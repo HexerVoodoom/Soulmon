@@ -116,33 +116,33 @@ está vazio em 13/09/2026).
 
 | id | fluxo | tela | estado (condição do `03`) | chega por | sai para | prio | estado do wireframe |
 |---|---|---|---|---|---|---|---|
-| `ATIV-01` | Atividades | `RitualPanel` | vazio — `emptyMessage` | Home | `+ Nova atividade` | P0 | criticado |
-| `ATIV-02` | Atividades | `RitualPanel` | parcial — `done`/`total` do dia | Home | — | P0 | criticado |
-| `ATIV-03` | Atividades | `RitualPanel` | completo — meta do dia cumprida | Home | — | P0 | criticado |
-| `ATIV-04` | Atividades | `RitualRow` (tarefa) + `TaskMeta` | normal — por tarefa ativa | `RitualPanel` | conclusão ou lápis | P0 | criticado |
-| `ATIV-05` | Atividades | `RitualRow` (tarefa) | concluída — `completeTask` remove a tarefa de `tasks` | toque | — | P0 | criticado |
-| `ATIV-06` | Atividades | `RitualRow` (hábito) + `StepRow` + `HabitConstancy` | normal — por hábito devido hoje | `RitualPanel` | `handleToggleActivityCompletion` | P0 | criticado |
-| `ATIV-07` | Atividades | `RitualRow` (hábito) | fora do dia — `dimmed={!disponivelHoje}`, **etapas inertes** | `isDueOn` falso | — | P0 | criticado |
-| `ATIV-08` | Atividades | `TaskMeta` | normal — prazo e esforço (`effort` 1–3) | dentro da linha | `handleEditTask` | P0 | criticado |
-| `ATIV-09` | Atividades | `TaskMeta` | adiada — contador visível; em `POSTPONE_NUDGE_AT` (3) chama o nudge | `handlePostponeNudge` | `ATIV-20` | P1 | criticado |
-| `ATIV-10` | Atividades | `TaskMeta` | assombrada — vencida ou parada há `HAUNTED_AFTER_DAYS` (7): esmaece + partícula escura; **`someday`/`dropped` nunca assombram** | idade da tarefa | conclusão com bônus de alívio | P1 | criticado |
-| `ATIV-11` | Atividades | `HabitConstancy` | normal — "N das últimas 7" (`CONSTANCY_WINDOW_DAYS`), **nunca percentual cru** | dentro da linha de hábito | — | P0 | criticado |
-| `ATIV-12` | Atividades | `HabitConstancy` | sem métricas — `hideMetrics={gameState.rest?.hideMetrics === true}`; **as recompensas ficam** | switch de Configurações | — | P1 | criticado |
-| `ATIV-13` | Atividades | `HabitConstancy` | marco — tier `seed → sprout → sapling → tree` (`HABIT_MILESTONES` 7/21/66), ícone evolui na lista | dias efetivos | `RIT-18` | P1 | criticado |
-| `ATIV-14` | Atividades | `QuickAddBar` | normal — sempre acima do painel | Home | `onCommit={handleQuickAdd}` | P0 | criticado |
-| `ATIV-15` | Atividades | `CreateModal` | normal — `{createModalOpen && (…)}` | CTA `+ Nova atividade` (`handleAddNewActivity`) e `EvolveTaskModal.onCreateTask` | `onClose` | P0 | criticado |
-| `ATIV-16` | Atividades | `CreateModal` | **demo no teto** — `capIsDemoBoundary={gameState.accountTier === 'demo'}` monta `UnlockNudge` (`reason` `task-limit`) | idem | `onUnlock` → `setUnlockReason('task-limit')` | P1 | criticado |
-| `ATIV-17` | Atividades | `EditModal` | normal — `{editModalOpen && (…)}` | lápis da atividade (`handleEditActivity`) | `onClose` limpa `editModalOpen` e `editingActivity` | P0 | criticado |
-| `ATIV-18` | Atividades | `EditModal` | **demo no teto** — também monta o `UnlockNudge`: era **o caminho que contornava o cap** (o botão principal de criar da tela inicial abre o `EditModal`) | idem | `setUnlockReason('task-limit')` | P1 | criticado |
-| `ATIV-19` | Atividades | `TaskEditModal` | normal — `{taskEditModalOpen && (…)}`, com `editingTask` | lápis da tarefa (`handleEditTask`) | `onClose` | P0 | criticado |
-| `ATIV-20` | Atividades | `PostponeNudgeSheet` (dentro do `App.tsx`) | normal — `task={nudgeTaskId ? … : null}`; três saídas: decompor, encolher (`shrink` rebaixa o `effort` e **zera o contador**), deixar pra lá | `TaskMeta` → `handlePostponeNudge` | `handleCloseNudge` | P1 | criticado |
-| `ATIV-21` | Atividades | `BalanceWeekModal` | normal — `{balanceOpen && (…)}` | botão "Equilibrar minha semana" | `onClose` | P1 | criticado |
-| `ATIV-22` | Atividades | `TriagePile` | fila — `interstitial === 'triage' && triageTasks`; a fila é **congelada** ao abrir (`setTriageTasks(triageQueue(…))`) para o contador não mentir | botão "Arrumar a pilha" → `handleOpenTriage` | `handleTriageResolve` | P1 | criticado |
-| `ATIV-23` | Atividades | `TriagePile` | carta — 4 ações de **peso igual** (`TriageAction = 'today' \&#124; 'week' \&#124; 'someday' \&#124; 'drop'`) | idem | `toOpen` · `postpone` · `toSomeday` · `drop` | P1 | criticado |
-| `ATIV-24` | Atividades | `TriagePile` | fim da fila — terminar rende recompensa (planejar é o que alivia) | última carta | `onClose={() => setTriageTasks(null)}` | P1 | criticado |
-| `ATIV-25` | Atividades | gaveta "Guardadas" | fechada — `{guardadas.length > 0 && (…)}`, um `<details>` **fechado por padrão** | Home | abre | P1 | criticado |
-| `ATIV-26` | Atividades | gaveta "Guardadas" | aberta — `someday` e `dropped`, com o botão "Retomar" (`handleRestoreTask`) | toque | `handleRestoreTask` | P1 | criticado |
-| `ATIV-27` | Atividades | botão "Equilibrar minha semana" | normal — `{podeEquilibrar && (…)}` | Home | `setBalanceOpen(true)` | P1 | criticado |
+| `ATIV-01` | Atividades | `RitualPanel` | vazio — `emptyMessage` | Home | `+ Nova atividade` | P0 | aprovado |
+| `ATIV-02` | Atividades | `RitualPanel` | parcial — `done`/`total` do dia | Home | — | P0 | aprovado |
+| `ATIV-03` | Atividades | `RitualPanel` | completo — meta do dia cumprida | Home | — | P0 | aprovado |
+| `ATIV-04` | Atividades | `RitualRow` (tarefa) + `TaskMeta` | normal — por tarefa ativa | `RitualPanel` | conclusão ou lápis | P0 | aprovado |
+| `ATIV-05` | Atividades | `RitualRow` (tarefa) | concluída — `completeTask` remove a tarefa de `tasks` | toque | — | P0 | aprovado |
+| `ATIV-06` | Atividades | `RitualRow` (hábito) + `StepRow` + `HabitConstancy` | normal — por hábito devido hoje | `RitualPanel` | `handleToggleActivityCompletion` | P0 | aprovado |
+| `ATIV-07` | Atividades | `RitualRow` (hábito) | fora do dia — `dimmed={!disponivelHoje}`, **etapas inertes** | `isDueOn` falso | — | P0 | aprovado |
+| `ATIV-08` | Atividades | `TaskMeta` | normal — prazo e esforço (`effort` 1–3) | dentro da linha | `handleEditTask` | P0 | aprovado |
+| `ATIV-09` | Atividades | `TaskMeta` | adiada — contador visível; em `POSTPONE_NUDGE_AT` (3) chama o nudge | `handlePostponeNudge` | `ATIV-20` | P1 | aprovado |
+| `ATIV-10` | Atividades | `TaskMeta` | assombrada — vencida ou parada há `HAUNTED_AFTER_DAYS` (7): esmaece + partícula escura; **`someday`/`dropped` nunca assombram** | idade da tarefa | conclusão com bônus de alívio | P1 | aprovado |
+| `ATIV-11` | Atividades | `HabitConstancy` | normal — "N das últimas 7" (`CONSTANCY_WINDOW_DAYS`), **nunca percentual cru** | dentro da linha de hábito | — | P0 | aprovado |
+| `ATIV-12` | Atividades | `HabitConstancy` | sem métricas — `hideMetrics={gameState.rest?.hideMetrics === true}`; **as recompensas ficam** | switch de Configurações | — | P1 | aprovado |
+| `ATIV-13` | Atividades | `HabitConstancy` | marco — tier `seed → sprout → sapling → tree` (`HABIT_MILESTONES` 7/21/66), ícone evolui na lista | dias efetivos | `RIT-18` | P1 | aprovado |
+| `ATIV-14` | Atividades | `QuickAddBar` | normal — sempre acima do painel | Home | `onCommit={handleQuickAdd}` | P0 | aprovado |
+| `ATIV-15` | Atividades | `CreateModal` | normal — `{createModalOpen && (…)}` | CTA `+ Nova atividade` (`handleAddNewActivity`) e `EvolveTaskModal.onCreateTask` | `onClose` | P0 | aprovado |
+| `ATIV-16` | Atividades | `CreateModal` | **demo no teto** — `capIsDemoBoundary={gameState.accountTier === 'demo'}` monta `UnlockNudge` (`reason` `task-limit`) | idem | `onUnlock` → `setUnlockReason('task-limit')` | P1 | aprovado |
+| `ATIV-17` | Atividades | `EditModal` | normal — `{editModalOpen && (…)}` | lápis da atividade (`handleEditActivity`) | `onClose` limpa `editModalOpen` e `editingActivity` | P0 | aprovado |
+| `ATIV-18` | Atividades | `EditModal` | **demo no teto** — também monta o `UnlockNudge`: era **o caminho que contornava o cap** (o botão principal de criar da tela inicial abre o `EditModal`) | idem | `setUnlockReason('task-limit')` | P1 | aprovado |
+| `ATIV-19` | Atividades | `TaskEditModal` | normal — `{taskEditModalOpen && (…)}`, com `editingTask` | lápis da tarefa (`handleEditTask`) | `onClose` | P0 | aprovado |
+| `ATIV-20` | Atividades | `PostponeNudgeSheet` (dentro do `App.tsx`) | normal — `task={nudgeTaskId ? … : null}`; três saídas: decompor, encolher (`shrink` rebaixa o `effort` e **zera o contador**), deixar pra lá | `TaskMeta` → `handlePostponeNudge` | `handleCloseNudge` | P1 | aprovado |
+| `ATIV-21` | Atividades | `BalanceWeekModal` | normal — `{balanceOpen && (…)}` | botão "Equilibrar minha semana" | `onClose` | P1 | aprovado |
+| `ATIV-22` | Atividades | `TriagePile` | fila — `interstitial === 'triage' && triageTasks`; a fila é **congelada** ao abrir (`setTriageTasks(triageQueue(…))`) para o contador não mentir | botão "Arrumar a pilha" → `handleOpenTriage` | `handleTriageResolve` | P1 | aprovado |
+| `ATIV-23` | Atividades | `TriagePile` | carta — 4 ações de **peso igual** (`TriageAction = 'today' \&#124; 'week' \&#124; 'someday' \&#124; 'drop'`) | idem | `toOpen` · `postpone` · `toSomeday` · `drop` | P1 | aprovado |
+| `ATIV-24` | Atividades | `TriagePile` | fim da fila — terminar rende recompensa (planejar é o que alivia) | última carta | `onClose={() => setTriageTasks(null)}` | P1 | aprovado |
+| `ATIV-25` | Atividades | gaveta "Guardadas" | fechada — `{guardadas.length > 0 && (…)}`, um `<details>` **fechado por padrão** | Home | abre | P1 | aprovado |
+| `ATIV-26` | Atividades | gaveta "Guardadas" | aberta — `someday` e `dropped`, com o botão "Retomar" (`handleRestoreTask`) | toque | `handleRestoreTask` | P1 | aprovado |
+| `ATIV-27` | Atividades | botão "Equilibrar minha semana" | normal — `{podeEquilibrar && (…)}` | Home | `setBalanceOpen(true)` | P1 | aprovado |
 
 ### 1.3 Onboarding
 
@@ -431,7 +431,7 @@ pastinha (`HOME-35`→`HOME-39`) → os estados globais (`HOME-04`, `HOME-05`, `
 (`ATIV-08`→`ATIV-13`) → entrada rápida e modais de criação/edição, com os dois estados de demo
 (`ATIV-14`→`ATIV-19`) → as saídas: nudge, equilíbrio, triagem, gaveta (`ATIV-20`→`ATIV-27`).
 
-**Desenhado e criticado em 14/09/2026** (`design-wireframer`; crítica de `design-critic`, `soulmon-product-designer` e `soulmon-guarda-linha-vermelha` — decisão em [DECISOES-WIREFRAME.md](DECISOES-WIREFRAME.md) §6): 27 linhas em 17 artboards — a lista em composição própria (`Main` = parcial, `ListaVazia`, `ListaCompleta`, `CargaDoDia` = D10 `[decisão 13/09]`), as linhas e metadados em folhas de estados (`LinhaTarefaEstados` = 04/05/08/09/10, `LinhaHabitoEstados` = 06/07, `FichaHabito` = 11/12/13 — a ficha do hábito no topo do `EditModal` `[novo — estrutura]`, + T5 escudos e T6 aura `[decisão 13/09]`), criar/editar em folhas (`CriarAtividade` 15, `CriarTetoDemo` 16, `EditarAtividade` 17 (+ 18 como **sai**: o teto não tranca edição), `EditarTarefa` 19, `CapturaRapida` 14) e as saídas (`NudgeAdiamento` 20, `EquilibrarSemana` 21/27, `TriagemFila` 22/23, `TriagemFim` 24, `GuardadasEstados` 25/26). Cada artboard leva a tag `ATIV-xx` que cobre.
+**Desenhado, criticado e aprovado pelo dono em 14/09/2026** (`design-wireframer`; crítica de `design-critic`, `soulmon-product-designer` e `soulmon-guarda-linha-vermelha` — decisão em [DECISOES-WIREFRAME.md](DECISOES-WIREFRAME.md) §6): 27 linhas em 17 artboards — a lista em composição própria (`Main` = parcial, `ListaVazia`, `ListaCompleta`, `CargaDoDia` = D10 `[decisão 13/09]`), as linhas e metadados em folhas de estados (`LinhaTarefaEstados` = 04/05/08/09/10, `LinhaHabitoEstados` = 06/07, `FichaHabito` = 11/12/13 — a ficha do hábito no topo do `EditModal` `[novo — estrutura]`, + T5 escudos e T6 aura `[decisão 13/09]`), criar/editar em folhas (`CriarAtividade` 15, `CriarTetoDemo` 16, `EditarAtividade` 17 (+ 18 como **sai**: o teto não tranca edição), `EditarTarefa` 19, `CapturaRapida` 14) e as saídas (`NudgeAdiamento` 20, `EquilibrarSemana` 21/27, `TriagemFila` 22/23, `TriagemFim` 24, `GuardadasEstados` 25/26). Cada artboard leva a tag `ATIV-xx` que cobre.
 
 ### 2.3 Rituais
 **Os dois quadros de fila primeiro** (`RIT-01`, `RIT-02`) — eles são a regra que governa todo

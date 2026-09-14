@@ -150,9 +150,9 @@ mantidas.
 
 | # | Pedido | Decisão | Motivo |
 |---|---|---|---|
-| V1 | Confirmação de "Delete" que nomeia o que vai ("This habit is a Sapling — 30 days.") ou "Put aside" para hábito (guarda 4e) | **Adiado → tensão para o dono** | É regra (apagar hábito com histórico apaga marco, `02 §28`); o wireframe desenha o Delete como o código (abaixo, quiet, separado do primário) |
+| V1 | Confirmação de "Delete" que nomeia o que vai ("This habit is a Sapling — 30 days.") ou "Put aside" para hábito (guarda 4e) | **Decidido pelo dono (14/09/2026): confirmar nomeando o marco** → `REGISTRO` 13.8 | Era regra (apagar hábito com histórico apaga marco, `02 §28`); o wireframe desenha o Delete como o código (abaixo, quiet, separado do primário) |
 | V2 | Copy da recusa da barra "That didn't fit — you've reached your item limit." → "free mode holds N active habits. One-off tasks still fit." (guarda 9a) | **Volta ao código no canvas; vira critério de aceite** | W2 (texto real); a alternativa está na nota do artboard para o `staff-frontend` |
-| V3 | Passos aceitos no nudge: substituem a tarefa ou somam? (guarda 5) | **Adiado → lead/dono** | Regra do `onDecompose`; o wireframe desenha o que existe |
+| V3 | Passos aceitos no nudge: substituem a tarefa ou somam? (guarda 5) | **Decidido pelo dono (14/09/2026): somam à mesma tarefa** → `REGISTRO` 13.9 | Regra do `onDecompose`; sem zeramento novo |
 | V4 | Recompensa material ao terminar a triagem ("terminar rende recompensa", `CLAUDE.md`) | **Sai** (guarda 6d: VETADO; não existe no código — divergência já registrada em `02 §34`) | #16/#19; a copy real "You decided on N items…" fica: N é decidido (feito ≥ 1) |
 | V5 | Foco do dia (0/1/2/3) na lista (`PRINCÍPIOS §2` estados) | **Não desenhado** | `02 §32` "Onde a UI mostra" = check-in e selo do HUD; inventar seria funcionalidade sem regra — lacuna registrada |
 
@@ -170,7 +170,7 @@ mantidas.
 
 ### 6.4 O que fica registrado para depois
 
-- **Para o dono, no checkpoint:** A1, A2, A3 e A5/A6 são as mudanças estruturais — a recomendação é aprovar as cinco; V1 (confirmar Delete nomeando o marco) e V3 (passos do nudge substituem ou somam) são decisões de regra suas.
+- **Checkpoint fechado em 14/09/2026 — o dono APROVOU** (A1–A8 entram; 13.8 confirmar Excluir nomeando o marco; 13.9 passos do nudge somam). Registro do que foi apresentado: A1, A2, A3 e A5/A6 eram as mudanças estruturais — a recomendação era aprovar as cinco.
 - **Para o cartógrafo:** `03 §4.5` está defasado em dois pontos (CTA → `CreateModal`; "toque no lápis"); `03 §4.1` diz "tarefas por `completed`" (concluídas nem estão em `tasks`); `ATIV-05` no inventário descreve a regra certa e a prova errada; `ATIV-18` deixa de ter caminho vivo.
 - **Para o `docs/STATUS.md` (achados):** `feitos/total` cego às tarefas concluídas (`App.tsx`); `"0/3 steps"` impresso antes do primeiro passo (fura o piso); "Bring back" a 36px; "Want to create without limits?" (C-S1); `handleAddNewTask` sem chamador; o `CLAUDE.md` promete recompensa na triagem que o código não tem.
 - **Para o `staff-frontend`:** A1–A8 e S1–S7 são o diff do motor de tarefas; nenhum item muda regra de jogo (`02`); as copies `[novo]` passam pelo guarda como aceite (dado neste parecer); a régua A4 é da UI, não do motor.

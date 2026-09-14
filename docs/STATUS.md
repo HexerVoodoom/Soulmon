@@ -7,7 +7,7 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
-> ## 📋 14/09/2026 — WIREFRAMES DE ATIVIDADES: DESENHADOS, CRITICADOS, CARIMBADOS — CHECKPOINT DO DONO PENDENTE
+> ## 📋 14/09/2026 — WIREFRAMES DE ATIVIDADES: DESENHADOS, CRITICADOS, CARIMBADOS E APROVADOS PELO DONO
 >
 > Segundo fluxo da SQUAD-DESIGN (Fase 1). Canvas publicado:
 > **https://claude.ai/code/artifact/4c632c62-a413-42f3-b6a4-35244038bde1**
@@ -27,9 +27,9 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 >   carga do dia = 7ª entrada da fila 2 como texto (D10); escudos por hábito, zero só
 >   na ficha/Estatísticas (T5). **Sai:** o segundo modal de criação (ATIV-18 perde o
 >   caminho vivo), a linha agregada de escudos, "N das últimas 7" na linha.
-> - **⏳ DEPENDE DE VOCÊ (checkpoint):** aprovar / devolver / mandar sair. Duas
->   decisões de regra suas: (a) confirmar "Excluir" nomeando o marco que vai
->   (guarda 4e); (b) no nudge, os passos aceitos SUBSTITUEM a tarefa ou SOMAM?
+> - **✅ Checkpoint fechado em 14/09/2026 (modal):** aprovado. Decisões novas no `REGISTRO` §13:
+>   **13.8** excluir hábito com histórico confirma nomeando o marco; **13.9** passos aceitos no
+>   nudge somam à mesma tarefa.
 > - **Achados de passagem (código):** o cabeçalho `feitos/total` do painel conta só
 >   `tasks` — a tarefa concluída sai da conta, e "5/5" nunca fecha num dia de hábito
 >   fora do dia; `"0/3 steps"` impresso antes do primeiro passo (fura o piso);
@@ -38,7 +38,7 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 >   ao terminar a triagem e o código não tem (já em `02 §34`); `03 §4.5` defasado
 >   (CTA → CreateModal; "toque no lápis"); `ATIV-05` e `ATIV-18` no inventário
 >   precisam de nota do cartógrafo.
-> - **Branch:** `design/wireframes-atividades` (pushada). Merge só após o seu OK.
+> - **Branch:** `design/wireframes-atividades`, mergeada na `main` após o OK.
 >   Próximo fluxo P0: Rituais.
 
 > ## 📚 14/09/2026 — MANUAL SINCRONIZADO COM `708893c0` (wireframes da Home)
