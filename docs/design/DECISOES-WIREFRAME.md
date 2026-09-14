@@ -233,3 +233,53 @@ mantidas.
 - **Para o cartógrafo:** `RIT-15` no inventário diz "item na pastinha → `applySpecialItem`" — é `handleRecoverHearts`, sem item; `03 §4.21` diz que o gate "substituiu" o `setTimeout(15 s)` — os dois coexistem ("o timer fica", `App.tsx`); `03 §3.1` precisa dizer que `interstitial === 'welcome'` monta o welcome prompt E libera o `ProtectProgressModal` (duas `ModalSheet` juntas); `RIT-26` não tem posição nas filas (R8); `RIT-13` "Forms lived" são nomes de estágio, não tiers.
 - **Para o `docs/STATUS.md` (achados de código):** (a) `FirstTaskCompletedPopup` z-120 sob os intersticiais, fora do `filaDeAvisos.contract.test.ts`, alcançável pela oferta reduzida; (b) `ProtectProgressModal` × `WelcomePromptModal` no mesmo valor de `interstitial`; (c) a linha de carga do check-in cega ao foco escolhido; (d) `WeeklyReportCard` imprime "0 of 4", "0 task(s) done" e "(s)"; (e) oferta reduzida sem estado pós-aceite (plano congelado); (f) `MilestoneCeremony` `role="status"` sem trap nem Escape — Tab vaza para o check-in sob o véu; (g) "You're on a good streak!"; (h) `restDayUsed`/`weeklyRelief` sem `!welcome` (podem aparecer no retorno); (i) `offerShownWeek` gravado no toque; (j) "You were away N days"; (k) "chosen focus: 0"; (l) o comentário "some sozinha em 2,5s" (já em `03 §6`).
 - **Para o `staff-frontend`:** R1–R8 e S1–S8 são o diff dos rituais; nenhum item muda regra de jogo (`02`) — V4 e V5 são regra e esperam o dono; os aceites do guarda viram critério: 1a (nenhuma superfície fora do check-in repete a oferta reduzida nem conta faltas), 2e (a raridade do sonho nunca vem com causa, comparação ou à noite), 3a-i (`heartsLost === 0` como trava explícita da oferta), 5b (as carinhas sem rótulo de prêmio), 5c (`soulStruggle` só na oferta reduzida — nunca push, chat ou telemetria), e "Escape = `onDone`" + `role="dialog"` na cerimônia.
+
+## 8. Pet: entra / volta / sai (decisão do `soulmon-design-lead`, 14/09/2026)
+
+> **Canvas:** [Soulmon — Wireframes Pet](https://claude.ai/code/artifact/80f27593-30d4-4c5d-a322-8f9ef3d0549e)
+> (rodada 2, pós-crítica) · arquivos em `docs/design/wireframes/pet/` (`Main.dc.html` + 8
+> `<TelaEstado>.dc.html` + `canvas.json`; 7 linhas `PET-*` em 9 artboards — `PET-02` é `fora` por D4).
+> Canvas próprio por **D1** (os ids `EVO-22`→`EVO-29` viraram `PET-01`→`PET-08`; inventário §1.4a).
+> **Crítica:** `design-critic` (rodada 1: "não passa", 1 bloqueante sistêmico B1 + 2 ressalvas — aplicados
+> na rodada 2), `soulmon-product-designer` (8 achados; o que mudou o canvas: as sub-abas desenhadas com
+> semântica que o código não tem; a data das formas mora no `FormAlbum`; a coluna sem wayfinding),
+> `soulmon-guarda-linha-vermelha` (família **APROVADA COM RESSALVA** — 1 veto ao `[novo]` da rodada 1
+> que suprimia o "0 of 30": reverteria 13.7 sem evidência nova).
+> **Precedência:** código > teste > `CLAUDE.md` > manual > este doc. Valem aqui E5/13.7 (posse × dívida),
+> A6 (zero de posse como texto quieto) e D4 (save legado = fora).
+
+### 8.1 Entra (estrutura ou copy nova, marcada `[novo]` no canvas)
+
+| # | O que entra | Motivo (fonte) | O que perde |
+|---|---|---|---|
+| P1 | **Dex vazio sem a barra de progresso em 0% e sem as frações "0 of 12 / 0 of 10 / 0 of 8"** — só enquanto as TRÊS raridades estão em zero; o dígito "0 of 30 · dreams discovered" **fica**, como texto quieto | PRINCÍPIOS §9 (Reddit: barra suprimida no zero; "zeros em série"); guarda 1b/1c; 13.7 + A6 (posse pode mostrar zero, como linha quieta — nunca banner + cadeado, que é o anti-padrão Withings); é branch `collected === 0` no `DreamDex.tsx`, não CSS | A barra vazia e o "0 · 0 · 0" do dia 1 |
+| P2 | **Célula obtida do Dex ganha "#NN · data"** (`#NN` = índice GLOBAL no `DREAM_CATALOG`, 1–30; a data = `rest.dreamDates[id]` via `collectedAt`); o não obtido fica só com "???" | PRINCÍPIOS §9 ("data no obtido" — Reddit/Runna; "número de catálogo" — Finch #25); `02 §45` (o save já carimba a primeira data e a UI nunca a mostrou); crítico R1 (o número tem de vir do dado, como o "+20%"); guarda 1d | Nada de regra: `collectedAt` devolve `null` em save antigo → célula só com o nome (nunca data inventada) |
+| P3 | **Sub-abas desenhadas como o código**: três `<button>` (`sm-btn` / `sm-btn-secondary`), o ativo só por classe — sem `tablist`, sem `aria-selected` | D11; crítico B1 (a rodada 1 desenhava um `tablist` que o código não tem, sem `[novo]`, e ainda numerava três paradas de Tab — um tablist real tem uma) | A semântica de aba vai ao STATUS como dívida a11y (roving-tabindex + setas é implementação, não wireframe) |
+| P4 | **Estados da ficha que o inventário não tinha**: habilidades antes do "power N" chegar (o par qualitativo pinta primeiro), classe ainda não computada, o vazio (`formas.length === 0`), save que aponta para forma fora da lista (cai na última alcançada) | W3; `PetPage.tsx` (três `try/catch` independentes: "sem classe é melhor que sem página"); crítico item 3 (achado, rota certa = cartógrafo) | Nada |
+
+### 8.2 Volta (a crítica pediu ou a rodada 1 tinha; o lead recusa ou adia)
+
+| # | Pedido | Decisão | Motivo |
+|---|---|---|---|
+| V1 | Suprimir o dígito "0 of 30" no Dex vazio (rodada 1) | **Sai — VETADO pelo guarda (1a)** | Reverteria 13.7 ("coleção é posse, pode mostrar zero") sem evidência nova; a régua já fechada em E5/A6 é a mesma: o dígito como texto quieto não é o padrão Withings (cadeado + vermelho + banner). Não vai ao dono |
+| V2 | A data das formas anteriores na ficha ("Who they used to be") — PRINCÍPIOS §9 "data no obtido" | **Adiado → canvas Estatísticas, com recomendação** | Uma casa só (guarda 2a): o `FormAlbum` (STAT-08) já lê `collectedAt(reachedAt, id)` e é peça de COLEÇÃO; a ficha continua narrativa (Finch Micropet, MOB §15.3: a data mora no rodapé da coleção, não na ficha de identidade). Duas superfícies com a mesma data seria W4 cruzado |
+| V3 | Wayfinding na coluna ficha → Dex → diário (chips de salto, ou cabeçalhos `sticky`) | **Adiado → STATUS / lead** | Não inventar navegação; a proposta menor (os `h2` de seção como `.sm-pet-sticky`, padrão já do dono) fica registrada. As setas ▲▼ do canvas são anotação, não componente |
+| V4 | Um `Suspense` só para os três blocos (três "LOADING" empilhados leem como três falhas) | **Adiado → STATUS** | É custo medido (o chunk mais lento seguraria a ficha), não decisão de wireframe; desenhado como o código (D11) |
+| V5 | A transição do primeiro sonho obtido (o dia em que `collected` vira 1) e a forma nova na ficha como momento | **Não desenhado** | O momento do sonho é o `MorningDream` (RIT-16, canvas Rituais); a forma nova é a `EvolutionCeremony` (canvas Evolução) — o Pet é o arquivo, não a celebração (PRINCÍPIOS §5 × §9) |
+
+### 8.3 Sai (o que a superfície de hoje tem e o wireframe não tem)
+
+| # | Sai | Motivo |
+|---|---|---|
+| S1 | **A barra de progresso em 0%** e as três frações em zero no Dex vazio | P1 |
+| S2 | **O `tablist` da rodada 1** | P3 (B1) |
+| S3 | **A miniatura de 56px empilhada em cartões iguais** (a ficha antes do revamp — ⚰️ já saiu do código) | `PetPage.tsx` cabeçalho |
+| S4 | **Nível numérico, "N/M formas", escada Rookie→Mega na ficha** | PRINCÍPIOS §6 (altura fica na própria tela de Evolução); `02 §14` |
+| S5 | **A seção "What they can do" no save legado** (`PET-02`) | D4: `fora`; não se desenha |
+
+### 8.4 O que fica registrado para depois
+
+- **Para o dono, no checkpoint:** P1 e P2 são as mudanças estruturais — a recomendação é aprovar as duas; não há decisão de regra nova (a tensão 13.7 × §9 foi resolvida pelo lead com a régua já aprovada em E5/A6).
+- **Para o cartógrafo:** o estado vazio da ficha (`formas.length === 0`) existe no código e não tem linha no inventário; as duas habilidades do estágio **não têm seção no `02-REGRAS-DE-NEGOCIO.md`** (a regra vive só em `utils/soulProfile/ficha/skills` — o `02 §15` é atributos e galhos); a data das formas tem de ter UM dono de tela (V2).
+- **Para o `docs/STATUS.md` (achados de código):** (a) `DreamDex` sempre renderiza contador + `progressbar`, mesmo em zero; (b) `dreamDates` carimbado no save e nunca exibido; (c) a fileira de sub-abas são três `<button>` sem grupo nem estado ativo para leitor de tela; (d) a sub-aba Soulmon não tem sinal de posição ao rolar (ficha → Dex → diário); (e) três `ScreenSkeleton` empilhados; (f) as habilidades do estágio sem seção no manual.
+- **Para o `staff-frontend`:** P1–P4 e S1–S5 são o diff do Pet; nenhum item muda regra de jogo; aceites do guarda: 1c (as frações somem só com as três em zero), 2a (a data das formas em uma casa só).

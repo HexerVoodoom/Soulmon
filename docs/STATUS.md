@@ -7,6 +7,35 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 🐾 14/09/2026 — WIREFRAMES DO PET: DESENHADOS, CRITICADOS, CORRIGIDOS — CHECKPOINT DO DONO PENDENTE
+>
+> Quarto canvas da SQUAD-DESIGN (Fase 1; canvas próprio por D1 — `EVO-22`→`EVO-29`
+> viraram `PET-01`→`PET-08`, inventário §1.4a). Canvas publicado:
+> **https://claude.ai/code/artifact/80f27593-30d4-4c5d-a322-8f9ef3d0549e**
+> (9 artboards em 3 páginas; `docs/design/wireframes/pet/`). 7 linhas `PET-*`
+> desenhadas (`PET-02` = `fora`, D4); decisão do design-lead em
+> `docs/design/DECISOES-WIREFRAME.md` §8.
+> - **Crítica em duas rodadas:** `design-critic` (r1 "não passa" — B1 sistêmico: sub-abas
+>   desenhadas como `tablist` sem `[novo]`; R1 índice global do `#NN`; R2 raridade em zero
+>   num Dex parcial — todos aplicados), `soulmon-product-designer` (8 achados), `soulmon-guarda-linha-vermelha`
+>   (**APROVADA COM RESSALVA** — VETO 1a ao `[novo]` que suprimia o "0 of 30": reverteria 13.7).
+> - **Decisões estruturais** (`[novo]`): Dex vazio sem a barra em 0% e sem as frações
+>   enquanto as três raridades estão em zero — o dígito fica como texto quieto (P1); célula
+>   obtida com "#NN · data" (índice global + `dreamDates`, P2); sub-abas como o código (P3);
+>   estados da ficha que o inventário não tinha (P4). **Sai:** a barra vazia, o `tablist`,
+>   o nível numérico na ficha.
+> - **⏳ DEPENDE DE VOCÊ (checkpoint):** aprovar / devolver / mandar sair. Sem decisão de
+>   regra nova nesta rodada.
+> - **Achados de passagem (código):** `DreamDex` sempre renderiza contador + `progressbar`
+>   mesmo em zero; `rest.dreamDates` é carimbado e nunca exibido; as sub-abas são três
+>   `<button>` sem grupo nem estado ativo para leitor de tela; a coluna ficha → Dex → diário
+>   não tem sinal de posição ao rolar; três `ScreenSkeleton` empilhados; as duas habilidades
+>   do estágio não têm seção no `02-REGRAS-DE-NEGOCIO.md` (só em `utils/soulProfile/ficha/skills`);
+>   o estado vazio da ficha (`formas.length === 0`) não tem linha no inventário; a data das
+>   formas anteriores tem dois candidatos a dono (`FormAlbum` × ficha) — recomendação: `FormAlbum`.
+> - **Branch:** `design/wireframes-pet` (pushada). Merge só após o seu OK.
+>   Próximo canvas: Onboarding-funil (D3).
+
 > ## 📚 14/09/2026 — MANUAL SINCRONIZADO COM `f673a082` (wireframes de Rituais)
 >
 > `doc-mantenedor` (sessão): delta `96d8dbdb` → `f673a082`, 5 commits, sem módulo
