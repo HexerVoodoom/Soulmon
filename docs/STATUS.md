@@ -7,6 +7,45 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## ☀️ 14/09/2026 — WIREFRAMES DE RITUAIS: DESENHADOS, CRITICADOS, CORRIGIDOS — CHECKPOINT DO DONO PENDENTE
+>
+> Terceiro fluxo da SQUAD-DESIGN (Fase 1). Canvas publicado:
+> **https://claude.ai/code/artifact/526d821f-9d70-497e-bb70-c932701c3a3a**
+> (21 artboards em 4 páginas; `docs/design/wireframes/rituais/`). As 26 linhas
+> `RIT-*` desenhadas; decisão do design-lead em `docs/design/DECISOES-WIREFRAME.md` §7.
+> - **Crítica em duas rodadas:** `design-critic` (r1 "não passa", 5 bloqueantes B1–B5 +
+>   7 ressalvas, todos aplicados na r2), `soulmon-product-designer` (10 achados — o que
+>   mudou o canvas: o `FirstTaskCompletedPopup` monta POR BAIXO dos intersticiais e o
+>   gatilho é a oferta reduzida; o relatório em ordem de tempo; o retorno com o pet
+>   falando), `soulmon-guarda-linha-vermelha` (**APROVADA COM RESSALVA** — 1 veto de
+>   copy: "You're on a good streak!"; 4 vetos ao código que o canvas já corrige; 9
+>   ressalvas que viram aceite).
+> - **Decisões estruturais** (`[novo]`): o mapa do que vive fora das filas (R1);
+>   relatório em ordem de tempo — ontem → humor → convite → CTA (R2); um caminho de
+>   volta por superfície — a nota do carinho sai do relatório (R3); retorno de
+>   ausência com o pet na peça e a linha da faixa, sem o N (R4); piso de dígitos nos
+>   rituais — "not logged", sem "0 of 4", sem "chosen focus: 0", uma anatomia por
+>   linha no semanal (R5); estado "aceitei" da oferta reduzida (R6); primeira tarefa
+>   como cerimônia, fora das filas de propósito (R8). **Sai:** o × da cerimônia, o
+>   número de dias fora, os zeros de dívida, "streak".
+> - **⏳ DEPENDE DE VOCÊ (checkpoint):** aprovar / devolver / mandar sair. Duas
+>   decisões de regra suas: (a) a missão semanal `mood-checkins` (2 Emblemas por
+>   responder o humor) fica no pool? (b) o "1×/semana" da oferta no relatório conta ao
+>   MOSTRAR ou ao TOCAR (hoje é ao tocar)?
+> - **Achados de passagem (código):** `FirstTaskCompletedPopup` (`ModalSheet` z-120)
+>   monta SOB um intersticial aberto, invisível, com trap próprio — e a 1ª conclusão
+>   da vida pode ser o "just 5 minutes today?" do check-in; `ProtectProgressModal` e
+>   `WelcomePromptModal` montam no MESMO valor de `interstitial` (duas folhas, dois
+>   traps); a linha de carga do check-in lê `plan.plannedEffort` congelado e ignora
+>   `focusEffort`; `WeeklyReportCard` imprime "0 of 4", "0 task(s) done" e "(s)";
+>   a oferta reduzida não muda nada na tela depois do toque; `MilestoneCeremony` é
+>   `role="status"` sem trap/Escape (Tab vaza para o check-in sob o véu z-300);
+>   "You're on a good streak!" com gate de 5 tarefas; `restDayUsed`/`weeklyRelief`
+>   sem `!welcome`; `offerShownWeek` gravado no toque; "You were away N days";
+>   "chosen focus: 0"; `03 §4.21` diz que o gate "substituiu" o timer — coexistem.
+> - **Branch:** `design/wireframes-rituais` (pushada). Merge só após o seu OK.
+>   Próximo canvas: Pet (D1).
+
 > ## 📚 14/09/2026 — MANUAL SINCRONIZADO COM `5540226c` (wireframes de Atividades)
 >
 > `doc-mantenedor` (sessão): delta `f3bec2ce` → `5540226c`, 5 commits, sem módulo

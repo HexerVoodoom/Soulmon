@@ -174,3 +174,62 @@ mantidas.
 - **Para o cartógrafo:** `03 §4.5` está defasado em dois pontos (CTA → `CreateModal`; "toque no lápis"); `03 §4.1` diz "tarefas por `completed`" (concluídas nem estão em `tasks`); `ATIV-05` no inventário descreve a regra certa e a prova errada; `ATIV-18` deixa de ter caminho vivo.
 - **Para o `docs/STATUS.md` (achados):** `feitos/total` cego às tarefas concluídas (`App.tsx`); `"0/3 steps"` impresso antes do primeiro passo (fura o piso); "Bring back" a 36px; "Want to create without limits?" (C-S1); `handleAddNewTask` sem chamador; o `CLAUDE.md` promete recompensa na triagem que o código não tem.
 - **Para o `staff-frontend`:** A1–A8 e S1–S7 são o diff do motor de tarefas; nenhum item muda regra de jogo (`02`); as copies `[novo]` passam pelo guarda como aceite (dado neste parecer); a régua A4 é da UI, não do motor.
+
+## 7. Rituais: entra / volta / sai (decisão do `soulmon-design-lead`, 14/09/2026)
+
+> **Canvas:** [Soulmon — Wireframes Rituais](https://claude.ai/code/artifact/526d821f-9d70-497e-bb70-c932701c3a3a)
+> (rodada 2, pós-crítica) · arquivos em `docs/design/wireframes/rituais/` (`Main.dc.html` + 20
+> `<TelaEstado>.dc.html` + `canvas.json`; 26 linhas `RIT-*` em 21 artboards).
+> **Crítica:** `design-critic` (rodada 1: "não passa", 5 bloqueantes B1–B5 + 7 ressalvas — todos
+> aplicados na rodada 2), `soulmon-product-designer` (10 achados; o que mudou o canvas: o
+> `FirstTaskCompletedPopup` monta POR BAIXO dos intersticiais e o gatilho vive neste canvas; a
+> ordem do relatório; o retorno de ausência), `soulmon-guarda-linha-vermelha` (família **APROVADA
+> COM RESSALVA** — 1 veto de copy, 4 vetos ao código que o canvas já corrige, 9 ressalvas que viram
+> aceite, 3 decisões para o dono).
+> **Precedência:** código > teste > `CLAUDE.md` > manual > este doc. As regras fechadas na Home
+> (§5: piso de dígitos, regra de canal, ordem de foco) e em Atividades (§6: léxico da janela de 7,
+> carga como 7ª entrada da fila 2) valem aqui.
+
+### 7.1 Entra (estrutura ou copy nova, marcada `[novo]` no canvas)
+
+| # | O que entra | Motivo (fonte) | O que perde |
+|---|---|---|---|
+| R1 | **O mapa completo do que vive fora das duas filas** (RIT-01): a cerimônia do marco (z-300) e a de evolução (z-500) de propósito; o `ProtectProgressModal` e o `FirstTaskCompletedPopup` **sem posição declarada**; o canal de VOZ (`falar`, `welcomeBackLine` no HUD, toast) como terceiro canal | W7 (superfície nova entra numa das filas, com posição declarada); `03 §3.1`; crítico B5/N2/N5; product-designer #1/#6/#10 | Nada — o quadro só passa a dizer a verdade: `interstitial === 'welcome'` é a condição de montagem do welcome prompt, não "nada aberto" |
+| R2 | **Relatório em ordem de tempo**: ONTEM inteiro (linhas · notas · aventura · memória) → a pergunta de HOJE (humor) → convite → "Start the day" `[novo — estrutura]` | W4 (o humor é a única pergunta de hoje e fica colada ao CTA de hoje); product-designer #4; `02 §12` não é reaberto (o humor continua no relatório) | Nada de regra: nada entra nem sai, só a ordem do DOM |
+| R3 | **Um caminho de volta por superfície**: a nota "A rub gives half a heart back, if you feel like it…" sai do relatório; o botão "I did it, forgot to log" fica | Guarda 1b (dois caminhos no mesmo prato — mesma ressalva da Home E6); o carinho é gesto da Home e se ensina lá (E7) | A menção ao carinho no relatório |
+| R4 | **Retorno de ausência com o pet na peça**: o sprite no lugar do ícone e UMA linha da família `welcomeBackLine` (faixa de ausência, `welcomeBack.ts`, teste "nenhuma frase menciona o que ficou"); o **N de dias fora sai**; "Complete days saved" some com `perfectDays === 0` `[novo — estrutura]` | PRINCÍPIOS §4 ("quantificar a ausência é criar uma consequência para depois anunciar que ela não existe"; Lovi; Finch linha 1); `02 §45` (`AbsenceBucket`: faixa, nunca o número cru); guarda 1c (VETADO o "You were away N days" do código); product-designer #6/Q5 (uma fonte só de copy) | A frase do código "You were away N days and your Soulmon lost nothing waiting…" |
+| R5 | **Piso de dígitos nos rituais** (E5/13.7 aplicados): "· chosen focus: 0" e "Planned load: 0 points" somem; "Yesterday's tasks" vira **"not logged"** com coração cobrado e some sem cobrança; no semanal a linha "N tasks done · N effort points" some com `tasksDone === 0`, e cada hábito tem **uma anatomia** — janela de 7 (léxico A2) + "N of M" só com N ≥ 1; plurais reais ("2 tasks", "1 point") | E5/13.7; guarda 4a/4c/4d/4e (VETADOS no código: "0 of 4", "chosen focus: 0"); crítico B2/R2; product-designer #5/Q4 (sem a linha, "I did it, forgot to log" perde o referente) | O "of M" quando feitos = 0; o "(s)" do código |
+| R6 | **Estado "aceitei" da oferta reduzida** `[novo]`: o botão vira chip preenchido "Stretch · counted" — sem prêmio, sem confete | `02 §27` ("conta como feito" é literal); product-designer #3 (hoje o plano é congelado e nada muda na tela — achado) | Nada |
+| R7 | **Copy nova** `[novo]`: "You two have a history now." no lugar de "You're on a good streak!" (`ProtectProgressModal`, `reason === 'streak'`) | Guarda 5a — **VETADO** o título do código: não existe streak (o gate é `completedTasks.length ≥ 5`); é o vocabulário que o produto trocou por constância, numa tela que pede dado pessoal (precedente C-S1: o app mentindo na tela em que pede); T9 | Nada de regra; lote de copy do `staff-frontend` |
+| R8 | **Primeira tarefa concluída como cerimônia**: o sprite na peça (com o 🌱), uma frase, um botão; e a peça muda de classe — sai da `ModalSheet` (z-120, sob os intersticiais) para a classe da cerimônia do marco (fora das filas de propósito, z-300, espera o gesto) `[novo — estrutura]` | W7 (hoje monta POR BAIXO de um intersticial aberto, invisível, com trap próprio — e o gatilho é o "just 5 minutes today?" de RIT-06); PRINCÍPIOS §5 (é celebração, não folha de sistema; Alan: prova pelo uso); crítico N2; product-designer #1/Q5 | A folha; o "Got it" pode virar saída relacional na implementação (copy do lote) |
+
+### 7.2 Volta (a crítica pediu ou a rodada 1 tinha; o lead recusa ou adia)
+
+| # | Pedido | Decisão | Motivo |
+|---|---|---|---|
+| V1 | × no topo da cerimônia do marco (rodada 1, PRINCÍPIOS §5 "composição de 9 apps") | **Sai** | Crítico B3: `MilestoneCeremony.render.test.tsx` trava UM botão (teste > docs); × é postura de DISPENSA e o produto escolheu RELAÇÃO (Ahead, MOB §6A). Escape = o mesmo `onDone` cobre o teclado — vai como aceite a11y (ver STATUS) |
+| V2 | A linha de carga do check-in reagindo ao foco ESCOLHIDO (hoje lê `plan.plannedEffort` congelado e ignora `focusEffort`) | **Adiado → STATUS / `staff-frontend`** | É comportamento do motor, não superfície; o wireframe desenha o código (D11). É a única tela em que a carga ainda é decisão — a proposta fica registrada |
+| V3 | Versão máxima do retorno: sem as duas linhas de extrato ("Hearts untouched", "Complete days saved" → Estatísticas) | **Volta parcial** | O pet e a linha entram (R4); as linhas ficam — são o código, "Complete days saved" é posse (13.7) e some em zero |
+| V4 | A missão semanal `mood-checkins` (2 Emblemas) recompensa responder um dado que a regra declara opcional e fora de pontuação (guarda 5b) | **→ dono** | É regra (`02 §12`, `02 §50`); o wireframe já desenha as carinhas sem rótulo de prêmio |
+| V5 | "1×/semana" da oferta: hoje `offerShownWeek` é carimbado no TOQUE, não na exibição — na prática "todo dia completo até tocar ou dispensar" (guarda 3a-ii) | **→ dono** | É regra (`offerMoment.ts`); o guarda recomenda carimbar ao mostrar (o que WP5.1 aprovou) |
+| V6 | O carinho continuar lembrado no relatório (guarda, decisão 3) | **Sai** (R3) | É superfície, não regra: um caminho por tela |
+
+### 7.3 Sai (o que a superfície de hoje tem e o wireframe não tem)
+
+| # | Sai | Motivo |
+|---|---|---|
+| S1 | **"You were away N days…"** — o número de dias fora | R4 (PRINCÍPIOS §4; `02 §45`; guarda 1c) |
+| S2 | **"0 of 4"** (semanal), **"0 task(s) done · 0 effort point(s)"**, **"chosen focus: 0"**, **"Planned load: 0 points"**, **"Yesterday's tasks 0 of M"** | R5 (E5/13.7; guarda 4a/4c/4d/4e) |
+| S3 | **A nota do carinho no relatório** | R3 (guarda 1b) |
+| S4 | **"You're on a good streak!"** | R7 (guarda 5a) |
+| S5 | **O × da cerimônia** (rodada 1) | V1 |
+| S6 | **O 4º candidato de foco sem pendência de ontem** (rodada 1, RIT-03) — sem `carryOver` o teto é 3 (`suggestedFocus.slice(0, 3)`) | Crítico B1 |
+| S7 | **"(s)"** nos plurais do semanal | R5 |
+| S8 | **A `ModalSheet` da primeira tarefa** (a peça vira cerimônia) | R8 |
+
+### 7.4 O que fica registrado para depois
+
+- **Para o dono, no checkpoint:** R2, R3, R4, R5 e R8 são as mudanças estruturais — a recomendação é aprovar as cinco; V4 (`mood-checkins` no pool de missões) e V5 (a semana da oferta conta ao mostrar ou ao tocar) são decisões de regra suas.
+- **Para o cartógrafo:** `RIT-15` no inventário diz "item na pastinha → `applySpecialItem`" — é `handleRecoverHearts`, sem item; `03 §4.21` diz que o gate "substituiu" o `setTimeout(15 s)` — os dois coexistem ("o timer fica", `App.tsx`); `03 §3.1` precisa dizer que `interstitial === 'welcome'` monta o welcome prompt E libera o `ProtectProgressModal` (duas `ModalSheet` juntas); `RIT-26` não tem posição nas filas (R8); `RIT-13` "Forms lived" são nomes de estágio, não tiers.
+- **Para o `docs/STATUS.md` (achados de código):** (a) `FirstTaskCompletedPopup` z-120 sob os intersticiais, fora do `filaDeAvisos.contract.test.ts`, alcançável pela oferta reduzida; (b) `ProtectProgressModal` × `WelcomePromptModal` no mesmo valor de `interstitial`; (c) a linha de carga do check-in cega ao foco escolhido; (d) `WeeklyReportCard` imprime "0 of 4", "0 task(s) done" e "(s)"; (e) oferta reduzida sem estado pós-aceite (plano congelado); (f) `MilestoneCeremony` `role="status"` sem trap nem Escape — Tab vaza para o check-in sob o véu; (g) "You're on a good streak!"; (h) `restDayUsed`/`weeklyRelief` sem `!welcome` (podem aparecer no retorno); (i) `offerShownWeek` gravado no toque; (j) "You were away N days"; (k) "chosen focus: 0"; (l) o comentário "some sozinha em 2,5s" (já em `03 §6`).
+- **Para o `staff-frontend`:** R1–R8 e S1–S8 são o diff dos rituais; nenhum item muda regra de jogo (`02`) — V4 e V5 são regra e esperam o dono; os aceites do guarda viram critério: 1a (nenhuma superfície fora do check-in repete a oferta reduzida nem conta faltas), 2e (a raridade do sonho nunca vem com causa, comparação ou à noite), 3a-i (`heartsLost === 0` como trava explícita da oferta), 5b (as carinhas sem rótulo de prêmio), 5c (`soulStruggle` só na oferta reduzida — nunca push, chat ou telemetria), e "Escape = `onDone`" + `role="dialog"` na cerimônia.
