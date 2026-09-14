@@ -6,7 +6,7 @@
       "x": 0,
       "y": 0,
       "w": 390,
-      "h": 1559,
+      "h": 1784,
       "page": "page-1"
     },
     {
@@ -15,7 +15,7 @@
       "x": 490,
       "y": 0,
       "w": 390,
-      "h": 1499,
+      "h": 1544,
       "page": "page-1"
     },
     {
@@ -33,16 +33,16 @@
       "x": 0,
       "y": 0,
       "w": 390,
-      "h": 1814,
+      "h": 1874,
       "page": "page-2"
     },
     {
       "file": "DexParcial.dc.html",
-      "title": "PET-04 · coleção de sonhos — parcial (com data e nº de catálogo no obtido)",
+      "title": "PET-04 · coleção de sonhos — parcial (com data e nº de catálogo no obtido; uma raridade ainda em zero)",
       "x": 490,
       "y": 0,
       "w": 390,
-      "h": 1799,
+      "h": 1934,
       "page": "page-2"
     },
     {
@@ -89,7 +89,7 @@
       "x": 0,
       "y": -170,
       "w": 900,
-      "text": "Soulmon — Wireframes Pet (Fase 1, cinza, rodada 1, 14/09/2026; canvas próprio por D1 — os ids EVO-22→29 viram PET-01→08). A sub-aba \"Soulmon\" (célula 3 da barra, chip do meio) empilha três blocos, cada um em Suspense próprio: a FICHA (PetPage: a forma atual no Visor 64×64×3, nome, estágio · classe, descrição, as duas habilidades, as formas anteriores), a COLEÇÃO DE SONHOS (DreamDex: 30 cenas em 3 raridades, silhueta + ??? para o não coletado) e o DIÁRIO DE AVENTURAS (só o que já aconteceu). Regras herdadas: piso de dígitos (E5/13.7 — coleção é POSSE, zero pode; mas PRINCÍPIOS §9 proíbe \"0 de 30\" no topo de uma grade toda em silhueta), nada cobra (W6). [novo] = copy ou estrutura proposta; [decisão 13/09] = D4 (PET-02 = save legado, fora). Números = ordem de foco (1 = skip link, oculto)."
+      "text": "Soulmon — Wireframes Pet (Fase 1, cinza, rodada 2 pós-crítica, 14/09/2026; canvas próprio por D1 — os ids EVO-22→29 viram PET-01→08). A sub-aba \"Soulmon\" (célula 3 da barra, chip do meio) empilha três blocos, cada um em Suspense próprio: a FICHA (PetPage: a forma atual no Visor 64×64×3, nome, estágio · classe, descrição, as duas habilidades, as formas anteriores), a COLEÇÃO DE SONHOS (DreamDex: 30 cenas em 3 raridades, silhueta + ??? para o não coletado) e o DIÁRIO DE AVENTURAS (só o que já aconteceu). Regras herdadas: piso de dígitos (E5/13.7 — coleção é POSSE, zero pode; no Dex vazio o dígito fica como texto quieto — 13.7 —, a barra vazia sai e as frações por raridade somem só com as três em zero — PRINCÍPIOS §9), nada cobra (W6). [novo] = copy ou estrutura proposta; [decisão 13/09] = D4 (PET-02 = save legado, fora). Números = ordem de foco (1 = skip link, oculto)."
     }
   ],
   "pages": [
