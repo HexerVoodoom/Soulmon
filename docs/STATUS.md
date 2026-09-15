@@ -7,6 +7,33 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## ⚙️ 15/09/2026 — WIREFRAMES DA CONTA: DESENHADOS, CRITICADOS, CORRIGIDOS E APROVADOS (META AUTÔNOMA DO DONO)
+>
+> Décimo primeiro canvas da SQUAD-DESIGN (Fase 1). Canvas publicado:
+> **https://claude.ai/code/artifact/c5fba27a-548f-444c-890f-10f4d482229f**
+> (14 artboards em 2 páginas; `docs/design/wireframes/conta/`). 25 linhas `CONTA-*` desenhadas
+> (`CONTA-13` `fora` pelo precedente da D5; a Biblioteca já é o Social); decisão do design-lead
+> em `docs/design/DECISOES-WIREFRAME.md` §15.
+> - **Crítica em duas rodadas:** `design-critic` (r1 "não passa" — B1 o preço da Nova Leitura é
+>   50, não 20; B2 o `ConfirmDialog` é um `ModalSheet` com × e `role="dialog"`; R1 "BRL" nos packs;
+>   R2 19 termos — aplicados; re-carimbo na r2), `soulmon-product-designer` (9 achados),
+>   `soulmon-guarda-linha-vermelha` (**APROVADA COM RESSALVA**, 0 vetos).
+> - **Decisões estruturais**: os sete grupos por intenção (K1); a saída de dados na própria
+>   superfície, 503 como estado (K2); a Janela de Descanso própria (K3); fidelidade de detalhe nos
+>   modais (K4); CONTA-13 fora (K5). **Sai:** o `SettingsModal`, o ramo sem sensor, "Heal 1 heart".
+> - **✅ Checkpoint fechado em 15/09/2026 — aprovação automática** (meta do dono). **Pendente do
+>   dono (modal final):** reordenar a página por prioridade (Rest Window P1 antes dos grupos P2,
+>   Install no fim — recomendação do lead; hoje vale a ordem do código) e confirmar CONTA-13 fora.
+> - **Achados de passagem (código):** `onEntitlementChange` nunca passado pela `SettingsPage`
+>   (restaurar compras não atualiza o `gameState`); `aria-describedby` do 503 só no botão de
+>   exportar; o `UnlockAccountModal` tem 2 ramos de corpo para 4 motivos (`report`/`shop` recebem
+>   a copy da Evolução); o lembrete de deitar dispara o toggle GERAL de notificações; `accountTier
+>   ?? 'paid'` (confirmar); "Soulmon 1.0.2" literal; recusar o diálogo nativo de instalar não
+>   persiste; o ramo sem sensor do `StepsCard` é morto e `declined` não tem volta; o erro da Nova
+>   Leitura persiste; sem teste para `AccountSection`/`RestWindowCard`/`StepsCard`/`InstallPrompt`;
+>   o prazo de 15 min de apagar não aparece no inventário; "Default" da Personalidade não salva.
+> - **Branch:** `design/wireframes-conta` — mergeada na `main` (ff). Próximo canvas: Fora do app.
+
 > ## 📚 15/09/2026 — MANUAL SINCRONIZADO COM `cdb08165` (wireframes do Social)
 >
 > `/manter-docs auto` após o merge do Social (`0d49ab16`→`cdb08165`, 3 commits). Delta em três docs:

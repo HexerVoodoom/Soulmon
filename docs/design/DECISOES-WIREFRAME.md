@@ -586,3 +586,56 @@ mantidas.
 - **Para o cartógrafo:** `SOC-06` cobre sete estados do `CoopPanel` numa linha só (sem grupo, com grupo, sozinho, já avisei, meta batida, aviso com grupo, ocupado/copiado) — desdobrar; o offline na aba Group não tem linha.
 - **Para o `docs/STATUS.md` (achados de código):** (a) `branchLevels` calculado e nunca renderizado em `PlayerDetailModal.tsx`; (b) o comentário do mesmo arquivo cita "D13", que não existe (é a decisão 8b); (c) `busyId` é por linha, não por botão; (d) o `LibraryPage` não distingue erro de sem rede (um `loadError`); (e) a 13.7 merece uma linha dizendo que cobre contador SEMANAL de grupo (guarda d).
 - **Para o `staff-frontend`:** C1–C5 e S1–S4 são o diff do Social; nenhum item muda regra de jogo; aceites do guarda: (b) "Friends N/5" é número próprio, (c) o presente desabilitado em palavras, (d) a meta somada, (e) o perfil sem métrica, (f) a linha degradada mantém as ações pelo id.
+
+## 15. Conta: entra / volta / sai (decisão do `soulmon-design-lead`, 15/09/2026)
+
+> **Canvas:** [Soulmon — Wireframes Conta](https://claude.ai/code/artifact/c5fba27a-548f-444c-890f-10f4d482229f)
+> (rodada 2, pós-crítica) · arquivos em `docs/design/wireframes/conta/` (`Main.dc.html` + 13
+> `<TelaEstado>.dc.html` + `canvas.json`; 25 linhas `CONTA-*` em 14 artboards; `CONTA-13` `fora` pelo precedente
+> da D5; a Biblioteca já migrou para o Social — D2).
+> **Crítica:** `design-critic` (rodada 1: "não passa", 2 bloqueantes — o preço da Nova Leitura era 20 e é 50; o
+> `ConfirmDialog` é um `ModalSheet` com × e `role="dialog"` — e 2 ressalvas ("BRL" nos packs; 19 termos) — todos
+> aplicados; re-carimbo na rodada 2), `soulmon-product-designer` (9 achados: a Janela de Descanso P1 no fim de uma
+> página P2; o prazo de 15 min invisível; o lembrete que dispara o toggle geral; "Default" que não salva; a porta de
+> mão única Créditos → Nova Leitura; os 2 ramos de corpo para 4 motivos; três estados que faltavam),
+> `soulmon-guarda-linha-vermelha` (família **APROVADA COM RESSALVA**, 0 vetos — `accountTier ?? 'paid'`; o corpo
+> do `UnlockAccountModal` por motivo; a copy do lembrete).
+> **Precedência:** código > teste > `CLAUDE.md` > manual > este doc. Valem D5 (precedente), D11 e a linha #13.
+
+### 15.1 Entra (estrutura ou copy nova, marcada `[novo]` no canvas)
+
+| # | O que entra | Motivo (fonte) | O que perde |
+|---|---|---|---|
+| K1 | **A `SettingsPage` em sete grupos por intenção** (Install no topo; Your account · Your data · Your story · What Soulmon sends you · Appearance · Help · Your rhythm) + o `RestWindowCard` e o `StepsCard` montados pelo App abaixo | `SettingsPage.tsx` (ordem do DOM); 03 §4.23; PRINCÍPIOS §11 | Os 11 blocos sem agrupamento (19/08) |
+| K2 | **A saída de dados na própria superfície**: exportar / apagar com o inventário de três blocos; o 503 como ESTADO (painel em tinta neutra + botões desabilitados com o motivo); "Go back" quieto | `AccountDataSection.tsx`; Speak (MOB §15.6) | Nada |
+| K3 | **A Janela de Descanso própria**: a janela sem sugestão; "N of M" só com `window > 0`; o vazio como ramo neutro; o switch que esconde números e preserva os sonhos; o lembrete com a prévia do push | `RestWindowCard.tsx`; 02 §40; 02 §58; Headspace (MOB §8B) | Nada |
+| K4 | **Os modais com fidelidade de detalhe**: Nova Leitura a 50 créditos ("Read again — 50 credits"); "R$ N BRL" nos packs em inglês; o `ConfirmDialog` como `ModalSheet` (× + `dialog`); 19 termos no Glossário; "Recover with a code" aberto; "Usage stats" aberto; "Watch ad" em "Loading ad…" / "limit reached" | Crítico B1/B2/R1/R2; product-designer #9 | "20 credits", `alertdialog` sem × (rodada 1) |
+| K5 | **`CONTA-13` (`SettingsModal`) fora pelo precedente da D5** `[pendente do dono]`: sem caminho vivo (medido em 13/09) → não se desenha; achado no STATUS como candidato a remoção | D5; 03 §4.23a; crítico R3 e product-designer #8 concordam | Nada |
+
+### 15.2 Volta (a crítica pediu; o lead recusa ou adia)
+
+| # | Pedido | Decisão | Motivo |
+|---|---|---|---|
+| V1 | Reordenar por prioridade — a Janela de Descanso (P1) antes dos grupos P2; Install no fim (product-designer #1) | **→ dono (pendente)**; no canvas vale a ordem do código | É estrutura; o App monta em ordem fixa. Recomendação do lead: mover o `RestWindowCard` para logo depois de "Your account" e o `InstallPrompt` para o fim — sem tocar copy; se o dono não quiser, fica |
+| V2 | Um corpo do `UnlockAccountModal` por motivo (`report`/`shop` recebem a copy da Evolução) — guarda (c), product-designer #7 | **Adiado → STATUS** (copy/código) | A manchete do nudge já é por motivo; o corpo é do código |
+| V3 | Mostrar o prazo de 15 min no inventário de apagar (product-designer #3) | **Adiado → `redator-ux`** | Copy |
+| V4 | O lembrete de deitar dispara o toggle GERAL de notificações (guarda e; product-designer #4) | **Adiado → STATUS** | Fiação; a copy promete um lembrete específico |
+| V5 | "Default" que não salva (product-designer #5) | **Adiado → `redator-ux` / STATUS** | Microcopy ou comportamento |
+| V6 | Voltar aos Créditos a partir da Nova Leitura (product-designer #6) | **Aceito como nota** | Porta de mão única, sem perda de dado |
+| V7 | `accountTier ?? 'paid'` (guarda a) | **Adiado → STATUS** (confirmar com o dono se é proteção intencional) | Integridade de dado, não linha vermelha |
+
+### 15.3 Sai (o que a superfície de hoje tem e o wireframe não tem)
+
+| # | Sai | Motivo |
+|---|---|---|
+| S1 | **O `SettingsModal` "Quick settings"** | K5 (sem caminho vivo) |
+| S2 | **O ramo "This device has no step counter…" do `StepsCard`** | Morto: o App só monta com `available` literal |
+| S3 | **"Heal 1 heart — 10 credits"** | ⚰️ saiu do `CreditsModal` (linha #13) |
+| S4 | **"20 credits" e o `alertdialog` sem ×** (rodada 1) | K4 |
+
+### 15.4 O que fica registrado para depois
+
+- **Checkpoint fechado em 15/09/2026 — aprovação automática (meta do dono).** K1–K5 entram. **Pendente do dono (modal final):** V1 (reordenar a página por prioridade) e K5 (CONTA-13 fora — confirmar).
+- **Para o cartógrafo:** `CONTA-25` cita "6 pontos"; os dois de `evolution` e o `reveal` são o mesmo componente com `variant`; "Recover with a code" e a telemetria aberta não têm linha; o `StepsCard` `declined` sem caminho de volta (registrado).
+- **Para o `docs/STATUS.md` (achados de código):** (a) `onEntitlementChange` nunca é passado pela `SettingsPage` — restaurar compras ali não atualiza o `gameState`; (b) só o botão de exportar tem `aria-describedby` no 503; (c) o corpo do `UnlockAccountModal` tem 2 ramos para 4 motivos; (d) o lembrete de deitar dispara o toggle geral; (e) `accountTier ?? 'paid'`; (f) "Soulmon 1.0.2" literal; (g) recusar o diálogo nativo de instalar não persiste; (h) o ramo sem sensor do `StepsCard` é morto; (i) o erro da Nova Leitura persiste até a próxima tentativa; (j) sem teste para `AccountSection`, `RestWindowCard`, `StepsCard`, `InstallPrompt`; (k) o termo "Complete Day" do Glossário com comentário de defasagem; (l) três `Suspense` independentes na página.
+- **Para o `staff-frontend`:** K1–K5 e S1–S4 são o diff da Conta; nenhum item muda regra de jogo; aceites do guarda: (a) Créditos sem cura, (b) Nova Leitura sem cobrança nula, (d) o nudge com `maxWidth 280`, (f) `declined` definitivo, (g) o vínculo do recibo fica, (h) CONTA-13 fora.
