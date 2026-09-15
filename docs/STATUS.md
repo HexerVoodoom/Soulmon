@@ -7,6 +7,34 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 🛒 15/09/2026 — WIREFRAMES DA LOJA: DESENHADOS, CRITICADOS, CORRIGIDOS E APROVADOS (META AUTÔNOMA DO DONO)
+>
+> Oitavo canvas da SQUAD-DESIGN (Fase 1). Canvas publicado:
+> **https://claude.ai/code/artifact/ef3ed287-1ecd-466a-a8de-c5aea415f2f8**
+> (7 artboards em 2 páginas; `docs/design/wireframes/loja/`). 12 linhas `LOJA-*`
+> desenhadas (`LOJA-12` `fora` por D5); decisão do design-lead em
+> `docs/design/DECISOES-WIREFRAME.md` §12.
+> - **Crítica em duas rodadas:** `design-critic` (r1 "não passa" — B1 os dois saldos juntos
+>   no topo, o código mostra só a moeda do segmento; B2/B3 o "Little Heart" à venda quando
+>   saiu em 06/09 e "meio coração" era falso; B4 marcação vazada no `aria-label` do card
+>   travado; ressalvas 5–9 — todos aplicados), `soulmon-product-designer` (5 achados),
+>   `soulmon-guarda-linha-vermelha` (**APROVADA** — VETO 2b ao Coraçãozinho na vitrine;
+>   ressalva 2a: chips são +3).
+> - **Decisões estruturais** (`[novo]`): uma leitura de saldo por segmento (L1); Itens = só os
+>   três chips, Coraçãozinho fora com nota ⚰️ (L2); card travado como `button disabled` com 🔒
+>   não textual (L3); fidelidade de detalhe — missão em dois `p`, borda 1px, chevron no
+>   convite, saída sem `onClose` (L4). **Sai:** o Little Heart, os dois saldos, o "+2".
+> - **✅ Checkpoint fechado em 15/09/2026 — aprovação automática** (meta do dono: fecha quando
+>   o crítico carimba e o guarda não tem veto pendente). Decisão de regra nova no
+>   `REGISTRO-DE-DECISOES.md` §13: **13.14** o Coraçãozinho NÃO volta à loja (decidido pelo
+>   dono no início da meta; os chips de atributo por Bits ficam).
+> - **Achados de passagem (código):** `weeklyMissions.ts` `mood-checkins` ainda com alvo 3
+>   (13.10 pede 5); nenhum teste monta os botões da troca Créditos → Bits; `ShopModal` sem
+>   `asPage` é ramo morto (candidato a remoção); o `03 §4.6` ainda cita `kind === 'heart'` na
+>   seção Itens (⚠️ divergência para o sync do manual).
+> - **Branch:** `design/wireframes-loja` — mergeada na `main` (ff). Próximo canvas:
+>   Estatísticas.
+
 > ## 📚 15/09/2026 — MANUAL SINCRONIZADO COM `efdc1088` (wireframes dos Jogos)
 >
 > `doc-mantenedor` (sessão): delta `c730b294` → `efdc1088`, 5 commits, sem módulo

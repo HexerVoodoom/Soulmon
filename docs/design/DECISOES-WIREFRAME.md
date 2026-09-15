@@ -436,3 +436,51 @@ mantidas.
 - **Para o cartógrafo:** `JOGO-22` no inventário cita a faixa do oponente? (não — o inventário está certo; a rodada 1 do wireframe errou); a Arena tem o estado `sem-motor` sem linha; o `fightError` sem linha.
 - **Para o `docs/STATUS.md` (achados de código):** (a) o × da masmorra sai da run sem confirmação em qualquer fase, inclusive após gastar Bits; (b) `sm-px-arcade-value/-label` (Silkscreen) no popup e no placar — fonte pixelada no corpo do texto (PRINCÍPIOS §7); (c) os cards da página de Jogos sem `aria-label` (nome acessível = concatenação sem separador); (d) "N match(es)" e o "(s)"; (e) o pesadelo sem instrução da barra.
 - **Para o `staff-frontend`:** J1–J5 e S1–S4 são o diff dos Jogos; nenhum item muda regra de jogo; aceites do guarda: 2b (a barra "You" da run nunca usa ❤️), 2c ("N matches left today" nunca vira push nem contagem regressiva), 3c ("N pts" = poder da partida); V1 espera o dono.
+
+## 12. Loja: entra / volta / sai (decisão do `soulmon-design-lead`, 15/09/2026)
+
+> **Canvas:** [Soulmon — Wireframes Loja](https://claude.ai/code/artifact/ef3ed287-1ecd-466a-a8de-c5aea415f2f8)
+> (rodada 2, pós-crítica) · arquivos em `docs/design/wireframes/loja/` (`Main.dc.html` + 6
+> `<TelaEstado>.dc.html` + `canvas.json`; 12 linhas `LOJA-*` em 7 artboards; `LOJA-12` `fora` por D5).
+> **Crítica:** `design-critic` (rodada 1: "não passa", 4 bloqueantes B1–B4 e 5 ressalvas — todos aplicados
+> na rodada 2), `soulmon-product-designer` (5 achados: `mood-checkins` alvo 3 × 13.10; a troca sem teste;
+> `!asPage` ramo morto; cadeado sem sinal não textual; legibilidade do número de Bits),
+> `soulmon-guarda-linha-vermelha` (família **APROVADA** — **1 veto** (2b: o Coraçãozinho à venda), 1 ressalva
+> (2a: os chips são +3), 3a/3b aceites).
+> **Precedência:** código > teste > `CLAUDE.md` > manual > este doc. Valem D5 (LOJA-12 fora), D11 (dois
+> segmentos, não cinco abas) e a linha #13 (não se vende proteção contra punição).
+
+### 12.1 Entra (estrutura ou copy nova, marcada `[novo]` no canvas)
+
+| # | O que entra | Motivo (fonte) | O que perde |
+|---|---|---|---|
+| L1 | **O saldo do topo é UMA leitura só** — Bits no segmento Shop, Emblemas no Tournament (como `ShopModal.tsx` ~300–311) | Crítico B1 (a rodada 1 mostrava os dois juntos; o código nunca mostra); PRINCÍPIOS §8 (três moedas inconfundíveis) | Os dois saldos lado a lado (rodada 1) |
+| L2 | **A seção Itens vende só os três chips** ("+3 Power/Harmony/Benevolence", `CHIP_BOOST = 3`); o Coraçãozinho NÃO está na vitrine — nota ⚰️ no artboard: `SPECIAL_ITEMS`, fonte única = drop raro da masmorra, `HEART_HEAL = 1` | Guarda VETO 2b + ressalva 2a; crítico B2/B3 (o `heart` saiu da venda em 06/09/2026 — D7+D15 — para fechar Créditos→Bits→cura sem esforço; "half a heart" era falso); **decisão do dono (15/09/2026, no início da meta): fica fora → `REGISTRO` 13.14** | O card "Little Heart — 80 Bits" (rodada 1) |
+| L3 | **O card travado é `button disabled`**, com o 🔒 como sinal não textual (`aria-hidden`) e o rótulo "‹name› — locked: ‹missão›" sem marcação vazada; a missão em palavras, o progresso só com `cur > 0` | Crítico B4 (o `<span class="tag">` escapado dentro do `aria-label`) e ressalva 7 (todo card é `<button>`); product-designer #4 | O card travado como `div` inerte (rodada 1) |
+| L4 | **Fidelidade de detalhe**: a missão da semana em DOIS `<p>` (descrição / "cur/target"); a borda da recusa em 1px; o `chevron_right` no fim do convite demo; a saída da tela é outra célula da `BottomNav` (em `asPage` não há × e `onClose` nunca é chamado) | Crítico ressalvas 5, 6, 8, 9; D11 | A nota "`onClose` → `setCurrentView('main')`" (rodada 1) |
+
+### 12.2 Volta (a crítica pediu; o lead recusa ou adia)
+
+| # | Pedido | Decisão | Motivo |
+|---|---|---|---|
+| V1 | Legibilidade do número de Bits no topo (product-designer #5: o valor em `<b>` de 12px dentro do chip) | **Adiado → Fase 2** | Tamanho de fonte é identidade; o wireframe fixa a estrutura (chip, sem ícone, à direita) |
+| V2 | `mood-checkins` com alvo 3 no `weeklyMissions.ts` contra `REGISTRO` 13.10 (alvo 5) | **Adiado → STATUS** (já registrado em 14/09 no checkpoint de Rituais) | Código é da implementação; o wireframe desenha "on 5 days" com a nota 13.10 |
+| V3 | A troca Créditos → Bits não tem teste que monte os botões (product-designer #2) | **Adiado → STATUS** | Achado de cobertura, não de desenho |
+| V4 | `!asPage` (a variante modal) é ramo morto — remover do código (product-designer #3, crítico "o que o autor não viu") | **Adiado → STATUS** (candidato a remoção; D5 já tira do inventário) | Decisão de código |
+
+### 12.3 Sai (o que a superfície de hoje tem e o wireframe não tem)
+
+| # | Sai | Motivo |
+|---|---|---|
+| S1 | **"Little Heart — 80 Bits" na seção Itens** (rodada 1) | L2 (veto 2b; 13.14) |
+| S2 | **Os dois saldos juntos no topo** (rodada 1) | L1 (B1) |
+| S3 | **"+2" nos chips** (rodada 1) | L2 (ressalva 2a: `CHIP_BOOST = 3`) |
+| S4 | **A variante modal `LOJA-12`** | D5 (nenhum caminho vivo) |
+| S5 | **As cinco abas do `CLAUDE.md`** (Itens/Cenários/Mobílias/Torneio/Missões) | D11 (dois segmentos; a aba Missões vive no topo do Tournament) |
+
+### 12.4 O que fica registrado para depois
+
+- **Checkpoint fechado em 15/09/2026 — aprovação automática (meta do dono de 15/09: cada canvas fecha quando o `design-critic` carimba PASSA e o guarda não tem veto pendente do dono).** L1–L4 entram. A única decisão de regra (o Coraçãozinho na vitrine) o dono já tinha tomado no início da meta: **tirar da loja → `REGISTRO` 13.14**; os chips de atributo por Bits **ficam** (também decidido pelo dono, 15/09).
+- **Para o cartógrafo:** `LOJA-01` cita `kind === 'heart'` na seção Itens — corrigido nesta rodada (o `heart` está em `SPECIAL_ITEMS`); o `03 §4.6` ainda lista o Coraçãozinho como item da loja? (conferir no próximo sync).
+- **Para o `docs/STATUS.md` (achados de código):** (a) `weeklyMissions.ts` `mood-checkins` alvo 3 × 13.10 (alvo 5); (b) nenhum teste monta os botões da troca Créditos → Bits; (c) `ShopModal` sem `asPage` é ramo morto (o `App.tsx` sempre passa `asPage`) — candidato a remoção; (d) o `aria-label` do card travado concatena o `lockLine` sem separador de progresso legível ("· 2/5").
+- **Para o `staff-frontend`:** L1–L4 e S1–S5 são o diff da Loja; nenhum item muda regra de jogo; aceites do guarda: 3a (a recusa sem saldo não abre convite de Créditos), 3b (o convite demo passivo, sem ×, fim da lista).
