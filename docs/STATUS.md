@@ -7,6 +7,35 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 📊 15/09/2026 — WIREFRAMES DE ESTATÍSTICAS: DESENHADOS, CRITICADOS, CORRIGIDOS E APROVADOS (META AUTÔNOMA DO DONO)
+>
+> Nono canvas da SQUAD-DESIGN (Fase 1). Canvas publicado:
+> **https://claude.ai/code/artifact/b35cbac1-de65-4b5d-a17a-760f94e4d6df**
+> (7 artboards em 2 páginas; `docs/design/wireframes/estatisticas/`). 9 linhas `STAT-*`
+> desenhadas (`STAT-10` `fora` por D4); decisão do design-lead em
+> `docs/design/DECISOES-WIREFRAME.md` §13.
+> - **Crítica em duas rodadas:** `design-critic` (r1 "não passa" — B1 o ano na data do
+>   nascimento; B2 "Companions"; B3 o vazio omitia "Quem é" e "A estação", que montam sempre;
+>   B4 `formatDate` é relativa; B5 "Sep 3"; B6 o epíteto fora do formato — e nunca chega à
+>   Estatísticas; B7 tag vazada; B8 a jornada é um cartão só — todos aplicados; re-carimbo na
+>   r2), `soulmon-product-designer` (6 achados), `soulmon-guarda-linha-vermelha` (**APROVADA
+>   COM RESSALVA**, sem veto — (c) o "0" grande vai ao dono; (f) `hideMetrics`).
+> - **Decisões estruturais** (`[novo]`): o Vínculo pela palavra (E1); a data sem ano e sem
+>   epíteto (E2); o vazio com forma corrigida (E3); a frase de contexto ao lado do "0"
+>   `[pendente do dono]` (E4); fidelidade de detalhe (E5). **Sai:** o ramo legado (D4), o ano, o
+>   epíteto, o segundo cartão, as datas absolutas.
+> - **✅ Checkpoint fechado em 15/09/2026 — aprovação automática** (meta do dono). **Pendente do
+>   dono (modal final):** o "0" grande no primeiro uso — dígito + frase (recomendação do lead,
+>   desenhada) / só o dígito / dígito menor. Nenhuma decisão de regra nova no `REGISTRO`.
+> - **Achados de passagem (código):** `hideMetrics` NÃO chega à `StatsPage` (a interface de
+>   props não o tem; os comentários do arquivo dizem que obedece) — critério de aceite do WP;
+>   o `App.tsx` nunca passa `epithet` ao `BirthCard` da Estatísticas (só o reveal passa);
+>   nenhum teste monta a `StatsPage`; o `03 §4.8a` diz que "Quem é" e "A estação" somem no
+>   primeiro uso — falso (⚠️ divergência para o sync); o inventário não tem linha para "entre
+>   estações".
+> - **Branch:** `design/wireframes-estatisticas` — mergeada na `main` (ff). Próximo canvas:
+>   Social (D2).
+
 > ## 📚 15/09/2026 — MANUAL SINCRONIZADO COM `3abee07f` (wireframes da Loja)
 >
 > `/manter-docs auto` após o merge da Loja (`9acfa7e0`→`3abee07f`, 5 commits). Delta em três docs:

@@ -484,3 +484,52 @@ mantidas.
 - **Para o cartógrafo:** `LOJA-01` cita `kind === 'heart'` na seção Itens — corrigido nesta rodada (o `heart` está em `SPECIAL_ITEMS`); o `03 §4.6` ainda lista o Coraçãozinho como item da loja? (conferir no próximo sync).
 - **Para o `docs/STATUS.md` (achados de código):** (a) `weeklyMissions.ts` `mood-checkins` alvo 3 × 13.10 (alvo 5); (b) nenhum teste monta os botões da troca Créditos → Bits; (c) `ShopModal` sem `asPage` é ramo morto (o `App.tsx` sempre passa `asPage`) — candidato a remoção; (d) o `aria-label` do card travado concatena o `lockLine` sem separador de progresso legível ("· 2/5").
 - **Para o `staff-frontend`:** L1–L4 e S1–S5 são o diff da Loja; nenhum item muda regra de jogo; aceites do guarda: 3a (a recusa sem saldo não abre convite de Créditos), 3b (o convite demo passivo, sem ×, fim da lista).
+
+## 13. Estatísticas: entra / volta / sai (decisão do `soulmon-design-lead`, 15/09/2026)
+
+> **Canvas:** [Soulmon — Wireframes Estatísticas](https://claude.ai/code/artifact/b35cbac1-de65-4b5d-a17a-760f94e4d6df)
+> (rodada 2, pós-crítica) · arquivos em `docs/design/wireframes/estatisticas/` (`Main.dc.html` + 6
+> `<TelaEstado>.dc.html` + `canvas.json`; 9 linhas `STAT-*` em 7 artboards; `STAT-10` `fora` por D4).
+> **Crítica:** `design-critic` (rodada 1: "não passa", 8 bloqueantes B1–B8 — todos aplicados na rodada 2;
+> re-carimbo na rodada 2), `soulmon-product-designer` (6 achados: o cartão da jornada sem separadores; o
+> "0" grande; `hideMetrics` não chega à `StatsPage`; as duas listas como fecho frio; `epithet` nunca passado;
+> o estado "entre estações" sem linha), `soulmon-guarda-linha-vermelha` (família **APROVADA COM RESSALVA** —
+> sem veto; ressalva (c): o "0" grande no primeiro uso vai ao dono; (f) `hideMetrics` vira critério de aceite).
+> **Precedência:** código > teste > `CLAUDE.md` > manual > este doc. Valem D4 (STAT-10 fora) e D11 (o "#25"
+> e o "-" do PRINCÍPIOS §9 não existem no código — registrados, não inventados).
+
+### 13.1 Entra (estrutura ou copy nova, marcada `[novo]` no canvas)
+
+| # | O que entra | Motivo (fonte) | O que perde |
+|---|---|---|---|
+| E1 | **O Vínculo pela PALAVRA** ("Companion" — singular, `bond.ts`), "Level N" como legenda, `progressbar` rotulada, a frase "It only goes up…" | `StatsPage.tsx` (a palavra vem primeiro; o número é a legenda dela); PRINCÍPIOS §9; 13.7 | "Companions" (rodada 1) |
+| E2 | **A data de nascimento SEM ano** ("September 3" / "3 de setembro") e **sem epíteto** na Estatísticas | `BirthCard.tsx` (`dataPorExtenso` sem `year`: "6 de setembro é uma lembrança; 2026-09-06 é um registro"); o `App.tsx` nunca passa `epithet` a esta instância (product-designer #5; crítico B6) | "September 3, 2026" e "the Quiet Flame" (rodada 1) |
+| E3 | **O vazio com forma corrigida**: "Who they are" e "The season" MONTAM no primeiro uso (o traço é sorteado na criação do save; o `season` é sempre passado); encontros, formas, feitos e "Started for" somem; as duas listas trocam o `<ul>` por uma frase de futuro | Crítico B3 (código > inventário > `03 §4.8a`, que erram os dois); WP4.12 | A nota "Who they are e The season não montam" (rodada 1) |
+| E4 | **Uma frase de contexto ao lado do "0" de dias completos no primeiro uso** `[novo]` `[pendente do dono]`: "You two just met — the first complete day starts the count." — o dígito FICA (posse, 13.7) | Guarda (c): o "0" em fonte display não é "quieto"; a recomendação do lead é manter o dígito e amolecer com uma frase, nunca esconder; aplicada por meta autônoma (15/09) e listada para o dono | Nada |
+| E5 | **Fidelidade de detalhe**: "The journey" é UM cartão contínuo (o artboard rolado diz "the same card, continued"); `formatDate` relativa até 7 dias ("3h ago" · "Yesterday" · "2d ago" · depois "Sep 03"); "Sep 3" (en-US) no álbum; moldura 56×56 no bestiário; o estado "entre estações"; W4 explicitado (três artboards = recorte de UMA pergunta) | Crítico B4, B5, B7, B8 + ressalvas; product-designer #6a | A nota invertida sobre datas (rodada 1) |
+
+### 13.2 Volta (a crítica pediu; o lead recusa ou adia)
+
+| # | Pedido | Decisão | Motivo |
+|---|---|---|---|
+| V1 | Separadores (hairline) entre os blocos de "The journey" (product-designer #1) | **Adiado → Fase 2** | O código não os tem (um `section`, `marginTop:16`); D11 desenha como o código; a hierarquia interna é tipografia/espaço |
+| V2 | Reduzir o peso visual do "0" grande / decidir se é "quieto" para 13.7 (guarda c; product-designer #2) | **→ dono (pendente)**; no canvas vale E4 | É leitura de regra (o que conta como "quieto" na 13.7); o lead recomenda E4 (dígito + frase); as alternativas — só o dígito, ou dígito menor — ficam no modal final |
+| V3 | `hideMetrics` não chega à `StatsPage` (os comentários dizem que obedece; a interface de props não o tem) — guarda (f), product-designer #3 | **Adiado → STATUS, como critério de aceite do WP** | Código; o wireframe não desenha o estado "descanso ligado" nesta tela porque ele não existe hoje |
+| V4 | As duas listas do fim como "painel de produtividade" (product-designer #4) | **Aceito como nota** | Sem posição, teto 5/10, sem comparação; guarda (e) passa; título/copy podem enquadrar melhor na Fase 2 |
+| V5 | O "#25" e o "-" do não obtido (PRINCÍPIOS §9) | **Adiado → Fase 2** | Não existem no código (D11) |
+
+### 13.3 Sai (o que a superfície de hoje tem e o wireframe não tem)
+
+| # | Sai | Motivo |
+|---|---|---|
+| S1 | **A linha de texto legada "Forms reached so far: …"** (`STAT-10`) | D4 (save sem `album`; a conta vai ao STATUS) |
+| S2 | **O ano na data do nascimento e o epíteto** (rodada 1) | E2 |
+| S3 | **"The journey (continued)" como segundo cartão** (rodada 1) | E5 (B8) |
+| S4 | **Data absoluta nas conclusões recentes** (rodada 1) | E5 (B4) |
+
+### 13.4 O que fica registrado para depois
+
+- **Checkpoint fechado em 15/09/2026 — aprovação automática (meta do dono de 15/09).** E1–E5 entram. **Pendente do dono (modal final):** V2 — o "0" grande no primeiro uso: (a) dígito + frase de contexto `[novo]` (recomendação do lead, desenhada), (b) só o dígito como o código, (c) dígito com peso reduzido. Nunca esconder o dígito (posse).
+- **Para o cartógrafo:** `STAT-02` corrigido nesta rodada ("Who they are" e "The season" montam sempre); falta uma linha para "entre estações" (`seasonProgress() === null`); o `03 §4.8a` repete a premissa errada — ⚠️ divergência para o sync do manual.
+- **Para o `docs/STATUS.md` (achados de código):** (a) `hideMetrics` não chega à `StatsPage` — a interface de props não o tem e o `App.tsx` não o passa; os comentários do arquivo afirmam o contrário; (b) o `App.tsx` nunca passa `epithet` ao `BirthCard` da Estatísticas — só o reveal passa; (c) nenhum teste monta a `StatsPage` (o vazio não tem régua); (d) `03 §4.8a` diz que "Quem é" e "A estação" somem no primeiro uso — falso.
+- **Para o `staff-frontend`:** E1–E5 e S1–S4 são o diff da Estatísticas; nenhum item muda regra de jogo; critério de aceite obrigatório: `hideMetrics` até a `StatsPage` (cobrindo `streakDays` e `daysTogether`); aceites do guarda: (a) contagens de coleção só com ≥ 1, (b) estação sem contagem regressiva, (d) "Level 0" como legenda quieta, (e) as listas sem posição.
