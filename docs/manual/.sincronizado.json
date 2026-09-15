@@ -1,6 +1,6 @@
 {
-  "sha": "ba957ca774f6dc66cb521910692a3909e2bcd8df",
+  "sha": "a4d92d5cf069777f586ee9d0d269cfaed73b11fe",
   "data": "14/09/2026",
-  "por": "doc-mantenedor (sessão) — delta 1ceb3bc8→ba957ca7: wireframes do Onboarding-funil aprovados (D3), DECISOES-WIREFRAME §9",
+  "por": "doc-mantenedor (sessão) — marcador: o delta ba957ca7→a4d92d5c era só o bloco de STATUS da própria sincronização",
   "nota": "Escrito pelo doc-mantenedor ao fechar cada sincronização. Lido por scripts/docs-delta.mjs e pelo hook de sessão. Nunca edite à mão."
 }
