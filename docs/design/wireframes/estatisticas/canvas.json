@@ -1,0 +1,91 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "title": "STAT-01 · a página cheia — o Vínculo pela palavra, quem ele é, o começo da jornada",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1949,
+      "page": "page-1"
+    },
+    {
+      "file": "JornadaRolada.dc.html",
+      "title": "STAT-01 · a jornada rolada — encontros, formas vividas, o que vocês fizeram, por que começou",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 2084,
+      "page": "page-1"
+    },
+    {
+      "file": "EstacaoListas.dc.html",
+      "title": "STAT-01 · a estação e as duas listas — o que você mais repete, últimas conclusões",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 1949,
+      "page": "page-1"
+    },
+    {
+      "file": "Vazio.dc.html",
+      "title": "STAT-02 · a primeira vez — o vazio tem forma declarada, e ela é mínima",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 1859,
+      "page": "page-1"
+    },
+    {
+      "file": "Nascimento.dc.html",
+      "title": "STAT-03 · 04 · o cartão de nascimento — normal e no demo",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 2274,
+      "page": "page-2"
+    },
+    {
+      "file": "Bestiario.dc.html",
+      "title": "STAT-05 · 06 · 07 · os encontros — ausente, parcial, completo",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 2244,
+      "page": "page-2"
+    },
+    {
+      "file": "Album.dc.html",
+      "title": "STAT-08 · 09 · 10 · o álbum de formas — vivida com data, silhueta \"???\", e o ramo legado (fora)",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 2304,
+      "page": "page-2"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "leia",
+      "page": "page-1",
+      "x": 0,
+      "y": -170,
+      "w": 900,
+      "text": "Soulmon — Wireframes Estatísticas (Fase 1, cinza, rodada 1, 15/09/2026). A terceira sub-aba da célula 3 (‹currentView === 'stats'›, ‹StatsPage›). NÃO é um painel de números: é \"o que nós dois já vivemos\" (PRINCÍPIOS §9) — o Vínculo lê-se pela PALAVRA (o número é legenda), a jornada tem UM contador que governa algo (dias completos → evolução) e o resto é acervo (nascimento, encontros, formas). Toda seção tem condição literal: Vínculo e A jornada montam sempre; as outras somem em vez de mostrar zero; as duas listas do fim trocam o ‹ul› por uma frase de FUTURO. Nada nesta página é botão além dos chips e da barra. [decisão 13/09] = D4 (STAT-10, ramo legado = fora), D11 (desenhar como o código faz; o \"#25\" e o \"-\" do PRINCÍPIOS §9 não existem no código — registrados, não inventados). Números = ordem de foco (1 = skip link, oculto)."
+    }
+  ],
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Estatísticas — a página (cheia, rolada, vazia)"
+    },
+    {
+      "id": "page-2",
+      "name": "Estatísticas — os cartões (nascimento, encontros, formas)"
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "page-1"
+  }
+}

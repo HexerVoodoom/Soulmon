@@ -326,16 +326,16 @@ está vazio em 13/09/2026).
 
 | id | fluxo | tela | estado (condição do `03`) | chega por | sai para | prio | estado do wireframe |
 |---|---|---|---|---|---|---|---|
-| `STAT-01` | Estatísticas | `StatsPage` | normal — quatro cartões, cada um com condição literal | chip "Estatísticas" | os outros dois chips | P2 | a desenhar |
-| `STAT-02` | Estatísticas | `StatsPage` | **primeira-vez / vazio** — ⚰️ a medição de 19/08/2026 (três listas cruas: "No activities completed yet." / "No tasks completed yet." / "No history yet.") **venceu**: nenhuma das três strings existe. Hoje são **duas** listas, cada uma mantendo `<section>` + `<h3>` e trocando o `<ul>` por uma frase de FUTURO ("Nada concluído ainda. A primeira vez já aparece aqui." / "O histórico começa na sua próxima conclusão."); Vínculo e A jornada montam sempre, as demais seções somem. Continua **sem ilustração e sem CTA**. **Medido em 13/09/2026** → `03` §4.8a | 1º uso | — | P2 | a desenhar |
-| `STAT-03` | Estatísticas | `BirthCard` | normal — `{birth && (…)}`; o `App.tsx` monta `birth` sob `bornAt \&#124;\&#124; soulmonMeta?.baseName \&#124;\&#124; demoCharacterId` | `StatsPage` | — | P2 | a desenhar |
-| `STAT-04` | Estatísticas | `BirthCard` | **demo** — `displaySprite` lê o acervo, que o demo nunca preenche, então há fallback `getSpriteForStage('rookie', gameState.demoCharacterId)` | `accountTier === 'demo'` | — | P2 | a desenhar |
-| `STAT-05` | Estatísticas | `BestiaryCard` | ausente — `{(bestiary?.length ?? 0) > 0 && (…)}`: sem nenhum inimigo visto, o cartão **não monta**. A condição é **PRÓPRIA, não aninhada no álbum** (o álbum depende de `soulmonStages`, que o jogador grátis não tem — e é ele quem mais roda masmorra) | nenhum encontro | — | P2 | a desenhar |
-| `STAT-06` | Estatísticas | `BestiaryCard` | parcial — 24 artes possíveis (6 linhas × 4 tiers), **silhueta** para o que não apareceu e contagem de COLEÇÃO (nunca percentual, nunca "faltam N") | masmorra | — | P2 | a desenhar |
-| `STAT-07` | Estatísticas | `BestiaryCard` | completo — 24 de 24 | coleção cheia | — | P2 | a desenhar |
-| `STAT-08` | Estatísticas | `FormAlbum` | normal — `{album && album.length > 0 && (…)}`, com `reachedAt` | evoluções | — | P2 | a desenhar |
-| `STAT-09` | Estatísticas | `FormAlbum` | silhueta — para o não alcançado | formas futuras | — | P2 | a desenhar |
-| `STAT-10` | Estatísticas | linha de texto legada | compat — `{!album && formNames.length > 0 && (…)}`: ⚰️ o que o álbum substituiu, mantido para save sem `album`. **Ver §3** — desenhar ou não é decisão do design-lead | save antigo | — | P2 | a desenhar |
+| `STAT-01` | Estatísticas | `StatsPage` | normal — quatro cartões, cada um com condição literal | chip "Estatísticas" | os outros dois chips | P2 | desenhado |
+| `STAT-02` | Estatísticas | `StatsPage` | **primeira-vez / vazio** — ⚰️ a medição de 19/08/2026 (três listas cruas: "No activities completed yet." / "No tasks completed yet." / "No history yet.") **venceu**: nenhuma das três strings existe. Hoje são **duas** listas, cada uma mantendo `<section>` + `<h3>` e trocando o `<ul>` por uma frase de FUTURO ("Nada concluído ainda. A primeira vez já aparece aqui." / "O histórico começa na sua próxima conclusão."); Vínculo e A jornada montam sempre, as demais seções somem. Continua **sem ilustração e sem CTA**. **Medido em 13/09/2026** → `03` §4.8a | 1º uso | — | P2 | desenhado |
+| `STAT-03` | Estatísticas | `BirthCard` | normal — `{birth && (…)}`; o `App.tsx` monta `birth` sob `bornAt \&#124;\&#124; soulmonMeta?.baseName \&#124;\&#124; demoCharacterId` | `StatsPage` | — | P2 | desenhado |
+| `STAT-04` | Estatísticas | `BirthCard` | **demo** — `displaySprite` lê o acervo, que o demo nunca preenche, então há fallback `getSpriteForStage('rookie', gameState.demoCharacterId)` | `accountTier === 'demo'` | — | P2 | desenhado |
+| `STAT-05` | Estatísticas | `BestiaryCard` | ausente — `{(bestiary?.length ?? 0) > 0 && (…)}`: sem nenhum inimigo visto, o cartão **não monta**. A condição é **PRÓPRIA, não aninhada no álbum** (o álbum depende de `soulmonStages`, que o jogador grátis não tem — e é ele quem mais roda masmorra) | nenhum encontro | — | P2 | desenhado |
+| `STAT-06` | Estatísticas | `BestiaryCard` | parcial — 24 artes possíveis (6 linhas × 4 tiers), **silhueta** para o que não apareceu e contagem de COLEÇÃO (nunca percentual, nunca "faltam N") | masmorra | — | P2 | desenhado |
+| `STAT-07` | Estatísticas | `BestiaryCard` | completo — 24 de 24 | coleção cheia | — | P2 | desenhado |
+| `STAT-08` | Estatísticas | `FormAlbum` | normal — `{album && album.length > 0 && (…)}`, com `reachedAt` | evoluções | — | P2 | desenhado |
+| `STAT-09` | Estatísticas | `FormAlbum` | silhueta — para o não alcançado | formas futuras | — | P2 | desenhado |
+| `STAT-10` | Estatísticas | linha de texto legada | compat — `{!album && formNames.length > 0 && (…)}`: ⚰️ o que o álbum substituiu, mantido para save sem `album`. **Ver §3** — desenhar ou não é decisão do design-lead | save antigo | — | P2 | fora |
 
 ### 1.9 Conta (o que o menu sanduíche alcança, compra, ajuda e social)
 
@@ -416,7 +416,7 @@ Um fluxo por despacho, dois agentes nunca no mesmo canvas (`CONTRACT.md`).
 | 6 | `wireframes/jogos/` — **[canvas publicado](https://claude.ai/code/artifact/baa66565-81e1-4256-b54e-97da6fcc265a)** (15/09/2026, 16 artboards em 4 páginas, rodada 2 pós-crítica; `Main.dc.html` + 15 `<TelaEstado>.dc.html` + `canvas.json`) | 7 | 25 | 0 / 20 / 5 | semanal, mas é onde mora a maior máquina de estados do app (9 fases da masmorra) |
 | 7 | `wireframes/loja/` — **[canvas publicado](https://claude.ai/code/artifact/ef3ed287-1ecd-466a-a8de-c5aea415f2f8)** (15/09/2026, 7 artboards em 2 páginas, rodada 2 pós-crítica; `Main.dc.html` + 6 `<TelaEstado>.dc.html` + `canvas.json`; LOJA-12 `fora` por D5) | 6 | 13 | 0 / 11 / 2 | semanal; e é onde as três moedas não podem se confundir |
 | 8 | `wireframes/onboarding-funil/` — **[canvas publicado](https://claude.ai/code/artifact/443c5305-7e71-4a8f-8e2e-ca343206e8c6)** (14/09/2026, 17 artboards em 4 páginas, rodada 2 pós-crítica; `Main.dc.html` + 16 `<TelaEstado>.dc.html` + `canvas.json`; D3: o funil — ONB-01→20, 34, 39→43; ONB-13 `fora` por D4) | 18 | 26 | 0 / 21 / 5 | uma vez por jogador — mas por **todos** eles. Ver a ressalva na §3.2 item 3 |
-| 9 | `estatisticas.dc.html` | 5 | 10 | 0 / 0 / 10 | raro; três coleções (bestiário, álbum, nascimento) com a mesma gramática de silhueta |
+| 9 | `wireframes/estatisticas/` — **[canvas publicado](https://claude.ai/code/artifact/b35cbac1-de65-4b5d-a17a-760f94e4d6df)** (15/09/2026, 7 artboards em 2 páginas, rodada 1; `Main.dc.html` + 6 `<TelaEstado>.dc.html` + `canvas.json`; STAT-10 `fora` por D4) | 5 | 10 | 0 / 0 / 10 | raro; três coleções (bestiário, álbum, nascimento) com a mesma gramática de silhueta |
 | 10 | `conta.dc.html` | 18 | 33 | 0 / 8 / 25 | raro, mas é onde a compra acontece e onde a Biblioteca ficou hospedada (§3.2 item 2) |
 | 11 | `fora-do-app.dc.html` | 17 | 18 | 0 / 0 / 18 | 5 widgets + overlay + 7 copies de push: superfície que a pessoa vê **sem decidir abrir** |
 | 12 | `wireframes/onboarding-oraculo/` (D3: o ritual — ONB-21→33, 35→38) | 13 | 17 | 0 / 1 / 16 | uma vez por jogador pagante; é o último canvas por W5 |
@@ -492,6 +492,8 @@ Splash e intro (`ONB-01`→`ONB-04`) → **o portão de conta com os cinco estad
 `StatsPage` cheia e vazia (`STAT-01`, `STAT-02`) → nascimento (`STAT-03`, `STAT-04`) →
 bestiário nos três enchimentos (`STAT-05`→`STAT-07`) → álbum (`STAT-08`, `STAT-09`) → o ramo
 legado (`STAT-10`).
+
+**Desenhado em 15/09/2026** (`design-wireframer`): 10 linhas em 7 artboards — a página (`Main` 01, `JornadaRolada` 01, `EstacaoListas` 01, `Vazio` 02) e os cartões (`Nascimento` 03/04, `Bestiario` 05/06/07, `Album` 08/09 + 10 como nota). `STAT-10` é `fora` por D4. Cada artboard leva a tag `STAT-xx` que cobre.
 
 ### 2.9 Conta
 `SettingsPage` e os blocos de conta (`CONTA-01`→`CONTA-06`) → descanso e passos
