@@ -390,24 +390,24 @@ está vazio em 13/09/2026).
 
 | id | fluxo | tela | estado (condição do `03`) | chega por | sai para | prio | estado do wireframe |
 |---|---|---|---|---|---|---|---|
-| `FORA-01` | Fora-do-app | widget `SoulmonWidgetProvider` (label "Soulmon") | normal — nome do pet (`pet_name`), rótulo do estágio, `"$completedTasks/$totalTasks"` (ou `"—"`), corações, barra de energia, sprite, cocô e uma frase | lista de widgets do Android | **tocar em qualquer lugar abre o app** (`PendingIntent` no `R.id.widget_root`; não há alvo por região) | P2 | a desenhar |
-| `FORA-02` | Fora-do-app | widget `SoulmonWidgetVerticalProvider` ("Soulmon Vertical") | normal | idem | idem | P2 | a desenhar |
-| `FORA-03` | Fora-do-app | widget `SoulmonWidgetPetProvider` ("Soulmon Pet") | normal | idem | idem | P2 | a desenhar |
-| `FORA-04` | Fora-do-app | widget `SoulmonWidgetChatProvider` ("Soulmon Chat") | normal | idem | idem | P2 | a desenhar |
-| `FORA-05` | Fora-do-app | widget `SoulmonWidgetScreenProvider` ("Soulmon Tela") | normal | idem | idem | P2 | a desenhar |
-| `FORA-06` | Fora-do-app | escada de frases do `WidgetRenderer.kt` | os 7 degraus, na ordem em que a função decide (três `if` e então um `when`): `hp <= 20` · `needsIntervention` · `total == 0` (com `habit_steady` ou neutro) · `ratio >= 1.0` · `>= 0.7` · `>= 0.4` · senão. ⚰️ `"📋 $completed de $total feitas"`, `"⚠️ Cuide de mim!"` e `"N task(s) left, let's go!"` **não existem mais** — **o widget NÃO cobra** | render do widget | — | P2 | a desenhar |
-| `FORA-07` | Fora-do-app | overlay Electron · `renderMain` | painel principal — cabeçalho com `stageName` (por `textContent`, **nunca `innerHTML`**), a linha `heartsLabel() · ⚡energia · 🍎comida`, retrato, status e a fileira de 4 botões: 🫶 `doPet`, 🍎 `doFeed`, 🚿 `doShower`, 💤/☀️ `doSleepToggle` | faixa na barra de tarefas do Windows | `panel = 'tasks'` · `renderSettings` | P2 | a desenhar |
-| `FORA-08` | Fora-do-app | overlay · `renderTasks` | tarefas de hoje — `button(...)` com contador. **Criar e editar tarefas é só no app**, e a nota do painel diz isso | painel principal | volta | P2 | a desenhar |
-| `FORA-09` | Fora-do-app | overlay · `renderSettings` | configurações — inclui "📱 Abrir Soulmon completo" (`window.soulmonDesktop?.openFullApp()`) | painel principal | o app web | P2 | a desenhar |
-| `FORA-10` | Fora-do-app | overlay | **sem conta** — "Conecte a sua conta para cuidar do pet e marcar tarefas daqui." | sem sessão | janela de auth (`auth-preload.js`) | P2 | a desenhar |
-| `FORA-11` | Fora-do-app | overlay | **com conta** — e-mail + "🔄 Sincronizar agora" (`syncNow`) | sessão ativa | — | P2 | a desenhar |
-| `FORA-12` | Fora-do-app | push 10h (`pet-nudge-10`) | "`nome` passou pra dizer oi" — `PUSH_HOURS_BRT = [10, 16, 22]`, dono único do texto e do horário: `functions/api/_pushCopy.js` | cron do `workers/push-scheduler.js` | abre o app | P2 | a desenhar |
-| `FORA-13` | Fora-do-app | push recém-nascido (`pet-newborn`) | "`nome` acordou" — 10h com `ageDays` 1 ou 2 | idem | abre o app | P2 | a desenhar |
-| `FORA-14` | Fora-do-app | push 16h (`pet-nudge-16`) | "`nome` pensou em você" | idem | abre o app | P2 | a desenhar |
-| `FORA-15` | Fora-do-app | push 20h (`evening-reminder`) | "🌙 `nome` está te esperando" — **só no cliente**, com quatro guardas: `hh !== 20 \&#124;\&#124; mm !== 0`, `lastEveningWarnDate === today`, `completedSteps >= totalRequired`, **`restWindow`** (a precedência do lembrete de deitar: é o único dos três que pede EXECUÇÃO, então é ele que cede) | `NotificationManager` | abre o app | P2 | a desenhar |
-| `FORA-16` | Fora-do-app | push 20h (`hp-critical-evening`) | "`nome` está meio pra baixo" — variante de HP crítico | idem | abre o app | P2 | a desenhar |
-| `FORA-17` | Fora-do-app | push 22h (`pet-goodnight`) | "🌙 `nome` te deseja boa noite" — o título **parou de alegar horário** | cron | abre o app | P2 | a desenhar |
-| `FORA-18` | Fora-do-app | push lembrete de deitar (`pet-sleep-reminder`) | "`nome` está ficando com sono" — janela −30 min (`sleepReminderAt`) | cron | abre o app | P2 | a desenhar |
+| `FORA-01` | Fora-do-app | widget `SoulmonWidgetProvider` (label "Soulmon") | normal — nome do pet (`pet_name`), rótulo do estágio, `"$completedTasks/$totalTasks"` (ou `"—"`), corações, barra de energia, sprite, cocô e uma frase | lista de widgets do Android | **tocar em qualquer lugar abre o app** (`PendingIntent` no `R.id.widget_root`; não há alvo por região) | P2 | desenhado |
+| `FORA-02` | Fora-do-app | widget `SoulmonWidgetVerticalProvider` ("Soulmon Vertical") | normal | idem | idem | P2 | desenhado |
+| `FORA-03` | Fora-do-app | widget `SoulmonWidgetPetProvider` ("Soulmon Pet") | normal | idem | idem | P2 | desenhado |
+| `FORA-04` | Fora-do-app | widget `SoulmonWidgetChatProvider` ("Soulmon Chat") | normal | idem | idem | P2 | desenhado |
+| `FORA-05` | Fora-do-app | widget `SoulmonWidgetScreenProvider` ("Soulmon Tela") | normal | idem | idem | P2 | desenhado |
+| `FORA-06` | Fora-do-app | escada de frases do `WidgetRenderer.kt` | os 7 degraus, na ordem em que a função decide (três `if` e então um `when`): `hp <= 20` · `needsIntervention` · `total == 0` (com `habit_steady` ou neutro) · `ratio >= 1.0` · `>= 0.7` · `>= 0.4` · senão. ⚰️ `"📋 $completed de $total feitas"`, `"⚠️ Cuide de mim!"` e `"N task(s) left, let's go!"` **não existem mais** — **o widget NÃO cobra** | render do widget | — | P2 | desenhado |
+| `FORA-07` | Fora-do-app | overlay Electron · `renderMain` | painel principal — cabeçalho com `stageName` (por `textContent`, **nunca `innerHTML`**), a linha `heartsLabel() · ⚡energia · 🍎comida`, retrato, status e a fileira de 4 botões: 🫶 `doPet`, 🍎 `doFeed`, 🚿 `doShower`, 💤/☀️ `doSleepToggle` | faixa na barra de tarefas do Windows | `panel = 'tasks'` · `renderSettings` | P2 | desenhado |
+| `FORA-08` | Fora-do-app | overlay · `renderTasks` | tarefas de hoje — `button(...)` com contador. **Criar e editar tarefas é só no app**, e a nota do painel diz isso | painel principal | volta | P2 | desenhado |
+| `FORA-09` | Fora-do-app | overlay · `renderSettings` | configurações — inclui "📱 Abrir Soulmon completo" (`window.soulmonDesktop?.openFullApp()`) | painel principal | o app web | P2 | desenhado |
+| `FORA-10` | Fora-do-app | overlay | **sem conta** — "Conecte a sua conta para cuidar do pet e marcar tarefas daqui." | sem sessão | janela de auth (`auth-preload.js`) | P2 | desenhado |
+| `FORA-11` | Fora-do-app | overlay | **com conta** — e-mail + "🔄 Sincronizar agora" (`syncNow`) | sessão ativa | — | P2 | desenhado |
+| `FORA-12` | Fora-do-app | push 10h (`pet-nudge-10`) | "`nome` passou pra dizer oi" — `PUSH_HOURS_BRT = [10, 16, 22]`, dono único do texto e do horário: `functions/api/_pushCopy.js` | cron do `workers/push-scheduler.js` | abre o app | P2 | desenhado |
+| `FORA-13` | Fora-do-app | push recém-nascido (`pet-newborn`) | "`nome` acordou" — 10h com `ageDays` 1 ou 2 | idem | abre o app | P2 | desenhado |
+| `FORA-14` | Fora-do-app | push 16h (`pet-nudge-16`) | "`nome` pensou em você" | idem | abre o app | P2 | desenhado |
+| `FORA-15` | Fora-do-app | push 20h (`evening-reminder`) | "🌙 `nome` está te esperando" — **só no cliente**, com quatro guardas: `hh !== 20 \&#124;\&#124; mm !== 0`, `lastEveningWarnDate === today`, `completedSteps >= totalRequired`, **`restWindow`** (a precedência do lembrete de deitar: é o único dos três que pede EXECUÇÃO, então é ele que cede) | `NotificationManager` | abre o app | P2 | desenhado |
+| `FORA-16` | Fora-do-app | push 20h (`hp-critical-evening`) | "`nome` está meio pra baixo" — variante de HP crítico | idem | abre o app | P2 | desenhado |
+| `FORA-17` | Fora-do-app | push 22h (`pet-goodnight`) | "🌙 `nome` te deseja boa noite" — o título **parou de alegar horário** | cron | abre o app | P2 | desenhado |
+| `FORA-18` | Fora-do-app | push lembrete de deitar (`pet-sleep-reminder`) | "`nome` está ficando com sono" — janela −30 min (`sleepReminderAt`) | cron | abre o app | P2 | desenhado |
 
 ---
 
@@ -430,7 +430,7 @@ Um fluxo por despacho, dois agentes nunca no mesmo canvas (`CONTRACT.md`).
 | 9 | `wireframes/estatisticas/` — **[canvas publicado](https://claude.ai/code/artifact/b35cbac1-de65-4b5d-a17a-760f94e4d6df)** (15/09/2026, 7 artboards em 2 páginas, rodada 2 pós-crítica; `Main.dc.html` + 6 `<TelaEstado>.dc.html` + `canvas.json`; STAT-10 `fora` por D4) | 5 | 10 | 0 / 0 / 10 | raro; três coleções (bestiário, álbum, nascimento) com a mesma gramática de silhueta |
 | 10 | `wireframes/social/` — **[canvas publicado](https://claude.ai/code/artifact/7abe2a04-90db-43f1-9d75-dd8a742f3ff0)** (15/09/2026, 8 artboards em 2 páginas, rodada 2 pós-crítica; `Main.dc.html` + 7 `<TelaEstado>.dc.html` + `canvas.json`; D2: CONTA-26→32 → SOC-01→07) | 3 | 7 | 0 / 0 / 7 | raro; a única família em que um número ao lado de um nome vira comparação — o guarda dá parecer sobre o canvas inteiro (D2) |
 | 11 | `wireframes/conta/` — **[canvas publicado](https://claude.ai/code/artifact/c5fba27a-548f-444c-890f-10f4d482229f)** (15/09/2026, 14 artboards em 2 páginas, rodada 2 pós-crítica; `Main.dc.html` + 13 `<TelaEstado>.dc.html` + `canvas.json`; CONTA-13 `fora` pelo precedente da D5) | 15 | 26 | 0 / 8 / 18 | raro, mas é onde a compra acontece e onde a Biblioteca ficou hospedada (§3.2 item 2) |
-| 12 | `fora-do-app.dc.html` | 17 | 18 | 0 / 0 / 18 | 5 widgets + overlay + 7 copies de push: superfície que a pessoa vê **sem decidir abrir** |
+| 12 | `wireframes/fora-do-app/` — **[canvas publicado](https://claude.ai/code/artifact/89cc5550-5b1a-4f2b-8929-759a4a68373b)** (15/09/2026, 7 artboards em 3 páginas, rodada 1; `Main.dc.html` + 6 `<TelaEstado>.dc.html` + `canvas.json`) | 17 | 18 | 0 / 0 / 18 | 5 widgets + overlay + 7 copies de push: superfície que a pessoa vê **sem decidir abrir** |
 | 13 | `wireframes/onboarding-oraculo/` (D3: o ritual — ONB-21→33, 35→38) | 13 | 17 | 0 / 1 / 16 | uma vez por jogador pagante; é o último canvas por W5 |
 
 ### 2.1 Home — ordem sugerida dentro do canvas
@@ -525,6 +525,8 @@ o grupo (`SOC-06`) → o perfil do outro (`SOC-07`).
 Os cinco widgets (`FORA-01`→`FORA-05`) → **a escada de frases** (`FORA-06`), que é a regra
 "o widget não cobra" em forma de texto → overlay (`FORA-07`→`FORA-11`) → as sete copies de
 push na ordem do relógio (`FORA-12`→`FORA-18`).
+
+**Desenhado em 15/09/2026** (`design-wireframer`): 18 linhas em 7 artboards — os widgets (`Main` 01, `Tamanhos` 02/03/04/05, `Escada` 06), o overlay (`OverlayPrincipal` 07, `OverlayTarefas` 08, `OverlayConfig` 09/10/11) e os pushes (`Pushes` 12→18). Cada artboard leva a tag `FORA-xx` que cobre.
 
 ---
 

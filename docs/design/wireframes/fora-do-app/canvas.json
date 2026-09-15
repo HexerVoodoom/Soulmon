@@ -1,0 +1,95 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "title": "FORA-01 · o widget \"Soulmon\" (A, 3×1) — nome, estágio, o contador só com ≥ 1 feita (T2), a frase",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 2439,
+      "page": "page-1"
+    },
+    {
+      "file": "Tamanhos.dc.html",
+      "title": "FORA-02 · 03 · 04 · 05 · os outros quatro widgets — vertical, pet (com cocô), chat, tela",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 2529,
+      "page": "page-1"
+    },
+    {
+      "file": "Escada.dc.html",
+      "title": "FORA-06 · a escada de frases do ‹WidgetRenderer.kt› — 7 degraus, na ordem em que a função decide",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 2289,
+      "page": "page-1"
+    },
+    {
+      "file": "OverlayPrincipal.dc.html",
+      "title": "FORA-07 · o overlay Electron — painel principal: estado, retrato, a fileira de cuidado, tarefas",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 2499,
+      "page": "page-2"
+    },
+    {
+      "file": "OverlayTarefas.dc.html",
+      "title": "FORA-08 · o overlay — tarefas de hoje: sem conta, vazia, com itens (criar e editar é no app)",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 2274,
+      "page": "page-2"
+    },
+    {
+      "file": "OverlayConfig.dc.html",
+      "title": "FORA-09 · 10 · 11 · o overlay — configurações: idioma, a conta em três estados, a carteira, o app completo",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 2319,
+      "page": "page-2"
+    },
+    {
+      "file": "Pushes.dc.html",
+      "title": "FORA-12 → 18 · os 7 pushes — ‹_pushCopy.js› é o dono do texto e do horário (10h · 16h · 22h; 20h no cliente; deitar)",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 2289,
+      "page": "page-3"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "leia",
+      "page": "page-1",
+      "x": 0,
+      "y": -170,
+      "w": 900,
+      "text": "Soulmon — Wireframes Fora do app (Fase 1, cinza, rodada 1, 15/09/2026). A superfície vista dezenas de vezes por dia SEM que ninguém decida abri-la — por isso a mais perigosa (PRINCÍPIOS §12). A pergunta: \"ele está bem?\" — e nada mais. Página 1 = os 5 widgets Android (A horizontal 3×1, B vertical 2×2, C pet 1×1, D chat 3×1, E tela 3×2) e a escada de 7 frases do ‹WidgetRenderer.kt›; página 2 = o overlay Electron (o widget do desktop: as mesmas proibições); página 3 = os 7 pushes (‹_pushCopy.js› é o dono único do texto e do horário; as 20h moram só no cliente). [decisão 13/09] = T2/13.2 (o contador \"N de M\" no widget SÓ com ≥ 1 feita, sem verbo de cobrança — ⚠️ o código ainda imprime \"0/5\": achado de implementação), D11. Idioma: a escada do widget e o contador são só PT no código (o overlay e o push têm PT+EN) — desenhado como o código, com a glosa EN marcada ‹[novo]›. Toque em qualquer ponto do widget abre o app (sem alvo por região) — por isso não há números de foco nos widgets; no overlay, sim."
+    }
+  ],
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Fora do app — os 5 widgets Android e a escada de frases"
+    },
+    {
+      "id": "page-2",
+      "name": "Fora do app — o overlay de desktop (Electron)"
+    },
+    {
+      "id": "page-3",
+      "name": "Fora do app — os 7 pushes"
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "page-1"
+  }
+}
