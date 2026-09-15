@@ -6,7 +6,7 @@
       "x": 0,
       "y": 0,
       "w": 390,
-      "h": 1979,
+      "h": 2099,
       "page": "page-1"
     },
     {
@@ -24,7 +24,7 @@
       "x": 980,
       "y": 0,
       "w": 390,
-      "h": 2559,
+      "h": 2589,
       "page": "page-1"
     },
     {
@@ -42,7 +42,7 @@
       "x": 0,
       "y": 2894,
       "w": 390,
-      "h": 2784,
+      "h": 2814,
       "page": "page-1"
     },
     {
@@ -51,7 +51,7 @@
       "x": 490,
       "y": 2894,
       "w": 390,
-      "h": 2619,
+      "h": 2634,
       "page": "page-1"
     },
     {
@@ -69,7 +69,7 @@
       "x": 0,
       "y": 0,
       "w": 390,
-      "h": 1634,
+      "h": 1649,
       "page": "page-2"
     },
     {
@@ -83,11 +83,11 @@
     },
     {
       "file": "RefazerRitual.dc.html",
-      "title": "CONTA-17 · \"Redo the ritual\" — o ‹ConfirmDialog›; o texto diz o que CONTINUA",
+      "title": "CONTA-17 · \"Redo the ritual\" — o ‹ConfirmDialog› (um ‹ModalSheet›); o texto diz o que CONTINUA",
       "x": 980,
       "y": 0,
       "w": 390,
-      "h": 1334,
+      "h": 1364,
       "page": "page-2"
     },
     {
@@ -96,7 +96,7 @@
       "x": 1470,
       "y": 0,
       "w": 390,
-      "h": 1619,
+      "h": 1634,
       "page": "page-2"
     },
     {
@@ -105,7 +105,7 @@
       "x": 0,
       "y": 2129,
       "w": 390,
-      "h": 1514,
+      "h": 1574,
       "page": "page-2"
     },
     {
@@ -123,7 +123,7 @@
       "x": 980,
       "y": 2129,
       "w": 390,
-      "h": 2034,
+      "h": 2049,
       "page": "page-2"
     }
   ],
@@ -134,7 +134,7 @@
       "x": 0,
       "y": -170,
       "w": 900,
-      "text": "Soulmon — Wireframes Conta (Fase 1, cinza, rodada 1, 15/09/2026). O que o menu sanduíche alcança, compra e ajuda (a Biblioteca migrou para o canvas Social — D2). A pergunta da família (PRINCÍPIOS §11): \"o que é meu, e como eu saio?\" — a saída de dados na própria superfície (exportar/apagar), ocultar métrica como opção legítima (o switch da Janela de Descanso), permissão pedida como consequência de um toggle, a SettingsPage em grupos por intenção. Página 1 = a ‹SettingsPage› (sete grupos + o ‹RestWindowCard› e o ‹StepsCard› que o App monta abaixo dela). Página 2 = os modais: Personalidade (‹AISettingsModal›), Guia/Glossário, \"Refazer o ritual\", Créditos → Nova Leitura, o ‹UnlockAccountModal› (3 estados) e os 6 pontos do ‹UnlockNudge›. [decisão 13/09] = D2, D11; CONTA-13 (‹SettingsModal›, inalcançável) segue o precedente da D5 → fora, ‹[pendente do dono]›. Números = ordem de foco (1 = skip link, oculto)."
+      "text": "Soulmon — Wireframes Conta (Fase 1, cinza, rodada 2 pós-crítica, 15/09/2026). O que o menu sanduíche alcança, compra e ajuda (a Biblioteca migrou para o canvas Social — D2). A pergunta da família (PRINCÍPIOS §11): \"o que é meu, e como eu saio?\" — a saída de dados na própria superfície (exportar/apagar), ocultar métrica como opção legítima (o switch da Janela de Descanso), permissão pedida como consequência de um toggle, a SettingsPage em grupos por intenção. Página 1 = a ‹SettingsPage› (sete grupos + o ‹RestWindowCard› e o ‹StepsCard› que o App monta abaixo dela). Página 2 = os modais: Personalidade (‹AISettingsModal›), Guia/Glossário, \"Refazer o ritual\", Créditos → Nova Leitura, o ‹UnlockAccountModal› (3 estados) e os 6 pontos do ‹UnlockNudge›. [decisão 13/09] = D2, D11; CONTA-13 (‹SettingsModal›, inalcançável) segue o precedente da D5 → fora, ‹[pendente do dono]›. Números = ordem de foco (1 = skip link, oculto)."
     }
   ],
   "pages": [
