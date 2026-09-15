@@ -7,6 +7,15 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 📚 15/09/2026 — MANUAL SINCRONIZADO COM `2580b73a` (o checkpoint final da meta — Fase 1 fechada)
+>
+> `/manter-docs auto` após o merge do checkpoint final (`a892f21a`→`2580b73a`, 1 commit). Delta em três docs:
+> - `00-MAPA.md` §6.7 — 268 das 273 (`ONB-44`), o Oráculo com 12 artboards, os pendentes fechados (`doc-bibliotecario`).
+> - `10-DISCUSSOES-E-DECISOES.md` — seis linhas novas no §11 (13.15–13.19 e o bloco 🧭), o preâmbulo e §17 com 13.1–13.19 (`doc-historiador`).
+> - `01-VISAO.md` — sem alteração (nem a 13.18 nem a 13.19 tocam frase do doc; a divergência da 13.18 com o CLAUDE.md › Idioma está marcada no REGISTRO/STATUS).
+> - Verificação: `doc-verificador`, tudo bate; carimbos em 15/09/2026. Guard verde (10/10).
+> - `.sincronizado.json` → `2580b73a`.
+
 > ## 🧭 15/09/2026 — MODAL FINAL DA META AUTÔNOMA: OS 12 PENDENTES DO DONO RESPONDIDOS — A FASE 1 ESTÁ FECHADA
 >
 > Fim da meta "complete o trabalho em todos os canvas" (15/09/2026): os 13 canvases foram
