@@ -337,7 +337,7 @@ está vazio em 13/09/2026).
 | `STAT-09` | Estatísticas | `FormAlbum` | silhueta — para o não alcançado | formas futuras | — | P2 | aprovado |
 | `STAT-10` | Estatísticas | linha de texto legada | compat — `{!album && formNames.length > 0 && (…)}`: ⚰️ o que o álbum substituiu, mantido para save sem `album`. **Ver §3** — desenhar ou não é decisão do design-lead | save antigo | — | P2 | fora |
 
-### 1.9 Conta (o que o menu sanduíche alcança, compra, ajuda e social)
+### 1.9 Conta (o que o menu sanduíche alcança, compra e ajuda — a Biblioteca migrou para §1.9a, D2)
 
 | id | fluxo | tela | estado (condição do `03`) | chega por | sai para | prio | estado do wireframe |
 |---|---|---|---|---|---|---|---|
@@ -366,15 +366,26 @@ está vazio em 13/09/2026).
 | `CONTA-23` | Conta | `UnlockAccountModal` | comprando — espera do servidor; `onUnlocked={handleAccountUnlocked}` **só depois de o servidor confirmar** | toque | `ONB-37` (ritual de upgrade) | P1 | a desenhar |
 | `CONTA-24` | Conta | `UnlockAccountModal` | recusa / cancelamento | retorno do billing | fecha | P1 | a desenhar |
 | `CONTA-25` | Conta | `UnlockNudge` | o componente e seus **6 pontos** (medidos em 09/09/2026): `CreateModal` e `EditModal` (`task-limit`), `ShopModal` (`shop`), `DailyReportModal` (`report`), `App.tsx` Evolução e Renascimento (`evolution`). **Nunca abre sozinho** | as 6 telas hospedeiras | `setUnlockReason(...)` | P1 | a desenhar |
-| `CONTA-26` | Conta | `LibraryPage` | **carregando** — um dos quatro estados declarados | linha "Biblioteca" do menu (**único caminho**) | a barra | P2 | a desenhar |
-| `CONTA-27` | Conta | `LibraryPage` | **vazio** | busca sem resultado | — | P2 | a desenhar |
-| `CONTA-28` | Conta | `LibraryPage` | **erro** | falha do servidor | — | P2 | a desenhar |
-| `CONTA-29` | Conta | `LibraryPage` | **sem rede** — ⚰️ a versão anterior tratava falha de rede como "nenhum jogador encontrado" (`.catch(() => setPlayers([]))`), **a pior mentira possível numa tela social** | offline | — | P2 | a desenhar |
-| `CONTA-30` | Conta | `LibraryPage` | lista — uma ação dominante por linha; NPCs de `utils/libraryNpcs.ts` misturados aos jogadores reais, marcados por `isNpc`; presentear e adicionar/remover amigo com rótulo e 44px | carga ok | `PlayerDetailModal` | P2 | a desenhar |
-| `CONTA-31` | Conta | `CoopPanel` | normal — montado dentro da página; `metaDoDiaCumprida` vem do `App.tsx` (`dailyTotal > 0 && dailyDone >= dailyTotal`). O número é do **GRUPO**, nunca de um membro; por pessoa existe só "apareceu hoje: sim/não" | `LibraryPage` | — | P2 | a desenhar |
-| `CONTA-32` | Conta | `PlayerDetailModal` | normal — abre pelo toque no jogador e chama `onVisitPlayer` → `contarMissao('friend-visit')` | linha da lista | `onClose` | P2 | a desenhar |
+
+
+
+
+
+
+
 | `CONTA-33` | Conta | `SettingsPage` | carregando — `Suspense` com `ScreenSkeleton` | navegação | — | P2 | a desenhar |
 
+### 1.9a Social (a Biblioteca: diretório, amigos, grupo, o perfil do outro — canvas próprio por D2; `CONTA-26`→`CONTA-32` renumerados)
+
+| id | fluxo | tela | estado (condição do `03`) | chega por | sai para | prio | estado do wireframe |
+|---|---|---|---|---|---|---|---|
+| `SOC-01` | Social | `LibraryPage` | **carregando** — um dos quatro estados declarados | linha "Biblioteca" do menu (**único caminho**) | a barra | P2 | desenhado |
+| `SOC-02` | Social | `LibraryPage` | **vazio** | busca sem resultado | — | P2 | desenhado |
+| `SOC-03` | Social | `LibraryPage` | **erro** | falha do servidor | — | P2 | desenhado |
+| `SOC-04` | Social | `LibraryPage` | **sem rede** — ⚰️ a versão anterior tratava falha de rede como "nenhum jogador encontrado" (`.catch(() => setPlayers([]))`), **a pior mentira possível numa tela social** | offline | — | P2 | desenhado |
+| `SOC-05` | Social | `LibraryPage` | lista — uma ação dominante por linha; NPCs de `utils/libraryNpcs.ts` misturados aos jogadores reais, marcados por `isNpc`; presentear e adicionar/remover amigo com rótulo e 44px | carga ok | `PlayerDetailModal` | P2 | desenhado |
+| `SOC-06` | Social | `CoopPanel` | normal — montado dentro da página; `metaDoDiaCumprida` vem do `App.tsx` (`dailyTotal > 0 && dailyDone >= dailyTotal`). O número é do **GRUPO**, nunca de um membro; por pessoa existe só "apareceu hoje: sim/não" | `LibraryPage` | — | P2 | desenhado |
+| `SOC-07` | Social | `PlayerDetailModal` | normal — abre pelo toque no jogador e chama `onVisitPlayer` → `contarMissao('friend-visit')` | linha da lista | `onClose` | P2 | desenhado |
 ### 1.10 Fora do app
 
 | id | fluxo | tela | estado (condição do `03`) | chega por | sai para | prio | estado do wireframe |
@@ -417,9 +428,10 @@ Um fluxo por despacho, dois agentes nunca no mesmo canvas (`CONTRACT.md`).
 | 7 | `wireframes/loja/` — **[canvas publicado](https://claude.ai/code/artifact/ef3ed287-1ecd-466a-a8de-c5aea415f2f8)** (15/09/2026, 7 artboards em 2 páginas, rodada 2 pós-crítica; `Main.dc.html` + 6 `<TelaEstado>.dc.html` + `canvas.json`; LOJA-12 `fora` por D5) | 6 | 13 | 0 / 11 / 2 | semanal; e é onde as três moedas não podem se confundir |
 | 8 | `wireframes/onboarding-funil/` — **[canvas publicado](https://claude.ai/code/artifact/443c5305-7e71-4a8f-8e2e-ca343206e8c6)** (14/09/2026, 17 artboards em 4 páginas, rodada 2 pós-crítica; `Main.dc.html` + 16 `<TelaEstado>.dc.html` + `canvas.json`; D3: o funil — ONB-01→20, 34, 39→43; ONB-13 `fora` por D4) | 18 | 26 | 0 / 21 / 5 | uma vez por jogador — mas por **todos** eles. Ver a ressalva na §3.2 item 3 |
 | 9 | `wireframes/estatisticas/` — **[canvas publicado](https://claude.ai/code/artifact/b35cbac1-de65-4b5d-a17a-760f94e4d6df)** (15/09/2026, 7 artboards em 2 páginas, rodada 2 pós-crítica; `Main.dc.html` + 6 `<TelaEstado>.dc.html` + `canvas.json`; STAT-10 `fora` por D4) | 5 | 10 | 0 / 0 / 10 | raro; três coleções (bestiário, álbum, nascimento) com a mesma gramática de silhueta |
-| 10 | `conta.dc.html` | 18 | 33 | 0 / 8 / 25 | raro, mas é onde a compra acontece e onde a Biblioteca ficou hospedada (§3.2 item 2) |
-| 11 | `fora-do-app.dc.html` | 17 | 18 | 0 / 0 / 18 | 5 widgets + overlay + 7 copies de push: superfície que a pessoa vê **sem decidir abrir** |
-| 12 | `wireframes/onboarding-oraculo/` (D3: o ritual — ONB-21→33, 35→38) | 13 | 17 | 0 / 1 / 16 | uma vez por jogador pagante; é o último canvas por W5 |
+| 10 | `wireframes/social/` — **[canvas publicado](https://claude.ai/code/artifact/7abe2a04-90db-43f1-9d75-dd8a742f3ff0)** (15/09/2026, 8 artboards em 2 páginas, rodada 1; `Main.dc.html` + 7 `<TelaEstado>.dc.html` + `canvas.json`; D2: CONTA-26→32 → SOC-01→07) | 3 | 7 | 0 / 0 / 7 | raro; a única família em que um número ao lado de um nome vira comparação — o guarda dá parecer sobre o canvas inteiro (D2) |
+| 11 | `conta.dc.html` | 15 | 26 | 0 / 8 / 18 | raro, mas é onde a compra acontece e onde a Biblioteca ficou hospedada (§3.2 item 2) |
+| 12 | `fora-do-app.dc.html` | 17 | 18 | 0 / 0 / 18 | 5 widgets + overlay + 7 copies de push: superfície que a pessoa vê **sem decidir abrir** |
+| 13 | `wireframes/onboarding-oraculo/` (D3: o ritual — ONB-21→33, 35→38) | 13 | 17 | 0 / 1 / 16 | uma vez por jogador pagante; é o último canvas por W5 |
 
 ### 2.1 Home — ordem sugerida dentro do canvas
 Chrome primeiro (`HOME-40`→`HOME-42`, `HOME-43`), porque tudo se desenha dentro dele → a
@@ -498,8 +510,14 @@ legado (`STAT-10`).
 ### 2.9 Conta
 `SettingsPage` e os blocos de conta (`CONTA-01`→`CONTA-06`) → descanso e passos
 (`CONTA-07`→`CONTA-12`) → modais de ajuste e ajuda (`CONTA-13`→`CONTA-17`) → créditos e nova
-leitura (`CONTA-18`→`CONTA-21`) → **compra** (`CONTA-22`→`CONTA-25`) → Biblioteca com os
-quatro estados declarados (`CONTA-26`→`CONTA-32`) → carregando (`CONTA-33`).
+leitura (`CONTA-18`→`CONTA-21`) → **compra** (`CONTA-22`→`CONTA-25`) → carregando (`CONTA-33`);
+a Biblioteca migrou para o canvas Social (D2, §1.9a).
+
+### 2.9a Social
+A Biblioteca com os quatro estados declarados (`SOC-01`→`SOC-04`) → a lista e o presente (`SOC-05`) →
+o grupo (`SOC-06`) → o perfil do outro (`SOC-07`).
+
+**Desenhado em 15/09/2026** (`design-wireframer`): 7 linhas em 8 artboards — a Biblioteca (`Main` 05, `Estados` 01/02/03, `SemRede` 04 — D9, `AmigosPresente` 05, `PerfilJogador` 07) e o Grupo (`GrupoSemGrupo` 06, `GrupoComGrupo` 06, `GrupoEstados` 06). Cada artboard leva a tag `SOC-xx` que cobre.
 
 ### 2.10 Fora do app
 Os cinco widgets (`FORA-01`→`FORA-05`) → **a escada de frases** (`FORA-06`), que é a regra
@@ -655,7 +673,8 @@ wc -l docs/design/INVENTARIO-WIREFRAMES.md
 | Jogos | 7 | 25 | 0 | 20 | 5 |
 | Loja | 6 | 13 | 0 | 11 | 2 |
 | Estatísticas | 5 | 10 | 0 | 0 | 10 |
-| Conta | 18 | 33 | 0 | 8 | 25 |
+| Social | 3 | 7 | 0 | 0 | 7 |
+| Conta | 15 | 26 | 0 | 8 | 18 |
 | Fora do app | 17 | 18 | 0 | 0 | 18 |
 | **total** | **150** | **272** | **45** | **121** | **106** |
 

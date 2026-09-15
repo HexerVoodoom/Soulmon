@@ -1,0 +1,100 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "title": "SOC-05 · a Biblioteca — aba \"All\": NPCs de demonstração e jogadores reais, uma ação dominante por linha",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 2054,
+      "page": "page-1"
+    },
+    {
+      "file": "Estados.dc.html",
+      "title": "SOC-01 · 02 · 03 · a Biblioteca — carregando, vazio (amigos / busca), erro do diretório, a linha que não carregou",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 2484,
+      "page": "page-1"
+    },
+    {
+      "file": "SemRede.dc.html",
+      "title": "SOC-04 · a Biblioteca sem rede — o selo na raiz + o erro do diretório (D9)",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 1904,
+      "page": "page-1"
+    },
+    {
+      "file": "AmigosPresente.dc.html",
+      "title": "SOC-05 · a aba \"Friends 2/5\" — o presente nos três estados; o limite de 5",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 2009,
+      "page": "page-1"
+    },
+    {
+      "file": "PerfilJogador.dc.html",
+      "title": "SOC-07 · o perfil do outro — a criatura grande, o nome do pet, o GALHO; visitar é olhar",
+      "x": 0,
+      "y": 2624,
+      "w": 390,
+      "h": 2054,
+      "page": "page-1"
+    },
+    {
+      "file": "GrupoSemGrupo.dc.html",
+      "title": "SOC-06 · a aba \"Group\" sem grupo — criar ou entrar; carregando; os erros",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1619,
+      "page": "page-2"
+    },
+    {
+      "file": "GrupoComGrupo.dc.html",
+      "title": "SOC-06 · a aba \"Group\" com grupo — a meta SOMADA, presença por pessoa, \"avisar que apareci\"",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1709,
+      "page": "page-2"
+    },
+    {
+      "file": "GrupoEstados.dc.html",
+      "title": "SOC-06 · o grupo — sozinho, já avisei, meta batida, falha do servidor",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 2109,
+      "page": "page-2"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "leia",
+      "page": "page-1",
+      "x": 0,
+      "y": -170,
+      "w": 900,
+      "text": "Soulmon — Wireframes Social (Fase 1, cinza, rodada 1, 15/09/2026). D2: a Biblioteca ganhou canvas próprio; CONTA-26→32 migram para SOC-01→07; o caminho de chegada continua sendo a linha \"Library\" do menu sanduíche (ÚNICO caminho — a Biblioteca saiu da barra). A pergunta da família (PRINCÍPIOS §10): \"quem mais está por aqui, e o que eu posso dar?\" — só verbos de DAR (presente, amizade, \"avisar que apareci\"); nenhum componente de métrica do próprio perfil; a meta do grupo é SOMADA (número do grupo, nunca de um membro; por pessoa só \"showed up today / not yet today\"). Três abas: All · Friends N/5 · Group. Quatro estados declarados, de propósito: carregando · vazio · erro · sem rede (⚰️ o ‹.catch(() => setPlayers([]))› — \"não há ninguém\" como resposta a falha de rede — morreu). O perfil do outro é OLHAR: a criatura grande, o nome do pet, o GALHO (não a altura), \"N days playing\" (decisão de 06/09: duração, só cresce, não ordena — ⚠️ tensão com PRINCÍPIOS §10 \"nenhum número por pessoa\", registrada). [decisão 13/09] = D2, D9 (artboard offline), D11. Números = ordem de foco (1 = skip link, oculto)."
+    }
+  ],
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Social — a Biblioteca (diretório, amigos, estados, o perfil do outro)"
+    },
+    {
+      "id": "page-2",
+      "name": "Social — o Grupo (coop): sem grupo, com grupo, a meta somada"
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "page-1"
+  }
+}
