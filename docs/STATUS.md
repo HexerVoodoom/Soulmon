@@ -7,6 +7,32 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 🤝 15/09/2026 — WIREFRAMES DO SOCIAL: DESENHADOS, CRITICADOS, CORRIGIDOS E APROVADOS (META AUTÔNOMA DO DONO)
+>
+> Décimo canvas da SQUAD-DESIGN (Fase 1). Canvas publicado:
+> **https://claude.ai/code/artifact/7abe2a04-90db-43f1-9d75-dd8a742f3ff0**
+> (8 artboards em 2 páginas; `docs/design/wireframes/social/`). D2: a Biblioteca ganhou canvas
+> próprio — `CONTA-26`→`CONTA-32` viraram `SOC-01`→`SOC-07` (nova §1.9a do inventário); decisão
+> do design-lead em `docs/design/DECISOES-WIREFRAME.md` §14.
+> - **Crítica:** `design-critic` (**PASSA** na rodada 1, zero bloqueante; 5 ressalvas aplicadas na
+>   rodada 2), `soulmon-product-designer` (8 achados — os estados `aviso` dentro do grupo, `ocupado`
+>   e `copiado` entraram; duas tensões de método viraram T10/T11), `soulmon-guarda-linha-vermelha`
+>   (canvas inteiro, D2: **APROVADA COM RESSALVA**, 0 vetos).
+> - **Decisões estruturais**: a Biblioteca com três abas e a linha de uma ação dominante (C1); os
+>   quatro estados declarados + offline por D9 (C2); o perfil do outro é olhar (C3); o grupo com a
+>   meta somada (C4); os estados que faltavam (C5). **Sai:** o `rank`, a escada no perfil do amigo,
+>   cronômetro no presente, "quanto cada um fez".
+> - **✅ Checkpoint fechado em 15/09/2026 — aprovação automática** (meta do dono). **Pendente do
+>   dono (modal final):** **T10** "N days playing" por pessoa — manter e formalizar no `REGISTRO`
+>   §5.5 (recomendação do lead e do guarda, desenhada) / tirar; **T11** lista vertical × "árvore/
+>   cena" do PRINCÍPIOS §10 — manter a lista (recomendação, desenhada) / encomendar a cena.
+> - **Achados de passagem (código):** `branchLevels` calculado e nunca renderizado em
+>   `PlayerDetailModal.tsx`; o comentário do mesmo arquivo cita "D13", que não existe em registro
+>   nenhum (é a decisão 8b); `busyId` é por linha (tocar "remove" gira o presente); o
+>   `LibraryPage` não distingue erro de sem rede (um `loadError` — o selo distingue); a 13.7 merece
+>   uma linha cobrindo o contador SEMANAL de grupo ("0 of 20" do grupo sozinho).
+> - **Branch:** `design/wireframes-social` — mergeada na `main` (ff). Próximo canvas: Conta.
+
 > ## 📚 15/09/2026 — MANUAL SINCRONIZADO COM `5e4def10` (wireframes de Estatísticas)
 >
 > `/manter-docs auto` após o merge de Estatísticas (`932c927f`→`5e4def10`, 4 commits). Delta em três docs:

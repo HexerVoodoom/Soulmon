@@ -379,13 +379,13 @@ está vazio em 13/09/2026).
 
 | id | fluxo | tela | estado (condição do `03`) | chega por | sai para | prio | estado do wireframe |
 |---|---|---|---|---|---|---|---|
-| `SOC-01` | Social | `LibraryPage` | **carregando** — um dos quatro estados declarados | linha "Biblioteca" do menu (**único caminho**) | a barra | P2 | desenhado |
-| `SOC-02` | Social | `LibraryPage` | **vazio** | busca sem resultado | — | P2 | desenhado |
-| `SOC-03` | Social | `LibraryPage` | **erro** | falha do servidor | — | P2 | desenhado |
-| `SOC-04` | Social | `LibraryPage` | **sem rede** — ⚰️ a versão anterior tratava falha de rede como "nenhum jogador encontrado" (`.catch(() => setPlayers([]))`), **a pior mentira possível numa tela social** | offline | — | P2 | desenhado |
-| `SOC-05` | Social | `LibraryPage` | lista — uma ação dominante por linha; NPCs de `utils/libraryNpcs.ts` misturados aos jogadores reais, marcados por `isNpc`; presentear e adicionar/remover amigo com rótulo e 44px | carga ok | `PlayerDetailModal` | P2 | desenhado |
-| `SOC-06` | Social | `CoopPanel` | normal — montado dentro da página; `metaDoDiaCumprida` vem do `App.tsx` (`dailyTotal > 0 && dailyDone >= dailyTotal`). O número é do **GRUPO**, nunca de um membro; por pessoa existe só "apareceu hoje: sim/não" | `LibraryPage` | — | P2 | desenhado |
-| `SOC-07` | Social | `PlayerDetailModal` | normal — abre pelo toque no jogador e chama `onVisitPlayer` → `contarMissao('friend-visit')` | linha da lista | `onClose` | P2 | desenhado |
+| `SOC-01` | Social | `LibraryPage` | **carregando** — um dos quatro estados declarados | linha "Biblioteca" do menu (**único caminho**) | a barra | P2 | aprovado |
+| `SOC-02` | Social | `LibraryPage` | **vazio** | busca sem resultado | — | P2 | aprovado |
+| `SOC-03` | Social | `LibraryPage` | **erro** | falha do servidor | — | P2 | aprovado |
+| `SOC-04` | Social | `LibraryPage` | **sem rede** — ⚰️ a versão anterior tratava falha de rede como "nenhum jogador encontrado" (`.catch(() => setPlayers([]))`), **a pior mentira possível numa tela social** | offline | — | P2 | aprovado |
+| `SOC-05` | Social | `LibraryPage` | lista — uma ação dominante por linha; NPCs de `utils/libraryNpcs.ts` misturados aos jogadores reais, marcados por `isNpc`; presentear e adicionar/remover amigo com rótulo e 44px | carga ok | `PlayerDetailModal` | P2 | aprovado |
+| `SOC-06` | Social | `CoopPanel` | normal — montado dentro da página; `metaDoDiaCumprida` vem do `App.tsx` (`dailyTotal > 0 && dailyDone >= dailyTotal`). O número é do **GRUPO**, nunca de um membro; por pessoa existe só "apareceu hoje: sim/não" | `LibraryPage` | — | P2 | aprovado |
+| `SOC-07` | Social | `PlayerDetailModal` | normal — abre pelo toque no jogador e chama `onVisitPlayer` → `contarMissao('friend-visit')` | linha da lista | `onClose` | P2 | aprovado |
 ### 1.10 Fora do app
 
 | id | fluxo | tela | estado (condição do `03`) | chega por | sai para | prio | estado do wireframe |
@@ -517,7 +517,7 @@ a Biblioteca migrou para o canvas Social (D2, §1.9a).
 A Biblioteca com os quatro estados declarados (`SOC-01`→`SOC-04`) → a lista e o presente (`SOC-05`) →
 o grupo (`SOC-06`) → o perfil do outro (`SOC-07`).
 
-**Desenhado em 15/09/2026** (`design-wireframer`): 7 linhas em 8 artboards — a Biblioteca (`Main` 05, `Estados` 01/02/03, `SemRede` 04 — D9, `AmigosPresente` 05, `PerfilJogador` 07) e o Grupo (`GrupoSemGrupo` 06, `GrupoComGrupo` 06, `GrupoEstados` 06). Cada artboard leva a tag `SOC-xx` que cobre.
+**Desenhado, criticado e aprovado em 15/09/2026** (`design-wireframer`; `design-critic` PASSA na rodada 1 com ressalvas aplicadas na rodada 2, `soulmon-product-designer` #1–#8, `soulmon-guarda-linha-vermelha` aprovada com ressalva sobre o canvas inteiro — D2; decisão do lead em `DECISOES-WIREFRAME.md` §14; checkpoint fechado por aprovação automática — meta do dono de 15/09; T10/T11 pendentes do dono): 7 linhas em 8 artboards — a Biblioteca (`Main` 05, `Estados` 01/02/03, `SemRede` 04 — D9, `AmigosPresente` 05, `PerfilJogador` 07) e o Grupo (`GrupoSemGrupo` 06, `GrupoComGrupo` 06, `GrupoEstados` 06). Cada artboard leva a tag `SOC-xx` que cobre.
 
 ### 2.10 Fora do app
 Os cinco widgets (`FORA-01`→`FORA-05`) → **a escada de frases** (`FORA-06`), que é a regra

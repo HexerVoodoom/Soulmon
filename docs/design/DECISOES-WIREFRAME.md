@@ -533,3 +533,56 @@ mantidas.
 - **Para o cartógrafo:** `STAT-02` corrigido nesta rodada ("Who they are" e "The season" montam sempre); falta uma linha para "entre estações" (`seasonProgress() === null`); o `03 §4.8a` repete a premissa errada — ⚠️ divergência para o sync do manual.
 - **Para o `docs/STATUS.md` (achados de código):** (a) `hideMetrics` não chega à `StatsPage` — a interface de props não o tem e o `App.tsx` não o passa; os comentários do arquivo afirmam o contrário; (b) o `App.tsx` nunca passa `epithet` ao `BirthCard` da Estatísticas — só o reveal passa; (c) nenhum teste monta a `StatsPage` (o vazio não tem régua); (d) `03 §4.8a` diz que "Quem é" e "A estação" somem no primeiro uso — falso.
 - **Para o `staff-frontend`:** E1–E5 e S1–S4 são o diff da Estatísticas; nenhum item muda regra de jogo; critério de aceite obrigatório: `hideMetrics` até a `StatsPage` (cobrindo `streakDays` e `daysTogether`); aceites do guarda: (a) contagens de coleção só com ≥ 1, (b) estação sem contagem regressiva, (d) "Level 0" como legenda quieta, (e) as listas sem posição.
+
+## 14. Social: entra / volta / sai (decisão do `soulmon-design-lead`, 15/09/2026)
+
+> **Canvas:** [Soulmon — Wireframes Social](https://claude.ai/code/artifact/7abe2a04-90db-43f1-9d75-dd8a742f3ff0)
+> (rodada 2, pós-crítica) · arquivos em `docs/design/wireframes/social/` (`Main.dc.html` + 7
+> `<TelaEstado>.dc.html` + `canvas.json`; 7 linhas `SOC-*` em 8 artboards — D2: `CONTA-26`→`CONTA-32` viraram
+> `SOC-01`→`SOC-07`; chegada pelo menu).
+> **Crítica:** `design-critic` (rodada 1: **PASSA**, zero bloqueante; 5 ressalvas — apóstrofo, `busyId` por linha,
+> nota D7, offline na aba Group, `gap` — e a maior alavanca: formalizar duas tensões soltas como T10/T11),
+> `soulmon-product-designer` (8 achados; bloqueantes de método: a lista vertical × "árvore/cena" e o "N days
+> playing"; estados que faltavam: `aviso` dentro do grupo, `ocupado` nas ações do grupo, `copiado`),
+> `soulmon-guarda-linha-vermelha` (canvas inteiro, D2: **APROVADA COM RESSALVA**, 0 vetos — (a) `daysPlaying`
+> precisa ser formalizado no `REGISTRO` §5.5; (d) o "0 of 20" do grupo sozinho pede uma linha na 13.7).
+> **Precedência:** código > teste > `CLAUDE.md` > manual > este doc. Valem D2, D9 (offline na Biblioteca), D11 e a
+> decisão 8b (a criatura do amigo no estágio real; galho, não altura — ⚠️ o comentário do código cita "D13", que
+> não existe: achado).
+
+### 14.1 Entra (estrutura ou copy nova, marcada `[novo]` no canvas)
+
+| # | O que entra | Motivo (fonte) | O que perde |
+|---|---|---|---|
+| C1 | **A Biblioteca como canvas próprio**, três abas (All · Friends N/5 · Group), a linha do jogador = UM botão + até duas ações de 44px com rótulo em palavras (presente / amizade); NPCs misturados e marcados "· demo" | D2; `LibraryPage.tsx`; PRINCÍPIOS §10 (só verbos de dar; presente desabilitado sem cronômetro nem contador) | Nada (rodada 1 já assim) |
+| C2 | **Quatro estados declarados, de propósito** — carregando · vazio (amigos / busca) · erro do diretório · sem rede (D9: o mesmo bloco `loadError` + `OfflineSeal` na raiz; os NPCs ficam) — e a linha degradada "Friend (didn't load)" com presente e remover de pé | 03 §4.22 (⚰️ `.catch(() => setPlayers([]))`); D9; D11 (o código não lê `navigator.onLine`; o selo distingue) | Nada |
+| C3 | **O perfil do outro é OLHAR**: criatura grande, nome do pet, "Demo character", "Pet's path · ‹galho›", "Close" — sem HP, sono, escada, presente de dentro | Decisão 8b + proibição #21; guarda (e) passa integralmente | O custo de voltar à lista para presentear — assumido |
+| C4 | **O grupo com a meta SOMADA**: "N of M this week" (do grupo), "showed up today / not yet today" por pessoa, o check-in só com a meta própria do dia, sozinho com texto próprio, meta batida em uma frase de todos | 02 §56; `CoopPanel.tsx`; guarda (d) passa | Nada |
+| C5 | **Estados que a rodada 1 não tinha**: `aviso` dentro do grupo ativo; `ocupado` em criar/entrar/check-in/sair; `copiado` (o ícone vira `check` por 2 s); a nota de que `busyId` é por linha (tocar "remove" gira o presente também); as notas D7 nos `sync` girantes | Product-designer #6/#8; crítico ressalvas 2–3; W3 | Nada |
+
+### 14.2 Volta (a crítica pediu; o lead recusa ou adia)
+
+| # | Pedido | Decisão | Motivo |
+|---|---|---|---|
+| V1 | **"N days playing" por pessoa** (PRINCÍPIOS §10 proíbe "qualquer número por pessoa"; o código o mantém desde 06/09 como duração) — product-designer #4 (alta), guarda (a), crítico ponto 6 | **→ dono (pendente), tensão T10**; no canvas vale o código | Nunca foi formalizado no `REGISTRO` §5.5 — é racional de comentário. Recomendação do lead e do guarda: **manter** (monotônico, não é desempenho, não ordena) e escrever a exceção com a alternativa (tirar — Finch puro) e o gatilho (se virar ordenação/comparação, sai). Aplicado por meta autônoma; vai ao modal final |
+| V2 | **Lista vertical × "árvore/cena, nunca lista vertical"** (PRINCÍPIOS §10 regra 2) — product-designer #3 (alta: é estrutura, não identidade) | **→ dono (pendente), tensão T11**; no canvas vale a lista | O código não tem cena; desenhar uma seria inventar estrutura sem função e sem fonte (W2/D11). Recomendação do lead: manter a lista como diretório sem posição (ordem do servidor, sem número de posição) e, se o dono quiser a cena, encomendá-la ao `staff-frontend` antes da Fase 2 |
+| V3 | Gancho de descoberta fora da Biblioteca (só o menu chega) — product-designer #1 | **Adiado → STATUS** | É decisão de outra tela (Home/menu), não desta |
+| V4 | A aba "Group" ecoar o estado (nome do grupo) como "Friends N/5" ecoa a contagem — product-designer #2 | **Adiado → Fase 2 / copy** | Rótulo; o código não o tem |
+| V5 | Explicar por que a energia cheia é pré-condição do presente — product-designer #5 | **Adiado → `redator-ux`** | Copy, não estrutura |
+| V6 | Apóstrofo reto como o código; `gap: 4` — crítico ressalvas 1 e 5 | **Aceito como nota** | Cosmético; o rodapé avisa para não colar do wireframe em teste de string |
+
+### 14.3 Sai (o que a superfície de hoje tem e o wireframe não tem)
+
+| # | Sai | Motivo |
+|---|---|---|
+| S1 | **O `rank` e o `tasksDone` por jogador** | ⚰️ 06/09/2026 (WP4.11, #21) — não voltam |
+| S2 | **A escada inteira Rookie→Mega no perfil do amigo** | Decisão 8b (galho, não altura) |
+| S3 | **Cronômetro / contador no presente desabilitado** | PRINCÍPIOS §10; MOB §13A |
+| S4 | **"Quanto cada um fez" no grupo; push de quem faltou** | 02 §56 |
+
+### 14.4 O que fica registrado para depois
+
+- **Checkpoint fechado em 15/09/2026 — aprovação automática (meta do dono de 15/09; o crítico carimbou PASSA na rodada 1; o guarda não tem veto).** C1–C5 entram. **Pendente do dono (modal final):** T10 ("N days playing" — manter e formalizar em §5.5 / tirar) e T11 (lista × cena — manter a lista / encomendar a cena).
+- **Para o cartógrafo:** `SOC-06` cobre sete estados do `CoopPanel` numa linha só (sem grupo, com grupo, sozinho, já avisei, meta batida, aviso com grupo, ocupado/copiado) — desdobrar; o offline na aba Group não tem linha.
+- **Para o `docs/STATUS.md` (achados de código):** (a) `branchLevels` calculado e nunca renderizado em `PlayerDetailModal.tsx`; (b) o comentário do mesmo arquivo cita "D13", que não existe (é a decisão 8b); (c) `busyId` é por linha, não por botão; (d) o `LibraryPage` não distingue erro de sem rede (um `loadError`); (e) a 13.7 merece uma linha dizendo que cobre contador SEMANAL de grupo (guarda d).
+- **Para o `staff-frontend`:** C1–C5 e S1–S4 são o diff do Social; nenhum item muda regra de jogo; aceites do guarda: (b) "Friends N/5" é número próprio, (c) o presente desabilitado em palavras, (d) a meta somada, (e) o perfil sem métrica, (f) a linha degradada mantém as ações pelo id.
