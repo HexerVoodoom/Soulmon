@@ -7,7 +7,7 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
-> ## 🌳 14/09/2026 — WIREFRAMES DA EVOLUÇÃO: DESENHADOS, CRITICADOS, CORRIGIDOS — CHECKPOINT DO DONO PENDENTE
+> ## 🌳 14/09/2026 — WIREFRAMES DA EVOLUÇÃO: DESENHADOS, CRITICADOS, CORRIGIDOS E APROVADOS PELO DONO
 >
 > Sexto canvas da SQUAD-DESIGN (Fase 1). Canvas publicado:
 > **https://claude.ai/code/artifact/60ad4289-eaba-4485-9d01-5b2015daa0ed**
@@ -25,9 +25,10 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 >   diz que não protege os corações (X4); estado por nó, offline (D9), reduced-motion
 >   como quadro (D7), `role="dialog"` (X5). **Sai:** "Continue", a tag "LOCKED" do cadeado,
 >   a intercalação em movimento reduzido.
-> - **⏳ DEPENDE DE VOCÊ (checkpoint):** aprovar / devolver / mandar sair. Uma decisão sua:
->   o `EvolveTaskModal` ("cadastre mais tarefas") continua como MODAL logo depois da
->   cerimônia, ou vira um CARD na página de Evolução? O lead recomenda o card.
+> - **✅ Checkpoint fechado em 14/09/2026 (modal):** o dono APROVOU X1–X5. Decisão de regra
+>   nova no `REGISTRO-DE-DECISOES.md` §13: **13.12** o aviso pós-evolução vira CARD na
+>   página de Evolução, não modal (para o `staff-frontend`: `EvolveTaskModal` deixa de
+>   montar; a mensagem entra na página; `filaDeAvisos.contract.test.ts` muda).
 > - **Achados de passagem (código):** ⚠️ **flash** — a cerimônia intercala sprites brancos
 >   de 420 ms até 55 ms (~18 trocas/s) sobre fundo escuro, acima do piso do WCAG 2.3.1 —
 >   capar em ≥ 334 ms sempre; `EvolutionCeremony` sem `role`/`aria-modal`/trap/Escape num
@@ -36,8 +37,8 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 >   de degeneração; `EvolveTaskModal` no kit antigo com botões só em inglês; o gesto duplo
 >   do visor (travar × evoluir); "Degenerate" (dois toques) sem linha no inventário; no
 >   demo os estados de sprite nunca disparam.
-> - **Branch:** `design/wireframes-evolucao` (pushada). Merge só após o seu OK.
->   Próximo canvas: Jogos.
+> - **Branch:** `design/wireframes-evolucao` — mergeada na `main` (ff) após o OK. Próximo
+>   canvas: Jogos.
 
 > ## 📚 14/09/2026 — MANUAL SINCRONIZADO COM `ba957ca7` (wireframes do Onboarding-funil)
 >
