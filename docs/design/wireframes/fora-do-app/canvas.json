@@ -6,7 +6,7 @@
       "x": 0,
       "y": 0,
       "w": 390,
-      "h": 2439,
+      "h": 2499,
       "page": "page-1"
     },
     {
@@ -33,7 +33,7 @@
       "x": 0,
       "y": 0,
       "w": 390,
-      "h": 2499,
+      "h": 2709,
       "page": "page-2"
     },
     {
@@ -42,7 +42,7 @@
       "x": 490,
       "y": 0,
       "w": 390,
-      "h": 2274,
+      "h": 2424,
       "page": "page-2"
     },
     {
@@ -51,7 +51,7 @@
       "x": 980,
       "y": 0,
       "w": 390,
-      "h": 2319,
+      "h": 2394,
       "page": "page-2"
     },
     {
@@ -60,7 +60,7 @@
       "x": 0,
       "y": 0,
       "w": 390,
-      "h": 2289,
+      "h": 2394,
       "page": "page-3"
     }
   ],
@@ -71,7 +71,7 @@
       "x": 0,
       "y": -170,
       "w": 900,
-      "text": "Soulmon — Wireframes Fora do app (Fase 1, cinza, rodada 1, 15/09/2026). A superfície vista dezenas de vezes por dia SEM que ninguém decida abri-la — por isso a mais perigosa (PRINCÍPIOS §12). A pergunta: \"ele está bem?\" — e nada mais. Página 1 = os 5 widgets Android (A horizontal 3×1, B vertical 2×2, C pet 1×1, D chat 3×1, E tela 3×2) e a escada de 7 frases do ‹WidgetRenderer.kt›; página 2 = o overlay Electron (o widget do desktop: as mesmas proibições); página 3 = os 7 pushes (‹_pushCopy.js› é o dono único do texto e do horário; as 20h moram só no cliente). [decisão 13/09] = T2/13.2 (o contador \"N de M\" no widget SÓ com ≥ 1 feita, sem verbo de cobrança — ⚠️ o código ainda imprime \"0/5\": achado de implementação), D11. Idioma: a escada do widget e o contador são só PT no código (o overlay e o push têm PT+EN) — desenhado como o código, com a glosa EN marcada ‹[novo]›. Toque em qualquer ponto do widget abre o app (sem alvo por região) — por isso não há números de foco nos widgets; no overlay, sim."
+      "text": "Soulmon — Wireframes Fora do app (Fase 1, cinza, rodada 2 pós-crítica, 15/09/2026). A superfície vista dezenas de vezes por dia SEM que ninguém decida abri-la — por isso a mais perigosa (PRINCÍPIOS §12). A pergunta: \"ele está bem?\" — e nada mais. Página 1 = os 5 widgets Android (A horizontal 3×1, B vertical 2×2, C pet 1×1, D chat 3×1, E tela 3×2) e a escada de 7 frases do ‹WidgetRenderer.kt›; página 2 = o overlay Electron (o widget do desktop: as mesmas proibições); página 3 = os 7 pushes (‹_pushCopy.js› é o dono único do texto e do horário; as 20h moram só no cliente). [decisão 13/09] = T2/13.2 (o contador \"N de M\" no widget SÓ com ≥ 1 feita, sem verbo de cobrança — ⚠️ o código ainda imprime \"0/5\": achado de implementação), D11. Idioma: a escada do widget e o contador são só PT no código (o overlay e o push têm PT+EN) — desenhado como o código, com a glosa EN marcada ‹[novo]›. Toque em qualquer ponto do widget abre o app (sem alvo por região) — por isso não há números de foco nos widgets; no overlay, sim."
     }
   ],
   "pages": [
