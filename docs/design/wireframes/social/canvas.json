@@ -6,7 +6,7 @@
       "x": 0,
       "y": 0,
       "w": 390,
-      "h": 2054,
+      "h": 2189,
       "page": "page-1"
     },
     {
@@ -24,7 +24,7 @@
       "x": 980,
       "y": 0,
       "w": 390,
-      "h": 1904,
+      "h": 1949,
       "page": "page-1"
     },
     {
@@ -42,7 +42,7 @@
       "x": 0,
       "y": 2624,
       "w": 390,
-      "h": 2054,
+      "h": 2144,
       "page": "page-1"
     },
     {
@@ -69,7 +69,7 @@
       "x": 980,
       "y": 0,
       "w": 390,
-      "h": 2109,
+      "h": 2184,
       "page": "page-2"
     }
   ],
@@ -80,7 +80,7 @@
       "x": 0,
       "y": -170,
       "w": 900,
-      "text": "Soulmon — Wireframes Social (Fase 1, cinza, rodada 1, 15/09/2026). D2: a Biblioteca ganhou canvas próprio; CONTA-26→32 migram para SOC-01→07; o caminho de chegada continua sendo a linha \"Library\" do menu sanduíche (ÚNICO caminho — a Biblioteca saiu da barra). A pergunta da família (PRINCÍPIOS §10): \"quem mais está por aqui, e o que eu posso dar?\" — só verbos de DAR (presente, amizade, \"avisar que apareci\"); nenhum componente de métrica do próprio perfil; a meta do grupo é SOMADA (número do grupo, nunca de um membro; por pessoa só \"showed up today / not yet today\"). Três abas: All · Friends N/5 · Group. Quatro estados declarados, de propósito: carregando · vazio · erro · sem rede (⚰️ o ‹.catch(() => setPlayers([]))› — \"não há ninguém\" como resposta a falha de rede — morreu). O perfil do outro é OLHAR: a criatura grande, o nome do pet, o GALHO (não a altura), \"N days playing\" (decisão de 06/09: duração, só cresce, não ordena — ⚠️ tensão com PRINCÍPIOS §10 \"nenhum número por pessoa\", registrada). [decisão 13/09] = D2, D9 (artboard offline), D11. Números = ordem de foco (1 = skip link, oculto)."
+      "text": "Soulmon — Wireframes Social (Fase 1, cinza, rodada 2 pós-crítica, 15/09/2026). D2: a Biblioteca ganhou canvas próprio; CONTA-26→32 migram para SOC-01→07; o caminho de chegada continua sendo a linha \"Library\" do menu sanduíche (ÚNICO caminho — a Biblioteca saiu da barra). A pergunta da família (PRINCÍPIOS §10): \"quem mais está por aqui, e o que eu posso dar?\" — só verbos de DAR (presente, amizade, \"avisar que apareci\"); nenhum componente de métrica do próprio perfil; a meta do grupo é SOMADA (número do grupo, nunca de um membro; por pessoa só \"showed up today / not yet today\"). Três abas: All · Friends N/5 · Group. Quatro estados declarados, de propósito: carregando · vazio · erro · sem rede (⚰️ o ‹.catch(() => setPlayers([]))› — \"não há ninguém\" como resposta a falha de rede — morreu). O perfil do outro é OLHAR: a criatura grande, o nome do pet, o GALHO (não a altura), \"N days playing\" (decisão de 06/09: duração, só cresce, não ordena — ⚠️ tensão com PRINCÍPIOS §10 \"nenhum número por pessoa\", registrada). [decisão 13/09] = D2, D9 (artboard offline), D11. Números = ordem de foco (1 = skip link, oculto)."
     }
   ],
   "pages": [
