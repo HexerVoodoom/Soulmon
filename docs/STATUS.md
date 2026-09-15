@@ -7,6 +7,17 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 📚 15/09/2026 — MANUAL SINCRONIZADO COM `3abee07f` (wireframes da Loja)
+>
+> `/manter-docs auto` após o merge da Loja (`9acfa7e0`→`3abee07f`, 5 commits). Delta em três docs:
+> - `00-MAPA.md` §6.7 — oito fluxos, 191/272 em `aprovado`, a Loja como 7º canvas, a §12 e
+>   13.1–13.14 (`doc-bibliotecario`; o verificador escapou dois pipes crus numa célula).
+> - `10-DISCUSSOES-E-DECISOES.md` — três linhas novas no §11 (decisão §12, 13.14, o bloco 🛒),
+>   §13 e §17 (`doc-historiador`).
+> - `01-VISAO.md` — sem alteração (já dizia que o 💗 saiu da loja em 06/09; a 13.14 reafirma).
+> - Verificação: `doc-verificador` ×2, tudo bate; carimbos em 15/09/2026. Guard verde (10/10).
+> - `.sincronizado.json` → `3abee07f`.
+
 > ## 🛒 15/09/2026 — WIREFRAMES DA LOJA: DESENHADOS, CRITICADOS, CORRIGIDOS E APROVADOS (META AUTÔNOMA DO DONO)
 >
 > Oitavo canvas da SQUAD-DESIGN (Fase 1). Canvas publicado:

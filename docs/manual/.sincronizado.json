@@ -1,6 +1,6 @@
 {
-  "sha": "9acfa7e014d7fb0b20661c27c885c5b723767606",
+  "sha": "3abee07f6397057d326e8552a055500e7d306762",
   "data": "15/09/2026",
-  "por": "doc-mantenedor (sessão) — marcador: o delta efdc1088→9acfa7e0 era só o bloco de STATUS da própria sincronização",
+  "por": "doc-mantenedor (sessão)",
   "nota": "Escrito pelo doc-mantenedor ao fechar cada sincronização. Lido por scripts/docs-delta.mjs e pelo hook de sessão. Nunca edite à mão."
 }
