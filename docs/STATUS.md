@@ -7,6 +7,15 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 📚 15/09/2026 — MANUAL SINCRONIZADO COM `cdb08165` (wireframes do Social)
+>
+> `/manter-docs auto` após o merge do Social (`0d49ab16`→`cdb08165`, 3 commits). Delta em três docs:
+> - `00-MAPA.md` §6.7 — dez fluxos, 207/272 em `aprovado`, 13 fluxos na tabela, o Social 10º (D2), a §14 (`doc-bibliotecario`).
+> - `10-DISCUSSOES-E-DECISOES.md` — duas linhas novas no §11 (decisão §14, o bloco 🤝), §13 e §17 (`doc-historiador`).
+> - `01-VISAO.md` — sem alteração (o delta do doc era só o bloco de STATUS).
+> - Verificação: `doc-verificador`, tudo bate; carimbos em 15/09/2026. Guard verde (10/10).
+> - `.sincronizado.json` → `cdb08165`.
+
 > ## 🤝 15/09/2026 — WIREFRAMES DO SOCIAL: DESENHADOS, CRITICADOS, CORRIGIDOS E APROVADOS (META AUTÔNOMA DO DONO)
 >
 > Décimo canvas da SQUAD-DESIGN (Fase 1). Canvas publicado:
