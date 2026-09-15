@@ -246,27 +246,27 @@ está vazio em 13/09/2026).
 
 | id | fluxo | tela | estado (condição do `03`) | chega por | sai para | prio | estado do wireframe |
 |---|---|---|---|---|---|---|---|
-| `EVO-01` | Evolução | fileira de sub-abas | normal — 3 chips sob `{(currentView === 'evolution' \&#124;\&#124; currentView === 'stats' \&#124;\&#124; currentView === 'pet') && (…)}`: "Evolução"/"Evolution", `Soulmon` (igual nos dois idiomas), "Estatísticas"/"Stats" | célula 3 da barra | `setCurrentView(view)` | P1 | a desenhar |
-| `EVO-02` | Evolução | `EvolutionPath` | normal — barra parcial, cadeado aberto | célula 3 (que também chama `contarMissao('evolve-view')`) ou `EvoTrail.onOpen` | chips | P1 | a desenhar |
-| `EVO-03` | Evolução | `EvolutionPath` | **travado** — toque na criatura atual alterna `evolutionLocked` (`onToggleEvolutionLock`); a cerimônia **não abre** e `canEvolve` é `false`, mas os `perfectDays` seguem acumulando | toque na criatura ou botão de 44px | — | P1 | a desenhar |
-| `EVO-04` | Evolução | `EvolutionPath` | **destravado com barra cheia** — quem dispara é o JOGADOR (`MANUAL_EVOLUTION = true`); a virada do dia nunca evolui sozinha | meta acumulada | `onEvolveRequest` → `EVO-13` | P1 | a desenhar |
-| `EVO-05` | Evolução | `EvolutionPath` | gerando sprite — `generatingSprites` (o card `GERANDO`) | evolução nova | `onRetrySprite` | P1 | a desenhar |
-| `EVO-06` | Evolução | `EvolutionPath` | erro de sprite — `onRetrySprite` | falha da geração | nova tentativa | P1 | a desenhar |
-| `EVO-07` | Evolução | `EvolutionPath` | sintonia do visor — `onTuneVisor`, `onRevertVisor`, `onSeenTune` (+ o anúncio `aria-live` de `HOME-48`) | card do sprite | — | P2 | a desenhar |
-| `EVO-08` | Evolução | `EvolutionPath` | silhueta — forma ainda não alcançada | sempre que houver futuro | — | P1 | a desenhar |
-| `EVO-09` | Evolução | `EvolutionPath` | ritmo de cuidado — `carePattern` só é passado quando `carePatternReading.confident`; ele é **critério de desempate**, os atributos mandam | histórico suficiente | — | P2 | a desenhar |
-| `EVO-10` | Evolução | `EvolutionPath` | ritmo não confiável — com pouco histórico a leitura **se declara não-confiável e não desempata** | histórico curto | — | P2 | a desenhar |
-| `EVO-11` | Evolução | Evolução · convite | **demo** — `{currentView === 'evolution' && gameState.demoCharacterId && (…UnlockNudge…)}` com `variant='buy'` | visita à página | `setUnlockReason('evolution')` | P1 | a desenhar |
-| `EVO-12` | Evolução | Evolução · convite | **pago com criatura de demo** — mesmo bloco com `variant='reveal'` quando `accountTier === 'paid'` | idem | `setUpgradeRitual(true)` → `ONB-37` | P1 | a desenhar |
-| `EVO-13` | Evolução | `EvolutionCeremony` | intercalando — os sprites da forma atual e da próxima alternam por `TOTAL_MS` (3000 ms), brancos, sobre vídeo em loop | `handleEvolveRequest` (só se `next !== evolutionStage`) | — | P1 | a desenhar |
-| `EVO-14` | Evolução | `EvolutionCeremony` | estabilizada — para na forma evoluída | fim do ciclo | `onEvolved={handleEvolve}` · `onClose` | P1 | a desenhar |
-| `EVO-15` | Evolução | `EvolveTaskModal` | normal — `isOpen={evolveModalStage !== null && evolutionCeremony === null}` (o `&& null` é o encadeamento que **faltava**: ele reaparecia por baixo da cerimônia cobrando "crie mais atividades"). Mostra `registeredForDay(...)`, **nunca `activities.length` cru** | level-up detectado | `onCreateTask` → `setCreateModalOpen(true)` | P1 | a desenhar |
-| `EVO-16` | Evolução | botão "Renascimento" | normal — `{currentView === 'evolution' && canRebirth(gameState) && (…)}`: só depois do **ultra**, só `accountTier:'paid'`, **uma vez só** | página de Evolução | `rebirthOpen` | P2 | a desenhar |
-| `EVO-17` | Evolução | `RebirthModal` | normal — a perda é dita **antes** de qualquer escolha, com nome e número, e o que **não** se perde é dito junto | botão | `onClose` | P2 | a desenhar |
-| `EVO-18` | Evolução | `RebirthModal` | confirmando — exige um **segundo toque** (`confirmando`); `onConfirm` é async e **só fecha com `ok`** | 1º toque | commit | P2 | a desenhar |
-| `EVO-19` | Evolução | `RebirthModal` | escolhas — criatura (campo aberto), escola (as 6 do class-system) e elemento (base ou par de 2º nível) | dentro do modal | `applyRebirth` | P2 | a desenhar |
-| `EVO-20` | Evolução | recusa de renascimento | **`not-paid`** — `{currentView === 'evolution' && rebirthRefusal(gameState) === 'not-paid' && (…UnlockNudge reason="evolution"…)}`. `not-ultra` **não vira convite** (a página já conta a escada) e `already-used` é registro, nunca oferta repetida | visita | `setUnlockReason('evolution')` | P2 | a desenhar |
-| `EVO-21` | Evolução | linha "Renasceu do …" | registro — `{currentView === 'evolution' && gameState.rebirth && (…)}`; o registro **nunca é apagado** (é o que impede a segunda vez) | após renascer | — | P2 | a desenhar |
+| `EVO-01` | Evolução | fileira de sub-abas | normal — 3 chips sob `{(currentView === 'evolution' \&#124;\&#124; currentView === 'stats' \&#124;\&#124; currentView === 'pet') && (…)}`: "Evolução"/"Evolution", `Soulmon` (igual nos dois idiomas), "Estatísticas"/"Stats" | célula 3 da barra | `setCurrentView(view)` | P1 | desenhado |
+| `EVO-02` | Evolução | `EvolutionPath` | normal — barra parcial, cadeado aberto | célula 3 (que também chama `contarMissao('evolve-view')`) ou `EvoTrail.onOpen` | chips | P1 | desenhado |
+| `EVO-03` | Evolução | `EvolutionPath` | **travado** — toque na criatura atual alterna `evolutionLocked` (`onToggleEvolutionLock`); a cerimônia **não abre** e `canEvolve` é `false`, mas os `perfectDays` seguem acumulando | toque na criatura ou botão de 44px | — | P1 | desenhado |
+| `EVO-04` | Evolução | `EvolutionPath` | **destravado com barra cheia** — quem dispara é o JOGADOR (`MANUAL_EVOLUTION = true`); a virada do dia nunca evolui sozinha | meta acumulada | `onEvolveRequest` → `EVO-13` | P1 | desenhado |
+| `EVO-05` | Evolução | `EvolutionPath` | gerando sprite — `generatingSprites` (o card `GERANDO`) | evolução nova | `onRetrySprite` | P1 | desenhado |
+| `EVO-06` | Evolução | `EvolutionPath` | erro de sprite — `onRetrySprite` | falha da geração | nova tentativa | P1 | desenhado |
+| `EVO-07` | Evolução | `EvolutionPath` | sintonia do visor — `onTuneVisor`, `onRevertVisor`, `onSeenTune` (+ o anúncio `aria-live` de `HOME-48`) | card do sprite | — | P2 | desenhado |
+| `EVO-08` | Evolução | `EvolutionPath` | silhueta — forma ainda não alcançada | sempre que houver futuro | — | P1 | desenhado |
+| `EVO-09` | Evolução | `EvolutionPath` | ritmo de cuidado — `carePattern` só é passado quando `carePatternReading.confident`; ele é **critério de desempate**, os atributos mandam | histórico suficiente | — | P2 | desenhado |
+| `EVO-10` | Evolução | `EvolutionPath` | ritmo não confiável — com pouco histórico a leitura **se declara não-confiável e não desempata** | histórico curto | — | P2 | desenhado |
+| `EVO-11` | Evolução | Evolução · convite | **demo** — `{currentView === 'evolution' && gameState.demoCharacterId && (…UnlockNudge…)}` com `variant='buy'` | visita à página | `setUnlockReason('evolution')` | P1 | desenhado |
+| `EVO-12` | Evolução | Evolução · convite | **pago com criatura de demo** — mesmo bloco com `variant='reveal'` quando `accountTier === 'paid'` | idem | `setUpgradeRitual(true)` → `ONB-37` | P1 | desenhado |
+| `EVO-13` | Evolução | `EvolutionCeremony` | intercalando — os sprites da forma atual e da próxima alternam por `TOTAL_MS` (3000 ms), brancos, sobre vídeo em loop | `handleEvolveRequest` (só se `next !== evolutionStage`) | — | P1 | desenhado |
+| `EVO-14` | Evolução | `EvolutionCeremony` | estabilizada — para na forma evoluída | fim do ciclo | `onEvolved={handleEvolve}` · `onClose` | P1 | desenhado |
+| `EVO-15` | Evolução | `EvolveTaskModal` | normal — `isOpen={evolveModalStage !== null && evolutionCeremony === null}` (o `&& null` é o encadeamento que **faltava**: ele reaparecia por baixo da cerimônia cobrando "crie mais atividades"). Mostra `registeredForDay(...)`, **nunca `activities.length` cru** | level-up detectado | `onCreateTask` → `setCreateModalOpen(true)` | P1 | desenhado |
+| `EVO-16` | Evolução | botão "Renascimento" | normal — `{currentView === 'evolution' && canRebirth(gameState) && (…)}`: só depois do **ultra**, só `accountTier:'paid'`, **uma vez só** | página de Evolução | `rebirthOpen` | P2 | desenhado |
+| `EVO-17` | Evolução | `RebirthModal` | normal — a perda é dita **antes** de qualquer escolha, com nome e número, e o que **não** se perde é dito junto | botão | `onClose` | P2 | desenhado |
+| `EVO-18` | Evolução | `RebirthModal` | confirmando — exige um **segundo toque** (`confirmando`); `onConfirm` é async e **só fecha com `ok`** | 1º toque | commit | P2 | desenhado |
+| `EVO-19` | Evolução | `RebirthModal` | escolhas — criatura (campo aberto), escola (as 6 do class-system) e elemento (base ou par de 2º nível) | dentro do modal | `applyRebirth` | P2 | desenhado |
+| `EVO-20` | Evolução | recusa de renascimento | **`not-paid`** — `{currentView === 'evolution' && rebirthRefusal(gameState) === 'not-paid' && (…UnlockNudge reason="evolution"…)}`. `not-ultra` **não vira convite** (a página já conta a escada) e `already-used` é registro, nunca oferta repetida | visita | `setUnlockReason('evolution')` | P2 | desenhado |
+| `EVO-21` | Evolução | linha "Renasceu do …" | registro — `{currentView === 'evolution' && gameState.rebirth && (…)}`; o registro **nunca é apagado** (é o que impede a segunda vez) | após renascer | — | P2 | desenhado |
 
 ### 1.6 Jogos (a página `currentView === 'games'`, os 4 minijogos e o Torneio)
 
@@ -412,7 +412,7 @@ Um fluxo por despacho, dois agentes nunca no mesmo canvas (`CONTRACT.md`).
 | 2 | `wireframes/atividades/` — **[canvas publicado](https://claude.ai/code/artifact/4c632c62-a413-42f3-b6a4-35244038bde1)** (14/09/2026, 17 artboards em 4 páginas, rodada 2 pós-crítica; `Main.dc.html` + 16 `<TelaEstado>.dc.html` + `canvas.json`) | 16 | 27 | 13 / 14 / 0 | o átomo mais repetido do app (`RitualRow`); uma linha bem desenhada arruma a Home inteira |
 | 3 | `wireframes/rituais/` — **[canvas publicado](https://claude.ai/code/artifact/526d821f-9d70-497e-bb70-c932701c3a3a)** (14/09/2026, 21 artboards em 4 páginas, rodada 2 pós-crítica; `Main.dc.html` + 20 `<TelaEstado>.dc.html` + `canvas.json`) | 10 | 26 | 11 / 10 / 5 | check-in e relatório passam por todo usuário ativo **todo dia**, e as duas filas são estrutura (W7) |
 | 4 | `wireframes/pet/` — **[canvas publicado](https://claude.ai/code/artifact/80f27593-30d4-4c5d-a322-8f9ef3d0549e)** (14/09/2026, 9 artboards em 3 páginas, rodada 2 pós-crítica; `Main.dc.html` + 8 `<TelaEstado>.dc.html` + `canvas.json`) | 3 | 8 | 0 / 0 / 8 | D1: canvas próprio, logo após Rituais — a ficha é onde a criatura é heroína, e o Dex é a única coleção do jogo |
-| 5 | `evolucao.dc.html` | 11 | 21 | 0 / 12 / 9 | o clímax do jogo e o único lugar onde demo × pago muda a página inteira |
+| 5 | `wireframes/evolucao/` — **[canvas publicado](https://claude.ai/code/artifact/60ad4289-eaba-4485-9d01-5b2015daa0ed)** (14/09/2026, 15 artboards em 3 páginas, rodada 1; `Main.dc.html` + 14 `<TelaEstado>.dc.html` + `canvas.json`) | 11 | 21 | 0 / 12 / 9 | o clímax do jogo e o único lugar onde demo × pago muda a página inteira |
 | 6 | `jogos.dc.html` | 7 | 25 | 0 / 20 / 5 | semanal, mas é onde mora a maior máquina de estados do app (9 fases da masmorra) |
 | 7 | `loja.dc.html` | 6 | 13 | 0 / 11 / 2 | semanal; e é onde as três moedas não podem se confundir |
 | 8 | `wireframes/onboarding-funil/` — **[canvas publicado](https://claude.ai/code/artifact/443c5305-7e71-4a8f-8e2e-ca343206e8c6)** (14/09/2026, 17 artboards em 4 páginas, rodada 2 pós-crítica; `Main.dc.html` + 16 `<TelaEstado>.dc.html` + `canvas.json`; D3: o funil — ONB-01→20, 34, 39→43; ONB-13 `fora` por D4) | 18 | 26 | 0 / 21 / 5 | uma vez por jogador — mas por **todos** eles. Ver a ressalva na §3.2 item 3 |
@@ -460,7 +460,9 @@ estados (`PET-03`→`PET-05`) → o diário (`PET-06`, `PET-07`) → carregando 
 Sub-abas (`EVO-01`) → `EvolutionPath` com o cadeado como ação dominante
 (`EVO-02`→`EVO-10`) → os dois convites, demo e pago (`EVO-11`, `EVO-12`) → cerimônia e o
 modal que já montou por baixo dela (`EVO-13`→`EVO-15`) → renascimento
-(`EVO-16`→`EVO-21`) → a sub-aba Soulmon (`EVO-22`→`EVO-29`).
+(`EVO-16`→`EVO-21`); a sub-aba Soulmon migrou para o canvas Pet (D1, §1.4a).
+
+**Desenhado em 14/09/2026** (`design-wireframer`): 21 linhas em 15 artboards — a página (`Main` 01/02/08, `EvoArvore` 08/09/10, `EvoTravado` 03, `EvoPronto` 04, `EvoSpriteEstados` 05/06/07, `EvoOffline` 05 + D9, `EvoEstados` 08/09), os convites e a cerimônia (`ConviteDemo` 11, `ConvitePago` 12, `Cerimonia` 13/14, `CerimoniaReduzida` 13 + D7, `EvolveTaskModal` 15) e o renascimento (`RenascimentoBlocos` 16/20/21, `RenascimentoModal` 17/19, `RenascimentoConfirmando` 18). Cada artboard leva a tag `EVO-xx` que cobre.
 
 ### 2.5 Jogos
 A página (`JOGO-01`) → masmorra inteira, que é a máquina de estados

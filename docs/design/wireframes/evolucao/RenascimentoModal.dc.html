@@ -1,0 +1,142 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#111;background:#fff;-webkit-font-smoothing:antialiased}
+a{color:#111}a:hover{color:#666}
+code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
+.ab{width:390px;display:flex;flex-direction:column}
+.phone{width:390px;height:844px;box-sizing:border-box;border:1px solid #999;position:relative;overflow:hidden;background:#fff;display:flex;flex-direction:column}
+.phone.tall{height:auto;min-height:844px}
+.content{flex:1;overflow:hidden;padding:8px 16px 0;display:flex;flex-direction:column;gap:8px;min-height:0}
+.sheet{flex:1;overflow:hidden;padding:12px 16px;display:flex;flex-direction:column;gap:12px;min-height:0}
+.box{background:#ddd;border:1px solid #999;border-radius:8px;box-sizing:border-box}
+.card{background:#fff;border:1px solid #999;border-radius:8px;padding:12px;box-sizing:border-box;display:flex;flex-direction:column;gap:8px}
+.t{font-size:13px;line-height:1.3;margin:0}
+.b{font-weight:600}
+.s{color:#666;font-size:12px;line-height:1.3;margin:0}
+.h1{font-size:14px;font-weight:700;letter-spacing:.06em;margin:0}
+.h2{font-size:14px;font-weight:700;margin:0}
+.btn{min-height:44px;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid #999;border-radius:8px;background:#ddd;font-size:13px;font-weight:600;padding:0 14px;box-sizing:border-box}
+.btn.ghost{background:#fff}
+.btn.dis{color:#999;border-style:dashed;background:#fff}
+.ico{width:24px;height:24px;border-radius:50%;border:1px solid #999;display:inline-flex;align-items:center;justify-content:center;font-size:8px;color:#666;flex:none;background:#fff;text-transform:lowercase;box-sizing:border-box}
+.ico.big{width:32px;height:32px;font-size:9px}
+.ico.on{background:#111;color:#fff;border-color:#111}
+.tap{min-width:44px;min-height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11px;box-sizing:border-box}
+.nav{height:68px;border-top:1px solid #999;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));background:#fff;flex:none}
+.navc{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:11px;position:relative;min-height:44px}
+.navc.on{font-weight:700}
+.navc.on::after{content:"";position:absolute;left:26%;right:26%;bottom:0;height:3px;background:#111}
+.dock{height:52px;border-top:1px solid #999;display:flex;align-items:center;gap:8px;padding:0 12px;background:#fff;flex:none;box-sizing:border-box}
+.input{flex:1;min-height:40px;border:1px solid #999;border-radius:8px;background:#fff;display:flex;align-items:center;padding:0 10px;color:#666;font-size:13px;box-sizing:border-box}
+.input.on{color:#111}
+.tag{display:inline-block;border:1px dashed #999;font-size:9px;color:#666;padding:0 4px;border-radius:3px;line-height:14px;font-weight:600;background:#fff;white-space:nowrap}
+.tag.novo{border-style:solid;color:#111}
+.note{font-size:10px;color:#666;line-height:1.25;margin:0}
+.fo{display:inline-flex;width:14px;height:14px;border:1px solid #111;font-size:9px;align-items:center;justify-content:center;border-radius:2px;background:#fff;color:#111;font-weight:700;flex:none;font-style:normal;margin-right:2px}
+.seg{display:inline-flex;gap:2px;vertical-align:middle}
+.seg i{display:block;width:9px;height:11px;border:1px solid #999;background:#fff}
+.seg i.on{background:#666}
+.seg i.half{background:linear-gradient(90deg,#666 50%,#fff 50%)}
+.hdr{display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:40px}
+.meters{position:absolute;left:10px;bottom:8px;display:flex;gap:12px;align-items:center;font-size:10px;color:#666}
+.meters .m{display:inline-flex;align-items:center;gap:4px}
+.meters .m .lbl{font-weight:700;letter-spacing:.04em}
+.stage{position:relative;height:200px;border:1px solid #999;border-radius:10px;background:#fff;overflow:hidden;box-sizing:border-box}
+.stage.mini{height:120px}
+.stage .pet{position:absolute;left:140px;top:56px;width:110px;height:96px;border:1px solid #999;background:#ddd;display:flex;align-items:center;justify-content:center;font-weight:700;letter-spacing:.1em;color:#666;box-sizing:border-box}
+.stage.mini .pet{top:14px;width:80px;height:70px;left:155px}
+.stage .shadow{position:absolute;left:125px;top:146px;width:140px;height:14px;border-radius:50%;background:#ddd;border:1px solid #999}
+.stage.mini .shadow{top:80px}
+.stage .bubble{position:absolute;left:16px;right:16px;top:10px;min-height:32px;border:1px solid #999;border-radius:8px;background:#fff;padding:6px 10px;font-size:12px;line-height:1.3;box-sizing:border-box}
+.stage .bubble::after{content:"";position:absolute;left:170px;bottom:-9px;width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:9px solid #999}
+.stage .prop{position:absolute;border:1px solid #999;background:#fff;border-radius:6px;font-size:9px;color:#666;padding:2px 5px}
+.deck{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+.deck .tap{border:1px solid transparent;border-radius:8px;position:relative;padding:2px 0}
+.deck .tap.dis{color:#999}
+.deck .tap.dis .ico{border-style:dashed}
+.nameline{text-align:center;line-height:1.2}
+.slot{display:flex;flex-direction:column;gap:6px}
+.more{min-height:44px;border:1px dashed #999;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;background:#fff}
+.sticky{border-top:1px dashed #666;font-size:9px;color:#666;text-align:center;line-height:14px;margin:0}
+.row{display:flex;align-items:flex-start;gap:8px;min-height:56px;border-top:1px solid #ddd;padding:6px 0}
+.row:first-of-type{border-top:0}
+.row .chk{width:44px;height:44px;display:flex;align-items:center;justify-content:center;flex:none}
+.row .chk i{width:22px;height:22px;border:1px solid #999;border-radius:4px;display:block;background:#fff}
+.row .chk i.on{background:#666}
+.row .nm{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;padding-top:6px}
+.row.dim .nm,.row.dim .ico{opacity:.5}
+.row.haunt .nm{border-left:3px double #666;padding-left:6px}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{display:inline-flex;align-items:center;gap:3px;border:1px solid #999;border-radius:999px;padding:1px 7px;font-size:10px;color:#666;background:#fff;min-height:18px}
+.chip.on{background:#ddd;color:#111}
+.dots{display:inline-flex;gap:4px;align-items:center}
+.dots i{display:block;width:10px;height:10px;border:1px solid #999;background:#fff;box-sizing:border-box}
+.dots i.done{background:#666;border-radius:50%}
+.dots i.shield{background:#fff;border:2px solid #666;transform:rotate(45deg);width:9px;height:9px}
+.dots i.dash{height:2px;border:0;background:#999;width:10px;align-self:center}
+.dots i.ring{border-radius:50%;border-style:dashed}
+.dots i.slot{width:9px;height:9px;border:2px dashed #999;transform:rotate(45deg);background:#fff}
+.steps{display:flex;flex-direction:column;gap:2px;margin-top:2px}
+.step{display:flex;align-items:center;gap:6px;min-height:44px;font-size:12px}
+.step i{width:18px;height:18px;border:1px solid #999;border-radius:4px;display:block;background:#fff;flex:none}
+.step i.on{background:#666}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.cell{min-height:80px;border:1px solid #999;border-radius:8px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:11px;box-sizing:border-box;text-align:center}
+.cell.sel{border-width:2px;border-color:#111;background:#ddd}
+.strip{border:1px dashed #999;border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:8px;background:#fff}
+.strip .cap{font-size:10px;color:#666;display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:0}
+.foot{width:390px;box-sizing:border-box;border:1px solid #999;border-top:0;background:#eee;padding:10px 12px 12px;display:flex;flex-direction:column;gap:6px;font-size:11px;line-height:1.35;color:#111}
+.foot h4{margin:0;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#666}
+.foot p{margin:0}
+.foot ul{margin:0;padding-left:14px}
+.foot li{margin:0}
+.toast{position:absolute;left:16px;right:16px;bottom:130px;border:1px solid #999;border-radius:8px;background:#fff;padding:10px 12px;font-size:12px;box-shadow:0 2px 0 #999}
+.dim{opacity:.55}
+.scrollhint{position:absolute;right:12px;bottom:126px;font-size:10px;color:#666;background:#fff;border:1px dashed #999;border-radius:4px;padding:2px 6px}
+.folha{position:absolute;left:0;right:0;bottom:0;border-top:1px solid #999;background:#fff;padding:12px 16px 16px;display:flex;flex-direction:column;gap:12px}
+.lbl{font-size:11px;color:#666;font-weight:600;letter-spacing:.03em;margin:0}
+.segm{display:flex;border:1px solid #999;border-radius:8px;overflow:hidden}
+.segm span{flex:1;min-height:44px;display:flex;align-items:center;justify-content:center;font-size:13px}
+.segm span.on{background:#ddd;font-weight:600}
+.radios{display:flex;gap:6px;flex-wrap:wrap}
+.radio{min-height:44px;min-width:44px;border:1px solid #999;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 10px;font-size:12px;box-sizing:border-box;background:#fff}
+.radio.on{background:#ddd;font-weight:600}
+.bars{display:flex;gap:6px;align-items:flex-end;height:60px}
+.bar{flex:1;background:#ddd;border:1px solid #999;border-radius:3px 3px 0 0;display:flex;align-items:flex-end;justify-content:center;font-size:9px;color:#666}
+</style>
+</helmet>
+<div class="ab">
+<div class="phone">
+  <div class="content dim" style="gap:8px"><header class="hdr"><h1 class="h1">SOULMON</h1></header><div aria-label="Evolution · Soulmon · Stats" style="display:flex;gap:6px"><span role="button" aria-current="page" class="btn" style="flex:1;min-width:0;padding:0 4px;font-size:12px">Evolution</span><span role="button"  class="btn ghost" style="flex:1;min-width:0;padding:0 4px;font-size:12px">Soulmon</span><span role="button"  class="btn ghost" style="flex:1;min-width:0;padding:0 4px;font-size:12px">Stats</span></div></div>
+  <div class="folha" role="dialog" aria-modal="true" aria-label="Rebirth" style="max-height:800px">
+    <div style="display:flex;align-items:center;justify-content:space-between"><h2 class="h2">Rebirth</h2><span class="tap" style="min-width:44px" role="button" aria-label="Close"><span class="tag">× = last in focus order · Escape closes</span><span class="ico ">x</span></span></div>
+    <p class="t">Your creature reached the top. Rebirth returns them to an egg: back to Rookie, attribute points reset to zero — in exchange they are born deeper, with more points at every stage, and this time the two of you choose who they are.</p>
+    <p class="s">Nothing else is lost: Bits, Emblems, Credits, decorations, scenes, dreams, habits, tasks, complete days and the forms you already unlocked all stay exactly as they are.</p>
+    <p class="s b">It happens ONCE per creature, and there is no undo.</p>
+    <div><p class="lbl" style="margin-bottom:6px">What creature will they be?</p><div class="input" role="textbox" aria-label="What creature will they be?" style="min-height:44px"><i class="fo">2</i><span style="color:#999">e.g. a glass fox</span></div></div>
+    <div style="display:flex;gap:8px"><div style="flex:1"><p class="lbl" style="margin-bottom:6px">School</p><div class="input" role="combobox" aria-label="School" style="min-height:44px"><i class="fo">3</i>Warden <span class="tag">sample</span> <span class="ico ">▾</span></div></div><div style="flex:1"><p class="lbl" style="margin-bottom:6px">Element</p><div class="input" role="combobox" aria-label="Element" style="min-height:44px"><i class="fo">4</i>Fire <span class="tag">sample</span> <span class="ico ">▾</span></div></div></div>
+    <p class="note">Element <code>optgroup</code>s: "Elements" (base) · "Combinations" (2nd-level pairs) — the 6 schools of the class-system</p>
+    
+    <div style="display:flex;flex-direction:column;gap:6px"><span class="btn dis" role="button" aria-disabled="true"   style="width:100%;">Be reborn</span><span class="btn ghost" role="button"    style="width:100%;"><i class="fo">5</i>Not now</span></div>
+  </div></div>
+<footer class="foot">
+    <p><span class="b">Artboard</span> · <span class="tag">EVO-17</span> <span class="tag">EVO-19</span></p>
+    <h4>Pergunta</h4><p>"What do I give up, what do I keep, and who do they become?" — in that order, before any choice</p>
+    <h4>Chega por / Sai para</h4><p>"Rebirth" (EVO-16) → <code>rebirthOpen</code> → "Be reborn" (com nome ≥ 1 caractere) → 2º toque (EVO-18) · "Not now" / × / Escape → <code>onClose</code></p>
+    <h4>Sai da tela atual</h4><ul><li>A perda depois da escolha — o parágrafo da perda ("back to Rookie, attribute points reset to zero") vem PRIMEIRO, com nome e número, e o que NÃO se perde vem junto (03 §4.12; guarda: nunca progresso por acidente).</li><li>Escolhas em cascata escondidas — as três (criatura, escola, elemento) estão visíveis de uma vez; o primário fica <code>disabled</code> até a criatura ter nome.</li><li>"Não tem como desfazer" escondido no rodapé — é a terceira linha, antes dos campos.</li></ul>
+    <h4>Fontes</h4><ul><li><code>RebirthModal.tsx</code> ("Rebirth"; os três parágrafos; "What creature will they be?" + "e.g. a glass fox"; "School" (<code>rebirthEscolaOptions</code>, as 6 escolas); "Element" com <code>optgroup</code> "Elements" / "Combinations"; "Be reborn" <code>disabled</code> sem nome; "Not now")</li><li>03 §4.12 · 02 §20 (renascimento: uma vez; o que fica; multiplicador) · REGISTRO §5 (regra de perda 1: nunca progresso por acidente)</li><li>W10: ordem de foco numerada (1 = skip link, oculto); alvos ≥ 44px; rótulo = <code>aria-label</code> — × da folha por último (E9)</li></ul>
+    <h4>PT</h4><ul><li>Renascimento · "Sua criatura chegou ao topo. O Renascimento devolve ela a um ovo: ela volta a Rookie e os pontos de atributo zeram — em troca, ela nasce de novo mais funda, com mais pontos em todos os estágios, e desta vez quem escolhe o que ela é são vocês dois." · "Nada mais é perdido: Bits, Emblemas, Créditos, decoração, cenários, sonhos, hábitos, tarefas, dias completos e as formas que você já viu continuam exatamente como estão." · "Acontece UMA vez por criatura, e não tem como desfazer." · "Que criatura ela vai ser?" · "ex.: uma raposa de vidro" · Escola · Elemento · Elementos / Combinações · Renascer · "Agora não"</li></ul>
+    
+  </footer>
+</div>
+</x-dc>
+</body>
+</html>
