@@ -308,7 +308,7 @@ está vazio em 13/09/2026).
 
 | id | fluxo | tela | estado (condição do `03`) | chega por | sai para | prio | estado do wireframe |
 |---|---|---|---|---|---|---|---|
-| `LOJA-01` | Loja | `ShopModal` `asPage` · segmento `shop` | normal — `<div>` com o **saldo no topo** + seção Itens (`kind === 'chip' \&#124;\&#124; kind === 'heart'`) | célula 4 da `BottomNav` | `onClose={() => setCurrentView('main')}` | P1 | desenhado |
+| `LOJA-01` | Loja | `ShopModal` `asPage` · segmento `shop` | normal — `<div>` com o **saldo no topo** + seção Itens (`kind === 'chip'`; ⚰️ `heart` saiu da venda em 06/09/2026 — `SPECIAL_ITEMS`, só drop da masmorra) | célula 4 da `BottomNav` | `onClose={() => setCurrentView('main')}` | P1 | desenhado |
 | `LOJA-02` | Loja | segmento `shop` | seção Cenários — `kind === 'bg'` (19 à venda) | rolagem | — | P1 | desenhado |
 | `LOJA-03` | Loja | segmento `shop` | seção Mobílias — `kind === 'furniture'` (27 à venda), com os espaços do palco | rolagem | — | P1 | desenhado |
 | `LOJA-04` | Loja | card de item | **travado** — item com `unlock`: aparece escurecido com 🔒 e **o próprio card diz a missão e o progresso**. ⚰️ o estado `hintFor` ("tocar para revelar") saiu | missão não cumprida | — | P1 | desenhado |
