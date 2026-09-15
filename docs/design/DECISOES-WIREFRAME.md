@@ -695,3 +695,58 @@ mantidas.
 - **Para o cartógrafo:** `FORA-01` corrigido nesta rodada (corações/energia são do E, o cocô do C); os estados do widget D (HP baixo, sem tarefas) e as falas por evento do overlay não têm linha.
 - **Para o `docs/STATUS.md` (achados de código):** (a) "Don't forget about me today!" viva em `WidgetRenderer.kt` `CHAT_FIXED_PHRASES` — veto de 02/09 não cumprido, fora do teste; (b) "0/5" com zero feitas — T2/13.2 por implementar; (c) "Dia perfeito!" no widget — P5 atrasada; (d) a escada só PT / o chat só EN — o bridge não leva idioma; (e) A/B/D comprimem com `ellipsis`; (f) overlay × push sem teste de paridade; (g) a linha `FORA-01` do inventário estava errada; (h) `pet-goodnight` (22h) e o lembrete de deitar (22h30) a 30 min.
 - **Para o `staff-frontend`:** F1–F5 e S1–S5 são o diff do Fora do app; nenhum item muda regra de jogo; aceites do guarda: (b) a escada não cobra, (d) o widget E é posse, (f) nenhum push tem culpa, (g) a glosa EN não reverte nada.
+
+## 17. Onboarding-oráculo: entra / volta / sai (decisão do `soulmon-design-lead`, 15/09/2026)
+
+> **Canvas:** [Soulmon — Wireframes Onboarding-oráculo](https://claude.ai/code/artifact/6dcb1aed-d52c-4c7c-ada1-c3de69f0de38)
+> (rodada 2, pós-crítica) · arquivos em `docs/design/wireframes/onboarding-oraculo/` (`Main.dc.html` + 10
+> `<TelaEstado>.dc.html` + `canvas.json`; 17 linhas `ONB-*` (21→33, 35→38) em 11 artboards — o segundo canvas do
+> Onboarding por D3, o último da Fase 1).
+> **Crítica:** `design-critic` (rodada 1: "não passa", 5 bloqueantes — a oferta do reveal (T1/13.1) não desenhada;
+> a escala likert/frequência inventada; a barra a 100% no `REGISTER`; "1 = skip link" falso no ritual; o eco do
+> `soulGoal` no `BirthCard` — todos aplicados; re-carimbo na rodada 2), `soulmon-product-designer` (9 achados: a
+> barra que "encolhe"; a 1ª pergunta sem voltar; o teste como primário numa decisão sem volta; o muro que zera um
+> typo; a copy do batismo igual no upgrade; o frame vazio sem frase; T1 sem superfície; o upgrade sem ponte; quatro
+> estados sem linha), `soulmon-guarda-linha-vermelha` (família **APROVADA COM RESSALVA**, 0 vetos — T1 sem piso no
+> funil atual; a 1ª pergunta sem voltar; T8 problema 1 segue).
+> **Precedência:** código > teste > `CLAUDE.md` > manual > este doc. Valem D3, D9 (= ONB-33), T8, T9, D17 e a 13.1
+> (desenhada; ver V1).
+
+### 17.1 Entra (estrutura ou copy nova, marcada `[novo]` no canvas)
+
+| # | O que entra | Motivo (fonte) | O que perde |
+|---|---|---|---|
+| R1 | **O ritual passo a passo como o código**: nome (não pulável) → data (mapa astral E 18+; o muro de idade sem erro, saída única) → hora (ou "não sei": meio-dia, sem Ascendente) → cidade (busca embarcada, sem rede) → favorita (opcional, pulável) → as 6 perguntas que avançam sozinhas (dica de ORIGEM, nunca de alvo) → a bifurcação SEM VOLTA (20 itens ou revelar) → os 20 itens em 4 formatos (5 botões empilhados com o rótulo inteiro) → geração → reveal → cadastro | `SoulmonOnboarding.tsx`; `CityPicker.tsx`; `SoulTestItem.tsx`; `oracle.ts`; PRINCÍPIOS §3 | A escala "1–5" inventada (rodada 1) |
+| R2 | **A barra de progresso pela fórmula**: só com `step > 0`; o denominador é `REGISTER + 1` (nunca chega a 100%: 35/36 ≈ 97%) e desconta os 20 itens recusados | Crítico B3 + ressalva; o comentário do código | O "100%" (rodada 1) |
+| R3 | **O reveal**: eyebrow → `BirthCard` (sem ano; "‹essence› essence · ‹profession›"; "You said: “…”. ‹nome› was born from that.") → a descrição → o batismo pré-preenchido → "Hatch ‹nome›"; sem sprite (D9): o casulo até 12 s, depois a moldura vazia, nunca arte de reserva | `REVEAL`; `BirthCard.tsx`; T8; D9 | Nada |
+| R4 | **A oferta no reveal (T1/13.1) desenhada** `[novo]` `[decisão 13/09]`: card dispensável, largura 280, mesmo container, "Not now" com 44px — condicionada a `accountTier === 'demo'`, condição que o código de hoje NÃO produz (ver V1) | 13.1 é decisão registrada (§5.3 é a alternativa que perdeu); crítico B1 | Nada |
+| R5 | **O upgrade** (`mode='upgrade'`): entra no passo 1 sem portão; `back` no passo 1 sai; termina no reveal com `onRevealed`; `bornAt` intocado (D17); **nenhum skip link** no ritual (o App só o monta após `hasCompletedOnboarding`) — a numeração de foco começa em 1 (vale também para o funil) | `App.tsx` `handleUpgradeRevealed`; D17; crítico B4 | "1 = skip link" (rodada 1) |
+
+### 17.2 Volta (a crítica pediu; o lead recusa ou adia)
+
+| # | Pedido | Decisão | Motivo |
+|---|---|---|---|
+| V1 | **T1/13.1 sem piso no funil** — a oferta está desenhada, mas ninguém chega ao `REVEAL` como demo (quem chega já pagou no `CHOICE_STEP`; o demo escolhe personagem — D3) | **→ dono (pendente)** | Pergunta: o funil ganha um REVEAL DEMO (o quiz de 6 para todos; a criatura própria só pagando) — e é ali que mora a 13.1? Recomendação do lead: sim (product-designer #7); o guarda: não forçar oferta no reveal pago — se for testar cedo, `CHOICE_STEP`. Até lá a 13.1 fica represada |
+| V2 | "Voltar" na 1ª pergunta do ritual (product-designer #2; guarda; crítico) | **→ dono (pendente)**; no canvas vale o código | Recomendação: dar voltar (→ `FAVORITE_STEP`); é o único passo do ritual pago sem saída de correção |
+| V3 | Os dois botões da bifurcação com o MESMO peso (product-designer #3) | **Adiado → Fase 2** | O código dá primário ao teste; o custo está declarado; o guarda (c) passa |
+| V4 | "Corrigir a data" no muro de idade sem perder o nome (product-designer #4) | **Adiado → STATUS** | Fluxo/código |
+| V5 | Copy do batismo diferente no upgrade (D17: é a MESMA criatura) — product-designer #5 | **Adiado → `redator-ux`** | Copy |
+| V6 | Uma frase sob a moldura vazia do reveal sem sprite (product-designer #6) | **Adiado → `redator-ux`** | Copy (o código não tem) |
+| V7 | Uma ponte / estimativa de tempo no passo 1 do upgrade (product-designer #8 e "o que o autor não viu") | **Adiado → `redator-ux`** | Copy |
+| V8 | A barra com denominador fixo (não "encolher") + rótulo de fase (product-designer #1) | **Aceito como nota** | O código escolheu medir o caminho que a pessoa escolheu |
+
+### 17.3 Sai (o que a superfície de hoje tem e o wireframe não tem)
+
+| # | Sai | Motivo |
+|---|---|---|
+| S1 | **A escala "1 2 3 4 5" com 3 legendas** (rodada 1) | R1 (B2) |
+| S2 | **"1 = skip link"** (rodada 1) | R5 (B4) |
+| S3 | **"REGISTRO §5.3 (não cobrar no reveal)" como regra vigente** (rodada 1) | É a alternativa que perdeu na 13.1 |
+| S4 | **Arte de reserva / "retry" no reveal sem sprite** | D9; `BirthCard.tsx` |
+
+### 17.4 O que fica registrado para depois
+
+- **Checkpoint fechado em 15/09/2026 — aprovação automática (meta do dono).** R1–R5 entram. **Pendente do dono (modal final):** V1 (o reveal demo como piso da 13.1) e V2 (voltar na 1ª pergunta).
+- **Para o cartógrafo:** quatro estados sem linha (a cidade com fuso escolhido; o rascunho retomado; `unlockMessage`; `submitting`); o estado `essence === null` (ramo legado) a confirmar; o skip link inexistente no ritual vale para o funil (§9).
+- **Para o `docs/STATUS.md` (achados de código):** (a) a 1ª pergunta do ritual sem `back`; (b) o `setTimeout(1400)` continua no 20º item do teste (só saiu do "revelar agora"); (c) o muro de idade zera até o nome num typo; (d) "Hatch ‹nome›" e a copy do batismo idênticas no upgrade (D17 diz que é a mesma criatura); (e) o reveal sem sprite não diz ao jogador que o desenho vem depois; (f) o ritual não estima o tempo; (g) a favorita nunca é ecoada no reveal (o `soulGoal` é); (h) T8 "problema 1" (retorno invisível de 20 telas) segue sem solução.
+- **Para o `staff-frontend`:** R1–R5 e S1–S4 são o diff do Oráculo; nenhum item muda regra de jogo; aceites do guarda: (b) o muro sem erro, (c) a bifurcação sem empurrão, (d) o reveal sem números, (f) o apelido sem dado íntimo, (g) D17, (h) dicas de origem.

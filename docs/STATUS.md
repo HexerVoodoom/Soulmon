@@ -7,6 +7,35 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 🔮 15/09/2026 — WIREFRAMES DO ONBOARDING-ORÁCULO: DESENHADOS, CRITICADOS, CORRIGIDOS E APROVADOS — A FASE 1 FECHOU OS 13 CANVASES
+>
+> Décimo terceiro e último canvas da SQUAD-DESIGN (Fase 1). Canvas publicado:
+> **https://claude.ai/code/artifact/6dcb1aed-d52c-4c7c-ada1-c3de69f0de38**
+> (11 artboards em 2 páginas; `docs/design/wireframes/onboarding-oraculo/`). 17 linhas `ONB-*`
+> (21→33, 35→38) desenhadas; decisão do design-lead em `docs/design/DECISOES-WIREFRAME.md` §17.
+> **Com este canvas, as 272 linhas tela × estado do inventário estão em `aprovado` ou `fora`.**
+> - **Crítica em duas rodadas:** `design-critic` (r1 "não passa" — B1 a oferta do reveal (T1/13.1)
+>   não desenhada; B2 a escala likert inventada; B3 a barra a 100%; B4 "1 = skip link" falso no
+>   ritual; B5 o eco do `soulGoal` — aplicados; re-carimbo na r2), `soulmon-product-designer`
+>   (9 achados), `soulmon-guarda-linha-vermelha` (**APROVADA COM RESSALVA**, 0 vetos).
+> - **Decisões estruturais**: o ritual passo a passo como o código (R1); a barra pela fórmula,
+>   nunca 100% (R2); o reveal com o cartão, o batismo e o sem-sprite por D9 (R3); a oferta do
+>   reveal desenhada por 13.1, condicionada a demo (R4); o upgrade e o skip link inexistente (R5).
+> - **✅ Checkpoint fechado em 15/09/2026 — aprovação automática** (meta do dono). **Pendente do
+>   dono (modal final):** **T1/13.1 não tem piso no funil de hoje** (o reveal é do caminho pago; o
+>   demo escolhe personagem) — o funil ganha um reveal demo? (recomendação do lead: sim); e o
+>   "voltar" na 1ª pergunta do ritual.
+> - **Achados de passagem (código):** a 1ª pergunta do ritual não tem `back` em lugar nenhum; o
+>   `setTimeout(1400)` continua no 20º item do teste (só saiu do "revelar agora"); o muro de idade
+>   zera até o nome num dígito trocado; "Hatch ‹nome›" e a copy do batismo idênticas no upgrade
+>   (D17: é a mesma criatura); o reveal sem sprite não diz ao jogador que o desenho vem depois; o
+>   ritual não estima o tempo; a favorita nunca é ecoada no reveal; não há skip link durante o
+>   onboarding (o App só o monta após `hasCompletedOnboarding`) — vale para o funil também; T8
+>   "problema 1" segue sem solução.
+> - **Branch:** `design/wireframes-oraculo` — mergeada na `main` (ff). **Próximo passo: o modal
+>   único com todos os pendentes do dono acumulados na meta autônoma; depois a Fase 2
+>   (identidade), só sobre canvas `aprovado`.**
+
 > ## 📚 15/09/2026 — MANUAL SINCRONIZADO COM `3955b8a1` (wireframes do Fora do app)
 >
 > `/manter-docs auto` após o merge do Fora do app (`d4ec208a`→`3955b8a1`, 5 commits). Delta em três docs:
