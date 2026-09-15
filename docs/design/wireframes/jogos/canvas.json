@@ -6,7 +6,7 @@
       "x": 0,
       "y": 0,
       "w": 390,
-      "h": 1679,
+      "h": 1754,
       "page": "page-1"
     },
     {
@@ -24,7 +24,7 @@
       "x": 980,
       "y": 0,
       "w": 390,
-      "h": 2004,
+      "h": 2199,
       "page": "page-1"
     },
     {
@@ -40,7 +40,7 @@
       "file": "MasmorraFim.dc.html",
       "title": "JOGO-08 · 09 · 10 · masmorra — run completa, derrota, drop de coraçãozinho",
       "x": 0,
-      "y": 2144,
+      "y": 2339,
       "w": 390,
       "h": 2019,
       "page": "page-1"
@@ -51,7 +51,7 @@
       "x": 0,
       "y": 0,
       "w": 390,
-      "h": 2004,
+      "h": 2064,
       "page": "page-2"
     },
     {
@@ -96,7 +96,7 @@
       "x": 980,
       "y": 0,
       "w": 390,
-      "h": 1499,
+      "h": 1649,
       "page": "page-3"
     },
     {
@@ -112,7 +112,7 @@
       "file": "TorneioRanking.dc.html",
       "title": "JOGO-16 · 17 · 18 · Torneio — a faixa ANTES do ranking; a janela de ±3; a season inteira",
       "x": 0,
-      "y": 1639,
+      "y": 1789,
       "w": 390,
       "h": 1574,
       "page": "page-3"
@@ -121,9 +121,9 @@
       "file": "TorneioResultado.dc.html",
       "title": "JOGO-19 · 20 · Torneio — vitória e derrota (o mesmo diálogo, tinta neutra)",
       "x": 490,
-      "y": 1639,
+      "y": 1789,
       "w": 390,
-      "h": 1974,
+      "h": 2064,
       "page": "page-3"
     },
     {
@@ -132,7 +132,7 @@
       "x": 0,
       "y": 0,
       "w": 390,
-      "h": 2079,
+      "h": 2199,
       "page": "page-4"
     },
     {
@@ -152,7 +152,7 @@
       "x": 0,
       "y": -170,
       "w": 900,
-      "text": "Soulmon — Wireframes Jogos (Fase 1, cinza, rodada 1, 15/09/2026). A célula 2 da barra (\"Games\"): um card destacado para o Torneio e quatro minijogos na ordem literal do array (dungeon · arena · dino · rps). A pergunta da família (PRINCÍPIOS §7): \"quanto eu aguento hoje — e nada do que eu cuidei está em jogo\": perda só sobre recurso recuperável e apostado (a run, o placar), nunca coração, identidade ou progresso (02 §51, §54). O jogo é compartimentado: a arte pixel fica numa JANELA (o quadro cinza \"PIXEL WINDOW\"); a UI em volta é contemporânea (Life Reset, MOB §15.2). Torneio: faixa ANTES do ranking; ranking em janela de ±3; perder também rende Emblemas e a tela diz. Pesadelo: fila 1, posição 5; perder não custa nada. [decisão 13/09] = D9 (offline no Torneio → artboard próprio), D11. Números = ordem de foco (1 = skip link, oculto)."
+      "text": "Soulmon — Wireframes Jogos (Fase 1, cinza, rodada 2 pós-crítica, 15/09/2026). A célula 2 da barra (\"Games\"): um card destacado para o Torneio e quatro minijogos na ordem literal do array (dungeon · arena · dino · rps). A pergunta da família (PRINCÍPIOS §7): \"quanto eu aguento hoje — e nada do que eu cuidei está em jogo\": perda só sobre recurso recuperável e apostado (a run, o placar), nunca coração, identidade ou progresso (02 §51, §54). O jogo é compartimentado: a arte pixel fica numa JANELA (o quadro cinza \"PIXEL WINDOW\"); a UI em volta é contemporânea (Life Reset, MOB §15.2). Torneio: faixa ANTES do ranking; ranking em janela de ±3; perder também rende Emblemas e a tela diz. Pesadelo: fila 1, posição 5; perder não custa nada. [decisão 13/09] = D9 (offline no Torneio → artboard próprio), D11. Números = ordem de foco (1 = skip link, oculto)."
     }
   ],
   "pages": [
