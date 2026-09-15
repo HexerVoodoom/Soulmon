@@ -7,6 +7,36 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 📱 15/09/2026 — WIREFRAMES DO FORA DO APP: DESENHADOS, CRITICADOS, CORRIGIDOS E APROVADOS (META AUTÔNOMA DO DONO)
+>
+> Décimo segundo canvas da SQUAD-DESIGN (Fase 1). Canvas publicado:
+> **https://claude.ai/code/artifact/89cc5550-5b1a-4f2b-8929-759a4a68373b**
+> (7 artboards em 3 páginas — widgets, overlay, pushes; `docs/design/wireframes/fora-do-app/`).
+> 18 linhas `FORA-*` desenhadas; decisão do design-lead em `docs/design/DECISOES-WIREFRAME.md` §16.
+> - **Crítica em duas rodadas:** `design-critic` (r1 "não passa" — 7 bloqueantes, todos no overlay:
+>   a barra fixa 🔮 "Soulmon" + ⚙ _ ✕ e o cabeçalho "‹ + título" colapsados; um "Back" inventado;
+>   quatro textos EN retraduzidos — aplicados; re-carimbo na r2), `soulmon-product-designer`
+>   (7 achados), `soulmon-guarda-linha-vermelha` (**APROVADA COM RESSALVA** — **veto ao CÓDIGO**:
+>   "Don't forget about me today!" segue viva em `CHAT_FIXED_PHRASES`).
+> - **Decisões estruturais**: os 5 widgets nos tamanhos reais (F1); o contador só com ≥ 1 feita
+>   (F2, T2/13.2); a escada como o código com "Dia completo" (P5) e glosa EN `[novo]` (F3); o
+>   overlay com as duas linhas reais e os textos literais (F4); os 7 pushes literais, pior caso
+>   QUATRO num dia (F5). **Sai:** "Don't forget about me today!", "0/5", "Dia perfeito!", a das 21h.
+> - **✅ Checkpoint fechado em 15/09/2026 — aprovação automática** (meta do dono). **Pendente do
+>   dono (modal final):** o "—" × remover a linha do contador com zero feitas; o badge de
+>   pendentes do overlay; o piso da 13.7 na energia ("⚡3/5"); o idioma dos widgets pela bridge; o
+>   widget E em HP crítico.
+> - **Achados de passagem (código):** **"Don't forget about me today!" viva em
+>   `WidgetRenderer.kt` (`CHAT_FIXED_PHRASES`)** — o veto de 02/09 não foi cumprido e o
+>   `widgetSemCobranca.contract.test.ts` não a cobre; "0/5" com zero feitas (T2/13.2 por
+>   implementar); "Dia perfeito!" no widget (P5 atrasada); a escada só PT e o chat só EN (o bridge
+>   não leva idioma); A/B/D comprimem com `ellipsis` em vez de remover camadas (§12); overlay ×
+>   push sem teste de paridade de copy; `pet-goodnight` (22h) e o lembrete de deitar (22h30) a
+>   30 min; a linha `FORA-01` do inventário descrevia corações/energia que são do widget E
+>   (corrigida).
+> - **Branch:** `design/wireframes-fora` — mergeada na `main` (ff). Próximo (e último) canvas:
+>   Onboarding-oráculo.
+
 > ## 📚 15/09/2026 — MANUAL SINCRONIZADO COM `d4ec208a` (wireframes da Conta)
 >
 > `/manter-docs auto` após o merge da Conta (`cdb08165`→`d4ec208a`, 4 commits). Delta em três docs:

@@ -639,3 +639,59 @@ mantidas.
 - **Para o cartógrafo:** `CONTA-25` cita "6 pontos"; os dois de `evolution` e o `reveal` são o mesmo componente com `variant`; "Recover with a code" e a telemetria aberta não têm linha; o `StepsCard` `declined` sem caminho de volta (registrado).
 - **Para o `docs/STATUS.md` (achados de código):** (a) `onEntitlementChange` nunca é passado pela `SettingsPage` — restaurar compras ali não atualiza o `gameState`; (b) só o botão de exportar tem `aria-describedby` no 503; (c) o corpo do `UnlockAccountModal` tem 2 ramos para 4 motivos; (d) o lembrete de deitar dispara o toggle geral; (e) `accountTier ?? 'paid'`; (f) "Soulmon 1.0.2" literal; (g) recusar o diálogo nativo de instalar não persiste; (h) o ramo sem sensor do `StepsCard` é morto; (i) o erro da Nova Leitura persiste até a próxima tentativa; (j) sem teste para `AccountSection`, `RestWindowCard`, `StepsCard`, `InstallPrompt`; (k) o termo "Complete Day" do Glossário com comentário de defasagem; (l) três `Suspense` independentes na página.
 - **Para o `staff-frontend`:** K1–K5 e S1–S4 são o diff da Conta; nenhum item muda regra de jogo; aceites do guarda: (a) Créditos sem cura, (b) Nova Leitura sem cobrança nula, (d) o nudge com `maxWidth 280`, (f) `declined` definitivo, (g) o vínculo do recibo fica, (h) CONTA-13 fora.
+
+## 16. Fora do app: entra / volta / sai (decisão do `soulmon-design-lead`, 15/09/2026)
+
+> **Canvas:** [Soulmon — Wireframes Fora do app](https://claude.ai/code/artifact/89cc5550-5b1a-4f2b-8929-759a4a68373b)
+> (rodada 2, pós-crítica) · arquivos em `docs/design/wireframes/fora-do-app/` (`Main.dc.html` + 6
+> `<TelaEstado>.dc.html` + `canvas.json`; 18 linhas `FORA-*` em 7 artboards, três páginas: widgets, overlay, pushes).
+> **Crítica:** `design-critic` (rodada 1: "não passa" — 7 bloqueantes, todos no overlay: a barra de título fixa
+> (🔮 "Soulmon" + ⚙ _ ✕) e o cabeçalho do painel ("‹" + título) colapsados numa linha só, um "Back" inventado, e
+> quatro textos EN retraduzidos do PT em vez de colados do código — todos aplicados; páginas 1 e 3 "com nota alta";
+> re-carimbo na rodada 2), `soulmon-product-designer` (7 achados: comprimir × remover; o idioma pela bridge; o "—";
+> o overlay como mini-app; o widget E; o pior caso são QUATRO pushes; estados que faltavam),
+> `soulmon-guarda-linha-vermelha` (família **APROVADA COM RESSALVA** — **1 veto ao CÓDIGO**, não ao desenho:
+> "Don't forget about me today!" segue viva em `CHAT_FIXED_PHRASES`; ressalvas: o badge de pendentes, o "⚡3/5",
+> o imperativo das 20h).
+> **Precedência:** código > teste > `CLAUDE.md` > manual > este doc. Valem T2/13.2 (o contador só com ≥ 1 feita),
+> a regra ⭐ P5 ("dia completo"), D11.
+
+### 16.1 Entra (estrutura ou copy nova, marcada `[novo]` no canvas)
+
+| # | O que entra | Motivo (fonte) | O que perde |
+|---|---|---|---|
+| F1 | **Os 5 widgets nos tamanhos reais** (A 3×1 · B 2×2 · C 1×1 só sprite + 💩 · D chat 3×1 com nome e contador em duas linhas · E 3×2 só corações + energia + sprite), um alvo só (toque abre o app) | `widget_soulmon*.xml`; `WidgetRenderer.kt`; PRINCÍPIOS §12 (o sprite sobrevive a todos os tamanhos) | Nada |
+| F2 | **O contador "N/M" só com ≥ 1 feita; "—" com zero** (T2/13.2) — ⚠️ o código imprime "0/5": achado de implementação já previsto na D-T2 | `DECISOES` §3 T2; `REGISTRO` 13.2 | "0/5" |
+| F3 | **A escada de 7 frases como o código (PT)**, com "✨ Dia completo!" pela regra ⭐ P5 (o código diz "perfeito") e a glosa EN `[novo]` (o bridge não leva idioma) | `WidgetRenderer.kt` `contextualMessage`; CLAUDE.md › Idioma; P5 | "Dia perfeito!" |
+| F4 | **O overlay com as DUAS linhas reais** — a barra fixa (🔮 "Soulmon" + ⚙ _ ✕) e, em Tarefas/Configurações, "‹ + título" — e os textos EN literais de `menu.ts`; a fila de cuidado 🫶🍎🚿💤/☀️; as falas de `phrases.ts` (idle, sleep, wake, full, noFood); as tarefas em três estados; as configurações em três estados de conta + carteira + "📱 Open full Soulmon" | Crítico B1–B7; `menu.html`; `menu.ts`; `phrases.ts` | O cabeçalho único e o "Back" no rodapé (rodada 1) |
+| F5 | **Os 7 pushes com título e corpo literais** de `_pushCopy.js`; as 4 guardas das 20h em ordem; a precedência do lembrete de deitar; o pior caso declarado: QUATRO num dia (10h · 16h · 22h + as 20h OU o deitar) | `_pushCopy.js`; `NotificationManager.tsx`; product-designer #6 | "Três por dia" (rodada 1) |
+
+### 16.2 Volta (a crítica pediu; o lead recusa ou adia)
+
+| # | Pedido | Decisão | Motivo |
+|---|---|---|---|
+| V1 | Não mostrar a linha do contador quando `completed == 0` em vez do "—" (product-designer #3) | **→ dono (pendente)**; no canvas vale T2 ("—") | O "—" é ambíguo; o lead recomenda remover a linha (§12: remover, não comprimir) — é ajuste da própria T2, decisão do dono |
+| V2 | O badge "✅ Today's tasks · N" do overlay conta PENDENTES — "quantidade que falta"? (guarda e) | **→ dono (pendente)**; no canvas vale o código | Recomendação do lead: tirar o dígito; alternativa: total registrado no dia |
+| V3 | "⚡3/5" no overlay — o piso da 13.7 se estende à energia? (guarda e) | **→ dono (pendente)** | Recomendação: sim, mesmo piso do contador (nunca "⚡0/5") |
+| V4 | O idioma dos widgets pela bridge (product-designer #2; guarda g) | **→ dono (pendente)**; a glosa EN é `[novo]` | Recomendação: acrescentar `language` ao `SoulmonWidgetPlugin` (permitido pela #20) no próximo WP dos widgets |
+| V5 | O widget E expõe "abatido" na tela inicial — piso visual? (product-designer #5) | **→ dono (pendente)** | Recomendação: manter (corações são posse de vitalidade; guarda d aprovou) |
+| V6 | A/B/D comprimem (ellipsis) em vez de remover camadas (§12) — product-designer #1 | **Adiado → STATUS/backlog** | Débito de implementação, regra já decidida em §12 |
+| V7 | O imperativo das 20h ("Log what you did today and feed it…") — guarda (f) | **Adiado → `redator-ux`** | Copy |
+| V8 | Paridade de copy overlay × push sem teste (§12) | **Adiado → STATUS** | Teste de contrato a criar |
+
+### 16.3 Sai (o que a superfície de hoje tem e o wireframe não tem)
+
+| # | Sai | Motivo |
+|---|---|---|
+| S1 | **"Don't forget about me today!"** (widget D) | VETADA (PRINCÍPIOS §12; ledger E1); ⚠️ segue viva em `CHAT_FIXED_PHRASES`, fora do teste — veto do guarda ao código |
+| S2 | **"0/5"** com zero feitas | T2/13.2 |
+| S3 | **"✨ Dia perfeito!"** | Regra ⭐ P5 |
+| S4 | **A das 21h** | ⚰️ "quarta visita" |
+| S5 | **Corações vermelhos, "⚠️", "Cuide de mim", fileira semanal, `constancy_pct`, escudos** | PRINCÍPIOS §12; o teste de contrato |
+
+### 16.4 O que fica registrado para depois
+
+- **Checkpoint fechado em 15/09/2026 — aprovação automática (meta do dono).** F1–F5 entram. **Pendente do dono (modal final):** V1 (o "—" × remover a linha), V2 (o badge de pendentes), V3 (o piso da energia), V4 (o idioma pela bridge), V5 (o widget E em HP crítico).
+- **Para o cartógrafo:** `FORA-01` corrigido nesta rodada (corações/energia são do E, o cocô do C); os estados do widget D (HP baixo, sem tarefas) e as falas por evento do overlay não têm linha.
+- **Para o `docs/STATUS.md` (achados de código):** (a) "Don't forget about me today!" viva em `WidgetRenderer.kt` `CHAT_FIXED_PHRASES` — veto de 02/09 não cumprido, fora do teste; (b) "0/5" com zero feitas — T2/13.2 por implementar; (c) "Dia perfeito!" no widget — P5 atrasada; (d) a escada só PT / o chat só EN — o bridge não leva idioma; (e) A/B/D comprimem com `ellipsis`; (f) overlay × push sem teste de paridade; (g) a linha `FORA-01` do inventário estava errada; (h) `pet-goodnight` (22h) e o lembrete de deitar (22h30) a 30 min.
+- **Para o `staff-frontend`:** F1–F5 e S1–S5 são o diff do Fora do app; nenhum item muda regra de jogo; aceites do guarda: (b) a escada não cobra, (d) o widget E é posse, (f) nenhum push tem culpa, (g) a glosa EN não reverte nada.
