@@ -6,7 +6,7 @@
       "x": 0,
       "y": 0,
       "w": 390,
-      "h": 1769,
+      "h": 1889,
       "page": "page-1"
     },
     {
@@ -24,7 +24,7 @@
       "x": 980,
       "y": 0,
       "w": 390,
-      "h": 2334,
+      "h": 2394,
       "page": "page-1"
     },
     {
@@ -40,7 +40,7 @@
       "file": "TrocaCreditos.dc.html",
       "title": "LOJA-13 · a troca Créditos → Bits — os 3 degraus e os cinco estados",
       "x": 0,
-      "y": 2474,
+      "y": 2534,
       "w": 390,
       "h": 2184,
       "page": "page-1"
@@ -51,7 +51,7 @@
       "x": 0,
       "y": 0,
       "w": 390,
-      "h": 1829,
+      "h": 1844,
       "page": "page-2"
     },
     {
@@ -71,7 +71,7 @@
       "x": 0,
       "y": -170,
       "w": 900,
-      "text": "Soulmon — Wireframes Loja (Fase 1, cinza, rodada 1, 15/09/2026). A célula 4 da barra. DOIS segmentos (‹ShopSegment = shop | tournament›, D11: a divergência com o CLAUDE.md \"cinco abas\" não é reaberta): Shop = Itens · Cenários · Mobílias num scroll único, pagos em Bits; Tournament = missões da semana no topo + prêmios em Emblemas (tudo cosmético). O card é o átomo: travado (🔒 + a missão em palavras), à venda, sem saldo (o card NÃO desabilita — o preço esmaece e o toque acende o flash), comprado (Equip/Equipped), \"não aparece no cenário atual\". O convite demo é o canal PASSIVO (fim da lista, sem ×, \"sem pressa\"). A troca Créditos → Bits é o último nó, uma direção só. [decisão 13/09] = D5 (LOJA-12 modal sem caminho vivo = fora), D11. Números = ordem de foco (1 = skip link, oculto)."
+      "text": "Soulmon — Wireframes Loja (Fase 1, cinza, rodada 2 pós-crítica, 15/09/2026). A célula 4 da barra. DOIS segmentos (‹ShopSegment = shop | tournament›, D11: a divergência com o CLAUDE.md \"cinco abas\" não é reaberta): Shop = Itens · Cenários · Mobílias num scroll único, pagos em Bits; Tournament = missões da semana no topo + prêmios em Emblemas (tudo cosmético). Saldo = UMA leitura só, a da moeda do segmento ativo (Bits no Shop, Emblemas no Tournament). O card é o átomo: travado (‹button disabled›, 🔒 + a missão em palavras), à venda, sem saldo (o card NÃO desabilita — o preço esmaece e o toque acende o flash), comprado (Equip/Equipped), \"não aparece no cenário atual\". O convite demo é o canal PASSIVO (fim da lista, sem ×, \"sem pressa\"). A troca Créditos → Bits é o último nó, uma direção só. [decisão 13/09] = D5 (LOJA-12 modal sem caminho vivo = fora), D11. Números = ordem de foco (1 = skip link, oculto)."
     }
   ],
   "pages": [
