@@ -272,31 +272,31 @@ está vazio em 13/09/2026).
 
 | id | fluxo | tela | estado (condição do `03`) | chega por | sai para | prio | estado do wireframe |
 |---|---|---|---|---|---|---|---|
-| `JOGO-01` | Jogos | `ActivitiesPage` | normal — um card destacado (`featured: true`) para o **Torneio** e a lista `games` com **quatro** minijogos na ordem literal do array: `dungeon`, `arena`, `dino`, `rps`. Cada card é um `<button>` inteiro | célula 2 da `BottomNav` (rótulo "Jogos"/"Games") | `onOpenTournament` → `setCurrentView('tournament')`; cada jogo monta **dentro** da página (`openGame`) | P1 | desenhado |
-| `JOGO-02` | Jogos | `DungeonGame` | lobby — `phase: 'intro'`; uma run = 5 andares (`MAX_FLOORS`, que mora em `DungeonGame.tsx`) | card | `onExit={() => setOpenGame(null)}` | P1 | desenhado |
-| `JOGO-03` | Jogos | `DungeonGame` | ataque — `phase: 'attack'` | dentro da run | próximo turno | P1 | desenhado |
-| `JOGO-04` | Jogos | `DungeonGame` | defesa — `phase: 'defend'` | idem | idem | P1 | desenhado |
-| `JOGO-05` | Jogos | `DungeonGame` | resultado do turno — `phase: 'result'` | idem | idem | P1 | desenhado |
-| `JOGO-06` | Jogos | `DungeonGame` | inimigo derrubado — `phase: 'enemy-down'` (escada de 6 inimigos por andar) | 6º inimigo | `floor-clear` | P1 | desenhado |
-| `JOGO-07` | Jogos | `DungeonGame` | andar limpo — `phase: 'floor-clear'`; HP do jogador carrega entre andares (+25% de cura) | fim do andar | próximo andar | P1 | desenhado |
-| `JOGO-08` | Jogos | `DungeonGame` | run completa — `phase: 'run-complete'`: sobe a base (`setDungeonDifficultyAtLeast`), bônus de andar escalado e **🌀 Glitchtama** | 5º andar limpo | `onExit` | P1 | desenhado |
-| `JOGO-09` | Jogos | `DungeonGame` | derrota — `phase: 'lost'`. **Perder não custa coração nenhum**, e o que está em jogo é a run | HP zerado na run | `onExit` | P1 | desenhado |
-| `JOGO-10` | Jogos | `DungeonGame` | drop de coraçãozinho — `💗`, muito raro (5%/inimigo, máx. 2/dia, `DUNGEON_HEART_DROPS`); **não dropa comida** | sorteio | pastinha | P2 | desenhado |
-| `JOGO-11` | Jogos | `ArenaGame` | normal — usa a ficha (`skills`, elemento). ⚠️ o `INVENTARIO-TELAS.md` (19/08/2026) a lista como **código morto**; o `03` mede que ela é o **segundo card** da página desde então — **o `03` manda, a Arena entra** | card | `onExit` | P1 | desenhado |
-| `JOGO-12` | Jogos | `DinoGame` | normal | card | `onExit` | P1 | desenhado |
-| `JOGO-13` | Jogos | `DinoGame` | fim de partida — `onScore={onDinoScore}` alimenta o recorde (`dinoBest`) | colisão | `onExit` | P1 | desenhado |
-| `JOGO-14` | Jogos | `RPSGame` | normal — duelo curto (5 Bits por vitória) | card | `onExit` | P1 | desenhado |
-| `JOGO-15` | Jogos | `TournamentPage` | **vazio** — "Enable PvP above…" quando `pvpEnabled` é falso | `onOpenTournament` | a barra | P1 | desenhado |
-| `JOGO-16` | Jogos | `TournamentPage` | faixa — `getTierStanding` (Semente→Broto→Guardião→Ancião→Lendário) vem **antes** do ranking, porque posição absoluta é a leitura associada a comparação tóxica | PvP ligado | — | P1 | desenhado |
-| `JOGO-17` | Jogos | `TournamentPage` | ranking — janela de **±`RANK_WINDOW` (3)** posições | idem | season inteira | P1 | desenhado |
-| `JOGO-18` | Jogos | `TournamentPage` | season inteira — a um toque | toque | volta | P2 | desenhado |
-| `JOGO-19` | Jogos | `TournamentPage` | vitória — `onEarnEmblems` soma e chama `contarMissao('tournament-match')` (conta a **PARTIDA**, não a vitória); `onMatchPlayed` credita XP de Vínculo | partida | — | P1 | desenhado |
-| `JOGO-20` | Jogos | `TournamentPage` | derrota — o placar de derrota é **tinta neutra**; perder também rende Emblemas **e a tela diz** | partida | — | P1 | desenhado |
-| `JOGO-21` | Jogos | `TournamentPage` | **travado** — gate de Vínculo (`BOND_PVP_MIN_LEVEL` = 5), **decidido pelo servidor** (o cliente é editável) | nível < 5 | — | P1 | desenhado |
-| `JOGO-22` | Jogos | `TournamentPage` | carregando — busca de oponentes | entrada | — | P1 | desenhado |
-| `JOGO-23` | Jogos | `NightmareBattle` | batalha — fila 1; guardas: `!nightmareOpen`, `!isSleeping`, `4 ≤ hora < 12`, `rest` existe, `hasPendingNightmare(...)` | fila de intersticiais | `closeNightmare` | P2 | desenhado |
-| `JOGO-24` | Jogos | `NightmareBattle` | vitória — `onWin={handleNightmareWin}` | fim da luta | fecha | P2 | desenhado |
-| `JOGO-25` | Jogos | `NightmareBattle` | derrota — `onLose`; **perder não custa nada, e a tela diz isso** | fim da luta | fecha | P2 | desenhado |
+| `JOGO-01` | Jogos | `ActivitiesPage` | normal — um card destacado (`featured: true`) para o **Torneio** e a lista `games` com **quatro** minijogos na ordem literal do array: `dungeon`, `arena`, `dino`, `rps`. Cada card é um `<button>` inteiro | célula 2 da `BottomNav` (rótulo "Jogos"/"Games") | `onOpenTournament` → `setCurrentView('tournament')`; cada jogo monta **dentro** da página (`openGame`) | P1 | aprovado |
+| `JOGO-02` | Jogos | `DungeonGame` | lobby — `phase: 'intro'`; uma run = 5 andares (`MAX_FLOORS`, que mora em `DungeonGame.tsx`) | card | `onExit={() => setOpenGame(null)}` | P1 | aprovado |
+| `JOGO-03` | Jogos | `DungeonGame` | ataque — `phase: 'attack'` | dentro da run | próximo turno | P1 | aprovado |
+| `JOGO-04` | Jogos | `DungeonGame` | defesa — `phase: 'defend'` | idem | idem | P1 | aprovado |
+| `JOGO-05` | Jogos | `DungeonGame` | resultado do turno — `phase: 'result'` | idem | idem | P1 | aprovado |
+| `JOGO-06` | Jogos | `DungeonGame` | inimigo derrubado — `phase: 'enemy-down'` (escada de 6 inimigos por andar) | 6º inimigo | `floor-clear` | P1 | aprovado |
+| `JOGO-07` | Jogos | `DungeonGame` | andar limpo — `phase: 'floor-clear'`; HP do jogador carrega entre andares (+25% de cura) | fim do andar | próximo andar | P1 | aprovado |
+| `JOGO-08` | Jogos | `DungeonGame` | run completa — `phase: 'run-complete'`: sobe a base (`setDungeonDifficultyAtLeast`), bônus de andar escalado e **🌀 Glitchtama** | 5º andar limpo | `onExit` | P1 | aprovado |
+| `JOGO-09` | Jogos | `DungeonGame` | derrota — `phase: 'lost'`. **Perder não custa coração nenhum**, e o que está em jogo é a run | HP zerado na run | `onExit` | P1 | aprovado |
+| `JOGO-10` | Jogos | `DungeonGame` | drop de coraçãozinho — `💗`, muito raro (5%/inimigo, máx. 2/dia, `DUNGEON_HEART_DROPS`); **não dropa comida** | sorteio | pastinha | P2 | aprovado |
+| `JOGO-11` | Jogos | `ArenaGame` | normal — usa a ficha (`skills`, elemento). ⚠️ o `INVENTARIO-TELAS.md` (19/08/2026) a lista como **código morto**; o `03` mede que ela é o **segundo card** da página desde então — **o `03` manda, a Arena entra** | card | `onExit` | P1 | aprovado |
+| `JOGO-12` | Jogos | `DinoGame` | normal | card | `onExit` | P1 | aprovado |
+| `JOGO-13` | Jogos | `DinoGame` | fim de partida — `onScore={onDinoScore}` alimenta o recorde (`dinoBest`) | colisão | `onExit` | P1 | aprovado |
+| `JOGO-14` | Jogos | `RPSGame` | normal — duelo curto (5 Bits por vitória) | card | `onExit` | P1 | aprovado |
+| `JOGO-15` | Jogos | `TournamentPage` | **vazio** — "Enable PvP above…" quando `pvpEnabled` é falso | `onOpenTournament` | a barra | P1 | aprovado |
+| `JOGO-16` | Jogos | `TournamentPage` | faixa — `getTierStanding` (Semente→Broto→Guardião→Ancião→Lendário) vem **antes** do ranking, porque posição absoluta é a leitura associada a comparação tóxica | PvP ligado | — | P1 | aprovado |
+| `JOGO-17` | Jogos | `TournamentPage` | ranking — janela de **±`RANK_WINDOW` (3)** posições | idem | season inteira | P1 | aprovado |
+| `JOGO-18` | Jogos | `TournamentPage` | season inteira — a um toque | toque | volta | P2 | aprovado |
+| `JOGO-19` | Jogos | `TournamentPage` | vitória — `onEarnEmblems` soma e chama `contarMissao('tournament-match')` (conta a **PARTIDA**, não a vitória); `onMatchPlayed` credita XP de Vínculo | partida | — | P1 | aprovado |
+| `JOGO-20` | Jogos | `TournamentPage` | derrota — o placar de derrota é **tinta neutra**; perder também rende Emblemas **e a tela diz** | partida | — | P1 | aprovado |
+| `JOGO-21` | Jogos | `TournamentPage` | **travado** — gate de Vínculo (`BOND_PVP_MIN_LEVEL` = 5), **decidido pelo servidor** (o cliente é editável) | nível < 5 | — | P1 | aprovado |
+| `JOGO-22` | Jogos | `TournamentPage` | carregando — busca de oponentes | entrada | — | P1 | aprovado |
+| `JOGO-23` | Jogos | `NightmareBattle` | batalha — fila 1; guardas: `!nightmareOpen`, `!isSleeping`, `4 ≤ hora < 12`, `rest` existe, `hasPendingNightmare(...)` | fila de intersticiais | `closeNightmare` | P2 | aprovado |
+| `JOGO-24` | Jogos | `NightmareBattle` | vitória — `onWin={handleNightmareWin}` | fim da luta | fecha | P2 | aprovado |
+| `JOGO-25` | Jogos | `NightmareBattle` | derrota — `onLose`; **perder não custa nada, e a tela diz isso** | fim da luta | fecha | P2 | aprovado |
 
 ### 1.7 Loja
 
@@ -469,7 +469,7 @@ A página (`JOGO-01`) → masmorra inteira, que é a máquina de estados
 (`JOGO-02`→`JOGO-10`) → os três curtos (`JOGO-11`→`JOGO-14`) → torneio, da tela vazia até a
 derrota em tinta neutra (`JOGO-15`→`JOGO-22`) → pesadelo (`JOGO-23`→`JOGO-25`).
 
-**Desenhado em 15/09/2026** (`design-wireframer`): 25 linhas em 16 artboards — a página (`Main` 01), a masmorra (`MasmorraLobby` 02, `MasmorraTurno` 03/04/05, `MasmorraAndar` 06/07, `MasmorraFim` 08/09/10), os três curtos (`Arena` 11, `Dino` 12/13, `PPT` 14), o Torneio (`TorneioVazio` 15, `TorneioTravado` 21, `TorneioArena` 22/19/20, `TorneioOffline` 22 + D9, `TorneioRanking` 16/17/18, `TorneioResultado` 19/20) e o pesadelo (`PesadeloIntro` 23, `PesadeloFim` 24/25). Cada artboard leva a tag `JOGO-xx` que cobre.
+**Desenhado, criticado e aprovado pelo dono em 15/09/2026** (`design-wireframer`; crítica em duas rodadas — `design-critic` B1–B6 aplicados, `soulmon-product-designer` #1–#6, `soulmon-guarda-linha-vermelha` aprovada com ressalva, veto 3b à faixa do oponente; decisão do lead em `DECISOES-WIREFRAME.md` §11; checkpoint em modal — 13.13): 25 linhas em 16 artboards — a página (`Main` 01), a masmorra (`MasmorraLobby` 02, `MasmorraTurno` 03/04/05, `MasmorraAndar` 06/07, `MasmorraFim` 08/09/10), os três curtos (`Arena` 11, `Dino` 12/13, `PPT` 14), o Torneio (`TorneioVazio` 15, `TorneioTravado` 21, `TorneioArena` 22/19/20, `TorneioOffline` 22 + D9, `TorneioRanking` 16/17/18, `TorneioResultado` 19/20) e o pesadelo (`PesadeloIntro` 23, `PesadeloFim` 24/25). Cada artboard leva a tag `JOGO-xx` que cobre.
 
 ### 2.6 Loja
 Segmento `shop` com as três seções e o saldo (`LOJA-01`→`LOJA-03`) → os estados do card, que

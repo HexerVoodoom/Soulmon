@@ -416,7 +416,7 @@ mantidas.
 
 | # | Pedido | Decisão | Motivo |
 |---|---|---|---|
-| V1 | **"Against ‹oponente› · N pts" no resultado do Torneio** — número por pessoa (PRINCÍPIOS §10; MOB §13A), tensão nova fora de T1–T9 (product-designer #3) | **→ dono** | O "N pts" é o poder DAQUELA partida (`result.points`, com aleatoriedade), nunca `lifetimePoints` (guarda 3c, aceite); mesmo assim é um número ao lado de um nome. Recomendação do lead: manter (é o placar da partida, não do jogador; some com o "Continue") — registrar no `REGISTRO` como decidido |
+| V1 | **"Against ‹oponente› · N pts" no resultado do Torneio** — número por pessoa (PRINCÍPIOS §10; MOB §13A), tensão nova fora de T1–T9 (product-designer #3) | **Decidido pelo dono (15/09/2026): MANTER** → `REGISTRO` 13.13 | O "N pts" é o poder DAQUELA partida (`result.points`, com aleatoriedade), nunca `lifetimePoints` (guarda 3c, aceite); mesmo assim é um número ao lado de um nome. Recomendação do lead: manter (é o placar da partida, não do jogador; some com o "Continue") — registrar no `REGISTRO` como decidido |
 | V2 | Confirmação ao sair da run pelo × (hoje `exitRun` sai imediatamente em qualquer fase, inclusive após "Go deeper") | **Adiado → STATUS** | É comportamento do motor; o wireframe desenha o código (D11) e registra |
 | V3 | A fonte pixelada (`sm-px-arcade-value/-label`, Silkscreen) no popup "PERFECT!" e no placar — contra PRINCÍPIOS §7 / Life Reset | **Adiado → STATUS** | O wireframe desenha sans-serif (a fronteira certa); o vazamento é do código, para a Fase 2 / `staff-frontend` |
 | V4 | Viewport curto (iPhone SE): a 5ª card da página pode sair da dobra sem affordance | **Aceito como nota** | 390×844 é o viewport do canvas; a rolagem é natural |
@@ -432,7 +432,7 @@ mantidas.
 
 ### 11.4 O que fica registrado para depois
 
-- **Para o dono, no checkpoint:** J1, J2, J3 são as mudanças estruturais/copy — a recomendação é aprovar; **V1 (o "N pts" por pessoa no resultado do Torneio) é decisão sua** — o lead recomenda manter.
+- **Checkpoint fechado em 15/09/2026 — o dono APROVOU** (J1–J5 entram; 13.13: o "N pts" do resultado fica, como poder da partida). Registro do que foi apresentado: J1–J3 eram as mudanças estruturais/copy — a recomendação era aprovar; V1 era decisão de regra do dono — o lead recomendava manter.
 - **Para o cartógrafo:** `JOGO-22` no inventário cita a faixa do oponente? (não — o inventário está certo; a rodada 1 do wireframe errou); a Arena tem o estado `sem-motor` sem linha; o `fightError` sem linha.
 - **Para o `docs/STATUS.md` (achados de código):** (a) o × da masmorra sai da run sem confirmação em qualquer fase, inclusive após gastar Bits; (b) `sm-px-arcade-value/-label` (Silkscreen) no popup e no placar — fonte pixelada no corpo do texto (PRINCÍPIOS §7); (c) os cards da página de Jogos sem `aria-label` (nome acessível = concatenação sem separador); (d) "N match(es)" e o "(s)"; (e) o pesadelo sem instrução da barra.
 - **Para o `staff-frontend`:** J1–J5 e S1–S4 são o diff dos Jogos; nenhum item muda regra de jogo; aceites do guarda: 2b (a barra "You" da run nunca usa ❤️), 2c ("N matches left today" nunca vira push nem contagem regressiva), 3c ("N pts" = poder da partida); V1 espera o dono.
