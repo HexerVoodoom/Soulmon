@@ -6,7 +6,7 @@
       "x": 0,
       "y": 0,
       "w": 390,
-      "h": 1784,
+      "h": 1979,
       "page": "page-1"
     },
     {
@@ -15,7 +15,7 @@
       "x": 490,
       "y": 0,
       "w": 390,
-      "h": 1934,
+      "h": 1949,
       "page": "page-1"
     },
     {
@@ -24,7 +24,7 @@
       "x": 980,
       "y": 0,
       "w": 390,
-      "h": 1619,
+      "h": 1709,
       "page": "page-1"
     },
     {
@@ -40,16 +40,16 @@
       "file": "EvoSpriteEstados.dc.html",
       "title": "EVO-05 · 06 · 07 · o estado da arte — gerando, erro, sintonia do Visor",
       "x": 0,
-      "y": 2074,
+      "y": 2119,
       "w": 390,
-      "h": 2049,
+      "h": 2079,
       "page": "page-1"
     },
     {
       "file": "EvoOffline.dc.html",
       "title": "EVO-05 · offline na geração de sprite (D9) — a página inteira, sem rede",
       "x": 490,
-      "y": 2074,
+      "y": 2119,
       "w": 390,
       "h": 1244,
       "page": "page-1"
@@ -58,7 +58,7 @@
       "file": "EvoEstados.dc.html",
       "title": "EVO-08 · 09 · árvore — spoiler, forma revelada, árvore não revelada, zênite, degenerar",
       "x": 980,
-      "y": 2074,
+      "y": 2119,
       "w": 390,
       "h": 2229,
       "page": "page-1"
@@ -87,7 +87,7 @@
       "x": 980,
       "y": 0,
       "w": 390,
-      "h": 1499,
+      "h": 1754,
       "page": "page-2"
     },
     {
@@ -96,16 +96,16 @@
       "x": 1470,
       "y": 0,
       "w": 390,
-      "h": 1259,
+      "h": 1274,
       "page": "page-2"
     },
     {
       "file": "EvolveTaskModal.dc.html",
       "title": "EVO-15 · EvolveTaskModal — o modal que monta quando a cerimônia FECHA",
       "x": 0,
-      "y": 1639,
+      "y": 1894,
       "w": 390,
-      "h": 1559,
+      "h": 1664,
       "page": "page-2"
     },
     {
@@ -143,7 +143,7 @@
       "x": 0,
       "y": -170,
       "w": 900,
-      "text": "Soulmon — Wireframes Evolução (Fase 1, cinza, rodada 1, 14/09/2026). A página de Evolução (célula 3 da barra, chip \"Evolution\") é onde o CADEADO é a ação dominante: quem dispara a evolução é o jogador (MANUAL_EVOLUTION), a virada do dia nunca evolui sozinha. Galho, não altura (PRINCÍPIOS §6): a próxima forma não é nomeável (???, silhueta), o vocabulário de ausência é um só. O convite demo × pago muda a página; a cerimônia é z-500 e o EvolveTaskModal só monta quando ela fecha. Renascimento: a perda dita antes, segundo toque, uma vez só. [novo] = proposta; [decisão 13/09] = D7 (reduced-motion muda a ESTRUTURA da cerimônia → artboard próprio), D9 (offline na geração de sprite → artboard próprio), D11. Números = ordem de foco (1 = skip link, oculto)."
+      "text": "Soulmon — Wireframes Evolução (Fase 1, cinza, rodada 2 pós-crítica, 14/09/2026). A página de Evolução (célula 3 da barra, chip \"Evolution\") é onde o CADEADO é a ação dominante: quem dispara a evolução é o jogador (MANUAL_EVOLUTION), a virada do dia nunca evolui sozinha. Galho, não altura (PRINCÍPIOS §6): a próxima forma não é nomeável (???, silhueta), o vocabulário de ausência é um só. O convite demo × pago muda a página; a cerimônia é z-500 e o EvolveTaskModal só monta quando ela fecha. Renascimento: a perda dita antes, segundo toque, uma vez só. [novo] = proposta; [decisão 13/09] = D7 (reduced-motion muda a ESTRUTURA da cerimônia → artboard próprio), D9 (offline na geração de sprite → artboard próprio), D11. Números = ordem de foco (1 = skip link, oculto)."
     }
   ],
   "pages": [
