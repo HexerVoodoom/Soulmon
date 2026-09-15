@@ -389,3 +389,50 @@ mantidas.
 - **Para o cartógrafo:** o botão "Degenerate" nos cards de estágio anterior (dois toques: "Confirm degeneration" → "Final warning") não tem linha no inventário nem seção no 03 §4.10; a linha de estado por nó da árvore (`linhaDeEstado`) não está no 03; no demo os estados de sprite (GERANDO/ERRO/A_SINTONIZAR) nunca disparam (`getSpriteForStage` é o fallback) — EVO-05/06/07 são só de conta paga.
 - **Para o `docs/STATUS.md` (achados de código):** (a) **flash** — a intercalação da cerimônia decai de 420 ms até 55 ms (~18 trocas/s) de sprites brancos sobre fundo escuro, acima do piso do WCAG 2.3.1; capar em ≥ 334 ms independente da preferência (prioridade alta); (b) `EvolutionCeremony` sem `role`, `aria-modal`, trap nem Escape num z-500 que bloqueia o app; (c) `EvolutionCeremony` não lê `prefers-reduced-motion` (o `MilestoneCeremony` lê); (d) a cerimônia sem a data e com saída neutra; (e) "LOCKED" para duas coisas em EN; (f) o cadeado não avisa que não protege de degeneração; (g) `EvolveTaskModal` no kit antigo (Consolas, `sm-card`) com "Create new task" / "Got it" só em inglês; (h) o gesto duplo do visor; (i) o "Degenerate" fora do inventário.
 - **Para o `staff-frontend`:** X1–X5 e S1–S5 são o diff da Evolução; nenhum item muda regra de jogo (`02`); V1 espera o dono; aceites do guarda: 1c (a frase do cadeado), 4a (a data), 4b (a pausa entre cerimônia e modal — resolvida por V1 se o dono aprovar o card).
+
+## 11. Jogos: entra / volta / sai (decisão do `soulmon-design-lead`, 15/09/2026)
+
+> **Canvas:** [Soulmon — Wireframes Jogos](https://claude.ai/code/artifact/baa66565-81e1-4256-b54e-97da6fcc265a)
+> (rodada 2, pós-crítica) · arquivos em `docs/design/wireframes/jogos/` (`Main.dc.html` + 15
+> `<TelaEstado>.dc.html` + `canvas.json`; 25 linhas `JOGO-*` em 16 artboards).
+> **Crítica:** `design-critic` (rodada 1: "não passa", 6 bloqueantes B1–B6 — todos aplicados na rodada 2),
+> `soulmon-product-designer` (6 achados; os que mudaram o canvas: o chrome da run nas fases de luta, a
+> instrução da barra no pesadelo, a tensão do "N pts" por pessoa), `soulmon-guarda-linha-vermelha` (família
+> **APROVADA COM RESSALVA** — **1 veto** (3b: a faixa do Torneio ao lado do oponente), 3 ressalvas que viram aceite).
+> **Precedência:** código > teste > `CLAUDE.md` > manual > este doc. Valem D9 (offline no Torneio), D11 e T7
+> (a criatura do amigo no estágio REAL, sem escada nem rank).
+
+### 11.1 Entra (estrutura ou copy nova, marcada `[novo]` no canvas)
+
+| # | O que entra | Motivo (fonte) | O que perde |
+|---|---|---|---|
+| J1 | **O card do oponente no Torneio = criatura + nome + "‹pet› · ‹estágio›"** (como o código: `o.petName || o.stage` · `getStageLevel`), sem a faixa | Guarda 3b (VETO à faixa da rodada 1: reusar o selo de "Your tier" no card alheio é a armadilha do #21 — Mimo); crítico B1 (a faixa só é calculada para o próprio jogador); T7 (estágio real) | A faixa ao lado do oponente (rodada 1) |
+| J2 | **O chrome persistente da run** ("Dungeon · Floor N/5 · scene · enemy I/6" + ×) em todas as fases de luta | `DungeonGame.tsx` monta o cabeçalho sempre; sem ele o jogador não sabe onde está no turno (product-designer #1) | Nada |
+| J3 | **Uma linha de instrução no pesadelo** `[novo]`: "Tap when the marker crosses the middle." | O pesadelo pode ser o PRIMEIRO combate do jogador (fila 1, antes de abrir Jogos) e o `NightmareBattle` não explica a barra (product-designer #5) | Nada |
+| J4 | **Estados que a rodada 1 não tinha**: o erro `sem-motor` da Arena ("I could not load the challengers right now… try again in a bit." + "Go back"); o `fightError` do Torneio ("The match didn’t happen. Try again."); o relógio de defesa de 3,0 s como padrão (o "(no time limit)" só com `prefers-reduced-motion`); "2.4s" como instante, não constante; o offline do Torneio (D9) | W3 (crítico B4, B5, B6); D9 | Nada |
+| J5 | **Fidelidade de a11y**: o × é o PRIMEIRO interativo em todo minijogo (`sm-px-arcade-close`); os cards da página sem `aria-label` — o nome acessível é a concatenação sem separador (como o código, registrado como achado); plural real em "N matches left today" | Crítico B2, B3; precedente RIT-18 | O `aria-label` inventado da rodada 1 |
+
+### 11.2 Volta (a crítica pediu; o lead recusa ou adia)
+
+| # | Pedido | Decisão | Motivo |
+|---|---|---|---|
+| V1 | **"Against ‹oponente› · N pts" no resultado do Torneio** — número por pessoa (PRINCÍPIOS §10; MOB §13A), tensão nova fora de T1–T9 (product-designer #3) | **→ dono** | O "N pts" é o poder DAQUELA partida (`result.points`, com aleatoriedade), nunca `lifetimePoints` (guarda 3c, aceite); mesmo assim é um número ao lado de um nome. Recomendação do lead: manter (é o placar da partida, não do jogador; some com o "Continue") — registrar no `REGISTRO` como decidido |
+| V2 | Confirmação ao sair da run pelo × (hoje `exitRun` sai imediatamente em qualquer fase, inclusive após "Go deeper") | **Adiado → STATUS** | É comportamento do motor; o wireframe desenha o código (D11) e registra |
+| V3 | A fonte pixelada (`sm-px-arcade-value/-label`, Silkscreen) no popup "PERFECT!" e no placar — contra PRINCÍPIOS §7 / Life Reset | **Adiado → STATUS** | O wireframe desenha sans-serif (a fronteira certa); o vazamento é do código, para a Fase 2 / `staff-frontend` |
+| V4 | Viewport curto (iPhone SE): a 5ª card da página pode sair da dobra sem affordance | **Aceito como nota** | 390×844 é o viewport do canvas; a rolagem é natural |
+
+### 11.3 Sai (o que a superfície de hoje tem e o wireframe não tem)
+
+| # | Sai | Motivo |
+|---|---|---|
+| S1 | **A faixa ao lado do oponente** (rodada 1) | J1 (veto 3b) |
+| S2 | **O `aria-label` "‹título› — ‹descrição›" dos cards** (rodada 1) — o código não o tem | J5 (B2); vira achado a11y |
+| S3 | **"(no time limit)" como padrão do pesadelo** (rodada 1) | J4 (B6) |
+| S4 | **A Biblioteca como card da página** (PD §5 dizia que viraria) — o código não tem; é o canvas Social (D2), pelo menu | D2 |
+
+### 11.4 O que fica registrado para depois
+
+- **Para o dono, no checkpoint:** J1, J2, J3 são as mudanças estruturais/copy — a recomendação é aprovar; **V1 (o "N pts" por pessoa no resultado do Torneio) é decisão sua** — o lead recomenda manter.
+- **Para o cartógrafo:** `JOGO-22` no inventário cita a faixa do oponente? (não — o inventário está certo; a rodada 1 do wireframe errou); a Arena tem o estado `sem-motor` sem linha; o `fightError` sem linha.
+- **Para o `docs/STATUS.md` (achados de código):** (a) o × da masmorra sai da run sem confirmação em qualquer fase, inclusive após gastar Bits; (b) `sm-px-arcade-value/-label` (Silkscreen) no popup e no placar — fonte pixelada no corpo do texto (PRINCÍPIOS §7); (c) os cards da página de Jogos sem `aria-label` (nome acessível = concatenação sem separador); (d) "N match(es)" e o "(s)"; (e) o pesadelo sem instrução da barra.
+- **Para o `staff-frontend`:** J1–J5 e S1–S4 são o diff dos Jogos; nenhum item muda regra de jogo; aceites do guarda: 2b (a barra "You" da run nunca usa ❤️), 2c ("N matches left today" nunca vira push nem contagem regressiva), 3c ("N pts" = poder da partida); V1 espera o dono.

@@ -7,6 +7,37 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 🎮 15/09/2026 — WIREFRAMES DOS JOGOS: DESENHADOS, CRITICADOS, CORRIGIDOS — CHECKPOINT DO DONO PENDENTE
+>
+> Sétimo canvas da SQUAD-DESIGN (Fase 1). Canvas publicado:
+> **https://claude.ai/code/artifact/baa66565-81e1-4256-b54e-97da6fcc265a**
+> (16 artboards em 4 páginas; `docs/design/wireframes/jogos/`). 25 linhas `JOGO-*`
+> desenhadas; decisão do design-lead em `docs/design/DECISOES-WIREFRAME.md` §11.
+> - **Crítica em duas rodadas:** `design-critic` (r1 "não passa" — B1 a faixa por oponente
+>   não existe; B2 `aria-label` inventado nos cards; B3 o × é o primeiro do DOM; B4 o erro
+>   `sem-motor` da Arena; B5 o `fightError`; B6 o relógio de defesa é 3,0 s — todos
+>   aplicados), `soulmon-product-designer` (6 achados: o chrome da run some nas fases de
+>   luta; a fonte pixelada vaza para o texto; "N pts" por pessoa é tensão nova),
+>   `soulmon-guarda-linha-vermelha` (**APROVADA COM RESSALVA** — VETO 3b à faixa ao lado do
+>   oponente; 3 ressalvas que viram aceite).
+> - **Decisões estruturais** (`[novo]`): o card do oponente = criatura + nome + estágio, sem
+>   a faixa (J1); o chrome da run em todas as fases (J2); a instrução da barra no pesadelo
+>   (J3); estados que faltavam (J4); a11y como o código (J5). **Sai:** a faixa do oponente,
+>   o `aria-label` inventado, o "(no time limit)" como padrão.
+> - **⏳ DEPENDE DE VOCÊ (checkpoint):** aprovar / devolver / mandar sair. Uma decisão sua:
+>   o resultado do Torneio mostra "Against ‹oponente› · N pts" — um número ao lado de um
+>   nome (PRINCÍPIOS §10 proíbe número por pessoa); é o poder DAQUELA partida, não do
+>   jogador. Manter ou tirar o número?
+> - **Achados de passagem (código):** o × da masmorra sai da run sem confirmação em qualquer
+>   fase, inclusive após gastar Bits em "Go deeper"; `sm-px-arcade-value/-label`
+>   (Silkscreen) estilizam o popup "PERFECT!" e o placar — fonte pixelada no corpo do texto
+>   (PRINCÍPIOS §7 / Life Reset); os cards da página de Jogos não têm `aria-label` (o nome
+>   acessível é a concatenação título + descrição + tag sem separador); "N match(es)" com
+>   "(s)"; o pesadelo não explica a barra de timing; a Arena tem um estado `sem-motor` e o
+>   Torneio um `fightError` sem linha no inventário.
+> - **Branch:** `design/wireframes-jogos` (pushada). Merge só após o seu OK.
+>   Próximo canvas: Loja.
+
 > ## 📚 14/09/2026 — MANUAL SINCRONIZADO COM `3ff60e7d` (wireframes da Evolução)
 >
 > `doc-mantenedor` (sessão): delta `a4d92d5c` → `3ff60e7d`, 5 commits, sem módulo
