@@ -7,6 +7,15 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 📚 15/09/2026 — MANUAL SINCRONIZADO COM `accbe6fa` (wireframes do Onboarding-oráculo — Fase 1 completa)
+>
+> `/manter-docs auto` após o merge do Oráculo (`3955b8a1`→`accbe6fa`, 4 commits). Delta em três docs:
+> - `00-MAPA.md` §6.7 — os treze fluxos, 267/272 em `aprovado` + 5 em `fora`, o Oráculo 13º, a §17 (`doc-bibliotecario`).
+> - `10-DISCUSSOES-E-DECISOES.md` — duas linhas novas no §11 (decisão §17, o bloco 🔮), §13 e §17 (`doc-historiador`).
+> - `01-VISAO.md` — sem alteração (o delta do doc era só o bloco de STATUS).
+> - Verificação: `doc-verificador`, tudo bate (os 5 `fora`: LOJA-12, STAT-10, CONTA-13, PET-02, ONB-13); carimbos em 15/09/2026. Guard verde (10/10).
+> - `.sincronizado.json` → `accbe6fa`.
+
 > ## 🔮 15/09/2026 — WIREFRAMES DO ONBOARDING-ORÁCULO: DESENHADOS, CRITICADOS, CORRIGIDOS E APROVADOS — A FASE 1 FECHOU OS 13 CANVASES
 >
 > Décimo terceiro e último canvas da SQUAD-DESIGN (Fase 1). Canvas publicado:
