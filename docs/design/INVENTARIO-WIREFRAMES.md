@@ -174,24 +174,24 @@ está vazio em 13/09/2026).
 | `ONB-18` | Onboarding | `CHOICE_STEP` | recusa por login — `authUsavel && !authEmail`: "Entre com seu e-mail antes de comprar" (a compra manda o `saveId` como `obfuscatedAccountId`) | idem | portão | P1 | aprovado |
 | `ONB-19` | Onboarding | `CHOICE_STEP` | compra recusada — `setUnlockMessage`, com texto próprio para `result.reason === 'cancelled'` ("Compra cancelada.") e outro para o resto | retorno do billing | — | P1 | aprovado |
 | `ONB-20` | Onboarding | `DEMO_PICK` (−1) | normal — os 3 personagens pré-prontos (`PREMADE_CHARACTERS`) | `CHOICE_STEP` grátis | `REGISTER` · `back` volta ao `CHOICE_STEP` | P1 | aprovado |
-| `ONB-21` | Onboarding | `AGE_BLOCK` (−5) | muro de idade — saída **única**: `restartFromAgeBlock` | data de nascimento < 18 | reinício | P2 | a desenhar |
-| `ONB-22` | Onboarding | passo 1 — nome completo | normal — não pulável | `CHOICE_STEP` pago ou `mode='upgrade'` | passo 2 | P2 | a desenhar |
-| `ONB-23` | Onboarding | passo 2 — data de nascimento | normal — serve ao mapa astral **e** ao 18+ | passo 1 | passo 3 · `AGE_BLOCK` | P2 | a desenhar |
-| `ONB-24` | Onboarding | passo 3 — hora de nascimento | normal | passo 2 | passo 4 | P2 | a desenhar |
-| `ONB-25` | Onboarding | passo 4 — cidade (`CityPicker`) | normal — busca de cidade | passo 3 | `FAVORITE_STEP` | P2 | a desenhar |
-| `ONB-26` | Onboarding | `FAVORITE_STEP` (5) | normal — criatura favorita; **pulável** pela caixa "Prefiro não influenciar o resultado" | passo 4 | primeira pergunta do ritual | P2 | a desenhar |
-| `ONB-27` | Onboarding | pergunta do ritual (template, 6×: `QUIZ_START`..`QUIZ_END − 1`) | normal — **avança sozinha ao escolher**, não pulável. As 6 respostas entram na leitura nos DOIS caminhos | `FAVORITE_STEP` | `REFINE_OFFER` | P2 | a desenhar |
-| `ONB-28` | Onboarding | `REFINE_OFFER` (12) | normal — a bifurcação do teste longo, **declarada na tela como decisão SEM VOLTA** | 6ª pergunta | `DEEP_START` · `GENERATING` | P2 | a desenhar |
-| `ONB-29` | Onboarding | `REFINE_OFFER` | erro de geração — `generateError` renderiza um `role="alert"` **na bifurcação** | falha de `generate` | nova tentativa | P2 | a desenhar |
-| `ONB-30` | Onboarding | item psicométrico (template, 20×: `DEEP_START`..`DEEP_END − 1`) | normal — só para quem aceitou (`SOUL_TEST_ITEMS`) | `REFINE_OFFER` | `GENERATING` (`DEEP_END` = 33 é o próprio `GENERATING`) | P2 | a desenhar |
-| `ONB-31` | Onboarding | `GENERATING` | normal — tela de geração; **o rascunho nunca retoma aqui nem depois** (`readOracleDraft(mode, DEEP_END - 1)`) | fim do teste | `REVEAL` | P2 | a desenhar |
-| `ONB-32` | Onboarding | `REVEAL` | com sprite — nome + descrição + batismo; "Nascer `nome`" emite `track('reveal_seen', { has_sprite, funnel, duration })` | `GENERATING` | `REGISTER` ou `onRevealed` (upgrade) | P2 | a desenhar |
-| `ONB-33` | Onboarding | `REVEAL` | sem sprite — `REVEAL_WAIT_MS` (12 000 ms) é o **teto da espera**; passado ele o reveal segue só com texto e o desenho entra pelo acervo depois | espera estourada | idem | P2 | a desenhar |
+| `ONB-21` | Onboarding | `AGE_BLOCK` (−5) | muro de idade — saída **única**: `restartFromAgeBlock` | data de nascimento < 18 | reinício | P2 | desenhado |
+| `ONB-22` | Onboarding | passo 1 — nome completo | normal — não pulável | `CHOICE_STEP` pago ou `mode='upgrade'` | passo 2 | P2 | desenhado |
+| `ONB-23` | Onboarding | passo 2 — data de nascimento | normal — serve ao mapa astral **e** ao 18+ | passo 1 | passo 3 · `AGE_BLOCK` | P2 | desenhado |
+| `ONB-24` | Onboarding | passo 3 — hora de nascimento | normal | passo 2 | passo 4 | P2 | desenhado |
+| `ONB-25` | Onboarding | passo 4 — cidade (`CityPicker`) | normal — busca de cidade | passo 3 | `FAVORITE_STEP` | P2 | desenhado |
+| `ONB-26` | Onboarding | `FAVORITE_STEP` (5) | normal — criatura favorita; **pulável** pela caixa "Prefiro não influenciar o resultado" | passo 4 | primeira pergunta do ritual | P2 | desenhado |
+| `ONB-27` | Onboarding | pergunta do ritual (template, 6×: `QUIZ_START`..`QUIZ_END − 1`) | normal — **avança sozinha ao escolher**, não pulável. As 6 respostas entram na leitura nos DOIS caminhos | `FAVORITE_STEP` | `REFINE_OFFER` | P2 | desenhado |
+| `ONB-28` | Onboarding | `REFINE_OFFER` (12) | normal — a bifurcação do teste longo, **declarada na tela como decisão SEM VOLTA** | 6ª pergunta | `DEEP_START` · `GENERATING` | P2 | desenhado |
+| `ONB-29` | Onboarding | `REFINE_OFFER` | erro de geração — `generateError` renderiza um `role="alert"` **na bifurcação** | falha de `generate` | nova tentativa | P2 | desenhado |
+| `ONB-30` | Onboarding | item psicométrico (template, 20×: `DEEP_START`..`DEEP_END − 1`) | normal — só para quem aceitou (`SOUL_TEST_ITEMS`) | `REFINE_OFFER` | `GENERATING` (`DEEP_END` = 33 é o próprio `GENERATING`) | P2 | desenhado |
+| `ONB-31` | Onboarding | `GENERATING` | normal — tela de geração; **o rascunho nunca retoma aqui nem depois** (`readOracleDraft(mode, DEEP_END - 1)`) | fim do teste | `REVEAL` | P2 | desenhado |
+| `ONB-32` | Onboarding | `REVEAL` | com sprite — nome + descrição + batismo; "Nascer `nome`" emite `track('reveal_seen', { has_sprite, funnel, duration })` | `GENERATING` | `REGISTER` ou `onRevealed` (upgrade) | P2 | desenhado |
+| `ONB-33` | Onboarding | `REVEAL` | sem sprite — `REVEAL_WAIT_MS` (12 000 ms) é o **teto da espera**; passado ele o reveal segue só com texto e o desenho entra pelo acervo depois | espera estourada | idem | P2 | desenhado |
 | `ONB-34` | Onboarding | `REGISTER` | **demo** — apelido **+ tonalidade** | `DEMO_PICK` | `onComplete` → `GameTutorialFlow` | P1 | aprovado |
-| `ONB-35` | Onboarding | `REGISTER` | **pago** — apelido | `REVEAL` | idem | P2 | a desenhar |
-| `ONB-36` | Onboarding | barra de progresso do ritual | normal — `role="progressbar"`, montada sob `step > 0 && step <= lastStep` (**não existe nos passos negativos**) | transversal | — | P1 | a desenhar |
-| `ONB-37` | Onboarding | `SoulmonOnboarding mode='upgrade'` | entrada — `step` começa em `1`, `flow` já é `'oracle'`; **não há portão, `CHOICE_STEP`, `DEMO_PICK` nem `REGISTER`** | card da Evolução com `accountTier === 'paid'` e `demoCharacterId` → `setUpgradeRitual(true)` | `handleUpgradeRevealed` troca **só a criatura** | P2 | a desenhar |
-| `ONB-38` | Onboarding | `SoulmonOnboarding mode='upgrade'` | saída pela metade — `back()` no passo 1 chama `onCancel?.()` e volta ao jogo (a Evolução passa a mostrar o convite na variante `reveal`) | `back` no passo 1 | `setUpgradeRitual(false)` | P2 | a desenhar |
+| `ONB-35` | Onboarding | `REGISTER` | **pago** — apelido | `REVEAL` | idem | P2 | desenhado |
+| `ONB-36` | Onboarding | barra de progresso do ritual | normal — `role="progressbar"`, montada sob `step > 0 && step <= lastStep` (**não existe nos passos negativos**) | transversal | — | P1 | desenhado |
+| `ONB-37` | Onboarding | `SoulmonOnboarding mode='upgrade'` | entrada — `step` começa em `1`, `flow` já é `'oracle'`; **não há portão, `CHOICE_STEP`, `DEMO_PICK` nem `REGISTER`** | card da Evolução com `accountTier === 'paid'` e `demoCharacterId` → `setUpgradeRitual(true)` | `handleUpgradeRevealed` troca **só a criatura** | P2 | desenhado |
+| `ONB-38` | Onboarding | `SoulmonOnboarding mode='upgrade'` | saída pela metade — `back()` no passo 1 chama `onCancel?.()` e volta ao jogo (a Evolução passa a mostrar o convite na variante `reveal`) | `back` no passo 1 | `setUpgradeRitual(false)` | P2 | desenhado |
 | `ONB-39` | Onboarding | `GameTutorialFlow` | conceito — `PAGES.length` = **1**: "Seu Soulmon nasceu!" / "Your Soulmon is born!" | portão `!hasCompletedTutorial` | `TASK_STEP` | P1 | aprovado |
 | `ONB-40` | Onboarding | `GameTutorialFlow` · `TASK_STEP` | vazio — criação **obrigatória** da 1ª atividade: objetivo, `CATEGORIES` (8) e CTA travado | conceito | sugestões | P1 | aprovado |
 | `ONB-41` | Onboarding | `GameTutorialFlow` · `TASK_STEP` | com sugestões — retorno da API | toque em sugerir | `onComplete(activities.slice(0, remaining))` → `handleCompleteTutorial` | P1 | aprovado |
@@ -431,7 +431,7 @@ Um fluxo por despacho, dois agentes nunca no mesmo canvas (`CONTRACT.md`).
 | 10 | `wireframes/social/` — **[canvas publicado](https://claude.ai/code/artifact/7abe2a04-90db-43f1-9d75-dd8a742f3ff0)** (15/09/2026, 8 artboards em 2 páginas, rodada 2 pós-crítica; `Main.dc.html` + 7 `<TelaEstado>.dc.html` + `canvas.json`; D2: CONTA-26→32 → SOC-01→07) | 3 | 7 | 0 / 0 / 7 | raro; a única família em que um número ao lado de um nome vira comparação — o guarda dá parecer sobre o canvas inteiro (D2) |
 | 11 | `wireframes/conta/` — **[canvas publicado](https://claude.ai/code/artifact/c5fba27a-548f-444c-890f-10f4d482229f)** (15/09/2026, 14 artboards em 2 páginas, rodada 2 pós-crítica; `Main.dc.html` + 13 `<TelaEstado>.dc.html` + `canvas.json`; CONTA-13 `fora` pelo precedente da D5) | 15 | 26 | 0 / 8 / 18 | raro, mas é onde a compra acontece e onde a Biblioteca ficou hospedada (§3.2 item 2) |
 | 12 | `wireframes/fora-do-app/` — **[canvas publicado](https://claude.ai/code/artifact/89cc5550-5b1a-4f2b-8929-759a4a68373b)** (15/09/2026, 7 artboards em 3 páginas, rodada 2 pós-crítica; `Main.dc.html` + 6 `<TelaEstado>.dc.html` + `canvas.json`) | 17 | 18 | 0 / 0 / 18 | 5 widgets + overlay + 7 copies de push: superfície que a pessoa vê **sem decidir abrir** |
-| 13 | `wireframes/onboarding-oraculo/` (D3: o ritual — ONB-21→33, 35→38) | 13 | 17 | 0 / 1 / 16 | uma vez por jogador pagante; é o último canvas por W5 |
+| 13 | `wireframes/onboarding-oraculo/` — **[canvas publicado](https://claude.ai/code/artifact/6dcb1aed-d52c-4c7c-ada1-c3de69f0de38)** (15/09/2026, 11 artboards em 2 páginas, rodada 1; `Main.dc.html` + 10 `<TelaEstado>.dc.html` + `canvas.json`; D3: o ritual — ONB-21→33, 35→38) | 13 | 17 | 0 / 1 / 16 | uma vez por jogador pagante; é o último canvas por W5 |
 
 ### 2.1 Home — ordem sugerida dentro do canvas
 Chrome primeiro (`HOME-40`→`HOME-42`, `HOME-43`), porque tudo se desenha dentro dele → a
@@ -499,6 +499,8 @@ Splash e intro (`ONB-01`→`ONB-04`) → **o portão de conta com os cinco estad
 (`ONB-39`→`ONB-43`).
 
 **Funil desenhado, criticado e aprovado pelo dono em 14/09/2026** (`design-wireframer`; D3 divide o Onboarding em dois canvases; crítica em duas rodadas — `design-critic` B1–B4/W3 aplicados, `soulmon-product-designer` #1–#6, `soulmon-guarda-linha-vermelha` aprovada com ressalva, sem veto; decisão do lead em `DECISOES-WIREFRAME.md` §9; checkpoint em modal — o dono manteve a ordem de hoje do funil): 25 linhas em 17 artboards — splash (`Main` 01, `SplashWebView` 02, `IntroEstados` 03/04), o portão (`PortaoDuasPortas` 06, `PortaoGoogle` 10/11, `PortaoEmail` 12, `PortaoEstados` 05/07/08/09 + 13 como nota), as perguntas e a bifurcação (`Objetivo` 14, `Atrapalha` 15, `Escolha` 16, `EscolhaEstados` 17/18/19, `EscolherPersonagem` 20, `CadastroDemo` 34) e o tutorial (`TutorialConceito` 39, `TutorialTarefa` 40/43, `TutorialSugestoes` 41, `TutorialErro` 42). `ONB-13` é `fora` por D4. O ritual do Oráculo (ONB-21→33, 35→38) é o canvas `onboarding-oraculo/`, o último.
+
+**Oráculo desenhado em 15/09/2026** (`design-wireframer`; o segundo canvas do Onboarding por D3): 17 linhas em 11 artboards — os passos (`Main` 22/36, `Nascimento` 23/21/24/25, `Favorita` 26, `Ritual` 27, `Bifurcacao` 28/29) e o resto (`Teste` 30, `Gerando` 31, `Reveal` 32, `RevealSemSprite` 33 — D9, `Cadastro` 35, `Upgrade` 37/38). Cada artboard leva a tag `ONB-xx` que cobre.
 
 ### 2.8 Estatísticas
 `StatsPage` cheia e vazia (`STAT-01`, `STAT-02`) → nascimento (`STAT-03`, `STAT-04`) →

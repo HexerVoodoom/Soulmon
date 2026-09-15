@@ -1,0 +1,127 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "title": "ONB-22 · 36 · passo 1 — o nome completo (não pulável) e a barra de progresso do ritual",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1994,
+      "page": "page-1"
+    },
+    {
+      "file": "Nascimento.dc.html",
+      "title": "ONB-23 · 21 · 24 · 25 · a data (e o muro de idade), a hora (ou não sei), a cidade",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 2544,
+      "page": "page-1"
+    },
+    {
+      "file": "Favorita.dc.html",
+      "title": "ONB-26 · a criatura favorita — opcional, pulável pela caixa; a última tela com \"Continue\"",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 1844,
+      "page": "page-1"
+    },
+    {
+      "file": "Ritual.dc.html",
+      "title": "ONB-27 · as 6 perguntas do ritual — avançam sozinhas ao escolher; a 1ª não tem \"voltar\"",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 2424,
+      "page": "page-1"
+    },
+    {
+      "file": "Bifurcacao.dc.html",
+      "title": "ONB-28 · 29 · a bifurcação (‹REFINE_OFFER›) — decisão SEM VOLTA; o erro de geração volta para cá",
+      "x": 0,
+      "y": 2684,
+      "w": 390,
+      "h": 2469,
+      "page": "page-1"
+    },
+    {
+      "file": "Teste.dc.html",
+      "title": "ONB-30 · os 20 itens psicométricos — likert, frequência, escolha forçada, cenário; o 1º TEM voltar (para a bifurcação)",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 2409,
+      "page": "page-2"
+    },
+    {
+      "file": "Gerando.dc.html",
+      "title": "ONB-31 · ‹GENERATING› — a espera; o rascunho nunca retoma aqui",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1724,
+      "page": "page-2"
+    },
+    {
+      "file": "Reveal.dc.html",
+      "title": "ONB-32 · o reveal com sprite — o cartão de nascimento, a descrição, o batismo, \"Hatch\"",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 2484,
+      "page": "page-2"
+    },
+    {
+      "file": "RevealSemSprite.dc.html",
+      "title": "ONB-33 · o reveal sem sprite (D9) — o casulo até 12 s, depois só o texto; o desenho entra pelo acervo",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 2304,
+      "page": "page-2"
+    },
+    {
+      "file": "Cadastro.dc.html",
+      "title": "ONB-35 · ‹REGISTER› pago — \"Last details\": o apelido (o que os outros veem), \"Hatch\"",
+      "x": 0,
+      "y": 2624,
+      "w": 390,
+      "h": 1844,
+      "page": "page-2"
+    },
+    {
+      "file": "Upgrade.dc.html",
+      "title": "ONB-37 · 38 · ‹mode='upgrade'› — entra no passo 1 sem portão; sair pela metade no passo 1; termina no reveal",
+      "x": 490,
+      "y": 2624,
+      "w": 390,
+      "h": 2559,
+      "page": "page-2"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "leia",
+      "page": "page-1",
+      "x": 0,
+      "y": -170,
+      "w": 900,
+      "text": "Soulmon — Wireframes Onboarding-oráculo (Fase 1, cinza, rodada 1, 15/09/2026). O ritual do Oráculo (‹SoulmonOnboarding.tsx›, caminho PAGO ou ‹mode='upgrade'›): nome → nascimento (data, hora, cidade) → criatura favorita → 6 perguntas que avançam sozinhas → a bifurcação SEM VOLTA (20 itens ou revelar agora) → geração → reveal → cadastro. Uma vez por jogador pagante; é o último canvas (D3). A barra de progresso só existe em ‹step > 0› e desconta os 20 itens de quem recusou o teste. Tudo roda offline exceto o SPRITE (‹requestSprite›): sem rede, o reveal segue só com texto (D9 = ONB-33). T1/13.1 (\"oferta no reveal\"): não existe no código — o reveal é do caminho pago; registrado como tensão sem superfície (‹[pendente do dono]›). Números = ordem de foco (1 = skip link, oculto)."
+    }
+  ],
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Onboarding-oráculo — os passos (nome, nascimento, favorita, as 6 perguntas, a bifurcação)"
+    },
+    {
+      "id": "page-2",
+      "name": "Onboarding-oráculo — o teste, a geração, o reveal, o cadastro, o upgrade"
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "page-1"
+  }
+}

@@ -1,0 +1,134 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#111;background:#fff;-webkit-font-smoothing:antialiased}
+a{color:#111}a:hover{color:#666}
+code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
+.ab{width:390px;display:flex;flex-direction:column}
+.phone{width:390px;height:844px;box-sizing:border-box;border:1px solid #999;position:relative;overflow:hidden;background:#fff;display:flex;flex-direction:column}
+.phone.tall{height:auto;min-height:844px}
+.content{flex:1;overflow:hidden;padding:8px 16px 0;display:flex;flex-direction:column;gap:8px;min-height:0}
+.sheet{flex:1;overflow:hidden;padding:12px 16px;display:flex;flex-direction:column;gap:12px;min-height:0}
+.box{background:#ddd;border:1px solid #999;border-radius:8px;box-sizing:border-box}
+.card{background:#fff;border:1px solid #999;border-radius:8px;padding:12px;box-sizing:border-box;display:flex;flex-direction:column;gap:8px}
+.t{font-size:13px;line-height:1.3;margin:0}
+.b{font-weight:600}
+.s{color:#666;font-size:12px;line-height:1.3;margin:0}
+.h1{font-size:14px;font-weight:700;letter-spacing:.06em;margin:0}
+.h2{font-size:14px;font-weight:700;margin:0}
+.btn{min-height:44px;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid #999;border-radius:8px;background:#ddd;font-size:13px;font-weight:600;padding:0 14px;box-sizing:border-box}
+.btn.ghost{background:#fff}
+.btn.dis{color:#999;border-style:dashed;background:#fff}
+.ico{width:24px;height:24px;border-radius:50%;border:1px solid #999;display:inline-flex;align-items:center;justify-content:center;font-size:8px;color:#666;flex:none;background:#fff;text-transform:lowercase;box-sizing:border-box}
+.ico.big{width:32px;height:32px;font-size:9px}
+.ico.on{background:#111;color:#fff;border-color:#111}
+.tap{min-width:44px;min-height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11px;box-sizing:border-box}
+.nav{height:68px;border-top:1px solid #999;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));background:#fff;flex:none}
+.navc{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:11px;position:relative;min-height:44px}
+.navc.on{font-weight:700}
+.navc.on::after{content:"";position:absolute;left:26%;right:26%;bottom:0;height:3px;background:#111}
+.dock{height:52px;border-top:1px solid #999;display:flex;align-items:center;gap:8px;padding:0 12px;background:#fff;flex:none;box-sizing:border-box}
+.input{flex:1;min-height:40px;border:1px solid #999;border-radius:8px;background:#fff;display:flex;align-items:center;padding:0 10px;color:#666;font-size:13px;box-sizing:border-box}
+.input.on{color:#111}
+.tag{display:inline-block;border:1px dashed #999;font-size:9px;color:#666;padding:0 4px;border-radius:3px;line-height:14px;font-weight:600;background:#fff;white-space:nowrap}
+.tag.novo{border-style:solid;color:#111}
+.note{font-size:10px;color:#666;line-height:1.25;margin:0}
+.fo{display:inline-flex;width:14px;height:14px;border:1px solid #111;font-size:9px;align-items:center;justify-content:center;border-radius:2px;background:#fff;color:#111;font-weight:700;flex:none;font-style:normal;margin-right:2px}
+.seg{display:inline-flex;gap:2px;vertical-align:middle}
+.seg i{display:block;width:9px;height:11px;border:1px solid #999;background:#fff}
+.seg i.on{background:#666}
+.seg i.half{background:linear-gradient(90deg,#666 50%,#fff 50%)}
+.hdr{display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:40px}
+.meters{position:absolute;left:10px;bottom:8px;display:flex;gap:12px;align-items:center;font-size:10px;color:#666}
+.meters .m{display:inline-flex;align-items:center;gap:4px}
+.meters .m .lbl{font-weight:700;letter-spacing:.04em}
+.stage{position:relative;height:200px;border:1px solid #999;border-radius:10px;background:#fff;overflow:hidden;box-sizing:border-box}
+.stage.mini{height:120px}
+.stage .pet{position:absolute;left:140px;top:56px;width:110px;height:96px;border:1px solid #999;background:#ddd;display:flex;align-items:center;justify-content:center;font-weight:700;letter-spacing:.1em;color:#666;box-sizing:border-box}
+.stage.mini .pet{top:14px;width:80px;height:70px;left:155px}
+.stage .shadow{position:absolute;left:125px;top:146px;width:140px;height:14px;border-radius:50%;background:#ddd;border:1px solid #999}
+.stage.mini .shadow{top:80px}
+.stage .bubble{position:absolute;left:16px;right:16px;top:10px;min-height:32px;border:1px solid #999;border-radius:8px;background:#fff;padding:6px 10px;font-size:12px;line-height:1.3;box-sizing:border-box}
+.stage .bubble::after{content:"";position:absolute;left:170px;bottom:-9px;width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:9px solid #999}
+.stage .prop{position:absolute;border:1px solid #999;background:#fff;border-radius:6px;font-size:9px;color:#666;padding:2px 5px}
+.deck{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+.deck .tap{border:1px solid transparent;border-radius:8px;position:relative;padding:2px 0}
+.deck .tap.dis{color:#999}
+.deck .tap.dis .ico{border-style:dashed}
+.nameline{text-align:center;line-height:1.2}
+.slot{display:flex;flex-direction:column;gap:6px}
+.more{min-height:44px;border:1px dashed #999;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;background:#fff}
+.sticky{border-top:1px dashed #666;font-size:9px;color:#666;text-align:center;line-height:14px;margin:0}
+.row{display:flex;align-items:flex-start;gap:8px;min-height:56px;border-top:1px solid #ddd;padding:6px 0}
+.row:first-of-type{border-top:0}
+.row .chk{width:44px;height:44px;display:flex;align-items:center;justify-content:center;flex:none}
+.row .chk i{width:22px;height:22px;border:1px solid #999;border-radius:4px;display:block;background:#fff}
+.row .chk i.on{background:#666}
+.row .nm{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;padding-top:6px}
+.row.dim .nm,.row.dim .ico{opacity:.5}
+.row.haunt .nm{border-left:3px double #666;padding-left:6px}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{display:inline-flex;align-items:center;gap:3px;border:1px solid #999;border-radius:999px;padding:1px 7px;font-size:10px;color:#666;background:#fff;min-height:18px}
+.chip.on{background:#ddd;color:#111}
+.dots{display:inline-flex;gap:4px;align-items:center}
+.dots i{display:block;width:10px;height:10px;border:1px solid #999;background:#fff;box-sizing:border-box}
+.dots i.done{background:#666;border-radius:50%}
+.dots i.shield{background:#fff;border:2px solid #666;transform:rotate(45deg);width:9px;height:9px}
+.dots i.dash{height:2px;border:0;background:#999;width:10px;align-self:center}
+.dots i.ring{border-radius:50%;border-style:dashed}
+.dots i.slot{width:9px;height:9px;border:2px dashed #999;transform:rotate(45deg);background:#fff}
+.steps{display:flex;flex-direction:column;gap:2px;margin-top:2px}
+.step{display:flex;align-items:center;gap:6px;min-height:44px;font-size:12px}
+.step i{width:18px;height:18px;border:1px solid #999;border-radius:4px;display:block;background:#fff;flex:none}
+.step i.on{background:#666}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.cell{min-height:80px;border:1px solid #999;border-radius:8px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:11px;box-sizing:border-box;text-align:center}
+.cell.sel{border-width:2px;border-color:#111;background:#ddd}
+.strip{border:1px dashed #999;border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:8px;background:#fff}
+.strip .cap{font-size:10px;color:#666;display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:0}
+.foot{width:390px;box-sizing:border-box;border:1px solid #999;border-top:0;background:#eee;padding:10px 12px 12px;display:flex;flex-direction:column;gap:6px;font-size:11px;line-height:1.35;color:#111}
+.foot h4{margin:0;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#666}
+.foot p{margin:0}
+.foot ul{margin:0;padding-left:14px}
+.foot li{margin:0}
+.toast{position:absolute;left:16px;right:16px;bottom:130px;border:1px solid #999;border-radius:8px;background:#fff;padding:10px 12px;font-size:12px;box-shadow:0 2px 0 #999}
+.dim{opacity:.55}
+.scrollhint{position:absolute;right:12px;bottom:126px;font-size:10px;color:#666;background:#fff;border:1px dashed #999;border-radius:4px;padding:2px 6px}
+.folha{position:absolute;left:0;right:0;bottom:0;border-top:1px solid #999;background:#fff;padding:12px 16px 16px;display:flex;flex-direction:column;gap:12px}
+.lbl{font-size:11px;color:#666;font-weight:600;letter-spacing:.03em;margin:0}
+.segm{display:flex;border:1px solid #999;border-radius:8px;overflow:hidden}
+.segm span{flex:1;min-height:44px;display:flex;align-items:center;justify-content:center;font-size:13px}
+.segm span.on{background:#ddd;font-weight:600}
+.radios{display:flex;gap:6px;flex-wrap:wrap}
+.radio{min-height:44px;min-width:44px;border:1px solid #999;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 10px;font-size:12px;box-sizing:border-box;background:#fff}
+.radio.on{background:#ddd;font-weight:600}
+.bars{display:flex;gap:6px;align-items:flex-end;height:60px}
+.bar{flex:1;background:#ddd;border:1px solid #999;border-radius:3px 3px 0 0;display:flex;align-items:flex-end;justify-content:center;font-size:9px;color:#666}
+</style>
+</helmet>
+<div class="ab">
+<div class="phone"><div class="content" style="gap:12px;overflow:hidden;padding-bottom:16px"><header class="hdr"><h1 class="h1">SOULMON</h1><span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;border:1px solid #999;border-radius:999px;padding:2px 8px"><span class="ico ">ok</span>focus done</span></header><div role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="3" aria-label="Ritual progress" style="height:6px;border-radius:999px;background:#ddd;overflow:hidden"><div style="width:3%;height:100%;background:#666"></div></div>
+      <div style="display:flex;flex-direction:column;gap:10px"><div><p class="h1" style="font-size:18px;letter-spacing:0">What is your full name?</p><p class="s">Your name shapes your creature's numerology.</p></div><div class="input" role="textbox" aria-label="Full name"  style="min-height:44px;display:flex;align-items:center;gap:6px;"><i class="fo">2</i><span class="s">E.g.: Jane Doe</span></div></div>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:auto"><span role="button" class="tap" aria-label="Back" style="width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;flex:none"><i class="fo">3</i><span class="ico ">back</span></span><span class="btn dis" role="button" aria-disabled="true"   style="width:100%;">Continue</span></div>
+      <p class="note"><code>step = 1</code>: the bar exists (<code>step &gt; 0</code>) at ~3%; "Continue" disabled until 3 characters; Enter → <code>next()</code>. Back: <code>isUpgrade</code> → <code>onCancel</code> (ONB-38); else → <code>CHOICE_STEP</code> (the funnel)</p>
+    </div></div>
+<footer class="foot">
+    <p><span class="b">Artboard</span> · <span class="tag">ONB-22</span> <span class="tag">ONB-36</span></p>
+    <h4>Pergunta</h4><p>"Who are you — so the reading can be yours?" (PRINCÍPIOS §3) — one question, the why under it, the bar says how far</p>
+    <h4>Chega por / Sai para</h4><p><code>CHOICE_STEP</code> pago (o funil, ONB-16) ou <code>mode='upgrade'</code> (ONB-37: <code>step</code> começa em 1) → "Continue" / Enter → passo 2 · <code>back</code>: <code>CHOICE_STEP</code> (pago) ou <code>onCancel</code> (upgrade)</p>
+    <h4>Sai da tela atual</h4><ul><li>A barra nos passos negativos — só monta com <code>step &gt; 0</code> (o portão, GOAL, STRUGGLE, CHOICE e o muro de idade não a têm).</li><li>Pular o nome — não pulável: a numerologia precisa dele (<code>length &gt;= 3</code>).</li><li>Um passo "sem porquê" — cada passo diz o que o dado faz (§3).</li></ul>
+    <h4>Fontes</h4><ul><li><code>SoulmonOnboarding.tsx</code> (<code>StepShell</code> título + hint; <code>role="progressbar"</code> "Ritual progress" sob <code>step &gt; 0 &amp;&amp; step &lt;= lastStep</code>, <code>progress</code> desconta os 20 itens de quem recusou; passo 1 "What is your full name?" + "Your name shapes your creature's numerology." + "E.g.: Jane Doe", <code>canAdvance = fullName.trim().length &gt;= 3</code>; passo 2 "When were you born?" + "Your birth date does two things here: it sets your astral chart's elements and confirms you're 18 or older, Soulmon's minimum age." + "__/__/____ (DD/MM/YYYY)" com máscara, <code>isAgeBlocked</code> → <code>AGE_BLOCK</code>; <code>AGE_BLOCK</code>: "Not quite yet" + "Soulmon asks for 18+." + "Back to start" → <code>restartFromAgeBlock</code> (reinício total, sem <code>role="alert"</code>, sem vermelho); passo 3 "At what time?" + "The hour sets the Ascendant and the houses of your chart." + <code>time</code> + "I don't know my birth time" → "No problem: we use noon, and the chart goes without an Ascendant instead of faking precision."; passo 4 "Where were you born?" + "The place positions the sky at your birth — and the right timezone."; <code>FAVORITE_STEP</code> "What's your favorite creature?" + "Optional — up to 2 words. It shapes how your creature looks." + "E.g.: axolotl" + "I'd rather not influence the result" (<code>canAdvance</code> sempre); a nav genérica (<code>back</code> só ícone + "Continue") só de 1 a <code>FAVORITE_STEP</code>) · <code>CityPicker.tsx</code> ("E.g.: London"; busca SÍNCRONA na tabela embarcada — sem rede; até 6 resultados; vazio: "No city by that name in the list. Pick the nearest large city — the chart only needs the region and the timezone."; o fuso IANA só com cidade escolhida)</li><li>03 §2.5 · 02 §46 (Créditos liberam gerar o pet próprio) · REGISTRO §5.3 (não cobrar no reveal; value moment = 1º dia completo) · T8 (psicométrico invisível: nome e descrição no reveal, nada de eixo nem "porque") · D17 (upgrade = "trocou de pele": <code>bornAt</code> não muda)</li><li>PRINCÍPIOS §3 (onboarding: uma pergunta por tela; o porquê de cada dado visível; pular o que é opcional; nunca fingir precisão)</li><li><span class="tag novo">decisão 13/09</span> D3 (o ritual do Oráculo em canvas próprio, último) · D9 (offline na geração de sprite = ONB-33)</li><li>W10: ordem de foco numerada (1 = skip link, oculto); alvos ≥ 44px; rótulo = <code>aria-label</code> — o ícone de voltar antes de "Continue"; o campo com <code>autoFocus</code>; o botão desabilitado sai do Tab</li></ul>
+    <h4>PT</h4><ul><li>"Qual é o seu nome completo?" · "Seu nome molda a numerologia da sua criatura." · "Ex.: Maria da Silva" · "Continuar" · "Quando você nasceu?" · "Sua data de nascimento faz duas coisas aqui: define os elementos do seu mapa astral e confirma que você tem 18 anos ou mais, a idade mínima do Soulmon." · "Ainda não dá para continuar" · "O Soulmon pede 18 anos." · "Voltar ao início" · "A que horas?" · "A hora define o Ascendente e as casas do seu mapa." · "Não sei a hora que nasci" · "Sem problema: usamos meio-dia, e o mapa fica sem Ascendente em vez de fingir precisão." · "Onde você nasceu?" · "O lugar posiciona o céu do seu nascimento — e o fuso certo." · "Ex.: São Paulo" · "Nenhuma cidade com esse nome na lista. Escolha a cidade grande mais próxima — o mapa só precisa da região e do fuso." · "Qual sua criatura favorita?" · "Opcional — até 2 palavras. Ela influencia a aparência da sua criatura." · "Ex.: axolote" · "Prefiro não influenciar o resultado" · "Progresso do ritual"</li></ul>
+    
+  </footer>
+</div>
+</x-dc>
+</body>
+</html>
