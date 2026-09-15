@@ -7,6 +7,16 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 📚 14/09/2026 — MANUAL SINCRONIZADO COM `3ff60e7d` (wireframes da Evolução)
+>
+> `doc-mantenedor` (sessão): delta `a4d92d5c` → `3ff60e7d`, 5 commits, sem módulo
+> novo. Redatores: `doc-bibliotecario` (`00-MAPA.md` §6.7 — seis fluxos em
+> `aprovado`, 154 das 272 linhas, `DECISOES-WIREFRAME.md` §10, os 15 artboards de
+> `evolucao/`), `doc-historiador` (`10-DISCUSSOES-E-DECISOES.md` — 13.12 e a decisão da
+> Evolução na §11, o bloco de 14/09 com o flash da cerimônia, §17), `doc-redator-regras`
+> (`01-VISAO.md`: **sem alteração** — 13.12 é superfície). Verificados pelo
+> `doc-verificador` em 14/09/2026; guard verde (10/10).
+
 > ## 🌳 14/09/2026 — WIREFRAMES DA EVOLUÇÃO: DESENHADOS, CRITICADOS, CORRIGIDOS E APROVADOS PELO DONO
 >
 > Sexto canvas da SQUAD-DESIGN (Fase 1). Canvas publicado:
