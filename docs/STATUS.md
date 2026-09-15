@@ -7,6 +7,17 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 🎨 15/09/2026 — FASE 2 (IDENTIDADE): PLANO VALIDADO COM O DONO — `docs/HANDOFF-IDENTIDADE.md`
+>
+> Antes de aplicar identidade, o dono validou o plano em modal (quatro escolhas):
+> 1. **Canvas de identidade primeiro, código depois** — um canvas por fluxo em `docs/design/wireframes/<fluxo>/identidade/`; o `staff-frontend` implementa só depois.
+> 2. **O canvas "Sistema" vem antes da Home** — tokens, tipografia e os átomos (botão, card, chip, folha, nav, Visor, campo, switch, foco).
+> 3. **Escuro em todos os artboards; o claro só no `Main` de cada fluxo** (o AA dos dois temas é do token; o claro desenhado prova).
+> 4. **Checkpoint do dono por canvas**, com o recorte 200×200.
+> - Ordem: Sistema → Home → Atividades → Rituais → Pet → Onboarding-funil → Evolução → Jogos → Loja → Estatísticas → Social → Conta → Fora do app → Onboarding-oráculo.
+> - Regras: sem reabrir estrutura; sem token novo (vira pendente); "O Visor" não se reabre; o canvas desenha a TESE onde o código diverge (pixel fora do visor em 28 `.tsx`, nav em Silkscreen 12px, `lucide-react`) e registra a divergência.
+> - **Próximo:** `/squad-design identidade sistema`.
+
 > ## 📚 15/09/2026 — MANUAL SINCRONIZADO COM `2580b73a` (o checkpoint final da meta — Fase 1 fechada)
 >
 > `/manter-docs auto` após o merge do checkpoint final (`a892f21a`→`2580b73a`, 1 commit). Delta em três docs:
