@@ -1,0 +1,91 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "title": "LOJA-01 · segmento Shop — o saldo, os segmentos, a seção Itens",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1769,
+      "page": "page-1"
+    },
+    {
+      "file": "CenariosMobilias.dc.html",
+      "title": "LOJA-02 · 03 · segmento Shop rolado — Cenários (19) e Mobílias (27, com os espaços do palco)",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1634,
+      "page": "page-1"
+    },
+    {
+      "file": "CardEstados.dc.html",
+      "title": "LOJA-04 · 05 · 06 · 07 · o card — travado, comprado, flash de compra, sem saldo",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 2334,
+      "page": "page-1"
+    },
+    {
+      "file": "ConviteDemo.dc.html",
+      "title": "LOJA-08 · segmento Shop, demo — o convite PASSIVO no fim da lista",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 1649,
+      "page": "page-1"
+    },
+    {
+      "file": "TrocaCreditos.dc.html",
+      "title": "LOJA-13 · a troca Créditos → Bits — os 3 degraus e os cinco estados",
+      "x": 0,
+      "y": 2474,
+      "w": 390,
+      "h": 2184,
+      "page": "page-1"
+    },
+    {
+      "file": "TorneioSegmento.dc.html",
+      "title": "LOJA-09 · 10 · segmento Tournament — as missões da semana no topo, os prêmios em Emblemas",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1829,
+      "page": "page-2"
+    },
+    {
+      "file": "TorneioEstados.dc.html",
+      "title": "LOJA-11 · 12 · Tournament sem missões; a variante modal (fora)",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1929,
+      "page": "page-2"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "leia",
+      "page": "page-1",
+      "x": 0,
+      "y": -170,
+      "w": 900,
+      "text": "Soulmon — Wireframes Loja (Fase 1, cinza, rodada 1, 15/09/2026). A célula 4 da barra. DOIS segmentos (‹ShopSegment = shop | tournament›, D11: a divergência com o CLAUDE.md \"cinco abas\" não é reaberta): Shop = Itens · Cenários · Mobílias num scroll único, pagos em Bits; Tournament = missões da semana no topo + prêmios em Emblemas (tudo cosmético). O card é o átomo: travado (🔒 + a missão em palavras), à venda, sem saldo (o card NÃO desabilita — o preço esmaece e o toque acende o flash), comprado (Equip/Equipped), \"não aparece no cenário atual\". O convite demo é o canal PASSIVO (fim da lista, sem ×, \"sem pressa\"). A troca Créditos → Bits é o último nó, uma direção só. [decisão 13/09] = D5 (LOJA-12 modal sem caminho vivo = fora), D11. Números = ordem de foco (1 = skip link, oculto)."
+    }
+  ],
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Loja — o segmento Shop (Bits): seções, o card, a troca"
+    },
+    {
+      "id": "page-2",
+      "name": "Loja — o segmento Tournament (Emblemas): missões e prêmios"
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "page-1"
+  }
+}

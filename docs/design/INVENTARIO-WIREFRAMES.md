@@ -308,19 +308,19 @@ está vazio em 13/09/2026).
 
 | id | fluxo | tela | estado (condição do `03`) | chega por | sai para | prio | estado do wireframe |
 |---|---|---|---|---|---|---|---|
-| `LOJA-01` | Loja | `ShopModal` `asPage` · segmento `shop` | normal — `<div>` com o **saldo no topo** + seção Itens (`kind === 'chip' \&#124;\&#124; kind === 'heart'`) | célula 4 da `BottomNav` | `onClose={() => setCurrentView('main')}` | P1 | a desenhar |
-| `LOJA-02` | Loja | segmento `shop` | seção Cenários — `kind === 'bg'` (19 à venda) | rolagem | — | P1 | a desenhar |
-| `LOJA-03` | Loja | segmento `shop` | seção Mobílias — `kind === 'furniture'` (27 à venda), com os espaços do palco | rolagem | — | P1 | a desenhar |
-| `LOJA-04` | Loja | card de item | **travado** — item com `unlock`: aparece escurecido com 🔒 e **o próprio card diz a missão e o progresso**. ⚰️ o estado `hintFor` ("tocar para revelar") saiu | missão não cumprida | — | P1 | a desenhar |
-| `LOJA-05` | Loja | card de item | já comprado | compra anterior | — | P1 | a desenhar |
-| `LOJA-06` | Loja | card de item | flash de compra — `flash` (medido em 19/08/2026; o `03` não detalha) | `handleShopBuy` | — | P1 | a desenhar |
-| `LOJA-07` | Loja | card de item | saldo insuficiente — **o card NÃO é desabilitado**: só o preço esmaece (`opacity: affordable ? 1 : 0.5`), e o toque acende `flash` por 2600 ms (borda e `sub` em `--sm2-danger-ink` + "Saldo insuficiente para X." na região `role="status" aria-live="polite"` + `vibrate(60)`). Sem tela de "comprar Bits". **Medido em 13/09/2026** → `03` §4.6a | toque sem Bits | — | P1 | a desenhar |
-| `LOJA-08` | Loja | segmento `shop` | **demo** — `{seg === 'shop' && accountTier === 'demo' && onUnlock && (…)}` monta o `UnlockNudge` com `reason="shop"` | visita | `setUnlockReason('shop')` | P1 | a desenhar |
-| `LOJA-09` | Loja | segmento `tournament` | missões semanais — **no topo**, sob `{seg === 'tournament' && (weeklyMissions?.length ?? 0) > 0 && (…)}`: 3 por semana ISO, determinísticas por `weekKey`, pagas em Emblemas | troca de segmento | — | P1 | a desenhar |
-| `LOJA-10` | Loja | segmento `tournament` | itens de Emblemas — `TOURNAMENT_ITEMS` (8, escada 8/12/15/20/25/40/55/70); **tudo cosmético, e isso é regra** | idem | `handleShopBuy` | P1 | a desenhar |
-| `LOJA-11` | Loja | segmento `tournament` | sem missões — `weeklyMissions?.length === 0` (o bloco não monta) | semana sem sorteio | — | P2 | a desenhar |
-| `LOJA-12` | Loja | `ShopModal` sem `asPage` | como modal — a mesma `body` dentro de um `ModalSheet` com título "Loja"/"Shop". ⚠️ o `App.tsx` **sempre passa `asPage`**; a variante existe e não é usada — ver §3 | nenhum caminho vivo | — | P2 | a desenhar |
-| `LOJA-13` | Loja | troca Créditos → Bits | os **3** degraus de `BITS_EXCHANGE` (`CREDIT_TO_BITS` = 10), **último nó do corpo**, só em `{seg === 'shop'}`; cinco estados (`can` / sem Créditos / `busy` = `sync` e os outros dois travados / falhou / concluiu, os dois últimos pela região `aria-live` + toast). ⚰️ **O achado de 19/08/2026 (💎 emoji convivendo com `icon-gem.png`) não vale mais**: hoje é um glifo só, `diamond`, e Bits seguem sem ícone. **Medido em 13/09/2026** → `03` §4.6b | segmento `shop` | — | P1 | a desenhar |
+| `LOJA-01` | Loja | `ShopModal` `asPage` · segmento `shop` | normal — `<div>` com o **saldo no topo** + seção Itens (`kind === 'chip' \&#124;\&#124; kind === 'heart'`) | célula 4 da `BottomNav` | `onClose={() => setCurrentView('main')}` | P1 | desenhado |
+| `LOJA-02` | Loja | segmento `shop` | seção Cenários — `kind === 'bg'` (19 à venda) | rolagem | — | P1 | desenhado |
+| `LOJA-03` | Loja | segmento `shop` | seção Mobílias — `kind === 'furniture'` (27 à venda), com os espaços do palco | rolagem | — | P1 | desenhado |
+| `LOJA-04` | Loja | card de item | **travado** — item com `unlock`: aparece escurecido com 🔒 e **o próprio card diz a missão e o progresso**. ⚰️ o estado `hintFor` ("tocar para revelar") saiu | missão não cumprida | — | P1 | desenhado |
+| `LOJA-05` | Loja | card de item | já comprado | compra anterior | — | P1 | desenhado |
+| `LOJA-06` | Loja | card de item | flash de compra — `flash` (medido em 19/08/2026; o `03` não detalha) | `handleShopBuy` | — | P1 | desenhado |
+| `LOJA-07` | Loja | card de item | saldo insuficiente — **o card NÃO é desabilitado**: só o preço esmaece (`opacity: affordable ? 1 : 0.5`), e o toque acende `flash` por 2600 ms (borda e `sub` em `--sm2-danger-ink` + "Saldo insuficiente para X." na região `role="status" aria-live="polite"` + `vibrate(60)`). Sem tela de "comprar Bits". **Medido em 13/09/2026** → `03` §4.6a | toque sem Bits | — | P1 | desenhado |
+| `LOJA-08` | Loja | segmento `shop` | **demo** — `{seg === 'shop' && accountTier === 'demo' && onUnlock && (…)}` monta o `UnlockNudge` com `reason="shop"` | visita | `setUnlockReason('shop')` | P1 | desenhado |
+| `LOJA-09` | Loja | segmento `tournament` | missões semanais — **no topo**, sob `{seg === 'tournament' && (weeklyMissions?.length ?? 0) > 0 && (…)}`: 3 por semana ISO, determinísticas por `weekKey`, pagas em Emblemas | troca de segmento | — | P1 | desenhado |
+| `LOJA-10` | Loja | segmento `tournament` | itens de Emblemas — `TOURNAMENT_ITEMS` (8, escada 8/12/15/20/25/40/55/70); **tudo cosmético, e isso é regra** | idem | `handleShopBuy` | P1 | desenhado |
+| `LOJA-11` | Loja | segmento `tournament` | sem missões — `weeklyMissions?.length === 0` (o bloco não monta) | semana sem sorteio | — | P2 | desenhado |
+| `LOJA-12` | Loja | `ShopModal` sem `asPage` | como modal — a mesma `body` dentro de um `ModalSheet` com título "Loja"/"Shop". ⚠️ o `App.tsx` **sempre passa `asPage`**; a variante existe e não é usada — ver §3 | nenhum caminho vivo | — | P2 | fora |
+| `LOJA-13` | Loja | troca Créditos → Bits | os **3** degraus de `BITS_EXCHANGE` (`CREDIT_TO_BITS` = 10), **último nó do corpo**, só em `{seg === 'shop'}`; cinco estados (`can` / sem Créditos / `busy` = `sync` e os outros dois travados / falhou / concluiu, os dois últimos pela região `aria-live` + toast). ⚰️ **O achado de 19/08/2026 (💎 emoji convivendo com `icon-gem.png`) não vale mais**: hoje é um glifo só, `diamond`, e Bits seguem sem ícone. **Medido em 13/09/2026** → `03` §4.6b | segmento `shop` | — | P1 | desenhado |
 
 ### 1.8 Estatísticas
 
@@ -414,7 +414,7 @@ Um fluxo por despacho, dois agentes nunca no mesmo canvas (`CONTRACT.md`).
 | 4 | `wireframes/pet/` — **[canvas publicado](https://claude.ai/code/artifact/80f27593-30d4-4c5d-a322-8f9ef3d0549e)** (14/09/2026, 9 artboards em 3 páginas, rodada 2 pós-crítica; `Main.dc.html` + 8 `<TelaEstado>.dc.html` + `canvas.json`) | 3 | 8 | 0 / 0 / 8 | D1: canvas próprio, logo após Rituais — a ficha é onde a criatura é heroína, e o Dex é a única coleção do jogo |
 | 5 | `wireframes/evolucao/` — **[canvas publicado](https://claude.ai/code/artifact/60ad4289-eaba-4485-9d01-5b2015daa0ed)** (14/09/2026, 15 artboards em 3 páginas, rodada 2 pós-crítica; `Main.dc.html` + 14 `<TelaEstado>.dc.html` + `canvas.json`) | 11 | 21 | 0 / 12 / 9 | o clímax do jogo e o único lugar onde demo × pago muda a página inteira |
 | 6 | `wireframes/jogos/` — **[canvas publicado](https://claude.ai/code/artifact/baa66565-81e1-4256-b54e-97da6fcc265a)** (15/09/2026, 16 artboards em 4 páginas, rodada 2 pós-crítica; `Main.dc.html` + 15 `<TelaEstado>.dc.html` + `canvas.json`) | 7 | 25 | 0 / 20 / 5 | semanal, mas é onde mora a maior máquina de estados do app (9 fases da masmorra) |
-| 7 | `loja.dc.html` | 6 | 13 | 0 / 11 / 2 | semanal; e é onde as três moedas não podem se confundir |
+| 7 | `wireframes/loja/` — **[canvas publicado](https://claude.ai/code/artifact/ef3ed287-1ecd-466a-a8de-c5aea415f2f8)** (15/09/2026, 7 artboards em 2 páginas, rodada 1; `Main.dc.html` + 6 `<TelaEstado>.dc.html` + `canvas.json`; LOJA-12 `fora` por D5) | 6 | 13 | 0 / 11 / 2 | semanal; e é onde as três moedas não podem se confundir |
 | 8 | `wireframes/onboarding-funil/` — **[canvas publicado](https://claude.ai/code/artifact/443c5305-7e71-4a8f-8e2e-ca343206e8c6)** (14/09/2026, 17 artboards em 4 páginas, rodada 2 pós-crítica; `Main.dc.html` + 16 `<TelaEstado>.dc.html` + `canvas.json`; D3: o funil — ONB-01→20, 34, 39→43; ONB-13 `fora` por D4) | 18 | 26 | 0 / 21 / 5 | uma vez por jogador — mas por **todos** eles. Ver a ressalva na §3.2 item 3 |
 | 9 | `estatisticas.dc.html` | 5 | 10 | 0 / 0 / 10 | raro; três coleções (bestiário, álbum, nascimento) com a mesma gramática de silhueta |
 | 10 | `conta.dc.html` | 18 | 33 | 0 / 8 / 25 | raro, mas é onde a compra acontece e onde a Biblioteca ficou hospedada (§3.2 item 2) |
@@ -475,6 +475,8 @@ derrota em tinta neutra (`JOGO-15`→`JOGO-22`) → pesadelo (`JOGO-23`→`JOGO-
 Segmento `shop` com as três seções e o saldo (`LOJA-01`→`LOJA-03`) → os estados do card, que
 é o átomo (`LOJA-04`→`LOJA-07`) → convite de demo (`LOJA-08`) → segmento `tournament`
 (`LOJA-09`→`LOJA-11`) → as duas pontas soltas (`LOJA-12`, `LOJA-13`).
+
+**Desenhado em 15/09/2026** (`design-wireframer`): 12 linhas em 7 artboards — o segmento Shop (`Main` 01, `CenariosMobilias` 02/03, `CardEstados` 04/05/06/07, `ConviteDemo` 08, `TrocaCreditos` 13) e o segmento Tournament (`TorneioSegmento` 09/10, `TorneioEstados` 11 + 12 como nota). `LOJA-12` é `fora` por D5. Cada artboard leva a tag `LOJA-xx` que cobre.
 
 ### 2.7 Onboarding
 Splash e intro (`ONB-01`→`ONB-04`) → **o portão de conta com os cinco estados**
