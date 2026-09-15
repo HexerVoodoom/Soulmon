@@ -7,6 +7,16 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 📚 15/09/2026 — MANUAL SINCRONIZADO COM `efdc1088` (wireframes dos Jogos)
+>
+> `doc-mantenedor` (sessão): delta `c730b294` → `efdc1088`, 5 commits, sem módulo
+> novo. Redatores: `doc-bibliotecario` (`00-MAPA.md` §6.7 — sete fluxos em `aprovado`,
+> 179 das 272 linhas, `DECISOES-WIREFRAME.md` §11, os 16 artboards de `jogos/`),
+> `doc-historiador` (`10-DISCUSSOES-E-DECISOES.md` — 13.13 e a decisão dos Jogos na §11,
+> o bloco de 15/09, §17), `doc-redator-regras` (`01-VISAO.md`: **sem alteração** —
+> 13.13 nasce dentro de #21: é o placar de UMA partida, nunca métrica do outro jogador).
+> Verificados e carimbados pelo `doc-verificador` em 15/09/2026; guard verde (10/10).
+
 > ## 🎮 15/09/2026 — WIREFRAMES DOS JOGOS: DESENHADOS, CRITICADOS, CORRIGIDOS E APROVADOS PELO DONO
 >
 > Sétimo canvas da SQUAD-DESIGN (Fase 1). Canvas publicado:
