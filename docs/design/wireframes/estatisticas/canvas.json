@@ -33,7 +33,7 @@
       "x": 1470,
       "y": 0,
       "w": 390,
-      "h": 2574,
+      "h": 2544,
       "page": "page-1"
     },
     {
@@ -71,7 +71,7 @@
       "x": 0,
       "y": -170,
       "w": 900,
-      "text": "Soulmon — Wireframes Estatísticas (Fase 1, cinza, rodada 2 pós-crítica, 15/09/2026). A terceira sub-aba da célula 3 (‹currentView === 'stats'›, ‹StatsPage›). NÃO é um painel de números: é \"o que nós dois já vivemos\" (PRINCÍPIOS §9) — o Vínculo lê-se pela PALAVRA (o número é legenda), a jornada tem UM contador que governa algo (dias completos → evolução) e o resto é acervo (nascimento, encontros, formas). Toda seção tem condição literal: Vínculo, Quem é (o traço é sorteado na criação do save), A jornada e A estação (o objeto é sempre passado) montam sempre; encontros, formas, feitos, \"começou por\" somem em vez de mostrar zero; as duas listas do fim trocam o ‹ul› por uma frase de FUTURO. Nada nesta página é botão além dos chips e da barra. [decisão 13/09] = D4 (STAT-10, ramo legado = fora), D11 (desenhar como o código faz; o \"#25\" e o \"-\" do PRINCÍPIOS §9 não existem no código — registrados, não inventados). Números = ordem de foco (1 = skip link, oculto)."
+      "text": "Soulmon — Wireframes Estatísticas (Fase 1, cinza, rodada 3 — checkpoint final do dono, 15/09/2026). A terceira sub-aba da célula 3 (‹currentView === 'stats'›, ‹StatsPage›). NÃO é um painel de números: é \"o que nós dois já vivemos\" (PRINCÍPIOS §9) — o Vínculo lê-se pela PALAVRA (o número é legenda), a jornada tem UM contador que governa algo (dias completos → evolução) e o resto é acervo (nascimento, encontros, formas). Toda seção tem condição literal: Vínculo, Quem é (o traço é sorteado na criação do save), A jornada e A estação (o objeto é sempre passado) montam sempre; encontros, formas, feitos, \"começou por\" somem em vez de mostrar zero; as duas listas do fim trocam o ‹ul› por uma frase de FUTURO. Nada nesta página é botão além dos chips e da barra. [decisão 13/09] = D4 (STAT-10, ramo legado = fora), D11 (desenhar como o código faz; o \"#25\" e o \"-\" do PRINCÍPIOS §9 não existem no código — registrados, não inventados). Números = ordem de foco (1 = skip link, oculto)."
     }
   ],
   "pages": [

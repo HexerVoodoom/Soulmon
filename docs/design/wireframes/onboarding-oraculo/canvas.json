@@ -29,7 +29,7 @@
     },
     {
       "file": "Ritual.dc.html",
-      "title": "ONB-27 · as 6 perguntas do ritual — avançam sozinhas ao escolher; a 1ª não tem \"voltar\"",
+      "title": "ONB-27 · as 6 perguntas do ritual — avançam sozinhas ao escolher; a 1ª ganha \"voltar\" [novo] (decisão 15/09)",
       "x": 1470,
       "y": 0,
       "w": 390,
@@ -69,14 +69,23 @@
       "x": 980,
       "y": 0,
       "w": 390,
-      "h": 2709,
+      "h": 2619,
+      "page": "page-2"
+    },
+    {
+      "file": "RevealDemo.dc.html",
+      "title": "ONB-44 · [novo] o REVEAL DEMO (13.19) — o quiz de 6 para todos; a leitura + a oferta da 13.1; a criatura só pagando",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 2049,
       "page": "page-2"
     },
     {
       "file": "RevealSemSprite.dc.html",
       "title": "ONB-33 · o reveal sem sprite (D9) — o casulo até 12 s, depois só o texto; o desenho entra pelo acervo",
-      "x": 1470,
-      "y": 0,
+      "x": 0,
+      "y": 2759,
       "w": 390,
       "h": 2319,
       "page": "page-2"
@@ -84,8 +93,8 @@
     {
       "file": "Cadastro.dc.html",
       "title": "ONB-35 · ‹REGISTER› pago — \"Last details\": o apelido (o que os outros veem), \"Hatch\"",
-      "x": 0,
-      "y": 2849,
+      "x": 490,
+      "y": 2759,
       "w": 390,
       "h": 1859,
       "page": "page-2"
@@ -93,8 +102,8 @@
     {
       "file": "Upgrade.dc.html",
       "title": "ONB-37 · 38 · ‹mode='upgrade'› — entra no passo 1 sem portão; sair pela metade no passo 1; termina no reveal",
-      "x": 490,
-      "y": 2849,
+      "x": 980,
+      "y": 2759,
       "w": 390,
       "h": 2574,
       "page": "page-2"
@@ -107,7 +116,7 @@
       "x": 0,
       "y": -170,
       "w": 900,
-      "text": "Soulmon — Wireframes Onboarding-oráculo (Fase 1, cinza, rodada 2 pós-crítica, 15/09/2026). O ritual do Oráculo (‹SoulmonOnboarding.tsx›, caminho PAGO ou ‹mode='upgrade'›): nome → nascimento (data, hora, cidade) → criatura favorita → 6 perguntas que avançam sozinhas → a bifurcação SEM VOLTA (20 itens ou revelar agora) → geração → reveal → cadastro. Uma vez por jogador pagante; é o último canvas (D3). A barra de progresso só existe em ‹step > 0› e desconta os 20 itens de quem recusou o teste. Tudo roda offline exceto o SPRITE (‹requestSprite›): sem rede, o reveal segue só com texto (D9 = ONB-33). T1/13.1 (\"oferta no reveal\", decisão do dono de 13/09): desenhada no reveal como ‹[decisão 13/09]›, condicionada a ‹accountTier === 'demo'› — condição que o código de hoje não produz (o reveal é do caminho pago; o demo escolhe personagem, D3). A pergunta para o dono: o funil ganha um reveal demo (o quiz para todos, a criatura própria só pagando)? ‹[pendente do dono]›. Números = ordem de foco a partir de 1 — NÃO há skip link no ritual: o ‹SoulmonOnboarding› renderiza por ‹return› antecipado antes de o App montar o ‹sm-skip-link› (‹hasCompletedOnboarding›); achado que vale também para o funil."
+      "text": "Soulmon — Wireframes Onboarding-oráculo (Fase 1, cinza, rodada 3 — checkpoint final do dono, 15/09/2026). O ritual do Oráculo (‹SoulmonOnboarding.tsx›, caminho PAGO ou ‹mode='upgrade'›): nome → nascimento (data, hora, cidade) → criatura favorita → 6 perguntas que avançam sozinhas → a bifurcação SEM VOLTA (20 itens ou revelar agora) → geração → reveal → cadastro. Uma vez por jogador pagante; é o último canvas (D3). A barra de progresso só existe em ‹step > 0› e desconta os 20 itens de quem recusou o teste. Tudo roda offline exceto o SPRITE (‹requestSprite›): sem rede, o reveal segue só com texto (D9 = ONB-33). T1/13.1 (\"oferta no reveal\", decisão do dono de 13/09): desenhada no reveal como ‹[decisão 13/09]›, condicionada a ‹accountTier === 'demo'› — condição que o código de hoje não produz (o reveal é do caminho pago; o demo escolhe personagem, D3). O dono decidiu (15/09, modal final — 13.19): o funil GANHA um reveal demo — as 6 perguntas para todo mundo, a oferta no reveal demo, a criatura própria só pagando (artboard ‹RevealDemo›). E a 1ª pergunta ganha \"voltar\" (‹[novo]›). Números = ordem de foco a partir de 1 — NÃO há skip link no ritual: o ‹SoulmonOnboarding› renderiza por ‹return› antecipado antes de o App montar o ‹sm-skip-link› (‹hasCompletedOnboarding›); achado que vale também para o funil."
     }
   ],
   "pages": [

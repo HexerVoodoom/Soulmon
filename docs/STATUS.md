@@ -7,6 +7,32 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 🧭 15/09/2026 — MODAL FINAL DA META AUTÔNOMA: OS 12 PENDENTES DO DONO RESPONDIDOS — A FASE 1 ESTÁ FECHADA
+>
+> Fim da meta "complete o trabalho em todos os canvas" (15/09/2026): os 13 canvases foram
+> desenhados, criticados, corrigidos e aprovados por aprovação automática; as decisões de regra
+> que surgiram foram aplicadas pela recomendação do lead e listadas para o dono, que respondeu
+> tudo num único checkpoint (três modais). Resultado, por canvas:
+> - **Estatísticas:** o "0" grande do primeiro uso fica **como o código** — a frase de contexto
+>   `[novo]` (E4 da §13) foi **revogada** e o canvas republicado sem ela.
+> - **Social:** "N days playing" **fica e vira regra** (13.15 — a única exceção a "nenhum número
+>   por pessoa"; sai se virar ordenação); a lista de jogadores **fica lista** (T11 fechada).
+> - **Conta:** a ordem da página de Configurações **fica como hoje**; `CONTA-13` **fora**, confirmado.
+> - **Fora do app:** com zero feitas o widget **não mostra a linha do contador** e a energia do
+>   overlay **nunca aparece "⚡0/5"** (13.16); o badge de pendentes **perde o dígito** (13.17); a copy
+>   dos widgets é **só em inglês** (13.18 — ⚠️ diverge do `CLAUDE.md` › Idioma: a linha precisa
+>   registrar a exceção); o widget E **sem piso** visual. Canvas republicado.
+> - **Onboarding-oráculo:** o funil ganha um **reveal demo** (13.19 — o quiz de 6 para todos, a
+>   oferta da 13.1 mora ali, a criatura própria só pagando) — a Fase 1 reabriu só para isso: um
+>   artboard novo no canvas do Oráculo; e a 1ª pergunta do ritual **ganha "voltar"** `[novo]`.
+> - **`REGISTRO-DE-DECISOES.md` §13:** 13.15 a 13.19. **`DECISOES-WIREFRAME.md`:** os `[pendente do
+>   dono]` das §13–§17 viraram "Decidido pelo dono (15/09/2026, modal final)".
+> - **Próximo:** a Fase 2 (identidade: tokens, tipografia, Visor) só sobre canvas `aprovado` —
+>   `/squad-design identidade <fluxo>`, na ordem de frequência (Home primeiro). Antes dela, os
+>   achados de código dos blocos de cada canvas são o backlog do `staff-frontend` (o mais urgente:
+>   "Don't forget about me today!" viva no widget D; `hideMetrics` que não chega à `StatsPage`;
+>   "0/5" no widget; a linha `CLAUDE.md` › Idioma para a 13.18).
+
 > ## 📚 15/09/2026 — MANUAL SINCRONIZADO COM `accbe6fa` (wireframes do Onboarding-oráculo — Fase 1 completa)
 >
 > `/manter-docs auto` após o merge do Oráculo (`3955b8a1`→`accbe6fa`, 4 commits). Delta em três docs:
