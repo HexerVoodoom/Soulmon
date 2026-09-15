@@ -1,0 +1,154 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "title": "CONTA-01 · 02 · 06 · a página de Configurações — o cartão de instalar e \"Your account\" deslogada",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1979,
+      "page": "page-1"
+    },
+    {
+      "file": "ContaLogada.dc.html",
+      "title": "CONTA-03 · \"Your account\" logada — Restaurar compras, Sair, as respostas da restauração",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 2409,
+      "page": "page-1"
+    },
+    {
+      "file": "DadosTelemetria.dc.html",
+      "title": "CONTA-04 · 05 · \"Your data\" — exportar e apagar; o 503 é ESTADO; a lista do que some; as estatísticas de uso",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 2559,
+      "page": "page-1"
+    },
+    {
+      "file": "Grupos.dc.html",
+      "title": "CONTA-01 · os outros grupos — história, o que o Soulmon te manda, aparência, ajuda, seu ritmo",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 2754,
+      "page": "page-1"
+    },
+    {
+      "file": "Descanso.dc.html",
+      "title": "CONTA-07 · 08 · 09 · 10 · a Janela de Descanso — a própria janela, o vazio neutro, o lembrete, sem métricas",
+      "x": 0,
+      "y": 2894,
+      "w": 390,
+      "h": 2784,
+      "page": "page-1"
+    },
+    {
+      "file": "Passos.dc.html",
+      "title": "CONTA-11 · 12 · os passos — consentimento antes do sistema; com permissão; sem sensor (morto)",
+      "x": 490,
+      "y": 2894,
+      "w": 390,
+      "h": 2619,
+      "page": "page-1"
+    },
+    {
+      "file": "Carregando.dc.html",
+      "title": "CONTA-33 · carregando — o ‹ScreenSkeleton› enquanto o chunk da página chega",
+      "x": 980,
+      "y": 2894,
+      "w": 390,
+      "h": 1229,
+      "page": "page-1"
+    },
+    {
+      "file": "Personalidade.dc.html",
+      "title": "CONTA-14 · 13 · \"Personality\" — três grupos de chips, \"More options\", Default/Save; o painel rápido (fora)",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1634,
+      "page": "page-2"
+    },
+    {
+      "file": "GuiaGlossario.dc.html",
+      "title": "CONTA-15 · 16 · o Guia (acordeão de 7 capítulos) e o Glossário (18 termos) — os números saem das constantes",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1989,
+      "page": "page-2"
+    },
+    {
+      "file": "RefazerRitual.dc.html",
+      "title": "CONTA-17 · \"Redo the ritual\" — o ‹ConfirmDialog›; o texto diz o que CONTINUA",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 1334,
+      "page": "page-2"
+    },
+    {
+      "file": "Creditos.dc.html",
+      "title": "CONTA-18 · 19 · \"Credits\" — ganhar, gastar, a Nova Leitura só na conta completa; sem reroll sem perfil",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 1619,
+      "page": "page-2"
+    },
+    {
+      "file": "NovaLeitura.dc.html",
+      "title": "CONTA-20 · 21 · \"New Reading\" — a semente vem das respostas; confirmando; sem créditos; falhou",
+      "x": 0,
+      "y": 2129,
+      "w": 390,
+      "h": 1514,
+      "page": "page-2"
+    },
+    {
+      "file": "Desbloquear.dc.html",
+      "title": "CONTA-22 · 23 · 24 · o ‹UnlockAccountModal› — normal (por motivo), comprando, recusa/cancelamento",
+      "x": 490,
+      "y": 2129,
+      "w": 390,
+      "h": 1739,
+      "page": "page-2"
+    },
+    {
+      "file": "Convites.dc.html",
+      "title": "CONTA-25 · o ‹UnlockNudge› e seus 6 pontos — a manchete por motivo; nunca abre sozinho",
+      "x": 980,
+      "y": 2129,
+      "w": 390,
+      "h": 2034,
+      "page": "page-2"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "leia",
+      "page": "page-1",
+      "x": 0,
+      "y": -170,
+      "w": 900,
+      "text": "Soulmon — Wireframes Conta (Fase 1, cinza, rodada 1, 15/09/2026). O que o menu sanduíche alcança, compra e ajuda (a Biblioteca migrou para o canvas Social — D2). A pergunta da família (PRINCÍPIOS §11): \"o que é meu, e como eu saio?\" — a saída de dados na própria superfície (exportar/apagar), ocultar métrica como opção legítima (o switch da Janela de Descanso), permissão pedida como consequência de um toggle, a SettingsPage em grupos por intenção. Página 1 = a ‹SettingsPage› (sete grupos + o ‹RestWindowCard› e o ‹StepsCard› que o App monta abaixo dela). Página 2 = os modais: Personalidade (‹AISettingsModal›), Guia/Glossário, \"Refazer o ritual\", Créditos → Nova Leitura, o ‹UnlockAccountModal› (3 estados) e os 6 pontos do ‹UnlockNudge›. [decisão 13/09] = D2, D11; CONTA-13 (‹SettingsModal›, inalcançável) segue o precedente da D5 → fora, ‹[pendente do dono]›. Números = ordem de foco (1 = skip link, oculto)."
+    }
+  ],
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Conta — a página de Configurações (grupos, descanso, passos, carregando)"
+    },
+    {
+      "id": "page-2",
+      "name": "Conta — os modais que o menu alcança (personalidade, guia, ritual, créditos, nova leitura, compra, convites)"
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "page-1"
+  }
+}

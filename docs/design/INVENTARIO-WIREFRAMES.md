@@ -341,31 +341,31 @@ está vazio em 13/09/2026).
 
 | id | fluxo | tela | estado (condição do `03`) | chega por | sai para | prio | estado do wireframe |
 |---|---|---|---|---|---|---|---|
-| `CONTA-01` | Conta | `SettingsPage` | normal — **cinco grupos por intenção**, uma ação dominante (entrar/sincronizar). ⚠️ o `INVENTARIO-TELAS.md` (19/08/2026) mediu **11 blocos empilhados sem agrupamento**: o agrupamento em 5 é posterior — **o `03` manda** | linha "Configurações" do menu | a barra | P2 | a desenhar |
-| `CONTA-02` | Conta | `AccountSection` | deslogado — conta e compras | `SettingsPage` | portão de auth | P2 | a desenhar |
-| `CONTA-03` | Conta | `AccountSection` | logado — com **"Restaurar compras"** (exigido pela Play) | idem | `claimOrder` | P2 | a desenhar |
-| `CONTA-04` | Conta | `AccountDataSection` | normal — exportar e apagar | `SettingsPage` | — | P2 | a desenhar |
-| `CONTA-05` | Conta | `AccountDataSection` | **503 é ESTADO, não erro** — o botão nasce desabilitado **com o motivo escrito, em tinta neutra** | servidor indisponível | — | P2 | a desenhar |
-| `CONTA-06` | Conta | `InstallPrompt` | cartão — **não modal**; vive dentro da `SettingsPage` e só monta com `beforeinstallprompt` e `!standalone` | `SettingsPage` | prompt do sistema | P2 | a desenhar |
-| `CONTA-07` | Conta | `RestWindowCard` | normal — o usuário escolhe a **própria** janela (`onChangeWindow`, `DEFAULT_REST_WINDOW` 23:00–07:00) | `currentView === 'settings'` | — | P1 | a desenhar |
-| `CONTA-08` | Conta | `RestWindowCard` | vazio — nenhuma noite registrada; **noite sem registro é NEUTRA** e sai do denominador | 1ª semana | — | P1 | a desenhar |
-| `CONTA-09` | Conta | `RestWindowCard` | lembrete de deitar — `onEnableReminder` com `reminderPreview`, pedido **no momento-ouro**; é o **único push possível** deste eixo | toque | permissão do sistema | P1 | a desenhar |
-| `CONTA-10` | Conta | `RestWindowCard` | sem métricas — switch `onToggleMetrics`: esconde números e **preserva as recompensas**. **Proibido nesta tela**: score de 0 a 100 e gráfico de estágios do sono | switch | `hideMetrics` no save | P1 | a desenhar |
-| `CONTA-11` | Conta | `StepsCard` | disponível — `{currentView === 'settings' && stepsAvailable === true && gameState.stepsConsent !== 'declined' && (…)}`; **some por completo** sem sensor (PWA) | APK com sensor | — | P2 | a desenhar |
-| `CONTA-12` | Conta | `StepsCard` | consentimento — vem **antes** do diálogo do sistema; `'declined'` é **definitivo** (insistir depois de um "não" é assédio) | 1ª visita | — | P2 | a desenhar |
-| `CONTA-13` | Conta | `SettingsModal` | painel rápido de IA — `{settingsOpen && (…)}` na raiz do `App`. ⚠️ **não é "aberto pelo menu": é INALCANÇÁVEL** — o único chamador de `setSettingsOpen(true)` é `handleOpenAISettings`, que desce até o `ChatBox` e nunca é chamado (medido em 13/09/2026). Mesma família do `OraclePage`; ver `03` §4.23a | nenhum caminho vivo | `onClose` | P2 | a desenhar |
-| `CONTA-14` | Conta | `AISettingsModal` | normal — 3 grupos de chips (`tone` · `emojiIntensity` · `motivationStyle`) + `Disclosure` "Mais opções" (`CREATIVITY` e `customKeywords`, contador só acima de 400/500); rodapé "Padrão" (local) + "Salvar"; `useEffect` ressincroniza a cada abertura, então fechar sem salvar descarta. **Caminho de abertura REAL, medido em 13/09/2026**: menu sanduíche → "Configurações" (`onNavigate('settings')`) → `SettingsPage` → `ActionRow` "Personalidade" → `setShowAISettings(true)`. ⚰️ O "via `CompanionHUD`" do `INVENTARIO-TELAS.md` (19/08/2026) é a fiação MORTA que abriria o `SettingsModal` (ver `CONTA-13`). → `03` §4.23a | `SettingsPage` | `onClose` | P2 | a desenhar |
-| `CONTA-15` | Conta | `GuideModal` (via `ContentModals`) | normal — `guideModalOpen`; **os números saem das CONSTANTES**, nunca de texto à mão | `onOpenGuide` da `SettingsPage` | `onClose` | P2 | a desenhar |
-| `CONTA-16` | Conta | `HelpModal` | glossário — `showHelpModal`, idem | `onOpenGlossary` | `onClose` | P2 | a desenhar |
-| `CONTA-17` | Conta | `ConfirmDialog` | "Refazer o ritual" — `resetOnboardingOpen`; o texto diz que Soulmon, atividades, Bits e progresso **continuam** | linha do menu | confirma ou cancela | P2 | a desenhar |
-| `CONTA-18` | Conta | `CreditsModal` | normal — `{creditsOpen && (…)}` | `onOpenCredits` do menu → `openCredits` | `onClose` | P2 | a desenhar |
-| `CONTA-19` | Conta | `CreditsModal` | sem reroll — `canReroll` é `!!readLocal(STORAGE_KEYS.SOULMON_PROFILE)` | sem perfil salvo | — | P2 | a desenhar |
-| `CONTA-20` | Conta | `NewReadingModal` | normal — **só chega do `CreditsModal`** (a linha faz `setCreditsOpen(false); setNewReadingOpen(true)`). ⚰️ substituiu o reroll por `Math.random()`: a semente passa a vir **das respostas** | `CreditsModal` | `onClose` | P2 | a desenhar |
-| `CONTA-21` | Conta | `NewReadingModal` | confirmando — `onConfirm` async, **só fecha com `ok`** | toque | commit | P2 | a desenhar |
-| `CONTA-22` | Conta | `UnlockAccountModal` | normal — `{unlockReason && (…)}` na raiz do `App`; **nunca abre sozinho**. `UnlockReason = 'task-limit' \&#124; 'evolution' \&#124; 'report' \&#124; 'shop'` | os 4 motivos | `onClose={() => setUnlockReason(null)}` | P1 | a desenhar |
-| `CONTA-23` | Conta | `UnlockAccountModal` | comprando — espera do servidor; `onUnlocked={handleAccountUnlocked}` **só depois de o servidor confirmar** | toque | `ONB-37` (ritual de upgrade) | P1 | a desenhar |
-| `CONTA-24` | Conta | `UnlockAccountModal` | recusa / cancelamento | retorno do billing | fecha | P1 | a desenhar |
-| `CONTA-25` | Conta | `UnlockNudge` | o componente e seus **6 pontos** (medidos em 09/09/2026): `CreateModal` e `EditModal` (`task-limit`), `ShopModal` (`shop`), `DailyReportModal` (`report`), `App.tsx` Evolução e Renascimento (`evolution`). **Nunca abre sozinho** | as 6 telas hospedeiras | `setUnlockReason(...)` | P1 | a desenhar |
+| `CONTA-01` | Conta | `SettingsPage` | normal — **cinco grupos por intenção**, uma ação dominante (entrar/sincronizar). ⚠️ o `INVENTARIO-TELAS.md` (19/08/2026) mediu **11 blocos empilhados sem agrupamento**: o agrupamento em 5 é posterior — **o `03` manda** | linha "Configurações" do menu | a barra | P2 | desenhado |
+| `CONTA-02` | Conta | `AccountSection` | deslogado — conta e compras | `SettingsPage` | portão de auth | P2 | desenhado |
+| `CONTA-03` | Conta | `AccountSection` | logado — com **"Restaurar compras"** (exigido pela Play) | idem | `claimOrder` | P2 | desenhado |
+| `CONTA-04` | Conta | `AccountDataSection` | normal — exportar e apagar | `SettingsPage` | — | P2 | desenhado |
+| `CONTA-05` | Conta | `AccountDataSection` | **503 é ESTADO, não erro** — o botão nasce desabilitado **com o motivo escrito, em tinta neutra** | servidor indisponível | — | P2 | desenhado |
+| `CONTA-06` | Conta | `InstallPrompt` | cartão — **não modal**; vive dentro da `SettingsPage` e só monta com `beforeinstallprompt` e `!standalone` | `SettingsPage` | prompt do sistema | P2 | desenhado |
+| `CONTA-07` | Conta | `RestWindowCard` | normal — o usuário escolhe a **própria** janela (`onChangeWindow`, `DEFAULT_REST_WINDOW` 23:00–07:00) | `currentView === 'settings'` | — | P1 | desenhado |
+| `CONTA-08` | Conta | `RestWindowCard` | vazio — nenhuma noite registrada; **noite sem registro é NEUTRA** e sai do denominador | 1ª semana | — | P1 | desenhado |
+| `CONTA-09` | Conta | `RestWindowCard` | lembrete de deitar — `onEnableReminder` com `reminderPreview`, pedido **no momento-ouro**; é o **único push possível** deste eixo | toque | permissão do sistema | P1 | desenhado |
+| `CONTA-10` | Conta | `RestWindowCard` | sem métricas — switch `onToggleMetrics`: esconde números e **preserva as recompensas**. **Proibido nesta tela**: score de 0 a 100 e gráfico de estágios do sono | switch | `hideMetrics` no save | P1 | desenhado |
+| `CONTA-11` | Conta | `StepsCard` | disponível — `{currentView === 'settings' && stepsAvailable === true && gameState.stepsConsent !== 'declined' && (…)}`; **some por completo** sem sensor (PWA) | APK com sensor | — | P2 | desenhado |
+| `CONTA-12` | Conta | `StepsCard` | consentimento — vem **antes** do diálogo do sistema; `'declined'` é **definitivo** (insistir depois de um "não" é assédio) | 1ª visita | — | P2 | desenhado |
+| `CONTA-13` | Conta | `SettingsModal` | painel rápido de IA — `{settingsOpen && (…)}` na raiz do `App`. ⚠️ **não é "aberto pelo menu": é INALCANÇÁVEL** — o único chamador de `setSettingsOpen(true)` é `handleOpenAISettings`, que desce até o `ChatBox` e nunca é chamado (medido em 13/09/2026). Mesma família do `OraclePage`; ver `03` §4.23a | nenhum caminho vivo | `onClose` | P2 | fora |
+| `CONTA-14` | Conta | `AISettingsModal` | normal — 3 grupos de chips (`tone` · `emojiIntensity` · `motivationStyle`) + `Disclosure` "Mais opções" (`CREATIVITY` e `customKeywords`, contador só acima de 400/500); rodapé "Padrão" (local) + "Salvar"; `useEffect` ressincroniza a cada abertura, então fechar sem salvar descarta. **Caminho de abertura REAL, medido em 13/09/2026**: menu sanduíche → "Configurações" (`onNavigate('settings')`) → `SettingsPage` → `ActionRow` "Personalidade" → `setShowAISettings(true)`. ⚰️ O "via `CompanionHUD`" do `INVENTARIO-TELAS.md` (19/08/2026) é a fiação MORTA que abriria o `SettingsModal` (ver `CONTA-13`). → `03` §4.23a | `SettingsPage` | `onClose` | P2 | desenhado |
+| `CONTA-15` | Conta | `GuideModal` (via `ContentModals`) | normal — `guideModalOpen`; **os números saem das CONSTANTES**, nunca de texto à mão | `onOpenGuide` da `SettingsPage` | `onClose` | P2 | desenhado |
+| `CONTA-16` | Conta | `HelpModal` | glossário — `showHelpModal`, idem | `onOpenGlossary` | `onClose` | P2 | desenhado |
+| `CONTA-17` | Conta | `ConfirmDialog` | "Refazer o ritual" — `resetOnboardingOpen`; o texto diz que Soulmon, atividades, Bits e progresso **continuam** | linha do menu | confirma ou cancela | P2 | desenhado |
+| `CONTA-18` | Conta | `CreditsModal` | normal — `{creditsOpen && (…)}` | `onOpenCredits` do menu → `openCredits` | `onClose` | P2 | desenhado |
+| `CONTA-19` | Conta | `CreditsModal` | sem reroll — `canReroll` é `!!readLocal(STORAGE_KEYS.SOULMON_PROFILE)` | sem perfil salvo | — | P2 | desenhado |
+| `CONTA-20` | Conta | `NewReadingModal` | normal — **só chega do `CreditsModal`** (a linha faz `setCreditsOpen(false); setNewReadingOpen(true)`). ⚰️ substituiu o reroll por `Math.random()`: a semente passa a vir **das respostas** | `CreditsModal` | `onClose` | P2 | desenhado |
+| `CONTA-21` | Conta | `NewReadingModal` | confirmando — `onConfirm` async, **só fecha com `ok`** | toque | commit | P2 | desenhado |
+| `CONTA-22` | Conta | `UnlockAccountModal` | normal — `{unlockReason && (…)}` na raiz do `App`; **nunca abre sozinho**. `UnlockReason = 'task-limit' \&#124; 'evolution' \&#124; 'report' \&#124; 'shop'` | os 4 motivos | `onClose={() => setUnlockReason(null)}` | P1 | desenhado |
+| `CONTA-23` | Conta | `UnlockAccountModal` | comprando — espera do servidor; `onUnlocked={handleAccountUnlocked}` **só depois de o servidor confirmar** | toque | `ONB-37` (ritual de upgrade) | P1 | desenhado |
+| `CONTA-24` | Conta | `UnlockAccountModal` | recusa / cancelamento | retorno do billing | fecha | P1 | desenhado |
+| `CONTA-25` | Conta | `UnlockNudge` | o componente e seus **6 pontos** (medidos em 09/09/2026): `CreateModal` e `EditModal` (`task-limit`), `ShopModal` (`shop`), `DailyReportModal` (`report`), `App.tsx` Evolução e Renascimento (`evolution`). **Nunca abre sozinho** | as 6 telas hospedeiras | `setUnlockReason(...)` | P1 | desenhado |
 
 
 
@@ -373,7 +373,7 @@ está vazio em 13/09/2026).
 
 
 
-| `CONTA-33` | Conta | `SettingsPage` | carregando — `Suspense` com `ScreenSkeleton` | navegação | — | P2 | a desenhar |
+| `CONTA-33` | Conta | `SettingsPage` | carregando — `Suspense` com `ScreenSkeleton` | navegação | — | P2 | desenhado |
 
 ### 1.9a Social (a Biblioteca: diretório, amigos, grupo, o perfil do outro — canvas próprio por D2; `CONTA-26`→`CONTA-32` renumerados)
 
@@ -429,7 +429,7 @@ Um fluxo por despacho, dois agentes nunca no mesmo canvas (`CONTRACT.md`).
 | 8 | `wireframes/onboarding-funil/` — **[canvas publicado](https://claude.ai/code/artifact/443c5305-7e71-4a8f-8e2e-ca343206e8c6)** (14/09/2026, 17 artboards em 4 páginas, rodada 2 pós-crítica; `Main.dc.html` + 16 `<TelaEstado>.dc.html` + `canvas.json`; D3: o funil — ONB-01→20, 34, 39→43; ONB-13 `fora` por D4) | 18 | 26 | 0 / 21 / 5 | uma vez por jogador — mas por **todos** eles. Ver a ressalva na §3.2 item 3 |
 | 9 | `wireframes/estatisticas/` — **[canvas publicado](https://claude.ai/code/artifact/b35cbac1-de65-4b5d-a17a-760f94e4d6df)** (15/09/2026, 7 artboards em 2 páginas, rodada 2 pós-crítica; `Main.dc.html` + 6 `<TelaEstado>.dc.html` + `canvas.json`; STAT-10 `fora` por D4) | 5 | 10 | 0 / 0 / 10 | raro; três coleções (bestiário, álbum, nascimento) com a mesma gramática de silhueta |
 | 10 | `wireframes/social/` — **[canvas publicado](https://claude.ai/code/artifact/7abe2a04-90db-43f1-9d75-dd8a742f3ff0)** (15/09/2026, 8 artboards em 2 páginas, rodada 2 pós-crítica; `Main.dc.html` + 7 `<TelaEstado>.dc.html` + `canvas.json`; D2: CONTA-26→32 → SOC-01→07) | 3 | 7 | 0 / 0 / 7 | raro; a única família em que um número ao lado de um nome vira comparação — o guarda dá parecer sobre o canvas inteiro (D2) |
-| 11 | `conta.dc.html` | 15 | 26 | 0 / 8 / 18 | raro, mas é onde a compra acontece e onde a Biblioteca ficou hospedada (§3.2 item 2) |
+| 11 | `wireframes/conta/` — **[canvas publicado](https://claude.ai/code/artifact/c5fba27a-548f-444c-890f-10f4d482229f)** (15/09/2026, 14 artboards em 2 páginas, rodada 1; `Main.dc.html` + 13 `<TelaEstado>.dc.html` + `canvas.json`; CONTA-13 `fora` pelo precedente da D5) | 15 | 26 | 0 / 8 / 18 | raro, mas é onde a compra acontece e onde a Biblioteca ficou hospedada (§3.2 item 2) |
 | 12 | `fora-do-app.dc.html` | 17 | 18 | 0 / 0 / 18 | 5 widgets + overlay + 7 copies de push: superfície que a pessoa vê **sem decidir abrir** |
 | 13 | `wireframes/onboarding-oraculo/` (D3: o ritual — ONB-21→33, 35→38) | 13 | 17 | 0 / 1 / 16 | uma vez por jogador pagante; é o último canvas por W5 |
 
@@ -512,6 +512,8 @@ legado (`STAT-10`).
 (`CONTA-07`→`CONTA-12`) → modais de ajuste e ajuda (`CONTA-13`→`CONTA-17`) → créditos e nova
 leitura (`CONTA-18`→`CONTA-21`) → **compra** (`CONTA-22`→`CONTA-25`) → carregando (`CONTA-33`);
 a Biblioteca migrou para o canvas Social (D2, §1.9a).
+
+**Desenhado em 15/09/2026** (`design-wireframer`): 25 linhas em 14 artboards — a página (`Main` 01/02/06, `ContaLogada` 03, `DadosTelemetria` 04/05, `Grupos` 01, `Descanso` 07/08/09/10, `Passos` 11/12, `Carregando` 33) e os modais (`Personalidade` 14 + 13 como nota, `GuiaGlossario` 15/16, `RefazerRitual` 17, `Creditos` 18/19, `NovaLeitura` 20/21, `Desbloquear` 22/23/24, `Convites` 25). `CONTA-13` é `fora` pelo precedente da D5 (sem caminho vivo; pendente do dono). Cada artboard leva a tag `CONTA-xx` que cobre.
 
 ### 2.9a Social
 A Biblioteca com os quatro estados declarados (`SOC-01`→`SOC-04`) → a lista e o presente (`SOC-05`) →
