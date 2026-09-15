@@ -7,6 +7,15 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 📚 15/09/2026 — MANUAL SINCRONIZADO COM `3955b8a1` (wireframes do Fora do app)
+>
+> `/manter-docs auto` após o merge do Fora do app (`d4ec208a`→`3955b8a1`, 5 commits). Delta em três docs:
+> - `00-MAPA.md` §6.7 — doze fluxos, 250/272 em `aprovado`, o Fora do app 12º, a §16 (`doc-bibliotecario`).
+> - `10-DISCUSSOES-E-DECISOES.md` — duas linhas novas no §11 (decisão §16, o bloco 📱), §13 e §17 (`doc-historiador`).
+> - `01-VISAO.md` — sem alteração (o delta do doc era só o bloco de STATUS).
+> - Verificação: `doc-verificador`, tudo bate; carimbos em 15/09/2026. Guard verde (10/10).
+> - `.sincronizado.json` → `3955b8a1`.
+
 > ## 📱 15/09/2026 — WIREFRAMES DO FORA DO APP: DESENHADOS, CRITICADOS, CORRIGIDOS E APROVADOS (META AUTÔNOMA DO DONO)
 >
 > Décimo segundo canvas da SQUAD-DESIGN (Fase 1). Canvas publicado:
