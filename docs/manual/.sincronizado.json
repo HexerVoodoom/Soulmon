@@ -1,6 +1,6 @@
 {
-  "sha": "efdc1088b1d4f1edd64fe1f22e5a84a864063247",
+  "sha": "9acfa7e014d7fb0b20661c27c885c5b723767606",
   "data": "15/09/2026",
-  "por": "doc-mantenedor (sessão) — delta c730b294→efdc1088: wireframes dos Jogos aprovados, decisão 13.13, DECISOES-WIREFRAME §11",
+  "por": "doc-mantenedor (sessão) — marcador: o delta efdc1088→9acfa7e0 era só o bloco de STATUS da própria sincronização",
   "nota": "Escrito pelo doc-mantenedor ao fechar cada sincronização. Lido por scripts/docs-delta.mjs e pelo hook de sessão. Nunca edite à mão."
 }
