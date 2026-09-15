@@ -7,6 +7,38 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 🌳 14/09/2026 — WIREFRAMES DA EVOLUÇÃO: DESENHADOS, CRITICADOS, CORRIGIDOS — CHECKPOINT DO DONO PENDENTE
+>
+> Sexto canvas da SQUAD-DESIGN (Fase 1). Canvas publicado:
+> **https://claude.ai/code/artifact/60ad4289-eaba-4485-9d01-5b2015daa0ed**
+> (15 artboards em 3 páginas; `docs/design/wireframes/evolucao/`). 21 linhas `EVO-*`
+> desenhadas (a sub-aba Soulmon migrou para o Pet, D1); decisão do design-lead em
+> `docs/design/DECISOES-WIREFRAME.md` §10.
+> - **Crítica em duas rodadas:** `design-critic` (r1 "não passa" — B1 ordem de foco
+>   invertida em 7 artboards; B2 a cerimônia sem semântica de diálogo; B3 risco de FLASH
+>   na intercalação; W3 o estado por nó — aplicados/registrados), `soulmon-product-designer`
+>   (8 achados: a data e a saída relacional na cerimônia; o gesto duplo do visor; o modal em
+>   cima do clímax), `soulmon-guarda-linha-vermelha` (**APROVADA COM RESSALVA**, sem veto:
+>   o cadeado avisa dos corações; a data; a pausa antes do modal).
+> - **Decisões estruturais** (`[novo]`): a DATA na cerimônia (X1); "Let’s keep going
+>   together" no lugar de "Continue" (X2); a tag do cadeado vira "ON HOLD" (X3); o cadeado
+>   diz que não protege os corações (X4); estado por nó, offline (D9), reduced-motion
+>   como quadro (D7), `role="dialog"` (X5). **Sai:** "Continue", a tag "LOCKED" do cadeado,
+>   a intercalação em movimento reduzido.
+> - **⏳ DEPENDE DE VOCÊ (checkpoint):** aprovar / devolver / mandar sair. Uma decisão sua:
+>   o `EvolveTaskModal` ("cadastre mais tarefas") continua como MODAL logo depois da
+>   cerimônia, ou vira um CARD na página de Evolução? O lead recomenda o card.
+> - **Achados de passagem (código):** ⚠️ **flash** — a cerimônia intercala sprites brancos
+>   de 420 ms até 55 ms (~18 trocas/s) sobre fundo escuro, acima do piso do WCAG 2.3.1 —
+>   capar em ≥ 334 ms sempre; `EvolutionCeremony` sem `role`/`aria-modal`/trap/Escape num
+>   z-500; não lê `prefers-reduced-motion` (o `MilestoneCeremony` lê); sem a data e com
+>   saída neutra; "LOCKED" nomeia duas coisas em EN; o cadeado não avisa que não protege
+>   de degeneração; `EvolveTaskModal` no kit antigo com botões só em inglês; o gesto duplo
+>   do visor (travar × evoluir); "Degenerate" (dois toques) sem linha no inventário; no
+>   demo os estados de sprite nunca disparam.
+> - **Branch:** `design/wireframes-evolucao` (pushada). Merge só após o seu OK.
+>   Próximo canvas: Jogos.
+
 > ## 📚 14/09/2026 — MANUAL SINCRONIZADO COM `ba957ca7` (wireframes do Onboarding-funil)
 >
 > `doc-mantenedor` (sessão): delta `1ceb3bc8` → `ba957ca7`, 5 commits, sem módulo

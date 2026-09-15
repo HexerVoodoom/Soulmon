@@ -337,3 +337,55 @@ mantidas.
 - **Para o cartógrafo:** `03 §2.3` não diz que `STRUGGLE`, `CHOICE` e `REGISTER` não têm volta; `03 §2.4` não diz que o campo de objetivo do tutorial é independente do `soulGoal`; a régua "8 telas" de PP Parte 0 exclui o tutorial.
 - **Para o `docs/STATUS.md` (achados de código):** (a) três becos sem saída no funil (`back()` sem botão em `STRUGGLE_STEP`, `CHOICE_STEP`, `REGISTER`); (b) `REGISTER` demo sem `<img>`; (c) durante a checagem assíncrona o portão renderiza a tela sem-Firebase por um tick — quem toca "Continue" entra sem conta mesmo com Firebase configurado (`mostrarAuth = authUsavel && !authEmail`, `authUsavel` nasce `false`); (d) o skip da intro sem rótulo nem `onKeyDown`; (e) `/api/suggest-tasks` recebe `goalText` e a `privacidade.html` não o menciona; (f) o objetivo perguntado duas vezes (ONB-14 e ONB-40); (g) nenhuma copy diz que a 1ª atividade é real; (h) a métrica "8 telas" × 10 contadas.
 - **Para o `staff-frontend`:** O1–O7 e S1–S5 são o diff do funil; nenhum item muda regra de jogo; aceites do guarda: 2c (as caixas de ONB-09 nascem desmarcadas — o artboard mostra o estado pós-marcação), 2e (linha na política antes de implementar a disclosure); V1 espera o dono.
+
+## 10. Evolução: entra / volta / sai (decisão do `soulmon-design-lead`, 14/09/2026)
+
+> **Canvas:** [Soulmon — Wireframes Evolução](https://claude.ai/code/artifact/60ad4289-eaba-4485-9d01-5b2015daa0ed)
+> (rodada 2, pós-crítica) · arquivos em `docs/design/wireframes/evolucao/` (`Main.dc.html` + 14
+> `<TelaEstado>.dc.html` + `canvas.json`; 21 linhas `EVO-*` em 15 artboards — a sub-aba Soulmon migrou para o Pet, D1).
+> **Crítica:** `design-critic` (rodada 1: "não passa", 3 bloqueantes — B1 ordem de foco invertida em 7 artboards,
+> B2 a cerimônia sem semântica de diálogo, B3 risco de flash na intercalação — + W3 o estado por nó da árvore;
+> aplicados/registrados na rodada 2), `soulmon-product-designer` (8 achados; os que mudaram o canvas: a data e a
+> saída relacional na cerimônia; a tag "LOCKED" duplicada), `soulmon-guarda-linha-vermelha` (família **APROVADA
+> COM RESSALVA** — nenhum veto; 3 ressalvas que viram aceite: o cadeado avisa dos corações, a data na cerimônia,
+> a pausa entre a cerimônia e o modal).
+> **Precedência:** código > teste > `CLAUDE.md` > manual > este doc. Valem D7 (reduced-motion muda a estrutura da
+> cerimônia), D9 (offline na geração de sprite), D11 (a 4ª divergência — marco espera o gesto — não é reaberta) e
+> a régua viva `evolucaoManual.contract.test.ts`.
+
+### 10.1 Entra (estrutura ou copy nova, marcada `[novo]` no canvas)
+
+| # | O que entra | Motivo (fonte) | O que perde |
+|---|---|---|---|
+| X1 | **A DATA na cerimônia de evolução** ("September 14, 2026" — `formReachedAt`, 02 §45) | PRINCÍPIOS §5 obriga (MOB §6A, 4 de 11 apps; "marco é memória, não aviso"); a cerimônia do marco já a tem (RIT-20); guarda 4a (aceite); product-designer #1 | Nada de regra |
+| X2 | **"Continue" vira "Let’s keep going together"** na cerimônia | PRINCÍPIOS §5 (saída de RELAÇÃO — Ahead); o marco já usa esta frase: duas celebrações, uma saída (product-designer #2/#3); `onClose` intacto | O "Continue" neutro |
+| X3 | **A tag do cadeado do jogador vira "ON HOLD"** (era "LOCKED", a mesma palavra da forma não alcançada) | Em EN duas coisas tinham um nome; o PT já desambigua (TRAVADA × BLOQUEADA); casa com o botão "Evolution on hold" (PRINCÍPIOS §6 "vocabulário único"; M-perm §3 item 6; crítico ressalva; product-designer #5) | Nada; a tag "LOCKED" da forma não alcançada fica |
+| X4 | **A superfície do cadeado diz o que ele não protege**: "Holding the form doesn’t shield it — hearts can still drop on hard days." | 02 §17 ("o cadeado não protege de degeneração") vivia só em comentário de código; quem trava para "manter como está" podia ver a criatura cair sem aviso — teste do homem atrás da cortina (guarda 1c, aceite) | Nada |
+| X5 | **Estados que a rodada 1 não tinha**: a linha de estado por NÓ da árvore (`linhaDeEstado` roda em cada card — "NEW · Visor tuned", "Not revealed yet", "The Oracle is drawing…"); o offline da geração de sprite (D9); a cerimônia em movimento reduzido como quadro antes → depois (D7); o `role="dialog"` na cerimônia; plural real no `EvolveTaskModal` | W3 (crítico); D7; D9; B2 | Nada |
+
+### 10.2 Volta (a crítica pediu; o lead recusa ou adia)
+
+| # | Pedido | Decisão | Motivo |
+|---|---|---|---|
+| V1 | **O `EvolveTaskModal` em cima do clímax** (Continue → "cadastre mais tarefas" em dois toques; guarda 4b, product-designer #4) — alternativa: virar CARD na página de Evolução, onde a barra já mudou | **→ dono** | É a única mudança que reorganiza uma superfície inteira; o código já encadeou o modal para DEPOIS da cerimônia (03 §4.11) e a régua `filaDeAvisos` trava a string do `isOpen`. Recomendação do lead: virar card na página (o mesmo léxico do convite), sem modal |
+| V2 | O gesto duplo do visor (alterna o cadeado; com a barra cheia, dispara a evolução) — separar "travar" de "evoluir" | **Adiado → STATUS / lead** | É IA do motor (product-designer #2/#4); o botão de 44px replica o cadeado; um botão "Evolve" separado seria funcionalidade nova — registrada como dívida, não desenhada |
+| V3 | "N complete days to go." como leitura dominante (PRINCÍPIOS §6 família "faltam N", PARCIAL) — copy candidata "4 of 7 complete days" | **Adiado → lote de copy** | A frase está abaixo da barra e diz "complete"; trocar a ordem (feito primeiro) é copy, não estrutura |
+| V4 | O × permanente no `UnlockNudge` (Garmin, PRINCÍPIOS §8) | **Volta ao código (D11)** | Decisão preexistente do dono (13/09): as quatro divergências não são reabertas; o guarda registra (3a) e segue |
+| V5 | W9: nenhum artboard nomeia o que o Soulmon ATUAL perde (só anti-padrões de outros apps) | **Aceito como lacuna documental** | D11 manda desenhar como o código já faz; a coluna "Sai" desta seção é o delta |
+
+### 10.3 Sai (o que a superfície de hoje tem e o wireframe não tem)
+
+| # | Sai | Motivo |
+|---|---|---|
+| S1 | **"Continue"** na cerimônia | X2 |
+| S2 | **A tag "LOCKED" do cadeado do jogador** | X3 |
+| S3 | **A intercalação de 3 s e o vídeo em loop** em movimento reduzido — viram quadro antes → depois | D7 (o código não lê `prefers-reduced-motion` — achado) |
+| S4 | **"(s)"** nos plurais do `EvolveTaskModal` | X5 |
+| S5 | **A ordem de foco começando no visor** (rodada 1) — as sub-abas vêm antes no DOM | Crítico B1 |
+
+### 10.4 O que fica registrado para depois
+
+- **Para o dono, no checkpoint:** X1–X4 são as mudanças estruturais/copy — a recomendação é aprovar as quatro; **V1 (o modal de "cadastre mais tarefas" vira card na página, em vez de modal em cima da cerimônia) é decisão sua** — o lead recomenda o card.
+- **Para o cartógrafo:** o botão "Degenerate" nos cards de estágio anterior (dois toques: "Confirm degeneration" → "Final warning") não tem linha no inventário nem seção no 03 §4.10; a linha de estado por nó da árvore (`linhaDeEstado`) não está no 03; no demo os estados de sprite (GERANDO/ERRO/A_SINTONIZAR) nunca disparam (`getSpriteForStage` é o fallback) — EVO-05/06/07 são só de conta paga.
+- **Para o `docs/STATUS.md` (achados de código):** (a) **flash** — a intercalação da cerimônia decai de 420 ms até 55 ms (~18 trocas/s) de sprites brancos sobre fundo escuro, acima do piso do WCAG 2.3.1; capar em ≥ 334 ms independente da preferência (prioridade alta); (b) `EvolutionCeremony` sem `role`, `aria-modal`, trap nem Escape num z-500 que bloqueia o app; (c) `EvolutionCeremony` não lê `prefers-reduced-motion` (o `MilestoneCeremony` lê); (d) a cerimônia sem a data e com saída neutra; (e) "LOCKED" para duas coisas em EN; (f) o cadeado não avisa que não protege de degeneração; (g) `EvolveTaskModal` no kit antigo (Consolas, `sm-card`) com "Create new task" / "Got it" só em inglês; (h) o gesto duplo do visor; (i) o "Degenerate" fora do inventário.
+- **Para o `staff-frontend`:** X1–X5 e S1–S5 são o diff da Evolução; nenhum item muda regra de jogo (`02`); V1 espera o dono; aceites do guarda: 1c (a frase do cadeado), 4a (a data), 4b (a pausa entre cerimônia e modal — resolvida por V1 se o dono aprovar o card).
