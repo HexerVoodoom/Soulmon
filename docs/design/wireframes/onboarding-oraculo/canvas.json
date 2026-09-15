@@ -6,7 +6,7 @@
       "x": 0,
       "y": 0,
       "w": 390,
-      "h": 1994,
+      "h": 2114,
       "page": "page-1"
     },
     {
@@ -15,7 +15,7 @@
       "x": 490,
       "y": 0,
       "w": 390,
-      "h": 2544,
+      "h": 2619,
       "page": "page-1"
     },
     {
@@ -24,7 +24,7 @@
       "x": 980,
       "y": 0,
       "w": 390,
-      "h": 1844,
+      "h": 1859,
       "page": "page-1"
     },
     {
@@ -33,16 +33,16 @@
       "x": 1470,
       "y": 0,
       "w": 390,
-      "h": 2424,
+      "h": 2439,
       "page": "page-1"
     },
     {
       "file": "Bifurcacao.dc.html",
       "title": "ONB-28 · 29 · a bifurcação (‹REFINE_OFFER›) — decisão SEM VOLTA; o erro de geração volta para cá",
       "x": 0,
-      "y": 2684,
+      "y": 2759,
       "w": 390,
-      "h": 2469,
+      "h": 2499,
       "page": "page-1"
     },
     {
@@ -51,7 +51,7 @@
       "x": 0,
       "y": 0,
       "w": 390,
-      "h": 2409,
+      "h": 2454,
       "page": "page-2"
     },
     {
@@ -60,7 +60,7 @@
       "x": 490,
       "y": 0,
       "w": 390,
-      "h": 1724,
+      "h": 1754,
       "page": "page-2"
     },
     {
@@ -69,7 +69,7 @@
       "x": 980,
       "y": 0,
       "w": 390,
-      "h": 2484,
+      "h": 2709,
       "page": "page-2"
     },
     {
@@ -78,25 +78,25 @@
       "x": 1470,
       "y": 0,
       "w": 390,
-      "h": 2304,
+      "h": 2319,
       "page": "page-2"
     },
     {
       "file": "Cadastro.dc.html",
       "title": "ONB-35 · ‹REGISTER› pago — \"Last details\": o apelido (o que os outros veem), \"Hatch\"",
       "x": 0,
-      "y": 2624,
+      "y": 2849,
       "w": 390,
-      "h": 1844,
+      "h": 1859,
       "page": "page-2"
     },
     {
       "file": "Upgrade.dc.html",
       "title": "ONB-37 · 38 · ‹mode='upgrade'› — entra no passo 1 sem portão; sair pela metade no passo 1; termina no reveal",
       "x": 490,
-      "y": 2624,
+      "y": 2849,
       "w": 390,
-      "h": 2559,
+      "h": 2574,
       "page": "page-2"
     }
   ],
@@ -107,7 +107,7 @@
       "x": 0,
       "y": -170,
       "w": 900,
-      "text": "Soulmon — Wireframes Onboarding-oráculo (Fase 1, cinza, rodada 1, 15/09/2026). O ritual do Oráculo (‹SoulmonOnboarding.tsx›, caminho PAGO ou ‹mode='upgrade'›): nome → nascimento (data, hora, cidade) → criatura favorita → 6 perguntas que avançam sozinhas → a bifurcação SEM VOLTA (20 itens ou revelar agora) → geração → reveal → cadastro. Uma vez por jogador pagante; é o último canvas (D3). A barra de progresso só existe em ‹step > 0› e desconta os 20 itens de quem recusou o teste. Tudo roda offline exceto o SPRITE (‹requestSprite›): sem rede, o reveal segue só com texto (D9 = ONB-33). T1/13.1 (\"oferta no reveal\"): não existe no código — o reveal é do caminho pago; registrado como tensão sem superfície (‹[pendente do dono]›). Números = ordem de foco (1 = skip link, oculto)."
+      "text": "Soulmon — Wireframes Onboarding-oráculo (Fase 1, cinza, rodada 2 pós-crítica, 15/09/2026). O ritual do Oráculo (‹SoulmonOnboarding.tsx›, caminho PAGO ou ‹mode='upgrade'›): nome → nascimento (data, hora, cidade) → criatura favorita → 6 perguntas que avançam sozinhas → a bifurcação SEM VOLTA (20 itens ou revelar agora) → geração → reveal → cadastro. Uma vez por jogador pagante; é o último canvas (D3). A barra de progresso só existe em ‹step > 0› e desconta os 20 itens de quem recusou o teste. Tudo roda offline exceto o SPRITE (‹requestSprite›): sem rede, o reveal segue só com texto (D9 = ONB-33). T1/13.1 (\"oferta no reveal\", decisão do dono de 13/09): desenhada no reveal como ‹[decisão 13/09]›, condicionada a ‹accountTier === 'demo'› — condição que o código de hoje não produz (o reveal é do caminho pago; o demo escolhe personagem, D3). A pergunta para o dono: o funil ganha um reveal demo (o quiz para todos, a criatura própria só pagando)? ‹[pendente do dono]›. Números = ordem de foco a partir de 1 — NÃO há skip link no ritual: o ‹SoulmonOnboarding› renderiza por ‹return› antecipado antes de o App montar o ‹sm-skip-link› (‹hasCompletedOnboarding›); achado que vale também para o funil."
     }
   ],
   "pages": [
