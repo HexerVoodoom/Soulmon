@@ -239,7 +239,7 @@ os `.woff2` são assets, não pacotes.
 | `fredoka-latin-ext.woff2` | 4,5 KB | latin-ext |
 | `rubik-latin.woff2` | 35 KB | latin |
 | `rubik-latin-ext.woff2` | 19 KB | latin-ext |
-| `material-symbols-rounded.woff2` | **147 KB** | 102 ícones |
+| `material-symbols-rounded.woff2` | **152 KB** | 102 ícones |
 
 ### Silkscreen: onde ela mora, e o que foi MEDIDO
 
@@ -304,24 +304,29 @@ curl -s -A "$UA" -o public/fonts/material-symbols-rounded.woff2 "$(grep -o 'http
 Ao trocar o arquivo, **suba o `CACHE_VERSION` de `public/sw.js`** — senão
 quem já tem o app instalado fica com a fonte velha e o ícone novo não aparece.
 
-**Inventário atual (102):**
+**Inventário atual (102 — a linha dizia 102 com 100 nomes; contados de novo em 16/09/2026):**
 
 `accessibility_new, add, archive, arrow_back, arrow_forward, auto_awesome,
 bedtime, bolt, calendar_month, casino, chat_bubble, check, check_circle,
-chevron_left, chevron_right, cleaning_services, close, cloud_done, cloud_off,
-content_copy, dark_mode, delete, diamond, do_not_disturb_on, download,
-drag_indicator, eco, edit, egg, emoji_events, event_repeat, expand_less,
-expand_more, favorite, filter_list, flag, help, home, info, inventory_2,
-leaderboard, light_mode, link, local_fire_department, lock, lock_open, logout,
-menu, mic, military_tech, mood, more_horiz, nightlight, paid, palette,
-pan_tool, park, pause, pending, person, pets, play_arrow, psychology,
-radio_button_unchecked, refresh, replay, restaurant, schedule, search, send,
-sentiment_satisfied, settings, share, shopping_bag, shower, sort, spa, star,
-stop_circle, storefront, swords, sync, task_alt, timer, today, touch_app,
-translate, trending_up, tune, undo, upload, visibility, visibility_off,
-volume_off, volume_up, volunteer_activism, warning, water_drop, wb_sunny,
-wifi_off`
+chevron_left, chevron_right, cleaning_services, close, cloud_done,
+cloud_off, content_copy, dark_mode, delete, diamond, do_not_disturb_on,
+download, drag_indicator, eco, edit, egg, emoji_events, event_repeat,
+expand_less, expand_more, favorite, filter_list, flag, groups, help, home,
+info, inventory_2, leaderboard, light_mode, link, local_fire_department,
+lock, lock_open, logout, menu, mic, military_tech, mood, more_horiz,
+nightlight, paid, palette, pan_tool, park, pause, pending, person, pets,
+play_arrow, psychology, radio_button_unchecked, refresh, replay,
+restaurant, schedule, search, send, sentiment_satisfied, settings, share,
+shopping_bag, shower, sort, spa, star, stop_circle, storefront, swords,
+sync, task_alt, timer, today, touch_app, toys, translate, trending_up,
+tune, undo, upload, visibility, visibility_off, volume_off, volume_up,
+volunteer_activism, warning, water_drop, wb_sunny, wifi_off`
 
+> `toys` (Brincar, 5ª célula do deck) e `groups` (Biblioteca, no menu da nav)
+> entraram pelo canvas Home (P6, decisão do dono em 16/09/2026; o crítico
+> derrubou `pets` — é a criatura — e `person` — é perfil). Arquivo rebaixado
+> pelo comando acima; `CACHE_VERSION` v122.
+>
 > `mic`, `send` e `stop_circle` entraram na onda do ChatBox (a barra de chat é
 > `position: fixed`, aparece em toda a Home e era a última superfície com PNG
 > raster + `lucide-react`). O arquivo foi rebaixado pelo comando acima e o
