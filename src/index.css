@@ -4905,7 +4905,8 @@ button.sm-px-node {
   padding: 0;
 }
 .sm-px-ritual {
-  border-top: 1px solid color-mix(in srgb, var(--sm-px-copper) 38%, transparent);
+  /* Linha do sistema (`--sm2-line`), não cobre: o painel é vetor (SIS-03). */
+  border-top: 1px solid var(--sm2-line);
   &:first-child { border-top: 0; }
 }
 .sm-px-ritual-row {
@@ -4919,10 +4920,15 @@ button.sm-px-node {
 /* Concluído: dessaturado + tinta muted, NUNCA `opacity` — opacidade mistura
    texto E fundo com a tela e esmaga a razão de contraste (a mesma armadilha
    medida no `.sm-btn:disabled`). */
-.sm-px-ritual-done .sm-px-ritual-name { color: var(--sm-muted); text-decoration: line-through; }
+.sm-px-ritual-done .sm-px-ritual-name { color: var(--sm2-muted); text-decoration: line-through; }
 .sm-px-ritual-done .sm-px-ritual-icon { filter: grayscale(.75); }
-.sm-px-ritual-dim .sm-px-ritual-name { color: var(--sm-muted); }
+.sm-px-ritual-dim .sm-px-ritual-name { color: var(--sm2-muted); }
 .sm-px-ritual-dim .sm-px-ritual-icon { filter: grayscale(.75); }
+/* TAREFA ASSOMBRADA (canvas Home, `PetAssombrado` / P5, 16/09/2026): título
+   na tinta PRÓPRIA `--sm2-haunted` (5,58 / 5,66 sobre `surface`), sólida —
+   NUNCA `opacity` na linha (F1: `.55` dava 2,31:1). Lápis e checkbox
+   intactos; o chip "haunted · +relief" é do `TaskMeta`. */
+.sm-px-ritual-haunted .sm-px-ritual-name { color: var(--sm2-haunted); }
 
 /* Casa do ícone: 40×40, SEM MOLDURA (rodada 4, direção do dono).
    Era um quadro de cobre chanfrado em volta de cada ícone; o dono não quer
@@ -4964,7 +4970,7 @@ button.sm-px-node {
   text-align: left;
   color: inherit;
   cursor: pointer;
-  &:focus-visible { outline: 3px solid var(--sm-px-copper); outline-offset: 2px; }
+  &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
 }
 /* Nome escrito pelo USUÁRIO, sem limite de tamanho e ~25% mais longo em
    PT-BR: trunca em uma linha (o `title` no JSX carrega o texto inteiro).
@@ -4982,7 +4988,7 @@ button.sm-px-node {
   font-size: var(--sm2-text-sm);
   font-weight: 600;
   line-height: 1.25;
-  color: var(--sm-ink);
+  color: var(--sm2-ink);
 }
 .sm-px-ritual-sub {
   display: block;
@@ -4994,7 +5000,7 @@ button.sm-px-node {
   font-size: var(--sm2-text-xs);
   font-weight: 500;
   line-height: 1.3;
-  color: var(--sm-muted);
+  color: var(--sm2-muted);
 }
 
 /* Expansor das etapas — ocupa a MESMA casa do checkbox (44×44), então a

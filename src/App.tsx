@@ -5179,6 +5179,9 @@ export default function App() {
                         value={task.completed ? 1 : 0}
                         max={1}
                         done={task.completed}
+                        /* A tinta `--sm2-haunted` na linha (P5); a regra é a
+                           mesma do chip do `TaskMeta` e do olhar do pet. */
+                        haunted={isHaunted(task, agora)}
                         onToggle={() => { if (!task.completed) handleToggleTask(task.id); }}
                         onEdit={() => handleEditTask(task.id)}
                         language={language}

@@ -35,7 +35,9 @@ export function StepRow({ id, label, completed, onToggle, disabled = false, lang
         /* 44×44 de toque com o quadrado de 22px dentro. A etapa é item
            secundário, mas o alvo segue o mesmo piso das outras ações do app
            — 40 passava no WCAG AA (24px) e ficava abaixo do padrão daqui. */
-        style={{ width: 44, height: 44, padding: 11, background: 'none', border: 'none', opacity: disabled ? 0.5 : 1 }}
+        /* Desativado (fora do dia) = caixa TRACEJADA, nunca `opacity` —
+           alfa < 1 derruba o contraste do rótulo inteiro (canvas Home, F1). */
+        style={{ width: 44, height: 44, padding: 11, background: 'none', border: 'none' }}
         className="flex items-center justify-center shrink-0"
       >
         <span
@@ -49,7 +51,7 @@ export function StepRow({ id, label, completed, onToggle, disabled = false, lang
             width: 20, height: 20, borderRadius: 4, display: 'flex',
             alignItems: 'center', justifyContent: 'center',
             backgroundColor: completed ? 'var(--sm2-primary-fill)' : 'transparent',
-            border: `2px solid ${completed ? 'var(--sm2-primary-fill)' : 'var(--sm2-muted)'}`,
+            border: `2px ${disabled && !completed ? 'dashed' : 'solid'} ${completed ? 'var(--sm2-primary-fill)' : 'var(--sm2-muted)'}`,
             transition: 'background-color var(--sm2-dur-tap) var(--sm2-ease), border-color var(--sm2-dur-tap) var(--sm2-ease)',
           }}
         >

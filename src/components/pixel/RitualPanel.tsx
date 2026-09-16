@@ -120,15 +120,17 @@ function RitualCheck({
         style={{
           width: 24,
           height: 24,
-          borderRadius: 8,
+          borderRadius: 'var(--sm2-radius-sm)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           boxSizing: 'border-box',
-          border: checked ? '1px solid transparent' : '1px solid var(--sm2-line)',
-          backgroundColor: checked ? 'var(--sm2-primary-fill)' : 'var(--sm2-surface-2)',
+          /* SIS-03 / canvas Home: caixa 24, raio 4, borda `muted` 2px; marcada
+             = `primary-fill`. Desativada (fora do dia) = tracejada — por
+             FORMA, nunca por opacidade (0 elementos com alfa < 1 no canvas). */
+          border: checked ? '2px solid var(--sm2-primary-fill)' : `2px ${disabled ? 'dashed' : 'solid'} var(--sm2-muted)`,
+          backgroundColor: checked ? 'var(--sm2-primary-fill)' : 'transparent',
           color: 'var(--sm2-on-primary)',
-          opacity: disabled && !checked ? 0.5 : 1,
           transition: 'background-color var(--sm2-dur-tap) var(--sm2-ease)',
         }}
       >
@@ -168,11 +170,14 @@ function RitualCheck({
  * e alvo próprios. E NÃO é "ícone dentro de box": `.sm-px-ritual-icon` não
  * desenha fundo, borda nem chanfro — é só a casa que alinha a coluna.
  */
-export function RitualIcon({ name }: { name?: string }) {
+export function RitualIcon({ name, haunted = false }: { name?: string; haunted?: boolean }) {
   if (!name) return null;
   return (
     <span className="sm-px-ritual-icon" aria-hidden="true">
-      <Icon name={name} size={32} tone="gold" />
+      {/* Assombrada: o ícone segue a tinta da linha (`--sm2-haunted`, P5) —
+          o esmaecer é a TINTA, nunca opacidade. `tone` não tem esse acento
+          (é o 4º, só desta linha), então entra por `style`. */}
+      <Icon name={name} size={32} tone={haunted ? 'ink' : 'gold'} style={haunted ? { color: 'var(--sm2-haunted)' } : undefined} />
     </span>
   );
 }
@@ -193,6 +198,14 @@ export interface RitualRowProps {
   done?: boolean;
   /** Fora do dia da semana da atividade: lê como inativa, mas continua legível. */
   dimmed?: boolean;
+  /**
+   * TAREFA ASSOMBRADA (`isHaunted`, canvas Home `PetAssombrado` / P5):
+   * título e ícone na tinta PRÓPRIA `--sm2-haunted` (sólida, AA nos dois
+   * temas), lápis e checkbox intactos — NUNCA opacidade na linha (F1 da
+   * crítica: `.55` dava 2,31:1). O convite ("haunted · +relief") é o chip do
+   * `TaskMeta`, logo abaixo; o sinal forte é o pet olhando (WP3.2).
+   */
+  haunted?: boolean;
   /** Ausente = a linha não tem checkbox (quem completa são as etapas). */
   onToggle?: () => void;
   onEdit: () => void;
@@ -208,19 +221,20 @@ export interface RitualRowProps {
 }
 
 export function RitualRow({
-  iconName, name, subtitle, value, max, done = false, dimmed = false,
+  iconName, name, subtitle, value, max, done = false, dimmed = false, haunted = false,
   onToggle, onEdit, expandable = false, expanded = false, onExpand,
   children, language, toggleLabelPt, toggleLabelEn,
 }: RitualRowProps) {
   const isPt = language === 'pt-BR';
   return (
     <li
-      className={`sm-px-ritual${done ? ' sm-px-ritual-done' : ''}${dimmed ? ' sm-px-ritual-dim' : ''}`}
+      className={`sm-px-ritual${done ? ' sm-px-ritual-done' : ''}${dimmed ? ' sm-px-ritual-dim' : ''}${haunted && !done ? ' sm-px-ritual-haunted' : ''}`}
+      data-haunted={haunted && !done ? 'true' : undefined}
       /* Lido pela medição de densidade (T4) do roteiro de verificação. */
       data-action-unit
     >
       <div className="sm-px-ritual-row">
-        <RitualIcon name={iconName} />
+        <RitualIcon name={iconName} haunted={haunted && !done} />
 
         {/* Coluna de texto = botão de editar (decisão 5 do cabeçalho). */}
         <button

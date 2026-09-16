@@ -27,28 +27,14 @@ import {
  */
 
 /**
- * Roxo do assombro. NÃO é vermelho, e isso é a mecânica, não estética.
- *
- * Era o hex cru `#7c5cbf`, sem par por tema — e o contêiner inteiro esmaecia
- * com `opacity: 0.72`, que é a parte que estragava tudo: opacidade global
- * mistura TODO o conteúdo com o fundo e derruba a razão de contraste de coisas
- * que não têm nada a ver com o esmaecimento. Os chips caíam para 2,94:1 (claro)
- * e 3,71:1 (escuro) no `--sm-muted`, e este roxo para 2,76:1 e **1,92:1**.
- * Reprovava AA nos dois temas, justamente no item que o app quer que a pessoa
- * consiga ler para enfrentar.
- *
- * A correção é a mesma que o `.sm-px-btn:disabled` já tinha adotado: esmaecer
- * com COR dedicada por tema (`--sm-haunt-ink` para o que é lido, e um véu de
- * superfície `--sm-haunt-veil` para o "esmaecido"), nunca com opacidade.
- *
- * ONDA 2 (`--sm2-*`): o roxo continua vindo de `--sm-haunt-ink`/`--sm-haunt-veil`
- * porque a fundação nova NÃO tem par de assombro — e inventar um hex aqui é
- * exatamente o que este bloco documenta como o erro. Os dois tokens já existem
- * nos DOIS temas e já foram medidos (6,79:1 no claro, 7,63:1 no escuro). Quando
- * a fundação ganhar `--sm2-haunt-*`, esta é a única linha a trocar.
+ * O chip do assombro (canvas Home, `PetAssombrado` / F1 / X9, 16/09/2026):
+ * "haunted · +relief" em `--sm2-gold-ink` sobre `--sm2-surface-2`, 24px de
+ * altura — CONVITE com prêmio, na cor do convite (âmbar), nunca vermelho e
+ * nunca opacidade (a linha inteira a `.55` dava 2,31:1 no claro). Medido:
+ * 7,49:1 escuro / 5,15:1 claro. A LINHA (título + ícone) fica na tinta
+ * própria `--sm2-haunted` (P5), pelo `RitualRow`; a aura roxa
+ * (`--sm-haunt-ink`/`-veil`, tokens da era `--sm-*`) saiu daqui.
  */
-const HAUNT_INK = 'var(--sm-haunt-ink)';
-const HAUNT_VEIL = 'var(--sm-haunt-veil)';
 
 const EFFORT_LABEL: Record<number, { pt: string; en: string }> = {
   1: { pt: 'rápida', en: 'quick' },
@@ -111,24 +97,12 @@ export function TaskMeta({ task, now, language, onPostponeNudge }: TaskMetaProps
         /* NÃO volte a pôr `opacity` aqui. Esmaecida nunca quis dizer ilegível —
            e opacidade no contêiner é a única coisa nesta faixa capaz de
            reprovar AA em TODOS os chips de uma vez, inclusive os que não têm
-           nada a ver com o assombro. Ver a nota em HAUNT_INK. */
+           nada a ver com o assombro. Ver a nota do chip, acima. */
       }}
     >
-      {/* Aura escura — sem contorno, sem ícone de alerta. Só uma sombra que
-          sugere que tem alguma coisa ali pra enfrentar. */}
-      {haunted && (
-        <span
-          aria-hidden="true"
-          style={{
-            position: 'absolute',
-            inset: '-8px -12px',
-            pointerEvents: 'none',
-            background:
-              `radial-gradient(ellipse at 18% 50%, color-mix(in srgb, ${HAUNT_INK} 26%, transparent) 0%, transparent 68%)`,
-          }}
-        />
-      )}
-
+      {/* NÃO volte a pôr `opacity` neste contêiner nem aura por cima dele:
+          esmaecida nunca quis dizer ilegível — a linha assombrada esmaece pela
+          TINTA (`--sm2-haunted`, no `RitualRow`), e o chip abaixo é o convite. */}
       {/* Esforço. Os três pontinhos SAÍRAM: eles codificavam 1/2/3 ao lado da
           palavra que já diz 1/2/3 ("rápida/média/projeto") — duas leituras do
           mesmo dado, uma delas cifrada. A palavra fica, os pontos vão embora.
@@ -190,16 +164,19 @@ export function TaskMeta({ task, now, language, onPostponeNudge }: TaskMetaProps
           pilha de culpa virar conteúdo de jogo em vez de motivo pra fechar o app. */}
       {haunted && (
         <span
+          data-haunted-chip
           style={{
             ...meta,
             position: 'relative',
-            // A ÚNICA superfície que sobrou na faixa, e ela é informação: o véu
-            // roxo é o "esmaecido" da tarefa assombrada. Fill de véu + tinta
-            // cheia por cima — nunca `opacity`, que derruba o contraste de tudo.
-            padding: '2px 8px',
-            color: HAUNT_INK,
-            backgroundColor: HAUNT_VEIL,
-            fontWeight: 600,
+            // A ÚNICA superfície que sobrou na faixa, e ela é informação: o
+            // chip de etiqueta 24 (SIS-03) — `gold-ink` sobre `surface-2`,
+            // tinta cheia, nunca `opacity`, que derruba o contraste de tudo.
+            minHeight: 24,
+            padding: '0 8px',
+            borderRadius: 12,
+            color: 'var(--sm2-gold-ink)',
+            backgroundColor: 'var(--sm2-surface-2)',
+            fontWeight: 500,
           }}
           title={
             overdue
@@ -211,12 +188,9 @@ export function TaskMeta({ task, now, language, onPostponeNudge }: TaskMetaProps
                 : `Idle for ${stale} days. Finishing it gives a relief bonus.`
           }
         >
-          {/* A partícula quadrada pulsante (`sm-haunt-particle`) virou o glifo:
-              `auto_awesome` diz "tem prêmio aqui" — que é a metade da mensagem
-              que importa. Continua sem ícone de ALERTA, e continua roxo: isto é
-              convite, não erro. A classe da animação sai junto, e com ela a
-              única peça desta faixa que dependia de `prefers-reduced-motion`. */}
-          <Icon name="auto_awesome" size={20} fill={1} />
+          {/* `auto_awesome` diz "tem prêmio aqui" — a metade da mensagem que
+              importa. Sem ícone de ALERTA, em âmbar: isto é convite, não erro. */}
+          <Icon name="auto_awesome" size={20} fill={1} tone="gold" />
           {isPt ? 'assombrada · +alívio' : 'haunted · +relief'}
         </span>
       )}
