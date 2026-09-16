@@ -6057,9 +6057,10 @@ button.sm-px-node {
   --sm2-viewport-danger: #FF8B8B;
   --sm2-credit-ink: #C9A7FF;
   /* A proposta do lead era `#6E8AA3`: 4,21:1 sobre `surface` escura — abaixo
-     de AA. Clareado para `#829DB6`: 5,38:1 sobre `surface`, 6,40:1 sobre `bg`,
-     4,56:1 sobre `surface-2` (medido no teste, não no olho). */
-  --sm2-haunted: #829DB6;
+     de AA (medido pelo crítico). Clareado para `#85A0B8`: 5,58:1 sobre
+     `surface`, 6,63:1 sobre `bg`, 4,73:1 sobre `surface-2` (medido no teste,
+     não no olho). */
+  --sm2-haunted: #85A0B8;
 }
 
 /* GRAD do ícone: eixo de grade da Material Symbols. No escuro o glifo claro
