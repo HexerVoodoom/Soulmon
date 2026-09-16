@@ -4454,206 +4454,13 @@ select:focus-visible {
   --sm-px-ink: #eaf5f2;         /* tinta dentro de peça escura */
   --sm-px-cyan: #5df0e0;        /* neon do kit (destaque/aceso) */
   --sm-px-copper: #c68642;      /* cobre do kit (moldura/borda fina) */
-  --sm-px-track: #16283d;       /* trilho escuro da barra segmentada */
-  --sm-px-track-line: #0a1422;
   --sm-px-panel-bg: var(--sm-surface);
   --sm-px-panel-ink: var(--sm-ink);
-  --sm-px-chip-bg: #10373a;
   --sm-px-red: #ff5d5d;
 }
 [data-theme="dark"] {
   --sm-px-panel-bg: #10312f;
   --sm-px-panel-ink: var(--sm-ink);
-}
-
-/* ── Botão 9-slice ─────────────────────────────────────────────────────────
-   `--sm-px-src` = arte; `--sm-px-slice` = fatia no PNG de ORIGEM (px medidos
-   na arte: a espessura da moldura até o preenchimento teal); `--sm-px-bw` =
-   espessura RENDERIZADA da moldura. `fill` mantém o miolo teal da arte. */
-.sm-px-btn {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  box-sizing: border-box;
-  background: transparent;
-  color: var(--sm-px-ink);
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.55);
-  cursor: pointer;
-  image-rendering: pixelated;
-  border-style: solid;
-  border-width: var(--sm-px-bw, 12px);
-  border-image-source: var(--sm-px-src);
-  border-image-slice: var(--sm-px-slice, 68) fill;
-  border-image-repeat: stretch;
-  border-image-width: var(--sm-px-bw, 12px);
-  transition: filter .12s ease, transform .08s ease;
-  /* Cada estado troca a ARTE, não um filtro sobre a arte (18/08/2026). Os
-     quatro PNGs são derivados do mesmo `normal`, então a fatia 9-slice é a
-     mesma e a moldura não pula na troca. O `drop-shadow` continua por CSS de
-     propósito: brilho externo assado no PNG vira franja quando a arte é
-     recortada, e é justamente o defeito que o guard de asset persegue. */
-  &:hover {
-    --sm-px-src: var(--sm-px-src-hover, var(--sm-px-src));
-    filter: drop-shadow(0 0 6px color-mix(in srgb, var(--sm-px-cyan) 55%, transparent));
-  }
-  &:active {
-    --sm-px-src: var(--sm-px-src-active, var(--sm-px-src));
-    transform: translateY(2px);
-    filter: drop-shadow(0 0 9px color-mix(in srgb, var(--sm-px-cyan) 75%, transparent));
-  }
-  /* Sem `opacity`: opacidade mistura TEXTO e FUNDO com a tela e esmaga a
-     razão de contraste (foi o que reprovou o .sm-btn desabilitado, medido na
-     rodada 3). A arte desabilitada já nasce dessaturada na direção do
-     cinza-teal do tema, então aqui não sobra filtro nenhum sobre o texto. */
-  &:disabled {
-    --sm-px-src: var(--sm-px-src-off, var(--sm-px-src));
-    filter: none;
-    cursor: default;
-    transform: none;
-  }
-}
-/* Ação primária: mesmo corpo, miolo aceso em ciano (o "active" da referência
-   virou o estado de DESTAQUE, não um PNG à parte — ver relatório). */
-/* O miolo aceso é um ::before, NÃO um box-shadow inset: `border-image: … fill`
-   pinta o centro DEPOIS do background e de qualquer sombra interna, então o
-   inset simplesmente não aparecia (verificado em screenshot). O ::before cai
-   sobre a caixa de padding — exatamente a área do fill — e o conteúdo sobe
-   junto pelo <span> com z-index do componente. */
-.sm-px-btn-primary {
-  color: #04211f;
-  text-shadow: 0 1px 0 color-mix(in srgb, #ffffff 35%, transparent);
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: var(--sm-px-cyan);
-    opacity: .9;
-  }
-}
-.sm-px-btn-sm { --sm-px-slice: 82; --sm-px-bw: 11px; min-height: 44px; padding: 4px 14px; font-size: var(--sm2-text-xs); }
-.sm-px-btn-md { --sm-px-slice: 66; --sm-px-bw: 12px; min-height: 48px; padding: 6px 20px; font-size: var(--sm2-text-sm); }
-.sm-px-btn-lg { --sm-px-slice: 43; --sm-px-bw: 12px; min-height: 56px; padding: 8px 26px; font-size: var(--sm2-text-sm); width: 100%; }
-
-/* ── Painel emoldurado ─────────────────────────────────────────────────────
-   Sem `fill`: o miolo é o token de superfície do TEMA, então o tema claro
-   continua claro e só a moldura de cobre é arte. */
-.sm-px-panel {
-  position: relative;
-  box-sizing: border-box;
-  background: var(--sm-px-panel-bg);
-  color: var(--sm-px-panel-ink);
-  image-rendering: pixelated;
-  border-style: solid;
-  border-width: var(--sm-px-bw, 12px);
-  border-image-source: var(--sm-px-src);
-  border-image-slice: var(--sm-px-slice, 43);
-  border-image-repeat: stretch;
-  border-image-width: var(--sm-px-bw, 12px);
-}
-.sm-px-panel-body { padding: 14px 16px; }
-.sm-px-panel-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: var(--sm2-text-xs);
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--sm-primary);
-  padding: 10px 16px 0;
-}
-
-/* ── Barra segmentada ──────────────────────────────────────────────────────
-   Desenhada em DOM, não no PNG: o PNG do kit é uma barra fixa (9 blocos
-   cheios) e não sabe representar 3/7. Mesma leitura visual, valor real. */
-.sm-px-bar {
-  display: flex;
-  gap: 2px;
-  box-sizing: border-box;
-  padding: 2px;
-  background: var(--sm-px-track);
-  border: 2px solid var(--sm-px-track-line);
-  border-radius: var(--sm2-radius-sm);
-  overflow: hidden;
-}
-.sm-px-bar-seg {
-  flex: 1 1 0;
-  min-width: 3px;
-  background: color-mix(in srgb, var(--sm-px-track-line) 70%, transparent);
-  transition: background .15s ease, box-shadow .15s ease;
-}
-.sm-px-bar-seg-on {
-  background: var(--sm-px-bar-tone, var(--sm-px-cyan));
-  box-shadow: inset 0 -3px 0 color-mix(in srgb, var(--sm-px-bar-tone, var(--sm-px-cyan)) 55%, #000);
-}
-
-/* ── Checkbox de cobre ─────────────────────────────────────────────────────
-   44×44 de ALVO com o quadrado de 26px desenhado dentro (o alvo não encolhe
-   junto com a arte — foi assim que o checkbox virou 2px em produção). */
-.sm-px-check {
-  width: 44px;
-  height: 44px;
-  padding: 9px;
-  background: none;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  cursor: pointer;
-  &:disabled { cursor: default; }
-}
-.sm-px-check-box {
-  width: 26px;
-  height: 26px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  background: var(--sm-surface);
-  border: 2px solid var(--sm-gold);
-  clip-path: polygon(5px 0, calc(100% - 5px) 0, 100% 5px, 100% calc(100% - 5px), calc(100% - 5px) 100%, 5px 100%, 0 calc(100% - 5px), 0 5px);
-  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
-}
-.sm-px-check-on {
-  border-color: var(--sm-primary);
-  background: color-mix(in srgb, var(--sm-primary) 16%, var(--sm-surface));
-  box-shadow: 0 0 8px color-mix(in srgb, var(--sm-primary) 65%, transparent);
-}
-
-/* ── Cápsula de HUD ────────────────────────────────────────────────────────
-   Rótulo + valor com moldura fina de cobre. NÃO carrega ícone por conta
-   própria: quem passa o ícone é a chamada, porque as três moedas têm
-   identidade visual obrigatoriamente distinta (utils/currencies.ts). */
-.sm-px-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  box-sizing: border-box;
-  min-height: 34px;
-  padding: 4px 10px;
-  background: var(--sm-px-chip-bg);
-  border: 2px solid var(--sm-px-copper);
-  clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
-}
-.sm-px-chip-label {
-  font-size: var(--sm2-text-xs);
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  line-height: 1.1;
-  color: color-mix(in srgb, var(--sm-px-cyan) 75%, #ffffff);
-}
-.sm-px-chip-value {
-  font-size: var(--sm2-text-sm);
-  font-weight: 800;
-  line-height: 1.1;
-  color: var(--sm-px-ink);
 }
 
 /* ═════════════════════════════════════════════════════════════════════════
@@ -4695,44 +4502,6 @@ select:focus-visible {
   letter-spacing: 0.06em;
   line-height: 1.5;
   color: var(--sm-primary);
-}
-
-/* Sobrescritas dos primitivos da rodada 1 (mesma especificidade, vencem por
-   ordem de origem — não editei o bloco anterior). */
-.sm-px-btn {
-  font-family: var(--sm-font-pixel);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  line-height: 1.45;
-  -webkit-font-smoothing: none;
-}
-/* Silkscreen desenha ~15% menor que a sans no mesmo `font-size`; sem esta
-   compensação os botões pareciam ter encolhido de tamanho. */
-.sm-px-btn-sm { font-size: var(--sm2-text-xs); }
-.sm-px-btn-md { font-size: var(--sm2-text-sm); }
-.sm-px-btn-lg { font-size: var(--sm2-text-sm); }
-
-.sm-px-panel-title {
-  font-family: var(--sm-font-pixel);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  line-height: 1.5;
-  -webkit-font-smoothing: none;
-}
-.sm-px-chip-label {
-  font-family: var(--sm-font-pixel);
-  font-weight: 400;
-  font-size: var(--sm2-text-xs);
-  letter-spacing: 0.06em;
-  line-height: 1.4;
-  -webkit-font-smoothing: none;
-}
-.sm-px-chip-value {
-  font-family: var(--sm-font-pixel);
-  font-weight: 700;
-  font-size: var(--sm2-text-xs);
-  line-height: 1.4;
-  -webkit-font-smoothing: none;
 }
 
 /* ── Ícone de categoria emoldurado ────────────────────────────────────────
@@ -5327,96 +5096,6 @@ button.sm-px-node {
 .sm-px-card-ok { border-color: #3fae5a; }
 .sm-px-card-fail { border-color: #d9534f; }
 
-/* Moldura de 44px onde mora o ícone de um item (loja, pastinha, missão).
-   O FALLBACK é o quadro vazio, nunca o emoji do sistema — mesma decisão da
-   rodada 1 no painel de rituais (G2). */
-.sm-px-slot {
-  width: 44px;
-  height: 44px;
-  flex-shrink: 0;
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  background: color-mix(in srgb, var(--sm-px-copper) 12%, var(--sm-bg));
-  border: 2px solid color-mix(in srgb, var(--sm-px-copper) 60%, transparent);
-  clip-path: polygon(5px 0, calc(100% - 5px) 0, 100% 5px, 100% calc(100% - 5px), calc(100% - 5px) 100%, 5px 100%, 0 calc(100% - 5px), 0 5px);
-}
-.sm-px-slot-locked { filter: grayscale(0.8) brightness(0.8); }
-
-/* ── Fileira de abas (G4 + G9) ────────────────────────────────────────────
-   Chip emoldurado, não sublinhado. `overflow-x` porque a Loja tem 5 abas e
-   em PT-BR ("Cenários", "Mobílias", "Missões") elas não cabem em 412px sem
-   espremer o rótulo até virar reticências. */
-/* B3 (rodada 3): a fileira rola, mas rolava SEM PISTA. Na Loja, 2 de 5 abas
-   (Torneio e Missões) ficavam fora da tela e nada dizia que existiam — a
-   última aba visível terminava rente à margem, que é exatamente o desenho
-   que Material e HIG proíbem: o padrão manda cortar a última aba NO MEIO ou
-   marcar a borda.
-
-   Aqui a pista é uma máscara de desvanecimento na borda direita, ligada
-   apenas quando há conteúdo rolável (`animation-timeline: scroll()` não tem
-   suporte suficiente, então o gatilho é `mask` estático + `scroll-padding`:
-   a aba cortada aparece esmaecida em vez de sumir na margem). Como é
-   `mask-image`, não pinta cor nenhuma — funciona igual nos dois temas, sobre
-   qualquer fundo, e não precisa saber a cor de trás. */
-.sm-px-tabs {
-  display: flex;
-  gap: 6px;
-  align-items: stretch;
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  scrollbar-width: none;
-  padding-bottom: 2px;
-  scroll-padding-inline: 12px;
-  &::-webkit-scrollbar { display: none; }
-  /* A máscara só existe quando HÁ corte — o estado vem do componente
-     (`data-cut`), medido no scroll/resize. Aplicá-la incondicionalmente
-     esmaeceria a última aba de uma fileira que cabe inteira (Aparência,
-     Idioma, Biblioteca, Torneio), inventando um corte que não existe. */
-  &[data-cut="end"] { mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent 100%); }
-  &[data-cut="start"] { mask-image: linear-gradient(to right, transparent 0, #000 28px); }
-  &[data-cut="both"] { mask-image: linear-gradient(to right, transparent 0, #000 28px, #000 calc(100% - 28px), transparent 100%); }
-}
-.sm-px-tab {
-  flex: 1 0 auto;
-  min-height: 44px;
-  box-sizing: border-box;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 6px 12px;
-  cursor: pointer;
-  font-family: var(--sm-font-pixel);
-  font-size: var(--sm2-text-xs);
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  line-height: 1.4;
-  -webkit-font-smoothing: none;
-  /* ESTADO 1 — normal (não selecionado): sem fill. */
-  background: var(--sm-px-off-bg);
-  color: var(--sm-px-off-ink);
-  border: 2px solid var(--sm-px-off-edge);
-  clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
-  transition: background .12s ease, color .12s ease, border-color .12s ease;
-  /* ESTADO 2 — hover: só a borda acende. Nunca o fill, senão o hover imita a
-     seleção e o defeito do G9 volta por outra porta. */
-  &:hover { border-color: var(--sm-px-copper); }
-  &:focus-visible { outline: 3px solid var(--sm-px-copper); outline-offset: 2px; }
-  /* ESTADO 4 — desabilitado. */
-  &:disabled { opacity: 0.45; cursor: default; }
-}
-/* ESTADO 3 — selecionado: o ÚNICO bloco sólido da fileira, nos dois temas. */
-.sm-px-tab-on {
-  background: var(--sm-px-sel-bg);
-  color: var(--sm-px-sel-ink);
-  border-color: var(--sm-px-sel-edge);
-  &:hover { background-color: var(--sm-px-sel-bg); }
-}
-
 /* ── Chip de escolha (dias da semana, categoria) — G8 ─────────────────────
    Eram pílulas `border-radius: 999px` com `--sm-primary-soft` no ativo: forma
    de outro design system E o mesmo G9 do parágrafo de cima (no claro, o
@@ -5444,106 +5123,6 @@ button.sm-px-node {
   &:hover { border-color: var(--sm-px-copper); }
   &:focus-visible { outline: 3px solid var(--sm-px-copper); outline-offset: 2px; }
   &:disabled { opacity: 0.45; cursor: default; }
-}
-.sm-px-chip-on {
-  background: var(--sm-px-sel-bg);
-  color: var(--sm-px-sel-ink);
-  border-color: var(--sm-px-sel-edge);
-  &:hover { background-color: var(--sm-px-sel-bg); }
-}
-/* Chip de dia da semana: caixa estreita, rótulo de 3 letras em bitmap (é
-   RÓTULO, não texto corrido — cabe na regra de dois níveis do G5). O
-   `min-width` existe porque em PT-BR os dias não têm largura igual e sem ele
-   a fileira ficava com sete larguras diferentes. */
-.sm-px-chip-day {
-  min-width: 46px;
-  padding: 6px 8px;
-  font-family: var(--sm-font-pixel);
-  font-size: var(--sm2-text-xs);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  -webkit-font-smoothing: none;
-}
-
-/* ── Etiqueta estática (NPC, "5 partidas/dia", faixa) ─────────────────────
-   Não é botão: não recebe hover nem foco. Mesma moldura chanfrada, para não
-   sobrar pílula nenhuma na tela (T2). */
-.sm-px-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  box-sizing: border-box;
-  padding: 3px 8px;
-  font-family: var(--sm-font-pixel);
-  font-size: var(--sm2-text-xs);
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  line-height: 1.5;
-  -webkit-font-smoothing: none;
-  color: var(--sm-px-off-ink);
-  border: 2px solid var(--sm-px-off-edge);
-  background: transparent;
-  clip-path: polygon(4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px), 0 4px);
-}
-.sm-px-tag-on {
-  background: var(--sm-px-sel-bg);
-  color: var(--sm-px-sel-ink);
-  border-color: var(--sm-px-sel-edge);
-}
-
-/* ── Interruptor emoldurado ───────────────────────────────────────────────
-   O toggle do PvP era o pill+bolinha do Material (`border-radius: 999px` +
-   círculo branco deslizando). Aqui a chave é uma caixa com o cursor em dois
-   quadros — mesma leitura, forma do kit, e o estado ligado é de novo o fill. */
-.sm-px-switch {
-  width: 56px;
-  height: 30px;
-  flex-shrink: 0;
-  box-sizing: border-box;
-  position: relative;
-  padding: 0;
-  cursor: pointer;
-  background: var(--sm-px-off-bg);
-  border: 2px solid var(--sm-px-off-edge);
-  clip-path: polygon(5px 0, calc(100% - 5px) 0, 100% 5px, 100% calc(100% - 5px), calc(100% - 5px) 100%, 5px 100%, 0 calc(100% - 5px), 0 5px);
-  transition: background .12s ease, border-color .12s ease;
-  &:hover { border-color: var(--sm-px-copper); }
-  &:focus-visible { outline: 3px solid var(--sm-px-copper); outline-offset: 3px; }
-}
-.sm-px-switch-on {
-  background: var(--sm-px-sel-bg);
-  border-color: var(--sm-px-sel-edge);
-}
-.sm-px-switch-knob {
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 22px;
-  height: 20px;
-  background: var(--sm-px-copper);
-  transition: left .12s ease, background .12s ease;
-}
-.sm-px-switch-on .sm-px-switch-knob {
-  left: 27px;
-  background: var(--sm-px-sel-ink);
-}
-
-/* ── Trilho de progresso liso (faixa do Torneio, missão) ──────────────────
-   Onde a barra é uma PROPORÇÃO contínua e não uma contagem, o segmentado
-   mentiria (dá a entender que existem N passos discretos). Fica lisa, mas com
-   o mesmo trilho quadrado da barra segmentada — nada de `border-radius: 999px`. */
-.sm-px-meter {
-  box-sizing: border-box;
-  height: 12px;
-  overflow: hidden;
-  background: var(--sm-px-track);
-  border: 2px solid var(--sm-px-track-line);
-}
-.sm-px-meter-fill {
-  height: 100%;
-  background: var(--sm-px-bar-tone, var(--sm-px-cyan));
-  transition: width .3s ease;
 }
 
 /* ── Cabeçalho de tela de jogo (Dino/Masmorra/PPT/Torneio) ────────────────
@@ -5662,13 +5241,6 @@ button.sm-px-node {
    porque são a MESMA classe de informação: um número sobre N. */
 .sm-px-hud { display: flex; flex-direction: column; gap: 8px; }
 .sm-px-hud-meters { display: flex; align-items: stretch; gap: 8px; }
-/* Cápsula clicável: a MOLDURA é o botão (ver a nota em `PixelChip`). */
-.sm-px-chip-tap {
-  cursor: pointer;
-  text-align: left;
-  &:hover { filter: brightness(1.1); }
-  &:focus-visible { outline: 3px solid var(--sm-px-copper); outline-offset: 3px; }
-}
 
 /* Fileira de ações do pet, rente ao palco. É a peça que a referência resolve
    com "uma coisa só" no mesmo espaço, e é o padrão do gênero: o cuidado do
@@ -5910,19 +5482,13 @@ button.sm-px-node {
 .sm-px-pop,
 .sm-px-field,
 .sm-px-choice,
-.sm-px-check-box,
-.sm-px-chip,
 .sm-px-fab,
 .sm-px-chatbar,
 .sm-px-tree-plate,
 .sm-px-tree-degen,
 .sm-px-ritual-expand,
 .sm-px-card,
-.sm-px-slot,
-.sm-px-tab,
 .sm-px-chip-btn,
-.sm-px-tag,
-.sm-px-switch,
 .sm-px-arcade-bar,
 .sm-px-arcade-close,
 .sm-px-jump,
@@ -5948,9 +5514,6 @@ button.sm-px-node {
   background-clip: border-box;
   background-position: 0 0, 100% 0, 0 100%, 100% 100%;
 }
-
-/* Chanfro por peça — o mesmo número do `clip-path` de cada uma. */
-.sm-px-chip { --sm-cham-c: 6px; }
 .sm-px-fab { --sm-cham-c: 9px; --sm-cham-bw: 3px; }
 .sm-px-chatbar { --sm-cham-c: 8px; }
 .sm-px-tree-plate { --sm-cham-c: 7px; --sm-cham-line: var(--sm-line); }
@@ -5960,24 +5523,11 @@ button.sm-px-node {
 .sm-px-card { --sm-cham-c: 8px; }
 .sm-px-card-ok { --sm-cham-line: #3fae5a; }
 .sm-px-card-fail { --sm-cham-line: #d9534f; }
-.sm-px-slot { --sm-cham-line: color-mix(in srgb, var(--sm-px-copper) 60%, transparent); }
-.sm-px-tab { --sm-cham-c: 6px; --sm-cham-line: var(--sm-px-off-edge); }
-.sm-px-tab-on { --sm-cham-line: var(--sm-px-sel-edge); }
 .sm-px-chip-btn { --sm-cham-line: var(--sm-px-off-edge); }
-.sm-px-chip-on { --sm-cham-line: var(--sm-px-sel-edge); }
-.sm-px-tag { --sm-cham-c: 4px; --sm-cham-line: var(--sm-px-off-edge); }
-.sm-px-tag-on { --sm-cham-line: var(--sm-px-sel-edge); }
-.sm-px-switch { --sm-cham-line: var(--sm-px-off-edge); }
-.sm-px-switch-on { --sm-cham-line: var(--sm-px-sel-edge); }
 .sm-px-arcade-bar { --sm-cham-c: 8px; }
 .sm-px-jump { --sm-cham-c: 8px; }
 .sm-px-code { --sm-cham-line: color-mix(in srgb, var(--sm-px-copper) 45%, transparent); }
 .sm-px-row-btn { --sm-cham-c: 6px; --sm-cham-line: color-mix(in srgb, var(--sm-px-copper) 60%, transparent); }
-/* O checkbox é o único que muda de cor de moldura ao ser marcado — e é o
-   controle mais importante da Home, então a quina dele tem que fechar nos
-   DOIS estados. */
-.sm-px-check-box { --sm-cham-line: var(--sm-gold); }
-.sm-px-check-on { --sm-cham-line: var(--sm-primary); }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    RODADA 4 — A ÁREA DO PET NÃO ROLA PARA FORA DA TELA
@@ -6064,7 +5614,6 @@ button.sm-px-node {
    (WCAG 2.2 AA 2.5.8 intacto). */
 @media (max-height: 800px) {
   .sm-px-ritual-row { min-height: 64px; padding: 6px 12px; }
-  .sm-px-panel-title { padding: 6px 16px 0; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -6290,12 +5839,6 @@ button.sm-px-node {
    `.sm-btn` é o botão de texto do app inteiro; 44px de altura mínima resolve
    de uma vez os alvos curtos de vários modais (WCAG 2.5.5). */
 .sm-btn { min-height: 44px; }
-
-/* O interruptor do kit media 30px de altura — abaixo até do mínimo de 24px do
-   2.5.8. Cresce para 44 e o cursor cresce junto (44 − 2×2 de borda − 2×3 de
-   folga = 34), senão a chave vira uma caixa alta com uma pastilha perdida. */
-.sm-px-switch { height: 44px; }
-.sm-px-switch-knob { height: 34px; }
 
 /* Expansor de alvo para controles que PRECISAM ser pequenos no layout (o chip
    de adiamentos da faixa de metadados tem 23px de altura). O pseudo-elemento
