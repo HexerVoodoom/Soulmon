@@ -97,7 +97,7 @@ describe('CompanionHUD', () => {
   it('o berço e o sprite do pet são arte NOSSA (src/assets/soulmon)', () => {
     const { container } = renderWithCss(<CompanionHUD {...base} />);
     const srcs = Array.from(container.querySelectorAll('img')).map(i => i.getAttribute('src') ?? '');
-    expect(srcs.some(s => /nest-base/.test(s))).toBe(true);
+    expect(srcs.some(s => /nest-(base|cradle-wide)/.test(s))).toBe(true);
     // nenhuma arte de terceiro embarcada (docs/Attributions.md)
     expect(srcs.some(s => /_dmc\.png/.test(s))).toBe(false);
   });

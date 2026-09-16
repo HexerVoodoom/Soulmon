@@ -164,7 +164,11 @@ export const PET_RENDER = SPRITE_SRC_PX / SPRITE_SCALE;
  */
 export const BASE_SLOTS: Record<BaseSlotId, DecorSlot & { yPx: number }> = {
   nest: {
-    id: 'nest', x: 50, w: 148, h: 83, yPx: 17, anchor: 'ground',
+    // 220×104 desde 15/09/2026 (berço largo, `nest-cradle-wide.png` em 3×
+    // exato — a caixa antiga de 148×83 esmagava a arte anisotropicamente, ver
+    // o guard de escala em `assets.contract.test.ts`). `yPx` reencontrado para
+    // manter os pés do sprite no MESMO y de antes (17 + ⅔·83 = 3 + ⅔·104).
+    id: 'nest', x: 50, w: 220, h: 104, yPx: 3, anchor: 'ground',
     namePt: 'Berço', nameEn: 'Nest',
   },
 };

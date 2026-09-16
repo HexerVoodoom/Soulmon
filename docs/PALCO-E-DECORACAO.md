@@ -206,7 +206,7 @@ sempre**, sem passar pela loja: a mobília debaixo do pet. Hoje é o berço.
 
 | Espaço | x | Caixa (px) | Origem vertical |
 |---|---|---|---|
-| `nest` | 50 % | **148 × 83** | `top: 50%` da área do pet + `yPx` |
+| `nest` | 50 % | **220 × 104** (era 148 × 83 até 15/09/2026 — berço largo em 3× exato) | `top: 50%` da área do pet + `yPx` |
 
 Por que ele **não** é um `SlotId`:
 

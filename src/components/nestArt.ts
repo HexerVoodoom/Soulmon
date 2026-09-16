@@ -8,7 +8,7 @@
  *
  * Trocar o berço por outra mobília é:
  *   1. pôr o PNG em `src/assets/soulmon/` (desenhado para a caixa declarada em
- *      `BASE_SLOTS.nest` — 148×83, em 2× para retina, ancorado embaixo);
+ *      `BASE_SLOTS.nest` — 220×104, em 3× exato, ancorado embaixo);
  *   2. acrescentar uma entrada em `NEST_ART`;
  *   3. mudar qual id o `CompanionHUD` pede.
  * Nenhuma outra linha do app muda.
@@ -20,15 +20,18 @@
 import nestBase from '../assets/soulmon/nest-base.png';
 import nestBasket from '../assets/soulmon/nest-basket.png';
 import nestCushion from '../assets/soulmon/nest-cushion.png';
+import nestCradleWide from '../assets/soulmon/nest-cradle-wide.png';
 
 /** Peças que sabem ocupar o espaço `nest`. */
-export type NestId = 'nest-base' | 'nest-basket' | 'nest-cushion';
+export type NestId = 'nest-base' | 'nest-basket' | 'nest-cushion' | 'nest-cradle-wide';
 
 export const NEST_ART: Record<NestId, string> = {
   'nest-base': nestBase,
   'nest-basket': nestBasket,
   'nest-cushion': nestCushion,
+  /** Berço largo e raso (entrega 2, `A12`): 660×312, 3× exato da caixa 220×104. */
+  'nest-cradle-wide': nestCradleWide,
 };
 
 /** A peça que o app põe quando o jogador não escolheu nenhuma. */
-export const DEFAULT_NEST: NestId = 'nest-base';
+export const DEFAULT_NEST: NestId = 'nest-cradle-wide';

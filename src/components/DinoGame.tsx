@@ -6,12 +6,21 @@ import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readNumber, writeLocal } from '../utils/safeStorage';
 import type { Language } from '../utils/i18n';
 import { PixelButton } from './pixel/PixelKit';
+import obstacle1 from '../assets/soulmon/dino/dino-obstacle-1.png';
+import obstacle2 from '../assets/soulmon/dino/dino-obstacle-2.png';
+import obstacle3 from '../assets/soulmon/dino/dino-obstacle-3.png';
+import obstacle4 from '../assets/soulmon/dino/dino-obstacle-4.png';
+import groundStrip from '../assets/soulmon/dino/dino-ground-strip.png';
+import parallaxFar from '../assets/soulmon/dino/dino-parallax-far.png';
 
 /**
  * Dino Runner — endless runner starring the pet.
- * Obstacles are enemy creatures and get scarier as difficulty ramps:
- * Bakemon → Tuskmon → Gigadramon → Titamon (tier by elapsed time; speed and
- * spawn rate also scale continuously). Jump via the big button BELOW the game
+ * Obstacles are dungeon ruins and get bigger as difficulty ramps:
+ * broken pillar → crystal rock → vine column → copper barricade (tier by
+ * elapsed time; speed and spawn rate also scale continuously). Arte própria
+ * (`assets/soulmon/dino/`, entrega 4) — até 15/09/2026 os obstáculos eram os
+ * sprites do roster desenhados como silhueta espelhada e o chão era uma linha
+ * de 1px. Jump via the big button BELOW the game
  * box (thumb never covers the action), the box itself, or SPACE.
  * Scoring: 🪙 Bits earned = floor(distance score / 100) per run.
  *
@@ -31,12 +40,21 @@ import { PixelButton } from './pixel/PixelKit';
  */
 
 // Obstacle tiers: unlocked as the run progresses (start time in seconds).
+// `hit` é a fração horizontal OPACA da arte (medida da bounding box, 128px):
+// a coluna do tier 3 ocupa só o meio da caixa quadrada, e uma colisão na
+// caixa inteira mataria o jogador "no ar".
 const OBSTACLE_TIERS = [
-  { stage: 'bakemon',    from: 0,  size: 38 },
-  { stage: 'tuskmon',    from: 20, size: 44 },
-  { stage: 'gigadramon', from: 45, size: 50 },
-  { stage: 'titamon',    from: 75, size: 56 },
+  { src: obstacle1, from: 0,  size: 38, hit: [6 / 128, 122 / 128] },
+  { src: obstacle2, from: 20, size: 44, hit: [14 / 128, 114 / 128] },
+  { src: obstacle3, from: 45, size: 50, hit: [38 / 128, 90 / 128] },
+  { src: obstacle4, from: 75, size: 56, hit: [3 / 128, 125 / 128] },
 ];
+// Chão e silhueta de fundo, repetíveis em X (medidos: costura < 20/765).
+const GROUND_H = 28;            // altura desenhada da faixa (384×48 → 224×28)
+const GROUND_W = 224;
+const PARALLAX_H = 64;          // 512×128 → 256×64
+const PARALLAX_W = 256;
+const PARALLAX_SPEED = 0.25;    // fração da velocidade do chão
 
 export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoints, onScore, onExit }: {
   evolutionStage: string;
@@ -53,6 +71,8 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
   const scoreElRef = useRef<HTMLSpanElement>(null);
   const petImgRef = useRef<HTMLImageElement | null>(null);
   const tierImgsRef = useRef<HTMLImageElement[]>([]);
+  const groundImgRef = useRef<HTMLImageElement | null>(null);
+  const parallaxImgRef = useRef<HTMLImageElement | null>(null);
   const [phase, setPhase] = useState<'ready' | 'playing' | 'over'>('ready');
   const phaseRef = useRef(phase);
   phaseRef.current = phase;
@@ -65,7 +85,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
   const petNeedsFlip = false;
 
   // Physics/game state lives in a ref — the loop never re-renders React.
-  const g = useRef({ h: 0, vy: 0, obstacles: [] as { x: number; size: number; tier: number }[], speed: 0, t: 0, spawnIn: 0, score: 0 });
+  const g = useRef({ h: 0, vy: 0, obstacles: [] as { x: number; size: number; tier: number }[], speed: 0, t: 0, spawnIn: 0, score: 0, gx: 0, px: 0 });
 
   useEffect(() => {
     const pet = new Image();
@@ -73,9 +93,11 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
     petImgRef.current = pet;
     tierImgsRef.current = OBSTACLE_TIERS.map(t => {
       const img = new Image();
-      img.src = getSpriteForStage(t.stage);
+      img.src = t.src;
       return img;
     });
+    const ground = new Image(); ground.src = groundStrip; groundImgRef.current = ground;
+    const far = new Image(); far.src = parallaxFar; parallaxImgRef.current = far;
   }, [evolutionStage, demoCharacterId]);
 
   const jump = useCallback(() => {
@@ -88,7 +110,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
   }, []);
 
   const start = () => {
-    g.current = { h: 0, vy: 0, obstacles: [], speed: 260, t: 0, spawnIn: 1.1, score: 0 };
+    g.current = { h: 0, vy: 0, obstacles: [], speed: 260, t: 0, spawnIn: 1.1, score: 0, gx: 0, px: 0 };
     setEarned(0);
     setPhase('playing');
   };
@@ -107,16 +129,10 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
     let last = performance.now();
     let dead = false;
 
-    // Draw an image horizontally mirrored (enemies face left; pet faces right)
-    // Arte em transição: sprites legados desenhados como silhueta.
-    const SILHOUETTE = 'brightness(0) opacity(0.85)';
-    const drawFlipped = (img: HTMLImageElement, x: number, y: number, w: number, h: number) => {
-      ctx.save();
-      ctx.filter = SILHOUETTE;
-      ctx.translate(x + w, y);
-      ctx.scale(-1, 1);
-      ctx.drawImage(img, 0, 0, w, h);
-      ctx.restore();
+    // Faixa repetível em X: desenha cópias lado a lado a partir do offset.
+    const drawStrip = (img: HTMLImageElement, offset: number, y: number, w: number, h: number) => {
+      const start = -((offset % w) + w) % w;
+      for (let x = start; x < canvas.width; x += w) ctx.drawImage(img, x, y, w, h);
     };
 
     const currentTier = () => {
@@ -149,24 +165,30 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       }
       for (const o of s.obstacles) o.x -= s.speed * dt;
       s.obstacles = s.obstacles.filter(o => o.x + o.size > -10);
+      s.gx += s.speed * dt;
+      s.px += s.speed * dt * PARALLAX_SPEED;
 
       // Collision (AABB with generous padding — sprites have transparent margins)
       const dTop = GROUND - DINO_S - s.h + 10;
       const dBot = GROUND - s.h - 2;
       const dL = DINO_X + 8, dR = DINO_X + DINO_S - 10;
       for (const o of s.obstacles) {
-        const oL = o.x + 7, oR = o.x + o.size - 7, oT = GROUND - o.size + 9;
+        const [hl, hr] = OBSTACLE_TIERS[o.tier].hit;
+        const oL = o.x + o.size * hl + 2, oR = o.x + o.size * hr - 2, oT = GROUND - o.size + 6;
         if (dR > oL && dL < oR && dBot > oT && dTop < GROUND) { dead = true; break; }
       }
 
-      // Draw
+      // Draw — fundo distante, obstáculos, chão, pet (ordem de profundidade)
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.strokeStyle = '#453a63';
-      ctx.beginPath(); ctx.moveTo(0, GROUND + 1); ctx.lineTo(canvas.width, GROUND + 1); ctx.stroke();
+      const far = parallaxImgRef.current;
+      if (far?.complete) drawStrip(far, s.px, GROUND - PARALLAX_H + 2, PARALLAX_W, PARALLAX_H);
       for (const o of s.obstacles) {
         const img = tierImgsRef.current[o.tier];
-        if (img?.complete) drawFlipped(img, o.x, GROUND - o.size, o.size, o.size);
+        if (img?.complete) ctx.drawImage(img, o.x, GROUND - o.size, o.size, o.size);
       }
+      const ground = groundImgRef.current;
+      if (ground?.complete) drawStrip(ground, s.gx, GROUND + 1, GROUND_W, GROUND_H);
+      else { ctx.strokeStyle = '#453a63'; ctx.beginPath(); ctx.moveTo(0, GROUND + 1); ctx.lineTo(canvas.width, GROUND + 1); ctx.stroke(); }
       const pet = petImgRef.current;
       if (pet?.complete) {
         if (petNeedsFlip) {
