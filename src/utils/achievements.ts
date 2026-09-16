@@ -4,15 +4,16 @@
 // então uma conquista, uma vez lida como aberta, não fecha.
 //
 // ⚠️ Nenhuma é "streak que zera" — a tese do produto proíbe (habitRhythm.ts):
-// `habit-7`/`habit-21` leem `totalDone` (o marco de hábito), não sequência.
+// `habit-7`/`habit-21`/`habit-66` leem `totalDone` (os marcos de `HABIT_MILESTONES`), não sequência.
 // Nenhuma premia CONTAGEM DE TAREFAS como missão paga em moeda; `tasks-100`
 // é conquista cosmética (não paga nada), o mesmo estatuto do bestiário.
 import type { GameState } from '../contexts/GameStateContext';
 
 export const ACHIEVEMENT_IDS = [
   'perfect-day',
-  'streak-7',
-  'milestone-21',
+  'habit-7',
+  'habit-21',
+  'habit-66',
   'first-evolution',
   'mega-form',
   'dungeon-10',
@@ -23,8 +24,9 @@ export type AchievementId = typeof ACHIEVEMENT_IDS[number];
 
 export const ACHIEVEMENT_LABELS: Record<AchievementId, { pt: string; en: string }> = {
   'perfect-day': { pt: 'Primeiro dia completo', en: 'First complete day' },
-  'streak-7': { pt: 'Hábito de 7 dias', en: '7-day habit' },
-  'milestone-21': { pt: 'Marco de 21 dias', en: '21-day milestone' },
+  'habit-7': { pt: 'Broto — 7 dias de hábito', en: 'Sprout — 7-day habit' },
+  'habit-21': { pt: 'Arvoreta — 21 dias', en: 'Sapling — 21 days' },
+  'habit-66': { pt: 'Árvore — 66 dias', en: 'Tree — 66 days' },
   'first-evolution': { pt: 'Primeira evolução', en: 'First evolution' },
   'mega-form': { pt: 'Forma mega', en: 'Mega form' },
   'dungeon-10': { pt: 'Dez masmorras', en: 'Ten dungeon runs' },
@@ -45,8 +47,9 @@ export function unlockedAchievements(s: Slice): AchievementId[] {
   const stage = s.evolutionStage ?? '';
   const tests: Record<AchievementId, boolean> = {
     'perfect-day': (s.totalPerfectDays ?? 0) >= 1 || (s.perfectDays ?? 0) >= 1,
-    'streak-7': done >= 7,
-    'milestone-21': done >= 21,
+    'habit-7': done >= 7,
+    'habit-21': done >= 21,
+    'habit-66': done >= 66,
     'first-evolution': (s.unlockedEvolutions ?? []).some(id => id !== 'rookie'),
     'mega-form': stage.startsWith('mega') || stage === 'ultra',
     'dungeon-10': (s.dungeonRunsCompleted ?? 0) >= 10,
