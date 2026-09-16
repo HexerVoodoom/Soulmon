@@ -33,7 +33,7 @@ Duas consequências práticas do desenho (herdadas da entrega6 base):
 O combate de hoje **não conhece elemento**. `buildDungeonWave` sorteia por
 tier, não por elemento, e os popups de `DungeonGame`/`NightmareBattle` mostram
 os emojis genéricos de `fxArt.ts` (⚔️ 💥 🛡️ ✨ 💫 🏳️). Instalar os arquivos e o
-mapa (`src/utils/derivedAttackFxArt.ts`) não troca nenhuma arte hoje — deixa a
+mapa (`src/utils/attackFxArt.ts`) não troca nenhuma arte hoje — deixa a
 peça pronta para o dia em que alguém decidir de onde vem o elemento do golpe
 (do bicho do jogador? do inimigo? de um item equipado?). Essa é uma decisão de
 produto, não de arte, e continua em aberto.
@@ -42,7 +42,7 @@ O caminho mais barato para estrear a arte sem tocar no motor de combate:
 `derivedAttackFx(idDoElementoDoGalho, 'aura')` na página de **Evolução**, que
 já sabe o galho elemental do bicho.
 
-## Integração: `src/utils/derivedAttackFxArt.ts`
+## Integração: `src/utils/attackFxArt.ts`
 
 Usa `import.meta.glob('../assets/soulmon/fx-ataque/*.png', { eager: true })`
 em vez de 816 imports nomeados — o Vite ainda vê e empacota cada PNG
@@ -61,7 +61,7 @@ Os 17 elementos **base** (fogo, água, terra...) têm sua própria leva
 (`_gemini_out/entrega6/`) e **ainda não foram instalados** — essa decisão
 não foi pedida nesta sessão. Quando forem, devem cair no mesmo
 `fx-ataque/` e no mesmo formato de chave `'<id>:<estado>'`; o glob de
-`derivedAttackFxArt.ts` já os pegaria automaticamente, mas o nome do módulo
+`attackFxArt.ts` já os pegaria automaticamente, mas o nome do módulo
 ("derived...") deixaria de fazer sentido — vale renomear para algo neutro
 (`attackFxArt.ts`, unificando os dois mapas) nesse momento.
 

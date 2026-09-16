@@ -1,12 +1,12 @@
 // Ícone de cada ELEMENTO — o objeto que representa o elemento (caveira para
 // morte, chama para fogo), não o efeito dele em combate.
 //
-// Distinto de `derivedAttackFxArt.ts`, que é a arte de COMBATE (cast, aura,
+// Distinto de `attackFxArt.ts`, que é a arte de COMBATE (cast, aura,
 // slash, impact, defended, orb) e vive em `assets/soulmon/fx-ataque/`. Aqui é
 // uma peça por elemento, para identificá-lo numa lista ou ficha.
 //
 // O prefixo do arquivo é `el-` e não `fx-` de propósito: o glob de
-// `derivedAttackFxArt.ts` casa `fx-(.+)-(cast|aura|...)`, e misturar as duas
+// `attackFxArt.ts` casa `fx-(.+)-(cast|aura|...)`, e misturar as duas
 // famílias na mesma convenção de nome faria uma pegar arquivos da outra.
 //
 // **A fronteira do visor.** `docs/PLANO-DESIGN` §1 diz que pixel art existe

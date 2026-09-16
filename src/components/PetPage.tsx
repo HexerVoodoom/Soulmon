@@ -29,12 +29,15 @@ import { readJson } from '../utils/safeStorage';
 import { FICHA_STAGE_ORDER, type FichaStage } from '../utils/soulProfile/ficha/types';
 import type { StageSkills, StageSkill } from '../utils/soulProfile/ficha/skills';
 import type { ClassTitle } from '../utils/soulProfile/ficha/classTitle';
+import { auraForElement } from '../utils/attackFxArt';
 import { Viewport } from './ui/Viewport';
 import { Icon } from './ui/Icon';
 import { sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 
 interface PetPageProps {
   stages: CreatureStage[];
+  /** Elemento dominante do oráculo — aura elemental atrás da forma atual, dentro do visor (D9). */
+  dominantElement?: string;
   /** Skills já persistidas no save (vêm da nuvem). */
   savedSkills?: Record<FichaStage, StageSkills>;
   /** Chamado quando a página recomputa as skills a partir do perfil local —
@@ -134,7 +137,8 @@ function SkillRow({ skill, isPt }: { skill: StageSkill; isPt: boolean }) {
 }
 
 export function PetPage({
-  stages, unlockedEvolutions, currentStageId, demoCharacterId, petName,
+  stages,
+  dominantElement, unlockedEvolutions, currentStageId, demoCharacterId, petName,
   savedSkills, onSkillsComputed, savedClassTitles, onClassTitlesComputed, language = 'pt-BR',
 }: PetPageProps) {
   const isPt = language === 'pt-BR';
@@ -233,6 +237,9 @@ export function PetPage({
             label={isPt ? `${nome}, forma atual` : `${nome}, current form`}
             screenStyle={{ position: 'relative' }}
           >
+            {auraForElement(dominantElement) && (
+              <img src={auraForElement(dominantElement)} alt="" aria-hidden="true" data-aura style={{ ...spriteInScreen, opacity: 0.6 }} />
+            )}
             <img src={getSpriteForStage(creatureFormId(atual), demoCharacterId)} alt="" style={spriteInScreen} />
           </Viewport>
 

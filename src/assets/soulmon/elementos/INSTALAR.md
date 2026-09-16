@@ -11,7 +11,7 @@ armadilhas estão em `D:\Soulmon\scripts-arte\` (repo git local, sem remoto) —
 
 É o **objeto** que representa o elemento — caveira para veneno, ampulheta para
 areia, foice para ceifa. **Não** é o efeito em combate: isso é
-`fx-ataque/`, coberto por `derivedAttackFxArt.ts`.
+`fx-ataque/`, coberto por `attackFxArt.ts`.
 
 Duas fontes alimentaram cada ícone: a FORMA veio de um dicionário de motivos
 escrito para esta leva (`elementos-motivos.json`), e a COR veio do mesmo
@@ -44,7 +44,7 @@ elementIcon(elementoId: string): string | undefined
 elementIconIds(): string[]
 ```
 
-Usa `import.meta.glob` eager, como `derivedAttackFxArt.ts` — o Vite empacota
+Usa `import.meta.glob` eager, como `attackFxArt.ts` — o Vite empacota
 cada PNG estaticamente sem exigir 137 imports à mão.
 
 Devolve `undefined` quando não há arte, de propósito: o consumidor decide se

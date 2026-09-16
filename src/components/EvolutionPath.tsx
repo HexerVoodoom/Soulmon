@@ -44,6 +44,7 @@ import { ALIGN_TO_ATTR, ATTR_COLOR, ATTR_INK, ATTR_LABEL, ATTR_ON_FILL_INK } fro
    — esta página e o visor da Home (`CompanionHUD`). Hook duplicado com um
    número que tem gêmeo no CSS é como os dois lados divergem em silêncio. */
 import { Viewport, usePrefersReducedMotion, useVarreduraDeSintonia } from './ui/Viewport';
+import { auraForElement } from '../utils/attackFxArt';
 /* `useIsOnline` já é o dono da leitura de rede neste app (o selo "SEM SINAL").
    O card `OFFLINE` da spec (§2.2) precisa da MESMA resposta — um segundo
    `navigator.onLine` aqui seria a cópia do footgun 9 na sua forma mais boba. */
@@ -95,6 +96,10 @@ interface EvolutionPathProps {
   /** Acervo de sprites gerados (`utils/spriteLibrary.ts`). Ausente = tudo na
    *  arte de reserva, que é o piso e nunca é erro. */
   spriteLibrary?: SpriteLibrary;
+  /** Elemento dominante do oráculo (`soulmonMeta.dominantElement`): desenha a
+   *  aura elemental atrás da criatura, dentro do visor (D9, 15/09/2026 — a
+   *  primeira e única chamada da arte de `fx-ataque/`). Ausente = sem aura. */
+  dominantElement?: string;
   /** "Sintonizar o Visor" — a adoção do sprite próprio é gesto do JOGADOR. */
   onTuneVisor?: (formId: string) => void;
   /** "Voltar ao traço antigo" — devolve a reserva sem apagar o sprite pago. */
@@ -182,6 +187,7 @@ export function EvolutionPath({
   carePattern,
   forecastBranch,
   spriteLibrary,
+  dominantElement,
   onTuneVisor,
   onRevertVisor,
   onSeenTune,
@@ -236,6 +242,7 @@ export function EvolutionPath({
   const acervo = spriteLibrary ?? emptySpriteLibrary();
   const spriteAtual = displaySprite(acervo, currentStageId)?.url
     ?? getSpriteForStage(currentStageId, demoCharacterId);
+  const auraElemental = auraForElement(dominantElement);
   // A sintonia: o fade de 120ms vive na classe do `<img>`; a varredura de
   // 400ms precisa de um elemento próprio, que só existe enquanto ela passa.
   const movimentoReduzido = usePrefersReducedMotion();
@@ -838,6 +845,15 @@ export function EvolutionPath({
             : (isPt ? 'Seu Soulmon' : 'Your Soulmon')}
           screenStyle={{ position: 'relative' }}
         >
+          {auraElemental && (
+            <img
+              src={auraElemental}
+              alt=""
+              aria-hidden="true"
+              data-aura
+              style={{ ...spriteInScreen, opacity: 0.6 }}
+            />
+          )}
           <img
             src={spriteAtual}
             alt=""

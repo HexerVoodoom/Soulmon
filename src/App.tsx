@@ -5426,6 +5426,7 @@ export default function App() {
               language={language}
               carePattern={carePatternReading.confident ? carePatternReading.pattern : null}
               spriteLibrary={spriteAcervo}
+              dominantElement={gameState.soulmonMeta?.dominantElement}
               onTuneVisor={handleTuneVisor}
               onRetrySprite={handleRetrySprite}
               onRevertVisor={handleRevertVisor}
@@ -5498,6 +5499,7 @@ export default function App() {
           {currentView === 'pet' && (
             <Suspense fallback={<ScreenSkeleton language={language} />}><PetPage
               stages={gameState.soulmonStages ?? []}
+              dominantElement={gameState.soulmonMeta?.dominantElement}
               unlockedEvolutions={gameState.unlockedEvolutions}
               currentStageId={gameState.evolutionStage}
               demoCharacterId={gameState.demoCharacterId}
