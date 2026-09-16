@@ -34,14 +34,14 @@ describe('BestiaryCard', () => {
       <BestiaryCard encountered={['ignar-rookie', 'lumel-mega']} language="pt-BR" />,
     );
     const texto = container.textContent ?? '';
-    expect(texto).toContain('2 de 24');
+    expect(texto).toContain('2 de 36');
     expect(texto).not.toMatch(/%/);
     expect(texto).not.toMatch(/falta|restam/i);
   });
 
   it('os dois idiomas', () => {
     const { container } = renderWithCss(<BestiaryCard encountered={[]} language="en-US" />);
-    expect(container.textContent).toContain('of 24');
+    expect(container.textContent).toContain('of 36');
     expect(container.textContent).toContain('Encounters');
   });
 });

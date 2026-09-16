@@ -132,7 +132,7 @@ export type OnboardingCompleteData = {
     }
   | {
       mode: 'demo';
-      demoCharacterId: 'kaelen' | 'orrin' | 'thalindra';
+      demoCharacterId: 'kaelen' | 'orrin' | 'thalindra' | 'igni' | 'nautilu' | 'astrase';
       /** WP1.12 — tonalidade escolhida. Cosmética; 0 = arte original. */
       demoTint?: number;
     }
@@ -318,7 +318,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     if (redeGoogleRef.current !== null) clearTimeout(redeGoogleRef.current);
   }, []);
   const [resetEnviado, setResetEnviado] = useState(false);
-  const [demoCharacterId, setDemoCharacterId] = useState<'kaelen' | 'orrin' | 'thalindra' | null>(null);
+  const [demoCharacterId, setDemoCharacterId] = useState<'kaelen' | 'orrin' | 'thalindra' | 'igni' | 'nautilu' | 'astrase' | null>(null);
   /** WP1.12 — tonalidade escolhida no demo. 0 = a arte original. */
   const [demoTint, setDemoTint] = useState(0);
   const [unlockLoading, setUnlockLoading] = useState(false);

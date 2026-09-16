@@ -6,7 +6,8 @@ import { PREMADE_CHARACTERS } from './monetization';
 import { LIBRARY_NPCS } from './libraryNpcs';
 
 /**
- * WP4.9 — o roster da masmorra é `DUNGEON_LINE_SPRITES` (6 linhas NOSSAS).
+ * WP4.9 — o roster da masmorra é `DUNGEON_LINE_SPRITES` (linhas NOSSAS — 6 até
+ * 15/09/2026, 9 desde que igni/nautilu/astrase entraram na pré-seleção, D1).
  *
  * ⚠️ Este arquivo importava `LEGACY_FORM_TIERS` para provar que o sorteio não
  * a usava. A tabela foi APAGADA em 07/09/2026: eram 57 ids de espécie de outra
@@ -22,8 +23,8 @@ import { LIBRARY_NPCS } from './libraryNpcs';
 describe('roster da masmorra (WP4.9)', () => {
   const lines = Object.keys(DUNGEON_LINE_SPRITES);
 
-  it('tem exatamente 6 linhas, cada uma com as 4 artes', () => {
-    expect(lines).toHaveLength(6);
+  it('tem exatamente 9 linhas, cada uma com as 4 artes', () => {
+    expect(lines).toHaveLength(9);
     for (const l of lines) {
       for (const stage of ['rookie', 'champion', 'ultimate', 'mega'] as const) {
         expect(typeof DUNGEON_LINE_SPRITES[l][stage]).toBe('string');
@@ -133,7 +134,8 @@ describe('nenhum nome de criatura leva sufixo fixo `-mon`', () => {
     // o nome pode divergir sem nada ficar vermelho — foi assim que os três
     // acabaram escritos em três arquivos. Este caso amarra os três.
     expect(PREMADE_CHARACTERS.map(c => c.name))
-      .toEqual([DUNGEON_LINE_NAMES.kaelen, DUNGEON_LINE_NAMES.orrin, DUNGEON_LINE_NAMES.thalindra]);
+      .toEqual([DUNGEON_LINE_NAMES.kaelen, DUNGEON_LINE_NAMES.orrin, DUNGEON_LINE_NAMES.thalindra,
+        DUNGEON_LINE_NAMES.igni, DUNGEON_LINE_NAMES.nautilu, DUNGEON_LINE_NAMES.astrase]);
     expect(LIBRARY_NPCS.map(n => n.petName))
       .toEqual([DUNGEON_LINE_NAMES.kaelen, DUNGEON_LINE_NAMES.orrin, DUNGEON_LINE_NAMES.thalindra]);
     for (const c of PREMADE_CHARACTERS) expect(proibido(c.name)).toBe(false);
@@ -143,7 +145,8 @@ describe('nenhum nome de criatura leva sufixo fixo `-mon`', () => {
   it('o `id` das linhas NÃO mudou — ele resolve sprite, save e arquivo de arte', () => {
     // O rótulo é cosmético; o id não é. Trocar um id renomearia arquivo de
     // arte e quebraria todo save com `demoCharacterId`.
+    // 15/09/2026: +igni/nautilu/astrase (D1) — acrescentar é permitido, renomear não.
     expect(Object.keys(DUNGEON_LINE_SPRITES).sort())
-      .toEqual(['ignar', 'kaelen', 'lumel', 'orrin', 'serah', 'thalindra']);
+      .toEqual(['astrase', 'ignar', 'igni', 'kaelen', 'lumel', 'nautilu', 'orrin', 'serah', 'thalindra']);
   });
 });

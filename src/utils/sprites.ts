@@ -60,6 +60,20 @@ import thalindraRookie from '../assets/soulmon/lines/thalindra-rookie.png';
 import thalindraChampion from '../assets/soulmon/lines/thalindra-champion.png';
 import thalindraUltimate from '../assets/soulmon/lines/thalindra-ultimate.png';
 import thalindraMega from '../assets/soulmon/lines/thalindra-mega.png';
+// As 3 linhas do oráculo com seed fixo (runs 1–3 de 18/08/2026, recortadas em
+// 15/09/2026 — D1: entram na pré-seleção do jogador free).
+import igniRookie from '../assets/soulmon/lines/igni-rookie.png';
+import igniChampion from '../assets/soulmon/lines/igni-champion.png';
+import igniUltimate from '../assets/soulmon/lines/igni-ultimate.png';
+import igniMega from '../assets/soulmon/lines/igni-mega.png';
+import nautiluRookie from '../assets/soulmon/lines/nautilu-rookie.png';
+import nautiluChampion from '../assets/soulmon/lines/nautilu-champion.png';
+import nautiluUltimate from '../assets/soulmon/lines/nautilu-ultimate.png';
+import nautiluMega from '../assets/soulmon/lines/nautilu-mega.png';
+import astraseRookie from '../assets/soulmon/lines/astrase-rookie.png';
+import astraseChampion from '../assets/soulmon/lines/astrase-champion.png';
+import astraseUltimate from '../assets/soulmon/lines/astrase-ultimate.png';
+import astraseMega from '../assets/soulmon/lines/astrase-mega.png';
 
 export const DUNGEON_LINE_SPRITES: Record<string, Record<'rookie' | 'champion' | 'ultimate' | 'mega', string>> = {
   ignar: { rookie: ignarRookie, champion: ignarChampion, ultimate: ignarUltimate, mega: ignarMega },
@@ -68,6 +82,9 @@ export const DUNGEON_LINE_SPRITES: Record<string, Record<'rookie' | 'champion' |
   kaelen: { rookie: kaelenRookie, champion: kaelenChampion, ultimate: kaelenUltimate, mega: kaelenMega },
   orrin: { rookie: orrinRookie, champion: orrinChampion, ultimate: orrinUltimate, mega: orrinMega },
   thalindra: { rookie: thalindraRookie, champion: thalindraChampion, ultimate: thalindraUltimate, mega: thalindraMega },
+  igni: { rookie: igniRookie, champion: igniChampion, ultimate: igniUltimate, mega: igniMega },
+  nautilu: { rookie: nautiluRookie, champion: nautiluChampion, ultimate: nautiluUltimate, mega: nautiluMega },
+  astrase: { rookie: astraseRookie, champion: astraseChampion, ultimate: astraseUltimate, mega: astraseMega },
 };
 /**
  * O NOME DE EXIBIÇÃO DE CADA LINHA — dono único.
@@ -91,6 +108,7 @@ export const DUNGEON_LINE_SPRITES: Record<string, Record<'rookie' | 'champion' |
 export const DUNGEON_LINE_NAMES: Record<string, string> = {
   ignar: 'Ignar', lumel: 'Lumel', serah: 'Serah',
   kaelen: 'Pyraka', orrin: 'Akashaoi', thalindra: 'Nimbrata',
+  igni: 'Igni', nautilu: 'Nautilu', astrase: 'Astrase',
 };
 
 /** Sprite de inimigo de masmorra: sorteia uma das nossas linhas pelo tier

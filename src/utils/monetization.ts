@@ -18,7 +18,7 @@ export type AccountTier = 'demo' | 'paid';
 // sem ultra) — por isso o modo demo evolui num caminho ÚNICO por nível
 // (sem escolha de Poder/Harmonia/Benevolência) e capa em Mega.
 export interface PremadeCharacter {
-  id: 'kaelen' | 'orrin' | 'thalindra';
+  id: 'kaelen' | 'orrin' | 'thalindra' | 'igni' | 'nautilu' | 'astrase';
   name: string;
   bioPt: string;
   bioEn: string;
@@ -55,6 +55,23 @@ export const PREMADE_CHARACTERS: PremadeCharacter[] = [
     id: 'thalindra', name: DUNGEON_LINE_NAMES.thalindra,
     bioPt: 'Uma presença dourada e serena, tecida a partir de luz calma.',
     bioEn: 'A golden, serene presence woven from calm light.',
+  },
+  // As 3 linhas do oráculo com seed fixo (D1, 15/09/2026): a pré-seleção do
+  // free passa de 3 para 6 personagens prontos.
+  {
+    id: 'igni', name: DUNGEON_LINE_NAMES.igni,
+    bioPt: 'Um lagarto de brasa que carrega a fornalha nas costas.',
+    bioEn: 'An ember lizard carrying the furnace on its back.',
+  },
+  {
+    id: 'nautilu', name: DUNGEON_LINE_NAMES.nautilu,
+    bioPt: 'Um peixe de maré calma que sonha com correntes distantes.',
+    bioEn: 'A calm-tide fish dreaming of distant currents.',
+  },
+  {
+    id: 'astrase', name: DUNGEON_LINE_NAMES.astrase,
+    bioPt: 'Uma coruja rosada que guarda uma luz mansa sob as asas.',
+    bioEn: 'A rosy owl keeping a gentle light beneath its wings.',
   },
 ];
 

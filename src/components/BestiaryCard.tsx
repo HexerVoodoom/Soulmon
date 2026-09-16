@@ -49,7 +49,7 @@ export function BestiaryCard({
   const vistos = new Set(encountered);
 
   const linhas = Object.keys(DUNGEON_LINE_SPRITES);
-  // Contagem de COLEÇÃO: quantas das 24 artes possíveis já apareceram.
+  // Contagem de COLEÇÃO: quantas das artes possíveis (linhas × tiers) já apareceram.
   const total = linhas.length * TIERS.length;
   const achados = linhas.reduce(
     (n, l) => n + TIERS.filter(t => vistos.has(`${l}-${t}`)).length,

@@ -441,7 +441,7 @@ export interface GameState {
    *  jamais renasceu (nunca inferido de estágio nem de nada). */
   rebirth?: import('../utils/rebirth').RebirthRecord | null;
   /** Modo demo: qual personagem pré-pronto foi escolhido (utils/monetization.ts). */
-  demoCharacterId?: 'kaelen' | 'orrin' | 'thalindra';
+  demoCharacterId?: 'kaelen' | 'orrin' | 'thalindra' | 'igni' | 'nautilu' | 'astrase';
   /** Créditos (moeda premium, dinheiro real) — reroll de personagem, cura
    *  instantânea de coração, itens/cenários da loja. */
   credits?: number;
@@ -1049,8 +1049,7 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
         // pode ter saído dele. O que importa no load é a PRESENÇA — é ela
         // que trava a segunda vez.
         rebirth: (loadedState.rebirth as GameState['rebirth']) ?? undefined,
-        demoCharacterId: (loadedState.demoCharacterId === 'kaelen' || loadedState.demoCharacterId === 'orrin'
-          || loadedState.demoCharacterId === 'thalindra') ? loadedState.demoCharacterId : undefined,
+        demoCharacterId: (['kaelen', 'orrin', 'thalindra', 'igni', 'nautilu', 'astrase'] as const).find(id => id === loadedState.demoCharacterId),
         credits: num(loadedState.credits, 0),
         // Sistema de missões: contadores LIFETIME. `Math.max(prev ?? 0, x)` e a
         // aritmética de incremento em `App.tsx` transformam um valor não-numérico
