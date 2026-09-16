@@ -338,7 +338,7 @@ export function ShopModal({
                  desculpa dos degraus 16 e 14 — "não cabia". O que não cabia era
                  o padding de 16px de um botão de texto num botão que é quase
                  só número; a escala de ícone não negocia com o layout. */
-              style={{ ...sm2Button(can ? 'ghost' : 'ghost', !can), flex: 1, gap: 4, padding: '10px 8px' }}
+              style={{ ...sm2Button('outline', !can), flex: 1, gap: 4, padding: '10px 8px' }}
             >
               <Icon name={busy ? 'sync' : 'diamond'} size={ICON_INLINE} tone={can ? 'primary' : 'muted'} />
               <span className="sm2-num">{pack.credits}</span>

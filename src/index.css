@@ -4177,8 +4177,10 @@ html {
 button:focus-visible,
 [role="checkbox"]:focus-visible,
 a:focus-visible {
-  outline: 3px solid var(--sm-primary);
-  outline-offset: 2px;
+  /* Canvas Sistema (`Botoes`, X11): anel 2px `primary-ink` com fresta de 3px,
+     para nunca encostar num fill da mesma cor. Era 3px `--sm-primary`/2. */
+  outline: 2px solid var(--sm2-primary-ink);
+  outline-offset: 3px;
 }
 input:focus-visible,
 textarea:focus-visible,
@@ -7625,4 +7627,84 @@ body {
   border-image-repeat: round;
   border-radius: var(--sm2-radius-md);
   image-rendering: pixelated;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FORMKIT — `components/form/FormKit.tsx` sobre `--sm2-*` (16/09/2026)
+   ═══════════════════════════════════════════════════════════════════════════
+   Canvas "Sistema" (SIS-02 `Botoes`, SIS-03 `Cards`) e §18. O `FormKit`
+   desenha por `style` inline (footgun 1); aqui ficam SÓ os estados que
+   `style` não alcança — `:focus-visible`, `:active`, `::placeholder` e a
+   caixa do checkbox. Mesmas regras do `.sm2-kit-*`: cor sempre token,
+   variante aninhada, raio 4/12/20, alvo ≥ 44.
+
+   `sm2Button()` é um objeto de estilo e os 100+ chamadores passam só `style`,
+   então a variante viaja como custom property (`--sm2-btn: primary`) e o
+   seletor de atributo lê o `style` serializado. Mantém os chamadores
+   intactos e dá o pressed do canvas (`primary-deep` / `surface-2` /
+   `primary-soft`). O foco 2px `primary-ink` offset 3 é a regra global de
+   `button:focus-visible` (acima, "Foco visível").
+   ───────────────────────────────────────────────────────────────────────── */
+button[style*="--sm2-btn:primary"]:active,
+button[style*="--sm2-btn: primary"]:active {
+  background-color: var(--sm2-primary-deep) !important;
+  transform: translateY(1px);
+}
+button[style*="--sm2-btn:outline"]:active,
+button[style*="--sm2-btn: outline"]:active,
+button[style*="--sm2-btn:quiet"]:active,
+button[style*="--sm2-btn: quiet"]:active {
+  background-color: var(--sm2-surface-2) !important;
+}
+button[style*="--sm2-btn:ghost"]:active,
+button[style*="--sm2-btn: ghost"]:active {
+  background-color: var(--sm2-primary-soft) !important;
+}
+
+/* ── Campo filled ───────────────────────────────────────────────────────── */
+.sm2-form-field {
+  &::placeholder { color: var(--sm2-muted); opacity: 1; }
+  /* O anel é o `box-shadow` inline (código vence no mecanismo); o outline
+     do navegador ficaria por cima e dobraria a fronteira. */
+  &:focus, &:focus-visible { outline: none; }
+  &:disabled { color: var(--sm2-muted); cursor: not-allowed; opacity: 1; }
+}
+
+/* ── Chip tonal / segmento ──────────────────────────────────────────────── */
+.sm2-form-chip {
+  /* Anel com fresta ≥ 2px de fundo (X11): nunca encosta na fronteira. */
+  &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
+  &:disabled { cursor: default; }
+}
+.sm2-form-segment {
+  &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
+}
+
+/* ── Checkbox 24, raio 4, num alvo 44 (o rótulo inteiro) ────────────────── */
+.sm2-form-check {
+  appearance: none;
+  -webkit-appearance: none;
+  box-sizing: border-box;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--sm2-radius-sm);
+  border: 2px solid var(--sm2-muted);
+  background-color: transparent;
+  display: inline-grid;
+  place-content: center;
+  cursor: pointer;
+  transition: background-color var(--sm2-dur-tap) var(--sm2-ease), border-color var(--sm2-dur-tap) var(--sm2-ease);
+  &::before {
+    content: "";
+    width: 14px;
+    height: 14px;
+    transform: scale(0);
+    transition: transform var(--sm2-dur-tap) var(--sm2-ease);
+    background-color: var(--sm2-on-primary);
+    clip-path: polygon(14% 44%, 0 62%, 40% 100%, 100% 20%, 86% 8%, 40% 70%);
+  }
+  &:checked { background-color: var(--sm2-primary-fill); border-color: var(--sm2-primary-fill); }
+  &:checked::before { transform: scale(1); }
+  &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
+  &:disabled { opacity: .45; cursor: default; }
 }

@@ -123,7 +123,7 @@ export function EditModal({
         <UnlockNudge language={language} reason="task-limit" onOpen={onUnlock} />
       )}
       <div style={{ display: 'flex', gap: 12 }}>
-        <button type="button" onClick={onClose} style={{ ...sm2Button('ghost'), flex: 1 }}>
+        <button type="button" onClick={onClose} style={{ ...sm2Button('outline'), flex: 1 }}>
           {isPt ? 'Cancelar' : 'Cancel'}
         </button>
         <button type="button" onClick={handleSave} disabled={disabled}

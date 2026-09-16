@@ -383,7 +383,7 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
               role="tab"
               aria-selected={active}
               onClick={() => setTab(item.key)}
-              style={{ ...sm2Button(active ? 'primary' : 'ghost'), flex: 1 }}
+              style={{ ...sm2Button(active ? 'primary' : 'outline'), flex: 1 }}
             >
               <Icon name={item.icon} size={20} fill={active ? 1 : 0} />
               {item.label}
@@ -440,7 +440,7 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
               <p style={{ ...sm2Hint, marginTop: 4 }}>
                 {isPt ? 'Pode ser a sua conexão.' : 'It may be your connection.'}
               </p>
-              <button type="button" onClick={loadOpponents} style={{ ...sm2Button('ghost'), marginTop: 12 }}>
+              <button type="button" onClick={loadOpponents} style={{ ...sm2Button('outline'), marginTop: 12 }}>
                 <Icon name="refresh" size={20} />
                 {isPt ? 'Tentar de novo' : 'Try again'}
               </button>
@@ -502,7 +502,7 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
               <button
                 type="button"
                 onClick={() => { setRank(null); setRankFailed(false); }}
-                style={{ ...sm2Button('ghost'), marginTop: 12 }}
+                style={{ ...sm2Button('outline'), marginTop: 12 }}
               >
                 <Icon name="refresh" size={20} />
                 {isPt ? 'Tentar de novo' : 'Try again'}

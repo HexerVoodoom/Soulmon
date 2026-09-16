@@ -4883,7 +4883,7 @@ export default function App() {
                       </button>
                       <button
                         type="button"
-                        style={{ ...sm2Button('ghost'), flex: 1 }}
+                        style={{ ...sm2Button('outline'), flex: 1 }}
                         onClick={dispensarPriming}
                       >
                         {language === 'pt-BR' ? 'Agora não' : 'Not now'}

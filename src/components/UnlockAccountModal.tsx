@@ -145,7 +145,7 @@ export function UnlockAccountModal({ language, reason, onUnlocked, onClose }: Un
             type="button"
             onClick={handleDismiss}
             disabled={loading !== null}
-            style={{ ...sm2Button('ghost'), width: '100%' }}
+            style={{ ...sm2Button('outline'), width: '100%' }}
           >
             {isPt ? 'Agora não' : 'Not now'}
           </button>

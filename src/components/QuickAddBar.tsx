@@ -103,7 +103,7 @@ export function QuickAddBar({ language, onCommit }: QuickAddBarProps) {
           disabled={!podeGravar}
           aria-label={isPt ? 'Adicionar' : 'Add'}
           style={{
-            minWidth: 44, minHeight: 44, borderRadius: 10,
+            minWidth: 44, minHeight: 44, borderRadius: 'var(--sm2-radius-md)',
             cursor: podeGravar ? 'pointer' : 'default',
             border: '1px solid transparent',
             backgroundColor: podeGravar ? 'var(--sm2-primary-fill)' : 'var(--sm2-surface-2)',

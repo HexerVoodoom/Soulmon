@@ -314,7 +314,7 @@ export function StepsFields({
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
         <label style={{ ...sm2Label, marginBottom: 0 }}>{isPt ? 'Passos (opcional)' : 'Steps (optional)'}</label>
-        <button type="button" onClick={onAdd} style={{ ...sm2Button('ghost'), padding: '6px 12px', minHeight: 44 }}>
+        <button type="button" onClick={onAdd} style={{ ...sm2Button('outline', false, 'sm') }}>
           <Icon name="add" size={20} />{isPt ? 'Adicionar' : 'Add'}
         </button>
       </div>
@@ -527,7 +527,7 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, langu
         </div>
       )}
       <div style={{ display: 'flex', gap: 12 }}>
-        <button type="button" onClick={onClose} style={{ ...sm2Button('ghost'), flex: 1 }}>{txt.cancel}</button>
+        <button type="button" onClick={onClose} style={{ ...sm2Button('outline'), flex: 1 }}>{txt.cancel}</button>
         <button
           type="button"
           onClick={handleSave}
@@ -628,7 +628,7 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, langu
                   {effort === 3 && steps.length === 0 && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginTop: 6 }}>
                       <span style={{ ...sm2Hint, margin: 0, flex: 1, minWidth: 180 }}>{txt.projectSteps}</span>
-                      <button type="button" onClick={handleAddStep} style={{ ...sm2Button('ghost'), padding: '6px 12px' }}>
+                      <button type="button" onClick={handleAddStep} style={{ ...sm2Button('outline', false, 'sm') }}>
                         {txt.openSteps}
                       </button>
                     </div>

@@ -102,7 +102,7 @@ export function AccountSection({ language, onEntitlementChange }: AccountSection
       )}
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
-        <button type="button" onClick={handleRestore} disabled={restoring} style={sm2Button('ghost', restoring)}>
+        <button type="button" onClick={handleRestore} disabled={restoring} style={sm2Button('outline', restoring)}>
           {restoring
             ? (isPt ? 'Restaurando…' : 'Restoring…')
             : (isPt ? 'Restaurar compras' : 'Restore purchases')}

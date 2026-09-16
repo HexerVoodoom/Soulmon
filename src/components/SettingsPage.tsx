@@ -257,7 +257,7 @@ export function SettingsPage({
             <div>
               <p style={sm2Hint}>{isPt ? 'Seu código' : 'Your code'}</p>
               <p className="sm2-num" style={{ ...sm2Text, wordBreak: 'break-all' }}>{saveId}</p>
-              <button type="button" onClick={handleCopy} style={sm2Button('ghost')}>
+              <button type="button" onClick={handleCopy} style={sm2Button('outline')}>
                 {copied ? (isPt ? 'Copiado' : 'Copied') : (isPt ? 'Copiar' : 'Copy')}
               </button>
               {lastSyncLabel && (
@@ -279,7 +279,7 @@ export function SettingsPage({
               type="button"
               onClick={handleRestore}
               disabled={!restoreInput.trim() || restoreStatus === 'loading'}
-              style={{ ...sm2Button('ghost', !restoreInput.trim() || restoreStatus === 'loading'), marginTop: 8 }}
+              style={{ ...sm2Button('outline', !restoreInput.trim() || restoreStatus === 'loading'), marginTop: 8 }}
             >
               {restoreStatus === 'loading'
                 ? (isPt ? 'Restaurando…' : 'Restoring…')

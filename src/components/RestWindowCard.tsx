@@ -188,7 +188,7 @@ export function RestWindowCard({
           <button
             type="button"
             onClick={onEnableReminder}
-            style={{ ...sm2Button('ghost'), width: '100%' }}
+            style={{ ...sm2Button('outline'), width: '100%' }}
           >
             {isPt ? 'Quero um lembrete de deitar' : 'Remind me to lie down'}
           </button>

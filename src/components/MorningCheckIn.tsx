@@ -345,7 +345,7 @@ export function MorningCheckIn({ open, plan, language, onConfirm, onSkip, onTiny
                     key={h.id}
                     type="button"
                     onClick={() => onTinyHabit(h.id)}
-                    style={{ ...sm2Button('ghost'), width: '100%', justifyContent: 'flex-start' }}
+                    style={{ ...sm2Button('outline'), width: '100%', justifyContent: 'flex-start' }}
                   >
                     {isPt
                       ? `${h.name || 'Esse hábito'}: hoje, só 5 minutos?`
@@ -469,7 +469,7 @@ export function MorningCheckIn({ open, plan, language, onConfirm, onSkip, onTiny
               ? (isPt ? 'Assumir minha meta de hoje' : 'Commit to today’s goal')
               : (isPt ? 'Começar o dia' : 'Start the day')}
           </button>
-          <button type="button" onClick={onSkip} style={{ ...sm2Button('ghost'), width: '100%' }}>
+          <button type="button" onClick={onSkip} style={{ ...sm2Button('outline'), width: '100%' }}>
             {isPt ? 'Hoje não, obrigado' : 'Not today, thanks'}
           </button>
         </div>

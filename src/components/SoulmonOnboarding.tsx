@@ -885,14 +885,14 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         <a
           href={isPt ? '/termos.html' : '/termos.html#en'}
           target="_blank" rel="noopener noreferrer"
-          style={{ ...sm2Button('ghost'), width: '100%', textDecoration: 'none' }}
+          style={{ ...sm2Button('outline'), width: '100%', textDecoration: 'none' }}
         >
           {isPt ? 'Ler os Termos de Uso' : 'Read the Terms of Use'}
         </a>
         <a
           href={isPt ? '/privacidade.html' : '/privacidade.html#en'}
           target="_blank" rel="noopener noreferrer"
-          style={{ ...sm2Button('ghost'), width: '100%', textDecoration: 'none' }}
+          style={{ ...sm2Button('outline'), width: '100%', textDecoration: 'none' }}
         >
           {isPt ? 'Ler a Política de Privacidade' : 'Read the Privacy Policy'}
         </a>
@@ -1141,7 +1141,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
           <div style={{ width: '100%', maxWidth: 440, padding: '20px 20px 40px' }}>
             <button
               type="button"
-              style={{ ...sm2Button('ghost'), marginBottom: 12 }}
+              style={{ ...sm2Button('outline'), marginBottom: 12 }}
               onClick={() => setOracleDebugOpen(false)}
             >
               <Icon name="arrow_back" size={20} />
@@ -1360,7 +1360,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
 
             <button
               type="button"
-              style={{ ...sm2Button('ghost'), width: '100%', marginTop: 8 }}
+              style={{ ...sm2Button('outline'), width: '100%', marginTop: 8 }}
               onClick={() => { setCriandoConta(v => !v); setAuthErro(null); setResetEnviado(false); }}
             >
               {criandoConta
@@ -1371,7 +1371,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             {!criandoConta && (
               <button
                 type="button"
-                style={{ ...sm2Button('ghost'), width: '100%', marginTop: 4 }}
+                style={{ ...sm2Button('outline'), width: '100%', marginTop: 4 }}
                 onClick={aoEsquecerSenha}
                 disabled={authOcupado}
               >
@@ -1683,7 +1683,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               onClick={() => chooseRefine(true)}>
               {isPt ? `Responder mais ${SOUL_TEST_ITEMS.length} perguntas` : `Answer ${SOUL_TEST_ITEMS.length} more questions`}
             </button>
-            <button type="button" style={{ ...sm2Button('ghost'), width: '100%' }}
+            <button type="button" style={{ ...sm2Button('outline'), width: '100%' }}
               onClick={() => chooseRefine(false)}>
               {isPt ? 'Revelar meu Soulmon agora' : 'Reveal my Soulmon now'}
             </button>
@@ -1948,7 +1948,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         {/* Navegação (para passos com input manual) */}
         {step >= 1 && step <= FAVORITE_STEP && (
           <div style={{ display: 'flex', gap: 8, marginTop: 24 }}>
-            <button type="button" style={sm2Button('ghost')} onClick={back} aria-label={isPt ? 'Voltar' : 'Back'}>
+            <button type="button" style={sm2Button('outline')} onClick={back} aria-label={isPt ? 'Voltar' : 'Back'}>
               <Icon name="arrow_back" size={20} />
             </button>
             <button type="button" style={{ ...sm2Button('primary', !canAdvance()), flex: 1 }} onClick={next} disabled={!canAdvance()}>

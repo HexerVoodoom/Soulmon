@@ -552,7 +552,7 @@ export function EvolutionPath({
               <button
                 type="button"
                 onClick={() => onRetrySprite?.(stageId)}
-                style={{ ...sm2Button('ghost'), marginTop: 8, minHeight: 44, minWidth: 200 }}
+                style={{ ...sm2Button('outline'), marginTop: 8, minHeight: 44, minWidth: 200 }}
               >
                 {spriteText('retry', language)}
               </button>
@@ -793,7 +793,7 @@ export function EvolutionPath({
           : (isPt ? 'Confirmar degeneração' : 'Confirm degeneration')}
         footer={
           <div style={{ display: 'flex', gap: 10 }}>
-            <button type="button" onClick={() => setConfirmDegenerate(null)} style={{ ...sm2Button('ghost'), flex: 1 }}>
+            <button type="button" onClick={() => setConfirmDegenerate(null)} style={{ ...sm2Button('outline'), flex: 1 }}>
               {isPt ? 'Cancelar' : 'Cancel'}
             </button>
             <button
@@ -833,7 +833,7 @@ export function EvolutionPath({
         title={isPt ? 'Revelar essa evolução?' : 'Reveal this evolution?'}
         footer={
           <div style={{ display: 'flex', gap: 10 }}>
-            <button type="button" onClick={() => setConfirmReveal(null)} style={{ ...sm2Button('ghost'), flex: 1 }}>
+            <button type="button" onClick={() => setConfirmReveal(null)} style={{ ...sm2Button('outline'), flex: 1 }}>
               {isPt ? 'Cancelar' : 'Cancel'}
             </button>
             <button type="button" onClick={handleRevealConfirm} style={{ ...sm2Button('primary'), flex: 1 }}>
@@ -940,7 +940,7 @@ export function EvolutionPath({
             onClick={onToggleEvolutionLock}
             aria-pressed={evolutionLocked}
             style={{
-              ...sm2Button(evolutionLocked ? 'primary' : 'ghost'),
+              ...sm2Button(evolutionLocked ? 'primary' : 'outline'),
               minWidth: 220,
             }}
           >
@@ -1032,7 +1032,7 @@ export function EvolutionPath({
               <button
                 type="button"
                 onClick={() => onRetrySprite(currentStageId)}
-                style={{ ...sm2Button('ghost'), marginTop: 12, minHeight: 44, minWidth: 220 }}
+                style={{ ...sm2Button('outline'), marginTop: 12, minHeight: 44, minWidth: 220 }}
               >
                 {spriteText('retry', language)}
               </button>
@@ -1059,7 +1059,7 @@ export function EvolutionPath({
           <button
             type="button"
             onClick={() => onRevertVisor(currentStageId)}
-            style={{ ...sm2Button('ghost'), minHeight: 44, minWidth: 220 }}
+            style={{ ...sm2Button('outline'), minHeight: 44, minWidth: 220 }}
           >
             {spriteText('revert', language)}
           </button>
@@ -1068,7 +1068,7 @@ export function EvolutionPath({
           <button
             type="button"
             onClick={() => onTuneVisor(currentStageId)}
-            style={{ ...sm2Button('ghost'), minHeight: 44, minWidth: 220 }}
+            style={{ ...sm2Button('outline'), minHeight: 44, minWidth: 220 }}
           >
             {spriteText('tune', language)}
           </button>
@@ -1155,7 +1155,7 @@ export function EvolutionPath({
                 aria-checked={active}
                 onClick={() => setSelectedBranch(b)}
                 style={{
-                  ...sm2Button(active ? 'primary' : 'ghost'),
+                  ...sm2Button(active ? 'primary' : 'outline'),
                   flex: 1,
                   padding: '10px 8px',
                   // Branco sobre os três preenchimentos media 2,4–3,1:1 (medido);

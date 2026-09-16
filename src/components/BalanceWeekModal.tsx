@@ -171,7 +171,7 @@ export function BalanceWeekModal({
         )}
         {/* "Agora não" é ação de primeira classe, e não um X no canto: recusar
             uma sugestão tem que ser tão fácil quanto aceitá-la. */}
-        <button type="button" style={{ ...sm2Button('ghost'), width: '100%' }} onClick={onClose}>
+        <button type="button" style={{ ...sm2Button('outline'), width: '100%' }} onClick={onClose}>
           {semMudanca ? (isPt ? 'Entendi' : 'Got it') : t.agoraNao}
         </button>
       </div>

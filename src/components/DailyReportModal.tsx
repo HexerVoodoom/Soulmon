@@ -410,7 +410,7 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, on
         <div style={{ padding: '16px 20px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
           {canRecover && (
             <>
-              <button type="button" onClick={onRecoverHearts} style={{ ...sm2Button('ghost'), width: '100%' }}>
+              <button type="button" onClick={onRecoverHearts} style={{ ...sm2Button('outline'), width: '100%' }}>
                 {isPt ? 'Eu fiz, esqueci de marcar' : 'I did it, forgot to log'}
               </button>
               <p style={{ ...hint, textAlign: 'center' }}>

@@ -141,7 +141,7 @@ export function CoopPanel({ saveId, language, metaDoDiaCumprida }: CoopPanelProp
             type="button"
             disabled={ocupado || codigo.trim().length < 8}
             onClick={() => agir(() => joinCoop(saveId, codigo.trim()))}
-            style={sm2Button('ghost')}
+            style={sm2Button('outline')}
           >
             <Icon name="arrow_forward" size={20} />
             {isPt ? 'Entrar' : 'Join'}
@@ -255,7 +255,7 @@ export function CoopPanel({ saveId, language, metaDoDiaCumprida }: CoopPanelProp
               .then(() => { setCopiado(true); setTimeout(() => setCopiado(false), 2000); })
               .catch(() => {});
           }}
-          style={{ ...sm2Button('ghost'), padding: '6px 10px' }}
+          style={{ ...sm2Button('outline', false, 'sm'), padding: '0 12px' }}
           aria-label={isPt ? 'Copiar o código de convite' : 'Copy the invite code'}
         >
           <Icon name={copiado ? 'check' : 'content_copy'} size={20} />
@@ -268,7 +268,7 @@ export function CoopPanel({ saveId, language, metaDoDiaCumprida }: CoopPanelProp
         type="button"
         disabled={ocupado}
         onClick={() => agir(async () => { await leaveCoop(saveId); return null; })}
-        style={{ ...sm2Button('ghost'), color: 'var(--sm2-muted)' }}
+        style={{ ...sm2Button('outline'), color: 'var(--sm2-muted)' }}
       >
         {isPt ? 'Sair do grupo' : 'Leave the group'}
       </button>

@@ -75,7 +75,7 @@ export function NewReadingModal({ language, answers, credits, onConfirm, onClose
               ? (isPt ? 'Lendo…' : 'Reading…')
               : (isPt ? `Ler de novo — ${REROLL_COST_CREDITS} créditos` : `Read again — ${REROLL_COST_CREDITS} credits`)}
           </button>
-          <button type="button" onClick={onClose} style={{ ...sm2Button('ghost'), width: '100%' }}>
+          <button type="button" onClick={onClose} style={{ ...sm2Button('outline'), width: '100%' }}>
             {isPt ? 'Agora não' : 'Not now'}
           </button>
         </div>

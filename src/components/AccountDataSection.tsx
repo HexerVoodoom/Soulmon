@@ -281,7 +281,7 @@ export function AccountDataSection({ language, saveId: saveIdProp, authAvailable
         onClick={handleExport}
         disabled={blocked || busy}
         aria-describedby={localUnavailable ? 'sm-account-unavailable' : undefined}
-        style={{ ...sm2Button('ghost', blocked || busy), alignSelf: 'flex-start' }}
+        style={{ ...sm2Button('outline', blocked || busy), alignSelf: 'flex-start' }}
       >
         {exportPhase === 'loading'
           ? (isPt ? 'Preparando…' : 'Preparing…')
@@ -299,7 +299,7 @@ export function AccountDataSection({ language, saveId: saveIdProp, authAvailable
           type="button"
           onClick={handleDeleteRequest}
           disabled={blocked || busy}
-          style={{ ...sm2Button('ghost', blocked || busy), alignSelf: 'flex-start' }}
+          style={{ ...sm2Button('outline', blocked || busy), alignSelf: 'flex-start' }}
         >
           {deletePhase === 'loading'
             ? (isPt ? 'Montando a lista…' : 'Building the list…')
@@ -320,7 +320,7 @@ export function AccountDataSection({ language, saveId: saveIdProp, authAvailable
               onClick={handleDeleteConfirm}
               disabled={deletePhase === 'deleting'}
               style={{
-                ...sm2Button('ghost', deletePhase === 'deleting'),
+                ...sm2Button('outline', deletePhase === 'deleting'),
                 ...(deletePhase === 'deleting' ? {} : { borderColor: 'var(--sm2-danger-ink)', color: 'var(--sm2-danger-ink)' }),
               }}
             >
