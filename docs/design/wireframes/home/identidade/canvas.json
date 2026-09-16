@@ -1,0 +1,295 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "title": "HOME-01 · dia normal (topo)",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 2501,
+      "page": "page-1"
+    },
+    {
+      "file": "HomeRolado.dc.html",
+      "title": "HOME-01 · rolado (lista sob o pet fixo)",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1336,
+      "page": "page-1"
+    },
+    {
+      "file": "HomeVazio.dc.html",
+      "title": "HOME-02 · sem atividade",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 1410,
+      "page": "page-1"
+    },
+    {
+      "file": "HomePrimeiroDia.dc.html",
+      "title": "HOME-03 · primeira vez",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 1455,
+      "page": "page-1"
+    },
+    {
+      "file": "MainClaro.dc.html",
+      "title": "HOME-01 · o Main no tema CLARO (prova de AA)",
+      "x": 1960,
+      "y": 0,
+      "w": 390,
+      "h": 1364,
+      "page": "page-1"
+    },
+    {
+      "file": "HomeCarregando.dc.html",
+      "title": "HOME-04 · HOME-46 · ScreenSkeleton",
+      "x": 0,
+      "y": 2641,
+      "w": 390,
+      "h": 1412,
+      "page": "page-1"
+    },
+    {
+      "file": "HomeSemMetricas.dc.html",
+      "title": "HOME-05 · hideMetrics (constância sem números)",
+      "x": 490,
+      "y": 2641,
+      "w": 390,
+      "h": 1290,
+      "page": "page-1"
+    },
+    {
+      "file": "HomeOffline.dc.html",
+      "title": "HOME-44 · OfflineSeal",
+      "x": 980,
+      "y": 2641,
+      "w": 390,
+      "h": 1322,
+      "page": "page-1"
+    },
+    {
+      "file": "HomeErro.dc.html",
+      "title": "HOME-47 · ErrorBoundary",
+      "x": 1470,
+      "y": 2641,
+      "w": 390,
+      "h": 1353,
+      "page": "page-1"
+    },
+    {
+      "file": "HomeAvisosExpandido.dc.html",
+      "title": "HOME-10 · slot expandido",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1383,
+      "page": "page-2"
+    },
+    {
+      "file": "HomeAvisosCartoes.dc.html",
+      "title": "HOME-13 · 14 · 15 · 16 · os cartões",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1802,
+      "page": "page-2"
+    },
+    {
+      "file": "FirstDayEstados.dc.html",
+      "title": "HOME-11 · HOME-12 · FirstDayCard",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 1337,
+      "page": "page-2"
+    },
+    {
+      "file": "HomeHudEstados.dc.html",
+      "title": "HOME-06 · 07 · 08 · HomeHud (topo e aparelho)",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 2246,
+      "page": "page-2"
+    },
+    {
+      "file": "PetCarinho.dc.html",
+      "title": "HOME-18 · carinho em curso",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1322,
+      "page": "page-3"
+    },
+    {
+      "file": "PetDormindo.dc.html",
+      "title": "HOME-19 · dormindo",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1368,
+      "page": "page-3"
+    },
+    {
+      "file": "PetAssombrado.dc.html",
+      "title": "HOME-20 · assombrado",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 1397,
+      "page": "page-3"
+    },
+    {
+      "file": "PetPodeEvoluir.dc.html",
+      "title": "HOME-22 · pode evoluir",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 1413,
+      "page": "page-3"
+    },
+    {
+      "file": "PetDeckEstados.dc.html",
+      "title": "HOME-21 · 23 · 24 · deck, palco e retorno",
+      "x": 0,
+      "y": 1553,
+      "w": 390,
+      "h": 1793,
+      "page": "page-3"
+    },
+    {
+      "file": "PetCheio.dc.html",
+      "title": "HOME-36 · recusa por teto (não é tela)",
+      "x": 490,
+      "y": 1553,
+      "w": 390,
+      "h": 1289,
+      "page": "page-3"
+    },
+    {
+      "file": "AlimentarFolha.dc.html",
+      "title": "HOME-35 · seletor de comida",
+      "x": 980,
+      "y": 1553,
+      "w": 390,
+      "h": 1426,
+      "page": "page-3"
+    },
+    {
+      "file": "ItensPastinha.dc.html",
+      "title": "HOME-37 · pastinha",
+      "x": 1470,
+      "y": 1553,
+      "w": 390,
+      "h": 1337,
+      "page": "page-3"
+    },
+    {
+      "file": "ItensVazio.dc.html",
+      "title": "HOME-38 · pastinha vazia",
+      "x": 0,
+      "y": 3486,
+      "w": 390,
+      "h": 1292,
+      "page": "page-3"
+    },
+    {
+      "file": "ItensUsar.dc.html",
+      "title": "HOME-39 · usar item especial",
+      "x": 490,
+      "y": 3486,
+      "w": 390,
+      "h": 1353,
+      "page": "page-3"
+    },
+    {
+      "file": "ChatEstados.dc.html",
+      "title": "HOME-25 → 30 · ChatBox",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1720,
+      "page": "page-4"
+    },
+    {
+      "file": "PlayEstados.dc.html",
+      "title": "HOME-31 · 32 · 33 · Play (célula do deck)",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 2303,
+      "page": "page-4"
+    },
+    {
+      "file": "TrilhaEvolucao.dc.html",
+      "title": "HOME-34 · EvoTrail — sai",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 1306,
+      "page": "page-4"
+    },
+    {
+      "file": "NavEstados.dc.html",
+      "title": "HOME-40 · 41 · 43 · barra e skip link",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 1384,
+      "page": "page-4"
+    },
+    {
+      "file": "NavMenu.dc.html",
+      "title": "HOME-42 · menu sanduíche",
+      "x": 0,
+      "y": 2443,
+      "w": 390,
+      "h": 1355,
+      "page": "page-4"
+    },
+    {
+      "file": "FeedbackEstados.dc.html",
+      "title": "HOME-45 · HOME-48 · toast e aria-live",
+      "x": 490,
+      "y": 2443,
+      "w": 390,
+      "h": 1336,
+      "page": "page-4"
+    },
+    {
+      "type": "text",
+      "page": "page-1",
+      "x": 0,
+      "y": -190,
+      "w": 1400,
+      "text": "Soulmon — Identidade HOME (Fase 2, segundo canvas; 16/09/2026, rodada 2 após CRITICA.md — F1, F2, X1–X12 resolvidos). Cada artboard = o wireframe cinza aprovado (docs/design/wireframes/home/, DECISÕES §5) com a identidade do canvas Sistema aplicada: mesma hierarquia, mesmos estados, mesma copy EN, mesma ordem de foco. O Visor: pixel só dentro do vidro (bg-room e berço como transição, igni-rookie 256²→128 CSS = P2 (a), decoração, VisorBar HP/EN com placa, FX do animArt, EVOLVE em Silkscreen); tudo fora é o aparelho em vetor (Fredoka/Rubik/Material, tokens --sm2-*, espaço P1, nav 32 P3). Escuro em todos; claro só no MainClaro. Rodapé: tokens · divergências com o código · PT. Páginas iguais às do wireframe. Alturas = scrollHeight do .ab."
+    }
+  ],
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Home — composição"
+    },
+    {
+      "id": "page-2",
+      "name": "Home — slot de avisos e HUD"
+    },
+    {
+      "id": "page-3",
+      "name": "Home — pet e cuidado"
+    },
+    {
+      "id": "page-4",
+      "name": "Home — chat, play e chrome"
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "page-1"
+  }
+}
