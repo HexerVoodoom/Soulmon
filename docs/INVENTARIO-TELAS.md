@@ -327,7 +327,7 @@ menu sanduíche; **`oracle` não é alcançável** (ver 5.13).
 | **Banner de HP** | PNG `icon-heart-handshake` + `✕` em texto | `healthPoints ≤ 1 && > 0 && dailyDone < hpSafeToday && !dismissed` — **raro, mas no pior dia** |
 | `CompanionHUD` (pet, palco, ninho, decoração, gesto de esfregar) | PNG `nest-base.png`, sprite da linha (`kaelen-rookie.png`) | sempre |
 | Action bar de cuidado: ITEMS / BATH / SLEEP-WAKE | PNG `icon-items`, `icon-bath`, `icon-sleep`, `icon-wake` | sempre |
-| `CareSystem` (cocô) | PNG `figma:asset/9087038914….png` | agendado 07–15h e +8–10h; nunca dormindo |
+| `CareSystem` (cocô) | FX `anim-poop-plop` do `animArt` (quadro 3/3 a 2×; o PNG `figma:asset/9087…` saiu em 16/09/2026) | agendado 07–15h e +8–10h; nunca dormindo |
 | `ChatBox` (dock de chat) | PNG `icon-send`, `icon-mic` + lucide `Square` (parar gravação) | sempre |
 | `PlayCard` | — | **só depois da 1ª conclusão da vida** (`jaConcluiuAlgo`) |
 | `EvoTrail` | PNG `node-current`, `node-forecast`, `node-locked` | `soulmonStages.length > 0` |

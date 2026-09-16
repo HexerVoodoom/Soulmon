@@ -26,7 +26,6 @@ export default defineConfig({
       'lucide-react@0.487.0': 'lucide-react',
       'input-otp@1.4.2': 'input-otp',
       'figma:asset/90d2794255a0abd49ab9e2ca8c9f1c54b45d7cd0.png': path.resolve(__dirname, './src/assets/90d2794255a0abd49ab9e2ca8c9f1c54b45d7cd0.png'),
-      'figma:asset/9087038914d85d3c74c1b4c1fb6e2b91f486cbee.png': path.resolve(__dirname, './src/assets/9087038914d85d3c74c1b4c1fb6e2b91f486cbee.png'),
       'figma:asset/7e77e9ec45ca6381843c93b205d4f8cdd7ddf568.png': path.resolve(__dirname, './src/assets/7e77e9ec45ca6381843c93b205d4f8cdd7ddf568.png'),
       'embla-carousel-react@8.6.0': 'embla-carousel-react',
       'cmdk@1.1.1': 'cmdk',

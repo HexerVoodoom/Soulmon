@@ -2,7 +2,7 @@
 /**
  * Teste de render do `HomeHud`.
  *
- * Dois guardrails, e nenhum deles é estético:
+ * Três guardrails, e nenhum deles é estético:
  *
  * 1. **Orçamento de leituras da Home** (PLANO-DESIGN §5.1). O contador de
  *    Créditos SAIU daqui para abrir espaço ao Nível de Vínculo. Se alguém
@@ -12,102 +12,68 @@
  *    apareceram com o mesmo ícone 💎 e o jogador não tinha como saber que o
  *    que pagou com dinheiro real não comprava nada na loja. Com moeda NENHUMA
  *    no HUD, o bug fica estruturalmente impossível aqui.
- *
- * E a leitura de HP/energia: blocos DISCRETOS, com meio bloco para a fração de
- * 0,5 que a regra do carinho produz.
+ * 3. **UMA leitura de HP/energia na Home** (canvas Home, achado 1 / DECISÕES
+ *    §19, 16/09/2026). Este componente desenhava a barra segmentada DOM
+ *    (`.sm2-seg-blk`) enquanto o `CompanionHUD` montava a `VisorBar` em pixel
+ *    dentro do vidro — o mesmo número duas vezes na mesma tela. A DOM saiu;
+ *    o guard dos `.sm2-seg-blk` passa a valer PELO AVESSO: se um bloco voltar
+ *    a nascer aqui, a duplicidade voltou.
  */
 import { describe, it, expect } from 'vitest';
 import { screen } from '@testing-library/react';
 import { renderWithCss } from '../../test/renderEnv';
 import { HomeHud } from './HomeHud';
 
-const base = { energyPoints: 2, maxEnergyPoints: 4 };
-
-describe('HomeHud — medidores segmentados', () => {
-  it('a barra de energia mostra o valor real (2 de 4 blocos acesos)', () => {
-    const { container } = renderWithCss(<HomeHud {...base} />);
-    const bar = screen.getByRole('progressbar');
-    expect(bar.getAttribute('aria-valuenow')).toBe('2');
-    expect(container.querySelectorAll('.sm2-seg-blk')).toHaveLength(4);
-    expect(container.querySelectorAll('.sm2-seg-on')).toHaveLength(2);
+describe('HomeHud — a leitura de HP/energia mora no vidro, não aqui', () => {
+  it('não desenha NENHUM medidor DOM (a `VisorBar` do CompanionHUD é a única leitura)', () => {
+    const { container } = renderWithCss(<HomeHud language="pt-BR" />);
+    expect(container.querySelectorAll('.sm2-seg-blk')).toHaveLength(0);
+    expect(container.querySelectorAll('.sm2-meter')).toHaveLength(0);
+    expect(container.querySelectorAll('[role="progressbar"]')).toHaveLength(0);
+    expect(container.textContent).not.toMatch(/Health|Vida|Energy|Energia/);
   });
 
-  it('energia 0/0 (estágio sem requisito) não quebra nem acende bloco', () => {
-    const { container } = renderWithCss(<HomeHud energyPoints={0} maxEnergyPoints={0} />);
-    expect(container.querySelectorAll('.sm2-seg-on')).toHaveLength(0);
-    expect(screen.getByRole('progressbar')).toBeTruthy();
-  });
-
-  it('HP tem medidor próprio, com o mesmo peso da energia', () => {
-    const { container } = renderWithCss(
-      <HomeHud {...base} healthPoints={2} maxHealthPoints={3} language="pt-BR" />,
-    );
-    const medidores = Array.from(container.querySelectorAll('.sm2-meter'));
-    expect(medidores.length).toBe(2);
-    const vida = medidores.find(m => m.textContent?.includes('Vida'))!;
-    expect(vida.textContent).toContain('2/3');
-    expect(vida.querySelectorAll('.sm2-seg-blk')).toHaveLength(3);
-    expect(vida.querySelectorAll('.sm2-seg-on')).toHaveLength(2);
-  });
-
-  it('MEIA UNIDADE = MEIO BLOCO — a cura por carinho não é arredondada', () => {
-    // `PixelSegmentedBar` faz `Math.round`, e 1,5/3 acenderia DOIS blocos
-    // inteiros: a barra mentiria sobre a regra (HP aceita frações de 0,5).
-    const { container } = renderWithCss(
-      <HomeHud {...base} healthPoints={1.5} maxHealthPoints={3} language="en-US" />,
-    );
-    const vida = Array.from(container.querySelectorAll('.sm2-meter'))
-      .find(m => m.textContent?.includes('Health'))!;
-    expect(vida.querySelectorAll('.sm2-seg-on')).toHaveLength(1);
-    expect(vida.querySelectorAll('.sm2-seg-half')).toHaveLength(1);
-  });
-
-  it('o número que muda usa tabular-nums (senão o valor "dança" a cada tick)', () => {
-    const { container } = renderWithCss(
-      <HomeHud {...base} healthPoints={2} maxHealthPoints={3} />,
-    );
-    expect(container.querySelectorAll('.sm2-meter-value.sm2-num').length).toBe(2);
-  });
-
-  it('sem HP declarado (chamador antigo) o HUD não inventa um medidor vazio', () => {
-    const { container } = renderWithCss(<HomeHud {...base} />);
-    expect(container.textContent).not.toMatch(/Health|Vida/);
-    expect(container.querySelectorAll('.sm2-meter').length).toBe(1);
+  it('a marca é o <h1> da Home, em Fredoka (display), e é o único heading', () => {
+    const { container } = renderWithCss(<HomeHud language="en-US" />);
+    const h1 = container.querySelector('h1');
+    expect(h1?.textContent).toBe('Soulmon');
+    expect(container.querySelectorAll('h1, h2, h3')).toHaveLength(1);
+    const fam = getComputedStyle(h1!).fontFamily;
+    expect(fam, 'a marca é Fredoka, nunca Silkscreen fora do vidro').toMatch(/sm2-font-display|Fredoka/);
+    expect(fam).not.toMatch(/Silkscreen|font-pixel/);
   });
 });
 
 describe('HomeHud — o orçamento de leituras da Home', () => {
   it('ORÇAMENTO: nenhuma moeda no HUD — Créditos saíram para abrir o Vínculo', () => {
-    const { container } = renderWithCss(
-      <HomeHud {...base} healthPoints={3} maxHealthPoints={3} language="pt-BR" />,
-    );
+    const { container } = renderWithCss(<HomeHud language="pt-BR" focusSealed />);
     expect(container.textContent).not.toMatch(/Cr[ée]dito|Credit/i);
     expect(container.textContent).not.toMatch(/\bBits?\b/i);
     expect(container.textContent).not.toMatch(/Emblema|Emblem/i);
   });
 
-  it('ORÇAMENTO: as leituras numéricas do HUD são exatamente duas (HP e energia)', () => {
-    const { container } = renderWithCss(
-      <HomeHud {...base} healthPoints={3} maxHealthPoints={3} language="en-US" />,
-    );
-    expect(container.querySelectorAll('.sm2-meter-value').length).toBe(2);
+  it('ORÇAMENTO: nenhuma leitura numérica sobra no topo (zero dígitos)', () => {
+    const { container } = renderWithCss(<HomeHud language="en-US" focusSealed />);
+    expect(container.textContent).not.toMatch(/\d/);
   });
 
-  it('nenhum PNG sobrou no HUD — os ícones são glifos da Material Symbols', () => {
-    const { container } = renderWithCss(
-      <HomeHud {...base} healthPoints={3} maxHealthPoints={3} language="pt-BR" />,
-    );
+  it('nenhum PNG no HUD — o único ícone (o selo) é glifo da Material Symbols', () => {
+    const { container } = renderWithCss(<HomeHud language="pt-BR" focusSealed />);
     expect(container.querySelectorAll('img').length).toBe(0);
-    expect(container.querySelectorAll('.sm2-icon').length).toBeGreaterThan(0);
+    expect(container.querySelectorAll('.sm2-icon').length).toBe(1);
   });
 
-  it('par PT/EN dos rótulos', () => {
-    const pt = renderWithCss(<HomeHud {...base} healthPoints={3} maxHealthPoints={3} language="pt-BR" />);
-    expect(screen.getByText('Vida')).toBeTruthy();
-    expect(screen.getByText('Energia')).toBeTruthy();
+  it('sem o selo, o HUD é só a palavra — nem ícone, nem imagem', () => {
+    const { container } = renderWithCss(<HomeHud language="pt-BR" />);
+    expect(container.querySelectorAll('.sm2-icon, img').length).toBe(0);
+    expect(container.textContent?.trim()).toBe('Soulmon');
+  });
+
+  it('par PT/EN do selo', () => {
+    const pt = renderWithCss(<HomeHud language="pt-BR" focusSealed />);
+    expect(screen.getByText('foco do dia')).toBeTruthy();
     pt.unmount();
-    renderWithCss(<HomeHud {...base} healthPoints={3} maxHealthPoints={3} language="en-US" />);
-    expect(screen.getByText('Health')).toBeTruthy();
-    expect(screen.getByText('Energy')).toBeTruthy();
+    renderWithCss(<HomeHud language="en-US" focusSealed />);
+    expect(screen.getByText('focus done')).toBeTruthy();
   });
 });

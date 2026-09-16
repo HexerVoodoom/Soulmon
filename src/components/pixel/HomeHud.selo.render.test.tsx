@@ -20,35 +20,37 @@ import { screen } from '@testing-library/react';
 import { renderWithCss } from '../../test/renderEnv';
 import { HomeHud } from './HomeHud';
 
-const base = { energyPoints: 2, maxEnergyPoints: 4, language: 'pt-BR' as const };
-
 describe('HomeHud — selo do Foco do dia (WP2.12)', () => {
   it('sem os três focos, nenhum selo', () => {
-    renderWithCss(<HomeHud {...base} hideMeters />);
+    renderWithCss(<HomeHud language="pt-BR" />);
     expect(screen.queryByText('foco do dia')).toBeNull();
   });
 
   it('com o foco completo, o selo aparece ao lado da marca', () => {
-    renderWithCss(<HomeHud {...base} hideMeters focusSealed />);
+    renderWithCss(<HomeHud language="pt-BR" focusSealed />);
     expect(screen.getByText('foco do dia')).toBeTruthy();
     expect(screen.getByText('Soulmon'), 'o selo não pode substituir a marca').toBeTruthy();
   });
 
   it('nunca imprime contagem parcial', () => {
-    renderWithCss(<HomeHud {...base} hideMeters focusSealed />);
+    renderWithCss(<HomeHud language="pt-BR" focusSealed />);
     const marca = screen.getByText('Soulmon').parentElement!;
     expect(marca.textContent, 'o selo virou placar').not.toMatch(/\d\s*\/\s*\d/);
     expect(marca.textContent).not.toMatch(/\d/);
   });
 
   it('em inglês também', () => {
-    renderWithCss(<HomeHud {...base} language="en-US" hideMeters focusSealed />);
+    renderWithCss(<HomeHud language="en-US" focusSealed />);
     expect(screen.getByText('focus done')).toBeTruthy();
   });
 
-  it('some junto com a marca quando ela está escondida', () => {
-    // A instância que só carrega medidores não tem onde pendurar o selo.
-    renderWithCss(<HomeHud {...base} hideBrand focusSealed />);
-    expect(screen.queryByText('foco do dia')).toBeNull();
+  it('o selo é um chip de etiqueta (24px, primary-soft), ao lado da marca', () => {
+    // Canvas Home, HOME-07: chip de etiqueta 24 em `primary-soft`, `check_circle`
+    // FILL 1 + Rubik 12/500. Não é ícone solto em box — é a etiqueta inteira.
+    const { container } = renderWithCss(<HomeHud language="pt-BR" focusSealed />);
+    const selo = container.querySelector('.sm2-hud-seal')!;
+    expect(selo).toBeTruthy();
+    expect(selo.querySelector('.sm2-icon')).toBeTruthy();
+    expect(selo.textContent).toContain('foco do dia');
   });
 });

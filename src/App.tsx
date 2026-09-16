@@ -52,7 +52,6 @@ import {
 import { hashString, creatureFormId } from './utils/oracle';
 import type { OracleInput, OracleResult } from './utils/oracle';
 import { applyDecorEquip, type SlotId } from './utils/petStage';
-import { PET_BACKGROUNDS } from './utils/backgrounds';
 
 // Identidades estáveis: CompanionHUD é memo() e um `?? {}` inline cria um
 // objeto novo a cada render, anulando a memoização (footgun conhecido).
@@ -217,7 +216,6 @@ import type { Dream, RestWindow } from './utils/restWindow';
 // Mesma disciplina do bloco acima: as regras moram nos módulos puros
 // (`nightmares`, `petNeeds`, `steps`) e aqui só existe fiação.
 import { NightmareBattle } from './components/NightmareBattle';
-import { PlayCard } from './components/PlayCard';
 import { StepsCard } from './components/StepsCard';
 import {
   buildNightmareWave, hasPendingNightmare, markFought, nightmareDayKey, nightmaresFor,
@@ -2890,11 +2888,10 @@ export default function App() {
     const todayKey = playerDayKey(now, gameState.playerDayTz);
     const preview = play(gameState, todayKey, now);
     if (preview.refused) {
-      const isPt = language === 'pt-BR';
-      toast(preview.refused === 'already-played'
-        ? (isPt ? '🎈 Já brincamos hoje! Amanhã tem mais.' : '🎈 We already played today! More tomorrow.')
-        : (isPt ? '🎈 Uma comidinha primeiro, aí a gente brinca.' : '🎈 A snack first, then we play.'));
-      setMessageTrigger(prev => prev + 1);
+      /* Os dois toasts 🎈 SAÍRAM (canvas Home, E7): recusa de cuidado é fala
+         do pet, nunca aviso do sistema. Quem recusa é o deck do
+         `CompanionHUD` — "já brincou" é célula inerte, "sem energia" é a
+         criatura falando no balão. Aqui só se garante que a regra não fura. */
       return;
     }
     contarMissao('play-days');
@@ -2903,6 +2900,22 @@ export default function App() {
     playBuffSpentRef.current = false; // buff novo, pronto para o próximo minijogo
     setMessageTrigger(prev => prev + 1);
   }, [gameState, language, setGameState]);
+
+  /* A 5ª célula do deck, memoizada: `CompanionHUD` é `memo()` e um objeto
+     novo por render anularia o memo (footgun 5). A MESMA régua do
+     `handlePlay`: o que a UI oferece e o que o clique aceita têm de ser o
+     mesmo dia do jogador. */
+  const playDeck = useMemo(() => {
+    const agoraPlay = new Date();
+    const chave = playerDayKey(agoraPlay, gameState.playerDayTz);
+    return {
+      available: jaConcluiuAlgo,
+      canPlay: canPlay(petNeedsView, chave),
+      playedToday: playedToday(petNeedsView, chave),
+      onPlay: handlePlay,
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jaConcluiuAlgo, gameState.energyPoints, gameState.playLog, gameState.playerDayTz, handlePlay]);
 
   // 🛒 Shop purchase — charges points and applies the item's effect. Items can
   // be locked behind a mission (utils/shop.ts `unlock`).
@@ -4597,35 +4610,29 @@ export default function App() {
             SEM consumidor — é peça de kit, e apagá-la só criaria trabalho se
             outra tela precisar de um flutuante. */}
 
-        {/* Fundo da Home cheio, atrás de tudo (barra de chat/nav ficam por
-            cima) — antes era só um retângulo dentro do CompanionHUD, restrito
-            à altura da área do pet. Sem cenário equipado, cai no teal escuro
-            do tema (--sm-bg) em vez de um cinza neutro genérico.
+        {/* ── O FUNDO DA HOME = o corpo do aparelho (canvas Home, D-H1) ────
+            A página É o aparelho: `--sm2-bg` sólido, e por cima dele a TEXTURA
+            P4 — `home-scene-1547.png` (a moldura pintada do dono) a 10% de
+            opacidade, numa camada `fixed`, `pointer-events: none`, abaixo de
+            todo conteúdo (`z-index: 0`; o `<main>` está em 1). É a exceção
+            declarada à tese do Visor, decidida pelo dono em 16/09/2026
+            (DECISÕES §19): os cards continuam SÓLIDOS e o contraste é medido
+            contra a superfície, nunca contra a cena. Estática — nada a cortar
+            em `prefers-reduced-motion`.
 
-            27/08/2026: `home-scene-1547.png` (o pedido do dono) NÃO pinta
-            este fundo de página inteira — foi tentado e revertido no mesmo
-            dia. O pedido era "dentro do box, na área que o Soulmon fica":
-            a imagem foi para o `.sm2-device` (CompanionHUD, o corpo do
-            aparelho), não para trás da Home inteira. Ver a nota lá. */}
+            O que SAIU daqui: o cenário equipado pintado como fundo de PÁGINA
+            (era pixel fora do visor — ele já é pintado DENTRO do vidro pelo
+            `CompanionHUD`) e a grade de circuito (`.sm-circuit-bg`, G10).
+
+            O arquivo é `home-scene-texture.webp` (688×1529, 32 KB), derivado
+            da arte original de 4,2 MB: a 10% de opacidade nenhum detalhe da
+            resolução nativa sobrevive, e 4 MB no caminho do LCP da tela mais
+            aberta do app é orçamento de performance jogado fora. A regra do
+            `.sm-pet-sticky` (index.css) repete a mesma camada com
+            `background-attachment: fixed` para a faixa fixa do pet casar
+            pixel a pixel com o fundo que rola por baixo dela. */}
         {currentView === 'main' && (
-          <div
-            aria-hidden="true"
-            /* G10 (Ref C): sem cenário equipado, o teal padrão ganha a grade
-               de circuito ciano tênue. Cenário equipado sobrescreve por style
-               inline — a grade só existe no fundo padrão. */
-            className={gameState.equippedBackground && PET_BACKGROUNDS[gameState.equippedBackground] ? undefined : 'sm-circuit-bg'}
-            style={{
-              position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none',
-              backgroundImage: gameState.equippedBackground && PET_BACKGROUNDS[gameState.equippedBackground]
-                ? PET_BACKGROUNDS[gameState.equippedBackground].css
-                : undefined,
-              backgroundColor: 'var(--sm-bg)',
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat',
-              imageRendering: 'pixelated',
-            }}
-          />
+          <div aria-hidden="true" className="sm2-home-bg" data-home-texture />
         )}
 
         {/* Scrollable Content - padding bottom pra não ficar atrás da bottom nav (+ chat na home)
@@ -4641,7 +4648,10 @@ export default function App() {
           /* Alvo do "pular para o conteúdo": `-1` = focável por programa,
              fora da ordem de Tab. Ver o comentário no atalho lá em cima. */
           tabIndex={-1}
-          className="flex-1 overflow-y-auto px-6"
+          /* Gutter 16 na Home (canvas Home, P1) — TEM de casar com o
+             `margin-inline: -16px` do `.sm-pet-sticky` (index.css). As outras
+             views seguem em 24. */
+          className={currentView === 'main' ? 'flex-1 overflow-y-auto px-4' : 'flex-1 overflow-y-auto px-6'}
           style={{
             position: 'relative', zIndex: 1,
             /* RODADA 4: o `pt-3` virou TOKEN porque a área fixa do pet precisa
@@ -4706,22 +4716,16 @@ export default function App() {
 
           {currentView === 'main' && (
             <div className="space-y-4">
-              {/* HUD do topo (Ref C): SÓ a marca (o `<h1>` da Home) agora.
-                  Vida/Energia migraram para DENTRO do `.sm2-device`
-                  (CompanionHUD, `hideBrand compact`) em 27/08/2026 — o dono
-                  achou os medidores grandes demais acima do pet. Ver
-                  components/pixel/HomeHud.tsx para a nota sobre o rótulo da
-                  moeda ("SOUL CRYSTAL" da referência vs. Créditos). */}
+              {/* HUD do topo: SÓ a marca (o `<h1>` da Home) + o selo do dia.
+                  A leitura de HP/energia mora no VIDRO (`VisorBar`, em pixel,
+                  no `CompanionHUD`) — e só lá. A barra DOM que este componente
+                  desenhava (a "segunda leitura", achado 1 do canvas Home)
+                  SAIU em 16/09/2026 (DECISÕES §19). */}
               <HomeHud
                 /* WP2.12 — o selo do dia. `focusComplete` existia com teste e
                    nenhum chamador, e o guia prometia "completar os 3 rende o
                    selo". Binário de propósito: nunca "2 de 3". */
                 focusSealed={focoDoDiaCompleto}
-                energyPoints={gameState.energyPoints}
-                maxEnergyPoints={getMaxEnergyForStage(gameState.evolutionStage)}
-                healthPoints={gameState.healthPoints}
-                maxHealthPoints={gameState.maxHealthPoints}
-                hideMeters
                 language={language}
               />
 
@@ -5035,36 +5039,16 @@ export default function App() {
                 language={language}
                 evolutionFlash={evolutionFlash}
                 feedAnim={feedAnim}
+                play={playDeck}
               />
 
-              {/* BRINCAR — na área do pet, junto de banho/dormir/itens, porque
-                  é um gesto de CUIDADO e não um minijogo. É uma OFERTA: sem
-                  barra de diversão, sem contador regressivo, sem badge por não
-                  ter brincado. Ver components/PlayCard.tsx.
-
-                  Não existe antes da PRIMEIRA conclusão. `canPlay` exige energia
-                  ≥1, energia só vem de comida e comida só vem de concluir
-                  atividade — ou seja, no dia 1 o card nascia indisponível e
-                  ocupava o espaço mais nobre da tela com uma oferta impossível.
-                  Uma oferta que não dá para aceitar não é convite, é ruído. */}
-              {jaConcluiuAlgo && (() => {
-                const agoraPet = new Date();
-                // A MESMA régua do `handlePlay`: o que a UI oferece e o que o
-                // clique aceita têm de ser o mesmo dia. Guard de AST em
-                // `playerDay.contract.test.ts` trava isto — o handler sozinho
-                // não cobriria esta IIFE.
-                const chavePet = playerDayKey(agoraPet, gameState.playerDayTz);
-                return (
-                  <PlayCard
-                    canPlay={canPlay(petNeedsView, chavePet)}
-                    playedToday={playedToday(petNeedsView, chavePet)}
-                    buff={activeBuff(petNeedsView, agoraPet)}
-                    now={agoraPet}
-                    language={language}
-                    onPlay={handlePlay}
-                  />
-                );
-              })()}
+              {/* BRINCAR saiu do card (`PlayCard`) e virou a 5ª célula do deck
+                  do `CompanionHUD` (canvas Home, E1+E2 / PlayEstados): é um
+                  gesto de CUIDADO, ao lado de banho/dormir/itens. A linha do
+                  buff ("+20% Bits · N min") sai da Home e vai para o canvas
+                  Jogos. O gate é o mesmo: não existe antes da PRIMEIRA
+                  conclusão (`jaConcluiuAlgo`) — célula inerte, não card
+                  ausente. */}
 
               {/* ── G1: UM painel de rituais, linhas de ~72px ────────────────
                   Antes: um `PixelPanel` de ~200px por item, três estourando a

@@ -5563,29 +5563,53 @@ button.sm-px-node {
   position: sticky;
   top: calc(var(--sm-scroll-pt) * -1);
   z-index: 5;
-  margin-inline: -24px;
+  /* Gutter 16 (canvas Home, P1): o `<main>` da Home é `px-4`; a faixa cancela
+     o mesmo valor. Os dois números TÊM de ser o mesmo — senão sobra fresta em
+     que a lista rola visível ao lado do pet. */
+  margin-inline: -16px;
   /* Padding vertical no mínimo: aqui cada pixel sai da lista. Medido: 6px em
      cima custavam uma unidade de ação inteira acima da dobra em 412×915. */
-  padding: 0 24px;
-  /* Opacidade: sem fundo, a lista rolaria VISÍVEL por trás do pet. O fundo
-     repetido aqui é o MESMO da Home (App.tsx pinta um cenário `fixed` cobrindo
-     a tela), e `background-attachment: fixed` ancora no viewport — então esta
-     faixa casa pixel a pixel com o cenário de baixo em vez de virar uma tarja
-     chapada por cima dele. `--sm-pet-scene` vem do componente (é o `css` do
-     cenário equipado, ou `none`). */
-  background-color: var(--sm-bg);
-  /* Fallback = a MESMA grade de circuito do `.sm-circuit-bg` (G10): com
-     `background-attachment: fixed` as duas camadas ancoram no viewport e a
-     faixa do pet casa pixel a pixel com o fundo padrão da Home. */
-  background-image: var(--sm-pet-scene,
-    repeating-linear-gradient(0deg, transparent 0 47px, color-mix(in srgb, var(--sm-px-cyan) 6%, transparent) 47px 48px),
-    repeating-linear-gradient(90deg, transparent 0 47px, color-mix(in srgb, var(--sm-px-cyan) 6%, transparent) 47px 48px),
-    radial-gradient(circle at 50% -10%, color-mix(in srgb, var(--sm-px-cyan) 9%, transparent), transparent 55%));
-  background-attachment: fixed;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  image-rendering: pixelated;
+  padding: 0 16px;
+  /* Opaca: sem fundo, a lista rolaria VISÍVEL por trás do pet. A página é
+     o corpo do aparelho (canvas Home, D-H1): `--sm2-bg` sólido + a textura
+     P4 a 10% (`::before`, abaixo), ancorada no viewport com
+     `background-attachment: fixed` para casar pixel a pixel com a camada
+     `.sm2-home-bg` que rola por baixo. (Até 16/09/2026 esta faixa repetia o
+     cenário equipado e a grade de circuito — pixel fora do visor; saíram.)
+     Em navegadores que ignoram `attachment: fixed` (iOS Safari) a textura
+     desta faixa desliza junto com o scroll — a 10% não lê como costura. */
+  background-color: var(--sm2-bg);
+}
+.sm-pet-sticky::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: url('./assets/backgrounds/home-scene-texture.webp') center top / cover no-repeat fixed;
+  opacity: .1;
+}
+/* ── A TEXTURA DA HOME (P4, decisão do dono em 16/09/2026) ─────────────────
+   Camada `fixed` sob todo o conteúdo da Home (o `<main>` está em z 1): a
+   moldura pintada do dono (`home-scene-1547.png`, aqui na cópia leve
+   `home-scene-texture.webp`, 688×1529 / 32 KB) a 10% de opacidade sobre
+   `--sm2-bg`. Exceção declarada à tese do Visor; cards continuam sólidos e o
+   contraste é medido contra a superfície, não contra a cena. Estática — nada
+   a desligar em `prefers-reduced-motion`. Montada só em `currentView ===
+   'main'` (App.tsx). */
+.sm2-home-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-color: var(--sm2-bg);
+}
+.sm2-home-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url('./assets/backgrounds/home-scene-texture.webp') center top / cover no-repeat;
+  opacity: .1;
 }
 
 /* Altura da JANELA do palco. Não é a altura da composição: a composição
@@ -5601,7 +5625,8 @@ button.sm-px-node {
 
    215 (em vez de 250) devolve uma unidade inteira em 915 sem chegar perto do
    sprite. */
-:root { --sm-petstage-h: 215px; }
+:root { --sm-petstage-h: 200px; }
+/* 200 desde 16/09/2026 (canvas Home: vidro 348×200 — D-H1/X12). Era 215. */
 /* PISO da janela: o sprite começa a 87px do topo da composição, então uma
    janela abaixo de ~165px passa a cortar o pet pela cabeça. 175 deixa 12px de
    folga. Abaixo disto não se encolhe mais — se a lista ainda não couber, a
@@ -6326,75 +6351,11 @@ button.sm-px-node {
   }
 }
 
-/* ── O CORPO DO APARELHO (`.sm2-device`) ──────────────────────────────────
-   O achado da crítica: o "visor" tinha 4px de corpo (os 20px eram RAIO), e
-   por isso não havia massa onde os controles pudessem morar — a fileira de
-   ações flutuava no fundo da página com `background: transparent`. Tamagotchi
-   e Vital Bracelet fazem o oposto: os botões são do APARELHO.
-
-   Então o corpo existe de verdade: 16px de material em volta do anel (4px) =
-   20px de bisel, e a fileira de ações é uma ÁREA do corpo, separada da tela
-   por um sulco, não um flutuante.
-
-   Por que o deck não vive dentro do `Viewport`: com `label`, o `Viewport` é
-   `role="img"` — subárvore inteira ignorada pelo leitor de tela. Botão ali
-   dentro é focável e invisível. O corpo é o pai dos dois. */
-.sm2-device {
-  position: relative;
-  box-sizing: border-box;
-  padding: 16px 16px 0;
-  border-radius: var(--sm2-radius-lg);
-  /* Anel de cobre do CORPO inteiro (27/08/2026, pedido do dono: "quero esses
-     elementos no mesmo box do soulmon, nesse retângulo com bordas que ele
-     fica"). Até aqui só o `.sm2-viewport` (a tela, lá dentro) tinha borda —
-     o corpo era só sombra, sem contorno, e por isso Vida/Energia e o deck
-     pareciam morar FORA do "box" mesmo já estando dentro do `.sm2-device`.
-     Mesmo token de cor do anel do visor (`--sm2-viewport-ring`), pra ler
-     como UMA peça (aparelho + tela), não dois objetos empilhados. */
-  border: 3px solid var(--sm2-viewport-ring);
-  background-color: var(--sm2-surface);
-  /* `--sm2-device-photo` (27/08/2026, CompanionHUD.tsx): o fundo pintado que
-     o dono forneceu, ATRÁS dos dois gradientes de material do bisel — eles
-     continuam por cima para o corpo do aparelho não virar uma foto plana; a
-     leitura de "objeto físico" (cobre, sombra) sobrevive em cima da cena.
-     `none` por padrão: nenhum outro consumidor de `.sm2-device` (se algum
-     dia existir) herda a foto sem pedir.
-
-     ⚠️ O ZOOM DA FOTO NÃO É ESTÉTICA, É REGRA (27/08/2026). A arte
-     (`home-scene-1547.png`, 1376×3058) é uma MOLDURA pintada: os mesmos 4
-     cantos de cano/junta/trepadeira/cristal que o dono mandou tirar do
-     `PixelFrame` no mesmo dia, mais os dois trilhos de cano verticais nas
-     laterais. Medido no arquivo (remedido em 27/08/2026 — a primeira medição
-     desta nota dizia ~10%/~88%, otimista; a régua real do desenho é mais
-     apertada): o trilho esquerdo termina em ~8% da largura, o direito começa
-     em ~92%; a placa de cobre + trepadeira do topo desce até **~15%** da
-     altura, e a base (com os dois cristais acesos) começa em **~78%**.
-
-     Com `cover` numa caixa LARGA (o aparelho é ~340–503px de largo por
-     ~350–400px de alto, sempre mais largo que 1:2,22), a largura é quem manda:
-     a imagem entrava inteira na horizontal — os dois trilhos apareciam
-     cravados nas laterais do corpo. Por isso `150% auto` em vez de `cover`:
-     150% da largura da caixa, centrado, mostra só a faixa x 16,7%–83,3% —
-     folga de 8pp para cada trilho. Na vertical, `auto` a 150% rende
-     1,5 × 2,22 = 3,33 × a largura da caixa, sempre MUITO mais alto que ela, e
-     `center` deixa visível só o miolo de circuito. Nenhum canto ornamentado
-     sobra. **Não troque por `cover`** — volta a moldura dupla. */
-  background-image:
-    linear-gradient(180deg,
-      color-mix(in srgb, var(--sm2-ink) 7%, transparent) 0%,
-      transparent 28%),
-    linear-gradient(0deg,
-      color-mix(in srgb, var(--sm2-viewport-ring-deep) 26%, transparent) 0%,
-      transparent 38%),
-    var(--sm2-device-photo, none);
-  background-size: auto, auto, 150% auto;
-  background-position: 0 0, 0 0, center;
-  background-repeat: no-repeat, no-repeat, no-repeat;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, .12),
-    inset 0 0 0 1px var(--sm2-line),
-    0 8px 20px rgba(0, 0, 0, .28);
-}
+/* O `.sm2-device` (corpo com bisel de 16px, borda de cobre e a foto
+   `home-scene-1547.png` por trás) SAIU em 16/09/2026 — canvas Home, D-H1 /
+   SIS-01: "tudo nesta página é o aparelho". O que sobrou: anel + vidro
+   (`.sm2-viewport`), nome e deck sobre `--sm2-bg`, e a foto virou a textura
+   de página a 10% (`.sm2-home-bg`). */
 /* A janela do palco: só ela ancora os controles que ficam POR CIMA da tela
    (evoluir, balão, alvo do carinho). O visor é centrado porque a largura da
    tela é DERIVADA (`width * scale`) e pode sobrar 1px do arredondamento —
@@ -6430,13 +6391,12 @@ button.sm-px-node {
    entre a tela e o painel de controle — a mesma peça que no aparelho de
    verdade separa o vidro dos botões. */
 .sm2-deck {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   align-items: stretch;
   gap: 4px;
-  margin-top: 6px;
-  padding: 4px 0 6px;
-  border-top: 1px solid color-mix(in srgb, var(--sm2-viewport-ring-deep) 60%, transparent);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .07);
+  /* Sem sulco de cobre e sem sombra: desde 16/09/2026 (canvas Home, D-H1) o
+     deck senta direto sobre `--sm2-bg` — a página é o corpo do aparelho. */
 }
 .sm2-deck-btn {
   position: relative;
@@ -6463,29 +6423,40 @@ button.sm-px-node {
   &:hover { background-color: var(--sm2-primary-soft); }
   &:active { background-color: color-mix(in srgb, var(--sm2-primary-fill) 26%, transparent); }
   &:focus-visible { outline: 3px solid var(--sm2-primary-fill); outline-offset: -3px; }
-  &:disabled { opacity: .45; cursor: default; }
+}
+/* Célula INERTE (canvas Home, PetDeckEstados): a ação não existe agora por
+   regra. Tracejado `muted` 1px + tinta `muted` — por FORMA, nunca só por cor,
+   e NUNCA por opacidade (alfa < 1 derruba o contraste de tudo, F1). Fica na
+   ordem de Tab; o `aria-label` diz o porquê. */
+.sm2-deck-btn-inert {
+  cursor: default;
+  outline: 1px dashed var(--sm2-muted);
+  outline-offset: -2px;
+  &:hover, &:active { background-color: transparent; }
+  &:focus-visible { outline: 3px solid var(--sm2-primary-fill); outline-offset: -3px; }
+  .sm2-deck-label { color: var(--sm2-muted); }
 }
 .sm2-deck-label {
   font-family: var(--sm2-font-text);
   font-size: var(--sm2-text-xs);
   font-weight: 500;
   line-height: 1.2;
-  /* Tinta de VISOR, clara nos dois temas — e não `--sm2-ink`, que inverte.
-     O deck fica sobre o corpo do aparelho, que desde 27/08/2026 tem a foto
-     ESCURA por baixo nos dois temas (mesma regra do visor: "é a tela do
-     aparelho, não um card"). Com `--sm2-ink` o rótulo virava tinta quase preta
-     sobre foto escura no tema claro. */
-  color: var(--sm2-viewport-ink);
+  /* `--sm2-ink` desde 16/09/2026: o deck senta sobre `--sm2-bg` (a página é o
+     corpo do aparelho, D-H1) — a foto escura por baixo saiu junto com o
+     `.sm2-device`, então a tinta volta a seguir o tema. */
+  color: var(--sm2-ink);
 }
-/* Marcador de "tem coisa nova" — quadrado, não bolinha. */
+/* Marcador de "tem coisa nova" — ponto de cobre 8px (canvas Home, SIS-04):
+   presença, não placar. `gold-fill` (7,84 / 4,42 sobre `bg`), NUNCA
+   `danger` — vermelho é cobrança, e um item novo é presente. */
 .sm2-deck-dot {
   position: absolute;
   top: 6px;
-  right: 8px;
+  right: calc(50% - 22px);
   width: 8px;
   height: 8px;
-  background-color: var(--sm2-danger-fill);
-  border: 1px solid var(--sm2-viewport-ring);
+  border-radius: 50%;
+  background-color: var(--sm2-gold-fill);
 }
 /* ── O ALVO DO CARINHO ────────────────────────────────────────────────────
    É o controle mais importante do jogo (a ÚNICA cura de HP) e estava dentro
@@ -6783,125 +6754,58 @@ button.sm-px-node {
 .sm2-hud-wordmark {
   font-family: var(--sm2-font-display);
   font-weight: 600;
-  font-size: var(--sm2-text-md);
-  letter-spacing: .04em;
-  text-transform: uppercase;
-  line-height: var(--sm2-leading-title);
-  color: var(--sm2-primary-ink);
-  white-space: nowrap;
-}
-.sm2-hud-meters { display: flex; align-items: stretch; gap: 8px; }
-/* 28/08/2026 — tinta de VISOR, fixa nos dois temas, não mais `--sm2-surface`/
-   `--sm2-ink`/`--sm2-muted` (que invertem por tema). Único consumidor hoje é
-   a instância COMPACTA dentro do `.sm2-device` (ver App.tsx/CompanionHUD.tsx),
-   ao lado do deck — que já usa a mesma tinta fixa (`--sm2-viewport-ink`,
-   revisão de UI de 27/08/2026). Dois cartões trocando de cor com o tema ao
-   lado de um deck que não troca lia como duas peças, não uma; unificado por
-   pedido do dono. Se algum dia `.sm2-meter` voltar a aparecer FORA do corpo
-   do aparelho (a instância não-compacta, hoje só `hideMeters`), essa
-   instância nova precisa dos tokens de tema — não reverta este bloco, crie
-   um modificador. */
-.sm2-meter {
-  flex: 1 1 0;
-  min-width: 0;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  padding: 8px 10px;
-  background-color: var(--sm2-viewport-bg);
-  border: 1px solid var(--sm2-viewport-ring-deep);
-  border-radius: var(--sm2-radius-md);
-}
-.sm2-meter-head { display: flex; align-items: center; gap: 6px; }
-.sm2-meter-label {
-  font-family: var(--sm2-font-text);
-  font-weight: 500;
-  font-size: var(--sm2-text-xs);
+  /* Fredoka 20, caixa alta, `--sm2-ink` (canvas Home, `.wordmark`): era 16 em
+     `primary-ink`. O ciano é para o que AGE (ícone ativo, sublinhado, foco,
+     `add`); a marca é tinta. */
+  font-size: var(--sm2-text-lg);
   letter-spacing: .08em;
   text-transform: uppercase;
   line-height: 1.2;
-  color: color-mix(in srgb, var(--sm2-viewport-ink) 70%, transparent);
+  color: var(--sm2-ink);
+  white-space: nowrap;
 }
-.sm2-meter-value {
-  margin-left: auto;
+/* Os medidores DOM do HUD (`.sm2-hud-meters`, `.sm2-meter*`, `.sm2-seg*`,
+   a variante `--compact`) SAÍRAM em 16/09/2026 — canvas Home, achado 1 /
+   DECISÕES §19: a leitura de HP/energia é UMA, em pixel, dentro do vidro
+   (`VisorBar` sobre a placa `.sm2-visor-plate`). */
+/* O selo do dia: chip de etiqueta 24 em `primary-soft` (canvas Home, HOME-07). */
+.sm2-hud-seal {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+  padding: 0 8px 0 4px;
+  border-radius: 12px;
+  background-color: var(--sm2-primary-soft);
+  color: var(--sm2-primary-ink);
+  font-family: var(--sm2-font-text);
   font-size: var(--sm2-text-xs);
-  font-weight: 600;
-  line-height: 1.2;
-  color: var(--sm2-viewport-ink);
-}
-
-/* ── VARIANTE COMPACTA ────────────────────────────────────────────────────
-   27/08/2026: os medidores migraram para DENTRO do `.sm2-device` (o corpo
-   do aparelho, acima da tela do pet) — o dono achou o HUD cheio demais
-   acima do bicho. Aqui eles precisam caber ao lado do sulco de cobre sem
-   competir com o visor.
-
-   O que `compact` faz, exatamente (a descrição antiga dizia "rótulo oculto,
-   ícone 16px" e era falsa nas duas metades): o RÓTULO continua sempre
-   visível — texto some é informação que some — e o ícone é FIXO em 20px, o
-   degrau `inline` da escala (`tokens.md` §6.1), porque não existe degrau
-   menor. `compact` aperta só a moldura em volta: gap, padding e a altura do
-   trilho da barra. Nada de tipografia encolhe abaixo do piso.
-
-   ⚠️ O `font-size` daqui era **9px** até 27/08/2026 — abaixo do piso absoluto
-   de 12px do projeto (`tokens.md` §4). Subiu para `--sm2-text-xs` (12px, o
-   menor degrau que existe) — que já é o valor da regra BASE
-   (`.sm2-meter-label`/`.sm2-meter-value` mais abaixo neste arquivo), então
-   aqui não sobrescreve nada além do `letter-spacing`. Achado do Loop 3 da
-   revisão de UI de 27/08/2026: a regra de `-value` era 100% morta (só
-   repetia o valor herdado) e foi removida; `-label` ficou só com o que tem
-   efeito de verdade. O HUD compacto ficou um pouco mais alto que antes: é o
-   preço certo, o piso não é negociável. */
-.sm2-hud--compact { gap: 4px; }
-.sm2-hud--compact .sm2-hud-meters { gap: 6px; }
-.sm2-hud--compact .sm2-meter { gap: 2px; padding: 4px 6px; }
-.sm2-hud--compact .sm2-meter-head { gap: 4px; }
-.sm2-hud--compact .sm2-meter-label { letter-spacing: .04em; }
-
-/* ── BARRA SEGMENTADA `--sm2-*` ─────────────────────────────────────────────
-   Trilho ESCURO nos dois temas (`--sm2-viewport-bg`) porque isto é a tela do
-   aparelho, não um card do app: por isso o preenchimento também usa as tintas
-   de VISOR (`--sm2-viewport-ink` / `--sm2-viewport-ring`), que são claras nos
-   dois temas. Um `--sm2-primary-fill` aqui daria 2,7:1 no tema claro (teal
-   escuro sobre trilho escuro) — abaixo do 3:1 de componente não-textual.
-
-   MEIA UNIDADE = MEIO BLOCO. HP aceita frações de 0,5 (carinho cura meio
-   coração) e uma barra que arredonda mente sobre a regra do jogo. */
-.sm2-seg {
-  display: flex;
-  gap: 2px;
-  box-sizing: border-box;
-  padding: 2px;
-  background-color: var(--sm2-viewport-bg);
-  border: 1px solid var(--sm2-viewport-ring-deep);
-  border-radius: var(--sm2-radius-sm);
-}
-.sm2-seg-blk {
-  position: relative;
-  flex: 1 1 0;
-  min-width: 4px;
-  overflow: hidden;
-  background-color: color-mix(in srgb, var(--sm2-viewport-ink) 14%, transparent);
-}
-.sm2-seg-on { background-color: var(--sm2-seg-tone, var(--sm2-viewport-ink)); }
-.sm2-seg-half::after {
-  content: '';
-  position: absolute;
-  inset: 0 50% 0 0;
-  background-color: var(--sm2-seg-tone, var(--sm2-viewport-ink));
+  font-weight: 500;
+  line-height: 1.3;
+  white-space: nowrap;
 }
 
 /* ── CABEÇALHO DO PAINEL DE RITUAIS ─────────────────────────────────────── */
-.sm2-panel-head { display: flex; align-items: center; gap: 8px; padding: 10px 16px 0; }
+/* Cabeçalho de painel = 44 (SIS-03, `box-sizing: border-box`, X5), linha
+   embaixo; título Fredoka 20 em `--sm2-ink`, caixa mista (canvas Home:
+   "Daily rituals"). */
+.sm2-panel-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--sm2-line);
+}
 .sm2-panel-head-title {
   font-family: var(--sm2-font-display);
   font-weight: 600;
-  font-size: var(--sm2-text-sm);
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  line-height: var(--sm2-leading-title);
-  color: var(--sm2-primary-ink);
+  font-size: var(--sm2-text-lg);
+  letter-spacing: 0;
+  text-transform: none;
+  line-height: 1.2;
+  color: var(--sm2-ink);
 }
 .sm2-panel-head-count {
   margin-left: auto;
@@ -7721,4 +7625,158 @@ button[style*="--sm2-btn: ghost"]:active {
   &:checked::before { transform: scale(1); }
   &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
   &:disabled { opacity: .45; cursor: default; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   HOME — identidade (canvas `docs/design/wireframes/home/identidade/`, §19)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* A seção do pet: vidro → nome → deck, gap 8 (P1). */
+.sm2-home-pet {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sm2-home-nameline {
+  text-align: center;
+  line-height: 1.2;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: center;
+}
+/* Nome do pet: Fredoka 20 (display), como o wordmark e o título do painel. */
+.sm2-home-petname {
+  margin: 0;
+  font-family: var(--sm2-font-display);
+  font-size: var(--sm2-text-lg);
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--sm2-ink);
+}
+.sm2-home-petsub {
+  margin: 0;
+  font-family: var(--sm2-font-text);
+  font-size: var(--sm2-text-xs);
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--sm2-muted);
+}
+
+/* ── A PLACA dos medidores DENTRO do vidro (D-H3) ──────────────────────────
+   `color-mix(viewport-bg 78%)`, cantos retos, canto inferior esquerdo. Tudo
+   aqui é a voz do aparelho: Silkscreen 14, tinta de visor, dígitos tabulares.
+   `pointer-events: none` — o gesto de esfregar o pet passa por ela. */
+.sm2-visor-plate {
+  position: absolute;
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 8px;
+  background: color-mix(in srgb, var(--sm2-viewport-bg) 78%, transparent);
+  pointer-events: none;
+}
+.sm2-visor-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sm2-visor-tag,
+.sm2-visor-num {
+  font-family: var(--sm2-font-pixel);
+  font-size: 14px;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--sm2-viewport-ink);
+  -webkit-font-smoothing: none;
+}
+.sm2-visor-tag { min-width: 28px; }
+
+/* ── "EVOLVE" na língua do vidro (X3) ──────────────────────────────────────
+   Silkscreen 14 caixa alta dentro da moldura pixel do `hudArt`
+   (`border-image` = `frame-pipe-vine-96`, slice 24 / 12px = ½×), sobre a
+   placa de D-H3 (`background-clip: padding-box` para a placa não vazar sob a
+   moldura). Alvo 44. A `border-image-source` e o `slice` vêm inline do
+   componente (o PNG é asset do Vite, CSS puro não o alcança). */
+.sm2-pxbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  box-sizing: border-box;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 8px;
+  font-family: var(--sm2-font-pixel);
+  font-size: 14px;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  -webkit-font-smoothing: none;
+  color: var(--sm2-viewport-ink);
+  background: color-mix(in srgb, var(--sm2-viewport-bg) 78%, transparent);
+  background-clip: padding-box;
+  border: 12px solid transparent;
+  border-image-width: 12px;
+  border-image-repeat: round;
+  image-rendering: pixelated;
+  cursor: pointer;
+  &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 3px; }
+}
+
+/* ── Célula de item nas folhas (D-H6: arte pixel dentro de célula vetor) ────
+   Grade de 3; célula 96, `surface-2` + `muted` 1px, raio 12; arte 48
+   (`pixelated` só na arte — o resto é vetor); nome Rubik 12; `×N` tabular. */
+.sm2-gcell-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.sm2-gcell {
+  box-sizing: border-box;
+  min-height: 96px;
+  padding: 6px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border-radius: var(--sm2-radius-md);
+  background-color: var(--sm2-surface-2);
+  border: 1px solid var(--sm2-muted);
+  color: var(--sm2-ink);
+  font-family: var(--sm2-font-text);
+  font-size: var(--sm2-text-xs);
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
+  &[aria-pressed="true"], &.sm2-gcell-sel { border: 2px solid var(--sm2-primary-ink); background-color: var(--sm2-primary-soft); }
+}
+.sm2-gcell-art {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sm2-gcell-art img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  display: block;
+}
+.sm2-gcell-name {
+  font-weight: 500;
+  line-height: 1.3;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sm2-gcell-count {
+  font-weight: 500;
+  color: var(--sm2-muted);
 }

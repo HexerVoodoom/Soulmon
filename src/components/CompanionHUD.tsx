@@ -4,20 +4,15 @@ import { aiFetch } from '../utils/aiClient';
 import { getSpriteForStage, demoTintFilter } from '../utils/sprites';
 import { petVoiceLine, type PetVoiceKind } from '../utils/petVoice';
 import { welcomeBackLine } from '../utils/welcomeBack';
-import { PixelButton } from './pixel/PixelKit';
-import { HomeHud } from './pixel/HomeHud';
 import { Icon } from './ui/Icon';
 import { Viewport, usePrefersReducedMotion, useVarreduraDeSintonia } from './ui/Viewport';
 import { NEST_ART, DEFAULT_NEST } from './nestArt';
-// O fundo do CORPO do aparelho (27/08/2026, pedido do dono: "dentro do box,
-// na área que o Soulmon fica"). Vive FORA do `Viewport` (que é pixel-art
-// estrito, escala inteira) — ver `.sm2-device` no index.css.
-import homeSceneBg from '../assets/backgrounds/home-scene-1547.png';
 import { ITEM_ART } from '../utils/itemArt';
 import { FX_ART } from '../utils/fxArt';
 import { ANIM_ART } from '../utils/animArt';
 import { SpriteAnim } from './pixel/SpriteAnim';
 import { VisorBar } from './pixel/VisorBar';
+import { HUD_ART } from '../utils/hudArt';
 import { type SlotId, BASE_SLOTS, PET_TOP_OFFSET, PET_BOX, PET_RENDER, STAGE_HEIGHT } from '../utils/petStage';
 import { PetStageDecor } from './PetStageDecor';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
@@ -101,8 +96,23 @@ const PET_BOTTOM_IN_STAGE =
    antiga, e continua necessário: a faixa de largura total do balão é
    `pointer-events: none`, e só a CAIXA de fala (não as sobras
    transparentes ao lado, que cobrem o palco inteiro) aceita o clique. */
-const EVOLVE_BTN_BOTTOM = 10;
+const EVOLVE_BTN_BOTTOM = 8;
 const BUBBLE_GAP = 6;
+/* ── O BALÃO NÃO COBRE A CRIATURA (canvas Home, D-H5 / X2) ────────────────
+   Com o balão ancorado no topo do vidro, o sprite (que começa ~37px abaixo
+   do topo numa janela de 200) ficava com a crista debaixo da fala. O canvas
+   mede: balão de UMA linha = 36px → a composição inteira (sprite, berço,
+   sombra, decoração) desce 22px; DUAS linhas = 54px → desce 40px. A frente
+   do berço passa a cortar no vidro na variante de 2 linhas — registrado no
+   canvas como aceito. O deslocamento é `transform` (não `top`): nada de
+   layout, e sai com `--sm2-dur-tap` para não pular. */
+const BUBBLE_ONE_LINE_MAX_PX = 40;
+const STAGE_DROP_ONE_LINE = 22;
+const STAGE_DROP_TWO_LINES = 40;
+/* FX do `animArt` DENTRO do vidro a 2× (célula 64 → 128 CSS, D-H4): mesma
+   grade lógica 64 × `VIEW_SCALE` do `Viewport`. Ancorados ACIMA da cabeça
+   (X8), nunca sobre o rosto. */
+const FX_PX = 64 * VIEW_SCALE;
 
 /** Passo do passeio: 2 device px = 1 pixel de origem do sprite (escala 2:1).
     Meio pixel aqui é o que transforma serrilhado em borrão. */
@@ -215,6 +225,18 @@ interface CompanionHUDProps {
   isSleeping?: boolean;
   onPet?: () => void;
   hasNewItems?: boolean;
+  /**
+   * BRINCAR como 5ª célula do deck (canvas Home, PlayEstados / E1+E2): é um
+   * gesto de CUIDADO, ao lado de banho/dormir/itens — não um card. As três
+   * situações têm três respostas, e a regra é única (PetDeckEstados, r3):
+   *  · `available` falso (antes da 1ª conclusão) ou `playedToday` → célula
+   *    INERTE (`aria-disabled`, tracejado, o rótulo diz o porquê): a ação
+   *    não existe agora por regra;
+   *  · `canPlay` falso com a célula viva (sem energia) → a criatura RECUSA
+   *    no balão. Nunca toast para recusa de cuidado (02 §13).
+   * `onPlay` só é chamado quando a oferta existe de verdade.
+   */
+  play?: { available: boolean; canPlay: boolean; playedToday: boolean; onPlay: () => void };
   evolutionFlash?: boolean;
   feedAnim?: { emoji: string; n: number } | null;
 }
@@ -270,6 +292,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   isSleeping = false,
   onPet,
   hasNewItems = false,
+  play,
   evolutionFlash = false,
   feedAnim = null,
 }: CompanionHUDProps) {
@@ -363,6 +386,15 @@ export const CompanionHUD = memo(function CompanionHUD({
   onPetRef.current = onPet;
   const [showerCooldown, setShowerCooldown] = useState(false);
   const [hugBalloon, setHugBalloon] = useState(false);
+  /* Quantas linhas o balão ocupa decide quanto a composição desce (X2). Medido
+     no DOM depois do texto entrar — jsdom devolve 0 e cai no caso de 1 linha. */
+  const bubbleRef = useRef<HTMLDivElement | null>(null);
+  const [stageDrop, setStageDrop] = useState(0);
+  useLayoutEffect(() => {
+    if (!showBubble) { setStageDrop(0); return; }
+    const h = bubbleRef.current?.offsetHeight ?? 0;
+    setStageDrop(h > BUBBLE_ONE_LINE_MAX_PX ? STAGE_DROP_TWO_LINES : STAGE_DROP_ONE_LINE);
+  }, [showBubble, bubbleText]);
   /* ── ALIMENTAR É CONTROLE DE PRIMEIRA CLASSE ─────────────────────────────
      O deck tinha Itens / Banho / Dormir e a ação que DEFINE o gênero v-pet
      estava enterrada dentro do `ItemsWindow`, atrás de "Itens" — um rótulo
@@ -836,6 +868,21 @@ export const CompanionHUD = memo(function CompanionHUD({
     onFeed?.(emoji);
   };
 
+  /* Brincar pelo deck. Célula inerte nem chega aqui (o botão não chama). Sem
+     energia = a criatura recusa NO BALÃO — os dois toasts 🎈 do `handlePlay`
+     saíram (canvas Home, E7): recusa de cuidado é fala do pet, não aviso do
+     sistema. */
+  const handleDeckPlay = () => {
+    if (!play || !play.available || play.playedToday) return;
+    if (!play.canPlay) {
+      speak(language === 'pt-BR'
+        ? 'Brincar pede 1 de energia — dá pra deixar pra depois de uma comidinha.'
+        : 'Playing takes 1 energy — it can wait until after a snack.', 3500);
+      return;
+    }
+    play.onPlay();
+  };
+
   // Shower: always available (cleans poop anytime), 5s cooldown
   const handleShowerClick = () => {
     if (isShowering || showerCooldown) return;
@@ -1059,98 +1106,18 @@ export const CompanionHUD = memo(function CompanionHUD({
   );
 
   return (
-    <div className="relative sm-pet-sticky" style={{ '--sm-pet-scene': cenario ?? 'none' } as React.CSSProperties}>
-      {/* WP3.3 — NOME + TÍTULO DO VÍNCULO, na home.
-          O comentário de `BOND_REWARDS` prometia, por escrito, que o título
-          "aparece na home, sob o nome do pet" — e ele só existia em
-          Estatísticas e no Torneio, telas que quem está começando não abre. O
-          nível 2 (dia 1) e o 3 (dia 3) são justamente os que decidem a
-          retenção, então a recompensa deles precisa ser vista SEM abrir nada.
-          Descoberta ao implementar: o nome do pet também não existia neste
-          arquivo — a pílula resolve os dois de uma vez.
-          O título é DERIVADO (`bondTitle(bondLevelFor(totalXP))`), nunca
-          persistido — guardar `bondLevel` no save é o footgun 9 na forma mais
-          cara (ver `utils/bond.ts`). Uma linha só: cada pixel aqui é um pixel
-          a menos de lista de atividades. */}
-      {(petDisplayName || bondTitleText || redeemedMark) && (
-        <div style={{
-          textAlign: 'center', lineHeight: 1.15, marginBottom: 2,
-          fontFamily: 'var(--sm2-font-text)',
-        }}>
-          {petDisplayName && (
-            <div style={{ fontSize: 'var(--sm2-text-sm)', fontWeight: 600, color: 'var(--sm-ink)' }}>
-              {petDisplayName}
-            </div>
-          )}
-          {bondTitleText && (
-            <div style={{ fontSize: 'var(--sm2-text-xs)', opacity: .75, color: 'var(--sm-ink)' }}>
-              {bondTitleText}
-            </div>
-          )}
-          {/* WP4.19 — a marca da VOLTA. Lê como prestígio e nunca como queda:
-              não diz o que aconteceu, só que houve recuperação. Aparece só se
-              o jogador ligou (padrão desligado) — a história é dele. */}
-          {redeemedMark && (
-            <div style={{ fontSize: 'var(--sm2-text-xs)', opacity: .85, color: 'var(--sm2-accent-ink, var(--sm-ink))' }}>
-              {language === 'pt-BR' ? '✦ Voltou inteiro' : '✦ Came back whole'}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Main Container with Companion Area and Energy Bar */}
+    <div className="relative sm-pet-sticky">
+      {/* ── O CORPO DO APARELHO = A PÁGINA (canvas Home, D-H1 / SIS-01) ─────
+          Até 16/09/2026 o palco vivia num card com borda de cobre
+          (`.sm2-device`, 16px de bisel + foto atrás) e a barra DOM de
+          HP/energia (`HomeHud compact`) sentava em cima dele — o jogador lia
+          o mesmo número duas vezes (achado 1 do canvas). Agora: só o ANEL
+          (`Viewport`, 4px de cobre) + o VIDRO; nome e deck sobre `--sm2-bg`,
+          que é o corpo. A leitura de HP/energia mora no vidro, em pixel
+          (`VisorBar` sobre a placa de D-H3), uma vez só. */}
       <div className="relative">
-      {/* O fundo de cenário equipado agora é pintado em App.tsx, cobrindo a
-          Home inteira (era só esse retângulo, do tamanho do CompanionHUD —
-          o dono pediu o fundo "no todo", não restrito a essa caixa). */}
       <div style={{ position: 'relative', zIndex: 1 }}>
-        {/* RODADA 4 — a JANELA do palco.
-            Com a área do pet fixa, cada pixel do palco é um pixel a menos de
-            lista, e o palco de 250px tinha ~87px de ar acima do sprite. Mas
-            encolher o palco NÃO pode ser encolher a composição: tudo lá dentro
-            (sprite, berço, decoração, `GROUND_Y`) é ancorado no centro dos
-            250px, então um palco de 158px cortava o pet pelos pés — medido em
-            412×700 antes desta janela existir.
-
-            Então: a COMPOSIÇÃO continua com `STAGE_HEIGHT` (250px) e é ancorada
-            ao FUNDO; quem encolhe é a janela por cima dela, que corta pelo
-            TOPO — exatamente onde estava o ar. Nada em `utils/petStage.ts`
-            muda, e o pet nunca aparece cortado. */}
-        {/* ── O CORPO DO APARELHO ──────────────────────────────────────────
-            O achado da crítica: o "visor" era um card. `padding: 4px` +
-            `border-radius: 20px` — os 20px eram RAIO, e o aparelho tinha 4px
-            de corpo. Sem massa, não há onde os controles morarem, e a fileira
-            de ações acabava flutuando no fundo da PÁGINA (`background:
-            transparent; border: none`) em vez de estar cravada no bicho.
-
-            Agora existe corpo: 16px de material em volta do anel de 4px = os
-            20px de bisel do plano, e o deck de ações é uma ÁREA dele, com
-            sulco de cobre entre a tela e os botões. */}
-        <div
-          className="sm2-device"
-          /* `--sm2-device-photo`: consumida em index.css, empilhada ATRÁS
-             dos gradientes de material do bisel (que continuam por cima,
-             para o corpo do aparelho não virar um retângulo de foto plana).
-             CSS puro não alcança um asset importado pelo Vite — por isso a
-             variável, não uma classe. */
-          style={{ '--sm2-device-photo': `url(${homeSceneBg})` } as React.CSSProperties}
-        >
-        {/* Vida/Energia — MIGRARAM para dentro do corpo do aparelho em
-            27/08/2026 (pedido do dono: pet + rituais são a prioridade da
-            Home, os medidores grandes acima do pet não). `hideBrand`: o
-            `<h1>Soulmon</h1>` continua sozinho lá em cima, no `App.tsx`
-            (`hideMeters`) — é o heading da página, e não pode sumir com os
-            medidores. `compact`: ícone e trilho menores (ver index.css,
-            `.sm2-hud--compact`). */}
-        <HomeHud
-          energyPoints={energyPoints}
-          maxEnergyPoints={maxEnergy}
-          healthPoints={healthPoints}
-          maxHealthPoints={maxHealthPoints}
-          language={language}
-          hideBrand
-          compact
-        />
+        <div className="sm2-home-pet">
         {/* A janela do palco: ancora os CONTROLES que ficam por cima da tela
             (evoluir, balão, alvo do carinho) e é a caixa que dá a largura
             medida para a escala inteira do visor. */}
@@ -1190,21 +1157,35 @@ export const CompanionHUD = memo(function CompanionHUD({
           screenStyle={cenario ? (cenarioBase ? { backgroundColor: cenarioBase } : { background: cenario }) : undefined}
         >
         {/* Mini-HUD pixel DENTRO do visor (D3, 16/09/2026): HP e energia como
-            barras segmentadas de arte, no canto superior esquerdo do VIDRO.
-            A barra DOM do topo da Home é do aparelho e segue existindo.
+            barras segmentadas de arte, sobre a PLACA escura de D-H3 —
+            `color-mix(in srgb, var(--sm2-viewport-bg) 78%, transparent)`,
+            cantos retos, canto inferior esquerdo do VIDRO (canvas Home,
+            `HomeHudEstados`). Pior caso medido pelo crítico: Silkscreen sobre
+            pixel branco do `bg-room` = 8,46:1; segmento 4,97 (≥3). É a única
+            leitura de HP/energia da Home (a barra DOM do topo SAIU, §19).
 
             Filho direto do `.screen`, e NÃO da janela do palco logo abaixo: a
-            composição de 250px é ancorada em `bottom: 0` e vaza pelo TOPO da
-            tela (214px), então um `top: 6` medido nela caía ~30px acima do
-            vidro — as barras existiam no DOM, com `aria-valuenow` certo, e
-            ninguém as via (achado ao medir no browser em 16/09/2026).
+            composição de 250px é ancorada em `bottom: 0` e vaza pelo TOPO.
 
-            A `VisorBar` desenha a 1× e recebe o MESMO `scale` do Viewport
-            (canvas Sistema SIS-05): barra e sprite na mesma grade de pixel; a
-            margem também é em px lógicos × escala. */}
-        <div style={{ position: 'absolute', left: 3 * VIEW_SCALE, top: 3 * VIEW_SCALE, zIndex: 15, display: 'grid', gap: 2 * VIEW_SCALE, pointerEvents: 'none' }} data-visor-hud>
-          <VisorBar value={healthPoints} max={maxHealthPoints} scale={VIEW_SCALE} label={language === 'pt-BR' ? 'Corações' : 'Hearts'} />
-          <VisorBar value={energyPoints} max={maxEnergy} scale={VIEW_SCALE} label={language === 'pt-BR' ? 'Energia' : 'Energy'} />
+            Rótulos "HP"/"EN" e dígitos em Silkscreen 14 (`--sm2-font-pixel`,
+            a voz do aparelho — só aqui, dentro do vidro), tabulares. DÍGITO SÓ
+            COM VALOR ≥ 1 (E5, canvas): 0 e 0,5 mostram só os segmentos —
+            `viewport-danger` não tem onde entrar e não entra (nada vermelho
+            na Home). A `VisorBar` desenha a 1× e recebe o MESMO `scale` do
+            Viewport (SIS-05): barra e sprite na mesma grade de pixel. */}
+        <div className="sm2-visor-plate" data-visor-hud style={{ left: 4 * VIEW_SCALE, bottom: 4 * VIEW_SCALE }}>
+          {([
+            { key: 'hp', tag: 'HP', value: healthPoints, max: maxHealthPoints, label: language === 'pt-BR' ? 'Corações' : 'Hearts' },
+            { key: 'en', tag: 'EN', value: energyPoints, max: maxEnergy, label: language === 'pt-BR' ? 'Energia' : 'Energy' },
+          ] as const).map(m => (
+            <div key={m.key} className="sm2-visor-row">
+              <span className="sm2-visor-tag" aria-hidden="true">{m.tag}</span>
+              <VisorBar value={m.value} max={m.max} scale={VIEW_SCALE} label={m.label} />
+              {m.value >= 1 && (
+                <span className="sm2-visor-num sm2-num" aria-hidden="true">{m.value}/{m.max}</span>
+              )}
+            </div>
+          ))}
         </div>
         <div
           className="p-3"
@@ -1216,6 +1197,10 @@ export const CompanionHUD = memo(function CompanionHUD({
             height: STAGE_HEIGHT,
             imageRendering: 'pixelated',
             borderWidth: 0,
+            /* X2: a criatura desce sob o balão (22 / 40px), nunca fica embaixo
+               dele. `transform` para não reflow; a transição é o token. */
+            transform: stageDrop ? `translateY(${stageDrop}px)` : undefined,
+            transition: 'transform var(--sm2-dur-tap) var(--sm2-ease)',
             // `auto 100%` + `center bottom`: a ALTURA da arte casa com a
             // altura da composição, que é a única régua em que `GROUND_Y`
             // significa alguma coisa. Sem esticar (o pixel não perdoa) e sem
@@ -1277,7 +1262,9 @@ export const CompanionHUD = memo(function CompanionHUD({
               >
                 {/* Coração quadro a quadro (entrega 4): nasce → cresce → cheio → faíscas,
                     UMA vez, enquanto o wrapper irradia. Antes eram 3 PNGs estáticos. */}
-                <SpriteAnim sheet={ANIM_ART.heartBurst} size={Math.round(h.size * 24)} durationMs={640} />
+                {/* 2× (célula 64 → 128 CSS, D-H4) e ACIMA da cabeça (X8) — o
+                    wrapper irradia a partir do topo do sprite, não do rosto. */}
+                <SpriteAnim sheet={ANIM_ART.heartBurst} size={Math.round(h.size * 32)} durationMs={640} style={{ marginTop: -PET_RENDER / 2 }} />
               </span>
             ))}
 
@@ -1536,12 +1523,15 @@ export const CompanionHUD = memo(function CompanionHUD({
               {/* Z quadro a quadro (entrega 4): pequeno e baixo → maior e mais alto →
                   sumindo. Até 15/09/2026 eram três "Z" em monospace — texto do
                   aparelho dentro do visor. */}
+              {/* 2× (D-H4), acima e à direita da cabeça (X8). O `sleep-z` é
+                  teal escuro e some sobre `bg-room` — variante clara pedida à
+                  `squad-arte` (achado 5 do canvas). */}
               <SpriteAnim
                 sheet={ANIM_ART.sleepZ}
-                size={48}
+                size={FX_PX}
                 durationMs={1800}
                 loop
-                style={{ position: 'absolute', left: '58%', top: '22%' }}
+                style={{ position: 'absolute', left: `calc(${position}% + 48px - ${FX_PX / 2}px)`, top: `calc(50% + ${PET_TOP_OFFSET + PET_GROUND_KEEP - 44}px - ${FX_PX}px)` }}
               />
             </div>
           )}
@@ -1632,21 +1622,37 @@ export const CompanionHUD = memo(function CompanionHUD({
         {canEvolve && !isSleeping && (
           <SpriteAnim
             sheet={ANIM_ART.sparklePop}
-            size={32}
+            size={FX_PX}
             durationMs={900}
             loop
-            style={{ position: 'absolute', zIndex: 25, left: `calc(${position}% + 34px)`, top: 'calc(50% - 60px)', pointerEvents: 'none' }}
+            /* 2× (D-H4), acima e à ESQUERDA da cabeça (X8): nunca sobre o rosto. */
+            style={{ position: 'absolute', zIndex: 25, left: `calc(${position}% - 104px)`, top: -40 + stageDrop, pointerEvents: 'none' }}
           />
         )}
+        {/* "EVOLVE" fala a língua do vidro (canvas Home, X3): UMA palavra em
+            Silkscreen 14 caixa alta, dentro da moldura pixel do `hudArt`
+            (`frame-pipe-vine-96` a ½×, slice 24 → 12px) sobre a placa de D-H3,
+            alvo 44, no canto inferior direito do vidro — o LCD fala em LCD.
+            Continua FORA do `Viewport` (`role="img"` engole botão) e ancorado
+            no RODAPÉ (`bottom`), em ponta oposta ao balão (topo): as duas
+            faixas não se cruzam por construção (`CompanionHUD.cta.test`).
+            Sem "into X": o botão não diz a forma. */}
         {canEvolve && !isSleeping && (
-          <PixelButton
-            size="sm"
-            variant="primary"
+          <button
+            type="button"
             onClick={onEvolveRequest}
-            style={{ position: 'absolute', zIndex: 30, left: '50%', bottom: EVOLVE_BTN_BOTTOM, transform: 'translateX(-50%)', animation: 'evo-btn-pulse 1.6s ease-in-out infinite' }}
+            data-evolve-btn
+            className="sm2-pxbtn"
+            aria-label={language === 'pt-BR' ? 'Evoluir' : 'Evolve'}
+            style={{
+              position: 'absolute', zIndex: 30, right: EVOLVE_BTN_BOTTOM + RING_PX, bottom: EVOLVE_BTN_BOTTOM + RING_PX,
+              borderImageSource: `url(${HUD_ART.frame})`,
+              borderImageSlice: HUD_ART.frameSlice,
+              animation: reducedMotion ? undefined : 'evo-btn-pulse 1.6s ease-in-out infinite',
+            }}
           >
             {language === 'pt-BR' ? 'Evoluir' : 'Evolve'}
-          </PixelButton>
+          </button>
         )}
 
         {/* Balão de fala. Saiu do monospace a 0,68rem (≈11px, abaixo do piso
@@ -1677,20 +1683,22 @@ export const CompanionHUD = memo(function CompanionHUD({
             }}
           >
             <div
+              ref={bubbleRef}
+              data-pet-bubble
               className="relative pointer-events-auto"
               onClick={handleBubbleClick}
               style={{
                 cursor: 'pointer',
-                /* Só transparência, sem `backdrop-filter` — o blur atrás de
-                   um fundo animado (respiração/passeio do pet, logo abaixo)
-                   força o navegador a recompor a região toda a cada frame;
-                   é caro em aparelho fraco e foi cortado por suspeita de
-                   contribuir para o travamento relatado em 27/08/2026. */
-                background: 'color-mix(in srgb, var(--sm2-surface) 78%, transparent)',
-                border: '1px solid var(--sm2-line)',
-                borderRadius: 14,
-                padding: '8px 12px',
-                boxShadow: '0 4px 14px rgba(0,0,0,.28)',
+                /* Overlay de HUD, não card (canvas Home, D-H5 / R6): SEM
+                   borda (era `--sm2-line` a 1,3:1 sobre o vidro — invisível),
+                   `--sm2-surface` sólida, raio `md`, padding 6/12, entrelinha
+                   1,3 → 1 linha = 36px, 2 linhas = 54px (é isso que decide
+                   quanto a criatura desce, X2). Sem `backdrop-filter`: blur
+                   sobre fundo animado recompõe a região a cada frame. */
+                background: 'var(--sm2-surface)',
+                borderRadius: 'var(--sm2-radius-md)',
+                padding: '6px 12px',
+                boxShadow: '0 1px 2px rgba(4,18,20,.10), 0 4px 12px rgba(4,18,20,.10)',
               }}
             >
               <p
@@ -1699,7 +1707,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                   margin: 0,
                   fontFamily: 'var(--sm2-font-text)',
                   fontSize: 'var(--sm2-text-sm)',
-                  lineHeight: 'var(--sm2-leading-body)',
+                  lineHeight: 1.3,
                   color: 'var(--sm2-ink)',
                 }}
               >
@@ -1709,11 +1717,11 @@ export const CompanionHUD = memo(function CompanionHUD({
               <span
                 className="absolute"
                 style={{
-                  bottom: -6, left: '50%', transform: 'translateX(-50%)',
+                  bottom: -8, left: '50%', transform: 'translateX(-50%)',
                   width: 0, height: 0,
-                  borderLeft: '6px solid transparent',
-                  borderRight: '6px solid transparent',
-                  borderTop: '6px solid color-mix(in srgb, var(--sm2-surface) 78%, transparent)',
+                  borderLeft: '8px solid transparent',
+                  borderRight: '8px solid transparent',
+                  borderTop: '8px solid var(--sm2-surface)',
                 }}
               />
             </div>
@@ -1721,79 +1729,81 @@ export const CompanionHUD = memo(function CompanionHUD({
         )}
         </div>
 
-        {/* ── O DECK — a fileira de ações CRAVADA no corpo do aparelho ───────
-            Ela flutuava no fundo da página (`.sm-px-actionbar`: `background:
-            transparent; border: none`), o que é o oposto do que Tamagotchi e
-            Vital Bracelet fazem — lá os botões são do APARELHO, e é isso que
-            torna o objeto um objeto. Agora ela é uma ÁREA do corpo: mesma
-            superfície, separada da tela por um sulco de cobre, dentro do
-            `.sm2-device`.
 
-            O alvo é de 44px de altura (`min-height` do `.sm2-deck-btn`) — o
-            PISO da WCAG 2.2 AA 2.5.8, não uma folga: o deck encolheu de 60px
-            em 27/08/2026 a pedido do dono, e daqui não desce mais. O ícone
-            continua pelado (regra do dono: ícone nunca dentro de box — quem
-            ganha superfície ao toque é o BOTÃO), e o FILL segue carregando o
-            estado. */}
+        {/* WP3.3 — NOME + TÍTULO DO VÍNCULO, sob o vidro (canvas Home: nome em
+            Fredoka 20 + "Companion" Rubik 12 `muted`, entre a tela e o deck).
+            O comentário de `BOND_REWARDS` prometia, por escrito, que o título
+            "aparece na home, sob o nome do pet". O título é DERIVADO
+            (`bondTitle(bondLevelFor(totalXP))`), nunca persistido — guardar
+            `bondLevel` no save é o footgun 9 na forma mais cara. */}
+        {(petDisplayName || bondTitleText || redeemedMark) && (
+          <div className="sm2-home-nameline">
+            {petDisplayName && (
+              <p className="sm2-home-petname">{petDisplayName}</p>
+            )}
+            {bondTitleText && (
+              <p className="sm2-home-petsub">{bondTitleText}</p>
+            )}
+            {/* WP4.19 — a marca da VOLTA. Lê como prestígio e nunca como queda:
+                não diz o que aconteceu, só que houve recuperação. Aparece só se
+                o jogador ligou (padrão desligado) — a história é dele. Tinta
+                sólida (`gold-ink`), nunca opacidade. */}
+            {redeemedMark && (
+              <p className="sm2-home-petsub" style={{ color: 'var(--sm2-gold-ink)' }}>
+                {language === 'pt-BR' ? '✦ Voltou inteiro' : '✦ Came back whole'}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* ── O DECK — cinco células sobre o corpo do aparelho (a página) ─────
+            Feed · Items · Bath · Sleep · Play (canvas Home, E1+E2: Brincar
+            virou 5ª célula para fechar a dobra). Ícone Material pelado 24
+            (degrau `action`, escala fechada de tokens.md §6.1) + rótulo Rubik
+            12/500 em `--sm2-ink`; alvo de 44px é do BOTÃO. FILL carrega o
+            estado (`bedtime` cheio dormindo; `inventory_2` cheio com item
+            novo + ponto de cobre 8px, `gold-fill`, presença e não placar).
+
+            CÉLULA INERTE = a ação não existe agora por regra (banho em
+            cooldown, brincar já usado hoje, brincar antes da 1ª conclusão):
+            `aria-disabled`, tracejado `muted` 1px, tinta `muted` — por FORMA,
+            nunca só por cor, e NUNCA por opacidade (0 elementos com alfa < 1
+            no canvas). Ela continua na ordem de Tab (o rótulo diz o porquê).
+            CÉLULA VIVA + fala do pet = a ação existe e a criatura recusa
+            (barriga cheia, sem energia, HP cheio). Regra única (r3). */}
         <div className="sm2-deck" role="group" aria-label={language === 'pt-BR' ? 'Cuidar do pet' : 'Care for your pet'}>
-          {/* Os três PNGs saíram: as ações do pet são `Icon` (Material Symbols
-              Rounded) a 24px, `weight 500` — o peso que faz o traço casar com a
-              espessura do pixel do sprite. SEM MOLDURA: o alvo de toque de
-              44px é do BOTÃO (`.sm2-deck-btn`), nunca do ícone.
-
-              O eixo FILL carrega o estado aqui também: `bedtime` preenchido
-              enquanto o pet dorme, e o glifo troca para `wb_sunny` só porque a
-              AÇÃO muda (acordar ≠ dormir), não porque o estado mudou. */}
           {([
             /* Alimentar PRIMEIRO: é a ação que define o gênero, e a leitura da
                fileira é da esquerda para a direita. */
-            { key: 'feed', icon: 'restaurant', fill: 0, en: 'Feed', pt: 'Alimentar', onClick: () => setFeedOpen(true), disabled: false, badge: false },
-            { key: 'items', icon: 'inventory_2', fill: hasNewItems ? 1 : 0, en: 'Items', pt: 'Itens', onClick: onOpenItems ?? (() => {}), disabled: false, badge: hasNewItems },
-            { key: 'bath', icon: 'shower', fill: 0, en: 'Bath', pt: 'Banho', onClick: handleShowerClick, disabled: showerCooldown, badge: false },
-            { key: 'sleep', icon: isSleeping ? 'wb_sunny' : 'bedtime', fill: isSleeping ? 1 : 0, en: isSleeping ? 'Wake' : 'Sleep', pt: isSleeping ? 'Acordar' : 'Dormir', onClick: onSleep ?? (() => {}), disabled: false, badge: false },
-          ] as { key: string; icon: string; fill: number; en: string; pt: string; onClick: () => void; disabled: boolean; badge: boolean | undefined }[]).map(a => (
+            { key: 'feed', icon: 'restaurant', fill: 0, en: 'Feed', pt: 'Alimentar', onClick: () => setFeedOpen(true), inert: false, badge: false },
+            { key: 'items', icon: 'inventory_2', fill: hasNewItems ? 1 : 0, en: hasNewItems ? 'Items — new' : 'Items', pt: hasNewItems ? 'Itens — novo' : 'Itens', short: { en: 'Items', pt: 'Itens' }, onClick: onOpenItems ?? (() => {}), inert: false, badge: hasNewItems },
+            { key: 'bath', icon: 'shower', fill: 0, en: showerCooldown ? 'Bath — just a moment' : 'Bath', pt: showerCooldown ? 'Banho — só um instante' : 'Banho', short: { en: 'Bath', pt: 'Banho' }, onClick: handleShowerClick, inert: showerCooldown, badge: false },
+            { key: 'sleep', icon: isSleeping ? 'wb_sunny' : 'bedtime', fill: isSleeping ? 1 : 0, en: isSleeping ? 'Wake' : 'Sleep', pt: isSleeping ? 'Acordar' : 'Dormir', onClick: onSleep ?? (() => {}), inert: false, badge: false },
+            {
+              key: 'play', icon: 'toys', fill: 0,
+              en: !play || !play.available ? 'Play — after your first activity' : play.playedToday ? 'Play — already played today' : 'Play',
+              pt: !play || !play.available ? 'Brincar — depois da primeira atividade' : play.playedToday ? 'Brincar — já brincamos hoje' : 'Brincar',
+              short: { en: 'Play', pt: 'Brincar' },
+              onClick: handleDeckPlay, inert: !play || !play.available || play.playedToday, badge: false,
+            },
+          ] as { key: string; icon: string; fill: number; en: string; pt: string; short?: { en: string; pt: string }; onClick: () => void; inert: boolean; badge: boolean | undefined }[]).map(a => (
             <button
               key={a.key}
               type="button"
-              /* "Banho" nunca fica realmente desabilitado: o `disabled` dele é
-                 só um cooldown de 5s, e o handler já ignora o clique repetido.
-                 Desabilitar de verdade tiraria o botão da ordem de tabulação
-                 no meio do uso. */
-              onClick={a.key === 'bath' ? a.onClick : (a.disabled ? undefined : a.onClick)}
-              disabled={a.key !== 'bath' && a.disabled}
-              className="sm2-deck-btn"
+              /* Inerte NÃO é `disabled`: continua na ordem de Tab, com o
+                 rótulo explicando; o clique só não faz nada. */
+              onClick={a.inert ? undefined : a.onClick}
+              aria-disabled={a.inert || undefined}
+              className={a.inert ? 'sm2-deck-btn sm2-deck-btn-inert' : 'sm2-deck-btn'}
               aria-label={language === 'pt-BR' ? a.pt : a.en}
-              style={{ opacity: a.disabled ? 0.45 : 1, cursor: a.disabled ? 'default' : 'pointer' }}
+              data-deck={a.key}
             >
               {a.badge && (
-                <span
-                  className="sm2-deck-dot"
-                  aria-label={language === 'pt-BR' ? 'Novidade' : 'New'}
-                  role="img"
-                />
+                <span className="sm2-deck-dot" aria-hidden="true" />
               )}
-              {/* 24px (era 42px, degrau `deck`): o deck encolheu a pedido do
-                  dono em 27/08/2026 — pet e lista de rituais são a
-                  prioridade da Home, o deck de cuidado não. 24 é o degrau
-                  `action` de tokens.md §6.1 (a escala é FECHADA a 20/24/32);
-                  o deck passou a dividi-lo — ver a nota na tabela. O `opsz`
-                  do `Icon` casa com o `size`, então o traço não afina ao
-                  encolher.
-
-                  `tone='viewport'` (e não `'ink'`): o deck fica sobre o corpo
-                  do `.sm2-device`, que tem a foto ESCURA por baixo nos dois
-                  temas. `--sm2-ink` inverte com o tema e o glifo virava tinta
-                  quase preta sobre fundo escuro no tema claro;
-                  `--sm2-viewport-ink` é claro nos dois, como já é a regra do
-                  visor e da barra segmentada. */}
-              <Icon name={a.icon} size={24} fill={a.fill} weight={500} tone={a.fill ? 'primary' : 'viewport'} />
-              {/* Rótulo de AÇÃO em Rubik 12px, caixa mista. Era Silkscreen a
-                  8px: abaixo do piso absoluto da escala, e a bitmap fecha os
-                  contornos nesse tamanho. Silkscreen agora é a voz do aparelho
-                  — só DENTRO do visor e em selos —, e esta fileira é o corpo
-                  do aparelho, por fora. */}
+              <Icon name={a.icon} size={24} fill={a.fill} weight={500} tone={a.inert ? 'muted' : a.fill ? 'primary' : 'ink'} />
               <span className="sm2-deck-label">
-                {language === 'pt-BR' ? a.pt : a.en}
+                {language === 'pt-BR' ? (a.short?.pt ?? a.pt) : (a.short?.en ?? a.en)}
               </span>
             </button>
           ))}
@@ -1821,29 +1831,26 @@ export const CompanionHUD = memo(function CompanionHUD({
           </p>
         ) : (
           <>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(72px, 1fr))', gap: 8 }}>
+            {/* Grade de 3 (canvas `AlimentarFolha`, D-H6): a ARTE do item é
+                pixel (96² a ½× = 48) dentro de uma célula VETOR — `surface-2`
+                + `muted` 1px, raio 12, 96 de altura: o slot do SIS-07 em
+                tamanho de célula, um mini-visor sem anel. Nome em Rubik 12 e
+                `×N` tabular. Sem emoji do sistema: item sem arte mostra o
+                quadro vazio (`.sm2-gcell-art` reserva a caixa). */}
+            <div className="sm2-gcell-grid">
               {foodStock.map(([emoji, n]) => (
                 <button
                   key={emoji}
                   type="button"
                   onClick={() => handleDeckFeed(emoji)}
+                  className="sm2-gcell"
                   aria-label={`${FOOD_NAME_BY_EMOJI[emoji] ?? emoji} × ${n}`}
-                  style={{
-                    minHeight: 72,
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2,
-                    padding: 8,
-                    borderRadius: 10,
-                    border: '1px solid var(--sm2-line)',
-                    backgroundColor: 'var(--sm2-surface-2)',
-                    cursor: 'pointer',
-                  }}
                 >
-                  <span aria-hidden="true" style={{ fontSize: 26, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 34 }}>
-                    {ITEM_ART[emoji]
-                      ? <img src={ITEM_ART[emoji]} alt="" width={34} height={34} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-                      : emoji}
+                  <span className="sm2-gcell-art" aria-hidden="true">
+                    {ITEM_ART[emoji] && <img src={ITEM_ART[emoji]} alt="" width={48} height={48} />}
                   </span>
-                  <span className="sm2-num" style={{ fontSize: 'var(--sm2-text-xs)', color: 'var(--sm2-muted)' }}>×{n}</span>
+                  <span className="sm2-gcell-name">{FOOD_NAME_BY_EMOJI[emoji] ?? ''}</span>
+                  <span className="sm2-gcell-count sm2-num">×{n}</span>
                 </button>
               ))}
             </div>

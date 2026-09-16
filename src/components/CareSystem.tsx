@@ -2,8 +2,15 @@ import { useEffect, useState } from 'react';
 import { GROUND_Y } from '../utils/petStage';
 import { ANIM_ART } from '../utils/animArt';
 import { SpriteAnim } from './pixel/SpriteAnim';
-import poopSprite from 'figma:asset/9087038914d85d3c74c1b4c1fb6e2b91f486cbee.png';
 import foodSprite from 'figma:asset/90d2794255a0abd49ab9e2ca8c9f1c54b45d7cd0.png';
+
+/* O cocô SAIU do `figma:asset/9087…` (156×145, herança do DigiApp) em
+   16/09/2026 — canvas Home, achado 4 / PetDeckEstados: o adereço é o FX
+   próprio `anim-poop-plop` do `animArt`, na grade 64 × 2 do vidro. A folha
+   toca UMA vez (`forwards`) e PARA no quadro 3/3 — o quadro final É o cocô
+   assentado; não existe mais um PNG estático por cima. Sob movimento
+   reduzido a animação encolhe para o fim e o quadro 3 aparece direto. */
+const FX_PX = 128;
 
 export interface CareEvent {
   type: 'poop' | 'food';
@@ -24,6 +31,25 @@ export function CareSystem({ careEvent, onCareEventComplete, language = 'en-US' 
   }
 
   const isPoop = careEvent.type === 'poop';
+  if (isPoop) {
+    return (
+      <div
+        className="absolute z-10"
+        data-care-poop
+        role="img"
+        aria-label={isPt ? 'Cocô para limpar — dê um banho' : 'Poop to clean — use the shower'}
+        style={{ left: '66%', top: `${GROUND_Y}%`, marginLeft: -FX_PX / 2, marginTop: -FX_PX + 16, width: FX_PX, height: FX_PX, pointerEvents: 'none' }}
+      >
+        <SpriteAnim
+          key={`plop-${careEvent.requestTime}`}
+          sheet={ANIM_ART.poopPlop}
+          size={FX_PX}
+          durationMs={450}
+          style={{ position: 'absolute', left: 0, top: 0 }}
+        />
+      </div>
+    );
+  }
 
   // Cocô/comida ficam APOIADOS no chão do palco, como toda a decoração
   // (utils/petStage.ts). Antes eram `bottom-3 right-3` — uma regra anterior ao
@@ -36,24 +62,13 @@ export function CareSystem({ careEvent, onCareEventComplete, language = 'en-US' 
       style={{ left: '66%', top: `${GROUND_Y}%`, marginLeft: -SIZE / 2, marginTop: -SIZE }}
     >
       <img
-        src={isPoop ? poopSprite : foodSprite}
-        alt={isPoop ? (isPt ? 'Cocô para limpar' : 'Poop to clean') : (isPt ? 'Comida' : 'Food')}
-        onClick={isPoop ? undefined : onCareEventComplete}
-        className={`w-12 h-12 object-contain transition-transform ${isPoop ? 'cursor-default' : 'cursor-pointer hover:scale-110 active:scale-95'}`}
-        title={isPoop ? (isPt ? '🚿 Dê um banho para limpar' : '🚿 Use the shower to clean') : (isPt ? 'Alimentar' : 'Feed')}
+        src={foodSprite}
+        alt={isPt ? 'Comida' : 'Food'}
+        onClick={onCareEventComplete}
+        className="w-12 h-12 object-contain transition-transform cursor-pointer hover:scale-110 active:scale-95"
+        title={isPt ? 'Alimentar' : 'Feed'}
         style={{ imageRendering: 'pixelated' }}
       />
-      {/* Plop (entrega 4): o cocô cai, achata com poeira e assenta — UMA vez ao
-          aparecer (o `key` reinicia por evento); depois só o sprite fica. */}
-      {isPoop && (
-        <SpriteAnim
-          key={`plop-${careEvent.requestTime}`}
-          sheet={ANIM_ART.poopPlop}
-          size={SIZE}
-          durationMs={450}
-          style={{ position: 'absolute', left: 0, top: 0, pointerEvents: 'none' }}
-        />
-      )}
     </div>
   );
 }
