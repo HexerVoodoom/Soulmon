@@ -102,16 +102,18 @@ export function QuickAddBar({ language, onCommit }: QuickAddBarProps) {
           onClick={gravar}
           disabled={!podeGravar}
           aria-label={isPt ? 'Adicionar' : 'Add'}
+          /* ÍCONE PELADO (regra do dono; canvas Home, achado 12): `add` 24 em
+             ciano, alvo 48, sem caixa — era uma placa `primary-fill` em volta
+             do glifo. Inativo = `muted`, nunca opacidade. */
           style={{
-            minWidth: 44, minHeight: 44, borderRadius: 'var(--sm2-radius-md)',
+            minWidth: 48, minHeight: 48, borderRadius: 'var(--sm2-radius-md)',
             cursor: podeGravar ? 'pointer' : 'default',
-            border: '1px solid transparent',
-            backgroundColor: podeGravar ? 'var(--sm2-primary-fill)' : 'var(--sm2-surface-2)',
-            color: podeGravar ? 'var(--sm2-on-primary)' : 'var(--sm2-muted)',
+            border: 'none', background: 'none', padding: 0,
+            color: podeGravar ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}
         >
-          <Icon name="add" size={20} />
+          <Icon name="add" size={24} tone={podeGravar ? 'primary' : 'muted'} />
         </button>
       </div>
 

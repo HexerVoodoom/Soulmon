@@ -190,8 +190,9 @@ Helpers prontos: `.sm2-title`, `.sm2-text`, `.sm2-muted`, `.sm2-num`,
 `.sm2-device-voice`.
 
 > **Cuidado com o nome.** `.sm2-device-voice` é a TIPOGRAFIA (a voz do
-> aparelho); `.sm2-device` é o CORPO do aparelho (padding, bisel, fundo,
-> sombras). As duas já se chamaram igual, e como as propriedades eram
+> aparelho); `.sm2-device` ERA o CORPO do aparelho (padding, bisel, fundo,
+> sombras) — saiu em 16/09/2026 (canvas Home, D-H1: a página é o corpo; só
+> anel + vidro sobram), mas o nome continua reservado. As duas já se chamaram igual, e como as propriedades eram
 > disjuntas elas somavam em vez de sobrescrever: pedir a fonte trazia a
 > carcaça junto, e a carcaça fazia a subárvore herdar bitmap em caixa alta.
 
@@ -497,10 +498,18 @@ import { Viewport } from './components/ui/Viewport';
 | `frame` | `boolean` | `false` | moldura 9-slice pixel (`hudArt.frame`) como overlay `absolute; inset: 0` **dentro** da tela, sob o reflexo, a 1× (24px de cano). Opcional em Masmorra/Torneio; **nunca na Home** (canvas Sistema SIS-05, X2) |
 | `children` | `ReactNode` | — | renderiza dentro da tela, sob a moldura e o reflexo |
 
-A mini-HUD pixel (`pixel/VisorBar.tsx`) desenha a **1×** (96×8) e recebe o
-mesmo `scale` do Viewport que a contém (`<VisorBar scale={2} />` → 192×16):
-barra e sprite na mesma grade de pixel. Quem monta a HUD dentro do visor a
-põe como filha direta da tela, não da janela do palco (que vaza pelo topo).
+A mini-HUD pixel (`pixel/VisorBar.tsx`) desenha a **1×** e recebe o mesmo
+`scale` do Viewport que a contém: barra e sprite na mesma grade de pixel. A
+**moldura é recortada ao `max`** (canvas Home, D-H2/X4, 16/09/2026): largura
+= cap 6 + 7·max + cap 6 (HP 3 = 33×8; a 2× = 66×16), segmento 6 em `left =
+6 + 7·i`, meio = 3 — fórmula única, em `visorBarWidth()`. Os caps são fatiados
+do `bar-frame-96x8` até a `squad-arte` entregar `bar-cap-l/mid/r` em grade.
+Na Home ela senta sobre a **placa** `.sm2-visor-plate` (`color-mix(in srgb,
+var(--sm2-viewport-bg) 78%, transparent)`, D-H3) com rótulo `HP`/`EN` e dígito
+em Silkscreen 14 — dígito só com valor ≥ 1 (E5). É a ÚNICA leitura de
+HP/energia da Home: a barra DOM do `HomeHud` saiu (§19). Quem monta a HUD
+dentro do visor a põe como filha direta da tela, não da janela do palco (que
+vaza pelo topo).
 
 ### 7.1 O kit vetor — `components/pixel/PixelKit.tsx`
 
