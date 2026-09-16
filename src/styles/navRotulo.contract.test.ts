@@ -133,6 +133,24 @@ describe('🔴 o rótulo da barra de baixo cabe na célula', () => {
     expect(css.slice(Math.max(0, i - 2200), i)).toMatch(/320px/);
   });
 
+  it('🔴 o rótulo é Rubik 12/500 no CSS — Silkscreen nunca sai do vidro (canvas Home, SIS achado 3)', () => {
+    /* Até 16/09/2026 a regra dizia `--sm-font-pixel` (Silkscreen, caixa alta)
+       e o JSX sobrescrevia inline com Rubik: duas fontes declaradas para o
+       mesmo nó, e a regra do CSS era a mentira que sobrevivia a qualquer
+       refactor do inline. Agora a REGRA é medida. */
+    const css = ler('src/index.css');
+    const bloco = css.slice(css.indexOf('.sm-bottom-nav-label {'));
+    // sem os comentários: a prosa da regra cita a Silkscreen para dizer que saiu
+    const regra = bloco.slice(0, bloco.indexOf('}')).replace(/\/\*[\s\S]*?\*\//g, '');
+    expect(regra).toMatch(/font-family:\s*var\(--sm2-font-text\)/);
+    expect(regra).toMatch(/font-size:\s*var\(--sm2-text-xs\)/);
+    expect(regra).toMatch(/font-weight:\s*500/);
+    expect(regra).not.toMatch(/font-pixel|Silkscreen/);
+    expect(regra).not.toMatch(/text-transform:\s*uppercase/);
+    // e a tinta é da fundação nova, não da era `--sm-*`
+    expect(regra).toMatch(/color:\s*var\(--sm2-muted\)/);
+  });
+
   it('AUTOVERIFICAÇÃO: a leitura dos pares de idioma encontra rótulos de verdade', () => {
     // Guard que não acha nada passa sempre. Este caso prova que o arquivo foi
     // lido e que o padrão `isPt ? … : …` casa.

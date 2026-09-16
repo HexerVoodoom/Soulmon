@@ -321,11 +321,15 @@ export function BottomNav({ currentView, onNavigate, onResetOnboarding, onOpenCr
             <div
               style={{
                 position: 'absolute', bottom: 'calc(100% + 8px)', right: 0,
-                minWidth: 210, overflow: 'hidden', zIndex: 61,
+                /* Popover do canvas `NavMenu`: `surface`, raio 12 (`md`),
+                   sombra de folha, 4 linhas de 44. Continua POPOVER (disclosure),
+                   não `ModalSheet`: o canvas aprovado desenha popover e a
+                   semântica abaixo (não-modal, toque fora fecha) depende disso. */
+                minWidth: 300, overflow: 'hidden', zIndex: 61,
                 background: 'var(--sm2-surface)',
                 border: '1px solid var(--sm2-line)',
-                borderRadius: 14,
-                boxShadow: '0 8px 24px rgba(0,0,0,.28)',
+                borderRadius: 'var(--sm2-radius-md)',
+                boxShadow: '0 1px 2px rgba(4,18,20,.10), 0 8px 24px rgba(4,18,20,.28)',
               }}
             >
               {/* 16px (`-text-md`), e não os 14 de antes: um título do mesmo
@@ -349,9 +353,11 @@ export function BottomNav({ currentView, onNavigate, onResetOnboarding, onOpenCr
                 {isPt ? 'Menu' : 'Menu'}
               </p>
               <div role="group" aria-labelledby={MENU_LABEL_ID}>
+              {/* `groups`, não `person` (canvas Home, D-H8 / P6): a Biblioteca
+                  é a tela dos OUTROS jogadores; `person` é perfil/Conta. */}
               <MenuRow
                 first
-                icon="person"
+                icon="groups"
                 label={isPt ? 'Biblioteca' : 'Library'}
                 active={currentView === 'library'}
                 onClick={() => { onNavigate('library'); setMenuOpen(false); }}

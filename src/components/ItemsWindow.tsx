@@ -3,6 +3,7 @@ import { ITEM_ART } from '../utils/itemArt';
 import ravenMascot from '../assets/soulmon/mascot-raven.png';
 import type { Language } from '../utils/i18n';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
+import { Viewport } from './ui/Viewport';
 import { FOOD_BY_CATEGORY } from '../constants/labels';
 import { CATEGORY_ATTRIBUTES, ATTR_LABEL } from '../types/attributes';
 import { SPECIAL_ITEMS, CHIP_BOOST, HEART_HEAL } from '../utils/shop';
@@ -123,9 +124,13 @@ export function ItemsWindow({ foodInventory, onFeed, onClose, language = 'en-US'
       ) : undefined}
     >
       {items.length === 0 ? (
-        /* Estado vazio — ilustração, não texto cru. */
+        /* Estado vazio — ilustração, não texto cru. O mascote é pixel, e pixel
+           só vive DENTRO de um vidro (canvas Home, `ItensVazio` / D-H7): vidro
+           96² (32 lógicos × 3), sem opacidade na arte. */
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '24px 0' }}>
-          <img src={ravenMascot} alt="" width={72} height={72} style={{ objectFit: 'contain', opacity: 0.85 }} />
+          <Viewport width={32} height={32} scale={3} breathing={false} screenStyle={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img src={ravenMascot} alt="" width={72} height={72} style={{ objectFit: 'contain', display: 'block' }} />
+          </Viewport>
           <p style={{ ...sm2Hint, textAlign: 'center' }}>
             {isPt
               ? 'Sua pastinha está vazia. Conclua uma atividade para ganhar comida.'
@@ -133,33 +138,28 @@ export function ItemsWindow({ foodInventory, onFeed, onClose, language = 'en-US'
           </p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+        /* Grade de 3 (canvas `ItensPastinha` / `ItensUsar`, D-H6): a ARTE é
+           pixel (48) dentro de uma célula VETOR — `surface-2` + `muted` 1px,
+           raio 12, 96 de altura (`.sm2-gcell`, index.css). Seleção = anel
+           `primary-ink` 2px + `primary-soft`, por `aria-pressed`. Nome Rubik 12
+           e `×N` tabular. Sem emoji do sistema: sem arte, a caixa fica vazia. */
+        <div className="sm2-gcell-grid">
           {items.map(([emoji, count]) => {
             const active = detail === emoji;
             return (
               <button
                 key={emoji}
                 type="button"
+                className="sm2-gcell"
                 onClick={() => setSelected(active ? null : emoji)}
                 aria-pressed={active}
                 aria-label={`${getFoodName(emoji, language)} ×${count}`}
-                style={{
-                  minHeight: 96, padding: '12px 6px', borderRadius: 16, cursor: 'pointer',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
-                  border: active ? '1px solid var(--sm2-primary-ink)' : '1px solid transparent',
-                  backgroundColor: active ? 'var(--sm2-primary-soft)' : 'var(--sm2-surface-2)',
-                  transition: 'background-color var(--sm2-dur-tap) var(--sm2-ease)',
-                }}
               >
-                <span aria-hidden="true" style={{ fontSize: 30, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 38 }}>
-                  {ITEM_ART[emoji]
-                    ? <img src={ITEM_ART[emoji]} alt="" width={38} height={38} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-                    : emoji}
+                <span className="sm2-gcell-art" aria-hidden="true">
+                  {ITEM_ART[emoji] && <img src={ITEM_ART[emoji]} alt="" width={48} height={48} />}
                 </span>
-                <span style={{ ...sm2Hint, color: 'var(--sm2-ink)', fontWeight: 500, textAlign: 'center' }}>
-                  {getFoodName(emoji, language)}
-                </span>
-                <span className="sm2-num" style={sm2Hint}>×{count}</span>
+                <span className="sm2-gcell-name">{getFoodName(emoji, language)}</span>
+                <span className="sm2-gcell-count sm2-num">×{count}</span>
               </button>
             );
           })}

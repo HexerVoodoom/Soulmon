@@ -2,6 +2,8 @@ import { Component, ReactNode, ErrorInfo } from 'react';
 import ravenMascot from '../assets/soulmon/mascot-raven.png';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readLocal } from '../utils/safeStorage';
+import { Viewport } from './ui/Viewport';
+import { sm2Button } from './form/FormKit';
 
 interface Props { children: ReactNode; }
 interface State { hasError: boolean; error: Error | null; }
@@ -24,31 +26,39 @@ export class ErrorBoundary extends Component<Props, State> {
       // A tela de erro é a única superfície que pode aparecer antes de o app
       // montar, então lê o idioma direto do localStorage.
       const isPt = (readLocal(STORAGE_KEYS.LANGUAGE) ?? 'pt-BR') === 'pt-BR';
+      /* Canvas Home, `HomeErro` (HOME-47) / D-H7 / D-H9 / X7: mascote em
+         pixel DENTRO de um vidro 96², título Fredoka 20, corpo Rubik 14
+         `muted`, e UM `primary` "Reload" — a única ação. Sem `danger`, sem
+         hex cru: tudo por token, e os tokens respondem ao tema que o `<html>`
+         já carrega (o `:root` cobre o caso de a tela cair antes do script). */
       return (
         <div style={{
           display: 'flex', flexDirection: 'column', alignItems: 'center',
-          justifyContent: 'center', height: '100vh', padding: '24px',
-          fontFamily: 'monospace', textAlign: 'center', background: '#0c1c1a', color: '#2dd4bf'
+          justifyContent: 'center', minHeight: '100vh', padding: 24, gap: 12,
+          textAlign: 'center', background: 'var(--sm2-bg)', color: 'var(--sm2-ink)',
+          fontFamily: 'var(--sm2-font-text)',
         }}>
-          <img src={ravenMascot} alt="" width={72} height={72} style={{ marginBottom: '16px', objectFit: 'contain' }} />
-          <h2 style={{ margin: '0 0 8px' }}>{isPt ? 'Algo deu errado' : 'Something went wrong'}</h2>
-          <p style={{ margin: '0 0 24px', color: '#8fb0a8', fontSize: '14px' }}>
+          <Viewport width={32} height={32} scale={3} breathing={false} screenStyle={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img src={ravenMascot} alt="" width={72} height={72} style={{ objectFit: 'contain', display: 'block' }} />
+          </Viewport>
+          <h1 style={{ margin: 0, fontFamily: 'var(--sm2-font-display)', fontSize: 'var(--sm2-text-lg)', fontWeight: 600, lineHeight: 1.2, color: 'var(--sm2-ink)' }}>
+            {isPt ? 'Algo deu errado' : 'Something went wrong'}
+          </h1>
+          <p style={{ margin: 0, fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm)', lineHeight: 'var(--sm2-leading-body)', color: 'var(--sm2-muted)', maxWidth: 320 }}>
             {isPt ? 'O Soulmon encontrou um erro inesperado.' : 'Soulmon hit an unexpected error.'}
           </p>
           <button
+            type="button"
             onClick={() => window.location.reload()}
-            style={{
-              background: '#2dd4bf', color: '#0c1c1a', border: 'none',
-              padding: '10px 24px', borderRadius: '8px', cursor: 'pointer',
-              fontFamily: 'monospace', fontWeight: 'bold'
-            }}
+            style={{ ...sm2Button('primary'), marginTop: 12, minWidth: 160 }}
           >
             {isPt ? 'Recarregar' : 'Reload'}
           </button>
           {import.meta.env.DEV && this.state.error && (
             <pre style={{
-              marginTop: '24px', padding: '12px', background: '#111',
-              borderRadius: '8px', fontSize: '11px', color: '#f87171',
+              marginTop: 24, padding: 12, background: 'var(--sm2-surface-2)',
+              borderRadius: 'var(--sm2-radius-md)', fontSize: 'var(--sm2-text-xs)', color: 'var(--sm2-danger-ink)',
+              fontFamily: 'var(--sm2-font-mono)',
               maxWidth: '100%', overflow: 'auto', textAlign: 'left'
             }}>
               {this.state.error.message}

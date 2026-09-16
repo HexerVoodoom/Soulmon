@@ -63,14 +63,33 @@ describe('BottomNav', () => {
     expect(visiveis).toEqual(btns.map(b => b.getAttribute('aria-label')));
   });
 
-  it('o rótulo é Rubik ≥12px — Silkscreen a 8px reprovava legibilidade', () => {
+  it('o rótulo é Rubik 12/500 — medido no estilo COMPUTADO, não só no inline (canvas Home)', () => {
     const { container } = renderWithCss(<BottomNav currentView="main" onNavigate={() => {}} />);
     const label = container.querySelector('.sm-bottom-nav-label') as HTMLElement;
     expect(label.style.fontFamily).toBe('var(--sm2-font-text)');
     expect(label.style.fontSize).toBe('var(--sm2-text-xs)');
+    expect(label.style.fontWeight).toBe('500');
+    // jsdom não resolve `var()` na cascata, mas aplica a REGRA do index.css:
+    // se alguém tirar o inline, a regra tem de dizer a mesma coisa.
+    const cs = window.getComputedStyle(label);
+    expect(cs.fontFamily).toMatch(/sm2-font-text|Rubik/);
+    expect(cs.fontFamily).not.toMatch(/font-pixel|Silkscreen/);
+    expect(cs.fontWeight).toBe('500');
+    expect(cs.textTransform).not.toBe('uppercase');
     const xs = window.getComputedStyle(document.documentElement)
       .getPropertyValue('--sm2-text-xs').trim();
     expect(parseFloat(xs)).toBeGreaterThanOrEqual(12);
+  });
+
+  it('a seleção é o sublinhado ciano de 3px (primary-fill) sob o ícone de 32', () => {
+    const { container } = renderWithCss(<BottomNav currentView="main" onNavigate={() => {}} />);
+    const ativo = container.querySelector('[aria-current="page"]') as HTMLElement;
+    const barra = ativo.querySelector('[data-nav-underline]') as HTMLElement;
+    expect(barra.style.height).toBe('3px');
+    expect(barra.style.background).toBe('var(--sm2-primary-fill)');
+    const glifo = ativo.querySelector('svg') as SVGElement;
+    expect(glifo.getAttribute('width')).toBe('32');
+    expect(glifo.getAttribute('height')).toBe('32');
   });
 
   it('ÍCONE NUNCA DENTRO DE BOX: nada de PNG, nada de moldura em volta do glifo', () => {

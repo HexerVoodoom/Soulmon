@@ -59,24 +59,22 @@ function usePrefersReducedMotion(): boolean {
  * pré-compilado) e `index.css` é de outro dono nesta onda, então a animação
  * viaja junto do componente. Nome prefixado para não colidir.
  */
-const SWEEP_CSS = `
-@keyframes sm2-skel-sweep {
-  0%   { transform: translateY(-120%); }
-  100% { transform: translateY(320%); }
-}
-@keyframes sm2-skel-blink {
-  0%, 60%  { opacity: 1; }
-  61%, 100%{ opacity: .35; }
+/* O pulso do segmento (canvas `HomeCarregando`): um bloco `primary-fill`
+   24×12 dentro do vidro alternando — `steps()`, movimento reduzido desliga. */
+const PULSE_CSS = `
+@keyframes sm2-skel-pulse {
+  0%, 49%  { opacity: 1; }
+  50%, 100%{ opacity: .35; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .sm2-skel-sweep, .sm2-skel-blink { animation: none !important; }
+  .sm2-skel-pulse { animation: none !important; }
 }
 `;
 
 export function ScreenSkeleton({ language = 'en-US', label, variant = 'page' }: ScreenSkeletonProps) {
   const reduced = usePrefersReducedMotion();
   const pt = language === 'pt-BR';
-  const text = label ?? (pt ? 'CARREGANDO' : 'LOADING');
+  const text = label ?? (pt ? 'Carregando' : 'Loading');
 
   const outer: React.CSSProperties =
     variant === 'overlay'
@@ -107,50 +105,48 @@ export function ScreenSkeleton({ language = 'en-US', label, variant = 'page' }: 
       aria-live="polite"
       aria-label={pt ? 'Carregando' : 'Loading'}
     >
-      <style>{SWEEP_CSS}</style>
+      <style>{PULSE_CSS}</style>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+        {/* Vidro 56×40 (28×20 lógicos a 2×) com UM segmento ciano pulsando —
+            canvas Home, `HomeCarregando` (HOME-04/46). Silkscreen NÃO sai do
+            vidro: a palavra fica FORA, em Rubik 12/500 caixa alta (achado 8).
+            O contêiner é `role="status" aria-live="polite"` com `aria-label`
+            em PT/EN (X6) — é o único anúncio do esqueleto para leitor de tela. */}
         <Viewport
-          width={56}
-          height={40}
-          scale={3}
+          width={28}
+          height={20}
+          scale={2}
           breathing={!reduced}
           screenStyle={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >
-          {/* A varredura: uma faixa de luz do próprio primário descendo pelo
-              visor. É a leitura de "sintonizando", e não de "erro". */}
-          {!reduced && (
-            <div
-              className="sm2-skel-sweep"
-              style={{
-                position: 'absolute',
-                left: 0,
-                right: 0,
-                top: 0,
-                height: '28%',
-                background:
-                  'linear-gradient(180deg, transparent, color-mix(in srgb, var(--sm2-primary-fill) 34%, transparent), transparent)',
-                animation: 'sm2-skel-sweep 1.6s var(--sm2-ease) infinite',
-                pointerEvents: 'none',
-              }}
-            />
-          )}
           <span
-            className={reduced ? undefined : 'sm2-skel-blink'}
+            aria-hidden="true"
+            className={reduced ? undefined : 'sm2-skel-pulse'}
+            data-skel-seg
             style={{
-              fontFamily: 'var(--sm2-font-pixel)',
-              fontSize: 14,
-              letterSpacing: '.06em',
-              textTransform: 'uppercase',
-              color: 'var(--sm2-viewport-ink)',
-              animation: reduced ? undefined : 'sm2-skel-blink 1.6s steps(1, end) infinite',
-              position: 'relative',
+              display: 'block',
+              width: 24,
+              height: 12,
+              background: 'var(--sm2-primary-fill)',
+              animation: reduced ? undefined : 'sm2-skel-pulse 1.2s steps(1, end) infinite',
             }}
-          >
-            {text}
-          </span>
+          />
         </Viewport>
-        {/* Par EN + PT-BR: o visor fala uma língua só (é a voz do aparelho);
-            a legenda de fora é a do usuário. */}
+        <span
+          data-skel-word
+          style={{
+            fontFamily: 'var(--sm2-font-text)',
+            fontSize: 'var(--sm2-text-xs)',
+            fontWeight: 500,
+            lineHeight: 1.2,
+            letterSpacing: '.04em',
+            textTransform: 'uppercase',
+            color: 'var(--sm2-ink)',
+          }}
+        >
+          {text}
+        </span>
+        {/* Par EN + PT-BR: a legenda de fora é a do usuário. */}
         <span
           style={{
             fontFamily: 'var(--sm2-font-text)',

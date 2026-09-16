@@ -1817,6 +1817,15 @@ export const CompanionHUD = memo(function CompanionHUD({
           é a mesma superfície `--sm2-*` do resto do app fora do visor.
           Os TRÊS estados existem: com estoque (a grade), vazio (o que fazer
           para conseguir comida) e recusa (o pet fala, via `fullSignal`). */}
+      {/* A folha nasce DENTRO do `.sm-pet-sticky` (contexto de empilhamento,
+          z 5) dentro do `<main>` (z 1): a folha `fixed` de z 120 ficava PRESA
+          sob o dock de chat (z 40) e sob a nav (z 45) — medido em 16/09/2026,
+          o campo do chat cobria a grade de comida. Sai por portal para o
+          `<body>`, onde um overlay de tela inteira pertence (o `ItemsWindow`
+          já é irmão do `<main>` pelo mesmo motivo). Sem `document`
+          (jsdom/SSR) fica onde estava. Foco preso e Escape são do
+          `ModalSheet` (`useDialogA11y`), portal não muda isso. */}
+      {(() => { const folha = (
       <ModalSheet
         open={feedOpen}
         onClose={() => setFeedOpen(false)}
@@ -1862,6 +1871,7 @@ export const CompanionHUD = memo(function CompanionHUD({
           </>
         )}
       </ModalSheet>
+      ); return typeof document !== 'undefined' ? createPortal(folha, document.body) : folha; })()}
 
       {/* Chat Box — fixo no rodapé da tela (não rola com o conteúdo), e ainda
           dentro do `<main>` do app: assim modais (z-index maior, irmãos do
