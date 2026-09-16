@@ -474,7 +474,28 @@ import { Viewport } from './components/ui/Viewport';
 | `label` | `string` | — | ausente = decorativo (`aria-hidden`) |
 | `className`, `style` | — | — | aplicam no **bisel** |
 | `screenStyle` | `CSSProperties` | — | aplica na **tela** interna |
-| `children` | `ReactNode` | — | renderiza dentro da tela, sob o reflexo |
+| `screenClassName` | `string` | — | classe da tela (ciclo diurno `.sm2-sky-*`) |
+| `frame` | `boolean` | `false` | moldura 9-slice pixel (`hudArt.frame`) como overlay `absolute; inset: 0` **dentro** da tela, sob o reflexo, a 1× (24px de cano). Opcional em Masmorra/Torneio; **nunca na Home** (canvas Sistema SIS-05, X2) |
+| `children` | `ReactNode` | — | renderiza dentro da tela, sob a moldura e o reflexo |
+
+A mini-HUD pixel (`pixel/VisorBar.tsx`) desenha a **1×** (96×8) e recebe o
+mesmo `scale` do Viewport que a contém (`<VisorBar scale={2} />` → 192×16):
+barra e sprite na mesma grade de pixel. Quem monta a HUD dentro do visor a
+põe como filha direta da tela, não da janela do palco (que vaza pelo topo).
+
+### 7.1 O kit vetor — `components/pixel/PixelKit.tsx`
+
+Os primitivos FORA do visor (botão, painel, abas, chip, etiqueta, checkbox,
+interruptor, medidores, casa de item, chip de estatística) são **vetor sobre
+`--sm2-*`** desde 16/09/2026 (canvas Sistema, `docs/design/wireframes/sistema/
+identidade/`, `DECISOES-WIREFRAME.md` §18) — a API `Pixel*` ficou a mesma; o
+que saiu foi o 9-slice PNG, o chanfro de cobre e a Silkscreen fora do vidro.
+Classes `.sm2-kit-*` no fim do `index.css`. Regras que o kit segue e que valem
+para quem o estender: cor só por token; raio 4/12/20 (+ pílula como forma);
+espaço `--sm2-space-*`; texto ≥ 12px; alvo ≥ 44; ícone é `Icon` pelado
+(`iconName`); medidor **nunca vermelho** (`tone="red"` desenha em cobre);
+foco = anel 2px `primary-ink` com fresta ≥ 2px. Testes:
+`PixelKit.render.test.tsx`, `PixelStates.render.test.tsx`.
 
 É a **fronteira** entre o pixel (dentro) e o vetor (fora). Anatomia fixa:
 bisel externo 20px · tela interna 12px · anel de cobre de 4px (2px de linha +

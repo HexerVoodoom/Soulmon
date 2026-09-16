@@ -558,7 +558,10 @@ ficam valendo:
 
 - **Ícone NUNCA dentro de box** — vale no app inteiro (18/ago/2026). Nada de
   moldura, placa, chanfro ou fundo em volta de um ícone: o ícone aparece
-  GRANDE e pelado (nav inferior 36px, ações do pet 42px, chat 30px). Seleção
+  GRANDE e pelado (nav inferior **32px**, ações do pet 24px, chat 32px —
+  números da escala viva `src/styles/tokens.md` §6.1, travada por
+  `iconScale.contract.test.ts`; dizia 36/42/30 até 16/09/2026 e o código
+  vence, decisão P3 do canvas Sistema). Seleção
   na nav = sublinhado ciano (uma barra não é uma caixa), nunca a placa
   preenchida antiga. Peças com moldura continuam existindo para PAINÉIS e
   BOTÕES DE TEXTO — a regra é sobre ícones.
