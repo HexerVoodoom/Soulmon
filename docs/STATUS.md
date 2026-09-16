@@ -23,9 +23,10 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > (`D:\Soulmon\_gemini_out\hud-20260915\H1-evoarvore-3-versoes.png`). Ver também: `bg-gameboy` fugiu do
 > conceito "LCD chapado" (aceitar/regerar); os 3 `void` antigos (gameboy/matrix/ocean) agora têm chão — vale
 > dar `slots` a eles no canvas da Loja.
-> **Dívida aberta:** UI dos emblemas, do placeholder (D1 no `displaySprite`) e das barras pixel (D3) entra
-> com os canvases de identidade; `entrega2/` (ganho/movimento) e `sparkle-pop`/`dust-step` seguem sem
-> chamada; `progress/` ainda em 4×; ícones de categoria e `PixelKit` (botões PNG) continuam pixel FORA do
+> **Fechado depois (`a388ddb9`):** placeholder v3 (cristal da Home com o ser dentro) ligado na EvoArvore e no
+> reveal; emblemas na Ficha; sparkle na evolução pronta; LCD refeito; entrega 2 instalada (`gainArt.ts`).
+> **Dívida aberta:** barras pixel (D3) e `progress/` 4× esperam o canvas Sistema (as barras da Home são do
+> aparelho, DOM); `gainArt`/`dust-step` sem chamada; ícones de categoria e `PixelKit` (botões PNG) continuam pixel FORA do
 > visor — divergência a registrar no canvas Sistema/Atividades, não consertada aqui.
 > **Ambiente:** `supabase.contract.test.ts` falha localmente por diretórios ignorados
 > (`.claude/worktrees`, `coverage`, `android/app/build`) com JWT antigo — não é o repo; limpar as pastas.
