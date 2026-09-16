@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { GROUND_Y } from '../utils/petStage';
+import { ANIM_ART } from '../utils/animArt';
+import { SpriteAnim } from './pixel/SpriteAnim';
 import poopSprite from 'figma:asset/9087038914d85d3c74c1b4c1fb6e2b91f486cbee.png';
 import foodSprite from 'figma:asset/90d2794255a0abd49ab9e2ca8c9f1c54b45d7cd0.png';
 
@@ -41,6 +43,17 @@ export function CareSystem({ careEvent, onCareEventComplete, language = 'en-US' 
         title={isPoop ? (isPt ? '🚿 Dê um banho para limpar' : '🚿 Use the shower to clean') : (isPt ? 'Alimentar' : 'Feed')}
         style={{ imageRendering: 'pixelated' }}
       />
+      {/* Plop (entrega 4): o cocô cai, achata com poeira e assenta — UMA vez ao
+          aparecer (o `key` reinicia por evento); depois só o sprite fica. */}
+      {isPoop && (
+        <SpriteAnim
+          key={`plop-${careEvent.requestTime}`}
+          sheet={ANIM_ART.poopPlop}
+          size={SIZE}
+          durationMs={450}
+          style={{ position: 'absolute', left: 0, top: 0, pointerEvents: 'none' }}
+        />
+      )}
     </div>
   );
 }

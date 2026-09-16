@@ -6,6 +6,9 @@ import './style.css';
 import { petSprite, facesLeft } from './sprites';
 import { loadState, type DesktopState } from './state';
 import { idlePhrase } from './phrases';
+// Glifo pixel do banho (A21.1, 15/09/2026): dentro do visor do overlay, no lugar do 🫧 do sistema.
+import glyphBath from '../../../src/assets/soulmon/hud/glyph-bath.png';
+const EFFECT_ART: Record<string, string> = { '🫧': glyphBath };
 
 let state: DesktopState = loadState();
 const t = (pt: string, en: string) => (state.language === 'pt-BR' ? pt : en);
@@ -101,7 +104,13 @@ function burst(emoji: string, count = 6) {
   for (let i = 0; i < count; i++) {
     const el = document.createElement('span');
     el.className = 'fx';
-    el.textContent = emoji;
+    const art = EFFECT_ART[emoji];
+    if (art) {
+      const img = document.createElement('img');
+      img.src = art; img.alt = ''; img.width = 16; img.height = 16;
+      img.style.imageRendering = 'pixelated';
+      el.appendChild(img);
+    } else el.textContent = emoji;
     el.style.left = `${20 + Math.random() * 56}px`;
     el.style.animationDelay = `${Math.random() * 0.4}s`;
     petFx.appendChild(el);

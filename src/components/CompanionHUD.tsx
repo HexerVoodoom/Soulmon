@@ -15,6 +15,8 @@ import { NEST_ART, DEFAULT_NEST } from './nestArt';
 import homeSceneBg from '../assets/backgrounds/home-scene-1547.png';
 import { ITEM_ART } from '../utils/itemArt';
 import { FX_ART } from '../utils/fxArt';
+import { ANIM_ART } from '../utils/animArt';
+import { SpriteAnim } from './pixel/SpriteAnim';
 import { type SlotId, BASE_SLOTS, PET_TOP_OFFSET, PET_BOX, PET_RENDER, STAGE_HEIGHT } from '../utils/petStage';
 import { PetStageDecor } from './PetStageDecor';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
@@ -1255,9 +1257,9 @@ export const CompanionHUD = memo(function CompanionHUD({
                   animation: 'rub-heart 1.5s ease-out forwards',
                 } as React.CSSProperties}
               >
-                {FX_ART[h.emoji]
-                  ? <img src={FX_ART[h.emoji]} alt="" style={{ width: `${h.size}rem`, height: `${h.size}rem`, objectFit: 'contain', imageRendering: 'pixelated' }} />
-                  : h.emoji}
+                {/* Coração quadro a quadro (entrega 4): nasce → cresce → cheio → faíscas,
+                    UMA vez, enquanto o wrapper irradia. Antes eram 3 PNGs estáticos. */}
+                <SpriteAnim sheet={ANIM_ART.heartBurst} size={Math.round(h.size * 24)} durationMs={640} />
               </span>
             ))}
 
@@ -1305,6 +1307,16 @@ export const CompanionHUD = memo(function CompanionHUD({
                   ? <img src={ITEM_ART[eatingEmoji]} alt="" width={30} height={30} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
                   : eatingEmoji}
               </span>
+            )}
+            {/* Migalhas (entrega 4): a comida sobe, as migalhas caem — uma vez por mordida. */}
+            {eatingEmoji && (
+              <SpriteAnim
+                key={`crumbs-${eatKey}`}
+                sheet={ANIM_ART.eatCrumbs}
+                size={36}
+                durationMs={600}
+                style={{ position: 'absolute', left: `${position}%`, top: 'calc(50% + 34px)', transform: 'translateX(-50%)', zIndex: 20, pointerEvents: 'none' }}
+              />
             )}
 
             {/* Berço — mobília BASE do espaço `nest` (utils/petStage.ts).
@@ -1485,6 +1497,14 @@ export const CompanionHUD = memo(function CompanionHUD({
                   >
                     <img src={FX_ART['🚿']} alt="" width={26} height={26} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
                   </span>
+                  {/* Respingo nos pés (entrega 4), em loop enquanto o banho dura. */}
+                  <SpriteAnim
+                    sheet={ANIM_ART.showerSplash}
+                    size={40}
+                    durationMs={520}
+                    loop
+                    style={{ position: 'absolute', left: '50%', bottom: -6, transform: 'translateX(-50%)' }}
+                  />
                 </div>
               )}
             </div>
@@ -1494,21 +1514,16 @@ export const CompanionHUD = memo(function CompanionHUD({
           {isSleeping && (
             <div className="absolute inset-0 z-20 pointer-events-none">
               <div className="absolute inset-0 bg-black/40" />
-              {[0, 1, 2].map(i => (
-                <span
-                  key={i}
-                  className="absolute text-white font-bold"
-                  style={{
-                    left: `${56 + i * 9}%`,
-                    top: `${42 - i * 13}%`,
-                    fontSize: `${0.65 + i * 0.18}rem`,
-                    fontFamily: 'monospace',
-                    animation: `float-up 2s ease-out ${i * 0.9}s infinite`,
-                  }}
-                >
-                  Z
-                </span>
-              ))}
+              {/* Z quadro a quadro (entrega 4): pequeno e baixo → maior e mais alto →
+                  sumindo. Até 15/09/2026 eram três "Z" em monospace — texto do
+                  aparelho dentro do visor. */}
+              <SpriteAnim
+                sheet={ANIM_ART.sleepZ}
+                size={48}
+                durationMs={1800}
+                loop
+                style={{ position: 'absolute', left: '58%', top: '22%' }}
+              />
             </div>
           )}
 

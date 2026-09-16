@@ -2,6 +2,8 @@
 // Título tem 3 botões: engrenagem (configurações), minimizar (só esta janela)
 // e fechar (o app inteiro — overlay + bandeja).
 import './menu.css';
+// Glifo pixel do carinho (A21.1, 15/09/2026) no lugar do 🫶 do sistema.
+import glyphAffection from '../../../src/assets/soulmon/hud/glyph-affection.png';
 import { petSprite } from './sprites';
 import {
   loadState, saveState, foodCount, firstFood, formatLastSync,
@@ -130,7 +132,7 @@ function renderMain() {
   const careRow = document.createElement('div');
   careRow.className = 'care-row';
   careRow.append(
-    careButton('🫶', t('Carinho', 'Pet'), doPet),
+    careButton(`<img src="${glyphAffection}" alt="" width="20" height="20" style="image-rendering:pixelated">`, t('Carinho', 'Pet'), doPet),
     careButton('🍎', t('Comida', 'Feed'), doFeed),
     careButton('🚿', t('Banho', 'Bath'), doShower),
     careButton(state.sleeping ? '☀️' : '💤', state.sleeping ? t('Acordar', 'Wake') : t('Dormir', 'Sleep'), doSleepToggle),

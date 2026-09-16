@@ -3848,6 +3848,12 @@ html {
   100% { opacity: 0; transform: translateX(-50%) translateY(-72px) scale(0.8); }
 }
 
+/* Spritesheet quadro a quadro dentro do visor (`components/pixel/SpriteAnim.tsx`):
+   a tira inteira desliza para a esquerda em `steps(N)`, uma célula por passo. */
+@keyframes sm-sheet {
+  to { background-position-x: calc(-1 * var(--sm-sheet-w)); }
+}
+
 @keyframes pet-munch {
   0%   { transform: scaleY(1) scaleX(1); }
   25%  { transform: scaleY(0.85) scaleX(1.1); }
@@ -7096,6 +7102,8 @@ button.sm-px-node {
      dele. Um bloco novo no fim tira a trava da fundação do alcance do teste
      sem ninguém notar. */
   .sm-visor-swap { animation: none !important; }
+  /* Spritesheet: para no ÚLTIMO quadro (o estado final do efeito), sem varrer. */
+  .sm-sheet { animation: none !important; background-position-x: calc(-1 * var(--sm-sheet-w) + var(--sm-sheet-w) / var(--sm-sheet-frames)) !important; }
   /* A varredura da sintonia NÃO TOCA (§6 da spec). O corte de verdade é em JS
      — `EvolutionPath` nem monta o elemento —, exatamente como a respiração do
      anel: o `*` global deste arquivo só encolhe para `0.01ms`, e 0,01ms de
