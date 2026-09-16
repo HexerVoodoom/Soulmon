@@ -17,6 +17,7 @@ import { ITEM_ART } from '../utils/itemArt';
 import { FX_ART } from '../utils/fxArt';
 import { ANIM_ART } from '../utils/animArt';
 import { SpriteAnim } from './pixel/SpriteAnim';
+import { VisorBar } from './pixel/VisorBar';
 import { type SlotId, BASE_SLOTS, PET_TOP_OFFSET, PET_BOX, PET_RENDER, STAGE_HEIGHT } from '../utils/petStage';
 import { PetStageDecor } from './PetStageDecor';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
@@ -1318,6 +1319,14 @@ export const CompanionHUD = memo(function CompanionHUD({
                 style={{ position: 'absolute', left: `${position}%`, top: 'calc(50% + 34px)', transform: 'translateX(-50%)', zIndex: 20, pointerEvents: 'none' }}
               />
             )}
+
+            {/* Mini-HUD pixel DENTRO do visor (D3, 16/09/2026): HP e energia como
+                barras segmentadas de arte, no canto superior esquerdo do palco.
+                A barra DOM do topo da Home é do aparelho e segue existindo. */}
+            <div style={{ position: 'absolute', left: 6, top: 6, zIndex: 15, display: 'grid', gap: 3, pointerEvents: 'none' }} data-visor-hud>
+              <VisorBar value={healthPoints} max={maxHealthPoints} label={language === 'pt-BR' ? 'Corações' : 'Hearts'} />
+              <VisorBar value={energyPoints} max={maxEnergy} label={language === 'pt-BR' ? 'Energia' : 'Energy'} />
+            </div>
 
             {/* Berço — mobília BASE do espaço `nest` (utils/petStage.ts).
                 A caixa vem do palco e a arte vem de `nestArt.ts`: aqui não há

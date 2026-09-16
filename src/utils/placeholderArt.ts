@@ -1,7 +1,8 @@
-// Placeholders de FORMA AINDA NÃO GERADA (leva sprites-20260915 v3, 256² alfa):
+// Placeholders de FORMA AINDA NÃO GERADA (leva sprites-20260915 v4, 256² alfa):
 // o CRISTAL DO MEIO da cena da Home (`home-scene`, os três cristais presos por
 // garras de cobre e cabos sobre a base de pedra), com um ser adormecido
-// dentro, esperando para nascer — referência e pedido do dono, 15/09/2026:
+// dentro, esperando para nascer, com vinhas e brotos na base (natureza) —
+// referência e pedido do dono, 15–16/09/2026:
 //   dormant — o cristal apagado, silhueta escura: o rookie do pago ainda vai nascer
 //   forming — o cristal aceso, o ser brilhando: a forma está sendo gerada
 //   glitch  — o cristal rachado em blocos: a geração falhou (pode pedir de novo)

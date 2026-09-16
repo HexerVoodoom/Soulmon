@@ -254,15 +254,15 @@ Regras do instalador: fonte = arquivo canônico atual (nunca backup); `CACHE_VER
 | # | Peça | Estado |
 |---|---|---|
 | C1 | dungeon-1..5 em pé | ✅ gerado e instalado (`559222ed`) |
-| C2 | placeholder dormant/forming/glitch (v3: cristal da Home com o ser dentro) | ✅ gerado e LIGADO: nós da EvoArvore (pago, D1) e casulo do reveal |
+| C2 | placeholder dormant/forming/glitch (v4: cristal da Home com o ser dentro + vinhas e brotos) | ✅ gerado e LIGADO: nós da EvoArvore (pago, D1) e casulo do reveal |
 | C3 | 17 pet-box + 3 regerados | ✅ gerado e instalado (`559222ed`) |
 | C4 | ícone de notificação | ✅ `drawable/ic_notification.xml` (`005a2941`) |
 | C5 | glifos do overlay | ✅ ligados (`55f332ad`) |
 | Emblemas | 8 | ✅ arte + `achievements.ts` + faixa na Ficha do Pet (visor estreito) |
 | F6 | anim-hunger-drop | ✅ gerado, sem chamada |
 | M1 | marca vetorizada + derivados | ✅ (`005a2941`) |
-| H1 | EvoArvore 3 versões | 📋 folha em `_gemini_out/hud-20260915/H1-evoarvore-3-versoes.png` — sem resposta do dono; recomendação (a) SVG por token fica como `[pendente do dono]` para o canvas de Evolução |
-| H2/H3 | barra + moldura | ✅ gerados, `hudArt.ts`; consumidor = canvas Sistema |
+| H1 | EvoArvore 3 versões | ✅ dono escolheu **(a) SVG por token** (16/09) — `soulmon/evolution/` (4) e `E:/nodes/` (8) descartados; o canvas de Evolução desenha os nós em vetor |
+| H2/H3 | barra + moldura | ✅ barra LIGADA: `VisorBar` (HP + energia) dentro do palco (D3, 16/09); moldura 9-slice em `hudArt.ts` para o canvas Sistema |
 
 Créditos Higgsfield: 567,95 → ver `account status` (≈ 52 cenários + 12 remover-fundo + ~8 folhas ≈ 75 cr).
 

@@ -3492,7 +3492,7 @@ async function onRequest5({ env }) {
 }
 __name(onRequest5, "onRequest");
 
-// ../.wrangler/tmp/pages-pLRvt9/functionsRoutes-0.6549169736626469.mjs
+// ../.wrangler/tmp/pages-riHRw0/functionsRoutes-0.6247717762802422.mjs
 var routes = [
   {
     routePath: "/api/account",

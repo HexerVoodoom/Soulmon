@@ -19,7 +19,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 - **Conta e configurações:** [`SettingsPage.tsx`](#srccomponentssettingspagetsx) · [`SettingsModal.tsx`](#srccomponentssettingsmodaltsx) · [`AccountSection.tsx`](#srccomponentsaccountsectiontsx) · [`AccountDataSection.tsx`](#srccomponentsaccountdatasectiontsx) · [`AISettingsModal.tsx`](#srccomponentsaisettingsmodaltsx) · [`NotificationManager.tsx`](#srccomponentsnotificationmanagertsx) · [`InstallPrompt.tsx`](#srccomponentsinstallprompttsx) · [`GuideModal.tsx`](#srccomponentsguidemodaltsx) · [`HelpModal.tsx`](#srccomponentshelpmodaltsx) · [`GameTutorialFlow.tsx`](#srccomponentsgametutorialflowtsx) · [`WelcomePromptModal.tsx`](#srccomponentswelcomepromptmodaltsx) · [`CityPicker.tsx`](#srccomponentscitypickertsx)
 - **Onboarding e oráculo:** [`SoulmonOnboarding.tsx`](#srccomponentssoulmononboardingtsx) · [`OraclePage.tsx`](#srccomponentsoraclepagetsx) · [`SoulTestItem.tsx`](#srccomponentssoultestitemtsx) · [`AlignmentIcons.tsx`](#srccomponentsalignmenticonstsx) · [`PixelizerCard.tsx`](#srccomponentspixelizercardtsx) · [`NewReadingModal.tsx`](#srccomponentsnewreadingmodaltsx)
 - **Comunidade:** [`LibraryPage.tsx`](#srccomponentslibrarypagetsx) · [`PlayerDetailModal.tsx`](#srccomponentsplayerdetailmodaltsx) · [`CoopPanel.tsx`](#srccomponentscooppaneltsx) · [`TournamentPage.tsx`](#srccomponentstournamentpagetsx)
-- **Infraestrutura de UI:** [`ConfirmDialog.tsx`](#srccomponentsconfirmdialogtsx) · [`PixelFrame.tsx`](#srccomponentspixelframetsx) · [`figma/ImageWithFallback.tsx`](#srccomponentsfigmaimagewithfallbacktsx) · [`form/FormKit.tsx`](#srccomponentsformformkittsx) · [`pixel/HomeHud.tsx`](#srccomponentspixelhomehudtsx) · [`pixel/PixelKit.tsx`](#srccomponentspixelpixelkittsx) · [`pixel/RitualPanel.tsx`](#srccomponentspixelritualpaneltsx) · [`pixel/SpriteAnim.tsx`](#srccomponentspixelspriteanimtsx) · [`ui/Icon.tsx`](#srccomponentsuiicontsx) · [`ui/NavGlyphs.tsx`](#srccomponentsuinavglyphstsx) · [`ui/OfflineSeal.tsx`](#srccomponentsuiofflinesealtsx) · [`ui/ScreenSkeleton.tsx`](#srccomponentsuiscreenskeletontsx) · [`ui/Viewport.tsx`](#srccomponentsuiviewporttsx) · [`ui/sonner.tsx`](#srccomponentsuisonnertsx)
+- **Infraestrutura de UI:** [`ConfirmDialog.tsx`](#srccomponentsconfirmdialogtsx) · [`PixelFrame.tsx`](#srccomponentspixelframetsx) · [`figma/ImageWithFallback.tsx`](#srccomponentsfigmaimagewithfallbacktsx) · [`form/FormKit.tsx`](#srccomponentsformformkittsx) · [`pixel/HomeHud.tsx`](#srccomponentspixelhomehudtsx) · [`pixel/PixelKit.tsx`](#srccomponentspixelpixelkittsx) · [`pixel/RitualPanel.tsx`](#srccomponentspixelritualpaneltsx) · [`pixel/SpriteAnim.tsx`](#srccomponentspixelspriteanimtsx) · [`pixel/VisorBar.tsx`](#srccomponentspixelvisorbartsx) · [`ui/Icon.tsx`](#srccomponentsuiicontsx) · [`ui/NavGlyphs.tsx`](#srccomponentsuinavglyphstsx) · [`ui/OfflineSeal.tsx`](#srccomponentsuiofflinesealtsx) · [`ui/ScreenSkeleton.tsx`](#srccomponentsuiscreenskeletontsx) · [`ui/Viewport.tsx`](#srccomponentsuiviewporttsx) · [`ui/sonner.tsx`](#srccomponentsuisonnertsx)
 
 ---
 
@@ -784,6 +784,11 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Props:** `sheet` (`AnimSheet` de `utils/animArt.ts`), `size`, `durationMs`, `loop`, `style`, `className`.
 **Estado/efeitos relevantes:** nenhum — apresentação pura.
 **Usado por:** `CompanionHUD.tsx` (coração do carinho, respingo do banho, Z do sono, migalhas), `CareSystem.tsx` (plop do cocô).
+
+### `src/components/pixel/VisorBar.tsx`
+**Papel:** barra segmentada PIXEL dentro do visor (D3): moldura 96×8 + segmentos 6×6 de `utils/hudArt.ts`; meia unidade = segmento de 3 px. A barra DOM da Home é do aparelho e continua.
+**Props:** `value`, `max`, `label`, `style`.
+**Usado por:** `CompanionHUD.tsx` (HP e energia no canto do palco, `data-visor-hud`).
 
 ### `src/components/pixel/TimingBar.tsx`
 **Dono de:** a mecânica de timing de todo combate do Soulmon — marcador vaivém, `onStop` devolve precisão 0..1; quem interpreta o número é cada jogo.
