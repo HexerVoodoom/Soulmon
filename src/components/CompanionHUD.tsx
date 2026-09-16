@@ -1189,6 +1189,23 @@ export const CompanionHUD = memo(function CompanionHUD({
           // preenche a tela inteira.
           screenStyle={cenario ? (cenarioBase ? { backgroundColor: cenarioBase } : { background: cenario }) : undefined}
         >
+        {/* Mini-HUD pixel DENTRO do visor (D3, 16/09/2026): HP e energia como
+            barras segmentadas de arte, no canto superior esquerdo do VIDRO.
+            A barra DOM do topo da Home é do aparelho e segue existindo.
+
+            Filho direto do `.screen`, e NÃO da janela do palco logo abaixo: a
+            composição de 250px é ancorada em `bottom: 0` e vaza pelo TOPO da
+            tela (214px), então um `top: 6` medido nela caía ~30px acima do
+            vidro — as barras existiam no DOM, com `aria-valuenow` certo, e
+            ninguém as via (achado ao medir no browser em 16/09/2026).
+
+            A `VisorBar` desenha a 1× e recebe o MESMO `scale` do Viewport
+            (canvas Sistema SIS-05): barra e sprite na mesma grade de pixel; a
+            margem também é em px lógicos × escala. */}
+        <div style={{ position: 'absolute', left: 3 * VIEW_SCALE, top: 3 * VIEW_SCALE, zIndex: 15, display: 'grid', gap: 2 * VIEW_SCALE, pointerEvents: 'none' }} data-visor-hud>
+          <VisorBar value={healthPoints} max={maxHealthPoints} scale={VIEW_SCALE} label={language === 'pt-BR' ? 'Corações' : 'Hearts'} />
+          <VisorBar value={energyPoints} max={maxEnergy} scale={VIEW_SCALE} label={language === 'pt-BR' ? 'Energia' : 'Energy'} />
+        </div>
         <div
           className="p-3"
           style={{
@@ -1320,13 +1337,6 @@ export const CompanionHUD = memo(function CompanionHUD({
               />
             )}
 
-            {/* Mini-HUD pixel DENTRO do visor (D3, 16/09/2026): HP e energia como
-                barras segmentadas de arte, no canto superior esquerdo do palco.
-                A barra DOM do topo da Home é do aparelho e segue existindo. */}
-            <div style={{ position: 'absolute', left: 6, top: 6, zIndex: 15, display: 'grid', gap: 3, pointerEvents: 'none' }} data-visor-hud>
-              <VisorBar value={healthPoints} max={maxHealthPoints} label={language === 'pt-BR' ? 'Corações' : 'Hearts'} />
-              <VisorBar value={energyPoints} max={maxEnergy} label={language === 'pt-BR' ? 'Energia' : 'Energy'} />
-            </div>
 
             {/* Berço — mobília BASE do espaço `nest` (utils/petStage.ts).
                 A caixa vem do palco e a arte vem de `nestArt.ts`: aqui não há

@@ -1,4 +1,5 @@
 import { CSSProperties, ReactNode, useEffect, useRef, useState } from 'react';
+import { HUD_ART } from '../../utils/hudArt';
 
 /**
  * `Viewport` — o elemento de marca do Soulmon.
@@ -69,6 +70,16 @@ export interface ViewportProps {
    * congelaria o interior num dos temas.
    */
   screenClassName?: string;
+  /**
+   * Moldura 9-slice pixel (`hudArt.frame`, cano + trepadeira, 96² com cantos
+   * de 24) como OVERLAY dentro do vidro — `position: absolute; inset: 0`,
+   * sob o reflexo, `pointer-events: none` (X2 do canvas Sistema, SIS-05). O
+   * anel de cobre continua sendo a fronteira externa; a moldura nunca sai do
+   * retângulo `--sm2-viewport-bg`. Opcional (Masmorra/Torneio); **nunca na
+   * Home**, nunca em volta de card ou botão. Desenhada a 1× (24 CSS px de
+   * cano), como no artboard.
+   */
+  frame?: boolean;
 }
 
 /**
@@ -158,6 +169,7 @@ export function Viewport({
   style,
   screenStyle,
   screenClassName,
+  frame = false,
 }: ViewportProps) {
   const reduced = usePrefersReducedMotion();
   // Guard de escala inteira: se alguém passar 2.5 por `as any` num JSX, o
@@ -190,6 +202,23 @@ export function Viewport({
         style={{ ...screenStyle, width: width * s, height: height * s }}
       >
         {children}
+        {/* A moldura vem DEPOIS do conteúdo e ANTES do reflexo: cobre o
+            sprite nas bordas (é uma moldura) e o vidro cobre a moldura (é um
+            vidro). Mesmo contrato do `.sm2-viewport-glass`: absoluto e sem
+            eventos, para não roubar o gesto de esfregar o pet. */}
+        {frame && (
+          <div
+            className="sm2-viewport-frame"
+            aria-hidden="true"
+            data-viewport-frame
+            style={{
+              borderWidth: HUD_ART.frameSlice,
+              borderImageSource: `url(${HUD_ART.frame})`,
+              borderImageSlice: HUD_ART.frameSlice,
+              borderImageWidth: HUD_ART.frameSlice,
+            }}
+          />
+        )}
         <div className="sm2-viewport-glass" aria-hidden="true" />
       </div>
     </div>

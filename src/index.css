@@ -7608,3 +7608,21 @@ body {
   cursor: pointer;
   &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
 }
+
+/* ── Moldura 9-slice DENTRO do vidro (`Viewport frame`) ──────────────────
+   Overlay absoluto sob o reflexo (X2 do canvas Sistema, SIS-05): a arte
+   pixel do cano/trepadeira (`hudArt.frame`, 96² com cantos de 24) veste o
+   retângulo `--sm2-viewport-bg`, nunca a superfície do aparelho. A largura da
+   borda, a fonte e a fatia vêm inline do componente (url do import do Vite —
+   o hash do asset continua sendo do bundler); aqui mora só o que é forma. */
+.sm2-viewport-frame {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  pointer-events: none;
+  border-style: solid;
+  border-color: transparent;
+  border-image-repeat: round;
+  border-radius: var(--sm2-radius-md);
+  image-rendering: pixelated;
+}

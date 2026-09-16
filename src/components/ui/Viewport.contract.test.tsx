@@ -74,4 +74,27 @@ describe('Viewport — a medida da tela é do componente, não do chamador', () 
     const px = parseFloat(tela.style.width);
     expect(Number.isInteger(px / 50), `escala fracionária vazou: ${tela.style.width}`).toBe(true);
   });
+
+  /**
+   * X2 do canvas Sistema (SIS-05): a moldura 9-slice é overlay DENTRO do
+   * vidro, sob o reflexo. Fora do `.screen` ela vira PNG pixel na superfície
+   * do aparelho — exatamente o que o crítico reprovou no artboard.
+   */
+  it('`frame` desenha a moldura DENTRO da tela, antes do reflexo, e sem eventos', () => {
+    const { container } = render(<Viewport width={64} height={48} scale={2} frame />);
+    const tela = screenOf(container);
+    const moldura = tela.querySelector('.sm2-viewport-frame') as HTMLElement | null;
+    expect(moldura, 'a moldura não está dentro de .sm2-viewport-screen').not.toBeNull();
+    expect(moldura!.getAttribute('aria-hidden')).toBe('true');
+    expect(moldura!.style.borderImageSource).toMatch(/^url\(/);
+    expect(moldura!.style.borderWidth).toBe('24px');
+    // sob o reflexo: o vidro é o ÚLTIMO filho, a moldura vem antes
+    const filhos = Array.from(tela.children);
+    expect(filhos.indexOf(moldura!)).toBeLessThan(filhos.indexOf(tela.querySelector('.sm2-viewport-glass')!));
+  });
+
+  it('sem `frame` não há moldura (padrão = nunca na Home)', () => {
+    const { container } = render(<Viewport width={64} height={48} scale={2} />);
+    expect(screenOf(container).querySelector('.sm2-viewport-frame')).toBeNull();
+  });
 });

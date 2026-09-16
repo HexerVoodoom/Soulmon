@@ -3,7 +3,8 @@
 //   bar-frame-96x8 — moldura de barra vazia (A5), trilho petróleo, aro cobre
 //   bar-fill-6     — um segmento ciano 6×6, repetido dentro do trilho
 //   frame-pipe-vine-96 — moldura 9-slice 96² (A6), cantos de 24 px
-// Mapa só; o consumidor (`HomeHud`, `Viewport`) entra com o canvas Sistema.
+// Mapa só. Consumidores: `pixel/VisorBar.tsx` (barras) e `ui/Viewport.tsx`
+// (`frame` — overlay 9-slice DENTRO do vidro, canvas Sistema SIS-05/X2).
 import barFrame from '../assets/soulmon/hud/bar-frame-96x8.png';
 import barFill from '../assets/soulmon/hud/bar-fill-6.png';
 import frame from '../assets/soulmon/hud/frame-pipe-vine-96.png';
