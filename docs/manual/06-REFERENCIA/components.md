@@ -19,7 +19,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 - **Conta e configurações:** [`SettingsPage.tsx`](#srccomponentssettingspagetsx) · [`SettingsModal.tsx`](#srccomponentssettingsmodaltsx) · [`AccountSection.tsx`](#srccomponentsaccountsectiontsx) · [`AccountDataSection.tsx`](#srccomponentsaccountdatasectiontsx) · [`AISettingsModal.tsx`](#srccomponentsaisettingsmodaltsx) · [`NotificationManager.tsx`](#srccomponentsnotificationmanagertsx) · [`InstallPrompt.tsx`](#srccomponentsinstallprompttsx) · [`GuideModal.tsx`](#srccomponentsguidemodaltsx) · [`HelpModal.tsx`](#srccomponentshelpmodaltsx) · [`GameTutorialFlow.tsx`](#srccomponentsgametutorialflowtsx) · [`WelcomePromptModal.tsx`](#srccomponentswelcomepromptmodaltsx) · [`CityPicker.tsx`](#srccomponentscitypickertsx)
 - **Onboarding e oráculo:** [`SoulmonOnboarding.tsx`](#srccomponentssoulmononboardingtsx) · [`OraclePage.tsx`](#srccomponentsoraclepagetsx) · [`SoulTestItem.tsx`](#srccomponentssoultestitemtsx) · [`AlignmentIcons.tsx`](#srccomponentsalignmenticonstsx) · [`PixelizerCard.tsx`](#srccomponentspixelizercardtsx) · [`NewReadingModal.tsx`](#srccomponentsnewreadingmodaltsx)
 - **Comunidade:** [`LibraryPage.tsx`](#srccomponentslibrarypagetsx) · [`PlayerDetailModal.tsx`](#srccomponentsplayerdetailmodaltsx) · [`CoopPanel.tsx`](#srccomponentscooppaneltsx) · [`TournamentPage.tsx`](#srccomponentstournamentpagetsx)
-- **Infraestrutura de UI:** [`ConfirmDialog.tsx`](#srccomponentsconfirmdialogtsx) · [`PixelFrame.tsx`](#srccomponentspixelframetsx) · [`figma/ImageWithFallback.tsx`](#srccomponentsfigmaimagewithfallbacktsx) · [`form/FormKit.tsx`](#srccomponentsformformkittsx) · [`pixel/HomeHud.tsx`](#srccomponentspixelhomehudtsx) · [`pixel/PixelKit.tsx`](#srccomponentspixelpixelkittsx) · [`pixel/RitualPanel.tsx`](#srccomponentspixelritualpaneltsx) · [`ui/Icon.tsx`](#srccomponentsuiicontsx) · [`ui/NavGlyphs.tsx`](#srccomponentsuinavglyphstsx) · [`ui/OfflineSeal.tsx`](#srccomponentsuiofflinesealtsx) · [`ui/ScreenSkeleton.tsx`](#srccomponentsuiscreenskeletontsx) · [`ui/Viewport.tsx`](#srccomponentsuiviewporttsx) · [`ui/sonner.tsx`](#srccomponentsuisonnertsx)
+- **Infraestrutura de UI:** [`ConfirmDialog.tsx`](#srccomponentsconfirmdialogtsx) · [`PixelFrame.tsx`](#srccomponentspixelframetsx) · [`figma/ImageWithFallback.tsx`](#srccomponentsfigmaimagewithfallbacktsx) · [`form/FormKit.tsx`](#srccomponentsformformkittsx) · [`pixel/HomeHud.tsx`](#srccomponentspixelhomehudtsx) · [`pixel/PixelKit.tsx`](#srccomponentspixelpixelkittsx) · [`pixel/RitualPanel.tsx`](#srccomponentspixelritualpaneltsx) · [`pixel/SpriteAnim.tsx`](#srccomponentspixelspriteanimtsx) · [`ui/Icon.tsx`](#srccomponentsuiicontsx) · [`ui/NavGlyphs.tsx`](#srccomponentsuinavglyphstsx) · [`ui/OfflineSeal.tsx`](#srccomponentsuiofflinesealtsx) · [`ui/ScreenSkeleton.tsx`](#srccomponentsuiscreenskeletontsx) · [`ui/Viewport.tsx`](#srccomponentsuiviewporttsx) · [`ui/sonner.tsx`](#srccomponentsuisonnertsx)
 
 ---
 
@@ -778,6 +778,12 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Chamado por:** `src/App.tsx` (`grep -rl "from '.*/RitualPanel'" src`, 09/09/2026).
 **Régua:** `src/components/pixel/RitualPanel.render.test.tsx`.
 **Avisos do arquivo:** coluna única até 768px (duas colunas só a partir daí, e nem isso é feito aqui); nome do item trunca com `…` + `title` completo, nunca altura dependente de texto; sem ícone não sobra caixa vazia (quadro de cobre em volta do ícone saiu por direção do dono); a coluna de texto inteira é o botão de editar.
+
+### `src/components/pixel/SpriteAnim.tsx`
+**Papel:** spritesheet quadro a quadro DENTRO do visor — tira horizontal de N células avançada por `background-position` em `steps(N)`; `prefers-reduced-motion` mostra o último quadro (`.sm-sheet` no bloco único de movimento reduzido do `index.css`).
+**Props:** `sheet` (`AnimSheet` de `utils/animArt.ts`), `size`, `durationMs`, `loop`, `style`, `className`.
+**Estado/efeitos relevantes:** nenhum — apresentação pura.
+**Usado por:** `CompanionHUD.tsx` (coração do carinho, respingo do banho, Z do sono, migalhas), `CareSystem.tsx` (plop do cocô).
 
 ### `src/components/pixel/TimingBar.tsx`
 **Dono de:** a mecânica de timing de todo combate do Soulmon — marcador vaivém, `onStop` devolve precisão 0..1; quem interpreta o número é cada jogo.

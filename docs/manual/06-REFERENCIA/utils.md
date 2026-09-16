@@ -13,7 +13,7 @@ Cobertura: **120/120** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 **Tarefas e hábitos** — [`goalToCategory.ts`](#srcutilsgoaltocategoryts), [`habitCreate.ts`](#srcutilshabitcreatets), [`habitRhythm.ts`](#srcutilshabitrhythmts), [`quickAdd.ts`](#srcutilsquickaddts), [`rituals.ts`](#srcutilsritualsts), [`taskSuggestions.ts`](#srcutilstasksuggestionsts), [`taskTriage.ts`](#srcutilstasktriagets), [`tinyOffer.ts`](#srcutilstinyofferts), [`weekBalance.ts`](#srcutilsweekbalancets)
 **Economia (moedas, loja, monetização)** — [`backgrounds.ts`](#srcutilsbackgroundsts), [`currencies.ts`](#srcutilscurrenciests), [`entitlements.ts`](#srcutilsentitlementsts), [`missions.ts`](#srcutilsmissionsts), [`monetization.ts`](#srcutilsmonetizationts), [`offerMoment.ts`](#srcutilsoffermomentts), [`playBilling.ts`](#srcutilsplaybillingts), [`priceLabel.ts`](#srcutilspricelabelts), [`seasons.ts`](#srcutilsseasonsts), [`shop.ts`](#srcutilsshopts), [`shopBuy.ts`](#srcutilsshopbuyts), [`weeklyMissions.ts`](#srcutilsweeklymissionsts)
 **Jogos (arena, masmorra, torneio)** — [`arena.ts`](#srcutilsarenats), [`dungeon.ts`](#srcutilsdungeonts), [`dungeonScenes.ts`](#srcutilsdungeonscenests), [`fxArt.ts`](#srcutilsfxartts), [`tournamentSeason.ts`](#srcutilstournamentseasonts), [`tournamentTiers.ts`](#srcutilstournamenttiersts)
-**Oráculo, ficha e sprites** — [`adventureArt.ts`](#srcutilsadventureartts), [`decorArt.ts`](#srcutilsdecorartts), [`derivedAttackFxArt.ts`](#srcutilsderivedattackfxartts), [`dreamArt.ts`](#srcutilsdreamartts), [`elementIconArt.ts`](#srcutilselementiconartts), [`gateDraft.ts`](#srcutilsgatedraftts), [`itemArt.ts`](#srcutilsitemartts), [`libraryNpcs.ts`](#srcutilslibrarynpcsts), [`newReading.ts`](#srcutilsnewreadingts), [`oracle.ts`](#srcutilsoraclets), [`oracleDraft.ts`](#srcutilsoracledraftts), [`pixelizer.ts`](#srcutilspixelizerts), [`soulProfile/astrology/chart.ts`](#srcutilssoulprofileastrologychartts), [`soulProfile/astrology/prominence.ts`](#srcutilssoulprofileastrologyprominencets), [`soulProfile/astrology/types.ts`](#srcutilssoulprofileastrologytypests), [`soulProfile/axes.ts`](#srcutilssoulprofileaxests), [`soulProfile/bestiary/select.ts`](#srcutilssoulprofilebestiaryselectts), [`soulProfile/cities.ts`](#srcutilssoulprofilecitiests), [`soulProfile/derivedElements.ts`](#srcutilssoulprofilederivedelementsts), [`soulProfile/essenceLabels.ts`](#srcutilssoulprofileessencelabelsts), [`soulProfile/ficha/buildSheet.ts`](#srcutilssoulprofilefichabuildsheetts), [`soulProfile/ficha/capture.ts`](#srcutilssoulprofilefichacapturets), [`soulProfile/ficha/cascata.ts`](#srcutilssoulprofilefichacascatats), [`soulProfile/ficha/classTitle.ts`](#srcutilssoulprofilefichaclasstitlets), [`soulProfile/ficha/fromInput.ts`](#srcutilssoulprofilefichafrominputts), [`soulProfile/ficha/realEngine.ts`](#srcutilssoulprofileficharealenginets), [`soulProfile/ficha/realSkillPower.ts`](#srcutilssoulprofileficharealskillpowerts), [`soulProfile/ficha/skills.ts`](#srcutilssoulprofilefichaskillsts), [`soulProfile/ficha/types.ts`](#srcutilssoulprofilefichatypests), [`soulProfile/identity.ts`](#srcutilssoulprofileidentityts), [`soulProfile/index.ts`](#srcutilssoulprofileindexts), [`soulProfile/numerology.ts`](#srcutilssoulprofilenumerologyts), [`soulProfile/personality/labels.ts`](#srcutilssoulprofilepersonalitylabelsts), [`soulProfile/personality/questions.ts`](#srcutilssoulprofilepersonalityquestionsts), [`soulProfile/personality/scoring.ts`](#srcutilssoulprofilepersonalityscoringts), [`soulProfile/personality/types.ts`](#srcutilssoulprofilepersonalitytypests), [`soulProfile/pipeline.ts`](#srcutilssoulprofilepipelinets), [`soulProfile/profile.ts`](#srcutilssoulprofileprofilets), [`soulProfile/ritualAnswers.ts`](#srcutilssoulprofileritualanswersts), [`soulProfile/types.ts`](#srcutilssoulprofiletypests), [`spriteCopy.ts`](#srcutilsspritecopyts), [`spriteGen.ts`](#srcutilsspritegents), [`spriteLibrary.ts`](#srcutilsspritelibraryts), [`spriteRunner.ts`](#srcutilsspriterunnerts), [`spriteTrigger.ts`](#srcutilsspritetriggerts), [`sprites.ts`](#srcutilsspritests)
+**Oráculo, ficha e sprites** — [`adventureArt.ts`](#srcutilsadventureartts), [`decorArt.ts`](#srcutilsdecorartts), [`achievements.ts`](#srcutilsachievementsts), [`animArt.ts`](#srcutilsanimartts), [`attackFxArt.ts`](#srcutilsattackfxartts), [`emblemArt.ts`](#srcutilsemblemartts), [`hudArt.ts`](#srcutilshudartts), [`placeholderArt.ts`](#srcutilsplaceholderartts), [`sigilArt.ts`](#srcutilssigilartts), [`dreamArt.ts`](#srcutilsdreamartts), [`elementIconArt.ts`](#srcutilselementiconartts), [`gateDraft.ts`](#srcutilsgatedraftts), [`itemArt.ts`](#srcutilsitemartts), [`libraryNpcs.ts`](#srcutilslibrarynpcsts), [`newReading.ts`](#srcutilsnewreadingts), [`oracle.ts`](#srcutilsoraclets), [`oracleDraft.ts`](#srcutilsoracledraftts), [`pixelizer.ts`](#srcutilspixelizerts), [`soulProfile/astrology/chart.ts`](#srcutilssoulprofileastrologychartts), [`soulProfile/astrology/prominence.ts`](#srcutilssoulprofileastrologyprominencets), [`soulProfile/astrology/types.ts`](#srcutilssoulprofileastrologytypests), [`soulProfile/axes.ts`](#srcutilssoulprofileaxests), [`soulProfile/bestiary/select.ts`](#srcutilssoulprofilebestiaryselectts), [`soulProfile/cities.ts`](#srcutilssoulprofilecitiests), [`soulProfile/derivedElements.ts`](#srcutilssoulprofilederivedelementsts), [`soulProfile/essenceLabels.ts`](#srcutilssoulprofileessencelabelsts), [`soulProfile/ficha/buildSheet.ts`](#srcutilssoulprofilefichabuildsheetts), [`soulProfile/ficha/capture.ts`](#srcutilssoulprofilefichacapturets), [`soulProfile/ficha/cascata.ts`](#srcutilssoulprofilefichacascatats), [`soulProfile/ficha/classTitle.ts`](#srcutilssoulprofilefichaclasstitlets), [`soulProfile/ficha/fromInput.ts`](#srcutilssoulprofilefichafrominputts), [`soulProfile/ficha/realEngine.ts`](#srcutilssoulprofileficharealenginets), [`soulProfile/ficha/realSkillPower.ts`](#srcutilssoulprofileficharealskillpowerts), [`soulProfile/ficha/skills.ts`](#srcutilssoulprofilefichaskillsts), [`soulProfile/ficha/types.ts`](#srcutilssoulprofilefichatypests), [`soulProfile/identity.ts`](#srcutilssoulprofileidentityts), [`soulProfile/index.ts`](#srcutilssoulprofileindexts), [`soulProfile/numerology.ts`](#srcutilssoulprofilenumerologyts), [`soulProfile/personality/labels.ts`](#srcutilssoulprofilepersonalitylabelsts), [`soulProfile/personality/questions.ts`](#srcutilssoulprofilepersonalityquestionsts), [`soulProfile/personality/scoring.ts`](#srcutilssoulprofilepersonalityscoringts), [`soulProfile/personality/types.ts`](#srcutilssoulprofilepersonalitytypests), [`soulProfile/pipeline.ts`](#srcutilssoulprofilepipelinets), [`soulProfile/profile.ts`](#srcutilssoulprofileprofilets), [`soulProfile/ritualAnswers.ts`](#srcutilssoulprofileritualanswersts), [`soulProfile/types.ts`](#srcutilssoulprofiletypests), [`spriteCopy.ts`](#srcutilsspritecopyts), [`spriteGen.ts`](#srcutilsspritegents), [`spriteLibrary.ts`](#srcutilsspritelibraryts), [`spriteRunner.ts`](#srcutilsspriterunnerts), [`spriteTrigger.ts`](#srcutilsspritetriggerts), [`sprites.ts`](#srcutilsspritests)
 **Som** — [`audioBus.ts`](#srcutilsaudiobusts), [`loudness.ts`](#srcutilsloudnessts), [`sounds.ts`](#srcutilssoundsts)
 **Persistência (save, conta, storage)** — [`accountData.ts`](#srcutilsaccountdatats), [`auth.ts`](#srcutilsauthts), [`cloudSave.ts`](#srcutilscloudsavets), [`consent.ts`](#srcutilsconsentts), [`playerDay.ts`](#srcutilsplayerdayts), [`safeStorage.ts`](#srcutilssafestoragets), [`serverConfig.ts`](#srcutilsserverconfigts), [`storageKeys.ts`](#srcutilsstoragekeysts)
 **Push e notificações** — [`notifications.ts`](#srcutilsnotificationsts), [`pushPriming.ts`](#srcutilspushprimingts), [`vapid.ts`](#srcutilsvapidts)
@@ -459,14 +459,54 @@ Cobertura: **120/120** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 **Chamado por:** `src/components/PetStageDecor.tsx`, `src/components/ShopModal.tsx`
 **Régua:** nenhuma (`ls src/utils/decorArt*.test.ts` vazio).
 
-### `src/utils/derivedAttackFxArt.ts`
-**Dono de:** URL do sprite de FX de ataque por elemento derivado + estado.
+### `src/utils/attackFxArt.ts`
+**Dono de:** URL do sprite de FX de ataque por elemento (18 base + 136 derivados) + estado — 924 peças em `assets/soulmon/fx-ataque/`. Era `derivedAttackFxArt.ts` até 15/09/2026 (só derivados).
 **Exports:**
 - `AttackFxState` (type) — `| 'cast' | 'aura' | 'slash' | 'impact' | 'defended' | 'orb'`
-- `derivedAttackFx` — Devolve a URL do sprite de FX de ataque para um elemento derivado + estado, ou `undefined` se não houver arte para essa combinação — de propósito, para o consumidor cair no emoji genérico de `fxArt.ts` sem quebrar.
-- `ATTACK_FX_STATES` (re-export) — reexportado por conveniência; a descrição mora no módulo de origem.
-**Chamado por:** nenhum consumidor encontrado (`grep -rl` em `src/`, `functions/`, `workers/`, `desktop/`).
-**Régua:** nenhuma (`ls src/utils/derivedAttackFxArt*.test.ts` vazio).
+- `attackFx` — URL para elemento + estado, ou `undefined` (consumidor cai no emoji de `fxArt.ts`).
+- `derivedAttackFx` — alias antigo de `attackFx`.
+- `auraForElement` — a aura para o elemento DOMINANTE do oráculo (`planta`→`vida`, `industrial`→`aco`). D9: a única chamada por agora.
+- `ATTACK_FX_COUNT`, `ATTACK_FX_STATES`.
+**Chamado por:** `components/EvolutionPath.tsx`, `components/PetPage.tsx` (aura atrás da criatura no Viewport).
+**Régua:** nenhuma (`ls src/utils/attackFxArt*.test.ts` vazio).
+
+### `src/utils/achievements.ts`
+**Dono de:** as 8 CONQUISTAS exibíveis (emblemas de arte), DERIVADAS do save na leitura — nada persistido, nenhuma lê streak.
+**Exports:**
+- `ACHIEVEMENT_IDS`, `AchievementId`, `ACHIEVEMENT_LABELS` (PT/EN).
+- `unlockedAchievements(slice)` — função pura: quais conquistas estão abertas, na ordem canônica.
+**Chamado por:** nenhum consumidor de UI ainda (a colocação é do canvas de identidade); `emblemArt.ts` importa o tipo.
+**Régua:** `src/utils/achievements.test.ts` (cada gatilho, save vazio, as 8 com arte).
+
+### `src/utils/animArt.ts`
+**Dono de:** os spritesheets de FX quadro a quadro (`assets/soulmon/fx/anim-*.png`, N células de 64 px na horizontal).
+**Exports:** `ANIM_ART` (eatCrumbs, heartBurst, showerSplash, sleepZ, poopPlop, sparklePop, dustStep, hungerDrop), `AnimSheet`, `AnimId`.
+**Chamado por:** `components/CompanionHUD.tsx`, `components/CareSystem.tsx` via `components/pixel/SpriteAnim.tsx`.
+**Régua:** nenhuma.
+
+### `src/utils/emblemArt.ts`
+**Dono de:** URL do emblema pixel (64²) de cada conquista de `achievements.ts`. Emblema-MOEDA continua número.
+**Exports:** `emblemArt(id)`, `EMBLEM_COUNT`.
+**Chamado por:** nenhum consumidor de UI ainda.
+**Régua:** `src/utils/achievements.test.ts` (as 8 têm arte).
+
+### `src/utils/hudArt.ts`
+**Dono de:** peças pixel do HUD dentro do visor (D3): moldura de barra 96×8, segmento 6², moldura 9-slice 96² (cantos 24).
+**Exports:** `HUD_ART`.
+**Chamado por:** nenhum consumidor ainda (canvas Sistema).
+**Régua:** nenhuma.
+
+### `src/utils/placeholderArt.ts`
+**Dono de:** os placeholders de forma ainda não gerada (`egg`, `cocoon`, `glitch`, 256²) — D1.
+**Exports:** `PLACEHOLDER_ART`, `PlaceholderId`.
+**Chamado por:** nenhum consumidor ainda (ligação em `displaySprite`/Reveal na Fase 2).
+**Régua:** nenhuma.
+
+### `src/utils/sigilArt.ts`
+**Dono de:** URL dos 45 sigilos do class-system (`assets/soulmon/sigilos/`, 192²) — D6.
+**Exports:** `sigilArt(id)`, `SIGIL_COUNT`.
+**Chamado por:** nenhum consumidor ainda (Ficha do Pet quando o Class-System entrar).
+**Régua:** nenhuma.
 
 ### `src/utils/dreamArt.ts`
 **Dono de:** Mapa id de sonho (`DREAM_CATALOG`) → URL da arte.
