@@ -6020,6 +6020,15 @@ button.sm-px-node {
      (`#a855f7`, inline em `utils/currencies.ts`) dava 3,65:1 sobre `bg` e
      3,47:1 sobre `surface-2`. Este dá 6,55:1 / 6,23:1. */
   --sm2-credit-ink: #6D28D9;
+  /* ASSOMBRO — a tinta PRÓPRIA da tarefa assombrada (P5 do canvas Home,
+     decisão do dono em 16/09/2026: cor dedicada, um azul-acinzentado
+     "fantasma", nunca opacidade e nunca vermelho). Sólida: quem esmaece é a
+     TINTA, não o alfa — `opacity` na linha derrubava tudo para 2,3:1 (F1 da
+     crítica). Par claro `#4E6A83`: 5,66:1 sobre `surface`, 5,21:1 sobre `bg`,
+     4,96:1 sobre `surface-2`. O chip "haunted · +relief" NÃO usa esta tinta:
+     é `gold-ink` sobre `surface-2` (convite com prêmio). Guard:
+     `styles/tokens.contrast.test.ts`. */
+  --sm2-haunted: #4E6A83;
 }
 
 /* ── TOKENS — TEMA ESCURO (canônico: o Soulmon é noturno) ────────────────── */
@@ -6047,6 +6056,10 @@ button.sm-px-node {
   --sm2-viewport-ring-deep: #241507;
   --sm2-viewport-danger: #FF8B8B;
   --sm2-credit-ink: #C9A7FF;
+  /* A proposta do lead era `#6E8AA3`: 4,21:1 sobre `surface` escura — abaixo
+     de AA. Clareado para `#829DB6`: 5,38:1 sobre `surface`, 6,40:1 sobre `bg`,
+     4,56:1 sobre `surface-2` (medido no teste, não no olho). */
+  --sm2-haunted: #829DB6;
 }
 
 /* GRAD do ícone: eixo de grade da Material Symbols. No escuro o glifo claro

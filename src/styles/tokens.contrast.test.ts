@@ -215,6 +215,12 @@ const PARES: Par[] = [
   ['btn-text sobre primary-deep', '--sm2-on-primary', '--sm2-primary-deep', AA_TEXTO],
   // O visor é escuro nos DOIS temas — a tinta dele não é a da página.
   ['viewport-ink dentro do visor', '--sm2-viewport-ink', '--sm2-viewport-bg', AA_TEXTO],
+  // A tarefa assombrada (P5, canvas Home): tinta PRÓPRIA, sólida, sobre a
+  // superfície do painel e sobre a página. A proposta do lead (`#6E8AA3` no
+  // escuro) dava 4,21:1 sobre `surface` e foi clareada aqui, pelo número.
+  ['haunted sobre surface', '--sm2-haunted', '--sm2-surface', AA_TEXTO],
+  ['haunted sobre bg', '--sm2-haunted', '--sm2-bg', AA_TEXTO],
+  ['haunted sobre surface-2', '--sm2-haunted', '--sm2-surface-2', AA_TEXTO],
   // Fills e superfícies: 3:1, o mínimo de componente não-textual (1.4.11).
   ['primary-fill sobre bg (UI)', '--sm2-primary-fill', '--sm2-bg', AA_UI],
   ['primary-fill sobre surface (UI)', '--sm2-primary-fill', '--sm2-surface', AA_UI],

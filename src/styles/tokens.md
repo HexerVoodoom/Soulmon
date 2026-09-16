@@ -66,6 +66,7 @@ localização, não a origem.
 | `--sm2-viewport-bg` | `#071413` |
 | `--sm2-viewport-ink` | `#E9F5F2` |
 | `--sm2-viewport-ring` / `-ring-deep` | `#C68642` / `#241507` |
+| `--sm2-haunted` | `#829DB6` |
 | `--sm2-icon-grad` | `-25` |
 
 ### Claro — `:root, [data-theme="light"]`
@@ -90,6 +91,7 @@ localização, não a origem.
 | `--sm2-viewport-bg` | `#0E2422` (**escuro no tema claro também**) |
 | `--sm2-viewport-ink` | `#E9F5F2` |
 | `--sm2-viewport-ring` / `-ring-deep` | `#B0722F` / `#5E3612` |
+| `--sm2-haunted` | `#4E6A83` |
 | `--sm2-icon-grad` | `0` |
 
 Dois desvios da proposta original, e os dois foram MEDIDOS, não opinados:
@@ -103,6 +105,15 @@ Dois desvios da proposta original, e os dois foram MEDIDOS, não opinados:
   `--sm2-on-danger`.** Um único "texto de botão" só funciona enquanto existe
   um só fill; no minuto em que o botão de perigo aparece, ele volta a ser a
   cor errada em cima de alguma coisa.
+
+**`--sm2-haunted` (P5, canvas Home, 16/09/2026):** a tinta PRÓPRIA da
+tarefa assombrada — azul-acinzentado "fantasma", o quarto acento, aprovado
+pelo dono contra a recomendação do crítico (que preferia `muted`). Sólida,
+nunca por opacidade (F1 da crítica: `opacity:.55` na linha dava 2,31:1 no
+claro). A proposta do lead era escuro `#6E8AA3` / claro `#4E6A83`; o escuro
+media **4,21:1** sobre `surface` (`#0F2A29`) e foi clareado para `#829DB6`
+(5,38:1). Vale para título e ícone da linha; o chip "haunted · +relief" é
+`gold-ink` sobre `surface-2`. Guard no `tokens.contrast.test.ts`.
 
 ### FOOTGUN 10 — paridade obrigatória
 
@@ -129,6 +140,9 @@ teste mecânico exigindo a paridade das chaves, nas duas direções.
 | on-danger / danger-fill | 6,54:1 | 7,50:1 | 4,5:1 |
 | on-primary / primary-deep | 8,78:1 | 8,16:1 | 4,5:1 |
 | viewport-ink / viewport-bg | 14,53:1 | 16,82:1 | 4,5:1 |
+| haunted / surface | 5,66:1 | 5,38:1 | 4,5:1 |
+| haunted / bg | 5,21:1 | 6,40:1 | 4,5:1 |
+| haunted / surface-2 | 4,96:1 | 4,56:1 | 4,5:1 |
 | gold-fill / surface (UI) | 4,80:1 | 6,60:1 | 3:1 |
 | gold-fill / bg (UI) | 4,42:1 | 7,84:1 | 3:1 |
 | primary-fill / bg (UI) | 5,55:1 | 13,21:1 | 3:1 |
