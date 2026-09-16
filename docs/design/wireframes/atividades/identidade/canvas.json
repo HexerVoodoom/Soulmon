@@ -1,0 +1,198 @@
+{
+  "annotations": [
+    {
+      "id": "leia",
+      "page": "page-1",
+      "x": 0,
+      "y": -190,
+      "w": 1100,
+      "text": "Soulmon — Atividades · IDENTIDADE (Fase 2, terceiro canvas, 16/09/2026, rodada 2 pós-crítica). Cada artboard = o wireframe de mesmo nome (../) com a identidade do canvas Sistema aplicada: tokens --sm2-*, Fredoka/Rubik, Material Symbols Rounded pelado, pixel só dentro do vidro. Estrutura idêntica aos 17 wireframes (roles, aria-labels e ordem de foco conferidos por script). Rodapé cinza = tokens, divergências com o código de hoje (achados para o staff-frontend), PT. Números = ordem de foco (1 = skip link, oculto). Escuro em todos; claro só no MainClaro (decisão 3 do dono)."
+    }
+  ],
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "title": "ATIV-02 · lista parcial",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 2310,
+      "page": "page-1"
+    },
+    {
+      "file": "MainClaro.dc.html",
+      "title": "ATIV-02 · tema claro (o mesmo DOM sob [data-theme=light])",
+      "x": 1960,
+      "y": 0,
+      "w": 390,
+      "h": 2312,
+      "page": "page-1"
+    },
+    {
+      "file": "ListaVazia.dc.html",
+      "title": "ATIV-01 · vazio",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1519,
+      "page": "page-1"
+    },
+    {
+      "file": "ListaCompleta.dc.html",
+      "title": "ATIV-03 · 05 · meta do dia cumprida; concluídas no fim",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 1595,
+      "page": "page-1"
+    },
+    {
+      "file": "CargaDoDia.dc.html",
+      "title": "D10 · carga do dia = 7ª entrada da fila 2 [decisão 13/09]",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 1641,
+      "page": "page-1"
+    },
+    {
+      "file": "LinhaTarefaEstados.dc.html",
+      "title": "ATIV-04 · 08 · 09 · 10 · linha de tarefa e TaskMeta",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1981,
+      "page": "page-2"
+    },
+    {
+      "file": "LinhaHabitoEstados.dc.html",
+      "title": "ATIV-06 · 07 · linha de hábito, passos e janela",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 2379,
+      "page": "page-2"
+    },
+    {
+      "file": "FichaHabito.dc.html",
+      "title": "ATIV-11 · 12 · 13 · a ficha do hábito (topo do EditModal) [novo — estrutura] + T5/T6",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 2023,
+      "page": "page-2"
+    },
+    {
+      "file": "CriarAtividade.dc.html",
+      "title": "ATIV-15 · CreateModal — fechado (uma linha) e aberto",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 2256,
+      "page": "page-3"
+    },
+    {
+      "file": "CriarTetoDemo.dc.html",
+      "title": "ATIV-16 · demo no teto",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1565,
+      "page": "page-3"
+    },
+    {
+      "file": "EditarAtividade.dc.html",
+      "title": "ATIV-17 · 18 · EditModal (edição; o teto NÃO tranca edição)",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 2308,
+      "page": "page-3"
+    },
+    {
+      "file": "EditarTarefa.dc.html",
+      "title": "ATIV-19 · TaskEditModal",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 2417,
+      "page": "page-3"
+    },
+    {
+      "file": "CapturaRapida.dc.html",
+      "title": "ATIV-14 · 27 · QuickAddBar (+ o botão de equilibrar no contexto)",
+      "x": 0,
+      "y": 2396,
+      "w": 390,
+      "h": 1886,
+      "page": "page-3"
+    },
+    {
+      "file": "NudgeAdiamento.dc.html",
+      "title": "ATIV-20 · PostponeNudgeSheet",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 2267,
+      "page": "page-4"
+    },
+    {
+      "file": "EquilibrarSemana.dc.html",
+      "title": "ATIV-21 · BalanceWeekModal",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 2111,
+      "page": "page-4"
+    },
+    {
+      "file": "TriagemFila.dc.html",
+      "title": "ATIV-22 · 23 · TriagePile (fila e carta)",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 1562,
+      "page": "page-4"
+    },
+    {
+      "file": "TriagemFim.dc.html",
+      "title": "ATIV-24 · fim da fila",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 1516,
+      "page": "page-4"
+    },
+    {
+      "file": "GuardadasEstados.dc.html",
+      "title": "ATIV-25 · 26 · gaveta \"Put aside\"",
+      "x": 0,
+      "y": 2407,
+      "w": 390,
+      "h": 1517,
+      "page": "page-4"
+    }
+  ],
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Atividades — a lista"
+    },
+    {
+      "id": "page-2",
+      "name": "Atividades — linhas, metadados e ficha"
+    },
+    {
+      "id": "page-3",
+      "name": "Atividades — criar e editar"
+    },
+    {
+      "id": "page-4",
+      "name": "Atividades — saídas"
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "page-1"
+  }
+}

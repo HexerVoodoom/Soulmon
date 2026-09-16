@@ -434,6 +434,8 @@ Um fluxo por despacho, dois agentes nunca no mesmo canvas (`CONTRACT.md`).
 | 12 | `wireframes/fora-do-app/` — **[canvas publicado](https://claude.ai/code/artifact/89cc5550-5b1a-4f2b-8929-759a4a68373b)** (15/09/2026, 7 artboards em 3 páginas, rodada 3 — checkpoint final do dono; `Main.dc.html` + 6 `<TelaEstado>.dc.html` + `canvas.json`) | 17 | 18 | 0 / 0 / 18 | 5 widgets + overlay + 7 copies de push: superfície que a pessoa vê **sem decidir abrir** |
 | 13 | `wireframes/onboarding-oraculo/` — **[canvas publicado](https://claude.ai/code/artifact/6dcb1aed-d52c-4c7c-ada1-c3de69f0de38)** (15/09/2026, 12 artboards em 2 páginas, rodada 3 — checkpoint final do dono; `Main.dc.html` + 11 `<TelaEstado>.dc.html` + `canvas.json`; D3: o ritual — ONB-21→33, 35→38, + ONB-44 o reveal demo pela 13.19) | 13 | 18 | 0 / 2 / 16 | uma vez por jogador pagante; é o último canvas por W5 |
 | S | `wireframes/sistema/identidade/` — **canvas Sistema (Fase 2, identidade)**: 8 artboards (SIS-01..07 + Main claro), `canvas.json`, `README.md`, `CRITICA.md`; checkpoint do dono 16/09/2026 → `identidade` (`DECISOES-WIREFRAME.md` §18) | — | 8 | — | não é fluxo: é o sistema (tokens, tipografia, átomos, o Visor) que os 13 canvases de identidade consomem |
+| H | `wireframes/home/identidade/` — canvas Home (identidade), 28 + `MainClaro`, checkpoint 16/09/2026 → `identidade` (§19) | 26 | 29 | — | P4 textura 10%, P5 `--sm2-haunted`, P6 `toys`/`groups` |
+| A | `wireframes/atividades/identidade/` — canvas Atividades (identidade), 17 + `MainClaro`, checkpoint 16/09/2026 → `identidade` (§20) | 16 | 18 | — | sem pendência do dono |
 
 ### 2.1 Home — ordem sugerida dentro do canvas
 Chrome primeiro (`HOME-40`→`HOME-42`, `HOME-43`), porque tudo se desenha dentro dele → a
