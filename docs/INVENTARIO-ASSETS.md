@@ -1,0 +1,254 @@
+# Inventário de assets — o que existe, onde vai, o que falta
+
+> **Data:** 15/09/2026 · **Escopo:** TODO asset visual disponível para o Soulmon — no repo,
+> nas levas do Gemini (`D:\Soulmon\_gemini_out\`), no kit de UI gerado no Gemini
+> (`E:\Soulmon-assets\`), no Class-System, e a marca. Medido por varredura de arquivo
+> (dimensão, alfa, referência no código), não por memória.
+> **Propósito:** ser o projeto de "onde vai cada coisa" ANTES de qualquer execução da
+> Fase 2 (identidade). Nada aqui foi instalado, movido ou gerado.
+> **Regra que governa tudo:** a tese "O Visor" (`manual/04-IDENTIDADE-VISUAL.md` §1) —
+> pixel art **só dentro do visor**; tudo fora é SVG + Material Symbols. Cada asset abaixo
+> recebe um veredito **dentro / fora / decisão do dono** por essa régua.
+
+---
+
+## 0. Números
+
+| Origem | Arquivos de imagem | Estado |
+|---|---|---|
+| `repo/src/assets/` | **1.352** (816 são FX derivados de ataque, 137 ícones de elemento) | instalado; **~150 sem nenhuma referência no código** (§2) |
+| `repo/public/` | 6 (3 favicons + 3 screenshots) | instalado |
+| `repo/android/.../drawable/` | 21 (11 sprites `sprite_*`, splash, partner_area, ui_t_bg_01) | instalado no widget |
+| `D:\Soulmon\_gemini_out\` | ~1.900 (contando `raw/` e derivados) | **5 levas não instaladas** (§3) |
+| `E:\Soulmon-assets\out\` | 179 (kit de UI pixel: botões, nav, ícones, barras, nós, janelas, logo) | **nunca instalado; quase todo FORA do visor** (§4) |
+| `D:\Soulmon\Class-System\assets\` | 137 elementos (já no repo) + **45 sigilos** (não instalados) | §5 |
+| `C:\Users\spera\Desktop\icones\ui\` (memória de 27/08) | **pasta não existe mais** | a `image 1547` virou `src/assets/backgrounds/home-scene-1547.png` |
+
+Varredura: `E:\tmp\claude\D--Soulmon\...\scratchpad\census.tsv` (caminho, dimensão, alfa, bytes).
+
+---
+
+## 1. O que está instalado E em uso — por família
+
+Todos abaixo têm importador real no `src/`. Coluna "fluxo" usa os nomes dos 13 canvases da
+Fase 1 (`design/INVENTARIO-WIREFRAMES.md`).
+
+### 1.1 Criaturas (dentro do visor — sempre)
+
+| Pasta | Qtd · formato | Mapa | Fluxo / artboard |
+|---|---|---|---|
+| `soulmon/lines/` | 24 · 256² alfa — 6 linhas × 4 estágios (ignar, lumel, serah, kaelen, orrin, thalindra) | `DUNGEON_LINE_SPRITES` (`utils/sprites.ts`) | Jogos (`MasmorraTurno`, `Arena`, `PesadeloIntro`), Onboarding-funil (`EscolherPersonagem`), Social (NPCs da Biblioteca), Home (modo demo) |
+| `soulmon/rookie.png` … `ultra.png` | 11 · 384² — árvore genérica do jogador (rookie, 3×champion, 3×ultimate, 3×mega, ultra) | `SOULMON_SPRITES` | Home (`PetDeckEstados`, `TrilhaEvolucao`), Pet (`FichaEstados`), Evolução (`EvoSpriteEstados`), Onboarding-oráculo (`Reveal`) |
+| `soulmon/dungeon-spirit.png` | 1 · 128² | `DUNGEON_SPIRIT_SPRITE` | Jogos (`MasmorraLobby`) |
+| `soulmon/mascot-raven.png` | 1 · 512² | IntroScreen | Onboarding-funil (`IntroEstados`) |
+| `android/res/drawable/sprite_*.png` | 11 — a mesma árvore genérica, para o widget | `WidgetRenderer.kt` | Fora do app (`Tamanhos`, `Escada`) |
+
+### 1.2 Cenários (dentro do visor)
+
+| Pasta | Qtd · formato | Mapa | Fluxo |
+|---|---|---|---|
+| `soulmon/bg/dungeon-6..10`, `tournament-night`, `tournament-final`, `minigame-dino`, `minigame-rps` | 9 · **1080×1920** (formato certo) | `dungeonScenes.ts`, `RPSGame.tsx` | Jogos |
+| `soulmon/bg/dungeon-1..5`, `tournament.png` | 6 · **960×540** (formato antigo, deitado) | `dungeonScenes.ts` | Jogos — ⚠️ **inconsistência**: 5 andares deitados + 5 em pé; `background-size: cover` corta ~70% dos deitados (achado §11 do `04`) |
+| `backgrounds/bg-attic … bg-swamp` | 8 · **1200×648** (pet-box da loja, formato certo) | `PET_BACKGROUNDS` (`utils/backgrounds.ts`) | Loja (`CenariosMobilias`), Home (palco do pet) |
+| `backgrounds/bg-gameboy`, `bg-matrix`, `bg-ocean` | 3 · **800×800** (formato antigo, `setting:'void'`) | idem | Loja — ⚠️ cortam nas laterais |
+| `backgrounds/home-scene-1547.png` | 1 · 1376×3058 | `CompanionHUD.tsx` | Home (fundo do palco) — é a "image 1547" da pasta do Desktop |
+| `video/evolution-bg.mp4` + thumb | 1 | `EvolutionCeremony.tsx` | Evolução (`Cerimonia`) |
+| `brand/intro.mp4` | 1 · 720×1280 | `IntroScreen.tsx` | Onboarding-funil (`IntroEstados`) |
+
+### 1.3 Decoração, itens, sonhos, aventuras (dentro do visor)
+
+| Pasta | Qtd | Mapa (chave) | Fluxo |
+|---|---|---|---|
+| `decor/` | 33 (14 delas refeitas em 08/09 — `decor-v2`) | `decorArt.ts` (id do item) | Loja (`CenariosMobilias`), Home (palco) |
+| `soulmon/nest-base.png` (+cushion, basket) | 3 · 444×249 | `nestArt` / `PetStageDecor` | Home (palco) |
+| `soulmon/items/` | 13 · 96² — 8 comidas + 3 chips + coração + glitchtama | `itemArt.ts` (**emoji**) | Home (`ItensPastinha`, `AlimentarFolha`, `ItensUsar`) |
+| `soulmon/dreams/` | 30 · 96² | `dreamArt.ts` (`Dream.id`) | Rituais (`SonhoComCena`), Pet (`DexCompleto/Parcial`) |
+| `soulmon/adventures/` | 24 · 96² | `adventureArt.ts` | Rituais (`RelatorioNormal`, aventura da noite) |
+| `soulmon/fx/` | 12 · 64²/128² — 6 partículas de cuidado + 6 FX de batalha | `fxArt.ts` (**emoji** do `Popup.icon`) | Home (`PetCarinho`, banho), Jogos (`MasmorraTurno`, `PesadeloFim`) |
+| `soulmon/icons/games/hand-*` | 3 · 128² | `RPSGame.tsx` | Jogos (`PPT`) |
+| `soulmon/icons/categories/icon-cat-*` | 8 · 128² | `types/category-icons.ts` | Atividades (`LinhaHabitoEstados`, `CriarAtividade`) — ⚠️ **pixel FORA do visor** (lista de tarefas é aparelho). Divergência a registrar no canvas de Atividades, não a reproduzir |
+| `soulmon/elementos/` | 137 · 128² | `elementIconArt.ts` (glob) | Pet (`FichaEstados` — habilidades), Jogos (ficha de ataque) |
+| `soulmon/fx-ataque/` | 816 · 128² — 136 elementos DERIVADOS × 6 estados | `derivedAttackFxArt.ts` (glob) | Jogos — ⚠️ **sem ponto de chamada**: o combate não conhece elemento (decisão de produto pendente) |
+
+### 1.4 Marca e PWA (fora do visor — vetor/imagem de marca, não pixel)
+
+| Asset | Onde |
+|---|---|
+| `public/favicon.svg`, `favicon-192x192.png`, `favicon-512x512.png` | `index.html`, `manifest.json` |
+| `android/res/mipmap-*/ic_launcher*.png`, `drawable/splash.png` | app Android |
+| Splash `#splash` — chama em SVG inline (109 `<rect>`), wordmark Silkscreen | `index.html` (não é arquivo) |
+| `src/assets/brand/final/logo.svg`, `icon-1024/512/192.png`, `loading.mp4` | **sem importador** — fonte dos favicons; guardar como "master" da marca |
+
+---
+
+## 2. Instalado mas SEM uso (≈150 arquivos) — veredito um a um
+
+Varredura: basename de cada arquivo em `src/assets/` procurado em todo `src/**/*.{ts,tsx,css}` e `index.html`.
+
+| Pasta | Qtd | O que é | Veredito |
+|---|---|---|---|
+| `soulmon/buttons/` | 13 · 878×252 etc. | botões pixel em 3 tamanhos × 4 estados | **FORA do visor → não usar.** Botão é `--sm2-*` + SVG (`04` §2.5). Candidatos a remoção do bundle |
+| `soulmon/ui/btn-sm/md/lg.png` | 3 | idem (esses 3 ainda são importados em 1 lugar) | idem — achado a registrar no canvas Sistema |
+| `soulmon/windows/window-inventory-frame.png` | 1 · 1100×821 | moldura de janela de inventário | **FORA** (folha/`ModalSheet` é vetor). Não usar |
+| `soulmon/progress/` | 4 · ~900×254 | barras HP/XP pixel (segmentada ciano/vermelha, lisa) | **DENTRO** se a barra ficar no HUD do visor (`HomeHudEstados`); **FORA** se ficar no card de stats. **Decisão do dono** — o wireframe da Home põe o HUD onde? Se dentro: reescalar para 1× (hoje 900px é 3–4× o necessário) |
+| `soulmon/icons/` (raiz) | 32 · 128² — home, profile, gear, bell, search, trash, lock, map, potion, skull, flame, bolt, sleep, bath, wake, evolution, activities, items, attr-poder/harmonia/benevolencia… | ícones pixel de SISTEMA | **FORA → não usar.** Todos têm equivalente Material Symbols (`Icon.tsx`). `A3` (atributos) e `A10` (banho/dormir) já marcados obsoletos no backlog |
+| `soulmon/icons/games/icon-game-*` | 5 · 128² — dino, dungeon, rps, tournament, activities | ícones dos cards de jogo | **FORA** (o hub de Jogos é aparelho). Material. Não usar |
+| `soulmon/evolution/node-*` | 4 · 128² — current/forecast/locked/reached | nós da árvore de evolução | **Decisão do dono**: `EvoArvore` é visor ou aparelho? O `04` §3.1 lista `EvolutionCeremony` como retrô mas não a árvore. Ver também os 8 nós do kit `E:` (§4) — dois conjuntos concorrentes |
+| `soulmon/lines/full/` | 29 · 256² — kaelen/orrin/thalindra nas 11 formas (data/vaccine/virus/ultra) | árvore completa das 3 linhas do oráculo com seed fixo | **DENTRO.** Sem consumidor porque `DUNGEON_LINE_SPRITES` só usa 4 por linha. Uso possível: `EvoArvore` de demo, `Bestiario`, inimigos por galho. Guardar |
+| `icons/icon-chip-*`, `icon-heart-item` | 4 · 128² | versão antiga dos itens (duplicada em `soulmon/items/`) | duplicata → remover |
+| `brand/mascot-candidates/` (15), `mascot-branches/` (18), `mascot-*.png` (8), `mascot-ingame/idle.png` | 42 · 2048² | exploração de mascote (Higgsfield/Gemini, jul/2026) | **fora do app** — arquivo de processo. Tirar do `src/` (pesa no repo, não no bundle). Guardar em `D:\Soulmon\brand-archive\` |
+| `brand/logo-raw.svg`, `logo-v1-raw.png`, `logo-preview.png` | 3 | rascunhos de logo | idem — arquivo |
+| `src/assets/7e77…png`, `9087…png`, `90d2…png` | 3 · hash como nome | sobras de export | remover |
+
+---
+
+## 3. Gerado e NÃO instalado (`_gemini_out/`) — por leva
+
+| Leva | Qtd · formato | O que é | Visor? | Ponto de chamada hoje | Veredito |
+|---|---|---|---|---|---|
+| `entrega2/` | 6 movimento 64² + 6 ganho 96² + `fx-heal` + `move-poof` + `nest-cradle-wide` 660×312 | poeira de passo, Z de sono, espreguiçar, selo de dia perfeito, level-up, baú, confete, burst de evolução, selo de foco; berço largo (`A12`) | dentro | **nenhum** para os 6 de movimento; ganho tem momento (`DailyReportModal`, masmorra, evolução); berço substitui `nest-base` | **instalar berço** (`nestArt`, `h:104`); ganho/movimento entram quando a animação for escrita (Home/Rituais/Evolução) |
+| `entrega3/` | 8 · 1200×648 | os 8 cenários da loja em versão DIA (solar punk) | dentro | `PET_BACKGROUNDS` aceita | **Decisão do dono**: par dia/noite (pelo relógio do app?) ou descarte. O `HANDOFF-GERACAO` diz que o teste solar punk "não continua" |
+| `entrega4/` | 7 spritesheets anim (células 64²) + **6 do Dino** (4 obstáculos 128², chão 384×48, parallax 512×128) | comer, coração, banho, sono, cocô, faísca, poeira — quadro a quadro; conjunto do Dino Runner | dentro | anim: nenhum (novo); **Dino: substitui silhuetas + linha de 1px em `DinoGame.tsx`** | **Dino = instalar já** (é o buraco mais visível; atenção à colisão do obstáculo 3). Anims: Home (`PetCarinho`, `PetDormindo`, banho) quando houver infra de spritesheet |
+| `entrega5/` | `anim-spirit-float` 384×96 · `idle-ignar` 256×128 | espírito flutuando (lobby da masmorra), idle animado do Ignar | dentro | nenhum | protótipo de "pet animado" — decisão: vale animar as 6 linhas? (6 × N gerações) |
+| `entrega6/` (raiz) | **102** · 128² — 17 elementos BASE × 6 estados | FX de ataque por elemento | dentro | nenhum (combate não tem elemento) | instalar junto com os 816 derivados quando o combate ganhar elemento; caminho barato: `fx-<el>-aura` na Evolução (galho já é elemental) |
+| `backgrounds/evolution-ritual`, `evolution-ultra` | 2 · 1080×1920 | fundos estáticos da cerimônia | dentro | a cerimônia usa vídeo | guardados; entram só se a cerimônia ganhar variação por galho |
+| `icones/tilesF/`, `aventura2/tilesD/` | 16 + 15 · 128²/96² | folhas fatiadas cruas (`F-00…`, `D-00…`) | — | — | intermediários de fatiamento; os finais já estão no repo (`elementos/`, `adventures/`). Ignorar |
+| `branches/` | 12 · 2048² + refs 512² | Igni/Nautilu/Astrase (3 runs do oráculo, 4 formas cada) | dentro | nenhum — nunca viraram sprite (xadrez falso, precisam `dechecker`) | **Decisão**: são 3 linhas a mais (9 no total) ou foram substituídas por kaelen/orrin/thalindra? Se entram: recortar + 256² |
+| `processed/` (30) e raiz (30 × 1024²) | kaelen/orrin/thalindra 11 formas | já instalados em `lines/full/` | — | — | fonte; ignorar |
+
+Levas já instaladas (conferido por nome): `backgrounds` (17/19), `decor` (21), `decor-v2` (14), `icons` (58/59 — falta só `poop.png`, que virou outro nome), `arcano` (14), `aventura` + `aventura2` (24), `entrega7/icones` (137), `berco` (1).
+
+---
+
+## 4. Kit de UI pixel — `E:\Soulmon-assets\out\` (179, nunca instalado)
+
+Gerado no Gemini a partir do "UI Design Kit v1.2" (petróleo/turquesa/cobre), alfa real, fatiado.
+**Problema estrutural: é um kit de UI em pixel art, e a tese do Visor põe a UI do lado vetor.**
+A maior parte contradiz o `04` §1 e §5.4 ("ícone nunca em box") e o `README` do kit é anterior à tese.
+
+| Pasta | Qtd | Veredito pela tese |
+|---|---|---|
+| `buttons/` 13, `controls/` 20 (nav, chips, checkbox, radio, toggle, avatar-frame, badge), `glyphs/` 14, `icons/` 45, `window/` 7, `panels/` 2 (`frame-9slice`, `panel-card`), `bars/` 6 | 107 | **FORA do visor → não instalar.** São o que os tokens `--sm2-*` + Material Symbols já resolvem. Servem só como **referência de linguagem** para o canvas Sistema (chanfro, cobre, ciano) |
+| `nodes/` 8 (cristal/orbe/shard × locked/available/complete) | 8 | mesma decisão dos `soulmon/evolution/node-*` (§2): se `EvoArvore` for visor, escolher UM dos dois conjuntos |
+| `evolution-fx/evolve-01..06` 192² | 6 | dentro (cerimônia) — mas a cerimônia é vídeo; concorre com `gain-evolution-burst` da entrega2. Guardar |
+| `scenery/bg-circuit-tile` 256² (tileável), `balloon`, `tooltip` | 3 | tile = `A14` do backlog ("opcional, o CSS já cobre"); balão/tooltip são FORA. Só o tile tem chance, como textura do visor |
+| `logo/` 8 (marca completa ×2, ícone de app ×2, chama, cristal) | 8 | **concorre com `brand/final/logo.svg`** já em uso nos favicons. Decisão do dono: qual é a marca canônica? Hoje o app usa a do repo |
+
+---
+
+## 5. Class-System — `D:\Soulmon\Class-System\assets\`
+
+| Pasta | Qtd | Estado |
+|---|---|---|
+| `elementos/` | 137 · 128² | **já no repo** (`soulmon/elementos/`, idêntico) |
+| `sigilos/` | 45 · 192² alfa — um por classe/elemento base (agua, ar, arcano, benca, combate_fisico…) | **não instalado, sem consumidor no app.** O Class-System ainda não está integrado ao Soulmon (é repo à parte). Uso futuro: Pet (`FichaEstados` — classe), Evolução (galho). Dentro do visor se acompanhar o sprite; fora se for chip de ficha (aí vira SVG). **Decisão de produto antes de arte** |
+
+---
+
+## 6. Mapa fluxo → assets (o "projeto de onde vai cada coisa")
+
+Legenda: ✅ existe e está ligado · 📦 existe, falta instalar · ❓ decisão do dono · ✏️ falta criar (→ §7)
+
+| Fluxo | Superfícies com arte bitmap (dentro do visor) | Estado |
+|---|---|---|
+| **Sistema** | nenhuma — tokens, tipografia, Material, SVG. Splash inline. Favicons/ícone de app | ✅ (marca) · ❓ marca canônica (repo × kit `E:`) |
+| **Home** | sprite do pet (11 formas / 6 linhas) · palco: `home-scene-1547` + pet-box · berço · 33 decorações · partículas de cuidado · itens (13) · cocô · HUD (barras) | ✅ sprites/decor/itens/FX · 📦 berço largo, anims (comer/coração/banho/sono/passo) · ❓ barras pixel no HUD · ✏️ **sprite do jogador** (hoje placeholder SVG quando não é linha demo) |
+| **Atividades** | nenhuma (é aparelho) — ícones de categoria hoje em pixel | ❓ registrar divergência; trocar por Material no canvas |
+| **Rituais** | 30 sonhos · 24 aventuras · selos de ganho (dia perfeito, marco 21 dias) | ✅ sonhos/aventuras · 📦 `gain-perfect-day`, `gain-focus-seal` (só se o marco for desenhado no visor; o relatório é SVG — `A16` obsoleto) |
+| **Pet** | sprite grande na ficha · 137 ícones de elemento · Dex (sonhos) · sigilos de classe | ✅ · ❓ sigilos |
+| **Onboarding-funil** | `intro.mp4` · `mascot-raven` · 6 linhas (`EscolherPersonagem`) · splash | ✅ |
+| **Onboarding-oráculo** | `Gerando` (loading) · `Reveal` (sprite gerado) · `RevealSemSprite` · `Nascimento` | ✏️ **placeholder de "ovo/silhueta"** para geração pendente ou falha · ✏️ animação de "gerando" no visor (hoje?) |
+| **Evolução** | `EvoArvore` (nós) · `Cerimonia` (vídeo) · `EvoSpriteEstados` · `Renascimento` | ✅ vídeo · ❓ nós (2 conjuntos concorrentes) · 📦 `gain-evolution-burst` / `evolve-01..06` / `fx-<el>-aura` |
+| **Jogos** | Masmorra (10 andares, inimigos, FX, espírito) · Dino (chão, obstáculos, parallax, cena) · PPT (mãos, altar) · Torneio (2 arenas) · Pesadelo | ✅ cenas 6–10, PPT, arenas, inimigos · ✏️ **regerar `dungeon-1..5` em 1080×1920** · 📦 conjunto do Dino · 📦 FX por elemento (102 + 816) quando o combate tiver elemento · ❓ Pesadelo usa qual cena? |
+| **Loja** | 8 pet-box · 33 decorações · `TorneioSegmento` (emblemas de vitrine) | ✅ · ✏️ substituir/retirar `bg-gameboy/matrix/ocean` (800²) · ❓ versão dia (entrega3) · ✏️ **arte de Emblema** (slot `trophy` = "território de Emblemas", nenhum PNG existe) |
+| **Estatísticas** | `Album`, `Bestiario` (criaturas do pool procedural) | ✏️ ❓ o bestiário mostra imagem? Hoje só texto; se sim, é geração em massa (decisão) |
+| **Social** | sprite do outro jogador (`PerfilJogador`), NPCs | ✅ (linhas) · depende do "sprite do jogador" |
+| **Conta** | nenhuma | — |
+| **Fora do app** | widget Android (11 `sprite_*`, `partner_area`, `ui_t_bg_01`, barras/corações em XML) · overlay desktop (🫶 🫧 — `A21.1`) · pushes | ✅ sprites · ✏️ glifos do overlay (2) · ✏️ **ícone monocromático de notificação** (Android `small icon` — não existe) · ❓ `ui_t_bg_01`/`partner_area` são arte antiga: conferir origem |
+
+---
+
+## 7. Lista de assets A CRIAR
+
+Ordenada por valor. Formato e regra de geração já resolvidos onde possível (ver `HANDOFF-GERACAO.md` §3 e `scripts-arte/GUIA-GEMINI.md`).
+
+### P1 — buraco visível ou bloqueia fluxo
+
+| # | Asset | Formato | Onde | Observação |
+|---|---|---|---|---|
+| C1 | **`dungeon-1..5` em pé** (regerar as 5 cenas antigas) | 1080×1920, chão contínuo nos 26% de baixo | Jogos › Masmorra | anexar a versão 960×540 como referência para manter a cena; mesma receita das 6–10 |
+| C2 | **Placeholder de criatura "em gestação"** (ovo/silhueta/glitch) | 256² alfa, pixel | Onboarding-oráculo › `RevealSemSprite`, `Gerando`; Home quando o sprite do jogador ainda não existe | hoje cai em SVG genérico. É a peça que segura a experiência enquanto a via #1 (API) não tem crédito |
+| C3 | **17 cenários pet-box que hoje são só gradiente CSS** — `bg-arena-champion`, `bg-arena-spotlight` (Torneio), `bg-room`, `bg-night`, `bg-desert`, `bg-forest`, `bg-snow`, `bg-lava`, `bg-sakura`, `bg-toytown`, `bg-synthwave`, `bg-mission-{filecity,infinity,coliseum,abyss,dinoland,aurora}` | 1200×648, chão em 74% | Loja › `CenariosMobilias`, `TorneioSegmento`; Home (palco) | corrigido: os 6 itens vendidos por Emblemas JÁ têm arte em `decorArt`; o buraco real é o catálogo de cenários — 28 vendidos, 11 com imagem (8 no formato certo). **Decisão prévia:** gerar os 17 ou podar o catálogo no canvas da Loja (vários são paleta antiga: synthwave, toytown, sakura) |
+| C4 | **Ícone monocromático de notificação** | SVG/PNG 24dp branco sobre transparente (Android) | Fora do app › `Pushes` | é vetor (fora do visor) — derivar da chama do splash, não gerar |
+| C5 | Os 2 glifos do overlay desktop (Carinho, banho) — `A21.1` | 128² alfa, pixel | Fora do app › `OverlayPrincipal` | dentro do visor do overlay |
+
+### P2 — decisões do dono (respondidas em 15/09/2026)
+
+| # | Decisão | Consequência para os assets |
+|---|---|---|
+| D1 | **Free escolhe de uma pré-seleção; pago recebe o rookie gerado e as formas seguintes são geradas conforme avança** | pré-seleção = as 6 linhas (+ `lines/full/` para as 3 do oráculo). Decidir se `branches/` (Igni/Nautilu/Astrase) entra na pré-seleção → recortar. **C2 (placeholder de forma ainda não gerada) vira obrigatório** para o pago. Seguir os wireframes (`EscolherPersonagem`, `Reveal`, `RevealSemSprite`) |
+| D2 | **Fazer os 3 para escolher** | montar folha de contato da `EvoArvore` em 3 versões: SVG por token · `soulmon/evolution/` (4) · `E:/nodes/` (8). Checkpoint do dono antes do canvas de Evolução |
+| D3 | **Pixel dentro do visor** | reescalar `progress/` (4) para 1×; `A5` (segmentada fina) e `A6` (moldura 9-slice) voltam ao backlog como P2 |
+| D4 | **Descartar versão dia** | `entrega3/` arquivada; nenhuma cena dia será gerada |
+| D5 | **Um sprite por pet; expressão por deformação (bounce/squash, como no andar e no carinho)** | NÃO gerar idle nem spritesheet de criatura (`entrega5` descartada). As 7 anims de `entrega4` são FX ao redor do pet (migalhas, coração, respingo, Z, cocô, faísca, poeira) — continuam válidas como efeito, não como sprite |
+| D6 | **Sigilos entram na Ficha do Pet, dentro do visor** | instalar os 45 de `Class-System/assets/sigilos/` (192² → conferir escala no visor); exige definir de onde vem a classe do bicho (Class-System) |
+| D7 | **Bestiário não tem superfície visual** | nada a gerar; `Estatísticas › Bestiario` sai do inventário de arte |
+| D8 | **Marca canônica = kit `E:/logo/` (chama + cristal)** | trocar favicons, `manifest.json`, `ic_launcher`, `drawable/splash.png` e a chama do `#splash`. ⚠️ Os PNGs do kit têm ~250–480px — insuficiente para ícone 1024². Precisa **vetorizar** (ou regerar em alta) antes. Arquivar `brand/final/` |
+| D9 | **Elemento vem do galho; só na Evolução por agora** | instalar `entrega6/` base (102) junto dos 816 e unificar em `attackFxArt.ts`; estrear `fx-<el>-aura` em Evolução/Ficha. Combate segue genérico |
+| Limpeza | **Aprovada** | feita em 15/09: mascotes (42), rascunhos de logo (3), sobras com hash (3) e `icons/` duplicada (4) movidos para `D:\Soulmon\brand-archive\` (124 MB). `assets.contract.test.ts` passou (25/26). **Não movidos:** `buttons/`, `ui/`, `windows/`, `progress/`, `icons/` raiz — `PixelKit.tsx` (componente em uso) importa `ui/btn-*.png` e o teste de contrato os mede; é divergência a registrar no canvas Sistema, não um `mv` |
+| Emblemas | **Aprovados os 8** (§7.1) | gerar — `arte-emblema` |
+| C3 | **Gerar os 17** | `arte-cenario` |
+| `branches/` | **Entra na pré-seleção** | recortar as 12 (B1) — 9 linhas |
+
+### 7.1 Proposta de 8 Emblemas (a aprovar) — só se o slot `trophy` ganhar conquistas, não moeda
+
+Hoje Emblema é **moeda** (`currencies.ts`: "ganhe vencendo no Torneio", também por missão semanal) e os itens da vitrine já têm arte. Se a ideia é conquista exibível no visor, proposta pelo que o jogo já mede:
+
+| # | Emblema | Gatilho já existente |
+|---|---|---|
+| 1 | Primeiro Dia Perfeito | `report.wasPerfect` |
+| 2 | 7 dias seguidos | streak (`habitRhythm`) |
+| 3 | Marco de 21 dias | `A21.2` / cerimônia de marco |
+| 4 | Primeira Evolução | `EvolutionCeremony` |
+| 5 | Forma Mega | estágio `mega` |
+| 6 | Andar 10 da Masmorra | `dungeon-10` |
+| 7 | Campeão do Torneio | `closeSeason` / ranking 1º |
+| 8 | 100 tarefas concluídas | contador de tarefas |
+
+Formato: 64² alfa, pixel, paleta do kit, sem texto. Aguarda "sim" do dono e a decisão moeda × conquista.
+
+### P3 — melhora, não destrava (backlog antigo ainda válido)
+
+| # | Asset | Ref |
+|---|---|---|
+| E1 | `A13` splash/loading como conteúdo de visor (hoje é SVG inline e funciona) | `BACKLOG-ARTE-GERAR.md` |
+| E2 | `A5` barra segmentada fina, `A6` moldura cano+vinha 9-slice — **D3 disse "dentro": válidos** | idem |
+| E3 | `A14` textura de circuito tileável — já existe em `E:/scenery/bg-circuit-tile.png` (256²); é instalar, não gerar | idem |
+| E4 | Variação de decoração para cenários claros — só se D4 aprovar o dia | `HANDOFF-GERACAO` §5 |
+
+### O que NÃO criar (já decidido)
+
+`A3` ícones de atributo, `A10` banho/dormir, `A15` traços, `A16` relatório, qualquer botão/ícone/moldura/janela pixel para fora do visor, ícone de Bits, arte de terceiro. Fundo da página do Torneio (removido de propósito).
+
+---
+
+## 8. Limpeza recomendada (antes de executar, para o inventário parar de mentir)
+
+1. Tirar do `src/assets/` o que é arquivo de processo: `brand/mascot-*` (42), rascunhos de logo (3), os 3 PNGs com hash — mover para `D:\Soulmon\brand-archive\` (fora do repo ou em `docs/`). ~90 MB de repo.
+2. Remover duplicata `src/assets/icons/` (4) — os mesmos itens vivem em `soulmon/items/`.
+3. Marcar como "não usar" (ou remover) `soulmon/buttons/`, `soulmon/ui/`, `soulmon/windows/`, `soulmon/icons/` raiz e `icons/games/icon-game-*` — pixel fora do visor. Antes, conferir o único importador de `ui/btn-*.png` e registrar a divergência.
+4. Atualizar a memória: a pasta `Desktop\icones\ui\` não existe mais; `image 1547` já está instalada.
+5. Fechar no `BACKLOG-ARTE-GERAR.md`: `A12` (berço) e `A20` (aventura) estão gerados; `A21.1` pendente; acrescentar C1–C5.
+
+---
+
+## 9. Execução
+
+Fila com uso/formato/prompt: `docs/ASSETS-A-GERAR.md`. Squad: `/squad-arte` (8 agentes `arte-*`).
+
+### 9.1 Ordem
+
+1. Limpeza (§8) → o `src/assets/` passa a conter só o que o app usa ou vai usar.
+2. Instalar o que já existe e tem ponto de chamada: **Dino** (entrega4), **berço largo** (entrega2), `bg-circuit-tile` (se D3/E3).
+3. Gerar C1–C5.
+4. Só então `/squad-design identidade sistema` — o canvas Sistema nasce sabendo que não há bitmap fora do visor e o canvas de cada fluxo referencia esta tabela (§6) como lista fechada de arte.
