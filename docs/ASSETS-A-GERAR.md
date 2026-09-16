@@ -221,14 +221,14 @@ Uso: `Fora do app › OverlayPrincipal` — rótulo do botão Carinho (hoje 🫶
 
 | # | Leva | Destino | Mapa | Observação |
 |---|---|---|---|---|
-| I1 | `entrega4/` Dino (6) | `soulmon/dino/` | `DinoGame.tsx` (`OBSTACLE_TIERS`, chão, parallax) | colisão do obstáculo 3 |
-| I2 | `entrega2/nest-cradle-wide.png` | `soulmon/` | `nestArt` (`h:104`, não 70) | substitui `nest-base` |
-| I3 | `Class-System/sigilos/` (45) | `soulmon/sigilos/` | `sigilArt.ts` (glob) | D6 |
-| I4 | `entrega6/` base (102) | `soulmon/fx-ataque/` | unificar `attackFxArt.ts` | D9 |
-| I5 | `entrega4/` anims (7) + `entrega2/` (13) | `soulmon/fx/` | `fxArt.ts` + infra de spritesheet | precisa de código de animação |
-| I6 | `progress/` reescalado | `soulmon/progress/` (1×) | HUD | D3 |
-| I7 | `branches/` recortado (12) | `soulmon/lines/` | `DUNGEON_LINE_SPRITES` (9 linhas) | D1; ajustar guard para 9 |
-| I8 | `E:/scenery/bg-circuit-tile.png` | `soulmon/` | textura do visor (`A14`) | opcional |
+| I1 | `entrega4/` Dino (6) | `soulmon/dino/` | `DinoGame.tsx` (`OBSTACLE_TIERS`, chão, parallax) | ✅ 15/09 (`dd214688`) — colisão por largura opaca |
+| I2 | `entrega2/nest-cradle-wide.png` | `soulmon/` | `nestArt` (`h:104`, não 70) | ✅ 15/09 (`dd214688`) |
+| I3 | `Class-System/sigilos/` (45) | `soulmon/sigilos/` | `sigilArt.ts` (glob) | ✅ 15/09 (`ddd87def`), sem consumidor |
+| I4 | `entrega6/` base (108, incl. neutro) | `soulmon/fx-ataque/` | `attackFxArt.ts` | ✅ 15/09 (`ddd87def`) — aura ligada em Evolução/Ficha |
+| I5 | `entrega4/` anims (7) + F6 | `soulmon/fx/` | `animArt.ts` + `SpriteAnim` | ✅ 15/09 (`55f332ad`) — ligados coração/banho/sono/migalhas/cocô; `entrega2/` (ganho/movimento) ainda não |
+| I6 | `progress/` reescalado | `soulmon/progress/` (1×) | HUD | ⏳ com o canvas Sistema (A5/A6 já entregues em `hudArt.ts`) |
+| I7 | `branches/` recortado (12) | `soulmon/lines/` | `DUNGEON_LINE_SPRITES` (9 linhas) | ✅ 15/09 (`c11dc49d`) |
+| I8 | `E:/scenery/bg-circuit-tile.png` | `soulmon/` | textura do visor (`A14`) | ⏳ opcional |
 
 Regras do instalador: fonte = arquivo canônico atual (nunca backup); `CACHE_VERSION` em `public/sw.js`; `npx vitest run` (conferir `Test Files`, não só `Tests`); commit por caminho; `docs/Attributions.md` intocado (arte própria).
 
@@ -249,7 +249,24 @@ Regras do instalador: fonte = arquivo canônico atual (nunca backup); `CACHE_VER
 - **Linhas novas:** `igni`, `nautilu`, `astrase` (ids e nomes).
 - **Git:** commit por caminho na `main` + push ao fim de cada leva; `dist/` rebuildado; testes colados.
 
-## 11. Contagem
+## 11. Estado em 15/09/2026 (fim da rodada)
+
+| # | Peça | Estado |
+|---|---|---|
+| C1 | dungeon-1..5 em pé | ✅ gerado e instalado (`559222ed`) |
+| C2 | placeholder egg/cocoon/glitch | ✅ gerado, `placeholderArt.ts`; ligação em `displaySprite`/Reveal = Fase 2 |
+| C3 | 17 pet-box + 3 regerados | ✅ gerado e instalado (`559222ed`) |
+| C4 | ícone de notificação | ✅ `drawable/ic_notification.xml` (`005a2941`) |
+| C5 | glifos do overlay | ✅ ligados (`55f332ad`) |
+| Emblemas | 8 | ✅ arte + `achievements.ts`; UI = canvas |
+| F6 | anim-hunger-drop | ✅ gerado, sem chamada |
+| M1 | marca vetorizada + derivados | ✅ (`005a2941`) |
+| H1 | EvoArvore 3 versões | 📋 folha em `_gemini_out/hud-20260915/H1-evoarvore-3-versoes.png` — **dono escolhe** |
+| H2/H3 | barra + moldura | ✅ gerados, `hudArt.ts`; consumidor = canvas Sistema |
+
+Créditos Higgsfield: 567,95 → ver `account status` (≈ 52 cenários + 12 remover-fundo + ~8 folhas ≈ 75 cr).
+
+## 12. Contagem (planejada)
 
 | | Tem | Instalar | Gerar |
 |---|---|---|---|

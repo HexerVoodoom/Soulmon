@@ -12,6 +12,13 @@
 
 ---
 
+> **Atualização 15/09/2026 (fim da rodada da SQUAD-ARTE):** as levas `entrega2` (berço), `entrega4` (Dino + 7 anims),
+> `entrega6` base (108), `branches/` (12 → linhas igni/nautilu/astrase), `Class-System/sigilos` (45) e as novas
+> `cenarios-20260915` (25), `criaturas-20260915` (12), `sprites-20260915` (8 emblemas, 3 placeholders, 2 glifos,
+> 3 HUD, 1 anim) e `marca-20260915` (kit E:/logo vetorizado) estão **instaladas**. A marca anterior foi para
+> `D:\Soulmonrand-archiverand-anterior\`. Estado por peça em `ASSETS-A-GERAR.md` §11. Os §1–§4 abaixo
+> descrevem o estado ANTES da rodada; re-varrer com `/squad-arte inventario`.
+
 ## 0. Números
 
 | Origem | Arquivos de imagem | Estado |

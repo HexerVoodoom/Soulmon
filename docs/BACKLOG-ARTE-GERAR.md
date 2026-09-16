@@ -1,5 +1,8 @@
 # Backlog de arte a gerar — Soulmon
 
+> **15/09/2026:** a fila viva de arte passou para `docs/ASSETS-A-GERAR.md` (SQUAD-ARTE, `/squad-arte`).
+> Este arquivo fica como registro dos itens A1–A21; itens novos entram lá.
+
 > Lista viva. Cada item traz **prompt pronto pra colar**, **arquivo de destino
 > dentro do projeto**, **onde é usado** e **o que anexar como referência**.
 > Ao concluir um item: marque `✅ feito`, com a data e o gerador usado.
@@ -254,7 +257,7 @@ estilo dentro da mesma conversa — prefira continuar uma conversa existente.
 
 </details>
 
-### A12 · Berço "sentável" (mais largo e raso — Ref C)
+### A12 · Berço "sentável" (mais largo e raso — Ref C) — ✅ feito 15/09/2026 (entrega 2, instalado: `nest-cradle-wide`, caixa 220×104)
 - **Destino:** `src/assets/soulmon/nest-base.png` (substitui; manter ~360×~160
   de fonte, reescala nearest)
 - **Uso:** Home — base sob o pet (`CompanionHUD.tsx` + `BASE_SLOTS.nest`)
@@ -382,7 +385,7 @@ estilo dentro da mesma conversa — prefira continuar uma conversa existente.
   > #6EFFF8, #C68642, #0D0D0D. NO magenta, purple, violet or pink.
   > Transparent PNG.
 
-### A5 · Barra segmentada fina
+### A5 · Barra segmentada fina — ✅ feito 15/09/2026, gpt_image_2 (`soulmon/hud/bar-frame-96x8` + `bar-fill-6`, mapa `hudArt.ts`; consumidor no canvas Sistema)
 - **Destino:** `src/assets/soulmon/progress/bar-segmented-thin.png`
 - **Uso:** linhas do painel "Rituais Diários" (`PixelSegmentedBar`)
 - **Anexar:** `REF-kit-v12.png` (bloco "Progress Bars & Gauges")
@@ -397,7 +400,7 @@ estilo dentro da mesma conversa — prefira continuar uma conversa existente.
   > STRICT palette: #0B3A40, #6EFFF8, #C68642, #0D0D0D. NO magenta, purple,
   > violet or pink. Transparent PNG.
 
-### A6 · Moldura de cano + vinha em 9-slice
+### A6 · Moldura de cano + vinha em 9-slice — ✅ feito 15/09/2026, gpt_image_2 (`soulmon/hud/frame-pipe-vine-96`, cantos 24)
 - **Destino:** `src/assets/soulmon/frames/pipe-{corner-tl,corner-tr,corner-bl,corner-br,edge-h,edge-v}.png`
 - **Uso:** **só splash e talvez modal**
 - **Anexar:** `REF-kit-v12.png` e `REF-splash.png`
@@ -436,7 +439,7 @@ estilo dentro da mesma conversa — prefira continuar uma conversa existente.
 
 ---
 
-## A20 · Cenas da aventura da noite (24 peças) — ⬜ pendente
+## A20 · Cenas da aventura da noite (24 peças) — ✅ feito 08/09/2026
 
 **Contexto:** `utils/adventure.ts` (08/09/2026). Cada achado que a criatura traz
 do dia tem hoje um **emoji**, e a estrutura já aceita PNG — o mesmo caminho que
@@ -466,7 +469,7 @@ por projeção de pixels depois.
 
 ---
 
-## A21 · Os glifos que renderizam VAZIO — ⬜ pendente
+## A21 · Os glifos que renderizam VAZIO — ✅ A21.1 feito 15/09/2026 (gpt_image_2, ligado no overlay); A21.2 é troca de glifo
 
 **Contexto (sessão de QA, 08/09/2026).** Nove emojis do app são do bloco
 `Symbols and Pictographs Extended-A` (U+1FA70–U+1FAFF), que começa no Emoji 12.0
@@ -492,7 +495,7 @@ ninguém gerar arte à toa: os 4 sonhos (`restWindow.ts`) já renderizam o PNG d
 `dreamArt.ts` e o emoji sobrevive só como glifo de push; `HABIT_TIER_EMOJI` não
 tem consumidor nenhum; e o 🪙 dos Bits só existe em comentário.
 
-### A21.1 · Os dois glifos do overlay de desktop
+### A21.1 · Os dois glifos do overlay de desktop — ✅ feito 15/09/2026 (`soulmon/hud/glyph-affection`, `glyph-bath`; `desktop/renderer/src/{menu,main}.ts`)
 
 - **Destino:** `src/assets/soulmon/icons/desktop/{carinho,banho}.png` (32×32 —
   a faixa do overlay é baixa; ver `desktop/renderer/src/menu.ts`, `careButton`)

@@ -7,6 +7,29 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 🎨 15/09/2026 — SQUAD-ARTE: todos os assets gerados e instalados (7 commits, `dd214688..005a2941`)
+>
+> Inventário medido (`docs/INVENTARIO-ASSETS.md`), fila com prompt por peça (`docs/ASSETS-A-GERAR.md`),
+> 8 agentes `arte-*` + skill `/squad-arte`. Decisões do dono D1–D9 registradas no inventário §7.
+> Instalado: Dino (arte própria + colisão por largura opaca), berço largo (caixa 220×104), 108 FX de
+> elemento base + aura no Viewport da Evolução/Ficha, 45 sigilos (mapa, sem UI), 3 linhas novas
+> (Igni/Nautilu/Astrase → 9 linhas, 6 personagens prontos), 25 cenários pintados (20 pet-box 1200×648 +
+> dungeon-1..5 em pé), 8 emblemas + `achievements.ts`, placeholders egg/cocoon/glitch, HUD pixel (barra,
+> segmento, moldura 9-slice), 7 spritesheets + `SpriteAnim` (coração, banho, sono, migalhas, cocô ligados),
+> glifos do overlay desktop, e a MARCA do kit E:/logo vetorizada em tudo (favicons, PWA, launcher
+> adaptativo, splash Android — era o X do Capacitor —, chama do #splash, `ic_notification`).
+>
+> **Depende do dono (§3):** H1 — escolher os nós da EvoArvore entre as 3 versões
+> (`D:\Soulmon\_gemini_out\hud-20260915\H1-evoarvore-3-versoes.png`). Ver também: `bg-gameboy` fugiu do
+> conceito "LCD chapado" (aceitar/regerar); os 3 `void` antigos (gameboy/matrix/ocean) agora têm chão — vale
+> dar `slots` a eles no canvas da Loja.
+> **Dívida aberta:** UI dos emblemas, do placeholder (D1 no `displaySprite`) e das barras pixel (D3) entra
+> com os canvases de identidade; `entrega2/` (ganho/movimento) e `sparkle-pop`/`dust-step` seguem sem
+> chamada; `progress/` ainda em 4×; ícones de categoria e `PixelKit` (botões PNG) continuam pixel FORA do
+> visor — divergência a registrar no canvas Sistema/Atividades, não consertada aqui.
+> **Ambiente:** `supabase.contract.test.ts` falha localmente por diretórios ignorados
+> (`.claude/worktrees`, `coverage`, `android/app/build`) com JWT antigo — não é o repo; limpar as pastas.
+
 > ## 🎨 15/09/2026 — FASE 2 (IDENTIDADE): PLANO VALIDADO COM O DONO — `docs/HANDOFF-IDENTIDADE.md`
 >
 > Antes de aplicar identidade, o dono validou o plano em modal (quatro escolhas):
