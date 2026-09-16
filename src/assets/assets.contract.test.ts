@@ -146,7 +146,9 @@ const CHECKER_LIMIT = 5;
 
 /** Escopo do guard de xadrez: a arte de UI em pixel. Cenários de fundo são
  *  opacos por natureza e não entram. */
-const PIXEL_ART = /^soulmon\/(icons\/|ui\/|nest-base|lines\/|progress\/)/;
+/* `ui/` saiu do escopo em 16/09/2026: a pasta (os `btn-*.png` do botão 9-slice)
+   foi para o arquivo de marca — o kit é vetor (ver o guard ZERO PNG abaixo). */
+const PIXEL_ART = /^soulmon\/(icons\/|nest-base|lines\/|progress\/)/;
 
 /**
  * QUARENTENA — arquivos que existem no repo com defeito conhecido. A regra que
@@ -784,80 +786,25 @@ describe('guard de asset — paleta (magenta/roxo da paleta antiga)', () => {
   });
 
   /**
-   * ACHADO desta rodada, e ele contraria o que estava escrito: o relatório da
-   * UI (`ui/frontend-kit-round1.md` §2a) afirma que só os PNGs `hover`/`active`
-   * trazem o halo magenta e que por isso o `normal` foi ligado. Medindo, o
-   * `normal` TAMBÉM tem — pouco, mas tem, e é a arte que está no bundle:
-   * uma linha de contorno ameixa (~rgb(98,21,86)) na borda superior.
-   * `btn-sm.png` é a mais afetada (0,65% dos pixels) e é justamente a fatia do
-   * `PixelButton size="sm"`.
+   * ZERO PNG DE BOTÃO (16/09/2026, canvas Sistema da Fase 2).
    *
-   * RESOLVIDO depois que este teste foi escrito, e o próprio teste é quem
-   * corrigiu o conserto: a primeira limpeza usou um critério de magenta mais
-   * frouxo (exigia azul > 90) e declarou `btn-sm` zerado quando o guard ainda
-   * media 0,55% — o resíduo é ameixa escura, `rgb(98,21,86)`, com azul 86.
-   * Refeito com EXATAMENTE o critério do `metricsOf` acima:
-   * `btn-sm` 1690px→7, `btn-md` 1518px→62, `btn-lg` 82px→7.
+   * Aqui viviam três casos sobre `soulmon/ui/btn-*.png` e `soulmon/buttons/*`:
+   * teto de magenta, geometria compartilhada dos quatro estados, resíduo
+   * limpo. Todos mediam a arte 9-slice do `PixelButton` — e o `PixelButton`
+   * deixou de ter arte: é vetor sobre `--sm2-*` (`components/pixel/PixelKit.tsx`,
+   * `DECISOES-WIREFRAME.md` §18). Os PNGs saíram do repositório para
+   * `E:\Soulmon\brand-archive\pixel-ui-antigo\`.
    *
-   * O que sobra é anti-aliasing na borda do bisel, não elemento de design.
-   * O inpainting (média iterativa dos vizinhos limpos) preserva a vizinhança —
-   * escolher uma cor nova ali mudaria o bisel de cobre.
-   *
-   * Os `hover`/`active` de `buttons/` NÃO são recuperáveis assim: lá o magenta
-   * é área (halo), não contorno, e não há vizinho limpo de onde puxar cor.
-   * Continuam em quarentena e fora do bundle, esperando regeração.
+   * O guard que sobra é o contrário do antigo: NENHUM arquivo de `ui/` ou
+   * `buttons/` pode voltar a ser importado por `src/`. Pixel fora do visor é
+   * exatamente o que a direção "O Visor" proíbe, e a porta mais fácil de
+   * reabrir é um `import btn from '../assets/soulmon/ui/…'` num componente.
    */
-  const TETO_MAGENTA: Record<string, number> = {
-    'soulmon/ui/btn-md.png': 0.02,
-  };
-
-  it('a arte de botão do bundle não ganha mais magenta do que já tem', async () => {
+  it('ZERO PNG: nenhuma arte de botão (ui/ ou buttons/) é importada por src/', () => {
     const alvos = [...referenced].filter(f => /^soulmon\/(ui|buttons)\//.test(rel(f)));
-    expect(alvos.length).toBeGreaterThan(0);
-    for (const f of alvos) {
-      const m = await metricsOf(f);
-      const teto = TETO_MAGENTA[rel(f)] ?? 0.01;
-      expect(m.magentaPct, `${rel(f)} tem ${m.magentaPct.toFixed(2)}% de magenta (teto ${teto}%)`)
-        .toBeLessThanOrEqual(teto);
-    }
-  });
-
-  /**
-   * O invariante que faz os estados do botão funcionarem, e que NÃO é óbvio
-   * olhando os arquivos: as fatias 9-slice (`--sm-px-slice`: 82/66/43) foram
-   * medidas na arte `normal` e são aplicadas aos QUATRO estados. Se um estado
-   * tiver dimensão diferente, a mesma fatia cai noutro ponto do desenho e a
-   * moldura pula no hover — que é exatamente o frame em que o olho está no
-   * botão. Foi por isso que os PNGs antigos não podiam ser ligados: além do
-   * magenta, o `disabled` tinha enquadramento próprio.
-   *
-   * Derivar do `normal` garante isso por construção; este caso é quem impede
-   * que alguém volte a soltar arte desenhada à parte na pasta.
-   */
-  it('os quatro estados do botão dividem a mesma geometria (a fatia é uma só)', async () => {
-    for (const [tam, curto] of [['small', 'sm'], ['medium', 'md'], ['large', 'lg']] as const) {
-      const base = await sharp(path.join(ASSETS, `soulmon/ui/btn-${curto}.png`)).metadata();
-      for (const estado of ['hover', 'active', 'disabled']) {
-        const p = `soulmon/buttons/button-${estado}-${tam}.png`;
-        const m = await sharp(path.join(ASSETS, p)).metadata();
-        expect(
-          { w: m.width, h: m.height },
-          `${p} tem ${m.width}×${m.height} e o normal tem ${base.width}×${base.height} — a fatia 9-slice não serve para os dois`,
-        ).toEqual({ w: base.width, h: base.height });
-      }
-    }
-  });
-
-  it('REGRESSÃO: a arte de botão do bundle está limpa de magenta', async () => {
-    // Este caso substitui o antigo "o resíduo é REAL", que existia para provar
-    // que o teto não era decoração. O resíduo deixou de existir, então a prova
-    // agora é a contrária: as três fatias do PixelButton medem zero.
-    // 0,55% / 0,25% / 0,05% antes; agora resíduo de anti-aliasing na casa de
-    // dezenas de pixels. O teto de 0,02% deixa margem para recompressão sem
-    // deixar passar um halo de volta (o menor halo real medido foi 2,7%).
-    for (const fn of ['btn-sm.png', 'btn-md.png', 'btn-lg.png']) {
-      const m = await metricsOf(path.join(ASSETS, 'soulmon/ui', fn));
-      expect(m.magentaPct, `${fn} voltou a ter magenta`).toBeLessThanOrEqual(0.02);
-    }
+    expect(alvos.map(rel), 'arte de botão 9-slice de volta ao bundle — o kit é vetor').toEqual([]);
+    // E as pastas não existem mais no repositório (foram para o arquivo de marca).
+    expect(fs.existsSync(path.join(ASSETS, 'soulmon/ui'))).toBe(false);
+    expect(fs.existsSync(path.join(ASSETS, 'soulmon/buttons'))).toBe(false);
   });
 });

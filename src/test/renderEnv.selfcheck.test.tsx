@@ -25,7 +25,7 @@ describe('ambiente de render — autoverificação', () => {
   it('leu o index.css de verdade (não um arquivo vazio nem um mock)', () => {
     const css = loadAppCss();
     expect(css.length).toBeGreaterThan(50_000);
-    expect(css).toContain('.sm-px-check');
+    expect(css).toContain('.sm2-kit-check');
   });
 
   it('o desembrulho de @layer preserva as regras de dentro', () => {
@@ -44,8 +44,8 @@ describe('ambiente de render — autoverificação', () => {
     expect(probe('shrink-0', 'flex-shrink')).toBe('0');
   });
 
-  it('ENXERGA uma classe fora de layer (`sm-px-check` = 44px de alvo)', () => {
-    expect(probe('sm-px-check', 'width')).toBe('44px');
+  it('ENXERGA uma classe fora de layer (`sm2-kit-check` = 44px de alvo)', () => {
+    expect(probe('sm2-kit-check', 'width')).toBe('44px');
   });
 
   it('ENXERGA a AUSÊNCIA de `w-7`/`h-7` — as classes exatas do bug de 2px', () => {

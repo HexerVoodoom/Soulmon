@@ -30,8 +30,8 @@ describe('PixelCheckbox — o componente do bug de 2px', () => {
 
   it('o quadrado desenhado é menor que o alvo — o alvo não encolhe com a arte', () => {
     const { container } = renderWithCss(<PixelCheckbox checked={false} onToggle={() => {}} />);
-    const art = container.querySelector('.sm-px-check-box')!;
-    expect(declaredTargetSize(art).w).toBe(26);
+    const art = container.querySelector('.sm2-kit-check-box')!;
+    expect(declaredTargetSize(art).w).toBe(24);
     // e é MENOR que o alvo: se um dia alguém igualar os dois, a arte volta a
     // mandar no toque, que foi a origem do defeito.
     expect(declaredTargetSize(art).w!).toBeLessThan(declaredTargetSize(screen.getByRole('checkbox')).w!);
@@ -40,12 +40,12 @@ describe('PixelCheckbox — o componente do bug de 2px', () => {
   it('estado marcado/desmarcado é observável por `aria-checked` e pela classe acesa', () => {
     const { container, rerender } = renderWithCss(<PixelCheckbox checked={false} onToggle={() => {}} />);
     expect(screen.getByRole('checkbox')).toHaveProperty('ariaChecked', 'false');
-    expect(container.querySelector('.sm-px-check-on')).toBeNull();
+    expect(container.querySelector('.sm2-kit-check-on')).toBeNull();
     rerender(<PixelCheckbox checked onToggle={() => {}} />);
     expect(screen.getByRole('checkbox').getAttribute('aria-checked')).toBe('true');
-    expect(container.querySelector('.sm-px-check-on')).not.toBeNull();
+    expect(container.querySelector('.sm2-kit-check-on')).not.toBeNull();
     // o "aceso" precisa ser visível de verdade, não só um nome de classe
-    expect(computed(container.querySelector('.sm-px-check-on')!, 'border-color')).not.toBe('');
+    expect(computed(container.querySelector('.sm2-kit-check-on')!, 'border-color')).not.toBe('');
   });
 
   it('tem par PT/EN no rótulo acessível — nenhum estado sai só em português', () => {
@@ -90,24 +90,37 @@ describe('PixelSegmentedBar', () => {
 
   it('acende exatamente os blocos correspondentes (2 de 4)', () => {
     const { container } = renderWithCss(<PixelSegmentedBar value={2} max={4} segments={4} />);
-    expect(container.querySelectorAll('.sm-px-bar-seg')).toHaveLength(4);
-    expect(container.querySelectorAll('.sm-px-bar-seg-on')).toHaveLength(2);
+    expect(container.querySelectorAll('.sm2-kit-segbar-seg')).toHaveLength(4);
+    expect(container.querySelectorAll('.sm2-kit-segbar-seg-on')).toHaveLength(2);
   });
 
   it('max=0 não explode nem acende nada (estado vazio do dia)', () => {
     const { container } = renderWithCss(<PixelSegmentedBar value={0} max={0} />);
-    expect(container.querySelectorAll('.sm-px-bar-seg-on')).toHaveLength(0);
-    expect(container.querySelectorAll('.sm-px-bar-seg').length).toBeGreaterThan(0);
+    expect(container.querySelectorAll('.sm2-kit-segbar-seg-on')).toHaveLength(0);
+    expect(container.querySelectorAll('.sm2-kit-segbar-seg').length).toBeGreaterThan(0);
   });
 
   it('valor acima do máximo satura em vez de estourar a barra', () => {
     const { container } = renderWithCss(<PixelSegmentedBar value={99} max={4} segments={4} />);
-    expect(container.querySelectorAll('.sm-px-bar-seg-on')).toHaveLength(4);
+    expect(container.querySelectorAll('.sm2-kit-segbar-seg-on')).toHaveLength(4);
+  });
+
+  it('meia unidade = metade do bloco (2,5 de 4 → 2 cheios + 1 meio)', () => {
+    const { container } = renderWithCss(<PixelSegmentedBar value={2.5} max={4} segments={4} />);
+    expect(container.querySelectorAll('.sm2-kit-segbar-seg-on')).toHaveLength(2);
+    expect(container.querySelectorAll('.sm2-kit-segbar-seg-half')).toHaveLength(1);
+  });
+
+  it('o tom "red" da API desenha em COBRE — não existe medidor vermelho', () => {
+    const { container } = renderWithCss(<PixelSegmentedBar value={1} max={4} tone="red" />);
+    const bar = container.querySelector('.sm2-kit-segbar') as HTMLElement;
+    expect(bar.style.getPropertyValue('--sm2-kit-tone')).toBe('var(--sm2-gold-fill)');
+    expect(bar.style.getPropertyValue('--sm2-kit-tone')).not.toMatch(/danger|red/);
   });
 
   it('valor negativo não acende bloco nenhum', () => {
     const { container } = renderWithCss(<PixelSegmentedBar value={-5} max={4} segments={4} />);
-    expect(container.querySelectorAll('.sm-px-bar-seg-on')).toHaveLength(0);
+    expect(container.querySelectorAll('.sm2-kit-segbar-seg-on')).toHaveLength(0);
   });
 });
 
@@ -133,10 +146,59 @@ describe('PixelButton', () => {
     expect(img.getAttribute('alt')).toBe('');
   });
 
-  it('a arte 9-slice é injetada como variável CSS (senão a moldura some)', () => {
+  it('ZERO PNG: o botão não injeta arte nem usa classe do kit pixel antigo', () => {
+    // Canvas Sistema (16/09/2026): o botão é vetor sobre `--sm2-*`. Se alguém
+    // religar `--sm-px-src`/`.sm-px-btn`, a moldura 9-slice volta para fora do
+    // visor — exatamente o que a direção "O Visor" proíbe.
     renderWithCss(<PixelButton onClick={() => {}}>Usar</PixelButton>);
     const btn = screen.getByRole('button', { name: 'Usar' });
-    expect(btn.style.getPropertyValue('--sm-px-src')).toMatch(/^url\(/);
+    expect(btn.style.getPropertyValue('--sm-px-src')).toBe('');
+    expect(btn.className).not.toMatch(/sm-px-/);
+    expect(btn.className).toContain('sm2-kit-btn');
+  });
+
+  it('`default` é o outline; `primary` é o fill — e ambos são tokens', () => {
+    const { container } = renderWithCss(
+      <>
+        <PixelButton onClick={() => {}}>Later</PixelButton>
+        <PixelButton variant="primary" onClick={() => {}}>Feed</PixelButton>
+      </>,
+    );
+    const [out, pri] = Array.from(container.querySelectorAll('button'));
+    expect(out.className).toContain('sm2-kit-btn-outline');
+    expect(pri.className).toContain('sm2-kit-btn-primary');
+    expect(computed(pri, 'background-color')).toBe('var(--sm2-primary-fill)');
+    expect(computed(pri, 'color')).toBe('var(--sm2-on-primary)');
+    expect(computed(out, 'background-color')).toBe('var(--sm2-surface)');
+  });
+
+  it('sm = 44 e lg = 56 de altura, lg ocupa a largura toda', () => {
+    const { container } = renderWithCss(
+      <>
+        <PixelButton size="sm" onClick={() => {}}>a</PixelButton>
+        <PixelButton size="lg" onClick={() => {}}>b</PixelButton>
+      </>,
+    );
+    const [sm, lg] = Array.from(container.querySelectorAll('button'));
+    expect(computed(sm, 'min-height')).toBe('44px');
+    expect(computed(lg, 'min-height')).toBe('56px');
+    expect(computed(lg, 'width')).toBe('100%');
+  });
+
+  it('`iconName` desenha o ícone Material pelado (sem img, sem box)', () => {
+    const { container } = renderWithCss(<PixelButton iconName="restaurant" onClick={() => {}}>Feed</PixelButton>);
+    expect(container.querySelector('img')).toBeNull();
+    expect(container.querySelector('.sm2-icon')).not.toBeNull();
+  });
+
+  it('`busy` desativa ao toque e anuncia aria-busy, mantendo o rótulo', () => {
+    const onClick = vi.fn();
+    renderWithCss(<PixelButton busy onClick={onClick}>Feeding…</PixelButton>);
+    const btn = screen.getByRole('button', { name: 'Feeding…' }) as HTMLButtonElement;
+    expect(btn.disabled).toBe(true);
+    expect(btn.getAttribute('aria-busy')).toBe('true');
+    fireEvent.click(btn);
+    expect(onClick).not.toHaveBeenCalled();
   });
 });
 
@@ -149,7 +211,7 @@ describe('PixelChip / PixelPanel', () => {
 
   it('o painel sem título não renderiza barra de título vazia', () => {
     const { container } = renderWithCss(<PixelPanel>conteúdo</PixelPanel>);
-    expect(container.querySelector('.sm-px-panel-title')).toBeNull();
+    expect(container.querySelector('.sm2-kit-panel-title')).toBeNull();
   });
 
   it('o painel com título renderiza o título', () => {
