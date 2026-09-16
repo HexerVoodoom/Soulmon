@@ -30,6 +30,8 @@ import { FICHA_STAGE_ORDER, type FichaStage } from '../utils/soulProfile/ficha/t
 import type { StageSkills, StageSkill } from '../utils/soulProfile/ficha/skills';
 import type { ClassTitle } from '../utils/soulProfile/ficha/classTitle';
 import { auraForElement } from '../utils/attackFxArt';
+import { ACHIEVEMENT_IDS, ACHIEVEMENT_LABELS, type AchievementId } from '../utils/achievements';
+import { emblemArt } from '../utils/emblemArt';
 import { Viewport } from './ui/Viewport';
 import { Icon } from './ui/Icon';
 import { sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
@@ -38,6 +40,8 @@ interface PetPageProps {
   stages: CreatureStage[];
   /** Elemento dominante do oráculo — aura elemental atrás da forma atual, dentro do visor (D9). */
   dominantElement?: string;
+  /** Conquistas abertas (`utils/achievements.ts`, derivadas do save pelo App). Vazio = sem faixa. */
+  achievements?: readonly AchievementId[];
   /** Skills já persistidas no save (vêm da nuvem). */
   savedSkills?: Record<FichaStage, StageSkills>;
   /** Chamado quando a página recomputa as skills a partir do perfil local —
@@ -138,7 +142,7 @@ function SkillRow({ skill, isPt }: { skill: StageSkill; isPt: boolean }) {
 
 export function PetPage({
   stages,
-  dominantElement, unlockedEvolutions, currentStageId, demoCharacterId, petName,
+  dominantElement, achievements = [], unlockedEvolutions, currentStageId, demoCharacterId, petName,
   savedSkills, onSkillsComputed, savedClassTitles, onClassTitlesComputed, language = 'pt-BR',
 }: PetPageProps) {
   const isPt = language === 'pt-BR';
@@ -242,6 +246,33 @@ export function PetPage({
             )}
             <img src={getSpriteForStage(creatureFormId(atual), demoCharacterId)} alt="" style={spriteInScreen} />
           </Viewport>
+
+          {/* Emblemas de CONQUISTA (15/09/2026): pixel, logo DENTRO de um segundo visor
+              estreito — nunca soltos no aparelho (`04` §1). Só os abertos são
+              desenhados; os fechados não viram cadeado nem silhueta (o app não cobra). */}
+          {achievements.length > 0 && (
+            <Viewport
+              width={142}
+              height={20}
+              scale={2}
+              breathing={false}
+              label={isPt ? `Conquistas: ${achievements.length} de ${ACHIEVEMENT_IDS.length}` : `Achievements: ${achievements.length} of ${ACHIEVEMENT_IDS.length}`}
+              screenStyle={{ display: 'flex', alignItems: 'center', gap: 2, padding: '0 2px' }}
+            >
+              {ACHIEVEMENT_IDS.filter(id => achievements.includes(id)).map(id => (
+                <img
+                  key={id}
+                  src={emblemArt(id)}
+                  alt={isPt ? ACHIEVEMENT_LABELS[id].pt : ACHIEVEMENT_LABELS[id].en}
+                  title={isPt ? ACHIEVEMENT_LABELS[id].pt : ACHIEVEMENT_LABELS[id].en}
+                  width={16}
+                  height={16}
+                  data-emblem={id}
+                  style={{ imageRendering: 'pixelated', display: 'block' }}
+                />
+              ))}
+            </Viewport>
+          )}
 
           <div style={{ textAlign: 'center', maxWidth: 420 }}>
             <h1 style={h1Style}>{atual.name}</h1>

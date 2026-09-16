@@ -7088,7 +7088,7 @@ button.sm-px-node {
      leitura ("ele reparou naquilo") sobrevive parada. */
   .sm-pet-haunted { animation: none !important; transform: rotate(-4deg); }
   /* WP1.1: o casulo do reveal para de pulsar e continua sendo um casulo. */
-  .sm-reveal-cocoon { animation: none !important; }
+  .sm-reveal-cocoon, .sm-reveal-cocoon-img { animation: none !important; }
   /* WP2.4: a cerimônia do marco aparece parada — a informação é a mesma. */
   .sm-milestone-pop { animation: none !important; }
   .sm2-viewport { animation: none !important; }
@@ -7671,6 +7671,11 @@ body {
   background: radial-gradient(60% 55% at 50% 40%, var(--sm2-primary-fill, #6ee7d7), transparent 70%),
               var(--sm2-surface, #1d2b2e);
   border: 2px solid var(--sm2-line, #2f4145);
+  animation: sm-reveal-cocoon-pulse 1.6s ease-in-out infinite;
+}
+/* A versão em ARTE do casulo (15/09/2026): o PNG do cristal, sem a elipse de CSS. */
+.sm-reveal-cocoon-img {
+  display: block; width: 96px; height: 96px; object-fit: contain; image-rendering: pixelated;
   animation: sm-reveal-cocoon-pulse 1.6s ease-in-out infinite;
 }
 

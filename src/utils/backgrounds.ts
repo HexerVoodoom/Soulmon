@@ -112,7 +112,8 @@ export const PET_BACKGROUNDS: Record<string, PetBackground> = {
     namePt: 'Matriz Verde',
     nameEn: 'Green Matrix',
     css: `url(${bgMatrixImg})`, baseColor: '#071d1d',
-    setting: 'void', slots: [],
+    // 15/09/2026: a arte nova tem chão em 74% — deixou de ser 'void'.
+    setting: 'outdoor', slots: GROUND_SLOTS, horizonY: 74,
   },
   'bg-forest': {
     namePt: 'Floresta Nativa',
@@ -124,13 +125,15 @@ export const PET_BACKGROUNDS: Record<string, PetBackground> = {
     namePt: 'Fundo do Mar',
     nameEn: 'Deep Sea',
     css: `url(${bgOceanImg})`, baseColor: '#2b372b',
-    setting: 'void', slots: [],
+    // 15/09/2026: a arte nova tem chão em 74% — deixou de ser 'void'.
+    setting: 'outdoor', slots: GROUND_SLOTS, horizonY: 74,
   },
   'bg-gameboy': {
     namePt: 'LCD Retrô',
     nameEn: 'Retro LCD',
-    css: `url(${bgGameboyImg})`, baseColor: '#07191a',
-    setting: 'void', slots: [],
+    css: `url(${bgGameboyImg})`, baseColor: '#2f3e2b',
+    // 15/09/2026: a arte nova tem chão em 74% — deixou de ser 'void'.
+    setting: 'indoor', slots: GROUND_SLOTS, horizonY: 74,
   },
   'bg-snow': {
     namePt: 'Terra Gelada',

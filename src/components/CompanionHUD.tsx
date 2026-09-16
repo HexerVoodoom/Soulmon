@@ -1608,6 +1608,17 @@ export const CompanionHUD = memo(function CompanionHUD({
             pré-compilado (footgun 1). Ancorado no rodapé (rodada 4): a janela
             do palco corta pelo TOPO em tela baixa, e controle cortado é defeito
             funcional, não estético. */}
+        {/* Faísca (entrega 4) sobre o pet enquanto a evolução está pronta — o
+            sinal DENTRO do visor; o botão abaixo é o aparelho. */}
+        {canEvolve && !isSleeping && (
+          <SpriteAnim
+            sheet={ANIM_ART.sparklePop}
+            size={32}
+            durationMs={900}
+            loop
+            style={{ position: 'absolute', zIndex: 25, left: `calc(${position}% + 34px)`, top: 'calc(50% - 60px)', pointerEvents: 'none' }}
+          />
+        )}
         {canEvolve && !isSleeping && (
           <PixelButton
             size="sm"

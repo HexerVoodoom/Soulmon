@@ -3,6 +3,7 @@ import ravenMascot from '../assets/soulmon/mascot-raven.png';
 import { Icon } from './ui/Icon';
 import { BirthCard } from './BirthCard';
 import { DEMO_TINTS, demoTintFilter, getSpriteForStage } from '../utils/sprites';
+import { PLACEHOLDER_ART } from '../utils/placeholderArt';
 import { ScreenSkeleton } from './ui/ScreenSkeleton';
 import { sm2Button, sm2Hint, sm2Label, sm2Text, sm2TitleStyle, Field, CheckRow } from './form/FormKit';
 import { STORAGE_KEYS } from '../utils/storageKeys';
@@ -1747,10 +1748,15 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 não vem, e o cartão abaixo segue sem imagem. */}
             {revealEsperando && !revealSprite && (
               <div style={{ display: 'flex', justifyContent: 'center', margin: '12px 0' }}>
-                <span
-                  className="sm-reveal-cocoon"
+                {/* 15/09/2026: o casulo virou ARTE — o ser dentro do cristal de chama
+                    turquesa (`placeholderArt.forming`), pulsando com a mesma classe. */}
+                <img
+                  className="sm-reveal-cocoon-img"
+                  src={PLACEHOLDER_ART.forming}
+                  width={96}
+                  height={96}
                   role="status"
-                  aria-label={isPt ? 'A criatura está tomando forma' : 'The creature is taking shape'}
+                  alt={isPt ? 'A criatura está tomando forma' : 'The creature is taking shape'}
                 />
               </div>
             )}

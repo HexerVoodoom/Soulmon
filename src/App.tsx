@@ -43,6 +43,7 @@ import { type CareEvent } from './components/CareSystem';
 import { FORM_REQUIREMENTS, getStageLevel, getStageBranch, canSelectWeekdays, getMaxEnergyForStage } from './types/progression';
 import { type Language, useTranslation, resolveLanguage } from './utils/i18n';
 import { SoulmonWidget } from './plugins/SoulmonWidgetPlugin';
+import { unlockedAchievements } from './utils/achievements';
 import { useGameState, getMaxHPForStage, type GameState, type Activity, type Task, type Step } from './contexts/GameStateContext';
 import { STORAGE_KEYS } from './utils/storageKeys';
 import {
@@ -5500,6 +5501,7 @@ export default function App() {
             <Suspense fallback={<ScreenSkeleton language={language} />}><PetPage
               stages={gameState.soulmonStages ?? []}
               dominantElement={gameState.soulmonMeta?.dominantElement}
+              achievements={unlockedAchievements(gameState)}
               unlockedEvolutions={gameState.unlockedEvolutions}
               currentStageId={gameState.evolutionStage}
               demoCharacterId={gameState.demoCharacterId}

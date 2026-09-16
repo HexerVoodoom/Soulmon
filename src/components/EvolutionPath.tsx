@@ -45,6 +45,7 @@ import { ALIGN_TO_ATTR, ATTR_COLOR, ATTR_INK, ATTR_LABEL, ATTR_ON_FILL_INK } fro
    número que tem gêmeo no CSS é como os dois lados divergem em silêncio. */
 import { Viewport, usePrefersReducedMotion, useVarreduraDeSintonia } from './ui/Viewport';
 import { auraForElement } from '../utils/attackFxArt';
+import { PLACEHOLDER_ART } from '../utils/placeholderArt';
 /* `useIsOnline` já é o dono da leitura de rede neste app (o selo "SEM SINAL").
    O card `OFFLINE` da spec (§2.2) precisa da MESMA resposta — um segundo
    `navigator.onLine` aqui seria a cópia do footgun 9 na sua forma mais boba. */
@@ -459,6 +460,19 @@ export function EvolutionPath({
 
   const estadoTexto: CSSProperties = { ...sm2Hint, margin: '4px 0 0' };
 
+  /* D1 (15/09/2026): o pago recebe o rookie gerado e as formas seguintes sob
+     demanda. Enquanto uma forma está GERANDO o visor mostra o cristal apagado (rookie) ou
+     aceso (as demais); quando a geração parou de vez (`RESERVA_FINAL`) mostra
+     o glitch. Só para quem NÃO é personagem pronto — o demo tem a arte da linha
+     e ela é a identidade dele. Fora desses dois estados, a reserva continua
+     sendo o piso (Invariante nº 1). */
+  const placeholderDoNo = (stageId: string, estado: SpriteCardState): string | undefined => {
+    if (demoCharacterId) return undefined;
+    if (estado === 'GERANDO') return stageId === 'rookie' ? PLACEHOLDER_ART.dormant : PLACEHOLDER_ART.forming;
+    if (estado === 'RESERVA_FINAL') return PLACEHOLDER_ART.glitch;
+    return undefined;
+  };
+
   /* Os 3 pontos do `GERANDO`, FORA da moldura do nó (§2.2) e quadrados, não
      bolinhas — a regra do marcador de novidade deste projeto. Sob movimento
      reduzido eles ficam estáticos (§6), e a animação reusa o `@keyframes pulse`
@@ -659,6 +673,7 @@ export function EvolutionPath({
             sprite={hidden
               ? (isForecast ? displaySprite(acervo, stageId)?.url : undefined)
               : (displaySprite(acervo, stageId)?.url
+                 ?? placeholderDoNo(stageId, estadoDoNo(stageId, isCurrent, isForecast))
                  ?? getSpriteForStage(stageId, isCurrent ? demoCharacterId : undefined))}
             /* WP4.21 — a próxima forma prevista aparece como SILHUETA quando
                já existe sprite para ela. Antes o nó `forecast` era só um selo
