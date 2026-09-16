@@ -6559,6 +6559,19 @@ button.sm-px-node {
   --sm2-radius-md: 12px;
   --sm2-radius-lg: 20px;
 
+  /* Escala de ESPAÇO — grid de 4 (P1, aprovado pelo dono em 16/09/2026,
+     `DECISOES-WIREFRAME.md` §18). Seis degraus e UM meio-passo:
+     `--sm2-space-half` (2px) só entre ícone e rótulo na mesma linha (nav,
+     chip) — qualquer outro 2/6/10/14 é literal fora do grid. Invariante de
+     tema, como raio e duração. Trava em `styles/tokens.contrast.test.ts`. */
+  --sm2-space-half: 2px;
+  --sm2-space-1: 4px;
+  --sm2-space-2: 8px;
+  --sm2-space-3: 12px;
+  --sm2-space-4: 16px;
+  --sm2-space-5: 24px;
+  --sm2-space-6: 32px;
+
   /* Movimento: três durações e UMA curva. Mais que isso vira ruído. */
   --sm2-dur-tap: 120ms;    /* feedback de toque */
   --sm2-dur-enter: 200ms;  /* entrada de card/sheet */

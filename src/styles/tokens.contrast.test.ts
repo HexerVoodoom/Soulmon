@@ -410,6 +410,22 @@ describe('regras da fundação travadas no CSS', () => {
     expect(t['--sm2-leading-title']).toBe('1.2');
   });
 
+  it('a escala de espaço é grid de 4 (4/8/12/16/24/32) com meio-passo de 2', () => {
+    // P1 (DECISOES-WIREFRAME §18, 16/09/2026). Invariante de tema, como o raio:
+    // declarada uma vez no bloco `:root` e herdada pelo escuro.
+    const t = temaClaro();
+    expect(['1', '2', '3', '4', '5', '6'].map(k => t[`--sm2-space-${k}`]))
+      .toEqual(['4px', '8px', '12px', '16px', '24px', '32px']);
+    // O meio-passo existe SÓ para ícone↔rótulo na mesma linha; é declarado
+    // para que o `gap: 2` da nav e do chip sejam token, não literal.
+    expect(t['--sm2-space-half']).toBe('2px');
+    // Invariante: o bloco escuro NÃO redeclara espaço (senão vira cor por
+    // acidente, e o guard de paridade passaria a exigir os dois lados).
+    for (const k of ['half', '1', '2', '3', '4', '5', '6']) {
+      expect(tokensDoBlocoEscuro()[`--sm2-space-${k}`], `--sm2-space-${k} redeclarado no escuro`).toBeUndefined();
+    }
+  });
+
   it('os tokens de movimento são 120/200/320 numa curva só', () => {
     const t = temaClaro();
     expect(t['--sm2-dur-tap']).toBe('120ms');

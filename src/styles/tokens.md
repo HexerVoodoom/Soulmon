@@ -504,6 +504,24 @@ A respiração é cortada em JS além do `@media` do CSS: o bloco global de
 `prefers-reduced-motion` do projeto usa `animation-duration: 0.01ms` em `*`,
 o que num loop `infinite` ainda dispara milhares de recálculos por segundo.
 
+## 7a. Espaço — grid de 4 (P1, aprovado em 16/09/2026)
+
+| token | valor | uso |
+|---|---|---|
+| `--sm2-space-half` | `2px` | **só** ícone ↔ rótulo na mesma linha (nav, chip) |
+| `--sm2-space-1` | `4px` | gap entre blocos de barra, entre segmentos |
+| `--sm2-space-2` | `8px` | gap padrão dentro de uma linha / entre ícone e texto |
+| `--sm2-space-3` | `12px` | padding de card, gap entre linhas de lista |
+| `--sm2-space-4` | `16px` | padding de página, gap entre seções |
+| `--sm2-space-5` | `24px` | respiro entre grupos |
+| `--sm2-space-6` | `32px` | respiro de topo de página / de folha |
+
+Seis degraus e um meio-passo, invariantes de tema (bloco `:root`, junto de
+raio e duração). O meio-passo é declarado para que o `gap: 2` que o canvas
+Sistema (`docs/design/wireframes/sistema/identidade/`) usa entre ícone e
+rótulo seja token e não literal — qualquer outro 2, 6, 10 ou 14 é literal
+fora do grid (X8 da crítica). Trava: `styles/tokens.contrast.test.ts`.
+
 ## 8. Movimento
 
 | token | valor | uso |
