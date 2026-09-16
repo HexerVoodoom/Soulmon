@@ -1,0 +1,94 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "title": "SIS-01 · Sistema — paleta, tipo, ícones, raios, espaço, movimento (ESCURO)",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 4262,
+      "page": "page-1"
+    },
+    {
+      "file": "MainClaro.dc.html",
+      "title": "SIS-01 · o mesmo artboard no tema CLARO (prova de AA)",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 4262,
+      "page": "page-1"
+    },
+    {
+      "file": "Visor.dc.html",
+      "title": "SIS-05 · O Visor — a fronteira diegética (pixel dentro, vetor fora)",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 2837,
+      "page": "page-1"
+    },
+    {
+      "file": "Botoes.dc.html",
+      "title": "SIS-02 · Botões — primary/secondary/ghost × normal/pressed/disabled/foco",
+      "x": 0,
+      "y": 4402,
+      "w": 390,
+      "h": 2383,
+      "page": "page-1"
+    },
+    {
+      "file": "Cards.dc.html",
+      "title": "SIS-03 · Card, chip, campo, switch, checkbox, foco",
+      "x": 490,
+      "y": 4402,
+      "w": 390,
+      "h": 2505,
+      "page": "page-1"
+    },
+    {
+      "file": "Dados.dc.html",
+      "title": "SIS-07 · Dados — cabeçalho, tabs, slot, stat chip, medidor contínuo/segmentado, segmento, painel com título",
+      "x": 980,
+      "y": 4402,
+      "w": 390,
+      "h": 1668,
+      "page": "page-1"
+    },
+    {
+      "file": "FolhaNav.dc.html",
+      "title": "SIS-04 · Folha (ModalSheet) e BottomNav",
+      "x": 1470,
+      "y": 4402,
+      "w": 390,
+      "h": 1679,
+      "page": "page-1"
+    },
+    {
+      "file": "Estados.dc.html",
+      "title": "SIS-06 · Estados transversais — carregando, vazio, erro, offline, diálogo, toast, reduced-motion",
+      "x": 1960,
+      "y": 4402,
+      "w": 390,
+      "h": 2425,
+      "page": "page-1"
+    },
+    {
+      "type": "text",
+      "page": "page-1",
+      "x": 0,
+      "y": -170,
+      "w": 1400,
+      "text": "Soulmon — Identidade, canvas SISTEMA (Fase 2, HANDOFF-IDENTIDADE §2 decisão 2; 16/09/2026). Não é uma tela: é o sistema aplicado — tokens --sm2-* copiados do src/index.css (não inventados), Fredoka/Rubik/Silkscreen, Material Symbols Rounded (FILL = estado, nunca em box), O Visor como fronteira pixel/vetor. Escuro em todos; claro só no Main (decisão 3). Rodapé de cada artboard: tokens usados · divergências com o código de hoje (achados para o staff-frontend) · PT · fontes. [pendente do dono] = token/escala que não existe e precisa de decisão. Rodada 2 (16/09, após CRITICA.md: F1, F2, X1–X13 resolvidos). Linha 1: Sistema escuro · claro · O Visor. Linha 2: átomos, dados e estados. Alturas medidas no DOM (scrollHeight do .ab)."
+    }
+  ],
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Sistema — identidade"
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "page-1"
+  }
+}
