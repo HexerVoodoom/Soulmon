@@ -1,0 +1,189 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "title": "JOGO-01 · a página (ActivitiesPage) — Torneio em destaque + quatro minijogos, ícones Material pelados, Bits em mono",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 2537,
+      "page": "page-1"
+    },
+    {
+      "file": "MainClaro.dc.html",
+      "title": "JOGO-01 claro · a mesma página no tema CLARO (prova de AA)",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1572,
+      "page": "page-1"
+    },
+    {
+      "file": "MasmorraLobby.dc.html",
+      "title": "JOGO-02 · masmorra — lobby: o visor com a cena e a criatura, Best/Base level, entrar / descer mais fundo",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 1922,
+      "page": "page-1"
+    },
+    {
+      "file": "MasmorraTurno.dc.html",
+      "title": "JOGO-03 · 04 · 05 · masmorra — ataque, defesa, resultado: chrome vetor, visor 350×176, barras vetor, timing vetor, popups com FX em mini-visor",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 2459,
+      "page": "page-1"
+    },
+    {
+      "file": "MasmorraAndar.dc.html",
+      "title": "JOGO-06 · 07 · masmorra — inimigo derrubado (fx-defeat no vidro), andar limpo",
+      "x": 0,
+      "y": 2677,
+      "w": 390,
+      "h": 1728,
+      "page": "page-1"
+    },
+    {
+      "file": "MasmorraFim.dc.html",
+      "title": "JOGO-08 · 09 · 10 · masmorra — run completa (faísca), derrota (sem cor de perda), drop de coraçãozinho (favorite)",
+      "x": 490,
+      "y": 2677,
+      "w": 390,
+      "h": 2002,
+      "page": "page-1"
+    },
+    {
+      "file": "Arena.dc.html",
+      "title": "JOGO-11 · Arena — lobby (ficha em tags), erro sem-motor (cloud_off), luta, fim",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 2338,
+      "page": "page-2"
+    },
+    {
+      "file": "Dino.dc.html",
+      "title": "JOGO-12 · 13 · Dino Runner — visor com parallax + chão a 1×, pet 64, Jump 64 de altura; fim de jogo",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1894,
+      "page": "page-2"
+    },
+    {
+      "file": "PPT.dc.html",
+      "title": "JOGO-14 · Rock · Paper · Scissors — mãos a 64 + \"VS\" Silkscreen no vidro; jogadas em chips de texto",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 1819,
+      "page": "page-2"
+    },
+    {
+      "file": "TorneioVazio.dc.html",
+      "title": "JOGO-15 · Torneio — vazio (PvP desligado; a rodada é ritual)",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1602,
+      "page": "page-3"
+    },
+    {
+      "file": "TorneioTravado.dc.html",
+      "title": "JOGO-21 · Torneio — travado pelo Vínculo (switch inerte por forma, nunca opacidade)",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1710,
+      "page": "page-3"
+    },
+    {
+      "file": "TorneioArena.dc.html",
+      "title": "JOGO-22 · Torneio — aba Arena: Emblemas em serifa dourada, abas com sublinhado, alerta âmbar, oponentes em mini-visor 64 (J1: sem faixa)",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 1863,
+      "page": "page-3"
+    },
+    {
+      "file": "TorneioOffline.dc.html",
+      "title": "JOGO-22 · Torneio — sem rede (D9): cloud_off 48 + \"Try again\" outline",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 1571,
+      "page": "page-3"
+    },
+    {
+      "file": "TorneioRanking.dc.html",
+      "title": "JOGO-16 · 17 · 18 · Torneio — a faixa ANTES do ranking (park 32 em ouro, barra gold-fill); janela de ±3 com a linha \"you\" em primary-soft",
+      "x": 0,
+      "y": 2003,
+      "w": 390,
+      "h": 1908,
+      "page": "page-3"
+    },
+    {
+      "file": "TorneioResultado.dc.html",
+      "title": "JOGO-19 · 20 · Torneio — vitória (visor com as duas criaturas) e derrota (mesma tinta); Emblemas em serifa",
+      "x": 490,
+      "y": 2003,
+      "w": 390,
+      "h": 1708,
+      "page": "page-3"
+    },
+    {
+      "file": "PesadeloIntro.dc.html",
+      "title": "JOGO-23 · pesadelo — a proposta (.dlg + visor com o espírito a 1×) e a luta (instrução J3)",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1921,
+      "page": "page-4"
+    },
+    {
+      "file": "PesadeloFim.dc.html",
+      "title": "JOGO-24 · 25 · pesadelo — vitória e derrota (o mesmo primário; perder não custa nada, e a tela diz)",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1753,
+      "page": "page-4"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "leia",
+      "page": "page-1",
+      "x": 0,
+      "y": -190,
+      "w": 1860,
+      "text": "Soulmon — Identidade, canvas JOGOS (Fase 2, oitavo canvas; rodada 2 pós-crítica, 20/09/2026). Cada artboard = o wireframe cinza de mesmo nome (docs/design/wireframes/jogos/, DECISÕES §11) com a identidade do Sistema aplicada: tokens --sm2-*, Fredoka/Rubik, Material Symbols (FILL = estado, nunca em box), O Visor como fronteira — aqui é o fluxo mais \"visor\": o minijogo É o conteúdo do vidro (cena 1080×1920 em cover como ilustração, pet e inimigo 256² a 128, FX 128² a 1× dentro — a faísca da run completa no lugar do último inimigo, nunca sobre o pet; espírito do pesadelo a 1×; Dino com parallax e chão a 1×; mãos do PPT a 64 com \"VS\" Silkscreen) e o CHROME de cada jogo é aparelho em vetor (título Fredoka, × 44 pelado primeiro, barras de HP .meter — \"You\" ciano / o outro dourado, nunca vermelho, nunca ❤️ —, barra de timing vetor, popups role=status com o FX num mini-visor 64 e o título em Rubik, nunca Silkscreen). Página: cards com ícone Material pelado, Bits em mono sem ícone. Torneio: Emblemas em serifa dourada, faixa ANTES do ranking, abas com sublinhado, oponente = criatura + nome + \"pet · estágio\" (J1, sem faixa), linha \"you\" em primary-soft. Perder não custa coração e a tela diz; nada de vermelho de cobrança. Mesma estrutura, mesma copy EN, mesma ordem de foco (16/16). Escuro em todos; claro só no MainClaro. Rodapé cinza: tokens · achados para o staff-frontend · PT · fontes · dobra. Alturas = scrollHeight do .ab, medidas no DOM."
+    }
+  ],
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Jogos — a página e a masmorra"
+    },
+    {
+      "id": "page-2",
+      "name": "Jogos — os três curtos (Arena · Dino · PPT)"
+    },
+    {
+      "id": "page-3",
+      "name": "Jogos — o Torneio"
+    },
+    {
+      "id": "page-4",
+      "name": "Jogos — o pesadelo da manhã"
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "page-1"
+  }
+}
