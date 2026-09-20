@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, lazy, Suspense, type CSSProperties } from 
 import ravenMascot from '../assets/soulmon/mascot-raven.png';
 import { Icon } from './ui/Icon';
 import { MiniGlass } from './ui/MiniGlass';
+import { Viewport } from './ui/Viewport';
 import { BrandFlame } from '../brand/BrandFlame';
 import { BirthCard } from './BirthCard';
 import { DEMO_TINTS, demoTintFilter, getSpriteForStage } from '../utils/sprites';
@@ -340,6 +341,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const [demoCharacterId, setDemoCharacterId] = useState<'kaelen' | 'orrin' | 'thalindra' | 'igni' | 'nautilu' | 'astrase' | null>(null);
   /** WP1.12 — tonalidade escolhida no demo. 0 = a arte original. */
   const [demoTint, setDemoTint] = useState(0);
+  const [areaFoco, setAreaFoco] = useState(false);
   const [unlockLoading, setUnlockLoading] = useState(false);
   const [unlockMessage, setUnlockMessage] = useState<string | null>(null);
   /** A caixa de consentimento vive FORA do texto legal: é elemento de UI
@@ -728,6 +730,10 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     if (step === STRUGGLE_STEP) { setStep(GOAL_STEP); return; }
     if (step === CHOICE_STEP) { setStep(STRUGGLE_STEP); return; }
     if (step === DEMO_PICK) { setStep(CHOICE_STEP); return; }
+    // O "Back" do cadastro demo (canvas ONB-34, B1): volta à escolha do
+    // personagem — o passo anterior na numeração é o REVEAL, que só existe
+    // no caminho do oráculo e renderizaria vazio.
+    if (step === REGISTER && flow === 'demo') { setStep(DEMO_PICK); return; }
     if (step === 1 && !isUpgrade) { setStep(CHOICE_STEP); return; }
     // Voltar de dentro do teste longo devolve a escolha: quem entrou sem
     // querer não fica preso em 20 perguntas.
@@ -1119,8 +1125,9 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
      telas de arcade, e um formulário nunca foi nenhum dos dois. */
   const fieldStyle: CSSProperties = {
     width: '100%', boxSizing: 'border-box', minHeight: 44,
-    padding: '10px 12px', borderRadius: 10,
-    border: '1px solid var(--sm2-line)',
+    padding: '10px 12px', borderRadius: 'var(--sm2-radius-md)',
+    /* Fronteira `muted` 1px (SIS-03, F2 do canvas Sistema: `line` dá 1,3:1). */
+    border: '1px solid var(--sm2-muted)',
     backgroundColor: 'var(--sm2-surface-2)',
     fontFamily: 'var(--sm2-font-text)',
     fontSize: 'var(--sm2-text-sm)',
@@ -1450,18 +1457,20 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             >
               {isPt ? 'Começar agora — é grátis' : 'Start now — it’s free'}
             </button>
-            {/* A compra em voz baixa: duas acoes do mesmo peso nao tem acao
-                dominante. */}
+            {/* A segunda escolha = `outline` (D-O5): peso igual ao de uma
+                porta, sem dourado, sem badge — a bifurcação sem empurrão. O
+                preço em `tabular-nums`. */}
             <button
               type="button"
-              style={{ ...sm2Button('quiet', unlockLoading), width: '100%', marginTop: 8 }}
+              className="sm2-num"
+              style={{ ...sm2Button('outline', unlockLoading), width: '100%', marginTop: 12 }}
               onClick={handleUnlockFull}
               aria-label={isPt ? `Quero o completo — ${precoLabel}` : `Get the full game — ${precoLabel}`}
               aria-busy={unlockLoading}
               disabled={unlockLoading}
             >
               {unlockLoading
-                ? <Spinner />
+                ? <Spinner size={24} />
                 : (isPt ? `Quero o completo — ${precoLabel}` : `Get the full game — ${precoLabel}`)}
             </button>
             {/* ONB-17/18/19: compra cancelada / loja indisponível / falha — âmbar,
@@ -1471,6 +1480,11 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 {unlockMessage}
               </p>
             )}
+            {/* "Back" `[novo]` (B1): `back()` já suportava CHOICE → STRUGGLE. */}
+            <button type="button" style={{ ...sm2Button('quiet'), width: '100%', marginTop: 12 }} onClick={back}>
+              <Icon name="arrow_back" size={20} />
+              {isPt ? 'Voltar' : 'Back'}
+            </button>
           </StepShell>
         )}
 
@@ -1484,29 +1498,43 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 escreveu — quem pulou não recebe eco de coisa nenhuma, porque
                 aí a frase viraria mentira. Nada disso vira estado no save: o
                 gatilho é o `soulGoal` que já está em memória. */}
-            {step === STRUGGLE_STEP && soulGoal.trim().length > 0 && (
-              <p style={{ ...sm2Hint, marginBottom: 10, color: 'var(--sm2-accent-ink)' }}>
-                {isPt ? 'Anotado. Seu Soulmon vai lembrar disso.' : 'Noted. Your Soulmon will remember.'}
-              </p>
-            )}
             <h2 className="sm2-title" style={{ ...sm2TitleStyle, marginBottom: 8 }}>
               {step === GOAL_STEP
                 ? (isPt ? 'O que você quer melhorar na sua vida?' : 'What do you want to improve in your life?')
                 : (isPt ? 'E o que mais te atrapalha hoje?' : 'And what gets in your way the most?')}
             </h2>
-            <p style={{ ...sm2Hint, marginBottom: 16 }}>
-              {step === GOAL_STEP
-                ? (isPt
-                    ? 'Escreva do seu jeito. Nada aqui vira nota ou cobrança.'
-                    : 'In your own words. None of this becomes a score.')
-                : (isPt
-                    ? 'Saber onde você costuma travar ajuda seu Soulmon nos dias difíceis.'
-                    : 'Knowing where you tend to get stuck helps your Soulmon on the hard days.')}
-            </p>
+            {/* A justificativa do campo (O2, canvas Objetivo): por que perguntar. */}
+            {step === GOAL_STEP && (
+              <p style={{ ...sm2Hint, marginBottom: 16 }}>
+                {isPt
+                  ? 'Seu Soulmon traz isso de volta nos dias que importam.'
+                  : 'Your Soulmon brings this back on the days that count.'}
+              </p>
+            )}
+            {/* O eco (canvas Atrapalha): `check_circle` 20 FILL 1 + 12 em
+                `primary-ink` — a única luz forte da tela além do primário. Era
+                `var(--sm2-accent-ink)`, token que não existe. */}
+            {step === STRUGGLE_STEP && soulGoal.trim().length > 0 && (
+              <p style={{ ...sm2Hint, display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0 12px', color: 'var(--sm2-primary-ink)' }}>
+                <Icon name="check_circle" size={20} fill={1} tone="inherit" />
+                {isPt ? 'Anotado. Seu Soulmon vai lembrar disso.' : 'Noted. Your Soulmon will remember.'}
+              </p>
+            )}
             <textarea
               rows={4}
               autoFocus
-              style={{ ...fieldStyle, resize: 'none', fontFamily: 'var(--sm2-font-text)' }}
+              className="sm2-form-field"
+              aria-label={step === GOAL_STEP
+                ? (isPt ? 'O que você quer melhorar na sua vida?' : 'What do you want to improve in your life?')
+                : (isPt ? 'E o que mais te atrapalha hoje?' : 'And what gets in your way the most?')}
+              onFocus={() => setAreaFoco(true)}
+              onBlur={() => setAreaFoco(false)}
+              style={{
+                ...fieldStyle, minHeight: 96, padding: 12, resize: 'none', fontFamily: 'var(--sm2-font-text)',
+                /* Foco = fronteira + anel 2px `primary-ink` (o mesmo mecanismo do `Field`). */
+                border: `1px solid ${areaFoco ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)'}`,
+                boxShadow: areaFoco ? '0 0 0 2px var(--sm2-primary-ink)' : 'none',
+              }}
               value={step === GOAL_STEP ? soulGoal : soulStruggle}
               onChange={e => (step === GOAL_STEP ? setSoulGoal : setSoulStruggle)(e.target.value.slice(0, 280))}
               placeholder={step === GOAL_STEP
@@ -1526,6 +1554,15 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             >
               {isPt ? 'Prefiro não responder agora' : 'I’d rather not say right now'}
             </button>
+            {/* "Back" no Atrapalha (O4/B1 — `back()` já sabia voltar, nada o
+                chamava). Não existe no Objetivo: a conta está atrás, o ritual
+                à frente. */}
+            {step === STRUGGLE_STEP && (
+              <button type="button" style={{ ...sm2Button('quiet'), width: '100%', marginTop: 4 }} onClick={back}>
+                <Icon name="arrow_back" size={20} />
+                {isPt ? 'Voltar' : 'Back'}
+              </button>
+            )}
           </div>
         )}
 
@@ -1553,32 +1590,44 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
           </StepShell>
         )}
 
-        {/* DEMO_PICK — escolha entre os 3 personagens pré-prontos */}
+        {/* DEMO_PICK — escolha entre os 6 personagens pré-prontos (canvas
+            EscolherPersonagem, D-O9/D-O10): grade 2×3 de cards SIS-03, cada um
+            com o sprite 256² a 128 (0,5×, P2 a) num vidro 128² com anel — uma
+            criatura, um tamanho; nome Rubik 14/500, bio 12 `muted`; iguais em
+            peso. Os 6 cabem em 844 sem rolar. */}
         {step === DEMO_PICK && (
           <div style={{ paddingTop: 20 }}>
-            <h2 className="sm2-title" style={{ ...sm2TitleStyle, marginBottom: 16 }}>
+            <h2 className="sm2-title" style={{ ...sm2TitleStyle, marginBottom: 12 }}>
               {isPt ? 'Escolha seu Soulmon' : 'Choose your Soulmon'}
             </h2>
-            {PREMADE_CHARACTERS.map(c => (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => { track('demo_pick'); setDemoCharacterId(c.id); setStep(REGISTER); }}
-                style={{
-                  width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 12,
-                  padding: 12, marginBottom: 8, cursor: 'pointer',
-                  borderRadius: 12, border: '1px solid var(--sm2-line)',
-                  backgroundColor: 'var(--sm2-surface)',
-                }}
-              >
-                <img src={getDemoSprite(c.id, 'rookie')} alt="" style={{ width: 52, height: 52, objectFit: 'contain', imageRendering: 'pixelated', flexShrink: 0 }} />
-                <span style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ ...sm2Text, fontWeight: 500, display: 'block' }}>{c.name}</span>
-                  <span style={{ ...sm2Hint, display: 'block', marginTop: 2 }}>{isPt ? c.bioPt : c.bioEn}</span>
-                </span>
-              </button>
-            ))}
-            <button type="button" style={{ ...sm2Button('quiet'), marginTop: 4 }} onClick={() => { setFlow(null); setStep(CHOICE_STEP); }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
+              {PREMADE_CHARACTERS.map(c => {
+                const bio = isPt ? c.bioPt : c.bioEn;
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    data-demo-char={c.id}
+                    aria-label={`${c.name} — ${bio}`}
+                    onClick={() => { track('demo_pick'); setDemoCharacterId(c.id); setStep(REGISTER); }}
+                    style={{
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                      padding: 8, cursor: 'pointer', textAlign: 'center',
+                      borderRadius: 'var(--sm2-radius-md)', border: '1px solid var(--sm2-line)',
+                      backgroundColor: 'var(--sm2-surface)', color: 'var(--sm2-ink)',
+                    }}
+                  >
+                    <Viewport width={64} height={64} scale={2} breathing={false} style={{ borderRadius: 'var(--sm2-radius-md)' }}>
+                      <img src={getDemoSprite(c.id, 'rookie')} alt="" width={128} height={128}
+                        style={{ width: 128, height: 128, display: 'block', imageRendering: 'pixelated' }} />
+                    </Viewport>
+                    <span style={{ ...sm2Text, fontWeight: 500, lineHeight: 1.2, marginTop: 4 }}>{c.name}</span>
+                    <span style={{ ...sm2Hint, lineHeight: 1.35 }}>{bio}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <button type="button" style={{ ...sm2Button('quiet'), width: '100%', marginTop: 12 }} onClick={() => { setFlow(null); setStep(CHOICE_STEP); }}>
               <Icon name="arrow_back" size={20} />
               {isPt ? 'Voltar' : 'Back'}
             </button>
@@ -1909,10 +1958,38 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 a menor coisa possível que transforma um personagem emprestado
                 em algo escolhido — e é o oposto de uma mecânica: nenhuma
                 regra, atributo ou preço olha para ele. */}
+            {/* O NASCIMENTO COM A CRIATURA (O1, D-O11): vidro 192² com anel
+                (sprite 256² a 128 — a mesma peça da Ficha, Pet D-P2), na
+                tonalidade escolhida. `role=img` porque a criatura é conteúdo,
+                não decoração (R6). */}
+            {demoChar && (
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 18 }}>
+                <Viewport
+                  width={96}
+                  height={96}
+                  scale={2}
+                  label={isPt ? `${registerDisplayName}, na tonalidade ${demoTint + 1}` : `${registerDisplayName}, in tint ${demoTint + 1}`}
+                  screenStyle={{ position: 'relative' }}
+                >
+                  <img
+                    src={getSpriteForStage('rookie', demoChar.id)}
+                    alt=""
+                    data-hero
+                    width={128}
+                    height={128}
+                    style={{ position: 'absolute', left: 32, top: 32, width: 128, height: 128, imageRendering: 'pixelated', filter: demoTintFilter(demoTint) }}
+                  />
+                </Viewport>
+              </div>
+            )}
+            {/* As 4 tonalidades como SLOTS 64² (D-O12: SIS-07 `viewport-bg`,
+                sprite a 64 = 0,25×, `hue-rotate` — o único filtro aceito no
+                vidro, muda matiz e não alfa); seleção = anel INTERNO 2px
+                `primary-ink` (forma, não só cor). Eram 48 com o sprite a 36. */}
             {demoChar && (
               <div style={{ marginBottom: 18 }}>
                 <span style={sm2Label}>{isPt ? 'Tonalidade' : 'Tint'}</span>
-                <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+                <div role="group" aria-label={isPt ? 'Tonalidade' : 'Tint'} style={{ display: 'flex', gap: 8, marginTop: 6 }}>
                   {DEMO_TINTS.map((_, i) => (
                     <button
                       key={i}
@@ -1921,19 +1998,25 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                       aria-label={isPt ? `Tonalidade ${i + 1}` : `Tint ${i + 1}`}
                       onClick={() => setDemoTint(i)}
                       style={{
-                        width: 48, height: 48, borderRadius: 10, cursor: 'pointer',
-                        border: demoTint === i ? '2px solid var(--sm2-primary-ink)' : '1px solid var(--sm2-line)',
-                        backgroundColor: 'var(--sm2-surface)',
-                        display: 'grid', placeItems: 'center',
+                        width: 64, height: 64, padding: 0, border: 'none', background: 'none',
+                        borderRadius: 'var(--sm2-radius-md)', cursor: 'pointer', display: 'inline-flex',
                       }}
                     >
-                      <img
-                        src={getSpriteForStage('rookie', demoChar.id)}
-                        alt=""
-                        width={36}
-                        height={36}
-                        style={{ objectFit: 'contain', imageRendering: 'pixelated', filter: demoTintFilter(i) }}
-                      />
+                      <MiniGlass
+                        size={64}
+                        style={{
+                          borderRadius: 'var(--sm2-radius-md)',
+                          boxShadow: demoTint === i ? 'inset 0 0 0 2px var(--sm2-primary-ink)' : undefined,
+                        }}
+                      >
+                        <img
+                          src={getSpriteForStage('rookie', demoChar.id)}
+                          alt=""
+                          width={64}
+                          height={64}
+                          style={{ width: 64, height: 64, display: 'block', imageRendering: 'pixelated', filter: demoTintFilter(i) }}
+                        />
+                      </MiniGlass>
                     </button>
                   ))}
                 </div>
@@ -1990,6 +2073,14 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             )}
             {unlockMessage && (
               <p role="alert" style={{ ...alertStyle, marginTop: 12 }}>{unlockMessage}</p>
+            )}
+            {/* "Back" `[novo]` (B1): o bloco global de "Voltar" cobre só
+                `1..FAVORITE_STEP`; no demo volta à escolha do personagem. */}
+            {demoChar && (
+              <button type="button" style={{ ...sm2Button('quiet'), width: '100%', marginTop: 12 }} onClick={back}>
+                <Icon name="arrow_back" size={20} />
+                {isPt ? 'Voltar' : 'Back'}
+              </button>
             )}
           </div>
         )}
