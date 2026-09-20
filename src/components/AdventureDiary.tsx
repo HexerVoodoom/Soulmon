@@ -20,11 +20,21 @@
  *
  * O mais recente primeiro: o diário é lido para reencontrar ontem, não para
  * auditar o mês.
+ *
+ * CANVAS PET (identidade, D-P8, 20/09/2026): **o texto em 1ª pessoa é o
+ * CONTEÚDO do card, em Rubik 14 `ink`** — não metadado em 12 `muted`, que
+ * era como o código o tratava. Título 14/500, data 12 `muted` `tabular` à
+ * direita, e a arte 96² a 48 num **vidro 48² sem anel** (`MiniGlass`, a
+ * mesma peça da aventura do relatório, D-R3) — antes era um `<img 24>`
+ * solto no `li`. Vazio = card com título, tese e promessa; nenhum slot,
+ * silhueta ou "0 of 24".
  */
 import type { CSSProperties } from 'react';
 import { findById } from '../utils/adventure';
 import { ADVENTURE_ART } from '../utils/adventureArt';
 import { sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
+import { MiniGlass } from './ui/MiniGlass';
+import { dayKeyLabel } from '../utils/dayKeyLabel';
 import type { Language } from '../utils/i18n';
 
 interface AdventureDiaryProps {
@@ -40,30 +50,6 @@ const card: CSSProperties = {
   boxShadow: SM2_SHADOW_CARD,
   padding: 16,
 };
-
-/**
- * `day` é um `dayKey` do jogador — pode ser ISO (`2026-09-08`) ou o
- * `toDateString()` (`Tue Sep 08 2026`), porque as duas formas circulam no save.
- *
- * ⚠️ O ISO é montado NA MÃO, e não com `new Date(day)`: a string `AAAA-MM-DD`
- * é interpretada pelo JS como **meia-noite UTC**, então em qualquer fuso
- * negativo (o Brasil inteiro) ela vira o dia ANTERIOR na hora de exibir. O
- * diário mostraria 07/09 para um achado do dia 08. Um teste pegou isto.
- */
-function dataCurta(day: string, isPt: boolean): string {
-  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(day);
-  if (iso) {
-    const [, ano, mes, dia] = iso;
-    if (isPt) return `${dia}/${mes}`;
-    const meses = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return `${meses[Number(mes) - 1]} ${Number(dia)}`;
-  }
-  const d = new Date(day);
-  if (Number.isNaN(d.getTime())) return day;
-  return isPt
-    ? `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`
-    : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
 
 export function AdventureDiary({ entries, language }: AdventureDiaryProps) {
   const isPt = language === 'pt-BR';
@@ -102,25 +88,30 @@ export function AdventureDiary({ entries, language }: AdventureDiaryProps) {
       ) : (
         <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
           {linhas.map(({ e, achado }) => (
-            <li key={e.id} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-              {/* Arte pixel quando existe, emoji quando não (ver
-                  `utils/adventureArt.ts`: a cobertura é parcial de propósito). */}
-              {ADVENTURE_ART[achado.id]
-                ? <img src={ADVENTURE_ART[achado.id]} alt="" width={24} height={24}
-                       style={{ objectFit: 'contain', imageRendering: 'pixelated', flexShrink: 0 }} />
-                : <span aria-hidden style={{ fontSize: 24, lineHeight: 1.2 }}>{achado.emoji}</span>}
-              <div style={{ minWidth: 0, flex: 1 }}>
+            <li key={e.id} data-adventure={achado.id} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+              {/* A arte 96² a 48 num vidro 48² sem anel (D-P8/D-R3). Emoji só
+                  quando não há arte (ver `utils/adventureArt.ts`: a cobertura é
+                  parcial de propósito) — e mesmo assim dentro do vidro, para a
+                  coluna de texto alinhar entre as linhas. */}
+              <MiniGlass size={48}>
+                {ADVENTURE_ART[achado.id]
+                  ? <img src={ADVENTURE_ART[achado.id]} alt="" width={48} height={48}
+                         style={{ display: 'block', imageRendering: 'pixelated' }} />
+                  : <span aria-hidden style={{ fontSize: 24, lineHeight: 1 }}>{achado.emoji}</span>}
+              </MiniGlass>
+              <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <div style={{ display: 'flex', gap: 8, justifyContent: 'space-between', alignItems: 'baseline' }}>
                   <p style={{ ...sm2Text, fontWeight: 500, margin: 0 }}>
                     {isPt ? achado.titlePt : achado.titleEn}
                   </p>
                   {/* A data é o que faz isto ser história e não lista: "esse foi
                       na primeira semana". */}
-                  <span className="sm2-num" style={{ ...sm2Hint, flexShrink: 0 }}>
-                    {dataCurta(e.day, isPt)}
+                  <span className="sm2-num" data-adventure-date style={{ ...sm2Hint, flexShrink: 0 }}>
+                    {dayKeyLabel(e.day, isPt)}
                   </span>
                 </div>
-                <p style={{ ...sm2Hint, margin: '2px 0 0' }}>
+                {/* A voz da criatura é o CONTEÚDO: Rubik 14 `ink` (D-P8). */}
+                <p data-adventure-text style={{ ...sm2Text, margin: 0 }}>
                   {isPt ? achado.textPt : achado.textEn}
                 </p>
               </div>

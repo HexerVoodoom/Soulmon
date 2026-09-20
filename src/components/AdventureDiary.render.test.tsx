@@ -106,3 +106,32 @@ describe('idioma', () => {
     expect(screen.getByText(A.textEn)).toBeTruthy();
   });
 });
+
+describe('identidade (canvas Pet, D-P8)', () => {
+  it('o texto em 1ª pessoa é CONTEÚDO: Rubik 14 ink, não legenda 12 muted', () => {
+    renderWithCss(<AdventureDiary entries={[{ id: A.id, day: '2026-09-08' }]} language="en-US" />);
+    const texto = document.querySelector<HTMLElement>('[data-adventure-text]')!;
+    expect(texto.textContent).toBe(A.textEn);
+    expect(texto.style.fontSize).toBe('var(--sm2-text-sm)');
+    expect(texto.style.color).toBe('var(--sm2-ink)');
+    expect(texto.style.fontFamily).toBe('var(--sm2-font-text)');
+    const data = document.querySelector<HTMLElement>('[data-adventure-date]')!;
+    expect(data.textContent).toBe('Sep 8');
+    expect(data.style.fontSize).toBe('var(--sm2-text-xs)');
+    expect(data.classList.contains('sm2-num')).toBe(true);
+  });
+
+  it('a arte 96² a 48 num vidro 48² sem anel — nunca um <img 24> solto', () => {
+    renderWithCss(<AdventureDiary entries={[{ id: A.id, day: '2026-09-08' }]} language="en-US" />);
+    const li = screen.getByRole('listitem');
+    const vidro = li.querySelector<HTMLElement>('[data-mini-glass]')!;
+    expect(vidro.style.width).toBe('48px');
+    expect(vidro.classList.contains('sm2-viewport-screen')).toBe(true);
+    expect(vidro.closest('.sm2-viewport')).toBeNull();
+    const img = li.querySelector('img');
+    if (img) {
+      expect(img.getAttribute('width')).toBe('48');
+      expect(img.closest('[data-mini-glass]')).toBeTruthy();
+    }
+  });
+});
