@@ -5207,19 +5207,18 @@ export default function App() {
                 <button
                   key={view}
                   onClick={() => setCurrentView(view)}
-                  className={`sm-btn ${currentView === view ? '' : 'sm-btn-secondary'}`}
-                  /* `0.72rem` computava **11,52px** — abaixo do piso ABSOLUTO
-                     de 12px do design system (tokens.md §4), medido no app
-                     rodando. O piso não tem exceção para "chip" nem para
-                     "aba": abaixo dele o texto deixa de ser legível para quem
-                     não tem visão perfeita, e estes três são a única forma de
-                     trocar de página aqui. `var(--sm2-text-xs)` é o token, e a
-                     família é declarada porque `.sm-btn` não declara nenhuma. */
+                  aria-current={currentView === view ? 'page' : undefined}
+                  /* Sub-aba = SELEÇÃO, não ação (canvas Pet §22, D-P1): a ativa
+                     vai em `primary-soft` + `primary-ink`, nunca na placa cheia
+                     do primário. Sai o `.sm-btn` pixel (fora do visor). Texto
+                     no piso de 12px (`--sm2-text-xs`), alvo 44 do `sm2Button`. */
                   style={{
-                    flex: 1, minWidth: 0,
-                    fontFamily: 'var(--sm2-font-text)',
+                    ...sm2Button('outline', false, 'sm'),
+                    flex: 1, minWidth: 0, padding: '0 8px', whiteSpace: 'nowrap',
                     fontSize: 'var(--sm2-text-xs)',
-                    padding: '10px 4px', letterSpacing: 0, whiteSpace: 'nowrap',
+                    ...(currentView === view
+                      ? { backgroundColor: 'var(--sm2-primary-soft)', color: 'var(--sm2-primary-ink)', border: '1px solid var(--sm2-primary-ink)' }
+                      : {}),
                   }}
                 >
                   {label}
