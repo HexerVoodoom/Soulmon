@@ -1,14 +1,15 @@
+import type { CSSProperties } from 'react';
 import { Icon } from './ui/Icon';
-import { SM2_SHADOW_CARD, sm2Button, sm2Hint, sm2TitleStyle } from './form/FormKit';
-import { useDialogA11y } from '../hooks/useDialogA11y';
+import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import { UnlockNudge } from './UnlockAccountModal';
 import { MemoriesCard } from './MemoriesCard';
 import { MOOD_OPTIONS, type MoodValue } from '../utils/mood';
 import type { AdventureFind } from '../utils/adventure';
 import { ADVENTURE_ART } from '../utils/adventureArt';
+import { welcomeBackLine } from '../utils/welcomeBack';
 import type { GameState } from '../contexts/GameStateContext';
 import type { Language } from '../utils/i18n';
-import confettiBurst from '../assets/icons/confetti-burst.png';
+import { RitualDialog, RitualGlass, RitualRow, SpriteGlass, ritualTitle, type RitualRowTone } from './ritual/RitualKit';
 
 interface DailyReportModalProps {
   report: NonNullable<GameState['lastDayReport']>;
@@ -42,6 +43,8 @@ interface DailyReportModalProps {
   /** Dispensa o convite PARA SEMPRE (`offerDismissed` no save). O `×` do card
    *  é o único padrão POSITIVO que o dossiê achou em onze apps de paywall. */
   onDismissOffer?: () => void;
+  /** Sprite atual do pet — a criatura NA peça do retorno (R4, D-H7). */
+  spriteUrl?: string | null;
   /** WP4.8 — as memórias de 30/90 dias, quando este é o dia. */
   memories?: {
     mark: number;
@@ -54,7 +57,58 @@ interface DailyReportModalProps {
 }
 
 const hint = sm2Hint;
-type Row = { label: string; value: string; highlight?: 'good' | 'soft' };
+type Row = { label: string; value: string; tone?: RitualRowTone };
+
+/**
+ * O confete do dia completo — VETOR, na faixa da estrela, nunca sobre as
+ * letras (D-R2, X2). SVG 200×60 em `primary-ink`/`gold-ink`, `aria-hidden`;
+ * termina acima do título (medido: 0 das 14 peças dentro do retângulo do
+ * `h2`). O `gain-confetti.png` fica para o vidro da Home.
+ */
+function Confetti() {
+  return (
+    <svg
+      data-confetti
+      viewBox="0 0 200 60"
+      aria-hidden="true"
+      style={{ position: 'absolute', left: '50%', top: 0, width: 200, height: 60, marginLeft: -100, pointerEvents: 'none', zIndex: 0 }}
+    >
+      <g fill="none" strokeWidth="3" strokeLinecap="round">
+        <path d="M22 22 q6 -8 12 0 t12 0" stroke="var(--sm2-primary-ink)" />
+        <path d="M150 12 q6 8 12 0 t12 0" stroke="var(--sm2-gold-ink)" />
+        <path d="M30 46 q6 -8 12 0" stroke="var(--sm2-gold-ink)" />
+        <path d="M158 42 q6 8 12 0" stroke="var(--sm2-primary-ink)" />
+      </g>
+      <g>
+        <rect x="60" y="6" width="6" height="6" rx="1" fill="var(--sm2-primary-ink)" transform="rotate(20 63 9)" />
+        <rect x="128" y="4" width="6" height="6" rx="1" fill="var(--sm2-gold-ink)" transform="rotate(-15 131 7)" />
+        <rect x="12" y="36" width="6" height="6" rx="1" fill="var(--sm2-gold-ink)" transform="rotate(30 15 39)" />
+        <rect x="182" y="28" width="6" height="6" rx="1" fill="var(--sm2-primary-ink)" transform="rotate(10 185 31)" />
+        <rect x="66" y="48" width="6" height="6" rx="1" fill="var(--sm2-primary-ink)" transform="rotate(-25 69 51)" />
+        <rect x="126" y="50" width="6" height="6" rx="1" fill="var(--sm2-gold-ink)" transform="rotate(40 129 53)" />
+        <circle cx="46" cy="34" r="3" fill="var(--sm2-primary-ink)" />
+        <circle cx="160" cy="28" r="3" fill="var(--sm2-gold-ink)" />
+        <circle cx="8" cy="14" r="2.5" fill="var(--sm2-gold-ink)" />
+        <circle cx="192" cy="10" r="2.5" fill="var(--sm2-primary-ink)" />
+      </g>
+    </svg>
+  );
+}
+
+/** O `.card` SIS-03: `surface` + fronteira `line`, raio 12. */
+const card: CSSProperties = {
+  backgroundColor: 'var(--sm2-surface)',
+  border: '1px solid var(--sm2-line)',
+  borderRadius: 'var(--sm2-radius-md)',
+  boxSizing: 'border-box',
+};
+
+/** `pick` determinístico pela data do relatório: a mesma manhã, a mesma frase. */
+function pickFor(date: string): number {
+  let h = 0;
+  for (let i = 0; i < date.length; i += 1) h = (h * 31 + date.charCodeAt(i)) % 1000;
+  return h / 1000;
+}
 
 /**
  * O relatório do dia, mostrado uma vez na primeira abertura depois da virada.
@@ -63,14 +117,26 @@ type Row = { label: string; value: string; highlight?: 'good' | 'soft' };
  * menos, nenhum imperativo. Perda vira "em recuperação", e a frase de rodapé
  * oferece o caminho de volta em vez de mandar.
  *
- * ONDA 5: o ícone da manchete saiu da caixa de cobre (regra do dono: ícone
- * nunca dentro de box) e os PNGs viraram Material Symbols. Os ícones de CADA
- * LINHA saíram — eles desenhavam de novo a palavra ao lado ("Corações" com um
- * coração), que é o tipo de repetição que esta onda existe para cortar.
+ * CANVAS RITUAIS (DECISÕES §7 R2–R5, S1–S3; §21 D-R1/D-R2/D-R3/D-R6/D-R7/D-R9):
+ *  · **aparelho, não pixel**: manchete com glifo Material 48 (`bedtime`
+ *    `muted` · `star` FILL 1 `gold-ink` · `wb_sunny` · `nightlight`), confete
+ *    em SVG vetor na faixa da estrela; o pixel entra só em vidro — a arte da
+ *    aventura 96² a 48 num vidro 48², a criatura do retorno/memória a 64 num
+ *    vidro 96²;
+ *  · **ordem de tempo (R2)**: ONTEM inteiro (linhas · notas · aventura ·
+ *    memória) → a pergunta de HOJE (humor) → convite → "Start the day";
+ *  · **piso de dígitos (R5/S2)**: "Yesterday's tasks" com feitos = 0 vira
+ *    "not logged" quando houve cobrança e SOME sem cobrança; "Complete days
+ *    saved" some com `perfectDays === 0`;
+ *  · **retorno (R4/S1)**: o sprite na peça + UMA linha da família
+ *    `welcomeBackLine` (faixa de ausência, nunca o N de dias);
+ *  · **um caminho de volta (R3/S3)**: a nota do carinho saiu; "I did it,
+ *    forgot to log" fica, em `outline`;
+ *  · **humor = 5 alvos 44 iguais** com o emoji de `mood.ts` (D-R6);
+ *  · **convite** = card irmão com × 44 e `outline` de duas linhas em 260 (D-R9).
  */
-export function DailyReportModal({ report, adventure, adventureIsNew = false, onClose, language, soulGoal, onRecoverHearts, moodToday, onPickMood, moodNote, showOffer = false, onOpenOffer, onDismissOffer, memories }: DailyReportModalProps) {
+export function DailyReportModal({ report, adventure, adventureIsNew = false, onClose, language, soulGoal, onRecoverHearts, moodToday, onPickMood, moodNote, showOffer = false, onOpenOffer, onDismissOffer, spriteUrl, memories }: DailyReportModalProps) {
   const isPt = language === 'pt-BR';
-  const dialogRef = useDialogA11y<HTMLDivElement>(true, onClose);
   // Modo acolhida: quem passou dias fora não recebe cobrança nenhuma. O
   // relatório vira "que bom que você voltou", e os números de falha somem — o
   // retorno depois de uma ausência tem que ser um abraço, não uma fatura.
@@ -78,43 +144,45 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, on
   // Só faz sentido oferecer quando houve cobrança e ela ainda não foi desfeita.
   const canRecover = !welcome && report.heartsLost > 0 && !report.heartsRecovered && !!onRecoverHearts;
 
-  // `soft` = ouro. NÃO existe `bad`: o vermelho de alerta é a cor de erro do
-  // sistema, e um dia mais devagar não é um erro do usuário (mesma tese escrita
-  // em TaskMeta.tsx:29).
   // Sem sinal de menos: era o único número negativo do app, e escrever uma
-  // perda como "-1" é o vocabulário de extrato bancário. A frase de rodapé já
-  // oferece o caminho de volta (carinho).
+  // perda como "-1" é o vocabulário de extrato bancário. A perda é peso 400,
+  // sem itálico, sem vermelho (D-R2). NÃO existe `bad`.
   const heartsValue = report.heartsLost <= 0
     ? (isPt ? 'inteiros!' : 'all there!')
     : report.heartsLost <= 0.5
       ? (isPt ? 'meio em recuperação' : 'half recovering')
       : (isPt ? `${report.heartsLost} em recuperação` : `${report.heartsLost} recovering`);
-  const rows: Row[] = welcome
-    ? [
-        { label: isPt ? 'Corações' : 'Hearts', value: isPt ? 'intactos' : 'untouched', highlight: 'good' },
-        { label: isPt ? 'Dias completos guardados' : 'Complete days saved', value: `${report.perfectDays}`, highlight: 'good' },
-      ]
-    : [
-        {
-          label: isPt ? 'Tarefas de ontem' : "Yesterday's tasks",
-          value: isPt ? `${report.done} de ${report.total}` : `${report.done} of ${report.total}`,
-          highlight: report.wasPerfect ? 'good' : undefined,
-        },
-        { label: isPt ? 'Corações' : 'Hearts', value: heartsValue, highlight: report.heartsLost > 0 ? 'soft' : 'good' },
-        { label: isPt ? 'Dias completos' : 'Complete days', value: `${report.perfectDays}`, highlight: report.wasPerfect ? 'good' : undefined },
-      ];
+  const rows: Row[] = [];
+  if (welcome) {
+    rows.push({ label: isPt ? 'Corações' : 'Hearts', value: isPt ? 'intactos' : 'untouched', tone: 'hi' });
+    // 13.7 — posse pode mostrar zero, mas aqui o zero não é posse: some (R4).
+    if (report.perfectDays > 0) {
+      rows.push({ label: isPt ? 'Dias completos guardados' : 'Complete days saved', value: `${report.perfectDays}`, tone: 'hi' });
+    }
+  } else {
+    // R5 — feitos = 0: "not logged" quando houve cobrança (é o referente do
+    // botão "I did it, forgot to log"); sem cobrança a linha some — um "0 of
+    // 4" numa manhã perdoada não explica nada.
+    if (report.done > 0) {
+      rows.push({
+        label: isPt ? 'Tarefas de ontem' : "Yesterday's tasks",
+        value: isPt ? `${report.done} de ${report.total}` : `${report.done} of ${report.total}`,
+        tone: report.wasPerfect ? 'hi' : undefined,
+      });
+    } else if (report.heartsLost > 0) {
+      rows.push({ label: isPt ? 'Tarefas de ontem' : "Yesterday's tasks", value: isPt ? 'sem registro' : 'not logged', tone: 'soft' });
+    }
+    rows.push({ label: isPt ? 'Corações' : 'Hearts', value: heartsValue, tone: report.heartsLost > 0 ? 'soft' : 'hi' });
+    rows.push({ label: isPt ? 'Dias completos' : 'Complete days', value: `${report.perfectDays}`, tone: report.wasPerfect ? 'hi' : undefined });
+  }
 
   // Coração partido + vermelho + fundo rosa era uma composição de LUTO para um
   // evento que já exige dias ruins seguidos. A noite diz a mesma coisa
   // ("passou um tempo ruim") sem dizer que a pessoa falhou.
-  const headIcon = welcome ? 'volunteer_activism'
-    : report.wasPerfect ? 'star'
-      : (report.degenerated || report.heartsLost > 0) ? 'bedtime' : 'wb_sunny';
-  const headTone: 'primary' | 'gold' | 'muted' = welcome
-    ? 'primary'
-    : report.heartsLost > 0 && !report.degenerated
-      ? 'muted'
-      : 'gold';
+  const headIcon = report.wasPerfect ? 'star'
+    : report.degenerated ? 'nightlight'
+      : report.heartsLost > 0 ? 'bedtime' : 'wb_sunny';
+  const headTone: 'gold' | 'muted' = report.wasPerfect || headIcon === 'wb_sunny' ? 'gold' : 'muted';
 
   const headline = welcome
     ? (isPt ? 'Que saudade!' : 'I missed you!')
@@ -127,23 +195,18 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, on
           : (isPt ? 'Novo dia!' : 'New day!');
 
   // Frases de rodapé. Nenhuma delas cobra — a mais "dura" apenas conta o que
-  // aconteceu e oferece o caminho de volta.
+  // aconteceu. S1: o N de dias fora NÃO aparece (a acolhida é a linha do pet,
+  // no cabeçalho). STATUS h: folga e alívio semanal não entram no retorno.
   const notes: string[] = [];
-  if (welcome) {
-    notes.push(isPt
-      ? `Você ficou ${report.daysAway} dias fora e seu Soulmon não perdeu nada esperando — só estava com saudade. Comece de onde parou.`
-      : `You were away ${report.daysAway} days and your Soulmon lost nothing waiting. It just missed you. Pick up where you left off.`);
-  }
   // P2 — a folga da semana entrou. **Contar é obrigatório**: uma folga gasta em
   // silêncio é um perdão que a pessoa nunca soube que recebeu — e na semana
-  // seguinte ela é cobrada sem entender por que desta vez doeu. O texto diz o
-  // que aconteceu e que a folga volta, sem sugerir que ela "deveria" ter feito.
-  if (report.restDayUsed) {
+  // seguinte ela é cobrada sem entender por que desta vez doeu.
+  if (!welcome && report.restDayUsed) {
     notes.push(isPt
       ? 'Hoje seu Soulmon usou a folga da semana: nada foi cobrado. Ela volta na segunda.'
       : "Your Soulmon used this week's day off, so nothing was charged. It comes back on Monday.");
   }
-  if (report.weeklyRelief) {
+  if (!welcome && report.weeklyRelief) {
     notes.push(isPt
       ? 'Semana nova: seu Soulmon recuperou meio coração. O que passou, passou.'
       : 'New week: your Soulmon recovered half a heart. Last week stays behind.');
@@ -155,12 +218,6 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, on
       ? 'Tarefas em dia! Fica a dica pra amanhã: encher a energia também fecha o dia completo.'
       : 'Tasks done! A tip for tomorrow: filling the energy bar also seals a complete day.');
   }
-  if (!welcome && report.heartsLost > 0 && !report.degenerated) {
-    notes.push(isPt
-      // Convite, não imperativo: era a única ordem dirigida ao usuário no app.
-      ? 'Um carinho devolve meio coração, se você quiser — e nunca se perde mais que um por dia.'
-      : 'A rub gives half a heart back, if you feel like it — and you never lose more than one a day.');
-  }
   if (report.heartsRecovered) {
     notes.push(isPt
       // A segunda oração corrigia o comportamento logo depois de perdoar — o
@@ -168,263 +225,178 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, on
       ? 'Corações devolvidos. Ficou tudo certo.'
       : 'Hearts restored. All good.');
   }
-  if (soulGoal && (report.wasPerfect || welcome)) {
-    notes.push(isPt
-      ? `Lembra por que você começou: "${soulGoal}".`
-      : `Remember why you started: "${soulGoal}".`);
-  }
+  const goalNote = soulGoal && (report.wasPerfect || welcome) ? soulGoal : null;
+
+  const welcomeLine = welcome
+    ? welcomeBackLine(Number(report.daysAway ?? 0), isPt, pickFor(report.date))
+    : null;
+
+  const adventureArt = adventure ? ADVENTURE_ART[adventure.id] : undefined;
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(6, 24, 26, .55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div
-        ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-label={headline}
-        style={{
-          width: '100%', maxWidth: 340, maxHeight: '90vh', overflowY: 'auto',
-          backgroundColor: 'var(--sm2-surface)',
-          borderRadius: 12,
-          boxShadow: SM2_SHADOW_CARD,
-        }}
-      >
-        {/* Cabeçalho */}
-        <div style={{ position: 'relative', padding: '24px 20px 12px', textAlign: 'center' }}>
-          {/* 44×44 de área de toque (WCAG 2.2 AA 2.5.8): fechar um modal é a
-              saída de emergência da UI, e o pior lugar para um alvo pequeno. A
-              placa cinza em volta saiu — ícone nunca dentro de box. */}
-          <button type="button" onClick={onClose} aria-label={isPt ? 'Fechar' : 'Close'}
-            style={{ position: 'absolute', top: 4, right: 4, width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer' }}>
-            <Icon name="close" size={24} tone="muted" />
-          </button>
-          <div style={{ position: 'relative', width: 48, height: 48, margin: '0 auto 10px' }}>
-            {report.wasPerfect && (
-              <img src={confettiBurst} alt="" aria-hidden="true" style={{
-                position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-                width: 140, height: 140, maxWidth: 'none', pointerEvents: 'none', imageRendering: 'pixelated',
-              }} />
-            )}
-            <Icon name={headIcon} size={48} fill={1} tone={headTone} style={{ position: 'relative' }} />
-          </div>
-          {/* `position: relative` NÃO é enfeite. O estouro de confete é
-              `position: absolute` e o título era estático: elemento posicionado
-              pinta POR CIMA do não-posicionado no mesmo contexto, então a arte
-              cobria o texto. Medido no aparelho de 375 px: o confete ocupa
-              y 19→159 e o título y 123→147 — as 24 px de altura da manchete
-              ficavam 100% atrás da explosão colorida, no dia mais comemorativo
-              do app. Nenhuma conta de contraste por `getComputedStyle` pega
-              isso (footgun 10): só a geometria e o pixel renderizado. A sombra
-              na cor do painel dá o descolamento das letras, e só existe no dia
-              completo — nas outras noites não há confete atrás. */}
-          <p className="sm2-title" style={{
-            ...sm2TitleStyle,
-            position: 'relative',
-            ...(report.wasPerfect
-              ? { textShadow: '0 1px 2px var(--sm2-surface), 0 0 10px var(--sm2-surface)' }
-              : null),
-          }}>{headline}</p>
-        </div>
+    <RitualDialog label={headline} onClose={onClose} maxWidth={340} closeLabel={isPt ? 'Fechar' : 'Close'}>
+      {/* Cabeçalho: a manchete é APARELHO — glifo 48 pelado (ícone nunca
+          dentro de box) ou, no retorno, a criatura num vidro. O confete é
+          absoluto na faixa do glifo e o título fica acima dele no z. */}
+      <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, textAlign: 'center', paddingTop: report.wasPerfect ? 6 : 4 }}>
+        {report.wasPerfect && <Confetti />}
+        {welcome && spriteUrl
+          ? <SpriteGlass spriteUrl={spriteUrl} />
+          : <Icon name={headIcon} size={48} fill={report.wasPerfect ? 1 : 0} tone={headTone} style={{ position: 'relative', zIndex: 1 }} />}
+        <h2 data-headline style={{ ...ritualTitle, position: 'relative', zIndex: 1 }}>{headline}</h2>
+      </div>
 
-        {/* Linhas */}
-        <div style={{ padding: '0 20px 6px' }}>
-          {rows.map(r => (
-            <div key={r.label} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0' }}>
-              <span style={{ ...hint, flex: 1 }}>{r.label}</span>
-              <span className="sm2-num" style={{
-                fontSize: 'var(--sm2-text-sm)', fontWeight: 500,
-                color: r.highlight === 'good' ? 'var(--sm2-primary-ink)'
-                  : r.highlight === 'soft' ? 'var(--sm2-gold-ink)' : 'var(--sm2-ink)',
-              }}>{r.value}</span>
-            </div>
-          ))}
-          {notes.map((n, i) => (
-            <p key={i} style={{ ...hint, paddingTop: 8 }}>{n}</p>
-          ))}
-        </div>
+      {/* R4 — UMA linha da família `welcomeBackLine`; nunca o N de dias. */}
+      {welcomeLine && <p style={{ ...sm2Text, margin: 0, textAlign: 'center' }}>{welcomeLine}</p>}
 
-        {/* Check-in de humor. Fica aqui porque o relatório já aparece 1×/dia:
-            não custa uma abertura a mais do app. É opcional e não vale ponto. */}
-        {onPickMood && (
-          <div style={{ padding: '12px 20px 0' }}>
-            <p style={{ ...hint, marginBottom: 8 }}>
-              {isPt ? 'E você, como está hoje?' : 'And how are you today?'}
-            </p>
-            <div style={{ display: 'flex', gap: 6 }}>
-              {MOOD_OPTIONS.map(m => {
-                const active = moodToday === m.value;
-                return (
-                  <button
-                    key={m.value}
-                    type="button"
-                    onClick={() => onPickMood(m.value)}
-                    aria-label={isPt ? m.labelPt : m.labelEn}
-                    aria-pressed={active}
-                    title={isPt ? m.labelPt : m.labelEn}
-                    style={{
-                      flex: 1, minHeight: 44, cursor: 'pointer', fontSize: 20, lineHeight: 1,
-                      borderRadius: 10,
-                      backgroundColor: active ? 'var(--sm2-primary-soft)' : 'var(--sm2-surface-2)',
-                      border: active ? '1px solid var(--sm2-primary-ink)' : '1px solid var(--sm2-line)',
-                    }}
-                  >
-                    {m.emoji}
-                  </button>
-                );
-              })}
-            </div>
-            {moodNote && <p style={{ ...hint, marginTop: 8 }}>{moodNote}</p>}
-          </div>
+      {/* Linhas de ONTEM */}
+      <div>
+        {rows.map(r => <RitualRow key={r.label} label={r.label} value={r.value} tone={r.tone} />)}
+        {notes.map((n, i) => (
+          <p key={i} style={{ ...hint, paddingTop: 4 }}>{n}</p>
+        ))}
+        {goalNote && (
+          <p style={{ ...hint, paddingTop: 4 }}>
+            {isPt ? 'Lembra por que você começou: “' : 'Remember why you started: “'}
+            <i>{goalNote}</i>
+            ”.
+          </p>
         )}
+      </div>
 
-        {/* WP4.8 — MEMÓRIAS. O app contava o dia e a semana e nunca contou a
-            HISTÓRIA. Fica dentro do relatório que a pessoa já ia ver: não
-            gera push, badge nem lembrete — um "momento" que persegue deixa de
-            ser momento. */}
-        {/* ── A AVENTURA DA NOITE ──────────────────────────────────────────
-            O pet saiu durante o dia e voltou com uma cena. É o loop de duas
-            visitas do Finch, e a razão de ele ser narrativo está no benchmark
-            do `docs/PLANO-TAREFAS.md`: **narrativa não satura** — um número que
-            sobe todo dia vira ruído em duas semanas; uma cena inédita, não.
+      {/* ── A AVENTURA DA NOITE ──────────────────────────────────────────
+          O pet saiu durante o dia e voltou com uma cena. É o loop de duas
+          visitas do Finch, e a razão de ele ser narrativo está no benchmark
+          do `docs/PLANO-TAREFAS.md`: **narrativa não satura**.
 
-            APARECE EM TODO RELATÓRIO, inclusive no do dia ruim e no de quem
-            voltou depois de sumir. É deliberado: o dia ruim é o momento mais
-            frágil do app, e é justamente nele que a única coisa boa da tela não
-            pode faltar. Um dia parado traz uma cena mais silenciosa — nunca
-            nada.
+          APARECE EM TODO RELATÓRIO, inclusive no do dia ruim e no de quem
+          voltou depois de sumir. É deliberado: o dia ruim é o momento mais
+          frágil do app, e é justamente nele que a única coisa boa da tela não
+          pode faltar.
 
-            NÃO PAGA NADA (decisão do dono, 08/09/2026). Sem Bits, sem item, sem
-            atributo. Recompensa material aqui transformaria o relatório num
-            lugar que a pessoa PRECISA abrir para não perder coisa, que é o
-            oposto de um ritual tranquilo. */}
-        {adventure && (
-          <div style={{ padding: '0 20px 8px' }}>
-            <div
+          NÃO PAGA NADA (decisão do dono, 08/09/2026). Sem Bits, sem item, sem
+          atributo. A arte (96² nativa) entra a 48 (0,5×) num vidro 48² — o
+          único pixel do card (D-R3). */}
+      {adventure && (
+        <div style={{ ...card, display: 'flex', gap: 12, alignItems: 'flex-start', padding: '8px 12px 8px 8px' }}>
+          {adventureArt
+            ? (
+              <RitualGlass width={48}>
+                <img src={adventureArt} alt="" width={48} height={48} style={{ width: 48, height: 48, display: 'block' }} />
+              </RitualGlass>
+            )
+            /* Emoji do catálogo quando a arte ainda não existe — conteúdo, não
+               pixel: fica fora do vidro. */
+            : <span aria-hidden style={{ fontSize: 28, lineHeight: '48px', width: 48, textAlign: 'center', flexShrink: 0 }}>{adventure.emoji}</span>}
+          <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <p style={hint}>
+              {isPt ? 'Da aventura de hoje' : "From today's adventure"}
+              {adventureIsNew && <b style={{ fontWeight: 600 }}>{isPt ? ' · inédito' : ' · new'}</b>}
+            </p>
+            <p style={{ ...sm2Text, margin: 0, fontWeight: 500 }}>
+              {isPt ? adventure.titlePt : adventure.titleEn}
+            </p>
+            <p style={hint}>
+              {isPt ? adventure.textPt : adventure.textEn}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* WP4.8 — MEMÓRIAS. O app contava o dia e a semana e nunca contou a
+          HISTÓRIA. Fica dentro do relatório que a pessoa já ia ver: não
+          gera push, badge nem lembrete. Ainda é ONTEM (R2). */}
+      {memories && <MemoriesCard {...memories} language={language} />}
+
+      {/* A pergunta de HOJE (R2): o humor, colado ao CTA. Fica aqui porque o
+          relatório já aparece 1×/dia. Opcional, e não vale ponto (D-R6: sem
+          rótulo de prêmio; 5 alvos 44 iguais com o emoji de `mood.ts`). */}
+      {onPickMood && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 4 }}>
+          <p style={hint}>{isPt ? 'E você, como está hoje?' : 'And how are you today?'}</p>
+          <div role="group" aria-label={isPt ? 'Humor' : 'Mood'} style={{ display: 'flex', gap: 8 }}>
+            {MOOD_OPTIONS.map(m => {
+              const active = moodToday === m.value;
+              return (
+                <button
+                  key={m.value}
+                  type="button"
+                  onClick={() => onPickMood(m.value)}
+                  aria-label={isPt ? m.labelPt : m.labelEn}
+                  aria-pressed={active}
+                  title={isPt ? m.labelPt : m.labelEn}
+                  style={{
+                    flex: 1, minHeight: 44, cursor: 'pointer',
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 24, lineHeight: 1,
+                    boxSizing: 'border-box',
+                    border: 'none',
+                    borderRadius: 'var(--sm2-radius-md)',
+                    backgroundColor: active ? 'var(--sm2-primary-soft)' : 'var(--sm2-surface-2)',
+                    boxShadow: active ? 'inset 0 0 0 2px var(--sm2-primary-ink)' : 'inset 0 0 0 1px var(--sm2-muted)',
+                  }}
+                >
+                  <span aria-hidden="true">{m.emoji}</span>
+                </button>
+              );
+            })}
+          </div>
+          {moodNote && <p style={hint}>{moodNote}</p>}
+        </div>
+      )}
+
+      {/* WP5.1 — O CONVITE NO VALUE MOMENT.
+          Fica ANTES do botão de fechar e depois do relatório inteiro: quem
+          veio ver o próprio dia vê o dia primeiro. As travas são de
+          `utils/offerMoment.ts`. A FORMA (D-R9, o único padrão positivo do
+          dossiê — Garmin): × 44 no próprio card, `outline` de duas linhas com
+          largura PARCIAL (260) contra os CTAs de largura total, container
+          irmão, removível de vez. Sem cadeado: é convite, não recusa. */}
+      {showOffer && onOpenOffer && (
+        <div aria-label={isPt ? 'Convite' : 'Invitation'} style={{ ...card, position: 'relative', padding: 12 }}>
+          {onDismissOffer && (
+            <button
+              type="button"
+              onClick={onDismissOffer}
+              aria-label={isPt ? 'Não mostrar de novo' : 'Do not show again'}
               style={{
-                display: 'flex', gap: 12, alignItems: 'flex-start',
-                padding: 14, borderRadius: 14,
-                backgroundColor: 'var(--sm2-surface-2)',
-                border: '1px solid var(--sm2-line)',
+                position: 'absolute', top: 0, right: 0, width: 44, height: 44,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'none', border: 'none', cursor: 'pointer',
               }}
             >
-              {/* Arte pixel quando existe, emoji quando não — o mesmo `? :` do
-                  `DreamDex`. A cobertura de `ADVENTURE_ART` é parcial (as 12
-                  cenas comuns), e é o emoji do catálogo que segura as demais
-                  sem deixar buraco na tela. */}
-              {ADVENTURE_ART[adventure.id]
-                ? <img src={ADVENTURE_ART[adventure.id]} alt="" width={28} height={28}
-                       style={{ objectFit: 'contain', imageRendering: 'pixelated', flexShrink: 0 }} />
-                : <span aria-hidden style={{ fontSize: 28, lineHeight: 1 }}>{adventure.emoji}</span>}
-              <div style={{ minWidth: 0 }}>
-                <p style={{ ...hint, margin: 0 }}>
-                  {isPt ? 'Da aventura de hoje' : "From today's adventure"}
-                  {adventureIsNew && (
-                    <span style={{ color: 'var(--sm2-primary-ink)' }}>
-                      {isPt ? ' · inédito' : ' · new'}
-                    </span>
-                  )}
-                </p>
-                <p style={{ ...sm2TitleStyle, fontSize: 'var(--sm2-text-sm)', margin: '2px 0 4px' }}>
-                  {isPt ? adventure.titlePt : adventure.titleEn}
-                </p>
-                <p style={{ ...hint, margin: 0 }}>
-                  {isPt ? adventure.textPt : adventure.textEn}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {memories && (
-          <div style={{ padding: '0 20px 8px' }}>
-            <MemoriesCard {...memories} language={language} />
-          </div>
-        )}
-
-        {/* WP5.1 — O CONVITE NO VALUE MOMENT.
-            O momento em que este produto prova o que vende não é o reveal (ali
-            a pessoa ainda não sabe se isso vai servir para alguma coisa): é o
-            primeiro DIA PERFEITO — ela cumpriu o que combinou consigo mesma e
-            viu a criatura responder. O convite existia em dois lugares e em
-            nenhum deles.
-            Fica ANTES do botão de fechar e depois do relatório inteiro: quem
-            veio ver o próprio dia vê o dia primeiro. As travas (nunca no D0,
-            nunca em cima de quem voltou de ausência, 1×/semana, só para quem
-            não comprou) são de `utils/offerMoment.ts`. */}
-        {showOffer && onOpenOffer && (
-          /* A FORMA do card, e ela é a metade que faltava (auditoria de
-             06/09/2026). O dossiê achou UM padrão positivo em onze apps de
-             paywall (Garmin) e ele são quatro decisões JUNTAS: `×` no próprio
-             card, botão de largura PARCIAL contra os CTAs de largura total,
-             container irmão (não empilhado no fluxo da ação), e removível de
-             vez. Sem o `×`, a única forma de nunca mais ver o convite era
-             comprar ou nunca mais ter um dia perfeito na semana. */
-          <div
-            style={{
-              margin: '0 20px',
-              padding: 12,
-              borderRadius: 12,
-              border: '1px solid var(--sm2-line)',
-              backgroundColor: 'var(--sm2-surface)',
-              position: 'relative',
-            }}
-          >
-            {onDismissOffer && (
-              <button
-                type="button"
-                onClick={onDismissOffer}
-                aria-label={isPt ? 'Não mostrar de novo' : 'Do not show again'}
-                // 44×44, como o `×` de fechar o modal logo acima e como todo
-                // alvo de toque do app. Era 32×32 — o ÚNICO alvo abaixo da
-                // régua nesta tela (medido no aparelho de 375 px), e logo o
-                // deste: a ação dele é TERMINAL (`offerDismissed` no save, e o
-                // convite não volta nunca mais). Alvo pequeno para ação sem
-                // volta é a combinação errada, ainda mais encostado num card
-                // que leva à compra — errar o toque aqui abre o paywall.
-                // O `top`/`right` negativos mantêm o × visualmente no canto: a
-                // área cresceu para fora, não para dentro do texto.
-                style={{
-                  position: 'absolute', top: -2, right: -2, width: 44, height: 44,
-                  display: 'grid', placeItems: 'center',
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  color: 'var(--sm2-muted)', fontSize: 16, lineHeight: 1,
-                }}
-              >
-                ×
-              </button>
-            )}
-            <p style={{ ...hint, margin: '0 24px 8px 0' }}>
-              {isPt
-                ? 'Foi um dia inteiro do jeito que você quis. Seu Soulmon sentiu.'
-                : 'That was a whole day the way you wanted it. Your Soulmon felt it.'}
-            </p>
-            {/* Largura PARCIAL de propósito: os botões de ação do relatório
-                ("Começar o dia") ocupam a largura toda, e um convite com o
-                mesmo peso compete com a ação que fecha o ritual do dia. */}
-            <div style={{ maxWidth: 260 }}>
-              <UnlockNudge language={language} reason="report" onOpen={onOpenOffer} />
-            </div>
-          </div>
-        )}
-
-        {/* Ações */}
-        <div style={{ padding: '16px 20px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {canRecover && (
-            <>
-              <button type="button" onClick={onRecoverHearts} style={{ ...sm2Button('outline'), width: '100%' }}>
-                {isPt ? 'Eu fiz, esqueci de marcar' : 'I did it, forgot to log'}
-              </button>
-              <p style={{ ...hint, textAlign: 'center' }}>
-                {isPt
-                  ? 'Devolve os corações. O dia completo não volta — esse já passou.'
-                  : 'Gives the hearts back. The complete day doesn’t return — that one’s gone.'}
-              </p>
-            </>
+              <Icon name="close" size={24} tone="muted" />
+            </button>
           )}
-          <button type="button" onClick={onClose} style={{ ...sm2Button('primary'), width: '100%' }}>
-            {isPt ? 'Começar o dia' : 'Start the day'}
-          </button>
+          <p style={{ ...hint, margin: '0 36px 8px 0' }}>
+            {isPt
+              ? 'Foi um dia inteiro do jeito que você quis. Seu Soulmon sentiu.'
+              : 'That was a whole day the way you wanted it. Your Soulmon felt it.'}
+          </p>
+          <div style={{ maxWidth: 260 }}>
+            <UnlockNudge language={language} reason="report" onOpen={onOpenOffer} />
+          </div>
         </div>
+      )}
+
+      {/* Ações */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {canRecover && (
+          <>
+            <button type="button" onClick={onRecoverHearts} style={{ ...sm2Button('outline'), width: '100%' }}>
+              {isPt ? 'Eu fiz, esqueci de marcar' : 'I did it, forgot to log'}
+            </button>
+            <p style={{ ...hint, textAlign: 'center' }}>
+              {isPt
+                ? 'Devolve os corações. O dia completo não volta — esse já passou.'
+                : 'Gives the hearts back. The complete day doesn’t return — that one’s gone.'}
+            </p>
+          </>
+        )}
+        <button type="button" onClick={onClose} style={{ ...sm2Button('primary'), width: '100%' }}>
+          {isPt ? 'Começar o dia' : 'Start the day'}
+        </button>
       </div>
-    </div>
+    </RitualDialog>
   );
 }

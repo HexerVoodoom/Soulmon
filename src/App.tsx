@@ -4336,6 +4336,22 @@ export default function App() {
     gameState.playerDayTz, gameState.offerShownWeek,
   ]);
 
+  /* 13.11 (dono, 14/09/2026; STATUS i) — a semana da oferta conta ao MOSTRAR,
+     não ao tocar. Carimbar `offerShownWeek` derruba `ofereceNoRelatorio` no
+     mesmo render, então o relatório ABERTO segura o convite por um trinco
+     próprio (a data do relatório); dispensar continua vencendo tudo. */
+  const [ofertaMostradaEm, setOfertaMostradaEm] = useState<string | null>(null);
+  useEffect(() => {
+    if (interstitial !== 'dailyReport' || !ofereceNoRelatorio) return;
+    const report = gameState.lastDayReport;
+    if (!report || ofertaMostradaEm === report.date) return;
+    const semana = isoWeekKey(playerDayKey(new Date(), gameState.playerDayTz));
+    setOfertaMostradaEm(report.date);
+    if (semana) setGameState(prev => ({ ...prev, offerShownWeek: semana }));
+  }, [interstitial, ofereceNoRelatorio, gameState.lastDayReport, gameState.playerDayTz, ofertaMostradaEm, setGameState]);
+  const mostraOfertaNoRelatorio = gameState.offerDismissed !== true
+    && (ofereceNoRelatorio || (!!gameState.lastDayReport && ofertaMostradaEm === gameState.lastDayReport.date));
+
   const dispensarPriming = useCallback(() => {
     setPrimingDispensado(true);
     writeFlag(STORAGE_KEYS.NOTIFICATION_PRIMING_DISMISSED, true, { silent: true });
@@ -4568,7 +4584,7 @@ export default function App() {
             text={milestoneCeremony.text}
             dateLabel={milestoneCeremony.dateLabel}
             reducedMotion={milestoneCeremony.reducedMotion}
-            spriteUrl={displaySprite(spriteAcervo, gameState.evolutionStage)?.url}
+            spriteUrl={displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? getSpriteForStage(gameState.evolutionStage, gameState.demoCharacterId)}
             language={language}
             onDone={() => setMilestoneCeremony(null)}
           />
@@ -5834,7 +5850,7 @@ export default function App() {
         showFirstTaskPopup={showFirstTaskPopup}
         onCloseFirstTaskPopup={() => setShowFirstTaskPopup(false)}
         language={language}
-        spriteUrl={displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? null}
+        spriteUrl={displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? getSpriteForStage(gameState.evolutionStage, gameState.demoCharacterId)}
       />
 
       {evolutionCeremony && (
@@ -5962,7 +5978,7 @@ export default function App() {
             return {
               mark: marco,
               petName: soulmonDisplayName(gameState.soulmonMeta) || '—',
-              spriteUrl: displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? null,
+              spriteUrl: displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? getSpriteForStage(gameState.evolutionStage, gameState.demoCharacterId),
               formNames: (gameState.unlockedEvolutions ?? []).map(id => {
                 const st = (gameState.soulmonStages ?? []).find(
                   x => (x.branch ? `${x.stage}-${x.branch}` : x.stage) === id,
@@ -5973,14 +5989,11 @@ export default function App() {
               soulGoal: gameState.soulGoal ?? null,
             };
           })()}
-          showOffer={ofereceNoRelatorio}
-          onOpenOffer={() => {
-            // Marca a semana ANTES de abrir: o cap é sobre ter oferecido, não
-            // sobre a pessoa ter comprado.
-            const semana = isoWeekKey(playerDayKey(new Date(), gameState.playerDayTz));
-            if (semana) setGameState(prev => ({ ...prev, offerShownWeek: semana }));
-            setUnlockReason('report');
-          }}
+          showOffer={mostraOfertaNoRelatorio}
+          /* A semana já foi carimbada ao MOSTRAR (13.11) — aqui só abre. */
+          onOpenOffer={() => setUnlockReason('report')}
+          /* R4 / D-H7 — a criatura na peça do retorno. */
+          spriteUrl={displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? getSpriteForStage(gameState.evolutionStage, gameState.demoCharacterId)}
           onDismissOffer={() => setGameState(prev => ({ ...prev, offerDismissed: true }))}
         />
       )}

@@ -15,6 +15,7 @@
  *    pessoa já ia ver. Não gera push, nem badge, nem lembrete.
  */
 import { sm2Hint, sm2Text } from './form/FormKit';
+import { SpriteGlass } from './ritual/RitualKit';
 import type { Language } from '../utils/i18n';
 
 interface MemoriesCardProps {
@@ -56,7 +57,7 @@ export function MemoriesCard({
         />
       )}
 
-      <p style={{ ...sm2Text, margin: 0, fontWeight: 600 }}>
+      <p style={{ ...sm2Text, margin: 0, fontWeight: 500 }}>
         {isPt ? `${mark} dias com ${petName}` : `${mark} days with ${petName}`}
       </p>
 
@@ -64,7 +65,7 @@ export function MemoriesCard({
           única frase do cartão que não é sobre a criatura — e é a que faz o
           resto significar alguma coisa. */}
       {soulGoal?.trim() && (
-        <p style={{ ...sm2Text, margin: '10px 0 0', color: 'var(--sm2-muted)' }}>
+        <p style={{ ...sm2Hint }}>
           {isPt
             ? `Começou assim: “${soulGoal.trim()}”.`
             : `It started like this: “${soulGoal.trim()}”.`}
