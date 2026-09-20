@@ -26,7 +26,7 @@ export interface MiniGlassProps {
 export function MiniGlass({ size, children, style }: MiniGlassProps) {
   return (
     <span
-      className="sm2-viewport-screen"
+      className="sm2-viewport-screen sm2-visor"
       aria-hidden="true"
       data-mini-glass
       style={{

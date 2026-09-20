@@ -156,7 +156,7 @@ export interface RitualGlassProps {
 export function RitualGlass({ width, height = width, align = 'center', children, style }: RitualGlassProps) {
   return (
     <span
-      className="sm2-viewport-screen"
+      className="sm2-viewport-screen sm2-visor"
       aria-hidden="true"
       data-ritual-glass
       style={{

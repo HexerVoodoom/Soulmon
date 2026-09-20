@@ -360,6 +360,61 @@ describe('tinta e fill nunca são a mesma cor', () => {
   });
 });
 
+// ── 3b. O VISOR (D-O16, canvas Onboarding-funil §23) ──────────────────────
+//
+// Dentro do vidro a paleta é a do visor e NÃO muda de tema: o vidro é escuro
+// nos dois temas, mas `primary-ink`/`muted` do tema claro foram calibrados
+// para superfície clara — o ciano claro `#0B6F68` sobre o vidro claro
+// `#0E2422` dá 2,70:1. O escopo `.sm2-visor` do `index.css` é o ÚNICO lugar
+// que fixa os hex do escuro para o que vive no vidro (splash, intro, slots,
+// `Viewport`). Aqui o par é medido contra o `viewport-bg` dos DOIS temas.
+const visor = () => tokensOnde(s => s === '.sm2-visor');
+
+describe('VISOR — a paleta dentro do vidro (`.sm2-visor`) é um escopo único', () => {
+  it('o escopo existe no index.css e redefine a tinta do visor', () => {
+    const v = visor();
+    for (const k of ['--sm2-primary-ink', '--sm2-muted', '--sm2-ink', '--sm2-surface', '--sm2-surface-2', '--sm2-line']) {
+      expect(v[k], `token ausente em .sm2-visor: ${k}`).toBeTruthy();
+    }
+  });
+
+  it('os valores do visor são os do TEMA ESCURO (uma fonte, não uma terceira paleta)', () => {
+    const v = visor();
+    const e = temaEscuro();
+    for (const k of Object.keys(v)) {
+      expect(v[k], `${k} do visor ≠ tema escuro`).toBe(e[k]);
+    }
+  });
+
+  for (const [nomeTema, tokens] of [['tema claro', temaClaro], ['tema escuro', temaEscuro]] as const) {
+    it(`primary-ink do visor sobre viewport-bg (${nomeTema}) ≥ ${AA_TEXTO}:1`, () => {
+      const r = contraste(visor()['--sm2-primary-ink'], tokens()['--sm2-viewport-bg']);
+      expect(Number(r.toFixed(2))).toBeGreaterThanOrEqual(AA_TEXTO);
+    });
+    it(`muted do visor sobre viewport-bg (${nomeTema}) ≥ ${AA_TEXTO}:1`, () => {
+      const r = contraste(visor()['--sm2-muted'], tokens()['--sm2-viewport-bg']);
+      expect(Number(r.toFixed(2))).toBeGreaterThanOrEqual(AA_TEXTO);
+    });
+  }
+
+  it('o primary-ink do tema CLARO falharia no vidro — é por isso que o escopo existe', () => {
+    const r = contraste(temaClaro()['--sm2-primary-ink'], temaClaro()['--sm2-viewport-bg']);
+    expect(r).toBeLessThan(AA_TEXTO);
+  });
+
+  it('o index.html não carrega mais cópia dos tokens: o #splash lê de .sm2-visor', async () => {
+    const fs = await import(/* @vite-ignore */ 'node:fs');
+    const { fileURLToPath } = await import(/* @vite-ignore */ 'node:url');
+    const aqui = fileURLToPath(new URL('.', import.meta.url));
+    const html = fs.readFileSync(`${aqui}../../index.html`, 'utf8');
+    expect(html).toMatch(/<div id="splash" class="sm2-visor sm2-splash"/);
+    expect(html, 'declaração --sm2-* dentro do index.html (cópia de token)').not.toMatch(/--sm2-[a-z-]+\s*:/);
+    // Sem sombra e sem opacidade na splash (D-O2): o brilho é a tinta.
+    const splashCss = cssRaw.slice(cssRaw.indexOf('.sm2-splash {'), cssRaw.indexOf('.sm2-splash-video')).replace(/\/\*[\s\S]*?\*\//g, '');
+    expect(splashCss).not.toMatch(/drop-shadow|text-shadow|box-shadow|opacity\s*:\s*\.\d/);
+  });
+});
+
 // ── 4. REGRAS ESTRUTURAIS DA FUNDAÇÃO ─────────────────────────────────────
 
 describe('regras da fundação travadas no CSS', () => {

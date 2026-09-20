@@ -6477,6 +6477,9 @@ button.sm-px-node {
      dele. Um bloco novo no fim tira a trava da fundação do alcance do teste
      sem ninguém notar. */
   .sm-visor-swap { animation: none !important; }
+  /* A splash/intro (canvas Onboarding-funil): a onda da barra e os cristais
+     param; o que informa é o texto ("LOADING DATA..."), não o movimento. */
+  .sm2-splash-bar i, .sm2-splash-crystal { animation: none !important; }
   /* Spritesheet: para no ÚLTIMO quadro (o estado final do efeito), sem varrer. */
   .sm-sheet { animation: none !important; background-position-x: calc(-1 * var(--sm-sheet-w) + var(--sm-sheet-w) / var(--sm-sheet-frames)) !important; }
   /* A varredura da sintonia NÃO TOCA (§6 da spec). O corte de verdade é em JS
@@ -7708,3 +7711,117 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
    com eles: `--sm-px-cyan-ink`/`--sm-px-copper-ink` (a raridade do sonho era
    o único consumidor; hoje é rótulo `muted`, D-R2) e o `sm-px-card` do
    `MorningDream` (a classe fica — o arcade ainda a usa). */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ONBOARDING-FUNIL (canvas §23) — a paleta do VISOR e a splash
+   ═══════════════════════════════════════════════════════════════════════════
+   D-O16: DENTRO do vidro a paleta é a do visor e não muda de tema. O vidro é
+   escuro nos dois temas (`--sm2-viewport-bg`), mas `primary-ink`/`muted` do
+   tema CLARO foram calibrados para superfície clara — o ciano claro
+   `#0B6F68` sobre o vidro `#0E2422` dá 2,70:1. Este é o ÚNICO escopo que
+   fixa os hex do escuro para o que vive no vidro; `index.html #splash`, o
+   `Viewport`, `MiniGlass` e `RitualGlass` levam a classe. Nunca copiar estes
+   valores num componente (footgun 9). Par medido em
+   `styles/tokens.contrast.test.ts` (visor × `viewport-bg` claro = 11,89). */
+.sm2-visor {
+  --sm2-ink: #E9F5F2;
+  --sm2-muted: #9DBCB4;
+  --sm2-primary-ink: #5FF3E0;
+  --sm2-primary-deep: #29C9B8;
+  --sm2-surface: #0F2A29;
+  --sm2-surface-2: #163735;
+  --sm2-line: #1E3F3C;
+  color: var(--sm2-viewport-ink);
+}
+
+/* A SPLASH é o visor do aparelho ligando, em tela cheia (ONB-01) — e a intro
+   (ONB-03/04) é a continuação do boot no MESMO `.sm2-splash` (D-O3/X4), com o
+   vídeo em `cover` dentro. Cor sólida separada das camadas decorativas: se o
+   `color-mix` não for suportado o navegador descarta só o `background-image`
+   e a tela continua com o fundo do visor. `#splash` pinta ANTES do bundle: o
+   CSS chega pelo `<link>` bloqueante do `<head>` no build, então ele lê daqui
+   e não carrega mais cópia de token no `index.html`. */
+.sm2-splash {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+  overflow: hidden;
+  background-color: var(--sm2-viewport-bg);
+  background-image:
+    radial-gradient(circle at 50% -10%, color-mix(in srgb, var(--sm2-primary-ink) 10%, transparent), transparent 55%),
+    repeating-linear-gradient(0deg, transparent 0 47px, color-mix(in srgb, var(--sm2-primary-ink) 5%, transparent) 47px 48px),
+    repeating-linear-gradient(90deg, transparent 0 47px, color-mix(in srgb, var(--sm2-primary-ink) 5%, transparent) 47px 48px),
+    linear-gradient(180deg, var(--sm2-viewport-bg) 0%, var(--sm2-surface) 55%, var(--sm2-viewport-bg) 100%);
+  /* A voz do aparelho é a Silkscreen. Ela chega com o bundle e NÃO é
+     preloadada (fonte nova no caminho crítico atrasaria o LCP desta própria
+     tela); o fallback é uma face de máquina de escrever concreta, não o
+     mono da UI, para trocar sem mudar o papel do texto. */
+  font-family: 'Silkscreen', 'Courier New', 'DejaVu Sans Mono', monospace;
+  -webkit-font-smoothing: none;
+  image-rendering: pixelated;
+}
+#splash { z-index: 9999; transition: opacity .45s ease; }
+#splash.done { opacity: 0; pointer-events: none; }
+/* O reflexo do vidro, sem raio (é a tela inteira). */
+.sm2-splash > .sm2-viewport-glass { border-radius: 0; }
+/* A chama do kit a 4× inteiro (76×120, D-O1) — sem `drop-shadow`, sem
+   `transform` fracionário: o pulso da splash é COR, não escala (D-O2). */
+.sm2-splash-flame { display: block; flex: none; shape-rendering: crispEdges; }
+.sm2-splash-title {
+  margin: 0;
+  font-family: inherit;
+  font-size: var(--sm2-text-2xl);
+  font-weight: 400;
+  letter-spacing: .12em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: var(--sm2-primary-ink);
+}
+/* 14px é o PISO da Silkscreen e o piso de "texto que o usuário lê". */
+.sm2-splash-pix { margin: 0; font-size: var(--sm2-text-sm); letter-spacing: .16em; color: var(--sm2-muted); text-transform: uppercase; }
+.sm2-splash-link { color: var(--sm2-primary-ink); }
+.sm2-splash-bar {
+  width: 220px; height: 16px; padding: 2px; box-sizing: border-box;
+  background: var(--sm2-surface-2); border: 1px solid var(--sm2-line);
+  border-radius: var(--sm2-radius-sm); display: flex; gap: 2px;
+}
+/* Segmento apagado em TINTA (`primary-ink` 15% sobre `surface-2`), nunca por
+   `opacity`; o aceso é `primary-ink`. A onda anima a COR entre os dois. */
+.sm2-splash-bar i {
+  flex: 1;
+  background: color-mix(in srgb, var(--sm2-primary-ink) 15%, var(--sm2-surface-2));
+  animation: sm2-splash-seg 1.6s linear infinite;
+}
+@keyframes sm2-splash-seg {
+  0%, 20% { background: color-mix(in srgb, var(--sm2-primary-ink) 15%, var(--sm2-surface-2)); }
+  30%, 70% { background: var(--sm2-primary-ink); }
+  80%, 100% { background: color-mix(in srgb, var(--sm2-primary-ink) 15%, var(--sm2-surface-2)); }
+}
+.sm2-splash-crystals { display: flex; gap: 24px; margin-top: 4px; }
+/* Cristais em vetor (gradiente + `clip-path`), sem `box-shadow`. */
+.sm2-splash-crystal {
+  width: 14px; height: 26px;
+  background: linear-gradient(160deg, var(--sm2-viewport-ink) 0%, var(--sm2-primary-ink) 45%, var(--sm2-primary-deep) 100%);
+  clip-path: polygon(50% 0, 100% 30%, 78% 100%, 22% 100%, 0 30%);
+  animation: sm2-splash-flick 1.6s ease-in-out infinite;
+}
+.sm2-splash-crystal:nth-child(2) { height: 34px; width: 17px; animation-delay: .3s; }
+.sm2-splash-crystal:nth-child(3) { animation-delay: .6s; }
+@keyframes sm2-splash-flick {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.14) translateY(-1px); }
+}
+/* A INTRO dentro do mesmo visor: o vídeo `cover`, o corvo (ilustração 512²
+   a 128 = 0,25×, `image-rendering: auto` — como o `bg-room`) e o wordmark
+   Silkscreen 20; "TAP TO SKIP" 14 `muted` no pé, dentro do alvo. */
+.sm2-splash-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.sm2-splash-raven { width: 128px; height: 128px; display: block; image-rendering: auto; }
+.sm2-splash-wordmark { margin: 0; font-family: inherit; font-size: var(--sm2-text-lg); font-weight: 400; letter-spacing: .12em; line-height: 1.2; text-transform: uppercase; color: var(--sm2-primary-ink); }
+.sm2-splash-tap { position: absolute; inset: 0; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 12px; pointer-events: none; }
+.sm2-splash[role="button"] { cursor: pointer; }
+.sm2-splash[role="button"]:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: -4px; }

@@ -190,7 +190,7 @@ export function Viewport({
       {...(label ? { role: 'img', 'aria-label': label } : { 'aria-hidden': true })}
     >
       <div
-        className={['sm2-viewport-screen', screenClassName].filter(Boolean).join(' ')}
+        className={['sm2-viewport-screen', 'sm2-visor', screenClassName].filter(Boolean).join(' ')}
         /* A ORDEM AQUI É O CONTRATO, não estilo de código.
            Enquanto o spread vinha DEPOIS, qualquer chamador que passasse
            `width`/`height` em `screenStyle` anulava a regra de escala inteira

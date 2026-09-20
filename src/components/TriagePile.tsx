@@ -263,7 +263,7 @@ function TriageDone({ isPt, decided, onClose, petSprite }: { isPt: boolean; deci
           `Viewport` (fundo de visor + reflexo), sem anel — arte pixel dentro
           de uma célula vetor. `aria-hidden`: a frase abaixo é a mensagem. */}
       <span
-        className="sm2-viewport-screen"
+        className="sm2-viewport-screen sm2-visor"
         aria-hidden="true"
         style={{ width: 96, height: 96, flex: 'none', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', position: 'relative', borderRadius: 'var(--sm2-radius-md)', overflow: 'hidden' }}
       >
