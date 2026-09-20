@@ -31,6 +31,16 @@ export interface ClassTitle {
    *  ampla); 'generico' = nenhum arquétipo nasceu ainda, cai no elemento
    *  dominante. */
   origem: 'arquetipo' | 'diluido' | 'generico';
+  /**
+   * Chave do SIGILO da classe (`utils/sigilArt.ts`, nome do arquivo em
+   * `assets/soulmon/sigilos/`) — a peça que a Ficha desenha a 48 no canto
+   * superior esquerdo do visor (canvas Pet, D-P4). A ESCOLA vence o elemento
+   * porque o elemento já é dito dentro do vidro pela aura (D9): o sigilo diz
+   * o que a aura não diz. Opcional porque o cache no save (`soulmonClassTitles`)
+   * anterior a 20/09/2026 não o tem — sem chave, a Ficha não desenha sigilo
+   * (nunca inventa um), até a próxima recomputação preencher o cache.
+   */
+  sigilo?: string;
 }
 
 /**
@@ -164,6 +174,24 @@ function elementoBaseDominante(ficha: Ficha): string {
 }
 
 /**
+ * O sigilo de uma classe, a partir da CONDIÇÃO do arquétipo que a nomeou:
+ * a escola de maior limiar; sem escola, o elemento de maior limiar; sem
+ * nenhum dos dois (fallback genérico), o elemento base dominante da ficha —
+ * que é o mesmo que dá nome ao "Adepto de …". Pura e determinística.
+ */
+export function sigiloDaClasse(condicao: CondicaoLike | undefined, ficha: Ficha): string {
+  const maior = (grupo?: Record<string, number>): string | undefined => {
+    let melhor: string | undefined;
+    let melhorPts = -Infinity;
+    for (const [id, pts] of Object.entries(grupo ?? {})) {
+      if (pts > melhorPts) { melhor = id; melhorPts = pts; }
+    }
+    return melhor;
+  };
+  return maior(condicao?.escolas) ?? maior(condicao?.elementos) ?? elementoBaseDominante(ficha);
+}
+
+/**
  * Classe de UM estágio. Determinística: função da ficha (que já é função da
  * identidade), então reroll não troca a classe — mesmo padrão das skills.
  */
@@ -175,6 +203,7 @@ export async function computeClassTitle(ficha: Ficha): Promise<ClassTitle> {
     return {
       nome: { pt: pleno.nome, en: CLASS_TITLE_EN[pleno.id] ?? pleno.nome },
       origem: 'arquetipo',
+      sigilo: sigiloDaClasse(pleno.condicao, ficha),
     };
   }
 
@@ -184,6 +213,7 @@ export async function computeClassTitle(ficha: Ficha): Promise<ClassTitle> {
     return {
       nome: { pt: `Aspirante a ${diluido.nome}`, en: `${en} Aspirant` },
       origem: 'diluido',
+      sigilo: sigiloDaClasse(diluido.condicao, ficha),
     };
   }
 
@@ -194,6 +224,7 @@ export async function computeClassTitle(ficha: Ficha): Promise<ClassTitle> {
       en: `${baseElementLabel(elId, false)} Adept`,
     },
     origem: 'generico',
+    sigilo: elId,
   };
 }
 

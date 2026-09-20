@@ -44,7 +44,13 @@ const modules = import.meta.glob('../assets/soulmon/fx-ataque/*.png', {
 const ATTACK_FX: Record<string, string> = {};
 
 for (const [path, url] of Object.entries(modules)) {
-  const match = /fx-(.+)-(cast|aura|slash|impact|defended|orb)\.png$/.exec(path);
+  // ⚠️ Ancorado na BARRA e sem `.+` guloso: o caminho do glob é
+  // `../assets/soulmon/fx-ataque/fx-fogo-aura.png`, e `fx-(.+)-aura` casava a
+  // partir do `fx-` de `fx-ataque/`, gravando a chave `ataque/fx-fogo:aura` —
+  // 924 peças no mapa e NENHUMA encontrável: `auraForElement` devolvia
+  // `undefined` para todo elemento e a aura da Ficha nunca foi desenhada
+  // (achado em 20/09/2026, ao implementar o canvas Pet; há teste).
+  const match = /\/fx-([a-z_]+)-(cast|aura|slash|impact|defended|orb)\.png$/.exec(path);
   if (!match) continue;
   const [, id, estado] = match;
   ATTACK_FX[`${id}:${estado}`] = url;

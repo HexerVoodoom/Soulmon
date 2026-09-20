@@ -6,6 +6,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { computeClassTitle, computeClassTitlesAllStages, CLASS_TITLE_EN } from './classTitle';
+import { sigilArt } from '../../sigilArt';
 import { buildFichaESkills } from './fromInput';
 import { buildSoulProfile } from '../profile';
 import { FICHA_STAGE_ORDER, type FichaStage } from './types';
@@ -36,6 +37,9 @@ describe('computeClassTitle', () => {
       expect(titulo.nome.en.length).toBeGreaterThan(0);
       expect(titulo.nome.en).not.toBe(titulo.nome.pt);
       expect(['arquetipo', 'diluido', 'generico']).toContain(titulo.origem);
+      // o sigilo da classe (canvas Pet, D-P4) sempre aponta para uma arte que existe
+      expect(titulo.sigilo, `sigilo de ${stage}`).toBeTruthy();
+      expect(sigilArt(titulo.sigilo!), `arte do sigilo ${titulo.sigilo}`).toBeTruthy();
     }
   });
 

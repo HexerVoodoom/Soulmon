@@ -30,9 +30,11 @@ import { FICHA_STAGE_ORDER, type FichaStage } from '../utils/soulProfile/ficha/t
 import type { StageSkills, StageSkill } from '../utils/soulProfile/ficha/skills';
 import type { ClassTitle } from '../utils/soulProfile/ficha/classTitle';
 import { auraForElement } from '../utils/attackFxArt';
+import { sigilArt } from '../utils/sigilArt';
 import { ACHIEVEMENT_IDS, ACHIEVEMENT_LABELS, type AchievementId } from '../utils/achievements';
 import { emblemArt } from '../utils/emblemArt';
 import { Viewport } from './ui/Viewport';
+import { MiniGlass } from './ui/MiniGlass';
 import { Icon } from './ui/Icon';
 import { sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 
@@ -95,14 +97,55 @@ const h2Style: CSSProperties = {
   margin: 0,
 };
 
-/** O sprite dentro do visor: escala inteira e nada de suavização. */
-const spriteInScreen: CSSProperties = {
-  position: 'absolute',
-  inset: 0,
-  width: '100%',
-  height: '100%',
-  objectFit: 'contain',
-  imageRendering: 'pixelated',
+/**
+ * A COMPOSIÇÃO DA HEROÍNA no vidro 192² (`Viewport 64×64×3`) — canvas Pet
+ * (`docs/design/wireframes/pet/identidade/`, D-P2/D-P3/D-P4), medidas em CSS px:
+ *
+ *  · **sprite 256² a 128, centrado** (`left/top 32`) — 0,5× em DPR 1, 1× em
+ *    DPR 2, a MESMA escala da Home (DECISÕES §18 P2 a): uma criatura, um
+ *    tamanho. Antes ele esticava ao vidro (192 = 0,75×), e três escalas da
+ *    mesma arte (Home 0,5×, Ficha 0,75×, anterior 0,19×) liam como três
+ *    criaturas.
+ *  · **aura 128² a 2× (256), atrás, a opacidade 1** — o PNG já traz o alfa;
+ *    nenhuma opacidade no aparelho (Home F1). **O corte é declarado (X3 b):**
+ *    a caixa de alfa da aura ocupa a largura inteira do PNG, então a 2× o
+ *    anel mede 256 num vidro de 192 — 32 px de cada lado ficam fora, o anel
+ *    ATRAVESSA o vidro (FX, não moldura). A `squad-arte` deve uma aura em
+ *    96² (a 2× = o vidro inteiro); quando ela chegar, só `AURA` muda.
+ *  · **sigilo de classe 192² a 48 (0,25×)**, canto superior esquerdo a 8 px,
+ *    à frente da aura — só quando a classe do estágio traz `sigilo`
+ *    (`classTitle.ts`); nunca solto no aparelho (D6).
+ */
+const HERO: CSSProperties = {
+  position: 'absolute', left: 32, top: 32, width: 128, height: 128, imageRendering: 'pixelated',
+};
+const AURA: CSSProperties = {
+  position: 'absolute', left: -32, top: -32, width: 256, height: 256, imageRendering: 'pixelated',
+};
+const SIGIL: CSSProperties = {
+  position: 'absolute', left: 8, top: 8, width: 48, height: 48, imageRendering: 'pixelated',
+};
+
+/**
+ * O VISOR DE EMBLEMAS (D-P5): `Viewport 158×41×2` = 316×82 CSS, com **duas
+ * linhas de 158×20 (×2 = 316×40)** e 2 px entre elas — emblemas 64² a 32
+ * (0,5×), `gap` 2 + `padding` 4. A conta: com 9 conquistas (`ACHIEVEMENT_IDS`)
+ * o visor 142×20 do código de 15/09 não comportava as nove abertas
+ * (9 × 32 + 8 × 2 + 8 = 312 > 284); em duas linhas cada conquista tem casa
+ * FIXA (as `ceil(9/2)` primeiras em cima, o resto embaixo — pela ordem
+ * canônica), então abrir uma nova nunca embaralha as outras. Só os abertos
+ * são desenhados; os fechados não viram cadeado nem silhueta (o app não
+ * cobra). Um `role="img"` só, com o MESMO texto da linha quieta sob o visor
+ * (X2: o vidente vê o que o leitor ouve).
+ */
+const EMBLEM_ROW_W = 158;
+const EMBLEM_ROW_H = 20;
+const EMBLEM_ROWS = 2;
+const EMBLEM_ROW_GAP = 1; // lógico; ×2 = 2 CSS px entre as linhas
+const EMBLEM_PER_ROW = Math.ceil(ACHIEVEMENT_IDS.length / EMBLEM_ROWS);
+const emblemRow: CSSProperties = {
+  display: 'flex', alignItems: 'center', gap: 2, padding: '0 4px', boxSizing: 'border-box',
+  width: EMBLEM_ROW_W * 2, height: EMBLEM_ROW_H * 2,
 };
 
 /**
@@ -242,37 +285,57 @@ export function PetPage({
             screenStyle={{ position: 'relative' }}
           >
             {auraForElement(dominantElement) && (
-              <img src={auraForElement(dominantElement)} alt="" aria-hidden="true" data-aura style={{ ...spriteInScreen, opacity: 0.6 }} />
+              <img src={auraForElement(dominantElement)} alt="" aria-hidden="true" data-aura style={AURA} />
             )}
-            <img src={getSpriteForStage(creatureFormId(atual), demoCharacterId)} alt="" style={spriteInScreen} />
+            <img src={getSpriteForStage(creatureFormId(atual), demoCharacterId)} alt="" data-hero style={HERO} />
+            {classeAtual?.sigilo && sigilArt(classeAtual.sigilo) && (
+              <img src={sigilArt(classeAtual.sigilo)} alt="" aria-hidden="true" data-sigil={classeAtual.sigilo} style={SIGIL} />
+            )}
           </Viewport>
 
           {/* Emblemas de CONQUISTA (15/09/2026): pixel, logo DENTRO de um segundo visor
               estreito — nunca soltos no aparelho (`04` §1). Só os abertos são
               desenhados; os fechados não viram cadeado nem silhueta (o app não cobra). */}
-          {achievements.length > 0 && (
-            <Viewport
-              width={142}
-              height={20}
-              scale={2}
-              breathing={false}
-              label={isPt ? `Conquistas: ${achievements.length} de ${ACHIEVEMENT_IDS.length}` : `Achievements: ${achievements.length} of ${ACHIEVEMENT_IDS.length}`}
-              screenStyle={{ display: 'flex', alignItems: 'center', gap: 2, padding: '0 2px' }}
-            >
-              {ACHIEVEMENT_IDS.filter(id => achievements.includes(id)).map(id => (
-                <img
-                  key={id}
-                  src={emblemArt(id)}
-                  alt={isPt ? ACHIEVEMENT_LABELS[id].pt : ACHIEVEMENT_LABELS[id].en}
-                  title={isPt ? ACHIEVEMENT_LABELS[id].pt : ACHIEVEMENT_LABELS[id].en}
-                  width={16}
-                  height={16}
-                  data-emblem={id}
-                  style={{ imageRendering: 'pixelated', display: 'block' }}
-                />
-              ))}
-            </Viewport>
-          )}
+          {achievements.length > 0 && (() => {
+            const abertos = ACHIEVEMENT_IDS.filter(id => achievements.includes(id));
+            const rotulo = isPt
+              ? `Conquistas · ${abertos.length} de ${ACHIEVEMENT_IDS.length}`
+              : `Achievements · ${abertos.length} of ${ACHIEVEMENT_IDS.length}`;
+            const linhas = Array.from({ length: EMBLEM_ROWS }, (_, i) =>
+              ACHIEVEMENT_IDS.slice(i * EMBLEM_PER_ROW, (i + 1) * EMBLEM_PER_ROW).filter(id => abertos.includes(id)));
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                <Viewport
+                  width={EMBLEM_ROW_W}
+                  height={EMBLEM_ROW_H * EMBLEM_ROWS + EMBLEM_ROW_GAP * (EMBLEM_ROWS - 1)}
+                  scale={2}
+                  breathing={false}
+                  label={rotulo}
+                  style={{ borderRadius: 12 }}
+                  screenStyle={{ display: 'flex', flexDirection: 'column', gap: EMBLEM_ROW_GAP * 2 }}
+                >
+                  {linhas.map((ids, i) => (
+                    <div key={i} data-emblem-row={i} style={emblemRow}>
+                      {ids.map(id => (
+                        <img
+                          key={id}
+                          src={emblemArt(id)}
+                          alt={isPt ? ACHIEVEMENT_LABELS[id].pt : ACHIEVEMENT_LABELS[id].en}
+                          title={isPt ? ACHIEVEMENT_LABELS[id].pt : ACHIEVEMENT_LABELS[id].en}
+                          width={32}
+                          height={32}
+                          data-emblem={id}
+                          style={{ imageRendering: 'pixelated', display: 'block' }}
+                        />
+                      ))}
+                    </div>
+                  ))}
+                </Viewport>
+                {/* A contagem de POSSE como linha quieta (E5/13.7) — nunca "faltam N". */}
+                <p className="sm2-num" data-achievements-count style={{ ...sm2Hint, textAlign: 'center' }}>{rotulo}</p>
+              </div>
+            );
+          })()}
 
           <div style={{ textAlign: 'center', maxWidth: 420 }}>
             <h1 style={h1Style}>{atual.name}</h1>
@@ -329,15 +392,21 @@ export function PetPage({
               const stageKey = getStageLevel(formId) as FichaStage;
               const classe = classTitles?.[stageKey];
               return (
-                <article key={formId} style={{ ...card, display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-                  <img
-                    // a linha demo vale para TODAS as formas da jornada: passar o id só na
-                    // forma atual desenhava um bicho na atual e o placeholder genérico
-                    // nas anteriores — duas criaturas diferentes na mesma "jornada"
-                    src={getSpriteForStage(formId, demoCharacterId)}
-                    alt=""
-                    style={{ width: 48, height: 48, flexShrink: 0, imageRendering: 'pixelated', objectFit: 'contain' }}
-                  />
+                <article key={formId} style={{ ...card, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                  {/* A forma anterior num vidro 80² sem anel, sprite 256² a 64
+                      (0,25× — D-P9, miniatura sempre em vidro, D-H7); antes era um
+                      <img 48> solto no card (achado 7). */}
+                  <MiniGlass size={80}>
+                    <img
+                      // a linha demo vale para TODAS as formas da jornada: passar o id só na
+                      // forma atual desenhava um bicho na atual e o placeholder genérico
+                      // nas anteriores — duas criaturas diferentes na mesma "jornada"
+                      src={getSpriteForStage(formId, demoCharacterId)}
+                      alt=""
+                      data-form-sprite={formId}
+                      style={{ width: 64, height: 64, display: 'block', imageRendering: 'pixelated' }}
+                    />
+                  </MiniGlass>
                   <div style={{ minWidth: 0 }}>
                     <p style={{ ...sm2Text, fontWeight: 500, margin: 0 }}>{form.name}</p>
                     <p style={{ ...sm2Hint, marginTop: 2 }}>
