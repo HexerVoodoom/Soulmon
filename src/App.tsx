@@ -5834,6 +5834,7 @@ export default function App() {
         showFirstTaskPopup={showFirstTaskPopup}
         onCloseFirstTaskPopup={() => setShowFirstTaskPopup(false)}
         language={language}
+        spriteUrl={displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? null}
       />
 
       {evolutionCeremony && (
@@ -6000,6 +6001,10 @@ export default function App() {
              segunda regra de conclusão (footgun 9) e um "meio-feito" que a
              tese do produto não tem. */
           onTinyHabit={handleToggleActivityCompletion}
+          /* D-R5 — a etiqueta do hábito leva o `eco` de maturidade (o mesmo
+             glifo da lista), então o check-in precisa do tier de cada um. */
+          habitTiers={Object.fromEntries(checkInPlanData.habitsToday.map(h =>
+            [h.id, habitTier(gameState.habitRhythms?.[h.id]?.totalDone ?? 0)]))}
           language={language}
           onConfirm={handleCheckInConfirm}
           onSkip={handleCheckInSkip}

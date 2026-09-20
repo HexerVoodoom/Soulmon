@@ -1,11 +1,12 @@
-import { useEffect, useLayoutEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import type { Language } from '../utils/i18n';
-import { MAX_DAILY_FOCUS, normalizeEffort } from '../types/taskModel';
+import { MAX_DAILY_FOCUS, normalizeEffort, type HabitTier } from '../types/taskModel';
 import { tinyOfferIntro } from '../utils/tinyOffer';
 import { isOvercommitted } from '../utils/taskTriage';
-import { useDialogA11y } from '../hooks/useDialogA11y';
 import { Icon } from './ui/Icon';
-import { SM2_SHADOW_CARD, sm2Button, sm2Hint, sm2Text, sm2TitleStyle } from './form/FormKit';
+import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
+import { TIER_FILL } from './HabitConstancy';
+import { RitualDialog, ritualLabel, ritualTitle } from './ritual/RitualKit';
 
 /**
  * O CHECK-IN MATINAL (≤20 SEGUNDOS)
@@ -35,9 +36,18 @@ import { SM2_SHADOW_CARD, sm2Button, sm2Hint, sm2Text, sm2TitleStyle } from './f
  *    da frente se cumprido é uma cobrança na porta do app — e um app que cobra
  *    na abertura é um app que a pessoa passa a evitar abrir.
  *
- * ONDA 5: saiu o kit de arcade (moldura de cobre em cada pendência, caixa em
- * cada hábito, os três quadradinhos de esforço que cifravam a palavra ao lado).
- * Superfície limpa nos tokens `--sm2-*`, raio 12.
+ * CANVAS RITUAIS (`docs/design/wireframes/rituais/identidade/`, DECISÕES §21):
+ *  · o diálogo é o `.dlg` SIS-06 centrado sobre o scrim literal (D-R1);
+ *  · hábito do dia = `.hchip` 32 (`surface-2`, sem borda, não interativo)
+ *    com `eco` FILL por tier (D-R5) — etiqueta, não chip de escolha;
+ *  · foco = `.focus-row` 44: escolhido `primary-soft` + anel 1px
+ *    `primary-ink` + `check_circle` FILL 1; não escolhido
+ *    `radio_button_unchecked` `muted` em `surface-2`; **inerte = sem fundo +
+ *    contorno tracejado 1px `muted` + `aria-disabled`** — forma e tinta,
+ *    nunca opacidade (D-R4, Home F1/E7);
+ *  · carga do dia = texto `role=status` em `gold-ink` com `info` 20, sem
+ *    moldura (D-R8); a linha "Planned load" some com `plannedEffort === 0` (S2: nada de "0 points");
+ *  · saídas em `outline`, nunca `quiet` (D-R7).
  *
  * Componente puramente apresentacional: nada de GameState, nada de
  * localStorage. O plano vem pronto (`checkInPlan`) e quem grava é o pai.
@@ -48,8 +58,6 @@ export interface CheckInHabitItem {
   id: string;
   name?: string;
   emoji?: string;
-  /** Ícone de maturidade do hábito (`habitTierIcon`), se o pai já calculou. */
-  tierIcon?: string;
   /** A âncora do Atoms: "depois do café da manhã". */
   anchor?: { after?: string; where?: string };
 }
@@ -92,6 +100,9 @@ export interface MorningCheckInProps {
    *  reduzida reconhecer o que a pessoa contou. Opcional: quem pulou a
    *  pergunta vê a oferta genérica, nunca um vazio. */
   soulStruggle?: string;
+  /** Maturidade de cada hábito (`habitTier`), para o `eco` da etiqueta
+   *  (D-R5). Ausente = semente (FILL 0). */
+  habitTiers?: Record<string, HabitTier | string>;
 }
 
 const EFFORT_WORD: Record<number, { pt: string; en: string }> = {
@@ -103,9 +114,9 @@ const EFFORT_WORD: Record<number, { pt: string; en: string }> = {
 const hint = sm2Hint;
 const body = sm2Text;
 
-const sectionTitle: CSSProperties = { ...sm2Hint, margin: '0 0 8px', fontWeight: 500, letterSpacing: '.02em' };
+const section: CSSProperties = { display: 'flex', flexDirection: 'column', gap: 8 };
 
-export function MorningCheckIn({ open, plan, language, onConfirm, onSkip, onTinyHabit, soulStruggle }: MorningCheckInProps) {
+export function MorningCheckIn({ open, plan, language, onConfirm, onSkip, onTinyHabit, soulStruggle, habitTiers }: MorningCheckInProps) {
   const isPt = language === 'pt-BR';
   const introStruggle = tinyOfferIntro(soulStruggle, isPt);
 
@@ -129,56 +140,17 @@ export function MorningCheckIn({ open, plan, language, onConfirm, onSkip, onTiny
   }, [carryOver, suggested]);
 
   const [selected, setSelected] = useState<string[]>([]);
-
-  // `aria-modal="true"` é uma promessa: nada fora daqui existe agora. Sem trap
-  // o Tab passeava pela lista de tarefas atrás do véu, e não havia Escape.
-  // Fechar pelo teclado equivale a "hoje não, obrigado" — nunca a confirmar um
-  // plano que a pessoa não escolheu.
-  const dialogRef = useDialogA11y<HTMLDivElement>(open, onSkip);
-
-  /* ── O PONTO DE ENTRADA DO FOCO É O CARTÃO, E ELE É DAQUI ────────────────
-     Este diálogo não é aberto por um toque da pessoa: ele é o primeiro item
-     da fila de intersticiais e MONTA SOZINHO na abertura do app. Quem chega
-     de teclado ou leitor de tela não tem um "eu cliquei em alguma coisa" para
-     ancorar o que acabou de acontecer — então a entrada do foco tem que ser
-     inequívoca, e tem que ser o CARTÃO.
-
-     Duas coisas mudam em relação a deixar isso por conta do `useDialogA11y`:
-
-      1. **QUANDO.** O foco inicial do hook vive num efeito PASSIVO, que só
-         roda depois da pintura e depois de todos os efeitos de layout do
-         commit — inclusive os de quem estava montado antes na fila (o
-         relatório diário devolvendo o foco a quem o abriu, por exemplo).
-         Aqui ele é de LAYOUT: acontece no próprio commit, antes de a tela
-         pintar, e nenhum outro efeito pode chegar antes com um `focus()` de
-         despedida. O hook enxerga o foco já dentro do diálogo
-         (`!node.contains(activeElement)`) e respeita — é o mesmo caminho que
-         o `autoFocus` do `MorningDream` já usava, e está documentado lá.
-
-      2. **ONDE.** O primeiro focável do cartão é a primeira TAREFA da lista
-         de focos, lá no meio da tela: quem usa leitor caía em "Escrever o
-         relatório, esforço 2 de 3, média, botão" (medido) e nunca ouvia o
-         nome do diálogo, o "Bom dia" nem a seção de pendências de ontem, que
-         é justamente a primeira coisa que esta tela existe para dizer.
-         Focando o container (`tabIndex={-1}`, declarado no JSX e não herdado
-         do último recurso do hook), o leitor anuncia o diálogo pelo nome e lê
-         do começo; o primeiro Tab entra na lista.
-
-     O trap, o Escape, o fundo inerte e a devolução do foco continuam sendo do
-     hook — nada disso é reimplementado aqui. */
-  useLayoutEffect(() => {
-    if (!open) return;
-    const node = dialogRef.current;
-    if (!node) return;
-    if (node.contains(document.activeElement)) return;
-    node.focus({ preventScroll: true });
-  }, [open, dialogRef]);
+  /* R6 — o estado "aceitei" da oferta reduzida: o botão vira chip preenchido
+     "Stretch · counted". Sem prêmio, sem confete: é uma conclusão como
+     qualquer outra. Estado de UI desta abertura — o save já contou. */
+  const [accepted, setAccepted] = useState<string[]>([]);
 
   // Progresso dotado (Nunes & Drèze): ninguém começa em 0%. A tela abre com a
   // sugestão já marcada, e desmarcar é um toque.
   useEffect(() => {
     if (!open) return;
     setSelected(candidates.slice(0, MAX_DAILY_FOCUS).map(t => t.id));
+    setAccepted([]);
   }, [open, candidates]);
 
   if (!open) return null;
@@ -195,286 +167,285 @@ export function MorningCheckIn({ open, plan, language, onConfirm, onSkip, onTiny
     .filter(t => selected.includes(t.id))
     .reduce((sum, t) => sum + normalizeEffort(t.effort), 0);
 
-  const overcommitted = plan.overcommitted || isOvercommitted(plan.plannedEffort);
+  /* V2 / STATUS c — a linha de carga continua lendo `plan.plannedEffort`
+     (hábitos + tarefas já datadas para hoje). Somar o foco escolhido aqui
+     contaria duas vezes a tarefa que já está datada — quem sabe quais são é
+     o motor (`checkInPlan`), não a superfície. Fica registrado como dívida
+     do motor; a UI mostra os dois números lado a lado, como o canvas. */
+  const load = plan.plannedEffort;
+  const overcommitted = plan.overcommitted || isOvercommitted(load);
   // Pluralização: "Planned load: 1 points" era o primeiro texto que o usuário
   // novo lia depois de nascer o pet.
   const points = (n: number) => (isPt ? (n === 1 ? 'ponto' : 'pontos') : (n === 1 ? 'point' : 'points'));
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 200,
-        background: 'rgba(6, 24, 26, .55)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 16,
-      }}
+    <RitualDialog
+      label={isPt ? 'Check-in da manhã' : 'Morning check-in'}
+      onClose={onSkip}
+      maxWidth={380}
+      /* O ponto de entrada do foco é o CARTÃO (efeito de layout, antes da
+         pintura): este diálogo monta sozinho na abertura do app, e quem chega
+         de leitor de tela precisa ouvir o nome e o "Bom dia" antes da lista.
+         Escape = "hoje não, obrigado" — nunca confirma um plano que a pessoa
+         não escolheu. */
+      focusContainer
     >
-      <div
-        ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-label={isPt ? 'Check-in da manhã' : 'Morning check-in'}
-        /* Focável por programa, FORA da ordem de Tab — ver a nota do efeito
-           de layout lá em cima. Declarado aqui de propósito: o hook põe o
-           mesmo `-1` como último recurso, e depender disso deixaria o ponto
-           de entrada desta tela invisível em quem lê o JSX. */
-        tabIndex={-1}
-        /* Sem anel de foco no cartão: ele recebe o foco por MONTAGEM, não por
-           navegação, e um contorno de 380px em volta do diálogo inteiro leria
-           como "isto está selecionado". Quem navega de teclado só volta aqui
-           por Shift+Tab a partir do primeiro botão, e o foco visível dos
-           controles continua intacto. */
-        style={{
-          outline: 'none',
-          width: '100%',
-          maxWidth: 380,
-          maxHeight: '90vh',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          backgroundColor: 'var(--sm2-surface)',
-          borderRadius: 12,
-          boxShadow: SM2_SHADOW_CARD,
-        }}
-      >
-        <div style={{ padding: '18px 18px 0' }}>
-          <p className="sm2-title" style={sm2TitleStyle}>
-            {isPt ? 'Bom dia!' : 'Good morning!'}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <p style={ritualTitle}>{isPt ? 'Bom dia!' : 'Good morning!'}</p>
+        <p style={hint}>{isPt ? 'Vinte segundos e a gente começa.' : 'Twenty seconds and we’re off.'}</p>
+      </div>
+
+      {/* (a) PENDÊNCIAS DE ONTEM — primeiro, sempre que houver. Texto plano:
+          uma lista de linhas é uma lista. */}
+      {carryOver.length > 0 && (
+        <section style={section}>
+          <p style={ritualLabel}>
+            {isPt ? 'Ficou de ontem — sem cobrança' : 'Left from yesterday — no blame'}
           </p>
-          <p style={{ ...hint, marginTop: 4 }}>
-            {isPt ? 'Vinte segundos e a gente começa.' : 'Twenty seconds and we’re off.'}
-          </p>
-        </div>
-
-        <div style={{ overflowY: 'auto', padding: 18, display: 'flex', flexDirection: 'column', gap: 18 }}>
-          {/* (a) PENDÊNCIAS DE ONTEM — primeiro, sempre que houver.
-              As molduras de cobre saíram: uma lista de linhas é uma lista. */}
-          {carryOver.length > 0 && (
-            <section>
-              <p style={sectionTitle}>
-                {isPt ? 'Ficou de ontem — sem cobrança' : 'Left from yesterday — no blame'}
-              </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {carryOver.map(t => (
-                  <p key={t.id} style={{ ...body, margin: 0 }}>
-                    {t.name || (isPt ? 'Tarefa sem nome' : 'Untitled task')}
-                    {(t.postponedCount ?? 0) >= 1 && (
-                      <span style={{ ...hint, marginLeft: 6 }}>
-                        {isPt ? '· adiada ' : '· postponed '}
-                        <span className="sm2-num">{t.postponedCount}</span>
-                        {isPt
-                          ? (t.postponedCount === 1 ? ' vez' : ' vezes')
-                          : (t.postponedCount === 1 ? ' time' : ' times')}
-                      </span>
-                    )}
-                  </p>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* (b) HÁBITOS DE HOJE. O emoji é do usuário — conteúdo, e fica. */}
-          <section>
-            <p style={sectionTitle}>{isPt ? 'Hábitos de hoje' : 'Today’s habits'}</p>
-            {habits.length === 0 ? (
-              <p style={hint}>
-                {isPt ? 'Nenhum hábito devido hoje. Dia leve.' : 'No habits due today. Light day.'}
-              </p>
-            ) : (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {habits.map(h => (
-                  <span
-                    key={h.id}
-                    style={{
-                      ...body,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      padding: '6px 10px',
-                      borderRadius: 999,
-                      fontSize: 'var(--sm2-text-xs)',
-                      backgroundColor: 'var(--sm2-surface-2)',
-                    }}
-                    title={
-                      h.anchor?.after
-                        ? `${h.anchor.after}${h.anchor.where ? ` — ${h.anchor.where}` : ''}`
-                        : undefined
-                    }
-                  >
-                    {(h.tierIcon || h.emoji) && (
-                      <span aria-hidden="true" style={{ fontSize: 14, lineHeight: 1 }}>
-                        {h.tierIcon || h.emoji}
-                      </span>
-                    )}
-                    {h.name || (isPt ? 'Hábito' : 'Habit')}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {/* WP2.10 — A OFERTA REDUZIDA (never miss twice).
-                `needsIntervention` existia com teste, 40 linhas de comentário e
-                NENHUM chamador: o guia e o `CLAUDE.md` prometiam que "o pet
-                oferece uma versão bem menor do hábito — aceitar já conta como
-                feito", e o pet nunca ofereceu nada. A primeira falha continua
-                não gerando nada visível; a segunda gera isto.
-
-                Três travas de forma, e as três são a diferença entre companhia
-                e cobrança:
-                · NENHUM dígito de falta. Nunca "você falhou 2 dias" — a pessoa
-                  sabe. O único número na frase é o 5 dos minutos.
-                · aceitar chama o MESMO caminho de conclusão de sempre
-                  (`onTinyHabit` → `handleToggleActivityCompletion`), com os
-                  mesmos ganhos. "Conta como feito" é literal, não simbólico.
-                · não há botão de recusar. Ignorar é a recusa, e ela não custa
-                  nada nem aparece em lugar nenhum. */}
-            {onTinyHabit && ofertaReduzida.length > 0 && (
-              <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {/* WP2.5 — o que a pessoa contou no onboarding volta AQUI, e
-                    só aqui: no momento em que o hábito custa, não numa tela de
-                    resumo. `soulStruggle` era escrito e nunca lido — perguntar
-                    algo pessoal, guardar e não devolver é extração. A frase é
-                    LOCAL (nada vai para a IA) e não repete o que falhou. */}
-                {introStruggle && <p style={hint}>{introStruggle}</p>}
-                {ofertaReduzida.map(h => (
-                  <button
-                    key={h.id}
-                    type="button"
-                    onClick={() => onTinyHabit(h.id)}
-                    style={{ ...sm2Button('outline'), width: '100%', justifyContent: 'flex-start' }}
-                  >
-                    {isPt
-                      ? `${h.name || 'Esse hábito'}: hoje, só 5 minutos?`
-                      : `${h.name || 'This habit'}: just 5 minutes today?`}
-                  </button>
-                ))}
-                <p style={hint}>
+          {carryOver.map(t => (
+            <p key={t.id} style={{ ...body, margin: 0, padding: '2px 0' }}>
+              {t.name || (isPt ? 'Tarefa sem nome' : 'Untitled task')}
+              {(t.postponedCount ?? 0) >= 1 && (
+                <span style={{ ...hint, marginLeft: 6 }}>
+                  {isPt ? '· adiada ' : '· postponed '}
+                  <span className="sm2-num">{t.postponedCount}</span>
                   {isPt
-                    ? 'Aceitar já conta como feito.'
-                    : 'Saying yes already counts as done.'}
-                </p>
-              </div>
-            )}
-          </section>
-
-          {/* (c) ATÉ 3 FOCOS */}
-          <section>
-            <p style={sectionTitle}>
-              {isPt ? `Foco do dia (até ${MAX_DAILY_FOCUS})` : `Today’s focus (up to ${MAX_DAILY_FOCUS})`}
+                    ? (t.postponedCount === 1 ? ' vez' : ' vezes')
+                    : (t.postponedCount === 1 ? ' time' : ' times')}
+                </span>
+              )}
             </p>
-            {candidates.length === 0 ? (
-              <p style={hint}>
-                {isPt
-                  ? 'Nenhuma tarefa esperando. Hoje é só cuidar dos hábitos.'
-                  : 'No tasks waiting. Today is habits only.'}
-              </p>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {candidates.map(t => {
-                  const active = selected.includes(t.id);
-                  const full = !active && selected.length >= MAX_DAILY_FOCUS;
-                  const effort = normalizeEffort(t.effort);
-                  const name = t.name || (isPt ? 'Tarefa sem nome' : 'Untitled task');
-                  // O esforço só existia como três pontinhos `aria-hidden`:
-                  // quem não vê a tela escolhia foco sem saber o peso. Agora é
-                  // a PALAVRA na tela e no rótulo. E `full` (limite de 3
-                  // atingido) precisa de `aria-disabled` — antes era só
-                  // opacidade e cursor, que nenhum leitor de tela anuncia.
-                  // `aria-disabled` e não `disabled`: o botão continua focável,
-                  // então dá para ler o que ficou de fora.
-                  const word = isPt ? EFFORT_WORD[effort].pt : EFFORT_WORD[effort].en;
-                  const effortText = isPt ? `esforço ${effort} de 3, ${word}` : `effort ${effort} of 3, ${word}`;
-                  return (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() => toggle(t.id)}
-                      aria-pressed={active}
-                      aria-disabled={full || undefined}
-                      aria-label={
-                        full
-                          ? isPt
-                            ? `${name}, ${effortText}. Limite de ${MAX_DAILY_FOCUS} focos atingido — desmarque um para escolher este.`
-                            : `${name}, ${effortText}. Limit of ${MAX_DAILY_FOCUS} focuses reached — unselect one to pick this.`
-                          : `${name}, ${effortText}`
-                      }
+          ))}
+        </section>
+      )}
+
+      {/* (b) HÁBITOS DE HOJE — etiquetas 32 com o glifo de maturidade. */}
+      <section style={section}>
+        <p style={ritualLabel}>{isPt ? 'Hábitos de hoje' : 'Today’s habits'}</p>
+        {habits.length === 0 ? (
+          <p style={hint}>
+            {isPt ? 'Nenhum hábito devido hoje. Dia leve.' : 'No habits due today. Light day.'}
+          </p>
+        ) : (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {habits.map(h => (
+              <span
+                key={h.id}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                  minHeight: 32, padding: '0 12px 0 8px', borderRadius: 999,
+                  boxSizing: 'border-box',
+                  backgroundColor: 'var(--sm2-surface-2)',
+                  fontFamily: 'var(--sm2-font-text)',
+                  fontSize: 'var(--sm2-text-xs)', fontWeight: 500,
+                  lineHeight: 'var(--sm2-leading-body)',
+                  color: 'var(--sm2-ink)',
+                }}
+                title={
+                  h.anchor?.after
+                    ? `${h.anchor.after}${h.anchor.where ? ` — ${h.anchor.where}` : ''}`
+                    : undefined
+                }
+              >
+                {/* `eco` = maturidade (D-A2): o MESMO glifo da lista se
+                    preenchendo. 20 e não 18: `inline` é o degrau da escala. */}
+                <Icon name="eco" size={20} fill={TIER_FILL[habitTiers?.[h.id] ?? 'seed'] ?? 0} tone="primary" />
+                {h.name || (isPt ? 'Hábito' : 'Habit')}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* WP2.10 — A OFERTA REDUZIDA (never miss twice).
+            `needsIntervention` existia com teste, 40 linhas de comentário e
+            NENHUM chamador: o guia e o `CLAUDE.md` prometiam que "o pet
+            oferece uma versão bem menor do hábito — aceitar já conta como
+            feito", e o pet nunca ofereceu nada. A primeira falha continua
+            não gerando nada visível; a segunda gera isto.
+
+            Três travas de forma, e as três são a diferença entre companhia
+            e cobrança:
+            · NENHUM dígito de falta. Nunca "você falhou 2 dias" — a pessoa
+              sabe. O único número na frase é o 5 dos minutos.
+            · aceitar chama o MESMO caminho de conclusão de sempre
+              (`onTinyHabit` → `handleToggleActivityCompletion`), com os
+              mesmos ganhos. "Conta como feito" é literal, não simbólico.
+            · não há botão de recusar. Ignorar é a recusa, e ela não custa
+              nada nem aparece em lugar nenhum. */}
+        {onTinyHabit && ofertaReduzida.length > 0 && (
+          <div style={{ marginTop: 4, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {/* WP2.5 — o que a pessoa contou no onboarding volta AQUI, e
+                só aqui: no momento em que o hábito custa, não numa tela de
+                resumo. `soulStruggle` era escrito e nunca lido — perguntar
+                algo pessoal, guardar e não devolver é extração. A frase é
+                LOCAL (nada vai para a IA) e não repete o que falhou. */}
+            {introStruggle && <p style={hint}>{introStruggle}</p>}
+            {ofertaReduzida.map(h => {
+              const name = h.name || (isPt ? 'Esse hábito' : 'This habit');
+              if (accepted.includes(h.id)) {
+                /* R6 — "aceitei": chip tonal selecionado, inerte, sem alpha. */
+                return (
+                  <div key={h.id} style={{ display: 'flex' }}>
+                    <span
+                      aria-disabled="true"
                       style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 10,
-                        width: '100%',
-                        minHeight: 44,
-                        padding: '8px 12px',
-                        borderRadius: 10,
-                        textAlign: 'left',
-                        cursor: full ? 'not-allowed' : 'pointer',
-                        opacity: full ? 0.5 : 1,
-                        color: 'var(--sm2-ink)',
-                        backgroundColor: active ? 'var(--sm2-primary-soft)' : 'var(--sm2-surface-2)',
-                        border: active ? '1px solid var(--sm2-primary-ink)' : '1px solid var(--sm2-line)',
+                        display: 'inline-flex', alignItems: 'center', gap: 8,
+                        minHeight: 44, padding: '0 16px 0 12px', borderRadius: 999,
+                        boxSizing: 'border-box',
+                        border: '1px solid var(--sm2-primary-ink)',
+                        backgroundColor: 'var(--sm2-primary-soft)',
+                        color: 'var(--sm2-primary-ink)',
+                        fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm)',
+                        fontWeight: 500, lineHeight: 'var(--sm2-leading-body)',
                       }}
                     >
-                      {/* FILL 0→1 é o estado: o MESMO glifo se preenchendo. */}
-                      <Icon name="check_circle" size={20} fill={active ? 1 : 0}
-                        tone={active ? 'primary' : 'muted'} />
-                      <span style={{ ...body, flex: 1 }}>{name}</span>
-                      <span style={hint}>{word}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            <p style={{ ...hint, marginTop: 8 }}>
-              {isPt ? 'Carga planejada: ' : 'Planned load: '}
-              <span className="sm2-num">{plan.plannedEffort}</span> {points(plan.plannedEffort)}
-              {isPt ? ' · foco escolhido: ' : ' · chosen focus: '}
-              <span className="sm2-num">{focusEffort}</span>
+                      <Icon name="check" size={20} fill={1} tone="inherit" />
+                      {isPt ? `${name} · contou` : `${name} · counted`}
+                    </span>
+                  </div>
+                );
+              }
+              return (
+                <button
+                  key={h.id}
+                  type="button"
+                  onClick={() => { onTinyHabit(h.id); setAccepted(prev => [...prev, h.id]); }}
+                  style={{ ...sm2Button('outline'), width: '100%', justifyContent: 'flex-start', textAlign: 'left' }}
+                >
+                  {isPt ? `${name}: hoje, só 5 minutos?` : `${name}: just 5 minutes today?`}
+                </button>
+              );
+            })}
+            <p style={hint}>
+              {isPt ? 'Aceitar já conta como feito.' : 'Saying yes already counts as done.'}
             </p>
-          </section>
+          </div>
+        )}
+      </section>
 
-          {/* O aviso gentil do pet. AVISO, nunca bloqueio — o botão abaixo
-              continua ativo, e isso é regra, não detalhe de implementação. */}
-          {overcommitted && (
-            <div
-              role="status"
-              style={{
-                ...body,
-                fontSize: 'var(--sm2-text-xs)',
-                padding: '10px 12px',
-                borderRadius: 10,
-                backgroundColor: 'color-mix(in srgb, var(--sm2-gold-fill) 14%, var(--sm2-surface))',
-                border: '1px solid var(--sm2-gold-fill)',
-              }}
-            >
-              {isPt
-                ? 'Isso é bastante pra um dia só — quer deixar uma pra amanhã? (Tudo bem se não.)'
-                : 'That’s a lot for one day — want to leave one for tomorrow? (It’s fine either way.)'}
-            </div>
-          )}
-        </div>
+      {/* (c) ATÉ 3 FOCOS */}
+      <section style={section}>
+        <p style={ritualLabel}>
+          {isPt ? `Foco do dia (até ${MAX_DAILY_FOCUS})` : `Today’s focus (up to ${MAX_DAILY_FOCUS})`}
+        </p>
+        {candidates.length === 0 ? (
+          <p style={hint}>
+            {isPt
+              ? 'Nenhuma tarefa esperando. Hoje é só cuidar dos hábitos.'
+              : 'No tasks waiting. Today is habits only.'}
+          </p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {candidates.map(t => {
+              const active = selected.includes(t.id);
+              const full = !active && selected.length >= MAX_DAILY_FOCUS;
+              const effort = normalizeEffort(t.effort);
+              const name = t.name || (isPt ? 'Tarefa sem nome' : 'Untitled task');
+              // O esforço é a PALAVRA na tela e no rótulo — quem não vê a
+              // tela escolhe foco sabendo o peso. `full` (limite de 3) é
+              // `aria-disabled`, não `disabled`: o botão continua focável,
+              // então dá para ler o que ficou de fora.
+              const word = isPt ? EFFORT_WORD[effort].pt : EFFORT_WORD[effort].en;
+              const effortText = isPt ? `esforço ${effort} de 3, ${word}` : `effort ${effort} of 3, ${word}`;
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => toggle(t.id)}
+                  aria-pressed={active}
+                  aria-disabled={full || undefined}
+                  aria-label={
+                    full
+                      ? isPt
+                        ? `${name}, ${effortText}. Limite de ${MAX_DAILY_FOCUS} focos atingido — desmarque um para escolher este.`
+                        : `${name}, ${effortText}. Limit of ${MAX_DAILY_FOCUS} focuses reached — unselect one to pick this.`
+                      : `${name}, ${effortText}`
+                  }
+                  /* D-R4: escolhido = `primary-soft` + anel interno 1px;
+                     não escolhido = `surface-2`; INERTE = sem fundo + tracejado
+                     1px `muted` (forma), tinta `muted` — nunca `opacity`. A
+                     fronteira vive em `border` (e não em `outline`) para não
+                     apagar o anel de foco global do `:focus-visible`. */
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    width: '100%', minHeight: 44, padding: '0 12px',
+                    boxSizing: 'border-box',
+                    borderRadius: 'var(--sm2-radius-md)',
+                    textAlign: 'left',
+                    cursor: full ? 'not-allowed' : 'pointer',
+                    fontFamily: 'var(--sm2-font-text)',
+                    color: full ? 'var(--sm2-muted)' : 'var(--sm2-ink)',
+                    backgroundColor: full ? 'transparent' : active ? 'var(--sm2-primary-soft)' : 'var(--sm2-surface-2)',
+                    border: full ? '1px dashed var(--sm2-muted)' : '1px solid transparent',
+                    boxShadow: active ? 'inset 0 0 0 1px var(--sm2-primary-ink)' : 'none',
+                  }}
+                >
+                  {active
+                    ? <Icon name="check_circle" size={24} fill={1} tone="primary" />
+                    : <Icon name="radio_button_unchecked" size={24} tone="muted" />}
+                  <span style={{ ...body, flex: 1, minWidth: 0, fontWeight: 500, color: 'inherit' }}>{name}</span>
+                  <span style={hint}>{word}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
-        {/* Ações. Pular fica SEMPRE visível e sem tom de desistência. */}
-        <div style={{ padding: 16, borderTop: '1px solid var(--sm2-line)', display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {/* WP2.3: o botão é um COMPROMISSO, não um "continuar" — foi só a
-              troca desse texto que rendeu ao Duolingo dezenas de milhares de
-              DAU (transcrição A2). Sem meta cadastrada não há o que assumir,
-              então o texto volta a ser neutro. */}
-          <button type="button" onClick={() => onConfirm(selected)} style={{ ...sm2Button('primary'), width: '100%' }}>
-            {plan.plannedEffort > 0
-              ? (isPt ? 'Assumir minha meta de hoje' : 'Commit to today’s goal')
-              : (isPt ? 'Começar o dia' : 'Start the day')}
-          </button>
-          <button type="button" onClick={onSkip} style={{ ...sm2Button('outline'), width: '100%' }}>
-            {isPt ? 'Hoje não, obrigado' : 'Not today, thanks'}
-          </button>
-        </div>
+        {/* S2 — sem meta não há carga a mostrar ("Planned load: 0 points" era
+            o mesmo zero pela porta de trás). "· chosen focus: 0" também some. */}
+        {load > 0 && (
+          <p style={hint}>
+            {isPt ? 'Carga planejada: ' : 'Planned load: '}
+            <span className="sm2-num" style={{ color: 'var(--sm2-ink)', fontWeight: 500 }}>{load}</span>
+            {' '}{points(load)}
+            {focusEffort > 0 && (
+              <>
+                {isPt ? ' · foco escolhido: ' : ' · chosen focus: '}
+                <span className="sm2-num" style={{ color: 'var(--sm2-ink)', fontWeight: 500 }}>{focusEffort}</span>
+              </>
+            )}
+          </p>
+        )}
+      </section>
+
+      {/* O aviso gentil do pet. AVISO, nunca bloqueio — o botão abaixo
+          continua ativo, e isso é regra, não detalhe de implementação.
+          D-R8: texto em `gold-ink` com `info` 20, sem moldura (a mesma peça
+          da carga do dia na fila 2). */}
+      {overcommitted && (
+        <p
+          role="status"
+          style={{
+            ...body, margin: 0,
+            display: 'flex', gap: 8, alignItems: 'flex-start',
+            color: 'var(--sm2-gold-ink)',
+          }}
+        >
+          <Icon name="info" size={20} tone="gold" style={{ flexShrink: 0, marginTop: 1 }} />
+          <span>
+            {isPt
+              ? 'Isso é bastante pra um dia só — quer deixar uma pra amanhã? (Tudo bem se não.)'
+              : 'That’s a lot for one day — want to leave one for tomorrow? (It’s fine either way.)'}
+          </span>
+        </p>
+      )}
+
+      {/* Ações. Pular fica SEMPRE visível, em `outline` (D-R7). */}
+      <div style={{ borderTop: '1px solid var(--sm2-line)', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {/* WP2.3: o botão é um COMPROMISSO, não um "continuar" — foi só a
+            troca desse texto que rendeu ao Duolingo dezenas de milhares de
+            DAU (transcrição A2). Sem meta cadastrada não há o que assumir,
+            então o texto volta a ser neutro. */}
+        <button type="button" onClick={() => onConfirm(selected)} style={{ ...sm2Button('primary'), width: '100%' }}>
+          {plan.plannedEffort > 0
+            ? (isPt ? 'Assumir minha meta de hoje' : 'Commit to today’s goal')
+            : (isPt ? 'Começar o dia' : 'Start the day')}
+        </button>
+        <button type="button" onClick={onSkip} style={{ ...sm2Button('outline'), width: '100%' }}>
+          {isPt ? 'Hoje não, obrigado' : 'Not today, thanks'}
+        </button>
       </div>
-    </div>
+    </RitualDialog>
   );
 }
 

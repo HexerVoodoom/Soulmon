@@ -32,7 +32,10 @@ export function ProtectProgressModal({ language, reason, onDismiss, onConfirm }:
 
   const motivo = reason === 'evolution'
     ? (isPt ? 'Seu Soulmon evoluiu!' : 'Your Soulmon evolved!')
-    : (isPt ? 'Você está numa sequência boa!' : "You're on a good streak!");
+    /* R7 / S4 — "You're on a good streak!" foi VETADO (guarda 5a): não existe
+       streak (o gate é `completedTasks.length ≥ 5`), e é o vocabulário que o
+       produto trocou por constância — numa tela que pede dado pessoal. */
+    : (isPt ? 'Vocês dois já têm história.' : 'You two have a history now.');
 
   const submit = async () => {
     if (!valid || saving) return;
@@ -54,7 +57,7 @@ export function ProtectProgressModal({ language, reason, onDismiss, onConfirm }:
       title={motivo}
       maxWidth={420}
       footer={
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <button
             type="button"
             onClick={submit}
@@ -66,7 +69,8 @@ export function ProtectProgressModal({ language, reason, onDismiss, onConfirm }:
               ? (isPt ? 'Salvando…' : 'Saving…')
               : (isPt ? 'Salvar meu progresso' : 'Save my progress')}
           </button>
-          <button type="button" onClick={onDismiss} style={{ ...sm2Button('quiet'), width: '100%' }}>
+          {/* D-R7: a saída é `outline`, nunca `quiet` — recusa com peso de botão. */}
+          <button type="button" onClick={onDismiss} style={{ ...sm2Button('outline'), width: '100%' }}>
             {isPt ? 'Agora não' : 'Not now'}
           </button>
         </div>
@@ -96,9 +100,10 @@ export function ProtectProgressModal({ language, reason, onDismiss, onConfirm }:
           style={{ fontSize: 16 }}
         />
         {/* Estado de erro: falha de rede é o caso comum aqui, e ele fala em
-            tom de "tente de novo", não de alarme. `danger-ink` é TINTA. */}
+            tom de "tente de novo", não de alarme — texto comum, sem vermelho
+            (canvas `ProtegerProgresso`, strip de variantes). */}
         {error && (
-          <p id="protect-email-error" role="alert" style={{ ...sm2Hint, color: 'var(--sm2-danger-ink)', marginTop: 8 }}>
+          <p id="protect-email-error" role="alert" style={{ ...sm2Text, marginTop: 8 }}>
             {error}
           </p>
         )}
