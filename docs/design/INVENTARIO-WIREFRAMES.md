@@ -436,6 +436,8 @@ Um fluxo por despacho, dois agentes nunca no mesmo canvas (`CONTRACT.md`).
 | S | `wireframes/sistema/identidade/` — **canvas Sistema (Fase 2, identidade)**: 8 artboards (SIS-01..07 + Main claro), `canvas.json`, `README.md`, `CRITICA.md`; checkpoint do dono 16/09/2026 → `identidade` (`DECISOES-WIREFRAME.md` §18) | — | 8 | — | não é fluxo: é o sistema (tokens, tipografia, átomos, o Visor) que os 13 canvases de identidade consomem |
 | H | `wireframes/home/identidade/` — canvas Home (identidade), 28 + `MainClaro`, checkpoint 16/09/2026 → `identidade` (§19) | 26 | 29 | — | P4 textura 10%, P5 `--sm2-haunted`, P6 `toys`/`groups` |
 | A | `wireframes/atividades/identidade/` — canvas Atividades (identidade), 17 + `MainClaro`, checkpoint 16/09/2026 → `identidade` (§20) | 16 | 18 | — | sem pendência do dono |
+| R | `wireframes/rituais/identidade/` — canvas Rituais (identidade), 21 + `MainClaro`, checkpoint 20/09/2026 → `identidade` (§21) | 21 | 22 | — | emblemas de marco habit-7/21/66 |
+| P | `wireframes/pet/identidade/` — canvas Pet (identidade), 9 + `MainClaro`, checkpoint 20/09/2026 → `identidade` (§22) | 9 | 10 | — | visor de emblemas como exceção declarada |
 
 ### 2.1 Home — ordem sugerida dentro do canvas
 Chrome primeiro (`HOME-40`→`HOME-42`, `HOME-43`), porque tudo se desenha dentro dele → a
