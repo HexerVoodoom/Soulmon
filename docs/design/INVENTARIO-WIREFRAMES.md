@@ -441,6 +441,7 @@ Um fluxo por despacho, dois agentes nunca no mesmo canvas (`CONTRACT.md`).
 | O | `wireframes/onboarding-funil/identidade/` — canvas Onboarding-funil (identidade), 17 + `MainClaro`, checkpoint 20/09/2026 → `identidade` (§23) | 25 | 18 | — | 6 personagens; chama no slot-visor |
 | E | `wireframes/evolucao/identidade/` — canvas Evolução (identidade), 15 + `MainClaro`, checkpoint 20/09/2026 → `identidade` (§24) | 15 | 16 | — | nós SVG por token (H1 a), vidro 80 |
 | J | `wireframes/jogos/identidade/` — canvas Jogos (identidade), 16 + `MainClaro`, checkpoint 20/09/2026 → `identidade` (§25) | 16 | 17 | — | minijogo = conteúdo do vidro; chrome vetor |
+| L | `wireframes/loja/identidade/` — canvas Loja (identidade), 7 + `MainClaro`, checkpoint 20/09/2026 → `identidade` (§26) | 7 | 8 | — | três moedas distintas; palco falso saiu |
 
 ### 2.1 Home — ordem sugerida dentro do canvas
 Chrome primeiro (`HOME-40`→`HOME-42`, `HOME-43`), porque tudo se desenha dentro dele → a

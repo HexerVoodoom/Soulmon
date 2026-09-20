@@ -1,0 +1,100 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "title": "LOJA-01 · segmento Shop — saldo em mono, segmentos SIS-04, os três chips em card-aparelho (mini-visor 72²)",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 2477,
+      "page": "page-1"
+    },
+    {
+      "file": "MainClaro.dc.html",
+      "title": "LOJA-01 claro · a mesma página no tema CLARO (prova de AA)",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1499,
+      "page": "page-1"
+    },
+    {
+      "file": "CenariosMobilias.dc.html",
+      "title": "LOJA-02 · 03 · Cenários (mini-visor 96×52) e Mobílias (slot 72²) — equipado, à venda, travado",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 2032,
+      "page": "page-1"
+    },
+    {
+      "file": "CardEstados.dc.html",
+      "title": "LOJA-04 · 05 · 06 · 07 · o card — travado por forma, Equip/Equipped, flash de compra, recusa em âmbar",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 2165,
+      "page": "page-1"
+    },
+    {
+      "file": "ConviteDemo.dc.html",
+      "title": "LOJA-08 · o convite PASSIVO no fim da lista — auto_awesome dourado, chevron, sem ×",
+      "x": 1960,
+      "y": 0,
+      "w": 390,
+      "h": 1653,
+      "page": "page-1"
+    },
+    {
+      "file": "TrocaCreditos.dc.html",
+      "title": "LOJA-13 · a troca Créditos → Bits — diamond em credit-ink, três degraus outline, os cinco estados",
+      "x": 2450,
+      "y": 0,
+      "w": 390,
+      "h": 2028,
+      "page": "page-1"
+    },
+    {
+      "file": "TorneioSegmento.dc.html",
+      "title": "LOJA-09 · 10 · segmento Tournament — Emblemas em serifa dourada, missões da semana, prêmios",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1908,
+      "page": "page-2"
+    },
+    {
+      "file": "TorneioEstados.dc.html",
+      "title": "LOJA-11 · 12 · Tournament sem missões; seção vazia; a variante modal (fora)",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1528,
+      "page": "page-2"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "leia",
+      "page": "page-1",
+      "x": 0,
+      "y": -190,
+      "w": 1400,
+      "text": "Soulmon — Loja, IDENTIDADE (Fase 2, nono canvas, rodada 2 pós-crítica, 20/09/2026). Cada artboard = o wireframe cinza de mesmo nome (../) com a identidade do canvas Sistema aplicada: tokens --sm2-*, Fredoka/Rubik, Material Symbols pelados, pixel SÓ dentro de um vidro (os mini-visores dos cards). As três moedas inconfundíveis: Bits = número em mono primary-ink sem ícone; Emblemas = serifa dourada + military_tech; Créditos = diamond em credit-ink, só na troca. O card é um APARELHO: o item real num mini-visor sem anel (0,5× num slot 72²; cenário a 96×52), nome, linha, preço. Travado = inerte por forma (tracejado, muted, véu, cadeado na tag); sem saldo = preço em muted e, no toque, filete âmbar — nunca vermelho. Escuro em todos; claro só no MainClaro. Números = ordem de foco (idêntica ao wireframe). README.md ao lado: D-L1..D-L12, contraste, medição, achados."
+    }
+  ],
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Loja — o segmento Shop (Bits): página, o palco, o card, o convite, a troca"
+    },
+    {
+      "id": "page-2",
+      "name": "Loja — o segmento Tournament (Emblemas): missões e prêmios"
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "page-1"
+  }
+}
