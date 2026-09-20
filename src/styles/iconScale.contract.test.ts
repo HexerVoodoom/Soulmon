@@ -322,6 +322,10 @@ const ALLOWLIST: Divida[] = [
     motivo: 'Ilustração de estado VAZIO: "sua árvore ainda não foi revelada". Era 40. Ver ENTRADA 1.',
   },
   {
+    arquivo: 'src/components/EvolveTaskModal.tsx', size: 48, quantos: 1,
+    motivo: 'Ilustração de estado: o `auto_awesome` do diálogo "Evolution!" (canvas Evolução EVO-15, `.dlg` com ícone 48 pelado). Era o emoji ✨ do sistema. Ver ENTRADA 1.',
+  },
+  {
     arquivo: 'src/components/LibraryPage.tsx', size: 48, quantos: 1,
     motivo: 'Ilustração de estado de ERRO: "não deu para falar com o servidor". Era 40. Ver ENTRADA 1.',
   },

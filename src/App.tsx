@@ -5249,6 +5249,9 @@ export default function App() {
               unlockedEvolutions={gameState.unlockedEvolutions}
               evolutionLocked={gameState.evolutionLocked ?? false}
               onToggleEvolutionLock={handleToggleEvolutionLock}
+              // O visor da forma atual é o gesto (V2): com a barra cheia e o
+              // cadeado aberto, o toque abre a MESMA cerimônia que o HUD abre.
+              onEvolveRequest={handleEvolveRequest}
               language={language}
               carePattern={carePatternReading.confident ? carePatternReading.pattern : null}
               spriteLibrary={spriteAcervo}
@@ -5274,17 +5277,22 @@ export default function App() {
               convite é um card, o gesto é do jogador. Quem já renasceu vê a
               marca, não o botão — é um registro, não uma oferta repetida. */}
           {currentView === 'evolution' && canRebirth(gameState) && (
-            <div style={{ marginTop: 16, padding: 16, borderRadius: 12, border: '1px solid var(--sm2-line)' }}>
-              <p style={{ ...sm2Text, margin: '0 0 8px' }}>
+            <div
+              data-rebirth-block
+              style={{ marginTop: 16, padding: 12, borderRadius: 'var(--sm2-radius-md)', border: '1px solid var(--sm2-line)', backgroundColor: 'var(--sm2-surface)', display: 'flex', flexDirection: 'column', gap: 8 }}
+            >
+              <p style={{ ...sm2Text, margin: 0 }}>
                 {language === 'pt-BR'
                   ? 'Sua criatura chegou ao topo. Você pode devolvê-la ao ovo e escolher quem ela renasce.'
                   : 'Your creature reached the top. You can return them to the egg and choose who they are reborn as.'}
               </p>
+              {/* "Rebirth" primário com `egg` 24 pelado (canvas EVO-16). */}
               <button
                 type="button"
                 onClick={() => setRebirthOpen(true)}
                 style={{ ...sm2Button('primary'), width: '100%' }}
               >
+                <Icon name="egg" size={24} tone="inherit" />
                 {language === 'pt-BR' ? 'Renascimento' : 'Rebirth'}
               </button>
             </div>
@@ -5300,13 +5308,14 @@ export default function App() {
               própria página já conta isso) e `already-used` é registro, não
               oferta repetida. O motivo de telemetria continua sendo
               `evolution` porque é literalmente onde o card está. */}
-          {currentView === 'evolution' && rebirthRefusal(gameState) === 'not-paid' && (
-            <div style={{ marginTop: 16 }}>
-              <p style={{ ...sm2Hint, margin: '0 0 8px' }}>
-                {language === 'pt-BR'
-                  ? 'Sua criatura chegou ao topo. Quem tem a conta completa pode devolvê-la ao ovo e escolher criatura, escola e elemento do renascimento.'
-                  : 'Your creature reached the top. With the full account you can return them to the egg and choose the creature, school and element they are reborn with.'}
-              </p>
+          {/* Canvas Evolução EVO-20: a recusa `not-paid` é o MESMO card-convite
+              âmbar, sem frase em cima — a frase antiga dizia "chegou ao topo"
+              para um rookie demo, porque `rebirthRefusal` responde `not-paid`
+              antes de olhar o estágio. E só quando o convite do demo (o
+              primeiro bloco da página) não está montado: dois convites iguais
+              na mesma tela é cobrança, não convite. */}
+          {currentView === 'evolution' && rebirthRefusal(gameState) === 'not-paid' && !gameState.demoCharacterId && (
+            <div style={{ marginTop: 16 }} data-rebirth-block>
               <UnlockNudge
                 language={language}
                 reason="evolution"
@@ -5314,11 +5323,16 @@ export default function App() {
               />
             </div>
           )}
+          {/* EVO-21: o registro — linha 12 `muted` com `egg` FILL 1 20; memória,
+              nunca oferta repetida (a linha `rebirth` do save nunca é apagada). */}
           {currentView === 'evolution' && gameState.rebirth && (
-            <p style={{ ...sm2Hint, marginTop: 16 }}>
-              {language === 'pt-BR'
-                ? `Renasceu do ${gameState.rebirth.fromStage} como "${gameState.rebirth.criatura}".`
-                : `Reborn from ${gameState.rebirth.fromStage} as "${gameState.rebirth.criatura}".`}
+            <p style={{ ...sm2Hint, marginTop: 16, display: 'flex', alignItems: 'center', gap: 8 }} data-rebirth-block>
+              <Icon name="egg" size={20} fill={1} tone="muted" />
+              <span>
+                {language === 'pt-BR'
+                  ? `Renasceu do ${gameState.rebirth.fromStage} como "${gameState.rebirth.criatura}".`
+                  : `Reborn from ${gameState.rebirth.fromStage} as "${gameState.rebirth.criatura}".`}
+              </span>
             </p>
           )}
 

@@ -31,14 +31,13 @@
  */
 import { useState, useMemo, useEffect, useRef, type CSSProperties } from 'react';
 import { SoulNode, type SoulNodeVisual } from './evolution/SoulNode';
-import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
 import { getSpriteForStage } from '../utils/sprites';
 import { canManualRetry, cardState, displaySprite, emptySpriteLibrary, type SpriteCardState, type SpriteLibrary } from '../utils/spriteLibrary';
 import { spriteFailText, spriteText } from '../utils/spriteCopy';
 import { pointsToEvolve } from '../utils/spriteTrigger';
 import { creatureFormId, type CreatureStage, type LText } from '../utils/oracle';
 import { AVAILABLE_BRANCHES, clampBranch, canReachUltra, ULTRA_PATIENCE_DAYS } from '../types/progression';
-import { ALIGN_TO_ATTR, ATTR_COLOR, ATTR_INK, ATTR_LABEL, ATTR_ON_FILL_INK } from '../types/attributes';
+import { ALIGN_TO_ATTR, ATTR_LABEL } from '../types/attributes';
 /* A varredura de 400 ms mudou de casa: o dono dela é o dono do visor
    (`ui/Viewport.tsx`), porque a spec pede a MESMA sintonia em dois call-sites
    — esta página e o visor da Home (`CompanionHUD`). Hook duplicado com um
@@ -46,28 +45,22 @@ import { ALIGN_TO_ATTR, ATTR_COLOR, ATTR_INK, ATTR_LABEL, ATTR_ON_FILL_INK } fro
 import { Viewport, usePrefersReducedMotion, useVarreduraDeSintonia } from './ui/Viewport';
 import { auraForElement } from '../utils/attackFxArt';
 import { PLACEHOLDER_ART } from '../utils/placeholderArt';
+import { ANIM_ART } from '../utils/animArt';
+import { HUD_ART } from '../utils/hudArt';
+import { PixelSegmentedBar } from './pixel/PixelKit';
+import { RitualDialog } from './ritual/RitualKit';
 /* `useIsOnline` já é o dono da leitura de rede neste app (o selo "SEM SINAL").
    O card `OFFLINE` da spec (§2.2) precisa da MESMA resposta — um segundo
    `navigator.onLine` aqui seria a cópia do footgun 9 na sua forma mais boba. */
 import { useIsOnline } from './ui/OfflineSeal';
 import { Icon } from './ui/Icon';
 import { playVisorTune } from '../utils/sounds';
-import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
+import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 
 type Attr = 'virus' | 'data' | 'vaccine';
 // ALIGN_TO_ATTR mudou para types/attributes.ts quando o EvoTrail da Home
 // passou a precisar do mesmo mapa (footgun 9: cópia diverge em silêncio).
 const ATTR_ORDER: Attr[] = ['virus', 'data', 'vaccine'];
-
-/**
- * UM jogo de ícone de atributo, e só um. Antes eram dois na mesma tela (PNG
- * pixel-art + SVG inline). Ganhou o SVG: ele herda a cor, então serve tanto
- * sobre superfície neutra (tinta do atributo) quanto sobre o preenchimento do
- * botão ativo (tinta escura por cima do fill) — um PNG ciano/cobre sobre
- * verde/azul/laranja simplesmente não tinha como ficar legível.
- * O RÓTULO não é duplicado aqui: vem de `types/attributes.ts`.
- */
-const ATTR_GLYPH: Record<Attr, typeof PowerIcon> = { virus: PowerIcon, data: HarmonyIcon, vaccine: BenevolenceIcon };
 
 interface EvolutionPathProps {
   /** Id da forma atual ('rookie' | 'champion-virus' | ... | 'ultra'). */
@@ -89,6 +82,13 @@ interface EvolutionPathProps {
   /** Evolution padlock: tapping the CURRENT Soulmon toggles it. */
   evolutionLocked?: boolean;
   onToggleEvolutionLock?: () => void;
+  /**
+   * O JOGADOR dispara a evolução tocando na criatura com a barra cheia
+   * (regra 🔒 do CLAUDE.md, `MANUAL_EVOLUTION`). É o mesmo `handleEvolveRequest`
+   * do HUD da Home; aqui o visor da forma atual é o gesto (V2). Ausente = o
+   * visor só alterna o cadeado.
+   */
+  onEvolveRequest?: () => void;
   language?: 'pt-BR' | 'en-US';
   /** Ritmo de cuidado — desempata o galho quando os atributos empatam. */
   carePattern?: { emoji: string; namePt: string; nameEn: string } | null;
@@ -160,16 +160,6 @@ const sectionLabel: CSSProperties = {
   textTransform: 'uppercase',
 };
 
-/** O sprite dentro do visor: escala inteira, sem suavização. */
-const spriteInScreen: CSSProperties = {
-  position: 'absolute',
-  inset: 0,
-  width: '100%',
-  height: '100%',
-  objectFit: 'contain',
-  imageRendering: 'pixelated',
-};
-
 export function EvolutionPath({
   currentStageId,
   currentBranch,
@@ -184,6 +174,7 @@ export function EvolutionPath({
   unlockedEvolutions = [],
   evolutionLocked = false,
   onToggleEvolutionLock,
+  onEvolveRequest,
   language = 'en-US',
   carePattern,
   forecastBranch,
@@ -230,7 +221,6 @@ export function EvolutionPath({
   const podeChegarAoUltra = canReachUltra({ unlockedEvolutions, perfectDays });
 
   const branchPath = getBranchPath(selectedBranch);
-  const branchHex = ATTR_COLOR[selectedBranch];
 
   const formaAtual = stages.find(s => creatureFormId(s) === currentStageId);
 
@@ -426,6 +416,27 @@ export function EvolutionPath({
         // falta para meu bicho evoluir", ou seja, a mais lida da página.
         ? `Falta${faltam === 1 ? '' : 'm'} ${faltam} dia${faltam === 1 ? '' : 's'} completo${faltam === 1 ? '' : 's'}.`
         : `${faltam} complete day${faltam === 1 ? '' : 's'} to go.`);
+
+  /* O TOQUE no visor (V2): com a barra cheia e o cadeado aberto, evolui; nos
+     outros casos alterna o cadeado. O rótulo diz qual dos dois vai acontecer
+     — "tap to lock" num visor que também evolui era o gesto duplo sem nome. */
+  const evoluiNoToque = prontoParaEvoluir && !evolutionLocked && Boolean(onEvolveRequest);
+  const acaoDoVisor = evoluiNoToque ? onEvolveRequest : onToggleEvolutionLock;
+  const nomeAtual = formaAtual?.name ?? (isPt ? 'Seu Soulmon' : 'Your Soulmon');
+  const rotuloDoVisor = `${nomeAtual}, ${isPt ? 'forma atual' : 'current form'}. ${
+    evoluiNoToque
+      ? (isPt ? 'Pronto — toque para evoluir' : 'Ready — tap to evolve')
+      : !onToggleEvolutionLock
+        ? ''
+        : evolutionLocked
+          ? (isPt ? 'Evolução segurada, toque para liberar' : 'Evolution on hold, tap to release')
+          : (isPt ? 'Evolução liberada, toque para segurar' : 'Evolution unlocked, tap to hold')
+  }`.trim().replace(/\.$/, '');
+  const tituloDoVisor = evoluiNoToque
+    ? (isPt ? 'Evoluir' : 'Evolve')
+    : evolutionLocked ? (isPt ? 'Liberar evolução' : 'Release evolution') : (isPt ? 'Segurar evolução' : 'Hold evolution');
+  /* A régua dos três atributos: o líder, com piso em 10 segmentos. */
+  const reguaDosAtributos = Math.max(10, virusPoints, dataPoints, vaccinePoints);
 
   /* ── O ESTADO DA ARTE, forma por forma (§2.2) ──────────────────────────────
      Até aqui a página dizia o estado do sprite só da forma ATUAL. A spec põe o
@@ -711,6 +722,10 @@ export function EvolutionPath({
             {isUltraMode && tag(isPt ? 'ZÊNITE' : 'ZENITH', 'gold')}
             {!isReached && tag(isPt ? 'BLOQUEADA' : 'LOCKED')}
           </div>
+          {/* A espiada NÃO persiste (só a sessão), e o card diz isso. */}
+          {isRevealed && !isReached && (
+            <p style={sm2Hint}>{isPt ? 'revelada só nesta sessão' : 'revealed this session only'}</p>
+          )}
           {/* O estado da ARTE desta forma (§2.2). */}
           {linhaDeEstado(stageId, estado, hidden)}
 
@@ -745,112 +760,171 @@ export function EvolutionPath({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingBottom: 24 }}>
 
-      {/* Degeneração — dupla confirmação preservada, agora com foco preso e
-          Escape (o modal antigo não tinha nenhum dos dois). */}
-      <ModalSheet
-        open={!!confirmDegenerate}
-        onClose={() => setConfirmDegenerate(null)}
-        language={language}
-        title={confirmDegenerate?.isSecondConfirm
-          ? (isPt ? 'Aviso final' : 'Final warning')
-          : (isPt ? 'Confirmar degeneração' : 'Confirm degeneration')}
-        footer={
-          <div style={{ display: 'flex', gap: 10 }}>
-            <button type="button" onClick={() => setConfirmDegenerate(null)} style={{ ...sm2Button('outline'), flex: 1 }}>
+      {/* Degeneração — dupla confirmação preservada, com foco preso e Escape
+          (`RitualDialog`, o `.dlg` SIS-06 centrado do canvas `EvoEstados`).
+          SEM primário e SEM vermelho (X8, D-E8): Cancel e Confirm `outline` —
+          a ação é do jogador, pedida duas vezes; o app nunca cobra. */}
+      {confirmDegenerate && (
+        <RitualDialog
+          label={confirmDegenerate.isSecondConfirm
+            ? (isPt ? 'Aviso final' : 'Final warning')
+            : (isPt ? 'Confirmar degeneração' : 'Confirm degeneration')}
+          onClose={() => setConfirmDegenerate(null)}
+          zIndex={120}
+        >
+          <p style={{ ...sm2Text, fontWeight: 500, margin: 0 }}>
+            {confirmDegenerate.isSecondConfirm
+              ? (isPt ? 'Aviso final' : 'Final warning')
+              : (isPt ? 'Confirmar degeneração' : 'Confirm degeneration')}
+          </p>
+          <p style={{ ...sm2Text, margin: 0 }}>
+            {confirmDegenerate.isSecondConfirm
+              ? (isPt
+                  ? `Tem certeza absoluta que quer degenerar para ${confirmDegenerate.name}? Essa ação NÃO pode ser desfeita.`
+                  : `Are you absolutely sure you want to degenerate to ${confirmDegenerate.name}? This action CANNOT be undone.`)
+              : (isPt
+                  ? `Quer degenerar para ${confirmDegenerate.name}? Você vai perder o progresso além deste estágio.`
+                  : `Do you want to degenerate to ${confirmDegenerate.name}? You will lose all progress beyond this stage.`)}
+          </p>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button type="button" onClick={() => setConfirmDegenerate(null)} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, padding: '0 12px' }}>
               {isPt ? 'Cancelar' : 'Cancel'}
             </button>
-            <button
-              type="button"
-              onClick={handleDegenerateConfirm}
-              style={{
-                ...sm2Button('primary'),
-                flex: 1,
-                ...(confirmDegenerate?.isSecondConfirm
-                  ? { backgroundColor: 'var(--sm2-danger-fill)', color: 'var(--sm2-on-danger)' }
-                  : null),
-              }}
-            >
-              {confirmDegenerate?.isSecondConfirm
+            <button type="button" onClick={handleDegenerateConfirm} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, padding: '0 12px' }}>
+              {confirmDegenerate.isSecondConfirm
                 ? (isPt ? 'Sim, degenerar' : 'Yes, degenerate')
                 : (isPt ? 'Confirmar' : 'Confirm')}
             </button>
           </div>
-        }
-      >
-        <p style={sm2Text}>
-          {confirmDegenerate?.isSecondConfirm
-            ? (isPt
-                ? `Tem certeza absoluta que quer degenerar para ${confirmDegenerate?.name}? Essa ação NÃO pode ser desfeita.`
-                : `Are you absolutely sure you want to degenerate to ${confirmDegenerate?.name}? This action CANNOT be undone.`)
-            : (isPt
-                ? `Quer degenerar para ${confirmDegenerate?.name}? Você vai perder o progresso além deste estágio.`
-                : `Do you want to degenerate to ${confirmDegenerate?.name}? You will lose all progress beyond this stage.`)}
-        </p>
-      </ModalSheet>
+        </RitualDialog>
+      )}
 
-      {/* Spoiler-guard das formas futuras. */}
-      <ModalSheet
-        open={!!confirmReveal}
-        onClose={() => setConfirmReveal(null)}
-        language={language}
-        title={isPt ? 'Revelar essa evolução?' : 'Reveal this evolution?'}
-        footer={
-          <div style={{ display: 'flex', gap: 10 }}>
-            <button type="button" onClick={() => setConfirmReveal(null)} style={{ ...sm2Button('outline'), flex: 1 }}>
+      {/* Spoiler-guard das formas futuras — o primário fica aqui, que não
+          perde nada. */}
+      {confirmReveal && (
+        <RitualDialog
+          label={isPt ? 'Revelar essa evolução?' : 'Reveal this evolution?'}
+          onClose={() => setConfirmReveal(null)}
+          zIndex={120}
+        >
+          <p style={{ ...sm2Text, fontWeight: 500, margin: 0 }}>{isPt ? 'Revelar essa evolução?' : 'Reveal this evolution?'}</p>
+          <p style={{ ...sm2Text, margin: 0 }}>
+            {isPt
+              ? 'Essa é uma evolução futura que você ainda não desbloqueou — espiar é spoiler. Ela aparece só nesta sessão e esconde de novo quando você sair dessa tela.'
+              : "This is a future evolution you haven't unlocked yet — peeking is a spoiler. It shows up this session only, and hides again once you leave this screen."}
+          </p>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button type="button" onClick={() => setConfirmReveal(null)} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, padding: '0 12px' }}>
               {isPt ? 'Cancelar' : 'Cancel'}
             </button>
-            <button type="button" onClick={handleRevealConfirm} style={{ ...sm2Button('primary'), flex: 1 }}>
+            <button type="button" onClick={handleRevealConfirm} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 12px' }}>
               {isPt ? 'Sim, revelar' : 'Yes, reveal'}
             </button>
           </div>
-        }
-      >
-        <p style={sm2Text}>
-          {isPt
-            ? 'Essa é uma evolução futura que você ainda não desbloqueou — espiar é spoiler. Ela vai aparecer escurecida e esconder de novo quando você sair dessa tela.'
-            : "This is a future evolution you haven't unlocked yet — peeking is a spoiler. It'll show up darkened, and hide again once you leave this screen."}
-        </p>
-      </ModalSheet>
+        </RitualDialog>
+      )}
 
       {/* ─────────── A HEROÍNA + A AÇÃO DOMINANTE ─────────── */}
-      <section style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
-        <Viewport
-          width={64}
-          height={64}
-          scale={3}
-          label={formaAtual
-            ? (isPt ? `${formaAtual.name}, forma atual` : `${formaAtual.name}, current form`)
-            : (isPt ? 'Seu Soulmon' : 'Your Soulmon')}
-          screenStyle={{ position: 'relative' }}
+      <section style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, paddingTop: 4 }}>
+        {/* O VISOR é o gesto (canvas Evolução D-E1/D-E4, regra 🔒 do
+            CLAUDE.md: "tocar na criatura ATUAL alterna `evolutionLocked`";
+            "destravado: o JOGADOR dispara, tocando na criatura com a barra
+            cheia"). Um `<button>` de 200×200 em volta do `Viewport` decorativo
+            (`aria-hidden`): o `Viewport` com `label` seria `role="img"`, e
+            controle dentro de imagem some da árvore de acessibilidade. O
+            rótulo diz o que o TOQUE faz (V2) — travar, destravar ou evoluir. */}
+        <button
+          type="button"
+          data-visor-button
+          onClick={acaoDoVisor}
+          aria-pressed={evolutionLocked}
+          aria-label={rotuloDoVisor}
+          title={tituloDoVisor}
+          style={{
+            display: 'block', padding: 0, border: 'none', background: 'transparent',
+            borderRadius: 'var(--sm2-radius-lg)', cursor: 'pointer',
+          }}
         >
-          {auraElemental && (
+          <Viewport
+            width={64}
+            height={64}
+            scale={3}
+            screenStyle={{ position: 'relative' }}
+          >
+            {/* A aura elemental (`fx-ataque/`, 128² a 2× = 256) atrás da
+                criatura, opacidade 1 com corte declarado (32 px de cada lado
+                ficam fora — Pet D-P3). Só existe com oráculo: no demo
+                `auraForElement` devolve `undefined` (X6). */}
+            {auraElemental && (
+              <img
+                src={auraElemental}
+                alt=""
+                aria-hidden="true"
+                data-aura
+                style={{ position: 'absolute', left: -32, top: -32, width: 256, height: 256, imageRendering: 'pixelated' }}
+              />
+            )}
+            {/* O sprite 256² a 128 CENTRADO (0,5× — P2 a, a MESMA escala da
+                Home e da Ficha). Era esticado ao vidro (192 = 0,75×). */}
             <img
-              src={auraElemental}
+              src={spriteAtual}
               alt=""
-              aria-hidden="true"
-              data-aura
-              style={{ ...spriteInScreen, opacity: 0.6 }}
+              data-visor-sprite
+              style={{ position: 'absolute', left: 32, top: 32, width: 128, height: 128, objectFit: 'contain', imageRendering: 'pixelated' }}
+              /* Fade de 120 ms na troca reserva→próprio: reusa o token de
+                 movimento que já existe (`--sm2-dur-tap`), e ele já respeita
+                 `prefers-reduced-motion` no `index.css`. */
+              className="sm-visor-swap"
+              key={spriteAtual}
             />
-          )}
-          <img
-            src={spriteAtual}
-            alt=""
-            style={spriteInScreen}
-            /* Fade de 120 ms na troca reserva→próprio: reusa o token de
-               movimento que já existe (`--sm2-dur-tap`), e ele já respeita
-               `prefers-reduced-motion` no `index.css`. */
-            className="sm-visor-swap"
-            key={spriteAtual}
-          />
-          {/* A varredura de 400 ms que acompanha o fade — o par que a spec
-              chama de "sintonia" (§2.1 e §2.3.1). Irmã do
-              `.sm2-viewport-glass`: `position:absolute` recortada pela tela e
-              `pointer-events:none`, para não roubar o gesto de esfregar o pet.
-              `key` no sprite para a animação recomeçar do zero a cada troca. */}
-          {varrendoSintonia && (
-            <div className="sm-visor-scan" aria-hidden="true" key={`scan-${spriteAtual}`} />
-          )}
-        </Viewport>
+            {/* A FAÍSCA da evolução pronta (X2): `anim-sparkle-pop` quadro 4
+                (a dispersão), 64² a 2× = 128, no canto superior direito do
+                vidro, FORA da criatura (0 px de sobreposição: alfa do quadro
+                em x 164–220, sprite em 32–160). Quadro parado — o FX que a
+                Home já liga na evolução pronta, sem loop. */}
+            {prontoParaEvoluir && !evolutionLocked && (
+              <span
+                aria-hidden="true"
+                data-visor-spark
+                style={{
+                  position: 'absolute', left: 128, top: 8, width: 128, height: 128,
+                  backgroundImage: `url(${ANIM_ART.sparklePop.src})`,
+                  backgroundRepeat: 'no-repeat',
+                  backgroundSize: `${ANIM_ART.sparklePop.frames * 128}px 128px`,
+                  backgroundPosition: `-${(ANIM_ART.sparklePop.frames - 1) * 128}px 0`,
+                  imageRendering: 'pixelated', pointerEvents: 'none',
+                }}
+              />
+            )}
+            {/* "ON HOLD" na língua do vidro (D-E5): a MESMA peça do "EVOLVE"
+                da Home (`.sm2-pxbtn` — Silkscreen 14 na moldura pixel a ½×
+                sobre placa `viewport-bg` 78%), aqui como placa, não botão:
+                o gesto é o visor inteiro, e o `aria-label` já diz "on hold". */}
+            {evolutionLocked && (
+              <span
+                aria-hidden="true"
+                data-onhold-plate
+                className="sm2-pxbtn"
+                style={{
+                  position: 'absolute', right: 8, top: 8, zIndex: 5,
+                  minHeight: 32, minWidth: 0, padding: '0 6px', cursor: 'inherit', pointerEvents: 'none',
+                  borderImageSource: `url(${HUD_ART.frame})`,
+                  borderImageSlice: HUD_ART.frameSlice,
+                }}
+              >
+                {isPt ? 'SEGURADA' : 'ON HOLD'}
+              </span>
+            )}
+            {/* A varredura de 400 ms que acompanha o fade — o par que a spec
+                chama de "sintonia" (§2.1 e §2.3.1). Irmã do
+                `.sm2-viewport-glass`: `position:absolute` recortada pela tela e
+                `pointer-events:none`, para não roubar o gesto de esfregar o pet.
+                `key` no sprite para a animação recomeçar do zero a cada troca. */}
+            {varrendoSintonia && (
+              <div className="sm-visor-scan" aria-hidden="true" key={`scan-${spriteAtual}`} />
+            )}
+          </Viewport>
+        </button>
 
         {/* UM anúncio (§6), e num lugar só. Fica logo depois do visor porque é
             o visor que sintonizou, e a ordem de foco do §6 começa pela forma
@@ -861,74 +935,90 @@ export function EvolutionPath({
           </p>
         )}
 
-        <div style={{ textAlign: 'center', maxWidth: 380 }}>
-          <p
-            style={{
-              fontFamily: 'var(--sm2-font-display)',
-              fontSize: 'var(--sm2-text-lg)',
-              fontWeight: 600,
-              lineHeight: 'var(--sm2-leading-title)',
-              color: 'var(--sm2-ink)',
-              margin: 0,
-            }}
-          >
-            {fraseProgresso}
-          </p>
+        {/* O nome da forma, Fredoka 20, fora do vidro (aparelho). */}
+        <h2
+          style={{
+            fontFamily: 'var(--sm2-font-display)',
+            fontSize: 'var(--sm2-text-lg)',
+            fontWeight: 600,
+            lineHeight: 'var(--sm2-leading-title)',
+            color: 'var(--sm2-ink)',
+            margin: 0,
+            textAlign: 'center',
+          }}
+        >
+          {formaAtual?.name ?? (isPt ? 'Seu Soulmon' : 'Your Soulmon')}
+        </h2>
+
+        {/* OFFLINE (D9): a geração de sprite é a única superfície de rede
+            desta página, e o card diz que ela espera — sem âmbar, sem
+            vermelho; a barra e o cadeado seguem vivos. Só para quem tem
+            Oráculo: o demo cai sempre em `getSpriteForStage` e nunca gera. */}
+        {!online && !demoCharacterId && (
           <div
+            role="status"
+            data-testid="sm-evo-offline"
+            style={{ ...card, padding: 12, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, textAlign: 'center' }}
+          >
+            <Icon name="wifi_off" size={24} tone="muted" />
+            <p style={{ ...sm2Text, margin: 0 }}>{spriteText('offline', language)}</p>
+          </div>
+        )}
+
+        {/* A barra de progresso é APARELHO (D-E2): `.meter` SIS-07 em vetor
+            (12px, trilho `surface-2` + fronteira `muted`, fill
+            `primary-fill`), `aria-valuemax = gateDays`; a frase 14 centrada. */}
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
+          <div
+            className="sm2-kit-meter"
+            data-evo-meter
             role="progressbar"
             aria-valuemin={0}
             aria-valuemax={gateDays}
             aria-valuenow={Math.min(perfectDays, gateDays)}
             aria-label={isPt ? 'Progresso até a próxima evolução' : 'Progress to the next evolution'}
-            style={{
-              margin: '12px auto 0', width: 200, height: 8, borderRadius: 999,
-              backgroundColor: 'var(--sm2-surface-2)', overflow: 'hidden',
-            }}
+            style={{ height: 12, ['--sm2-kit-tone' as string]: 'var(--sm2-primary-fill)' } as CSSProperties}
           >
-            <div
-              style={{
-                width: `${Math.round(ratio * 100)}%`, height: '100%',
-                backgroundColor: 'var(--sm2-primary-fill)',
-                transition: 'width var(--sm2-dur-enter) var(--sm2-ease)',
-              }}
-            />
+            <div className="sm2-kit-meter-fill" style={{ width: `${Math.round(ratio * 100)}%` }} />
           </div>
+          <p style={{ ...sm2Text, margin: 0, textAlign: 'center' }}>{fraseProgresso}</p>
         </div>
 
-        {/* A ÚNICA ação da tela. O gesto no nó do grafo continua valendo — este
-            botão é o mesmo estado dito em palavras, e com alvo de 44px. */}
+        {/* O cadeado fala a língua da SELEÇÃO, não a do bloqueio (D-E4):
+            aberto = `outline` 44 com `lock_open`; segurado = `primary-soft` +
+            `primary-ink` + anel 1px (o idioma da sub-aba ativa e do chip do
+            galho) com `lock` FILL 1. É o mesmo estado do visor, dito em
+            palavras, para quem não descobre o gesto. */}
         {onToggleEvolutionLock && (
           <button
             type="button"
+            data-lock-button
             onClick={onToggleEvolutionLock}
             aria-pressed={evolutionLocked}
             style={{
-              ...sm2Button(evolutionLocked ? 'primary' : 'outline'),
-              minWidth: 220,
+              ...sm2Button('outline', false, 'sm'),
+              width: '100%', maxWidth: 240, marginTop: 4,
+              ...(evolutionLocked
+                ? { backgroundColor: 'var(--sm2-primary-soft)', color: 'var(--sm2-primary-ink)', border: '1px solid var(--sm2-primary-ink)' }
+                : null),
             }}
           >
-            <Icon name={evolutionLocked ? 'lock' : 'lock_open'} size={20} fill={evolutionLocked ? 1 : 0} />
+            <Icon name={evolutionLocked ? 'lock' : 'lock_open'} size={24} fill={evolutionLocked ? 1 : 0} tone="inherit" />
             {evolutionLocked
               ? (isPt ? 'Evolução segurada' : 'Evolution on hold')
               : (isPt ? 'Segurar evolução' : 'Hold evolution')}
           </button>
         )}
-        <p style={{ ...sm2Hint, textAlign: 'center', maxWidth: 340 }}>
-          {/* ⚠️ Os dois textos estavam INVERTIDOS em relação à regra. O de
-              destravado prometia evolução automática ("vai evoluir sozinho
-              assim que o dia virar") — que `MANUAL_EVOLUTION` impede —, e o de
-              travado descrevia justamente o comportamento DESTRAVADO ("só
-              espera você dizer quando"), quando travado é o estado em que
-              dizer não resolve: `handleEvolve` devolve o mesmo estado e
-              `canEvolve` é false. */}
-          {evolutionLocked
-            ? (isPt
-                ? 'Os dias completos continuam somando, mas a evolução está segurada. Destrave quando quiser.'
-                : 'Complete days keep adding up, but evolution is on hold. Release it whenever you want.')
-            : (isPt
-                ? 'Quando a barra enche, toque no seu Soulmon para evoluir. Nada acontece sem você.'
-                : 'When the bar fills, tap your Soulmon to evolve. Nothing happens without you.')}
-        </p>
+        {/* X4 (guarda 1c): segurar a forma NÃO protege da degeneração — e a
+            superfície diz isso, em 12 `muted`, sem âmbar. Só no travado: o
+            destravado já tem a frase da barra ("tap your Soulmon to evolve"). */}
+        {evolutionLocked && (
+          <p style={{ ...sm2Hint, textAlign: 'center', maxWidth: 340 }}>
+            {isPt
+              ? 'Os dias completos continuam somando, mas a evolução está segurada. Segurar a forma não a protege — os corações ainda podem cair nos dias difíceis.'
+              : 'Complete days keep adding up, but evolution is on hold. Holding the form doesn’t shield it — hearts can still drop on hard days.'}
+          </p>
+        )}
 
         {/* ── A SINTONIA (spec §2.3.1) ──────────────────────────────────────
             A criatura ATUAL é o único objeto do jogo cuja troca sempre teve
@@ -939,15 +1029,17 @@ export function EvolutionPath({
             automático: são alcançáveis, nunca impostos. */}
         {estadoAtual === 'A_SINTONIZAR' && onTuneVisor && (
           <div
-            style={{ ...card, width: '100%', maxWidth: 380, textAlign: 'center' }}
+            style={{ ...card, width: '100%', textAlign: 'center' }}
+            role="status"
             data-testid="sm-tune-card"
           >
             <p style={{ ...sm2Text, margin: 0 }}>{spriteText('tuneReady', language)}</p>
             <button
               type="button"
               onClick={() => onTuneVisor(currentStageId)}
-              style={{ ...sm2Button('primary'), marginTop: 12, minHeight: 44, minWidth: 220 }}
+              style={{ ...sm2Button('primary'), marginTop: 12, minHeight: 48, width: '100%', maxWidth: 240 }}
             >
+              <Icon name="tune" size={24} tone="inherit" />
               {spriteText('tune', language)}
             </button>
             {/* A troca deixa de ser silenciosa porque é ANUNCIADA ANTES. */}
@@ -967,7 +1059,7 @@ export function EvolutionPath({
             `avisoCredencial` só existe em `RESERVA`/`RESERVA_VESPERA`. */}
         {estadoAtual === 'RESERVA_FINAL' && (
           <div
-            style={{ ...card, width: '100%', maxWidth: 380, textAlign: 'center' }}
+            style={{ ...card, width: '100%', textAlign: 'center' }}
             role="status"
             data-testid="sm-sprite-final"
           >
@@ -986,7 +1078,7 @@ export function EvolutionPath({
             atingido, quem falhou foi a credencial, e o traco ainda pode vir. */}
         {avisoCredencial && (
           <div
-            style={{ ...card, width: '100%', maxWidth: 380, textAlign: 'center' }}
+            style={{ ...card, width: '100%', textAlign: 'center' }}
             role="status"
             data-testid="sm-sprite-credencial"
           >
@@ -995,35 +1087,39 @@ export function EvolutionPath({
               <button
                 type="button"
                 onClick={() => onRetrySprite(currentStageId)}
-                style={{ ...sm2Button('outline'), marginTop: 12, minHeight: 44, minWidth: 220 }}
+                style={{ ...sm2Button('outline', false, 'sm'), marginTop: 12, width: '100%', maxWidth: 200 }}
               >
+                <Icon name="refresh" size={24} tone="inherit" />
                 {spriteText('retry', language)}
               </button>
             )}
           </div>
         )}
 
-        {/* Desfazer: o sprite próprio fica no save e pode ser sintonizado de
-            novo a qualquer momento — re-sintonizar NÃO chama geração, logo não
-            toca teto nenhum. Trocar o rosto do bicho sem saída é a versão
-            educada do mesmo erro. */}
         {/* X-3: o aviso de que o Visor sintonizou SOZINHO. Quem nunca abre esta
-            aba acordava com o rosto do bicho trocado sem nada dizendo nada. */}
+            aba acordava com o rosto do bicho trocado sem nada dizendo nada.
+            `auto_awesome` FILL 1 em `primary-ink` 20 + a linha 12 `muted`. */}
         {estadoAtual === 'NOVO' && (
           <p
-            style={{ ...sm2Hint, margin: 0, fontWeight: 700, letterSpacing: '0.08em' }}
+            style={{ ...sm2Hint, margin: 0, display: 'inline-flex', alignItems: 'center', gap: 4 }}
             data-testid="sm-tuned-badge"
           >
+            <Icon name="auto_awesome" size={20} fill={1} tone="primary" />
             {spriteText('new', language)} · {spriteText('tuned', language)}
           </p>
         )}
 
+        {/* Desfazer: o sprite próprio fica no save e pode ser sintonizado de
+            novo a qualquer momento — re-sintonizar NÃO chama geração, logo não
+            toca teto nenhum. Trocar o rosto do bicho sem saída é a versão
+            educada do mesmo erro. */}
         {(estadoAtual === 'PROPRIO' || estadoAtual === 'NOVO') && onRevertVisor && (
           <button
             type="button"
             onClick={() => onRevertVisor(currentStageId)}
-            style={{ ...sm2Button('outline'), minHeight: 44, minWidth: 220 }}
+            style={{ ...sm2Button('outline', false, 'sm'), width: '100%', maxWidth: 240 }}
           >
+            <Icon name="undo" size={24} tone="inherit" />
             {spriteText('revert', language)}
           </button>
         )}
@@ -1031,22 +1127,25 @@ export function EvolutionPath({
           <button
             type="button"
             onClick={() => onTuneVisor(currentStageId)}
-            style={{ ...sm2Button('outline'), minHeight: 44, minWidth: 220 }}
+            style={{ ...sm2Button('outline', false, 'sm'), width: '100%', maxWidth: 240 }}
           >
+            <Icon name="tune" size={24} tone="inherit" />
             {spriteText('tune', language)}
           </button>
         )}
       </section>
 
-      {/* ─────────── Para onde ele está indo ─────────── */}
-      <section style={card}>
+      {/* ─────────── Para onde ele está indo (D-E11) ─────────── */}
+      <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }} aria-label={isPt ? 'Para onde seu Soulmon está indo' : 'Where they are heading'} data-evo-heading>
         <p style={sectionLabel}>{isPt ? 'Para onde seu Soulmon está indo' : 'Where they are heading'}</p>
 
-        {/* A FRASE vem antes dos números: é ela que responde à pergunta. */}
+        {/* A FRASE vem antes dos números: é ela que responde à pergunta. O
+            galho previsto em `primary-ink` 500 dentro da frase — a resposta
+            da tela (PRINCÍPIOS §6), nunca a cor do atributo. */}
         {forecastBranch ? (
-          <p style={{ ...sm2Text, marginTop: 6 }}>
+          <p style={{ ...sm2Text, margin: 0 }}>
             {isPt ? 'Seguindo para ' : 'Heading toward '}
-            <strong style={{ color: ATTR_INK[forecastBranch] }}>{L(ATTR_LABEL[forecastBranch])}</strong>
+            <strong style={{ fontWeight: 500, color: 'var(--sm2-primary-ink)' }}>{L(ATTR_LABEL[forecastBranch])}</strong>
             {isTie
               ? (carePattern
                   ? (isPt
@@ -1060,23 +1159,31 @@ export function EvolutionPath({
                   : '. Change it by completing more tasks of another category.')}
           </p>
         ) : (
-          <p style={{ ...sm2Text, marginTop: 6 }}>
+          <p style={{ ...sm2Text, margin: 0 }}>
             {isPt
               ? 'Ainda não dá para dizer. Conclua tarefas e o galho aparece aqui.'
               : 'Too early to tell. Finish tasks and the branch shows up here.'}
           </p>
         )}
 
-        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginTop: 14 }}>
+        {/* Os três atributos em `.segb` de 10 segmentos (vetor, `role=progressbar`
+            por atributo, rótulo 12 `muted` de 90px) — nenhum percentual, nenhum
+            "N%" (02 §16). Os pontos não têm teto no jogo: a régua é o LÍDER
+            (piso 10), então a leitura é "quem está na frente, e por quanto". */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 4 }}>
           {ATTR_ORDER.map(a => {
-            const Glyph = ATTR_GLYPH[a];
             const valor = a === 'virus' ? virusPoints : a === 'data' ? dataPoints : vaccinePoints;
             return (
-              <span key={a} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Glyph size={18} color={ATTR_COLOR[a]} strokeWidth={2.2} />
-                <span style={sm2Hint}>{L(ATTR_LABEL[a])}</span>
-                <span className="sm2-num" style={{ ...sm2Text, fontWeight: 500, color: ATTR_INK[a] }}>{valor}</span>
-              </span>
+              <div key={a} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ ...sm2Hint, width: 90, flex: 'none' }}>{L(ATTR_LABEL[a])}</span>
+                <PixelSegmentedBar
+                  value={valor}
+                  max={reguaDosAtributos}
+                  segments={10}
+                  label={L(ATTR_LABEL[a])}
+                  style={{ flex: 1 }}
+                />
+              </div>
             );
           })}
         </div>

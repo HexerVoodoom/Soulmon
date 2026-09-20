@@ -250,10 +250,16 @@ export function UnlockNudge({ language, reason, variant = 'buy', onOpen }: {
      dismiss. Era uma placa `primary-soft`. */
   const nudgeStyle: CSSProperties = {
     ...sm2Button('outline'),
-    width: '100%', minHeight: 64, justifyContent: 'flex-start', gap: 12,
-    padding: '8px 16px', textAlign: 'left',
+    width: '100%', minHeight: reason === 'evolution' ? 56 : 64, justifyContent: 'flex-start', gap: 12,
+    padding: reason === 'evolution' ? '10px 12px' : '8px 16px', textAlign: 'left',
   };
   const isCap = variant !== 'reveal' && reason === 'task-limit';
+  /* Canvas Evolução D-E7 (`ConviteDemo`/`ConvitePago`, EVO-11/12): na página
+     de Evolução o convite é ÂMBAR de convite — `auto_awesome` 24 FILL 1 em
+     `gold-ink` pelado, card-botão 56, sem chevron (PRINCÍPIOS §8: âmbar =
+     convite, nunca cobrança). A recusa `not-paid` do renascimento usa a
+     MESMA peça. Os outros motivos seguem o canvas Atividades. */
+  const isEvo = reason === 'evolution';
 
   const head = variant === 'reveal'
     ? (isPt ? 'Falta revelar a sua criatura' : 'Your creature is still unrevealed')
@@ -283,7 +289,13 @@ export function UnlockNudge({ language, reason, variant = 'buy', onOpen }: {
 
   return (
     <button type="button" onClick={onOpen} style={nudgeStyle}>
-      <Icon name={isCap ? 'lock_open' : 'auto_awesome'} size={24} tone={isCap ? 'gold' : 'primary'} style={{ flexShrink: 0 }} />
+      <Icon
+        name={isCap ? 'lock_open' : 'auto_awesome'}
+        size={24}
+        fill={isEvo ? 1 : 0}
+        tone={isCap || isEvo ? 'gold' : 'primary'}
+        style={{ flexShrink: 0 }}
+      />
       <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
         <span style={{
           display: 'block', fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm)',
@@ -298,7 +310,7 @@ export function UnlockNudge({ language, reason, variant = 'buy', onOpen }: {
           {sub}
         </span>
       </span>
-      <Icon name="chevron_right" size={24} tone="muted" style={{ flexShrink: 0 }} />
+      {!isEvo && <Icon name="chevron_right" size={24} tone="muted" style={{ flexShrink: 0 }} />}
     </button>
   );
 }

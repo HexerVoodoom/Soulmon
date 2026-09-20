@@ -14,9 +14,18 @@
  *    desfazer, e um jogo que esconde isso está vendendo arrependimento.
  *  · **a confirmação exige um segundo toque** (`confirmando`). Não é fricção
  *    por fricção: é a única ação irreversível do app inteiro.
+ *
+ * Canvas Evolução (`RenascimentoModal`/`Confirmando`, D-E8, 20/09/2026): a
+ * folha SIS-04 (`ModalSheet`) com campo SIS-03 e dois `combobox` lado a lado
+ * (`expand_more` 24, `select` nativo com `appearance: none` — os `optgroup`s
+ * do elemento ficam); "Be reborn" INERTE POR SUPERFÍCIE (`surface-2` +
+ * `muted` + `aria-disabled`), nunca opacidade; o `role=alert` com filete
+ * `gold-ink` 3px; NADA de vermelho — o "ONCE" é 12/500 `muted`, o erro é
+ * âmbar; "Renascendo…" em `muted` com `aria-busy`.
  */
 import { useMemo, useState } from 'react';
 import { ModalSheet, sm2Button, sm2Hint, sm2Label, sm2Text, Field } from './form/FormKit';
+import { Icon } from './ui/Icon';
 import {
   rebirthEscolaOptions, rebirthElementOptions, sanitizeCriatura,
   REBIRTH_CRIATURA_MAX,
@@ -31,15 +40,53 @@ interface RebirthModalProps {
   onClose: () => void;
 }
 
+/** O `combobox` do canvas: campo filled 44 (`surface-2` + `muted` 1px, raio
+ *  12, 16px) com `expand_more` 24 pelado à direita — o `select` nativo por
+ *  baixo, sem a seta do sistema. */
 const selectStyle: React.CSSProperties = {
-  ...sm2Text,
+  fontFamily: 'var(--sm2-font-text)',
+  fontSize: 'var(--sm2-text-md)',
+  lineHeight: 'var(--sm2-leading-body)',
   width: '100%',
-  padding: '10px 12px',
-  borderRadius: 10,
-  border: '1px solid var(--sm2-line)',
-  backgroundColor: 'var(--sm2-surface)',
+  minHeight: 44,
+  boxSizing: 'border-box',
+  padding: '0 40px 0 12px',
+  borderRadius: 'var(--sm2-radius-md)',
+  border: '1px solid var(--sm2-muted)',
+  backgroundColor: 'var(--sm2-surface-2)',
   color: 'var(--sm2-ink)',
+  appearance: 'none',
+  WebkitAppearance: 'none',
 };
+
+function Combo({ id, label, value, onChange, children }: {
+  id: string; label: string; value: string; onChange: (v: string) => void; children: React.ReactNode;
+}) {
+  // Foco = fronteira + anel 2px `primary-ink` por `box-shadow`, como o `Field`.
+  const [focus, setFocus] = useState(false);
+  return (
+    <div style={{ flex: 1, minWidth: 0 }}>
+      <label style={sm2Label} htmlFor={id}>{label}</label>
+      <span style={{ position: 'relative', display: 'block' }}>
+        <select
+          id={id}
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          onFocus={() => setFocus(true)}
+          onBlur={() => setFocus(false)}
+          className="sm2-form-field"
+          style={{
+            ...selectStyle,
+            ...(focus ? { borderColor: 'var(--sm2-primary-ink)', boxShadow: '0 0 0 2px var(--sm2-primary-ink)' } : null),
+          }}
+        >
+          {children}
+        </select>
+        <Icon name="expand_more" size={24} tone="muted" style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+      </span>
+    </div>
+  );
+}
 
 export function RebirthModal({ language, onConfirm, onClose }: RebirthModalProps) {
   const isPt = language === 'pt-BR';
@@ -84,8 +131,9 @@ export function RebirthModal({ language, onConfirm, onClose }: RebirthModalProps
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <button
             type="button"
-            onClick={confirmar}
-            disabled={!podeSeguir}
+            onClick={podeSeguir ? confirmar : undefined}
+            aria-disabled={!podeSeguir}
+            aria-busy={ocupado}
             style={{ ...sm2Button('primary', !podeSeguir), width: '100%' }}
           >
             {ocupado
@@ -116,7 +164,7 @@ export function RebirthModal({ language, onConfirm, onClose }: RebirthModalProps
           : 'Nothing else is lost: Bits, Emblems, Credits, decorations, scenes, dreams, habits, tasks, complete days and the forms you already unlocked all stay exactly as they are.'}
       </p>
 
-      <p style={{ ...sm2Hint, color: 'var(--sm2-danger-ink)' }}>
+      <p style={{ ...sm2Hint, fontWeight: 500 }}>
         {isPt
           ? 'Acontece UMA vez por criatura, e não tem como desfazer.'
           : 'It happens ONCE per creature, and there is no undo.'}
@@ -140,30 +188,11 @@ export function RebirthModal({ language, onConfirm, onClose }: RebirthModalProps
         </p>
       </div>
 
-      <div>
-        <label style={sm2Label} htmlFor="rebirth-escola">
-          {isPt ? 'Escola' : 'School'}
-        </label>
-        <select
-          id="rebirth-escola"
-          value={escola}
-          onChange={e => setEscola(e.target.value as EscolaId)}
-          style={selectStyle}
-        >
+      <div style={{ display: 'flex', gap: 8 }}>
+        <Combo id="rebirth-escola" label={isPt ? 'Escola' : 'School'} value={escola} onChange={v => setEscola(v as EscolaId)}>
           {escolas.map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
-        </select>
-      </div>
-
-      <div>
-        <label style={sm2Label} htmlFor="rebirth-elemento">
-          {isPt ? 'Elemento' : 'Element'}
-        </label>
-        <select
-          id="rebirth-elemento"
-          value={elemento}
-          onChange={e => setElemento(e.target.value)}
-          style={selectStyle}
-        >
+        </Combo>
+        <Combo id="rebirth-elemento" label={isPt ? 'Elemento' : 'Element'} value={elemento} onChange={setElemento}>
           <optgroup label={isPt ? 'Elementos' : 'Elements'}>
             {base.map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
           </optgroup>
@@ -173,22 +202,23 @@ export function RebirthModal({ language, onConfirm, onClose }: RebirthModalProps
           <optgroup label={isPt ? 'Combinações' : 'Combinations'}>
             {pares.map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
           </optgroup>
-        </select>
-        <p style={sm2Hint}>
-          {isPt
-            ? 'A escola e o elemento escolhidos ganham o maior peso na ficha da nova criatura.'
-            : 'The chosen school and element get the heaviest weight in the new creature’s sheet.'}
-        </p>
+        </Combo>
       </div>
+      <p style={sm2Hint}>
+        {isPt
+          ? 'A escola e o elemento escolhidos ganham o maior peso na ficha da nova criatura.'
+          : 'The chosen school and element get the heaviest weight in the new creature’s sheet.'}
+      </p>
 
+      {/* O alerta de confirmação: filete `gold-ink` 3px — âmbar, nunca vermelho. */}
       {confirmando && (
-        <p role="alert" style={{ ...sm2Text, margin: 0 }}>
+        <p role="alert" style={{ ...sm2Text, margin: 0, borderLeft: '3px solid var(--sm2-gold-ink)', paddingLeft: 12 }}>
           {isPt
             ? `Confirmando: sua criatura vira um ovo e renasce como "${criaturaLimpa}". Isso não volta atrás.`
             : `Confirming: your creature becomes an egg and is reborn as "${criaturaLimpa}". This cannot be undone.`}
         </p>
       )}
-      {erro && <p role="alert" style={{ ...sm2Hint, color: 'var(--sm2-danger-ink)' }}>{erro}</p>}
+      {erro && <p role="alert" style={{ ...sm2Hint, borderLeft: '3px solid var(--sm2-gold-ink)', paddingLeft: 12 }}>{erro}</p>}
     </ModalSheet>
   );
 }
