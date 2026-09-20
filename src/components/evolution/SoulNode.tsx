@@ -1,80 +1,133 @@
-import { NodeArt, type SoulNodeVisual } from './nodeArt';
+import type { CSSProperties } from 'react';
+import { NodeArt, NODE_GLASS, NODE_SIZE, NODE_SPRITE, type SoulNodeVisual } from './nodeArt';
 
 export type { SoulNodeVisual };
 
 interface SoulNodeProps {
   visual: SoulNodeVisual;
-  /** Lado da caixa do cristal em px. */
-  size?: number;
-  /** Cor do galho (só pinta nó já alcançado). */
-  tone?: string;
   /**
-   * Sprite pousado NO nó (Ref C: o pet em cima do nó atual). Decorativo —
-   * o nome da forma já está no texto ao lado e no `label`.
+   * A arte dentro do vidro: o sprite PRÓPRIO/de reserva da forma (256² a 64,
+   * 0,25× — Pet D-P9) ou o placeholder v3 enquanto o Oráculo desenha (D-E9).
+   * Ausente = vidro vazio (a forma oculta sem sprite próprio é silêncio).
    */
   sprite?: string;
-  /** Rótulo acessível COMPLETO: nome + situação ("atual", "bloqueada"…). */
+  /**
+   * WP4.21 / Pet D-P7 — desenha o `sprite` como SILHUETA: `mask-image` do
+   * PNG preenchida por `color-mix(viewport-bg 58%, viewport-ink)`. Sem alfa,
+   * sem `filter`: a forma inteira, nenhuma cor — o contorno é a antecipação,
+   * a identidade continua atrás do spoiler.
+   */
+  silhouette?: boolean;
+  /** O Oráculo está desenhando esta forma (anel tracejado, D-E9). */
+  busy?: boolean;
+  /** Rótulo acessível COMPLETO: nome + situação + o que o toque faz (V2). */
   label: string;
   title?: string;
   onClick?: () => void;
-  /** Anel ciano pulsante do nó atual. */
-  ring?: boolean;
-  /** WP4.21 — desenha o sprite como sombra borrada (a próxima forma prevista).
-   *  Só faz sentido quando existe sprite: sem ele o nó já é silêncio. */
-  silhouette?: boolean;
 }
 
 /**
- * Um nó do grafo de evolução (Ref C: coluna vertical de losangos de cristal
- * ligados por linhas).
+ * Um nó da árvore de evolução (canvas Evolução, D-E3 — H1 opção (a)).
  *
  * Divisão de responsabilidade, de propósito:
- *  · `nodeArt.tsx` = o desenho (hoje SVG, amanhã PNG — fronteira única);
- *  · aqui         = interação, foco, alvo de toque e o que o leitor de tela ouve;
+ *  · `nodeArt.tsx` = o anel (SVG por token — fronteira única de arte);
+ *  · aqui         = o VIDRO circular de 80 (`viewport-bg`, X3: corte 0 % nas
+ *                   quatro artes e nos placeholders), o sprite a 64 ou a
+ *                   silhueta, interação, foco e o que o leitor de tela ouve;
  *  · `EvolutionPath` = o grafo e os dados.
  *
+ * O interior do nó é VIDRO, não `surface-2`: o pixel só entra em vidro (D-E3
+ * (i)); o disco `surface-2` fica no SVG, atrás, decorativo. Reusa as classes
+ * do `Viewport` (`sm2-viewport-screen` + `sm2-viewport-glass`, escopo
+ * `.sm2-visor`) — nenhum CSS novo; o raio 50% vem inline porque é célula
+ * circular, não visor.
+ *
  * A cor/posição NÃO é o único portador de informação: o `label` diz a
- * situação em palavras (WCAG 1.4.1), e o alvo é ≥44px mesmo quando o
- * cristal desenhado é menor.
+ * situação em palavras (WCAG 1.4.1), e o alvo do nó oculto é o SVG inteiro
+ * (88 ≥ 44).
  */
 export function SoulNode({
-  visual, size = 44, tone, sprite, label, title, onClick, ring = false,
-  silhouette = false,
+  visual, sprite, silhouette = false, busy = false, label, title, onClick,
 }: SoulNodeProps) {
+  const box: CSSProperties = {
+    position: 'relative',
+    display: 'block',
+    width: NODE_SIZE,
+    height: NODE_SIZE,
+    flex: 'none',
+    padding: 0,
+    border: 'none',
+    background: 'transparent',
+    cursor: onClick ? 'pointer' : undefined,
+    borderRadius: '50%',
+  };
+  const inset = (NODE_SIZE - NODE_GLASS) / 2;
+
   const body = (
-    <span className="sm-px-node-art" style={{ width: size, height: size }}>
-      {ring && <span className="sm-px-node-ring" aria-hidden="true" />}
-      <NodeArt visual={visual} size={size} tone={tone} />
-      {sprite && (
-        <img
-          className="sm-px-node-sprite"
-          src={sprite}
-          alt=""
-          aria-hidden="true"
-          style={{
-            width: Math.round(size * 0.95), height: Math.round(size * 0.95),
-            /* WP4.21 — SILHUETA da próxima forma. A antecipação é o conteúdo:
-               ver o contorno do que vem, sem ver quem é. `brightness(0)` +
-               opacidade em vez de `brightness(.3)`: o sprite tem cor própria
-               e escurecer sem zerar deixava a paleta legível, entregando o
-               que a silhueta existe para NÃO entregar. */
-            ...(silhouette ? { filter: 'blur(6px) brightness(0)', opacity: .45 } : null),
-          }}
-        />
-      )}
-    </span>
+    <>
+      <NodeArt visual={visual} busy={busy} />
+      <span
+        className="sm2-viewport-screen sm2-visor"
+        data-node-glass
+        style={{
+          position: 'absolute',
+          left: inset,
+          top: inset,
+          width: NODE_GLASS,
+          height: NODE_GLASS,
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        {sprite && (silhouette
+          ? (
+            <span
+              data-node-silhouette
+              aria-hidden="true"
+              style={{
+                width: NODE_SPRITE,
+                height: NODE_SPRITE,
+                display: 'block',
+                background: 'color-mix(in srgb, var(--sm2-viewport-bg) 58%, var(--sm2-viewport-ink))',
+                WebkitMaskImage: `url(${sprite})`,
+                maskImage: `url(${sprite})`,
+                WebkitMaskSize: `${NODE_SPRITE}px ${NODE_SPRITE}px`,
+                maskSize: `${NODE_SPRITE}px ${NODE_SPRITE}px`,
+                WebkitMaskRepeat: 'no-repeat',
+                maskRepeat: 'no-repeat',
+                WebkitMaskPosition: 'center',
+                maskPosition: 'center',
+              }}
+            />
+          )
+          : (
+            <img
+              data-node-sprite
+              src={sprite}
+              alt=""
+              aria-hidden="true"
+              width={NODE_SPRITE}
+              height={NODE_SPRITE}
+              style={{ width: NODE_SPRITE, height: NODE_SPRITE, display: 'block', objectFit: 'contain', imageRendering: 'pixelated' }}
+            />
+          ))}
+        <span className="sm2-viewport-glass" style={{ borderRadius: '50%' }} />
+      </span>
+    </>
   );
 
   if (!onClick) {
     return (
-      <span className="sm-px-node" role="img" aria-label={label} title={title}>
+      <span role="img" aria-label={label} title={title} data-soul-node={visual} style={box}>
         {body}
       </span>
     );
   }
 
   return (
-    <button type="button" className="sm-px-node" onClick={onClick} aria-label={label} title={title}>
+    <button type="button" onClick={onClick} aria-label={label} title={title} data-soul-node={visual} style={box}>
       {body}
     </button>
   );

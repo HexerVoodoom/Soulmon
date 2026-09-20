@@ -1,65 +1,84 @@
 // @vitest-environment jsdom
 /**
- * Teste de render do `NodeArt`.
+ * Teste de render do `NodeArt` — o anel do nó em SVG por token (H1 a).
  *
  * Motivo de existir: o cabeçalho do `nodeArt.tsx` sempre prometeu um contrato
- * para quem chama — "(visual, size) → um quadrado de `size`×`size` px,
- * decorativo, com o centro do cristal no centro da caixa" — e esse contrato
- * era só um comentário. Ele acabou de ser exercido de verdade: a arte trocou
- * de SVG para PNG (2026-08-18), e é exatamente numa troca dessas que um
- * contrato escrito só em prosa se perde. `SoulNode` posiciona o anel e o
- * sprite pousado por cima, e `EvolutionPath` liga as linhas do grafo, os dois
- * assumindo a caixa quadrada — se o novo desenho vazar do quadrado ou virar
- * `inline`, os dois quebram longe daqui, e em silêncio.
+ * para quem chama — "(visual) → um quadrado NODE_SIZE², decorativo, com o
+ * centro do anel no centro da caixa" — e esse contrato já foi exercido duas
+ * vezes (SVG → PNG em 18/08/2026, PNG → SVG em 20/09/2026). `SoulNode`
+ * posiciona o vidro circular por cima assumindo a caixa quadrada e o anel
+ * concêntrico; se o desenho vazar do quadrado ou o anel sair do centro, o
+ * vidro deixa de ser concêntrico longe daqui, e em silêncio.
  *
- * O que fica travado: os quatro estados existem e são DISTINTOS (senão a
- * hierarquia visual que carrega o significado desaparece), a caixa é quadrada
- * do tamanho pedido, e a arte segue decorativa para leitores de tela.
+ * O que fica travado: os quatro estados são DISTINTOS (senão a hierarquia
+ * visual que carrega o significado desaparece — canvas D-E3: halo / tracejado
+ * / cinza / ciano-escuro), todo anel é TOKEN (nenhum literal de cor), o traço
+ * é 3 (a fronteira do controle, WCAG 1.4.11), a caixa é 88² e a arte segue
+ * decorativa para leitores de tela.
  */
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { NodeArt, type SoulNodeVisual } from './nodeArt';
+import { NodeArt, NODE_GLASS, NODE_SIZE, NODE_SPRITE, type SoulNodeVisual } from './nodeArt';
 
 const VISUAIS: SoulNodeVisual[] = ['current', 'reached', 'forecast', 'locked'];
 
+const assinatura = (visual: SoulNodeVisual, busy = false) => {
+  const { container, unmount } = render(<NodeArt visual={visual} busy={busy} />);
+  const ring = container.querySelector('[data-node-ring]') as SVGCircleElement;
+  const halo = container.querySelector('[data-node-halo]');
+  const out = {
+    stroke: ring.getAttribute('stroke'),
+    dash: ring.getAttribute('stroke-dasharray'),
+    width: ring.getAttribute('stroke-width'),
+    halo: Boolean(halo),
+  };
+  unmount();
+  return out;
+};
+
 describe('NodeArt', () => {
-  it('cada estado visual tem arte PRÓPRIA — nenhum reaproveita a do outro', () => {
-    const srcs = VISUAIS.map(visual => {
-      const { container, unmount } = render(<NodeArt visual={visual} size={44} />);
-      const img = container.querySelector('img');
-      const src = img?.getAttribute('src') ?? '';
-      unmount();
-      return src;
+  it('cada estado visual tem assinatura PRÓPRIA — nenhum reaproveita a do outro', () => {
+    const chaves = VISUAIS.map(v => {
+      const a = assinatura(v);
+      return `${a.stroke}|${a.dash ?? ''}|${a.halo}`;
     });
-    expect(srcs.every(Boolean), 'algum estado ficou sem arte').toBe(true);
-    expect(new Set(srcs).size, `estados com arte repetida: ${srcs.join(', ')}`).toBe(VISUAIS.length);
+    expect(new Set(chaves).size, `estados com anel repetido: ${chaves.join(' · ')}`).toBe(VISUAIS.length);
   });
 
-  it('a caixa é um quadrado do tamanho pedido (o anel e o grafo dependem disso)', () => {
-    const { container } = render(<NodeArt visual="current" size={44} />);
-    const img = container.querySelector('img')!;
-    expect(img.getAttribute('width')).toBe('44');
-    expect(img.getAttribute('height')).toBe('44');
+  it('todo anel é token, traço 3 (a fronteira do controle)', () => {
+    for (const v of VISUAIS) {
+      const a = assinatura(v);
+      expect(a.stroke, v).toMatch(/^var\(--sm2-/);
+      expect(a.width, v).toBe('3');
+    }
+  });
+
+  it('só o ATUAL tem halo; só o PREVISTO é tracejado por estado', () => {
+    expect(assinatura('current').halo).toBe(true);
+    expect(VISUAIS.filter(v => assinatura(v).halo)).toEqual(['current']);
+    expect(VISUAIS.filter(v => assinatura(v).dash)).toEqual(['forecast']);
+  });
+
+  it('`busy` (o Oráculo desenhando) traceja sem trocar o tom do estado', () => {
+    const parado = assinatura('reached');
+    const ocupado = assinatura('reached', true);
+    expect(ocupado.stroke).toBe(parado.stroke);
+    expect(ocupado.dash).toBe('6 5');
+  });
+
+  it('a caixa é 88², o anel é concêntrico e as três medidas do canvas batem (88 / 80 / 64)', () => {
+    const { container } = render(<NodeArt visual="current" />);
+    const svg = container.querySelector('svg')!;
+    expect(svg.getAttribute('width')).toBe(String(NODE_SIZE));
+    expect(svg.getAttribute('height')).toBe(String(NODE_SIZE));
+    const ring = container.querySelector('[data-node-ring]')!;
+    expect(ring.getAttribute('cx')).toBe(String(NODE_SIZE / 2));
+    expect(ring.getAttribute('cy')).toBe(String(NODE_SIZE / 2));
+    expect([NODE_SIZE, NODE_GLASS, NODE_SPRITE]).toEqual([88, 80, 64]);
   });
 
   it('é decorativa: nada para o leitor de tela anunciar', () => {
-    render(<NodeArt visual="reached" size={44} />);
+    render(<NodeArt visual="reached" />);
     expect(screen.queryByRole('img')).toBeNull();
-  });
-
-  it('o `tone` do galho tinge sem esconder o facetado da arte', () => {
-    // A tintura entra como camada recortada pela silhueta; se um dia virar um
-    // preenchimento chapado por cima, o volume do pixel art some e este caso
-    // é quem avisa.
-    const { container } = render(<NodeArt visual="reached" size={44} tone="#ff8800" />);
-    const camada = container.querySelectorAll('span > span')[0] as HTMLElement;
-    expect(camada, 'tone não gerou camada de tintura').toBeTruthy();
-    expect(camada.style.mixBlendMode).toBe('color');
-    expect(Number(camada.style.opacity)).toBeLessThan(1);
-  });
-
-  it('sem `tone` não há camada extra — o padrão é a arte crua', () => {
-    const { container } = render(<NodeArt visual="reached" size={44} />);
-    expect(container.querySelectorAll('span > span').length).toBe(0);
   });
 });

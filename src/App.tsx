@@ -39,7 +39,7 @@ import { HelpModal } from './components/HelpModal';
 import { ProtectProgressModal } from './components/ProtectProgressModal';
 import { CATEGORY_ATTRIBUTES, type ActivityCategory, XP_THRESHOLDS } from './types/attributes';
 import { type CareEvent } from './components/CareSystem';
-import { FORM_REQUIREMENTS, getStageLevel, getStageBranch, canSelectWeekdays, getMaxEnergyForStage } from './types/progression';
+import { FORM_REQUIREMENTS, getStageLevel, canSelectWeekdays, getMaxEnergyForStage } from './types/progression';
 import { type Language, useTranslation, resolveLanguage } from './utils/i18n';
 import { SoulmonWidget } from './plugins/SoulmonWidgetPlugin';
 import { unlockedAchievements } from './utils/achievements';
@@ -141,7 +141,6 @@ import { CATEGORY_EMOJIS, AI_CATEGORY_MAP, FOOD_BY_CATEGORY } from './constants/
 import type { AISettings } from './components/AISettingsModal';
 import type { OnboardingCompleteData } from './components/SoulmonOnboarding';
 import { UnlockAccountModal, UnlockNudge, type UnlockReason } from './components/UnlockAccountModal';
-import { EvoTrail } from './components/EvoTrail';
 
 // ── O MOTOR DE TAREFAS (docs/PLANO-TAREFAS.md) ──────────────────────────────
 // As REGRAS moram nos módulos puros (`taskTriage`, `habitRhythm`, `rituals`,
@@ -5093,17 +5092,12 @@ export default function App() {
                   de vista — tudo em `components/DailyRituals.tsx` (a
                   composição da linha em `components/pixel/RitualPanel.tsx`). */}
               {(() => {
-                /* Trilha de evolução na Home (referência: caminho de nós ao
-                   lado dos Daily Rituals). O galho é o que o pet JÁ está
-                   seguindo; em rookie (sem galho) é o previsto — o MESMO
-                   resolveBranch da página de Evolução, nada recalculado. */
-                const trailBranch = getStageBranch(gameState.evolutionStage)
-                  ?? resolveBranch(
-                    { virus: gameState.virusPoints, data: gameState.dataPoints, vaccine: gameState.vaccinePoints },
-                    carePatternReading,
-                    gameState.currentBranch,
-                  );
-
+                /* A trilha de evolução (`EvoTrail`) SAIU da Home — decisão S1
+                   do canvas Home (`DECISOES-WIREFRAME.md` §5, aprovada em
+                   14/09/2026): escada de altura fora da própria tela, e o
+                   destino (a célula Evolução da barra) está a um toque. O
+                   componente foi apagado no canvas Evolução (§24), quando o nó
+                   virou SVG por token e a trilha ficou sem consumidor. */
                 const agora = new Date();
                 /* Recomeço, relatório semanal e "arrumar a pilha" NÃO moram
                    mais aqui: os três entraram no SLOT DO DIA lá em cima, com
@@ -5113,17 +5107,6 @@ export default function App() {
 
                 return (
                   <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                  {(gameState.soulmonStages?.length ?? 0) > 0 && (
-                    <EvoTrail
-                      stages={gameState.soulmonStages ?? []}
-                      currentStageId={gameState.evolutionStage}
-                      unlockedEvolutions={gameState.unlockedEvolutions}
-                      branch={trailBranch}
-                      demoCharacterId={gameState.demoCharacterId}
-                      onOpen={() => setCurrentView('evolution')}
-                      language={language}
-                    />
-                  )}
                   <div style={{ flex: 1, minWidth: 0 }}>
                   {/* Captura de uma linha (`docs/PLANO-TAREFAS.md` §2.5). Fica
                       ACIMA de tudo porque o custo de anotar é o que decide se a

@@ -1,33 +1,36 @@
 /**
- * ⚠️ FRONTEIRA DE ARTE DO NÓ (hoje: PNG do kit).
+ * ⚠️ FRONTEIRA DE ARTE DO NÓ (hoje: SVG por token — H1 opção (a)).
  *
- * Este arquivo é o ÚNICO lugar que sabe COM O QUE um nó da árvore é
- * desenhado. `SoulNode.tsx` (anel, brilho, sprite pousado, foco, aria) e
- * `EvolutionPath.tsx` (grafo, linhas, dados) não importam nada de arte.
+ * Este arquivo é o ÚNICO lugar que sabe COM O QUE o anel de um nó da árvore é
+ * desenhado. `SoulNode.tsx` (vidro, sprite/silhueta, foco, aria) e
+ * `EvolutionPath.tsx` (grafo e dados) não importam nada de arte.
  *
- * A troca SVG → PNG que este arquivo prometia foi FEITA (2026-08-18): a arte
- * saiu da rodada de UI gerada no Gemini e recortada por algoritmo
- * (`E:\Soulmon-assets`, ver `docs/BACKLOG-ARTE-GERAR.md` §A4). São quatro
- * PNGs 128×128 com alfa real, um por estado visual, medidos contra o guard de
- * `src/assets/assets.contract.test.ts` antes de entrar: 0,00% de magenta e
- * 0,6–2,2% de cinza (o teto é 5%), com 12–23% de transparência real — ou seja,
- * sem xadrez assado.
+ * Histórico curto, porque ele explica a forma: o nó nasceu SVG, virou PNG
+ * (18/08/2026 — quatro cristais 128² do Gemini, `soulmon/evolution/node-*`)
+ * e voltou a vetor pela decisão do dono no canvas Evolução (H1, `STATUS.md`
+ * §3; `docs/design/wireframes/evolucao/identidade/README.md` D-E3,
+ * 20/09/2026). Os quatro PNGs foram para `D:\Soulmon\brand-archive\
+ * evo-nodes-antigos\` e o kit de cristais de `E:/nodes` ficou sem consumidor.
+ * O motivo é a direção "O Visor": o pixel só entra em VIDRO, e o nó agora TEM
+ * um vidro (o circular de 80, em `SoulNode`) — o cristal pixel em volta dele
+ * era pixel fora do visor.
  *
- * A hierarquia visual é CRESCENTE em presença, e é isso que carrega o
- * significado sem depender de cor: `locked` é o cristal morto, `forecast` é um
- * shard aceso (possível, mas ainda não seu), `reached` é a gema cheia e
- * `current` é a gema com raios.
+ * O que este SVG desenha (88², medidas do canvas, todas em token):
+ *  · o disco `surface-2` (r 41) — decorativo, atrás do vidro;
+ *  · o ANEL por estado, r 41, traço 3 — a fronteira do controle (WCAG
+ *    1.4.11: os quatro medem ≥ 3:1 sobre `surface`/`surface-2` nos dois
+ *    temas, tabela do README):
+ *      ATUAL      `primary-ink` 3px + halo 1px (r 43,5)
+ *      PREVISTO   `primary-deep` 3px tracejado 6/5
+ *      BLOQUEADO  `muted` 3px (X5 — o nó oculto é botão, "Reveal (spoiler)")
+ *      ALCANÇADO  `primary-deep` 3px sólido (X4 — cheio taparia o sprite)
+ *  · `busy` = o Oráculo está desenhando esta forma (D-E9): o anel vira
+ *    tracejado no tom do estado, sem trocar de estado.
  *
- * O contrato para quem chama continua igual: (visual, size) → um quadrado de
- * `size`×`size` px, sem texto, decorativo (`aria-hidden`), com o centro
- * geométrico do cristal no centro da caixa — é dele que a linha de conexão e o
- * anel dependem. Os PNGs foram normalizados para canvas quadrado justamente
- * para preservar isso.
+ * Contrato para quem chama: `(visual) → um quadrado NODE_SIZE²`, decorativo
+ * (`aria-hidden`), com o centro do anel no centro da caixa — é dele que o
+ * vidro circular depende para ficar concêntrico.
  */
-import nodeCurrent from '../../assets/soulmon/evolution/node-current.png';
-import nodeReached from '../../assets/soulmon/evolution/node-reached.png';
-import nodeForecast from '../../assets/soulmon/evolution/node-forecast.png';
-import nodeLocked from '../../assets/soulmon/evolution/node-locked.png';
 
 /** Estados VISUAIS do nó. O significado de jogo é resolvido por quem chama. */
 export type SoulNodeVisual =
@@ -40,67 +43,53 @@ export type SoulNodeVisual =
   /** Forma futura ainda trancada. */
   | 'locked';
 
-export interface NodeArtProps {
-  visual: SoulNodeVisual;
-  /** Lado da caixa em px. O cristal é inscrito nele. */
-  size: number;
-  /** Cor do galho, quando o galho tem cor própria. */
-  tone?: string;
-}
+/** Lado do SVG (88), do vidro circular (80) e do sprite dentro dele (64 = 0,25× de 256²). */
+export const NODE_SIZE = 88;
+export const NODE_GLASS = 80;
+export const NODE_SPRITE = 64;
 
-const SRC: Record<SoulNodeVisual, string> = {
-  current: nodeCurrent,
-  reached: nodeReached,
-  forecast: nodeForecast,
-  locked: nodeLocked,
+const R = 41;
+const C = NODE_SIZE / 2;
+
+const RING_TONE: Record<SoulNodeVisual, string> = {
+  current: 'var(--sm2-primary-ink)',
+  reached: 'var(--sm2-primary-deep)',
+  forecast: 'var(--sm2-primary-deep)',
+  locked: 'var(--sm2-muted)',
 };
 
-/**
- * O cristal.
- *
- * `tone` (cor do galho, passada só para nós já alcançados por
- * `EvolutionPath`) entra como uma camada de tintura por cima do PNG, recortada
- * pela silhueta com `mask-image` e composta em `mix-blend-mode: color`. Esse
- * modo troca a MATIZ preservando a luminância, então o facetado do pixel art
- * continua legível — pintar a silhueta chapada teria jogado fora justamente o
- * volume que a arte tem a mais que o SVG antigo.
- */
-export function NodeArt({ visual, size, tone }: NodeArtProps) {
-  const src = SRC[visual];
+export interface NodeArtProps {
+  visual: SoulNodeVisual;
+  /** O Oráculo está desenhando esta forma: anel tracejado, mesmo tom. */
+  busy?: boolean;
+}
+
+/** O disco e o anel do nó — vetor, por token. */
+export function NodeArt({ visual, busy = false }: NodeArtProps) {
+  const dashed = visual === 'forecast' || busy;
   return (
-    <span
+    <svg
+      viewBox={`0 0 ${NODE_SIZE} ${NODE_SIZE}`}
+      width={NODE_SIZE}
+      height={NODE_SIZE}
       aria-hidden="true"
-      style={{
-        position: 'relative',
-        display: 'block',
-        width: size,
-        height: size,
-        flex: 'none',
-      }}
+      data-node-art={visual}
+      style={{ position: 'absolute', inset: 0, display: 'block' }}
     >
-      <img
-        src={src}
-        width={size}
-        height={size}
-        alt=""
-        style={{ imageRendering: 'pixelated', display: 'block' }}
-      />
-      {tone && (
-        <span
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background: tone,
-            opacity: 0.5,
-            mixBlendMode: 'color',
-            WebkitMaskImage: `url(${src})`,
-            maskImage: `url(${src})`,
-            WebkitMaskSize: '100% 100%',
-            maskSize: '100% 100%',
-            pointerEvents: 'none',
-          }}
-        />
+      <circle cx={C} cy={C} r={R} fill="var(--sm2-surface-2)" />
+      {visual === 'current' && (
+        <circle data-node-halo cx={C} cy={C} r={R + 2.5} fill="none" stroke={RING_TONE.current} strokeWidth={1} />
       )}
-    </span>
+      <circle
+        data-node-ring
+        cx={C}
+        cy={C}
+        r={R}
+        fill="none"
+        stroke={RING_TONE[visual]}
+        strokeWidth={3}
+        strokeDasharray={dashed ? '6 5' : undefined}
+      />
+    </svg>
   );
 }

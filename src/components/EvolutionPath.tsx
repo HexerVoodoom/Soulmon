@@ -582,13 +582,21 @@ export function EvolutionPath({
   };
 
   /**
-   * Um nó do grafo: coluna vertical de nós ligados por uma linha.
+   * Um nó da árvore: UM card SIS-03 por forma (canvas Evolução, `EvoArvore`),
+   * com o NÓ em SVG por token à esquerda (D-E3) e nome / estágio / tags /
+   * linha de estado à direita.
    *
    * NÃO existe regra nova aqui — `isCurrent`, `isReached`, `hidden`,
    * `isPreviousStage` e o galho previsto são exatamente os mesmos cálculos que
-   * a página já fazia; o que mudou é a superfície da placa (kit pixel → tokens).
+   * a página sempre fez; o que mudou é a superfície (coluna com linhas → cards;
+   * cristal PNG → anel vetor + vidro circular).
+   *
+   * O nó da forma ATUAL não é botão (como o wireframe aprovado): o gesto do
+   * cadeado mora no VISOR lá em cima (`role=button`) e no botão de 44 — dois
+   * alvos para a mesma regra já bastam; um terceiro no card seria ruído de
+   * foco. O nó OCULTO continua botão ("Reveal (spoiler)").
    */
-  const renderEvolutionCard = (evolution: CreatureStage, hex: string, index: number, pathLength: number) => {
+  const renderEvolutionCard = (evolution: CreatureStage, isLast: boolean) => {
     const stageId = creatureFormId(evolution);
     const isCurrent = stageId === currentStageId;
     const isUltra = evolution.stage === 'ultra';
@@ -615,6 +623,7 @@ export function EvolutionPath({
       : isReached ? 'reached'
       : isForecast ? 'forecast'
       : 'locked';
+    const estado = estadoDoNo(stageId, isCurrent, isForecast);
 
     // Situação em PALAVRAS: a cor e a posição do nó não podem ser o único
     // portador da informação (WCAG 1.4.1).
@@ -624,28 +633,48 @@ export function EvolutionPath({
       : isForecast ? (isPt ? 'próxima prevista, ainda bloqueada' : 'next forecast, still locked')
       : (isPt ? 'bloqueada' : 'locked');
     const nome = hidden ? (isPt ? 'Evolução oculta' : 'Hidden evolution') : evolution.name;
+    // V2: o rótulo diz o que o TOQUE faz — e só quando há toque.
     const nodeLabel = hidden
       ? `${nome} — ${situacao}. ${isPt ? 'Revelar (spoiler)' : 'Reveal (spoiler)'}`
-      : isCurrent && onToggleEvolutionLock
-        ? `${nome} — ${situacao}. ${evolutionLocked
-            ? (isPt ? 'Evolução travada, toque para destravar' : 'Evolution locked, tap to unlock')
-            : (isPt ? 'Evolução destravada, toque para travar' : 'Evolution unlocked, tap to lock')}`
-        : `${nome} — ${situacao}`;
+      : `${nome} — ${situacao}`;
 
-    /** A etiqueta de estado do nó. Uma palavra, caixa alta, nunca uma cor só. */
-    const tag = (texto: string, style: CSSProperties) => (
+    /* A arte dentro do vidro do nó (256² a 64):
+       · oculto: só a SILHUETA, e só de uma arte que É a forma que vem — o
+         sprite PRÓPRIO adotado ou, no demo, a arte da linha (a árvore do demo
+         É a linha kaelen/orrin/thalindra; ali a "reserva" é a identidade).
+         A arte de reserva por hash de quem ainda não tem sprite NÃO entra:
+         mostraria a silhueta de uma criatura que não é a que vem (WP4.21).
+         Sem arte verdadeira, vidro vazio;
+       · visível: o sprite próprio adotado, senão o placeholder v3 enquanto o
+         Oráculo desenha (D-E9), senão a arte de reserva — o piso, nunca erro
+         (Invariante nº 1). `displaySprite` é quem sabe a diferença. */
+    const spriteProprio = displaySprite(acervo, stageId)?.url;
+    const arteVerdadeira = spriteProprio ?? (demoCharacterId ? getSpriteForStage(stageId, demoCharacterId) : undefined);
+    const arteDoNo = hidden
+      ? arteVerdadeira
+      : (spriteProprio
+         ?? placeholderDoNo(stageId, estado)
+         ?? getSpriteForStage(stageId, isCurrent ? demoCharacterId : undefined));
+
+    /** A etiqueta de estado do nó (D-E10): Rubik 12/600, 24 de altura, pílula
+     *  `surface-2` + `muted`; CURRENT em `primary-soft` + `primary-ink`;
+     *  ZENITH em `gold-ink`. Uma palavra, caixa alta, nunca uma cor só. */
+    const tag = (texto: string, tone: 'muted' | 'current' | 'gold' = 'muted') => (
       <span
         style={{
           fontFamily: 'var(--sm2-font-text)',
           fontSize: 'var(--sm2-text-xs)',
-          fontWeight: 500,
+          fontWeight: 600,
           letterSpacing: '.04em',
-          padding: '2px 8px',
+          lineHeight: 'var(--sm2-leading-body)',
+          minHeight: 24,
+          padding: '0 8px',
           borderRadius: 999,
+          boxSizing: 'border-box',
           display: 'inline-flex',
           alignItems: 'center',
-          gap: 4,
-          ...style,
+          backgroundColor: tone === 'current' ? 'var(--sm2-primary-soft)' : 'var(--sm2-surface-2)',
+          color: tone === 'current' ? 'var(--sm2-primary-ink)' : tone === 'gold' ? 'var(--sm2-gold-ink)' : 'var(--sm2-muted)',
         }}
       >
         {texto}
@@ -653,103 +682,37 @@ export function EvolutionPath({
     );
 
     return (
-      <div key={stageId} style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-        {/* Trilho do grafo: o nó e a linha que desce até o próximo. */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
-          <SoulNode
-            visual={visual}
-            size={48}
-            tone={isReached && !isCurrent ? hex : undefined}
-            ring={isCurrent}
-            /* O sprite PRÓPRIO desta forma quando ele já existe e já foi
-               adotado; senão a arte de reserva, que é o piso e nunca é erro
-               (Invariante nº 1). `displaySprite` é quem sabe a diferença —
-               nada de reperguntar `sprites[...]` aqui. */
-            /* Oculto normalmente é SEM sprite (a arte é o spoiler). A exceção
-               é o nó `forecast` com sprite próprio: ali a arte entra só para
-               virar SILHUETA (WP4.21) — contorno, nunca identidade. Sem
-               sprite próprio, segue sem nada: borrar a arte de reserva
-               mostraria a silhueta de uma criatura que não é a que vem. */
-            sprite={hidden
-              ? (isForecast ? displaySprite(acervo, stageId)?.url : undefined)
-              : (displaySprite(acervo, stageId)?.url
-                 ?? placeholderDoNo(stageId, estadoDoNo(stageId, isCurrent, isForecast))
-                 ?? getSpriteForStage(stageId, isCurrent ? demoCharacterId : undefined))}
-            /* WP4.21 — a próxima forma prevista aparece como SILHUETA quando
-               já existe sprite para ela. Antes o nó `forecast` era só um selo
-               de texto: o jogador sabia QUE vinha algo e não via nada. A
-               silhueta é a antecipação do gênero (o "quem é esse pokémon"),
-               e continua não revelando a arte. Sem sprite, silêncio — nada de
-               borrar a arte de reserva, que mostraria a silhueta ERRADA. */
-            /* A silhueta vale justamente para o nó OCULTO: mostrar a forma
-               sem mostrar quem é. Se o jogador já revelou (spoiler), ele
-               pediu para ver — e aí borrar seria desfazer a escolha dele. */
-            silhouette={isForecast && hidden && !!displaySprite(acervo, stageId)?.url}
-            label={nodeLabel}
-            title={hidden
-              ? (isPt ? 'Revelar (spoiler)' : 'Reveal (spoiler)')
-              : isCurrent && onToggleEvolutionLock
-                ? (evolutionLocked ? (isPt ? 'Destravar evolução' : 'Unlock evolution') : (isPt ? 'Travar evolução' : 'Lock evolution'))
-                : nome}
-            onClick={hidden
-              ? () => setConfirmReveal(evolution)
-              : isCurrent && onToggleEvolutionLock ? onToggleEvolutionLock : undefined}
-          />
-          {index < pathLength - 1 && (
-            <span
-              aria-hidden="true"
-              style={{
-                width: 2,
-                flex: 1,
-                minHeight: 28,
-                backgroundColor: isReached ? hex : 'var(--sm2-line)',
-              }}
-            />
-          )}
-        </div>
+      <article
+        key={stageId}
+        style={{ ...card, padding: 12, display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: isLast ? 0 : 8 }}
+        data-testid={`sm-no-${stageId}`}
+      >
+        <SoulNode
+          visual={visual}
+          sprite={arteDoNo}
+          silhouette={hidden && Boolean(arteVerdadeira)}
+          busy={estado === 'GERANDO'}
+          label={nodeLabel}
+          title={hidden ? (isPt ? 'Revelar (spoiler)' : 'Reveal (spoiler)') : nome}
+          onClick={hidden ? () => setConfirmReveal(evolution) : undefined}
+        />
 
-        {/* Placa do nó: nome, estágio e situação. */}
-        <div style={{ flex: 1, minWidth: 0, paddingBottom: index < pathLength - 1 ? 20 : 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <h3
-              style={{
-                fontFamily: 'var(--sm2-font-display)',
-                fontSize: 'var(--sm2-text-md)',
-                fontWeight: 600,
-                lineHeight: 'var(--sm2-leading-title)',
-                color: isReached ? 'var(--sm2-ink)' : 'var(--sm2-muted)',
-                margin: 0,
-              }}
-            >
-              {hidden ? '???' : evolution.name}
-            </h3>
-            {!hidden && <span style={sm2Hint}>{L(evolution.stageName)}</span>}
-            {isCurrent && tag(isPt ? 'ATUAL' : 'CURRENT', { backgroundColor: hex, color: ATTR_ON_FILL_INK })}
-            {isForecast && tag(isPt ? 'PREVISTA' : 'FORECAST', {
-              border: '1px solid var(--sm2-primary-ink)', color: 'var(--sm2-primary-ink)',
-            })}
-            {isCurrent && evolutionLocked && (
-              <span
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 4,
-                  fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-xs)', fontWeight: 500,
-                  padding: '2px 8px', borderRadius: 999,
-                  backgroundColor: 'var(--sm2-gold-fill)', color: 'var(--sm2-on-gold)',
-                }}
-              >
-                <Icon name="lock" size={20} style={{ fontSize: 14, width: 14, height: 14 }} />
-                {isPt ? 'TRAVADA' : 'LOCKED'}
-              </span>
-            )}
-            {isUltraMode && tag(isPt ? 'ZÊNITE' : 'ZENITH', {
-              backgroundColor: 'var(--sm2-gold-fill)', color: 'var(--sm2-on-gold)',
-            })}
-            {!isReached && tag(isPt ? 'BLOQUEADA' : 'LOCKED', {
-              border: '1px solid var(--sm2-line)', color: 'var(--sm2-muted)',
-            })}
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <p style={{ ...sm2Text, fontWeight: 500, margin: 0, color: isReached ? 'var(--sm2-ink)' : 'var(--sm2-muted)' }}>
+            {hidden ? '???' : evolution.name}
+          </p>
+          {!hidden && <p style={sm2Hint}>{L(evolution.stageName)}</p>}
+          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+            {isCurrent && tag(isPt ? 'ATUAL' : 'CURRENT', 'current')}
+            {isForecast && tag(isPt ? 'PREVISTA' : 'FORECAST')}
+            {/* X3: o cadeado do jogador é "ON HOLD", nunca "LOCKED" — a
+                coleção trancada é outra coisa (BLOQUEADA). */}
+            {isCurrent && evolutionLocked && tag(isPt ? 'SEGURADA' : 'ON HOLD')}
+            {isUltraMode && tag(isPt ? 'ZÊNITE' : 'ZENITH', 'gold')}
+            {!isReached && tag(isPt ? 'BLOQUEADA' : 'LOCKED')}
           </div>
           {/* O estado da ARTE desta forma (§2.2). */}
-          {linhaDeEstado(stageId, estadoDoNo(stageId, isCurrent, isForecast), hidden)}
+          {linhaDeEstado(stageId, estado, hidden)}
 
           {/* WP4.2 — os DOIS caminhos, ditos no lugar onde a pergunta nasce.
 
@@ -758,7 +721,7 @@ export function EvolutionPath({
               A ordem é deliberada — a PERMANÊNCIA vem primeiro, porque é o
               caminho que não pede nenhum ato de descuido. */}
           {isUltraMode && (
-            <p style={{ ...sm2Hint, marginTop: 6 }}>
+            <p style={{ ...sm2Hint, marginTop: 2 }}>
               {isPt
                 ? `Dois caminhos chegam aqui: ${ULTRA_PATIENCE_DAYS} dias completos como mega, ou conhecer os três galhos. Nenhum é melhor — e nenhum pede que você desça.`
                 : `Two paths reach this form: ${ULTRA_PATIENCE_DAYS} complete days as a mega, or knowing all three branches. Neither is better — and neither asks you to go back down.`}
@@ -769,13 +732,13 @@ export function EvolutionPath({
             <button
               type="button"
               onClick={() => handleDegenerateClick(evolution)}
-              style={{ ...sm2Button('quiet'), marginTop: 4, padding: '10px 0' }}
+              style={{ ...sm2Button('outline', false, 'sm'), alignSelf: 'flex-start', marginTop: 4 }}
             >
               {isPt ? 'Degenerar' : 'Degenerate'}
             </button>
           )}
         </div>
-      </div>
+      </article>
     );
   };
 
@@ -1141,12 +1104,15 @@ export function EvolutionPath({
           </p>
         )}
 
-        {/* Seletor de galho — só os branches disponíveis (transição de arte). */}
-        <div role="radiogroup" aria-label={isPt ? 'Linha de evolução' : 'Evolution branch'} style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+        {/* Seletor de galho — só os branches disponíveis (transição de arte).
+            Chips de SELEÇÃO (`role=radio`, canvas `EvoArvore`): 44, pílula,
+            `surface-2` + fronteira `muted`; selecionado `primary-soft` +
+            `primary-ink` — o mesmo idioma da sub-aba ativa e do cadeado
+            segurado. A cor do atributo saiu do botão: a informação é o
+            RÓTULO, e o galho previsto é dito em palavras logo acima. */}
+        <div role="radiogroup" aria-label={isPt ? 'Linha de evolução' : 'Evolution branch'} style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
           {(AVAILABLE_BRANCHES as readonly Attr[]).map(b => {
-            const hex = ATTR_COLOR[b];
             const active = selectedBranch === b;
-            const Glyph = ATTR_GLYPH[b];
             return (
               <button
                 key={b}
@@ -1154,18 +1120,18 @@ export function EvolutionPath({
                 role="radio"
                 aria-checked={active}
                 onClick={() => setSelectedBranch(b)}
+                className="sm2-form-chip"
                 style={{
-                  ...sm2Button(active ? 'primary' : 'outline'),
-                  flex: 1,
-                  padding: '10px 8px',
-                  // Branco sobre os três preenchimentos media 2,4–3,1:1 (medido);
-                  // a tinta escura mede 5,4–7,0:1.
-                  ...(active
-                    ? { backgroundColor: hex, color: ATTR_ON_FILL_INK, borderColor: hex }
-                    : { color: ATTR_INK[b] }),
+                  flex: 1, minWidth: 0, minHeight: 44, padding: '0 6px', borderRadius: 999,
+                  boxSizing: 'border-box', cursor: 'pointer', whiteSpace: 'nowrap',
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm)', fontWeight: 500,
+                  lineHeight: 'var(--sm2-leading-body)',
+                  border: `1px solid ${active ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)'}`,
+                  backgroundColor: active ? 'var(--sm2-primary-soft)' : 'var(--sm2-surface-2)',
+                  color: active ? 'var(--sm2-primary-ink)' : 'var(--sm2-ink)',
                 }}
               >
-                <Glyph size={18} color={active ? ATTR_ON_FILL_INK : hex} strokeWidth={2.2} />
                 {L(ATTR_LABEL[b])}
               </button>
             );
@@ -1192,14 +1158,11 @@ export function EvolutionPath({
           </div>
         ) : (
           (() => {
-            // Uma coluna só: tronco (rookie) → galho escolhido → ultra.
-            const total = (rookie ? 1 : 0) + branchPath.length + (ultra ? 1 : 0);
-            let i = 0;
+            // Uma coluna de cards: tronco (rookie) → galho escolhido → ultra.
+            const ordem = [rookie, ...branchPath, ultra].filter((s): s is CreatureStage => Boolean(s));
             return (
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                {rookie && renderEvolutionCard(rookie, 'var(--sm2-primary-fill)', i++, total)}
-                {branchPath.map(evolution => renderEvolutionCard(evolution, branchHex, i++, total))}
-                {ultra && renderEvolutionCard(ultra, branchHex, i++, total)}
+              <div style={{ display: 'flex', flexDirection: 'column' }} aria-label={isPt ? 'Árvore de evolução' : 'Evolution tree'}>
+                {ordem.map((evolution, i) => renderEvolutionCard(evolution, i === ordem.length - 1))}
               </div>
             );
           })()
