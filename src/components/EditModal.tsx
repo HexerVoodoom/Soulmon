@@ -3,9 +3,10 @@ import { ActivityCategory } from '../types/attributes';
 import { CATEGORY_ICONS } from '../types/category-icons';
 import { useHabitSchedule } from '../hooks/useItemForm';
 import { CategoryChips, HabitAnchorFields, HabitScheduleFields, StepsFields } from './CreateModal';
-import { UnlockNudge } from './UnlockAccountModal';
-import { Field, ModalSheet, sm2Button, sm2Label } from './form/FormKit';
-import type { HabitAnchor, Schedule } from '../types/taskModel';
+import { Field, ModalSheet, SM2_SHADOW_CARD, sm2Button, sm2Label } from './form/FormKit';
+import { HabitConstancy } from './HabitConstancy';
+import { normalizeSchedule, type HabitAnchor, type Schedule } from '../types/taskModel';
+import type { HabitRhythm } from '../utils/habitRhythm';
 import type { Language } from '../utils/i18n';
 
 interface Step {
@@ -30,21 +31,15 @@ interface EditModalProps {
     anchor?: HabitAnchor;
   }) => void;
   onDelete?: () => void;
-  /** O teto de hábitos ATIVOS bate aqui também (D-12).
-   *
-   *  Este modal é o do botão principal da tela inicial, e era por ele que o teto
-   *  do modo grátis vazava inteiro: ele salvava sem perguntar nada. O portão do
-   *  `App` agora recusa — e recusar em silêncio, depois de a pessoa escrever a
-   *  atividade toda, seria trocar um defeito por outro. Então a mesma parede que
-   *  o `CreateModal` mostra aparece aqui, com as mesmas palavras.
-   *
-   *  Só vale na CRIAÇÃO: editar um hábito que já existe não cria vaga nenhuma. */
-  atCap?: boolean;
-  /** O teto que morde é a fronteira do modo GRÁTIS (e não o teto do estágio, que
-   *  o pagante também tem)? Só então o convite de compra faz sentido. */
-  capIsDemoBoundary?: boolean;
-  activitiesCap?: number;
-  onUnlock?: () => void;
+  /**
+   * A FICHA do hábito (canvas Atividades `FichaHabito`, ATIV-11…13): janela
+   * de 7 + "N of the last 7" + maturidade + escudos como posse, num card no
+   * topo da folha. Só na EDIÇÃO — a criação vive no `CreateModal` (A1: um
+   * modal de criação só; o teto do demo não bate aqui, ATIV-18 saiu).
+   */
+  rhythm?: HabitRhythm;
+  now?: Date;
+  hideMetrics?: boolean;
   initialData?: {
     name: string;
     category: string;
@@ -65,7 +60,7 @@ const CATEGORIES: ActivityCategory[] = [
 
 export function EditModal({
   isOpen, onClose, onSave, onDelete, initialData, language = 'en-US', canEditWeekdays = true,
-  atCap = false, capIsDemoBoundary = false, activitiesCap = 0, onUnlock,
+  rhythm, now, hideMetrics = false,
 }: EditModalProps) {
   const isPt = language === 'pt-BR';
 
@@ -104,34 +99,21 @@ export function EditModal({
   };
   const handleDeleteStep = (id: string) => setSteps(steps.filter(step => step.id !== id));
 
-  // `initialData` é o que separa criar de editar: no teto, editar continua livre.
-  const blocked = atCap && !initialData;
-  const disabled = !name.trim() || (canEditWeekdays && !sched.isValid) || blocked;
-  const capHint = capIsDemoBoundary
-    ? (isPt
-      ? `Modo grátis: até ${activitiesCap} hábitos ativos. Tarefas avulsas continuam sem limite; `
-        + 'evoluir com seu próprio Soulmon é o que aumenta esse teto.'
-      : `Free mode: up to ${activitiesCap} active habits. One-off tasks stay unlimited; `
-        + 'evolving your own Soulmon is what raises this ceiling.')
-    : (isPt ? `Limite atingido (${activitiesCap})` : `Limit reached (${activitiesCap})`);
+  const disabled = !name.trim() || (canEditWeekdays && !sched.isValid);
 
   const footer = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      {/* O botão desabilitado explica o limite, mas não oferece a saída — é
-          aqui, com a atividade já escrita, que a compra faz sentido. */}
-      {blocked && capIsDemoBoundary && onUnlock && (
-        <UnlockNudge language={language} reason="task-limit" onOpen={onUnlock} />
-      )}
-      <div style={{ display: 'flex', gap: 12 }}>
+      <div style={{ display: 'flex', gap: 8 }}>
         <button type="button" onClick={onClose} style={{ ...sm2Button('outline'), flex: 1 }}>
           {isPt ? 'Cancelar' : 'Cancel'}
         </button>
         <button type="button" onClick={handleSave} disabled={disabled}
-          style={{ ...sm2Button('primary', disabled), flex: 1 }}
-          title={blocked ? capHint : ''}>
-          {blocked ? (isPt ? 'Limite atingido' : 'Limit reached') : (isPt ? 'Salvar' : 'Save')}
+          style={{ ...sm2Button('primary', disabled), flex: 1.4 }}>
+          {isPt ? 'Salvar' : 'Save'}
         </button>
       </div>
+      {/* `quiet` + `danger-ink`: é o TEXTO de uma ação destrutiva, não um
+          alerta — o único `danger` do canvas; abaixo e separado do primário. */}
       {onDelete && (
         <button type="button" onClick={onDelete}
           style={{ ...sm2Button('quiet'), width: '100%', color: 'var(--sm2-danger-ink)' }}>
@@ -149,6 +131,26 @@ export function EditModal({
       language={language}
       footer={footer}
     >
+      {/* A FICHA — card SIS-03 no topo (FichaHabito). Só com ritmo: um
+          hábito sem histórico ainda não tem o que mostrar além da linha. */}
+      {rhythm && initialData && (
+        <section
+          aria-label={isPt ? 'Ficha do hábito' : 'Habit card'}
+          style={{
+            backgroundColor: 'var(--sm2-surface)', border: '1px solid var(--sm2-line)',
+            borderRadius: 'var(--sm2-radius-md)', padding: 12, boxShadow: SM2_SHADOW_CARD,
+          }}
+        >
+          <HabitConstancy
+            rhythm={rhythm}
+            schedule={normalizeSchedule(initialData)}
+            now={now ?? new Date()}
+            language={language}
+            hideMetrics={hideMetrics}
+          />
+        </section>
+      )}
+
       <div>
         <label style={sm2Label} htmlFor="sm-edit-name">{isPt ? 'Nome' : 'Name'}</label>
         <Field id="sm-edit-name" type="text" value={name} maxLength={60}

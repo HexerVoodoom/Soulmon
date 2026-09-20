@@ -1,40 +1,11 @@
 import { ActivityCategory } from './attributes';
-import iconHealth from '../assets/soulmon/icons/categories/icon-cat-health.png';
-import iconCreativity from '../assets/soulmon/icons/categories/icon-cat-creativity.png';
-import iconDiscipline from '../assets/soulmon/icons/categories/icon-cat-discipline.png';
-import iconStudy from '../assets/soulmon/icons/categories/icon-cat-study.png';
-import iconWork from '../assets/soulmon/icons/categories/icon-cat-work.png';
-import iconSocial from '../assets/soulmon/icons/categories/icon-cat-social.png';
-import iconWellness from '../assets/soulmon/icons/categories/icon-cat-wellness.png';
-import iconFitness from '../assets/soulmon/icons/categories/icon-cat-fitness.png';
-
-/** Ícone pixel-art (gerado no Higgsfield) pra chip de seleção de categoria —
- *  visual apenas. `CATEGORY_ICONS` (emoji) continua sendo o valor gravado no
- *  `emoji` da tarefa/atividade (texto livre, usado no título) — não dá pra
- *  trocar aquele por imagem sem reescrever a estrutura de dados. */
-export const CATEGORY_ICON_IMG: Record<ActivityCategory, string> = {
-  Health: iconHealth,
-  Creativity: iconCreativity,
-  Discipline: iconDiscipline,
-  Study: iconStudy,
-  Work: iconWork,
-  Social: iconSocial,
-  Wellness: iconWellness,
-  Fitness: iconFitness,
-};
-
-/**
- * Ícone emoldurado do kit para uma categoria vinda do ESTADO — que nem sempre
- * é uma `ActivityCategory` válida: saves antigos e dados semeados gravaram a
- * categoria em caixa baixa (`'study'`), e há tarefa sem categoria nenhuma.
- * Devolve `undefined` nesses casos, para quem chama cair de volta no emoji
- * em vez de renderizar uma imagem quebrada.
+/*
+ * `CATEGORY_ICON_IMG` / `categoryIconImg` (os PNG pixel `icon-cat-*.png`)
+ * SAÍRAM em 20/09/2026 (canvas Atividades, D-A7 / achado 3): ícone de
+ * categoria é ícone de INTERFACE, mora fora do visor e é vetor —
+ * `CATEGORY_ICON_NAME` abaixo. Os PNG ficam em `src/assets/soulmon/icons/
+ * categories/` só como arquivo de arte; nenhum componente os importa.
  */
-export function categoryIconImg(category?: string): string | undefined {
-  if (!category) return undefined;
-  const key = category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
-  return CATEGORY_ICON_IMG[key as ActivityCategory];
-}
 
 /**
  * Categoria → nome de ícone Material Symbols Rounded (`<Icon>`).
@@ -45,8 +16,8 @@ export function categoryIconImg(category?: string): string | undefined {
  * inventário, ou o inventário é regerado (comando no tokens.md) com bump do
  * `CACHE_VERSION` do `public/sw.js`.
  *
- * `icon-cat-*.png` continua existindo para os chips de criação (outra tela,
- * outro dono); esta função é o caminho VETOR, para a Home.
+ * É o ÚNICO caminho: os chips de criação/edição e o onboarding também
+ * desenham por aqui (D-A7).
  */
 export const CATEGORY_ICON_NAME: Record<ActivityCategory, string> = {
   Health: 'favorite',
@@ -60,7 +31,7 @@ export const CATEGORY_ICON_NAME: Record<ActivityCategory, string> = {
 };
 
 /**
- * Mesma tolerância do `categoryIconImg`: a categoria vem do ESTADO e nem
+ * Tolerância: a categoria vem do ESTADO e nem
  * sempre é uma `ActivityCategory` válida (saves antigos gravaram `'study'` em
  * caixa baixa; há tarefa sem categoria). Devolve `undefined` nesses casos, e
  * quem chama simplesmente não desenha ícone.

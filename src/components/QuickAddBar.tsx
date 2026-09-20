@@ -26,6 +26,7 @@ import { useMemo, useState } from 'react';
 import { parseQuickAdd, quickAddHint, type QuickAddResult } from '../utils/quickAdd';
 import { Icon } from './ui/Icon';
 import { Field, sm2Hint, sm2Text } from './form/FormKit';
+import { sm2Tag } from './TaskMeta';
 import type { Language } from '../utils/i18n';
 
 interface QuickAddBarProps {
@@ -119,22 +120,20 @@ export function QuickAddBar({ language, onCommit }: QuickAddBarProps) {
 
       {chips.length > 0 && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+          {/* Chip de etiqueta 24 em `primary-ink` (canvas `CapturaRapida`):
+              o que o parser entendeu, na cor do acento. */}
           {chips.map(c => (
-            <span
-              key={c}
-              style={{
-                ...sm2Hint, margin: 0, padding: '2px 8px', borderRadius: 999,
-                backgroundColor: 'var(--sm2-surface-2)', color: 'var(--sm2-ink)',
-              }}
-            >
+            <span key={c} style={{ ...sm2Tag, color: 'var(--sm2-primary-ink)' }}>
               {c}
             </span>
           ))}
         </div>
       )}
 
+      {/* Texto comum em `ink` (canvas): a recusa é informação, não erro —
+          vermelho é a cor da cobrança e não entra aqui. */}
       {recusado && (
-        <p role="alert" style={{ ...sm2Text, color: 'var(--sm2-danger-ink)', marginTop: 8 }}>
+        <p role="alert" style={{ ...sm2Text, marginTop: 8 }}>
           {isPt
             ? 'Não coube agora — você chegou ao limite de itens.'
             : "That didn't fit — you've reached your item limit."}

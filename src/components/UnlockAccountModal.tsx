@@ -243,17 +243,25 @@ export function UnlockNudge({ language, reason, variant = 'buy', onOpen }: {
   const isPt = language === 'pt-BR';
   const precoLabel = useUnlockPriceLabel(isPt);
 
+  /* Canvas Atividades `CriarTetoDemo` (ATIV-16): uma LINHA-BOTÃO `outline`
+     64 — `surface` + fronteira `muted`, ícone 24 pelado (`lock_open` em cobre
+     quando é o teto; `auto_awesome` ciano nos outros motivos), título 14/500
+     em `ink`, subtítulo 12 `muted`, `chevron_right` `muted`. Passivo, sem
+     dismiss. Era uma placa `primary-soft`. */
   const nudgeStyle: CSSProperties = {
-    width: '100%', minHeight: 44, display: 'flex', alignItems: 'center', gap: 10,
-    padding: '12px 14px', textAlign: 'left', cursor: 'pointer',
-    borderRadius: 12, border: '1px solid var(--sm2-line)',
-    backgroundColor: 'var(--sm2-primary-soft)',
+    ...sm2Button('outline'),
+    width: '100%', minHeight: 64, justifyContent: 'flex-start', gap: 12,
+    padding: '8px 16px', textAlign: 'left',
   };
+  const isCap = variant !== 'reveal' && reason === 'task-limit';
 
   const head = variant === 'reveal'
     ? (isPt ? 'Falta revelar a sua criatura' : 'Your creature is still unrevealed')
     : reason === 'task-limit'
-      ? (isPt ? 'Quer criar sem limite?' : 'Want to create without limits?')
+      /* Achado 11 do canvas Atividades: "sem limite" foi VETADO pelo guarda —
+         o pago também tem teto (`activityCapFor`). O teto CRESCE com a
+         evolução; é isso que se promete. */
+      ? (isPt ? 'Quer um teto que cresce com você?' : 'Want a ceiling that grows with you?')
       : reason === 'report'
         // Fala do resultado que a pessoa acabou de ter, não do que falta a ela.
         ? (isPt ? 'Quer uma criatura que seja só sua?' : 'Want a creature that is only yours?')
@@ -275,22 +283,22 @@ export function UnlockNudge({ language, reason, variant = 'buy', onOpen }: {
 
   return (
     <button type="button" onClick={onOpen} style={nudgeStyle}>
-      <Icon name="auto_awesome" size={20} tone="primary" style={{ flexShrink: 0 }} />
-      <span style={{ flex: 1, minWidth: 0 }}>
+      <Icon name={isCap ? 'lock_open' : 'auto_awesome'} size={24} tone={isCap ? 'gold' : 'primary'} style={{ flexShrink: 0 }} />
+      <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
         <span style={{
           display: 'block', fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm)',
-          fontWeight: 500, color: 'var(--sm2-primary-ink)',
+          fontWeight: 500, lineHeight: 'var(--sm2-leading-body)', color: 'var(--sm2-ink)',
         }}>
           {head}
         </span>
         <span style={{
-          display: 'block', fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-xs)',
-          lineHeight: 'var(--sm2-leading-body)', color: 'var(--sm2-ink)',
+          display: 'block', fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-xs)', fontWeight: 400,
+          lineHeight: 'var(--sm2-leading-body)', color: 'var(--sm2-muted)',
         }}>
           {sub}
         </span>
       </span>
-      <Icon name="chevron_right" size={20} tone="muted" style={{ flexShrink: 0 }} />
+      <Icon name="chevron_right" size={24} tone="muted" style={{ flexShrink: 0 }} />
     </button>
   );
 }

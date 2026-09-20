@@ -100,12 +100,12 @@ export function TaskEditModal({
 
   const footer = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <div style={{ display: 'flex', gap: 12 }}>
+      <div style={{ display: 'flex', gap: 8 }}>
         <button type="button" onClick={onClose} style={{ ...sm2Button('outline'), flex: 1 }}>
           {isPt ? 'Cancelar' : 'Cancel'}
         </button>
         <button type="button" onClick={handleSave} disabled={!name.trim()}
-          style={{ ...sm2Button('primary', !name.trim()), flex: 1 }}>
+          style={{ ...sm2Button('primary', !name.trim()), flex: 1.4 }}>
           {isPt ? 'Salvar' : 'Save'}
         </button>
       </div>
@@ -140,7 +140,7 @@ export function TaskEditModal({
         {effort === 3 && steps.length === 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginTop: 6 }}>
             <span style={{ ...sm2Hint, margin: 0, flex: 1, minWidth: 180 }}>{txt.projectSteps}</span>
-            <button type="button" onClick={handleAddStep} style={{ ...sm2Button('outline', false, 'sm') }}>
+            <button type="button" onClick={handleAddStep} style={{ ...sm2Button('ghost', false, 'sm'), padding: '0 8px', minWidth: 44 }}>
               {txt.add}
             </button>
           </div>

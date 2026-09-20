@@ -135,12 +135,11 @@
 **Avisos do arquivo:** `ATTR_LABEL` — "este comentário..." (nota sobre não expor `virus`/`data`/`vaccine` na UI).
 
 ### `src/types/category-icons.ts`
-**Dono de:** o ícone (pixel-art e Material Symbol) e o rótulo PT de cada categoria de atividade, tolerantes a categoria vinda de save antigo/seed que não bate com `ActivityCategory`.
+**Dono de:** o ícone (Material Symbol) e o rótulo PT de cada categoria de atividade, tolerantes a categoria vinda de save antigo/seed que não bate com `ActivityCategory`.
 **Exports:**
-- `CATEGORY_ICON_IMG` — ícone pixel-art (gerado no Higgsfield) para o chip de seleção de categoria; `CATEGORY_ICONS` (emoji) continua sendo o valor gravado no campo `emoji` da atividade.
-- `categoryIconImg(category)` — versão tolerante de `CATEGORY_ICON_IMG` para categoria vinda do ESTADO (pode não ser uma `ActivityCategory` válida).
+- (`CATEGORY_ICON_IMG` / `categoryIconImg`, o PNG pixel-art dos chips, SAÍRAM em 20/09/2026 — canvas Atividades D-A7; o vetor abaixo é o único caminho.)
 - `CATEGORY_ICON_NAME` — categoria → nome de ícone Material Symbols Rounded; todo nome está no inventário de 99 do subset de `src/styles/tokens.md`.
-- `categoryIconName(category)` — mesma tolerância de `categoryIconImg`.
+- `categoryIconName(category)` — tolerante à categoria vinda do ESTADO (pode não ser uma `ActivityCategory` válida): devolve `undefined` e ninguém desenha ícone.
 - `CATEGORY_ICONS` — mapa categoria → emoji.
 - `CATEGORY_LABELS_PT` — rótulo em português de cada categoria.
 - `categoryLabel(category, language)` — rótulo final, nos dois idiomas.

@@ -2012,11 +2012,6 @@ export default function App() {
     }
   }, [commitHabitCreate]);
 
-  const handleAddNewTask = useCallback(() => {
-    setEditingTask(null);
-    setTaskEditModalOpen(true);
-  }, []);
-
   /**
    * Salva uma tarefa vinda do `TaskEditModal` (criação e edição).
    *
@@ -2428,9 +2423,14 @@ export default function App() {
     return commitTaskCreate(nova, TELEMETRY_CREATE_PATH.home_edit, 'topo');
   }, [commitTaskCreate, commitHabitCreate]);
 
+  /**
+   * UM modal de criação só (canvas Atividades, A1 / achado 8): o CTA da lista
+   * abre o `CreateModal` — captura rápida + "More options" — e não mais o
+   * `EditModal` sem `initialData`. Editar continua no `EditModal`, que perdeu
+   * o caminho de criação (e com ele o nudge do teto, ATIV-18).
+   */
   const handleAddNewActivity = useCallback(() => {
-    setEditingActivity(null);
-    setEditModalOpen(true);
+    setCreateModalOpen(true);
   }, []);
 
   /**
@@ -5675,6 +5675,8 @@ export default function App() {
                 : undefined
             }
             canEditWeekdays={canSelectWeekdays(gameState.evolutionStage)}
+            rhythm={editingActivity ? (gameState.habitRhythms?.[editingActivity] ?? EMPTY_RHYTHM) : undefined}
+            hideMetrics={gameState.rest?.hideMetrics === true}
             language={language}
           />
         </Suspense>

@@ -567,10 +567,12 @@ inventário não foi refeito. Este documento não o corrige — o dono daquele
 arquivo é o Cartógrafo de Telas.
 
 Ícone de categoria tem DUAS fontes e elas não são a mesma coisa:
-`CATEGORY_ICON_IMG` (`src/types/category-icons.ts`) é o PNG pixel-art para o
-chip de seleção, **visual apenas**; `CATEGORY_ICONS` (emoji) continua sendo o
-valor GRAVADO no campo `emoji` da tarefa; `CATEGORY_ICON_NAME` mapeia categoria
-→ nome Material Symbols, e todo nome ali está no inventário de 100.
+`CATEGORY_ICON_NAME` (`src/types/category-icons.ts`) mapeia categoria → nome
+Material Symbols (todo nome ali está no inventário) e é o ÚNICO desenho — na
+lista, nos chips de criação/edição e no onboarding (canvas Atividades D-A7,
+20/09/2026: o PNG pixel `CATEGORY_ICON_IMG` saiu do código; ficou só como
+arquivo de arte); `CATEGORY_ICONS` (emoji) continua sendo o valor GRAVADO no
+campo `emoji` da tarefa.
 
 ---
 

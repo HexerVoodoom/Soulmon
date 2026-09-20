@@ -4,7 +4,7 @@ import { PixelChoiceChip } from './pixel/PixelKit';
 import type { Language } from '../utils/i18n';
 import type { ActivityCategory } from '../types/attributes';
 import { orderCategoriesForGoal } from '../utils/goalToCategory';
-import { CATEGORY_ICONS, CATEGORY_ICON_IMG, categoryLabel } from '../types/category-icons';
+import { CATEGORY_ICONS, CATEGORY_ICON_NAME, categoryLabel } from '../types/category-icons';
 import { suggestTasks, type SuggestedTask } from '../utils/taskSuggestions';
 
 // ---------------------------------------------------------------------------
@@ -338,7 +338,7 @@ export function GameTutorialFlow({
                     key={cat}
                     selected={active}
                     onToggle={() => toggleCat(cat)}
-                    icon={CATEGORY_ICON_IMG[cat]}
+                    iconName={CATEGORY_ICON_NAME[cat]}
                   >
                     {categoryLabel(cat, isPt)}
                   </PixelChoiceChip>

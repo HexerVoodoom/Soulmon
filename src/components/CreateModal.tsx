@@ -4,7 +4,7 @@ import {
   CATEGORY_ATTRIBUTES, ATTR_INK, ATTR_LABEL,
   ActivityCategory, type BranchType,
 } from '../types/attributes';
-import { CATEGORY_ICONS, categoryLabel } from '../types/category-icons';
+import { CATEGORY_ICONS, CATEGORY_ICON_NAME, categoryLabel } from '../types/category-icons';
 import { canSelectWeekdays } from '../types/progression';
 import { Language, useTranslation } from '../utils/i18n';
 import { WEEKDAY_INDEXES, weekdayFull, weekdayShort } from '../utils/weekdays';
@@ -17,6 +17,7 @@ import {
   type Step, type ScheduleKind,
 } from '../hooks/useItemForm';
 import { UnlockNudge } from './UnlockAccountModal';
+import { sm2Tag } from './TaskMeta';
 import { minimumViableHint } from '../utils/taskSuggestions';
 import { parseQuickAdd, quickAddHint, type QuickAddResult } from '../utils/quickAdd';
 import type { Effort, HabitAnchor, Schedule } from '../types/taskModel';
@@ -143,9 +144,19 @@ export function HabitScheduleFields({ sched, language }: { sched: HabitScheduleS
                 onToggle={() => { sched.setWeekDays([...ROUTINE_PRESETS[nome]]); setGradeAberta(false); }}
                 title={nome === 'uteis' ? t.uteisPista : nome === 'leve' ? t.levePista : t.diario}
                 ariaLabel={t[nome]}
-                style={{ padding: '8px 14px', borderRadius: 10 }}
+                style={{ padding: '0 12px' }}
               >
-                {t[nome]}
+                {/* Chip de escolha com a PISTA em 2ª linha (canvas
+                    `CriarAtividade`: "Weekdays / Mon to Fri") — em tinta,
+                    12/400, nunca alfa. */}
+                <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2, textAlign: 'left' }}>
+                  {t[nome]}
+                  {nome !== 'diario' && (
+                    <span style={{ fontSize: 'var(--sm2-text-xs)', fontWeight: 400, color: presetAtual === nome ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)' }}>
+                      {nome === 'uteis' ? t.uteisPista : t.levePista}
+                    </span>
+                  )}
+                </span>
               </Chip>
             ))}
             <Chip
@@ -153,7 +164,7 @@ export function HabitScheduleFields({ sched, language }: { sched: HabitScheduleS
               onToggle={() => setGradeAberta(v => !v)}
               title={t.personalizar}
               ariaLabel={t.personalizar}
-              style={{ padding: '8px 14px', borderRadius: 10 }}
+              style={{ padding: '0 12px' }}
             >
               {t.personalizar}
             </Chip>
@@ -172,7 +183,7 @@ export function HabitScheduleFields({ sched, language }: { sched: HabitScheduleS
                   onToggle={() => sched.toggleWeekDay(index)}
                   title={weekdayFull(index, language)}
                   ariaLabel={weekdayFull(index, language)}
-                  style={{ padding: '8px 0', borderRadius: 10 }}
+                  style={{ padding: 0, minWidth: 44 }}
                 >
                   {weekdayShort(index, language)}
                 </Chip>
@@ -253,7 +264,8 @@ const CATEGORIES: ActivityCategory[] = [
   'Health', 'Creativity', 'Discipline', 'Study', 'Work', 'Social', 'Wellness', 'Fitness',
 ];
 
-/** Chips de categoria. Sem ícone: oito imagens que repetem oito palavras. */
+/** Chips de categoria com o ícone VETOR de 20 (D-A7: `CATEGORY_ICON_NAME`,
+ *  todos no subset — o PNG `icon-cat-*` fora do visor saiu). */
 export function CategoryChips({
   category, setCategory, isPt,
 }: {
@@ -266,7 +278,8 @@ export function CategoryChips({
       <label style={sm2Label}>{isPt ? 'Categoria' : 'Category'}</label>
       <div role="group" aria-label={isPt ? 'Categoria' : 'Category'} style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
         {CATEGORIES.map(cat => (
-          <Chip key={cat} selected={category === cat} onToggle={() => setCategory(cat)}>
+          <Chip key={cat} selected={category === cat} onToggle={() => setCategory(cat)} style={{ padding: '0 12px' }}>
+            <Icon name={CATEGORY_ICON_NAME[cat]} size={20} fill={category === cat ? 1 : 0} tone="inherit" />
             {categoryLabel(cat, isPt)}
           </Chip>
         ))}
@@ -314,7 +327,8 @@ export function StepsFields({
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
         <label style={{ ...sm2Label, marginBottom: 0 }}>{isPt ? 'Passos (opcional)' : 'Steps (optional)'}</label>
-        <button type="button" onClick={onAdd} style={{ ...sm2Button('outline', false, 'sm') }}>
+        {/* `ghost sm` 44 (canvas): ação leve em ciano, sem borda. */}
+        <button type="button" onClick={onAdd} style={{ ...sm2Button('ghost', false, 'sm'), padding: '0 8px' }}>
           <Icon name="add" size={20} />{isPt ? 'Adicionar' : 'Add'}
         </button>
       </div>
@@ -325,10 +339,11 @@ export function StepsFields({
               <span className="sm2-num" style={{ ...sm2Hint, margin: 0, flexShrink: 0 }}>{index + 1}.</span>
               <Field type="text" value={step.label} onChange={(e) => onLabel(step.id, e.target.value)}
                 placeholder={`${isPt ? 'Passo' : 'Step'} ${index + 1}`} />
+              {/* "Remove step N": alvo 44 (achado 7), `close` 24 `muted` pelado. */}
               <button type="button" onClick={() => onDelete(step.id)}
                 aria-label={isPt ? `Remover passo ${index + 1}` : `Remove step ${index + 1}`}
-                style={{ width: 44, height: 44, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer' }}>
-                <Icon name="delete" size={20} tone="muted" />
+                style={{ width: 44, height: 44, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', borderRadius: 'var(--sm2-radius-md)' }}>
+                <Icon name="close" size={24} tone="muted" />
               </button>
             </div>
           ))}
@@ -528,11 +543,12 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, langu
       )}
       <div style={{ display: 'flex', gap: 12 }}>
         <button type="button" onClick={onClose} style={{ ...sm2Button('outline'), flex: 1 }}>{txt.cancel}</button>
+        {/* Save com 1.4 do Cancel (canvas): o primário é o único e é o maior. */}
         <button
           type="button"
           onClick={handleSave}
           disabled={!name.trim() || (!isSingleExecution && showWeekdayGrid && !sched.isValid) || isBlocked}
-          style={{ ...sm2Button('primary', !name.trim() || (!isSingleExecution && showWeekdayGrid && !sched.isValid) || isBlocked), flex: 1 }}
+          style={{ ...sm2Button('primary', !name.trim() || (!isSingleExecution && showWeekdayGrid && !sched.isValid) || isBlocked), flex: 1.4 }}
           title={isAtCap ? (capIsDemoBoundary ? txt.demoCapHint : `${txt.limitReached} (${activitiesCap})`) : ''}
         >
           {isAtCap ? txt.limitReached : txt.save}
@@ -573,10 +589,7 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, langu
           {quickTokens.length > 0 && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
               {quickTokens.map((tk, i) => (
-                <span key={`${tk}-${i}`} style={{
-                  ...sm2Hint, margin: 0, padding: '4px 10px', borderRadius: 999,
-                  backgroundColor: 'var(--sm2-surface-2)', color: 'var(--sm2-ink)',
-                }}>{tk}</span>
+                <span key={`${tk}-${i}`} style={{ ...sm2Tag, color: 'var(--sm2-primary-ink)' }}>{tk}</span>
               ))}
             </div>
           )}
@@ -590,7 +603,7 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, langu
           type="button"
           onClick={() => setShowForm(v => !v)}
           aria-expanded={showForm}
-          style={{ ...sm2Button('quiet'), padding: '0 4px 0 0', color: 'var(--sm2-primary-ink)' }}
+          style={{ ...sm2Button('quiet', false, 'sm'), padding: '0 8px', alignSelf: 'flex-start' }}
         >
           <Icon name={showForm ? 'expand_less' : 'expand_more'} size={20} />
           {showForm ? txt.lessOptions : txt.moreOptions}
@@ -628,7 +641,7 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, langu
                   {effort === 3 && steps.length === 0 && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginTop: 6 }}>
                       <span style={{ ...sm2Hint, margin: 0, flex: 1, minWidth: 180 }}>{txt.projectSteps}</span>
-                      <button type="button" onClick={handleAddStep} style={{ ...sm2Button('outline', false, 'sm') }}>
+                      <button type="button" onClick={handleAddStep} style={{ ...sm2Button('ghost', false, 'sm'), padding: '0 8px', minWidth: 44 }}>
                         {txt.openSteps}
                       </button>
                     </div>
@@ -665,7 +678,7 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, langu
 
             <div>
               <label style={sm2Label} htmlFor="sm-create-alarm">
-                {isSingleExecution ? txt.alarm : isPt ? 'Horário' : 'Time'}
+                {isSingleExecution ? txt.alarm : isPt ? 'Horário (opcional)' : 'Time (optional)'}
               </label>
               {isSingleExecution && hasDeadline && (
                 <div role="radiogroup" aria-label={txt.alarm} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>

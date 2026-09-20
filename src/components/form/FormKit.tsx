@@ -226,14 +226,15 @@ export function Chip({
         padding: '0 14px',
         borderRadius: 999,
         cursor: disabled ? 'default' : 'pointer',
-        opacity: disabled ? .45 : 1,
         fontFamily: 'var(--sm2-font-text)',
         fontSize: 'var(--sm2-text-sm)',
         fontWeight: 500,
         lineHeight: 'var(--sm2-leading-body)',
-        border: `1px solid ${selected ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)'}`,
-        backgroundColor: selected ? 'var(--sm2-primary-soft)' : 'var(--sm2-surface-2)',
-        color: selected ? 'var(--sm2-primary-ink)' : 'var(--sm2-ink)',
+        /* Inerte = fronteira `line` + tinta `muted` (Home E7) — nunca `opacity`,
+           que derruba o contraste do rótulo inteiro (canvas Atividades, D-A3). */
+        border: `1px solid ${disabled ? 'var(--sm2-line)' : selected ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)'}`,
+        backgroundColor: selected && !disabled ? 'var(--sm2-primary-soft)' : 'var(--sm2-surface-2)',
+        color: disabled ? 'var(--sm2-muted)' : selected ? 'var(--sm2-primary-ink)' : 'var(--sm2-ink)',
         transition: 'background-color var(--sm2-dur-tap) var(--sm2-ease), border-color var(--sm2-dur-tap) var(--sm2-ease), color var(--sm2-dur-tap) var(--sm2-ease)',
         ...style,
       }}
@@ -290,7 +291,9 @@ export function Segment({
       }}
     >
       <span>{label}</span>
-      {hint && <span style={{ fontSize: 'var(--sm2-text-xs)', opacity: .85 }}>{hint}</span>}
+      {/* A pista em TINTA (X5 do canvas Atividades): `muted` no inativo,
+          `on-primary` no ativo — nunca `opacity`. */}
+      {hint && <span style={{ fontSize: 'var(--sm2-text-xs)', fontWeight: 400, color: selected ? 'var(--sm2-on-primary)' : 'var(--sm2-muted)' }}>{hint}</span>}
     </button>
   );
 }
