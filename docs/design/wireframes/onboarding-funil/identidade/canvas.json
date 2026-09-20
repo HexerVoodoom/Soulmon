@@ -1,0 +1,196 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "title": "ONB-01 · splash estática (index.html, antes do bundle)",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1972,
+      "page": "page-1"
+    },
+    {
+      "file": "MainClaro.dc.html",
+      "title": "ONB-01 claro · splash estática (index.html, antes do bundle) — o mesmo DOM no tema CLARO (o visor não muda)",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 2080,
+      "page": "page-1"
+    },
+    {
+      "file": "SplashWebView.dc.html",
+      "title": "ONB-02 · splash — erro de WebView (terminal)",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 1661,
+      "page": "page-1"
+    },
+    {
+      "file": "IntroEstados.dc.html",
+      "title": "ONB-03 · 04 · IntroScreen — vídeo de marca e o erro do vídeo",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 2043,
+      "page": "page-1"
+    },
+    {
+      "file": "PortaoDuasPortas.dc.html",
+      "title": "ONB-06 · portão — as duas portas (deslogado)",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1861,
+      "page": "page-2"
+    },
+    {
+      "file": "PortaoGoogle.dc.html",
+      "title": "ONB-10 · 11 · portão — Google: aceite e idade ANTES do pop-up",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1833,
+      "page": "page-2"
+    },
+    {
+      "file": "PortaoEmail.dc.html",
+      "title": "ONB-12 · portão — e-mail e senha (criar conta / entrar)",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 2240,
+      "page": "page-2"
+    },
+    {
+      "file": "PortaoEstados.dc.html",
+      "title": "ONB-05 · 07 · 08 · 09 · 13 · portão — carregando, ocupado, erro, sem Firebase, rascunho",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 2279,
+      "page": "page-2"
+    },
+    {
+      "file": "Objetivo.dc.html",
+      "title": "ONB-14 · \"What do you want to improve in your life?\" (pulável)",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1650,
+      "page": "page-3"
+    },
+    {
+      "file": "Atrapalha.dc.html",
+      "title": "ONB-15 · \"And what gets in your way the most?\" (pulável; ecoa o objetivo)",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1617,
+      "page": "page-3"
+    },
+    {
+      "file": "Escolha.dc.html",
+      "title": "ONB-16 · \"How do you want to start?\" — grátis × completo",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 1709,
+      "page": "page-3"
+    },
+    {
+      "file": "EscolhaEstados.dc.html",
+      "title": "ONB-17 · 18 · 19 · bifurcação — as três recusas de ‹handleUnlockFull›",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 1478,
+      "page": "page-3"
+    },
+    {
+      "file": "EscolherPersonagem.dc.html",
+      "title": "ONB-20 · \"Choose your Soulmon\" — os 3 pré-prontos (demo)",
+      "x": 0,
+      "y": 1758,
+      "w": 390,
+      "h": 1843,
+      "page": "page-3"
+    },
+    {
+      "file": "CadastroDemo.dc.html",
+      "title": "ONB-34 · \"Last details\" — apelido + tonalidade (demo) → nascer",
+      "x": 490,
+      "y": 1758,
+      "w": 390,
+      "h": 1893,
+      "page": "page-3"
+    },
+    {
+      "file": "TutorialConceito.dc.html",
+      "title": "ONB-39 · GameTutorialFlow — \"Your Soulmon is born!\" (a única página de conceito)",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1571,
+      "page": "page-4"
+    },
+    {
+      "file": "TutorialTarefa.dc.html",
+      "title": "ONB-40 · 43 · TASK_STEP — a 1ª atividade é obrigatória (vazio; áreas ordenadas pelo objetivo)",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 2012,
+      "page": "page-4"
+    },
+    {
+      "file": "TutorialSugestoes.dc.html",
+      "title": "ONB-41 · TASK_STEP — com sugestões (retorno da IA); teto do estágio",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 1771,
+      "page": "page-4"
+    },
+    {
+      "file": "TutorialErro.dc.html",
+      "title": "ONB-42 · TASK_STEP — erro/offline: as tarefas de dois minutos (fallback local)",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 1665,
+      "page": "page-4"
+    },
+    {
+      "type": "text",
+      "page": "page-1",
+      "x": 0,
+      "y": -190,
+      "w": 1900,
+      "text": "Soulmon — Identidade, canvas ONBOARDING-FUNIL (Fase 2, sexto canvas; HANDOFF-IDENTIDADE §1/§4; 16/09/2026; rodada 2 em 20/09 após CRITICA.md — X1–X6 aplicados). Cada artboard = o wireframe aprovado de mesmo nome (DECISÕES §9, O1–O7 / S1–S5) com a identidade medida no 04 aplicada: tokens --sm2-* copiados do src/index.css, Fredoka/Rubik fora do visor, Silkscreen SÓ dentro do vidro (splash e intro), Material Symbols (FILL = estado, nunca em box), O Visor como fronteira pixel/vetor (a splash É o visor ligando e a intro é a continuação dele, full-bleed; a marca do portão = chama do kit num slot viewport-bg (como o favicon); a heroína e os 6 personagens em vidro a 128 = 0,5×; os slots de tonalidade a 64 = 0,25×). Nada por opacidade, nada de vermelho de alerta (âmbar), escala inteira em toda arte. Escuro em todos; claro só no MainClaro (decisão 3). Rodapé: pergunta · tokens · divergências com o código (achados para o staff-frontend) · PT · fontes · notas. Alturas = scrollHeight do .ab medido no DOM. Linha 1: splash + intro. Página 2: o portão. Página 3: perguntas, bifurcação, personagem, cadastro. Página 4: tutorial."
+    }
+  ],
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Onboarding-funil — splash e intro"
+    },
+    {
+      "id": "page-2",
+      "name": "Onboarding-funil — o portão de conta"
+    },
+    {
+      "id": "page-3",
+      "name": "Onboarding-funil — perguntas, bifurcação, personagem, cadastro"
+    },
+    {
+      "id": "page-4",
+      "name": "Onboarding-funil — tutorial (a primeira atividade)"
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "page-1"
+  }
+}

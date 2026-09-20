@@ -438,6 +438,7 @@ Um fluxo por despacho, dois agentes nunca no mesmo canvas (`CONTRACT.md`).
 | A | `wireframes/atividades/identidade/` — canvas Atividades (identidade), 17 + `MainClaro`, checkpoint 16/09/2026 → `identidade` (§20) | 16 | 18 | — | sem pendência do dono |
 | R | `wireframes/rituais/identidade/` — canvas Rituais (identidade), 21 + `MainClaro`, checkpoint 20/09/2026 → `identidade` (§21) | 21 | 22 | — | emblemas de marco habit-7/21/66 |
 | P | `wireframes/pet/identidade/` — canvas Pet (identidade), 9 + `MainClaro`, checkpoint 20/09/2026 → `identidade` (§22) | 9 | 10 | — | visor de emblemas como exceção declarada |
+| O | `wireframes/onboarding-funil/identidade/` — canvas Onboarding-funil (identidade), 17 + `MainClaro`, checkpoint 20/09/2026 → `identidade` (§23) | 25 | 18 | — | 6 personagens; chama no slot-visor |
 
 ### 2.1 Home — ordem sugerida dentro do canvas
 Chrome primeiro (`HOME-40`→`HOME-42`, `HOME-43`), porque tudo se desenha dentro dele → a
