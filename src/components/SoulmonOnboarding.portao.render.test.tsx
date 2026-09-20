@@ -379,3 +379,94 @@ describe('portão de identidade', () => {
     expect(fonte).toContain('I am ${MIN_AGE_YEARS} or older');
   });
 });
+
+/**
+ * Canvas Onboarding-funil — identidade (DECISÕES §23, 20/09/2026): a marca no
+ * slot-visor (D-O4/X3), a segunda porta `outline` (D-O5), os links legais
+ * como ghost 44 sem separador (D-O6/X6), e-mail malformado em `role=alert`
+ * âmbar + anel `warn` (X2/D-O7), `aria-busy` no envio (R7).
+ */
+describe('portão — identidade do canvas Onboarding-funil', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    authLigada = true;
+    emailAtual = null;
+    resposta = { ok: true, email: 'a@b.com' };
+    chamadas = [];
+    googlePendura = false;
+  });
+
+  it('a marca é a chama do kit num slot-visor `role=img` "Soulmon", sem corvo', async () => {
+    await montar();
+    const marca = screen.getByRole('img', { name: 'Soulmon' });
+    const vidro = marca.querySelector('.sm2-viewport-screen') as HTMLElement;
+    expect(vidro).toBeTruthy();
+    expect(vidro.classList.contains('sm2-visor')).toBe(true);
+    expect(vidro.style.width).toBe('64px');
+    expect(vidro.style.height).toBe('80px');
+    const svg = vidro.querySelector('svg')!;
+    expect(svg.getAttribute('width')).toBe('38');
+    expect(svg.getAttribute('height')).toBe('60');
+    expect(document.querySelector('img[src*="mascot-raven"]')).toBeNull();
+  });
+
+  it('"New User" é a segunda PORTA: `outline`, não ghost/quiet', async () => {
+    await montar();
+    const b = btn('New User');
+    expect(b.style.getPropertyValue('--sm2-btn')).toBe('outline');
+    expect(btn('Continue with Google').style.getPropertyValue('--sm2-btn')).toBe('primary');
+  });
+
+  it('os links legais são ghost 44 em `primary-ink`, empilhados, sem "·"', async () => {
+    await montar();
+    botao('New User');
+    const termos = screen.getByRole('link', { name: 'Read the Terms of Use' }) as HTMLAnchorElement;
+    const priv = screen.getByRole('link', { name: 'Read the Privacy Policy' }) as HTMLAnchorElement;
+    for (const a of [termos, priv]) {
+      expect(a.style.getPropertyValue('--sm2-btn')).toBe('ghost');
+      expect(a.style.minHeight).toBe('44px');
+      expect(a.style.color).toBe('var(--sm2-primary-ink)');
+      expect(a.target).toBe('_blank');
+    }
+    expect(termos.parentElement).toBe(priv.parentElement);
+    expect(termos.parentElement!.textContent).not.toContain('·');
+  });
+
+  it('e-mail malformado: anel âmbar no campo + "Enter a valid email." em `role=alert` âmbar', async () => {
+    await montar();
+    abrirFormulario();
+    fireEvent.change(campoEmail(), { target: { value: 'maria@exemplo' } });
+    fireEvent.change(campoSenha(), { target: { value: 'segredo1' } });
+    botao('Create account');
+    const alerta = screen.getByRole('alert');
+    expect(alerta.textContent).toBe('Enter a valid email.');
+    expect(alerta.style.borderLeft).toContain('var(--sm2-gold-ink)');
+    expect(alerta.style.color).toBe('var(--sm2-ink)');
+    const campo = campoEmail() as HTMLInputElement;
+    expect(campo.getAttribute('aria-invalid')).toBe('true');
+    expect(campo.style.boxShadow).toContain('var(--sm2-gold-ink)');
+    expect(chamadas).toEqual([]);
+  });
+
+  it('nenhum alerta do portão usa vermelho', async () => {
+    resposta = { ok: false, erro: 'popup-bloqueado' };
+    await montar();
+    abrirGoogle();
+    botao('Continue with Google');
+    await act(async () => {});
+    const alerta = screen.getByRole('alert');
+    expect(alerta.style.borderLeft).toContain('var(--sm2-gold-ink)');
+    expect(alerta.style.color).not.toContain('danger');
+  });
+
+  it('o envio declara `aria-busy` e mantém o nome acessível', async () => {
+    googlePendura = true;
+    await montar();
+    abrirGoogle();
+    botao('Continue with Google');
+    await act(async () => {});
+    const b = btn('Continue with Google');
+    expect(b.getAttribute('aria-busy')).toBe('true');
+    expect(b.disabled).toBe(true);
+  });
+});

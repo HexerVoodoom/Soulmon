@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect, lazy, Suspense, type CSSProperties } from 'react';
 import ravenMascot from '../assets/soulmon/mascot-raven.png';
 import { Icon } from './ui/Icon';
+import { MiniGlass } from './ui/MiniGlass';
+import { BrandFlame } from '../brand/BrandFlame';
 import { BirthCard } from './BirthCard';
 import { DEMO_TINTS, demoTintFilter, getSpriteForStage } from '../utils/sprites';
 import { PLACEHOLDER_ART } from '../utils/placeholderArt';
@@ -100,6 +102,22 @@ function Spinner({ size = 20 }: { size?: number }) {
     </span>
   );
 }
+
+/**
+ * Todo `role=alert` do funil é ÂMBAR (canvas Onboarding-funil D-O7 / SIS-06):
+ * filete 3px `gold-ink` + texto 14 `ink`. Nenhuma dessas mensagens é culpa
+ * da pessoa (pop-up bloqueado, janela sem resposta, compra cancelada, loja
+ * indisponível) — âmbar convida, vermelho acusa; `danger-ink` fica para o
+ * irreversível. O `role=status` (boa notícia: reset enviado) leva o filete
+ * em `primary-ink`.
+ */
+const alertStyle: CSSProperties = {
+  ...sm2Text,
+  margin: 0,
+  paddingLeft: 12,
+  borderLeft: '3px solid var(--sm2-gold-ink)',
+};
+const statusStyle: CSSProperties = { ...alertStyle, borderLeftColor: 'var(--sm2-primary-ink)' };
 
 export type OnboardingCompleteData = {
   userName: string;
@@ -881,21 +899,27 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
    *  legal não vale como consentimento específico (achado do run 01). */
   const blocoLegal = (
     <>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
+      {/* Os dois links como GHOST 44 em `primary-ink` (D-O6, W10): a cor + o
+          verbo já dizem "abre"; `role=link` é o do `<a>`; abrem em aba nova.
+          Empilhados, sem separador (X6) — os dois já são lista. */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 0, marginBottom: 4 }}>
         <a
           href={isPt ? '/termos.html' : '/termos.html#en'}
           target="_blank" rel="noopener noreferrer"
-          style={{ ...sm2Button('outline'), width: '100%', textDecoration: 'none' }}
+          style={{ ...sm2Button('ghost', false, 'sm'), padding: '0 8px', textDecoration: 'none' }}
         >
           {isPt ? 'Ler os Termos de Uso' : 'Read the Terms of Use'}
         </a>
         <a
           href={isPt ? '/privacidade.html' : '/privacidade.html#en'}
           target="_blank" rel="noopener noreferrer"
-          style={{ ...sm2Button('outline'), width: '100%', textDecoration: 'none' }}
+          style={{ ...sm2Button('ghost', false, 'sm'), padding: '0 8px', textDecoration: 'none' }}
         >
           {isPt ? 'Ler a Política de Privacidade' : 'Read the Privacy Policy'}
         </a>
+        <p style={{ ...sm2Hint, marginLeft: 8, marginBottom: 8 }}>
+          {isPt ? '(aba nova; nada aqui se perde)' : '(new tab; nothing here is lost)'}
+        </p>
       </div>
       {/* AS DUAS CAIXAS JUNTAS, aceite em cima e idade logo abaixo — pedido
           do dono. Continuam sendo DUAS, e não uma frase só: juntar "sou
@@ -1190,6 +1214,24 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             deixar o aceite só no caminho do e-mail abriria conta sem aceite e
             sem checagem de idade por um lado da bifurcação. */}
         {step === IDENTITY_STEP && (
+          <>
+          {/* A MARCA = a chama do kit num slot-visor (D-O4 / X3): a chama é
+              pixel (um `<rect>` por pixel, `crispEdges`) e pixel vive DENTRO
+              do vidro — solta sobre a página clara os pixels claros somem a
+              1,10:1. Slot 64×80 `viewport-bg` sem anel (SIS-07), a chama a
+              2× (38×60), o wordmark Fredoka 16 FORA; o mesmo fundo nos dois
+              temas. O corvo-mascote só aparece no vidro da intro. */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, paddingTop: 24 }}>
+            <span role="img" aria-label="Soulmon" style={{ display: 'inline-flex' }}>
+              <MiniGlass size={64} style={{ height: 80 }}>
+                <BrandFlame scale={2} />
+              </MiniGlass>
+            </span>
+            <span style={{
+              fontFamily: 'var(--sm2-font-display)', fontSize: 'var(--sm2-text-md)',
+              fontWeight: 600, letterSpacing: '.01em', color: 'var(--sm2-ink)', lineHeight: 'var(--sm2-leading-title)',
+            }}>Soulmon</span>
+          </div>
           <StepShell
             title={!mostrarAuth
               ? (isPt ? 'Antes de começar' : 'Before we start')
@@ -1201,17 +1243,6 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               : (isPt
                 ? 'Sua conta guarda o progresso e amarra qualquer compra a você. A sessão fica salva — não precisa entrar de novo a cada vez.'
                 : 'Your account keeps your progress and ties any purchase to you. The session is saved — no need to sign in every time.')}>
-
-            <div style={{ textAlign: 'center', marginBottom: 22 }}>
-              <img src={ravenMascot} alt="" width={56} height={56}
-                style={{ display: 'block', margin: '0 auto 8px', objectFit: 'contain', imageRendering: 'pixelated' }}
-                draggable={false} />
-              <span style={{
-                fontFamily: 'var(--sm2-font-display)', fontSize: 'var(--sm2-text-lg)',
-                fontWeight: 600, letterSpacing: '.01em', color: 'var(--sm2-ink)',
-              }}>Soulmon</span>
-            </div>
-
             {mostrarAuth ? (
               <>
                 <button
@@ -1228,9 +1259,12 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                   <span style={{ flex: 1, height: 1, backgroundColor: 'var(--sm2-line)' }} />
                 </div>
 
+                {/* Segunda PORTA = `outline` (D-O5): ghost ciano ao lado de um
+                    primário ciano lê como a mesma ação; outline diz "outra
+                    porta". */}
                 <button
                   type="button"
-                  style={{ ...sm2Button('quiet'), width: '100%' }}
+                  style={{ ...sm2Button('outline'), width: '100%' }}
                   onClick={aoAbrirEmail}
                 >
                   {isPt ? 'Novo usuário' : 'New User'}
@@ -1255,6 +1289,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               </>
             )}
           </StepShell>
+          </>
         )}
 
         {/* PORTÃO — TELA DO GOOGLE: aceite e idade ANTES do popup.
@@ -1268,7 +1303,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               : 'Before your account is created, confirm the two documents and your age.'}>
             {blocoLegal}
             {authErro && (
-              <p role="alert" style={{ ...sm2Hint, color: 'var(--sm2-danger-ink)', margin: '12px 0 0' }}>
+              <p role="alert" style={{ ...alertStyle, marginTop: 12 }}>
                 {textoErroAuth}
               </p>
             )}
@@ -1286,7 +1321,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               aria-busy={authOcupado}
               disabled={authOcupado || !podeAutenticar}
             >
-              {authOcupado ? <Spinner /> : (isPt ? 'Entrar com Google' : 'Continue with Google')}
+              {authOcupado ? <Spinner size={24} /> : (isPt ? 'Entrar com Google' : 'Continue with Google')}
             </button>
             {!podeAutenticar && <p style={{ ...sm2Hint, marginTop: 12, textAlign: 'center' }}>{faltaParaAutenticar}</p>}
             <button type="button" style={{ ...sm2Button('quiet'), width: '100%', marginTop: 8 }} onClick={back}>
@@ -1312,7 +1347,11 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             <label style={sm2Label} htmlFor="onb-gate-email">
               {isPt ? 'E-mail' : 'Email'}
             </label>
+            {/* E-mail malformado = anel ÂMBAR do `Field` (`warn`) + `aria-invalid`
+                + a frase "Enter a valid email." em `role=alert` logo abaixo
+                do bloco (X2: erro em texto, nunca só por cor). */}
             <Field id="onb-gate-email" type="email" value={email} autoComplete="email"
+              warn={emailError}
               aria-invalid={emailError || undefined}
               onChange={e => { setEmail(e.target.value); setEmailError(false); setAuthErro(null); }}
               placeholder={isPt ? 'voce@exemplo.com' : 'you@example.com'} />
@@ -1325,17 +1364,24 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               onChange={e => { setSenha(e.target.value); setAuthErro(null); }}
               placeholder={isPt ? 'Mínimo de 6 caracteres' : 'At least 6 characters'}
               onKeyDown={e => e.key === 'Enter' && aoEnviarSenha()} />
+            {/* A regra "6 caracteres" sumia junto com o placeholder ao digitar
+                (achado 5 do canvas): fica como dica enquanto faltar. */}
+            {criandoConta && senha.length > 0 && senha.length < 6 && (
+              <p style={{ ...sm2Hint, marginTop: 4 }}>
+                {isPt ? 'Mínimo de 6 caracteres.' : 'At least 6 characters.'}
+              </p>
+            )}
 
             <div style={{ height: 1, backgroundColor: 'var(--sm2-line)', margin: '22px 0 14px' }} />
             {blocoLegal}
 
             {authErro && (
-              <p role="alert" style={{ ...sm2Hint, color: 'var(--sm2-danger-ink)', margin: '12px 0 0' }}>
+              <p role="alert" style={{ ...alertStyle, marginTop: 12 }}>
                 {textoErroAuth}
               </p>
             )}
             {resetEnviado && (
-              <p role="status" style={{ ...sm2Hint, color: 'var(--sm2-primary-ink)', margin: '12px 0 0' }}>
+              <p role="status" style={{ ...statusStyle, marginTop: 12 }}>
                 {isPt
                   ? 'Mandamos um e-mail para trocar a senha. Se não aparecer, olhe no spam.'
                   : 'We sent an email to reset your password. If it does not show up, check your spam.'}
@@ -1351,16 +1397,17 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               disabled={authOcupado || !podeAutenticar}
             >
               {authOcupado
-                ? <Spinner />
+                ? <Spinner size={24} />
                 : criandoConta
                   ? (isPt ? 'Criar conta' : 'Create account')
                   : (isPt ? 'Entrar' : 'Sign in')}
             </button>
             {!podeAutenticar && <p style={{ ...sm2Hint, marginTop: 12, textAlign: 'center' }}>{faltaParaAutenticar}</p>}
 
+            {/* A inversão criar/entrar é um LINK (ghost), não uma porta. */}
             <button
               type="button"
-              style={{ ...sm2Button('outline'), width: '100%', marginTop: 8 }}
+              style={{ ...sm2Button('ghost'), width: '100%', marginTop: 8 }}
               onClick={() => { setCriandoConta(v => !v); setAuthErro(null); setResetEnviado(false); }}
             >
               {criandoConta
@@ -1371,7 +1418,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             {!criandoConta && (
               <button
                 type="button"
-                style={{ ...sm2Button('outline'), width: '100%', marginTop: 4 }}
+                style={{ ...sm2Button('quiet', authOcupado), width: '100%', marginTop: 4 }}
                 onClick={aoEsquecerSenha}
                 disabled={authOcupado}
               >
@@ -1417,8 +1464,10 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 ? <Spinner />
                 : (isPt ? `Quero o completo — ${precoLabel}` : `Get the full game — ${precoLabel}`)}
             </button>
+            {/* ONB-17/18/19: compra cancelada / loja indisponível / falha — âmbar,
+                filete, sob os botões; nada de modal, nada de vermelho (D-O7). */}
             {unlockMessage && (
-              <p role="alert" style={{ ...sm2Hint, color: 'var(--sm2-danger-ink)', marginTop: 16 }}>
+              <p role="alert" style={{ ...alertStyle, marginTop: 16 }}>
                 {unlockMessage}
               </p>
             )}
@@ -1688,7 +1737,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               {isPt ? 'Revelar meu Soulmon agora' : 'Reveal my Soulmon now'}
             </button>
             {generateError && (
-              <p role="alert" style={{ ...sm2Hint, color: 'var(--sm2-danger-ink)', marginTop: 14 }}>
+              <p role="alert" style={{ ...alertStyle, marginTop: 14 }}>
                 {isPt
                   ? 'Não foi possível revelar sua criatura agora. Escolha de novo para tentar outra vez.'
                   : "We couldn't reveal your creature just now. Choose again to retry."}
@@ -1940,7 +1989,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               </p>
             )}
             {unlockMessage && (
-              <p role="alert" style={{ ...sm2Hint, color: 'var(--sm2-danger-ink)', marginTop: 12 }}>{unlockMessage}</p>
+              <p role="alert" style={{ ...alertStyle, marginTop: 12 }}>{unlockMessage}</p>
             )}
           </div>
         )}
