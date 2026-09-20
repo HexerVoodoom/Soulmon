@@ -1172,7 +1172,7 @@ Nenhum dos nomes propostos pelo plano foi criado. Medido com
 | `--sm-space-1..6` (grid de 4) | **não** | nenhum token de espaço; espaçamento é literal |
 | `--sm-r-sm/md/lg/visor` | **não** | `--sm2-radius-sm/md/lg` (4/12/20px), sem degrau próprio de visor |
 | `--sm-bisel` / `--sm-tela` / `--sm-anel` | **não** | valores literais em `.sm2-viewport` e `.sm2-device` |
-| `--sm-toque-min` 44px | **não** | `.sm-btn { min-height: 44px }`, `.sm-px-switch { height: 44px }`, `.sm-tap-44` — literais |
+| `--sm-toque-min` 44px | **não** | `.sm-btn { min-height: 44px }`, `.sm-px-switch { height: 44px }` — literais (`.sm-tap-44` saiu em 20/09/2026: o contador de adiamentos passou a ser um botão de 44 de verdade, D-A4) |
 | `--sm-dur-1/2/3` · `--sm-ease` · `--sm-steps` | **não** | `--sm2-dur-tap/enter/page` + `--sm2-ease`; `steps()` escrito no call-site |
 | **Guarda sugerida**: teste varrendo `index.css` atrás de `color: var(--sm-*-fill)` | **existe, no conjunto novo** | `src/styles/tokens.contrast.test.ts` prova que todo acento tem o trio `ink`/`fill`/`on-` e que `gold-ink` ≠ `gold-fill`. E `grep -nE "^\s*color: var\(--sm2-[a-z]+-fill\)" src/index.css \| wc -l` → **0** |
 | **`src/components/SmIcon.tsx`** como dono único do ícone | **não existe com esse nome** | `src/components/ui/Icon.tsx` → `Icon` faz o papel, com a mesma API (`name`/`size`/`fill`/`weight`/`tone`/`label`) e mais um motor de glifo próprio (`NavGlyphs`) que o plano não previa |

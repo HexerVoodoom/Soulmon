@@ -5714,22 +5714,6 @@ button.sm-px-node {
    de uma vez os alvos curtos de vários modais (WCAG 2.5.5). */
 .sm-btn { min-height: 44px; }
 
-/* Expansor de alvo para controles que PRECISAM ser pequenos no layout (o chip
-   de adiamentos da faixa de metadados tem 23px de altura). O pseudo-elemento
-   aumenta só a área que o dedo acerta — o desenho não muda de tamanho, e a
-   linha de metadados não vira uma barra de 44px. */
-.sm-tap-44 { position: relative; }
-.sm-tap-44::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  height: 44px;
-  min-width: 44px;
-  transform: translateY(-50%);
-}
-
 /* ── Animações que ESTAVAM inline (para `prefers-reduced-motion` alcançá-las)
    Animação em `style={{animation}}` só perde para `animation: none !important`.
    Vira classe, que é mais limpo e deixa a regra de movimento reduzida legível. */

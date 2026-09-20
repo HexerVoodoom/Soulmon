@@ -203,10 +203,12 @@ describe('a moldura chanfrada FECHA na quina', () => {
 
   it('nenhuma peça chanfrada ficou sem banda de quina', () => {
     const comBanda = classesComBanda();
-    // `.sm-px-ritual-icon` perdeu a moldura nesta mesma rodada (direção do
-    // dono): sem borda não há quina para fechar. Se um dia voltar a ter
-    // moldura, some daqui e entra na regra das bandas.
-    const semMoldura = new Set(['sm-px-ritual-icon']);
+    // Peças sem moldura por direção do dono (sem borda não há quina para
+    // fechar). `.sm-px-ritual-icon` estava aqui até 20/09/2026 — a regra
+    // inteira `.sm-px-ritual-*` saiu do CSS (canvas Atividades, achado 4:
+    // pixel fora do visor); a lista fica vazia de propósito, para quem
+    // precisar da exceção declará-la aqui.
+    const semMoldura = new Set<string>([]);
     const faltando = [...chanfrosDeclarados().keys()]
       .filter(c => !comBanda.has(c) && !semMoldura.has(c));
     expect(faltando, `peças com clip-path chanfrado e SEM banda de quina: ${faltando.join(', ')}`).toEqual([]);
