@@ -64,7 +64,10 @@ describe('TaskMeta — o gatilho do adiamento', () => {
 
   it('o App PASSA o handler — sem isso o chip volta a ser decoração', () => {
     const src = readFileSync(APP_TSX, 'utf-8');
-    expect(src).toMatch(/<TaskMeta[\s\S]{0,300}?onPostponeNudge=\{handlePostponeNudge\}/);
+    // O caminho agora passa pela lista: App → `DailyRituals` → `TaskMeta`.
+    expect(src).toMatch(/<DailyRituals[\s\S]{0,900}?onPostponeNudge=\{handlePostponeNudge\}/);
+    const lista = readFileSync(path.join(process.cwd(), 'src', 'components', 'DailyRituals.tsx'), 'utf-8');
+    expect(lista).toMatch(/<TaskMeta[\s\S]{0,200}?onPostponeNudge=\{onPostponeNudge\}/);
     // E as três ações prometidas no guia existem de verdade do outro lado.
     expect(src).toContain('onShrink={handleShrinkTask}');
     expect(src).toContain('onDrop={handleDropTask}');

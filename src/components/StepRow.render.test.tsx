@@ -40,7 +40,7 @@ describe('StepRow', () => {
     const onToggle = vi.fn();
     const { container } = renderWithCss(<StepRow {...base} disabled onToggle={onToggle} />);
     fireEvent.click(screen.getByRole('checkbox'));
-    fireEvent.click(container.querySelector('span[aria-hidden="true"].select-none')!);
+    fireEvent.click(container.querySelectorAll('span[aria-hidden="true"]')[1]!);
     expect(onToggle).not.toHaveBeenCalled();
   });
 

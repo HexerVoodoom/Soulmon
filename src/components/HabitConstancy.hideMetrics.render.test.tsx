@@ -74,6 +74,6 @@ describe('HabitConstancy — hideMetrics PRESERVA a recompensa', () => {
     const { container } = renderWithCss(
       <HabitConstancy rhythm={comHistoria()} schedule={schedule} now={now} language="pt-BR" hideMetrics />,
     );
-    expect(container.querySelector('[role="group"]')).not.toBeNull();
+    expect(container.querySelector('[role="img"][aria-label^="Janela de constância"]')).not.toBeNull();
   });
 });

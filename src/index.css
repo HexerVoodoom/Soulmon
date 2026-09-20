@@ -4894,158 +4894,6 @@ button.sm-px-node {
 .sm-hp-empty { filter: brightness(0.2) saturate(0); }
 [data-theme="dark"] .sm-hp-empty { filter: saturate(0) brightness(2.4) opacity(0.42); }
 
-/* ── Linha de ritual da Home (G1) ─────────────────────────────────────────
-   Densidade: a Home tinha um painel emoldurado por tarefa (~200px cada) e
-   cabiam 1,5 unidades de ação acima da dobra em 412×915. Aqui é UM painel com
-   linhas de ~72px, e cabem ≥3 + o CTA.
-
-   Tudo em px e em regra própria porque `src/index.css` é Tailwind v4
-   PRÉ-COMPILADO (footgun 1): classe utilitária ausente não aplica nada. Toda
-   variante fica ANINHADA (`&:hover`, `&:focus-visible`), como o resto do kit.
-   Cor sempre de token — nenhum hex solto. */
-.sm-px-ritual-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-.sm-px-ritual {
-  /* Linha do sistema (`--sm2-line`), não cobre: o painel é vetor (SIS-03). */
-  border-top: 1px solid var(--sm2-line);
-  &:first-child { border-top: 0; }
-}
-.sm-px-ritual-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  min-height: 72px;
-  box-sizing: border-box;
-}
-/* Concluído: dessaturado + tinta muted, NUNCA `opacity` — opacidade mistura
-   texto E fundo com a tela e esmaga a razão de contraste (a mesma armadilha
-   medida no `.sm-btn:disabled`). */
-.sm-px-ritual-done .sm-px-ritual-name { color: var(--sm2-muted); text-decoration: line-through; }
-.sm-px-ritual-done .sm-px-ritual-icon { filter: grayscale(.75); }
-.sm-px-ritual-dim .sm-px-ritual-name { color: var(--sm2-muted); }
-.sm-px-ritual-dim .sm-px-ritual-icon { filter: grayscale(.75); }
-/* TAREFA ASSOMBRADA (canvas Home, `PetAssombrado` / P5, 16/09/2026): título
-   na tinta PRÓPRIA `--sm2-haunted` (5,58 / 5,66 sobre `surface`), sólida —
-   NUNCA `opacity` na linha (F1: `.55` dava 2,31:1). Lápis e checkbox
-   intactos; o chip "haunted · +relief" é do `TaskMeta`. */
-.sm-px-ritual-haunted .sm-px-ritual-name { color: var(--sm2-haunted); }
-
-/* Casa do ícone: 40×40, SEM MOLDURA (rodada 4, direção do dono).
-   Era um quadro de cobre chanfrado em volta de cada ícone; o dono não quer
-   item dentro de caixa. O ícone fica solto na linha.
-
-   Isto NÃO viola a regra da rodada 3 ("controle interativo sem superfície =
-   0"): esta casa é um `<span aria-hidden>` DECORATIVO. Quem é controle na
-   linha continua com superfície própria — a coluna de texto (`.sm-px-ritual-main`,
-   44px de altura mínima e `:focus-visible`), o checkbox de cobre
-   (`.sm-px-check-box`, 44×44) e o expansor (`.sm-px-ritual-expand`, emoldurado).
-
-   O FALLBACK mudou junto: a linha sem categoria mostrava um quadro de cobre
-   VAZIO, que sem a moldura vira 40px de nada. Agora `RitualIcon` não renderiza
-   nada nesse caso (ver RitualPanel.tsx) e a linha simplesmente começa no texto. */
-.sm-px-ritual-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 40px;
-  width: 40px;
-  height: 40px;
-  box-sizing: border-box;
-  image-rendering: pixelated;
-}
-
-/* Coluna de texto = botão de editar. `min-width: 0` é o que permite o
-   truncamento funcionar dentro de um flex container. */
-.sm-px-ritual-main {
-  flex: 1 1 auto;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 1px;
-  min-height: 44px;
-  padding: 4px 2px;
-  background: none;
-  border: 0;
-  text-align: left;
-  color: inherit;
-  cursor: pointer;
-  &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
-}
-/* Nome escrito pelo USUÁRIO, sem limite de tamanho e ~25% mais longo em
-   PT-BR: trunca em uma linha (o `title` no JSX carrega o texto inteiro).
-   Sans, não bitmap — Silkscreen não tem acentuação confortável e o nome é
-   texto de leitura, não rótulo. */
-/* RODADA 5: uma linha com ellipsis virou CLAMP DE 2 LINHAS — com o trilho de
-   evolução ao lado do painel, "Meditation" virava "Medita…" já no primeiro
-   ritual; a referência mostra o nome quebrando em duas linhas, não sumindo. */
-.sm-px-ritual-name {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
-  overflow-wrap: anywhere;
-  font-size: var(--sm2-text-sm);
-  font-weight: 600;
-  line-height: 1.25;
-  color: var(--sm2-ink);
-}
-.sm-px-ritual-sub {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  /* 12px é o PISO ABSOLUTO do design system (tokens.md §4) — nem legenda nem
-     "detalhe" desce disso. Estava em 11px. */
-  font-size: var(--sm2-text-xs);
-  font-weight: 500;
-  line-height: 1.3;
-  color: var(--sm2-muted);
-}
-
-/* Expansor das etapas — ocupa a MESMA casa do checkbox (44×44), então a
-   coluna da direita fica alinhada em toda a lista, com ou sem etapas. */
-.sm-px-ritual-expand {
-  flex: 0 0 44px;
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  padding: 0;
-  background: none;
-  border: 2px solid color-mix(in srgb, var(--sm-px-copper) 70%, transparent);
-  color: var(--sm-px-copper);
-  cursor: pointer;
-  clip-path: polygon(5px 0, calc(100% - 5px) 0, 100% 5px, 100% calc(100% - 5px), calc(100% - 5px) 100%, 5px 100%, 0 calc(100% - 5px), 0 5px);
-  &:hover { border-color: var(--sm-px-copper); }
-  &:focus-visible { outline: 3px solid var(--sm-px-copper); outline-offset: 2px; }
-}
-.sm-px-ritual-slot {
-  flex: 0 0 44px;
-  width: 44px;
-  height: 44px;
-}
-.sm-px-ritual-steps {
-  padding: 0 12px 12px 62px;
-}
-.sm-px-ritual-empty {
-  padding: 18px 16px 6px;
-  text-align: center;
-  font-size: var(--sm2-text-sm);
-  color: var(--sm-muted);
-}
-/* CTA largo no fim do painel: é ele que aposenta o FAB flutuante (que era um
-   forasteiro de outro design system e ainda cobria a última linha da lista). */
-.sm-px-ritual-cta {
-  padding: 10px 12px 12px;
-}
-
 /* ═══════════════════════════════════════════════════════════════════════════
    RODADA 2 — G4 (telas nunca tocadas) · G8 (forasteiros) · G9 (estados)
    ═══════════════════════════════════════════════════════════════════════════
@@ -5498,7 +5346,6 @@ button.sm-px-node {
 .sm-px-chatbar,
 .sm-px-tree-plate,
 .sm-px-tree-degen,
-.sm-px-ritual-expand,
 .sm-px-card,
 .sm-px-chip-btn,
 .sm-px-arcade-bar,
@@ -5531,7 +5378,6 @@ button.sm-px-node {
 .sm-px-tree-plate { --sm-cham-c: 7px; --sm-cham-line: var(--sm-line); }
 .sm-px-tree-plate-current { --sm-cham-line: var(--sm-px-copper); }
 .sm-px-tree-degen { --sm-cham-c: 6px; --sm-cham-line: var(--sm-line); }
-.sm-px-ritual-expand { --sm-cham-line: color-mix(in srgb, var(--sm-px-copper) 70%, transparent); }
 .sm-px-card { --sm-cham-c: 8px; }
 .sm-px-card-ok { --sm-cham-line: #3fae5a; }
 .sm-px-card-fail { --sm-cham-line: #d9534f; }
@@ -5643,15 +5489,6 @@ button.sm-px-node {
    conversa é sobre O QUE SAI DA TELA (o dock de chat? a marca no HUD?), não
    sobre espremer o pet. */
 @media (max-height: 800px) { :root { --sm-petstage-h: 175px; } }
-
-/* Tela baixa: a linha de ritual aperta de 72 para 64px. Com a área do pet
-   fixa, a lista perde altura útil — e 8px por linha é o único corte que
-   devolve uma unidade inteira acima da dobra sem mexer em alvo de toque: o
-   checkbox continua 44×44 e a coluna de texto continua com `min-height: 44px`
-   (WCAG 2.2 AA 2.5.8 intacto). */
-@media (max-height: 800px) {
-  .sm-px-ritual-row { min-height: 64px; padding: 6px 12px; }
-}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    RODADA 5 — O LEGADO FALA A LÍNGUA DO KIT
@@ -7790,3 +7627,86 @@ button[style*="--sm2-btn: ghost"]:active {
   font-weight: 500;
   color: var(--sm2-muted);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ATIVIDADES — a lista do dia (canvas `docs/design/wireframes/atividades/
+   identidade/`, DECISÕES §20; `components/pixel/RitualPanel.tsx`)
+   ═══════════════════════════════════════════════════════════════════════════
+   Só GEOMETRIA sobre tokens: linha 56 mínimos, coluna de texto = botão de
+   editar, clamp de 2 linhas do nome (não cabe em `style`). Cor por estado
+   (`muted` / `--sm2-haunted` / `primary-ink`) vem inline do componente —
+   TINTA, nunca `opacity` (D-A3). Nada aqui desenha pixel: o cobre, o chanfro
+   e o 9-slice do `.sm-px-ritual-*` saíram junto com a regra. */
+.sm2-ritual-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 12px;
+}
+.sm2-ritual {
+  border-top: 1px solid var(--sm2-line);
+  &:first-child { border-top: 0; }
+}
+.sm2-ritual-row {
+  display: flex;
+  align-items: center;
+  min-height: 56px;
+  box-sizing: border-box;
+}
+/* Coluna de texto = botão de editar. `min-width: 0` é o que permite o
+   truncamento funcionar dentro de um flex container. */
+.sm2-ritual-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  align-self: stretch;
+  gap: 2px;
+  min-height: 44px;
+  padding: 8px 0;
+  background: none;
+  border: 0;
+  text-align: left;
+  color: inherit;
+  font-family: var(--sm2-font-text);
+  &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
+}
+/* Nome escrito pelo USUÁRIO, sem limite de tamanho e ~25% mais longo em
+   PT-BR: clamp de 2 linhas (o `title` no JSX carrega o texto inteiro).
+   Rubik 14/500 (canvas: `.t.b`). */
+.sm2-ritual-name {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  font-family: var(--sm2-font-text);
+  font-size: var(--sm2-text-sm);
+  font-weight: 500;
+  line-height: var(--sm2-leading-body);
+  color: var(--sm2-ink);
+}
+.sm2-ritual-haunted .sm2-ritual-name { color: var(--sm2-haunted); }
+.sm2-ritual-sub {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--sm2-font-text);
+  font-size: var(--sm2-text-xs);
+  font-weight: 400;
+  line-height: var(--sm2-leading-body);
+  color: var(--sm2-muted);
+}
+/* A gaveta "Put aside": `<details>` com o resumo como botão `quiet` 44 em
+   `muted` — tinta, não `opacity` (achado 10). O marcador nativo sai; o
+   chevron é o `expand_more` do sistema e gira quando aberto. */
+.sm2-details-summary {
+  cursor: pointer;
+  list-style: none;
+  &::-webkit-details-marker { display: none; }
+  &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
+}
+.sm2-details-chevron { transition: transform var(--sm2-dur-tap) var(--sm2-ease); }
+details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(180deg); }

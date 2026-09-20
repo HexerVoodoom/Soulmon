@@ -17,9 +17,8 @@ import {
 import { BottomNav } from './components/BottomNav';
 import { CompanionHUD } from './components/CompanionHUD';
 import { HomeHud } from './components/pixel/HomeHud';
-import { RitualPanel, RitualRow } from './components/pixel/RitualPanel';
-import { StepRow } from './components/StepRow';
-import { categoryIconName, categoryLabel, CATEGORY_ICONS } from './types/category-icons';
+import { DailyRituals } from './components/DailyRituals';
+import { CATEGORY_ICONS } from './types/category-icons';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { Toaster } from './components/ui/sonner';
 import { GamePopups } from './components/GamePopups';
@@ -152,8 +151,6 @@ import { EvoTrail } from './components/EvoTrail';
 // (footgun 9 do CLAUDE.md).
 import { MorningCheckIn } from './components/MorningCheckIn';
 import { TriagePile, type TriageAction } from './components/TriagePile';
-import { TaskMeta } from './components/TaskMeta';
-import { HabitConstancy } from './components/HabitConstancy';
 import { MorningDream } from './components/MorningDream';
 import { WeeklyReportCard } from './components/WeeklyReportCard';
 import {
@@ -163,7 +160,7 @@ import {
 } from './utils/rituals';
 import {
   triageQueue, toOpen, toSomeday, drop, postpone, isHaunted, isActive, restore,
-  shrink, effortOf, focusComplete,
+  shrink, effortOf, focusComplete, plannedEffort, isOvercommitted,
 } from './utils/taskTriage';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './components/form/FormKit';
 import { suggestTasks, type SuggestedTask } from './utils/taskSuggestions';
@@ -174,38 +171,6 @@ import {
 import { normalizeSchedule, weekDaysForSchedule, HABIT_WEIGHT, MAX_DAILY_FOCUS, cheerReached, HABIT_TIER_ICONS } from './types/taskModel';
 import { equilibrarSemana, valeEquilibrar } from './utils/weekBalance';
 
-/**
- * O rótulo de frequência de um hábito na lista.
- *
- * Lê o `schedule` (fonte da verdade da recorrência) e NUNCA o `weekDays`, que
- * para os modos flexíveis é preenchido com a semana inteira só para o widget
- * Android e o app de desktop — que não carregam o motor novo — continuarem
- * enxergando o item. Ler o campo antigo aqui fazia "3× por semana" e "a cada 2
- * dias" aparecerem como "Todo dia": o app anunciava uma cobrança diária que a
- * regra não faz, que é a pior classe de erro possível num app cuja tese é não
- * cobrar demais.
- */
-function frequencyLabel(
-  activity: { schedule?: any; weekDays?: number[] },
-  isPt: boolean,
-  diasCurtos: string[],
-): string {
-  const s = normalizeSchedule(activity);
-  if (s.kind === 'timesPerWeek') {
-    return isPt ? `${s.target}× por semana` : `${s.target}× per week`;
-  }
-  if (s.kind === 'everyNDays') {
-    const base = isPt ? `A cada ${s.n} dia${s.n > 1 ? 's' : ''}` : `Every ${s.n} day${s.n > 1 ? 's' : ''}`;
-    // O sufixo importa: é a diferença entre acumular atrasadas e não acumular.
-    return s.from === 'completion'
-      ? `${base} ${isPt ? '(após concluir)' : '(after completion)'}`
-      : base;
-  }
-  const dias = s.days;
-  if (dias.length === 7) return isPt ? 'Todo dia' : 'Every day';
-  if (dias.length === 0) return isPt ? 'Avulsa' : 'One-off';
-  return dias.map(d => diasCurtos[d]).join(' · ');
-}
 import type { Schedule, HabitAnchor, Effort } from './types/taskModel';
 import {
   createRestState, recordNight, dreamRarity, rollDream, collectDream, DREAM_CATALOG, isWithinWindow,
@@ -673,6 +638,7 @@ export default function App() {
      linhas e comia sozinha a dobra. Estado de VISTA, não de jogo — de propósito
      fora do GameState, para não virar cloud save a cada toque. */
   const [expandedRituals, setExpandedRituals] = useState<Record<string, boolean>>({});
+  const handleExpandRitual = useCallback((id: string) => setExpandedRituals(prev => ({ ...prev, [id]: !prev[id] })), []);
   const [messageTrigger, setMessageTrigger] = useState(0);
   const [feedAnim, setFeedAnim] = useState<{ emoji: string; n: number } | null>(null);
   const [careEvent, setCareEvent] = useState<CareEvent | null>(null);
@@ -4925,6 +4891,33 @@ export default function App() {
                   ),
                 });
 
+                // ── 6. CARGA DO DIA (canvas Atividades, `CargaDoDia` / D10) ──
+                // `plannedEffort` (ponderado) > `OVERCOMMIT_EFFORT` → um TEXTO
+                // em `gold-ink` com `info` 20, `role="status"`, sem moldura
+                // (PRINCÍPIOS §2: aviso é texto; âmbar = convite). É AVISO,
+                // NUNCA BLOQUEIO: a lista inteira continua viva. Última da
+                // fila — é o mais adiável de todos os avisos.
+                if (isOvercommitted(plannedEffort(gameState.tasks, gameState.activities, dayKeyOf(agoraA), gameState.habitRhythms))) avisos.push({
+                  key: 'carga',
+                  node: (
+                    <p
+                      role="status"
+                      style={{
+                        display: 'flex', gap: 8, alignItems: 'flex-start', margin: 0, padding: '4px 4px',
+                        fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm)', lineHeight: 1.4,
+                        color: 'var(--sm2-gold-ink)',
+                      }}
+                    >
+                      <Icon name="info" size={20} tone="gold" style={{ marginTop: 1, flexShrink: 0 }} />
+                      <span>
+                        {isPtA
+                          ? 'É bastante pra um dia só — quer deixar uma pra amanhã? (Tudo bem de qualquer jeito.)'
+                          : 'That’s a lot for one day — want to leave one for tomorrow? (It’s fine either way.)'}
+                      </span>
+                    </p>
+                  ),
+                });
+
                 if (avisos.length === 0) return null;
                 const resto = avisos.length - 1;
                 return (
@@ -5050,46 +5043,11 @@ export default function App() {
                   conclusão (`jaConcluiuAlgo`) — célula inerte, não card
                   ausente. */}
 
-              {/* ── G1: UM painel de rituais, linhas de ~72px ────────────────
-                  Antes: um `PixelPanel` de ~200px por item, três estourando a
-                  dobra e o quarto cortado pelo dock de chat. A composição e as
-                  decisões (coluna única em retrato, truncamento por PT-BR,
-                  etapas recolhidas, fallback sem emoji) estão documentadas em
-                  components/pixel/RitualPanel.tsx. */}
+              {/* ── A LISTA DO DIA (canvas Atividades, §20) ─────────────────
+                  UM painel de rituais, linhas de 56px, e a gaveta do que saiu
+                  de vista — tudo em `components/DailyRituals.tsx` (a
+                  composição da linha em `components/pixel/RitualPanel.tsx`). */}
               {(() => {
-                const isPt = language === 'pt-BR';
-                const today = new Date().getDay(); // 0 = domingo, 6 = sábado
-                const todayString = new Date().toDateString();
-                const diasCurtos = isPt
-                  ? ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
-                  : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-                // Só as ATIVAS entram na lista. 'someday' e 'dropped' saem de
-                // vista de propósito: as duas existem justamente para tirar um
-                // item do campo de atenção sem apagá-lo. Deixá-las aqui
-                // devolveria a culpa que a decisão acabou de resolver — o
-                // usuário disse "isso não é para agora" e o app continuaria
-                // mostrando. Elas seguem no save, contáveis e reversíveis pela
-                // gaveta abaixo, e ficam fora da meta do dia (dailyReset).
-                const tarefas = gameState.tasks
-                  .filter(t => isActive(t))
-                  .sort((a, b) => Number(a.completed) - Number(b.completed));
-                const guardadas = gameState.tasks.filter(t => !isActive(t));
-
-                const atividades = [
-                  ...gameState.activities.filter(a => a.weekDays?.includes(today)),
-                  ...gameState.activities.filter(a => !a.weekDays?.includes(today)),
-                ].map(activity => ({
-                  ...activity,
-                  isComplete: activity.steps.length > 0
-                    ? activity.steps.every(s => s.completed)
-                    : !!(activity.completedToday && activity.lastCompletedDate === todayString),
-                })).sort((a, b) => Number(a.isComplete) - Number(b.isComplete));
-
-                const total = tarefas.length + atividades.length;
-                const feitos = tarefas.filter(t2 => t2.completed).length
-                  + atividades.filter(a => a.isComplete).length;
-
                 /* Trilha de evolução na Home (referência: caminho de nós ao
                    lado dos Daily Rituals). O galho é o que o pet JÁ está
                    seguindo; em rookie (sem galho) é o previsto — o MESMO
@@ -5147,183 +5105,36 @@ export default function App() {
                         fontSize: 'var(--sm2-text-sm)', fontWeight: 500,
                       }}
                     >
-                      {/* `eco` e não `balance`: a fonte é SUBSETADA por
-                          `icon_names` e um nome fora do inventário renderiza
-                          VAZIO, sem erro (`src/styles/tokens.md`). `balance`
-                          não está lá — este botão saiu sem ícone. */}
-                      <Icon name="eco" size={20} />
+                      {/* `calendar_month` (D-A8): `eco` é o glifo de MATURIDADE
+                          do hábito e não pode ter dois papéis; `balance` não
+                          está no subset (nome fora do inventário renderiza
+                          VAZIO, sem erro — `src/styles/tokens.md`). */}
+                      <Icon name="calendar_month" size={24} />
                       {language === 'pt-BR' ? 'Equilibrar minha semana' : 'Balance my week'}
                     </button>
                   )}
-                  <RitualPanel
-                    done={feitos}
-                    total={total}
-                    titleIconName="task_alt"
+                  <DailyRituals
+                    tasks={gameState.tasks}
+                    activities={gameState.activities}
+                    completedTasks={gameState.completedTasks}
+                    habitRhythms={gameState.habitRhythms}
+                    /* WP2.8 — a MESMA chave da Janela de Descanso. */
+                    hideMetrics={gameState.rest?.hideMetrics === true}
                     language={language}
-                    ctaLabel={`+ ${t.activities.addNew}`}
-                    onCta={handleAddNewActivity}
-                    emptyMessage={total === 0 ? t.main.noActivityRegistered : undefined}
-                  >
-                    {tarefas.map(task => (
-                      /* A linha + a fita de metadados abaixo dela. `<li>` e não
-                         `<div>`: o pai é uma `<ul>`, e um filho que não é item
-                         de lista quebra a semântica que o leitor de tela usa
-                         para contar as tarefas. */
-                      <Fragment key={task.id}>
-                      <RitualRow
-                        iconName={categoryIconName(task.category)}
-                        name={task.name}
-                        subtitle={task.category
-                          ? categoryLabel(task.category as ActivityCategory, isPt)
-                          : (isPt ? 'Tarefa avulsa' : 'One-off task')}
-                        value={task.completed ? 1 : 0}
-                        max={1}
-                        done={task.completed}
-                        /* A tinta `--sm2-haunted` na linha (P5); a regra é a
-                           mesma do chip do `TaskMeta` e do olhar do pet. */
-                        haunted={isHaunted(task, agora)}
-                        onToggle={() => { if (!task.completed) handleToggleTask(task.id); }}
-                        onEdit={() => handleEditTask(task.id)}
-                        language={language}
-                        toggleLabelPt={task.completed ? 'Tarefa concluída' : 'Marcar tarefa como concluída'}
-                        toggleLabelEn={task.completed ? 'Task completed' : 'Mark task as completed'}
-                      />
-                      {!task.completed && (
-                        <li style={{ listStyle: 'none', padding: '0 12px 8px 12px' }}>
-                          {/* Esforço, prazo, "adiada 4×" e a aura de assombrada
-                              — dado honesto, nunca acusação (TaskMeta.tsx). */}
-                          <TaskMeta
-                            task={task}
-                            now={agora}
-                            language={language}
-                            onPostponeNudge={handlePostponeNudge}
-                          />
-                        </li>
-                      )}
-                      </Fragment>
-                    ))}
-
-                    {atividades.map(activity => {
-                      const disponivelHoje = !!activity.weekDays?.includes(today);
-                      const etapas = activity.steps ?? [];
-                      const feitasEtapas = etapas.filter(s => s.completed).length;
-                      // O rótulo sai do `schedule`, não do `weekDays` cru: um
-                      // hábito "3× por semana" ou "a cada 2 dias" preenche
-                      // `weekDays` com a semana inteira (é assim que o widget
-                      // Android e o desktop continuam entendendo o item), então
-                      // ler o campo antigo aqui rotulava os dois como "Todo
-                      // dia" — o app anunciava uma cobrança diária que a regra
-                      // não faz.
-                      const freq = frequencyLabel(activity, isPt, diasCurtos);
-                      const subtitulo = etapas.length > 0
-                        ? `${freq} · ${feitasEtapas}/${etapas.length} ${isPt ? 'etapas' : 'steps'}`
-                        : freq;
-
-                      return (
-                        <Fragment key={activity.id}>
-                        <RitualRow
-                          iconName={categoryIconName(activity.category)}
-                          name={activity.name}
-                          subtitle={subtitulo}
-                          value={etapas.length > 0 ? feitasEtapas : (activity.isComplete ? 1 : 0)}
-                          max={etapas.length > 0 ? etapas.length : 1}
-                          done={activity.isComplete}
-                          dimmed={!disponivelHoje}
-                          onEdit={() => handleEditActivity(activity.id)}
-                          expandable={etapas.length > 0}
-                          expanded={!!expandedRituals[activity.id]}
-                          onExpand={() => setExpandedRituals(prev => ({
-                            ...prev, [activity.id]: !prev[activity.id],
-                          }))}
-                          onToggle={etapas.length > 0 ? undefined : () => handleToggleActivityCompletion(activity.id)}
-                          language={language}
-                          toggleLabelPt={activity.isComplete ? 'Atividade concluída' : 'Marcar atividade como concluída'}
-                          toggleLabelEn={activity.isComplete ? 'Activity completed' : 'Mark activity as completed'}
-                        >
-                          {etapas.map(step => (
-                            <StepRow
-                              key={step.id}
-                              id={step.id}
-                              label={step.label}
-                              completed={step.completed}
-                              onToggle={disponivelHoje ? (stepId) => handleUpdateStep(activity.id, stepId) : () => {}}
-                              disabled={!disponivelHoje}
-                              language={language}
-                            />
-                          ))}
-                        </RitualRow>
-                        <li style={{ listStyle: 'none', padding: '0 12px 8px 12px' }}>
-                          {/* "5 das últimas 7", escudos e o marco do hábito —
-                              média móvel, nunca streak que zera. O ritmo vem do
-                              save (`habitRhythms`); sem histórico, o vazio
-                              ESTÁVEL, porque um objeto novo por render anula
-                              memoização mundo afora. */}
-                          <HabitConstancy
-                            compact
-                            rhythm={gameState.habitRhythms?.[activity.id] ?? EMPTY_RHYTHM}
-                            schedule={normalizeSchedule(activity)}
-                            now={agora}
-                            language={language}
-                            /* WP2.8 — a MESMA chave da Janela de Descanso.
-                               Quem pediu para não ver número continuava
-                               recebendo "N das últimas 7" embaixo de cada
-                               hábito, que é o número mais frequente do app. */
-                            hideMetrics={gameState.rest?.hideMetrics === true}
-                          />
-                        </li>
-                        </Fragment>
-                      );
-                    })}
-                  </RitualPanel>
-
-                  {/* GAVETA DO QUE SAIU DE VISTA.
-                      'Algum dia' e 'Deixar pra lá' tiram o item da atenção sem
-                      apagá-lo — mas some-sem-volta é indistinguível de perda de
-                      dado, e um backlog que o usuário não consegue reencontrar
-                      deixa de ser uma decisão e vira desconfiança no app. A
-                      gaveta fica FECHADA por padrão (o ponto é não pesar) e diz
-                      em uma linha que nada ali cobra nada. */}
-                  {guardadas.length > 0 && (
-                    <details style={{ marginTop: 12, opacity: 0.75 }}>
-                      {/* Piso de 12px e Rubik DECLARADA em toda a gaveta: os
-                          rótulos de status e o botão "Retomar" estavam em 11px
-                          herdando a fonte do documento. */}
-                      <summary style={{ cursor: 'pointer', fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-xs)', letterSpacing: '.04em' }}>
-                        {isPt
-                          ? `Guardadas (${guardadas.length}) — não cobram nada`
-                          : `Put aside (${guardadas.length}) — these ask nothing of you`}
-                      </summary>
-                      <ul style={{ listStyle: 'none', padding: '8px 0 0 0', margin: 0 }}>
-                        {guardadas.map(t => (
-                          <li
-                            key={t.id}
-                            style={{
-                              display: 'flex', alignItems: 'center', gap: 8,
-                              padding: '6px 4px',
-                              fontFamily: 'var(--sm2-font-text)',
-                              fontSize: 'var(--sm2-text-sm)',
-                            }}
-                          >
-                            <span aria-hidden="true">{t.emoji}</span>
-                            <span style={{ flex: 1, minWidth: 0 }}>{t.name}</span>
-                            <span style={{ fontSize: 'var(--sm2-text-xs)', color: 'var(--sm2-muted)' }}>
-                              {t.status === 'dropped'
-                                ? (isPt ? 'deixada pra lá' : 'let go')
-                                : (isPt ? 'algum dia' : 'someday')}
-                            </span>
-                            <button
-                              type="button"
-                              className="sm-btn sm-btn-secondary"
-                              style={{ padding: '6px 10px', fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-xs)' }}
-                              onClick={() => handleRestoreTask(t.id)}
-                            >
-                              {isPt ? 'Retomar' : 'Bring back'}
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    </details>
-                  )}
+                    now={agora}
+                    expanded={expandedRituals}
+                    onExpand={handleExpandRitual}
+                    onToggleTask={handleToggleTask}
+                    onEditTask={handleEditTask}
+                    onPostponeNudge={handlePostponeNudge}
+                    onEditActivity={handleEditActivity}
+                    onToggleActivity={handleToggleActivityCompletion}
+                    onUpdateStep={handleUpdateStep}
+                    onRestoreTask={handleRestoreTask}
+                    onCreate={handleAddNewActivity}
+                    ctaLabel={t.activities.addNew}
+                    emptyMessage={t.main.noActivityRegistered}
+                  />
                   </div>
                   </div>
                 );

@@ -76,7 +76,7 @@ describe('lista diária — fundação sm2', () => {
     expect(screen.queryByText(/0 das últimas/)).toBeNull();
   });
 
-  it('os quatro estados da janela têm FORMA própria, não só cor', () => {
+  it('os quatro estados da janela têm FORMA própria, não só cor (D-A1)', () => {
     const dia = (delta: number) => {
       const d = new Date(NOW);
       d.setDate(d.getDate() - delta);
@@ -90,15 +90,42 @@ describe('lista diária — fundação sm2', () => {
         language="en-US"
       />,
     );
-    const pontos = Array.from(container.querySelectorAll('[role="group"] span[aria-hidden="true"]')) as HTMLElement[];
-    // Assinatura de forma: quadrado cheio · losango girado · anel redondo · traço.
+    const janela = container.querySelector('[role="img"][aria-label^="Constancy window"]') as HTMLElement;
+    expect(janela.getAttribute('aria-label')).toBe('Constancy window: 2 of the last 3');
+    const pontos = Array.from(janela.querySelectorAll('span[aria-hidden="true"]')) as HTMLElement[];
+    expect(pontos).toHaveLength(7);
+    // Assinatura de forma: ● cheio · ◆ losango de contorno · ○ anel · — traço.
     const assinatura = (el: HTMLElement) =>
       el.style.transform.includes('rotate') ? 'losango'
-        : el.style.borderRadius === '50%' ? 'anel'
-          : el.style.height === '3px' ? 'traço'
-            : 'quadrado';
+        : el.style.borderRadius === '50%' && el.style.backgroundColor === 'transparent' ? 'anel'
+          : el.style.height === '2px' ? 'traço'
+            : 'cheio';
     const formas = new Set(pontos.map(assinatura));
-    expect(formas).toEqual(new Set(['quadrado', 'losango', 'anel', 'traço']));
+    expect(formas).toEqual(new Set(['cheio', 'losango', 'anel', 'traço']));
+    // nenhum ponto com alfa
+    expect(pontos.filter(p => p.style.opacity !== '')).toHaveLength(0);
+  });
+
+  it('na lista (`compact`) só existem a janela e o glifo — sem "N of the last 7" (achado 9)', () => {
+    const { container } = renderWithCss(
+      <HabitConstancy compact rhythm={rhythm({ totalDone: 30, shields: 2 })} schedule={SCHEDULE} now={NOW} language="en-US" />,
+    );
+    expect(container.textContent).not.toMatch(/of the last|shield/i);
+    expect(container.querySelector('[role="img"][aria-label^="Constancy window"]')).toBeTruthy();
+    expect(container.querySelector('[role="img"][aria-label^="Maturity"]')).toBeTruthy();
+  });
+
+  it('a aura de 28 dias é FILL 1 + halo `primary-soft`, sem sombra de texto', () => {
+    const dia = (delta: number) => { const d = new Date(NOW); d.setDate(d.getDate() - delta); return dayKeyOf(d); };
+    const done = Array.from({ length: 28 }, (_, i) => dia(i + 1));
+    const { container } = renderWithCss(
+      <HabitConstancy compact rhythm={rhythm({ done, totalDone: 30 })} schedule={SCHEDULE} now={NOW} language="en-US" />,
+    );
+    const glifo = container.querySelector('[role="img"][aria-label^="Maturity"]') as HTMLElement;
+    expect(glifo.getAttribute('aria-label')).toMatch(/Steady rhythm/);
+    expect(glifo.style.boxShadow).toBe('0 0 0 3px var(--sm2-primary-soft)');
+    expect(glifo.style.textShadow).toBe('');
+    expect(glifo.style.filter).toBe('');
   });
 
   it('nenhum texto da faixa de metadados desce abaixo de 12px', () => {
@@ -113,7 +140,7 @@ describe('lista diária — fundação sm2', () => {
     expect(min === Infinity || min >= 12).toBe(true);
   });
 
-  it('o contador de adiamentos continua sendo um botão com alvo de 44px', () => {
+  it('o contador de adiamentos é um botão com alvo 44 e desenho 24 sem borda, em `muted` (D-A4)', () => {
     renderWithCss(
       <TaskMeta
         task={{ id: 't1', name: 'X', effort: 1, postponedCount: 3, createdAt: NOW.toISOString() } as never}
@@ -122,8 +149,15 @@ describe('lista diária — fundação sm2', () => {
         onPostponeNudge={() => {}}
       />,
     );
-    const botao = screen.getByRole('button');
-    expect(botao.className).toContain('sm-tap-44');
+    const botao = screen.getByRole('button') as HTMLElement;
+    expect(botao.style.minHeight).toBe('44px');
+    const etiqueta = botao.querySelector('span') as HTMLElement;
+    expect(etiqueta.style.minHeight).toBe('24px');
+    expect(etiqueta.style.color).toBe('var(--sm2-muted)');
+    expect(etiqueta.style.border).toBe('');
+    // em POSTPONE_NUDGE_AT: sublinhado, nunca outra cor
+    expect(etiqueta.style.textDecoration).toBe('underline');
+    expect(botao.getAttribute('aria-label')).toMatch(/postponed 3 times — tap/);
   });
 });
 

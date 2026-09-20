@@ -43,16 +43,17 @@ describe('tarefa assombrada — tinta, não alfa', () => {
   it('a linha assombrada é marcada por classe e a tinta do título é o token --sm2-haunted', () => {
     const { container } = renderWithCss(
       <ul>
-        <RitualRow name="Call the dentist" value={0} max={1} haunted onEdit={() => {}} onToggle={() => {}} language="en-US" iconName="favorite" />
+        <RitualRow kind="task" name="Call the dentist" value={0} max={1} haunted onEdit={() => {}} onToggle={() => {}} language="en-US" />
       </ul>,
     );
     const li = container.querySelector('li')!;
-    expect(li.className).toContain('sm-px-ritual-haunted');
+    expect(li.className).toContain('sm2-ritual-haunted');
     expect(li.getAttribute('data-haunted')).toBe('true');
     expect(li.style.opacity).toBe('');
-    const nome = li.querySelector('.sm-px-ritual-name') as HTMLElement;
+    const nome = li.querySelector('.sm2-ritual-name') as HTMLElement;
     // jsdom não resolve `var()`: o que dá para medir é a regra do index.css.
     expect(getComputedStyle(nome).color).toMatch(/sm2-haunted/);
+    // o selo do tipo segue a tinta da linha
     const icone = li.querySelector('.sm2-icon') as HTMLElement;
     expect(icone.style.color).toBe('var(--sm2-haunted)');
     // lápis (a coluna de texto é o botão de editar) e checkbox intactos
@@ -63,9 +64,9 @@ describe('tarefa assombrada — tinta, não alfa', () => {
   it('concluída, a linha deixa de ser assombrada (o convite já foi aceito)', () => {
     const { container } = renderWithCss(
       <ul>
-        <RitualRow name="Call the dentist" value={1} max={1} done haunted onEdit={() => {}} onToggle={() => {}} language="pt-BR" />
+        <RitualRow kind="task" name="Call the dentist" value={1} max={1} done haunted onEdit={() => {}} onToggle={() => {}} language="pt-BR" />
       </ul>,
     );
-    expect(container.querySelector('li')!.className).not.toContain('sm-px-ritual-haunted');
+    expect(container.querySelector('li')!.className).not.toContain('sm2-ritual-haunted');
   });
 });

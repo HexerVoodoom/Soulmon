@@ -8,9 +8,9 @@
  *
  *  · o nome escrito pelo usuário TRUNCA — e por isso precisa carregar `title`,
  *    senão um nome longo em PT-BR desaparece sem recurso de leitura;
- *  · o fallback de ícone é quadro VAZIO, nunca emoji do sistema (G2);
- *  · a linha continua com ≥72px de altura mesmo com nome de 40+ caracteres,
- *    porque é a altura que sustenta a medida de densidade (T4).
+ *  · o selo é o TIPO (`task_alt`/`event_repeat`, D-A2), nunca emoji nem PNG;
+ *  · a linha continua com ≥56px de altura mesmo com nome de 40+ caracteres
+ *    (canvas Atividades: `.li` 56, checkbox 24 em alvo 44).
  *
  * Cada caso afirma EFEITO OBSERVÁVEL, medido na cascata real do index.css.
  */
@@ -24,6 +24,7 @@ const NOME_LONGO = 'Organizar a manhã inteira antes das nove horas da matina';
 function linha(extra: Partial<React.ComponentProps<typeof RitualRow>> = {}) {
   return (
     <RitualRow
+      kind="habit"
       name="Beber 2 litros de água"
       subtitle="Saúde"
       value={0}
@@ -80,7 +81,7 @@ describe('RitualRow — sobreviver ao texto PT-BR (N3 da análise de gap)', () =
      `title` leva o texto inteiro. */
   it('nome longo é CONTIDO (clamp de 2 linhas) e leva `title` com o texto inteiro', () => {
     const { container } = renderWithCss(<ul>{linha({ name: NOME_LONGO })}</ul>);
-    const nome = container.querySelector('.sm-px-ritual-name') as HTMLElement;
+    const nome = container.querySelector('.sm2-ritual-name') as HTMLElement;
     expect(nome.getAttribute('title')).toBe(NOME_LONGO);
     expect(computed(nome, 'overflow')).toBe('hidden');
     expect(computed(nome, '-webkit-line-clamp')).toBe('2');
@@ -89,52 +90,57 @@ describe('RitualRow — sobreviver ao texto PT-BR (N3 da análise de gap)', () =
 
   it('a altura mínima da linha não depende do tamanho do nome', () => {
     const { container } = renderWithCss(<ul>{linha({ name: NOME_LONGO })}</ul>);
-    const row = container.querySelector('.sm-px-ritual-row') as HTMLElement;
-    // 72px é a medida que sustenta a densidade da dobra (T4). Se alguém
-    // encolher isto sem refazer a medição, a composição perde o alvo.
-    expect(computed(row, 'min-height')).toBe('72px');
+    const row = container.querySelector('.sm2-ritual-row') as HTMLElement;
+    // 56px é a linha do canvas Atividades (SIS-03). O alvo do checkbox e da
+    // coluna de texto continua 44.
+    expect(computed(row, 'min-height')).toBe('56px');
   });
 });
 
-describe('RitualRow — ícone SEM MOLDURA (rodada 4), e NUNCA emoji', () => {
-  it('sem ícone de categoria, a linha começa no TEXTO — sem casa reservada', () => {
-    // Era o contrário: a casa existia sempre e ficava vazia (o "quadro de
-    // cobre vazio" do G2). Tirada a moldura por direção do dono, um quadro
-    // vazio vira 40px de NADA no meio de uma tela de 412px — então a casa
-    // deixa de existir e a linha começa no texto.
-    const { container } = renderWithCss(<ul>{linha({ iconName: undefined })}</ul>);
-    expect(container.querySelector('.sm-px-ritual-icon')).toBeNull();
+describe('RitualRow — o selo é o TIPO (D-A2), pelado, e NUNCA emoji', () => {
+  it('hábito = `event_repeat`, tarefa = `task_alt`, 24 e decorativos', () => {
+    const { container, unmount } = renderWithCss(<ul>{linha({ kind: 'habit' })}</ul>);
+    const selo = container.querySelector('.sm2-icon') as HTMLElement;
+    expect(selo.textContent).toBe('event_repeat');
+    expect(selo.getAttribute('aria-hidden')).toBe('true');
+    expect(selo.style.fontSize).toBe('24px');
+    unmount();
+    const r2 = renderWithCss(<ul>{linha({ kind: 'task' })}</ul>);
+    expect((r2.container.querySelector('.sm2-icon') as HTMLElement).textContent).toBe('task_alt');
   });
 
-  it('a casa do ícone não tem moldura própria', () => {
-    // A regra da rodada 3 ("controle interativo sem superfície = 0") vale para
-    // CONTROLE. Esta casa é decorativa (`aria-hidden`); o checkbox e a coluna
-    // de texto da linha continuam com superfície e alvo próprios.
-    const { container } = renderWithCss(<ul>{linha({ iconName: 'favorite' })}</ul>);
-    const casa = container.querySelector('.sm-px-ritual-icon') as HTMLElement;
-    expect(computed(casa, 'width')).toBe('40px');
-    // `border-style`, não `border-width`: sem estilo a borda não desenha, e o
-    // jsdom devolve o *keyword* `medium` para a largura inicial — asserção
-    // sobre a largura passaria a medir o jsdom, não a regra.
-    expect(computed(casa, 'border-top-style') || 'none').toBe('none');
-    expect(computed(casa, 'clip-path') || 'none').toBe('none');
+  it('o selo não ganha caixa e nunca é PNG', () => {
+    const { container } = renderWithCss(<ul>{linha()}</ul>);
+    const selo = container.querySelector('.sm2-icon') as HTMLElement;
+    expect(selo.style.backgroundColor).toBe('');
+    expect(selo.style.border).toBe('');
+    expect(container.querySelectorAll('img').length).toBe(0);
   });
 
   it('nenhum emoji do sistema sobra no conteúdo da linha', () => {
-    const { container } = renderWithCss(<ul>{linha({ iconName: undefined, name: 'Ler 10 páginas' })}</ul>);
+    const { container } = renderWithCss(<ul>{linha({ name: 'Ler 10 páginas' })}</ul>);
     const EMOJI = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u;
     expect(EMOJI.test(container.textContent ?? '')).toBe(false);
   });
 
-  it('com categoria, renderiza o GLIFO da Material Symbols — nunca PNG, nunca emoji', () => {
-    const { container } = renderWithCss(<ul>{linha({ iconName: 'favorite' })}</ul>);
-    // O nome TEM que estar no inventário de 99 (tokens.md): fora dele o
-    // `<span>` sai vazio, sem glifo e sem erro — falha silenciosa.
-    const glifo = container.querySelector('.sm-px-ritual-icon .sm2-icon') as HTMLElement;
-    expect(glifo.textContent).toBe('favorite');
-    // decorativo: o nome ao lado já diz o que é
-    expect(glifo.getAttribute('aria-hidden')).toBe('true');
-    expect(container.querySelectorAll('.sm-px-ritual-icon img').length).toBe(0);
+  it('esmaecer é TINTA, nunca `opacity` (D-A3): fora do dia, concluída e assombrada', () => {
+    for (const extra of [{ dimmed: true }, { done: true }, { haunted: true }] as const) {
+      const { container, unmount } = renderWithCss(<ul>{linha(extra)}</ul>);
+      const comAlfa = Array.from(container.querySelectorAll<HTMLElement>('*'))
+        .filter(e => e.style.opacity !== '' && e.style.opacity !== '1');
+      expect(comAlfa, JSON.stringify(extra)).toHaveLength(0);
+      const nome = container.querySelector('.sm2-ritual-name') as HTMLElement;
+      expect(nome.style.color).toBe('haunted' in extra ? 'var(--sm2-haunted)' : 'var(--sm2-muted)');
+      unmount();
+    }
+  });
+
+  it('fora do dia, o checkbox é tracejado e `aria-disabled`', () => {
+    renderWithCss(<ul>{linha({ dimmed: true })}</ul>);
+    const box = screen.getByRole('checkbox');
+    expect(box.getAttribute('aria-disabled')).toBe('true');
+    const caixa = box.querySelector('span') as HTMLElement;
+    expect(caixa.style.border).toContain('dashed');
   });
 });
 
@@ -167,7 +173,7 @@ describe('RitualRow — etapas nascem recolhidas', () => {
 describe('RitualPanel — um painel só, com contador e CTA largo', () => {
   it('título traz o par PT/EN e o contador feitos/total', () => {
     const { unmount } = renderWithCss(
-      <RitualPanel done={2} total={5} ctaLabel="+ Nova Atividade" onCta={() => {}} language="pt-BR">
+      <RitualPanel done={2} total={5} ctaLabel="Nova Atividade" onCta={() => {}} language="pt-BR">
         {linha()}
       </RitualPanel>,
     );
@@ -176,7 +182,7 @@ describe('RitualPanel — um painel só, com contador e CTA largo', () => {
     unmount();
 
     renderWithCss(
-      <RitualPanel done={2} total={5} ctaLabel="+ New Activity" onCta={() => {}} language="en-US">
+      <RitualPanel done={2} total={5} ctaLabel="New Activity" onCta={() => {}} language="en-US">
         {linha({ language: 'en-US' })}
       </RitualPanel>,
     );
@@ -184,28 +190,42 @@ describe('RitualPanel — um painel só, com contador e CTA largo', () => {
     expect(screen.getByText('2/5')).toBeTruthy();
   });
 
-  it('o CTA largo existe e dispara (é o que aposentou o FAB flutuante)', () => {
-    const cta = vi.fn();
-    renderWithCss(
-      <RitualPanel done={0} total={1} ctaLabel="+ Nova Atividade" onCta={cta} language="pt-BR">
+  it('o contador só existe com feitos ≥ 1 (piso de dígitos E5) e o CTA é `outline` com a lista viva', () => {
+    const { container } = renderWithCss(
+      <RitualPanel done={0} total={3} ctaLabel="Nova Atividade" onCta={() => {}} language="pt-BR">
         {linha()}
       </RitualPanel>,
     );
-    fireEvent.click(screen.getByRole('button', { name: '+ Nova Atividade' }));
+    expect(screen.queryByText('0/3')).toBeNull();
+    const cta = screen.getByRole('button', { name: /Nova Atividade/ }) as HTMLElement;
+    expect(cta.style.backgroundColor).toBe('var(--sm2-surface)');
+    expect(container.querySelector('.sm2-ritual-list')).toBeTruthy();
+  });
+
+  it('o CTA largo existe e dispara (é o que aposentou o FAB flutuante)', () => {
+    const cta = vi.fn();
+    renderWithCss(
+      <RitualPanel done={0} total={1} ctaLabel="Nova Atividade" onCta={cta} language="pt-BR">
+        {linha()}
+      </RitualPanel>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: /Nova Atividade/ }));
     expect(cta).toHaveBeenCalledTimes(1);
   });
 
   it('estado VAZIO mostra a mensagem e mantém o CTA (não é uma tela morta)', () => {
     renderWithCss(
       <RitualPanel
-        done={0} total={0} ctaLabel="+ Nova Atividade" onCta={() => {}} language="pt-BR"
+        done={0} total={0} ctaLabel="Nova Atividade" onCta={() => {}} language="pt-BR"
         emptyMessage="Nenhuma atividade cadastrada."
       >
         {null}
       </RitualPanel>,
     );
     expect(screen.getByText('Nenhuma atividade cadastrada.')).toBeTruthy();
-    expect(screen.getByRole('button', { name: '+ Nova Atividade' })).toBeTruthy();
+    // vazio: o CTA é o ÚNICO primário da tela (ListaVazia)
+    const cta = screen.getByRole('button', { name: /Nova Atividade/ }) as HTMLElement;
+    expect(cta.style.backgroundColor).toBe('var(--sm2-primary-fill)');
     // sem contador quando não há nada para contar
     expect(screen.getByText('Rituais diários')).toBeTruthy();
   });

@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import type { Language } from '../utils/i18n';
 import type { Schedule } from '../types/taskModel';
 import { CONSTANCY_WINDOW_DAYS, REST_SHIELD_MAX } from '../types/taskModel';
@@ -19,60 +20,58 @@ import { Icon } from './ui/Icon';
  * custa ~14% e não 100%. Um número que zera é invenção de produto — Lally et
  * al. mediram que pular um único dia não prejudica a automaticidade.
  *
- * As duas decisões visuais que não se negociam:
+ * Canvas ATIVIDADES (identidade, D-A1/D-A2, DECISÕES §20):
  *
- *  1. **Cada estado tem FORMA própria, não só cor.** Quem não distingue verde
- *     de cinza (~8% dos homens) tem que conseguir ler a janela inteira. Feito é
- *     um quadrado cheio, protegido é um losango, falta é um anel vazado, não
- *     devido é um traço.
- *  2. **Dia protegido por escudo parece PROTEGIDO, nunca falho.** Ele conta
- *     como feito na constância (é para isso que o escudo existe) e aparece com
- *     a cor de destaque do app, não com a de falta. Um escudo que salva o
- *     número mas deixa a marca feia na tela não salvou nada.
+ *  1. **A janela de 7 são FORMAS de 12px com 4 de ar** — ● feito (`primary-fill`
+ *     cheio) · ◆ protegido por escudo (contorno 2px `primary-ink`) · ○ falta
+ *     (anel 2px `muted`) · — não devido (traço 2px `muted`, o menos saliente).
+ *     Cada estado tem forma própria, não só cor: quem não separa verde de
+ *     cinza (~8% dos homens) continua lendo a semana. Não-texto ≥ 3:1 nos
+ *     dois temas.
+ *  2. **A maturidade é UM glifo que se preenche** — `eco` com FILL 0/.34/.67/1
+ *     (`TIER_FILL`) em `primary-ink`; a aura de 28 dias (`steadyWindow`) é
+ *     FILL 1 + halo de 3px em `primary-soft` — sem sombra e sem `filter`
+ *     (X3: no claro a sombra virava mancha).
+ *  3. **Na lista (`compact`) só existem a janela e o glifo.** "N of the last 7"
+ *     e a frase dos escudos saem da linha (achado 9): o número mora na ficha
+ *     do hábito, um toque de distância. A janela é `role="img"` com o número
+ *     no `aria-label` — a leitura sonora precisa do dado, a tela não.
+ *  4. **Escudos como POSSE, inclusive zero** (só na ficha): `REST_SHIELD_MAX`
+ *     casas, ◆ ciano = tem, ◇ tracejado `muted` = vazia — nunca o traço de
+ *     "não devido".
+ *  5. `hideMetrics` (WP2.8) tira o NÚMERO e preserva a recompensa: tier,
+ *     janela e escudos ficam; some só o "N das últimas 7" e as contagens dos
+ *     tooltips e dos `aria-label`.
  */
 
 type DotState = 'done' | 'shielded' | 'missed' | 'notDue';
 
-/**
- * As três tintas da janela, agora na fundação `--sm2-*` (todas com par nos DOIS
- * temas e medidas em `src/styles/tokens.md`; nenhuma delas é hex cru).
- *
- * O que mudou de valor e por quê: o verde `--sm-ok-ink` e o ciano/cobre do kit
- * antigo não existem na fundação nova, e inventar um terceiro verde só para
- * esta linha reabriria o problema que ela já teve (o ponto "feito", o mais
- * frequente da janela, era o que menos aparecia no tema claro). Feito passa a
- * usar o acento do app (`primary`) e protegido usa o ouro. A FORMA continua
- * sendo o que distingue os quatro estados — ver a nota do topo — então a troca
- * de matiz não custa nenhuma leitura a quem não separa verde de ciano.
- *
- * São objetos gráficos (3:1, WCAG 1.4.11): `primary-fill` mede 5,55:1 (claro) e
- * 13,21:1 (escuro) contra o fundo; `gold-fill`, 4,80:1 e 6,60:1.
- */
 const DONE_FILL = 'var(--sm2-primary-fill)';
-const SHIELD_FILL = 'var(--sm2-gold-fill)';
+const SHIELD_INK = 'var(--sm2-primary-ink)';
 const MISS_INK = 'var(--sm2-muted)';
 
 /**
  * Maturidade: UM glifo que se PREENCHE, não quatro emojis diferentes.
- *
- * Os 🌱🌿🌳 eram ícone de sistema disfarçado de emoji (o próprio plano de
- * design os cita nominalmente): não são escolha da pessoa, são o estado que o
- * app calcula. `eco` com o eixo `FILL` de 0 a 1 é o mesmo estado dito do jeito
- * da fundação — inativo→ativo é o mesmo desenho se preenchendo, e o tier é
- * legível na tinta e no rótulo, nunca só na cor.
+ * `eco` com o eixo `FILL` de 0 a 1 — inativo→ativo é o mesmo desenho se
+ * preenchendo, e o tier é legível na tinta e no rótulo, nunca só na cor.
  */
-const TIER_FILL: Record<string, number> = { seed: 0, sprout: 0.34, sapling: 0.67, tree: 1 };
+export const TIER_FILL: Record<string, number> = { seed: 0, sprout: 0.34, sapling: 0.67, tree: 1 };
+
+const TIER_NAME: Record<string, { pt: string; en: string }> = {
+  seed: { pt: 'semente', en: 'seed' },
+  sprout: { pt: 'broto', en: 'sprout' },
+  sapling: { pt: 'muda', en: 'sapling' },
+  tree: { pt: 'árvore', en: 'tree' },
+};
 
 export interface HabitConstancyProps {
   rhythm: HabitRhythm;
   schedule: Schedule;
   now: Date;
   language: Language;
-  /** Versão de uma linha, para caber no card do hábito na lista. */
+  /** Versão de linha: janela + glifo, e nada mais (D-A2). */
   compact?: boolean;
-  /** WP2.8 — a mesma opção da Janela de Descanso (`rest.hideMetrics`): esconde
-   *  NÚMERO e preserva RECOMPENSA. Tier, janela de pontinhos e escudos ficam;
-   *  some só o "N das últimas 7" e as contagens dos tooltips. */
+  /** WP2.8 — a mesma opção da Janela de Descanso (`rest.hideMetrics`). */
   hideMetrics?: boolean;
 }
 
@@ -86,7 +85,7 @@ function windowDays(now: Date): Date[] {
   return days;
 }
 
-function stateOf(rhythm: HabitRhythm, _schedule: Schedule, day: Date, _now: Date): DotState {
+function stateOf(rhythm: HabitRhythm, day: Date): DotState {
   const key = dayKeyOf(day);
   if (rhythm.done.includes(key)) return 'done';
   if (rhythm.shielded.includes(key)) return 'shielded';
@@ -94,52 +93,45 @@ function stateOf(rhythm: HabitRhythm, _schedule: Schedule, day: Date, _now: Date
   // Dia sem registro NÃO vira falta, mesmo que `isDueOn` dissesse que era
   // devido: quem transforma "devido e não feito" em falta é a virada do dia
   // (`applyMissedDay`), depois de consumir escudo. Antecipar esse veredito na
-  // tela mostraria falha para o dia de HOJE, que ainda está em aberto, e para
-  // dias que um escudo ainda vai cobrir.
+  // tela mostraria falha para o dia de HOJE, que ainda está em aberto.
   return 'notDue';
 }
 
-function Dot({ state, label }: { state: DotState; label: string }) {
-  const base: React.CSSProperties = {
-    width: 12,
-    height: 12,
-    flexShrink: 0,
-    display: 'inline-block',
-  };
-  const style: React.CSSProperties =
-    state === 'done'
-      ? { ...base, backgroundColor: DONE_FILL }
-      : state === 'shielded'
-        ? {
-            ...base,
-            width: 10,
-            height: 10,
-            margin: 1,
-            backgroundColor: SHIELD_FILL,
-            transform: 'rotate(45deg)',
-          }
-        : state === 'missed'
-          ? {
-              ...base,
-              backgroundColor: 'transparent',
-              border: `2px solid ${MISS_INK}`,
-              borderRadius: '50%',
-            }
-          : { ...base, height: 3, marginTop: 4.5, backgroundColor: 'var(--sm2-line)' };
+/** As formas (D-A1). `empty` = casa vazia de escudo (só na ficha). */
+export function dotStyle(state: DotState | 'empty'): CSSProperties {
+  const base: CSSProperties = { display: 'block', width: 12, height: 12, boxSizing: 'border-box', flexShrink: 0 };
+  switch (state) {
+    case 'done':
+      return { ...base, borderRadius: '50%', backgroundColor: DONE_FILL };
+    case 'shielded':
+      return { ...base, width: 10, height: 10, margin: '0 1px', border: `2px solid ${SHIELD_INK}`, borderRadius: 2, transform: 'rotate(45deg)' };
+    case 'missed':
+      return { ...base, borderRadius: '50%', border: `2px solid ${MISS_INK}`, backgroundColor: 'transparent' };
+    case 'empty':
+      return { ...base, width: 10, height: 10, margin: '0 1px', border: `2px dashed ${MISS_INK}`, borderRadius: 2, transform: 'rotate(45deg)' };
+    default:
+      return { ...base, height: 2, backgroundColor: MISS_INK, borderRadius: 1 };
+  }
+}
 
+/**
+ * O glifo de maturidade — exportado porque a ficha o mostra 5× (os 4 tiers +
+ * a aura) e a linha 1×. `aura` = FILL 1 + halo `primary-soft`, sem sombra.
+ */
+export function MaturityGlyph({ tier, aura = false, label }: { tier: string; aura?: boolean; label: string }) {
   return (
-    <span
-      title={label}
-      aria-label={label}
-      role="img"
-      style={{ width: 12, height: 12, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
-    >
-      <span aria-hidden="true" style={style} />
-    </span>
+    <Icon
+      name="eco"
+      size={20}
+      fill={aura ? 1 : (TIER_FILL[tier] ?? 0)}
+      tone="primary"
+      label={label}
+      style={aura ? { borderRadius: '50%', boxShadow: '0 0 0 3px var(--sm2-primary-soft)' } : undefined}
+    />
   );
 }
 
-export function HabitConstancy({ rhythm, schedule, now, language, compact = false, hideMetrics = false }: HabitConstancyProps) {
+export function HabitConstancy({ rhythm, schedule: _schedule, now, language, compact = false, hideMetrics = false }: HabitConstancyProps) {
   const isPt = language === 'pt-BR';
   const { done, window } = constancy(rhythm, now);
   const tier = habitTier(rhythm.totalDone);
@@ -159,30 +151,17 @@ export function HabitConstancy({ rhythm, schedule, now, language, compact = fals
     return `${d}: ${s}`;
   };
 
-  const tierName: Record<string, { pt: string; en: string }> = {
-    seed: { pt: 'semente', en: 'seed' },
-    sprout: { pt: 'broto', en: 'sprout' },
-    sapling: { pt: 'muda', en: 'sapling' },
-    tree: { pt: 'árvore', en: 'tree' },
-  };
-
-  // Denominador: a própria janela registrada. Um hábito de 3x por semana não
-  // pode aparecer como "3 de 7" só porque a semana tem sete dias.
-  //
-  // JANELA VAZIA NÃO VIRA "0 DE 7". O fallback para `CONSTANCY_WINDOW_DAYS`
-  // fabricava um denominador que não existe e imprimia "0 das últimas 7" logo
-  // abaixo do hábito recém-criado, na primeira tela do app — contradizendo o
-  // dono da própria regra, que devolve `ratio: 1` sem histórico exatamente
-  // porque ninguém começa em 0% (progresso dotado, Nunes & Drèze). O mesmo
-  // aparecia para quem volta de uma ausência (ausência não registra falta, então
-  // a janela fica vazia): o relatório dizia "você não perdeu nada" e a linha
-  // logo abaixo dizia zero, na mesma tela. `WeeklyReportCard` já filtrava
-  // `window > 0` pelo motivo certo — "0 de 0 não descreve nada".
-  /* WP2.2 — a aura. Calculada aqui, do mesmo `rhythm` que já chega: não há
-     estado novo no save, e sem estado não há o que ficar desatualizado. */
+  /* WP2.2 — a aura. Calculada aqui, do mesmo `rhythm` que já chega. Quando
+     deixa de valer ela some EM SILÊNCIO — anunciar a perda é exatamente a
+     punição que a streak que zera faz. */
   const aura = steadyWindow(rhythm, now);
   const semJanela = window === 0;
   const total = window || CONSTANCY_WINDOW_DAYS;
+
+  // JANELA VAZIA NÃO VIRA "0 DE 7": o dono da regra devolve `ratio: 1` sem
+  // histórico (progresso dotado, Nunes & Drèze). "0 das últimas 7" (janela
+  // cheia de faltas) é SILÊNCIO na linha e número na ficha — nunca frase de
+  // consolo.
   const headline = semJanela
     ? (rhythm.totalDone === 0
       ? (isPt ? 'hábito novo' : 'new habit')
@@ -194,170 +173,120 @@ export function HabitConstancy({ rhythm, schedule, now, language, compact = fals
       : 'No due days in this window — it starts today. Nobody starts at 0%.')
     : undefined;
 
+  /* O rótulo da janela: o número vai AQUI (leitura sonora), não na tela. */
+  const windowLabel = semJanela
+    ? (isPt ? 'Janela de constância: nenhum dia devido ainda' : 'Constancy window: no due days yet')
+    : hideMetrics
+      ? (isPt ? 'Janela de constância' : 'Constancy window')
+      : isPt
+        ? `Janela de constância: ${done} das últimas ${total}`
+        : `Constancy window: ${done} of the last ${total}`;
+
+  const tierWord = isPt ? TIER_NAME[tier].pt : TIER_NAME[tier].en;
+  const maturityLabel = isPt ? `Maturidade: ${tierWord}` : `Maturity: ${tierWord}`;
+  const auraLabel = hideMetrics
+    ? (isPt ? 'Ritmo firme' : 'Steady rhythm')
+    : (isPt ? `Ritmo firme nos últimos ${STEADY_WINDOW_DAYS} dias` : `Steady rhythm over the last ${STEADY_WINDOW_DAYS} days`);
+  const glyphLabel = aura ? `${maturityLabel} · ${auraLabel}` : maturityLabel;
+  const glyphTitle = hideMetrics
+    ? glyphLabel
+    : `${maturityLabel} (${rhythm.totalDone} ${isPt ? 'dias' : 'days'})${aura ? ` · ${auraLabel}` : ''}`;
+
+  const janela = (
+    <span
+      role="img"
+      aria-label={windowLabel}
+      title={headlineTitle}
+      style={{ display: 'inline-flex', alignItems: 'center', gap: 4, height: 12 }}
+    >
+      {days.map(day => {
+        const state = stateOf(rhythm, day);
+        return <span key={day.toDateString()} aria-hidden="true" title={dayLabel(day, state)} style={dotStyle(state)} />;
+      })}
+    </span>
+  );
+
+  const glifo = (
+    <span title={glyphTitle} style={{ display: 'inline-flex' }}>
+      <MaturityGlyph tier={tier} aura={aura} label={glyphLabel} />
+    </span>
+  );
+
+  if (compact) {
+    return (
+      <>
+        {janela}
+        {glifo}
+      </>
+    );
+  }
+
+  const shieldsLabel = hideMetrics
+    ? (isPt ? 'Escudos de descanso disponíveis' : 'Rest shields available')
+    : isPt
+      ? `${shields} escudo${shields === 1 ? '' : 's'} de descanso disponíve${shields === 1 ? 'l' : 'is'}`
+      : `${shields} rest shield${shields === 1 ? '' : 's'} available`;
+
   return (
     <div
       style={{
         display: 'flex',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: compact ? 8 : 10,
+        flexDirection: 'column',
+        gap: 8,
         fontFamily: 'var(--sm2-font-text)',
-        // Piso ABSOLUTO de 12px: o modo largo estava em 12.5 e o compacto em 12
-        // — dois tamanhos para a mesma linha, um deles fora da escala fechada.
         fontSize: 'var(--sm2-text-xs)',
         lineHeight: 'var(--sm2-leading-body)',
         color: 'var(--sm2-muted)',
       }}
     >
-      {/* Maturidade. Glifo pelado, sem moldura — ícone nunca dentro de box.
-          WP2.2 — a AURA de janela pura: 28 dias devidos sem falha e sem
-          escudo gasto. É estética e só: não dá ponto, não bloqueia o escudo, e
-          quando deixa de valer ela some EM SILÊNCIO — anunciar a perda é
-          exatamente a punição que a streak que zera faz. */}
-      {/* ⚠️ A aura precisa ser LEGÍVEL, e não era (auditoria de 06/09/2026):
-          um `drop-shadow` de 4px num ícone de 20px, sem nome, sem rótulo, fora
-          do guia. Prestígio funciona por ser reconhecível — um brilho que
-          ninguém nomeia não produz orgulho nenhum, então o produto pagava o
-          risco e não recebia o benefício. E a decisão D4 diz que a aura é a
-          régua de perda de TODO o produto: uma régua que o jogador não percebe
-          ganhando não pode ser a régua de nada.
-          O que NÃO muda: ela some em silêncio quando deixa de valer — anunciar
-          a perda é exatamente a punição que a streak que zera faz. */}
-      <span
-        title={[
-          hideMetrics
-            ? (isPt ? `Maturidade: ${tierName[tier].pt}` : `Maturity: ${tierName[tier].en}`)
-            : (isPt ? `Maturidade: ${tierName[tier].pt} (${rhythm.totalDone} dias)` : `Maturity: ${tierName[tier].en} (${rhythm.totalDone} days)`),
-          /* `hideMetrics` tira o NÚMERO e preserva a recompensa — é a regra da
-             Janela de Descanso aplicada aqui, e o guard de tooltips a pegou na
-             primeira execução: "28 dias" é um número, e quem pediu para não
-             ver números não pode recebê-los de volta pela porta da aura. */
-          aura
-            ? (hideMetrics
-              ? (isPt ? 'Ritmo firme' : 'Steady rhythm')
-              : (isPt ? `Ritmo firme nos últimos ${STEADY_WINDOW_DAYS} dias` : `Steady rhythm over the last ${STEADY_WINDOW_DAYS} days`))
-            : null,
-        ].filter(Boolean).join(' · ')}
-        aria-label={aura
-          ? (hideMetrics
-            ? (isPt ? 'Ritmo firme' : 'Steady rhythm')
-            : (isPt ? `Ritmo firme nos últimos ${STEADY_WINDOW_DAYS} dias` : `Steady rhythm over the last ${STEADY_WINDOW_DAYS} days`))
-          : undefined}
-        style={{
-          display: 'inline-flex', alignItems: 'center', gap: 4, fontWeight: 500,
-          color: 'var(--sm2-ink)',
-          ...(aura ? { filter: 'drop-shadow(0 0 4px var(--sm2-gold-ink, #d4a017))' } : null),
-        }}
-      >
-        <Icon
-          name="eco"
-          size={20}
-          fill={TIER_FILL[tier] ?? 0}
-          tone="primary"
-          label={isPt ? `Maturidade: ${tierName[tier].pt}` : `Maturity: ${tierName[tier].en}`}
-        />
-        {!compact && <span>{isPt ? tierName[tier].pt : tierName[tier].en}</span>}
-      </span>
+      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+        {janela}
+        {/* A métrica. Nada aqui zera — e sem janela ela nem vira número.
+            `sm2-num` porque o numerador muda todo dia. */}
+        {!hideMetrics && (
+          <span
+            title={headlineTitle}
+            className={semJanela ? undefined : 'sm2-num'}
+            style={{ fontSize: 'var(--sm2-text-sm)', fontWeight: 500, color: 'var(--sm2-ink)' }}
+          >
+            {headline}
+          </span>
+        )}
+        {glifo}
+        <span>{maturityLabel}</span>
+      </div>
 
-      {/* WP2.8 — `hideMetrics` cobre a CONSTÂNCIA também.
-          A opção já existia para a Janela de Descanso, com a regra escrita de
-          que esconder número PRESERVA as recompensas. Ela não alcançava esta
-          linha, então quem pediu para não ver número continuava recebendo
-          "3 das últimas 7" embaixo de cada hábito da lista — o número mais
-          frequente do app inteiro.
-          O que some é só o NÚMERO: o tier (maturidade), a janela de pontinhos
-          e os escudos ficam. É a mesma regra da Janela de Descanso — quem não
-          quer medir não perde o que ganhou. */}
-      {/* A métrica. Nada aqui zera — e sem janela ela nem vira número.
-          `sm2-num` (tabular-nums) porque o numerador muda todo dia: sem ele a
-          linha inteira dança na horizontal a cada conclusão. */}
-      {!hideMetrics && (
+      {/* Escudos como POSSE, inclusive zero (T5 / 13.5): `REST_SHIELD_MAX`
+          casas; consumidos sozinhos num dia perdido — o usuário nunca precisa
+          lembrar de ativar. */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <span>{isPt ? 'Escudos de descanso' : 'Rest shields'}</span>
         <span
-          title={headlineTitle}
-          className={semJanela ? undefined : 'sm2-num'}
-          style={{ fontWeight: 500, color: 'var(--sm2-ink)' }}
+          role="img"
+          aria-label={shieldsLabel}
+          title={hideMetrics
+            ? (isPt ? 'Escudos de descanso. Usados sozinhos num dia perdido.' : 'Rest shields. Spent automatically on a missed day.')
+            : shieldsLabel}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 4, height: 12 }}
         >
-          {headline}
-        </span>
-      )}
-
-      {/* A janela. Forma OU cor distinta por estado. */}
-      {/* O rótulo dizia "Últimos 7 dias" fixo enquanto o denominador EXIBIDO é
-          `total` (a janela realmente registrada) — um hábito de 3x por semana
-          era anunciado como uma janela de 7 que a tela não mostra. */}
-      <span
-        role="group"
-        aria-label={
-          semJanela
-            ? (isPt
-              ? 'Janela de constância: nenhum dia devido ainda'
-              : 'Constancy window: no due days yet')
-            : isPt
-              ? `Janela de constância: últimos ${total} dias devidos`
-              : `Constancy window: last ${total} due days`
-        }
-        style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
-      >
-        {days.map(day => {
-          const state = stateOf(rhythm, schedule, day, now);
-          return <Dot key={day.toDateString()} state={state} label={dayLabel(day, state)} />;
-        })}
-      </span>
-
-      {/* Escudos disponíveis. Consumidos sozinhos quando falta um dia — o
-          usuário nunca precisa lembrar de ativar, que é exatamente o que faz o
-          Streak Freeze do Duolingo funcionar.
-
-          ONDA 2: as CASAS VAZIAS saíram. A linha desenhava sempre
-          `REST_SHIELD_MAX` losangos e apagava os que faltavam — ou seja, com 0
-          escudo (o caso mais comum, e o de quem acabou de criar o hábito) a
-          lista mostrava três contornos vazios embaixo de cada hábito, dizendo
-          "você não tem" três vezes. Agora só existe o que existe: sem escudo,
-          nada é desenhado. O losango é o MESMO do dia protegido, de propósito —
-          é a mesma coisa, guardada. */}
-      {shields > 0 && (
-        <span
-          title={
-            hideMetrics
-              ? (isPt
-                ? 'Escudos de descanso. Usados sozinhos num dia perdido.'
-                : 'Rest shields. Spent automatically on a missed day.')
-              : isPt
-                ? `${shields} escudo(s) de descanso. Usados sozinhos num dia perdido.`
-                : `${shields} rest shield(s). Spent automatically on a missed day.`
-          }
-          aria-label={
-            hideMetrics
-              ? (isPt ? 'Escudos de descanso disponíveis' : 'Rest shields available')
-              : isPt ? `${shields} escudos de descanso disponíveis` : `${shields} rest shields available`
-          }
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}
-        >
-          {Array.from({ length: shields }, (_, i) => (
-            <span
-              key={i}
-              aria-hidden="true"
-              style={{
-                width: 8,
-                height: 8,
-                transform: 'rotate(45deg)',
-                backgroundColor: SHIELD_FILL,
-              }}
-            />
+          {Array.from({ length: REST_SHIELD_MAX }, (_, i) => (
+            <span key={i} aria-hidden="true" style={dotStyle(i < shields ? 'shielded' : 'empty')} />
           ))}
         </span>
-      )}
+      </div>
+      <span>
+        {isPt
+          ? 'Chegam com semanas firmes e entram sozinhos quando um dia escapa.'
+          : 'They arrive with steady weeks and step in on their own when a day slips.'}
+      </span>
 
-      {/* A tese do produto, escrita. Fica só no modo largo — na lista diária
-          ela apareceria embaixo de CADA hábito, e uma frase repetida seis vezes
-          na mesma tela deixa de ser tranquilizadora. */}
-      {!compact && (
-        <span style={{ flexBasis: '100%', fontSize: 'var(--sm2-text-xs)', lineHeight: 'var(--sm2-leading-body)' }}>
-          {isPt
-            ? 'Nada zera aqui: um dia perdido custa um pontinho, não a sua história.'
-            : 'Nothing resets here: one missed day costs a dot, not your history.'}
-        </span>
-      )}
+      {/* A tese do produto, escrita. Só na ficha — na lista ela apareceria
+          embaixo de CADA hábito. */}
+      <span>
+        {isPt
+          ? 'Nada zera aqui: um dia perdido custa um pontinho, não a sua história.'
+          : 'Nothing resets here: one missed day costs a dot, not your history.'}
+      </span>
     </div>
   );
 }
