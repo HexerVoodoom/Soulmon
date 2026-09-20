@@ -10,6 +10,33 @@
  * vermelho, nunca com um contador de falta. A ausência aqui é convite, não
  * dívida: é o que faz dar vontade de voltar amanhã de manhã para ver qual
  * cena o pet trouxe.
+ *
+ * CANVAS PET (identidade, `docs/design/wireframes/pet/identidade/`, DECISÕES
+ * §8 P1/P2 e §22 D-P7), 20/09/2026:
+ *  · **Célula = slot SIS-07**: um mini-visor 64² SEM anel (`MiniGlass`,
+ *    `viewport-bg`, raio-sm) com a cena 96² a 48 (0,5×) DENTRO; nome e
+ *    "#NN · data" fora, em vetor. Nem mini-vidro com anel por célula (oito
+ *    visores em vez de uma coleção), nem PNG solto (Home D-H6).
+ *  · **Silhueta = `mask-image` do PNG** preenchida com
+ *    `color-mix(viewport-bg 58%, viewport-ink)` — 3,76/3,69 sobre o vidro, sem
+ *    alpha, forma limpa, o mesmo cinza nos dois temas (o vidro é sempre
+ *    escuro). Era `grayscale + brightness(.35) + opacity(.6)` — alpha no
+ *    aparelho (Home F1).
+ *  · **Vazio (P1)**: enquanto as TRÊS raridades estão em zero, sem barra em
+ *    0% e sem as frações "0 of 12 / 0 of 10 / 0 of 8"; o dígito "0 of 30 ·
+ *    dreams discovered" FICA, como texto quieto (13.7/A6: posse pode mostrar
+ *    zero — o que não pode é cadeado + vermelho + banner).
+ *  · **"#NN · data" (P2)** na célula obtida: `#NN` = índice GLOBAL no
+ *    `DREAM_CATALOG` (1–30), a data = `rest.dreamDates[id]` via
+ *    `collectedAt` — `null` em save antigo → célula só com o nome (nunca
+ *    data inventada). Alinhado à base da célula em toda a linha
+ *    (`height:100%` + `margin-top:auto`, X6).
+ *  · Contagem de COLEÇÃO: "N of 30", nunca "%", nunca "faltam N".
+ *
+ * ONDA 7 — a Dex saiu do fliperama (`PixelPanel` + `PixelMeter` + `PixelTag`)
+ * para a superfície `--sm2-*`, com cada texto declarando a própria família.
+ * As 30 cenas são sprites nossos (`utils/dreamArt.ts`); o `emoji` continua
+ * no `DREAM_CATALOG` porque é o único glifo que cabe num push.
  */
 import {
   DREAM_CATALOG,
@@ -22,28 +49,11 @@ import {
 import type { Language } from '../utils/i18n';
 import type { CSSProperties } from 'react';
 import { Icon } from './ui/Icon';
+import { MiniGlass } from './ui/MiniGlass';
 import { SM2_SHADOW_CARD, sm2Hint, sm2Text } from './form/FormKit';
-
-/**
- * ONDA 7 — a Dex sai do fliperama.
- *
- * Era `PixelPanel` (moldura 9-slice de cobre) + `PixelMeter` + `PixelTag`, com
- * SESSENTA E POUCOS `<span>` sem `font-family` própria: a grade inteira
- * computava a fonte do sistema (Segoe UI na medição), lado a lado com o
- * cabeçalho em Fredoka da página do Pet. Agora é a superfície `--sm2-*`, com
- * cada texto declarando a própria família.
- *
- * ✅ A PENDÊNCIA DE ARTE FOI PAGA (ago/2026).
- * As 30 cenas eram EMOJI DO SISTEMA — arte de terceiro, com desenho diferente
- * em cada plataforma, na ÚNICA coleção do jogo. Agora são 30 sprites nossos
- * (`utils/dreamArt.ts`), na paleta do kit. A moldura de visor e a silhueta do
- * não-coletado continuam iguais; o que mudou é o que entra dentro delas.
- *
- * O `emoji` continua no `DREAM_CATALOG` e não é lixo: é o único glifo que cabe
- * num push ou num título de notificação, onde não existe `<img>`.
- */
-
 import { DREAM_ART } from '../utils/dreamArt';
+import { collectedAt } from '../utils/collectionDates';
+import { dayKeyLabel } from '../utils/dayKeyLabel';
 
 export interface DreamDexProps {
   rest: RestState;
@@ -79,81 +89,90 @@ const sectionTitle: CSSProperties = {
   margin: 0,
 };
 
+/** A tinta da silhueta — derivada do vidro, sem alpha (D-P7). */
+export const SILHOUETTE_INK = 'color-mix(in srgb, var(--sm2-viewport-bg) 58%, var(--sm2-viewport-ink))';
+
+const cellText: CSSProperties = {
+  fontFamily: 'var(--sm2-font-text)',
+  /* Piso absoluto do sistema: 12px. É o NOME da cena — a única forma de
+     saber o que foi coletado. */
+  fontSize: 'var(--sm2-text-xs)',
+  lineHeight: 1.3,
+  textAlign: 'center',
+  overflowWrap: 'anywhere',
+};
+
 function rarityTitle(rarity: DreamRarity, isPt: boolean): string {
   if (rarity === 'legendary') return isPt ? 'Lendários' : 'Legendary';
   if (rarity === 'rare') return isPt ? 'Raros' : 'Rare';
   return isPt ? 'Comuns' : 'Common';
 }
 
-function DreamCell({ dream, owned, isPt }: { dream: Dream; owned: boolean; isPt: boolean }) {
+/** "#NN" — índice GLOBAL no catálogo, 1–30, sempre com dois dígitos. */
+function catalogNumber(dream: Dream): string {
+  return `#${String(DREAM_CATALOG.indexOf(dream) + 1).padStart(2, '0')}`;
+}
+
+function DreamCell({ dream, owned, date, isPt }: { dream: Dream; owned: boolean; date: string | null; isPt: boolean }) {
   const label = isPt ? dream.labelPt : dream.labelEn;
   const hiddenLabel = isPt ? 'Sonho ainda não descoberto' : 'Dream not discovered yet';
+  const art = DREAM_ART[dream.id];
   return (
     <li
       title={owned ? label : hiddenLabel}
       aria-label={owned ? label : hiddenLabel}
+      data-dream={dream.id}
+      data-owned={owned ? 'true' : 'false'}
       style={{
         listStyle: 'none',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: 6,
-        padding: '8px 4px',
+        gap: 4,
+        minWidth: 0,
+        height: '100%',
         boxSizing: 'border-box',
-        borderRadius: 10,
-        backgroundColor: owned ? 'var(--sm2-surface)' : 'var(--sm2-surface-2)',
-        /* A borda é objeto GRÁFICO (3:1): coletado ganha a tinta da raridade,
-           não-coletado fica na linha neutra. A ausência lê como "ainda não",
-           nunca como erro — nada de vermelho, nada de tracejado de falta. */
-        border: `1px solid ${owned ? RARITY_INK[dream.rarity] : 'var(--sm2-line)'}`,
+        textAlign: 'center',
       }}
     >
-      {/* A CENA. Moldura de visor: interior escuro nos dois temas, como o
-          `Viewport`, porque isto é conteúdo de tela do aparelho e não um chip
-          de interface. O glifo é PLACEHOLDER — ver a pendência de arte no
-          cabeçalho do arquivo. */}
-      <span
-        aria-hidden="true"
-        style={{
-          width: 40,
-          height: 40,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderRadius: 8,
-          boxSizing: 'border-box',
-          backgroundColor: 'var(--sm2-viewport-bg)',
-          border: '1px solid var(--sm2-line)',
-          lineHeight: 1,
-          pointerEvents: 'none',
-          /* SILHUETA, não falta: a cena existe e o pet ainda não a trouxe.
-             `brightness(0)` + opacidade devolve um recorte cheio (a forma se
-             lê), em vez do cinza lavado de antes, que parecia ícone quebrado.
-             Com sprite de verdade o `contrast` deixou de ser necessário (ele
-             existia para segurar o traço fino de emoji), mas o resto da receita
-             vale igual: a forma some, o objeto não. */
-          filter: owned ? 'none' : 'grayscale(1) brightness(0.35) opacity(0.6)',
-        }}
-      >
-        {DREAM_ART[dream.id]
-          ? <img src={DREAM_ART[dream.id]} alt="" width={34} height={34}
-                 style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-          : <span style={{ fontSize: 22 }}>{dream.emoji}</span>}
-      </span>
-      <span
-        style={{
-          fontFamily: 'var(--sm2-font-text)',
-          /* Piso absoluto do sistema: 12px. É o NOME da cena — a única forma
-             de saber o que foi coletado. */
-          fontSize: 'var(--sm2-text-xs)',
-          lineHeight: 'var(--sm2-leading-body)',
-          textAlign: 'center',
-          overflowWrap: 'anywhere',
-          color: owned ? 'var(--sm2-ink)' : 'var(--sm2-muted)',
-        }}
-      >
+      {/* A CENA num slot: mini-visor 64² sem anel, a arte 96² a 48 dentro. */}
+      <MiniGlass size={64}>
+        {art
+          ? (owned
+            ? <img src={art} alt="" width={48} height={48} style={{ display: 'block', imageRendering: 'pixelated' }} />
+            : (
+              /* SILHUETA, não falta: a cena existe e o pet ainda não a trouxe.
+                 Máscara do próprio PNG, preenchida com uma tinta derivada do
+                 vidro — a forma se lê, o objeto não. Sem alpha. */
+              <span
+                data-silhouette
+                style={{
+                  width: 48,
+                  height: 48,
+                  display: 'block',
+                  backgroundColor: SILHOUETTE_INK,
+                  WebkitMaskImage: `url(${art})`,
+                  maskImage: `url(${art})`,
+                  WebkitMaskSize: '48px 48px',
+                  maskSize: '48px 48px',
+                  WebkitMaskRepeat: 'no-repeat',
+                  maskRepeat: 'no-repeat',
+                  imageRendering: 'pixelated',
+                }}
+              />
+            ))
+          : (owned ? <span style={{ fontSize: 22, lineHeight: 1 }}>{dream.emoji}</span> : null)}
+      </MiniGlass>
+      <span style={{ ...cellText, color: owned ? 'var(--sm2-ink)' : 'var(--sm2-muted)', fontWeight: owned ? 500 : 400 }}>
         {owned ? label : '???'}
       </span>
+      {/* "#NN · data" só no obtido; save antigo sem data mostra só o "#NN".
+          `margin-top: auto` alinha a linha à base da célula em toda a fileira. */}
+      {owned && (
+        <span className="sm2-num" data-dream-date style={{ ...cellText, color: 'var(--sm2-muted)', marginTop: 'auto' }}>
+          {date ? `${catalogNumber(dream)} · ${dayKeyLabel(date, isPt)}` : catalogNumber(dream)}
+        </span>
+      )}
     </li>
   );
 }
@@ -162,8 +181,11 @@ export function DreamDex({ rest, language }: DreamDexProps) {
   const isPt = language === 'pt-BR';
   const owned = new Set(rest.dreams);
   const { collected, total } = dexProgress(rest);
+  const vazio = collected === 0;
 
   const ratio = total > 0 ? collected / total : 0;
+  const counter = isPt ? `${collected} de ${total}` : `${collected} of ${total}`;
+  const discovered = isPt ? 'sonhos descobertos' : 'dreams discovered';
 
   return (
     <section style={card} aria-labelledby="sm2-dex-title">
@@ -171,48 +193,55 @@ export function DreamDex({ rest, language }: DreamDexProps) {
         {isPt ? 'Coleção de sonhos' : 'Dream collection'}
       </h2>
 
-      {/* Barra de completude — nunca barra de desempenho. */}
       <div style={{ marginBottom: 14 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
-          {/* `.sm2-num`: o contador MUDA, e sem tabular-nums "9 de 30" e
-              "10 de 30" têm larguras diferentes — a linha treme a cada coleta. */}
-          <span
-            className="sm2-num"
-            style={{ ...sm2Text, fontSize: 'var(--sm2-text-lg)', fontWeight: 600 }}
-          >
-            {isPt ? `${collected} de ${total}` : `${collected} of ${total}`}
-          </span>
-          <span style={sm2Hint}>
-            {isPt ? 'sonhos descobertos' : 'dreams discovered'}
-          </span>
-        </div>
-        {/* Trilho + preenchimento em ouro. `*-fill` no fundo (objeto gráfico,
-            3:1), nunca `*-ink`. */}
-        <div
-          role="progressbar"
-          aria-valuenow={collected}
-          aria-valuemin={0}
-          aria-valuemax={total}
-          aria-label={isPt ? 'Completude da coleção de sonhos' : 'Dream collection completeness'}
-          style={{
-            height: 8,
-            borderRadius: 999,
-            overflow: 'hidden',
-            backgroundColor: 'var(--sm2-surface-2)',
-            border: '1px solid var(--sm2-line)',
-          }}
-        >
-          <div
-            style={{
-              width: `${Math.round(ratio * 100)}%`,
-              height: '100%',
-              backgroundColor: 'var(--sm2-gold-fill)',
-              transition: 'width var(--sm2-dur-enter) var(--sm2-ease)',
-            }}
-          />
-        </div>
-        <p style={{ ...sm2Hint, margin: '6px 0 0' }}>
-          {collected === 0
+        {vazio ? (
+          /* P1: no zero, o dígito como texto QUIETO — sem barra em 0%. */
+          <p className="sm2-num" data-dex-count style={sm2Hint}>{`${counter} · ${discovered}`}</p>
+        ) : (
+          <>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
+              {/* `.sm2-num`: o contador MUDA, e sem tabular-nums "9 de 30" e
+                  "10 de 30" têm larguras diferentes — a linha treme a cada coleta. */}
+              <span
+                className="sm2-num"
+                data-dex-count
+                style={{ ...sm2Text, fontSize: 'var(--sm2-text-md)', fontWeight: 500 }}
+              >
+                {counter}
+              </span>
+              <span style={sm2Hint}>{discovered}</span>
+            </div>
+            {/* O `.meter` SIS-07: 12px, trilho `surface-2` com fronteira `muted`
+                (≥3:1), preenchimento `primary-fill` — objeto gráfico, nunca `*-ink`. */}
+            <div
+              role="progressbar"
+              aria-valuenow={collected}
+              aria-valuemin={0}
+              aria-valuemax={total}
+              aria-label={isPt ? 'Completude da coleção de sonhos' : 'Dream collection completeness'}
+              style={{
+                height: 12,
+                borderRadius: 'var(--sm2-radius-sm)',
+                overflow: 'hidden',
+                boxSizing: 'border-box',
+                backgroundColor: 'var(--sm2-surface-2)',
+                border: '1px solid var(--sm2-muted)',
+              }}
+            >
+              <div
+                style={{
+                  width: `${Math.round(ratio * 100)}%`,
+                  height: '100%',
+                  borderRadius: 3,
+                  backgroundColor: 'var(--sm2-primary-fill)',
+                  transition: 'width var(--sm2-dur-enter) var(--sm2-ease)',
+                }}
+              />
+            </div>
+          </>
+        )}
+        <p style={{ ...sm2Hint, margin: '8px 0 0' }}>
+          {vazio
             ? (isPt
               ? 'Toda manhã depois de uma noite na sua janela, seu Soulmon volta com uma cena. A primeira está a caminho.'
               : 'Every morning after a night inside your window, your Soulmon comes back with a scene. The first one is on its way.')
@@ -232,15 +261,14 @@ export function DreamDex({ rest, language }: DreamDexProps) {
         if (group.length === 0) return null;
         const got = group.filter((d) => owned.has(d.id)).length;
         return (
-          <section key={rarity} style={{ marginBottom: 14 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-              {/* Era `PixelTag` (Silkscreen 10px, chanfro). Agora é um `<h3>`
-                  de verdade — a grade abaixo é uma lista, e sem heading não há
-                  como pular de "Comuns" para "Lendários" com leitor de tela. */}
+          <section key={rarity} data-rarity={rarity} style={{ marginBottom: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
+              {/* Um `<h3>` de verdade — a grade abaixo é uma lista, e sem heading
+                  não há como pular de "Comuns" para "Lendários" com leitor de tela. */}
               <h3
                 style={{
                   fontFamily: 'var(--sm2-font-display)',
-                  fontSize: 'var(--sm2-text-sm)',
+                  fontSize: 'var(--sm2-text-md)',
                   fontWeight: 600,
                   lineHeight: 'var(--sm2-leading-title)',
                   color: RARITY_INK[rarity],
@@ -249,30 +277,40 @@ export function DreamDex({ rest, language }: DreamDexProps) {
               >
                 {rarityTitle(rarity, isPt)}
               </h3>
-              <span className="sm2-num" style={sm2Hint}>
-                {isPt ? `${got} de ${group.length}` : `${got} of ${group.length}`}
-              </span>
+              {/* As frações somem só enquanto as TRÊS raridades estão em zero
+                  (guarda 1c): "Legendary 0 of 8" fica no parcial. */}
+              {!vazio && (
+                <span className="sm2-num" data-rarity-count style={sm2Hint}>
+                  {isPt ? `${got} de ${group.length}` : `${got} of ${group.length}`}
+                </span>
+              )}
             </div>
             <ul
               style={{
                 display: 'grid',
-                /* `auto-fill` em vez de 4 fixas: em 412px a célula de 4 colunas
-                   ficava com ~88px e o nome da cena quebrava em 4 linhas. */
-                gridTemplateColumns: 'repeat(auto-fill, minmax(84px, 1fr))',
+                /* 4 colunas fixas em 390 (achado 11): a célula é o slot 64 +
+                   nome 12, e o nome quebra por `overflow-wrap: anywhere`. */
+                gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
                 gap: 8,
                 margin: 0,
                 padding: 0,
               }}
             >
               {group.map((dream) => (
-                <DreamCell key={dream.id} dream={dream} owned={owned.has(dream.id)} isPt={isPt} />
+                <DreamCell
+                  key={dream.id}
+                  dream={dream}
+                  owned={owned.has(dream.id)}
+                  date={collectedAt(rest.dreamDates, dream.id)}
+                  isPt={isPt}
+                />
               ))}
             </ul>
           </section>
         );
       })}
 
-      <p style={{ ...sm2Hint, display: 'flex', alignItems: 'center', gap: 6, margin: 0 }}>
+      <p style={{ ...sm2Hint, display: 'flex', alignItems: 'flex-start', gap: 8, margin: 0 }}>
         <Icon name="info" size={20} tone="muted" />
         <span>
           {isPt
