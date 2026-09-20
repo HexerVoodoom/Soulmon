@@ -1,0 +1,172 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "title": "EVO-01 · 02 · 08 · Evolução — normal (visor 192², barra vetor, cadeado aberto)",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 2212,
+      "page": "page-1"
+    },
+    {
+      "file": "MainClaro.dc.html",
+      "title": "EVO-01 claro · a mesma página no tema CLARO (prova de AA)",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1586,
+      "page": "page-1"
+    },
+    {
+      "file": "EvoArvore.dc.html",
+      "title": "EVO-08 · 09 · 10 · a árvore rolada — galhos, nós SVG por token (H1 a), silhuetas, previsão, ritmo",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 2040,
+      "page": "page-1"
+    },
+    {
+      "file": "EvoTravado.dc.html",
+      "title": "EVO-03 · travado — o jogador segurou a evolução (\"ON HOLD\" no vidro, botão em seleção)",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 1870,
+      "page": "page-1"
+    },
+    {
+      "file": "EvoPronto.dc.html",
+      "title": "EVO-04 · destravado com a barra cheia — a faísca no vidro; quem dispara é o jogador",
+      "x": 0,
+      "y": 2400,
+      "w": 390,
+      "h": 1782,
+      "page": "page-1"
+    },
+    {
+      "file": "EvoOffline.dc.html",
+      "title": "EVO-05 · offline na geração de sprite (D9) — a página inteira, sem rede",
+      "x": 490,
+      "y": 2400,
+      "w": 390,
+      "h": 1539,
+      "page": "page-1"
+    },
+    {
+      "file": "EvoSpriteEstados.dc.html",
+      "title": "EVO-05 · 06 · 07 · o estado da arte — gerando (placeholders no nó), erro, sintonia do Visor",
+      "x": 980,
+      "y": 2400,
+      "w": 390,
+      "h": 2185,
+      "page": "page-1"
+    },
+    {
+      "file": "EvoEstados.dc.html",
+      "title": "EVO-08 · 09 · árvore — spoiler, forma revelada, árvore não revelada, zênite, degenerar",
+      "x": 1470,
+      "y": 2400,
+      "w": 390,
+      "h": 2652,
+      "page": "page-1"
+    },
+    {
+      "file": "ConviteDemo.dc.html",
+      "title": "EVO-11 · convite (demo) — UnlockNudge em âmbar sobre a página viva",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1693,
+      "page": "page-2"
+    },
+    {
+      "file": "ConvitePago.dc.html",
+      "title": "EVO-12 · convite (pago, criatura de demo) — a porta do ritual",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1511,
+      "page": "page-2"
+    },
+    {
+      "file": "Cerimonia.dc.html",
+      "title": "EVO-13 · 14 · cerimônia — o diálogo z-500 como VISOR de tela cheia (vídeo no vidro, burst 2×, sprite 128)",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 1996,
+      "page": "page-2"
+    },
+    {
+      "file": "CerimoniaReduzida.dc.html",
+      "title": "EVO-13 · cerimônia em movimento reduzido — quadro antes → depois (D7)",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 1600,
+      "page": "page-2"
+    },
+    {
+      "file": "EvolveTaskModal.dc.html",
+      "title": "EVO-15 · o modal pós-evolução (13.12: vira card — estrutura do wireframe replicada)",
+      "x": 0,
+      "y": 2400,
+      "w": 390,
+      "h": 1783,
+      "page": "page-2"
+    },
+    {
+      "file": "RenascimentoModal.dc.html",
+      "title": "EVO-17 · 19 · renascimento — a folha: perda, o que fica, as três escolhas",
+      "x": 490,
+      "y": 2400,
+      "w": 390,
+      "h": 1797,
+      "page": "page-2"
+    },
+    {
+      "file": "RenascimentoConfirmando.dc.html",
+      "title": "EVO-18 · renascimento — confirmando (segundo toque, role=alert âmbar)",
+      "x": 980,
+      "y": 2400,
+      "w": 390,
+      "h": 1603,
+      "page": "page-2"
+    },
+    {
+      "file": "RenascimentoBlocos.dc.html",
+      "title": "EVO-16 · 20 · 21 · renascimento — botão, recusa not-paid, nada, registro",
+      "x": 1470,
+      "y": 2400,
+      "w": 390,
+      "h": 1666,
+      "page": "page-2"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "leia",
+      "page": "page-1",
+      "x": 0,
+      "y": -170,
+      "w": 1860,
+      "text": "Soulmon — Identidade, canvas EVOLUÇÃO (Fase 2, sétimo canvas; 20/09/2026; rodada 2 — X1–X9 da CRITICA.md). Cada artboard = o wireframe cinza de mesmo nome (docs/design/wireframes/evolucao/, DECISÕES §10) com a identidade do Sistema aplicada: tokens --sm2-*, Fredoka/Rubik, Material Symbols (FILL = estado, nunca em box), O Visor como fronteira — a forma atual num visor 192² (sprite 256² a 128, P2 a; aura a 2×), a barra e o cadeado em vetor (o cadeado segurado fala a língua da SELEÇÃO, não do bloqueio; \"ON HOLD\" em Silkscreen só no vidro), os NÓS da árvore em SVG por token (H1 opção (a), decisão do dono: anel atual/previsto/bloqueado/alcançado, todos >=3:1, em volta de um vidro circular 80 com o sprite a 0,25× ou a silhueta por mask-image; placeholders v3 no nó durante a geração), a cerimônia como visor de tela cheia (o vídeo é cenário DENTRO do vidro; burst 96² a 2×, sprite 128) com a saída relacional no aparelho, o convite em âmbar, o renascimento em folha SIS-04 sem vermelho. Mesma estrutura, mesma copy EN, mesma ordem de foco (15/15). Escuro em todos; claro só no MainClaro. Rodapé cinza: tokens · achados para o staff-frontend · PT · fontes · dobra. Alturas = scrollHeight do .ab, medidas no DOM."
+    }
+  ],
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Evolução — a página e a árvore"
+    },
+    {
+      "id": "page-2",
+      "name": "Evolução — convites, cerimônia, renascimento"
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "page-1"
+  }
+}
