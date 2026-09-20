@@ -1,0 +1,100 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "title": "STAT-01 · a página cheia — o Vínculo pela palavra em Fredoka, os traços com ícone Material, a jornada com o nascimento em vidro 192²",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 2549,
+      "page": "page-1"
+    },
+    {
+      "file": "MainClaro.dc.html",
+      "title": "STAT-01 · a mesma página no tema claro (prova de AA) — o vidro continua escuro",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1571,
+      "page": "page-1"
+    },
+    {
+      "file": "JornadaRolada.dc.html",
+      "title": "STAT-01 · a jornada rolada — encontros em mini-visores 64² (sprite 0,25× / silhueta por máscara), o álbum em slots, feitos, por que começou",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 2087,
+      "page": "page-1"
+    },
+    {
+      "file": "EstacaoListas.dc.html",
+      "title": "STAT-01 · a estação (calendário, nunca prazo) e as duas listas — o emoji da pessoa como conteúdo",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 2094,
+      "page": "page-1"
+    },
+    {
+      "file": "Vazio.dc.html",
+      "title": "STAT-02 · a primeira vez — \"Just met\", só o dígito \"0\", o cartão de nascimento inteiro, duas frases de futuro",
+      "x": 1960,
+      "y": 0,
+      "w": 390,
+      "h": 2374,
+      "page": "page-1"
+    },
+    {
+      "file": "Nascimento.dc.html",
+      "title": "STAT-03 · 04 · o cartão de nascimento — o MESMO visor do reveal (sprite 128 no vidro 192²), normal, demo e sem data",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 2235,
+      "page": "page-2"
+    },
+    {
+      "file": "Bestiario.dc.html",
+      "title": "STAT-05 · 06 · 07 · os encontros — ausente (não monta), parcial (7 of 36), completo (36 of 36); silhueta = convite",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 2005,
+      "page": "page-2"
+    },
+    {
+      "file": "Album.dc.html",
+      "title": "STAT-08 · 09 · 10 · o álbum de formas — vivida com data, silhueta \"???\", e o ramo legado (fora)",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 1831,
+      "page": "page-2"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "leia",
+      "page": "page-1",
+      "x": 0,
+      "y": -170,
+      "w": 2350,
+      "text": "Soulmon — Identidade, canvas ESTATÍSTICAS (Fase 2, décimo canvas; 20/09/2026; rodada 2 — X1–X4 da CRITICA.md). Cada artboard = o wireframe cinza de mesmo nome (docs/design/wireframes/estatisticas/, DECISÕES §13) com a identidade do Sistema aplicada: tokens --sm2-*, Fredoka/Rubik (tabular em toda contagem e data), Material Symbols (FILL = estado, nunca em box), O Visor como fronteira — o cartão de nascimento é o MESMO visor do reveal (sprite 256² a 128 num vidro 192² com anel de cobre), os encontros e o álbum são mini-visores/slots 64² (SIS-07, sem anel) com o sprite a 0,25× ou a silhueta por mask-image em tinta derivada do vidro (nunca alpha, nunca cadeado), o traço de nascimento com ícone Material (A15 obsoleto), o vínculo como PALAVRA em Fredoka 24 com o nível como legenda e o medidor SIS-07 em vetor, a estação como calendário com as medalhas em âmbar de posse, as duas listas com o emoji da pessoa como conteúdo. NENHUMA Silkscreen (não há HUD nesta tela), nenhum número de moeda, nenhum percentual, nenhum \"faltam N\", só o dígito no \"0\" (decisão do dono, 15/09). O bestiário conta 36 (9 linhas × 4 tiers — o código de hoje; o wireframe dizia 24: registrado para o cartógrafo). Mesma estrutura, mesma copy EN, mesma ordem de foco (7/7). Escuro em todos; claro só no MainClaro. Rodapé cinza: tokens · achados para o staff-frontend · PT · fontes · dobra. Alturas = scrollHeight do .ab, medidas no DOM."
+    }
+  ],
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Estatísticas — a página (cheia, clara, rolada, vazia)"
+    },
+    {
+      "id": "page-2",
+      "name": "Estatísticas — os cartões (nascimento, encontros, formas)"
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "page-1"
+  }
+}

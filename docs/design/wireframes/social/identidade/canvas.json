@@ -1,0 +1,109 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "title": "SOC-05 · a Biblioteca — aba \"All\": criatura em mini-visor 64², abas SIS-04, ações 44 com ícone pelado",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 2657,
+      "page": "page-1"
+    },
+    {
+      "file": "MainClaro.dc.html",
+      "title": "SOC-05 claro · a mesma página no tema CLARO (prova de AA)",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1573,
+      "page": "page-1"
+    },
+    {
+      "file": "Estados.dc.html",
+      "title": "SOC-01 · 02 · 03 · carregando, vazio, erro do diretório (cloud_off 48 + Try again outline), a linha que não carregou (vidro apagado), o alerta âmbar",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 2023,
+      "page": "page-1"
+    },
+    {
+      "file": "SemRede.dc.html",
+      "title": "SOC-04 · sem rede — o selo .seal SIS-06 (Silkscreen em selo, 2º lugar autorizado) + o erro do diretório; os NPCs ficam",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 1924,
+      "page": "page-1"
+    },
+    {
+      "file": "AmigosPresente.dc.html",
+      "title": "SOC-05 · a aba \"Friends 2/5\" — o presente vivo / já dado / sem energia / ocupado, inerte por forma; o limite de 5",
+      "x": 1960,
+      "y": 0,
+      "w": 390,
+      "h": 1953,
+      "page": "page-1"
+    },
+    {
+      "file": "PerfilJogador.dc.html",
+      "title": "SOC-07 · o perfil do outro — .dlg com a criatura a 128 no vidro 192², nome do pet, o GALHO; Close outline",
+      "x": 2450,
+      "y": 0,
+      "w": 390,
+      "h": 1805,
+      "page": "page-1"
+    },
+    {
+      "file": "GrupoSemGrupo.dc.html",
+      "title": "SOC-06 · a aba \"Group\" sem grupo — Criar (primário) / Entrar (outline) vivos; ocupado; carregando; os alertas",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 2455,
+      "page": "page-2"
+    },
+    {
+      "file": "GrupoComGrupo.dc.html",
+      "title": "SOC-06 · a aba \"Group\" com grupo — .meter da meta SOMADA, presença por pessoa, o check-in inerte, o código em mono",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 2012,
+      "page": "page-2"
+    },
+    {
+      "file": "GrupoEstados.dc.html",
+      "title": "SOC-06 · o grupo — sozinho, já avisei, meta batida, falha dentro do grupo, ocupado + copiado, falha do servidor",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 3309,
+      "page": "page-2"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "leia",
+      "page": "page-1",
+      "x": 0,
+      "y": -190,
+      "w": 1400,
+      "text": "Soulmon — Social, IDENTIDADE (Fase 2, 11º canvas, rodada 2 pós-crítica, 20/09/2026). Cada artboard = o wireframe de mesmo nome (../) com a identidade do Sistema aplicada: mesma estrutura, mesmos estados, mesma copy, mesma ordem de foco (DECISÕES §14 — nada reaberto). O que muda: a criatura do outro num mini-visor 64² sem anel (sprite 256² a 0,25×; 0,5× no vidro 192² do perfil), nenhum avatar de pessoa; abas SIS-04 (ativa em primary-ink + sublinhado, nunca placa cheia); ações 44 com ícone pelado (add ciano, paid tinta, remover muted), inerte por FORMA (tracejado + muted), nunca opacidade; o alerta em âmbar (filete + gold-ink), nunca vermelho; o selo NO SIGNAL = .seal SIS-06 (Silkscreen em selo, o 2º lugar autorizado — a única fora do vidro, isenção declarada); o grupo com o .meter SIS-07 e a presença por pessoa (check_circle / radio_button_unchecked). Escuro em todos, claro só no MainClaro. Medido: 0 texto <12, 0 overflow, 0 alvo <44, 0 opacidade <1, 0 pixel fora do vidro, fidelidade 8/8 (cmp.py; GrupoSemGrupo com +2 fo declarados — X2). Números = ordem de foco (1 = skip link, oculto)."
+    }
+  ],
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Social — a Biblioteca (diretório, amigos, estados, sem rede, o perfil do outro)"
+    },
+    {
+      "id": "page-2",
+      "name": "Social — o Grupo (coop): sem grupo, com grupo, estados"
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "page-1"
+  }
+}
