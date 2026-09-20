@@ -44,7 +44,7 @@ Fase 1 (`design/INVENTARIO-WIREFRAMES.md`).
 
 | Pasta | Qtd · formato | Mapa | Fluxo / artboard |
 |---|---|---|---|
-| `soulmon/lines/` | 24 · 256² alfa — 6 linhas × 4 estágios (ignar, lumel, serah, kaelen, orrin, thalindra) | `DUNGEON_LINE_SPRITES` (`utils/sprites.ts`) | Jogos (`MasmorraTurno`, `Arena`, `PesadeloIntro`), Onboarding-funil (`EscolherPersonagem`), Social (NPCs da Biblioteca), Home (modo demo) |
+| `soulmon/lines/` | 36 · 256² alfa — 9 linhas × 4 estágios (ignar, lumel, serah, kaelen, orrin, thalindra + igni, nautilu, astrase desde 15/09) | `DUNGEON_LINE_SPRITES` (`utils/sprites.ts`) | Jogos (`MasmorraTurno`, `Arena`, `PesadeloIntro`), Onboarding-funil (`EscolherPersonagem`), Social (NPCs da Biblioteca), Home (modo demo) |
 | `soulmon/rookie.png` … `ultra.png` | 11 · 384² — árvore genérica do jogador (rookie, 3×champion, 3×ultimate, 3×mega, ultra) | `SOULMON_SPRITES` | Home (`PetDeckEstados`, `TrilhaEvolucao`), Pet (`FichaEstados`), Evolução (`EvoSpriteEstados`), Onboarding-oráculo (`Reveal`) |
 | `soulmon/dungeon-spirit.png` | 1 · 128² | `DUNGEON_SPIRIT_SPRITE` | Jogos (`MasmorraLobby`) |
 | `soulmon/mascot-raven.png` | 1 · 512² | IntroScreen | Onboarding-funil (`IntroEstados`) |

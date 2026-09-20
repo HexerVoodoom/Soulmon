@@ -3851,7 +3851,7 @@ A grade de `src/components/BestiaryCard.tsx` é
 `Object.keys(DUNGEON_LINE_SPRITES)` × `TIERS`, onde `TIERS` são os **quatro**
 tiers que têm arte própria (`rookie`, `champion`, `ultimate`, `mega`) — baby-i e
 baby-ii reusam a arte de rookie, e repetir a mesma imagem duas vezes seria uma
-coleção que mente sobre o próprio tamanho. Hoje são 6 linhas × 4 = **24** células.
+coleção que mente sobre o próprio tamanho. Hoje são 9 linhas × 4 = **36** células (eram 6 × 4 = 24 até 15/09/2026, quando Igni/Nautilu/Astrase entraram — `c11dc49d`).
 
 O que ainda não apareceu é **silhueta**, não espaço vazio: silhueta diz "existe e
 você ainda não viu"; vazio não diz nada, e coleção só é coleção quando o que

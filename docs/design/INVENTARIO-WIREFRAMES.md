@@ -332,7 +332,7 @@ está vazio em 13/09/2026).
 | `STAT-03` | Estatísticas | `BirthCard` | normal — `{birth && (…)}`; o `App.tsx` monta `birth` sob `bornAt \&#124;\&#124; soulmonMeta?.baseName \&#124;\&#124; demoCharacterId` | `StatsPage` | — | P2 | aprovado |
 | `STAT-04` | Estatísticas | `BirthCard` | **demo** — `displaySprite` lê o acervo, que o demo nunca preenche, então há fallback `getSpriteForStage('rookie', gameState.demoCharacterId)` | `accountTier === 'demo'` | — | P2 | aprovado |
 | `STAT-05` | Estatísticas | `BestiaryCard` | ausente — `{(bestiary?.length ?? 0) > 0 && (…)}`: sem nenhum inimigo visto, o cartão **não monta**. A condição é **PRÓPRIA, não aninhada no álbum** (o álbum depende de `soulmonStages`, que o jogador grátis não tem — e é ele quem mais roda masmorra) | nenhum encontro | — | P2 | aprovado |
-| `STAT-06` | Estatísticas | `BestiaryCard` | parcial — 24 artes possíveis (6 linhas × 4 tiers), **silhueta** para o que não apareceu e contagem de COLEÇÃO (nunca percentual, nunca "faltam N") | masmorra | — | P2 | aprovado |
+| `STAT-06` | Estatísticas | `BestiaryCard` | parcial — **36** artes possíveis (9 linhas × 4 tiers desde `c11dc49d`, 15/09/2026; era 24), **silhueta** para o que não apareceu e contagem de COLEÇÃO (nunca percentual, nunca "faltam N") | masmorra | — | P2 | aprovado |
 | `STAT-07` | Estatísticas | `BestiaryCard` | completo — 24 de 24 | coleção cheia | — | P2 | aprovado |
 | `STAT-08` | Estatísticas | `FormAlbum` | normal — `{album && album.length > 0 && (…)}`, com `reachedAt` | evoluções | — | P2 | aprovado |
 | `STAT-09` | Estatísticas | `FormAlbum` | silhueta — para o não alcançado | formas futuras | — | P2 | aprovado |
