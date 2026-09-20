@@ -14,9 +14,10 @@ import { renderWithCss } from '../test/renderEnv';
 import { MilestoneCeremony } from './MilestoneCeremony';
 
 const base = {
-  tierIcon: '🌿',
+  tier: 'sprout',
   habitName: 'Ler',
-  text: '🌿 7 dias! Este hábito virou broto.',
+  // Sem emoji (canvas Rituais X3): o tier é o `eco` e o emblema no vidro.
+  text: '7 dias! Este hábito virou broto.',
   language: 'pt-BR' as const,
 };
 
@@ -29,9 +30,37 @@ describe('MilestoneCeremony — o que ela mostra', () => {
     expect(screen.getByText(base.text)).toBeTruthy();
   });
 
-  it('é anunciada a quem usa leitor de tela', () => {
+  it('é anunciada a quem usa leitor de tela — e é um DIÁLOGO com nome (X5, STATUS f)', () => {
     const { container } = renderWithCss(<MilestoneCeremony {...base} onDone={() => {}} />);
     expect(container.querySelector('[role="status"]')).not.toBeNull();
+    const dlg = container.querySelector('[role="dialog"]');
+    expect(dlg).not.toBeNull();
+    expect(dlg?.getAttribute('aria-labelledby')).toBe('mc-title');
+    expect(container.querySelector('#mc-title')?.textContent).toBe('Ler');
+  });
+
+  it('o pixel do marco mora no vidro: sprite a 128 e emblema do tier a 64 (D-R3, X1)', () => {
+    const { container } = renderWithCss(
+      <MilestoneCeremony {...base} spriteUrl="/sprite.png" onDone={() => {}} />,
+    );
+    const glass = container.querySelector('[data-ritual-glass]');
+    expect(glass).not.toBeNull();
+    const sprite = glass?.querySelector('[data-milestone-sprite]');
+    expect(sprite?.getAttribute('width')).toBe('128');
+    const emblem = glass?.querySelector('[data-milestone-emblem]');
+    expect(emblem?.getAttribute('width')).toBe('64');
+    expect(emblem?.getAttribute('src')).toMatch(/habit-7/);
+    // Nenhum PNG fora do vidro.
+    expect(container.querySelectorAll('img:not([data-ritual-glass] img)')).toHaveLength(0);
+    // E a frase vai sem emoji.
+    expect(container.textContent).not.toMatch(/🌿|🌾|🌳/);
+  });
+
+  it('Escape é o mesmo `onDone` — o teclado tem a mesma saída que o gesto', () => {
+    const onDone = vi.fn();
+    renderWithCss(<MilestoneCeremony {...base} onDone={onDone} />);
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onDone).toHaveBeenCalledTimes(1);
   });
 });
 

@@ -178,8 +178,6 @@ contra `--sm-bg` e `--sm-surface` do PRÓPRIO tema.
 
 | token | claro | escuro | para quê | um uso |
 |---|---|---|---|---|
-| `--sm-px-cyan-ink` | `#0f766e` (5,14:1 sobre `bg`) | `#5df0e0` (12,66:1) | ciano como TEXTO/BORDA | `src/components/MorningDream.tsx` |
-| `--sm-px-copper-ink` | `#8a5a2b` (5,38:1) | `#c68642` (5,81:1) | cobre como TEXTO/BORDA | `src/components/MorningDream.tsx` |
 | `--sm-ok-ink` | `#177a00` (5,16:1) | `#22A900` (5,69:1) | o verde "feito"/"hoje" | **nenhum** — ver §2.7 |
 | `--sm-haunt-ink` | `#6242ad` (6,79:1) | `#b39bff` (7,63:1) | o roxo do assombro, **nunca vermelho** | `src/components/TaskMeta.tsx` |
 | `--sm-haunt-veil` | `color-mix(in srgb, #6242ad 8%, var(--sm-surface))` | `color-mix(in srgb, #b39bff 12%, var(--sm-surface))` | véu da tarefa assombrada | `src/components/TaskMeta.tsx` |

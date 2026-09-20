@@ -26,3 +26,20 @@ export const emblemArt = (id: AchievementId): string | undefined => EMBLEM_ART[i
 
 /** Quantos emblemas o glob encontrou — guard de instalação (8). */
 export const EMBLEM_COUNT = Object.keys(EMBLEM_ART).length;
+
+/**
+ * O emblema do MARCO de hábito por tier (canvas Rituais, achado 10 / X4,
+ * decisão do lead 16/09/2026): `sprout` = `habit-7` (broto) · `sapling` =
+ * `habit-21` (arvoreta) · `tree` = `habit-66` (árvore). `seed` não tem marco
+ * e devolve `undefined`. A cerimônia desenha isto a 64 CSS (1× do nativo 64²)
+ * no vidro, no lugar do `tierIcon` emoji.
+ */
+const TIER_EMBLEM: Record<string, AchievementId> = {
+  sprout: 'habit-7',
+  sapling: 'habit-21',
+  tree: 'habit-66',
+};
+export const emblemFor = (tier: string): string | undefined => {
+  const id = TIER_EMBLEM[tier];
+  return id ? EMBLEM_ART[id] : undefined;
+};

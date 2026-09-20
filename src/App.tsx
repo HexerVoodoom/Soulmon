@@ -168,7 +168,7 @@ import {
   completeHabit, emptyRhythm, dayKeyOf, attributeMultiplier, milestoneReached, habitTier,
   constancy, needsIntervention, GOOD_CONSTANCY_RATIO,
 } from './utils/habitRhythm';
-import { normalizeSchedule, weekDaysForSchedule, HABIT_WEIGHT, MAX_DAILY_FOCUS, cheerReached, HABIT_TIER_ICONS } from './types/taskModel';
+import { normalizeSchedule, weekDaysForSchedule, HABIT_WEIGHT, MAX_DAILY_FOCUS, cheerReached } from './types/taskModel';
 import { equilibrarSemana, valeEquilibrar } from './utils/weekBalance';
 
 import type { Schedule, HabitAnchor, Effort } from './types/taskModel';
@@ -567,12 +567,12 @@ function habitCheerOf(state: GameState, activityId: string, todayKey: string) {
   return cheerReached(before.totalDone, after.totalDone);
 }
 
+// Sem emoji (canvas Rituais X3 / achado 18): o tier já é o `eco` FILL e o
+// emblema no vidro da cerimônia — um glifo colorido na frase repetiria os dois.
 const MILESTONE_TEXT: Record<string, { pt: string; en: string }> = {
-  sprout: { pt: '🌿 7 dias! Este hábito virou broto.', en: '🌿 7 days! This habit is a sprout now.' },
-  // 🌾 e não 🪴: ver `HABIT_TIER_ICONS` em types/taskModel.ts. O glifo antigo
-  // era Emoji 13.0 e saía como caixa vazia no meio desta frase.
-  sapling: { pt: '🌾 21 dias! Este hábito está criando tronco.', en: '🌾 21 days! This habit is growing a trunk.' },
-  tree: { pt: '🌳 66 dias! Este hábito virou parte de quem você é.', en: '🌳 66 days! This habit is part of who you are.' },
+  sprout: { pt: '7 dias! Este hábito virou broto.', en: '7 days! This habit is a sprout now.' },
+  sapling: { pt: '21 dias! Este hábito está criando tronco.', en: '21 days! This habit is growing a trunk.' },
+  tree: { pt: '66 dias! Este hábito virou parte de quem você é.', en: '66 days! This habit is part of who you are.' },
 };
 
 const RebirthModal = lazy(() => import('./components/RebirthModal').then(m => ({ default: m.RebirthModal })));
@@ -646,7 +646,7 @@ export default function App() {
   const [rebirthOpen, setRebirthOpen] = useState(false);
   /** WP2.4 — a cerimônia do marco. `null` = nenhuma acontecendo. */
   const [milestoneCeremony, setMilestoneCeremony] = useState<
-    { tierIcon: string; habitName: string; text: string; dateLabel: string; reducedMotion: boolean } | null
+    { tier: string; habitName: string; text: string; dateLabel: string; reducedMotion: boolean } | null
   >(null);
   const [editingActivity, setEditingActivity] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<string | null>(null);
@@ -1677,7 +1677,7 @@ export default function App() {
     const movimentoReduzido = typeof window !== 'undefined'
       && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     setMilestoneCeremony({
-      tierIcon: HABIT_TIER_ICONS[tier as keyof typeof HABIT_TIER_ICONS] ?? '🌱',
+      tier,
       habitName: name,
       text: language === 'pt-BR' ? text.pt : text.en,
       // A data do marco: marco é permanente, e a data é o que o torna memória
@@ -4575,11 +4575,11 @@ export default function App() {
         )}
 
         {/* WP2.4 — a cerimônia do marco. Fora da fila de intersticiais de
-            propósito: ela não pede nada, some sozinha em 2,5s e não pode
+            propósito (z-300): ela não pede nada além do gesto e não pode
             esperar a vez — comemorar depois não é comemorar. */}
         {milestoneCeremony && (
           <MilestoneCeremony
-            tierIcon={milestoneCeremony.tierIcon}
+            tier={milestoneCeremony.tier}
             habitName={milestoneCeremony.habitName}
             text={milestoneCeremony.text}
             dateLabel={milestoneCeremony.dateLabel}
@@ -4837,6 +4837,9 @@ export default function App() {
                     <WeeklyReportCard
                       report={weeklyReport(gameState, agoraA)}
                       suggestion={stackingSuggestion(gameState, agoraA, language)}
+                      /* A janela de 7 de cada hábito — a mesma da lista. */
+                      rhythms={gameState.habitRhythms}
+                      now={agoraA}
                       language={language}
                       onDismiss={handleDismissWeeklyReport}
                     />

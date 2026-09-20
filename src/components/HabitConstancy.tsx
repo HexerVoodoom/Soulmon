@@ -131,12 +131,22 @@ export function MaturityGlyph({ tier, aura = false, label }: { tier: string; aur
   );
 }
 
-export function HabitConstancy({ rhythm, schedule: _schedule, now, language, compact = false, hideMetrics = false }: HabitConstancyProps) {
+/**
+ * A JANELA DE 7 sozinha — exportada porque o cartão da semana
+ * (`WeeklyReportCard`, canvas Rituais RIT-18) desenha a mesma janela por
+ * hábito com o mesmo léxico (A2). Uma segunda cópia das formas e do
+ * `aria-label` divergiria em silêncio (footgun 9).
+ */
+export function ConstancyWindow({ rhythm, now, language, hideMetrics = false }: {
+  rhythm: HabitRhythm;
+  now: Date;
+  language: Language;
+  hideMetrics?: boolean;
+}) {
   const isPt = language === 'pt-BR';
   const { done, window } = constancy(rhythm, now);
-  const tier = habitTier(rhythm.totalDone);
-  const shields = Math.max(0, Math.min(REST_SHIELD_MAX, rhythm.shields));
-
+  const semJanela = window === 0;
+  const total = window || CONSTANCY_WINDOW_DAYS;
   const days = windowDays(now);
   const dayLabel = (day: Date, state: DotState) => {
     const d = day.toLocaleDateString(isPt ? 'pt-BR' : 'en-US', { weekday: 'short', day: 'numeric' });
@@ -150,6 +160,39 @@ export function HabitConstancy({ rhythm, schedule: _schedule, now, language, com
             : isPt ? 'não devido' : 'not due';
     return `${d}: ${s}`;
   };
+  const headlineTitle = semJanela
+    ? (isPt
+      ? 'Sem dias devidos na janela — começa hoje. Ninguém começa em 0%.'
+      : 'No due days in this window — it starts today. Nobody starts at 0%.')
+    : undefined;
+  /* O rótulo da janela: o número vai AQUI (leitura sonora), não na tela. */
+  const windowLabel = semJanela
+    ? (isPt ? 'Janela de constância: nenhum dia devido ainda' : 'Constancy window: no due days yet')
+    : hideMetrics
+      ? (isPt ? 'Janela de constância' : 'Constancy window')
+      : isPt
+        ? `Janela de constância: ${done} das últimas ${total}`
+        : `Constancy window: ${done} of the last ${total}`;
+  return (
+    <span
+      role="img"
+      aria-label={windowLabel}
+      title={headlineTitle}
+      style={{ display: 'inline-flex', alignItems: 'center', gap: 4, height: 12 }}
+    >
+      {days.map(day => {
+        const state = stateOf(rhythm, day);
+        return <span key={day.toDateString()} aria-hidden="true" title={dayLabel(day, state)} style={dotStyle(state)} />;
+      })}
+    </span>
+  );
+}
+
+export function HabitConstancy({ rhythm, schedule: _schedule, now, language, compact = false, hideMetrics = false }: HabitConstancyProps) {
+  const isPt = language === 'pt-BR';
+  const { done, window } = constancy(rhythm, now);
+  const tier = habitTier(rhythm.totalDone);
+  const shields = Math.max(0, Math.min(REST_SHIELD_MAX, rhythm.shields));
 
   /* WP2.2 — a aura. Calculada aqui, do mesmo `rhythm` que já chega. Quando
      deixa de valer ela some EM SILÊNCIO — anunciar a perda é exatamente a
@@ -173,15 +216,6 @@ export function HabitConstancy({ rhythm, schedule: _schedule, now, language, com
       : 'No due days in this window — it starts today. Nobody starts at 0%.')
     : undefined;
 
-  /* O rótulo da janela: o número vai AQUI (leitura sonora), não na tela. */
-  const windowLabel = semJanela
-    ? (isPt ? 'Janela de constância: nenhum dia devido ainda' : 'Constancy window: no due days yet')
-    : hideMetrics
-      ? (isPt ? 'Janela de constância' : 'Constancy window')
-      : isPt
-        ? `Janela de constância: ${done} das últimas ${total}`
-        : `Constancy window: ${done} of the last ${total}`;
-
   const tierWord = isPt ? TIER_NAME[tier].pt : TIER_NAME[tier].en;
   const maturityLabel = isPt ? `Maturidade: ${tierWord}` : `Maturity: ${tierWord}`;
   const auraLabel = hideMetrics
@@ -192,19 +226,7 @@ export function HabitConstancy({ rhythm, schedule: _schedule, now, language, com
     ? glyphLabel
     : `${maturityLabel} (${rhythm.totalDone} ${isPt ? 'dias' : 'days'})${aura ? ` · ${auraLabel}` : ''}`;
 
-  const janela = (
-    <span
-      role="img"
-      aria-label={windowLabel}
-      title={headlineTitle}
-      style={{ display: 'inline-flex', alignItems: 'center', gap: 4, height: 12 }}
-    >
-      {days.map(day => {
-        const state = stateOf(rhythm, day);
-        return <span key={day.toDateString()} aria-hidden="true" title={dayLabel(day, state)} style={dotStyle(state)} />;
-      })}
-    </span>
-  );
+  const janela = <ConstancyWindow rhythm={rhythm} now={now} language={language} hideMetrics={hideMetrics} />;
 
   const glifo = (
     <span title={glyphTitle} style={{ display: 'inline-flex' }}>

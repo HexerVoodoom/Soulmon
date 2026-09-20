@@ -163,11 +163,12 @@ export function WelcomePromptModal({
       title={content.title}
       maxWidth={420}
       footer={
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <button type="button" onClick={content.onPrimary} style={{ ...sm2Button('primary'), width: '100%' }}>
             {content.primary}
           </button>
-          <button type="button" onClick={content.onSecondary} style={{ ...sm2Button('quiet'), width: '100%' }}>
+          {/* D-R7: a recusa em `outline`, nunca `quiet` — peso de botão. */}
+          <button type="button" onClick={content.onSecondary} style={{ ...sm2Button('outline'), width: '100%' }}>
             {isPt ? 'Agora não' : 'Not now'}
           </button>
         </div>

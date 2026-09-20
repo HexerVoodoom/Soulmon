@@ -29,17 +29,34 @@
  *    caía para um `toast.success` — o mesmo de concluir qualquer tarefa — e
  *    entregava MENOS cerimônia justamente a quem tem mais chance de precisar
  *    de acessibilidade. Agora a cerimônia é a mesma; só as animações somem.
+ *
+ * CANVAS RITUAIS (`MarcoCerimonia`, D-R3/D-R10, X1/X3/X5; DECISÕES §21):
+ *  · a cerimônia é um `.dlg` com `role="dialog"` + `aria-labelledby` e o
+ *    trap/Escape do `useDialogA11y` (STATUS f: antes o Tab vazava para o
+ *    check-in sob o véu); Escape = o mesmo `onDone`. O véu mantém o
+ *    `role="status"` — é anunciada E é diálogo;
+ *  · o pixel do marco mora no VIDRO 208×144: sprite 256² a **128** (0,5×, o
+ *    mesmo do palco) + o emblema do tier 64² a **64** (1×) no canto —
+ *    `emblemFor(tier)` (`habit-7` broto · `habit-21` arvoreta · `habit-66`
+ *    árvore), nunca 0,75×;
+ *  · fora do vidro, aparelho: `eco` 48 FILL .34/.67/1 (o tier, o mesmo glifo
+ *    da lista), Fredoka 20, a frase SEM emoji, a data 12 `muted`, um único
+ *    `primary` relacional. Sem ×: a saída é o botão (V1).
  */
 import { useEffect } from 'react';
+import { Icon } from './ui/Icon';
 import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
+import { TIER_FILL } from './HabitConstancy';
+import { emblemFor } from '../utils/emblemArt';
+import { RitualDialog, RitualGlass, ritualTitle } from './ritual/RitualKit';
 import type { Language } from '../utils/i18n';
 
 interface MilestoneCeremonyProps {
-  /** Ícone do tier (`HABIT_TIER_ICONS`) — conteúdo do jogo, não ícone de UI. */
-  tierIcon: string;
+  /** O tier alcançado (`habitTier`): `sprout` · `sapling` · `tree`. */
+  tier: string;
   /** Nome do hábito que cruzou o marco. */
   habitName: string;
-  /** A frase do marco (já no idioma). */
+  /** A frase do marco (já no idioma, sem emoji). */
   text: string;
   /** Sprite atual do pet, quando existe. */
   spriteUrl?: string | null;
@@ -53,9 +70,10 @@ interface MilestoneCeremonyProps {
 }
 
 export function MilestoneCeremony({
-  tierIcon, habitName, text, spriteUrl, language, dateLabel, reducedMotion = false, onDone,
+  tier, habitName, text, spriteUrl, language, dateLabel, reducedMotion = false, onDone,
 }: MilestoneCeremonyProps) {
   const isPt = language === 'pt-BR';
+  const emblem = emblemFor(tier);
 
   useEffect(() => {
     // Háptico curto: é pontuação, não alarme. Falha em silêncio onde não há.
@@ -63,56 +81,56 @@ export function MilestoneCeremony({
   }, [reducedMotion]);
 
   return (
-    <div
-      role="status"
-      aria-live="polite"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        // 300: acima do pesadelo (210) e dos intersticiais (200). Ela ficava em
-        // 60 e era comemorada por baixo do check-in.
-        zIndex: 300,
-        display: 'grid',
-        placeItems: 'center',
-        // Véu, não bloqueio: a tela continua legível por baixo, porque o que
-        // acontece aqui é uma comemoração e não um diálogo.
-        backgroundColor: 'rgba(4, 18, 20, .55)',
-      }}
+    <RitualDialog
+      labelledBy="mc-title"
+      onClose={onDone}
+      // 300: acima do pesadelo (210) e dos intersticiais (200).
+      zIndex={300}
+      maxWidth={340}
+      veilRole="status"
+      style={{ textAlign: 'center', alignItems: 'center' }}
     >
-      <div style={{ textAlign: 'center', padding: 24 }}>
-        {spriteUrl && (
-          <img
-            src={spriteUrl}
-            alt=""
-            width={96}
-            height={96}
-            className={reducedMotion ? undefined : 'sm-milestone-pop'}
-            style={{ objectFit: 'contain', imageRendering: 'pixelated', display: 'block', margin: '0 auto 8px' }}
-          />
-        )}
-        <div className={reducedMotion ? undefined : 'sm-milestone-pop'} style={{ fontSize: 44, lineHeight: 1 }} aria-hidden="true">
-          {tierIcon}
-        </div>
-        <p style={{ ...sm2Text, color: '#fff', margin: '10px 0 2px', fontWeight: 600 }}>{habitName}</p>
-        <p style={{ ...sm2Hint, color: 'rgba(255,255,255,.85)', margin: 0 }}>{text}</p>
-        {dateLabel && (
-          <p style={{ ...sm2Hint, color: 'rgba(255,255,255,.55)', margin: '10px 0 0' }}>
-            {dateLabel}
-          </p>
-        )}
-        {/* A saída é relacional, e é a metade do desenho que o dossiê achou em
-            comum nos onze apps: o marco não é um aviso que se dispensa, é uma
-            coisa que os dois fizeram. */}
-        <button
-          type="button"
-          onClick={onDone}
-          autoFocus
-          style={{ ...sm2Button('primary'), marginTop: 16, minWidth: 200 }}
-        >
-          {isPt ? 'Seguimos juntos' : 'Let’s keep going together'}
-        </button>
-      </div>
-    </div>
+      {/* O VIDRO do marco: o palco em miniatura, com o emblema no canto. */}
+      {(spriteUrl || emblem) && (
+        <RitualGlass width={208} height={144} align="end" style={{ position: 'relative' }}>
+          {spriteUrl && (
+            <img
+              src={spriteUrl}
+              alt=""
+              width={128}
+              height={128}
+              data-milestone-sprite
+              className={reducedMotion ? undefined : 'sm-milestone-pop'}
+              style={{ width: 128, height: 128, display: 'block', margin: '0 0 4px -40px' }}
+            />
+          )}
+          {emblem && (
+            <img
+              src={emblem}
+              alt=""
+              width={64}
+              height={64}
+              data-milestone-emblem
+              style={{ position: 'absolute', right: 8, top: 8, width: 64, height: 64, display: 'block' }}
+            />
+          )}
+        </RitualGlass>
+      )}
+      <Icon name="eco" size={48} fill={TIER_FILL[tier] ?? 0} tone="primary" />
+      <p id="mc-title" style={ritualTitle}>{habitName}</p>
+      <p style={{ ...sm2Text, margin: 0 }}>{text}</p>
+      {dateLabel && <p style={sm2Hint}>{dateLabel}</p>}
+      {/* A saída é relacional, e é a metade do desenho que o dossiê achou em
+          comum nos onze apps: o marco não é um aviso que se dispensa, é uma
+          coisa que os dois fizeram. */}
+      <button
+        type="button"
+        onClick={onDone}
+        style={{ ...sm2Button('primary'), marginTop: 4, minWidth: 200 }}
+      >
+        {isPt ? 'Seguimos juntos' : 'Let’s keep going together'}
+      </button>
+    </RitualDialog>
   );
 }
 

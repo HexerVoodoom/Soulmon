@@ -338,6 +338,14 @@ const ALLOWLIST: Divida[] = [
     motivo: 'Ilustração de estado VAZIO da lista do dia: `task_alt` 48 ciano acima de "No activity registered." (canvas Atividades `ListaVazia`, SIS-06). Ver ENTRADA 1.',
   },
   {
+    arquivo: 'src/components/MorningDream.tsx', size: 48, quantos: 1,
+    motivo: 'Ilustração de estado: a manhã SEM cena — `wb_sunny` 48 `gold-ink` no lugar do vidro vazio (canvas Rituais `SonhoSemCena`, D-R2). Ver ENTRADA 1.',
+  },
+  {
+    arquivo: 'src/components/MilestoneCeremony.tsx', size: 48, quantos: 1,
+    motivo: 'Ilustração de estado: o tier do marco — `eco` 48 FILL .34/.67/1, o mesmo glifo da lista, fora do vidro da cerimônia (canvas Rituais `MarcoCerimonia`, D-R10). Ver ENTRADA 1.',
+  },
+  {
     arquivo: 'src/components/WelcomePromptModal.tsx', size: 48, quantos: 1,
     motivo: 'Ilustração de estado: o herói do modal de boas-vindas. Ver ENTRADA 1.',
   },
@@ -577,10 +585,17 @@ describe('guard da escala de ícone — §6.1 é lei', () => {
    * já recusou. **O próximo aumento não deve ser um aumento**: 11 de 13 são o
    * mesmo papel, e a resposta certa é a §6.1a virar linha da tabela de §6.1 —
    * aí `escalaDeclarada()` aceita 48 sozinha e nove entradas caem de uma vez.
+   *
+   * Segundo aumento, 13 → **15** (20/09/2026, canvas Rituais §21, aprovado
+   * pelo dono): o `wb_sunny` da manhã sem cena (`SonhoSemCena`) e o `eco` do
+   * tier na cerimônia do marco (`MarcoCerimonia`) são desenhados a 48 nos
+   * artboards — ilustração de estado, o mesmo papel dos outros 13. Continua
+   * valendo o parágrafo acima: 13 de 15 são `state`, e a saída é a §6.1a
+   * virar degrau — decisão do lead de design, não deste teste.
    */
   it('a allowlist não cresce em silêncio', () => {
     const perdoados = ALLOWLIST.reduce((n, d) => n + d.quantos, 0);
-    expect(perdoados, 'dívida nova sem revisar a escala — leia a ENTRADA 1').toBeLessThanOrEqual(13);
+    expect(perdoados, 'dívida nova sem revisar a escala — leia a ENTRADA 1').toBeLessThanOrEqual(15);
     // e ela é uma FATIA pequena: se um dia a maior parte dos call-sites estiver
     // perdoada, a escala virou ficção outra vez.
     expect(perdoados / CALL_SITES.length).toBeLessThan(0.2);

@@ -21,8 +21,9 @@
 import type { Dream, DreamRarity } from '../utils/restWindow';
 import type { Language } from '../utils/i18n';
 import { Icon } from './ui/Icon';
-import { useDialogA11y } from '../hooks/useDialogA11y';
+import { sm2Button, sm2Hint } from './form/FormKit';
 import { DREAM_ART } from '../utils/dreamArt';
+import { RitualDialog, RitualGlass, ritualLabel } from './ritual/RitualKit';
 
 export interface MorningDreamProps {
   open: boolean;
@@ -34,18 +35,6 @@ export interface MorningDreamProps {
   onClose: () => void;
 }
 
-/**
- * A raridade aparece como TEXTO, então precisa dos tokens com par por tema:
- * `--sm-px-cyan` media 1,40:1 sobre a superfície clara e `--sm-px-copper`
- * 3,05:1 — o rótulo "Raro" era praticamente invisível no tema claro, que é o
- * padrão de quem abre o app de manhã.
- */
-const RARITY_TONE: Record<DreamRarity, string> = {
-  common: 'var(--sm-muted)',
-  rare: 'var(--sm-px-cyan-ink)',
-  legendary: 'var(--sm-px-copper-ink)',
-};
-
 function rarityLabel(rarity: DreamRarity, isPt: boolean): string {
   if (rarity === 'legendary') return isPt ? 'Lendário' : 'Legendary';
   if (rarity === 'rare') return isPt ? 'Raro' : 'Rare';
@@ -53,14 +42,6 @@ function rarityLabel(rarity: DreamRarity, isPt: boolean): string {
 }
 
 export function MorningDream({ open, dream, isNew, language, onClose }: MorningDreamProps) {
-  // Trap + Escape + devolução de foco (`hooks/useDialogA11y.ts`). O Escape
-  // daqui funcionava POR ACIDENTE: o handler estava na div do véu, que não é
-  // focável, e só recebia a tecla porque o `autoFocus` do botão OK fazia o
-  // evento borbulhar até lá. Um Tab do usuário já matava o acidente.
-  // Chamado ANTES do `return null` — hook depois de retorno condicional quebra
-  // a ordem dos hooks.
-  const dialogRef = useDialogA11y<HTMLDivElement>(open, onClose);
-
   if (!open) return null;
 
   const isPt = language === 'pt-BR';
@@ -79,87 +60,61 @@ export function MorningDream({ open, dream, isNew, language, onClose }: MorningD
       ? 'Seu Soulmon acordou primeiro e ficou esperando você. Hoje não veio nenhuma cena da noite — e está tudo bem.'
       : 'Your Soulmon woke up first and waited for you. No scene came back from the night today — and that’s okay.');
 
+  const art = dream ? DREAM_ART[dream.id] : undefined;
+  const centered = { ...sm2Hint, textAlign: 'center' as const };
+
   return (
-    <div
-      style={{
-        position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(6, 24, 26, 0.55)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
-      }}
-    >
-      <div
-        ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-label={headline}
-        className="sm-px-card"
-        style={{ width: '100%', maxWidth: 320, position: 'relative', padding: '26px 20px 20px', textAlign: 'center' }}
-      >
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label={isPt ? 'Fechar' : 'Close'}
-          /* 44x44 de alvo de toque (WCAG 2.2 AA 2.5.8), ícone pelado dentro —
-             ícone NUNCA dentro de box (regra visual do dono). */
-          style={{
-            position: 'absolute', top: 4, right: 4, width: 44, height: 44,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'none', border: 'none', cursor: 'pointer',
-          }}
-        >
-          {/* CHROME da cena, não conteúdo do visor: o fechar é interface e
-              fala Material Symbols, não pixel. */}
-          <Icon name="close" size={24} tone="muted" />
-        </button>
+    /* Trap + Escape + devolução de foco vêm do `RitualDialog` (`useDialogA11y`).
+       O Escape daqui funcionava POR ACIDENTE: o handler estava na div do véu,
+       que não é focável, e só recebia a tecla pelo `autoFocus` do botão. */
+    <RitualDialog label={headline} onClose={onClose} maxWidth={320} closeLabel={isPt ? 'Fechar' : 'Close'}>
+      <p style={{ ...centered, margin: '0 36px' }}>{headline}</p>
 
-        <p style={{ fontSize: '0.76rem', color: 'var(--sm-muted)', margin: '0 0 10px' }}>
-          {headline}
-        </p>
-
-        {/* A cena do sonho, agora em arte nossa (utils/dreamArt.ts). O emoji
-            fica como saída só para o caso de um sonho novo entrar no catálogo
-            antes de a arte dele existir — silencioso, e melhor que um buraco. */}
-        <div aria-hidden="true" style={{ fontSize: 56, lineHeight: 1.1, margin: '0 0 8px', display: 'flex', justifyContent: 'center' }}>
-          {dream && DREAM_ART[dream.id]
-            ? <img src={DREAM_ART[dream.id]} alt="" width={72} height={72}
-                   style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-            : (dream ? dream.emoji : '🌅')}
-        </div>
-
-        {dream && (
-          <>
-            <p className="sm-display" style={{ fontSize: '0.98rem', margin: '0 0 6px', color: 'var(--sm-ink)' }}>
-              {label}
-            </p>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 8 }}>
-              <span style={{ fontSize: '0.75rem', letterSpacing: '0.06em', textTransform: 'uppercase', color: RARITY_TONE[dream.rarity] }}>
-                {rarityLabel(dream.rarity, isPt)}
-              </span>
-              {isNew && (
-                <span style={{ fontSize: '0.75rem', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--sm-px-cyan-ink)', fontWeight: 800 }}>
-                  {isPt ? '· Novo!' : '· New!'}
-                </span>
-              )}
-            </div>
-          </>
-        )}
-
-        <p style={{ fontSize: '0.8rem', color: 'var(--sm-muted)', lineHeight: 1.5, margin: '0 0 6px' }}>
-          {line}
-        </p>
-
-        {dream && isNew && (
-          <p style={{ fontSize: '0.75rem', color: 'var(--sm-muted)', lineHeight: 1.45, margin: '0 0 6px' }}>
-            {isPt ? 'Cena nova na coleção de sonhos.' : 'New scene in the dream collection.'}
-          </p>
-        )}
-
-        <div style={{ paddingTop: 12 }}>
-          <button autoFocus onClick={onClose} className="sm-btn" style={{ width: '100%' }}>
-            {isPt ? 'Bom dia!' : 'Good morning!'}
-          </button>
-        </div>
+      {/* A cena do sonho (utils/dreamArt.ts) a 1× num vidro 128². O emoji fica
+          como saída só para um sonho novo entrar no catálogo antes de a arte
+          dele existir — conteúdo, não pixel: fora do vidro. Sem sonho, o sol. */}
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        {dream && art
+          ? (
+            <RitualGlass width={128}>
+              <img src={art} alt="" width={96} height={96} style={{ width: 96, height: 96, display: 'block' }} />
+            </RitualGlass>
+          )
+          : dream
+            ? <span aria-hidden="true" style={{ fontSize: 56, lineHeight: 1.1 }}>{dream.emoji}</span>
+            : <Icon name="wb_sunny" size={48} tone="gold" />}
       </div>
-    </div>
+
+      {dream && (
+        <>
+          <p style={{
+            fontFamily: 'var(--sm2-font-display)', fontWeight: 600, fontSize: 'var(--sm2-text-md)',
+            lineHeight: 'var(--sm2-leading-title)', color: 'var(--sm2-ink)', margin: 0, textAlign: 'center',
+          }}>
+            {label}
+          </p>
+          {/* Raridade sem cor por tier e sem duração (2e): é rótulo, não nota. */}
+          <p style={{ ...ritualLabel, textAlign: 'center' }}>
+            {rarityLabel(dream.rarity, isPt)}
+            {isNew && <b style={{ color: 'var(--sm2-gold-ink)', fontWeight: 600 }}>{isPt ? ' · Novo!' : ' · New!'}</b>}
+          </p>
+        </>
+      )}
+
+      <p style={centered}>{line}</p>
+
+      {dream && isNew && (
+        <p style={centered}>
+          {isPt ? 'Cena nova na coleção de sonhos.' : 'New scene in the dream collection.'}
+        </p>
+      )}
+
+      <div style={{ paddingTop: 4 }}>
+        <button type="button" onClick={onClose} style={{ ...sm2Button('primary'), width: '100%' }}>
+          {isPt ? 'Bom dia!' : 'Good morning!'}
+        </button>
+      </div>
+    </RitualDialog>
   );
 }
 
