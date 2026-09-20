@@ -5864,6 +5864,9 @@ export default function App() {
           toName={getStageNameById(evolutionCeremony.to)}
           language={language}
           demoCharacterId={gameState.demoCharacterId}
+          fromSpriteUrl={displaySprite(spriteAcervo, evolutionCeremony.from)?.url}
+          toSpriteUrl={displaySprite(spriteAcervo, evolutionCeremony.to)?.url}
+          reachedAt={gameState.formReachedAt?.[evolutionCeremony.to]}
           onEvolved={handleEvolve}
           onClose={() => setEvolutionCeremony(null)}
         />
