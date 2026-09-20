@@ -726,6 +726,16 @@ function hydrateRest(v: unknown, anchor?: PlayerDayAnchor): RestState {
     window,
     nights,
     dreams: strArr(raw.dreams),
+    // ⚠️ `dreamDates` (WP4.10, a PRIMEIRA data de cada sonho) era descartado
+    // AQUI a cada load: `rollDream` carimbava, o save gravava, e a próxima
+    // abertura do app apagava — a coleção inteira voltava a "sem data"
+    // (achado em 20/09/2026, ao ligar o "#NN · data" do Dex). Só entradas
+    // string→string; o resto some, nunca vira data inventada.
+    ...(() => {
+      const d = Object.fromEntries(Object.entries(obj<unknown>(raw.dreamDates))
+        .filter((e): e is [string, string] => typeof e[1] === 'string' && e[1].length > 0));
+      return Object.keys(d).length ? { dreamDates: d } : {};
+    })(),
     // `hideMetrics` é switch de apresentação: só o `true` explícito o liga.
     ...(raw.hideMetrics === true ? { hideMetrics: true } : {}),
     // A âncora do load VENCE a que veio no save do `rest`: a do `GameState` é a

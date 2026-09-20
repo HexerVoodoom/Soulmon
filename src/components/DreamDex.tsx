@@ -166,10 +166,11 @@ function DreamCell({ dream, owned, date, isPt }: { dream: Dream; owned: boolean;
       <span style={{ ...cellText, color: owned ? 'var(--sm2-ink)' : 'var(--sm2-muted)', fontWeight: owned ? 500 : 400 }}>
         {owned ? label : '???'}
       </span>
-      {/* "#NN · data" só no obtido; save antigo sem data mostra só o "#NN".
+      {/* "#NN · data" só no obtido; save antigo sem data mostra só o "#NN". `nowrap`:
+          medido em 390 a célula tem 71px e "#01 · Sep 12" quebrava em duas linhas.
           `margin-top: auto` alinha a linha à base da célula em toda a fileira. */}
       {owned && (
-        <span className="sm2-num" data-dream-date style={{ ...cellText, color: 'var(--sm2-muted)', marginTop: 'auto' }}>
+        <span className="sm2-num" data-dream-date style={{ ...cellText, color: 'var(--sm2-muted)', marginTop: 'auto', whiteSpace: 'nowrap' }}>
           {date ? `${catalogNumber(dream)} · ${dayKeyLabel(date, isPt)}` : catalogNumber(dream)}
         </span>
       )}

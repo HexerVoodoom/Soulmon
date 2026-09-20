@@ -279,6 +279,7 @@ describe('hydrateSave garante o TIPO, não só a presença', () => {
         window: { start: '22:30', end: '06:30' },
         nights: [{ date: hoje, sleptAt: new Date().toISOString(), onTime: true }],
         dreams: ['dream-aurora', 'dream-on-the-moon'],
+        dreamDates: { 'dream-aurora': '2026-09-12', 'dream-on-the-moon': 7 },
         hideMetrics: true,
       },
       habitRhythms: {
@@ -291,6 +292,9 @@ describe('hydrateSave garante o TIPO, não só a presença', () => {
     expect(s.rest.nights[0].onTime).toBe(true);
     expect(s.rest.dreams).toEqual(['dream-aurora', 'dream-on-the-moon']);
     expect(s.rest.hideMetrics).toBe(true);
+    // a data de coleção sobrevive ao load (era descartada); entrada que não é
+    // string some em vez de virar data inventada
+    expect(s.rest.dreamDates).toEqual({ 'dream-aurora': '2026-09-12' });
     expect(s.habitRhythms.h1.shields).toBe(2);
     // `totalDone` alimenta os marcos de 7/21/66 dias: rebaixá-lo roubaria
     // maturidade de hábito de quem já a conquistou.

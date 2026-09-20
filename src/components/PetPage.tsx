@@ -120,7 +120,9 @@ const HERO: CSSProperties = {
   position: 'absolute', left: 32, top: 32, width: 128, height: 128, imageRendering: 'pixelated',
 };
 const AURA: CSSProperties = {
-  position: 'absolute', left: -32, top: -32, width: 256, height: 256, imageRendering: 'pixelated',
+  // `maxWidth: 'none'`: o preflight (`img { max-width: 100% }`) encolhia a aura
+  // para os 192 do vidro — medido no browser (largura 192 em vez de 256).
+  position: 'absolute', left: -32, top: -32, width: 256, height: 256, maxWidth: 'none', imageRendering: 'pixelated',
 };
 const SIGIL: CSSProperties = {
   position: 'absolute', left: 8, top: 8, width: 48, height: 48, imageRendering: 'pixelated',
