@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { Language } from '../utils/i18n';
-import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
+import { ModalSheet, sm2Button, sm2Hint, sm2Label, sm2Text } from './form/FormKit';
 import { weekdayShort, weekdayFull, WEEKDAY_INDEXES } from '../utils/weekdays';
 import {
   equilibrarSemana, type AtividadeSemanal, type PropostaDeEquilibrio,
@@ -46,37 +46,50 @@ interface Props {
   onAplicar: (mudancas: AtividadeSemanal[]) => void;
 }
 
-/** Uma barrinha por dia — a leitura tem que ser instantânea, sem números. */
+/**
+ * Uma barrinha por dia — a leitura tem que ser instantânea, sem números.
+ *
+ * Canvas ATIVIDADES (`EquilibrarSemana`, D-A5/R5): "hoje" em `surface-2` +
+ * fronteira `muted` (fantasma), "como ficaria" em `primary-soft` + fronteira
+ * `primary-ink`; sem dígito na tela — o dígito vai no `aria-label`, que a
+ * leitura sonora precisa. Sem vermelho para o dia acima do teto (o convite
+ * não é alarme) e sem `opacity` para o dia vazio: ele é uma barra de 8px.
+ */
 function Semana({
-  contagem, teto, language, titulo,
-}: { contagem: number[]; teto: number; language: Language; titulo: string }) {
+  contagem, teto, language, titulo, proposta,
+}: { contagem: number[]; teto: number; language: Language; titulo: string; proposta: boolean }) {
   const pico = Math.max(...contagem, teto, 1);
   return (
     <div>
-      <p style={{ ...sm2Hint, margin: '0 0 6px' }}>{titulo}</p>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6, alignItems: 'end' }}>
+      <p style={{ ...sm2Label, marginBottom: 8, letterSpacing: '.06em', textTransform: 'uppercase' }}>{titulo}</p>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', height: 60 }}>
         {WEEKDAY_INDEXES.map(dia => {
           const n = contagem[dia] ?? 0;
-          const acima = n > teto;
           return (
-            <div key={dia} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-              <div
-                // O número vai no `aria-label` porque a barra é a leitura
-                // rápida e o leitor de tela precisa do dado, não da altura.
-                role="img"
-                aria-label={`${weekdayFull(dia, language)}: ${n}`}
-                style={{
-                  width: '100%',
-                  height: Math.max(4, Math.round((n / pico) * 56)),
-                  borderRadius: 4,
-                  backgroundColor: acima ? 'var(--sm2-danger-ink)' : 'var(--sm2-primary-fill)',
-                  opacity: n === 0 ? 0.25 : 1,
-                }}
-              />
-              <span style={{ ...sm2Hint, margin: 0 }}>{weekdayShort(dia, language)}</span>
-            </div>
+            <div
+              key={dia}
+              // O número vai no `aria-label` porque a barra é a leitura
+              // rápida e o leitor de tela precisa do dado, não da altura.
+              role="img"
+              aria-label={`${weekdayFull(dia, language)}: ${n}`}
+              style={{
+                flex: 1,
+                boxSizing: 'border-box',
+                height: Math.max(8, Math.round((n / pico) * 56)),
+                borderRadius: '4px 4px 0 0',
+                borderStyle: 'solid',
+                borderWidth: '1px 1px 0',
+                backgroundColor: proposta ? 'var(--sm2-primary-soft)' : 'var(--sm2-surface-2)',
+                borderColor: proposta ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)',
+              }}
+            />
           );
         })}
+      </div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        {WEEKDAY_INDEXES.map(dia => (
+          <span key={dia} style={{ ...sm2Hint, flex: 1, textAlign: 'center' }}>{weekdayShort(dia, language)}</span>
+        ))}
       </div>
     </div>
   );
@@ -94,6 +107,11 @@ export function BalanceWeekModal({
 
   const nomePorId = useMemo(
     () => new Map(atividades.map(a => [a.id, a.name])),
+    [atividades],
+  );
+  /* Os dias de HOJE, para a lista "Name: Mon · Wed → Tue · Thu". */
+  const diasPorId = useMemo(
+    () => new Map(atividades.map(a => [a.id, a.weekDays])),
     [atividades],
   );
 
@@ -122,59 +140,64 @@ export function BalanceWeekModal({
 
   const semMudanca = proposta.mudancas.length === 0;
 
+  const dias = (ds: number[]) => ds.map(d => weekdayShort(d, language)).join(' · ');
+
   return (
     <ModalSheet open={open} title={t.titulo} onClose={onClose} language={language}>
       {semMudanca ? (
-        <p style={{ ...sm2Text, margin: 0 }}>{t.semMudanca}</p>
+        <>
+          <p style={{ ...sm2Hint, fontSize: 'var(--sm2-text-sm)', margin: 0 }}>{t.semMudanca}</p>
+          <button type="button" style={{ ...sm2Button('outline', false, 'sm'), alignSelf: 'flex-start' }} onClick={onClose}>
+            {isPt ? 'Entendi' : 'Got it'}
+          </button>
+        </>
       ) : (
         <>
-          <p style={{ ...sm2Text, margin: '0 0 18px' }}>{t.intro}</p>
+          <p style={{ ...sm2Text, margin: 0 }}>{t.intro}</p>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-            <Semana contagem={proposta.antes} teto={teto} language={language} titulo={t.antes} />
-            <Semana contagem={proposta.depois} teto={teto} language={language} titulo={t.depois} />
+          <Semana contagem={proposta.antes} teto={teto} language={language} titulo={t.antes} proposta={false} />
+          <Semana contagem={proposta.depois} teto={teto} language={language} titulo={t.depois} proposta />
+
+          {/* A lista nominal do que muda: "confie em mim" não é confirmação
+              informada. Quem aceita precisa poder ver o que aceitou. */}
+          <div>
+            <p style={{ ...sm2Label, marginBottom: 8, letterSpacing: '.06em', textTransform: 'uppercase' }}>{t.oQueMuda}</p>
+            <ul style={{ margin: 0, padding: '0 0 0 16px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {proposta.mudancas.map(m => (
+                <li key={m.id} style={sm2Hint}>
+                  <span>{nomePorId.get(m.id) ?? m.id}</span>
+                  <span>{`: ${dias(diasPorId.get(m.id) ?? [])} → ${dias(m.days)}`}</span>
+                </li>
+              ))}
+            </ul>
           </div>
 
-          <p style={{ ...sm2Hint, margin: '18px 0 0' }}>{t.mesmaFrequencia}</p>
+          <p style={{ ...sm2Hint, margin: 0 }}>{t.mesmaFrequencia}</p>
 
+          {/* Honestidade quando não cabe — em `muted`, não em vermelho: é
+              informação, e a proposta continua sendo a melhor possível. */}
           {!proposta.cabe && (
-            <p role="status" style={{ ...sm2Hint, color: 'var(--sm2-danger-ink)', margin: '10px 0 0' }}>
+            <p role="status" style={{ ...sm2Hint, margin: 0 }}>
               {t.naoCabe}
             </p>
           )}
 
-          {/* A lista nominal do que muda: "confie em mim" não é confirmação
-              informada. Quem aceita precisa poder ver o que aceitou. */}
-          <p style={{ ...sm2Hint, margin: '18px 0 6px' }}>{t.oQueMuda}</p>
-          <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {proposta.mudancas.map(m => (
-              <li key={m.id} style={{ ...sm2Text, display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-                <span>{nomePorId.get(m.id) ?? m.id}</span>
-                <span style={{ color: 'var(--sm2-muted)' }}>
-                  {m.days.map(d => weekdayShort(d, language)).join(' · ')}
-                </span>
-              </li>
-            ))}
-          </ul>
+          {/* "Not now" com o MESMO peso de "Go ahead" (D-A5, 02 §36: saída de
+              primeira classe) — os dois `outline`: a folha mostra, não decide. */}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button type="button" style={{ ...sm2Button('outline'), flex: 1 }} onClick={onClose}>
+              {t.agoraNao}
+            </button>
+            <button
+              type="button"
+              style={{ ...sm2Button('outline'), flex: 1 }}
+              onClick={() => { onAplicar(proposta.mudancas); onClose(); }}
+            >
+              {t.aplicar}
+            </button>
+          </div>
         </>
       )}
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 24 }}>
-        {!semMudanca && (
-          <button
-            type="button"
-            style={{ ...sm2Button('primary'), width: '100%' }}
-            onClick={() => { onAplicar(proposta.mudancas); onClose(); }}
-          >
-            {t.aplicar}
-          </button>
-        )}
-        {/* "Agora não" é ação de primeira classe, e não um X no canto: recusar
-            uma sugestão tem que ser tão fácil quanto aceitá-la. */}
-        <button type="button" style={{ ...sm2Button('outline'), width: '100%' }} onClick={onClose}>
-          {semMudanca ? (isPt ? 'Entendi' : 'Got it') : t.agoraNao}
-        </button>
-      </div>
     </ModalSheet>
   );
 }

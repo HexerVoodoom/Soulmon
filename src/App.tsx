@@ -302,16 +302,19 @@ function PostponeNudgeSheet({
 
   const picks = state.kind === 'ready' ? state.items.filter(i => picked[i.name]) : [];
 
-  const actionCard: React.CSSProperties = {
-    display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4,
-    width: '100%', textAlign: 'left',
-    padding: '12px 14px', minHeight: 44,
-    border: '1px solid var(--sm2-line)', borderRadius: 12,
-    background: 'var(--sm2-surface)', cursor: 'pointer',
-  };
-  const actionTitle: React.CSSProperties = {
-    ...sm2Text, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8,
-  };
+  /* Canvas Atividades `NudgeAdiamento` (D-A5): as três saídas são `outline`
+     64 de duas linhas (glifo 24 pelado + título 14/500 + pista 12 `muted`),
+     NENHUMA primária — a folha mostra, não decide. Inerte ("Shrink it" no
+     esforço 1) = fronteira `line` + tinta `muted`, com o motivo escrito, sem
+     `opacity` (Home E7). */
+  const opt = (disabled = false): React.CSSProperties => ({
+    ...sm2Button('outline', disabled),
+    ...(disabled ? { backgroundColor: 'var(--sm2-surface)', border: '1px solid var(--sm2-line)' } : null),
+    width: '100%', minHeight: 64, flexDirection: 'column', alignItems: 'flex-start',
+    gap: 2, padding: '8px 16px', textAlign: 'left', fontSize: 'var(--sm2-text-sm)',
+  });
+  const optTitle: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, fontWeight: 500 };
+  const optHint = (disabled = false): React.CSSProperties => ({ ...sm2Hint, fontWeight: 400, color: disabled ? 'var(--sm2-muted)' : 'var(--sm2-muted)' });
 
   return (
     <ModalSheet
@@ -321,7 +324,7 @@ function PostponeNudgeSheet({
       title={isPt ? 'Essa aí tá difícil?' : 'Is this one stuck?'}
       maxWidth={480}
     >
-      <p style={sm2Hint}>
+      <p style={{ ...sm2Text, margin: 0 }}>
         {isPt
           ? `"${task.name}" já foi adiada ${task.postponedCount ?? 0} vezes. Isso é um dado, não uma bronca — e dado tem botão. Escolha uma saída, ou feche: nada acontece se você fechar.`
           : `"${task.name}" has been postponed ${task.postponedCount ?? 0} times. That's data, not a scolding — and data has buttons. Pick a way out, or close: nothing happens if you close.`}
@@ -331,15 +334,16 @@ function PostponeNudgeSheet({
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <button
           type="button"
-          style={{ ...actionCard, cursor: state.kind === 'loading' ? 'progress' : 'pointer' }}
+          style={{ ...opt(), cursor: state.kind === 'loading' ? 'progress' : 'pointer' }}
           onClick={runDecompose}
           disabled={state.kind === 'loading'}
+          aria-busy={state.kind === 'loading' || undefined}
         >
-          <span style={actionTitle}>
-            <Icon name="psychology" size={20} />
+          <span style={optTitle}>
+            <Icon name="psychology" size={24} />
             {isPt ? 'Decompor' : 'Break it down'}
           </span>
-          <span style={sm2Hint}>
+          <span style={optHint()}>
             {isPt
               ? 'O pet pensa em primeiros passos pequenos e você escolhe quais viram tarefa.'
               : 'Your pet thinks up small first steps and you pick which become tasks.'}
@@ -371,29 +375,45 @@ function PostponeNudgeSheet({
               <span style={sm2Hint}>
                 {isPt ? 'Toque nos passos que você quer:' : 'Tap the steps you want:'}
               </span>
+              {/* Passos sugeridos = linhas de 44 com checkbox 24 (canvas):
+                  `role="checkbox"`, a linha inteira é o alvo. */}
               {state.items.map(item => {
                 const on = !!picked[item.name];
                 return (
                   <button
                     key={item.name}
                     type="button"
-                    aria-pressed={on}
+                    role="checkbox"
+                    aria-checked={on}
                     onClick={() => setPicked(p => ({ ...p, [item.name]: !p[item.name] }))}
                     style={{
-                      ...actionCard,
-                      flexDirection: 'row', alignItems: 'center', gap: 10,
-                      borderColor: on ? 'var(--sm2-primary-ink)' : 'var(--sm2-line)',
+                      display: 'flex', alignItems: 'center', gap: 12, minHeight: 44, width: '100%',
+                      padding: '0 4px', background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer',
                     }}
                   >
-                    <Icon name={on ? 'check_circle' : 'radio_button_unchecked'} size={20} fill={on ? 1 : 0} />
+                    <span
+                      aria-hidden="true"
+                      style={{
+                        width: 24, height: 24, boxSizing: 'border-box', borderRadius: 'var(--sm2-radius-sm)', flexShrink: 0,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        border: `2px solid ${on ? 'var(--sm2-primary-fill)' : 'var(--sm2-muted)'}`,
+                        backgroundColor: on ? 'var(--sm2-primary-fill)' : 'transparent',
+                        color: 'var(--sm2-on-primary)',
+                      }}
+                    >
+                      {on && <Icon name="check" size={20} fill={1} weight={700} />}
+                    </span>
                     <span style={sm2Text}>{item.name}</span>
                   </button>
                 );
               })}
+              {/* "Add N steps": o único `primary` da folha — há UMA ação;
+                  inerte até escolher, rotulado. */}
               <button
                 type="button"
-                style={sm2Button('primary', picks.length === 0)}
+                style={{ ...sm2Button('primary', picks.length === 0, 'sm'), alignSelf: 'flex-start' }}
                 disabled={picks.length === 0}
+                aria-disabled={picks.length === 0 || undefined}
                 onClick={() => { onDecompose(task.id, picks); onClose(); }}
               >
                 {isPt
@@ -408,36 +428,37 @@ function PostponeNudgeSheet({
       {/* ---- ENCOLHER ---- */}
       <button
         type="button"
-        style={{ ...actionCard, cursor: canShrink ? 'pointer' : 'default' }}
+        style={opt(!canShrink)}
         disabled={!canShrink}
+        aria-disabled={!canShrink || undefined}
         onClick={() => { onShrink(task.id); onClose(); }}
       >
-        <span style={actionTitle}>
-          <Icon name="do_not_disturb_on" size={20} />
+        <span style={optTitle}>
+          <Icon name="do_not_disturb_on" size={24} />
           {isPt ? 'Encolher' : 'Shrink it'}
         </span>
-        <span style={sm2Hint}>
+        <span className="sm2-num" style={optHint(!canShrink)}>
           {canShrink
             ? (isPt
-              ? `Vira uma versão menor (esforço ${effort} → ${effort - 1}) e o contador de adiamentos zera.`
-              : `Becomes a smaller version (effort ${effort} → ${effort - 1}) and the postpone counter resets.`)
+              ? `esforço ${effort} → ${effort - 1} · zera o contador`
+              : `effort ${effort} → ${effort - 1} · resets the counter`)
             : (isPt
               ? 'Já é do tamanho mínimo — não dá pra encolher mais.'
               : 'Already at the smallest size — nothing left to shrink.')}
         </span>
       </button>
 
-      {/* ---- DEIXAR PRA LÁ ---- */}
+      {/* ---- DEIXAR PRA LÁ ---- `archive` (D-A8): `nightlight` é o Someday. */}
       <button
         type="button"
-        style={actionCard}
+        style={opt()}
         onClick={() => { onDrop(task.id); onClose(); }}
       >
-        <span style={actionTitle}>
-          <Icon name="nightlight" size={20} />
+        <span style={optTitle}>
+          <Icon name="archive" size={24} />
           {isPt ? 'Deixar pra lá' : 'Let it go'}
         </span>
-        <span style={sm2Hint}>
+        <span style={optHint()}>
           {isPt
             ? 'Sai da lista sem ser concluída e sem ser apagada. Fica guardada, e dá pra trazer de volta quando quiser.'
             : 'Leaves the list without being completed and without being deleted. It stays tucked away, and you can bring it back any time.'}
@@ -5992,6 +6013,8 @@ export default function App() {
           open
           tasks={triageTasks}
           language={language}
+          /* A reação do pet no fim: o MESMO sprite do visor. */
+          petSprite={displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? getSpriteForStage(gameState.evolutionStage, gameState.demoCharacterId)}
           onResolve={handleTriageResolve}
           onClose={() => setTriageTasks(null)}
         />

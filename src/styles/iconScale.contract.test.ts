@@ -334,10 +334,6 @@ const ALLOWLIST: Divida[] = [
     motivo: 'Três ilustrações de estado: PvP desligado, erro ao carregar oponentes, erro ao carregar o ranking. Eram 40. Ver ENTRADA 1.',
   },
   {
-    arquivo: 'src/components/TriagePile.tsx', size: 48, quantos: 1,
-    motivo: 'Ilustração de estado de CONCLUSÃO: "pilha arrumada!". Era 40. Ver ENTRADA 1.',
-  },
-  {
     arquivo: 'src/components/pixel/RitualPanel.tsx', size: 48, quantos: 1,
     motivo: 'Ilustração de estado VAZIO da lista do dia: `task_alt` 48 ciano acima de "No activity registered." (canvas Atividades `ListaVazia`, SIS-06). Ver ENTRADA 1.',
   },
@@ -584,7 +580,7 @@ describe('guard da escala de ícone — §6.1 é lei', () => {
    */
   it('a allowlist não cresce em silêncio', () => {
     const perdoados = ALLOWLIST.reduce((n, d) => n + d.quantos, 0);
-    expect(perdoados, 'dívida nova sem revisar a escala — leia a ENTRADA 1').toBeLessThanOrEqual(14);
+    expect(perdoados, 'dívida nova sem revisar a escala — leia a ENTRADA 1').toBeLessThanOrEqual(13);
     // e ela é uma FATIA pequena: se um dia a maior parte dos call-sites estiver
     // perdoada, a escala virou ficção outra vez.
     expect(perdoados / CALL_SITES.length).toBeLessThan(0.2);
