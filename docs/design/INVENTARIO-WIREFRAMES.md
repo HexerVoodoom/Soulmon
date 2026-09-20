@@ -444,6 +444,7 @@ Um fluxo por despacho, dois agentes nunca no mesmo canvas (`CONTRACT.md`).
 | L | `wireframes/loja/identidade/` — canvas Loja (identidade), 7 + `MainClaro`, checkpoint 20/09/2026 → `identidade` (§26) | 7 | 8 | — | três moedas distintas; palco falso saiu |
 | T | `wireframes/estatisticas/identidade/` — canvas Estatísticas (identidade), 7 + `MainClaro`, checkpoint 20/09/2026 → `identidade` (§27) | 7 | 8 | — | bestiário 36 |
 | C | `wireframes/social/identidade/` — canvas Social (identidade), 8 + `MainClaro`, checkpoint 20/09/2026 → `identidade` (§28) | 8 | 9 | — | selo offline SIS-06 |
+| K | `wireframes/conta/identidade/` — canvas Conta (identidade), 14 + `MainClaro`, checkpoint 20/09/2026 → `identidade` (§29) | 32 | 15 | — | tudo aparelho; Redo primário |
 
 ### 2.1 Home — ordem sugerida dentro do canvas
 Chrome primeiro (`HOME-40`→`HOME-42`, `HOME-43`), porque tudo se desenha dentro dele → a

@@ -1,0 +1,163 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "title": "CONTA-01 · 02 · 06 · a página de Configurações — o cartão de instalar e \"Your account\" deslogada (identidade)",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 2416,
+      "page": "page-1"
+    },
+    {
+      "file": "MainClaro.dc.html",
+      "title": "CONTA-01 claro · a mesma página no tema CLARO (prova de AA)",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1544,
+      "page": "page-1"
+    },
+    {
+      "file": "ContaLogada.dc.html",
+      "title": "CONTA-03 · \"Your account\" logada — Restaurar compras, Sair (quiet), as respostas da restauração, o código de recuperação em mono",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 2586,
+      "page": "page-1"
+    },
+    {
+      "file": "DadosTelemetria.dc.html",
+      "title": "CONTA-04 · 05 · \"Your data\" — exportar e apagar em outline; o 503 é ESTADO em tinta neutra; o inventário; \"Erase now\" outline, nunca danger",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 3086,
+      "page": "page-1"
+    },
+    {
+      "file": "Grupos.dc.html",
+      "title": "CONTA-01 · os outros grupos — história, o que o Soulmon te manda, aparência (segmentos tonais), ajuda, seu ritmo (horas em mono)",
+      "x": 0,
+      "y": 3186,
+      "w": 390,
+      "h": 2470,
+      "page": "page-1"
+    },
+    {
+      "file": "Descanso.dc.html",
+      "title": "CONTA-07 · 08 · 09 · 10 · a Janela de Descanso — a própria janela, o .meter de constância, o vazio neutro, o lembrete, sem métricas (os sonhos ficam)",
+      "x": 490,
+      "y": 3186,
+      "w": 390,
+      "h": 2577,
+      "page": "page-1"
+    },
+    {
+      "file": "Passos.dc.html",
+      "title": "CONTA-11 · 12 · os passos — consentimento antes do sistema (dois botões iguais); com permissão (número em mono 24 + .meter); sem sensor (morto)",
+      "x": 980,
+      "y": 3186,
+      "w": 390,
+      "h": 1997,
+      "page": "page-1"
+    },
+    {
+      "file": "Carregando.dc.html",
+      "title": "CONTA-33 · carregando — o skeleton sem Silkscreen fora do vidro; a nav fica",
+      "x": 1470,
+      "y": 3186,
+      "w": 390,
+      "h": 1651,
+      "page": "page-1"
+    },
+    {
+      "file": "Personalidade.dc.html",
+      "title": "CONTA-14 · 13 · \"Personality\" — três grupos de chips 44, \"More options\", Default (quiet) / Save (primary); o painel rápido (fora)",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 2125,
+      "page": "page-2"
+    },
+    {
+      "file": "GuiaGlossario.dc.html",
+      "title": "CONTA-15 · 16 · o Guia (acordeão com expand_more/less) e o Glossário (dl) — os números saem das constantes",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 2159,
+      "page": "page-2"
+    },
+    {
+      "file": "RefazerRitual.dc.html",
+      "title": "CONTA-17 · \"Redo the ritual\" — folha curta; Cancel e Redo em outline, mesma largura; nada em danger",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 1711,
+      "page": "page-2"
+    },
+    {
+      "file": "Creditos.dc.html",
+      "title": "CONTA-18 · 19 · \"Credits\" — linhas-botão 56; packs com diamond em credit-ink + mono; sem cura; sem reroll sem perfil",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 2471,
+      "page": "page-2"
+    },
+    {
+      "file": "NovaLeitura.dc.html",
+      "title": "CONTA-20 · 21 · \"New Reading\" — chips 44; \"Read again\" inerte até mudar; confirmando; sem créditos; a falha em âmbar",
+      "x": 0,
+      "y": 2571,
+      "w": 390,
+      "h": 2070,
+      "page": "page-2"
+    },
+    {
+      "file": "Desbloquear.dc.html",
+      "title": "CONTA-22 · 23 · 24 · o ‹UnlockAccountModal› — perks com check_circle; Unlock primary / Not now outline / restore quiet, mesma largura; comprando; recusa em âmbar",
+      "x": 490,
+      "y": 2571,
+      "w": 390,
+      "h": 2420,
+      "page": "page-2"
+    },
+    {
+      "file": "Convites.dc.html",
+      "title": "CONTA-25 · o ‹UnlockNudge› e seus 6 pontos — o .nudge 280 com auto_awesome dourado; nunca abre sozinho",
+      "x": 980,
+      "y": 2571,
+      "w": 390,
+      "h": 2010,
+      "page": "page-2"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "leia",
+      "page": "page-1",
+      "x": 0,
+      "y": -170,
+      "w": 900,
+      "text": "Soulmon — Conta — identidade (Fase 2, 12º canvas, 20/09/2026). Cada artboard = o wireframe cinza de mesmo nome (docs/design/wireframes/conta/, DECISÕES §15) com a identidade do Sistema aplicada: tudo é APARELHO (vetor, tokens --sm2-*); o único vidro é o palco mini da Home atrás das cinco folhas, onde o wireframe o põe. Créditos = dinheiro real (diamond em credit-ink + número em mono; sem Bits→Créditos, sem cura); a Janela de Descanso é do usuário (sem score, hideMetrics preserva os sonhos); desbloquear é convite (.nudge dourado, nunca cobrança); telemetria = consentimento explícito; Guia/Glossário com números das CONSTANTES; perda irreversível e confirmação em outline, nunca primário nem danger. Página 1 = a SettingsPage; página 2 = os modais que o menu alcança. Números = ordem de foco (1 = skip link, oculto). Escuro em todos; claro só no MainClaro."
+    }
+  ],
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Conta — identidade: a página de Configurações (grupos, descanso, passos, carregando)"
+    },
+    {
+      "id": "page-2",
+      "name": "Conta — identidade: os modais que o menu alcança (personalidade, guia, ritual, créditos, nova leitura, compra, convites)"
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "page-1"
+  }
+}

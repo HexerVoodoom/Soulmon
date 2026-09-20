@@ -1,0 +1,530 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+
+
+/* X12: sem @import do Google — self-host é regra (04 §4.1); servir da raiz do repo */
+@font-face{font-family:'Fredoka';font-weight:300 700;font-display:swap;src:url('../../../../../public/fonts/fredoka-latin.woff2') format('woff2')}
+@font-face{font-family:'Rubik';font-weight:400 500;font-display:swap;src:url('../../../../../public/fonts/rubik-latin.woff2') format('woff2')}
+@font-face{font-family:'Silkscreen';font-weight:400;font-display:swap;src:url('../../../../../node_modules/@fontsource/silkscreen/files/silkscreen-latin-400-normal.woff2') format('woff2')}
+@font-face{font-family:'Material Symbols Rounded';font-weight:100 700;font-display:block;src:url('../../../../../public/fonts/material-symbols-rounded.woff2') format('woff2')}
+.ab[data-theme=dark]{--sm2-bg:#08191A;--sm2-surface:#0F2A29;--sm2-surface-2:#163735;--sm2-line:#1E3F3C;--sm2-ink:#E9F5F2;--sm2-muted:#9DBCB4;--sm2-primary-ink:#5FF3E0;--sm2-primary-fill:#5FF3E0;--sm2-primary-deep:#29C9B8;--sm2-primary-soft:rgba(95, 243, 224, .14);--sm2-on-primary:#04211F;--sm2-gold-ink:#EBBE84;--sm2-gold-fill:#D9A05B;--sm2-on-gold:#04211F;--sm2-danger-ink:#FF8B8B;--sm2-danger-fill:#FF8B8B;--sm2-on-danger:#04211F;--sm2-viewport-bg:#071413;--sm2-viewport-ink:#E9F5F2;--sm2-viewport-ring:#C68642;--sm2-viewport-ring-deep:#241507;--sm2-viewport-danger:#FF8B8B;--sm2-credit-ink:#C9A7FF;--sm2-icon-grad:-25;--sm2-haunted:#85A0B8;}.ab[data-theme=light]{--sm2-bg:#F1F7F5;--sm2-surface:#FFFFFF;--sm2-surface-2:#E9F2EF;--sm2-line:#DCE9E6;--sm2-ink:#0E2422;--sm2-muted:#4E6B66;--sm2-primary-ink:#0B6F68;--sm2-primary-fill:#0B6F68;--sm2-primary-deep:#08544F;--sm2-primary-soft:#D6F5EF;--sm2-on-primary:#FFFFFF;--sm2-gold-ink:#8A5A2B;--sm2-gold-fill:#A2641F;--sm2-on-gold:#FFFFFF;--sm2-danger-ink:#B3261E;--sm2-danger-fill:#B3261E;--sm2-on-danger:#FFFFFF;--sm2-viewport-bg:#0E2422;--sm2-viewport-ink:#E9F5F2;--sm2-viewport-ring:#B0722F;--sm2-viewport-ring-deep:#5E3612;--sm2-viewport-danger:#FF8B8B;--sm2-credit-ink:#6D28D9;--sm2-icon-grad:0;--sm2-haunted:#4E6A83;}
+.ab{--sm2-font-display:'Fredoka','Segoe UI',system-ui,sans-serif;--sm2-font-text:'Rubik','Segoe UI',system-ui,sans-serif;--sm2-font-pixel:'Silkscreen',ui-monospace,'Courier New',monospace;--sm2-font-icon:'Material Symbols Rounded';--sm2-font-mono:'Cascadia Mono',Consolas,Menlo,'Roboto Mono','DejaVu Sans Mono','Courier New',ui-monospace,monospace;--sm2-font-serif:'Georgia','Times New Roman',serif;
+--sm2-text-xs:12px;--sm2-text-sm:14px;--sm2-text-md:16px;--sm2-text-lg:20px;--sm2-text-xl:24px;--sm2-text-2xl:32px;--sm2-leading-body:1.45;--sm2-leading-title:1.2;
+--sm2-radius-sm:4px;--sm2-radius-md:12px;--sm2-radius-lg:20px;--sm2-dur-tap:120ms;--sm2-dur-enter:200ms;--sm2-dur-page:320ms;--sm2-dur-scan:400ms;--sm2-ease:cubic-bezier(.2,0,0,1)}
+body{margin:0;background:#fff}
+.ab{width:390px;display:flex;flex-direction:column;font-family:var(--sm2-font-text);color:var(--sm2-ink);-webkit-font-smoothing:antialiased}
+.phone{width:390px;min-height:844px;box-sizing:border-box;background:var(--sm2-bg);color:var(--sm2-ink);display:flex;flex-direction:column;position:relative;overflow:hidden;border:1px solid #999}
+.content{flex:1;padding:12px 16px 16px;display:flex;flex-direction:column;gap:16px;min-height:0}
+h1,h2,h3,p,ul{margin:0}
+.phone code{font-family:var(--sm2-font-mono);font-size:max(12px,.92em)}
+.h1{font-family:var(--sm2-font-display);font-weight:600;font-size:var(--sm2-text-xl);line-height:var(--sm2-leading-title)}
+.h2{font-family:var(--sm2-font-display);font-weight:600;font-size:var(--sm2-text-lg);line-height:var(--sm2-leading-title)}
+.h3{font-family:var(--sm2-font-display);font-weight:500;font-size:var(--sm2-text-md);line-height:var(--sm2-leading-title)}
+.t{font-size:var(--sm2-text-sm);line-height:var(--sm2-leading-body)}
+.s{font-size:var(--sm2-text-xs);line-height:var(--sm2-leading-body);color:var(--sm2-muted)}
+.md{font-size:var(--sm2-text-md);line-height:var(--sm2-leading-body)}
+.b{font-weight:500}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1}
+.mono{font-family:var(--sm2-font-mono)}
+.serif{font-family:var(--sm2-font-serif)}
+.pix{font-family:var(--sm2-font-pixel);text-transform:uppercase;font-size:var(--sm2-text-sm);letter-spacing:0;-webkit-font-smoothing:none;line-height:1.2}
+.ico{font-family:var(--sm2-font-icon);font-weight:normal;font-style:normal;line-height:1;display:inline-block;white-space:nowrap;direction:ltr;font-feature-settings:'liga';user-select:none;flex-shrink:0;color:currentColor;--f:0;--w:500;--o:24;font-variation-settings:'FILL' var(--f),'wght' var(--w),'GRAD' var(--sm2-icon-grad),'opsz' var(--o);transition:font-variation-settings var(--sm2-dur-tap) var(--sm2-ease),color var(--sm2-dur-tap) var(--sm2-ease)}
+.ico.on{--f:1}
+.i18{font-size:18px;--o:20}.i20{font-size:20px;--o:20}.i24{font-size:24px;--o:24}.i32{font-size:32px;--o:32}.i48{font-size:48px;--o:48}
+.card{background:var(--sm2-surface);border:1px solid var(--sm2-line);border-radius:var(--sm2-radius-md);padding:12px;box-sizing:border-box;display:flex;flex-direction:column;gap:8px}
+.sec{display:flex;flex-direction:column;gap:8px}
+.lab{font-family:var(--sm2-font-text);font-weight:500;font-size:var(--sm2-text-xs);letter-spacing:.06em;text-transform:uppercase;color:var(--sm2-muted)}
+.row{display:flex;align-items:center;gap:8px}
+.wrap{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.sw{display:grid;grid-template-columns:28px 1fr auto;gap:8px;align-items:center;min-height:32px}
+.sw i{display:block;width:28px;height:28px;border-radius:var(--sm2-radius-sm);border:1px solid var(--sm2-line);box-sizing:border-box}
+.sw code{font-size:12px;color:var(--sm2-ink)}
+.sw .hx{font-family:var(--sm2-font-mono);font-size:12px;color:var(--sm2-muted);text-align:right;white-space:normal;word-break:break-all;width:108px}
+.sw .rl{font-size:12px;line-height:1.25;color:var(--sm2-muted)}
+.btn{min-height:48px;display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:var(--sm2-radius-md);padding:0 20px;box-sizing:border-box;font-family:var(--sm2-font-text);font-weight:500;font-size:var(--sm2-text-md);border:0;transition:background-color var(--sm2-dur-tap) var(--sm2-ease),transform var(--sm2-dur-tap) var(--sm2-ease)}
+.btn.pri{background:var(--sm2-primary-fill);color:var(--sm2-on-primary)}
+.btn.pri.pressed{background:var(--sm2-primary-deep);transform:translateY(1px)}
+.btn.out{background:var(--sm2-surface);color:var(--sm2-ink);box-shadow:inset 0 0 0 1px var(--sm2-muted)}
+.btn.out.pressed{background:var(--sm2-surface-2)}
+.btn.qui{background:transparent;color:var(--sm2-muted)}
+.btn.qui.pressed{background:var(--sm2-surface-2)}
+.btn.gho{background:transparent;color:var(--sm2-primary-ink)}
+.btn.gho.pressed{background:var(--sm2-primary-soft)}
+.btn.dis{background:var(--sm2-surface-2);color:var(--sm2-muted);box-shadow:none;cursor:not-allowed}
+.btn.gho.dis,.btn.qui.dis{background:transparent;color:var(--sm2-muted)}
+.btn.out.dis{box-shadow:inset 0 0 0 1px var(--sm2-line)}
+.focus{outline:2px solid var(--sm2-primary-ink);outline-offset:3px;border-radius:var(--sm2-radius-md)}
+.btn.sm{min-height:44px;font-size:var(--sm2-text-sm);padding:0 16px}
+.btn.lg{min-height:56px;padding:0 24px}
+.btn.full{width:100%}
+.iconbtn.s44{width:44px;height:44px;color:var(--sm2-muted)}
+.iconbtn{width:48px;height:48px;display:inline-flex;align-items:center;justify-content:center;border-radius:var(--sm2-radius-md);color:var(--sm2-ink);background:transparent}
+.chip{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid var(--sm2-muted);background:var(--sm2-surface-2);color:var(--sm2-ink);font-size:var(--sm2-text-sm);font-weight:500;box-sizing:border-box}
+.chip.sel{background:var(--sm2-primary-soft);border-color:var(--sm2-primary-ink);color:var(--sm2-primary-ink)}
+.chip.day{min-width:44px;padding:0;justify-content:center}
+.chip.tag{min-height:24px;padding:0 8px;background:var(--sm2-surface-2);border-color:transparent;color:var(--sm2-muted);font-size:var(--sm2-text-xs)}
+.chip.tag.gold{color:var(--sm2-gold-ink)}
+.chip.tag.pri{color:var(--sm2-primary-ink)}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:var(--sm2-text-xs);font-weight:500;color:var(--sm2-muted)}
+.inp{min-height:44px;display:flex;align-items:center;gap:8px;padding:0 12px;border-radius:var(--sm2-radius-md);background:var(--sm2-surface-2);border:1px solid var(--sm2-muted);box-sizing:border-box;font-size:var(--sm2-text-md);color:var(--sm2-ink)}
+.inp .ph{color:var(--sm2-muted)}
+.inp.foc{border-color:var(--sm2-primary-ink);box-shadow:0 0 0 2px var(--sm2-primary-ink)}
+.inp.warn{border-color:var(--sm2-gold-ink);box-shadow:0 0 0 2px var(--sm2-gold-ink)}
+.hint{font-size:var(--sm2-text-xs);line-height:1.35;color:var(--sm2-muted);display:flex;gap:4px;align-items:flex-start}
+.hint.gold{color:var(--sm2-gold-ink)}
+.switch{width:52px;height:32px;border-radius:999px;background:var(--sm2-surface-2);border:2px solid var(--sm2-muted);box-sizing:border-box;position:relative;flex:none}
+.switch::after{content:"";position:absolute;top:4px;left:4px;width:20px;height:20px;border-radius:50%;background:var(--sm2-muted);transition:left var(--sm2-dur-tap) var(--sm2-ease)}
+.switch.on{background:var(--sm2-primary-fill);border-color:var(--sm2-primary-fill)}
+.switch.on::after{left:24px;background:var(--sm2-on-primary)}
+.cb{width:24px;height:24px;border-radius:var(--sm2-radius-sm);border:2px solid var(--sm2-muted);box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;flex:none;background:transparent}
+.cb.on{background:var(--sm2-primary-fill);border-color:var(--sm2-primary-fill);color:var(--sm2-on-primary)}
+.cb.on .ico{--f:1;--w:700}
+.tap44{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+.li{display:flex;align-items:center;gap:12px;min-height:56px;border-top:1px solid var(--sm2-line)}
+.li:first-child{border-top:0}
+.nav{height:68px;border-top:1px solid var(--sm2-line);background:var(--sm2-surface);display:grid;grid-template-columns:repeat(5,minmax(0,1fr));flex:none}
+.navc{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;position:relative;min-height:44px;color:var(--sm2-muted);font-size:var(--sm2-text-xs);font-weight:500}
+.navc.on{color:var(--sm2-primary-ink)}
+.navc.on .ico{--f:1}
+.navc.on::after{content:"";position:absolute;left:22%;right:22%;bottom:0;height:3px;border-radius:2px 2px 0 0;background:var(--sm2-primary-ink);box-shadow:0 0 8px var(--sm2-primary-ink)}
+.sheet{background:var(--sm2-surface);border-radius:var(--sm2-radius-lg) var(--sm2-radius-lg) 0 0;padding:8px 16px 16px;display:flex;flex-direction:column;gap:12px;box-shadow:0 -2px 8px rgba(4,18,20,.12),0 -12px 32px rgba(4,18,20,.22)}
+.handle{width:36px;height:4px;border-radius:2px;background:var(--sm2-line);margin:0 auto 4px}
+.scrim{background:rgba(4,18,20,.55);padding:24px 0 0;border-radius:var(--sm2-radius-md)}
+/* O VISOR */
+.device{box-sizing:border-box;padding:16px;border-radius:var(--sm2-radius-lg);border:3px solid var(--sm2-viewport-ring);background:var(--sm2-surface);display:flex;flex-direction:column;gap:12px;align-items:center}
+.ring{padding:4px;border-radius:var(--sm2-radius-lg);background-color:var(--sm2-viewport-ring);background-image:linear-gradient(180deg,color-mix(in srgb,var(--sm2-viewport-ring) 74%,#fff) 0%,var(--sm2-viewport-ring) 46%,color-mix(in srgb,var(--sm2-viewport-ring) 72%,var(--sm2-viewport-ring-deep)) 100%);box-shadow:inset 0 0 0 2px var(--sm2-viewport-ring-deep),0 2px 0 0 var(--sm2-viewport-ring-deep),0 6px 18px rgba(0,0,0,.35);display:inline-block}
+.screen{display:block;position:relative;overflow:hidden;border-radius:var(--sm2-radius-md);background:var(--sm2-viewport-bg);color:var(--sm2-viewport-ink);image-rendering:pixelated}
+.screen img{image-rendering:pixelated;display:block}
+.glass{position:absolute;inset:0;pointer-events:none;border-radius:var(--sm2-radius-md);background-image:linear-gradient(160deg,rgba(255,255,255,.22) 0%,rgba(255,255,255,.09) 18%,rgba(255,255,255,.03) 32%,transparent 46%),radial-gradient(120% 100% at 50% 50%,rgba(0,0,0,0) 55%,rgba(0,0,0,.12) 100%)}
+.vbar{position:relative;display:block;width:192px;height:16px;background:url('../../../../../src/assets/soulmon/hud/bar-frame-96x8.png') 0 0/192px 16px no-repeat;image-rendering:pixelated}
+.vbar i{position:absolute;top:2px;width:12px;height:12px;background:url('../../../../../src/assets/soulmon/hud/bar-fill-6.png') 0 0/12px 12px no-repeat;image-rendering:pixelated}
+.vbar i.half{width:6px}
+.frame9{position:absolute;inset:0;pointer-events:none;border:24px solid transparent;border-image:url('../../../../../src/assets/soulmon/hud/frame-pipe-vine-96.png') 24 / 24px round;image-rendering:pixelated;box-sizing:border-box}
+.skel{background:var(--sm2-surface-2);border-radius:var(--sm2-radius-sm)}
+.seal{display:inline-flex;align-items:center;gap:8px;min-height:32px;padding:0 12px;border-radius:999px;background:var(--sm2-surface-2);border:1px solid var(--sm2-line);color:var(--sm2-ink)}
+.note{font-size:12px;line-height:1.35;color:var(--sm2-muted)}
+.tagd{display:inline-block;border:1px dashed var(--sm2-muted);font-size:12px;color:var(--sm2-muted);padding:0 4px;border-radius:3px;line-height:14px;font-weight:600;white-space:nowrap}
+.tagd.p{border-style:solid;color:var(--sm2-gold-ink);border-color:var(--sm2-gold-ink)}
+.dur{display:flex;align-items:center;gap:8px;font-size:var(--sm2-text-xs)}
+.dur i{display:block;height:8px;border-radius:4px;background:var(--sm2-primary-fill);flex:none}
+.grid4{display:flex;align-items:flex-end;gap:8px}
+.grid4 i{display:block;background:var(--sm2-primary-soft);border:1px solid var(--sm2-primary-ink);box-sizing:border-box}
+.rad{display:flex;gap:12px;align-items:flex-end}
+.rad i{display:block;width:56px;height:40px;background:var(--sm2-surface-2);border:1px solid var(--sm2-line);box-sizing:border-box}
+.pair{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;line-height:1.3}
+.pair .r{font-family:var(--sm2-font-mono);white-space:nowrap}
+.ok{color:var(--sm2-primary-ink);font-weight:500}
+.ptitle{display:flex;align-items:center;gap:8px;padding-bottom:8px;border-bottom:1px solid var(--sm2-line)}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--sm2-line)}
+.tab{flex:1;min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:4px;font-size:var(--sm2-text-sm);font-weight:500;color:var(--sm2-muted);position:relative}
+.tab.on{color:var(--sm2-primary-ink)}
+.tab.on::after{content:"";position:absolute;left:16%;right:16%;bottom:-1px;height:3px;border-radius:2px 2px 0 0;background:var(--sm2-primary-ink)}
+.meter{height:12px;border-radius:var(--sm2-radius-sm);background:var(--sm2-surface-2);border:1px solid var(--sm2-muted);box-sizing:border-box;overflow:hidden;position:relative}
+.meter i{display:block;height:100%;background:var(--sm2-primary-fill);border-radius:3px}
+.meter i.gold{background:var(--sm2-gold-fill)}
+.segb{display:flex;gap:4px}
+.segb i{display:block;flex:1;height:12px;border-radius:var(--sm2-radius-sm);background:var(--sm2-surface-2);border:1px solid var(--sm2-muted);box-sizing:border-box}
+.segb i.on{background:var(--sm2-primary-fill);border-color:var(--sm2-primary-fill)}
+.segb i.half{background:linear-gradient(90deg,var(--sm2-primary-fill) 50%,var(--sm2-surface-2) 50%)}
+.slot{width:64px;height:64px;border-radius:var(--sm2-radius-md);background:var(--sm2-surface-2);border:1px solid var(--sm2-muted);box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.slot.sel{border:2px solid var(--sm2-primary-ink)}
+.slot .ov{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--sm2-muted)}
+.slot .ct{position:absolute;right:4px;bottom:2px;font-size:var(--sm2-text-xs);font-weight:500}
+.stat{display:inline-flex;align-items:center;gap:4px;min-height:32px;padding:0 12px;border-radius:999px;background:var(--sm2-surface-2);font-size:var(--sm2-text-xs);color:var(--sm2-muted)}
+.stat b{font-weight:500;color:var(--sm2-ink)}
+.seg{display:flex;gap:4px}
+.segi{flex:1;min-height:44px;padding:8px 8px;border-radius:var(--sm2-radius-md);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:var(--sm2-text-sm);font-weight:500;border:1px solid var(--sm2-muted);background:var(--sm2-surface-2);color:var(--sm2-ink);box-sizing:border-box}
+.segi.on{border-color:transparent;background:var(--sm2-primary-fill);color:var(--sm2-on-primary)}
+.segi span{font-size:var(--sm2-text-xs);font-weight:400;color:var(--sm2-muted)}
+.segi.on span{color:var(--sm2-on-primary)}
+.hdr{display:flex;align-items:center;gap:8px;min-height:44px}
+.dlg{background:var(--sm2-surface);border-radius:var(--sm2-radius-lg);padding:16px;display:flex;flex-direction:column;gap:12px;box-shadow:0 1px 2px rgba(4,18,20,.10),0 4px 12px rgba(4,18,20,.10)}
+.toast{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border-radius:var(--sm2-radius-md);background:var(--sm2-surface-2);border:1px solid var(--sm2-muted);font-size:var(--sm2-text-sm)}
+.sim{position:absolute;inset:0;background:var(--sm2-viewport-bg)}
+/* rodapé do artboard — fora do telefone, neutro (é anotação, não UI) */
+.foot{width:390px;box-sizing:border-box;border:1px solid #999;border-top:0;background:#eee;color:#111;padding:10px 12px 12px;display:flex;flex-direction:column;gap:6px;font-size:11px;line-height:1.35;font-family:system-ui,'Segoe UI',sans-serif}
+.foot h4{margin:0;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#666}
+.foot ul{margin:0;padding-left:14px}.foot p{margin:0}
+.foot code{font-family:ui-monospace,Consolas,monospace;font-size:.92em}
+.foot .tg{display:inline-block;border:1px dashed #999;font-size:9px;color:#666;padding:0 4px;border-radius:3px;line-height:14px;font-weight:600;background:#fff}
+
+  
+/* ===== HOME (composição): só layout — nenhum token novo ===== */
+.phone{height:844px}
+.phone.tall{height:auto;min-height:844px}
+.content{padding:8px 16px 0;gap:8px;overflow:hidden}
+.sheetp{flex:1;overflow:hidden;padding:12px 16px 16px;display:flex;flex-direction:column;gap:12px;min-height:0}
+.hdr{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px}
+.wordmark{font-family:var(--sm2-font-display);font-weight:600;font-size:var(--sm2-text-lg);letter-spacing:.08em;text-transform:uppercase;line-height:1.2;color:var(--sm2-ink)}
+.fo{display:inline-flex;width:16px;height:16px;border:1px solid var(--sm2-primary-ink);font-size:12px;line-height:1;align-items:center;justify-content:center;border-radius:2px;background:var(--sm2-bg);color:var(--sm2-primary-ink);font-weight:600;flex:none;font-style:normal;margin-right:2px;font-family:var(--sm2-font-text)}
+.stage{width:auto;height:200px;background:var(--sm2-viewport-bg) url('../../../../../src/assets/backgrounds/bg-room.png') center/cover;image-rendering:auto}
+.stage .cradle{image-rendering:auto}
+.stage img{position:absolute;image-rendering:pixelated}
+.stage .pet{left:50%;margin-left:-64px;top:24px;width:128px;height:128px;z-index:2}
+.stage .pet.sleep{filter:brightness(.55) saturate(.7)}
+.stage .pet.haunt{transform:scaleX(-1)}
+.stage .cradle{left:50%;margin-left:-110px;top:98px;width:220px;height:104px;z-index:1}
+.stage .shadow{position:absolute;left:50%;margin-left:-48px;top:146px;width:96px;height:12px;border-radius:50%;background:radial-gradient(ellipse at center,rgba(0,0,0,.45) 0 58%,transparent 60%);z-index:1}
+.stage .decor{z-index:1}
+.stage .fx{position:absolute;margin-left:-175px;left:50%;width:128px;height:128px;background-repeat:no-repeat;background-size:auto 128px;image-rendering:pixelated;z-index:3;pointer-events:none}
+.stage .meters{position:absolute;left:8px;bottom:8px;display:flex;flex-direction:column;gap:4px;z-index:4;background:color-mix(in srgb,var(--sm2-viewport-bg) 78%,transparent);padding:6px 8px}
+.stage .meters .row{gap:8px}
+.stage .meters .pix{min-width:28px}
+.stage .bubble{position:absolute;left:12px;right:12px;top:6px;z-index:5;background:var(--sm2-surface);border-radius:var(--sm2-radius-md);padding:6px 12px;font-family:var(--sm2-font-text);font-size:var(--sm2-text-sm);line-height:1.3;color:var(--sm2-ink);box-shadow:0 1px 2px rgba(4,18,20,.10),0 4px 12px rgba(4,18,20,.10)}
+.stage .bubble::after{content:"";position:absolute;left:50%;margin-left:-8px;bottom:-8px;width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:8px solid var(--sm2-surface)}
+.stage .evolve{position:absolute;right:8px;bottom:8px;z-index:5}
+.pxbtn{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:44px;min-width:44px;padding:0 8px;box-sizing:border-box;color:var(--sm2-viewport-ink);background:color-mix(in srgb,var(--sm2-viewport-bg) 78%,transparent);background-clip:padding-box;border:12px solid transparent;border-image:url('../../../../../src/assets/soulmon/hud/frame-pipe-vine-96.png') 24 / 12px round;image-rendering:pixelated}
+.stage .glass{z-index:6}
+.vbar{width:auto;background:none}
+.vbar::before{content:"";position:absolute;left:0;top:0;bottom:0;right:12px;background:url('../../../../../src/assets/soulmon/hud/bar-frame-96x8.png') left top/192px 16px no-repeat;image-rendering:pixelated}
+.vbar::after{content:"";position:absolute;right:0;top:0;bottom:0;width:12px;background:url('../../../../../src/assets/soulmon/hud/bar-frame-96x8.png') right top/192px 16px no-repeat;image-rendering:pixelated}
+.vbar i{z-index:1}
+.nameline{text-align:center;line-height:1.2;display:flex;flex-direction:column;gap:2px;align-items:center}
+.deck{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+.deck .cell{min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:var(--sm2-text-xs);font-weight:500;color:var(--sm2-ink);border-radius:var(--sm2-radius-md);position:relative;padding:4px 0;box-sizing:border-box}
+.deck .cell .ico{color:var(--sm2-ink)}
+.deck .cell.dis{color:var(--sm2-muted);outline:1px dashed var(--sm2-muted);outline-offset:-2px}
+.deck .cell.dis .ico{color:var(--sm2-muted)}
+.deck .cell .fo{position:absolute;left:4px;top:4px}
+.badge{position:absolute;top:6px;right:calc(50% - 22px);width:8px;height:8px;border-radius:50%;background:var(--sm2-gold-fill)}
+.sticky{border-top:1px dashed var(--sm2-muted);font-size:12px;color:var(--sm2-muted);text-align:center;line-height:16px;margin:0;padding-top:2px}
+.avisos{display:flex;flex-direction:column;gap:8px}
+.btn.left{justify-content:flex-start;width:100%}
+.panel{padding:0;gap:0}
+.panel .ph{display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid var(--sm2-line);min-height:44px;box-sizing:border-box}
+.panel ul{list-style:none;margin:0;padding:0 12px}
+.panel .li{gap:8px}
+.panel .li .nm{flex:1;min-width:0}
+.panel .pf{padding:8px 12px 8px}
+.dock{height:52px;border-top:1px solid var(--sm2-line);display:flex;align-items:center;gap:8px;padding:0 16px;background:var(--sm2-surface);flex:none;box-sizing:border-box}
+.dock .inp{flex:1}
+.inp .ph{color:var(--sm2-muted)}
+.inp .pixph{font-family:var(--sm2-font-mono);color:var(--sm2-muted)}
+.iconbtn.pri{color:var(--sm2-primary-ink)}
+.iconbtn.dis{color:var(--sm2-muted)}
+.strip{border:1px dashed var(--sm2-muted);border-radius:var(--sm2-radius-md);padding:12px;display:flex;flex-direction:column;gap:8px;background:transparent}
+.strip .cap{font-size:12px;color:var(--sm2-muted);display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0;line-height:1.35}
+.toastp{position:absolute;left:16px;right:16px;bottom:132px;z-index:20}
+.sealp{position:absolute;right:16px;top:14px;z-index:20}
+.popover{position:absolute;right:8px;bottom:76px;width:300px;background:var(--sm2-surface);border-radius:var(--sm2-radius-md);box-shadow:0 1px 2px rgba(4,18,20,.10),0 8px 24px rgba(4,18,20,.28);overflow:hidden;z-index:20;border:1px solid var(--sm2-line)}
+.popover .mr{min-height:44px;display:flex;align-items:center;gap:12px;padding:0 12px;border-top:1px solid var(--sm2-line);font-size:var(--sm2-text-sm);font-weight:500;white-space:nowrap}
+.popover .mr:first-child{border-top:0}
+.folha{position:absolute;left:0;right:0;bottom:0;z-index:20}
+.folha .sheet{max-height:640px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.gcell{min-height:96px;border-radius:var(--sm2-radius-md);background:var(--sm2-surface-2);border:1px solid var(--sm2-muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:var(--sm2-text-xs);box-sizing:border-box;text-align:center;position:relative;color:var(--sm2-ink)}
+.gcell.sel{border:2px solid var(--sm2-primary-ink);background:var(--sm2-primary-soft)}
+.gcell .art{width:48px;height:48px;image-rendering:pixelated;display:block}
+.gcell .fo{position:absolute;left:4px;top:4px}
+.gcell .ct{font-weight:500;font-variant-numeric:tabular-nums}
+.first li{display:flex;gap:8px;align-items:flex-start;min-height:24px}
+.scrimfull{position:absolute;inset:0;background:rgba(4,18,20,.55);z-index:10}
+.miniglass{display:inline-flex;align-items:center;justify-content:center}
+.stub{color:var(--sm2-muted);font-size:12px;border:1px dashed var(--sm2-muted);border-radius:var(--sm2-radius-md);display:flex;align-items:center;justify-content:center;text-align:center;padding:8px}
+
+/* ===== ATIV (composição): a RitualRow do código, TaskMeta, janela de 7, ficha, folhas ===== */
+.li.w{flex-wrap:wrap;align-items:center}
+.li .nm{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;padding:8px 0;align-self:stretch;justify-content:center}
+.li .nm .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.li .meta{flex-basis:100%;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:0 0 8px 36px;box-sizing:border-box}
+.li .hm{display:flex;align-items:center;gap:8px;min-height:20px}
+.li.dim .t,.li.dim .selo{color:var(--sm2-muted)}
+.li.haunt .t,.li.haunt .selo{color:var(--sm2-haunted)}
+.li.done .t{text-decoration:line-through;color:var(--sm2-muted);font-weight:400}
+.selo{color:var(--sm2-muted)}
+.cb.dis{border-style:dashed}
+.dots{display:inline-flex;gap:4px;align-items:center;height:12px}
+.dots i{display:block;width:12px;height:12px;box-sizing:border-box;flex:none}
+.dots i.done{border-radius:50%;background:var(--sm2-primary-fill)}
+.dots i.miss{border-radius:50%;border:2px solid var(--sm2-muted)}
+.dots i.shield{width:10px;height:10px;margin:0 1px;border:2px solid var(--sm2-primary-ink);border-radius:2px;transform:rotate(45deg)}
+.dots i.dash{height:2px;background:var(--sm2-muted);border-radius:1px}
+.dots i.empty{width:10px;height:10px;margin:0 1px;border:2px dashed var(--sm2-muted);border-radius:2px;transform:rotate(45deg)}
+.mat{color:var(--sm2-primary-ink)}
+.mat.aura{--f:1;border-radius:50%;box-shadow:0 0 0 3px var(--sm2-primary-soft)}
+.segb.mini{width:96px}
+.pc{min-height:44px;display:inline-flex;align-items:center;gap:4px}
+.pc .chip.tag{gap:4px}
+.pc.nudge .chip.tag{text-decoration:underline;text-underline-offset:3px}
+.steps{display:flex;flex-direction:column;gap:0;flex-basis:100%;padding-left:36px;box-sizing:border-box}
+.step{display:flex;align-items:center;gap:12px;min-height:44px;font-size:var(--sm2-text-sm)}
+.step .fo{align-self:flex-start;margin-top:4px}
+.folha.flow{position:relative;left:auto;right:auto;bottom:auto;z-index:1}
+.folha .sheet{max-height:none}
+.sheet .field{gap:4px}
+.sheet .hdr{justify-content:space-between}
+.opt{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-height:64px;padding:8px 16px;text-align:left}
+.opt .t{display:flex;gap:8px;align-items:center}
+.opt.dis .t,.opt.dis .s{color:var(--sm2-muted)}
+.bars{display:flex;gap:8px;align-items:flex-end;height:60px}
+.bar{flex:1;background:var(--sm2-primary-soft);border:1px solid var(--sm2-primary-ink);border-bottom:0;border-radius:4px 4px 0 0;box-sizing:border-box}
+.bar.ghost{background:var(--sm2-surface-2);border-color:var(--sm2-muted)}
+.daylab{display:flex;gap:8px}.daylab span{flex:1;text-align:center;font-size:var(--sm2-text-xs);color:var(--sm2-muted)}
+.decide{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.decide .btn{flex-direction:column;min-height:72px;gap:2px;padding:8px 8px}
+.decide .btn .s{color:var(--sm2-muted);font-size:var(--sm2-text-xs);line-height:1.3}
+.btn.qui.quiet-danger{color:var(--sm2-danger-ink)}
+.miniglass .screen{width:96px;height:96px;display:flex;align-items:flex-end;justify-content:center}
+.miniglass .screen img{width:64px;height:64px;image-rendering:pixelated;display:block;margin-bottom:8px}
+.aviso{display:flex;flex-direction:column;gap:4px}
+.status-gold{display:flex;gap:8px;align-items:flex-start;color:var(--sm2-gold-ink);font-size:var(--sm2-text-sm);line-height:1.4;padding:4px 4px}
+.status-gold .ico{color:var(--sm2-gold-ink);margin-top:1px}
+.strip .cap{display:block}
+.strip .cap .tagd{margin-right:4px;vertical-align:1px}
+details summary{list-style:none;cursor:default}details summary::-webkit-details-marker{display:none}
+.inp.anch{position:relative;min-width:0}.inp.anch .ph{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.inp.anch .fo{position:absolute;left:-4px;top:-8px;z-index:2}
+.sheet{position:relative}
+.dobra{position:absolute;left:0;right:0;border-top:1px dashed var(--sm2-muted);font-size:12px;line-height:1.3;color:var(--sm2-muted);text-align:center;padding:2px 16px 0;pointer-events:none;z-index:3;background:color-mix(in srgb,var(--sm2-surface) 85%,transparent)}
+.gav{display:flex;align-items:center;gap:12px;min-height:44px}
+.gav .t{flex:1;min-width:0}
+
+/* ===== JOG (composição): o visor de jogo, o chrome vetor dos minijogos, a barra de timing, as barras de HP, o popup, o Torneio — nenhum token novo ===== */
+.content{gap:10px}
+.phone.tall .content{overflow:visible}
+.phone .note{color:var(--sm2-muted)}
+.strip .cap{display:block}
+.strip .cap .tagd{margin-right:4px;vertical-align:1px}
+.pghdr{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;min-height:44px}
+.pghdr .h2{font-size:18px}
+.bits{font-family:var(--sm2-font-mono);font-variant-numeric:tabular-nums;font-size:var(--sm2-text-sm);color:var(--sm2-ink);white-space:nowrap;display:inline-flex;align-items:center;min-height:28px}
+.embl{display:inline-flex;align-items:center;gap:4px;min-height:28px;white-space:nowrap}
+.embl .ico{color:var(--sm2-gold-ink)}
+.embl .n{font-family:var(--sm2-font-serif);font-variant-numeric:tabular-nums;font-size:var(--sm2-text-md);color:var(--sm2-gold-ink);font-weight:700}
+/* a página: um card-botão por jogo, ícone Material 24 pelado (nunca em box), tag à direita */
+.gcard{flex-direction:row;gap:12px;align-items:center;min-height:72px;padding:10px 12px}
+.gcard.feat{box-shadow:inset 0 0 0 1px var(--sm2-primary-ink)}
+.gcard .ico{color:var(--sm2-ink);flex:none}
+.gcard.feat .ico{color:var(--sm2-primary-ink)}
+.gcard .tx{min-width:0;flex:1;display:flex;flex-direction:column;gap:2px}
+.gcard .chip.tag{flex:none;white-space:nowrap}
+/* o chrome de cada minijogo: título Fredoka 20 + linha 12 muted + × 44 pelado (o PRIMEIRO interativo, J5) */
+.ghdr{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;min-height:44px}
+.ghdr.run{border-bottom:1px solid var(--sm2-line);padding-bottom:4px}
+.ghdr .tx{min-width:0;flex:1;display:flex;flex-direction:column;gap:2px}
+.ghdr .iconbtn{color:var(--sm2-ink);margin:-2px -8px 0 0}
+/* o visor de jogo: anel de cobre, vidro com a cena 1080×1920 em cover (ilustração — filtro), sprites e FX pixel dentro */
+.gv{width:auto;background-size:cover;background-position:center 58%;image-rendering:auto;background-color:var(--sm2-viewport-bg)}
+.gv img{position:absolute;image-rendering:pixelated}
+.gv .fx{position:absolute;width:128px;height:128px;image-rendering:pixelated;pointer-events:none}
+.gv .fx.s64{width:64px;height:64px}
+.gv .flip{transform:scaleX(-1)}
+.gv .tagd{position:absolute;left:8px;top:8px;z-index:5;background:color-mix(in srgb,var(--sm2-viewport-bg) 78%,transparent);color:var(--sm2-viewport-ink);border-color:var(--sm2-viewport-ink)}
+.gv .vs{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:color-mix(in srgb,var(--sm2-viewport-bg) 78%,transparent);padding:4px 8px}
+.gv .strip-img{position:absolute;left:0;right:0;background-repeat:repeat-x;background-position:left bottom;image-rendering:pixelated}
+.gv .glass{z-index:6}
+/* as duas leituras de HP: APARELHO (vetor), nunca ❤️ (guarda 2b) — "You" em primary-fill, o inimigo em gold-fill (o outro, nunca vermelho) */
+.bars2{display:flex;gap:12px}
+.hpb{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.hpb .s{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hpb .meter{height:10px}
+/* a barra de timing: trilho surface-2 + fronteira muted, a zona central primary-soft, o marcador primary-ink 3px; o botão primário para o marcador */
+.timing{display:flex;flex-direction:column;gap:8px;align-items:stretch}
+.timing .t{text-align:center}
+.trail{height:16px;border-radius:999px;background:var(--sm2-surface-2);border:1px solid var(--sm2-muted);position:relative;box-sizing:border-box}
+.trail .zone{position:absolute;left:40%;right:40%;top:0;bottom:0;background:var(--sm2-primary-soft);border-left:1px solid var(--sm2-primary-ink);border-right:1px solid var(--sm2-primary-ink)}
+.trail .mark{position:absolute;left:62%;top:-4px;width:3px;height:22px;background:var(--sm2-primary-ink);border-radius:2px}
+.timing .btn{align-self:center;width:100%;max-width:240px}
+/* o popup do golpe: role=status, o FX pixel num mini-visor 64 (sem anel, como o slot do Dex) + o texto em vetor */
+.pop{align-items:center;text-align:center;padding:8px 12px;gap:4px}
+.pop .mv{margin-bottom:2px}
+.mv{display:inline-flex}
+.mv .screen{width:64px;height:64px;display:flex;align-items:center;justify-content:center;border-radius:var(--sm2-radius-sm);flex:none}
+.mv .screen img{width:64px;height:64px}
+.mv.s32 .screen{width:32px;height:32px;border-radius:var(--sm2-radius-sm)}
+.mv.s32 .screen img{width:32px;height:32px;image-rendering:auto}
+.pop .hf{display:inline-flex;align-items:center;gap:2px;vertical-align:middle}
+.sline{display:inline-flex;align-items:center;gap:4px}
+.sline .ico{color:var(--sm2-primary-ink)}
+.pop .hf .ico{color:var(--sm2-primary-ink)}
+.two{display:flex;gap:8px}
+.two .btn{flex:1;min-width:0;padding:0 8px;white-space:nowrap}
+.center{text-align:center}
+.stack{display:flex;flex-direction:column;gap:8px;align-items:center}
+.stack .btn{width:100%;max-width:320px}
+.stack.n240 .btn{max-width:240px}
+.chipsrow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.chip.tag b{color:var(--sm2-ink);font-weight:500;font-variant-numeric:tabular-nums}
+.chip.tag .ico{color:var(--sm2-gold-ink)}
+.chip.tag.season{min-height:28px;color:var(--sm2-ink)}
+/* diálogo centrado (pesadelo, resultado do Torneio): .dlg SIS-06 com o visor dentro */
+.dlg.game{align-items:center;text-align:center;gap:10px}
+.dlg.game .ring{align-self:stretch}
+.dlg.game .xrow{align-self:flex-end;margin:-4px -8px -8px 0}
+.dlg.game .btn{width:100%;max-width:260px}
+.dlg.game .h2{font-size:var(--sm2-text-lg)}
+.emb-line{display:inline-flex;align-items:baseline;gap:8px}
+.emb-line .n{font-family:var(--sm2-font-serif);font-size:var(--sm2-text-lg);font-weight:700;color:var(--sm2-gold-ink);font-variant-numeric:tabular-nums}
+/* o Torneio: card do switch, abas com sublinhado, card do oponente com mini-visor, a faixa antes do ranking, as linhas do ranking */
+.pvp{flex-direction:row;align-items:center;gap:10px}
+.pvp .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.tap44.sw44{width:52px;height:44px}
+.switch.dis{border-style:dashed;background:transparent}
+.switch.dis::after{background:var(--sm2-muted)}
+.tabs .tab .ico{color:inherit}
+.alert{display:flex;gap:8px;align-items:flex-start;border-left:3px solid var(--sm2-gold-ink);padding-left:12px;font-size:var(--sm2-text-sm);line-height:1.45;color:var(--sm2-ink);flex-wrap:wrap}
+.opp{flex-direction:row;align-items:center;gap:10px;min-height:56px;padding:8px 12px}
+.opp .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.opp .btn{flex:none;min-width:88px;padding:0 16px}
+.tier{gap:8px}
+.tier .row{display:flex;align-items:center;gap:8px}
+.tier .row .ico{color:var(--sm2-gold-ink)}
+.tier .nm{font-family:var(--sm2-font-display);font-weight:600;font-size:var(--sm2-text-md)}
+.tier .meter{height:12px}
+.rank{gap:2px;padding:6px 8px}
+.rk{display:flex;align-items:center;gap:8px;min-height:36px;padding:0 6px;border-radius:var(--sm2-radius-sm)}
+.rk .pos{width:28px;flex:none;font-variant-numeric:tabular-nums}
+.rk .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rk .pts{font-variant-numeric:tabular-nums;white-space:nowrap}
+.rk.me{background:var(--sm2-primary-soft);box-shadow:inset 0 0 0 1px var(--sm2-primary-ink)}
+.rk.me .nm{color:var(--sm2-primary-ink);font-weight:500}
+.rk.me .pos,.rk.me .pts{color:var(--sm2-primary-ink)}
+.stcard{align-items:center;text-align:center}
+.stcard .ico{color:var(--sm2-muted)}
+.stcard .btn{width:100%;max-width:200px}
+.jump{min-height:64px;font-size:var(--sm2-text-md);width:100%}
+.sk{display:flex;flex-direction:column;gap:2px;align-items:center}
+
+/* ===== CONTA (composição): a SettingsPage em grupos, as linhas de ajuste, os modais que o menu alcança — nenhum token novo ===== */
+.content{gap:10px}
+.phone.tall .content{overflow:visible}
+/* o grupo por intenção = card SIS-03 com o título Fredoka 20 (o h2 do código) */
+.grp{gap:8px}
+.grp .h2{font-size:var(--sm2-text-lg)}
+.grp .s{line-height:1.4}
+/* a SwitchRow: rótulo 14/500 + linha 12 muted + o switch SIS-03 num alvo 44 — o switch inteiro é o alvo */
+.swrow{display:flex;align-items:center;gap:12px;min-height:44px}
+.swrow .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.swrow .switch{margin:6px 0}
+/* a ActionRow: texto 14 + chevron 24 muted pelado, alvo 44; o link é a mesma linha */
+.arow{display:flex;align-items:center;gap:8px;min-height:44px;color:var(--sm2-ink)}
+.arow .t{flex:1;min-width:0}
+.arow .ico{color:var(--sm2-muted)}
+/* o Disclosure (details/summary): a mesma linha, com expand_more/expand_less */
+.disc{display:flex;align-items:center;gap:8px;min-height:44px;font-size:var(--sm2-text-sm);font-weight:500;color:var(--sm2-ink)}
+.disc .ico{color:var(--sm2-muted)}
+/* o radiogroup (Theme, Language): rótulo 12 muted + segmentos TONAIS (Pet D-P1: primary-soft + primary-ink + borda, nunca placa cheia) */
+.rg{display:flex;gap:8px;align-items:center}
+.rg .lb{min-width:64px;flex:none}
+.rg .seg{flex:1;min-width:0}
+.rg .segi{min-height:44px;padding:0 6px;font-size:var(--sm2-text-sm);color:var(--sm2-muted);background:var(--sm2-surface);white-space:nowrap}
+.rg .segi.on{background:var(--sm2-primary-soft);color:var(--sm2-primary-ink);border-color:var(--sm2-primary-ink)}
+/* chave: valor (Your plan / Credits) — o valor em Rubik 500; números em mono tabular; Créditos = diamond em credit-ink + número em ink */
+.kv{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:24px}
+.kv .v{font-weight:500;color:var(--sm2-ink);display:inline-flex;align-items:center;gap:4px}
+.kv .v .ico{color:var(--sm2-credit-ink)}
+.kv .v.mono{font-family:var(--sm2-font-mono);font-variant-numeric:tabular-nums;font-size:var(--sm2-text-md)}
+/* a região aria-live: sempre montada, 18px de piso */
+.live{min-height:18px;margin:0}
+.live.ok{color:var(--sm2-ink);font-weight:500}
+/* os campos de hora: .inp 44 com schedule 20 + o valor em mono tabular */
+.times{display:flex;gap:8px}
+.times .inp{flex:1;min-width:0;padding:0 10px}
+.times .inp .ico{color:var(--sm2-muted)}
+.times .inp .v{font-family:var(--sm2-font-mono);font-variant-numeric:tabular-nums;font-size:var(--sm2-text-md);color:var(--sm2-ink)}
+.inp .v{color:var(--sm2-ink)}
+.inp.code .v{font-family:var(--sm2-font-mono)}
+/* o código de recuperação (Social .code) */
+.code{display:flex;align-items:center;gap:8px;min-height:44px;flex-wrap:wrap}
+.code .cd{font-family:var(--sm2-font-mono);letter-spacing:.1em;font-size:var(--sm2-text-sm);color:var(--sm2-ink);min-height:32px;display:inline-flex;align-items:center;padding:0 12px;border-radius:999px;background:var(--sm2-surface-2)}
+.code .tap44{color:var(--sm2-primary-ink);gap:4px;font-size:var(--sm2-text-sm);font-weight:500;padding:0 8px}
+/* o botão de largura inteira dos grupos: 48 SIS-02; o inerte por superfície (surface-2 + muted), fora do Tab */
+.grp .btn.full,.sheet .btn.full{width:100%}
+.btn .ico{flex:none}
+.btn.pri .ico{color:var(--sm2-on-primary)}
+.btn.out .ico{color:var(--sm2-primary-ink)}
+.btn.dis .ico{color:var(--sm2-muted)}
+.two{display:flex;gap:8px}
+.two .btn{flex:1;min-width:0;padding:0 8px}
+/* o painel do 503: tinta neutra sobre surface-2 — é ESTADO, não erro (sem filete, sem âmbar, sem vermelho) */
+.panel503{background:var(--sm2-surface-2);border:0;gap:4px}
+/* o inventário de apagar: três pares título 14/500 + 12 */
+.inv{gap:6px}
+.inv .t.b{margin-top:2px}
+/* o alerta (role=alert): filete 3px + tinta gold-ink — âmbar de convite, nunca vermelho (Social D-S6) */
+.alert{border-left:3px solid var(--sm2-gold-ink);padding-left:8px;color:var(--sm2-gold-ink);font-weight:500;margin:0;display:block}
+/* o .meter SIS-07 como barra de constância / de passos (primary-fill), rotulada por role=img */
+.meter.k{height:12px}
+/* o número grande dos passos: mono 24 tabular (valor = mono, Loja) */
+.bignum{font-family:var(--sm2-font-mono);font-variant-numeric:tabular-nums;font-size:var(--sm2-text-xl);line-height:1.2;color:var(--sm2-ink);display:flex;align-items:center;gap:8px}
+/* a tag de sonho: chip.tag; os números em tabular */
+.dreamline{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+/* o skeleton (CONTA-33): card centrado, bloco surface-2 120×80 sem texto, "Loading" Rubik 12/500 caixa alta — sem Silkscreen fora do vidro (Home/Pet) */
+.skcard{align-items:center;justify-content:center;min-height:220px;gap:8px;text-align:center}
+.skcard .skel{width:120px;height:80px}
+/* as folhas (modais): em FLUXO quando há strips (D-A6), ancoradas quando cabem; o × é o iconbtn 44 pelado */
+.folha.anch{position:absolute;left:0;right:0;bottom:0;z-index:20}
+.folha .sheet{max-height:none}
+.sheet .hdr{justify-content:space-between}
+.sheet .iconbtn.s44{color:var(--sm2-ink);margin-right:-8px}
+/* as linhas-botão dos Créditos: card SIS-03 inteiro, 56, título 14/500 + linha 12, chevron 24 muted; inerte por FORMA */
+.crow{flex-direction:row;align-items:center;gap:10px;min-height:56px;padding:8px 12px}
+.crow .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.crow .tx .t{display:inline-flex;align-items:center;gap:6px}
+.crow .tx .t .ico{color:var(--sm2-credit-ink)}
+.crow .tx .t .mono{font-family:var(--sm2-font-mono);font-variant-numeric:tabular-nums;font-size:var(--sm2-text-md)}
+.crow .tx .s.mono{font-family:var(--sm2-font-mono);font-variant-numeric:tabular-nums}
+.crow .chev{color:var(--sm2-muted);flex:none}
+.crow.dis{border:1px dashed var(--sm2-muted);background:transparent}
+.crow.dis .tx .t,.crow.dis .tx .s,.crow.dis .chev{color:var(--sm2-muted)}
+/* o saldo de Créditos no rodapé da folha: diamond 20 FILL credit-ink + o número em mono ink */
+.bal{display:inline-flex;align-items:center;gap:6px;min-height:32px}
+.bal .ico{color:var(--sm2-credit-ink)}
+.bal b{font-family:var(--sm2-font-mono);font-variant-numeric:tabular-nums;font-size:var(--sm2-text-md);font-weight:500;color:var(--sm2-ink)}
+/* o subtítulo de grupo dentro da folha ("Earn" / "Spend"): Fredoka 16 */
+.sheet .h3{margin-top:2px}
+/* os chips de resposta / de personalidade: .chip SIS-03 a 44 (o wireframe desenhou 32 — piso do alvo), selecionado = primary-soft + primary-ink */
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chips .chip{padding:0 14px}
+.cg{display:flex;flex-direction:column;gap:6px}
+/* os perks do desbloqueio: check_circle 20 FILL primary-ink pelado + texto 14 */
+.perk{display:flex;align-items:center;gap:8px;min-height:24px}
+.perk .ico{color:var(--sm2-primary-ink)}
+.vstack{display:flex;flex-direction:column;gap:8px;align-items:stretch}
+.perks{display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+/* o convite (Loja .nudge): card-botão 280 com auto_awesome em gold-ink e chevron no fim */
+.nudge{flex-direction:row;gap:12px;align-items:center;min-height:56px;padding:10px 12px;max-width:280px}
+.nudge .ico{color:var(--sm2-gold-ink);flex:none}
+.nudge .ico.chev{color:var(--sm2-muted)}
+.nudge .tx{min-width:0;flex:1;display:flex;flex-direction:column;gap:2px}
+/* o Guia: capítulos = linhas 44 com expand_more / expand_less; o aberto em 500 + corpo 12 recuado */
+.chap{display:flex;align-items:center;gap:8px;min-height:44px}
+.chap .t{flex:1;min-width:0}
+.chap .ico{color:var(--sm2-muted)}
+.chap.open .ico{color:var(--sm2-primary-ink)}
+.chapbody{padding-left:8px;border-left:2px solid var(--sm2-line);margin:0 0 4px 4px}
+/* o Glossário: dl com dt 14/500 e dd 12 muted */
+.gl{margin:0;display:grid;gap:6px}
+.gl dt{font-size:var(--sm2-text-sm);font-weight:500;line-height:1.3}
+.gl dd{margin:0}
+.strip .cap{display:block}
+.strip .cap .tagd{margin-right:4px;vertical-align:1px}
+.dobra{background:transparent;border-top:2px dashed var(--sm2-primary-ink);text-align:left;padding:0}
+.dobra span{display:inline-block;background:var(--sm2-surface);padding:0 4px 0 8px;font-size:12px;line-height:16px;color:var(--sm2-primary-ink)}
+.inst{gap:6px}
+.inst .t.b{display:flex;align-items:center;gap:8px}
+.inst .t.b .ico{color:var(--sm2-primary-ink)}
+
+.stage.mini{height:120px}
+.stage.mini .pet{top:-6px}
+.stage.mini .cradle{top:52px}
+.stage.mini .shadow{top:100px}
+.scrimfull{position:absolute;inset:0;background:rgba(4,18,20,.55);z-index:10}
+
+  </style>
+</helmet>
+<div class="ab" data-theme="dark">
+<div class="phone" style=""><div class="content" style="overflow:hidden"><header class="hdr"><h1 class="wordmark">Soulmon</h1><span class="chip tag pri"><span class="ico i20 on" aria-hidden="true" style="">check_circle</span> focus done</span></header><div class="card inst"><p class="t b"><span class="ico i24" aria-hidden="true" style="">download</span>Install Soulmon</p><p class="s">Quick access from your home screen, and it works offline.</p><span class="btn pri full" role="button"><i class="fo">2</i>Install</span><span class="btn out full" role="button"><i class="fo">3</i>Not now</span></div><section class="card grp"><p class="h2">Your account</p><p class="s">The same email brings the same progress to any device.</p><span class="inp" role="textbox" aria-label="Your email"><i class="fo">4</i><span class="ph">your@email.com</span></span><span class="btn pri dis full" role="button" aria-disabled="true">Sign in</span><p class="s live" aria-live="polite"></p><div class="kv" aria-busy="false"><span class="s">Your plan</span><span class="v t">Demo</span></div><div class="kv"><span class="s">Credits</span><span class="v mono"><span class="ico i20 on" aria-hidden="true" style="">diamond</span>0</span></div><span class="btn out full" role="button"><i class="fo">5</i>Restore purchases</span><p class="s live" aria-live="polite"></p><details><summary class="disc" role="button" aria-expanded="false"><i class="fo">6</i>Recover with a code <span class="ico i24" aria-hidden="true" style="">expand_more</span></summary></details></section><p class="sticky">▼ Your data · Your story · What Soulmon sends you · Appearance · Help · Your rhythm · Rest window · Steps (one page)</p></div><nav class="nav" aria-label="Main"><span class="navc" role="button"><i class="fo">7</i><span class="ico i32" aria-hidden="true" style="">home</span><span>Home</span></span><span class="navc" role="button"><i class="fo">8</i><span class="ico i32" aria-hidden="true" style="">casino</span><span>Games</span></span><span class="navc" role="button"><i class="fo">9</i><span class="ico i32" aria-hidden="true" style="">auto_awesome</span><span>Evolution</span></span><span class="navc" role="button"><i class="fo">10</i><span class="ico i32" aria-hidden="true" style="">storefront</span><span>Shop</span></span><span class="navc on" role="button" aria-expanded="false"><i class="fo">11</i><span class="ico i32 on" aria-hidden="true" style="">menu</span><span>Menu</span></span></nav></div>
+<footer class="foot"><p><span style="font-weight:700">Artboard</span> · <span class="tg">CONTA-01</span> <span class="tg">CONTA-02</span> <span class="tg">CONTA-06</span> · canvas <b>Conta — identidade</b> (Fase 2, HANDOFF §1/§4) · replica: <code>docs/design/wireframes/conta/Main.dc.html</code> (estrutura aprovada, DECISÕES §15 — nada estrutural mudou)</p><h4>Pergunta</h4><p>"What is mine, and how do I leave?" — the account first, because it is what makes the rest portable. O cartão de instalar = card SIS-03 com <code>download</code> 24 pelado em <code>primary-ink</code> + Fredoka 14/500, "Install" <code>primary</code> 48, "Not now" <code>outline</code> (a recusa é saída, nunca <code>quiet</code> — Rituais); "Your account" = card com título Fredoka 20, o campo <code>.inp</code> 44, "Sign in" INERTE por superfície (fora do Tab), a região <code>aria-live</code> sempre montada (18px), "Your plan · Demo" 14/500, "Credits · <code>diamond</code> 0" em <code>credit-ink</code> + mono, "Restore purchases" <code>outline</code>, o <code>Disclosure</code> com <code>expand_more</code>.</p><h4>Tokens usados</h4><p><code>--sm2-bg</code> (o aparelho) · <code>--sm2-surface/surface-2/line</code> (os grupos, o painel do 503, os inertes, o chip do código) · <code>--sm2-ink/muted</code> · <code>--sm2-primary-ink</code> (segmento ativo, switch ligado, <code>check_circle</code> dos perks, <code>download</code> do instalar, <code>check</code> de copiado, nav) · <code>--sm2-primary-fill/on-primary</code> (Install, Sign in, Count them, Unlock, Save, Create — os primários) · <code>--sm2-primary-soft</code> (segmento ativo, chip selecionado) · <code>--sm2-gold-ink</code> (o filete + a tinta do <code>role=alert</code>; o <code>auto_awesome</code> do convite — âmbar de convite, nunca vermelho) · <code>--sm2-credit-ink</code> (o <code>diamond</code> dos Créditos — dinheiro real, e só ele) · <code>--sm2-viewport-bg/ink/ring/ring-deep</code> (só o palco mini da Home atrás das folhas) · <code>--sm2-font-display</code> (wordmark 20, os títulos de grupo 20, os títulos das folhas 20, Earn/Spend 16) · <code>--sm2-font-text</code> (14/12; rótulos 14/500) · <code>--sm2-font-mono</code> (horas, saldos, preços, o código de recuperação, o número de passos — <code>tabular-nums</code>) · <code>--sm2-font-icon</code> (24 nas linhas, 20 nos campos e perks, 32 nav) · <code>--sm2-radius-sm/md/lg</code> · espaço 4/8/12/16 (P1)</p><h4>Divergências com o código de hoje (achados para o staff-frontend)</h4><ul><li><b>O kit pixel fora do visor</b>: <code>RestWindowCard</code> e <code>StepsCard</code> são <code>PixelPanel</code> + <code>PixelMeter</code> + <code>PixelTag</code> + <code>PixelSwitch</code> (Silkscreen "REST WINDOW"/"TODAY'S STEPS" a 12px, molduras PNG) — aqui são cards SIS-03 com título Fredoka 20 em caixa de frase ("Rest window", "Today's steps", "Count your steps?" — a copy de <code>stepsConsentCopy</code> já é assim), <code>.meter</code> SIS-07, <code>.chip.tag</code>, <code>.switch</code> (HANDOFF §1/§6; Sistema achado 1).</li><li><b>Os <code>radiogroup</code> Theme/Language em <code>sm-btn</code> cheio</b> (o wireframe pinta o ativo como placa cheia) → segmento TONAL: <code>primary-soft</code> + <code>primary-ink</code> + borda 1px (Pet D-P1, Loja); "onde estou" nunca é placa cheia.</li><li><b>O <code>ModalSheet</code> 9-slice</b> (<code>FormKit.tsx</code>) das cinco folhas (Créditos, Nova Leitura, Personalidade, Refazer, Desbloquear) → folha vetor SIS-04 (<code>surface</code>, raio 20 no topo, alça, × 44 pelado primeiro, Escape fecha).</li><li><b>Os valores em Rubik 600</b> ("Full", "0", "32", "23:00", "4 320", "R$ 4,90 BRL") → números, horas, preços e saldos em <code>--sm2-font-mono</code> <code>tabular-nums</code> (Loja: valor = mono); o plano ("Full"/"Demo") é palavra e fica em Rubik 500.</li><li><b>Créditos com o mesmo <code>💎</code> dos Bits</b> em alguma superfície antiga → aqui Créditos = <code>diamond</code> 20 FILL em <code>--sm2-credit-ink</code> + número em <code>ink</code>, e SÓ eles (as três moedas nunca se misturam; Bits não aparecem nesta família).</li><li><b>"Soulmon 1.0.2" literal</b> no código (achado do wireframe) — desenhado como está, em <code>note</code> 12 <code>muted</code>.</li><li><b><code>InstallPrompt</code> com o ícone em box</b> → <code>download</code> 24 pelado em <code>primary-ink</code> ao lado do título (regra do dono: ícone nunca em box).</li><li><b>O <code>Disclosure</code> com <code>chevron_right</code></b> → <code>expand_more</code>/<code>expand_less</code> 24 <code>muted</code> (é abrir para baixo, não navegar); as <code>ActionRow</code> mantêm o <code>chevron_right</code>.</li><li><b>"Sign in" desabilitado em <code>opacity</code></b> no código → inerte por superfície (<code>surface-2</code> + <code>muted</code>, <code>aria-disabled</code>), fora do Tab, sem número de foco.</li></ul><h4>PT</h4><ul><li>"Sua conta" · "O mesmo e-mail traz o mesmo progresso em qualquer aparelho." · "Seu e-mail" · "Entrar" / "Sincronizando…" · "Progresso carregado!" · "Seu plano" · Completa / Demo · "Créditos" · "Autenticado como …" · "Restaurar compras" · "Sair da conta" · "Recuperar com um código" · "Seus dados" · "Sua história" · "O que o Soulmon te manda" · "Aparência" · "Ajuda" · "Seu ritmo" · "Instalar o Soulmon" · "Agora não"</li><li>"Acesso rápido pela tela inicial e funcionamento offline." · "Instalar"</li></ul><h4>Fontes</h4><ul><li><code>SettingsPage.tsx</code> (ordem do DOM: <code>InstallPrompt</code> → "Your account" → "Your data" → "Your story" (cond.) → "What Soulmon sends you" → "Appearance" → "Help" → "Your rhythm"; <code>Group</code> = <code>section</code> + <code>h2</code>; <code>Field</code> "Your email"; "Sign in" <code>disabled={!emailInput.trim() || loading}</code>; <code>aria-live="polite"</code> sempre montado; <code>Disclosure</code> "Recover with a code") · <code>AccountSection.tsx</code> ("Your plan" <code>aria-busy</code>; "Credits"; "Restore purchases"; "Sign out" só com auth configurado; <code>flash</code> 4 s) · <code>App.tsx</code> (<code>currentView === 'settings'</code>; <code>RestWindowCard</code> e <code>StepsCard</code> montados pelo App abaixo da página)</li><li><code>InstallPrompt.tsx</code> ("Install Soulmon"; "Quick access from your home screen, and it works offline."; "Install" / "Not now"; <code>deferredPrompt &amp;&amp; !dismissed &amp;&amp; !installed</code>)</li><li>03 §4.23 · 03 §4.23a · 02 §40 · 02 §46 · 02 §58 · CLAUDE.md (Restaurar compras exigido pela Play; "pagar nunca deixa a criatura mais forte"; Créditos = dinheiro real, sem Bits→Créditos)</li><li>PRINCÍPIOS §11 (conta: saída de dados na própria superfície; ocultar métrica é opção legítima; permissão como consequência de um toggle; janela de descanso própria; grupos por intenção; proibido score de sono, gráfico de estágios, cobrança preventiva)</li><li>DECISÕES §15 K1 · V1 (ordem de hoje fica) · D11 · W10: ordem de foco numerada (1 = skip link, oculto); alvos ≥ 44px; rótulo = <code>aria-label</code></li></ul><h4>Notas</h4><ul><li><b>Dobra a 844</b>: cabeçalho, o cartão de instalar, "Your account" inteira (até "Recover with a code") e o marcador cabem antes da nav — medido no README.</li><li>Ordem de foco 2–11 idêntica ao wireframe (Install, Not now, e-mail, Restore, Recover, nav); "Sign in" inerte sem número.</li></ul></footer>
+</div>
+</x-dc>
+</body>
+</html>
