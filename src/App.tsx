@@ -4414,6 +4414,11 @@ export default function App() {
              daqui (decisão D8, e `_redact.js` já declarava a mesma linha). */
           soulGoal={gameState.soulGoal}
           soulStruggle={gameState.soulStruggle}
+          /* A criatura que acabou de nascer, no vidro do tutorial (canvas
+             Onboarding-funil D-O13): o mesmo sprite/tonalidade da Home. */
+          spriteUrl={displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? getSpriteForStage(gameState.evolutionStage, gameState.demoCharacterId)}
+          petName={soulmonDisplayName(gameState.soulmonMeta) || undefined}
+          demoTint={gameState.demoCharacterId ? gameState.demoTint : undefined}
           onComplete={handleCompleteTutorial}
         />
       </Suspense>

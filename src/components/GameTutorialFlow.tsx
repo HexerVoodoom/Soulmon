@@ -1,10 +1,12 @@
 import { useMemo, useState, type CSSProperties } from 'react';
 import { Icon } from './ui/Icon';
-import { PixelChoiceChip } from './pixel/PixelKit';
+import { Viewport } from './ui/Viewport';
+import { Chip, sm2Button, sm2Hint, sm2Label, sm2Text, sm2TitleStyle } from './form/FormKit';
 import type { Language } from '../utils/i18n';
 import type { ActivityCategory } from '../types/attributes';
 import { orderCategoriesForGoal } from '../utils/goalToCategory';
-import { CATEGORY_ICONS, CATEGORY_ICON_NAME, categoryLabel } from '../types/category-icons';
+import { CATEGORY_ICONS, categoryLabel } from '../types/category-icons';
+import { demoTintFilter } from '../utils/sprites';
 import { suggestTasks, type SuggestedTask } from '../utils/taskSuggestions';
 
 // ---------------------------------------------------------------------------
@@ -25,20 +27,30 @@ import { suggestTasks, type SuggestedTask } from '../utils/taskSuggestions';
 // `GuideModal` (seções 1, 2 e 6) e no glossário do `HelpModal`. Ver
 // `docs/PLANO-PRODUTO.md`, Parte 0 ("Correção da correção").
 //
-// ÍCONES: esta tela era o ÚLTIMO consumidor de `lucide-react` no `src/` — e no
-// pior lugar possível, porque é a primeira tela de verdade de todo usuário
-// novo. Cinco glifos de uma quarta biblioteca, desenhados em 16/18/42px com
-// `strokeWidth` 2.2–3, ao lado da nav (Material Symbols), dos sprites e dos
-// emojis de categoria. Migrados para o `<Icon>` (motor único), com os nomes
-// CONFERIDOS no inventário de `src/styles/tokens.md` §5 — nome fora do
-// inventário não renderiza glifo NENHUM e não dá erro — e nos degraus da §6.1.
-// A dependência saiu do `package.json` no mesmo commit; o guard
-// `iconScale.contract.test.ts` agora acusa qualquer import dela de volta.
+// IDENTIDADE (canvas `docs/design/wireframes/onboarding-funil/identidade/`,
+// DECISÕES §23, 20/09/2026 — `TutorialConceito`, `TutorialTarefa`,
+// `TutorialSugestoes`, `TutorialErro`): o tutorial é o APARELHO — tudo aqui é
+// vetor sobre os tokens `--sm2-*`, e o único pixel é a criatura que acabou de
+// nascer, dentro de um vidro 192² com anel (D-O13; era o glifo `pets` 48).
+//  · pontinhos 8px (`primary-fill` / anel 2px `muted`) com `role=progressbar`;
+//  · o campo do objetivo JÁ PREENCHIDO com o `soulGoal` (O3 — era um campo
+//    vazio fazendo a mesma pergunta três telas depois);
+//  · chips e sugestões em VETOR (`FormKit.Chip`, cards SIS-03 com
+//    `check_circle`/`radio_button_unchecked` como estado — D-O14; os
+//    `PixelChoiceChip`/`.sm-px-*`/`.sm-card`/`.sm-btn` eram pixel fora do visor);
+//  · a sugestão além do teto é INERTE POR FORMA (tracejado 1px `muted` +
+//    tinta `muted` + `aria-disabled`), nunca `opacity: .5` (D-O15);
+//  · o teto do estágio anunciado em `role=status` (muda sob o dedo — D-A4),
+//    em `gold-ink` sem moldura;
+//  · "Suggest tasks with AI" VIVO com o objetivo no campo (X1): só desliga
+//    com o campo vazio E nenhuma área;
+//  · o aviso de que o objetivo vai para a IA (O6), 12 `muted`.
+// O QUE NÃO MUDOU: o fluxo, o teto (`maxActivities`), o fallback local e o
+// próprio objetivo como 1ª linha selecionável (`customKey` — achado para o
+// lead, mantido no código).
 // ---------------------------------------------------------------------------
 
 interface TutorialPage {
-  /** Nome Material do `<Icon>`. Tem que estar no inventário de tokens.md §5. */
-  icon: string;
   titlePt: string; titleEn: string;
   bodyPt: string; bodyEn: string;
 }
@@ -51,7 +63,6 @@ interface TutorialPage {
  */
 const PAGES: TutorialPage[] = [
   {
-    icon: 'pets',
     titlePt: 'Seu Soulmon nasceu!', titleEn: 'Your Soulmon is born!',
     bodyPt: 'Seu Soulmon cresce com você — cada tarefa que você cumpre na vida real ajuda na evolução. Vamos começar pela primeira.',
     bodyEn: "It grows with you — every task you complete in real life helps it evolve. Let's start with the first one.",
@@ -103,6 +114,12 @@ function fallbackTasks(cats: ActivityCategory[], isPt: boolean): SuggestedTask[]
   }));
 }
 
+/** O giro do carregando, com `prefers-reduced-motion` (mesmo padrão do onboarding). */
+const SPIN_CSS = `
+@keyframes tutspin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){[data-sm-spin]{animation:none !important}}
+`;
+
 interface GameTutorialFlowProps {
   language: Language;
   /** Teto de atividades do estágio atual (types/progression.ts FORM_REQUIREMENTS) — a
@@ -113,19 +130,30 @@ interface GameTutorialFlowProps {
   onComplete: (activities: Array<{ name: string; category: ActivityCategory; emoji: string }>) => void;
   /** WP1.4 — o que a pessoa escreveu no onboarding. Usado SÓ no aparelho, por
    *  palavra-chave (`utils/goalToCategory.ts`), para pôr a área de vida que
-   *  ela descreveu na frente da lista. O texto não sai daqui (decisão D8). */
+   *  ela descreveu na frente da lista — e, desde o canvas (O3), como o valor
+   *  inicial do campo do objetivo. O texto não sai daqui (decisão D8). */
   soulGoal?: string;
   soulStruggle?: string;
+  /** A criatura que acabou de nascer, no vidro 192² (D-O13). Sprite 256² a 128. */
+  spriteUrl?: string;
+  /** Nome da criatura, para o `aria-label` do vidro. */
+  petName?: string;
+  /** Tonalidade do demo (`demoTintFilter`); ausente no caminho do oráculo. */
+  demoTint?: number;
 }
 
 export function GameTutorialFlow({
   language, maxActivities, existingActivitiesCount = 0, onComplete, soulGoal, soulStruggle,
+  spriteUrl, petName, demoTint,
 }: GameTutorialFlowProps) {
   const isPt = language === 'pt-BR';
   const TASK_STEP = PAGES.length;
   const [step, setStep] = useState(0);
 
-  const [goalText, setGoalText] = useState('');
+  // O3: o objetivo escrito no onboarding chega já no campo (editável). Quem
+  // pulou o Objetivo vê o placeholder.
+  const [goalText, setGoalText] = useState((soulGoal ?? '').trim());
+  const [areaFoco, setAreaFoco] = useState(false);
   const [selectedCats, setSelectedCats] = useState<Set<ActivityCategory>>(new Set());
   const [suggestions, setSuggestions] = useState<SuggestedTask[]>([]);
   const [loading, setLoading] = useState(false);
@@ -204,16 +232,9 @@ export function GameTutorialFlow({
     onComplete(activities.slice(0, remaining));
   };
 
-  const triangleGlyph = (dir: 'left' | 'right', color = 'var(--sm2-primary-ink)') => (
-    <span style={{
-      display: 'inline-block', width: 0, height: 0,
-      borderTop: '7px solid transparent', borderBottom: '7px solid transparent',
-      ...(dir === 'right' ? { borderLeft: `10px solid ${color}` } : { borderRight: `10px solid ${color}` }),
-    }} />
-  );
-
   /**
-   * Pontinhos de progresso. O denominador inclui a criação da 1ª atividade
+   * Pontinhos de progresso (S4): 8px, aceso = `primary-fill`, apagado = anel
+   * 2px `muted`. O denominador inclui a criação da 1ª atividade
    * (`TASK_STEP + 1`), e não só as páginas de conceito — a barra do
    * `SoulmonOnboarding` já foi corrigida uma vez pelo mesmo motivo: barra que
    * enche antes do fim do fluxo mente sobre quanto falta.
@@ -225,224 +246,211 @@ export function GameTutorialFlow({
       aria-valuemax={TASK_STEP + 1}
       aria-valuenow={step + 1}
       aria-label={isPt ? `Passo ${step + 1} de ${TASK_STEP + 1}` : `Step ${step + 1} of ${TASK_STEP + 1}`}
-      style={{ display: 'flex', gap: 6, justifyContent: 'center' }}
+      style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 8 }}
     >
       {Array.from({ length: TASK_STEP + 1 }, (_, i) => (
-        <span key={i} style={{
-          width: 6, height: 6, borderRadius: '50%',
-          background: i === step ? 'var(--sm2-primary-fill)' : 'var(--sm2-line)',
+        <span key={i} data-dot={i <= step ? 'on' : 'off'} style={{
+          width: 8, height: 8, borderRadius: '50%', boxSizing: 'border-box',
+          border: `2px solid ${i <= step ? 'var(--sm2-primary-fill)' : 'var(--sm2-muted)'}`,
+          background: i <= step ? 'var(--sm2-primary-fill)' : 'transparent',
         }} />
       ))}
     </div>
   );
 
+  const heroLabel = petName
+    ? (demoTint !== undefined
+      ? (isPt ? `${petName}, na tonalidade ${demoTint + 1}` : `${petName}, in tint ${demoTint + 1}`)
+      : (isPt ? `${petName}, seu Soulmon` : `${petName}, your Soulmon`))
+    : (isPt ? 'Seu Soulmon' : 'Your Soulmon');
+
+  /** Card de sugestão SIS-03 (44): estado pelo glifo, seleção por `primary-soft` + anel. */
+  const sugestao = (key: string, texto: string, isSel: boolean, ariaLabel?: string) => {
+    const inerte = !isSel && atCap;
+    return (
+      <button
+        key={key}
+        type="button"
+        onClick={() => { if (!inerte) toggleSelected(key, isSel); }}
+        aria-pressed={isSel}
+        aria-disabled={inerte || undefined}
+        aria-label={ariaLabel}
+        data-suggestion={inerte ? 'inert' : isSel ? 'on' : 'off'}
+        style={{
+          width: '100%', boxSizing: 'border-box', minHeight: 44, textAlign: 'left',
+          display: 'flex', alignItems: 'center', gap: 12,
+          padding: isSel ? '7px 11px' : '8px 12px',
+          borderRadius: 'var(--sm2-radius-md)',
+          cursor: inerte ? 'not-allowed' : 'pointer',
+          /* Inerte por FORMA (D-O15): tracejado 1px `muted` + tinta `muted`,
+             fundo transparente — nunca `opacity`. */
+          border: inerte
+            ? '1px dashed var(--sm2-muted)'
+            : isSel ? '2px solid var(--sm2-primary-ink)' : '1px solid var(--sm2-line)',
+          backgroundColor: inerte ? 'transparent' : isSel ? 'var(--sm2-primary-soft)' : 'var(--sm2-surface)',
+          color: inerte ? 'var(--sm2-muted)' : 'var(--sm2-ink)',
+          fontFamily: 'var(--sm2-font-text)',
+          fontSize: 'var(--sm2-text-sm)',
+          lineHeight: 'var(--sm2-leading-body)',
+        }}
+      >
+        {isSel
+          ? <Icon name="check_circle" size={24} fill={1} tone="primary" />
+          : <Icon name="radio_button_unchecked" size={24} tone="muted" />}
+        <span style={{ flex: 1, minWidth: 0 }}>{texto}</span>
+      </button>
+    );
+  };
+
   return (
-    <div className="sm-app-bg" style={{
+    <div style={{
       position: 'fixed', inset: 0, overflowY: 'auto',
       display: 'flex', flexDirection: 'column', alignItems: 'center',
+      backgroundColor: 'var(--sm2-bg)',
       color: 'var(--sm2-ink)',
+      fontFamily: 'var(--sm2-font-text)',
     }}>
-      <div style={{ width: '100%', maxWidth: 440, padding: '24px 20px 40px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <style>{SPIN_CSS}</style>
+      <div style={{ width: '100%', maxWidth: 440, padding: '24px 16px 24px', flex: 1, display: 'flex', flexDirection: 'column', gap: 12, boxSizing: 'border-box' }}>
         {step < TASK_STEP ? (
           <>
-            {/* Página do tutorial — moldura estilo RPG (borda dourada dupla) */}
-            <div
-              className="sm-card"
-              style={{
-                /* `flex: 1` faz o cartão ocupar a altura toda; sem
-                   `justifyContent` o conteúdo grudava no topo e sobravam ~700px
-                   de vazio embaixo (visto no screenshot da rodada 3 — a
-                   PRIMEIRA tela que o jogador novo vê). Centralizar resolve sem
-                   mudar a moldura. */
-                flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center',
-                padding: '36px 24px', marginTop: 40, marginBottom: 4,
-                /* Moldura dourada. Era uma borda `--sm-gold` de 3px MAIS um
-                   anel de 4px em `--sm-gold-soft`; o `--sm2-*` não tem um par
-                   ink/soft de ouro, e inventar um `rgba()` aqui seria cor
-                   fora do sistema (o footgun dos tokens à mão). Fica UMA
-                   linha de `--sm2-gold-fill` + a sombra de profundidade, que
-                   é o que já lia como moldura. */
-                border: '3px solid var(--sm2-gold-fill)',
-                boxShadow: '0 8px 24px rgba(6, 24, 26,.12)',
-              }}
-            >
-              {/* Glifo herói, PELADO. A caixa de 84px com fundo
-                  `--sm-primary-soft` que existia aqui era ícone DENTRO DE BOX,
-                  proibido no app inteiro (CLAUDE.md, "UI: regras visuais").
-                  48px é o papel `state` da §6.1a — o glifo que É a tela; está
-                  na allowlist do guard junto dos outros nove do mesmo papel. */}
-              <div style={{ marginBottom: 22, display: 'flex' }}>
-                <Icon name={PAGES[step].icon} size={48} tone="primary" fill={1} />
-              </div>
-              <h1 style={{ fontSize: 22, margin: '0 0 12px', fontWeight: 800 }}>
+            {dots}
+            {/* A promessa: a criatura que acabou de nascer, no vidro (D-O13),
+                título Fredoka 20, texto Rubik 14, um primário no pé. */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: 12 }}>
+              <Viewport width={96} height={96} scale={2} label={heroLabel} screenStyle={{ position: 'relative' }}>
+                {spriteUrl && (
+                  <img
+                    src={spriteUrl}
+                    alt=""
+                    data-hero
+                    width={128}
+                    height={128}
+                    style={{ position: 'absolute', left: 32, top: 32, width: 128, height: 128, imageRendering: 'pixelated', filter: demoTintFilter(demoTint) }}
+                  />
+                )}
+              </Viewport>
+              <h2 className="sm2-title" style={sm2TitleStyle}>
                 {isPt ? PAGES[step].titlePt : PAGES[step].titleEn}
-              </h1>
-              <p style={{ fontSize: 14.5, color: 'var(--sm2-muted)', lineHeight: 1.7, margin: 0 }}>
+              </h2>
+              <p style={{ ...sm2Text, margin: 0 }}>
                 {isPt ? PAGES[step].bodyPt : PAGES[step].bodyEn}
               </p>
             </div>
 
-            {/* Uma tela, uma saída. As setinhas de avançar/voltar e o "Pular
-                tutorial" existiam porque havia 6 páginas para percorrer;
-                com uma só, os três botões faziam a MESMA coisa. Sobra o CTA
-                primário (largura cheia, altura do `sm-btn` ≥44px). */}
-            <button
-              className="sm-btn"
-              style={{ width: '100%', marginTop: 20 }}
-              onClick={() => setStep(TASK_STEP)}
-            >
-              {isPt ? 'Começar' : "Let's start"}
-            </button>
-            <div style={{ marginTop: 16 }}>{dots}</div>
+            {/* Uma tela, uma saída. */}
+            <div style={{ paddingBottom: 12 }}>
+              <button
+                type="button"
+                style={{ ...sm2Button('primary'), width: '100%' }}
+                onClick={() => setStep(TASK_STEP)}
+              >
+                {isPt ? 'Começar' : "Let's start"}
+              </button>
+            </div>
           </>
         ) : (
           <>
+            {dots}
             {/* Passo obrigatório: criar a 1ª tarefa */}
             <button
+              type="button"
               onClick={() => setStep(TASK_STEP - 1)}
-              /* minHeight 44 = alvo de toque do WCAG 2.2 AA (2.5.8); era 0 de
-                 padding e ~19px de altura. */
-              style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: 'var(--sm2-muted)', fontSize: 12, margin: '0 0 4px', cursor: 'pointer', padding: '0 4px', minHeight: 44 }}
+              style={{ ...sm2Button('quiet', false, 'sm'), alignSelf: 'flex-start', padding: '0 8px' }}
             >
-              {triangleGlyph('left', 'var(--sm2-muted)')}
+              <Icon name="arrow_back" size={20} />
               {isPt ? 'Voltar' : 'Back'}
             </button>
-            <div style={{ marginBottom: 10 }}>{dots}</div>
-            <h1 style={{ fontSize: 21, margin: '8px 0 4px', fontWeight: 800 }}>
+            <h2 className="sm2-title" style={sm2TitleStyle}>
               {isPt ? 'Qual é o seu objetivo?' : "What's your goal?"}
-            </h1>
-            <p style={{ fontSize: 12.5, color: 'var(--sm2-muted)', margin: '0 0 16px', lineHeight: 1.5 }}>
-              {isPt
-                ? 'Conte pra gente o que você quer alcançar — vamos sugerir tarefas pra ajudar. Você precisa adicionar pelo menos 1 pra continuar.'
-                : "Tell us what you want to achieve — we'll suggest tasks to help. You need to add at least 1 to continue."}
-            </p>
+            </h2>
 
             <textarea
               value={goalText}
               onChange={e => setGoalText(e.target.value)}
+              onFocus={() => setAreaFoco(true)}
+              onBlur={() => setAreaFoco(false)}
+              aria-label={isPt ? 'Qual é o seu objetivo?' : "What's your goal?"}
               placeholder={isPt ? 'Ex.: Quero ficar mais em forma e menos ansioso' : 'E.g.: I want to get fitter and less anxious'}
               rows={3}
               maxLength={300}
-              className="sm-px-field"
-              style={{ width: '100%', boxSizing: 'border-box', resize: 'none', outline: 'none', fontFamily: 'inherit' }}
+              className="sm2-form-field"
+              style={{
+                width: '100%', boxSizing: 'border-box', minHeight: 96, padding: 12, resize: 'none', outline: 'none',
+                borderRadius: 'var(--sm2-radius-md)',
+                border: `1px solid ${areaFoco ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)'}`,
+                boxShadow: areaFoco ? '0 0 0 2px var(--sm2-primary-ink)' : 'none',
+                backgroundColor: 'var(--sm2-surface-2)',
+                fontFamily: 'var(--sm2-font-text)',
+                fontSize: 'var(--sm2-text-sm)',
+                lineHeight: 'var(--sm2-leading-body)',
+                color: 'var(--sm2-ink)',
+              }}
             />
 
-            <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--sm2-muted)', margin: '14px 0 8px' }}>
-              {isPt ? 'Áreas da vida (opcional)' : 'Life areas (optional)'}
-            </p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-              {categoriasOrdenadas.map(cat => {
-                const active = selectedCats.has(cat);
-                return (
-                  <PixelChoiceChip
+            <div>
+              <span style={sm2Label} id="tut-areas-label">{isPt ? 'Áreas da vida (opcional)' : 'Life areas (optional)'}</span>
+              <div role="group" aria-labelledby="tut-areas-label" style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {categoriasOrdenadas.map(cat => (
+                  <Chip
                     key={cat}
-                    selected={active}
+                    selected={selectedCats.has(cat)}
                     onToggle={() => toggleCat(cat)}
-                    iconName={CATEGORY_ICON_NAME[cat]}
+                    style={{ padding: '0 12px', fontSize: 'var(--sm2-text-xs)' }}
                   >
                     {categoryLabel(cat, isPt)}
-                  </PixelChoiceChip>
-                );
-              })}
+                  </Chip>
+                ))}
+              </div>
             </div>
 
+            {/* VIVO com o objetivo no campo (X1): só desliga com o campo vazio E
+                nenhuma área. Depois de responder vira `outline` (já respondeu). */}
             <button
-              className="sm-btn"
-              style={{ width: '100%' }}
+              type="button"
+              style={{ ...sm2Button(searched && !loading ? 'outline' : 'primary', loading || (!goalText.trim() && selectedCats.size === 0)), width: '100%' }}
               onClick={handleGenerate}
               disabled={loading || (!goalText.trim() && selectedCats.size === 0)}
               aria-busy={loading}
+              aria-label={isPt ? 'Sugerir tarefas com IA' : 'Suggest tasks with AI'}
             >
-              {/* 20 = degrau `inline` da §6.1: os dois andam ao lado de uma
-                  palavra na mesma linha (o spinner ocupa o lugar dela). O
-                  spinner tem `label` porque, carregando, ele é a única coisa
-                  no botão — sem isso o leitor de tela anuncia um botão mudo. */}
               {loading
-                ? <Icon
-                    name="sync" size={20}
-                    label={isPt ? 'Gerando sugestões…' : 'Generating suggestions…'}
-                    style={{ animation: 'tutspin 1.1s linear infinite' }}
-                  />
-                : <><Icon name="auto_awesome" size={20} /> {isPt ? 'Sugerir tarefas com IA' : 'Suggest tasks with AI'}</>}
+                ? <span data-sm-spin="" aria-hidden="true" style={{ display: 'inline-flex', animation: 'tutspin 1.1s linear infinite' }}><Icon name="sync" size={24} /></span>
+                : (isPt ? 'Sugerir tarefas com IA' : 'Suggest tasks with AI')}
             </button>
+            {/* O aviso da IA (O6): o objetivo sai do aparelho só neste toque. */}
+            {!searched && (
+              <p style={{ ...sm2Hint, textAlign: 'center' }}>
+                {isPt ? 'Seu objetivo é enviado à IA para escrever as sugestões.' : 'Your goal is sent to the AI to write suggestions.'}
+              </p>
+            )}
 
             {searched && !loading && (
-              <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {goalText.trim() && (() => {
-                  const isSel = selected.has(customKey);
-                  const disabled = !isSel && atCap;
-                  return (
-                    <button
-                      onClick={() => toggleSelected(customKey, isSel)}
-                      aria-pressed={isSel}
-                      disabled={disabled}
-                      className="sm-card"
-                      style={{
-                        width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10, padding: 12,
-                        cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.5 : 1,
-                        borderColor: isSel ? 'var(--sm2-primary-ink)' : undefined,
-                        backgroundColor: isSel ? 'var(--sm2-primary-soft)' : undefined,
-                        ...(isSel ? { ['--sm-cham-line' as string]: 'var(--sm2-primary-ink)' } : null),
-                      } as CSSProperties}
-                    >
-                      <span style={{ fontSize: '1.3rem', width: 36, height: 36, backgroundColor: 'var(--sm2-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        {CATEGORY_ICONS[customCategory]}
-                      </span>
-                      <span style={{ flex: 1, fontSize: 13.5, fontWeight: 600, color: 'var(--sm2-ink)' }}>{goalText.trim()}</span>
-                      {isSel && <Icon name="check" size={24} tone="primary" />}
-                    </button>
-                  );
-                })()}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {goalText.trim() && sugestao(customKey, goalText.trim(), selected.has(customKey))}
                 {suggestions.length === 0 ? (
-                  <p style={{ fontSize: 12.5, color: 'var(--sm2-muted)', textAlign: 'center', margin: '8px 0' }}>
+                  <p style={{ ...sm2Hint, textAlign: 'center', margin: '8px 0' }}>
                     {isPt
                       ? 'Não veio sugestão da IA agora — sem problema, use seu objetivo acima ou digite de novo.'
                       : 'No AI suggestions came back — no worries, use your goal above or try again.'}
                   </p>
-                ) : suggestions.map(s => {
-                  const isSel = selected.has(s.name);
-                  const disabled = !isSel && atCap;
-                  return (
-                    <button
-                      key={s.name}
-                      onClick={() => toggleSelected(s.name, isSel)}
-                      aria-pressed={isSel}
-                      disabled={disabled}
-                      className="sm-card"
-                      style={{
-                        width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10, padding: 12,
-                        cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.5 : 1,
-                        borderColor: isSel ? 'var(--sm2-primary-ink)' : undefined,
-                        backgroundColor: isSel ? 'var(--sm2-primary-soft)' : undefined,
-                        ...(isSel ? { ['--sm-cham-line' as string]: 'var(--sm2-primary-ink)' } : null),
-                      } as CSSProperties}
-                    >
-                      <span style={{ fontSize: '1.3rem', width: 36, height: 36, backgroundColor: 'var(--sm2-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        {s.emoji}
-                      </span>
-                      <span style={{ flex: 1, minWidth: 0 }}>
-                        <span style={{ display: 'block', fontSize: 13.5, fontWeight: 600, color: 'var(--sm2-ink)' }}>{s.name}</span>
-                        <span style={{ fontSize: 11, color: 'var(--sm2-muted)' }}>{categoryLabel(s.category, isPt)}</span>
-                      </span>
-                      {isSel && <Icon name="check" size={24} tone="primary" />}
-                    </button>
-                  );
-                })}
-                {atCap && (
-                  <p style={{ fontSize: 11.5, color: 'var(--sm2-gold-ink)', textAlign: 'center', margin: '2px 0 0', fontWeight: 600 }}>
-                    {isPt
+                ) : suggestions.map(s => sugestao(s.name, s.name, selected.has(s.name), `${s.name} · ${categoryLabel(s.category, isPt)}`))}
+                {/* O teto muda sob o dedo: `role=status` (D-A4), `gold-ink` sem moldura. */}
+                <p role="status" aria-live="polite" style={{ ...sm2Hint, textAlign: 'center', color: 'var(--sm2-gold-ink)', minHeight: atCap ? undefined : 0 }}>
+                  {atCap
+                    ? (isPt
                       ? `Limite de ${remaining} atividades do estágio atingido — desmarque algo pra trocar.`
-                      : `Stage limit of ${remaining} activities reached — unselect something to swap.`}
-                  </p>
-                )}
+                      : `Stage limit of ${remaining} activities reached — unselect something to swap.`)
+                    : ''}
+                </p>
               </div>
             )}
 
             <div style={{ flex: 1 }} />
 
             <button
-              className="sm-btn"
-              style={{ width: '100%', marginTop: 20 }}
+              type="button"
+              style={{ ...sm2Button('primary', !canFinish), width: '100%' }}
               disabled={!canFinish}
               onClick={handleFinish}
             >
@@ -452,7 +460,6 @@ export function GameTutorialFlow({
             </button>
           </>
         )}
-        <style>{`@keyframes tutspin{to{transform:rotate(360deg)}}`}</style>
       </div>
     </div>
   );

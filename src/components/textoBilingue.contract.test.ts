@@ -45,6 +45,7 @@ const EXTENSOES = ['.ts', '.tsx'];
  */
 const NEUTROS: Record<string, string> = {
   ABCD2345: 'exemplo do formato do código de convite do grupo — são letras e números, iguais nos dois idiomas.',
+  Soulmon: 'a MARCA — o `aria-label` do slot da chama no portão (canvas Onboarding-funil, D-O4). O nome do app é o mesmo nos dois idiomas.',
 };
 
 /** Posições em que um literal chega aos olhos (ou ao leitor de tela). */

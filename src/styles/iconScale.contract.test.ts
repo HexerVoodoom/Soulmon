@@ -349,10 +349,8 @@ const ALLOWLIST: Divida[] = [
     arquivo: 'src/components/WelcomePromptModal.tsx', size: 48, quantos: 1,
     motivo: 'Ilustração de estado: o herói do modal de boas-vindas. Ver ENTRADA 1.',
   },
-  {
-    arquivo: 'src/components/GameTutorialFlow.tsx', size: 48, quantos: 1,
-    motivo: 'Ilustração de estado: o glifo herói do segundo onboarding — sozinho, centralizado, acima do parágrafo, É a tela. Veio de `lucide-react` em 42px dentro de uma caixa de 84px (ícone em box, proibido). Ver ENTRADA 1.',
-  },
+  /* `GameTutorialFlow` saiu da lista em 20/09/2026 (canvas Onboarding-funil,
+     D-O13): o glifo `pets` 48 deu lugar à criatura no vidro 192². */
   {
     arquivo: 'src/components/ui/foundation.render.test.tsx', size: 64, quantos: 1,
     motivo: 'NÃO é UI: é o teste do clamp de `opsz` (§6 regra 3). Precisa passar acima de 48 para provar que o componente clampa. Ver ENTRADA 2.',
