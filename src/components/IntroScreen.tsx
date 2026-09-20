@@ -1,14 +1,26 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import ravenMascot from '../assets/soulmon/mascot-raven.png';
 import introVideo from '../assets/brand/intro.mp4';
+import { resolveLanguage } from '../utils/i18n';
+import { readLocal } from '../utils/safeStorage';
+import { STORAGE_KEYS } from '../utils/storageKeys';
 
 /**
- * Splash screen shown briefly on every cold start, before the onboarding
- * gate / main app render. Purely cosmetic — self-dismisses via onFinish.
- * Plays the brand intro video; falls back to the raven/gradient wordmark
- * if the video fails to load (e.g. unsupported format on an old WebView).
+ * A INTRO é a continuação do boot (canvas Onboarding-funil ONB-03/04,
+ * DECISÕES §23, D-O3 revista na rodada 2 / X4): o MESMO `.sm2-splash` da
+ * splash do `index.html` — full-bleed, paleta do visor (`.sm2-visor`, D-O16)
+ * — com o vídeo de marca em `cover` dentro. Sem anel, sem janela: a splash
+ * liga o visor, a intro continua nele, o portão é o aparelho.
+ *
+ * A superfície inteira é o alvo "Skip intro" (`role=button` + Enter/Espaço,
+ * O5/B4) e diz "TAP TO SKIP" em Silkscreen 14 no pé. Se o vídeo falhar
+ * (WebView antigo), o quadro vira o corvo-mascote a 128 direto sobre o vidro
+ * (ilustração 512² a 0,25×, `image-rendering: auto` — sem a placa 96² que
+ * era ícone em box) + "SOULMON" em Silkscreen 20, e sai sozinho em 1,5 s.
+ * Os literais `#0b0d16` e o gradiente Tailwind saíram: tudo é token.
  */
 export function IntroScreen({ onFinish }: { onFinish: () => void }) {
+  const isPt = resolveLanguage(readLocal(STORAGE_KEYS.LANGUAGE)) === 'pt-BR';
   const [leaving, setLeaving] = useState(false);
   const [videoFailed, setVideoFailed] = useState(false);
   const doneTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -21,9 +33,12 @@ export function IntroScreen({ onFinish }: { onFinish: () => void }) {
     doneTimerRef.current = setTimeout(onFinish, totalMs);
   };
 
-  // Toque/clique no vídeo: pula direto pro app, com o mesmo fade de saída
-  // (400ms) que o fim natural do vídeo já usa — sem esperar o resto tocar.
+  // Toque/tecla em qualquer lugar: pula direto pro app, com o mesmo fade de
+  // saída (400ms) que o fim natural do vídeo já usa.
   const skip = () => scheduleFinish(400);
+  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); skip(); }
+  };
 
   useEffect(() => {
     // Fallback timing (used if the video fails, or as a safety net if
@@ -36,17 +51,23 @@ export function IntroScreen({ onFinish }: { onFinish: () => void }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onFinish]);
 
+  const skipLabel = isPt ? 'Pular introdução' : 'Skip intro';
+  /* ONB-04 (erro) é o mesmo quadro SEM alvo — sai sozinho (fidelidade ao
+     canvas): o `role=button` só existe enquanto o vídeo é a estrutura. */
+  const alvo = videoFailed ? {} : { role: 'button' as const, tabIndex: 0, 'aria-label': skipLabel, onClick: skip, onKeyDown };
+
   return (
     <div
+      {...alvo}
+      className="sm2-visor sm2-splash"
+      data-testid="intro-screen"
       style={{
-        position: 'fixed', inset: 0, zIndex: 500,
-        background: videoFailed ? 'linear-gradient(160deg, #2dd4bf 0%, #0d9488 45%, #0f766e 100%)' : '#0b0d16',
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        color: '#ffffff',
+        zIndex: 500,
+        /* O único `opacity` aqui é o FADE DE SAÍDA da tela inteira (movimento
+           de transição), não um estado visual — nada dentro esmaece. */
         opacity: leaving ? 0 : 1,
         transition: 'opacity 0.4s ease',
         pointerEvents: leaving ? 'none' : 'auto',
-        overflow: 'hidden',
       }}
     >
       {!videoFailed ? (
@@ -55,41 +76,25 @@ export function IntroScreen({ onFinish }: { onFinish: () => void }) {
           autoPlay
           muted
           playsInline
+          className="sm2-splash-video"
           onLoadedMetadata={e => {
             const dur = e.currentTarget.duration;
             if (isFinite(dur) && dur > 0) scheduleFinish(dur * 1000);
           }}
           onEnded={onFinish}
           onError={() => { setVideoFailed(true); scheduleFinish(1500); }}
-          onClick={skip}
-          style={{
-            position: 'absolute', inset: 0,
-            width: '100%', height: '100%',
-            objectFit: 'cover',
-            cursor: 'pointer',
-          }}
         />
       ) : (
         <>
-          <div style={{
-            width: 96, height: 96, borderRadius: 28,
-            background: 'rgba(255,255,255,0.16)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            animation: 'sm-intro-logo-in 0.6s cubic-bezier(.2,.9,.3,1.3)',
-          }}>
-            <img src={ravenMascot} alt="" width={64} height={64} style={{ objectFit: 'contain' }} />
-          </div>
-          <h1
-            className="sm-display"
-            style={{
-              fontSize: 28, margin: '18px 0 0',
-              animation: 'sm-intro-wordmark-in 0.5s ease 0.25s both',
-              color: '#ffffff', WebkitTextStroke: '1.5px #0f766e',
-            }}
-          >
-            Soulmon
-          </h1>
+          <img src={ravenMascot} alt="" width={128} height={128} className="sm2-splash-raven" draggable={false} />
+          <p className="sm2-splash-wordmark">Soulmon</p>
         </>
+      )}
+      <span className="sm2-viewport-glass" aria-hidden="true" />
+      {!videoFailed && (
+        <span className="sm2-splash-tap" aria-hidden="true">
+          <span className="sm2-splash-pix">{isPt ? 'Toque para pular' : 'Tap to skip'}</span>
+        </span>
       )}
     </div>
   );
