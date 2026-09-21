@@ -1,6 +1,6 @@
 # Visão — o que o Soulmon é, para quem, e o que ele nunca pode virar
 
-> **Dono:** doc-redator-regras · **Data:** 09/09/2026 · **Estado:** verificado em 10/09/2026 por doc-verificador
+> **Dono:** doc-redator-regras · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (sincronizado com `dc72579e`, delta `2580b73a..dc72579e`: Fase 2 identidade, squad-arte, bíblia narrativa; verificação anterior: 10/09/2026)
 > **Verificação:** `npx vitest run src/utils/currencies.test.ts src/utils/monetization.fronteira.test.ts src/utils/restWindow.test.ts src/utils/passives.test.ts src/utils/bond.test.ts src/utils/habitRhythm.test.ts src/hooks/useDailyReset.test.ts src/plugins/widgetSemCobranca.contract.test.ts` — são os testes que travam, em código, as linhas vermelhas citadas aqui. Toda contagem deste doc traz, na própria linha, o comando que a mediu em 09/09/2026.
 > **Não cobre:** as regras de jogo em si (→ `02-REGRAS-DE-NEGOCIO.md`), telas e navegação (→ `03-FLUXO-DE-TELAS.md`), identidade visual (→ `04-IDENTIDADE-VISUAL.md`), arquitetura, deploy e integrações (→ `05-ARQUITETURA.md`, `08-INTEGRACOES-E-DEPLOY.md`), o histórico das decisões (→ `09-HISTORICO.md`, `10-DISCUSSOES-E-DECISOES.md`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -244,6 +244,35 @@ lista curta também está em [`docs/PLANO-MELHORIAS.md`](../PLANO-MELHORIAS.md)
 | 20 | **Chaves do bridge do widget e do save: só ACRESCENTAR** |
 | 21 | **Nunca métrica de desempenho de outro jogador** — nem por reuso de componente do próprio perfil. A tela do outro só mostra presença (criatura, nome, galho como palavra) e só oferece verbos de dar. Inscrita em 02/09/2026 |
 
+### A bíblia narrativa obedece às 21 (21/09/2026)
+
+[`docs/NARRATIVA-E-UNIVERSO.md`](../NARRATIVA-E-UNIVERSO.md) (doc vivo, indexado
+no `00-MAPA.md`) é o universo do jogo — premissa, cosmogonia da **Malha**,
+persona, biologia, taxonomia, vocabulário PT+EN — e **não decide regra nenhuma**:
+nada de `src/` mudou com ela, e tudo que pediria mecânica está isolado na §14
+("depende do dono"). O que ela acrescenta a este capítulo:
+
+- **Doze leis de ESCRITA (L1..L12, §2)** para todo texto de jogador: o mundo
+  descreve, nunca julga (L1); a criatura não é espelho nem placar (L2); nada no
+  universo enfraquece por culpa do jogador (L3); o mundo nomeia o **ato**, nunca
+  a pessoa nem o mérito (L12).
+- **Os três limites (§16)**, fora da ficção e obrigatórios em superfície
+  alcançável (`HelpModal`, Sobre, ficha da loja): não é tratamento; não sabe
+  nada além do declarado; texto que leia como afirmação sobre saúde, mente ou
+  destino não entra.
+- **O checklist que reprova copy (§17)** — qualquer "sim" reprova.
+
+Parecer do guarda em [`vetos.md`](../plano-melhorias/ledger/vetos.md), 21/09/2026:
+**`APROVADO COM RESSALVA`** — sem perdão novo (D4 segue em oito, proibição #17),
+sem número que desce. Três ressalvas foram do lado "perdoa demais": L4 nascia
+falsa sobre HP e energia, que descem por desenho; L11 proibia a criatura reagir
+ao carinho, que é o retorno do loop central; e faltava L12, sem a qual L1 + L11
+dão um mundo indiferente — contra a tese que diz *encoraja*. Todas aplicadas.
+Duas afirmações da bíblia foram medidas falsas contra o código e corrigidas:
+`moodSummary` (`src/utils/mood.ts`) já devolve a normalização que L9 proíbe
+(virou a proposta P14), e as faixas do Torneio vêm de pontos (`getTierStanding`),
+não de tempo de casa.
+
 ### As seis perguntas que qualquer proposta responde
 
 Do arquivo do guarda (`.claude/agents/soulmon-guarda-linha-vermelha.md`):
@@ -275,10 +304,14 @@ o tier** — quem concede é o servidor, em `functions/api/_entitlements.js`
 
 | | Demo (grátis) | Pago |
 |---|---|---|
-| Criatura | uma das três linhas prontas (`PREMADE_CHARACTERS`) | criatura **gerada** pelo Oráculo, única |
+| Criatura | uma das **seis** linhas prontas (`PREMADE_CHARACTERS`, `src/utils/monetization.ts`: `kaelen`/`orrin`/`thalindra` + `igni`/`nautilu`/`astrase` — as três do oráculo com seed fixo entraram em 15/09/2026, decisão D1 da SQUAD-ARTE; nome sempre de `DUNGEON_LINE_NAMES`). Desde 20/09/2026 o caminho grátis também responde as 6 perguntas e vê um reveal-demo em **silhueta** antes de escolher (`REVEAL_DEMO` → `DEMO_PICK`, REGISTRO 13.19) | criatura **gerada** pelo Oráculo, única |
 | Teto de atividades | `DEMO_ACTIVITY_TOTAL_CAP` = `FORM_REQUIREMENTS.rookie.cap` | o `cap` do estágio atual |
 | Renascimento | indisponível (`rebirthRefusal` → `'not-paid'`) | disponível, **uma vez só** |
 | Regras de jogo | **idênticas** | **idênticas** |
+
+⚠️ **divergência:** o `CLAUDE.md` ("Arte e nomes") ainda fala em "os três
+personagens prontos" (Pyraka, Akashaoi, Nimbrata). São seis desde 15/09/2026;
+o código vence. Registrado em [`02 §59`](02-REGRAS-DE-NEGOCIO.md#divergencias), D28.
 
 Preço de entrada: `FULL_UNLOCK_PRICE_LABEL` (`src/utils/monetization.ts`) —
 compra ÚNICA, SKU `FULL_UNLOCK_SKU`. A decisão de modelo
@@ -376,6 +409,22 @@ IA por usuário pago ≤ R$ 8.
 
 O que está aberto e **depende do dono** está na seção 3 de
 [`docs/STATUS.md`](../STATUS.md) — é lá que se lê o estado vivo, não aqui.
+
+### Adendo de 20–21/09/2026
+
+- **Fase 2 (identidade) fechada em 20/09/2026**: 14 canvases aprovados e
+  implementados na `main` (`docs/design/DECISOES-WIREFRAME.md` §18–§31). A tese
+  "O Visor" (pixel só dentro do vidro) vale em todas as superfícies, inclusive
+  widgets, overlay e push. Nenhuma regra de jogo mudou com ela — o que mudou de
+  regra está em [`02`](02-REGRAS-DE-NEGOCIO.md) (§22, §28, §57-A, §57-B).
+- **A marca `Soulmon` é o nome canônico de uma criatura da Bandai** (Champion,
+  Fantasma, Virus), verificado na enciclopédia oficial em 21/09/2026 — achado do
+  parecer de PI sobre a bíblia (`NARRATIVA-E-UNIVERSO.md` §14, **P8**). Nome
+  exato, no gênero em que a confusão é máxima, num app que usa vírus/dado/vacina
+  e a escada rookie→champion→ultimate→mega. **Depende do dono** (busca de
+  anterioridade e revisão jurídica antes de loja); a bíblia não depende do nome
+  — o mundo se chama a Malha. Junto: `Serah` e `Pyraka` nas 9 linhas, `Zeed`
+  nos prefixos de mega, e vírus/dado/vacina visíveis em 7 famílias de superfície.
 
 ---
 

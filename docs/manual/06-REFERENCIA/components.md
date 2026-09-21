@@ -1,6 +1,6 @@
 # Referência — `src/components`
 
-> **Dono:** doc-redator-referencia · **Data:** 09/09/2026 · **Estado:** verificado em 10/09/2026 por doc-verificador (mecânico completo)
+> **Dono:** doc-redator-referencia · **Data:** 20/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (mecânico completo)
 > **Verificação:** `npx vitest run src/docsManual.contract.test.ts` (item c — cobertura de referência) e a lista de `.test.tsx`/`.test.ts` citada em cada entrada.
 > **Não cobre:** regra de negócio em profundidade (→ [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md)), fluxo de tela a tela (→ [03-FLUXO-DE-TELAS.md](../03-FLUXO-DE-TELAS.md)), identidade visual/tokens (→ [04-IDENTIDADE-VISUAL.md](../04-IDENTIDADE-VISUAL.md)).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -106,7 +106,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 
 ### `src/components/BirthCard.tsx`
 **Dono de:** o Cartão de Nascimento — mesma peça no reveal do onboarding e nas Estatísticas (a lembrança).
-**Props principais:** `BirthCardProps` — `spriteUrl?`, `name`, `epithet?` (linha de essência do oráculo), `soulGoal?` (o que a pessoa escreveu no início), `bornAt?` (`YYYY-MM-DD`, dia do jogador), `language`.
+**Props principais:** `BirthCardProps` — `spriteUrl?`, `name`, `epithet?` (linha de essência do oráculo), `soulGoal?` (o que a pessoa escreveu no início), `bornAt?` (`YYYY-MM-DD`, dia do jogador), `language`, `pending?` (novo — estado de geração de sprite ainda em curso) `silhouette?` (novo — desenha silhueta em vez do sprite, enquanto `pending`).
 **Exports:** `BirthCard(props)` · `default`.
 **Estado/efeitos relevantes:** nenhum — função `dataPorExtenso` interna converte `bornAt` em data por extenso sem ano numérico.
 **Chamado por:** `src/components/SoulmonOnboarding.tsx`, `src/components/StatsPage.tsx` (`grep -rl "from '.*/BirthCard'" src`, 09/09/2026).
@@ -142,7 +142,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 
 ### `src/components/CityPicker.tsx`
 **Dono de:** busca de cidade de nascimento com fuso IANA, usada no oráculo/onboarding para o mapa astral.
-**Props principais:** `CityPickerProps` — `value: City | null`, `onChange(city)`, `isPt`, `inputStyle`, `optionStyle(selected)`, `inputClass?`/`optionClass?` (classes do kit; a `OraclePage` não passa nada, fora da navegação).
+**Props principais:** `CityPickerProps` — `value: City | null`, `onChange(city)`, `isPt`, `inputStyle`, `optionStyle(selected)?` (agora com padrão `choiceStyle` de `form/FormKit.tsx`), `inputClass?`/`optionClass?` (classes do kit; a `OraclePage` não passa nada, fora da navegação).
 **Exports:** `CityPicker(props)`.
 **Estado/efeitos relevantes:** `useState` (`query`, `touched`); `useMemo` (`matches`) chama `searchCities` (`src/utils/soulProfile/cities.ts`) só depois do primeiro toque (`touched`).
 **Chamado por:** `src/components/OraclePage.tsx`, `src/components/SoulmonOnboarding.tsx` (`grep -rl "from '.*/CityPicker'" src`, 09/09/2026).
@@ -205,7 +205,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 
 ### `src/components/DailyReportModal.tsx`
 **Dono de:** o relatório do dia, mostrado uma vez na primeira abertura após a virada — resumo de cuidado, humor, aventura da noite e convite de desbloqueio no value moment.
-**Props principais:** `DailyReportModalProps` — `report: GameState['lastDayReport']`, `adventure?` (achado da noite, vem PRONTO de fora — nunca `useState` local, senão reabrir o relatório sortearia um achado novo), `adventureIsNew?`, `onClose`, `language`, `soulGoal?`, `onRecoverHearts?`, `moodToday?`/`onPickMood?`/`moodNote?`, `showOffer?` (decisão de `src/utils/offerMoment.ts`, só o resultado chega aqui).
+**Props principais:** `DailyReportModalProps` — `report: GameState['lastDayReport']`, `adventure?` (achado da noite, vem PRONTO de fora — nunca `useState` local, senão reabrir o relatório sortearia um achado novo), `adventureIsNew?`, `onClose`, `language`, `soulGoal?`, `onRecoverHearts?`, `moodToday?`/`onPickMood?`/`moodNote?`, `showOffer?` (decisão de `src/utils/offerMoment.ts`, só o resultado chega aqui), `spriteUrl?` (novo — o sprite do pet, para o vidro `ritual/RitualKit.tsx` dentro do relatório).
 **Exports:** `DailyReportModal(props)`.
 **Estado/efeitos relevantes:** usa `useDialogA11y` (`src/hooks/useDialogA11y.ts`); renderiza `MemoriesCard`, `UnlockNudge`; lê `MOOD_OPTIONS`/`MoodValue` de `src/utils/mood.ts` e `ADVENTURE_ART` de `src/utils/adventureArt.ts`.
 **Chamado por:** `src/App.tsx` (`grep -rl "from '.*/DailyReportModal'" src`, 09/09/2026). A relação com `MemoriesCard.tsx` é a INVERSA: é este arquivo que importa e renderiza `MemoriesCard` (ver Estado/efeitos acima), não o contrário — corrigido em 10/09/2026 por doc-verificador (`grep -n "MemoriesCard" src/components/DailyReportModal.tsx` mostra o import; `grep -n "DailyReportModal" src/components/MemoriesCard.tsx` não acha nada).
@@ -224,7 +224,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 ### `src/components/DreamDex.tsx`
 **Dono de:** a Dex de Sonhos — coleção de cenas noturnas colecionáveis, apresentação pura de `DREAM_CATALOG`.
 **Props principais:** `DreamDexProps` (exportado) — recebe `RestState` e devolve a grade com `dexProgress`.
-**Exports:** `DreamDexProps` (interface) · `DreamDex(props)` · `default`.
+**Exports:** `DreamDexProps` (interface) · `SILHOUETTE_INK` (cor da silhueta do não coletado) · `DreamDex(props)` · `default`.
 **Estado/efeitos relevantes:** nenhum estado — sem GameState, sem storage; lê `DREAM_CATALOG`/`DREAMS_BY_RARITY`/`dexProgress`/`Dream`/`DreamRarity` de `src/utils/restWindow.ts`; usa `DREAM_ART` (`src/utils/dreamArt.ts`, sprites próprios desde ago/2026, substituindo emoji do sistema).
 **Chamado por:** `grep -rl "from '.*/DreamDex'" src` vazio; consumo real em `src/App.tsx` via `lazy(() => import('./components/DreamDex'))` (09/09/2026).
 **Régua:** nenhuma (`find src/components -maxdepth 1 -name 'DreamDex.*test.ts*'` vazio, 09/09/2026).
@@ -257,8 +257,8 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** nenhuma (`find src/components -maxdepth 1 -name 'ErrorBoundary.*test.ts*'` vazio, 09/09/2026).
 **Avisos do arquivo:** nenhum.
 
-### `src/components/EvoTrail.tsx`
-**Dono de:** a trilha de evolução resumida na Home (nós serpenteantes ao lado do painel de rituais) — atalho para a página de Evolução real.
+### `src/components/EvoTrail.tsx` — ⚰️ apagado em `7ea27825`
+**Dono de (histórico):** a trilha de evolução resumida na Home (nós serpenteantes ao lado do painel de rituais) — atalho para a página de Evolução real. Saiu da Home no canvas Atividades (DECISÕES §20): o painel "Daily rituals" (`DailyRituals.tsx`) tomou o espaço, e o atalho para a árvore de Evolução deixou de ter um resumo próprio ali (`grep -n "EvoTrail" src/App.tsx` só acha o comentário que registra a saída).
 **Props principais:** `EvoTrailProps` — `stages: CreatureStage[]`, `currentStageId`, `unlockedEvolutions?`, `branch: Attr` (já resolvido por quem chama, mesmo `resolveBranch` da página), `demoCharacterId?`, `onOpen()`, `language?`.
 **Exports:** `EvoTrail(props)`.
 **Estado/efeitos relevantes:** `useMemo` para `unlockedSet` e `trail`; sem regra de grafo própria (footgun 9) — reusa `SoulNode` e o galho resolvido de fora.
@@ -269,7 +269,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 ### `src/components/EvolutionCeremony.tsx`
 **Dono de:** a tela dedicada da cerimônia de evolução manual — sprites atual/próxima intercalando em velocidade progressiva sobre vídeo cósmico em loop.
 **Props principais:** `EvolutionCeremonyProps` — `fromStage`, `toStage`, `toName`, `language`, `demoCharacterId?`, `onEvolved()` (commit da evolução no estado), `onClose()`.
-**Exports:** `EvolutionCeremony(props)`.
+**Exports:** `TOTAL_MS` (3000ms, duração total da troca de sprites) · `MIN_STEP_MS` (340ms, piso do intervalo) · `buildSchedule()` — monta os intervalos decrescentes que somam `TOTAL_MS` · `EvolutionCeremony(props)`.
 **Estado/efeitos relevantes:** `useState` (`showNext`, `done`); `useRef` (`evolvedRef`); `useEffect` roda o `buildSchedule()` (intervalos decrescentes somando `TOTAL_MS`=3000ms) que alterna os sprites até estabilizar.
 **Chamado por:** `src/App.tsx` (`grep -rl "from '.*/EvolutionCeremony'" src`, 09/09/2026).
 **Régua:** nenhuma (`find src/components -maxdepth 1 -name 'EvolutionCeremony.*test.ts*'` vazio, 09/09/2026).
@@ -313,7 +313,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 
 ### `src/components/FormAlbum.tsx`
 **Dono de:** o álbum das formas vividas (WP4.6/WP4.10) — cada forma alcançada com arte e data, o resto como silhueta.
-**Props principais:** `AlbumForm` (interface exportada: `id`, `name`, `spriteUrl?`) · `FormAlbumProps` — `forms: readonly AlbumForm[]`, `reached: readonly string[]` (`unlockedEvolutions`), `reachedAt?: Record<string,string>` (WP4.10), `language`.
+**Props principais:** `AlbumForm` (interface exportada: `id`, `name`, `spriteUrl?`) · `FormAlbumProps` — `forms: readonly AlbumForm[]`, `reached: readonly string[]` (`unlockedEvolutions`), `reachedAt?: Record<string,string>` (WP4.10), `language`, `hideMetrics?` (novo, padrão `false` — mesma bandeira de "esconder números" da Janela de Descanso).
 **Exports:** `AlbumForm` (interface) · `FormAlbum(props)` · `default`.
 **Estado/efeitos relevantes:** nenhum — apresentação pura; usa `collectedAt` de `src/utils/collectionDates.ts` para a data da primeira vez.
 **Chamado por:** `src/components/StatsPage.tsx` (`grep -rl "from '.*/FormAlbum'" src`, 09/09/2026).
@@ -350,7 +350,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 ### `src/components/HabitConstancy.tsx`
 **Dono de:** o indicador de constância de um hábito (grade "N das últimas 7", sem streak).
 **Props principais:** `HabitConstancyProps` (exportado) — recebe `HabitRhythm`, `Schedule`, `language`.
-**Exports:** `HabitConstancyProps` (interface) · `HabitConstancy(props)` · `default`.
+**Exports:** `TIER_FILL` (mapa tier→fração do glifo de maturidade) · `HabitConstancyProps` (interface) · `dotStyle(state)` — estilo de um ponto da grade · `MaturityGlyph({tier,aura,label})` — o selo de maturidade · `ConstancyWindow({rhythm,now,language,hideMetrics})` — a grade "N das últimas 7" sozinha · `HabitConstancy(props)` · `default`.
 **Estado/efeitos relevantes:** nenhum estado — apresentação pura sobre `constancy`/`habitTier`/`dayKeyOf`/`steadyWindow` de `src/utils/habitRhythm.ts`.
 **Chamado por:** `src/App.tsx` (`grep -rl "from '.*/HabitConstancy'" src`, 09/09/2026).
 **Régua:** `src/components/HabitConstancy.hideMetrics.render.test.tsx`; também exercitado por `src/components/dailyList.sm2.render.test.tsx`.
@@ -538,7 +538,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 
 ### `src/components/RPSGame.tsx`
 **Dono de:** o minijogo Pedra-Papel-Tesoura contra o pet — melhor de 5 (primeiro a 3 vitórias de rodada).
-**Props principais:** props inline (sem interface nomeada) — `evolutionStage`, `demoCharacterId?`, `language`, `onEarnPoints`, `onExit`.
+**Props principais:** props inline (sem interface nomeada) — `language`, `onEarnPoints`, `onExit`; `evolutionStage` e `demoCharacterId?` SEGUEM no tipo (assinatura comum dos minijogos, o `App.tsx` ainda passa) mas não são lidos — desde o canvas Jogos o pet não aparece na cena, e o visor vem do kit `games/GameKit.tsx`.
 **Exports:** `RPSGame(props)`.
 **Estado/efeitos relevantes:** `useState` (`playerWins`, `petWins`, `playerHand`, `petHand`, `thinking`, `roundMsg`, `matchOver`); `useRef`/`useEffect` limpam o timer da IA ao desmontar; toca `playTaskComplete` (`src/utils/sounds.ts`).
 **Chamado por:** `src/components/ActivitiesPage.tsx` (`grep -rl "from '.*/RPSGame'" src`, 09/09/2026).
@@ -592,7 +592,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 
 ### `src/components/SoulTestItem.tsx`
 **Dono de:** desenha UMA pergunta do teste de personalidade (Likert/escolha forçada/cenário) — usado tanto no onboarding quanto na `OraclePage`.
-**Props principais:** `SoulTestItemProps` — `item: Item`, resposta atual, callback de resposta.
+**Props principais:** `SoulTestItemProps` — `item: Item`, resposta atual, callback de resposta, `optionStyle?` (agora com padrão `choiceStyle` de `form/FormKit.tsx`, em vez de exigir que todo chamador passasse o próprio estilo).
 **Exports:** `itemPrompt(item)` — o enunciado no formato certo · `itemHint(item)` — dica de como responder · `SoulTestItem(props)`.
 **Estado/efeitos relevantes:** nenhum — componente puro; `LIKERT_LABELS` fixa os cinco rótulos (1–5, extremos e meio sempre nomeados).
 **Chamado por:** `src/components/OraclePage.tsx`, `src/components/SoulmonOnboarding.tsx` (`grep -rl "from '.*/SoulTestItem'" src`, 09/09/2026).
@@ -620,7 +620,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 ### `src/components/StatsPage.tsx`
 **Dono de:** a página de Estatísticas — deixou de ser uma parede de números; só o Nível de Vínculo é leitura grande.
 **Props principais:** `CompletedTask`, `ActivityStats` (interfaces internas) · `StatsPageProps` — dados de progresso, formas desbloqueadas, jornada (kills, runs, recorde do Dino), histórico de conclusões.
-**Exports:** `StatsPage(props)`.
+**Exports:** `StatsPageProps` (interface) · `StatsPage(props)`.
 **Estado/efeitos relevantes:** 3 ocorrências de `useMemo` (`grep -c`, 09/09/2026); renderiza `BirthCard`, `FormAlbum`, `BestiaryCard`; usa `getPassive` (`src/utils/passives.ts`).
 **Chamado por:** `grep -rl "from '.*/StatsPage'" src` vazio; consumo real em `src/App.tsx` via `lazy(() => import('./components/StatsPage'))` (09/09/2026).
 **Régua:** nenhuma (`find src/components -maxdepth 1 -name 'StatsPage.*test.ts*'` vazio, 09/09/2026).
@@ -665,7 +665,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 ### `src/components/TaskMeta.tsx`
 **Dono de:** a faixa de metadados de uma tarefa (assombrada/atrasada/parada/adiada) — a diferença entre ALERTA e CONVITE, sem vermelho de cobrança.
 **Props principais:** `TaskMetaProps` (exportado) — a tarefa e o relógio (`now`), sem GameState.
-**Exports:** `TaskMetaProps` (interface) · `TaskMeta(props)` · `default`.
+**Exports:** `sm2Tag` (estilo do selo de metadado) · `TaskMetaProps` (interface) · `TaskMeta(props)` · `default`.
 **Estado/efeitos relevantes:** nenhum — puramente apresentacional; usa `effortOf`/`isHaunted`/`daysStale`/`isOverdue`/`needsPostponeNudge` de `src/utils/taskTriage.ts`.
 **Chamado por:** `src/App.tsx` (`grep -rl "from '.*/TaskMeta'" src`, 09/09/2026); também exercitado por `src/components/dailyList.sm2.render.test.tsx`.
 **Régua:** `src/components/TaskMeta.render.test.tsx`.
@@ -721,14 +721,14 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Props principais:** `SoulNodeProps` — `visual: SoulNodeVisual`, `size?`, `tone?` (só pinta nó já alcançado), `sprite?` (decorativo, pousado no nó), `label` (situação completa em palavras — WCAG 1.4.1), `title?`, `onClick?`, `ring?` (anel do nó atual), `silhouette?` (WP4.21, sombra da próxima forma prevista).
 **Exports:** `SoulNodeVisual` (re-export de `nodeArt.tsx`) · `SoulNode(props)`.
 **Estado/efeitos relevantes:** nenhum — componente de interação/apresentação puro.
-**Chamado por:** `src/components/EvoTrail.tsx`, `src/components/EvolutionPath.tsx` (`grep -rl "from '.*/SoulNode'" src`, 09/09/2026).
+**Chamado por:** `src/components/EvolutionPath.tsx` (`grep -rl "from '.*/SoulNode'" src`, 20/09/2026 — era `EvoTrail.tsx` também, mas esse arquivo foi apagado em `7ea27825`).
 **Régua:** nenhuma direta (`find src/components/evolution -maxdepth 1 -name 'SoulNode.*test.ts*'` vazio, 09/09/2026); exercitado pelos testes de `EvolutionPath.tsx`.
 **Avisos do arquivo:** divisão de responsabilidade de propósito — `nodeArt.tsx` desenha, `SoulNode` interage, `EvolutionPath` monta o grafo; alvo sempre ≥44px mesmo quando o cristal desenhado é menor.
 
 ### `src/components/evolution/nodeArt.tsx`
 **Dono de:** a fronteira única de arte do nó da árvore — hoje quatro PNGs 128×128 (um por `SoulNodeVisual`), não SVG.
 **Props principais:** `NodeArtProps` (exportado) — `visual: SoulNodeVisual`, `size` → devolve um quadrado `size`×`size`px, decorativo (`aria-hidden`).
-**Exports:** `SoulNodeVisual` (type: `'current'|'reached'|'forecast'|'locked'`) · `NodeArtProps` (interface) · `NodeArt(props)`.
+**Exports:** `SoulNodeVisual` (type: `'current'|'reached'|'forecast'|'locked'`) · `NODE_SIZE`/`NODE_GLASS`/`NODE_SPRITE` (medidas do nó, 88/80/64) · `NodeArtProps` (interface) · `NodeArt(props)`.
 **Estado/efeitos relevantes:** nenhum — módulo de arte estático, importa os 4 PNGs de `src/assets/soulmon/evolution/`.
 **Chamado por:** `src/components/evolution/SoulNode.tsx` (`grep -rl "from '.*/nodeArt'" src`, 09/09/2026).
 **Régua:** `src/components/evolution/nodeArt.render.test.tsx`.
@@ -754,8 +754,8 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 
 ### `src/components/form/FormKit.tsx`
 **Dono de:** as primitivas de formulário do kit `--sm2-*` (campos, chips, segmentos, bottom sheet) — usadas por seis+ superfícies para não divergir em silêncio.
-**Props principais:** cada função tem props próprias — `Field` estende `React.InputHTMLAttributes<HTMLInputElement>`; `Chip`, `Segment`, `CheckRow`, `ModalSheet` têm assinaturas próprias (ver o corpo, arquivo de 332 linhas — corrigido de "333" por doc-verificador, `wc -l`, 10/09/2026).
-**Exports:** `SM2_SHADOW_CARD`, `SM2_SHADOW_SHEET` (const) · `sm2Text`, `sm2Hint`, `sm2Label`, `sm2TitleStyle` (const, estilos de texto) · `sm2Button(variant, disabled?)` · `Field(props)` · `Chip(props)` · `Segment(props)` · `CheckRow(props)` · `ModalSheet(props)` — bottom sheet com `useDialogA11y` embutido · `default`.
+**Props principais:** cada função tem props próprias — `Field` estende `React.InputHTMLAttributes<HTMLInputElement>` (+ `warn?`); `Chip`, `Segment`, `CheckRow`, `ModalSheet`, e desde 20/09/2026 (canvas Conta §29) `GroupCard`, `SwitchRow`, `ActionRow`, `Disclosure`, `TimeField`, `AlertLine` têm assinaturas próprias (ver o corpo, arquivo de 614 linhas, `wc -l`, 20/09/2026).
+**Exports:** `SM2_SHADOW_CARD`, `SM2_SHADOW_SHEET` (const) · `sm2Text`, `sm2Hint`, `sm2Label`, `sm2TitleStyle` (const, estilos de texto) · `Sm2ButtonVariant`, `Sm2ButtonSize` (type) · `sm2Button(variant, disabled?, size?)` · `Field(props)` — agora com `warn?` · `FieldWarn(props)` — legenda âmbar de convite abaixo de um `Field` com `warn` · `choiceStyle(selected)` — estilo de opção em linha inteira · `Chip(props)` · `Segment(props)` · `CheckRow(props)` · `ModalSheet(props)` — bottom sheet com `useDialogA11y` embutido · `GroupCard(props)` — card por intenção, canvas Conta · `SwitchRow(props)` — linha de configuração `role="switch"`, alvo = linha inteira · `ActionRow(props)` — linha que leva a outro painel/guia/política · `Disclosure(props)` — revelação colapsável · `TimeField(props)` — campo de hora com ícone `schedule` · `AlertLine(props)` — `role="alert"` em âmbar · `default`.
 **Estado/efeitos relevantes:** `useState` interno a alguns componentes (ex.: `ModalSheet`); usa `useDialogA11y` (`src/hooks/useDialogA11y.ts`) para foco preso/Escape/devolução de foco.
 **Chamado por:** praticamente toda a árvore de telas/modais (`grep -rl "from '.*/FormKit'" src` lista dezenas de arquivos — `AISettingsModal`, `AccountDataSection`, `CreateModal`, `DailyReportModal`, `ShopModal`, `SoulmonOnboarding` etc., 09/09/2026).
 **Régua:** nenhuma direta (`find src/components/form -maxdepth 1 -name 'FormKit.*test.ts*'` vazio, 09/09/2026); exercitado indiretamente por todos os `.render.test.tsx` das telas que o usam.
@@ -773,7 +773,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 ### `src/components/pixel/PixelKit.tsx`
 **Dono de:** os primitivos de UI da direção visual pixel (`docs/ui-refs/SPEC-UI-PIXEL.md`) — botão, painel, barra segmentada, checkbox, abas, chip, tag, switch, medidor, slot.
 **Props principais:** cada função tem sua interface própria — `PixelButtonProps`, `PixelPanelProps`, `PixelSegmentedBarProps`, `PixelCheckboxProps`, `PixelTabItem`/`PixelTabsProps`, `PixelChoiceChipProps`, `PixelTagProps`, `PixelSwitchProps`, `PixelMeterProps`, `PixelSlotProps`, `PixelChipProps` (arquivo de 556 linhas — corrigido de "557" por doc-verificador, `wc -l`, 10/09/2026).
-**Exports:** `PixelSize` (type) · `PixelButton(props)` · `PixelPanel(props)` · `PixelSegmentedBar(props)` · `PixelCheckbox(props)` · `PixelTabs(props)` — conserto do "G9" (a seleção de aba passou a ser carregada pela sublinha, não só por cor de texto) · `PixelChoiceChip(props)` · `PixelTag(props)` — sem hover, é etiqueta informativa · `PixelSwitch(props)` · `PixelMeter(props)` · `PixelSlot(props)` — casa de 44px, fallback é o quadro vazio, nunca emoji do sistema · `PixelChip(props)`.
+**Exports:** `PixelSize` (type) · `PixelTone` (type: `'cyan'|'red'|'gold'`) · `PixelButton(props)` · `PixelPanel(props)` — `titleIconName?` novo (ícone do título por nome, além do `titleIcon` de imagem) · `PixelSegmentedBar(props)` · `PixelCheckbox(props)` · `PixelTabs(props)` — conserto do "G9" (a seleção de aba passou a ser carregada pela sublinha, não só por cor de texto) · `PixelChoiceChip(props)` · `PixelTag(props)` — sem hover, é etiqueta informativa · `PixelSwitch(props)` · `PixelMeter(props)` · `PixelSlot(props)` — casa de 44px, fallback é o quadro vazio, nunca emoji do sistema · `PixelChip(props)` — `iconName?` novo, ao lado do `icon` de imagem.
 **Estado/efeitos relevantes:** nenhum estado global — cada primitivo é apresentacional; a arte 9-slice usa PNGs recortados na bbox alfa (`src/assets/soulmon/ui/btn-{sm,md,lg}.png`, via `sharp`, determinístico).
 **Chamado por:** `src/components/ArenaGame.tsx`, `CompanionHUD.tsx`, `DinoGame.tsx`, `DungeonGame.tsx`, `GameTutorialFlow.tsx`, `NightmareBattle.tsx`, `PlayCard.tsx`, `RPSGame.tsx`, `RestWindowCard.tsx`, `StepsCard.tsx`, `WeeklyReportCard.tsx`, `pixel/RitualPanel.tsx` (`grep -rl "from '.*/PixelKit'" src`, 09/09/2026).
 **Régua:** `src/components/pixel/PixelKit.render.test.tsx`; também exercitado por `src/components/pixel/PixelStates.render.test.tsx`.
@@ -782,7 +782,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 ### `src/components/pixel/RitualPanel.tsx`
 **Dono de:** o painel de rituais da Home — um painel titulado, coluna única, linhas de ~72px, dimensionado para o PT-BR (mais longo que o EN).
 **Props principais:** `RitualRowProps` (exportado), `RitualPanelProps` (exportado) — lista de itens (hábitos/tarefas do dia), progresso segmentado, callback de concluir/editar.
-**Exports:** `RitualIcon(props)` — casa 40×40 sem moldura · `RitualRowProps` (interface) · `RitualRow(props)` · `RitualPanelProps` (interface) · `RitualPanel(props)`.
+**Exports:** `RITUAL_TEXT_INSET` (const — recuo do texto até o fim do selo) · `RitualKind` (type: `'task'|'habit'`) · `RITUAL_KIND_ICON` (const, mapa `RitualKind`→nome do ícone: `task_alt`/`event_repeat` — substitui o antigo `RitualIcon`, removido) · `RitualRowProps` (interface) · `RitualRow(props)` · `RitualPanelProps` (interface) · `RitualPanel(props)`.
 **Estado/efeitos relevantes:** nenhum estado próprio — apresentação pura; etapas nascem RECOLHIDAS (barra segmentada mostra `2/4`, expansor abre para marcar).
 **Chamado por:** `src/App.tsx` (`grep -rl "from '.*/RitualPanel'" src`, 09/09/2026).
 **Régua:** `src/components/pixel/RitualPanel.render.test.tsx`.

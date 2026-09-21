@@ -1,7 +1,7 @@
 # Fluxo de telas do Soulmon
 
-> **Dono:** doc-redator-telas · **Data:** 09/09/2026 · **Estado:** verificado em 13/09/2026 por doc-verificador (6 subseções novas; o restante verificado em 10/09/2026)
-> **Verificação:** `npx vitest run src/components/filaDeAvisos.contract.test.ts src/components/evolucaoManual.contract.test.ts src/components/ofertaDoisCanais.contract.test.ts src/components/upgradeReveal.contract.test.ts src/components/textoBilingue.contract.test.ts src/plugins/widgetSemCobranca.contract.test.ts` · guard do manual: `npx vitest run src/docsManual.contract.test.ts`
+> **Dono:** doc-redator-telas · **Data:** 09/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `2580b73a..dc72579e`, Fase 2, identidade "O Visor", 14 fluxos)
+> **Verificação:** `npx vitest run src/components/filaDeAvisos.contract.test.ts src/components/evolucaoManual.contract.test.ts src/components/ofertaDoisCanais.contract.test.ts src/components/upgradeReveal.contract.test.ts src/components/textoBilingue.contract.test.ts src/plugins/widgetSemCobranca.contract.test.ts src/components/SoulmonOnboarding.oraculo.render.test.tsx src/components/StatsPage.render.test.tsx` · guard do manual: `npx vitest run src/docsManual.contract.test.ts`
 > **Não cobre:** aparência (cor, tipografia, espaçamento, tokens `--sm2-*`) — é do `04-IDENTIDADE-VISUAL.md`; as REGRAS que as telas aplicam (corações, meta do dia, evolução, moedas) — são do `02-REGRAS-DE-NEGOCIO.md`; a assinatura de cada componente — é de [`06-REFERENCIA/components.md`](06-REFERENCIA/components.md); percurso real com o app rodando — é do `soulmon-screen-cartographer`, cuja medição de 19/08/2026 está em [`../INVENTARIO-TELAS.md`](../INVENTARIO-TELAS.md).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
 
@@ -22,13 +22,26 @@ Cada superfície é descrita por sete campos fixos:
 | **Régua** | o teste que trava o comportamento, ou `régua: nenhuma` |
 
 Duas medições que este documento usa e que envelhecem — o comando está junto para
-poder ser refeito, em 09/09/2026:
+poder ser refeito. Em 09/09/2026 → em 20/09/2026 (delta `2580b73a..dc72579e`):
 
 ```
-wc -l src/App.tsx                       → 6245
-wc -l src/components/SoulmonOnboarding.tsx → 1979
-grep -rn "<UnlockNudge" src --include=*.tsx | grep -v "\.test\." | wc -l → 6
+wc -l src/App.tsx                       → 6245 → 6100
+wc -l src/components/SoulmonOnboarding.tsx → 1979 → 2302
+grep -rn "<UnlockNudge" src --include=*.tsx | grep -v "\.test\." | wc -l → 6 → 6 (conjunto diferente, ver §4.13)
 ```
+
+**O que a Fase 2 (identidade "O Visor", 16–20/09/2026) mudou NESTE documento**:
+pixel só existe dentro de um vidro (`Viewport`/`MiniGlass`/`GameVisor`); tudo o
+resto virou vetor sobre tokens `--sm2-*` e ícones Material Symbols. Isso é
+assunto do `04-IDENTIDADE-VISUAL.md`. O que entra aqui é só o que mudou de
+**fluxo**: passo novo no ritual grátis (`REVEAL_DEMO`, §2.3), o Brincar que saiu
+do card e virou célula do deck (§4.2, §4.14), a trilha `EvoTrail` que morreu
+(§1.4, §4.1, §4.10), a lista do dia que ganhou dono (`DailyRituals`, §4.1), o
+`EditModal` que deixou de criar (§4.5, §4.13), o toque no visor da Evolução que
+evolui (§4.10), a cerimônia como `role="dialog"` (§4.11), `hideMetrics` chegando à
+`StatsPage` (§4.8), a escada do widget em inglês e o contador que some no zero
+(§5.1) e o overlay com ícones em vez de emoji (§5.2). Fonte de decisão por
+fluxo: `docs/design/DECISOES-WIREFRAME.md` §18–§31.
 
 A medição por percurso real mais recente é de **19/08/2026**
 ([`../INVENTARIO-TELAS.md`](../INVENTARIO-TELAS.md), 114 superfícies contadas). O que
@@ -123,7 +136,7 @@ Cada chip chama `setCurrentView(view)`. Os rótulos são "Evolução"/"Evolution
     │ │
     │ └── ShopModal `onClose` → setCurrentView('main')
     │     ActivitiesPage `onOpenTournament` → setCurrentView('tournament')
-    │     EvoTrail `onOpen` → setCurrentView('evolution')
+    │     ⚰️ EvoTrail `onOpen` → setCurrentView('evolution') — não existe mais (20/09/2026, ver abaixo)
     │
     ├── FILA 1: intersticiais (um por vez, tela cheia)
     │     triage → dailyReport → checkIn → dream → nightmare → welcome
@@ -133,10 +146,13 @@ Cada chip chama `setCurrentView(view)`. Os rótulos são "Evolução"/"Evolution
 ```
 
 Os únicos `setCurrentView('<literal>')` fora da `BottomNav` em todo o `src/` são
-três (medido em 09/09/2026 com
+**dois** (medido em 20/09/2026 com
 `grep -rn "setCurrentView(" src/ --include=*.tsx | grep -o "setCurrentView('[a-z]*'" | sort | uniq -c`):
-`'evolution'` (do `EvoTrail`), `'main'` (do `ShopModal onClose`) e `'tournament'`
-(do `ActivitiesPage`). **Nenhum leva a `'oracle'`.**
+`'main'` (do `ShopModal onClose`) e `'tournament'` (do `ActivitiesPage`).
+⚰️ Eram três em 09/09/2026 — o `'evolution'` vinha do `EvoTrail`, apagado em
+`72196da2` (canvas Evolução, `DECISOES-WIREFRAME.md` §24) depois de sair da Home
+pela decisão S1 do canvas Home (§5); a célula Evolução da barra é o único caminho.
+**Nenhum leva a `'oracle'`.**
 
 ---
 
@@ -176,9 +192,16 @@ cima de um app já carregado. Corrigido em 27/08/2026 (comentário em `main.tsx`
   ```
 
 - **Estados**: **erro** — `onError` do `<video>` liga `videoFailed` e a tela cai
-  no mascote + wordmark sobre gradiente, com `scheduleFinish(1500)`. **Duração**:
-  `onLoadedMetadata` assume a duração real do vídeo; sem ela, 1500 ms.
-- **O que se vê/faz**: tocar no vídeo (`skip`) reagenda a saída para 400 ms.
+  no mascote + wordmark dentro do mesmo `.sm2-splash`, com `scheduleFinish(1500)`
+  (⚰️ o gradiente Tailwind e o literal `#0b0d16` saíram em `f6a0fadf`, 20/09/2026).
+  **Duração**: `onLoadedMetadata` assume a duração real do vídeo; sem ela, 1500 ms.
+- **O que se vê/faz**: **a superfície inteira é o alvo "Pular introdução" /
+  "Skip intro"** — o `<div>` raiz recebe `role="button"`, `tabIndex={0}`,
+  `aria-label={skipLabel}`, `onClick={skip}` e Enter/Espaço (`onKeyDown`); `skip`
+  reagenda a saída para 400 ms. Com `videoFailed` o alvo **não** é montado
+  (`const alvo = videoFailed ? {} : {…}`): a tela de erro sai sozinha em 1,5 s.
+  Desde `f6a0fadf` (canvas Onboarding-funil, `DECISOES-WIREFRAME.md` §23, D-O3/X4)
+  a intro é a continuação da splash do `index.html` no mesmo `.sm2-splash`.
 - **Dono**: `src/components/IntroScreen.tsx`.
 - **Régua**: nenhuma.
 
@@ -196,18 +219,19 @@ sequência inteira. **Os passos negativos existem para não renumerar o ritual**
 | `GOAL_STEP` | −2 | "por que você quer mudar" (`soulGoal`) | **sim** — botão que limpa o campo e chama `next()` |
 | `STRUGGLE_STEP` | −3 | "o que te atrapalha" (`soulStruggle`) | **sim**, idem |
 | `CHOICE_STEP` | −7 | grátis × completo | não |
-| `DEMO_PICK` | −1 | os 3 personagens pré-prontos | volta ao `CHOICE_STEP` |
+| `REVEAL_DEMO` | −4 | **novo em `a1181a5b` (20/09/2026)** — a leitura do caminho GRÁTIS: criatura em silhueta + descrição + oferta `UnlockNudge reason="reveal-demo"`; só renderiza com `demoReading` | é a própria escolha: "Continuar com um personagem demo" e o × "Agora não" levam os dois a `DEMO_PICK` |
+| `DEMO_PICK` | −1 | os **6** personagens pré-prontos (`PREMADE_CHARACTERS` em `utils/monetization.ts`: `kaelen`, `orrin`, `thalindra`, `igni`, `nautilu`, `astrase` — eram 3 até `c11dc49d`) | volta ao `REVEAL_DEMO` quando há `demoReading`; senão ao `CHOICE_STEP` |
 | `AGE_BLOCK` | −5 | muro de idade | saída única: `restartFromAgeBlock` |
 | `1` | 1 | nome completo | não |
 | `2` | 2 | data de nascimento (mapa astral **e** 18+) | não |
 | `3` | 3 | hora | não |
 | `4` | 4 | cidade (`CityPicker`) | não |
 | `FAVORITE_STEP` | 5 | criatura favorita | **sim** — caixa "Prefiro não influenciar o resultado" |
-| `QUIZ_START`..`QUIZ_END − 1` | 6..11 | as 6 de `ORACLE_QUESTIONS`, uma por página (`QUIZ_END` = 12 é o "primeiro passo pós-quiz", pelo comentário do código) | não (avançam sozinhas ao escolher) |
+| `QUIZ_START`..`QUIZ_END − 1` | 6..11 | as 6 de `ORACLE_QUESTIONS`, uma por página (`QUIZ_END` = 12 é o "primeiro passo pós-quiz", pelo comentário do código). **Desde `a1181a5b` o caminho grátis também passa por aqui** (`flow === 'demo'`): ao escolher a última, `setDemoReading(generateOracle({… answers: nextAnswers}))` e `setStep(REVEAL_DEMO)` em vez de `s + 1` | não (avançam sozinhas ao escolher); `back()` na 1ª com `flow === 'demo'` volta ao `CHOICE_STEP` |
 | `REFINE_OFFER` | 12 | a bifurcação do teste longo | é a própria escolha |
 | `DEEP_START`..`DEEP_END − 1` | 13..32 | os 20 de `SOUL_TEST_ITEMS` (`DEEP_END` = 33, que é o próprio `GENERATING`) | só quem aceitou |
-| `GENERATING` | — | tela de geração | — |
-| `REVEAL` | — | nome + descrição + batismo | — |
+| `GENERATING` | — | tela de geração — o `role="status"` é o casulo `forming` num `BirthCard`/vidro, pulsando por posição (`55d02ccc`; ⚰️ o corvo e o `Spinner` saíram) | — |
+| `REVEAL` | — | `BirthCard` (nome + epíteto + batismo). **Estados do sprite**: `pending='forming'` enquanto `revealEsperando`; passado `REVEAL_WAIT_MS`, `pending='dormant'` (cristal apagado) e a frase "The drawing is still being made — it arrives on its own, later." — nunca arte de reserva | — |
 | `REGISTER` | — | apelido (+ tonalidade, no demo) | — |
 
 Os números 1..5 e 6..11 vêm das constantes derivadas
@@ -249,9 +273,16 @@ if (!hasCompletedOnboarding) {
 **Free × pago (`CHOICE_STEP`)**
 
 ```jsx
-onClick={() => { setFlow('demo'); setStep(DEMO_PICK); }}   // "Começar agora — é grátis"
-onClick={handleUnlockFull}                                 // "Quero o completo — <precoLabel>"
+onClick={() => { setFlow('demo'); setDemoReading(null); setStep(QUIZ_START); }}   // "Começar agora — é grátis"
+onClick={handleUnlockFull}                                                        // "Quero o completo — <precoLabel>"
 ```
+
+⚰️ Até `a1181a5b` o grátis ia direto a `DEMO_PICK` (`setStep(DEMO_PICK)`). Hoje
+responde as 6 perguntas e vê o `REVEAL_DEMO` antes de escolher o personagem
+(`REGISTRO-DE-DECISOES.md` §13.19; canvas Onboarding-oráculo,
+`DECISOES-WIREFRAME.md` §31). A oferta do `REVEAL_DEMO` compra pelo **mesmo**
+`handleUnlockFull`; o × emite `track('unlock_dismiss', { reason: unlockReasonCode('reveal-demo') })`
+e a montagem emite `unlock_view` com o mesmo motivo.
 
 `handleUnlockFull` (mesmo arquivo) tem quatro saídas:
 
@@ -292,16 +323,22 @@ reveal segue só com o texto e o desenho entra pelo acervo depois.
   passo 1 chama `onCancel?.()` e volta ao jogo.
 - **Régua**: `src/components/upgradeReveal.contract.test.ts`.
 
-**Estados gerais do ritual**: barra de progresso (`role="progressbar"`) montada
-sob `step > 0 && step <= lastStep`; rascunho do ritual por
-`readOracleDraft(mode, DEEP_END - 1)` (nunca retoma na geração ou depois);
-`generateError` renderiza um `role="alert"` na bifurcação.
+**Estados gerais do ritual**: barra de progresso (`.meter` do kit) montada sob
+`(step > 0 && step <= lastStep) || step === REVEAL_DEMO` (no reveal demo ela
+conta como `REVEAL`: `const progressStep = step === REVEAL_DEMO ? REVEAL : step`);
+rascunho do ritual por `readOracleDraft(mode, DEEP_END - 1)` (nunca retoma na
+geração ou depois); `generateError` renderiza um `role="alert"` na bifurcação.
+"Continuar" inerte é por **superfície** (`aria-disabled`, fora do Tab), nunca
+`disabled`/opacidade (`2b334035`).
 
 **Régua**: `SoulmonOnboarding.portao.render.test.tsx`,
 `SoulmonOnboarding.batismo.render.test.tsx`,
 `SoulmonOnboarding.reveal.render.test.tsx`,
 `SoulmonOnboarding.rascunho.render.test.tsx`,
-`SoulmonOnboarding.copyRitual.render.test.tsx`.
+`SoulmonOnboarding.copyRitual.render.test.tsx`,
+`SoulmonOnboarding.funil.render.test.tsx` e
+`SoulmonOnboarding.oraculo.render.test.tsx` (os dois novos na Fase 2; o ritual
+grátis é atravessado nos testes por `src/test/ritualDemo`).
 
 ### 2.4 `GameTutorialFlow` — o segundo onboarding
 
@@ -438,25 +475,43 @@ da barra.
 A Home empilha, nesta ordem de render:
 
 1. **`HomeHud`** — o `<h1>` da Home (o wordmark) + `focusSealed` (o selo do dia,
-   binário: `focoDoDiaCompleto`), energia e vida em modo `hideMeters`.
+   binário: `focoDoDiaCompleto`). **Só isso**: ⚰️ a barra DOM de HP/energia
+   (`hideMeters`) saiu em `f5ead7c0` (16/09/2026, canvas Home achado 1,
+   `DECISOES-WIREFRAME.md` §19) — a leitura de HP/energia mora **uma vez**, na
+   `VisorBar` dentro do vidro do `CompanionHUD`.
 2. **O slot de avisos** (§3.2).
-3. **`CompanionHUD`** — §4.2.
-4. **`PlayCard`**, sob `{jaConcluiuAlgo && (…)}` — §4.14.
-5. **`EvoTrail`**, sob `(gameState.soulmonStages?.length ?? 0) > 0`, com
-   `onOpen={() => setCurrentView('evolution')}`.
+3. **`CompanionHUD`** — §4.2. Brincar é a **5ª célula do deck** dele
+   (`play={playDeck}`), não um card.
+4. ⚰️ **`PlayCard`** — não é mais montado (`f5ead7c0`); o arquivo
+   `src/components/PlayCard.tsx` continua no repo **sem consumidor**
+   (`grep -rn "PlayCard" src --include=*.tsx` devolve só um comentário do
+   `App.tsx`, 20/09/2026).
+5. ⚰️ **`EvoTrail`** — apagado em `72196da2` (S1 do canvas Home): a escada de
+   altura fora da própria tela saiu, e a célula Evolução da barra é o caminho.
 6. **`QuickAddBar`** (`onCommit={handleQuickAdd}`).
 7. **Botão "Equilibrar minha semana"**, sob `{podeEquilibrar && (…)}` →
    `setBalanceOpen(true)`.
-8. **`RitualPanel`** com as tarefas (`RitualRow` + `TaskMeta`) e as atividades
-   (`RitualRow` + `StepRow` + `HabitConstancy`).
-9. **A gaveta "Guardadas"**, sob `{guardadas.length > 0 && (…)}`, um `<details>`
-   fechado por padrão com o botão "Retomar" (`handleRestoreTask`).
+8. **`DailyRituals`** (`src/components/DailyRituals.tsx`, novo em `682835a3`,
+   canvas Atividades §20) — a lista do dia inteira ganhou dono: o `RitualPanel`
+   com as tarefas (`RitualRow` + `TaskMeta`), as atividades (`RitualRow` +
+   `StepRow` + `HabitConstancy`) **e** a gaveta "Guardadas" (`<details>` sob
+   `{guardadas.length > 0 && (…)}`, com `guardadas = tasks.filter(t => !isActive(t))`
+   e o botão "Retomar" → `onRestoreTask`). Ordem declarada no cabeçalho: tarefas
+   ativas → hábitos devidos hoje → hábitos fora do dia → concluídas de hoje por
+   último. O `App.tsx` só passa o save e os handlers.
 
-**Estados**: **vazio** — `RitualPanel` recebe `emptyMessage={total === 0 ? t.main.noActivityRegistered : undefined}`;
-**hábito fora do dia** — `dimmed={!disponivelHoje}` e as etapas ficam inertes;
-**sem métricas** — `HabitConstancy` recebe `hideMetrics={gameState.rest?.hideMetrics === true}`.
+**Estados**: **vazio** — `DailyRituals` passa ao `RitualPanel`
+`emptyMessage={tarefas.length + atividades.length + feitasHoje.length === 0 ? emptyMessage : undefined}`
+(com `emptyMessage={t.main.noActivityRegistered}` vindo do `App`);
+**hábito fora do dia** — `dimmed={!activity.disponivelHoje}` e as etapas ficam
+inertes (esmaecer é tinta `muted`, nunca `opacity` — é regra do componente);
+**sem métricas** — `hideMetrics={gameState.rest?.hideMetrics === true}` desce
+pelo `DailyRituals` até o `HabitConstancy`; **contador "feitos/total"** = devido
+hoje + concluídas de hoje (a tarefa concluída fica riscada na lista até a virada);
+**"N/M steps" só com N ≥ 1** — antes do primeiro passo é "M steps".
 
-**Dono**: `src/App.tsx` (bloco `currentView === 'main'`) · **Régua**:
+**Dono**: `src/App.tsx` (bloco `currentView === 'main'`) +
+`src/components/DailyRituals.tsx` · **Régua**:
 `src/components/dailyList.sm2.render.test.tsx`,
 `src/components/p5DiaCompleto.contract.test.ts`.
 
@@ -469,16 +524,25 @@ A Home empilha, nesta ordem de render:
   para curar)" / "Pet your Soulmon (hold to heal)", `onPointerDown/Move/Up` e
   `onKeyDown` (Enter/Espaço rodam um ciclo de 2 s). A regra e o teto de cura são
   de `onPet` (`handlePet` no `App.tsx`), nunca daqui.
-- **O deck de quatro ações** (`div.sm2-deck`, `role="group"`), na ordem literal
-  do array: `feed` (abre o seletor de comida, `setFeedOpen(true)`), `items`
+- **O deck de CINCO ações** (`div.sm2-deck`, `role="group"`), na ordem literal
+  do array (`key`): `feed` (abre o seletor de comida, `setFeedOpen(true)`), `items`
   (`onOpenItems` → `handleOpenItems`, que **alterna** `showItemsWindow`), `bath`
-  (`handleShowerClick`; `disabled: showerCooldown` é um cooldown de 5 s contra o
-  toque duplo — não existe gate de regra, o banho está sempre disponível) e `sleep` (`onSleep`, glifo `bedtime`/`wb_sunny`).
+  (`handleShowerClick`; `inert: showerCooldown` é um cooldown de 5 s contra o
+  toque duplo — não existe gate de regra, o banho está sempre disponível), `sleep`
+  (`onSleep`, glifo `bedtime`/`wb_sunny`) e **`play`** (novo em `f5ead7c0`,
+  canvas Home E1+E2 / `PlayEstados`, `DECISOES-WIREFRAME.md` §19 — Brincar saiu do
+  `PlayCard` e virou gesto de cuidado). A regra de `play` é única
+  (`handleDeckPlay`): célula **inerte** (`aria-disabled`, tracejado, rótulo diz o
+  porquê — "Brincar — depois da primeira atividade" / "Brincar — já brincamos
+  hoje") quando `!play.available || play.playedToday`; célula viva com
+  `!play.canPlay` → o pet **recusa no balão** ("Brincar pede 1 de energia…"),
+  nunca toast; só então `play.onPlay()` (`handlePlay` do `App.tsx`). Célula
+  inerte **não é `disabled`**: fica na ordem de Tab e o clique não faz nada.
 - **Botão "Evoluir"**: montado sob `{canEvolve && !isSleeping && (…)}`, chama
-  `onEvolveRequest`.
+  `onEvolveRequest` — hoje é a placa "EVOLVE" na moldura do vidro.
 - **Estados**: `hauntedWatching` acrescenta a classe `sm-pet-haunted` ao sprite —
-  é gesto, sem texto junto; `hasNewItems` acende o selo do botão de itens;
-  `isSleeping` troca a ação de dormir por acordar.
+  é gesto, sem texto junto; `hasNewItems` acende o selo do botão de itens
+  (`inventory_2` FILL + ponto); `isSleeping` troca a ação de dormir por acordar.
 - **Dono**: `src/components/CompanionHUD.tsx` · **Régua**:
   `CompanionHUD.render.test.tsx`, `CompanionHUD.cta.test.tsx`,
   `CompanionHUD.vinculo.render.test.tsx`, `CompanionHUD.voz.render.test.tsx`,
@@ -490,6 +554,10 @@ A Home empilha, nesta ordem de render:
 `onClick: () => setFeedOpen(true)` · **Sai para**:
 `onClose={() => setFeedOpen(false)}`, o × / Escape do `ModalSheet`, ou escolher
 uma comida — `handleDeckFeed` **fecha a folha antes** de chamar `onFeed`.
+Desde `91b0deb8` (16/09/2026) a folha sai por **`createPortal(folha, document.body)`**:
+montada dentro do `.sm-pet-sticky`, ela ficava presa sob o dock do chat e a nav
+(medido no comentário do próprio arquivo); sem `document` (jsdom/SSR) fica onde
+estava.
 
 **Aparece quando** (condição literal):
 
@@ -516,7 +584,7 @@ const foodStock = Object.entries(foodInventory)
 
 | Estado | Condição | O que se vê |
 |---|---|---|
-| com estoque (`HOME-35`) | `foodStock.length > 0` | grade `repeat(auto-fill, minmax(72px, 1fr))`; cada célula é um `<button>` de `minHeight: 72` com a arte (`ITEM_ART[emoji]`, 34px, `imageRendering: 'pixelated'`) ou o emoji, `×N` em `sm2-num`, e `aria-label` = `` `${FOOD_NAME_BY_EMOJI[emoji] ?? emoji} × ${n}` ``. Abaixo, a dica: "Cada comida dá +1 de energia e pontos de atributo. Se a barriga estiver cheia, seu Soulmon avisa." / "Each food gives +1 energy and attribute points. If its belly is full, your Soulmon will say so." |
+| com estoque (`HOME-35`) | `foodStock.length > 0` | grade `.sm2-gcell-grid` (canvas `AlimentarFolha`, D-H6, desde `91b0deb8`); cada célula é um `<button className="sm2-gcell">` com a arte (`ITEM_ART[emoji]`, 48px, dentro de `.sm2-gcell-art`), o nome (`FOOD_NAME_BY_EMOJI[emoji] ?? ''`), `×N` em `sm2-num`, e `aria-label` = `` `${FOOD_NAME_BY_EMOJI[emoji] ?? emoji} × ${n}` ``. ⚰️ **Item sem arte não cai mais no emoji do sistema** — mostra o quadro vazio. Abaixo, a dica: "Cada comida dá +1 de energia e pontos de atributo. Se a barriga estiver cheia, seu Soulmon avisa." / "Each food gives +1 energy and attribute points. If its belly is full, your Soulmon will say so." |
 | vazio | `foodStock.length === 0` | **um parágrafo, e só** — "Sua pastinha está sem comida. Conclua uma tarefa ou hábito para ganhar comida — é assim que seu Soulmon come." / "You're out of food. Complete a task or habit to earn some — that's how your Soulmon eats." Sem grade, sem botão, sem ilustração |
 | recusa por teto (`HOME-36`) | acontece **depois** de a folha fechar | ver abaixo |
 
@@ -566,8 +634,8 @@ e `newItemsReady` acende quando o total do inventário cresce
 
 | Estado | Condição literal | O que se vê |
 |---|---|---|
-| vazio (`HOME-38`) | `items.length === 0`, com `const items = Object.entries(foodInventory).filter(([, c]) => c > 0)` | **ilustração, não texto cru**: `mascot-raven.png` 72×72 com `opacity: .85`, centralizado, e a frase "Sua pastinha está vazia. Conclua uma atividade para ganhar comida." / "Your item folder is empty. Complete an activity to earn food." **Sem rodapé** — o `footer` do `ModalSheet` só existe com `detail` |
-| com itens, nada escolhido | `detail === null` | grade de 3 colunas (`repeat(3, 1fr)`); cada célula tem arte (`ITEM_ART`, 38px) ou emoji, nome e `×N`, com `aria-pressed={active}` e `aria-label` = `` `${getFoodName(emoji, language)} ×${count}` `` |
+| vazio (`HOME-38`) | `items.length === 0`, com `const items = Object.entries(foodInventory).filter(([, c]) => c > 0)` | **ilustração, não texto cru**: `mascot-raven.png` 72×72 **dentro de um `Viewport` 32×32 a `scale={3}`** (pixel só vive em vidro — canvas Home `ItensVazio`, D-H7; ⚰️ o `opacity: .85` saiu em `91b0deb8`), centralizado, e a frase "Sua pastinha está vazia. Conclua uma atividade para ganhar comida." / "Your item folder is empty. Complete an activity to earn food." **Sem rodapé** — o `footer` do `ModalSheet` só existe com `detail` |
+| com itens, nada escolhido | `detail === null` | grade de 3 (`.sm2-gcell-grid`, a mesma da folha Alimentar — §4.2a); cada célula (`.sm2-gcell`) tem arte (`ITEM_ART`, 48px; ⚰️ sem fallback de emoji desde `91b0deb8`), nome e `×N`, com `aria-pressed={active}` e `aria-label` = `` `${getFoodName(emoji, language)} ×${count}` `` |
 | item escolhido | `const detail = selected && foodInventory[selected] > 0 ? selected : null` | a célula ganha borda `--sm2-primary-ink` e fundo `--sm2-primary-soft`; o **rodapé** mostra nome + `effectLine` e o botão "Usar" / "Use" |
 
 **O uso (`HOME-39`)**. "Usar" chama `use(emoji)` → `onFeed(emoji)` (que é o
@@ -677,7 +745,7 @@ recusas, inclusive os dois toques no mesmo lote do React).
 |---|---|---|---|---|
 | `QuickAddBar` | está na Home | sempre (acima do painel) | `onCommit={handleQuickAdd}` | `QuickAddBar.tsx` |
 | `CreateModal` | CTA `+ Nova atividade` (`handleAddNewActivity`) e `EvolveTaskModal.onCreateTask` | `{createModalOpen && (…)}` | `onClose={() => setCreateModalOpen(false)}` | `CreateModal.tsx` |
-| `EditModal` | toque no lápis de uma atividade (`handleEditActivity`) | `{editModalOpen && (…)}` | `onClose` limpa `editModalOpen` e `editingActivity` | `EditModal.tsx` |
+| `EditModal` | toque no lápis de uma atividade (`handleEditActivity`, **único gatilho**: `setEditingActivity(id); setEditModalOpen(true)`) | `{editModalOpen && (…)}` | `onClose` limpa `editModalOpen` e `editingActivity` | `EditModal.tsx` |
 | `TaskEditModal` | toque no lápis de uma tarefa (`handleEditTask`) | `{taskEditModalOpen && (…)}` | idem, com `editingTask` | `TaskEditModal.tsx` |
 | `PostponeNudgeSheet` | `TaskMeta` → `handlePostponeNudge` | `task={nudgeTaskId ? … : null}` | `handleCloseNudge` | dentro do `App.tsx` |
 | `BalanceWeekModal` | botão "Equilibrar minha semana" | `{balanceOpen && (…)}` | `onClose={() => setBalanceOpen(false)}` | `BalanceWeekModal.tsx` |
@@ -685,9 +753,14 @@ recusas, inclusive os dois toques no mesmo lote do React).
 
 **Demo × pago**: `CreateModal` recebe `capIsDemoBoundary={gameState.accountTier === 'demo'}`
 e `onUnlock={() => { setCreateModalOpen(false); setUnlockReason('task-limit'); }}`.
-O `EditModal` também monta o `UnlockNudge` — **era o caminho que contornava o
-teto do demo**, porque o botão principal de criar da tela inicial abre o
-`EditModal`, que salvava sem checar cap.
+⚰️ **O `EditModal` não monta mais o `UnlockNudge`** (`d044fb2e`, 20/09/2026,
+canvas Atividades A1 — "um modal de criação só"): as props `atCap` /
+`capIsDemoBoundary` / `activitiesCap` / `onUnlock` saíram, e ele **só edita** —
+hoje recebe `rhythm` (a ficha do hábito: janela de 7, "N of the last 7",
+maturidade, escudos) e `hideMetrics`. O teto do demo bate num lugar só, o
+`CreateModal`. ⚠️ **Divergência com o `CLAUDE.md`**, que ainda diz que o
+`EditModal` "passou a exibir o `UnlockNudge` também" (item "Desbloqueio no meio
+do jogo") — ver §4.13 e §6.
 
 **`TriagePile`**: quatro saídas de peso igual, `TriageAction = 'today' | 'week' | 'someday' | 'drop'`;
 quem aplica é `handleTriageResolve` no `App.tsx`, delegando a `toOpen`,
@@ -851,7 +924,15 @@ Três blocos, cada um com condição própria e cada um em `Suspense` com
 
 - **`PetPage`** mostra as formas **já desbloqueadas** (nunca as futuras), a
   descrição do oráculo, a classe do estágio (`classTitle`) e as duas habilidades.
-  **Estado**: save legado sem `soulProfile` simplesmente não mostra habilidades.
+  **Novo no delta** (`a388ddb9` em 15/09/2026, refeito em `f1413ddc` pelo canvas
+  Pet, `DECISOES-WIREFRAME.md` §22): o **visor de emblemas** — prop
+  `achievements={unlockedAchievements(gameState)}` (`utils/achievements.ts`,
+  `ACHIEVEMENT_IDS` = 9); **só os abertos são desenhados**, os fechados não viram
+  cadeado nem silhueta, e a linha quieta sob o visor diz "Achievements · N of 9";
+  o **sigilo de classe** aparece no canto do vidro sob
+  `{classeAtual?.sigilo && sigilArt(classeAtual.sigilo) && (…)}`.
+  **Estado**: save legado sem `soulProfile` simplesmente não mostra habilidades;
+  sem conquista aberta, sem faixa.
 - **`DreamDex`**: os 30 do `DREAM_CATALOG`; o não coletado é **silhueta**, nunca
   "faltando".
 - **`AdventureDiary`**: só o que já aconteceu — **não** mostra lacuna, de
@@ -874,7 +955,16 @@ Quatro cartões, cada um com condição literal dentro da `StatsPage`:
 `MemoriesCard` **não mora aqui** — ele é montado dentro do `DailyReportModal`
 (§4.16).
 
-**Régua**: `BestiaryCard.render.test.tsx`, `FormAlbum.render.test.tsx`,
+**`hideMetrics` chega à `StatsPage`** (`05808e27`, 20/09/2026, canvas Estatísticas
+§27 — até então não chegava): `hideMetrics={gameState.rest?.hideMetrics === true}`
+esconde os NÚMEROS — "Nível N" e o `role="progressbar"` do vínculo
+(`{!hideMetrics && (…)}`), `daysTogether`, os `feitos`, as frações da estação e
+"done N×" — e **preserva as recompensas**: a palavra do vínculo, o `BirthCard`,
+as artes do bestiário e do álbum, as medalhas e as listas sem contagem. O
+`BirthCard` é o **mesmo** do reveal (§2.3).
+
+**Régua**: `StatsPage.render.test.tsx` (novo — cobre `hideMetrics`),
+`BestiaryCard.render.test.tsx`, `FormAlbum.render.test.tsx`,
 `BirthCard.render.test.tsx`, `MemoriesCard.render.test.tsx`.
 
 ### 4.8a Estatísticas — a primeira vez / o vazio (medido em 13/09/2026, a pedido do inventário de wireframes)
@@ -918,10 +1008,12 @@ próxima conclusão"), nunca da falta; é a mesma trava de forma que proíbe o
 `0/20` da estação e o "faltam N" do bestiário.
 
 **Dono**: `src/components/StatsPage.tsx` (`topRepeated`, `recent`) ·
-**Régua**: ⚠️ **nenhuma para o vazio.** Há `BirthCard.render.test.tsx`,
-`BestiaryCard.render.test.tsx` e `FormAlbum.render.test.tsx` para os cartões, e
-**nenhum teste monta a `StatsPage`** (`ls src/components | grep -i 'StatsPage.*test'`
-não devolve nada, 13/09/2026).
+**Régua**: `StatsPage.render.test.tsx` — existe desde `05808e27` (20/09/2026).
+⚰️ Até 13/09/2026 **nenhum teste montava a `StatsPage`**; hoje
+`ls src/components | grep -i 'StatsPage.*test'` devolve o arquivo. Os cartões
+continuam com `BirthCard.render.test.tsx`, `BestiaryCard.render.test.tsx` e
+`FormAlbum.render.test.tsx`. A linha "Nível 0" e o `progressbar` da tabela acima
+**somem** com `hideMetrics` (§4.8).
 
 ### 4.9 `OraclePage` — `currentView === 'oracle'`, inalcançável
 
@@ -946,27 +1038,45 @@ não devolve nada, 13/09/2026).
 ### 4.10 Evolução — `currentView === 'evolution'`
 
 **Chega por**: célula 3 da `BottomNav` (que também chama `contarMissao('evolve-view')`)
-ou `EvoTrail.onOpen` · **Sai para**: os chips das sub-abas.
+— **único caminho**; ⚰️ `EvoTrail.onOpen` não existe mais (`72196da2`,
+20/09/2026) · **Sai para**: os chips das sub-abas.
 
-Cinco blocos, com estas condições literais:
+Cinco blocos, com estas condições literais (a quarta ganhou `!gameState.demoCharacterId`
+em `acf4413e` — dois convites iguais na mesma tela é cobrança, EVO-20):
 
 ```jsx
 {currentView === 'evolution' && gameState.demoCharacterId && (…UnlockNudge…)}
 {currentView === 'evolution' && (…EvolutionPath…)}
 {currentView === 'evolution' && canRebirth(gameState) && (…botão Renascimento…)}
-{currentView === 'evolution' && rebirthRefusal(gameState) === 'not-paid' && (…UnlockNudge…)}
+{currentView === 'evolution' && rebirthRefusal(gameState) === 'not-paid' && !gameState.demoCharacterId && (…UnlockNudge…)}
 {currentView === 'evolution' && gameState.rebirth && (…linha "Renasceu do …"…)}
 ```
 
 - **Demo × pago no convite**: `variant={gameState.accountTier === 'paid' ? 'reveal' : 'buy'}`;
   `onOpen` chama `setUpgradeRitual(true)` para quem já pagou e
   `setUnlockReason('evolution')` para quem não pagou.
-- **`EvolutionPath`**: o **cadeado** é a ação dominante — toque na criatura
-  atual alterna `evolutionLocked` (`onToggleEvolutionLock` →
-  `handleToggleEvolutionLock`), e o mesmo estado aparece como botão de 44px para
-  quem não descobre o gesto. **Estados de sprite**: `generatingSprites`
-  (o card `GERANDO`), `onRetrySprite`, `onRevertVisor`, `onTuneVisor`,
-  `onSeenTune`; `carePattern` só é passado quando `carePatternReading.confident`.
+- **`EvolutionPath`**: o visor da forma atual é **um gesto com dois sentidos**
+  (`acf4413e`, canvas Evolução V2, `DECISOES-WIREFRAME.md` §24):
+
+  ```ts
+  const evoluiNoToque = prontoParaEvoluir && !evolutionLocked && Boolean(onEvolveRequest);
+  const acaoDoVisor = evoluiNoToque ? onEvolveRequest : onToggleEvolutionLock;
+  ```
+
+  Com a barra cheia e o cadeado aberto o toque **evolui** (`onEvolveRequest` →
+  `handleEvolveRequest`, o mesmo do botão "EVOLVE" da Home); nos outros casos
+  alterna `evolutionLocked` (`onToggleEvolutionLock` → `handleToggleEvolutionLock`).
+  O `aria-label` do visor (`rotuloDoVisor`) diz qual dos dois vai acontecer
+  ("Pronto — toque para evoluir" / "Evolução segurada, toque para liberar" /
+  "Evolução liberada, toque para segurar"). O mesmo estado do cadeado continua
+  como botão de 44px (`data-lock-button`, `aria-pressed={evolutionLocked}`) para
+  quem não descobre o gesto; segurada = placa "ON HOLD"/"SEGURADA" dentro do
+  vidro. ⚰️ Até `2580b73a` o toque no visor **só** alternava o cadeado.
+  **Nós da árvore** são `SoulNode` (SVG por token, `evolution/nodeArt.tsx`);
+  ⚰️ os PNGs de nó saíram junto com o `EvoTrail`.
+  **Estados de sprite**: `generatingSprites` (o card `GERANDO`), `onRetrySprite`,
+  `onRevertVisor`, `onTuneVisor`, `onSeenTune`; `carePattern` só é passado
+  quando `carePatternReading.confident`.
 - **Régua**: `src/components/evolucaoManual.contract.test.ts` (a régua VIVA da
   evolução manual), `EvolutionPath.estados.render.test.tsx`,
   `EvolutionPath.silhueta.render.test.tsx`, `EvolutionPath.sprite.render.test.tsx`,
@@ -984,8 +1094,19 @@ Cinco blocos, com estas condições literais:
 
   **Aparece quando**: `{evolutionCeremony && (…)}` · **Sai para**:
   `onEvolved={handleEvolve}` (o commit) e `onClose={() => setEvolutionCeremony(null)}`.
-  **O que se vê**: os sprites da forma atual e da próxima intercalam por `TOTAL_MS` (3000 ms),
-  brancos, até estabilizar na evoluída, sobre vídeo em loop.
+  **O que se vê**: um **visor de tela cheia** (`b83f30cd`, canvas Evolução D-E6):
+  o vídeo é o cenário **dentro** do vidro; os sprites da forma atual e da
+  próxima intercalam por `TOTAL_MS` (3000 ms), brancos, até estabilizar na
+  evoluída — **nunca abaixo de `MIN_STEP_MS` (340 ms)** entre trocas (WCAG
+  2.3.1; antes o intervalo caía a 55 ms). Fora do vidro, a faixa "EVOLVED INTO" +
+  nome + data (`reachedAt`) + o primário "Let's keep going together".
+  É `role="dialog"` + `aria-modal` com foco preso (`useDialogA11y`); **Escape só
+  depois de `done`** — fechar antes seria abandonar a evolução no meio, e o commit
+  acontece em `onEvolved`.
+  **Movimento reduzido** (`usePrefersReducedMotion`): muda a ESTRUTURA, não a
+  pausa — quadro parado antes (64) → `arrow_forward` → depois (128), sem burst e
+  sem vídeo, com a evolução commitada na montagem; a cerimônia continua
+  esperando o gesto.
 
 - **`EvolveTaskModal`** — **Aparece quando**:
 
@@ -998,7 +1119,10 @@ Cinco blocos, com estas condições literais:
   cobrando "crie mais atividades" quando ela fechava.
   **Sai para**: `onCreateTask` → `setEvolveModalStage(null)` + `setCreateModalOpen(true)`.
   **Número que ele mostra**: `registeredForDay(gameState, new Date().getDay(), new Date().toDateString())`
-  — cadastradas **para hoje**, nunca `activities.length` cru.
+  — cadastradas **para hoje**, nunca `activities.length` cru; o texto
+  "complete N tasks per day" tem plural real (`acf4413e`, X7).
+  **Superfície**: desde `acf4413e` é um `RitualDialog` (`ritual/RitualKit.tsx`,
+  `zIndex={200}`) — trap, Escape e devolução de foco vêm dele.
 - **Régua**: `src/components/filaDeAvisos.contract.test.ts` trava a string do
   `isOpen`.
 
@@ -1010,29 +1134,38 @@ Cinco blocos, com estas condições literais:
 - **Sai para**: `onConfirm` (async — só fecha com `ok`) e `onClose`.
 - **Estados**: a confirmação exige **um segundo toque** (`confirmando`); a perda
   é dita **antes** de qualquer escolha, com nome e número, e o que **não** se
-  perde é dito junto.
+  perde é dito junto. "Renascer" sem nome de criatura (`podeSeguir = criaturaLimpa.length > 0 && !ocupado`)
+  é inerte **por superfície** (`aria-disabled={!podeSeguir}`, tinta `muted`),
+  nunca opacidade; o erro é um
+  `role="alert"` âmbar (`acf4413e`).
 - **Recusa motivada**: `rebirthRefusal` distingue `not-paid` / `not-ultra` /
-  `already-used`; só `not-paid` vira convite (`UnlockNudge` com `reason="evolution"`).
+  `already-used`; só `not-paid` vira convite (`UnlockNudge` com `reason="evolution"`),
+  e só quando o convite do demo não está na mesma tela (§4.10).
 - **Dono**: `src/components/RebirthModal.tsx` + `src/utils/rebirth.ts`.
 
 ### 4.13 `UnlockNudge` e `UnlockAccountModal`
 
 - **`UnlockAccountModal`** — **Aparece quando**: `{unlockReason && (…)}`, na raiz
-  do `App`. **Nunca abre sozinho.** `UnlockReason = 'task-limit' | 'evolution' | 'report' | 'shop'`.
+  do `App`. **Nunca abre sozinho.** `UnlockReason = 'task-limit' | 'evolution' | 'report' | 'shop' | 'reveal-demo'`
+  (o quinto entrou em `a1181a5b`, com o código `revealDemo` no schema de
+  telemetria, cliente e servidor).
   **Sai para**: `onUnlocked={handleAccountUnlocked}` (só depois de o **servidor**
   confirmar) e `onClose={() => setUnlockReason(null)}`.
 - **`UnlockNudge`** — ⚠️ **Divergência com o `CLAUDE.md`**, que fala em "dois
-  lugares" e depois corrige para "TRÊS". Medido em 09/09/2026
-  (`grep -rn "<UnlockNudge" src --include=*.tsx | grep -v "\.test\." | wc -l` → **6**):
+  lugares" e depois corrige para "TRÊS", **e cita o `EditModal`, que já não
+  monta o convite**. Medido em 20/09/2026
+  (`grep -rn "<UnlockNudge" src --include=*.tsx | grep -v "\.test\." | wc -l` → **6**,
+  o mesmo número de 09/09/2026 com um lugar trocado):
 
   | Onde | `reason` | Condição |
   |---|---|---|
   | `CreateModal.tsx` | `task-limit` | teto do demo |
-  | `EditModal.tsx` | `task-limit` | teto do demo (o caminho que contornava o cap) |
+  | ⚰️ `EditModal.tsx` | `task-limit` | **saiu em `d044fb2e`** (A1 do canvas Atividades: um modal de criação só — o `EditModal` não cria mais, então não há teto para bater) |
+  | `SoulmonOnboarding.tsx` (`REVEAL_DEMO`) | `reveal-demo` | `step === REVEAL_DEMO && demoReading` — novo em `a1181a5b` (§2.3) |
   | `ShopModal.tsx` | `shop` | `seg === 'shop' && accountTier === 'demo' && onUnlock` |
   | `DailyReportModal.tsx` | `report` | `showOffer` (`ofereceNoRelatorio`, com cap semanal por `offerShownWeek`) |
   | `App.tsx` (Evolução) | `evolution` | `currentView === 'evolution' && gameState.demoCharacterId` |
-  | `App.tsx` (Renascimento) | `evolution` | `rebirthRefusal(gameState) === 'not-paid'` |
+  | `App.tsx` (Renascimento) | `evolution` | `rebirthRefusal(gameState) === 'not-paid' && !gameState.demoCharacterId` |
 
 - **Régua**: `src/components/ofertaDoisCanais.contract.test.ts`,
   `UnlockAccountModal.copy.render.test.tsx`,
@@ -1046,8 +1179,18 @@ Cinco blocos, com estas condições literais:
 | `ArenaGame` | card na `ActivitiesPage` | `onExit` | usa a ficha (`skills`, elemento) | `ArenaGame.tsx` |
 | `DinoGame` | card na `ActivitiesPage` | `onExit` | `onScore={onDinoScore}` alimenta o recorde | `DinoGame.tsx` |
 | `RPSGame` | card na `ActivitiesPage` | `onExit` | duelo curto | `RPSGame.tsx` |
-| `NightmareBattle` | **fila de intersticiais** | `onWin={handleNightmareWin}` / `onLose`/`onClose` = `closeNightmare` | perder não custa nada, e a tela diz isso | `NightmareBattle.tsx` |
-| `PlayCard` | cartão na Home | não navega | `canPlay` / `playedToday` / `buff` | `PlayCard.tsx` |
+| `NightmareBattle` | **fila de intersticiais** | `onWin={handleNightmareWin}` / `onLose`/`onClose` = `closeNightmare`; desde `6fe6c73a` é um `RitualDialog` (trap, Escape, devolução de foco) | perder não custa nada, e a tela diz isso | `NightmareBattle.tsx` |
+| ⚰️ `PlayCard` | **não é mais montado** (`f5ead7c0`, 16/09/2026) — Brincar é a célula `play` do deck do `CompanionHUD` (§4.2) | — | `available` / `canPlay` / `playedToday` (`playDeck` no `App.tsx`) | `PlayCard.tsx` segue no repo sem consumidor |
+
+**Chrome comum dos quatro jogos** (`src/components/games/GameKit.tsx`, novo em
+`6fe6c73a`, canvas Jogos §25): `GameRoot` (a página, `position: fixed`, **reserva a
+faixa da nav inferior** — a nav continua visível, e sair pelo Início é caminho
+legítimo) › `GameHeader` (título + × 44 que chama `onClose` = o `onExit` do jogo, e
+é **o primeiro interativo** da tela) › `GameVisor` (o minijogo é o conteúdo do
+vidro) › `HpBars`/`TimingBar`/`FxPopup` (`role="status"`) embaixo (`TimingBar` mora em
+`src/components/pixel/TimingBar.tsx`; os outros dois no `GameKit`). Sem `Suspense`
+novo: o ponto de montagem continua `{openGame === '<id>' && (…)}` na
+`ActivitiesPage`.
 
 **`NightmareBattle` — aparece quando** (efeito no `App.tsx`, transcrito):
 
@@ -1064,9 +1207,12 @@ setNightmareOpen(true);
 
 `não percorrida` — depende de noite registrada e da janela 4h–12h.
 
-**`PlayCard` — aparece quando**: `{jaConcluiuAlgo && (…)}`. Não existe antes da
-primeira conclusão porque `canPlay` exige energia ≥ `PLAY_ENERGY_COST` (1), energia vem de comida e
-comida vem de concluir — no dia 1 o card nasceria indisponível.
+**Brincar — a célula `play` do deck**: `available: jaConcluiuAlgo` (`playDeck`,
+`useMemo` no `App.tsx`). ⚰️ O `PlayCard` era montado sob `{jaConcluiuAlgo && (…)}`;
+o gate é o mesmo, mas hoje é **célula inerte, não card ausente** — antes da
+primeira conclusão `canPlay` exige energia ≥ `PLAY_ENERGY_COST` (1), energia vem
+de comida e comida vem de concluir, então no dia 1 a célula nasce inerte com o
+rótulo "Brincar — depois da primeira atividade".
 
 **`MAX_FLOORS`** mora em `src/components/DungeonGame.tsx` (medido em 09/09/2026;
 o `CLAUDE.md` já registra que ele **não** está em `utils/dungeon.ts`).
@@ -1083,6 +1229,10 @@ o `CLAUDE.md` já registra que ele **não** está em `utils/dungeon.ts`).
 - **Efeitos ao jogar**: `onEarnEmblems` soma emblemas **e** chama
   `contarMissao('tournament-match')` (conta a PARTIDA, não a vitória);
   `onMatchPlayed` credita XP de Vínculo.
+- **Resultado da partida**: um `RitualDialog` (`zIndex={400}`, `3f359acc`) com as
+  duas criaturas em mini-visor; "Fight" tem nome acessível "Fight — challenge
+  ‹nome›" (WCAG 2.5.3); o switch de PvP travado é inerte por forma
+  (`aria-disabled`, fora do Tab), nunca `disabled`.
 - **Dono**: `src/components/TournamentPage.tsx` · **Régua**:
   `TournamentPage.bondGate.test.tsx`.
 
@@ -1179,12 +1329,12 @@ o `CLAUDE.md` já registra que ele **não** está em `utils/dungeon.ts`).
 - **Estados**: `reducedMotion` é calculado no `App.tsx` por
   `window.matchMedia?.('(prefers-reduced-motion: reduce)').matches` e **só
   desliga as animações e o háptico** — a cerimônia é a mesma, com a mesma pausa.
-- ⚠️ **Divergência dentro do próprio código**: o comentário do `App.tsx` diz que
-  ela "some sozinha em 2,5s". O componente **não tem `setTimeout` nenhum**
-  (medido: `grep -n "setTimeout" src/components/MilestoneCeremony.tsx` → vazio);
-  ele é `zIndex: 300` e **espera o gesto** — um `<button onClick={onDone}>`. O
-  comentário é resíduo do comportamento anterior; o `CLAUDE.md` já descreve o
-  comportamento certo.
+- ⚰️ **Divergência fechada em `4f5d2aac` (20/09/2026)**: o comentário do `App.tsx`
+  dizia que ela "some sozinha em 2,5s"; hoje diz "não pede nada além do gesto".
+  O componente continua sem `setTimeout` (`grep -n "setTimeout" src/components/MilestoneCeremony.tsx`
+  → vazio), é `zIndex: 300` e **espera o gesto**. Desde o canvas Rituais (§21) é
+  um `RitualDialog` (`role="dialog"` + `aria-labelledby`), com o sprite e o emblema
+  do marco (`emblemFor(tier)`) num vidro.
 - **Dono**: `src/components/MilestoneCeremony.tsx` · **Régua**:
   `MilestoneCeremony.render.test.tsx`.
 
@@ -1229,6 +1379,11 @@ o `CLAUDE.md` já registra que ele **não** está em `utils/dungeon.ts`).
   `App.tsx` (`dailyTotal > 0 && dailyDone >= dailyTotal`) — a meta é do motor, e
   o painel não pode ter uma segunda cópia dela. O número é do **grupo**, nunca de
   um membro; por pessoa existe só "apareceu hoje: sim/não".
+- **Superfícies desde `f757ed26`** (canvas Social, `DECISOES-WIREFRAME.md` §28):
+  o `PlayerDetailModal` é um `RitualDialog` com × "Fechar"/"Close"; as abas são
+  `role="tab"`; ação sem rede/sem saldo é **inerte por forma** (tracejado +
+  `muted` + `aria-disabled`, fora do Tab); alertas `role="alert"` em âmbar (⚰️ o
+  `danger-ink` saiu); a criatura do outro aparece em `MiniGlass` (nunca avatar).
 - **Dono**: `src/components/LibraryPage.tsx`, `CoopPanel.tsx`,
   `PlayerDetailModal.tsx` · **Régua**: `LibraryPage.amigos.render.test.tsx`,
   `CoopPanel.render.test.tsx`, `PlayerDetailModal.semMetrica.render.test.tsx`.
@@ -1358,7 +1513,7 @@ ele monta a `SettingsPage`, nunca a folha (13/09/2026).
 | `Toaster` (sonner) | último nó do `App` | avisos de uma linha | `ui/sonner.tsx` |
 | `NotificationManager` | sempre | agenda os pushes locais — §5.3 | `NotificationManager.tsx` |
 | `ItemsWindow` | `{showItemsWindow && (…)}` | a pastinha; `handleOpenItems` **alterna** e zera `newItemsReady` | `ItemsWindow.tsx` |
-| `GamePopups` → `FirstTaskCompletedPopup` | `showFirstTaskPopup` | **uma vez na vida**, guardado por `FIRST_TASK_POPUP_SHOWN` e por uma varredura (`anyStepCompleted` / `anyTaskCompleted`) | `GamePopups.tsx` |
+| `GamePopups` → `FirstTaskCompletedPopup` | `showFirstTaskPopup` | **uma vez na vida**, guardado por `FIRST_TASK_POPUP_SHOWN` e por uma varredura (`anyStepCompleted` / `anyTaskCompleted`). Desde `eb932ebb` (canvas Rituais R8/S8) mudou de CLASSE: ⚰️ era `ModalSheet` em z-120, **sob** os intersticiais (invisível quando o gatilho era o "só 5 minutos?" do check-in); hoje é `RitualDialog` **z-300, espera o gesto**, como a cerimônia do marco — fora das filas de propósito | `GamePopups.tsx` |
 | `ContentModals` → `GuideModal` | `guideModalOpen` | o guia; os números saem das CONSTANTES | `GuideModal.tsx` |
 | `HelpModal` | `showHelpModal` | o glossário, idem | `HelpModal.tsx` |
 | `ConfirmDialog` | `resetOnboardingOpen` | "Refazer o ritual" — o texto diz que Soulmon, atividades, Bits e progresso **continuam** | `ConfirmDialog.tsx` |
@@ -1379,26 +1534,41 @@ Cinco provedores, todos em `android/app/src/main/java/com/hexervoodoom/soulmon/w
 do `AndroidManifest.xml` são "Soulmon", "Soulmon Vertical", "Soulmon Pet",
 "Soulmon Chat" e "Soulmon Tela" — é o texto que a pessoa lê na lista de widgets.
 
-- **O que mostram** (`WidgetRenderer.kt`): nome do pet (`pet_name`), rótulo do
-  estágio, `"$completedTasks/$totalTasks"` (ou `"—"`), corações, barra de energia,
-  sprite, cocô e uma **frase do pet**.
-- **Para onde levam**: `WidgetRenderer` monta um `PendingIntent` com o
+- **O que mostram** (`WidgetRenderer.kt`, refeito em `6affd501` pelo canvas
+  Fora do app, `DECISOES-WIREFRAME.md` §30): nome do pet (`pet_name`), rótulo do
+  estágio, o contador `"$completed/$total"` **só com ≥1 feita**
+  (`taskCounter` devolve `null` e a linha `widget_tasks` vai a `View.GONE` com zero
+  feitas ou zero tarefas — REGISTRO 13.16; ⚰️ o `"—"` no zero saiu), corações,
+  barra de energia, sprite (a criatura do estágio via `setImageViewBitmap`) e uma
+  **frase do pet**. Por widget: **A** (`renderFull`, horizontal) tem contador e
+  frase; **B** (vertical) tem o contador **na linha do estágio** e ⚰️ **sem
+  frase**; **C** (`renderPet`) só sprite + cocô; **D** (`renderChat`) frases e
+  ⚰️ **sem contador**; **E** (`renderScreen`) corações + energia + sprite.
+- **Para onde levam**: `attachClick` monta um `PendingIntent` com o
   `getLaunchIntentForPackage` e o liga ao `R.id.widget_root` — **tocar em
   qualquer lugar do widget abre o app**. Não há alvo por região.
-- **O widget NÃO cobra** — a escada de frases, na ordem em que a função decide (três `if` e então um `when`):
-  `hp <= 20` → "💛 Tô com saudade de você"; `needsIntervention` → "🌱 Hoje, só 5
-  minutos?"; `total == 0` → "🌳 Você tem estado firme" (com `habit_steady`) ou
-  "🌤️ Um dia de cada vez"; depois `ratio >= 1.0` → "✨ Dia perfeito!";
-  `>= 0.7` → "💪 Quase lá!"; `>= 0.4` → "🔥 Continue assim!"; senão →
-  "🌱 Começou — isso já conta".
+- **O widget NÃO cobra** — a escada de frases (`contextualMessage`), na ordem em
+  que a função decide (três `if` e então um `when`), **só em inglês e sem emoji**
+  (REGISTRO 13.18 — o widget não tem idioma; D-F3 — o RemoteViews não tem fonte
+  de ícone): `hp <= 20` → "I've been missing you"; `needsIntervention` → "Today,
+  just five minutes?"; `total == 0` → "You've been steady" (com `habit_steady`)
+  ou "One day at a time"; depois `ratio >= 1.0` → "Complete day!"; `>= 0.7` →
+  "Almost there!"; `>= 0.4` → "Keep it up!"; senão → "You started — that already
+  counts". No widget D (`buildChatPhrases`): `hp <= 20` → "I miss you...";
+  `total == 0` → "Let's add a task?"; `completed >= total` → "We crushed it
+  today! ✨"; senão "Whenever you're ready, I'm here."; ⚰️ "Don't forget about
+  me today!" saiu do pool.
   ⚰️ `"📋 $completed de $total feitas"`, `"⚠️ Cuide de mim!"` e
-  `"N task(s) left, let's go!"` **não existem mais**.
+  `"N task(s) left, let's go!"` **não existem mais**; ⚰️ a escada em PT-BR
+  ("💛 Tô com saudade de você" … "✨ Dia perfeito!") **também não** — saiu em
+  `6affd501` (20/09/2026).
 - **Régua**: `src/plugins/widgetSemCobranca.contract.test.ts` — lê o FONTE
-  Kotlin, porque nenhum teste em `node` alcança Kotlin.
+  Kotlin, porque nenhum teste em `node` alcança Kotlin; desde `6affd501` trava
+  também `"0/"`, o traço e o veto de presença.
 
-⚠️ Duas observações do fluxo: a frase do widget é **só em PT-BR** (não há par EN
-no `when`), e o degrau `ratio >= 1.0` ainda diz "Dia perfeito!" enquanto o app
-renomeou a leitura para "dia completo" (P5, 07/09/2026). Vão para o `../STATUS.md`.
+⚰️ As duas observações de 09/09/2026 (frase só em PT-BR; "Dia perfeito!" no topo
+da escada) **fecharam em `6affd501`**: a escada é só em inglês por decisão
+(13.18) e o degrau diz "Complete day!" (P5).
 
 ### 5.2 Overlay Electron
 
@@ -1406,13 +1576,20 @@ Dono da fronteira: `desktop/renderer/src/menu.ts` (`renderMain`, `renderTasks`,
 `renderSettings`) — e a fronteira de **cuidado** é `desktop/renderer/src/care.ts`,
 não este arquivo.
 
-- **Painel principal** (`renderMain`): cabeçalho com `stageName` (por
-  `textContent`, nunca `innerHTML` — o nome vem do save remoto), a linha
-  `${heartsLabel()} · ⚡${state.energy}/${state.maxEnergy} · 🍎×${foodCount(...)}`,
-  o retrato do pet, a linha de status, e a **fileira de cuidado** com quatro
-  botões: 🫶 Carinho (`doPet`), 🍎 Comida (`doFeed`), 🚿 Banho (`doShower`) e
-  💤 Dormir / ☀️ Acordar (`doSleepToggle`).
-- **Tarefas de hoje**: `button(...)` com contador → `panel = 'tasks'; render()`.
+- **Painel principal** (`renderMain`, refeito em `e2e196b2` pelo canvas Fora do
+  app, `DECISOES-WIREFRAME.md` §30 D-F7..D-F13): cabeçalho com `stageName` (por
+  `textContent`, nunca `innerHTML` — o nome vem do save remoto), a linha de
+  estado `statusLine()` — corações `favorite` num `role="img"` com `aria-label`
+  "N de M corações", `bolt` + `energy/maxEnergy` **só com energia > 0**,
+  `restaurant` + `×foodCount` (⚰️ os emojis ❤️/⚡/🍎 saíram; a linha **não é
+  montada dormindo**: `if (!state.sleeping) pb.appendChild(statusLine())`), o
+  retrato do pet num vidro (dormindo = filtro + Z, nunca opacidade), a fala
+  (`aria-live="polite"`), e a **fileira de cuidado** com quatro `careButton`:
+  `volunteer_activism` Carinho (`doPet`), `restaurant` Comida (`doFeed`),
+  `shower` Banho (`doShower`) e `bedtime` Dormir / `wb_sunny` Acordar
+  (`doSleepToggle`).
+- **Tarefas de hoje**: `button('task_alt', …)` **sem dígito** (REGISTRO 13.17 —
+  ⚰️ o contador na porta da lista saiu) → `panel = 'tasks'; render()`.
 - **Para onde leva**: `window.soulmonDesktop?.openFullApp()` — a linha
   "📱 Abrir Soulmon completo" nas Configurações e o botão de entrar quando não há
   sessão. **Criar e editar tarefas é só no app**, e a nota do painel diz isso:
@@ -1455,6 +1632,12 @@ export const PUSH_HOURS_UTC = PUSH_HOURS_BRT.map(h => (h + 3) % 24).sort((a, b) 
   A última é a **precedência do lembrete de deitar**: com a janela padrão
   (23:00) a noite mandava três pushes em 2h30, e o das 20h é o único dos três
   que pede EXECUÇÃO — então é ele que cede.
+- **Ícones** (`3e758a81`, canvas Fora do app D-F14/D-F15): Web Push e
+  `AlarmReceiver.kt` levam `push-large-192.png` (mini-visor redondo com a chama)
+  como `largeIcon`/`setLargeIcon` e `badge-96.png` alfa-only; o FCM v1 **não tem
+  `largeIcon`** (e `image` viraria BigPicture), então `workers/fcm.js` manda só
+  `android.notification.icon = ic_notification` + `color`. A copy de
+  `_pushCopy.js` e os horários **não mudaram**.
 - **Dedupe entre os dois canais**: a **tag da copy** é o que impede a duplicata;
   o `AlarmReceiver.kt` usa `notify(tag, 0, …)` casando com o
   `android.notification.tag` do `workers/fcm.js`.
@@ -1466,14 +1649,16 @@ export const PUSH_HOURS_UTC = PUSH_HOURS_BRT.map(h => (h + 3) % 24).sort((a, b) 
 
 ## 6. Divergências abertas (para o `../STATUS.md`)
 
-| # | Afirmação | Onde está | O que o código diz (09/09/2026) |
+| # | Afirmação | Onde está | O que o código diz (09/09/2026; recheado em 20/09/2026 sobre `dc72579e`) |
 |---|---|---|---|
 | 1 | "Loja em ABAS (Itens/Cenários/Mobílias/Torneio/Missões)" | `CLAUDE.md` | `type ShopSegment = 'shop' \| 'tournament'` — **dois** segmentos; Itens/Cenários/Mobílias são seções de um scroll, e a aba Missões não existe |
 | 2 | "a página é dungeon + dino + pedra-papel-tesoura + torneio" | comentário de `BottomNav.tsx` | `openGame` aceita `'dungeon' \| 'arena' \| 'dino' \| 'rps'` — **quatro** minijogos |
-| 3 | "`UnlockNudge` só aparece em dois lugares… hoje são TRÊS" | `CLAUDE.md` | `grep -rn "<UnlockNudge" src --include=*.tsx \| grep -v "\.test\." \| wc -l` → **6** |
+| 3 | "`UnlockNudge` só aparece em dois lugares… hoje são TRÊS", e "o `EditModal` passou a exibir o `UnlockNudge` também" | `CLAUDE.md` | `grep -rn "<UnlockNudge" src --include=*.tsx \| grep -v "\.test\." \| wc -l` → **6**; e o `EditModal` **não** monta mais o convite desde `d044fb2e` (o sexto lugar é o `REVEAL_DEMO` do onboarding) — §4.13 |
 | 4 | "sem elas o botão de microfone **não é desenhado**" | `CLAUDE.md` | o `<button>` continua montado; com `micDisponivel === false` ele vira o botão de enviar, com `aria-disabled` quando não há texto |
-| 5 | "a cerimônia de marco… some sozinha em 2,5s" | comentário do `src/App.tsx` | `MilestoneCeremony.tsx` não tem `setTimeout`; é `zIndex: 300` e espera o toque no botão |
+| 5 | ⚰️ "a cerimônia de marco… some sozinha em 2,5s" | comentário do `src/App.tsx` | **fechada em `4f5d2aac`** (20/09/2026): o comentário passou a dizer "não pede nada além do gesto"; o componente segue sem `setTimeout`, `zIndex: 300` |
 | 6 | "`ArenaGame` é código morto" | `docs/INVENTARIO-TELAS.md` §6.3 (19/08/2026) | é o segundo card da `ActivitiesPage` desde então |
 | 7 | "`OraclePage` é alcançável pelo atalho de dono (segurar o mascote)" | `SoulmonOnboarding.tsx` (comentário) e `docs/INVENTARIO-TELAS.md` §5.13 | `startOracleDebugHold`/`cancelOracleDebugHold` **não têm chamador** — a intro que os usava foi apagada. `OraclePage` e `PixelizerCard` são inalcançáveis por qualquer caminho |
-| 8 | frase do widget e nome do dia | `WidgetRenderer.kt` | a escada de frases é **só PT-BR** e o topo dela ainda diz "Dia perfeito!", enquanto a UI do app diz "dia completo" desde 07/09/2026 (P5) |
+| 8 | ⚰️ frase do widget e nome do dia | `WidgetRenderer.kt` | **fechada em `6affd501`** (20/09/2026): a escada é só em inglês por decisão (REGISTRO 13.18) e o topo diz "Complete day!" (P5) — §5.1 |
 | 9 | comentário do slot de avisos numera "1. HP" duas vezes | `src/App.tsx` | a ordem executada é a dos `push`: firstDay → hp → semanal → triagem → priming → recomeco |
+| 10 | "Brincar" é um card na Home (`PlayCard`), e a IIFE do `PlayCard` no `App.tsx` é consumidora de `playLog` | `CLAUDE.md` (linha 🧮, "**brincar** `playLog` (`utils/petNeeds.ts` + a IIFE do `PlayCard` no `App.tsx`)") | o `PlayCard` não é montado desde `f5ead7c0`; Brincar é a célula `play` do deck do `CompanionHUD`, alimentada por `playDeck` (`useMemo` no `App.tsx`) — §4.2, §4.14. `src/components/PlayCard.tsx` segue no repo sem consumidor |
+| 11 | "o fundo do widget é vetor `pet_grid.xml`" | `CLAUDE.md` (footgun 4) | `android/app/src/main/res/drawable/pet_grid.xml` foi **apagado** no delta (`6affd501`); o fundo é `widget_bg.xml` (`<shape>`, `drawable/` e `drawable-v31/`) — §5.1 |

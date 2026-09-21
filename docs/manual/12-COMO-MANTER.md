@@ -1,6 +1,6 @@
 # Como manter o manual
 
-> **Dono:** doc-bibliotecario · **Data:** 14/09/2026 · **Estado:** verificado em 14/09/2026 por doc-verificador
+> **Dono:** doc-bibliotecario · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador
 > **Verificação:** `npx vitest run src/docsManual.contract.test.ts src/docsSemMentira.contract.test.ts` (as duas travas descritas aqui) + `node scripts/docs-inventario.mjs` (a medição que alimenta o ciclo)
 > **Não cobre:** o CONTEÚDO de nenhum doc (cada um tem dono declarado no próprio cabeçalho) e as regras do jogo ([02-REGRAS-DE-NEGOCIO.md](02-REGRAS-DE-NEGOCIO.md)). Aqui só se responde "como se escreve, verifica e trava documentação neste repositório".
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -168,6 +168,8 @@ rascunho  →  verificado em dd/mm/aaaa por doc-verificador  →  desatualizado 
 | Um módulo, tela ou regra mudou e o doc dono precisa acompanhar | `/squad-docs atualizar <assunto ou caminho>` — despacha só o redator dono |
 | Suspeita de que a documentação apodreceu | `/squad-docs verificar [doc]` — devolve a lista `afirmação — evidência — veredito` |
 | Um doc nasceu à mão fora da squad e o guard ficou vermelho no item (a) | `/squad-docs indice` |
+| Nasceu um agente ou uma skill em `.claude/` (ex.: os 8 `arte-*` e `.claude/skills/squad-arte/SKILL.md`, 15/09/2026) | **O guard não vê `.claude/`** — o item (a) só varre `docs/`, então nada fica vermelho. O `doc-bibliotecario` acrescenta a linha em [00-MAPA.md](00-MAPA.md) §6.1 (contagem de `ls .claude/agents/*.md \| wc -l` com data) e, se a squad tem comando próprio, a situação que o aciona entra nesta tabela. |
+| Nasceu ou morreu um ASSET, ou um mapa `src/utils/*Art.ts` ganhou/perdeu entrada | `/squad-arte inventario` re-varre; o manual só descreve o resultado ([04-IDENTIDADE-VISUAL.md](04-IDENTIDADE-VISUAL.md) §8 e a entrada do mapa em `06-REFERENCIA/utils.md`) — a fila e o inventário vivem em [`ASSETS-A-GERAR.md`](../ASSETS-A-GERAR.md) e [`INVENTARIO-ASSETS.md`](../INVENTARIO-ASSETS.md), fora do manual. |
 | Só quer saber o estado (dono, carimbo, data, guard) | `/squad-docs status` — não escreve nada |
 | Uma frase errada, um símbolo renomeado, um link quebrado | **Edite o doc à mão.** Corrija, ajuste a data do cabeçalho, rode o guard, commit. Abrir a squad para trocar uma palavra é overhead, não rigor. |
 | Vai mudar uma REGRA DE PRODUTO | **A squad não decide isso.** Ela DESCREVE o que o código faz e registra onde a decisão vive; quem decide é o dono, no [`REGISTRO-DE-DECISOES.md`](../REGISTRO-DE-DECISOES.md). |

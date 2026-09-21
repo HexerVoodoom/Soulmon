@@ -1,6 +1,6 @@
 # Referência — functions/api e workers
 
-> **Dono:** doc-redator-referencia · **Data:** 09/09/2026 · **Estado:** verificado em 10/09/2026 por doc-verificador (mecânico completo)
+> **Dono:** doc-redator-referencia · **Data:** 20/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (mecânico completo)
 > **Verificação:** `npx tsc -p tsconfig.server.json --noEmit && npx vitest run functions/api workers` — cada rota e cada `_*.js` foi lido no corpo, não só no comentário de cabeçalho.
 > **Não cobre:** regra de negócio em profundidade (→ `02-REGRAS-DE-NEGOCIO.md`), o schema D1/KV completo (→ `07-DADOS-E-SAVE.md`), como fazer deploy do worker (→ `08-INTEGRACOES-E-DEPLOY.md`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -308,7 +308,7 @@ Cloudflare Workers (`workers/`), deploy **manual** (`wrangler deploy` dentro de 
 **Dono de:** envio de push nativo via Firebase Cloud Messaging (HTTP v1), sem `firebase-admin` — WebCrypto puro.
 **Exports:**
 - `getFcmAccessToken(serviceAccount)` — troca a service account por um token OAuth2 de curta duração (JWT-bearer grant, RS256, cache em escopo de módulo, reaproveitado entre requisições do mesmo isolate quente).
-- `sendFcmPush(token, notif, projectId, accessToken)` — envia uma notificação a um device token, com `android.notification.tag` (dedupe com o canal Web Push).
+- `sendFcmPush(token, notif, projectId, accessToken)` — envia uma notificação a um device token, com `android.notification.tag` (dedupe com o canal Web Push) e `android.notification.icon:'ic_notification'`/`color:'#0B6F68'` (ícone mono = a chama, pintada pelo Android no acento `primary-ink`; sem `image`, porque no FCM v1 não existe `largeIcon` — o largeIcon redondo é só do Web Push, em `public/sw.js`).
 **Chamado por:** `workers/push-scheduler.js`.
 **Régua:** cobertura indireta via `workers/push-scheduler.test.js`.
 

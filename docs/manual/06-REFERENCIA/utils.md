@@ -1,6 +1,6 @@
 # Referência — `src/utils`
 
-> **Dono:** doc-redator-referencia · **Data:** 09/09/2026 · **Estado:** verificado em 10/09/2026 por doc-verificador (mecânico completo; descrição por amostra dirigida de 15 módulos)
+> **Dono:** doc-redator-referencia · **Data:** 20/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (mecânico completo; descrição por amostra dirigida de 15 módulos)
 > **Verificação:** `npx vitest run src/docsManual.contract.test.ts` (item c — cobertura) + os testes listados em **Régua** de cada módulo.
 > **Não cobre:** o CONTEÚDO das regras de jogo em profundidade (→ [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md)); componentes, hooks, contexts, types, plugins, constants, `functions/api`, `workers/` e `desktop/` (→ os outros docs de `06-REFERENCIA/`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -171,7 +171,7 @@ Cobertura: **120/120** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 **Dono de:** Catálogo de cenários (`PetBackground`) comprados na loja.
 **Exports:**
 - `PetBackground` (interface) — campos: `namePt`, `nameEn`, `css`, `setting`, `slots`, `baseColor`, `horizonY`.
-- `PET_BACKGROUNDS` — tabela/dado de configuração (ver código; 41+ linhas).
+- `PET_BACKGROUNDS` — tabela/dado de configuração (ver código; 41+ linhas). Desde 15/09/2026 os 19 cenários que eram gradiente CSS (ou arte 800² antiga) viraram arte PINTADA 1200×648 (`cenarios-20260915`) — `css` agora é sempre `url(...)`, `matrix`/`ocean`/`gameboy` deixaram de ser `'void'` (a arte nova tem chão desenhado em 74%) e passaram a `'outdoor'`/`'indoor'` com `GROUND_SLOTS`.
 **Chamado por:** `src/App.tsx`, `src/components/CompanionHUD.tsx`, `src/components/PetStageDecor.tsx`, `src/components/ShopModal.tsx`, `src/utils/dungeonScenes.ts`
 **Régua:** nenhuma (`ls src/utils/backgrounds*.test.ts` vazio).
 
@@ -483,43 +483,43 @@ Cobertura: **120/120** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 **Exports:**
 - `ACHIEVEMENT_IDS`, `AchievementId`, `ACHIEVEMENT_LABELS` (PT/EN).
 - `unlockedAchievements(slice)` — função pura: quais conquistas estão abertas, na ordem canônica.
-**Chamado por:** nenhum consumidor de UI ainda (a colocação é do canvas de identidade); `emblemArt.ts` importa o tipo.
+**Chamado por:** `App.tsx` (`unlockedAchievements(gameState)` alimenta a prop `achievements` do `PetPage`), `components/PetPage.tsx` (`ACHIEVEMENT_IDS`/`ACHIEVEMENT_LABELS`); `utils/emblemArt.ts` importa o tipo `AchievementId`.
 **Régua:** `src/utils/achievements.test.ts` (cada gatilho, save vazio, as 8 com arte).
 
 ### `src/utils/animArt.ts`
 **Dono de:** os spritesheets de FX quadro a quadro (`assets/soulmon/fx/anim-*.png`, N células de 64 px na horizontal).
 **Exports:** `ANIM_ART` (eatCrumbs, heartBurst, showerSplash, sleepZ, poopPlop, sparklePop, dustStep, hungerDrop), `AnimSheet`, `AnimId`.
-**Chamado por:** `components/CompanionHUD.tsx`, `components/CareSystem.tsx` via `components/pixel/SpriteAnim.tsx`.
+**Chamado por:** `components/CareSystem.tsx`, `components/CompanionHUD.tsx`, `components/EvolutionCeremony.tsx`, `components/EvolutionPath.tsx` — todos via `components/pixel/SpriteAnim.tsx`.
 **Régua:** nenhuma.
 
 ### `src/utils/emblemArt.ts`
 **Dono de:** URL do emblema pixel (64²) de cada conquista de `achievements.ts`. Emblema-MOEDA continua número.
-**Exports:** `emblemArt(id)`, `EMBLEM_COUNT`.
-**Chamado por:** nenhum consumidor de UI ainda.
+**Exports:** `emblemArt(id)`, `EMBLEM_COUNT`, `emblemFor(tier)` — emblema do MARCO de hábito por tier (`sprout`→`habit-7`, `sapling`→`habit-21`, `tree`→`habit-66`; `seed` devolve `undefined`).
+**Chamado por:** `components/PetPage.tsx` (`emblemArt`, faixa de conquistas), `components/MilestoneCeremony.tsx` (`emblemFor`, no lugar do `tierIcon` emoji).
 **Régua:** `src/utils/achievements.test.ts` (as 8 têm arte).
 
 ### `src/utils/gainArt.ts`
 **Dono de:** peças estáticas de ganho (96²) e movimento (64²) da entrega 2, dentro do visor — `GAIN_ART` (perfectDay, levelup, chest, confetti, evolutionBurst, focusSeal, heal) e `MOVE_ART` (dustPuff, speedLines, jumpArc, landImpact, sleepZ, wakeStretch, poof).
-**Chamado por:** nenhum consumidor ainda (os momentos estão listados no cabeçalho; entram com os canvases).
+**Chamado por:** `components/EvolutionCeremony.tsx` (`evolutionBurst` de `GAIN_ART`); os demais momentos seguem listados no cabeçalho do arquivo, sem chamador ainda.
 **Régua:** nenhuma.
 
 ### `src/utils/hudArt.ts`
 **Dono de:** peças pixel do HUD dentro do visor (D3): moldura de barra 96×8, segmento 6², moldura 9-slice 96² (cantos 24).
 **Exports:** `HUD_ART`.
-**Chamado por:** nenhum consumidor ainda (canvas Sistema).
+**Chamado por:** `components/pixel/VisorBar.tsx` (`barFrame`/`barFill`, barras), `components/ui/Viewport.tsx` (`frame`/`frameSlice`, overlay 9-slice), `components/CompanionHUD.tsx`, `components/EvolutionPath.tsx`.
 **Régua:** nenhuma.
 
 ### `src/utils/placeholderArt.ts`
 **Dono de:** os placeholders de forma ainda não gerada (`egg`, `cocoon`, `glitch`, 256²) — D1.
 **Exports:** `PLACEHOLDER_ART`, `PlaceholderId`.
-**Chamado por:** nenhum consumidor ainda (ligação em `displaySprite`/Reveal na Fase 2).
+**Chamado por:** `components/EvolutionPath.tsx` (D1 — GERANDO → `forming`/`dormant`, RESERVA_FINAL → `glitch`), `components/BirthCard.tsx`, `components/SoulmonOnboarding.tsx`.
 **Régua:** nenhuma.
 
 ### `src/utils/sigilArt.ts`
 **Dono de:** URL dos 45 sigilos do class-system (`assets/soulmon/sigilos/`, 192²) — D6.
 **Exports:** `sigilArt(id)`, `SIGIL_COUNT`.
-**Chamado por:** nenhum consumidor ainda (Ficha do Pet quando o Class-System entrar).
-**Régua:** nenhuma.
+**Chamado por:** `components/PetPage.tsx`.
+**Régua:** nenhuma direta (`src/utils/soulProfile/ficha/classTitle.test.ts` exercita o mesmo mapa de sigilos indiretamente).
 
 ### `src/utils/dreamArt.ts`
 **Dono de:** Mapa id de sonho (`DREAM_CATALOG`) → URL da arte.
@@ -557,9 +557,13 @@ Cobertura: **120/120** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 **Exports:**
 - `DungeonScene` (interface) — campos: `namePt`, `nameEn`, `bg`, `accent`.
 - `DUNGEON_SCENES` — tabela/dado de configuração (ver código; 27+ linhas).
+- `NIGHTMARE_SCENE` — a cena FIXA do Pesadelo (`SPIRIT_BG_SCENES[6]`, a Forja das Almas): não sorteada, porque o pesadelo é uma luta só, de manhã, com o mesmo vidro todas as noites.
+- `ARENA_SCENE` — a cena FIXA da Arena (`SPIRIT_BG_SCENES[3]`, o Abismo Violeta).
+- `DINO_SCENE` — a cena FIXA do Dino (`SPIRIT_BG_SCENES[10]`, o corredor em ruínas atrás do parallax).
 - `function buildRunScenes(count = 5): DungeonScene[]` — Scenes for one run: 5 picks without repeats, drawn at random from the classic retro scenes + the shop backgrounds. Every run looks different.
 - `function sceneForFloor(floor: number): DungeonScene` — Scene for a run floor (1-based). Clamps to the 5 defined scenes.
-**Chamado por:** `src/components/DungeonGame.tsx`
+**Avisos do arquivo:** o overlay de scanline VHS que o `DungeonGame` camadava por cima **saiu** (canvas Jogos, DECISÕES §25) — a cena hoje é o `cover` de um visor (`games/GameKit.tsx`), e movimento contínuo sem propósito era o que `prefers-reduced-motion` nunca alcançava.
+**Chamado por:** `src/components/DungeonGame.tsx` (`buildRunScenes`/`sceneForFloor`), `src/components/ArenaGame.tsx` (`ARENA_SCENE`), `src/components/DinoGame.tsx` (`DINO_SCENE`), `src/components/NightmareBattle.tsx` (`NIGHTMARE_SCENE`)
 **Régua:** nenhuma (`ls src/utils/dungeonScenes*.test.ts` vazio).
 **Regra de negócio:** Cada andar da Masmorra sorteia um cenário retrô diferente por run. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
@@ -762,8 +766,8 @@ Cobertura: **120/120** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 **Dono de:** Tier de conta, personagens pré-prontos do modo demo, pacotes de crédito e o portão único de criação de atividade.
 **Exports:**
 - `AccountTier` (type) — `'demo' | 'paid'`
-- `PremadeCharacter` (interface) — campos: `id`, `name`, `bioPt`, `bioEn`.
-- `PREMADE_CHARACTERS` — Os três personagens prontos do modo grátis. ⚠️ **SEM SUFIXO `-mon`, e isto é regra, não gosto** (`CLAUDE.md`, seção de arte).
+- `PremadeCharacter` (interface) — campos: `id` (`'kaelen' | 'orrin' | 'thalindra' | 'igni' | 'nautilu' | 'astrase'`), `name`, `bioPt`, `bioEn`.
+- `PREMADE_CHARACTERS` — Os **seis** personagens prontos do modo grátis (eram 3 até 15/09/2026 — D1: `igni`/`nautilu`/`astrase` entraram, as 3 linhas do oráculo com seed fixo, dobrando a pré-seleção do free). ⚠️ **SEM SUFIXO `-mon`, e isto é regra, não gosto** (`CLAUDE.md`, seção de arte).
 - `function getDemoSprite(characterId: string, stage: string): string` — Sprite de um personagem pré-pronto (modo demo) num nível dado — usado na tela de escolha do onboarding. getSpriteForStage já sabe resolver isso quando um demoCharacterId é passado (ver utils/sprites.ts).
 - `function getDemoCreatureStages(character: PremadeCharacter): CreatureStage[]` — Formas do modo demo pra alimentar a página de Evolução (EvolutionPath.tsx), que espera uma árvore CreatureStage[] no formato do oráculo.
 - `REROLL_COST_CREDITS` — tabela/dado de configuração (ver código; 14+ linhas).
@@ -1453,9 +1457,10 @@ Cobertura: **120/120** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 ### `src/utils/soulProfile/ficha/classTitle.ts`
 **Dono de:** A classe/arquétipo (dos 79 do class-system) de cada estágio, determinística pela ficha.
 **Exports:**
-- `ClassTitle` (interface) — campos: `nome`, `origem`.
+- `ClassTitle` (interface) — campos: `nome`, `origem`, `sigilo?` — chave do sigilo da classe (`utils/sigilArt.ts`), que a Ficha desenha a 48 no canto superior esquerdo do visor (canvas Pet, D-P4). Opcional: cache `soulmonClassTitles` anterior a 20/09/2026 não tem o campo, e sem ele a Ficha não desenha sigilo nenhum (nunca inventa).
 - `CLASS_TITLE_EN` — Tradução EN dos 79 arquétipos do class-system, por ID (estável). O PT vem direto do motor — não duplicado aqui.
-- `function computeClassTitle(ficha: Ficha): Promise<ClassTitle>` — Classe de UM estágio. Determinística: função da ficha (que já é função da identidade), então reroll não troca a classe — mesmo padrão das skills.
+- `function sigiloDaClasse(condicao: CondicaoLike | undefined, ficha: Ficha): string` — pura e determinística: sigilo = escola de maior limiar da condição do arquétipo; sem escola, o elemento de maior limiar; sem nenhum dos dois, o elemento base dominante da ficha (o mesmo que nomeia o "Adepto de …" genérico).
+- `function computeClassTitle(ficha: Ficha): Promise<ClassTitle>` — Classe de UM estágio. Determinística: função da ficha (que já é função da identidade), então reroll não troca a classe — mesmo padrão das skills. Preenche `sigilo` via `sigiloDaClasse` nos ramos `arquetipo`/`diluido`; no `generico`, `sigilo` é o próprio elemento dominante.
 - `function computeClassTitlesAllStages( fichaByStage: Record<string, Ficha>): Promise<Record<string, ClassTitle>>` — `computeClassTitle` pra todos os estágios de uma vez.
 **Chamado por:** `src/components/PetPage.tsx`, `src/contexts/GameStateContext.tsx`, `src/utils/soulProfile/pipeline.ts`
 **Régua:** `classTitle.test.ts`
@@ -1854,12 +1859,12 @@ Cobertura: **120/120** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 - `DEMO_TINTS` — WP1.12 — O FILTRO DE TONALIDADE DO DEMO. Quem entra pelo caminho grátis recebe um dos três personagens pré-prontos — iguais para todo mundo.
 - `function demoTintFilter(tint: number | undefined): string | undefined` — O filtro CSS `hue-rotate` do tint do personagem demo, ou `undefined` para o tint 0.
 - `DUNGEON_SPIRIT_SPRITE` (re-export) — reexportado por conveniência; a descrição mora no módulo de origem.
-- `DUNGEON_LINE_SPRITES` — tabela/dado de configuração (ver código; 8+ linhas).
+- `DUNGEON_LINE_SPRITES` — tabela/dado de configuração (ver código; 9 linhas jogáveis desde 15/09/2026: `ignar`/`lumel`/`serah`/`kaelen`/`orrin`/`thalindra` + `igni`/`nautilu`/`astrase`, as 3 novas com seed fixo dos runs 18/08/2026, recortadas para entrar na pré-seleção do free — D1).
 - `DUNGEON_LINE_NAMES` — O NOME DE EXIBIÇÃO DE CADA LINHA — dono único. ⚠️ Estes três nomes estavam escritos à mão em TRÊS arquivos: aqui, no `PREMADE_CHARACTERS` (`monetization.ts`) e no `petName` dos NPCs da Biblioteca (`libraryNpcs.ts`).
 - `function getDungeonEnemySprite(tier: string, excludeLine?: string): { sprite: string; name: string; line: string }` — Sprite de inimigo de masmorra: sorteia uma das nossas linhas pelo tier (baby-i/ii caem no rookie da linha; mega cobre ultimate também). `excludeLine` tira do sorteio a linha que o próprio jogador está usando (modo demo), pra ninguém encarar um espelho de si mesmo.
 - `function getSpriteForStage(stage: string, demoCharacterId?: string): string` — A URL do sprite de um estágio; resolve primeiro o personagem demo (sem branch, um sprite por nível) antes da árvore normal.
 **Chamado por:** `desktop/renderer/src/cloudSync.ts`, `desktop/renderer/src/main.ts`, `desktop/renderer/src/menu.ts`, `desktop/renderer/src/sprites.ts`, `desktop/renderer/src/state.ts`, `src/App.tsx`, `src/components/ArenaGame.tsx`, `src/components/BestiaryCard.tsx`, `src/components/CompanionHUD.tsx`, `src/components/DinoGame.tsx`, `src/components/DungeonGame.tsx`, `src/components/EvoTrail.tsx`, `src/components/EvolutionCeremony.tsx`, `src/components/EvolutionPath.tsx`, `src/components/LibraryPage.tsx`, `src/components/NightmareBattle.tsx`, `src/components/PetPage.tsx`, `src/components/PlayerDetailModal.tsx`, `src/components/RPSGame.tsx`, `src/components/SoulmonOnboarding.tsx`, `src/components/TournamentPage.tsx`, `src/components/spriteUrl.beacon.render.test.tsx`, `src/utils/dungeon.ts`, `src/utils/libraryNpcs.ts`, `src/utils/monetization.ts`
-**Régua:** `sprites.dungeonRoster.test.ts`
+**Régua:** `sprites.dungeonRoster.test.ts`, `sprites.umQuadro.contract.test.ts` (D5: cada `lines/*.png` tem UM único sprite, nunca spritesheet — projeção de alfa detecta tira de N quadros num arquivo só).
 **Regra de negócio:** O nome de cada linha jogável mora num lugar só — evita a masmorra e a Biblioteca divergirem no nome. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
 ### `src/utils/steps.ts`
@@ -1950,9 +1955,9 @@ Cobertura: **120/120** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 - `TelemetryFunnel` (type) — `typeof TELEMETRY_FUNNEL[keyof typeof TELEMETRY_FUNNEL]`
 - `TELEMETRY_TIER` — O TIER da conta no momento do evento. Códigos IGUAIS aos do funil de propósito — é o mesmo eixo demo × pago, lido em dois momentos diferentes da vida do usuário (o funil descreve por qual onboarding ele passou; o tier, o que ele É agora, inclusive depois de converter).
 - `TelemetryTier` (type) — `typeof TELEMETRY_TIER[keyof typeof TELEMETRY_TIER]`
-- `TELEMETRY_UNLOCK_REASON` — `report` = oferta proativa no 1º dia perfeito (WP5.1); `shop` = card passivo na Loja.
+- `TELEMETRY_UNLOCK_REASON` — `{ taskLimit: 0, evolution: 1, report: 2, shop: 3, revealDemo: 4 }`. `report` = oferta proativa no 1º dia perfeito (WP5.1); `shop` = card passivo na Loja; `revealDemo` (novo, 20/09/2026) = o convite do REVEAL DEMO (REGISTRO 13.19 / canvas Onboarding-oráculo §31) — coincide de propósito com `onboarding` em `TELEMETRY_PURCHASE_REASON`, porque a compra que sai dali É a compra do onboarding (`handleUnlockFull`).
 - `TELEMETRY_PURCHASE_REASON` — WP0.9 — de onde a compra veio. Os quatro primeiros são os MESMOS de `TELEMETRY_UNLOCK_REASON` de propósito (o convite e a compra têm de ser comparáveis); `onboarding` é o caminho que não passa por convite nenhum.
-- `function unlockReasonCode(reason: 'task-limit' | 'evolution' | 'report' | 'shop'): number` — O motivo do convite, traduzido para o número do schema. ⚠️ Existe porque os DOIS emissores eram ternários de duas pernas contra um mapa de quatro (auditoria de 06/09/2026): um convite vindo do relatório diário era gravado como `evolution`, e um dispensar vindo de lá virava (…)
+- `function unlockReasonCode(reason: 'task-limit' | 'evolution' | 'report' | 'shop' | 'reveal-demo'): number` — O motivo do convite, traduzido para o número do schema (agora com o quinto motivo, `reveal-demo` → `revealDemo`). ⚠️ Existe porque os DOIS emissores eram ternários de duas pernas contra um mapa de quatro (auditoria de 06/09/2026): um convite vindo do relatório diário era gravado como `evolution`, e um dispensar vindo de lá virava (…)
 - `TELEMETRY_BAD_DAY` — WP0.10 — que TIPO de dia ruim ficou para trás. `heart` é perder coração na virada — a hipótese nº1 de churn do relatório 07. `degeneration` é cair de estágio, que é raro e caro.
 - `TELEMETRY_OPEN_SOURCE` — WP0.11 — origem da abertura.
 - `function openSourceFromUrl(search: string): number` — Lê a origem da abertura do `?src=` da URL (posto pelo `sw.js` no clique da notificação, e disponível para widget/atalho). Valor desconhecido cai em `direct` — inventar uma origem nova a partir de query string de terceiro seria deixar a métrica ser escrita por quem manda o link.

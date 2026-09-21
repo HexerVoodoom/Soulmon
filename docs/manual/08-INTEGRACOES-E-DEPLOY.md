@@ -1,6 +1,6 @@
 # Integrações e deploy
 
-> **Dono:** doc-redator-arquitetura · **Data:** 09/09/2026 · **Estado:** verificado em 10/09/2026 por doc-verificador
+> **Dono:** doc-redator-arquitetura · **Data:** 20/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (sincronizado com `2580b73a..dc72579e` em 20/09/2026 por doc-redator-arquitetura)
 > **Verificação:** `npx vitest run src/deploy src/security functions/api workers` — em especial `src/deploy/appUrl.contract.test.ts` (as quatro fontes da URL), `src/deploy/firebaseNoBuild.contract.test.ts` (o `.env.production` versionado), `src/deploy/swCache.contract.test.ts`, `src/security/csp.test.ts`, `src/security/supabase.contract.test.ts`, `workers/pushCopy.parity.test.js` e `workers/vapid.parity.test.js`.
 > **Não cobre:** o esquema do save e as chaves de storage (→ [07-DADOS-E-SAVE.md](07-DADOS-E-SAVE.md)), a arquitetura e os portões (→ [05-ARQUITETURA.md](05-ARQUITETURA.md)), as regras do jogo (→ `02-REGRAS-DE-NEGOCIO.md`), função por função (→ `06-REFERENCIA/`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -188,7 +188,7 @@ nenhum de `transcribe.js`, e não pode haver.
 | | |
 |---|---|
 | **Para quê** | Notificação em navegador e PWA instalada — e também dentro do WebView do Capacitor, onde `PushManager` é suportado. |
-| **Cliente** | `src/utils/notifications.ts` → `subscribeToPush` / `unsubscribeFromPush`; o `push`/`notificationclick` é tratado em `public/sw.js`. |
+| **Cliente** | `src/utils/notifications.ts` → `subscribeToPush` / `unsubscribeFromPush`; o `push`/`notificationclick` é tratado em `public/sw.js`. **Ícones (20/09/2026, `3e758a81`, canvas Fora do app — `docs/design/DECISOES-WIREFRAME.md` §30, D-F14/D-F15):** `icon` = `/push-large-192.png` (`PUSH_ICON` no `sw.js`; mini-visor REDONDO `#071413` com a chama de `src/brand/flame.ts` a 1× — o Android 12+ recorta o `largeIcon` em círculo, então o PNG já nasce círculo) e `badge` = `/badge-96.png` (`PUSH_BADGE`; ALFA-ONLY, chama branca em transparente — a barra de status descarta cor). Os mesmos dois caminhos estão em `showNotification` de `notifications.ts` e no `PRECACHE_URLS`. ⚰️ Até então os dois eram `/favicon-192x192.png`, e o favicon (quadrado escuro cheio) virava um BLOCO PRETO na barra de status — inclusive no WebView do APK, onde o Web Push também roda. |
 | **Servidor** | `functions/api/subscribe.js` (`POST` grava, `DELETE` remove) → chaves `push:<hash do endpoint>` em `PUSH_SUBSCRIPTIONS`. O envio é `workers/webpush.js` (RFC 8292 VAPID + RFC 8291 + RFC 8188 aes128gcm, tudo em WebCrypto). |
 | **Credencial** | `VAPID_JWK` — **`wrangler secret put VAPID_JWK` dentro de `workers/`** (a chave privada ECDSA P-256 como JSON). A chave PÚBLICA correspondente é `VAPID_PUBLIC_KEY`, que vai em `[vars]` do `workers/wrangler.toml` (é pública por definição). O endereço de contato do VAPID (RFC 8292 `sub`) é uma constante no `workers/push-scheduler.js`: é para onde o SERVIÇO de push escreve em caso de falha de entrega e **nunca aparece para o usuário**. |
 | **Sem ela** | O cron não consegue assinar e nenhum push web sai. |
@@ -200,8 +200,8 @@ nenhum de `transcribe.js`, e não pode haver.
 |---|---|
 | **Para quê** | Canal NATIVO extra, só no app Android. FCM tem tratamento mais confiável contra Doze e otimização de bateria em ROMs de fabricante (MIUI, EMUI) do que uma subscription de Web Push crua, e dá visibilidade de entrega pelo Firebase Console. |
 | **Cliente** | `src/utils/notifications.ts` → `registerForPushNotifications` / `unregisterFromPushNotifications`, via `@capacitor/push-notifications`. O token fica em `FCM_TOKEN` (`localStorage`). |
-| **Servidor** | `functions/api/fcm-subscribe.js` (`POST`/`DELETE`) → chaves `fcm:*` no MESMO namespace `PUSH_SUBSCRIPTIONS`. O envio é `workers/fcm.js` (HTTP v1, JWT assinado em WebCrypto — sem `firebase-admin`). |
-| **Credencial** | `FIREBASE_SERVICE_ACCOUNT` — **`wrangler secret put` dentro de `workers/`**, com o JSON COMPLETO baixado em Firebase Console → Configurações do projeto → Contas de serviço → Gerar nova chave privada. Exige também `android/app/google-services.json` (**commitado**; a API key ali é restrita por pacote e não é segredo) e o canal `soulmon_push` criado em `MainActivity.java`. |
+| **Servidor** | `functions/api/fcm-subscribe.js` (`POST`/`DELETE`) → chaves `fcm:*` no MESMO namespace `PUSH_SUBSCRIPTIONS`. O envio é `workers/fcm.js` (HTTP v1, JWT assinado em WebCrypto — sem `firebase-admin`). Desde 20/09/2026 (`3e758a81`) o payload `android.notification` leva `icon: 'ic_notification'` (a chama de `android/.../drawable/ic_notification.xml`, silhueta que o Android pinta no acento) e `color: '#0B6F68'` (`primary-ink` claro, 6,02:1 sobre a bandeja clara) — **sem `image`**: no FCM v1 não existe `largeIcon`, e `image` vira BigPictureStyle. O mini-visor redondo fica só no Web Push e no alarme local. ⚠️ **Isso está no worker, que NÃO foi deployado** (§3.5): em produção o FCM continua mandando o payload anterior até alguém rodar `wrangler deploy` dentro de `workers/`. |
+| **Credencial** | `FIREBASE_SERVICE_ACCOUNT` — **`wrangler secret put` dentro de `workers/`**, com o JSON COMPLETO baixado em Firebase Console → Configurações do projeto → Contas de serviço → Gerar nova chave privada. Exige também `android/app/google-services.json` (**commitado**; a API key ali é restrita por pacote e não é segredo) e o canal `soulmon_push` criado em `MainActivity.java`. O `AndroidManifest.xml` aponta `com.google.firebase.messaging.default_notification_icon` para `@drawable/ic_notification` (⚰️ era `@mipmap/ic_launcher` até 15/09/2026, `005a2941`). |
 | **Sem ela** | O cron pula o canal FCM; o Web Push continua funcionando. |
 | **Régua** | `functions/api/fcm-subscribe.test.js`. |
 
@@ -212,6 +212,15 @@ notificações diferentes e o mesmo aviso chegava DUAS vezes no mesmo aparelho, 
 10h, 16h e 22h. Hoje o receiver usa `notify(tag, 0, …)` com a tag vinda do `id`
 que o cliente passa (que É a tag da copy). O dedupe do WP3.4
 (`isNativePlatform()` antes do poll web) matou a TERCEIRA cópia.
+
+**O alarme local (`AlarmReceiver.kt`) usa a mesma identidade visual** (20/09/2026,
+`3e758a81`): `setSmallIcon(R.drawable.ic_notification)`, `setColor(0xFF0B6F68)` e
+`setLargeIcon` com `R.drawable.push_large` (`res/drawable-nodpi/push_large.png`,
+o MESMO PNG de `public/push-large-192.png`). ⚰️ O ícone pequeno era
+`R.mipmap.ic_launcher`. No mesmo delta sincronizado, mas em 15/09/2026
+(`005a2941`), `values/ic_launcher_background.xml` passou de `#0d9488` para
+`#071413` (o vidro). Estas três mudanças moram em
+`android/`, logo **só chegam ao aparelho com APK novo** (§3.4).
 
 **Histórico:** o FCM já foi implementado e revertido uma vez (commit `056a6b06`),
 com a tese de que o Web Push sozinho basta porque o WebView delega ao FCM por
@@ -306,8 +315,8 @@ o cliente exibe esses, nunca uma constante própria.
 | | |
 |---|---|
 | **Para quê** | Medir produto sem medir pessoa. |
-| **Cliente** | `src/utils/telemetry.ts` — `track`, `flush`, `installTelemetryAutoFlush`, `isTelemetryEnabled`/`setTelemetryEnabled`, `telemetryConsentCopy`. `ENDPOINT = '/api/metrics'`, `MAX_QUEUE = 200`, `MAX_BATCH = 100`. Todo evento tem esquema declarado em `EVENT_SCHEMA` e passa por `sanitizeEvent`. |
-| **Servidor** | `functions/api/metrics.js`. Escrita: agrega em **uma chave por DIA** (`m:YYYY-MM-DD`) com contadores somados de todo mundo. Leitura: `GET`, janela FECHADA lida chave a chave (nada de `list()` por prefixo), com teto `MAX_READ_DAYS`. |
+| **Cliente** | `src/utils/telemetry.ts` — `track`, `flush`, `installTelemetryAutoFlush`, `isTelemetryEnabled`/`setTelemetryEnabled`, `telemetryConsentCopy`. `ENDPOINT = '/api/metrics'`, `MAX_QUEUE = 200`, `MAX_BATCH = 100`. Todo evento tem esquema declarado em `EVENT_SCHEMA` e passa por `sanitizeEvent`. `TELEMETRY_UNLOCK_REASON` ganhou `revealDemo: 4` em 20/09/2026 (`a1181a5b`, REGISTRO 13.19 — o convite do reveal demo), e `unlock_view`/`unlock_dismiss` aceitam `reason` 0–4 (era 0–3); `unlockReasonCode` traduz `'reveal-demo'`. O 4 de `TELEMETRY_PURCHASE_REASON` continua `onboarding` de propósito — a compra que sai do reveal demo É a compra do onboarding, e o balde tem de ser um só. |
+| **Servidor** | `functions/api/metrics.js`. Escrita: agrega em **uma chave por DIA** (`m:YYYY-MM-DD`) com contadores somados de todo mundo. Leitura: `GET`, janela FECHADA lida chave a chave (nada de `list()` por prefixo), com teto `MAX_READ_DAYS`. Espelha o cliente: `EVENT_SCHEMA` com `reason` 0–4 em `unlock_view`/`unlock_dismiss` e `REASON_LABEL` com o 5º rótulo `reveal_demo` (20/09/2026); `PURCHASE_REASON_LABEL` = os 4 primeiros + `onboarding` (`REASON_LABEL.slice(0, 4)`), para o 4 da compra não virar `reveal_demo`. A régua da paridade cliente↔servidor é `src/utils/telemetry.test.ts`. |
 | **Credencial** | `METRICS_ADMIN_KEY` — `wrangler secret`, enviada num header próprio (`METRICS_KEY_HEADER`), comparada por `secretEquals`. |
 | **Sem ela** | ⚠️ **A rota de leitura responde 404, não 401**, de propósito: um 401 confirmaria que o endpoint existe. Ou seja, a métrica está instrumentada e agregada e **ninguém consegue ler nada** até o segredo existir. |
 | **Leitura fora do app** | `tools/metrics-read.mjs` (transporte) + `tools/metricsReport.mjs` (regras puras, testadas em `tests/metricsReport.test.ts`). `METRICS_ADMIN_KEY=… node tools/metrics-read.mjs --from … --to …`, ou `--file resposta.json` offline. |

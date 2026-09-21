@@ -1,7 +1,7 @@
 # Identidade visual e sonora do Soulmon
 
-> **Dono:** doc-redator-identidade · **Data:** 09/09/2026 · **Estado:** verificado em 10/09/2026 por doc-verificador (a devolução TINTA × FILL foi fechada pelo orquestrador com a leitura do teste)
-> **Verificação:** `npx vitest run src/styles/ src/index.css.contract.test.ts src/utils/sprites.dungeonRoster.test.ts src/utils/loudness.contract.test.ts src/utils/cortes.contract.test.ts src/components/ui/Viewport.contract.test.tsx src/components/ui/foundation.render.test.tsx` — 11 arquivos, 216 testes, verde em 09/09/2026.
+> **Dono:** doc-redator-identidade · **Data:** 20/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `2580b73a..dc72579e`, Fase 2 identidade fechada)
+> **Verificação:** `npx vitest run src/styles/ src/index.css.contract.test.ts src/utils/sprites.dungeonRoster.test.ts src/utils/loudness.contract.test.ts src/utils/cortes.contract.test.ts src/components/ui/Viewport.contract.test.tsx src/components/ui/foundation.render.test.tsx src/brand/brandFlame.parity.test.ts src/assets/assets.contract.test.ts` — os 11 arquivos de 09/09/2026 (216 testes, verde) mais os dois que nasceram com a marca vetorizada e a leva de arte de 15/09/2026.
 > **Não cobre:** o fluxo entre telas e o que cada superfície mostra (doc `03-FLUXO-DE-TELAS.md`); as regras de jogo por trás dos números que a UI pinta (doc `02-REGRAS-DE-NEGOCIO.md`); a assinatura de cada componente (`06-REFERENCIA/components.md`); o pipeline de build/deploy dos assets (doc `08-INTEGRACOES-E-DEPLOY.md`). Este doc descreve o som — **não** decide nada sobre ele: quem decide é o `REGISTRO-DE-DECISOES.md` (§6.1, S1..S13).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
 
@@ -20,14 +20,15 @@ superfície.**
 datado de 19/08/2026, que declara a direção de arte "O Visor" como fechada e não
 reabrível dentro daquele plano.
 
-**O que o código confirma**, medido em 09/09/2026:
+**O que o código confirma**, medido em 09/09/2026 e remedido em 20/09/2026 onde a
+linha diz:
 
 | Peça da tese | Onde está no código | Estado |
 |---|---|---|
 | A fronteira existe como componente | `src/components/ui/Viewport.tsx` → `Viewport` | **no ar** |
 | O interior é escuro nos DOIS temas | `--sm2-viewport-bg` = `#0E2422` (claro) / `#071413` (escuro) | **no ar**, com régua |
 | Anel de cobre de 4px | `.sm2-viewport` em `src/index.css` — `padding: 4px` + `inset 0 0 0 2px` de `--sm2-viewport-ring-deep` | **no ar** |
-| Bisel externo de 20px | 16px de corpo em `.sm2-device` + os 4px do anel | **no ar**, dividido em duas peças |
+| Bisel externo de 20px | ⚰️ **não existe mais como peça**: `.sm2-device` (16px de corpo) saiu em 16/09/2026 (canvas Home, D-H1 — a PÁGINA é o corpo do aparelho; sobram só anel + vidro). O que resta é o anel de 4px de `.sm2-viewport` | **saiu** (o nome `.sm2-device` fica reservado, ver §4.2) |
 | Tela interna de 12px de raio | `.sm2-viewport-screen` usa `--sm2-radius-md` = `12px` | **no ar** |
 | Escala INTEIRA do sprite | `ViewportProps.scale` aceita literalmente `2 \| 3` (tipo), e a largura é derivada (`width * scale`) | **no ar**, travado pelo tipo |
 | `image-rendering: pixelated` | `.sm2-viewport-screen` e seus `img`/`canvas` | **no ar** |
@@ -36,21 +37,25 @@ reabrível dentro daquele plano.
 
 **O que o código NÃO confirma** (medido em 09/09/2026, comandos abaixo):
 
-- **A fronteira ainda não é exclusiva.** O `Viewport` é consumido por **4**
-  componentes de produção (`src/components/PetPage.tsx`,
-  `src/components/CompanionHUD.tsx`, `src/components/EvolutionPath.tsx`,
-  `src/components/PlayerDetailModal.tsx`) mais o `ScreenSkeleton`
-  (`grep -rl "ui/Viewport" src --include=*.tsx`). Ao mesmo tempo, o **kit pixel
-  antigo** (`.sm-px-*`, arte 9-slice em PNG, Silkscreen) aparece em **28**
-  arquivos `.tsx` de produção com **82** classes distintas
-  (`grep -rl "sm-px-" src --include=*.tsx | grep -v test | wc -l` e
-  `grep -rho "sm-px-[a-z0-9-]*" src --include=*.tsx | sort -u | wc -l`). Ou
-  seja: em 09/09/2026 há pixel FORA do visor, o que é exatamente o que a tese
-  proíbe.
-- **A `.sm-bottom-nav-label` desenha Silkscreen em `--sm2-text-xs` = `12px`**,
-  fora do visor e abaixo do piso de 14px que a própria tipografia declara
-  (ver §4). Régua: nenhuma para o piso — a `src/styles/navRotulo.contract.test.ts`
-  mede a LARGURA do rótulo, não o tamanho da fonte.
+- **A fronteira ficou quase exclusiva na Fase 2.** Em 09/09/2026 o `Viewport`
+  era consumido por **4** componentes de produção e o **kit pixel antigo**
+  (`.sm-px-*`, arte 9-slice em PNG, Silkscreen) aparecia em **28** arquivos
+  `.tsx` de produção com **82** classes distintas. Remedido em 20/09/2026, depois
+  dos 14 canvases da Fase 2 (`docs/design/DECISOES-WIREFRAME.md` §18–§25):
+  `grep -rl "<Viewport" src --include=*.tsx | grep -v test | wc -l` → **12**;
+  `grep -rl "sm-px-" src --include=*.tsx | grep -v test | wc -l` → **14**, com
+  **13** classes distintas (`grep -rho "sm-px-[a-z0-9-]*" src --include=*.tsx |
+  sort -u | wc -l`). O que era pixel fora do visor virou vetor sobre `--sm2-*`
+  (`PixelKit` em vetor, `a482dfd5`, 16/09/2026 — a API `Pixel*` ficou; o
+  9-slice PNG, o chanfro de cobre e a Silkscreen fora do vidro saíram). O que
+  ainda cita `.sm-px-*` é resíduo, não tese.
+- ⚰️ **A `.sm-bottom-nav-label` NÃO desenha mais Silkscreen.** Até 16/09/2026
+  ela usava Silkscreen em `--sm2-text-xs` = `12px`, fora do visor e abaixo do
+  piso de 14px. Desde o canvas Home (`NavEstados`, SIS achado 3) a regra é
+  `font-family: var(--sm2-font-text)` (Rubik) 12/500, caixa mista,
+  `text-transform: none` — Silkscreen só dentro do vidro e em selos.
+  Réguas: `src/styles/navRotulo.contract.test.ts` e
+  `src/components/BottomNav.render.test.tsx` medem a fonte.
 
 O **teste de aceitação da identidade** do plano ("recorte de 200×200px sem logo:
 dá para dizer que é o Soulmon?") **não tem régua executável** — é critério
@@ -58,10 +63,18 @@ humano, e continua sendo.
 
 ---
 
-## 2. Os 55 tokens `--sm-*`
+## 2. Os 41 tokens `--sm-*` (eram 55)
 
 Medição: `grep -o -- '--sm-[a-z0-9-]*:' src/index.css | sort -u | wc -l` →
-**55**, em 09/09/2026. `wc -l src/index.css` → **7678**.
+**41** em 20/09/2026 (era **55** em 09/09/2026). `wc -l src/index.css` →
+**7481** (era 7678). ⚰️ Os **14** que saíram são todos do kit pixel antigo,
+removidos em `f318984f` (16/09/2026, "remove as regras `.sm-px-*` que o kit
+vetor deixou sem consumidor"): `--sm-px-bw`, `--sm-px-chip-bg`,
+`--sm-px-copper-ink`, `--sm-px-cyan-ink`, `--sm-px-off-bg`, `--sm-px-off-edge`,
+`--sm-px-off-ink`, `--sm-px-sel-bg`, `--sm-px-sel-edge`, `--sm-px-sel-ink`,
+`--sm-px-slice`, `--sm-px-src`, `--sm-px-track`, `--sm-px-track-line`
+(`comm -23` entre os inventários de `2580b73a` e `dc72579e`). Nenhum `--sm-*`
+novo nasceu — o que nasce, nasce `--sm2-*` (§2.8).
 
 Convenção da tabela: quando a coluna "escuro" traz `—`, o token é declarado uma
 única vez e vale igual nos dois temas (é **invariante de tema**, não é um token
@@ -93,8 +106,9 @@ preso — a distinção importa por causa do footgun 10, ver §3).
 O valor de `--sm-primary` no tema claro é `#0f766e` **e não** `#0d9488` de
 propósito: o comentário do CSS registra que `#0d9488` media **3,74:1** com o
 branco do `.sm-btn` por cima e 3,74:1 como texto sobre superfície — reprovava
-nos dois papéis; `#0f766e` mede **5,47:1** nos dois. ⚠️ **O
-`public/manifest.json` ainda declara `"theme_color": "#0d9488"`** (ver §9).
+nos dois papéis; `#0f766e` mede **5,47:1** nos dois. O `public/manifest.json` declarou
+`"theme_color": "#0d9488"` até 15/09/2026 ⚰️ — desde `005a2941` é `#0f766e`
+(ver §10.1).
 
 ### 2.2 Kit pixel — primitivos
 
@@ -104,15 +118,20 @@ escuro sobre página clara.
 
 | token | claro | escuro | para quê | um uso |
 |---|---|---|---|---|
-| `--sm-px-ink` | `#eaf5f2` | — | tinta DENTRO de peça escura | `.sm-px-btn` (`color`) |
-| `--sm-px-cyan` | `#5df0e0` | — | neon do kit (destaque/aceso) — **decorativo** | `.sm-bottom-nav-btn-on::after` (sublinhado) |
-| `--sm-px-copper` | `#c68642` | — | cobre do kit (moldura/borda fina) — **decorativo** | `.sm-px-card` (`border`) |
-| `--sm-px-track` | `#16283d` | — | trilho escuro da barra segmentada | `.sm-px-bar` (`background`) |
-| `--sm-px-track-line` | `#0a1422` | — | linha do trilho | `.sm-px-bar` (`border`) |
-| `--sm-px-panel-bg` | `var(--sm-surface)` | `#10312f` | fundo do painel do kit | `.sm-px-panel` |
-| `--sm-px-panel-ink` | `var(--sm-ink)` | `var(--sm-ink)` | tinta do painel do kit | `.sm-px-panel` |
-| `--sm-px-chip-bg` | `#10373a` | — | fundo do chip do kit | `.sm-px-chip` |
-| `--sm-px-red` | `#ff5d5d` | — | vermelho de sinal do kit | `.sm-px-chat-btn-rec` (`border-color`) |
+| `--sm-px-ink` | `#eaf5f2` | — | tinta DENTRO de peça escura | **nenhum** desde 16/09/2026 (`.sm-px-btn` saiu ⚰️) — ver §2.7 |
+| `--sm-px-cyan` | `#5df0e0` | — | neon do kit (destaque/aceso) — **decorativo** | `.sm-bottom-nav-btn-on::after` (sublinhado) e o `outline` de foco de `.sm-bottom-nav-btn` |
+| `--sm-px-copper` | `#c68642` | — | cobre do kit (moldura/borda fina) — **decorativo** | `.sm-bottom-nav` (`border-top`), `.sm-px-field` (`border`) |
+| `--sm-px-track` · `--sm-px-track-line` | ⚰️ | — | eram o trilho e a linha da barra segmentada `.sm-px-bar` | **saíram em 16/09/2026** — a barra é `VisorBar` (pixel, dentro do vidro) ou medidor do kit vetor |
+| `--sm-px-panel-bg` | `var(--sm-surface)` | `#10312f` | fundo do painel do kit | **nenhum** desde 16/09/2026 (`.sm-px-panel` saiu ⚰️) — ver §2.7 |
+| `--sm-px-panel-ink` | `var(--sm-ink)` | `var(--sm-ink)` | tinta do painel do kit | **nenhum** desde 16/09/2026 — ver §2.7 |
+| `--sm-px-chip-bg` | ⚰️ | — | era o fundo do chip do kit `.sm-px-chip` | **saiu em 16/09/2026** — chip é `.sm2-kit-*` |
+| `--sm-px-red` | `#ff5d5d` | — | vermelho de sinal do kit | **nenhum** desde 16/09/2026 (`.sm-px-chat-btn-rec` saiu ⚰️) — ver §2.7 |
+
+Das **21** classes `.sm-px-*` que restam no CSS em 20/09/2026
+(`grep -o '\.sm-px-[a-z0-9-]*' src/index.css | sort -u | wc -l`; eram 100),
+as vivas são as da nav antiga, do campo de formulário (`.sm-px-field`), do
+`.sm-px-fab`, do `.sm-px-card`, da árvore (`.sm-px-tree-*`, `.sm-px-node-*`),
+do chat (`.sm-px-chat-*`) e do arcade — todas candidatas à mesma saída.
 
 **A regra de uso que não pode se perder** (escrita no CSS, no bloco dos pares
 `*-ink`): decorativo — fundo, véu, brilho, moldura de peça escura — usa
@@ -120,31 +139,30 @@ escuro sobre página clara.
 o par `*-ink` de §2.6. Motivo medido: sobre a superfície do tema CLARO o ciano
 mede **1,40:1** e o cobre **3,05:1**, contra os 4,5:1 exigidos de texto normal.
 
-### 2.3 Kit pixel — seleção
+### 2.3 Kit pixel — seleção ⚰️ (saiu em 16/09/2026)
 
-A regra é uma só e é invariante de tema: **o PREENCHIMENTO carrega a seleção; o
-não-selecionado nunca é preenchido.** A COR do fill muda por tema só para o
-contraste do rótulo passar dos dois lados.
-
-| token | claro | escuro | para quê | um uso |
-|---|---|---|---|---|
-| `--sm-px-sel-bg` | `#0d3b39` | `#5df0e0` | fill da peça SELECIONADA | `.sm-px-tab-on` (`background`), `.sm-px-chip-on` |
-| `--sm-px-sel-ink` | `#f2fbf9` | `#04211f` | tinta sobre o fill de seleção | `.sm-px-tab-on` (`color`) |
-| `--sm-px-sel-edge` | `var(--sm-px-copper)` | — | borda da peça selecionada | `.sm-px-tab-on` via `--sm-cham-line` |
-| `--sm-px-off-bg` | `transparent` | — | peça NÃO selecionada: sem fill | `.sm-px-tab` (`background`) |
-| `--sm-px-off-ink` | `var(--sm-ink)` | — | tinta da peça não selecionada | `.sm-px-tab` (`color`) |
-| `--sm-px-off-edge` | `color-mix(in srgb, var(--sm-px-copper) 45%, transparent)` | — | borda da peça não selecionada | `.sm-px-tab` e `.sm-px-chip-btn` (`border`) |
+Os seis tokens desta seção **não existem mais** (`grep -c -- '--sm-px-sel-bg:'
+src/index.css` → 0 em 20/09/2026): `--sm-px-sel-bg`, `--sm-px-sel-ink`,
+`--sm-px-sel-edge`, `--sm-px-off-bg`, `--sm-px-off-ink`, `--sm-px-off-edge`
+saíram com as abas/chips do kit pixel (`f318984f`). A REGRA que eles
+carregavam continua, agora no kit vetor (`.sm2-kit-*`, §2.8): **o
+PREENCHIMENTO carrega a seleção; o não-selecionado nunca é preenchido**, com
+`--sm2-primary-fill` + `--sm2-on-primary` no lado selecionado. Era, até
+16/09/2026: `--sm-px-sel-bg` `#0d3b39` claro / `#5df0e0` escuro,
+`--sm-px-sel-ink` `#f2fbf9` / `#04211f`, e o não-selecionado `transparent` com
+borda em cobre a 45%.
 
 ### 2.4 Kit pixel — geometria da arte 9-slice e do chanfro
 
-Estes seis não são cor: são **parâmetros de forma**, setados por classe de
-tamanho ou inline pelo componente.
+Destes seis, **três morreram em 16/09/2026** ⚰️ com o 9-slice em PNG
+(`a482dfd5`: "PixelKit em vetor sobre `--sm2-*`, mesma API; zero PNG de
+botão"): `--sm-px-src`, `--sm-px-slice` e `--sm-px-bw` — eram a arte
+9-slice setada inline pelo componente, a fatia no PNG (82/66/43) e a
+espessura renderizada (11/12px). Os três do chanfro continuam, como
+**parâmetros de forma**:
 
 | token | valor base | para quê | um uso |
 |---|---|---|---|
-| `--sm-px-src` | `url(...)` do import do Vite, **setada inline no componente** | a arte 9-slice do botão — assim o hash do asset continua sendo do bundler | `src/components/pixel/PixelKit.tsx`; variantes `--sm-px-src-hover` / `-active` / `-off` trocam a arte por estado |
-| `--sm-px-slice` | `82` (`.sm-px-btn-sm`) · `66` (`-md`) · `43` (`-lg`) | fatia no PNG de ORIGEM, em px medidos na arte | `.sm-px-btn` → `border-image-slice` |
-| `--sm-px-bw` | `11px` (`sm`) · `12px` (`md`/`lg`) | espessura RENDERIZADA da moldura | `.sm-px-btn` → `border-width` |
 | `--sm-cham-c` | `5px` (`4/6/7/8/9px` por peça) | tamanho do corte de canto do chanfro | `.sm-px-fab` sobe para `9px` |
 | `--sm-cham-bw` | `2px` (`3px` no FAB) | espessura da linha do chanfro | `.sm-px-fab` |
 | `--sm-cham-line` | `var(--sm-px-copper)` | cor da linha do chanfro | `.sm-px-tree-plate` troca para `var(--sm-line)` |
@@ -179,13 +197,13 @@ contra `--sm-bg` e `--sm-surface` do PRÓPRIO tema.
 | token | claro | escuro | para quê | um uso |
 |---|---|---|---|---|
 | `--sm-ok-ink` | `#177a00` (5,16:1) | `#22A900` (5,69:1) | o verde "feito"/"hoje" | **nenhum** — ver §2.7 |
-| `--sm-haunt-ink` | `#6242ad` (6,79:1) | `#b39bff` (7,63:1) | o roxo do assombro, **nunca vermelho** | `src/components/TaskMeta.tsx` |
-| `--sm-haunt-veil` | `color-mix(in srgb, #6242ad 8%, var(--sm-surface))` | `color-mix(in srgb, #b39bff 12%, var(--sm-surface))` | véu da tarefa assombrada | `src/components/TaskMeta.tsx` |
+| `--sm-haunt-ink` | `#6242ad` (6,79:1) | `#b39bff` (7,63:1) | o roxo do assombro, **nunca vermelho** | **nenhum** desde 16/09/2026 — a tarefa assombrada passou a `--sm2-haunted` (§2.8, `c1c1b743`); o `TaskMeta.tsx` não o cita mais |
+| `--sm-haunt-veil` | `color-mix(in srgb, #6242ad 8%, var(--sm-surface))` | `color-mix(in srgb, #b39bff 12%, var(--sm-surface))` | véu da tarefa assombrada | **nenhum** desde 16/09/2026 — o véu por opacidade foi a F1 da crítica do canvas Home (2,31:1 no claro); a tinta nova é SÓLIDA |
 | `--sm-attr-virus-ink` | `#1a7d00` (5,28:1) | `#5fdc3a` (6,95:1) | Poder como TEXTO | `src/types/attributes.ts` → `ATTR_INK` |
 | `--sm-attr-data-ink` | `#00699a` (6,02:1) | `#5ac8f5` (6,49:1) | Harmonia como TEXTO | idem |
 | `--sm-attr-vaccine-ink` | `#8a5a00` (5,93:1) | `#f0b64d` (6,78:1) | Benevolência como TEXTO | idem |
 | `--sm-help-accent` | `#0f766e` | `#5df0e0` | acento do glossário | **nenhum** — ver §2.7 |
-| `--sm-help-item-bg` | `#f3f9f8` | `rgba(255,255,255,0.03)` | fundo do item do glossário | `.sm-px-help-item` |
+| `--sm-help-item-bg` | `#f3f9f8` | `rgba(255,255,255,0.03)` | fundo do item do glossário | **nenhum** desde 16/09/2026 (`.sm-px-help-item` saiu ⚰️) — ver §2.7 |
 
 Os três `--sm-attr-*-ink` existem porque `ATTR_COLOR` (`src/types/attributes.ts`)
 é a fonte única da IDENTIDADE do atributo — cor do ícone, do preenchimento e da
@@ -194,39 +212,51 @@ nos dois temas (`#22A900` sobre branco = 3,11:1; `#009ED8` = 3,05:1; `#E69600` =
 2,41:1). Os pares acima são a MESMA matiz com a luminosidade ajustada: não é cor
 nova na paleta.
 
-### 2.7 Layout, tipografia e os seis tokens sem consumidor
+### 2.7 Layout, tipografia e os 14 tokens sem consumidor (eram seis)
 
 | token | valor | para quê | um uso |
 |---|---|---|---|
 | `--sm-scroll-pt` | `12px` | folga de topo do scroller | `.sm-pet-sticky` (`top: calc(var(--sm-scroll-pt) * -1)`) |
 | `--sm-petstage-h` | `215px`; `175px` sob `@media (max-height: 800px)` | altura do palco do pet | `src/components/ui/Viewport.tsx` |
-| `--sm-font-pixel` | `'Silkscreen', ui-monospace, 'Courier New', monospace` | ponto único da fonte de aparelho | `.sm-px-font`, `.sm-bottom-nav-label` |
+| `--sm-font-pixel` | `'Silkscreen', ui-monospace, 'Courier New', monospace` | ponto único da fonte de aparelho | `.sm-px-font`, `.sm-px-section-title` (a `.sm-bottom-nav-label` saiu daqui em 16/09/2026 — é Rubik, §4.2) |
 
-⚠️ **Seis tokens são declarados e não têm um único `var()` que os consuma** em
-`src/` nem em `desktop/`, medido em 09/09/2026 com
-`grep -rn "var(--sm-<nome>" src desktop | wc -l` → `0`:
-`--sm-gold-soft` · `--sm-danger-soft` · `--sm-energy` · `--sm-energy-track` ·
-`--sm-ok-ink` · `--sm-help-accent`. Os dois últimos foram criados numa rodada de
-contraste **com valor medido anotado no CSS** e nunca chegaram a um call-site;
-os quatro primeiros são do bloco base original. Não são erro de renderização
-(token sem consumidor não pinta nada), mas são superfície de decisão morta.
-**Régua: nenhuma** — o `src/styles/tokens.contrast.test.ts` cobre paridade e
-contraste dos `--sm2-*`, não órfão dos `--sm-*`.
+⚠️ **Catorze tokens são declarados e não têm um único `var()` que os consuma**
+em `src/` nem em `desktop/`, medido em 20/09/2026 com
+`grep -rn "var(--sm-<nome>)" src desktop | grep -v .test. | wc -l` → `0`
+(eram seis em 09/09/2026). Os seis de sempre: `--sm-gold-soft` ·
+`--sm-danger-soft` · `--sm-energy` · `--sm-energy-track` · `--sm-ok-ink` ·
+`--sm-help-accent` (os dois últimos criados numa rodada de contraste com valor
+medido anotado no CSS e nunca ligados; os quatro primeiros do bloco base
+original). Os **oito** que ficaram órfãos na Fase 2, porque o consumidor saiu e
+o token não: `--sm-danger` · `--sm-haunt-ink` · `--sm-haunt-veil` ·
+`--sm-help-item-bg` · `--sm-px-ink` · `--sm-px-panel-bg` · `--sm-px-panel-ink` ·
+`--sm-px-red`. Não são erro de renderização (token sem consumidor não pinta
+nada), mas são superfície de decisão morta. **Régua: nenhuma** — o
+`src/styles/tokens.contrast.test.ts` cobre paridade e contraste dos `--sm2-*`,
+não órfão dos `--sm-*`.
 
 ### 2.8 O conjunto `--sm2-*` — para onde os tokens estão indo
 
 Medição: `grep -o -- '--sm2-[a-z0-9-]*:' src/index.css | sort -u | wc -l` →
-**50**, em 09/09/2026. Contrato completo e tabela de contraste:
-[`src/styles/tokens.md`](../../src/styles/tokens.md).
+**59** em 20/09/2026, dos quais **58** são tokens (era **50** em 09/09/2026): a
+59ª linha é `--sm2-btn:`, que não é token — é a custom property que o kit vetor
+usa como SELETOR de variante (`button[style*="--sm2-btn:primary"]`), e o `grep`
+a pega numa menção em comentário. Os **8** novos, todos de 16/09/2026 (canvas
+Sistema e canvas Home): `--sm2-haunted` (P5) e a escala de espaço
+`--sm2-space-half/1..6` (P1) — ver abaixo. Contrato completo e tabela de
+contraste: [`src/styles/tokens.md`](../../src/styles/tokens.md).
 
 **Por que dois conjuntos.** Os `--sm-*` estão espalhados por milhares de linhas
 do `index.css` (kit pixel, palco, masmorra, moldura chanfrada). Trocar o VALOR
 deles repinta toda tela existente de uma vez, sem revisão — regressão garantida.
 O conjunto novo nasceu ao lado; as ondas migram tela por tela, e só no fim os
 `--sm-*` morrem. Estado em 09/09/2026: **64** classes `.sm2-*` contra **100**
-classes `.sm-px-*` no CSS
+classes `.sm-px-*` no CSS; em 20/09/2026, depois da Fase 2: **231** `.sm2-*`
+contra **21** `.sm-px-*`
 (`grep -o '\.sm2-[a-z0-9-]*' src/index.css | sort -u | wc -l` e o mesmo para
-`.sm-px-`), e **61** arquivos `.tsx` de produção já citam `sm2-`.
+`.sm-px-`), e **78** arquivos `.tsx` de produção citam `sm2-` (eram 61). A
+migração tela por tela ACONTECEU (14 canvases, `docs/design/DECISOES-WIREFRAME.md`
+§18–§25); o que sobrou de `--sm-*` é a base do tema (§2.1) e resíduo do kit.
 
 **A regra estrutural do conjunto novo é TINTA × FILL**: todo acento declara o
 PAR `*-ink` + `*-fill` mais `--sm2-on-<acento>` — `*-ink` é cor de texto/glifo,
@@ -265,6 +295,39 @@ MESMO valor nos dois, e `--sm2-viewport-ring` (`#B0722F` / `#C68642`) e
 `--sm2-viewport-ring-deep` (`#5E3612` / `#241507`) só variam o material do
 cobre. Régua: `src/styles/tokens.contrast.test.ts`, bloco *"o visor é escuro nos
 DOIS temas"*.
+
+**O escopo `.sm2-visor`** (desde `fd9ec04d`, 20/09/2026) é a consequência
+disso para o que vive DENTRO do vidro: a classe redeclara `--sm2-ink`,
+`--sm2-muted`, `--sm2-primary-ink`, `--sm2-primary-deep`, `--sm2-surface`,
+`--sm2-surface-2` e `--sm2-line` com os hex do tema ESCURO, porque os do tema
+claro foram calibrados para superfície clara (`#0B6F68` sobre `#0E2422` dá
+2,70:1). É o ÚNICO escopo que fixa hex do escuro; `index.html #splash`, o
+`Viewport`, `MiniGlass` e `RitualGlass` levam a classe. Copiar esses valores
+num componente é o footgun 9 — e foi exatamente o que a splash fazia até
+20/09/2026 (§10.2).
+
+**`--sm2-haunted` — o quarto acento (P5 do canvas Home, 16/09/2026).** A tinta
+PRÓPRIA da tarefa assombrada: `#85A0B8` no escuro, `#4E6A83` no claro, azul
+acinzentado "fantasma", aprovada pelo dono contra a recomendação do crítico
+(que preferia `muted`). **Sólida, nunca por opacidade** — `opacity: .55` na
+linha dava 2,31:1 no claro (F1 da crítica). O escuro nasceu `#6E8AA3`
+(4,21:1 sobre `surface`) e foi clareado em `736d53e2` para o hex que o crítico
+mediu (5,58:1). Vale para título e ícone da linha (`.sm2-ritual-haunted
+.sm2-ritual-name`); o chip "haunted · +relief" é `gold-ink` sobre `surface-2`.
+Régua: `src/styles/tokens.contrast.test.ts`, pares `haunted / surface`,
+`haunted / bg`, `haunted / surface-2` (5,66 · 5,21 · 4,96 no escuro; 5,58 ·
+6,63 · 4,73 no claro). Substitui `--sm-haunt-ink`/`--sm-haunt-veil` (§2.6), que
+ficaram declarados e sem consumidor.
+
+**`--sm2-space-half/1..6` — o grid de 4 (P1 do canvas Sistema, 16/09/2026,
+`f041285f`).** Seis degraus e um meio-passo, invariantes de tema (bloco
+`:root`, junto de raio e duração): `half` `2px` (**só** ícone ↔ rótulo na mesma
+linha) · `1` `4px` · `2` `8px` · `3` `12px` · `4` `16px` · `5` `24px` · `6`
+`32px`. O meio-passo existe para que o `gap: 2` entre ícone e rótulo seja token
+e não literal; qualquer outro 2, 6, 10 ou 14 é literal fora do grid (X8 da
+crítica). Régua: `src/styles/tokens.contrast.test.ts` (escala declarada uma vez,
+não redeclarada no escuro). É o token de espaço que o `PLANO-DESIGN.md` §1
+pedia como `--sm-space-1..6` e que não existia até 16/09/2026 (§11.2).
 
 ---
 
@@ -316,7 +379,8 @@ em `src/components/ui/`. **Não reintroduza `var(--foreground)` /
 | Régua | Arquivo | O que reprova |
 |---|---|---|
 | Paridade de tema | `src/styles/tokens.contrast.test.ts` | token de cor `--sm2-*` declarado só no claro (ficaria preso sob `[data-theme="dark"]`) ou só no escuro |
-| Contraste AA | idem | par (ink, surface), (muted, surface), (primary, bg), (gold, surface), (btn-text, primary) e os do toast abaixo do mínimo, **nos dois temas**, pela fórmula da WCAG 2.x escrita à mão no teste |
+| Contraste AA | idem | par (ink, surface), (muted, surface), (primary, bg), (gold, surface), (btn-text, primary), os três de `haunted` (desde 16/09/2026) e os do toast abaixo do mínimo, **nos dois temas**, pela fórmula da WCAG 2.x escrita à mão no teste |
+| Grid de espaço | idem | `--sm2-space-1..6` fora de 4/8/12/16/24/32, `--sm2-space-half` ≠ 2px, ou qualquer um redeclarado no bloco escuro (desde 16/09/2026) |
 | Tinta × fill | idem | acento `primary`/`gold`/`danger` sem o trio `ink`+`fill`+`on-` declarado; `gold-ink` = `gold-fill` em qualquer tema (só `gold` exige valores distintos) |
 | Ícone sem box | idem | `.sm2-icon` desenhando moldura/fundo/borda/padding |
 | Fonte self-host | idem | `@font-face` apontando para CDN |
@@ -345,7 +409,7 @@ que o `@font-face` da Silkscreen saiu daqui ⚰️; `ls public/fonts/`):
 |---|---|---|---|
 | **Fredoka** (300–700) | títulos — `--sm2-font-display` | `@font-face` self-host, `font-display: swap`, subsets `latin` + `latin-ext` | `public/fonts/fredoka-latin.woff2` (29.732 B) e `fredoka-latin-ext.woff2` (4.576 B) |
 | **Rubik** (400–500) | texto e dado — `--sm2-font-text` | idem | `public/fonts/rubik-latin.woff2` (35.348 B) e `rubik-latin-ext.woff2` (19.400 B) |
-| **Material Symbols Rounded** (100–700, variável) | ícone — `--sm2-font-icon` | `@font-face` self-host, `font-display: block` | `public/fonts/material-symbols-rounded.woff2` (150.016 B) |
+| **Material Symbols Rounded** (100–700, variável) | ícone — `--sm2-font-icon` | `@font-face` self-host, `font-display: block` | `public/fonts/material-symbols-rounded.woff2` (**155.440 B** em 20/09/2026; era 150.016 B — rebaixado em 16/09/2026 com `toys` e `groups`, §5.2) |
 | **Silkscreen** (400/700) | **voz do aparelho** — `--sm-font-pixel` / `--sm2-font-pixel` | ⚠️ **NÃO** está em `public/fonts/` nem tem `@font-face` no `index.css`: vem do pacote npm `@fontsource/silkscreen`, importado em `src/main.tsx` (`latin-400.css` e `latin-700.css`) | emitido pelo Vite em `dist/assets/` |
 
 Mais dois `@font-face` residuais: `MS Sans Serif` (mapeado por `local()` para
@@ -374,9 +438,11 @@ Silkscreen é bitmap de caixa alta: ótima em rótulo, número, botão e título
 péssima em parágrafo — e em português é pior, porque os acentos empilham em cima
 de uma caixa pequena e o olho perde a palavra.
 
-- **Entra em**: botão do kit, título de painel, cápsula de HUD, marca, título de
-  seção/página, números de HUD; no conjunto novo, **só dentro do visor e em
-  selos** (classe `.sm2-device-voice`), **mínimo 14px, CAIXA ALTA**.
+- **Entra em**: **só dentro do visor e em selos** (classe `.sm2-device-voice`),
+  **mínimo 14px, CAIXA ALTA** — a splash (§10.2), a placa HP/EN do visor
+  (`.sm2-visor-tag`/`.sm2-visor-num`, Silkscreen 14), marca. Até 16/09/2026
+  também entrava em botão do kit, título de painel e rótulo da nav ⚰️ — o kit
+  vetor (`a482dfd5`) e o canvas Home tiraram a Silkscreen de FORA do vidro.
 - **Não entra em**: nome de tarefa, falas do pet, guia, glossário, relatório
   diário, qualquer texto de leitura corrida.
 - `.sm-px-font` e `.sm2-device-voice` declaram `-webkit-font-smoothing: none` —
@@ -386,7 +452,9 @@ de uma caixa pequena e o olho perde a palavra.
   Como os conjuntos de propriedades eram disjuntos elas não se sobrescreviam,
   elas **somavam** nos dois sentidos — quem pedia a fonte ganhava padding, raio,
   fundo e três sombras junto, e o corpo do aparelho fazia a subárvore inteira
-  HERDAR Silkscreen em caixa alta.
+  HERDAR Silkscreen em caixa alta. ⚰️ **`.sm2-device` (o corpo) saiu em
+  16/09/2026** (canvas Home, D-H1: a página é o corpo; só anel + vidro sobram) —
+  o nome continua reservado, e `grep -c "^\.sm2-device {" src/index.css` → 0.
 
 ### 4.3 Escala, entrelinha, raio
 
@@ -451,10 +519,15 @@ avanço do glifo (ao contrário de mexer no `wght`, que reflui o layout).
 ### 5.2 A fonte é um SUBSET — e o modo de falha é silencioso
 
 A Material Symbols Rounded completa tem **5,3 MB**; a que o app carrega é
-subsetada por `icon_names` e tem **150.016 B** (`ls -la public/fonts/`, 09/09/2026).
-A lista de nomes tem **100** entradas em `src/styles/tokens.md` (medido com
-`node` sobre o bloco em crase que começa em `accessibility_new` e termina em
-`wifi_off`).
+subsetada por `icon_names` e tem **155.440 B** (`ls -la public/fonts/`,
+20/09/2026; era 150.016 B em 09/09/2026). A lista de nomes tem **102** entradas
+em `src/styles/tokens.md` (medido com `node` sobre o bloco em crase que começa
+em `accessibility_new` e termina em `wifi_off`; eram 100 — o cabeçalho do
+`tokens.md` dizia "102" com 100 nomes, e foi recontado em 16/09/2026). Os dois
+que entraram, em `d45c8223` (P6 do canvas Home, decisão do dono em 16/09/2026):
+`toys` (Brincar, 5ª célula do deck) e `groups` (Biblioteca, no menu da nav) — o
+crítico derrubou `pets` (é a criatura) e `person` (é perfil). O arquivo foi
+rebaixado pelo comando do `tokens.md` e o `CACHE_VERSION` subiu.
 
 ⚠️ **Nome fora do inventário renderiza um `<span>` vazio** — sem erro no
 console, sem exceção, sem falhar em teste de render (o texto do ícone É o nome, e
@@ -480,19 +553,22 @@ vez de digitá-la (número copiado é número que diverge):
 | `nav` | **32** | destino da barra inferior e botão da barra de chat |
 | `deck` | **24** | o deck de ações do aparelho na Home (comida, carinho, banho) — **era 42, dedicado**, e encolheu em 27/08/2026 por decisão do dono |
 
-Medido em 09/09/2026 com
+Medido em 20/09/2026 com
 `grep -rho "size={[0-9]*}" src --include=*.tsx | sort | uniq -c | sort -rn`:
-**76×** `size={20}`, **22×** `size={24}`, **13×** `size={32}`, e as exceções
-nomeadas na allowlist do guard (**12×** `48`, **5×** `44`, **3×** `18`, **1×**
-`64`, **1×** `12`). A allowlist é verificada nos DOIS sentidos: entrada morta
-(call-site já migrado) reprova igual.
+**64×** `size={20}`, **61×** `size={24}`, **9×** `size={32}`, e fora dos quatro
+degraus: **13×** `48` (o 5º degrau `state` proposto em `tokens.md` §6.1a, pendente
+do dono), **12×** `64`, e **1×** cada de `80`, `40`, `36`, `18`, `12` — todos
+têm de estar na allowlist do guard, que é verificada nos DOIS sentidos: entrada
+morta (call-site já migrado) reprova igual. (Em 09/09/2026 eram 76/22/13 nos
+degraus e 12×48, 5×44, 3×18, 1×64, 1×12 fora; o `24` mais que dobrou porque o
+deck da Home e as ações de linha migraram para `action`.)
 
-⚠️ **Divergência com o `CLAUDE.md`.** A seção "UI: regras visuais do dono" diz
-"nav inferior 36px, ações do pet 42px, chat 30px". Nenhum desses três números
-existe no código: `grep -rho "size={36}\|size={42}\|size={30}" src --include=*.tsx`
-devolve **0** ocorrências em 09/09/2026. A escala viva é a de `tokens.md` §6.1
-acima. A REGRA de que o ícone aparece grande e pelado continua valendo; os
-números envelheceram.
+**Divergência com o `CLAUDE.md` — FECHADA em 16/09/2026.** A seção "UI: regras
+visuais do dono" dizia "nav inferior 36px, ações do pet 42px, chat 30px" (nenhum
+dos três existia no código, medido em 09/09/2026). Em `3fdfeee1` (P3 do canvas
+Sistema) o `CLAUDE.md` passou a dizer **32 / 24 / 32**, citando `tokens.md`
+§6.1 e `iconScale.contract.test.ts` como régua e registrando que "dizia
+36/42/30 até 16/09/2026 e o código vence". As duas fontes concordam desde então.
 
 ### 5.4 Ícone NUNCA dentro de box
 
@@ -513,7 +589,8 @@ sobrava "ciano vs cinza", cor pura. `.sm-bottom-nav-btn-on::after` devolve uma
 pista de FORMA: barra de `3px`, de 22% a 22%, em `--sm-px-cyan` com halo. Uma
 barra não é uma caixa em volta do ícone.
 
-O rótulo da nav é persistente, Silkscreen, `letter-spacing: 0`,
+O rótulo da nav é persistente, **Rubik 12/500 em caixa mista** desde
+16/09/2026 (era Silkscreen ⚰️ — ver §1 e §4.2), `letter-spacing: 0`,
 `text-overflow: ellipsis`. **Régua: `src/styles/navRotulo.contract.test.ts`**,
 que mede a contagem de caracteres do rótulo mais largo contra o teto declarado
 pela própria régua do CSS, **nos dois idiomas**. Ele nasceu de uma medição real
@@ -537,25 +614,37 @@ crescer.
 
 ### 5.6 Os ícones em PNG (arte própria)
 
-Contagem medida em 09/09/2026 com `find src/assets/soulmon/<pasta> -name '*.png' | wc -l`:
+Contagem medida em 20/09/2026 com `find src/assets/soulmon/<pasta> -name '*.png' | wc -l`
+(a coluna "09/09" é a medição anterior; o que mudou veio da rodada 1 da
+SQUAD-ARTE, 15–16/09/2026, `docs/INVENTARIO-ASSETS.md` e `docs/ASSETS-A-GERAR.md` §11):
 
-| pasta | PNGs |
-|---|---|
-| `src/assets/soulmon/icons/` (recursivo, inclui `categories/` e `games/`) | **57** |
-| `src/assets/soulmon/elementos/` | **137** |
-| `src/assets/soulmon/fx-ataque/` | **816** |
-| `src/assets/soulmon/lines/` | **53** |
-| `src/assets/soulmon/dreams/` | **30** |
-| `src/assets/soulmon/adventures/` | **24** |
-| `src/assets/soulmon/bg/` | **15** |
-| `src/assets/soulmon/buttons/` | **13** |
-| `src/assets/soulmon/items/` | **13** |
-| `src/assets/soulmon/fx/` | **12** |
-| `src/assets/soulmon/evolution/` · `progress/` | **4** cada |
-| `src/assets/soulmon/ui/` | **3** |
-| `src/assets/soulmon/windows/` | **1** |
-| raiz de `src/assets/soulmon/` | **16** |
-| **total** (`find src/assets/soulmon -name '*.png' \| wc -l`) | **1198** |
+| pasta | PNGs | 09/09 |
+|---|---|---|
+| `src/assets/soulmon/icons/` (recursivo, inclui `categories/` e `games/`) | **57** | 57 |
+| `src/assets/soulmon/elementos/` | **137** | 137 |
+| `src/assets/soulmon/fx-ataque/` | **924** (D9: `entrega6/` base unificada) | 816 |
+| `src/assets/soulmon/lines/` | **65** (+12: as 3 linhas Igni/Nautilu/Astrase × 4, §8.2) | 53 |
+| `src/assets/soulmon/sigilos/` (nova, D6 — os 45 sigilos do class-system na Ficha) | **45** | — |
+| `src/assets/soulmon/fx/` | **34** (+22: FX quadro a quadro no visor, `55f332ad`) | 12 |
+| `src/assets/soulmon/dreams/` | **30** | 30 |
+| `src/assets/soulmon/adventures/` | **24** | 24 |
+| `src/assets/soulmon/bg/` | **15** | 15 |
+| `src/assets/soulmon/items/` | **13** | 13 |
+| `src/assets/soulmon/emblems/` (nova — os 8 emblemas + `habit-7/21/66`, `663b9de5`) | **9** | — |
+| `src/assets/soulmon/dino/` (nova — conjunto do Dino, `dd214688`) | **6** | — |
+| `src/assets/soulmon/hud/` (nova — barra/moldura pixel do visor, D3) | **5** | — |
+| `src/assets/soulmon/progress/` | **4** | 4 |
+| `src/assets/soulmon/placeholder/` (nova — `dormant`/`forming`/`glitch`, §8.6) | **3** | — |
+| `src/assets/soulmon/windows/` | **1** | 1 |
+| `src/assets/soulmon/buttons/` · `evolution/` · `ui/` | ⚰️ **saíram** (o kit vetor dispensou os 13 PNGs de botão; a árvore de evolução é SVG por token — H1, decisão do dono em 16/09/2026) | 13 · 4 · 3 |
+| raiz de `src/assets/soulmon/` | **17** (+`nest-cradle-wide.png`, o berço largo, §7.1) | 16 |
+| **total** (`find src/assets/soulmon -name '*.png' \| wc -l`) | **1389** | 1198 |
+
+Régua nova para tudo isso: `src/assets/assets.contract.test.ts` (15/09/2026) —
+nenhum asset de 0 byte, todo asset decodificável, nenhum xadrez de
+transparência "assado" nos pixels, nenhuma nuvem de ruído em sprite de
+criatura, e **uma grade de pixel só** (escala de render inteira — é o guard que
+achou o berço esmagado, §7.1).
 
 ⚠️ **Divergência com `docs/INVENTARIO-TELAS.md` §1.1**, cujo levantamento é de
 **19/08/2026**: ele afirma 47 PNGs em `icons/`, 8 em `categories/`, 5 em
@@ -594,21 +683,30 @@ do DOM.
 
 ### 6.2 Os keyframes
 
-`grep -c '@keyframes' src/index.css` → **33** em 09/09/2026, das quais **32**
-são declarações (`grep -o '@keyframes [a-zA-Z0-9_-]*'`): a 33ª é uma menção
-dentro de comentário. As 32, por família:
+`grep -c '@keyframes' src/index.css` → **35** em 20/09/2026, das quais **34**
+são declarações (`grep -o '@keyframes [a-zA-Z0-9_-]*' | sort -u`): a 35ª é uma
+menção dentro de comentário. (Eram 33/32 em 09/09/2026.) As 34, por família:
 
 - **Do sistema `sm-*`/`sm2-*`**: `sm-ambient-float`, `sm-intro-logo-in`,
   `sm-intro-wordmark-in`, `sm-milestone-pop`, `sm-pet-haunted-look`,
-  `sm-px-node-pulse`, `sm-reveal-cocoon-pulse`, `sm-visor-scan-once`,
-  `sm-visor-swap-in`, `sm2-pet-blink`, `sm2-pet-greet`, `sm2-rub-call`,
-  `sm2-viewport-breathe`.
+  `sm-reveal-cocoon-pulse`, `sm-sheet` (nova — a folha de baixo do canvas
+  Atividades), `sm-visor-scan-once`, `sm-visor-swap-in`, `sm2-pet-blink`,
+  `sm2-pet-greet`, `sm2-rub-call`, `sm2-viewport-breathe`, `sm2-kit-spin`
+  (nova — o kit vetor), `sm2-ora-cocoon` e `sm2-ora-spin` (novas — o casulo do
+  oráculo, canvas Onboarding), `sm2-splash-flick` e `sm2-splash-seg` (novas — a
+  chama e a barra da splash, §10.2).
 - **Do pet e do cuidado**: `pet-munch`, `pet-rub`, `pet-shower-shake`,
   `rub-heart`, `shower-drop`, `float-up`.
-- **Da masmorra e do CRT**: `dungeon-idle`, `dungeon-vhs`, `vhs-distort`,
-  `crt-off`, `noise-anim`, `boot-up`.
-- **Da evolução**: `evo-bg-drift`, `evo-btn-pulse`, `evo-fade-in`, `evo-pop`.
+- **Da masmorra e do CRT**: `dungeon-idle`, `vhs-distort`, `crt-off`,
+  `noise-anim`, `boot-up`.
+- **Da evolução**: `evo-bg-drift`, `evo-btn-pulse`.
 - **Genéricos**: `enter`, `pulse`, `spin`.
+
+⚰️ **Quatro saíram na Fase 2**: `dungeon-vhs` (o overlay VHS da masmorra — a
+cena virou o `cover` de um visor, `games/GameKit.tsx`, canvas Jogos §25, e
+"movimento contínuo sem propósito era o que `prefers-reduced-motion` nunca
+alcançava", como o cabeçalho de `dungeonScenes.ts` registra), `sm-px-node-pulse`
+(kit pixel), `evo-fade-in` e `evo-pop` (a árvore de evolução em SVG por token).
 
 `rub-heart` é o exemplo do vocabulário do gesto: os corações EXPLODEM do centro
 do pet (pop rápido, depois radiam para fora como fogos), com a direção vindo de
@@ -617,10 +715,13 @@ do pet (pop rápido, depois radiam para fora como fogos), com a direção vindo 
 ### 6.3 `steps()` — dentro do visor, e só
 
 Movimento DENTRO do visor é `steps()`, sempre: pixel deslizando em subpixel é o
-que faz pixel art parecer borrada. Medido: `grep -n 'steps(' src/index.css` →
-**5** ocorrências, das quais **1** é declaração real — `.sm2-rub-heal::after`
-usa `sm2-rub-call 1.6s steps(1, end) infinite`, `steps(1)` de propósito, porque
-a mira TROCA de estado, não desliza; as outras 4 são comentário. Fora do CSS, o
+que faz pixel art parecer borrada. Medido em 20/09/2026: `grep -n 'steps('
+src/index.css` → **8** ocorrências, das quais **2** são declaração real —
+`.sm2-rub-heal::after` usa `sm2-rub-call 1.6s steps(1, end) infinite`,
+`steps(1)` de propósito, porque a mira TROCA de estado, não desliza; e
+`.sm2-ora-pulse` usa `sm2-ora-cocoon 1.6s steps(2, end) infinite` (o casulo do
+oráculo pulsa por POSIÇÃO, D-Q4); as outras 6 são comentário. (Eram 5/1 em
+09/09/2026.) Fora do CSS, o
 `CompanionHUD` aplica `steps(2, end)` num sprite que só tem dois quadros (e
 `steps(4, end)` no cumprimento) e o `ScreenSkeleton` aplica `steps(1, end)`.
 
@@ -656,17 +757,22 @@ Regra do dono (rodada 4). No ar como:
   position: sticky;
   top: calc(var(--sm-scroll-pt) * -1);
   z-index: 5;
-  margin-inline: -24px;
-  padding: 0 24px;
+  margin-inline: -16px;
+  padding: 0 16px;
 }
 ```
 
-O padding vertical é zero por medição: 6px em cima custavam uma unidade de ação
-inteira acima da dobra em 412×915. O fundo repetido na faixa é o MESMO da Home
-com `background-attachment: fixed`, ancorado no viewport — assim a faixa casa
-pixel a pixel com o cenário de baixo em vez de virar uma tarja chapada por cima
-dele. O scroll acontece só na lista de atividades abaixo. **Régua: nenhuma**
-(é geometria de CSS, não há teste de layout em jsdom).
+O gutter é **16** desde 16/09/2026 (canvas Home, P1; era 24): o `<main>` da Home
+é `px-4` e a faixa cancela o mesmo valor — os dois números TÊM de ser o mesmo,
+senão sobra fresta em que a lista rola visível ao lado do pet. O padding
+vertical é zero por medição: 6px em cima custavam uma unidade de ação inteira
+acima da dobra em 412×915. A faixa é **opaca** — `--sm2-bg` sólido + a textura
+P4 (10%) do canvas Home no `::before`, porque a página É o corpo do aparelho
+(D-H1) — a textura continua com `background-attachment: fixed`, para casar com a
+camada `.sm2-home-bg` que rola por baixo; ⚰️ o que saiu em 16/09/2026 foi a
+repetição do cenário equipado e a grade de circuito (pixel fora do visor).
+O scroll acontece só na lista de atividades abaixo. **Régua: nenhuma** (é
+geometria de CSS, não há teste de layout em jsdom).
 
 ---
 
@@ -712,7 +818,15 @@ um sprite imprevisível (o pet é gerado pelo usuário). Enfiá-lo em `SlotId`
 quebraria de uma vez as duas regras que o `SlotId` carrega (a loja vende para
 todo `SlotId`, e há teste exigindo isso), e enfiá-lo no `rug` roubaria do jogador
 o tapete que ele comprou. A arte dele mora em `src/components/nestArt.ts`, a
-fronteira de troca.
+fronteira de troca — `DEFAULT_NEST` = `'nest-cradle-wide'` desde 15/09/2026.
+
+**A caixa do berço é 220 × 104 px desde 15/09/2026** (`BASE_SLOTS.nest`:
+`w: 220, h: 104, yPx: 3`; era 148 × 83 com `yPx: 17` ⚰️). O berço largo
+(`nest-cradle-wide.png`, `dd214688`) é desenhado a **3× exato**; a caixa antiga o
+esmagava anisotropicamente — foi o guard de escala de
+`src/assets/assets.contract.test.ts` que acusou. O `yPx` foi reencontrado para
+manter os pés do sprite no MESMO y de antes (17 + ⅔·83 = 3 + ⅔·104), como o
+comentário do módulo registra.
 
 ⚠️ **`GROUND_Y` está defasado, e o código diz isso por extenso.**
 `PET_TOP_OFFSET` = **−38** px é a origem REAL do pet e do berço, e **não** sai de
@@ -737,8 +851,12 @@ decoração nenhuma.
 
 Cada cenário (`PET_BACKGROUNDS`, `src/utils/backgrounds.ts`) declara:
 
-- `setting` — medido em 09/09/2026: **20** `outdoor`, **5** `indoor`, **3**
-  `void` (`grep -o "setting: '[a-z]*'" src/utils/backgrounds.ts | sort | uniq -c`);
+- `setting` — medido em 20/09/2026: **22** `outdoor`, **6** `indoor`, **0**
+  `void` (`grep -o "setting: '[a-z]*'" src/utils/backgrounds.ts | sort | uniq -c`;
+  eram 20/5/3 em 09/09/2026). ⚰️ **Não há mais cenário `void`**: `bg-matrix`,
+  `bg-ocean` (→ `outdoor`) e `bg-gameboy` (→ `indoor`) ganharam arte nova com
+  chão em 74% em 15/09/2026 e passaram a oferecer `GROUND_SLOTS`. O tipo
+  `'void'` continua em `StageSetting` — sem consumidor;
 - `slots` — quais espaços ele oferece. Só chão (`GROUND_SLOTS`, sem `wall`)
   para cena de céu aberto sem superfície vertical: um estandarte pendurado no
   nada pareceria bug, não decoração. `FULL_SLOTS` é o conjunto completo;
@@ -747,16 +865,23 @@ Cada cenário (`PET_BACKGROUNDS`, `src/utils/backgrounds.ts`) declara:
   propósito: o CSS de um cenário é uma pilha de gradientes onde "74%" tanto pode
   ser a linha do piso quanto a coordenada horizontal de uma estrela — foi
   exatamente assim que a primeira versão do teste passou sem verificar nada.
-  Presente em **25** dos 28 cenários (`grep` por `horizonY:` dentro de
-  `PET_BACKGROUNDS`); os 3 ausentes são exatamente os `setting: 'void'`
-  (`bg-matrix`, `bg-ocean`, `bg-gameboy`);
-- `baseColor` (opcional) — cor de base atrás da arte, para cenário PINTADO. O
-  visor desenha a arte com `auto 100%` para não deformar o pixel nem perder a
-  linha do chão; numa caixa mais larga que a proporção da arte sobra área, e é
-  esta cor que preenche.
+  Presente em **28** dos 28 cenários em 20/09/2026 (`grep -c "horizonY:"
+  src/utils/backgrounds.ts`; eram 25 — os 3 ausentes eram os `void`);
+- `baseColor` — cor de base atrás da arte, para cenário PINTADO. O visor
+  desenha a arte com `auto 100%` para não deformar o pixel nem perder a linha
+  do chão; numa caixa mais larga que a proporção da arte sobra área, e é esta
+  cor que preenche. Era opcional; em 20/09/2026 **os 28 declaram**
+  (`grep -c "baseColor:"` → 28).
 
-`PET_BACKGROUNDS` tem **28** entradas em 09/09/2026: 22 comuns/comprados + os 6
-`bg-mission-*` liberados por missão.
+`PET_BACKGROUNDS` tem **28** entradas: 22 comuns/comprados + os 6 `bg-mission-*`
+liberados por missão. ⚰️ **Nenhum é mais gradiente CSS**: em 15/09/2026
+(`559222ed`, leva `cenarios-20260915` da SQUAD-ARTE — C3 em
+`docs/ASSETS-A-GERAR.md` §11) os **19** cenários que eram pilhas de
+`linear-gradient`/`radial-gradient` (ou arte 800² antiga) viraram **arte
+pintada 1200×648** para o pet-box — os 13 comuns de `bg-room` a `bg-synthwave`,
+os 6 `bg-mission-*`, mais as 2 arenas do Torneio; os 8 já pintados do kit v1.2
+ficaram. O `css` de cada um é só `url(<import>)` + `baseColor`. A "versão dia"
+dos cenários foi descartada pelo dono (D4).
 
 Item equipado que não combina com o cenário **não é desenhado, mas a loja
 explica em vez de sumir em silêncio**. Estado no save: `equippedDecor` (um item
@@ -769,8 +894,8 @@ por espaço), migrado do antigo `equippedFurniture` no load.
 
 | conjunto | n | o que é |
 |---|---|---|
-| `DUNGEON_SCENES` | **5** | os clássicos em CSS puro (Tamagotchi/VHS/Sol Neon/CRT/Glitch), com overlay `dungeon-vhs` |
-| `SPIRIT_BG_SCENES` | **13** | arte PINTADA: as 5 grutas originais (960×540, deitadas), 6 da segunda leva (retrato 9:16, porque o campo de batalha é uma caixa ALTA), o "Corredor em Ruínas" (nasceu como fundo do Dino e migrou) e as **2 arenas do Torneio** |
+| `DUNGEON_SCENES` | **5** | os clássicos em CSS puro (Tamagotchi/VHS/Sol Neon/CRT/Glitch). ⚰️ O overlay `dungeon-vhs` que o `DungeonGame` punha por cima **saiu** (canvas Jogos, `DECISOES-WIREFRAME.md` §25): a cena é o `cover` de um visor (`games/GameKit.tsx`) |
+| `SPIRIT_BG_SCENES` | **13** | arte PINTADA: as 5 grutas originais (regeradas **em pé** em 15/09/2026, C1 de `ASSETS-A-GERAR.md` §11 — eram 960×540 deitadas ⚰️), 6 da segunda leva (retrato 9:16, porque o campo de batalha é uma caixa ALTA), o "Corredor em Ruínas" (nasceu como fundo do Dino e migrou) e as **2 arenas do Torneio** |
 | `SHOP_BG_ACCENTS` | **16** | os cenários da loja, reaproveitados como cena de andar (`SHOP_BG_SCENES` filtra os que existem em `PET_BACKGROUNDS`) |
 
 Comandos usados: `sed -n '<faixa>' src/utils/dungeonScenes.ts | grep -c "^  {"`
@@ -782,6 +907,13 @@ visor — que é exatamente a fronteira que a tese traça.
 
 `sceneForFloor` (usada fora do sorteio) indexa `DUNGEON_SCENES` pelo andar,
 clampado.
+
+**Três cenas FIXAS, fora do sorteio** (novas na Fase 2, exportadas de
+`dungeonScenes.ts` como índices de `SPIRIT_BG_SCENES`): `NIGHTMARE_SCENE` (a
+Forja das Almas, `dungeon-7` — o pesadelo é uma luta só, de manhã, e o vidro do
+diálogo é o mesmo todas as noites; canvas Jogos, `PesadeloIntro`/`PesadeloFim`),
+`ARENA_SCENE` (o Abismo Violeta, `dungeon-4`, canvas Arena) e `DINO_SCENE` (o
+corredor em ruínas atrás do parallax do Dino).
 
 ### 7.4 Decoração
 
@@ -807,9 +939,10 @@ briefing de arte está em `docs/BRIEF-ARTE-DECORACAO.md`.
    sprite daquela linha no nível pedido (`ultra` reusa `mega`).
 2. **Árvore em vigor desde 07/09/2026** — `SOULMON_SPRITES` tem as **11** formas (`rookie`,
    `{champion|ultimate|mega}-{virus|data|vaccine}`, `ultra`).
-3. **Save legado** — `legacySpriteForStage` escolhe uma das nossas 6 linhas por
-   **hash do id** (`hashId`, base 31): determinístico, então o mesmo save
-   renderiza sempre a mesma criatura em vez de embaralhar a cada load.
+3. **Save legado** — `legacySpriteForStage` escolhe uma das nossas **9** linhas
+   (eram 6 até 15/09/2026) por **hash do id** (`hashId`, base 31):
+   determinístico, então o mesmo save renderiza sempre a mesma criatura em vez
+   de embaralhar a cada load.
 
 ⚠️ **Divergência de símbolo:** `CLAUDE.md` (seção de arte) e
 `src/types/progression.ts` chamam essa função de `fallbackSpriteForStage`. O
@@ -817,7 +950,7 @@ símbolo no código é **`legacySpriteForStage`** —
 `grep -rn "fallbackSpriteForStage" src/` devolve 4 ocorrências, **todas em
 comentário ou em teste**, nenhuma em declaração.
 
-### 8.2 As 6 linhas próprias
+### 8.2 As 9 linhas próprias (eram 6 até 15/09/2026)
 
 **Dono do sprite: `DUNGEON_LINE_SPRITES`. Dono do NOME: `DUNGEON_LINE_NAMES`, e
 só ele** (`src/utils/sprites.ts`).
@@ -830,6 +963,27 @@ só ele** (`src/utils/sprites.ts`).
 | `kaelen` | **Pyraka** | idem |
 | `orrin` | **Akashaoi** | idem |
 | `thalindra` | **Nimbrata** | idem |
+| `igni` | Igni | idem — desde 15/09/2026 (`c11dc49d`) |
+| `nautilu` | Nautilu | idem — desde 15/09/2026 |
+| `astrase` | Astrase | idem — desde 15/09/2026 |
+
+As três últimas são **as linhas do oráculo com seed fixo** (runs 1–3 de
+18/08/2026, `branches/`), recortadas em 15/09/2026 e postas na **pré-seleção do
+jogador free** — decisão D1 do dono na rodada 1 da SQUAD-ARTE
+(`docs/INVENTARIO-ASSETS.md`, P2: "free escolhe de uma pré-seleção; pago recebe
+o rookie gerado e as formas seguintes são geradas conforme avança"; `branches/`
+"entra na pré-seleção"). Os 12 PNGs vivem em `src/assets/soulmon/lines/`
+(§5.6). Consequência mecânica, documentada no `CLAUDE.md` › ⚔️ Masmorra: o
+roster da masmorra e o bestiário passam de 6 para 9 linhas (24 → **36** artes).
+
+**Um sprite por criatura, e é decisão (D5, 15/09/2026):** não existe idle
+animado nem spritesheet de criatura — "um sprite por pet; expressão por
+deformação (bounce/squash, como no andar e no carinho)". A `entrega5/` (idle)
+foi descartada; as 7 animações da `entrega4/` são **FX ao redor do pet**
+(migalhas, coração, respingo, Z…), em `src/assets/soulmon/fx/`, não quadros do
+sprite. É por isso que a tabela acima tem exatamente 4 artes por linha e o
+`steps(2, end)` do `CompanionHUD` (§6.3) anima dois quadros de DEFORMAÇÃO,
+não dois desenhos.
 
 Os três últimos se chamavam **Pyrakamon, Akashaoimon e Nimbratamon** até
 08/09/2026 ⚰️ — prefixo somado ao sufixo fixo `-mon` é o que soletra nome de
@@ -864,8 +1018,9 @@ com a descrição oficial copiada no pool do bestiário (947 KB de JSON no bundl
 `android/res/drawable`; `pipeline.test.ts` varre o pool. O fonte não é varrido
 **de propósito** — comentário some no build, e os comentários-lápide CITAM os
 nomes para registrar o que não pode voltar. O guard também exige que
-`DUNGEON_LINE_SPRITES` tenha exatamente **6** linhas × 4 artes, reprova o sufixo
-`-mon` e reprova a volta da string duplicada de nome.
+`DUNGEON_LINE_SPRITES` tenha exatamente **9** linhas × 4 artes (`it('tem
+exatamente 9 linhas, cada uma com as 4 artes')`; exigia 6 até 15/09/2026),
+reprova o sufixo `-mon` e reprova a volta da string duplicada de nome.
 
 O filtro de origem do bestiário mora em `scripts/sync-oracle-data.mjs`, **na
 FONTE** — senão volta no próximo `npm run sync:oracle-data`. Só ficam
@@ -919,6 +1074,22 @@ shading, no outlines, no anti-aliasing`, e um pedido explícito de **não tingir
 criatura inteira numa matiz só** (escala de cinza é exceção permitida — preto e
 branco lê como escolha de arte, enquanto o bicho tingido de um vermelho só
 parece filtro).
+
+### 8.6 O placeholder da forma ainda não gerada (v4, 16/09/2026)
+
+**Dono: `src/utils/placeholderArt.ts` → `PLACEHOLDER_ART`** (`61748685`, leva
+`sprites-20260915` v4, 256² alfa). Enquanto a forma do jogador pago não existe,
+o visor mostra **o cristal do meio da cena da Home** — os três cristais presos
+por garras de cobre sobre a base de pedra — com um ser adormecido dentro e
+vinhas e brotos na base, em três estados: `dormant` (cristal apagado, silhueta
+escura: o rookie ainda vai nascer), `forming` (cristal aceso, o ser brilhando: a
+forma está sendo gerada) e `glitch` (cristal rachado em blocos: a geração
+falhou e pode ser pedida de novo). Consumidor: `EvolutionPath` (D1) —
+`GERANDO` → `forming` (`dormant` no rookie), `RESERVA_FINAL` → `glitch`; só para
+quem não é personagem pronto. A arte âmbar/cristal é o que faz o "ainda não"
+parecer parte do aparelho, não erro. Arquivos em `src/assets/soulmon/placeholder/`
+(§5.6). Referência e pedido do dono em 15–16/09/2026, `docs/ASSETS-A-GERAR.md`
+§11 (C2).
 
 ---
 
@@ -1068,50 +1239,88 @@ para o git** — por isso `docs/SOM.md` existe: é a parte que precisa sobrevive
 | `start_url` / `scope` | `/` |
 | `display` | `standalone` |
 | `orientation` | `portrait-primary` |
-| `theme_color` | `#0d9488` |
-| `background_color` | `#f3f9f8` |
+| `theme_color` | `#0f766e` (desde `005a2941`, 15/09/2026; era `#0d9488` ⚰️) |
+| `background_color` | `#071413` (= `--sm2-viewport-bg` escuro; era `#f3f9f8` ⚰️) |
 | `categories` | `productivity`, `lifestyle`, `games` |
 | `lang` / `dir` | `pt-BR` / `ltr` |
 
-Duas observações medidas, sem proposta:
+Duas observações medidas em 09/09/2026 — uma fechou, uma fica:
 
-1. **`theme_color: "#0d9488"`** é o valor que `--sm-primary` **deixou de ter** —
-   o CSS registra que `#0d9488` media 3,74:1 nos dois papéis e foi trocado por
-   `#0f766e`. O `index.html` repete `#0d9488` no `<meta name="theme-color">` do
-   esquema claro (e `#0c1c1a` no escuro, que não é nenhum token declarado). O
-   manifesto não segue o tema escuro canônico.
+1. ⚰️ **Fechada em 15/09/2026.** `theme_color: "#0d9488"` era o valor que
+   `--sm-primary` tinha abandonado por reprovar em contraste (3,74:1). Desde
+   `005a2941` o manifesto diz `#0f766e` (o `--sm-primary` claro que mede 5,47:1)
+   e `background_color` é `#071413` (o vidro do visor, escuro nos dois temas).
+   O `index.html` acompanha: `<meta name="theme-color">` = `#0f766e` no esquema
+   claro e `#071413` no escuro (era `#0d9488` / `#0c1c1a`, este último token
+   nenhum).
 2. **`lang: "pt-BR"`** enquanto a regra de idioma do projeto é "inglês é a base,
-   PT-BR é localização" (`CLAUDE.md`).
+   PT-BR é localização" (`CLAUDE.md`). Continua.
 
-Ícones em `public/`: `favicon.svg` (250 B), `favicon-192x192.png` (31.292 B),
-`favicon-512x512.png` (175.448 B). O `index.html` declara **dois** deles
-(`favicon.svg` e o de 192px) e usa o de 192px também como `apple-touch-icon`; o
-de 512px só existe no manifesto. `<title>` = `Soulmon`.
+**A marca é o kit `E:/logo/` (chama + cristal), decisão D8 do dono em
+15/09/2026** (`docs/INVENTARIO-ASSETS.md`, P2), **vetorizada** porque os PNGs do
+kit tinham ~250–480 px, insuficiente para ícone de 1024². O dado canônico é
+**`src/brand/flame.ts`** — `FLAME_W` = 19, `FLAME_H` = 30, `FLAME_GROUPS` (um
+`<rect>` por pixel, agrupados por `fill`, cores da MARCA e não de token: a
+marca é a mesma nos dois temas) — desenhado por `src/brand/BrandFlame.tsx` (o
+portão do onboarding, dentro de um slot-visor, D-O4/X3) e, como SVG literal,
+no `#splash` do `index.html` (§10.2). **Régua:
+`src/brand/brandFlame.parity.test.ts`** trava as duas cópias uma contra a outra,
+grupo por grupo e pixel por pixel (footgun 9: a segunda cópia diverge em
+silêncio).
+
+Ícones em `public/` (`ls -la`, 20/09/2026): `favicon.svg` (**27.238 B** — a
+chama sobre `#071413`, `shape-rendering: crispEdges`, um `<rect>` por pixel; era
+um SVG de 250 B ⚰️), `favicon-192x192.png` (**2.180 B**; era 31.292 B) e
+`favicon-512x512.png` (**9.140 B**; era 175.448 B) — os três de `005a2941`, junto
+com o `ic_launcher`, o `drawable/splash.png` e o `ic_notification.xml` do
+Android. O `index.html` declara **dois** deles (`favicon.svg` e o de 192px) e
+usa o de 192px também como `apple-touch-icon`; o de 512px só existe no
+manifesto. `<title>` = `Soulmon`. Os ícones do **push** deixaram de ser o
+favicon em 20/09/2026 (canvas Fora do app, D-F14/D-F15): `public/push-large-192.png`
+(mini-visor redondo com a chama a 1×, porque o Android 12+ recorta o
+`largeIcon` em círculo) e `public/badge-96.png` (alfa-only: a barra de status
+descarta a cor, e o favicon quadrado virava um bloco preto) — os dois
+derivados de `flame.ts`, referenciados em `public/sw.js` (`PUSH_ICON`,
+`PUSH_BADGE`).
 
 ### 10.2 O splash — o aparelho ligando
 
-O `#splash` vive **inline no `index.html`** (nada de bundle no caminho crítico) e
-é uma peça de identidade completa: **é o VISOR do aparelho ligando**, e por isso
-usa os tokens do **tema ESCURO copiados literalmente** para dentro do seu próprio
-escopo — `--sm2-viewport-bg: #071413`, `--sm2-viewport-ink: #E9F5F2`,
-`--sm2-surface: #0F2A29`, `--sm2-surface-2: #163735`, `--sm2-line: #1E3F3C`,
-`--sm2-muted: #9DBCB4`, `--sm2-primary-ink: #5FF3E0`, `--sm2-primary-deep:
-#29C9B8`, mais `--sm2-text-sm: 14px`, `--sm2-text-2xl: 32px` e
-`--sm2-radius-sm: 4px`.
+O `#splash` vive **inline no `index.html`** como MARKUP (nada de bundle no
+caminho crítico) e é uma peça de identidade completa: **é o VISOR do aparelho
+ligando, em tela cheia** (canvas Onboarding-funil ONB-01,
+`docs/design/DECISOES-WIREFRAME.md` §23; `fd9ec04d`, 20/09/2026). O `<div
+id="splash">` leva as classes **`.sm2-visor .sm2-splash`** e termina com um
+`.sm2-viewport-glass` (o reflexo, sem raio porque é a tela inteira).
 
-Composição: uma **chama em pixel art como SVG inline** (12×16, **109** `<rect>` —
-`grep -o '<rect' index.html | wc -l`, medido em 10/09/2026 —,
-`shape-rendering: crispEdges`, `image-rendering: pixelated`, animação
-`sp-flick`), o wordmark `SOULMON` em `--sm2-text-2xl`, a linha `LOADING DATA...`,
-uma barra de 8 segmentos animados e o selo `SOUL_LINK ESTABLISHED`, mais três
-cristais em `clip-path`.
+⚰️ **O `<style>` inline com ~60 linhas de tokens do tema escuro copiados à mão
+saiu em 20/09/2026.** Até então o `#splash` redeclarava `--sm2-viewport-bg:
+#071413`, `--sm2-surface: #0F2A29`, `--sm2-primary-ink: #5FF3E0` etc. dentro do
+próprio escopo, "porque roda antes do bundle" — era o footgun 9 na primeira
+tela do app. No build o CSS entra pelo `<link>` bloqueante do `<head>`, então a
+splash lê os tokens de `src/index.css`: a paleta do vidro vem do escopo
+`.sm2-visor` (§2.8), o mesmo do `Viewport`, e a composição vive nas classes
+`.sm2-splash-*` (`grep -n "^\.sm2-splash" src/index.css`). A intro
+(ONB-03/04) é a continuação do boot no MESMO `.sm2-splash` (D-O3/X4), com o
+vídeo em `cover` dentro.
 
-Quatro decisões medidas ali dentro:
+Composição, de cima para baixo: a **chama do kit a 4× inteiro** (`svg.sp-flame
+.sm2-splash-flame`, `viewBox 0 0 19 30`, `width 76 × height 120`, **343**
+`<rect>` — `grep -o '<rect' index.html | wc -l`, 20/09/2026; eram 109 numa chama
+de 12×16 ⚰️ — a arte é a de `src/brand/flame.ts`, §10.1, e
+`brandFlame.parity.test.ts` confere grupo por grupo), **sem `drop-shadow` e sem
+`transform` fracionário** (o pulso é COR, não escala — D-O2, keyframe
+`sm2-splash-flick`); o wordmark `Soulmon` em `h1.sm2-splash-title` (Silkscreen
+`--sm2-text-2xl`, caixa alta por CSS, `--sm2-primary-ink`); a linha `LOADING
+DATA...` (`.sm2-splash-pix`, `--sm2-text-sm` = 14px — o PISO da Silkscreen);
+a **barra de 8 segmentos** (`.sm2-splash-bar`, 220×16, `surface-2` + `line`,
+`radius-sm`) cujo segmento apagado é **TINTA** (`primary-ink` a 15% sobre
+`surface-2`), nunca `opacity`, e a onda anima a COR (`sm2-splash-seg`); o selo
+`SOUL_LINK ESTABLISHED` (`.sm2-splash-link`); e os **três cristais**
+(`.sm2-splash-crystals`), a mesma cena da Home que o placeholder reproduz
+(§8.6).
 
-- Os `fill` do sprite estão como ATRIBUTO no SVG (pixel art é markup, não CSS).
-  Atributo de apresentação perde para qualquer regra CSS, então os dois tons
-  entram por token (`#5df0e0` → `--sm2-primary-ink`, `#d8fffa` →
-  `--sm2-viewport-ink`) **sem tocar nos 109 `rect`**.
+Três decisões medidas que sobreviveram à reescrita:
+
 - `background-color` é declarado **separado** das camadas decorativas: se
   `color-mix` não for suportado, o navegador descarta só o `background-image` e a
   tela continua com o fundo do visor, em vez de cair para transparente.
@@ -1124,6 +1333,10 @@ Quatro decisões medidas ali dentro:
 - O selo `SOUL_LINK` **era um selo dentro de uma caixa com borda de cobre de
   2px** ⚰️. A caixa saiu: o que informa é a palavra, não a moldura — a mesma
   regra do dono que tirou a placa do ícone.
+
+O que morreu com o `<style>`: os `fill` do sprite antigo entravam por token
+(`#5df0e0` → `--sm2-primary-ink`) "sem tocar nos 109 `rect`" ⚰️ — a chama nova
+tem as cores da MARCA como atributo, de propósito, e elas NÃO seguem tema.
 
 Um script inline localiza o splash sem esperar o bundle (`CARREGANDO DADOS...` /
 `SOUL_LINK ESTABELECIDO` quando `navigator.language` começa com `pt`).
@@ -1144,12 +1357,12 @@ CSS e o código medidos em 09/09/2026.
 
 | # | Item do plano | Estado | Evidência |
 |---|---|---|---|
-| 1 | Fronteira diegética "O Visor" | **parcial** | `Viewport` existe e é usado por 4 componentes de produção; ao mesmo tempo o kit pixel `.sm-px-*` aparece em 28 `.tsx` de produção — há pixel FORA do visor |
-| 2 | Bisel 20px · tela 12px · anel 4px · visor escuro nos dois temas · `pixelated` com escala INTEIRA · grid de 4px | **no ar**, exceto o grid | `.sm2-viewport` (`padding: 4px`), `.sm2-viewport-screen` (`--sm2-radius-md` 12px, `image-rendering: pixelated`), `ViewportProps.scale: 2 \| 3`, `--sm2-viewport-bg` nos dois temas. **Não existe token de espaço**: `--sm-space-1..6` → `grep` devolve 0 |
+| 1 | Fronteira diegética "O Visor" | **no ar** desde a Fase 2 (era **parcial** em 09/09/2026) | `Viewport` em 12 componentes de produção; o kit pixel `.sm-px-*` caiu de 28 para **14** `.tsx` (13 classes) e o que sobrou é resíduo da nav/árvore/chat, não 9-slice — o `PixelKit` é vetor sobre `--sm2-*` desde 16/09/2026 (§1) |
+| 2 | Bisel 20px · tela 12px · anel 4px · visor escuro nos dois temas · `pixelated` com escala INTEIRA · grid de 4px | **no ar**, com o bisel redesenhado | `.sm2-viewport` (`padding: 4px`), `.sm2-viewport-screen` (`--sm2-radius-md` 12px, `image-rendering: pixelated`), `ViewportProps.scale: 2 \| 3`, `--sm2-viewport-bg` nos dois temas. ⚰️ O bisel de 16px (`.sm2-device`) saiu em 16/09/2026 — a página é o corpo (D-H1). **O grid de 4 existe desde 16/09/2026**: `--sm2-space-half/1..6` (§2.8) |
 | 3 | Paleta ciano-turquesa como única luz forte; cobre; petróleo. Tinta ≠ fill | **no ar, com outros nomes** | `--sm2-primary-*` (ciano), `--sm2-gold-*`/`--sm2-viewport-ring` (cobre), `--sm2-bg`/`--sm2-viewport-bg` (petróleo). Régua de tinta×fill em `src/styles/tokens.contrast.test.ts` |
-| 4 | Silkscreen = voz do dispositivo, ≥14px, caixa alta, nunca frase inteira. Fredoka = títulos. Rubik = texto e dado com `tabular-nums` | **no ar, com uma exceção** | `.sm2-device-voice`, `--sm2-font-display`, `--sm2-font-text`, `.sm2-num`. ⚠️ `.sm-bottom-nav-label` usa Silkscreen em `--sm2-text-xs` = 12px, fora do visor e abaixo do piso |
+| 4 | Silkscreen = voz do dispositivo, ≥14px, caixa alta, nunca frase inteira. Fredoka = títulos. Rubik = texto e dado com `tabular-nums` | **no ar** (a exceção fechou em 16/09/2026) | `.sm2-device-voice`, `--sm2-font-display`, `--sm2-font-text`, `.sm2-num`. ⚰️ A `.sm-bottom-nav-label` em Silkscreen 12px, fora do visor e abaixo do piso, é Rubik 12/500 desde o canvas Home (§4.2) |
 | 5 | Material Symbols Rounded variável; `FILL` 0→1 como sistema de estado; `opsz` casado; `wght` 500 | **no ar** | `src/components/ui/Icon.tsx` — as quatro props e os quatro eixos, com clamp de `opsz` em 20–48 |
-| 6 | Dentro do visor `steps()`; fora, 120/200/320ms; `prefers-reduced-motion` obrigatório | **no ar**, com uma quarta duração | `--sm2-dur-tap/enter/page` + `--sm2-ease`; `--sm2-dur-scan` 400ms acrescentada com justificativa; 1 declaração de `steps()` no CSS (§6.3) e mais três no call-site; 8 blocos de movimento reduzido |
+| 6 | Dentro do visor `steps()`; fora, 120/200/320ms; `prefers-reduced-motion` obrigatório | **no ar**, com uma quarta duração | `--sm2-dur-tap/enter/page` + `--sm2-ease`; `--sm2-dur-scan` 400ms acrescentada com justificativa; 2 declarações de `steps()` no CSS (§6.3) e mais três no call-site; 8 blocos de movimento reduzido; o overlay VHS contínuo da masmorra saiu ⚰️ (§7.3) |
 | 7 | Regras do dono: ícone nunca em box · sublinhado ciano na nav · `.sm-pet-sticky` · `index.css` único CSS · não reintroduzir `--foreground`/`--background` | **no ar** | §5.4, §6.5, §3.1 deste doc; réguas em `src/styles/tokens.contrast.test.ts` e `src/index.css.contract.test.ts` |
 | 8 | Teste de aceitação: recorte de 200×200px sem logo | **sem régua** | critério humano; não há teste |
 
@@ -1167,10 +1380,10 @@ Nenhum dos nomes propostos pelo plano foi criado. Medido com
 | `--sm-ink-muted` | **não** | `--sm2-muted` |
 | `--sm-perigo-fill` / `--sm-perigo-ink` | **não** | `--sm2-danger-fill` / `--sm2-danger-ink` (+ `--sm2-viewport-danger` para dentro do vidro) |
 | `--sm-sucesso-fill` / `--sm-sucesso-ink` | **não** | `--sm-ok-ink` — declarado e **sem consumidor** (§2.7) |
-| `--sm-space-1..6` (grid de 4) | **não** | nenhum token de espaço; espaçamento é literal |
+| `--sm-space-1..6` (grid de 4) | **sim, com outro nome, desde 16/09/2026** | `--sm2-space-half/1..6` (2/4/8/12/16/24/32px, `f041285f`, P1 do canvas Sistema — §2.8). Até então o espaçamento era literal |
 | `--sm-r-sm/md/lg/visor` | **não** | `--sm2-radius-sm/md/lg` (4/12/20px), sem degrau próprio de visor |
-| `--sm-bisel` / `--sm-tela` / `--sm-anel` | **não** | valores literais em `.sm2-viewport` e `.sm2-device` |
-| `--sm-toque-min` 44px | **não** | `.sm-btn { min-height: 44px }`, `.sm-px-switch { height: 44px }` — literais (`.sm-tap-44` saiu em 20/09/2026: o contador de adiamentos passou a ser um botão de 44 de verdade, D-A4) |
+| `--sm-bisel` / `--sm-tela` / `--sm-anel` | **não** | valores literais em `.sm2-viewport`; o bisel (`.sm2-device`) saiu em 16/09/2026 ⚰️ — a página é o corpo |
+| `--sm-toque-min` 44px | **não** | `.sm-btn { min-height: 44px }` e os `min-height: 44px` do kit vetor — literais (`.sm-px-switch` saiu com o kit pixel em 16/09/2026 ⚰️; `.sm-tap-44` saiu em 20/09/2026: o contador de adiamentos passou a ser um botão de 44 de verdade, D-A4) |
 | `--sm-dur-1/2/3` · `--sm-ease` · `--sm-steps` | **não** | `--sm2-dur-tap/enter/page` + `--sm2-ease`; `steps()` escrito no call-site |
 | **Guarda sugerida**: teste varrendo `index.css` atrás de `color: var(--sm-*-fill)` | **existe, no conjunto novo** | `src/styles/tokens.contrast.test.ts` prova que todo acento tem o trio `ink`/`fill`/`on-` e que `gold-ink` ≠ `gold-fill`. E `grep -nE "^\s*color: var\(--sm2-[a-z]+-fill\)" src/index.css \| wc -l` → **0** |
 | **`src/components/SmIcon.tsx`** como dono único do ícone | **não existe com esse nome** | `src/components/ui/Icon.tsx` → `Icon` faz o papel, com a mesma API (`name`/`size`/`fill`/`weight`/`tone`/`label`) e mais um motor de glifo próprio (`NavGlyphs`) que o plano não previa |
@@ -1183,8 +1396,8 @@ Nenhum dos nomes propostos pelo plano foi criado. Medido com
 |---|---|---|
 | Apagar `ArenaGame.tsx` | **não cumprido** — o arquivo existe | `ls src/components/ArenaGame.tsx`. Ele foi, aliás, a causa-raiz da R-NOVA (§9.4) |
 | Tirar `OraclePage.tsx` do bundle (mover para `src/dev/`) | **não cumprido** — segue em `src/components/` | `find src -name "OraclePage*"` |
-| `src/components/ui/` (44 arquivos shadcn) morre inteiro | **quase** — restam **8** entradas, das quais 5 são peças NOVAS do kit (`Icon`, `NavGlyphs`, `OfflineSeal`, `ScreenSkeleton`, `Viewport`) + 2 testes; o único sobrevivente shadcn é `sonner.tsx`, que o próprio plano isentava até a Onda 4 | `ls src/components/ui/ \| wc -l` |
-| `lucide-react` sai | **parcial** — **8** arquivos `.tsx` ainda importam | `grep -rl "lucide-react" src --include=*.tsx`: `AISettingsModal`, `SettingsModal`, `TournamentPage`, `SettingsPage`, `ChatBox`, `SoulmonOnboarding`, `LibraryPage`, `GameTutorialFlow` |
+| `src/components/ui/` (44 arquivos shadcn) morre inteiro | **quase** — restam **9** entradas em 20/09/2026, das quais 6 são peças NOVAS do kit (`Icon`, `MiniGlass` — o mini-visor do canvas Pet, `NavGlyphs`, `OfflineSeal`, `ScreenSkeleton`, `Viewport`) + 2 testes; o único sobrevivente shadcn é `sonner.tsx`, que o próprio plano isentava até a Onda 4 | `ls src/components/ui/ \| wc -l` |
+| `lucide-react` sai | **parcial** — **7** arquivos `.tsx` ainda importam em 20/09/2026 (eram 8; `GameTutorialFlow` migrou) | `grep -rl "lucide-react" src --include=*.tsx`: `AISettingsModal`, `SettingsModal`, `TournamentPage`, `SettingsPage`, `ChatBox`, `SoulmonOnboarding`, `LibraryPage` |
 
 ---
 
@@ -1210,18 +1423,21 @@ nas duas pastas, 09/09/2026.
 
 ## 13. Divergências registradas neste documento
 
-Lista fechada, para o `STATUS.md`. Todas medidas em 09/09/2026.
+Lista fechada, para o `STATUS.md`. Medidas em 09/09/2026 e revistas em
+20/09/2026 (delta `2580b73a..dc72579e`): as marcadas ⚰️ fecharam.
 
 | # | Onde | Divergência |
 |---|---|---|
-| 1 | `CLAUDE.md` › UI × `src/styles/tokens.md` §6.1 | escala de ícone: o `CLAUDE.md` diz "nav 36px / ações 42px / chat 30px"; o código não tem nenhum desses três (`grep -rho "size={36}\|size={42}\|size={30}" src --include=*.tsx` → 0). A escala viva é 20 / 24 / 32 |
+| 1 | `CLAUDE.md` › UI × `src/styles/tokens.md` §6.1 | ⚰️ **fechada em 16/09/2026** (`3fdfeee1`, P3 do canvas Sistema): o `CLAUDE.md` dizia "nav 36px / ações 42px / chat 30px" e hoje diz 32 / 24 / 32, citando `tokens.md` §6.1 e `iconScale.contract.test.ts` |
 | 2 | `CLAUDE.md` › arte e `src/types/progression.ts` × `src/utils/sprites.ts` | o símbolo é `legacySpriteForStage`; `fallbackSpriteForStage` só existe em comentário e em teste |
 | 3 | `docs/INVENTARIO-TELAS.md` §1.1 (19/08/2026) × repositório | 60 PNGs de ícone → **57**; 158 PNGs em `src/assets/soulmon/` → **1198** |
-| 4 | `src/index.css` × `src/` inteiro | seis tokens `--sm-*` declarados **sem nenhum consumidor**: `--sm-gold-soft`, `--sm-danger-soft`, `--sm-energy`, `--sm-energy-track`, `--sm-ok-ink`, `--sm-help-accent` |
-| 5 | `public/manifest.json` × `src/index.css` | `theme_color: "#0d9488"` é o valor que `--sm-primary` abandonou por reprovar em contraste (3,74:1); e `lang: "pt-BR"` contra a regra "inglês é a base" |
-| 6 | `docs/PLANO-DESIGN.md` §0 item 1 × código | a fronteira "pixel dentro, limpo fora" não é exclusiva: kit pixel em 28 `.tsx` de produção, fora do `Viewport` |
-| 7 | `docs/PLANO-DESIGN.md` §0 item 4 × `src/index.css` | Silkscreen a 12px na `.sm-bottom-nav-label`, fora do visor e abaixo do piso de 14px declarado |
-| 8 | `docs/PLANO-DESIGN.md` Onda 0 × código | `ArenaGame.tsx` e `OraclePage.tsx` continuam no bundle; `lucide-react` em 8 arquivos |
+| 4 | `src/index.css` × `src/` inteiro | **catorze** tokens `--sm-*` declarados **sem nenhum consumidor** em 20/09/2026 (eram seis): os seis de sempre (`--sm-gold-soft`, `--sm-danger-soft`, `--sm-energy`, `--sm-energy-track`, `--sm-ok-ink`, `--sm-help-accent`) mais oito que a Fase 2 deixou órfãos — `--sm-danger`, `--sm-haunt-ink`, `--sm-haunt-veil`, `--sm-help-item-bg`, `--sm-px-ink`, `--sm-px-panel-bg`, `--sm-px-panel-ink`, `--sm-px-red` (§2.7) |
+| 5 | `public/manifest.json` × `src/index.css` | ⚰️ a metade do `theme_color` **fechou em 15/09/2026** (`#0f766e`, `background_color` `#071413`, `005a2941`). Fica só `lang: "pt-BR"` contra a regra "inglês é a base" |
+| 6 | `docs/PLANO-DESIGN.md` §0 item 1 × código | ⚰️ **fechada na Fase 2**: o kit pixel caiu de 28 para 14 `.tsx` e o que sobrou não é 9-slice/Silkscreen; o `PixelKit` é vetor sobre `--sm2-*` (`a482dfd5`). Os 14 residuais estão listados como candidatos à saída em §2.2 |
+| 7 | `docs/PLANO-DESIGN.md` §0 item 4 × `src/index.css` | ⚰️ **fechada em 16/09/2026**: a `.sm-bottom-nav-label` é Rubik 12/500 (canvas Home, `NavEstados`), não Silkscreen |
+| 8 | `docs/PLANO-DESIGN.md` Onda 0 × código | `ArenaGame.tsx` e `OraclePage.tsx` continuam no bundle; `lucide-react` em **7** arquivos (eram 8) |
 | 9 | `brand/design-system.md` × produto | o arquivo é da **Consultech360**, não do Soulmon |
 | 10 | `src/contexts/ThemeContext.tsx` × expectativa do nome | o modo `'system'` **não** segue o SO: `resolveSystemPreference()` devolve `'dark'` sempre. Intencional e justificado no código; **régua: nenhuma** |
-| 11 | `docs/PALCO-E-DECORACAO.md` × `src/utils/petStage.ts` | `GROUND_Y` = 74 é a conta do sprite de 80px; o sprite é `PET_BOX` = 152 e a origem real é `PET_TOP_OFFSET` = −38. O código e o doc já registram o desvio; a conta do palco **não foi refeita** |
+| 11 | `docs/PALCO-E-DECORACAO.md` × `src/utils/petStage.ts` | `GROUND_Y` = 74 é a conta do sprite de 80px; o sprite é `PET_BOX` = 152 e a origem real é `PET_TOP_OFFSET` = −38. O código e o doc já registram o desvio; a conta do palco **não foi refeita** — e o berço mudou para 220×104 em 15/09/2026 (§7.1), o que aquele doc também não descreve |
+| 12 | `src/utils/backgrounds.ts` × `StageSetting` | o tipo ainda aceita `'void'`, mas nenhum cenário o declara desde 15/09/2026 (§7.2) — tipo com valor sem consumidor; **régua: nenhuma** |
+| 13 | `src/styles/tokens.md` × `src/index.css` | o `grep` de tokens `--sm2-*` devolve 59 e são 58: `--sm2-btn` é seletor de variante do kit vetor, não token declarado (§2.8) |

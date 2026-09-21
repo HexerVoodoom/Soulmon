@@ -1,6 +1,6 @@
 # Regras de negócio — todas as regras do jogo, por sistema
 
-> **Dono:** doc-redator-regras · **Data:** 10/09/2026 · **Estado:** verificado em 10/09/2026 por doc-verificador (em duas metades; a devolução V1 — `level-de-conta.md` ausente — foi fechada pelo orquestrador com a medição)
+> **Dono:** doc-redator-regras · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (só as seções do delta `2580b73a..dc72579e` — §22, §28, §41, §43, §46, §57-A, §57-B, §59 D28–D30; verificação anterior do doc inteiro: 10/09/2026, em duas metades)
 > **Verificação:** `npx vitest run src/utils src/types src/hooks` — cada sistema abaixo declara a sua régua própria na linha **Régua**. Números medidos trazem o comando na própria linha.
 > **Não cobre:** o porquê estratégico e as linhas vermelhas (→ [`01-VISAO.md`](01-VISAO.md)), telas e navegação (→ `03-FLUXO-DE-TELAS.md`), função por função (→ `06-REFERENCIA/`), formato do save (→ `07-DADOS-E-SAVE.md`), infraestrutura de push, deploy e API (→ `08-INTEGRACOES-E-DEPLOY.md`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -77,7 +77,9 @@ no primeiro commit, o símbolo se reencontra por `grep`.
 [54. Minijogos: PPT e Dino](#minijogos) ·
 [55. Vínculo e o gate de PvP](#vinculo) ·
 [56. Comunidade e cooperativo](#comunidade) ·
-[57. Estações](#estacoes)
+[57. Estações](#estacoes) ·
+[57-A. Conquistas (emblemas de arte)](#conquistas) ·
+[57-B. Mapas de arte que carregam regra](#mapas-de-arte)
 
 **Transversal**
 [58. Notificações como regra](#notificacoes) ·
@@ -1576,15 +1578,39 @@ funil, reordenar vira P0) e §5.4 (reroll com semente derivada, contra a Lei
   É uma criatura nova, não uma repintura.
 - **Perfil de antes da troca de motor** (sem `soulProfile`) roda o caminho
   legado inteiro — é o que mantém o reroll de quem jogou antes.
-- **Conta grátis** não passa por aqui: escolhe um dos personagens prontos em
-  `DEMO_PICK` e recebe `demoCharacterId`.
+- **Conta grátis** não gera criatura: escolhe um dos **seis** personagens
+  prontos (`PREMADE_CHARACTERS`, `src/utils/monetization.ts` — `kaelen`/`orrin`/
+  `thalindra` e, desde 15/09/2026 (D1 da SQUAD-ARTE), `igni`/`nautilu`/`astrase`,
+  as três linhas do oráculo com seed fixo; o nome vem sempre de
+  `DUNGEON_LINE_NAMES`) em `DEMO_PICK` e recebe `demoCharacterId`. Desde
+  20/09/2026 (REGISTRO 13.19) ela **responde as 6 perguntas** e, antes de
+  escolher, vê o `REVEAL_DEMO` (`SoulmonOnboarding.tsx`): leitura por
+  `generateOracle` só das 6 respostas, criatura de uma linha pronta em
+  **silhueta** (`BirthCard` `silhouette`), e o `UnlockNudge` com motivo
+  `reveal-demo`; dispensar ou continuar leva ao `DEMO_PICK`. ⚠️ divergência: o
+  `CLAUDE.md` ainda diz "os três personagens prontos" — ver [§59](#divergencias), D28.
 - **Recusa do provedor de imagem**: a variante com referências é sempre a
   primeira, e `functions/api/generate-sprite.js` refaz sozinho com
   `imagePromptFallback` quando `isRefusal` — erro que não é recusa **não** refaz,
   para não dobrar custo à toa.
-- **Enquanto o desenho não vem**, o reveal mostra um casulo pulsando; se o tempo
-  acaba sem desenho, o casulo **some** — um casulo parado seria a promessa de
-  algo que não vem.
+- **Enquanto o desenho não vem**, o reveal mostra o casulo — `BirthCard`
+  `pending='forming'`, o cristal aceso de `PLACEHOLDER_ART` (`src/utils/placeholderArt.ts`)
+  pulsando por POSIÇÃO numa região `role=status`; estourado o teto da espera,
+  `pending='dormant'` (o cristal apagado: "ainda vai nascer"), **nunca `glitch`**
+  (rachado = falhou + retry, e ali não há retry) e nunca arte de reserva. ⚰️ Até
+  20/09/2026 o casulo **sumia** ao fim do tempo (canvas Onboarding-oráculo §31,
+  D-Q6/D-Q11). Na Evolução, `EvolutionPath` usa o mesmo mapa: `GERANDO` →
+  `forming` (rookie: `dormant`), `RESERVA_FINAL` → `glitch`.
+- **Sigilo e aura da classe (canvas Pet §22, D-P4 e D9)**: `ClassTitle.sigilo`
+  (`src/utils/soulProfile/ficha/classTitle.ts` → `sigiloDaClasse`) é a chave da
+  peça de `sigilArt` que a Ficha desenha no canto do visor — a **escola** de maior
+  limiar vence; sem escola, o elemento de maior limiar; sem nenhum (classe
+  genérica), o elemento base dominante da ficha. É opcional: o cache
+  `soulmonClassTitles` anterior a 20/09/2026 não o tem, e sem chave a Ficha **não
+  desenha sigilo** (nunca inventa um) até a próxima recomputação. A aura vem de
+  `auraForElement` (`src/utils/attackFxArt.ts`) pelo `dominantElement` do oráculo,
+  com `planta` → `vida` e `industrial` → `aco` (`ORACLE_TO_FX`), porque esses dois
+  não são elementos base do class-system; sem arte → `undefined` → sem aura.
 
 **O que NÃO faz.** Não mostra diagnóstico de personalidade, pontuação de eixo
 nem prompt. Não permite responder o teste longo depois. Não sorteia: o reroll é
@@ -1597,7 +1623,9 @@ prompt. Não muda mecânica nenhuma: todo pet é mecanicamente equivalente — m
 reveal), `src/components/BirthCard.tsx`, `src/components/StatsPage.tsx` (o mesmo
 cartão, depois), `src/components/NewReadingModal.tsx` e
 `src/components/CreditsModal.tsx` (a nova leitura),
-`src/components/OraclePage.tsx` (ferramenta de criação, fora da navegação).
+`src/components/OraclePage.tsx` (ferramenta de criação, fora da navegação),
+`src/components/PetPage.tsx` (aura por `auraForElement` e sigilo por `sigilArt`
+na Ficha), `src/components/EvolutionPath.tsx` (placeholders e aura).
 
 ---
 
@@ -1972,7 +2000,8 @@ milestoneReached(before, after) = o tier NOVO quando o degrau mudou, senão null
 |---|---|---|
 | `HABIT_MILESTONES` | `[7, 21, 66]` | `src/types/taskModel.ts` |
 | `HABIT_TIER_BONUS` | seed 0 · sprout 0,1 · sapling 0,2 · tree 0,3 | `src/types/taskModel.ts` |
-| `HABIT_TIER_ICONS` | 🌱 · 🌿 · 🌾 · 🌳 | `src/types/taskModel.ts` |
+| `HABIT_TIER_ICONS` | 🌱 · 🌿 · 🌾 · 🌳 | `src/types/taskModel.ts` — o glifo da lista; ⚰️ a cerimônia não o usa mais desde 20/09/2026 (`4f5d2aac`; decisão do lead de 16/09/2026) |
+| `TIER_EMBLEM` | sprout → `habit-7` · sapling → `habit-21` · tree → `habit-66` · seed → nenhum | `src/utils/emblemArt.ts` → `emblemFor(tier)` — o emblema pixel 64² que a cerimônia desenha no vidro (canvas Rituais, achado 10 / X4) |
 | `HABIT_CHEER_AT` | `[3, 36, 51]` | `src/types/taskModel.ts` — falas, **não** marcos |
 
 Os 66 dias são a mediana medida por Lally et al. (2010), faixa de 18 a 254. Os
@@ -1982,7 +2011,9 @@ plástica.
 **Dono.** `src/utils/habitRhythm.ts` → `habitTier`, `habitTierIcon`,
 `attributeMultiplier`, `milestoneReached`. A cerimônia é
 `src/components/MilestoneCeremony.tsx`, disparada por
-`celebrateHabitMilestone` no `src/App.tsx`. As falas de meio de caminho são
+`celebrateHabitMilestone` no `src/App.tsx`; a arte do marco é `emblemFor`
+(`src/utils/emblemArt.ts`), e os mesmos três emblemas são as conquistas
+`habit-7`/`habit-21`/`habit-66` de [§57-A](#conquistas) — um marco, uma peça. As falas de meio de caminho são
 `cheerReached` (`src/types/taskModel.ts`).
 
 **Régua.** `src/utils/habitRhythm.test.ts` (bloco `marcos de maturidade`, com o
@@ -2017,7 +2048,8 @@ Não muda a lista de marcos por acidente: se `HABIT_CHEER_AT` passar a dar algo,
 escada de maturidade ganha seis degraus sem ninguém ter decidido isso.
 
 **Onde a UI mostra.** `src/components/MilestoneCeremony.tsx` (com a DATA — marco é
-memória, não aviso), `src/components/HabitConstancy.tsx` (o glifo que se preenche
+memória, não aviso — e o emblema de `emblemFor(tier)` a 64 no vidro, no lugar do
+`tierIcon` emoji), `src/components/HabitConstancy.tsx` (o glifo que se preenche
 na lista), `src/components/CompanionHUD.tsx` (a fala `milestone`).
 
 ---
@@ -2980,7 +3012,10 @@ pool por causa da estação.
 **Onde a UI mostra.** `src/components/MorningDream.tsx` (4º na fila de
 intersticiais; com `dream === null` a tela é um bom-dia neutro, nunca uma
 fatura) e `src/components/DreamDex.tsx`, na página do **Pet** — é coleção do
-bicho; em Configurações leria como painel de métrica de sono.
+bicho; em Configurações leria como painel de métrica de sono. A célula coletada
+mostra "#NN · data" com a data por `dayKeyLabel` (`src/utils/dayKeyLabel.ts`,
+[§57-B](#mapas-de-arte)) — nunca `new Date(iso)`, que em fuso negativo mostraria
+o dia anterior.
 
 ---
 
@@ -3149,7 +3184,9 @@ que ela valeu pouco — e não conta nem premia nada.
 **Onde a UI mostra.** O cartão do achado dentro do
 `src/components/DailyReportModal.tsx` ([§11](#relatorio-diario)) e
 `src/components/AdventureDiary.tsx`, na página do **Pet**, ao lado do Dex de
-Sonhos, com o mais recente primeiro.
+Sonhos, com o mais recente primeiro; a data da linha é `dayKeyLabel`
+(`src/utils/dayKeyLabel.ts`, [§57-B](#mapas-de-arte)) — nasceu aqui e foi para o
+módulo quando o Dex de Sonhos ganhou data.
 
 ---
 
@@ -3376,7 +3413,11 @@ vez de cobrar de novo.
 calculadora (`bitsStyle`, `--sm2-font-mono` + `slashed-zero` + `tabular-nums`) e
 **sem ícone nenhum** — a ausência de ícone É a distinção. Emblemas em serifa de
 medalha (`emblemStyle`, `--sm2-font-serif`, `EMBLEM_COLOR`). Créditos com o
-ícone `diamond` e `CREDIT_COLOR`. As cores são tokens `--sm2-*-ink`, medidos por
+ícone `diamond` e `CREDIT_COLOR`. A tinta dos Bits é `--sm2-primary-ink`, e
+isso é **decisão do canvas Loja** (`DECISOES-WIREFRAME.md` §26, D-L11, checkpoint
+do dono 20/09/2026): vence o canvas Jogos (§25), que pedia `ink` — as duas
+superfícies leem a mesma cor de `bitsStyle`, e o hub de Jogos mostra "N Bits"
+mono sem ícone com ela. As cores são tokens `--sm2-*-ink`, medidos por
 `src/styles/tokens.contrast.test.ts`; ⚰️ as cores cruas (`#39ff14`, `#b8860b`,
 `#a855f7`) **não existem mais** — reprovavam AA e vinham inline, vencendo o
 token por especificidade.
@@ -4362,6 +4403,96 @@ original mandava isto para a aba Missões da loja, que não existe mais.
 
 ---
 
+<a id="conquistas"></a>
+## 57-A. 🏆 Conquistas (emblemas de arte)
+
+**Em uma frase.** Nove emblemas que se abrem lendo contadores que já existem no
+save — nada é gravado, nada se compra, nada fecha depois de aberto.
+
+**A regra.** Dono: `src/utils/achievements.ts` → `ACHIEVEMENT_IDS`,
+`ACHIEVEMENT_LABELS` (PT/EN), `unlockedAchievements(save)` — função PURA que
+devolve os ids abertos na ordem canônica. Todas **derivadas na leitura**
+(footgun 9: duas fontes para o mesmo fato), e cada uma lê um contador que
+**nunca decresce**, então uma conquista lida como aberta não fecha:
+
+| Id | Abre quando | O contador que lê |
+|---|---|---|
+| `perfect-day` | `totalPerfectDays ≥ 1` ou `perfectDays ≥ 1` | [§7](#dia-completo) |
+| `habit-7` / `habit-21` / `habit-66` | o **maior** `totalDone` entre os `habitRhythms` ≥ 7 / 21 / 66 | os marcos de `HABIT_MILESTONES`, [§28](#marcos) — `totalDone`, **não** sequência |
+| `first-evolution` | algum id em `unlockedEvolutions` ≠ `'rookie'` | [§17](#evolucao) |
+| `mega-form` | `evolutionStage` começa por `mega` ou é `ultra` | [§14](#escada) |
+| `dungeon-10` | `dungeonRunsCompleted ≥ 10` | [§51](#masmorra) |
+| `tournament-champion` | algum `trophies[].place === 1` | [§53](#torneio) — 2º e 3º lugar **não** abrem |
+| `tasks-100` | `completedTasks.length + activityLog.length ≥ 100` | cosmética, sem moeda — ver abaixo |
+
+A arte é `src/utils/emblemArt.ts` → `emblemArt(id)` (glob de
+`src/assets/soulmon/emblems/*.png`, 64² com alfa, chave = nome do arquivo = id da
+conquista) e `EMBLEM_COUNT` como guard de instalação. Sem arte → `undefined` →
+não desenha.
+
+**Dono.** `src/utils/achievements.ts` (regra) · `src/utils/emblemArt.ts` (arte e
+`emblemFor`, o mapa tier → emblema usado pela cerimônia de marco).
+
+**Régua.** `src/utils/achievements.test.ts` — save novo abre nenhuma; cada uma
+abre pelo próprio contador e nenhuma lê streak; `EMBLEM_COUNT` é 9 e todo id tem
+arte.
+
+**Decisão.** Decisão do dono de 15/09/2026 registrada no cabeçalho de
+`emblemArt.ts` e em `docs/INVENTARIO-ASSETS.md` §7 (SQUAD-ARTE, D1–D9): emblema
+aparece **dentro do visor** — Ficha do Pet, slot `trophy`, segmento Torneio da
+loja. A colocação na Ficha é do canvas Pet (`DECISOES-WIREFRAME.md` §22).
+
+**Casos de borda.**
+- **`tasks-100` é a única que conta tarefas**, e é aceita porque é **cosmética**
+  — não paga Bits, Emblema nem atributo, o mesmo estatuto do bestiário. A
+  proibição #16 ([`01 §7`](01-VISAO.md#as-linhas-vermelhas)) é sobre recompensa
+  **paga** por contagem; o cabeçalho do módulo declara a fronteira.
+- **`habit-*` lê `totalDone`**, que a poda de `HISTORY_CAP` não toca — por isso
+  o de 66 continua alcançável.
+- **Save antigo sem os campos**: todo acesso tem `?? 0` / `?? []`; nenhuma
+  conquista abre por `undefined`.
+- **Emblema-MOEDA ≠ emblema-CONQUISTA**: `emblems` no save ([§46](#moedas)) é
+  número e compra `TOURNAMENT_ITEMS`; este mapa é de conquistas e **conquista
+  nunca se compra**.
+
+**O que NÃO faz.** Não persiste nada (não há campo `achievements` no save). Não
+dá moeda, item, atributo nem `perfectDay`. Não notifica nem abre cerimônia
+própria — a única cerimônia é a do marco de hábito ([§28](#marcos)), que
+reaproveita a peça. Não fecha: não existe "perder conquista".
+
+**Onde a UI mostra.** `src/components/PetPage.tsx` (Ficha: `emblemArt(id)` para
+cada id de `unlockedAchievements(gameState)`, passado pelo `src/App.tsx`, em duas
+linhas) e `src/components/MilestoneCeremony.tsx` (`emblemFor(tier)`).
+
+---
+
+<a id="mapas-de-arte"></a>
+## 57-B. 🎨 Mapas de arte que carregam regra
+
+**Em uma frase.** Módulos de `src/utils/` que só mapeiam id → URL de arte, mas
+cujo cabeçalho fixa uma regra de USO (o que pode e o que não pode ser desenhado)
+— a regra é o que interessa aqui; a peça em si é de
+[`04-IDENTIDADE-VISUAL.md`](04-IDENTIDADE-VISUAL.md) e o símbolo de
+[`06-REFERENCIA/`](06-REFERENCIA/).
+
+| Módulo | O que mapeia | A regra que carrega | Consumidor em 20/09/2026 | Régua |
+|---|---|---|---|---|
+| `src/utils/attackFxArt.ts` → `attackFx`, `auraForElement`, `ATTACK_FX_COUNT` | FX de ataque por `'<elemento>:<estado>'` — 18 base (incl. neutro) + 136 derivados × 6 estados (`cast`/`aura`/`slash`/`impact`/`defended`/`orb`) = 924 | **Só `aura` é chamada** (decisão D9 do dono, 15/09/2026), pelo elemento dominante, na Evolução/Ficha. O combate segue genérico: `buildDungeonWave` sorteia por tier, e os popups de `DungeonGame`/`NightmareBattle` usam `fxArt.ts`. ⚰️ `derivedAttackFxArt.ts` (só os derivados) **não existe mais** — virou este módulo quando os base entraram; `derivedAttackFx` fica como alias `@deprecated`. ⚠️ O regex do glob era guloso e gravava `ataque/fx-fogo:aura`: 924 peças e **nenhuma encontrável**, a aura nunca foi desenhada até 20/09/2026 | `EvolutionPath.tsx`, `PetPage.tsx` | `src/utils/attackFxArt.test.ts` (`ATTACK_FX_COUNT` = 924, chave correta) |
+| `src/utils/emblemArt.ts` → `emblemArt`, `emblemFor`, `EMBLEM_COUNT` | os 9 emblemas de conquista | conquista nunca se compra; `emblemFor` é o mapa tier → emblema do marco | `PetPage.tsx`, `MilestoneCeremony.tsx` | `src/utils/achievements.test.ts` |
+| `src/utils/sigilArt.ts` → `sigilArt`, `SIGIL_COUNT` | 45 sigilos do class-system (elementos/escolas base, estados de talento, `fam_*`, `prof_*`, `soullink`), chave = nome do arquivo | sem arte para a chave → `undefined` → o consumidor mostra **nada** (nunca emoji, nunca box). A chave vem de `ClassTitle.sigilo` ([§22](#oraculo)) | `PetPage.tsx` (Ficha, canto do visor) | `src/components/PetPage.render.test.tsx` (sigilo só quando a classe traz chave; chave sem arte = nada) |
+| `src/utils/placeholderArt.ts` → `PLACEHOLDER_ART` | `dormant` / `forming` / `glitch` — o cristal do meio da cena da Home (v4, 256² alfa) | **um estado, um significado**: apagado = ainda vai nascer; aceso = gerando; rachado = falhou e pode pedir de novo. Só para quem **não** é personagem pronto | `BirthCard.tsx` (nunca `glitch`), `EvolutionPath.tsx` | `src/components/BirthCard` e `EvolutionPath` render tests |
+| `src/utils/hudArt.ts` → `HUD_ART` | moldura de barra 96×8, segmento 6×6, moldura 9-slice 96² (`frameSlice` = 24) | HUD **dentro do visor** é pixel, não vetor (D3 do dono, 15/09/2026) | `pixel/VisorBar.tsx`, `ui/Viewport.tsx` (`frame`) | canvas Sistema SIS-05/X2 |
+| `src/utils/animArt.ts` → `ANIM_ART` | 8 spritesheets 64² horizontais (`eatCrumbs`, `heartBurst`, `showerSplash`, `sleepZ`, `poopPlop`, `sparklePop`, `dustStep`, `hungerDrop`) com `frames` | efeitos **ao redor** do pet: o sprite da criatura continua **único** e se expressa por deformação (D5 do dono) — há guard de que nenhum `lines/*.png` é tira de quadros | `components/pixel/SpriteAnim.tsx` | guard D5 dos sprites (`711be279`) |
+| `src/utils/gainArt.ts` → `GAIN_ART`, `MOVE_ART` | selos de ganho 96² e movimentos 64² estáticos | **Só `evolutionBurst` é chamado** em 20/09/2026 — o burst a 3× atrás do sprite na cerimônia (canvas Evolução D-E6, `b83f30cd`); os outros momentos previstos (`perfectDay`, `levelup`, `chest`, `heal`, `poof`, `dustPuff`) entram quando o canvas do fluxo definir. ⚠️ o cabeçalho do módulo ainda diz "mapa pronto; a chamada entra quando o canvas definir" e chama o burst de "hoje vídeo" — apurado em 21/09/2026 | `EvolutionCeremony.tsx` (`GAIN_ART.evolutionBurst`) | nenhuma — `grep -rn "GAIN_ART\." src/components` (1 ocorrência em 21/09/2026) |
+| `src/utils/dayKeyLabel.ts` → `dayKeyLabel(day, isPt)` | data CURTA de um `dayKey` ("12/09" / "Sep 12"), aceitando ISO **e** `toDateString()` | o ISO é montado **à mão**: `new Date('AAAA-MM-DD')` é meia-noite **UTC** e em fuso negativo (o Brasil inteiro) vira o dia anterior — o diário mostraria 07/09 para um achado do dia 08 | `AdventureDiary.tsx`, `DreamDex.tsx` | `src/components/AdventureDiary.render.test.tsx` |
+| `src/types/category-icons.ts` → `CATEGORY_ICON_NAME`, `categoryIconName` | categoria → nome de ícone Material Symbols | ícone de categoria é ícone de **interface**, mora fora do visor e é **vetor** — o ÚNICO caminho, também nos chips de criação/edição e no onboarding (canvas Atividades D-A7). ⚰️ `CATEGORY_ICON_IMG` / `categoryIconImg` (os PNG `icon-cat-*.png`) **saíram em 20/09/2026**; os PNG ficam só como arquivo de arte, sem importador. A categoria vem do ESTADO e pode ser inválida (`'study'` minúsculo, ausente) → `undefined` → não desenha | Home, `CreateModal`/`EditModal`, onboarding | os `*.render.test.tsx` das telas |
+
+**O que NÃO faz.** Nenhum destes módulos decide regra de jogo: não pontua, não
+grava no save, não escolhe galho. Onde um cabeçalho diz "sem chamada", é porque
+o momento é decisão de canvas, não porque a arte falte.
+
+---
+
 <a id="notificacoes"></a>
 ## 58. 🔔 Notificações como regra
 
@@ -4477,7 +4608,8 @@ card de priming na Home (na fila de avisos, ver a regra das DUAS FILAS).
 
 O que segue é o que o **código** faz e o `CLAUDE.md` (ou um comentário do próprio
 código) descreve de outro jeito, apurado em 09 e 10/09/2026 (D1–D12 em
-09/09/2026; D13–D26 em 10/09/2026). A precedência do
+09/09/2026; D13–D27 em 10/09/2026) e em 20/09/2026 (D28–D30, sincronização
+`2580b73a..dc72579e`). A precedência do
 cabeçalho vale: **o código está certo**. Nenhuma linha aqui é proposta de
 mudança — cada uma é um item para o [`STATUS.md`](../STATUS.md), que o
 orquestrador recolhe.
@@ -4514,6 +4646,9 @@ registraram divergência nenhuma**.
 | D25 | comentário de `handleFeed` (`src/App.tsx`, §3) | "Limited to 5 feedings per rolling hour" | `FOOD_LIMIT_PER_HOUR` é derivado de `MAX_STAGE_REQUIREMENT` = 6 | `grep -n "5 feedings" src/App.tsx` |
 | D26 | `REGISTRO-DE-DECISOES.md` §5.6 (§18) | "rota de redenção visível" marcada como não implementada | `applyRedemption`/`redeemed`/`showRedeemed`/`redeemedMark` estão em produção (WP4.19); o que falta é narrativa, não mecânica | `src/utils/redemption.test.ts` |
 | D27 | comentário de `src/utils/currencies.ts` (§46) | cabeçalho ainda diz "Créditos → reroll, cura instantânea" | a cura instantânea foi removida em 06/09/2026 (D7+D15); há lápide em `App.tsx`, `CreditsModal.tsx`, `monetization.ts` e `shop.ts`, mas não aqui | `grep -n "cura instantânea" src/utils/currencies.ts` |
+| D28 | "Arte e nomes" (§22, `01 §8`) | "os três personagens prontos se chamavam … hoje são **Pyraka, Akashaoi e Nimbrata**" | `PREMADE_CHARACTERS` tem **seis** desde 15/09/2026 (`c11dc49d`, D1 da SQUAD-ARTE): `igni`, `nautilu`, `astrase` entraram com nome de `DUNGEON_LINE_NAMES`. Apurado em 20/09/2026 | `grep -c "^    id: '" src/utils/monetization.ts` → 6 |
+| D29 | comentários de `src/utils/achievements.ts` e `src/utils/emblemArt.ts` (§57-A) | cabeçalhos dizem "As **8** CONQUISTAS" / "os **8** EMBLEMAS" / "guard de instalação (8)", e o teste chama-se "as 8 conquistas têm arte instalada" | `ACHIEVEMENT_IDS` tem **9** ids, há **9** PNGs em `src/assets/soulmon/emblems/` e o próprio teste exige `EMBLEM_COUNT` = **9** (`tasks-100` entrou depois do cabeçalho). O `STATUS.md` de 15/09/2026 também diz "8 emblemas". Apurado em 20/09/2026 | `ls src/assets/soulmon/emblems` → 9 arquivos; `grep -n "EMBLEM_COUNT).toBe" src/utils/achievements.test.ts` |
+| D30 | `CLAUDE.md`, tabela 💠 Bits (§46) | os Bits aparecem "em fonte de calculadora (`bitsStyle` retrô / `bitsStyleLight` tema claro)" — dois estilos, um por tema | os dois exports são **idênticos** e a cor é o token `--sm2-primary-ink` nos dois temas (canvas Loja D-L11, 20/09/2026); não há mais versão por tema | `grep -n "bitsStyleLight" src/utils/currencies.ts` |
 
 **Como usar esta tabela.** Antes de "corrigir" qualquer linha, leia a linha
 correspondente do [`REGISTRO-DE-DECISOES.md`](../REGISTRO-DE-DECISOES.md): D1 e

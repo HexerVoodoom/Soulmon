@@ -7,6 +7,19 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 21/09/2026 — Manual sincronizado com `dc72579e` (delta `2580b73a..dc72579e`, 92 commits)
+>
+> 15 docs de `docs/manual/` reescritos só nas seções que o diff tocou (Fase 2
+> identidade, squad-arte, widgets/overlay/push, bíblia narrativa), cada um
+> verificado símbolo a símbolo e carimbado em 21/09/2026. Divergências novas
+> registradas nos próprios docs: `CLAUDE.md` ainda diz "três personagens
+> prontos" (são 6), `bitsStyleLight` "por tema" (idêntico), `setImageViewResource`
+> confiável (hoje é fallback), `pet_grid.xml` (morto), `PlayCard`/`playLog` (sem
+> consumidor desde `f5ead7c0`); cabeçalhos de `achievements.ts`/`emblemArt.ts`
+> dizem 8 emblemas (são 9); cabeçalho de `gainArt.ts` diz "sem chamada" mas
+> `evolutionBurst` já é desenhado pela cerimônia. `src/components/PlayCard.tsx`
+> é candidato a remoção.
+>
 > ## 20/09/2026 — Fase 2 (identidade) FECHADA: 14 canvases aprovados e implementados na `main`
 >
 > Sistema + 13 fluxos (Home, Atividades, Rituais, Onboarding-funil, Pet,
