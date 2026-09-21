@@ -1,0 +1,104 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "title": "FORA-01 · o widget \"Soulmon\" (A, 180×90dp a 1:1) É o visor — anel chapado, vidro, a criatura do estágio a 64dp, 13sp/12sp; contador só com ≥ 1 feita (13.16); copy EN (13.18)",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 3068,
+      "page": "page-1"
+    },
+    {
+      "file": "MainClaro.dc.html",
+      "title": "FORA-01 claro · a mesma folha no tema CLARO — o widget é o MESMO (literais #071413/#C68642: o XML não tem tema)",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1753,
+      "page": "page-1"
+    },
+    {
+      "file": "Tamanhos.dc.html",
+      "title": "FORA-02 · 03 · 04 · 05 · os outros quatro a 1:1 dp, removendo camadas — B (110², sem frase), C (40², sprite 32 + cocô 16), D (180×40, nome + frase, sem contador — 13.16), E (180×110, corações 16dp + energia com contorno + 64)",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 3221,
+      "page": "page-1"
+    },
+    {
+      "file": "Escada.dc.html",
+      "title": "FORA-06 · a escada de frases — 7 degraus EN (13.18 → redator-ux) como lista de aparelho, sem emoji; o degrau 5 dentro do widget-visor",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 1871,
+      "page": "page-1"
+    },
+    {
+      "file": "OverlayPrincipal.dc.html",
+      "title": "FORA-07 · o overlay Electron — a faixa (a criatura do estágio a 64 + balão + glifos pixel a 1×) e o menu-aparelho 340 (MENU_SIZE): barra de título, estado em Material, retrato 128 (acordado e dormindo), fileira de cuidado, tarefas sem dígito",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 3605,
+      "page": "page-2"
+    },
+    {
+      "file": "OverlayTarefas.dc.html",
+      "title": "FORA-08 · o overlay — tarefas de hoje: checkbox SIS-03 em linha 44; vazia; sem conta",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1891,
+      "page": "page-2"
+    },
+    {
+      "file": "OverlayConfig.dc.html",
+      "title": "FORA-09 · 10 · 11 · o overlay — configurações: translate / sync / lock / diamond credit-ink / arrow_forward; três estados de conta",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 2295,
+      "page": "page-2"
+    },
+    {
+      "file": "Pushes.dc.html",
+      "title": "FORA-12 → 18 · os 7 pushes — o card da bandeja: chama mono no acento + copy literal de _pushCopy.js + o ícone grande num mini-visor 48 REDONDO",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 2987,
+      "page": "page-3"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "leia",
+      "page": "page-1",
+      "x": 0,
+      "y": -190,
+      "w": 1470,
+      "text": "Soulmon — Fora do app (identidade, Fase 2, 13º canvas, 20/09/2026 — rodada 2, pós-crítica: widgets a 1:1 dp, camadas removidas em vez de comprimidas, D sem \"—\", uma cara só para a criatura). Cada artboard = o wireframe cinza de mesmo nome (../, DECISÕES §16, rodada 3 / modal final 15/09) com a identidade aplicada — mesma hierarquia, mesmos estados, mesma copy, mesma ordem de foco. Três superfícies, três regras: o WIDGET Android É o visor (anel de cobre + vidro viewport-bg, a criatura do estágio sprite_*.png a 64/48/32 dp (÷6/÷8/÷12 de 384, bucket de densidade), corações em viewport-ink, energia em primary-fill; o texto na fonte do SISTEMA — RemoteViews não carrega Rubik/Silkscreen nem fonte de ícone, e o canvas não finge); no OVERLAY o pet é o visor (a faixa 358×72 com a MESMA criatura a 64 e os glifos pixel a 1×; o retrato a 128) e o menu é aparelho (card 340 = MENU_SIZE, chama + wordmark, settings/expand_more/close em 44, favorite/bolt/restaurant, volunteer_activism/restaurant/shower/bedtime, task_alt sem dígito — 13.17); no PUSH o ícone mono é a chama (ic_notification.xml, em primary-ink) e o ícone grande é um mini-visor 48 redondo com o favicon a 1×. Nenhum token novo; nenhum vermelho; 13.16 (a linha do contador some no zero; nunca ⚡0/5), 13.18 (widget só EN). Escuro em todos; claro só no MainClaro. Medido em localhost:8779: 0 texto < 12, 0 vazamento, 0 alvo < 44, 0 opacidade < 1, 0 Silkscreen fora do vidro, 0 PNG fora do vidro."
+    }
+  ],
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Fora do app — os 5 widgets Android e a escada de frases"
+    },
+    {
+      "id": "page-2",
+      "name": "Fora do app — o overlay de desktop (Electron)"
+    },
+    {
+      "id": "page-3",
+      "name": "Fora do app — os 7 pushes"
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "page-1"
+  }
+}
