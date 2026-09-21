@@ -7,13 +7,18 @@ import { petSprite, facesLeft } from './sprites';
 import { loadState, type DesktopState } from './state';
 import { idlePhrase } from './phrases';
 // Glifos pixel a 1× (32) no lugar dos emoji do sistema (canvas Fora do app,
-// D-F10): carinho e banho já têm arte; comida e sono ficam no ícone Material
-// (`restaurant`/`bedtime`) até a squad-arte entregar `glyph-food-32`/`glyph-sleep-32`.
+// D-F10): carinho e banho vêm do HUD do app; comida e sono são da SQUAD-ARTE
+// rodada 2 (R2-5), só do desktop, em `desktop/renderer/assets/`. O ícone
+// Material fica só como reserva para um emoji sem arte.
 import glyphAffection from '../../../src/assets/soulmon/hud/glyph-affection.png';
 import glyphBath from '../../../src/assets/soulmon/hud/glyph-bath.png';
+import glyphFood from '../assets/glyph-food-32.png';
+import glyphSleep from '../assets/glyph-sleep-32.png';
 import sleepZ from '../../../src/assets/soulmon/fx/anim-sleep-z.png';
-const EFFECT_ART: Record<string, string> = { '💗': glyphAffection, '🫧': glyphBath };
-const EFFECT_ICON: Record<string, string> = { '🍎': 'restaurant', '🍖': 'restaurant', '💤': 'bedtime' };
+const EFFECT_ART: Record<string, string> = {
+  '💗': glyphAffection, '🫧': glyphBath,
+  '🍎': glyphFood, '🍖': glyphFood, '💤': glyphSleep,
+};
 
 let state: DesktopState = loadState();
 const t = (pt: string, en: string) => (state.language === 'pt-BR' ? pt : en);
@@ -126,10 +131,10 @@ function burst(emoji: string, count = 3) {
       img.src = art; img.alt = ''; img.width = 32; img.height = 32;
       el.appendChild(img);
     } else {
-      // Sem glifo pixel ainda: o ícone Material, nunca o emoji do fabricante.
+      // Emoji sem glifo pixel: o ícone Material genérico, nunca o emoji do fabricante.
       const ico = document.createElement('span');
       ico.className = 'ico';
-      ico.textContent = EFFECT_ICON[emoji] ?? 'favorite';
+      ico.textContent = 'favorite';
       el.appendChild(ico);
     }
     // Sobe de cima da cabeça: três posições em cima do corpo de 64.
