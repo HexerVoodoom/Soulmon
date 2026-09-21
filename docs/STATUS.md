@@ -39,6 +39,66 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > rodada 2, `bg-gameboy`, largura do `UnlockNudge`, correção do `CLAUDE.md`,
 > deploy manual do worker de push, bump do `CACHE_VERSION`, branches órfãs).
 >
+> ## 21/09/2026 (2ª rodada) — SQUAD-NARRATIVA, régua executável e a trava de segurança do chat
+>
+> **O achado mais grave da sessão não é de narrativa.** `functions/api/chat.js` é
+> a única superfície onde a pessoa escreve texto livre e íntimo, para uma
+> entidade que o produto declara ser a alma dela, respondida por um modelo de 8B
+> sem revisão humana — e o bloco `NEVER` não dizia **uma palavra** sobre
+> autolesão. Pior: a persona é definida como alguém que **sofre quando a pessoa
+> não cuida dela**, então um modelo pequeno instruído a ser carinhoso produz, com
+> probabilidade real, alguma variante de *"não faz isso, e eu?"* — culpa como
+> dissuasor, que é o conteúdo de "sou um peso" na forma mais direta que este
+> produto consegue gerar. A cláusula **SAFETY** entrou e proíbe isso
+> nominalmente; a superfície de suporte entrou **na tela do chat** (`ChatBox`),
+> porque quem está mal às 2h não navega até Configurações.
+> ⚠️ **Honestidade sobre o alcance, escrita no arquivo:** instrução de prompt é
+> probabilística. O caminho determinístico (casar no servidor ANTES do Groq e
+> devolver string curada) é a única peça testável e está **recomendado, não
+> feito**.
+>
+> **Régua executável:** `src/narrativa.contract.test.ts` trava o vocabulário
+> vetado em fonte, com uma tabela `DÍVIDA` que só pode encolher, e exige que todo
+> caminho de código citado na bíblia exista. Verificada por mutação.
+>
+> **SQUAD-NARRATIVA:** `soulmon-loremaster`, `soulmon-narrative-critic`,
+> `soulmon-copy-redator`, a skill `/squad-narrativa` e o roteamento no
+> coordenador. A bíblia cresceu para a camada ecológica (biologia, 17 elementos,
+> 9 reinos, eras) e as propostas saíram para `docs/NARRATIVA-PROPOSTAS.md`.
+> `docs/NARRATIVA-COPY.md` traz 66 linhas de copy PT+EN, e é recomendação — nada
+> foi aplicado em tela, para não colidir com a sessão de design.
+>
+> **A crítica adversarial reprovou a rodada e estava certa.** Três achados que
+> valem registro, todos medidos no código:
+> - **`lowHp` diz "Tô com saudade. Como VOCÊ está?" e dispara quando o HP caiu** —
+>   ou seja, no dia em que a pessoa não cumpriu a meta. Emoção da criatura
+>   causada pelo que a pessoa deixou de fazer, no pior momento. Mais quatro
+>   famílias de fala no mesmo caso: viraram a tabela `DÍVIDA` da §5.10;
+> - **`welcomeBack.ts` escolhe a saudação POR FAIXA DE DIAS** ("Quanto tempo!",
+>   "Eu estava aqui, esperando") — a contagem de ausência que a L6 proíbe, num
+>   arquivo cujo próprio comentário diz que isso é "cobrança com roupa de
+>   saudade";
+> - **`MILESTONE_TEXT.tree` viola a L1 no ar**: "virou parte de quem você é".
+>
+> **⏳ DEPENDE DO DONO (§3):**
+> 1. **P8 — a marca `Soulmon` é nome canônico de uma criatura da Bandai**
+>    (Champion, Fantasma, atributo Virus), verificado na enciclopédia oficial.
+>    Precede tudo; pede anterioridade (INPI/USPTO) e revisão jurídica antes de
+>    qualquer loja. A bíblia não depende disso — o mundo se chama **a Malha**.
+> 2. **Se entra diretório externo de linhas de apoio** (ex.: findahelpline) e
+>    quais serviços locais são nomeados. O texto curado já está no `ChatBox`, sem
+>    telefone — um modelo de 8B alucina número, e número errado em tela de crise
+>    pune quem pediu ajuda.
+> 3. **Classificação etária.** A §16 já devolvia isso; o achado do chat torna
+>    urgente, porque parte do público real é adolescente.
+> 4. As 16 propostas de `docs/NARRATIVA-PROPOSTAS.md`, com destaque para as de
+>    PI (P9 Serah/Pyraka, P10 Zeed, P1 os três galhos).
+>
+> **Aberto para a próxima rodada, sem depender do dono:** os três limites da §16
+> no guia e no Sobre (a L10 segue violada nessas duas telas — território da
+> sessão de design); o caminho determinístico de crise no servidor; e a troca das
+> cinco famílias de fala da `DÍVIDA` da §5.10.
+
 > ## 21/09/2026 — Universo narrativo: a bíblia nasce, com três pareceres em cima
 >
 > `docs/NARRATIVA-E-UNIVERSO.md` (novo, vivo, indexado no `00-MAPA.md`): premissa,
