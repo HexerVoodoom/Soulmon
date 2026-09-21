@@ -88,7 +88,17 @@ if (saida.ok) {
   try { for (const f of execSync('ls', { cwd: refDir }).toString().split('\n').filter(Boolean)) ref += readFileSync(join(refDir, f), 'utf8'); } catch { /* sem referência */ }
   const vivos = new Set(ARVORES.flatMap(a => modulosDe(a)));
   for (const m of vivos) if (!ref.includes('`' + m + '`')) saida.novos.push(m);
-  for (const l of ref.matchAll(/^### `([^`]+)`/gm)) { const p = l[1]; if (/^(src|functions|workers|desktop)\//.test(p) && !vivos.has(p) && !existsSync(join(ROOT, p))) saida.apagados.push(p); }
+  // A LINHA INTEIRA do H3, não só o caminho: uma entrada já marcada `⚰️ apagado
+  // em <sha>` é trabalho FEITO, e sinalizá-la de novo a cada rodada é um alarme
+  // que nunca fecha. Medido em 21/09/2026: `EvoTrail.tsx` estava com a lápide
+  // desde `7ea27825` e voltava em toda sincronização como se faltasse fazer —
+  // e alarme permanente é o que ensina a ignorar o alarme, que é exatamente o
+  // modo de falha que este manual existe para evitar.
+  for (const l of ref.matchAll(/^### `([^`]+)`(.*)$/gm)) {
+    const p = l[1];
+    if (/⚰️/.test(l[2])) continue;
+    if (/^(src|functions|workers|desktop)\//.test(p) && !vivos.has(p) && !existsSync(join(ROOT, p))) saida.apagados.push(p);
+  }
   const exportsDe = src => (src.match(/^export\s+(?:default\s+)?(?:async\s+)?(?:const|let|function\*?|class|type|interface|enum)\s+[A-Za-z_$][\w$]*/gm) || []).sort().join('\n');
   for (const { status, path } of mudados) {
     if (status !== 'M' || !vivos.has(path)) continue;
