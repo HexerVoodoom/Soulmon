@@ -39,6 +39,37 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > rodada 2, `bg-gameboy`, largura do `UnlockNudge`, correção do `CLAUDE.md`,
 > deploy manual do worker de push, bump do `CACHE_VERSION`, branches órfãs).
 >
+> ## 21/09/2026 (3ª rodada) — o dono decidiu as quatro pendências da narrativa
+>
+> Registro canônico, com alternativa que perdeu e gatilho de revisão, em
+> **`docs/REGISTRO-DE-DECISOES.md` §14**. Resumo:
+>
+> 1. **A marca `Soulmon` FICA** — *"o nome é do nosso app e personagens
+>    próprios, não da Bandai"*. A medição que existia na hora de decidir está
+>    registrada junto (há uma criatura da Bandai com esse nome, verificada na
+>    enciclopédia oficial), **não para reabrir, mas para nenhuma sessão futura
+>    tratar como novidade**. Gatilho: comunicação formal de titular ou de loja.
+> 2. **A trava de crise ganhou caminho**: `findahelpline.com` (resolve por país)
+>    + CVV 188 · 988 · 116 123, numa lista **curada e estática** no `ChatBox`.
+>    A lista NUNCA sai do modelo — um 8B alucina telefone, e número errado em
+>    tela de crise pune quem teve a coragem de pedir ajuda.
+> 3. **O reencontro continua por FAIXAS** (WP2.7 mantido). As frases que
+>    encenavam espera já tinham saído; a estrutura fica. Consequência declarada:
+>    a saudação de retorno é a **única** exceção ao sensório, porque é voz do
+>    PRODUTO lendo o save, não a criatura lendo tempo.
+> 4. **Os nomes de PI ficam todos** (*"nenhum, aceito todos assim"*):
+>    `Vírus/Dado/Vacina`, `Glitchtama`, `Serah`, `Pyraka`, `Zeed`.
+>    `Ruptura/Trama/Guarda` viram vocabulário de MUNDO, não rótulo de UI. A
+>    régua `src/narrativa.contract.test.ts` foi reescrita de `DÍVIDA`
+>    (pendência) para `EXCECOES` (o que ficou, por decisão) — e continua
+>    travando o que nunca foi aceito (`tamer`, `domador`, `treinador`,
+>    `digievolução`, `mundo digital`) e o espalhamento para arquivo NOVO.
+>
+> **Aberto, e não depende do dono:** os três limites da §16 no guia e no Sobre
+> (a L10 segue violada nessas duas telas — território da sessão de design) e o
+> caminho determinístico de crise no servidor, que é a única peça testável e que
+> o parecer clínico recomendou para a rodada seguinte.
+
 > ## 21/09/2026 (2ª rodada) — SQUAD-NARRATIVA, régua executável e a trava de segurança do chat
 >
 > **O achado mais grave da sessão não é de narrativa.** `functions/api/chat.js` é

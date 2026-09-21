@@ -779,3 +779,107 @@ decisão desta página; o que o código faz hoje continua sendo o antigo até al
 superfície. Quem implementa passa pelo guarda dono (constância para 13.2/13.5, sustento para
 13.1, permanência para 13.3/13.4) e pelo `soulmon-guarda-linha-vermelha`.
 
+
+---
+
+## 14. As decisões do dono de 21/09/2026 — narrativa, PI e a trava de crise
+
+Saíram da rodada da SQUAD-NARRATIVA (a bíblia `docs/NARRATIVA-E-UNIVERSO.md`, o
+pacote `docs/NARRATIVA-COPY.md`, três pareceres bloqueantes e a crítica
+adversarial). Quatro perguntas foram ao dono; as quatro voltaram decididas.
+
+### 14.1 A marca `Soulmon` fica — o nome é do app e dos personagens próprios
+
+**A medição, que continua verdadeira e não é o que ficou decidido:** existe uma
+criatura da Bandai chamada Soulmon (Champion, tipo Fantasma, atributo Virus),
+listada na enciclopédia oficial (`digimon.net/reference_en`), verificada na
+fonte em 21/09/2026. O parecer de PI classificou como risco alto pela
+convergência de sinais: v-pet, atributo vírus/dado/vacina, escada
+rookie→champion→ultimate→mega.
+
+**A decisão:** *"Soulmon é o nome do nosso app e personagens próprios, não da
+Bandai."* O nome **fica**, e a proposta P8 está fechada.
+
+**Por que isto está registrado assim, com a medição junto:** para nenhuma
+sessão futura reabrir o assunto como se fosse novidade. O achado não some
+porque foi decidido; ele fica aqui como o que já se sabia quando se decidiu. Se
+o gatilho de revisão vier — uma notificação de loja, uma reclamação de PI —, a
+conversa começa deste parágrafo, não do zero.
+
+**Alternativa que perdeu:** trocar o nome antes de submeter a loja, ou levantar
+anterioridade (INPI/USPTO) primeiro. **Gatilho de revisão:** qualquer
+comunicação formal de titular ou de loja.
+
+### 14.2 A trava de crise do chat ganha caminho: diretório externo + serviços locais
+
+**Contexto:** o parecer clínico achou que `functions/api/chat.js` — a única
+superfície onde a pessoa escreve texto livre e íntimo, respondida por um modelo
+de 8B sem revisão humana — não tinha **nenhuma** instrução sobre autolesão. Pior,
+a persona é definida como alguém que sofre quando a pessoa não cuida dela, o que
+torna previsível a frase mais perigosa possível ali: *"não faz isso, e eu?"* —
+culpa como dissuasor, que é o conteúdo de "sou um peso" na forma mais direta que
+este produto consegue produzir.
+
+**A decisão:** entra o diretório `findahelpline.com` (resolve por país; é o que
+Apple e Google usam) **mais** os serviços locais do público real — CVV 188 no
+Brasil, 988 nos EUA/Canadá, 116 123 no Reino Unido/Irlanda.
+
+**A regra dura que acompanha, e ela não é negociável:** a lista é **curada,
+estática e humana**, e **nunca** sai do modelo. Um `llama-3.1-8b-instant`
+alucina número de telefone com facilidade, e número alucinado numa tela de crise
+pune quem teve a coragem de pedir ajuda. A cláusula SAFETY do system prompt
+proíbe explicitamente o modelo de citar número, serviço ou site.
+
+**Alternativas que perderam:** só os serviços locais (deixaria sem caminho quem
+está fora de BR/US) e manter só a frase genérica (transfere a pesquisa para quem
+está no estado em que iniciativa e função executiva estão mais comprometidas —
+o parecer foi explícito em recusar).
+
+**Onde mora:** a frase e os links no `ChatBox`, e não nas Configurações, porque
+quem está mal às 2h da manhã não navega até lá. Discrição é requisito clínico:
+aviso de crise proeminente numa tela de bichinho virtual estigmatiza e assusta o
+uso normal.
+
+### 14.3 O reencontro continua por FAIXAS de ausência (WP2.7 mantido)
+
+**A decisão:** as faixas de `welcomeBack.ts` ficam. O WP2.7 continua valendo:
+*continuar* e *voltar* não são a mesma coisa.
+
+**A alternativa que perdeu:** colapsar tudo numa frase idêntica em 2 e em 40
+dias, pedida pelo critério (e) do parecer clínico e sustentada pelo sensório da
+bíblia (§5.10: a criatura não tem órgão que leia tempo decorrido).
+
+**O que mudou de fato, e não dependia desta decisão:** as frases das faixas 2 e
+3 diziam *"Quanto tempo!"*, *"Senti saudade esses dias"* e *"Eu estava aqui,
+esperando"* — e saíram. O cabeçalho do arquivo já proibia mencionar o que ficou
+para trás, e elas obedeciam ao pé da letra; o que mencionavam era **tempo** e
+**espera**. A culpa não precisa de número: vem da cena. A trava fechou a
+contabilidade e deixou a iconografia aberta.
+
+**Consequência declarada:** a saudação de retorno passa a ser a **única** exceção
+ao sensório — ela varia com a ausência porque é voz do PRODUTO lendo um dado do
+save, não a criatura lendo tempo. Nenhuma frase dela pode dizer, sugerir ou
+encenar a duração. **Gatilho de revisão:** se alguma frase futura voltar a
+encenar espera, a decisão volta à mesa.
+
+### 14.4 Os nomes de propriedade intelectual ficam todos como estão
+
+**A decisão:** *"nenhum, aceito todos assim."* Ficam `Vírus/Dado/Vacina` como
+rótulo, `Glitchtama`, `Serah`, `Pyraka` e `Zeed`. As propostas **P1, P5, P9 e
+P10 estão fechadas**.
+
+**O que isso muda no que já existe:** `Ruptura / Trama / Guarda` deixam de ser
+proposta de rótulo e passam a ser **vocabulário de MUNDO** — servem para
+escrever lore sobre o que cada galho é, e não substituem o texto da interface. A
+régua `src/narrativa.contract.test.ts` foi reescrita: a tabela deixou de se
+chamar `DÍVIDA` (pendência a quitar) e passou a `EXCECOES` (o que ficou, por
+decisão registrada).
+
+**O que a régua continua travando, e é por isso que ela sobrevive à decisão:**
+os termos que **nunca** foram aceitos — `tamer`, `domador`, `treinador`,
+`digievolução`, `mundo digital` — e o espalhamento de um termo aceito para um
+arquivo **novo**. A decisão foi "fica como está", não "use à vontade": arquivo
+novo é escolha nova, e ela passa a ser visível em vez de silenciosa.
+
+**Gatilho de revisão:** o mesmo de 14.1 — comunicação formal de titular ou de
+loja, ou reprovação de ficha.

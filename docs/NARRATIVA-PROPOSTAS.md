@@ -3,15 +3,21 @@
 > **Dono:** `soulmon-loremaster` · **Data:** 21/09/2026 · **Estado:** vivo
 > **Não cobre:** regra de jogo. **Nada aqui está implementado.**
 > **Precedência:** código > teste > `CLAUDE.md` > manual > a bíblia > este doc.
-> **A bíblia é `docs/NARRATIVA-E-UNIVERSO.md`**; este arquivo é a §14 dela,
-> extraída em 21/09/2026 porque 180 linhas de proposta ficavam entre a lore e o
-> checklist que todo redator precisa alcançar — e proposta é justamente o
-> material que **não** decide nada.
+>
+> ✅ **FECHADAS pelo dono em 21/09/2026** (registro canônico em
+> [`REGISTRO-DE-DECISOES.md`](REGISTRO-DE-DECISOES.md) §14, e é lá que a
+> conversa recomeça se alguém quiser reabrir):
+> **P1**, **P5**, **P9**, **P10** — os nomes ficam todos como estão
+> (*"nenhum, aceito todos assim"*) · **P8** — a marca `Soulmon` fica, o nome é
+> do app e dos personagens próprios · **P2** — as faixas do reencontro ficam
+> (WP2.7 mantido), e as frases que encenavam espera já saíram.
+> As entradas delas abaixo ficam **como registro do que foi considerado**, não
+> como pendência.
 
 ## As propostas
 
-Nenhuma destas altera regra de jogo. P1–P7 e P9–P16 são de TEXTO, rótulo ou
-guard; **P8 é decisão de marca e precede as outras**. Todas passam pelo
+Nenhuma destas altera regra de jogo. São de TEXTO, rótulo ou guard. As abertas
+passam pelo
 `soulmon-guarda-linha-vermelha` e pelo `soulmon-ip-brand-guardian`.
 
 **P1 — Nome de jogador para os três galhos (Ruptura / Trama / Guarda).**

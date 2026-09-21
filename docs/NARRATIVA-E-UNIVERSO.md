@@ -434,11 +434,17 @@ Fora de `petVoice.ts`, no mesmo passe: `welcomeBack.ts` (as faixas 2 e 3 diziam
 cujo próprio cabeçalho proíbe balanço no reencontro) e `MILESTONE_TEXT.tree`
 (*"virou parte de quem você é"*, a L1 no marco de 66 dias).
 
-⏳ **O que sobra, e é do dono:** colapsar as FAIXAS do `welcomeBack` numa frase
-só, idêntica em 2 e em 40 dias (critério (e) do parecer clínico). Trocar as
-frases foi conserto; colapsar as faixas reabre a decisão do WP2.7, que rejeitou
-exatamente isso com o argumento de que "continuar" e "voltar" não são a mesma
-coisa. Ver a proposta **P2**.
+✅ **E o que sobrava foi decidido:** o dono manteve as FAIXAS do `welcomeBack`
+em 21/09/2026 — o WP2.7 continua valendo ("continuar" e "voltar" não são a mesma
+coisa), e o que estava errado eram as frases, que já saíram. A P2 está fechada
+nessa forma.
+
+⚠️ **A consequência para quem escreve:** a saudação de retorno é a **única**
+exceção declarada ao sensório. Ela varia com a ausência porque é voz do
+PRODUTO reagindo a um dado do save, não a criatura lendo tempo — e nenhuma das
+frases pode dizer, sugerir ou encenar a duração. Foi assim que *"Quanto tempo!"*
+e *"eu estava aqui, esperando"* entraram: a trava de cima proibia a
+contabilidade e deixou a iconografia aberta.
 
 ### 5.11 Continuidade — por que não há reprodução
 
@@ -625,10 +631,13 @@ recompensa: é o formato do que ficou. No empate, o que decide é o **ritmo** do
 caminho (`src/utils/carePattern.ts`), e os três ritmos puxam galhos distintos
 sem que nenhum seja melhor (L7).
 
-⚠️ **O par EN de `data` NÃO é "Weave"** — *the Weave* é o nome da trama de magia
-de Forgotten Realms / D&D, franquia banida. Parecer de PI de 21/09/2026: PT
-**Trama** fica, EN vira **Braid** (alternativa: *Lattice*). Nenhuma string pode
-nascer com "Weave".
+⚠️ **DECISÃO DO DONO, 21/09/2026: os rótulos atuais FICAM.** Perguntado se eu
+devia trocar `Vírus/Dado/Vacina` pelos nomes acima, ele respondeu *"nenhum,
+aceito todos assim"*. Então **Ruptura / Trama / Guarda são vocabulário de
+MUNDO** — servem para escrever lore e descrever o que cada galho é — e **não
+são o rótulo da interface**, que continua o que sempre foi. A proposta P1 está
+fechada, e a régua `src/narrativa.contract.test.ts` registra os nove arquivos
+como exceção declarada, não como dívida.
 
 ### 6.7 As 9 linhas próprias
 
@@ -641,11 +650,11 @@ para quem escrever copy não improvisar:
 |---|---|
 | **Ignar** | Calor que trabalha: assenta onde há forja e não apaga. |
 | **Lumel** | Luz curta e honesta; enxerga perto, ilumina quem está ao lado. |
-| **Serah** ⚠️ | Corpo de corrente; atravessa sem deixar marca. **Nome com colisão de PI** (Serah Farron, Final Fantasy XIII) — troca pendente, ver §14 P9. |
-| **Pyraka** ⚠️ | Fagulha em excesso, contida a duras penas; nobre e impaciente. **Nome com colisão de PI** (Piraka, Bionicle/LEGO) — troca pendente, ver §14 P9. |
+| **Serah** | Corpo de corrente; atravessa sem deixar marca. *(O parecer de PI apontou proximidade com um personagem de outra franquia; o dono decidiu manter em 21/09/2026 — P9 fechada.)* |
+| **Pyraka** | Fagulha em excesso, contida a duras penas; nobre e impaciente. *(Idem — decisão do dono de manter, 21/09/2026.)* |
 | **Akashaoi** | Vem da camada sem superfície; está sempre meio ausente. |
 | **Nimbrata** | Criatura de céu baixo — névoa, peso de chuva antes da chuva. |
-| **Igni** ⚠️ | Brasa pequena e obstinada; a mais comum e a que nunca cede. Colisão parcial (sinal *Igni*, The Witcher); latim comum, risco baixo — ver §14 P9. |
+| **Igni** | Brasa pequena e obstinada; a mais comum e a que nunca cede. *(Latim comum; mantido.)* |
 | **Nautilu** | Espiral de fundo de água; guarda dentro de si o que recolhe. |
 | **Astrase** | Alinhada a corpos distantes; mede tempo que não é o nosso. |
 
@@ -871,7 +880,7 @@ renascimento como recomeço do zero, castigo, purificação ou apagamento.
 | **término** ⚠️ | ending | o fim da insistência local de um padrão (§5.12) | "morte", "abate", "KO" — sempre, sem exceção |
 | **forma** | form | cada estágio | "digievolução" ⚠️; "nível", "upgrade" |
 | **mudar de forma** | to take a new form | o ato | "digievoluir" ⚠️; "evoluir" é tolerável na UI já no ar; nunca "subir de nível" |
-| **Ruptura / Trama / Guarda** *(pendente de P1 — hoje a UI ainda diz Vírus/Dado/Vacina)* | Rupture / **Braid** / Ward | os três galhos | "vírus", "dados", "vacina" em texto de jogador (herança de fork); **"Weave"** ⚠️ em EN (D&D) — §6.6 |
+| **Ruptura / Trama / Guarda** *(vocabulário de MUNDO, para lore — a UI diz Vírus/Dado/Vacina, e o dono decidiu manter assim em 21/09/2026)* | Rupture / Braid / Ward | os três galhos, em texto de mundo | em EN prefira **Braid** a "Weave" em lore NOVO (*the Weave* é de D&D); o rótulo da UI não muda |
 | **o abrigo** | the den | o palco | "casa", "quarto", "base" |
 | **as fendas** ⚠️ | the rifts | a masmorra | "masmorra"/"dungeon" é tolerável na UI já no ar; evitar em lore novo |
 | **as arenas** | the arenas | o Torneio | "coliseu", "liga", "ginásio" ⚠️ |
@@ -886,7 +895,7 @@ renascimento como recomeço do zero, castigo, purificação ou apagamento.
 | **passo** | step | um pedaço declarado de uma ocasião (`StepRow`) | "subtarefa", "checklist" |
 | **linha** | line | as 9 linhagens | "espécie" é tolerável; "família" já tem sentido técnico |
 | **ofício** | craft | as 6 escolas | "classe" (já é termo técnico interno, não mostrado) |
-| **Glitchtama** ⚠️ | Glitchtama | o item | já está no código; ver §14 P5 |
+| **Glitchtama** | Glitchtama | o item | nome mantido por decisão do dono (21/09/2026, P5 fechada) |
 | *(proposta P3)* **a Borda · o Enquadre · a Insônia ⚠️ · o Primeiro Chão · o Cobre Frio** | the Edge · the Frame · the Sleepless · the First Ground · the Cold Copper | as cinco camadas da fenda (§7.3) | nada decidido; não use em string enquanto P3 estiver aberta |
 
 Regra transversal: **nenhum nome de criatura leva sufixo fixo** (`-mon` e

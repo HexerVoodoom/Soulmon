@@ -7500,3 +7500,17 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
   color: var(--sm-muted);
   text-wrap: pretty;
 }
+
+/* O link da superfície de suporte do chat (decisão do dono, 21/09/2026).
+   Sublinhado SEMPRE: num texto `muted` de 11px, cor sozinha não sinaliza
+   link com contraste suficiente, e esta é a última linha que alguém em
+   crise precisa conseguir identificar como clicável. Herda a cor do
+   parágrafo de propósito — destacar em primário daria a este link mais
+   peso visual que o próprio chat, e a discrição aqui é requisito clínico
+   (ver a nota no ChatBox). Alvo de toque preservado pelo padding. */
+.sm2-chat-support-link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  padding: 2px 0;
+}

@@ -60,14 +60,16 @@ via `language === 'pt-BR'`).
 > vocabulário vetado em fonte (com a tabela `DÍVIDA` do que já está no app por
 > decisão pendente) e exige que todo caminho de código citado na bíblia exista.
 > A squad é `/squad-narrativa`.
-> ⚠️ **Três achados de PI saíram dela e ainda dependem do dono**: `Soulmon` é o
-> nome canônico de uma criatura da Bandai (Champion, tipo Fantasma, atributo
-> Virus — verificado na enciclopédia oficial); `Serah` e `Pyraka`, em
-> `DUNGEON_LINE_NAMES`, colidem com Final Fantasy XIII e Bionicle; e
-> `Vírus/Dado/Vacina` como RÓTULO é o sistema de atributos assinatura de outra
-> franquia, hoje visível em nove arquivos — inclusive no texto do Ultra gerado
-> em `oracle.ts`, que aparece na tela de revelação. Os **ids do save não mudam**
-> (linha vermelha #20); o que muda é o que o jogador lê. Ver §14 P8, P9 e P1.
+> ✅ **Os achados de PI dela foram DECIDIDOS pelo dono em 21/09/2026, e a
+> decisão foi manter tudo**: a marca `Soulmon` ("o nome é do nosso app e
+> personagens próprios"), os nomes `Serah`/`Pyraka`/`Zeed` e os rótulos
+> `Vírus/Dado/Vacina`. **Não reabra como novidade** — o registro, com a medição
+> que existia na hora de decidir e o gatilho de revisão, é o
+> `REGISTRO-DE-DECISOES.md` §14. Consequência prática: `Ruptura/Trama/Guarda`
+> são vocabulário de MUNDO (para lore), não rótulo de interface; e a régua
+> trava os termos que NUNCA foram aceitos (`tamer`, `domador`, `treinador`,
+> `digievolução`, `mundo digital`) mais o espalhamento de um termo aceito para
+> arquivo NOVO.
 
 > **`docs/STATUS.md` é o registro vivo do projeto**: achados de segurança em
 > aberto, o que já foi corrigido e a lista do que depende do dono. Leia no

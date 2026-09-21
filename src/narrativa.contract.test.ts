@@ -19,20 +19,27 @@
  *
  * Vocabulário é justamente o que se lê. Então é o que dá para travar.
  *
- * ## A ideia: a dívida só pode ENCOLHER
+ * ## A ideia: uma lista de exceções DECLARADAS, não uma lista de pendências
  *
- * Três termos vetados já estão no app hoje, e nenhum deles é meu para trocar —
- * são decisões do dono registradas como propostas P1, P5 e P9 na bíblia. Um
- * guard que exigisse zero nasceria vermelho e seria desligado na primeira
- * semana; um guard que não existisse deixaria a palavra voltar.
+ * ⚠️ **O dono decidiu em 21/09/2026, e a decisão muda o estatuto desta tabela.**
+ * Perguntado sobre trocar `Vírus/Dado/Vacina`, `Glitchtama`, `Serah`, `Pyraka` e
+ * `Zeed`, ele respondeu **"nenhum, aceito todos assim"**. Então a tabela
+ * `EXCECOES` abaixo não é mais dívida a quitar: é a lista do que ficou, por
+ * decisão registrada (`docs/REGISTRO-DE-DECISOES.md`).
  *
- * A saída é a tabela `DIVIDA` abaixo: ela declara, arquivo por arquivo, onde
- * cada termo já está e por quê. A asserção é de **subconjunto** — um termo
- * vetado num arquivo que não está na tabela reprova. Consequências:
+ * O guard continua valendo, e por dois motivos que sobrevivem à decisão:
  *
- * - trocar o termo num arquivo e tirar a linha daqui é o caminho normal;
- * - espalhar o termo para um arquivo novo fica vermelho na hora;
- * - e a tabela é a contagem honesta do que falta, em vez de uma promessa.
+ * - **os termos NUNCA aceitos continuam travados** — `tamer`, `domador`,
+ *   `treinador`, `digievolução`, `mundo digital`. Esses não têm exceção
+ *   nenhuma, e é por eles que esta régua existe;
+ * - **espalhar um termo aceito para um arquivo NOVO continua reprovando.** A
+ *   decisão foi "fica como está", não "use à vontade": arquivo novo é uma
+ *   escolha nova, e ela passa a ser visível em vez de silenciosa.
+ *
+ * Deliberadamente NÃO asserto o número de ocorrências por arquivo: contagem
+ * apodrece a cada edição não relacionada, e este repositório tem cinco lápides
+ * de número que apodreceu (a `CACHE_VERSION` do `CLAUDE.md`, o `wc -l` do
+ * `App.tsx`, as referências `arquivo:linha`). Conjunto de arquivos não apodrece.
  *
  * Deliberadamente NÃO asserto o número de ocorrências por arquivo: contagem
  * apodrece a cada edição não relacionada, e este repositório tem cinco lápides
@@ -134,17 +141,18 @@ const TERMOS: { termo: string; re: RegExp; motivo: string }[] = [
 ];
 
 /**
- * A DÍVIDA: onde cada termo vetado já está hoje, e por quê ainda está.
+ * AS EXCEÇÕES: onde cada termo vetado está, e por decisão de quem.
  *
- * Medido em 21/09/2026, no merge da bíblia. Cada linha é uma decisão do dono
- * pendente, não um esquecimento — por isso a coluna `proposta`.
+ * Medido em 21/09/2026. **Todas foram ACEITAS pelo dono no mesmo dia** — a
+ * coluna `proposta` guarda a proposta que as cobria e que ele fechou.
  *
- * **Como usar:** trocou o termo num arquivo? Tire o arquivo daqui. Esta lista
- * encolhendo até `[]` é o aceite das propostas P1, P5 e P9.
+ * **Como usar:** esta lista não precisa encolher. Se um dia o dono reabrir e
+ * trocar o termo num arquivo, tire o arquivo daqui — o 3º teste reclama
+ * sozinho quando isso acontecer e a linha ficar sobrando.
  */
-const DIVIDA: Record<string, { arquivos: string[]; proposta: string }> = {
+const EXCECOES: Record<string, { arquivos: string[]; proposta: string }> = {
   'Weave': {
-    proposta: 'P1 — par EN do galho `data`; hoje é nome de skill visível',
+    proposta: 'P1 — par EN do galho `data`. ACEITO PELO DONO em 21/09/2026',
     arquivos: [
       // O único ponto no app: o léxico de nome de skill, que compõe
       // "Weave of <algo>" e vai para a Página do Pet. O verbo comum em
@@ -154,7 +162,7 @@ const DIVIDA: Record<string, { arquivos: string[]; proposta: string }> = {
     ],
   },
   'Vírus/Vacina/Virus/Vaccine (rótulo)': {
-    proposta: 'P1 — rótulo dos três galhos (os ids do save não mudam)',
+    proposta: 'P1 — rótulo dos três galhos. ACEITO PELO DONO em 21/09/2026',
     arquivos: [
       'src/components/GuideModal.tsx',
       'src/components/HelpModal.tsx',
@@ -168,7 +176,7 @@ const DIVIDA: Record<string, { arquivos: string[]; proposta: string }> = {
     ],
   },
   'Glitchtama': {
-    proposta: 'P5 — rótulo do item; `GLITCHTAMA_PER_DAY` e o campo do save ficam',
+    proposta: 'P5 — rótulo do item. ACEITO PELO DONO em 21/09/2026',
     arquivos: [
       'src/App.tsx',
       'src/components/ActivitiesPage.tsx',
@@ -194,7 +202,7 @@ describe('régua da narrativa — vocabulário da bíblia (§12)', () => {
     const novos: string[] = [];
 
     for (const { termo, re, motivo } of TERMOS) {
-      const permitidos = new Set(DIVIDA[termo]?.arquivos ?? []);
+      const permitidos = new Set(EXCECOES[termo]?.arquivos ?? []);
       for (const arquivo of fontes) {
         const rel = relative(RAIZ, arquivo).split('\\').join('/');
         if (permitidos.has(rel)) continue;
@@ -205,22 +213,23 @@ describe('régua da narrativa — vocabulário da bíblia (§12)', () => {
 
     expect(
       novos,
-      'termo vetado pela §12 da bíblia num arquivo fora da tabela DÍVIDA.\n' +
-        'Troque pelo termo canônico — ou, se a decisão do dono ainda não saiu, ' +
-        'acrescente o arquivo à DÍVIDA com a proposta que o cobre.',
+      'termo vetado pela §12 da bíblia num arquivo fora da tabela EXCECOES.\n' +
+        'Os termos aceitos pelo dono (21/09/2026) ficam onde já estavam — ' +
+        'espalhá-los para um arquivo novo é uma escolha nova. Use o termo ' +
+        'canônico, ou declare o arquivo aqui com a decisão que o cobre.',
     ).toEqual([]);
   });
 
   it('a dívida não aponta para arquivo que não existe mais', () => {
     const fantasmas: string[] = [];
-    for (const [termo, { arquivos }] of Object.entries(DIVIDA)) {
+    for (const [termo, { arquivos }] of Object.entries(EXCECOES)) {
       for (const rel of arquivos) {
         if (!existsSync(join(RAIZ, rel))) fantasmas.push(`${termo}: ${rel}`);
       }
     }
     expect(
       fantasmas,
-      'a tabela DÍVIDA cita arquivo inexistente — ela vira mentira em silêncio, ' +
+      'a tabela EXCECOES cita arquivo inexistente — ela vira mentira em silêncio, ' +
         'que é exatamente o modo de falha que esta régua existe para impedir.',
     ).toEqual([]);
   });
@@ -228,7 +237,7 @@ describe('régua da narrativa — vocabulário da bíblia (§12)', () => {
   it('todo arquivo da dívida ainda contém o termo (senão a linha sobra)', () => {
     const resolvidos: string[] = [];
     for (const { termo, re } of TERMOS) {
-      for (const rel of DIVIDA[termo]?.arquivos ?? []) {
+      for (const rel of EXCECOES[termo]?.arquivos ?? []) {
         const cheio = join(RAIZ, rel);
         if (!existsSync(cheio)) continue;
         if (!re.test(readFileSync(cheio, 'utf8'))) {
@@ -238,8 +247,9 @@ describe('régua da narrativa — vocabulário da bíblia (§12)', () => {
     }
     expect(
       resolvidos,
-      'estes arquivos já não têm o termo vetado: tire a linha da DÍVIDA.\n' +
-        'Dívida que não encolhe quando o trabalho é feito ensina a ignorá-la.',
+      'estes arquivos já não têm o termo vetado: tire a linha da EXCECOES.\n' +
+        'Exceção que sobra depois do trabalho feito vira ruído, e ruído é o que ' +
+        'ensina o próximo leitor a ignorar a tabela inteira.',
     ).toEqual([]);
   });
 });

@@ -567,6 +567,34 @@ export function ChatBox({
         {isPt
           ? 'Se você está num momento difícil, procure ajuda de verdade: um serviço de saúde, uma linha de apoio da sua região, ou alguém de confiança. O Soulmon é um app de hábitos e não substitui isso.'
           : "If you're going through a hard time, please reach out for real help: a health service, a support line where you live, or someone you trust. Soulmon is a habit app and it is not a substitute for that."}
+        {' '}
+        {/* O CAMINHO — decisão do dono, 21/09/2026.
+            Sem ele, a cláusula SAFETY de `functions/api/chat.js` manda procurar
+            ajuda e não diz como chegar lá, o que transfere a pesquisa para
+            quem está no estado em que iniciativa e função executiva estão mais
+            comprometidas. O parecer clínico foi explícito: "nenhum caminho"
+            não é opção.
+
+            ⚠️ Esta lista é CURADA, ESTÁTICA e HUMANA — ela nunca pode sair do
+            modelo. Um `llama-3.1-8b-instant` alucina número de telefone com
+            facilidade, e número alucinado numa tela de crise pune quem teve a
+            coragem de pedir ajuda. Por isso a cláusula SAFETY proíbe o modelo
+            de citar qualquer número, serviço ou site: quem cita é esta linha.
+
+            O diretório resolve POR PAÍS (é o que Apple e Google usam), e os
+            dois serviços nomeados cobrem o público real medido do app. Manter
+            só o diretório deixaria PT-BR e EN-US a um toque a mais do que
+            precisam estar; manter só os dois deixaria todo o resto do mundo
+            sem caminho nenhum. */}
+        <a
+          href="https://findahelpline.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="sm2-chat-support-link"
+        >
+          {isPt ? 'Encontrar uma linha de apoio' : 'Find a helpline'}
+        </a>
+        {isPt ? ' · No Brasil: CVV, 188 (24h, gratuito).' : ' · US/Canada: 988. UK/IE: 116 123.'}
       </p>
     </div>
   );
