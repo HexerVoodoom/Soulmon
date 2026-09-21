@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Icon } from './ui/Icon';
 import { getSpriteForStage } from '../utils/sprites';
 import { playTaskComplete } from '../utils/sounds';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readNumber, writeLocal } from '../utils/safeStorage';
 import type { Language } from '../utils/i18n';
-import { PixelButton } from './pixel/PixelKit';
+import { sm2Button } from './form/FormKit';
+import { GameRoot, GameHeader, GameVisor, GAME_VISOR_W, phaseTitle, phaseLine } from './games/GameKit';
+import { DINO_SCENE } from '../utils/dungeonScenes';
 import obstacle1 from '../assets/soulmon/dino/dino-obstacle-1.png';
 import obstacle2 from '../assets/soulmon/dino/dino-obstacle-2.png';
 import obstacle3 from '../assets/soulmon/dino/dino-obstacle-3.png';
@@ -25,18 +26,19 @@ import parallaxFar from '../assets/soulmon/dino/dino-parallax-far.png';
  * Scoring: 🪙 Bits earned = floor(distance score / 100) per run.
  *
  * ───────────────────────────────────────────────────────────────────────────
- * A FRONTEIRA RETRÔ, nesta tela
+ * A FRONTEIRA RETRÔ, nesta tela (canvas Jogos, DECISÕES §25, D-J3/D-J4)
  * ───────────────────────────────────────────────────────────────────────────
- * DENTRO do `<canvas>` (pet, inimigos, linha do chão, o véu de fim de jogo)
- * é território retrô, diegético, e NÃO migra: é o conteúdo do visor.
- * FORA dele — a barra de cabeçalho, o botão de sair, o HUD de Recorde/Score e
- * o botão de pular — é CHROME, ou seja, interface, e fala Material Symbols.
- * O `sm-px-*` do chrome de arcade fica (é a moldura do fliperama, decisão da
- * Onda 6 do PLANO-DESIGN); o que saiu foram os PNGs raster de ícone.
+ * O jogo é o conteúdo de um VISOR 348×192 (`games/GameKit.tsx`): a cena
+ * `minigame-dino` em `cover` atrás, o `<canvas>` transparente na frente com o
+ * parallax (512×128) e o chão (384×48) a 1×, o pet 256² a 64 (0,25× — a
+ * criatura pequena correndo) e os obstáculos; o placar em Silkscreen 14
+ * DENTRO do vidro. FORA dele tudo é aparelho em vetor: o chrome (Fredoka 20 +
+ * "Best N" 12 + × 44), as regras, "Start"/"Play again" e o **"Jump" primário
+ * de 64 de altura e largura inteira**, sem ícone.
  *
- * `expand_less` e não `arrow_upward` no botão de pular: `arrow_upward` NÃO
- * está no subset da fonte (`src/styles/tokens.md`) e um nome fora do
- * inventário renderiza VAZIO, sem erro nenhum.
+ * ⚠️ Os obstáculos continuam nos tamanhos do balanceamento (38/44/50/56 — a
+ * caixa de colisão é medida sobre eles). O canvas os desenhou a 64 (0,5×);
+ * regra de jogo vence o canvas — trocar o tamanho muda a dificuldade.
  */
 
 // Obstacle tiers: unlocked as the run progresses (start time in seconds).
@@ -49,12 +51,19 @@ const OBSTACLE_TIERS = [
   { src: obstacle3, from: 45, size: 50, hit: [38 / 128, 90 / 128] },
   { src: obstacle4, from: 75, size: 56, hit: [3 / 128, 125 / 128] },
 ];
-// Chão e silhueta de fundo, repetíveis em X (medidos: costura < 20/765).
-const GROUND_H = 28;            // altura desenhada da faixa (384×48 → 224×28)
-const GROUND_W = 224;
-const PARALLAX_H = 64;          // 512×128 → 256×64
-const PARALLAX_W = 256;
+// Chão e silhueta de fundo, repetíveis em X (medidos: costura < 20/765),
+// desenhados a 1× (D-J4): a faixa do chão 384×48 e o parallax 512×128.
+const GROUND_H = 48;
+const GROUND_W = 384;
+const PARALLAX_H = 128;
+const PARALLAX_W = 512;
 const PARALLAX_SPEED = 0.25;    // fração da velocidade do chão
+// O vidro: 174×96 lógicos a 2× = 348×192 (canvas `Dino`).
+const VISOR_W = GAME_VISOR_W * 2;
+const VISOR_H = 96;
+/** Linha dos pés (pet e obstáculos): 40 acima do fundo do vidro (canvas). */
+const GROUND_Y = VISOR_H * 2 - 40;
+const DINO_X = 24, DINO_S = 64;
 
 export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoints, onScore, onExit }: {
   evolutionStage: string;
@@ -98,6 +107,23 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
     });
     const ground = new Image(); ground.src = groundStrip; groundImgRef.current = ground;
     const far = new Image(); far.src = parallaxFar; parallaxImgRef.current = far;
+    // O quadro parado do vidro antes de começar: chão, parallax e o pet na
+    // linha dos pés — a criatura pequena esperando, não um vidro vazio.
+    const drawStatic = () => {
+      if (phaseRef.current === 'playing') return;
+      const canvas = canvasRef.current;
+      const ctx = canvas?.getContext('2d');
+      if (!canvas || !ctx) return;
+      ctx.imageSmoothingEnabled = false;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const strip = (img: HTMLImageElement, y: number, w: number, h: number) => { for (let x = 0; x < canvas.width; x += w) ctx.drawImage(img, x, y, w, h); };
+      if (far.complete && far.naturalWidth) strip(far, GROUND_Y - PARALLAX_H, PARALLAX_W, PARALLAX_H);
+      if (ground.complete && ground.naturalWidth) strip(ground, canvas.height - GROUND_H, GROUND_W, GROUND_H);
+      if (pet.complete && pet.naturalWidth) ctx.drawImage(pet, DINO_X, GROUND_Y - DINO_S, DINO_S, DINO_S);
+    };
+    for (const img of [pet, ground, far]) img.addEventListener('load', drawStatic);
+    drawStatic();
+    return () => { for (const img of [pet, ground, far]) img.removeEventListener('load', drawStatic); };
   }, [evolutionStage, demoCharacterId]);
 
   const jump = useCallback(() => {
@@ -119,11 +145,8 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
     if (phase !== 'playing') return;
     const canvas = canvasRef.current!;
     const ctx = canvas.getContext('2d')!;
-    canvas.width = canvas.clientWidth;
-    canvas.height = 240;
     ctx.imageSmoothingEnabled = false;
-    const GROUND = canvas.height - 28;
-    const DINO_X = 26, DINO_S = 46;
+    const GROUND = GROUND_Y;
     const s = g.current;
     let raf = 0;
     let last = performance.now();
@@ -181,14 +204,13 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       // Draw — fundo distante, obstáculos, chão, pet (ordem de profundidade)
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const far = parallaxImgRef.current;
-      if (far?.complete) drawStrip(far, s.px, GROUND - PARALLAX_H + 2, PARALLAX_W, PARALLAX_H);
+      if (far?.complete) drawStrip(far, s.px, GROUND - PARALLAX_H, PARALLAX_W, PARALLAX_H);
       for (const o of s.obstacles) {
         const img = tierImgsRef.current[o.tier];
         if (img?.complete) ctx.drawImage(img, o.x, GROUND - o.size, o.size, o.size);
       }
       const ground = groundImgRef.current;
-      if (ground?.complete) drawStrip(ground, s.gx, GROUND + 1, GROUND_W, GROUND_H);
-      else { ctx.strokeStyle = '#453a63'; ctx.beginPath(); ctx.moveTo(0, GROUND + 1); ctx.lineTo(canvas.width, GROUND + 1); ctx.stroke(); }
+      if (ground?.complete) drawStrip(ground, s.gx, canvas.height - GROUND_H, GROUND_W, GROUND_H);
       const pet = petImgRef.current;
       if (pet?.complete) {
         if (petNeedsFlip) {
@@ -234,81 +256,76 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
   }, [phase, jump, onEarnPoints, onScore, petNeedsFlip]);
 
   return (
-    <div className="sm-px-dark-ctx sm-px-arcade-root" style={{ background: 'linear-gradient(180deg, #0e1522 0%, #16213a 100%)', color: '#eef2fb' }}>
-      {/* Cabecalho de arcade: mesma peca do Torneio e da Masmorra. O circulo
-          de 34px do botao de sair virou quadrado chanfrado de 44px — era o
-          ultimo controle redondo da tela (portao T2). */}
-      <div className="sm-px-arcade-bar" style={{ margin: '14px 16px 8px', justifyContent: 'space-between' }}>
-        <Icon name="pets" size={20} />
-        <span className="sm-px-arcade-value" style={{ flex: 1, minWidth: 0 }}>
-          {isPt ? 'Corrida do Dino' : 'Dino Runner'}
-        </span>
-        <button onClick={onExit} aria-label={isPt ? 'Sair' : 'Exit'} className="sm-px-arcade-close">
-          <Icon name="close" size={20} />
-        </button>
-      </div>
+    <GameRoot>
+      <GameHeader
+        title={isPt ? 'Corrida do Dino' : 'Dino Runner'}
+        sub={<span className="sm2-num">{isPt ? 'Recorde' : 'Best'} {best}</span>}
+        closeLabel={isPt ? 'Sair' : 'Exit'}
+        onClose={onExit}
+      />
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 20px 8px' }}>
-        <span className="sm-px-arcade-label">
-          {isPt ? 'Recorde' : 'Best'} <span className="sm-px-arcade-value">{best}</span>
-        </span>
-        <span className="sm-px-arcade-label">
-          Score <span className="sm-px-arcade-value" ref={scoreElRef}>0</span>
-        </span>
-      </div>
-
-      <div className="sm-px-card" style={{ margin: 'auto 16px 0', overflow: 'hidden', position: 'relative', backgroundColor: 'transparent' }}>
+      {/* O VISOR 348×192 (D-J3): a cena `minigame-dino` em `cover` atrás, o
+          `<canvas>` transparente na frente desenhando o parallax e o chão a
+          1×, o pet a 64 e os obstáculos. Tocar no vidro também pula. */}
+      <GameVisor height={VISOR_H} scene={`${DINO_SCENE.bg.replace('center/cover', 'center 40%/cover')}`}>
         <canvas
           ref={canvasRef}
+          width={VISOR_W}
+          height={VISOR_H * 2}
           onPointerDown={jump}
-          style={{ display: 'block', width: '100%', height: 240, touchAction: 'manipulation' }}
+          style={{ display: 'block', width: VISOR_W, height: VISOR_H * 2, touchAction: 'manipulation', imageRendering: 'pixelated' }}
         />
-        {phase !== 'playing' && (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, background: 'rgba(14,21,34,0.85)' }}>
-            {phase === 'over' && (
-              <>
-                <p className="sm-px-arcade-value" style={{ fontSize: '1.05rem' }}>{isPt ? 'Fim de jogo!' : 'Game over!'}</p>
-                <p style={{ fontSize: '0.85rem', color: '#93a3c9' }}>
-                  Score: {finalScore} · +{earned} Bits
-                </p>
-              </>
-            )}
-            {phase === 'ready' && (
-              <p style={{ fontSize: '0.82rem', color: '#93a3c9', padding: '0 20px', textAlign: 'center' }}>
-                {isPt
-                  ? 'Pule os inimigos! Eles ficam mais fortes com o tempo. 100 de score = 1 Bit'
-                  : 'Jump the enemies! They get scarier over time. 100 score = 1 Bit'}
-              </p>
-            )}
-            {/* Era uma cápsula verde `#4ade80` com raio 16 e sans bold — o
-                último botão Material vivo fora de Configurações, e num jogo
-                que a crítica R2 tinha dado como "alinhado" (o veredito veio
-                do hub de Atividades, não de dentro do jogo). Agora é o botão
-                do kit, como em Masmorra e no PPT. */}
-            <PixelButton size="md" variant="primary" onClick={start}>
-              {phase === 'over' ? (isPt ? 'Jogar de novo' : 'Play again') : (isPt ? 'Começar' : 'Start')}
-            </PixelButton>
-          </div>
-        )}
-      </div>
-
-      {/* Big jump button OUTSIDE the game box — thumb never covers the action */}
-      <div style={{ padding: 16, marginBottom: 'auto' }}>
-        {/* Continua sendo um `<button>` cru e não um `PixelButton`: a ação é
-            `onPointerDown` (pular no toque, sem esperar o `click`), que é
-            requisito do jogo e o kit não expõe. O que mudou é a LINGUAGEM —
-            chanfro + borda de cobre + ciano, em vez do raio 18 e do azul
-            `#60a5fa` fora da paleta. */}
-        <button
-          onPointerDown={jump}
-          disabled={phase !== 'playing'}
-          className="sm-px-jump"
-          aria-label={isPt ? 'Pular' : 'Jump'}
+        {/* O placar é DOM, em Silkscreen 14 DENTRO do vidro, sobre a placa
+            `color-mix(viewport-bg 78%)` — a voz do aparelho (D-J10 idem). */}
+        <span
+          aria-live="off"
+          style={{
+            position: 'absolute', left: 8, top: 8, padding: '2px 6px', zIndex: 2,
+            fontFamily: 'var(--sm2-font-pixel)', fontSize: 'var(--sm2-text-sm)', lineHeight: 1.2,
+            textTransform: 'uppercase', letterSpacing: 0, WebkitFontSmoothing: 'none',
+            color: 'var(--sm2-viewport-ink)',
+            backgroundColor: 'color-mix(in srgb, var(--sm2-viewport-bg) 78%, transparent)',
+            borderRadius: 'var(--sm2-radius-sm)',
+          }}
         >
-          <Icon name="expand_less" size={20} weight={600} />
-          {isPt ? 'Pular' : 'Jump'}
-        </button>
-      </div>
-    </div>
+          <span ref={scoreElRef}>0</span>
+        </span>
+      </GameVisor>
+
+      {phase === 'ready' && (
+        <>
+          <p style={phaseLine}>
+            {isPt
+              ? 'Pule os inimigos! Eles ficam mais fortes com o tempo. 100 de score = 1 Bit'
+              : 'Jump the enemies! They get scarier over time. 100 score = 1 Bit'}
+          </p>
+          <button type="button" onClick={start} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 240, alignSelf: 'center' }}>
+            {isPt ? 'Começar' : 'Start'}
+          </button>
+        </>
+      )}
+      {phase === 'over' && (
+        <>
+          <p style={phaseTitle}>{isPt ? 'Fim de jogo!' : 'Game over!'}</p>
+          <p className="sm2-num" style={phaseLine}>Score: {finalScore} · +{earned} Bits</p>
+          <button type="button" onClick={start} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 240, alignSelf: 'center' }}>
+            {isPt ? 'Jogar de novo' : 'Play again'}
+          </button>
+        </>
+      )}
+
+      {/* O PULAR é aparelho: primário de 64 de altura e largura inteira, sem
+          ícone, `onPointerDown` (reflexo — não espera o `click`). Inerte
+          antes de começar: `surface-2` + `muted`, nunca opacidade. */}
+      <button
+        type="button"
+        onPointerDown={jump}
+        disabled={phase !== 'playing'}
+        aria-label={isPt ? 'Pular' : 'Jump'}
+        style={{ ...sm2Button('primary', phase !== 'playing', 'lg'), minHeight: 64, width: '100%', marginTop: 'auto', touchAction: 'manipulation', userSelect: 'none' }}
+      >
+        {isPt ? 'Pular' : 'Jump'}
+      </button>
+    </GameRoot>
   );
 }

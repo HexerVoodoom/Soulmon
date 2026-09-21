@@ -1,14 +1,21 @@
 import { useState, useRef, useEffect } from 'react';
-import { PixelButton } from './pixel/PixelKit';
-import { Icon } from './ui/Icon';
+import type { CSSProperties } from 'react';
 import rpsScene from '../assets/soulmon/bg/minigame-rps.png';
-import { getSpriteForStage } from '../utils/sprites';
 import { playTaskComplete } from '../utils/sounds';
 import type { Language } from '../utils/i18n';
+import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
+import { GameRoot, GameHeader, GameVisor, phaseTitle } from './games/GameKit';
 
 /**
  * Rock-Paper-Scissors vs the pet. First to 3 round-wins takes the match.
  * Scoring: 🪙 +5 Bits on a match victory (luck-based game → flat, modest reward).
+ *
+ * Canvas Jogos (DECISÕES §25, D-J10): o placar em Rubik `tabular-nums`; o
+ * VISOR 348×144 com a cena `minigame-rps` em `cover`, as duas mãos 128² a 64
+ * frente a frente e "VS" em Silkscreen 14 sobre placa — a única palavra pixel
+ * da tela, DENTRO do vidro; as três jogadas como chips de TEXTO 44 (as mãos
+ * em PNG só aparecem no vidro); "Rematch"/"Exit" no fim. O sprite do pet
+ * saiu da cena: o duelo é entre as mãos (o pet é quem joga do outro lado).
  */
 type Hand = 0 | 1 | 2; // rock, paper, scissors
 import handRock from '../assets/soulmon/icons/games/hand-rock.png';
@@ -33,9 +40,11 @@ const HANDS = [
 const MATCH_POINTS = 5;
 const WINS_NEEDED = 3;
 
-export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoints, onExit }: {
+export function RPSGame({ language, onEarnPoints, onExit }: {
   evolutionStage: string;
-  /** Modo demo (utils/monetization.ts): personagem pré-pronto — sobrepõe o sprite do pet. */
+  /** Modo demo (utils/monetization.ts). Sem uso visual desde o canvas Jogos
+   *  (o pet não aparece na cena do PPT — só as mãos), mantido pela assinatura
+   *  comum dos minijogos. */
   demoCharacterId?: string;
   language: Language;
   onEarnPoints: (pts: number) => void;
@@ -98,85 +107,89 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
     setRoundMsg(''); setMatchOver(null);
   };
 
+  const handStyle = (side: 'left' | 'right'): CSSProperties => ({
+    position: 'absolute', top: '50%', marginTop: -32, width: 64, height: 64, maxWidth: 'none',
+    imageRendering: 'pixelated', display: 'block',
+    ...(side === 'left' ? { left: 56 } : { right: 56, transform: 'scaleX(-1)' }),
+  });
+  const chip: CSSProperties = {
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+    minHeight: 44, padding: '0 16px', borderRadius: 999, boxSizing: 'border-box',
+    border: '1px solid var(--sm2-muted)', backgroundColor: 'var(--sm2-surface-2)', color: 'var(--sm2-ink)',
+    fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm)', fontWeight: 500, lineHeight: 'var(--sm2-leading-body)',
+    cursor: 'pointer',
+  };
+  const chipOff: CSSProperties = { ...chip, border: '1px solid var(--sm2-line)', color: 'var(--sm2-muted)', cursor: 'default' };
+
   return (
-    <div className="sm-px-dark-ctx sm-px-arcade-root" style={{ background: 'linear-gradient(180deg, #081a20 0%, #10312f 100%)', color: '#eaf5f2' }}>
-      <div className="sm-px-arcade-bar" style={{ margin: '14px 16px 8px', justifyContent: 'space-between' }}>
-        {/* CHROME: cabecalho, sair e a linha de resultado sao interface. As
-            PECAS do jogo (os tres emojis de mao) e o sprite do pet sao a cena
-            e ficam como estao. */}
-        <Icon name="casino" size={20} />
-        <span className="sm-px-arcade-value" style={{ flex: 1, minWidth: 0 }}>
-          {isPt ? 'Pedra · Papel · Tesoura' : 'Rock · Paper · Scissors'}
-        </span>
-        <button onClick={onExit} aria-label={isPt ? 'Sair' : 'Exit'} className="sm-px-arcade-close">
-          <Icon name="close" size={20} />
-        </button>
+    <GameRoot>
+      <GameHeader
+        title={isPt ? 'Pedra · Papel · Tesoura' : 'Rock · Paper · Scissors'}
+        closeLabel={isPt ? 'Sair' : 'Exit'}
+        onClose={onExit}
+      />
+
+      {/* Placar em Rubik `tabular-nums` (era Silkscreen — V3). */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center' }}>
+        <p className="sm2-num" style={phaseTitle}>
+          {isPt ? 'Você' : 'You'} {playerWins} × {petWins} Soulmon
+        </p>
+        <p style={sm2Hint}>{isPt ? 'primeiro a 3' : 'first to 3'}</p>
       </div>
 
-      {/* Placar */}
-      <p className="sm-px-arcade-value" style={{ textAlign: 'center', fontSize: '1rem' }}>
-        {isPt ? 'Você' : 'You'} {playerWins} × {petWins} Soulmon
-        <span className="sm-px-arcade-label" style={{ display: 'block' }}>{isPt ? 'primeiro a 3' : 'first to 3'}</span>
+      {/* O VISOR 348×144 (D-J10): as mãos 128² a 64 frente a frente e "VS" em
+          Silkscreen 14 sobre placa — a única palavra pixel do canvas, DENTRO
+          do vidro. As mãos em PNG só aparecem aqui; as jogadas são chips de
+          texto embaixo. */}
+      <GameVisor height={72} scene={`url(${rpsScene}) center/cover`}>
+        {playerHand !== null && (
+          <img src={HANDS[playerHand].art} alt={isPt ? HANDS[playerHand].pt : HANDS[playerHand].en} width={64} height={64} style={handStyle('left')} data-hand-you />
+        )}
+        <span
+          aria-hidden="true"
+          style={{
+            position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', padding: '4px 8px',
+            fontFamily: 'var(--sm2-font-pixel)', fontSize: 'var(--sm2-text-sm)', lineHeight: 1.2, letterSpacing: 0,
+            textTransform: 'uppercase', WebkitFontSmoothing: 'none', color: 'var(--sm2-viewport-ink)',
+            backgroundColor: 'color-mix(in srgb, var(--sm2-viewport-bg) 78%, transparent)',
+            borderRadius: 'var(--sm2-radius-sm)',
+          }}
+        >
+          {thinking ? '. . .' : 'VS'}
+        </span>
+        {petHand !== null && !thinking && (
+          <img src={HANDS[petHand].art} alt={isPt ? HANDS[petHand].pt : HANDS[petHand].en} width={64} height={64} style={handStyle('right')} data-hand-pet />
+        )}
+      </GameVisor>
+
+      {/* O resultado da rodada / da partida — `role=status`, mesma tinta nos
+          dois desfechos (perder uma rodada não é erro). */}
+      <p role="status" style={{ ...sm2Text, margin: 0, textAlign: 'center', minHeight: 20 }}>
+        {matchOver === 'won'
+          ? (isPt ? `Você venceu! +${MATCH_POINTS} Bits` : `You won! +${MATCH_POINTS} Bits`)
+          : matchOver === 'lost'
+            ? (isPt ? 'Seu Soulmon venceu a partida!' : 'Your Soulmon won the match!')
+            : roundMsg}
       </p>
 
-      {/* Arena */}
-      {/* A CENA (o cartão da arena) ganha arte; o CHROME em volta continua
-          `--sm2-*`, que é a fronteira que esta tela já tinha traçado. O altar
-          foi desenhado simétrico e com o centro vazio justamente para o sprite
-          e as mãos caírem em cima dele sem disputar leitura. */}
-      <div className="sm-px-card" style={{ flex: 1, margin: 16, background: `url(${rpsScene}) center/cover`, boxShadow: 'inset 0 0 60px rgba(0,0,0,0.55)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-        <img src={getSpriteForStage(evolutionStage, demoCharacterId)} alt="pet"
-             style={{ width: 88, height: 88, objectFit: 'contain', imageRendering: 'pixelated', animation: 'dungeon-idle 1.4s ease-in-out infinite' }} />
-        {/* As PECAS do jogo, agora em arte nossa (ver HANDS no topo). */}
-        <div style={{ minHeight: 52, lineHeight: 1, display: 'flex', alignItems: 'center' }}>
-          {thinking ? <span className="sm-px-arcade-value" style={{ fontSize: 20 }}>. . .</span>
-            : petHand !== null ? <img src={HANDS[petHand].art} alt={isPt ? HANDS[petHand].pt : HANDS[petHand].en} width={52} height={52} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} /> : null}
+      {matchOver ? (
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button type="button" onClick={restart} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }}>
+            {isPt ? 'Revanche' : 'Rematch'}
+          </button>
+          <button type="button" onClick={onExit} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, padding: '0 8px' }}>
+            {isPt ? 'Sair' : 'Exit'}
+          </button>
         </div>
-        <p style={{ fontSize: '0.9rem', fontWeight: 700, minHeight: 22, display: 'flex', alignItems: 'center', gap: 6 }}>
-          {matchOver === 'won' ? (
-            <>
-              {/* Sem `tone`: a tela e escura NOS DOIS temas (`sm-px-dark-ctx`),
-                  e um token `--sm2-*-ink` seguiria o tema da PAGINA — o ouro
-                  claro (#8A5A2B) sobre #10312f nao passa AA. Herda o
-                  #eaf5f2 do contexto, que passa. */}
-              <Icon name="emoji_events" size={20} />
-              {isPt ? `Você venceu! +${MATCH_POINTS} Bits` : `You won! +${MATCH_POINTS} Bits`}
-            </>
-          ) : matchOver === 'lost' ? (
-            <>
-              <Icon name="pets" size={20} />
-              {isPt ? 'Seu Soulmon venceu a partida!' : 'Your Soulmon won the match!'}
-            </>
-          ) : roundMsg}
-        </p>
-        <div style={{ minHeight: 44, lineHeight: 1, display: 'flex', alignItems: 'center' }}>
-          {playerHand !== null ? <img src={HANDS[playerHand].art} alt={isPt ? HANDS[playerHand].pt : HANDS[playerHand].en} width={44} height={44} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} /> : null}
+      ) : (
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
+          {HANDS.map((h, i) => (
+            <button key={h.en} type="button" onClick={() => play(i as Hand)} disabled={thinking} style={thinking ? chipOff : chip}>
+              {isPt ? h.pt : h.en}
+            </button>
+          ))}
         </div>
-      </div>
-
-      {/* Controls */}
-      <div style={{ padding: '0 16px 16px' }}>
-        {matchOver ? (
-          <div style={{ display: 'flex', gap: 8 }}>
-            <span style={{ flex: 1 }}>
-              <PixelButton size="lg" variant="primary" onClick={restart}>{isPt ? 'Revanche' : 'Rematch'}</PixelButton>
-            </span>
-            <span style={{ flex: 1 }}>
-              <PixelButton size="lg" onClick={onExit}>{isPt ? 'Sair' : 'Exit'}</PixelButton>
-            </span>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', gap: 8 }}>
-            {HANDS.map((h, i) => (
-              <button key={h.en} onClick={() => play(i as Hand)} disabled={thinking}
-                className="sm-px-chip-btn" aria-label={isPt ? h.pt : h.en}
-                style={{ flex: 1, padding: '10px 0', color: '#f1edfb', display: 'flex', justifyContent: 'center' }}>
-                <img src={h.art} alt="" width={40} height={40} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
+      )}
+    </GameRoot>
   );
 }
