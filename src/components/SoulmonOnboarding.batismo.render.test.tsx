@@ -21,6 +21,7 @@ import { renderWithCss, installFakeStorage } from '../test/renderEnv';
 import { SoulmonOnboarding, type OnboardingCompleteData } from './SoulmonOnboarding';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { PREMADE_CHARACTERS } from '../utils/monetization';
+import { atravessarRevealDemo } from '../test/ritualDemo';
 
 /** Caminho demo: portão (aceite + idade) -> objetivo -> dificuldade ->
  *  escolha grátis/completo -> personagem -> cadastro. O mais curto até o
@@ -41,6 +42,8 @@ function ateOCadastro(pt: boolean) {
   // do portão de e-mail (07/09/2026) — com a auth desligada no teste, o portão
   // não existe e o consentimento cai direto aqui.
   fireEvent.click(screen.getByText(pt ? 'Começar agora — é grátis' : 'Start now — it’s free'));
+  // 13.19: o grátis responde as 6 perguntas e vê o reveal demo antes do personagem.
+  atravessarRevealDemo(pt);
   // Escolhe o primeiro personagem pré-pronto — leva direto ao cadastro.
   fireEvent.click(screen.getByText(PREMADE_CHARACTERS[0].name).closest('button')!);
 }

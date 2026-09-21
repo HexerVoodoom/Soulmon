@@ -29,7 +29,8 @@ import { track, TELEMETRY_UNLOCK_REASON, unlockReasonCode } from '../utils/telem
 /** WP5.1 — `report` é o VALUE MOMENT: o primeiro dia perfeito. É o terceiro
  *  motivo, e o único que não nasce de um limite batido — os outros dois
  *  aparecem quando a pessoa esbarra em algo, este quando ela conseguiu. */
-export type UnlockReason = 'task-limit' | 'evolution' | 'report' | 'shop';
+/** `reveal-demo` = o convite do REVEAL DEMO (13.19), a casa da 13.1. */
+export type UnlockReason = 'task-limit' | 'evolution' | 'report' | 'shop' | 'reveal-demo';
 
 interface UnlockAccountModalProps {
   language: Language;
@@ -254,8 +255,8 @@ export function UnlockNudge({ language, reason, variant = 'buy', onOpen }: {
      todos os convites — a assimetria diz "opcional". */
   const nudgeStyle: CSSProperties = {
     ...sm2Button('outline'),
-    width: '100%', maxWidth: 280, minHeight: reason === 'evolution' ? 56 : 64, justifyContent: 'flex-start', gap: 12,
-    padding: reason === 'evolution' ? '10px 12px' : '8px 16px', textAlign: 'left',
+    width: '100%', maxWidth: 280, minHeight: reason === 'evolution' || reason === 'reveal-demo' ? 56 : 64, justifyContent: 'flex-start', gap: 12,
+    padding: reason === 'evolution' || reason === 'reveal-demo' ? '10px 12px' : '8px 16px', textAlign: 'left',
   };
   const isCap = variant !== 'reveal' && reason === 'task-limit';
   /* Canvas Evolução D-E7 (`ConviteDemo`/`ConvitePago`, EVO-11/12): na página
@@ -266,7 +267,11 @@ export function UnlockNudge({ language, reason, variant = 'buy', onOpen }: {
   const isEvo = reason === 'evolution';
   /* Canvas Loja D-L7/LOJA-08: o convite passivo da Loja é a MESMA peça âmbar
      (`auto_awesome` FILL `gold-ink`), com o `chevron_right` no fim. */
-  const isGoldInvite = isEvo || reason === 'shop';
+  /* Canvas Onboarding-oráculo (RevealDemo, 13.1): a MESMA peça âmbar, 280,
+     `auto_awesome` FILL `gold-ink`, sem chevron — o × 44 ao lado é o "Not
+     now"; a manchete fala do que a pessoa acabou de ver. */
+  const isRevealDemo = reason === 'reveal-demo';
+  const isGoldInvite = isEvo || reason === 'shop' || isRevealDemo;
 
   const head = variant === 'reveal'
     ? (isPt ? 'Falta revelar a sua criatura' : 'Your creature is still unrevealed')
@@ -275,7 +280,7 @@ export function UnlockNudge({ language, reason, variant = 'buy', onOpen }: {
          o pago também tem teto (`activityCapFor`). O teto CRESCE com a
          evolução; é isso que se promete. */
       ? (isPt ? 'Quer um teto que cresce com você?' : 'Want a ceiling that grows with you?')
-      : reason === 'report'
+      : reason === 'report' || isRevealDemo
         // Fala do resultado que a pessoa acabou de ter, não do que falta a ela.
         ? (isPt ? 'Quer uma criatura que seja só sua?' : 'Want a creature that is only yours?')
         : reason === 'shop'
@@ -317,7 +322,7 @@ export function UnlockNudge({ language, reason, variant = 'buy', onOpen }: {
           {sub}
         </span>
       </span>
-      {!isEvo && <Icon name="chevron_right" size={24} tone="muted" style={{ flexShrink: 0 }} />}
+      {!isEvo && !isRevealDemo && <Icon name="chevron_right" size={24} tone="muted" style={{ flexShrink: 0 }} />}
     </button>
   );
 }

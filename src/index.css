@@ -5817,7 +5817,7 @@ select:focus-visible {
   .sm-visor-swap { animation: none !important; }
   /* Onboarding-oráculo (D-Q11/R1): o casulo para de pulsar e continua sendo o
      cristal aceso; o `sync` da espera para de girar — o `role=status` anuncia. */
-  .sm2-ora-cocoon.is-pulsing, .sm2-ora-spin { animation: none !important; }
+  .sm2-ora-pulse, .sm2-ora-spin { animation: none !important; }
   /* A splash/intro (canvas Onboarding-funil): a onda da barra e os cristais
      param; o que informa é o texto ("LOADING DATA..."), não o movimento. */
   .sm2-splash-bar i, .sm2-splash-crystal { animation: none !important; }
@@ -7469,7 +7469,8 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
 /* o casulo (`forming`/`dormant`) 256² a 128 no vidro 192²: pulso por posição, 2 quadros */
 @keyframes sm2-ora-cocoon { 0% { transform: translateY(0); } 50% { transform: translateY(-4px); } 100% { transform: translateY(0); } }
 .sm2-ora-cocoon { display: block; width: 128px; height: 128px; image-rendering: pixelated; }
-.sm2-ora-cocoon.is-pulsing { animation: sm2-ora-cocoon 1.6s steps(2, end) infinite; }
+/* (classe própria, não composta: o guard de classes fantasma lê `.a.b` como um nome só) */
+.sm2-ora-pulse { animation: sm2-ora-cocoon 1.6s steps(2, end) infinite; }
 /* a espera (GENERATING): vidro, `sync` 24 `primary-ink` girando, a frase 14 `ink` */
 .sm2-ora-wait { display: flex; flex-direction: column; align-items: center; gap: var(--sm2-space-3); padding: 12px 0; text-align: center; }
 @keyframes sm2-ora-spin { to { transform: rotate(360deg); } }

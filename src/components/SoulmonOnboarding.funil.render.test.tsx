@@ -11,6 +11,7 @@ import { renderWithCss, installFakeStorage } from '../test/renderEnv';
 import { SoulmonOnboarding } from './SoulmonOnboarding';
 import { PREMADE_CHARACTERS } from '../utils/monetization';
 import { DEMO_TINTS } from '../utils/sprites';
+import { atravessarRevealDemo } from '../test/ritualDemo';
 
 const btn = (nome: string | RegExp) => screen.getByRole('button', { name: nome }) as HTMLButtonElement;
 const variante = (b: HTMLElement) => b.style.getPropertyValue('--sm2-btn');
@@ -76,6 +77,7 @@ describe('funil grátis — identidade do canvas', () => {
     fireEvent.click(btn('I’d rather not say right now'));
     fireEvent.click(btn('I’d rather not say right now'));
     fireEvent.click(btn('Start now — it’s free'));
+    atravessarRevealDemo();
     const cards = document.querySelectorAll('button[data-demo-char]');
     expect(cards.length).toBe(PREMADE_CHARACTERS.length);
     expect(cards.length).toBe(6);
@@ -96,6 +98,7 @@ describe('funil grátis — identidade do canvas', () => {
     fireEvent.click(btn('I’d rather not say right now'));
     fireEvent.click(btn('I’d rather not say right now'));
     fireEvent.click(btn('Start now — it’s free'));
+    atravessarRevealDemo();
     fireEvent.click(screen.getByText(PREMADE_CHARACTERS[0].name).closest('button')!);
     const nome = PREMADE_CHARACTERS[0].name;
     const hero = screen.getByRole('img', { name: `${nome}, in tint 1` });

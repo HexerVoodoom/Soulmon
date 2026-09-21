@@ -94,7 +94,7 @@ export const EVENT_SCHEMA = {
   demo_pick: null,
   first_task_done: { tier: { min: 0, max: 2 } },
   day_active: { effort: { min: 0, max: 500 }, tier: { min: 0, max: 2 } },
-  unlock_view: { reason: { min: 0, max: 3 }, tier: { min: 0, max: 2 } },
+  unlock_view: { reason: { min: 0, max: 4 }, tier: { min: 0, max: 2 } },
   // WP0.9 — espelho de `src/utils/telemetry.ts` (há teste de paridade).
   purchase: { tier: { min: 0, max: 2 }, reason: { min: 0, max: 4 } },
   demo_cap_hit: { path: { min: 0, max: 4 } },
@@ -108,7 +108,7 @@ export const EVENT_SCHEMA = {
   // o teste de paridade em telemetry.test.ts cai se os dois divergirem.
   reveal_seen: { has_sprite: { min: 0, max: 1 }, funnel: { min: 0, max: 2 }, duration: { min: 0, max: 3 } },
   checkin_commit: { focus_count: { min: 0, max: 3 } },
-  unlock_dismiss: { reason: { min: 0, max: 3 } },
+  unlock_dismiss: { reason: { min: 0, max: 4 } },
   haunted_done: null,
   checkin_shown: null,
   milestone: { level: { min: 1, max: 3 } },
@@ -285,10 +285,12 @@ export function effortBucket(effort) {
 /** Espelha `TELEMETRY_UNLOCK_REASON` — qual convite abriu a compra. Eram dois
  *  rótulos para um schema que já aceitava 0–3: `report` e `shop` caíam em
  *  `unknown` sem erro nenhum. */
-const REASON_LABEL = ['task_limit', 'evolution', 'report', 'shop'];
+/* `reveal_demo` (4) = o convite do reveal demo (13.19) — e a compra que sai
+   dele é a do onboarding, por isso o 4 da compra continua `onboarding`. */
+const REASON_LABEL = ['task_limit', 'evolution', 'report', 'shop', 'reveal_demo'];
 /* WP0.9 — a compra usa os MESMOS rótulos do convite (por isso é o mesmo array
    mais o `onboarding`), para convite e compra serem comparáveis balde a balde. */
-const PURCHASE_REASON_LABEL = [...REASON_LABEL, 'onboarding'];
+const PURCHASE_REASON_LABEL = [...REASON_LABEL.slice(0, 4), 'onboarding'];
 
 /** Espelha `TELEMETRY_CREATE_PATH`. Os caminhos NÃO são equivalentes: só
  *  `create_modal` consulta o teto do modo demo. Ver o comentário lá. */

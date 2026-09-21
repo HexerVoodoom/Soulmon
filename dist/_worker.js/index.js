@@ -2679,7 +2679,7 @@ var EVENT_SCHEMA = {
   demo_pick: null,
   first_task_done: { tier: { min: 0, max: 2 } },
   day_active: { effort: { min: 0, max: 500 }, tier: { min: 0, max: 2 } },
-  unlock_view: { reason: { min: 0, max: 3 }, tier: { min: 0, max: 2 } },
+  unlock_view: { reason: { min: 0, max: 4 }, tier: { min: 0, max: 2 } },
   // WP0.9 — espelho de `src/utils/telemetry.ts` (há teste de paridade).
   purchase: { tier: { min: 0, max: 2 }, reason: { min: 0, max: 4 } },
   demo_cap_hit: { path: { min: 0, max: 4 } },
@@ -2693,7 +2693,7 @@ var EVENT_SCHEMA = {
   // o teste de paridade em telemetry.test.ts cai se os dois divergirem.
   reveal_seen: { has_sprite: { min: 0, max: 1 }, funnel: { min: 0, max: 2 }, duration: { min: 0, max: 3 } },
   checkin_commit: { focus_count: { min: 0, max: 3 } },
-  unlock_dismiss: { reason: { min: 0, max: 3 } },
+  unlock_dismiss: { reason: { min: 0, max: 4 } },
   haunted_done: null,
   checkin_shown: null,
   milestone: { level: { min: 1, max: 3 } },
@@ -2798,8 +2798,8 @@ function effortBucket(effort) {
   return 4;
 }
 __name(effortBucket, "effortBucket");
-var REASON_LABEL = ["task_limit", "evolution", "report", "shop"];
-var PURCHASE_REASON_LABEL = [...REASON_LABEL, "onboarding"];
+var REASON_LABEL = ["task_limit", "evolution", "report", "shop", "reveal_demo"];
+var PURCHASE_REASON_LABEL = [...REASON_LABEL.slice(0, 4), "onboarding"];
 var PATH_LABEL = ["create_modal", "home_edit", "ai_chat", "tutorial", "onboarding"];
 var KIND_LABEL = ["task", "habit"];
 var RETENTION_LABEL = ["d1", "d7", "d30"];
@@ -3492,7 +3492,7 @@ async function onRequest5({ env }) {
 }
 __name(onRequest5, "onRequest");
 
-// ../.wrangler/tmp/pages-erknfH/functionsRoutes-0.7701050545527478.mjs
+// ../.wrangler/tmp/pages-V5a3hr/functionsRoutes-0.9432845840595533.mjs
 var routes = [
   {
     routePath: "/api/account",

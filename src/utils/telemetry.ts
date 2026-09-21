@@ -155,7 +155,7 @@ export const EVENT_SCHEMA: Record<TelemetryEvent, Record<string, { min: number; 
   demo_pick: null,
   first_task_done: { tier: { min: 0, max: 2 } },
   day_active: { effort: { min: 0, max: 500 }, tier: { min: 0, max: 2 } },
-  unlock_view: { reason: { min: 0, max: 3 }, tier: { min: 0, max: 2 } },
+  unlock_view: { reason: { min: 0, max: 4 }, tier: { min: 0, max: 2 } },
   /* WP0.9 — `reason` diz DE ONDE veio a compra, com o mesmo vocabulário do
      convite (`TELEMETRY_UNLOCK_REASON`) mais o 4 = onboarding. Sem ele, todas
      as compras eram um número só: dava para saber quantas, nunca qual convite
@@ -174,7 +174,7 @@ export const EVENT_SCHEMA: Record<TelemetryEvent, Record<string, { min: number; 
      pergunta precisa saber é se o reveal foi olhado ou pulado. */
   reveal_seen: { has_sprite: { min: 0, max: 1 }, funnel: { min: 0, max: 2 }, duration: { min: 0, max: 3 } },
   checkin_commit: { focus_count: { min: 0, max: 3 } },
-  unlock_dismiss: { reason: { min: 0, max: 3 } },
+  unlock_dismiss: { reason: { min: 0, max: 4 } },
   haunted_done: null,
   checkin_shown: null,
   /* ⚠️ `level`, NÃO `tier`: enquanto se chamava `tier`, o `applyAggregate`
@@ -257,7 +257,11 @@ export type TelemetryTier = typeof TELEMETRY_TIER[keyof typeof TELEMETRY_TIER];
  * OPOSTAS sobre por que alguém paga.
  */
 /** `report` = oferta proativa no 1º dia perfeito (WP5.1); `shop` = card passivo na Loja. */
-export const TELEMETRY_UNLOCK_REASON = { taskLimit: 0, evolution: 1, report: 2, shop: 3 } as const;
+/** `revealDemo` (4) = o convite do REVEAL DEMO (REGISTRO 13.19 / canvas
+ *  Onboarding-oráculo §31, achado 10) — a casa da 13.1. Coincide de propósito
+ *  com `onboarding` em `TELEMETRY_PURCHASE_REASON`: a compra que sai dali É a
+ *  compra do onboarding (`handleUnlockFull`), e o balde tem de ser um só. */
+export const TELEMETRY_UNLOCK_REASON = { taskLimit: 0, evolution: 1, report: 2, shop: 3, revealDemo: 4 } as const;
 
 /** WP0.9 — de onde a compra veio. Os quatro primeiros são os MESMOS de
  *  `TELEMETRY_UNLOCK_REASON` de propósito (o convite e a compra têm de ser
@@ -277,12 +281,13 @@ export const TELEMETRY_PURCHASE_REASON = { ...TELEMETRY_UNLOCK_REASON, onboardin
  * origem daqui a 30 dias. Uma tradução com dono único é o que impede a
  * terceira perna de ser esquecida na próxima vez.
  */
-export function unlockReasonCode(reason: 'task-limit' | 'evolution' | 'report' | 'shop'): number {
+export function unlockReasonCode(reason: 'task-limit' | 'evolution' | 'report' | 'shop' | 'reveal-demo'): number {
   switch (reason) {
     case 'task-limit': return TELEMETRY_UNLOCK_REASON.taskLimit;
     case 'evolution': return TELEMETRY_UNLOCK_REASON.evolution;
     case 'report': return TELEMETRY_UNLOCK_REASON.report;
     case 'shop': return TELEMETRY_UNLOCK_REASON.shop;
+    case 'reveal-demo': return TELEMETRY_UNLOCK_REASON.revealDemo;
   }
 }
 

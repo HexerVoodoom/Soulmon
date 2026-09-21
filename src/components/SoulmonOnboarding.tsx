@@ -33,7 +33,8 @@ import {
   entrarComGoogle, mandarResetDeSenha, type AuthErro,
 } from '../utils/auth';
 import { resolveLanguage } from '../utils/i18n';
-import { track, flush as flushTelemetry, onboardingStepCode, TELEMETRY_FUNNEL, TELEMETRY_PURCHASE_REASON, revealDurationBucket } from '../utils/telemetry';
+import { track, flush as flushTelemetry, onboardingStepCode, TELEMETRY_FUNNEL, TELEMETRY_PURCHASE_REASON, revealDurationBucket, unlockReasonCode } from '../utils/telemetry';
+import { UnlockNudge } from './UnlockAccountModal';
 import type { ActivityCategory } from '../types/attributes';
 
 // Ferramenta interna de dev — não entra no bundle inicial da intro (mesmo
@@ -272,6 +273,12 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const REVEAL = GENERATING + 1;
   const REGISTER = REVEAL + 1;
   const DEMO_PICK = -1;
+  // REGISTRO 13.19 (canvas Onboarding-oráculo §31, achado 10): o caminho
+  // grátis responde as 6 perguntas do ritual e vê o REVEAL DEMO — a leitura
+  // de quem ele seria, com a criatura em SILHUETA e a oferta da 13.1 — ANTES
+  // de escolher o personagem pronto. Id negativo como os outros; -4 estava
+  // livre e vira o código 41 na telemetria (`onboardingStepCode`).
+  const REVEAL_DEMO = -4;
   // O "porquê" vem ANTES de nome, data e quiz: a razão para mudar precisa vir
   // da pessoa, não do app (Goal-Setting Theory + autonomia da SDT), e nenhuma
   // mecânica de jogo aparece antes dela. Ids negativos, como DEMO_PICK, para
@@ -408,6 +415,10 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
    *  guarda a decisão como está — retomar não reabre a bifurcação. */
   const [refine, setRefine] = useState<boolean | null>(draft?.refine ?? null);
   const [result, setResult] = useState<OracleResult | null>(null);
+  /** A leitura do REVEAL DEMO: só as 6 respostas (sem nome, data, hora,
+   *  cidade — o demo não deu nenhum), pelo caminho legado do oráculo. É uma
+   *  leitura de quem a pessoa seria; a criatura própria só nasce pagando. */
+  const [demoReading, setDemoReading] = useState<OracleResult | null>(null);
   /** Essência do class-system + ofício, calculados pelo pipeline completo —
    *  aparecem como UMA linha no reveal. Pontuações continuam invisíveis. */
   const [essence, setEssence] = useState<{ pt: string; en: string } | null>(null);
@@ -464,9 +475,14 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   // barra tem que medir o caminho QUE A PESSOA escolheu, não o mais longo
   // possível.
   const deepBlock = SOUL_TEST_ITEMS.length;
-  const skipDeep = refine === false;
+  // O demo nunca faz o teste longo: o bloco sai da conta dele também. O
+  // reveal demo mede como o `REVEAL` (14/16 = 88 % — X4 da crítica: o número
+  // que a fórmula R2 dá para o caminho curto; o denominador do demo é decisão
+  // registrada no canvas, não um valor copiado do reveal pago).
+  const skipDeep = refine === false || flow === 'demo';
   const shrink = (n: number) => (skipDeep && n > REFINE_OFFER ? n - deepBlock : n);
-  const progress = Math.min(shrink(step), shrink(lastStep)) / shrink(isUpgrade ? lastStep : REGISTER + 1);
+  const progressStep = step === REVEAL_DEMO ? REVEAL : step;
+  const progress = Math.min(shrink(progressStep), shrink(lastStep)) / shrink(isUpgrade ? lastStep : REGISTER + 1);
 
   const canAdvance = (): boolean => {
     if (step === 1) return fullName.trim().length >= 3;
@@ -506,6 +522,11 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     if (code === null) return;
     track('onboarding_step', { step: code, funnel });
   }, [step, funnel]);
+  // `unlock_view` COM O MOTIVO (G-5) para o convite do reveal demo: é o
+  // denominador honesto da 13.1 — sem ele a conversão desta tela não existe.
+  useEffect(() => {
+    if (step === REVEAL_DEMO) track('unlock_view', { reason: unlockReasonCode('reveal-demo') });
+  }, [step]);
 
   const [generateError, setGenerateError] = useState(false);
 
@@ -728,7 +749,10 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     if (step === GOAL_STEP) return;
     if (step === STRUGGLE_STEP) { setStep(GOAL_STEP); return; }
     if (step === CHOICE_STEP) { setStep(STRUGGLE_STEP); return; }
-    if (step === DEMO_PICK) { setStep(CHOICE_STEP); return; }
+    // 13.19: da escolha do personagem volta-se ao reveal demo (a leitura
+    // continua lá); da 1ª pergunta do ritual grátis, à escolha grátis/completo.
+    if (step === DEMO_PICK) { setStep(demoReading ? REVEAL_DEMO : CHOICE_STEP); return; }
+    if (step === QUIZ_START && flow === 'demo') { setFlow(null); setStep(CHOICE_STEP); return; }
     // O "Back" do cadastro demo (canvas ONB-34, B1): volta à escolha do
     // personagem — o passo anterior na numeração é o REVEAL, que só existe
     // no caminho do oráculo e renderizaria vazio.
@@ -1211,7 +1235,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             trilho `surface-2` + anel `muted` 1px + água `primary-fill` (o
             trilho sobre `bg` sozinho lia 1,2:1; o anel é o que faz a barra
             existir). Era um `div` 6px com fronteira `line`. */}
-        {step > 0 && step <= lastStep && (
+        {((step > 0 && step <= lastStep) || step === REVEAL_DEMO) && (
           <div
             role="progressbar"
             aria-valuemin={0}
@@ -1469,7 +1493,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             <button
               type="button"
               style={{ ...sm2Button('primary'), width: '100%' }}
-              onClick={() => { setFlow('demo'); setStep(DEMO_PICK); }}
+              onClick={() => { setFlow('demo'); setDemoReading(null); setStep(QUIZ_START); }}
             >
               {isPt ? 'Começar agora — é grátis' : 'Start now — it’s free'}
             </button>
@@ -1643,7 +1667,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 );
               })}
             </div>
-            <button type="button" style={{ ...sm2Button('quiet'), width: '100%', marginTop: 12 }} onClick={() => { setFlow(null); setStep(CHOICE_STEP); }}>
+            <button type="button" style={{ ...sm2Button('quiet'), width: '100%', marginTop: 12 }} onClick={back}>
               <Icon name="arrow_back" size={20} />
               {isPt ? 'Voltar' : 'Back'}
             </button>
@@ -1762,9 +1786,22 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                   return (
                     <button key={opt.id} type="button" aria-pressed={selected} style={optionBtn(selected)}
                       onClick={() => {
-                        setAnswers(prev => ({ ...prev, [q.id]: opt.id }));
+                        const nextAnswers = { ...answers, [q.id]: opt.id };
+                        setAnswers(nextAnswers);
                         // avança sozinho após escolher (fluido)
-                        setTimeout(() => setStep(s => s + 1), 180);
+                        setTimeout(() => {
+                          if (flow === 'demo' && step === QUIZ_END - 1) {
+                            // 13.19 — a leitura do demo nasce aqui, com as 6
+                            // respostas já completas (o estado ainda é o
+                            // anterior neste instante, como no 20º item).
+                            setDemoReading(generateOracle({
+                              fullName: '', birthDate: '', birthTime: '', birthPlace: '', answers: nextAnswers,
+                            }));
+                            setStep(REVEAL_DEMO);
+                            return;
+                          }
+                          setStep(s => s + 1);
+                        }, 180);
                       }}>
                       {L(opt.text)}
                     </button>
@@ -1872,7 +1909,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               screenStyle={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
               <img
-                className="sm2-ora-cocoon is-pulsing"
+                className="sm2-ora-cocoon sm2-ora-pulse"
                 src={PLACEHOLDER_ART.forming}
                 alt=""
                 width={128}
@@ -1895,39 +1932,39 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               {isPt ? 'A criatura da sua alma' : 'Your soul\'s creature'}
             </p>
 
-            {/* WP1.1 — O CASULO, e depois a criatura.
-                Enquanto o desenho vem, o que se vê é um casulo pulsando: a
-                espera vira parte do ritual em vez de um vazio onde deveria
-                estar a criatura. Quando o tempo acaba sem desenho, nada disso
-                fica na tela — um casulo parado seria a promessa de algo que
-                não vem, e o cartão abaixo segue sem imagem. */}
-            {revealEsperando && !revealSprite && (
-              <div style={{ display: 'flex', justifyContent: 'center', margin: '12px 0' }}>
-                {/* 15/09/2026: o casulo virou ARTE — o ser dentro do cristal de chama
-                    turquesa (`placeholderArt.forming`), pulsando com a mesma classe. */}
-                <img
-                  className="sm-reveal-cocoon-img"
-                  src={PLACEHOLDER_ART.forming}
-                  width={96}
-                  height={96}
-                  role="status"
-                  alt={isPt ? 'A criatura está tomando forma' : 'The creature is taking shape'}
-                />
-              </div>
-            )}
-
-            {/* WP1.6 — o cartão de nascimento é a MESMA peça que aparece
+            {/* WP1.1 — O CASULO, e depois a criatura — DENTRO do vidro do
+                cartão (canvas Onboarding-oráculo D-Q9: uma peça, um lugar; a
+                criatura toma forma onde vai ficar). Enquanto o desenho vem, o
+                casulo `forming` pulsa por posição no vidro 192² (D-Q11) numa
+                região `role=status` com texto. Passado o teto (`REVEAL_WAIT_MS`,
+                D9), o vidro mostra o cristal APAGADO (`dormant` — "ainda vai
+                nascer", que é a definição do D1) e uma linha diz que o desenho
+                chega sozinho: nunca `glitch` (rachado = falhou + retry, e aqui
+                não há retry), nunca arte de reserva (S4). O sprite tardio entra
+                no jogo pelo acervo, no tempo dele.
+                WP1.6 — o cartão de nascimento é a MESMA peça que aparece
                 depois nas Estatísticas. Ser a mesma coisa é o ponto: um
                 cartão desenhado duas vezes divergiria, e o que a pessoa
                 guarda na memória não seria o que ela reencontra. */}
             <div style={{ margin: '8px 0 20px' }}>
               <BirthCard
                 spriteUrl={revealSprite?.url}
+                pending={revealSprite ? null : revealEsperando ? 'forming' : 'dormant'}
                 name={result.creature.baseName}
                 epithet={essence ? (isPt ? essence.pt : essence.en) : null}
                 soulGoal={soulGoal}
                 language={isPt ? 'pt-BR' : 'en-US'}
               />
+              {!revealSprite && !revealEsperando && (
+                /* §17 V6 / achado e — a frase sob a moldura sem sprite (copy
+                   proposta pelo canvas, `RevealSemSprite`): 12 `muted`, sem
+                   `role`, sem "retry", sem erro. */
+                <p style={{ ...sm2Hint, margin: '12px 0 0', textAlign: 'center' }}>
+                  {isPt
+                    ? 'O desenho ainda está sendo feito — chega sozinho, mais tarde.'
+                    : 'The drawing is still being made — it arrives on its own, later.'}
+                </p>
+              )}
             </div>
 
             <div style={{
@@ -1989,10 +2026,80 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 if (isUpgrade) onRevealed?.(result, revealSprite ?? undefined); else setStep(REGISTER);
               }}
             >
-              {isUpgrade
-                ? (isPt ? `Nascer ${registerDisplayName}` : `Hatch ${registerDisplayName}`)
-                : (isPt ? `Nascer ${registerDisplayName}` : `Hatch ${registerDisplayName}`)}
-              <Icon name="arrow_forward" size={20} />
+              {/* Sem seta: o verbo já é o botão (canvas Reveal — "Hatch ‹nome›"
+                  primário, 2 paradas de foco no reveal pago: o nome e este). */}
+              {isPt ? `Nascer ${registerDisplayName}` : `Hatch ${registerDisplayName}`}
+            </button>
+          </div>
+        )}
+
+        {/* REVEAL DEMO (REGISTRO 13.19 / canvas §31 `RevealDemo`, ONB-44): a
+            leitura de quem a pessoa seria, feita das 6 respostas, com a
+            criatura em SILHUETA (D-Q8 — a mesma peça por `mask-image` de uma
+            linha pronta; nenhuma é "a dela": a criatura própria, sprite e
+            árvore, só pagando); sem "Born" (o demo nasce no cadastro); sem
+            epíteto (a linha de essência vem do pipeline completo, que precisa
+            do mapa astral que o demo não deu). Abaixo, a descrição e a
+            OFERTA da 13.1: card dispensável de 280 com o × 44 ("Not now"), e
+            "Continue with a demo character" com PESO DE PRIMÁRIO (D-Q13 /
+            F1 da crítica — a régua de morte da 13.1 mede a conversão desta
+            tela, e uma saída grátis mais fraca do que o decidido mediria outra
+            coisa). Dispensar ou continuar → `DEMO_PICK`; a leitura fica para
+            o upgrade. */}
+        {step === REVEAL_DEMO && demoReading && (
+          <div style={{ textAlign: 'center', paddingTop: 40 }}>
+            <p style={{ ...sm2Hint, letterSpacing: '.08em', textTransform: 'uppercase', fontWeight: 500 }}>
+              {isPt ? 'A criatura da sua alma' : 'Your soul\'s creature'}
+            </p>
+            <div style={{ margin: '8px 0 20px' }}>
+              <BirthCard
+                spriteUrl={getDemoSprite(PREMADE_CHARACTERS[0].id, 'rookie')}
+                silhouette
+                name={demoReading.creature.baseName}
+                soulGoal={soulGoal}
+                language={isPt ? 'pt-BR' : 'en-US'}
+              />
+            </div>
+            <div style={{
+              padding: '16px 16px', marginBottom: 20, borderRadius: 12,
+              border: '1px solid var(--sm2-line)', backgroundColor: 'var(--sm2-surface)',
+              textAlign: 'left',
+            }}>
+              <p style={{ ...sm2Text, margin: 0 }}>{L(demoReading.creature.bio)}</p>
+            </div>
+            {/* A oferta (13.1): largura parcial — a assimetria diz "opcional";
+                o × é o "Not now" com o próprio alvo 44, pelado (ícone nunca em
+                box). A compra sai por `handleUnlockFull`, o mesmo caminho do
+                `CHOICE_STEP` (reason `onboarding`). */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 12 }}>
+              <div data-nudge style={{ flex: '0 1 280px', minWidth: 0, textAlign: 'left' }}>
+                <UnlockNudge
+                  language={isPt ? 'pt-BR' : 'en-US'}
+                  reason="reveal-demo"
+                  onOpen={() => { void handleUnlockFull(); }}
+                />
+              </div>
+              <button
+                type="button"
+                className="sm2-ora-back"
+                aria-label={isPt ? 'Agora não' : 'Not now'}
+                onClick={() => {
+                  track('unlock_dismiss', { reason: unlockReasonCode('reveal-demo') });
+                  setStep(DEMO_PICK);
+                }}
+              >
+                <Icon name="close" size={24} tone="inherit" />
+              </button>
+            </div>
+            {unlockMessage && (
+              <p role="alert" style={{ ...alertStyle, marginBottom: 12, textAlign: 'left' }}>{unlockMessage}</p>
+            )}
+            <button
+              type="button"
+              style={{ ...sm2Button('primary'), width: '100%' }}
+              onClick={() => setStep(DEMO_PICK)}
+            >
+              {isPt ? 'Continuar com um personagem demo' : 'Continue with a demo character'}
             </button>
           </div>
         )}

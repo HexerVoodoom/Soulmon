@@ -179,7 +179,7 @@ describe('Gerando — a espera é ritual (D-Q6, D-Q11, R1, R3)', () => {
     expect(vidro.style.width).toBe('192px');
     expect(vidro.style.height).toBe('192px');
     const casulo = vidro.querySelector('img.sm2-ora-cocoon') as HTMLImageElement;
-    expect(casulo.className).toContain('is-pulsing');
+    expect(casulo.className).toContain('sm2-ora-pulse');
     expect(casulo.getAttribute('src')).toContain('forming');
     expect(casulo.width).toBe(128);
     expect(casulo.style.opacity).toBe('');
@@ -197,8 +197,127 @@ describe('Gerando — a espera é ritual (D-Q6, D-Q11, R1, R3)', () => {
     const kf = css.slice(css.indexOf('@keyframes sm2-ora-cocoon'), css.indexOf('.sm2-ora-cocoon {'));
     expect(kf).toContain('translateY(-4px)');
     expect(kf).not.toContain('opacity');
-    expect(css).toMatch(/\.sm2-ora-cocoon\.is-pulsing \{ animation: sm2-ora-cocoon 1\.6s steps\(2, end\) infinite; \}/);
+    expect(css).toMatch(/\.sm2-ora-pulse \{ animation: sm2-ora-cocoon 1\.6s steps\(2, end\) infinite; \}/);
     const reduzido = css.slice(css.lastIndexOf('@media (prefers-reduced-motion: reduce)'));
-    expect(reduzido).toContain('.sm2-ora-cocoon.is-pulsing, .sm2-ora-spin { animation: none !important; }');
+    expect(reduzido).toContain('.sm2-ora-pulse, .sm2-ora-spin { animation: none !important; }');
+  });
+});
+
+describe('Reveal pago — o casulo no vidro do cartão, depois o cristal apagado (D-Q7, D-Q9, X2)', () => {
+  beforeEach(() => { vi.useFakeTimers(); installFakeStorage(); clearOracleDraft(); });
+  afterEach(() => { vi.useRealTimers(); });
+
+  it('esperando: `forming` pulsando DENTRO do vidro 192² numa região role=status com texto; teto estourado: `dormant` no mesmo vidro + a frase; nunca glitch, nunca oferta', async () => {
+    const { BirthCard } = await import('./BirthCard');
+    // A peça é UMA (WP1.6): o cartão em espera é o mesmo componente que o
+    // reveal monta — testado direto, porque a leitura real nunca termina aqui.
+    const { unmount } = renderWithCss(<BirthCard name="Pyraka" epithet="Fire essence · Blacksmith" soulGoal="sleep earlier" language="en-US" pending="forming" />);
+    const status = screen.getByRole('status');
+    expect(status.textContent).toContain('The creature is taking shape');
+    expect(status.querySelector('.sm2-ora-vh')).toBeTruthy();
+    const vidro = status.querySelector('.sm2-viewport-screen') as HTMLElement;
+    expect(vidro.style.width).toBe('192px');
+    const casulo = vidro.querySelector('img.sm2-ora-cocoon') as HTMLImageElement;
+    expect(casulo.className).toContain('sm2-ora-pulse');
+    expect(casulo.getAttribute('src')).toContain('forming');
+    expect(casulo.width).toBe(128);
+    expect(screen.queryByRole('img')).toBeNull(); // o vidro é decorativo: quem anuncia é a região
+    // D-Q7: o epíteto em gold-ink 500
+    const epi = screen.getByText('Fire essence · Blacksmith') as HTMLElement;
+    expect(epi.style.color).toBe('var(--sm2-gold-ink)');
+    expect(epi.style.fontWeight).toBe('500');
+    unmount();
+
+    renderWithCss(<BirthCard name="Pyraka" language="en-US" pending="dormant" />);
+    expect(screen.queryByRole('status')).toBeNull();
+    const apagado = document.querySelector('img.sm2-ora-cocoon') as HTMLImageElement;
+    expect(apagado.getAttribute('src')).toContain('dormant');
+    expect(apagado.className).not.toContain('sm2-ora-pulse');
+    expect(document.body.innerHTML).not.toContain('glitch');
+    expect(document.querySelector('.sm-reveal-cocoon-img')).toBeNull();
+  });
+
+  it('o reveal pago não tem a oferta (X2): a fonte não monta UnlockNudge no REVEAL, só no REVEAL_DEMO; a frase do sem-sprite existe nas duas línguas', async () => {
+    const fs = await import(/* @vite-ignore */ 'node:fs');
+    const src = fs.readFileSync(`${process.cwd()}/src/components/SoulmonOnboarding.tsx`, 'utf8');
+    const reveal = src.slice(src.indexOf('{step === REVEAL && result && ('), src.indexOf('{step === REVEAL_DEMO && demoReading && ('));
+    expect(reveal).not.toContain('UnlockNudge');
+    expect(reveal).toContain("pending={revealSprite ? null : revealEsperando ? 'forming' : 'dormant'}");
+    expect(reveal).toContain('The drawing is still being made — it arrives on its own, later.');
+    expect(reveal).toContain('O desenho ainda está sendo feito — chega sozinho, mais tarde.');
+    expect(reveal).not.toContain('arrow_forward');
+  });
+});
+
+describe('Reveal demo — 13.19 / 13.1 (D-Q8, D-Q13, X4)', () => {
+  beforeEach(() => { vi.useFakeTimers(); installFakeStorage(); clearOracleDraft(); localStorage.clear(); });
+  afterEach(() => { vi.useRealTimers(); });
+
+  async function ateOReveal() {
+    const { responderRitualDemo } = await import('../test/ritualDemo');
+    renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
+    fireEvent.click(screen.getByText('I have read and agree to the Terms of Use and the Privacy Policy'));
+    fireEvent.click(screen.getByText('I am 18 or older'));
+    fireEvent.click(btn('Continue'));
+    fireEvent.change(screen.getByLabelText('What do you want to improve in your life?'), { target: { value: 'sleep earlier' } });
+    fireEvent.click(btn('Continue'));
+    fireEvent.click(btn('I’d rather not say right now'));
+    fireEvent.click(btn('Start now — it’s free'));
+    // o grátis entra no ritual das 6, com voltar → a escolha
+    expect(document.body.textContent).toContain('Question 1 of 6');
+    expect(btn('Back').className).toContain('sm2-ora-back');
+    responderRitualDemo();
+  }
+
+  it('o grátis responde as 6 e vê a leitura com a criatura em SILHUETA (mask-image), sem Born, com "You said…"; a barra a 88 %', async () => {
+    await ateOReveal();
+    const card = screen.getByRole('region', { name: 'Birth card' });
+    const sil = card.querySelector('[data-silhouette]') as HTMLElement;
+    expect(sil.className).toContain('sm2-stats-sil');
+    expect(sil.style.maskImage).toMatch(/^url\(/);
+    expect(card.querySelector('img')).toBeNull();
+    expect(card.querySelector('[role="img"]')?.getAttribute('aria-label')).toMatch(/, silhouette$/);
+    expect(card.textContent).not.toContain('Born');
+    expect(card.textContent).toContain('You said');
+    expect(screen.getByRole('progressbar', { name: 'Ritual progress' }).getAttribute('aria-valuenow')).toBe('88');
+    expect(localStorage.getItem('soulmon-oracle-draft')).toBeNull();
+  });
+
+  it('D-Q13: "Continue with a demo character" é PRIMÁRIO; a oferta é o convite âmbar de 280 com o × 44 "Not now"; os dois levam à escolha do personagem', async () => {
+    await ateOReveal();
+    const cont = btn('Continue with a demo character');
+    expect(variante(cont)).toBe('primary');
+    const nudge = screen.getByRole('button', { name: /Want a creature that is only yours\?/ });
+    expect(nudge.style.maxWidth).toBe('280px');
+    expect(nudge.querySelector('.sm2-icon')?.textContent).toBe('auto_awesome');
+    expect(nudge.textContent).not.toContain('chevron_right');
+    const x = btn('Not now');
+    expect(x.className).toContain('sm2-ora-back');
+    expect(x.textContent?.trim()).toBe('close');
+    expect(document.body.innerHTML).not.toContain('danger');
+    fireEvent.click(x);
+    expect(screen.getByText('Choose your Soulmon')).toBeTruthy();
+    // e voltar da escolha devolve o reveal demo (a leitura fica)
+    fireEvent.click(btn('Back'));
+    expect(btn('Continue with a demo character')).toBeTruthy();
+    fireEvent.click(btn('Continue with a demo character'));
+    expect(screen.getByText('Choose your Soulmon')).toBeTruthy();
+  });
+});
+
+describe('Upgrade — o mesmo ritual sem intro e sem cadastro', () => {
+  beforeEach(() => { vi.useFakeTimers(); installFakeStorage(); clearOracleDraft(); });
+  afterEach(() => { vi.useRealTimers(); });
+
+  it('abre no passo 1 com a barra a 3 %, o voltar pelado sai do ritual (onCancel)', () => {
+    const cancel = vi.fn();
+    renderWithCss(<SoulmonOnboarding onComplete={() => {}} mode="upgrade" onRevealed={() => {}} onCancel={cancel} />);
+    expect(screen.getByText('What is your full name?')).toBeTruthy();
+    expect(screen.getByRole('progressbar', { name: 'Ritual progress' }).getAttribute('aria-valuenow')).toBe('3');
+    expect(screen.queryByText('Before we start')).toBeNull();
+    const back = btn('Back');
+    expect(back.className).toContain('sm2-ora-back');
+    fireEvent.click(back);
+    expect(cancel).toHaveBeenCalledTimes(1);
   });
 });

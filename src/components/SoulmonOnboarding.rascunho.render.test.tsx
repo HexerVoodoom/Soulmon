@@ -7,13 +7,14 @@
  * que nunca entra no ritual, não grava nada — um rascunho do demo retomaria
  * um ritual que a pessoa não escolheu.
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { screen, fireEvent } from '@testing-library/react';
 import { renderWithCss, installFakeStorage } from '../test/renderEnv';
 import { SoulmonOnboarding } from './SoulmonOnboarding';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { writeOracleDraft, clearOracleDraft } from '../utils/oracleDraft';
 import { PREMADE_CHARACTERS } from '../utils/monetization';
+import { atravessarRevealDemo } from '../test/ritualDemo';
 
 const rascunho = {
   mode: 'onboarding' as const,
@@ -48,6 +49,7 @@ describe('SoulmonOnboarding — rascunho do ritual (WP1.7)', () => {
   });
 
   it('o caminho grátis (demo) nunca grava rascunho', () => {
+    vi.useFakeTimers();
     renderWithCss(<SoulmonOnboarding onComplete={async () => {}} />);
       fireEvent.click(screen.getByText('I have read and agree to the Terms of Use and the Privacy Policy'));
     fireEvent.click(screen.getByText('I am 18 or older'));
@@ -55,7 +57,10 @@ describe('SoulmonOnboarding — rascunho do ritual (WP1.7)', () => {
     fireEvent.click(screen.getByText('I’d rather not say right now'));
     fireEvent.click(screen.getByText('I’d rather not say right now'));
     fireEvent.click(screen.getByText('Start now — it’s free'));
+    // 13.19: as 6 perguntas e o reveal demo também não gravam rascunho.
+    atravessarRevealDemo();
     fireEvent.click(screen.getByText(PREMADE_CHARACTERS[0].name).closest('button')!);
+    vi.useRealTimers();
     // O rascunho do RITUAL continua sem existir no caminho grátis. O do
     // PORTÃO (`GATE_DRAFT`) é outra coisa e existe de propósito — ele é o que
     // faz a viagem até o e-mail não cobrar de volta o aceite dos Termos.

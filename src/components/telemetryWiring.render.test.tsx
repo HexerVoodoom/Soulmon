@@ -12,7 +12,7 @@
  *  · `onboarding_step` carrega o funil, e demo × pago NUNCA colidem;
  *  · nenhum campo sensível (nome, objetivo, luta, e-mail) entra no payload.
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { screen, fireEvent } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
 import { SoulmonOnboarding } from './SoulmonOnboarding';
@@ -21,6 +21,7 @@ import {
   pendingTelemetry, resetTelemetryForTest, TELEMETRY_FUNNEL, onboardingStepCode,
   track, setTelemetryTier, TELEMETRY_TIER, TELEMETRY_UNLOCK_REASON,
 } from '../utils/telemetry';
+import { atravessarRevealDemo } from '../test/ritualDemo';
 
 const only = (event: string) => pendingTelemetry().filter(r => r.e === event);
 
@@ -99,6 +100,7 @@ describe('fiação da telemetria — onboarding', () => {
   });
 
   it('escolher um personagem pronto emite demo_pick uma vez', () => {
+    vi.useFakeTimers();
     renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
       fireEvent.click(screen.getByText(
       'I have read and agree to the Terms of Use and the Privacy Policy',
@@ -108,10 +110,15 @@ describe('fiação da telemetria — onboarding', () => {
     fireEvent.click(screen.getByText('I’d rather not say right now'));
     fireEvent.click(screen.getByText('I’d rather not say right now'));
     fireEvent.click(screen.getByText('Start now — it’s free'));
+    // 13.19: o reveal demo vem antes do personagem, e ele emite `unlock_view`
+    // com o motivo `revealDemo` (o denominador da 13.1) — nunca `demo_pick`.
+    atravessarRevealDemo();
     expect(only('demo_pick')).toHaveLength(0);
+    expect(only('unlock_view').map(r => r.p?.reason)).toEqual([TELEMETRY_UNLOCK_REASON.revealDemo]);
 
     fireEvent.click(screen.getByText('Pyraka').closest('button')!);
     expect(only('demo_pick')).toHaveLength(1);
+    vi.useRealTimers();
   });
 });
 
