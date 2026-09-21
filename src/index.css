@@ -3888,12 +3888,6 @@ html {
   50%      { transform: translateY(-5px) scaleX(var(--flip, 1)); }
 }
 
-/* VHS scanline drift for the dungeon battlefield overlay. */
-@keyframes dungeon-vhs {
-  0%   { background-position: 0 0; }
-  100% { background-position: 0 100%; }
-}
-
 /* Rub-to-heal: hearts EXPLODE from the pet center — quick pop, then radiate
    far outward (like fireworks) and fade. Direction from --tx / --ty. */
 @keyframes rub-heart {
@@ -4608,250 +4602,6 @@ select:focus-visible {
 .sm-hp-empty { filter: brightness(0.2) saturate(0); }
 [data-theme="dark"] .sm-hp-empty { filter: saturate(0) brightness(2.4) opacity(0.42); }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   RODADA 2 — G4 (telas nunca tocadas) · G8 (forasteiros) · G9 (estados)
-   ═══════════════════════════════════════════════════════════════════════════
-   Regras da seção (footgun 1 + guard de `index.css.contract.test.ts`):
-   variante SEMPRE aninhada (`&:hover`), cor sempre de token, regra nova no fim.
-
-   G9 é a razão de existir da metade destas regras. O defeito era este: a aba
-   selecionada se anunciava por COR DE TEXTO + sublinhado, e a não-selecionada
-   ficava com o fundo da superfície. No tema claro a superfície é branca e a
-   cor de seleção era clara também, então a inativa (branca, sólida, opaca)
-   pesava MAIS na tela do que a ativa — e no escuro invertia. A regra nova é
-   uma só, e vale para aba, chip de dia e chip de categoria:
-
-     **o PREENCHIMENTO carrega a seleção; o não-selecionado nunca é preenchido.**
-
-   Isso é invariante de tema porque não depende de qual cor é mais clara: o
-   selecionado é sempre o único bloco sólido da fileira. A COR do fill muda
-   por tema (teal profundo no claro, ciano no escuro) só para o contraste do
-   rótulo passar dos dois lados — a HIERARQUIA não muda.
-   ───────────────────────────────────────────────────────────────────────── */
-:root {
-  /* Fill da seleção. No tema CLARO é o teal profundo do kit: o ciano do kit
-     mede ~1,4:1 sobre branco (N6 da análise de gap) e não pode carregar
-     seleção sozinho numa página clara. */
-  --sm-px-sel-bg: #0d3b39;
-  --sm-px-sel-ink: #f2fbf9;
-  --sm-px-sel-edge: var(--sm-px-copper);
-  /* Peça NÃO selecionada: sem fill, herda o que estiver atrás. */
-  --sm-px-off-bg: transparent;
-  --sm-px-off-ink: var(--sm-ink);
-  --sm-px-off-edge: color-mix(in srgb, var(--sm-px-copper) 45%, transparent);
-}
-[data-theme="dark"] {
-  --sm-px-sel-bg: #5df0e0;
-  --sm-px-sel-ink: #04211f;
-}
-
-/* ── Card emoldurado ──────────────────────────────────────────────────────
-   Substituto de `.sm-card` nas telas do G4. `.sm-card` é do sistema anterior:
-   canto arredondado + `box-shadow: 0 2px 8px rgba(42,36,64,.05)`, que é sombra
-   Material — item explícito do portão T2. Aqui a profundidade vem do chanfro e
-   da borda de cobre, como na folha de referência. */
-.sm-px-card {
-  box-sizing: border-box;
-  background: var(--sm-surface);
-  color: var(--sm-ink);
-  border: 2px solid var(--sm-px-copper);
-  border-radius: 0;
-  box-shadow: none;
-  clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px);
-}
-/* Card de item clicável (linha da loja, linha da biblioteca). */
-/* Feedback de compra — verde/vermelho de sinal, não de marca. */
-
-/* ── Chip de escolha (dias da semana, categoria) — G8 ─────────────────────
-   Eram pílulas `border-radius: 999px` com `--sm-primary-soft` no ativo: forma
-   de outro design system E o mesmo G9 do parágrafo de cima (no claro, o
-   "soft" quase não se distinguia do branco de fundo). Mesmos 4 estados da
-   aba, caixa menor. NÃO herda de `.sm-px-tab` de propósito: aba é navegação
-   (uma escolhida por vez), chip é seleção múltipla, e amarrar as duas faria
-   qualquer ajuste de aba mexer no formulário de tarefa. */
-.sm-px-chip-btn {
-  min-height: 44px;
-  box-sizing: border-box;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 6px 12px;
-  cursor: pointer;
-  font-size: var(--sm2-text-xs);
-  font-weight: 700;
-  line-height: 1.3;
-  background: var(--sm-px-off-bg);
-  color: var(--sm-px-off-ink);
-  border: 2px solid var(--sm-px-off-edge);
-  clip-path: polygon(5px 0, calc(100% - 5px) 0, 100% 5px, 100% calc(100% - 5px), calc(100% - 5px) 100%, 5px 100%, 0 calc(100% - 5px), 0 5px);
-  transition: background .12s ease, color .12s ease, border-color .12s ease;
-  &:hover { border-color: var(--sm-px-copper); }
-  &:focus-visible { outline: 3px solid var(--sm-px-copper); outline-offset: 2px; }
-  &:disabled { opacity: 0.45; cursor: default; }
-}
-
-/* ── Cabeçalho de tela de jogo (Dino/Masmorra/PPT/Torneio) ────────────────
-   Essas telas pintam o próprio fundo (cenário retrô/arte), então NÃO usam o
-   token de superfície do tema: a barra de cima é uma peça escura sobre a arte,
-   nos dois temas, e isso é de propósito — a tela é um gabinete de arcade, não
-   uma página do app. O que muda aqui é a FORMA (chanfro + cobre) e a fonte,
-   que estavam em Material. */
-.sm-px-arcade-bar {
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  background: rgba(6, 20, 20, 0.82);
-  color: var(--sm-px-ink);
-  border: 2px solid var(--sm-px-copper);
-  clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px);
-}
-/* Botão de sair/fechar de tela de jogo: quadrado de 44px, não círculo. */
-.sm-px-arcade-close {
-  width: 44px;
-  height: 44px;
-  flex-shrink: 0;
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  cursor: pointer;
-  background: transparent;
-  color: var(--sm-px-ink);
-  border: 2px solid var(--sm-px-copper);
-  clip-path: polygon(5px 0, calc(100% - 5px) 0, 100% 5px, 100% calc(100% - 5px), calc(100% - 5px) 100%, 5px 100%, 0 calc(100% - 5px), 0 5px);
-  &:hover { background-color: color-mix(in srgb, var(--sm-px-cyan) 16%, transparent); }
-  &:focus-visible { outline: 3px solid var(--sm-px-copper); outline-offset: 2px; }
-}
-/* Rótulo/valor de HUD de arcade (SCORE, ANDAR, RECORDE). */
-.sm-px-arcade-label {
-  font-family: var(--sm-font-pixel);
-  font-size: var(--sm2-text-xs);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  line-height: 1.4;
-  -webkit-font-smoothing: none;
-  color: color-mix(in srgb, var(--sm-px-cyan) 75%, #ffffff);
-}
-.sm-px-arcade-value {
-  font-family: var(--sm-font-pixel);
-  font-size: var(--sm2-text-sm);
-  font-weight: 700;
-  line-height: 1.3;
-  -webkit-font-smoothing: none;
-  color: var(--sm-px-ink);
-}
-
-/* ── Contexto de peça escura ──────────────────────────────────────────────
-   MEDIDO na verificação da rodada 2, e é um defeito que eu mesmo criei:
-   `--sm-px-off-ink` é `var(--sm-ink)`, ou seja, segue o tema da PÁGINA. Numa
-   fileira de abas em cima do painel de arcade do Torneio — que é escuro nos
-   dois temas —, o tema claro pintava o rótulo da aba não selecionada com a
-   tinta escura da página, sobre fundo escuro: a aba "Rank" ficava ilegível.
-
-   É o G9 de novo, pelo avesso: o token certo, lido no contexto errado. A
-   correção não é hard-code de cor no componente, e sim declarar o CONTEXTO —
-   quem envolve o conteúdo diz "aqui dentro o fundo é escuro", e os tokens de
-   estado se reapontam para toda a subárvore. Vale para aba, chip, etiqueta e
-   interruptor de uma vez. */
-.sm-px-dark-ctx {
-  --sm-px-off-ink: var(--sm-px-ink);
-  --sm-px-off-edge: color-mix(in srgb, var(--sm-px-copper) 70%, transparent);
-  /* No claro, o fill de seleção é o teal profundo — que sobre uma peça já
-     escura desapareceria. Dentro do contexto escuro o fill é sempre o ciano,
-     como no tema escuro: a seleção continua sendo o único bloco sólido. */
-  --sm-px-sel-bg: var(--sm-px-cyan);
-  --sm-px-sel-ink: #04211f;
-}
-
-/* ═════════════════════════════════════════════════════════════════════════
-   RODADA 3 — B1: emoldurar a Home FORA do painel de rituais
-   ═════════════════════════════════════════════════════════════════════════
-   O diagnóstico da crítica R2: fora do painel havia SEIS grupos em superfície
-   nenhuma (3 ações soltas, 3 corações no ar, uma barra vertical vazia colada
-   na margem, partículas). Nenhuma métrica anterior via isso porque todas
-   mediam INVENTÁRIO (emoji, pílula, sombra) e nenhuma media COMPOSIÇÃO.
-   A métrica nova é uma frase: *todo controle interativo mora numa moldura.*
-
-   As regras abaixo são as duas superfícies que faltavam. Variante sempre
-   ANINHADA (footgun do index.css pré-compilado). */
-
-/* Fileira de medidores do HUD (HP + Energia). Duas cápsulas de peso igual,
-   porque são a MESMA classe de informação: um número sobre N. */
-
-/* Fileira de ações do pet, rente ao palco. É a peça que a referência resolve
-   com "uma coisa só" no mesmo espaço, e é o padrão do gênero: o cuidado do
-   bicho mora numa fila emoldurada embaixo dele. A moldura é a MESMA do
-   `.sm-px-card` (borda de cobre + chanfro) — não inventa uma sexta. */
-/* RODADA 5 — sem box em volta de ícone (regra do dono, vale no app inteiro).
-   Era uma peça emoldurada (fundo + borda de cobre + chanfro) com três ícones
-   pequenos dentro. A moldura saiu; o que separa as três ações agora é o
-   ESPAÇO, e o que as torna tocáveis é o ícone grande + rótulo. O alvo de
-   60px de altura não mudou, então a regra 2.5.8 do WCAG segue paga. */
-/* Marcador de "tem coisa nova" — quadrado, não bolinha: círculo de 8px era o
-   último raio do sistema Material que sobrava na Home. */
-
-/* ── B2: raiz de minijogo que não é comida pela nav ───────────────────────
-   Os três minijogos abrem como `position: fixed; inset: 0` e empilham
-   cabeçalho / arena `flex: 1` / controles. A nav inferior é `fixed` e mora
-   num contexto de empilhamento que ganha do overlay: o resultado é que os
-   ÚNICOS controles do jogo (as três mãos do Pedra-Papel-Tesoura) ficavam
-   71% cobertos pela barra de navegação. Controle primário inalcançável é
-   dead-end, não estética.
-
-   A correção é reservar a faixa da nav no próprio overlay, num lugar só,
-   em vez de três `paddingBottom` copiados. A nav continua visível e
-   utilizável — sair do jogo pelo Início é um caminho legítimo. */
-.sm-px-arcade-root {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  display: flex;
-  flex-direction: column;
-  padding-bottom: calc(var(--sm-bottomnav-h) + env(safe-area-inset-bottom, 0px));
-}
-
-/* Botão de PULAR do Dino — alvo gigante de `onPointerDown`, na linguagem do
-   kit. Não vira `PixelButton` porque o kit não expõe `onPointerDown`, e
-   esperar o `click` num jogo de reflexo é defeito funcional. */
-.sm-px-jump {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 20px 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-family: var(--sm-font-pixel);
-  font-size: var(--sm2-text-sm);
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  -webkit-font-smoothing: none;
-  background: var(--sm-px-cyan);
-  color: #04211f;
-  border: 2px solid var(--sm-px-copper);
-  cursor: pointer;
-  touch-action: manipulation;
-  user-select: none;
-  clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px);
-  &:disabled {
-    /* `background-color`, NUNCA o atalho: o atalho zera `background-image` e
-       apaga as bandas de quina (ver "RODADA 4 — A QUINA FECHA", fim do arquivo).
-       Como a variante tem especificidade maior que a regra base, o atalho
-       ganharia dela — e a moldura voltaria a abrir só no estado desabilitado. */
-    background-color: color-mix(in srgb, var(--sm-px-copper) 18%, transparent);
-    color: color-mix(in srgb, #ffffff 45%, transparent);
-    cursor: default;
-  }
-  &:active:not(:disabled) { filter: brightness(0.9); }
-  &:focus-visible { outline: 3px solid var(--sm-px-copper); outline-offset: 2px; }
-}
-
 /* ── B8: as peças que faltavam para Configurações falar a mesma língua ────
    Nada aqui é uma forma nova: é o `.sm-px-card` (chanfro + cobre) aplicado a
    campo de texto, cabeçalho de seção, bloco de código e botão de linha —
@@ -4962,14 +4712,13 @@ select:focus-visible {
 .sm-card,
 .sm-px-field,
 .sm-px-choice,
-.sm-px-card,
-.sm-px-chip-btn,
-.sm-px-arcade-bar,
-.sm-px-arcade-close,
-.sm-px-jump,
 .sm-px-row-btn {
   /* Padrão do kit: chanfro de 5px, borda de 2px, cobre. Cada peça sobrescreve
-     só o que diverge, logo abaixo. `--sm-cham-line` acompanha a `border-color`
+     só o que diverge, logo abaixo. (Canvas Jogos §25: `.sm-px-card`,
+     `.sm-px-chip-btn`, `.sm-px-arcade-bar/-close/-label/-value`,
+     `.sm-px-dark-ctx`, `.sm-px-arcade-root`, `.sm-px-jump` e o keyframe
+     `dungeon-vhs` saíram — os minijogos são visor + aparelho vetor em
+     `components/games/GameKit.tsx`, tudo inline.) `--sm-cham-line` acompanha a `border-color`
      da peça — inclusive nos estados (selecionado, ok, falha). */
   --sm-cham-c: 5px;
   --sm-cham-bw: 2px;
@@ -4988,10 +4737,6 @@ select:focus-visible {
   background-clip: border-box;
   background-position: 0 0, 100% 0, 0 100%, 100% 100%;
 }
-.sm-px-card { --sm-cham-c: 8px; }
-.sm-px-chip-btn { --sm-cham-line: var(--sm-px-off-edge); }
-.sm-px-arcade-bar { --sm-cham-c: 8px; }
-.sm-px-jump { --sm-cham-c: 8px; }
 .sm-px-row-btn { --sm-cham-c: 6px; --sm-cham-line: color-mix(in srgb, var(--sm-px-copper) 60%, transparent); }
 
 /* ═══════════════════════════════════════════════════════════════════════════

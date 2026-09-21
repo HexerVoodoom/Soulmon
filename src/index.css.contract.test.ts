@@ -201,10 +201,12 @@ describe('a moldura chanfrada FECHA na quina', () => {
     // Eram > 15; `.sm-px-tree-plate`/`.sm-px-tree-degen` saíram em 20/09/2026
     // (canvas Evolução §24: a árvore virou cards SIS-03, sem chanfro), e
     // `.sm-px-pop`/`.sm-px-fab`/`.sm-px-chatbar`/`.sm-px-code` saíram na poda
-    // das órfãs do canvas Loja (§26) — sem consumidor em TSX nenhum. O piso
-    // existe só para provar que a varredura ENXERGA a lista, não para travar
-    // o tamanho dela.
-    expect(classesComBanda().size).toBeGreaterThan(8);
+    // das órfãs do canvas Loja (§26) — sem consumidor em TSX nenhum; e
+    // `.sm-px-card`/`.sm-px-chip-btn`/`.sm-px-arcade-bar`/`.sm-px-arcade-close`/
+    // `.sm-px-jump` saíram no canvas Jogos (§25: os minijogos são visor +
+    // aparelho vetor, `components/games/GameKit.tsx`). O piso existe só para
+    // provar que a varredura ENXERGA a lista, não para travar o tamanho dela.
+    expect(classesComBanda().size).toBeGreaterThan(3);
   });
 
   it('nenhuma peça chanfrada ficou sem banda de quina', () => {
