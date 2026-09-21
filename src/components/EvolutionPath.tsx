@@ -861,7 +861,7 @@ export function EvolutionPath({
                 alt=""
                 aria-hidden="true"
                 data-aura
-                style={{ position: 'absolute', left: -32, top: -32, width: 256, height: 256, imageRendering: 'pixelated' }}
+                style={{ position: 'absolute', left: -32, top: -32, width: 256, height: 256, maxWidth: 'none', imageRendering: 'pixelated' }}
               />
             )}
             {/* O sprite 256² a 128 CENTRADO (0,5× — P2 a, a MESMA escala da

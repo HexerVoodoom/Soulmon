@@ -83,7 +83,7 @@ const BEFORE = 64;
 const BURST = 288;
 const SPARK = 128;
 
-const pixel: CSSProperties = { position: 'absolute', imageRendering: 'pixelated', display: 'block' };
+const pixel: CSSProperties = { position: 'absolute', imageRendering: 'pixelated', display: 'block', maxWidth: 'none' };
 
 export function EvolutionCeremony({
   fromStage, toStage, toName, language, demoCharacterId, fromSpriteUrl, toSpriteUrl, reachedAt, onEvolved, onClose,

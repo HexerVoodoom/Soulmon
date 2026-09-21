@@ -198,7 +198,11 @@ describe('a moldura chanfrada FECHA na quina', () => {
 
   it('a regra das bandas existe e cobre o kit inteiro', () => {
     expect(cssRaw).toContain('RODADA 4 — A QUINA FECHA');
-    expect(classesComBanda().size).toBeGreaterThan(15);
+    // Eram > 15; `.sm-px-tree-plate`/`.sm-px-tree-degen` saíram em 20/09/2026
+    // (canvas Evolução §24: a árvore virou cards SIS-03, sem chanfro). O piso
+    // existe só para provar que a varredura ENXERGA a lista, não para travar
+    // o tamanho dela.
+    expect(classesComBanda().size).toBeGreaterThan(12);
   });
 
   it('nenhuma peça chanfrada ficou sem banda de quina', () => {
