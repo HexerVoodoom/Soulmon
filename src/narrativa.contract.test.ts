@@ -199,7 +199,7 @@ const EXCECOES: Record<string, { arquivos: string[]; proposta: string }> = {
 describe('régua da narrativa — vocabulário da bíblia (§12)', () => {
   const fontes = fontesDeTexto();
 
-  it('nenhum termo vetado aparece fora da dívida declarada', () => {
+  it('nenhum termo vetado aparece fora das exceções declaradas', () => {
     const novos: string[] = [];
 
     for (const { termo, re, motivo } of TERMOS) {
@@ -221,7 +221,7 @@ describe('régua da narrativa — vocabulário da bíblia (§12)', () => {
     ).toEqual([]);
   });
 
-  it('a dívida não aponta para arquivo que não existe mais', () => {
+  it('a tabela de exceções não aponta para arquivo que não existe mais', () => {
     const fantasmas: string[] = [];
     for (const [termo, { arquivos }] of Object.entries(EXCECOES)) {
       for (const rel of arquivos) {
@@ -235,7 +235,7 @@ describe('régua da narrativa — vocabulário da bíblia (§12)', () => {
     ).toEqual([]);
   });
 
-  it('todo arquivo da dívida ainda contém o termo (senão a linha sobra)', () => {
+  it('todo arquivo das exceções ainda contém o termo (senão a linha sobra)', () => {
     const resolvidos: string[] = [];
     for (const { termo, re } of TERMOS) {
       for (const rel of EXCECOES[termo]?.arquivos ?? []) {

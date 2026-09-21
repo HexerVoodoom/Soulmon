@@ -6,14 +6,16 @@
 
 ## 1. O que está decidido (não reabra)
 
-- **`docs/SOM.md`** é o guia; **S1..S13** em `docs/REGISTRO-DE-DECISOES.md` §6.1 são as decisões
+- **`docs/SOM.md`** é o guia; **S1..S16** em `docs/REGISTRO-DE-DECISOES.md` §6.1 são as decisões (não existe S14; dizia S13 até 21/09/2026)
   canônicas. Três mordem em código: **R-CAT** (categoria vem do EVENTO, nunca do nível medido),
   **R-EX** (um gesto, uma fonte — `tocarNa` em `src/utils/audioBus.ts`), **R-NOVA** (toda
   superfície nova nasce muda; régua `src/utils/cortes.contract.test.ts`). **D11**: som só por
   gesto, checado no chamador. Alvo de loudness só em `src/utils/loudness.ts` (guard reprova cópia).
 - **S1**: a fonte do som NOVO é geração por IA (Higgsfield `seed_audio`). **S10**: enquanto o A/B
-  cego não roda, o **procedural é a solução VIGENTE** (8 sons sintetizados em `src/utils/sounds.ts`,
-  calibrados contra a escada, zero byte de asset). "O procedural venceu" é frase proibida — o outro
+  cego não roda, o **procedural é a solução VIGENTE** (8 sons em `src/utils/sounds.ts`,
+  calibrados contra a escada) ⚠️ **"zero byte de asset" ficou FALSO em 21/09/2026**: o S16
+  instalou cinco `.webm` em `public/sounds/`, e três sons preferem o asset com o
+  procedural como fallback (`playComAsset`). "O procedural venceu" é frase proibida — o outro
   lado nunca entrou em campo.
 - **S6**: 300 KB no total, zero no bundle inicial. `dist/` é commitado: byte é permanente.
 - **S13**: o contrato adaptativo E0–E6 (trilha em camadas) fica CONGELADO até haver ≥2 camadas

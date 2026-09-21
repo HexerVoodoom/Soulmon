@@ -5,7 +5,7 @@
 > pasta está no **`.gitignore`**, ou seja, **não vai para o git**. Por isso este arquivo
 > existe: é a parte que precisa sobreviver. Se você precisar de detalhe que não está aqui,
 > ele está lá, na máquina de quem rodou o run.
-> **Origem:** run `som-01` (Fases 0 a 3, 08–09/09/2026). As decisões canônicas são **S1..S13**
+> **Origem:** run `som-01` (Fases 0 a 3, 08–09/09/2026). As decisões canônicas são **S1..S16** ⚠️ (dizia S1..S13 até 21/09/2026, e ficou para trás quando o S16 entrou; não existe S14)
 > em `docs/REGISTRO-DE-DECISOES.md` §6.1 — este documento não decide nada, só orienta.
 > ⚠️ Este arquivo foi escrito na Fase 5, **antes** da Fase 3 e das decisões S11–S13: as
 > seções 2, 2.1 e 5 foram **corrigidas em 09/09/2026** contra o código e contra os
@@ -185,7 +185,7 @@ Do **engenheiro de áudio** — **as três fechadas em 21/09/2026**, no arnês l
   reprova se citar cenário inexistente, e cenário novo sem veredito de inclusão reprova.
   ⚠️ **Limite que fica**: o baseline de `discovery/baseline-wav/` é captura da **Fase 0**; o
   `playVisorTune` de produção (400 ms) só entra pela variável `SOM01_CANDIDATO_VISOR`
-  (`procedural/wav-sintonia-gate`, captura do motor real da forma decidida). Recapturar os 8 sons
+  (`procedural/wav-sintonia-gate`, captura do motor real da forma decidida). Recapturar os 8 sons ⚠️ (a CONTAGEM segue 8, mas desde `ee79fd44` três deles preferem asset `.webm` — `playEvolve`/`playDegenerate`/`playTaskComplete`, via `playComAsset`; há **cinco** arquivos em `public/sounds/`)
   do `src/` vigente pelo `audioBus` continua **pendente** — o arnês é ferramenta de calibração,
   não portão de commit (`loudness.contract.test.ts` explica por quê).
 
