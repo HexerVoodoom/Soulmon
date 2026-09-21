@@ -28,15 +28,25 @@
  * fica vermelho e não existe texto de "faltam X passos para a meta" — a meta é
  * uma referência de caminhada, nunca uma cobrança.
  */
-import type { CSSProperties } from 'react';
 import { DEFAULT_STEP_GOAL, stepsConsentCopy, stepsGoalProgress } from '../utils/steps';
 import type { Language } from '../utils/i18n';
-import { PixelButton, PixelMeter, PixelPanel } from './pixel/PixelKit';
+import { GroupCard, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
+
+/*
+ * CANVAS "CONTA" (20/09/2026, `Passos.dc.html`, CONTA-11/12): o consentimento
+ * é o card SIS-03 "Count your steps?" (Fredoka 20, caixa de frase — era
+ * `PixelPanel` Silkscreen), "Count them" `primary` + "Not now" `outline` do
+ * MESMO tamanho; com permissão, o número do dia em mono 24 `tabular-nums`
+ * (valor = mono; leitura, não placar) e o `.meter` SIS-07 em `primary-fill`.
+ * O ramo "sem sensor" não é desenhado (DECISÕES §15 S2: o App só monta com
+ * `available` literal; `!available` devolve nada).
+ */
 
 export interface StepsCardProps {
   /** Total de passos de hoje (`StepsRecord.today`). */
   steps: number;
-  /** O aparelho tem contador (`isStepsAvailable`). `false` = PWA/sem sensor. */
+  /** O aparelho tem contador (`isStepsAvailable`). `false` = PWA/sem sensor:
+   *  o cartão não existe (regra 3 — sem sensor não há desvantagem nem aviso). */
   available: boolean;
   /** Já concedida (`hasStepsPermission`). */
   hasPermission: boolean;
@@ -49,71 +59,36 @@ export interface StepsCardProps {
   onDismiss: () => void;
 }
 
-/** ONDA 2 — escala fechada da fundação: legenda 12px, corpo 14px. */
-const mutedLine: CSSProperties = {
-  fontFamily: 'var(--sm2-font-text)',
-  fontSize: 'var(--sm2-text-xs)',
-  color: 'var(--sm2-muted)',
-  lineHeight: 'var(--sm2-leading-body)',
-  margin: 0,
-};
-
-const bodyLine: CSSProperties = {
-  fontFamily: 'var(--sm2-font-text)',
-  fontSize: 'var(--sm2-text-sm)',
-  color: 'var(--sm2-ink)',
-  lineHeight: 'var(--sm2-leading-body)',
-  margin: '0 0 8px',
-};
-
 export function StepsCard({
   steps, available, hasPermission, goal = DEFAULT_STEP_GOAL,
   language, onRequestPermission, onDismiss,
 }: StepsCardProps) {
   const isPt = language === 'pt-BR';
 
-  // ── Sem sensor: uma linha neutra e um jeito de sumir com ela ────────────
-  // Nada de erro, nada de "ative para não perder". Quem está aqui não perdeu
-  // nada — o app inteiro funciona igual.
-  if (!available) {
-    return (
-      <PixelPanel title={isPt ? 'PASSOS' : 'STEPS'}>
-        <p style={{ ...mutedLine, marginBottom: 10 }}>
-          {isPt
-            ? 'Este aparelho não tem contador de passos. O Soulmon funciona exatamente igual sem ele.'
-            : 'This device has no step counter. Soulmon works exactly the same without it.'}
-        </p>
-        <PixelButton size="lg" onClick={onDismiss}>
-          {isPt ? 'Entendi' : 'Got it'}
-        </PixelButton>
-      </PixelPanel>
-    );
-  }
+  // ── Sem sensor: nada. O app inteiro funciona igual, e dizer isso num
+  // cartão seria mais um medidor a administrar (S2: ramo sem caminho vivo).
+  if (!available) return null;
 
   // ── Consentimento: o que é lido, para quê, e o que não guardamos ────────
   if (!hasPermission) {
     const copy = stepsConsentCopy(language);
     return (
-      <PixelPanel title={copy.title.toUpperCase()}>
-        <p style={bodyLine}>{copy.what}</p>
-        <p style={bodyLine}>{copy.why}</p>
-        <p style={{ ...mutedLine, marginBottom: 14 }}>{copy.privacy}</p>
+      <GroupCard title={copy.title}>
+        <p style={{ ...sm2Text, margin: 0 }}>{copy.what}</p>
+        <p style={{ ...sm2Text, margin: 0 }}>{copy.why}</p>
+        <p style={sm2Hint}>{copy.privacy}</p>
 
         {/* Aceitar e recusar têm o MESMO peso: mesma largura, mesma altura,
             lado a lado. Recusa escondida é padrão escuro. */}
-        <div style={{ display: 'flex', gap: 8 }}>
-          <span style={{ flex: 1 }}>
-            <PixelButton size="lg" variant="primary" onClick={onRequestPermission}>
-              {copy.accept}
-            </PixelButton>
-          </span>
-          <span style={{ flex: 1 }}>
-            <PixelButton size="lg" onClick={onDismiss}>
-              {copy.decline}
-            </PixelButton>
-          </span>
+        <div className="sm2-conta-two">
+          <button type="button" onClick={onRequestPermission} style={sm2Button('primary')}>
+            {copy.accept}
+          </button>
+          <button type="button" onClick={onDismiss} style={sm2Button('outline')}>
+            {copy.decline}
+          </button>
         </div>
-      </PixelPanel>
+      </GroupCard>
     );
   }
 
@@ -123,41 +98,34 @@ export function StepsCard({
   const locale = isPt ? 'pt-BR' : 'en-US';
 
   return (
-    <PixelPanel title={isPt ? 'PASSOS DE HOJE' : "TODAY'S STEPS"}>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
-        {/* O dado do dia: Rubik com `tabular-nums` (`sm2-num`). É o número que
-            mais muda do cartão — sem largura fixa de dígito ele pula de posição
-            a cada leitura do sensor. */}
-        <span
-          className="sm2-num"
-          style={{ fontSize: 'var(--sm2-text-xl)', fontWeight: 500, color: 'var(--sm2-ink)', lineHeight: 'var(--sm2-leading-title)' }}
-        >
-          {shown.toLocaleString(locale)}
-        </span>
-        <span style={mutedLine}>
+    <GroupCard title={isPt ? 'Passos de hoje' : "Today's steps"}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {/* O dado do dia em mono `tabular-nums` (D-K3): é o número que mais
+            muda do cartão — sem largura fixa de dígito ele pula de posição a
+            cada leitura do sensor. */}
+        <span className="sm2-conta-bignum">{shown.toLocaleString(locale)}</span>
+        <span className="sm2-num" style={sm2Hint}>
           {isPt
             ? `de ${goal.toLocaleString(locale)} passos`
             : `of ${goal.toLocaleString(locale)} steps`}
         </span>
       </div>
 
-      <PixelMeter
-        ratio={ratio}
-        tone="cyan"
-        label={isPt ? 'Progresso de passos do dia' : "Today's step progress"}
-      />
+      <div
+        className="sm2-kit-meter"
+        role="img"
+        aria-label={isPt ? 'Progresso de passos do dia' : "Today's step progress"}
+      >
+        <div className="sm2-kit-meter-fill" style={{ width: `${Math.round(Math.max(0, Math.min(1, ratio)) * 100)}%` }} />
+      </div>
 
-      {/* A REGRA DE PRODUTO, na tela, sempre visível.
-          A segunda frase ("quem não tem contador não fica atrás em nada") saiu
-          DESTE ramo: aqui só chega quem TEM contador e já deu permissão, então
-          ela tranquilizava uma pessoa que não está lendo. Ela continua inteira
-          no ramo `!available`, que é o de quem precisa dela. */}
-      <p style={{ ...mutedLine, margin: '10px 0 0' }}>
+      {/* A REGRA DE PRODUTO, na tela, sempre visível. */}
+      <p style={sm2Hint}>
         {isPt
           ? 'Passos não valem ponto sozinhos: eles só confirmam um hábito de saúde que você já marcou como feito.'
           : 'Steps never score on their own: they only confirm a health habit you already marked as done.'}
       </p>
-    </PixelPanel>
+    </GroupCard>
   );
 }
 

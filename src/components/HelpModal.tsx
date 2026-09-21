@@ -1,4 +1,4 @@
-import { ModalSheet, sm2Hint, sm2Text } from './form/FormKit';
+import { ModalSheet, sm2Button, sm2Hint } from './form/FormKit';
 import { FOOD_LIMIT_PER_HOUR } from '../utils/careRules';
 import { Language } from '../utils/i18n';
 import {
@@ -164,19 +164,24 @@ export function HelpModal({ isOpen, onClose, language }: HelpModalProps) {
       language={language}
       title={isPt ? 'Glossário' : 'Glossary'}
       maxWidth={520}
+      footer={
+        <button type="button" onClick={onClose} style={{ ...sm2Button('outline'), width: '100%' }}>
+          {isPt ? 'Fechar' : 'Close'}
+        </button>
+      }
     >
       <p style={sm2Hint}>
         {isPt ? 'O que cada palavra da tela quer dizer.' : 'What each word on screen means.'}
       </p>
 
-      <dl style={{ margin: 0, display: 'flex', flexDirection: 'column', gap: 18 }}>
+      {/* Canvas Conta (`GuiaGlossario.dc.html`, CONTA-16): `dl` com `dt`
+          14/500 e `dd` 12 `muted`, sem acordeão e sem o emoji na frente — o
+          `icon` fica no dado (é o glifo que a tela usa), não no glossário. */}
+      <dl className="sm2-conta-gl">
         {TERMS.map(t => (
-          <div key={t.en} style={{ display: 'flex', gap: 12 }}>
-            <span aria-hidden="true" style={{ fontSize: 20, lineHeight: 1.4, flexShrink: 0 }}>{t.icon}</span>
-            <div style={{ minWidth: 0 }}>
-              <dt style={{ ...sm2Text, margin: 0, fontWeight: 500 }}>{isPt ? t.pt : t.en}</dt>
-              <dd style={{ ...sm2Hint, margin: 0 }}>{isPt ? t.descPt : t.descEn}</dd>
-            </div>
+          <div key={t.en}>
+            <dt>{isPt ? t.pt : t.en}</dt>
+            <dd>{isPt ? t.descPt : t.descEn}</dd>
           </div>
         ))}
       </dl>

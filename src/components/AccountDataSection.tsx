@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
+import { Icon } from './ui/Icon';
 import type { Language } from '../utils/i18n';
 import { isAuthConfigured } from '../utils/auth';
 import { readLocal } from '../utils/safeStorage';
@@ -46,22 +47,14 @@ type DeletePhase = 'idle' | 'loading' | 'plan' | 'deleting' | 'done';
 
 const stackStyle: CSSProperties = { display: 'flex', flexDirection: 'column', gap: 8 };
 
-/** Painel de leitura. Superfície 2, sem borda de alerta: é informação. */
-function Panel({ children, tone = 'quiet' }: { children: ReactNode; tone?: 'quiet' | 'warn' }) {
-  return (
-    <div
-      style={{
-        backgroundColor: 'var(--sm2-surface-2)',
-        border: tone === 'warn' ? '1px solid var(--sm2-danger-ink)' : '1px solid var(--sm2-line)',
-        borderRadius: 12,
-        padding: 12,
-        marginTop: 8,
-        ...stackStyle,
-      }}
-    >
-      {children}
-    </div>
-  );
+/**
+ * Painel de leitura: `surface-2` em tinta neutra, sem filete, sem âmbar, sem
+ * vermelho — é informação/ESTADO (o 503, o inventário), nunca alarme (canvas
+ * Conta D-K7). A borda de perigo que o inventário de apagar tinha saiu: a
+ * família não usa o acento de perigo.
+ */
+function Panel({ children }: { children: ReactNode }) {
+  return <div className="sm2-conta-panel">{children}</div>;
 }
 
 function pick(b: Bilingual | undefined, isPt: boolean): string | null {
@@ -281,8 +274,11 @@ export function AccountDataSection({ language, saveId: saveIdProp, authAvailable
         onClick={handleExport}
         disabled={blocked || busy}
         aria-describedby={localUnavailable ? 'sm-account-unavailable' : undefined}
-        style={{ ...sm2Button('outline', blocked || busy), alignSelf: 'flex-start' }}
+        style={{ ...sm2Button('outline', blocked || busy), width: '100%' }}
       >
+        {/* `download` 20 em `primary-ink` no exportar (canvas DadosTelemetria);
+            inerte = `muted`, por tinta, nunca alfa. */}
+        <Icon name="download" size={20} tone={blocked || busy ? 'muted' : 'primary'} />
         {exportPhase === 'loading'
           ? (isPt ? 'Preparando…' : 'Preparing…')
           : (isPt ? 'Baixar meus dados' : 'Download my data')}
@@ -299,7 +295,8 @@ export function AccountDataSection({ language, saveId: saveIdProp, authAvailable
           type="button"
           onClick={handleDeleteRequest}
           disabled={blocked || busy}
-          style={{ ...sm2Button('outline', blocked || busy), alignSelf: 'flex-start' }}
+          aria-describedby={localUnavailable ? 'sm-account-unavailable' : undefined}
+          style={{ ...sm2Button('outline', blocked || busy), width: '100%' }}
         >
           {deletePhase === 'loading'
             ? (isPt ? 'Montando a lista…' : 'Building the list…')
@@ -309,20 +306,20 @@ export function AccountDataSection({ language, saveId: saveIdProp, authAvailable
 
       {/* O INVENTÁRIO — o que você perde, antes de confirmar. */}
       {deletePhase === 'plan' || deletePhase === 'deleting' ? (
-        <Panel tone="warn">
+        <Panel>
           <p style={sm2Text}>{pick(pending?.aviso, isPt)}</p>
           {pending && <Inventory plan={pending.plano} isPt={isPt} />}
           {pending && <NotIncluded items={pending.naoIncluido} isPt={isPt} />}
           <p style={sm2Hint}>{pick(pending?.prazo, isPt)}</p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
+          {/* "Erase now" em `outline` (D-K6: perda irreversível nunca em
+              primário, nunca no acento de perigo) e "Go back" `quiet` — de
+              largura inteira, um sobre o outro. */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 4 }}>
             <button
               type="button"
               onClick={handleDeleteConfirm}
               disabled={deletePhase === 'deleting'}
-              style={{
-                ...sm2Button('outline', deletePhase === 'deleting'),
-                ...(deletePhase === 'deleting' ? {} : { borderColor: 'var(--sm2-danger-ink)', color: 'var(--sm2-danger-ink)' }),
-              }}
+              style={{ ...sm2Button('outline', deletePhase === 'deleting'), width: '100%' }}
             >
               {deletePhase === 'deleting'
                 ? (isPt ? 'Apagando…' : 'Erasing…')
@@ -334,7 +331,7 @@ export function AccountDataSection({ language, saveId: saveIdProp, authAvailable
               type="button"
               onClick={() => { setDeletePhase('idle'); setPending(null); setDeleteFail(null); }}
               disabled={deletePhase === 'deleting'}
-              style={sm2Button('quiet')}
+              style={{ ...sm2Button('quiet'), width: '100%' }}
             >
               {isPt ? 'Voltar' : 'Go back'}
             </button>
@@ -344,19 +341,21 @@ export function AccountDataSection({ language, saveId: saveIdProp, authAvailable
 
       {/* ── SAÍDAS: sucesso, o que não estava incluído, e as falhas ─────── */}
       <div aria-live="polite" style={stackStyle}>
+        {/* As respostas em `muted` 12; as boas em `ink` 500 — nenhuma em
+            vermelho (D-K7). */}
         {exportPhase === 'done' && exportNote && (
-          <p style={{ ...sm2Hint, color: 'var(--sm2-primary-ink)' }}>{exportNote}</p>
+          <p style={{ ...sm2Hint, color: 'var(--sm2-ink)', fontWeight: 500 }}>{exportNote}</p>
         )}
-        {farewell && <p style={{ ...sm2Text, color: 'var(--sm2-primary-ink)' }}>{farewell}</p>}
+        {farewell && <p style={{ ...sm2Text, fontWeight: 500 }}>{farewell}</p>}
         {(exportPhase === 'done' || deletePhase === 'done') && notIncluded && (
           <Panel><NotIncluded items={notIncluded} isPt={isPt} /></Panel>
         )}
         {exportFail && exportFail.kind !== 'unavailable' && (
-          <p style={{ ...sm2Hint, color: 'var(--sm2-danger-ink)' }}>{failText(exportFail)}</p>
+          <p style={sm2Hint}>{failText(exportFail)}</p>
         )}
         {exportFail?.kind === 'unavailable' && <p style={sm2Hint}>{failText(exportFail)}</p>}
         {deleteFail && deleteFail.kind !== 'unavailable' && (
-          <p style={{ ...sm2Hint, color: 'var(--sm2-danger-ink)' }}>{failText(deleteFail)}</p>
+          <p style={sm2Hint}>{failText(deleteFail)}</p>
         )}
         {deleteFail?.kind === 'unavailable' && <p style={sm2Hint}>{failText(deleteFail)}</p>}
       </div>

@@ -19,7 +19,8 @@
  *    produto que aceita esse pagamento está vendendo confusão.
  */
 import { useState } from 'react';
-import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
+import { AlertLine, Chip, ModalSheet, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
+import { Icon } from './ui/Icon';
 import { ORACLE_QUESTIONS } from '../utils/oracle';
 import { answersChanged } from '../utils/newReading';
 import { REROLL_COST_CREDITS } from '../utils/monetization';
@@ -65,14 +66,18 @@ export function NewReadingModal({ language, answers, credits, onConfirm, onClose
       maxWidth={520}
       footer={
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {/* INERTE por superfície até uma resposta mudar (canvas Conta,
+              CONTA-20): o primário só acende quando há o que cobrar.
+              Lendo: `sync` 20 + `aria-busy`. */}
           <button
             type="button"
             onClick={confirmar}
             disabled={!mudou || !podePagar || ocupado}
+            aria-busy={ocupado || undefined}
             style={{ ...sm2Button('primary', !mudou || !podePagar || ocupado), width: '100%' }}
           >
             {ocupado
-              ? (isPt ? 'Lendo…' : 'Reading…')
+              ? <><Icon name="sync" size={20} tone="inherit" className="sm2-kit-spin" />{isPt ? 'Lendo…' : 'Reading…'}</>
               : (isPt ? `Ler de novo — ${REROLL_COST_CREDITS} créditos` : `Read again — ${REROLL_COST_CREDITS} credits`)}
           </button>
           <button type="button" onClick={onClose} style={{ ...sm2Button('outline'), width: '100%' }}>
@@ -91,28 +96,19 @@ export function NewReadingModal({ language, answers, credits, onConfirm, onClose
       {ORACLE_QUESTIONS.map(q => (
         <div key={q.id}>
           <p style={{ ...sm2Hint, marginBottom: 6 }}>{L(q.text)}</p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          {/* Chips SIS-03 a 44 (achado 6: eram 32), o escolhido em
+              `primary-soft` + `primary-ink` — o `Chip` do kit. */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {q.options.map(opt => {
               const escolhida = rascunho[q.id] === opt.id;
               return (
-                <button
+                <Chip
                   key={opt.id}
-                  type="button"
-                  aria-pressed={escolhida}
-                  onClick={() => setRascunho(prev => ({ ...prev, [q.id]: opt.id }))}
-                  style={{
-                    ...sm2Text,
-                    padding: '8px 12px',
-                    borderRadius: 999,
-                    cursor: 'pointer',
-                    fontSize: 'var(--sm2-text-xs)',
-                    ...(escolhida
-                      ? { backgroundColor: 'var(--sm2-primary-fill)', color: 'var(--sm2-on-primary)', border: '1px solid transparent' }
-                      : { backgroundColor: 'transparent', color: 'var(--sm2-ink)', border: '1px solid var(--sm2-line)' }),
-                  }}
+                  selected={escolhida}
+                  onToggle={() => setRascunho(prev => ({ ...prev, [q.id]: opt.id }))}
                 >
                   {L(opt.text)}
-                </button>
+                </Chip>
               );
             })}
           </div>
@@ -131,7 +127,8 @@ export function NewReadingModal({ language, answers, credits, onConfirm, onClose
           {isPt ? 'Créditos insuficientes.' : 'Not enough credits.'}
         </p>
       )}
-      {erro && <p role="alert" style={{ ...sm2Hint, color: 'var(--sm2-danger-ink)' }}>{erro}</p>}
+      {/* A falha = `role=alert` em âmbar (D-K7): filete 3px + `gold-ink`. */}
+      {erro && <AlertLine>{erro}</AlertLine>}
 
       <p style={sm2Hint}>
         {isPt

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Icon } from './ui/Icon';
-import { SM2_SHADOW_CARD, sm2Button, sm2Hint, sm2TitleStyle } from './form/FormKit';
+import { sm2Button, sm2Hint } from './form/FormKit';
 import { type Language } from '../utils/i18n';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readFlag, writeFlag } from '../utils/safeStorage';
@@ -69,22 +69,14 @@ export function InstallPrompt({ language = 'en-US' }: InstallPromptProps) {
   const isPt = language === 'pt-BR';
 
   return (
-    <div
-      style={{
-        padding: 18,
-        borderRadius: 12,
-        backgroundColor: 'var(--sm2-surface)',
-        border: '1px solid var(--sm2-line)',
-        boxShadow: SM2_SHADOW_CARD,
-        display: 'flex', flexDirection: 'column', gap: 10,
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+    /* Canvas Conta (`Main.dc.html`, CONTA-06): card SIS-03 com `download` 24
+       pelado em `primary-ink` + título 14/500; "Install" `primary` 48 e
+       "Not now" `outline` — a recusa é saída, nunca `quiet`. */
+    <section className="sm2-conta-card">
+      <h3 className="sm2-conta-t" style={{ display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}>
         <Icon name="download" size={24} tone="primary" />
-        <h3 className="sm2-title" style={{ ...sm2TitleStyle, fontSize: 'var(--sm2-text-md)' }}>
-          {isPt ? 'Instalar o Soulmon' : 'Install Soulmon'}
-        </h3>
-      </div>
+        {isPt ? 'Instalar o Soulmon' : 'Install Soulmon'}
+      </h3>
       <p style={sm2Hint}>
         {isPt
           ? 'Acesso rápido pela tela inicial e funcionamento offline.'
@@ -93,9 +85,9 @@ export function InstallPrompt({ language = 'en-US' }: InstallPromptProps) {
       <button type="button" onClick={handleInstall} style={{ ...sm2Button('primary'), width: '100%' }}>
         {isPt ? 'Instalar' : 'Install'}
       </button>
-      <button type="button" onClick={handleDismiss} style={{ ...sm2Button('quiet'), width: '100%' }}>
+      <button type="button" onClick={handleDismiss} style={{ ...sm2Button('outline'), width: '100%' }}>
         {isPt ? 'Agora não' : 'Not now'}
       </button>
-    </div>
+    </section>
   );
 }

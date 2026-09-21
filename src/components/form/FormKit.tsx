@@ -1,4 +1,4 @@
-import { useState, type CSSProperties, type ReactNode } from 'react';
+import { useId, useState, type CSSProperties, type ReactNode } from 'react';
 import { Icon } from '../ui/Icon';
 import type { Language } from '../../utils/i18n';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
@@ -187,6 +187,28 @@ export function FieldWarn({ id, children }: { id?: string; children: ReactNode }
       {children}
     </p>
   );
+}
+
+/**
+ * Opção de escolha única em LINHA inteira (o `.sm-px-choice` de antes, agora
+ * vetor — canvas Conta §29): 44 de piso, `surface` + fronteira `line`;
+ * selecionada = `primary-fill` + `on-primary`. `CityPicker` e `SoulTestItem`
+ * a usam quando o chamador não passa a sua.
+ */
+export function choiceStyle(selected: boolean): CSSProperties {
+  return {
+    width: '100%', boxSizing: 'border-box', textAlign: 'left',
+    minHeight: 44, padding: '12px 14px', marginBottom: 8, borderRadius: 'var(--sm2-radius-md)',
+    fontFamily: 'var(--sm2-font-text)',
+    fontSize: 'var(--sm2-text-sm)',
+    lineHeight: 'var(--sm2-leading-body)',
+    fontWeight: selected ? 600 : 400,
+    cursor: 'pointer',
+    border: selected ? '1px solid transparent' : '1px solid var(--sm2-line)',
+    backgroundColor: selected ? 'var(--sm2-primary-fill)' : 'var(--sm2-surface)',
+    color: selected ? 'var(--sm2-on-primary)' : 'var(--sm2-ink)',
+    transition: 'background-color var(--sm2-dur-tap) var(--sm2-ease)',
+  };
 }
 
 /**
@@ -439,6 +461,154 @@ export function ModalSheet({
       </div>
     </div>
   );
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * CANVAS "CONTA" (20/09/2026, `docs/design/wireframes/conta/identidade/`,
+ * `DECISOES-WIREFRAME.md` §29, D-K1). As linhas de ajuste e o card por
+ * intenção moravam no `AISettingsModal` e na `SettingsPage`; a `RestWindowCard`
+ * e o `StepsCard` (segundo uso real) desenhavam o mesmo card com o kit pixel.
+ * Passam para cá — um desenho só. As classes `.sm2-conta-*` vivem no bloco
+ * `CONTA (canvas §29)` no fim do `index.css` (footgun 1).
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * O grupo por intenção = card SIS-03 (surface, fronteira `line` 1px, raio 12,
+ * padding 12) com o título Fredoka 20 — o `h2` do código. Sem ícone ao lado.
+ */
+export function GroupCard({ title, children, style, titleAs = 'h2' }: {
+  title: string;
+  children: ReactNode;
+  style?: CSSProperties;
+  titleAs?: 'h2' | 'h3';
+}) {
+  const Title = titleAs;
+  return (
+    <section className="sm2-conta-card" style={style}>
+      <Title className="sm2-title sm2-conta-h2">{title}</Title>
+      {children}
+    </section>
+  );
+}
+
+/**
+ * A LINHA DE CONFIGURAÇÃO — o alvo é a linha inteira (`role="switch"`), 44 de
+ * piso: rótulo 14/500 em `ink` + linha 12 `muted` + o `.switch` 52×32 (D-K1).
+ * Ligado = trilho `primary-fill` + bolinha `on-primary`; desligado = trilho
+ * `surface-2` + bolinha `muted` (D-K5: inerte por superfície, nunca alfa).
+ * O trilho reusa `.sm2-kit-switch-track/-knob` — o mesmo desenho do kit.
+ */
+export function SwitchRow({
+  checked, onToggle, label, hint, ariaLabel,
+}: {
+  checked: boolean;
+  onToggle: () => void;
+  label: string;
+  hint?: string;
+  ariaLabel?: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={ariaLabel}
+      onClick={onToggle}
+      className="sm2-conta-swrow"
+    >
+      <span className="sm2-conta-swrow-tx">
+        <span className="sm2-conta-t">{label}</span>
+        {hint && <span className="sm2-conta-s">{hint}</span>}
+      </span>
+      <span aria-hidden="true" className={checked ? 'sm2-conta-switch sm2-kit-switch-on' : 'sm2-conta-switch'}>
+        <span className="sm2-kit-switch-track"><span className="sm2-kit-switch-knob" /></span>
+      </span>
+    </button>
+  );
+}
+
+/** Linha que LEVA a algum lugar (outro painel, o guia, a política): 44 com
+ *  `chevron_right` 24 `muted` pelado. Com `href` é um link na mesma linha. */
+export function ActionRow({
+  label, hint, onClick, href,
+}: {
+  label: string;
+  hint?: string;
+  onClick?: () => void;
+  href?: string;
+}) {
+  const inner = (
+    <>
+      <span className="sm2-conta-swrow-tx">
+        <span className="sm2-conta-t">{label}</span>
+        {hint && <span className="sm2-conta-s">{hint}</span>}
+      </span>
+      {/* `chevron_right` nos dois casos: `open_in_new` NÃO está no inventário
+          da fonte subsetada, e nome fora dele não renderiza glifo nenhum e
+          não dá erro (o pior modo de falha que existe). */}
+      <Icon name="chevron_right" size={24} tone="muted" />
+    </>
+  );
+  if (href) {
+    return <a href={href} target="_blank" rel="noopener noreferrer" className="sm2-conta-arow">{inner}</a>;
+  }
+  return <button type="button" onClick={onClick} className="sm2-conta-arow">{inner}</button>;
+}
+
+/**
+ * Revelação — o que é avançado não fica empilhado. A mesma linha 44, 14/500
+ * em `ink`, com `expand_more`/`expand_less` 24 `muted` (abrir para baixo, não
+ * navegar). `aria-controls` liga o botão ao corpo.
+ */
+export function Disclosure({ label, children, defaultOpen = false }: { label: string; children: ReactNode; defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen);
+  const id = useId();
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        aria-controls={id}
+        className="sm2-conta-disc"
+      >
+        <span className="sm2-conta-t" style={{ flex: 1, minWidth: 0 }}>{label}</span>
+        <Icon name={open ? 'expand_less' : 'expand_more'} size={24} tone="muted" />
+      </button>
+      {open && <div id={id} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>{children}</div>}
+    </div>
+  );
+}
+
+/**
+ * Campo de HORA (D-K3): `.inp` 44 com `schedule` 20 `muted` + o valor em mono
+ * `tabular-nums` 16. O `<input type="time">` nativo fica transparente dentro
+ * da casca; o anel de foco é `:focus-within` no CSS.
+ */
+export function TimeField({ value, onChange, ariaLabel, id }: {
+  value: string;
+  onChange: (v: string) => void;
+  ariaLabel: string;
+  id?: string;
+}) {
+  return (
+    <label className="sm2-conta-time">
+      <Icon name="schedule" size={20} tone="muted" />
+      <input
+        id={id}
+        type="time"
+        value={value}
+        aria-label={ariaLabel}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    </label>
+  );
+}
+
+/** O `role=alert` da família (D-K7): filete 3px + tinta `gold-ink` 500 — âmbar
+ *  de convite, nunca vermelho. */
+export function AlertLine({ children, id }: { children: ReactNode; id?: string }) {
+  return <p role="alert" id={id} className="sm2-conta-alert">{children}</p>;
 }
 
 export default ModalSheet;

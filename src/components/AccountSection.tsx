@@ -1,5 +1,7 @@
-import { useState, useEffect, type CSSProperties } from 'react';
-import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
+import { useState, useEffect } from 'react';
+import { sm2Button, sm2Hint } from './form/FormKit';
+import { Icon } from './ui/Icon';
+import { CREDIT_COLOR } from '../utils/currencies';
 import type { Language } from '../utils/i18n';
 import { fetchEntitlement, type Entitlement } from '../utils/entitlements';
 import { isBillingAvailable, restorePurchases } from '../utils/playBilling';
@@ -23,18 +25,15 @@ interface AccountSectionProps {
   onEntitlementChange?: (ent: Entitlement) => void;
 }
 
-const rowStyle: CSSProperties = {
-  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-  gap: 12, minHeight: 44,
-};
-
 export function AccountSection({ language, onEntitlementChange }: AccountSectionProps) {
   const isPt = language === 'pt-BR';
 
   const [ent, setEnt] = useState<Entitlement | null>(null);
   const [authEmail, setAuthEmail] = useState<string | null>(null);
   const [restoring, setRestoring] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  /* A resposta da região viva: a boa em `ink` 500, as outras em `muted` 12 —
+     nenhuma em vermelho (canvas Conta D-K7). */
+  const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -43,7 +42,7 @@ export function AccountSection({ language, onEntitlementChange }: AccountSection
     return () => { cancelled = true; };
   }, []);
 
-  const flash = (msg: string) => { setMessage(msg); setTimeout(() => setMessage(null), 4000); };
+  const flash = (text: string, ok = false) => { setMessage({ text, ok }); setTimeout(() => setMessage(null), 4000); };
 
   const handleRestore = async () => {
     if (!isBillingAvailable()) {
@@ -58,7 +57,7 @@ export function AccountSection({ language, onEntitlementChange }: AccountSection
     if (result.ok) {
       setEnt(result.ent);
       onEntitlementChange?.(result.ent);
-      flash(isPt ? 'Compras restauradas!' : 'Purchases restored!');
+      flash(isPt ? 'Compras restauradas!' : 'Purchases restored!', true);
       return;
     }
     if (result.reason === 'order-in-use') {
@@ -86,39 +85,45 @@ export function AccountSection({ language, onEntitlementChange }: AccountSection
     : ent.tier === 'paid' ? (isPt ? 'Completa' : 'Full') : (isPt ? 'Demo' : 'Demo');
 
   return (
-    <div>
-      <div style={rowStyle} aria-busy={ent === null}>
-        <span style={sm2Text}>{isPt ? 'Seu plano' : 'Your plan'}</span>
-        <span style={{ ...sm2Text, fontWeight: 500 }}>{tierLabel}</span>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {/* Chave: valor (D-K3/D-K4) — a palavra ("Full"/"Demo") em Rubik 500; os
+          Créditos = `diamond` 20 FILL em `credit-ink` + o número em `ink` mono
+          `tabular-nums`: a única moeda com ícone, porque é dinheiro real. */}
+      <div className="sm2-conta-kv" aria-busy={ent === null}>
+        <span>{isPt ? 'Seu plano' : 'Your plan'}</span>
+        <span className="sm2-conta-kv-v">{tierLabel}</span>
       </div>
-      <div style={rowStyle}>
-        <span style={sm2Text}>{isPt ? 'Créditos' : 'Credits'}</span>
-        <span className="sm2-num" style={{ ...sm2Text, fontWeight: 500 }}>{ent?.credits ?? 0}</span>
+      <div className="sm2-conta-kv">
+        <span>{isPt ? 'Créditos' : 'Credits'}</span>
+        <span className="sm2-conta-kv-v sm2-conta-mono">
+          <Icon name="diamond" size={20} fill={1} tone="inherit" style={{ color: CREDIT_COLOR }} label={isPt ? 'Créditos' : 'Credits'} />
+          {ent?.credits ?? 0}
+        </span>
       </div>
       {authEmail && (
-        <p style={{ ...sm2Hint, marginTop: 4 }}>
+        <p style={sm2Hint}>
           {isPt ? `Autenticado como ${authEmail}` : `Signed in as ${authEmail}`}
         </p>
       )}
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
-        <button type="button" onClick={handleRestore} disabled={restoring} style={sm2Button('outline', restoring)}>
-          {restoring
-            ? (isPt ? 'Restaurando…' : 'Restoring…')
-            : (isPt ? 'Restaurar compras' : 'Restore purchases')}
+      {/* "Restore purchases" `outline` 48 de largura inteira; "Sign out" é
+          `quiet` — sair é quieto, nunca vermelho. */}
+      <button type="button" onClick={handleRestore} disabled={restoring} style={{ ...sm2Button('outline', restoring), width: '100%' }}>
+        {restoring
+          ? (isPt ? 'Restaurando…' : 'Restoring…')
+          : (isPt ? 'Restaurar compras' : 'Restore purchases')}
+      </button>
+      {isAuthConfigured() && authEmail && (
+        <button type="button" onClick={handleSignOut} style={{ ...sm2Button('quiet'), width: '100%' }}>
+          {isPt ? 'Sair da conta' : 'Sign out'}
         </button>
-        {isAuthConfigured() && authEmail && (
-          <button type="button" onClick={handleSignOut} style={sm2Button('quiet')}>
-            {isPt ? 'Sair da conta' : 'Sign out'}
-          </button>
-        )}
-      </div>
+      )}
 
-      {/* Região viva SEMPRE montada: leitor de tela não anuncia região que
-          nasce junto com o texto. */}
-      <div aria-live="polite">
-        {message && <p style={{ ...sm2Hint, color: 'var(--sm2-primary-ink)', marginTop: 8 }}>{message}</p>}
-      </div>
+      {/* Região viva SEMPRE montada (18px de piso): leitor de tela não anuncia
+          região que nasce junto com o texto. */}
+      <p aria-live="polite" className={message?.ok ? 'sm2-conta-live is-ok' : 'sm2-conta-live'}>
+        {message?.text}
+      </p>
     </div>
   );
 }

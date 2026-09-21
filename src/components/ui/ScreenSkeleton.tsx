@@ -60,11 +60,13 @@ function usePrefersReducedMotion(): boolean {
  * viaja junto do componente. Nome prefixado para não colidir.
  */
 /* O pulso do segmento (canvas `HomeCarregando`): um bloco `primary-fill`
-   24×12 dentro do vidro alternando — `steps()`, movimento reduzido desliga. */
+   24×12 dentro do vidro alternando — `steps()`, movimento reduzido desliga.
+   Alterna por COR (fill ↔ primary-deep), nunca por opacidade (canvas
+   Conta D-K10: o gerador reprova `opacity < 1`). */
 const PULSE_CSS = `
 @keyframes sm2-skel-pulse {
-  0%, 49%  { opacity: 1; }
-  50%, 100%{ opacity: .35; }
+  0%, 49%  { background-color: var(--sm2-primary-fill); }
+  50%, 100%{ background-color: var(--sm2-primary-deep); }
 }
 @media (prefers-reduced-motion: reduce) {
   .sm2-skel-pulse { animation: none !important; }

@@ -16,6 +16,7 @@
 
 import type { LText } from '../utils/oracle';
 import type { Answer, Item, LikertValue } from '../utils/soulProfile/personality/types';
+import { choiceStyle } from './form/FormKit';
 
 const LIKERT_LABELS: Record<'likert' | 'frequency', LText[]> = {
   likert: [
@@ -61,18 +62,19 @@ interface SoulTestItemProps {
   answer: Answer | undefined;
   onAnswer: (answer: Answer) => void;
   isPt: boolean;
-  optionStyle: (selected: boolean) => React.CSSProperties;
   /**
-   * Classe do kit aplicada a CADA opção. O onboarding passa `sm-px-choice`, a
-   * mesma classe das 6 perguntas do ritual — sem ela as 20 telas seguintes
-   * viravam parágrafos centrados sem moldura e ninguém percebia que dava para
-   * tocar. A `OraclePage` (ferramenta de criação, tema claro, fora da
-   * navegação) não passa nada e segue com o próprio visual inline.
+   * Estilo de CADA opção. Sem ele, a `choiceStyle` do `FormKit` (canvas
+   * Conta, §29: o kit pixel `sm-px-choice` saiu daqui). O onboarding passa o
+   * seu, o mesmo das 6 perguntas do ritual — sem um estilo de opção as 20
+   * telas seguintes viravam parágrafos centrados sem moldura e ninguém
+   * percebia que dava para tocar. A `OraclePage` (ferramenta de criação, fora
+   * da navegação) passa o dela.
    */
+  optionStyle?: (selected: boolean) => React.CSSProperties;
   optionClass?: string;
 }
 
-export function SoulTestItem({ item, answer, onAnswer, isPt, optionStyle, optionClass }: SoulTestItemProps) {
+export function SoulTestItem({ item, answer, onAnswer, isPt, optionStyle = choiceStyle, optionClass }: SoulTestItemProps) {
   const L = (t: LText) => (isPt ? t.pt : t.en);
 
   if (item.kind === 'likert' || item.kind === 'frequency') {
@@ -85,6 +87,7 @@ export function SoulTestItem({ item, answer, onAnswer, isPt, optionStyle, option
           return (
             <button
               key={value}
+              type="button"
               className={optionClass}
               aria-pressed={current === value}
               style={optionStyle(current === value)}
@@ -105,6 +108,7 @@ export function SoulTestItem({ item, answer, onAnswer, isPt, optionStyle, option
         {(['a', 'b'] as const).map(choice => (
           <button
             key={choice}
+            type="button"
             className={optionClass}
             aria-pressed={current === choice}
             style={optionStyle(current === choice)}
@@ -124,6 +128,7 @@ export function SoulTestItem({ item, answer, onAnswer, isPt, optionStyle, option
       {item.options.map(option => (
         <button
           key={option.id}
+          type="button"
           className={optionClass}
           aria-pressed={current === option.id}
           style={optionStyle(current === option.id)}

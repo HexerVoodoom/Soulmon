@@ -20,9 +20,10 @@ interface ConfirmDialogProps {
   language?: Language;
   /**
    * `true` só quando a ação DESTRÓI algo de verdade (apagar save, perder
-   * progresso). O vermelho de perigo é a coisa mais barulhenta da paleta e
-   * gasta a própria força quando enfeita uma confirmação inofensiva — o
-   * call-site de hoje ("refazer o ritual") preserva tudo, então é primário.
+   * progresso). Canvas Conta D-K6: perda irreversível vai em `outline` —
+   * nunca em primário, nunca no acento de perigo (o gerador reprova). O
+   * call-site de hoje ("refazer o ritual") preserva tudo, então é primário
+   * (X4, decisão do lead).
    */
   destructive?: boolean;
 }
@@ -34,21 +35,19 @@ export function ConfirmDialog({
   const lang = language ?? resolveLanguage(readLocal(STORAGE_KEYS.LANGUAGE));
   const isPt = lang === 'pt-BR';
 
-  const primary = sm2Button('primary');
-  const confirmStyle = destructive
-    ? { ...primary, backgroundColor: 'var(--sm2-danger-fill)', color: 'var(--sm2-on-danger)' }
-    : primary;
+  const confirmStyle = sm2Button(destructive ? 'outline' : 'primary');
 
   return (
     <ModalSheet open={isOpen} onClose={onClose} language={lang} title={title} maxWidth={420}
       footer={
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {/* Uma ação domina; a saída sussurra logo abaixo, em `quiet`. */}
-          <button type="button" onClick={onConfirm} style={{ ...confirmStyle, width: '100%' }}>
-            {confirmLabel ?? (isPt ? 'Confirmar' : 'Confirm')}
-          </button>
-          <button type="button" onClick={onClose} style={{ ...sm2Button('quiet'), width: '100%' }}>
+        /* "Cancel" `outline` + "Redo" `primary`, lado a lado, MESMA largura
+           (canvas Conta `RefazerRitual`): cancelar é saída, nunca `quiet`. */
+        <div className="sm2-conta-two">
+          <button type="button" onClick={onClose} style={sm2Button('outline')}>
             {cancelLabel ?? (isPt ? 'Cancelar' : 'Cancel')}
+          </button>
+          <button type="button" onClick={onConfirm} style={confirmStyle}>
+            {confirmLabel ?? (isPt ? 'Confirmar' : 'Confirm')}
           </button>
         </div>
       }

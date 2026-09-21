@@ -1,6 +1,5 @@
 import { useState, useEffect, type ReactNode } from 'react';
-import { ModalSheet, Chip, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
-import { Icon } from './ui/Icon';
+import { ModalSheet, Chip, Disclosure, SwitchRow, ActionRow, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import { resolveLanguage, type Language } from '../utils/i18n';
 import { readLocal } from '../utils/safeStorage';
 import { STORAGE_KEYS } from '../utils/storageKeys';
@@ -50,103 +49,12 @@ const nearestCreativity = (t: number) =>
   CREATIVITY.reduce((a, b) => (Math.abs(b - t) < Math.abs(a - t) ? b : a));
 
 /**
- * Revelação — o que é avançado não fica empilhado (régua nº 3). O botão é a
- * linha inteira, com 44px de alvo, e o chevron gira com a curva do sistema.
+ * `Disclosure`, `SwitchRow` e `ActionRow` moravam aqui; com o canvas Conta
+ * (D-K1) a `RestWindowCard` e o `StepsCard` passaram a desenhar as mesmas
+ * linhas, então elas foram para o `FormKit`. Re-exportadas para quem ainda
+ * importa daqui (`SettingsModal`).
  */
-export function Disclosure({ label, children }: { label: string; children: ReactNode }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div>
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        aria-expanded={open}
-        style={{
-          display: 'flex', alignItems: 'center', gap: 6, width: '100%', minHeight: 44,
-          padding: 0, background: 'none', border: 'none', cursor: 'pointer',
-          fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm)',
-          fontWeight: 500, color: 'var(--sm2-muted)', textAlign: 'left',
-        }}
-      >
-        {label}
-        <Icon name={open ? 'expand_less' : 'expand_more'} size={20} tone="muted" />
-      </button>
-      {open && <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>{children}</div>}
-    </div>
-  );
-}
-
-/**
- * A LINHA DE CONFIGURAÇÃO — o alvo é a linha inteira, nunca só o controle
- * (régua nº 6). Mora aqui porque é o módulo-folha que `SettingsPage` e
- * `SettingsModal` já importam; um segundo desenho divergiria em silêncio.
- *
- * O interruptor iOS (pill + bolinha branca) morreu: o estado é o eixo
- * `FILL 0→1` do mesmo glifo, que é o sistema de estado do design system.
- */
-export function SwitchRow({
-  checked, onToggle, label, hint, ariaLabel,
-}: {
-  checked: boolean;
-  onToggle: () => void;
-  label: string;
-  hint?: string;
-  ariaLabel?: string;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={ariaLabel}
-      onClick={onToggle}
-      style={{
-        display: 'flex', alignItems: 'center', gap: 12, width: '100%',
-        minHeight: 56, padding: '8px 0', textAlign: 'left',
-        background: 'none', border: 'none', cursor: 'pointer',
-      }}
-    >
-      <span style={{ flex: 1, minWidth: 0 }}>
-        <span style={{ ...sm2Text, display: 'block', fontSize: 'var(--sm2-text-md)' }}>{label}</span>
-        {hint && <span style={{ ...sm2Hint, display: 'block' }}>{hint}</span>}
-      </span>
-      <Icon name="check_circle" size={24} fill={checked ? 1 : 0} tone={checked ? 'primary' : 'muted'} />
-    </button>
-  );
-}
-
-/** Linha que LEVA a algum lugar (outro painel, o guia, a política). */
-export function ActionRow({
-  label, hint, onClick, href,
-}: {
-  label: string;
-  hint?: string;
-  onClick?: () => void;
-  href?: string;
-}) {
-  const inner = (
-    <>
-      <span style={{ flex: 1, minWidth: 0 }}>
-        <span style={{ ...sm2Text, display: 'block', fontSize: 'var(--sm2-text-md)' }}>{label}</span>
-        {hint && <span style={{ ...sm2Hint, display: 'block' }}>{hint}</span>}
-      </span>
-      {/* `chevron_right` nos dois casos: `open_in_new` NÃO está no inventário
-          da fonte subsetada, e nome fora dele não renderiza glifo nenhum e
-          não dá erro (o pior modo de falha que existe). */}
-      <Icon name="chevron_right" size={24} tone="muted" />
-    </>
-  );
-  const style = {
-    display: 'flex', alignItems: 'center', gap: 12, width: '100%',
-    minHeight: 56, padding: '8px 0', textAlign: 'left' as const,
-    background: 'none', border: 'none', cursor: 'pointer',
-    textDecoration: 'none', boxSizing: 'border-box' as const,
-  };
-  if (href) {
-    return <a href={href} target="_blank" rel="noopener noreferrer" style={style}>{inner}</a>;
-  }
-  return <button type="button" onClick={onClick} style={style}>{inner}</button>;
-}
+export { Disclosure, SwitchRow, ActionRow };
 
 /** Grupo de escolha: rótulo do grupo + chips. Sem borda, sem card. */
 function ChipGroup({ label, children }: { label: string; children: ReactNode }) {
@@ -199,8 +107,10 @@ export function AISettingsModal({
       language={language}
       title={isPt ? 'Personalidade' : 'Personality'}
       footer={
+        /* "Default" `quiet` + "Save" `primary`, lado a lado, MESMA largura
+           (canvas Conta, Personalidade). */
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button type="button" onClick={() => setS(defaultSettings)} style={sm2Button('quiet')}>
+          <button type="button" onClick={() => setS(defaultSettings)} style={{ ...sm2Button('quiet'), flex: 1 }}>
             {isPt ? 'Padrão' : 'Default'}
           </button>
           <button

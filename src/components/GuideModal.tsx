@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { Icon } from './ui/Icon';
-import { ModalSheet, sm2Hint, sm2Text } from './form/FormKit';
+import { ModalSheet, sm2Button, sm2Hint } from './form/FormKit';
 import { FOOD_LIMIT_PER_HOUR } from '../utils/careRules';
 import type { Language } from '../utils/i18n';
 import { FORM_REQUIREMENTS, ULTRA_PATIENCE_DAYS } from '../types/progression';
@@ -58,8 +58,9 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
   /** O "5" de "5 das últimas 7": vem da razão, não de um literal. */
   const GOOD_DAYS = Math.round(GOOD_CONSTANCY_RATIO * CONSTANCY_WINDOW_DAYS);
   const DREAM_COUNT = DREAM_CATALOG.length;
-  /** Parágrafo do guia: `sm2Text` não zera a margem do `<p>`, e o gap do flex já espaça. */
-  const para = { ...sm2Text, margin: 0 };
+  /** Parágrafo do guia: o corpo do capítulo aberto é 12 `muted`, recuado por
+   *  um filete `line` (canvas Conta, CONTA-15); o gap do flex já espaça. */
+  const para = { ...sm2Hint, margin: 0 };
 
   const chapters: { id: string; title: string; body: ReactNode }[] = [
     {
@@ -297,40 +298,38 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
       language={language}
       title={L('Guia', 'Guide')}
       maxWidth={520}
+      footer={
+        <button type="button" onClick={onClose} style={{ ...sm2Button('outline'), width: '100%' }}>
+          {L('Fechar', 'Close')}
+        </button>
+      }
     >
       <p style={sm2Hint}>
         {L('Toque num assunto. Nada aqui é obrigatório saber para jogar.',
            'Tap a topic. None of this is required knowledge to play.')}
       </p>
 
+      {/* Canvas Conta (`GuiaGlossario.dc.html`, achado 7): sete capítulos =
+          linhas 44 em Rubik 14/500 com `expand_more` 24 `muted`; o aberto com
+          `expand_less` em `primary-ink` e o corpo 12 recuado por um filete
+          `line`. Um aberto por vez. */}
       <div style={{ display: 'flex', flexDirection: 'column' }}>
         {chapters.map(ch => {
           const isOpenCh = open === ch.id;
           return (
-            <div key={ch.id} style={{ borderTop: '1px solid var(--sm2-line)' }}>
+            <div key={ch.id}>
               <button
                 type="button"
                 onClick={() => setOpen(isOpenCh ? null : ch.id)}
                 aria-expanded={isOpenCh}
                 aria-controls={`guide-${ch.id}`}
-                style={{
-                  width: '100%', minHeight: 52, display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '10px 2px', background: 'none', border: 'none', cursor: 'pointer',
-                  textAlign: 'left',
-                  fontFamily: 'var(--sm2-font-display)',
-                  fontSize: 'var(--sm2-text-md)',
-                  fontWeight: 600,
-                  color: 'var(--sm2-ink)',
-                }}
+                className="sm2-conta-chap"
               >
-                <span style={{ flex: 1 }}>{ch.title}</span>
-                <Icon name={isOpenCh ? 'expand_less' : 'expand_more'} size={24} tone="muted" />
+                <span style={{ flex: 1, minWidth: 0 }}>{ch.title}</span>
+                <Icon name={isOpenCh ? 'expand_less' : 'expand_more'} size={24} tone={isOpenCh ? 'primary' : 'muted'} />
               </button>
               {isOpenCh && (
-                <div
-                  id={`guide-${ch.id}`}
-                  style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '0 2px 16px' }}
-                >
+                <div id={`guide-${ch.id}`} className="sm2-conta-chapbody">
                   {ch.body}
                 </div>
               )}
@@ -339,7 +338,7 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
         })}
       </div>
 
-      <p style={{ ...sm2Hint, borderTop: '1px solid var(--sm2-line)', paddingTop: 16 }}>
+      <p style={sm2Hint}>
         {L('Nos dias em que não der, seu Soulmon continua aqui.',
            'On the days you can’t, it stays right here.')}
       </p>

@@ -1,6 +1,6 @@
 import { useState, useEffect, type CSSProperties } from 'react';
 import { Icon } from './ui/Icon';
-import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
+import { AlertLine, ModalSheet, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import { FULL_UNLOCK_SKU, DEMO_ACTIVITY_TOTAL_CAP } from '../utils/monetization';
 import { useUnlockPriceLabel } from '../utils/priceLabel';
 import { purchase, restorePurchases, isBillingAvailable } from '../utils/playBilling';
@@ -39,16 +39,18 @@ interface UnlockAccountModalProps {
   onClose: () => void;
 }
 
-/** Uma vantagem: ícone pelado + duas linhas. Sem card, sem placa atrás do glifo. */
-function Perk({ icon, title, desc }: { icon: string; title: string; desc: string }) {
+/**
+ * Uma vantagem (canvas Conta, `Desbloquear.dc.html`): `check_circle` 20 FILL
+ * `primary-ink` pelado + a manchete 14. Sem card, sem placa atrás do glifo.
+ * A linha de apoio (`desc`) fica no `title` do elemento — o wireframe
+ * aprovado desenha só a manchete, e a folha inteira cabe antes da dobra.
+ */
+function Perk({ title, desc }: { title: string; desc: string }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-      <Icon name={icon} size={24} tone="primary" style={{ flexShrink: 0, marginTop: 2 }} />
-      <div style={{ minWidth: 0 }}>
-        <p style={{ ...sm2Text, margin: 0, fontWeight: 500 }}>{title}</p>
-        <p style={sm2Hint}>{desc}</p>
-      </div>
-    </div>
+    <p className="sm2-conta-perk" title={desc}>
+      <Icon name="check_circle" size={20} fill={1} tone="primary" style={{ flexShrink: 0 }} />
+      {title}
+    </p>
   );
 }
 
@@ -129,10 +131,11 @@ export function UnlockAccountModal({ language, reason, onUnlocked, onClose }: Un
             type="button"
             onClick={handleBuy}
             disabled={loading !== null}
+            aria-busy={loading === 'buy' || undefined}
             style={{ ...sm2Button('primary', loading !== null), width: '100%' }}
           >
             {loading === 'buy'
-              ? <><Icon name="sync" size={20} className="animate-spin" />{isPt ? 'Comprando…' : 'Purchasing…'}</>
+              ? <><Icon name="sync" size={20} tone="inherit" className="sm2-kit-spin" />{isPt ? 'Comprando…' : 'Purchasing…'}</>
               : (isPt ? `Desbloquear — ${precoLabel}` : `Unlock — ${precoLabel}`)}
           </button>
           {/* WP5.5 — "Agora não" com a MESMA largura do primário, logo abaixo
@@ -145,7 +148,7 @@ export function UnlockAccountModal({ language, reason, onUnlocked, onClose }: Un
             type="button"
             onClick={handleDismiss}
             disabled={loading !== null}
-            style={{ ...sm2Button('outline'), width: '100%' }}
+            style={{ ...sm2Button('outline', loading !== null), width: '100%' }}
           >
             {isPt ? 'Agora não' : 'Not now'}
           </button>
@@ -153,10 +156,11 @@ export function UnlockAccountModal({ language, reason, onUnlocked, onClose }: Un
             type="button"
             onClick={handleRestore}
             disabled={loading !== null}
-            style={{ ...sm2Button('quiet'), width: '100%' }}
+            aria-busy={loading === 'restore' || undefined}
+            style={{ ...sm2Button('quiet', loading !== null), width: '100%' }}
           >
             {loading === 'restore'
-              ? <><Icon name="sync" size={20} className="animate-spin" />{isPt ? 'Restaurando…' : 'Restoring…'}</>
+              ? <><Icon name="sync" size={20} tone="inherit" className="sm2-kit-spin" />{isPt ? 'Restaurando…' : 'Restoring…'}</>
               : (isPt ? 'Já comprei — restaurar' : 'Already bought — restore')}
           </button>
         </div>
@@ -179,20 +183,20 @@ export function UnlockAccountModal({ language, reason, onUnlocked, onClose }: Un
             : "This is a demo character's tree: the three paths exist, but they end at the same creature. An oracle creature is born from you, and each branch leads to a different form.")}
       </p>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <Perk icon="auto_awesome"
+      <div className="sm2-conta-perks">
+        <Perk
           title={isPt ? 'Sua criatura, só sua' : 'Your creature, yours alone'}
           desc={isPt ? 'O ritual do oráculo gera um Soulmon a partir de quem você é' : 'The oracle ritual generates a Soulmon from who you are'} />
         {/* `park` (uma árvore) e não `account_tree`: a fonte é subsetada por
             `icon_names` e este nome NÃO está no inventário — o ícone saía
             vazio. Ver `src/styles/iconInventory.contract.test.ts`. */}
-        <Perk icon="park"
+        <Perk
           title={isPt ? 'A árvore inteira' : 'The whole tree'}
           desc={isPt ? 'Cada galho leva a uma forma diferente, decidida por como você cuida' : 'Each branch leads to a different form, decided by how you care'} />
         {/* C-S1: o terceiro perk era "Reroll liberado (custa Créditos)" —
             vender gasto FUTURO dentro da própria oferta. Trocado pelo modelo
             do Finch: o que se compra é a continuidade do app, dita sem drama. */}
-        <Perk icon="volunteer_activism"
+        <Perk
           title={isPt ? 'Ajuda o Soulmon a existir' : 'Keeps Soulmon alive'}
           desc={isPt ? 'Uma pessoa faz este app; a compra é o que paga as contas dele' : 'One person makes this app; the purchase is what pays its bills'} />
       </div>
@@ -210,17 +214,15 @@ export function UnlockAccountModal({ language, reason, onUnlocked, onClose }: Un
           — dentro do pedido de dinheiro. As duas peças saíram neste mesmo lote
           (D7+D15), e a frase virou verdade verificável. Se alguém reintroduzir
           qualquer venda que toque HP, é esta linha que passa a mentir. */}
-      <p style={{ ...sm2Hint, fontWeight: 500 }}>
+      <p style={{ ...sm2Text, margin: 0, fontWeight: 500 }}>
         {isPt
           ? 'Pagar nunca deixa sua criatura mais forte. Não tem como.'
           : "Paying never makes your creature stronger. It can't."}
       </p>
 
-      {/* Estado de erro do fluxo de compra. Tinta de perigo, sem placa
-          vermelha: é informação, não alarme. */}
-      {message && (
-        <p role="alert" style={{ ...sm2Hint, color: 'var(--sm2-danger-ink)' }}>{message}</p>
-      )}
+      {/* A recusa/cancelamento da compra: `role=alert` em ÂMBAR (D-K7 —
+          filete 3px + `gold-ink`), sem caixa; o modal fica. */}
+      {message && <AlertLine>{message}</AlertLine>}
     </ModalSheet>
   );
 }
@@ -248,9 +250,11 @@ export function UnlockNudge({ language, reason, variant = 'buy', onOpen }: {
      quando é o teto; `auto_awesome` ciano nos outros motivos), título 14/500
      em `ink`, subtítulo 12 `muted`, `chevron_right` `muted`. Passivo, sem
      dismiss. Era uma placa `primary-soft`. */
+  /* Canvas Conta `Convites` (aceite (d) do guarda, §29): `maxWidth 280` em
+     todos os convites — a assimetria diz "opcional". */
   const nudgeStyle: CSSProperties = {
     ...sm2Button('outline'),
-    width: '100%', minHeight: reason === 'evolution' ? 56 : 64, justifyContent: 'flex-start', gap: 12,
+    width: '100%', maxWidth: 280, minHeight: reason === 'evolution' ? 56 : 64, justifyContent: 'flex-start', gap: 12,
     padding: reason === 'evolution' ? '10px 12px' : '8px 16px', textAlign: 'left',
   };
   const isCap = variant !== 'reveal' && reason === 'task-limit';

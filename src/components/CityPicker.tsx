@@ -20,24 +20,25 @@
 
 import { useMemo, useState } from 'react';
 import { cityLabel, searchCities, type City } from '../utils/soulProfile/cities';
+import { Field, choiceStyle, sm2Hint } from './form/FormKit';
 
 interface CityPickerProps {
   value: City | null;
   onChange: (city: City | null) => void;
   isPt: boolean;
-  inputStyle: React.CSSProperties;
-  optionStyle: (selected: boolean) => React.CSSProperties;
   /**
-   * Classes do kit. O onboarding passa `sm-px-field`/`sm-px-choice` — as
-   * MESMAS do passo do nome e das 6 perguntas. Sem elas este passo era o único
-   * do ritual com canto quadrado, outline nativo do browser e sugestões como
-   * texto solto. A `OraclePage` (tema claro, fora da navegação) não passa nada.
+   * Estilos do chamador. Sem eles, o campo é o `Field` e a sugestão é a
+   * `choiceStyle` do `FormKit` (canvas Conta, §29: o kit pixel `sm-px-field`/
+   * `sm-px-choice` saiu deste passo — o onboarding passa os seus, iguais aos
+   * do nome e das 6 perguntas; a `OraclePage`, ferramenta de dev, os dela).
    */
+  inputStyle?: React.CSSProperties;
+  optionStyle?: (selected: boolean) => React.CSSProperties;
   inputClass?: string;
   optionClass?: string;
 }
 
-export function CityPicker({ value, onChange, isPt, inputStyle, optionStyle, inputClass, optionClass }: CityPickerProps) {
+export function CityPicker({ value, onChange, isPt, inputStyle, optionStyle = choiceStyle, inputClass, optionClass }: CityPickerProps) {
   const [query, setQuery] = useState(value ? cityLabel(value) : '');
   const [touched, setTouched] = useState(false);
 
@@ -46,7 +47,7 @@ export function CityPicker({ value, onChange, isPt, inputStyle, optionStyle, inp
 
   return (
     <div>
-      <input
+      <Field
         className={inputClass}
         style={inputStyle}
         type="text"
@@ -54,6 +55,7 @@ export function CityPicker({ value, onChange, isPt, inputStyle, optionStyle, inp
         autoFocus
         autoComplete="off"
         placeholder={isPt ? 'Ex.: São Paulo' : 'E.g.: London'}
+        aria-label={isPt ? 'Cidade de nascimento' : 'Birth city'}
         onChange={e => {
           setQuery(e.target.value);
           setTouched(true);
@@ -64,7 +66,7 @@ export function CityPicker({ value, onChange, isPt, inputStyle, optionStyle, inp
       {showList && (
         <div style={{ marginTop: 10 }}>
           {matches.length === 0 ? (
-            <p style={{ fontSize: 12.5, color: 'var(--sm-muted)', margin: '4px 2px', lineHeight: 1.5 }}>
+            <p style={{ ...sm2Hint, margin: '4px 2px' }}>
               {isPt
                 ? 'Nenhuma cidade com esse nome na lista. Escolha a cidade grande mais próxima — o mapa só precisa da região e do fuso.'
                 : "No city by that name in the list. Pick the nearest large city — the chart only needs the region and the timezone."}
@@ -89,9 +91,9 @@ export function CityPicker({ value, onChange, isPt, inputStyle, optionStyle, inp
       )}
 
       {value && (
-        <p style={{ fontSize: 12, color: 'var(--sm-muted)', margin: '10px 2px 0', lineHeight: 1.5 }}>
+        <p style={{ ...sm2Hint, margin: '10px 2px 0' }}>
           {isPt ? 'Fuso horário: ' : 'Timezone: '}
-          <strong style={{ color: 'var(--sm-ink)' }}>{value.timeZone}</strong>
+          <strong className="sm2-num" style={{ color: 'var(--sm2-ink)', fontWeight: 500 }}>{value.timeZone}</strong>
           {isPt
             ? ' — é ele que faz o horário de verão da sua data de nascimento ser respeitado.'
             : ' — this is what makes the daylight saving rules of your birth date apply.'}

@@ -7297,3 +7297,135 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
 .sm2-lib-path { display: flex; flex-direction: column; gap: var(--sm2-space-1); align-items: flex-start; }
 .sm2-lib-path .t { display: flex; align-items: center; gap: 6px; font-weight: 500; font-size: var(--sm2-text-sm); color: var(--sm2-ink); margin: 0; }
 .sm2-lib-path svg { display: block; flex: none; }
+
+/* CONTA (canvas §29) — a SettingsPage e os modais que o menu alcança, sobre o
+   kit `--sm2-*`. Nenhum token novo, nenhum literal de cor. O `.sm2-kit-meter`,
+   o trilho `.sm2-kit-switch-track/-knob`, a `.sm2-kit-tag` e o `.sm2-kit-spin`
+   já existem acima; aqui só a COMPOSIÇÃO (D-K1…D-K10): o card por intenção
+   (SIS-03, Fredoka 20), a `SwitchRow`/`ActionRow`/`Disclosure` 44, o radiogroup
+   tonal com rótulo, chave:valor, o campo de hora com `schedule` + mono, o código
+   de recuperação, o painel do 503 (estado, não erro), o alerta âmbar, as
+   linhas-botão dos Créditos (inerte por FORMA), o saldo, os perks, os capítulos
+   do Guia e o glossário. */
+.sm2-conta-card {
+  box-sizing: border-box;
+  display: flex; flex-direction: column; gap: var(--sm2-space-2);
+  padding: var(--sm2-space-3);
+  background-color: var(--sm2-surface);
+  border: 1px solid var(--sm2-line);
+  border-radius: var(--sm2-radius-md);
+  color: var(--sm2-ink);
+  margin: 0 0 var(--sm2-space-3);
+}
+.sm2-conta-h2 { margin: 0; font-size: var(--sm2-text-lg); font-weight: 600; }
+/* rótulo 14/500 em `ink` + linha 12 `muted` (os `.t`/`.s` do canvas) */
+.sm2-conta-t { display: block; font-family: var(--sm2-font-text); font-size: var(--sm2-text-sm); font-weight: 500; line-height: var(--sm2-leading-body); color: var(--sm2-ink); }
+.sm2-conta-s { display: block; font-family: var(--sm2-font-text); font-size: var(--sm2-text-xs); font-weight: 400; line-height: var(--sm2-leading-body); color: var(--sm2-muted); }
+/* a SwitchRow: a linha inteira é o alvo (44); o `.switch` 52×32 é o do kit */
+.sm2-conta-swrow , .sm2-conta-arow , .sm2-conta-disc {
+  box-sizing: border-box;
+  display: flex; align-items: center; gap: var(--sm2-space-3);
+  width: 100%; min-height: 44px; padding: 0; margin: 0;
+  background: none; border: 0; text-align: left; text-decoration: none;
+  color: var(--sm2-ink); cursor: pointer;
+  font-family: var(--sm2-font-text); font-size: var(--sm2-text-sm); line-height: var(--sm2-leading-body);
+  border-radius: var(--sm2-radius-sm);
+  &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
+}
+.sm2-conta-swrow-tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--sm2-space-half); }
+.sm2-conta-switch { display: inline-flex; align-items: center; flex: none; padding: 6px 0; }
+/* o radiogroup (Theme / Language): rótulo 12 `muted` à esquerda + segmentos tonais */
+.sm2-conta-rg { display: flex; align-items: center; gap: var(--sm2-space-2); min-height: 44px; }
+.sm2-conta-rg-lb { flex: none; min-width: 64px; font-family: var(--sm2-font-text); font-size: var(--sm2-text-xs); line-height: var(--sm2-leading-body); color: var(--sm2-muted); }
+.sm2-conta-rg-seg { flex: 1; min-width: 0; display: flex; gap: var(--sm2-space-2); }
+/* chave: valor — a palavra em Rubik 500; o número em mono tabular; Créditos = `diamond` em `credit-ink` + número em `ink` */
+.sm2-conta-kv { display: flex; align-items: center; justify-content: space-between; gap: var(--sm2-space-2); min-height: 24px; font-family: var(--sm2-font-text); font-size: var(--sm2-text-sm); line-height: var(--sm2-leading-body); color: var(--sm2-ink); }
+.sm2-conta-kv-v { display: inline-flex; align-items: center; gap: var(--sm2-space-1); font-weight: 500; color: var(--sm2-ink); }
+.sm2-conta-mono { font-family: var(--sm2-font-mono); font-variant-numeric: tabular-nums; font-feature-settings: 'tnum' 1; }
+.sm2-conta-kv-v.sm2-conta-mono { font-size: var(--sm2-text-md); }
+/* a região `aria-live`: sempre montada, 18px de piso; a resposta boa em `ink` 500, as outras em `muted` */
+.sm2-conta-live { min-height: 18px; margin: 0; font-family: var(--sm2-font-text); font-size: var(--sm2-text-xs); line-height: var(--sm2-leading-body); color: var(--sm2-muted); }
+.sm2-conta-live.is-ok { color: var(--sm2-ink); font-weight: 500; }
+/* o campo de hora: `.inp` 44 com `schedule` 20 + o valor em mono tabular */
+.sm2-conta-times { display: flex; gap: var(--sm2-space-2); }
+.sm2-conta-time {
+  box-sizing: border-box; flex: 1; min-width: 0;
+  display: flex; align-items: center; gap: var(--sm2-space-2);
+  min-height: 44px; padding: 0 10px;
+  border-radius: var(--sm2-radius-md);
+  background-color: var(--sm2-surface-2);
+  border: 1px solid var(--sm2-muted);
+  cursor: text;
+  &:focus-within { border-color: var(--sm2-primary-ink); box-shadow: 0 0 0 2px var(--sm2-primary-ink); }
+}
+.sm2-conta-time input {
+  flex: 1; min-width: 0; width: 100%; min-height: 42px;
+  border: 0; background: transparent; outline: none; padding: 0; margin: 0;
+  font-family: var(--sm2-font-mono); font-variant-numeric: tabular-nums; font-feature-settings: 'tnum' 1;
+  font-size: var(--sm2-text-md); color: var(--sm2-ink);
+  &::-webkit-calendar-picker-indicator { display: none; }
+}
+/* o código de recuperação: chip mono sobre `surface-2` + "Copy"/"Copied" num alvo 44 em `primary-ink` */
+.sm2-conta-code { display: flex; align-items: center; gap: var(--sm2-space-2); min-height: 44px; flex-wrap: wrap; }
+.sm2-conta-cd {
+  font-family: var(--sm2-font-mono); letter-spacing: .1em; font-size: var(--sm2-text-sm); color: var(--sm2-ink);
+  min-height: 32px; display: inline-flex; align-items: center; padding: 0 var(--sm2-space-3);
+  border-radius: 999px; background-color: var(--sm2-surface-2);
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.sm2-conta-copy {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--sm2-space-1);
+  min-width: 44px; min-height: 44px; padding: 0 var(--sm2-space-2);
+  background: none; border: 0; border-radius: var(--sm2-radius-md); cursor: pointer;
+  font-family: var(--sm2-font-text); font-size: var(--sm2-text-sm); font-weight: 500; color: var(--sm2-primary-ink);
+  &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
+}
+/* o painel do 503: tinta neutra sobre `surface-2` — é ESTADO, não erro (sem filete, sem âmbar, sem vermelho) */
+.sm2-conta-panel { display: flex; flex-direction: column; gap: var(--sm2-space-1); padding: var(--sm2-space-3); border-radius: var(--sm2-radius-md); background-color: var(--sm2-surface-2); }
+/* o alerta (`role=alert`): filete 3px + tinta `gold-ink` — âmbar de convite, nunca vermelho (D-K7) */
+.sm2-conta-alert { border-left: 3px solid var(--sm2-gold-ink); padding-left: var(--sm2-space-2); margin: 0; color: var(--sm2-gold-ink); font-family: var(--sm2-font-text); font-weight: 500; font-size: var(--sm2-text-sm); line-height: var(--sm2-leading-body); }
+/* o número grande dos passos: mono 24 tabular (valor = mono) */
+.sm2-conta-bignum { font-family: var(--sm2-font-mono); font-variant-numeric: tabular-nums; font-feature-settings: 'tnum' 1; font-size: var(--sm2-text-xl); line-height: 1.2; color: var(--sm2-ink); }
+/* a contagem "N of M": Rubik 500 tabular (`.sm2-num`), nunca 700 sintetizado */
+.sm2-conta-count { font-family: var(--sm2-font-text); font-variant-numeric: tabular-nums; font-feature-settings: 'tnum' 1; font-size: var(--sm2-text-sm); font-weight: 500; line-height: var(--sm2-leading-body); color: var(--sm2-ink); }
+.sm2-conta-dream { display: flex; align-items: center; gap: var(--sm2-space-2); flex-wrap: wrap; min-height: 24px; }
+.sm2-conta-two { display: flex; gap: var(--sm2-space-2); }
+.sm2-conta-two > * { flex: 1; min-width: 0; padding-left: var(--sm2-space-2); padding-right: var(--sm2-space-2); }
+/* as linhas-botão dos Créditos: card SIS-03 inteiro, 56, título 14/500 + linha 12, `chevron_right` 24 `muted`; inerte por FORMA */
+.sm2-conta-crow {
+  box-sizing: border-box; width: 100%;
+  display: flex; align-items: center; gap: 10px;
+  min-height: 56px; padding: var(--sm2-space-2) var(--sm2-space-3);
+  background-color: var(--sm2-surface); border: 1px solid var(--sm2-line); border-radius: var(--sm2-radius-md);
+  color: var(--sm2-ink); text-align: left; cursor: pointer;
+  font-family: var(--sm2-font-text);
+  &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
+  &:active { background-color: var(--sm2-surface-2); }
+}
+.sm2-conta-crow-tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--sm2-space-half); }
+.sm2-conta-crow-t { display: inline-flex; align-items: center; gap: 6px; font-size: var(--sm2-text-sm); font-weight: 500; line-height: var(--sm2-leading-body); color: var(--sm2-ink); }
+.sm2-conta-crow-t.sm2-conta-mono { font-size: var(--sm2-text-md); }
+.sm2-conta-crow.is-inert { border: 1px dashed var(--sm2-muted); background-color: transparent; cursor: default; }
+.sm2-conta-crow.is-inert .sm2-conta-t , .sm2-conta-crow.is-inert .sm2-conta-s , .sm2-conta-crow.is-inert .sm2-conta-crow-t { color: var(--sm2-muted); }
+/* o saldo de Créditos: `diamond` 20 FILL `credit-ink` + o número em mono `ink` */
+.sm2-conta-bal { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; }
+.sm2-conta-bal b { font-family: var(--sm2-font-mono); font-variant-numeric: tabular-nums; font-feature-settings: 'tnum' 1; font-size: var(--sm2-text-md); font-weight: 500; color: var(--sm2-ink); }
+/* os perks do desbloqueio: `check_circle` 20 FILL `primary-ink` pelado + texto 14 */
+.sm2-conta-perks { display: flex; flex-direction: column; gap: var(--sm2-space-1); }
+.sm2-conta-perk { display: flex; align-items: center; gap: var(--sm2-space-2); min-height: 24px; margin: 0; font-family: var(--sm2-font-text); font-size: var(--sm2-text-sm); line-height: var(--sm2-leading-body); color: var(--sm2-ink); }
+/* o Guia: capítulos = linhas 44 com `expand_more`/`expand_less`; o aberto em 500 + `primary-ink`, corpo 12 recuado por um filete `line` */
+.sm2-conta-chap {
+  box-sizing: border-box; width: 100%;
+  display: flex; align-items: center; gap: var(--sm2-space-2);
+  min-height: 44px; padding: 0; margin: 0;
+  background: none; border: 0; text-align: left; cursor: pointer;
+  font-family: var(--sm2-font-text); font-size: var(--sm2-text-sm); font-weight: 500; line-height: var(--sm2-leading-body); color: var(--sm2-ink);
+  border-radius: var(--sm2-radius-sm);
+  &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
+}
+.sm2-conta-chapbody { display: flex; flex-direction: column; gap: var(--sm2-space-2); padding-left: var(--sm2-space-2); border-left: 2px solid var(--sm2-line); margin: 0 0 var(--sm2-space-1) var(--sm2-space-1); }
+.sm2-conta-chapbody p { margin: 0; font-family: var(--sm2-font-text); font-size: var(--sm2-text-xs); line-height: var(--sm2-leading-body); color: var(--sm2-muted); }
+/* o Glossário: `dl` com `dt` 14/500 e `dd` 12 `muted` */
+.sm2-conta-gl { margin: 0; display: grid; gap: 6px; }
+.sm2-conta-gl dt { font-family: var(--sm2-font-text); font-size: var(--sm2-text-sm); font-weight: 500; line-height: 1.3; color: var(--sm2-ink); }
+.sm2-conta-gl dd { margin: 0 0 var(--sm2-space-1); font-family: var(--sm2-font-text); font-size: var(--sm2-text-xs); line-height: var(--sm2-leading-body); color: var(--sm2-muted); }

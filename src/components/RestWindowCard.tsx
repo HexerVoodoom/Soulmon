@@ -35,7 +35,6 @@
  * RECOMPENSAS (`hideMetrics` em restWindow.ts, regra 5) — quem não quer ver
  * medida não deve por isso colecionar menos sonhos.
  */
-import { useId, type CSSProperties } from 'react';
 import {
   restConstancy,
   dreamRarity,
@@ -46,8 +45,17 @@ import {
 } from '../utils/restWindow';
 import { REST_WINDOW_DAYS } from '../types/taskModel';
 import type { Language } from '../utils/i18n';
-import { PixelPanel, PixelMeter, PixelSwitch, PixelTag } from './pixel/PixelKit';
-import { sm2Button, sm2Hint } from './form/FormKit';
+import { GroupCard, SwitchRow, TimeField, sm2Button, sm2Hint } from './form/FormKit';
+
+/*
+ * CANVAS "CONTA" (20/09/2026, `Descanso.dc.html`, D-K1/D-K3): o cartão é o
+ * mesmo card SIS-03 da `SettingsPage` (`GroupCard`, Fredoka 20 em caixa de
+ * frase — era `PixelPanel` Silkscreen 12 "REST WINDOW"); as horas em `.inp`
+ * 44 com `schedule` + mono `tabular-nums`; "5 of 7" em Rubik 500 tabular
+ * (`.sm2-conta-count`) + o `.meter` SIS-07 (`.sm2-kit-meter`); a tag de sonho
+ * é a `.sm2-kit-tag` 24; o switch é a `SwitchRow` do kit. Nenhum PNG, nenhuma
+ * Silkscreen — e nenhuma das quatro proibições acima entrou.
+ */
 
 export interface RestWindowCardProps {
   rest: RestState;
@@ -82,46 +90,6 @@ function rarityLabel(rarity: DreamRarity, isPt: boolean): string {
   return isPt ? 'Comum' : 'Common';
 }
 
-/** ONDA 2 — Rubik, escala fechada e tokens da fundação. */
-const mutedLine: CSSProperties = {
-  fontFamily: 'var(--sm2-font-text)',
-  fontSize: 'var(--sm2-text-xs)',
-  color: 'var(--sm2-muted)',
-  lineHeight: 'var(--sm2-leading-body)',
-  margin: 0,
-};
-
-const labelStyle: CSSProperties = {
-  display: 'block',
-  fontFamily: 'var(--sm2-font-text)',
-  fontSize: 'var(--sm2-text-xs)',
-  letterSpacing: '0.06em',
-  textTransform: 'uppercase',
-  color: 'var(--sm2-muted)',
-  marginBottom: 4,
-};
-
-/**
- * O campo de horário. Era moldura de COBRE de 2px, herança do kit pixel — dois
- * campos de formulário desenhados como peça de arcade, dentro de um cartão que
- * fala de dormir. Vira um campo comum: 1px de `--sm2-line`, superfície própria,
- * canto de 8px. Os 44px de alvo continuam sendo o piso.
- */
-const timeInputStyle: CSSProperties = {
-  width: '100%',
-  boxSizing: 'border-box',
-  minHeight: 44,
-  padding: '8px 10px',
-  fontFamily: 'var(--sm2-font-text)',
-  fontVariantNumeric: 'tabular-nums',
-  fontSize: 'var(--sm2-text-md)',
-  fontWeight: 500,
-  color: 'var(--sm2-ink)',
-  background: 'var(--sm2-surface)',
-  border: '1px solid var(--sm2-line)',
-  borderRadius: 8,
-};
-
 export function RestWindowCard({
   rest, now, language, onChangeWindow, onToggleMetrics,
   onEnableReminder, notificationsEnabled = false, reminderPreview,
@@ -133,46 +101,31 @@ export function RestWindowCard({
   const rarity = dreamRarity(rest, now);
   const dex = dexProgress(rest);
 
-  const startId = useId();
-  const endId = useId();
   const switchLabel = isPt
     ? 'Não quero ver métricas de sono'
     : "Don't show me sleep metrics";
 
   return (
-    <PixelPanel title={isPt ? 'JANELA DE DESCANSO' : 'REST WINDOW'}>
-      <p style={{ ...mutedLine, margin: '0 0 12px' }}>
+    <GroupCard title={isPt ? 'Janela de descanso' : 'Rest window'}>
+      <p style={sm2Hint}>
         {isPt
           ? 'Escolha os horários que combinam com a sua vida. A janela é sua — o app não sugere nenhuma.'
           : 'Pick the hours that fit your life. The window is yours — the app suggests none.'}
       </p>
 
-      {/* Os dois campos. Sem "duração", sem "ideal", sem cálculo de horas. */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 14 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <label htmlFor={startId} style={labelStyle}>
-            {isPt ? 'Começa' : 'Starts'}
-          </label>
-          <input
-            id={startId}
-            type="time"
-            value={rest.window.start}
-            onChange={(e) => onChangeWindow({ ...rest.window, start: e.target.value })}
-            style={timeInputStyle}
-          />
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <label htmlFor={endId} style={labelStyle}>
-            {isPt ? 'Termina' : 'Ends'}
-          </label>
-          <input
-            id={endId}
-            type="time"
-            value={rest.window.end}
-            onChange={(e) => onChangeWindow({ ...rest.window, end: e.target.value })}
-            style={timeInputStyle}
-          />
-        </div>
+      {/* Os dois campos. Sem "duração", sem "ideal", sem cálculo de horas. O
+          nome de cada um vai no `aria-label` (Starts / Ends), como no canvas. */}
+      <div className="sm2-conta-times">
+        <TimeField
+          ariaLabel={isPt ? 'Começa' : 'Starts'}
+          value={rest.window.start}
+          onChange={(v) => onChangeWindow({ ...rest.window, start: v })}
+        />
+        <TimeField
+          ariaLabel={isPt ? 'Termina' : 'Ends'}
+          value={rest.window.end}
+          onChange={(v) => onChangeWindow({ ...rest.window, end: v })}
+        />
       </div>
 
       {/* WP1.8 — O MOMENTO-OURO DA PERMISSÃO DE PUSH.
@@ -182,9 +135,9 @@ export function RestWindowCard({
           lembrar disso?" é uma pergunta óbvia em vez de uma interrupção.
           Aparece só para quem NÃO tem push ligado, e o convite mostra a
           própria frase que chegaria — pedir permissão sem dizer o que vai
-          chegar é pedir um cheque em branco. */}
+          chegar é pedir um cheque em branco. Lembrete é convite: `outline`. */}
       {onEnableReminder && !notificationsEnabled && (
-        <div style={{ marginBottom: 14 }}>
+        <div>
           <button
             type="button"
             onClick={onEnableReminder}
@@ -213,41 +166,43 @@ export function RestWindowCard({
           junto com o conteúdo não é anunciada por parte dos leitores. */}
       <div aria-live="polite">
       {!hidden && (
-        <div style={{ marginBottom: 14 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {/* O denominador é o de noites REGISTRADAS, nunca `REST_WINDOW_DAYS`
               cru: pintar "0 de 7" numa semana sem registro inventaria sete
               falhas que não existem (restWindow.ts: noite sem registro é
-              NEUTRA). Sem registro nenhum, o número simplesmente não aparece. */}
+              NEUTRA). Sem registro nenhum, o número simplesmente não aparece —
+              e a barra tampouco (nunca "0 of 0"). */}
           {constancy.window > 0 && (
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 6 }}>
-              <span
-                className="sm2-num"
-                style={{ fontSize: 'var(--sm2-text-lg)', fontWeight: 500, color: 'var(--sm2-ink)' }}
-              >
+            <>
+              <p className="sm2-conta-count" style={{ margin: 0 }}>
                 {isPt
                   ? `${constancy.onTime} de ${constancy.window}`
                   : `${constancy.onTime} of ${constancy.window}`}
-              </span>
-              <span style={mutedLine}>
-                {isPt
-                  ? `noites registradas nos últimos ${REST_WINDOW_DAYS} dias começaram na sua janela`
-                  : `logged nights in the last ${REST_WINDOW_DAYS} days started inside your window`}
-              </span>
-            </div>
+                {' '}
+                <span style={{ fontWeight: 400, color: 'var(--sm2-muted)', fontSize: 'var(--sm2-text-xs)' }}>
+                  {isPt
+                    ? `noites registradas nos últimos ${REST_WINDOW_DAYS} dias começaram na sua janela`
+                    : `logged nights in the last ${REST_WINDOW_DAYS} days started inside your window`}
+                </span>
+              </p>
+              <div
+                className="sm2-kit-meter"
+                role="img"
+                aria-label={isPt
+                  ? `Constância de horário: ${constancy.onTime} de ${constancy.window}`
+                  : `Bedtime constancy: ${constancy.onTime} of ${constancy.window}`}
+              >
+                <div className="sm2-kit-meter-fill" style={{ width: `${Math.round(Math.max(0, Math.min(1, constancy.ratio)) * 100)}%` }} />
+              </div>
+            </>
           )}
-          <PixelMeter
-            ratio={constancy.ratio}
-            tone="cyan"
-            label={isPt ? 'Constância de horário' : 'Bedtime constancy'}
-          />
           {/* Com noites registradas, a frase "é a constância do HORÁRIO em que
               você deita" repetia palavra por palavra a linha que acompanha o
-              número logo acima ("noites registradas … começaram na sua janela").
-              Ficou só a metade que a linha de cima NÃO diz — e que é a regra de
-              produto desta tela: noite sem registro nunca conta contra você.
-              O texto vazio (sem registro nenhum) continua inteiro: ali não há
-              linha nenhuma acima para repetir. */}
-          <p style={{ ...mutedLine, margin: '6px 0 0' }}>
+              número logo acima. Ficou só a metade que a linha de cima NÃO diz —
+              e que é a regra de produto desta tela: noite sem registro nunca
+              conta contra você. O texto vazio (sem registro nenhum) continua
+              inteiro: ali não há linha nenhuma acima para repetir. */}
+          <p style={sm2Hint}>
             {constancy.window === 0
               ? (isPt
                 ? 'Ainda não há noites registradas. Nenhuma noite conta como falha — as que faltam simplesmente não entram na conta.'
@@ -261,42 +216,28 @@ export function RestWindowCard({
       </div>
 
       {/* RECOMPENSAS — ficam visíveis com o switch ligado (regra 5). */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
-        <PixelTag style={{ color: RARITY_TONE[rarity], fontFamily: 'var(--sm2-font-text)' }}>
+      <div className="sm2-conta-dream">
+        <span className="sm2-kit-tag" style={{ color: RARITY_TONE[rarity] }}>
           {isPt ? `Sonho ${rarityLabel(rarity, true).toLowerCase()}` : `${rarityLabel(rarity, false)} dream`}
-        </PixelTag>
-        <span className="sm2-num" style={mutedLine}>
-          {isPt
-            ? `Sonhos na coleção: ${dex.collected} de ${dex.total}`
-            : `Dreams collected: ${dex.collected} of ${dex.total}`}
+        </span>
+        <span className="sm2-num" style={sm2Hint}>
+          {isPt ? 'Sonhos na coleção: ' : 'Dreams collected: '}
+          <span className="sm2-conta-count" style={{ fontSize: 'var(--sm2-text-xs)' }}>
+            {isPt ? `${dex.collected} de ${dex.total}` : `${dex.collected} of ${dex.total}`}
+          </span>
         </span>
       </div>
 
       {/* O switch. Esconde números, mantém prêmios. */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <PixelSwitch
-          checked={hidden}
-          onToggle={() => onToggleMetrics(!hidden)}
-          ariaLabel={switchLabel}
-        />
-        <span
-          style={{
-            flex: 1,
-            fontFamily: 'var(--sm2-font-text)',
-            fontSize: 'var(--sm2-text-sm)',
-            color: 'var(--sm2-ink)',
-            lineHeight: 'var(--sm2-leading-body)',
-          }}
-        >
-          {switchLabel}
-          <span style={{ ...mutedLine, display: 'block' }}>
-            {isPt
-              ? 'Some com os números. Os sonhos continuam chegando igual.'
-              : 'Hides the numbers. Dreams keep arriving all the same.'}
-          </span>
-        </span>
-      </div>
-    </PixelPanel>
+      <SwitchRow
+        checked={hidden}
+        onToggle={() => onToggleMetrics(!hidden)}
+        label={switchLabel}
+        hint={isPt
+          ? 'Some com os números. Os sonhos continuam chegando igual.'
+          : 'Hides the numbers. Dreams keep arriving all the same.'}
+      />
+    </GroupCard>
   );
 }
 

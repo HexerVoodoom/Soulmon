@@ -1,6 +1,9 @@
-import { useState, type CSSProperties, type ReactNode } from 'react';
-import { AISettingsModal, Disclosure, SwitchRow, ActionRow, type AISettings } from './AISettingsModal';
-import { Field, Segment, sm2Button, sm2Hint, sm2Text, sm2TitleStyle } from './form/FormKit';
+import { useState } from 'react';
+import { AISettingsModal, type AISettings } from './AISettingsModal';
+import {
+  ActionRow, Disclosure, Field, GroupCard, Segment, SwitchRow, TimeField, sm2Button, sm2Hint, sm2Text,
+} from './form/FormKit';
+import { Icon } from './ui/Icon';
 import { Language, useTranslation, getLanguageName } from '../utils/i18n';
 import { readFlag, readLocal, writeFlag, writeLocal } from '../utils/safeStorage';
 import { AccountSection } from './AccountSection';
@@ -45,29 +48,12 @@ interface SettingsPageProps {
 }
 
 /**
- * O grupo. Uma superfície limpa, canto de 16, sem borda e sem sombra — o
- * espaçamento já separa (régua nº 4). O título é Fredoka; nenhum ícone
- * decorativo ao lado, porque nenhum deles informava nada.
+ * O grupo por intenção é o `GroupCard` do `FormKit` (canvas Conta D-K1: card
+ * SIS-03 com o título Fredoka 20). A `RestWindowCard` e o `StepsCard`, que o
+ * App monta logo abaixo desta página, desenham o MESMO card — por isso ele
+ * saiu daqui.
  */
-function Group({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section style={{ marginBottom: 24 }}>
-      <h2 className="sm2-title" style={{ ...sm2TitleStyle, marginBottom: 8, paddingLeft: 4 }}>{title}</h2>
-      <div
-        style={{
-          backgroundColor: 'var(--sm2-surface)',
-          borderRadius: 16,
-          padding: '8px 16px 16px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 4,
-        }}
-      >
-        {children}
-      </div>
-    </section>
-  );
-}
+const Group = GroupCard;
 
 /**
  * ESTATÍSTICAS DE USO — o opt-out real, na tela.
@@ -124,8 +110,6 @@ function TelemetrySection({ language }: { language: Language }) {
     </div>
   );
 }
-
-const radioGroupStyle: CSSProperties = { display: 'flex', gap: 8, marginTop: 8 };
 
 export function SettingsPage({
   useAI,
@@ -238,14 +222,12 @@ export function SettingsPage({
             ? (isPt ? 'Sincronizando…' : 'Syncing…')
             : (isPt ? 'Entrar' : 'Sign in')}
         </button>
-        {/* Região viva sempre montada — ver AccountSection. */}
-        <div aria-live="polite">
-          {loginMessage && (
-            <p style={{ ...sm2Hint, color: loginStatus === 'err' ? 'var(--sm2-danger-ink)' : 'var(--sm2-primary-ink)' }}>
-              {loginMessage}
-            </p>
-          )}
-        </div>
+        {/* Região viva sempre montada (18px de piso) — ver AccountSection.
+            A resposta boa em `ink` 500; a falha em `muted` 12, nunca vermelho
+            (D-K7: a falha do sync não é erro da pessoa). */}
+        <p aria-live="polite" className={loginMessage && loginStatus !== 'err' ? 'sm2-conta-live is-ok' : 'sm2-conta-live'}>
+          {loginMessage}
+        </p>
 
         <AccountSection language={language} />
 
@@ -255,13 +237,18 @@ export function SettingsPage({
         <Disclosure label={isPt ? 'Recuperar com um código' : 'Recover with a code'}>
           {saveId && (
             <div>
-              <p style={sm2Hint}>{isPt ? 'Seu código' : 'Your code'}</p>
-              <p className="sm2-num" style={{ ...sm2Text, wordBreak: 'break-all' }}>{saveId}</p>
-              <button type="button" onClick={handleCopy} style={sm2Button('outline')}>
-                {copied ? (isPt ? 'Copiado' : 'Copied') : (isPt ? 'Copiar' : 'Copy')}
-              </button>
+              {/* O código em mono sobre `surface-2` + "Copy"/"Copied" num alvo
+                  44 com `check` FILL `primary-ink` (achado 5: era 32). */}
+              <div className="sm2-conta-code">
+                <span style={sm2Hint}>{isPt ? 'Seu código' : 'Your code'}</span>
+                <span className="sm2-conta-cd" title={saveId}>{saveId}</span>
+                <button type="button" onClick={handleCopy} className="sm2-conta-copy" aria-live="polite">
+                  {copied && <Icon name="check" size={24} fill={1} tone="inherit" />}
+                  {copied ? (isPt ? 'Copiado' : 'Copied') : (isPt ? 'Copiar' : 'Copy')}
+                </button>
+              </div>
               {lastSyncLabel && (
-                <p className="sm2-num" style={{ ...sm2Hint, marginTop: 8 }}>
+                <p className="sm2-num" style={{ ...sm2Hint, marginTop: 4 }}>
                   {isPt ? `Última sincronização: ${lastSyncLabel}` : `Last sync: ${lastSyncLabel}`}
                 </p>
               )}
@@ -279,7 +266,7 @@ export function SettingsPage({
               type="button"
               onClick={handleRestore}
               disabled={!restoreInput.trim() || restoreStatus === 'loading'}
-              style={{ ...sm2Button('outline', !restoreInput.trim() || restoreStatus === 'loading'), marginTop: 8 }}
+              style={{ ...sm2Button('outline', !restoreInput.trim() || restoreStatus === 'loading'), marginTop: 8, width: '100%' }}
             >
               {restoreStatus === 'loading'
                 ? (isPt ? 'Restaurando…' : 'Restoring…')
@@ -287,13 +274,9 @@ export function SettingsPage({
                   ? (isPt ? 'Pronto' : 'Done')
                   : (isPt ? 'Restaurar' : 'Restore')}
             </button>
-            <div aria-live="polite">
-              {restoreStatus === 'err' && (
-                <p style={{ ...sm2Hint, color: 'var(--sm2-danger-ink)' }}>
-                  {isPt ? 'Código não encontrado.' : 'Code not found.'}
-                </p>
-              )}
-            </div>
+            <p aria-live="polite" className="sm2-conta-live">
+              {restoreStatus === 'err' && (isPt ? 'Código não encontrado.' : 'Code not found.')}
+            </p>
           </div>
         </Disclosure>
       </Group>
@@ -348,19 +331,28 @@ export function SettingsPage({
 
       {/* ── APARÊNCIA ─────────────────────────────────────────────────────── */}
       <Group title={isPt ? 'Aparência' : 'Appearance'}>
-        <div role="radiogroup" aria-label={isPt ? 'Tema' : 'Theme'} style={radioGroupStyle}>
-          {([
-            { k: 'light' as const, l: isPt ? 'Claro' : 'Light' },
-            { k: 'dark' as const, l: isPt ? 'Escuro' : 'Dark' },
-            { k: 'system' as const, l: isPt ? 'Sistema' : 'System' },
-          ]).map(o => (
-            <Segment key={o.k} selected={themeMode === o.k} onSelect={() => setThemeMode(o.k)} label={o.l} />
-          ))}
+        {/* Segmentos TONAIS (D-K2): o ativo em `primary-soft` + `primary-ink` +
+            borda; nunca placa cheia — "onde estou" não é ação. O rótulo 12
+            `muted` à esquerda é o nome do radiogroup, visível. */}
+        <div className="sm2-conta-rg">
+          <span className="sm2-conta-rg-lb" id="sm-conta-theme-lb">{isPt ? 'Tema' : 'Theme'}</span>
+          <div role="radiogroup" aria-labelledby="sm-conta-theme-lb" className="sm2-conta-rg-seg">
+            {([
+              { k: 'light' as const, l: isPt ? 'Claro' : 'Light' },
+              { k: 'dark' as const, l: isPt ? 'Escuro' : 'Dark' },
+              { k: 'system' as const, l: isPt ? 'Sistema' : 'System' },
+            ]).map(o => (
+              <Segment key={o.k} tonal selected={themeMode === o.k} onSelect={() => setThemeMode(o.k)} label={o.l} />
+            ))}
+          </div>
         </div>
-        <div role="radiogroup" aria-label={t.settings.language} style={radioGroupStyle}>
-          {(['en-US', 'pt-BR'] as Language[]).map(l => (
-            <Segment key={l} selected={language === l} onSelect={() => onChangeLanguage(l)} label={getLanguageName(l)} />
-          ))}
+        <div className="sm2-conta-rg">
+          <span className="sm2-conta-rg-lb" id="sm-conta-lang-lb">{t.settings.language}</span>
+          <div role="radiogroup" aria-labelledby="sm-conta-lang-lb" className="sm2-conta-rg-seg">
+            {(['en-US', 'pt-BR'] as Language[]).map(l => (
+              <Segment key={l} tonal selected={language === l} onSelect={() => onChangeLanguage(l)} label={getLanguageName(l)} />
+            ))}
+          </div>
         </div>
       </Group>
 
@@ -372,7 +364,7 @@ export function SettingsPage({
           label={isPt ? 'Política de privacidade' : 'Privacy policy'}
           href="/privacidade.html"
         />
-        <p className="sm2-num" style={sm2Hint}>Soulmon 1.0.2</p>
+        <p className="sm2-num" style={{ ...sm2Hint, minHeight: 24, display: 'flex', alignItems: 'center' }}>Soulmon 1.0.2</p>
       </Group>
 
       {/* ── SEU RITMO — encosta na Janela de Descanso, que o App desenha logo
@@ -392,20 +384,19 @@ export function SettingsPage({
             : 'It sleeps and wakes on its own. Asleep, it never poops.'}
         />
         {autoSleepEnabled && (
-          <div style={{ display: 'flex', gap: 12 }}>
+          /* As horas em `.inp` 44 com `schedule` 20 + mono `tabular-nums`
+             (D-K3). O nome do campo vai no `aria-label`, como no canvas. */
+          <div className="sm2-conta-times">
             {([
               { label: isPt ? 'Dorme' : 'Sleeps', value: autoSleepStart, set: setAutoSleepStart, key: STORAGE_KEYS.AUTO_SLEEP_START },
               { label: isPt ? 'Acorda' : 'Wakes', value: autoSleepEnd, set: setAutoSleepEnd, key: STORAGE_KEYS.AUTO_SLEEP_END },
             ] as const).map(f => (
-              <label key={f.key} style={{ flex: 1, minWidth: 0 }}>
-                <span style={{ ...sm2Hint, display: 'block', marginBottom: 4 }}>{f.label}</span>
-                <Field
-                  type="time"
-                  value={f.value}
-                  onChange={e => { f.set(e.target.value); writeLocal(f.key, e.target.value, { silent: true }); }}
-                  style={{ fontVariantNumeric: 'tabular-nums' }}
-                />
-              </label>
+              <TimeField
+                key={f.key}
+                ariaLabel={f.label}
+                value={f.value}
+                onChange={v => { f.set(v); writeLocal(f.key, v, { silent: true }); }}
+              />
             ))}
           </div>
         )}

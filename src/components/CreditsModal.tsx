@@ -2,7 +2,7 @@ import { useCreditPackLabels, useUnlockPriceLabel } from '../utils/priceLabel';
 import { useState, useEffect } from 'react';
 import { Icon } from './ui/Icon';
 import { CREDIT_COLOR } from '../utils/currencies';
-import { ModalSheet, sm2Button, sm2Hint, sm2Text, sm2TitleStyle } from './form/FormKit';
+import { ModalSheet, sm2Hint, sm2TitleStyle } from './form/FormKit';
 import {
   CREDIT_PACKS, type CreditPack, ADS_ENABLED, AD_REWARD_CREDITS, AD_DAILY_CAP, REROLL_COST_CREDITS,
 } from '../utils/monetization';
@@ -99,44 +99,46 @@ export function CreditsModal({
     return ok;
   };
 
-  /** Uma linha de ação. O ícone é pelado; a LINHA inteira é o alvo de 44px+. */
-  const Row = ({ icon, tone, title, hint, disabled, onClick }: {
-    icon: string;
-    tone: 'primary' | 'gold' | 'credit' | 'muted';
+  /**
+   * Uma linha-botão (canvas Conta, `Creditos.dc.html`): card SIS-03 inteiro,
+   * 56, título 14/500 + linha 12, `chevron_right` 24 `muted` no fim. Os packs
+   * levam `diamond` 20 FILL `credit-ink` + "60 Credits" em mono 16 + o preço
+   * em mono 12 (D-K3/D-K4: Créditos são dinheiro real, a única moeda com
+   * ícone). "Watch ad" e "New Reading" não têm ícone. Inerte por FORMA
+   * (D-K5): tracejado 1px `muted` + tinta `muted`, `aria-disabled`, fora do
+   * Tab — nunca `opacity` (achado 10).
+   */
+  const Row = ({ credit, title, hint, hintMono, disabled, onClick }: {
+    credit?: boolean;
     title: string;
     hint: string;
+    hintMono?: boolean;
     disabled?: boolean;
     onClick: () => void;
   }) => (
     <button
       type="button"
-      onClick={onClick}
-      disabled={disabled}
-      style={{
-        display: 'flex', alignItems: 'center', gap: 14, width: '100%',
-        minHeight: 64, padding: 12, borderRadius: 16, textAlign: 'left',
-        border: '1px solid transparent', backgroundColor: 'var(--sm2-surface-2)',
-        cursor: disabled ? 'default' : 'pointer',
-        /* Inerte por TINTA (canvas Loja/Atividades F1): ícone e título em
-           `muted`, nunca `opacity` — o alfa derruba o contraste da linha inteira. */
-      }}
+      onClick={disabled ? undefined : onClick}
+      aria-disabled={disabled || undefined}
+      tabIndex={disabled ? -1 : undefined}
+      className={disabled ? 'sm2-conta-crow is-inert' : 'sm2-conta-crow'}
     >
-      <Icon
-        name={icon}
-        size={24}
-        fill={tone === 'credit' ? 1 : 0}
-        tone={disabled ? 'muted' : tone === 'credit' ? 'inherit' : tone}
-        style={tone === 'credit' && !disabled ? { color: CREDIT_COLOR } : undefined}
-      />
-      <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <span style={{ ...sm2Text, fontWeight: 500, color: disabled ? 'var(--sm2-muted)' : 'var(--sm2-ink)' }}>{title}</span>
-        <span style={sm2Hint}>{hint}</span>
+      <span className="sm2-conta-crow-tx">
+        <span className={credit ? 'sm2-conta-crow-t sm2-conta-mono' : 'sm2-conta-crow-t'}>
+          {credit && (
+            <Icon name="diamond" size={20} fill={1} tone="inherit" style={disabled ? undefined : { color: CREDIT_COLOR }} />
+          )}
+          {title}
+        </span>
+        <span className={hintMono ? 'sm2-conta-s sm2-conta-mono' : 'sm2-conta-s'}>{hint}</span>
       </span>
+      <Icon name="chevron_right" size={24} tone="muted" style={{ flexShrink: 0 }} />
     </button>
   );
 
+  /* "Earn" / "Spend" em Fredoka 16 (o `.h3` do canvas). */
   const sectionTitle = (text: string) => (
-    <h2 className="sm2-title" style={{ ...sm2TitleStyle, marginTop: 4 }}>{text}</h2>
+    <h2 className="sm2-title" style={{ ...sm2TitleStyle, fontSize: 'var(--sm2-text-md)', fontWeight: 500, marginTop: 2 }}>{text}</h2>
   );
 
   return (
@@ -146,9 +148,10 @@ export function CreditsModal({
       onClose={onClose}
       language={language}
       footer={
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        /* O saldo: `diamond` 20 FILL `credit-ink` + o número em mono `ink`. */
+        <div className="sm2-conta-bal">
           <Icon name="diamond" size={20} fill={1} tone="inherit" style={{ color: CREDIT_COLOR }} label={isPt ? 'Créditos' : 'Credits'} />
-          <span className="sm2-num" style={{ ...sm2Text, fontWeight: 500 }}>{credits}</span>
+          <b>{credits}</b>
         </div>
       }
     >
@@ -176,8 +179,6 @@ export function CreditsModal({
           servidor sobre a verificação do AdMob. */}
       {ADS_ENABLED && adsEnabled && (
         <Row
-          icon="play_arrow"
-          tone="primary"
           disabled={busy === 'ad' || adsLeft === 0}
           onClick={() => run('ad', onWatchAd,
             isPt ? `+${AD_REWARD_CREDITS} créditos.` : `+${AD_REWARD_CREDITS} credits.`,
@@ -195,8 +196,8 @@ export function CreditsModal({
       {CREDIT_PACKS.map(pack => (
         <Row
           key={pack.id}
-          icon="diamond"
-          tone="credit"
+          credit
+          hintMono
           disabled={busy !== null || !billingAvailable}
           onClick={() => run(pack.id, () => onBuyPack(pack),
             isPt ? `+${pack.credits} créditos.` : `+${pack.credits} credits.`,
@@ -222,8 +223,6 @@ export function CreditsModal({
           Sortear e cobrar na mesma linha era o formato de caça-níquel. */}
       {accountTier === 'paid' && canReroll && (
         <Row
-          icon="auto_awesome"
-          tone="gold"
           disabled={busy !== null}
           onClick={onReroll}
           title={isPt ? 'Nova Leitura' : 'New Reading'}

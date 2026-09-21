@@ -112,9 +112,13 @@ describe('AccountDataSection — exclusão em dois passos', () => {
     // é o `border-style`.)
     expect(back.style.borderStyle).toBe('none');
     expect(back.style.background).toBe('none');
-    // E o "Apagar agora" é o que carrega o acento — o oposto do padrão escuro.
+    // E o "Apagar agora" é `outline` (canvas Conta D-K6): perda irreversível
+    // nunca em primário, nunca no acento de perigo — e nunca quieto como o
+    // "Voltar", que é o oposto do padrão escuro.
     const confirm = screen.getByRole('button', { name: /Apagar agora/ });
-    expect(confirm.style.borderColor).toContain('--sm2-danger-ink');
+    expect(confirm.style.border).toContain('--sm2-muted');
+    expect(confirm.style.border).not.toContain('danger');
+    expect(confirm.style.backgroundColor).toContain('--sm2-surface');
     // E nenhum sermão de "tem certeza? você vai perder tudo".
     expect(screen.queryByText(/tem certeza/i)).toBeNull();
     expect(screen.queryByText(/perder tudo/i)).toBeNull();
