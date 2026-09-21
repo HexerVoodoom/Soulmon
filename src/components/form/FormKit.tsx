@@ -252,14 +252,19 @@ export function Chip({
  * TABS/nav, não do segmento.
  */
 export function Segment({
-  selected, onSelect, label, hint, ariaLabel,
+  selected, onSelect, label, hint, ariaLabel, tonal = false,
 }: {
   selected: boolean;
   onSelect: () => void;
   label: ReactNode;
   hint?: string;
   ariaLabel?: string;
+  /** Ativo TONAL (canvas Loja D-L5 / Pet D-P1): `primary-soft` + `primary-ink`
+   *  + borda `primary-ink` — "onde estou" não é ação, a placa cheia é do
+   *  primário. O padrão sólido continua sendo o dos formulários. */
+  tonal?: boolean;
 }) {
+  const onColor = tonal ? 'var(--sm2-primary-ink)' : 'var(--sm2-on-primary)';
   return (
     <button
       type="button"
@@ -284,16 +289,16 @@ export function Segment({
         fontSize: 'var(--sm2-text-sm)',
         fontWeight: 500,
         lineHeight: 'var(--sm2-leading-body)',
-        border: selected ? '1px solid transparent' : '1px solid var(--sm2-muted)',
-        backgroundColor: selected ? 'var(--sm2-primary-fill)' : 'var(--sm2-surface-2)',
-        color: selected ? 'var(--sm2-on-primary)' : 'var(--sm2-ink)',
-        transition: 'background-color var(--sm2-dur-tap) var(--sm2-ease)',
+        border: selected ? `1px solid ${tonal ? 'var(--sm2-primary-ink)' : 'transparent'}` : '1px solid var(--sm2-muted)',
+        backgroundColor: selected ? (tonal ? 'var(--sm2-primary-soft)' : 'var(--sm2-primary-fill)') : 'var(--sm2-surface-2)',
+        color: selected ? onColor : 'var(--sm2-ink)',
+        transition: 'background-color var(--sm2-dur-tap) var(--sm2-ease), border-color var(--sm2-dur-tap) var(--sm2-ease)',
       }}
     >
       <span>{label}</span>
       {/* A pista em TINTA (X5 do canvas Atividades): `muted` no inativo,
           `on-primary` no ativo — nunca `opacity`. */}
-      {hint && <span style={{ fontSize: 'var(--sm2-text-xs)', fontWeight: 400, color: selected ? 'var(--sm2-on-primary)' : 'var(--sm2-muted)' }}>{hint}</span>}
+      {hint && <span style={{ fontSize: 'var(--sm2-text-xs)', fontWeight: 400, color: selected ? onColor : 'var(--sm2-muted)' }}>{hint}</span>}
     </button>
   );
 }
