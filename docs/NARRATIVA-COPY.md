@@ -1,7 +1,10 @@
 # Copy do Soulmon — a string, superfície por superfície
 
 > **Dono:** `soulmon-copy-redator` (squad `soulmon-narrativa`) · **Data:** 21/09/2026
-> **Estado:** recomendação — **nada aqui está no código**.
+> **Estado:** **APLICADA em 21/09/2026** pelo `staff-frontend` — commits
+> `a2ded861` (§1, voz), `84ae4937` (§2–§4), `5b91717c` (§5.4/5.6, §6, §6-bis),
+> `397899a4` (dist, `CACHE_VERSION` v150). O que NÃO entrou, e por quê, está
+> na **§8** no fim deste documento; cada seção abaixo traz o carimbo ✅/⏸️.
 > **Fonte:** `docs/NARRATIVA-E-UNIVERSO.md` §2 (L1..L12), §12 (vocabulário), §13
 > (voz e tom), §16 (os três limites), §17 (checklist que reprova).
 > **Precedência:** código > teste > `CLAUDE.md` > bíblia > este documento.
@@ -47,6 +50,9 @@ histórico de quem lê (L11); ela nunca relata desempenho (L2).
 
 ### 1.1 Ócio (idle)
 
+> **Aplicação:** ✅ `a2ded861`
+
+
 | onde vai | PT-BR | EN | lei | nota |
 |---|---|---|---|---|
 | `PET_VOICE_LINES.idle` (`src/utils/petVoice.ts`) — já existe, estas **substituem** | "Tô aqui. Tava só olhando a luz." | "I'm here. I was just watching the light." | L2, L11 | Convite, nunca lista do que falta. O que ela vê, não o que você fez |
@@ -54,6 +60,9 @@ histórico de quem lê (L11); ela nunca relata desempenho (L2).
 | idem | "Você chegou. Eu ia te contar uma coisa e esqueci." | "You showed up. I was going to tell you something and forgot." | L2, L12 | Ela tem teimosia e esquecimento próprios — é outra pessoa, não um medidor |
 
 ### 1.2 Recusa de comida (teto da hora)
+
+> **Aplicação:** ✅ `a2ded861` — kind `full`; o array inline do `CompanionHUD` saiu
+
 
 | onde vai | PT-BR | EN | lei | nota |
 |---|---|---|---|---|
@@ -63,6 +72,9 @@ histórico de quem lê (L11); ela nunca relata desempenho (L2).
 
 ### 1.3 Sendo esfregada (o gesto presente)
 
+> **Aplicação:** ✅ `a2ded861`
+
+
 | onde vai | PT-BR | EN | lei | nota |
 |---|---|---|---|---|
 | `PET_VOICE_LINES.rub` (`src/utils/petVoice.ts`) — já existe, estas **acrescentam/substituem** | "Ahh. Isso aqui firma." | "Ahh. This one steadies me." | **L11**, §5.4 | Prazer pelo gesto que está acontecendo. "Firma" é o verbo da sustentação (§5.4), e ele descreve o padrão, não o seu mérito |
@@ -71,6 +83,9 @@ histórico de quem lê (L11); ela nunca relata desempenho (L2).
 
 ### 1.4 Ao dormir
 
+> **Aplicação:** ✅ `a2ded861` — kind `sleep`, falado por `handleSleep` (gesto manual; o sono automático segue mudo)
+
+
 | onde vai | PT-BR | EN | lei | nota |
 |---|---|---|---|---|
 | **kind novo `sleep`**; hoje `handleSleep` (`src/App.tsx`) só toca `playSleep()` e **não fala** | "Vou desligar a leitura um pouco." | "I'm switching the reading off for a bit." | §5.5, L3 | Dormir **reorganiza o padrão**, não repõe nada. Nunca "boa noite, descanse bem" — isso é recado sobre a noite de QUEM LÊ |
@@ -78,12 +93,18 @@ histórico de quem lê (L11); ela nunca relata desempenho (L2).
 
 ### 1.5 Ao acordar
 
+> **Aplicação:** ✅ `a2ded861` — kind `wake`, idem; teste em `petVoice.test.ts` trava "dormiu bem?"
+
+
 | onde vai | PT-BR | EN | lei | nota |
 |---|---|---|---|---|
 | **kind novo `wake`** (mesma medição: não existe) | "Assentou. Tô inteiro." | "It settled. I'm all here." | §5.5, L9 | ⚠️ Fala do corpo **dela**. Veto #12 e a regra da Janela de Descanso: **nenhuma frase de manhã comenta a noite de quem lê** — nada de "dormiu bem?", que é exatamente como se fabrica ortossonia |
 | idem | "A Malha tava clara essa noite." | "The Mesh was clear last night." | §5.5, §12 | A noite é quando a Malha fica legível. É mundo, não avaliação |
 
 ### 1.6 Borra no abrigo
+
+> **Aplicação:** ✅ `a2ded861` — kind `residue`, falado na CHEGADA do `careEvent` de cocô; o dreno segue mudo
+
 
 | onde vai | PT-BR | EN | lei | nota |
 |---|---|---|---|---|
@@ -97,6 +118,9 @@ pagou uma vez (o cabeçalho de `lowHp` em `petVoice.ts` conta a conta).
 
 ### 1.7 Depois do banho
 
+> **Aplicação:** ✅ `a2ded861`
+
+
 | onde vai | PT-BR | EN | lei | nota |
 |---|---|---|---|---|
 | `PET_VOICE_LINES.shower` (`src/utils/petVoice.ts`) — já existe, estas **substituem** | "Dissolveu tudo. Que leve." | "It all dissolved. So light." | §5.6, L12 | Nomeia o **ato e o efeito**, nunca o mérito de quem apertou |
@@ -104,6 +128,9 @@ pagou uma vez (o cabeçalho de `lowHp` em `petVoice.ts` conta a conta).
 | idem | "Agora o chão tá limpo pra assentar de novo." | "Now the floor is clear to settle on again." | §5.6 | Fecha o ciclo sem transformar o banho em obrigação |
 
 ### 1.8 A tarefa assombrada — **as duas metades**
+
+> **Aplicação:** ✅ `a2ded861` — olhar continua sem texto; `haunted` ganhou as duas frases (a 2ª substituiu "Ficou leve aqui", que era a metade dela)
+
 
 **Enquanto ela olha (`hauntedWatching`): ZERO TEXTO. Esta é a entrega.**
 
@@ -120,6 +147,9 @@ pagou uma vez (o cabeçalho de `lowHp` em `petVoice.ts` conta a conta).
 
 ### 1.9 Vida cheia e teto de carinho do dia
 
+> **Aplicação:** ✅ `a2ded861` — em DOIS kinds: `healCap` (teto do carinho) e `steady` (vida cheia, via `falar('steady')` em `handleFeed`). Os gatilhos são distintos e "guarda essa" não serve ao carinho
+
+
 | onde vai | PT-BR | EN | lei | nota |
 |---|---|---|---|---|
 | **kind novo `healCap`**; hoje array inline no efeito de `healCapSignal` (`src/components/CompanionHUD.tsx`), disparado pelo teto de `rubDecision` **e** por `specialRefusal === 'already-full'` | "Já firmou o que dava hoje. Continua que eu gosto." | "It's as steady as it gets today. Keep going, I like it." | L11, §5.4 | ⚠️ A parte importante é a segunda oração: **a animação de corações toca sempre e o carinho continua valendo como contato**. Sem ela, o teto lê como "pare" — e o gesto central do produto vira erro |
@@ -134,11 +164,17 @@ elogia esforço, não consola, não motiva, não promete (§13).
 
 ### 2.1 Relatório do dia — a manchete
 
+> **Aplicação:** ✅ `84ae4937`
+
+
 | onde vai | PT-BR | EN | lei | nota |
 |---|---|---|---|---|
 | `headline` (`src/components/DailyReportModal.tsx`), ramo neutro | "Dia novo." | "New day." | L13 | Já é o que está no ar, sem o `!`. A exclamação transforma constatação em animação encomendada |
 
 ### 2.2 A virada
+
+> **Aplicação:** ⏸️ **não aplicada** — a linha `rows` "Tarefas de ontem · N de M" é o **piso sóbrio** que a própria §2.4 declara obrigatório (fato mecânico em voz de produto, L10); trocar o rótulo por "Ontem fechou." tiraria o piso. Decisão do `soulmon-design-lead`
+
 
 | onde vai | PT-BR | EN | lei | nota |
 |---|---|---|---|---|
@@ -146,12 +182,18 @@ elogia esforço, não consola, não motiva, não promete (§13).
 
 ### 2.3 Dia completo
 
+> **Aplicação:** ✅ `84ae4937` — manchete + "A fagulha firmou." em `notes`
+
+
 | onde vai | PT-BR | EN | lei | nota |
 |---|---|---|---|---|
 | `headline`, ramo `report.wasPerfect` (`src/components/DailyReportModal.tsx`) | "Um trecho fechou." | "A stretch closed." | **L12**, §10 | A §10 proíbe "dia perfeito/imperfeito" e "você quebrou a sequência". Nomeia o **ato e o efeito na Malha**; o mérito fica de fora |
 | idem, linha de apoio | "A fagulha firmou." | "The ember steadied." | L12, §3.5 | É o exemplo literal que a §13 lista como ✅. **Não** "você merece" — veredito, ainda que elogioso (§17 #1) |
 
 ### 2.4 Perda de sustentação — **descreve o fenômeno, não atribui causa**
+
+> **Aplicação:** ✅ `84ae4937` — `heartsValue` e a manchete (agora com ponto final)
+
 
 | onde vai | PT-BR | EN | lei | nota |
 |---|---|---|---|---|
@@ -166,11 +208,17 @@ escondendo a própria regra. Com o piso, o silêncio diegético é legítimo (L1
 
 ### 2.5 A maré de segunda
 
+> **Aplicação:** ✅ `84ae4937`
+
+
 | onde vai | PT-BR | EN | lei | nota |
 |---|---|---|---|---|
 | `notes`, ramo `report.weeklyRelief` (`src/components/DailyReportModal.tsx`) | "A maré devolveu um pouco. Semana nova." | "The tide gave a little back. New week." | **L4**, §9, §12 | "Maré" é o termo canônico (§12) e é o que tira a devolução da mão de alguém: **ninguém concedeu nada**, a Malha tem ciclo próprio (§9). ⚠️ Nunca "recuperamos seu progresso perdido" — sugere que houve perda, e L4 diz que não houve |
 
 ### 2.6 Dia de folga usado — **o perdão precisa ser SABIDO**
+
+> **Aplicação:** ✅ `84ae4937`
+
 
 | onde vai | PT-BR | EN | lei | nota |
 |---|---|---|---|---|
@@ -178,6 +226,9 @@ escondendo a própria regra. Com o piso, o silêncio diegético é legítimo (L1
 | idem, segunda oração | "Ela recarrega na segunda." | "It comes back on Monday." | L4, L6 | Fato recuperável e que só sobe. Permitido justamente por não ser um número que desce (§17 #6) |
 
 ### 2.7 Retorno após ausência (proposta **P2**, aprovada com ressalva)
+
+> **Aplicação:** ⏸️ **não aplicada** — decisão 3 do dono (21/09/2026): o reencontro continua por FAIXAS; as frases que encenavam espera já tinham saído em `1480b632`. A manchete `'Que saudade!'` do relatório fica pelo mesmo motivo (não está na tabela)
+
 
 | onde vai | PT-BR | EN | lei | nota |
 |---|---|---|---|---|
@@ -206,11 +257,17 @@ relatório (§2.6), e esse precedente já está no `CLAUDE.md`.
 
 ### 3.1 O padrão pronto, esperando
 
+> **Aplicação:** ✅ `84ae4937` — a 2ª oração ("Toque no seu Soulmon para evoluir") FICA junto: `evolucaoManual.contract.test.ts` exige que a frase ensine o gesto
+
+
 | onde vai | PT-BR | EN | lei | nota |
 |---|---|---|---|---|
 | `fraseProgresso`, ramo `prontoParaEvoluir && !evolutionLocked` (`src/components/EvolutionPath.tsx`) | "O padrão está pronto. Ele espera você encostar." | "The pattern is ready. It waits for you to touch it." | **§5.7**, L4 | Exemplo ✅ literal da §13. ⚠️ **Nunca "Evolução disponível! Não perca."** — urgência e FOMO (proibição #15). O padrão espera; ele não expira |
 
 ### 3.2 O jogador encostando
+
+> **Aplicação:** ✅ `84ae4937` — `tituloDoVisor` "Encostar"/"Touch it"; botão da `EvolutionCeremony` "Seguimos juntos"/"We keep going together" (e o do `MilestoneCeremony` alinhou o EN)
+
 
 | onde vai | PT-BR | EN | lei | nota |
 |---|---|---|---|---|
@@ -218,6 +275,9 @@ relatório (§2.6), e esse precedente já está no `CLAUDE.md`.
 | `EvolutionCeremony.tsx`, botão de saída (hoje: *"Vamos seguir juntos"*) | "Seguimos juntos" | "We keep going together" | L12, §11 | Saída **relacional** — é o mesmo desenho do `MilestoneCeremony`: o marco não é um aviso que se dispensa, é uma coisa que os dois fizeram |
 
 ### 3.3 O cadeado
+
+> **Aplicação:** ✅ `84ae4937` — frase canônica, hint sem "dias difíceis", Segurar/Soltar no título do visor. O botão de texto abaixo do visor continua "Segurar evolução"/"Evolução segurada" (a régua `evolucaoManual` exige `evolução está segurada` no travado)
+
 
 | onde vai | PT-BR | EN | lei | nota |
 |---|---|---|---|---|
@@ -228,6 +288,9 @@ relatório (§2.6), e esse precedente já está no `CLAUDE.md`.
 
 ### 3.4 Queda de forma — **o padrão recolhe**
 
+> **Aplicação:** ✅ `84ae4937` — manchete + linha de apoio em `notes`
+
+
 | onde vai | PT-BR | EN | lei | nota |
 |---|---|---|---|---|
 | `headline`, ramo `report.degenerated` (`src/components/DailyReportModal.tsx`) — hoje: *"Seu Soulmon voltou um estágio"* | "Ele recolheu para uma forma que se sustenta com menos." | "The pattern drew back into a form that holds with less." | **L3, L5**, §5.7 | Exemplo ✅ da §13. **Recolher**, não regredir, não perder, não voltar atrás. ⚠️ O §17 #11 reprova "regrediu", "perder", "custa" e a família de morte inteira |
@@ -235,12 +298,18 @@ relatório (§2.6), e esse precedente já está no `CLAUDE.md`.
 
 ### 3.5 Marcos de hábito — a cerimônia
 
+> **Aplicação:** ✅ já no ar (EN alinhado em `84ae4937`)
+
+
 | onde vai | PT-BR | EN | lei | nota |
 |---|---|---|---|---|
 | `MilestoneCeremony.tsx`, botão de saída (já no ar) | "Seguimos juntos" | "We keep going together" | L12 | Passa. A saída pertence à pessoa, e é isso que faz o marco virar registro em vez de notificação |
 | `dateLabel` (`src/App.tsx` → `MilestoneCeremony`) | *(a data, já formatada)* | *(the date, already formatted)* | L4 | Sem copy. A data é o que transforma o marco em **memória**; ela não precisa de frase em volta |
 
 ### 3.6 Marcos 7 / 21 / 66
+
+> **Aplicação:** ✅ `tree` em `1480b632` (sessão de narrativa). `sprout`/`sapling` **não trocadas**: as do ar ("Este hábito virou broto") já têm o sujeito na coisa; só o `!` difere, e ele é o tom da cerimônia (`MilestoneCeremony`). Registrado, não aplicado
+
 
 | onde vai | PT-BR | EN | lei | nota |
 |---|---|---|---|---|
@@ -251,6 +320,9 @@ relatório (§2.6), e esse precedente já está no `CLAUDE.md`.
 ---
 
 ## 4. As fendas
+
+> **Aplicação:** ✅ `84ae4937` — todas as linhas, inclusive **o nó**: a P5 foi decidida (o nome `Glitchtama` FICA, `EXCECOES` da régua), então a frase entrou com o nome do código e "Usar" como verbo da pastinha. "masmorra" continua no título do `GameHeader` (tolerável, §12)
+
 
 ⚠️ **Termo:** a §12 diz *as fendas / the rifts*, e marca "masmorra"/"dungeon"
 como **tolerável na UI já no ar** — o que está em `DungeonGame.tsx` não é
@@ -273,6 +345,9 @@ folds), que a própria §7 antecipa ao definir fenda como "dobra da Malha".
 
 ## 5. Recusas
 
+> **Aplicação:** ✅ 5.1 (`steady`), 5.2 (`full`), 5.3 (já no ar com o nome mantido pela P5; EN ganhou o `It'll`), 5.4 (`5b91717c`, `sm2Hint` centrada na página de Evolução, sem botão), 5.6 (`5b91717c`, dentro do registro EVO-21). ⏸️ **5.5 não aplicada**: o canvas Evolução EVO-20 decidiu o `UnlockNudge` **sem frase em cima** — decisão do `soulmon-design-lead`
+
+
 Regra transversal: **a recusa diz o que fazer, nunca o que foi negado**, e
 nunca consome o item. Nada de toast de erro.
 
@@ -288,6 +363,9 @@ nunca consome o item. Nada de toast de erro.
 ---
 
 ## 6. Os três limites (§16) — **voz de PRODUTO**
+
+> **Aplicação:** ✅ `5b91717c` — grupo "Sobre"/"About" no `SettingsPage` (3 parágrafos `sm2Text` + nota `sm2Hint`) e a abertura do `HelpModal`. ⏸️ O texto de suporte/crise **não** entrou aqui: o `ChatBox` já tem o caminho de crise (decisão 2 do dono, `f3654076`); duplicar em Configurações é decisão do dono com o `soulmon-design-lead`
+
 
 ⚠️ **Esta seção é a exceção declarada ao registro diegético (L10), e é
 obrigatória.** Medido em 21/09/2026: **não existe em lugar nenhum do app.** O
@@ -312,6 +390,9 @@ pessoa do plural ou impessoal, sem metáfora.
 ---
 
 ## 6-bis. O resumo de humor (`moodSummary`) — **voz de PRODUTO**
+
+> **Aplicação:** ✅ `5b91717c` — ramos `avg <= 2` e intermediário; `mood.test.ts` trava "registrados" e a ausência de normalização
+
 
 ⚠️ **Esta seção não existia na 1ª entrega.** O redator recusou-se a escrevê-la
 alegando que a proposta P14 estava aberta e que redigir a frase seria "decidir a
@@ -444,3 +525,24 @@ folga diz que nada foi cobrado e quando recarrega; o retorno não menciona a
 ausência **nem** oferece recompensa por ela (critério (d) da P2). Uma frase que
 sobrevive a saber como ela é decidida é uma frase que não foi escrita para
 fazer ninguém voltar.
+
+---
+
+## 8. Aplicação em 21/09/2026 — o que entrou e o que ficou (`staff-frontend`)
+
+| Linha | Estado | Motivo / sha |
+|---|---|---|
+| §1 inteira (idle, full, rub, sleep, wake, residue, shower, haunted, healCap/steady) | ✅ | `a2ded861`. `KINDS` do teste passa a vir de `Object.keys(PET_VOICE_LINES)`: kind novo entra na varredura de tom sozinho |
+| bug `TRAIT_LINES.carinhoso` | ✅ já corrigido | pela sessão de narrativa, antes desta aplicação |
+| §2.1, §2.3–§2.6 | ✅ | `84ae4937` |
+| §2.2 "Ontem fechou." | ⏸️ | conflita com o piso sóbrio da §2.4 (`rows` é o fato mecânico, L10) |
+| §2.7 retorno (P2) | ⏸️ | decisão 3 do dono: faixas mantidas |
+| §3.1–§3.4 | ✅ | `84ae4937`; a 2ª oração de §3.1 ("Toque no seu Soulmon…") fica por exigência de `evolucaoManual.contract.test.ts` |
+| §3.6 `sprout`/`sapling` | ⏸️ | as do ar já cumprem L12; só o `!` difere e ele é o tom da cerimônia |
+| §4 inteira, inclusive o nó | ✅ | `84ae4937`; P5 decidida (nome mantido) |
+| §5.1–5.4, §5.6 | ✅ | `a2ded861` / `5b91717c` |
+| §5.5 frase sobre o `UnlockNudge` | ⏸️ | canvas Evolução EVO-20: card sem frase em cima |
+| §6 Sobre + HelpModal | ✅ | `5b91717c` |
+| §6 texto de suporte/crise | ⏸️ | já mora no `ChatBox` (decisão 2 do dono); segunda cópia é decisão do dono |
+| §6-bis | ✅ | `5b91717c` |
+| dist + `CACHE_VERSION` v150 | ✅ | `397899a4` |

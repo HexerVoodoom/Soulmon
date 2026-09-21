@@ -7,6 +7,23 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 21/09/2026 (4ª rodada) — a copy da bíblia está em tela (`docs/NARRATIVA-COPY.md` §1–§6-bis)
+>
+> `staff-frontend` aplicou a tabela inteira menos cinco linhas registradas
+> (`NARRATIVA-COPY.md` §8): `a2ded861` (voz da criatura — seis `kind` novos em
+> `PET_VOICE_LINES`: `full`, `healCap`, `steady`, `sleep`, `wake`, `residue`;
+> as duas famílias inline do `CompanionHUD` saíram; dormir/acordar e a borra
+> deixaram de ser mudos), `84ae4937` (relatório do dia, evolução, cerimônias,
+> fendas — inclusive a linha do nó, porque a P5 foi decidida), `5b91717c`
+> (grupo **"Sobre"/"About"** no `SettingsPage` com os três limites da §16 —
+> **L10 deixa de estar violada** —, abertura do `HelpModal`, `moodSummary` sem
+> afirmar sobre a pessoa, recusas `not-ultra`/`already-used` do renascimento),
+> `397899a4` (dist, `CACHE_VERSION` v150). `tsc` limpo; `vitest` 301/301
+> arquivos, 4206 testes. **Não aplicadas, por decisão de outro dono:** §2.2
+> (conflita com o piso sóbrio da §2.4), §2.7 (decisão 3: faixas ficam), §3.6
+> `sprout`/`sapling` (já cumprem L12), §5.5 (EVO-20: `UnlockNudge` sem frase),
+> texto de crise nas Configurações (já mora no `ChatBox`).
+
 > ## 21/09/2026 — Manual sincronizado com `dc72579e` (delta `2580b73a..dc72579e`, 92 commits)
 >
 > 15 docs de `docs/manual/` reescritos só nas seções que o diff tocou (Fase 2
