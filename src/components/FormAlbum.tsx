@@ -15,16 +15,20 @@
  *    coleção inteira para o dia da atualização do app.
  *  · **nenhum número de desempenho.** A contagem de completude ("4 de 11") é
  *    de COLEÇÃO, que só cresce — a mesma admissão que o Dex já faz.
+ *
+ * Canvas Estatísticas (§27, D-S7): forma vivida = slot 64² (`MiniGlass`, a
+ * mesma célula do Dex) com o sprite 256² a 64 (0,25×); a não alcançada é
+ * silhueta por `mask-image` em tinta derivada do vidro, com "???"; a data em
+ * tinta `muted` (nunca `opacity .7`). A moldura 72×72 com `<img 72>` saiu.
  */
-import type { CSSProperties } from 'react';
-import { sm2Hint, sm2Text } from './form/FormKit';
+import { MiniGlass } from './ui/MiniGlass';
 import { collectedAt } from '../utils/collectionDates';
 import type { Language } from '../utils/i18n';
 
 export interface AlbumForm {
   id: string;
   name: string;
-  /** Sprite próprio, quando já existe. Sem ele, a moldura fica vazia. */
+  /** Sprite próprio, quando já existe. Sem ele, o vidro fica vazio. */
   spriteUrl?: string | null;
 }
 
@@ -36,18 +40,12 @@ interface FormAlbumProps {
   /** WP4.10 — quando cada uma foi alcançada. Ausente = sem data. */
   reachedAt?: Record<string, string>;
   language: Language;
+  /** Janela de Descanso: esconde a contagem "N/11", preserva as artes. */
+  hideMetrics?: boolean;
 }
 
-const moldura: CSSProperties = {
-  width: 72,
-  height: 72,
-  display: 'grid',
-  placeItems: 'center',
-  borderRadius: 10,
-  border: '1px solid var(--sm2-line)',
-  backgroundColor: 'var(--sm2-surface)',
-  overflow: 'hidden',
-};
+/** Slot 64² = a MESMA célula do Dex do Pet (canvas §27, D-S7); sprite 256² a 64 (0,25×). */
+const SLOT = 64;
 
 function dataCurta(dayKey: string, isPt: boolean): string | null {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dayKey);
@@ -59,57 +57,65 @@ function dataCurta(dayKey: string, isPt: boolean): string | null {
   }).format(d);
 }
 
-export function FormAlbum({ forms, reached, reachedAt, language }: FormAlbumProps) {
+export function FormAlbum({ forms, reached, reachedAt, language, hideMetrics = false }: FormAlbumProps) {
   const isPt = language === 'pt-BR';
   const vistas = new Set(reached);
   const total = forms.length;
   const colecionadas = forms.filter(f => vistas.has(f.id)).length;
 
   return (
-    <section aria-label={isPt ? 'Formas vividas' : 'Forms lived'}>
-      <p style={{ ...sm2Text, margin: '0 0 2px', fontWeight: 600 }}>
+    <section aria-label={isPt ? 'Formas vividas' : 'Forms lived'} className="sm2-stats-cont" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <p className="sm2-stats-s" style={{ color: 'var(--sm2-ink)', fontWeight: 500 }}>
         {isPt ? 'Formas vividas' : 'Forms lived'}
       </p>
-      {/* Contagem de COLEÇÃO, que só cresce — nunca de desempenho. */}
-      <p className="sm2-num" style={{ ...sm2Hint, margin: '0 0 10px' }}>
-        {colecionadas}/{total}
-      </p>
+      {/* Contagem de COLEÇÃO, que só cresce — nunca de desempenho. Some com o descanso. */}
+      {!hideMetrics && (
+        <p className="sm2-stats-s sm2-num">
+          {colecionadas}/{total}
+        </p>
+      )}
 
-      <ul style={{
-        listStyle: 'none', margin: 0, padding: 0,
-        display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(84px, 1fr))', gap: 10,
-      }}>
+      <ul className="sm2-stats-agrid">
         {forms.map(f => {
           const viva = vistas.has(f.id);
           const quando = viva ? collectedAt(reachedAt, f.id) : null;
           const data = quando ? dataCurta(quando, isPt) : null;
           return (
-            <li key={f.id} style={{ textAlign: 'center' }}>
-              <span style={moldura}>
-                {f.spriteUrl ? (
-                  <img
-                    src={f.spriteUrl}
-                    alt={viva ? f.name : ''}
-                    width={64}
-                    height={64}
-                    style={{
-                      objectFit: 'contain',
-                      imageRendering: 'pixelated',
-                      /* Silhueta para o que ainda não foi vivido: mostra a
-                         FORMA sem entregar quem é. É o mesmo gesto do nó
-                         previsto na página de Evolução, e a mesma razão: a
-                         ausência aqui é convite. */
-                      ...(viva ? null : { filter: 'brightness(0)', opacity: .35 }),
-                    }}
-                  />
-                ) : null}
-              </span>
-              <span style={{ ...sm2Hint, display: 'block', marginTop: 4 }}>
-                {viva ? f.name : '???'}
-              </span>
-              {data && (
-                <span style={{ ...sm2Hint, display: 'block', opacity: .7 }}>{data}</span>
+            <li key={f.id} className={viva ? 'sm2-stats-acell' : 'sm2-stats-acell off'}>
+              {/* A vivida: o vidro leva o nome (`role=img`); a arte é decorativa. */}
+              {viva && f.spriteUrl ? (
+                <span role="img" aria-label={f.name} style={{ display: 'inline-flex' }}>
+                  <MiniGlass size={SLOT}>
+                    <img
+                      src={f.spriteUrl}
+                      alt=""
+                      width={SLOT}
+                      height={SLOT}
+                      style={{ display: 'block', width: SLOT, height: SLOT, imageRendering: 'pixelated' }}
+                    />
+                  </MiniGlass>
+                </span>
+              ) : (
+                <MiniGlass size={SLOT}>
+                  {f.spriteUrl ? (
+                    /* Silhueta para o que ainda não foi vivido: máscara do
+                       próprio PNG em tinta derivada do vidro — mostra a FORMA
+                       sem entregar quem é. Mesmo gesto do nó previsto na
+                       Evolução e do Dex: a ausência aqui é convite. */
+                    <span
+                      data-silhouette
+                      className="sm2-stats-sil"
+                      style={{
+                        width: SLOT, height: SLOT,
+                        WebkitMaskImage: `url(${f.spriteUrl})`, maskImage: `url(${f.spriteUrl})`,
+                        WebkitMaskSize: `${SLOT}px ${SLOT}px`, maskSize: `${SLOT}px ${SLOT}px`,
+                      }}
+                    />
+                  ) : null}
+                </MiniGlass>
               )}
+              <span className="nm">{viva ? f.name : '???'}</span>
+              {data && <span className="dt">{data}</span>}
             </li>
           );
         })}

@@ -45,9 +45,12 @@ describe('FormAlbum — a ausência é convite, nunca dívida', () => {
     );
     expect(container.textContent).toContain('???');
     expect(container.textContent).not.toContain('Velhamon');
-    const silhuetas = [...container.querySelectorAll('img')]
-      .filter(el => (el as HTMLImageElement).style.filter.includes('brightness(0)'));
+    // Canvas §27 D-S7: silhueta por `mask-image` (tinta, sem alpha) — o PNG
+    // não é um `<img>` para o que ainda não veio.
+    const silhuetas = [...container.querySelectorAll('[data-silhouette]')];
     expect(silhuetas).toHaveLength(2);
+    for (const s of silhuetas) expect((s as HTMLElement).style.maskImage).toMatch(/^url\(/);
+    expect(container.querySelectorAll('img')).toHaveLength(1);
   });
 
   it('nada de "faltam N", nada de vermelho, nada de cobrança', () => {

@@ -14,13 +14,13 @@
  *    dono legítimo do `totalXP`, que antes aparecia cru aqui e não governava
  *    nada (a evolução é por `perfectDays`). Um número solto sem dono é ruído;
  *    ligado ao Vínculo ele vira uma PALAVRA — o título ("Companheiro") — com
- *    uma barra embaixo. Só a LEITURA foi ligada: nenhuma regra nova, nenhum
+ *    um medidor embaixo. Só a LEITURA foi ligada: nenhuma regra nova, nenhum
  *    campo novo no save, e nada disto entra na home (a home tem orçamento
  *    próprio de leituras — PLANO-DESIGN §5.1).
- *  · **Traço de nascimento e ritmo de cuidado**: já eram palavras. Ficaram, e
- *    os emojis-de-sistema viraram `<Icon>`.
- *  · **Dias perfeitos**: o único contador que governa alguma coisa (evolução).
- *    Fica, com `tabular-nums`.
+ *  · **Traço de nascimento e ritmo de cuidado**: já eram palavras. Ficaram,
+ *    com um ícone Material 24 pelado por traço/ritmo (canvas §27, D-S2).
+ *  · **Dias completos**: o único contador que governa alguma coisa (evolução).
+ *    Fica, com `tabular-nums`, e é o ÚNICO número grande da tela.
  *  · **A jornada** (kills, runs, recorde do Dino, itens raros): virou FRASE.
  *    Ninguém decide nada com "Runs concluídas: 3" numa grade de cinco caixas;
  *    dentro de uma sentença os mesmos fatos leem como memória, que é o que
@@ -30,8 +30,22 @@
  *  · **As três tabelas de contagem** viraram DUAS listas: o que você mais
  *    repete (top 5) e as últimas conclusões. Atividade e tarefa eram duas
  *    tabelas com o mesmo desenho, uma embaixo da outra.
+ *
+ * Canvas Estatísticas (§27, identidade): cards SIS-03 (`.sm2-stats-card`) com
+ * cabeçalho ícone 24 `muted` + Fredoka 16 (D-S3); o vínculo é a PALAVRA em
+ * Fredoka 24 com "Level N" 12 `muted` e o `.meter` SIS-07 (D-S1); o cartão de
+ * nascimento é o visor do reveal (D-S4); encontros e álbum em mini-visores 64²
+ * com silhueta por `mask-image` (D-S5/6/7); a estação é calendário, com as
+ * medalhas em `gold-ink` (D-S8); o emoji das listas é conteúdo, 20px pelado
+ * (D-S9); nenhuma Silkscreen (D-S10); só o dígito no "0" (D-S11).
+ *
+ * **`hideMetrics` (Janela de Descanso)** chega aqui e esconde os NÚMEROS —
+ * "12", "N days together", "Level N", o `progressbar`, "7 of 36", "2/11", as
+ * frações da estação, "done N×", a frase dos feitos — e **preserva as
+ * recompensas**: a palavra do vínculo, o cartão de nascimento, as artes
+ * vistas e vividas, as medalhas e as listas sem contagem.
  */
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { ActivityCategory } from '../types/attributes';
 import { useTranslation, Language } from '../utils/i18n';
 import { getPassive } from '../utils/passives';
@@ -46,7 +60,6 @@ import {
 import type { RestState } from '../utils/restWindow';
 import { bondProgress, bondTitle } from '../utils/bond';
 import { Icon } from './ui/Icon';
-import { sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 
 interface CompletedTask {
   id: string;
@@ -65,7 +78,7 @@ interface ActivityStats {
   };
 }
 
-interface StatsPageProps {
+export interface StatsPageProps {
   completedTasks: CompletedTask[];
   activityStats: ActivityStats;
   language?: Language;
@@ -119,44 +132,42 @@ interface StatsPageProps {
     counters: SeasonCounters;
     rest?: RestState;
   };
+  /** Janela de Descanso (`rest.hideMetrics`): esconde números, preserva recompensas. */
+  hideMetrics?: boolean;
 }
 
 /**
  * Emoji marcando SEÇÃO é ícone de sistema disfarçado (PLANO-DESIGN §4.11).
  * O traço e o ritmo são conceitos do app, não escolha da pessoa — viram glifo
- * da Material Symbols. Todo nome abaixo está no inventário de `tokens.md`;
- * nome fora dele renderiza VAZIO e não dá erro nenhum.
+ * da Material Symbols. Mapa D-S2 do canvas (X2: Sortudo é `star`, nunca
+ * `casino` — que é a aba "Games" na nav da mesma tela). Todo nome abaixo está
+ * no inventário de `tokens.md`; nome fora dele renderiza VAZIO e não dá erro.
  */
 const PASSIVE_ICON: Record<string, string> = {
   guloso: 'restaurant',
-  carinhoso: 'favorite',
+  carinhoso: 'volunteer_activism',
   teimoso: 'pan_tool',
-  sortudo: 'casino',
+  sortudo: 'star',
   madrugador: 'wb_sunny',
 };
+/** `event_repeat` também abre "What you repeat most" — dois papéis na mesma
+ *  tela, de propósito: os dois dizem "repetição" (R3 da crítica). */
 const PATTERN_ICON: Record<string, string> = {
-  constante: 'eco',
-  explosivo: 'local_fire_department',
-  equilibrado: 'tune',
+  constante: 'event_repeat',
+  explosivo: 'bolt',
+  equilibrado: 'spa',
 };
 
-/** A superfície do sistema: sem chanfro, sem cobre, sem 9-slice. */
-const card: React.CSSProperties = {
-  backgroundColor: 'var(--sm2-surface)',
-  border: '1px solid var(--sm2-line)',
-  borderRadius: 12,
-  boxShadow: SM2_SHADOW_CARD,
-  padding: 16,
-};
-
-const sectionTitle: React.CSSProperties = {
-  fontFamily: 'var(--sm2-font-display)',
-  fontSize: 'var(--sm2-text-md)',
-  fontWeight: 600,
-  lineHeight: 'var(--sm2-leading-title)',
-  color: 'var(--sm2-ink)',
-  margin: '0 0 12px',
-};
+/** Cabeçalho de card (D-S3): ícone 24 `muted` pelado + Fredoka 16 — a mesma
+ *  peça do painel de rituais da Home. */
+function CardHead({ icon, children }: { icon: string; children: ReactNode }) {
+  return (
+    <div className="sm2-stats-ch">
+      <Icon name={icon} size={24} tone="muted" />
+      <h3 className="sm2-stats-h3">{children}</h3>
+    </div>
+  );
+}
 
 export function StatsPage({
   completedTasks,
@@ -173,6 +184,7 @@ export function StatsPage({
   formReachedAt,
   bestiary,
   season,
+  hideMetrics = false,
 }: StatsPageProps) {
   const passive = getPassive(petPassive);
   const t = useTranslation(language);
@@ -243,63 +255,51 @@ export function StatsPage({
     return form?.name ?? id;
   });
 
+  /** Traço/ritmo (D-S2): ícone Material 24 pelado em `primary-ink` + nome 14/500 + frase 14. */
   const traitRow = (iconName: string, name: string, desc: string) => (
-    <div key={name} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-      {/* Ícone PELADO — sem moldura, sem fundo, sem chanfro (regra do dono). */}
-      <Icon name={iconName} size={24} fill={1} tone="primary" />
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ ...sm2Text, fontWeight: 500, margin: 0 }}>{name}</p>
-        <p style={{ ...sm2Hint, marginTop: 2 }}>{desc}</p>
-      </div>
-    </div>
+    <p key={name} className="sm2-stats-trait">
+      <Icon name={iconName} size={24} tone="primary" />
+      <span className="sm2-stats-t" style={{ minWidth: 0 }}>
+        <b style={{ fontWeight: 500 }}>{name}</b>
+        {' — '}
+        {desc}
+      </span>
+    </p>
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingBottom: 24 }}>
+    <div className="sm2-stats" data-hide-metrics={hideMetrics ? 'true' : undefined}>
 
       {/* ─────────────── A leitura dominante: o Vínculo ─────────────── */}
-      <section style={{ ...card, padding: 20 }} aria-labelledby="sm2-bond-title">
-        <p style={{ ...sm2Hint, letterSpacing: '.06em', textTransform: 'uppercase' }}>
-          {isPt ? 'Nível de vínculo' : 'Bond level'}
-        </p>
-        <h2
-          id="sm2-bond-title"
-          style={{
-            fontFamily: 'var(--sm2-font-display)',
-            fontSize: 'var(--sm2-text-2xl)',
-            fontWeight: 600,
-            lineHeight: 'var(--sm2-leading-title)',
-            color: 'var(--sm2-ink)',
-            margin: '2px 0 0',
-          }}
-        >
-          {/* A PALAVRA vem primeiro; o número é a legenda dela. */}
+      <section className="sm2-stats-card" style={{ gap: 4 }} aria-labelledby="sm2-bond-title">
+        <p className="sm2-stats-lab">{isPt ? 'Nível de vínculo' : 'Bond level'}</p>
+        {/* A PALAVRA vem primeiro (Fredoka 24); o número é a legenda dela. */}
+        <h2 id="sm2-bond-title" className="sm2-stats-word">
           {title ?? (isPt ? 'Recém-chegados' : 'Just met')}
         </h2>
-        <p className="sm2-num" style={{ ...sm2Hint, marginTop: 2 }}>
-          {isPt ? `Nível ${bond.level}` : `Level ${bond.level}`}
-        </p>
+        {!hideMetrics && (
+          <p className="sm2-stats-s sm2-num">
+            {isPt ? `Nível ${bond.level}` : `Level ${bond.level}`}
+          </p>
+        )}
 
-        <div
-          role="progressbar"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={pct}
-          aria-label={isPt ? 'Progresso até o próximo nível de vínculo' : 'Progress to the next bond level'}
-          style={{
-            marginTop: 14, height: 8, borderRadius: 999,
-            backgroundColor: 'var(--sm2-surface-2)', overflow: 'hidden',
-          }}
-        >
+        {/* O medidor SIS-07 do PRÓXIMO nível (no vazio fica a 0 %: é medidor,
+            não coleção). Com o descanso ligado ele SOME — o `aria-valuenow`
+            é número. */}
+        {!hideMetrics && (
           <div
-            style={{
-              width: `${pct}%`, height: '100%',
-              backgroundColor: 'var(--sm2-primary-fill)',
-              transition: 'width var(--sm2-dur-enter) var(--sm2-ease)',
-            }}
-          />
-        </div>
-        <p style={{ ...sm2Hint, marginTop: 8 }}>
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={pct}
+            aria-label={isPt ? 'Progresso até o próximo nível de vínculo' : 'Progress to the next bond level'}
+            className="sm2-kit-meter"
+            style={{ marginTop: 8 }}
+          >
+            <div className="sm2-kit-meter-fill" style={{ width: `${pct}%` }} />
+          </div>
+        )}
+        <p className="sm2-stats-s" style={{ marginTop: 4 }}>
           {isPt
             ? 'Ele só sobe. Cuidar de você é o que aproxima vocês dois — nada aqui desce, nunca.'
             : 'It only goes up. Caring for yourself is what brings you two closer — nothing here ever drops.'}
@@ -308,118 +308,90 @@ export function StatsPage({
 
       {/* ─────────────── Quem ele é ─────────────── */}
       {(passive || carePattern) && (
-        <section style={card}>
-          <h3 style={sectionTitle}>{isPt ? 'Quem é o seu Soulmon' : 'Who they are'}</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {passive && traitRow(
-              PASSIVE_ICON[passive.id] ?? 'auto_awesome',
-              isPt ? passive.namePt : passive.nameEn,
-              isPt ? passive.descPt : passive.descEn,
-            )}
-            {carePattern && traitRow(
-              PATTERN_ICON[carePattern.id] ?? 'auto_awesome',
-              `${isPt ? 'Ritmo: ' : 'Rhythm: '}${isPt ? carePattern.namePt : carePattern.nameEn}`,
-              isPt ? carePattern.descPt : carePattern.descEn,
-            )}
-          </div>
+        <section className="sm2-stats-card">
+          <CardHead icon="psychology">{isPt ? 'Quem é o seu Soulmon' : 'Who they are'}</CardHead>
+          {passive && traitRow(
+            PASSIVE_ICON[passive.id] ?? 'auto_awesome',
+            isPt ? passive.namePt : passive.nameEn,
+            isPt ? passive.descPt : passive.descEn,
+          )}
+          {carePattern && traitRow(
+            PATTERN_ICON[carePattern.id] ?? 'auto_awesome',
+            `${isPt ? 'Ritmo: ' : 'Rhythm: '}${isPt ? carePattern.namePt : carePattern.nameEn}`,
+            isPt ? carePattern.descPt : carePattern.descEn,
+          )}
         </section>
       )}
 
-      {/* ─────────────── A jornada ─────────────── */}
-      <section style={card}>
-        <h3 style={sectionTitle}>{isPt ? 'A jornada' : 'The journey'}</h3>
+      {/* ─────────────── A jornada: UM cartão contínuo ─────────────── */}
+      <section className="sm2-stats-card">
+        <CardHead icon="auto_awesome">{isPt ? 'A jornada' : 'The journey'}</CardHead>
 
-        {/* O ÚNICO contador que governa alguma coisa: dias perfeitos alimentam
-            a evolução (`perfectDays`). Por isso ele é número, e sozinho. */}
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-          <span
-            className="sm2-num"
-            style={{
-              fontFamily: 'var(--sm2-font-display)',
-              fontSize: 'var(--sm2-text-xl)',
-              fontWeight: 600,
-              color: 'var(--sm2-ink)',
-            }}
-          >
-            {streakDays}
-          </span>
-          <span style={sm2Hint}>{isPt ? 'dias completos até aqui' : 'complete days so far'}</span>
-        </div>
+        {/* O ÚNICO contador que governa alguma coisa: dias completos alimentam
+            a evolução (`perfectDays`). Por isso ele é número, e sozinho —
+            só o dígito, mesmo no "0" (D-S11). Some com o descanso. */}
+        {!hideMetrics && (
+          <div className="sm2-stats-count">
+            <span className="sm2-stats-word sm2-num">{streakDays}</span>
+            <span className="sm2-stats-s">{isPt ? 'dias completos até aqui' : 'complete days so far'}</span>
+          </div>
+        )}
 
-        {/* WP2.11 — "dias juntos".
-            Admissível como número exibido porque só CRESCE: não existe leitura
-            em que ele desça, então não vira placar de desempenho (C.3 #2). E é
-            o número que responde "estou com ele há quanto tempo?", que a
-            pesquisa aponta como a frase que as pessoas dizem sobre um v-pet de
-            que gostam. Obedece `hideMetrics` como todo o resto. */}
-        {typeof daysTogether === 'number' && (
-          <p className="sm2-num" style={{ ...sm2Hint, marginTop: 6 }}>
+        {/* WP2.11 — "dias juntos". Admissível como número exibido porque só
+            CRESCE (C.3 #2); é o número que responde "estou com ele há quanto
+            tempo?". Obedece `hideMetrics`. */}
+        {!hideMetrics && typeof daysTogether === 'number' && (
+          <p className="sm2-stats-s sm2-num">
             {isPt ? `${daysTogether} dias juntos` : `${daysTogether} days together`}
           </p>
         )}
 
-        {/* WP1.6 — o CARTÃO DE NASCIMENTO, a mesma peça do reveal.
-            Aqui ele é a lembrança do momento; lá era o momento. Ser o mesmo
-            componente é o ponto: dois cartões desenhados separadamente
-            divergiriam, e o que a pessoa guardou na memória não seria o que
-            ela reencontra. Sem número por dentro — a contagem de dias fica na
-            linha acima, que é outra coisa e obedece `hideMetrics`. */}
+        {/* WP1.6 — o CARTÃO DE NASCIMENTO, a mesma peça do reveal (D-S4).
+            Sem número por dentro — a contagem de dias fica na linha acima. */}
         {birth && (
-          <div style={{ marginTop: 16 }}>
-            <BirthCard
-              spriteUrl={birth.spriteUrl}
-              name={birth.name}
-              epithet={birth.epithet}
-              soulGoal={birth.soulGoal}
-              bornAt={birth.bornAt}
-              language={language}
-            />
-          </div>
+          <BirthCard
+            spriteUrl={birth.spriteUrl}
+            name={birth.name}
+            epithet={birth.epithet}
+            soulGoal={birth.soulGoal}
+            bornAt={birth.bornAt}
+            language={language}
+          />
         )}
 
-        {/* WP4.6(b) — os ENCONTROS. Vizinho do álbum de formas, porque os dois
-            são acervo, mas com condição PRÓPRIA e não aninhado nele: o álbum
-            depende de `soulmonStages`, que o jogador GRÁTIS não tem — e ele é
-            justamente quem mais roda masmorra. Aninhar deixaria o bestiário
-            invisível para quem mais o preenche. */}
+        {/* WP4.6(b) — os ENCONTROS. Condição PRÓPRIA, não aninhada no álbum:
+            o álbum depende de `soulmonStages`, que o jogador GRÁTIS não tem —
+            e ele é justamente quem mais roda masmorra. */}
         {(bestiary?.length ?? 0) > 0 && (
-          <div style={{ marginTop: 16 }}>
-            <BestiaryCard encountered={bestiary ?? []} language={language} />
-          </div>
+          <BestiaryCard encountered={bestiary ?? []} language={language} hideMetrics={hideMetrics} />
         )}
 
-        {/* WP4.6 — O ÁLBUM substitui a LINHA DE TEXTO.
-            A coisa mais cara que o jogador constrói (meses de cuidado virando
-            formas) era uma string com nomes separados por ponto. O álbum
-            mostra as onze, com arte, silhueta para o que ainda não veio, e a
-            data de quando cada uma chegou (WP4.10). */}
+        {/* WP4.6 — O ÁLBUM substitui a LINHA DE TEXTO. */}
         {album && album.length > 0 && (
-          <div style={{ marginTop: 16 }}>
-            <FormAlbum
-              forms={album}
-              reached={journey?.unlockedEvolutions ?? []}
-              reachedAt={formReachedAt}
-              language={language}
-            />
-
-          </div>
+          <FormAlbum
+            forms={album}
+            reached={journey?.unlockedEvolutions ?? []}
+            reachedAt={formReachedAt}
+            language={language}
+            hideMetrics={hideMetrics}
+          />
         )}
 
         {!album && formNames.length > 0 && (
-          <p style={{ ...sm2Text, marginTop: 12 }}>
+          <p className="sm2-stats-t">
             {isPt ? 'Formas já alcançadas: ' : 'Forms reached so far: '}
             <span style={{ color: 'var(--sm2-primary-ink)' }}>{formNames.join(' · ')}</span>
           </p>
         )}
 
-        {feitos.length > 0 && (
-          <p className="sm2-num" style={{ ...sm2Hint, marginTop: 8 }}>
+        {!hideMetrics && feitos.length > 0 && (
+          <p className="sm2-stats-s sm2-num">
             {isPt ? 'Vocês também ' : 'You two also '}{feitos.join(', ')}.
           </p>
         )}
 
         {journey?.soulGoal && (
-          <p style={{ ...sm2Hint, marginTop: 14, fontStyle: 'italic' }}>
+          <p className="sm2-stats-s" style={{ fontStyle: 'italic' }}>
             {isPt ? 'Começou por: ' : 'Started for: '}“{journey.soulGoal}”
           </p>
         )}
@@ -427,45 +399,33 @@ export function StatsPage({
 
       {/* ─────────────── A estação ───────────────
 
-          WP4.16 — `seasons.ts` estava escrito, testado e SEM CONSUMIDOR:
-          `seasonLabel`, `SEASON_PATHS`, `ensureSeasonProgress` e
-          `applySeasonMedal` nunca eram chamados, então o jogador não sabia que
-          estação era e a medalha **não podia ser ganha por ninguém**.
-
-          A spec original mandava isto para a aba Missões da Loja. Essa aba não
-          existe mais — foi removida num redesenho, porque explicava o cadeado
-          longe do cadeado. O bloco veio para cá, ao lado de "dias perfeitos até
-          aqui", que é a outra leitura de jornada da tela.
-
-          DUAS travas de forma, da ressalva #15/E4:
-          · nada de "faltam N dias" e nada de contagem regressiva. A estação é
-            um CALENDÁRIO ("tem mais coisa agora"), nunca um prazo ("corre").
-            É a diferença entre motivo para voltar e medo de perder, e é a
-            regra 1 do cabeçalho de `seasons.ts`.
-          · caminho com progresso ZERO não vira `0/20` na tela. Um placar de
-            zeros é a fatura que este produto não emite; o caminho aparece
-            quando a pessoa já andou nele. */}
+          WP4.16 — `seasons.ts` estava escrito, testado e SEM CONSUMIDOR. A
+          estação é um CALENDÁRIO ("tem mais coisa agora"), nunca um prazo
+          ("corre"): nada de "faltam N dias", nada de contagem regressiva
+          (regra 1 do cabeçalho de `seasons.ts`). Caminho com progresso ZERO
+          não vira `0/20`: um placar de zeros é a fatura que este produto não
+          emite. As medalhas são posse guardada — `military_tech` em `gold-ink`
+          (D-S8), a única cor de acento além do ciano nesta tela. */}
       {season && (() => {
         const win = seasonProgress();
         const status = seasonMedalStatus(season.state, season.counters, season.rest);
         const andados = status.paths.filter(p => p.current >= 1);
+        const medalhas = (season.state?.earnedMedals?.length ?? 0) + (status.earned && !season.state?.medalEarned ? 1 : 0);
+        const temMedalha = status.earned || (status.season && (season.state?.earnedMedals?.length ?? 0) > 0);
         return (
-          <section style={card}>
-            <h3 style={sectionTitle}>{isPt ? 'A estação' : 'The season'}</h3>
-            <p style={{ ...sm2Text, margin: 0 }}>{seasonLabel(win, isPt ? 'pt-BR' : 'en-US')}</p>
+          <section className="sm2-stats-card">
+            <CardHead icon="calendar_month">{isPt ? 'A estação' : 'The season'}</CardHead>
+            <p className="sm2-stats-t">{seasonLabel(win, isPt ? 'pt-BR' : 'en-US')}</p>
 
-            {andados.length > 0 && (
-              <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {!hideMetrics && andados.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {andados.map(p => (
-                  <p key={p.id} className="sm2-num" style={{ ...sm2Hint, margin: 0 }}>
-                    {isPt ? p.labelPt : p.labelEn}
-                    {' · '}
-                    <span style={{ color: p.done ? 'var(--sm2-primary-ink)' : 'var(--sm2-ink)' }}>
-                      {Math.min(p.current, p.target)}/{p.target}
-                    </span>
+                  <p key={p.id} className="sm2-stats-s sm2-stats-path sm2-num">
+                    <span>{isPt ? p.labelPt : p.labelEn}</span>
+                    <b>{Math.min(p.current, p.target)}/{p.target}</b>
                   </p>
                 ))}
-                <p style={sm2Hint}>
+                <p className="sm2-stats-s">
                   {isPt
                     ? 'Um caminho basta — nunca os três.'
                     : 'One path is enough — never all three.'}
@@ -473,13 +433,14 @@ export function StatsPage({
               </div>
             )}
 
-            {(status.earned || (status.season && (season.state?.earnedMedals?.length ?? 0) > 0)) && (
-              <p style={{ ...sm2Text, marginTop: 12 }}>
-                {isPt ? 'Medalhas guardadas: ' : 'Medals kept: '}
-                <span style={{ color: 'var(--sm2-primary-ink)' }}>
-                  {(season.state?.earnedMedals?.length ?? 0) + (status.earned && !season.state?.medalEarned ? 1 : 0)}
+            {temMedalha && (
+              <p className="sm2-stats-t sm2-stats-medals sm2-num">
+                <Icon name="military_tech" size={20} fill={1} tone="gold" />
+                <span>
+                  {isPt ? 'Medalhas guardadas: ' : 'Medals kept: '}
+                  {medalhas}
+                  {isPt ? ' — para sempre.' : ' — forever.'}
                 </span>
-                {isPt ? ' — para sempre.' : ' — forever.'}
               </p>
             )}
           </section>
@@ -487,32 +448,28 @@ export function StatsPage({
       })()}
 
       {/* ─────────────── O que você mais repete ─────────────── */}
-      <section style={card}>
-        <h3 style={sectionTitle}>{isPt ? 'O que você mais repete' : 'What you repeat most'}</h3>
+      <section className="sm2-stats-card">
+        <CardHead icon="event_repeat">{isPt ? 'O que você mais repete' : 'What you repeat most'}</CardHead>
         {topRepeated.length === 0 ? (
-          <p style={sm2Hint}>
+          <p className="sm2-stats-s">
             {isPt
               ? 'Nada concluído ainda. A primeira vez já aparece aqui.'
               : 'Nothing finished yet. The very first one shows up here.'}
           </p>
         ) : (
-          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 14 }}>
+          <ul className="sm2-stats-lst">
             {topRepeated.map(([key, stat]) => (
-              <li key={key} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <li key={key}>
                 {/* O emoji da atividade é CONTEÚDO — escolha da pessoa, não
-                    ícone de sistema. Fica (PLANO-DESIGN §4.11). */}
-                <span aria-hidden="true" style={{ fontSize: 'var(--sm2-text-lg)', width: 26, textAlign: 'center' }}>
-                  {stat.emoji}
-                </span>
-                <span
-                  title={stat.name}
-                  style={{ ...sm2Text, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-                >
-                  {stat.name}
-                </span>
-                <span className="sm2-num" style={sm2Hint}>
-                  {isPt ? `${stat.completionCount}× feita` : `done ${stat.completionCount}×`}
-                </span>
+                    ícone de sistema: 20px pelado numa coluna de 24, nunca em
+                    caixa (D-S9). */}
+                <span className="em" aria-hidden="true">{stat.emoji}</span>
+                <span className="t" title={stat.name}>{stat.name}</span>
+                {!hideMetrics && (
+                  <span className="s sm2-num">
+                    {isPt ? `${stat.completionCount}× feita` : `done ${stat.completionCount}×`}
+                  </span>
+                )}
               </li>
             ))}
           </ul>
@@ -520,28 +477,19 @@ export function StatsPage({
       </section>
 
       {/* ─────────────── Últimas conclusões ─────────────── */}
-      <section style={card}>
-        <h3 style={sectionTitle}>{isPt ? 'Últimas conclusões' : 'Latest completions'}</h3>
+      <section className="sm2-stats-card">
+        <CardHead icon="task_alt">{isPt ? 'Últimas conclusões' : 'Latest completions'}</CardHead>
         {recent.length === 0 ? (
-          <p style={sm2Hint}>
+          <p className="sm2-stats-s">
             {isPt ? 'O histórico começa na sua próxima conclusão.' : 'History starts at your next completion.'}
           </p>
         ) : (
-          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 14 }}>
+          <ul className="sm2-stats-lst">
             {recent.map(task => (
-              <li key={task.id} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <span aria-hidden="true" style={{ fontSize: 'var(--sm2-text-md)', width: 26, textAlign: 'center' }}>
-                  {task.emoji}
-                </span>
-                <span
-                  title={task.name}
-                  style={{ ...sm2Text, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-                >
-                  {task.name}
-                </span>
-                <span className="sm2-num" style={{ ...sm2Hint, whiteSpace: 'nowrap' }}>
-                  {formatDate(task.completedAt)}
-                </span>
+              <li key={task.id}>
+                <span className="em" aria-hidden="true">{task.emoji}</span>
+                <span className="t" title={task.name}>{task.name}</span>
+                <span className="s sm2-num">{formatDate(task.completedAt)}</span>
               </li>
             ))}
           </ul>

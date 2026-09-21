@@ -17,13 +17,21 @@
  *
  * A data aparece por extenso e sem ano-mês-dia numérico, pelo mesmo motivo do
  * primeiro item: "6 de setembro" é uma lembrança; "2026-09-06" é um registro.
+ *
+ * Canvas Estatísticas (§27, D-S4): o cartão é um VISOR — o sprite 256² a 128
+ * (0,5×, escala inteira) centrado no vidro 192² com anel de cobre, o MESMO
+ * `Viewport` do reveal e da Home. O `<img 112>` solto (0,44×) saiu. O vidro
+ * leva `role=img` com o nome (o `alt` de antes, dito uma vez); embaixo é
+ * aparelho: "BORN · <data>" em rótulo 12/500 caixa alta, o nome Fredoka 24,
+ * "You said…" 12 `muted`. O epíteto, quando vem, entra em `gold-ink` entre o
+ * nome e a frase.
  */
-import { sm2Hint, sm2Text } from './form/FormKit';
+import { Viewport } from './ui/Viewport';
 import type { Language } from '../utils/i18n';
 
 interface BirthCardProps {
   /** Sprite próprio da forma inicial, quando existe. Sem ele, o cartão mostra
-   *  a moldura vazia — nunca uma arte de reserva, que seria outra criatura. */
+   *  o vidro vazio — nunca uma arte de reserva, que seria outra criatura. */
   spriteUrl?: string | null;
   name: string;
   /** Linha de essência do oráculo ("Essência X · Ofício Y"), se houver. */
@@ -47,6 +55,10 @@ function dataPorExtenso(bornAt: string, isPt: boolean): string | null {
   }).format(d);
 }
 
+/** O vidro 192² = 64 lógicos × 3; o sprite 256² a 128 = 0,5× (P2 a). */
+const GLASS = 64;
+const SPRITE = 128;
+
 export function BirthCard({ spriteUrl, name, epithet, soulGoal, bornAt, language }: BirthCardProps) {
   const isPt = language === 'pt-BR';
   const data = bornAt ? dataPorExtenso(bornAt, isPt) : null;
@@ -54,48 +66,45 @@ export function BirthCard({ spriteUrl, name, epithet, soulGoal, bornAt, language
   return (
     <section
       aria-label={isPt ? 'Cartão de nascimento' : 'Birth card'}
-      style={{
-        padding: 16,
-        borderRadius: 12,
-        border: '1px solid var(--sm2-line)',
-        backgroundColor: 'var(--sm2-surface)',
-        textAlign: 'center',
-      }}
+      className="sm2-stats-card sm2-stats-birth"
     >
-      {spriteUrl && (
-        <img
-          src={spriteUrl}
-          alt={name}
-          width={112}
-          height={112}
-          style={{ objectFit: 'contain', imageRendering: 'pixelated', display: 'block', margin: '0 auto 8px' }}
-        />
-      )}
+      {/* O visor: anel de cobre + vidro escuro nos dois temas. `label` = o
+          nome, e só ele — o `img` dentro é decorativo (`alt=""`). Sem sprite
+          o vidro fica vazio, de propósito: nunca outra criatura. */}
+      <Viewport
+        width={GLASS}
+        height={GLASS}
+        scale={3}
+        breathing={false}
+        label={name}
+        screenStyle={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      >
+        {spriteUrl && (
+          <img
+            src={spriteUrl}
+            alt=""
+            width={SPRITE}
+            height={SPRITE}
+            style={{ display: 'block', width: SPRITE, height: SPRITE, imageRendering: 'pixelated' }}
+          />
+        )}
+      </Viewport>
 
-      <p style={{ ...sm2Hint, letterSpacing: '.08em', textTransform: 'uppercase', margin: 0 }}>
+      <p className="sm2-stats-lab">
         {isPt ? 'Nasceu' : 'Born'}
         {data ? ` · ${data}` : ''}
       </p>
 
-      <h2 style={{
-        fontFamily: 'var(--sm2-font-display)',
-        fontSize: 'var(--sm2-text-xl)',
-        lineHeight: 'var(--sm2-leading-title)',
-        fontWeight: 600,
-        color: 'var(--sm2-ink)',
-        margin: '4px 0',
-      }}>
-        {name}
-      </h2>
+      <h2 className="sm2-stats-word">{name}</h2>
 
       {epithet && (
-        <p style={{ ...sm2Hint, color: 'var(--sm2-gold-ink)', fontWeight: 500, margin: '0 0 8px' }}>
+        <p className="sm2-stats-s" style={{ color: 'var(--sm2-gold-ink)', fontWeight: 500 }}>
           {epithet}
         </p>
       )}
 
       {soulGoal?.trim() && (
-        <p style={{ ...sm2Text, margin: '8px 0 0', color: 'var(--sm2-muted)' }}>
+        <p className="sm2-stats-s">
           {isPt
             ? `Você disse: “${soulGoal.trim()}”. ${name} nasceu disso.`
             : `You said: “${soulGoal.trim()}”. ${name} was born from that.`}

@@ -5418,6 +5418,9 @@ export default function App() {
               vaccinePoints={gameState.vaccinePoints}
               petPassive={gameState.petPassive}
               carePattern={carePatternReading.confident ? carePatternReading.pattern : null}
+              /* Janela de Descanso: esconde os números da tela, preserva as
+                 recompensas (DECISÕES §13 V3; canvas §27, achado 6). */
+              hideMetrics={gameState.rest?.hideMetrics === true}
               /* WP2.11 — "N dias juntos". Lê de `bornAt` (WP1.16) e não de um
                  segundo contador: três guardas propuseram medir "há quanto
                  tempo" de três jeitos diferentes, e uma fonte só é o conserto.

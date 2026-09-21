@@ -7645,3 +7645,121 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
 /* A barra `.meter` da missão da semana (SIS-07): trilho `surface-2` + fronteira `muted`, água `primary-fill`. */
 .sm2-shop-meter { display: block; height: 12px; max-width: 100%; box-sizing: border-box; border-radius: var(--sm2-radius-sm); border: 1px solid var(--sm2-muted); background-color: var(--sm2-surface-2); overflow: hidden; }
 .sm2-shop-meter i { display: block; height: 100%; border-radius: 3px; background-color: var(--sm2-primary-fill); }
+
+/* STATS+SOCIAL (canvas §27/§28) — Estatísticas e Biblioteca sobre o kit `--sm2-*`.
+   Nenhum token novo, nenhum literal de cor. O `.sm2-kit-meter`, as `.sm2-kit-tab*`
+   e o `.sm2-viewport-screen` (MiniGlass/Viewport) já existem acima; aqui só a
+   COMPOSIÇÃO: card SIS-03 com cabeçalho `.ch` (ícone 24 `muted` + Fredoka 16),
+   o vínculo como palavra, os traços, o nascimento em vidro, os mini-visores do
+   bestiário/álbum, a estação, as listas; a linha do jogador, o inerte por FORMA
+   (tracejado + `muted`, nunca opacidade), o alerta âmbar, o chip do código. */
+.sm2-stats { display: flex; flex-direction: column; gap: var(--sm2-space-2); padding-bottom: var(--sm2-space-5); }
+.sm2-stats-card {
+  box-sizing: border-box;
+  display: flex; flex-direction: column; gap: var(--sm2-space-2);
+  padding: var(--sm2-space-3);
+  background-color: var(--sm2-surface);
+  border: 1px solid var(--sm2-line);
+  border-radius: var(--sm2-radius-md);
+  color: var(--sm2-ink);
+}
+/* O cartão contínuo: o bloco seguinte da jornada abre com topo tracejado, sem separador. */
+.sm2-stats-cont { border-top: 1px dashed var(--sm2-muted); padding-top: var(--sm2-space-2); }
+.sm2-stats-ch { display: flex; align-items: center; gap: var(--sm2-space-2); min-height: 24px; }
+.sm2-stats-h3 {
+  flex: 1; min-width: 0; margin: 0;
+  font-family: var(--sm2-font-display); font-weight: 500;
+  font-size: var(--sm2-text-md); line-height: var(--sm2-leading-title);
+  color: var(--sm2-ink);
+}
+.sm2-stats-lab {
+  margin: 0;
+  font-family: var(--sm2-font-text); font-weight: 500; font-size: var(--sm2-text-xs);
+  letter-spacing: .06em; text-transform: uppercase; color: var(--sm2-muted);
+  line-height: var(--sm2-leading-body);
+}
+.sm2-stats-s { margin: 0; font-size: var(--sm2-text-xs); line-height: var(--sm2-leading-body); color: var(--sm2-muted); }
+.sm2-stats-t { margin: 0; font-size: var(--sm2-text-sm); line-height: var(--sm2-leading-body); color: var(--sm2-ink); }
+.sm2-stats-word {
+  margin: 0;
+  font-family: var(--sm2-font-display); font-weight: 600;
+  font-size: var(--sm2-text-xl); line-height: var(--sm2-leading-title); color: var(--sm2-ink);
+}
+.sm2-stats-trait { display: flex; gap: var(--sm2-space-3); align-items: flex-start; margin: 0; }
+.sm2-stats-trait > :first-child { flex: none; margin-top: 1px; }
+.sm2-stats-count { display: flex; align-items: baseline; gap: var(--sm2-space-2); }
+.sm2-stats-birth { align-items: center; text-align: center; gap: var(--sm2-space-1); }
+.sm2-stats-birth .sm2-viewport { margin-bottom: var(--sm2-space-2); }
+.sm2-stats-birth .sm2-stats-lab { letter-spacing: .08em; }
+.sm2-stats-birth h2 { margin: var(--sm2-space-1) 0; }
+/* Silhueta = máscara do próprio PNG, tinta derivada do vidro — sem alpha, o mesmo cinza nos dois temas. */
+.sm2-stats-sil {
+  display: block;
+  background-color: color-mix(in srgb, var(--sm2-viewport-bg) 58%, var(--sm2-viewport-ink));
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  image-rendering: pixelated;
+}
+.sm2-stats-bline { display: flex; flex-direction: column; gap: var(--sm2-space-1); }
+.sm2-stats-brow { display: flex; gap: var(--sm2-space-2); }
+.sm2-stats-agrid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 10px var(--sm2-space-2); }
+.sm2-stats-acell { display: flex; flex-direction: column; align-items: center; gap: var(--sm2-space-1); min-width: 0; text-align: center; }
+.sm2-stats-acell .nm { font-size: var(--sm2-text-xs); line-height: 1.3; color: var(--sm2-ink); font-weight: 500; }
+.sm2-stats-acell.off .nm { color: var(--sm2-muted); font-weight: 400; }
+.sm2-stats-acell .dt { font-size: var(--sm2-text-xs); line-height: 1.3; color: var(--sm2-muted); font-variant-numeric: tabular-nums; }
+.sm2-stats-path { display: flex; justify-content: space-between; gap: var(--sm2-space-2); align-items: baseline; }
+.sm2-stats-path b { color: var(--sm2-ink); font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.sm2-stats-medals { display: flex; gap: var(--sm2-space-2); align-items: center; }
+.sm2-stats-lst { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sm2-space-2); }
+.sm2-stats-lst li { display: flex; align-items: center; gap: var(--sm2-space-3); min-height: 24px; }
+.sm2-stats-lst .em { width: 24px; text-align: center; font-size: 20px; line-height: 1; flex: none; }
+.sm2-stats-lst .t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--sm2-text-sm); color: var(--sm2-ink); }
+.sm2-stats-lst .s { white-space: nowrap; font-variant-numeric: tabular-nums; font-size: var(--sm2-text-xs); color: var(--sm2-muted); }
+
+/* ── Biblioteca ── */
+.sm2-lib { display: flex; flex-direction: column; gap: 10px; padding-bottom: var(--sm2-space-5); }
+.sm2-lib-ttl { display: flex; flex-direction: column; gap: 2px; }
+.sm2-lib-h2 {
+  display: flex; align-items: center; gap: var(--sm2-space-2); margin: 0;
+  font-family: var(--sm2-font-display); font-weight: 600;
+  font-size: var(--sm2-text-lg); line-height: var(--sm2-leading-title); color: var(--sm2-ink);
+}
+.sm2-lib-list { display: flex; flex-direction: column; }
+.sm2-lib-row { display: flex; align-items: center; gap: var(--sm2-space-1); border-top: 1px solid var(--sm2-line); }
+.sm2-lib-row:first-child { border-top: 0; }
+.sm2-lib-who {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--sm2-space-3);
+  min-height: 64px; padding: 0; box-sizing: border-box; text-align: left;
+  background: none; border: 0; cursor: pointer; color: var(--sm2-ink);
+  font-family: var(--sm2-font-text);
+}
+.sm2-lib-who:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; border-radius: var(--sm2-radius-sm); }
+.sm2-lib-nm { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.sm2-lib-nm .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--sm2-text-sm); font-weight: 500; line-height: var(--sm2-leading-body); }
+.sm2-lib-nm .s, .sm2-lib-s { font-size: var(--sm2-text-xs); font-weight: 400; line-height: var(--sm2-leading-body); color: var(--sm2-muted); }
+.sm2-lib-act {
+  width: 44px; height: 44px; flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: none; border: 0; padding: 0; border-radius: var(--sm2-radius-md);
+  cursor: pointer; color: var(--sm2-ink);
+}
+.sm2-lib-act:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
+/* Inerte por FORMA (deck da Home): tracejado 1px `muted` + tinta `muted` + `aria-disabled`, fora do Tab — nunca opacidade. */
+.sm2-lib-act[aria-disabled="true"] { color: var(--sm2-muted); outline: 1px dashed var(--sm2-muted); outline-offset: -2px; cursor: default; }
+.sm2-lib-cstate { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; padding: var(--sm2-space-3) 0; }
+.sm2-lib-busy { display: flex; align-items: center; justify-content: center; gap: var(--sm2-space-2); padding: var(--sm2-space-3) 0; margin: 0; font-size: var(--sm2-text-xs); color: var(--sm2-muted); }
+/* O alerta (`role=alert`): filete 3px + tinta `gold-ink` — âmbar de convite, nunca vermelho. */
+.sm2-lib-alert { border-left: 3px solid var(--sm2-gold-ink); padding-left: var(--sm2-space-2); margin: 0; color: var(--sm2-gold-ink); font-weight: 500; font-size: var(--sm2-text-sm); line-height: var(--sm2-leading-body); }
+/* O grupo: presença por pessoa (32), o chip do código em mono sobre `surface-2`. */
+.sm2-coop-mem { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sm2-space-1); }
+.sm2-coop-mem li { display: flex; align-items: center; gap: var(--sm2-space-2); min-height: 32px; font-size: var(--sm2-text-sm); color: var(--sm2-ink); }
+.sm2-coop-mem li .t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sm2-coop-code { display: flex; align-items: center; gap: var(--sm2-space-2); min-height: 44px; }
+.sm2-coop-cd {
+  font-family: var(--sm2-font-mono); letter-spacing: .1em; font-size: var(--sm2-text-sm); color: var(--sm2-ink);
+  min-height: 32px; display: inline-flex; align-items: center; padding: 0 var(--sm2-space-3);
+  border-radius: 999px; background-color: var(--sm2-surface-2);
+}
+.sm2-lib-hero { display: flex; flex-direction: column; align-items: center; gap: var(--sm2-space-2); text-align: center; }
+.sm2-lib-path { display: flex; flex-direction: column; gap: var(--sm2-space-1); align-items: flex-start; }
+.sm2-lib-path .t { display: flex; align-items: center; gap: 6px; font-weight: 500; font-size: var(--sm2-text-sm); color: var(--sm2-ink); margin: 0; }
+.sm2-lib-path svg { display: block; flex: none; }

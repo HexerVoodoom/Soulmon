@@ -38,6 +38,9 @@ describe('BirthCard — o que ele mostra', () => {
     // como sendo a que nasceu.
     const { container } = renderWithCss(<BirthCard {...base} />);
     expect(container.querySelector('img')).toBeNull();
+    // O vidro 192² (64 × 3) fica, vazio — é o mesmo visor do reveal (D-S4).
+    const vidro = container.querySelector('[role="img"]');
+    expect(vidro?.getAttribute('aria-label')).toBe('Velhuma');
   });
 
   it('em inglês, tudo em inglês', () => {
