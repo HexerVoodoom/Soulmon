@@ -41,17 +41,19 @@
  *
  * O canvas replica o que esta tela já fazia bem (Emblemas em serifa, faixa
  * antes do ranking, `TIER_ICON`, janela de ±3, `cloud_off`) e corrige: o
- * sprite do oponente solto a 44 → **mini-visor 64** (0,25×); as abas em
- * botões → `PixelTabs` com sublinhado (SIS-04); o `role=alert` sem filete →
- * filete `gold-ink` 3px, tinta `ink` (nunca vermelho); o ranking com
- * mini-visor 32 (0,125× com filtro — TRANSIÇÃO condicionada aos ícones 32²
- * da `squad-arte`, D-J13); o switch travado inerte por FORMA (tracejado,
+ * sprite do oponente solto a 44 → **mini-visor 64** (ícone-ficha 64² da
+ * linha, rodada 2 — ou o sprite a 0,25×); as abas em botões → `PixelTabs`
+ * com sublinhado (SIS-04); o `role=alert` sem filete → filete `gold-ink`
+ * 3px, tinta `ink` (nunca vermelho); o ranking com mini-visor 32 (ícone-ficha
+ * 32² a 1× — D-J13 cumprida em 21/09/2026; sprite a 0,125× com filtro só
+ * quando o estágio não é de linha); o switch travado inerte por FORMA (tracejado,
  * `aria-disabled`, fora do Tab — nunca opacidade, D-J14); a faixa em Fredoka
  * 16 (Silkscreen só dentro do vidro); o resultado num `RitualDialog` com o
  * visor 288×112 da arena e as duas criaturas a 64 na vitória.
  */
 import { useEffect, useState } from 'react';
 import { getSpriteForStage } from '../utils/sprites';
+import { lineIconForStage } from '../utils/lineIcons';
 import { getStageLevel } from '../types/progression';
 import { getOpponents, playMatch, getRank, type Opponent, type MatchResult, type RankRow } from '../utils/community';
 import { EMBLEMS_PER_WIN, EMBLEMS_PER_LOSS, emblemStyle } from '../utils/currencies';
@@ -455,10 +457,12 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
             const blocked = matchesLeft === 0;
             return (
               <div key={o.id} style={{ ...cardStyle, display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', minHeight: 56 }}>
-                {/* A criatura do amigo no estágio REAL, num mini-visor 64
-                    (0,25×) — sem faixa, sem rank (J1, veto 3b). */}
+                {/* A criatura do amigo no estágio REAL, num mini-visor 64 —
+                    o ícone-ficha 64² da linha (rodada 2, D-J13) ou, quando o
+                    estágio não é de linha, o sprite a 0,25× — sem faixa, sem
+                    rank (J1, veto 3b). */}
                 <MiniGlass size={64}>
-                  <img src={getSpriteForStage(o.stage)} alt="" width={64} height={64} style={{ width: 64, height: 64, imageRendering: 'pixelated', display: 'block' }} />
+                  <img src={lineIconForStage(o.stage, 64) ?? getSpriteForStage(o.stage)} alt="" width={64} height={64} style={{ width: 64, height: 64, imageRendering: 'pixelated', display: 'block' }} />
                 </MiniGlass>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ ...sm2Text, margin: 0, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -556,11 +560,11 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
           )}
 
           {/* A janela de ±3 num card só, linhas de 36: posição `tabular-nums`,
-              a criatura num mini-visor 32 (0,125× com FILTRO — D-J13, transição
-              até os ícones 32² da `squad-arte`; a linha se identifica pelo
-              NOME), nome 14, pontos 12. A linha "you" em `primary-soft` + anel
-              `primary-ink` — o idioma de seleção, não um pódio (sem ouro no
-              top 3). */}
+              a criatura num mini-visor 32 — o ícone-ficha 32² (a cabeça, rodada
+              2, D-J13) a 1×, ou o sprite a 0,125× com filtro quando o estágio
+              não é de linha; a linha se identifica pelo NOME —, nome 14,
+              pontos 12. A linha "you" em `primary-soft` + anel `primary-ink` —
+              o idioma de seleção, não um pódio (sem ouro no top 3). */}
           {visibleRank.length > 0 && (
             <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 2, padding: '6px 8px' }}>
               {visibleRank.map(({ row: r, place }) => {
@@ -580,7 +584,10 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
                       {place}
                     </span>
                     <MiniGlass size={32}>
-                      <img src={getSpriteForStage(r.stage)} alt="" width={32} height={32} style={{ width: 32, height: 32, imageRendering: 'auto', display: 'block' }} />
+                      {(() => {
+                        const icon = lineIconForStage(r.stage, 32);
+                        return <img src={icon ?? getSpriteForStage(r.stage)} alt="" width={32} height={32} style={{ width: 32, height: 32, imageRendering: icon ? 'pixelated' : 'auto', display: 'block' }} />;
+                      })()}
                     </MiniGlass>
                     <span style={{ ...sm2Text, flex: 1, minWidth: 0, fontWeight: isMe ? 500 : 400, color: isMe ? 'var(--sm2-primary-ink)' : 'var(--sm2-ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {r.name}{isMe ? (isPt ? ' (você)' : ' (you)') : ''}

@@ -7,6 +7,9 @@ import eatCrumbs from '../assets/soulmon/fx/anim-eat-crumbs.png';
 import heartBurst from '../assets/soulmon/fx/anim-heart-burst.png';
 import showerSplash from '../assets/soulmon/fx/anim-shower-splash.png';
 import sleepZ from '../assets/soulmon/fx/anim-sleep-z.png';
+// Rodada 2 (R2-4): a mesma folha recolorida em claro (#E9F5F2 / #5FF3E0) para
+// cenário ESCURO — o Z teal sumia sobre `bg-room` (achado 5 do canvas Home).
+import sleepZLight from '../assets/soulmon/fx/anim-sleep-z-light.png';
 import poopPlop from '../assets/soulmon/fx/anim-poop-plop.png';
 import sparklePop from '../assets/soulmon/fx/anim-sparkle-pop.png';
 import dustStep from '../assets/soulmon/fx/anim-dust-step.png';
@@ -20,6 +23,7 @@ export const ANIM_ART = {
   heartBurst: sheet(heartBurst, 4),
   showerSplash: sheet(showerSplash, 4),
   sleepZ: sheet(sleepZ, 3),
+  sleepZLight: sheet(sleepZLight, 3),
   poopPlop: sheet(poopPlop, 3),
   sparklePop: sheet(sparklePop, 4),
   dustStep: sheet(dustStep, 3),

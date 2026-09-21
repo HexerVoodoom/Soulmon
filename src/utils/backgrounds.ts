@@ -265,3 +265,20 @@ export const PET_BACKGROUNDS: Record<string, PetBackground> = {
     setting: 'outdoor', slots: GROUND_SLOTS, horizonY: 74,   // céu aberto: nada onde pendurar
   },
 };
+
+/**
+ * O cenário equipado é ESCURO? Decide qual `anim-sleep-z` a Home usa (R2-4,
+ * 21/09/2026): a folha clara sobre cenário escuro, a teal sobre claro.
+ * Luminância relativa da `baseColor` (a cor atrás da arte) < 0,5 = escuro;
+ * sem cenário — ou cenário sem `baseColor` — o que se vê é o
+ * `--sm2-viewport-bg`, escuro nos dois temas, então também é escuro.
+ */
+export function isDarkBackground(id: string | null | undefined): boolean {
+  const hex = id ? PET_BACKGROUNDS[id]?.baseColor : undefined;
+  const m = hex && /^#([0-9a-f]{6})$/i.exec(hex);
+  if (!m) return true;
+  const v = parseInt(m[1], 16);
+  const lin = (c: number) => { const s = c / 255; return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4; };
+  const lum = 0.2126 * lin(v >> 16) + 0.7152 * lin((v >> 8) & 255) + 0.0722 * lin(v & 255);
+  return lum < 0.5;
+}

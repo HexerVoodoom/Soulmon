@@ -19,9 +19,11 @@ import type { Language } from '../utils/i18n';
  * ─── O aparelho em vetor, pixel só no vidro (D-L1, D-L2, D-L3) ─────────────
  * Cada card é um botão SIS-03 inteiro; o item é a ARTE REAL dentro de um
  * mini-visor sem anel (`MiniGlass`): 72² para chip (96² → 48, 0,5×) e mobília
- * (0,5× do nativo), 96×52 para cenário (a ilustração 1200×648 a 0,08× —
- * transição declarada até a `squad-arte` gerar as miniaturas a 1×). O emoji
- * continua sendo a CHAVE (`item.icon` indexa `ITEM_ART`), nunca o desenho.
+ * (0,5× do nativo), 96×52 para cenário (a miniatura 96×52 de
+ * `backgrounds/thumbs/`, derivada da ilustração 1200×648 — rodada 2 da
+ * `squad-arte`, 21/09/2026; cenário sem miniatura cai na ilustração reduzida).
+ * O emoji continua sendo a CHAVE (`item.icon` indexa `ITEM_ART`), nunca o
+ * desenho.
  *
  * ─── Estados por FORMA, nunca por alfa (D-L6, D-L7, D-L8, D-L9) ───────────
  *   · travado    → borda tracejada `muted`, nome `muted`, véu `color-mix` no
@@ -58,9 +60,20 @@ const ICON_TAG = 20;
 
 /** Mini-visor de item/decoração (D-L3: o slot SIS-07 alargado a 72). */
 const GLASS_ITEM = 72;
-/** Mini-visor de cenário (D-L3: 1200×648 → 96×52, transição). */
+/** Mini-visor de cenário (D-L3: miniatura 96×52 a 1×). */
 const GLASS_BG_W = 96;
 const GLASS_BG_H = 52;
+
+/**
+ * As miniaturas 96×52 por id de cenário (`thumbs/<id>.png`, R2-1). Glob eager
+ * no molde de `attackFxArt.ts`: o Vite empacota cada PNG estaticamente e o
+ * mapa devolve `undefined` para cenário sem miniatura → cai na ilustração
+ * 1200×648 reduzida por CSS (o que era antes).
+ */
+const BG_THUMBS: Record<string, string> = Object.fromEntries(
+  Object.entries(import.meta.glob('../assets/backgrounds/thumbs/*.png', { eager: true, import: 'default' }) as Record<string, string>)
+    .map(([p, url]) => [p.replace(/^.*\/([^/]+)\.png$/, '$1'), url]),
+);
 
 /** Bits e Emblemas: exatamente o que `utils/currencies.ts` define — SEM override
  *  de cor (o canvas segue `bitsStyle`, X4). */
@@ -180,7 +193,7 @@ export function ShopModal({
     const veil = locked && <span aria-hidden="true" className="sm2-shop-veil" />;
     if (item.kind === 'bg') {
       const bg = PET_BACKGROUNDS[item.id];
-      const src = bgImage(bg?.css);
+      const src = BG_THUMBS[item.id] ?? bgImage(bg?.css);
       return (
         <MiniGlass size={GLASS_ITEM} style={{ width: GLASS_BG_W, height: GLASS_BG_H, ...ring }}>
           {src

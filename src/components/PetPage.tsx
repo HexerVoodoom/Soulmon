@@ -106,12 +106,11 @@ const h2Style: CSSProperties = {
  *    tamanho. Antes ele esticava ao vidro (192 = 0,75×), e três escalas da
  *    mesma arte (Home 0,5×, Ficha 0,75×, anterior 0,19×) liam como três
  *    criaturas.
- *  · **aura 128² a 2× (256), atrás, a opacidade 1** — o PNG já traz o alfa;
- *    nenhuma opacidade no aparelho (Home F1). **O corte é declarado (X3 b):**
- *    a caixa de alfa da aura ocupa a largura inteira do PNG, então a 2× o
- *    anel mede 256 num vidro de 192 — 32 px de cada lado ficam fora, o anel
- *    ATRAVESSA o vidro (FX, não moldura). A `squad-arte` deve uma aura em
- *    96² (a 2× = o vidro inteiro); quando ela chegar, só `AURA` muda.
+ *  · **aura 96² a 2× (192 = o vidro inteiro), atrás, a opacidade 1** — o
+ *    PNG já traz o alfa; nenhuma opacidade no aparelho (Home F1). A 96² é a
+ *    derivada da rodada 2 (`auraForElement(el, 96)`, R2-3, 21/09/2026); sem
+ *    ela cai na 128² e o corte de X3 b volta (a 2× o anel mede 256, 32 px de
+ *    cada lado fora — `AURA_128`).
  *  · **sigilo de classe 192² a 48 (0,25×)**, canto superior esquerdo a 8 px,
  *    à frente da aura — só quando a classe do estágio traz `sigilo`
  *    (`classTitle.ts`); nunca solto no aparelho (D6).
@@ -120,9 +119,12 @@ const HERO: CSSProperties = {
   position: 'absolute', left: 32, top: 32, width: 128, height: 128, imageRendering: 'pixelated',
 };
 const AURA: CSSProperties = {
+  position: 'absolute', left: 0, top: 0, width: 192, height: 192, maxWidth: 'none', imageRendering: 'pixelated',
+};
+const AURA_128: CSSProperties = {
   // `maxWidth: 'none'`: o preflight (`img { max-width: 100% }`) encolhia a aura
   // para os 192 do vidro — medido no browser (largura 192 em vez de 256).
-  position: 'absolute', left: -32, top: -32, width: 256, height: 256, maxWidth: 'none', imageRendering: 'pixelated',
+  ...AURA, left: -32, top: -32, width: 256, height: 256,
 };
 const SIGIL: CSSProperties = {
   position: 'absolute', left: 8, top: 8, width: 48, height: 48, imageRendering: 'pixelated',
@@ -271,6 +273,9 @@ export function PetPage({
 
   const nome = petName ?? (isPt ? 'Seu Soulmon' : 'Your Soulmon');
   const classeAtual = atual ? classTitles?.[getStageLevel(creatureFormId(atual)) as FichaStage] : undefined;
+  /** A aura 96² (R2-3) quando existe; senão a 128² com o corte declarado. */
+  const aura = auraForElement(dominantElement, 96);
+  const auraStyle = aura && aura === auraForElement(dominantElement, 128) ? AURA_128 : AURA;
   const skillsAtuais = atual ? skills?.[getStageLevel(creatureFormId(atual)) as FichaStage] : undefined;
 
   return (
@@ -286,9 +291,7 @@ export function PetPage({
             label={isPt ? `${nome}, forma atual` : `${nome}, current form`}
             screenStyle={{ position: 'relative' }}
           >
-            {auraForElement(dominantElement) && (
-              <img src={auraForElement(dominantElement)} alt="" aria-hidden="true" data-aura style={AURA} />
-            )}
+            {aura && <img src={aura} alt="" aria-hidden="true" data-aura style={auraStyle} />}
             <img src={getSpriteForStage(creatureFormId(atual), demoCharacterId)} alt="" data-hero style={HERO} />
             {classeAtual?.sigilo && sigilArt(classeAtual.sigilo) && (
               <img src={sigilArt(classeAtual.sigilo)} alt="" aria-hidden="true" data-sigil={classeAtual.sigilo} style={SIGIL} />

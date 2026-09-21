@@ -7,7 +7,7 @@
  * nunca foi desenhada, sem erro nenhum. Contar não prova nada; procurar prova.
  */
 import { describe, it, expect } from 'vitest';
-import { attackFx, auraForElement, ATTACK_FX_COUNT, ATTACK_FX_STATES } from './attackFxArt';
+import { attackFx, auraForElement, ATTACK_FX_COUNT, AURA_96_COUNT, ATTACK_FX_STATES } from './attackFxArt';
 
 describe('attackFxArt', () => {
   it('as 924 peças estão no mapa (17 base + neutro + 136 derivados, × 6 estados)', () => {
@@ -33,5 +33,14 @@ describe('attackFxArt', () => {
     expect(auraForElement('industrial')).toMatch(/fx-aco-aura/);
     expect(auraForElement(undefined)).toBeUndefined();
     expect(auraForElement('elemento-que-nao-existe')).toBeUndefined();
+  });
+
+  it('R2-3: uma aura 96² por elemento com `-aura.png` (154), separada do mapa 128² e servida por `size: 96`', () => {
+    expect(AURA_96_COUNT).toBe(154);
+    expect(ATTACK_FX_COUNT).toBe(924); // a -aura-96 NÃO entra como 7º estado
+    expect(auraForElement('fogo', 96)).toMatch(/fx-fogo-aura-96\.png$/);
+    expect(auraForElement('planta', 96)).toMatch(/fx-vida-aura-96\.png$/);
+    expect(auraForElement('fogo', 128)).toMatch(/fx-fogo-aura\.png$/);
+    expect(auraForElement('fogo')).toMatch(/fx-fogo-aura\.png$/);
   });
 });

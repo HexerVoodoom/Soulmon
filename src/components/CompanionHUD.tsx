@@ -15,7 +15,7 @@ import { VisorBar } from './pixel/VisorBar';
 import { HUD_ART } from '../utils/hudArt';
 import { type SlotId, BASE_SLOTS, PET_TOP_OFFSET, PET_BOX, PET_RENDER, STAGE_HEIGHT } from '../utils/petStage';
 import { PetStageDecor } from './PetStageDecor';
-import { PET_BACKGROUNDS } from '../utils/backgrounds';
+import { PET_BACKGROUNDS, isDarkBackground } from '../utils/backgrounds';
 import { CareSystem, CareEvent } from './CareSystem';
 import { ChatBox } from './ChatBox';
 import { Language } from '../utils/i18n';
@@ -1524,10 +1524,11 @@ export const CompanionHUD = memo(function CompanionHUD({
                   sumindo. Até 15/09/2026 eram três "Z" em monospace — texto do
                   aparelho dentro do visor. */}
               {/* 2× (D-H4), acima e à direita da cabeça (X8). O `sleep-z` é
-                  teal escuro e some sobre `bg-room` — variante clara pedida à
-                  `squad-arte` (achado 5 do canvas). */}
+                  teal escuro e some sobre `bg-room` — sobre cenário escuro
+                  (`isDarkBackground`, luminância da `baseColor` < 0,5) entra a
+                  folha clara `sleepZLight` (R2-4, achado 5 do canvas). */}
               <SpriteAnim
-                sheet={ANIM_ART.sleepZ}
+                sheet={isDarkBackground(equippedBackground) ? ANIM_ART.sleepZLight : ANIM_ART.sleepZ}
                 size={FX_PX}
                 durationMs={1800}
                 loop

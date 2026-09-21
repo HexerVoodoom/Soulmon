@@ -172,6 +172,27 @@ function legacySpriteForStage(stageId: string): string {
   return line[key as 'rookie' | 'champion' | 'ultimate' | 'mega'] ?? line.rookie;
 }
 
+/** Tiers com arte própria nas linhas (`lines/<linha>-<tier>.png`). */
+export type LineTier = 'rookie' | 'champion' | 'ultimate' | 'mega';
+
+/**
+ * A LINHA e o TIER por trás de um estágio — a mesma resolução de
+ * `getSpriteForStage`, sem o sprite: demo → a linha escolhida; id legado →
+ * a linha sorteada por hash; estágio com ramo (`champion-virus`, a árvore
+ * do jogador) → `null`, porque aí a arte é a do próprio Soulmon, não de
+ * linha. Consumido por `lineIcons.ts` (rodada 2: ícones-ficha 64²/32²).
+ */
+export function resolveLineForStage(stage: string, demoCharacterId?: string): { line: string; tier: LineTier } | null {
+  const key = stage.toLowerCase();
+  const level = getStageLevel(key);
+  const tier = (level === 'ultra' ? 'mega' : level) as LineTier;
+  if (demoCharacterId && DUNGEON_LINE_SPRITES[demoCharacterId]) return { line: demoCharacterId, tier };
+  if (SOULMON_SPRITES[key]) return null;
+  const branch = getStageBranch(key);
+  if (branch && SOULMON_SPRITES[`${level}-${branch}`]) return null;
+  return { line: LEGACY_LINES[hashId(key) % LEGACY_LINES.length], tier };
+}
+
 export function getSpriteForStage(stage: string, demoCharacterId?: string): string {
   const key = stage.toLowerCase();
   // Modo demo (utils/monetization.ts): personagem pré-pronto, sem branch —

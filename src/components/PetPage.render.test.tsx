@@ -4,8 +4,9 @@
  *
  *  1. **Sprite 256² a 128, centrado** no vidro 192² (`left/top 32`) — a MESMA
  *     escala da Home. Antes esticava ao vidro (`inset: 0` = 192 = 0,75×).
- *  2. **Aura a 2× (256) a opacidade 1** — nenhuma opacidade no aparelho
- *     (Home F1); o corte de 32 px por lado é declarado, não acidente.
+ *  2. **Aura 96² a 2× (192 = o vidro inteiro) a opacidade 1** — nenhuma
+ *     opacidade no aparelho (Home F1). Rodada 2 (R2-3, 21/09/2026): a 96²
+ *     derivada substitui a 128² a 2× com corte de 32 px por lado.
  *  3. **Sigilo de classe a 48 no canto superior esquerdo (8,8)**, só quando a
  *     classe traz `sigilo`; classe sem sigilo (cache antigo) = nada no canto.
  *  4. **Forma anterior num vidro 80² sem anel, sprite a 64** (D-P9) — não mais
@@ -69,12 +70,13 @@ describe('a heroína no vidro 192²', () => {
     expect(hero.style.inset).toBe('');
   });
 
-  it('aura a 2× (256 CSS, a −32) e SEM opacidade', () => {
+  it('aura 96² a 2× (192 CSS = o vidro, a 0) e SEM opacidade', () => {
     montar();
     const aura = document.querySelector<HTMLElement>('[data-aura]')!;
     expect(aura).toBeTruthy();
-    expect(aura.style.width).toBe('256px');
-    expect(aura.style.left).toBe('-32px');
+    expect(aura.getAttribute('src')).toMatch(/-aura-96\.png$/);
+    expect(aura.style.width).toBe('192px');
+    expect(aura.style.left).toBe('0px');
     expect(aura.style.opacity).toBe('');
   });
 

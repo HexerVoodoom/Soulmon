@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { getSpriteForStage } from '../utils/sprites';
+import { lineIconForStage } from '../utils/lineIcons';
 import { playTaskComplete } from '../utils/sounds';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readNumber, writeLocal } from '../utils/safeStorage';
@@ -98,7 +99,9 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
 
   useEffect(() => {
     const pet = new Image();
-    pet.src = getSpriteForStage(evolutionStage, demoCharacterId);
+    // O ícone-ficha 64² da linha (rodada 2, D-J13: bbox cheia, pés no chão) ou
+    // o sprite 256² a 0,25× quando o estágio não é de linha.
+    pet.src = lineIconForStage(evolutionStage, 64, demoCharacterId) ?? getSpriteForStage(evolutionStage, demoCharacterId);
     petImgRef.current = pet;
     tierImgsRef.current = OBSTACLE_TIERS.map(t => {
       const img = new Image();
