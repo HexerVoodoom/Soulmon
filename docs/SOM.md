@@ -106,10 +106,17 @@ conquista", isso é timbre/envelope/duração, não nível.
 - **Aprovação auditiva não é do gate.** "Soa bem" é do dono (S8): fone **e** alto-falante de
   celular, três perguntas fechadas por asset, lote de no máximo 8.
 
-## 5. Áudio gerado por IA — bloqueado hoje
+## 5. Áudio gerado por IA — gerado em 21/09/2026, A/B montado e NÃO OUVIDO
 
-Prompts (12) e a sequência de 6 passos estão prontos em
-`squad-alpha-runs/som-01/prototyper/pacote-prompts.md`. **Não gere nada antes de:**
+> **21/09/2026:** o bloqueio caiu (480 cr; termos, loja e S11/S12 respondidos pelo dono — registro
+> §6.1, nota de 21/09 sob a emenda da S10). Os 12 prompts foram gerados e pós-processados em
+> `E:/Soulmon-assets/som-01/` (**fora do repo**: nenhum byte de áudio entrou, `Attributions.md`
+> segue sem linha de áudio). Custo medido: **2,5 cr/geração**, plano pro = **3 jobs concorrentes**.
+> O A/B cego dos 3 pares está montado (`E:/Soulmon-assets/som-01/ab/escuta.html`, protocolo
+> `ab-piloto.md` §8) e **espera o dono ouvir** — até lá, tudo abaixo continua valendo.
+
+Prompts (12) e a sequência de 6 passos estão em
+`squad-alpha-runs/som-01/prototyper/pacote-prompts.md`. O que era pré-condição, e como ficou:
 crédito no gerador (a conta estava em **0,45**), **termos comerciais confirmados** (§13.2 nega
 garantia de originalidade e põe o *rights clearance* no usuário) e política de loja sobre IA.
 ⚠️ **`dist/` é commitado: todo byte é permanente no histórico do git.** Orçamento: **S6 — 300 KB
@@ -151,10 +158,25 @@ outro na calibração (desvio 0,00 era **identidade algébrica**, não medição
 Do **dono**: crédito no gerador · termos comerciais · política de loja sobre IA · o 🔴 do
 microfone (`ChatBox.tsx` grava e envia áudio ao Supabase contra a Data Safety declarada — fora do
 escopo do som, **bloqueia publicação**).
-Do **engenheiro de áudio**: o flake do gate (**1 falha em 11**, não diagnosticada — requisito de
-promoção: persistir diagnóstico ao falhar) · **O-5** (sons cortados ainda entram na medição) ·
-**O-7** (a lista auditável `FORA_DO_AC1` discorda do filtro real `/^g[1-7]-/`, que exclui mais em
-silêncio — pode haver cenário nunca aferido).
+Do **engenheiro de áudio** — **as três fechadas em 21/09/2026**, no arnês local
+(`prototyper/gate-loudness.mjs`, `driver-chrome.mjs`, `cenarios.ts`; não versionado):
+- **Flake do gate**: o diagnóstico agora **persiste** em `prototyper/diagnosticos/*.json` a cada
+  saída anormal (exceção, rejeição, vermelho), com produto do Chrome, retries, avisos da página e
+  renders recebidos. A **primeira execução instrumentada reproduziu o flake**: *"Chrome nao expos
+  aba pelo CDP"* em 20 s — a porta era `9500 + pid % 400`, escolhida **antes** de o Chrome subir,
+  e colidia. Hoje o Chrome recebe `--remote-debugging-port=0` e o driver **lê a porta real** de
+  `DevToolsActivePort`. Depois do conserto: **11 execuções, 11 verdes, 0 retries**.
+- **O-5**: `SONS` é a amostra medida (os **8** do fonte); `playPoopClean`/`playMenuOpen` só entram
+  como `MATERIAL_DE_TESTE` dos contraexemplos (0 dB, sem assertiva), e o gate reprova se um deles
+  voltar ao fonte ou se a calibração carregar offset de som fora da amostra. `RENDERS_ESPERADOS`
+  48 → 46 (os dois G-1 dos cortados deixaram de existir — não é ajuste ao observado).
+- **O-7**: o AC-1 varre **todos** os renders; `FORA_DO_AC1` virou mapa nome → motivo (13 cenários),
+  reprova se citar cenário inexistente, e cenário novo sem veredito de inclusão reprova.
+  ⚠️ **Limite que fica**: o baseline de `discovery/baseline-wav/` é captura da **Fase 0**; o
+  `playVisorTune` de produção (400 ms) só entra pela variável `SOM01_CANDIDATO_VISOR`
+  (`procedural/wav-sintonia-gate`, captura do motor real da forma decidida). Recapturar os 8 sons
+  do `src/` vigente pelo `audioBus` continua **pendente** — o arnês é ferramenta de calibração,
+  não portão de commit (`loudness.contract.test.ts` explica por quê).
 
 ## 8. Quatro armadilhas que este run pagou para aprender
 

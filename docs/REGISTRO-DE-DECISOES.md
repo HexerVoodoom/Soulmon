@@ -454,6 +454,40 @@ deixado aberta. O resultado **confirmou a S9** e **abriu uma ponta nova**:
 > urgente. Ela volta a ser bloqueante no minuto em que o primeiro asset for gerado, porque `dist/`
 > é commitado e todo byte é permanente no histórico do git.
 
+> ### 21/09/2026 — o gatilho da S10 DISPAROU: o A/B cego está MONTADO, e ainda NÃO OUVIDO
+>
+> A conta do gerador voltou a ter crédito (480,95 cr em 21/09/2026) e o dono respondeu em modal as
+> três perguntas do `docs/HANDOFF-SOM.md` §3: **(1)** autorizou gerar em `E:/` e, se a IA vencer o
+> A/B, instalar no repo sob S6/S9 (risco da §8 dos termos — provedor terceiro anônimo, S15 — aceito
+> com registro); **(2)** áudio gerado por IA **será declarado** na ficha da loja; **(3)** S11 e S12
+> **mantidas**. Com isso o `pacote-prompts.md` §0 rodou: custo medido de **2,5 cr por geração**
+> (não era conhecido — o piso da §5.1 era "> 0,45"); limite do plano **pro = 3 jobs concorrentes**
+> (`rate_limit_reached` acima disso); fila do gerador oscilando de 4 a 30 min por job. Os 12 prompts
+> literais foram gerados (`--sample-rate 48000 --format wav`), tudo em `E:/Soulmon-assets/som-01/`
+> — **nenhum byte de áudio entrou no repositório**, e por isso `docs/Attributions.md` continua sem
+> linha de áudio (S9: atribuir asset que não existe no repo é mentira no registro).
+>
+> **O pipeline reprovou de verdade** (§4 do pacote, "um lote com 100% de aprovação é sinal de gate
+> não exercido"): `transaction` e `end-zero` saíram com **RECUSA (crista-inconsertável)** — os sons
+> "seco/click" pedem 7,9 e 9,6 dB de atenuação de pico, acima do limite de 6,0 dB — e foram
+> mandados regerar. E dois achados que **não** são aprovação: `presence` e `shower` precisaram de
+> **+31,8 e +24,2 dB** de ganho depois do corte de 200/120 ms (o gerador entregou 1,6–1,7 s com o
+> corpo do som fora da janela cortada) — pelo critério do AC-5 (|offset| > 20 dB = fonte errada), o
+> corte pegou a parte errada do arquivo, e isso volta ao produtor antes de qualquer escuta.
+>
+> **O A/B cego dos 3 pares (`playEvolve`, `playDegenerate`, `playTaskComplete`) foi montado
+> exatamente pelo `ab-piloto.md` §8.1** — os dois lados no alvo da categoria (Δ 0,00 LU nos três),
+> A/B e ordem sorteados (semente 20260921), mapa cego em arquivo separado, página de escuta com as
+> 3 perguntas × 2 condições. O lado procedural é a **captura do motor real da forma calibrada**
+> (`procedural/wav-calibrado/`, síntese conferida idêntica ao `src/utils/sounds.ts` vigente).
+> **O dono ainda não ouviu** (resposta em modal: "feche o resto sem o A/B"). Consequência: **a S10
+> segue exatamente como está** — o procedural é a solução vigente, a premissa continua **não
+> medida, não refutada**, e "o procedural venceu" continua frase proibida. O que muda é só o
+> gatilho: ele deixou de ser "haver crédito" e passou a ser **"o dono responder as 18 perguntas"**
+> (`E:/Soulmon-assets/som-01/ab/escuta.html`). Quando responder, a tradução é a do §8.4: IA vence
+> P1 em ≥2 de 3 nas **duas** condições → procedural volta a ser provisório e o lote entra sob S6/S9
+> com atribuição no mesmo commit; empate/derrota → **S1 cai para SFX**.
+
 > **A alternativa que perdeu, e o gatilho para ela voltar.** O caminho não
 > escolhido é **melhorar o sintetizador procedural** (ADSR, segundo oscilador,
 > filtro, round-robin por detune) em vez de embarcar arquivos. Ele é gratuito em

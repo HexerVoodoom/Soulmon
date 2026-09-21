@@ -17,3 +17,11 @@
 ## Respostas (21/09/2026)
 
 Todas as sete respondidas em modal, sempre pela recomendada: (1) rodada 2 gerada — R2-1…R2-4 derivados sem crédito (`118131f4`, `66e32d43`), R2-5 glifos (`02d483af`), R2-6 `bg-gameboy` regerado (`b52fa074`, 7 cr); (2) idem; (3) `UnlockNudge` 280; (4) `CLAUDE.md` corrigido (`26c7aab0`); (5) push scheduler deployado (`digiapp-push-scheduler`, versão `e90f05a6`); (6) `CACHE_VERSION` v147 → v148 na rodada 2; (7) branches apagadas (0 commits fora da `main`). Fila vazia.
+
+## SQUAD-SOM (21/09/2026)
+
+| # | Pergunta | Provisório aplicado | Se mudar |
+|---|---|---|---|
+| 8 | **Ouvir o A/B cego** — `E:/Soulmon-assets/som-01/ab/escuta.html`: 3 pares × 3 perguntas, alto-falante do celular primeiro e fone depois, volume fixo; salvar os dois `ab-respostas-*.json` na pasta `ab`. **Não abrir `ab-mapa-cego.md` antes.** | S10 intacta: procedural vigente, nenhum byte de áudio no repo | IA vence P1 em ≥2 de 3 nas duas condições → lote entra sob S6/S9 + `Attributions.md` no mesmo commit + `CACHE_VERSION` +1; empate/derrota → S1 cai para SFX (registro §6.1) |
+| 9 | `presence` e `shower` gerados vieram com o corpo do som fora da janela de corte (+31,8 / +24,2 dB de ganho pós-corte, acima do limite de plausibilidade de 20 dB). Regero com prompt pedindo *"the entire sound within the first 200 ms"*, ou aceito a variante em que o corte segue o onset detectado? | Nenhum dos dois entra no lote; `transaction`/`end-zero` (RECUSA de crista) idem | Regerar custa 2,5 cr cada |
+

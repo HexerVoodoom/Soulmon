@@ -7,6 +7,30 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 21/09/2026 — SQUAD-SOM retomada: os 12 prompts gerados, A/B cego MONTADO e não ouvido, gate destravado (flake, O-5, O-7)
+>
+> `docs/HANDOFF-SOM.md` executado. Dono respondeu as 3 perguntas do §3 em modal (gerar em
+> `E:/` e instalar se a IA vencer · declarar IA na loja · manter S11/S12). `pacote-prompts.md`
+> §0 rodou de ponta a ponta: **480,95 → ~446 cr**, custo medido **2,5 cr/geração**, plano pro
+> = **3 jobs concorrentes**, fila do gerador de 4 a 30 min. 12 prompts literais gerados
+> (+1 duplicata acidental de `presence`) e pós-processados; **10 APROVADOS, 2 RECUSAS de crista**
+> (`transaction`, `end-zero` — regerar) e **3 com ganho > 20 dB** depois do corte (`presence` ×2,
+> `shower` — o corpo do som ficou fora da janela; volta ao produtor). Tudo em
+> `E:/Soulmon-assets/som-01/` (`MANIFESTO.md`, cópia em `squad-alpha-runs/som-01/prototyper/`):
+> **nenhum byte de áudio entrou no repo**, `Attributions.md` intacto, `CACHE_VERSION` intacto.
+> **A/B cego** dos 3 pares montado pelo `ab-piloto.md` §8.1 (Δ 0,00 LU, semente 20260921,
+> mapa cego separado, `escuta.html`) — **o dono escolheu fechar sem ouvir**: S10 intacta, premissa
+> segue não medida (registro §6.1, nota de 21/09; `PERGUNTAS-DO-DONO.md` #8–#9).
+> **Engenharia fechada** no arnês local: o flake "1 em 11" foi **reproduzido na 1ª execução
+> instrumentada** ("Chrome nao expos aba pelo CDP" — porta `9500 + pid % 400` escolhida antes de
+> o Chrome subir) e consertado lendo `DevToolsActivePort` com `--remote-debugging-port=0`;
+> diagnóstico persistido em `prototyper/diagnosticos/`; O-5 (cortados fora da amostra,
+> `MATERIAL_DE_TESTE` explícito, 48 → 46 renders) e O-7 (AC-1 varre todos os renders,
+> `FORA_DO_AC1` com motivo e auto-auditável). **11 execuções, 11 verdes, 0 retries.** Limite que
+> fica: baseline de `discovery/baseline-wav/` é captura da Fase 0 (`docs/SOM.md` §7).
+> Portões: `tsc` ×3 exit 0 · `vitest` **301 arquivos, 4206 testes** · sem mudança em `src/`
+> (build não rodado de propósito: nada a embarcar).
+
 > ## 21/09/2026 (4ª rodada) — a copy da bíblia está em tela (`docs/NARRATIVA-COPY.md` §1–§6-bis)
 >
 > `staff-frontend` aplicou a tabela inteira menos cinco linhas registradas
