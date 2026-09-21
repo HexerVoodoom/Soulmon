@@ -392,6 +392,12 @@ Cobertura: **120/120** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 - ⚠️ 200 com corpo que não é JSON é FALHA, não sucesso vazio — até 09/09/2026 `res.json().catch(() => ({}))` devolvia `{}` como se fosse resposta válida.
 **Regra de negócio:** Diretório de jogadores, oponentes, ranking, amigos, presentes e grupos coop. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
+### `src/utils/termsNotice.ts` (novo em 21/09/2026, decisão #24)
+**Dono de:** a regra do aviso de termos atualizados — função PURA que decide se o save merece o BANNER (nunca modal, nunca re-aceite).
+**Exports:** `precisaAvisarTermos(consent, termsVersion, privacyVersion, avisoVisto?)` — verdadeiro quando há `ConsentRecord` com versão anterior à atual e o aviso dessa versão ainda não foi visto; save sem registro nunca vê banner. `marcaAvisoTermos(termsVersion, privacyVersion)` — o valor gravado em `STORAGE_KEYS.TERMS_NOTICE_SEEN`.
+**Chamado por:** `src/App.tsx` (item `termos`, último da fila de avisos) e `src/components/TermsUpdateBanner.tsx`.
+**Régua:** `src/utils/termsNotice.test.ts` (5 casos).
+
 ### `src/utils/consent.ts`
 **Dono de:** Idade mínima e versão dos termos/privacidade — o registro de consentimento gravado no save.
 **Exports:**

@@ -4,6 +4,7 @@ import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readLocal } from '../utils/safeStorage';
 import { Viewport } from './ui/Viewport';
 import { sm2Button } from './form/FormKit';
+import { FeedbackLink } from './FeedbackLink';
 
 interface Props { children: ReactNode; }
 interface State { hasError: boolean; error: Error | null; }
@@ -26,6 +27,9 @@ export class ErrorBoundary extends Component<Props, State> {
       // A tela de erro é a única superfície que pode aparecer antes de o app
       // montar, então lê o idioma direto do localStorage.
       const isPt = (readLocal(STORAGE_KEYS.LANGUAGE) ?? 'pt-BR') === 'pt-BR';
+      // O `saveId` também vem direto do storage, pelo mesmo motivo. Vai só um
+      // trecho no e-mail (`FeedbackLink.tsx`).
+      const saveId = readLocal(STORAGE_KEYS.SAVE_ID);
       /* Canvas Home, `HomeErro` (HOME-47) / D-H7 / D-H9 / X7: mascote em
          pixel DENTRO de um vidro 96², título Fredoka 20, corpo Rubik 14
          `muted`, e UM `primary` "Reload" — a única ação. Sem `danger`, sem
@@ -54,6 +58,15 @@ export class ErrorBoundary extends Component<Props, State> {
           >
             {isPt ? 'Recarregar' : 'Reload'}
           </button>
+          {/* O canal de feedback ONDE o erro acontece (QA geral 21/09/2026,
+              item 4): um link de texto abaixo do único botão, para que a
+              pessoa possa contar o que viu sem ter que voltar a Configurações
+              — que talvez nem abra. Vai a mensagem do erro, nunca o stack. */}
+          <FeedbackLink
+            language={isPt ? 'pt-BR' : 'en-US'}
+            saveId={saveId}
+            errorMessage={this.state.error?.message ?? null}
+          />
           {import.meta.env.DEV && this.state.error && (
             <pre style={{
               marginTop: 24, padding: 12, background: 'var(--sm2-surface-2)',

@@ -3,6 +3,12 @@
 > **Leia este arquivo ANTES de qualquer análise.** Ele é a fonte única de contexto
 > compartilhado do squad. Não re-derive o que já está aqui.
 > Última atualização: 2026-08-02.
+>
+> ⚰️ **21/09/2026 — a squad de revisão (`soulmon-maestro` + especialistas) foi aposentada**
+> (governança, `02-SQUAD.md` › lápide). Este briefing e a `01-RUBRICA.md` ficam como o
+> **contexto de entrada** para quem instanciar uma nova rodada pela skill global
+> `squad-alpha` (`alpha-briefer` lê os dois e monta o bloco de contexto). Fatos de produto
+> aqui têm data de 08/2026 — o manual (`docs/manual/00-MAPA.md`) e o `STATUS.md` vencem.
 
 ---
 

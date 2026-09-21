@@ -1,6 +1,6 @@
 ---
 name: squad-docs
-description: "SQUAD-DOCS — a squad que escreve, verifica e mantém o manual completo do Soulmon (`docs/manual/`): regras de negócio, fluxo de telas, identidade visual, arquitetura, referência de toda função, dados e save, integrações, histórico de versões e mapa das discussões — com um documento central (`00-MAPA.md`) que ensina uma sessão de IA a achar qualquer coisa em um salto. 9 agentes `doc-*` (cartógrafo, 5 redatores, historiador, verificador bloqueante, bibliotecário) + método R1–R10 + guard executável. Use quando: criar ou atualizar o manual, documentar um módulo/tela/regra nova, checar se a documentação ainda bate com o código, ou preparar uma sessão nova para trabalhar num assunto. Comandos: /squad-docs [start | atualizar <assunto|caminho> | verificar [doc] | indice | status]. NÃO use para escrever CLAUDE.md (é do dono, o manual só aponta para ele), nem para docs de pesquisa (`docs/guia-experiencia/`, `docs/reviews/`), nem para decidir regra de produto — a squad DESCREVE o que o código faz e registra onde a decisão vive; quem decide é o dono, no `REGISTRO-DE-DECISOES.md`."
+description: "SQUAD-DOCS — a squad que escreve, verifica e mantém o manual completo do Soulmon (`docs/manual/`): regras de negócio, fluxo de telas, identidade visual, arquitetura, referência de toda função, dados e save, integrações, histórico de versões e mapa das discussões — com um documento central (`00-MAPA.md`) que ensina uma sessão de IA a achar qualquer coisa em um salto. 9 agentes `doc-*` (5 redatores, historiador, verificador bloqueante, bibliotecário, mantenedor) + a medição como passo do orquestrador (`scripts/docs-inventario.mjs`) + método R1–R10 + guard executável. Use quando: criar ou atualizar o manual, documentar um módulo/tela/regra nova, checar se a documentação ainda bate com o código, ou preparar uma sessão nova para trabalhar num assunto. Comandos: /squad-docs [start | atualizar <assunto|caminho> | verificar [doc] | indice | status]. NÃO use para escrever CLAUDE.md (é do dono, o manual só aponta para ele), nem para docs de pesquisa (`docs/guia-experiencia/`, `docs/reviews/`), nem para decidir regra de produto — a squad DESCREVE o que o código faz e registra onde a decisão vive; quem decide é o dono, no `REGISTRO-DE-DECISOES.md`."
 ---
 
 # SQUAD-DOCS — Orquestrador do manual do Soulmon
@@ -23,9 +23,17 @@ o roster em `CONTRACT.md` (nesta pasta).
 
 ### `/squad-docs start` — rodada completa
 
-Fase A · **Medir** — `doc-cartografo` roda o inventário e confere contagens (módulos, campos
-do GameState, chaves, tokens, rotas, eras do git). Saída: inventário + lista de discrepâncias
-com o que os docs de hoje afirmam.
+Fase A · **Medir** — **passo do orquestrador, sem agente** (o `doc-cartografo` foi absorvido em
+21/09/2026 — "o que existe, e quantos?" é script, não julgamento): rode
+`node scripts/docs-inventario.mjs > <scratchpad>/inventario.md` (e `--json`), com data e
+`git rev-parse --short HEAD` no topo; para cada contagem que um doc do manual afirma, rode o
+comando declarado ao lado dela e compare (sem comando declarado = discrepância, R3). Contagens
+que o script não cobre: telas (`grep -o "page === '[a-z-]*'" src/App.tsx | sort -u`), modais
+(`grep -l "Modal" src/components/*.tsx`), intersticiais (`const interstitial` no `App.tsx`),
+sons (`export function play` em `sounds.ts`), cenários (`SPIRIT_BG_SCENES`, `DUNGEON_SCENES`).
+Se faltar árvore ou campo, **melhore o script**, não conte à mão. Saída: inventário + tabela
+`doc · afirmação · comando · resultado · bate?` — é a ÚNICA lista de módulos que os redatores
+recebem.
 
 Fase B · **Redigir em paralelo** — UMA mensagem com todos os redatores (`doc-redator-regras`,
 `-telas`, `-identidade`, `-arquitetura`, `-referencia`, `doc-historiador`). Cada um recebe:

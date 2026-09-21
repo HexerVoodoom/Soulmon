@@ -2,6 +2,7 @@
 // DELETE /api/subscribe  — remove a push subscription
 
 import { isAllowedPushEndpoint } from './_pushTargets.js';
+import { VALID_ID } from './_entitlements.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import {
   nomeDePet, idiomaDePush, dataDeNascimento, gravarSeMudou, LIMITE_INSCRICAO,
@@ -45,7 +46,7 @@ export async function onRequestPost({ request, env }) {
     });
   }
 
-  const { endpoint, keys, petName, language, bornAt } = body;
+  const { endpoint, keys, petName, language, bornAt, saveId } = body;
   if (!endpoint || !keys?.p256dh || !keys?.auth) {
     return new Response(JSON.stringify({ error: 'Missing required fields' }), {
       status: 400,
@@ -98,6 +99,17 @@ export async function onRequestPost({ request, env }) {
     // então qualquer outra coisa já caía em inglês — mas gravar a string crua
     // guardava texto de cliente sem teto num registro de um ano.
     language: idiomaDePush(language),
+    /* Decisão #23 do QA GERAL (21/09/2026) — a CONTA dona da inscrição.
+       Existe por um motivo só: a exclusão de conta (`account.js`,
+       `deletePushSubscriptions`) varre `push:*` e apaga o que carrega este
+       campo — sem ele, a chave é hash do endpoint e o servidor não tem como
+       achar as inscrições do titular. OPCIONAL e não verificado: quem manda é
+       o mesmo cliente anônimo que já manda o endpoint, e um `saveId` alheio
+       aqui só faria a inscrição DESTE aparelho ser apagada quando o outro
+       excluir a conta — dano para quem mentiu, não para o alvo. Inválido é
+       DESCARTADO, nunca corrigido (um id torto nunca casaria com ninguém e
+       viraria lixo de um ano). O worker de push não lê este campo. */
+    ...(typeof saveId === 'string' && VALID_ID.test(saveId) ? { saveId } : {}),
   };
 
   // A chave é o hash do endpoint, então reenviar a MESMA inscrição já era

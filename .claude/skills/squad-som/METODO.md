@@ -60,7 +60,7 @@ Encurtada: sem pesquisa de campo e sem analytics (§1/§8). Vira:
   **nasce desligada** e só toca **após gesto explícito**, nunca em `document.hidden`. O que
   a Fase 0 herda é a restrição operacional: o estado da trilha **persiste separado do `mute`
   global**, porque o som hoje nasce ligado (`readFlag` devolve `false` sem a chave).
-- Parecer de PI (`soulmon-ip-brand-guardian`) · parecer curto de dados (`security-architect`) ·
+- Parecer de PI (`soulmon-ip-brand-guardian`) · parecer curto de dados (`alpha-security`, global) ·
   benchmark com fonte (`alpha-benchmark`) · proposta da métrica de som (`soulmon-guarda-medicao`).
 - **Destino explícito de `playPoopAlert` e `playMenuOpen`** — exportados sem nenhum chamador
   (0 call-sites cada, por grep). Ou ganham dono e chamador que respeite D11, ou saem. Um
@@ -332,7 +332,7 @@ Não delegável. O agente entrega medição; o julgamento auditivo é do humano.
 | Eixo | Status neste run |
 |---|---|
 | 🔍 **Benchmarking** | **fica** — Fase 0 e **retorno na Fase 3** (contra o lote pronto). O retorno na 4 é **condicional**: sem métrica instrumentada, não há o que comparar. |
-| 🛡️ **Security & Privacy** | **reduzido a parecer pontual** — §10 tira microfone; áudio é asset estático sem coleta. `security-architect` na Fase 0, e só volta se o escopo mudar. |
+| 🛡️ **Security & Privacy** | **reduzido a parecer pontual** — §10 tira microfone; áudio é asset estático sem coleta. `alpha-security` (global) na Fase 0, e só volta se o escopo mudar. |
 | ⚖️ **Conformidade** | **fica, com dono trocado** → `soulmon-ip-brand-guardian`. §6 é a linha vermelha mais concreta do run. |
 | 🎼 **PI / atribuição** (**novo**) | **entra.** Todo asset é gerado por IA e `docs/Attributions.md` é obrigatório. Nenhum asset atravessa fase sem linha de atribuição (origem, modelo, prompt, data). Verificado por execução, no mesmo teste que checa que **nenhum prompt contém texto do usuário** (D8/#18). |
 | 📋 **Delivery-ops** | **sai.** §8: não há rastreador; o trabalho vive em markdown + PR. |

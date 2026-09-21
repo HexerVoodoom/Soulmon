@@ -208,7 +208,7 @@ glossário registra o símbolo real e marca a divergência; o `CLAUDE.md` fica c
 | [05-ARQUITETURA.md](05-ARQUITETURA.md) · [07-DADOS-E-SAVE.md](07-DADOS-E-SAVE.md) · [08-INTEGRACOES-E-DEPLOY.md](08-INTEGRACOES-E-DEPLOY.md) | `doc-redator-arquitetura` |
 | `06-REFERENCIA/` (utils · components · hooks-contexts-types · plugins-constants · api-workers · desktop) | `doc-redator-referencia` |
 | [09-HISTORICO.md](09-HISTORICO.md) · [10-DISCUSSOES-E-DECISOES.md](10-DISCUSSOES-E-DECISOES.md) | `doc-historiador` |
-| a MEDIÇÃO (`scripts/docs-inventario.mjs`) | `doc-cartografo` |
+| a MEDIÇÃO (`scripts/docs-inventario.mjs`) | o orquestrador da squad-docs, passo Medir (⚰️ `doc-cartografo`, 21/09/2026) |
 | o carimbo `verificado` — **bloqueante** | `doc-verificador` |
 | `src/docsManual.contract.test.ts` (o guard) | `doc-bibliotecario` |
 | a linha do manual no [`STATUS.md`](../STATUS.md) | quem conduz a rodada |

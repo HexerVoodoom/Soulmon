@@ -1,6 +1,19 @@
 # Mapa do Squad — Soulmon
 
-14 agentes. Definições em `.claude/agents/soulmon-*.md`.
+> ⚰️ **DOCUMENTO HISTÓRICO (registro) — 21/09/2026.** A squad de revisão descrita abaixo
+> (`soulmon-maestro` + 16 especialistas, uma rodada em 03/08/2026) foi **aposentada** pela
+> governança `docs/reviews/2026-09-21-qa-geral/13-governanca-agentes.md` §8 (C3–C5, R6),
+> com aval do dono (`docs/PERGUNTAS-DO-DONO.md` #28). Dos 16, sobrevivem no repo só os que
+> outras squads reusam: `soulmon-ip-brand-guardian`, `soulmon-behavioral-psychologist`,
+> `soulmon-product-designer` e `soulmon-monster-taming-designer`. O `/revisao-soulmon` não
+> existe mais. **Uma nova rodada de revisão de produto se instancia pela skill global
+> `squad-alpha`** (`/squad-alpha start <alvo>`, com `alpha-briefer` lendo `00-BRIEFING.md` +
+> `01-RUBRICA.md` como contexto) — foi assim que o run `som-01` rodou. O texto abaixo é
+> mantido como estava em 02/08/2026 para que os relatórios de `docs/reviews/2026-08-03/`
+> continuem legíveis; **nenhum nome de agente aqui é despachável**.
+
+Era: 16 agentes (o texto dizia "14" — contagem apodrecida, registrada como estava).
+Definições viviam em `.claude/agents/soulmon-*.md`.
 Contexto compartilhado em [`00-BRIEFING.md`](00-BRIEFING.md).
 Rubrica e template em [`01-RUBRICA.md`](01-RUBRICA.md).
 
@@ -25,7 +38,7 @@ Rubrica e template em [`01-RUBRICA.md`](01-RUBRICA.md).
 | 2 | `soulmon-tech-feasibility` | Viabilidade, dívida, custo por usuário, prontidão de lançamento | D13 |
 | 3 | `soulmon-product-manager` | Tese, competição, escopo de lançamento, roadmap, métricas | D1 D9 D10 |
 
-## Por que estes 14
+## Por que estes agentes (o texto original dizia 14; eram 16 com as duas adições do registro abaixo)
 
 Os nove primeiros papéis vieram do pedido original. Os cinco seguintes foram
 acrescentados porque a revisão ficaria cega sem eles:
@@ -60,7 +73,7 @@ Onda 3  product-manager  →  maestro
           └─> integração e veredito
 ```
 
-Rodar em ondas (e não os 14 de uma vez) é o que produz debate em vez de 14 análises
+Rodar em ondas (e não todos de uma vez) é o que produz debate em vez de N análises
 paralelas que se ignoram.
 
 ## Como rodar
@@ -75,8 +88,8 @@ revisão completa do produto"*. Ele define escopo, dispara as ondas e consolida.
 **Rodada de bloqueio:** um agente sobre um risco. Ex.: `soulmon-ip-brand-guardian` antes
 de submeter à Play Store.
 
-Existe também o comando `/revisao-soulmon` (em `.claude/commands/`) que dispara a rodada
-completa com um argumento opcional de escopo.
+Existia também o comando `/revisao-soulmon` (em `.claude/commands/`) que disparava a rodada
+completa com um argumento opcional de escopo — ⚰️ apagado em 21/09/2026 (ver lápide no topo).
 
 ## Regras invioláveis
 
@@ -136,5 +149,6 @@ auditar" de cada agente contra o novo repositório.
 |---|---|---|
 | 2026-08-02 | Squad criado com 14 agentes | Primeira rodada de revisão do Soulmon |
 | 2026-08-02 | +`soulmon-ai-companion-designer` (Onda 1) | Duas tecnologias — chat Groq e sprites Higgsfield — carregam sozinhas a promessa da camada 2, e nenhum agente as julgava a fundo. Consistência visual entre estágios evolutivos e memória da criatura são risco de produto, não detalhe de implementação. |
+| 2026-09-21 | ⚰️ Squad aposentada (governança C3–C5): saem `soulmon-maestro`, `-user-researcher`, `-productivity-expert`, `-gamification-expert`, `-mobile-game-designer`, `-monetization-strategist`, `-retention-analyst`, `-growth-aso`, `-tech-feasibility`, `-product-manager`, `-ai-companion-designer`, `-devils-advocate` e `/revisao-soulmon`; ficam os 4 reusados. Rodada nova = skill global `squad-alpha` | 1 rodada em 7 semanas, 3 de 16 chegaram ao fim, lanes absorvidas por guardas/squads (`docs/reviews/2026-09-21-qa-geral/13-governanca-agentes.md` §1.2) |
 | 2026-08-02 | +`soulmon-devils-advocate` (pós-Onda 2) | Um squad contratado para melhorar um produto converge para consenso construtivo. Sem alguém encarregado do pre-mortem e do caso "não faça", a revisão vira polimento de uma premissa não testada. |
 </content>

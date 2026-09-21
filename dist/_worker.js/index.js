@@ -96,13 +96,26 @@ async function writeEntitlement(env, saveId, ent) {
   return ent;
 }
 __name(writeEntitlement, "writeEntitlement");
+function paidProviderOf(ent) {
+  const details = Array.isArray(ent?.orderDetails) ? ent.orderDetails : [];
+  for (let i = details.length - 1; i >= 0; i--) {
+    const o = details[i];
+    if (o && o.grantTier === "paid" && !o.voided) return typeof o.provider === "string" ? o.provider : null;
+  }
+  return null;
+}
+__name(paidProviderOf, "paidProviderOf");
 function publicView(ent) {
   const sameDay = ent.adDate === today();
   const used = sameDay ? ent.adCount : 0;
+  const provider = ent.tier === "paid" ? paidProviderOf(ent) : null;
   return {
     tier: ent.tier,
     credits: ent.credits,
-    adsLeft: Math.max(0, AD_DAILY_CAP - used)
+    adsLeft: Math.max(0, AD_DAILY_CAP - used),
+    // Só aparece quando há o que dizer: cliente antigo e os testes que fixam a
+    // forma `{ tier, credits, adsLeft }` não veem campo novo em conta demo.
+    ...provider ? { provider } : {}
   };
 }
 __name(publicView, "publicView");
@@ -198,6 +211,40 @@ async function applyVerifiedPurchase(env, saveId, {
   return { ent, duplicate: false };
 }
 __name(applyVerifiedPurchase, "applyVerifiedPurchase");
+var COURTESY_PROVIDER = "courtesy";
+var COURTESY_COUNT_KEY = "courtesy:count";
+var COURTESY_DEFAULT_MAX = 25;
+function courtesyOrderId(saveId) {
+  return `${COURTESY_PROVIDER}:${saveId}`;
+}
+__name(courtesyOrderId, "courtesyOrderId");
+function courtesyMaxFrom(env) {
+  const n = Number.parseInt(String(env?.COURTESY_MAX_ACCOUNTS ?? ""), 10);
+  return Number.isInteger(n) && n >= 0 ? n : COURTESY_DEFAULT_MAX;
+}
+__name(courtesyMaxFrom, "courtesyMaxFrom");
+async function grantCourtesy(env, saveId, max = courtesyMaxFrom(env)) {
+  const orderId = courtesyOrderId(saveId);
+  const store = kvOrThrow(env);
+  const raw = await store.get(COURTESY_COUNT_KEY);
+  const count = Number.parseInt(raw ?? "0", 10) || 0;
+  const ent = await readEntitlement(env, saveId);
+  if (ent.consumedOrders.includes(orderId)) {
+    return { ok: true, ent, duplicate: true, count, max };
+  }
+  if (count >= max) return { ok: false, reason: "courtesy-cap", count, max };
+  await store.put(COURTESY_COUNT_KEY, String(count + 1), { expirationTtl: RETENTION_TTL_SECONDS });
+  const { ent: granted } = await applyVerifiedPurchase(env, saveId, {
+    orderId,
+    grantTier: "paid",
+    grantCredits: 0,
+    provider: COURTESY_PROVIDER,
+    productId: COURTESY_PROVIDER,
+    purchaseToken: null
+  });
+  return { ok: true, ent: granted, duplicate: false, count: count + 1, max };
+}
+__name(grantCourtesy, "grantCourtesy");
 var AUDIT_INTERVAL_MS = 24 * 60 * 60 * 1e3;
 var AUDIT_MAX_ORDERS = 20;
 async function auditRefunds(env, saveId, isVoided, now = Date.now()) {
@@ -353,11 +400,11 @@ async function publicIdFor(saveId) {
   return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 24);
 }
 __name(publicIdFor, "publicIdFor");
-async function listPrefix(env, prefix) {
+async function listPrefix(env, prefix, store = kvOrThrow(env)) {
   const out = [];
   let cursor;
   for (let page = 0; page < MAX_SCAN_PAGES; page++) {
-    const res = await kvOrThrow(env).list({ prefix, cursor, limit: 1e3 });
+    const res = await store.list({ prefix, cursor, limit: 1e3 });
     for (const k of res.keys || []) out.push(k.name);
     if (res.list_complete || !res.cursor) break;
     cursor = res.cursor;
@@ -365,6 +412,29 @@ async function listPrefix(env, prefix) {
   return out;
 }
 __name(listPrefix, "listPrefix");
+var PUSH_PREFIXES = ["push:", "fcm:"];
+async function deletePushSubscriptions(env, saveId) {
+  const pushStore = env?.PUSH_SUBSCRIPTIONS;
+  if (!pushStore || typeof pushStore.list !== "function") return { deleted: 0, scanned: 0 };
+  let deleted = 0;
+  let scanned = 0;
+  for (const prefix of PUSH_PREFIXES) {
+    for (const key of await listPrefix(env, prefix, pushStore)) {
+      scanned++;
+      let rec;
+      try {
+        rec = JSON.parse(await pushStore.get(key) || "null");
+      } catch {
+        continue;
+      }
+      if (!rec || rec.saveId !== saveId) continue;
+      await pushStore.delete(key);
+      deleted++;
+    }
+  }
+  return { deleted, scanned };
+}
+__name(deletePushSubscriptions, "deletePushSubscriptions");
 function maskOrderDetails(details) {
   if (!Array.isArray(details)) return [];
   return details.map((d) => ({
@@ -407,8 +477,8 @@ var NOT_INCLUDED = [
   },
   {
     what: "push:* / fcm:*",
-    "pt-BR": "Suas inscri\xE7\xF5es de notifica\xE7\xE3o s\xE3o guardadas pelo endere\xE7o do aparelho, n\xE3o pela sua conta \u2014 o servidor n\xE3o consegue ach\xE1-las a partir dela. O app desfaz a inscri\xE7\xE3o deste aparelho junto com a exclus\xE3o; se voc\xEA usa o Soulmon em mais de um aparelho, desligue as notifica\xE7\xF5es em cada um.",
-    en: "Your notification subscriptions are stored by device address, not by your account \u2014 the server cannot find them from it. The app unsubscribes this device along with the deletion; if you use Soulmon on more than one device, turn notifications off on each."
+    "pt-BR": "Suas inscri\xE7\xF5es de notifica\xE7\xE3o s\xE3o guardadas pelo endere\xE7o do aparelho, n\xE3o pela sua conta. O servidor apaga as que conseguiu ligar \xE0 sua conta; as que n\xE3o carregam essa liga\xE7\xE3o (inscri\xE7\xF5es feitas por vers\xF5es antigas do app) s\xF3 o aparelho desfaz. O app desfaz a inscri\xE7\xE3o deste aparelho junto com a exclus\xE3o; se voc\xEA usa o Soulmon em mais de um aparelho, desligue as notifica\xE7\xF5es em cada um.",
+    en: "Your notification subscriptions are stored by device address, not by your account. The server erases the ones it could link to your account; the ones without that link (subscriptions made by older app versions) can only be undone by the device. The app unsubscribes this device along with the deletion; if you use Soulmon on more than one device, turn notifications off on each."
   },
   {
     what: "ord:<orderId>",
@@ -495,7 +565,8 @@ function plan(c, saveId) {
       c.pidIndexed ? `pid:${c.pid}` : null,
       c.gifts ? `gifts:${saveId}` : null,
       ...c.rankKeys,
-      "men\xE7\xF5es a voc\xEA na lista de amigos de outros jogadores"
+      "men\xE7\xF5es a voc\xEA na lista de amigos de outros jogadores",
+      "inscri\xE7\xF5es de notifica\xE7\xE3o (push:*/fcm:*) ligadas \xE0 sua conta"
     ].filter(Boolean),
     minimiza: c.entitlement ? [`${ENT_PREFIX}${saveId} \u2014 sai o uso (IA, an\xFAncios), ficam os campos de compra`] : [],
     sobrevive: Array.isArray(c.entitlement?.consumedOrders) ? c.entitlement.consumedOrders.map((o) => `${ORDER_PREFIX}${o}`) : []
@@ -561,6 +632,7 @@ async function handleDeleteConfirm(env, saveId, body) {
     await store.put(key, JSON.stringify(p), { expirationTtl: 86400 * 365 });
     scrubbed++;
   }
+  const push = await deletePushSubscriptions(env, saveId);
   if (c.entitlement) {
     const ent = c.entitlement;
     await store.put(ENT_PREFIX + saveId, JSON.stringify({
@@ -580,11 +652,13 @@ async function handleDeleteConfirm(env, saveId, body) {
   log("account.delete.done", saveId, {
     deletedKeys: executed.apaga.length,
     scrubbedFriendLists: scrubbed,
+    pushSubscriptionsDeleted: push.deleted,
+    pushSubscriptionsScanned: push.scanned,
     entitlementMinimized: !!c.entitlement
   });
   return json({
     ok: true,
-    executado: { ...executed, listasDeAmigosLimpas: scrubbed },
+    executado: { ...executed, listasDeAmigosLimpas: scrubbed, inscricoesDePushApagadas: push.deleted },
     naoIncluido: NOT_INCLUDED,
     aviso: COPY.deleteDone
   });
@@ -2193,6 +2267,38 @@ async function onRequestGet({ env }) {
 __name(onRequestGet, "onRequestGet");
 
 // api/entitlements.js
+var GRANT_RATE = { limit: 10, windowMs: 6e4 };
+function secretEquals(a, b) {
+  if (typeof a !== "string" || typeof b !== "string" || a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+__name(secretEquals, "secretEquals");
+function log2(event, saveId, extra = {}) {
+  console.log(JSON.stringify({ event, saveIdPrefix: String(saveId).slice(0, 8), ...extra }));
+}
+__name(log2, "log");
+async function handleGrant(request, env) {
+  if (!env?.ENTITLEMENTS_ADMIN_KEY) return json4({ error: "Not found" }, 404);
+  const gate = takeToken("entitlements-grant", clientKey(request), GRANT_RATE);
+  if (!gate.ok) return tooManyRequests(gate.retryAfter, CORS6);
+  const header = request.headers.get("Authorization") ?? "";
+  const given = header.startsWith("Bearer ") ? header.slice("Bearer ".length).trim() : "";
+  if (!secretEquals(given, env.ENTITLEMENTS_ADMIN_KEY)) return json4({ error: "Unauthorized" }, 401);
+  if (!kv(env)) return json4({ error: "Storage not bound" }, 500);
+  const body = await request.json().catch(() => null);
+  const saveId = body?.saveId;
+  if (!saveId || !VALID_ID.test(saveId)) return json4({ error: "Invalid save ID" }, 400);
+  const r = await grantCourtesy(env, saveId);
+  if (!r.ok) {
+    log2("entitlements.courtesy.refused", saveId, { reason: r.reason, count: r.count, max: r.max });
+    return json4({ ok: false, reason: r.reason, count: r.count, max: r.max }, 429);
+  }
+  log2("entitlements.courtesy.granted", saveId, { duplicate: r.duplicate, count: r.count, max: r.max });
+  return json4({ ok: true, duplicate: r.duplicate, count: r.count, max: r.max, ...publicView(r.ent) });
+}
+__name(handleGrant, "handleGrant");
 var CORS6 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
@@ -2214,6 +2320,7 @@ async function onRequestGet2({ request, env }) {
   const auth = await authorizeSaveAccess(request, env, saveId);
   if (!auth.ok) return json4({ error: auth.reason }, auth.reason === "forbidden" ? 403 : 401);
   const { ent } = await auditRefunds(env, saveId, (order) => {
+    if (order.provider === COURTESY_PROVIDER) return Promise.resolve(false);
     if (order.provider !== "steam") {
       return isPlayPurchaseVoided(env, { productId: order.productId, purchaseToken: order.purchaseToken });
     }
@@ -2225,6 +2332,7 @@ __name(onRequestGet2, "onRequestGet");
 async function onRequestPost3({ request, env }) {
   const url = new URL(request.url);
   const action = url.searchParams.get("action");
+  if (action === "grant") return handleGrant(request, env);
   if (!kv(env)) return json4({ error: "Storage not bound" }, 500);
   const body = await request.json().catch(() => null);
   const saveId = body?.id;
@@ -2322,14 +2430,19 @@ async function onRequestPost4({ request, env }) {
   if (limited) return limited;
   const body = await corpoDe(request);
   if (!body) return json5({ error: "Invalid JSON" }, 400);
-  const { token, petName, language, bornAt } = body;
+  const { token, petName, language, bornAt, saveId } = body;
   if (!token) return json5({ error: "Missing token" }, 400);
   if (!ehTokenFcm(token)) return json5({ error: "Invalid token" }, 400);
   const registro = {
     token,
     petName: nomeDePet(petName),
     language: idiomaDePush(language),
-    bornAt: dataDeNascimento(bornAt)
+    bornAt: dataDeNascimento(bornAt),
+    // Decisão #23 — a conta dona, para a exclusão em `account.js` achar esta
+    // linha. Opcional, não verificado, inválido descartado: o porquê inteiro
+    // está no comentário equivalente de `subscribe.js` (mesma regra, os dois
+    // canais são varridos pela mesma função).
+    ...typeof saveId === "string" && VALID_ID.test(saveId) ? { saveId } : {}
   };
   await gravarSeMudou(env.PUSH_SUBSCRIPTIONS, `fcm:${await hashToken(token)}`, registro);
   return json5({ ok: true }, 201);
@@ -2947,13 +3060,13 @@ async function onRequestOptions9() {
 __name(onRequestOptions9, "onRequestOptions");
 var MAX_READ_DAYS = 92;
 var METRICS_KEY_HEADER = "X-Metrics-Key";
-function secretEquals(a, b) {
+function secretEquals2(a, b) {
   if (typeof a !== "string" || typeof b !== "string" || a.length !== b.length) return false;
   let diff = 0;
   for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
   return diff === 0;
 }
-__name(secretEquals, "secretEquals");
+__name(secretEquals2, "secretEquals");
 function dayRange(from, to, max = MAX_READ_DAYS) {
   if (!DAY_RE.test(String(from)) || !DAY_RE.test(String(to))) return null;
   const start = Date.parse(`${from}T00:00:00Z`);
@@ -2985,7 +3098,7 @@ async function onRequestGet3({ request, env }) {
   const gate = takeToken("metrics-read", clientKey(request), RATE);
   if (!gate.ok) return tooManyRequests(gate.retryAfter, CORS9);
   const given = request.headers.get(METRICS_KEY_HEADER);
-  if (!secretEquals(given ?? "", env.METRICS_ADMIN_KEY)) {
+  if (!secretEquals2(given ?? "", env.METRICS_ADMIN_KEY)) {
     return Response.json({ error: "Unauthorized" }, { status: 401, headers: CORS9 });
   }
   const url = new URL(request.url);
@@ -3245,7 +3358,7 @@ async function onRequestPost6({ request, env }) {
       headers: { "Content-Type": "application/json", ...CORS11 }
     });
   }
-  const { endpoint, keys, petName, language, bornAt } = body;
+  const { endpoint, keys, petName, language, bornAt, saveId } = body;
   if (!endpoint || !keys?.p256dh || !keys?.auth) {
     return new Response(JSON.stringify({ error: "Missing required fields" }), {
       status: 400,
@@ -3285,7 +3398,18 @@ async function onRequestPost6({ request, env }) {
     // Dois valores possíveis, e só. `_pushCopy.js` só pergunta se é `pt-BR`,
     // então qualquer outra coisa já caía em inglês — mas gravar a string crua
     // guardava texto de cliente sem teto num registro de um ano.
-    language: idiomaDePush(language)
+    language: idiomaDePush(language),
+    /* Decisão #23 do QA GERAL (21/09/2026) — a CONTA dona da inscrição.
+       Existe por um motivo só: a exclusão de conta (`account.js`,
+       `deletePushSubscriptions`) varre `push:*` e apaga o que carrega este
+       campo — sem ele, a chave é hash do endpoint e o servidor não tem como
+       achar as inscrições do titular. OPCIONAL e não verificado: quem manda é
+       o mesmo cliente anônimo que já manda o endpoint, e um `saveId` alheio
+       aqui só faria a inscrição DESTE aparelho ser apagada quando o outro
+       excluir a conta — dano para quem mentiu, não para o alvo. Inválido é
+       DESCARTADO, nunca corrigido (um id torto nunca casaria com ninguém e
+       viraria lixo de um ano). O worker de push não lê este campo. */
+    ...typeof saveId === "string" && VALID_ID.test(saveId) ? { saveId } : {}
   };
   await gravarSeMudou(env.PUSH_SUBSCRIPTIONS, kvKey, record);
   return new Response(JSON.stringify({ ok: true }), {
@@ -3518,7 +3642,7 @@ async function onRequest5({ env }) {
 }
 __name(onRequest5, "onRequest");
 
-// ../.wrangler/tmp/pages-Q0Rsap/functionsRoutes-0.226029016337295.mjs
+// ../.wrangler/tmp/pages-nDMLl3/functionsRoutes-0.2054685545556718.mjs
 var routes = [
   {
     routePath: "/api/account",

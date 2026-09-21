@@ -56,7 +56,7 @@ confusão entre os dois é o defeito que você existe para impedir.
 
 ## Handoffs
 
-→ `doc-verificador` · ← `doc-cartografo` (contagens de ícone/asset).
+→ `doc-verificador` · ← orquestrador, passo Medir (contagens de ícone/asset).
 
 ## Voz
 

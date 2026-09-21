@@ -7,6 +7,8 @@
 > **Data do levantamento:** 19/08/2026 · commit da árvore de trabalho em
 > `D:\Soulmon\repo` · app rodando em `http://localhost:3001` (`npm run dev`;
 > a porta 3000 estava ocupada).
+>
+> ⚰️ **Registro de 19/08/2026, não estado** (lápide de 21/09/2026, QA GERAL). O inventário vivo é `docs/manual/03-FLUXO-DE-TELAS.md` + `docs/design/INVENTARIO-WIREFRAMES.md` §3. Três componentes citados abaixo **não existem mais** (`ls src/components/{DigivolutionProgress,RowIcon,WalkingPetStrip}.tsx` → nenhum): `RowIcon.tsx` apagado em `ad11e64b` (24/08/2026, lucide zerado), `WalkingPetStrip.tsx` em `55793cb6` (07/09/2026, órfão), `DigivolutionProgress.tsx` em `977634f1` (07/09/2026, rename DigiApp). `utils/iconRegistry.ts` também não existe.
 
 ---
 
@@ -144,7 +146,7 @@ Lista com contagem por arquivo (medida com parser de `import { … } from 'lucid
 | `InstallPrompt.tsx` | 1 | Download |
 | `ProtectProgressModal.tsx` | 1 | CloudUpload |
 | `TournamentPage.tsx` | 1 | Loader2 |
-| `BottomNav.tsx`, `RowIcon.tsx`, `utils/iconRegistry.ts`, `vite-env.d.ts` | 0 | só menção em comentário/tipo |
+| `BottomNav.tsx`, ⚰️ `RowIcon.tsx` (apagado em `ad11e64b`, 24/08/2026), ⚰️ `utils/iconRegistry.ts` (não existe), `vite-env.d.ts` | 0 | só menção em comentário/tipo |
 
 > **Observação de coerência:** `utils/shop.ts` é o maior consumidor de lucide
 > (15 ícones), mas na loja renderizada os móveis aparecem como **PNG**
@@ -238,7 +240,7 @@ Fora do kit, mas recorrentes e definidores da linguagem:
 | `StepRow` | `StepRow.tsx` | sub-etapa de hábito |
 | `TaskMeta` | `TaskMeta.tsx` | metadados da tarefa (prazo, adiamentos, esforço, assombrada) |
 | `HabitConstancy` | `HabitConstancy.tsx` | "N das últimas 7" + marco de hábito |
-| `RowIcon` | `RowIcon.tsx` | aceita string (PNG) OU componente lucide — a costura entre os dois sistemas |
+| ⚰️ `RowIcon` | `RowIcon.tsx` — **apagado em `ad11e64b` (24/08/2026)**, junto com o lucide | aceitava string (PNG) OU componente lucide — a costura entre os dois sistemas; hoje os ícones são `PixelKit`/Material Symbols |
 | `AlignmentIcons` | `AlignmentIcons.tsx` | 3 ícones **SVG inline** (Power/Harmony/Benevolence), usados só em `EvolutionPath` |
 | `PetStageDecor` | `PetStageDecor.tsx` | decoração do palco |
 | `EvoTrail` | `EvoTrail.tsx` | trilha vertical de nós na Home |
@@ -352,8 +354,8 @@ estágio), mas o desenho não distingue "cheio" de "meta cumprida".
 
 ### 5.2 `evolution` — Evolução
 
-**Arquivo:** `EvolutionPath.tsx` (+ `DigivolutionProgress.tsx`,
-`WalkingPetStrip.tsx`, `evolution/SoulNode.tsx`). **Frequência: semanal.**
+**Arquivo:** `EvolutionPath.tsx` (+ ⚰️ `DigivolutionProgress.tsx` — apagado em `977634f1`, 07/09/2026;
+⚰️ `WalkingPetStrip.tsx` — apagado em `55793cb6`, 07/09/2026; `evolution/SoulNode.tsx`). **Frequência: semanal.**
 
 Verificado. Elementos: 3 abas internas (EVOLUTION / SOULMON / STATS),
 `UnlockNudge` (só demo: "Want YOUR own evolution tree?"), CURRENT ALIGNMENT com

@@ -8,19 +8,19 @@
 
 ## Roster
 
-### Agentes novos (2)
+### Agentes próprios (1)
 
 | id | model | possui | pergunta que possui |
 |---|---|---|---|
-| `design-curador-padroes` | opus | `docs/design/PRINCIPIOS-DE-WIREFRAME.md` — o que a pesquisa obriga e proíbe, por família de tela, com procedência | "o que o mercado já provou, e onde está escrito?" |
-| `design-wireframer` | opus | os canvases `docs/design/wireframes/*.dc.html` — um por fluxo, cinza, todo estado | "o que está nesta tela, em que ordem, e por quê?" |
+| *(procedimento — ex-`design-curador-padroes`, 21/09/2026)* | — | `docs/design/PRINCIPIOS-DE-WIREFRAME.md` (já entregue; quem altera cita procedência — `METODO.md`) | "o que o mercado já provou, e onde está escrito?" |
+| `design-wireframer` | opus | os canvases `docs/design/wireframes/*.dc.html` — um por fluxo, cinza, todo estado. **Mantido só enquanto houver fluxo `a desenhar` no inventário** (Fase 1 fechada com 13 canvases); depois vira doc de método (S3) | "o que está nesta tela, em que ordem, e por quê?" |
 
-### Agentes do repositório reusados (6)
+### Agentes do repositório reusados (5)
 
 | agente | o que possui nesta squad |
 |---|---|
 | `soulmon-design-lead` | **decide** — o que entra, volta ou sai; escreve `docs/design/DECISOES-WIREFRAME.md`; dono do checkpoint com o dono do produto |
-| `soulmon-screen-cartographer` | o inventário (`docs/design/INVENTARIO-WIREFRAMES.md`), derivado do `03-FLUXO-DE-TELAS.md` — mede, não propõe |
+| *(procedimento — ex-`soulmon-screen-cartographer`, 21/09/2026)* | o inventário (`docs/design/INVENTARIO-WIREFRAMES.md`), derivado do `03-FLUXO-DE-TELAS.md` e confirmado no app rodando — `METODO.md` › "Inventário de superfícies", executado pelo orquestrador |
 | `soulmon-product-designer` | arquitetura de informação e fluxos: parecer sobre cada canvas antes da crítica (hierarquia, time-to-value, uma pergunta por tela) |
 | `design-critic` | **crítica bloqueante** antes do checkpoint: W1–W10 item a item, acessibilidade, o que o autor não viu |
 | `soulmon-guarda-linha-vermelha` | parecer APROVADO/COM RESSALVA/VETADO sobre cada família de tela (W6) |
@@ -39,8 +39,8 @@
 
 | artefato | dono | estado |
 |---|---|---|
-| `docs/design/INVENTARIO-WIREFRAMES.md` | cartógrafo | tabela com `a desenhar / desenhado / criticado / aprovado / fora` por tela |
-| `docs/design/PRINCIPIOS-DE-WIREFRAME.md` | curador | vivo |
+| `docs/design/INVENTARIO-WIREFRAMES.md` | orquestrador (procedimento do `METODO.md`) | tabela com `a desenhar / desenhado / criticado / aprovado / fora` por tela |
+| `docs/design/PRINCIPIOS-DE-WIREFRAME.md` | orquestrador (quem altera cita procedência) | vivo |
 | `docs/design/wireframes/<fluxo>.dc.html` | wireframer | canvas |
 | `docs/design/DECISOES-WIREFRAME.md` | design-lead | decisões |
 | `docs/HANDOFF-WIREFRAMES.md` | orquestrador | o que a próxima sessão lê primeiro |

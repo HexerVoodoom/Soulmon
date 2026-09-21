@@ -54,6 +54,51 @@ tipografia e "O Visor" (medidos em `04-IDENTIDADE-VISUAL.md`) sobre os wireframe
 aprovados — sem reabrir estrutura. Aceite: recorte 200×200 reconhecível como Soulmon
 (`PLANO-DESIGN.md` §0 item 8) + contraste AA nos dois temas (`tokens.contrast.test.ts`).
 
+## Procedimentos (ex-agentes, absorvidos em 21/09/2026)
+
+> Governança `docs/reviews/2026-09-21-qa-geral/13-governanca-agentes.md` §8 S1–S2: o
+> `soulmon-screen-cartographer` e o `design-curador-padroes` entregaram o que tinham de
+> entregar (inventário e princípios) e não guardam julgamento recorrente. Ficam aqui como
+> procedimento, executado pelo orquestrador (ou pelo `design-wireframer`, quando reabrir fila).
+
+### Inventário de superfícies (era `soulmon-screen-cartographer`)
+
+Princípio: **leitura estática é palpite; o app rodando é medida** — três análises seguidas
+erraram a contagem de telas do onboarding por ler arquivos em vez de percorrer a jornada.
+
+1. **Derivar do doc**: a lista base é o `docs/manual/03-FLUXO-DE-TELAS.md` (já cita o código
+   e a condição de aparição). Conta como superfície: páginas/views, modais e diálogos
+   (inclusive os que abrem sozinhos), cartões condicionais, **cada estado** (vazio, carregando,
+   erro, primeiro uso, cheio, offline, demo × pago), overlays (toast, celebração, cerimônia,
+   tutorial, nudge) e componentes recorrentes que definem a linguagem (linha de tarefa, botão,
+   chip, painel, barra).
+2. **Confirmar no app rodando** quando a pergunta for de contagem ou de percurso ("quantas
+   telas até a home"): `npx vite preview` + Playwright (`CLAUDE.md` › footgun 7: `xdg-open`
+   falso no PATH; semear `localStorage` com `page.addInitScript`, nunca `evaluate` + `reload`).
+   Não estime o que dá para medir.
+3. **Por superfície**, registrar: nome e arquivo (caminho real) · quando aparece (condição
+   lida do código) · frequência (todo dia · toda semana · raro · uma vez na vida) · elementos
+   (inclusive origem dos ícones: PNG, lucide, emoji, SVG) · problemas com evidência ·
+   prioridade = frequência × gravidade · estado (`a desenhar / desenhado / criticado /
+   aprovado / fora`) e link do canvas.
+4. **Inventário de ícones**: quantos PNG, quantos de biblioteca, quantos emoji — é o número que
+   dimensiona o trabalho.
+5. **Não propor design** no inventário (mistura deixa o inventário incompleto onde já havia
+   ideia). Marcar explicitamente o que **não** foi verificado, e por quê.
+6. Saída: `docs/design/INVENTARIO-WIREFRAMES.md` (tabela; alguém vai riscar item por item),
+   com data e `git rev-parse --short HEAD`. Medição histórica: `docs/INVENTARIO-TELAS.md`
+   (19/08/2026). O `doc-redator-telas` da `squad-docs` usa este mesmo procedimento quando o
+   `03-FLUXO` precisa de percurso real.
+
+### Princípios de wireframe (era `design-curador-padroes`)
+
+O doc já existe: `docs/design/PRINCIPIOS-DE-WIREFRAME.md` — o que a pesquisa (Mobbin,
+estudos, benchmark) e as decisões registradas obrigam ou proíbem por família de tela, com
+procedência (W8). Regra que sobrevive ao agente: **quem mexe em princípio cita procedência**
+(seção do dossiê Mobbin, do estudo, ou linha do `REGISTRO-DE-DECISOES.md` /
+`02-REGRAS-DE-NEGOCIO.md`) na própria linha alterada — princípio sem fonte é opinião e o
+`design-critic` o descarta como evidência.
+
 ## O que conta como evidência
 
 Padrão de mercado → seção do dossiê Mobbin ou do estudo. Regra de produto → linha do

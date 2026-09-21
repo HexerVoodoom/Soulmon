@@ -175,9 +175,9 @@ Siga `METODO.md` desta pasta (deltas) sobre o método da Alpha (base):
    - a regra `[hipótese]`;
    - o alvo de loudness decidido (S3: ≤ −16 LUFS integrado, true peak ≤ −1 dBTP), com o
      lembrete de que ele vale por categoria e por estado e que o dono da spec é o engenheiro;
-   - para `soulmon-ip-brand-guardian`, `soulmon-devils-advocate` e `soulmon-tech-feasibility`,
-     a **linha de neutralização de onda/rubrica** do `CONTRACT.md` §2 — sem ela, os três
-     escrevem no caminho errado e pontuam rubrica inexistente.
+   - para `soulmon-ip-brand-guardian`, a **linha de neutralização de onda/rubrica** do
+     `CONTRACT.md` §2 — sem ela, ele escreve no caminho errado e pontua rubrica inexistente
+     (pre-mortem → `alpha-skeptic`; custo → `alpha-estrategista-negocio`, ambos globais).
 3. **Coletar** em `squad-alpha-runs/som-01/<fase>/`.
 4. **Loop adversarial** — `alpha-skeptic` ataca; `soulmon-guarda-vinculo` veta onde toca D11;
    `soulmon-ip-brand-guardian` onde toca PI. Fecha com `<fase>/gate.md`. **Gate sem artefato

@@ -7,6 +7,38 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 21/09/2026 — EXECUÇÃO das respostas do dono (#11–#39), etapas 1–3 e 5
+>
+> Cinco frentes em paralelo sobre a mesma árvore, arquivos disjuntos, um commit no fim.
+> **Primeiro usuário (etapa 1):** rota de cortesia `POST /api/entitlements?action=grant`
+> (`ENTITLEMENTS_ADMIN_KEY`, fail-closed 404; `COURTESY_MAX_ACCOUNTS`, padrão 25; `provider:'courtesy'`,
+> idempotente — `grantCourtesy` em `_entitlements.js`, 8 testes) · `scripts/metrics-report.mjs`
+> (funil da semana; exit 2 sem `METRICS_ADMIN_KEY`) · aviso de WebView velho por
+> `CSS.supports('selector(&)')` (Chromium < 112; `index.html`, hash novo na CSP) · feedback in-app
+> (`FeedbackLink.tsx`: Sobre + `ErrorBoundary`) · aviso de IA em Configurações › Sobre ·
+> `TermsUpdateBanner` + `termsNotice.ts` (#24, banner, nunca re-aceite; `STORAGE_KEYS.TERMS_NOTICE_SEEN`) ·
+> exclusão de conta revoga push (cliente chama os DELETE; servidor apaga `push:*`/`fcm:*` por `saveId`,
+> que as inscrições passam a gravar — `NotificationManager` recebe `saveId`).
+> **Legal (etapa 2):** termos §8 reescrito (IA sem revisão humana, não é emergência, CVV 188/findahelpline)
+> · EN §4 em `US$ 6.99` (`FULL_UNLOCK_PRICE_LABEL_USD`; ⚠️ conversão do `PLANO-PRODUTO`, confirmar no Play
+> Console antes da 1ª venda) · política §8 (o que a exclusão apaga; `ord:` 5 anos) · `PLAY-DATA-SAFETY.md`
+> §2.7 token FCM = ID "Sim", §3b conteúdo de IA · `Attributions.md` com fontes e arte de IA por lote.
+> **Docs (etapa 3):** `CLAUDE.md` 7 afirmações + 2 refs `arquivo:linha` corrigidas · 10 fósseis da raiz →
+> `docs/historico-digiapp/` com lápide, `README.md` novo · `docs/adr/ADR-001..003` · `product/soulmon-01`
+> e `docs/adr` no MAPA · REGISTRO: Camada 3 congelada (10 usuários × 14 dias), 18+ é ICP, cobrança web
+> depois · `vetos.md`: exceção da #20, veto de `'tasks-100'` · LEDGER 87 WPs, WP1.14 RECUSADO, WP3.4
+> IMPLEMENTADO, 8 comandos de aceite vivos.
+> **Roster (etapa 5):** 64 → **37** agentes (`13-governanca-agentes.md` §8 aplicado): saíram 9 genéricos,
+> `prod-squad` do repo, maestro + 12, `/revisao-soulmon`, 4 skills higgsfield; 6 `arte-*` → `arte-gerador`;
+> cartógrafo/curador viraram procedimento; nasceram **`soulmon-operador`** (git × ar) e
+> **`soulmon-guarda-plataforma`** (Android/desktop/EN/a11y, ledger `plataforma.md`). Tabela do coordenador
+> e hook atualizados.
+> **Portões:** `tsc` ×3 = 0 · `vitest` 311 arquivos, 4266 passed, 1 skipped · build ok · `CACHE_VERSION`
+> v156 → **v157** · guards do manual verdes (3 módulos novos com entrada em `06-REFERENCIA`).
+> **Depende do dono:** `ENTITLEMENTS_ADMIN_KEY`, `COURTESY_MAX_ACCOUNTS` e `METRICS_ADMIN_KEY` no painel do
+> Pages (#18); 1 h com profissional na trava de crise (#20). **Fica para a etapa 4:** `SettingsModal`,
+> deps mortas + guard, PNG do `dist/`, orçamento de perf como guard, `'tasks-100'`. **Etapa 6:** Play.
+
 > ## 21/09/2026 — sincronização do manual pós-merge `f9faf7a7` (QA geral)
 >
 > Delta `9f4e5a7a..f9faf7a7`, feita inline pelo coordenador (sem despacho de redatores: as

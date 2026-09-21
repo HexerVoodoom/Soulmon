@@ -167,15 +167,38 @@ describe('POST — o registro gravado', () => {
       request: req({
         endpoint: ENDPOINT, keys: CHAVES, petName: 'Nimbo', language: 'pt-BR',
         // Campos que um cliente futuro (ou um curioso) poderia mandar:
-        email: 'alguem@exemplo.com', saveId: 'a'.repeat(32), tier: 'paid',
+        email: 'alguem@exemplo.com', tier: 'paid',
       }, { ip: ipNovo() }),
       env,
     });
     // `bornAt: undefined` não sobrevive ao `JSON.stringify`, então ele só
     // aparece na lista quando veio válido — por isso a asserção é sobre o
-    // CONJUNTO PERMITIDO, e não uma lista fixa.
-    const PERMITIDOS = ['bornAt', 'endpoint', 'keys', 'language', 'petName', 'refreshedAt'];
+    // CONJUNTO PERMITIDO, e não uma lista fixa. `saveId` entrou na lista em
+    // 21/09/2026 (decisão #23): é o que deixa a exclusão de conta achar a linha.
+    const PERMITIDOS = ['bornAt', 'endpoint', 'keys', 'language', 'petName', 'refreshedAt', 'saveId'];
     expect(Object.keys(gravado()).filter(k => !PERMITIDOS.includes(k))).toEqual([]);
+  });
+
+  // Decisão #23 do QA GERAL: a conta dona vai no registro, para
+  // `account.js:deletePushSubscriptions` conseguir apagar na exclusão.
+  it('`saveId` válido é gravado no registro', async () => {
+    await onRequestPost({ request: req({ endpoint: ENDPOINT, keys: CHAVES, saveId: 'a'.repeat(32) }, { ip: ipNovo() }), env });
+    expect(gravado().saveId).toBe('a'.repeat(32));
+  });
+
+  it('sem `saveId` continua 201 e o registro não ganha o campo — compat com cliente antigo', async () => {
+    const res = await onRequestPost({ request: req({ endpoint: ENDPOINT, keys: CHAVES }, { ip: ipNovo() }), env });
+    expect(res.status).toBe(201);
+    expect('saveId' in gravado()).toBe(false);
+  });
+
+  it('`saveId` inválido é IGNORADO, não recusado nem corrigido', async () => {
+    for (const ruim of ['curto', 'a'.repeat(65), 'ent:' + 'a'.repeat(32), 42, ['a'.repeat(32)]]) {
+      env = { PUSH_SUBSCRIPTIONS: fakeKV() };
+      const res = await onRequestPost({ request: req({ endpoint: ENDPOINT, keys: CHAVES, saveId: ruim }, { ip: ipNovo() }), env });
+      expect(res.status, JSON.stringify(ruim)).toBe(201);
+      expect('saveId' in gravado()).toBe(false);
+    }
   });
 });
 

@@ -143,6 +143,15 @@ O problema real da compra única é estrutural: **receita = instalações × con
 
 - Custo de IA por usuário pago: **R$ 3–8** (11 formas via Higgsfield). COGS de 10–27% sobre R$ 29,90 — saudável, e travado atrás de `accountTier:'paid'`, então só quem paga gera.
 - Receita líquida: ~R$ 25,40 na Play Store (15% de taxa), ~R$ 27 no funil web direto. **Priorizar o funil web.**
+
+> **Nota de 21/09/2026 (decisão do dono, pergunta #17 do QA geral):** a web
+> **hoje NÃO cobra**. A única compra que existe é pela Play (`functions/api/billing.js`
+> valida o comprovante do Google); no navegador, PWA e desktop o app mostra o preço
+> de referência e o desbloqueio só acontece com a conta que comprou no Android.
+> A cobrança web (Pix/cartão) **entra depois do primeiro usuário real e antes de
+> qualquer gasto com marketing** — "priorizar o funil web" acima é a meta de
+> margem, não o estado atual. Se a decisão virar "nunca", apagar a frase de
+> priorização em vez de deixar as duas coexistirem.
 - Fixos: ~R$ 100–300/mês.
 - Cobrir custos: ~10–15 unlocks/mês. Renda relevante (R$ 5k/mês): ~200 unlocks/mês.
 

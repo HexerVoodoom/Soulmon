@@ -13,6 +13,7 @@ import { STORAGE_KEYS } from '../utils/storageKeys';
 import { isTelemetryEnabled, setTelemetryEnabled, telemetryConsentCopy } from '../utils/telemetry';
 import { useTheme } from '../contexts/ThemeContext';
 import { desligarTrilha, ligarTrilha, trilhaPreferida } from '../utils/trilha';
+import { APP_VERSION, FeedbackRow } from './FeedbackLink';
 
 /**
  * CONFIGURAÇÕES — revamp minimalista.
@@ -400,7 +401,7 @@ export function SettingsPage({
           label={isPt ? 'Política de privacidade' : 'Privacy policy'}
           href="/privacidade.html"
         />
-        <p className="sm2-num" style={{ ...sm2Hint, minHeight: 24, display: 'flex', alignItems: 'center' }}>Soulmon 1.0.2</p>
+        <p className="sm2-num" style={{ ...sm2Hint, minHeight: 24, display: 'flex', alignItems: 'center' }}>Soulmon {APP_VERSION}</p>
       </Group>
 
       {/* ── SOBRE — os três limites da §16 da bíblia (`docs/NARRATIVA-E-UNIVERSO.md`),
@@ -429,6 +430,25 @@ export function SettingsPage({
             ? 'Nada do que aparece aqui é uma afirmação sobre a sua saúde, a sua mente ou o seu futuro.'
             : 'Nothing shown here is a statement about your health, your mind or your future.'}
         </p>
+        {/* IA DECLARADA (decisão #22 do QA geral, 21/09/2026): a imagem da
+            criatura e as falas do chat são geradas por modelo, e a pessoa tem
+            o direito de saber sem procurar na política. Tom de FATO, não de
+            alerta (L11 da bíblia): não é um risco a avisar, é como o app
+            funciona. Os nomes dos provedores ficam aqui porque a ficha da loja
+            e a política já os dizem — divergir seria pior que repetir. */}
+        <p style={sm2Text}>
+          {isPt
+            ? 'A imagem da sua criatura e as falas do chat são geradas por IA (Higgsfield e Gemini para a imagem, Groq para a conversa).'
+            : 'Your creature’s image and the chat lines are AI-generated (Higgsfield and Gemini for the image, Groq for the conversation).'}
+        </p>
+        <ActionRow
+          label={isPt ? 'O que o chat recebe' : 'What the chat receives'}
+          hint={isPt ? 'Na política de privacidade.' : 'In the privacy policy.'}
+          href="/privacidade.html#chat-contexto"
+        />
+        {/* O canal de feedback vive em "Sobre" porque é a conversa com quem
+            faz o app — mesmo assunto deste grupo (`FeedbackLink.tsx`). */}
+        <FeedbackRow language={language} saveId={saveId} />
       </Group>
 
       {/* ── SEU RITMO — encosta na Janela de Descanso, que o App desenha logo

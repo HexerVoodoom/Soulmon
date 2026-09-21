@@ -186,6 +186,46 @@ describe('account.js — exclusão', () => {
     expect(again.status).toBe(409);
   });
 
+  // Decisão #23 do QA GERAL: push não sobrevive à exclusão — quando o registro
+  // carrega `saveId`. As chaves são hash de endpoint/token, então é varredura.
+  it('apaga as inscrições de push (push:* e fcm:*) do titular e NÃO as de outro', async () => {
+    const { e } = await seededEnv();
+    const pushKV = fakeKV({
+      'push:aaaa': JSON.stringify({ endpoint: 'https://fcm.googleapis.com/x', saveId: ID, petName: 'Bolha' }),
+      'fcm:bbbb': JSON.stringify({ token: 'tok', saveId: ID }),
+      'push:cccc': JSON.stringify({ endpoint: 'https://fcm.googleapis.com/y', saveId: OTHER, petName: 'Bolha' }),
+      // Registro legado, sem saveId: fora do alcance — NUNCA apagado por palpite
+      // (o petName igual ao do titular é isca de propósito).
+      'push:dddd': JSON.stringify({ endpoint: 'https://fcm.googleapis.com/z', petName: 'Bolha' }),
+      'fcm:eeee': 'não é json',
+    });
+    e.PUSH_SUBSCRIPTIONS = pushKV;
+
+    const { confirmToken } = await (await onRequest({ request: post(`action=delete-request&id=${ID}`), env: e })).json();
+    const res = await onRequest({ request: post(`action=delete-confirm&id=${ID}`, { confirmToken }), env: e });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.executado.inscricoesDePushApagadas).toBe(2);
+
+    expect(pushKV.store.has('push:aaaa')).toBe(false);
+    expect(pushKV.store.has('fcm:bbbb')).toBe(false);
+    expect(pushKV.store.has('push:cccc'), 'inscrição de OUTRO jogador segue intocada').toBe(true);
+    expect(pushKV.store.has('push:dddd'), 'registro sem saveId não é apagado por palpite').toBe(true);
+    expect(pushKV.store.has('fcm:eeee')).toBe(true);
+    // O save também foi — a varredura de push não substitui o resto.
+    expect(e.DIGIAPP_SAVES.store.has(ID)).toBe(false);
+  });
+
+  it('sem o binding PUSH_SUBSCRIPTIONS a exclusão segue inteira (0 apagadas, sem erro)', async () => {
+    const { e } = await seededEnv();
+    expect(e.PUSH_SUBSCRIPTIONS).toBeUndefined();
+    const { confirmToken } = await (await onRequest({ request: post(`action=delete-request&id=${ID}`), env: e })).json();
+    const res = await onRequest({ request: post(`action=delete-confirm&id=${ID}`, { confirmToken }), env: e });
+    expect(res.status).toBe(200);
+    expect((await res.json()).executado.inscricoesDePushApagadas).toBe(0);
+    expect(e.DIGIAPP_SAVES.store.has(ID)).toBe(false);
+  });
+
   it('save inexistente não vaza se a conta existe — mesma forma e mesmo status', async () => {
     const vazio = env();
     const cheio = (await seededEnv()).e;

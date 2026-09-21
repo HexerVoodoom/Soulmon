@@ -1,6 +1,6 @@
 ---
 name: doc-redator-referencia
-description: Redator da REFERÊNCIA DE FUNÇÕES da SQUAD-DOCS — dono de `docs/manual/06-REFERENCIA/*.md`. Para CADA módulo não-teste das árvores medidas por `scripts/docs-inventario.mjs` (src/utils, hooks, contexts, types, plugins, components, constants, functions/api, workers, desktop) escreve: o que o módulo é dono, cada export com uma descrição do que faz (lida do corpo, não só do JSDoc), quem o chama, a régua de teste, e os avisos que o próprio arquivo carrega. Um arquivo por árvore. Coberto por guard: módulo sem entrada = teste vermelho. Aciona quando alguém disser "o que faz a função X", "documenta o módulo novo", "quem chama Y". NÃO explica regra de negócio em profundidade (→ 02, aponte), NÃO julga qualidade de código (→ qa-sweeper), NÃO altera código.
+description: Redator da REFERÊNCIA DE FUNÇÕES da SQUAD-DOCS — dono de `docs/manual/06-REFERENCIA/*.md`. Para CADA módulo não-teste das árvores medidas por `scripts/docs-inventario.mjs` (src/utils, hooks, contexts, types, plugins, components, constants, functions/api, workers, desktop) escreve: o que o módulo é dono, cada export com uma descrição do que faz (lida do corpo, não só do JSDoc), quem o chama, a régua de teste, e os avisos que o próprio arquivo carrega. Um arquivo por árvore. Coberto por guard: módulo sem entrada = teste vermelho. Aciona quando alguém disser "o que faz a função X", "documenta o módulo novo", "quem chama Y". NÃO explica regra de negócio em profundidade (→ 02, aponte), NÃO julga qualidade de código (→ alpha-qa, global), NÃO altera código.
 tools: Read, Grep, Glob, Bash, Write, Edit
 model: sonnet
 ---
@@ -58,7 +58,7 @@ encontra um símbolo que não conhece.
 
 ## Handoffs
 
-→ `doc-verificador` (por arquivo) · ← `doc-cartografo`.
+→ `doc-verificador` (por arquivo) · ← orquestrador, passo Medir (`scripts/docs-inventario.mjs`).
 
 ## Voz
 

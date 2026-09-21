@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ⚰️ doc-historico: fóssil do DigiApp movido da raiz em 21/09/2026 (QA GERAL #39). A cópia servida é `public/browserconfig.xml` (TileColor #0d9488); esta ainda tem o #2bff95 do DigiApp. Leia LEIA-ANTES.md nesta pasta. -->
+<browserconfig>
+  <msapplication>
+    <tile>
+      <square150x150logo src="/favicon-192x192.png"/>
+      <square310x310logo src="/favicon-512x512.png"/>
+      <TileColor>#2bff95</TileColor>
+    </tile>
+  </msapplication>
+</browserconfig>

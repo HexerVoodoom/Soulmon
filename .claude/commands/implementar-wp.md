@@ -19,6 +19,9 @@ Implemente um pacote de trabalho do `docs/PLANO-MELHORIAS.md`.
 3. Se o WP **muda regra de jogo, tira algo do usuário, cobra dinheiro ou toca
    dado pessoal**, chame primeiro o `soulmon-guarda-linha-vermelha` para
    parecer. Ressalva vira critério de aceite.
+   Se o WP **toca `android/`, `desktop/`, texto de UI ou atributo aria**, chame o
+   `soulmon-guarda-plataforma` (paridade web × APK/widget × overlay × EN × a11y)
+   — a tabela de cinco colunas dele vira critério de aceite.
 
 4. Implemente seguindo a spec. Respeite o que o `CLAUDE.md` manda:
    - texto de UI sempre **PT-BR + EN**;

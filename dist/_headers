@@ -21,9 +21,10 @@
 #
 # Os três `sha256-` são os TRÊS <script> inline do `index.html`, na ordem em que
 # aparecem: tema antes da primeira pintura · aviso de WebView antigo (troca a
-# tela branca por uma frase acionável em aparelho com Chromium < 111) · registro
-# do service worker. Não use 'unsafe-inline' para resolver isso — seria devolver
-# exatamente o que a política existe para tirar.
+# tela branca por uma frase acionável em aparelho com Chromium < 112) · registro
+# do service worker (gate do WebView com `selector(&)` desde 21/09/2026).
+# Não use 'unsafe-inline' para resolver isso — seria devolver exatamente o
+# que a política existe para tirar.
 # `src/security/csp.test.ts` recalcula os hashes a partir do HTML e falha se
 # alguém editar um script inline sem atualizar esta linha.
 #
@@ -52,4 +53,4 @@
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
   Strict-Transport-Security: max-age=31536000; includeSubDomains
-  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' https://apis.google.com 'sha256-ZpbXoJAYQEB9rJBNQCGdUhQphNAnAOIcYiIOgvMGvFg=' 'sha256-c6QQgFbjfCzeF0+hvpAF/HkyXkTYWEchvMDHPeDGxFQ=' 'sha256-yXojjaY5oUBR7lkpGB0N4v0nVK1JIwueCJJgrTrmPhM=' 'sha256-9dTtYE4pgtpNvqECJDrGuRpL2eDNBOmoCFJlP4iQ/Mo='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://*.firebaseapp.com https://*.firebaseio.com wss://*.firebaseio.com; worker-src 'self'; manifest-src 'self'; frame-src 'self' https://*.firebaseapp.com https://apis.google.com https://accounts.google.com
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' https://apis.google.com 'sha256-ZpbXoJAYQEB9rJBNQCGdUhQphNAnAOIcYiIOgvMGvFg=' 'sha256-c6QQgFbjfCzeF0+hvpAF/HkyXkTYWEchvMDHPeDGxFQ=' 'sha256-pha3mOZMUqIZaWS0SBrI08JfgLfw/cKkkHYMr5AQDuo=' 'sha256-9dTtYE4pgtpNvqECJDrGuRpL2eDNBOmoCFJlP4iQ/Mo='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://*.firebaseapp.com https://*.firebaseio.com wss://*.firebaseio.com; worker-src 'self'; manifest-src 'self'; frame-src 'self' https://*.firebaseapp.com https://apis.google.com https://accounts.google.com

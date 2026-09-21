@@ -15,6 +15,7 @@
 // um dono só; o que é deste canal (o formato do token) fica aqui.
 
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
+import { VALID_ID } from './_entitlements.js';
 import {
   nomeDePet, idiomaDePush, dataDeNascimento, ehTokenFcm, gravarSeMudou,
   LIMITE_INSCRICAO,
@@ -61,7 +62,7 @@ export async function onRequestPost({ request, env }) {
   const body = await corpoDe(request);
   if (!body) return json({ error: 'Invalid JSON' }, 400);
 
-  const { token, petName, language, bornAt } = body;
+  const { token, petName, language, bornAt, saveId } = body;
   if (!token) return json({ error: 'Missing token' }, 400);
   // Recusar AQUI é o que impede `{token: []}` (que passava, porque `[]` é
   // truthy) e um megabyte de lixo virarem uma linha de um ano que o cron tenta
@@ -73,6 +74,11 @@ export async function onRequestPost({ request, env }) {
     petName: nomeDePet(petName),
     language: idiomaDePush(language),
     bornAt: dataDeNascimento(bornAt),
+    // Decisão #23 — a conta dona, para a exclusão em `account.js` achar esta
+    // linha. Opcional, não verificado, inválido descartado: o porquê inteiro
+    // está no comentário equivalente de `subscribe.js` (mesma regra, os dois
+    // canais são varridos pela mesma função).
+    ...(typeof saveId === 'string' && VALID_ID.test(saveId) ? { saveId } : {}),
   };
 
   await gravarSeMudou(env.PUSH_SUBSCRIPTIONS, `fcm:${await hashToken(token)}`, registro);

@@ -89,7 +89,7 @@ afundado, notificação manipuladora, moeda intermediária que ofusca preço rea
 
 Aponte o que **já existe** no Soulmon, e crie a **linha vermelha** que a monetização
 futura não pode cruzar. Entregue isso como uma lista curta e citável — o
-`soulmon-monetization-strategist` vai ser obrigado a respeitá-la.
+`soulmon-guarda-sustento` (dono do billing) vai ser obrigado a respeitá-la.
 
 ### 6. A ética da criatura como alma
 A tese é forte e é justamente por isso que é perigosa: se a criatura é a alma da pessoa,

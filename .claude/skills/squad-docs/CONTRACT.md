@@ -18,11 +18,11 @@ encaixam. Segue o §1 do `squad-som/CONTRACT.md` (mesmo formato de agente).
 - Corpo, H2 nesta ordem: `## Mandato` · `## Entradas` · `## Framework Operacional` ·
   `## Barra de Qualidade` · `## Anti-Padrões` · `## Handoffs` · `## Voz`.
 
-## 2. Roster (10)
+## 2. Roster (9)
 
 | id | model | possui | pergunta que possui |
 |---|---|---|---|
-| `doc-cartografo` | sonnet | a MEDIÇÃO: inventário, contagens, o que existe | "o que existe, e quantos?" |
+| *(passo do orquestrador — sem agente)* | — | a MEDIÇÃO: `node scripts/docs-inventario.mjs` + comandos de contagem, com data e SHA. Era o `doc-cartografo`, absorvido em 21/09/2026 (governança F2): script, não julgamento | "o que existe, e quantos?" |
 | `doc-redator-regras` | opus | `01-VISAO.md` (objetivo, essência, princípios, linhas vermelhas) e `02-REGRAS-DE-NEGOCIO.md` | "qual é a regra, quem decide, quem trava, por quê?" |
 | `doc-redator-telas` | opus | `03-FLUXO-DE-TELAS.md` | "de onde se vem, para onde se vai, o que se vê em cada estado?" |
 | `doc-redator-identidade` | opus | `04-IDENTIDADE-VISUAL.md` | "o que faz um recorte de 200px ser reconhecível como Soulmon?" |
@@ -38,8 +38,8 @@ encaixam. Segue o §1 do `squad-som/CONTRACT.md` (mesmo formato de agente).
 | agente | para quê |
 |---|---|
 | `soulmon-guarda-linha-vermelha` | parecer sobre o `01-VISAO.md` (as linhas vermelhas têm de estar nele, inteiras, sem suavizar) |
-| `soulmon-screen-cartographer` | quando o `03-FLUXO-DE-TELAS.md` precisar de percurso no app rodando (Playwright) — o `doc-redator-telas` lê código; quem percorre é ele |
-| `qa-sweeper` | os três portões (`tsc` · `vitest` · `build`) antes do commit |
+| procedimento "percurso real" de `.claude/skills/squad-design/METODO.md` | quando o `03-FLUXO-DE-TELAS.md` precisar de percurso no app rodando (Playwright) — o `doc-redator-telas` lê código; o percurso é procedimento (ex-`soulmon-screen-cartographer`, virou doc em 21/09/2026), executado pelo orquestrador ou pelo próprio redator |
+| `alpha-qa` (global) | os três portões (`tsc` · `vitest` · `build`) antes do commit |
 
 ## 3. Regras de despacho
 
@@ -56,7 +56,7 @@ encaixam. Segue o §1 do `squad-som/CONTRACT.md` (mesmo formato de agente).
 | artefato | dono | estado vive em |
 |---|---|---|
 | `docs/manual/*.md` | o redator nomeado no cabeçalho | o cabeçalho (`rascunho` / `verificado em` / `desatualizado desde`) |
-| `scripts/docs-inventario.mjs` | `doc-cartografo` | — (é código; muda por PR) |
+| `scripts/docs-inventario.mjs` | orquestrador (passo Medir) | — (é código; muda por PR) |
 | `src/docsManual.contract.test.ts` | `doc-bibliotecario` | vermelho/verde |
 | a linha do manual em `docs/STATUS.md` | orquestrador | o bloco datado |
 

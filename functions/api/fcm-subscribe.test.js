@@ -136,6 +136,33 @@ describe('o texto do cliente que vai para o TÍTULO da notificação', () => {
   });
 });
 
+// Decisão #23 do QA GERAL: a conta dona vai no registro, para
+// `account.js:deletePushSubscriptions` conseguir apagar na exclusão.
+describe('`saveId` — a ligação com a conta', () => {
+  let env;
+  beforeEach(() => { env = { PUSH_SUBSCRIPTIONS: fakeKV() }; });
+
+  it('válido é gravado', async () => {
+    await onRequestPost({ request: req({ token: TOKEN, saveId: 'a'.repeat(32) }, { ip: ipNovo() }), env });
+    expect(gravado(env).saveId).toBe('a'.repeat(32));
+  });
+
+  it('ausente: 201 e sem o campo — cliente antigo não quebra', async () => {
+    const res = await onRequestPost({ request: req({ token: TOKEN }, { ip: ipNovo() }), env });
+    expect(res.status).toBe(201);
+    expect('saveId' in gravado(env)).toBe(false);
+  });
+
+  it('inválido é IGNORADO, não recusado nem corrigido', async () => {
+    for (const ruim of ['curto', 'a'.repeat(65), 'ent:' + 'a'.repeat(32), 42, null]) {
+      env = { PUSH_SUBSCRIPTIONS: fakeKV() };
+      const res = await onRequestPost({ request: req({ token: TOKEN, saveId: ruim }, { ip: ipNovo() }), env });
+      expect(res.status, JSON.stringify(ruim)).toBe(201);
+      expect('saveId' in gravado(env)).toBe(false);
+    }
+  });
+});
+
 describe('a ESCRITA de KV, que é o que custa', () => {
   let env;
   beforeEach(() => { env = { PUSH_SUBSCRIPTIONS: fakeKV() }; });

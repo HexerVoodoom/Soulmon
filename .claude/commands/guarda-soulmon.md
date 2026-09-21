@@ -1,6 +1,6 @@
 ---
 description: Auditoria de custódia — cada guarda confere seus pacotes do PLANO-MELHORIAS contra o código real e atualiza o ledger
-argument-hint: [escopo — "completa", uma área (medicao|nascimento|constancia|vinculo|permanencia|sustento), ou um WP (ex. WP2.1)]
+argument-hint: [escopo — "completa", uma área (medicao|nascimento|constancia|vinculo|permanencia|sustento|plataforma), ou um WP (ex. WP2.1)]
 ---
 
 Rode uma auditoria de custódia do `docs/PLANO-MELHORIAS.md`.
@@ -14,8 +14,9 @@ Rode uma auditoria de custódia do `docs/PLANO-MELHORIAS.md`.
    estado. **Não invente estado fora do vocabulário.**
 
 2. Determine quais guardas rodar:
-   - `completa` → os 6 guardas com WP, em paralelo (uma única mensagem com as 6
-     chamadas), e depois o `soulmon-guarda-linha-vermelha` sobre o consolidado.
+   - `completa` → os 6 guardas com WP + o `soulmon-guarda-plataforma` (ledger de
+     paridades, não de WP), em paralelo (uma única mensagem com as 7 chamadas), e depois
+     o `soulmon-guarda-linha-vermelha` sobre o consolidado.
    - área → só aquele guarda.
    - `WP<n>.<m>` → só o guarda dono (ver o mapa de custódia).
 

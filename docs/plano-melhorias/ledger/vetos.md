@@ -8,6 +8,8 @@ incentivo para relativizar a própria proibição.
 
 ## As proibições, e o que cada uma protege
 
+**21 proibições: 12 travadas por teste (#1–#12) e 9 por tese (#13–#21)** — contagem de 21/09/2026 sobre `docs/manual/01-VISAO.md` §7 (`awk '/^## 7/{f=1} f' docs/manual/01-VISAO.md | grep -cE '^\| \*?\*?[0-9]+'` → 21). ⚰️ "20 proibições, oito por tese" valeu até 02/09/2026, quando a #21 foi inscrita.
+
 ### Travadas por TESTE (remover o teste é remover o produto)
 1. Streak que zera · 2. Humor como pontuação · 3. Bits→Créditos ·
 4. Emblemas comprando vantagem · 5. `bondLevel` persistido · 6. Dia da regra
@@ -60,6 +62,8 @@ Formato: data · WP ou proposta · parecer (`APROVADO` / `APROVADO COM RESSALVA`
 | 02/09/2026 | §17 Q5 — a tela de amigos escala? | `APROVADO manter MAX_FRIENDS = 5` | — | Cinco cabem numa cena sem ordem; subir o teto reintroduz a lista |
 | 02/09/2026 | WP5.1 oferta no 1º dia perfeito (padrão Me+) | `APROVADO COM RESSALVA` | — | Linha do pet primeiro; nunca no modal em que `heartsLost > 0`; cap 1/semana; `×` persistente (Garmin) |
 | 02/09/2026 | **O que perdoa demais** (a metade que ninguém pede): "esqueci de marcar" é o candidato a nono perdão; um coração perdido tem **três** caminhos de volta antes do almoço | `RESPONDIDO` (D4: a AURA é o que dói, e só ela) (decisão do dono, 06/09/2026 — §15 do plano) para qualquer perdão adicional | #17 | A resposta à D4 deve **nomear** quais mecanismos são a linha, não contar. Onde NÃO perdoa demais e está certo: Vínculo (teto suave, não decai), constância (14%/falta), Torneio (XP na derrota < vitória) |
+| 21/09/2026 | **Exceção da #20** (QA GERAL #29): `src/plugins/widgetSemCobranca.contract.test.ts` it "as chaves antigas são REMOVIDAS, não só deixadas de escrever" exige `editor.remove("constancy_pct"/"shields"/"bond_level")` em `SoulmonWidgetPlugin.kt` — a #14 (percentual cru) aplicada sobre o bridge quebrava a #20 (só acrescentar) sem registro | `APROVADO COM RESSALVA` — exceção inscrita | #20 (exceção), #14 | **Regra:** chave do bridge vetada por OUTRA proibição pode ser removida, e só assim: (a) por `remove()` explícito, nunca por deixar de escrever; (b) com tolerância a ausência provada no widget antigo (o layout lê a chave com default, nunca quebra); (c) registrada aqui com data e a proibição que a vetou. Fora disso, #20 continua: só acrescentar |
+| 21/09/2026 | **`'tasks-100'` em `src/utils/achievements.ts`** — conquista cosmética que lê `completedTasks.length + activityLog.length >= 100`: literalmente recompensa por CONTAGEM de tarefas (QA GERAL #30; `09-guardas.md` §2 #16) | `VETADO` na forma atual | #16 | **Será renomeada para gatilho de COMPORTAMENTO** (decisão do dono, 21/09/2026); o código é de outro agente nesta rodada — esta linha só registra o veto e a saída. Aceite: nenhuma conquista lê `.length` de tarefas |
 
 ## Perguntas que este guarda faz a QUALQUER proposta
 

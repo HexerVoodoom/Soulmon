@@ -165,6 +165,30 @@ aberta** — não como cumprida por presunção.
 
 ## Tipografia
 
+### As fontes em `public/fonts/` (self-host — ver `src/index.css`, bloco "FONTES — SELF-HOST")
+
+Conferido em 21/09/2026 (decisão do dono #26, QA geral). Os cinco arquivos são
+subsets `woff2` das famílias abaixo, servidos da própria origem porque o service
+worker ignora requisição cross-origin (fonte do `fonts.gstatic.com` sumia
+offline). Nenhuma das três licenças exige atribuição na interface; a tabela é
+regra interna de procedência, como no áudio.
+
+| Arquivo | Família · autor | Licença | Fonte / texto da licença | Uso no app |
+|---|---|---|---|---|
+| `material-symbols-rounded.woff2` (155 440 B) | **Material Symbols Rounded** — Google | **Apache License 2.0** | <https://github.com/google/material-design-icons> (`LICENSE`); especimen <https://fonts.google.com/icons> | Ícones de sistema FORA do visor (`Icon.tsx`), `font-display: block` |
+| `fredoka-latin.woff2` (29 732 B) · `fredoka-latin-ext.woff2` (4 576 B) | **Fredoka** — Milena Brandão, Hafontia (variável) | **SIL Open Font License 1.1** | <https://fonts.google.com/specimen/Fredoka> · <https://github.com/hellogreg/fredoka> (`OFL.txt`) | Títulos e rótulos |
+| `rubik-latin.woff2` (35 348 B) · `rubik-latin-ext.woff2` (19 400 B) | **Rubik** — Hubert & Fischer, Meir Sadan, Cyreal (variável) | **SIL Open Font License 1.1** | <https://fonts.google.com/specimen/Rubik> · <https://github.com/googlefonts/rubik> (`OFL.txt`) | Texto corrido e interface |
+
+O que cada licença exige, no que toca a nós: as duas permitem embarcar num app
+pago; a OFL proíbe **vender a fonte sozinha** e pede que uma versão
+**modificada** troque o nome reservado — subset por unicode-range não é
+modificação de desenho, e o nome de família é mantido; a Apache pede que o
+texto da licença acompanhe a redistribuição do código (o repositório é público
+e este arquivo aponta para ele). Os arquivos não têm hash registrado aqui:
+**sem hash registrado** — a régua de integridade deles é o próprio git.
+
+### Silkscreen (via npm)
+
 - **Silkscreen** — Jason Kottke, licença **SIL Open Font License 1.1** (livre
   para uso comercial, inclusive embarcada em app pago). Entra pelo npm
   (`@fontsource/silkscreen`, `OFL-1.1`), não por download avulso, para que a
@@ -178,3 +202,61 @@ aberta** — não como cumprida por presunção.
   em texto corrido (guia, glossário, relatório diário, falas do pet) — bitmap
   em caixa alta destrói legibilidade em parágrafo, e em português os acentos
   ficam colados no teto da caixa.
+
+## Arte gerada por IA — procedência por lote
+
+Registro pedido pelo dono em 21/09/2026 (pergunta #26 do QA geral), no mesmo
+espírito da tabela de áudio: **procedência é auditável, originalidade não.** As
+regras que valem para toda linha: nenhum prompt cita franquia nem nome de
+personagem registrado (`src/utils/sprites.dungeonRoster.test.ts` varre o
+bundle); nenhum prompt contém texto do usuário exceto o do sprite pago, que é
+higienizado e delimitado (`src/utils/oracle.ts`); a arte curada foi vista por
+gente antes de entrar — o único caminho **sem** revisão humana é o sprite gerado
+sob demanda para a conta paga.
+
+Onde não há hash por arquivo, a coluna diz **sem hash registrado** — os lotes
+têm dezenas a centenas de arquivos e a integridade deles é o git; registrar
+hash um a um aqui seria uma tabela que ninguém mantém.
+
+| Família (pasta) | Qtd | Modelo · provedor | Data aproximada | Onde o prompt vive | Hash |
+|---|---|---|---|---|---|
+| Sprite da criatura PAGA (11 formas, gerado por conta) | sob demanda | Higgsfield **Soul** (`platform.higgsfield.ai`), fallback Gemini `gemini-2.5-flash-image` | contínuo, desde ago/2026 | `src/utils/oracle.ts` (`composeSpritePrompts`, duas variantes) → `functions/api/generate-sprite.js` | não se aplica (por conta, no nosso armazenamento) |
+| Árvore genérica do jogador (`soulmon/rookie.png` … `ultra.png`, 11 · 384²) + `android/res/drawable/sprite_*` | 11 + 11 | Higgsfield (mesmo pipeline do oráculo, seed fixo) | ago/2026 | `src/utils/oracle.ts` | sem hash registrado |
+| Linhas prontas (`soulmon/lines/`, 9 linhas × 4 estágios · 256²; `lines/full/` kaelen/orrin/thalindra nas 11 formas) | 36 + 29 | Higgsfield (Soul) para kaelen/orrin/thalindra e ignar/lumel/serah; Igni/Nautilu/Astrase gerados em `_gemini_out/branches/` e recortados com `image_background_remover` (Higgsfield, 15/09) | ago/2026; +3 linhas em 15/09/2026 | `src/utils/oracle.ts`; rodada de 15/09 em `docs/ASSETS-A-GERAR.md` | sem hash registrado |
+| Ícones-ficha das linhas (`lines/icons/`, 72) | 72 | **derivados** dos 256² por script (não é geração) | 21/09/2026 | `scripts-arte/derivar-rodada2.mjs` | sem hash registrado |
+| Cenários (`soulmon/bg/` 15; `src/assets/backgrounds/` 11 + 28 thumbs derivadas) | 26 (+28) | `nano_banana_pro` via Higgsfield CLI (rodada 15/09); os mais antigos (`bg/dungeon-1..5`, `tournament`, `bg-gameboy/matrix/ocean`) no Gemini (navegador) | ago/2026 e 15/09/2026 | `docs/ASSETS-A-GERAR.md`, `scripts-arte/hf-gen.mjs`; antigos em `docs/BACKLOG-ARTE-GERAR.md` | sem hash registrado |
+| Decoração (`src/assets/decor/`, 33) | 33 | 1ª leva: Higgsfield (`docs/BRIEF-ARTE-DECORACAO.md`); 14 refeitas no Gemini (navegador) em estilo arcano-tech | 12/08/2026 → refeitas 08/09/2026 | `docs/BRIEF-ARTE-DECORACAO.md`, `docs/PROMPT-ARTE-ARCANO-TECH.md`, `_gemini_out/arcano/` | sem hash registrado |
+| Sonhos (`soulmon/dreams/`, 30 · 96²) | 30 | Gemini (navegador), folha única fatiada | ago/2026 | `docs/BACKLOG-ARTE-GERAR.md`, `docs/HANDOFF-ARTE-GEMINI.md` | sem hash registrado |
+| Aventuras da noite (`soulmon/adventures/`, 24 · 96²) | 12 + 12 | 12 comuns no Gemini (navegador); **12 raras/lendárias desenhadas por script, sem IA** (`scripts/aventura-desenhar.mjs`) | 08/09/2026 | `docs/HANDOFF-ARTE-GEMINI.md` (A20) | sem hash registrado |
+| Itens (`soulmon/items/`, 13), berço (`nest-*`, 3), mãos do PPT, cocô | ~20 | Gemini (navegador) | ago/2026 | `docs/BACKLOG-ARTE-GERAR.md` (A1, A8, A11) | sem hash registrado |
+| FX de cuidado/batalha (`soulmon/fx/`, 12) e spritesheets (`anim-*`, 9) | 21 | Gemini (navegador) — `_gemini_out/entrega2`, `entrega4` | ago–set/2026, instalados 15/09/2026 | `docs/BACKLOG-ARTE-GERAR.md`; `_gemini_out/entrega*/INSTALAR.md` | sem hash registrado |
+| Dino Runner (`soulmon/dino/`, 6) | 6 | Gemini (navegador) — `_gemini_out/entrega4` | set/2026, instalado 15/09/2026 | idem | sem hash registrado |
+| FX de ataque por elemento (`soulmon/fx-ataque/`: 17 base × 6 = 102; 136 derivados × 6 = 816; auras 96² derivadas) | 918 (+154) | Gemini (navegador) — `_gemini_out/entrega6`; derivados por recolorização de script | set/2026, instalados 15/09/2026 | `src/assets/soulmon/fx-ataque/INSTALAR.md` | sem hash registrado |
+| Ícones de elemento (`soulmon/elementos/`, 137) e sigilos (`soulmon/sigilos/`, 45) | 182 | vindos do repo irmão `D:\Soulmon\Class-System\assets` (procedência registrada lá; gerados por IA na mesma conta) | elementos ago/2026; sigilos 15/09/2026 | `Class-System/assets` | sem hash registrado |
+| HUD e emblemas (`soulmon/hud/`, `soulmon/emblems/` 8, ícones de categoria 8, glifos do overlay) | ~25 | `gpt_image_2` via Higgsfield CLI (alfa real, `--background transparent`) | 15/09/2026 | `docs/BACKLOG-ARTE-GERAR.md` (A5, A6, A21), `docs/ASSETS-A-GERAR.md` | sem hash registrado |
+| Marca (`src/assets/brand/final/`, favicons, launcher, splash, `mascot-raven`, `intro.mp4`) | ~10 | exploração Higgsfield/Gemini (jul/2026); marca final vetorizada por script | jul–set/2026 | `scripts-arte/vetorizar-pixel.mjs`, `marca-derivados.mjs`; candidatos em `brand/mascot-candidates/` | sem hash registrado |
+| Vídeo da cerimônia (`src/assets/video/evolution-bg.mp4`) | 1 | Higgsfield (vídeo) | ago/2026 | sem prompt registrado no repo | sem hash registrado |
+
+**Termos que valem para cada linha:**
+
+- **Higgsfield** — os mesmos de `## Áudio` acima: §4.4 uso comercial, sem
+  exclusividade, direito sobrevive ao cancelamento **se exportado** (todo asset
+  aqui foi exportado e está no git); §13.2 sem garantia de originalidade; o
+  **provedor do modelo de imagem** (`Soul`, `gpt_image_2`, `nano_banana_pro`)
+  é nomeado pela plataforma só pelo apelido do modelo — o mesmo buraco da §8
+  que o áudio já registra.
+- **Gemini (navegador, `gemini.google.com`)** — Termos de Serviço do Google +
+  Termos Adicionais de IA Generativa: o usuário é responsável pelo conteúdo
+  gerado, uso comercial não é vedado, sem garantia de originalidade, e o Google
+  não reivindica propriedade sobre a saída. **Versão dos termos na geração:
+  não registrada** — lacuna igual à coluna do áudio, a fechar quando o próximo
+  lote sair.
+- **Derivados por script** (ícones das linhas, thumbs, auras 96², recolorizações,
+  12 aventuras desenhadas, vetorização da marca) **não são geração**: herdam a
+  procedência da fonte.
+
+O que continua **sem linha**, de propósito: dependências npm
+(`astronomy-engine`, `@capgo/capacitor-pedometer` etc.) — o dono decidiu em
+21/09/2026 que o escopo deste arquivo é arte, som e fontes; a licença das deps
+vive no `package.json` de cada uma.
+

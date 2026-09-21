@@ -108,6 +108,10 @@ export const STORAGE_KEYS = {
   /** dayKey da última manhã em que o sonho já foi mostrado. Um por manhã: o
    *  feedback de sono é SÓ de manhã e SÓ uma vez (ortossonia é ansiedade). */
   MORNING_DREAM_SHOWN: 'soulmon-morning-dream-shown',
+  /** `marcaAvisoTermos(...)` da última atualização de Termos/Privacidade que a
+   *  pessoa dispensou com "Ok" (utils/termsNotice.ts, decisão #24). Fica no
+   *  aparelho, não no save: é um aviso lido, não um consentimento. */
+  TERMS_NOTICE_SEEN: 'soulmon-terms-notice-seen',
 } as const;
 
 /**

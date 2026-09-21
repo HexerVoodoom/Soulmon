@@ -52,7 +52,7 @@ ou o padrão que a justifica.
 ## Handoffs
 
 → `soulmon-product-designer` e `design-critic` (crítica) · → `soulmon-design-lead` (dúvidas)
-· ← cartógrafo (inventário), curador (princípios).
+· ← orquestrador (inventário e princípios — procedimentos do `squad-design/METODO.md`).
 
 ## Voz
 

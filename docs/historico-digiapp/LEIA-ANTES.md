@@ -1,7 +1,8 @@
 # ⚰️ Documentação do DigiApp — histórico, NUNCA verdade
 
-**Nada nesta pasta descreve o Soulmon de hoje.** São oito documentos herdados
-do fork, aposentados em 07/09/2026. Ficam versionados porque as revisões de
+**Nada nesta pasta descreve o Soulmon de hoje.** São os documentos herdados
+do fork: onze aposentados em 07/09/2026 e mais dez fósseis tirados da RAIZ do
+repo em 21/09/2026 (QA GERAL #39 — ver a seção no fim). Ficam versionados porque as revisões de
 agosto os citam e porque saber o que o produto já foi tem valor — mas ler
 qualquer um deles como instrução leva a decidir errado.
 
@@ -37,8 +38,26 @@ Um agente que lesse a tabela da esquerda implementaria a tabela de HP errada e
 | Plano e benchmark | `docs/PLANO-EVOLUCAO.md` · `docs/PLANO-MELHORIAS.md` |
 | Motor de tarefas | `docs/PLANO-TAREFAS.md` |
 | Separação do fork | `docs/SEPARACAO-DIGIAPP.md` |
-| Telas | `docs/INVENTARIO-TELAS.md` |
+| Telas | `docs/manual/03-FLUXO-DE-TELAS.md` (⚰️ `docs/INVENTARIO-TELAS.md` é registro de 19/08/2026) |
 
 E a regra que vale para todo doc, não só para estes: **a régua viva é o teste,
 não o documento.** Onde houver conflito entre uma tabela em markdown e um
 arquivo em `src/`, o arquivo ganha — e o documento está com defeito.
+
+## Fósseis da raiz, movidos em 21/09/2026 (QA GERAL #39)
+
+Ficavam na raiz do repo sem lápide e eram o primeiro arquivo que o GitHub
+mostrava. Nenhum era referenciado por `vite.config.ts`, `index.html`,
+`package.json` ou `.github/workflows` (`grep -rl` em 21/09/2026 → 0); as
+cópias SERVIDAS moram em `public/` (`manifest.json`, `browserconfig.xml`,
+`screenshots/`, `sw.js`).
+
+| Arquivo | O que mente |
+|---|---|
+| `README-digiapp.md` | "DigiApp Design Prototype", link do Figma do fork. O `README.md` vivo da raiz aponta para `docs/manual/00-MAPA.md` |
+| `PWA-SETUP.md` · `PWA-CHECKLIST.md` | theme `#2bff95`, "Service Worker (opcional)" pendente — `public/sw.js` está em `CACHE_VERSION` v155 |
+| `PROJETO.md` | "DigiMon", `DIGIAPP_SAVES` canônico, "Cloud save: Supabase" — o cloud save é KV via `functions/api/save.js` |
+| `PLANO_MELHORIAS.md` | branch `claude/digiapp-code-improvements-*` e módulos MOD-01…; não confundir com `docs/PLANO-MELHORIAS.md` (vivo) |
+| `index.html.example` · `manifest.webmanifest` · `registerSW.js` · `icon-template.svg` · `browserconfig.xml` | receita PWA do DigiApp (vite-plugin-pwa); o app usa `public/manifest.json` + `public/sw.js` escrito à mão |
+
+`screenshots/` da raiz foi apagada (byte a byte igual a `public/screenshots/`, `md5sum` em 21/09/2026).

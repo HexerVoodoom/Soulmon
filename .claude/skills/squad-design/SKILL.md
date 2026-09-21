@@ -1,6 +1,6 @@
 ---
 name: squad-design
-description: "SQUAD-DESIGN — a squad que redesenha o Soulmon em DUAS fases: primeiro wireframes (estrutura, hierarquia, estados, em cinza) de todas as telas, depois a identidade visual já medida. 2 agentes novos (design-curador-padroes, design-wireframer) + 6 reusados (design-lead decide, cartógrafo mede, product-designer opina, design-critic critica bloqueante, guarda-linha-vermelha veta, visual-designer aplica a identidade na Fase 2). Método W1–W10 e artefatos em docs/design/. Use quando: redesenhar telas, desenhar wireframes, rever hierarquia/fluxo de uma superfície, aplicar identidade sobre wireframe aprovado. Comandos: /squad-design [start | inventario | principios | desenhar <fluxo> | criticar <fluxo> | decidir | identidade <fluxo> | status]. NÃO decide regra de produto, NÃO escreve código de tela (→ staff-frontend, depois), NÃO reabre a direção de arte 'O Visor' (decidida pelo dono)."
+description: "SQUAD-DESIGN — a squad que redesenha o Soulmon em DUAS fases: primeiro wireframes (estrutura, hierarquia, estados, em cinza) de todas as telas, depois a identidade visual já medida. 1 agente próprio (design-wireframer, enquanto houver fluxo `a desenhar`) + 5 reusados (design-lead decide, soulmon-product-designer opina, design-critic critica bloqueante, guarda-linha-vermelha veta, visual-designer aplica a identidade na Fase 2); inventário e princípios são procedimentos do METODO.md (ex-cartógrafo e ex-curador, 21/09/2026). Método W1–W10 e artefatos em docs/design/. Use quando: redesenhar telas, desenhar wireframes, rever hierarquia/fluxo de uma superfície, aplicar identidade sobre wireframe aprovado. Comandos: /squad-design [start | inventario | principios | desenhar <fluxo> | criticar <fluxo> | decidir | identidade <fluxo> | status]. NÃO decide regra de produto, NÃO escreve código de tela (→ staff-frontend, depois; paridade Android/desktop/EN → soulmon-guarda-plataforma), NÃO reabre a direção de arte 'O Visor' (decidida pelo dono)."
 ---
 
 # SQUAD-DESIGN — Orquestrador
@@ -18,12 +18,12 @@ checkpoint da Fase 1.
 3. `docs/HANDOFF-WIREFRAMES.md` — o estado combinado com o dono.
 
 ## Comandos
-- **`start`** — inventário (cartógrafo) ∥ princípios (curador); depois `desenhar` fluxo a
+- **`start`** — inventário ∥ princípios (procedimentos do `METODO.md`, pelo orquestrador); depois `desenhar` fluxo a
   fluxo na ordem de frequência (W5), `criticar` cada um, `decidir`, checkpoint com o dono.
-- **`inventario`** — `soulmon-screen-cartographer` deriva a lista do `03-FLUXO` (não percorre
-  o app; mede o doc, que já cita o código).
-- **`principios`** — `design-curador-padroes` destila Mobbin + estudos + decisões em regras
-  por família de tela, cada uma com procedência (W8).
+- **`inventario`** — procedimento "Inventário de superfícies" do `METODO.md` (orquestrador):
+  deriva a lista do `03-FLUXO` e confirma no app rodando quando a pergunta é de contagem.
+- **`principios`** — `docs/design/PRINCIPIOS-DE-WIREFRAME.md` já existe; o comando só o
+  reabre para acrescentar regra, e toda linha nova cita procedência (W8, `METODO.md`).
 - **`desenhar <fluxo>`** — `design-wireframer` faz o canvas do fluxo (skill `design`, cinza,
   todo estado, rodapé com a pergunta da tela e o que sai). Um fluxo por despacho.
 - **`criticar <fluxo>`** — `soulmon-product-designer` (IA/fluxo) e `design-critic` (W1–W10,

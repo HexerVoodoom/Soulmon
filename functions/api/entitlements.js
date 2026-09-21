@@ -6,6 +6,15 @@
 //   GET  /api/entitlements?id=<saveId>          → { tier, credits, adsLeft }
 //   POST /api/entitlements?action=spend         { id, amount, reason }
 //   POST /api/entitlements?action=ad            { id }
+//   POST /api/entitlements?action=grant         { saveId }   ← CORTESIA (admin)
+//
+// SOBRE A CORTESIA (action=grant): é a única rota que concede tier pago sem
+// loja, e por isso não usa `authorizeSaveAccess` (que autentica o DONO DO
+// SAVE — e o dono do save é justamente quem não pode se dar o tier). Ela exige
+// `Authorization: Bearer <ENTITLEMENTS_ADMIN_KEY>`, e é FAIL-CLOSED no mesmo
+// padrão de `METRICS_ADMIN_KEY` em `metrics.js`: sem a variável, a rota NÃO
+// EXISTE (404, não 401 — 401 confirma o endpoint a quem sonda). O teto, a
+// idempotência e o "nunca crédito" moram em `_entitlements.js:grantCourtesy`.
 //
 // SOBRE O ANÚNCIO RECOMPENSADO (action=ad): um endpoint aberto que dá crédito
 // só porque o cliente pediu é farmável com um `curl` — o jogador ganharia a
@@ -21,10 +30,66 @@
 
 import {
   VALID_ID, publicView, spendCredits, grantAdReward, auditRefunds,
+  grantCourtesy, COURTESY_PROVIDER,
 } from './_entitlements.js';
 import { authorizeSaveAccess } from './_auth.js';
 import { isPlayPurchaseVoided, isSteamPurchaseVoided, isSteamOwnershipVoided } from './_billing.js';
+import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import { kv } from './_kv.js';
+
+/**
+ * Teto por IP na cortesia. Amortecedor contra sonda de chave (ver
+ * `_rateLimit.js` para o que isto NÃO é) — o dono roda isso 10 vezes numa
+ * tarde, não 60 por minuto.
+ */
+const GRANT_RATE = { limit: 10, windowMs: 60_000 };
+
+/**
+ * Compara em tempo (aproximadamente) constante. Cópia consciente de
+ * `metrics.js:secretEquals` — a função não é exportada de lá, e importar um
+ * handler de rota só para comparar string arrastaria a allowlist de eventos
+ * para dentro desta rota. Se virar uma terceira, vai para `_auth.js`.
+ */
+function secretEquals(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string' || a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+/** Log estruturado. NUNCA o saveId inteiro (deriva do e-mail) nem a chave. */
+function log(event, saveId, extra = {}) {
+  console.log(JSON.stringify({ event, saveIdPrefix: String(saveId).slice(0, 8), ...extra }));
+}
+
+/**
+ * A cortesia. Ordem das checagens é a do fail-closed: existe a rota? → taxa →
+ * chave → corpo. O saveId só é lido DEPOIS da chave, para que uma chamada sem
+ * chave não descubra nem se o id é válido.
+ */
+async function handleGrant(request, env) {
+  if (!env?.ENTITLEMENTS_ADMIN_KEY) return json({ error: 'Not found' }, 404);
+
+  const gate = takeToken('entitlements-grant', clientKey(request), GRANT_RATE);
+  if (!gate.ok) return tooManyRequests(gate.retryAfter, CORS);
+
+  const header = request.headers.get('Authorization') ?? '';
+  const given = header.startsWith('Bearer ') ? header.slice('Bearer '.length).trim() : '';
+  if (!secretEquals(given, env.ENTITLEMENTS_ADMIN_KEY)) return json({ error: 'Unauthorized' }, 401);
+
+  if (!kv(env)) return json({ error: 'Storage not bound' }, 500);
+  const body = await request.json().catch(() => null);
+  const saveId = body?.saveId;
+  if (!saveId || !VALID_ID.test(saveId)) return json({ error: 'Invalid save ID' }, 400);
+
+  const r = await grantCourtesy(env, saveId);
+  if (!r.ok) {
+    log('entitlements.courtesy.refused', saveId, { reason: r.reason, count: r.count, max: r.max });
+    return json({ ok: false, reason: r.reason, count: r.count, max: r.max }, 429);
+  }
+  log('entitlements.courtesy.granted', saveId, { duplicate: r.duplicate, count: r.count, max: r.max });
+  return json({ ok: true, duplicate: r.duplicate, count: r.count, max: r.max, ...publicView(r.ent) });
+}
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -55,6 +120,10 @@ export async function onRequestGet({ request, env }) {
   // passa — e é justamente quem usa o app que precisa perder o benefício
   // reembolsado. Se a loja não responder, o benefício é MANTIDO.
   const { ent } = await auditRefunds(env, saveId, order => {
+    // Cortesia não tem loja para perguntar; `false` = válida, mantém. Sem esta
+    // linha ela cairia no ramo da Play com `purchaseToken: null`, e a resposta
+    // dependeria de como `_billing.js` trata um token que nunca existiu.
+    if (order.provider === COURTESY_PROVIDER) return Promise.resolve(false);
     if (order.provider !== 'steam') {
       return isPlayPurchaseVoided(env, { productId: order.productId, purchaseToken: order.purchaseToken });
     }
@@ -71,6 +140,11 @@ export async function onRequestGet({ request, env }) {
 export async function onRequestPost({ request, env }) {
   const url = new URL(request.url);
   const action = url.searchParams.get('action');
+
+  // Antes de tudo — inclusive do 500 de KV: a cortesia autentica o ADMIN, não
+  // o dono do save, e sem a chave no ambiente ela não existe. Ver a nota no topo.
+  if (action === 'grant') return handleGrant(request, env);
+
   if (!kv(env)) return json({ error: 'Storage not bound' }, 500);
 
   const body = await request.json().catch(() => null);

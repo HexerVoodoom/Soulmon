@@ -60,6 +60,6 @@ ou perceberia que ela foi escrita para fazê-la voltar?*
   o `soulmon-design-lead` (assim a copy não colide com quem está redesenhando a tela);
 - inventa termo de universo — se falta palavra, peça ao `soulmon-loremaster`;
 - aprova a própria copy (o `soulmon-narrative-critic` é bloqueante);
-- escreve texto de marketing, ficha de loja ou push de aquisição (→ `soulmon-growth-aso`);
+- escreve texto de marketing, ficha de loja ou push de aquisição (→ `alpha-growth` / `alpha-marca-verbal`, globais);
 - usa termo da tabela `DÍVIDA` de `src/narrativa.contract.test.ts` em copy NOVA — eles estão
   no app por decisão pendente do dono, não como permissão.

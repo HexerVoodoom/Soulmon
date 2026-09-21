@@ -11,7 +11,7 @@
 > dado pessoal". Cada linha abaixo aponta para o código que a sustenta, então dá
 > para reconferir em vez de acreditar.
 >
-> **Atualizado em:** 08/09/2026 · **Confira antes de enviar** se nada mudou desde
+> **Atualizado em:** 21/09/2026 (§2.7 e §3b) · **Confira antes de enviar** se nada mudou desde
 > essa data — a fonte viva é `public/privacidade.html` e o inventário de eventos
 > em `functions/api/metrics.js`.
 
@@ -180,14 +180,20 @@ lado certo para errar.
 | Tipo do Google | Coletado? | Observação |
 |---|---|---|
 | Localização aproximada ou precisa | ❌ Não | Nenhuma permissão de localização. `ACTIVITY_RECOGNITION` **não** é localização: ela dá acesso ao contador de passos, não a onde você esteve |
-| **IDs do dispositivo ou outros IDs** | ❌ Não | O identificador das métricas é **gerado no aparelho, aleatório, sem relação com e-mail nem com o save**, e o servidor o descarta antes de gravar (`functions/api/metrics.js`). Não é ID de publicidade nem ID de dispositivo |
+| **IDs do dispositivo ou outros IDs** | ✅ **Sim** | **Token do FCM** (app Android, `functions/api/fcm-subscribe.js`, chaves `fcm:*`) e **endpoint do Web Push** (PWA/navegador, `functions/api/subscribe.js`, chaves `push:*`). Finalidade: **funcionalidades do app** (entregar lembretes). **Opcional** — só existe com as notificações ligadas e é apagado ao desligá-las ou ao excluir a conta pelo app. Não compartilhado (o FCM é o transporte, não um destinatário). O identificador das métricas continua **fora** desta linha: é gerado no aparelho, aleatório, e o servidor o descarta antes de gravar (`functions/api/metrics.js`) |
 | Registros de erro / diagnóstico | ❌ Não | Não há Crashlytics, Sentry ou similar |
 
-> A inscrição de push guarda um **token do FCM**, que é um identificador de
-> instalação. Ele existe só enquanto as notificações estiverem ligadas e morre
-> ao desligá-las. Se o revisor questionar, a resposta honesta é essa — mas o
-> token do FCM não é "ID do dispositivo" na taxonomia do Google, e a
-> categoria correta já está coberta pelo consentimento de notificação.
+> **Por que "sim" (decisão do dono, 21/09/2026 — pergunta #21 do QA geral).**
+> Até essa data este documento dizia "não" e argumentava que o token do FCM
+> "não é ID do dispositivo na taxonomia do Google" — **sem fonte**. Um token
+> de push é um identificador estável por instalação que sai do aparelho e
+> fica guardado no nosso servidor; a zona é cinzenta, e o lado seguro de errar
+> numa ficha da Play é **declarar**. Subdeclarar é motivo de remoção;
+> sobredeclarar, no máximo, uma linha a mais na ficha pública. Se o revisor
+> perguntar: o token existe só enquanto as notificações estiverem ligadas,
+> não é ID de publicidade, e não é cruzado com e-mail nem com o save
+> (`account.js` diz por escrito que o servidor **não consegue** achar as
+> inscrições a partir da conta).
 
 ---
 
@@ -205,9 +211,10 @@ lado certo para errar.
 - Outras ações geradas pelo usuário (o save)
 - **Informações de exercícios físicos** *(passos — opcional)* ← **não esqueça**
 - **Informações de saúde** *(humor + texto livre — ver 2.6)*
+- **IDs do dispositivo ou outros IDs** *(token FCM / endpoint Web Push — opcional; ver 2.7, decisão de 21/09/2026)*
 
 **Não coletado:** localização, contatos, fotos, vídeo, arquivos,
-calendário, IDs de dispositivo/publicidade, diagnóstico, histórico de pesquisa,
+calendário, ID de publicidade, diagnóstico, histórico de pesquisa,
 apps instalados, dados de pagamento, documentos.
 
 > ⚠️ **`áudio` saiu desta lista em 09/09/2026, e o motivo importa.** A tabela do
@@ -228,6 +235,36 @@ apps instalados, dados de pagamento, documentos.
 > vai para o formulário.
 
 ---
+
+## 3b. Conteúdo gerado por IA — o que é, e onde está declarado
+
+> Decisão do dono, 21/09/2026 (pergunta #22 do QA geral): **declarar** na ficha
+> da loja e avisar dentro do app. O repo não documenta o texto exato da regra
+> da Play/Steam sobre conteúdo de IA; a postura é a mesma da §2.7 — declarar
+> o que existe em vez de apostar que a regra não alcança.
+
+| O que o jogador vê | Como é gerado | Onde no código | Revisão humana? |
+|---|---|---|---|
+| **Sprite da criatura** (as 11 formas do jogador pago; os personagens de demonstração foram gerados antes e revisados) | Higgsfield (modelo Soul), fallback Gemini `gemini-2.5-flash-image` | `functions/api/generate-sprite.js`, prompts em `src/utils/oracle.ts` | Não, no caminho pago (gerado sob demanda por conta) |
+| **Chat da criatura** (texto e, com microfone, transcrição do recado) | Groq `llama-3.1-8b-instant`, personalidade via `aiSettings` | `functions/api/chat.js` (cláusula SAFETY), `src/utils/chatSafety.ts` (ponte local, lista curada) | Não — em tempo real |
+| **Sons** — 3 eventos (`evolve`, `degenerate`, `task-complete`) + 2 camadas da trilha | Higgsfield CLI `seed_audio` / `sonilo_music` | `public/sounds/`, manifesto em `src/utils/sonsAssets.ts` | Sim — gerados uma vez, ouvidos e instalados (S16) |
+| Arte estática do app (cenários, decoração, sonhos, aventuras, FX, ícones dentro do visor) | Gemini (navegador) e Higgsfield (`gpt_image_2`, `nano_banana_pro`) | `src/assets/`, mapas `src/utils/*Art.ts` | Sim — gerada uma vez, curada e instalada |
+
+**Onde isso está declarado, e as três têm que dizer a mesma coisa:**
+
+1. **Ficha da Play** — na seção de conteúdo gerado por IA do Play Console
+   (declarar sprite, chat e sons; a arte estática curada é indistinguível de
+   arte encomendada para efeito de ficha, mas nada impede citá-la).
+2. **Aviso in-app** — **Configurações › Sobre**, texto curto PT/EN: o chat é
+   escrito por IA sem revisão humana e não é serviço de emergência; a imagem da
+   criatura e os sons de marco/evolução são gerados por IA.
+3. **Termos §8** (`public/termos.html`, PT e EN, versão 2026-09-21) — a
+   cláusula completa: modelo sem revisão humana, não é aconselhamento nem
+   emergência, canais de ajuda fixos (CVV 188 / findahelpline.com), sprite e
+   sons gerados por IA.
+
+A procedência asset a asset (modelo, provedor, data, onde vive o prompt) mora
+em `docs/Attributions.md`, não aqui.
 
 ## 4. O que NÃO declarar por engano
 

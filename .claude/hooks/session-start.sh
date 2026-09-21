@@ -41,8 +41,8 @@ cat <<BRIEF
 **Protocolo obrigatório desta sessão:** antes de trabalhar em qualquer assunto,
 invoque a skill \`soulmon-coordenador\` (\`/soulmon start\`). Ela lê
 \`docs/manual/00-MAPA.md\`, \`docs/STATUS.md\` e \`CLAUDE.md\`, roteia o pedido
-para o orquestrador certo (maestro · guardas · squad-som · squad-docs ·
-prod-squad · design) e, ao fechar, garante os portões, o bloco no STATUS, o
+para o orquestrador certo (guardas · squad-som · squad-narrativa · squad-docs ·
+squad-design · squad-arte · operador · squad-alpha global) e, ao fechar, garante os portões, o bloco no STATUS, o
 PR + merge e a sincronização do manual (\`/manter-docs\`). Se a linha "docs:"
 acima disser DEFASADO, a sincronização vem ANTES do trabalho novo.
 BRIEF

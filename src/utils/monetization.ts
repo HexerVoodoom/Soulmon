@@ -128,6 +128,11 @@ export const FULL_UNLOCK_SKU = 'soulmon.unlock.full';
  *  entao quem guarda a igualdade e `src/utils/publishedPrice.test.ts`, que
  *  reprova a divergencia em vez de confiar neste comentario. */
 export const FULL_UNLOCK_PRICE_LABEL = 'R$ 29,90';
+/** Preco de referencia em dolar, so para os Termos EM INGLES (decisao do dono
+ *  #25, 21/09/2026). Valor de `docs/PLANO-PRODUTO.md` Parte 3 (R$ 29,90 /
+ *  US$ 6,99) — confirmar no Play Console antes da 1a venda. O app NUNCA
+ *  cobra por este rotulo: quem cobra e o Play, em moeda local. */
+export const FULL_UNLOCK_PRICE_LABEL_USD = 'US$ 6.99';
 
 // ── Anúncio recompensado — DESLIGADO (decisão D-13, 25/08/2026) ─────────────
 // O caminho anúncio → moeda premium → reroll aleatório fica FECHADO: com o

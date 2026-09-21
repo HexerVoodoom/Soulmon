@@ -4,9 +4,9 @@ Este arquivo é o **estado durável** do `docs/PLANO-MELHORIAS.md`. Ele existe
 porque um agente não tem memória entre sessões: sem registro em disco,
 "o guarda garante que foi implementado" é uma frase, não um mecanismo.
 
-**São 86 pacotes (WP)** — 36 na criação, +14 na rodada 3, **+36 na rodada 4** (estudo pré-Mobbin, 03/09/2026 — tabela da seção 14.3 do plano, mesma forma de linhas da seção 13) (dossiê Mobbin, 02/09/2026); antes disso, não 30 — o número "30" apareceu no primeiro commit do
+**São 87 pacotes (WP)** (`grep -o 'WP[0-9]\+\.[0-9]\+' docs/PLANO-MELHORIAS.md | sort -u | wc -l` → 87, em 21/09/2026; ⚰️ este parágrafo disse "86" de 03/09 a 21/09/2026, contando sem o WP5.9 que nasceu de D12) — 36 na criação, +14 na rodada 3, **+36 na rodada 4** (estudo pré-Mobbin, 03/09/2026 — tabela da seção 14.3 do plano, mesma forma de linhas da seção 13) (dossiê Mobbin, 02/09/2026); antes disso, não 30 — o número "30" apareceu no primeiro commit do
 plano e estava errado; conferido com
-`grep -oE '^### WP[0-9]+\.[0-9]+' docs/PLANO-MELHORIAS.md | wc -l` → **36** (as seções da criação) **mais** os 14 pacotes da rodada 3, que vivem como LINHAS da tabela da seção 13 e não como seções: `grep -oE '^\| WP[0-9]+\.[0-9]+ ' docs/PLANO-MELHORIAS.md | sort -u | wc -l` → 16 na seção 13.5 (dos quais 2, WP3.1 e WP3.3, são revisões) e 36 na seção 14.3 (rodada 4). ⚠️ A tabela 14.1 também começa linhas com `| WPx.y |` para pacotes EXISTENTES — quem contar só pelo prefixo pega 60 e erra; conte por seção. Conferência hoje: 36 + 14 + 36 = **86**. ⚠️ Até 03/09/2026 este parágrafo citava só o primeiro comando e afirmava 50 — o guarda da medição rodou o comando, obteve 36 e apontou a contradição (`estudo/medicao.md`). O número estava certo; o comando, não.
+`grep -oE '^### WP[0-9]+\.[0-9]+' docs/PLANO-MELHORIAS.md | wc -l` → **36** (as seções da criação) **mais** os 14 pacotes da rodada 3, que vivem como LINHAS da tabela da seção 13 e não como seções: `grep -oE '^\| WP[0-9]+\.[0-9]+ ' docs/PLANO-MELHORIAS.md | sort -u | wc -l` → 16 na seção 13.5 (dos quais 2, WP3.1 e WP3.3, são revisões) e 36 na seção 14.3 (rodada 4). ⚠️ A tabela 14.1 também começa linhas com `| WPx.y |` para pacotes EXISTENTES — quem contar só pelo prefixo pega 60 e erra; conte por seção. Conferência de 03/09/2026: 36 + 14 + 36 = 86; +1 (WP5.9, D12, 06/09/2026) = **87**. ⚠️ Até 03/09/2026 este parágrafo citava só o primeiro comando e afirmava 50 — o guarda da medição rodou o comando, obteve 36 e apontou a contradição (`estudo/medicao.md`). O número estava certo; o comando, não.
 
 ## Como funciona a guarda
 
@@ -68,12 +68,51 @@ rápido; a fonte são os arquivos de `ledger/`.
 | Área | PROPOSTO | BLOQUEADO | EM CURSO | IMPLEMENTADO | VERIFICADO | RECUSADO |
 |---|---|---|---|---|---|---|
 | medição (13) | — | — | — | **1** (0.1, falta a chave) | **12** | — |
-| nascimento (17) | — | — | — | **1** (1.2, falta a régua da bio) | **16** | — |
+| nascimento (17) | — | — | — | **1** (1.2, falta a régua da bio) | **15** | **1** (1.14 — premissa apagada em `ff3e48e1`/`2f264307`) |
 | constância (15) | — | — | — | **1** (2.6, requer APK) | **13** | **1** (2.1, por D3) |
-| vínculo (11) | — | — | — | **1** (3.1, falta a memória de sessão) | **10** | — |
+| vínculo (11) | — | — | — | **2** (3.1, falta a memória de sessão; 3.4, falta o win-back) | **9** | — |
 | permanência (21) | — | — | — | **2** (4.6 abismo, 4.7 fiação) | **18** | **1** (4.4) |
 | sustento (10) | — | — | — | **2** (0.6 e 5.8, requerem APK) | **8** | — |
-| **Total (87)** | **ZERO** | **ZERO** | — | **5** | **79** | **3** |
+| **Total (87)** | **ZERO** | **ZERO** | — | **9** | **75** | **3** |
+
+> ### ⚠️ 21/09/2026 — QA GERAL: dois carimbos falsos e oito comandos de aceite mortos
+>
+> Fonte: `docs/reviews/2026-09-21-qa-geral/09-guardas.md` §1, cada item RODADO de novo
+> em 21/09/2026 antes de escrever aqui. Editado à mão nesta rodada (QA GERAL, tarefa 7)
+> porque o `/guarda-soulmon completa` não roda desde 07/09/2026; a tabela acima foi
+> refeita somando as linhas (antes dizia 5/79/3 e as linhas somavam 8/77/2).
+>
+> **Carimbos falsos (estado real):**
+> - **WP1.14** `VERIFICADO` → **`RECUSADO`**: o bloco `{linkSent ? (` com o `<img>` saiu em
+>   `ff3e48e1` (portão de identidade) e o estado `linkSent` inteiro em `2f264307` (login
+>   Google/e-mail+senha). `grep -c linkSent src/components/SoulmonOnboarding.tsx` → 0; sobra
+>   o comentário órfão "Link de acesso enviado". A premissa (link mágico) não existe mais.
+> - **WP3.4** `VERIFICADO` → **`IMPLEMENTADO`** (fatia 3 aberta): (1) fonte única OK
+>   (`grep -c 'passou pra dizer oi' src/components/NotificationManager.tsx` → 0); (2) dedup
+>   PWA×APK OK (`41bdefda`); (3) **win-back**: `grep -rn -iE 'win-?back' src functions workers`
+>   (sem testes) → 0; `grep -c refreshedAt workers/push-scheduler.js` → 0. Mesmo padrão do WP3.1.
+>
+> **Comandos de aceite que apontavam para símbolo/arquivo inexistente** (o pacote está
+> feito; o comando é que mentia). Forma nova: `caminho` + SÍMBOLO, conferida por grep:
+>
+> | WP | Comando morto | Comando vivo (rodado em 21/09/2026) |
+> |---|---|---|
+> | WP1.17 | `node --test functions/api/_pushCopy.test.js` (arquivo não existe) | `npx vitest run workers/pushCopy.parity.test.js`; `grep -c ageDays functions/api/_pushCopy.js` → 3 |
+> | WP2.6 | `plugins/DigiWidgetPlugin.kt` + `grep -c constancy_pct → 0` | arquivo é `android/app/src/main/java/com/hexervoodoom/soulmon/plugins/SoulmonWidgetPlugin.kt`; as chaves aparecem só em `editor.remove(...)` (exceção da #20 em `vetos.md`, 21/09/2026); régua: `npx vitest run src/plugins/widgetSemCobranca.contract.test.ts` |
+> | WP2.14 | `RARE_CHEER_RATE` em `src/types/taskModel.ts` (→ 0) | `grep -n 'RARE_CHEER_RATE =' src/utils/petVoice.ts` → `0.05` |
+> | WP3.5 | `playChirp` em `src/utils/sounds.ts` (→ 0) | `grep -n 'export function playPresence' src/utils/sounds.ts` → 1 (bloco "WP3.5 — O SOM DE PRESENÇA") |
+> | WP4.8 | `src/utils/shareCard.ts` (não existe) | `ls src/components/MemoriesCard.tsx`; `grep -c MemoriesCard src/components/DailyReportModal.tsx` → 2 |
+> | WP4.21 | `grep -n blur src/components/EvolutionPath.tsx` (→ 0) | `grep -n 'silhouette=' src/components/EvolutionPath.tsx` → 1 (`silhouette={hidden && …}`; a silhueta é por `mask-image`, não `blur`) |
+> | WP5.6 | `! grep -q 'Reroll liberado'` (a frase sobrevive como comentário C-S1) | `grep -c 'cresce porque você cresce' src/components/UnlockAccountModal.tsx` → 1; `grep -n 'Reroll liberado' src/components/UnlockAccountModal.tsx` só dentro de `{/* C-S1 … */}` |
+> | WP5.9 | `grep -c 'mesmo lugar' → 0` (→ 1 hoje, em comentário) | `grep -n 'mesmo lugar' src/components/UnlockAccountModal.tsx` → 1, e é a lápide `// mesmo lugar", como se fosse equivalência`; a string do jogador não contém a frase |
+>
+> **WP4.14** continua `VERIFICADO` mas o comando `grep -q visit LibraryPage.tsx community.js`
+> passa por OR (`grep -c visit functions/api/community.js` → 0): a régua real é o bloco
+> "WP4.14 — A CRIATURA É VISITÁVEL" em `src/components/PlayerDetailModal.tsx`.
+>
+> Os arquivos-fonte em `ledger/<guarda>.md` **não** foram tocados nesta rodada (são de
+> outros donos); a linha de cada WP lá continua com o comando velho até o guarda dono
+> rodar `/guarda-soulmon completa` e colar a saída.
 
 > ### ⚠️ 07/09/2026 — a auditoria de alinhamento, e o que ela achou no PRÓPRIO ledger
 >

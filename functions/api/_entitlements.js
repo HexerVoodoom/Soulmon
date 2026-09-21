@@ -175,14 +175,35 @@ export async function writeEntitlement(env, saveId, ent) {
   return ent;
 }
 
+/**
+ * De onde veio o tier pago em vigor: o `provider` da compra mais recente que
+ * concedeu `paid` e não foi desfeita (`play`/`steam`/`courtesy`). `null` para
+ * conta sem tier pago. Existe porque a cortesia (`grantCourtesy`) precisa ser
+ * DISTINGUÍVEL de uma compra de verdade — no painel do dono, no `curl` de
+ * conferência e na leitura que decide se um "vínculo" medido veio de quem
+ * pagou ou de quem ganhou. `orderDetails` inteiro continua não saindo.
+ */
+export function paidProviderOf(ent) {
+  const details = Array.isArray(ent?.orderDetails) ? ent.orderDetails : [];
+  for (let i = details.length - 1; i >= 0; i--) {
+    const o = details[i];
+    if (o && o.grantTier === 'paid' && !o.voided) return typeof o.provider === 'string' ? o.provider : null;
+  }
+  return null;
+}
+
 /** Visão pública (o que o cliente pode saber) do entitlement. */
 export function publicView(ent) {
   const sameDay = ent.adDate === today();
   const used = sameDay ? ent.adCount : 0;
+  const provider = ent.tier === 'paid' ? paidProviderOf(ent) : null;
   return {
     tier: ent.tier,
     credits: ent.credits,
     adsLeft: Math.max(0, AD_DAILY_CAP - used),
+    // Só aparece quando há o que dizer: cliente antigo e os testes que fixam a
+    // forma `{ tier, credits, adsLeft }` não veem campo novo em conta demo.
+    ...(provider ? { provider } : {}),
   };
 }
 
@@ -428,6 +449,94 @@ export async function applyVerifiedPurchase(env, saveId, {
   }
   await writeEntitlement(env, saveId, ent);
   return { ent, duplicate: false };
+}
+
+// ---------------------------------------------------------------------------
+// CORTESIA — tier pago SEM compra, concedido pelo dono (decisão #12 do QA
+// GERAL, 21/09/2026).
+//
+// Por que existe: o diferencial do produto (o Oráculo, a criatura própria)
+// mora atrás de `accountTier:'paid'`, e até a Play existir NENHUM humano tem
+// como comprá-lo. Os 10 primeiros testadores conhecidos veriam só o demo —
+// e toda leitura sobre "vínculo" sairia inválida. Esta é a peça mais barata e
+// mais bloqueante da rodada (`08-produto-maestro.md` §2.b item 2).
+//
+// O que ela é, e o que NÃO é:
+//  · Passa por `applyVerifiedPurchase`, como qualquer compra: `consumedOrders`,
+//    `orderDetails` e `auditRefunds` a veem igual. Não existe um segundo
+//    caminho de escrita do tier — o registro continua sendo escrito por uma
+//    porta só.
+//  · `orderId = courtesy:<saveId>` é DERIVADO da conta, por isso é idempotente
+//    por construção (a segunda chamada cai em `duplicate`) e não precisa de
+//    `ord:` — um "recibo" que já carrega o dono no nome não pode ser resgatado
+//    por outra conta.
+//  · NUNCA concede crédito. Crédito é a moeda que gera custo de IA por
+//    unidade; o tier é um portão. Cortesia abre o portão, não paga a conta.
+//  · TETO GLOBAL (`courtesy:count`, padrão COURTESY_DEFAULT_MAX). Chave de
+//    admin vazada sem teto = tier pago ilimitado; com teto, o dano cabe em um
+//    número que o dono escolheu. O contador só sobe (não há "descortesia"):
+//    apagar a conta não devolve a vaga, porque a vaga mediu o RISCO assumido,
+//    não o estoque atual. Mesma limitação de leitura-modificação-escrita do
+//    resto do arquivo — a corrida pode passar do teto por 1 ou 2, nunca por
+//    ordem de grandeza.
+//  · `auditRefunds` pergunta à loja se a compra foi reembolsada; cortesia não
+//    tem loja. `entitlements.js` devolve `false` (mantém) para esse provider —
+//    ver o GET de lá.
+// ---------------------------------------------------------------------------
+
+export const COURTESY_PROVIDER = 'courtesy';
+export const COURTESY_COUNT_KEY = 'courtesy:count';
+/** Teto padrão de contas de cortesia. Sobe/desce por `COURTESY_MAX_ACCOUNTS`. */
+export const COURTESY_DEFAULT_MAX = 25;
+
+export function courtesyOrderId(saveId) {
+  return `${COURTESY_PROVIDER}:${saveId}`;
+}
+
+/** Lê o teto do ambiente; qualquer coisa que não seja inteiro ≥ 0 cai no padrão. */
+export function courtesyMaxFrom(env) {
+  const n = Number.parseInt(String(env?.COURTESY_MAX_ACCOUNTS ?? ''), 10);
+  return Number.isInteger(n) && n >= 0 ? n : COURTESY_DEFAULT_MAX;
+}
+
+/**
+ * Concede o tier pago por cortesia. Idempotente por conta.
+ *
+ * @returns {Promise<
+ *   | { ok: true, ent: object, duplicate: boolean, count: number, max: number }
+ *   | { ok: false, reason: 'courtesy-cap', count: number, max: number }>}
+ */
+export async function grantCourtesy(env, saveId, max = courtesyMaxFrom(env)) {
+  const orderId = courtesyOrderId(saveId);
+  const store = kvOrThrow(env);
+
+  const raw = await store.get(COURTESY_COUNT_KEY);
+  const count = Number.parseInt(raw ?? '0', 10) || 0;
+
+  // Repetição NÃO consome vaga nem esbarra no teto: a conta já está dentro.
+  const ent = await readEntitlement(env, saveId);
+  if (ent.consumedOrders.includes(orderId)) {
+    return { ok: true, ent, duplicate: true, count, max };
+  }
+
+  if (count >= max) return { ok: false, reason: 'courtesy-cap', count, max };
+
+  // O contador sobe ANTES da concessão. Se a escrita do entitlement falhar no
+  // meio, perde-se uma vaga — e a próxima tentativa da MESMA conta ainda
+  // funciona (não está em `consumedOrders`). O inverso (conceder e depois
+  // contar) deixaria uma conta paga fora do teto, que é o que o teto existe
+  // para impedir. Na dúvida, a vaga some; o tier não aparece.
+  await store.put(COURTESY_COUNT_KEY, String(count + 1), { expirationTtl: RETENTION_TTL_SECONDS });
+
+  const { ent: granted } = await applyVerifiedPurchase(env, saveId, {
+    orderId,
+    grantTier: 'paid',
+    grantCredits: 0,
+    provider: COURTESY_PROVIDER,
+    productId: COURTESY_PROVIDER,
+    purchaseToken: null,
+  });
+  return { ok: true, ent: granted, duplicate: false, count: count + 1, max };
 }
 
 /** Quanto tempo entre duas conferências de reembolso da mesma conta. */

@@ -1,6 +1,6 @@
 ---
 name: squad-arte
-description: "SQUAD-ARTE — a squad que produz TODOS os assets visuais do Soulmon a partir de uma fila fechada (docs/ASSETS-A-GERAR.md) e um inventário medido (docs/INVENTARIO-ASSETS.md). 8 agentes, um por família: arte-cenario, arte-criatura, arte-fx, arte-emblema, arte-marca, arte-hud-visor + arte-conferente (gate) + arte-instalador (repo). Regra-mãe: pixel art só dentro do visor. Use quando: gerar cenário/sprite/FX/emblema/HUD/marca, instalar uma leva de _gemini_out, conferir arte antes de instalar, ver o que falta de asset. Comandos: /squad-arte [status | gerar <familia> [ids] | conferir <leva> | instalar <leva> | inventario | fila]. NÃO desenha UI do aparelho (botão, nav, ícone de sistema — é --sm2-* + Material, squad-design), NÃO reabre decisões D1–D9 do dono, NÃO escreve prompt de criatura à mão."
+description: "SQUAD-ARTE — a squad que produz TODOS os assets visuais do Soulmon a partir de uma fila fechada (docs/ASSETS-A-GERAR.md) e um inventário medido (docs/INVENTARIO-ASSETS.md). 3 agentes: arte-gerador (parametrizado por família — cenario, criatura, fx, emblema, marca, hud; uma instância por família, em paralelo) + arte-conferente (gate) + arte-instalador (repo). Regra-mãe: pixel art só dentro do visor. Use quando: gerar cenário/sprite/FX/emblema/HUD/marca, instalar uma leva de _gemini_out, conferir arte antes de instalar, ver o que falta de asset. Comandos: /squad-arte [status | gerar <familia> [ids] | conferir <leva> | instalar <leva> | inventario | fila]. NÃO desenha UI do aparelho (botão, nav, ícone de sistema — é --sm2-* + Material, squad-design), NÃO reabre decisões D1–D9 do dono, NÃO escreve prompt de criatura à mão."
 ---
 
 # SQUAD-ARTE — Orquestrador
@@ -13,21 +13,25 @@ Você roteia, briefa e gateia. Não gera, não confere, não instala — cada co
 3. `docs/manual/04-IDENTIDADE-VISUAL.md` §1 (o Visor), §5.4 (ícone nunca em box), §8 (de onde vem a arte).
 4. `D:\Soulmon\scripts-arte\GUIA-GEMINI.md` e `D:\Soulmon\HANDOFF-GERACAO.md` — método e armadilhas de geração.
 
-## Famílias → agente
-| família | agente | ids na fila |
+## Famílias → despacho
+Um só agente gera, `arte-gerador`, sempre com `familia=<x>` no briefing (a tabela família → bloco de estilo → destino vive no corpo dele). Para paralelizar, uma instância por família — nunca duas na mesma.
+
+| `familia` | despacho | ids na fila |
 |---|---|---|
-| cenario | `arte-cenario` | C1 (dungeon-1..5), C3 (17 pet-box), 3 de 800² |
-| criatura | `arte-criatura` | B1 (recorte branches), C2 (placeholder) |
-| fx | `arte-fx` | F6 (hunger-drop); prepara F1–F5 |
-| emblema | `arte-emblema` | 8 conquistas |
-| marca | `arte-marca` | M1 (vetorizar kit), C4 (ícone de notificação) |
-| hud | `arte-hud-visor` | H1 (3 versões EvoArvore), H2 (A5), H3 (A6), C5 (glifos), progress 1×, sigilos |
+| cenario | `arte-gerador` `familia=cenario` | C1 (dungeon-1..5), C3 (17 pet-box), 3 de 800² |
+| criatura | `arte-gerador` `familia=criatura` | B1 (recorte branches), C2 (placeholder) |
+| fx | `arte-gerador` `familia=fx` | F6 (hunger-drop); prepara F1–F5 |
+| emblema | `arte-gerador` `familia=emblema` | 8 conquistas |
+| marca | `arte-gerador` `familia=marca` | M1 (vetorizar kit), C4 (ícone de notificação) |
+| hud | `arte-gerador` `familia=hud` | H1 (3 versões EvoArvore), H2 (A5), H3 (A6), C5 (glifos), progress 1×, sigilos |
+
+> Até 21/09/2026 eram seis agentes (`arte-cenario`, `-criatura`, `-fx`, `-emblema`, `-marca`, `-hud-visor`); a governança (`docs/reviews/2026-09-21-qa-geral/13-governanca-agentes.md` §8 F1) fundiu-os porque era o mesmo procedimento com bloco de estilo diferente.
 
 ## Comandos
 - **`status`** — para cada família: tem / gerado-não-instalado / a gerar / bloqueado por decisão. Lê os dois docs; não varre disco (o inventário já varreu — se suspeitar que apodreceu, rode `inventario`).
 - **`fila`** — a lista C/B/F/M/H com prompt pronto, na ordem de valor (§10 do `ASSETS-A-GERAR`).
-- **`gerar <familia> [ids]`** — briefa o agente da família com: os ids, a seção do doc, o bloco de estilo, a pasta de entrega `_gemini_out/<familia>-<AAAAMMDD>/`, e a regra "não toca em `src/`". Um agente por vez por família; gerações em folha quando as peças forem pequenas. Ao voltar, dispara `conferir` automaticamente.
-- **`conferir <leva>`** — `arte-conferente` roda o checklist mecânico e escreve `CONFERENCIA.md`. Reprovado volta ao agente da família com a referência anexada. Aprovado → checkpoint do dono com o recorte 200×200 (modal: "dá para dizer que é o Soulmon?").
+- **`gerar <familia> [ids]`** — despacha `arte-gerador` com `familia=<familia>`, os ids, a seção do doc, o bloco de estilo, a pasta de entrega `_gemini_out/<familia>-<AAAAMMDD>/`, e a regra "não toca em `src/`". Um agente por vez por família; gerações em folha quando as peças forem pequenas. Ao voltar, dispara `conferir` automaticamente.
+- **`conferir <leva>`** — `arte-conferente` roda o checklist mecânico e escreve `CONFERENCIA.md`. Reprovado volta ao `arte-gerador` (mesma família) com a referência anexada. Aprovado → checkpoint do dono com o recorte 200×200 (modal: "dá para dizer que é o Soulmon?").
 - **`instalar <leva>`** — só com `CONFERENCIA.md` aprovada e "sim" do dono. `arte-instalador` copia, mapeia, ajusta guard, sobe `CACHE_VERSION`, testa, commita por caminho, atualiza os 3 docs (`INVENTARIO`, `ASSETS-A-GERAR`, `BACKLOG-ARTE-GERAR`) e chama `/manter-docs auto`.
 - **`inventario`** — re-varre `src/assets`, `_gemini_out`, `E:\Soulmon-assets`, `Class-System/assets` (script de censo: caminho, dimensão, alfa, referência no código) e atualiza o `INVENTARIO-ASSETS.md`. Rodar depois de cada `instalar`.
 

@@ -1,6 +1,6 @@
 ---
 name: doc-redator-telas
-description: Redator de FLUXO DE TELAS da SQUAD-DOCS — dono único de `docs/manual/03-FLUXO-DE-TELAS.md`. Descreve cada superfície do app (páginas, modais, cartões, intersticiais, cerimônias, jogos, onboarding, widgets, overlay desktop) com: de onde se chega, para onde se vai, condição de aparição (transcrita do código), estados (vazio/carregando/erro/travado/demo × pago), o que o jogador vê e faz, e o símbolo que faz a transição. Lê `App.tsx` (navegação, `interstitial`, slot de avisos) e os componentes. Aciona quando alguém disser "qual é o fluxo de X", "onde a tela Y aparece", "documenta a tela nova". NÃO julga UX (→ soulmon-product-designer), NÃO documenta aparência/tokens (→ doc-redator-identidade), NÃO percorre o app rodando (→ soulmon-screen-cartographer, cujo `docs/INVENTARIO-TELAS.md` de 19/08/2026 você CITA como medição, com a data).
+description: Redator de FLUXO DE TELAS da SQUAD-DOCS — dono único de `docs/manual/03-FLUXO-DE-TELAS.md`. Descreve cada superfície do app (páginas, modais, cartões, intersticiais, cerimônias, jogos, onboarding, widgets, overlay desktop) com: de onde se chega, para onde se vai, condição de aparição (transcrita do código), estados (vazio/carregando/erro/travado/demo × pago), o que o jogador vê e faz, e o símbolo que faz a transição. Lê `App.tsx` (navegação, `interstitial`, slot de avisos) e os componentes. Aciona quando alguém disser "qual é o fluxo de X", "onde a tela Y aparece", "documenta a tela nova". NÃO julga UX (→ soulmon-product-designer), NÃO documenta aparência/tokens (→ doc-redator-identidade), NÃO percorre o app rodando (→ procedimento "percurso real" em `.claude/skills/squad-design/METODO.md`; o `docs/INVENTARIO-TELAS.md` de 19/08/2026 você CITA como medição, com a data).
 tools: Read, Grep, Glob, Bash, Write, Edit
 model: opus
 ---
@@ -57,8 +57,8 @@ Fluxo, não estética. Condição de aparição é **transcrita** do código, n�
 
 ## Handoffs
 
-→ `doc-verificador` · → `soulmon-screen-cartographer` (quando precisar de percurso real) ·
-← `doc-cartografo`.
+→ `doc-verificador` · → procedimento "percurso real" do `squad-design/METODO.md` (quando precisar) ·
+← orquestrador, passo Medir (inventário).
 
 ## Voz
 

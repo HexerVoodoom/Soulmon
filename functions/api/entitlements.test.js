@@ -10,7 +10,11 @@
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { onRequestGet, onRequestPost, onRequestOptions } from './entitlements.js';
-import { ENT_PREFIX, AD_REWARD_CREDITS, AD_DAILY_CAP } from './_entitlements.js';
+import {
+  ENT_PREFIX, AD_REWARD_CREDITS, AD_DAILY_CAP, COURTESY_COUNT_KEY, COURTESY_DEFAULT_MAX,
+  courtesyOrderId,
+} from './_entitlements.js';
+import { resetRateLimits } from './_rateLimit.js';
 
 const ID = 'a'.repeat(32);
 
@@ -157,8 +161,11 @@ describe('entitlements.js — gastar crédito (dinheiro real)', () => {
   });
 
   it('action desconhecida é 400 (nada de rota implícita)', async () => {
+    // Este caso usava `action=grant` como exemplo de rota inexistente. Desde
+    // 21/09/2026 ela EXISTE (cortesia, bloco no fim do arquivo) e sem a chave
+    // no ambiente responde 404 — coberto lá. Aqui fica uma ação que não existe.
     const e = env({ tier: 'paid', credits: 10, adDate: hoje(), adCount: 0 });
-    const res = await onRequestPost({ request: post('https://x/api/entitlements?action=grant', { id: ID, amount: 5 }), env: e });
+    const res = await onRequestPost({ request: post('https://x/api/entitlements?action=steal', { id: ID, amount: 5 }), env: e });
     expect(res.status).toBe(400);
     expect(saldo(e)).toBe(10);
   });
@@ -241,5 +248,110 @@ describe('entitlements.js — conferência de reembolso não pode tirar o que fo
     const body = await (await onRequestGet({ request: new Request(`https://x/api/entitlements?id=${ID}`), env: e })).json();
     expect(body.tier).toBe('paid');
     expect(body.credits).toBe(100);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// CORTESIA (decisão #12 do QA GERAL) — tier pago sem loja, só com a chave do
+// dono. As seis garantias que a rota promete, cada uma como comportamento.
+// ---------------------------------------------------------------------------
+describe('entitlements.js — cortesia (action=grant)', () => {
+  const KEY = 'chave-do-dono-de-teste';
+  const grant = (e, body, auth = `Bearer ${KEY}`) => onRequestPost({
+    request: new Request('https://x/api/entitlements?action=grant', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(auth ? { Authorization: auth } : {}) },
+      body: JSON.stringify(body),
+    }),
+    env: e,
+  });
+  const envAdmin = (extra = {}) => env(null, { ENTITLEMENTS_ADMIN_KEY: KEY, ...extra });
+
+  afterEach(() => { resetRateLimits(); });
+
+  it('sem ENTITLEMENTS_ADMIN_KEY a rota NÃO EXISTE (404), mesmo com a chave certa no header', async () => {
+    const e = env();
+    const res = await grant(e, { saveId: ID });
+    expect(res.status).toBe(404);
+    expect(e.DIGIAPP_SAVES.store.size).toBe(0);
+  });
+
+  it('chave errada (ou ausente) é 401 e não toca o KV', async () => {
+    for (const auth of ['Bearer outra', 'Bearer ', '', `Basic ${KEY}`]) {
+      const e = envAdmin();
+      const res = await grant(e, { saveId: ID }, auth);
+      expect(res.status, `auth=${JSON.stringify(auth)}`).toBe(401);
+      expect(e.DIGIAPP_SAVES.store.size).toBe(0);
+    }
+  });
+
+  it('chave certa concede tier pago, ZERO crédito, provider courtesy — e sobe o contador', async () => {
+    const e = envAdmin();
+    const res = await grant(e, { saveId: ID });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toMatchObject({ ok: true, duplicate: false, tier: 'paid', credits: 0, provider: 'courtesy', count: 1, max: COURTESY_DEFAULT_MAX });
+
+    const ent = JSON.parse(e.DIGIAPP_SAVES.store.get(ENT_PREFIX + ID));
+    expect(ent.tier).toBe('paid');
+    expect(ent.credits, 'cortesia NUNCA concede crédito').toBe(0);
+    expect(ent.consumedOrders).toEqual([courtesyOrderId(ID)]);
+    expect(ent.orderDetails[0]).toMatchObject({ provider: 'courtesy', grantTier: 'paid', grantCredits: 0 });
+    expect(e.DIGIAPP_SAVES.store.get(COURTESY_COUNT_KEY)).toBe('1');
+
+    // O GET público (o que o app lê) mostra de onde veio o tier.
+    const view = await (await onRequestGet({ request: new Request(`https://x/api/entitlements?id=${ID}`), env: e })).json();
+    expect(view).toMatchObject({ tier: 'paid', credits: 0, provider: 'courtesy' });
+  });
+
+  it('é idempotente: a segunda chamada devolve duplicate e NÃO consome outra vaga', async () => {
+    const e = envAdmin();
+    await grant(e, { saveId: ID });
+    const res = await grant(e, { saveId: ID });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ ok: true, duplicate: true, tier: 'paid', credits: 0, count: 1 });
+    const ent = JSON.parse(e.DIGIAPP_SAVES.store.get(ENT_PREFIX + ID));
+    expect(ent.consumedOrders).toHaveLength(1);
+    expect(e.DIGIAPP_SAVES.store.get(COURTESY_COUNT_KEY)).toBe('1');
+  });
+
+  it('no teto é 429 e a conta nova NÃO ganha nada; a conta já dentro continua respondendo 200', async () => {
+    const e = envAdmin({ COURTESY_MAX_ACCOUNTS: '2' });
+    const outro = 'b'.repeat(32);
+    const terceiro = 'c'.repeat(32);
+    expect((await grant(e, { saveId: ID })).status).toBe(200);
+    expect((await grant(e, { saveId: outro })).status).toBe(200);
+
+    const res = await grant(e, { saveId: terceiro });
+    expect(res.status).toBe(429);
+    expect(await res.json()).toMatchObject({ ok: false, reason: 'courtesy-cap', count: 2, max: 2 });
+    expect(e.DIGIAPP_SAVES.store.has(ENT_PREFIX + terceiro)).toBe(false);
+
+    // Repetir quem já entrou não esbarra no teto — a vaga já é dela.
+    expect((await grant(e, { saveId: ID })).status).toBe(200);
+  });
+
+  it('COURTESY_MAX_ACCOUNTS inválido cai no padrão, não em zero nem em infinito', async () => {
+    const e = envAdmin({ COURTESY_MAX_ACCOUNTS: 'muitos' });
+    const body = await (await grant(e, { saveId: ID })).json();
+    expect(body.max).toBe(COURTESY_DEFAULT_MAX);
+  });
+
+  it('saveId inválido é 400 — só DEPOIS da chave (sem chave, nem o formato do id vaza)', async () => {
+    const e = envAdmin();
+    expect((await grant(e, { saveId: 'curto' })).status).toBe(400);
+    expect((await grant(e, { id: ID })).status).toBe(400);
+    expect((await grant(e, { saveId: 'curto' }, 'Bearer errada')).status).toBe(401);
+  });
+
+  it('o tier de cortesia sobrevive à conferência de reembolso do GET (não há loja para perguntar)', async () => {
+    const e = envAdmin();
+    await grant(e, { saveId: ID });
+    // Força a auditoria a rodar (auditedAt zerado) — se ela consultasse a Play
+    // com purchaseToken null, o mock abaixo explodiria.
+    vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('não era para ir à rede'); }));
+    const view = await (await onRequestGet({ request: new Request(`https://x/api/entitlements?id=${ID}`), env: e })).json();
+    expect(view.tier).toBe('paid');
+    expect(JSON.parse(e.DIGIAPP_SAVES.store.get(ENT_PREFIX + ID)).orderDetails[0].voided).toBeUndefined();
   });
 });

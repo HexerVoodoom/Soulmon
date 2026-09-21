@@ -35,12 +35,18 @@
 //               Apagar aqui destruiria o direito pago junto com o dado.
 //               ⚠️ Esta escolha está ENDEREÇADA AO DONO, não decidida aqui.
 //               Nenhuma norma é afirmada neste arquivo.
-//  FORA DO      Assinaturas de push (`push:*`, `fcm:*`): a chave é hash do
-//  ALCANCE      endpoint/token e o registro NÃO guarda o saveId, então o
-//               servidor não consegue achar as do titular a partir dele. O
-//               cliente tem que chamar `DELETE /api/subscribe` e
-//               `DELETE /api/fcm-subscribe`. A resposta DECLARA isso em vez de
-//               deixar a pessoa achar que já foi.
+//  APAGA        Assinaturas de push (`push:*`, `fcm:*`, namespace
+//  (VARREDURA)  `PUSH_SUBSCRIPTIONS`) cujo VALOR carrega `saveId` igual ao do
+//               titular (decisão #23 do QA GERAL, 21/09/2026). A chave é hash
+//               do endpoint/token, então não dá para achá-las pela chave — é
+//               varredura por prefixo com teto (`MAX_SCAN_PAGES`), comparando o
+//               campo do valor. ⚠️ Registro SEM `saveId` (os gravados por
+//               `subscribe.js`/`fcm-subscribe.js` até esta data não têm o
+//               campo) fica FORA DO ALCANCE: o cliente continua chamando
+//               `DELETE /api/subscribe` e `DELETE /api/fcm-subscribe` no
+//               aparelho, e a resposta DECLARA isso em vez de deixar a pessoa
+//               achar que já foi. Nunca se apaga por palpite (hash de e-mail
+//               não está no registro; um `petName` igual não prova nada).
 //
 // ## Confirmação — handshake de duas chamadas
 //
@@ -86,19 +92,53 @@ async function publicIdFor(saveId) {
 
 /**
  * Lista chaves por prefixo, com teto de páginas.
+ * @param {object} store  a KV a varrer (padrão: a de saves).
  * @returns {Promise<string[]>}
  */
-async function listPrefix(env, prefix) {
+async function listPrefix(env, prefix, store = kvOrThrow(env)) {
   /** @type {string[]} */
   const out = [];
   let cursor;
   for (let page = 0; page < MAX_SCAN_PAGES; page++) {
-    const res = await kvOrThrow(env).list({ prefix, cursor, limit: 1000 });
+    const res = await store.list({ prefix, cursor, limit: 1000 });
     for (const k of res.keys || []) out.push(k.name);
     if (res.list_complete || !res.cursor) break;
     cursor = res.cursor;
   }
   return out;
+}
+
+/** Os dois prefixos de inscrição de push, um por canal. Ver `subscribe.js`/`fcm-subscribe.js`. */
+const PUSH_PREFIXES = ['push:', 'fcm:'];
+
+/**
+ * Apaga as inscrições de push do titular — as que o servidor CONSEGUE ligar a
+ * ele, ou seja, as que carregam `saveId` no valor. Ver o cabeçalho ("APAGA
+ * (VARREDURA)"). Sem o binding `PUSH_SUBSCRIPTIONS`, não há o que varrer: zero,
+ * e não erro — a exclusão do resto não pode depender de um namespace que o
+ * ambiente de teste ou preview pode não ter.
+ *
+ * @returns {Promise<{ deleted: number, scanned: number }>}
+ */
+async function deletePushSubscriptions(env, saveId) {
+  const pushStore = env?.PUSH_SUBSCRIPTIONS;
+  if (!pushStore || typeof pushStore.list !== 'function') return { deleted: 0, scanned: 0 };
+  let deleted = 0;
+  let scanned = 0;
+  for (const prefix of PUSH_PREFIXES) {
+    for (const key of await listPrefix(env, prefix, pushStore)) {
+      scanned++;
+      let rec;
+      try { rec = JSON.parse((await pushStore.get(key)) || 'null'); } catch { continue; }
+      // Igualdade ESTRITA com o saveId inteiro. Prefixo, `petName` ou qualquer
+      // outro campo não identificam conta — apagar a inscrição de outra pessoa
+      // é cortar o push dela em silêncio.
+      if (!rec || rec.saveId !== saveId) continue;
+      await pushStore.delete(key);
+      deleted++;
+    }
+  }
+  return { deleted, scanned };
 }
 
 /**
@@ -157,8 +197,8 @@ const NOT_INCLUDED = [
   },
   {
     what: 'push:* / fcm:*',
-    'pt-BR': 'Suas inscrições de notificação são guardadas pelo endereço do aparelho, não pela sua conta — o servidor não consegue achá-las a partir dela. O app desfaz a inscrição deste aparelho junto com a exclusão; se você usa o Soulmon em mais de um aparelho, desligue as notificações em cada um.',
-    en: 'Your notification subscriptions are stored by device address, not by your account — the server cannot find them from it. The app unsubscribes this device along with the deletion; if you use Soulmon on more than one device, turn notifications off on each.',
+    'pt-BR': 'Suas inscrições de notificação são guardadas pelo endereço do aparelho, não pela sua conta. O servidor apaga as que conseguiu ligar à sua conta; as que não carregam essa ligação (inscrições feitas por versões antigas do app) só o aparelho desfaz. O app desfaz a inscrição deste aparelho junto com a exclusão; se você usa o Soulmon em mais de um aparelho, desligue as notificações em cada um.',
+    en: 'Your notification subscriptions are stored by device address, not by your account. The server erases the ones it could link to your account; the ones without that link (subscriptions made by older app versions) can only be undone by the device. The app unsubscribes this device along with the deletion; if you use Soulmon on more than one device, turn notifications off on each.',
   },
   {
     what: 'ord:<orderId>',
@@ -246,6 +286,7 @@ function plan(c, saveId) {
       c.gifts ? `gifts:${saveId}` : null,
       ...c.rankKeys,
       'menções a você na lista de amigos de outros jogadores',
+      'inscrições de notificação (push:*/fcm:*) ligadas à sua conta',
     ].filter(Boolean),
     minimiza: c.entitlement ? [`${ENT_PREFIX}${saveId} — sai o uso (IA, anúncios), ficam os campos de compra`] : [],
     sobrevive: Array.isArray(c.entitlement?.consumedOrders)
@@ -316,6 +357,12 @@ async function handleDeleteConfirm(env, saveId, body) {
     scrubbed++;
   }
 
+  // 2b) Inscrições de push ligadas à conta (decisão #23). Vem DEPOIS do save
+  //     e ANTES do entitlement: se a varredura falhar no meio, o que já foi
+  //     apagado é o que a pessoa mais quer ver sumir, e o que sobra é o que o
+  //     cabeçalho declara como fora do alcance.
+  const push = await deletePushSubscriptions(env, saveId);
+
   // 3) Entitlement: MINIMIZADO, não apagado. Ver o cabeçalho — apagar o
   //    registro de compra destrói o direito pago e a trava anti-fraude junto.
   //    O que sai é USO (não prova nada); o que fica é DINHEIRO.
@@ -344,12 +391,14 @@ async function handleDeleteConfirm(env, saveId, body) {
   log('account.delete.done', saveId, {
     deletedKeys: executed.apaga.length,
     scrubbedFriendLists: scrubbed,
+    pushSubscriptionsDeleted: push.deleted,
+    pushSubscriptionsScanned: push.scanned,
     entitlementMinimized: !!c.entitlement,
   });
 
   return json({
     ok: true,
-    executado: { ...executed, listasDeAmigosLimpas: scrubbed },
+    executado: { ...executed, listasDeAmigosLimpas: scrubbed, inscricoesDePushApagadas: push.deleted },
     naoIncluido: NOT_INCLUDED,
     aviso: COPY.deleteDone,
   });

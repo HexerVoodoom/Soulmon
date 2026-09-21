@@ -97,9 +97,12 @@ frases curtas; todo termo novo precisa de par EN e entrada no `HelpModal`.
 
 ---
 
-**P14 — A frase de normalização do resumo de humor.**
-*O que é:* `moodSummary` (`src/utils/mood.ts`, no `DailyReportModal`) devolve
-hoje *"Seus últimos dias têm sido de altos e baixos — e tudo bem que seja
+**P14 — A frase de normalização do resumo de humor.** ✅ *(FECHADA — aplicada
+em `5b91717c`, 21/09/2026: `moodSummary` em `src/utils/mood.ts` devolve
+"Seus últimos dias tiveram altos e baixos." e ponto — `grep -c 'tudo bem que
+seja' src/utils/mood.ts` → 2, ambos no comentário-lápide. Nada a decidir.)*
+*O que era:* `moodSummary` (`src/utils/mood.ts`, no `DailyReportModal`) devolvia
+até `5b91717c` *"Seus últimos dias têm sido de altos e baixos — e tudo bem que seja
 assim"*. A segunda metade é normalização, que a L9 proíbe nas duas direções: o
 produto não diz que é doença **nem** que não é nada. A primeira metade e a
 existência da devolutiva ficam — a regra do próprio módulo, de que coletar sem
@@ -160,19 +163,22 @@ depois do nome (P8).
 própria §7 define fendas como "dobras da Malha" — o termo melhor já está no
 texto. *Risco:* nenhum de PI; é ganho de identidade. *A decidir:* se vale.
 
-**P13 — Teste de vocabulário executável.** *(EXISTE desde 21/09/2026 —
-`src/narrativa.contract.test.ts`)*
+**P13 — Teste de vocabulário executável.** ✅ *(FECHADA — a régua existe desde
+`c7b0c048`, 21/09/2026, `src/narrativa.contract.test.ts`; e P1/P5, que eram o
+"resta", foram fechadas pelo dono no mesmo dia — ver o quadro no topo. ⚰️ A tabela
+chamava-se `DÍVIDA`; desde `f3654076` é `EXCECOES`: lista do que ficou por decisão,
+não pendência.)*
 *O que é:* a coluna "proibido" da §12 virou guard: varre `src/**/*.ts(x)` e
 reprova `Weave`, `Vírus|Vacina|Virus|Vaccine`, `Glitchtama`,
 `domador|treinador|tamer`, `digievolu*` e `mundo digital` em fonte, com uma
-tabela `DÍVIDA` declarando arquivo por arquivo o que já está no app e sob qual
+tabela `EXCECOES` (⚰️ nasceu como `DÍVIDA`) declarando arquivo por arquivo o que está no app e sob qual
 proposta (P1, P5). A régua também exige que **todo caminho `src/…` citado nesta
 bíblia exista** e que as doze leis estejam declaradas.
-*O que falta:* a DÍVIDA encolher até `[]`, o que é o aceite de P1 e P5. ⚠️ O
+*O que faltava:* a DÍVIDA encolher até `[]`, o que era o aceite de P1 e P5 — ⚰️ deixou de valer em 21/09/2026: P1 e P5 fecharam com "aceito todos assim", então `EXCECOES` não precisa encolher. ⚠️ O
 parecer de PI mediu **7 famílias** de superfície visível, e a pior não está na
 UI: o texto do **Ultra** em `oracle.ts` interpola as três palavras na tela de
 revelação. Trocar rótulo e esquecer o gerador deixa a citação mais exposta no ar.
-*A decidir:* nada — a régua está no ar; o que resta é P1 e P5.
+*A decidir:* nada — a régua está no ar e P1/P5 estão fechadas.
 
 **P15 — ⚠️ Vocabulário de término no combate.**
 *O que é:* a §5.12 fixa que corpos de fenda **param de insistir** e voltam à

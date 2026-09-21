@@ -136,7 +136,11 @@ export const subscribeToPush = async (
   language: 'pt-BR' | 'en-US',
   /** WP1.17 — `bornAt` do save (`YYYY-MM-DD`), para a copy dos dias 1 e 2.
    *  Opcional: quem não tem (save antigo) recebe a copy de sempre. */
-  bornAt?: string
+  bornAt?: string,
+  /** #23 (QA geral 21/09/2026) — o `saveId` amarra a inscrição à conta para
+   *  que apagar a conta possa apagar o push no servidor também. Opcional: sem
+   *  ele o body é o de sempre. */
+  saveId?: string | null
 ): Promise<boolean> => {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
   if (Notification.permission !== 'granted') return false;
@@ -157,6 +161,7 @@ export const subscribeToPush = async (
       petName,
       language,
       bornAt,
+      ...(saveId ? { saveId } : {}),
     };
 
     const res = await fetch('/api/subscribe', {
@@ -199,13 +204,24 @@ export const unsubscribeFromPush = async (): Promise<void> => {
 // uploaded to the SAME KV store the Web Push subscriptions live in (prefixed
 // `fcm:` instead of `push:`), and the scheduled worker (workers/) sends to both.
 let fcmListenersBound = false;
+/** O listener `registration` é ligado UMA vez; o que ele manda no POST vem
+ *  destas refs, atualizadas a cada chamada — senão o primeiro `saveId` (ou a
+ *  ausência dele) ficaria congelado na closure para sempre. */
+let fcmPetName = '';
+let fcmLanguage: 'pt-BR' | 'en-US' = 'en-US';
+let fcmSaveId: string | null = null;
 
 export const registerForPushNotifications = async (
   petName: string,
   language: 'pt-BR' | 'en-US',
   onForegroundNotification?: (title: string, body: string) => void,
+  /** #23 — ver `subscribeToPush`. */
+  saveId?: string | null,
 ): Promise<boolean> => {
   if (Capacitor.getPlatform() !== 'android') return false;
+  fcmPetName = petName;
+  fcmLanguage = language;
+  fcmSaveId = saveId ?? null;
 
   try {
     const current = await PushNotifications.checkPermissions();
@@ -225,7 +241,10 @@ export const registerForPushNotifications = async (
         fetch('/api/fcm-subscribe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: token.value, petName, language }),
+          body: JSON.stringify({
+            token: token.value, petName: fcmPetName, language: fcmLanguage,
+            ...(fcmSaveId ? { saveId: fcmSaveId } : {}),
+          }),
         }).catch((err) => console.error('FCM token upload failed:', err));
       });
 

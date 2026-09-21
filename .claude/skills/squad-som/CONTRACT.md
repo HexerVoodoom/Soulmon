@@ -38,7 +38,7 @@ contexto.
 | `som-produtor-assets` | sonnet | Procedência e conformidade de todo asset | 1 · 2 · 3 · **5** | "o arquivo existe, mede contra a spec e tem procedência?" |
 | `som-engenheiro-audio` | opus | Camada de reprodução **e mixagem**; dono único de **loudness** e de **codec** | 1 · 2 · 3 · **5** | "quando o app pode fazer barulho, e o que se ouve quando tudo toca junto?" |
 
-### Agentes do repositório reusados (12) — `.claude/agents/`, sem clone
+### Agentes do repositório reusados (7) — `.claude/agents/`, sem clone
 
 | agente | o que ele possui **neste run**, e o que ele **não** possui |
 |---|---|
@@ -48,18 +48,19 @@ contexto.
 | `soulmon-guarda-linha-vermelha` | Veto formal **onde o som toca regra, D11, push ou dado**. Por texto próprio, *"copy, animação e refactor não passam por você"* — **não conte com ele para vetar um SFX por fadiga ou estética**. |
 | `soulmon-behavioral-psychologist` | "Companheiro ou chefe?"; som não solicitado como punição. Revisor obrigatório do **corte** de eventos da Fase 0. Ocupa `alpha-comportamento`. |
 | `soulmon-visual-designer` · `soulmon-design-lead` | Coerência do eixo sonoro com o DS visual **canônico**. |
-| `principal-architect` | ADR, se a stack de áudio mudar (§10). Também revisa o **script de medição** contra BS.1770 antes do primeiro lote. |
+| `alpha-architect` (global) | ADR, se a stack de áudio mudar (§10). Também revisa o **script de medição** contra BS.1770 antes do primeiro lote. |
 | `staff-frontend` | UI de controle de som e superfície React/TS. O grafo é do `som-engenheiro-audio`. Briefing carrega os footguns do `CLAUDE.md`. |
-| `qa-sweeper` | Suíte e os três portões (`tsc` · `vitest` · `build`). |
-| `security-architect` | Parecer curto na Fase 0: o escopo de dados mudou? (§10 tira microfone.) |
-| `soulmon-devils-advocate` | **Só** para a premissa arriscada da Fase 1. O mandato dele é pre-mortem **de produto** — não serve como crítica de asset ou de lote. |
-| `soulmon-tech-feasibility` | **Custo** (conta do gerador, custo por usuário). **Não** orçamento de bytes — esse é do `alpha-perf-a11y`, dono único. |
+| `alpha-qa` (global) | Suíte e os três portões (`tsc` · `vitest` · `build`). |
+| `alpha-security` (global) | Parecer curto na Fase 0: o escopo de dados mudou? (§10 tira microfone.) |
+| `alpha-skeptic` (global) | **Só** para a premissa arriscada da Fase 1 (pre-mortem **de produto** — não serve como crítica de asset ou de lote). Foi quem atacou de fato no som-01 (`discovery/ataque-gate*.md`). |
+| `alpha-estrategista-negocio` (global) | **Custo** (conta do gerador, custo por usuário). **Não** orçamento de bytes — esse é do `alpha-perf-a11y`, dono único. |
 
-**Regra de despacho dos agentes de auditoria** (`soulmon-ip-brand-guardian`,
-`soulmon-devils-advocate`, `soulmon-tech-feasibility`): os três nasceram numa auditoria em
-ondas e carregam no corpo `Onda N`, `docs/squad/00-BRIEFING.md`, `docs/squad/01-RUBRICA.md`,
+> Governança 21/09/2026 (`docs/reviews/2026-09-21-qa-geral/13-governanca-agentes.md` §8): os genéricos do repo (`principal-architect`, `qa-sweeper`, `security-architect`) e os agentes do maestro (`soulmon-devils-advocate`, `soulmon-tech-feasibility`) foram cortados; os `alpha-*` globais acima ocupam os lugares.
+
+**Regra de despacho do agente de auditoria** (`soulmon-ip-brand-guardian`): ele nasceu numa auditoria em
+ondas e carrega no corpo `Onda N`, `docs/squad/00-BRIEFING.md`, `docs/squad/01-RUBRICA.md`,
 rubrica `D10`–`D13` e entregável em `docs/reviews/<data>/`. **Nada disso existe em `som-01`.**
-Todo briefing para eles neste run declara, textualmente:
+Todo briefing para ele neste run declara, textualmente:
 
 > *"Ignore a numeração de onda, a rubrica e o caminho de entregável do seu arquivo. Sua
 > entrada é `squad-alpha-runs/som-01/contexto.md` e sua saída é
@@ -70,14 +71,15 @@ inexistente.
 
 ### Não usados neste run (registrado para não haver dúvida)
 
-`soulmon-maestro`, `soulmon-screen-cartographer`, `soulmon-product-manager`,
-`soulmon-product-designer`, `soulmon-user-researcher`, `soulmon-retention-analyst`,
-`soulmon-growth-aso`, `soulmon-monetization-strategist`, `soulmon-monster-taming-designer`,
-`soulmon-mobile-game-designer`, `soulmon-gamification-expert`, `soulmon-productivity-expert`,
-`soulmon-ai-companion-designer`, `soulmon-guarda-constancia`, `soulmon-guarda-nascimento`,
-`soulmon-guarda-permanencia`, `soulmon-guarda-sustento`, `business-strategist`,
-`growth-engineer`, `investor-skeptic`, `product-manager`, `product-designer`, `design-critic`,
-`staff-backend`.
+`soulmon-product-designer`, `soulmon-monster-taming-designer`, `soulmon-guarda-constancia`,
+`soulmon-guarda-nascimento`, `soulmon-guarda-permanencia`, `soulmon-guarda-sustento`,
+`design-critic`, nem os globais `alpha-product-manager`, `alpha-growth`,
+`alpha-estrategista-negocio` (fora do custo), `alpha-backend`.
+(A squad do maestro — `soulmon-maestro`, `-product-manager`, `-user-researcher`, `-retention-analyst`,
+`-growth-aso`, `-monetization-strategist`, `-mobile-game-designer`, `-gamification-expert`,
+`-productivity-expert`, `-ai-companion-designer` — e os genéricos `business-strategist`,
+`growth-engineer`, `investor-skeptic`, `product-manager`, `product-designer`, `staff-backend`
+não existem mais no repo desde 21/09/2026.)
 
 Motivo comum: §10 (marketing/ASO/voz fora de escopo), §8 (áudio é 100% cliente, sem backend),
 §2 (o alvo é o eixo sonoro, não uma revisão de produto).

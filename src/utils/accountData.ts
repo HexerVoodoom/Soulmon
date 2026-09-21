@@ -125,7 +125,39 @@ export function requestDelete(saveId: string): Promise<AccountResult<DeleteReque
   });
 }
 
-export function confirmDelete(saveId: string, confirmToken: string): Promise<AccountResult<DeleteDone>> {
+/**
+ * Revoga o push ANTES de apagar a conta (decisão #23 do QA geral, 21/09/2026).
+ *
+ * O servidor apaga o save, o perfil e o entitlement, mas a inscrição de push
+ * (`push:<endpoint>` do Web Push e `fcm:<token>` do Android) só sai pelas rotas
+ * `DELETE /api/subscribe` e `DELETE /api/fcm-subscribe` — e o único que sabe
+ * o endpoint/token é o aparelho. Sem esta chamada, a conta sumia e o worker
+ * das 22h continuava mandando notificação para quem pediu para sair.
+ *
+ * Quem conhece o endpoint é `notifications.ts` (`unsubscribeFromPush` e
+ * `unregisterFromPushNotifications`); chamar as duas em vez de refazer o
+ * fetch aqui é o footgun 9 evitado. Import dinâmico pelo mesmo motivo do
+ * `./auth` em `call`: `notifications.ts` arrasta o Capacitor, e este módulo
+ * é de transporte.
+ *
+ * Falha de push NÃO bloqueia a exclusão: `allSettled`, e o resultado é
+ * devolvido só para diagnóstico — a pessoa pediu para apagar a conta, e um
+ * token que não deu para revogar não é motivo para negar isso. O caso pior é
+ * uma notificação órfã, que o worker descarta no primeiro 404/410.
+ */
+export async function revokePushBeforeDelete(): Promise<{ webPush: boolean; fcm: boolean }> {
+  try {
+    const { unsubscribeFromPush, unregisterFromPushNotifications } = await import('./notifications');
+    const [web, fcm] = await Promise.allSettled([unsubscribeFromPush(), unregisterFromPushNotifications()]);
+    return { webPush: web.status === 'fulfilled', fcm: fcm.status === 'fulfilled' };
+  } catch {
+    // O módulo nem carregou (ambiente sem Capacitor, etc.): a exclusão segue.
+    return { webPush: false, fcm: false };
+  }
+}
+
+export async function confirmDelete(saveId: string, confirmToken: string): Promise<AccountResult<DeleteDone>> {
+  await revokePushBeforeDelete();
   return call<DeleteDone>(`/api/account?action=delete-confirm&id=${encodeURIComponent(saveId)}`, {
     method: 'POST',
     body: JSON.stringify({ confirmToken }),

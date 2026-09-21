@@ -71,7 +71,7 @@ fora o design inteiro.
   política de privacidade? Falta consentimento? Falta caminho de exclusão de dados?
 - Faixa etária: o produto atrai menores. Avalie exposição a COPPA / Play Families /
   LGPD Art. 14, e o que isso implica para publicidade e IAP (coordene com
-  `soulmon-monetization-strategist`).
+  `soulmon-guarda-sustento`).
 - Chat com LLM (Groq) exposto a menores: moderação de conteúdo, política de IA das
   lojas, custo e risco. Este é um risco subestimado — trate-o com peso.
 - Segredos: `CLAUDE.md` e `PROJETO.md` contêm uma chave privada VAPID em texto plano

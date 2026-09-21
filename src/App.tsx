@@ -98,6 +98,9 @@ import {
   emptyFirstDay, markGesture, shouldShowFirstDay, type FirstDayGesture,
 } from './utils/firstDay';
 import { FirstDayCard } from './components/FirstDayCard';
+import { TermsUpdateBanner } from './components/TermsUpdateBanner';
+import { marcaAvisoTermos, precisaAvisarTermos } from './utils/termsNotice';
+import { PRIVACY_VERSION, TERMS_VERSION } from './utils/consent';
 import { MilestoneCeremony } from './components/MilestoneCeremony';
 import {
   applyRebirth, canRebirth, rebirthRefusal, rebirthEscolaOptions, rebirthElementOptions,
@@ -802,6 +805,9 @@ export default function App() {
   // Recomeço de segunda/dia 1: cartão discreto, dispensável nesta sessão sem
   // gravar nada — recusar um convite não é uma decisão que mereça memória.
   const [freshStartDismissed, setFreshStartDismissed] = useState(false);
+  // Termos/Política atualizados (decisão #24): a marca da última versão que a
+  // pessoa dispensou com "Ok" fica no aparelho — aviso lido, não consentimento.
+  const [termsNoticeSeen, setTermsNoticeSeen] = useState<string | null>(() => readLocal(STORAGE_KEYS.TERMS_NOTICE_SEEN));
   // O COMBATE do pesadelo: a outra face da mesma noite que rendeu o sonho.
   // Também só de manhã, também nunca à noite (ver o efeito lá embaixo).
   const [nightmareOpen, setNightmareOpen] = useState(false);
@@ -3626,6 +3632,14 @@ export default function App() {
      `memo()` mundo abaixo (footgun 5). */
   const handleDismissHpBanner = useCallback(() => setHpBannerDismissed(true), []);
   const handleDismissFreshStart = useCallback(() => setFreshStartDismissed(true), []);
+  const handleTermsNoticeOk = useCallback(() => {
+    // Gravar FORA do updater (footgun 6): a marca é uma string fixa, e a
+    // segunda chamada do StrictMode escreveria o mesmo valor — mas o padrão é
+    // o padrão.
+    const marca = marcaAvisoTermos(TERMS_VERSION, PRIVACY_VERSION);
+    writeLocal(STORAGE_KEYS.TERMS_NOTICE_SEEN, marca, { silent: true });
+    setTermsNoticeSeen(marca);
+  }, []);
   const handleToggleAvisos = useCallback(() => setAvisosAbertos(v => !v), []);
 
   const handleTriageResolve = useCallback((taskId: string, action: TriageAction) => {
@@ -5003,6 +5017,15 @@ export default function App() {
                   ),
                 });
 
+                // ── 7. TERMOS ATUALIZADOS (decisão #24, 21/09/2026) ────────
+                // Informativo, sem re-aceite, o ÚLTIMO da fila: é o único
+                // aviso que não fala do dia da pessoa. A regra de quando
+                // aparecer é de `utils/termsNotice.ts`.
+                if (precisaAvisarTermos(gameState.consent, TERMS_VERSION, PRIVACY_VERSION, termsNoticeSeen)) avisos.push({
+                  key: 'termos',
+                  node: <TermsUpdateBanner language={language} onOk={handleTermsNoticeOk} />,
+                });
+
                 if (avisos.length === 0) return null;
                 const resto = avisos.length - 1;
                 return (
@@ -5972,6 +5995,9 @@ export default function App() {
            sido chamado por ninguém. */
         restWindow={gameState.rest?.window ?? null}
         isSleeping={isSleeping}
+        /* #23 — a inscrição de push leva o `saveId` para que apagar a conta
+           alcance o push no servidor; muda no login e o manager reenvia. */
+        saveId={saveId}
         language={language}
         enabled={notificationsEnabled}
         healthPoints={gameState.healthPoints}

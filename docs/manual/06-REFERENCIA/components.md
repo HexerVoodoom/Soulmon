@@ -248,6 +248,18 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** nenhuma (`find src/components -maxdepth 1 -name 'EditModal.*test.ts*'` vazio, 09/09/2026).
 **Avisos do arquivo:** ⚠️ (D-12) este é o modal do botão principal da tela inicial — era por onde o teto do modo grátis vazava (salvava sem checar cap); hoje mostra o mesmo convite (`UnlockNudge`) que o `CreateModal`, com as mesmas palavras, em vez de recusar em silêncio depois de a pessoa escrever tudo.
 
+### `src/components/FeedbackLink.tsx` (novo em 21/09/2026, QA geral)
+**Dono de:** o canal de feedback in-app — `mailto:` para o e-mail de contato com versão, 8 caracteres do `saveId` e origem (e a mensagem do erro, nunca stack, quando vem do `ErrorBoundary`).
+**Exports:** `FEEDBACK_EMAIL`, `APP_VERSION`, `feedbackMailto(opts)`, `feedbackLabel(language)`, `FeedbackRow` (linha do grupo Sobre da `SettingsPage`), `FeedbackLink` (link solto, usado no `ErrorBoundary`).
+**Chamado por:** `src/components/SettingsPage.tsx`, `src/components/ErrorBoundary.tsx`.
+**Régua:** `src/components/SettingsPage.sobre.render.test.tsx`, `src/components/ErrorBoundary.feedback.render.test.tsx`.
+
+### `src/components/TermsUpdateBanner.tsx` (novo em 21/09/2026, decisão #24)
+**Dono de:** o cartão discreto (`.sm2-notice`, `role="status"`) que avisa que Termos/Política mudaram — dois links em aba nova e um "Ok" que grava o aviso como visto. Não bloqueia nada.
+**Props:** `language`, `onOk`.
+**Chamado por:** `src/App.tsx` (item `termos` da fila de avisos, `filaDeAvisos.contract.test.ts`).
+**Régua:** `src/components/TermsUpdateBanner.render.test.tsx`.
+
 ### `src/components/ErrorBoundary.tsx`
 **Dono de:** boundary de erro de renderização do app inteiro — tela de fallback com o mascote e um botão de recarregar.
 **Props principais:** `Props` (`children`), `State` (`hasError`, `error`).

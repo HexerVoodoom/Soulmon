@@ -65,7 +65,7 @@
           } catch (e) {}
         })();
       </script>
-      <script type="module" crossorigin src="/assets/index-CmxtaoHZ.js"></script>
+      <script type="module" crossorigin src="/assets/index-DSsqsacJ.js"></script>
       <link rel="modulepreload" crossorigin href="/assets/vendor-DDxydHEc.js">
       <link rel="stylesheet" crossorigin href="/assets/index-kMNEBcud.css">
     </head>
@@ -116,6 +116,14 @@
         // no parse e o usuário fica com TELA BRANCA, sem explicação. Foi assim
         // que ele se comportou no emulador da API 30 (WebView 83, de 2020).
         //
+        // O gate testa o requisito MAIS NOVO do `src/index.css`, não o mais
+        // conhecido: oklch()/color-mix() chegaram no Chromium 111, mas o
+        // aninhamento (`&:hover` dentro da regra, 122 ocorrências) só existe
+        // a partir do 112 — um WebView 111 passava no teste antigo e abria o
+        // app com o kit inteiro sem hover/foco/variante, que é pior que a
+        // tela branca porque parece bug nosso. `selector(&)` é a forma
+        // padrão de perguntar por aninhamento (QA geral de 21/09/2026, #19).
+        //
         // Isso não é hipótese de laboratório: no Android o WebView se atualiza
         // SEPARADO do sistema, então um aparelho novo com WebView travado
         // quebra igual — e `minSdkVersion = 24` faz a Play Store oferecer o app
@@ -130,7 +138,8 @@
               typeof CSS !== 'undefined' &&
               CSS.supports &&
               CSS.supports('color', 'oklch(0 0 0)') &&
-              CSS.supports('color', 'color-mix(in srgb, red, blue)');
+              CSS.supports('color', 'color-mix(in srgb, red, blue)') &&
+              CSS.supports('selector(&)');
             if (ok) return;
 
             var pt = (navigator.language || '').toLowerCase().indexOf('pt') === 0;

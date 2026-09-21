@@ -38,6 +38,10 @@ interface NotificationManagerProps {
   restWindow?: { start: string; end: string } | null;
   /** WP3.11 — o pet está dormindo? Já deitou: não há o que lembrar. */
   isSleeping?: boolean;
+  /** #23 (QA geral 21/09/2026) — amarra a inscrição de push à conta, para que
+   *  apagar a conta alcance o push. Ausente = inscrição anônima, como antes.
+   *  Mudou (login) → reenvia. */
+  saveId?: string | null;
   language: 'pt-BR' | 'en-US';
   enabled: boolean;
   healthPoints: number;
@@ -54,6 +58,7 @@ export function NotificationManager({
   bornAt,
   restWindow,
   isSleeping = false,
+  saveId,
   language,
   enabled,
   healthPoints,
@@ -78,10 +83,10 @@ export function NotificationManager({
       if (isNativeAndroid) {
         registerForPushNotifications(petName, language, (title, body) => {
           toast(title, { description: body });
-        });
+        }, saveId);
       } else {
         // WP1.17 — a idade vai junto: é ela que dá voz própria aos dias 1 e 2.
-        subscribeToPush(petName, language, bornAt);
+        subscribeToPush(petName, language, bornAt, saveId);
       }
     } else {
       if (isNativeAndroid) {
@@ -90,7 +95,7 @@ export function NotificationManager({
         unsubscribeFromPush();
       }
     }
-  }, [enabled, petName, language]);
+  }, [enabled, petName, language, saveId]);
 
   // Sync alarms when activities or tasks change
   useEffect(() => {

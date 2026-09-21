@@ -60,7 +60,7 @@ e o que cada regra NÃO faz.
 ## Handoffs
 
 → `doc-verificador` (o doc) · → orquestrador (divergências para o `STATUS.md`) ·
-← `doc-cartografo` (inventário).
+← orquestrador, passo Medir (inventário).
 
 ## Voz
 

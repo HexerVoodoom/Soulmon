@@ -347,6 +347,7 @@ de forma é `GAME_STATE`, que usa `_` e versão: `soulmon_state_v1` (era
 | `SOUND_MUTED` | `soulmon-sound-muted` | Mudo global. **Sem a chave, `readFlag` devolve `false` e o som NASCE LIGADO** — coerente para SFX, que só saem por gesto. | `sounds.ts`, `telemetry.ts`, `EvolutionPath.tsx` |
 | `SOUND_CATEGORY_VOLUMES` | `soulmon-sound-category-volumes` | Volume por categoria (0..1, JSON). Chave NOVA: `SOUND_MUTED` não foi renomeada, só se ACRESCENTA. | `audioBus.ts` |
 | `SOUND_TRACK_ENABLED` | `soulmon-sound-track-enabled` | Trilha ligada. **Polaridade invertida de propósito**: a chave guarda LIGADA, então sem ela `readFlag` devolve `false` e a trilha nasce DESLIGADA — pendurar trilha no mudo global seria autoplay, que a D11 veta. | `audioBus.ts` |
+| `TERMS_NOTICE_SEEN` | `soulmon-terms-notice-seen` | Versão dos termos/política cujo banner de atualização já foi visto (decisão #24, 21/09/2026). Sem ela, quem aceitou versão anterior vê o banner uma vez. | `termsNotice.ts`, `App.tsx` |
 | `FCM_TOKEN` | `soulmon-fcm-token` | O token FCM deste aparelho. | `notifications.ts` |
 | `LAST_CLOUD_SYNC` | `soulmon-last-cloud-sync` | ISO do último save confirmado PELO SERVIDOR. | `cloudSave.ts`, `SettingsPage.tsx` |
 | `ORACLE_FORM` | `soulmon-oracle-form` | Estado do formulário da página do Oráculo (ferramenta de criação). | `OraclePage.tsx` |

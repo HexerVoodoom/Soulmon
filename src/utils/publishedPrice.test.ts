@@ -10,21 +10,28 @@
 // O contrato é o marcador `data-price="full-unlock"`: toda menção ao preço no
 // HTML mora dentro dele, e o teste também reprova preço solto FORA do marcador
 // (senão bastaria escrever um novo "R$ 39,90" num parágrafo para escapar).
+//
+// Desde 21/09/2026 (decisão do dono #25) os DOIS idiomas têm moedas
+// diferentes: o PT publica `FULL_UNLOCK_PRICE_LABEL` (R$) e o EN publica
+// `FULL_UNLOCK_PRICE_LABEL_USD` (US$). A metade PT é o que vem antes de
+// `<h1 id="en">`; a EN é o que vem depois.
 // ---------------------------------------------------------------------------
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { FULL_UNLOCK_PRICE_LABEL } from './monetization';
+import { FULL_UNLOCK_PRICE_LABEL, FULL_UNLOCK_PRICE_LABEL_USD } from './monetization';
 
 const HTML = readFileSync(resolve(__dirname, '../../public/termos.html'), 'utf8');
 const MARCADOR = /<span data-price="full-unlock">([^<]*)<\/span>/g;
+/** Qualquer preço em real ou dólar, com ou sem espaço depois do símbolo. */
+const PRECO_SOLTO = /(?:R|US)\$\s*\d[\d.,]*/g;
 
-/** Compara VALOR, não formatação: o texto PT usa "R$ 29,90" e o EN "R$29.90",
- *  e as duas formas são o mesmo preço. O que não pode divergir é o número. */
+/** Compara VALOR, não formatação: "R$ 29,90" e "R$29.90" são o mesmo preço.
+ *  O que não pode divergir é o número. */
 function valor(rotulo: string): number {
-  const m = /R\$\s*([\d.,]+)/.exec(rotulo);
+  const m = /(?:R|US)\$\s*([\d.,]+)/.exec(rotulo);
   if (!m) return NaN;
-  // O ÚLTIMO separador é o decimal (29,90 em PT · 29.90 em EN); os anteriores
+  // O ÚLTIMO separador é o decimal (29,90 em PT · 6.99 em EN); os anteriores
   // são de milhar e caem fora. Sem isso, "29.90" virava 2990.
   const bruto = m[1];
   const corte = Math.max(bruto.lastIndexOf(','), bruto.lastIndexOf('.'));
@@ -33,39 +40,59 @@ function valor(rotulo: string): number {
   return Number(`${inteiro}.${bruto.slice(corte + 1)}`);
 }
 
-describe('preço do desbloqueio completo — Termos x código', () => {
-  const marcados = [...HTML.matchAll(MARCADOR)].map(m => m[1]);
+function metades(html: string): { pt: string; en: string } {
+  const corte = html.indexOf('<h1 id="en">');
+  if (corte < 0) throw new Error('termos.html sem a âncora <h1 id="en"> que separa PT de EN');
+  return { pt: html.slice(0, corte), en: html.slice(corte) };
+}
 
-  it('os Termos marcam o preço nos dois idiomas', () => {
-    expect(marcados.length).toBe(2);
+function marcados(html: string): string[] {
+  return [...html.matchAll(MARCADOR)].map(m => m[1]);
+}
+
+describe('preço do desbloqueio completo — Termos x código', () => {
+  const { pt, en } = metades(HTML);
+
+  it('os Termos marcam o preço UMA vez em cada idioma', () => {
+    expect(marcados(pt).length).toBe(1);
+    expect(marcados(en).length).toBe(1);
   });
 
-  it('o preço publicado é o MESMO de FULL_UNLOCK_PRICE_LABEL', () => {
+  it('PT publica FULL_UNLOCK_PRICE_LABEL, em real', () => {
     const esperado = valor(FULL_UNLOCK_PRICE_LABEL);
     expect(Number.isNaN(esperado)).toBe(false);
-    for (const rotulo of marcados) {
-      expect(rotulo, `"${rotulo}" precisa citar a moeda`).toContain('R$');
-      expect(valor(rotulo), `"${rotulo}" diverge de FULL_UNLOCK_PRICE_LABEL (${FULL_UNLOCK_PRICE_LABEL})`)
-        .toBe(esperado);
-    }
+    const [rotulo] = marcados(pt);
+    expect(rotulo, `"${rotulo}" precisa citar R$`).toContain('R$');
+    expect(rotulo, 'o PT não publica dólar').not.toContain('US$');
+    expect(valor(rotulo), `"${rotulo}" diverge de FULL_UNLOCK_PRICE_LABEL (${FULL_UNLOCK_PRICE_LABEL})`)
+      .toBe(esperado);
   });
 
-  it('não existe preço solto fora do marcador', () => {
+  it('EN publica FULL_UNLOCK_PRICE_LABEL_USD, em dólar', () => {
+    const esperado = valor(FULL_UNLOCK_PRICE_LABEL_USD);
+    expect(Number.isNaN(esperado)).toBe(false);
+    expect(FULL_UNLOCK_PRICE_LABEL_USD).toContain('US$');
+    const [rotulo] = marcados(en);
+    expect(rotulo, `"${rotulo}" precisa citar US$`).toContain('US$');
+    expect(valor(rotulo), `"${rotulo}" diverge de FULL_UNLOCK_PRICE_LABEL_USD (${FULL_UNLOCK_PRICE_LABEL_USD})`)
+      .toBe(esperado);
+  });
+
+  it('não existe preço solto fora do marcador (R$ nem US$)', () => {
     const semMarcados = HTML.replace(MARCADOR, '');
-    const soltos = semMarcados.match(/R\$\s*\d[\d.,]*/g) ?? [];
+    const soltos = semMarcados.match(PRECO_SOLTO) ?? [];
     expect(soltos, 'preço fora de data-price="full-unlock" não é verificável').toEqual([]);
   });
 
   it('a checagem REPROVA de verdade quando o HTML diverge (o teste do teste)', () => {
     // Sem este caso, um marcador escrito errado (que nunca casa) faria os
     // outros passarem vazios e o teste viraria decoração.
-    const divergente = HTML.replace(
-      MARCADOR,
-      (_todo, rotulo: string) =>
-        `<span data-price="full-unlock">${rotulo.replace(/\d/, d => String((Number(d) + 1) % 10))}</span>`,
-    );
-    const outros = [...divergente.matchAll(MARCADOR)].map(m => m[1]);
-    expect(outros.length).toBe(2);
-    expect(outros.every(r => valor(r) === valor(FULL_UNLOCK_PRICE_LABEL))).toBe(false);
+    const troca = (rotulo: string) => rotulo.replace(/\d/, d => String((Number(d) + 1) % 10));
+    const ptDivergente = pt.replace(MARCADOR, (_t, r: string) => `<span data-price="full-unlock">${troca(r)}</span>`);
+    const enDivergente = en.replace(MARCADOR, (_t, r: string) => `<span data-price="full-unlock">${troca(r)}</span>`);
+    expect(marcados(ptDivergente).length).toBe(1);
+    expect(marcados(enDivergente).length).toBe(1);
+    expect(valor(marcados(ptDivergente)[0])).not.toBe(valor(FULL_UNLOCK_PRICE_LABEL));
+    expect(valor(marcados(enDivergente)[0])).not.toBe(valor(FULL_UNLOCK_PRICE_LABEL_USD));
   });
 });

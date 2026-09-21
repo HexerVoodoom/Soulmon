@@ -24,7 +24,9 @@ mente é pior que doc que falta — quem lê acredita.
 
 ## Ciclo (abrir → medir → redigir → verificar → indexar → travar)
 
-1. **Medir** (`doc-cartografo`): `node scripts/docs-inventario.mjs > <scratch>/inventario.md`.
+1. **Medir** (passo do orquestrador; ex-`doc-cartografo`, absorvido em 21/09/2026):
+   `node scripts/docs-inventario.mjs > <scratch>/inventario.md`, data + SHA no topo; toda
+   contagem afirmada por um doc é reconferida pelo comando declarado ao lado dela (R3).
    O inventário é a ÚNICA lista de módulos que os redatores recebem — ninguém lista de
    memória.
 2. **Redigir** (`doc-redator-*`, `doc-historiador`): cada redator escreve **um** doc, do

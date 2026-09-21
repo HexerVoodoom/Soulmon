@@ -1,0 +1,2 @@
+// ⚰️ doc-historico: fóssil do DigiApp movido da raiz em 21/09/2026 (QA GERAL #39). Nada o importa; o SW vivo é `public/sw.js`. Leia LEIA-ANTES.md nesta pasta.
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/sw.js', { scope: '/' })})}
