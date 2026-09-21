@@ -1,0 +1,236 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   TOKENS DO OVERLAY — cópia DECLARADA do bloco `--sm2-*` de `src/index.css`.
+
+   O renderer do desktop não carrega o CSS do app (é outro bundle, outro
+   processo), então os hex precisam existir aqui. Cópia é o footgun 9: a
+   segunda cópia diverge em silêncio — por isso existe um teste de paridade
+   (`src/styles/overlayTokens.parity.test.ts`) que lê ESTE arquivo e o
+   `index.css` e compara token a token, nos dois temas. Mude lá, o teste
+   aponta aqui.
+
+   Tema: o Soulmon é noturno — o escuro é o canônico e o `:root`. O claro entra
+   por `prefers-color-scheme: light` (a janela do menu segue o Windows; a faixa
+   é transparente e só pinta balão e glifos). Canvas: `docs/design/wireframes/
+   fora-do-app/identidade/` (D-F9, X8).
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* As três fontes (X8): sem elas o menu cai em Segoe e todo `.ico` fica VAZIO.
+   Os `.woff2` são os MESMOS de `public/fonts/` — o Vite copia para o bundle do
+   desktop (`desktop/vite.config.ts`); carregam por file://, sem rede. */
+@font-face {
+  font-family: 'Fredoka';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: block;
+  src: url('../../../public/fonts/fredoka-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Fredoka';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: block;
+  src: url('../../../public/fonts/fredoka-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Rubik';
+  font-style: normal;
+  font-weight: 400 500;
+  font-display: block;
+  src: url('../../../public/fonts/rubik-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Rubik';
+  font-style: normal;
+  font-weight: 400 500;
+  font-display: block;
+  src: url('../../../public/fonts/rubik-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Material Symbols Rounded';
+  font-style: normal;
+  font-weight: 100 700;
+  font-display: block;
+  src: url('../../../public/fonts/material-symbols-rounded.woff2') format('woff2');
+}
+
+/* ── TEMA ESCURO (canônico) ─────────────────────────────────────────────── */
+:root {
+  --sm2-bg: #08191A;
+  --sm2-surface: #0F2A29;
+  --sm2-surface-2: #163735;
+  --sm2-line: #1E3F3C;
+  --sm2-ink: #E9F5F2;
+  --sm2-muted: #9DBCB4;
+  --sm2-primary-ink: #5FF3E0;
+  --sm2-primary-fill: #5FF3E0;
+  --sm2-primary-deep: #29C9B8;
+  --sm2-primary-soft: rgba(95, 243, 224, .14);
+  --sm2-on-primary: #04211F;
+  --sm2-gold-ink: #EBBE84;
+  --sm2-gold-fill: #D9A05B;
+  --sm2-on-gold: #04211F;
+  --sm2-viewport-bg: #071413;
+  --sm2-viewport-ink: #E9F5F2;
+  --sm2-viewport-ring: #C68642;
+  --sm2-viewport-ring-deep: #241507;
+  --sm2-credit-ink: #C9A7FF;
+  --sm2-icon-grad: -25;
+}
+
+/* ── TEMA CLARO ─────────────────────────────────────────────────────────── */
+@media (prefers-color-scheme: light) {
+  :root {
+    --sm2-bg: #F1F7F5;
+    --sm2-surface: #FFFFFF;
+    --sm2-surface-2: #E9F2EF;
+    --sm2-line: #DCE9E6;
+    --sm2-ink: #0E2422;
+    --sm2-muted: #4E6B66;
+    --sm2-primary-ink: #0B6F68;
+    --sm2-primary-fill: #0B6F68;
+    --sm2-primary-deep: #08544F;
+    --sm2-primary-soft: #D6F5EF;
+    --sm2-on-primary: #FFFFFF;
+    --sm2-gold-ink: #8A5A2B;
+    --sm2-gold-fill: #A2641F;
+    --sm2-on-gold: #FFFFFF;
+    --sm2-viewport-bg: #0E2422;
+    --sm2-viewport-ink: #E9F5F2;
+    --sm2-viewport-ring: #B0722F;
+    --sm2-viewport-ring-deep: #5E3612;
+    --sm2-credit-ink: #6D28D9;
+    --sm2-icon-grad: 0;
+  }
+}
+
+/* ── INVARIANTES DE TEMA ────────────────────────────────────────────────── */
+:root {
+  --sm2-font-display: 'Fredoka', 'Segoe UI', system-ui, sans-serif;
+  --sm2-font-text: 'Rubik', 'Segoe UI', system-ui, sans-serif;
+  --sm2-font-icon: 'Material Symbols Rounded';
+  --sm2-font-mono: 'Cascadia Mono', Consolas, Menlo, 'Roboto Mono', 'DejaVu Sans Mono', 'Courier New', ui-monospace, monospace;
+  --sm2-text-xs: 12px;
+  --sm2-text-sm: 14px;
+  --sm2-text-md: 16px;
+  --sm2-text-lg: 20px;
+  --sm2-leading-body: 1.45;
+  --sm2-leading-title: 1.2;
+  --sm2-radius-sm: 4px;
+  --sm2-radius-md: 12px;
+  --sm2-radius-lg: 20px;
+  --sm2-dur-tap: 120ms;
+  --sm2-ease: cubic-bezier(.2, 0, 0, 1);
+}
+
+/* ── ÁTOMOS (os mesmos do canvas Sistema) ───────────────────────────────── */
+
+/* Ícone: NUNCA em box (regra do dono) — sem fundo, borda, sombra ou padding. */
+.ico {
+  font-family: var(--sm2-font-icon);
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  display: inline-block;
+  white-space: nowrap;
+  direction: ltr;
+  font-feature-settings: 'liga';
+  user-select: none;
+  flex-shrink: 0;
+  color: currentColor;
+  --f: 0;
+  --w: 500;
+  --o: 24;
+  font-variation-settings: 'FILL' var(--f), 'wght' var(--w), 'GRAD' var(--sm2-icon-grad), 'opsz' var(--o);
+  transition: font-variation-settings var(--sm2-dur-tap) var(--sm2-ease), color var(--sm2-dur-tap) var(--sm2-ease);
+}
+.ico.on { --f: 1; }
+.i18 { font-size: 18px; --o: 20; }
+.i20 { font-size: 20px; --o: 20; }
+.i24 { font-size: 24px; --o: 24; }
+
+/* Botão de ícone: o alvo de 44 é o botão, o ícone fica pelado dentro. */
+.iconbtn {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--sm2-radius-md);
+  color: var(--sm2-ink);
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+}
+.iconbtn:hover { background: var(--sm2-surface-2); }
+.iconbtn:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: -2px; }
+
+/* Botão de texto (SIS-03): 44 no menu. */
+.btn {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: var(--sm2-radius-md);
+  padding: 0 16px;
+  box-sizing: border-box;
+  font-family: var(--sm2-font-text);
+  font-weight: 500;
+  font-size: var(--sm2-text-sm);
+  border: 0;
+  cursor: pointer;
+  color: var(--sm2-ink);
+  transition: background-color var(--sm2-dur-tap) var(--sm2-ease), transform var(--sm2-dur-tap) var(--sm2-ease);
+}
+.btn.out { background: var(--sm2-surface); color: var(--sm2-ink); box-shadow: inset 0 0 0 1px var(--sm2-muted); }
+.btn.out:hover { background: var(--sm2-surface-2); }
+.btn.gho { background: transparent; color: var(--sm2-primary-ink); }
+.btn.gho:hover { background: var(--sm2-primary-soft); }
+.btn.full { width: 100%; }
+.btn.left { justify-content: flex-start; width: 100%; gap: 8px; padding: 0 8px; }
+.btn.left .sp { flex: 1; text-align: left; }
+.btn.left .ico.chev { color: var(--sm2-muted); }
+.btn:active { transform: translateY(1px); }
+.btn:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
+.btn:disabled { color: var(--sm2-muted); cursor: default; }
+
+/* Visor: anel de cobre + vidro. O pixel mora dentro; o vetor, fora. */
+.ring {
+  display: inline-block;
+  padding: 4px;
+  border-radius: var(--sm2-radius-lg);
+  background-color: var(--sm2-viewport-ring);
+  background-image: linear-gradient(180deg,
+    color-mix(in srgb, var(--sm2-viewport-ring) 74%, #fff) 0%,
+    var(--sm2-viewport-ring) 46%,
+    color-mix(in srgb, var(--sm2-viewport-ring) 72%, var(--sm2-viewport-ring-deep)) 100%);
+  box-shadow: inset 0 0 0 2px var(--sm2-viewport-ring-deep), 0 2px 0 0 var(--sm2-viewport-ring-deep);
+}
+.screen {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--sm2-radius-md);
+  background: var(--sm2-viewport-bg);
+  color: var(--sm2-viewport-ink);
+  image-rendering: pixelated;
+}
+.screen img { image-rendering: pixelated; display: block; }
+.glass {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: var(--sm2-radius-md);
+  background-image:
+    linear-gradient(160deg, rgba(255, 255, 255, .22) 0%, rgba(255, 255, 255, .09) 18%, rgba(255, 255, 255, .03) 32%, transparent 46%),
+    radial-gradient(120% 100% at 50% 50%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, .12) 100%);
+}
+
+.num { font-variant-numeric: tabular-nums; font-feature-settings: 'tnum' 1; }
+.note { font-size: var(--sm2-text-xs); line-height: 1.35; color: var(--sm2-muted); }

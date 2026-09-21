@@ -1,19 +1,12 @@
-/* Overlay transparente: NADA de fundo no body — só pet, balão e menu pintam. */
+/* A FAIXA (overlay transparente): NADA de fundo no body — só a criatura, o
+   balão e os glifos pintam. Canvas Fora do app FORA-07 (D-F7, D-F8, D-F10):
+   a criatura do estágio a 64 (÷6 de 384) rente ao chão, o balão Rubik 14 em
+   `surface` AO LADO (a 72 não cabe balão em cima), os glifos pixel a 1× (32)
+   subindo de cima da cabeça. Altura = `STRIP_HEIGHT` 72 (desktop/electron/main.js).
 
-/* Paleta do Soulmon (espelha as custom props sm-* de src/index.css). Aqui
-   precisa ser cópia mesmo: o renderer do desktop não carrega o CSS do app. */
-:root {
-  --sm-bg: #f7f6fb;
-  --sm-surface: #ffffff;
-  --sm-ink: #2a2440;
-  --sm-muted: #8b86a3;
-  --sm-line: #e9e6f2;
-  --sm-primary: #6d5bd0;
-  --sm-primary-deep: #55449f;
-  --sm-primary-soft: #efecfb;
-  --sm-gold: #d9a441;
-  --sm-radius: 16px;
-}
+   Tokens: `tokens.css` (cópia declarada do `--sm2-*`, com teste de paridade).
+   A paleta roxa do DigiApp (`--sm-*`) SAIU daqui em 20/09/2026. */
+@import './tokens.css';
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -23,7 +16,7 @@ html, body, #stage {
   background: transparent;
   overflow: hidden;
   user-select: none;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--sm2-font-text);
 }
 
 /* ------------------------------------------------------------------ pet */
@@ -31,15 +24,15 @@ html, body, #stage {
   position: absolute;
   bottom: 0;
   left: 0;
-  width: 96px;
-  height: 96px;
+  width: 64px;
+  height: 64px;
   cursor: pointer;
   will-change: transform;
 }
 
 #pet-img {
-  width: 96px;
-  height: 96px;
+  width: 64px;
+  height: 64px;
   image-rendering: pixelated;
   pointer-events: none;
 }
@@ -50,69 +43,78 @@ html, body, #stage {
   50% { margin-top: -4px; }
 }
 
-#pet.sleeping #pet-img { opacity: 0.75; filter: saturate(0.6); }
-#pet-zzz { display: none; }
-#pet.sleeping #pet-zzz {
-  display: block;
+/* Dormindo escurece por FILTRO, nunca por alfa (Atividades F1; X3): o box é o
+   mesmo. O Z é o quadro 3 de `anim-sleep-z` (64²) a 1×, ao lado da cabeça. */
+#pet.sleeping #pet-img { filter: brightness(.55) saturate(.7); }
+#pet-zzz {
+  display: none;
   position: absolute;
-  top: -18px;
-  right: 4px;
-  font-size: 18px;
-  animation: zzz-float 2.4s ease-in-out infinite;
+  left: 56px;
+  top: 0;
+  width: 64px;
+  height: 64px;
+  background-position: -128px 0;
+  background-size: 192px 64px;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  pointer-events: none;
 }
+#pet.sleeping #pet-zzz { display: block; animation: zzz-float 2.4s steps(3) infinite; }
 @keyframes zzz-float {
-  0% { transform: translateY(0); opacity: 0.4; }
-  50% { transform: translateY(-8px); opacity: 1; }
-  100% { transform: translateY(0); opacity: 0.4; }
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-6px); }
 }
 
-/* efeitos (corações/bolhas/comida) subindo do pet */
-#pet-fx { position: absolute; inset: 0; pointer-events: none; }
+/* Glifos (carinho/banho…) subindo de cima da cabeça — pixel a 1×, `steps()`,
+   SEM alfa: sobem e são removidos no fim (D-F10). */
+#pet-fx { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
 .fx {
   position: absolute;
-  bottom: 30px;
-  font-size: 18px;
-  animation: fx-rise 1.4s ease-out forwards;
+  bottom: 40px;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  animation: fx-rise 1.2s steps(6) forwards;
 }
+.fx img { width: 32px; height: 32px; image-rendering: pixelated; display: block; }
+/* Comida e sono ainda não têm glifo pixel (`glyph-food-32`/`glyph-sleep-32`,
+   pendentes da squad-arte): até lá o ícone Material, nunca o emoji do sistema. */
+.fx .ico { color: var(--sm2-viewport-ink); font-size: 28px; --o: 24; --f: 1; }
 @keyframes fx-rise {
-  0% { transform: translateY(0) scale(0.7); opacity: 0; }
-  20% { opacity: 1; }
-  100% { transform: translateY(-70px) scale(1.2); opacity: 0; }
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-40px); }
 }
 
-/* --------------------------------------------------------------- balão */
+/* --------------------------------------------------------------- balão
+   Rubik 14 em `surface`, AO LADO da criatura (D-F8): o rabicho aponta para
+   ela, à esquerda ou à direita conforme o lado em que o balão couber. */
 #bubble {
   position: absolute;
-  bottom: 108px;
-  max-width: 260px;
-  padding: 9px 12px;
-  background: var(--sm-surface);
-  color: var(--sm-ink);
-  border: 1px solid var(--sm-line);
-  border-radius: 14px;
-  font-size: 12.5px;
-  line-height: 1.4;
+  top: 8px;
+  max-width: 240px;
+  padding: 6px 12px;
+  background: var(--sm2-surface);
+  color: var(--sm2-ink);
+  border-radius: var(--sm2-radius-md);
+  font-family: var(--sm2-font-text);
+  font-size: var(--sm2-text-sm);
+  line-height: 1.3;
   display: none;
-  box-shadow: 0 6px 20px rgba(42, 36, 64, 0.18);
+  box-shadow: 0 1px 2px rgba(4, 18, 20, .10), 0 4px 12px rgba(4, 18, 20, .10);
 }
 #bubble.open { display: block; }
-/* Rabicho: dois triângulos sobrepostos desenham a borda de 1px sob a ponta. */
-#bubble::before,
-#bubble::after {
+#bubble::before {
   content: '';
   position: absolute;
-  left: 50%;
-  border: 7px solid transparent;
-  border-bottom: none;
+  top: 14px;
+  width: 0;
+  height: 0;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
 }
-#bubble::before {
-  bottom: -8px;
-  margin-left: -7px;
-  border-top-color: var(--sm-line);
-}
-#bubble::after {
-  bottom: -6px;
-  margin-left: -7px;
-  border-top-color: var(--sm-surface);
-}
-
+/* rabicho à esquerda (balão à direita da criatura) */
+#bubble.side-right::before { left: -8px; border-right: 8px solid var(--sm2-surface); }
+/* rabicho à direita (balão à esquerda da criatura, perto da borda) */
+#bubble.side-left::before { right: -8px; border-left: 8px solid var(--sm2-surface); }

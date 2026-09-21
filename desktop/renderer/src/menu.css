@@ -1,30 +1,9 @@
-/* Janela de menu do Soulmon Desktop: cartão flutuante com cantos arredondados
-   ideia (barra de título com 3 botões, cara de "programinha") mas em chrome
-   flat, cantos arredondados e paleta clean — nada de bevel 3D/pixelado. */
-:root {
-  --bg: #f4f5f7;
-  --card: #ffffff;
-  --text: #1c1e21;
-  --muted: #6b7280;
-  --border: rgba(0, 0, 0, 0.08);
-  --accent: #3a5ba0;
-  --accent-soft: #eef1f8;
-  --danger: #e5484d;
-  --shadow: 0 16px 40px rgba(20, 24, 40, 0.22), 0 2px 8px rgba(20, 24, 40, 0.12);
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #1e2025;
-    --card: #26282e;
-    --text: #f1f2f4;
-    --muted: #9aa0aa;
-    --border: rgba(255, 255, 255, 0.08);
-    --accent: #7fa1e0;
-    --accent-soft: #2f3a52;
-    --danger: #ff6b6f;
-    --shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
-  }
-}
+/* Janela de menu do Soulmon Desktop — o menu é o APARELHO (canvas Fora do app,
+   FORA-07..11): um card SIS-03 de 340 em vetor, barra de título fixa com a
+   chama + wordmark e três alvos 44, ícones Material pelados, texto Rubik,
+   títulos Fredoka. Tokens em `tokens.css` (cópia declarada do `--sm2-*`); a
+   paleta própria (`--bg/--card/--accent`) SAIU em 20/09/2026. */
+@import './tokens.css';
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -34,17 +13,17 @@ html, body {
   overflow: hidden;
   user-select: none;
   background: transparent;
-  font-family: -apple-system, 'Segoe UI', ui-sans-serif, system-ui, sans-serif;
-  font-size: 13px;
-  color: var(--text);
+  font-family: var(--sm2-font-text);
+  font-size: var(--sm2-text-sm);
+  line-height: var(--sm2-leading-body);
+  color: var(--sm2-ink);
 }
 
-/* A janela Electron é maior que o cartão visível (16px de sobra em volta) —
-   é o espaço onde a sombra do #win aparece contra o desktop por trás. Sem
-   essa margem a sombra e os cantos arredondados ficariam cortados na borda
-   da janela transparente. */
+/* A janela Electron é o card + 12px de cada lado (`MENU_SHADOW` em
+   desktop/electron/main.js) — é onde a sombra e os cantos aparecem contra o
+   desktop. Mude os dois juntos. */
 body {
-  padding: 16px;
+  padding: 12px;
   display: flex;
 }
 
@@ -52,218 +31,194 @@ body {
   display: flex;
   flex-direction: column;
   flex: 1;
-  background: var(--bg);
-  border-radius: 14px;
+  min-width: 0;
+  background: var(--sm2-surface);
+  border: 1px solid var(--sm2-line);
+  border-radius: var(--sm2-radius-md);
   overflow: hidden;
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border);
+  box-shadow: 0 1px 2px rgba(4, 18, 20, .10), 0 4px 12px rgba(4, 18, 20, .10);
 }
 
 /* ------------------------------------------------------------- title bar */
 #titlebar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  height: 40px;
-  padding: 0 8px 0 14px;
+  gap: 4px;
+  min-height: 44px;
+  padding: 0 4px 0 12px;
   flex-shrink: 0;
-  background: var(--card);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--sm2-line);
   -webkit-app-region: drag;
 }
-#titlebar-icon { font-size: 15px; -webkit-app-region: no-drag; }
-#titlebar-title { flex: 1; font-size: 12.5px; font-weight: 600; letter-spacing: 0.1px; color: var(--text); }
-#titlebar-btns { display: flex; gap: 4px; -webkit-app-region: no-drag; }
-
-.tb-btn {
-  width: 26px;
-  height: 26px;
-  border-radius: 8px;
-  background: transparent;
-  border: none;
-  color: var(--muted);
-  font-family: inherit;
-  font-size: 13px;
+#titlebar-mark { display: inline-flex; align-items: center; gap: 4px; flex: 1; min-width: 0; color: var(--sm2-primary-ink); }
+#titlebar-title {
+  font-family: var(--sm2-font-display);
   font-weight: 600;
-  line-height: 1;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.12s ease, color 0.12s ease;
+  font-size: var(--sm2-text-md);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--sm2-ink);
 }
-.tb-btn:hover { background: var(--accent-soft); color: var(--text); }
-.tb-btn:active { transform: scale(0.94); }
-.tb-btn-close:hover { background: var(--danger); color: #fff; }
+#titlebar-btns { display: flex; gap: 0; -webkit-app-region: no-drag; }
+#titlebar .iconbtn { color: var(--sm2-muted); }
+#titlebar .iconbtn:hover { color: var(--sm2-ink); }
 
 /* ------------------------------------------------------------------ body */
 #content {
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
 }
 
+/* Cabeçalho de painel: `chevron_left` 44 + título Fredoka 16 */
 .panel-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
+  min-height: 44px;
+  padding: 0 8px 0 0;
+  flex-shrink: 0;
 }
-.panel-title { font-weight: 700; font-size: 14px; }
-.panel-stats { margin-left: auto; font-size: 11.5px; color: var(--muted); }
+.panel-header .iconbtn { color: var(--sm2-ink); }
+.panel-title {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--sm2-font-display);
+  font-weight: 500;
+  font-size: var(--sm2-text-md);
+  line-height: var(--sm2-leading-title);
+}
 
-.back-btn {
-  width: 26px;
-  height: 26px;
-  border-radius: 8px;
-  background: var(--accent-soft);
-  border: none;
-  color: var(--accent);
-  cursor: pointer;
-  font-size: 15px;
-  font-weight: 700;
+/* Corpo do painel: coluna com 6 de vão e 12 nas laterais (P1) */
+.pb {
+  padding: 0 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Principal: estágio 14/500 + linha de estado em Material 18 */
+.stg { font-size: var(--sm2-text-sm); font-weight: 500; padding: 4px 12px 0; }
+.stat2 {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
+  min-height: 24px;
+  color: var(--sm2-ink);
+  flex-wrap: wrap;
 }
-.back-btn:hover { filter: brightness(0.96); }
+.stat2 .dot { color: var(--sm2-muted); }
+.stat2 .hh { display: inline-flex; gap: 0; }
 
-.pet-portrait {
-  width: 72px;
-  height: 72px;
+/* Retrato: vidro 160×136 com a criatura a 128 (÷3) — acordada E dormindo no
+   MESMO box (X3): dormir escurece por filtro, nunca encolhe nem esmaece. */
+.port { display: flex; justify-content: center; }
+.port .screen { width: 160px; height: 136px; }
+.port .screen img { position: absolute; left: 50%; top: 50%; width: 128px; height: 128px; margin: -64px 0 0 -64px; }
+.port .screen img.sleep { filter: brightness(.55) saturate(.7); }
+.port .screen .zz {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 64px;
+  height: 64px;
+  background-position: -128px 0;
+  background-size: 192px 64px;
+  background-repeat: no-repeat;
   image-rendering: pixelated;
-  display: block;
-  margin: 0 auto;
 }
 
-/* -------------------------------------------------------- ações de cuidado
-   Grupo separado dos demais itens (tarefas/config): ícones redondos numa
-   fileira própria, com fundo levemente destacado do resto do painel. */
-.care-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 10px 6px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-}
-.care-btn {
-  flex: 1;
+/* A fala do pet (phrases.ts) */
+.say { font-size: var(--sm2-text-sm); text-align: center; line-height: 1.35; min-height: 19px; }
+
+/* Fileira de cuidado: ícone 24 pelado + Rubik 12/500, células 56 */
+.care { display: flex; justify-content: space-between; }
+.care .cell {
+  min-width: 56px;
+  min-height: 56px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 8px 4px;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px 0;
+  font-family: var(--sm2-font-text);
+  font-size: var(--sm2-text-xs);
+  font-weight: 500;
+  color: var(--sm2-ink);
   background: transparent;
-  border: none;
-  border-radius: 10px;
+  border: 0;
+  border-radius: var(--sm2-radius-md);
   cursor: pointer;
-  color: var(--text);
-  font-family: inherit;
 }
-.care-btn:hover { background: var(--accent-soft); }
-.care-btn:active { transform: scale(0.96); }
-.care-icon { font-size: 20px; line-height: 1; }
-.care-label { font-size: 10px; color: var(--muted); }
-
-.status-line {
-  text-align: center;
-  font-size: 11.5px;
-  color: var(--accent);
-  font-weight: 600;
-  min-height: 14px;
-}
-
-/* ------------------------------------------------------- lista de opções */
-.list-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 10px 12px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  font-family: inherit;
-  font-size: 12.5px;
-  text-align: left;
-  cursor: pointer;
-  color: var(--text);
-  transition: background-color 0.12s ease, border-color 0.12s ease;
-}
-.list-btn:hover { border-color: var(--accent); background: var(--accent-soft); }
-.list-btn:active { transform: scale(0.99); }
-.list-btn.muted { color: var(--muted); }
-
-.badge {
-  margin-left: auto;
-  background: var(--accent);
-  color: #fff;
-  border-radius: 999px;
-  padding: 1px 7px;
-  font-size: 10px;
-  font-weight: 700;
-}
+.care .cell:hover { background: var(--sm2-surface-2); }
+.care .cell:active { transform: translateY(1px); }
+.care .cell:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: -2px; }
+.care .cell .ico { color: var(--sm2-ink); }
+.care .cell img { width: 24px; height: 24px; image-rendering: pixelated; display: block; }
 
 /* -------------------------------------------------------------- tarefas */
-.task-list { display: flex; flex-direction: column; gap: 6px; }
-.task-empty { font-size: 11.5px; color: var(--muted); padding: 6px 2px; }
-.task-row {
+.task-list { display: flex; flex-direction: column; }
+.task-empty { font-size: var(--sm2-text-xs); color: var(--sm2-muted); text-align: center; padding: 8px 0; }
+.li {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 10px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-}
-.task-row.done .task-name { text-decoration: line-through; color: var(--muted); }
-.task-toggle { background: none; border: none; font-size: 15px; cursor: pointer; color: var(--accent); }
-.task-name { flex: 1; font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.task-del { background: none; border: none; font-size: 12px; cursor: pointer; color: var(--muted); }
-.task-del:hover { color: var(--danger); }
-
-.field-row { display: flex; flex-direction: column; gap: 6px; }
-.field-row input[type='text'],
-.field-row input[type='email'] {
-  padding: 9px 11px;
-  background: var(--card);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  font-family: inherit;
-  font-size: 12.5px;
-  outline: none;
-  transition: border-color 0.12s ease;
-}
-.field-row input:focus { border-color: var(--accent); }
-.field-hint { font-size: 10.5px; color: var(--muted); }
-.field-hint.error { color: var(--danger); }
-.field-hint.ok { color: #1f9d55; }
-
-/* ----------------------------------------------------- escolha de pet */
-.pet-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 6px;
-}
-.pet-cell {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 4px;
+  min-height: 44px;
+  border-top: 1px solid var(--sm2-line);
+  background: transparent;
+  border-left: 0; border-right: 0; border-bottom: 0;
+  width: 100%;
+  text-align: left;
+  color: var(--sm2-ink);
+  font: inherit;
   cursor: pointer;
+  padding: 0;
 }
-.pet-cell img { width: 100%; image-rendering: pixelated; display: block; }
-.pet-cell.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
-.pet-cell:hover { border-color: var(--accent); }
+.li:first-child { border-top: 0; }
+.li:disabled { cursor: default; }
+.li:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: -2px; }
+.li .t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--sm2-text-sm); }
+/* checkbox SIS-03: 24, borda 2 `muted` */
+.cb {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--sm2-radius-sm);
+  border: 2px solid var(--sm2-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  background: transparent;
+}
+
+/* ---------------------------------------------------------------- config */
+.t.b { font-size: var(--sm2-text-sm); font-weight: 500; }
+.field-hint { font-size: var(--sm2-text-xs); line-height: 1.35; color: var(--sm2-muted); }
+.field-hint.error { color: var(--sm2-ink); font-weight: 500; }
+.acct { display: flex; align-items: center; gap: 6px; font-size: var(--sm2-text-xs); color: var(--sm2-muted); }
+.acct b { color: var(--sm2-ink); font-weight: 500; }
+.acct .ico { color: var(--sm2-credit-ink); }
+.acct .n { color: var(--sm2-ink); font-weight: 500; }
+.inp {
+  min-height: 44px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  border-radius: var(--sm2-radius-md);
+  background: var(--sm2-surface-2);
+  border: 1px solid var(--sm2-muted);
+  font-family: var(--sm2-font-text);
+  font-size: var(--sm2-text-md);
+  color: var(--sm2-ink);
+  outline: none;
+}
+.inp::placeholder { color: var(--sm2-muted); }
+.inp:focus { border-color: var(--sm2-primary-ink); box-shadow: 0 0 0 2px var(--sm2-primary-ink); }
 
 #content::-webkit-scrollbar { width: 10px; }
 #content::-webkit-scrollbar-track { background: transparent; }
-#content::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 6px;
-}
+#content::-webkit-scrollbar-thumb { background: var(--sm2-line); border-radius: 6px; }

@@ -27,10 +27,12 @@ const { appOrigin, decideNavigation, decideWindowOpen, isTrustedAuthSender } = r
 const { shouldAutoUpdate } = require('./updatePolicy.js');
 const pkgEmpacotado = require('../package.json');
 
-// Altura da faixa: pet (~96px) + espaço pro balão de fala acima dele. O menu
-// é uma janela própria (ver createMenuWindow), não precisa caber aqui.
-const STRIP_HEIGHT = 180;
-const PET_SIZE = 96; // mesma constante do renderer (main.ts)
+// Altura da faixa: 72 — a criatura a 64 (384 ÷ 6, escala inteira) rente ao
+// chão e o balão AO LADO dela, não em cima (canvas Fora do app, D-F7/D-F8;
+// era 180 com o pet a 96, que não é divisor inteiro de 384). O menu é uma
+// janela própria (ver createMenuWindow), não precisa caber aqui.
+const STRIP_HEIGHT = 72;
+const PET_SIZE = 64; // mesma constante do renderer (main.ts)
 // URL do app web completo. Ainda aponta pro Pages compartilhado — trocar
 // junto com capacitor.config.json quando o domínio próprio existir
 // (docs/SEPARACAO-DIGIAPP.md). O renderer lê o mesmo valor de config.ts.
@@ -40,7 +42,13 @@ const FULL_APP_URL = process.env.SOULMON_APP_URL || 'https://soulmon.mateus-sprn
 // default — sem isso uma env com `file:` daria origem opaca ('null') e a
 // checagem aceitaria qualquer origem opaca.
 const APP_ORIGIN = appOrigin(FULL_APP_URL);
-const MENU_SIZE = { width: 340, height: 520 };
+// O CARD do menu mede 340×520 (canvas Fora do app, X4: 480 de altura com
+// conta, cabe nos 520). A janela é o card + `MENU_SHADOW` de cada lado, que é
+// onde a sombra e os cantos arredondados aparecem sobre o desktop (o body do
+// menu.css tem o mesmo padding — mude os dois juntos).
+const MENU_CARD = { width: 340, height: 520 };
+const MENU_SHADOW = 12;
+const MENU_SIZE = { width: MENU_CARD.width + 2 * MENU_SHADOW, height: MENU_CARD.height + 2 * MENU_SHADOW };
 
 /** @type {BrowserWindow | null} */
 let overlayWin = null;

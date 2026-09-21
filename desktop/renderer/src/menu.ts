@@ -1,9 +1,11 @@
 // Janela de menu do pet (frame:false + chrome falso em menu.html/menu.css).
-// Título tem 3 botões: engrenagem (configurações), minimizar (só esta janela)
-// e fechar (o app inteiro — overlay + bandeja).
+// O menu é o APARELHO (canvas Fora do app, FORA-07..11): barra de título com a
+// chama + wordmark e três botões de 44 — `settings` (configurações),
+// `expand_more` (minimizar só esta janela — `minimize` não está no subset da
+// fonte, R2) e `close` (o app inteiro — overlay + bandeja).
 import './menu.css';
-// Glifo pixel do carinho (A21.1, 15/09/2026) no lugar do 🫶 do sistema.
-import glyphAffection from '../../../src/assets/soulmon/hud/glyph-affection.png';
+// O Z de dormir: quadro 3 de `anim-sleep-z` (64²) a 1× no canto do vidro (X3).
+import sleepZ from '../../../src/assets/soulmon/fx/anim-sleep-z.png';
 import { petSprite } from './sprites';
 import {
   loadState, saveState, foodCount, firstFood, formatLastSync,
@@ -48,34 +50,78 @@ document.getElementById('btn-settings')!.addEventListener('click', () => { panel
 document.getElementById('btn-minimize')!.addEventListener('click', () => window.soulmonDesktop?.minimizeMenu());
 document.getElementById('btn-close')!.addEventListener('click', () => window.soulmonDesktop?.quit());
 
+/** Os nomes acessíveis da barra de título, no idioma do usuário (o HTML é estático). */
+function labelTitlebar() {
+  const set = (id: string, label: string) => {
+    const b = document.getElementById(id)!;
+    b.setAttribute('aria-label', label);
+    b.title = label;
+  };
+  set('btn-settings', t('Configurações', 'Settings'));
+  set('btn-minimize', t('Minimizar', 'Minimize'));
+  set('btn-close', t('Fechar o Soulmon', 'Close Soulmon'));
+}
+
 type Panel = 'main' | 'tasks' | 'settings';
 let panel: Panel = state.syncEmail ? 'main' : 'settings';
 let status = '';
 
-function heartsLabel(): string {
-  const full = Math.floor(state.hearts);
-  const half = state.hearts - full >= 0.5;
-  return '❤️'.repeat(full) + (half ? '💗' : '') + '🖤'.repeat(Math.max(0, state.maxHearts - full - (half ? 1 : 0)));
+/** Um glifo da Material Symbols Rounded, pelado (nunca em box — regra do dono). */
+function icon(name: string, size: 18 | 20 | 24 = 20, fill = false): HTMLSpanElement {
+  const i = document.createElement('span');
+  i.className = `ico i${size}${fill ? ' on' : ''}`;
+  i.setAttribute('aria-hidden', 'true');
+  i.textContent = name;
+  return i;
 }
 
 /**
- * ⚠️ `label` é inserido como HTML (para caber o `<span class="badge">`), então
- * só aceita texto NOSSO. Nada vindo do save ou digitado pelo usuário pode
- * passar por aqui — use `textContent` num elemento próprio.
+ * A linha de estado em Material 18 (D-F12): `favorite` cheio/contorno em `ink`
+ * (o vazio é CONTORNO — nunca vermelho, nunca um coração preto cheio), `bolt`
+ * + "N/M" tabular (só o ícone com zero — 13.16), `restaurant` + "×N".
+ * Meio coração conta como contorno: ainda não é um coração inteiro.
  */
-function button(label: string, onClick: () => void, extraClass = ''): HTMLButtonElement {
+function statusLine(): HTMLParagraphElement {
+  const p = document.createElement('p');
+  p.className = 'stat2';
+  const full = Math.floor(state.hearts);
+  const hearts = document.createElement('span');
+  hearts.className = 'hh';
+  hearts.setAttribute('role', 'img');
+  hearts.setAttribute('aria-label', t(`${full} de ${state.maxHearts} corações`, `${full} of ${state.maxHearts} hearts`));
+  for (let i = 0; i < state.maxHearts; i++) hearts.appendChild(icon('favorite', 18, i < full));
+  const dot = () => { const d = document.createElement('span'); d.className = 'dot'; d.textContent = '·'; return d; };
+  const num = (text: string) => { const n = document.createElement('span'); n.className = 'num'; n.textContent = text; return n; };
+  p.append(hearts, dot(), icon('bolt', 18, state.energy > 0));
+  if (state.energy > 0) p.appendChild(num(`${state.energy}/${state.maxEnergy}`));
+  p.append(dot(), icon('restaurant', 18), num(`×${foodCount(state.foodInventory)}`));
+  return p;
+}
+
+/**
+ * Botão de lista com glifo pelado à esquerda (D-F13). `label` vai por
+ * `textContent`: nada vindo do save ou digitado passa por HTML.
+ */
+function button(iconName: string, label: string, onClick: () => void, kind: 'gho' | 'out' = 'gho'): HTMLButtonElement {
   const b = document.createElement('button');
-  b.className = `list-btn ${extraClass}`.trim();
-  b.innerHTML = label;
+  b.type = 'button';
+  b.className = `btn ${kind} full left`;
+  const text = document.createElement('span');
+  text.className = 'sp';
+  text.textContent = label;
+  b.append(icon(iconName, 20), text);
   b.addEventListener('click', onClick);
   return b;
 }
 
-/** Botão redondo de ícone, usado só pelas ações de cuidado (care-row). */
-function careButton(icon: string, label: string, onClick: () => void): HTMLButtonElement {
+/** Célula da fileira de cuidado: ícone 24 pelado + Rubik 12 (D-F10/D-F12). */
+function careButton(iconName: string, label: string, onClick: () => void): HTMLButtonElement {
   const b = document.createElement('button');
-  b.className = 'care-btn';
-  b.innerHTML = `<span class="care-icon">${icon}</span><span class="care-label">${label}</span>`;
+  b.type = 'button';
+  b.className = 'cell';
+  const text = document.createElement('span');
+  text.textContent = label;
+  b.append(icon(iconName, 24), text);
   b.addEventListener('click', onClick);
   return b;
 }
@@ -84,127 +130,166 @@ function addBackHeader(title: string) {
   const header = document.createElement('div');
   header.className = 'panel-header';
   const back = document.createElement('button');
-  back.className = 'back-btn';
-  back.textContent = '‹';
+  back.type = 'button';
+  back.className = 'iconbtn';
+  back.setAttribute('aria-label', t('Voltar', 'Back'));
+  back.appendChild(icon('chevron_left', 24));
   back.addEventListener('click', () => { panel = 'main'; render(); });
-  const span = document.createElement('span');
-  span.className = 'panel-title';
-  span.textContent = title;
-  header.append(back, span);
+  const h = document.createElement('h3');
+  h.className = 'panel-title';
+  h.textContent = title;
+  header.append(back, h);
   content.appendChild(header);
+}
+
+/** O corpo de um painel (coluna com 6 de vão, 12 nas laterais). */
+function body(): HTMLDivElement {
+  const pb = document.createElement('div');
+  pb.className = 'pb';
+  content.appendChild(pb);
+  return pb;
 }
 
 function render() {
   content.innerHTML = '';
+  labelTitlebar();
   if (panel === 'main') renderMain();
   else if (panel === 'tasks') renderTasks();
   else renderSettings();
 }
 
 function renderMain() {
-  const header = document.createElement('div');
-  header.className = 'panel-header';
   // textContent, não innerHTML: `stageName` vem do save remoto. Com innerHTML,
   // um save com HTML no nome executaria script DENTRO do renderer — que tem
   // acesso a `soulmonDesktop.getAuth()` e poderia vazar o token da conta.
-  const title = document.createElement('span');
-  title.className = 'panel-title';
-  title.textContent = state.stageName;
-  const stats = document.createElement('span');
-  stats.className = 'panel-stats';
-  stats.textContent = `${heartsLabel()} · ⚡${state.energy}/${state.maxEnergy} · 🍎×${foodCount(state.foodInventory)}`;
-  header.append(title, stats);
-  content.appendChild(header);
+  const stg = document.createElement('p');
+  stg.className = 'stg';
+  stg.textContent = state.stageName;
+  content.appendChild(stg);
 
+  const pb = body();
+  if (!state.sleeping) pb.appendChild(statusLine());
+
+  // O retrato: vidro 160×136 com a criatura a 128 (÷3), acordada e dormindo
+  // no MESMO box — dormir escurece por filtro (X3), com o Z pixel no canto.
+  const port = document.createElement('div');
+  port.className = 'port';
+  const ring = document.createElement('span');
+  ring.className = 'ring';
+  const screen = document.createElement('span');
+  screen.className = 'screen';
   const img = document.createElement('img');
-  img.className = 'pet-portrait';
   img.src = petSprite(state.stage, state.demoCharacterId);
   img.alt = state.stageName;
-  content.appendChild(img);
+  img.width = 128; img.height = 128;
+  if (state.sleeping) img.classList.add('sleep');
+  screen.appendChild(img);
+  if (state.sleeping) {
+    const zz = document.createElement('span');
+    zz.className = 'zz';
+    zz.setAttribute('aria-hidden', 'true');
+    zz.style.backgroundImage = `url("${sleepZ}")`;
+    screen.appendChild(zz);
+  }
+  const glass = document.createElement('span');
+  glass.className = 'glass';
+  screen.appendChild(glass);
+  ring.appendChild(screen);
+  port.appendChild(ring);
+  pb.appendChild(port);
 
-  const statusLine = document.createElement('div');
-  statusLine.className = 'status-line';
-  statusLine.textContent = status;
-  content.appendChild(statusLine);
+  const say = document.createElement('p');
+  say.className = 'say';
+  say.setAttribute('aria-live', 'polite');
+  say.textContent = status;
+  pb.appendChild(say);
 
-  // Ações de cuidado (carinho/comida/banho/sono) ficam separadas do resto
-  // numa fileira de ícones própria — tarefas/config são outra categoria.
+  // Ações de cuidado (carinho/comida/banho/sono): ícones pelados 24 em células
+  // 56, separadas do resto — tarefas/config são outra categoria.
   const careRow = document.createElement('div');
-  careRow.className = 'care-row';
+  careRow.className = 'care';
   careRow.append(
-    careButton(`<img src="${glyphAffection}" alt="" width="20" height="20" style="image-rendering:pixelated">`, t('Carinho', 'Pet'), doPet),
-    careButton('🍎', t('Comida', 'Feed'), doFeed),
-    careButton('🚿', t('Banho', 'Bath'), doShower),
-    careButton(state.sleeping ? '☀️' : '💤', state.sleeping ? t('Acordar', 'Wake') : t('Dormir', 'Sleep'), doSleepToggle),
+    careButton('volunteer_activism', t('Carinho', 'Pet'), doPet),
+    careButton('restaurant', t('Comida', 'Feed'), doFeed),
+    careButton('shower', t('Banho', 'Bath'), doShower),
+    careButton(state.sleeping ? 'wb_sunny' : 'bedtime', state.sleeping ? t('Acordar', 'Wake') : t('Dormir', 'Sleep'), doSleepToggle),
   );
-  content.appendChild(careRow);
+  pb.appendChild(careRow);
 
-  const pending = state.tasks.length;
-  content.append(
-    button(`✅ ${t('Tarefas de hoje', "Today's tasks")}${pending ? ` <span class="badge">${pending}</span>` : ''}`,
-      () => { panel = 'tasks'; render(); }),
-  );
+  // "Today's tasks" SEM dígito (REGISTRO 13.17): contar o que falta na porta
+  // da lista é cobrança. O chevron diz que é uma lista.
+  const tasksBtn = button('task_alt', t('Tarefas de hoje', "Today's tasks"), () => { panel = 'tasks'; render(); });
+  const chev = icon('chevron_right', 20);
+  chev.classList.add('chev');
+  tasksBtn.appendChild(chev);
+  pb.appendChild(tasksBtn);
 
   // Carinho e comida escrevem no save real quando há conta; tarefas ainda não
   // (as do desktop são livres, as do app vêm de atividades com agenda). Dizer
   // qual é qual evita o usuário achar que marcou a tarefa no celular também.
-  const note = document.createElement('div');
-  note.className = 'field-hint';
+  const note = document.createElement('p');
+  note.className = 'note';
   note.textContent = state.syncEmail
     ? t('Tudo aqui vale no celular também. Criar e editar tarefas é no app.',
       'Everything here also counts on your phone. Creating and editing tasks happens in the app.')
     : t('Conecte a sua conta para cuidar do pet e marcar tarefas daqui.',
       'Connect your account to care for your pet and check off tasks from here.');
-  content.appendChild(note);
+  pb.appendChild(note);
 }
 
 function renderTasks() {
   addBackHeader(t('Tarefas de hoje', "Today's tasks"));
+  const pb = body();
 
   if (!state.syncEmail) {
-    const aviso = document.createElement('div');
-    aviso.className = 'field-hint';
+    const aviso = document.createElement('p');
+    aviso.className = 'task-empty';
     aviso.textContent = t(
       'Conecte a sua conta para ver as tarefas do app aqui.',
       'Connect your account to see your app tasks here.',
     );
-    content.appendChild(aviso);
+    pb.appendChild(aviso);
     return;
   }
 
   const list = document.createElement('div');
   list.className = 'task-list';
   if (state.tasks.length === 0) {
-    const empty = document.createElement('div');
+    const empty = document.createElement('p');
     empty.className = 'task-empty';
     empty.textContent = t('Nada pendente por hoje!', 'Nothing left for today!');
     list.appendChild(empty);
   }
   for (const task of state.tasks) {
-    const row = document.createElement('div');
-    row.className = 'task-row';
-    const toggle = document.createElement('button');
-    toggle.className = 'task-toggle';
-    toggle.textContent = '☐';
-    toggle.disabled = completing !== null;
-    toggle.addEventListener('click', () => doCompleteTask(task.id));
+    // Cada tarefa é UMA linha de 44 que é o próprio checkbox (SIS-03, `.cb` 24):
+    // o alvo é a linha inteira, não o quadradinho.
+    const row = document.createElement('button');
+    row.type = 'button';
+    row.className = 'li';
+    row.setAttribute('role', 'checkbox');
+    row.setAttribute('aria-checked', 'false');
+    row.disabled = completing !== null;
+    row.addEventListener('click', () => doCompleteTask(task.id));
+    const cb = document.createElement('span');
+    cb.className = 'cb';
     const name = document.createElement('span');
-    name.className = 'task-name';
+    name.className = 't';
+    // O emoji do nome é DADO do usuário — fica.
     name.textContent = `${task.emoji} ${task.name}`;
     // Sem botão de excluir: criar, editar e apagar tarefa é no app. Aqui só
     // dá pra marcar como feita — a agenda continua sendo dona da lista.
-    row.append(toggle, name);
+    row.append(cb, name);
     list.appendChild(row);
   }
-  content.appendChild(list);
+  pb.appendChild(list);
 
-  const nota = document.createElement('div');
-  nota.className = 'field-hint';
+  const nota = document.createElement('p');
+  nota.className = 'note';
   nota.textContent = t(
     'Criar e editar tarefas é no app do celular.',
     'Creating and editing tasks happens in the phone app.',
   );
-  content.appendChild(nota);
+  pb.appendChild(nota);
 }
 
 /* A formatação saiu daqui para `state.ts` (`formatLastSync`), que é
@@ -218,89 +303,88 @@ function lastSyncLabel(): string {
 
 function renderSettings() {
   addBackHeader(t('Configurações', 'Settings'));
+  const pb = body();
 
-  content.appendChild(button(
-    `🌐 ${t('Idioma: Português', 'Language: English')}`,
+  pb.appendChild(button(
+    'translate',
+    t('Idioma: Português', 'Language: English'),
     () => { state.language = state.language === 'pt-BR' ? 'en' : 'pt-BR'; persist(); render(); },
   ));
 
   // A criatura NÃO é escolhida aqui: cada jogador tem uma linha evolutiva única
   // gerada pelo oráculo. Ela vem do save — a conta é o controle central desta
   // tela, não um extra.
-  const syncBox = document.createElement('div');
-  syncBox.className = 'field-row';
-  const label = document.createElement('div');
-  label.className = 'panel-title';
-  label.style.fontSize = '11px';
-  const hint = document.createElement('div');
+  const hint = document.createElement('p');
   hint.className = 'field-hint';
 
   if (authRequired && session) {
     // Logado: o e-mail vem do token assinado, não é digitável.
-    label.textContent = t('Conta conectada', 'Connected account');
-    const who = document.createElement('div');
-    who.className = 'status-line';
+    const who = document.createElement('p');
+    who.className = 't b';
     who.textContent = session.email;
-    const syncBtn = button(`🔄 ${t('Sincronizar agora', 'Sync now')}`, () => syncNow(session!.email));
+    const syncBtn = button('sync', t('Sincronizar agora', 'Sync now'), () => syncNow(session!.email), 'out');
     hint.textContent = lastSyncLabel()
       || t('Puxe o seu progresso do celular.', 'Pull your progress from the phone.');
-    syncBox.append(label, who, syncBtn, hint);
+    pb.append(who, syncBtn, hint);
   } else if (authRequired) {
     // Sem login não há o que sincronizar: o servidor recusaria a leitura.
     // Digitar um e-mail aqui só produziria um 403 sem explicação.
+    const label = document.createElement('p');
+    label.className = 't b';
     label.textContent = t('Entre na sua conta', 'Sign in to your account');
-    const loginBtn = button(
-      `🔐 ${t('Entrar com e-mail', 'Sign in with email')}`,
-      () => window.soulmonDesktop?.openFullApp(),
-    );
+    const loginBtn = button('lock', t('Entrar com e-mail', 'Sign in with email'), () => window.soulmonDesktop?.openFullApp(), 'out');
     hint.textContent = t(
       'Abre o Soulmon completo para você entrar. Depois é só voltar aqui — a criatura do celular aparece sozinha.',
       'Opens the full Soulmon so you can sign in. Then come back — your phone creature shows up automatically.',
     );
-    syncBox.append(label, loginBtn, hint);
+    pb.append(label, loginBtn, hint);
   } else {
     // Modo de migração (servidor sem FIREBASE_PROJECT_ID): ainda aceita e-mail
     // digitado, porque é assim que o app web funciona hoje.
-    label.textContent = t('E-mail da sua conta Soulmon', 'Your Soulmon account email');
     const emailInput = document.createElement('input');
     emailInput.type = 'email';
+    emailInput.className = 'inp';
     emailInput.placeholder = t('voce@email.com', 'you@example.com');
+    emailInput.setAttribute('aria-label', t('E-mail da sua conta Soulmon', 'Your Soulmon account email'));
     emailInput.value = state.syncEmail ?? '';
-    const syncBtn = button(`🔄 ${t('Sincronizar agora', 'Sync now')}`, () => syncNow(emailInput.value));
+    const syncBtn = button('sync', t('Sincronizar agora', 'Sync now'), () => syncNow(emailInput.value), 'out');
     hint.textContent = lastSyncLabel()
       || t('Use o mesmo e-mail do celular para ver a sua criatura aqui.', 'Use the same email as the phone to see your creature here.');
-    syncBox.append(label, emailInput, syncBtn, hint);
+    pb.append(emailInput, syncBtn, hint);
   }
 
   // O resultado da última sincronização tem prioridade sobre o texto padrão.
+  // Erro é tinta `ink` 500, nunca vermelho (o overlay não tem `danger`).
   if (syncMessage) {
     hint.textContent = syncMessage.text;
     hint.className = syncMessage.error ? 'field-hint error' : 'field-hint';
+    hint.setAttribute('role', syncMessage.error ? 'alert' : 'status');
   }
 
-  content.appendChild(syncBox);
-
   if (wallet) {
-    const box = document.createElement('div');
-    box.className = 'field-row';
-    const title = document.createElement('div');
-    title.className = 'panel-title';
-    title.style.fontSize = '11px';
-    title.textContent = t('Conta', 'Account');
-    const line = document.createElement('div');
-    line.className = 'status-line';
-    line.textContent = `${wallet.tier === 'paid' ? t('Completa', 'Full') : 'Demo'} · 💎 ${wallet.credits}`;
-    const hint2 = document.createElement('div');
-    hint2.className = 'field-hint';
+    // A carteira numa linha: "Account · Full ·" + `diamond` em `credit-ink` + N
+    // (a terceira moeda com o glifo próprio — Loja D-L11).
+    const line = document.createElement('p');
+    line.className = 'acct';
+    const b = document.createElement('b');
+    b.textContent = t('Conta', 'Account');
+    const dot = () => { const d = document.createElement('span'); d.textContent = '·'; return d; };
+    const tier = document.createElement('span');
+    tier.textContent = wallet.tier === 'paid' ? t('Completa', 'Full') : 'Demo';
+    const n = document.createElement('span');
+    n.className = 'n num';
+    n.textContent = String(wallet.credits);
+    line.append(b, dot(), tier, dot(), icon('diamond', 18, true), n);
+    const hint2 = document.createElement('p');
+    hint2.className = 'note';
     hint2.textContent = t(
       'Mesmo saldo do celular. Compras só no app da loja.',
       'Same balance as your phone. Purchases happen in the store app.',
     );
-    box.append(title, line, hint2);
-    content.appendChild(box);
+    pb.append(line, hint2);
   }
 
-  content.appendChild(button(`📱 ${t('Abrir Soulmon completo', 'Open full Soulmon')}`, () => window.soulmonDesktop?.openFullApp()));
+  pb.appendChild(button('arrow_forward', t('Abrir Soulmon completo', 'Open full Soulmon'), () => window.soulmonDesktop?.openFullApp()));
 }
 
 async function syncNow(email: string) {

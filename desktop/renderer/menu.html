@@ -6,14 +6,20 @@
     <title>Soulmon</title>
   </head>
   <body>
+    <!-- O menu é o APARELHO: card SIS-03 de 340 com a barra de título fixa —
+         a chama da marca + wordmark Fredoka, três botões de 44 com o ícone
+         pelado (canvas Fora do app, D-F11). Os aria-labels são postos pelo
+         menu.ts no idioma do usuário. -->
     <div id="win">
       <div id="titlebar">
-        <span id="titlebar-icon">🔮</span>
-        <span id="titlebar-title">Soulmon</span>
+        <span id="titlebar-mark">
+          <span class="ico i20 on" aria-hidden="true">local_fire_department</span>
+          <span id="titlebar-title">Soulmon</span>
+        </span>
         <div id="titlebar-btns">
-          <button id="btn-settings" class="tb-btn" title="Configurações">⚙</button>
-          <button id="btn-minimize" class="tb-btn" title="Minimizar">_</button>
-          <button id="btn-close" class="tb-btn tb-btn-close" title="Fechar o Soulmon">✕</button>
+          <button id="btn-settings" class="iconbtn" type="button"><span class="ico i20" aria-hidden="true">settings</span></button>
+          <button id="btn-minimize" class="iconbtn" type="button"><span class="ico i20" aria-hidden="true">expand_more</span></button>
+          <button id="btn-close" class="iconbtn" type="button"><span class="ico i20" aria-hidden="true">close</span></button>
         </div>
       </div>
       <div id="content"></div>

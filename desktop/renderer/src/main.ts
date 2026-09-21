@@ -6,9 +6,14 @@ import './style.css';
 import { petSprite, facesLeft } from './sprites';
 import { loadState, type DesktopState } from './state';
 import { idlePhrase } from './phrases';
-// Glifo pixel do banho (A21.1, 15/09/2026): dentro do visor do overlay, no lugar do 🫧 do sistema.
+// Glifos pixel a 1× (32) no lugar dos emoji do sistema (canvas Fora do app,
+// D-F10): carinho e banho já têm arte; comida e sono ficam no ícone Material
+// (`restaurant`/`bedtime`) até a squad-arte entregar `glyph-food-32`/`glyph-sleep-32`.
+import glyphAffection from '../../../src/assets/soulmon/hud/glyph-affection.png';
 import glyphBath from '../../../src/assets/soulmon/hud/glyph-bath.png';
-const EFFECT_ART: Record<string, string> = { '🫧': glyphBath };
+import sleepZ from '../../../src/assets/soulmon/fx/anim-sleep-z.png';
+const EFFECT_ART: Record<string, string> = { '💗': glyphAffection, '🫧': glyphBath };
+const EFFECT_ICON: Record<string, string> = { '🍎': 'restaurant', '🍖': 'restaurant', '💤': 'bedtime' };
 
 let state: DesktopState = loadState();
 const t = (pt: string, en: string) => (state.language === 'pt-BR' ? pt : en);
@@ -19,7 +24,8 @@ const stage = document.getElementById('stage')!;
 const pet = document.createElement('div');
 pet.id = 'pet';
 pet.dataset.hit = '1';
-pet.innerHTML = `<img id="pet-img" alt="pet" draggable="false" /><div id="pet-fx"></div><div id="pet-zzz">💤</div>`;
+pet.innerHTML = `<img id="pet-img" alt="pet" draggable="false" /><div id="pet-fx"></div><div id="pet-zzz" aria-hidden="true"></div>`;
+pet.querySelector<HTMLDivElement>('#pet-zzz')!.style.backgroundImage = `url("${sleepZ}")`;
 stage.appendChild(pet);
 
 const bubble = document.createElement('div');
@@ -30,7 +36,9 @@ const petImg = pet.querySelector<HTMLImageElement>('#pet-img')!;
 const petFx = pet.querySelector<HTMLDivElement>('#pet-fx')!;
 
 // ------------------------------------------------------------- caminhada
-const PET_SIZE = 96;
+// 64 = 384 ÷ 6: escala inteira (P2 (a)); a mesma criatura do widget (X2).
+// Espelha `PET_SIZE` de desktop/electron/main.js — a faixa tem 72 de altura.
+const PET_SIZE = 64;
 const SPEED = 28; // px/s
 let x = Math.random() * Math.max(1, window.innerWidth - PET_SIZE);
 let dir: -1 | 1 = Math.random() < 0.5 ? -1 : 1;
@@ -74,11 +82,18 @@ function tick(ts: number) {
   requestAnimationFrame(tick);
 }
 
+// O balão fica AO LADO da criatura (D-F8): à direita, com o rabicho apontando
+// para ela; perto da borda direita, passa para a esquerda.
+const BUBBLE_GAP = 16;
 function positionBubble() {
   if (!bubble.classList.contains('open')) return;
-  const center = x + PET_SIZE / 2;
   const w = bubble.offsetWidth;
-  bubble.style.left = `${Math.min(Math.max(4, center - w / 2), window.innerWidth - w - 4)}px`;
+  const right = x + PET_SIZE + BUBBLE_GAP;
+  const fitsRight = right + w <= window.innerWidth - 4;
+  const left = fitsRight ? right : Math.max(4, x - BUBBLE_GAP - w);
+  bubble.classList.toggle('side-right', fitsRight);
+  bubble.classList.toggle('side-left', !fitsRight);
+  bubble.style.left = `${left}px`;
 }
 
 // ----------------------------------------------------------------- falas
@@ -100,19 +115,26 @@ function scheduleIdleTalk() {
 }
 
 // --------------------------------------------------------------- efeitos
-function burst(emoji: string, count = 6) {
+function burst(emoji: string, count = 3) {
   for (let i = 0; i < count; i++) {
     const el = document.createElement('span');
     el.className = 'fx';
+    el.setAttribute('aria-hidden', 'true');
     const art = EFFECT_ART[emoji];
     if (art) {
       const img = document.createElement('img');
-      img.src = art; img.alt = ''; img.width = 16; img.height = 16;
-      img.style.imageRendering = 'pixelated';
+      img.src = art; img.alt = ''; img.width = 32; img.height = 32;
       el.appendChild(img);
-    } else el.textContent = emoji;
-    el.style.left = `${20 + Math.random() * 56}px`;
-    el.style.animationDelay = `${Math.random() * 0.4}s`;
+    } else {
+      // Sem glifo pixel ainda: o ícone Material, nunca o emoji do fabricante.
+      const ico = document.createElement('span');
+      ico.className = 'ico';
+      ico.textContent = EFFECT_ICON[emoji] ?? 'favorite';
+      el.appendChild(ico);
+    }
+    // Sobe de cima da cabeça: três posições em cima do corpo de 64.
+    el.style.left = `${Math.round(-8 + i * 24 + Math.random() * 8)}px`;
+    el.style.animationDelay = `${i * 0.12}s`;
     petFx.appendChild(el);
     window.setTimeout(() => el.remove(), 1600);
   }
@@ -148,7 +170,7 @@ window.soulmonDesktop?.onStateChanged(() => {
 // Ação feita no menu (carinho/comida/banho/tarefa) — toca a animação aqui,
 // já que o pet visível é o overlay (o menu é só a janela de controle).
 window.soulmonDesktop?.onEffect((emoji, phrase) => {
-  burst(emoji, 8);
+  burst(emoji);
   say(phrase);
 });
 
