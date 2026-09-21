@@ -12,6 +12,7 @@ import { InstallPrompt } from './InstallPrompt';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { isTelemetryEnabled, setTelemetryEnabled, telemetryConsentCopy } from '../utils/telemetry';
 import { useTheme } from '../contexts/ThemeContext';
+import { desligarTrilha, ligarTrilha, trilhaPreferida } from '../utils/trilha';
 
 /**
  * CONFIGURAÇÕES — revamp minimalista.
@@ -27,6 +28,11 @@ import { useTheme } from '../contexts/ThemeContext';
  * revelação. Toda linha de configuração é alvo de toque inteiro.
  */
 interface SettingsPageProps {
+  /** Mudo global (S-som). Sem estes dois, o jogador não alcança o mudo: o
+   *  `SettingsModal` ("Ajustes rápidos") ficou sem gatilho vivo depois do
+   *  canvas Conta (§29) — achado do doc-mantenedor em 21/09/2026. */
+  soundMuted?: boolean;
+  onToggleSound?: () => void;
   useAI: boolean;
   onToggleAI: () => void;
   aiSettings: AISettings;
@@ -112,6 +118,8 @@ function TelemetrySection({ language }: { language: Language }) {
 }
 
 export function SettingsPage({
+  soundMuted = false,
+  onToggleSound,
   useAI,
   onToggleAI,
   aiSettings,
@@ -128,6 +136,7 @@ export function SettingsPage({
   onRestoreFromCloud,
   onLoginWithEmail,
 }: SettingsPageProps) {
+  const [trilha, setTrilha] = useState(() => trilhaPreferida());
   const isPt = language === 'pt-BR';
   const t = useTranslation(language);
 
@@ -303,6 +312,33 @@ export function SettingsPage({
             hint={isPt
               ? 'Seu Soulmon já se recuperou por inteiro. Mostrar isso é escolha sua.'
               : 'Your Soulmon has fully recovered before. Showing it is up to you.'}
+          />
+        </Group>
+      )}
+
+      {/* ── SOM ─────────────────────────────────────────────────────────────
+             D11: som só por gesto; o app funciona 100 % mudo. A trilha tem chave
+             PRÓPRIA (S2/S13): nasce desligada e este toque É o gesto que a liga. */}
+      {onToggleSound && (
+        <Group title={isPt ? 'Som' : 'Sound'}>
+          <SwitchRow
+            checked={!soundMuted}
+            onToggle={onToggleSound}
+            label={isPt ? 'Sons' : 'Sound effects'}
+            hint={isPt
+              ? 'Confirmam o que você fez. Nunca tocam sozinhos.'
+              : 'They confirm what you did. Never play on their own.'}
+          />
+          <SwitchRow
+            checked={trilha}
+            onToggle={() => {
+              if (trilha) desligarTrilha(); else ligarTrilha();
+              setTrilha(!trilha);
+            }}
+            label={isPt ? 'Trilha' : 'Music'}
+            hint={soundMuted
+              ? (isPt ? 'Com os sons desligados, a trilha fica em silêncio.' : 'With sound off, music stays silent.')
+              : (isPt ? 'Duas camadas calmas, em loop. Para sozinha quando o app sai de vista.' : 'Two calm looping layers. Stops by itself when the app is out of view.')}
           />
         </Group>
       )}

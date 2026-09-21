@@ -69,7 +69,7 @@ export function SettingsModal({
             label={isPt ? 'Trilha' : 'Music'}
             hint={soundMuted
               ? (isPt ? 'Com os sons desligados, a trilha fica em silêncio.' : 'With sound off, music stays silent.')
-              : (isPt ? 'Uma camada calma, em loop. Para sozinha quando o app sai de vista.' : 'One calm looping layer. Stops by itself when the app is out of view.')}
+              : (isPt ? 'Duas camadas calmas, em loop. Para sozinha quando o app sai de vista.' : 'Two calm looping layers. Stops by itself when the app is out of view.')}
           />
           <SwitchRow
             checked={useAI}

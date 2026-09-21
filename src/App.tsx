@@ -4097,6 +4097,20 @@ export default function App() {
   }, []);
 
   const handleOpenAISettings = useCallback(() => setSettingsOpen(true), []);
+  // Um só handler para o mudo, usado pela SettingsPage (o caminho vivo do jogador,
+  // canvas Conta §29) e pelo SettingsModal.
+  const handleToggleSound = useCallback(() => {
+    const mudo = !soundMuted;
+    setMuted(mudo);
+    setSoundMuted(mudo);
+    // E0: o mudo global também cala a trilha; religar devolve só se ela estava ligada por gesto.
+    if (mudo) pausarTrilha(); else retomarTrilha();
+    // som-01 — só a transição LIGADO → MUDO é medida, e só ela. É o
+    // único evento que mede o perfil "usuário em público" sendo
+    // punido, e ele mede por REJEIÇÃO explícita, nunca por inferência.
+    // Religar o som não emite nada: não há decisão pendurada nisso.
+    if (mudo) trackSoundOff();
+  }, [soundMuted]);
 
   const handleCompleteOnboarding = async (data: OnboardingCompleteData) => {
     // Fim do onboarding: perder isto refaz o ritual do zero. AVISA.
@@ -5492,6 +5506,8 @@ export default function App() {
 
           {currentView === 'settings' && (
             <Suspense fallback={<ScreenSkeleton language={language} />}><SettingsPage
+              soundMuted={soundMuted}
+              onToggleSound={handleToggleSound}
               /* WP4.19 — a marca da volta. Só existe para quem já caiu e
                  subiu de novo, e vem desligada: contar isso é escolha do
                  jogador, não do app. */
@@ -5871,18 +5887,7 @@ export default function App() {
             useAI={useAI}
             onToggleAI={() => setUseAI(!useAI)}
             soundMuted={soundMuted}
-            onToggleSound={() => {
-              const mudo = !soundMuted;
-              setMuted(mudo);
-              setSoundMuted(mudo);
-              // E0: o mudo global também cala a trilha; religar devolve só se ela estava ligada por gesto.
-              if (mudo) pausarTrilha(); else retomarTrilha();
-              // som-01 — só a transição LIGADO → MUDO é medida, e só ela. É o
-              // único evento que mede o perfil "usuário em público" sendo
-              // punido, e ele mede por REJEIÇÃO explícita, nunca por inferência.
-              // Religar o som não emite nada: não há decisão pendurada nisso.
-              if (mudo) trackSoundOff();
-            }}
+            onToggleSound={handleToggleSound}
             aiSettings={aiSettings}
             onSaveAISettings={(settings) => {
               setAiSettings(settings);

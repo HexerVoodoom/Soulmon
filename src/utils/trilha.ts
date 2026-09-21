@@ -1,5 +1,5 @@
 /**
- * A TRILHA — uma camada, em loop, no `busTrilha`. Nasce desligada (S2).
+ * A TRILHA — duas camadas em fase, em loop, no `busTrilha`. Nasce desligada (S2).
  *
  * Existem DUAS camadas (`base` + `ritmo`, `CAMADAS_DA_TRILHA`), tocando juntas
  * num estado só: a máquina E0–E6 da S13 continua CONGELADA (a condição (2) —
