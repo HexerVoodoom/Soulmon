@@ -33,9 +33,10 @@ const pkgEmpacotado = require('../package.json');
 // janela própria (ver createMenuWindow), não precisa caber aqui.
 const STRIP_HEIGHT = 72;
 const PET_SIZE = 64; // mesma constante do renderer (main.ts)
-// URL do app web completo. Ainda aponta pro Pages compartilhado — trocar
-// junto com capacitor.config.json quando o domínio próprio existir
-// (docs/SEPARACAO-DIGIAPP.md). O renderer lê o mesmo valor de config.ts.
+// URL do app web completo — o worker próprio do Soulmon (a mesma das três
+// fontes: capacitor.config.json, desktop/renderer/src/config.ts e aqui; régua
+// `src/deploy/appUrl.contract.test.ts`). Trocar nas três quando o domínio
+// próprio existir.
 const FULL_APP_URL = process.env.SOULMON_APP_URL || 'https://soulmon.mateus-sprnd.workers.dev';
 // Origem confiavel derivada da URL acima. Como `SOULMON_APP_URL` e env var,
 // `appOrigin` recusa o que nao for `https:` (ou `http:` em localhost) e cai no

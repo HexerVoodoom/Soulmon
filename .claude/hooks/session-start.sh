@@ -21,7 +21,13 @@ HEAD=$(git rev-parse --short HEAD 2>/dev/null || echo '?')
 git fetch -q origin main 2>/dev/null || true
 ATRAS=$(git rev-list --count HEAD..origin/main 2>/dev/null || echo '?')
 DELTA=$(node scripts/docs-delta.mjs --resumo 2>/dev/null || echo 'docs: (não medido — scripts/docs-delta.mjs falhou)')
-DONO=$(grep -m1 -oE '^> ## ⏳ DEPENDE DO DONO \([0-9/]+\)[^\n]*' docs/STATUS.md 2>/dev/null | sed 's/^> ## //')
+# A fila viva do dono é `docs/PERGUNTAS-DO-DONO.md` (regra de 20/09/2026), não
+# um bloco fixo do STATUS: a regex antiga só casava com o bloco de 09/09 e toda
+# sessão abria com pendências velhas (achado do QA geral de 21/09/2026). Conta
+# as linhas de pergunta (tabela, 1ª coluna numérica) e aponta a última seção.
+PERG=$(grep -cE '^\| *[0-9]+ *\|' docs/PERGUNTAS-DO-DONO.md 2>/dev/null || echo 0)
+ULTIMA=$(grep -E '^## ' docs/PERGUNTAS-DO-DONO.md 2>/dev/null | tail -1 | sed 's/^## //')
+DONO="docs/PERGUNTAS-DO-DONO.md — $PERG pergunta(s) registradas; última seção: ${ULTIMA:-—}"
 GUARD=$( (npx vitest run src/docsManual.contract.test.ts src/docsSemMentira.contract.test.ts 2>&1 | grep -E '^\s+(Test Files|Tests) ' | sed 's/^ *//') || echo 'guard do manual: não rodou')
 
 cat <<BRIEF
@@ -30,7 +36,7 @@ cat <<BRIEF
 - git: branch \`$BRANCH\` em \`$HEAD\`; \`origin/main\` está $ATRAS commit(s) à frente
 - $DELTA
 - guard do manual: ${GUARD:-não rodou}
-- STATUS.md: ${DONO:-(sem bloco 'DEPENDE DO DONO' no topo)}
+- depende do dono: ${DONO}
 
 **Protocolo obrigatório desta sessão:** antes de trabalhar em qualquer assunto,
 invoque a skill \`soulmon-coordenador\` (\`/soulmon start\`). Ela lê

@@ -5,6 +5,21 @@
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <title>Soulmon</title>
+      <!-- Descrição e Open Graph: sem isto o link chega "pelado" em qualquer
+           chat/rede (achado do QA geral de 21/09/2026 — `grep og: index.html`
+           dava 0). A frase é a essência declarada (`01-VISAO.md` §2): avatar
+           que evolui COM a pessoa, nunca um cobrador. A imagem é o ícone 512
+           já servido pelo Worker; trocar por um key visual 1200×630 quando a
+           squad-arte gerar um (fila em `docs/ASSETS-A-GERAR.md`). -->
+      <meta name="description" content="Soulmon: um bichinho virtual que evolui com o que você faz na vida real. Hábitos e tarefas viram cuidado, evolução e história — nunca cobrança." />
+      <meta property="og:type" content="website" />
+      <meta property="og:site_name" content="Soulmon" />
+      <meta property="og:title" content="Soulmon — o bichinho que evolui com você" />
+      <meta property="og:description" content="Cadastre hábitos e tarefas de verdade; sua criatura cresce, evolui e ramifica em função do que você fez. Retrô, pixel art, sem cobrança." />
+      <meta property="og:image" content="https://soulmon.mateus-sprnd.workers.dev/favicon-512x512.png" />
+      <meta property="og:locale" content="pt_BR" />
+      <meta property="og:locale:alternate" content="en_US" />
+      <meta name="twitter:card" content="summary" />
       <link rel="manifest" href="/manifest.json" />
       <meta name="theme-color" media="(prefers-color-scheme: light)" content="#0f766e" />
       <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#071413" />
@@ -38,7 +53,10 @@
       <script>
         (function () {
           try {
-            var stored = localStorage.getItem('digiapp-theme');
+            // Mesma chave de `STORAGE_KEYS.THEME` (src/utils/storageKeys.ts).
+            // Lia `digiapp-theme` até o QA de 21/09/2026 — a chave morreu em
+            // 07/09 e o anti-flash ignorava a preferência salva do jogador.
+            var stored = localStorage.getItem('soulmon-theme');
             var mode = (stored === 'light' || stored === 'dark' || stored === 'system') ? stored : 'system';
             // O visual do jogo (moldura cobre, teal escuro) só existe no tema
             // escuro — sem preferência salva, o padrão é escuro, não o SO.
@@ -47,9 +65,9 @@
           } catch (e) {}
         })();
       </script>
-      <script type="module" crossorigin src="/assets/index-CtDh4dZo.js"></script>
+      <script type="module" crossorigin src="/assets/index-CmxtaoHZ.js"></script>
       <link rel="modulepreload" crossorigin href="/assets/vendor-DDxydHEc.js">
-      <link rel="stylesheet" crossorigin href="/assets/index-NrnwFuOG.css">
+      <link rel="stylesheet" crossorigin href="/assets/index-kMNEBcud.css">
     </head>
 
     <!-- SPLASH — estática de propósito: aparece ANTES do bundle carregar (é

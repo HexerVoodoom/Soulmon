@@ -53,6 +53,16 @@ const FONTES = [
     arquivo: 'desktop/electron/main.js',
     extrai: (s: string) => s.match(/FULL_APP_URL\s*=\s*[^|]*\|\|\s*['"]([^'"]+)['"]/)?.[1],
   },
+  {
+    // `og:image` precisa ser ABSOLUTA (crawler de rede social não resolve
+    // caminho relativo), então é a quarta casca que carrega a origem do app.
+    // Entrou no QA geral de 21/09/2026 junto com as tags Open Graph.
+    arquivo: 'index.html',
+    extrai: (s: string) => {
+      const img = s.match(/property="og:image"\s+content="([^"]+)"/)?.[1];
+      return img ? new URL(img).origin : undefined;
+    },
+  },
 ];
 
 describe('fronteira casca nativa ↔ deploy', () => {

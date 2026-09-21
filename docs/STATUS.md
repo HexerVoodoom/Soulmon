@@ -7,6 +7,48 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 21/09/2026 — QA GERAL: 19 frentes em paralelo, "o que nunca foi analisado nem desenvolvido"
+>
+> Pedido do dono: pull, chamar todos os agentes/skills/squads, mapear tudo e atualizar tudo.
+> Base `212da7d5` (pull limpo). Portões na base: `tsc` ×3 = 0 · `vitest` **303 arquivos, 4223
+> testes, 1 skipped**. Consolidado e os 16 relatórios em
+> **`docs/reviews/2026-09-21-qa-geral/`** (indexados no MAPA §6.5). Frentes: cobertura dos
+> planos · inventário de código · suíte · segurança · arquitetura · perf/a11y · design system ·
+> produto (maestro condensado) · guardas e linhas vermelhas · squads temáticas · compliance ·
+> growth · governança dos agentes · verificação de docs · desktop/Android/workers/CI · métricas,
+> mais um passeio de runtime no dev server.
+>
+> **O que ninguém tinha olhado** (consolidado §2): operação do que está no ar (deploy manual do
+> worker, migração D1, secrets — `e90f05a6` não é SHA do git, é id do Cloudflare; a versão no ar
+> é desconhecida) · `android/` e `desktop/electron/*` com **zero teste** · `scripts/` sem dono e
+> com 5 órfãos · `product/soulmon-01/**` (30 arquivos) fora do índice · ADRs 001–003 fora do git
+> · Supabase residual · i18n EN como disciplina · leitor de tela nunca medido · orçamento de
+> performance inexistente · custo em dinheiro sem vigia · 12 temas de arquitetura sem ADR ·
+> ads recompensados no código contra o briefing · 7 áreas do sistema de agentes sem dono nenhum.
+>
+> **Corrigido na rodada** (consolidado §3): `termos.html` §4 PT vendia "cura na hora" e reroll
+> "sorteado" (ambos removidos em 06/09) e §3 descrevia a idade errada; `privacidade.html` não
+> citava Higgsfield/Gemini (recebem o prompt do sprite, com texto livre do jogador) e **não tinha
+> o §2b em EN**; `consent.ts` gravava `PRIVACY_VERSION` de 25/08 para uma política de 08/09 —
+> as três versões agora são `2026-09-21` e a régua nova `consent.versoes.contract.test.ts`
+> compara com o "Última atualização" dos HTMLs; `.sm2-chat-support` 11px → 12px (piso do
+> `04` §4.3); `index.html` ganhou `description` + Open Graph (tinha 0); `desktop/electron/main.js`
+> tinha a mentira do "Pages" que o STATUS atribuía ao `config.ts`; hook de sessão lia um bloco
+> de 09/09 e agora conta `PERGUNTAS-DO-DONO.md`; `/implementar-wp` ganhou o `tsc` do servidor;
+> `android-build.yml` sem `version-b`; tabela do coordenador com linhas para perf/a11y,
+> compliance e "git × ar"; §3.2 abaixo: o binding D1 **existe** (o STATUS dizia que não).
+>
+> **Mentiras apanhadas e NÃO tocadas** (esperam o dono): `CLAUDE.md` com 7 afirmações falsas
+> (Coraçãozinho "à venda", "cura instantânea (10)", `digiapp_push`, `DigiWidgetPlugin`, `canPvp`,
+> `DÍVIDA`, "17 documentos") — pergunta **#38**; fósseis da raiz (`README.md`, `PWA-*.md`,
+> `PROJETO.md`, `PLANO_MELHORIAS.md`) — **#39**; ledger dos guardas com 2 falsos positivos
+> (WP1.14, WP3.4) e 8 comandos de aceite mortos; linha vermelha #20 contradita por
+> `widgetSemCobranca.contract.test.ts` — **#29**.
+>
+> **Fila do dono: 29 perguntas novas (#11–#39) em `docs/PERGUNTAS-DO-DONO.md`**, todas com
+> provisório. As que destravam o primeiro usuário real: #11 (quem é), #12 (rota de cortesia),
+> #18 (`METRICS_ADMIN_KEY`). Backlog que a squad executa sem ele: consolidado §6.
+
 > ## 21/09/2026 — sincronização do manual pós-merge (`/manter-docs auto`)
 >
 > Base `15164e4c` → head `3cb89e59`. O manual **já cobria** o trabalho da rodada
@@ -3162,11 +3204,11 @@ decisão sua.
 | 🔴 | Criar os 4 produtos no Play Console (`soulmon.unlock.full`, 3 pacotes de crédito) |
 | 🔴 | Conta de serviço do Google Play → `GOOGLE_PLAY_SERVICE_ACCOUNT` e `ANDROID_PACKAGE_NAME` |
 | 🔴 | **`PLAY_REQUIRE_ACCOUNT_BINDING = true`** — depois de publicar o app que manda `setObfuscatedAccountId(saveId)`. É o que impede um recibo de virar N contas pagas (ver docs/BILLING-SETUP.md) |
-| 🟠 | ~~Opcional:~~ banco **D1** vinculado como `DB` + tabela `order_claims`. ⚠️ **"Opcional" é otimista e a palavra sai.** Este é o conserto do **SEC-3**, que a §1.2 chama de *maior risco de dinheiro que sobrou*, e o `wrangler.jsonc` **não tem binding `d1_databases`** — conferido em `e8aef62a`. Enquanto não tiver, `env.DB` é `undefined`, `claimOrderAtomic` **nunca roda** e o resgate é read-then-write sem CAS sobre KV eventualmente consistente. ✅ **O que a squad já preparou:** `migrations/0001_order_claims.sql` e `0002_order_claims_expires_at.sql` (com o prazo em coluna, respondendo à pendência C). Falta **ligar** |
+| 🟡 | ~~Opcional:~~ banco **D1** vinculado como `DB` + tabela `order_claims`. Este é o conserto do **SEC-3**, que a §1.2 chama de *maior risco de dinheiro que sobrou*. ⚰️ **A metade "o `wrangler.jsonc` não tem binding `d1_databases`" morreu** (QA geral de 21/09/2026): o binding `DB` → `soulmon-billing` **existe** no `wrangler.jsonc`, e `claimOrder` (`functions/api/_entitlements.js`) desvia para `claimOrderAtomic` quando `env.DB` está presente. O que **não dá para provar pelo repo** é se as migrações `migrations/0001_order_claims.sql` e `0002_order_claims_expires_at.sql` foram **aplicadas** no banco (`wrangler d1 migrations apply soulmon-billing`) — sem a tabela, a query falha e o resgate cai no caminho antigo. Confirmar no painel/CLI é do dono |
 | 🔴 | URL da política de privacidade + formulário de Segurança de Dados |
 | ✅ | ~~`VITE_FIREBASE_*`~~ — **feito em 07/09/2026**, no `.env` LOCAL (não no painel: são de BUILD, o Vite as inlina). Projeto `soulmon-app`. Chave conferida contra a API do Firebase, não só transcrita. |
 | 🟠 | Conferir no painel do Cloudflare se já existe o projeto Pages `soulmon` — o `wrangler.jsonc` diz que sim. ⚠️ **A segunda metade desta linha era FALSA e saiu**: dizia que `capacitor.config.json` "ainda aponta o APK para `digiapp-a5e.pages.dev`". Conferido em `e8aef62a` — ele aponta para `https://soulmon.mateus-sprnd.workers.dev`, e as três fontes concordam (`capacitor.config.json`, `desktop/renderer/src/config.ts`, `desktop/electron/main.js`). É a **mesma mentira** que o `CLAUDE.md` e o `docs/PLANO-DESKTOP-STEAM.md` carregaram até 26/08 e que faria um agente decidir errado sobre deploy |
-| 🐛 | 🆕 **Comentário mentiroso encontrado e NÃO consertado** (é `src/`, fora do escopo desta frente): `desktop/renderer/src/config.ts:3` diz *"A URL ainda aponta pro Pages herdado do DigiApp"* — **a linha logo abaixo é `soulmon.mateus-sprnd.workers.dev`**. É o mesmo dano de sempre: comentário que descreve um estado anterior e não fica vermelho. Conserto de 1 linha, para quem tocar `desktop/renderer/` |
+| ⚰️ | ~~**Comentário mentiroso encontrado e NÃO consertado**: `desktop/renderer/src/config.ts` diz *"A URL ainda aponta pro Pages herdado do DigiApp"*~~ — **fechado**: o `config.ts` já era lápide antes do QA de 21/09/2026, e a mesma mentira tinha **migrado** para `desktop/electron/main.js` acima de `FULL_APP_URL` ("Ainda aponta pro Pages compartilhado") — corrigida nessa rodada, apontando a régua `src/deploy/appUrl.contract.test.ts` |
 | ✅ | ~~Endereço de contato do VAPID~~ — **resolvido em 07/09/2026**: o dono escolheu `mateus.sprnd@gmail.com`. É endereço de CONTATO (RFC 8292 `sub`), para onde o serviço de push escreve em caso de falha de entrega; nunca aparece para o usuário e trocá-lo não invalida subscription nenhuma. Substituir por um endereço do domínio do Soulmon quando ele existir. ⚠️ **Só vale na borda depois de um `wrangler deploy` dentro de `workers/`** — aquele worker não builda no push da `main`. |
 | 🟠 | **Decidir se a Fase 4 (sensores via Health Connect) vale o custo** — só o dono pode: exige **conta de organização verificada** no Play (enforcement jan/2026; conta pessoal é bloqueador), declaração de health app, política de privacidade dedicada e consentimento LGPD art. 11 específico por finalidade, além de APK novo. A Fase 3 (Janela de Descanso + Sonhos) já roda **sem sensor nenhum**, igual na PWA e no APK — a Fase 4 é opt-in, só Android, e o plano só a previa **se** a Fase 3 provar que move retenção. Caminho técnico, se aprovada: `@capgo/capacitor-health` (único plugin Capacitor vivo em 2026 que expõe sono). **Google Fit está morrendo (APIs até o fim de 2026) — nada deve ser escrito contra ele.** |
 | 🟡 | `ASSETLINKS_PACKAGE_NAME` e `ASSETLINKS_SHA256` no Pages (fingerprint sai do Play Console → Integridade do app) |

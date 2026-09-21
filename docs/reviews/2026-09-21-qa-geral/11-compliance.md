@@ -1,0 +1,7 @@
+# 11 — Compliance (alpha-compliance, 21/09/2026) — resumo salvo pelo orquestrador
+
+Veredito: 1 Data Safety RISCO (Higgsfield/Gemini ausentes; FCM token zona cinzenta) · 2 Termos RISCO (§4 PT "cura na hora"+"sorteada" contradiz §5; §3 descreve data de nascimento no cadastro que virou autodeclaração) · 3 Consentimento BLOQUEIA (PRIVACY_VERSION='2026-08-25' em src/utils/consent.ts vs política 08/09) · 4 Compras OK (Nova Leitura determinística, newReading.test trava Math.random; preço localizado exige APK) · 5 Attributions LACUNA (Material Symbols Rounded, Fredoka, Rubik e arte de IA sem linha) · 6 Aviso/rótulo de IA LACUNA→dono · 7 LGPD OK (account.js delete/export) com push sobrevivendo à exclusão e retenção ord: 5 anos = zona cinzenta · 8 Cláusula SAFETY não está nos termos.
+
+Ajustes acionáveis sem dono: (1) PRIVACY_VERSION=2026-09-08 + teste comparando com HTML; (2) termos §4 PT = EN, §3 = mecanismo real, subir TERMS_VERSION; (3) privacidade §6 + PLAY-DATA-SAFETY §2.3/§3 com Higgsfield e Gemini; (4) Attributions para as 3 fontes e arte IA; (5) privacidade §2b: histórico do chat e nome da criatura também vão ao provedor.
+
+Perguntas ao dono: P1 token FCM = "ID de dispositivo"? · P2 declaração de IA na Play/Steam (repo não documenta a regra) · P3 push após exclusão (código ou texto) + retenção ord: 5 anos na política §8 · P4 re-aceite quando TERMS_VERSION subir · P5 "R$ 29,90" fixo nos termos EN · P6 escopo de Attributions (deps npm?) · P7 redação oficial da cláusula de crise/IA nos termos §8.

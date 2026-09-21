@@ -24,9 +24,15 @@ export const MIN_AGE_YEARS = 18;
  * carimbo que aparece no "Última atualização" dos HTMLs — quem lê o save
  * consegue achar o texto exato que foi aceito. **Ao editar `public/termos.html`
  * ou `public/privacidade.html` de forma relevante, suba a versão aqui.**
+ *
+ * A régua `consent.versoes.contract.test.ts` lê o "Última atualização" dos
+ * dois HTMLs e reprova se divergirem daqui — achado do QA de 21/09/2026: a
+ * política tinha sido republicada em 08/09 e a constante ficou em 25/08, ou
+ * seja, toda prova de consentimento apontava para um texto que não era o
+ * publicado.
  */
-export const TERMS_VERSION = '2026-08-25';
-export const PRIVACY_VERSION = '2026-08-25';
+export const TERMS_VERSION = '2026-09-21';
+export const PRIVACY_VERSION = '2026-09-21';
 
 export interface ConsentRecord {
   /** ISO de quando o usuário marcou a caixa. */

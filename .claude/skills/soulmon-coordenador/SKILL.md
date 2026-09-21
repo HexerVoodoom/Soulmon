@@ -23,7 +23,8 @@ skill é a sua régua: a tabela de roteamento e o protocolo de fechamento.
 | Regra de jogo, balanceamento, economia, evolução | o **guarda dono** (`soulmon-guarda-permanencia` / `-constancia` / `-nascimento` / `-vinculo` / `-sustento` / `-medicao`) com parecer do `soulmon-guarda-linha-vermelha` | `/implementar-wp` se for WP; `/guarda-soulmon` para auditar | `02-REGRAS-DE-NEGOCIO.md` §do sistema (dono · régua · decisão), a linha do `REGISTRO-DE-DECISOES.md`, o ledger da área |
 | Revisão de produto, estratégia, roadmap, "o que falta para lançar" | `soulmon-maestro` (14 especialistas) | `/revisao-soulmon` | `01-VISAO.md`, `docs/PLANO-PRODUTO.md`, `STATUS.md` §2–3 |
 | Ciclo de produto formal (discovery → maintainer), PRD, ADR | `prod-squad` | skill `prod-squad` | `memory/product-context.md`, `01-VISAO.md`, `05-ARQUITETURA.md` |
-| Som, trilha, loudness, autoplay | orquestrador `squad-som` | `/squad-som` | `docs/SOM.md`, `04-IDENTIDADE-VISUAL.md` §som, S1..S13 |
+| Som, trilha, loudness, autoplay | orquestrador `squad-som` | skill `squad-som` (não existe command `/squad-som`) | `docs/SOM.md`, `04-IDENTIDADE-VISUAL.md` §som, S1..S16 |
+| Arte pixel (criatura, cenário, FX, emblema, HUD), geração Higgsfield/Gemini | orquestrador `squad-arte` (`arte-*` por família · `arte-conferente` · `arte-instalador`) | skill `squad-arte` (não existe command `/squad-arte`) | `docs/ASSETS-A-GERAR.md`, `docs/INVENTARIO-ASSETS.md`, `docs/Attributions.md`, `04` §8 |
 | Lore, universo, storytelling, significado de mecânica, copy de tela/fala/push, "isto cobra?" | orquestrador `squad-narrativa` (loremaster escreve · narrative-critic bloqueante · copy-redator · psicologia e PI bloqueantes · guarda-linha-vermelha fecha) | `/squad-narrativa` | `docs/NARRATIVA-E-UNIVERSO.md` (as doze leis, §12 vocabulário, §14 propostas), régua `src/narrativa.contract.test.ts` |
 | Documentação (novo doc, doc apodreceu, "onde está X") | `squad-docs` / `doc-mantenedor` | `/documentar`, `/manter-docs` | `00-MAPA.md`, `12-COMO-MANTER.md` |
 | Redesign, wireframes, hierarquia de tela, tokens, arte de UI | orquestrador `squad-design` (design-lead decide · cartógrafo mede · curador de padrões · wireframer · design-critic bloqueante · visual-designer na Fase 2) | `/squad-design` | `docs/HANDOFF-WIREFRAMES.md`, `docs/design/*`, `03-FLUXO-DE-TELAS.md`, `04-IDENTIDADE-VISUAL.md`, `docs/PLANO-DESIGN.md` |
@@ -37,7 +38,10 @@ skill é a sua régua: a tabela de roteamento e o protocolo de fechamento.
 | Desktop/Electron/Steam | `staff-frontend` + `principal-architect` | agentes | `06-REFERENCIA/desktop.md`, `desktop/README.md`, footgun 9 |
 | Android/widget/APK | `staff-frontend` | agentes | `03` §fora do app, `08` §APK, footguns 2/3 |
 | Segurança, segredo, CSP | `security-architect` | `/security-review` | `STATUS.md` §1, `08` §credenciais |
-| Testes, cobertura, release | `qa-sweeper` | agentes | `05` §portões, `vitest.config.ts` |
+| Testes, cobertura, release | `qa-sweeper` (ou `alpha-qa`, global) | agentes | `05` §portões, `vitest.config.ts` |
+| Bytes, bundle, `dist/`, performance, acessibilidade medida | `alpha-perf-a11y` (global) | agente | `docs/reviews/2026-09-21-qa-geral/06-perf-a11y.md` (orçamento proposto), `public/sw.js`, `04` §4.3 (piso de 12px) |
+| Termos, política, Data Safety, Attributions, LGPD, aviso de IA | `alpha-compliance` (global) + `soulmon-guarda-medicao` | agentes | `public/termos.html`, `public/privacidade.html`, `docs/PLAY-DATA-SAFETY.md`, `src/utils/consent.ts` (versões travadas por `consent.versoes.contract.test.ts`) |
+| O que está no ar × o que está no git (worker de push, D1, secrets, `CACHE_VERSION`, incidente) | **sem dono** — proposta N1 `soulmon-operador` (`docs/reviews/2026-09-21-qa-geral/13-governanca-agentes.md`) aguarda o dono; até lá, `alpha-architect` + skills globais `cloudflare`/`wrangler` | agentes | `08` §deploy, `workers/wrangler.toml`, `wrangler.jsonc` |
 | Bug sem área clara | `Explore` (achar) → guarda/staff dono | agentes | o índice por arquivo do MAPA §5 |
 
 Regra: **um orquestrador por pedido**. Se o pedido cruza duas áreas, o coordenador

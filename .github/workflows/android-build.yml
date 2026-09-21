@@ -2,7 +2,7 @@ name: Android APK Build
 
 on:
   push:
-    branches: [main, version-b]
+    branches: [main]
   workflow_dispatch:
 
 # MENOR PRIVILEGIO (S-6 da auditoria de suprimentos). Sem este bloco o job

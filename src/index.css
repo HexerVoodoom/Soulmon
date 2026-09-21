@@ -7494,7 +7494,11 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
    sem regra própria (footgun 10: nunca `var(--foreground)` em texto novo). */
 .sm2-chat-support {
   margin: 10px 4px 0;
-  font-size: 11px;
+  /* Discreto pela COR e pela ausência de caixa — não pelo tamanho: 12px é o
+     piso absoluto do app (`04-IDENTIDADE-VISUAL.md` §4.3), e este é o texto
+     que quem está em crise precisa conseguir ler. Era 11px até o QA de
+     21/09/2026; o guard da escala só olhava `--sm2-text-*`, não literais. */
+  font-size: 12px;
   line-height: 1.45;
   max-width: 62ch;
   color: var(--sm-muted);
@@ -7502,7 +7506,7 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
 }
 
 /* O link da superfície de suporte do chat (decisão do dono, 21/09/2026).
-   Sublinhado SEMPRE: num texto `muted` de 11px, cor sozinha não sinaliza
+   Sublinhado SEMPRE: num texto `muted` de 12px, cor sozinha não sinaliza
    link com contraste suficiente, e esta é a última linha que alguém em
    crise precisa conseguir identificar como clicável. Herda a cor do
    parágrafo de propósito — destacar em primário daria a este link mais

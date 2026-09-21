@@ -37,3 +37,39 @@ Todas as sete respondidas em modal, sempre pela recomendada: (1) rodada 2 gerada
 loop em 28,800 s exatos (12 compassos), trim de 2 camadas em `loudness.ts`. Fila vazia.
 
 **#8 respondido (21/09/2026):** "Coloca o A" e, perguntado, **"quero o gerado nos 3"** → os 3 assets de IA ficam. Fila vazia.
+
+## QA GERAL (21/09/2026) — 29 perguntas, todas com provisório aplicado
+
+> Origem: `docs/reviews/2026-09-21-qa-geral/00-CONSOLIDADO.md` §5 (o "por quê" de cada uma está lá, com o relatório da frente). Nada ficou parado: a squad segue o provisório até você responder. As que mais destravam: **#11, #12, #18** (primeiro usuário real + rota de cortesia + chave de métricas) e **#38** (`CLAUDE.md`).
+
+| # | Pergunta | Provisório aplicado | Se mudar |
+|---|---|---|---|
+| 11 | Quem é o primeiro usuário real? (a) 10 conhecidos, PWA, cortesia, 14 dias · (b) estranhos via TikTok · (c) esperar a Play | (a) | (b) exige landing + domínio + vídeo; (c) adia meses |
+| 12 | Rota de cortesia (tier pago sem compra) pode existir, com `ADMIN_KEY` + teto de N contas, `provider:'courtesy'`? | Sim — squad implementa quando autorizada | Sem ela o 1º usuário só vê demo |
+| 13 | Congelar Camada 3 (Steam, coop, som, arte extra, narrativa) até 10 usuários × 14 dias? | Congelar e registrar no `REGISTRO` | Registrar o contrário — o que não pode é drift sem registro |
+| 14 | Anúncios recompensados (`ADS_ENABLED`, `grantAdReward`): apagar com lápide ou manter desligado? | Apagar | Se manter: `PLAY-DATA-SAFETY.md` ganha seção de ads |
+| 15 | 18+ é ICP ou só defesa legal? | ICP; remover a persona adolescente dos check-ups | Menores = LGPD art. 14 + Play Families |
+| 16 | Domínio próprio: qual, e compra agora? | Comprar agora | Sem domínio, TikTok aponta para `workers.dev` |
+| 17 | Cobrança na web (Pix/cartão) antes ou depois da Play? | Depois do 1º usuário; corrigir `PLANO-PRODUTO` Parte 3 | "Nunca" = apagar "priorizar funil web" |
+| 18 | `METRICS_ADMIN_KEY`: você define hoje? | Definir; script de leitura vem junto | Sem ela o 1º usuário gera dado invisível |
+| 19 | Aviso de WebView velho por `CSS.supports` agora? | Sim | Fica parado até decidir `minSdk` |
+| 20 | Trava de crise do chat: revisão por profissional antes do 1º usuário? | 1 h de revisão | Registrar risco assumido no `REGISTRO` §14.2 |
+| 21 | Token FCM / endpoint Web Push entra em "IDs do dispositivo" na ficha da Play? (`PLAY-DATA-SAFETY.md` §2.7 diz "não" sem fonte) | Ficha diz "não" | Subdeclaração = risco de remoção |
+| 22 | Existe exigência da Play/Steam de declarar conteúdo gerado por IA (sprites, chat, áudio)? O repo não documenta a regra | Nada declarado, sem aviso in-app | Bloqueia ficha e eventual aviso |
+| 23 | Push que sobrevive à exclusão da conta (`push:*`/`fcm:*` fora do alcance de `account.js`): corrigir no código ou declarar na política? E a retenção de `ord:` por 5 anos entra na política §8? | Código atual; política silenciosa | Política promete mais do que o sistema apaga |
+| 24 | Termos §10 prometem aviso in-app antes de mudança relevante: re-aceite (nova caixa + `ConsentRecord`) ou banner? — **já vale**: `TERMS_VERSION` subiu hoje | Sem mecanismo; save antigo segue válido (`normalizeConsent`) | Define o fluxo de cada bump |
+| 25 | "R$ 29,90" fixo nos termos EN quando a Play cobra em moeda local (WP5.8) | Mantido (travado por `publishedPrice.test.ts`) | Texto |
+| 26 | `Attributions.md`: cobre deps npm (`astronomy-engine`, `@capgo/capacitor-pedometer`)? E as 3 fontes (Material Symbols Rounded, Fredoka, Rubik) + arte de IA ganham linha no mesmo formato do áudio? | Só arte/som/Silkscreen; fontes e arte de IA sem linha | Escopo do doc |
+| 27 | Redação oficial da cláusula de crise/IA nos termos §8 (o chat é modelo sem revisão humana; não é serviço de emergência; canais curados de `chatSafety.ts`) | Nenhuma | Termos descompassados do produto desde 21/09 |
+| 28 | Roster de agentes 64 → 37 (`13` §8): cortar 9 genéricos + `prod-squad` do repo + 12 do maestro, fundir 6 `arte-*`, criar `soulmon-operador` e `soulmon-guarda-plataforma`? | Nada cortado; tabela do coordenador já aponta os globais | Mantém 15 agentes que só existem no `.md` |
+| 29 | Linha vermelha #20 × `widgetSemCobranca.contract.test.ts` (`remove()` de chaves vetadas): #20 ganha a exceção "chave vetada por outra proibição" ou o teste volta? | Teste fica; exceção não registrada em `vetos.md` | — |
+| 30 | `achievements.ts` › `'tasks-100'` (recompensa cosmética por contagem de tarefas, #16): renomear para comportamento ou registrar exceção? | Fica | — |
+| 31 | Orçamento de performance (`06` §6): JS entrada ≤ 250 KB, CSS ≤ 100 KB, cenário ≤ 400 KB, vídeo ≤ 800 KB — adota como régua? | Sem orçamento | Sem número, a squad-arte instala sem teto |
+| 32 | `dist/`: apagar os PNG após a conversão WebP (100 MB de peso morto que o `sw.js` nunca serve) e só depois discutir tirar `dist/` do git? | Como está | Pack de 553 MiB continua crescendo |
+| 33 | 38 dependências sem import (26 `@radix-ui/*`, `hono`, `recharts`…): remover + guard "todo pacote tem import"? | Como está | Supply chain sem uso |
+| 34 | Electron 33.4 (sem suporte desde abr/2025): bump agora ou junto com o Steam? | Como está | — |
+| 35 | ADRs 001–003 (fora do git em `squad-alpha-runs/`): promover para `docs/adr/`? E o ROADMAP de lá, que ainda descreve o fail-open como aberto, apagar ou datar? | Fora do git | A única descrição de 3 decisões de infra vive numa pasta que não versiona |
+| 36 | `product/soulmon-01/**` (30 arquivos fora do índice): indexar como registro ou mover para `historico-digiapp/`? | Fora do índice | — |
+| 37 | `SettingsModal` (duplicata do mudo, aberto via `handleOpenAISettings`): remover? | Fica | — |
+| 38 | **`CLAUDE.md`** — autoriza corrigir as 7 afirmações falsas de `14` (Coraçãozinho "à venda por 150", "cura instantânea (10)", `digiapp_push` → `soulmon_push`, `DigiWidgetPlugin` → `SoulmonWidgetPlugin`, `canPvp` → `meetsPvpBond`, `DÍVIDA` → `EXCECOES` (D31), "17 documentos" → 18) e as 2 refs `arquivo:linha`? | Nada tocado (só o dono edita o `CLAUDE.md`) | Um commit de docs com cada correção conferida por grep |
+| 39 | Fósseis da raiz (`README.md`, `PWA-SETUP.md`, `PWA-CHECKLIST.md`, `PROJETO.md`, `PLANO_MELHORIAS.md`, `index.html.example`, `manifest.webmanifest`, `registerSW.js`): apagar, ou mover para `docs/historico-digiapp/` com lápide? | Como está | Uma sessão nova abre `PLANO_MELHORIAS.md` achando que é `docs/PLANO-MELHORIAS.md` |

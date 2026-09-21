@@ -27,7 +27,9 @@ Implemente um pacote de trabalho do `docs/PLANO-MELHORIAS.md`.
    - ao mudar regra: `GuideModal.tsx` + `HelpModal.tsx` + testes de
      `useDailyReset.test.ts`.
 
-5. Rode o gate: `npx tsc --noEmit`, `npx tsc -p desktop/tsconfig.json --noEmit`,
+5. Rode o gate: `npx tsc --noEmit`, `npx tsc -p tsconfig.server.json --noEmit`
+   (`functions/` e `workers/` — dinheiro, conta, save; já voltou vermelho no CI
+   por ficar de fora daqui), `npx tsc -p desktop/tsconfig.json --noEmit`,
    `npx vitest run`. Se o WP mexe em UI, screenshot via Playwright.
 
 6. **Chame o guarda dono para verificar o aceite** — ele roda o comando da

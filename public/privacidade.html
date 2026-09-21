@@ -30,7 +30,7 @@
 <body>
 
 <h1>Política de Privacidade — Soulmon</h1>
-<p class="sub">Última atualização: 8 de setembro de 2026</p>
+<p class="sub">Última atualização: 21 de setembro de 2026</p>
 
 <p class="lang">
   <a href="#en">English version below ↓</a> ·
@@ -139,10 +139,12 @@
 <h2 id="chat-contexto">2b. O que o chat da criatura recebe</h2>
 <p>
   Quando você conversa com sua criatura, o texto da sua mensagem vai para o
-  provedor de IA (Groq) para gerar a resposta. Junto com ele vai um pequeno
-  bloco de <strong>números</strong> sobre o momento — quanta vida e energia o
-  bichinho tem, o nível de vínculo e se você acabou de voltar de alguns dias
-  fora. <strong>Só números, nunca texto seu</strong>: o que você escreveu no
+  provedor de IA (Groq) para gerar a resposta. Junto com ele vão as
+  <strong>mensagens anteriores dessa conversa</strong> (para a resposta fazer
+  sentido), o <strong>nome da sua criatura</strong> e um pequeno bloco de
+  <strong>números</strong> sobre o momento — quanta vida e energia o bichinho
+  tem, o nível de vínculo e se você acabou de voltar de alguns dias fora.
+  <strong>Fora isso, nunca texto seu</strong>: o que você escreveu no
   onboarding (seu objetivo e a sua dificuldade) e o conteúdo das suas tarefas
   <strong>não passam por nenhuma rota de IA</strong>.
 </p>
@@ -268,9 +270,19 @@
   <tr><th>Serviço</th><th>O que recebe</th><th>Quando</th></tr>
   <tr>
     <td>Groq (IA)</td>
-    <td>As mensagens que você escreve no chat do pet e o texto do objetivo que
-        você digita ao pedir sugestões de tarefas.</td>
+    <td>As mensagens que você escreve no chat do pet (com as anteriores da
+        mesma conversa e o nome da criatura) e o texto do objetivo que você
+        digita ao pedir sugestões de tarefas.</td>
     <td>Só quando você usa esses recursos.</td>
+  </tr>
+  <tr>
+    <td>Higgsfield e Google Gemini (geração de imagem por IA)</td>
+    <td>A descrição em texto da sua criatura, montada a partir das suas
+        respostas ao Oráculo, para desenhar a imagem dela. Se você preencher o
+        campo opcional de <strong>criatura favorita</strong>, ou escolher uma
+        criatura no Renascimento, esse texto vai junto. Nunca vai seu nome,
+        e-mail, data de nascimento ou o conteúdo das suas tarefas.</td>
+    <td>Só quando o app gera ou regenera a imagem da criatura.</td>
   </tr>
   <tr>
     <td>Google Firebase</td>
@@ -326,7 +338,7 @@
 <hr>
 
 <h1 id="en">Privacy Policy — Soulmon</h1>
-<p class="sub">Last updated: September 8, 2026</p>
+<p class="sub">Last updated: September 21, 2026</p>
 
 <p class="lang"><a href="/termos.html#en">Terms of Use</a></p>
 
@@ -421,6 +433,19 @@
   </tr>
 </table>
 <p>Storage is hosted on <strong>Cloudflare</strong> infrastructure.</p>
+
+<h2 id="chat-context">2b. What the creature's chat receives</h2>
+<p>
+  When you talk to your creature, the text of your message goes to the AI
+  provider (Groq) to generate the reply. Along with it go the <strong>earlier
+  messages of that conversation</strong> (so the reply makes sense), your
+  <strong>creature's name</strong> and a small block of <strong>numbers</strong>
+  about the moment — how much life and energy the creature has, the bond level
+  and whether you just came back after a few days away. <strong>Beyond that,
+  never your text</strong>: what you wrote in onboarding (your goal and your
+  struggle) and the contents of your tasks <strong>never go through any AI
+  route</strong>.
+</p>
 
 <h2 id="microphone">2c. Spoken messages (microphone)</h2>
 <p>
@@ -542,9 +567,19 @@
   <tr><th>Service</th><th>What it receives</th><th>When</th></tr>
   <tr>
     <td>Groq (AI)</td>
-    <td>Messages you write in the pet chat, and the goal text you type when
-        asking for task suggestions.</td>
+    <td>Messages you write in the pet chat (with the earlier messages of the
+        same conversation and the creature's name), and the goal text you type
+        when asking for task suggestions.</td>
     <td>Only when you use those features.</td>
+  </tr>
+  <tr>
+    <td>Higgsfield and Google Gemini (AI image generation)</td>
+    <td>A text description of your creature, built from your Oracle answers,
+        used to draw its image. If you fill in the optional <strong>favorite
+        creature</strong> field, or pick a creature in the Rebirth, that text
+        goes along. Never your name, email, birth date or the contents of your
+        tasks.</td>
+    <td>Only when the app generates or regenerates the creature's image.</td>
   </tr>
   <tr>
     <td>Google Firebase</td>
