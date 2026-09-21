@@ -65,8 +65,10 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { join, relative } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const RAIZ = new URL('..', import.meta.url).pathname;
+// `fileURLToPath`, não `.pathname`: no Windows o pathname vem `/D:/…` e o `join` vira `D:\D:\…`.
+const RAIZ = fileURLToPath(new URL('..', import.meta.url));
 const SRC = join(RAIZ, 'src');
 const BIBLIA = join(RAIZ, 'docs', 'NARRATIVA-E-UNIVERSO.md');
 

@@ -714,6 +714,16 @@ Cobertura: **120/120** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 **Chamado por:** `src/components/LibraryPage.tsx`
 **Régua:** nenhuma (`ls src/utils/libraryNpcs*.test.ts` vazio).
 
+### `src/utils/lineIcons.ts`
+**Dono de:** os ícones-ficha das 9 linhas × 4 tiers (rodada 2 da SQUAD-ARTE, 21/09/2026 — `docs/ASSETS-A-GERAR.md` §13 R2-2, D-J13 do canvas Jogos): 64² para o Dino e os oponentes do Torneio, 32² (a cabeça) para o mini-visor do ranking. São DERIVADOS do sprite 256² de `lines/` (`scripts-arte/derivar-rodada2.mjs`, fora do repo), então D5 (um sprite por criatura) continua valendo — ícone é redução, não pose. Fronteira no molde de `attackFxArt.ts`: glob eager sobre `assets/soulmon/lines/icons/*.png`, `undefined` quando não há arte → o consumidor cai no sprite 256² reduzido.
+**Exports:**
+- `LineIconSize` (type) — `32 | 64`.
+- `lineIcon(lineId, tier, size)` — URL do ícone ou `undefined`.
+- `lineIconForStage(stage, size, demoCharacterId?)` — resolve a linha por `resolveLineForStage` (`sprites.ts`: demo → linha; legado → hash; árvore do jogador → `null`) e devolve o ícone.
+- `LINE_ICON_COUNT` — 72 (36 × 2 tamanhos); régua em `lineIcons.test.ts`.
+**Chamado por:** `components/TournamentPage.tsx` (ranking 32, oponente 64), `components/DinoGame.tsx` (pet 64), `components/pixel/PixelKit.tsx`.
+**Estado:** verificado em 21/09/2026 por doc-mantenedor (entrada nasceu no mesmo commit da rodada 2).
+
 ### `src/utils/loudness.ts`
 **Dono de:** A política de loudness — dono único, sem I/O (run `som-01`, Fase 2), promovida do gate de prototipagem.
 **Exports:**

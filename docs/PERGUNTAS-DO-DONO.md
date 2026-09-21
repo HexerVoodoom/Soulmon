@@ -13,3 +13,7 @@
 | 5 | **Worker de push** (`workers/`) mudou (ícone/cor/copy do push, `e3851a92`) e **não builda no push da `main`** — precisa de `wrangler deploy` dentro de `workers/` com a sua conta. Eu rodo, ou você? | Não deployado; produção manda o push antigo | Se eu rodar, preciso que o `wrangler login` esteja feito nesta máquina |
 | 6 | **Bump do `CACHE_VERSION`**: hoje `public/sw.js` está em v146 e a Fase 2 trocou HTML/CSS/assets em massa. Já bumpo para v147 no próximo commit? | Não bumpado (cada leva anterior bumpou a sua) | Sem bump, quem já abriu o app fica com CSS velho até o SW atualizar sozinho |
 | 7 | **Worktrees antigos removidos** (`.claude/worktrees/agent-a093c7e1bab3f09ae` = `fix/tier-gate-generate-sprite`, `agent-a4c6bc875962d5f25`) para o guard do Supabase passar. As branches continuam no git. Apago as branches também? | Branches mantidas | `git branch -D` das duas se você confirmar que o conteúdo já entrou na `main` |
+
+## Respostas (21/09/2026)
+
+Todas as sete respondidas em modal, sempre pela recomendada: (1) rodada 2 gerada — R2-1…R2-4 derivados sem crédito (`118131f4`, `66e32d43`), R2-5 glifos (`02d483af`), R2-6 `bg-gameboy` regerado (`b52fa074`, 7 cr); (2) idem; (3) `UnlockNudge` 280; (4) `CLAUDE.md` corrigido (`26c7aab0`); (5) push scheduler deployado (`digiapp-push-scheduler`, versão `e90f05a6`); (6) `CACHE_VERSION` v147 → v148 na rodada 2; (7) branches apagadas (0 commits fora da `main`). Fila vazia.
