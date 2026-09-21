@@ -278,3 +278,16 @@ Créditos Higgsfield: 567,95 → ver `account status` (≈ 52 cenários + 12 rem
 | HUD | 57 | 49 | **3** (+ 3 versões da árvore, sem geração) |
 
 Gerações novas: ~38 imagens (as folhas reduzem: emblemas 1, placeholder 1, glifos 1, barra 1, moldura 1, hunger 1, cenários 22 individuais).
+
+## 13. Rodada 2 — decisão do dono em 21/09/2026 ("Gerar")
+
+Regra desta rodada: **derivar do que existe sempre que a peça for redução da arte já aprovada** (zero crédito, determinístico, fiel por construção); gerar só o que não existe em nenhuma escala. Teto: 30 cr. Créditos em 21/09: 487,95.
+
+| # | Peça | Uso (artboard) | Formato / destino | Método |
+|---|---|---|---|---|
+| R2-1 | Miniaturas dos cenários da loja | `Loja.dc.html` card (D-L3) | 96×52 PNG por cenário, `src/assets/backgrounds/thumbs/<id>.png`; `ShopModal` troca o `1200×648` reduzido por CSS | derivar: `sharp` lanczos3 1200×648 → 96×52, leve unsharp; script `scripts-arte/derivar-rodada2.mjs` |
+| R2-2 | Ícones-ficha 64² e 32² das 9 linhas × 4 tiers | `Jogos` ranking (D-J13, mini-visor 32) e Dino/oponentes (64) | `src/assets/soulmon/lines/icons/<linha>-<tier>-64.png` e `-32.png`, alfa real | derivar do sprite 256²: bbox → 64 lanczos; 32 = recorte da cabeça (45% superior da bbox) → 32. Um sprite por criatura (D5) continua valendo — ícone é redução, não pose |
+| R2-3 | Aura 96² por elemento | `Pet.dc.html` vidro 192 (D-P?) | `src/assets/soulmon/fx-ataque/fx-<el>-aura-96.png` (só para os elementos com `-aura.png`) | derivar 128² → 96² nearest-ish (lanczos + threshold de alfa); `auraForElement` ganha variante `size: 96` |
+| R2-4 | `anim-sleep-z` em tom claro | Home dormindo sobre cenário escuro (D-H?) | `src/assets/soulmon/fx/anim-sleep-z-light.png` (mesma grade 3 quadros) | derivar: recolor da folha atual para `#E9F5F2`/`#5FF3E0`, alfa intacto; `animArt.sleepZLight` |
+| R2-5 | Glifos pixel comida/sono do overlay | `ForaDoApp.dc.html` overlay (D-F10) | folha 1×, 2 glifos 32² alfa real → `desktop/renderer/assets/glyph-food-32.png`, `glyph-sleep-32.png`; `EFFECT_ICON` do `main.ts` passa a usar PNG | gerar 1 folha `gpt_image_2 --quality medium --background transparent`, fatiar `fatiar-alfa.mjs` |
+| R2-6 | `bg-gameboy` regerado | Loja/cenário equipado | 1200×648 → `src/assets/backgrounds/bg-gameboy.png` (substitui) | gerar `nano_banana_pro` 2k 16:9 com referência NOVA: recorte real de LCD de console (verde-oliva, grade de pixel visível), prompt do §4 + "the whole image IS the LCD surface, no device, no hands"; `hf-finalize-bg.mjs` |
