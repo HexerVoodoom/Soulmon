@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Icon } from './ui/Icon';
-import { PixelButton } from './pixel/PixelKit';
+import { sm2Button } from './form/FormKit';
+import { GameRoot, GameHeader, GameVisor, VisorSprite, VisorFx, HpBars, FxPopup, StatTag, phaseTitle, phaseLine } from './games/GameKit';
 import { getSpriteForStage } from '../utils/sprites';
 import { playFeed } from '../utils/sounds';
-import { getStageLevel } from '../types/progression';
 import { playerStatsFor } from '../utils/dungeon';
 import { TimingBar } from './pixel/TimingBar';
 import {
@@ -14,7 +14,6 @@ import {
 } from '../utils/dungeon';
 import { buildRunScenes, DUNGEON_SCENES, type DungeonScene } from '../utils/dungeonScenes';
 import type { Language } from '../utils/i18n';
-import { FX_ART } from '../utils/fxArt';
 
 /**
  * Dungeon minigame — timing-bar battle across up to 5 FLOORS.
@@ -27,6 +26,15 @@ import { FX_ART } from '../utils/fxArt';
  * Clearing all 5 floors COMPLETES the run and raises the base level (next run is
  * harder); the base level resets WEEKLY. Player HP carries between floors with a
  * small heal on each clear.
+ *
+ * Canvas Jogos (DECISÕES §25, D-J3…D-J9): o minijogo é o conteúdo de um VISOR
+ * 348×176 (cena do andar em `cover`, pet e inimigo 256² a 128, FX 128² a 1× na
+ * caixa do inimigo — o golpe, a derrota dele e a faísca da run completa; nunca
+ * sobre o pet); o chrome é aparelho em vetor (`games/GameKit.tsx`): × 44 pelado
+ * primeiro, barras de HP `.meter` fora do vidro ("You" ciano, o outro
+ * `gold-fill` — nunca ❤️, nunca vermelho), `TimingBar` por token, popups
+ * `role=status` com o FX num mini-visor 64. O overlay VHS saiu (movimento
+ * contínuo sem propósito; `prefers-reduced-motion` já não o lia).
  *
  * Attack: stop the sweeping marker near CENTER for more damage (≥92% = crit).
  * Defense: same bar, timed — center dodges, a perfect stop dodges + counters.
@@ -43,7 +51,7 @@ const POPUP_MS = 1400;     // how long result popups stay before the next phase
 const clearBonus = (floor: number) => 10 + 5 * (floor - 1);
 
 type Phase = 'intro' | 'attack' | 'defend' | 'result' | 'enemy-down' | 'floor-clear' | 'run-complete' | 'lost';
-interface Popup { icon: string; title: string; detail: string; color: string }
+interface Popup { icon: string; title: string; detail: string }
 
 // ── Game ───────────────────────────────────────────────────────────────────
 export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter, onLose, onHeartDrop, onGlitchtama, onEnemyDefeated, onEarnPoints, onExit, bits = 0, onSpendBits }: {
@@ -84,6 +92,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
   const [popup, setPopup] = useState<Popup | null>(null);
   const [hitFx, setHitFx] = useState<'enemy' | 'player' | null>(null);
   const [rewardMsg, setRewardMsg] = useState('');
+  /** O coraçãozinho caiu neste inimigo (JOGO-10) — vira glifo, não emoji na string. */
+  const [gotHeart, setGotHeart] = useState(false);
   const [defendTimeLeft, setDefendTimeLeft] = useState(DEFEND_TIME);
   const [baseLevel, setBaseLevel] = useState(() => getDungeonDifficulty());
   const [floor, setFloor] = useState(1);
@@ -99,8 +109,6 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
   const petSprite = getSpriteForStage(evolutionStage, demoCharacterId);
   const ladderLen = LADDER_TIERS.length;
   const scene = runScenes[floor - 1] ?? DUNGEON_SCENES[0];
-  // Some shop backdrops are LIGHT — keep the in-scene labels readable on them.
-  const sceneLabel = { textShadow: '0 1px 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.5)' as const };
 
   const after = useCallback((ms: number, fn: () => void) => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -139,6 +147,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
     runScoreRef.current = 0;
     setRunScore(0);
     setRewardMsg('');
+    setGotHeart(false);
     setPopup(null);
     setPhase('attack');
   };
@@ -151,11 +160,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
   const defeatEnemy = (finalMsg: Popup) => {
     onEnemyDefeated(enemy.stage);
     addPoints(enemy.points);
-    const gotHeart = onHeartDrop();
-    setRewardMsg(
-      `+${enemy.points} Bits` +
-      (gotHeart ? ` · 💗 +1 ${isPt ? 'coração' : 'heart'}` : ''),
-    );
+    setGotHeart(onHeartDrop());
+    setRewardMsg(`+${enemy.points} Bits`);
     setPopup(finalMsg);
     setPhase('result');
     after(POPUP_MS, () => { setPopup(null); setPhase('enemy-down'); });
@@ -174,7 +180,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
     const title = crit ? (isPt ? 'PERFEITO!' : 'PERFECT!')
       : acc >= 0.6 ? (isPt ? 'Bom golpe!' : 'Good hit!')
       : (isPt ? 'Raspão...' : 'Graze...');
-    const atkPopup: Popup = { icon: '⚔️', title, detail: isPt ? `${dmg} de dano no ${enemy.name}` : `${dmg} damage to ${enemy.name}`, color: '#4ade80' };
+    const atkPopup: Popup = { icon: '⚔️', title, detail: isPt ? `${dmg} de dano no ${enemy.name}` : `${dmg} damage to ${enemy.name}` };
 
     if (newHp <= 0) { defeatEnemy(atkPopup); return; }
 
@@ -202,7 +208,6 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
       const dodgePopup: Popup = {
         icon: '🛡️', title: isPt ? 'DESVIO PERFEITO!' : 'PERFECT DODGE!',
         detail: isPt ? `Contra-ataque: ${counter} de dano!` : `Counter-attack: ${counter} damage!`,
-        color: '#60a5fa',
       };
       if (newEnemyHp <= 0) { defeatEnemy(dodgePopup); return; }
       setPopup(dodgePopup);
@@ -221,7 +226,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
     const title = timedOut ? (isPt ? 'Muito lento!' : 'Too slow!')
       : effAcc >= 0.6 ? (isPt ? 'Desvio parcial!' : 'Partial dodge!')
       : (isPt ? 'Ataque em cheio!' : 'Direct hit!');
-    setPopup({ icon: '💥', title, detail: isPt ? `Você sofreu ${taken} de dano` : `You took ${taken} damage`, color: '#f87171' });
+    setPopup({ icon: '💥', title, detail: isPt ? `Você sofreu ${taken} de dano` : `You took ${taken} damage` });
     setPhase('result');
 
     if (newHp <= 0) {
@@ -297,272 +302,231 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
     setPhase('attack');
   };
 
-  const hpBar = (cur: number, max: number, color: string) => (
-    <div style={{ width: 110, height: 10, background: '#1c2636', border: '1px solid color-mix(in srgb, var(--sm-px-copper) 55%, transparent)', overflow: 'hidden' }}>
-      <div style={{ width: `${(cur / max) * 100}%`, height: '100%', background: color, transition: 'width 0.3s' }} />
-    </div>
-  );
-
   const inBattle = enemies.length > 0 && ['attack', 'defend', 'result', 'enemy-down', 'floor-clear', 'run-complete', 'lost'].includes(phase);
   const sceneName = isPt ? scene.namePt : scene.nameEn;
+  const exitLabel = isPt ? 'Sair' : 'Exit';
+  const scoreLine = isPt ? `Placar: ${runScore} · Recorde: ${best}` : `Score: ${runScore} · Best: ${best}`;
+
+  /* O que o VIDRO mostra na caixa do inimigo (canto superior direito, 128²,
+     a MESMA caixa em todas as fases — X1/X4): o inimigo espelhado na luta; o
+     `fx-defeat` quando ele cai; o `fx-sparkle` quando a run acaba (a run
+     acabou onde o último inimigo estava — nunca sobre o pet); nada na derrota
+     (o pet fica inteiro — nada caiu do lado dele). */
+  const enemyBox: React.CSSProperties = { right: 16, top: 8 };
+  const enemySlot = phase === 'run-complete'
+    ? <VisorFx icon="✨" style={enemyBox} data-visor-fx="sparkle" />
+    : phase === 'enemy-down' || phase === 'floor-clear'
+      ? <VisorFx icon="🏳️" style={enemyBox} data-visor-fx="defeat" />
+      : phase === 'lost'
+        ? null
+        : enemy
+          ? <VisorSprite src={enemy.sprite} alt={enemy.name} flip style={enemyBox} data-visor-enemy />
+          : null;
 
   return (
-    /* Tela de arcade: peça escura nos dois temas, então declara o contexto —
-       senão os tokens de estado (`--sm-px-off-ink`) leem o tema da PÁGINA e o
-       rótulo não selecionado some no tema claro. */
-    <div className="sm-px-dark-ctx sm-px-arcade-root" style={{ background: '#07090f', color: '#e8eefc' }}>
-      {/* Top bar */}
-      <div className="sm-px-arcade-bar" style={{ margin: '14px 16px 8px', justifyContent: 'space-between' }}>
-        <span style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
-          <span className="sm-px-arcade-value" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {/* CHROME: a barra de topo e o sair sao interface. O CAMPO DE
-                BATALHA abaixo (sprites, cenario, overlay VHS, popup) e
-                territorio retro e NAO migra. */}
-            <Icon name="swords" size={20} />
-            {isPt ? 'Masmorra' : 'Dungeon'}
-          </span>
-          <span className="sm-px-arcade-label" style={{ color: scene.accent }}>
+    <GameRoot>
+      <GameHeader
+        run={inBattle}
+        title={isPt ? 'Masmorra' : 'Dungeon'}
+        sub={
+          <>
             {isPt ? 'Andar' : 'Floor'} {floor}/{MAX_FLOORS} · {sceneName}
-            {inBattle ? <span style={{ color: '#9fb2d8', marginLeft: 6 }}>· {enemyIdx + 1}/{ladderLen}</span> : null}
-          </span>
-        </span>
-        <button onClick={exitRun} aria-label={isPt ? 'Sair' : 'Exit'} className="sm-px-arcade-close">
-          <Icon name="close" size={20} />
-        </button>
-      </div>
+            {inBattle ? ` · ${isPt ? 'inimigo' : 'enemy'} ${enemyIdx + 1}/${ladderLen}` : null}
+          </>
+        }
+        closeLabel={exitLabel}
+        onClose={exitRun}
+      />
 
-      {/* Battlefield (only during a run) — per-floor retro scene + VHS overlay */}
+      {/* O VISOR (D-J3): a cena do andar em `cover`, o pet a 128 embaixo à
+          esquerda, o inimigo a 128 espelhado no alto à direita; 176 de altura
+          em TODAS as fases (X4). No lobby, só o pet, centrado. */}
+      <GameVisor height={88} scene={scene.bg}>
+        {enemySlot}
+        <VisorSprite
+          src={petSprite}
+          alt=""
+          style={inBattle ? { left: 16, bottom: 8 } : { left: '50%', marginLeft: -64, bottom: 8 }}
+          data-visor-pet
+        />
+        {/* O golpe é o FX `fx-hit` 128² a 1× sobre quem apanhou (D-J4) —
+            nunca `filter: brightness(3)`. */}
+        {hitFx === 'enemy' && <VisorFx icon="💥" style={enemyBox} data-visor-fx="hit" />}
+        {hitFx === 'player' && <VisorFx icon="💥" style={{ left: 16, bottom: 8 }} data-visor-fx="hit" />}
+      </GameVisor>
+
+      {/* As barras FORA do vidro, em vetor (D-J5): "You" ciano, o outro dourado. */}
       {inBattle && enemy && (
-        <div className="sm-px-card" style={{ flex: 1, position: 'relative', margin: '0 16px', borderColor: scene.accent, ['--sm-cham-line' as string]: scene.accent,
-          // `background` e NÃO `backgroundColor`: `scene.bg` é um valor de
-          // shorthand (`url(...) center/cover`, pilha de gradientes), e
-          // `background-color` só aceita COR — o CSSOM descartava a string
-          // inteira em silêncio, sem erro nenhum. Efeito: o campo de batalha
-          // vinha sem cenário desde sempre, e os 5 de `DUNGEON_SCENES` mais os
-          // de `SPIRIT_BG_SCENES` nunca chegaram a aparecer na tela.
-          background: scene.bg, overflow: 'hidden', boxShadow: 'inset 0 0 60px rgba(0,0,0,0.6)' }}>
-          {/* VHS scanline overlay */}
-          <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'repeating-linear-gradient(0deg, rgba(0,0,0,0.28) 0 1px, transparent 1px 3px)', backgroundSize: '100% 6px', animation: 'dungeon-vhs 5s linear infinite', opacity: 0.55, mixBlendMode: 'overlay' }} />
-          <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', boxShadow: `inset 0 0 40px ${scene.accent}22` }} />
-
-          {/* Enemy (top-right) */}
-          <div style={{ position: 'absolute', top: 14, right: 16, textAlign: 'right' }}>
-            <p style={{ ...sceneLabel, fontSize: '0.8rem', fontWeight: 700, marginBottom: 4 }}>{enemy.name}</p>
-            {hpBar(enemyHp, enemy.hp, '#f87171')}
-          </div>
-          <img
-            src={enemy.sprite}
-            alt={enemy.name}
-            style={{
-              position: 'absolute', top: '18%', right: '10%', width: 96, height: 96, objectFit: 'contain',
-              imageRendering: 'pixelated',
-              ['--flip' as string]: '-1',
-              filter: hitFx === 'enemy' ? 'brightness(3) drop-shadow(0 0 10px #f87171)' : 'drop-shadow(0 0 8px rgba(248,113,113,0.35))',
-              transition: 'filter 0.15s',
-              animation: 'dungeon-idle 1.6s ease-in-out infinite',
-            } as React.CSSProperties}
-          />
-          {/* Pet (bottom-left) */}
-          <div style={{ position: 'absolute', bottom: 'calc(6% + 96px)', left: 16 }}>
-            <p style={{ ...sceneLabel, fontSize: '0.8rem', fontWeight: 700, marginBottom: 4 }}>{isPt ? 'Você' : 'You'}</p>
-            {hpBar(playerHp, playerStats.hp, '#4ade80')}
-          </div>
-          <img
-            src={petSprite}
-            alt="pet"
-            style={{
-              position: 'absolute', bottom: '6%', left: '8%', width: 84, height: 84, objectFit: 'contain',
-              imageRendering: 'pixelated',
-              filter: hitFx === 'player' ? 'brightness(3) drop-shadow(0 0 10px #f87171)' : 'drop-shadow(0 0 8px rgba(74,222,128,0.35))',
-              transition: 'filter 0.15s',
-              animation: 'dungeon-idle 1.3s ease-in-out infinite',
-            }}
-          />
-
-          {/* Result popup — feedback beat between actions */}
-          {popup && (
-            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(6,9,15,0.45)' }}>
-              <div className="sm-px-card" style={{ textAlign: 'center', backgroundColor: '#0e1522', borderColor: popup.color, ['--sm-cham-line' as string]: popup.color, padding: '16px 26px' }}>
-                {/* O `icon` continua sendo o emoji-CHAVE; quem tem sprite em
-                    FX_ART ganha a arte, quem nao tem cai no texto — e assim um
-                    popup novo nunca quebra. */}
-                <div style={{ fontSize: '1.7rem', lineHeight: 1.2 }}>{FX_ART[popup.icon]
-                  ? <img src={FX_ART[popup.icon]} alt="" width={44} height={44}
-                         style={{ objectFit: 'contain', imageRendering: 'pixelated', display: 'inline-block' }} />
-                  : popup.icon}</div>
-                <p className="sm-px-arcade-value" style={{ fontSize: '1rem', color: popup.color, margin: '4px 0 2px' }}>{popup.title}</p>
-                <p style={{ fontSize: '0.82rem', color: '#c6d4f2' }}>{popup.detail}</p>
-              </div>
-            </div>
-          )}
-        </div>
+        <HpBars
+          bars={[
+            { label: isPt ? 'Você' : 'You', cur: playerHp, max: playerStats.hp, tone: 'cyan' },
+            { label: enemy.name, cur: enemyHp, max: enemy.hp, tone: 'gold' },
+          ]}
+        />
       )}
 
-      {/* Intro */}
+      {/* Lobby */}
       {phase === 'intro' && (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, padding: 24, textAlign: 'center' }}>
-          {/* Tela de MENU (intro) = chrome. O icone saiu do `sm-px-slot`: o
-              slot e uma caixa, e icone nunca vai dentro de box (regra do
-              dono). Grande e pelado. */}
-          <Icon name="swords" size={48} />
-          {/* Os dois emojis (medalha/fogo) sairam: rotulo em bitmap ja diz o
-              que cada numero e, e emoji do sistema em conteudo conta no T2. */}
-          <div style={{ display: 'flex', gap: 18 }}>
-            <span className="sm-px-arcade-label">
-              {isPt ? 'Recorde' : 'Best'} <b className="sm-px-arcade-value" style={{ color: '#facc15' }}>{best}</b>
-            </span>
-            <span className="sm-px-arcade-label">
-              {isPt ? 'Dificuldade base' : 'Base level'} <b className="sm-px-arcade-value" style={{ color: 'var(--sm-px-cyan)' }}>{baseLevel}</b>
-            </span>
+        <>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <StatTag label={isPt ? 'Recorde' : 'Best'} value={best} />
+            <StatTag label={isPt ? 'Dificuldade base' : 'Base level'} value={baseLevel} />
           </div>
-          <p style={{ fontSize: '0.8rem', color: '#9fb2d8', maxWidth: 330 }}>
+          <p style={phaseLine}>
             {isPt
               ? '5 andares, cada um com 6 inimigos e mais forte que o anterior. Andar 1 serve pra um rookie; alguns andares acima ficam brutais. Concluir a run inteira sobe a dificuldade (reset semanal). Perder custa a run — nunca os seus corações.'
               : '5 floors, each with 6 enemies and tougher than the last. Floor 1 suits a rookie; a few floors up gets brutal. Completing the whole run raises the difficulty (weekly reset). Losing costs you the run — never your hearts.'}
           </p>
-          <span style={{ width: '100%', maxWidth: 320 }}>
-            <PixelButton size="lg" variant="primary" onClick={startRun}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
+            <button type="button" onClick={startRun} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 320 }}>
               {isPt ? 'Entrar na masmorra' : 'Enter the dungeon'}
-            </PixelButton>
-          </span>
+            </button>
 
-          {/* WP4.5 — DESCER MAIS FUNDO: o sumidouro recorrente de Bits.
-              Os Bits só tinham compras ÚNICAS, então quem joga muito acumulava
-              moeda que não compra nada — e moeda que não compra nada deixa de
-              ser recompensa. Este é o único sumidouro que o CLAUDE.md declara
-              legítimo: custo de ENTRADA, nunca cobrar da barra de cuidado.
-              Recorrente sem mecânica nova, porque a base reseta toda semana.
-              Some ao chegar no teto: oferta que não pode ser aceita é ruído. */}
-          {onSpendBits && baseLevel < DEEP_START_MAX_LEVEL && (
-            <span style={{ width: '100%', maxWidth: 320 }}>
-              <PixelButton
-                size="md"
-                variant="default"
-                disabled={!canBuyDeepStart(baseLevel, bits)}
-                onClick={() => {
-                  if (!canBuyDeepStart(baseLevel, bits)) return;
-                  if (!onSpendBits(deepStartCost(baseLevel))) return;
-                  setBaseLevel(setDungeonDifficultyAtLeast(baseLevel + 1));
-                }}
-              >
-                {isPt
-                  ? `Descer mais fundo — ${deepStartCost(baseLevel)} Bits`
-                  : `Go deeper — ${deepStartCost(baseLevel)} Bits`}
-              </PixelButton>
-              <p style={{ fontSize: '0.72rem', color: '#9fb2d8', marginTop: 6 }}>
-                {canBuyDeepStart(baseLevel, bits)
-                  ? (isPt
-                    ? 'Começa a run um nível abaixo. Vale até o reset da semana.'
-                    : 'Starts the run one level deeper. Lasts until the weekly reset.')
-                  : (isPt ? 'Bits insuficientes.' : 'Not enough Bits.')}
-              </p>
-            </span>
-          )}
-        </div>
+            {/* WP4.5 — DESCER MAIS FUNDO: o sumidouro recorrente de Bits.
+                Os Bits só tinham compras ÚNICAS, então quem joga muito acumulava
+                moeda que não compra nada — e moeda que não compra nada deixa de
+                ser recompensa. Este é o único sumidouro que o CLAUDE.md declara
+                legítimo: custo de ENTRADA, nunca cobrar da barra de cuidado.
+                Recorrente sem mecânica nova, porque a base reseta toda semana.
+                Some ao chegar no teto: oferta que não pode ser aceita é ruído.
+                Aposta opcional = `outline`, sem placa cheia (canvas Lobby). */}
+            {onSpendBits && baseLevel < DEEP_START_MAX_LEVEL && (
+              <>
+                <button
+                  type="button"
+                  disabled={!canBuyDeepStart(baseLevel, bits)}
+                  onClick={() => {
+                    if (!canBuyDeepStart(baseLevel, bits)) return;
+                    if (!onSpendBits(deepStartCost(baseLevel))) return;
+                    setBaseLevel(setDungeonDifficultyAtLeast(baseLevel + 1));
+                  }}
+                  style={{ ...sm2Button('outline', !canBuyDeepStart(baseLevel, bits)), width: '100%', maxWidth: 320 }}
+                >
+                  {isPt
+                    ? `Descer mais fundo — ${deepStartCost(baseLevel)} Bits`
+                    : `Go deeper — ${deepStartCost(baseLevel)} Bits`}
+                </button>
+                <p style={phaseLine}>
+                  {canBuyDeepStart(baseLevel, bits)
+                    ? (isPt
+                      ? 'Começa a run um nível abaixo. Vale até o reset da semana.'
+                      : 'Starts the run one level deeper. Lasts until the weekly reset.')
+                    : (isPt ? 'Bits insuficientes.' : 'Not enough Bits.')}
+                </p>
+              </>
+            )}
+          </div>
+        </>
       )}
 
-      {/* Action area (during a run) */}
-      {inBattle && (
-        <div style={{ padding: 16, minHeight: 150 }}>
+      {/* Área de ação (durante a run) */}
+      {inBattle && enemy && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minHeight: 120 }}>
           {phase === 'attack' && (
-            <div>
-              <p className="sm-px-arcade-label" style={{ textAlign: 'center', marginBottom: 6 }}>
+            <>
+              <p style={phaseTitle}>
                 {isPt ? 'Seu turno — mire no centro!' : 'Your turn — aim for the center!'}
               </p>
-              <TimingBar key={`atk-${floor}-${enemyIdx}-${enemyHp}-${playerHp}`} speed={enemy.speed} color="#4ade80" label={isPt ? 'Atacar!' : 'Attack!'} onStop={handleAttack} />
-            </div>
+              <TimingBar key={`atk-${floor}-${enemyIdx}-${enemyHp}-${playerHp}`} speed={enemy.speed} label={isPt ? 'Atacar!' : 'Attack!'} onStop={handleAttack} />
+            </>
           )}
           {phase === 'defend' && (
-            <div>
-              <p style={{ textAlign: 'center', fontSize: '0.84rem', fontWeight: 800, color: defendTimeLeft <= 1 ? '#f87171' : '#facc15', marginBottom: 6 }}>
-                {isPt ? `${enemy.name} atacando — desvie!` : `${enemy.name} attacking — dodge!`} {defendTimeLeft.toFixed(1)}s
+            <>
+              {/* O relógio é leitura, não alarme: `ink` sempre, `tabular-nums`
+                  (D-J8 — era `#facc15` → `#f87171` no último segundo). */}
+              <p style={phaseTitle}>
+                {isPt ? `${enemy.name} atacando — desvie!` : `${enemy.name} attacking — dodge!`}{' '}
+                <span className="sm2-num">{defendTimeLeft.toFixed(1)}s</span>
               </p>
-              <TimingBar key={`def-${floor}-${enemyIdx}-${enemyHp}-${playerHp}`} speed={enemy.speed * 1.2} color="#60a5fa" label={isPt ? 'Desviar!' : 'Dodge!'} onStop={a => handleDefend(a)} />
-            </div>
+              <TimingBar key={`def-${floor}-${enemyIdx}-${enemyHp}-${playerHp}`} speed={enemy.speed * 1.2} label={isPt ? 'Desviar!' : 'Dodge!'} onStop={a => handleDefend(a)} />
+            </>
           )}
-          {phase === 'result' && (
-            <p style={{ textAlign: 'center', fontSize: '0.8rem', color: '#5d729c', paddingTop: 24 }}>…</p>
+          {phase === 'result' && popup && (
+            <FxPopup icon={popup.icon} title={popup.title} detail={popup.detail} />
           )}
           {phase === 'enemy-down' && (
-            <div style={{ textAlign: 'center' }}>
-              <p className="sm-px-arcade-value" style={{ marginBottom: 4 }}>
+            <>
+              <p style={phaseTitle}>
                 {isPt ? `${enemy.name} derrotado!` : `${enemy.name} defeated!`}
               </p>
-              <p style={{ fontSize: '0.82rem', color: '#facc15', marginBottom: 10 }}>{rewardMsg}</p>
-              <PixelButton size="lg" variant="primary" onClick={nextEnemy}>
+              {/* "+N Bits" e, raramente, o coraçãozinho — o emoji da string virou
+                  glifo `favorite` 20 FILL `primary-ink` + "+1 heart" (D-J9). */}
+              <p style={phaseLine}>
+                <span className="sm2-num">{rewardMsg}</span>
+                {gotHeart && (
+                  <>
+                    {' · '}
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2, verticalAlign: 'middle' }}>
+                      <Icon name="favorite" size={20} fill={1} tone="primary" />
+                      +1 {isPt ? 'coração' : 'heart'}
+                    </span>
+                  </>
+                )}
+              </p>
+              <button type="button" onClick={nextEnemy} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 320, alignSelf: 'center' }}>
                 {enemyIdx + 1 >= enemies.length
                   ? (floor >= MAX_FLOORS
                       ? (isPt ? `Concluir run (+${clearBonus(floor)} Bits + Glitchtama)` : `Finish run (+${clearBonus(floor)} Bits + Glitchtama)`)
                       : (isPt ? `Limpar andar (+${clearBonus(floor)} Bits)` : `Clear floor (+${clearBonus(floor)} Bits)`))
                   : (isPt ? `Desafiar ${enemies[enemyIdx + 1].name}` : `Challenge ${enemies[enemyIdx + 1].name}`)}
-              </PixelButton>
-            </div>
+              </button>
+            </>
           )}
           {phase === 'floor-clear' && (
-            <div style={{ textAlign: 'center' }}>
-              <p className="sm-px-arcade-value" style={{ fontSize: '1.05rem', marginBottom: 4 }}>
-                {isPt ? `Andar ${floor} concluído!` : `Floor ${floor} cleared!`}
-              </p>
-              <p style={{ fontSize: '0.8rem', color: '#c6d4f2', marginBottom: 2 }}>
-                {isPt ? `Placar: ${runScore} · Recorde: ${best}` : `Score: ${runScore} · Best: ${best}`}
-              </p>
-              <p style={{ fontSize: '0.76rem', color: '#4ade80', marginBottom: 10 }}>{rewardMsg}</p>
+            <>
+              <p style={phaseTitle}>{isPt ? `Andar ${floor} concluído!` : `Floor ${floor} cleared!`}</p>
+              <p className="sm2-num" style={phaseLine}>{scoreLine}</p>
+              {/* A cura é FATO em `muted`, não prêmio (D-J8). */}
+              <p style={phaseLine}>{rewardMsg}</p>
               <div style={{ display: 'flex', gap: 8 }}>
-                <span style={{ flex: 1 }}>
-                  <PixelButton size="lg" variant="primary" onClick={nextFloor}>
-                    {isPt ? `Andar ${floor + 1}` : `Floor ${floor + 1}`}
-                  </PixelButton>
-                </span>
-                <span style={{ flex: 1 }}>
-                  <PixelButton size="lg" onClick={exitRun}>{isPt ? 'Sair c/ placar' : 'Bank & exit'}</PixelButton>
-                </span>
+                <button type="button" onClick={nextFloor} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px', whiteSpace: 'nowrap' }}>
+                  {isPt ? `Andar ${floor + 1}` : `Floor ${floor + 1}`}
+                </button>
+                <button type="button" onClick={exitRun} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, padding: '0 8px', whiteSpace: 'nowrap' }}>
+                  {isPt ? 'Sair c/ placar' : 'Bank & exit'}
+                </button>
               </div>
-            </div>
+            </>
           )}
           {phase === 'run-complete' && (
-            <div style={{ textAlign: 'center' }}>
-              <p className="sm-px-arcade-value" style={{ fontSize: '1.05rem', marginBottom: 4, color: '#facc15' }}>
-                {isPt ? 'Run completa! Os 5 andares caíram!' : 'Run complete! All 5 floors down!'}
-              </p>
-              <p style={{ fontSize: '0.8rem', color: '#c6d4f2', marginBottom: 2 }}>
-                {isPt ? `Placar: ${runScore} · Recorde: ${best}` : `Score: ${runScore} · Best: ${best}`}
-              </p>
-              <p style={{ fontSize: '0.8rem', color: '#4ade80', marginBottom: 2, fontWeight: 800 }}>
-                {isPt ? 'Glitchtama obtido! (pastinha de itens)' : 'Glitchtama acquired! (Items folder)'}
-              </p>
-              <p style={{ fontSize: '0.76rem', color: '#c084fc', marginBottom: 10 }}>
-                {isPt ? 'A próxima run ficou mais difícil.' : 'The next run got harder.'}
-              </p>
+            <>
+              {/* Nenhuma cor de prêmio: o que é ganho fala pela frase (D-J8). */}
+              <p style={phaseTitle}>{isPt ? 'Run completa! Os 5 andares caíram!' : 'Run complete! All 5 floors down!'}</p>
+              <p className="sm2-num" style={phaseLine}>{scoreLine}</p>
+              <p style={phaseLine}>{isPt ? 'Glitchtama obtido! (pastinha de itens)' : 'Glitchtama acquired! (Items folder)'}</p>
+              <p style={phaseLine}>{isPt ? 'A próxima run ficou mais difícil.' : 'The next run got harder.'}</p>
               <div style={{ display: 'flex', gap: 8 }}>
-                <span style={{ flex: 1 }}>
-                  <PixelButton size="lg" variant="primary" onClick={startRun}>{isPt ? 'Nova run' : 'New run'}</PixelButton>
-                </span>
-                <span style={{ flex: 1 }}>
-                  <PixelButton size="lg" onClick={onExit}>{isPt ? 'Sair' : 'Exit'}</PixelButton>
-                </span>
+                <button type="button" onClick={startRun} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }}>
+                  {isPt ? 'Nova run' : 'New run'}
+                </button>
+                <button type="button" onClick={onExit} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, padding: '0 8px' }}>
+                  {exitLabel}
+                </button>
               </div>
-            </div>
+            </>
           )}
           {phase === 'lost' && (
-            <div style={{ textAlign: 'center' }}>
-              <p className="sm-px-arcade-value" style={{ fontSize: '1.05rem', marginBottom: 4 }}>
+            <>
+              {/* A derrota sem visor de derrota e sem cor de perda: o que estava
+                  em jogo era a run; os corações ficam, e a tela diz (JOGO-09). */}
+              <p style={phaseTitle}>
                 {isPt ? 'Você foi derrotado — seus corações continuam intactos.' : 'You were defeated — your hearts are untouched.'}
               </p>
-              <p style={{ fontSize: '0.8rem', color: '#c6d4f2', marginBottom: 10 }}>
-                {isPt ? `Andar ${floor} · Placar: ${runScore} · Recorde: ${best}` : `Floor ${floor} · Score: ${runScore} · Best: ${best}`}
+              <p className="sm2-num" style={phaseLine}>
+                {isPt ? `Andar ${floor} · ${scoreLine}` : `Floor ${floor} · ${scoreLine}`}
               </p>
               <div style={{ display: 'flex', gap: 8 }}>
-                <span style={{ flex: 1 }}>
-                  <PixelButton size="lg" variant="primary" onClick={startRun}>{isPt ? 'Jogar de novo' : 'Play again'}</PixelButton>
-                </span>
-                <span style={{ flex: 1 }}>
-                  <PixelButton size="lg" onClick={onExit}>{isPt ? 'Sair' : 'Exit'}</PixelButton>
-                </span>
+                <button type="button" onClick={startRun} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }}>
+                  {isPt ? 'Jogar de novo' : 'Play again'}
+                </button>
+                <button type="button" onClick={onExit} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, padding: '0 8px' }}>
+                  {exitLabel}
+                </button>
               </div>
-            </div>
+            </>
           )}
         </div>
       )}
-    </div>
+    </GameRoot>
   );
 }

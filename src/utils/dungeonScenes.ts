@@ -1,7 +1,9 @@
 // 🎞️ Dungeon floor backgrounds — one retro scene per floor (1..5). Pure CSS so
-// they stay tiny and theme-safe. A shared VHS scanline overlay is layered on top
-// in DungeonGame for the "filtro de VHS" feel. Kept dark enough that the pixel
-// sprites stay readable.
+// they stay tiny and theme-safe. Kept dark enough that the pixel sprites stay
+// readable. (The VHS scanline overlay that DungeonGame used to layer on top is
+// gone since the canvas Jogos, DECISÕES §25: the scene is the `cover` of a
+// visor now — `games/GameKit.tsx` — and continuous motion without purpose was
+// the thing `prefers-reduced-motion` never reached.)
 export interface DungeonScene {
   namePt: string;
   nameEn: string;
@@ -84,6 +86,16 @@ const SPIRIT_BG_SCENES: DungeonScene[] = [
   { namePt: 'Arena Noturna', nameEn: 'Night Arena', accent: '#6fd3e8', bg: `url(${arenaNight}) center/cover` },
   { namePt: 'Coliseu Ancião', nameEn: 'Elder Colosseum', accent: '#d7a55c', bg: `url(${arenaFinal}) center/cover` },
 ];
+
+/** A cena do PESADELO (`NightmareBattle`) — a Forja das Almas, como o canvas
+ *  Jogos desenhou (`PesadeloIntro`/`PesadeloFim`: `dungeon-7`). Fixa, não
+ *  sorteada: o pesadelo é uma luta só, de manhã, e o vidro do diálogo é o
+ *  mesmo todas as noites. */
+export const NIGHTMARE_SCENE: DungeonScene = SPIRIT_BG_SCENES[6];
+/** A cena da ARENA (`ArenaGame`) — o Abismo Violeta (`dungeon-4`, canvas `Arena`). */
+export const ARENA_SCENE: DungeonScene = SPIRIT_BG_SCENES[3];
+/** A cena do DINO — o corredor em ruínas (`minigame-dino`), atrás do parallax. */
+export const DINO_SCENE: DungeonScene = SPIRIT_BG_SCENES[10];
 
 const SHOP_BG_ACCENTS: Record<string, string> = {
   'bg-forest': '#4ade80',

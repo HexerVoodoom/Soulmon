@@ -263,31 +263,32 @@ describe('a tela não inventa número de balanceamento', () => {
 });
 
 describe('🔴 a Arena TOMA a tela, como as irmãs', () => {
-  it('a raiz carrega `sm-px-arcade-root` — sem ela o jogo nasce fora da dobra', () => {
+  it('a raiz é o `GameRoot` do kit (`data-game-root`) — sem ele o jogo nasce fora da dobra', () => {
     /* Medido no navegador em 320×640: a primeira versão desta tela era inline,
        montava em `top: 705` (dobra 640) e quem tocasse no cartão via a lista de
        cartões e NADA MAIS — o jogo existia 700px abaixo, sem nada rolar até
-       ele. Masmorra, Dino e Pedra-Papel-Tesoura já usavam a classe; só a Arena
+       ele. Masmorra, Dino e Pedra-Papel-Tesoura já tomavam a tela; só a Arena
        não, porque eu escrevi o contêiner do zero em vez de olhar as irmãs.
 
-       A classe é `position: fixed; inset: 0` mais o respiro da barra de baixo —
-       está em `src/index.css`. `sm-px-dark-ctx` vem no par pelo motivo escrito
-       no `DungeonGame`: peça escura nos dois temas declara o contexto, senão os
-       tokens de estado leem o tema da PÁGINA e o texto some no tema claro. */
+       Desde o canvas Jogos (DECISÕES §25) a raiz é o `GameRoot` de
+       `games/GameKit.tsx`: `position: fixed; inset: 0` mais o respiro da barra
+       de baixo, num lugar só, marcado por `data-game-root`. */
     const { container } = renderWithCss(
       <ArenaGame evolutionStage="rookie" language="pt-BR" onExit={() => {}} />,
     );
     const raiz = container.firstElementChild as HTMLElement;
-    expect(raiz.className).toContain('sm-px-arcade-root');
-    expect(raiz.className).toContain('sm-px-dark-ctx');
+    expect(raiz.hasAttribute('data-game-root')).toBe(true);
+    expect(getComputedStyle(raiz).position).toBe('fixed');
   });
 
-  it('e a MESMA classe é a que as irmãs usam — não uma cópia parecida', () => {
-    // Se alguém criar `sm-px-arena-root` com o mesmo conteúdo, o footgun 9
-    // volta: duas classes para a mesma decisão, e uma delas some no próximo
+  it('e a MESMA peça é a que as irmãs usam — não uma cópia parecida', () => {
+    // Se alguém criar um contêiner próprio com o mesmo conteúdo, o footgun 9
+    // volta: duas raízes para a mesma decisão, e uma delas some no próximo
     // ajuste do respiro da barra de baixo.
     const dungeon = readFileSync(resolve(__dirname, 'DungeonGame.tsx'), 'utf8');
-    expect(dungeon).toContain('sm-px-arcade-root');
+    expect(dungeon).toContain('<GameRoot');
+    const arena = readFileSync(resolve(__dirname, 'ArenaGame.tsx'), 'utf8');
+    expect(arena).toContain('<GameRoot');
   });
 });
 
@@ -307,7 +308,11 @@ describe('estados que não são a luta', () => {
     vi.mocked(arena.loadBestiaryPool).mockRejectedValueOnce(new Error('rede'));
     const onExit = vi.fn();
     renderWithCss(<ArenaGame evolutionStage="rookie" language="pt-BR" onExit={onExit} />);
-    fireEvent.click(await screen.findByRole('button', { name: /Voltar/i }));
+    // Espera o ESTADO DE ERRO: a tela de carregamento também oferece "Voltar"
+    // (canvas Jogos: "Go back" no loading), e clicar nele no instante em que o
+    // pool rejeita acerta um nó já desmontado.
+    await screen.findByText(/Não consegui carregar os desafiantes/i);
+    fireEvent.click(screen.getByRole('button', { name: /Voltar/i }));
     expect(onExit).toHaveBeenCalled();
   });
 

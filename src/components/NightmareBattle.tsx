@@ -55,9 +55,11 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
-import { PixelButton } from './pixel/PixelKit';
-import { useDialogA11y } from '../hooks/useDialogA11y';
-import { getSpriteForStage } from '../utils/sprites';
+import { RitualDialog } from './ritual/RitualKit';
+import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
+import { GameVisor, VisorSprite, VisorFx, HpBars, FxPopup, DIALOG_VISOR_W, phaseTitle } from './games/GameKit';
+import { NIGHTMARE_SCENE } from '../utils/dungeonScenes';
+import { getSpriteForStage, DUNGEON_SPIRIT_SPRITE } from '../utils/sprites';
 import { playerStatsFor } from '../utils/dungeon';
 import { TimingBar } from './pixel/TimingBar';
 import { playFeed } from '../utils/sounds';
@@ -70,8 +72,6 @@ import {
 import type { DungeonEnemy } from '../utils/dungeon';
 import type { DreamRarity } from '../utils/restWindow';
 import type { Language } from '../utils/i18n';
-import { Icon } from './ui/Icon';
-import { FX_ART } from '../utils/fxArt';
 
 export interface NightmareBattleProps {
   open: boolean;
@@ -115,26 +115,8 @@ function prefersReducedMotion(): boolean {
 }
 
 type Phase = 'intro' | 'attack' | 'defend' | 'result' | 'won' | 'lost';
-interface Popup { icon: string; title: string; detail: string; color: string }
+interface Popup { icon: string; title: string; detail: string }
 
-
-function hpBar(cur: number, max: number, color: string, label: string) {
-  const pct = max > 0 ? Math.min(1, Math.max(0, cur / max)) : 0;
-  return (
-    <div
-      role="progressbar"
-      aria-label={label}
-      aria-valuenow={Math.round(pct * 100)}
-      aria-valuemin={0}
-      aria-valuemax={100}
-      style={{ width: 104, height: 10, background: '#1c2636', border: '1px solid color-mix(in srgb, var(--sm-px-copper) 55%, transparent)', overflow: 'hidden' }}
-    >
-      <div style={{ width: `${pct * 100}%`, height: '100%', background: color, transition: 'width 0.3s' }} />
-    </div>
-  );
-}
-
-const sceneLabel: CSSProperties = { textShadow: '0 1px 3px rgba(0,0,0,0.9)' };
 
 export function NightmareBattle({
   open, wave, rarity, petStage, demoCharacterId, language, onWin, onLose, onClose,
@@ -163,11 +145,8 @@ export function NightmareBattle({
   const [relaxedTiming] = useState(prefersReducedMotion);
   const defendTime = relaxedTiming ? 0 : DEFEND_TIME;
 
-  /* Trap + Escape + devolução de foco. O handler de Escape daqui existia, mas
-     nada recebia foco na abertura: o `keydown` nascia no `<body>`, fora da
-     árvore do diálogo, e nunca chegava na div do véu. Escape morto desde o
-     primeiro frame. */
-  const dialogRef = useDialogA11y<HTMLDivElement>(open, onClose);
+  /* Trap + Escape + devolução de foco vêm do `RitualDialog` (SIS-06, canvas
+     Rituais): o × 44 pelado é o primeiro focável, Escape fecha. */
 
   const [idx, setIdx] = useState(0);
   const [enemyHp, setEnemyHp] = useState(0);
@@ -270,7 +249,7 @@ export function NightmareBattle({
       : acc >= 0.6 ? (isPt ? 'Bom golpe!' : 'Good hit!')
       : (isPt ? 'Raspão...' : 'Graze...');
     setPopup({
-      icon: '✨', title: head, color: '#4ade80',
+      icon: '✨', title: head,
       detail: isPt ? `${dmg} de dano em ${enemy.name}` : `${dmg} damage to ${enemy.name}`,
     });
     setPhase('result');
@@ -299,7 +278,7 @@ export function NightmareBattle({
       setEnemyHp(next);
       flash('enemy');
       setPopup({
-        icon: '🛡️', title: isPt ? 'DESVIO PERFEITO!' : 'PERFECT DODGE!', color: '#60a5fa',
+        icon: '🛡️', title: isPt ? 'DESVIO PERFEITO!' : 'PERFECT DODGE!',
         detail: isPt ? `Contra-ataque: ${counter} de dano!` : `Counter-attack: ${counter} damage!`,
       });
       setPhase('result');
@@ -324,7 +303,6 @@ export function NightmareBattle({
         : eff >= 0.6 ? (isPt ? 'Desvio parcial!' : 'Partial dodge!')
         : (isPt ? 'Levou de cheio!' : 'Direct hit!'),
       detail: isPt ? `Seu Soulmon segurou ${taken}` : `Your Soulmon took ${taken}`,
-      color: '#f0abfc',
     });
     setPhase('result');
 
@@ -337,238 +315,160 @@ export function NightmareBattle({
   defendRef.current = handleDefend;
 
   const inBattle = !!enemy && ['attack', 'defend', 'result'].includes(phase);
+  const goodMorning = isPt ? 'Bom dia!' : 'Good morning!';
+  /* O VISOR do diálogo (288 = 144×2): o pet a 128 embaixo à esquerda; na caixa
+     do outro (alto à direita) o espírito 128² a 1× na proposta, o pesadelo da
+     vez na luta, a faísca na vitória — nunca sobre o pet (X1); na derrota
+     nada: o pet inteiro, porque nada caiu (JOGO-25). */
+  const otherBox: CSSProperties = { right: 8, top: 12 };
+  const visor = (height: 80 | 72, other: React.ReactNode) => (
+    <GameVisor width={DIALOG_VISOR_W} height={height} scene={NIGHTMARE_SCENE.bg}>
+      {other}
+      <VisorSprite src={petSprite} alt="" style={{ left: 8, bottom: 8 }} data-visor-pet />
+      {hitFx === 'player' && <VisorFx icon="💥" style={{ left: 8, bottom: 8 }} data-visor-fx="hit" />}
+    </GameVisor>
+  );
+  const btn = (variant: 'primary' | 'outline'): CSSProperties => ({ ...sm2Button(variant), width: '100%', maxWidth: 260, alignSelf: 'center' });
 
   return (
-    <div
-      style={{
-        position: 'fixed', inset: 0, zIndex: 210, background: 'rgba(6, 12, 26, 0.6)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
-      }}
+    <RitualDialog
+      label={title}
+      onClose={onClose}
+      zIndex={210}
+      maxWidth={340}
+      closeLabel={isPt ? 'Fechar' : 'Close'}
+      style={{ alignItems: 'center', textAlign: 'center', gap: 10, paddingTop: 44 }}
     >
-      <div
-        ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        className="sm-px-card sm-px-dark-ctx"
-        style={{
-          width: '100%', maxWidth: 360, position: 'relative',
-          background: '#0c1120', color: '#e8eefc', padding: '22px 16px 16px',
-        }}
-      >
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label={isPt ? 'Fechar' : 'Close'}
-          /* Alvo de 44px com o ícone PELADO dentro — ícone nunca dentro de box. */
-          style={{
-            position: 'absolute', top: 0, right: 0, width: 44, height: 44,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'none', border: 'none', cursor: 'pointer',
-          }}
-        >
-          {/* CHROME: o fechar é interface, não conteúdo da cena. Tinta fixa
-              porque o cartão tem contexto escuro próprio (#0c1120) — 8,9:1. */}
-          <Icon name="close" size={24} style={{ color: '#9fb2d8' }} />
-        </button>
+      {/* ── Convite ─────────────────────────────────────────────────── */}
+      {phase === 'intro' && (
+        <>
+          {visor(80, <VisorSprite src={DUNGEON_SPIRIT_SPRITE} alt="" idle={false} style={otherBox} data-visor-enemy />)}
+          <p style={sm2Hint}>{isPt ? 'De manhã, seu Soulmon conta:' : 'In the morning, your Soulmon says:'}</p>
+          <h2 style={{ margin: 0, fontFamily: 'var(--sm2-font-display)', fontWeight: 600, fontSize: 'var(--sm2-text-lg)', lineHeight: 'var(--sm2-leading-title)', color: 'var(--sm2-ink)' }}>{title}</h2>
+          <p style={{ ...sm2Text, margin: 0 }}>{flavor}</p>
 
-        {/* ── Convite ─────────────────────────────────────────────────── */}
-        {phase === 'intro' && (
-          <div style={{ textAlign: 'center' }}>
-            <p style={{ fontSize: '0.75rem', color: '#9fb2d8', margin: '0 0 8px' }}>
-              {isPt ? 'De manhã, seu Soulmon conta:' : 'In the morning, your Soulmon says:'}
-            </p>
-            <div aria-hidden="true" style={{ fontSize: 46, lineHeight: 1.1, marginBottom: 6 }}>🌙</div>
-            <p className="sm-display" style={{ fontSize: '1rem', margin: '0 0 6px' }}>{title}</p>
-            <p style={{ fontSize: '0.82rem', color: '#c6d4f2', lineHeight: 1.5, margin: '0 0 10px' }}>{flavor}</p>
+          {wave.length > 0 ? (
+            <>
+              <p style={{ ...sm2Text, margin: 0 }}>
+                {isPt
+                  ? `Uma luta curtinha (${wave.length}). Vencer rende ${preview.bits} Bits, +${preview.energy} de energia${preview.hearts > 0 ? ` e +${preview.hearts} de coração` : ''}. Perder não custa nada.`
+                  : `A very short fight (${wave.length}). Winning gives ${preview.bits} Bits, +${preview.energy} energy${preview.hearts > 0 ? ` and +${preview.hearts} heart` : ''}. Losing costs nothing.`}
+              </p>
+              <button type="button" onClick={start} style={btn('primary')}>
+                {isPt ? 'Ficar na frente dele' : 'Stand in its way'}
+              </button>
+              <button type="button" onClick={onClose} style={btn('outline')}>
+                {isPt ? 'Agora não' : 'Not now'}
+              </button>
+            </>
+          ) : (
+            <>
+              {/* Estado VAZIO: noite sem registro. Nada foi perdido. */}
+              <p style={{ ...sm2Text, margin: 0 }}>
+                {isPt
+                  ? 'A noite passou tranquila — nada apareceu para enfrentar. Está tudo certo.'
+                  : 'The night went by quietly — nothing showed up to face. All is well.'}
+              </p>
+              <button type="button" onClick={onClose} style={btn('primary')}>{goodMorning}</button>
+            </>
+          )}
+        </>
+      )}
 
-            {wave.length > 0 ? (
+      {/* ── A luta: o visor persiste (R6), as barras fora dele ───────── */}
+      {inBattle && enemy && (
+        <>
+          {visor(80, (
+            <>
+              <VisorSprite src={enemy.sprite} alt={enemy.name} flip style={otherBox} data-visor-enemy />
+              {hitFx === 'enemy' && <VisorFx icon="💥" style={otherBox} data-visor-fx="hit" />}
+            </>
+          ))}
+          <div style={{ alignSelf: 'stretch' }}>
+            <HpBars
+              bars={[
+                { label: isPt ? 'Vida do pesadelo' : 'Nightmare health', cur: enemyHp, max: enemy.hp, tone: 'gold' },
+                { label: isPt ? 'Fôlego do seu Soulmon' : "Your Soulmon's stamina", cur: playerHp, max: stats.hp, tone: 'cyan' },
+              ]}
+            />
+          </div>
+          {/* A instrução da barra (J3) — não existia no código. */}
+          <p style={sm2Hint}>{isPt ? 'Toque quando o marcador cruzar o meio.' : 'Tap when the marker crosses the middle.'}</p>
+
+          <div aria-live="polite" style={{ alignSelf: 'stretch', display: 'flex', flexDirection: 'column', gap: 8, minHeight: 92 }}>
+            {phase === 'attack' && (
               <>
-                <p style={{ fontSize: '0.76rem', color: '#9fb2d8', lineHeight: 1.5, margin: '0 0 12px' }}>
-                  {isPt
-                    ? `Uma luta curtinha (${wave.length}). Vencer rende ${preview.bits} Bits, +${preview.energy} de energia${preview.hearts > 0 ? ` e +${preview.hearts} de coração` : ''}. Perder não custa nada.`
-                    : `A very short fight (${wave.length}). Winning gives ${preview.bits} Bits, +${preview.energy} energy${preview.hearts > 0 ? ` and +${preview.hearts} heart` : ''}. Losing costs nothing.`}
-                </p>
-                <PixelButton size="lg" variant="primary" onClick={start}>
-                  {isPt ? 'Ficar na frente dele' : 'Stand in its way'}
-                </PixelButton>
-                <span style={{ display: 'block', marginTop: 8 }}>
-                  <PixelButton size="lg" onClick={onClose}>
-                    {isPt ? 'Agora não' : 'Not now'}
-                  </PixelButton>
-                </span>
-              </>
-            ) : (
-              <>
-                {/* Estado VAZIO: noite sem registro. Nada foi perdido. */}
-                <p style={{ fontSize: '0.78rem', color: '#9fb2d8', lineHeight: 1.5, margin: '0 0 12px' }}>
-                  {isPt
-                    ? 'A noite passou tranquila — nada apareceu para enfrentar. Está tudo certo.'
-                    : 'The night went by quietly — nothing showed up to face. All is well.'}
-                </p>
-                <PixelButton size="lg" variant="primary" onClick={onClose}>
-                  {isPt ? 'Bom dia!' : 'Good morning!'}
-                </PixelButton>
+                <p style={phaseTitle}>{isPt ? 'Sua vez — pare no centro!' : 'Your turn — stop in the center!'}</p>
+                <TimingBar
+                  key={`atk-${idx}-${enemyHp}-${playerHp}`}
+                  speed={enemy.speed}
+                  label={isPt ? 'Avançar!' : 'Push!'}
+                  onStop={handleAttack}
+                />
               </>
             )}
-          </div>
-        )}
-
-        {/* ── Campo de batalha ────────────────────────────────────────── */}
-        {inBattle && enemy && (
-          <>
-            <div
-              style={{
-                position: 'relative', height: 200, marginBottom: 12, overflow: 'hidden',
-                background: 'linear-gradient(180deg, #131b33 0%, #1b2444 60%, #223056 100%)',
-                border: '1px solid color-mix(in srgb, var(--sm-px-cyan) 40%, transparent)',
-              }}
-            >
-              <div style={{ position: 'absolute', top: 10, right: 12, textAlign: 'right' }}>
-                <p style={{ ...sceneLabel, fontSize: '0.76rem', fontWeight: 700, margin: '0 0 4px' }}>{enemy.name}</p>
-                {hpBar(enemyHp, enemy.hp, '#c084fc', isPt ? 'Vida do pesadelo' : 'Nightmare health')}
-              </div>
-              {/* O idle era `style={{animation}}` inline nos DOIS sprites, e
-                  animação inline só perde para `animation: none !important` —
-                  `prefers-reduced-motion` não alcançava nenhum dos dois. Virou
-                  classe, com a duração por custom property (que é onde os dois
-                  diferem). Ver o bloco de movimento reduzido no index.css. */}
-              <img
-                src={enemy.sprite}
-                alt={enemy.name}
-                className="sm-battle-idle"
-                style={{
-                  position: 'absolute', top: '20%', right: '8%', width: 84, height: 84,
-                  objectFit: 'contain', imageRendering: 'pixelated',
-                  filter: hitFx === 'enemy' ? 'brightness(3) drop-shadow(0 0 10px #c084fc)' : 'drop-shadow(0 0 8px rgba(192,132,252,0.35))',
-                  transition: 'filter 0.15s',
-                  ['--sm-idle-dur' as string]: '1.6s',
-                } as CSSProperties}
-              />
-              <div style={{ position: 'absolute', bottom: 96, left: 12 }}>
-                <p style={{ ...sceneLabel, fontSize: '0.76rem', fontWeight: 700, margin: '0 0 4px' }}>
-                  {isPt ? 'Seu Soulmon' : 'Your Soulmon'}
+            {phase === 'defend' && (
+              <>
+                {/* Sem limite de tempo, o relógio não aparece: um contador
+                    parado seria pressão sem função. O relógio é leitura, na
+                    tinta do texto (D-J8). */}
+                <p style={phaseTitle}>
+                  {isPt ? `${enemy.name} vindo — desvie!` : `${enemy.name} incoming — dodge!`}
+                  {defendTime > 0
+                    ? <> <span className="sm2-num">{defendLeft.toFixed(1)}s</span></>
+                    : (isPt ? ' (sem pressa)' : ' (no time limit)')}
                 </p>
-                {hpBar(playerHp, stats.hp, '#4ade80', isPt ? 'Fôlego do seu Soulmon' : "Your Soulmon's stamina")}
-              </div>
-              <img
-                src={petSprite}
-                alt=""
-                className="sm-battle-idle"
-                style={{
-                  position: 'absolute', bottom: '6%', left: '8%', width: 76, height: 76,
-                  objectFit: 'contain', imageRendering: 'pixelated',
-                  filter: hitFx === 'player' ? 'brightness(3) drop-shadow(0 0 10px #f0abfc)' : 'drop-shadow(0 0 8px rgba(74,222,128,0.35))',
-                  transition: 'filter 0.15s',
-                  ['--sm-idle-dur' as string]: '1.3s',
-                } as CSSProperties}
-              />
-              {popup && (
-                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(6,9,15,0.45)' }}>
-                  <div className="sm-px-card" style={{ textAlign: 'center', backgroundColor: '#0e1522', borderColor: popup.color, ['--sm-cham-line' as string]: popup.color, padding: '12px 20px' } as CSSProperties}>
-                    <div aria-hidden="true" style={{ fontSize: '1.5rem', lineHeight: 1.2 }}>{FX_ART[popup.icon]
-                      ? <img src={FX_ART[popup.icon]} alt="" width={40} height={40}
-                             style={{ objectFit: 'contain', imageRendering: 'pixelated', display: 'inline-block' }} />
-                      : popup.icon}</div>
-                    <p className="sm-px-arcade-value" style={{ fontSize: '0.94rem', color: popup.color, margin: '4px 0 2px' }}>{popup.title}</p>
-                    <p style={{ fontSize: '0.8rem', color: '#c6d4f2', margin: 0 }}>{popup.detail}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div aria-live="polite" style={{ minHeight: 92 }}>
-              {phase === 'attack' && (
-                <>
-                  <p style={{ textAlign: 'center', fontSize: '0.78rem', color: '#9fb2d8', margin: '0 0 6px' }}>
-                    {isPt ? 'Sua vez — pare no centro!' : 'Your turn — stop in the center!'}
-                  </p>
-                  <TimingBar
-                    key={`atk-${idx}-${enemyHp}-${playerHp}`}
-                    speed={enemy.speed}
-                    color="#4ade80"
-                    label={isPt ? 'Avançar!' : 'Push!'}
-                    onStop={handleAttack}
-                  />
-                </>
-              )}
-              {phase === 'defend' && (
-                <>
-                  {/* Sem limite de tempo, o relógio não aparece: um contador
-                      parado seria pressão sem função. */}
-                  <p style={{ textAlign: 'center', fontSize: '0.8rem', fontWeight: 800, color: defendTime > 0 && defendLeft <= 1 ? '#f0abfc' : '#facc15', margin: '0 0 6px' }}>
-                    {isPt ? `${enemy.name} vindo — desvie!` : `${enemy.name} incoming — dodge!`}
-                    {defendTime > 0
-                      ? ` ${defendLeft.toFixed(1)}s`
-                      : (isPt ? ' (sem pressa)' : ' (no time limit)')}
-                  </p>
-                  <TimingBar
-                    key={`def-${idx}-${enemyHp}-${playerHp}`}
-                    speed={enemy.speed * 1.2}
-                    color="#60a5fa"
-                    label={isPt ? 'Desviar!' : 'Dodge!'}
-                    onStop={(a) => handleDefend(a)}
-                  />
-                </>
-              )}
-              {phase === 'result' && (
-                <p style={{ textAlign: 'center', fontSize: '0.8rem', color: '#5d729c', paddingTop: 22 }}>…</p>
-              )}
-            </div>
-            <DefendClock
-              running={phase === 'defend' && defendTime > 0}
-              left={defendLeft}
-              setLeft={setDefendLeft}
-              onTimeout={() => defendRef.current(0, true)}
-            />
-          </>
-        )}
-
-        {/* ── Vitória ─────────────────────────────────────────────────── */}
-        {phase === 'won' && rewards && (
-          <div style={{ textAlign: 'center' }} aria-live="polite">
-            <div aria-hidden="true" style={{ fontSize: 46, lineHeight: 1.1, marginBottom: 6 }}>🌤️</div>
-            <p className="sm-display" style={{ fontSize: '1rem', margin: '0 0 6px', color: '#4ade80' }}>
-              {isPt ? 'Seu Soulmon cuidou da sua noite!' : 'Your Soulmon looked after your night!'}
-            </p>
-            <p style={{ fontSize: '0.8rem', color: '#c6d4f2', lineHeight: 1.5, margin: '0 0 10px' }}>
-              {isPt
-                ? `${title} foi embora sem fazer barulho.`
-                : `${title} drifted away without a sound.`}
-            </p>
-            <p style={{ fontSize: '0.84rem', color: '#facc15', margin: '0 0 12px' }}>
-              {`+${rewards.bits} Bits`}
-              {rewards.energy > 0 ? ` · +${rewards.energy} ${isPt ? 'energia' : 'energy'}` : ''}
-              {rewards.hearts > 0 ? ` · +${rewards.hearts} ${isPt ? 'coração' : 'heart'}` : ''}
-            </p>
-            <PixelButton size="lg" variant="primary" onClick={onClose}>
-              {isPt ? 'Bom dia!' : 'Good morning!'}
-            </PixelButton>
+                <TimingBar
+                  key={`def-${idx}-${enemyHp}-${playerHp}`}
+                  speed={enemy.speed * 1.2}
+                  label={isPt ? 'Desviar!' : 'Dodge!'}
+                  onStop={(a) => handleDefend(a)}
+                />
+              </>
+            )}
+            {phase === 'result' && popup && (
+              <FxPopup icon={popup.icon} title={popup.title} detail={popup.detail} />
+            )}
           </div>
-        )}
+          <DefendClock
+            running={phase === 'defend' && defendTime > 0}
+            left={defendLeft}
+            setLeft={setDefendLeft}
+            onTimeout={() => defendRef.current(0, true)}
+          />
+        </>
+      )}
 
-        {/* ── Derrota: NÃO custa nada, e a tela diz isso ──────────────── */}
-        {phase === 'lost' && (
-          <div style={{ textAlign: 'center' }} aria-live="polite">
-            <div aria-hidden="true" style={{ fontSize: 46, lineHeight: 1.1, marginBottom: 6 }}>🌅</div>
-            <p className="sm-display" style={{ fontSize: '1rem', margin: '0 0 6px' }}>
-              {isPt ? 'O sonho passou — e você acorda bem.' : 'The dream passed — and you wake up fine.'}
-            </p>
-            <p style={{ fontSize: '0.82rem', color: '#c6d4f2', lineHeight: 1.5, margin: '0 0 6px' }}>
-              {isPt
-                ? 'Seu Soulmon ficou na frente até o fim e voltou pro seu colo. Nada foi perdido: nenhum coração, nenhum Bit, nenhum progresso.'
-                : 'Your Soulmon stood in the way until the end and came right back to you. Nothing was lost: no hearts, no Bits, no progress.'}
-            </p>
-            <p style={{ fontSize: '0.76rem', color: '#9fb2d8', lineHeight: 1.45, margin: '0 0 12px' }}>
-              {isPt ? 'Amanhã tem outra noite. Sem pressa.' : 'There is another night tomorrow. No rush.'}
-            </p>
-            <PixelButton size="lg" variant="primary" onClick={onClose}>
-              {isPt ? 'Bom dia!' : 'Good morning!'}
-            </PixelButton>
-          </div>
-        )}
-      </div>
-    </div>
+      {/* ── Vitória: a faísca no lugar do pesadelo, nunca sobre o pet ── */}
+      {phase === 'won' && rewards && (
+        <div aria-live="polite" style={{ display: 'contents' }}>
+          {visor(72, <VisorFx icon="✨" style={{ right: 8, top: 8 }} data-visor-fx="sparkle" />)}
+          <p style={phaseTitle}>{isPt ? 'Seu Soulmon cuidou da sua noite!' : 'Your Soulmon looked after your night!'}</p>
+          <p style={sm2Hint}>{isPt ? `${title} foi embora sem fazer barulho.` : `${title} drifted away without a sound.`}</p>
+          <p className="sm2-num" style={{ ...sm2Text, margin: 0 }}>
+            {`+${rewards.bits} Bits`}
+            {rewards.energy > 0 ? ` · +${rewards.energy} ${isPt ? 'energia' : 'energy'}` : ''}
+            {rewards.hearts > 0 ? ` · +${rewards.hearts} ${isPt ? 'coração' : 'heart'}` : ''}
+          </p>
+          <button type="button" onClick={onClose} style={btn('primary')}>{goodMorning}</button>
+        </div>
+      )}
+
+      {/* ── Derrota: NÃO custa nada, e a tela diz isso — o pet inteiro ── */}
+      {phase === 'lost' && (
+        <div aria-live="polite" style={{ display: 'contents' }}>
+          {visor(72, null)}
+          <p style={phaseTitle}>{isPt ? 'O sonho passou — e você acorda bem.' : 'The dream passed — and you wake up fine.'}</p>
+          <p style={{ ...sm2Text, margin: 0 }}>
+            {isPt
+              ? 'Seu Soulmon ficou na frente até o fim e voltou pro seu colo. Nada foi perdido: nenhum coração, nenhum Bit, nenhum progresso.'
+              : 'Your Soulmon stood in the way until the end and came right back to you. Nothing was lost: no hearts, no Bits, no progress.'}
+          </p>
+          <p style={sm2Hint}>{isPt ? 'Amanhã tem outra noite. Sem pressa.' : 'There is another night tomorrow. No rush.'}</p>
+          <button type="button" onClick={onClose} style={btn('primary')}>{goodMorning}</button>
+        </div>
+      )}
+    </RitualDialog>
   );
 }
 

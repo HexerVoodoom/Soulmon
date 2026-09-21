@@ -314,8 +314,8 @@ const ALLOWLIST: Divida[] = [
     motivo: 'Ilustração de estado: o herói do relatório diário, dentro de uma caixa de 48×48 declarada no JSX (precedente da §6.2). Ver ENTRADA 1.',
   },
   {
-    arquivo: 'src/components/DungeonGame.tsx', size: 48, quantos: 1,
-    motivo: 'Ilustração de estado: o glifo da tela de intro da masmorra, que é a tela inteira. Ver ENTRADA 1.',
+    arquivo: 'src/components/ArenaGame.tsx', size: 48, quantos: 1,
+    motivo: 'Ilustração de estado de ERRO: `cloud_off` 48 `muted` no card `role=status` "não consegui carregar os desafiantes" (canvas Jogos D-J11 — é rede, não medalha). Ver ENTRADA 1.',
   },
   {
     arquivo: 'src/components/EvolutionPath.tsx', size: 48, quantos: 1,

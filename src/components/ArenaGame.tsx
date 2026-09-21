@@ -36,11 +36,22 @@
  * entrada paga — a mesma regra da Masmorra (`DungeonGame`). Perder custa a run
  * e mais nada. Isto é decisão de produto do `CLAUDE.md` ("encoraja — NUNCA um
  * cobrador"), não detalhe de implementação.
+ *
+ * ## A superfície (canvas Jogos, DECISÕES §25)
+ *
+ * A luta é o conteúdo de um VISOR 348×160 (`games/GameKit.tsx`): o pet a 128,
+ * os inimigos da rodada a 64 espelhados, o caído vira `fx-defeat` na própria
+ * caixa; as barras `.meter` FORA do vidro ("You" ciano, o alvo `gold-fill`);
+ * a ficha em `.chip.tag` (D-J11); o erro `sem-motor` é `cloud_off` num
+ * `role=status` (é rede, não medalha); "Special ready" leva `auto_awesome`
+ * 20 FILL no lugar do ✨ (D-J9/X3).
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { PixelButton } from './pixel/PixelKit';
 import { TimingBar } from './pixel/TimingBar';
 import { Icon } from './ui/Icon';
+import { sm2Button, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
+import { GameRoot, GameHeader, GameVisor, VisorSprite, VisorFx, HpBars, FxPopup, StatTag, phaseTitle, phaseLine } from './games/GameKit';
+import { ARENA_SCENE } from '../utils/dungeonScenes';
 import { getDungeonEnemySprite, getSpriteForStage } from '../utils/sprites';
 import {
   ARENA_ROUNDS,
@@ -78,7 +89,7 @@ type Fase =
   | 'carregando' | 'sem-motor' | 'intro'
   | 'atacar' | 'defender' | 'rodada-limpa' | 'venceu' | 'perdeu';
 
-interface Popup { icon: string; title: string; detail: string; color: string }
+interface Popup { icon: string; title: string; detail: string }
 
 export interface ArenaGameProps {
   evolutionStage: string;
@@ -270,7 +281,6 @@ export function ArenaGame({
         icon: '✨',
         title: (isPt ? especial?.nome.pt : especial?.nome.en) ?? (isPt ? 'Especial!' : 'Special!'),
         detail: isPt ? 'A habilidade especial disparou' : 'Special skill unleashed',
-        color: '#facc15',
       });
     } else {
       const t = vivosDe()[0];
@@ -284,7 +294,7 @@ export function ArenaGame({
       if (acc >= PERFECT_ACC) {
         mostrarPopup({
           icon: '💥', title: isPt ? 'Crítico!' : 'Critical!',
-          detail: isPt ? 'Bem no centro' : 'Dead center', color: '#4ade80',
+          detail: isPt ? 'Bem no centro' : 'Dead center',
         }, 800);
       }
     }
@@ -302,8 +312,8 @@ export function ArenaGame({
     let hpDepois = hp;
     if (defAcc >= PERFECT_ACC) {
       mostrarPopup({
-        icon: '🌀', title: isPt ? 'Esquiva!' : 'Dodge!',
-        detail: isPt ? 'Sem dano nenhum' : 'No damage at all', color: '#60a5fa',
+        icon: '🛡️', title: isPt ? 'Esquiva!' : 'Dodge!',
+        detail: isPt ? 'Sem dano nenhum' : 'No damage at all',
       }, 800);
     } else {
       const dano = enemyHitDamage(e.atk, defAcc, e.elements[0], atributos, enfraquecidos > 0);
@@ -338,198 +348,197 @@ export function ArenaGame({
 
   const emLuta = fase === 'atacar' || fase === 'defender';
   const nomeDe = (e: ArenaEnemy) => (isPt ? e.namePt : e.nameEn);
+  const sair = isPt ? 'Sair' : 'Leave';
+  const especialPronto = carga >= SPECIAL_CHARGE_TURNS;
+  const petSprite = getSpriteForStage(evolutionStage, demoCharacterId);
+
+  /* A luta no VIDRO (D-J3/D-J4): o pet a 128 embaixo à esquerda; os inimigos
+     da rodada (1–3) a 64 (0,25×) empilhados à direita, espelhados de frente
+     para o pet; o que caiu vira `fx-defeat` a 64 na própria caixa — a derrota
+     é do outro, e é pixel no vidro. O golpe é `fx-hit` sobre quem apanhou. */
+  const caixaInimigo = (i: number, n: number): React.CSSProperties => {
+    const passo = n <= 1 ? 0 : n === 2 ? 72 : 48;
+    const topo = n <= 1 ? 48 : n === 2 ? 12 : 8;
+    return { right: 16, top: topo + i * passo };
+  };
 
   return (
-    /* ⚠️ `sm-px-arcade-root` NÃO é decoração: é `position: fixed; inset: 0` mais
-       o respiro da barra de baixo, e é o que faz um minijogo TOMAR a tela. A
-       primeira versão desta tela era inline, e o resultado (medido em 320×640)
-       foi a Arena montar em `top: 705` — abaixo da dobra de 640. Quem tocasse
-       no cartão via a lista de cartões e nada mais: o jogo existia 700px
-       abaixo, sem nada rolar até ele. Masmorra, Dino e Pedra-Papel-Tesoura já
-       usavam esta classe; só a Arena não, porque eu escrevi o contêiner do
-       zero em vez de olhar as irmãs.
-
-       `sm-px-dark-ctx` vem no mesmo par e pelo mesmo motivo que está escrito no
-       `DungeonGame`: esta é peça escura nos dois temas, então ela declara o
-       contexto — senão os tokens de estado leem o tema da PÁGINA e o texto
-       some no tema claro. */
-    <div
-      className="sm-px-dark-ctx sm-px-arcade-root"
-      style={{ background: '#07090f', color: '#e8eefc', position: 'fixed' }}
-    >
-      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px' }}>
-        <span className="sm-px-arcade-label">
-          {isPt ? 'Arena' : 'Arena'}
-          {emLuta && ` · ${isPt ? 'Rodada' : 'Round'} ${rodada}/${ARENA_ROUNDS}`}
-        </span>
-        <PixelButton size="sm" variant="default" onClick={onExit}>
-          {isPt ? 'Sair' : 'Leave'}
-        </PixelButton>
-      </header>
-
-      {popup && (
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', zIndex: 5 }}>
-          <div className="sm-px-card" role="status" style={{ textAlign: 'center', backgroundColor: '#0e1522', borderColor: popup.color, ['--sm-cham-line' as string]: popup.color, padding: '16px 26px' }}>
-            <div style={{ fontSize: '1.7rem', lineHeight: 1.2 }} aria-hidden="true">{popup.icon}</div>
-            <p className="sm-px-arcade-value" style={{ fontSize: '1rem', color: popup.color, margin: '4px 0 2px' }}>{popup.title}</p>
-            <p style={{ fontSize: '0.82rem', color: '#c6d4f2' }}>{popup.detail}</p>
-          </div>
-        </div>
-      )}
+    <GameRoot>
+      <GameHeader
+        run={emLuta}
+        title={isPt ? 'Arena' : 'Arena'}
+        sub={emLuta ? `${isPt ? 'Rodada' : 'Round'} ${rodada}/${ARENA_ROUNDS}` : undefined}
+        closeLabel={sair}
+        onClose={onExit}
+      />
 
       {fase === 'carregando' && (
-        <p style={{ flex: 1, display: 'grid', placeItems: 'center', color: '#9fb2d8', fontSize: '0.85rem' }}>
-          {isPt ? 'Chamando os desafiantes…' : 'Calling the challengers…'}
-        </p>
+        <>
+          <GameVisor height={80} scene={ARENA_SCENE.bg}>
+            <VisorSprite src={petSprite} alt="" style={{ left: '50%', marginLeft: -64, bottom: 8 }} data-visor-pet />
+          </GameVisor>
+          <p style={{ ...phaseLine, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '16px 0' }}>
+            <Icon name="sync" size={24} tone="primary" className="animate-spin" />
+            {isPt ? 'Chamando os desafiantes…' : 'Calling the challengers…'}
+          </p>
+          <button type="button" onClick={onExit} style={{ ...sm2Button('outline'), width: '100%', maxWidth: 200, alignSelf: 'center' }}>
+            {isPt ? 'Voltar' : 'Go back'}
+          </button>
+        </>
       )}
 
       {/* ESTADO DE ERRO, e não tela branca. O pool do bestiário é um import
           dinâmico; falhar nele é plausível (rede, cache frio) e o jogador
-          precisa saber que não foi ele. */}
+          precisa saber que não foi ele — é rede, não medalha: `cloud_off` 48
+          `muted` num card `role=status` + "Go back" `outline` (D-J11). */}
       {fase === 'sem-motor' && (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24, textAlign: 'center' }}>
-          <Icon name="military_tech" size={32} />
-          <p style={{ fontSize: '0.85rem', color: '#c6d4f2', maxWidth: 320 }}>
+        <div
+          role="status"
+          style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 8,
+            padding: 12, backgroundColor: 'var(--sm2-surface)', border: '1px solid var(--sm2-line)',
+            borderRadius: 'var(--sm2-radius-md)', boxShadow: SM2_SHADOW_CARD,
+          }}
+        >
+          <Icon name="cloud_off" size={48} tone="muted" />
+          <p style={{ ...sm2Text, margin: 0 }}>
             {isPt
               ? 'Não consegui carregar os desafiantes agora. Isso costuma ser conexão — tente de novo daqui a pouco.'
               : "I could not load the challengers right now. This is usually the connection — try again in a bit."}
           </p>
-          <span style={{ width: '100%', maxWidth: 300 }}>
-            <PixelButton size="lg" variant="primary" onClick={onExit}>
-              {isPt ? 'Voltar' : 'Go back'}
-            </PixelButton>
-          </span>
+          <button type="button" onClick={onExit} style={{ ...sm2Button('outline'), width: '100%', maxWidth: 200 }}>
+            {isPt ? 'Voltar' : 'Go back'}
+          </button>
         </div>
       )}
 
       {fase === 'intro' && (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, padding: 24, textAlign: 'center' }}>
-          <Icon name="military_tech" size={32} />
-          <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', justifyContent: 'center' }}>
-            <span className="sm-px-arcade-label">
-              {isPt ? 'Vida' : 'HP'} <b className="sm-px-arcade-value" style={{ color: '#4ade80' }}>{stats.hp}</b>
-            </span>
-            <span className="sm-px-arcade-label">
-              {isPt ? 'Dano' : 'DMG'} <b className="sm-px-arcade-value" style={{ color: '#facc15' }}>{stats.dmg}</b>
-            </span>
-            <span className="sm-px-arcade-label">
-              {isPt ? 'Essência' : 'Essence'}{' '}
-              <b className="sm-px-arcade-value" style={{ color: 'var(--sm-px-cyan)' }}>
-                {elementLabel(atributos.principal, isPt)}
-              </b>
-            </span>
+        <>
+          <GameVisor height={80} scene={ARENA_SCENE.bg}>
+            <VisorSprite src={petSprite} alt="" style={{ left: '50%', marginLeft: -64, bottom: 8 }} data-visor-pet />
+          </GameVisor>
+          {/* A ficha em `.chip.tag` (D-J11): HP/DMG/Essence, valor em `ink`. */}
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <StatTag label={isPt ? 'Vida' : 'HP'} value={stats.hp} />
+            <StatTag label={isPt ? 'Dano' : 'DMG'} value={stats.dmg} />
+            <StatTag label={isPt ? 'Essência' : 'Essence'} value={elementLabel(atributos.principal, isPt)} />
           </div>
 
           {/* A ficha do jogador é o que torna a Arena DELE. Sem ela, o texto
               diz o porquê em vez de mostrar um par genérico sem explicação. */}
           {basica && especial ? (
-            <div className="sm-px-card" style={{ padding: '10px 14px', maxWidth: 340, textAlign: 'left' }}>
-              <p style={{ fontSize: '0.78rem', color: '#c6d4f2', margin: 0 }}>
-                <b style={{ color: '#4ade80' }}>{isPt ? basica.nome.pt : basica.nome.en}</b>
+            <>
+              <p style={phaseLine}>
+                <b style={{ color: 'var(--sm2-ink)', fontWeight: 500 }}>{isPt ? basica.nome.pt : basica.nome.en}</b>
                 {' · '}{isPt ? 'a cada turno' : 'every turn'}
               </p>
-              <p style={{ fontSize: '0.78rem', color: '#c6d4f2', margin: '6px 0 0' }}>
-                <b style={{ color: '#facc15' }}>{isPt ? especial.nome.pt : especial.nome.en}</b>
+              <p style={phaseLine}>
+                <b style={{ color: 'var(--sm2-ink)', fontWeight: 500 }}>{isPt ? especial.nome.pt : especial.nome.en}</b>
                 {' · '}{isPt
                   ? `carrega em ${SPECIAL_CHARGE_TURNS} turnos`
                   : `charges in ${SPECIAL_CHARGE_TURNS} turns`}
               </p>
-            </div>
+            </>
           ) : (
-            <p style={{ fontSize: '0.78rem', color: '#9fb2d8', maxWidth: 330 }}>
+            <p style={phaseLine}>
               {isPt
                 ? 'Sua ficha ainda não está neste aparelho, então você entra com um par genérico. Abra a página do seu Soulmon uma vez para lutar com as habilidades dele.'
                 : "Your sheet is not on this device yet, so you go in with a generic pair. Open your Soulmon's page once to fight with its own skills."}
             </p>
           )}
 
-          <p style={{ fontSize: '0.8rem', color: '#9fb2d8', maxWidth: 330 }}>
+          <p style={phaseLine}>
             {isPt
               ? `${ARENA_ROUNDS} rodadas seguidas, cada uma mais dura. Seu elemento decide quem você machuca mais e quem te machuca. Entre as rodadas você recupera um pouco. Perder custa a run — nunca os seus corações.`
               : `${ARENA_ROUNDS} rounds back to back, each harder. Your element decides who you hurt more and who hurts you. You recover a little between rounds. Losing costs you the run — never your hearts.`}
           </p>
-          <span style={{ width: '100%', maxWidth: 320 }}>
-            <PixelButton size="lg" variant="primary" onClick={comecar}>
-              {isPt ? 'Entrar na Arena' : 'Enter the Arena'}
-            </PixelButton>
-          </span>
-        </div>
+          <button type="button" onClick={comecar} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 320, alignSelf: 'center' }}>
+            {isPt ? 'Entrar na Arena' : 'Enter the Arena'}
+          </button>
+        </>
       )}
 
       {emLuta && (
         <>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', padding: '4px 12px' }}>
-            {inimigos.map((e, i) => (
-              <div
-                key={i}
-                style={{ opacity: e.hp > 0 ? 1 : 0.28, textAlign: 'center', minWidth: 86 }}
-              >
-                <img
-                  src={sprites[i]}
-                  alt=""
-                  width={56}
-                  height={56}
-                  style={{ objectFit: 'contain', imageRendering: 'pixelated' }}
-                />
-                <p className="sm-px-arcade-label" style={{ fontSize: '0.62rem', margin: '2px 0 0' }}>
-                  {nomeDe(e)}
-                </p>
-                <p style={{ fontSize: '0.66rem', color: e.hp > 0 ? '#4ade80' : '#7c8db3', margin: 0 }}>
-                  {Math.max(0, e.hp)}/{e.maxHp}
-                  {i === defensor && fase === 'defender' && ' ⚔'}
-                </p>
-              </div>
-            ))}
-          </div>
+          <GameVisor height={80} scene={ARENA_SCENE.bg}>
+            {inimigos.map((e, i) => {
+              const caixa = caixaInimigo(i, inimigos.length);
+              return e.hp > 0
+                ? (
+                  <VisorSprite key={i} src={sprites[i]} alt={nomeDe(e)} size={64} flip style={caixa} data-visor-enemy />
+                )
+                : <VisorFx key={i} icon="🏳️" size={64} style={caixa} data-visor-fx="defeat" />;
+            })}
+            <VisorSprite src={petSprite} alt="" style={{ left: 16, bottom: 8 }} data-visor-pet />
+            {popup?.icon === '💥' && alvo && (
+              <VisorFx icon="💥" size={64} style={caixaInimigo(inimigos.indexOf(alvo), inimigos.length)} data-visor-fx="hit" />
+            )}
+          </GameVisor>
 
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '6px 12px' }}>
-            <img
-              src={getSpriteForStage(evolutionStage, demoCharacterId)}
-              alt=""
-              width={56}
-              height={56}
-              style={{ objectFit: 'contain', imageRendering: 'pixelated' }}
-            />
-            <div>
-              <p className="sm-px-arcade-label" style={{ margin: 0 }}>
-                {isPt ? 'Você' : 'You'}{' '}
-                <b className="sm-px-arcade-value" style={{ color: hp > stats.hp * 0.3 ? '#4ade80' : '#f87171' }}>
-                  {Math.max(0, hp)}/{stats.hp}
-                </b>
-              </p>
-              <p className="sm-px-arcade-label" style={{ margin: '2px 0 0', fontSize: '0.68rem' }}>
-                {carga >= SPECIAL_CHARGE_TURNS
-                  ? (isPt ? '✨ Especial pronto' : '✨ Special ready')
-                  : `${isPt ? 'Carga' : 'Charge'} ${carga}/${SPECIAL_CHARGE_TURNS}`}
-                {enfraquecidos > 0 && (isPt ? ' · inimigos enfraquecidos' : ' · enemies weakened')}
-                {eco > 0 && (isPt ? ' · eco ativo' : ' · echo active')}
-              </p>
-            </div>
-          </div>
+          {/* As barras FORA do vidro (D-J5): "You" ciano; o alvo da vez em
+              `gold-fill` — o outro, nunca vermelho. Os demais inimigos vivos
+              ficam na lista abaixo, com o HP em número. */}
+          <HpBars
+            bars={[
+              { label: isPt ? 'Você' : 'You', cur: Math.max(0, hp), max: stats.hp, tone: 'cyan' },
+              ...(fase === 'defender' && inimigos[defensor]
+                ? [{ label: nomeDe(inimigos[defensor]), cur: Math.max(0, inimigos[defensor].hp), max: inimigos[defensor].maxHp, tone: 'gold' as const }]
+                : alvo
+                  ? [{ label: nomeDe(alvo), cur: Math.max(0, alvo.hp), max: alvo.maxHp, tone: 'gold' as const }]
+                  : []),
+            ]}
+          />
+          {inimigos.length > 1 && (
+            <p className="sm2-num" style={phaseLine}>
+              {inimigos.map((e, i) => (
+                <span key={i}>
+                  {i > 0 && ' · '}
+                  {nomeDe(e)} {Math.max(0, e.hp)}/{e.maxHp}
+                </span>
+              ))}
+            </p>
+          )}
 
-          <div style={{ padding: 16, minHeight: 150 }}>
+          {/* A linha de estado: "You · <auto_awesome> Special ready · enemies
+              weakened" (X3/D-J9 — o ✨ da string virou glifo 20 FILL). */}
+          <p className="sm2-num" style={{ ...phaseLine, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4, alignSelf: 'center' }}>
+            <span>
+              <b style={{ color: 'var(--sm2-ink)', fontWeight: 500 }}>{Math.max(0, hp)}/{stats.hp}</b>
+              {' · '}
+            </span>
+            {especialPronto && <Icon name="auto_awesome" size={20} fill={1} tone="primary" />}
+            <span>
+              {especialPronto
+                ? (isPt ? 'Especial pronto' : 'Special ready')
+                : `${isPt ? 'Carga' : 'Charge'} ${carga}/${SPECIAL_CHARGE_TURNS}`}
+              {enfraquecidos > 0 && (isPt ? ' · inimigos enfraquecidos' : ' · enemies weakened')}
+              {eco > 0 && (isPt ? ' · eco ativo' : ' · echo active')}
+            </span>
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minHeight: 120 }}>
+            {popup && <FxPopup icon={popup.icon} title={popup.title} detail={popup.detail} />}
             {fase === 'atacar' && alvo && (
-              <div>
-                <p className="sm-px-arcade-label" style={{ textAlign: 'center', marginBottom: 6 }}>
-                  {carga >= SPECIAL_CHARGE_TURNS
+              <>
+                <p style={phaseTitle}>
+                  {especialPronto
                     ? (isPt ? 'Especial carregado — mire no centro!' : 'Special charged — aim for the center!')
                     : (isPt ? 'Seu turno — mire no centro!' : 'Your turn — aim for the center!')}
                 </p>
                 <TimingBar
                   key={`atk-${rodada}-${vivos.length}-${hp}-${carga}`}
                   speed={alvo.speed}
-                  color={carga >= SPECIAL_CHARGE_TURNS ? '#facc15' : '#4ade80'}
                   label={isPt ? 'Atacar!' : 'Attack!'}
                   ariaLabel={isPt
                     ? `Atacar ${nomeDe(alvo)}. Pare a barra no centro para acertar melhor.`
                     : `Attack ${nomeDe(alvo)}. Stop the bar in the center to hit harder.`}
                   onStop={atacar}
                 />
-              </div>
+              </>
             )}
             {fase === 'defender' && inimigos[defensor] && (
-              <div>
-                <p className="sm-px-arcade-label" style={{ textAlign: 'center', marginBottom: 6 }}>
+              <>
+                <p style={phaseTitle}>
                   {isPt
                     ? `${nomeDe(inimigos[defensor])} ataca — desvie!`
                     : `${nomeDe(inimigos[defensor])} attacks — dodge!`}
@@ -537,65 +546,68 @@ export function ArenaGame({
                 <TimingBar
                   key={`def-${rodada}-${defensor}-${hp}`}
                   speed={inimigos[defensor].speed * 1.2}
-                  color="#60a5fa"
                   label={isPt ? 'Desviar!' : 'Dodge!'}
                   ariaLabel={isPt
                     ? 'Desviar. Parar no centro esquiva sem tomar dano nenhum.'
                     : 'Dodge. Stopping in the center avoids all damage.'}
                   onStop={defender}
                 />
-              </div>
+              </>
             )}
           </div>
         </>
       )}
 
       {fase === 'rodada-limpa' && (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24, textAlign: 'center' }}>
-          <p className="sm-px-arcade-value" style={{ fontSize: '1.1rem', color: '#4ade80' }}>
-            {isPt ? `Rodada ${rodada} vencida` : `Round ${rodada} cleared`}
-          </p>
-          <p style={{ fontSize: '0.8rem', color: '#9fb2d8' }}>
+        <>
+          <GameVisor height={80} scene={ARENA_SCENE.bg}>
+            <VisorSprite src={petSprite} alt="" style={{ left: 16, bottom: 8 }} data-visor-pet />
+            <VisorFx icon="🏳️" style={{ right: 16, top: 8 }} data-visor-fx="defeat" />
+          </GameVisor>
+          <p style={phaseTitle}>{isPt ? `Rodada ${rodada} vencida` : `Round ${rodada} cleared`}</p>
+          <p className="sm2-num" style={phaseLine}>
             {isPt
               ? `Você recuperou um pouco de vida. Total: ${pontos} Bits.`
               : `You recovered some health. Total: ${pontos} Bits.`}
           </p>
-          <span style={{ width: '100%', maxWidth: 320 }}>
-            <PixelButton size="lg" variant="primary" onClick={proximaRodada}>
-              {rodada >= ARENA_ROUNDS
-                ? (isPt ? 'Terminar' : 'Finish')
-                : (isPt ? 'Próxima rodada' : 'Next round')}
-            </PixelButton>
-          </span>
-        </div>
+          <button type="button" onClick={proximaRodada} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 320, alignSelf: 'center' }}>
+            {rodada >= ARENA_ROUNDS
+              ? (isPt ? 'Terminar' : 'Finish')
+              : (isPt ? 'Próxima rodada' : 'Next round')}
+          </button>
+        </>
       )}
 
       {(fase === 'venceu' || fase === 'perdeu') && (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24, textAlign: 'center' }}>
-          <p className="sm-px-arcade-value" style={{ fontSize: '1.2rem', color: fase === 'venceu' ? '#facc15' : '#f87171' }}>
+        <>
+          {/* Vitória: a faísca no lugar do último inimigo; derrota: o pet
+              inteiro — na MESMA tinta (D-J8). */}
+          <GameVisor height={80} scene={ARENA_SCENE.bg}>
+            <VisorSprite src={petSprite} alt="" style={{ left: 16, bottom: 8 }} data-visor-pet />
+            {fase === 'venceu' && <VisorFx icon="✨" style={{ right: 16, top: 8 }} data-visor-fx="sparkle" />}
+          </GameVisor>
+          <p style={phaseTitle}>
             {fase === 'venceu'
               ? (isPt ? 'Arena vencida!' : 'Arena cleared!')
               : (isPt ? 'Você caiu' : 'You went down')}
           </p>
-          <p style={{ fontSize: '0.82rem', color: '#c6d4f2', maxWidth: 320 }}>
+          <p className="sm2-num" style={phaseLine}>
             {fase === 'venceu'
               ? (isPt ? `As ${ARENA_ROUNDS} rodadas, na sequência. ${pontos} Bits.` : `All ${ARENA_ROUNDS} rounds, back to back. ${pontos} Bits.`)
               : (isPt
                 ? `Chegou até a rodada ${rodada}. Não custou nenhum coração — só a run.`
                 : `You got to round ${rodada}. It cost no hearts — only the run.`)}
           </p>
-          <span style={{ width: '100%', maxWidth: 320 }}>
-            <PixelButton size="lg" variant="primary" onClick={comecar}>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button type="button" onClick={comecar} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }}>
               {isPt ? 'Tentar de novo' : 'Try again'}
-            </PixelButton>
-          </span>
-          <span style={{ width: '100%', maxWidth: 320 }}>
-            <PixelButton size="md" variant="default" onClick={onExit}>
-              {isPt ? 'Sair' : 'Leave'}
-            </PixelButton>
-          </span>
-        </div>
+            </button>
+            <button type="button" onClick={onExit} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, padding: '0 8px' }}>
+              {sair}
+            </button>
+          </div>
+        </>
       )}
-    </div>
+    </GameRoot>
   );
 }

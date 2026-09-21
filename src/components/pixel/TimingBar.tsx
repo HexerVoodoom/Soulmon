@@ -26,13 +26,11 @@
  * fundos.
  */
 import { useEffect, useRef, useState } from 'react';
-import type { CSSProperties } from 'react';
+import { sm2Button } from '../form/FormKit';
 
 export interface TimingBarProps {
   /** Ciclos por segundo do vaivém. Inimigo mais rápido = barra mais rápida. */
   speed: number;
-  /** Cor do marcador e do botão. */
-  color: string;
   /** Texto do botão ("Atacar!", "Desviar!"). */
   label: string;
   /**
@@ -48,7 +46,15 @@ export interface TimingBarProps {
   ariaLabel?: string;
 }
 
-export function TimingBar({ speed, color, label, onStop, ariaLabel }: TimingBarProps) {
+/**
+ * A barra em VETOR por token (canvas Jogos D-J6): trilho `surface-2` com
+ * fronteira `muted`, a zona central (40–60 %) em `primary-soft` com filetes
+ * `primary-ink`, o marcador `primary-ink` 3×22 saindo 4 px do trilho, e o
+ * botão primário 48 que o para. As cores cruas (`#4ade80`/`#60a5fa`/`#facc15`)
+ * e a prop `color` saíram: a barra é a mesma peça em todo jogo — o que muda
+ * é o RÓTULO, nunca a tinta (dano é leitura, não alarme — D-J8).
+ */
+export function TimingBar({ speed, label, onStop, ariaLabel }: TimingBarProps) {
   const [pos, setPos] = useState(0);
   const posRef = useRef(0);
   const rafRef = useRef(0);
@@ -75,21 +81,43 @@ export function TimingBar({ speed, color, label, onStop, ariaLabel }: TimingBarP
   };
 
   return (
-    <div style={{ width: '100%' }}>
+    <div data-timing-bar style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'stretch' }}>
+      {/* O trilho também para o marcador no toque (reflexo, `onPointerDown`);
+          é decorativo para o leitor — o botão abaixo é o controle nomeado. */}
       <div
         onPointerDown={stop}
         aria-hidden="true"
-        style={{ position: 'relative', height: 34, background: '#131a26', border: '1px solid color-mix(in srgb, var(--sm-px-copper) 55%, transparent)', overflow: 'hidden', cursor: 'pointer', touchAction: 'manipulation' }}
+        data-timing-trail
+        style={{
+          position: 'relative', height: 16, boxSizing: 'border-box', margin: '4px 0',
+          borderRadius: 999,
+          backgroundColor: 'var(--sm2-surface-2)',
+          border: '1px solid var(--sm2-muted)',
+          cursor: 'pointer', touchAction: 'manipulation',
+        }}
       >
-        <div style={{ position: 'absolute', top: 0, bottom: 0, left: '35%', width: '30%', background: 'rgba(250, 204, 21, 0.22)' }} />
-        <div style={{ position: 'absolute', top: 0, bottom: 0, left: '46%', width: '8%', background: 'rgba(74, 222, 128, 0.45)' }} />
-        <div style={{ position: 'absolute', top: 2, bottom: 2, left: `calc(${pos * 100}% - 3px)`, width: 6, background: color, boxShadow: `0 0 8px ${color}` }} />
+        <div
+          style={{
+            position: 'absolute', left: '40%', right: '40%', top: 0, bottom: 0,
+            backgroundColor: 'var(--sm2-primary-soft)',
+            borderLeft: '1px solid var(--sm2-primary-ink)',
+            borderRight: '1px solid var(--sm2-primary-ink)',
+          }}
+        />
+        <div
+          data-timing-mark
+          style={{
+            position: 'absolute', top: -4, width: 3, height: 22, borderRadius: 2,
+            left: `calc(${pos * 100}% - 1.5px)`,
+            backgroundColor: 'var(--sm2-primary-ink)',
+          }}
+        />
       </div>
       <button
+        type="button"
         onPointerDown={stop}
-        className="sm-btn"
         aria-label={ariaLabel}
-        style={{ width: '100%', marginTop: 8, backgroundColor: color, borderColor: 'color-mix(in srgb, ' + color + ' 55%, black)', ['--sm-cham-line' as string]: 'color-mix(in srgb, ' + color + ' 55%, black)', color: '#0b0f17' } as CSSProperties}
+        style={{ ...sm2Button('primary'), width: '100%', maxWidth: 240, alignSelf: 'center', touchAction: 'manipulation' }}
       >
         {label}
       </button>
