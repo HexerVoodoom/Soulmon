@@ -41,11 +41,6 @@
  * de número que apodreceu (a `CACHE_VERSION` do `CLAUDE.md`, o `wc -l` do
  * `App.tsx`, as referências `arquivo:linha`). Conjunto de arquivos não apodrece.
  *
- * Deliberadamente NÃO asserto o número de ocorrências por arquivo: contagem
- * apodrece a cada edição não relacionada, e este repositório tem cinco lápides
- * de número que apodreceu (a `CACHE_VERSION` do `CLAUDE.md`, o `wc -l` do
- * `App.tsx`, as referências `arquivo:linha`). Conjunto de arquivos não apodrece.
- *
  * ## O que esta régua NÃO alcança, dito por extenso
  *
  * - Ela lê **fonte**, não tela. Termo montado por concatenação
@@ -101,16 +96,19 @@ const TERMOS: { termo: string; re: RegExp; motivo: string }[] = [
     re: /\bWeave\b/,
     motivo:
       'o par EN de `data` NÃO é "Weave" — *the Weave* é a trama de magia de ' +
-      'Forgotten Realms / D&D, franquia banida. A bíblia §6.6 fixa **Braid**.',
+      'Forgotten Realms / D&D, franquia banida. A bíblia §6.6 fixa **Braid** ' +
+      'para lore NOVO; o ponto que já existe é exceção declarada abaixo.',
   },
   {
     termo: 'Vírus/Vacina/Virus/Vaccine (rótulo)',
     re: /(Vírus|Vacina|Vaccine|\bVirus\b)/,
     motivo:
       'a tríade Virus/Data/Vaccine é o sistema de atributos assinatura de outra ' +
-      'franquia, não vocabulário genérico do gênero. O jogador deve ler ' +
-      'Ruptura / Trama / Guarda (bíblia §6.6, proposta P1). Os IDS minúsculos ' +
-      'do save ficam — linha vermelha #20.',
+      'franquia, não vocabulário genérico do gênero. ⚠️ O DONO DECIDIU MANTER o ' +
+      'rótulo em 21/09/2026 (REGISTRO-DE-DECISOES §14.4), e os arquivos onde ele ' +
+      'já está são exceção declarada abaixo — o que este termo trava é a volta ' +
+      'dele num arquivo NOVO. Ruptura / Trama / Guarda são vocabulário de MUNDO ' +
+      '(bíblia §6.6), para lore, não rótulo de interface.',
   },
   {
     termo: 'Glitchtama',
@@ -118,7 +116,8 @@ const TERMOS: { termo: string; re: RegExp; motivo: string }[] = [
     motivo:
       '"-tama" é eco fonético de marca registrada de brinquedo, e aparece num ' +
       'app de bichinho virtual, que é a classe de produto onde essa marca é ' +
-      'mais forte. Substituto proposto: Nó de Dia / Day-knot (bíblia P5).',
+      'mais forte. ⚠️ O DONO DECIDIU MANTER em 21/09/2026 (§14.4): o que este ' +
+      'termo trava é o espalhamento para arquivo NOVO, não o que já existe.',
   },
   {
     termo: 'domador/treinador/tamer',
