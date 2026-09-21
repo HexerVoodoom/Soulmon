@@ -31,3 +31,8 @@ Todas as sete respondidas em modal, sempre pela recomendada: (1) rodada 2 gerada
 
 **Resultado das v2 (21/09/2026, 4 gerações, saldo 429,35 cr) — achado, não conserto.** A cláusula de duração no fim do prompt **funcionou** (o gerador devolveu exatamente 0,200 s em vez de 1,7 s), mas o som que cabe em 120–200 ms sai **quase mudo**: −55,6 / −40,5 / −56,9 LUFS-M cru, ou seja, ganho pós-corte de **+39,7 / +21,9 / +39,1 dB** — pior que antes (crista no teto de 12,0 nos três). `transaction-v2`, sem click, **RECUSADO pela 3ª vez** (10,3 dB > 6,0). Leitura: o `seed_audio` não entrega, dentro da spec, os quatro sons **curtos e secos** do lote (Cuidado ×3, Transação) — ele é bom nos longos (Marco, Degeneração, Conclusão a 1 s). Paro de regerar (3 tentativas é o teto da regra do `CLAUDE.md`). **Nova pergunta #10:** para Cuidado e Transação, (a) manter procedural mesmo que a IA vença o A/B (híbrido já admitido na alternativa que perdeu da S1), ou (b) gerar longo (1–2 s) e cortar por envelope, aceitando que o "som" é um recorte? Provisório: **(a)**.
 
+**Fechado pelo dono em 21/09/2026 ("resolva tudo e tenha tudo pronto e mergeado"):** #8 continua sendo dele
+(ouvir o A/B) mas deixou de bloquear — S16 instalou os assets "só pra ter pronto"; #9 e #10 resolvidos por S16
+(curtos ficam procedurais; os três longos e a trilha entraram). A trilha ganhou a **segunda camada** (`ritmo`),
+loop em 28,800 s exatos (12 compassos), trim de 2 camadas em `loudness.ts`. Fila vazia.
+

@@ -70,6 +70,18 @@ export const ALVO_LUFS_M: Record<CategoriaSom, number> = {
 export const ALVO_TRILHA_LUFS_S = -28.0;
 
 /**
+ * Trim da trilha por NÚMERO de camadas tocando ao mesmo tempo, em dB — o
+ * `trimEstadoDb` do arnês (`gate-loudness.mjs` A-5), medido e não calculado.
+ * Cada camada sai do mestre no alvo SOZINHA (`mestre-trilha.mjs`); a soma de
+ * duas sobe, e é este trim, aplicado igual às duas, que devolve a soma ao
+ * `ALVO_TRILHA_LUFS_S`. Medido em 21/09/2026 sobre `base` + `ritmo`
+ * (`E:/Soulmon-assets/som-01/mix-camadas.mjs`): soma −28,00 LUFS-S,
+ * −15,86 dBTP, −31,46 LUFS integrado. Camada nova = medir de novo, nunca
+ * derivar de 1/√n.
+ */
+export const TRIM_TRILHA_POR_CAMADAS_DB: Record<1 | 2, number> = { 1: 0, 2: -2.024 };
+
+/**
  * A ordem da escada, do mais alto ao mais baixo. Existe como declaração
  * SEPARADA do mapa acima para o teste poder provar que a ordem foi preservada —
  * um `Object.keys` provaria só que o mapa é igual a si mesmo.

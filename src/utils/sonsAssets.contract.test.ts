@@ -12,10 +12,10 @@ import { describe, it, expect } from 'vitest';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { ASSETS_DE_SOM, TRILHA_BASE, recortarSilencio } from './sonsAssets';
+import { ASSETS_DE_SOM, CAMADAS_DA_TRILHA, recortarSilencio } from './sonsAssets';
 
 const raiz = join(__dirname, '..', '..');
-const TODOS = [...Object.values(ASSETS_DE_SOM), TRILHA_BASE];
+const TODOS = [...Object.values(ASSETS_DE_SOM), ...Object.values(CAMADAS_DA_TRILHA)];
 /** S6, literal: 300 KB no total. */
 const TETO_S6_BYTES = 300 * 1024;
 
@@ -23,7 +23,7 @@ const sha256 = (b: Buffer) => createHash('sha256').update(b).digest('hex');
 
 describe('S9 — procedência nas duas direções', () => {
   it('a amostra não é vazia (o teste não pode passar por lista vazia)', () => {
-    expect(TODOS.length).toBeGreaterThanOrEqual(4);
+    expect(TODOS.length).toBeGreaterThanOrEqual(5);
   });
 
   it('todo asset do manifesto existe em public/ com o SHA-256 e os bytes declarados', () => {
@@ -81,6 +81,15 @@ describe('S6 — 300 KB no total, zero no bundle inicial', () => {
       const src = readFileSync(f, 'utf8');
       expect(/import\s[^;]*\.webm/.test(src), `${f} importa um .webm`).toBe(false);
     }
+  });
+});
+
+describe('as camadas da trilha fecham o loop no mesmo ponto (mesmo BPM, mesmo compasso)', () => {
+  it('toda camada tem a mesma duracaoS, e ela é múltiplo inteiro do compasso de 100 BPM (2,4 s)', () => {
+    const durs = new Set(Object.values(CAMADAS_DA_TRILHA).map(c => c.duracaoS));
+    expect(durs.size).toBe(1);
+    const [d] = [...durs];
+    expect(Math.abs(d / 2.4 - Math.round(d / 2.4))).toBeLessThan(1e-9);
   });
 });
 

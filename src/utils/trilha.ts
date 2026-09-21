@@ -1,8 +1,9 @@
 /**
  * A TRILHA — uma camada, em loop, no `busTrilha`. Nasce desligada (S2).
  *
- * O que existe hoje é **só E1** (`base`): S13 continua CONGELADA — o contrato
- * E0–E6 pede ≥2 camadas reais no repositório, e há uma. Este módulo não decide
+ * Existem DUAS camadas (`base` + `ritmo`, `CAMADAS_DA_TRILHA`), tocando juntas
+ * num estado só: a máquina E0–E6 da S13 continua CONGELADA (a condição (2) —
+ * o dono ligar a trilha por gesto numa sessão real — não é verificável aqui). Este módulo não decide
  * estado nenhum: liga, desliga, pausa. As duas peças extraídas da S13 valem
  * aqui inteiras:
  * - **E0**: `document.hidden` → o `audioBus` já suspende o contexto; ao voltar,
@@ -18,37 +19,60 @@
  * D-1 (Marco abaixa a trilha ao piso) já mora no `audioBus`.
  */
 import { definirTrilhaLigada, garantirBarramento, trilhaLigada } from './audioBus';
-import { carregarAsset, TRILHA_BASE } from './sonsAssets';
+import { carregarAsset, CAMADAS_DA_TRILHA, type CamadaDaTrilha } from './sonsAssets';
+import { db2lin, TRIM_TRILHA_POR_CAMADAS_DB } from './loudness';
 import { isMuted } from './sounds';
 
-let fonte: AudioBufferSourceNode | null = null;
+let fontes: AudioBufferSourceNode[] = [];
+let trim: GainNode | null = null;
 let ligadaNestaSessao = false;
 let pausada = false;
 let cicloLigado = false;
 
 function parar(): void {
-  if (!fonte) return;
-  try { fonte.stop(); } catch { /* já parou */ }
-  try { fonte.disconnect(); } catch { /* nó solto */ }
-  fonte = null;
+  for (const f of fontes) {
+    try { f.stop(); } catch { /* já parou */ }
+    try { f.disconnect(); } catch { /* nó solto */ }
+  }
+  fontes = [];
+  if (trim) { try { trim.disconnect(); } catch { /* nó solto */ } trim = null; }
 }
 
 async function comecar(): Promise<boolean> {
-  if (fonte || pausada || isMuted()) return fonte !== null;
+  if (fontes.length || pausada || isMuted()) return fontes.length > 0;
   const b = garantirBarramento();
   if (!b) return false;
-  const buf = await carregarAsset(b.ctx, TRILHA_BASE);
-  if (!buf || fonte || pausada || !ligadaNestaSessao) return false;
+  const nomes = Object.keys(CAMADAS_DA_TRILHA) as CamadaDaTrilha[];
+  const bufs = await Promise.all(nomes.map(n => carregarAsset(b.ctx, CAMADAS_DA_TRILHA[n])));
+  // Só as camadas que chegaram tocam; o trim é o do NÚMERO que toca (medido, `loudness.ts`).
+  const prontas = nomes.filter((_, i) => bufs[i] !== null);
+  if (prontas.length === 0 || fontes.length || pausada || !ligadaNestaSessao) return false;
   try {
     if (b.ctx.state === 'suspended') void b.ctx.resume?.();
-    const src = b.ctx.createBufferSource();
-    src.buffer = buf;
-    src.loop = true;
-    src.connect(b.busTrilha);
-    src.start(b.ctx.currentTime);
-    fonte = src;
+    const g = b.ctx.createGain();
+    const n = Math.min(prontas.length, 2) as 1 | 2;
+    g.gain.value = db2lin(TRIM_TRILHA_POR_CAMADAS_DB[n]);
+    g.connect(b.busTrilha);
+    // Mesmo instante de início para todas: as camadas foram mestradas no mesmo BPM e no mesmo
+    // ponto de loop, e é o início comum que as mantém em fase compasso a compasso.
+    const t0 = b.ctx.currentTime + 0.02;
+    for (const nome of prontas) {
+      const buf = bufs[nomes.indexOf(nome)] as AudioBuffer;
+      const src = b.ctx.createBufferSource();
+      src.buffer = buf;
+      src.loop = true;
+      // O arquivo carrega 1 s de cauda (a cabeça do loop repetida) porque o codec perde a ponta;
+      // o loop fecha no ponto exato do manifesto, dentro de áudio válido.
+      src.loopStart = 0;
+      src.loopEnd = Math.min(CAMADAS_DA_TRILHA[nome].duracaoS, buf.duration);
+      src.connect(g);
+      src.start(t0);
+      fontes.push(src);
+    }
+    trim = g;
     return true;
   } catch {
+    parar();
     return false;
   }
 }
@@ -109,7 +133,12 @@ export function trilhaPreferida(): boolean {
 }
 
 export function trilhaTocando(): boolean {
-  return fonte !== null;
+  return fontes.length > 0;
+}
+
+/** Quantas camadas estão tocando agora (0, 1 ou 2). */
+export function camadasTocando(): number {
+  return fontes.length;
 }
 
 /** Só para teste. */
