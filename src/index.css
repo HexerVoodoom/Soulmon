@@ -5815,6 +5815,9 @@ select:focus-visible {
      dele. Um bloco novo no fim tira a trava da fundação do alcance do teste
      sem ninguém notar. */
   .sm-visor-swap { animation: none !important; }
+  /* Onboarding-oráculo (D-Q11/R1): o casulo para de pulsar e continua sendo o
+     cristal aceso; o `sync` da espera para de girar — o `role=status` anuncia. */
+  .sm2-ora-cocoon.is-pulsing, .sm2-ora-spin { animation: none !important; }
   /* A splash/intro (canvas Onboarding-funil): a onda da barra e os cristais
      param; o que informa é o texto ("LOADING DATA..."), não o movimento. */
   .sm2-splash-bar i, .sm2-splash-crystal { animation: none !important; }
@@ -7429,3 +7432,49 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
 .sm2-conta-gl { margin: 0; display: grid; gap: 6px; }
 .sm2-conta-gl dt { font-family: var(--sm2-font-text); font-size: var(--sm2-text-sm); font-weight: 500; line-height: 1.3; color: var(--sm2-ink); }
 .sm2-conta-gl dd { margin: 0 0 var(--sm2-space-1); font-family: var(--sm2-font-text); font-size: var(--sm2-text-xs); line-height: var(--sm2-leading-body); color: var(--sm2-muted); }
+
+/* ═════════════════════════════════════════════════════════════════════════
+   ONBOARDING-ORÁCULO (canvas §31, D-Q1…D-Q13) — o ritual sobre o kit `--sm2-*`.
+   Nenhum token novo, nenhum literal de cor. A barra é o `.sm2-kit-meter` a 8px
+   (D-Q1); o voltar é `arrow_back` 24 pelado num alvo 44 (D-Q2); as opções são
+   inline (`optionBtn`, tonal — D-Q4); o casulo pulsa por POSIÇÃO em `steps(2)`
+   dentro do vidro (D-Q11), nunca por opacidade; o `sync` gira fora dele (R1).
+   A regra de movimento reduzido mora no bloco canônico (sentinela). */
+.sm2-ora-meter { height: 8px; margin-bottom: var(--sm2-space-4); }
+.sm2-ora-meter .sm2-kit-meter-fill { border-radius: 2px; }
+/* o voltar: ícone pelado, alvo 44, tinta `ink`; foco visível em anel */
+.sm2-ora-back {
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+  width: 44px; height: 44px; padding: 0; margin: 0;
+  background: none; border: 0; border-radius: var(--sm2-radius-md); cursor: pointer; color: var(--sm2-ink);
+  -webkit-tap-highlight-color: transparent;
+  &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
+  &:active { background-color: var(--sm2-surface-2); }
+}
+/* a nav dos passos com campo: voltar + "Continue" primário (inerte por superfície) */
+.sm2-ora-nav { display: flex; gap: var(--sm2-space-2); align-items: center; margin-top: var(--sm2-space-4); }
+/* os resultados da cidade: linhas de 44 num card SIS-03 (W10) — a lista é o card */
+.sm2-ora-cityrow {
+  display: flex; align-items: center; box-sizing: border-box; width: 100%;
+  min-height: 44px; padding: 0 var(--sm2-space-3); margin: 0;
+  background-color: var(--sm2-surface); border: 1px solid var(--sm2-line); border-radius: 0;
+  font-family: var(--sm2-font-text); font-size: var(--sm2-text-sm); line-height: var(--sm2-leading-body);
+  color: var(--sm2-ink); text-align: left; cursor: pointer;
+  &:not(:first-child) { margin-top: -1px; }
+  &:first-child { border-top-left-radius: var(--sm2-radius-md); border-top-right-radius: var(--sm2-radius-md); }
+  &:last-child { border-bottom-left-radius: var(--sm2-radius-md); border-bottom-right-radius: var(--sm2-radius-md); }
+  &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: -2px; position: relative; z-index: 1; }
+  &:active { background-color: var(--sm2-surface-2); }
+}
+/* o casulo (`forming`/`dormant`) 256² a 128 no vidro 192²: pulso por posição, 2 quadros */
+@keyframes sm2-ora-cocoon { 0% { transform: translateY(0); } 50% { transform: translateY(-4px); } 100% { transform: translateY(0); } }
+.sm2-ora-cocoon { display: block; width: 128px; height: 128px; image-rendering: pixelated; }
+.sm2-ora-cocoon.is-pulsing { animation: sm2-ora-cocoon 1.6s steps(2, end) infinite; }
+/* a espera (GENERATING): vidro, `sync` 24 `primary-ink` girando, a frase 14 `ink` */
+.sm2-ora-wait { display: flex; flex-direction: column; align-items: center; gap: var(--sm2-space-3); padding: 12px 0; text-align: center; }
+@keyframes sm2-ora-spin { to { transform: rotate(360deg); } }
+.sm2-ora-spin { display: inline-flex; animation: sm2-ora-spin 1.2s linear infinite; }
+/* a silhueta do reveal demo (D-Q8): a mesma `.sm2-stats-sil` do Bestiário, a 128 */
+.sm2-ora-sil { width: 128px; height: 128px; -webkit-mask-size: 128px 128px; mask-size: 128px 128px; }
+/* texto só para leitor de tela (R3) — o `role=status` precisa de conteúdo */
+.sm2-ora-vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

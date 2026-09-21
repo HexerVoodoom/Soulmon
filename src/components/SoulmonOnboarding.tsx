@@ -1135,19 +1135,34 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     color: 'var(--sm2-ink)',
     outline: 'none',
   };
-  /** Opção de escolha única. Selecionado = FILL, e o texto por cima usa
-   *  `--sm2-on-primary` — nunca o `*-ink` do mesmo acento. */
+  /** O campo INERTE por forma (D-Q3 / Nascimento ONB-24): fundo transparente,
+   *  tracejado `muted`, tinta `muted` — o mesmo desenho do `.is-inert` da Conta. */
+  const inertFieldStyle: CSSProperties = {
+    backgroundColor: 'transparent',
+    border: '1px dashed var(--sm2-muted)',
+    color: 'var(--sm2-muted)',
+    boxShadow: 'none',
+    cursor: 'default',
+  };
+  /** Opção de escolha única — as 6 do ritual E os 20 itens do teste (canvas
+   *  Onboarding-oráculo D-Q4): card SIS-03 de 44 com anel `muted` 1px e texto
+   *  14 centrado; a escolhida é TONAL — `primary-soft` + anel 2px
+   *  `primary-ink` + tinta `primary-ink` 500 (Pet D-P1). Nunca placa cheia:
+   *  nestas telas não há primário, escolher avança. O padding cai 1px quando o
+   *  anel engrossa, para a caixa não pular. */
   const optionBtn = (selected: boolean): CSSProperties => ({
-    width: '100%', boxSizing: 'border-box', textAlign: 'left',
-    minHeight: 44, padding: '12px 14px', marginBottom: 8, borderRadius: 10,
+    width: '100%', boxSizing: 'border-box', textAlign: 'center',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    minHeight: 44, padding: selected ? '7px 11px' : '8px 12px', marginBottom: 8,
+    borderRadius: 'var(--sm2-radius-md)',
     fontFamily: 'var(--sm2-font-text)',
     fontSize: 'var(--sm2-text-sm)',
-    lineHeight: 'var(--sm2-leading-body)',
-    fontWeight: selected ? 600 : 400,
+    lineHeight: 1.3,
+    fontWeight: selected ? 500 : 400,
     cursor: 'pointer',
-    border: selected ? '1px solid transparent' : '1px solid var(--sm2-line)',
-    backgroundColor: selected ? 'var(--sm2-primary-fill)' : 'var(--sm2-surface)',
-    color: selected ? 'var(--sm2-on-primary)' : 'var(--sm2-ink)',
+    border: selected ? '2px solid var(--sm2-primary-ink)' : '1px solid var(--sm2-muted)',
+    backgroundColor: selected ? 'var(--sm2-primary-soft)' : 'var(--sm2-surface)',
+    color: selected ? 'var(--sm2-primary-ink)' : 'var(--sm2-ink)',
     transition: 'background-color var(--sm2-dur-tap) var(--sm2-ease)',
   });
 
@@ -1182,11 +1197,21 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
           </div>
         </Suspense>
       ) : (
-      <div style={{ width: '100%', maxWidth: 440, padding: '24px 20px 40px' }}>
+      /* Coluna flex de altura inteira: é o que leva a nav dos passos com
+         campo ao PÉ do telefone (`marginTop: auto` — canvas Onboarding-oráculo,
+         dobra F2 da Home: voltar + "Continue" em 718–766 a 844). */
+      <div style={{
+        width: '100%', maxWidth: 440, padding: '24px 20px 40px', boxSizing: 'border-box',
+        minHeight: '100%', display: 'flex', flexDirection: 'column',
+      }}>
         {/* Barra de progresso. O DENOMINADOR não mudou nesta rodada: ele já
             inclui o tutorial que vem depois do onboarding (antes a barra
             chegava a 100% e ainda apareciam telas) e já desconta o bloco de 20
             itens de quem recusa o teste longo. */}
+        {/* Canvas Onboarding-oráculo D-Q1: a barra é o `.meter` SIS-07 a 8px —
+            trilho `surface-2` + anel `muted` 1px + água `primary-fill` (o
+            trilho sobre `bg` sozinho lia 1,2:1; o anel é o que faz a barra
+            existir). Era um `div` 6px com fronteira `line`. */}
         {step > 0 && step <= lastStep && (
           <div
             role="progressbar"
@@ -1194,17 +1219,9 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             aria-valuemax={100}
             aria-valuenow={Math.round(progress * 100)}
             aria-label={isPt ? 'Progresso do ritual' : 'Ritual progress'}
-            style={{
-              height: 6, borderRadius: 999, marginBottom: 24, overflow: 'hidden',
-              backgroundColor: 'var(--sm2-surface-2)',
-              border: '1px solid var(--sm2-line)',
-            }}
+            className="sm2-kit-meter sm2-ora-meter"
           >
-            <div style={{
-              height: '100%', width: `${progress * 100}%`,
-              backgroundColor: 'var(--sm2-primary-fill)',
-              transition: 'width var(--sm2-dur-page) var(--sm2-ease)',
-            }} />
+            <div className="sm2-kit-meter-fill" style={{ width: `${progress * 100}%` }} />
           </div>
         )}
 
@@ -1669,10 +1686,16 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             hint={isPt
               ? 'A hora define o Ascendente e as casas do seu mapa.'
               : 'The hour sets the Ascendant and the houses of your chart.'}>
+            {/* D-Q3: inerte por FORMA — tracejado `muted` + tinta `muted`,
+                `aria-disabled`, fora do Tab; nunca `opacity .5`. O campo
+                continua no DOM porque é o que mostra o meio-dia assumido. */}
             <Field type="time" value={birthTime}
-              disabled={timeUnknown}
-              style={{ opacity: timeUnknown ? 0.5 : 1 }}
-              onChange={e => setBirthTime(e.target.value)} />
+              readOnly={timeUnknown}
+              aria-disabled={timeUnknown || undefined}
+              tabIndex={timeUnknown ? -1 : undefined}
+              aria-label={isPt ? 'Hora de nascimento' : 'Birth time'}
+              style={timeUnknown ? inertFieldStyle : undefined}
+              onChange={e => { if (!timeUnknown) setBirthTime(e.target.value); }} />
             {/* Sem hora, o mapa NÃO inventa Ascendente — ele desliga o cálculo
                 e avisa. Obrigar um palpite seria pedir para a pessoa mentir
                 num dado que desloca o mapa inteiro. */}
@@ -1697,8 +1720,10 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             hint={isPt
               ? 'O lugar posiciona o céu do seu nascimento — e o fuso certo.'
               : 'The place positions the sky at your birth — and the right timezone.'}>
+            {/* Os resultados = linhas de 44 num card SIS-03 (W10 — eram 36),
+                separadas por `line`; a classe é a lista inteira. */}
             <CityPicker value={birthCity} onChange={setBirthCity} isPt={isPt}
-              inputStyle={fieldStyle} optionStyle={optionBtn} />
+              inputStyle={fieldStyle} optionStyle={() => ({})} optionClass="sm2-ora-cityrow" />
           </StepShell>
         )}
 
@@ -1707,8 +1732,11 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
           <StepShell title={isPt ? 'Qual sua criatura favorita?' : "What's your favorite creature?"}
             hint={isPt ? 'Opcional — até 2 palavras. Ela influencia a aparência da sua criatura.' : 'Optional — up to 2 words. It shapes how your creature looks.'}>
             <Field type="text" value={favoriteCreature} autoFocus
-              disabled={skipFavorite}
-              style={{ opacity: skipFavorite ? 0.5 : 1 }}
+              readOnly={skipFavorite}
+              aria-disabled={skipFavorite || undefined}
+              tabIndex={skipFavorite ? -1 : undefined}
+              aria-label={isPt ? 'Criatura favorita' : 'Favorite creature'}
+              style={skipFavorite ? inertFieldStyle : undefined}
               onChange={e => setFavoriteCreature(e.target.value.split(/\s+/).slice(0, 2).join(' '))}
               placeholder={isPt ? 'Ex.: axolote' : 'E.g.: axolotl'}
               onKeyDown={e => e.key === 'Enter' && next()} />
@@ -1777,7 +1805,21 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 ? `Seu Soulmon já pode nascer agora. Com mais ${SOUL_TEST_ITEMS.length} perguntas (~2 min), a leitura usa seus traços de personalidade além das respostas de agora.`
                 : `Your Soulmon can be born right now. With ${SOUL_TEST_ITEMS.length} more questions (~2 min), the reading uses your personality traits on top of the answers you just gave.`}
             </p>
-            <button type="button" style={{ ...sm2Button('primary'), width: '100%', marginBottom: 8 }}
+            {/* ONB-29 (D-Q12): o erro de geração vem ANTES das portas, em
+                âmbar — a falha não é da pessoa; escolher de novo tenta outra vez. */}
+            {generateError && (
+              <p role="alert" style={{ ...alertStyle, margin: '0 0 18px' }}>
+                {isPt
+                  ? 'Não foi possível revelar sua criatura agora. Escolha de novo para tentar outra vez.'
+                  : "We couldn't reveal your creature just now. Choose again to retry."}
+              </p>
+            )}
+            {/* D-Q5 (X5 da crítica, a resposta da §17 V3): as DUAS portas em
+                `outline`, o teste primeiro. Numa decisão declarada final sem
+                porta "certa", o primário seria recomendação implícita — "sem
+                empurrão" vale para a forma. A ordem já diz qual é o caminho
+                longo. */}
+            <button type="button" style={{ ...sm2Button('outline'), width: '100%', marginBottom: 8 }}
               onClick={() => chooseRefine(true)}>
               {isPt ? `Responder mais ${SOUL_TEST_ITEMS.length} perguntas` : `Answer ${SOUL_TEST_ITEMS.length} more questions`}
             </button>
@@ -1785,13 +1827,6 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               onClick={() => chooseRefine(false)}>
               {isPt ? 'Revelar meu Soulmon agora' : 'Reveal my Soulmon now'}
             </button>
-            {generateError && (
-              <p role="alert" style={{ ...alertStyle, marginTop: 14 }}>
-                {isPt
-                  ? 'Não foi possível revelar sua criatura agora. Escolha de novo para tentar outra vez.'
-                  : "We couldn't reveal your creature just now. Choose again to retry."}
-              </p>
-            )}
           </StepShell>
         )}
 
@@ -2086,26 +2121,39 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         )}
 
         {/* Navegação (para passos com input manual) */}
+        {/* D-Q2: o voltar é `arrow_back` 24 PELADO num alvo 44 em `ink` (regra
+            do dono: ícone nunca em box), rótulo só no nome acessível;
+            "Continue" primário toma o resto da linha e é INERTE POR SUPERFÍCIE
+            (`surface-2` + `muted`, D-Q3) até o passo valer. Sem seta no
+            "Continue": o verbo já é o botão. */}
         {step >= 1 && step <= FAVORITE_STEP && (
-          <div style={{ display: 'flex', gap: 8, marginTop: 24 }}>
-            <button type="button" style={sm2Button('outline')} onClick={back} aria-label={isPt ? 'Voltar' : 'Back'}>
-              <Icon name="arrow_back" size={20} />
+          <div className="sm2-ora-nav" style={{ marginTop: 'auto', paddingTop: 24 }}>
+            <button type="button" className="sm2-ora-back" onClick={back} aria-label={isPt ? 'Voltar' : 'Back'}>
+              <Icon name="arrow_back" size={24} tone="inherit" />
             </button>
-            <button type="button" style={{ ...sm2Button('primary', !canAdvance()), flex: 1 }} onClick={next} disabled={!canAdvance()}>
+            <button
+              type="button"
+              style={{ ...sm2Button('primary', !canAdvance()), flex: 1, minWidth: 0 }}
+              onClick={next}
+              aria-disabled={!canAdvance() || undefined}
+              tabIndex={canAdvance() ? undefined : -1}
+            >
               {isPt ? 'Continuar' : 'Continue'}
-              <Icon name="arrow_forward" size={20} />
             </button>
           </div>
         )}
-        {/* Passos que avançam sozinhos ao escolher: só precisam de "voltar".
-            Cobre as 6 do ritual (da 2ª em diante) E os 20 itens do teste — do
-            PRIMEIRO item em diante, porque voltar de lá devolve a bifurcação
-            para quem entrou no teste longo sem querer. */}
-        {((step > QUIZ_START && step < QUIZ_END) || (step >= DEEP_START && step < DEEP_END)) && (
-          <button type="button" style={{ ...sm2Button('quiet'), marginTop: 4 }} onClick={back}>
-            <Icon name="arrow_back" size={20} />
-            {isPt ? 'Voltar' : 'Back'}
-          </button>
+        {/* Passos que avançam sozinhos ao escolher: só precisam de "voltar",
+            sozinho na linha. Cobre as 6 do ritual — DA PRIMEIRA (§17 V2,
+            decisão do dono 15/09: a 1ª volta à criatura favorita; era o único
+            passo do ritual pago sem saída de correção) — E os 20 itens do
+            teste, do primeiro em diante, porque voltar de lá devolve a
+            bifurcação para quem entrou no teste longo sem querer. */}
+        {((step >= QUIZ_START && step < QUIZ_END) || (step >= DEEP_START && step < DEEP_END)) && (
+          <div className="sm2-ora-nav" style={{ marginTop: 4 }}>
+            <button type="button" className="sm2-ora-back" onClick={back} aria-label={isPt ? 'Voltar' : 'Back'}>
+              <Icon name="arrow_back" size={24} tone="inherit" />
+            </button>
+          </div>
         )}
       </div>
       )}
