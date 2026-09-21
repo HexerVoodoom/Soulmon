@@ -260,6 +260,9 @@ export function UnlockNudge({ language, reason, variant = 'buy', onOpen }: {
      convite, nunca cobrança). A recusa `not-paid` do renascimento usa a
      MESMA peça. Os outros motivos seguem o canvas Atividades. */
   const isEvo = reason === 'evolution';
+  /* Canvas Loja D-L7/LOJA-08: o convite passivo da Loja é a MESMA peça âmbar
+     (`auto_awesome` FILL `gold-ink`), com o `chevron_right` no fim. */
+  const isGoldInvite = isEvo || reason === 'shop';
 
   const head = variant === 'reveal'
     ? (isPt ? 'Falta revelar a sua criatura' : 'Your creature is still unrevealed')
@@ -292,8 +295,8 @@ export function UnlockNudge({ language, reason, variant = 'buy', onOpen }: {
       <Icon
         name={isCap ? 'lock_open' : 'auto_awesome'}
         size={24}
-        fill={isEvo ? 1 : 0}
-        tone={isCap || isEvo ? 'gold' : 'primary'}
+        fill={isGoldInvite ? 1 : 0}
+        tone={isCap || isGoldInvite ? 'gold' : 'primary'}
         style={{ flexShrink: 0 }}
       />
       <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>

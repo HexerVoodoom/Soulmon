@@ -1,6 +1,7 @@
 import { useCreditPackLabels, useUnlockPriceLabel } from '../utils/priceLabel';
 import { useState, useEffect } from 'react';
 import { Icon } from './ui/Icon';
+import { CREDIT_COLOR } from '../utils/currencies';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text, sm2TitleStyle } from './form/FormKit';
 import {
   CREDIT_PACKS, type CreditPack, ADS_ENABLED, AD_REWARD_CREDITS, AD_DAILY_CAP, REROLL_COST_CREDITS,
@@ -14,7 +15,8 @@ import type { Language } from '../utils/i18n';
  * servidor (`ent:<saveId>`). Revamp minimalista.
  *
  * ─── O desenho ÚNICO dos Créditos ─────────────────────────────────────────
- * `Icon name="diamond"` com tom primário, e **nada mais** — nem `icon-gem.png`,
+ * `Icon name="diamond"` FILL em `--sm2-credit-ink` (canvas Loja D-L11: a única
+ * moeda com glifo, na cor própria), e **nada mais** — nem `icon-gem.png`,
  * nem o emoji de gem, que antes conviviam com este modal e com a loja na mesma
  * sessão. Bits continuam sem ícone; Emblemas são `military_tech` em ouro.
  * Três moedas, três leituras que não se confundem (regra de produto, com
@@ -100,7 +102,7 @@ export function CreditsModal({
   /** Uma linha de ação. O ícone é pelado; a LINHA inteira é o alvo de 44px+. */
   const Row = ({ icon, tone, title, hint, disabled, onClick }: {
     icon: string;
-    tone: 'primary' | 'gold' | 'danger' | 'muted';
+    tone: 'primary' | 'gold' | 'credit' | 'muted';
     title: string;
     hint: string;
     disabled?: boolean;
@@ -115,12 +117,19 @@ export function CreditsModal({
         minHeight: 64, padding: 12, borderRadius: 16, textAlign: 'left',
         border: '1px solid transparent', backgroundColor: 'var(--sm2-surface-2)',
         cursor: disabled ? 'default' : 'pointer',
-        opacity: disabled ? 0.55 : 1,
+        /* Inerte por TINTA (canvas Loja/Atividades F1): ícone e título em
+           `muted`, nunca `opacity` — o alfa derruba o contraste da linha inteira. */
       }}
     >
-      <Icon name={icon} size={24} tone={disabled ? 'muted' : tone} />
+      <Icon
+        name={icon}
+        size={24}
+        fill={tone === 'credit' ? 1 : 0}
+        tone={disabled ? 'muted' : tone === 'credit' ? 'inherit' : tone}
+        style={tone === 'credit' && !disabled ? { color: CREDIT_COLOR } : undefined}
+      />
       <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <span style={{ ...sm2Text, fontWeight: 500 }}>{title}</span>
+        <span style={{ ...sm2Text, fontWeight: 500, color: disabled ? 'var(--sm2-muted)' : 'var(--sm2-ink)' }}>{title}</span>
         <span style={sm2Hint}>{hint}</span>
       </span>
     </button>
@@ -138,7 +147,7 @@ export function CreditsModal({
       language={language}
       footer={
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Icon name="diamond" size={20} tone="primary" label={isPt ? 'Créditos' : 'Credits'} />
+          <Icon name="diamond" size={20} fill={1} tone="inherit" style={{ color: CREDIT_COLOR }} label={isPt ? 'Créditos' : 'Credits'} />
           <span className="sm2-num" style={{ ...sm2Text, fontWeight: 500 }}>{credits}</span>
         </div>
       }
@@ -149,7 +158,10 @@ export function CreditsModal({
         aria-live="polite"
         style={{
           ...sm2Hint, minHeight: 18, margin: 0,
-          color: message ? (message.ok ? 'var(--sm2-primary-ink)' : 'var(--sm2-danger-ink)') : 'var(--sm2-muted)',
+          /* A falha em `muted` (canvas Loja LOJA-13: "sem vermelho") — a compra
+             que não concluiu não é erro do jogador, e o app nunca cobra. */
+          fontWeight: message?.ok ? 500 : 400,
+          color: message?.ok ? 'var(--sm2-ink)' : 'var(--sm2-muted)',
         }}
       >
         {message?.text ?? (billingAvailable
@@ -184,7 +196,7 @@ export function CreditsModal({
         <Row
           key={pack.id}
           icon="diamond"
-          tone="primary"
+          tone="credit"
           disabled={busy !== null || !billingAvailable}
           onClick={() => run(pack.id, () => onBuyPack(pack),
             isPt ? `+${pack.credits} créditos.` : `+${pack.credits} credits.`,

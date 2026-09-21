@@ -89,6 +89,11 @@ export const CURRENCIES: Record<CurrencyId, CurrencyMeta> = {
 /**
  * Bits: calculadora, tinta primária.
  *
+ * Canvas Loja (DECISÕES §26, checkpoint do dono 20/09/2026): Bits ficam em
+ * `primary-ink` — ESTE estilo vence o canvas de Jogos (§25, que pedia `ink`);
+ * as duas superfícies leem a mesma cor daqui. Créditos consomem
+ * `CREDIT_COLOR` no `diamond` (Loja/troca e `CreditsModal`), D-L11.
+ *
  * Existe um par histórico (`bitsStyle` retrô / `bitsStyleLight` claro) porque
  * a cor era escolhida à mão por tema. Com token isso deixou de ser preciso — o
  * token já muda sozinho — mas os DOIS exports ficam, porque `utils/currency.ts`

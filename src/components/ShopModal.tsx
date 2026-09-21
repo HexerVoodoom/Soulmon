@@ -1,5 +1,5 @@
 import { useState, type CSSProperties, type ReactNode } from 'react';
-import { bitsStyle, emblemStyle, BITS_EXCHANGE } from '../utils/currencies';
+import { bitsStyle, emblemStyle, BITS_EXCHANGE, CREDIT_COLOR } from '../utils/currencies';
 import { Icon } from './ui/Icon';
 import { MiniGlass } from './ui/MiniGlass';
 import { ModalSheet, Segment, sm2Button, sm2Hint, sm2Text, sm2TitleStyle } from './form/FormKit';
@@ -320,7 +320,7 @@ export function ShopModal({
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 4 }}>
       <p style={{ ...sm2Text, margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
         {/* Créditos: a única moeda com glifo, na cor própria (D-L11). */}
-        <Icon name="diamond" size={ICON_INLINE} fill={1} tone="inherit" style={{ color: 'var(--sm2-credit-ink)', flexShrink: 0 }} />
+        <Icon name="diamond" size={ICON_INLINE} fill={1} tone="inherit" style={{ color: CREDIT_COLOR, flexShrink: 0 }} />
         <span>
           {isPt ? 'Trocar Créditos por Bits — você tem ' : 'Swap Credits for Bits — you have '}
           <span className="sm2-num">{credits}</span>
