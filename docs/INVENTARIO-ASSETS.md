@@ -45,6 +45,7 @@ Fase 1 (`design/INVENTARIO-WIREFRAMES.md`).
 | Pasta | Qtd · formato | Mapa | Fluxo / artboard |
 |---|---|---|---|
 | `soulmon/lines/` | 36 · 256² alfa — 9 linhas × 4 estágios (ignar, lumel, serah, kaelen, orrin, thalindra + igni, nautilu, astrase desde 15/09) | `DUNGEON_LINE_SPRITES` (`utils/sprites.ts`) | Jogos (`MasmorraTurno`, `Arena`, `PesadeloIntro`), Onboarding-funil (`EscolherPersonagem`), Social (NPCs da Biblioteca), Home (modo demo) |
+| `soulmon/lines/icons/` | 72 · 64² e 32² alfa — ícones-ficha das 9 linhas × 4 tiers, DERIVADOS do 256² (`scripts-arte/derivar-rodada2.mjs`, rodada 2 R2-2, 21/09/2026) | `lineIcon`/`lineIconForStage` (`utils/lineIcons.ts`) | Jogos (`TournamentPage` ranking 32 e oponente 64, `DinoGame` pet 64) |
 | `soulmon/rookie.png` … `ultra.png` | 11 · 384² — árvore genérica do jogador (rookie, 3×champion, 3×ultimate, 3×mega, ultra) | `SOULMON_SPRITES` | Home (`PetDeckEstados`, `TrilhaEvolucao`), Pet (`FichaEstados`), Evolução (`EvoSpriteEstados`), Onboarding-oráculo (`Reveal`) |
 | `soulmon/dungeon-spirit.png` | 1 · 128² | `DUNGEON_SPIRIT_SPRITE` | Jogos (`MasmorraLobby`) |
 | `soulmon/mascot-raven.png` | 1 · 512² | IntroScreen | Onboarding-funil (`IntroEstados`) |
@@ -58,6 +59,7 @@ Fase 1 (`design/INVENTARIO-WIREFRAMES.md`).
 | `soulmon/bg/dungeon-1..5`, `tournament.png` | 6 · **960×540** (formato antigo, deitado) | `dungeonScenes.ts` | Jogos — ⚠️ **inconsistência**: 5 andares deitados + 5 em pé; `background-size: cover` corta ~70% dos deitados (achado §11 do `04`) |
 | `backgrounds/bg-attic … bg-swamp` | 8 · **1200×648** (pet-box da loja, formato certo) | `PET_BACKGROUNDS` (`utils/backgrounds.ts`) | Loja (`CenariosMobilias`), Home (palco do pet) |
 | `backgrounds/bg-gameboy`, `bg-matrix`, `bg-ocean` | 3 · **800×800** (formato antigo, `setting:'void'`) | idem | Loja — ⚠️ cortam nas laterais |
+| `backgrounds/thumbs/` | 28 · **96×52** — miniatura de cada cenário 1200×648, DERIVADA (lanczos3 + sharpen leve; rodada 2 R2-1, 21/09/2026) | `BG_THUMBS` (glob em `ShopModal.tsx`) | Loja (`CenariosMobilias`, mini-visor do card) |
 | `backgrounds/home-scene-1547.png` | 1 · 1376×3058 | `CompanionHUD.tsx` | Home (fundo do palco) — é a "image 1547" da pasta do Desktop |
 | `video/evolution-bg.mp4` + thumb | 1 | `EvolutionCeremony.tsx` | Evolução (`Cerimonia`) |
 | `brand/intro.mp4` | 1 · 720×1280 | `IntroScreen.tsx` | Onboarding-funil (`IntroEstados`) |
@@ -72,6 +74,8 @@ Fase 1 (`design/INVENTARIO-WIREFRAMES.md`).
 | `soulmon/dreams/` | 30 · 96² | `dreamArt.ts` (`Dream.id`) | Rituais (`SonhoComCena`), Pet (`DexCompleto/Parcial`) |
 | `soulmon/adventures/` | 24 · 96² | `adventureArt.ts` | Rituais (`RelatorioNormal`, aventura da noite) |
 | `soulmon/fx/` | 12 · 64²/128² — 6 partículas de cuidado + 6 FX de batalha | `fxArt.ts` (**emoji** do `Popup.icon`) | Home (`PetCarinho`, banho), Jogos (`MasmorraTurno`, `PesadeloFim`) |
+| `soulmon/fx/anim-sleep-z-light.png` | 1 · 192×64 (3 quadros) — a folha `anim-sleep-z` recolorida em claro (`#E9F5F2`/`#5FF3E0`, alfa intacto; rodada 2 R2-4) | `ANIM_ART.sleepZLight` (`animArt.ts`) | Home (`CompanionHUD` dormindo sobre cenário escuro — `isDarkBackground`) |
+| `soulmon/fx-ataque/fx-<el>-aura-96.png` | 154 · **96²** — aura por elemento derivada da 128² (lanczos3, alfa < 64 → 0; rodada 2 R2-3) | `auraForElement(el, 96)` (`attackFxArt.ts`) | Pet (`FichaEstados` — aura a 2× = o vidro 192 inteiro) |
 | `soulmon/icons/games/hand-*` | 3 · 128² | `RPSGame.tsx` | Jogos (`PPT`) |
 | `soulmon/icons/categories/icon-cat-*` | 8 · 128² | `types/category-icons.ts` | Atividades (`LinhaHabitoEstados`, `CriarAtividade`) — ⚠️ **pixel FORA do visor** (lista de tarefas é aparelho). Divergência a registrar no canvas de Atividades, não a reproduzir |
 | `soulmon/elementos/` | 137 · 128² | `elementIconArt.ts` (glob) | Pet (`FichaEstados` — habilidades), Jogos (ficha de ataque) |
