@@ -118,9 +118,9 @@ conquista", isso é timbre/envelope/duração, não nível.
 > `ab-piloto.md` §8) e **espera o dono ouvir**.
 >
 > **S16 (mesmo dia, decisão do dono: "só pra ter pronto"):** os assets dos três eventos LONGOS e a
-> camada-base da trilha **estão no app** — `public/sounds/*.webm` (188 KB, Opus pelo MediaRecorder
+> trilha (duas camadas) **estão no app** — `public/sounds/*.webm` (5 arquivos, 258 248 bytes, Opus pelo MediaRecorder
 > do Chrome), manifesto e carga preguiçosa em `src/utils/sonsAssets.ts`, trilha em
-> `src/utils/trilha.ts` (switch "Trilha/Music" no `SettingsModal`; liga por gesto, para em
+> `src/utils/trilha.ts` (switches "Sons" e "Trilha/Music" nas **Configurações** — `SettingsPage`, grupo Som; liga por gesto, para em
 > `hidden`/sono/mudo). Os cinco sons curtos seguem procedurais; os três com asset mantêm o
 > procedural como fallback. Régua: `src/utils/sonsAssets.contract.test.ts`. O A/B continua sendo
 > o gatilho: se o procedural vencer, os assets saem. "O procedural venceu" e "a IA venceu" seguem

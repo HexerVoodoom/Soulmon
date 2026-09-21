@@ -37,11 +37,17 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > perguntado, corrigiu: **"quero o gerado nos 3"** → `evolve.webm` voltou; os três eventos longos
 > ficam com asset de IA. Escolha do dono, não protocolo. Registro na nota do §6.1. `CACHE_VERSION`
 > **v154**.
+> **Achado grave do doc-mantenedor, fechado (`980bc84c`):** o `SettingsModal` ("Ajustes rápidos")
+> não tem gatilho vivo desde o canvas Conta — o mudo global e o switch da trilha eram
+> **inalcançáveis pela UI**. As duas chaves ("Sons", "Trilha/Music") entraram na `SettingsPage`,
+> grupo "Som"; `handleToggleSound` único no `App.tsx`; régua `settingsSom.render.test.tsx` (5
+> testes, PT/EN, toque chega ao dono). `CACHE_VERSION` **v155**. O `SettingsModal` continua no
+> código sem gatilho — candidato a remoção (não removido: fora do escopo do som).
 > Portões: `tsc` ×3 · `vitest` **302 arquivos, 4217 testes** · `npm run build` ok. Registro:
-> `REGISTRO-DE-DECISOES.md` §6.1 **S16**; `Attributions.md` com as 4 linhas (hash, job, prompt,
+> `REGISTRO-DE-DECISOES.md` §6.1 **S16**; `Attributions.md` com as linhas (5 depois da rodada 2) (hash, job, prompt,
 > versão dos termos). **Sobra que fica:** o A/B cego (`E:/Soulmon-assets/som-01/ab/`) é quem
-> decide se isso fica — o dono ainda não ouviu; o loop da trilha perde ~48 ms no fim (limite do
-> MediaRecorder) e só a camada `base` existe (S13 segue congelada).
+> decide se isso fica — o dono ainda não ouviu. ⚰️ (mesmo dia) "o loop perde ~48 ms" e "só a camada
+> `base` existe" — as duas sobras foram fechadas na rodada 2, abaixo.
 
 > ## 21/09/2026 — Manual sincronizado com `5ac3d351` (delta `dc72579e..5ac3d351`, 31 commits)
 >
