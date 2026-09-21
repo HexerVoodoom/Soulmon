@@ -1,6 +1,6 @@
 # Visão — o que o Soulmon é, para quem, e o que ele nunca pode virar
 
-> **Dono:** doc-redator-regras · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (último item do adendo da §10, delta `5ac3d351..8d318529`, som/S16 + chaves na `SettingsPage`; o resto: sincronizado com `9875477b`, delta `dc72579e..9875477b`: decisões do dono no `REGISTRO-DE-DECISOES.md` §14, copy da bíblia em tela, trava de crise no chat — só nas §7 e §10; verificação anterior do delta `2580b73a..dc72579e`: 21/09/2026)
+> **Dono:** doc-redator-regras · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `15164e4c..7e5d0ba9`: §7 "A bíblia narrativa obedece às 21" e §10 conferidos contra `REGISTRO-DE-DECISOES.md` §14.1–§14.4, `NARRATIVA-PROPOSTAS.md` e `src/narrativa.contract.test.ts` — P1/P2/P5/P8/P9/P10 fechadas, `EXCECOES`, faixas de `welcomeBack`, trava de crise; verificação anterior: último item do adendo da §10, delta `5ac3d351..8d318529`, som/S16 + chaves na `SettingsPage`; o resto: sincronizado com `9875477b`, delta `dc72579e..9875477b`: decisões do dono no `REGISTRO-DE-DECISOES.md` §14, copy da bíblia em tela, trava de crise no chat — só nas §7 e §10; verificação anterior do delta `2580b73a..dc72579e`: 21/09/2026)
 > **Verificação:** `npx vitest run src/utils/currencies.test.ts src/utils/monetization.fronteira.test.ts src/utils/restWindow.test.ts src/utils/passives.test.ts src/utils/bond.test.ts src/utils/habitRhythm.test.ts src/hooks/useDailyReset.test.ts src/plugins/widgetSemCobranca.contract.test.ts` — são os testes que travam, em código, as linhas vermelhas citadas aqui. Toda contagem deste doc traz, na própria linha, o comando que a mediu em 09/09/2026.
 > **Não cobre:** as regras de jogo em si (→ `02-REGRAS-DE-NEGOCIO.md`), telas e navegação (→ `03-FLUXO-DE-TELAS.md`), identidade visual (→ `04-IDENTIDADE-VISUAL.md`), arquitetura, deploy e integrações (→ `05-ARQUITETURA.md`, `08-INTEGRACOES-E-DEPLOY.md`), o histórico das decisões (→ `09-HISTORICO.md`, `10-DISCUSSOES-E-DECISOES.md`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -249,8 +249,12 @@ lista curta também está em [`docs/PLANO-MELHORIAS.md`](../PLANO-MELHORIAS.md)
 [`docs/NARRATIVA-E-UNIVERSO.md`](../NARRATIVA-E-UNIVERSO.md) (doc vivo, indexado
 no `00-MAPA.md`) é o universo do jogo — premissa, cosmogonia da **Malha**,
 persona, biologia, taxonomia, vocabulário PT+EN — e **não decide regra nenhuma**:
-nada de `src/` mudou com ela, e tudo que pediria mecânica está isolado na §14
-("depende do dono"). O que ela acrescenta a este capítulo:
+nada de `src/` mudou com ela, e tudo que pediria mecânica está isolado nas
+propostas — que saíram da §14 da bíblia para
+[`docs/NARRATIVA-PROPOSTAS.md`](../NARRATIVA-PROPOSTAS.md) em `e98fd2b7`
+(21/09/2026) e continuam "depende do dono", exceto **P1, P2, P5, P8, P9 e P10**,
+fechadas pelo dono no mesmo dia ([`REGISTRO-DE-DECISOES.md`](../REGISTRO-DE-DECISOES.md)
+§14 — ver §10 deste doc). O que ela acrescenta a este capítulo:
 
 - **Doze leis de ESCRITA (L1..L12, §2)** para todo texto de jogador: o mundo
   descreve, nunca julga (L1); a criatura não é espelho nem placar (L2); nada no

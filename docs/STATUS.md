@@ -74,7 +74,9 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > "pendência" o que o §14.3 decidiu; `CONTEXT_SCHEMA.bond` é campo morto desde `01b649ce`;
 > a cláusula SAFETY não tem teste; `docs/NARRATIVA-COPY.md` tem dois `## 8.`;
 > `scripts-arte/derivar-rodada2.mjs` é citado como do repo mas vive em `D:\Soulmon\scripts-arte`;
-> `CLAUDE.md` ainda diz `DÍVIDA` (é `EXCECOES` desde `f3654076`) e "S1..S13" (o registro tem S15).
+> `CLAUDE.md` ainda diz `DÍVIDA` (é `EXCECOES` desde `f3654076`) — segue aberta, é a D31 de
+> `docs/manual/02-REGRAS-DE-NEGOCIO.md` §59; a metade "S1..S13" ⚰️ **fechada em `15164e4c`**
+> (o `CLAUDE.md` diz **S1..S16**, e o registro vai até S16 desde `ee79fd44` — não existe S14).
 
 > ## 21/09/2026 — SQUAD-SOM retomada: os 12 prompts gerados, A/B cego MONTADO e não ouvido, gate destravado (flake, O-5, O-7)
 >

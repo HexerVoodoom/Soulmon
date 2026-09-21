@@ -1,6 +1,6 @@
 # Discussões e decisões — onde cada uma vive
 
-> **Dono:** doc-historiador · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `5ac3d351..8d318529`, tema som — shas, anchors e as citações de `STATUS.md`/`SOM.md`/`REGISTRO`/`PERGUNTAS`/`Attributions` conferidas; verificação anterior: em `9875477b`, conferido em `5ac3d351`)
+> **Dono:** doc-historiador · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `15164e4c..7e5d0ba9`: as linhas de 21/09/2026 dos temas narrativa/PI — `REGISTRO-DE-DECISOES.md` §14.1/§14.2/§14.4, `NARRATIVA-PROPOSTAS.md` P1–P10, `vetos.md` — e as fichas de `NARRATIVA-E-UNIVERSO.md`/`NARRATIVA-PROPOSTAS.md` do índice de docs; verificação anterior: delta `5ac3d351..8d318529`, tema som — shas, anchors e as citações de `STATUS.md`/`SOM.md`/`REGISTRO`/`PERGUNTAS`/`Attributions` conferidas; verificação anterior: em `9875477b`, conferido em `5ac3d351`)
 > **Verificação:** abra cada caminho citado e confira a seção nomeada existe (`grep -n "^## " <caminho>`)
 > **Não cobre:** o CONTEÚDO integral de cada discussão — este documento é um ÍNDICE, não a discussão. Para "como chegamos aqui" em datas e commits, veja `09-HISTORICO.md`
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde este índice apontar para um documento que discorda do código, o código está certo e o documento apontado tem defeito — não este índice.
