@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, lazy, Suspense, type CSSProperties } from 'react';
-import ravenMascot from '../assets/soulmon/mascot-raven.png';
 import { Icon } from './ui/Icon';
 import { MiniGlass } from './ui/MiniGlass';
 import { Viewport } from './ui/Viewport';
@@ -1854,13 +1853,36 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
           );
         })()}
 
-        {/* Gerando */}
+        {/* Gerando — A ESPERA É RITUAL (canvas Onboarding-oráculo D-Q6/D-Q11,
+            ONB-31): o `role=status` é o casulo — o placeholder `forming` (D1,
+            o cristal aceso) 256² a 128 num vidro 192² com anel, pulsando
+            DENTRO do vidro por POSIÇÃO em `steps(2)` (nunca opacidade — Home
+            F1); `sync` 24 `primary-ink` girando fora do vidro (R1, o único
+            movimento fora dele); a frase 14 `ink`. O corvo a 64 saiu: é a
+            marca, não a criatura (funil D-O4 — só no vidro da intro); o
+            spinner de sistema saiu com ele. Reduced-motion: o casulo e o
+            `sync` param, e o anúncio fica (a frase é o conteúdo da região). */}
         {step === GENERATING && (
-          <div style={{ textAlign: 'center', paddingTop: 90 }} role="status" aria-live="polite">
-            <img src={ravenMascot} alt="" width={64} height={64}
-              style={{ display: 'block', margin: '0 auto 8px', objectFit: 'contain', imageRendering: 'pixelated' }} />
-            <Spinner size={32} />
-            <p style={{ ...sm2Text, color: 'var(--sm2-muted)', marginTop: 12 }}>
+          <div role="status" aria-live="polite" className="sm2-ora-wait" style={{ paddingTop: 24 }}>
+            <Viewport
+              width={64}
+              height={64}
+              scale={3}
+              breathing={false}
+              screenStyle={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              <img
+                className="sm2-ora-cocoon is-pulsing"
+                src={PLACEHOLDER_ART.forming}
+                alt=""
+                width={128}
+                height={128}
+              />
+            </Viewport>
+            <span className="sm2-ora-spin" aria-hidden="true">
+              <Icon name="sync" size={24} tone="primary" />
+            </span>
+            <p style={{ ...sm2Text, margin: 0 }}>
               {isPt ? 'Revelando a criatura da sua alma…' : 'Revealing your soul\'s creature…'}
             </p>
           </div>

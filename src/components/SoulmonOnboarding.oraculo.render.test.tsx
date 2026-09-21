@@ -160,3 +160,45 @@ describe('as 6 perguntas, a bifurcação e os 20 itens (D-Q4, D-Q5, D-Q12)', () 
     expect(screen.getByText('Want to sharpen the reading?')).toBeTruthy();
   });
 });
+
+/* A leitura (astronomy-engine) nunca termina aqui: o que se mede é a tela
+   de espera, não a geração. */
+vi.mock('../utils/soulProfile', () => new Promise(() => {}));
+
+describe('Gerando — a espera é ritual (D-Q6, D-Q11, R1, R3)', () => {
+  beforeEach(() => { vi.useFakeTimers(); installFakeStorage(); clearOracleDraft(); });
+  afterEach(() => { vi.useRealTimers(); });
+
+  it('o `role=status` é o casulo `forming` 128 num vidro 192² pulsando por POSIÇÃO; `sync` 24 girando; sem corvo, sem spinner de sistema', () => {
+    writeOracleDraft(rascunho(REFINE_OFFER));
+    renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
+    fireEvent.click(btn('Reveal my Soulmon now'));
+    const status = screen.getByRole('status');
+    expect(status.textContent).toContain("Revealing your soul's creature…");
+    const vidro = status.querySelector('.sm2-viewport-screen') as HTMLElement;
+    expect(vidro.style.width).toBe('192px');
+    expect(vidro.style.height).toBe('192px');
+    const casulo = vidro.querySelector('img.sm2-ora-cocoon') as HTMLImageElement;
+    expect(casulo.className).toContain('is-pulsing');
+    expect(casulo.getAttribute('src')).toContain('forming');
+    expect(casulo.width).toBe(128);
+    expect(casulo.style.opacity).toBe('');
+    expect(status.querySelector('.sm2-ora-spin .sm2-icon')?.textContent).toBe('sync');
+    expect(status.querySelector('[data-sm-spin]')).toBeNull();
+    expect(document.querySelector('img[src*="mascot-raven"]')).toBeNull();
+    // a barra segue viva na espera (GENERATING < lastStep)
+    expect(screen.getByRole('progressbar', { name: 'Ritual progress' })).toBeTruthy();
+  });
+
+  it('o pulso do casulo é por transform em steps(2) e para em reduced-motion; o sync idem (CSS)', async () => {
+    const fs = await import(/* @vite-ignore */ 'node:fs');
+    // jsdom: `import.meta.url` não é `file:` — o CSS vem pela raiz do repo.
+    const css = fs.readFileSync(`${process.cwd()}/src/index.css`, 'utf8');
+    const kf = css.slice(css.indexOf('@keyframes sm2-ora-cocoon'), css.indexOf('.sm2-ora-cocoon {'));
+    expect(kf).toContain('translateY(-4px)');
+    expect(kf).not.toContain('opacity');
+    expect(css).toMatch(/\.sm2-ora-cocoon\.is-pulsing \{ animation: sm2-ora-cocoon 1\.6s steps\(2, end\) infinite; \}/);
+    const reduzido = css.slice(css.lastIndexOf('@media (prefers-reduced-motion: reduce)'));
+    expect(reduzido).toContain('.sm2-ora-cocoon.is-pulsing, .sm2-ora-spin { animation: none !important; }');
+  });
+});
