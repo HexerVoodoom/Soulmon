@@ -31,7 +31,11 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > (+1 duplicata acidental de `presence`, +2 regenerações) e pós-processados: **12 APROVADOS, 3 RECUSAS**
 > de crista (`transaction` ×2 — conflito prompt "click" × limite de 6 dB —, `end-zero` na 1ª, aprovado na
 > 2ª) e **4 com ganho > 20 dB** depois do corte (`presence` ×2, `shower`, `sleep` — o corpo do som
-> ficou fora da janela; volta ao produtor). Saldo final **443,35 cr** (15 gerações × 2,5). Tudo em
+> ficou fora da janela; volta ao produtor). **Rodada v2 (decisão do dono em modal):** cláusula de
+> duração no fim do prompt fez o gerador devolver 0,200 s exatos, mas quase mudo (ganho +22 a +40 dB);
+> `transaction` sem click recusado pela **3ª** vez. Achado: o `seed_audio` não entrega os sons curtos e
+> secos (Cuidado ×3, Transação) dentro da spec — provisório = ficam procedurais (`PERGUNTAS-DO-DONO.md`
+> #10). Saldo final **429,35 cr** (19 gerações × 2,5 + 1 duplicata). Tudo em
 > `E:/Soulmon-assets/som-01/` (`MANIFESTO.md`, cópia em `squad-alpha-runs/som-01/prototyper/`):
 > **nenhum byte de áudio entrou no repo**, `Attributions.md` intacto, `CACHE_VERSION` intacto.
 > **A/B cego** dos 3 pares montado pelo `ab-piloto.md` §8.1 (Δ 0,00 LU, semente 20260921,
