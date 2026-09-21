@@ -55,6 +55,29 @@ describe('o widget não cobra', () => {
     expect(codigo).not.toMatch(/constancy_pct/);
     expect(codigo).not.toMatch(/"shields"/);
   });
+
+  it('o contador some no zero: nunca "0/N", nunca um traço (13.16 — X10 do canvas Fora do app)', () => {
+    // Até 20/09/2026 o renderer escrevia `"$completed/$total"` com zero feitas
+    // ("0/5" — o placar de quem ainda não começou) e `else "—"` sem tarefa — e
+    // este guard NÃO travava nenhum dos dois (só as substrings de cobrança). A
+    // regra 13.16 é a linha SUMIR (`setViewVisibility(GONE)`), não trocar de texto.
+    expect(codigo).not.toMatch(/"0\//);
+    expect(codigo).not.toMatch(/"—"/);
+    expect(codigo).not.toMatch(/else "-"/);
+    // O interpolado só pode existir atrás de um `completed > 0`.
+    expect(codigo).toMatch(/completed > 0\) "\$completed\/\$total" else null/);
+    expect(codigo).toMatch(/setViewVisibility\(R\.id\.widget_tasks, View\.GONE\)/);
+  });
+
+  it("não cobra presença: \"Don't forget about me today!\" (PRINCÍPIOS §12) saiu do pool do chat", () => {
+    expect(codigo).not.toMatch(/forget about me/i);
+  });
+
+  it('a escada é só EN e sem emoji (13.18, D-F3)', () => {
+    // As frases PT com emoji do fabricante eram o que o widget dizia até 20/09/2026.
+    expect(codigo).not.toMatch(/saudade|Quase lá|Continue assim|Dia perfeito|Um dia de cada vez/);
+    expect(codigo).toMatch(/"Complete day!"/);
+  });
 });
 
 describe('o bridge não grava o que a spec vetou', () => {

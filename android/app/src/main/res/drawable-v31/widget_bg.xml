@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- API 31+: o raio é o do sistema (o launcher recorta o widget com ele). Ver drawable/widget_bg.xml. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="#071413" />
+    <stroke android:width="3dp" android:color="#C68642" />
+    <corners android:radius="@android:dimen/system_app_widget_background_radius" />
+</shape>

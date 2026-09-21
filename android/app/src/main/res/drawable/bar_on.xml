@@ -1,4 +1,5 @@
+<!-- Segmento aceso da energia = `primary-fill` escuro (#5FF3E0), a única luz forte do widget (D-F5). -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <solid android:color="#2BFF95" />
+    <solid android:color="#5FF3E0" />
     <corners android:radius="2dp" />
 </shape>

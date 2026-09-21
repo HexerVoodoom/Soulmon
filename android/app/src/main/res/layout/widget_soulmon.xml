@@ -1,17 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Widget A "Soulmon" 3x1 (180x90dp) - o widget E o visor (canvas Fora do app, D-F1..D-F3):
+     anel + vidro em `widget_bg`, a criatura a 64dp (bitmap via `setImageViewBitmap`), a coluna
+     de texto na fonte do sistema (o RemoteViews nao desenha Fredoka/Rubik): nome 13sp/500,
+     estagio 12sp, contador 13sp `tnum` SO com >=1 feita (GONE no zero - 13.16), frase 12sp
+     (2 linhas quando o contador some). Padding 11 = 3 de anel + 8 (P1). Sem sombra, sem emoji.
+     So ImageView/TextView/ViewFlipper/LinearLayout (footgun 2). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="horizontal"
-    android:padding="10dp"
-    android:background="@drawable/partner_area"
+    android:padding="11dp"
+    android:background="@drawable/widget_bg"
     android:gravity="center_vertical">
 
-    <!-- Sprite (left) — 2-frame bounce via ViewFlipper -->
+    <!-- A criatura (64dp = 384 / 6) - 2 quadros no ViewFlipper para a respiracao -->
     <ViewFlipper
-        android:layout_width="60dp"
-        android:layout_height="60dp"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
         android:autoStart="true"
         android:flipInterval="450">
         <ImageView
@@ -19,71 +25,70 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="fitEnd"
+            android:contentDescription="@null"
             android:src="@drawable/sprite_rookie" />
         <ImageView
             android:id="@+id/widget_sprite_2"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="fitEnd"
-            android:paddingTop="5dp"
+            android:paddingTop="4dp"
+            android:contentDescription="@null"
             android:src="@drawable/sprite_rookie" />
     </ViewFlipper>
 
-    <!-- Text column (right) -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:orientation="vertical"
-        android:layout_marginStart="10dp"
+        android:layout_marginStart="8dp"
         android:gravity="center_vertical">
 
-        <!-- Digimon name -->
         <TextView
             android:id="@+id/widget_pet_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="DigiEgg"
+            android:text="Soulmon"
             android:textSize="13sp"
-            android:textStyle="bold"
-            android:textColor="#FFFFFF"
+            android:fontFamily="sans-serif-medium"
+            android:textColor="#E9F5F2"
+            android:includeFontPadding="false"
             android:maxLines="1"
-            android:ellipsize="end"
-            android:shadowColor="#000000"
-            android:shadowDx="1"
-            android:shadowDy="1"
-            android:shadowRadius="2" />
+            android:ellipsize="end" />
 
-        <!-- Stage label -->
         <TextView
             android:id="@+id/widget_stage"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Ovo Digital"
-            android:textSize="10sp"
-            android:textColor="#CCFFFFFF"
-            android:maxLines="1" />
+            android:text="Rookie"
+            android:textSize="12sp"
+            android:textColor="#AAB6B4"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:ellipsize="end" />
 
-        <!-- Task progress -->
+        <!-- Contador: visivel so com >=1 feita (o renderer poe GONE no zero - nunca "0/5" nem um traco) -->
         <TextView
             android:id="@+id/widget_tasks"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="—"
-            android:textSize="11sp"
-            android:textColor="#FFFFFF"
+            android:textSize="13sp"
+            android:fontFamily="sans-serif-medium"
+            android:fontFeatureSettings="tnum"
+            android:textColor="#E9F5F2"
+            android:includeFontPadding="false"
             android:maxLines="1"
-            android:layout_marginTop="2dp" />
+            android:visibility="gone" />
 
-        <!-- Contextual message -->
         <TextView
             android:id="@+id/widget_message"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Adicione tarefas!"
-            android:textSize="10sp"
-            android:textColor="#CCFFFFFF"
-            android:maxLines="1"
+            android:textSize="12sp"
+            android:textColor="#E9F5F2"
+            android:includeFontPadding="false"
+            android:maxLines="2"
             android:ellipsize="end" />
 
     </LinearLayout>

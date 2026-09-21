@@ -1,67 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Pet-screen widget: green grid + hearts (top-left) + animated pet (center) + energy bar (right). -->
+<!-- Widget E "Soulmon (tela)" 3x2 (180x110dp): o unico SEM texto. Coracoes `favorite` 16dp em
+     `viewport-ink` (cheio) / contorno #AAB6B4 (vazio - nunca vermelho, D-F4) no alto a esquerda;
+     energia = 5 segmentos verticais a direita, `primary-fill` acesos / vidro com contorno 1dp
+     apagados (D-F5); a criatura a 64 no centro. A grade verde do DigiApp (`pet_grid`) SAIU. -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:padding="11dp"
+    android:background="@drawable/widget_bg">
 
-    <!-- Background grid (vector — partner_area.png is a broken 0-byte file) -->
-    <ImageView
-        android:layout_width="match_parent"
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true">
+        <ImageView android:id="@+id/widget_heart_1" android:layout_width="16dp" android:layout_height="16dp" android:layout_marginEnd="2dp" android:contentDescription="@null" android:src="@drawable/heart_full" />
+        <ImageView android:id="@+id/widget_heart_2" android:layout_width="16dp" android:layout_height="16dp" android:layout_marginEnd="2dp" android:contentDescription="@null" android:src="@drawable/heart_empty" />
+        <ImageView android:id="@+id/widget_heart_3" android:layout_width="16dp" android:layout_height="16dp" android:layout_marginEnd="2dp" android:contentDescription="@null" android:src="@drawable/heart_empty" />
+        <ImageView android:id="@+id/widget_heart_4" android:layout_width="16dp" android:layout_height="16dp" android:layout_marginEnd="2dp" android:contentDescription="@null" android:src="@drawable/heart_empty" />
+        <ImageView android:id="@+id/widget_heart_5" android:layout_width="16dp" android:layout_height="16dp" android:contentDescription="@null" android:src="@drawable/heart_empty" />
+    </LinearLayout>
+
+    <!-- Energia (direita, vertical, enche de baixo para cima) -->
+    <LinearLayout
+        android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:scaleType="fitXY"
-        android:src="@drawable/pet_grid" />
+        android:orientation="vertical"
+        android:gravity="bottom"
+        android:layout_alignParentEnd="true">
+        <ImageView android:id="@+id/widget_energy_5" android:layout_width="10dp" android:layout_height="0dp" android:layout_weight="1" android:layout_marginBottom="2dp" android:scaleType="fitXY" android:contentDescription="@null" android:src="@drawable/bar_off" />
+        <ImageView android:id="@+id/widget_energy_4" android:layout_width="10dp" android:layout_height="0dp" android:layout_weight="1" android:layout_marginBottom="2dp" android:scaleType="fitXY" android:contentDescription="@null" android:src="@drawable/bar_off" />
+        <ImageView android:id="@+id/widget_energy_3" android:layout_width="10dp" android:layout_height="0dp" android:layout_weight="1" android:layout_marginBottom="2dp" android:scaleType="fitXY" android:contentDescription="@null" android:src="@drawable/bar_off" />
+        <ImageView android:id="@+id/widget_energy_2" android:layout_width="10dp" android:layout_height="0dp" android:layout_weight="1" android:layout_marginBottom="2dp" android:scaleType="fitXY" android:contentDescription="@null" android:src="@drawable/bar_off" />
+        <ImageView android:id="@+id/widget_energy_1" android:layout_width="10dp" android:layout_height="0dp" android:layout_weight="1" android:scaleType="fitXY" android:contentDescription="@null" android:src="@drawable/bar_off" />
+    </LinearLayout>
 
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:padding="8dp">
-
-        <!-- Hearts (top-left) -->
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentStart="true">
-            <ImageView android:id="@+id/widget_heart_1" android:layout_width="15dp" android:layout_height="15dp" android:layout_marginEnd="2dp" android:src="@drawable/heart_full" />
-            <ImageView android:id="@+id/widget_heart_2" android:layout_width="15dp" android:layout_height="15dp" android:layout_marginEnd="2dp" android:src="@drawable/heart_empty" />
-            <ImageView android:id="@+id/widget_heart_3" android:layout_width="15dp" android:layout_height="15dp" android:layout_marginEnd="2dp" android:src="@drawable/heart_empty" />
-            <ImageView android:id="@+id/widget_heart_4" android:layout_width="15dp" android:layout_height="15dp" android:layout_marginEnd="2dp" android:src="@drawable/heart_empty" />
-            <ImageView android:id="@+id/widget_heart_5" android:layout_width="15dp" android:layout_height="15dp" android:src="@drawable/heart_empty" />
-        </LinearLayout>
-
-        <!-- Energy bar (right, vertical, fills from bottom) -->
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:gravity="bottom"
-            android:layout_alignParentEnd="true">
-            <ImageView android:id="@+id/widget_energy_5" android:layout_width="9dp" android:layout_height="0dp" android:layout_weight="1" android:layout_marginBottom="2dp" android:scaleType="fitXY" android:src="@drawable/bar_off" />
-            <ImageView android:id="@+id/widget_energy_4" android:layout_width="9dp" android:layout_height="0dp" android:layout_weight="1" android:layout_marginBottom="2dp" android:scaleType="fitXY" android:src="@drawable/bar_off" />
-            <ImageView android:id="@+id/widget_energy_3" android:layout_width="9dp" android:layout_height="0dp" android:layout_weight="1" android:layout_marginBottom="2dp" android:scaleType="fitXY" android:src="@drawable/bar_off" />
-            <ImageView android:id="@+id/widget_energy_2" android:layout_width="9dp" android:layout_height="0dp" android:layout_weight="1" android:layout_marginBottom="2dp" android:scaleType="fitXY" android:src="@drawable/bar_off" />
-            <ImageView android:id="@+id/widget_energy_1" android:layout_width="9dp" android:layout_height="0dp" android:layout_weight="1" android:scaleType="fitXY" android:src="@drawable/bar_off" />
-        </LinearLayout>
-
-        <!-- Pet sprite (center) — 2-frame breathing -->
-        <ViewFlipper
-            android:layout_width="68dp"
-            android:layout_height="68dp"
-            android:layout_centerInParent="true"
-            android:autoStart="true"
-            android:flipInterval="450">
-            <ImageView
-                android:id="@+id/widget_sprite"
-                android:layout_width="match_parent" android:layout_height="match_parent"
-                android:scaleType="fitEnd" android:src="@drawable/sprite_rookie" />
-            <ImageView
-                android:id="@+id/widget_sprite_2"
-                android:layout_width="match_parent" android:layout_height="match_parent"
-                android:scaleType="fitEnd" android:paddingTop="6dp" android:src="@drawable/sprite_rookie" />
-        </ViewFlipper>
-
-    </RelativeLayout>
+    <ViewFlipper
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_centerInParent="true"
+        android:autoStart="true"
+        android:flipInterval="450">
+        <ImageView
+            android:id="@+id/widget_sprite"
+            android:layout_width="match_parent" android:layout_height="match_parent"
+            android:scaleType="fitEnd" android:contentDescription="@null" android:src="@drawable/sprite_rookie" />
+        <ImageView
+            android:id="@+id/widget_sprite_2"
+            android:layout_width="match_parent" android:layout_height="match_parent"
+            android:scaleType="fitEnd" android:paddingTop="4dp" android:contentDescription="@null" android:src="@drawable/sprite_rookie" />
+    </ViewFlipper>
 
 </RelativeLayout>

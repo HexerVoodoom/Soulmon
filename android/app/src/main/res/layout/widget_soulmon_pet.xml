@@ -1,15 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Widget C "Soulmon (pet)" 1x1 (40x40dp): so a criatura a 32 (384 / 12) dentro do anel; com
+     `has_poop`, o quadro 3 de `anim-poop-plop` (fx_poop, 16dp) no canto - nenhum texto (D-F6).
+     O emoji saiu: o emoji e do fabricante, o FX pixel e nosso. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="6dp"
-    android:background="@drawable/partner_area">
+    android:padding="4dp"
+    android:background="@drawable/widget_bg">
 
-    <!-- Sprite only — 2-frame bounce via ViewFlipper -->
     <ViewFlipper
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_gravity="center"
         android:autoStart="true"
         android:flipInterval="450">
         <ImageView
@@ -17,24 +20,26 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="fitEnd"
+            android:contentDescription="@null"
             android:src="@drawable/sprite_rookie" />
         <ImageView
             android:id="@+id/widget_sprite_2"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="fitEnd"
-            android:paddingTop="8dp"
+            android:paddingTop="2dp"
+            android:contentDescription="@null"
             android:src="@drawable/sprite_rookie" />
     </ViewFlipper>
 
-    <!-- Needs-cleaning indicator (shown while there's uncleaned poop) -->
-    <TextView
+    <ImageView
         android:id="@+id/widget_poop"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="16dp"
+        android:layout_height="16dp"
         android:layout_gravity="bottom|start"
-        android:text="💩"
-        android:textSize="14sp"
+        android:scaleType="fitXY"
+        android:contentDescription="@null"
+        android:src="@drawable/fx_poop"
         android:visibility="gone" />
 
 </FrameLayout>

@@ -1,17 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Widget B "Soulmon (vertical)" 2x2 (110x110dp): 88dp uteis = criatura 48 + nome 13sp +
+     "Rookie / 3/5" 12sp (= 79). A FRASE SAI - remover camada em vez de comprimir (F1/§12,
+     excecao de fidelidade registrada em DECISOES §30 (b)). O contador vive na linha do
+     estagio e so entra com >=1 feita (13.16). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="8dp"
-    android:background="@drawable/partner_area"
+    android:padding="11dp"
+    android:background="@drawable/widget_bg"
     android:gravity="center">
 
-    <!-- Sprite (top) — 2-frame bounce via ViewFlipper -->
     <ViewFlipper
-        android:layout_width="64dp"
-        android:layout_height="64dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:autoStart="true"
         android:flipInterval="450">
         <ImageView
@@ -19,67 +22,44 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="fitEnd"
+            android:contentDescription="@null"
             android:src="@drawable/sprite_rookie" />
         <ImageView
             android:id="@+id/widget_sprite_2"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="fitEnd"
-            android:paddingTop="5dp"
+            android:paddingTop="3dp"
+            android:contentDescription="@null"
             android:src="@drawable/sprite_rookie" />
     </ViewFlipper>
 
-    <!-- Digimon name -->
     <TextView
         android:id="@+id/widget_pet_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="DigiEgg"
+        android:text="Soulmon"
         android:textSize="13sp"
-        android:textStyle="bold"
-        android:textColor="#FFFFFF"
+        android:fontFamily="sans-serif-medium"
+        android:textColor="#E9F5F2"
+        android:includeFontPadding="false"
         android:gravity="center"
         android:maxLines="1"
         android:ellipsize="end"
-        android:shadowColor="#000000"
-        android:shadowDx="1"
-        android:shadowDy="1"
-        android:shadowRadius="2"
-        android:layout_marginTop="4dp" />
+        android:layout_marginTop="2dp" />
 
-    <!-- Stage label -->
+    <!-- "Rookie" ou "Rookie · 3/5" (o renderer monta; tnum para o contador nao dancar) -->
     <TextView
         android:id="@+id/widget_stage"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Ovo Digital"
-        android:textSize="10sp"
-        android:textColor="#CCFFFFFF"
-        android:gravity="center"
-        android:maxLines="1" />
-
-    <!-- Task progress -->
-    <TextView
-        android:id="@+id/widget_tasks"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="—"
-        android:textSize="11sp"
-        android:textColor="#FFFFFF"
+        android:text="Rookie"
+        android:textSize="12sp"
+        android:fontFeatureSettings="tnum"
+        android:textColor="#AAB6B4"
+        android:includeFontPadding="false"
         android:gravity="center"
         android:maxLines="1"
-        android:layout_marginTop="2dp" />
-
-    <!-- Contextual message -->
-    <TextView
-        android:id="@+id/widget_message"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Adicione tarefas!"
-        android:textSize="10sp"
-        android:textColor="#CCFFFFFF"
-        android:gravity="center"
-        android:maxLines="2"
         android:ellipsize="end" />
 
 </LinearLayout>

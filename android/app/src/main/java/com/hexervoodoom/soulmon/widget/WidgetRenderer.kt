@@ -4,6 +4,8 @@ import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.view.View
 import android.widget.RemoteViews
 import com.hexervoodoom.soulmon.R
@@ -12,8 +14,10 @@ import com.hexervoodoom.soulmon.R
 object WidgetRenderer {
     const val PREFS_NAME = "DigiWidgetPrefs"
 
-    // Full widget: sprite + name/stage/tasks/message. Layouts A (horizontal) and B (vertical)
-    // share the same view IDs, so they reuse this renderer with a different layout resource.
+    // Widgets A (horizontal, 180×90) e B (vertical, 110²) — canvas Fora do app (DECISÕES §30).
+    // Compartilham `widget_pet_name` e `widget_stage`; só o A tem `widget_tasks` e
+    // `widget_message` (no B a frase SAIU e o contador vive na linha do estágio — remover
+    // camada em vez de comprimir, exceção (b) do §30).
     fun renderFull(context: Context, mgr: AppWidgetManager, appWidgetId: Int, layoutId: Int) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val petName = prefs.getString("pet_name", "Soulmon") ?: "Soulmon"
@@ -23,25 +27,52 @@ object WidgetRenderer {
         val hp = prefs.getInt("hp", 100)
         val eggType = prefs.getString("egg_type", "") ?: ""
         val branchType = prefs.getString("branch_type", "data") ?: "data"
+        val vertical = layoutId == R.layout.widget_soulmon_vertical
 
         val views = RemoteViews(context.packageName, layoutId)
-        setSprite(views, resolveSprite(context, currentStage, eggType, branchType))
+        setSprite(context, views, resolveSprite(context, currentStage, eggType, branchType), if (vertical) 48 else 64)
         views.setTextViewText(R.id.widget_pet_name, petName)
-        views.setTextViewText(R.id.widget_stage, stageLabel(currentStage))
-        views.setTextViewText(R.id.widget_tasks, if (totalTasks > 0) "$completedTasks/$totalTasks" else "—")
-        views.setTextViewText(
-            R.id.widget_message,
-            contextualMessage(
-                completedTasks,
-                totalTasks,
-                hp,
-                prefs.getBoolean("needs_intervention", false),
-                if (prefs.contains("habit_steady")) prefs.getBoolean("habit_steady", false) else null,
-            ),
-        )
+        // O contador só existe com ≥1 feita (13.16): nunca "0/5", nunca um traço no zero.
+        val counter = taskCounter(completedTasks, totalTasks)
+        if (vertical) {
+            views.setTextViewText(
+                R.id.widget_stage,
+                if (counter != null) "${stageLabel(currentStage)} · $counter" else stageLabel(currentStage),
+            )
+        } else {
+            views.setTextViewText(R.id.widget_stage, stageLabel(currentStage))
+            if (counter != null) {
+                views.setViewVisibility(R.id.widget_tasks, View.VISIBLE)
+                views.setTextViewText(R.id.widget_tasks, counter)
+                views.setInt(R.id.widget_message, "setMaxLines", 1)
+            } else {
+                // A linha some e devolve o espaço à frase (duas linhas).
+                views.setViewVisibility(R.id.widget_tasks, View.GONE)
+                views.setInt(R.id.widget_message, "setMaxLines", 2)
+            }
+            views.setTextViewText(
+                R.id.widget_message,
+                contextualMessage(
+                    completedTasks,
+                    totalTasks,
+                    hp,
+                    prefs.getBoolean("needs_intervention", false),
+                    if (prefs.contains("habit_steady")) prefs.getBoolean("habit_steady", false) else null,
+                ),
+            )
+        }
         attachClick(context, views)
         mgr.updateAppWidget(appWidgetId, views)
     }
+
+    /**
+     * "3/5" com ≥1 feita; `null` (= a linha SOME) com zero feitas ou zero tarefas.
+     * 13.16: o widget nunca mostra "0/N" — zero feitas é o placar de quem ainda não
+     * começou, e placar na tela inicial é cobrança. O guard
+     * `widgetSemCobranca.contract.test.ts` lê este fonte.
+     */
+    private fun taskCounter(completed: Int, total: Int): String? =
+        if (total > 0 && completed > 0) "$completed/$total" else null
 
     // Pet-only widget: just the sprite (+ needs-cleaning indicator).
     fun renderPet(context: Context, mgr: AppWidgetManager, appWidgetId: Int, layoutId: Int) {
@@ -52,16 +83,46 @@ object WidgetRenderer {
         val hasPoop = prefs.getBoolean("has_poop", false)
 
         val views = RemoteViews(context.packageName, layoutId)
-        setSprite(views, resolveSprite(context, currentStage, eggType, branchType))
+        setSprite(context, views, resolveSprite(context, currentStage, eggType, branchType), 32)
         views.setViewVisibility(R.id.widget_poop, if (hasPoop) View.VISIBLE else View.GONE)
         attachClick(context, views)
         mgr.updateAppWidget(appWidgetId, views)
     }
 
-    // Both ViewFlipper frames use the same sprite (frame 2 is offset in XML for the bounce).
-    private fun setSprite(views: RemoteViews, spriteId: Int) {
-        views.setImageViewResource(R.id.widget_sprite, spriteId)
-        views.setImageViewResource(R.id.widget_sprite_2, spriteId)
+    /**
+     * A criatura nos dois quadros do ViewFlipper, como BITMAP no tamanho exato em dp
+     * (decisão (a) do §30: `setImageViewBitmap`, uma cara só por estágio).
+     *
+     * Por que bitmap e não `setImageViewResource`: os `sprite_*.png` são 384² e ficavam
+     * em `drawable/` (= mdpi), então um xxxhdpi pré-escalava para 1056² antes de o
+     * ImageView reduzir para 64dp — duas reamostragens e ~4 MB por quadro. Agora vivem
+     * em `drawable-nodpi/`, são decodificados crus (`inScaled = false`) e reduzidos UMA
+     * vez, para `sizeDp × density` px com filtro bilinear (a arte é ilustração, não pixel
+     * art de 32 — X2 do canvas). Um bitmap de 64dp a xxxhdpi tem 256² × 4 B = 256 KB,
+     * folgado no teto do RemoteViews. Se a decodificação falhar (memória), cai no
+     * recurso — o widget nunca fica sem criatura.
+     */
+    private fun setSprite(context: Context, views: RemoteViews, spriteId: Int, sizeDp: Int) {
+        val bmp = spriteBitmap(context, spriteId, sizeDp)
+        if (bmp != null) {
+            views.setImageViewBitmap(R.id.widget_sprite, bmp)
+            views.setImageViewBitmap(R.id.widget_sprite_2, bmp)
+        } else {
+            views.setImageViewResource(R.id.widget_sprite, spriteId)
+            views.setImageViewResource(R.id.widget_sprite_2, spriteId)
+        }
+    }
+
+    private fun spriteBitmap(context: Context, spriteId: Int, sizeDp: Int): Bitmap? {
+        val px = (sizeDp * context.resources.displayMetrics.density).toInt().coerceAtLeast(1)
+        return try {
+            val opts = BitmapFactory.Options().apply { inScaled = false }
+            val raw = BitmapFactory.decodeResource(context.resources, spriteId, opts) ?: return null
+            if (raw.width == px && raw.height == px) raw
+            else Bitmap.createScaledBitmap(raw, px, px, true).also { if (it !== raw) raw.recycle() }
+        } catch (e: OutOfMemoryError) {
+            null
+        }
     }
 
     private val CHAT_PHRASE_SLOTS = intArrayOf(
@@ -69,6 +130,9 @@ object WidgetRenderer {
         R.id.widget_phrase_4, R.id.widget_phrase_5
     )
 
+    /* ⚰️ "Don't forget about me today!" SAIU (PRINCÍPIOS §12, veto registrado no
+       STATUS): é a frase de culpa por excelência — o pet cobrando presença. Teto do pool
+       ~22 caracteres (§30 (c), copy com o `redator-ux`); o `ellipsize` do layout é só a rede. */
     private val CHAT_FIXED_PHRASES = listOf(
         "Glad you're back!",
         "Let's tackle our tasks together?",
@@ -78,11 +142,10 @@ object WidgetRenderer {
         "You can always count on me!",
         "Good to see you!",
         "Together we're stronger!",
-        "Don't forget about me today!",
         "I'm rooting for you!"
     )
 
-    // Chat widget (4x2): animated sprite + auto-rotating phrases.
+    // Widget D (chat, 180×40): criatura a 32 + nome + frases girando.
     fun renderChat(context: Context, mgr: AppWidgetManager, appWidgetId: Int, layoutId: Int) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val petName = prefs.getString("pet_name", "Soulmon") ?: "Soulmon"
@@ -94,9 +157,9 @@ object WidgetRenderer {
         val hp = prefs.getInt("hp", 100)
 
         val views = RemoteViews(context.packageName, layoutId)
-        setSprite(views, resolveSprite(context, currentStage, eggType, branchType))
+        setSprite(context, views, resolveSprite(context, currentStage, eggType, branchType), 32)
         views.setTextViewText(R.id.widget_pet_name, petName)
-        views.setTextViewText(R.id.widget_tasks, if (total > 0) "$completed/$total" else "—")
+        // Sem linha de contador no D (180×40 cabe duas linhas, não três — F1/V6, §30 (b)).
 
         val phrases = buildChatPhrases(currentStage, completed, total, hp)
         for (i in CHAT_PHRASE_SLOTS.indices) {
@@ -135,7 +198,7 @@ object WidgetRenderer {
         R.id.widget_energy_4, R.id.widget_energy_5
     )
 
-    // Pet-screen widget: green grid + hearts (health) + animated pet + energy bar.
+    // Widget E (tela, 180×110): corações `favorite` + criatura a 64 + energia — sem texto.
     fun renderScreen(context: Context, mgr: AppWidgetManager, appWidgetId: Int, layoutId: Int) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val currentStage = prefs.getString("current_stage", "rookie") ?: "rookie"
@@ -146,9 +209,10 @@ object WidgetRenderer {
         val energy = prefs.getInt("energy_points", 0).coerceIn(0, maxH)
 
         val views = RemoteViews(context.packageName, layoutId)
-        setSprite(views, resolveSprite(context, currentStage, eggType, branchType))
+        setSprite(context, views, resolveSprite(context, currentStage, eggType, branchType), 64)
 
-        // Hearts: red = current health, dark = empty; hide slots beyond maxHealth.
+        // Corações: cheio em `viewport-ink`, vazio em CONTORNO (nunca vermelho — D-F4);
+        // os slots além de maxHealth somem.
         for (i in SCREEN_HEART_IDS.indices) {
             if (i < maxH) {
                 views.setViewVisibility(SCREEN_HEART_IDS[i], View.VISIBLE)
@@ -292,24 +356,30 @@ object WidgetRenderer {
          * A régua da reescrita: nada que conte o que falta, nada que peça, e
          * a voz é do PET falando com a pessoa — não do app lendo a própria UI.
          */
+        // A escada é SÓ EM INGLÊS (REGISTRO 13.18 — o widget não tem idioma) e SEM
+        // emoji (D-F3: o RemoteViews não tem fonte de ícone e o emoji é do fabricante;
+        // no visor a frase lê sozinha). As 7 frases são a copy do canvas Fora do app
+        // (Escada.dc.html), sujeita ao `redator-ux` (V7/X5).
         // HP baixo é saudade, nunca alarme: o HP representa o cuidado que a
         // pessoa teve consigo mesma, e um ⚠️ ali converte culpa em vergonha.
-        if (hp <= 20) return "💛 Tô com saudade de você"
+        if (hp <= 20) return "I've been missing you"
         // Quem faltou duas vezes seguidas precisa da porta pequena, não do placar.
-        if (needsIntervention) return "🌱 Hoje, só 5 minutos?"
+        if (needsIntervention) return "Today, just five minutes?"
         if (total == 0) {
             // Sem tarefa hoje, a FAIXA de constância ainda tem o que dizer —
             // e ela é uma faixa, nunca o percentual (ver `habit_steady`).
-            if (habitSteady == true) return "🌳 Você tem estado firme"
-            return "🌤️ Um dia de cada vez"
+            if (habitSteady == true) return "You've been steady"
+            return "One day at a time"
         }
         val ratio = if (total > 0) completed.toDouble() / total else 0.0
         return when {
-            ratio >= 1.0 -> "✨ Dia perfeito!"
-            ratio >= 0.7 -> "💪 Quase lá!"
-            ratio >= 0.4 -> "🔥 Continue assim!"
+            // "Complete day", nunca "perfeito" (regra P5, 07/09): o dia completo é o
+            // combinado cumprido, não uma nota.
+            ratio >= 1.0 -> "Complete day!"
+            ratio >= 0.7 -> "Almost there!"
+            ratio >= 0.4 -> "Keep it up!"
             // O degrau de baixo NÃO conta o que falta. Começar já é o passo.
-            else -> "🌱 Começou — isso já conta"
+            else -> "You started — that already counts"
         }
     }
 }

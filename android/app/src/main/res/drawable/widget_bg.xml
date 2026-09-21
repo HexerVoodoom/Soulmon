@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- O widget É o visor (canvas Fora do app, D-F1/X7): vidro `viewport-bg` + anel de cobre
+     `viewport-ring` chapado, 3dp. Literais de propósito — o RemoteViews não lê token e o
+     widget NÃO tem tema (X1): os mesmos hex sobre qualquer papel de parede. A régua dos
+     pares é `src/styles/tokens.contrast.test.ts` (#E9F5F2/#071413 16,82 · #AAB6B4 8,99).
+     Raio: 12dp aqui (API 26–30); em `drawable-v31/` o raio é o do sistema
+     (`system_app_widget_background_radius`), com que o Android 12+ recorta o widget. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="#071413" />
+    <stroke android:width="3dp" android:color="#C68642" />
+    <corners android:radius="12dp" />
+</shape>
