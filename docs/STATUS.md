@@ -7,6 +7,17 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 21/09/2026 — sincronização do manual pós-merge `f9faf7a7` (QA geral)
+>
+> Delta `9f4e5a7a..f9faf7a7`, feita inline pelo coordenador (sem despacho de redatores: as
+> passagens tocadas são poucas e cada uma foi conferida por grep no código). 8 docs recarimbados:
+> `02` §consentimento (versões `2026-09-21` + régua `consent.versoes.contract.test.ts`), `04`
+> (`.sm2-chat-support` 12px; anti-flash lia `digiapp-theme`; §10.0 novo — `description`/Open
+> Graph e a `og:image` como 4ª fonte do `appUrl.contract`), `08` (`android-build.yml` sem
+> `version-b`), `10` §18 (a fila viva é `PERGUNTAS-DO-DONO.md`, #11–#39), `12` (hook conta a
+> fila), `06-REFERENCIA/utils.md` e `desktop.md` (lápides), `00-MAPA` §6.5 (17 docs da review
+> indexados). Guards `docsManual` + `docsSemMentira` verdes (2 files / 10 tests).
+
 > ## 21/09/2026 — QA GERAL: 19 frentes em paralelo, "o que nunca foi analisado nem desenvolvido"
 >
 > Pedido do dono: pull, chamar todos os agentes/skills/squads, mapear tudo e atualizar tudo.

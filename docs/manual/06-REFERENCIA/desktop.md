@@ -1,6 +1,6 @@
 # Referência — desktop (Electron)
 
-> **Dono:** doc-redator-referencia · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (mecânico completo; delta `dc72579e..9875477b` conferido símbolo a símbolo, sha a sha)
+> **Dono:** doc-redator-referencia · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: mecânico completo; delta `dc72579e..9875477b` conferido símbolo a símbolo, sha a sha)
 > **Verificação:** `npx tsc -p desktop/tsconfig.json --noEmit && npx vitest run desktop`
 > **Não cobre:** regra de negócio em profundidade (→ `02-REGRAS-DE-NEGOCIO.md`), o build/release do desktop (→ `08-INTEGRACOES-E-DEPLOY.md`, `desktop/README.md`), as regras de cuidado em si (→ `src/utils/careRules.ts` em `06-REFERENCIA/utils.md`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -28,7 +28,7 @@ A separação de responsabilidade é física, não estilística: `desktop/electr
 **Exports:** nenhum (`module.exports` ausente) — é o entrypoint do processo principal, carregado pelo `package.json` (`main`), sem chamador dentro do próprio repositório em JS.
 **Chamado por:** processo Electron (entrypoint), não por outro módulo.
 **Régua:** nenhuma direta (não é importável); as decisões que ele delega são travadas por `desktop/renderer/src/navigationPolicy.test.ts` e `updatePolicy.test.ts`.
-**Avisos do arquivo:** a DECISÃO de quem pode navegar e de quem pode publicar token mora em `navigationPolicy.js` "porque este aqui não é importável por teste nenhum" (comentário próprio, em PT sem acento — estilo do autor original desta seção). `FULL_APP_URL` ainda cita, em comentário, "aponta pro Pages compartilhado" — resíduo de antes da migração de URL (ver `desktop/renderer/src/config.ts` abaixo, onde o MESMO resíduo foi corrigido); a URL efetiva (`https://soulmon.mateus-sprnd.workers.dev`) já está certa nas três fontes, travada por `src/deploy/appUrl.contract.test.ts`.
+**Avisos do arquivo:** a DECISÃO de quem pode navegar e de quem pode publicar token mora em `navigationPolicy.js` "porque este aqui não é importável por teste nenhum" (comentário próprio, em PT sem acento — estilo do autor original desta seção). ⚰️ `FULL_APP_URL` citava, em comentário, "aponta pro Pages compartilhado" — resíduo de antes da migração de URL, corrigido em `f9faf7a7` (QA geral de 21/09/2026; o comentário agora nomeia as três fontes e a régua); a URL efetiva (`https://soulmon.mateus-sprnd.workers.dev`) já está certa nas três fontes, travada por `src/deploy/appUrl.contract.test.ts`.
 
 **Estrutura interna (não exportada, para orientação de leitura):**
 - `createOverlay()` — janela transparente, `frame:false`, `skipTaskbar:true`, `setAlwaysOnTop(true,'screen-saver')`, `setIgnoreMouseEvents(true,{forward:true})` por padrão (click-through; o renderer avisa via `set-interactive` quando o mouse está sobre o pet). Faixa com `STRIP_HEIGHT = 72` e criatura `PET_SIZE = 64` (era 180/96 até `e2e196b2` — a criatura a 64, ÷6 de 384, escala inteira, rente ao chão; o balão passou a ficar AO LADO dela, não em cima, então não precisa mais de espaço acima do pet).

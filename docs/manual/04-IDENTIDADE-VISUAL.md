@@ -1,6 +1,6 @@
 # Identidade visual e sonora do Soulmon
 
-> **Dono:** doc-redator-identidade · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `dc72579e..9875477b`, conferido em `5ac3d351`: rodada 2 da SQUAD-ARTE, SQUAD-SOM retomada, superfície de suporte do chat) · §9 verificado em 21/09/2026 por doc-verificador (delta `5ac3d351..8d318529`: S16, trilha em duas camadas, escolha do dono nos 3 eventos longos, chaves na `SettingsPage`)
+> **Dono:** doc-redator-identidade · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: delta `dc72579e..9875477b`, conferido em `5ac3d351`: rodada 2 da SQUAD-ARTE, SQUAD-SOM retomada, superfície de suporte do chat) · §9 verificado em 21/09/2026 por doc-verificador (delta `5ac3d351..8d318529`: S16, trilha em duas camadas, escolha do dono nos 3 eventos longos, chaves na `SettingsPage`)
 > **Verificação:** `npx vitest run src/styles/ src/index.css.contract.test.ts src/utils/sprites.dungeonRoster.test.ts src/utils/loudness.contract.test.ts src/utils/cortes.contract.test.ts src/utils/sonsAssets.contract.test.ts src/components/ui/Viewport.contract.test.tsx src/components/ui/foundation.render.test.tsx src/brand/brandFlame.parity.test.ts src/assets/assets.contract.test.ts` — os 11 arquivos de 09/09/2026 (216 testes, verde) mais os dois que nasceram com a marca vetorizada e a leva de arte de 15/09/2026, mais `sonsAssets.contract.test.ts` (21/09/2026, S16).
 > **Não cobre:** o fluxo entre telas e o que cada superfície mostra (doc `03-FLUXO-DE-TELAS.md`); as regras de jogo por trás dos números que a UI pinta (doc `02-REGRAS-DE-NEGOCIO.md`); a assinatura de cada componente (`06-REFERENCIA/components.md`); o pipeline de build/deploy dos assets (doc `08-INTEGRACOES-E-DEPLOY.md`). Este doc descreve o som — **não** decide nada sobre ele: quem decide é o `REGISTRO-DE-DECISOES.md` (§6.1, S1..S16 — não existe S14).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -71,10 +71,12 @@ Medição: `grep -o -- '--sm-[a-z0-9-]*:' src/index.css | sort -u | wc -l` →
 linhas novas são duas classes, `.sm2-chat-support` e `.sm2-chat-support-link`
 (`6ad2e629` e `f3654076`, 21/09/2026): a superfície de suporte do chat, par visual da
 cláusula SAFETY de `functions/api/chat.js`. **Discrição é requisito clínico,
-não escolha de estilo** — corpo `11px`, `color: var(--sm-muted)`, `max-width:
+não escolha de estilo** — corpo `12px` (⚰️ nasceu com `11px`, abaixo do piso
+absoluto do §4.3; subiu no QA geral de 21/09/2026, `f9faf7a7` — o guard da escala
+só olha `--sm2-text-*`, não literais), `color: var(--sm-muted)`, `max-width:
 62ch`, sem ícone, sem caixa e sem cor de alerta (nada de `--sm2-danger-*`); o
 link é `color: inherit` + sublinhado sempre (decisão do dono, 21/09/2026: em
-texto `muted` de 11px, cor sozinha não sinaliza link). Nenhum token novo; o
+texto `muted` pequeno, cor sozinha não sinaliza link). Nenhum token novo; o
 contraste é o do `--sm-muted` do tema (§3.1). O fluxo em que ela aparece é do
 doc `03-FLUXO-DE-TELAS.md`. ⚰️ Os **14** que saíram são todos do kit pixel antigo,
 removidos em `f318984f` (16/09/2026, "remove as regras `.sm-px-*` que o kit
@@ -351,7 +353,12 @@ pedia como `--sm-space-1..6` e que não existia até 16/09/2026 (§11.2).
 - O provider escreve `document.documentElement.dataset.theme` com o tema
   RESOLVIDO. O `data-theme` inicial já vem de um **script inline no
   `index.html`**, que roda antes do primeiro paint (evita FOUC); o provider só
-  assume o controle depois que o React monta.
+  assume o controle depois que o React monta. ⚰️ Esse script leu
+  `localStorage['digiapp-theme']` de 07/09 (quando a chave virou
+  `STORAGE_KEYS.THEME` = `soulmon-theme`) até `f9faf7a7` (QA geral de
+  21/09/2026) — o anti-flash ignorava a preferência salva. Mexer nele exige
+  refazer o `sha256-` correspondente em `public/_headers`
+  (`src/security/csp.test.ts` reprova).
 - ⚠️ **`resolveSystemPreference()` devolve `'dark'` incondicionalmente.** O modo
   `'system'` NÃO segue o sistema operacional. A justificativa está escrita na
   função: o visual do jogo (moldura cobre, teal escuro) só existe pensado para o
@@ -1369,6 +1376,16 @@ para o git** — por isso `docs/SOM.md` existe: é a parte que precisa sobrevive
 ---
 
 ## 10. PWA, marca e splash
+
+### 10.0 `index.html` — `description` e Open Graph (desde `f9faf7a7`, 21/09/2026)
+
+O `<head>` declara `meta name="description"`, `og:type/site_name/title/description/image/locale`
+(+ `og:locale:alternate` `en_US`) e `twitter:card` — antes disso `grep og: index.html` dava 0 e
+o link chegava "pelado" em qualquer chat (QA geral, relatório `12-growth-distribuicao.md`). A
+`og:image` é **absoluta** (crawler não resolve caminho relativo) e aponta para o ícone 512 no
+worker; por isso ela é a quarta fonte que `src/deploy/appUrl.contract.test.ts` obriga a
+concordar com `capacitor.config.json`, `desktop/renderer/src/config.ts` e
+`desktop/electron/main.js`. Trocar por um key visual 1200×630 quando a squad-arte gerar.
 
 ### 10.1 `public/manifest.json`
 

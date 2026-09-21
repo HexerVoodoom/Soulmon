@@ -1,6 +1,6 @@
 # Como manter o manual
 
-> **Dono:** doc-bibliotecario · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (sincronização pós-merge `dc72579e..9875477b`, conferida em `5ac3d351`)
+> **Dono:** doc-bibliotecario · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: sincronização pós-merge `dc72579e..9875477b`, conferida em `5ac3d351`)
 > **Verificação:** `npx vitest run src/docsManual.contract.test.ts src/docsSemMentira.contract.test.ts` (as duas travas descritas aqui) + `node scripts/docs-inventario.mjs` (a medição que alimenta o ciclo)
 > **Não cobre:** o CONTEÚDO de nenhum doc (cada um tem dono declarado no próprio cabeçalho) e as regras do jogo ([02-REGRAS-DE-NEGOCIO.md](02-REGRAS-DE-NEGOCIO.md)). Aqui só se responde "como se escreve, verifica e trava documentação neste repositório".
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -239,7 +239,10 @@ levantam o **`doc-mantenedor`** (`.claude/agents/doc-mantenedor.md`, skill
 [`manter-docs`](../../.claude/skills/manter-docs/SKILL.md), comando `/manter-docs`):
 
 1. **O hook de início de sessão** (`.claude/hooks/session-start.sh`) imprime
-   `node scripts/docs-delta.mjs --resumo` e o resultado do guard. Se disser
+   `node scripts/docs-delta.mjs --resumo`, o resultado do guard e a fila do dono
+   (contagem de perguntas e última seção de `docs/PERGUNTAS-DO-DONO.md` — ⚰️ até
+   `f9faf7a7` lia um bloco fixo de 09/09 do `STATUS.md` e toda sessão abria com
+   pendências velhas; achado do QA geral de 21/09/2026). Se disser
    `docs: DEFASADO`, o `soulmon-coordenador` (`/soulmon start`) despacha
    `/manter-docs auto` antes do trabalho novo. **O resultado do guard são DUAS
    linhas do vitest — `Test Files` e `Tests`** (desde `708893c0`, 14/09/2026).

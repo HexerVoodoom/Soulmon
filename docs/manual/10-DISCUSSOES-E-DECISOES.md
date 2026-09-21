@@ -1,6 +1,6 @@
 # Discussões e decisões — onde cada uma vive
 
-> **Dono:** doc-historiador · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `15164e4c..7e5d0ba9`: as linhas de 21/09/2026 dos temas narrativa/PI — `REGISTRO-DE-DECISOES.md` §14.1/§14.2/§14.4, `NARRATIVA-PROPOSTAS.md` P1–P10, `vetos.md` — e as fichas de `NARRATIVA-E-UNIVERSO.md`/`NARRATIVA-PROPOSTAS.md` do índice de docs; verificação anterior: delta `5ac3d351..8d318529`, tema som — shas, anchors e as citações de `STATUS.md`/`SOM.md`/`REGISTRO`/`PERGUNTAS`/`Attributions` conferidas; verificação anterior: em `9875477b`, conferido em `5ac3d351`)
+> **Dono:** doc-historiador · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: delta `15164e4c..7e5d0ba9`: as linhas de 21/09/2026 dos temas narrativa/PI — `REGISTRO-DE-DECISOES.md` §14.1/§14.2/§14.4, `NARRATIVA-PROPOSTAS.md` P1–P10, `vetos.md` — e as fichas de `NARRATIVA-E-UNIVERSO.md`/`NARRATIVA-PROPOSTAS.md` do índice de docs; verificação anterior: delta `5ac3d351..8d318529`, tema som — shas, anchors e as citações de `STATUS.md`/`SOM.md`/`REGISTRO`/`PERGUNTAS`/`Attributions` conferidas; verificação anterior: em `9875477b`, conferido em `5ac3d351`)
 > **Verificação:** abra cada caminho citado e confira a seção nomeada existe (`grep -n "^## " <caminho>`)
 > **Não cobre:** o CONTEÚDO integral de cada discussão — este documento é um ÍNDICE, não a discussão. Para "como chegamos aqui" em datas e commits, veja `09-HISTORICO.md`
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde este índice apontar para um documento que discorda do código, o código está certo e o documento apontado tem defeito — não este índice.
@@ -487,6 +487,15 @@ silêncio (footgun 9 do `CLAUDE.md`, aplicado a prosa em vez de código). Em
 `../STATUS.md#-depende-do-dono-09092026--três-decisões-abertas`: o projeto
 Supabase da transcrição, a decisão sobre `getRedirectResult` no login, e a
 palavra do rótulo do Bestiário na Home.
+
+**Desde 20/09/2026 a fila viva de perguntas é `../PERGUNTAS-DO-DONO.md`** (regra
+do dono: seguir a recomendada sem travar; cada linha traz o provisório aplicado e
+o que muda se ele responder diferente). O QA geral de 21/09/2026
+(`../reviews/2026-09-21-qa-geral/00-CONSOLIDADO.md` §5) acrescentou **#11–#39**
+— as que mais destravam são #11 (quem é o primeiro usuário real), #12 (rota de
+cortesia), #18 (`METRICS_ADMIN_KEY`) e #38 (as sete afirmações falsas do
+`CLAUDE.md`). É esse arquivo que o hook de sessão passou a contar
+(`.claude/hooks/session-start.sh`, desde `f9faf7a7`).
 
 Para decisões de PRODUTO (não infraestrutura) que aguardam o dono, a lista
 correspondente é `docs/PLANO-MELHORIAS.md#10-decisões-que-só-o-dono-pode-tomar-e-o-que-cada-uma-destrava`

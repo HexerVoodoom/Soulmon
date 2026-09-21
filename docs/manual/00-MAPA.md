@@ -1,6 +1,6 @@
 # Mapa do manual do Soulmon — comece por aqui
 
-> **Dono:** doc-bibliotecario · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (sincronização pós-merge `5ac3d351..8d318529`, tema som — `sonsAssets.ts`, `trilha.ts`, `public/sounds/` e `Attributions.md` › Áudio conferidos; anterior: `dc72579e..9875477b`, conferida em `5ac3d351`; guard verde)
+> **Dono:** doc-bibliotecario · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: sincronização pós-merge `5ac3d351..8d318529`, tema som — `sonsAssets.ts`, `trilha.ts`, `public/sounds/` e `Attributions.md` › Áudio conferidos; anterior: `dc72579e..9875477b`, conferida em `5ac3d351`; guard verde)
 > **Verificação:** `npx vitest run src/docsManual.contract.test.ts` — o item (a) exige que TODO `.md` de `docs/` (exceto `historico-digiapp/`) esteja citado neste arquivo, e o item (b) exige que todo link relativo do manual resolva. O item (d) proíbe referência `arquivo` + número de linha em qualquer doc do manual.
 > **Não cobre:** o conteúdo de nada. Este documento **aponta**; quem responde é o doc dono de cada assunto. Se você está lendo uma regra AQUI, o índice tem defeito.
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.

@@ -1,6 +1,6 @@
 # Referência — `src/utils`
 
-> **Dono:** doc-redator-referencia · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador — delta `dc72579e..9875477b`; a devolução de `welcomeBack.ts` foi fechada pelo doc-mantenedor com a evidência do próprio verificador (`f3654076`, §14.3) e reconferida; entradas de `audioBus.ts`, `loudness.ts`, `sonsAssets.ts`, `sounds.ts` e `trilha.ts` verificadas em 21/09/2026 por doc-verificador sobre `5ac3d351..8d318529` (carimbo anterior, sobre `dc72579e`: verificado em 21/09/2026 por doc-verificador, mecânico completo; descrição por amostra dirigida de 15 módulos)
+> **Dono:** doc-redator-referencia · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `9f4e5a7a..f9faf7a7`, QA geral — só `consent.ts`, conferido por grep; anterior: delta `dc72579e..9875477b`); a devolução de `welcomeBack.ts` foi fechada pelo doc-mantenedor com a evidência do próprio verificador (`f3654076`, §14.3) e reconferida; entradas de `audioBus.ts`, `loudness.ts`, `sonsAssets.ts`, `sounds.ts` e `trilha.ts` verificadas em 21/09/2026 por doc-verificador sobre `5ac3d351..8d318529` (carimbo anterior, sobre `dc72579e`: verificado em 21/09/2026 por doc-verificador, mecânico completo; descrição por amostra dirigida de 15 módulos)
 > **Verificação:** `npx vitest run src/docsManual.contract.test.ts` (item c — cobertura) + os testes listados em **Régua** de cada módulo.
 > **Não cobre:** o CONTEÚDO das regras de jogo em profundidade (→ [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md)); componentes, hooks, contexts, types, plugins, constants, `functions/api`, `workers/` e `desktop/` (→ os outros docs de `06-REFERENCIA/`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -397,7 +397,7 @@ Cobertura: **120/120** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 **Exports:**
 - `MIN_AGE_YEARS` — Idade mínima do Soulmon (D-06).
 - `TERMS_VERSION` — Versão dos documentos aceitos. Formato de data (AAAA-MM-DD) porque é o mesmo carimbo que aparece no "Última atualização" dos HTMLs — quem lê o save consegue achar o texto exato que foi aceito.
-- `PRIVACY_VERSION` — `'2026-08-25'`
+- `PRIVACY_VERSION` — `'2026-09-21'` (as duas constantes; ⚰️ `'2026-08-25'` até `f9faf7a7`). Régua: `consent.versoes.contract.test.ts` compara com o carimbo dos HTMLs de `public/`.
 - `ConsentRecord` (interface) — campos: `acceptedAt`, `termsVersion`, `privacyVersion`.
 - `function buildConsentRecord(now: Date = new Date()): ConsentRecord` — O registro a gravar no save quando a pessoa marca a caixa.
 - `function ageOn(birthDate: string, now: Date = new Date()): number | null` — Idade em anos completos na data `now`. `birthDate` no formato AAAA-MM-DD (o mesmo que o onboarding já monta). Data inválida devolve `null` — quem chama decide, e "não sei a idade" nunca vira "é menor".
