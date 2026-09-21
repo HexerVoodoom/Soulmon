@@ -7,16 +7,26 @@
 import { describe, it, expect } from 'vitest';
 import { PET_VOICE_LINES, petVoiceLine, type PetVoiceKind } from './petVoice';
 
-const KINDS: PetVoiceKind[] = ['task', 'haunted', 'rub', 'shower', 'milestone'];
+/** TODOS os kinds — inclusive os que nasceram em 21/09/2026 (`full`, `healCap`,
+ *  `steady`, `sleep`, `wake`, `residue`). A lista vem do objeto, não à mão:
+ *  kind novo entra na varredura de tom sem ninguém lembrar de acrescentar. */
+const KINDS = Object.keys(PET_VOICE_LINES) as PetVoiceKind[];
+/** Os cinco gestos do WP3.2, que têm três variantes cada. */
+const KINDS_WP32: PetVoiceKind[] = ['task', 'haunted', 'rub', 'shower', 'milestone'];
 
 /** Cobrança, vergonha e comparação com um passado idealizado. */
 const PROIBIDAS_PT = [
   'deveria', 'devia', 'atrasou', 'atrasad', 'falhou', 'falha', 'esqueceu',
   'finalmente', 'até que enfim', 'preguiç', 'desculpa', 'culpa', 'perdeu',
 ];
-const PROIBIDAS_EN = [
-  'should', 'late', 'failed', 'failure', 'forgot', 'finally', 'at last',
-  'lazy', 'excuse', 'guilt', 'lost',
+/* Regex, e não substring, desde 21/09/2026: `'late'` casava "later" ("I'll
+   keep this one for later") e `'forgot'` casava a criatura esquecendo a
+   PRÓPRIA coisa ("I was going to tell you something and forgot" — copy §1.1:
+   ela tem esquecimento próprio, é outra pessoa, não um medidor). A cobrança é
+   "YOU forgot", e é isso que fica travado. */
+const PROIBIDAS_EN: RegExp[] = [
+  /should/, /late/, /failed/, /failure/, /you forgot/, /finally/, /at last/,
+  /lazy/, /excuse/, /guilt/, /lost/,
 ];
 
 describe('petVoice — nenhuma frase cobra', () => {
@@ -29,7 +39,7 @@ describe('petVoice — nenhuma frase cobra', () => {
       }
       for (const linha of PET_VOICE_LINES[kind].en) {
         for (const p of PROIBIDAS_EN) {
-          expect(linha.toLowerCase(), `"${linha}"`).not.toContain(p);
+          expect(linha.toLowerCase(), `"${linha}" ~ ${p}`).not.toMatch(p);
         }
       }
     });
@@ -38,9 +48,35 @@ describe('petVoice — nenhuma frase cobra', () => {
 
 describe('petVoice — os dois idiomas, sempre', () => {
   it('todo kind tem 3 frases em PT e 3 em EN', () => {
-    for (const kind of KINDS) {
+    for (const kind of KINDS_WP32) {
       expect(PET_VOICE_LINES[kind].pt, kind).toHaveLength(3);
       expect(PET_VOICE_LINES[kind].en, kind).toHaveLength(3);
+    }
+  });
+
+  it('todo kind tem o MESMO número de frases em PT e EN, e pelo menos uma', () => {
+    // String só em português já chegou ao usuário (CLAUDE.md, "Idioma").
+    for (const kind of KINDS) {
+      expect(PET_VOICE_LINES[kind].pt.length, kind).toBeGreaterThan(0);
+      expect(PET_VOICE_LINES[kind].en.length, kind).toBe(PET_VOICE_LINES[kind].pt.length);
+    }
+  });
+
+  it('a manhã não comenta a noite de quem lê (veto #12, Janela de Descanso)', () => {
+    for (const l of [...PET_VOICE_LINES.wake.pt, ...PET_VOICE_LINES.wake.en, ...PET_VOICE_LINES.sleep.pt, ...PET_VOICE_LINES.sleep.en]) {
+      expect(l).not.toMatch(/dormiu|descans|boa noite|sleep well|good night|rest well|did you sleep/i);
+    }
+  });
+
+  it('a borra constata, nunca envergonha nem pede', () => {
+    for (const l of [...PET_VOICE_LINES.residue.pt, ...PET_VOICE_LINES.residue.en]) {
+      expect(l).not.toMatch(/sujo|nojo|vergonha|me limpa|por sua causa|dirty|gross|shame|clean me|your fault/i);
+    }
+  });
+
+  it('a recusa de comida fala do corpo dela, não manda voltar', () => {
+    for (const l of [...PET_VOICE_LINES.full.pt, ...PET_VOICE_LINES.full.en]) {
+      expect(l).not.toMatch(/volta mais tarde|come back|você já|you already/i);
     }
   });
 

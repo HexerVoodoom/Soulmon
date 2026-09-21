@@ -2608,11 +2608,13 @@ export default function App() {
         // repreender quem farmou a masmorra.
         toast(language === 'pt-BR'
           ? '🌀 Um Glitchtama por dia. Ele te espera amanhã.'
-          : '🌀 One Glitchtama a day. It will wait for you tomorrow.');
+          : "🌀 One Glitchtama a day. It'll wait for you tomorrow.");
         return;
       }
       if (refused === 'already-full') {
-        setHealCapSignal(n => n + 1);
+        // Copy §5.1: a vida cheia recusa PROTEGENDO o item — a fala é da
+        // criatura ("Tô firme. Guarda essa."), kind `steady` de `petVoice.ts`.
+        falar('steady');
         return;
       }
 
@@ -2721,7 +2723,23 @@ export default function App() {
       if (next) playSleep();
       return next;
     });
-  }, []);
+    /* Copy §1.4/§1.5 (21/09/2026): dormir e acordar eram MUDOS. A fala é do
+       GESTO manual (o sono automático continua calado: ninguém está olhando),
+       e sai FORA do updater (footgun 6), lendo o estado que o gesto inverte.
+       A criatura fala do corpo dela — ⚠️ `wake` nunca comenta a noite de quem
+       lê (veto #12); há teste em `petVoice.test.ts`. */
+    falar(isSleeping ? 'wake' : 'sleep');
+  }, [isSleeping, falar]);
+
+  /* Copy §1.6: a borra apareceu — ela constata e aponta (L3, §5.6). Só na
+     CHEGADA do evento; o dreno cobrando sustentação segue mudo de propósito
+     (a criatura anunciando o próprio dano é a família de `'HP baixo...'`). */
+  const borraAnteriorRef = useRef(false);
+  useEffect(() => {
+    const agora = careEvent?.type === 'poop';
+    if (agora && !borraAnteriorRef.current) falar('residue');
+    borraAnteriorRef.current = agora;
+  }, [careEvent, falar]);
 
   // Dungeon: no daily cap — entry is blocked only at ≤1 heart (a loss costs a
   // real heart, so the player must be able to afford it). As long as HP allows,
@@ -5329,15 +5347,30 @@ export default function App() {
               />
             </div>
           )}
+          {/* Copy §5.4 (21/09/2026): `not-ultra` ganha a sua frase — contexto
+              em `sm2Hint`, e acabou. NÃO vira convite nem botão: a saída é a
+              própria página, que já conta a escada (canvas Evolução §24:
+              "not-ultra sem convite"). Só fora do demo, que tem o convite dele. */}
+          {currentView === 'evolution' && rebirthRefusal(gameState) === 'not-ultra' && !gameState.demoCharacterId && (
+            <p style={{ ...sm2Hint, marginTop: 16, textAlign: 'center' }} data-rebirth-block>
+              {language === 'pt-BR'
+                ? 'O padrão ainda não chegou ao limite do que esta forma ocupa.'
+                : "The pattern hasn't yet reached the edge of what this form can hold."}
+            </p>
+          )}
           {/* EVO-21: o registro — linha 12 `muted` com `egg` FILL 1 20; memória,
-              nunca oferta repetida (a linha `rebirth` do save nunca é apagada). */}
+              nunca oferta repetida (a linha `rebirth` do save nunca é apagada).
+              Copy §5.6: a 2ª frase é a família obrigatória da §11 ("É ele.
+              Ainda é ele.") — sem ela, somada a "parte da alma" e ao fato de
+              renascer ser compra, a cena lê como morte de um ente. Proibidas
+              aqui: morrer, morte, partir, despedida, adeus. */}
           {currentView === 'evolution' && gameState.rebirth && (
             <p style={{ ...sm2Hint, marginTop: 16, display: 'flex', alignItems: 'center', gap: 8 }} data-rebirth-block>
               <Icon name="egg" size={20} fill={1} tone="muted" />
               <span>
                 {language === 'pt-BR'
-                  ? `Renasceu do ${gameState.rebirth.fromStage} como "${gameState.rebirth.criatura}".`
-                  : `Reborn from ${gameState.rebirth.fromStage} as "${gameState.rebirth.criatura}".`}
+                  ? `Já aconteceu, uma vez. Renasceu do ${gameState.rebirth.fromStage} como "${gameState.rebirth.criatura}". É ele. Ainda é ele.`
+                  : `It already happened, once. Reborn from ${gameState.rebirth.fromStage} as "${gameState.rebirth.criatura}". Same pattern. Still the same one.`}
               </span>
             </p>
           )}

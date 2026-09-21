@@ -21,7 +21,18 @@
 // (`speakRaw()` preserva, e é para "+1⚡", não para frase).
 // ---------------------------------------------------------------------------
 
-export type PetVoiceKind = 'task' | 'haunted' | 'rub' | 'shower' | 'milestone' | 'cheer' | 'rare' | 'lowHp' | 'idle';
+/**
+ * 21/09/2026 — seis `kind` novos vindos de `docs/NARRATIVA-COPY.md` §1:
+ * `full` (recusa de comida) e `healCap` (teto de carinho do dia) moravam como
+ * arrays INLINE no `CompanionHUD` — frase que mora em componente é frase que
+ * nenhum teste de tom varre; `steady` é a vida cheia recusando o item (a copy
+ * §1.9 põe as duas no mesmo `kind`, mas os gatilhos são distintos e a frase
+ * do item não serve ao carinho — por isso dois); `sleep`, `wake` e `residue`
+ * eram gestos MUDOS.
+ */
+export type PetVoiceKind =
+  | 'task' | 'haunted' | 'rub' | 'shower' | 'milestone' | 'cheer' | 'rare' | 'lowHp' | 'idle'
+  | 'full' | 'healCap' | 'steady' | 'sleep' | 'wake' | 'residue';
 
 /**
  * WP2.14 — a taxa da fala rara. ~5% das conclusões.
@@ -54,18 +65,20 @@ export const PET_VOICE_LINES: Record<PetVoiceKind, VoiceLines> = {
   },
   // A que estava te olhando. O alívio é o prêmio — nada de "finalmente".
   haunted: {
+    /* Copy §1.8 (21/09/2026): nomeia o ato e o efeito, nunca o tempo que ela
+       ficou parada. "Aqui" é o abrigo — ela fala do espaço dela, não do seu
+       alívio (o seu, ela não tem como saber; §16 limite 2). A 2ª oração de
+       "Ficou leve aqui" saiu antes ("Deve ter ficado aí também"): inferência
+       sobre o estado interno de quem lê (§5.10). */
     pt: [
-      'Aquela que estava te olhando... foi. Respira.',
+      'Aquela ali... foi. Respira.',
       'Essa era pesada. Agora ela é só passado.',
-      /* A 2ª oração saiu em 21/09/2026 ("Deve ter ficado aí também"): era
-         inferência sobre o estado interno de quem lê, e o corpo dela não
-         alcança isso (§5.10 — quem move a mão fica fora do alcance). */
-      'Ficou leve aqui.',
+      'Fechou. Ficou leve aqui.',
     ],
     en: [
-      'The one that was watching you... is gone. Breathe.',
+      'That one... is gone. Breathe.',
       'That one was heavy. Now it is just past.',
-      'It got lighter in here.',
+      'It closed. It got lighter in here.',
     ],
   },
   /**
@@ -109,18 +122,71 @@ export const PET_VOICE_LINES: Record<PetVoiceKind, VoiceLines> = {
     pt: ['Tô mole hoje. E VOCÊ, como tá?', 'Tô meio sem borda. Senta aqui um pouco?', 'Só queria te ver hoje.'],
     en: ["I'm soft today. How about YOU?", 'My edges are loose. Sit here a bit?', 'I just wanted to see you today.'],
   },
-  /** O ócio de barriga cheia: convite, nunca lista do que falta. */
+  /** O ócio de barriga cheia: convite, nunca lista do que falta.
+   *  21/09/2026 (copy §1.1): ela fala do que VÊ agora, não do seu dia —
+   *  `'Como foi seu dia até agora?'` pedia relato de desempenho (L2, L11). */
   idle: {
-    pt: ['Que bom que você veio.', 'Como foi seu dia até agora?', 'Tô aqui, no meu canto.'],
-    en: ['Glad you came by.', 'How has your day been?', 'I am here, in my corner.'],
+    pt: ['Tô aqui. Tava só olhando a luz.', 'Ficou quieto agora. Eu gosto assim.', 'Você chegou. Eu ia te contar uma coisa e esqueci.'],
+    en: ["I'm here. I was just watching the light.", 'It got quiet just now. I like it like this.', 'You showed up. I was going to tell you something and forgot.'],
   },
+  /* Copy §1.3: prazer pelo gesto que está acontecendo (L11). "Firma" é o verbo
+     da sustentação (§5.4). `'Eu gosto de quando você aparece'` saiu — é
+     histórico de aparições, e o corpo dela não guarda isso (§5.10). */
   rub: {
-    pt: ['Ahh, isso é bom...', 'Fica mais um pouquinho?', 'Eu gosto de quando você aparece.'],
-    en: ['Ahh, that feels good...', 'Stay a little longer?', 'I like it when you show up.'],
+    pt: ['Ahh. Isso aqui firma.', 'Fica mais um pouco.', 'Aqui. Mais em cima. Isso.'],
+    en: ['Ahh. This one steadies me.', 'Stay a little longer.', 'Here. Higher up. There.'],
   },
+  /* Copy §1.7: nomeia o ato e o efeito, nunca o mérito de quem apertou. */
   shower: {
-    pt: ['Limpinho!', 'Água boa, hein.', 'Agora sim.'],
-    en: ['All clean!', 'That water was nice.', 'Much better.'],
+    pt: ['Dissolveu tudo. Que leve.', 'Água boa.', 'Agora o chão tá limpo pra assentar de novo.'],
+    en: ['It all dissolved. So light.', 'Good water.', 'Now the floor is clear to settle on again.'],
+  },
+  /* Copy §1.2 — a recusa de comida (teto da hora, `FOOD_LIMIT_PER_HOUR`).
+     Vivia inline no `CompanionHUD` como `'Não aguento mais! Volta mais tarde.'`
+     — "volta mais tarde" é instrução de retorno. A criatura fala do corpo
+     DELA (L2); nunca "você já alimentou demais". */
+  full: {
+    pt: ['Tá assentando ainda. Daqui a pouco eu como.', 'Cheio. Foi bom.', 'Esse eu guardo pra depois.'],
+    en: ["It's still settling. I'll eat again in a bit.", 'Full. That was good.', "I'll keep this one for later."],
+  },
+  /* Copy §1.9 — teto de carinho do dia (`rubDecision === 'daily-cap'`).
+     Vivia inline no `CompanionHUD` ("já sarei o que dava por hoje!").
+     ⚠️ A segunda oração é a parte que importa: os corações tocam sempre e o
+     carinho continua valendo como contato. Sem ela o teto lê como "pare", e
+     o gesto central do produto vira erro. */
+  healCap: {
+    pt: ['Já firmou o que dava hoje. Continua que eu gosto.'],
+    en: ["It's as steady as it gets today. Keep going, I like it."],
+  },
+  /* Copy §1.9 / §5.1 — vida cheia recusando o coraçãozinho
+     (`specialRefusal === 'already-full'`). A recusa PROTEGE o item: ele volta
+     para a pastinha, e "guarda" é o que diz isso. Nunca "você desperdiçou". */
+  steady: {
+    pt: ['Tô firme. Guarda essa.'],
+    en: ["I'm steady. Keep that one."],
+  },
+  /* Copy §1.4 — ao dormir (`handleSleep`). Dormir REORGANIZA o padrão (§5.5),
+     não repõe nada. Nunca "boa noite, descanse bem": é recado sobre a noite
+     de QUEM LÊ. */
+  sleep: {
+    pt: ['Vou desligar a leitura um pouco.', 'Se passar alguma coisa, eu guardo.'],
+    en: ["I'm switching the reading off for a bit.", "If something passes by, I'll keep it."],
+  },
+  /* Copy §1.5 — ao acordar. ⚠️ Veto #12 e a Janela de Descanso: NENHUMA frase
+     de manhã comenta a noite de quem lê ("dormiu bem?" é como se fabrica
+     ortossonia). Ela fala do corpo dela e da Malha (L9). */
+  wake: {
+    pt: ['Assentou. Tô inteiro.', 'A Malha tava clara essa noite.'],
+    en: ["It settled. I'm all here.", 'The Mesh was clear last night.'],
+  },
+  /* Copy §1.6 — a borra apareceu no abrigo. Constata e aponta: zero vergonha,
+     zero nojo, zero pedido (L3, §5.6). Diz a consequência NA MALHA, nunca no
+     seu dia. Nada de "me limpa" nem "estou sujo por sua causa".
+     ⚠️ Esta superfície NÃO fala quando o dreno cobra sustentação: a criatura
+     anunciando o próprio dano é a família de `'HP baixo...'`. */
+  residue: {
+    pt: ['Alguma coisa não assentou. Tá ali.', 'Isso atrapalha o assentamento. Água resolve.'],
+    en: ["Something didn't settle. It's over there.", 'That gets in the way of settling. Water fixes it.'],
   },
   /* WP2.13 — os dias do meio do caminho (`HABIT_CHEER_AT`). Entre o marco de
      21 e o de 66 há quarenta e cinco dias em que nada acontece, e é ali que a

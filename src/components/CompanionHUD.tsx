@@ -487,25 +487,18 @@ export const CompanionHUD = memo(function CompanionHUD({
     setTimeout(() => setIsMunching(false), 600);
   }, [feedAnim?.n, speakRaw]);
 
-  // When a feed is refused (5/hour limit reached), the pet just says it's full
-  // — with a hint that it can eat again in a little while.
+  // A recusa de comida (teto da hora) e o teto de carinho do dia. As frases
+  // moravam AQUI, inline, desde antes do WP3.2 — fora do alcance do teste de
+  // tom de `petVoice.ts`. Em 21/09/2026 (copy §1.2 e §1.9) viraram os kinds
+  // `full` e `healCap` do dono único, `PET_VOICE_LINES`.
   useEffect(() => {
     if (!fullSignal) return;
-    const isPt = language === 'pt-BR';
-    const lines = isPt
-      ? ['Estou cheio! Me dá uma horinha...', 'Não aguento mais! Volta mais tarde.', 'Chega, obrigado! Daqui a pouco eu como de novo.']
-      : ["I'm full! Give me an hour...", "I can't eat more! Come back later.", 'Enough, thanks! I can eat again in a bit.'];
-    speak(lines[Math.floor(Math.random() * lines.length)], 3500);
+    speak(petVoiceLine('full', language === 'pt-BR', Math.random(), petPassive), 3500);
   }, [fullSignal]);
 
-  // When rubbing can't heal anymore today (daily cap), the pet says so.
   useEffect(() => {
     if (!healCapSignal) return;
-    const isPt = language === 'pt-BR';
-    const lines = isPt
-      ? ['Já recebi muito carinho hoje! Hehe', 'Adoro carinho... mas já sarei o que dava por hoje!', 'Carinho é bom! Amanhã ele cura de novo.']
-      : ['So much affection today! Hehe', 'I love it... but no more healing today!', 'Petting feels great! It heals again tomorrow.'];
-    speak(lines[Math.floor(Math.random() * lines.length)], 3500);
+    speak(petVoiceLine('healCap', language === 'pt-BR', Math.random(), petPassive), 3500);
   }, [healCapSignal]);
 
   // WP3.2 — os quatro gestos mudos ganham voz. Um efeito só, chaveado pelo
