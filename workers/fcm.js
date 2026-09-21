@@ -103,7 +103,19 @@ export async function sendFcmPush(token, notif, projectId, accessToken) {
           notification: { title: notif.title, body: notif.body },
           android: {
             priority: 'high',
-            notification: { channel_id: 'soulmon_push', tag: notif.tag },
+            notification: {
+              channel_id: 'soulmon_push',
+              tag: notif.tag,
+              // O ícone mono é a CHAMA (`ic_notification.xml`, silhueta que o
+              // Android pinta no acento) e o acento é `#0B6F68` (`primary-ink`
+              // claro: 6,02:1 sobre a bandeja clara; o ciano escuro daria
+              // 1,37 — canvas Fora do app, D-F14/D-F15). Sem `image`: no FCM
+              // v1 não existe `largeIcon` — `image` vira BigPictureStyle
+              // (expande a foto), e um mini-visor de 192 esticado não é o
+              // desenho; o largeIcon redondo fica só no Web Push (`sw.js`).
+              icon: 'ic_notification',
+              color: '#0B6F68',
+            },
           },
         },
       }),

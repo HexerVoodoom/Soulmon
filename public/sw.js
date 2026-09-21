@@ -1,6 +1,6 @@
 // Soulmon Service Worker — cache-first for static assets
 
-const CACHE_VERSION = 'v144';
+const CACHE_VERSION = 'v145';
 const STATIC_CACHE = `soulmon-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `soulmon-runtime-${CACHE_VERSION}`;
 
@@ -10,6 +10,8 @@ const PRECACHE_URLS = [
   '/index.html',
   '/manifest.json',
   '/favicon-192x192.png',
+  '/push-large-192.png',
+  '/badge-96.png',
 ];
 
 /**
@@ -162,14 +164,30 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
+/**
+ * Os dois ícones do push (canvas Fora do app, D-F14/D-F15, X6/X9):
+ *  · `icon` = o ícone GRANDE, um mini-visor REDONDO com a chama da marca — o
+ *    Android 12+ recorta o largeIcon em círculo, então o PNG já nasce círculo
+ *    (`#071413` + a chama de `src/brand/flame.ts` a 1×, ponto mais distante do
+ *    centro a 63 < 96).
+ *  · `badge` = ALFA-ONLY: a barra de status pinta só a silhueta e descarta a
+ *    cor. Até 20/09/2026 o badge era o favicon (quadrado escuro cheio), que
+ *    virava um BLOCO PRETO na barra de status — e o Web Push também roda no
+ *    WebView do APK. `badge-96.png` é a chama branca em transparente, o mesmo
+ *    desenho do `ic_notification.xml` do Android.
+ * Os dois vêm de `src/brand/flame.ts` (gerados com Pillow; ver o commit).
+ */
+const PUSH_ICON = '/push-large-192.png';
+const PUSH_BADGE = '/badge-96.png';
+
 // Show notification triggered from app via postMessage
 self.addEventListener('message', (event) => {
   if (event.data?.type === 'SHOW_NOTIFICATION') {
     event.waitUntil(
       self.registration.showNotification(event.data.title, {
         body: event.data.body,
-        icon: event.data.icon || '/favicon-192x192.png',
-        badge: '/favicon-192x192.png',
+        icon: event.data.icon || PUSH_ICON,
+        badge: PUSH_BADGE,
         tag: event.data.tag,
         requireInteraction: false,
         data: { url: '/' },
@@ -184,8 +202,8 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.registration.showNotification(data.title, {
       body: data.body,
-      icon: '/favicon-192x192.png',
-      badge: '/favicon-192x192.png',
+      icon: PUSH_ICON,
+      badge: PUSH_BADGE,
       tag: data.tag,
       renotify: false,
       data: { url: '/' },

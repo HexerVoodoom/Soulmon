@@ -4,6 +4,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.Context
+import android.graphics.BitmapFactory
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
@@ -30,8 +31,15 @@ class AlarmReceiver : BroadcastReceiver() {
 
         createChannelIfNeeded(notificationManager)
 
+        // Ícone mono = a chama (silhueta pintada no acento); acento `#0B6F68`
+        // (`primary-ink` claro, 6,02:1 sobre a bandeja clara); ícone grande =
+        // o mini-visor redondo com a chama (`push_large`, o MESMO PNG do Web
+        // Push) — canvas Fora do app, D-F14/D-F15. O FCM (`workers/fcm.js`)
+        // manda os mesmos `icon` e `color`; `largeIcon` não existe no FCM v1.
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
+            .setColor(0xFF0B6F68.toInt())
+            .setLargeIcon(BitmapFactory.decodeResource(context.resources, R.drawable.push_large))
             .setContentTitle(title)
             .setContentText(body)
             .setPriority(NotificationCompat.PRIORITY_HIGH)

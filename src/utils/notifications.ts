@@ -43,8 +43,11 @@ export const showNotification = (title: string, options?: NotificationOptions): 
   if (Notification.permission !== 'granted') return;
 
   const opts: NotificationOptions = {
-    icon: '/favicon-192x192.png',
-    badge: '/favicon-192x192.png',
+    // Os mesmos do `public/sw.js`: ícone grande = mini-visor redondo com a
+    // chama; badge = alfa-only (a barra de status descarta cor — o favicon ali
+    // virava um bloco preto). Canvas Fora do app, D-F14/D-F15.
+    icon: '/push-large-192.png',
+    badge: '/badge-96.png',
     requireInteraction: false,
     ...options,
   };
