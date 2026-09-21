@@ -54,7 +54,7 @@ doze. Cada uma existe para impedir um tipo específico de lore que vira cobranç
 | **L7** | O **como** conta tanto quanto o quanto, e **nenhum como é melhor**. Constante, explosivo e equilibrado são três formas, não três notas. | Hierarquizar ritmos, chamar um jeito de cuidar de "certo", insinuar que o outro atrasa a criatura. |
 | **L8** | O misticismo fica **dentro da Malha**. Ele explica criatura, nunca a vida da pessoa. | Conselho de vida, previsão, promessa, "os astros indicam que você deve…", sorte, cura, recomendação de saúde. |
 | **L9** | O mundo **não opina sobre o corpo nem sobre a mente da pessoa, em nenhuma direção.** Ele descreve a Malha: `sombra` é ausência de leitura, a noite é quando a Malha fica legível, um pesadelo é camada que não reassentou. Quando a pessoa está mal, o mundo não explica o que ela tem — ele não sabe, e o silêncio é resposta válida. | Dizer que algo é sintoma, transtorno, defeito, trauma ou estresse — **e igualmente** dizer que NÃO é, que é passageiro, que passa, ou que "não é nada". A negativa é asserção clínica do mesmo jeito, e para quem está em episódio depressivo ela chega como invalidação. |
-| **L10** | A ficção é total na **voz** e nunca na **informação**. Toda afirmação do mundo sobre a pessoa tem, em algum lugar alcançável do produto, uma descrição sóbria equivalente. | Deixar a ficção ser a única fonte disponível sobre o que aconteceu. Tirar do `HelpModal`, do Sobre ou do texto de suporte a linguagem fora da ficção (§16). |
+| **L10** | A ficção é total na **voz** e nunca na **informação**. Toda afirmação do mundo sobre a pessoa **precisa ter**, em algum lugar alcançável do produto, uma descrição sóbria equivalente. ⚠️ **E hoje ela não tem: a §16 não existe em `SettingsPage.tsx` nem no `HelpModal.tsx`** (medido em 21/09/2026). **Enquanto isso for verdade, L10 está violada e nenhuma camada de mundo nova deve entrar.** | Deixar a ficção ser a única fonte disponível sobre o que aconteceu. Tirar do `HelpModal`, do Sobre ou do texto de suporte a linguagem fora da ficção (§16). E acrescentar ficção enquanto a moldura não existir. |
 | **L11** | A criatura pode **notar** a pessoa e **reagir ao que acontece AGORA, em contato**. O que ela nunca faz é sentir por causa do que a pessoa fez ou deixou de fazer **ao longo do tempo**. | "Ele está triste porque você não veio", "ele ficou animado com o que você fez hoje" — emoção causada pelo histórico do jogador, em qualquer direção. Permitido: *"Você está quieto hoje. Eu também."* e o gosto evidente por estar sendo esfregado, que é reação ao gesto presente e é o retorno do loop central. |
 | **L12** | O mundo pode nomear o **ato** e o efeito dele na Malha; **nunca a pessoa, nunca o mérito**. | "Você merece", "muito bem", "você foi ótimo hoje" — elogio à pessoa. Permitido, e necessário: *"Isso fechou um trecho. A fagulha firmou."* Sem esta lei, L1 e L11 somadas produzem um mundo indiferente — e a tese declarada diz **encoraja**. |
 
@@ -172,7 +172,7 @@ porque a forma dele guarda o formato do caminho — não o total dele.
 
 **O que ele NUNCA sabe sobre você.** Ele não sabe o que você prometeu, não conta
 o que você deixou de fazer, e não tem opinião sobre isso. Ele sabe que você
-apareceu, e sabe como você tem andado. É tudo. **A razão disso é fisiológica e
+apareceu, e sabe o que encostou nele. É tudo. **A razão disso é fisiológica e
 está escrita na §5.10** — ele não tem órgão que leia promessa, contagem ou
 ausência. Quem escrever texto a partir desta seção não precisa se lembrar de uma
 proibição: precisa se lembrar de um corpo.
@@ -344,7 +344,10 @@ para um dos três, e não há um quarto:
 
 **Por que há limite por hora** (`FOOD_LIMIT_PER_HOUR`, `src/utils/careRules.ts`):
 assentamento leva tempo. Ocasião empilhada sobre ocasião não assenta — escorre.
-A recusa é do corpo, não do jogo: *"Ele recusou. Está cheio."*
+A recusa é do corpo, não do jogo — e quem a diz é **ela, em primeira pessoa**
+(*"Já tá cheio aqui dentro"*). ⚠️ Nunca dê o exemplo na voz do mundo em 3ª
+pessoa: exemplo entre aspas numa bíblia vira string, e a criatura passaria a
+falar de si como "ele".
 
 **Duas coisas entram por fora do ciclo, e é por isso que se comportam
 diferente** (`src/utils/specialItemUse.ts`): a inclinação comprada é ocasião que
@@ -385,11 +388,44 @@ Daí saem, como **consequências anatômicas** e não como regras de etiqueta:
 
 **O que ela percebe, e o texto pode dizer sem medo:** que a janela abriu · o
 gesto enquanto dura · a ocasião quando chega · a borra · a própria sustentação ·
-a maré · a própria forma pronta, esperando.
+a maré · a própria forma pronta, esperando · **e o que ela está fazendo, querendo
+ou recusando por conta própria** — autorizado pela §4 (*"Espelho não recusa. Ele
+recusa"*), e é o oitavo item de propósito: sem ele a paleta tem sete referentes
+para uma fala de ócio que dispara **a cada 3 minutos**, e a repetição percebida
+mata a ilusão de que ali tem alguém mais rápido do que qualquer proibição
+conseguiria proteger. Vontade própria não é memória: *"Tava só olhando a luz"* e
+*"Eu ia te contar uma coisa e esqueci"* passam.
 
 Regra prática para quem escreve fala de criatura: **se a frase exige memória de
 algo que não está encostando nela agora, o corpo dela não podia ter produzido a
 frase.** Corte, e não por gentileza — por anatomia.
+
+#### A DÍVIDA do sensório — cinco famílias no ar contradizem esta seção
+
+⚠️ **Medido em 21/09/2026, pela crítica adversarial.** A regra acima nasceu
+depois do app, e cinco famílias de fala de `PET_VOICE_LINES`
+(`src/utils/petVoice.ts`) exigem leituras que esta seção declara inexistentes. A
+precedência deste documento é clara — **código > bíblia** —, então enquanto a
+tabela abaixo tiver linhas, **a §5.10 descreve o alvo, não o app**. Escrever aqui
+que a anatomia já vale seria a mentira que esta bíblia mais teme.
+
+| `kind` | O que está no ar | Leitura que a §5.10 nega | Substituta proposta (PT / EN) |
+|---|---|---|---|
+| `lowHp` | *"Tô com saudade. Como VOCÊ está?"* | memória de ausência **e** tempo decorrido | *"Tô mole hoje. Senta aqui um pouco?"* / *"I'm soft today. Sit here a bit?"* |
+| `cheer` | *"Já virou parte do dia."* | histórico de repetição (dispara por `HABIT_CHEER_AT`) | *"Isso aqui já tem raiz."* / *"This one has roots already."* |
+| `rare` | *"Ei… hoje você me parece diferente."* | comparar hoje com ontem | *"Isso aqui chegou bonito."* / *"This one came in well."* |
+| `milestone` | *"Você repetiu tanto que virou seu."* | histórico + a pessoa como sujeito (roça a L1) | pendente — ver também `MILESTONE_TEXT.tree`, que viola a L1 no ar |
+| `haunted` | *"Ficou leve aqui. **Deve ter ficado aí também.**"* | inferência sobre o estado interno de quem lê | cortar a 2ª oração: *"Ficou leve aqui."* / *"It got lighter in here."* |
+
+⚠️ **O `lowHp` é o mais caro dos cinco, e por um motivo que não é de tom:** ele
+dispara quando a sustentação caiu, isto é, **no dia em que a pessoa não cumpriu a
+meta**. "Tô com saudade" ali é emoção da criatura causada pelo que a pessoa
+deixou de fazer — **L11 e L6 violadas em produção, no momento de maior
+vulnerabilidade**. O docblock do próprio `petVoice.ts` comemora ter consertado
+esse `kind` (a fala *"HP baixo…"*); consertou o placar e deixou a saudade.
+
+**Isto não é meu para trocar** — é string que o jogador lê, e vai para a decisão
+do dono junto das propostas da §14. Tirar a linha daqui é o aceite.
 
 ### 5.11 Continuidade — por que não há reprodução
 
@@ -426,9 +462,13 @@ construção, reversível. É isso que o elemento `morte` nomeia: **término, n�
 mortalidade** (§6.1).
 
 **O que não termina:** a manifestação do jogador. Sustentação em zero **recolhe
-a forma** (§5.7) — o padrão segue inteiro, com menos borda. Não existe estado
-neste universo em que ela deixe de existir, e não existe ação do jogador, do
-tempo ou da Malha que produza esse estado. Não é clemência do desenho: é que
+a forma** (§5.7) — o padrão segue inteiro, com menos borda. Não existe, **dentro da Malha**,
+estado em que ela deixe de existir, e nenhuma ação do jogador ou do tempo produz
+esse estado. (A ressalva importa e é honesta: desinstalar o app ou perder o save
+não é um estado da Malha, é o aparelho — e a moldura sóbria correspondente, em
+voz de produto, é *"Seu Soulmon vive no seu save. Se você entrar com o mesmo
+e-mail, ele está lá."* Um absoluto que o produto não pode honrar vira, para quem
+perdeu o save, a prova de que o mundo mentiu.) Não é clemência do desenho: é que
 nada, na §5.1, oferece um jeito de parar de ser diferença.
 
 ⚠️ **Vocabulário, e aqui não há margem** (parecer de psicologia de 21/09/2026;
@@ -864,7 +904,7 @@ tê-la produzido (§5.10).
 | "Ele recuou para uma forma que se sustenta com menos." | "Ele regrediu porque você falhou." | L3/L5 |
 | "Uma camada não reassentou. Ele foi ver." | "Você teve um pesadelo por causa do estresse." | L9 — patologização |
 | "Da fenda ele trouxe uma fagulha." | "Você merece esta recompensa." | L1 — veredito, ainda que elogioso |
-| "Ele recusou. Está cheio." | "Você já alimentou demais." | L2 — a criatura fala de si, não de você |
+| "Já tá cheio aqui dentro." (a criatura, 1ª pessoa) | "Você já alimentou demais." · "Ele recusou. Está cheio." | L2 — a criatura fala de si, não de você; e a recusa é **fala dela** (`fullSignal`), não narração do mundo sobre ela |
 | "Você está quieto hoje. Eu também." | "Ele ficou animado com o que você fez." | L11 — notar pode; sentir POR CAUSA da pessoa, não (nem no elogio) |
 | "Ele espera. Esperar não tira nada dele." | "Você travou a evolução dele." | L5 — o cadeado não custa nada |
 | "É ele. Ainda é ele." | "Diga adeus à forma antiga." | §11 — despedida/morte são vetadas sobre a criatura |
@@ -1154,6 +1194,6 @@ todo texto derivado desta bíblia.
 15. A frase apresenta deixar de existir como alívio, descanso ou paz? (§5.12 —
     reprova sempre, em qualquer voz.)
 
-**O teste final, que resume os doze:** *se a pessoa soubesse exatamente como o
+**O teste final, que resume todos:** *se a pessoa soubesse exatamente como o
 app decide isto, ainda acharia a frase gentil — ou perceberia que ela foi
 escrita para fazê-la voltar?*

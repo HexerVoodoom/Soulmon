@@ -181,7 +181,7 @@ escondendo a própria regra. Com o piso, o silêncio diegético é legítimo (L1
 
 | onde vai | PT-BR | EN | lei | nota |
 |---|---|---|---|---|
-| **substitui a família inteira** `LINES` / `welcomeBackLine` / `absenceBucket` (`src/utils/welcomeBack.ts`), consumida por `CompanionHUD` e por `welcomeLine` em `DailyReportModal.tsx` | **"Você abriu. Ele está aqui."** | **"You opened it. He's here."** | **L6**, L11, §14 P2 | A redação aprovada, verbatim |
+| **substitui a família inteira** `LINES` / `welcomeBackLine` / `absenceBucket` (`src/utils/welcomeBack.ts`), consumida por `CompanionHUD` e por `welcomeLine` em `DailyReportModal.tsx` | **"Você abriu. Ele está aqui."** | **"You opened it. {name} is here."** | **L6**, L11, §14 P2 | A redação aprovada. ⚠️ O EN saiu de *"He's here"* na crítica de 21/09/2026: em PT "ele" é só o gênero de "o Soulmon", mas em EN **"he" é uma asserção sobre a criatura** — que é gerada pelo oráculo, tem nome único e **não tem gênero em lugar nenhum do código**. Usar `petName`, que já está em estado, resolve sem escolher por ninguém |
 | alternativa da P2 (mais fria, igualmente boa) | "A Malha seguiu. Ele também." | "The Mesh went on. So did he." | L6, §9 | Escolha do `soulmon-design-lead` entre as duas; **não use as duas** |
 
 **Os cinco critérios de aceite, conferidos um a um:**
@@ -230,7 +230,7 @@ relatório (§2.6), e esse precedente já está no `CLAUDE.md`.
 
 | onde vai | PT-BR | EN | lei | nota |
 |---|---|---|---|---|
-| `headline`, ramo `report.degenerated` (`src/components/DailyReportModal.tsx`) — hoje: *"Seu Soulmon voltou um estágio"* | "Ele recolheu para uma forma que se sustenta com menos." | "He drew back into a form that holds with less." | **L3, L5**, §5.7 | Exemplo ✅ da §13. **Recolher**, não regredir, não perder, não voltar atrás. ⚠️ O §17 #11 reprova "regrediu", "perder", "custa" e a família de morte inteira |
+| `headline`, ramo `report.degenerated` (`src/components/DailyReportModal.tsx`) — hoje: *"Seu Soulmon voltou um estágio"* | "Ele recolheu para uma forma que se sustenta com menos." | "The pattern drew back into a form that holds with less." | **L3, L5**, §5.7 | Exemplo ✅ da §13. **Recolher**, não regredir, não perder, não voltar atrás. ⚠️ O §17 #11 reprova "regrediu", "perder", "custa" e a família de morte inteira |
 | linha de apoio, mesmo ramo | "Nada do que foi descoberto saiu. O caminho de volta é o mesmo caminho." | "Nothing found is gone. The way back is the same way." | **L4**, §5.7 | É a metade sem a qual a primeira frase lê como punição. Fato verdadeiro no código: `unlockedEvolutions`, `perfectDays` e o registro não são tocados |
 
 ### 3.5 Marcos de hábito — a cerimônia
@@ -263,7 +263,7 @@ folds), que a própria §7 antecipa ao definir fenda como "dobra da Malha".
 | linha de contexto da entrada | "Aqui o assentamento falhou e as camadas se empilharam. Ninguém mora numa fenda." | "Here the settling failed and the layers piled up. Nobody lives in a rift." | §7, L3 | ⚠️ Fecha, em uma frase, a leitura de que os inimigos são vítimas ou de que a fenda é castigo de alguém |
 | cabeçalho de camada (hoje `Andar {floor}/{MAX_FLOORS}`) | "Camada {n} de {total}" | "Layer {n} of {total}" | §12 | "camada / layer" é o termo canônico; "andar"/"floor" é herança tolerável. **Os números vêm de `MAX_FLOORS`** (`src/components/DungeonGame.tsx`), nunca à mão |
 | ao limpar a camada | "Esta camada é mais antiga. A fauna também." | "This layer is older. So is what lives in it." | §7 | Dá sentido ao escalonamento de tier (`LADDER_TIERS`) sem falar em dificuldade como mérito |
-| ao vencer um inimigo (hoje *"{nome} derrotado!"*) | "{nome} passou. O corpo dele reassenta noutro lugar." | "{nome} passed. His pattern settles somewhere else." | **L3**, §7 | ⚠️ *"Vencer é **passar**, não matar"* (§7). Nenhuma criatura da Malha morre — e o §17 #11 reprova a família de morte inteira |
+| ao vencer um inimigo (hoje *"{nome} derrotado!"*) | "{nome} parou de insistir aqui. O padrão dele reassenta noutro lugar." | "{name} stopped holding here. The pattern settles somewhere else." | **L3**, §7 | ⚠️ *"Vencer é **passar**, não matar"* (§7). Nenhuma criatura da Malha morre. **A 1ª redação EN dizia "{name} passed" e foi REPROVADA na crítica de 21/09/2026:** em PT "passou" é neutro, mas em EN *"he passed"* é o eufemismo padrão de morreu — o que se diz num velório. A tradução ao pé da letra importou o verbo errado, e um jogador anglófono enlutado leria isso seis vezes por andar. O verbo canônico é o da §5.12: **parar de insistir** |
 | ao concluir as cinco camadas | "As cinco camadas ficaram para trás." | "All five layers are behind you." | L12 | Fato. **Nunca** "você dominou a masmorra" — mérito atribuído à pessoa (L12) |
 | ao sair sem terminar (hoje já bom: *"seus corações continuam intactos"*) | "Você subiu. A descida ficou pelo caminho — e só ela." | "You went back up. The descent stayed behind — and only it." | **L5**, §7 | ⚠️ A linha mais importante da seção: *"Voltar sem terminar não custa nada do que é seu; custa a descida"*. Perda **só** sobre coisa apostada de propósito |
 | o que se traz | "Da fenda ele trouxe fragmentos que ainda não assentaram." | "From the rift he brought fragments that haven't settled yet." | §7, §12 | Exemplo ✅ da §13 ("Da fenda ele trouxe uma fagulha"). Cobre Bits e fagulha-coração numa frase |
@@ -283,7 +283,7 @@ nunca consome o item. Nada de toast de erro.
 | 5.3 | item de dia no teto diário → `specialRefusal === 'daily-cap'` (`src/utils/specialItemUse.ts`); toast em `handleFeed` (`src/App.tsx`) | "Um nó por dia. Ele te espera amanhã." | "One knot a day. It'll wait for you tomorrow." | L4, L6 | ⚠️ Voz de **produto** (é um toast, não a criatura). Diz o que fazer, não o que foi negado — a recusa acontece **antes** do decremento e o item vale amanhã. ⚠️ **Depende da P5** pelo nome; o texto no ar usa o termo da `DÍVIDA` |
 | 5.4 | `rebirthRefusal === 'not-ultra'` (`src/utils/rebirth.ts`) | "O padrão ainda não chegou ao limite do que esta forma ocupa." | "The pattern hasn't yet reached the edge of what this form can hold." | §11, L4 | ⚠️ A saída é **a própria página de Evolução**, que já conta a escada — por isso esta linha **não vira convite** nem botão. É contexto, e acabou |
 | 5.5 | `rebirthRefusal === 'not-paid'` (`src/utils/rebirth.ts`) → `UnlockNudge` na página de Evolução (`src/App.tsx`) | "Isso precisa de ferragem trazida de fora da Malha." | "This needs hardware brought in from outside the Mesh." | §10, L8 | Único dos três com saída comercial, e já é o único renderizado hoje. A §10 chama Créditos de *"ferragem trazida de fora da Malha pelo humano"* — a compra é dita **sem** prometer nada sobre a vida de quem compra |
-| 5.6 | `rebirthRefusal === 'already-used'` (`src/utils/rebirth.ts`) — **hoje sem superfície nenhuma** | "Já aconteceu, uma vez. É ele. Ainda é ele." | "It already happened, once. It's him. Still him." | **§11**, L4 | ⚠️ **Registro, nunca oferta repetida.** A segunda frase é a família obrigatória da §11: sem ela, e somada a "parte da alma" e ao fato de que renascer é uma compra, a cena lê como morte de um ente — leitura cara para quem está de luto. **Proibidas aqui e em qualquer lugar:** morrer, morte, partir, despedida, adeus |
+| 5.6 | `rebirthRefusal === 'already-used'` (`src/utils/rebirth.ts`) — **hoje sem superfície nenhuma** | "Já aconteceu, uma vez. É ele. Ainda é ele." | "It already happened, once. Same pattern. Still the same one." | **§11**, L4 | ⚠️ **Registro, nunca oferta repetida.** A segunda frase é a família obrigatória da §11: sem ela, e somada a "parte da alma" e ao fato de que renascer é uma compra, a cena lê como morte de um ente — leitura cara para quem está de luto. **Proibidas aqui e em qualquer lugar:** morrer, morte, partir, despedida, adeus |
 
 ---
 
@@ -308,6 +308,29 @@ pessoa do plural ou impessoal, sem metáfora.
 | idem, **limite 3** (como nota de rodapé do grupo) | "Nada do que aparece aqui é uma afirmação sobre a sua saúde, a sua mente ou o seu futuro." | "Nothing shown here is a statement about your health, your mind or your future." | **§16.3**, L9 | ⚠️ Cobre o app inteiro de uma vez, inclusive as telas de oráculo e de sonho |
 | **`HelpModal.tsx`** — linha de abertura, acima de `TERMS` (hoje: *"O que cada palavra da tela quer dizer."*) | "O que cada palavra da tela quer dizer. O Soulmon tem um universo próprio: estes são os nomes dele, e nenhum deles descreve você." | "What each word on screen means. Soulmon has a world of its own: these are its names, and none of them describe you." | **L10, §16**, §6 (adjacência) | ⚠️ É aqui que *"o universo é descrito como universo"*. A segunda oração faz o serviço da §6 da bíblia: bloqueia a inferência de tipologia ("então eu sou akasha") que a mera **adjacência** entre ficha da criatura e respostas da pessoa ensina, mesmo com todo o resto do texto certo |
 | **NÃO EXISTE** — texto de suporte / crise, destino a definir pelo `soulmon-design-lead` | "Se você está passando por um momento difícil, o Soulmon não é o lugar certo para isso. Procure ajuda de verdade — um serviço de saúde ou uma linha de apoio da sua região." | "If you're going through a hard time, Soulmon is not the right place for it. Please reach out for real help — a health service or a support line where you live." | **§16**, L9 | ⚠️ **Não nomeei serviço nem número.** Nome e telefone de linha de apoio variam por país e **caducam**; uma linha errada numa tela de crise é pior que nenhuma. Quem decide o destino e a lista é o dono, com o `soulmon-design-lead` |
+
+---
+
+## 6-bis. O resumo de humor (`moodSummary`) — **voz de PRODUTO**
+
+⚠️ **Esta seção não existia na 1ª entrega.** O redator recusou-se a escrevê-la
+alegando que a proposta P14 estava aberta e que redigir a frase seria "decidir a
+proposta por baixo". A crítica de 21/09/2026 derrubou a recusa, e com razão: a
+**L9 já proíbe a frase que está no ar**, sem depender de proposta nenhuma — a
+P14 nunca foi "se muda", foi "qual frase". Enquanto a substituta não existia, a
+string permanecia, e ela é lida exatamente por quem registrou dias ruins
+seguidos.
+
+Registro: **voz de PRODUTO**, não do mundo (§16, L10). `moodSummary` vive no
+`DailyReportModal`, e a regra do cabeçalho do próprio `src/utils/mood.ts` — *o
+app DEVOLVE algo, senão é extração* — é anterior e continua valendo. O que sai é
+só a avaliação.
+
+| ramo (`src/utils/mood.ts` → `moodSummary`) | PT-BR | EN | lei | nota |
+|---|---|---|---|---|
+| `avg <= 2` | "Seus últimos dias foram registrados como pesados. O Soulmon guarda isso e não faz nada com isso." | "Your last few days were logged as heavy. Soulmon keeps that and does nothing with it." | **L9**, §16 limite 2 | A frase no ar diz "têm sido pesados", que é o app **afirmando** sobre a pessoa. "Foram registrados" devolve o que ela mesma marcou — e a 2ª oração é a §16 limite 2 dita em voz alta |
+| intermediário | "Seus últimos dias tiveram altos e baixos." | "Your last few days had ups and downs." | **L9** | **Ponto final.** A normalização sai (*"e tudo bem que seja assim"* / *"and that's allowed"*) e **nada entra no lugar**: o §17 #2 reprova afirmar E negar. Para quem está em episódio depressivo, "tudo bem que seja assim" chega como invalidação |
+| `avg >= 4` | *(a atual passa)* "Seus últimos dias têm sido bons. Vale reparar no que anda funcionando." | "Your last few days have been good. Worth noticing what's been working." | **L12** | Convite a observar, não veredito. Não mexa |
 
 ---
 
@@ -343,10 +366,14 @@ igual encontre a resposta já escrita, em vez de a frase.
    "tudo bem que seja assim", "não é nada". L9 proíbe nas duas direções: o
    produto não diz que é doença **nem** que não é nada. A negativa é asserção
    clínica do mesmo jeito, e para quem está em episódio depressivo ela chega
-   como invalidação. Isto inclui a substituição pedida na **P14**: eu **não**
-   escrevi a redação nova de `moodSummary` (`src/utils/mood.ts`), porque a P14
-   está aberta e o pedido desta rodada não a cobria — escrever a frase aqui
-   seria decidir a proposta por baixo.
+   como invalidação.
+   ⚠️ **Esta recusa ia mais longe e foi DERRUBADA** (crítica de 21/09/2026, a
+   única das onze que não se sustentou): eu tinha me recusado a escrever a
+   redação nova de `moodSummary` alegando que a **P14** estava aberta. Mas a L9
+   já proíbe a frase que está no ar, sem depender de proposta — a P14 nunca foi
+   "se muda", foi "qual frase". Eu tinha a lei, a medição e a superfície;
+   faltou a frase. E uma substituta escrita não decide a proposta: **dá ao dono
+   o que decidir.** A redação está na §6-bis.
 
 5. **Celebração que escala com contagem** — "3 dias seguidos!", "seu melhor
    dia do mês", "mais um para o recorde". §17 #6 e a regra do `RARE_CHEER_RATE`
