@@ -49,6 +49,26 @@ via `language === 'pt-BR'`).
 > se escreve à mão no código** (há guard que reprova). O runbook completo vive em
 > `squad-alpha-runs/som-01/maintainer/`, que **não vai para o git**.
 
+> **`docs/NARRATIVA-E-UNIVERSO.md`** é a bíblia do universo (21/09/2026): o que
+> cada mecânica SIGNIFICA no mundo, as doze leis de escrita (L1..L12), o
+> vocabulário canônico PT+EN e a tabela "mecânica → significado → a frase que
+> NUNCA pode ser dita". **Leia antes de escrever qualquer texto que o jogador
+> vai ler** — fala do pet, modal, push, guia, glossário. Ela **não decide regra
+> nenhuma**: a precedência é código > teste > este arquivo > manual > bíblia, e
+> o que exigiria mecânica nova está isolado na §14 (Propostas — depende do
+> dono). A régua viva é `src/narrativa.contract.test.ts`, que trava o
+> vocabulário vetado em fonte (com a tabela `DÍVIDA` do que já está no app por
+> decisão pendente) e exige que todo caminho de código citado na bíblia exista.
+> A squad é `/squad-narrativa`.
+> ⚠️ **Três achados de PI saíram dela e ainda dependem do dono**: `Soulmon` é o
+> nome canônico de uma criatura da Bandai (Champion, tipo Fantasma, atributo
+> Virus — verificado na enciclopédia oficial); `Serah` e `Pyraka`, em
+> `DUNGEON_LINE_NAMES`, colidem com Final Fantasy XIII e Bionicle; e
+> `Vírus/Dado/Vacina` como RÓTULO é o sistema de atributos assinatura de outra
+> franquia, hoje visível em nove arquivos — inclusive no texto do Ultra gerado
+> em `oracle.ts`, que aparece na tela de revelação. Os **ids do save não mudam**
+> (linha vermelha #20); o que muda é o que o jogador lê. Ver §14 P8, P9 e P1.
+
 > **`docs/STATUS.md` é o registro vivo do projeto**: achados de segurança em
 > aberto, o que já foi corrigido e a lista do que depende do dono. Leia no
 > começo da sessão e **atualize ao terminar qualquer coisa relevante**.
