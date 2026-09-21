@@ -44,7 +44,8 @@ import { DinoGame } from './DinoGame';
 import { RPSGame } from './RPSGame';
 import { bitsStyle } from '../utils/currencies';
 import { Icon } from './ui/Icon';
-import { sm2Hint, SM2_SHADOW_CARD } from './form/FormKit';
+import { sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
+import { sm2Tag } from './TaskMeta';
 import type { Language } from '../utils/i18n';
 
 /** Bits: o estilo da moeda, inteiro, SEM override de cor.
@@ -127,10 +128,10 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, tota
       // e e isso que o texto do cartao precisa dizer, senao ela le como uma
       // segunda masmorra com outro nome.
       key: 'arena',
-      // `military_tech` e nao `swords`: `swords` ja e a Masmorra e
-      // `emoji_events` ja e o Torneio. Icone repetido num menu de cartoes faz
-      // dois jogos diferentes lerem como o mesmo.
-      icon: 'military_tech',
+      // `bolt` (canvas Jogos D-J1): `swords` ja e a Masmorra, `emoji_events`
+      // ja e o Torneio e `military_tech` e a MOEDA do Torneio (Emblemas) —
+      // o icone de um jogo nao pode ser o glifo de uma moeda.
+      icon: 'bolt',
       title: isPt ? 'Arena' : 'Arena',
       desc: isPt
         ? 'Cinco rodadas com o elemento e a habilidade especial do seu Soulmon.'
@@ -140,7 +141,9 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, tota
     },
     {
       key: 'dino',
-      icon: 'pets',
+      // `play_arrow` (D-J1): `directions_run` seria mais literal mas nao esta
+      // no subset de 102; `pets` era o glifo do PET, nao do jogo.
+      icon: 'play_arrow',
       title: isPt ? 'Corrida do Dino' : 'Dino Runner',
       desc: isPt ? 'Pule os obstáculos e corra o máximo que conseguir.' : 'Jump the obstacles and run as far as you can.',
       tag: isPt ? 'Recorde' : 'High score',
@@ -173,33 +176,31 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, tota
         textAlign: 'left',
         cursor: 'pointer',
         borderRadius: 'var(--sm2-radius-md)',
-        backgroundColor: c.featured ? 'var(--sm2-primary-soft)' : 'var(--sm2-surface)',
-        border: c.featured ? '1px solid var(--sm2-primary-fill)' : '1px solid var(--sm2-line)',
-        boxShadow: SM2_SHADOW_CARD,
+        backgroundColor: 'var(--sm2-surface)',
+        border: '1px solid var(--sm2-line)',
+        /* O card em destaque leva anel 1px `primary-ink` (D-J1) — não fundo
+           `primary-soft`: o soft é o idioma de SELEÇÃO (linha "you" do
+           ranking, chip marcado), e o Torneio não está selecionado. */
+        boxShadow: c.featured ? `inset 0 0 0 1px var(--sm2-primary-ink), ${SM2_SHADOW_CARD}` : SM2_SHADOW_CARD,
         transition: 'background-color var(--sm2-dur-tap) var(--sm2-ease)',
       }}
     >
-      {/* Ícone PELADO — sem moldura, sem fundo, sem chanfro (regra do dono). */}
-      <Icon name={c.icon} size={32} fill={c.featured ? 1 : 0} tone={c.featured ? 'primary' : 'ink'} />
+      {/* Ícone PELADO — sem moldura, sem fundo, sem chanfro (regra do dono).
+          24 (D-J1: Material 24 pelado; era 32). O destaque do Torneio é o
+          ícone em ciano + anel 1px `primary-ink`, a única luz forte da tela. */}
+      <Icon name={c.icon} size={24} fill={c.featured ? 1 : 0} tone={c.featured ? 'primary' : 'ink'} />
       <span style={{ flex: 1, minWidth: 0 }}>
         <span
-          className="sm2-title"
-          style={{ display: 'block', fontSize: 'var(--sm2-text-md)', fontWeight: 600 }}
+          style={{ ...sm2Text, display: 'block', fontWeight: 500 }}
         >
           {c.title}
         </span>
         <span style={{ ...sm2Hint, display: 'block', marginTop: 2 }}>{c.desc}</span>
       </span>
-      {/* O rótulo nomeado. Tinta sobre superfície, nunca `*-fill` como cor de
-          texto — e por isso ele não precisa de pílula preenchida atrás. */}
-      <span
-        style={{
-          ...sm2Hint,
-          flexShrink: 0,
-          fontWeight: 500,
-          color: c.featured ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)',
-        }}
-      >
+      {/* O rótulo nomeado como `.chip.tag` 24 (SIS-03, canvas Jogos): pílula
+          `surface-2` sem borda, Rubik 12/500 `muted` — a mesma peça das
+          etiquetas da Ficha. Não é alvo (CRITICA R7, registro). */}
+      <span style={{ ...sm2Tag, flexShrink: 0, color: c.featured ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)' }}>
         {c.tag}
       </span>
     </button>
@@ -225,13 +226,17 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, tota
             {isPt ? 'Jogue com seu Soulmon e ganhe Bits.' : 'Play with your Soulmon and earn Bits.'}
           </p>
         </div>
-        {/* Saldo: número + a palavra, sem cápsula e sem ícone. */}
+        {/* Saldo: "N Bits" numa peça só, em `--sm2-font-mono` (calculadora),
+            sem cápsula e sem ícone (D-J2, 💠). A cor é a do `bitsStyle`
+            (`primary-ink`, DECISÕES §26 — o §25 dizia `ink`, o §26 do mesmo
+            dia fecha em `primary-ink` e o código vence). */}
         <span
+          className="sm2-num"
           title={isPt ? 'Bits — moeda dos minijogos, gaste na Loja' : 'Bits — minigame currency, spend it in the Shop'}
-          style={{ display: 'flex', alignItems: 'baseline', gap: 4, flexShrink: 0, paddingTop: 2 }}
+          aria-label={`Bits: ${totalPoints}`}
+          style={{ ...bitsNum, display: 'inline-flex', alignItems: 'center', minHeight: 28, flexShrink: 0, fontSize: 'var(--sm2-text-sm)', whiteSpace: 'nowrap' }}
         >
-          <span className="sm2-num" style={{ ...bitsNum, fontSize: 'var(--sm2-text-lg)' }}>{totalPoints}</span>
-          <span style={sm2Hint}>Bits</span>
+          {totalPoints} Bits
         </span>
       </div>
 
@@ -240,7 +245,7 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, tota
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <h2
           className="sm2-title"
-          style={{ fontSize: 'var(--sm2-text-md)', fontWeight: 600, margin: 0 }}
+          style={{ fontSize: 'var(--sm2-text-md)', fontWeight: 500, margin: 0 }}
         >
           {isPt ? 'Minijogos' : 'Minigames'}
         </h2>
