@@ -73,3 +73,41 @@ loop em 28,800 s exatos (12 compassos), trim de 2 camadas em `loudness.ts`. Fila
 | 37 | `SettingsModal` (duplicata do mudo, aberto via `handleOpenAISettings`): remover? | Fica | — |
 | 38 | **`CLAUDE.md`** — autoriza corrigir as 7 afirmações falsas de `14` (Coraçãozinho "à venda por 150", "cura instantânea (10)", `digiapp_push` → `soulmon_push`, `DigiWidgetPlugin` → `SoulmonWidgetPlugin`, `canPvp` → `meetsPvpBond`, `DÍVIDA` → `EXCECOES` (D31), "17 documentos" → 18) e as 2 refs `arquivo:linha`? | Nada tocado (só o dono edita o `CLAUDE.md`) | Um commit de docs com cada correção conferida por grep |
 | 39 | Fósseis da raiz (`README.md`, `PWA-SETUP.md`, `PWA-CHECKLIST.md`, `PROJETO.md`, `PLANO_MELHORIAS.md`, `index.html.example`, `manifest.webmanifest`, `registerSW.js`): apagar, ou mover para `docs/historico-digiapp/` com lápide? | Como está | Uma sessão nova abre `PLANO_MELHORIAS.md` achando que é `docs/PLANO-MELHORIAS.md` |
+
+## Respostas QA GERAL (21/09/2026, modal)
+
+Todas as 29 respondidas. Divergências da recomendada em **negrito**.
+
+| # | Resposta |
+|---|---|
+| 11 | (a) 10 conhecidos, PWA, 14 dias |
+| 12 | Sim — implementar rota de cortesia (`ADMIN_KEY` + teto, `provider:'courtesy'`) |
+| 13 | Congelar Camada 3 e registrar no `REGISTRO-DE-DECISOES.md` |
+| 14 | **Manter ads desligados e avaliar** (não apagar); `PLAY-DATA-SAFETY.md` ganha seção de ads na fila de monetização |
+| 15 | 18+ é ICP; persona adolescente sai dos check-ups |
+| 16 | Domínio: **depois**. Play Store: **preparar tudo do lado da squad** (APK novo, ficha, screenshots, checklist passo a passo do que é do console); o dono executa o console |
+| 17 | Cobrança web depois do 1º usuário; corrigir `PLANO-PRODUTO` Parte 3 |
+| 18 | `METRICS_ADMIN_KEY`: o dono define; squad entrega `scripts/metrics-report.mjs` |
+| 19 | Aviso de WebView velho por `CSS.supports` agora |
+| 20 | 1 h de revisão por profissional da trava de crise antes do 1º usuário |
+| 21 | Token FCM/Web Push: **declarar** como ID na ficha; atualizar `PLAY-DATA-SAFETY.md` §2.7 |
+| 22 | Declarar IA na ficha da loja + aviso in-app (Configurações › Sobre) |
+| 23 | Corrigir código (cliente chama os DELETE de push na exclusão) + declarar retenção de `ord:` na política §8 |
+| 24 | Banner informativo ao subir `TERMS_VERSION`; sem re-aceite obrigatório |
+| 25 | **Termos EN mostram o preço em dólar** (não "preço da loja"); `publishedPrice.test.ts` passa a aceitar R$ no PT e US$ no EN com paridade declarada |
+| 26 | `Attributions.md`: fontes (Material Symbols, Fredoka, Rubik) + arte de IA, sem deps npm |
+| 27 | Cláusula de crise/IA nos termos §8: **squad redige e autoaprova** |
+| 28 | Aplicar a proposta 64 → 37 (`13-governanca-agentes.md` §8) |
+| 29 | LV #20 ganha exceção registrada em `vetos.md` |
+| 30 | `'tasks-100'` renomeada para gatilho de comportamento |
+| 31 | Orçamento de performance vira régua (guard) |
+| 32 | Apagar PNG de `dist/` após WebP |
+| 33 | Remover 38 deps sem import + guard |
+| 34 | Electron: bump junto com o Steam |
+| 35 | ADRs 001–003 → `docs/adr/`; ROADMAP datado com lápide |
+| 36 | `product/soulmon-01/**` indexado como registro no MAPA |
+| 37 | Remover `SettingsModal` |
+| 38 | `CLAUDE.md`: corrigir as 7 afirmações + 2 refs `arquivo:linha` |
+| 39 | Fósseis da raiz → `docs/historico-digiapp/` com lápide; README novo aponta para o MAPA |
+
+Fila vazia. Execução: ver o bloco datado do `STATUS.md`.
