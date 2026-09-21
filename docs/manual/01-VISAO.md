@@ -1,6 +1,6 @@
 # Visão — o que o Soulmon é, para quem, e o que ele nunca pode virar
 
-> **Dono:** doc-redator-regras · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (sincronizado com `9875477b`, delta `dc72579e..9875477b`: decisões do dono no `REGISTRO-DE-DECISOES.md` §14, copy da bíblia em tela, trava de crise no chat — só nas §7 e §10; verificação anterior do delta `2580b73a..dc72579e`: 21/09/2026)
+> **Dono:** doc-redator-regras · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (último item do adendo da §10, delta `5ac3d351..8d318529`, som/S16 + chaves na `SettingsPage`; o resto: sincronizado com `9875477b`, delta `dc72579e..9875477b`: decisões do dono no `REGISTRO-DE-DECISOES.md` §14, copy da bíblia em tela, trava de crise no chat — só nas §7 e §10; verificação anterior do delta `2580b73a..dc72579e`: 21/09/2026)
 > **Verificação:** `npx vitest run src/utils/currencies.test.ts src/utils/monetization.fronteira.test.ts src/utils/restWindow.test.ts src/utils/passives.test.ts src/utils/bond.test.ts src/utils/habitRhythm.test.ts src/hooks/useDailyReset.test.ts src/plugins/widgetSemCobranca.contract.test.ts` — são os testes que travam, em código, as linhas vermelhas citadas aqui. Toda contagem deste doc traz, na própria linha, o comando que a mediu em 09/09/2026.
 > **Não cobre:** as regras de jogo em si (→ `02-REGRAS-DE-NEGOCIO.md`), telas e navegação (→ `03-FLUXO-DE-TELAS.md`), identidade visual (→ `04-IDENTIDADE-VISUAL.md`), arquitetura, deploy e integrações (→ `05-ARQUITETURA.md`, `08-INTEGRACOES-E-DEPLOY.md`), o histórico das decisões (→ `09-HISTORICO.md`, `10-DISCUSSOES-E-DECISOES.md`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -471,6 +471,23 @@ O que está aberto e **depende do dono** está na seção 3 de
   crise do chat ganhou caminho curado (§14.2 — ver §7 acima) e o reencontro
   continua por FAIXAS de ausência (§14.3, WP2.7 mantido). O que segue **aberto e
   não depende do dono**: o caminho determinístico de crise no servidor.
+- **Som: o dono escolheu o GERADO nos três eventos longos (21/09/2026, S16 +
+  nota do fim do dia no §6.1 do registro).** Primeiro disse "Coloca o A"
+  (aplicado literal em `c703c8bc`); perguntado, corrigiu — *"quero o gerado nos
+  3"* (`73be1a2f`). O que está no app é o **híbrido**: arquivo de IA em
+  `playEvolve`/`playDegenerate`/`playTaskComplete` (com o sintetizado como
+  fallback) e na trilha de duas camadas, sintetizado nos cinco curtos. É
+  escolha do dono, **não** resultado do A/B cego, que segue montado e não
+  ouvido — "a IA venceu" e "o procedural venceu" continuam proibidas (S10).
+  Nenhuma linha vermelha muda: nada toca sem gesto, a trilha nasce desligada
+  e o app segue funcionando 100% mudo. Regra em
+  [`02` §58-A](02-REGRAS-DE-NEGOCIO.md#som); procedência e termos em
+  [`docs/Attributions.md`](../Attributions.md) (seção Áudio). ⚰️ Até
+  `980bc84c` (21/09/2026) o único switch que ligava a trilha vivia num modal
+  sem gatilho vivo e o jogador não tinha como ouvi-la; desde esse commit as
+  chaves "Sons" e "Trilha" estão nas **Configurações** (`SettingsPage`, grupo
+  "Som" — [`03` §4.23](03-FLUXO-DE-TELAS.md); régua
+  `src/components/settingsSom.render.test.tsx`).
 
 ---
 

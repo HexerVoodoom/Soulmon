@@ -1,8 +1,8 @@
 # Identidade visual e sonora do Soulmon
 
-> **Dono:** doc-redator-identidade · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `dc72579e..9875477b`, conferido em `5ac3d351`: rodada 2 da SQUAD-ARTE, SQUAD-SOM retomada, superfície de suporte do chat)
-> **Verificação:** `npx vitest run src/styles/ src/index.css.contract.test.ts src/utils/sprites.dungeonRoster.test.ts src/utils/loudness.contract.test.ts src/utils/cortes.contract.test.ts src/components/ui/Viewport.contract.test.tsx src/components/ui/foundation.render.test.tsx src/brand/brandFlame.parity.test.ts src/assets/assets.contract.test.ts` — os 11 arquivos de 09/09/2026 (216 testes, verde) mais os dois que nasceram com a marca vetorizada e a leva de arte de 15/09/2026.
-> **Não cobre:** o fluxo entre telas e o que cada superfície mostra (doc `03-FLUXO-DE-TELAS.md`); as regras de jogo por trás dos números que a UI pinta (doc `02-REGRAS-DE-NEGOCIO.md`); a assinatura de cada componente (`06-REFERENCIA/components.md`); o pipeline de build/deploy dos assets (doc `08-INTEGRACOES-E-DEPLOY.md`). Este doc descreve o som — **não** decide nada sobre ele: quem decide é o `REGISTRO-DE-DECISOES.md` (§6.1, S1..S13).
+> **Dono:** doc-redator-identidade · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `dc72579e..9875477b`, conferido em `5ac3d351`: rodada 2 da SQUAD-ARTE, SQUAD-SOM retomada, superfície de suporte do chat) · §9 verificado em 21/09/2026 por doc-verificador (delta `5ac3d351..8d318529`: S16, trilha em duas camadas, escolha do dono nos 3 eventos longos, chaves na `SettingsPage`)
+> **Verificação:** `npx vitest run src/styles/ src/index.css.contract.test.ts src/utils/sprites.dungeonRoster.test.ts src/utils/loudness.contract.test.ts src/utils/cortes.contract.test.ts src/utils/sonsAssets.contract.test.ts src/components/ui/Viewport.contract.test.tsx src/components/ui/foundation.render.test.tsx src/brand/brandFlame.parity.test.ts src/assets/assets.contract.test.ts` — os 11 arquivos de 09/09/2026 (216 testes, verde) mais os dois que nasceram com a marca vetorizada e a leva de arte de 15/09/2026, mais `sonsAssets.contract.test.ts` (21/09/2026, S16).
+> **Não cobre:** o fluxo entre telas e o que cada superfície mostra (doc `03-FLUXO-DE-TELAS.md`); as regras de jogo por trás dos números que a UI pinta (doc `02-REGRAS-DE-NEGOCIO.md`); a assinatura de cada componente (`06-REFERENCIA/components.md`); o pipeline de build/deploy dos assets (doc `08-INTEGRACOES-E-DEPLOY.md`). Este doc descreve o som — **não** decide nada sobre ele: quem decide é o `REGISTRO-DE-DECISOES.md` (§6.1, S1..S16 — não existe S14).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
 
 ---
@@ -1134,34 +1134,74 @@ parecer parte do aparelho, não erro. Arquivos em `src/assets/soulmon/placeholde
 ## 9. Identidade sonora
 
 > Este documento **descreve**. Quem decide é
-> [`docs/REGISTRO-DE-DECISOES.md`](../REGISTRO-DE-DECISOES.md) §6.1 (**S1..S13**),
+> [`docs/REGISTRO-DE-DECISOES.md`](../REGISTRO-DE-DECISOES.md) §6.1 (**S1..S16**, sem S14),
 > e o guia operacional é [`docs/SOM.md`](../SOM.md). Não altere som a partir
 > daqui.
 
 ### 9.1 Os 8 sons
 
-**`src/utils/sounds.ts`** — síntese procedural, **zero byte de asset**. Os oito
-símbolos exportados, com a categoria que `CATEGORIA_DO_SOM` (`loudness.ts`) lhes
-atribui:
+**`src/utils/sounds.ts`** — os oito símbolos, todos com síntese procedural. ⚰️ "Zero
+byte de asset" valeu até 21/09/2026: desde a S16 (`ee79fd44`) e a escolha do dono
+("o gerado nos 3", `73be1a2f`), os **três eventos longos** preferem um asset de IA e caem
+no procedural quando o arquivo não está decodificado (§9.1.1); os cinco curtos são só
+síntese. A categoria é a que `CATEGORIA_DO_SOM` (`loudness.ts`) lhes atribui:
 
-| símbolo | categoria | alvo (LUFS-M) |
-|---|---|---|
-| `playEvolve` | `marco` | −16,0 |
-| `playPresence` | `presenca` | −16,0 |
-| `playDegenerate` | `degeneracao` | −16,0 |
-| `playVisorTune` | `sintonia` | −19,0 |
-| `playFeed` | `cuidado` | −19,0 |
-| `playShower` | `cuidado` | −19,0 |
-| `playSleep` | `cuidado` | −19,0 |
-| `playTaskComplete` | `conclusao` | −22,0 |
+| símbolo | categoria | alvo (LUFS-M) | fonte desde 21/09/2026 |
+|---|---|---|---|
+| `playEvolve` | `marco` | −16,0 | **asset** `public/sounds/evolve.webm`, fallback procedural (⚠️ saiu em `c703c8bc` e **voltou** em `73be1a2f` — ver §9.5, S10) |
+| `playPresence` | `presenca` | −16,0 | procedural (o gerador reprovou, `PERGUNTAS-DO-DONO.md` #10) |
+| `playDegenerate` | `degeneracao` | −16,0 | **asset** `public/sounds/degenerate.webm`, fallback procedural |
+| `playVisorTune` | `sintonia` | −19,0 | procedural |
+| `playFeed` | `cuidado` | −19,0 | procedural (reprovado, #10) |
+| `playShower` | `cuidado` | −19,0 | procedural (reprovado, #10) |
+| `playSleep` | `cuidado` | −19,0 | procedural (reprovado, #10) |
+| `playTaskComplete` | `conclusao` | −22,0 | **asset** `public/sounds/task-complete.webm`, fallback procedural |
 
 Mais `isMuted` / `setMuted` (o gate de mudo, lendo `STORAGE_KEYS.SOUND_MUTED`).
 
 ⚠️ **O `AudioContext`-por-chamada não existe mais** ⚰️ — morreu na Fase 2 do run
-`som-01`. A função interna `play` é, desde então, **só** o gate de mudo, e o gate vem
-ANTES de qualquer construção de nó: com `SOUND_MUTED`, `tocarNa` nunca é chamada
-e **nenhum nó é criado**, nem o barramento. Contexto construído para "não tocar"
-já é plumbing vazando.
+`som-01`. A função interna `play` é, desde então, o gate de mudo **e, desde 21/09/2026,
+o aviso de gesto à trilha** (`aoGestoSonoro` de `utils/trilha.ts`, §9.2.1) — nessa ordem,
+e o gate vem ANTES de qualquer construção de nó: com `SOUND_MUTED`, `tocarNa` nunca é
+chamada e **nenhum nó é criado**, nem o barramento. Contexto construído para "não
+tocar" já é plumbing vazando. A função privada `playComAsset` (só `playEvolve`,
+`playDegenerate` e `playTaskComplete` passam por ela) chama `prepararAssets` dentro do
+`play` — ou seja, depois do mudo e do gesto — e toca `assetPronto` a ganho 1 se já
+decodificou, senão o procedural **desta vez**: nunca espera, nunca fica mudo.
+
+#### 9.1.1 Os assets de IA — S16 (21/09/2026)
+
+Decisão do dono em 21/09/2026 (`REGISTRO-DE-DECISOES.md` §6.1, **S16**: "só pra gente
+ter pronto; depois melhoramos"): o candidato único de cada evento em que o gerador
+passou na régua entrou no app, com o procedural como fallback, e os cinco sons curtos
+ficaram procedurais porque o gerador reprovou neles. **Manifesto e carga preguiçosa:
+`src/utils/sonsAssets.ts`** (`ASSETS_DE_SOM` para os 3 SFX, `CAMADAS_DA_TRILHA` para a
+trilha). O que está em `public/sounds/` em `73be1a2f` (`ls -l public/sounds/`,
+21/09/2026):
+
+| arquivo | evento | bytes (`bytes` do manifesto) | `duracaoS` |
+|---|---|---|---|
+| `evolve.webm` | `playEvolve` | 7 641 | 1,2 |
+| `degenerate.webm` | `playDegenerate` | 4 498 | 0,7 |
+| `task-complete.webm` | `playTaskComplete` | 1 570 | 0,2 |
+| `trilha-base.webm` | trilha, camada `base` | 122 447 | 28,8 |
+| `trilha-ritmo.webm` | trilha, camada `ritmo` | 122 092 | 28,8 |
+
+Total **258 248 bytes** (soma dos cinco; a régua confere contra o teto S6 de 300 KB).
+Codec: **WebM/Opus mono, codificado pelo MediaRecorder do Chrome** — não há
+codec nesta máquina — e decodificado por `decodeAudioData` no mesmo motor (48 kbps nos
+SFX, segundo o cabeçalho de `sonsAssets.ts`; as duas camadas da trilha a 32 kbps, segundo
+o bloco S16 do `STATUS.md` — 122 447 bytes / 29,8 s ≈ 33 kbps confere); o
+MediaRecorder grava um pré-rolo de silêncio na cabeça e `recortarSilencio` acha o
+onset (limiar −60 dBFS) ao decodificar, para o som começar no gesto. Origem
+`higgsfield/seed_audio` (SFX) e `higgsfield/sonilo_music` (trilha); o prompt fica
+**fora** do bundle (`promptRef` aponta para `squad-alpha-runs/som-01/prototyper/pacote-prompts.md`).
+Procedência por hash SHA-256 nas duas direções — manifesto ↔ arquivo ↔ seção
+"Áudio" de `docs/Attributions.md`. **Régua: `src/utils/sonsAssets.contract.test.ts`**
+(S9 nas duas direções; S6: soma ≤ 300 KB, nada em `PRECACHE_URLS` do `public/sw.js`,
+nenhum `import` de `.webm` em `src/`; as camadas fecham o loop no mesmo ponto;
+footgun 9: nenhum número de LUFS/dBTP no manifesto). ⚠️ `dist/` é commitado: todo
+byte de áudio é permanente no histórico — trocar é commit novo, nunca reescrita.
 
 ### 9.2 O barramento — `src/utils/audioBus.ts`
 
@@ -1171,13 +1211,16 @@ S3, e os dois duckings:
 ```
 fonte → bus da categoria → bus SFX → duckGeral → master → limitador → saída
                 ↑ Arcade passa antes pelo duckArcade (D-2)
-camadas da trilha → bus Trilha → duckGeral ↑
+camadas da trilha → bus Trilha → duckGeral ↑   (desde 21/09/2026: `utils/trilha.ts`, §9.2.1)
 Marco → master  (NÃO passa pelo duckGeral: ele é quem duca — D-1)
 ```
 
 Constantes: `D1_ATAQUE_S` `0.12` · `D1_LIBERACAO_S` `0.8` · `D2_ATAQUE_S` `0.12`
 · `D2_LIBERACAO_S` `0.4` · `D2_PROFUNDIDADE_DB` `-9.0` · `RAMPA_MINIMA_S`
-`0.005`. Funções de fronteira: `tocarNa` (despacho) e `liberarMarco`.
+`0.005`. Funções de fronteira: `tocarNa` (despacho), `liberarMarco` e, desde
+21/09/2026, `garantirBarramento` — o barramento construído se preciso, para quem toca
+**fora** de `tocarNa` (hoje só `utils/trilha.ts`, que tem gesto próprio e vai ao
+`busTrilha`); mesmo contrato: `null` = sem motor, falhar em silêncio.
 
 **A R-EX vive no despacho de `tocarNa`**: `JANELA_DE_COINCIDENCIA_MS` = **120**.
 Dois `play*` a ≤120 ms são o **mesmo gesto**: toca a de classe mais alta;
@@ -1199,6 +1242,32 @@ suspenso com a aba oculta, fechado em `pagehide`, e reconstruído sozinho se o
 cache estiver `closed` — sem isso um `pagehide` seguido de volta pelo bfcache
 deixaria o app mudo para sempre, sem erro nenhum).
 
+#### 9.2.1 A trilha — `src/utils/trilha.ts` (21/09/2026)
+
+**Duas camadas em fase, um estado só.** `CAMADAS_DA_TRILHA` (`sonsAssets.ts`) tem
+`base` e `ritmo`, ambas a 100 BPM, cada uma mestrada no alvo sozinha; `comecar()` carrega
+as duas por `carregarAsset`, cria **um** ganho de trim e liga ao `busTrilha`, e dá
+`start(t0)` no **mesmo instante** para todas — é o início comum que as mantém em fase
+compasso a compasso. Loop: `loopStart` 0, `loopEnd` = `duracaoS` = **28,8 s** (12
+compassos × 2,4 s), dentro do arquivo, que carrega 1 s de cauda porque o codec perde a
+ponta. Só as camadas que chegaram tocam, e o trim é o do NÚMERO que toca:
+`TRIM_TRILHA_POR_CAMADAS_DB` (§9.3), aplicado igual às duas. `camadasTocando()` devolve
+0, 1 ou 2. ⚠️ Isto satisfaz a condição (1) da S13 no repositório e **não descongela**
+a máquina E0–E6: o módulo não decide estado nenhum — liga, desliga, pausa.
+
+Ciclo: `ligarTrilha`/`desligarTrilha` (gesto — o switch "Trilha/Music" da
+`SettingsPage`, grupo "Som", desde `980bc84c`, e o mesmo par no `SettingsModal`, que
+segue sem gatilho vivo; persistem a chave própria `SOUND_TRACK_ENABLED`, separada do mudo),
+`pausarTrilha`/`retomarTrilha` (E0 — ganchos do `App.tsx` para dormir e para o mudo
+global), `aoGestoSonoro` (chamado pelo `play()` de `sounds.ts`: no PRIMEIRO gesto da
+sessão, se a preferência persistida estiver ligada, a trilha começa — o gesto é o
+consentimento, sem autoplay no carregamento) e, ao voltar de `document.hidden`, retoma
+**só se foi ligada por gesto nesta sessão**. O mudo global cala a trilha; o inverso não
+vale. **Régua:** nenhuma de `trilha.ts` em si — o loop no mesmo ponto é travado por
+`sonsAssets.contract.test.ts`, o gesto pela tela (liga/desliga a chave própria) por
+`src/components/settingsSom.render.test.tsx` (`980bc84c`); liga/pausa/retoma/desliga foi
+verificado no motor real em 21/09/2026 (`REGISTRO-DE-DECISOES.md` §6.1, S16).
+
 ### 9.3 A política — `src/utils/loudness.ts`, dono único
 
 **Alvo de loudness NUNCA se escreve à mão em outro arquivo.** A política tem
@@ -1207,7 +1276,14 @@ dono único e há guard que reprova a cópia.
 `TETO_DBTP` = **−1,0** (true peak, oversampling ≥4×) · `TETO_LUFS_INTEGRADO` =
 **−16,0** · `TOLERANCIA_LU` = **1,0** · `DEGRAU_DB` = **3,0** (DERIVADO — razão
 de 2× em escala sone; por isso não existe meio-degrau) · `ALVO_TRILHA_LUFS_S` =
-**−28,0** · `OFFSET_MAX_DB` = **20** · `GANHO_DE_CATEGORIA_DB` = **0,0**.
+**−28,0** · `OFFSET_MAX_DB` = **20** · `GANHO_DE_CATEGORIA_DB` = **0,0** ·
+`TRIM_TRILHA_POR_CAMADAS_DB` = **{ 1: 0, 2: −2,024 }** (21/09/2026, `8a930657`): o trim
+da trilha por NÚMERO de camadas tocando, em dB — **medido, não calculado** (o
+`trimEstadoDb` do arnês, `gate-loudness.mjs` A-5). Cada camada sai do mestre no alvo
+sozinha; a soma de duas sobe, e é este trim que devolve a soma ao `ALVO_TRILHA_LUFS_S`
+(medido sobre `base` + `ritmo` em `E:/Soulmon-assets/som-01/mix-camadas.mjs`: soma
+−28,00 LUFS-S, −15,86 dBTP, −31,46 LUFS integrado). Camada nova = medir de novo, nunca
+derivar de 1/√n.
 
 `ORDEM_DA_ESCADA` existe como declaração SEPARADA de `ALVO_LUFS_M` para o teste
 poder provar que a ordem foi preservada — um `Object.keys` provaria só que o
@@ -1251,20 +1327,30 @@ com uma asserção só: corte novo é uma linha na tabela, não um teste novo.
   proposta não verificada. Duas peças foram extraídas e valem sozinhas: **E0**
   (`document.hidden` · app sem foco · `isSleeping` · janela de descanso), que é
   D11 + S2 sobre o pacote inteiro, e a **chave da trilha separada de
-  `SOUND_MUTED`**. Recarregar crédito no gerador **não** descongela.
-- **S10** — o som PROCEDURAL é a solução vigente; **segue exatamente como
-  está** depois de 21/09/2026. ⚰️ "A conta do gerador está em 0,45 crédito e o
-  piloto A/B não rodou" era o estado até 20/09/2026: em 21/09/2026 o bloqueio
-  caiu (crédito recarregado; termos, política de loja e S11/S12 respondidos pelo
-  dono — `REGISTRO-DE-DECISOES.md` §6.1, nota de 21/09 sob a emenda da S10), os
-  **12 prompts** foram gerados e pós-processados em `E:/Soulmon-assets/som-01/`
-  — **fora do repo: nenhum byte de áudio entrou**, `sounds.ts` continua com os
-  8 sons sintetizados de §9.1 e `docs/Attributions.md` segue sem linha de
-  áudio (S9) — e o **A/B cego dos 3 pares** (`playEvolve`, `playDegenerate`,
-  `playTaskComplete`) está **montado e NÃO OUVIDO** (`ab/escuta.html`). O
-  gatilho da S10 deixou de ser "haver crédito" e passou a ser "o dono
-  responder as 18 perguntas"; até lá "o procedural venceu" continua frase
-  proibida. Detalhe em `docs/SOM.md` §5.
+  `SOUND_MUTED`**. Recarregar crédito no gerador **não** descongela. Desde
+  21/09/2026 (S16, `8a930657`) existem **duas camadas reais** (`base` + `ritmo`) tocando
+  juntas num estado só (§9.2.1) — condição (1) da S13 satisfeita; a (2), o dono ligar a
+  trilha por gesto numa sessão real, não é verificável por código, e E0–E6 **segue
+  congelada**.
+- **S10** — o som PROCEDURAL segue a solução vigente, e **não mudou de
+  significado** em 21/09/2026 — mudou de dono em três eventos, não de método. ⚰️
+  "A conta do gerador está em 0,45 crédito e o piloto A/B não rodou" era o
+  estado até 20/09/2026: em 21/09/2026 o bloqueio caiu (crédito recarregado;
+  termos, política de loja e S11/S12 respondidos pelo dono —
+  `REGISTRO-DE-DECISOES.md` §6.1, nota de 21/09 sob a emenda da S10) e os
+  **12 prompts** foram gerados e pós-processados em `E:/Soulmon-assets/som-01/`.
+  ⚰️ "Fora do repo: nenhum byte de áudio entrou" valeu só até a **S16** do mesmo
+  dia (`ee79fd44`): cinco arquivos estão em `public/sounds/` (§9.1.1) e
+  `docs/Attributions.md` **tem** a seção "Áudio" com hash por arquivo (S9). O
+  **A/B cego dos 3 pares** (`ab/escuta.html`) **não foi respondido pelo
+  protocolo** (`ab-piloto.md` §8.3/§8.4 — 3 perguntas × 2 condições): no fim de
+  21/09/2026 o dono primeiro disse "Coloca o A" — aplicado literalmente sobre o
+  mapa cego (semente 20260921), `evolve.webm` saiu em `c703c8bc` — e, perguntado
+  se era isso, respondeu **"Não — quero o gerado nos 3"**: `evolve.webm` voltou
+  em `73be1a2f`. **É escolha do dono, não resultado do A/B.** O que está no app é
+  o híbrido — IA nos 3 eventos longos e na trilha (2 camadas), procedural nos 5
+  curtos — e "o procedural venceu" e "a IA venceu" **seguem as duas proibidas**:
+  ninguém mediu. Detalhe em `docs/SOM.md` §5.
 
 Do gate de loudness (`docs/SOM.md` §7), os três itens que estavam abertos com o
 engenheiro de áudio **fecharam em 21/09/2026**, no arnês local (não
@@ -1501,4 +1587,5 @@ Lista fechada, para o `STATUS.md`. Medidas em 09/09/2026, revistas em
 | 11 | `docs/PALCO-E-DECORACAO.md` × `src/utils/petStage.ts` | `GROUND_Y` = 74 é a conta do sprite de 80px; o sprite é `PET_BOX` = 152 e a origem real é `PET_TOP_OFFSET` = −38. O código e o doc já registram o desvio; a conta do palco **não foi refeita** — e o berço mudou para 220×104 em 15/09/2026 (§7.1), o que aquele doc também não descreve |
 | 12 | `src/utils/backgrounds.ts` × `StageSetting` | o tipo ainda aceita `'void'`, mas nenhum cenário o declara desde 15/09/2026 (§7.2) — tipo com valor sem consumidor; **régua: nenhuma** |
 | 13 | `src/styles/tokens.md` × `src/index.css` | o `grep` de tokens `--sm2-*` devolve 59 e são 58: `--sm2-btn` é seletor de variante do kit vetor, não token declarado (§2.8) |
-| 14 | `CLAUDE.md`, `docs/SOM.md` e este doc (§9) × `docs/REGISTRO-DE-DECISOES.md` §6.1 | os três dizem "**S1..S13**", mas o registro tem **S15** desde 09/09/2026 (`6bbdd9f8`, termos do gerador) e a nota de 21/09/2026 sob a S10 a cita; **não existe S14**. Achado em 21/09/2026 ao sincronizar §9.5; a numeração é do registro, não deste doc — **régua: nenhuma** |
+| 14 | `CLAUDE.md`, `docs/SOM.md` e este doc (§9) × `docs/REGISTRO-DE-DECISOES.md` §6.1 | os três diziam "**S1..S13**", mas o registro tem **S15** desde 09/09/2026 (`6bbdd9f8`, termos do gerador) e **S16** desde 21/09/2026 (`ee79fd44`); **não existe S14**. Achado em 21/09/2026 ao sincronizar §9.5; ⚰️ este doc passou a dizer S1..S16 em 21/09/2026 (sincronização sobre `73be1a2f`); `CLAUDE.md` › Áudio ainda diz S1..S13 e "zero byte de asset" — a numeração é do registro, não deste doc — **régua: nenhuma** |
+| 15 | ⚰️ `docs/SOM.md` §5 e `REGISTRO-DE-DECISOES.md` §6.1 (linha da S16) × `public/sounds/` | diziam "188 KB" / "188 031 bytes" e "camada-base" (estado de `ee79fd44`: uma camada); em `73be1a2f` são **5** arquivos, duas camadas de trilha, **258 248 bytes** (`ls -l public/sounds/`, 21/09/2026). **Fechada em `8d318529`** (mesmo dia): a S16 foi emendada ("emenda no mesmo dia … 258 248 bytes em 5 arquivos") e `docs/SOM.md` não cita mais 188 (`grep -n 188 docs/SOM.md` → vazio). O total é conferido contra o teto S6 por `sonsAssets.contract.test.ts` |

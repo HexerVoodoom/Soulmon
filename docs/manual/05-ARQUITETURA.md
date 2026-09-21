@@ -1,6 +1,6 @@
 # Arquitetura
 
-> **Dono:** doc-redator-arquitetura · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (sincronizado com `dc72579e..9875477b` em 21/09/2026 por doc-redator-arquitetura; conferido em `5ac3d351`)
+> **Dono:** doc-redator-arquitetura · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (linhas de áudio da §2.1, §2.2, §5 e §7, delta `5ac3d351..8d318529`, som/S16; o resto: sincronizado com `dc72579e..9875477b` em 21/09/2026 por doc-redator-arquitetura; conferido em `5ac3d351`)
 > **Verificação:** `npx tsc --noEmit` · `npx tsc -p tsconfig.server.json --noEmit` · `npx tsc -p desktop/tsconfig.json --noEmit` · `npx vitest run` · `npm run build`; os contratos de fronteira são `src/deploy/appUrl.contract.test.ts`, `src/deploy/firebaseNoBuild.contract.test.ts`, `src/deploy/swCache.contract.test.ts`, `src/security/csp.test.ts`
 > **Não cobre:** as regras do jogo (→ `02-REGRAS-DE-NEGOCIO.md`), as telas (→ `03-FLUXO-DE-TELAS.md`), tokens e estilo (→ `04-IDENTIDADE-VISUAL.md`), função por função (→ `06-REFERENCIA/`), o esquema do save e as chaves de storage (→ `07-DADOS-E-SAVE.md`), credenciais e deploy (→ `08-INTEGRACOES-E-DEPLOY.md`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -88,7 +88,7 @@ do `apply from: 'capacitor.build.gradle'`, porque o arquivo regenerado pelo
 | `workers/` | O **worker de push** (`push-scheduler.js` + `webpush.js` + `fcm.js` + `wrangler.toml`). NÃO é Pages Function: deploy manual. |
 | `desktop/` | O overlay Electron: `electron/` (processo principal, preloads, políticas de navegação e update) e `renderer/src/` (a faixa do pet e o menu). |
 | `android/` | O projeto Capacitor: `app/src/main/java/com/hexervoodoom/soulmon/` com `MainActivity.java`, `plugins/` (widget, alarme, billing), `widget/` (5 providers + `WidgetRenderer.kt` + `WidgetRefreshWorker.kt`) e `notifications/` (`AlarmReceiver.kt`, `BootReceiver.kt`). Em `res/`, desde 20/09/2026 (`6affd501`): `drawable-nodpi/` (os `sprite_*.png` de 384², `push_large.png`, `fx_poop.png` — sem bucket de densidade, decodificados crus pelo renderer), `drawable-v31/widget_bg.xml` (o mesmo anel de `drawable/widget_bg.xml`, com o raio do sistema) e `drawable/ic_notification.xml` (a chama, ícone mono do push). |
-| `public/` | O que é servido cru: `sw.js` (service worker), `_headers` (CSP e cache), `manifest.json`, `privacidade.html`, `termos.html`, `fonts/`, `screenshots/`. |
+| `public/` | O que é servido cru: `sw.js` (service worker), `_headers` (CSP e cache), `manifest.json`, `privacidade.html`, `termos.html`, `fonts/`, `screenshots/` e, desde `ee79fd44` (21/09/2026, S16), `sounds/` — os cinco `.webm` gerados por IA (3 SFX + 2 camadas da trilha), listados com hash em `src/utils/sonsAssets.ts` e em `docs/Attributions.md`; **nunca importados** por `src/` e **fora de `PRECACHE_URLS`** (régua: `src/utils/sonsAssets.contract.test.ts`). |
 | `dist/` | O build publicado — **é commitado** (481 arquivos rastreados, `git ls-files dist \| wc -l`, 09/09/2026). |
 | `scripts/` | Ferramentas de build e de manutenção (`convert-to-webp.mjs`, `docs-inventario.mjs`, `sync-oracle-data.mjs`, `vendor-class-system.mjs`, `orcamento-de-tempo.mjs`, geradores de arte). |
 | `tools/` | Leitura das métricas fora do app: `metrics-read.mjs` (transporte) + `metricsReport.mjs` (regras puras, testadas). |
@@ -111,7 +111,7 @@ do `apply from: 'capacitor.build.gradle'`, porque o arquivo regenerado pelo
 | `src/main.tsx` | O ponto de entrada. Migra as chaves legadas e monta os providers (§3). |
 | `src/App.tsx` | O orquestrador. **Meça antes de abrir**: `wc -l src/App.tsx` → **6139** linhas em 21/09/2026 (era 6100 em 20/09/2026 e 6245 em 09/09/2026). |
 | `src/index.css` | O ÚNICO CSS empacotado. `wc -l src/index.css` → **7481** linhas em 20/09/2026 (era 7678 em 09/09/2026). |
-| `src/utils/` | **120 módulos** (inventário de 09/09/2026) — as regras puras: cuidado, virada do dia, hábito, tarefa, descanso, oráculo, loja, masmorra, som, telemetria, save na nuvem. |
+| `src/utils/` | **120 módulos** (inventário de 09/09/2026; `sonsAssets.ts` e `trilha.ts` entraram em 21/09/2026 e ainda não foram recontados) — as regras puras: cuidado, virada do dia, hábito, tarefa, descanso, oráculo, loja, masmorra, som, telemetria, save na nuvem. |
 | `src/utils/soulProfile/` | O motor pesado do Oráculo: `astrology/`, `bestiary/`, `ficha/`, `axes.ts`, `pipeline.ts`. Entra por import DINÂMICO. |
 | `src/components/` | **91 módulos** — telas, modais, HUD, minijogos. `src/components/ui/` é o scaffold shadcn importado do Figma. |
 | `src/hooks/` | **6 módulos**: `useDailyReset`, `useCareSystem`, `useProgressTracking`, `useSpriteGeneration`, `useDialogA11y`, `useItemForm`. |
@@ -228,6 +228,7 @@ regras em si estão em `02-REGRAS-DE-NEGOCIO.md`.
 | Palco do pet | `GROUND_Y`, `SlotId` | `src/utils/petStage.ts` |
 | Oráculo (leitura + criação) | `generateOracle`, `composeSpritePrompts` | `src/utils/oracle.ts`, `src/utils/soulProfile/` |
 | Áudio (sons · barramento · política) | `sounds`, `tocarNa`, `loudness` | `src/utils/sounds.ts`, `audioBus.ts`, `loudness.ts` |
+| Áudio — assets de IA e trilha (desde `ee79fd44`, 21/09/2026, S16) | `ASSETS_DE_SOM`, `CAMADAS_DA_TRILHA`, `carregarAsset`, `playComAsset`, `ligarTrilha`, `pausarTrilha` | `src/utils/sonsAssets.ts` (manifesto + carga preguiçosa, só depois do gesto), `src/utils/trilha.ts` (liga/desliga/pausa; E0), `src/utils/sounds.ts` (`playComAsset`: asset se decodificado, senão procedural). Os ganchos de E0 no `App.tsx` são `handleSleep` (`pausarTrilha`/`retomarTrilha` conforme `isSleeping`) e `handleToggleSound` (único desde `980bc84c`; passado como `onToggleSound` à `SettingsPage`, grupo "Som", e ao `SettingsModal`). Regra em [02-REGRAS-DE-NEGOCIO.md](02-REGRAS-DE-NEGOCIO.md) §58-A. |
 
 ---
 
@@ -268,7 +269,7 @@ texto novo nesses arquivos achando que ele aparece em algum lugar.**
 | Service worker | `public/sw.js` | `CACHE_VERSION` mora nas **primeiras linhas** do arquivo e é a origem dos nomes `soulmon-static-<v>` e `soulmon-runtime-<v>`. Ao mudar asset estático/HTML de forma incompatível, **abra o arquivo e some 1** — o número NÃO é repetido em documentação nenhuma, de propósito (já apodreceu três vezes). |
 | Navegação | `public/sw.js` | **Network-first**: busca a rede primeiro e só cai no cache no `.catch`. É o que impede o bundle novo de ficar inalcançável. |
 | O que pode entrar no cache | `public/sw.js`, `cacheavel` | Só resposta `ok` **e** `type === 'basic'` **e** `!redirected` — as três fecham caminhos distintos de servir conteúdo de outra origem sob a nossa chave. |
-| Precache do install | `public/sw.js`, `PRECACHE_URLS` | Só `/`, `/index.html`, `/manifest.json`, `/favicon-192x192.png` e, desde 20/09/2026 (`3e758a81`), os dois ícones do push `/push-large-192.png` e `/badge-96.png` (`PUSH_ICON`/`PUSH_BADGE`, usados nos handlers `message` e `push` — detalhe em [08-INTEGRACOES-E-DEPLOY.md](08-INTEGRACOES-E-DEPLOY.md) §2.6). **Nenhum JS/CSS**, para o install não conseguir fixar um bundle. |
+| Precache do install | `public/sw.js`, `PRECACHE_URLS` | Só `/`, `/index.html`, `/manifest.json`, `/favicon-192x192.png` e, desde 20/09/2026 (`3e758a81`), os dois ícones do push `/push-large-192.png` e `/badge-96.png` (`PUSH_ICON`/`PUSH_BADGE`, usados nos handlers `message` e `push` — detalhe em [08-INTEGRACOES-E-DEPLOY.md](08-INTEGRACOES-E-DEPLOY.md) §2.6). **Nenhum JS/CSS**, para o install não conseguir fixar um bundle. **Nenhum `/sounds/*.webm`** (S6; `src/utils/sonsAssets.contract.test.ts` varre a lista): os áudios entram pelo ramo "outros recursos da mesma origem" — network-first, cópia em `RUNTIME_CACHE` — e só depois do primeiro `play*`. |
 | Assunção imediata | `public/sw.js` | `skipWaiting()` no install e `clients.claim()` no activate: o SW novo assume na PRIMEIRA carga. |
 | Cabeçalhos HTTP | `public/_headers` | `/assets/*` `immutable` por 1 ano (o nome tem hash); `/index.html` e `/sw.js` `no-cache, no-store, must-revalidate`. |
 | CSP | `public/_headers`, diretiva `Content-Security-Policy` | `script-src 'self' https://apis.google.com` + **quatro hashes `sha256-`** dos scripts inline do `index.html`. Sem `unsafe-inline` e sem `unsafe-eval`. `style-src` precisa de `'unsafe-inline'` (o app usa `style={{}}` por causa do footgun 1). ⚠️ `https://apis.google.com` em `script-src` e `frame-src` **não é opcional**: sem ele o login com Google falha com `auth/internal-error`, sem mencionar CSP. |

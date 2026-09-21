@@ -1,6 +1,6 @@
 # Regras de negócio — todas as regras do jogo, por sistema
 
-> **Dono:** doc-redator-regras · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (só as seções do delta `dc72579e..9875477b` — §2, §3, §8, §10, §12, §45, §48, §59 D31; verificação anterior: 21/09/2026, seções do delta `2580b73a..dc72579e` — §22, §28, §41, §43, §46, §57-A, §57-B, §59 D28–D30; doc inteiro: 10/09/2026, em duas metades)
+> **Dono:** doc-redator-regras · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (§58-A e §59 D32–D33, delta `5ac3d351..8d318529`, som/S16 + chaves na `SettingsPage`; verificação anterior do mesmo dia: só as seções do delta `dc72579e..9875477b` — §2, §3, §8, §10, §12, §45, §48, §59 D31; verificação anterior: 21/09/2026, seções do delta `2580b73a..dc72579e` — §22, §28, §41, §43, §46, §57-A, §57-B, §59 D28–D30; doc inteiro: 10/09/2026, em duas metades)
 > **Verificação:** `npx vitest run src/utils src/types src/hooks` — cada sistema abaixo declara a sua régua própria na linha **Régua**. Números medidos trazem o comando na própria linha.
 > **Não cobre:** o porquê estratégico e as linhas vermelhas (→ [`01-VISAO.md`](01-VISAO.md)), telas e navegação (→ `03-FLUXO-DE-TELAS.md`), função por função (→ `06-REFERENCIA/`), formato do save (→ `07-DADOS-E-SAVE.md`), infraestrutura de push, deploy e API (→ `08-INTEGRACOES-E-DEPLOY.md`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -83,6 +83,7 @@ no primeiro commit, o símbolo se reencontra por `grep`.
 
 **Transversal**
 [58. Notificações como regra](#notificacoes) ·
+[58-A. Som como regra: o que toca, de onde vem, e o que fica mudo](#som) ·
 [59. Divergências com o `CLAUDE.md`](#divergencias)
 
 ---
@@ -4655,14 +4656,128 @@ card de priming na Home (na fila de avisos, ver a regra das DUAS FILAS).
 
 ---
 
+<a id="som"></a>
+## 58-A. 🔊 Som como regra: o que toca, de onde vem, e o que fica mudo
+
+**Em uma frase.** Oito sons, todos por gesto e nenhum obrigatório; desde
+21/09/2026 três deles preferem um arquivo gerado por IA e caem no sintetizado
+quando o arquivo não está pronto, e existe uma trilha que só toca se o jogador
+a ligar.
+
+> Este bloco é sobre **QUAL som toca em QUAL evento, quem decidiu e o que trava**.
+> A identidade sonora (as oito peças, o barramento, a escada de loudness, R-CAT /
+> R-EX / R-NOVA) é do [`04-IDENTIDADE-VISUAL.md`](04-IDENTIDADE-VISUAL.md) §9;
+> o guia operacional é [`docs/SOM.md`](../SOM.md).
+
+**A regra.**
+
+| Evento | Símbolo (`src/utils/sounds.ts`) | Fonte desde 21/09/2026 (S16) |
+|---|---|---|
+| Evolução | `playEvolve` | asset `ASSETS_DE_SOM.playEvolve` (`/sounds/evolve.webm`), fallback procedural |
+| Degeneração | `playDegenerate` | asset `ASSETS_DE_SOM.playDegenerate`, fallback procedural |
+| Tarefa concluída | `playTaskComplete` | asset `ASSETS_DE_SOM.playTaskComplete`, fallback procedural |
+| Presença, comida, banho, sono, sintonia do visor | `playPresence`, `playFeed`, `playShower`, `playSleep`, `playVisorTune` | procedural, sem asset (o gerador reprovou nos curtos — `PERGUNTAS-DO-DONO.md` #9/#10) |
+| Trilha | `ligarTrilha` / `desligarTrilha` (`src/utils/trilha.ts`) | duas camadas em loop (`CAMADAS_DA_TRILHA.base` + `.ritmo`), nasce desligada |
+
+- **Asset se já decodificou, senão o procedural desta vez** — `playComAsset`
+  em `sounds.ts`: chama `prepararAssets` (dispara a carga dos três de uma vez,
+  na primeira chamada) e depois `assetPronto`; nunca espera e nunca fica mudo.
+  A carga acontece **dentro** de um `play*`, ou seja, depois do gate de mudo e
+  do gesto — zero byte de áudio no bundle inicial e zero em `PRECACHE_URLS`
+  (S6). `carregarAsset` nunca lança: `fetch` falho, resposta não-`ok` ou motor
+  sem `decodeAudioData` devolvem `null`.
+- **Procedência nas duas direções** (S9): cada entrada de `ASSETS_DE_SOM` e
+  `CAMADAS_DA_TRILHA` carrega `sha256`, `bytes`, `origem`, `promptRef` e
+  `geradoEm`, e o teste casa manifesto ↔ arquivo em `public/sounds/` ↔ linha
+  de [`docs/Attributions.md`](../Attributions.md) (seção Áudio). Prova
+  procedência, nunca originalidade.
+- **A trilha nasce desligada e só começa por gesto** (S2): a chave é
+  `STORAGE_KEYS.SOUND_TRACK_ENABLED`, **separada** de `SOUND_MUTED`; o mudo
+  global cala a trilha, o inverso não vale. Numa sessão nova, com a preferência
+  ligada, ela recomeça no **primeiro gesto sonoro** (`aoGestoSonoro`, chamado
+  por todo `play`), nunca no carregamento.
+- **E0** (peça extraída da S13): a trilha para em `document.hidden` (o
+  `audioBus` suspende o contexto; `trilha.ts` só retoma em `visibilitychange`
+  se `ligadaNestaSessao`), ao dormir (`handleSleep` em `App.tsx` chama
+  `pausarTrilha`; acordar chama `retomarTrilha`) e no mudo global
+  (`handleToggleSound` em `App.tsx`, único desde `980bc84c`, passado como
+  `onToggleSound` à `SettingsPage` e ao `SettingsModal` — mesmos dois símbolos).
+- **Loop e camadas**: as duas camadas partem no mesmo `t0` e fecham em
+  `loopEnd = duracaoS` (12 compassos a 100 BPM — o arquivo carrega 1 s de cauda
+  além disso); o ganho da soma vem de `TRIM_TRILHA_POR_CAMADAS_DB[n]` em
+  `src/utils/loudness.ts`, dono único do alvo (footgun 9 — `sonsAssets.ts` não
+  declara LUFS nem dBTP, e há teste para isso).
+- **Teto de peso**: a soma dos `bytes` do manifesto cabe no teto do teste de S6
+  (medido em 21/09/2026: `ls -l public/sounds` → 5 arquivos, 258 248 bytes).
+
+**Dono.** `src/utils/sounds.ts` (`playComAsset`, qual evento prefere asset) ·
+`src/utils/sonsAssets.ts` (`ASSETS_DE_SOM`, `CAMADAS_DA_TRILHA`, `carregarAsset`,
+`recortarSilencio`) · `src/utils/trilha.ts` (`ligarTrilha`, `pausarTrilha`,
+`retomarTrilha`, `aoGestoSonoro`) · `src/utils/audioBus.ts`
+(`definirTrilhaLigada`, `garantirBarramento`, `busTrilha`).
+
+**Régua.** `src/utils/sonsAssets.contract.test.ts` (S9 nas duas direções, S6
+teto e `PRECACHE_URLS`, nenhum `import` de `.webm`, camadas com a mesma
+`duracaoS` múltipla do compasso, footgun 9, `recortarSilencio`);
+`src/utils/audioBus.contract.test.ts` (a chave da trilha é separada de
+`SOUND_MUTED` e nasce ausente); `src/utils/sounds.contract.test.ts`;
+`src/components/settingsSom.render.test.tsx` (desde `980bc84c`: as chaves
+"Sons"/"Trilha" existem na `SettingsPage` em PT e EN, o toque em "Sons" chega
+ao `onToggleSound` e o toque em "Trilha" liga/desliga a chave própria —
+`trilhaPreferida()`). **Para `trilha.ts` em si (E0, pausa, retomada,
+`aoGestoSonoro`): régua: nenhuma** (`grep -rl "utils/trilha" src
+--include=*.test.*` → só `settingsSom.render.test.tsx`, que exercita o gesto
+pela tela, 21/09/2026).
+
+**Decisão.** [`REGISTRO-DE-DECISOES.md`](../REGISTRO-DE-DECISOES.md) §6.1 **S16**
+(instalar "só pra ter pronto", sem o A/B cego) e a nota de 21/09/2026 (fim do
+dia): o dono disse primeiro "Coloca o A" (`c703c8bc`, `evolve.webm` saiu) e,
+perguntado, corrigiu — **"quero o gerado nos 3"** (`73be1a2f`, `evolve.webm`
+voltou). É escolha do dono, não resultado do protocolo do A/B, que segue
+**não ouvido**; "o procedural venceu" e "a IA venceu" continuam proibidas
+(S10). S2, S6, S9 e a S13 congelada valem como antes.
+
+**Casos de borda.**
+- Primeiro `play*` da sessão: o asset ainda não chegou → toca o procedural; o
+  segundo já toca o arquivo. Não há espera nem fila.
+- O MediaRecorder grava um pré-rolo de silêncio: `recortarSilencio` acha o
+  onset (`LIMIAR_ONSET`) ao decodificar, e o som começa no gesto. Tudo-silêncio
+  devolve o buffer original, nunca vazio.
+- Só as camadas que chegaram tocam; o trim é o do NÚMERO que toca (1 ou 2).
+- Aba oculta antes de `comecar()` terminar: `comecar` reconfere `pausada` e
+  `ligadaNestaSessao` depois do `await` e desiste.
+
+**O que NÃO faz.** Não toca nada sem gesto (D11, nos chamadores). Não espera o
+`fetch` para tocar. Não decide alvo de loudness (é do `loudness.ts`). Não
+liga a trilha por padrão nem a religa ao voltar de `hidden` se o gesto não
+foi desta sessão. Não descongela a máquina E0–E6 (duas camadas tocam juntas,
+um estado só). Não muda a categoria de um som pelo nível do arquivo (R-CAT).
+
+**Onde a UI mostra.** Grupo **"Som" / "Sound"** da `SettingsPage`
+(`src/components/SettingsPage.tsx`, desde `980bc84c`, 21/09/2026): switch
+"Sons" / "Sound effects" (`checked={!soundMuted}`, `onToggle={onToggleSound}`)
+e switch **"Trilha" / "Music"** (`ligarTrilha`/`desligarTrilha`, estado local
+por `trilhaPreferida()`), com hint que troca conforme `soundMuted` ("Duas
+camadas calmas, em loop…"). O grupo só monta se `onToggleSound` chegar
+(`App.tsx` passa `handleToggleSound`). O mesmo par existe no `SettingsModal`
+("Ajustes rápidos"), que **segue sem gatilho vivo** (`setSettingsOpen(true)`
+só em `handleOpenAISettings`, cuja prop morre no `ChatBox` —
+[`03` §4.23a/§4.23b](03-FLUXO-DE-TELAS.md)) e é candidato a remoção. ⚰️ Entre
+`ee79fd44` e `980bc84c` (mesmo dia) não existia caminho vivo para o jogador
+ligar a trilha nem o mudo global — achado do doc-mantenedor, fechado em
+`980bc84c` (régua `settingsSom.render.test.tsx`); ver D33.
+
+---
+
 <a id="divergencias"></a>
 ## 59. ⚠️ Divergências com o `CLAUDE.md`
 
 O que segue é o que o **código** faz e o `CLAUDE.md` (ou um comentário do próprio
 código) descreve de outro jeito, apurado em 09 e 10/09/2026 (D1–D12 em
 09/09/2026; D13–D27 em 10/09/2026), em 20/09/2026 (D28–D30, sincronização
-`2580b73a..dc72579e`) e em 21/09/2026 (D31, sincronização
-`dc72579e..9875477b`). A precedência do
+`2580b73a..dc72579e`), em 21/09/2026 (D31, sincronização
+`dc72579e..9875477b`) e em 21/09/2026 (D32–D33, sincronização
+`5ac3d351..73be1a2f`, som). A precedência do
 cabeçalho vale: **o código está certo**. Nenhuma linha aqui é proposta de
 mudança — cada uma é um item para o [`STATUS.md`](../STATUS.md), que o
 orquestrador recolhe.
@@ -4703,6 +4818,8 @@ registraram divergência nenhuma**.
 | D29 | comentários de `src/utils/achievements.ts` e `src/utils/emblemArt.ts` (§57-A) | cabeçalhos dizem "As **8** CONQUISTAS" / "os **8** EMBLEMAS" / "guard de instalação (8)", e o teste chama-se "as 8 conquistas têm arte instalada" | `ACHIEVEMENT_IDS` tem **9** ids, há **9** PNGs em `src/assets/soulmon/emblems/` e o próprio teste exige `EMBLEM_COUNT` = **9** (`tasks-100` entrou depois do cabeçalho). O `STATUS.md` de 15/09/2026 também diz "8 emblemas". Apurado em 20/09/2026 | `ls src/assets/soulmon/emblems` → 9 arquivos; `grep -n "EMBLEM_COUNT).toBe" src/utils/achievements.test.ts` |
 | D30 | `CLAUDE.md`, tabela 💠 Bits (§46) | os Bits aparecem "em fonte de calculadora (`bitsStyle` retrô / `bitsStyleLight` tema claro)" — dois estilos, um por tema | os dois exports são **idênticos** e a cor é o token `--sm2-primary-ink` nos dois temas (canvas Loja D-L11, 20/09/2026); não há mais versão por tema | `grep -n "bitsStyleLight" src/utils/currencies.ts` |
 | D31 | `CLAUDE.md`, bloco `docs/NARRATIVA-E-UNIVERSO.md` (`01 §7`) | a régua `src/narrativa.contract.test.ts` trava o vocabulário vetado "com a tabela `DÍVIDA` do que já está no app por decisão pendente" | a tabela chama-se **`EXCECOES`** desde `f3654076` (21/09/2026): a decisão §14.4 do `REGISTRO-DE-DECISOES.md` ("nenhum, aceito todos assim") mudou o estatuto de pendência a quitar para exceção declarada. O que a régua trava não mudou (termos nunca aceitos + espalhamento para arquivo novo) | `grep -n "EXCECOES\|DÍVIDA" src/narrativa.contract.test.ts` → só `EXCECOES` |
+| D32 | `CLAUDE.md`, linha "Áudio — três arquivos" e bloco `docs/SOM.md` (§58-A) | `src/utils/sounds.ts` são "os **8 sons**, todos sintetizados, **zero byte de asset**"; as decisões canônicas são "**S1..S13**" | desde `ee79fd44` (21/09/2026, S16) há **cinco** `.webm` em `public/sounds/` e `playEvolve`/`playDegenerate`/`playTaskComplete` preferem o asset (`playComAsset`), com o procedural como fallback; são **cinco** módulos de áudio (`sonsAssets.ts` e `trilha.ts` entraram), e o registro vai até **S16** | `ls public/sounds` → 5 arquivos; `grep -n "playComAsset" src/utils/sounds.ts`; `grep -n "S16" docs/REGISTRO-DE-DECISOES.md` |
+| D33 | ⚰️ hint do switch "Trilha" em `src/components/SettingsModal.tsx` (§58-A) | dizia "Uma camada calma, em loop" / "One calm looping layer" | `CAMADAS_DA_TRILHA` tem **duas** camadas (`base` + `ritmo`) desde `8a930657` (21/09/2026). **Fechada em `980bc84c`** (mesmo dia): o hint diz "Duas camadas calmas, em loop" no `SettingsModal` e na `SettingsPage`, e o cabeçalho de `trilha.ts` abre com "duas camadas em fase" | `grep -c "url: '/sounds/trilha-" src/utils/sonsAssets.ts` → 2; `grep -rn "Uma camada" src/components src/utils/trilha.ts` → vazio (21/09/2026) |
 
 **Como usar esta tabela.** Antes de "corrigir" qualquer linha, leia a linha
 correspondente do [`REGISTRO-DE-DECISOES.md`](../REGISTRO-DE-DECISOES.md): D1 e

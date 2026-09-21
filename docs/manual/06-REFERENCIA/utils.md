@@ -1,6 +1,6 @@
 # Referência — `src/utils`
 
-> **Dono:** doc-redator-referencia · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador — delta `dc72579e..9875477b`; a devolução de `welcomeBack.ts` foi fechada pelo doc-mantenedor com a evidência do próprio verificador (`f3654076`, §14.3) e reconferida (carimbo anterior, sobre `dc72579e`: verificado em 21/09/2026 por doc-verificador, mecânico completo; descrição por amostra dirigida de 15 módulos)
+> **Dono:** doc-redator-referencia · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador — delta `dc72579e..9875477b`; a devolução de `welcomeBack.ts` foi fechada pelo doc-mantenedor com a evidência do próprio verificador (`f3654076`, §14.3) e reconferida; entradas de `audioBus.ts`, `loudness.ts`, `sonsAssets.ts`, `sounds.ts` e `trilha.ts` verificadas em 21/09/2026 por doc-verificador sobre `5ac3d351..8d318529` (carimbo anterior, sobre `dc72579e`: verificado em 21/09/2026 por doc-verificador, mecânico completo; descrição por amostra dirigida de 15 módulos)
 > **Verificação:** `npx vitest run src/docsManual.contract.test.ts` (item c — cobertura) + os testes listados em **Régua** de cada módulo.
 > **Não cobre:** o CONTEÚDO das regras de jogo em profundidade (→ [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md)); componentes, hooks, contexts, types, plugins, constants, `functions/api`, `workers/` e `desktop/` (→ os outros docs de `06-REFERENCIA/`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -14,7 +14,7 @@ Cobertura: **120/120** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 **Economia (moedas, loja, monetização)** — [`backgrounds.ts`](#srcutilsbackgroundsts), [`currencies.ts`](#srcutilscurrenciests), [`entitlements.ts`](#srcutilsentitlementsts), [`missions.ts`](#srcutilsmissionsts), [`monetization.ts`](#srcutilsmonetizationts), [`offerMoment.ts`](#srcutilsoffermomentts), [`playBilling.ts`](#srcutilsplaybillingts), [`priceLabel.ts`](#srcutilspricelabelts), [`seasons.ts`](#srcutilsseasonsts), [`shop.ts`](#srcutilsshopts), [`shopBuy.ts`](#srcutilsshopbuyts), [`weeklyMissions.ts`](#srcutilsweeklymissionsts)
 **Jogos (arena, masmorra, torneio)** — [`arena.ts`](#srcutilsarenats), [`dungeon.ts`](#srcutilsdungeonts), [`dungeonScenes.ts`](#srcutilsdungeonscenests), [`fxArt.ts`](#srcutilsfxartts), [`tournamentSeason.ts`](#srcutilstournamentseasonts), [`tournamentTiers.ts`](#srcutilstournamenttiersts)
 **Oráculo, ficha e sprites** — [`adventureArt.ts`](#srcutilsadventureartts), [`decorArt.ts`](#srcutilsdecorartts), [`achievements.ts`](#srcutilsachievementsts), [`animArt.ts`](#srcutilsanimartts), [`attackFxArt.ts`](#srcutilsattackfxartts), [`emblemArt.ts`](#srcutilsemblemartts), [`gainArt.ts`](#srcutilsgainartts), [`hudArt.ts`](#srcutilshudartts), [`placeholderArt.ts`](#srcutilsplaceholderartts), [`sigilArt.ts`](#srcutilssigilartts), [`dreamArt.ts`](#srcutilsdreamartts), [`elementIconArt.ts`](#srcutilselementiconartts), [`gateDraft.ts`](#srcutilsgatedraftts), [`itemArt.ts`](#srcutilsitemartts), [`libraryNpcs.ts`](#srcutilslibrarynpcsts), [`newReading.ts`](#srcutilsnewreadingts), [`oracle.ts`](#srcutilsoraclets), [`oracleDraft.ts`](#srcutilsoracledraftts), [`pixelizer.ts`](#srcutilspixelizerts), [`soulProfile/astrology/chart.ts`](#srcutilssoulprofileastrologychartts), [`soulProfile/astrology/prominence.ts`](#srcutilssoulprofileastrologyprominencets), [`soulProfile/astrology/types.ts`](#srcutilssoulprofileastrologytypests), [`soulProfile/axes.ts`](#srcutilssoulprofileaxests), [`soulProfile/bestiary/select.ts`](#srcutilssoulprofilebestiaryselectts), [`soulProfile/cities.ts`](#srcutilssoulprofilecitiests), [`soulProfile/derivedElements.ts`](#srcutilssoulprofilederivedelementsts), [`soulProfile/essenceLabels.ts`](#srcutilssoulprofileessencelabelsts), [`soulProfile/ficha/buildSheet.ts`](#srcutilssoulprofilefichabuildsheetts), [`soulProfile/ficha/capture.ts`](#srcutilssoulprofilefichacapturets), [`soulProfile/ficha/cascata.ts`](#srcutilssoulprofilefichacascatats), [`soulProfile/ficha/classTitle.ts`](#srcutilssoulprofilefichaclasstitlets), [`soulProfile/ficha/fromInput.ts`](#srcutilssoulprofilefichafrominputts), [`soulProfile/ficha/realEngine.ts`](#srcutilssoulprofileficharealenginets), [`soulProfile/ficha/realSkillPower.ts`](#srcutilssoulprofileficharealskillpowerts), [`soulProfile/ficha/skills.ts`](#srcutilssoulprofilefichaskillsts), [`soulProfile/ficha/types.ts`](#srcutilssoulprofilefichatypests), [`soulProfile/identity.ts`](#srcutilssoulprofileidentityts), [`soulProfile/index.ts`](#srcutilssoulprofileindexts), [`soulProfile/numerology.ts`](#srcutilssoulprofilenumerologyts), [`soulProfile/personality/labels.ts`](#srcutilssoulprofilepersonalitylabelsts), [`soulProfile/personality/questions.ts`](#srcutilssoulprofilepersonalityquestionsts), [`soulProfile/personality/scoring.ts`](#srcutilssoulprofilepersonalityscoringts), [`soulProfile/personality/types.ts`](#srcutilssoulprofilepersonalitytypests), [`soulProfile/pipeline.ts`](#srcutilssoulprofilepipelinets), [`soulProfile/profile.ts`](#srcutilssoulprofileprofilets), [`soulProfile/ritualAnswers.ts`](#srcutilssoulprofileritualanswersts), [`soulProfile/types.ts`](#srcutilssoulprofiletypests), [`spriteCopy.ts`](#srcutilsspritecopyts), [`spriteGen.ts`](#srcutilsspritegents), [`spriteLibrary.ts`](#srcutilsspritelibraryts), [`spriteRunner.ts`](#srcutilsspriterunnerts), [`spriteTrigger.ts`](#srcutilsspritetriggerts), [`sprites.ts`](#srcutilsspritests)
-**Som** — [`audioBus.ts`](#srcutilsaudiobusts), [`loudness.ts`](#srcutilsloudnessts), [`sounds.ts`](#srcutilssoundsts)
+**Som** — [`audioBus.ts`](#srcutilsaudiobusts), [`loudness.ts`](#srcutilsloudnessts), [`sonsAssets.ts`](#srcutilssonsassetsts), [`sounds.ts`](#srcutilssoundsts), [`trilha.ts`](#srcutilstrilhats)
 **Persistência (save, conta, storage)** — [`accountData.ts`](#srcutilsaccountdatats), [`auth.ts`](#srcutilsauthts), [`cloudSave.ts`](#srcutilscloudsavets), [`consent.ts`](#srcutilsconsentts), [`playerDay.ts`](#srcutilsplayerdayts), [`safeStorage.ts`](#srcutilssafestoragets), [`serverConfig.ts`](#srcutilsserverconfigts), [`storageKeys.ts`](#srcutilsstoragekeysts)
 **Push e notificações** — [`notifications.ts`](#srcutilsnotificationsts), [`pushPriming.ts`](#srcutilspushprimingts), [`vapid.ts`](#srcutilsvapidts)
 **Comunidade e chat** — [`chatKeywords.ts`](#srcutilschatkeywordsts), [`chatSafety.ts`](#srcutilschatsafetyts), [`community.ts`](#srcutilscommunityts)
@@ -139,10 +139,11 @@ Cobertura: **120/120** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 - `function definirTrilhaLigada(on: boolean): void` — Liga/desliga a trilha (flag persistida) e aplica no ganho do bus de trilha vivo.
 - `function encerrarBarramento(): void` — Fecha o contexto e esquece o cache. Idempotente.
 - `function barramentoAtual(): Barramento | null` — Só para teste: o barramento vivo, ou `null`. Não usar em produção.
+- `function garantirBarramento(): Barramento | null` — (21/09/2026) o barramento, construído se preciso, para quem toca FORA de `tocarNa` — hoje só `utils/trilha.ts`, que tem gesto próprio e vai ao `busTrilha`. Mesmo contrato: `null` = sem motor, falhar em silêncio.
 - `function duckMarco(quando: number, duracaoDoSom: number): void` — D-1 (§6.2): o Marco abaixa Trilha + SFX ao piso em ≤120 ms. `duracaoDoSom` agenda a liberação, porque o gesto que fecha a cerimônia não tem hook (ver o cabeçalho). Sem essa liberação agendada, um Marco silenciaria o app.
 - `function liberarMarco(quandoGesto: number): void` — D-1, liberação por gesto — para quando a cerimônia ganhar o hook.
 - `function tocarNa( cat: CategoriaSom, montarFonte: (ctx: AudioContext, destino: AudioNode) => number | void, origem: OrigemDoDespacho = 'gesto'): boolean` — Toca alguma coisa numa categoria. `montarFonte` recebe o contexto e o nó de ENTRADA do despacho — nunca `ctx.destination`, que é o que fazia cada som ignorar o mix. Devolve a duração do som em segundos (para os duckings) ou nada.
-**Chamado por:** `src/utils/sounds.ts`
+**Chamado por:** `src/utils/sounds.ts`, `src/utils/trilha.ts` (`garantirBarramento`, `definirTrilhaLigada`, `trilhaLigada`)
 **Régua:** `audioBus.contract.test.ts`, `audioBus.rex.test.ts`
 
 ### `src/utils/auth.ts`
@@ -736,6 +737,7 @@ Cobertura: **120/120** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 - `DEGRAU_DB` — §3.2 item 3 — o degrau da escada, em dB. É DERIVADO (razão de 2× em escala sone), não escolhido: por isso não existe meio-degrau, e por isso `sintonia` caiu em −19,0 em vez de num −17,5 inventado por conveniência de um só som.
 - `ALVO_LUFS_M` — §3.1 — a escada, em **LUFS-M** no ponto P-B, com o barramento daquela categoria soando sozinho. A ordem é por REPETIÇÃO, nunca por importância: quem repete mais entra mais baixo.
 - `ALVO_TRILHA_LUFS_S` — §4.1 — alvo da trilha, em LUFS-S (janela curta de 3 s, EBU Tech 3341).
+- `TRIM_TRILHA_POR_CAMADAS_DB` — (21/09/2026) `Record<1 | 2, number>` = `{ 1: 0, 2: -2.024 }`: trim da trilha por NÚMERO de camadas tocando ao mesmo tempo, em dB — o `trimEstadoDb` do arnês (`gate-loudness.mjs` A-5), **medido e não calculado**. Cada camada sai do mestre no alvo sozinha; a soma de duas sobe, e este trim, aplicado igual às duas, devolve a soma ao `ALVO_TRILHA_LUFS_S` (medido sobre `base` + `ritmo` em `E:/Soulmon-assets/som-01/mix-camadas.mjs`: −28,00 LUFS-S, −15,86 dBTP, −31,46 LUFS integrado). Camada nova = medir de novo, nunca derivar de 1/√n.
 - `ORDEM_DA_ESCADA` — A ordem da escada, do mais alto ao mais baixo. Existe como declaração SEPARADA do mapa acima para o teste poder provar que a ordem foi preservada — um `Object.keys` provaria só que o mapa é igual a si mesmo.
 - `CATEGORIA_DO_SOM` — **AC-4 / cobertura** — a categoria de cada som exportado por `sounds.ts`. Dono único do vínculo som↔categoria: o `sounds.ts` importa daqui e não redeclara.
 - `OFFSET_MAX_DB` — **AC-5** — `|offset| > 20 dB` reprova. *"Não é calibração, é fonte errada."* O número veio da medição da Fase 1: a forma de 180 ms do `playVisorTune` pedia **+36 dB** para alcançar o alvo, e o conserto não era o ganho — era o envelope e a duração.
@@ -743,7 +745,7 @@ Cobertura: **120/120** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 - `function db2lin(db: number): number` — dB → linear. A conversão mora aqui porque o alvo mora aqui.
 - `GANHO_DE_CATEGORIA_DB` — §6.4 item 1 — o bus de categoria fica em **0,00 dB**. A correção de nível é OFFSET DE PRODUÇÃO por asset (cada fonte entra no grafo já no alvo da própria categoria), nunca um ganho de categoria arbitrário: um arquivo conforme multiplicado por um ganho de categoria inventado sai (…)
 - `function rotuloCategoria(cat: CategoriaSom, language: string): string` — Rótulos de superfície,  PT-BR e EN  — o `CLAUDE.md` é explícito: nunca string só em português. Usados pelo controle de volume por categoria.
-**Chamado por:** `src/utils/audioBus.ts`, `src/utils/sounds.ts`
+**Chamado por:** `src/utils/audioBus.ts`, `src/utils/sounds.ts`, `src/utils/trilha.ts` (`db2lin`, `TRIM_TRILHA_POR_CAMADAS_DB`), `src/utils/sonsAssets.ts` (só o tipo `CategoriaSom`)
 **Régua:** `loudness.contract.test.ts`
 **Avisos do arquivo:**
 - ⚠️ DONO ÚNICO dos números de loudness — nada aqui é redeclarado em `sounds.ts`, `audioBus.ts` ou teste (footgun 9); quem precisa de alvo importa daqui.
@@ -1749,47 +1751,50 @@ Cobertura: **120/120** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 **Régua:** nenhuma (`ls src/utils/soulProfile/types*.test.ts` vazio).
 
 ### `src/utils/sonsAssets.ts`
-**Dono de:** O manifesto dos 4 assets de áudio gerados por IA (S16, 21/09/2026: `evolve`, `degenerate`, `task-complete` e a camada `trilha-base`) e a carga preguiçosa deles — `fetch` + `decodeAudioData` só depois do primeiro `play*` (S6: zero no bundle inicial), com `recortarSilencio` tirando o pré-rolo que o MediaRecorder do Chrome grava na cabeça. Não declara alvo de loudness: o buffer toca a ganho 1 porque o mestre já saiu no alvo da categoria (footgun 9).
+**Dono de:** O manifesto dos 5 assets de áudio gerados por IA (S16, 21/09/2026: os 3 SFX `evolve`, `degenerate`, `task-complete` — o dono escolheu "o gerado nos 3", `73be1a2f` — e as 2 camadas da trilha, `trilha-base` e `trilha-ritmo`, `8a930657`) e a carga preguiçosa deles — `fetch` + `decodeAudioData` só depois do primeiro `play*` (S6: zero no bundle inicial), com `recortarSilencio` tirando o pré-rolo que o MediaRecorder do Chrome grava na cabeça. Total em disco: **258 248 bytes** (`ls -l public/sounds/`, 21/09/2026). Não declara alvo de loudness: o buffer toca a ganho 1 porque o mestre já saiu no alvo da categoria (footgun 9).
 **Exports:**
 - `interface AssetDeSom` — `url`, `sha256`, `bytes`, `categoria`, `duracaoS`, `origem`, `promptRef`, `geradoEm`.
-- `const ASSETS_DE_SOM` — os 3 SFX, por nome de `play*`.
+- `const ASSETS_DE_SOM` — os 3 SFX, por nome de `play*`: `playEvolve` (`/sounds/evolve.webm`, 7641 bytes, `duracaoS` 1.2, `marco`), `playDegenerate` (`/sounds/degenerate.webm`, 4498, 0.7, `degeneracao`), `playTaskComplete` (`/sounds/task-complete.webm`, 1570, 0.2, `conclusao`). ⚠️ `evolve.webm` saiu em `c703c8bc` ("Coloca o A" lido literalmente) e **voltou** em `73be1a2f` ("quero o gerado nos 3") — o estado vigente é o de três.
 - `type NomeDeAsset` — `keyof typeof ASSETS_DE_SOM`.
-- `const TRILHA_BASE: AssetDeSom` — a camada E1 da trilha (única; S13 segue congelada).
-- `function recortarSilencio(ctx, buf): AudioBuffer` — corta até o primeiro sample ≥ −60 dBFS; nunca devolve vazio.
-- `function carregarAsset(ctx, asset): Promise<AudioBuffer | null>` — idempotente; qualquer falha → `null` (o chamador fica no procedural).
+- `const CAMADAS_DA_TRILHA` — as DUAS camadas da trilha, `base` (`/sounds/trilha-base.webm`, 122447 bytes) e `ritmo` (`/sounds/trilha-ritmo.webm`, 122092), mesmo BPM fixo (100), `duracaoS` 28.8 (12 compassos, o ponto exato do loop; o arquivo carrega 1 s de cauda porque o codec perde a ponta), cada uma mestrada no alvo sozinha — a soma é trazida ao alvo por `TRIM_TRILHA_POR_CAMADAS_DB` (`loudness.ts`). `categoria: 'marco'` é declarada mas não usada (a trilha vai ao `busTrilha`, não a um bus de categoria). Condição (1) da S13 satisfeita; a máquina E0–E6 segue congelada.
+- `type CamadaDaTrilha` — `keyof typeof CAMADAS_DA_TRILHA` (`'base' | 'ritmo'`).
+- `const TRILHA_BASE: AssetDeSom` — **compatibilidade**: alias de `CAMADAS_DA_TRILHA.base` (sem consumidor fora do próprio módulo em 21/09/2026).
+- `function recortarSilencio(ctx, buf): AudioBuffer` — corta até o primeiro sample ≥ `LIMIAR_ONSET` (−60 dBFS); nunca devolve vazio.
+- `function carregarAsset(ctx, asset): Promise<AudioBuffer | null>` — idempotente (cache por `url`, promessa em curso reaproveitada); qualquer falha → `null` (o chamador fica no procedural).
 - `function assetPronto(nome): AudioBuffer | null` — só se já decodificou.
-- `function prepararAssets(ctx): void` — dispara a carga dos 3 SFX uma vez; não espera.
+- `function prepararAssets(ctx): void` — dispara a carga dos 3 SFX de `ASSETS_DE_SOM` uma vez; não espera. As camadas da trilha NÃO entram aqui — `trilha.ts` as carrega por `carregarAsset` quando liga.
 - `function esquecerAssets(): void` — só para teste.
 - `function tocarBuffer(ctx, destino, buf): number` — buffer source a ganho 1; devolve a duração (fecha D-1/D-2).
-**Chamado por:** `src/utils/sounds.ts`, `src/utils/trilha.ts`
-**Régua:** `sonsAssets.contract.test.ts` (hash e bytes nas duas direções com `public/sounds/` e `docs/Attributions.md`; soma ≤ 300 KB; nada em `PRECACHE_URLS`; nenhum `import` de `.webm` em `src/`; sem número de loudness no manifesto)
+**Chamado por:** `src/utils/sounds.ts` (`assetPronto`, `prepararAssets`, `tocarBuffer`), `src/utils/trilha.ts` (`carregarAsset`, `CAMADAS_DA_TRILHA`)
+**Régua:** `sonsAssets.contract.test.ts` (hash e bytes nas duas direções com `public/sounds/` e `docs/Attributions.md`; soma ≤ 300 KB; nada em `PRECACHE_URLS`; nenhum `import` de `.webm` em `src/`; as camadas têm a mesma `duracaoS`, múltiplo inteiro do compasso de 100 BPM (2,4 s); sem número de loudness no manifesto)
 
 ### `src/utils/sounds.ts`
-**Dono de:** Os 8 sons sintetizados do app — zero asset, sem `AudioContext` por chamada.
+**Dono de:** Os 8 sons do app, todos sintetizados, sem `AudioContext` por chamada. ⚰️ "Zero asset" valeu até 21/09/2026: desde a S16 os três eventos longos (`playEvolve`, `playDegenerate`, `playTaskComplete`) passam pela função privada `playComAsset` — `prepararAssets` + `assetPronto`/`tocarBuffer` de `sonsAssets.ts`, com o procedural como fallback quando o buffer ainda não decodificou; os cinco curtos são só síntese. A função privada `play` é o gate de mudo e, desde 21/09/2026, chama `aoGestoSonoro` (`trilha.ts`) antes de `tocarNa` — o primeiro gesto sonoro da sessão é o que liga a trilha persistida.
 **Exports:**
-- `function isMuted(): boolean` — O mudo está ligado (flag persistida)?
+- `function isMuted(): boolean` — O mudo está ligado (flag persistida)? Também lido por `trilha.ts` (o mudo global cala a trilha).
 - `function setMuted(v: boolean): void` — Liga/desliga o mudo (persistência silenciosa — não gasta o aviso único de storage).
 - `function playPresence(): void` — ⚠️ **O `AudioContext`-por-chamada MORREU aqui** (run `som-01`, Fase 2, fatia 2). Esta função abria um contexto novo a cada som, tocava e fechava em 2 s: sem barramento, sem sub-mix, sem ducking, sem volume.
-- `function playTaskComplete(): void` — Short ascending 3-note arpeggio (C–E–G)
+- `function playTaskComplete(): void` — Short ascending 3-note arpeggio (C–E–G); via `playComAsset` (asset `task-complete.webm`, fallback procedural).
 - `function playFeed(): void` — Quick 2-note munch
 - `function playShower(): void` — Water-drip bursts
-- `function playEvolve(): void` — Dramatic power-up sweep + two high notes
-- `function playDegenerate(): void` — Descending sad tones + low thud
+- `function playEvolve(): void` — Dramatic power-up sweep + two high notes; via `playComAsset` (asset `evolve.webm`, fallback procedural — ⚠️ em `c703c8bc` voltou a `play` puro e em `73be1a2f` voltou a `playComAsset`; vale o de `73be1a2f`).
+- `function playDegenerate(): void` — Descending sad tones + low thud; via `playComAsset` (asset `degenerate.webm`, fallback procedural).
 - `function playSleep(): void` — Soft descending lullaby notes
 - `function playVisorTune(): void` — O CHIADO DA SINTONIA — o terceiro terço da sintonia do Visor (spec §2.3.1: "scanline de 400 ms + fade de 120 ms reserva→próprio + o chiado curto que a ocasião A já usa"). ⚠️ DIVERGÊNCIA doc↔código nº 10 do projeto (a 9ª está registrada em `spriteGen.contract.test.ts`).
-**Chamado por:** `src/App.tsx`, `src/components/CompanionHUD.tsx`, `src/components/DinoGame.tsx`, `src/components/DungeonGame.tsx`, `src/components/EvolutionPath.tsx`, `src/components/NightmareBattle.tsx`, `src/components/RPSGame.tsx`
+**Chamado por:** `src/App.tsx`, `src/components/CompanionHUD.tsx`, `src/components/DinoGame.tsx`, `src/components/DungeonGame.tsx`, `src/components/EvolutionPath.tsx`, `src/components/NightmareBattle.tsx`, `src/components/RPSGame.tsx`, `src/utils/trilha.ts` (`isMuted`)
 **Régua:** `sounds.contract.test.ts`, `sounds.visorTune.test.ts`
 
 ### `src/utils/trilha.ts`
-**Dono de:** A trilha — uma camada (`TRILHA_BASE`) em loop no `busTrilha`. Nasce desligada (S2); liga e desliga por gesto (switch "Trilha/Music" do `SettingsModal`); `aoGestoSonoro` faz o primeiro `play*` da sessão ligá-la se a preferência persistida estiver ligada (o gesto é o consentimento, sem autoplay no carregamento); E0: o `audioBus` já suspende o contexto com `document.hidden`, e ao voltar a trilha retoma só se foi ligada por gesto nesta sessão; `pausarTrilha`/`retomarTrilha` são os ganchos do `App` para dormir e mudo global. Não decide estado E1–E6 (S13 congelada).
+**Dono de:** A trilha — as DUAS camadas de `CAMADAS_DA_TRILHA` (`base` + `ritmo`) em loop no `busTrilha`, tocando juntas num estado só (desde `8a930657`, 21/09/2026). `comecar()` pede o barramento por `garantirBarramento`, carrega as camadas por `carregarAsset`, cria UM ganho de trim = `db2lin(TRIM_TRILHA_POR_CAMADAS_DB[n])` para o NÚMERO de camadas que chegaram (só as prontas tocam), e dá `start` no mesmo instante (`t0`) para todas — o início comum é o que as mantém em fase compasso a compasso; `loopStart` 0, `loopEnd` = `min(duracaoS, buf.duration)` = 28,8 s, o ponto exato de 12 compassos, dentro do 1 s de cauda do arquivo. Nasce desligada (S2); liga e desliga por gesto (switch "Trilha/Music" da `SettingsPage`, grupo "Som", desde `980bc84c` — e o mesmo par no `SettingsModal`, sem gatilho vivo); `aoGestoSonoro` faz o primeiro `play*` da sessão ligá-la se a preferência persistida estiver ligada (o gesto é o consentimento, sem autoplay no carregamento); E0: o `audioBus` já suspende o contexto com `document.hidden`, e ao voltar a trilha retoma só se foi ligada por gesto nesta sessão; `pausarTrilha`/`retomarTrilha` são os ganchos do `App` para dormir e mudo global; `isMuted()` também barra `comecar()`. Não decide estado E1–E6 (S13 congelada — condição (1) satisfeita, (2) depende do dono).
 **Exports:**
-- `function ligarTrilha(): void` · `function desligarTrilha(): void` — gesto; persistem `SOUND_TRACK_ENABLED`.
+- `function ligarTrilha(): void` · `function desligarTrilha(): void` — gesto; persistem `SOUND_TRACK_ENABLED` via `definirTrilhaLigada`.
 - `function pausarTrilha(): void` · `function retomarTrilha(): void` — E0 (dormir, mudo).
-- `function aoGestoSonoro(): void` — chamado por `play()` de `sounds.ts`.
+- `function aoGestoSonoro(): void` — chamado por `play()` de `sounds.ts`; age só no primeiro gesto da sessão.
 - `function trilhaPreferida(): boolean` · `function trilhaTocando(): boolean`.
+- `function camadasTocando(): number` — (21/09/2026) quantas camadas estão tocando agora: 0, 1 ou 2.
 - `function esquecerTrilha(): void` — só para teste.
-**Chamado por:** `src/App.tsx`, `src/components/SettingsModal.tsx`, `src/utils/sounds.ts`
-**Régua:** nenhuma (verificado no motor real em 21/09/2026: liga/pausa/retoma/desliga; `busTrilha.gain` 1/0)
+**Chamado por:** `src/App.tsx` (`pausarTrilha`/`retomarTrilha` no sono e em `handleToggleSound`), `src/components/SettingsPage.tsx` e `src/components/SettingsModal.tsx` (`ligarTrilha`/`desligarTrilha`/`trilhaPreferida`), `src/utils/sounds.ts` (`aoGestoSonoro`)
+**Régua:** `src/components/settingsSom.render.test.tsx` (desde `980bc84c`: o toque em "Trilha" na `SettingsPage` liga e desliga a chave própria — `trilhaPreferida()` vai a `true` e volta a `false`); nenhuma para E0/pausa/retomada/`aoGestoSonoro` em si (verificado no motor real em 21/09/2026: liga/pausa/retoma/desliga; `busTrilha.gain` 1/0); o ponto de loop comum das camadas é travado por `sonsAssets.contract.test.ts`; o valor de `TRIM_TRILHA_POR_CAMADAS_DB` não tem teste (`grep -n TRIM_TRILHA src/utils/*.test.ts` vazio em 21/09/2026) — **régua: nenhuma**
 
 ### `src/utils/specialItemUse.ts`
 **Dono de:** O USO de item especial (glitchtama, coraçãozinho, chip) aplicado ao `prev` — dono único, distinto de `careUpdaters.ts`.

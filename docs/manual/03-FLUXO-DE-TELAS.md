@@ -1,6 +1,6 @@
 # Fluxo de telas do Soulmon
 
-> **Dono:** doc-redator-telas · **Data:** 09/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `dc72579e..9875477b`, 30 commits: copy da bíblia §1–§6-bis, superfície de suporte, rodada 2 da arte; verificação anterior do delta `2580b73a..dc72579e`, Fase 2, identidade "O Visor", 14 fluxos: 21/09/2026)
+> **Dono:** doc-redator-telas · **Data:** 09/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (§4.23/§4.23b, delta `5ac3d351..8d318529`, som/S16 + grupo "Som" na `SettingsPage`; verificação anterior do mesmo dia: delta `dc72579e..9875477b`, 30 commits: copy da bíblia §1–§6-bis, superfície de suporte, rodada 2 da arte; verificação anterior do delta `2580b73a..dc72579e`, Fase 2, identidade "O Visor", 14 fluxos: 21/09/2026)
 > **Verificação:** `npx vitest run src/components/filaDeAvisos.contract.test.ts src/components/evolucaoManual.contract.test.ts src/components/ofertaDoisCanais.contract.test.ts src/components/upgradeReveal.contract.test.ts src/components/textoBilingue.contract.test.ts src/plugins/widgetSemCobranca.contract.test.ts src/components/SoulmonOnboarding.oraculo.render.test.tsx src/components/StatsPage.render.test.tsx src/utils/petVoice.test.ts src/narrativa.contract.test.ts` · guard do manual: `npx vitest run src/docsManual.contract.test.ts`
 > **Não cobre:** aparência (cor, tipografia, espaçamento, tokens `--sm2-*`) — é do `04-IDENTIDADE-VISUAL.md`; as REGRAS que as telas aplicam (corações, meta do dia, evolução, moedas) — são do `02-REGRAS-DE-NEGOCIO.md`; a assinatura de cada componente — é de [`06-REFERENCIA/components.md`](06-REFERENCIA/components.md); percurso real com o app rodando — é do `soulmon-screen-cartographer`, cuja medição de 19/08/2026 está em [`../INVENTARIO-TELAS.md`](../INVENTARIO-TELAS.md).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -1525,9 +1525,10 @@ Três blocos, com condições literais:
 ```
 
 - **`SettingsPage`**: grupos por intenção (`grep -c "<Group title=" src/components/SettingsPage.tsx`
-  → **8** em 21/09/2026, um deles condicional — "Sua história" só sob
-  `redeemed && onToggleShowRedeemed`; ⚰️ "cinco grupos" era a contagem de
-  09/09/2026), uma ação dominante
+  → **9** em 21/09/2026 depois de `980bc84c`, dois deles condicionais — "Sua
+  história" só sob `redeemed && onToggleShowRedeemed`, "Som" só sob
+  `onToggleSound`; ⚰️ "8" era a contagem antes de `980bc84c` no mesmo dia e
+  "cinco grupos" a de 09/09/2026), uma ação dominante
   (entrar/sincronizar). Contém `AccountSection` (conta e compras, com
   "Restaurar compras" — exigido pela Play), `AccountDataSection` (exportar e
   apagar), `InstallPrompt` (cartão, **não** modal) e os botões que abrem o
@@ -1540,6 +1541,21 @@ Três blocos, com condições literais:
   e um `sm2Hint` de fecho ("Nada do que aparece aqui é uma afirmação sobre a sua
   saúde, a sua mente ou o seu futuro"). Sempre montado, entre "Ajuda" e "Seu
   ritmo"; sem botão, sem link. `régua: nenhuma` para o grupo.
+  **Grupo "Som" / "Sound"** (`980bc84c`, 21/09/2026 — achado do
+  doc-mantenedor: o `SettingsModal` ficou sem gatilho e com ele o mudo e a
+  trilha eram inalcançáveis): dois `SwitchRow`, entre "Sua história" e "O que o
+  Soulmon te manda" — **"Sons" / "Sound effects"** (`checked={!soundMuted}`,
+  toque → `onToggleSound`, que é `handleToggleSound` do `App.tsx`: `setMuted`,
+  `setSoundMuted`, `pausarTrilha()`/`retomarTrilha()`, `trackSoundOff()` só ao
+  ficar mudo; hint "Confirmam o que você fez. Nunca tocam sozinhos.") e
+  **"Trilha" / "Music"** (`checked={trilha}`, estado local iniciado por
+  `trilhaPreferida()`; toque → `desligarTrilha()` se ligada, senão
+  `ligarTrilha()` — este toque É o gesto da S2; hint com `soundMuted`: "Com os
+  sons desligados, a trilha fica em silêncio.", senão "Duas camadas calmas, em
+  loop. Para sozinha quando o app sai de vista."). O grupo **só monta se
+  `onToggleSound` chegar** — sem a prop, nada de switch morto. Régua:
+  `src/components/settingsSom.render.test.tsx` (PT/EN, o toque chega ao dono).
+  Regra em [`02` §58-A](02-REGRAS-DE-NEGOCIO.md#som).
   **Estados do `AccountDataSection`**: `503` é **estado**, não erro — o botão
   nasce desabilitado com o motivo escrito, em tinta neutra.
 - **`RestWindowCard`**: escolhe a janela (`onChangeWindow`), o switch "não quero
@@ -1554,9 +1570,14 @@ Três blocos, com condições literais:
   separados: `{settingsOpen && (…)}` na raiz do `App`. ⚠️ Esta linha dizia
   "aberto pelo menu" e era falso — `settingsOpen` não tem gatilho vivo, e o
   caminho real de "Personalidade" é esta página: ver §4.23a (13/09/2026).
+  Desde `ee79fd44` (21/09/2026) o modal tem um **quarto** switch, "Trilha" /
+  "Music" — ver §4.23b; o gatilho morto continua morto, e desde `980bc84c` o
+  par "Sons"/"Trilha" vive também nesta página (grupo "Som", acima) — o modal
+  é candidato a remoção.
 - **Dono**: `src/components/SettingsPage.tsx` e vizinhos · **Régua**:
   `AccountDataSection.render.test.tsx`,
-  `src/components/settingsTelemetry.render.test.tsx`.
+  `src/components/settingsTelemetry.render.test.tsx`,
+  `src/components/settingsSom.render.test.tsx`.
 
 ### 4.23a `AISettingsModal` — o caminho real de abertura (medido em 13/09/2026, a pedido do inventário de wireframes)
 
@@ -1620,6 +1641,57 @@ salva) e "Salvar" / "Save".
 `src/components/settingsTelemetry.render.test.tsx`, e **só por `import type`** —
 ele monta a `SettingsPage`, nunca a folha (13/09/2026).
 ⚠️ **Nada trava o caminho de abertura**, nem a morte do `SettingsModal`.
+
+### 4.23b `SettingsModal` "Ajustes rápidos" / "Quick settings" — o switch "Trilha" / "Music" (21/09/2026)
+
+**Chega por**: o mesmo `{settingsOpen && (…SettingsModal…)}` da raiz do `App`
+— e, reconferido em 21/09/2026 (em `8d318529`), **continua sem gatilho vivo**
+(§4.23a: `handleOpenAISettings` é o único `setSettingsOpen(true)`, e
+`onOpenAISettings` morre no `ChatBox`). Desde `980bc84c` o par "Sons"/"Trilha"
+tem caminho vivo na `SettingsPage` (§4.23, grupo "Som"); este modal é
+candidato a remoção. Tudo abaixo descreve o que o código monta **se** o modal
+abrir · **Sai para**: X/Escape do `ModalSheet` (`onClose`).
+
+**O que se vê/faz** — `ModalSheet` com `title` "Ajustes rápidos" / "Quick
+settings" e, desde `ee79fd44`, **quatro** linhas de `SwitchRow`/`ActionRow`, na
+ordem do arquivo:
+
+| Linha | Rótulo PT / EN | Gesto | Hint |
+|---|---|---|---|
+| 1 | "Sons" / "Sound" | `onToggleSound?.()` → `handleToggleSound` em `App.tsx` (único desde `980bc84c`, o mesmo da `SettingsPage`): `setMuted`, `setSoundMuted`, e **`pausarTrilha()` se ficou mudo / `retomarTrilha()` se religou** (E0: o mudo global cala a trilha); `trackSoundOff()` só na transição ligado → mudo | — |
+| 2 | **"Trilha" / "Music"** | `checked={trilha}` (estado local iniciado por `trilhaPreferida()`); toque: `if (trilha) desligarTrilha(); else ligarTrilha(); setTrilha(!trilha)` — este toque É o gesto da S2 | com `soundMuted`: "Com os sons desligados, a trilha fica em silêncio." / "With sound off, music stays silent."; senão: "Duas camadas calmas, em loop. Para sozinha quando o app sai de vista." / "Two calm looping layers. Stops by itself when the app is out of view." (⚰️ dizia "Uma camada" até `980bc84c`) |
+| 3 | "Conversa com IA" / "AI chat" | `onToggleAI` | "Desligado, seu Soulmon responde por palavras-chave." / "Off, it answers from keywords." |
+| 4 | "Personalidade" / "Personality" | `setShowAISettings(true)` → segunda instância de `AISettingsModal` | — |
+
+**Aparece quando**: a linha 2 não tem condição própria — monta sempre que o
+modal monta, mudo ou não; o que muda com `soundMuted` é só o hint.
+
+**Estados**: `trilha` é estado local lido uma vez na montagem
+(`useState(() => trilhaPreferida())`, isto é, a chave
+`STORAGE_KEYS.SOUND_TRACK_ENABLED`); não reage a mudança externa enquanto o
+modal está aberto. A trilha em si para sozinha em `document.hidden`, no sono
+(`handleSleep` chama `pausarTrilha`/`retomarTrilha`) e no mudo — regra em
+[`02` §58-A](02-REGRAS-DE-NEGOCIO.md#som).
+
+⚰️ **Consequência do gatilho morto, fechada em `980bc84c`** (21/09/2026,
+mesmo dia): entre `ee79fd44` e `980bc84c`, `ligarTrilha` só era chamada por
+esta linha e por `aoGestoSonoro` (`src/utils/trilha.ts`, que exige a chave já
+ligada), e `setMuted` só pelo `onToggleSound` deste modal — **não existia
+caminho vivo** para o jogador ligar a trilha nem mudar o mudo global. Hoje
+`ligarTrilha`/`desligarTrilha` são chamadas também pela `SettingsPage` (§4.23,
+grupo "Som"; `grep -rln "ligarTrilha" src/components` → `SettingsModal.tsx`,
+`SettingsPage.tsx` e a régua `settingsSom.render.test.tsx`) e `setMuted` continua sendo chamado só em `App.tsx`
+(`handleToggleSound`; `grep -rn "setMuted(" src --include=*.tsx` → só
+`App.tsx`), agora alcançável pela página. Registrado como fechado no
+[`../STATUS.md`](../STATUS.md). ⚰️ O hint dizia "Uma camada" com a trilha em
+**duas** (`CAMADAS_DA_TRILHA`, `8a930657`) — D33 em
+[`02` §59](02-REGRAS-DE-NEGOCIO.md#divergencias), fechada em `980bc84c`.
+
+**Dono**: `src/components/SettingsModal.tsx` · `src/App.tsx` (`handleToggleSound`,
+`handleSleep`) · **Régua: nenhuma** para o modal (`find src/components -maxdepth 1
+-name 'SettingsModal.*test.ts*'` vazio, 21/09/2026); o mesmo par de chaves na
+`SettingsPage` é travado por `src/components/settingsSom.render.test.tsx`, e a
+chave separada do mudo por `src/utils/audioBus.contract.test.ts`.
 
 ### 4.24 Créditos e Nova Leitura
 

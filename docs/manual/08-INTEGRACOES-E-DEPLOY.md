@@ -1,6 +1,6 @@
 # Integrações e deploy
 
-> **Dono:** doc-redator-arquitetura · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (sincronizado com `dc72579e..9875477b` em 21/09/2026 por doc-redator-arquitetura; conferido em `5ac3d351`)
+> **Dono:** doc-redator-arquitetura · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (§3.6, delta `5ac3d351..8d318529`, som/S16 — os quatro bumps do dia conferidos com `git log --format=%h 5ac3d351..73be1a2f -- public/sw.js`; `980bc84c` deu o quinto, v155; o resto: sincronizado com `dc72579e..9875477b` em 21/09/2026 por doc-redator-arquitetura; conferido em `5ac3d351`)
 > **Verificação:** `npx vitest run src/deploy src/security functions/api workers` — em especial `src/deploy/appUrl.contract.test.ts` (as quatro fontes da URL), `src/deploy/firebaseNoBuild.contract.test.ts` (o `.env.production` versionado), `src/deploy/swCache.contract.test.ts`, `src/security/csp.test.ts`, `src/security/supabase.contract.test.ts`, `workers/pushCopy.parity.test.js` e `workers/vapid.parity.test.js`.
 > **Não cobre:** o esquema do save e as chaves de storage (→ [07-DADOS-E-SAVE.md](07-DADOS-E-SAVE.md)), a arquitetura e os portões (→ [05-ARQUITETURA.md](05-ARQUITETURA.md)), as regras do jogo (→ `02-REGRAS-DE-NEGOCIO.md`), função por função (→ `06-REFERENCIA/`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -493,6 +493,17 @@ quem lê um número atrasado e soma 1 anda para TRÁS, e o cache velho volta par
 todo mundo. **O valor vive num lugar só: as primeiras linhas de `public/sw.js`.
 Abra o arquivo e some 1.** Régua: `src/deploy/swCache.contract.test.ts` (§7 de
 [05-ARQUITETURA.md](05-ARQUITETURA.md)).
+
+**Exemplo do ritmo, sem o número** (21/09/2026, S16): o `CACHE_VERSION` andou
+**quatro vezes num só dia**, uma por commit que tocou `public/sounds/` —
+`ee79fd44` (os assets entram), `8a930657` (segunda camada da trilha),
+`c703c8bc` (`evolve.webm` sai) e `73be1a2f` (`evolve.webm` volta):
+`git log --format=%h 5ac3d351..73be1a2f -- public/sw.js`. Os `.webm` **não**
+estão em `PRECACHE_URLS` (S6, `src/utils/sonsAssets.contract.test.ts`) e são
+servidos network-first com cópia em `RUNTIME_CACHE`; o bump existe porque um
+arquivo de **mesmo nome e conteúdo diferente** (o `evolve.webm` que saiu e
+voltou) ficaria na cópia offline de quem já o tinha tocado. Quem precisar do
+valor de hoje abre `public/sw.js`, não este parágrafo.
 
 ---
 

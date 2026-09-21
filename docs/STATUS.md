@@ -7,6 +7,17 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 21/09/2026 — Manual sincronizado com `8d318529` (delta `5ac3d351..8d318529`, som)
+>
+> 10 docs de `docs/manual/` atualizados só nas seções que o delta tocou (S16, trilha de 2
+> camadas, resposta ao A/B, chaves "Sons"/"Trilha" na `SettingsPage`) por 3 redatores e
+> carimbados por 1 verificador (~50 símbolos, 9 shas, 5 arquivos/258 248 bytes, 4 bumps do SW
+> conferidos por comando). Guards `docsManual` + `docsSemMentira` verdes. Novos: `02` §58-A
+> "Som como regra", `03` §4.23b "Ajustes rápidos", `04` §9.1.1/§9.2.1, `06` entradas
+> `sonsAssets.ts`/`trilha.ts`/`SettingsPage.tsx`. **Divergência que fica (D32):** `CLAUDE.md` › Áudio
+> ainda diz "8 sons, todos sintetizados, zero byte de asset" e "S1..S13" — falso desde `ee79fd44`
+> (o `CLAUDE.md` é do dono). `SettingsModal` segue sem gatilho vivo — candidato a remoção.
+
 > ## 21/09/2026 — S16: som de IA INSTALADO ("só pra ter pronto") + trilha base ligável
 >
 > Decisão do dono, literal: *"Escolhe quaisquer um, só pra gente ter pronto. Depois melhoramos.
