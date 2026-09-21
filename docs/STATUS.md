@@ -7,6 +7,37 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 21/09/2026 — sincronização do manual pós-merge (`/manter-docs auto`)
+>
+> Base `15164e4c` → head `3cb89e59`. O manual **já cobria** o trabalho da rodada
+> de narrativa (medido: bíblia, régua `narrativa.contract`, cláusula SAFETY,
+> `findahelpline` e a classe `sm2-chat-support` aparecem nos docs certos,
+> incluindo `06-REFERENCIA/components.md` e `api-workers.md`). O delta real era
+> um commit, e o `doc-verificador` fechou a verificação com os três guards
+> verdes.
+>
+> **O que estava falso e foi corrigido:**
+> - `01-VISAO` §7 dizia que as propostas de narrativa estão "isoladas na §14 da
+>   bíblia" — elas saíram para `docs/NARRATIVA-PROPOSTAS.md` em `e98fd2b7`, e
+>   seis das dezesseis já estão fechadas;
+> - o bloco da 4ª rodada do STATUS afirmava que o `CLAUDE.md` ainda diz
+>   "S1..S13": falso desde `15164e4c`. Ganhou ⚰️;
+> - `NARRATIVA-COPY.md` declarava duas linhas como "depende da P5", que o dono
+>   fechou (§14.4);
+> - os três testes do `narrativa.contract.test.ts` se chamavam "dívida" com a
+>   constante já em `EXCECOES`;
+> - **`docs/SOM.md` e `docs/HANDOFF-SOM.md` ainda diziam "S1..S13" e "zero byte
+>   de asset"** — falso desde o S16 (medido: 5 `.webm` em `public/sounds/`,
+>   `playComAsset` em 4 pontos). Corrigidos com a lápide.
+> - e o `src/narrativa.contract.test.ts` tinha um **parágrafo duplicado no
+>   próprio cabeçalho** (colisão de merge entre as duas rodadas) — o arquivo que
+>   existe para impedir documentação que apodrece.
+>
+> **Fica aberta a D31, e legitimamente:** o `CLAUDE.md` ainda descreve a tabela
+> do guard como `DÍVIDA` "por decisão pendente", quando ela virou `EXCECOES` por
+> decisão tomada. Só o dono autoriza mexer no `CLAUDE.md` — a D32 vizinha só
+> fechou porque houve essa autorização. Registrada em `02 §59`.
+
 > ## 21/09/2026 — Manual sincronizado com `8d318529` (delta `5ac3d351..8d318529`, som)
 >
 > 10 docs de `docs/manual/` atualizados só nas seções que o delta tocou (S16, trilha de 2
