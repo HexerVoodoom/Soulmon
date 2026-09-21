@@ -536,6 +536,38 @@ export function ChatBox({
           )}
         </button>
       </div>
+
+      {/* A SUPERFÍCIE DE SUPORTE — parecer clínico de 21/09/2026.
+          (`docs/NARRATIVA-COPY.md` §6; `docs/NARRATIVA-E-UNIVERSO.md` §16.)
+
+          Por que ela mora AQUI e não nas Configurações: esta é a única tela do
+          app onde a pessoa escreve texto livre e íntimo, para uma entidade que
+          o produto apresenta como a alma dela, respondida por um modelo. Quem
+          está mal às 2h da manhã não navega até Configurações — a frase precisa
+          estar na tela em que ela está.
+
+          Faz par com a cláusula SAFETY de `functions/api/chat.js`, que manda a
+          criatura sair do personagem e encaminhar. Uma trava que encaminha para
+          lugar nenhum é meia solução: aqui é o lugar.
+
+          DISCRETA de propósito, e isso é decisão clínica, não de estética: um
+          aviso de crise proeminente numa tela de bichinho virtual estigmatiza e
+          assusta o uso normal. Texto pequeno, tom `muted`, sem ícone, sem caixa.
+
+          A ORDEM da frase foi corrigida no parecer: o caminho vem primeiro, a
+          limitação do produto depois — e a limitação é sobre O APP, nunca sobre
+          a adequação de quem está lendo. A 1ª redação começava com "o Soulmon
+          não é o lugar certo para isso" e foi reprovada: a pessoa acabou de se
+          abrir, e a resposta começava dizendo que ela errou de lugar.
+
+          SEM telefone e SEM nome de serviço, de propósito: caducam por país, e
+          uma linha errada numa tela de crise pune quem teve a coragem de pedir
+          ajuda. Se entra um diretório externo (e qual), é decisão do dono. */}
+      <p className="sm2-chat-support">
+        {isPt
+          ? 'Se você está num momento difícil, procure ajuda de verdade: um serviço de saúde, uma linha de apoio da sua região, ou alguém de confiança. O Soulmon é um app de hábitos e não substitui isso.'
+          : "If you're going through a hard time, please reach out for real help: a health service, a support line where you live, or someone you trust. Soulmon is a habit app and it is not a substitute for that."}
+      </p>
     </div>
   );
 }

@@ -7479,3 +7479,24 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
 .sm2-ora-sil { width: 128px; height: 128px; -webkit-mask-size: 128px 128px; mask-size: 128px 128px; }
 /* texto só para leitor de tela (R3) — o `role=status` precisa de conteúdo */
 .sm2-ora-vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ── A superfície de suporte do chat (parecer clínico, 21/09/2026) ─────────
+   Par visual da cláusula SAFETY de `functions/api/chat.js`. Ver a nota inteira
+   no `ChatBox.tsx`, que explica POR QUE ela mora na tela do chat.
+
+   DISCRIÇÃO É REQUISITO CLÍNICO, não escolha de estilo: um aviso de crise
+   proeminente numa tela de bichinho virtual estigmatiza e assusta o uso normal.
+   Daí o corpo pequeno, o tom `muted` e a ausência de ícone, de caixa e de
+   qualquer cor de alerta — nada de `danger`, nada de moldura.
+
+   `max-width` em ch para a linha não atravessar a tela inteira em tablet; o
+   contraste do `--sm-muted` já é o do tema, então ela responde a claro/escuro
+   sem regra própria (footgun 10: nunca `var(--foreground)` em texto novo). */
+.sm2-chat-support {
+  margin: 10px 4px 0;
+  font-size: 11px;
+  line-height: 1.45;
+  max-width: 62ch;
+  color: var(--sm-muted);
+  text-wrap: pretty;
+}
