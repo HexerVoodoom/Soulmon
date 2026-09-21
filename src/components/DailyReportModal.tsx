@@ -147,11 +147,12 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, on
   // Sem sinal de menos: era o único número negativo do app, e escrever uma
   // perda como "-1" é o vocabulário de extrato bancário. A perda é peso 400,
   // sem itálico, sem vermelho (D-R2). NÃO existe `bad`.
+  // Copy §2.4 (21/09/2026): a perda de sustentação DESCREVE o fenômeno e não
+  // atribui causa — nem acusa ("porque você não fez") nem absolve ("não é
+  // culpa sua"): as duas reprovam (§17 #3). O número segue nas linhas de fato.
   const heartsValue = report.heartsLost <= 0
     ? (isPt ? 'inteiros!' : 'all there!')
-    : report.heartsLost <= 0.5
-      ? (isPt ? 'meio em recuperação' : 'half recovering')
-      : (isPt ? `${report.heartsLost} em recuperação` : `${report.heartsLost} recovering`);
+    : (isPt ? 'O padrão afrouxou um pouco.' : 'The pattern loosened a little.');
   const rows: Row[] = [];
   if (welcome) {
     rows.push({ label: isPt ? 'Corações' : 'Hearts', value: isPt ? 'intactos' : 'untouched', tone: 'hi' });
@@ -184,15 +185,20 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, on
       : report.heartsLost > 0 ? 'bedtime' : 'wb_sunny';
   const headTone: 'gold' | 'muted' = report.wasPerfect || headIcon === 'wb_sunny' ? 'gold' : 'muted';
 
+  /* Copy §2.1–§2.4 (21/09/2026): o mundo CONSTATA — sem `!`, que transforma
+     constatação em animação encomendada. "Um trecho fechou" no lugar de "Dia
+     completo!" (§10 da bíblia proíbe dia perfeito/imperfeito); a queda de forma
+     RECOLHE, nunca "volta"/"regride" (§17 #11). O ramo `welcome` continua com
+     a família do `welcomeBack.ts`, por decisão 3 do dono (faixas mantidas). */
   const headline = welcome
     ? (isPt ? 'Que saudade!' : 'I missed you!')
     : report.degenerated
-      ? (isPt ? 'Seu Soulmon voltou um estágio' : 'Your Soulmon stepped back a stage')
+      ? (isPt ? 'Ele recolheu para uma forma que se sustenta com menos.' : 'The pattern drew back into a form that holds with less.')
       : report.wasPerfect
-        ? (isPt ? 'Dia completo!' : 'Complete day!')
+        ? (isPt ? 'Um trecho fechou.' : 'A stretch closed.')
         : report.heartsLost > 0
-          ? (isPt ? 'Um dia mais devagar' : 'A slower day')
-          : (isPt ? 'Novo dia!' : 'New day!');
+          ? (isPt ? 'Um dia mais devagar.' : 'A slower day.')
+          : (isPt ? 'Dia novo.' : 'New day.');
 
   // Frases de rodapé. Nenhuma delas cobra — a mais "dura" apenas conta o que
   // aconteceu. S1: o N de dias fora NÃO aparece (a acolhida é a linha do pet,
@@ -201,15 +207,34 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, on
   // P2 — a folga da semana entrou. **Contar é obrigatório**: uma folga gasta em
   // silêncio é um perdão que a pessoa nunca soube que recebeu — e na semana
   // seguinte ela é cobrada sem entender por que desta vez doeu.
+  // Copy §2.6: "maré" é o termo canônico (§12) — ninguém concedeu nada, a
+  // Malha tem ciclo próprio. ⚠️ Sem SALDO ("resta 0", "1 de 1"): saldo de
+  // perdão é dívida com outro nome (§10). "Recarrega na segunda" é permitido
+  // por ser fato que só sobe (§17 #6).
   if (!welcome && report.restDayUsed) {
     notes.push(isPt
-      ? 'Hoje seu Soulmon usou a folga da semana: nada foi cobrado. Ela volta na segunda.'
-      : "Your Soulmon used this week's day off, so nothing was charged. It comes back on Monday.");
+      ? 'A maré absorveu ontem. Nada foi cobrado. Ela recarrega na segunda.'
+      : 'The tide absorbed yesterday. Nothing was charged. It comes back on Monday.');
   }
+  // Copy §2.5: nunca "recuperamos seu progresso perdido" — sugere perda, e L4
+  // diz que não houve.
   if (!welcome && report.weeklyRelief) {
     notes.push(isPt
-      ? 'Semana nova: seu Soulmon recuperou meio coração. O que passou, passou.'
-      : 'New week: your Soulmon recovered half a heart. Last week stays behind.');
+      ? 'A maré devolveu um pouco. Semana nova.'
+      : 'The tide gave a little back. New week.');
+  }
+  // Copy §3.4, linha de apoio: sem ela a manchete da queda de forma lê como
+  // punição. Fato verdadeiro no código — `unlockedEvolutions`, `perfectDays` e
+  // o registro não são tocados (L4).
+  if (!welcome && report.degenerated) {
+    notes.push(isPt
+      ? 'Nada do que foi descoberto saiu. O caminho de volta é o mesmo caminho.'
+      : 'Nothing found is gone. The way back is the same way.');
+  }
+  // Copy §2.3, linha de apoio do dia completo: o exemplo literal ✅ da §13.
+  // Nomeia o ato e o efeito na Malha (L12); o mérito fica de fora.
+  if (!welcome && report.wasPerfect) {
+    notes.push(isPt ? 'A fagulha firmou.' : 'The ember steadied.');
   }
   if (!welcome && report.done >= report.required && report.energyWasFull === false) {
     notes.push(isPt

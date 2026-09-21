@@ -402,13 +402,19 @@ export function EvolutionPath({
     : 1;
   const fraseProgresso = prontoParaEvoluir
     ? (evolutionLocked
-        ? (isPt ? 'Pronto para evoluir — mas você segurou a evolução.' : 'Ready to evolve — but you are holding it back.')
+        /* Copy §3.3 (21/09/2026): a linha canônica da §5.7, verbatim. O "mas
+           você segurou" que estava aqui punha a pessoa como causa de um MAS —
+           o começo do caminho "você travou a evolução dele" (§13 ❌). */
+        ? (isPt ? 'Ele espera. Esperar não tira nada dele.' : 'He waits. Waiting takes nothing from him.')
         /* ⚠️ Dizia "Pronto para evoluir na virada do dia" — FALSO desde que
            `MANUAL_EVOLUTION = true` (`types/progression.ts`): a virada NUNCA
            evolui sozinha, e o ramo que fazia isso em `utils/dailyReset.ts` está
            atrás do `!MANUAL_EVOLUTION`, morto. Quem espera a virada não vê
-           nada acontecer — e a barra fica cheia, o que faz parecer defeito. */
-        : (isPt ? 'Pronto! Toque no seu Soulmon para evoluir.' : 'Ready! Tap your Soulmon to evolve.'))
+           nada acontecer — e a barra fica cheia, o que faz parecer defeito.
+           Copy §3.1: "O padrão está pronto. Ele espera você encostar." — o
+           padrão espera, não expira (nunca "não perca"). A 2ª oração continua
+           ensinando o gesto: `evolucaoManual.contract.test.ts` exige. */
+        : (isPt ? 'O padrão está pronto. Ele espera você encostar. Toque no seu Soulmon para evoluir.' : 'The pattern is ready. It waits for you to touch it. Tap your Soulmon to evolve.'))
     : (isPt
         // "completo", não "perfeito" (P5). O docblock deste arquivo já dizia
         // "Faltam 4 dias completos" — a renomeação passou pelo COMENTÁRIO e
@@ -432,9 +438,13 @@ export function EvolutionPath({
           ? (isPt ? 'Evolução segurada, toque para liberar' : 'Evolution on hold, tap to release')
           : (isPt ? 'Evolução liberada, toque para segurar' : 'Evolution unlocked, tap to hold')
   }`.trim().replace(/\.$/, '');
+  /* Copy §3.2/§3.3: o gesto tem nome próprio — "Encostar" é dizer "pode ir"
+     (§5.7); "Segurar"/"Soltar" são o par do cadeado. Nunca "travar"/"lock" em
+     texto de jogador: trancar implica custo, e §5.7 proíbe dizer que mudar de
+     forma custa alguma coisa. */
   const tituloDoVisor = evoluiNoToque
-    ? (isPt ? 'Evoluir' : 'Evolve')
-    : evolutionLocked ? (isPt ? 'Liberar evolução' : 'Release evolution') : (isPt ? 'Segurar evolução' : 'Hold evolution');
+    ? (isPt ? 'Encostar' : 'Touch it')
+    : evolutionLocked ? (isPt ? 'Soltar' : 'Release') : (isPt ? 'Segurar' : 'Hold');
   /* A régua dos três atributos: o líder, com piso em 10 segmentos. */
   const reguaDosAtributos = Math.max(10, virusPoints, dataPoints, vaccinePoints);
 
@@ -1014,9 +1024,12 @@ export function EvolutionPath({
             destravado já tem a frase da barra ("tap your Soulmon to evolve"). */}
         {evolutionLocked && (
           <p style={{ ...sm2Hint, textAlign: 'center', maxWidth: 340 }}>
+            {/* Copy §3.3: a 2ª oração FICA (é regra que a pessoa precisa
+                para decidir, L10); o que saiu é "nos dias difíceis", a única
+                metade que avaliava o dia. */}
             {isPt
-              ? 'Os dias completos continuam somando, mas a evolução está segurada. Segurar a forma não a protege — os corações ainda podem cair nos dias difíceis.'
-              : 'Complete days keep adding up, but evolution is on hold. Holding the form doesn’t shield it — hearts can still drop on hard days.'}
+              ? 'Os dias completos continuam somando, mas a evolução está segurada. Segurar a forma não protege os corações.'
+              : 'Complete days keep adding up, but evolution is on hold. Holding the form doesn’t shield the hearts.'}
           </p>
         )}
 

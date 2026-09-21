@@ -273,7 +273,8 @@ export function EvolutionCeremony({
             botão só existe quando há o que sair; antes, a faixa é status. */}
         {done ? (
           <button type="button" onClick={onClose} style={{ ...sm2Button('primary'), minWidth: 240, marginTop: 8 }}>
-            {isPt ? 'Vamos seguir juntos' : 'Let’s keep going together'}
+            {/* Copy §3.2: a mesma saída relacional do `MilestoneCeremony`. */}
+            {isPt ? 'Seguimos juntos' : 'We keep going together'}
           </button>
         ) : (
           <span aria-busy="true" style={{ display: 'block', minHeight: 48, marginTop: 8 }} />

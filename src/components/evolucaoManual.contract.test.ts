@@ -97,7 +97,7 @@ describe('🔴 nenhum texto promete evolução automática', () => {
     for (const bom of [
       'Pronto! Toque no seu Soulmon para evoluir.',
       'Ready! Tap your Soulmon to evolve.',
-      'Pronto para evoluir — mas você segurou a evolução.',
+      'Ele espera. Esperar não tira nada dele.',
       'Quando a barra enche, toque no seu Soulmon para evoluir. Nada acontece sem você.',
     ]) {
       expect(PROMETE_AUTOMATICO.some(rx => rx.test(bom)), bom).toBe(false);

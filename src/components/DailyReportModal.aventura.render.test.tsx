@@ -77,7 +77,7 @@ describe('a aventura aparece — inclusive quando o dia foi ruim', () => {
       <DailyReportModal report={relatorio()} onClose={() => {}} language="pt-BR" />,
     );
     // Sem coração perdido e sem dia completo, a manchete é a neutra.
-    expect(screen.getByText('Novo dia!')).toBeTruthy();
+    expect(screen.getByText('Dia novo.')).toBeTruthy();
   });
 });
 

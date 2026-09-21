@@ -128,7 +128,7 @@ export function MilestoneCeremony({
         onClick={onDone}
         style={{ ...sm2Button('primary'), marginTop: 4, minWidth: 200 }}
       >
-        {isPt ? 'Seguimos juntos' : 'Let’s keep going together'}
+        {isPt ? 'Seguimos juntos' : 'We keep going together'}
       </button>
     </RitualDialog>
   );

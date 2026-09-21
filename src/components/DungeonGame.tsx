@@ -330,7 +330,9 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
         title={isPt ? 'Masmorra' : 'Dungeon'}
         sub={
           <>
-            {isPt ? 'Andar' : 'Floor'} {floor}/{MAX_FLOORS} · {sceneName}
+            {/* Copy §4: "camada/layer" é o termo canônico (§12); os números
+                vêm de `MAX_FLOORS`, nunca à mão. */}
+            {isPt ? `Camada ${floor} de ${MAX_FLOORS}` : `Layer ${floor} of ${MAX_FLOORS}`} · {sceneName}
             {inBattle ? ` · ${isPt ? 'inimigo' : 'enemy'} ${enemyIdx + 1}/${ladderLen}` : null}
           </>
         }
@@ -374,12 +376,20 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
           </div>
           <p style={phaseLine}>
             {isPt
-              ? '5 andares, cada um com 6 inimigos e mais forte que o anterior. Andar 1 serve pra um rookie; alguns andares acima ficam brutais. Concluir a run inteira sobe a dificuldade (reset semanal). Perder custa a run — nunca os seus corações.'
-              : '5 floors, each with 6 enemies and tougher than the last. Floor 1 suits a rookie; a few floors up gets brutal. Completing the whole run raises the difficulty (weekly reset). Losing costs you the run — never your hearts.'}
+              ? `${MAX_FLOORS} camadas, cada uma com ${ladderLen} inimigos e mais forte que a anterior. A camada 1 serve pra um rookie; algumas camadas abaixo ficam brutais. Concluir a descida inteira sobe a dificuldade (reset semanal). Perder custa a descida — nunca os seus corações.`
+              : `${MAX_FLOORS} layers, each with ${ladderLen} enemies and tougher than the last. Layer 1 suits a rookie; a few layers down gets brutal. Completing the whole descent raises the difficulty (weekly reset). Losing costs you the descent — never your hearts.`}
+          </p>
+          {/* Copy §4, linha de contexto (§7, L3): fecha a leitura de que os
+              inimigos são vítimas ou de que a fenda é castigo de alguém. */}
+          <p style={phaseLine}>
+            {isPt
+              ? 'Aqui o assentamento falhou e as camadas se empilharam. Ninguém mora numa fenda.'
+              : 'Here the settling failed and the layers piled up. Nobody lives in a rift.'}
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
             <button type="button" onClick={startRun} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 320 }}>
-              {isPt ? 'Entrar na masmorra' : 'Enter the dungeon'}
+              {/* Copy §4: fenda se DESCE; não se "entra" nem se "inicia run". */}
+              {isPt ? 'Descer' : 'Go down'}
             </button>
 
             {/* WP4.5 — DESCER MAIS FUNDO: o sumidouro recorrente de Bits.
@@ -446,8 +456,13 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
           )}
           {phase === 'enemy-down' && (
             <>
+              {/* Copy §4 (§5.12, L3): vencer é PASSAR, não matar — nenhuma
+                  criatura da Malha morre. ⚠️ EN nunca "{name} passed": é o
+                  eufemismo de velório. O verbo canônico é "parar de insistir". */}
               <p style={phaseTitle}>
-                {isPt ? `${enemy.name} derrotado!` : `${enemy.name} defeated!`}
+                {isPt
+                  ? `${enemy.name} parou de insistir aqui. O padrão dele reassenta noutro lugar.`
+                  : `${enemy.name} stopped holding here. The pattern settles somewhere else.`}
               </p>
               {/* "+N Bits" e, raramente, o coraçãozinho — o emoji da string virou
                   glifo `favorite` 20 FILL `primary-ink` + "+1 heart" (D-J9). */}
@@ -466,21 +481,24 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
               <button type="button" onClick={nextEnemy} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 320, alignSelf: 'center' }}>
                 {enemyIdx + 1 >= enemies.length
                   ? (floor >= MAX_FLOORS
-                      ? (isPt ? `Concluir run (+${clearBonus(floor)} Bits + Glitchtama)` : `Finish run (+${clearBonus(floor)} Bits + Glitchtama)`)
-                      : (isPt ? `Limpar andar (+${clearBonus(floor)} Bits)` : `Clear floor (+${clearBonus(floor)} Bits)`))
+                      ? (isPt ? `Concluir descida (+${clearBonus(floor)} Bits + Glitchtama)` : `Finish descent (+${clearBonus(floor)} Bits + Glitchtama)`)
+                      : (isPt ? `Limpar camada (+${clearBonus(floor)} Bits)` : `Clear layer (+${clearBonus(floor)} Bits)`))
                   : (isPt ? `Desafiar ${enemies[enemyIdx + 1].name}` : `Challenge ${enemies[enemyIdx + 1].name}`)}
               </button>
             </>
           )}
           {phase === 'floor-clear' && (
             <>
-              <p style={phaseTitle}>{isPt ? `Andar ${floor} concluído!` : `Floor ${floor} cleared!`}</p>
+              <p style={phaseTitle}>{isPt ? `Camada ${floor} limpa.` : `Layer ${floor} cleared.`}</p>
+              {/* Copy §4: dá sentido ao escalonamento de tier (`LADDER_TIERS`)
+                  sem falar em dificuldade como mérito. */}
+              <p style={phaseLine}>{isPt ? 'Esta camada é mais antiga. A fauna também.' : 'This layer is older. So is what lives in it.'}</p>
               <p className="sm2-num" style={phaseLine}>{scoreLine}</p>
               {/* A cura é FATO em `muted`, não prêmio (D-J8). */}
               <p style={phaseLine}>{rewardMsg}</p>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button type="button" onClick={nextFloor} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px', whiteSpace: 'nowrap' }}>
-                  {isPt ? `Andar ${floor + 1}` : `Floor ${floor + 1}`}
+                  {isPt ? `Camada ${floor + 1}` : `Layer ${floor + 1}`}
                 </button>
                 <button type="button" onClick={exitRun} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, padding: '0 8px', whiteSpace: 'nowrap' }}>
                   {isPt ? 'Sair c/ placar' : 'Bank & exit'}
@@ -491,13 +509,24 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
           {phase === 'run-complete' && (
             <>
               {/* Nenhuma cor de prêmio: o que é ganho fala pela frase (D-J8). */}
-              <p style={phaseTitle}>{isPt ? 'Run completa! Os 5 andares caíram!' : 'Run complete! All 5 floors down!'}</p>
+              {/* Copy §4: fato, nunca "você dominou a masmorra" (L12). O
+                  número vem de `MAX_FLOORS`. */}
+              <p style={phaseTitle}>{isPt ? `As ${MAX_FLOORS} camadas ficaram para trás.` : `All ${MAX_FLOORS} layers are behind you.`}</p>
               <p className="sm2-num" style={phaseLine}>{scoreLine}</p>
-              <p style={phaseLine}>{isPt ? 'Glitchtama obtido! (pastinha de itens)' : 'Glitchtama acquired! (Items folder)'}</p>
-              <p style={phaseLine}>{isPt ? 'A próxima run ficou mais difícil.' : 'The next run got harder.'}</p>
+              {/* Copy §4, "o que se traz" (§7, §12): cobre Bits e fagulha-coração. */}
+              <p style={phaseLine}>{isPt ? 'Da fenda ele trouxe fragmentos que ainda não assentaram.' : "From the rift he brought fragments that haven't settled yet."}</p>
+              {/* Copy §4, o nó (§7, L4): a P5 foi decidida pelo dono em
+                  21/09/2026 — o nome `Glitchtama` FICA (`EXCECOES` da régua),
+                  então a frase entra com ele. "Usar" é o verbo da pastinha. */}
+              <p style={phaseLine}>
+                {isPt
+                  ? 'Um Glitchtama, com um dia inteiro preso dentro. Usar dá àquele dia o fechamento que ele não teve. (pastinha de itens)'
+                  : 'A Glitchtama, with a whole day caught inside. Using it gives that day the closing it never had. (Items folder)'}
+              </p>
+              <p style={phaseLine}>{isPt ? 'A próxima descida ficou mais difícil.' : 'The next descent got harder.'}</p>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button type="button" onClick={startRun} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }}>
-                  {isPt ? 'Nova run' : 'New run'}
+                  {isPt ? 'Descer de novo' : 'Go down again'}
                 </button>
                 <button type="button" onClick={onExit} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, padding: '0 8px' }}>
                   {exitLabel}
@@ -509,11 +538,17 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
             <>
               {/* A derrota sem visor de derrota e sem cor de perda: o que estava
                   em jogo era a run; os corações ficam, e a tela diz (JOGO-09). */}
+              {/* Copy §4 (L5, §7): "Voltar sem terminar não custa nada do que
+                  é seu; custa a descida" — perda SÓ sobre coisa apostada de
+                  propósito. A 2ª linha mantém o fato dos corações. */}
               <p style={phaseTitle}>
-                {isPt ? 'Você foi derrotado — seus corações continuam intactos.' : 'You were defeated — your hearts are untouched.'}
+                {isPt ? 'Você subiu. A descida ficou pelo caminho — e só ela.' : 'You went back up. The descent stayed behind — and only it.'}
+              </p>
+              <p style={phaseLine}>
+                {isPt ? 'Seus corações continuam intactos.' : 'Your hearts are untouched.'}
               </p>
               <p className="sm2-num" style={phaseLine}>
-                {isPt ? `Andar ${floor} · ${scoreLine}` : `Floor ${floor} · ${scoreLine}`}
+                {isPt ? `Camada ${floor} · ${scoreLine}` : `Layer ${floor} · ${scoreLine}`}
               </p>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button type="button" onClick={startRun} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }}>
