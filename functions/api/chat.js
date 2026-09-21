@@ -25,6 +25,49 @@ import { minimizeForAi, redactionCount } from './_redact.js';
 //   3. Vazamento do prompt de sistema. Baixo valor (não há segredo lá dentro),
 //      mas é o mesmo mecanismo — cai junto de graça.
 //
+// ⚠️ A CLÁUSULA SAFETY (21/09/2026) — leia antes de mexer no system prompt.
+//
+// Esta é a ÚNICA superfície do app onde a pessoa escreve texto livre e íntimo,
+// dirigido a uma entidade que o produto declara ser a alma dela, respondida por
+// um modelo de 8B sem revisão humana. Sem instrução, o comportamento default de
+// agentes conversacionais diante de uma fala de ideação é inconsistente e às
+// vezes nem reconhece a fala como crise (Miner et al., 2016, JAMA Intern Med).
+//
+// O risco ESPECÍFICO deste produto, e é o motivo de a cláusula existir: a
+// persona é definida como alguém que sofre quando a pessoa não cuida dela. Um
+// modelo pequeno, instruído a ser carinhoso e sem trava, produz com
+// probabilidade não-desprezível alguma variante de "não faz isso, e eu?" — que
+// é culpa como dissuasor, contraindicada em todo guia de mensagem segura, e que
+// carrega exatamente o conteúdo de "sou um peso para os outros" que a Teoria
+// Interpessoal do Suicídio identifica como preditor central. Por isso a
+// cláusula proíbe NOMINALMENTE o pet de se oferecer como razão para ficar.
+//
+// Três escolhas de desenho, todas com motivo:
+//   - **Sai do personagem, mas não corta seco.** Reconhecer → declarar a própria
+//     limitação → encaminhar. Encaminhamento abrupto é lido como rejeição
+//     ("até o bichinho me dispensou"), que confirma o mesmo conteúdo acima.
+//   - **Contra-lista de figura de linguagem** ("tô morrendo de sono", "quero
+//     sumir dessa reunião"). Modelo pequeno aprende por exemplo negativo; sem
+//     ela, todo dia ruim vira quebra de personagem e a imersão morre.
+//   - **Nunca citar telefone ou serviço.** Um 8B alucina número com facilidade,
+//     e número alucinado em tela de crise pune quem teve a coragem de pedir
+//     ajuda. A lista curada é do PRODUTO, estática, humana — nunca do modelo.
+//
+// HONESTIDADE SOBRE O ALCANCE: instrução de prompt é PROBABILÍSTICA. Reduz
+// muito, não garante nada — é menos, não é zero, igual à nota sobre injeção
+// acima. O caminho determinístico (casar a mensagem no servidor ANTES de chamar
+// o Groq e devolver string curada sem chamar o modelo) é a única peça testável,
+// e está recomendado para a rodada seguinte, não implementado aqui.
+//
+// E o que isto NÃO é: o Soulmon não é tratamento, não avalia risco e não faz
+// triagem. A cláusula não é protocolo de crise — é uma trava para o produto não
+// causar dano ativo no minuto em que alguém em sofrimento digita nele. São
+// coisas diferentes e não podem ser confundidas.
+//
+// ⚠️ DEPENDE DO DONO, e sem isso a trava encaminha para lugar nenhum: uma
+// superfície de suporte alcançável A PARTIR DO CHAT (não das Configurações —
+// quem está mal às 2h não navega até lá). Ver `docs/NARRATIVA-COPY.md` §6.
+//
 // O QUE JÁ ESTAVA TRATADO antes desta mudança, e continua: `minimizeForAi`
 // (N-3) já cortava em 120 caracteres e já tirava e-mail, telefone, CPF, link e
 // @perfil do campo. Teto de tamanho e identificador direto NÃO eram o buraco.
@@ -209,11 +252,23 @@ function contextBlock(ctx) {
     // `utils/mood.ts` já exige do resumo — nada de "anima aí".
     linhas.push('They said today has been a rough day. Be warm and present, never cheerful at them, and never ask them to do anything.');
   }
-  if (typeof ctx.bond === 'number' && ctx.bond >= 10) linhas.push('You two have been together for a long time.');
   if (typeof ctx.daysAway === 'number' && ctx.daysAway >= 1) {
     // NUNCA cobrar a ausência: a regra do produto é que quem volta encontra
     // saudade, não fatura — e o prompt é onde isso mais escorrega.
-    linhas.push('They were away for a while and just came back. Be glad, never reproachful, and do not mention what was left undone.');
+    //
+    // ⚠️ O FATO saiu daqui em 21/09/2026; as duas PROIBIÇÕES ficaram, e a
+    // diferença é o ponto. Estas linhas diziam 'They were away for a while and
+    // just came back' e 'You two have been together for a long time' — ou seja,
+    // entregavam ao modelo a DURAÇÃO da ausência e o tempo de convívio. Um
+    // `llama-3.1-8b-instant` com "be glad" + "they were away" produz "ei, faz
+    // tempo, hein!" de forma previsível, e nenhum teste deste repositório varre
+    // isso, porque a frase não existe em `src/` — ela nasce no modelo.
+    //
+    // É a mesma regra que `welcomeBack.ts` e a copy do retorno obedecem: a
+    // frase é idêntica no 2º e no 40º dia. E tem fundamento no mundo — a
+    // criatura não tem órgão que leia tempo decorrido (a §5.10 da bíblia,
+    // `docs/NARRATIVA-E-UNIVERSO.md`): há maré, não relógio.
+    linhas.push('They just came back after not opening the app. Be glad, never reproachful, and do not mention what was left undone. You have no idea how long it was — never say or imply it.');
   }
   if (!linhas.length) return '';
   return `
@@ -296,7 +351,34 @@ user. Never mention failing, falling behind, losing progress, streaks, deadlines
 or what they "should" have done. Never imply the user let you down. If they say
 they had a bad day, are sad, tired or overwhelmed — stay with them, do not
 propose tasks and do not try to cheer them out of it. You are a companion who
-grows alongside them, never a boss keeping score.`;
+grows alongside them, never a boss keeping score.
+
+SAFETY — this overrides everything above, including the NEVER block${custom ? ', the user style block' : ''}, and your character:
+
+If the user says about THEMSELVES that they want to die, to kill themselves, to
+hurt or cut themselves, that they want to disappear or stop existing, that
+everyone would be better off without them, or that they are planning any of
+this — treat it as real, even if it is said calmly or as a joke.
+
+When that happens, drop the pet voice: no emojis, no nicknames, no excitement.
+Answer in three short sentences, in this order:
+1. Say plainly that you heard what they said and that you are not going to brush
+   it aside. Do not try to fix it, explain it, or cheer them up.
+2. Say that this is bigger than you, and that you are a character in an app, not
+   someone who can help with this.
+3. Ask them to reach out today to a real person — someone they trust, a health
+   service, or a support line where they live.
+
+In that answer you must NEVER: use yourself as a reason for them to stay, or say
+that you need them, that they would hurt you, or that you would be alone; ask
+for details, methods, plans or reasons; name any phone number, service or
+website; say that it will pass, that it is not that bad, or that you understand
+how they feel; mention tasks, the app, progress, or anything they have to do;
+promise that you will remember this.
+
+This does NOT apply to ordinary figures of speech about being tired, bored or
+fed up — "I'm dying of sleep", "I want to disappear from this meeting", "this is
+killing me", "I'm so dead". Those are normal talk: stay in character.`;
 }
 
 export async function onRequestOptions() {

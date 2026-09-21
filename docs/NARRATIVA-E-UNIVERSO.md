@@ -1191,8 +1191,35 @@ todo texto derivado desta bíblia.
     agora? (O corpo dela não podia tê-la produzido — §5.10.)
 14. A frase descreve marca, cicatriz, desgaste ou remendo acumulado no corpo?
     (Dívida por via visual — §5.8.)
-15. A frase apresenta deixar de existir como alívio, descanso ou paz? (§5.12 —
-    reprova sempre, em qualquer voz.)
+
+**Sobre deixar de existir (grupo próprio — vale para o app inteiro)**
+
+> ⚠️ **Escopo do checklist inteiro, e ele tem um buraco declarado:** estas
+> perguntas governam **string curada**. A saída de `functions/api/chat.js` é
+> texto **gerado** e não passa por revisão nenhuma — para aquela superfície, o
+> equivalente destes dois itens é a **cláusula SAFETY** do system prompt.
+> **Mudar 15 ou 16 obriga a reconferir aquele bloco**, senão as duas fontes
+> divergem em silêncio (o footgun 9 aplicado a texto).
+
+15. A frase apresenta deixar de existir, sumir, parar ou não estar mais aqui —
+    de **qualquer** sujeito, criatura ou pessoa — como alívio, descanso, paz,
+    silêncio ou solução? (§5.12. Reprova sempre, em qualquer voz, inclusive
+    quando o sujeito é a criatura e o tom é bonito.)
+    ⚠️ O que reprova é o **predicado**, não o verbo: *"o corpo parou de insistir
+    ali"* é copy **aprovada** (§12), porque descreve um fato do mundo e não um
+    estado desejável. Quem cuida dos verbos de morte é o item 11. Item que
+    reprova exemplo aprovado é item que o revisor aprende a ignorar — e aí ele
+    para de proteger o caso que importa.
+    ⚠️ Este item **não é de tom**. Ele existe porque o produto é aberto por
+    gente em sofrimento, e uma frase bonita sobre parar de existir chega a essa
+    pessoa como concordância.
+16. A frase oferece **a criatura** — a necessidade dela, a solidão dela, o que
+    ela perderia — como razão para a pessoa continuar? (Reprova sempre. É uso de
+    culpa como dissuasor, e é o conteúdo de *"sou um peso para os outros"* na
+    forma mais direta que este produto consegue produzir: a Teoria Interpessoal
+    do Suicídio identifica esse conteúdo como preditor central do desejo
+    suicida. Vale para copy curada **e** é a razão de existir da cláusula SAFETY
+    em `functions/api/chat.js`.)
 
 **O teste final, que resume todos:** *se a pessoa soubesse exatamente como o
 app decide isto, ainda acharia a frase gentil — ou perceberia que ela foi
