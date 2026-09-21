@@ -16,7 +16,8 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > "Som como regra", `03` §4.23b "Ajustes rápidos", `04` §9.1.1/§9.2.1, `06` entradas
 > `sonsAssets.ts`/`trilha.ts`/`SettingsPage.tsx`. **Divergência que fica (D32):** `CLAUDE.md` › Áudio
 > ainda diz "8 sons, todos sintetizados, zero byte de asset" e "S1..S13" — falso desde `ee79fd44`
-> (o `CLAUDE.md` é do dono). `SettingsModal` segue sem gatilho vivo — candidato a remoção.
+> ⚰️ **fechada em `15164e4c`** (dono autorizou: `CLAUDE.md` › Áudio diz S1..S16, cinco arquivos,
+> `sonsAssets.ts`/`trilha.ts`, chaves nas Configurações). `SettingsModal` segue sem gatilho vivo — candidato a remoção.
 
 > ## 21/09/2026 — S16: som de IA INSTALADO ("só pra ter pronto") + trilha base ligável
 >
