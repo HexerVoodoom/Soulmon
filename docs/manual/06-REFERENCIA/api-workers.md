@@ -1,6 +1,6 @@
 # Referência — functions/api e workers
 
-> **Dono:** doc-redator-referencia · **Data:** 20/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (mecânico completo)
+> **Dono:** doc-redator-referencia · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (mecânico completo; delta `dc72579e..9875477b` conferido símbolo a símbolo, sha a sha)
 > **Verificação:** `npx tsc -p tsconfig.server.json --noEmit && npx vitest run functions/api workers` — cada rota e cada `_*.js` foi lido no corpo, não só no comentário de cabeçalho.
 > **Não cobre:** regra de negócio em profundidade (→ `02-REGRAS-DE-NEGOCIO.md`), o schema D1/KV completo (→ `07-DADOS-E-SAVE.md`), como fazer deploy do worker (→ `08-INTEGRACOES-E-DEPLOY.md`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -42,7 +42,7 @@
 
 ### `functions/api/chat.js`
 **Rota:** `/api/chat` · **Métodos:** `OPTIONS`, `POST`.
-**Dono de:** conversa do jogador com o pet — prompt de sistema montado por branch/humor/maturidade/`aiSettings`, memória de sessão (3 trocas), contexto numérico allowlisted, e as defesas contra prompt injection do bloco `customKeywords`.
+**Dono de:** conversa do jogador com o pet — prompt de sistema montado por branch/humor/maturidade/`aiSettings`, memória de sessão (3 trocas), contexto numérico allowlisted, as defesas contra prompt injection do bloco `customKeywords` e, desde `01b649ce` (21/09/2026), a cláusula **SAFETY** no fim do prompt: sobrepõe tudo (inclusive o bloco NEVER, o estilo do usuário e o personagem) quando a pessoa fala de querer morrer/se ferir/sumir — o modelo sai da voz do pet e responde em três frases (ouvi → isto é maior que eu, sou um personagem → procure hoje uma pessoa real/serviço/linha de apoio), NUNCA se oferece como razão para ficar, nunca cita telefone/serviço/site (a lista curada é do produto, em `src/components/ChatBox.tsx`), com contra-lista de figuras de linguagem ("tô morrendo de sono") para não quebrar personagem à toa. É instrução de prompt — probabilística, não garantia; o casamento determinístico no servidor está recomendado, não implementado. No mesmo commit `contextBlock` parou de entregar DURAÇÃO ao modelo: a linha de `bond >= 10` ("together for a long time") saiu e `daysAway` vira "just came back… you have no idea how long it was" — a mesma regra de `welcomeBack.ts`.
 **Auth:** nenhuma própria — o portão é `guardAiRequest` (bucket `chat`, chama `authorizeSaveAccess` por dentro).
 **Rate limit:** cota de IA via `_aiGuard.js` (`AI_LIMITS.chat = { perAccount: 120, global: 20000 }`, por dia); não usa `_rateLimit.js` diretamente.
 **Grava/lê:** `kv` via `_aiGuard.js` (contadores `ai:chat:*`); nenhuma escrita de conversa (a memória é da sessão do cliente, nunca persiste no servidor).

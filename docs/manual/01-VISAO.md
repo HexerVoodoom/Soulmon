@@ -1,6 +1,6 @@
 # Visão — o que o Soulmon é, para quem, e o que ele nunca pode virar
 
-> **Dono:** doc-redator-regras · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (sincronizado com `dc72579e`, delta `2580b73a..dc72579e`: Fase 2 identidade, squad-arte, bíblia narrativa; verificação anterior: 10/09/2026)
+> **Dono:** doc-redator-regras · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (sincronizado com `9875477b`, delta `dc72579e..9875477b`: decisões do dono no `REGISTRO-DE-DECISOES.md` §14, copy da bíblia em tela, trava de crise no chat — só nas §7 e §10; verificação anterior do delta `2580b73a..dc72579e`: 21/09/2026)
 > **Verificação:** `npx vitest run src/utils/currencies.test.ts src/utils/monetization.fronteira.test.ts src/utils/restWindow.test.ts src/utils/passives.test.ts src/utils/bond.test.ts src/utils/habitRhythm.test.ts src/hooks/useDailyReset.test.ts src/plugins/widgetSemCobranca.contract.test.ts` — são os testes que travam, em código, as linhas vermelhas citadas aqui. Toda contagem deste doc traz, na própria linha, o comando que a mediu em 09/09/2026.
 > **Não cobre:** as regras de jogo em si (→ `02-REGRAS-DE-NEGOCIO.md`), telas e navegação (→ `03-FLUXO-DE-TELAS.md`), identidade visual (→ `04-IDENTIDADE-VISUAL.md`), arquitetura, deploy e integrações (→ `05-ARQUITETURA.md`, `08-INTEGRACOES-E-DEPLOY.md`), o histórico das decisões (→ `09-HISTORICO.md`, `10-DISCUSSOES-E-DECISOES.md`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -269,9 +269,44 @@ falsa sobre HP e energia, que descem por desenho; L11 proibia a criatura reagir
 ao carinho, que é o retorno do loop central; e faltava L12, sem a qual L1 + L11
 dão um mundo indiferente — contra a tese que diz *encoraja*. Todas aplicadas.
 Duas afirmações da bíblia foram medidas falsas contra o código e corrigidas:
-`moodSummary` (`src/utils/mood.ts`) já devolve a normalização que L9 proíbe
-(virou a proposta P14), e as faixas do Torneio vêm de pontos (`getTierStanding`),
-não de tempo de casa.
+`moodSummary` (`src/utils/mood.ts`) devolvia a normalização que L9 proíbe
+(virou a proposta P14 — ⚰️ a frase "e tudo bem que seja assim" **saiu em
+`5b91717c`, 21/09/2026**, e nada entrou no lugar: o meio-termo é só "altos e
+baixos", ver [`02` §12](02-REGRAS-DE-NEGOCIO.md#humor)), e as faixas do Torneio
+vêm de pontos (`getTierStanding`), não de tempo de casa.
+
+**O que da bíblia chegou ao código em 21/09/2026** (commits `a2ded861`,
+`84ae4937`, `5b91717c`, `f3654076`, `1480b632`):
+
+- **Os três limites da §16 estão em superfície alcançável**: grupo
+  **"Sobre"/"About"** do `SettingsPage` (`src/components/SettingsPage.tsx`, os
+  três parágrafos) e a linha de abertura do `HelpModal` ("nenhum deles descreve
+  você" — o universo descrito como universo) — L10 deixa de estar violada nessas
+  telas.
+- **A voz da criatura obedece ao sensório (§5.10)**: `PET_VOICE_LINES`
+  (`src/utils/petVoice.ts`) perdeu toda fala que exigia memória, tempo decorrido
+  ou afirmação sobre a pessoa (`lowHp` "Tô com saudade", `idle` "Como foi seu
+  dia", `milestone` "Você repetiu tanto que virou seu"), e ganhou seis `kind`
+  novos — `full`, `healCap`, `steady`, `sleep`, `wake`, `residue`. Régua:
+  `src/utils/petVoice.test.ts` (varre cobrança, comentário sobre a noite de quem
+  lê, vergonha/nojo e instrução de retorno). Detalhe por sistema em
+  [`02`](02-REGRAS-DE-NEGOCIO.md) §2, §3, §8, §10, §48.
+- **O reencontro não encena espera**: as faixas 2 e 3 de `welcomeBack.ts` perderam
+  "Quanto tempo!", "Senti saudade esses dias" e "Eu estava aqui, esperando"
+  (`1480b632`). A estrutura de FAIXAS fica — decisão do dono, §14.3 do registro.
+- **A trava de crise do chat** (`f3654076`, decisão §14.2 do registro): a cláusula
+  `SAFETY` do system prompt de `functions/api/chat.js` proíbe o modelo de citar
+  número, serviço ou site; o caminho de ajuda é uma lista **curada, estática e
+  humana** no `ChatBox` (`src/components/ChatBox.tsx`: `findahelpline.com` +
+  CVV 188 no PT; 988 e 116 123 no EN). ⚠️ Instrução de prompt é probabilística;
+  o caminho determinístico no servidor está **recomendado, não feito**
+  (`STATUS.md`, 21/09/2026).
+- **A régua `src/narrativa.contract.test.ts` mudou de estatuto**: a tabela
+  `DÍVIDA` (pendência a quitar) virou `EXCECOES` (o que ficou, por decisão
+  §14.4). Continua travando os termos nunca aceitos (`tamer`, `domador`,
+  `treinador`, `digievolução`, `mundo digital`) e o espalhamento de termo aceito
+  para arquivo novo. ⚠️ divergência: o `CLAUDE.md` ainda chama a tabela de
+  `DÍVIDA` — registrada como D31 em [`02` §59](02-REGRAS-DE-NEGOCIO.md#divergencias).
 
 ### As seis perguntas que qualquer proposta responde
 
@@ -421,10 +456,21 @@ O que está aberto e **depende do dono** está na seção 3 de
   Fantasma, Virus), verificado na enciclopédia oficial em 21/09/2026 — achado do
   parecer de PI sobre a bíblia (`NARRATIVA-E-UNIVERSO.md` §14, **P8**). Nome
   exato, no gênero em que a confusão é máxima, num app que usa vírus/dado/vacina
-  e a escada rookie→champion→ultimate→mega. **Depende do dono** (busca de
-  anterioridade e revisão jurídica antes de loja); a bíblia não depende do nome
-  — o mundo se chama a Malha. Junto: `Serah` e `Pyraka` nas 9 linhas, `Zeed`
-  nos prefixos de mega, e vírus/dado/vacina visíveis em 7 famílias de superfície.
+  e a escada rookie→champion→ultimate→mega. Junto: `Serah` e `Pyraka` nas 9
+  linhas, `Zeed` nos prefixos de mega, e vírus/dado/vacina visíveis em 7 famílias
+  de superfície. ⚰️ **Deixou de depender do dono em 21/09/2026**: ele decidiu
+  que *"Soulmon é o nome do nosso app e personagens próprios"* — o nome **fica**,
+  P8 fechada, e os nomes de PI ficam **todos** (`Vírus/Dado/Vacina`, `Glitchtama`,
+  `Serah`, `Pyraka`, `Zeed`; P1, P5, P9, P10 fechadas). A medição acima continua
+  verdadeira e fica registrada **para ninguém reabrir como novidade**; o gatilho
+  de revisão é comunicação formal de titular ou de loja. Registro canônico, com a
+  alternativa que perdeu: [`REGISTRO-DE-DECISOES.md`](../REGISTRO-DE-DECISOES.md)
+  §14.1 e §14.4. Consequência: `Ruptura/Trama/Guarda` são vocabulário de MUNDO,
+  não rótulo de interface.
+- **As outras duas decisões do dono de 21/09/2026** (mesmo §14): a trava de
+  crise do chat ganhou caminho curado (§14.2 — ver §7 acima) e o reencontro
+  continua por FAIXAS de ausência (§14.3, WP2.7 mantido). O que segue **aberto e
+  não depende do dono**: o caminho determinístico de crise no servidor.
 
 ---
 

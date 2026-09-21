@@ -1,6 +1,6 @@
 # Referência — `src/utils`
 
-> **Dono:** doc-redator-referencia · **Data:** 20/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (mecânico completo; descrição por amostra dirigida de 15 módulos)
+> **Dono:** doc-redator-referencia · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador — delta `dc72579e..9875477b`; a devolução de `welcomeBack.ts` foi fechada pelo doc-mantenedor com a evidência do próprio verificador (`f3654076`, §14.3) e reconferida (carimbo anterior, sobre `dc72579e`: verificado em 21/09/2026 por doc-verificador, mecânico completo; descrição por amostra dirigida de 15 módulos)
 > **Verificação:** `npx vitest run src/docsManual.contract.test.ts` (item c — cobertura) + os testes listados em **Régua** de cada módulo.
 > **Não cobre:** o CONTEÚDO das regras de jogo em profundidade (→ [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md)); componentes, hooks, contexts, types, plugins, constants, `functions/api`, `workers/` e `desktop/` (→ os outros docs de `06-REFERENCIA/`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -172,8 +172,9 @@ Cobertura: **120/120** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 **Exports:**
 - `PetBackground` (interface) — campos: `namePt`, `nameEn`, `css`, `setting`, `slots`, `baseColor`, `horizonY`.
 - `PET_BACKGROUNDS` — tabela/dado de configuração (ver código; 41+ linhas). Desde 15/09/2026 os 19 cenários que eram gradiente CSS (ou arte 800² antiga) viraram arte PINTADA 1200×648 (`cenarios-20260915`) — `css` agora é sempre `url(...)`, `matrix`/`ocean`/`gameboy` deixaram de ser `'void'` (a arte nova tem chão desenhado em 74%) e passaram a `'outdoor'`/`'indoor'` com `GROUND_SLOTS`.
-**Chamado por:** `src/App.tsx`, `src/components/CompanionHUD.tsx`, `src/components/PetStageDecor.tsx`, `src/components/ShopModal.tsx`, `src/utils/dungeonScenes.ts`
-**Régua:** nenhuma (`ls src/utils/backgrounds*.test.ts` vazio).
+- `isDarkBackground(id)` — desde `66e32d43` (21/09/2026, R2-4): o cenário equipado é ESCURO? Luminância relativa da `baseColor` < 0,5; sem cenário, ou cenário sem `baseColor` (hex de 6 dígitos), devolve `true` (o que se vê é o `--sm2-viewport-bg`, escuro nos dois temas). Decide qual folha de `anim-sleep-z` a Home usa (`ANIM_ART.sleepZLight` sobre escuro).
+**Chamado por:** `src/components/CompanionHUD.tsx`, `src/components/PetStageDecor.tsx`, `src/components/ShopModal.tsx`, `src/utils/dungeonScenes.ts` (`grep -rl "from '.*/backgrounds'" src`, 21/09/2026 — `src/App.tsx` saiu da lista: não importa mais o módulo).
+**Régua:** nenhuma (`ls src/utils/backgrounds*.test.ts` vazio, 21/09/2026).
 
 ### `src/utils/bond.ts`
 **Dono de:** O Nível de Vínculo: a trilha unificadora de XP que soma todos os sistemas de cuidado (`docs/PLANO-PRODUTO.md`, Parte 4).
@@ -473,10 +474,10 @@ Cobertura: **120/120** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 - `AttackFxState` (type) — `| 'cast' | 'aura' | 'slash' | 'impact' | 'defended' | 'orb'`
 - `attackFx` — URL para elemento + estado, ou `undefined` (consumidor cai no emoji de `fxArt.ts`).
 - `derivedAttackFx` — alias antigo de `attackFx`.
-- `auraForElement` — a aura para o elemento DOMINANTE do oráculo (`planta`→`vida`, `industrial`→`aco`). D9: a única chamada por agora.
-- `ATTACK_FX_COUNT`, `ATTACK_FX_STATES`.
+- `auraForElement(elementoOraculo, size = 128)` — a aura para o elemento DOMINANTE do oráculo (`planta`→`vida`, `industrial`→`aco`). D9: a única chamada por agora. Desde `66e32d43` (21/09/2026, R2-3) aceita `size: 96 | 128`: com `96` devolve a variante 96² (`fx-<el>-aura-96.png`, o vidro 192 da Ficha a 2×) quando ela existe; sem ela — ou com `128` — a 128² de sempre.
+- `ATTACK_FX_COUNT`, `AURA_96_COUNT` (quantas auras 96² o glob achou — uma por elemento com `-aura.png`, desde `66e32d43`), `ATTACK_FX_STATES`.
 **Chamado por:** `components/EvolutionPath.tsx`, `components/PetPage.tsx` (aura atrás da criatura no Viewport).
-**Régua:** nenhuma (`ls src/utils/attackFxArt*.test.ts` vazio).
+**Régua:** `src/utils/attackFxArt.test.ts` (`ls src/utils/attackFxArt*.test.ts`, 21/09/2026 — dizia "nenhuma"; ajustado em `66e32d43` para as auras 96²).
 
 ### `src/utils/achievements.ts`
 **Dono de:** as 8 CONQUISTAS exibíveis (emblemas de arte), DERIVADAS do save na leitura — nada persistido, nenhuma lê streak.
@@ -488,7 +489,7 @@ Cobertura: **120/120** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 
 ### `src/utils/animArt.ts`
 **Dono de:** os spritesheets de FX quadro a quadro (`assets/soulmon/fx/anim-*.png`, N células de 64 px na horizontal).
-**Exports:** `ANIM_ART` (eatCrumbs, heartBurst, showerSplash, sleepZ, poopPlop, sparklePop, dustStep, hungerDrop), `AnimSheet`, `AnimId`.
+**Exports:** `ANIM_ART` (eatCrumbs, heartBurst, showerSplash, sleepZ, sleepZLight — desde `66e32d43`, 21/09/2026, R2-4: a mesma folha do `sleepZ` recolorida em claro para cenário escuro, escolhida por `isDarkBackground` —, poopPlop, sparklePop, dustStep, hungerDrop), `AnimSheet`, `AnimId`.
 **Chamado por:** `components/CareSystem.tsx`, `components/CompanionHUD.tsx`, `components/EvolutionCeremony.tsx`, `components/EvolutionPath.tsx` — todos via `components/pixel/SpriteAnim.tsx`.
 **Régua:** nenhuma.
 
@@ -721,7 +722,8 @@ Cobertura: **120/120** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 - `lineIcon(lineId, tier, size)` — URL do ícone ou `undefined`.
 - `lineIconForStage(stage, size, demoCharacterId?)` — resolve a linha por `resolveLineForStage` (`sprites.ts`: demo → linha; legado → hash; árvore do jogador → `null`) e devolve o ícone.
 - `LINE_ICON_COUNT` — 72 (36 × 2 tamanhos); régua em `lineIcons.test.ts`.
-**Chamado por:** `components/TournamentPage.tsx` (ranking 32, oponente 64), `components/DinoGame.tsx` (pet 64), `components/pixel/PixelKit.tsx`.
+**Chamado por:** `components/TournamentPage.tsx` (ranking 32, oponente 64), `components/DinoGame.tsx` (pet 64) — `grep -rl "from '.*/lineIcons'" src`, 21/09/2026 (dizia `components/pixel/PixelKit.tsx` também; esse arquivo não importa o módulo).
+**Régua:** `src/utils/lineIcons.test.ts`.
 **Estado:** verificado em 21/09/2026 por doc-mantenedor (entrada nasceu no mesmo commit da rodada 2).
 
 ### `src/utils/loudness.ts`
@@ -808,7 +810,7 @@ Cobertura: **120/120** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 - `function recordMood(log: MoodEntry[] | undefined, date: string, mood: MoodValue): MoodEntry[]` — Registra o humor do dia. Responder de novo no mesmo dia SUBSTITUI — humor muda, e a pessoa tem direito de corrigir sem que o app guarde as duas coisas.
 - `function moodFor(log: MoodEntry[] | undefined, date: string): MoodValue | null` — O humor registrado numa data, ou `null`.
 - `function recentMoods(log: MoodEntry[] | undefined, days = 7): MoodEntry[]` — As últimas N entradas, da mais antiga para a mais recente.
-- `function moodSummary( log: MoodEntry[] | undefined, language: 'pt-BR' | 'en-US'): string | null` — Uma leitura curta dos últimos dias, para o app devolver algo em vez de só coletar. Devolve `null` com menos de 3 registros — três pontos é o mínimo para dizer qualquer coisa sem inventar padrão. Importante: nenhuma das leituras julga. "Semana pesada" reconhece, não cobra.
+- `function moodSummary( log: MoodEntry[] | undefined, language: 'pt-BR' | 'en-US'): string | null` — Uma leitura curta dos últimos dias, para o app devolver algo em vez de só coletar. Devolve `null` com menos de 3 registros — três pontos é o mínimo para dizer qualquer coisa sem inventar padrão. Importante: nenhuma das leituras julga. "Semana pesada" reconhece, não cobra. Desde `5b91717c` (21/09/2026, copy §6-bis): a leitura baixa diz "foram registrados como pesados" (devolve o que a pessoa marcou, nunca afirma sobre ela) e a do meio termina no fato ("tiveram altos e baixos", sem "e tudo bem que seja assim" — afirmar E negar reprova, §17 #2 da bíblia).
 **Chamado por:** `src/App.tsx`, `src/components/DailyReportModal.tsx`
 **Régua:** `mood.test.ts`
 **Regra de negócio:** Humor do check-in nunca alimenta pontuação, HP ou evolução. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
@@ -1029,9 +1031,9 @@ Cobertura: **120/120** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 **Regra de negócio:** O palco do pet é composição com espaços fixos, não canto para empilhar ícones. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
 ### `src/utils/petVoice.ts`
-**Dono de:** Falas curtas do pet ao concluir atividade, incluindo a fala rara (~5%).
+**Dono de:** Falas curtas do pet — dono único de TODA frase falada pela criatura (concluir atividade, gestos de cuidado, recusas, sono, borra), incluindo a fala rara (~5%).
 **Exports:**
-- `PetVoiceKind` (type) — `'task' | 'haunted' | 'rub' | 'shower' | 'milestone' | 'cheer' | 'rare' | 'lowHp' | 'idle'`
+- `PetVoiceKind` (type) — `'task' | 'haunted' | 'rub' | 'shower' | 'milestone' | 'cheer' | 'rare' | 'lowHp' | 'idle' | 'full' | 'healCap' | 'steady' | 'sleep' | 'wake' | 'residue'`. Os seis últimos entraram em `a2ded861` (21/09/2026, `docs/NARRATIVA-COPY.md` §1): `full` (recusa de comida, teto da hora) e `healCap` (teto de carinho do dia) eram arrays inline no `CompanionHUD`, fora do teste de tom; `steady` é a vida cheia recusando o coraçãozinho (`specialRefusal === 'already-full'`, chamado pelo `App.tsx`); `sleep`/`wake` (gesto manual de dormir/acordar — o sono automático segue mudo) e `residue` (a borra apareceu) eram gestos MUDOS. No mesmo commit as falas de `idle`, `rub`, `shower` e `haunted` foram reescritas pela bíblia (`docs/NARRATIVA-E-UNIVERSO.md` §5.10: a criatura não guarda histórico nem lê tempo — fala do corpo dela AGORA); antes dele, em `1480b632` (21/09/2026), `lowHp`, `haunted`, `cheer`, `rare` e `milestone` já tinham sido reescritas e a matriz `TRAIT_LINES.carinhoso` perdeu os blocos `lowHp`/`idle` colados por acidente (o traço só altera `rub`) — `git log -S` em `src/utils/petVoice.ts`, 21/09/2026.
 - `RARE_CHEER_RATE` — WP2.14 — a taxa da fala rara. ~5% das conclusões. ⚠️ **A taxa NUNCA vira alavanca.** Ela não é ajustável por evento, não sobe com nada e não desce com nada — se um dia virar botão de engajamento, é uma recompensa variável de valor zero sendo usada como isca, que é o desenho que (…)
 - `function rolledRareCheer(pick: number): boolean` — `pick` é 0..1 (o chamador passa `Math.random()`). PURA para o teste poder provar que a recompensa é idêntica com e sem o sorteio.
 - `PetVoiceSignal` (interface) — campos: `n`, `kind`.
@@ -1872,8 +1874,10 @@ Cobertura: **120/120** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 - `DUNGEON_LINE_SPRITES` — tabela/dado de configuração (ver código; 9 linhas jogáveis desde 15/09/2026: `ignar`/`lumel`/`serah`/`kaelen`/`orrin`/`thalindra` + `igni`/`nautilu`/`astrase`, as 3 novas com seed fixo dos runs 18/08/2026, recortadas para entrar na pré-seleção do free — D1).
 - `DUNGEON_LINE_NAMES` — O NOME DE EXIBIÇÃO DE CADA LINHA — dono único. ⚠️ Estes três nomes estavam escritos à mão em TRÊS arquivos: aqui, no `PREMADE_CHARACTERS` (`monetization.ts`) e no `petName` dos NPCs da Biblioteca (`libraryNpcs.ts`).
 - `function getDungeonEnemySprite(tier: string, excludeLine?: string): { sprite: string; name: string; line: string }` — Sprite de inimigo de masmorra: sorteia uma das nossas linhas pelo tier (baby-i/ii caem no rookie da linha; mega cobre ultimate também). `excludeLine` tira do sorteio a linha que o próprio jogador está usando (modo demo), pra ninguém encarar um espelho de si mesmo.
+- `LineTier` (type) — `'rookie' | 'champion' | 'ultimate' | 'mega'`, os tiers com arte própria em `lines/` (desde `66e32d43`, 21/09/2026).
+- `function resolveLineForStage(stage: string, demoCharacterId?: string): { line: string; tier: LineTier } | null` — desde `66e32d43`: a LINHA e o TIER por trás de um estágio, a mesma resolução de `getSpriteForStage` sem o sprite — demo → a linha escolhida; id legado → a linha sorteada por hash; estágio da árvore do próprio jogador (`SOULMON_SPRITES`, com ou sem ramo) → `null`. `ultra` cai em `mega`. Consumido por `lineIcons.ts` (ícones-ficha 64²/32²).
 - `function getSpriteForStage(stage: string, demoCharacterId?: string): string` — A URL do sprite de um estágio; resolve primeiro o personagem demo (sem branch, um sprite por nível) antes da árvore normal.
-**Chamado por:** `desktop/renderer/src/cloudSync.ts`, `desktop/renderer/src/main.ts`, `desktop/renderer/src/menu.ts`, `desktop/renderer/src/sprites.ts`, `desktop/renderer/src/state.ts`, `src/App.tsx`, `src/components/ArenaGame.tsx`, `src/components/BestiaryCard.tsx`, `src/components/CompanionHUD.tsx`, `src/components/DinoGame.tsx`, `src/components/DungeonGame.tsx`, `src/components/EvoTrail.tsx`, `src/components/EvolutionCeremony.tsx`, `src/components/EvolutionPath.tsx`, `src/components/LibraryPage.tsx`, `src/components/NightmareBattle.tsx`, `src/components/PetPage.tsx`, `src/components/PlayerDetailModal.tsx`, `src/components/RPSGame.tsx`, `src/components/SoulmonOnboarding.tsx`, `src/components/TournamentPage.tsx`, `src/components/spriteUrl.beacon.render.test.tsx`, `src/utils/dungeon.ts`, `src/utils/libraryNpcs.ts`, `src/utils/monetization.ts`
+**Chamado por:** `desktop/renderer/src/cloudSync.ts`, `desktop/renderer/src/main.ts`, `desktop/renderer/src/menu.ts`, `desktop/renderer/src/sprites.ts`, `desktop/renderer/src/state.ts`, `src/App.tsx`, `src/components/ArenaGame.tsx`, `src/components/BestiaryCard.tsx`, `src/components/CompanionHUD.tsx`, `src/components/DinoGame.tsx`, `src/components/DungeonGame.tsx`, `src/components/EvolutionCeremony.tsx`, `src/components/EvolutionPath.tsx`, `src/components/GameTutorialFlow.tsx`, `src/components/LibraryPage.tsx`, `src/components/NightmareBattle.tsx`, `src/components/PetPage.tsx`, `src/components/PlayerDetailModal.tsx`, `src/components/SoulmonOnboarding.tsx`, `src/components/TournamentPage.tsx`, `src/components/spriteUrl.beacon.render.test.tsx`, `src/utils/dungeon.ts`, `src/utils/libraryNpcs.ts`, `src/utils/lineIcons.ts`, `src/utils/monetization.ts` (`grep -rl "from '.*/sprites'" src desktop/renderer/src`, 21/09/2026 — `EvoTrail.tsx` ⚰️ apagado em `7ea27825`; `RPSGame.tsx` não importa o módulo)
 **Régua:** `sprites.dungeonRoster.test.ts`, `sprites.umQuadro.contract.test.ts` (D5: cada `lines/*.png` tem UM único sprite, nunca spritesheet — projeção de alfa detecta tira de N quadros num arquivo só).
 **Regra de negócio:** O nome de cada linha jogável mora num lugar só — evita a masmorra e a Biblioteca divergirem no nome. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
@@ -2107,6 +2111,7 @@ Cobertura: **120/120** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 - `function absenceBucket(days: number): AbsenceBucket` — 0 = voltou no dia seguinte (ou no mesmo), 1 = 2–4 dias, 2 = 5–14, 3 = 15+. Faixa e não número cru: dia exato de retorno, cruzado com o resto, começa a descrever uma pessoa.
 - `function welcomeBackLine(days: number, isPt: boolean, pick: number): string` — A fala do reencontro. `pick` (0..1) entra por parâmetro para o teste ser determinístico sem tocar no `Math.random` global.
 - `function welcomeBackLines(bucket: AbsenceBucket): { pt: string[]; en: string[] }` — Todas as frases de uma faixa — existe para o teste de tom varrer o conjunto.
-**Chamado por:** `src/components/CompanionHUD.tsx`
+**Chamado por:** `src/components/CompanionHUD.tsx`, `src/components/DailyReportModal.tsx` (`grep -rl "from '.*/welcomeBack'" src`, 21/09/2026)
 **Régua:** `welcomeBack.test.ts`
+**Avisos do arquivo:** desde `1480b632` (21/09/2026) as frases das faixas 2 e 3 não mencionam mais TEMPO nem ESPERA ("Quanto tempo!", "Senti saudade esses dias", "Eu estava aqui, esperando" saíram — a cena da espera fiel cobra sem contar nada; a criatura não lê tempo decorrido, §5.10 da bíblia). A estrutura de FAIXAS fica por **decisão do dono em 21/09/2026** (`f3654076`, decisão 3 — `docs/STATUS.md`: "O reencontro continua por FAIXAS (WP2.7 mantido)"; `REGISTRO-DE-DECISOES.md` §14.3); colapsá-las numa frase única (critério (e) do parecer clínico) foi a alternativa que perdeu. ⚠️ divergência: o cabeçalho de `src/utils/welcomeBack.ts` ainda chama isso de "pendência" (comentário velho; o código faz faixas por `absenceBucket`).
 **Regra de negócio:** A fala de retorno nunca cobra ausência — é reencontro, não fatura. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).

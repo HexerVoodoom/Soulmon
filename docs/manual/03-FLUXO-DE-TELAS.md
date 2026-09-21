@@ -1,7 +1,7 @@
 # Fluxo de telas do Soulmon
 
-> **Dono:** doc-redator-telas · **Data:** 09/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `2580b73a..dc72579e`, Fase 2, identidade "O Visor", 14 fluxos)
-> **Verificação:** `npx vitest run src/components/filaDeAvisos.contract.test.ts src/components/evolucaoManual.contract.test.ts src/components/ofertaDoisCanais.contract.test.ts src/components/upgradeReveal.contract.test.ts src/components/textoBilingue.contract.test.ts src/plugins/widgetSemCobranca.contract.test.ts src/components/SoulmonOnboarding.oraculo.render.test.tsx src/components/StatsPage.render.test.tsx` · guard do manual: `npx vitest run src/docsManual.contract.test.ts`
+> **Dono:** doc-redator-telas · **Data:** 09/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `dc72579e..9875477b`, 30 commits: copy da bíblia §1–§6-bis, superfície de suporte, rodada 2 da arte; verificação anterior do delta `2580b73a..dc72579e`, Fase 2, identidade "O Visor", 14 fluxos: 21/09/2026)
+> **Verificação:** `npx vitest run src/components/filaDeAvisos.contract.test.ts src/components/evolucaoManual.contract.test.ts src/components/ofertaDoisCanais.contract.test.ts src/components/upgradeReveal.contract.test.ts src/components/textoBilingue.contract.test.ts src/plugins/widgetSemCobranca.contract.test.ts src/components/SoulmonOnboarding.oraculo.render.test.tsx src/components/StatsPage.render.test.tsx src/utils/petVoice.test.ts src/narrativa.contract.test.ts` · guard do manual: `npx vitest run src/docsManual.contract.test.ts`
 > **Não cobre:** aparência (cor, tipografia, espaçamento, tokens `--sm2-*`) — é do `04-IDENTIDADE-VISUAL.md`; as REGRAS que as telas aplicam (corações, meta do dia, evolução, moedas) — são do `02-REGRAS-DE-NEGOCIO.md`; a assinatura de cada componente — é de [`06-REFERENCIA/components.md`](06-REFERENCIA/components.md); percurso real com o app rodando — é do `soulmon-screen-cartographer`, cuja medição de 19/08/2026 está em [`../INVENTARIO-TELAS.md`](../INVENTARIO-TELAS.md).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
 
@@ -22,13 +22,29 @@ Cada superfície é descrita por sete campos fixos:
 | **Régua** | o teste que trava o comportamento, ou `régua: nenhuma` |
 
 Duas medições que este documento usa e que envelhecem — o comando está junto para
-poder ser refeito. Em 09/09/2026 → em 20/09/2026 (delta `2580b73a..dc72579e`):
+poder ser refeito. Em 09/09/2026 → em 20/09/2026 (delta `2580b73a..dc72579e`) → em
+21/09/2026 (delta `dc72579e..9875477b`):
 
 ```
-wc -l src/App.tsx                       → 6245 → 6100
-wc -l src/components/SoulmonOnboarding.tsx → 1979 → 2302
-grep -rn "<UnlockNudge" src --include=*.tsx | grep -v "\.test\." | wc -l → 6 → 6 (conjunto diferente, ver §4.13)
+wc -l src/App.tsx                       → 6245 → 6100 → 6139
+wc -l src/components/SoulmonOnboarding.tsx → 1979 → 2302 → 2302
+grep -rn "<UnlockNudge" src --include=*.tsx | grep -v "\.test\." | wc -l → 6 → 6 (conjunto diferente, ver §4.13) → 6
 ```
+
+**O que o delta `dc72579e..9875477b` (21/09/2026, 30 commits) mudou NESTE
+documento** — nenhuma tela nasceu nem morreu; mudaram **textos que o jogador lê**
+(a copy da bíblia `docs/NARRATIVA-E-UNIVERSO.md`, régua `src/narrativa.contract.test.ts`)
+e **três superfícies ganharam conteúdo novo**: a linha de suporte fixa no `ChatBox`
+(§4.3), o grupo "Sobre" das Configurações (§4.23) e a frase do `not-ultra` na
+Evolução (§4.10). As falas de comida cheia e teto de carinho saíram do
+`CompanionHUD` para `petVoice.ts`, e dormir/acordar/borra ganharam fala (§4.2,
+§4.2a, §4.2b). A rodada 2 da `squad-arte` trocou o que se vê nos mini-visores
+(miniaturas na Loja §4.6, ícones-ficha no Torneio §4.15 e no Dino §4.14, aura 96²
+na Ficha §4.7, `sleep-z` claro sobre cenário escuro §4.2) — o que é aparência fica
+no `04-IDENTIDADE-VISUAL.md`; aqui entra só o símbolo que decide o que se vê.
+⚰️ `src/components/EvoTrail.tsx` continua morto — foi apagado em `7ea27825`
+(delta anterior, `2580b73a..dc72579e`), não neste; as lápides de §1.4, §4.1 e
+§4.10 já valem.
 
 **O que a Fase 2 (identidade "O Visor", 16–20/09/2026) mudou NESTE documento**:
 pixel só existe dentro de um vidro (`Viewport`/`MiniGlass`/`GameVisor`); tudo o
@@ -543,6 +559,27 @@ hoje + concluídas de hoje (a tarefa concluída fica riscada na lista até a vir
 - **Estados**: `hauntedWatching` acrescenta a classe `sm-pet-haunted` ao sprite —
   é gesto, sem texto junto; `hasNewItems` acende o selo do botão de itens
   (`inventory_2` FILL + ponto); `isSleeping` troca a ação de dormir por acordar.
+- **A voz do gesto (21/09/2026, copy §1 da bíblia)**: `fullSignal` e
+  `healCapSignal` continuam sendo os contadores que o `App.tsx` acende, mas a
+  frase vem do dono único `PET_VOICE_LINES` (`src/utils/petVoice.ts`, kinds
+  `full` e `healCap`) — ⚰️ as três frases inline de cada um ("Estou cheio! Me dá
+  uma horinha…", "Já recebi muito carinho hoje!") não existem mais:
+
+  ```ts
+  speak(petVoiceLine('full', language === 'pt-BR', Math.random(), petPassive), 3500);
+  speak(petVoiceLine('healCap', language === 'pt-BR', Math.random(), petPassive), 3500);
+  ```
+
+  Três gestos que eram mudos falam pelo `falar(kind)` do `App.tsx`
+  (`setSpeakSignal`): **dormir/acordar manual** — `falar(isSleeping ? 'wake' : 'sleep')`
+  fora do updater, só no toque (o sono automático segue calado); **a borra que
+  chegou** — `falar('residue')` na transição `careEvent?.type === 'poop'`
+  (`borraAnteriorRef`), nunca no dreno; **vida cheia ao usar 💗** — `falar('steady')`
+  (§4.2b). `wake` nunca comenta a noite de quem lê — `src/utils/petVoice.test.ts`
+  exige.
+- **O "Z" do sono** troca de folha pelo cenário: `isDarkBackground(equippedBackground)`
+  (`utils/backgrounds.ts`) escolhe `ANIM_ART.sleepZLight` sobre cenário escuro e
+  `ANIM_ART.sleepZ` nos demais (R2-4 da `squad-arte`, 21/09/2026).
 - **Dono**: `src/components/CompanionHUD.tsx` · **Régua**:
   `CompanionHUD.render.test.tsx`, `CompanionHUD.cta.test.tsx`,
   `CompanionHUD.vinculo.render.test.tsx`, `CompanionHUD.voz.render.test.tsx`,
@@ -599,8 +636,10 @@ if (feedTimesFor(gameState.careCaps, now).length >= FOOD_LIMIT_PER_HOUR) {
 ```
 
 `fullSignal` é um contador que **só cresce**; no `CompanionHUD` ele dispara um
-`speak(…, 3500)` sorteado entre três frases PT/EN ("Estou cheio! Me dá uma
-horinha…" / "I'm full! Give me an hour…"). **Sem toast, sem modal, sem estado de
+`speak(…, 3500)` com `petVoiceLine('full', …)` — a frase mora em `PET_VOICE_LINES`
+(`src/utils/petVoice.ts`) desde 21/09/2026; ⚰️ até então eram três frases inline
+no `CompanionHUD` ("Estou cheio! Me dá uma horinha…" / "I'm full! Give me an
+hour…"), fora do alcance do teste de tom. **Sem toast, sem modal, sem estado de
 erro na folha** — e o item **não** é decrementado (o `return` é antes do
 updater). `FOOD_LIMIT_PER_HOUR` é `MAX_STAGE_REQUIREMENT` (derivado do maior
 `FORM_REQUIREMENTS[…].required`, nunca um literal) e a janela é deslizante de
@@ -651,10 +690,10 @@ if (refused === 'no-stock') return;
 if (refused === 'daily-cap') {
   toast(language === 'pt-BR'
     ? '🌀 Um Glitchtama por dia. Ele te espera amanhã.'
-    : '🌀 One Glitchtama a day. It will wait for you tomorrow.');
+    : "🌀 One Glitchtama a day. It'll wait for you tomorrow.");
   return;
 }
-if (refused === 'already-full') { setHealCapSignal(n => n + 1); return; }
+if (refused === 'already-full') { falar('steady'); return; }
 ```
 
 - **`'daily-cap'`** (🌀 Glitchtama além de `GLITCHTAMA_PER_DAY`): **toast**, e a
@@ -662,8 +701,11 @@ if (refused === 'already-full') { setHealCapSignal(n => n + 1); return; }
   antes do decremento, então ele volta e vale amanhã. A frase diz o que fazer,
   não o que foi negado.
 - **`'already-full'`** (💗 Coraçãozinho com `healthPoints >= maxHealthPoints`):
-  **fala do pet**, pelo mesmo canal do `fullSignal` (`healCapSignal` →
-  `speak(…, 3500)`). Nenhum toast, nenhum texto dentro da pastinha.
+  **fala do pet**, kind `steady` de `petVoice.ts` ("Tô firme. Guarda essa.") via
+  `falar('steady')` (21/09/2026, copy §5.1: a recusa PROTEGE o item). ⚰️ Até
+  então acendia o `healCapSignal`, o canal do teto de carinho — a frase dizia que
+  o carinho tinha acabado, não que a vida estava cheia. Nenhum toast, nenhum
+  texto dentro da pastinha.
 - **`'no-stock'`**: silêncio total.
 
 **Sucesso**: `playTaskComplete()` para 🌀 e 💗, `playFeed()` para chip;
@@ -713,8 +755,24 @@ recusas, inclusive os dois toques no mesmo lote do React).
   microphone. You can still type here 🎤".
 - **Memória**: `history` vive em `useState`, cortado em 6 entradas — **nada vai
   para o save nem para o `localStorage`**.
+- **A superfície de suporte** (`6ad2e629` + `f3654076`, 21/09/2026 — parecer
+  clínico, `docs/NARRATIVA-COPY.md` §6): um `<p className="sm2-chat-support">`
+  **sempre montado** sob o campo, sem condição, sem ícone, sem caixa — é a única
+  tela em que a pessoa escreve texto livre para a criatura, então o caminho de
+  ajuda mora aqui e não nas Configurações. Ordem da frase: o caminho primeiro
+  ("procure ajuda de verdade: um serviço de saúde, uma linha de apoio da sua
+  região, ou alguém de confiança"), a limitação do produto depois ("O Soulmon é
+  um app de hábitos e não substitui isso"). Um link `<a href="https://findahelpline.com" target="_blank" rel="noopener noreferrer">`
+  ("Encontrar uma linha de apoio" / "Find a helpline") e dois serviços fixos por
+  idioma — PT: "No Brasil: CVV, 188 (24h, gratuito)"; EN: "US/Canada: 988. UK/IE:
+  116 123". A lista é **estática e humana**: faz par com a cláusula SAFETY de
+  `functions/api/chat.js`, que **proíbe o modelo** de citar número, serviço ou
+  site — quem cita é esta linha. Mais serviços ou um diretório diferente é
+  decisão do dono.
 - **Dono**: `src/components/ChatBox.tsx` · **Régua**:
-  `src/security/supabase.contract.test.ts` (as quatro peças da transcrição).
+  `src/security/supabase.contract.test.ts` (as quatro peças da transcrição);
+  a linha de suporte: `régua: nenhuma` (`grep -rl "sm2-chat-support" src --include=*.test.*`
+  → vazio em 21/09/2026).
 
 ### 4.4 `ActivitiesPage` — `currentView === 'games'`
 
@@ -795,6 +853,12 @@ type ShopSegment = 'shop' | 'tournament';
 - **Como página × como modal**: `asPage` (o valor que o `App.tsx` passa) devolve
   um `<div>` com o saldo no topo; sem ele, a mesma `body` vai dentro de um
   `ModalSheet` com título "Loja"/"Shop".
+- **O que o card de cenário mostra** (`66e32d43`, rodada 2 da `squad-arte`,
+  21/09/2026): `const src = BG_THUMBS[item.id] ?? bgImage(bg?.css);` — a
+  miniatura 96×52 de `src/assets/backgrounds/thumbs/<id>.png` (`import.meta.glob`
+  eager em `BG_THUMBS`); cenário sem miniatura cai na ilustração 1200×648
+  reduzida por CSS, ⚰️ que era o caminho de todos até então ("transição
+  declarada").
 - **Dono**: `src/components/ShopModal.tsx` · **Régua**:
   `ShopModal.missoes.render.test.tsx`, `ShopModal.convitePassivo.render.test.tsx`,
   `src/utils/weeklyMissions.fiacao.test.ts`.
@@ -931,6 +995,16 @@ Três blocos, cada um com condição própria e cada um em `Suspense` com
   cadeado nem silhueta, e a linha quieta sob o visor diz "Achievements · N of 9";
   o **sigilo de classe** aparece no canto do vidro sob
   `{classeAtual?.sigilo && sigilArt(classeAtual.sigilo) && (…)}`.
+  **A aura atrás do herói** (`66e32d43`, 21/09/2026): `auraForElement(dominantElement, 96)`
+  — a 96² da rodada 2 preenche o vidro inteiro (`AURA`); quando a 96² não
+  existe e a chamada devolve a 128², entra `AURA_128` (o anel a 256 num vidro de
+  192, 32 px de cada lado fora — ⚰️ era o único caminho até então):
+
+  ```ts
+  const aura = auraForElement(dominantElement, 96);
+  const auraStyle = aura && aura === auraForElement(dominantElement, 128) ? AURA_128 : AURA;
+  ```
+
   **Estado**: save legado sem `soulProfile` simplesmente não mostra habilidades;
   sem conquista aberta, sem faixa.
 - **`DreamDex`**: os 30 do `DREAM_CATALOG`; o não coletado é **silhueta**, nunca
@@ -1041,16 +1115,25 @@ continuam com `BirthCard.render.test.tsx`, `BestiaryCard.render.test.tsx` e
 — **único caminho**; ⚰️ `EvoTrail.onOpen` não existe mais (`72196da2`,
 20/09/2026) · **Sai para**: os chips das sub-abas.
 
-Cinco blocos, com estas condições literais (a quarta ganhou `!gameState.demoCharacterId`
-em `acf4413e` — dois convites iguais na mesma tela é cobrança, EVO-20):
+Seis blocos, com estas condições literais (a quarta ganhou `!gameState.demoCharacterId`
+em `acf4413e` — dois convites iguais na mesma tela é cobrança, EVO-20; o quinto
+nasceu em `84ae4937`, 21/09/2026 — eram cinco):
 
 ```jsx
 {currentView === 'evolution' && gameState.demoCharacterId && (…UnlockNudge…)}
 {currentView === 'evolution' && (…EvolutionPath…)}
 {currentView === 'evolution' && canRebirth(gameState) && (…botão Renascimento…)}
 {currentView === 'evolution' && rebirthRefusal(gameState) === 'not-paid' && !gameState.demoCharacterId && (…UnlockNudge…)}
-{currentView === 'evolution' && gameState.rebirth && (…linha "Renasceu do …"…)}
+{currentView === 'evolution' && rebirthRefusal(gameState) === 'not-ultra' && !gameState.demoCharacterId && (…frase "O padrão ainda não chegou ao limite do que esta forma ocupa."…)}
+{currentView === 'evolution' && gameState.rebirth && (…linha "Já aconteceu, uma vez. Renasceu do … como …. É ele. Ainda é ele."…)}
 ```
+
+- **`not-ultra`** (copy §5.4): é **uma frase em `sm2Hint`**, `data-rebirth-block`,
+  sem botão e sem convite — a própria página já conta a escada. O `CLAUDE.md`
+  ("`not-ultra` não vira convite") continua verdadeiro: o que entrou é
+  contexto, não saída. **`already-used`** segue sendo a linha de registro, que
+  ganhou a família obrigatória da §11 ("É ele. Ainda é ele." / "Same pattern.
+  Still the same one.") — ⚰️ dizia só "Renasceu do X como "Y"".
 
 - **Demo × pago no convite**: `variant={gameState.accountTier === 'paid' ? 'reveal' : 'buy'}`;
   `onOpen` chama `setUpgradeRitual(true)` para quem já pagou e
@@ -1068,7 +1151,17 @@ em `acf4413e` — dois convites iguais na mesma tela é cobrança, EVO-20):
   alterna `evolutionLocked` (`onToggleEvolutionLock` → `handleToggleEvolutionLock`).
   O `aria-label` do visor (`rotuloDoVisor`) diz qual dos dois vai acontecer
   ("Pronto — toque para evoluir" / "Evolução segurada, toque para liberar" /
-  "Evolução liberada, toque para segurar"). O mesmo estado do cadeado continua
+  "Evolução liberada, toque para segurar"). O `title` do visor (`tituloDoVisor`)
+  nomeia o gesto desde `84ae4937` (21/09/2026, copy §3.2/§3.3): "Encostar" /
+  "Touch it" quando evolui, "Soltar" / "Release" quando segurada, "Segurar" /
+  "Hold" quando liberada — ⚰️ era "Evoluir" / "Liberar evolução" / "Segurar
+  evolução"; nunca "travar"/"lock" em texto de jogador. A frase da barra
+  (`fraseProgresso`) com a barra cheia: cadeado aberto → "O padrão está pronto.
+  Ele espera você encostar. Toque no seu Soulmon para evoluir." (a 2ª oração
+  continua ensinando o gesto — `evolucaoManual.contract.test.ts` exige); cadeado
+  fechado → "Ele espera. Esperar não tira nada dele." ⚰️ ("Pronto para evoluir —
+  mas você segurou a evolução."). A dica sob o cadeado fechado perdeu "nos dias
+  difíceis": "Segurar a forma não protege os corações." O mesmo estado do cadeado continua
   como botão de 44px (`data-lock-button`, `aria-pressed={evolutionLocked}`) para
   quem não descobre o gesto; segurada = placa "ON HOLD"/"SEGURADA" dentro do
   vidro. ⚰️ Até `2580b73a` o toque no visor **só** alternava o cadeado.
@@ -1099,7 +1192,9 @@ em `acf4413e` — dois convites iguais na mesma tela é cobrança, EVO-20):
   próxima intercalam por `TOTAL_MS` (3000 ms), brancos, até estabilizar na
   evoluída — **nunca abaixo de `MIN_STEP_MS` (340 ms)** entre trocas (WCAG
   2.3.1; antes o intervalo caía a 55 ms). Fora do vidro, a faixa "EVOLVED INTO" +
-  nome + data (`reachedAt`) + o primário "Let's keep going together".
+  nome + data (`reachedAt`) + o primário "Seguimos juntos" / "We keep going
+  together" (`84ae4937`, 21/09/2026, copy §3.2 — a mesma saída do
+  `MilestoneCeremony`; ⚰️ era "Vamos seguir juntos" / "Let's keep going together").
   É `role="dialog"` + `aria-modal` com foco preso (`useDialogA11y`); **Escape só
   depois de `done`** — fechar antes seria abandonar a evolução no meio, e o commit
   acontece em `onEvolved`.
@@ -1175,9 +1270,9 @@ em `acf4413e` — dois convites iguais na mesma tela é cobrança, EVO-20):
 
 | Jogo | Chega por | Sai para | Estados | Dono |
 |---|---|---|---|---|
-| `DungeonGame` | card na `ActivitiesPage` | `onExit` | `phase`: `intro` → `attack`/`defend`/`result` → `enemy-down` → `floor-clear` → `run-complete` \| `lost`; `floor` até `MAX_FLOORS` (5) | `DungeonGame.tsx` |
+| `DungeonGame` | card na `ActivitiesPage` | `onExit` | `phase`: `intro` → `attack`/`defend`/`result` → `enemy-down` → `floor-clear` → `run-complete` \| `lost`; `floor` até `MAX_FLOORS` (5). **O vocabulário na tela é o da bíblia desde `84ae4937` (21/09/2026, copy §4)**: o subtítulo diz "Camada N de 5" / "Layer N of 5" (números de `MAX_FLOORS`, nunca à mão); o primário do `intro` é "Descer" / "Go down" (⚰️ "Entrar na masmorra"); `enemy-down` diz "‹nome› parou de insistir aqui." (⚰️ "derrotado!" — nenhuma criatura da Malha morre); `floor-clear` = "Camada N limpa."; `run-complete` = "As 5 camadas ficaram para trás." + a frase do Glitchtama "com um dia inteiro preso dentro" + "Descer de novo" (⚰️ "Nova run"); `lost` = "Você subiu. A descida ficou pelo caminho — e só ela." + "Seus corações continuam intactos." | `DungeonGame.tsx` |
 | `ArenaGame` | card na `ActivitiesPage` | `onExit` | usa a ficha (`skills`, elemento) | `ArenaGame.tsx` |
-| `DinoGame` | card na `ActivitiesPage` | `onExit` | `onScore={onDinoScore}` alimenta o recorde | `DinoGame.tsx` |
+| `DinoGame` | card na `ActivitiesPage` | `onExit` | `onScore={onDinoScore}` alimenta o recorde; o corredor é `lineIconForStage(evolutionStage, 64, demoCharacterId) ?? getSpriteForStage(…)` (`utils/lineIcons.ts`, rodada 2, 21/09/2026 — o ícone-ficha 64² da linha; sprite a 0,25× quando o estágio não é de linha) | `DinoGame.tsx` |
 | `RPSGame` | card na `ActivitiesPage` | `onExit` | duelo curto | `RPSGame.tsx` |
 | `NightmareBattle` | **fila de intersticiais** | `onWin={handleNightmareWin}` / `onLose`/`onClose` = `closeNightmare`; desde `6fe6c73a` é um `RitualDialog` (trap, Escape, devolução de foco) | perder não custa nada, e a tela diz isso | `NightmareBattle.tsx` |
 | ⚰️ `PlayCard` | **não é mais montado** (`f5ead7c0`, 16/09/2026) — Brincar é a célula `play` do deck do `CompanionHUD` (§4.2) | — | `available` / `canPlay` / `playedToday` (`playDeck` no `App.tsx`) | `PlayCard.tsx` segue no repo sem consumidor |
@@ -1216,6 +1311,10 @@ rótulo "Brincar — depois da primeira atividade".
 
 **`MAX_FLOORS`** mora em `src/components/DungeonGame.tsx` (medido em 09/09/2026;
 o `CLAUDE.md` já registra que ele **não** está em `utils/dungeon.ts`).
+⚠️ **Divergência de vocabulário com o `CLAUDE.md`** (linha ⚔️ Masmorra: "uma run =
+5 andares", "Concluir os 5 andares"): desde 21/09/2026 o jogador lê **descida** e
+**camada**; `run`/`andar`/`floor` seguem sendo os nomes de código (`MAX_FLOORS`,
+`floor`, `startRun`, `'run-complete'`). A mecânica não mudou — só o texto.
 
 ### 4.15 Torneio — `currentView === 'tournament'`
 
@@ -1233,6 +1332,11 @@ o `CLAUDE.md` já registra que ele **não** está em `utils/dungeon.ts`).
   duas criaturas em mini-visor; "Fight" tem nome acessível "Fight — challenge
   ‹nome›" (WCAG 2.5.3); o switch de PvP travado é inerte por forma
   (`aria-disabled`, fora do Tab), nunca `disabled`.
+- **O que os mini-visores mostram** (`66e32d43`, rodada 2, 21/09/2026 — D-J13
+  cumprida): o oponente a 64 é `lineIconForStage(o.stage, 64) ?? getSpriteForStage(o.stage)`;
+  a linha do ranking a 32 é `lineIconForStage(r.stage, 32)` com `imageRendering:
+  'pixelated'`, e cai no sprite a 0,125× com `imageRendering: 'auto'` (⚰️ o
+  único caminho, "transição até os ícones 32²") quando o estágio não é de linha.
 - **Dono**: `src/components/TournamentPage.tsx` · **Régua**:
   `TournamentPage.bondGate.test.tsx`.
 
@@ -1262,9 +1366,23 @@ o `CLAUDE.md` já registra que ele **não** está em `utils/dungeon.ts`).
   e uma em 90 dias); e a **oferta** sob `showOffer={ofereceNoRelatorio}`, que ao
   abrir marca a semana **antes** (`offerShownWeek`) e chama `setUnlockReason('report')`.
 - **Estados**: `soulGoal` volta em dias completos e no retorno de ausência.
+- **As manchetes e as notas** (`84ae4937`, 21/09/2026, copy §2 — o mundo
+  constata, sem `!`; a decisão ordena `welcome` → `degenerated` → `wasPerfect` →
+  `heartsLost > 0` → o resto): `welcome` → "Que saudade!" (mantida, decisão 3 do
+  dono); `degenerated` → "Ele recolheu para uma forma que se sustenta com menos."
+  (⚰️ "Seu Soulmon voltou um estágio") **mais a nota** "Nada do que foi
+  descoberto saiu. O caminho de volta é o mesmo caminho."; `wasPerfect` → "Um
+  trecho fechou." (⚰️ "Dia completo!") **mais a nota** "A fagulha firmou.";
+  `heartsLost > 0` → "Um dia mais devagar."; senão "Dia novo." (⚰️ "Novo dia!").
+  A linha de corações com perda diz "O padrão afrouxou um pouco." (⚰️ "meio em
+  recuperação" / "N em recuperação" — sem número, sem causa). `restDayUsed` →
+  "A maré absorveu ontem. Nada foi cobrado. Ela recarrega na segunda." (⚰️ "usou
+  a folga da semana"); `weeklyRelief` → "A maré devolveu um pouco. Semana nova."
+  **Sem saldo** de folga em lugar nenhum (§10 da bíblia).
 - **Dono**: `src/components/DailyReportModal.tsx` · **Régua**:
   `DailyReportModal.aventura.render.test.tsx`,
-  `src/components/ofertaDoisCanais.contract.test.ts`.
+  `src/components/ofertaDoisCanais.contract.test.ts`, `src/narrativa.contract.test.ts`
+  (vocabulário vetado).
 
 ### 4.17 `MorningCheckIn`
 
@@ -1335,6 +1453,12 @@ o `CLAUDE.md` já registra que ele **não** está em `utils/dungeon.ts`).
   → vazio), é `zIndex: 300` e **espera o gesto**. Desde o canvas Rituais (§21) é
   um `RitualDialog` (`role="dialog"` + `aria-labelledby`), com o sprite e o emblema
   do marco (`emblemFor(tier)`) num vidro.
+- **O texto do marco** vem de `MILESTONE_TEXT[tier]` no `App.tsx`; o de 66 dias
+  diz "66 dias! Isso virou raiz." / "66 days! This one took root." desde
+  `84ae4937` (21/09/2026) — ⚰️ dizia "virou parte de quem você é" / "is part of
+  who you are", a pessoa como sujeito de um verbo de ser (L1 da bíblia). O botão
+  de saída é "Seguimos juntos" / "We keep going together" (o EN era "Let's keep
+  going together").
 - **Dono**: `src/components/MilestoneCeremony.tsx` · **Régua**:
   `MilestoneCeremony.render.test.tsx`.
 
@@ -1400,11 +1524,22 @@ Três blocos, com condições literais:
 {currentView === 'settings' && stepsAvailable === true && gameState.stepsConsent !== 'declined' && (…StepsCard…)}
 ```
 
-- **`SettingsPage`**: cinco grupos por intenção, uma ação dominante
+- **`SettingsPage`**: grupos por intenção (`grep -c "<Group title=" src/components/SettingsPage.tsx`
+  → **8** em 21/09/2026, um deles condicional — "Sua história" só sob
+  `redeemed && onToggleShowRedeemed`; ⚰️ "cinco grupos" era a contagem de
+  09/09/2026), uma ação dominante
   (entrar/sincronizar). Contém `AccountSection` (conta e compras, com
   "Restaurar compras" — exigido pela Play), `AccountDataSection` (exportar e
   apagar), `InstallPrompt` (cartão, **não** modal) e os botões que abrem o
   `GuideModal` (`onOpenGuide`) e o `HelpModal` (`onOpenGlossary`).
+  **Grupo "Sobre" / "About"** (`5b91717c`, 21/09/2026 — os três limites da §16
+  da bíblia, em voz de PRODUTO, sem metáfora): três parágrafos `sm2Text` — o
+  Soulmon "não avalia, não diagnostica, não trata e não substitui acompanhamento
+  de saúde"; o questionário "não é um teste validado" e o mapa astral "não prevê
+  nada"; o app "não sabe nada sobre a sua vida além do que você escreveu nele" —
+  e um `sm2Hint` de fecho ("Nada do que aparece aqui é uma afirmação sobre a sua
+  saúde, a sua mente ou o seu futuro"). Sempre montado, entre "Ajuda" e "Seu
+  ritmo"; sem botão, sem link. `régua: nenhuma` para o grupo.
   **Estados do `AccountDataSection`**: `503` é **estado**, não erro — o botão
   nasce desabilitado com o motivo escrito, em tinta neutra.
 - **`RestWindowCard`**: escolhe a janela (`onChangeWindow`), o switch "não quero
@@ -1515,7 +1650,7 @@ ele monta a `SettingsPage`, nunca a folha (13/09/2026).
 | `ItemsWindow` | `{showItemsWindow && (…)}` | a pastinha; `handleOpenItems` **alterna** e zera `newItemsReady` | `ItemsWindow.tsx` |
 | `GamePopups` → `FirstTaskCompletedPopup` | `showFirstTaskPopup` | **uma vez na vida**, guardado por `FIRST_TASK_POPUP_SHOWN` e por uma varredura (`anyStepCompleted` / `anyTaskCompleted`). Desde `eb932ebb` (canvas Rituais R8/S8) mudou de CLASSE: ⚰️ era `ModalSheet` em z-120, **sob** os intersticiais (invisível quando o gatilho era o "só 5 minutos?" do check-in); hoje é `RitualDialog` **z-300, espera o gesto**, como a cerimônia do marco — fora das filas de propósito | `GamePopups.tsx` |
 | `ContentModals` → `GuideModal` | `guideModalOpen` | o guia; os números saem das CONSTANTES | `GuideModal.tsx` |
-| `HelpModal` | `showHelpModal` | o glossário, idem | `HelpModal.tsx` |
+| `HelpModal` | `showHelpModal` | o glossário, idem; a linha de abertura diz, desde `5b91717c` (21/09/2026, copy §6): "O que cada palavra da tela quer dizer. O Soulmon tem um universo próprio: estes são os nomes dele, e nenhum deles descreve você." — a 2ª oração bloqueia a leitura de tipologia ("então eu sou akasha") | `HelpModal.tsx` |
 | `ConfirmDialog` | `resetOnboardingOpen` | "Refazer o ritual" — o texto diz que Soulmon, atividades, Bits e progresso **continuam** | `ConfirmDialog.tsx` |
 | `ScreenSkeleton` | `Suspense fallback` de toda página carregada por `lazy()` | ⚰️ substituiu os `Suspense fallback={null}` que deixavam a tela **em branco** (13 pontos, medidos em 19/08/2026) | `ui/ScreenSkeleton.tsx` |
 
@@ -1649,7 +1784,7 @@ export const PUSH_HOURS_UTC = PUSH_HOURS_BRT.map(h => (h + 3) % 24).sort((a, b) 
 
 ## 6. Divergências abertas (para o `../STATUS.md`)
 
-| # | Afirmação | Onde está | O que o código diz (09/09/2026; recheado em 20/09/2026 sobre `dc72579e`) |
+| # | Afirmação | Onde está | O que o código diz (09/09/2026; recheado em 20/09/2026 sobre `dc72579e`; linhas 12–13 medidas em 21/09/2026 sobre `9875477b`) |
 |---|---|---|---|
 | 1 | "Loja em ABAS (Itens/Cenários/Mobílias/Torneio/Missões)" | `CLAUDE.md` | `type ShopSegment = 'shop' \| 'tournament'` — **dois** segmentos; Itens/Cenários/Mobílias são seções de um scroll, e a aba Missões não existe |
 | 2 | "a página é dungeon + dino + pedra-papel-tesoura + torneio" | comentário de `BottomNav.tsx` | `openGame` aceita `'dungeon' \| 'arena' \| 'dino' \| 'rps'` — **quatro** minijogos |
@@ -1662,3 +1797,5 @@ export const PUSH_HOURS_UTC = PUSH_HOURS_BRT.map(h => (h + 3) % 24).sort((a, b) 
 | 9 | comentário do slot de avisos numera "1. HP" duas vezes | `src/App.tsx` | a ordem executada é a dos `push`: firstDay → hp → semanal → triagem → priming → recomeco |
 | 10 | "Brincar" é um card na Home (`PlayCard`), e a IIFE do `PlayCard` no `App.tsx` é consumidora de `playLog` | `CLAUDE.md` (linha 🧮, "**brincar** `playLog` (`utils/petNeeds.ts` + a IIFE do `PlayCard` no `App.tsx`)") | o `PlayCard` não é montado desde `f5ead7c0`; Brincar é a célula `play` do deck do `CompanionHUD`, alimentada por `playDeck` (`useMemo` no `App.tsx`) — §4.2, §4.14. `src/components/PlayCard.tsx` segue no repo sem consumidor |
 | 11 | "o fundo do widget é vetor `pet_grid.xml`" | `CLAUDE.md` (footgun 4) | `android/app/src/main/res/drawable/pet_grid.xml` foi **apagado** no delta (`6affd501`); o fundo é `widget_bg.xml` (`<shape>`, `drawable/` e `drawable-v31/`) — §5.1 |
+| 12 | "uma **run = 5 andares**", "Concluir os 5 andares", "bônus de andar" | `CLAUDE.md` (linha ⚔️ Masmorra) e linha ⭐ ("os 5 andares da masmorra") | desde `84ae4937` (21/09/2026) o jogador lê **descida** e **camada** ("Camada N de 5", "Descer", "Descer de novo", "As 5 camadas ficaram para trás"); `run`/`floor`/`MAX_FLOORS` continuam sendo os nomes de código — vocabulário, não mecânica — §4.14 |
+| 13 | "Recusa = pet fala que está cheio (sem toast)" e a tabela 🫶 sem dizer o que acontece ao usar 💗 com a vida cheia | `CLAUDE.md` (linhas 🍎 e 🫶) | continua sem toast; mas a frase de comida cheia vem de `PET_VOICE_LINES.full` (`petVoice.ts`), não do `CompanionHUD`, e a vida cheia ao usar 💗 fala `steady` ("Tô firme. Guarda essa."), ⚰️ não mais o canal do teto de carinho (`healCapSignal`) — §4.2, §4.2b |

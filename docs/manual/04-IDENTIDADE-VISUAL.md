@@ -1,6 +1,6 @@
 # Identidade visual e sonora do Soulmon
 
-> **Dono:** doc-redator-identidade · **Data:** 20/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `2580b73a..dc72579e`, Fase 2 identidade fechada)
+> **Dono:** doc-redator-identidade · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `dc72579e..9875477b`, conferido em `5ac3d351`: rodada 2 da SQUAD-ARTE, SQUAD-SOM retomada, superfície de suporte do chat)
 > **Verificação:** `npx vitest run src/styles/ src/index.css.contract.test.ts src/utils/sprites.dungeonRoster.test.ts src/utils/loudness.contract.test.ts src/utils/cortes.contract.test.ts src/components/ui/Viewport.contract.test.tsx src/components/ui/foundation.render.test.tsx src/brand/brandFlame.parity.test.ts src/assets/assets.contract.test.ts` — os 11 arquivos de 09/09/2026 (216 testes, verde) mais os dois que nasceram com a marca vetorizada e a leva de arte de 15/09/2026.
 > **Não cobre:** o fluxo entre telas e o que cada superfície mostra (doc `03-FLUXO-DE-TELAS.md`); as regras de jogo por trás dos números que a UI pinta (doc `02-REGRAS-DE-NEGOCIO.md`); a assinatura de cada componente (`06-REFERENCIA/components.md`); o pipeline de build/deploy dos assets (doc `08-INTEGRACOES-E-DEPLOY.md`). Este doc descreve o som — **não** decide nada sobre ele: quem decide é o `REGISTRO-DE-DECISOES.md` (§6.1, S1..S13).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -66,8 +66,17 @@ humano, e continua sendo.
 ## 2. Os 41 tokens `--sm-*` (eram 55)
 
 Medição: `grep -o -- '--sm-[a-z0-9-]*:' src/index.css | sort -u | wc -l` →
-**41** em 20/09/2026 (era **55** em 09/09/2026). `wc -l src/index.css` →
-**7481** (era 7678). ⚰️ Os **14** que saíram são todos do kit pixel antigo,
+**41** em 20/09/2026, remedido igual em 21/09/2026 (era **55** em 09/09/2026).
+`wc -l src/index.css` → **7516** em 21/09/2026 (7481 em 20/09; era 7678). As 35
+linhas novas são duas classes, `.sm2-chat-support` e `.sm2-chat-support-link`
+(`6ad2e629` e `f3654076`, 21/09/2026): a superfície de suporte do chat, par visual da
+cláusula SAFETY de `functions/api/chat.js`. **Discrição é requisito clínico,
+não escolha de estilo** — corpo `11px`, `color: var(--sm-muted)`, `max-width:
+62ch`, sem ícone, sem caixa e sem cor de alerta (nada de `--sm2-danger-*`); o
+link é `color: inherit` + sublinhado sempre (decisão do dono, 21/09/2026: em
+texto `muted` de 11px, cor sozinha não sinaliza link). Nenhum token novo; o
+contraste é o do `--sm-muted` do tema (§3.1). O fluxo em que ela aparece é do
+doc `03-FLUXO-DE-TELAS.md`. ⚰️ Os **14** que saíram são todos do kit pixel antigo,
 removidos em `f318984f` (16/09/2026, "remove as regras `.sm-px-*` que o kit
 vetor deixou sem consumidor"): `--sm-px-bw`, `--sm-px-chip-bg`,
 `--sm-px-copper-ink`, `--sm-px-cyan-ink`, `--sm-px-off-bg`, `--sm-px-off-edge`,
@@ -252,7 +261,8 @@ deles repinta toda tela existente de uma vez, sem revisão — regressão garant
 O conjunto novo nasceu ao lado; as ondas migram tela por tela, e só no fim os
 `--sm-*` morrem. Estado em 09/09/2026: **64** classes `.sm2-*` contra **100**
 classes `.sm-px-*` no CSS; em 20/09/2026, depois da Fase 2: **231** `.sm2-*`
-contra **21** `.sm-px-*`
+contra **21** `.sm-px-*` (em 21/09/2026: **233** × 21 — as duas do suporte do
+chat, §2)
 (`grep -o '\.sm2-[a-z0-9-]*' src/index.css | sort -u | wc -l` e o mesmo para
 `.sm-px-`), e **78** arquivos `.tsx` de produção citam `sm2-` (eram 61). A
 migração tela por tela ACONTECEU (14 canvases, `docs/design/DECISOES-WIREFRAME.md`
@@ -614,31 +624,41 @@ crescer.
 
 ### 5.6 Os ícones em PNG (arte própria)
 
-Contagem medida em 20/09/2026 com `find src/assets/soulmon/<pasta> -name '*.png' | wc -l`
-(a coluna "09/09" é a medição anterior; o que mudou veio da rodada 1 da
-SQUAD-ARTE, 15–16/09/2026, `docs/INVENTARIO-ASSETS.md` e `docs/ASSETS-A-GERAR.md` §11):
+Contagem medida em 21/09/2026 com `find src/assets/soulmon/<pasta> -name '*.png' | wc -l`
+(a coluna "20/09" é a medição anterior, depois da rodada 1 da SQUAD-ARTE,
+15–16/09/2026; o que mudou em 21/09 é a **rodada 2** — `118131f4`, 255
+derivados, `docs/ASSETS-A-GERAR.md` §13 R2-1…R2-4 — que **não gerou pose
+nova**: tudo é REDUÇÃO do que já existia, via `scripts-arte/derivar-rodada2.mjs` (fora do repo, em `D:\Soulmon\scripts-arte\`),
+então a D5 de §8.2 continua valendo):
 
-| pasta | PNGs | 09/09 |
+| pasta | PNGs | 20/09 |
 |---|---|---|
 | `src/assets/soulmon/icons/` (recursivo, inclui `categories/` e `games/`) | **57** | 57 |
 | `src/assets/soulmon/elementos/` | **137** | 137 |
-| `src/assets/soulmon/fx-ataque/` | **924** (D9: `entrega6/` base unificada) | 816 |
-| `src/assets/soulmon/lines/` | **65** (+12: as 3 linhas Igni/Nautilu/Astrase × 4, §8.2) | 53 |
-| `src/assets/soulmon/sigilos/` (nova, D6 — os 45 sigilos do class-system na Ficha) | **45** | — |
-| `src/assets/soulmon/fx/` | **34** (+22: FX quadro a quadro no visor, `55f332ad`) | 12 |
+| `src/assets/soulmon/fx-ataque/` | **1078** (+154 `fx-<el>-aura-96.png`, R2-3: auras 96² derivadas das 128², consumidas por `auraForElement(el, 96)` de `src/utils/attackFxArt.ts` na Ficha; `ATTACK_FX_COUNT` continua 924 porque o glob separa as 96² em `AURA_96_COUNT`) | 924 |
+| `src/assets/soulmon/lines/` (recursivo) | **137** (+72 em `lines/icons/`, R2-2: ícones-ficha 64² e 32² das 9 linhas × 4 tiers, `src/utils/lineIcons.ts` → Dino, Torneio e mini-visor do ranking; os 36 sprites + 29 de `lines/full/` não mudaram) | 65 |
+| `src/assets/soulmon/sigilos/` (nova, D6 — os 45 sigilos do class-system na Ficha) | **45** | 45 |
+| `src/assets/soulmon/fx/` | **35** (+1 `anim-sleep-z-light.png`, R2-4: a folha clara do Z para cenário escuro — quem escolhe é `isDarkBackground`, §7.2) | 34 |
 | `src/assets/soulmon/dreams/` | **30** | 30 |
 | `src/assets/soulmon/adventures/` | **24** | 24 |
 | `src/assets/soulmon/bg/` | **15** | 15 |
 | `src/assets/soulmon/items/` | **13** | 13 |
-| `src/assets/soulmon/emblems/` (nova — os 8 emblemas + `habit-7/21/66`, `663b9de5`) | **9** | — |
-| `src/assets/soulmon/dino/` (nova — conjunto do Dino, `dd214688`) | **6** | — |
-| `src/assets/soulmon/hud/` (nova — barra/moldura pixel do visor, D3) | **5** | — |
+| `src/assets/soulmon/emblems/` (os 8 emblemas + `habit-7/21/66`, `663b9de5`) | **9** | 9 |
+| `src/assets/soulmon/dino/` (conjunto do Dino, `dd214688`) | **6** | 6 |
+| `src/assets/soulmon/hud/` (barra/moldura pixel do visor, D3) | **5** | 5 |
 | `src/assets/soulmon/progress/` | **4** | 4 |
-| `src/assets/soulmon/placeholder/` (nova — `dormant`/`forming`/`glitch`, §8.6) | **3** | — |
+| `src/assets/soulmon/placeholder/` (`dormant`/`forming`/`glitch`, §8.6) | **3** | 3 |
 | `src/assets/soulmon/windows/` | **1** | 1 |
-| `src/assets/soulmon/buttons/` · `evolution/` · `ui/` | ⚰️ **saíram** (o kit vetor dispensou os 13 PNGs de botão; a árvore de evolução é SVG por token — H1, decisão do dono em 16/09/2026) | 13 · 4 · 3 |
-| raiz de `src/assets/soulmon/` | **17** (+`nest-cradle-wide.png`, o berço largo, §7.1) | 16 |
-| **total** (`find src/assets/soulmon -name '*.png' \| wc -l`) | **1389** | 1198 |
+| `src/assets/soulmon/buttons/` · `evolution/` · `ui/` | ⚰️ **saíram em 16/09/2026** (o kit vetor dispensou os 13 PNGs de botão; a árvore de evolução é SVG por token — H1, decisão do dono) | — |
+| raiz de `src/assets/soulmon/` | **17** (+`nest-cradle-wide.png` em 15/09/2026, o berço largo, §7.1) | 17 |
+| **total** (`find src/assets/soulmon -name '*.png' \| wc -l`) | **1616** | 1389 |
+
+Fora de `src/assets/soulmon/`, e da mesma rodada 2: **`src/assets/backgrounds/thumbs/`**
+(R2-1, **28** PNGs em 21/09/2026 — `ls src/assets/backgrounds/thumbs | wc -l`),
+uma miniatura 96×52 por cenário, derivada da ilustração 1200×648, lida por glob
+eager no `ShopModal` para a vitrine de cenários. E `src/assets/backgrounds/bg-gameboy.png`
+foi **regerado** (R2-6, `b52fa074`, 21/09/2026 — uma das duas gerações novas da rodada, com os
+glifos R2-5 do overlay do desktop, `02d483af`, doc `05-ARQUITETURA.md` §4; não derivação).
 
 Régua nova para tudo isso: `src/assets/assets.contract.test.ts` (15/09/2026) —
 nenhum asset de 0 byte, todo asset decodificável, nenhum xadrez de
@@ -871,7 +891,14 @@ Cada cenário (`PET_BACKGROUNDS`, `src/utils/backgrounds.ts`) declara:
   desenha a arte com `auto 100%` para não deformar o pixel nem perder a linha
   do chão; numa caixa mais larga que a proporção da arte sobra área, e é esta
   cor que preenche. Era opcional; em 20/09/2026 **os 28 declaram**
-  (`grep -c "baseColor:"` → 28).
+  (`grep -c "baseColor:"` → 28). Desde 21/09/2026 ela tem um segundo
+  consumidor: **`isDarkBackground(id)`** (mesmo arquivo, R2-4) devolve `true`
+  quando a luminância relativa da `baseColor` é `< 0,5` — e também sem cenário
+  ou sem `baseColor`, porque aí o que se vê é o `--sm2-viewport-bg`, escuro nos
+  dois temas. O `CompanionHUD` usa a resposta para escolher a folha do Z de
+  dormir: `ANIM_ART.sleepZLight` (`fx/anim-sleep-z-light.png`) sobre cenário
+  escuro, `ANIM_ART.sleepZ` (teal) sobre claro. **Régua: nenhuma** além do
+  guard geral de assets (§5.6).
 
 `PET_BACKGROUNDS` tem **28** entradas: 22 comuns/comprados + os 6 `bg-mission-*`
 liberados por missão. ⚰️ **Nenhum é mais gradiente CSS**: em 15/09/2026
@@ -1001,6 +1028,17 @@ outro nome, sem nada ficar vermelho. Hoje os outros dois LEEM daqui.
 (`baby-i`/`baby-ii` caem no `rookie` da linha; `ultra` reusa `mega`) e **tira do
 sorteio a linha que o jogador está usando** — ninguém encara um espelho de si
 mesmo.
+
+Desde 21/09/2026 (`66e32d43`, rodada 2) o mesmo arquivo exporta
+**`resolveLineForStage(stage, demoCharacterId)`** e o tipo **`LineTier`**
+(`'rookie' | 'champion' | 'ultimate' | 'mega'`): é a resolução de
+`getSpriteForStage` **sem o sprite** — devolve `{ line, tier }` para demo e para
+id legado (mesmo hash), e `null` para estágio da árvore do jogador
+(`champion-virus` etc.), porque aí a arte é a do próprio Soulmon, não de linha.
+Único consumidor: `src/utils/lineIcons.ts` (`lineIcon(lineId, tier, 32 | 64)`),
+que serve os ícones-ficha de `lines/icons/` (§5.6) e devolve `undefined` quando
+a arte não existe — o consumidor cai no sprite 256² reduzido, que é o que era
+antes.
 
 ### 8.3 O que NUNCA entra
 
@@ -1214,9 +1252,30 @@ com uma asserção só: corte novo é uma linha na tabela, não um teste novo.
   (`document.hidden` · app sem foco · `isSleeping` · janela de descanso), que é
   D11 + S2 sobre o pacote inteiro, e a **chave da trilha separada de
   `SOUND_MUTED`**. Recarregar crédito no gerador **não** descongela.
-- **S10** — o som PROCEDURAL é a solução provisória; os prompts de IA estão
-  prontos e engatilhados (a conta do gerador está em 0,45 crédito e o piloto A/B
-  não rodou).
+- **S10** — o som PROCEDURAL é a solução vigente; **segue exatamente como
+  está** depois de 21/09/2026. ⚰️ "A conta do gerador está em 0,45 crédito e o
+  piloto A/B não rodou" era o estado até 20/09/2026: em 21/09/2026 o bloqueio
+  caiu (crédito recarregado; termos, política de loja e S11/S12 respondidos pelo
+  dono — `REGISTRO-DE-DECISOES.md` §6.1, nota de 21/09 sob a emenda da S10), os
+  **12 prompts** foram gerados e pós-processados em `E:/Soulmon-assets/som-01/`
+  — **fora do repo: nenhum byte de áudio entrou**, `sounds.ts` continua com os
+  8 sons sintetizados de §9.1 e `docs/Attributions.md` segue sem linha de
+  áudio (S9) — e o **A/B cego dos 3 pares** (`playEvolve`, `playDegenerate`,
+  `playTaskComplete`) está **montado e NÃO OUVIDO** (`ab/escuta.html`). O
+  gatilho da S10 deixou de ser "haver crédito" e passou a ser "o dono
+  responder as 18 perguntas"; até lá "o procedural venceu" continua frase
+  proibida. Detalhe em `docs/SOM.md` §5.
+
+Do gate de loudness (`docs/SOM.md` §7), os três itens que estavam abertos com o
+engenheiro de áudio **fecharam em 21/09/2026**, no arnês local (não
+versionado): o **flake** (1 falha em 11) tinha causa — porta do CDP escolhida
+antes de o Chrome subir — e hoje o diagnóstico persiste a cada saída anormal
+(11 execuções, 11 verdes depois do conserto); **O-5** — os sons cortados
+(`playPoopClean`/`playMenuOpen`) saíram da amostra medida e viraram
+contraexemplo; **O-7** — o AC-1 varre todos os renders e `FORA_DO_AC1` virou
+mapa nome → motivo. O que fica: o baseline é captura da Fase 0, e recapturar os
+8 sons vigentes pelo `audioBus` continua **pendente** — o arnês é ferramenta de
+calibração, não portão de commit.
 
 O runbook completo vive em `squad-alpha-runs/som-01/maintainer/`, que **não vai
 para o git** — por isso `docs/SOM.md` existe: é a parte que precisa sobreviver.
@@ -1423,8 +1482,9 @@ nas duas pastas, 09/09/2026.
 
 ## 13. Divergências registradas neste documento
 
-Lista fechada, para o `STATUS.md`. Medidas em 09/09/2026 e revistas em
-20/09/2026 (delta `2580b73a..dc72579e`): as marcadas ⚰️ fecharam.
+Lista fechada, para o `STATUS.md`. Medidas em 09/09/2026, revistas em
+20/09/2026 (delta `2580b73a..dc72579e`) e em 21/09/2026 (delta
+`dc72579e..9875477b`, que só acrescentou a #14): as marcadas ⚰️ fecharam.
 
 | # | Onde | Divergência |
 |---|---|---|
@@ -1441,3 +1501,4 @@ Lista fechada, para o `STATUS.md`. Medidas em 09/09/2026 e revistas em
 | 11 | `docs/PALCO-E-DECORACAO.md` × `src/utils/petStage.ts` | `GROUND_Y` = 74 é a conta do sprite de 80px; o sprite é `PET_BOX` = 152 e a origem real é `PET_TOP_OFFSET` = −38. O código e o doc já registram o desvio; a conta do palco **não foi refeita** — e o berço mudou para 220×104 em 15/09/2026 (§7.1), o que aquele doc também não descreve |
 | 12 | `src/utils/backgrounds.ts` × `StageSetting` | o tipo ainda aceita `'void'`, mas nenhum cenário o declara desde 15/09/2026 (§7.2) — tipo com valor sem consumidor; **régua: nenhuma** |
 | 13 | `src/styles/tokens.md` × `src/index.css` | o `grep` de tokens `--sm2-*` devolve 59 e são 58: `--sm2-btn` é seletor de variante do kit vetor, não token declarado (§2.8) |
+| 14 | `CLAUDE.md`, `docs/SOM.md` e este doc (§9) × `docs/REGISTRO-DE-DECISOES.md` §6.1 | os três dizem "**S1..S13**", mas o registro tem **S15** desde 09/09/2026 (`6bbdd9f8`, termos do gerador) e a nota de 21/09/2026 sob a S10 a cita; **não existe S14**. Achado em 21/09/2026 ao sincronizar §9.5; a numeração é do registro, não deste doc — **régua: nenhuma** |

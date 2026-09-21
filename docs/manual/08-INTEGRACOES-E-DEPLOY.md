@@ -1,6 +1,6 @@
 # Integrações e deploy
 
-> **Dono:** doc-redator-arquitetura · **Data:** 20/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (sincronizado com `2580b73a..dc72579e` em 20/09/2026 por doc-redator-arquitetura)
+> **Dono:** doc-redator-arquitetura · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (sincronizado com `dc72579e..9875477b` em 21/09/2026 por doc-redator-arquitetura; conferido em `5ac3d351`)
 > **Verificação:** `npx vitest run src/deploy src/security functions/api workers` — em especial `src/deploy/appUrl.contract.test.ts` (as quatro fontes da URL), `src/deploy/firebaseNoBuild.contract.test.ts` (o `.env.production` versionado), `src/deploy/swCache.contract.test.ts`, `src/security/csp.test.ts`, `src/security/supabase.contract.test.ts`, `workers/pushCopy.parity.test.js` e `workers/vapid.parity.test.js`.
 > **Não cobre:** o esquema do save e as chaves de storage (→ [07-DADOS-E-SAVE.md](07-DADOS-E-SAVE.md)), a arquitetura e os portões (→ [05-ARQUITETURA.md](05-ARQUITETURA.md)), as regras do jogo (→ `02-REGRAS-DE-NEGOCIO.md`), função por função (→ `06-REFERENCIA/`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -112,6 +112,34 @@ sistema. A vítima do campo é o próprio jogador (o chat é individual, um pedi
 uma resposta); o motivo de haver conserto é que **a `GROQ_API_KEY` é do dono e é
 ÚNICA para todos**, e uma persona forçada a violar a política do provedor derruba
 a conta de API de todo mundo.
+
+**A cláusula SAFETY do system prompt (21/09/2026, `01b649ce`)** fecha o prompt de
+`functions/api/chat.js` (`buildSystemPrompt`) e **sobrepõe tudo** — o bloco NEVER, o
+estilo do usuário e o personagem: diante de fala de ideação sobre a própria
+pessoa, o pet sai da voz (sem emoji, sem apelido), responde em três frases —
+reconhecer → declarar a própria limitação → pedir que procure hoje uma pessoa
+real —, e **nunca** se oferece como razão para ficar, pede detalhes, cita
+telefone/serviço/site ou minimiza; figura de linguagem ("tô morrendo de sono")
+fica em personagem. O motivo, escrito no próprio arquivo: a persona é definida
+como alguém que sofre quando não é cuidada, e um 8B sem trava produz "e eu?" —
+culpa como dissuasor. **Alcance honesto:** instrução de prompt é probabilística;
+o caminho determinístico (casar no servidor antes do Groq) está recomendado,
+não implementado. **Régua: nenhuma** — nenhum teste em `functions/api/` varre a
+cláusula (`grep -l SAFETY functions/api/*.test.js` → vazio, 21/09/2026). No
+mesmo commit, `contextBlock` **parou de entregar tempo ao modelo**: ⚰️ as linhas
+`'You two have been together for a long time.'` (`ctx.bond >= 10`) e `'They were
+away for a while and just came back …'` saíram — o `daysAway` só dispara `'They just came back after
+not opening the app … You have no idea how long it was'`. É a mesma trava de
+`welcomeBack.ts` levada ao prompt — nenhuma frase encena duração ou espera
+(⚠️ divergência: o comentário em `contextBlock` diz "frase idêntica no 2º e no
+40º dia", mas `welcomeBackLine` continua escolhendo POR FAIXA de `absenceBucket`,
+decisão 14.3 do `REGISTRO-DE-DECISOES.md`; o que é idêntico é a ausência de
+contagem, não a frase): a
+criatura não tem órgão que leia tempo (`docs/NARRATIVA-E-UNIVERSO.md` §5.10).
+`bond` continua aceito em `CONTEXT_SCHEMA`, mas nenhuma linha do bloco o lê. A
+superfície de suporte que a cláusula pressupõe está na tela do chat
+(`src/components/ChatBox.tsx`, `sm2-chat-support`, `6ad2e629`) — lista curada e
+estática, nunca do modelo.
 
 **A ponte de ajuda** (`src/utils/chatSafety.ts`) roda **antes de a mensagem sair
 do aparelho**: reconhece um punhado de frases de sofrimento agudo e devolve uma

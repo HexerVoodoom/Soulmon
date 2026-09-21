@@ -1,6 +1,6 @@
 # Regras de negócio — todas as regras do jogo, por sistema
 
-> **Dono:** doc-redator-regras · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (só as seções do delta `2580b73a..dc72579e` — §22, §28, §41, §43, §46, §57-A, §57-B, §59 D28–D30; verificação anterior do doc inteiro: 10/09/2026, em duas metades)
+> **Dono:** doc-redator-regras · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (só as seções do delta `dc72579e..9875477b` — §2, §3, §8, §10, §12, §45, §48, §59 D31; verificação anterior: 21/09/2026, seções do delta `2580b73a..dc72579e` — §22, §28, §41, §43, §46, §57-A, §57-B, §59 D28–D30; doc inteiro: 10/09/2026, em duas metades)
 > **Verificação:** `npx vitest run src/utils src/types src/hooks` — cada sistema abaixo declara a sua régua própria na linha **Régua**. Números medidos trazem o comando na própria linha.
 > **Não cobre:** o porquê estratégico e as linhas vermelhas (→ [`01-VISAO.md`](01-VISAO.md)), telas e navegação (→ `03-FLUXO-DE-TELAS.md`), função por função (→ `06-REFERENCIA/`), formato do save (→ `07-DADOS-E-SAVE.md`), infraestrutura de push, deploy e API (→ `08-INTEGRACOES-E-DEPLOY.md`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -225,7 +225,12 @@ gate da fatia 2 do run `soulmon-02`.
 quando o HP está cheio (o gesto vira só animação).
 
 **Onde a UI mostra.** `src/components/CompanionHUD.tsx` (o gesto e a explosão de
-corações).
+corações). A fala do teto diário (`rubDecision === 'daily-cap'`) é o `kind`
+`healCap` de `PET_VOICE_LINES` (`src/utils/petVoice.ts`) desde `a2ded861`
+(21/09/2026) — ⚰️ o array inline do `CompanionHUD` ("já sarei o que dava por
+hoje!") saiu; a segunda oração da fala nova diz que o carinho continua valendo
+como contato, porque sem ela o teto lê como "pare". Régua da fala:
+`src/utils/petVoice.test.ts`.
 
 ---
 
@@ -249,7 +254,12 @@ Uma comida comum (`FOOD_BY_CATEGORY`, `src/constants/labels.ts`):
   favorece (empate vai para `data`).
 
 Recusas (`FeedRefusal`): `'no-stock'`, `'hourly-limit'`. A recusa por teto é
-"o pet fala que está cheio" — **sem toast**.
+"o pet fala que está cheio" — **sem toast**. A fala é o `kind` `full` de
+`PET_VOICE_LINES` (`src/utils/petVoice.ts`) desde `a2ded861` (21/09/2026) — ⚰️
+o inline do `CompanionHUD` ("Não aguento mais! Volta mais tarde.") saiu, porque
+"volta mais tarde" é instrução de retorno; a criatura fala do corpo DELA, nunca
+"você já alimentou demais" (há teste varrendo `volta mais tarde`/`você já` em
+`src/utils/petVoice.test.ts`).
 
 Comida se ganha **concluindo atividade**: `foodForCompletedTask` entrega +1
 comida da categoria da tarefa. Os atributos NÃO vêm de concluir; vêm de
@@ -543,7 +553,14 @@ que não existe mais); não reintroduza a isenção achando que ela já existia.
 Não faça aritmética de HP no `App.tsx` (footgun 9).
 
 **Onde a UI mostra.** `src/components/CareSystem.tsx`,
-`src/components/CompanionHUD.tsx`.
+`src/components/CompanionHUD.tsx`. Desde `a2ded861` (21/09/2026) a chegada do
+cocô tem VOZ: `src/App.tsx` chama `falar('residue')` (`kind` `residue` de
+`PET_VOICE_LINES`, `src/utils/petVoice.ts`) só na **chegada** do
+`careEvent.type === 'poop'` (ref `borraAnteriorRef`), constatando e apontando —
+zero vergonha, zero nojo, zero pedido. **O dreno cobrando HP segue mudo de
+propósito**: a criatura anunciando o próprio dano é a família de `'HP baixo...'`
+que saiu em 06/09/2026. Régua: `src/utils/petVoice.test.ts` (varre
+`sujo`/`nojo`/`vergonha`/`me limpa`/`por sua causa`).
 
 ---
 
@@ -625,7 +642,15 @@ noite — o único push desta mecânica é o de DEITAR ([§58](#notificacoes)).
 
 **Onde a UI mostra.** `src/components/CompanionHUD.tsx` (a ação 💤),
 `src/components/SettingsPage.tsx` (a janela do sono automático),
-`src/components/RestWindowCard.tsx`.
+`src/components/RestWindowCard.tsx`. Desde `a2ded861` (21/09/2026) dormir e
+acordar deixaram de ser gestos MUDOS: `src/App.tsx` chama
+`falar(isSleeping ? 'wake' : 'sleep')` dentro de `handleSleep` — o toggle MANUAL, fora do updater; o sono automático segue calado (`kind`s
+`sleep`/`wake` de `PET_VOICE_LINES`, `src/utils/petVoice.ts`). Regra da fala de
+manhã, e ela é a mesma da Janela de Descanso ([§40](#janela-descanso), veto
+#12): **nenhuma frase comenta a noite de quem lê** — "dormiu bem?" é como se
+fabrica ortossonia; ela fala do corpo dela e da Malha. Régua:
+`src/utils/petVoice.test.ts` (varre `dormiu`/`descans`/`boa noite`/`sleep
+well`/`good night`/`did you sleep`).
 
 ---
 
@@ -731,9 +756,17 @@ registro de acompanhamento, não arquivo.
 
 **O que o app devolve.** `moodSummary(log, language)` lê `recentMoods(log, 7)` e
 devolve **`null` com menos de 3 registros** — três pontos é o mínimo para dizer
-qualquer coisa sem inventar padrão. Com média ≤ 2 acolhe ("seu Soulmon está
-aqui, e não precisa de nada de você hoje"); com ≥ 4 reconhece; no meio nomeia os
-altos e baixos. Nenhuma variante julga.
+qualquer coisa sem inventar padrão. Com média ≤ 2 devolve o que a pessoa
+**registrou** ("Seus últimos dias foram registrados como pesados. O Soulmon
+guarda isso e não faz nada com isso."); com ≥ 4 reconhece; no meio nomeia só os
+altos e baixos ("Seus últimos dias tiveram altos e baixos." — ponto final).
+Nenhuma variante julga, e **nenhuma afirma sobre a pessoa**. ⚰️ Até `5b91717c`
+(21/09/2026) a de ≤ 2 dizia "têm sido pesados" — o app AFIRMANDO sobre a pessoa
+(L9 da bíblia, §16 limite 2) — e a do meio terminava em "e tudo bem que seja
+assim", a normalização que virou a proposta P14: saiu e **nada entrou no lugar**,
+porque afirmar e negar na mesma frase chega como invalidação para quem está em
+episódio depressivo (§17 #2 da bíblia). A regra 3 do cabeçalho do módulo (o app
+DEVOLVE algo) continua valendo.
 
 **Onde o humor PODE aparecer.** Só em dois lugares: a leitura acima, e o
 contexto do `/api/chat` — como INTEIRO de 0 a 4 (`ctx.moodToday`), nunca texto.
@@ -3299,6 +3332,20 @@ welcomeBackLine(days, isPt, pick) → a fala da faixa de absenceBucket(days)
 | `MEMORY_MARKS` | 30 e 90 | `src/utils/memories.ts` — os dois que a pessoa reconhece sem contar; 60 não é marco de ninguém |
 | `AbsenceBucket` | 0 = ≤1 dia · 1 = 2–4 · 2 = 5–14 · 3 = 15+ | `src/utils/welcomeBack.ts` — faixa, nunca o número cru: dia exato de retorno, cruzado com o resto, começa a descrever uma pessoa |
 
+**As frases não encenam espera (desde `1480b632`, 21/09/2026).** ⚰️ As faixas 2
+e 3 de `LINES` diziam "Senti saudade esses dias", "Quanto tempo!" e "Eu estava
+aqui, esperando" — obedeciam à trava do cabeçalho (nada do que ficou para trás)
+e mesmo assim cobravam, porque mencionavam **tempo** e **espera**: a culpa não
+precisa de número, vem da cena. Hoje dizem só que a janela abriu ("Você abriu.
+Tô aqui. Sem pressa." / "Você abriu. Não mudei nada de lugar."). Fundamento no
+mundo: a criatura não tem órgão que leia tempo decorrido (bíblia §5.10).
+**A estrutura de FAIXAS fica** — o parecer clínico pediu frase idêntica no 2º e
+no 40º dia, e o dono decidiu manter o WP2.7 ("continuar" e "voltar" não são a
+mesma coisa): [`REGISTRO-DE-DECISOES.md`](../REGISTRO-DE-DECISOES.md) §14.3.
+Consequência declarada ali: a saudação de retorno é a **única** exceção ao
+sensório, porque é voz do PRODUTO lendo o save, não a criatura lendo tempo —
+nenhuma frase dela pode dizer, sugerir ou encenar a duração.
+
 `memoryMarkFor` compara por **IGUALDADE**, não por `>=`: o cartão é do DIA do
 marco. Com `>=` ele apareceria todos os dias depois do trigésimo, e a coisa que
 fazia dele um momento — ser raro — sumiria na segunda vez. `markMemoryShown`
@@ -3582,7 +3629,12 @@ decremento:
 - `'daily-cap'` — só o Glitchtama, e só a partir do segundo do dia. O item volta
   para a pastinha intacto e vale amanhã.
 - `'already-full'` — só o coraçãozinho, e só com a vida cheia. Gastar um item
-  para curar zero é queimá-lo.
+  para curar zero é queimá-lo. A recusa tem VOZ desde `a2ded861` (21/09/2026):
+  `src/App.tsx` chama `falar('steady')` (`kind` `steady` de `PET_VOICE_LINES`,
+  `src/utils/petVoice.ts` — "Tô firme. Guarda essa."), sem toast de erro. É
+  `kind` separado do `healCap` do carinho ([§2](#carinho)) porque os gatilhos são
+  distintos e a frase do item ("guarda", que diz que ele volta para a pastinha)
+  não serve ao carinho. Nunca "você desperdiçou".
 
 **O teto do Glitchtama é a espinha da progressão, não economia.** A conta que o
 justifica: rookie→mega custa 14 dias perfeitos e o Ultra custa mais
@@ -4608,8 +4660,9 @@ card de priming na Home (na fila de avisos, ver a regra das DUAS FILAS).
 
 O que segue é o que o **código** faz e o `CLAUDE.md` (ou um comentário do próprio
 código) descreve de outro jeito, apurado em 09 e 10/09/2026 (D1–D12 em
-09/09/2026; D13–D27 em 10/09/2026) e em 20/09/2026 (D28–D30, sincronização
-`2580b73a..dc72579e`). A precedência do
+09/09/2026; D13–D27 em 10/09/2026), em 20/09/2026 (D28–D30, sincronização
+`2580b73a..dc72579e`) e em 21/09/2026 (D31, sincronização
+`dc72579e..9875477b`). A precedência do
 cabeçalho vale: **o código está certo**. Nenhuma linha aqui é proposta de
 mudança — cada uma é um item para o [`STATUS.md`](../STATUS.md), que o
 orquestrador recolhe.
@@ -4649,6 +4702,7 @@ registraram divergência nenhuma**.
 | D28 | "Arte e nomes" (§22, `01 §8`) | "os três personagens prontos se chamavam … hoje são **Pyraka, Akashaoi e Nimbrata**" | `PREMADE_CHARACTERS` tem **seis** desde 15/09/2026 (`c11dc49d`, D1 da SQUAD-ARTE): `igni`, `nautilu`, `astrase` entraram com nome de `DUNGEON_LINE_NAMES`. Apurado em 20/09/2026 | `grep -c "^    id: '" src/utils/monetization.ts` → 6 |
 | D29 | comentários de `src/utils/achievements.ts` e `src/utils/emblemArt.ts` (§57-A) | cabeçalhos dizem "As **8** CONQUISTAS" / "os **8** EMBLEMAS" / "guard de instalação (8)", e o teste chama-se "as 8 conquistas têm arte instalada" | `ACHIEVEMENT_IDS` tem **9** ids, há **9** PNGs em `src/assets/soulmon/emblems/` e o próprio teste exige `EMBLEM_COUNT` = **9** (`tasks-100` entrou depois do cabeçalho). O `STATUS.md` de 15/09/2026 também diz "8 emblemas". Apurado em 20/09/2026 | `ls src/assets/soulmon/emblems` → 9 arquivos; `grep -n "EMBLEM_COUNT).toBe" src/utils/achievements.test.ts` |
 | D30 | `CLAUDE.md`, tabela 💠 Bits (§46) | os Bits aparecem "em fonte de calculadora (`bitsStyle` retrô / `bitsStyleLight` tema claro)" — dois estilos, um por tema | os dois exports são **idênticos** e a cor é o token `--sm2-primary-ink` nos dois temas (canvas Loja D-L11, 20/09/2026); não há mais versão por tema | `grep -n "bitsStyleLight" src/utils/currencies.ts` |
+| D31 | `CLAUDE.md`, bloco `docs/NARRATIVA-E-UNIVERSO.md` (`01 §7`) | a régua `src/narrativa.contract.test.ts` trava o vocabulário vetado "com a tabela `DÍVIDA` do que já está no app por decisão pendente" | a tabela chama-se **`EXCECOES`** desde `f3654076` (21/09/2026): a decisão §14.4 do `REGISTRO-DE-DECISOES.md` ("nenhum, aceito todos assim") mudou o estatuto de pendência a quitar para exceção declarada. O que a régua trava não mudou (termos nunca aceitos + espalhamento para arquivo novo) | `grep -n "EXCECOES\|DÍVIDA" src/narrativa.contract.test.ts` → só `EXCECOES` |
 
 **Como usar esta tabela.** Antes de "corrigir" qualquer linha, leia a linha
 correspondente do [`REGISTRO-DE-DECISOES.md`](../REGISTRO-DE-DECISOES.md): D1 e

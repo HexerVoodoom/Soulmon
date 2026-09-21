@@ -7,6 +7,21 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 21/09/2026 — Manual sincronizado com `5ac3d351` (delta `dc72579e..5ac3d351`, 31 commits)
+>
+> 13 docs de `docs/manual/` atualizados só nas seções que o diff tocou (SQUAD-NARRATIVA
+> 2ª–4ª rodadas, rodada 2 da squad-arte, SQUAD-SOM) por 7 redatores e carimbados por 3
+> verificadores (1 devolução em `utils.md`/`welcomeBack` fechada com a evidência
+> `f3654076`/§14.3). Guards `docsManual` + `docsSemMentira` verdes. **Divergências novas
+> achadas na verificação (código/comentário, não tocadas):** o comentário de `contextBlock`
+> em `functions/api/chat.js` afirma "frase idêntica no 2º e no 40º dia" e diz que a
+> superfície de suporte "depende do dono" — `welcomeBack.ts` faz faixas por `absenceBucket`
+> e o suporte existe desde `6ad2e629`; o cabeçalho de `src/utils/welcomeBack.ts` chama de
+> "pendência" o que o §14.3 decidiu; `CONTEXT_SCHEMA.bond` é campo morto desde `01b649ce`;
+> a cláusula SAFETY não tem teste; `docs/NARRATIVA-COPY.md` tem dois `## 8.`;
+> `scripts-arte/derivar-rodada2.mjs` é citado como do repo mas vive em `D:\Soulmon\scripts-arte`;
+> `CLAUDE.md` ainda diz `DÍVIDA` (é `EXCECOES` desde `f3654076`) e "S1..S13" (o registro tem S15).
+
 > ## 21/09/2026 — SQUAD-SOM retomada: os 12 prompts gerados, A/B cego MONTADO e não ouvido, gate destravado (flake, O-5, O-7)
 >
 > `docs/HANDOFF-SOM.md` executado. Dono respondeu as 3 perguntas do §3 em modal (gerar em

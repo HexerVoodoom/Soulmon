@@ -1,6 +1,6 @@
 {
-  "sha": "dc72579e6f2e526e7c0b3443e12e3c4314e7f509",
+  "sha": "5ac3d3511c74bd34249b53e0d326489c30f99675",
   "data": "21/09/2026",
-  "por": "doc-mantenedor (sessão)",
+  "por": "doc-mantenedor (sessão SQUAD-SOM)",
   "nota": "Escrito pelo doc-mantenedor ao fechar cada sincronização. Lido por scripts/docs-delta.mjs e pelo hook de sessão. Nunca edite à mão."
 }
