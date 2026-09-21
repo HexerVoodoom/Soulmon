@@ -400,32 +400,45 @@ Regra prática para quem escreve fala de criatura: **se a frase exige memória d
 algo que não está encostando nela agora, o corpo dela não podia ter produzido a
 frase.** Corte, e não por gentileza — por anatomia.
 
-#### A DÍVIDA do sensório — cinco famílias no ar contradizem esta seção
+#### A DÍVIDA do sensório — **quitada em 21/09/2026**
 
-⚠️ **Medido em 21/09/2026, pela crítica adversarial.** A regra acima nasceu
-depois do app, e cinco famílias de fala de `PET_VOICE_LINES`
-(`src/utils/petVoice.ts`) exigem leituras que esta seção declara inexistentes. A
-precedência deste documento é clara — **código > bíblia** —, então enquanto a
-tabela abaixo tiver linhas, **a §5.10 descreve o alvo, não o app**. Escrever aqui
-que a anatomia já vale seria a mentira que esta bíblia mais teme.
+A crítica adversarial mediu cinco famílias de `PET_VOICE_LINES`
+(`src/utils/petVoice.ts`) que exigiam leituras que esta seção declara
+inexistentes. **As cinco foram corrigidas no mesmo dia**, e cada uma carrega no
+código o comentário do porquê:
 
-| `kind` | O que está no ar | Leitura que a §5.10 nega | Substituta proposta (PT / EN) |
-|---|---|---|---|
-| `lowHp` | *"Tô com saudade. Como VOCÊ está?"* | memória de ausência **e** tempo decorrido | *"Tô mole hoje. Senta aqui um pouco?"* / *"I'm soft today. Sit here a bit?"* |
-| `cheer` | *"Já virou parte do dia."* | histórico de repetição (dispara por `HABIT_CHEER_AT`) | *"Isso aqui já tem raiz."* / *"This one has roots already."* |
-| `rare` | *"Ei… hoje você me parece diferente."* | comparar hoje com ontem | *"Isso aqui chegou bonito."* / *"This one came in well."* |
-| `milestone` | *"Você repetiu tanto que virou seu."* | histórico + a pessoa como sujeito (roça a L1) | pendente — ver também `MILESTONE_TEXT.tree`, que viola a L1 no ar |
-| `haunted` | *"Ficou leve aqui. **Deve ter ficado aí também.**"* | inferência sobre o estado interno de quem lê | cortar a 2ª oração: *"Ficou leve aqui."* / *"It got lighter in here."* |
+| `kind` | O que saiu | Leitura que a §5.10 nega |
+|---|---|---|
+| `lowHp` | *"Tô com saudade. Como VOCÊ está?"* | memória de ausência **e** tempo decorrido |
+| `cheer` | *"Você não larga, né?"*, *"Já virou parte do dia"* | histórico de repetição |
+| `rare` | *"hoje você me parece diferente"*, *"Guardei esse momento"* | comparar hoje com ontem; memória |
+| `milestone` | *"Você repetiu tanto que virou seu"* | histórico + a pessoa como sujeito (L1) |
+| `haunted` | *"Deve ter ficado aí também"* | inferência sobre o estado interno de quem lê |
 
-⚠️ **O `lowHp` é o mais caro dos cinco, e por um motivo que não é de tom:** ele
-dispara quando a sustentação caiu, isto é, **no dia em que a pessoa não cumpriu a
-meta**. "Tô com saudade" ali é emoção da criatura causada pelo que a pessoa
-deixou de fazer — **L11 e L6 violadas em produção, no momento de maior
-vulnerabilidade**. O docblock do próprio `petVoice.ts` comemora ter consertado
-esse `kind` (a fala *"HP baixo…"*); consertou o placar e deixou a saudade.
+⚠️ **O `lowHp` era o mais caro, e não por tom:** ele dispara quando a
+sustentação caiu — **no dia em que a pessoa não cumpriu a meta**. "Saudade" ali
+é emoção da criatura causada pelo que a pessoa deixou de fazer. O docblock do
+próprio `petVoice.ts` comemorava ter consertado esse `kind` em 06/09/2026:
+tirou *"HP baixo…"*, que era o PLACAR, e deixou a saudade, que é a COBRANÇA
+AFETIVA. **Corrigir metade de um problema é como ele sobrevive.**
 
-**Isto não é meu para trocar** — é string que o jogador lê, e vai para a decisão
-do dono junto das propostas da §14. Tirar a linha daqui é o aceite.
+⚠️ **E a correção quase apagou uma regra mais velha e igualmente deliberada.** A
+primeira tentativa tirou o *"E VOCÊ, como tá?"* junto — e o teste reprovou, com
+razão: desde 06/09/2026 pelo menos uma fala de HP baixo tem de **perguntar pela
+pessoa**, não falar do medidor. As duas regras conciliam, e a conciliação é a
+distinção que importa: **perguntar não é saber.** O sensório proíbe a criatura
+AFIRMAR o estado de quem lê; nunca proibiu perguntar.
+
+Fora de `petVoice.ts`, no mesmo passe: `welcomeBack.ts` (as faixas 2 e 3 diziam
+*"Quanto tempo!"* e *"Eu estava aqui, esperando"* — tempo e espera, num arquivo
+cujo próprio cabeçalho proíbe balanço no reencontro) e `MILESTONE_TEXT.tree`
+(*"virou parte de quem você é"*, a L1 no marco de 66 dias).
+
+⏳ **O que sobra, e é do dono:** colapsar as FAIXAS do `welcomeBack` numa frase
+só, idêntica em 2 e em 40 dias (critério (e) do parecer clínico). Trocar as
+frases foi conserto; colapsar as faixas reabre a decisão do WP2.7, que rejeitou
+exatamente isso com o argumento de que "continuar" e "voltar" não são a mesma
+coisa. Ver a proposta **P2**.
 
 ### 5.11 Continuidade — por que não há reprodução
 

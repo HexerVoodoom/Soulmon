@@ -57,12 +57,15 @@ export const PET_VOICE_LINES: Record<PetVoiceKind, VoiceLines> = {
     pt: [
       'Aquela que estava te olhando... foi. Respira.',
       'Essa era pesada. Agora ela é só passado.',
-      'Ficou leve aqui. Deve ter ficado aí também.',
+      /* A 2ª oração saiu em 21/09/2026 ("Deve ter ficado aí também"): era
+         inferência sobre o estado interno de quem lê, e o corpo dela não
+         alcança isso (§5.10 — quem move a mão fica fora do alcance). */
+      'Ficou leve aqui.',
     ],
     en: [
       'The one that was watching you... is gone. Breathe.',
       'That one was heavy. Now it is just past.',
-      'It got lighter in here. Probably out there too.',
+      'It got lighter in here.',
     ],
   },
   /**
@@ -81,8 +84,30 @@ export const PET_VOICE_LINES: Record<PetVoiceKind, VoiceLines> = {
    * escada de `pick()` dentro do componente.
    */
   lowHp: {
-    pt: ['Tô com saudade. Como VOCÊ está?', 'Senta aqui comigo um pouquinho?', 'Só queria te ver hoje.'],
-    en: ['I miss you. How are YOU doing?', 'Sit here with me a bit?', 'I just wanted to see you today.'],
+    /* ⚠️ 21/09/2026 — `'Tô com saudade. Como VOCÊ está?'` SAIU, e o motivo não
+       é de tom: este kind dispara quando a sustentação caiu, isto é, **no dia
+       em que a pessoa não cumpriu a meta**. "Saudade" ali é emoção da criatura
+       causada pelo que a pessoa deixou de fazer — L11 e L6 da bíblia
+       (`docs/NARRATIVA-E-UNIVERSO.md`) violadas no momento de maior
+       vulnerabilidade.
+
+       O docblock acima comemora ter consertado este kind em 06/09/2026: tirou
+       `'HP baixo...'`, que era o PLACAR, e deixou a saudade, que é a COBRANÇA
+       AFETIVA. Corrigir metade de um problema é como ele sobrevive.
+
+       Há fundamento no mundo, não só regra: a criatura não tem órgão que leia
+       ausência nem tempo decorrido (§5.10, o sensório). Ela fala do corpo dela
+       AGORA e convida ao contato — que é, por desenho, a única coisa que
+       reassenta.
+
+       ⚠️ E a regra de 06/09/2026 CONTINUA valendo: pelo menos uma das falas
+       pergunta pela PESSOA, não pelo pet (há teste exigindo `VOCÊ`/`you`). As
+       duas regras conciliam porque **perguntar não é saber**: o sensório
+       proíbe a criatura AFIRMAR o estado de quem lê, nunca perguntar. Foi por
+       isso que a 1ª tentativa desta correção apagou o "E VOCÊ, como tá?" e o
+       teste reprovou — corretamente. */
+    pt: ['Tô mole hoje. E VOCÊ, como tá?', 'Tô meio sem borda. Senta aqui um pouco?', 'Só queria te ver hoje.'],
+    en: ["I'm soft today. How about YOU?", 'My edges are loose. Sit here a bit?', 'I just wanted to see you today.'],
   },
   /** O ócio de barriga cheia: convite, nunca lista do que falta. */
   idle: {
@@ -103,20 +128,29 @@ export const PET_VOICE_LINES: Record<PetVoiceKind, VoiceLines> = {
      marco por acidente. E nenhuma diz quanto falta: o número que falta é a
      conta que transforma constância em cobrança. */
   cheer: {
-    pt: ['Esse aí você não larga, né?', 'Já virou parte do dia.', 'Continua acontecendo. Gosto disso.'],
-    en: ['You keep coming back to this one, huh?', 'It became part of the day.', 'It keeps happening. I like that.'],
+    /* ⚠️ 21/09/2026: as duas primeiras exigiam histórico de repetição ("você
+       não larga", "virou parte do dia"), que o corpo dela não guarda (§5.10).
+       O sujeito passa para a COISA e o tempo para o presente. */
+    pt: ['Isso aqui já tem raiz.', 'Isso aqui fica de pé sozinho.', 'Continua acontecendo. Gosto disso.'],
+    en: ['This one has roots already.', 'This one stands on its own.', 'It keeps happening. I like that.'],
   },
   /* WP2.14 — a fala RARA. Aparece em ~5% das conclusões e não é anunciada em
      lugar nenhum: sem contador, sem "raro!", sem coleção. Uma surpresa que
      tem medidor deixa de ser surpresa e vira mais uma barra para encher.
      Valor material: ZERO, e há teste. */
   rare: {
-    pt: ['Ei… hoje você me parece diferente. Do bem.', 'Guardei esse momento.', 'Acho que estou orgulhoso. É isso?'],
-    en: ['Hey… you seem different today. In a good way.', 'I kept this moment.', 'I think I am proud. Is that it?'],
+    /* ⚠️ 21/09/2026: `'hoje você me parece diferente'` SAIU — comparar hoje
+       com ontem exige guardar dois estados, e o corpo dela guarda um: o atual
+       (§5.10). `'Guardei esse momento'` saiu pelo mesmo motivo (memória). */
+    pt: ['Isso aqui chegou bonito.', 'Tô com o peito quente agora.', 'Acho que estou orgulhoso. É isso?'],
+    en: ['This one came in well.', 'My chest is warm right now.', 'I think I am proud. Is that it?'],
   },
   milestone: {
-    pt: ['Olha o tamanho disso agora!', 'Isso aqui virou raiz.', 'Você repetiu tanto que virou seu.'],
-    en: ['Look how big this got!', 'This one has roots now.', 'You repeated it enough that it is yours.'],
+    /* ⚠️ 21/09/2026: `'Você repetiu tanto que virou seu'` SAIU — põe a pessoa
+       como sujeito e apoia-se em histórico. A L1 proíbe a pessoa como sujeito
+       de verbo de ser **inclusive no elogio**. */
+    pt: ['Olha o tamanho disso agora!', 'Isso aqui virou raiz.', 'Isso aqui já é tronco.'],
+    en: ['Look how big this got!', 'This one has roots now.', 'This one is a trunk now.'],
   },
 };
 
@@ -143,31 +177,13 @@ const TRAIT_LINES: Partial<Record<string, Partial<Record<PetVoiceKind, VoiceLine
     },
   },
   carinhoso: {
-    /**
-   * HP BAIXO — e este é o kind mais importante do arquivo.
-   *
-   * ⚠️ O `CompanionHUD` dizia `'Não me sinto bem...'`, `'Preciso de
-   * cuidados!'` e **`'HP baixo...'`** — a criatura-alma da pessoa anunciando o
-   * próprio dano com o NOME DA VARIÁVEL, no exato dia em que a pessoa não
-   * conseguiu cuidar de si. Isso converte culpa (reparável, motiva ação) em
-   * vergonha (é sobre o self, motiva fuga — desinstalar).
-   *
-   * As frases viraram estas em 06/09/2026, e a régua é: **a atenção vira para
-   * a PESSOA**, não para o medidor. O gatilho de cuidado continua o mesmo — o
-   * pet quer companhia —, e o teste de palavras de cobrança que já varre este
-   * arquivo passa a alcançá-las, o que era impossível enquanto viviam numa
-   * escada de `pick()` dentro do componente.
-   */
-  lowHp: {
-    pt: ['Tô com saudade. Como VOCÊ está?', 'Senta aqui comigo um pouquinho?', 'Só queria te ver hoje.'],
-    en: ['I miss you. How are YOU doing?', 'Sit here with me a bit?', 'I just wanted to see you today.'],
-  },
-  /** O ócio de barriga cheia: convite, nunca lista do que falta. */
-  idle: {
-    pt: ['Que bom que você veio.', 'Como foi seu dia até agora?', 'Tô aqui, no meu canto.'],
-    en: ['Glad you came by.', 'How has your day been?', 'I am here, in my corner.'],
-  },
-  rub: {
+    /* ⚠️ 21/09/2026 — aqui estavam COLADOS por acidente o docblock inteiro do
+       `lowHp`, mais os blocos `lowHp` e `idle` do padrão, idênticos aos de
+       cima. Compilava pelo `Partial<Record<…>>` e não mudava comportamento
+       (as falas eram as mesmas), mas tornava a matriz de traços MENTIROSA:
+       quem lesse concluiria que o traço carinhoso altera o HP baixo e o ócio,
+       e não altera. O traço tem UMA fala própria — a do carinho. */
+    rub: {
       pt: ['Não para, não para…', 'Isso aqui é a melhor parte do dia.'],
       en: ['Do not stop, do not stop…', 'This is the best part of the day.'],
     },

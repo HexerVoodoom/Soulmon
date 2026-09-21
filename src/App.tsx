@@ -571,7 +571,13 @@ function habitCheerOf(state: GameState, activityId: string, todayKey: string) {
 const MILESTONE_TEXT: Record<string, { pt: string; en: string }> = {
   sprout: { pt: '7 dias! Este hábito virou broto.', en: '7 days! This habit is a sprout now.' },
   sapling: { pt: '21 dias! Este hábito está criando tronco.', en: '21 days! This habit is growing a trunk.' },
-  tree: { pt: '66 dias! Este hábito virou parte de quem você é.', en: '66 days! This habit is part of who you are.' },
+  /* ⚠️ 21/09/2026 — dizia `'virou parte de quem você é'` / `'is part of who
+     you are'`, e essa é a L1 violada no marco mais importante do motor de
+     hábitos: a pessoa como SUJEITO de um verbo de ser. O checklist da bíblia
+     (`docs/NARRATIVA-E-UNIVERSO.md` §17 item 1) reprova isso **mesmo sendo
+     elogio** — e é elogio, o que torna o caso mais fácil de deixar passar. O
+     sujeito passa para a coisa que cresceu; a celebração não perde nada. */
+  tree: { pt: '66 dias! Isso virou raiz.', en: '66 days! This one took root.' },
 };
 
 const RebirthModal = lazy(() => import('./components/RebirthModal').then(m => ({ default: m.RebirthModal })));
