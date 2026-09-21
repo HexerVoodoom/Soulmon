@@ -1,0 +1,151 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "title": "ONB-22 · 36 · passo 1 — o nome completo (não pulável) e a barra de progresso do ritual",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 2004,
+      "page": "page-1"
+    },
+    {
+      "file": "MainClaro.dc.html",
+      "title": "ONB-22 claro · o passo 1 no tema CLARO (prova de AA) — o mesmo DOM sob [data-theme=light]",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1469,
+      "page": "page-1"
+    },
+    {
+      "file": "Nascimento.dc.html",
+      "title": "ONB-23 · 21 · 24 · 25 · a data (e o muro de idade), a hora (ou não sei), a cidade",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 2560,
+      "page": "page-1"
+    },
+    {
+      "file": "Favorita.dc.html",
+      "title": "ONB-26 · a criatura favorita — opcional, pulável pela caixa; a última tela com \"Continue\"",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 1788,
+      "page": "page-1"
+    },
+    {
+      "file": "Ritual.dc.html",
+      "title": "ONB-27 · as 6 perguntas do ritual — avançam sozinhas ao escolher; a 1ª ganha \"voltar\" [novo] (decisão 15/09)",
+      "x": 1960,
+      "y": 0,
+      "w": 390,
+      "h": 2161,
+      "page": "page-1"
+    },
+    {
+      "file": "Bifurcacao.dc.html",
+      "title": "ONB-28 · 29 · a bifurcação (‹REFINE_OFFER›) — decisão SEM VOLTA; o erro de geração volta para cá",
+      "x": 0,
+      "y": 2700,
+      "w": 390,
+      "h": 1940,
+      "page": "page-1"
+    },
+    {
+      "file": "Teste.dc.html",
+      "title": "ONB-30 · os 20 itens psicométricos — likert, frequência, escolha forçada, cenário; o 1º TEM voltar (para a bifurcação)",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 2484,
+      "page": "page-2"
+    },
+    {
+      "file": "Gerando.dc.html",
+      "title": "ONB-31 · ‹GENERATING› — a espera; o rascunho nunca retoma aqui",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1961,
+      "page": "page-2"
+    },
+    {
+      "file": "Reveal.dc.html",
+      "title": "ONB-32 · o reveal com sprite — o cartão de nascimento, a descrição, o batismo, \"Hatch\"",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 2261,
+      "page": "page-2"
+    },
+    {
+      "file": "RevealDemo.dc.html",
+      "title": "ONB-44 · [novo] o REVEAL DEMO (13.19) — o quiz de 6 para todos; a leitura + a oferta da 13.1; a criatura só pagando",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 2270,
+      "page": "page-2"
+    },
+    {
+      "file": "RevealSemSprite.dc.html",
+      "title": "ONB-33 · o reveal sem sprite (D9) — o casulo até 12 s, depois só o texto; o desenho entra pelo acervo",
+      "x": 0,
+      "y": 2624,
+      "w": 390,
+      "h": 2278,
+      "page": "page-2"
+    },
+    {
+      "file": "Cadastro.dc.html",
+      "title": "ONB-35 · ‹REGISTER› pago — \"Last details\": o apelido (o que os outros veem), \"Hatch\"",
+      "x": 490,
+      "y": 2624,
+      "w": 390,
+      "h": 1865,
+      "page": "page-2"
+    },
+    {
+      "file": "Upgrade.dc.html",
+      "title": "ONB-37 · 38 · ‹mode='upgrade'› — entra no passo 1 sem portão; sair pela metade no passo 1; termina no reveal",
+      "x": 980,
+      "y": 2624,
+      "w": 390,
+      "h": 1744,
+      "page": "page-2"
+    },
+    {
+      "type": "text",
+      "page": "page-1",
+      "x": 0,
+      "y": -170,
+      "w": 2400,
+      "text": "Soulmon — Identidade, canvas ONBOARDING-ORÁCULO (Fase 2, o 14º e último canvas; 20/09/2026). Cada artboard = o wireframe cinza de mesmo nome (../, DECISÕES §17 + REGISTRO 13.19) com a identidade aplicada: tokens --sm2-* do src/index.css, Fredoka/Rubik, Material Symbols Rounded pelados, O Visor como fronteira — o único pixel é o casulo (placeholder forming/dormant) e a criatura no vidro 192² do cartão de nascimento (256² a 128, 0,5×). Escuro em todos; claro só no MainClaro (decisão 3). Rodapé de cada artboard: tokens · divergências com o código (achados para o staff-frontend) · PT · fontes · notas. Linha 1: os passos (nome, nascimento, favorita, as 6 perguntas); linha 2: a bifurcação. Alturas = scrollHeight do .ab."
+    },
+    {
+      "type": "text",
+      "page": "page-2",
+      "x": 0,
+      "y": -120,
+      "w": 2000,
+      "text": "Página 2 — o teste (20 itens em 4 formatos, radiogroups tonais), a espera (o casulo forming pulsando no vidro — a espera é ritual), o reveal pago (BirthCard = o MESMO das Estatísticas + batismo), o reveal DEMO (13.19: a leitura para todos, a oferta 13.1 onde o valor é sentido), o reveal sem sprite (D9: forming enquanto espera, dormant depois do teto — nunca arte de reserva), o cadastro e o upgrade."
+    }
+  ],
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Onboarding-oráculo — identidade · os passos e a bifurcação"
+    },
+    {
+      "id": "page-2",
+      "name": "Onboarding-oráculo — identidade · o teste, a espera, os reveals, o cadastro, o upgrade"
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "page-1"
+  }
+}
