@@ -134,3 +134,66 @@ Duplicidades para o consolidador fundir:
 - **C-V5 ↔ E1/WP2.6** — o conserto do veto de 02/09, que já tem WP.
 - **C-N9 ↔ C-V6 ↔ WP3.4** — três copies de push que precisam da MESMA fonte única (`_pushCopy.js`); e **C-M4** é quem mede o efeito delas.
 - **C-S4 ↔ nascimento §6 item 6** — os dois guardas já concordam que é um só item; dono da spec é o nascimento, do custo é o sustento.
+
+## Parecer — `docs/NARRATIVA-E-UNIVERSO.md` (a bíblia do universo), 21/09/2026
+
+**Veredito: `APROVADO COM RESSALVA`.** O documento não altera regra nenhuma
+(tudo que exigiria mecânica está isolado na §14, "depende do dono"), não cria
+perdão novo (a contagem de D4 **continua em oito**) e não expõe número que
+desce. As ressalvas abaixo viram critério de aceite de quem escrever copy a
+partir dele — e **três delas são "perdoa demais"**, não "pune demais".
+
+### Ressalvas bloqueantes para a PRÓXIMA versão do doc (não para publicá-lo)
+
+| # | Ressalva | Por quê |
+|---|---|---|
+| R1 | **L4 está escrita larga demais e se contradiz com a §5.4 e a §5.7.** "Nenhum número desce, na ficção também não" é falso sobre HP e energia, que descem por desenho. Restringir a: *vínculo, constância, coleção, marco, registro — nunca desce. Sustentação e disposição do dia descem, e o mundo pode descrever a descida.* | Lei que proíbe o que o produto faz torna a bíblia mentirosa no dia 1 e, pior, dá a quem escrever copy o argumento para esconder a única tensão que o produto tem. |
+| R2 | **L11 proíbe o retorno do GESTO PRESENTE — isto esvazia o loop central.** Como está, a criatura nunca pode reagir a nada que venha da pessoa, inclusive ao carinho no instante em que ele acontece. Abrir a exceção: *a criatura pode reagir ao que está acontecendo AGORA, em contato (ela responde ao esfregar); o que ela nunca faz é sentir por causa do que a pessoa fez ou deixou de fazer ao longo do tempo.* | Carinho é a única cura de HP. Uma criatura que nunca responde ao toque protege contra culpa removendo a recompensa da presença — perdão que esvazia. |
+| R3 | **Falta uma lei: L12 — o mundo pode nomear o ATO; nunca a pessoa, nunca o mérito.** Hoje L1 veta "Você merece" e L11 veta "ele gostou do que você fez": sobra um mundo que não pode reconhecer nada. A tese diz que o Soulmon **encoraja**. Encorajar sem julgar = falar do ato e do efeito na Malha ("Isso fechou um trecho. A fagulha firmou."), nunca da pessoa ("você é dedicado") nem de mérito ("você merece"). | Sem L12 a bíblia converge para um tom indiferente, que é o modo de falha de um v-pet. |
+| R4 | **§5.4 precisa de PISO, não só de silêncio.** "Descreva o fenômeno; cale sobre a atribuição" é a regra certa para a voz do mundo, mas L10 só exige que a camada sóbria exista "em algum lugar alcançável". Para a perda de sustentação ela deixa de ser opcional e remota: **é o relatório do dia, que já existe** (`lastDayReport`), em voz de produto, dizendo o fato mecânico sem acusar ("meta do dia: 4 de 6 · 1 coração"). | A mecânica É contingente (`1 − feitas/metaDeCoração`). Mundo mudo + nenhuma camada sóbria no caminho = o jogador sente a causa e não a encontra escrita: é a pergunta 5 (o homem atrás da cortina) falhando ao contrário — o app parecendo esconder a própria regra. |
+| R5 | **§10, linha do check-in de humor, está em conflito com o código NO AR.** `moodSummary` (`src/utils/mood.ts`) já devolve "Seus últimos dias têm sido pesados" e "tudo bem que seja assim" — devolutiva que interpreta o humor (vetada pela própria linha) e, na segunda, **normalização** que L9 proíbe expressamente. A regra 3 do cabeçalho de `mood.ts` ("o app DEVOLVE algo, senão é extração") é decisão anterior e boa. Resolver: a devolutiva é **voz de produto, não voz do mundo** (moldura, §16/L10) e a bíblia tem de dizer isso; e a frase de normalização sai. | Precedência é código > doc. Publicado como está, o doc nasce mentindo sobre a superfície mais sensível que existe. |
+| R6 | **§7, linha das arenas, mente sobre a mecânica.** "As faixas são quanto tempo alguém frequenta" — `getTierStanding` deriva faixa de **pontos acumulados**, não de tempo. Trocar por: *"são o quanto alguém já acumulou por ali, e nunca descem"*. | A §10/§7 existem para traduzir mecânica; linha de lore que descreve errado apodrece igual a número em `CLAUDE.md`. |
+
+### Onde este parecer disse "isto perdoa demais"
+
+R1, R2 e R3 são essa metade. Somadas, L3+L4+L9+L11 e a §5.4 chegam perto de um
+produto em que **nada que a pessoa faz tem eco declarado** — nem no mau, nem no
+bom. Proibir a cobrança é a tese; proibir também o reconhecimento é a tese
+virando preguiça. A linha que este guarda sustenta: **o mundo não atribui CULPA
+e não emite VEREDITO sobre a pessoa; ele pode e deve nomear o ATO e o efeito
+dele na Malha.**
+
+### As 21 linhas vermelhas
+
+Nenhuma violada, enfraquecida ou contornada. #20 respeitada explicitamente
+(P1/P9/P11 trocam rótulo, nunca id); #14 e #16 reforçadas pela §10; #13 confirmada
+(§10 lê o 💗 como drop de fenda, que é o estado pós-veto E2/C-S3 — a linha 🛒 do
+`CLAUDE.md`, que ainda vende 💗 por 150 Bits, é quem está velha); #21 compatível.
+#17: a bíblia **não acrescenta perdão** — D4 segue em oito.
+
+### As 13 propostas da §14
+
+| P | Parecer | Condição |
+|---|---|---|
+| P1 Ruptura/Trama/Guarda | `APROVADO COM RESSALVA` | Só entra **junto** de P13, e o guard tem de varrer `src/utils/oracle.ts` (o texto do Ultra interpola as três palavras), não só `.tsx`. Rótulo duplo sem guard volta na próxima feature. |
+| P2 Frase no retorno | `APROVADO COM RESSALVA` | Os quatro critérios (a)–(d) viram aceite. **Acrescente (e):** não pode existir frase DIFERENTE para quem não sumiu — se a presença da frase é detectável, ela vira contador de ausência por outro meio. |
+| P3 Nomear as 5 camadas | `APROVADO` | Rótulo; não passa por este guarda. |
+| P4 Linha de mundo no reveal | `APROVADO COM RESSALVA` | Uma frase, sujeito = a Malha. E obedece à regra de ADJACÊNCIA da §6: não divide tela com a ficha da criatura. |
+| P5 Trocar `Glitchtama` | `APROVADO` | O nome novo não pode sugerir atalho, compra ou saldo (o item tem teto de 1/dia). |
+| P6 Jung público | `APROVADO` (fica interno) | Publicar é L8 + promessa clínica num produto que a §16 declara não ser tratamento. |
+| P7 "Contraparte" na UI | `APROVADO` (não entra) | — |
+| P8 A marca `Soulmon` | **sem parecer deste guarda** | É do dono + jurídico. Registro só do que é meu: trocar o nome **não toca regra nenhuma**, e nada nesta bíblia depende dele. |
+| P9 Serah/Pyraka/Igni | `APROVADO` | Ids não mudam (#20). |
+| P10 `Zeed` | `APROVADO` | — |
+| P11 Escada de rótulos | `APROVADO COM RESSALVA` | **"Inteiro" como topo é vetado**: insinua que quem não chegou lá está incompleto, e a queda de forma por HP 0 passa a ler como "deixou de ser inteiro". É exatamente o dano que fez "dia perfeito" virar "dia completo" (P5 do canvas de carga). Peça outro topo (ex.: *Vasto*, *Aberto*). |
+| P12 `fendas` → `dobras` | `APROVADO` | — |
+| P13 Guard de vocabulário | `APROVADO`, e **pedido por este guarda** | Allowlist explícita para ids; cobre `oracle.ts`. É o que impede o léxico de apodrecer. |
+
+### As seis perguntas, sobre o documento inteiro
+
+1. *Faz querer a notificação?* Não — a bíblia veta FOMO, urgência e prêmio de
+   retorno (P2, critério d). 2. *Tira algo?* Não; L5 restringe perda a coisa
+   recuperável e apostada. 3. *Mais um perdão?* Não. 4. *Número que desce?* Não
+   propõe nenhum; L4 precisa de R1 para não proibir os que já existem.
+   5. *Homem atrás da cortina?* É o ponto frágil, e é R4. 6. *Cabe na tese?*
+   Cabe em "evolui COM"; só cabe em "encoraja" depois de R2 e R3.

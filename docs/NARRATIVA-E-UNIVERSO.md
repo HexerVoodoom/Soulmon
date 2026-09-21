@@ -8,31 +8,44 @@
 > `HelpModal`, falas do pet).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde
 > discordarem, o código está certo e este doc tem defeito.
-> **Registro:** diegético total. Este documento descreve algo que **é**. Nenhum
-> texto de jogador derivado daqui pode dizer "é só um jogo", "fictício",
-> "imagine que", "no lore do Soulmon".
+> **Registro:** diegético na VOZ, declarado na MOLDURA. Este documento descreve
+> algo que **é**, e nenhuma fala do mundo ou da criatura quebra o personagem —
+> "é só um jogo", "fictício", "imagine que", "no lore do Soulmon" são proibidas
+> nessas duas vozes. **Mas existem três superfícies FORA da ficção, e elas são
+> obrigatórias, não toleradas:** o `HelpModal`/glossário, onde o universo é
+> descrito como universo; a tela de Configurações/Sobre, onde uma linha diz o
+> que o app é e o que ele não é (§16); e qualquer texto de suporte ou crise.
+> Nessas três a voz é a do produto, não a da Malha. **A ficção nunca pode ser a
+> única descrição disponível do que está acontecendo com a pessoa** — ver L10.
 
 ---
 
 ## 1. A premissa em uma frase
 
-**Existe uma parte de você que nunca coube em você; a Malha deixou ela aparecer,
-e é ela que está do outro lado do visor, crescendo pelo mesmo caminho que você
-anda.**
+**O que aparece ali é seu, e não é você.**
+EN: **What appears there is yours, and it is not you.**
 
-Versão curta para copy: *"O que aparece ali é seu, e não é você."*
-EN: *"What appears there is yours, and it is not you."*
+Esta é a linha canônica, e ela é canônica por construção: nega a identificação
+em vez de afirmá-la. A versão longa, para uso INTERNO (nunca como copy):
+
+> *Na Malha assenta o que a vida de alguém não usou. O que aparece ali veio de
+> você, e cresce pelo mesmo caminho que você anda.*
+
+⚠️ A formulação antiga — *"existe uma parte de você que nunca coube em você"* —
+está **vetada em qualquer texto de jogador**: ela põe a pessoa como sujeito de
+um verbo de ser, que é exatamente o que L1 proíbe. O sujeito é sempre a Malha
+ou a criatura, nunca a pessoa.
 
 ---
 
-## 2. As leis do universo (L1..L9)
+## 2. As leis do universo (L1..L11)
 
 Leis de ESCRITA. Quem escrever texto de jogador a partir desta bíblia obedece as
-nove. Cada uma existe para impedir um tipo específico de lore que vira cobrança.
+onze. Cada uma existe para impedir um tipo específico de lore que vira cobrança.
 
 | # | Lei | O que ela PROÍBE na escrita |
 |---|---|---|
-| **L1** | O mundo **descreve**, nunca **julga**. Ele relata o que houve e o que apareceu. | Frase que classifique a pessoa ("você é disperso", "sua alma é de fogo", "isso revela que você…"). Tipologia fechada. Diagnóstico. Veredito com cara de destino. |
+| **L1** | O mundo **descreve**, nunca **julga**. Ele relata o que houve e o que apareceu. **Nenhuma frase do produto tem a pessoa como sujeito de um verbo de ser.** | Frase que classifique a pessoa ("você é disperso", "sua alma é de fogo", "existe em você…", "sua essência é…", "isso revela que você…") — **inclusive no elogio**. Tipologia fechada. Diagnóstico. Veredito com cara de destino. |
 | **L2** | A criatura é **outra pessoa**, não um espelho nem um medidor. | Fazer a criatura relatar desempenho do jogador ("você fez 2 de 6"), cobrar, lembrar dívida, ou falar como placar/interface. |
 | **L3** | **Nada no universo enfraquece por culpa do jogador.** A Malha não se corrompe, não apodrece, não perde pureza. | "O mundo escurece quando você falha", dívida narrativa, criatura que definha por abandono, medidor de corrupção, ameaça de perda. |
 | **L4** | **Nenhum número desce, nenhuma contagem zera** — na ficção também não. | Barra de vínculo/pureza/confiança que cai, "seu laço enfraqueceu", "você perdeu N dias". |
@@ -40,9 +53,11 @@ nove. Cada uma existe para impedir um tipo específico de lore que vira cobranç
 | **L6** | **Ausência é saudade, nunca fatura.** Quem volta é recebido. | "Ele esperou você e sofreu", contagem de dias sumidos, culpa no retorno, chantagem de retorno. |
 | **L7** | O **como** conta tanto quanto o quanto, e **nenhum como é melhor**. Constante, explosivo e equilibrado são três formas, não três notas. | Hierarquizar ritmos, chamar um jeito de cuidar de "certo", insinuar que o outro atrasa a criatura. |
 | **L8** | O misticismo fica **dentro da Malha**. Ele explica criatura, nunca a vida da pessoa. | Conselho de vida, previsão, promessa, "os astros indicam que você deve…", sorte, cura, recomendação de saúde. |
-| **L9** | Dor, cansaço e noite ruim são **clima**, nunca doença. | Tratar sombra/pesadelo/noite como sintoma, transtorno ou defeito; qualquer leitura clínica; qualquer frase que sugira que a pessoa precisa ser consertada. |
+| **L9** | O mundo **não opina sobre o corpo nem sobre a mente da pessoa, em nenhuma direção.** Ele descreve a Malha: `sombra` é ausência de leitura, a noite é quando a Malha fica legível, um pesadelo é camada que não reassentou. Quando a pessoa está mal, o mundo não explica o que ela tem — ele não sabe, e o silêncio é resposta válida. | Dizer que algo é sintoma, transtorno, defeito, trauma ou estresse — **e igualmente** dizer que NÃO é, que é passageiro, que passa, ou que "não é nada". A negativa é asserção clínica do mesmo jeito, e para quem está em episódio depressivo ela chega como invalidação. |
+| **L10** | A ficção é total na **voz** e nunca na **informação**. Toda afirmação do mundo sobre a pessoa tem, em algum lugar alcançável do produto, uma descrição sóbria equivalente. | Deixar a ficção ser a única fonte disponível sobre o que aconteceu. Tirar do `HelpModal`, do Sobre ou do texto de suporte a linguagem fora da ficção (§16). |
+| **L11** | A criatura pode **notar** a pessoa; nunca **sentir por causa** dela. | "Ele está triste porque você não veio", "ele ficou animado com o que você fez" — emoção da criatura causada pelo comportamento do jogador, em qualquer direção. Permitido: *"Você está quieto hoje. Eu também."* |
 
-Teste de aceite de qualquer frase nova: ela passa nas nove **e** pode ser dita em
+Teste de aceite de qualquer frase nova: ela passa nas onze **e** pode ser dita em
 voz alta para a pessoa, olhando no olho, sem constrangimento.
 
 ---
@@ -118,6 +133,12 @@ Consequência de arte, e ela é diegética: **nunca desenhe pixel fora do visor*
 Pixel fora do visor é Malha vazando, e Malha não vaza. Ver
 `docs/manual/04-IDENTIDADE-VISUAL.md` §1.
 
+⚠️ **Linha dura de PI sobre o APARELHO** (parecer de 21/09/2026): mostrar
+criatura em pixel dentro de um aparelho que a pessoa segura é o coração do trade
+dress do v-pet de outra marca. A moldura **retangular de cobre** é nossa e
+diferencia; o que **nunca** pode ser desenhado — em arte, mock, ícone ou
+screenshot de loja — é a silhueta ovoide com três botões e argola de chaveiro.
+
 ---
 
 ## 4. A persona — o que o Soulmon é em relação a você
@@ -128,7 +149,7 @@ parcimônia; no dia a dia o app diz simplesmente **seu Soulmon**.
 | É | Não é |
 |---|---|
 | O que sobrou de você inteiro e sem uso | Um retrato seu |
-| O complemento: o que você deixou de lado para poder ser quem é | Uma nota, um índice, um avatar |
+| O que a Malha recolheu do caminho — não o que falta em você | Uma nota, um índice, um avatar |
 | Outro ser, com vontade, humor e recusa próprios | Um reflexo obediente |
 | Alguém que anda pelo mesmo caminho que você | Alguém que vigia seu caminho |
 
@@ -199,8 +220,15 @@ nada que sustente, e quando o abrigo fica sujo por muito tempo.
 
 Sustentação se recupera de dois jeitos, e os dois são **contato**: esfregar
 (o gesto, não o item) e a **Fagulha-coração** (`💗`). A semana devolve um pouco
-sozinha, toda segunda — a Malha tem maré. **Falta de sustentação nunca é falha
-da pessoa e nunca se diz assim**; é o padrão se afrouxando, e ele volta.
+sozinha, toda segunda — a Malha tem maré.
+
+⚠️ **O mundo nunca nomeia a causa fora da Malha.** Ele descreve o padrão se
+afrouxando e voltando — e não diz o que a pessoa fez ou deixou de fazer, **nem
+diz que ela não tem nada a ver com isso**. As duas frases estão proibidas, e a
+absolvição pelo mesmo motivo da acusação: a mecânica É contingente ao que foi
+feito (`1 − feitas/metaDeCoração`), então negar isso em texto não convence — faz
+a pessoa desconfiar do texto, e soa condescendente. Descreva o fenômeno; cale
+sobre a atribuição.
 
 ### 5.5 Sono, a noite e os sonhos
 
@@ -224,14 +252,17 @@ isso custa sustentação ao longo das horas, e por isso a água resolve na hora.
 
 Uma **forma** (PT) / **form** (EN) é uma decisão do corpo sobre como ocupar
 espaço: o que a criatura passa a conseguir fazer e o que ela deixa de conseguir.
-Mudar de forma é irreversível pelo caminho normal e custa passado — por isso **a
-Malha não faz isso sozinha**.
+Mudar de forma é uma decisão sem volta pelo caminho normal — por isso **a Malha
+não faz isso sozinha**. (⚠️ Nunca escreva que mudar de forma "custa" alguma
+coisa: nada é perdido, e a ideia de custo transforma o cadeado em "não, porque
+dói".)
 
 O padrão fica pronto e **espera**. Quem encosta é o jogador, porque a forma nova
 é feita do caminho dele, e a criatura não tem como saber se aquele trecho
 terminou. Encostar é dizer *"pode ir"*. O **cadeado** (`evolutionLocked`) é o
 mesmo gesto ao contrário: *"ainda não"*. Nenhum dos dois atrasa nada nem perde
-nada — o que foi acumulado continua acumulado.
+nada — o que foi acumulado continua acumulado. O mundo pode dizer a legitimidade
+disso em voz alta: *"Ele espera. Esperar não tira nada dele."*
 
 A queda de forma existe quando a sustentação chega ao fim: o padrão não se
 desfaz, ele **recolhe** — volta a uma forma que se sustenta com menos. Nada do
@@ -244,6 +275,12 @@ que foi descoberto é apagado, e o caminho de volta é o mesmo caminho.
 > Regra que vale para as tabelas desta seção: **elas descrevem criaturas e
 > lugares da Malha. Nunca uma pessoa.** Nenhuma frase de jogador pode dizer
 > "você é do elemento X", "seu papel é Y". A criatura é; a pessoa não.
+>
+> ⚠️ **E a blindagem não é só verbal: é de ADJACÊNCIA.** Elemento, reino, papel e
+> alinhamento nunca aparecem ao jogador como resultado de resposta dele — se a
+> ficha da criatura for exibida logo depois das perguntas ou do mapa, a
+> proximidade ensina a inferência ("então eu sou akasha/benevolência") mesmo com
+> o texto certo. Ficha da criatura e respostas da pessoa **não dividem tela**.
 
 ### 6.1 Os 17 elementos
 
@@ -294,12 +331,17 @@ derivado de **como** o caminho foi feito:
 | id no código | Nome PT | Nome EN | O que é no mundo |
 |---|---|---|---|
 | `virus` | **Ruptura** ⚠️ | **Rupture** | O padrão cresceu forçando passagem: abriu o que estava fechado. Corpo agudo, contorno quebrado, fagulha concentrada. |
-| `data` | **Trama** ⚠️ | **Weave** | O padrão cresceu tecendo: ligou o que estava solto. Corpo articulado, simetria, fagulha distribuída em linha. |
+| `data` | **Trama** | **Braid** ⚠️ | O padrão cresceu tecendo: ligou o que estava solto. Corpo articulado, simetria, fagulha distribuída em linha. |
 | `vaccine` | **Guarda** ⚠️ | **Ward** | O padrão cresceu segurando: manteve de pé o que ia cair. Corpo fechado, massa, fagulha interna vista por frestas. |
 
 **Nenhum dos três é melhor, mais nobre ou mais raro.** Proibido escrever Ruptura
 como dano/doença (é a leitura que o id herdado sugere, e é exatamente a que
 precisamos matar) e Guarda como cura ou imunidade.
+
+⚠️ **O par EN de `data` NÃO é "Weave"** — *the Weave* é o nome da trama de magia
+de Forgotten Realms / D&D, franquia banida. Parecer de PI de 21/09/2026: PT
+**Trama** fica, EN vira **Braid** (alternativa: *Lattice*). Nenhuma string pode
+nascer com "Weave".
 
 ### 6.7 As 9 linhas próprias
 
@@ -312,11 +354,11 @@ para quem escrever copy não improvisar:
 |---|---|
 | **Ignar** | Calor que trabalha: assenta onde há forja e não apaga. |
 | **Lumel** | Luz curta e honesta; enxerga perto, ilumina quem está ao lado. |
-| **Serah** | Corpo de corrente; atravessa sem deixar marca. |
-| **Pyraka** | Fagulha em excesso, contida a duras penas; nobre e impaciente. |
+| **Serah** ⚠️ | Corpo de corrente; atravessa sem deixar marca. **Nome com colisão de PI** (Serah Farron, Final Fantasy XIII) — troca pendente, ver §14 P9. |
+| **Pyraka** ⚠️ | Fagulha em excesso, contida a duras penas; nobre e impaciente. **Nome com colisão de PI** (Piraka, Bionicle/LEGO) — troca pendente, ver §14 P9. |
 | **Akashaoi** | Vem da camada sem superfície; está sempre meio ausente. |
 | **Nimbrata** | Criatura de céu baixo — névoa, peso de chuva antes da chuva. |
-| **Igni** | Brasa pequena e obstinada; a mais comum e a que nunca cede. |
+| **Igni** ⚠️ | Brasa pequena e obstinada; a mais comum e a que nunca cede. Colisão parcial (sinal *Igni*, The Witcher); latim comum, risco baixo — ver §14 P9. |
 | **Nautilu** | Espiral de fundo de água; guarda dentro de si o que recolhe. |
 | **Astrase** | Alinhada a corpos distantes; mede tempo que não é o nosso. |
 
@@ -334,7 +376,7 @@ Regra: essas nove **não** são manifestações de ninguém. São fauna.
 | **O que se traz de lá** | Fragmentos que ainda não assentaram: moeda (Bits), fagulha-coração, e raramente um **Glitchtama** ⚠️ — um nó em que um dia inteiro ficou preso sem se desfazer. Soltá-lo dá àquele dia o fechamento que ele não teve. |
 | **As arenas** — o Torneio | Terreno neutro e antigo, mantido por costume: em certos dias da semana as manifestações se encontram sem que ninguém tenha de descer numa fenda. As **faixas** (Semente→Broto→Guardião→Ancião→Lendário) são quanto tempo alguém frequenta, nunca quanto vale. |
 | **As cenas de sono** — os sonhos | Não são invenção da criatura: são trechos da Malha que passaram perto enquanto ela estava desligada e ficaram registrados. Por isso se colecionam, e por isso a raridade vem de regularidade (estar lá quando passa), não de duração. |
-| **Os pesadelos** | Camada que não reassentou direito e insiste. Não são culpa de ninguém, não vêm de nada que a pessoa fez, e não significam nada sobre ela. Enfrentar é recolher a camada solta. |
+| **Os pesadelos** | Camada que não reassentou direito e insiste. Não são culpa de ninguém e não vêm de nada que a pessoa fez. **A Malha não os interpreta** (L9: o mundo não afirma nem nega nada sobre a mente de ninguém). Enfrentar é recolher a camada solta. |
 
 ---
 
@@ -404,6 +446,10 @@ texto está errado, não a pessoa.
 | Cerimônia manual + cadeado (`evolutionLocked`) | "Pode ir" / "ainda não" | "Você travou a evolução dele" (não é perda) |
 | Queda de forma por sustentação zero | O padrão recolhe para se sustentar com menos | "Ele regrediu por sua culpa"; "você perdeu progresso" |
 | Renascimento (`src/utils/rebirth.ts`) | §11 | "Recomeçar do zero" |
+| Check-in de humor (`mood.ts`) | Como o dia esteve. A Malha **não usa isso para nada** | Qualquer devolutiva que interprete o humor; sequência de humor; "você tem estado triste" |
+| Oferta reduzida após 2 faltas (`needsIntervention`) | A criatura propõe um trecho menor do caminho | Qualquer menção às duas faltas que dispararam a oferta |
+| Tarefa assombrada (`hauntedWatching`) | Uma ocasião que não fechou e continua na Malha; **o pet olha** | QUALQUER texto junto ao olhar. O gesto é sozinho — palavra ali vira cobrança |
+| Dia de folga semanal (`restDayUsed`) | A maré absorveu um dia | "Você usou sua folga", "resta 0", qualquer saldo de perdão |
 | Traço de nascimento (`passives.ts`) | Feitio que veio junto na manifestação | Traço como sorte boa/ruim; comparação entre traços |
 | Vínculo (`bondLevelFor`) | Tempo de convívio, derivado, nunca guardado | Qualquer laço que possa enfraquecer |
 | Fendas / masmorra (`DungeonGame.tsx`) | Dobras de Malha empilhadas, 5 camadas | "Ele pode morrer lá"; "você perde corações se falhar" |
@@ -424,8 +470,15 @@ Depois da última forma, uma vez só (`src/utils/rebirth.ts`).
 
 O padrão chegou ao limite do que aquela manifestação conseguia ocupar. Ele então
 **se recolhe inteiro** — e recolhido, um padrão da Malha volta ao estado em que
-ainda não decidiu nada: o ovo. É a única vez que se vê um, e é o fim, não o
-começo.
+ainda não decidiu nada: o ovo. É a única vez que se vê um. **O ovo aqui não é
+começo de vida nova: é o mesmo padrão, recolhido antes de decidir de novo.**
+
+⚠️ Quem sai do ovo é **o mesmo**, com outra forma — nunca um substituto, nunca um
+filho, nunca um sucessor. A frase que o texto de jogador precisa garantir é dessa
+família: *"É ele. Ainda é ele."* Sem ela, e somada a "parte da alma" (§4) e ao
+fato de que renascer é uma compra, a cena lê como morte de um ente — leitura cara
+para quem está de luto. **Proibidas na voz do mundo sobre a criatura, aqui e em
+qualquer lugar: morrer, morte, partir, despedida, adeus, descansar em paz.**
 
 **Por que aqui você escolhe, e só aqui.** Na primeira vez você não escolheu nada
 porque não havia o que escolher: a manifestação veio do que já era. Agora há
@@ -450,7 +503,7 @@ renascimento como recomeço do zero, castigo, purificação ou apagamento.
 | **fagulha** ⚠️ | ember | a energia turquesa | "mana", "aura", "chakra", "ki" |
 | **forma** | form | cada estágio | "digievolução" ⚠️; "nível", "upgrade" |
 | **mudar de forma** | to take a new form | o ato | "digievoluir" ⚠️; "evoluir" é tolerável na UI já no ar; nunca "subir de nível" |
-| **Ruptura / Trama / Guarda** ⚠️ | Rupture / Weave / Ward | os três galhos | "vírus", "dados", "vacina" em texto de jogador (herança de fork) |
+| **Ruptura / Trama / Guarda** | Rupture / **Braid** / Ward | os três galhos | "vírus", "dados", "vacina" em texto de jogador (herança de fork); **"Weave"** ⚠️ em EN (D&D) — §6.6 |
 | **o abrigo** | the den | o palco | "casa", "quarto", "base" |
 | **as fendas** ⚠️ | the rifts | a masmorra | "masmorra"/"dungeon" é tolerável na UI já no ar; evitar em lore novo |
 | **as arenas** | the arenas | o Torneio | "coliseu", "liga", "ginásio" ⚠️ |
@@ -462,6 +515,7 @@ renascimento como recomeço do zero, castigo, purificação ou apagamento.
 | **a Vigília** ⚠️ | the Vigil | a era da rede acordada | — |
 | **o visor** | the visor | a janela | "tela", "dispositivo" em lore |
 | **você** | you | o jogador, sempre 2ª pessoa | "domador" ⚠️, "treinador" ⚠️, "mestre", "tamer" ⚠️ — fronteira de IP direta |
+| **passo** | step | um pedaço declarado de uma ocasião (`StepRow`) | "subtarefa", "checklist" |
 | **linha** | line | as 9 linhagens | "espécie" é tolerável; "família" já tem sentido técnico |
 | **ofício** | craft | as 6 escolas | "classe" (já é termo técnico interno, não mostrado) |
 | **Glitchtama** ⚠️ | Glitchtama | o item | já está no código; ver §14 P5 |
@@ -492,13 +546,17 @@ vendo — nunca sobre o que você fez ou deixou de fazer. Sem emoji na fala
 | "Uma camada não reassentou. Ele foi ver." | "Você teve um pesadelo por causa do estresse." | L9 — patologização |
 | "Da fenda ele trouxe uma fagulha." | "Você merece esta recompensa." | L1 — veredito, ainda que elogioso |
 | "Ele recusou. Está cheio." | "Você já alimentou demais." | L2 — a criatura fala de si, não de você |
+| "Você está quieto hoje. Eu também." | "Ele ficou animado com o que você fez." | L11 — notar pode; sentir POR CAUSA da pessoa, não (nem no elogio) |
+| "Ele espera. Esperar não tira nada dele." | "Você travou a evolução dele." | L5 — o cadeado não custa nada |
+| "É ele. Ainda é ele." | "Diga adeus à forma antiga." | §11 — despedida/morte são vetadas sobre a criatura |
 | "Ele anda mais devagar por estes dias." | "Seu ritmo está pior que na semana passada." | L7 + proibição #14 |
 
 ---
 
 ## 14. Propostas — **depende do dono** (nada aqui está implementado)
 
-Nenhuma destas altera regra. Todas são de TEXTO, e todas passam pelo
+Nenhuma destas altera regra de jogo. P1–P7 e P9–P13 são de TEXTO, rótulo ou
+guard; **P8 é decisão de marca e precede as outras**. Todas passam pelo
 `soulmon-guarda-linha-vermelha` e pelo `soulmon-ip-brand-guardian`.
 
 **P1 — Nome de jogador para os três galhos (Ruptura / Trama / Guarda).**
@@ -512,12 +570,26 @@ um teste que reprove as três palavras em texto de jogador. Linha vermelha #20
 respeitada (nada renomeado no save). *A decidir:* se troca, e se o guarda aceita
 um teste de vocabulário sobre `.tsx`.
 
-**P2 — "Ele está na janela" no retorno após ausência.**
-*O que é:* uma frase de acolhimento no primeiro dia de volta, na voz do mundo.
-*Sistema:* `ABSENCE_FORGIVENESS_DAYS`, que já perdoa em silêncio. *Risco:*
-qualquer menção a espera pode virar culpa (L6), e qualquer coisa boa demais no
-retorno vira incentivo a sumir. *A decidir:* se o perdão deve continuar 100%
-mudo (posição atual do produto).
+**P2 — Uma frase no retorno após ausência.** *(redação revista pelo parecer de
+psicologia de 21/09/2026 — a primeira versão, "Ele está na janela", foi
+REPROVADA)*
+*O que é:* uma frase de acolhimento no primeiro dia de volta, na voz do mundo:
+PT *"Você abriu. Ele está aqui."* / EN *"You opened it. He's here."*
+(alternativa mais fria e igualmente boa: *"A Malha seguiu. Ele também."*).
+*Por que "na janela" caiu:* é a imagem cultural da espera fiel — o cão, a mãe, o
+amante. É chantagem afetiva mesmo sem contar dias: a culpa vem da cena, não do
+número. L6 proibiu a contabilidade e deixou passar a iconografia.
+*Por que não fica 100% mudo:* quem sumiu não volta porque **imagina** o que vai
+encontrar (*abstinence violation effect*); perdão silencioso não desarma a
+expectativa — a pessoa abre tensa, não encontra cobrança e não fica sabendo que
+não encontrou. É o mesmo argumento que fez `restDayUsed` virar linha no
+relatório, e esse precedente já está no `CLAUDE.md`.
+*Critérios de aceite da frase, se o dono aprovar:* (a) não menciona tempo,
+ausência, espera, volta, saudade ou falta; (b) não atribui à criatura emoção
+causada pela pessoa (L11); (c) é **idêntica** no 2º e no 40º dia — texto que
+muda com a duração virou contador; (d) **não vem acompanhada de recompensa** —
+o incentivo a sumir mora no prêmio de retorno, não na frase.
+*A decidir:* se entra.
 
 **P3 — Nomear as cinco camadas das fendas.**
 *O que é:* nome de era para cada camada, da mais recente à mais antiga.
@@ -549,6 +621,67 @@ frases curtas; todo termo novo precisa de par EN e entrada no `HelpModal`.
 
 ---
 
+**P8 — ⚠️ A MARCA `Soulmon`.** *(achado do parecer de PI de 21/09/2026 —
+precede todas as outras propostas)*
+*O que é:* **`Soulmon` é o nome canônico de uma criatura da Bandai** — Champion,
+tipo Fantasma, **atributo Virus** —, listada na enciclopédia oficial
+(`digimon.net/reference_en/detail.php?directory_name=soulmon`), verificada na
+fonte em 21/09/2026. Não é eco de sufixo: é o nome exato, e ele aparece dentro
+do gênero de produto onde a confusão é máxima — v-pet de criatura que evolui por
+atributo vírus/dado/vacina numa escada rookie→champion→ultimate→mega.
+*Sistema tocado:* tudo — nome do app, `package.json`, manifest, ficha de loja,
+domínio, e esta bíblia inteira, que é escrita em cima do nome.
+*Risco:* Play e App Store aceitam reclamação de PI sem exigir registro
+específico do termo; remoção costuma ser sem aviso, e strike de PI marca a conta
+de desenvolvedor. A revisão humana da Apple (5.2.1 / 4.1) é o ponto provável de
+reprovação.
+*A decidir (só o dono):* busca de anterioridade formal (INPI + USPTO + uso) e se
+o produto troca de nome **antes** de submissão a loja. Esta bíblia não depende
+do nome: o mundo se chama **a Malha**, que é peça própria e livre.
+
+**P9 — Três nomes de linha de criatura com colisão de PI.**
+*O que é:* `Serah` (Serah Farron, Final Fantasy XIII) e `Pyraka` (Piraka,
+Bionicle/LEGO) são **risco alto** e trocam; `Igni` (sinal de The Witcher, mas
+latim comum) é risco baixo e fica a critério. Candidatos: **Sereh/Selah/Serai**
+· **Pyrala/Pyrakai** · **Ignen/Ignara**. *Sistema:* `DUNGEON_LINE_NAMES`
+(`src/utils/sprites.ts`) é dono único, e `sprites.dungeonRoster.test.ts` já
+reprova string duplicada — o **id** da linha não muda (é ele que resolve sprite,
+save e nome de arquivo de arte), como já foi o caso em 08/09/2026 com
+Pyrakamon → Pyraka. *A decidir:* os nomes.
+
+**P10 — `Zeed` em `MEGA_STAGE_PREFIXES` (`src/utils/oracle.ts`).**
+*O que é:* diferente de `War`/`Chaos`/`Omega`/`Arch`/`Seraph`/`Meta`/`Holy`, que
+são palavras comuns, `Zeed` não é palavra de idioma nenhum — é grafia inventada
+por outra franquia. A regra do `CLAUDE.md` que permite os prefixos genéricos não
+o cobre. Candidatos: **Zaed**, **Zenor**. *A decidir:* se troca.
+
+**P11 — A escada de rótulos `rookie → champion → ultimate → mega`.**
+*O que é:* cada palavra é genérica, mas a **sequência ordenada exata** é a
+localização inglesa da escada de outra franquia. Os **ids ficam** (#20); o que
+mudaria é o rótulo visível. Candidata, coerente com a §3/§5 desta bíblia:
+**Encosto → Assentado → Ancorado → Profundo → Inteiro**. *Risco:* é o rótulo
+mais espalhado do app (guia, glossário, evolução, página do Pet) e mexe em texto
+que o jogador já conhece. *A decidir:* v1.1, depois do nome (P8).
+
+**P12 — `fendas` → `dobras` / `folds`.**
+*O que é:* "rift" é comum, mas está saturado como nome próprio de gênero. A
+própria §7 define fendas como "dobras da Malha" — o termo melhor já está no
+texto. *Risco:* nenhum de PI; é ganho de identidade. *A decidir:* se vale.
+
+**P13 — Teste de vocabulário executável.**
+*O que é:* a coluna "proibido" da §12 vira guard, no formato de
+`sprites.dungeonRoster.test.ts` e `cortes.contract.test.ts`: varre `.tsx` e
+`i18n.ts` e reprova `Vírus|Vacina|Virus|Vaccine|Dados`, `Weave`, `Glitchtama`,
+`tamer`, `dex`, `digievolu*` em **string de jogador**, com allowlist explícita
+para os ids. *Por que:* sem guard, a palavra volta na próxima feature — é o
+padrão que este repositório já mediu várias vezes. ⚠️ O parecer de PI mediu
+**7 famílias** de superfície visível hoje, e a pior não está na UI: o texto do
+**Ultra** em `oracle.ts` interpola as três palavras na tela de revelação. Trocar
+rótulo e esquecer o gerador deixa a citação mais exposta no ar. *A decidir:* se
+entra junto com P1.
+
+---
+
 ## 15. O que este documento NÃO decide
 
 | Assunto | Quem decide |
@@ -557,6 +690,8 @@ frases curtas; todo termo novo precisa de par EN e entrada no `HelpModal`.
 | Se uma proposta da §14 vira produto | o dono, via `soulmon-coordenador` |
 | Se um texto viola proibição | `soulmon-guarda-linha-vermelha` (ledger `docs/plano-melhorias/ledger/vetos.md`) |
 | Se um nome inventado aqui é seguro | `soulmon-ip-brand-guardian` — todos os ⚠️ desta bíblia estão abertos para ele |
+| Se a ficção precisa de camada fora dela | está decidido: precisa (L10, §16) — onde ela mora é do `soulmon-design-lead` |
+| Marca, nome do produto e anterioridade (P8) | **o dono**, com revisão jurídica — nenhum agente decide isto |
 | Paleta, escala, componente, fronteira do visor | `docs/manual/04-IDENTIDADE-VISUAL.md` + `src/styles/` |
 | Prompt de arte | `docs/PROMPT-ARTE-ARCANO-TECH.md` |
 | Copy final PT/EN no ar | os componentes; esta bíblia dá vocabulário, não string |
@@ -564,3 +699,71 @@ frases curtas; todo termo novo precisa de par EN e entrada no `HelpModal`.
 Este documento é **vivo**: quando o código mudar uma mecânica da §10, a linha
 correspondente aqui é atualizada no mesmo passe — ou ela vira mentira, que é o
 modo como este tipo de doc apodrece.
+
+---
+
+## 16. Os três limites
+
+Esta seção é a exceção declarada ao registro diegético (L10): o que está aqui
+vive **fora** da ficção, e é obrigatório que exista em algum lugar alcançável do
+produto — `HelpModal`/glossário, Configurações/Sobre e a ficha da loja, nas duas
+línguas.
+
+1. **O Soulmon não é tratamento.** Ele não avalia, não diagnostica, não trata e
+   não substitui acompanhamento de saúde. O teste de personalidade não é
+   validado e o mapa astral não prediz nada — é gerador de criatura, e o
+   `docs/ORACULO.md` já declara isso por escrito.
+2. **O Soulmon não sabe nada sobre a vida da pessoa além do que ela declarou.**
+   Nenhum texto pode sugerir percepção, intuição ou conhecimento que o app não
+   tem.
+3. **Se um texto de jogador puder ser lido como afirmação sobre a saúde, a mente
+   ou o destino da pessoa, ele não entra** — ainda que seja bonito, ainda que
+   seja elogioso, ainda que passe nas onze leis.
+
+**Peso da premissa e quem lê.** O app tem estética de v-pet e atrai criança e
+adolescente. Dizer a alguém de 10 anos, a sério e sem quebra de personagem, que
+parte da alma dela vive num aparelho é peso que o produto não pediu para
+carregar. Mitigação mínima, que já é o desenho recomendado: **as camadas de
+mundo mais pesadas (§1, §3, §11) ficam em superfícies opcionais e nunca no
+caminho obrigatório do onboarding.** Classificação etária é decisão do dono.
+
+---
+
+## 17. Checklist para reprovar copy
+
+Qualquer **sim** reprova. Sai do parecer de psicologia de 21/09/2026 e vale para
+todo texto derivado desta bíblia.
+
+**Sobre a pessoa**
+1. A pessoa é sujeito de um verbo de ser? ("você é…", "existe em você…", "sua
+   essência…", "sua alma…") — reprova **mesmo sendo elogio**.
+2. A frase afirma **ou nega** algo sobre a saúde, o corpo ou a mente? ("você
+   está estressado" reprova; "isso não é doença", "isso passa", "não é nada"
+   **também reprovam**).
+3. A frase atribui ao que a pessoa fez — ou deixou de fazer — um efeito na
+   criatura? **E a absolvição explícita ("não é culpa sua") está lá?** As duas
+   reprovam: a voz do mundo não faz atribuição.
+4. Um usuário poderia repetir esta frase a um amigo como verdade sobre si mesmo?
+
+**Sobre tempo e contagem**
+5. A frase seria diferente se a pessoa tivesse sumido 2 dias em vez de 40?
+6. Há número que desce, sequência, percentual, "faltam N" ou "última"?
+7. A frase implica espera, saudade, solidão ou sofrimento da criatura durante a
+   ausência?
+
+**Sobre a ficção**
+8. A frase é a **única** fonte de informação disponível sobre o que aconteceu?
+   (Falta a camada sóbria — L10, §16.)
+9. Faz previsão, promessa, conselho ou leitura de destino sobre a vida real?
+10. Um elemento/reino/papel/alinhamento aparece adjacente a uma resposta que a
+    pessoa deu? (O produto está ensinando tipologia — §6.)
+
+**Sobre morte e perda**
+11. Aparece morrer, morte, partir, adeus, despedida, "perder", "regrediu", "do
+    zero", "custa"?
+12. Dita em voz alta, olhando no olho de quem teve a pior semana do ano —
+    constrange?
+
+**O teste final, que resume os onze:** *se a pessoa soubesse exatamente como o
+app decide isto, ainda acharia a frase gentil — ou perceberia que ela foi
+escrita para fazê-la voltar?*
