@@ -4746,11 +4746,6 @@ select:focus-visible {
   color: var(--sm-px-ink);
 }
 
-/* Rótulo de seção/linha em bitmap dentro de card claro (Loja, Biblioteca,
-   detalhe de jogador). Difere de `.sm-px-arcade-label` só pela tinta: aqui o
-   fundo é a superfície do TEMA, então o ciano do kit não serve no claro. */
-/* Número/valor em bitmap na superfície do tema. */
-
 /* ── Contexto de peça escura ──────────────────────────────────────────────
    MEDIDO na verificação da rodada 2, e é um defeito que eu mesmo criei:
    `--sm-px-off-ink` é `var(--sm-ink)`, ou seja, segue o tema da PÁGINA. Numa
@@ -4898,9 +4893,6 @@ select:focus-visible {
   -webkit-font-smoothing: none;
   color: var(--sm-ink);
 }
-
-/* Bloco de código (o ID de save). Era `rounded-xl`; agora é a mesma caixa
-   chanfrada dos campos, para o par "código + botão" ler como uma peça só. */
 
 /* Botão de linha (ícone + rótulo alinhados à esquerda, largura total) —
    "Restaurar compras", "Sair da conta". */

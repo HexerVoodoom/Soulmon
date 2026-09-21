@@ -13,6 +13,13 @@
  * sem rede**. A versão anterior tratava falha de rede como "nenhum jogador
  * encontrado" (`.catch(() => setPlayers([]))`), que é a pior mentira possível
  * numa tela social — a pessoa concluía que o app não tem ninguém.
+ *
+ * Canvas Social (§28, D-S1…D-S10): a criatura do outro num `MiniGlass` 64²
+ * sem anel (sprite 0,25×), nunca avatar; `groups` 24 pelado no título; abas
+ * SIS-04 (`.sm2-kit-tab`, ativa em `primary-ink` + sublinhado — nunca placa
+ * cheia); ação inerte por FORMA (tracejado + `muted` + `aria-disabled`, fora
+ * do Tab — nunca opacidade); `add` ciano, `paid` tinta, remover `muted`; o
+ * `role=alert` é âmbar (`danger-ink` saiu); "Try again" em `outline`.
  */
 import { useEffect, useState } from 'react';
 import { getSpriteForStage } from '../utils/sprites';
@@ -22,7 +29,8 @@ import { LIBRARY_NPCS } from '../utils/libraryNpcs';
 import { PlayerDetailModal } from './PlayerDetailModal';
 import { CoopPanel } from './CoopPanel';
 import { Icon } from './ui/Icon';
-import { Field, sm2Button, sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
+import { MiniGlass } from './ui/MiniGlass';
+import { Field, sm2Button } from './form/FormKit';
 import type { Language } from '../utils/i18n';
 
 interface LibraryPageProps {
@@ -64,50 +72,42 @@ const amigoNaoResolvido = (id: string, isPt: boolean): LibraryEntry => ({
   unresolved: true,
 });
 
-const rowStyle: React.CSSProperties = {
-  width: '100%',
-  display: 'flex',
-  alignItems: 'center',
-  gap: 12,
-  padding: 12,
-  textAlign: 'left',
-  cursor: 'pointer',
-  backgroundColor: 'var(--sm2-surface)',
-  border: '1px solid var(--sm2-line)',
-  borderRadius: 12,
-  boxShadow: SM2_SHADOW_CARD,
-};
 
-/** Botão de ação da linha: ícone pelado dentro de um alvo de 44px. */
+/**
+ * Botão de ação da linha: ícone pelado 24 dentro de um alvo de 44px.
+ * Inerte por FORMA (D-S4): `aria-disabled` + tracejado + tinta `muted`, e
+ * `tabIndex=-1` para ficar fora do Tab (R5) — nunca `disabled` nativo com a
+ * opacidade do browser. O `aria-label`/`title` continua dizendo o MOTIVO.
+ * Cor pela natureza da ação (D-S5): `add` ciano, `paid` tinta, remover `muted`.
+ */
 function RowAction({
-  icon, label, onClick, disabled, busy, tone = 'ink',
+  icon, label, onClick, disabled, busy, tone = 'ink', fill,
 }: {
   icon: string;
   label: string;
   onClick: () => void;
   disabled?: boolean;
   busy?: boolean;
-  tone?: 'ink' | 'primary';
+  tone?: 'ink' | 'primary' | 'muted';
+  fill?: number;
 }) {
+  const inert = disabled || busy;
   return (
     <button
       type="button"
-      onClick={(e) => { e.stopPropagation(); onClick(); }}
-      disabled={disabled || busy}
+      onClick={(e) => { e.stopPropagation(); if (!inert) onClick(); }}
+      aria-disabled={inert ? true : undefined}
+      aria-busy={busy ? true : undefined}
+      tabIndex={inert ? -1 : undefined}
       aria-label={label}
       title={label}
-      style={{
-        width: 44, height: 44, flexShrink: 0,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: 'none', border: 'none', borderRadius: 10,
-        cursor: disabled || busy ? 'not-allowed' : 'pointer',
-        opacity: disabled ? .4 : 1,
-      }}
+      className="sm2-lib-act"
     >
       <Icon
         name={busy ? 'sync' : icon}
         size={24}
-        tone={disabled ? 'muted' : tone}
+        fill={inert ? 0 : fill}
+        tone={inert ? 'muted' : tone}
         className={busy ? 'animate-spin' : undefined}
       />
     </button>
@@ -225,21 +225,14 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 24 }}>
-      <div>
-        <h1
-          style={{
-            fontFamily: 'var(--sm2-font-display)',
-            fontSize: 'var(--sm2-text-xl)',
-            fontWeight: 600,
-            lineHeight: 'var(--sm2-leading-title)',
-            color: 'var(--sm2-ink)',
-            margin: 0,
-          }}
-        >
+    <div className="sm2-lib">
+      <div className="sm2-lib-ttl">
+        {/* `groups` 24 pelado marca a Biblioteca (D-S2) — nunca `person` em box. */}
+        <h1 className="sm2-lib-h2">
+          <Icon name="groups" size={24} tone="muted" />
           {isPt ? 'Biblioteca' : 'Library'}
         </h1>
-        <p style={{ ...sm2Hint, marginTop: 4 }}>
+        <p className="sm2-lib-s" style={{ margin: 0 }}>
           {isPt ? 'Veja outros jogadores e seus Soulmon.' : 'See other players and their Soulmon.'}
         </p>
       </div>
@@ -247,20 +240,21 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
       {tab !== 'coop' && (
       <div style={{ position: 'relative' }}>
         <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', display: 'flex', pointerEvents: 'none' }}>
-          <Icon name="search" size={20} tone="muted" />
+          <Icon name="search" size={24} tone="muted" />
         </span>
         <Field
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder={isPt ? 'Buscar por nome…' : 'Search by name…'}
           aria-label={isPt ? 'Buscar jogador por nome' : 'Search player by name'}
-          style={{ paddingLeft: 40 }}
+          style={{ paddingLeft: 44 }}
         />
       </div>
       )}
 
-      {/* As duas abas: a selecionada é a ÚNICA preenchida. */}
-      <div role="tablist" aria-label={isPt ? 'Filtro de jogadores' : 'Player filter'} style={{ display: 'flex', gap: 8 }}>
+      {/* Abas SIS-04 (D-S3): a ativa em `primary-ink` + sublinhado 3px + glifo
+          FILL 1; "onde estou" nunca é placa cheia. */}
+      <div role="tablist" aria-label={isPt ? 'Filtro de jogadores' : 'Player filter'} className="sm2-kit-tabs">
         {TABS.map(item => {
           const active = tab === item.key;
           return (
@@ -270,9 +264,10 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
               role="tab"
               aria-selected={active}
               onClick={() => setTab(item.key)}
-              style={{ ...sm2Button(active ? 'primary' : 'outline'), flex: 1 }}
+              className={active ? 'sm2-kit-tab sm2-kit-tab-on' : 'sm2-kit-tab'}
+              style={{ flex: 1, padding: '0 4px', minWidth: 0, whiteSpace: 'nowrap' }}
             >
-              <Icon name={item.icon} size={20} fill={active ? 1 : 0} />
+              <Icon name={item.icon} size={20} fill={active ? 1 : 0} tone="inherit" />
               {item.label}
             </button>
           );
@@ -284,14 +279,16 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
         <CoopPanel saveId={saveId} language={language} metaDoDiaCumprida={metaDoDiaCumprida} />
       )}
 
+      {/* O alerta é ÂMBAR (D-S6): filete + tinta `gold-ink` — "tente de novo" é
+          convite, não culpa. Nunca `danger`. */}
       {actionError && tab !== 'coop' && (
-        <p role="alert" style={{ ...sm2Text, color: 'var(--sm2-danger-ink)' }}>{actionError}</p>
+        <p role="alert" className="sm2-lib-alert">{actionError}</p>
       )}
 
       {/* ── Carregando ── */}
       {carregando && tab !== 'coop' && (
-        <p style={{ ...sm2Hint, display: 'flex', alignItems: 'center', gap: 8, padding: '24px 0', justifyContent: 'center' }}>
-          <Icon name="sync" size={24} tone="primary" className="animate-spin" />
+        <p className="sm2-lib-busy">
+          <Icon name="sync" size={24} tone="muted" className="animate-spin" />
           {isPt ? 'Procurando jogadores…' : 'Looking for players…'}
         </p>
       )}
@@ -299,60 +296,69 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
       {/* ── Erro / sem rede: nunca confundido com "não há ninguém" ── */}
       {/* O erro de carga e do DIRETORIO; na aba Amigos a falha e por linha. */}
       {loadError && tab === 'directory' && (
-        <div style={{ textAlign: 'center', padding: '16px 0' }}>
+        <div className="sm2-lib-cstate">
           <Icon name="cloud_off" size={48} tone="muted" />
-          <p style={{ ...sm2Text, marginTop: 8 }}>
+          <p className="sm2-stats-t">
             {isPt ? 'Não deu para falar com o servidor.' : "Couldn't reach the server."}
           </p>
-          <p style={{ ...sm2Hint, marginTop: 4 }}>
+          <p className="sm2-lib-s" style={{ margin: 0 }}>
             {isPt ? 'Pode ser a sua conexão. Os personagens de demonstração continuam aqui.' : 'It may be your connection. The demo characters are still here.'}
           </p>
-          <button type="button" onClick={() => setReloadKey(k => k + 1)} style={{ ...sm2Button('outline'), marginTop: 12 }}>
+          {/* Saída com fronteira (`outline`), nunca `ghost` (D-S10). */}
+          <button type="button" onClick={() => setReloadKey(k => k + 1)} style={{ ...sm2Button('outline', false, 'sm'), marginTop: 6, width: '100%', maxWidth: 200 }}>
             <Icon name="refresh" size={20} />
             {isPt ? 'Tentar de novo' : 'Try again'}
           </button>
         </div>
       )}
 
-      {/* ── Vazio ── */}
+      {/* ── Vazio: UMA frase, sem ilustração, sem "0 friends" ── */}
       {list && list.length === 0 && tab !== 'coop' && !(loadError && tab === 'directory') && (
-        <p style={{ ...sm2Hint, textAlign: 'center', padding: '24px 0' }}>
+        <p className="sm2-lib-s" style={{ textAlign: 'center', padding: '24px 0', margin: 0 }}>
           {tab === 'friends'
             ? (isPt ? 'Você ainda não tem amigos. Toque em alguém na aba Todos.' : 'You have no friends yet. Tap someone in the All tab.')
             : (isPt ? 'Nenhum jogador com esse nome.' : 'No player by that name.')}
         </p>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div className="sm2-lib-list">
         {list?.map(p => {
           const isNpc = !!p.isNpc;
           const isFriend = friends.includes(p.id);
           const gifted = giftedToday.has(p.id);
+          const sprite = isSafeSpriteSrc(p.spriteUrl) ? p.spriteUrl : getSpriteForStage(p.stage);
           return (
-            <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <div key={p.id} className="sm2-lib-row">
               {/* A linha inteira é UM botão: abrir o perfil é a ação dominante,
                   e um `<div onClick>` não é alcançável pelo teclado. */}
               <button
                 type="button"
                 onClick={() => { setSelectedPlayer(p); onVisitPlayer?.(); }}
                 aria-label={isPt ? `Ver o perfil de ${p.name}` : `View ${p.name}'s profile`}
-                style={rowStyle}
+                className="sm2-lib-who"
               >
-                <img
-                  src={isSafeSpriteSrc(p.spriteUrl) ? p.spriteUrl : getSpriteForStage(p.stage)}
-                  alt=""
-                  style={{ width: 44, height: 44, flexShrink: 0, objectFit: 'contain', imageRendering: 'pixelated' }}
-                />
-                <span style={{ flex: 1, minWidth: 0 }}>
-                  <span
-                    style={{ ...sm2Text, fontWeight: 500, display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-                  >
+                {/* A identidade do outro é a CRIATURA num mini-visor 64² sem
+                    anel (D-S1/D-S2): sprite 256² a 64 (0,25×). A linha que não
+                    carregou fica com o vidro APAGADO — sem "?", sem `person`. */}
+                <MiniGlass size={64}>
+                  {!p.unresolved && (
+                    <img
+                      src={sprite}
+                      alt=""
+                      width={64}
+                      height={64}
+                      style={{ display: 'block', width: 64, height: 64, objectFit: 'contain', imageRendering: 'pixelated' }}
+                    />
+                  )}
+                </MiniGlass>
+                <span className="sm2-lib-nm">
+                  <span className="t">
                     {p.name}
                     {isNpc && (
-                      <span style={{ ...sm2Hint, marginLeft: 6 }}>{isPt ? '· demonstração' : '· demo'}</span>
+                      <span className="s" style={{ marginLeft: 6 }}>{isPt ? '· demonstração' : '· demo'}</span>
                     )}
                   </span>
-                  <span className="sm2-num" style={{ ...sm2Hint, display: 'block' }}>
+                  <span className="s sm2-num">
                     {p.unresolved
                       ? (isPt ? 'Nao deu para carregar o perfil agora.' : "Couldn't load this profile right now.")
                       // WP4.11 / proibição #21: o `rank` saiu. Número que sobe
@@ -371,7 +377,7 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
                      são 20 Bits, e só `paid` existe no inventário de 102 nomes
                      da fonte subsetada — nome fora dele renderiza VAZIO. */
                   icon="paid"
-                  tone="primary"
+                  tone="ink"
                   busy={busyId === p.id}
                   disabled={!canGiftToday || gifted}
                   label={!canGiftToday
@@ -385,6 +391,8 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
               {!isNpc && (
                 <RowAction
                   icon={isFriend ? 'do_not_disturb_on' : 'add'}
+                  tone={isFriend ? 'muted' : 'primary'}
+                  fill={isFriend ? 0 : 1}
                   busy={busyId === p.id}
                   disabled={!isFriend && friends.length >= MAX_FRIENDS}
                   label={isFriend

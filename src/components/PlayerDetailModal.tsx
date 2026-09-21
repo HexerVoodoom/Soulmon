@@ -10,17 +10,22 @@
  * cima de "Rank: 340", e três ícones para três números era exatamente o tipo de
  * mobília que o revamp corta.
  *
- * A superfície é o `ModalSheet` do kit (`form/FormKit`): ele traz foco preso,
- * Escape e devolução de foco — o modal artesanal daqui não tinha nenhum dos
- * três, e ele era focável por cima da página inteira.
+ * A superfície é o `RitualDialog` (`ritual/RitualKit`, o `.dlg` SIS-06
+ * centrado sobre o scrim — canvas Social §28, D-S9: diálogo curto = centrado;
+ * a folha é para listas): foco preso, Escape, devolução de foco, × 44 por
+ * último na ordem de foco. A criatura é a heroína: sprite 256² a 128 (0,5×)
+ * num vidro 192² com anel de cobre (D-S1); o galho em `ink` com o glifo de
+ * `AlignmentIcons` — identidade, não semáforo (D-S8: `ATTR_COLOR`/`ATTR_INK`
+ * do sistema antigo saíram); "Close" em `outline` (D-S10).
  */
-import { FORM_REQUIREMENTS, getStageBranch, getStageLevel } from '../types/progression';
+import { getStageBranch } from '../types/progression';
 import { getSpriteForStage } from '../utils/sprites';
 import { isSafeSpriteSrc } from '../utils/spriteLibrary';
-import { ATTR_COLOR, ATTR_INK, ATTR_LABEL } from '../types/attributes';
+import { ATTR_LABEL } from '../types/attributes';
 import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
 import { Viewport } from './ui/Viewport';
-import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
+import { RitualDialog } from './ritual/RitualKit';
+import { sm2Button } from './form/FormKit';
 import type { DirectoryPlayer } from '../utils/community';
 import type { Language } from '../utils/i18n';
 
@@ -29,14 +34,6 @@ import type { Language } from '../utils/i18n';
 // as duas concordavam, a `StatsPage` não usava nenhuma e mostrava o nome
 // interno cru. Duas cópias que concordam ainda são duas cópias.
 
-const LEVEL_LABEL: Record<string, { pt: string; en: string }> = {
-  rookie: { pt: 'Rookie', en: 'Rookie' },
-  champion: { pt: 'Campeão', en: 'Champion' },
-  ultimate: { pt: 'Supremo', en: 'Ultimate' },
-  mega: { pt: 'Mega', en: 'Mega' },
-  ultra: { pt: 'Ultra', en: 'Ultra' },
-};
-const LEVEL_ORDER = Object.keys(FORM_REQUIREMENTS);
 
 /** O mesmo jogo de ícone de atributo da Evolução — vetor, e um só no app. */
 const ATTR_GLYPH = { virus: PowerIcon, data: HarmonyIcon, vaccine: BenevolenceIcon } as const;
@@ -52,56 +49,56 @@ export function PlayerDetailModal({ player, language, onClose }: PlayerDetailMod
   const branch = getStageBranch(player.stage);
   const Glyph = branch ? ATTR_GLYPH[branch] : null;
 
-  // Todos os estágios desbloqueados NO branch atual (rookie é o tronco
-  // comum, sem branch, sempre incluído), ordenados por nível.
-  const branchLevels = (player.unlockedStages ?? [])
-    .filter(s => s === 'rookie' || getStageBranch(s) === branch)
-    .sort((a, b) => LEVEL_ORDER.indexOf(getStageLevel(a)) - LEVEL_ORDER.indexOf(getStageLevel(b)));
-
   return (
-    <ModalSheet
-      open
+    <RitualDialog
       onClose={onClose}
-      language={language}
-      title={player.name}
-      footer={
-        <button type="button" onClick={onClose} style={{ ...sm2Button('primary'), width: '100%' }}>
-          {isPt ? 'Fechar' : 'Close'}
-        </button>
-      }
+      labelledBy="sm2-player-title"
+      closeLabel={isPt ? 'Fechar' : 'Close'}
+      closeLast
+      maxWidth={340}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+      <h2
+        id="sm2-player-title"
+        className="sm2-lib-h2"
+        style={{ minHeight: 44, display: 'flex', alignItems: 'center', paddingRight: 48 }}
+      >
+        {player.name}
+      </h2>
+
+      <div className="sm2-lib-hero">
         {/* WP4.14 — A CRIATURA É VISITÁVEL, e visitar é OLHAR.
             A tela do outro jogador existia como uma ficha pequena; a única
             coisa que a comunidade deste jogo tem de interessante — a criatura
             que a outra pessoa criou — aparecia num quadradinho de 48px.
-            Aqui ela ganha tamanho.
+            Aqui ela ganha tamanho: 256² a 128 (0,5×) no vidro 192² (64 × 3).
             E a visita não tem ESTADO nem NÚMERO (decisão 8 + proibição #21):
             não dá para cutucar, presentear, curtir nem comparar. Uma visita
             que rende alguma coisa deixa de ser visita e vira loop de
             engajamento social — que é exatamente o que este produto recusa
             desde que o `rank` saiu daqui. */}
         <Viewport
-          width={48}
-          height={48}
+          width={64}
+          height={64}
           scale={3}
           breathing={false}
           label={isPt ? `Soulmon de ${player.name}` : `${player.name}'s Soulmon`}
-          screenStyle={{ position: 'relative' }}
+          screenStyle={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >
           <img
             src={isSafeSpriteSrc(player.spriteUrl) ? player.spriteUrl : getSpriteForStage(player.stage)}
             alt=""
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', imageRendering: 'pixelated' }}
+            width={128}
+            height={128}
+            style={{ display: 'block', width: 128, height: 128, objectFit: 'contain', imageRendering: 'pixelated' }}
           />
         </Viewport>
 
-        <div style={{ textAlign: 'center' }}>
+        <div>
           {player.petName && (
-            <p style={{ ...sm2Text, fontWeight: 500, margin: 0 }}>{player.petName}</p>
+            <p className="sm2-stats-t" style={{ fontWeight: 500 }}>{player.petName}</p>
           )}
           {player.isNpc && (
-            <p style={{ ...sm2Hint, marginTop: 2 }}>
+            <p className="sm2-lib-s" style={{ margin: 0 }}>
               {isPt ? 'Personagem de demonstração' : 'Demo character'}
             </p>
           )}
@@ -113,7 +110,7 @@ export function PlayerDetailModal({ player, language, onClose }: PlayerDetailMod
               mesmo motivo — a tela do amigo tinha ficado para trás.
 
               `daysPlaying` fica: é duração, só cresce, e não ordena ninguém. */}
-          <p className="sm2-num" style={{ ...sm2Hint, marginTop: 6 }}>
+          <p className="sm2-lib-s sm2-num" style={{ margin: 0 }}>
             {isPt ? `${player.daysPlaying} dias jogando` : `${player.daysPlaying} days playing`}
           </p>
         </div>
@@ -128,22 +125,24 @@ export function PlayerDetailModal({ player, language, onClose }: PlayerDetailMod
           A decisão 8b do dono foi ratificada com essa condição exata (D13):
           mostrar a criatura do amigo no estágio real, desde que a UI mostre
           galho e não altura. É por isso que o sprite continua inteiro logo
-          acima — ele já diz quem a criatura é, sem ranquear ninguém. */}
-      <div>
-        <p style={{ ...sm2Hint, letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 8 }}>
+          acima — ele já diz quem a criatura é, sem ranquear ninguém.
+          O galho vai em `ink` (D-S8): identidade, não semáforo. */}
+      <div className="sm2-lib-path">
+        <p className="sm2-stats-lab">
           {isPt ? 'Caminho do pet' : "Pet's path"}
         </p>
 
         {branch && Glyph && (
-          <p style={{ ...sm2Text, display: 'flex', alignItems: 'center', gap: 6, margin: '0 0 10px' }}>
-            <Glyph size={18} color={ATTR_COLOR[branch]} strokeWidth={2.2} />
-            <span style={{ color: ATTR_INK[branch], fontWeight: 500 }}>
-              {isPt ? ATTR_LABEL[branch].pt : ATTR_LABEL[branch].en}
-            </span>
+          <p className="t">
+            <Glyph size={18} color="currentColor" strokeWidth={2.2} />
+            <span>{isPt ? ATTR_LABEL[branch].pt : ATTR_LABEL[branch].en}</span>
           </p>
         )}
-
       </div>
-    </ModalSheet>
+
+      <button type="button" onClick={onClose} style={{ ...sm2Button('outline'), width: '100%' }}>
+        {isPt ? 'Fechar' : 'Close'}
+      </button>
+    </RitualDialog>
   );
 }
