@@ -37,16 +37,20 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 describe('o PvP só é OFERECIDO a partir do Vínculo 5', () => {
-  it('abaixo do nível, o interruptor está desabilitado e a tela diz o que falta', () => {
+  it('abaixo do nível, o interruptor está inerte (aria-disabled, fora do Tab) e a tela diz o que falta', () => {
+    // Inerte por FORMA, não por `disabled` nativo nem opacidade (canvas Jogos
+    // D-J14): `aria-disabled` + `tabIndex=-1`, borda tracejada.
     render(<TournamentPage {...props} totalXP={0} />);
     const sw = screen.getByRole('switch', { name: /PvP/i });
-    expect(sw.hasAttribute('disabled')).toBe(true);
+    expect(sw.getAttribute('aria-disabled')).toBe('true');
+    expect(sw.getAttribute('tabindex')).toBe('-1');
+    expect(sw.style.opacity).toBe('');
     expect(screen.getByText(new RegExp(`Vínculo ${BOND_PVP_MIN_LEVEL}`))).toBeTruthy();
   });
 
   it('no nível 5, o interruptor está disponível', () => {
     render(<TournamentPage {...props} totalXP={xpForLevel(BOND_PVP_MIN_LEVEL)} />);
-    expect(screen.getByRole('switch', { name: /PvP/i }).hasAttribute('disabled')).toBe(false);
+    expect(screen.getByRole('switch', { name: /PvP/i }).hasAttribute('aria-disabled')).toBe(false);
   });
 
   it('quem JÁ ligou continua com o interruptor disponível para desligar', () => {
@@ -54,7 +58,7 @@ describe('o PvP só é OFERECIDO a partir do Vínculo 5', () => {
     // dentro de uma lista pública da qual ela quer sair — o pior resultado
     // possível de um gate de consentimento.
     render(<TournamentPage {...props} pvpEnabled totalXP={0} />);
-    expect(screen.getByRole('switch', { name: /PvP/i }).hasAttribute('disabled')).toBe(false);
+    expect(screen.getByRole('switch', { name: /PvP/i }).hasAttribute('aria-disabled')).toBe(false);
   });
 });
 

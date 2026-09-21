@@ -36,6 +36,19 @@
  * 4. **Perder também rende Emblemas, e a tela diz isso.**
  *
  * Nomes de ícone conferidos um a um contra o inventário de `tokens.md`.
+ *
+ * ─── CANVAS JOGOS (DECISÕES §25, D-J12…D-J14) ──────────────────────────────
+ *
+ * O canvas replica o que esta tela já fazia bem (Emblemas em serifa, faixa
+ * antes do ranking, `TIER_ICON`, janela de ±3, `cloud_off`) e corrige: o
+ * sprite do oponente solto a 44 → **mini-visor 64** (0,25×); as abas em
+ * botões → `PixelTabs` com sublinhado (SIS-04); o `role=alert` sem filete →
+ * filete `gold-ink` 3px, tinta `ink` (nunca vermelho); o ranking com
+ * mini-visor 32 (0,125× com filtro — TRANSIÇÃO condicionada aos ícones 32²
+ * da `squad-arte`, D-J13); o switch travado inerte por FORMA (tracejado,
+ * `aria-disabled`, fora do Tab — nunca opacidade, D-J14); a faixa em Fredoka
+ * 16 (Silkscreen só dentro do vidro); o resultado num `RitualDialog` com o
+ * visor 288×112 da arena e as duas criaturas a 64 na vitória.
  */
 import { useEffect, useState } from 'react';
 import { getSpriteForStage } from '../utils/sprites';
@@ -45,9 +58,14 @@ import { EMBLEMS_PER_WIN, EMBLEMS_PER_LOSS, emblemStyle } from '../utils/currenc
 import { getTierStanding } from '../utils/tournamentTiers';
 import { getTournamentWindow, tournamentWindowLabel } from '../utils/tournamentSeason';
 import { Icon } from './ui/Icon';
+import { MiniGlass } from './ui/MiniGlass';
+import { PixelMeter, PixelTabs } from './pixel/PixelKit';
+import { RitualDialog } from './ritual/RitualKit';
+import { GameVisor, VisorSprite, DIALOG_VISOR_W } from './games/GameKit';
 import { sm2Button, sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
-import { useDialogA11y } from '../hooks/useDialogA11y';
+import { sm2Tag } from './TaskMeta';
 import { bondLevelFor, meetsPvpBond, xpToPvpBond, BOND_PVP_MIN_LEVEL } from '../utils/bond';
+import tournamentFinal from '../assets/soulmon/bg/tournament-final.png';
 
 interface TournamentPageProps {
   saveId: string;
@@ -99,37 +117,40 @@ const TIER_ICON: Record<string, string> = {
 function Switch({ checked, onToggle, label, disabled = false }: {
   checked: boolean; onToggle: () => void; label: string; disabled?: boolean;
 }) {
+  /* Travado = inerte por FORMA (D-J14): borda tracejada `muted`, botão
+     `muted`, `aria-disabled`, fora da ordem de foco — nunca `opacity`, que
+     derruba o contraste do que ainda precisa ser lido. Host 52×44. */
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
       aria-label={label}
-      disabled={disabled}
-      onClick={onToggle}
+      aria-disabled={disabled || undefined}
+      tabIndex={disabled ? -1 : undefined}
+      onClick={disabled ? undefined : onToggle}
       style={{
         flexShrink: 0,
-        width: 56, height: 44,
+        width: 52, height: 44, padding: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         background: 'none', border: 'none',
         cursor: disabled ? 'not-allowed' : 'pointer',
-        opacity: disabled ? 0.45 : 1,
       }}
     >
       <span
         style={{
-          width: 44, height: 26, borderRadius: 999, padding: 3, boxSizing: 'border-box',
-          display: 'flex', alignItems: 'center',
-          justifyContent: checked ? 'flex-end' : 'flex-start',
-          backgroundColor: checked ? 'var(--sm2-primary-fill)' : 'var(--sm2-surface-2)',
-          border: checked ? '1px solid transparent' : '1px solid var(--sm2-line)',
+          width: 52, height: 32, borderRadius: 999, boxSizing: 'border-box', position: 'relative',
+          backgroundColor: checked ? 'var(--sm2-primary-fill)' : disabled ? 'transparent' : 'var(--sm2-surface-2)',
+          border: checked ? '2px solid var(--sm2-primary-fill)' : `2px ${disabled ? 'dashed' : 'solid'} var(--sm2-muted)`,
           transition: 'background-color var(--sm2-dur-tap) var(--sm2-ease)',
         }}
       >
         <span
           style={{
-            width: 20, height: 20, borderRadius: 999,
+            position: 'absolute', top: 4, width: 20, height: 20, borderRadius: '50%',
+            left: checked ? 24 : 4,
             backgroundColor: checked ? 'var(--sm2-on-primary)' : 'var(--sm2-muted)',
+            transition: 'left var(--sm2-dur-tap) var(--sm2-ease)',
           }}
         />
       </span>
@@ -150,8 +171,6 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
   /** Erro de AÇÃO (a partida não foi). Era `alert()` — diálogo do sistema por
    *  cima de um app de bichinho, e sem par PT/EN garantido. */
   const [fightError, setFightError] = useState<string | null>(null);
-  // Pontos do próprio jogador, lidos da linha dele no ranking.
-  const myPoints = rank?.find(r => r.id === saveId)?.points ?? 0;
   /* WP4.13 (achado E5) — a FAIXA lê o contador LIFETIME, não os pontos da
      season. Os pontos da season descem por três caminhos (derrota própria,
      ser sorteado como oponente e perder — sem jogar — e a virada de mês), e a
@@ -261,10 +280,11 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
             continuam impossíveis de confundir. */}
         <span
           title={isPt ? 'Emblemas — só compram itens da aba Torneio na loja' : 'Emblems — only buy Tournament items in the shop'}
-          style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}
+          aria-label={`${isPt ? 'Emblemas' : 'Emblems'}: ${emblems}`}
+          style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, minHeight: 28 }}
         >
-          <Icon name="military_tech" size={20} tone="gold" />
-          <span className="sm2-num" style={{ ...emblemNum, fontSize: 'var(--sm2-text-lg)' }}>{emblems}</span>
+          <Icon name="military_tech" size={20} tone="gold" fill={1} />
+          <span className="sm2-num" style={{ ...emblemNum, fontSize: 'var(--sm2-text-md)' }}>{emblems}</span>
         </span>
       </div>
 
@@ -277,17 +297,12 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
             <li
               key={`${t.season}-${i}`}
               title={isPt ? `${t.season} — ${t.place}º lugar` : `${t.season} — place ${t.place}`}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                padding: '6px 10px', borderRadius: 999,
-                border: '1px solid var(--sm2-line)',
-                backgroundColor: 'var(--sm2-surface)',
-              }}
+              /* `.chip.tag.season` (canvas): etiqueta 28 em `surface-2`, troféu
+                 `gold-ink` FILL, texto em `ink`. */
+              style={{ ...sm2Tag, minHeight: 28, color: 'var(--sm2-ink)' }}
             >
-              <Icon name="emoji_events" size={20} tone="gold" fill={t.place === 1 ? 1 : 0} />
-              <span className="sm2-num" style={{ ...sm2Hint, color: 'var(--sm2-ink)' }}>
-                {t.season} · {t.place}º
-              </span>
+              <Icon name="emoji_events" size={20} tone="gold" fill={1} />
+              <span className="sm2-num">{t.season} · {t.place}º</span>
             </li>
           ))}
         </ul>
@@ -367,35 +382,20 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
           combinada não se esforça mais, sai. Ver utils/tournamentSeason.ts.
           Aberto × fechado é dito pela TINTA e pelo ícone, nunca por um
           `#facc15` cravado nem por emoji do sistema. */}
-      <p style={{ ...sm2Hint, display: 'flex', alignItems: 'center', gap: 8, color: round.isOpen ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)' }}>
-        <Icon name={round.isOpen ? 'event_repeat' : 'schedule'} size={20} fill={round.isOpen ? 1 : 0} />
-        {tournamentWindowLabel(round, isPt ? 'pt-BR' : 'en-US')}
-      </p>
+      <p style={sm2Hint}>{tournamentWindowLabel(round, isPt ? 'pt-BR' : 'en-US')}</p>
 
-      {/* Duas abas: a selecionada é a ÚNICA preenchida. */}
-      <div role="tablist" aria-label={isPt ? 'Seções do torneio' : 'Tournament sections'} style={{ display: 'flex', gap: 8 }}>
-        {TABS.map(item => {
-          const active = tab === item.key;
-          return (
-            <button
-              key={item.key}
-              type="button"
-              role="tab"
-              aria-selected={active}
-              onClick={() => setTab(item.key)}
-              style={{ ...sm2Button(active ? 'primary' : 'outline'), flex: 1 }}
-            >
-              <Icon name={item.icon} size={20} fill={active ? 1 : 0} />
-              {item.label}
-            </button>
-          );
-        })}
-      </div>
+      {/* Duas abas com sublinhado ciano (SIS-04, como a Ficha) — a mesma
+          pista da nav: uma barra não é uma caixa. */}
+      <PixelTabs
+        items={TABS.map(t => ({ key: t.key, iconName: t.icon, label: t.label }))}
+        value={tab}
+        onChange={setTab}
+        ariaLabel={isPt ? 'Seções do torneio' : 'Tournament sections'}
+      />
 
       {tab === 'arena' && !pvpEnabled && (
-        <div style={{ textAlign: 'center', padding: '24px 0' }}>
-          <Icon name="swords" size={48} tone="muted" />
-          <p style={{ ...sm2Text, marginTop: 8 }}>
+        <div style={{ ...cardStyle, textAlign: 'center', padding: 12 }}>
+          <p style={{ ...sm2Text, margin: 0 }}>
             {isPt ? 'Ative o PvP acima para desafiar oponentes.' : 'Enable PvP above to challenge opponents.'}
           </p>
         </div>
@@ -403,19 +403,23 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
 
       {tab === 'arena' && pvpEnabled && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <p style={sm2Hint}>
+          <p className="sm2-num" style={sm2Hint}>
             {matchesLeft === null
               ? (isPt ? 'Partidas de hoje: não deu para consultar' : "Today's matches: couldn't check")
-              : (isPt ? `${matchesLeft} partida(s) restante(s) hoje` : `${matchesLeft} match(es) left today`)}
+              : (isPt
+                ? `${matchesLeft} ${matchesLeft === 1 ? 'partida restante' : 'partidas restantes'} hoje`
+                : `${matchesLeft} ${matchesLeft === 1 ? 'match' : 'matches'} left today`)}
           </p>
 
+          {/* O erro de AÇÃO: filete `gold-ink` 3px + tinta `ink` — informação,
+              nunca vermelho (a partida não aconteceu; ninguém errou). */}
           {fightError && (
-            <p role="alert" style={{ ...sm2Text, color: 'var(--sm2-danger-ink)' }}>{fightError}</p>
+            <p role="alert" style={{ ...sm2Text, margin: 0, paddingLeft: 12, borderLeft: '3px solid var(--sm2-gold-ink)' }}>{fightError}</p>
           )}
 
           {/* ── Carregando ── */}
           {opponents === null && (
-            <p style={{ ...sm2Hint, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '24px 0' }}>
+            <p role="status" style={{ ...sm2Hint, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '24px 0' }}>
               <Icon name="sync" size={24} tone="primary" className="animate-spin" />
               {isPt ? 'Procurando oponentes…' : 'Looking for opponents…'}
             </p>
@@ -432,16 +436,15 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
 
           {/* ── Erro / sem rede ── */}
           {loadFailed && (
-            <div style={{ textAlign: 'center', padding: '16px 0' }}>
+            <div role="status" style={{ ...cardStyle, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 8, padding: 12 }}>
               <Icon name="cloud_off" size={48} tone="muted" />
-              <p style={{ ...sm2Text, marginTop: 8 }}>
+              <p style={{ ...sm2Text, margin: 0 }}>
                 {isPt ? 'Não deu para carregar os oponentes.' : "Couldn't load the opponents."}
               </p>
-              <p style={{ ...sm2Hint, marginTop: 4 }}>
+              <p style={sm2Hint}>
                 {isPt ? 'Pode ser a sua conexão.' : 'It may be your connection.'}
               </p>
-              <button type="button" onClick={loadOpponents} style={{ ...sm2Button('outline'), marginTop: 12 }}>
-                <Icon name="refresh" size={20} />
+              <button type="button" onClick={loadOpponents} style={{ ...sm2Button('outline'), width: '100%', maxWidth: 200 }}>
                 {isPt ? 'Tentar de novo' : 'Try again'}
               </button>
             </div>
@@ -451,13 +454,12 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
             const busy = fighting === o.id;
             const blocked = matchesLeft === 0;
             return (
-              <div key={o.id} style={{ ...cardStyle, display: 'flex', alignItems: 'center', gap: 12, padding: 12 }}>
-                {/* Sprite: conteúdo do visor, e por isso continua pixel. */}
-                <img
-                  src={getSpriteForStage(o.stage)}
-                  alt=""
-                  style={{ width: 44, height: 44, flexShrink: 0, objectFit: 'contain', imageRendering: 'pixelated' }}
-                />
+              <div key={o.id} style={{ ...cardStyle, display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', minHeight: 56 }}>
+                {/* A criatura do amigo no estágio REAL, num mini-visor 64
+                    (0,25×) — sem faixa, sem rank (J1, veto 3b). */}
+                <MiniGlass size={64}>
+                  <img src={getSpriteForStage(o.stage)} alt="" width={64} height={64} style={{ width: 64, height: 64, imageRendering: 'pixelated', display: 'block' }} />
+                </MiniGlass>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ ...sm2Text, margin: 0, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {o.name}
@@ -466,14 +468,18 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
                     {o.petName || o.stage} · {getStageLevel(o.stage)}
                   </p>
                 </div>
+                {/* WCAG 2.5.3 (Label in Name): o texto visível "Fight" está
+                    CONTIDO no nome acessível, que ainda nomeia o oponente
+                    ("Fight — challenge Lu"); quem usa comando de voz diz
+                    "Fight" e acerta. */}
                 <button
                   type="button"
                   disabled={blocked || busy}
                   onClick={() => fight(o)}
                   aria-label={blocked
-                    ? (isPt ? 'Sem partidas restantes hoje' : 'No matches left today')
-                    : (isPt ? `Desafiar ${o.name}` : `Challenge ${o.name}`)}
-                  style={{ ...sm2Button('primary', blocked || busy), flexShrink: 0, padding: '10px 14px' }}
+                    ? (isPt ? 'Desafiar — sem partidas restantes hoje' : 'Fight — no matches left today')
+                    : (isPt ? `Desafiar ${o.name}` : `Fight — challenge ${o.name}`)}
+                  style={{ ...sm2Button('primary', blocked || busy, 'sm'), flexShrink: 0, minWidth: 88 }}
                 >
                   {busy && <Icon name="sync" size={20} className="animate-spin" />}
                   {isPt ? 'Desafiar' : 'Fight'}
@@ -487,24 +493,23 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
       {tab === 'rank' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {rank === null && (
-            <p style={{ ...sm2Hint, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '24px 0' }}>
+            <p role="status" style={{ ...sm2Hint, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '24px 0' }}>
               <Icon name="sync" size={24} tone="primary" className="animate-spin" />
               {isPt ? 'Carregando o ranking…' : 'Loading the ranking…'}
             </p>
           )}
 
           {rankFailed && (
-            <div style={{ textAlign: 'center', padding: '16px 0' }}>
+            <div role="status" style={{ ...cardStyle, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 8, padding: 12 }}>
               <Icon name="cloud_off" size={48} tone="muted" />
-              <p style={{ ...sm2Text, marginTop: 8 }}>
+              <p style={{ ...sm2Text, margin: 0 }}>
                 {isPt ? 'Não deu para carregar o ranking.' : "Couldn't load the ranking."}
               </p>
               <button
                 type="button"
                 onClick={() => { setRank(null); setRankFailed(false); }}
-                style={{ ...sm2Button('outline'), marginTop: 12 }}
+                style={{ ...sm2Button('outline'), width: '100%', maxWidth: 200 }}
               >
-                <Icon name="refresh" size={20} />
                 {isPt ? 'Tentar de novo' : 'Try again'}
               </button>
             </div>
@@ -515,56 +520,21 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
               tóxica, e a faixa mede o jogador contra ele mesmo — ela sobe com
               o que ele acumula e nunca desce porque outra pessoa jogou mais. */}
           {standing && !rankFailed && (
-            <div style={{ ...cardStyle, padding: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ ...cardStyle, padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <p style={sm2Hint}>{isPt ? 'Sua faixa' : 'Your tier'}</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Icon name={TIER_ICON[standing.tier.id] ?? 'military_tech'} size={32} tone="gold" fill={1} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={sm2Hint}>{isPt ? 'Sua faixa' : 'Your tier'}</p>
-                  {/* Selo de faixa: um dos DOIS lugares onde a Silkscreen é a
-                      voz do aparelho. 14px e caixa alta, o piso da bitmap. */}
-                  <p
-                    style={{
-                      fontFamily: 'var(--sm2-font-pixel)',
-                      fontSize: 'var(--sm2-text-sm)',
-                      lineHeight: 1.4,
-                      textTransform: 'uppercase',
-                      letterSpacing: '.06em',
-                      color: 'var(--sm2-gold-ink)',
-                      margin: '2px 0 0',
-                    }}
-                  >
-                    {isPt ? standing.tier.namePt : standing.tier.nameEn}
-                  </p>
-                </div>
-                <span className="sm2-num" style={{ ...sm2Text, flexShrink: 0, fontWeight: 500 }}>
-                  {myPoints} pts
-                </span>
+                {/* O nome da faixa em Fredoka 16 (canvas): a Silkscreen é a voz
+                    do APARELHO e só vive dentro do vidro (HANDOFF §1). */}
+                <p style={{ margin: 0, fontFamily: 'var(--sm2-font-display)', fontWeight: 600, fontSize: 'var(--sm2-text-md)', lineHeight: 'var(--sm2-leading-title)', color: 'var(--sm2-ink)' }}>
+                  {isPt ? standing.tier.namePt : standing.tier.nameEn}
+                </p>
               </div>
 
-              {/* Progresso DENTRO da faixa. Nunca diminui. */}
-              <div
-                role="progressbar"
-                aria-label={isPt ? 'Progresso na faixa' : 'Tier progress'}
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-valuenow={Math.round(standing.progress * 100)}
-                style={{
-                  marginTop: 12, height: 10, borderRadius: 999, overflow: 'hidden',
-                  backgroundColor: 'var(--sm2-surface-2)',
-                  border: '1px solid var(--sm2-line)',
-                }}
-              >
-                <div
-                  style={{
-                    width: `${Math.round(Math.min(1, Math.max(0, standing.progress)) * 100)}%`,
-                    height: '100%',
-                    backgroundColor: 'var(--sm2-gold-fill)',
-                    transition: 'width var(--sm2-dur-enter) var(--sm2-ease)',
-                  }}
-                />
-              </div>
+              {/* Progresso DENTRO da faixa, em `gold-fill` — só sobe. */}
+              <PixelMeter ratio={standing.progress} tone="gold" height={12} label={isPt ? 'Progresso na faixa' : 'Tier progress'} />
 
-              <p style={{ ...sm2Hint, marginTop: 8 }}>
+              <p style={sm2Hint}>
                 {standing.next
                   ? (isPt
                       ? `${standing.pointsToNext} pts até ${standing.next.namePt}. Sua faixa só sobe — ninguém te tira dela.`
@@ -575,7 +545,7 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
           )}
 
           {rank && rank.length > 0 && (
-            <p style={{ ...sm2Hint, marginTop: 8 }}>
+            <p style={{ ...sm2Hint, marginTop: 4, fontWeight: 500, letterSpacing: '.06em', textTransform: 'uppercase' }}>
               {isPt ? 'Ranking da season' : 'Season ranking'}
             </p>
           )}
@@ -585,40 +555,49 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
             </p>
           )}
 
-          {visibleRank.map(({ row: r, place }) => {
-            const isMe = r.id === saveId;
-            return (
-              <div
-                key={r.id}
-                style={{
-                  ...cardStyle,
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '10px 12px',
-                  backgroundColor: isMe ? 'var(--sm2-primary-soft)' : 'var(--sm2-surface)',
-                  borderColor: isMe ? 'var(--sm2-primary-fill)' : 'var(--sm2-line)',
-                }}
-              >
-                <span
-                  className="sm2-num"
-                  style={{ ...sm2Text, width: 28, textAlign: 'center', flexShrink: 0, color: place <= 3 ? 'var(--sm2-gold-ink)' : 'var(--sm2-muted)' }}
-                >
-                  {place}
-                </span>
-                <span style={{ ...sm2Text, flex: 1, minWidth: 0, fontWeight: isMe ? 500 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {r.name}
-                </span>
-                <span className="sm2-num" style={{ ...sm2Hint, flexShrink: 0 }}>{r.points} pts</span>
-              </div>
-            );
-          })}
+          {/* A janela de ±3 num card só, linhas de 36: posição `tabular-nums`,
+              a criatura num mini-visor 32 (0,125× com FILTRO — D-J13, transição
+              até os ícones 32² da `squad-arte`; a linha se identifica pelo
+              NOME), nome 14, pontos 12. A linha "you" em `primary-soft` + anel
+              `primary-ink` — o idioma de seleção, não um pódio (sem ouro no
+              top 3). */}
+          {visibleRank.length > 0 && (
+            <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 2, padding: '6px 8px' }}>
+              {visibleRank.map(({ row: r, place }) => {
+                const isMe = r.id === saveId;
+                return (
+                  <div
+                    key={r.id}
+                    data-rank-row={isMe ? 'me' : undefined}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8, minHeight: 36, padding: '0 6px',
+                      borderRadius: 'var(--sm2-radius-sm)',
+                      backgroundColor: isMe ? 'var(--sm2-primary-soft)' : undefined,
+                      boxShadow: isMe ? 'inset 0 0 0 1px var(--sm2-primary-ink)' : undefined,
+                    }}
+                  >
+                    <span className="sm2-num" style={{ ...sm2Hint, width: 28, flexShrink: 0, color: isMe ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)' }}>
+                      {place}
+                    </span>
+                    <MiniGlass size={32}>
+                      <img src={getSpriteForStage(r.stage)} alt="" width={32} height={32} style={{ width: 32, height: 32, imageRendering: 'auto', display: 'block' }} />
+                    </MiniGlass>
+                    <span style={{ ...sm2Text, flex: 1, minWidth: 0, fontWeight: isMe ? 500 : 400, color: isMe ? 'var(--sm2-primary-ink)' : 'var(--sm2-ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {r.name}{isMe ? (isPt ? ' (você)' : ' (you)') : ''}
+                    </span>
+                    <span className="sm2-num" style={{ ...sm2Hint, flexShrink: 0, color: isMe ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)' }}>{r.points} pts</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
           {rank && myIndex >= 0 && rank.length > visibleRank.length && !rankExpanded && (
             <button
               type="button"
               onClick={() => setRankExpanded(true)}
-              style={{ ...sm2Button('quiet'), width: '100%' }}
+              style={{ ...sm2Button('outline'), width: '100%' }}
             >
-              <Icon name="expand_more" size={20} />
               {isPt ? 'Ver a season inteira' : 'See the whole season'}
             </button>
           )}
@@ -629,6 +608,7 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
         <ResultDialog
           result={result}
           isPt={isPt}
+          petStage={petStage}
           onClose={() => { setResult(null); loadOpponents(); }}
         />
       )}
@@ -637,60 +617,40 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
 }
 
 /**
- * Resultado da partida. Foco preso, Escape fecha e o foco volta para quem
- * abriu — a peça inteira é um `dialog` de verdade e não uma `div` por cima.
+ * Resultado da partida — um `RitualDialog` (trap, Escape, devolução do foco).
+ * "Victory"/"Defeat" em Fredoka 20 na MESMA tinta; na vitória o visor 288×112
+ * com a arena `tournament-final` e as duas criaturas a 64 frente a frente;
+ * "Against ‹oponente› · N pts" 12 `muted` (N pts = poder da partida, 13.13);
+ * "Emblems +N" com o número em serifa dourada 20; "Continue" primário nos
+ * dois — a saída não muda de cor com o resultado (D-J8).
  */
-function ResultDialog({ result, isPt, onClose }: { result: MatchResult; isPt: boolean; onClose: () => void }) {
-  const ref = useDialogA11y<HTMLDivElement>(true, onClose);
+function ResultDialog({ result, isPt, petStage, onClose }: { result: MatchResult; isPt: boolean; petStage: string; onClose: () => void }) {
   const title = result.won ? (isPt ? 'Vitória' : 'Victory') : (isPt ? 'Derrota' : 'Defeat');
   return (
-    <div
-      style={{
-        position: 'fixed', inset: 0, zIndex: 400,
-        background: 'rgba(4, 18, 20, .55)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
-      }}
-    >
-      <div
-        ref={ref}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        style={{ ...cardStyle, maxWidth: 340, width: '100%', padding: 24, textAlign: 'center' }}
-      >
-        <p style={sm2Hint}>{title}</p>
-        {/* O placar da derrota era o MAIOR elemento da tela de resultado,
-            pintado de vermelho — a partida perdida virava um erro. É tinta
-            NEUTRA nos dois casos; só a vitória ganha cor. */}
-        <p
-          className="sm2-num"
-          style={{
-            fontFamily: 'var(--sm2-font-display)',
-            fontSize: 'var(--sm2-text-2xl)',
-            fontWeight: 600,
-            lineHeight: 'var(--sm2-leading-title)',
-            color: result.won ? 'var(--sm2-primary-ink)' : 'var(--sm2-ink)',
-            margin: '4px 0 12px',
-          }}
-        >
-          {result.myScore} × {result.oppScore}
-        </p>
-        <p className="sm2-num" style={sm2Text}>
-          {isPt ? `Contra ${result.opponent.name}` : `Against ${result.opponent.name}`} · {result.points} pts
-        </p>
-        {/* Perder também rende Emblemas, mas a UI nunca dizia isso — a
-            partida virava tempo perdido aos olhos de quem perdeu. */}
-        <p style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, margin: '10px 0 18px' }}>
-          <Icon name="military_tech" size={20} tone="gold" />
-          <span className="sm2-num" style={{ ...emblemNum, fontSize: 'var(--sm2-text-md)' }}>
-            +{result.won ? EMBLEMS_PER_WIN : EMBLEMS_PER_LOSS}
-          </span>
-          <span style={sm2Hint}>{isPt ? 'Emblemas' : 'Emblems'}</span>
-        </p>
-        <button type="button" onClick={onClose} style={{ ...sm2Button('primary'), width: '100%' }}>
-          {isPt ? 'Continuar' : 'Continue'}
-        </button>
-      </div>
-    </div>
+    <RitualDialog label={title} onClose={onClose} zIndex={400} maxWidth={340} style={{ alignItems: 'center', textAlign: 'center', gap: 10 }}>
+      <h2 style={{ margin: 0, fontFamily: 'var(--sm2-font-display)', fontWeight: 600, fontSize: 'var(--sm2-text-lg)', lineHeight: 'var(--sm2-leading-title)', color: 'var(--sm2-ink)' }}>
+        {title}
+      </h2>
+      {result.won && (
+        <GameVisor width={DIALOG_VISOR_W} height={56} scene={`url(${tournamentFinal}) center/cover`}>
+          <VisorSprite src={getSpriteForStage(petStage)} alt="" size={64} idle={false} style={{ left: 56, bottom: 8 }} data-visor-pet />
+          <VisorSprite src={getSpriteForStage(result.opponent.stage)} alt="" size={64} idle={false} flip style={{ right: 56, bottom: 8 }} data-visor-enemy />
+        </GameVisor>
+      )}
+      <p className="sm2-num" style={sm2Hint}>
+        {isPt ? `Contra ${result.opponent.name}` : `Against ${result.opponent.name}`} · {result.points} pts
+        {' · '}{result.myScore} × {result.oppScore}
+      </p>
+      {/* Perder também rende Emblemas, e a tela diz. */}
+      <p style={{ display: 'inline-flex', alignItems: 'baseline', gap: 8, margin: 0 }}>
+        <span style={sm2Hint}>{isPt ? 'Emblemas' : 'Emblems'}</span>
+        <span className="sm2-num" style={{ ...emblemNum, fontSize: 'var(--sm2-text-lg)' }}>
+          +{result.won ? EMBLEMS_PER_WIN : EMBLEMS_PER_LOSS}
+        </span>
+      </p>
+      <button type="button" onClick={onClose} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 260 }}>
+        {isPt ? 'Continuar' : 'Continue'}
+      </button>
+    </RitualDialog>
   );
 }

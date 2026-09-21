@@ -334,8 +334,8 @@ const ALLOWLIST: Divida[] = [
     motivo: 'Ilustração de estado VAZIO: a página do Pet sem criatura revelada. Era 40. Ver ENTRADA 1.',
   },
   {
-    arquivo: 'src/components/TournamentPage.tsx', size: 48, quantos: 3,
-    motivo: 'Três ilustrações de estado: PvP desligado, erro ao carregar oponentes, erro ao carregar o ranking. Eram 40. Ver ENTRADA 1.',
+    arquivo: 'src/components/TournamentPage.tsx', size: 48, quantos: 2,
+    motivo: 'Duas ilustrações de estado de ERRO: `cloud_off` ao carregar oponentes e ao carregar o ranking (canvas Jogos `TorneioOffline`). Eram três — o "PvP desligado" virou frase num card, sem glifo (`TorneioVazio`). Ver ENTRADA 1.',
   },
   {
     arquivo: 'src/components/pixel/RitualPanel.tsx', size: 48, quantos: 1,
