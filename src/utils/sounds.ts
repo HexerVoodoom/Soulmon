@@ -132,7 +132,8 @@ export function playShower(): void {
 
 /** Dramatic power-up sweep + two high notes */
 export function playEvolve(): void {
-  playComAsset('playEvolve', (ctx, destino) => {
+  // A/B de 21/09/2026: o dono escolheu o procedural (par1 A) — sem asset aqui.
+  play('playEvolve', (ctx, destino) => {
     const osc = ctx.createOscillator();
     const vol = ctx.createGain();
     osc.connect(vol);

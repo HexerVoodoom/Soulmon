@@ -456,6 +456,19 @@ deixado aberta. O resultado **confirmou a S9** e **abriu uma ponta nova**:
 > urgente. Ela volta a ser bloqueante no minuto em que o primeiro asset for gerado, porque `dist/`
 > é commitado e todo byte é permanente no histórico do git.
 
+> ### 21/09/2026 (fim do dia) — o dono RESPONDEU ao A/B: "Coloca o A"
+>
+> Uma resposta por par, sem as 3 perguntas × 2 condições do protocolo (`ab-piloto.md` §8.3/§8.4 —
+> **não** é o teste que estava escrito; é a escolha do dono, registrada como tal). Aberto o mapa cego
+> (semente 20260921): **par1 `playEvolve` A = procedural · par2 `playDegenerate` A = IA · par3
+> `playTaskComplete` A = IA**. Consequência aplicada no mesmo dia: o asset `evolve.webm` **saiu** e
+> `playEvolve` voltou a ser 100 % sintetizado; `degenerate.webm` e `task-complete.webm` ficam.
+> Placar 2×1 para a IA nos pares em que o gerador passou na régua — **abaixo do gatilho da S10
+> ("≥2 de 3 nas duas condições")**, então a S10 não muda de significado: o híbrido já admitido na
+> alternativa que perdeu da S1 é o que está no app — **procedural nos 6 eventos** (5 curtos + Marco),
+> **IA em 2** (Degeneração, Conclusão) e na trilha. "O procedural venceu" e "a IA venceu" seguem
+> as duas proibidas: 3 pares, 1 ouvinte, 1 resposta por par.
+
 > ### 21/09/2026 — o gatilho da S10 DISPAROU: o A/B cego está MONTADO, e ainda NÃO OUVIDO
 >
 > A conta do gerador voltou a ter crédito (480,95 cr em 21/09/2026) e o dono respondeu em modal as

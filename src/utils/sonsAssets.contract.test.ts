@@ -23,7 +23,7 @@ const sha256 = (b: Buffer) => createHash('sha256').update(b).digest('hex');
 
 describe('S9 — procedência nas duas direções', () => {
   it('a amostra não é vazia (o teste não pode passar por lista vazia)', () => {
-    expect(TODOS.length).toBeGreaterThanOrEqual(5);
+    expect(TODOS.length).toBeGreaterThanOrEqual(4);
   });
 
   it('todo asset do manifesto existe em public/ com o SHA-256 e os bytes declarados', () => {
