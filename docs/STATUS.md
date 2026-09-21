@@ -7,6 +7,25 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 20/09/2026 — Fase 2 (identidade) FECHADA: 14 canvases aprovados e implementados na `main`
+>
+> Sistema + 13 fluxos (Home, Atividades, Rituais, Onboarding-funil, Pet,
+> Evolução, Jogos, Loja, Estatísticas, Social, Conta, Fora do app,
+> Onboarding-Oráculo), cada um com duas rodadas de crítico
+> (`docs/design/wireframes/<fluxo>/identidade/{README,CRITICA}.md`) e checkpoint
+> em `docs/design/DECISOES-WIREFRAME.md` §18–§31. Código: `PixelKit`/`FormKit`/
+> `Viewport`/`MiniGlass`/`RitualDialog`/`SpriteAnim`/`VisorBar`, tokens `--sm2-*`,
+> Material Symbols em subset — a tese "O Visor" (pixel só dentro do vidro) vale
+> em todas as superfícies, inclusive widgets Android, overlay Electron e push.
+> Arte da `squad-arte` instalada (cenários, pet-box, placeholders âmbar v4,
+> emblemas, marca vetorizada). `tsc` ×3 limpos; `vitest` 299/299 arquivos
+> (os guards `docsManual.contract` e `supabase.contract` voltaram a passar
+> nesta sessão — MAPA completado; worktrees velhos removidos).
+>
+> **DEPENDE DO DONO:** `docs/PERGUNTAS-DO-DONO.md` — 7 itens (arte pendente da
+> rodada 2, `bg-gameboy`, largura do `UnlockNudge`, correção do `CLAUDE.md`,
+> deploy manual do worker de push, bump do `CACHE_VERSION`, branches órfãs).
+>
 > ## 21/09/2026 — Universo narrativo: a bíblia nasce, com três pareceres em cima
 >
 > `docs/NARRATIVA-E-UNIVERSO.md` (novo, vivo, indexado no `00-MAPA.md`): premissa,
