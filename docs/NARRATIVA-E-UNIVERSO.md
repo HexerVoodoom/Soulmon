@@ -38,26 +38,27 @@ ou a criatura, nunca a pessoa.
 
 ---
 
-## 2. As leis do universo (L1..L11)
+## 2. As leis do universo (L1..L12)
 
 Leis de ESCRITA. Quem escrever texto de jogador a partir desta bíblia obedece as
-onze. Cada uma existe para impedir um tipo específico de lore que vira cobrança.
+doze. Cada uma existe para impedir um tipo específico de lore que vira cobrança.
 
 | # | Lei | O que ela PROÍBE na escrita |
 |---|---|---|
 | **L1** | O mundo **descreve**, nunca **julga**. Ele relata o que houve e o que apareceu. **Nenhuma frase do produto tem a pessoa como sujeito de um verbo de ser.** | Frase que classifique a pessoa ("você é disperso", "sua alma é de fogo", "existe em você…", "sua essência é…", "isso revela que você…") — **inclusive no elogio**. Tipologia fechada. Diagnóstico. Veredito com cara de destino. |
 | **L2** | A criatura é **outra pessoa**, não um espelho nem um medidor. | Fazer a criatura relatar desempenho do jogador ("você fez 2 de 6"), cobrar, lembrar dívida, ou falar como placar/interface. |
 | **L3** | **Nada no universo enfraquece por culpa do jogador.** A Malha não se corrompe, não apodrece, não perde pureza. | "O mundo escurece quando você falha", dívida narrativa, criatura que definha por abandono, medidor de corrupção, ameaça de perda. |
-| **L4** | **Nenhum número desce, nenhuma contagem zera** — na ficção também não. | Barra de vínculo/pureza/confiança que cai, "seu laço enfraqueceu", "você perdeu N dias". |
+| **L4** | **Vínculo, constância, coleção, marco e registro nunca descem, e nenhuma contagem zera** — na ficção também não. **Sustentação (HP) e disposição do dia (energia) descem por desenho, e o mundo PODE descrever a descida** — o que ele não faz é atribuir causa (§5.4). | Barra de vínculo/pureza/confiança que cai, "seu laço enfraqueceu", "você perdeu N dias". E, do lado oposto: esconder a queda de sustentação, que é a única tensão do produto. |
 | **L5** | Perda só sobre **coisa recuperável e apostada de propósito** (a expedição, a moeda). | Perder forma, memória, nome, coleção, sonho ou marco como castigo narrativo. |
 | **L6** | **Ausência é saudade, nunca fatura.** Quem volta é recebido. | "Ele esperou você e sofreu", contagem de dias sumidos, culpa no retorno, chantagem de retorno. |
 | **L7** | O **como** conta tanto quanto o quanto, e **nenhum como é melhor**. Constante, explosivo e equilibrado são três formas, não três notas. | Hierarquizar ritmos, chamar um jeito de cuidar de "certo", insinuar que o outro atrasa a criatura. |
 | **L8** | O misticismo fica **dentro da Malha**. Ele explica criatura, nunca a vida da pessoa. | Conselho de vida, previsão, promessa, "os astros indicam que você deve…", sorte, cura, recomendação de saúde. |
 | **L9** | O mundo **não opina sobre o corpo nem sobre a mente da pessoa, em nenhuma direção.** Ele descreve a Malha: `sombra` é ausência de leitura, a noite é quando a Malha fica legível, um pesadelo é camada que não reassentou. Quando a pessoa está mal, o mundo não explica o que ela tem — ele não sabe, e o silêncio é resposta válida. | Dizer que algo é sintoma, transtorno, defeito, trauma ou estresse — **e igualmente** dizer que NÃO é, que é passageiro, que passa, ou que "não é nada". A negativa é asserção clínica do mesmo jeito, e para quem está em episódio depressivo ela chega como invalidação. |
 | **L10** | A ficção é total na **voz** e nunca na **informação**. Toda afirmação do mundo sobre a pessoa tem, em algum lugar alcançável do produto, uma descrição sóbria equivalente. | Deixar a ficção ser a única fonte disponível sobre o que aconteceu. Tirar do `HelpModal`, do Sobre ou do texto de suporte a linguagem fora da ficção (§16). |
-| **L11** | A criatura pode **notar** a pessoa; nunca **sentir por causa** dela. | "Ele está triste porque você não veio", "ele ficou animado com o que você fez" — emoção da criatura causada pelo comportamento do jogador, em qualquer direção. Permitido: *"Você está quieto hoje. Eu também."* |
+| **L11** | A criatura pode **notar** a pessoa e **reagir ao que acontece AGORA, em contato**. O que ela nunca faz é sentir por causa do que a pessoa fez ou deixou de fazer **ao longo do tempo**. | "Ele está triste porque você não veio", "ele ficou animado com o que você fez hoje" — emoção causada pelo histórico do jogador, em qualquer direção. Permitido: *"Você está quieto hoje. Eu também."* e o gosto evidente por estar sendo esfregado, que é reação ao gesto presente e é o retorno do loop central. |
+| **L12** | O mundo pode nomear o **ato** e o efeito dele na Malha; **nunca a pessoa, nunca o mérito**. | "Você merece", "muito bem", "você foi ótimo hoje" — elogio à pessoa. Permitido, e necessário: *"Isso fechou um trecho. A fagulha firmou."* Sem esta lei, L1 e L11 somadas produzem um mundo indiferente — e a tese declarada diz **encoraja**. |
 
-Teste de aceite de qualquer frase nova: ela passa nas onze **e** pode ser dita em
+Teste de aceite de qualquer frase nova: ela passa nas doze **e** pode ser dita em
 voz alta para a pessoa, olhando no olho, sem constrangimento.
 
 ---
@@ -230,6 +231,14 @@ feito (`1 − feitas/metaDeCoração`), então negar isso em texto não convence
 a pessoa desconfiar do texto, e soa condescendente. Descreva o fenômeno; cale
 sobre a atribuição.
 
+⚠️ **Mas o silêncio do mundo exige um PISO, e ele não é opcional** (L10 aplicada
+a este caso): o **relatório do dia**, que já existe (`lastDayReport`), mostra o
+fato mecânico em voz de PRODUTO — meta do dia, quanto foi feito, quanto de
+sustentação saiu — sem acusação e sem absolvição. Mundo mudo **e** nenhuma
+camada sóbria no caminho faz a pessoa sentir a causa e não achar onde ela está
+escrita, o que lê como app escondendo a própria regra. Com o piso, o silêncio
+diegético é legítimo.
+
 ### 5.5 Sono, a noite e os sonhos
 
 Corpos da Malha **desligam a leitura** para reassentar. Dormir não repõe energia
@@ -374,7 +383,7 @@ Regra: essas nove **não** são manifestações de ninguém. São fauna.
 | **Os reinos** | As oito regiões + a camada sem superfície (§6.2). O abrigo pode tomar o clima de qualquer uma. |
 | **As fendas** ⚠️ (EN *the rifts*) — a masmorra | Dobras da Malha onde o assentamento falhou e várias camadas se empilham. São **cinco camadas** por descida, cada uma mais antiga; quanto mais fundo, mais velha a fauna. Ninguém mora numa fenda: as criaturas que aparecem ali estão de passagem, como a sua. Vencer é **passar**, não matar — o corpo delas se desfaz e reassenta noutro lugar. Voltar sem terminar não custa nada do que é seu; custa a descida. |
 | **O que se traz de lá** | Fragmentos que ainda não assentaram: moeda (Bits), fagulha-coração, e raramente um **Glitchtama** ⚠️ — um nó em que um dia inteiro ficou preso sem se desfazer. Soltá-lo dá àquele dia o fechamento que ele não teve. |
-| **As arenas** — o Torneio | Terreno neutro e antigo, mantido por costume: em certos dias da semana as manifestações se encontram sem que ninguém tenha de descer numa fenda. As **faixas** (Semente→Broto→Guardião→Ancião→Lendário) são quanto tempo alguém frequenta, nunca quanto vale. |
+| **As arenas** — o Torneio | Terreno neutro e antigo, mantido por costume: em certos dias da semana as manifestações se encontram sem que ninguém tenha de descer numa fenda. As **faixas** (Semente→Broto→Guardião→Ancião→Lendário) são o quanto alguém já acumulou por ali — e **nunca descem** (`getTierStanding`, `src/utils/tournamentTiers.ts`). Nunca quanto alguém vale. |
 | **As cenas de sono** — os sonhos | Não são invenção da criatura: são trechos da Malha que passaram perto enquanto ela estava desligada e ficaram registrados. Por isso se colecionam, e por isso a raridade vem de regularidade (estar lá quando passa), não de duração. |
 | **Os pesadelos** | Camada que não reassentou direito e insiste. Não são culpa de ninguém e não vêm de nada que a pessoa fez. **A Malha não os interpreta** (L9: o mundo não afirma nem nega nada sobre a mente de ninguém). Enfrentar é recolher a camada solta. |
 
@@ -446,7 +455,7 @@ texto está errado, não a pessoa.
 | Cerimônia manual + cadeado (`evolutionLocked`) | "Pode ir" / "ainda não" | "Você travou a evolução dele" (não é perda) |
 | Queda de forma por sustentação zero | O padrão recolhe para se sustentar com menos | "Ele regrediu por sua culpa"; "você perdeu progresso" |
 | Renascimento (`src/utils/rebirth.ts`) | §11 | "Recomeçar do zero" |
-| Check-in de humor (`mood.ts`) | Como o dia esteve. A Malha **não usa isso para nada** | Qualquer devolutiva que interprete o humor; sequência de humor; "você tem estado triste" |
+| Check-in de humor (`mood.ts`) | Como o dia esteve. A Malha **não usa isso para nada** e **não o comenta** | Sequência de humor; humor como insumo de qualquer regra. ⚠️ A devolutiva existente (`moodSummary`, dentro do `DailyReportModal`) é **voz de PRODUTO**, não voz do mundo — a regra do próprio `mood.ts` é que coletar sem devolver é extração, e ela vale. Mas a frase de normalização hoje no ar ("…e tudo bem que seja assim") é o que L9 proíbe: o mundo — e o produto — não dizem que passa nem que não é nada. Ver §14 P14 |
 | Oferta reduzida após 2 faltas (`needsIntervention`) | A criatura propõe um trecho menor do caminho | Qualquer menção às duas faltas que dispararam a oferta |
 | Tarefa assombrada (`hauntedWatching`) | Uma ocasião que não fechou e continua na Malha; **o pet olha** | QUALQUER texto junto ao olhar. O gesto é sozinho — palavra ali vira cobrança |
 | Dia de folga semanal (`restDayUsed`) | A maré absorveu um dia | "Você usou sua folga", "resta 0", qualquer saldo de perdão |
@@ -503,7 +512,7 @@ renascimento como recomeço do zero, castigo, purificação ou apagamento.
 | **fagulha** ⚠️ | ember | a energia turquesa | "mana", "aura", "chakra", "ki" |
 | **forma** | form | cada estágio | "digievolução" ⚠️; "nível", "upgrade" |
 | **mudar de forma** | to take a new form | o ato | "digievoluir" ⚠️; "evoluir" é tolerável na UI já no ar; nunca "subir de nível" |
-| **Ruptura / Trama / Guarda** | Rupture / **Braid** / Ward | os três galhos | "vírus", "dados", "vacina" em texto de jogador (herança de fork); **"Weave"** ⚠️ em EN (D&D) — §6.6 |
+| **Ruptura / Trama / Guarda** *(pendente de P1 — hoje a UI ainda diz Vírus/Dado/Vacina)* | Rupture / **Braid** / Ward | os três galhos | "vírus", "dados", "vacina" em texto de jogador (herança de fork); **"Weave"** ⚠️ em EN (D&D) — §6.6 |
 | **o abrigo** | the den | o palco | "casa", "quarto", "base" |
 | **as fendas** ⚠️ | the rifts | a masmorra | "masmorra"/"dungeon" é tolerável na UI já no ar; evitar em lore novo |
 | **as arenas** | the arenas | o Torneio | "coliseu", "liga", "ginásio" ⚠️ |
@@ -588,7 +597,9 @@ relatório, e esse precedente já está no `CLAUDE.md`.
 ausência, espera, volta, saudade ou falta; (b) não atribui à criatura emoção
 causada pela pessoa (L11); (c) é **idêntica** no 2º e no 40º dia — texto que
 muda com a duração virou contador; (d) **não vem acompanhada de recompensa** —
-o incentivo a sumir mora no prêmio de retorno, não na frase.
+o incentivo a sumir mora no prêmio de retorno, não na frase; (e) **não existe
+frase diferente para quem NÃO sumiu** — se a presença é detectável pelo texto,
+a ausência virou contador por outro meio.
 *A decidir:* se entra.
 
 **P3 — Nomear as cinco camadas das fendas.**
@@ -620,6 +631,15 @@ frases curtas; todo termo novo precisa de par EN e entrada no `HelpModal`.
 *A decidir:* provável não — o app diz "seu Soulmon".
 
 ---
+
+**P14 — A frase de normalização do resumo de humor.**
+*O que é:* `moodSummary` (`src/utils/mood.ts`, no `DailyReportModal`) devolve
+hoje *"Seus últimos dias têm sido de altos e baixos — e tudo bem que seja
+assim"*. A segunda metade é normalização, que a L9 proíbe nas duas direções: o
+produto não diz que é doença **nem** que não é nada. A primeira metade e a
+existência da devolutiva ficam — a regra do próprio módulo, de que coletar sem
+devolver é extração, é anterior e é boa. *Sistema:* uma string em `mood.ts`.
+*A decidir:* a redação substituta, que descreve sem avaliar.
 
 **P8 — ⚠️ A MARCA `Soulmon`.** *(achado do parecer de PI de 21/09/2026 —
 precede todas as outras propostas)*
@@ -659,7 +679,11 @@ o cobre. Candidatos: **Zaed**, **Zenor**. *A decidir:* se troca.
 *O que é:* cada palavra é genérica, mas a **sequência ordenada exata** é a
 localização inglesa da escada de outra franquia. Os **ids ficam** (#20); o que
 mudaria é o rótulo visível. Candidata, coerente com a §3/§5 desta bíblia:
-**Encosto → Assentado → Ancorado → Profundo → Inteiro**. *Risco:* é o rótulo
+**Encosto → Assentado → Ancorado → Profundo → Vasto**. ⚠️ O topo **"Inteiro"
+foi REPROVADO** pelo guarda de linhas vermelhas (21/09/2026): insinua que quem
+não chegou lá está incompleto, e faz a queda de forma por sustentação zero ler
+como "deixou de ser inteiro" — exatamente o dano que fez "dia perfeito" virar
+"dia completo". Alternativa a *Vasto*: *Aberto*. *Risco:* é o rótulo
 mais espalhado do app (guia, glossário, evolução, página do Pet) e mexe em texto
 que o jogador já conhece. *A decidir:* v1.1, depois do nome (P8).
 
@@ -718,7 +742,7 @@ línguas.
    tem.
 3. **Se um texto de jogador puder ser lido como afirmação sobre a saúde, a mente
    ou o destino da pessoa, ele não entra** — ainda que seja bonito, ainda que
-   seja elogioso, ainda que passe nas onze leis.
+   seja elogioso, ainda que passe nas doze leis.
 
 **Peso da premissa e quem lê.** O app tem estética de v-pet e atrai criança e
 adolescente. Dizer a alguém de 10 anos, a sério e sem quebra de personagem, que
@@ -747,7 +771,11 @@ todo texto derivado desta bíblia.
 
 **Sobre tempo e contagem**
 5. A frase seria diferente se a pessoa tivesse sumido 2 dias em vez de 40?
-6. Há número que desce, sequência, percentual, "faltam N" ou "última"?
+6. Há número que desce, sequência, percentual ou "última"? E "faltam N"?
+   **Exceção declarada:** contagem que SOBE em direção a um marco alcançável
+   (o "faltam 4 dias completos" do `EvolutionPath`) é permitida — ela descreve
+   distância, não dívida. "Faltam N" sobre coleção ou sobre o que já passou
+   continua reprovado.
 7. A frase implica espera, saudade, solidão ou sofrimento da criatura durante a
    ausência?
 
@@ -764,6 +792,6 @@ todo texto derivado desta bíblia.
 12. Dita em voz alta, olhando no olho de quem teve a pior semana do ano —
     constrange?
 
-**O teste final, que resume os onze:** *se a pessoa soubesse exatamente como o
+**O teste final, que resume os doze:** *se a pessoa soubesse exatamente como o
 app decide isto, ainda acharia a frase gentil — ou perceberia que ela foi
 escrita para fazê-la voltar?*

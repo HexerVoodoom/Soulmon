@@ -7,6 +7,42 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 21/09/2026 — Universo narrativo: a bíblia nasce, com três pareceres em cima
+>
+> `docs/NARRATIVA-E-UNIVERSO.md` (novo, vivo, indexado no `00-MAPA.md`): premissa,
+> doze leis de ESCRITA, cosmogonia que DERIVA o arcano-tech, persona, biologia,
+> taxonomia, geografia, linha do tempo, tabela de ~34 mecânicas → significado →
+> frase proibida, vocabulário PT+EN, voz e tom, os três limites (§16) e o
+> checklist que reprova copy (§17). **Registro diegético na VOZ, declarado na
+> MOLDURA** — decisão do dono nesta sessão, junto com: vocabulário próprio no
+> lugar de Jung, e ressignificar o que existe em vez de propor mecânica (as 14
+> propostas estão isoladas na §14). **Nenhuma regra mudou; nada de `src/`.**
+>
+> Três pareceres bloqueantes, todos aplicados: psicologia (o diegético total não
+> tinha porta de saída; a premissa violava a própria L1; faltava dizer o que o
+> app não é), PI, e o guarda de linhas vermelhas — **`APROVADO COM RESSALVA`**,
+> ledger em `docs/plano-melhorias/ledger/vetos.md`. Do guarda veio a metade que
+> costuma faltar: a bíblia **perdoava demais**. L4 proibia número que desce e
+> nascia mentirosa sobre HP; L11 proibia a criatura reagir ao carinho, que é o
+> retorno do loop central; e faltava a L12 — o mundo pode nomear o ATO, senão L1
+> + L11 produzem um mundo indiferente, contra a tese que diz *encoraja*.
+>
+> **Duas afirmações da bíblia eram falsas contra o código, e as duas foram
+> medidas:** `moodSummary` (`src/utils/mood.ts`) já devolve "…e tudo bem que seja
+> assim", que é a normalização que a L9 proíbe (virou P14); e as faixas do
+> Torneio vêm de pontos acumulados (`getTierStanding`), não de tempo de casa.
+>
+> **DEPENDE DO DONO (§3):** P8 — **`Soulmon` é o nome canônico de uma criatura da
+> Bandai** (Champion, tipo Fantasma, atributo Virus), verificado na enciclopédia
+> oficial em 21/09/2026. Nome exato, no gênero de produto em que a confusão é
+> máxima, num app que também usa vírus/dado/vacina e a escada
+> rookie→champion→ultimate→mega. Precede todas as outras propostas; pede busca de
+> anterioridade (INPI/USPTO) e revisão jurídica antes de submissão a loja. A
+> bíblia não depende do nome — o mundo se chama **a Malha**. Junto: `Serah` (FF
+> XIII) e `Pyraka` (Bionicle) nas 9 linhas, `Zeed` nos prefixos de mega, e
+> vírus/dado/vacina hoje visíveis em **7 famílias de superfície** — a pior sendo
+> o texto do Ultra gerado em `oracle.ts`, na tela de revelação.
+
 > ## 🎨 15/09/2026 — SQUAD-ARTE: todos os assets gerados e instalados (7 commits, `dd214688..005a2941`)
 >
 > Inventário medido (`docs/INVENTARIO-ASSETS.md`), fila com prompt por peça (`docs/ASSETS-A-GERAR.md`),
