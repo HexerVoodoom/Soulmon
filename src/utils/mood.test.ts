@@ -45,8 +45,20 @@ describe('check-in de humor', () => {
     const s = moodSummary(log, 'pt-BR')!;
     expect(s).toMatch(/pesados/i);
     // Reconhece, não manda: nada de imperativo nem de "você deveria".
-    // ("não precisa de nada de você" é acolhimento, não cobrança.)
     expect(s).not.toMatch(/você precisa|tente |faça |deveria|vamos lá/i);
+    // L9 (21/09/2026): devolve o que a pessoa REGISTROU, nunca afirma sobre
+    // ela ("têm sido pesados" era o app afirmando).
+    expect(s).toMatch(/registrados/i);
+    expect(s).not.toMatch(/têm sido pesados/i);
+  });
+
+  it('não normaliza nem nega (L9 nas duas direções)', () => {
+    let misto: ReturnType<typeof recordMood> = [];
+    [3, 2, 4, 3, 3].forEach((m, i) => { misto = recordMood(misto, D(i + 1), m as 1 | 2 | 3 | 4 | 5); });
+    for (const lang of ['pt-BR', 'en-US'] as const) {
+      const s = moodSummary(misto, lang)!;
+      expect(s).not.toMatch(/tudo bem|isso passa|não é nada|that's allowed|that’s allowed|it passes|nothing wrong/i);
+    }
   });
 
   it('reconhece dias bons e altos e baixos', () => {

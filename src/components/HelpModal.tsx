@@ -170,8 +170,14 @@ export function HelpModal({ isOpen, onClose, language }: HelpModalProps) {
         </button>
       }
     >
+      {/* Copy §6 (L10, §16): é aqui que "o universo é descrito como universo".
+          A 2ª oração bloqueia a inferência de tipologia ("então eu sou
+          akasha") que a mera ADJACÊNCIA entre ficha da criatura e respostas
+          da pessoa ensina (§6 da bíblia). */}
       <p style={sm2Hint}>
-        {isPt ? 'O que cada palavra da tela quer dizer.' : 'What each word on screen means.'}
+        {isPt
+          ? 'O que cada palavra da tela quer dizer. O Soulmon tem um universo próprio: estes são os nomes dele, e nenhum deles descreve você.'
+          : 'What each word on screen means. Soulmon has a world of its own: these are its names, and none of them describe you.'}
       </p>
 
       {/* Canvas Conta (`GuiaGlossario.dc.html`, CONTA-16): `dl` com `dt`

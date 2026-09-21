@@ -100,17 +100,25 @@ export function moodSummary(
   const avg = recent.reduce((sum, e) => sum + e.mood, 0) / recent.length;
   const isPt = language === 'pt-BR';
 
+  /* Copy §6-bis (21/09/2026), voz de PRODUTO (L9, §16 limite 2): a frase
+     dizia "têm sido pesados" — o app AFIRMANDO sobre a pessoa. "Foram
+     registrados" devolve o que ela mesma marcou, e a 2ª oração é o limite 2
+     dito em voz alta. O que sai é só a avaliação; a regra 3 do cabeçalho (o
+     app DEVOLVE algo) continua valendo. */
   if (avg <= 2) {
     return isPt
-      ? 'Seus últimos dias têm sido pesados. Seu Soulmon está aqui, e não precisa de nada de você hoje.'
-      : 'Your last few days have been heavy. Your Soulmon is here, and needs nothing from you today.';
+      ? 'Seus últimos dias foram registrados como pesados. O Soulmon guarda isso e não faz nada com isso.'
+      : 'Your last few days were logged as heavy. Soulmon keeps that and does nothing with it.';
   }
   if (avg >= 4) {
     return isPt
       ? 'Seus últimos dias têm sido bons. Vale reparar no que anda funcionando.'
       : 'Your last few days have been good. Worth noticing what’s been working.';
   }
+  /* Ponto final. A normalização ("e tudo bem que seja assim") saiu e NADA
+     entra no lugar: §17 #2 reprova afirmar E negar — para quem está em
+     episódio depressivo, "tudo bem que seja assim" chega como invalidação. */
   return isPt
-    ? 'Seus últimos dias têm sido de altos e baixos — e tudo bem que seja assim.'
-    : 'Your last few days have had ups and downs — and that’s allowed.';
+    ? 'Seus últimos dias tiveram altos e baixos.'
+    : 'Your last few days had ups and downs.';
 }

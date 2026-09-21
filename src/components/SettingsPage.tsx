@@ -367,6 +367,34 @@ export function SettingsPage({
         <p className="sm2-num" style={{ ...sm2Hint, minHeight: 24, display: 'flex', alignItems: 'center' }}>Soulmon 1.0.2</p>
       </Group>
 
+      {/* ── SOBRE — os três limites da §16 da bíblia (`docs/NARRATIVA-E-UNIVERSO.md`),
+             em voz de PRODUTO. É a exceção declarada ao registro diegético
+             (L10): enquanto este grupo não existia, a ficção era a única
+             descrição disponível do que acontece com a pessoa. Sóbrio, sem
+             metáfora, sem "a Malha" — fora do visor, nada de kit pixel. ──── */}
+      <Group title={isPt ? 'Sobre' : 'About'}>
+        <p style={sm2Text}>
+          {isPt
+            ? 'O Soulmon é um app de hábitos com um bichinho virtual. Ele não avalia, não diagnostica, não trata e não substitui acompanhamento de saúde.'
+            : 'Soulmon is a habit app with a virtual pet. It does not assess, diagnose or treat anything, and it is not a substitute for health care.'}
+        </p>
+        <p style={sm2Text}>
+          {isPt
+            ? 'O questionário de personalidade não é um teste validado, e o mapa astral não prevê nada: os dois servem para gerar sua criatura.'
+            : 'The personality questionnaire is not a validated test, and the birth chart predicts nothing: both exist to generate your creature.'}
+        </p>
+        <p style={sm2Text}>
+          {isPt
+            ? 'O Soulmon não sabe nada sobre a sua vida além do que você escreveu nele.'
+            : 'Soulmon knows nothing about your life beyond what you typed into it.'}
+        </p>
+        <p style={sm2Hint}>
+          {isPt
+            ? 'Nada do que aparece aqui é uma afirmação sobre a sua saúde, a sua mente ou o seu futuro.'
+            : 'Nothing shown here is a statement about your health, your mind or your future.'}
+        </p>
+      </Group>
+
       {/* ── SEU RITMO — encosta na Janela de Descanso, que o App desenha logo
              abaixo desta página. Os dois falam da mesma coisa. ───────────── */}
       <Group title={isPt ? 'Seu ritmo' : 'Your rhythm'}>
