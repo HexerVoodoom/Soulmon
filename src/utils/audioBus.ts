@@ -419,6 +419,15 @@ export function barramentoAtual(): Barramento | null {
 }
 
 /**
+ * O barramento, construído se preciso — para quem toca fora de `tocarNa`
+ * (hoje só `utils/trilha.ts`, que tem gesto próprio e vai ao `busTrilha`).
+ * Mesmo contrato: `null` = sem motor, falhar em silêncio.
+ */
+export function garantirBarramento(): Barramento | null {
+  return obterBarramento();
+}
+
+/**
  * D-1 (§6.2): o Marco abaixa Trilha + SFX ao piso em ≤120 ms. `duracaoDoSom`
  * agenda a liberação, porque o gesto que fecha a cerimônia não tem hook (ver o
  * cabeçalho). Sem essa liberação agendada, um Marco silenciaria o app.

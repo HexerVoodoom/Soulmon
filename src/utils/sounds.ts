@@ -2,6 +2,8 @@ import { readFlag, writeFlag } from './safeStorage';
 import { STORAGE_KEYS } from './storageKeys';
 import { tocarNa } from './audioBus';
 import { CATEGORIA_DO_SOM } from './loudness';
+import { assetPronto, prepararAssets, tocarBuffer, type NomeDeAsset } from './sonsAssets';
+import { aoGestoSonoro } from './trilha';
 
 const MUTED_KEY = STORAGE_KEYS.SOUND_MUTED;
 
@@ -31,7 +33,27 @@ function play(
   fn: (ctx: AudioContext, destino: AudioNode) => number,
 ): void {
   if (isMuted()) return;
+  aoGestoSonoro();
   tocarNa(CATEGORIA_DO_SOM[nomeDoSom], fn);
+}
+
+/**
+ * S16 (21/09/2026): os três eventos LONGOS têm um asset de IA em
+ * `public/sounds/` (`utils/sonsAssets.ts`). A regra é **asset se já
+ * decodificou, senão o procedural desta vez** — nunca espera, nunca fica mudo.
+ * A primeira chamada dispara a carga (depois do gate de mudo e do gesto: S6,
+ * zero no bundle inicial). O buffer já está no alvo da categoria, então toca a
+ * ganho 1 — o procedural continua com os ganhos calibrados de sempre.
+ */
+function playComAsset(
+  nomeDoSom: NomeDeAsset,
+  procedural: (ctx: AudioContext, destino: AudioNode) => number,
+): void {
+  play(nomeDoSom, (ctx, destino) => {
+    prepararAssets(ctx);
+    const buf = assetPronto(nomeDoSom);
+    return buf ? tocarBuffer(ctx, destino, buf) : procedural(ctx, destino);
+  });
 }
 
 function beep(
@@ -80,7 +102,7 @@ export function playPresence(): void {
 
 /** Short ascending 3-note arpeggio (C–E–G) */
 export function playTaskComplete(): void {
-  play('playTaskComplete', (ctx, destino) => {
+  playComAsset('playTaskComplete', (ctx, destino) => {
     beep(ctx, destino, 523, 0,    0.08, 'square', 0.112767);
     beep(ctx, destino, 659, 0.09, 0.08, 'square', 0.112767);
     beep(ctx, destino, 784, 0.18, 0.15, 'square', 0.112767);
@@ -110,7 +132,7 @@ export function playShower(): void {
 
 /** Dramatic power-up sweep + two high notes */
 export function playEvolve(): void {
-  play('playEvolve', (ctx, destino) => {
+  playComAsset('playEvolve', (ctx, destino) => {
     const osc = ctx.createOscillator();
     const vol = ctx.createGain();
     osc.connect(vol);
@@ -134,7 +156,7 @@ export function playEvolve(): void {
 
 /** Descending sad tones + low thud */
 export function playDegenerate(): void {
-  play('playDegenerate', (ctx, destino) => {
+  playComAsset('playDegenerate', (ctx, destino) => {
     beep(ctx, destino, 440, 0,    0.12, 'square', 0.212903);
     beep(ctx, destino, 349, 0.14, 0.12, 'square', 0.212903);
     beep(ctx, destino, 262, 0.28, 0.15, 'square', 0.212903);

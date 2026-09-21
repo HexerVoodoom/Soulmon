@@ -1748,6 +1748,22 @@ Cobertura: **120/120** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 **Chamado por:** `src/utils/rebirth.ts`, `src/utils/arena.ts`, `src/utils/soulProfile/axes.ts`, `src/utils/soulProfile/derivedElements.ts`, `src/utils/soulProfile/ritualAnswers.ts`, `src/utils/soulProfile/profile.ts`, `src/utils/soulProfile/index.ts`, `src/utils/soulProfile/bestiary/select.ts`, `src/utils/soulProfile/ficha/buildSheet.ts`, `src/utils/soulProfile/ficha/cascata.ts`, `src/utils/soulProfile/ficha/classTitle.ts`
 **Régua:** nenhuma (`ls src/utils/soulProfile/types*.test.ts` vazio).
 
+### `src/utils/sonsAssets.ts`
+**Dono de:** O manifesto dos 4 assets de áudio gerados por IA (S16, 21/09/2026: `evolve`, `degenerate`, `task-complete` e a camada `trilha-base`) e a carga preguiçosa deles — `fetch` + `decodeAudioData` só depois do primeiro `play*` (S6: zero no bundle inicial), com `recortarSilencio` tirando o pré-rolo que o MediaRecorder do Chrome grava na cabeça. Não declara alvo de loudness: o buffer toca a ganho 1 porque o mestre já saiu no alvo da categoria (footgun 9).
+**Exports:**
+- `interface AssetDeSom` — `url`, `sha256`, `bytes`, `categoria`, `duracaoS`, `origem`, `promptRef`, `geradoEm`.
+- `const ASSETS_DE_SOM` — os 3 SFX, por nome de `play*`.
+- `type NomeDeAsset` — `keyof typeof ASSETS_DE_SOM`.
+- `const TRILHA_BASE: AssetDeSom` — a camada E1 da trilha (única; S13 segue congelada).
+- `function recortarSilencio(ctx, buf): AudioBuffer` — corta até o primeiro sample ≥ −60 dBFS; nunca devolve vazio.
+- `function carregarAsset(ctx, asset): Promise<AudioBuffer | null>` — idempotente; qualquer falha → `null` (o chamador fica no procedural).
+- `function assetPronto(nome): AudioBuffer | null` — só se já decodificou.
+- `function prepararAssets(ctx): void` — dispara a carga dos 3 SFX uma vez; não espera.
+- `function esquecerAssets(): void` — só para teste.
+- `function tocarBuffer(ctx, destino, buf): number` — buffer source a ganho 1; devolve a duração (fecha D-1/D-2).
+**Chamado por:** `src/utils/sounds.ts`, `src/utils/trilha.ts`
+**Régua:** `sonsAssets.contract.test.ts` (hash e bytes nas duas direções com `public/sounds/` e `docs/Attributions.md`; soma ≤ 300 KB; nada em `PRECACHE_URLS`; nenhum `import` de `.webm` em `src/`; sem número de loudness no manifesto)
+
 ### `src/utils/sounds.ts`
 **Dono de:** Os 8 sons sintetizados do app — zero asset, sem `AudioContext` por chamada.
 **Exports:**
@@ -1763,6 +1779,17 @@ Cobertura: **120/120** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 - `function playVisorTune(): void` — O CHIADO DA SINTONIA — o terceiro terço da sintonia do Visor (spec §2.3.1: "scanline de 400 ms + fade de 120 ms reserva→próprio + o chiado curto que a ocasião A já usa"). ⚠️ DIVERGÊNCIA doc↔código nº 10 do projeto (a 9ª está registrada em `spriteGen.contract.test.ts`).
 **Chamado por:** `src/App.tsx`, `src/components/CompanionHUD.tsx`, `src/components/DinoGame.tsx`, `src/components/DungeonGame.tsx`, `src/components/EvolutionPath.tsx`, `src/components/NightmareBattle.tsx`, `src/components/RPSGame.tsx`
 **Régua:** `sounds.contract.test.ts`, `sounds.visorTune.test.ts`
+
+### `src/utils/trilha.ts`
+**Dono de:** A trilha — uma camada (`TRILHA_BASE`) em loop no `busTrilha`. Nasce desligada (S2); liga e desliga por gesto (switch "Trilha/Music" do `SettingsModal`); `aoGestoSonoro` faz o primeiro `play*` da sessão ligá-la se a preferência persistida estiver ligada (o gesto é o consentimento, sem autoplay no carregamento); E0: o `audioBus` já suspende o contexto com `document.hidden`, e ao voltar a trilha retoma só se foi ligada por gesto nesta sessão; `pausarTrilha`/`retomarTrilha` são os ganchos do `App` para dormir e mudo global. Não decide estado E1–E6 (S13 congelada).
+**Exports:**
+- `function ligarTrilha(): void` · `function desligarTrilha(): void` — gesto; persistem `SOUND_TRACK_ENABLED`.
+- `function pausarTrilha(): void` · `function retomarTrilha(): void` — E0 (dormir, mudo).
+- `function aoGestoSonoro(): void` — chamado por `play()` de `sounds.ts`.
+- `function trilhaPreferida(): boolean` · `function trilhaTocando(): boolean`.
+- `function esquecerTrilha(): void` — só para teste.
+**Chamado por:** `src/App.tsx`, `src/components/SettingsModal.tsx`, `src/utils/sounds.ts`
+**Régua:** nenhuma (verificado no motor real em 21/09/2026: liga/pausa/retoma/desliga; `busTrilha.gain` 1/0)
 
 ### `src/utils/specialItemUse.ts`
 **Dono de:** O USO de item especial (glitchtama, coraçãozinho, chip) aplicado ao `prev` — dono único, distinto de `careUpdaters.ts`.

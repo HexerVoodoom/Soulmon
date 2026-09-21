@@ -7,6 +7,30 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 21/09/2026 — S16: som de IA INSTALADO ("só pra ter pronto") + trilha base ligável
+>
+> Decisão do dono, literal: *"Escolhe quaisquer um, só pra gente ter pronto. Depois melhoramos.
+> Tenha toda parte de som pronta."* Entraram os assets em que o gerador **passou na régua**
+> (`evolve`, `degenerate`, `task-complete`) e uma camada-base de trilha (`sonilo_music`, 30 s,
+> 100 BPM, 1,88 cr); os cinco sons curtos seguem procedurais (o gerador reprovou neles) e os
+> três com asset mantêm o procedural como **fallback**. **Codec = o Chrome** (MediaRecorder →
+> WebM/Opus 48 kbps, decodificação conferida no mesmo motor): `E:/Soulmon-assets/som-01/
+> codificar-opus.mjs`; trilha mestrada por `mestre-trilha.mjs` (mono, 12 compassos, crossfade,
+> −28,00 LUFS-S / −19,53 dBTP / −31,75 LUFS int.). Total **188 031 bytes** em `public/sounds/`,
+> zero em `PRECACHE_URLS`, `CACHE_VERSION` v150 → **v151**. Código: `src/utils/sonsAssets.ts`
+> (manifesto + carga preguiçosa + `recortarSilencio` do pré-rolo), `src/utils/trilha.ts`
+> (gesto liga/desliga, E0 em hidden/sono/mudo, retoma no 1º gesto da sessão se preferida),
+> `sounds.ts` (`playComAsset`), `audioBus.ts` (`garantirBarramento`), switch "Trilha/Music" no
+> `SettingsModal`, ganchos em `App.tsx` (`handleSleep`, `onToggleSound`). Régua nova:
+> `sonsAssets.contract.test.ts` (S6 + S9 nas duas direções, 11 testes). **Provado no motor real**
+> (dev server, Chrome): os 3 assets decodificam (1,159 / 0,669 / 0,179 s úteis) e tocam como
+> buffer (0 osciladores); `playFeed` segue procedural; trilha liga/pausa/retoma/desliga.
+> Portões: `tsc` ×3 · `vitest` **302 arquivos, 4217 testes** · `npm run build` ok. Registro:
+> `REGISTRO-DE-DECISOES.md` §6.1 **S16**; `Attributions.md` com as 4 linhas (hash, job, prompt,
+> versão dos termos). **Sobra que fica:** o A/B cego (`E:/Soulmon-assets/som-01/ab/`) é quem
+> decide se isso fica — o dono ainda não ouviu; o loop da trilha perde ~48 ms no fim (limite do
+> MediaRecorder) e só a camada `base` existe (S13 segue congelada).
+
 > ## 21/09/2026 — Manual sincronizado com `5ac3d351` (delta `dc72579e..5ac3d351`, 31 commits)
 >
 > 13 docs de `docs/manual/` atualizados só nas seções que o diff tocou (SQUAD-NARRATIVA

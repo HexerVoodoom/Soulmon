@@ -72,6 +72,7 @@ import { playerDayKey } from './utils/playerDay';
 import { awardBondXP, bondLevelFor, unclaimedBondRewards, applyBondRewards, bondTitle } from './utils/bond';
 import { applyPoopDrain, cleanPoop, POOP_DRAIN_PERIOD_MS, remainingDrainToday } from './utils/poopDrain';
 import { isMuted, setMuted, playTaskComplete, playFeed, playEvolve, playDegenerate, playSleep } from './utils/sounds';
+import { pausarTrilha, retomarTrilha } from './utils/trilha';
 import { requestNotificationPermission, showNotification } from './utils/notifications';
 // `CHIP_BOOST`/`HEART_HEAL` saíram daqui de propósito: os números do uso de item
 // especial agora são lidos uma vez só, dentro de `utils/specialItemUse.ts`.
@@ -2729,6 +2730,8 @@ export default function App() {
        A criatura fala do corpo dela — ⚠️ `wake` nunca comenta a noite de quem
        lê (veto #12); há teste em `petVoice.test.ts`. */
     falar(isSleeping ? 'wake' : 'sleep');
+    // E0 (S13, peça extraída): dormindo, a trilha para; acordar é gesto e ela volta se estava ligada.
+    if (isSleeping) retomarTrilha(); else pausarTrilha();
   }, [isSleeping, falar]);
 
   /* Copy §1.6: a borra apareceu — ela constata e aponta (L3, §5.6). Só na
@@ -5872,6 +5875,8 @@ export default function App() {
               const mudo = !soundMuted;
               setMuted(mudo);
               setSoundMuted(mudo);
+              // E0: o mudo global também cala a trilha; religar devolve só se ela estava ligada por gesto.
+              if (mudo) pausarTrilha(); else retomarTrilha();
               // som-01 — só a transição LIGADO → MUDO é medida, e só ela. É o
               // único evento que mede o perfil "usuário em público" sendo
               // punido, e ele mede por REJEIÇÃO explícita, nunca por inferência.

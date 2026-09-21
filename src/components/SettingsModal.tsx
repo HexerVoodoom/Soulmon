@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { desligarTrilha, ligarTrilha, trilhaPreferida } from '../utils/trilha';
 import { AISettingsModal, SwitchRow, ActionRow, type AISettings } from './AISettingsModal';
 import { ModalSheet } from './form/FormKit';
 import { resolveLanguage, type Language } from '../utils/i18n';
@@ -41,6 +42,7 @@ export function SettingsModal({
   language = resolveLanguage(readLocal(STORAGE_KEYS.LANGUAGE)),
 }: SettingsModalProps) {
   const [showAISettings, setShowAISettings] = useState(false);
+  const [trilha, setTrilha] = useState(() => trilhaPreferida());
   const isPt = language === 'pt-BR';
 
   return (
@@ -56,6 +58,18 @@ export function SettingsModal({
             checked={!soundMuted}
             onToggle={() => onToggleSound?.()}
             label={isPt ? 'Sons' : 'Sound'}
+          />
+          <SwitchRow
+            checked={trilha}
+            onToggle={() => {
+              // S2: a trilha só começa por gesto — este toque É o gesto.
+              if (trilha) desligarTrilha(); else ligarTrilha();
+              setTrilha(!trilha);
+            }}
+            label={isPt ? 'Trilha' : 'Music'}
+            hint={soundMuted
+              ? (isPt ? 'Com os sons desligados, a trilha fica em silêncio.' : 'With sound off, music stays silent.')
+              : (isPt ? 'Uma camada calma, em loop. Para sozinha quando o app sai de vista.' : 'One calm looping layer. Stops by itself when the app is out of view.')}
           />
           <SwitchRow
             checked={useAI}

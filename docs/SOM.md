@@ -16,7 +16,9 @@
 
 | O quê | Arquivo |
 |---|---|
-| Os sons — **8 símbolos** (`playPresence`, `playTaskComplete`, `playFeed`, `playShower`, `playEvolve`, `playDegenerate`, `playSleep`, `playVisorTune`), síntese procedural, zero byte de asset | `src/utils/sounds.ts` |
+| Os sons — **8 símbolos** (`playPresence`, `playTaskComplete`, `playFeed`, `playShower`, `playEvolve`, `playDegenerate`, `playSleep`, `playVisorTune`), síntese procedural; desde 21/09/2026 (S16) `playEvolve`/`playDegenerate`/`playTaskComplete` preferem o asset de IA e caem no procedural | `src/utils/sounds.ts` |
+| Manifesto e carga dos **4 assets** (3 SFX + trilha base), hash S9, zero no bundle inicial | `src/utils/sonsAssets.ts` + `public/sounds/` |
+| A **trilha** (uma camada, loop, gesto liga, E0 para) | `src/utils/trilha.ts` |
 | **A política de loudness** (categorias, alvos, teto, degrau, offsets) — **dono único** | `src/utils/loudness.ts` |
 | Barramento único (sub-mix por categoria, limitador, ducking) e **despacho com a R-EX** | `src/utils/audioBus.ts` |
 | Trava da **R-NOVA** — os sons cortados não podem voltar por superfície nova | `src/utils/cortes.contract.test.ts` |
@@ -106,14 +108,23 @@ conquista", isso é timbre/envelope/duração, não nível.
 - **Aprovação auditiva não é do gate.** "Soa bem" é do dono (S8): fone **e** alto-falante de
   celular, três perguntas fechadas por asset, lote de no máximo 8.
 
-## 5. Áudio gerado por IA — gerado em 21/09/2026, A/B montado e NÃO OUVIDO
+## 5. Áudio gerado por IA — INSTALADO em 21/09/2026 (S16), A/B ainda NÃO OUVIDO
 
 > **21/09/2026:** o bloqueio caiu (480 cr; termos, loja e S11/S12 respondidos pelo dono — registro
 > §6.1, nota de 21/09 sob a emenda da S10). Os 12 prompts foram gerados e pós-processados em
 > `E:/Soulmon-assets/som-01/` (**fora do repo**: nenhum byte de áudio entrou, `Attributions.md`
 > segue sem linha de áudio). Custo medido: **2,5 cr/geração**, plano pro = **3 jobs concorrentes**.
 > O A/B cego dos 3 pares está montado (`E:/Soulmon-assets/som-01/ab/escuta.html`, protocolo
-> `ab-piloto.md` §8) e **espera o dono ouvir** — até lá, tudo abaixo continua valendo.
+> `ab-piloto.md` §8) e **espera o dono ouvir**.
+>
+> **S16 (mesmo dia, decisão do dono: "só pra ter pronto"):** os assets dos três eventos LONGOS e a
+> camada-base da trilha **estão no app** — `public/sounds/*.webm` (188 KB, Opus pelo MediaRecorder
+> do Chrome), manifesto e carga preguiçosa em `src/utils/sonsAssets.ts`, trilha em
+> `src/utils/trilha.ts` (switch "Trilha/Music" no `SettingsModal`; liga por gesto, para em
+> `hidden`/sono/mudo). Os cinco sons curtos seguem procedurais; os três com asset mantêm o
+> procedural como fallback. Régua: `src/utils/sonsAssets.contract.test.ts`. O A/B continua sendo
+> o gatilho: se o procedural vencer, os assets saem. "O procedural venceu" e "a IA venceu" seguem
+> as duas proibidas — ninguém mediu.
 
 Prompts (12) e a sequência de 6 passos estão em
 `squad-alpha-runs/som-01/prototyper/pacote-prompts.md`. O que era pré-condição, e como ficou:
