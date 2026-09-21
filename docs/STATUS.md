@@ -11,11 +11,12 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 >
 > `docs/HANDOFF-SOM.md` executado. Dono respondeu as 3 perguntas do §3 em modal (gerar em
 > `E:/` e instalar se a IA vencer · declarar IA na loja · manter S11/S12). `pacote-prompts.md`
-> §0 rodou de ponta a ponta: **480,95 → ~446 cr**, custo medido **2,5 cr/geração**, plano pro
+> §0 rodou de ponta a ponta: **480,95 → 443,35 cr**, custo medido **2,5 cr/geração**, plano pro
 > = **3 jobs concorrentes**, fila do gerador de 4 a 30 min. 12 prompts literais gerados
-> (+1 duplicata acidental de `presence`) e pós-processados; **10 APROVADOS, 2 RECUSAS de crista**
-> (`transaction`, `end-zero` — regerar) e **3 com ganho > 20 dB** depois do corte (`presence` ×2,
-> `shower` — o corpo do som ficou fora da janela; volta ao produtor). Tudo em
+> (+1 duplicata acidental de `presence`, +2 regenerações) e pós-processados: **12 APROVADOS, 3 RECUSAS**
+> de crista (`transaction` ×2 — conflito prompt "click" × limite de 6 dB —, `end-zero` na 1ª, aprovado na
+> 2ª) e **4 com ganho > 20 dB** depois do corte (`presence` ×2, `shower`, `sleep` — o corpo do som
+> ficou fora da janela; volta ao produtor). Saldo final **443,35 cr** (15 gerações × 2,5). Tudo em
 > `E:/Soulmon-assets/som-01/` (`MANIFESTO.md`, cópia em `squad-alpha-runs/som-01/prototyper/`):
 > **nenhum byte de áudio entrou no repo**, `Attributions.md` intacto, `CACHE_VERSION` intacto.
 > **A/B cego** dos 3 pares montado pelo `ab-piloto.md` §8.1 (Δ 0,00 LU, semente 20260921,
