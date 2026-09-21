@@ -25,6 +25,14 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > `sonsAssets.contract.test.ts` (S6 + S9 nas duas direções, 11 testes). **Provado no motor real**
 > (dev server, Chrome): os 3 assets decodificam (1,159 / 0,669 / 0,179 s úteis) e tocam como
 > buffer (0 osciladores); `playFeed` segue procedural; trilha liga/pausa/retoma/desliga.
+> **Rodada 2 (mesmo dia, "resolva tudo"):** as duas sobras foram fechadas — o loop da trilha fecha em
+> **28,800 s exatos** (12 compassos; o arquivo carrega 1 s de cauda e `loopEnd` fixa o ponto) e a trilha
+> tem **duas camadas** (`base` + `ritmo`, `sonilo_music`, ambas mestradas no alvo sozinhas, em fase
+> pelo mesmo `start(t0)`), com o trim medido da soma em `loudness.ts` (`TRIM_TRILHA_POR_CAMADAS_DB`,
+> −2,024 dB). S6: as camadas a 32 kbps → **258 248 bytes** no total. A condição (1) da S13 (≥2
+> camadas reais) está satisfeita; a máquina E0–E6 segue congelada (as duas tocam juntas, um estado).
+> Provado no motor real: 2 camadas, `loopEnd` 28,8 nos dois buffers, desliga limpo. `CACHE_VERSION`
+> **v152**. `8a930657` na `main`.
 > Portões: `tsc` ×3 · `vitest` **302 arquivos, 4217 testes** · `npm run build` ok. Registro:
 > `REGISTRO-DE-DECISOES.md` §6.1 **S16**; `Attributions.md` com as 4 linhas (hash, job, prompt,
 > versão dos termos). **Sobra que fica:** o A/B cego (`E:/Soulmon-assets/som-01/ab/`) é quem

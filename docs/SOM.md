@@ -18,7 +18,7 @@
 |---|---|
 | Os sons — **8 símbolos** (`playPresence`, `playTaskComplete`, `playFeed`, `playShower`, `playEvolve`, `playDegenerate`, `playSleep`, `playVisorTune`), síntese procedural; desde 21/09/2026 (S16) `playEvolve`/`playDegenerate`/`playTaskComplete` preferem o asset de IA e caem no procedural | `src/utils/sounds.ts` |
 | Manifesto e carga dos **4 assets** (3 SFX + trilha base), hash S9, zero no bundle inicial | `src/utils/sonsAssets.ts` + `public/sounds/` |
-| A **trilha** (uma camada, loop, gesto liga, E0 para) | `src/utils/trilha.ts` |
+| A **trilha** (duas camadas em fase, loop de 12 compassos, gesto liga, E0 para; trim por nº de camadas em `loudness.ts`) | `src/utils/trilha.ts` |
 | **A política de loudness** (categorias, alvos, teto, degrau, offsets) — **dono único** | `src/utils/loudness.ts` |
 | Barramento único (sub-mix por categoria, limitador, ducking) e **despacho com a R-EX** | `src/utils/audioBus.ts` |
 | Trava da **R-NOVA** — os sons cortados não podem voltar por superfície nova | `src/utils/cortes.contract.test.ts` |
