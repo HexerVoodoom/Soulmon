@@ -16,8 +16,8 @@
 
 | O quê | Arquivo |
 |---|---|
-| Os sons — **8 símbolos** (`playPresence`, `playTaskComplete`, `playFeed`, `playShower`, `playEvolve`, `playDegenerate`, `playSleep`, `playVisorTune`), síntese procedural; desde 21/09/2026 (S16 + resposta "A" do dono ao A/B) `playDegenerate`/`playTaskComplete` preferem o asset de IA e caem no procedural; `playEvolve` é procedural por escolha do dono | `src/utils/sounds.ts` |
-| Manifesto e carga dos **4 assets** (2 SFX + 2 camadas de trilha), hash S9, zero no bundle inicial | `src/utils/sonsAssets.ts` + `public/sounds/` |
+| Os sons — **8 símbolos** (`playPresence`, `playTaskComplete`, `playFeed`, `playShower`, `playEvolve`, `playDegenerate`, `playSleep`, `playVisorTune`), síntese procedural; desde 21/09/2026 (S16; o dono escolheu "o gerado nos 3") `playEvolve`/`playDegenerate`/`playTaskComplete` preferem o asset de IA e caem no procedural | `src/utils/sounds.ts` |
+| Manifesto e carga dos **5 assets** (3 SFX + 2 camadas de trilha), hash S9, zero no bundle inicial | `src/utils/sonsAssets.ts` + `public/sounds/` |
 | A **trilha** (duas camadas em fase, loop de 12 compassos, gesto liga, E0 para; trim por nº de camadas em `loudness.ts`) | `src/utils/trilha.ts` |
 | **A política de loudness** (categorias, alvos, teto, degrau, offsets) — **dono único** | `src/utils/loudness.ts` |
 | Barramento único (sub-mix por categoria, limitador, ducking) e **despacho com a R-EX** | `src/utils/audioBus.ts` |

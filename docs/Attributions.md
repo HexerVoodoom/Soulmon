@@ -80,7 +80,7 @@ aberto no benchmark de agosto/2026 (`docs/PLANO-EVOLUCAO.md`) e foi fechado.*
 
 ## Áudio
 
-**Desde 21/09/2026: quatro arquivos de áudio gerados por IA em `public/sounds/`** (o quinto, `evolve.webm`, entrou e **saiu no mesmo dia** — o dono escolheu o procedural no par1 do A/B; o byte fica no histórico em `ee79fd44`) (S16, decisão
+**Desde 21/09/2026: cinco arquivos de áudio gerados por IA em `public/sounds/`** (S16, decisão
 do dono em `REGISTRO-DE-DECISOES.md` §6.1 — instalados **sem** o A/B cego ter rodado, "só pra ter
 pronto"). Os outros cinco sons continuam **sintetizados em runtime** (`src/utils/sounds.ts`), e os
 três eventos com arquivo mantêm o procedural como fallback. Régua executável, nas duas direções
@@ -90,6 +90,7 @@ três eventos com arquivo mantêm o procedural como fallback. Régua executável
 
 | Arquivo · SHA-256 | Evento | Origem · modelo | Provedor do modelo | Prompt | Gerado em | Versão dos termos | Termos |
 |---|---|---|---|---|---|---|---|
+| `public/sounds/evolve.webm` · `cc8e814b51c7eb5df5a3827cde0674492e869db35f30a4fef778094dc1fc1dfe` | `playEvolve` (Marco) | Higgsfield CLI · `seed_audio` (Seed Audio 1.0), job `298a77b3` | **não nomeado pela plataforma** (§8 — pendência) | `squad-alpha-runs/som-01/prototyper/pacote-prompts.md` §2.1, literal | 21/09/2026 | Terms of Use *Last Updated* 26/07/2026 | §4.4 uso comercial, sem exclusividade · §13.2 sem garantia de originalidade |
 | `public/sounds/degenerate.webm` · `1508cfaff0c4889152a94bf7b2735b1e03762dd3b228f7186397b89fb79d904b` | `playDegenerate` (Degeneração) | idem, job `af9b0064` | idem | `pacote-prompts.md` §2.12 | 21/09/2026 | idem | idem |
 | `public/sounds/task-complete.webm` · `798225a0dd836866b886506fa8d697fcda87e7eaafd30a783724211bff2d9520` | `playTaskComplete` (Conclusão) | idem, job `852e6808` | idem | `pacote-prompts.md` §2.7 | 21/09/2026 | idem | idem |
 | `public/sounds/trilha-base.webm` · `2122e7ed4d330a117eb27b067781a2fcbd90ce1113d800d2839a3702acd10688` | trilha, camada `base` (E1) | Higgsfield CLI · `sonilo_music`, job `49823588` | idem | `pacote-prompts.md` §2.14 | 21/09/2026 | idem | idem |
@@ -99,7 +100,7 @@ Pós-processamento (corte, 48 kHz, crista, normalização ao alvo da categoria) 
 `squad-alpha-runs/som-01/prototyper/pos-processar.mjs` (SFX) e `E:/Soulmon-assets/som-01/mestre-trilha.mjs`
 (trilha: mono, 12 compassos a 100 BPM, crossfade de loop, −28 LUFS-S); codificação **WebM/Opus 48 kbps
 mono pelo MediaRecorder do Chrome** (não há codec nesta máquina) e decodificação conferida no mesmo
-motor. Total **250 607 bytes**, nenhum em `PRECACHE_URLS` (S6). Nenhum prompt contém texto do usuário
+motor. Total **258 248 bytes**, nenhum em `PRECACHE_URLS` (S6). Nenhum prompt contém texto do usuário
 (D8/#18); todos carregam a cláusula anti-franquia.
 
 Esta seção existe **antes** de existir asset, de propósito: quando o primeiro arquivo entrar, ele

@@ -456,18 +456,16 @@ deixado aberta. O resultado **confirmou a S9** e **abriu uma ponta nova**:
 > urgente. Ela volta a ser bloqueante no minuto em que o primeiro asset for gerado, porque `dist/`
 > é commitado e todo byte é permanente no histórico do git.
 
-> ### 21/09/2026 (fim do dia) — o dono RESPONDEU ao A/B: "Coloca o A"
+> ### 21/09/2026 (fim do dia) — o dono escolheu: **o GERADO nos três**
 >
-> Uma resposta por par, sem as 3 perguntas × 2 condições do protocolo (`ab-piloto.md` §8.3/§8.4 —
-> **não** é o teste que estava escrito; é a escolha do dono, registrada como tal). Aberto o mapa cego
-> (semente 20260921): **par1 `playEvolve` A = procedural · par2 `playDegenerate` A = IA · par3
-> `playTaskComplete` A = IA**. Consequência aplicada no mesmo dia: o asset `evolve.webm` **saiu** e
-> `playEvolve` voltou a ser 100 % sintetizado; `degenerate.webm` e `task-complete.webm` ficam.
-> Placar 2×1 para a IA nos pares em que o gerador passou na régua — **abaixo do gatilho da S10
-> ("≥2 de 3 nas duas condições")**, então a S10 não muda de significado: o híbrido já admitido na
-> alternativa que perdeu da S1 é o que está no app — **procedural nos 6 eventos** (5 curtos + Marco),
-> **IA em 2** (Degeneração, Conclusão) e na trilha. "O procedural venceu" e "a IA venceu" seguem
-> as duas proibidas: 3 pares, 1 ouvinte, 1 resposta por par.
+> Primeiro disse "Coloca o A"; aplicado literalmente sobre o mapa cego (semente 20260921: par1
+> `playEvolve` A = procedural · par2/par3 A = IA), `evolve.webm` saiu em `c703c8bc`. Perguntado se
+> era isso, respondeu **"Não — quero o gerado nos 3"**: `evolve.webm` voltou no commit seguinte e os
+> três eventos longos ficam com o asset de IA (fallback procedural). **Isto é escolha do dono, não
+> resultado do protocolo** (`ab-piloto.md` §8.3/§8.4 — 3 perguntas × 2 condições — não foi
+> respondido). A S10 não muda de significado por medição nenhuma: o que está no app é o híbrido —
+> **IA em 3 eventos longos e na trilha (2 camadas), procedural nos 5 curtos**. "O procedural
+> venceu" e "a IA venceu" seguem proibidas.
 
 > ### 21/09/2026 — o gatilho da S10 DISPAROU: o A/B cego está MONTADO, e ainda NÃO OUVIDO
 >

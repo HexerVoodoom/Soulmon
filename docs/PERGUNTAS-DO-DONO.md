@@ -36,4 +36,4 @@ Todas as sete respondidas em modal, sempre pela recomendada: (1) rodada 2 gerada
 (curtos ficam procedurais; os três longos e a trilha entraram). A trilha ganhou a **segunda camada** (`ritmo`),
 loop em 28,800 s exatos (12 compassos), trim de 2 camadas em `loudness.ts`. Fila vazia.
 
-**#8 respondido (21/09/2026): "Coloca o A"** → par1 procedural, par2/par3 IA; aplicado (`evolve.webm` saiu). Fila vazia.
+**#8 respondido (21/09/2026):** "Coloca o A" e, perguntado, **"quero o gerado nos 3"** → os 3 assets de IA ficam. Fila vazia.

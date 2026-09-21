@@ -4,9 +4,8 @@
  * Decisão do dono em 21/09/2026 (`docs/REGISTRO-DE-DECISOES.md` §6.1, S16):
  * instalar os candidatos de IA dos eventos LONGOS e a trilha **sem** o A/B cego
  * ter rodado — "só pra gente ter pronto; depois melhoramos". Em 21/09/2026 o
- * dono escolheu "A" nos três pares do A/B (sem as 3 perguntas × 2 condições do
- * protocolo): par1 `playEvolve` A = **procedural** → o asset de evolução SAIU e
- * o som voltou a ser 100% sintetizado; par2/par3 A = IA → ficam. A S10 muda de dono, não de método: o
+ * dono confirmou: **o gerado nos três** (`playEvolve`, `playDegenerate`,
+ * `playTaskComplete`) — escolha dele, não resultado do protocolo do A/B. A S10 muda de dono, não de método: o
  * procedural continua sendo o **fallback** de cada um desses três sons (se o
  * arquivo ainda não chegou, não decodificou, ou o `fetch` falhou, o som que
  * toca é o de sempre), e os cinco sons CURTOS continuam procedurais porque o
@@ -52,6 +51,16 @@ export interface AssetDeSom {
 }
 
 export const ASSETS_DE_SOM = {
+  playEvolve: {
+    url: '/sounds/evolve.webm',
+    sha256: 'cc8e814b51c7eb5df5a3827cde0674492e869db35f30a4fef778094dc1fc1dfe',
+    bytes: 7641,
+    categoria: 'marco',
+    duracaoS: 1.2,
+    origem: 'higgsfield/seed_audio',
+    promptRef: 'squad-alpha-runs/som-01/prototyper/pacote-prompts.md §2.1',
+    geradoEm: '2026-09-21',
+  },
   playDegenerate: {
     url: '/sounds/degenerate.webm',
     sha256: '1508cfaff0c4889152a94bf7b2735b1e03762dd3b228f7186397b89fb79d904b',

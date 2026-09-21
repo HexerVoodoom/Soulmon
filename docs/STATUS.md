@@ -33,9 +33,10 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > camadas reais) está satisfeita; a máquina E0–E6 segue congelada (as duas tocam juntas, um estado).
 > Provado no motor real: 2 camadas, `loopEnd` 28,8 nos dois buffers, desliga limpo. `CACHE_VERSION`
 > **v152**. `8a930657` na `main`.
-> **Resposta do dono ao A/B ("Coloca o A"):** par1 = procedural, par2/par3 = IA → `evolve.webm` saiu,
-> `playEvolve` 100 % procedural de novo; `degenerate`/`task-complete` ficam. Registro na nota do
-> §6.1. `CACHE_VERSION` **v153**.
+> **Resposta do dono ao A/B:** "Coloca o A" → aplicado literal (`c703c8bc`, `evolve.webm` saiu);
+> perguntado, corrigiu: **"quero o gerado nos 3"** → `evolve.webm` voltou; os três eventos longos
+> ficam com asset de IA. Escolha do dono, não protocolo. Registro na nota do §6.1. `CACHE_VERSION`
+> **v154**.
 > Portões: `tsc` ×3 · `vitest` **302 arquivos, 4217 testes** · `npm run build` ok. Registro:
 > `REGISTRO-DE-DECISOES.md` §6.1 **S16**; `Attributions.md` com as 4 linhas (hash, job, prompt,
 > versão dos termos). **Sobra que fica:** o A/B cego (`E:/Soulmon-assets/som-01/ab/`) é quem
