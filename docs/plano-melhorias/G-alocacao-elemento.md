@@ -1,8 +1,17 @@
 > # ⏸️ PARQUEADO PARA A v2.0 — decisão do dono, 22/09/2026
 >
-> **Esta spec não é trabalho em andamento.** O dono decidiu priorizar o
-> balanceamento PRÉ-RENASCIMENTO e lançar a alocação de elemento junto do
-> Renascimento na **v2.0 do app**. Nada aqui entra antes disso.
+> **Esta spec não é trabalho em andamento** — com DUAS exceções declaradas
+> abaixo. O dono decidiu priorizar o balanceamento PRÉ-RENASCIMENTO e lançar a
+> **alocação de elemento** junto do Renascimento na **v2.0 do app**.
+>
+> ⚠️ **O que SAIU do parqueamento em 22/09/2026, por decisão do dono, e vale
+> para o v1:** a **geração tardia** (D-G5b — nasce só o rookie, o resto sob
+> demanda na incubação) e a **espera mínima de 30 min** (D-G8b). As duas são
+> independentes da alocação: existem para que a forma seguinte seja produzida
+> na hora em que o jogador chega nela, e funcionam sem plano de alocação
+> nenhum. **A alocação em si continua parqueada.** Leia a §6.4-A antes de
+> tocar em `spriteTrigger.ts` — ela mede o que o código faz hoje, que não é o
+> que esta spec presumia.
 >
 > **O que já está no código, e é INERTE.** Dois pacotes foram construídos e
 > mergeados antes da decisão. Eles não fazem nada hoje porque **ninguém passa
@@ -48,10 +57,11 @@
 | D-G2 | **Cadência**: o renascido aloca **a cada evolução** (rookie → champion → ultimate → mega → ultra), não uma vez na cerimônia. |
 | D-G3 | **Pontos**: uma FATIA do `ELEMENT_ORCAMENTO_BY_STAGE` que já existe. Redistribuição, não pontos novos. Sem ganho por desempenho, sem compra. |
 | D-G4 | **Reversibilidade**: permanente, acumulando entre estágios. |
-| D-G5 | **Geração tardia (só renascido)**: `soulmonStages` passa a ser escrito POR ESTÁGIO. Não renascido continua com as 11 de uma vez. |
+| D-G5 | ~~**Geração tardia (só renascido)**: `soulmonStages` passa a ser escrito POR ESTÁGIO. Não renascido continua com as 11 de uma vez.~~ ⚠️ **SUBSTITUÍDO em 22/09/2026 pelo D-G5b — a geração tardia deixou de ser exclusiva do renascido.** |
+| D-G5b | 🆕 **Geração tardia para TODO MUNDO, inclusive v1** (decisão do dono, 22/09/2026): *"Só nasce o rookie e o restante é sob demanda, na incubação."* **Nasce só a forma rookie**; cada forma seguinte é produzida sob demanda, na incubação daquela evolução. ⚠️ **Isto é MUDANÇA de comportamento, não descrição do que existe** — ver §6.6 para o estado medido hoje. Consequência direta em `utils/spriteTrigger.ts`: a ocasião A (`birthBatch`) deixa de ser `['rookie', champion previsto]` e passa a ser `['rookie']`. |
 | D-G6 | **Incubação**: a ocasião B de `utils/spriteTrigger.ts` (`faltam === 1`) ganha nome, estado persistido e visibilidade — aviso na fila da Home. Encaixar nas ocasiões A/B/C, não reinventar. ⚠️ **Revisto em 22/09/2026 (D-G8b)**: a incubação passa a ter DURAÇÃO — `INCUBATION_MIN_MS` = 30 min —, então o aviso pode dizer quando a forma fica pronta. O que continua proibido é contagem regressiva de PERDA: nada expira ao fim dos 30 min. |
 | D-G8 | ⚠️ **REVOGADO em 22/09/2026 o prazo de 24h.** Não existe relógio de parede que FECHE nada, tolerância em horas nem contagem de tempo de espécie nenhuma. Motivos registrados: (a) seria a primeira mecânica do app em que *não abrir o app* produz perda permanente, contra `ABSENCE_FORGIVENESS_DAYS`, `REST_DAYS_PER_WEEK`, escudos automáticos e constância em janela; (b) com `MANUAL_EVOLUTION = true` o disparo já pertence ao jogador — pôr um relógio ao lado dele acrescenta coerção onde havia autonomia. **O gesto de evoluir continua sendo do jogador, e a incubação espera por ele indefinidamente.** |
-| D-G8b | 🆕 **A incubação tem uma ESPERA MÍNIMA de 30 minutos** (decisão do dono, 22/09/2026 — `INCUBATION_MIN_MS`). Ao entrar em incubação o lote de sprite começa a ser gerado; a evolução só fica disponível depois dos 30 min, e o jogador volta para dar o gesto. **Isto NÃO reabre o D-G8, e a diferença é a única coisa que importa aqui: 30 min é um PISO, nunca um teto.** Voltar em 30 minutos, em três dias ou em três semanas dá exatamente o mesmo resultado — nada expira, nada fecha sozinho, nada é perdido por não abrir o app. A régua que separa os dois é `spriteTrigger.semPrazo.contract.test.ts`: proibida qualquer aritmética de data que PRODUZA perda; a comparação `agora − since ≥ INCUBATION_MIN_MS`, que só LIBERA, é a única permitida, e o teste a nomeia explicitamente para que a proibição não a engula. |
+| D-G8b | 🆕 **A incubação tem uma ESPERA MÍNIMA de 30 minutos, no v1 também** (decisão do dono, 22/09/2026 — `INCUBATION_MIN_MS`; escopo v1 confirmado por ele na mesma conversa: *"No v1 mesmo"*). Vale para todo jogador, renascido ou não — é a primeira peça desta spec que NÃO espera a v2.0. Ao entrar em incubação o lote de sprite começa a ser gerado; a evolução só fica disponível depois dos 30 min, e o jogador volta para dar o gesto. **Isto NÃO reabre o D-G8, e a diferença é a única coisa que importa aqui: 30 min é um PISO, nunca um teto.** Voltar em 30 minutos, em três dias ou em três semanas dá exatamente o mesmo resultado — nada expira, nada fecha sozinho, nada é perdido por não abrir o app. A régua que separa os dois é `spriteTrigger.semPrazo.contract.test.ts`: proibida qualquer aritmética de data que PRODUZA perda; a comparação `agora − since ≥ INCUBATION_MIN_MS`, que só LIBERA, é a única permitida, e o teste a nomeia explicitamente para que a proibição não a engula. |
 | D-G9 | Enquanto o estágio está aberto, a alocação é **livremente editável** — não é reversão, é *ainda não commitado*. Depois é permanente, e **reset de pontos (grátis, por Bits, por Créditos ou por item) está vetado preventivamente** (`ledger/vetos.md`, 22/09/2026). ⚠️ **O ponto de fechamento MUDOU com o D-G8b, por consequência necessária:** a alocação fecha no **início da incubação**, não mais no gesto de evoluir. O motivo é que o sprite é gerado A PARTIR da ficha, e a ficha é o que a alocação mexe — deixar a alocação editável durante os 30 min significaria gerar a forma a partir de uma alocação que o jogador ainda pode trocar, e então a alocação **não influenciaria a forma**, que é a razão inteira da funcionalidade existir. Isto RESTAURA o desenho original do dono ("o último dia é de incubação, deve deixar claro que status novos não influenciarão mais na evolução"), que o D-G8 tinha desfeito junto com o prazo de 24h. |
 | D-G10 | **A alocação NÃO abre na cerimônia de evolução.** Cerimônia é celebração; decidir sob excitação piora a escolha. Ao fechar, a cerimônia deixa um **marcador calmo e persistente** na página de Evolução. |
 | D-G11 | **Prévia obrigatória da cascata**, incluindo o que ainda FALTA ("faltam N pontos em Fogo para Vapor começar a despertar"). Arrependimento é função da opacidade, não da permanência. |
@@ -415,6 +425,40 @@ que o relógio faz neste sistema é LIBERAR; ele nunca tira. **R-F**: um estági
 chega ao gesto de evoluir sem alocação nenhuma é distribuído pelo oráculo
 exatamente como hoje — a alocação fecha a *escolha*, nunca o *recurso*, e a tela
 diz isso em palavra antes do commit.
+
+### 6.4-A ⚠️ O que o código faz HOJE — medido, não lembrado
+
+Registrado porque a decisão D-G5b foi tomada sobre uma descrição minha que
+estava pela metade, e o próximo a ler isto precisa da medição, não da frase.
+
+**Há DUAS camadas, e elas nascem em momentos diferentes:**
+
+| Camada | O que é | Quando nasce HOJE |
+|---|---|---|
+| **Texto** — `soulmonStages` | as 11 formas: nome, descrição PT/EN e os dois prompts | **todas de uma vez**, no nascimento. `generateOracle` (`utils/oracle.ts`) monta o array inteiro numa passada e o save congela |
+| **Sprite** — `spriteLibrary` | a imagem de cada forma, gerada por IA (paga) | **incremental**: ocasião A = `['rookie', champion previsto]` (**duas**), depois B (véspera) e C (resgate) |
+
+Então "as 11 nascem de uma vez" era verdade do TEXTO e falso do SPRITE — e o
+sprite, que é a parte cara e a que a alocação precisa influenciar, já era sob
+demanda. O que o **D-G5b** muda, em relação a este estado:
+
+1. a ocasião A encolhe de **duas** formas para **uma** (`['rookie']`) — o
+   champion previsto sai do lote de nascimento e passa a nascer na incubação;
+2. o TEXTO deixa de ser escrito de uma vez. ⚠️ **Esta metade tem custo e não é
+   simétrica com a do sprite**: `soulmonStages` alimenta a página de Evolução
+   (o galho previsto), o álbum de formas e o fallback de nome. Escrevê-lo por
+   estágio exige decidir o que essas telas mostram de uma forma que ainda não
+   foi escrita — silhueta sem nome é provavelmente a resposta certa (é o que o
+   bestiário já faz), mas é decisão de produto, não refactor. **Não comece por
+   aqui**: a metade do sprite entrega o efeito sozinha no v1, porque no v1 não
+   há alocação para o texto refletir.
+
+**Consequência de UX a declarar antes de implementar**: hoje a ocasião A gera o
+champion previsto justamente para que a próxima forma tenha arte antes da hora.
+Tirando-a do nascimento, a página de Evolução passa a mostrar a forma seguinte
+**sem arte** até a incubação. Isso pode ser ganho (silhueta = antecipação, e o
+bestiário já usa esse vocabulário) ou perda (a página fica vazia justo no lugar
+que existe para dar o que esperar). É escolha do dono, e está em aberto.
 
 ### 6.5 Visibilidade — posição declarada na fila
 

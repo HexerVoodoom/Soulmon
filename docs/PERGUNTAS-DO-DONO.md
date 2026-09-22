@@ -259,3 +259,25 @@ evolui na hora em que o último ponto cai pode pegar a forma sem sprite pronto
 **acrescentaria uma espera à evolução de todo mundo** — é troca de produto, não
 detalhe técnico. Não implementado em nenhum dos dois casos: a funcionalidade
 segue PARQUEADA para a v2.0.
+
+## Decisão AVULSA — geração tardia no v1 (22/09/2026, na conversa)
+
+| # | Decisão |
+|---|---|
+| 80 | **Os 30 min de incubação valem no v1** — *"No v1 mesmo"*. Não é só do renascido. Entra como escopo do **D-G8b**. |
+| 81 | **Nasce só o rookie; o resto é sob demanda, na incubação** — *"nao nascem as 11 de uma vez. Só nasce o rookie e o restante é sob demanda, na incubação"*. Entra como **D-G5b**, substituindo o D-G5 (que restringia a geração tardia ao renascido). ⚠️ **É mudança, não descrição**: hoje o TEXTO das 11 formas (`soulmonStages`) é escrito de uma vez no nascimento e o SPRITE já é incremental, mas a ocasião A gera **duas** formas (rookie + champion previsto), não uma. Medição em §6.4-A da spec. |
+
+⚠️ **ABERTO, e decide a forma da coisa — QUANDO a incubação começa:**
+
+| Opção | Começa em | Efeito |
+|---|---|---|
+| **(a) véspera** — o que existe hoje (ocasião B, `faltam === 1`) | falta 1 dia completo para evoluir | os 30 min escoam durante o dia; quando o jogador ganha o último ponto o sprite já está pronto e ele **evolui na hora**. A espera nunca aparece. |
+| **(b) elegível** — `faltam === 0` | no instante em que o jogador fica apto | a espera é REAL: ele fica apto, a incubação abre, e volta 30 min depois para evoluir. |
+
+A frase do dono (*"pro usuário voltar depois e evoluir de fato"*) descreve a
+**(b)**. Mas a instrução ORIGINAL dele, no início desta série, era a **(a)** e
+dava o motivo: *"Pra evitar espera, se o pet falta 1 dia pra evoluir, ele ja
+gera baseado nesse dia"*. **São opostas no propósito** — uma existe para
+eliminar a espera, a outra para criá-la. Não implementado até o dono escolher;
+escolher errado aqui é acrescentar uma espera à evolução de TODO jogador do v1
+ou é entregar um recurso que nunca se manifesta.
