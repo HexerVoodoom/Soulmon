@@ -224,6 +224,22 @@ export interface GameState {
   formReachedAt?: Record<string, string>;
   /** WP4.6 — inimigos da masmorra já enfrentados. Só cresce. */
   bestiary?: string[];
+  /**
+   * WP4.29 — A INCUBAÇÃO (D-G8b/D-G8c, 22/09/2026). `formId` → instante em que
+   * aquela forma começou a incubar. Ficar apto abre a espera de
+   * `INCUBATION_MIN_MS`; o gesto de evoluir só completa depois dela.
+   *
+   * **É "apto desde X", não "gerando desde X"** — não tem relação com o acervo
+   * de sprites, de propósito (ver o efeito no `App.tsx` e a trava 2 de
+   * `utils/spriteTrigger.ts`). E **o `since` de uma forma nunca é apagado
+   * enquanto a criatura for a mesma**: degenerar e re-subir reaproveita o
+   * relógio que já correu, senão o HP — única punição sancionada — passaria a
+   * cobrar tempo sobre progresso (parecer R-L).
+   *
+   * Ausente = save anterior a esta versão, e `incubationReady` responde `true`
+   * para forma sem registro: quem já estava apto não ganha um relógio novo.
+   */
+  incubation?: import('../utils/spriteTrigger').Incubation;
   /** WP1.3 — os três gestos do primeiro dia (`utils/firstDay.ts`). Some
    *  sozinho na virada; nunca vira lista de pendências. */
   firstDay?: import('../utils/firstDay').FirstDayProgress | null;
@@ -1083,6 +1099,25 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
           return v && typeof v === 'object' && !Array.isArray(v) ? v as GameState['soulmonClassTitles'] : undefined;
         })(),
         evolutionLocked: loadedState.evolutionLocked === true,
+        incubation: (() => {
+          const v = loadedState.incubation as { v?: unknown; since?: unknown; notified?: unknown } | undefined;
+          if (!v || typeof v !== 'object' || Array.isArray(v)) return undefined;
+          const since = v.since;
+          if (!since || typeof since !== 'object' || Array.isArray(since)) return undefined;
+          // Higieniza o que vem da nuvem: só par forma→string sobrevive. Data
+          // inválida não é filtrada aqui de propósito — `incubationReady` já
+          // responde `true` para relógio corrompido, e um relógio quebrado
+          // nunca pode prender ninguém fora da evolução.
+          const limpo: Record<string, string> = {};
+          for (const [k, val] of Object.entries(since as Record<string, unknown>)) {
+            if (typeof val === 'string') limpo[k] = val;
+          }
+          return {
+            v: 1 as const,
+            since: limpo,
+            notified: Array.isArray(v.notified) ? (v.notified as unknown[]).filter((x): x is string => typeof x === 'string') : [],
+          };
+        })(),
         soulGoal: str(loadedState.soulGoal) ?? '',
         soulStruggle: str(loadedState.soulStruggle) ?? '',
         moodLog: arr<unknown>(loadedState.moodLog).filter(

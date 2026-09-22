@@ -118,6 +118,16 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
               'Complete days only accumulate. Evolution is yours to trigger: tap your Soulmon on the Evolution page to lock or unlock the padlock.',
             )}
           </p>
+          <p style={para}>
+            {/* INCUBAÇÃO (D-G8b/D-G8c). A copy diz a verdade INTEIRA — leva um
+                tempo, volta quando quiser, nada se perde —, que é a condição
+                R-N do parecer: quem não sabe que nada expira se comporta como
+                se expirasse. Sem número e sem unidade de tempo (R-I). */}
+            {L(
+              'Quando a barra enche, a próxima forma começa a tomar corpo: leva um tempo até ficar pronta. Volte quando quiser — ela espera por você, e nada se perde no caminho.',
+              'When the bar fills, the next form starts taking shape: it takes a while to be ready. Come back whenever you like — it waits for you, and nothing is lost along the way.',
+            )}
+          </p>
         </>
       ),
     },

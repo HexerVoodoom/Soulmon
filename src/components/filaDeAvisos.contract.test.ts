@@ -43,6 +43,23 @@ describe('o slot de avisos não tem cartão solto', () => {
     expect((app.match(/if \(mostrarPrimingDePush\) avisos\.push/g) ?? []).length).toBe(1);
   });
 
+  it('a INCUBAÇÃO entra na fila, uma vez, logo depois do HP (D-G8c, parecer R-O)', () => {
+    // Posição declarada: HP é a única coisa que cobra e mantém precedência; a
+    // incubação é rara (uma vez por evolução) e descritiva, então vence tudo o
+    // que aparece todo dia. A condição aparece UMA vez — duas seriam duas
+    // superfícies falando da mesma coisa, que é como se empilha aviso.
+    expect(app.indexOf("key: 'hp',")).toBeLessThan(app.indexOf("key: 'incubacao',"));
+    expect(app.indexOf("key: 'incubacao',")).toBeLessThan(app.indexOf("key: 'semanal',"));
+    expect(app.match(/if \(incubandoAgora\) avisos\.push\(/g) ?? []).toHaveLength(1);
+  });
+
+  it('o pet NÃO fala da incubação: ela vive na fila, e só (parecer R-O)', () => {
+    // Um aviso que o pet repete em idle vira cobrança por repetição — é o
+    // mesmo motivo por que a tarefa assombrada é gesto e não frase.
+    const falas = app.slice(app.indexOf('const petSpeech'), app.indexOf('const petSpeech') + 4000);
+    expect(falas).not.toMatch(/incuba/i);
+  });
+
   it('o relatório semanal vem ANTES da triagem', () => {
     // `triageQueue` quase nunca está vazia para quem tem histórico, e o slot
     // renderiza só o primeiro — com a ordem antiga, num domingo típico a única

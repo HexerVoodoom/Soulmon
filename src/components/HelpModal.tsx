@@ -83,6 +83,14 @@ const TERMS: Term[] = [
     descPt: 'Pontos de atributo ganhos alimentando. O dominante define o galho da evolução.',
   },
   {
+    // INCUBAÇÃO (D-G8b/D-G8c). Sem número e sem unidade de tempo (R-I); diz
+    // que espera por você, que é a metade que impede a mecânica de ser lida
+    // como prazo (R-N).
+    icon: '🥚', en: 'Incubation', pt: 'Incubação',
+    descEn: 'When the bar fills, the next form starts taking shape — it takes a while. Come back whenever you like: it waits for you, and nothing is lost.',
+    descPt: 'Quando a barra enche, a próxima forma começa a tomar corpo — leva um tempo. Volte quando quiser: ela espera por você, e nada se perde.',
+  },
+  {
     icon: '🔒', en: 'Evolution padlock', pt: 'Cadeado de evolução',
     descEn: 'Tap your current Soulmon on the Evolution page. Locked, it never evolves — complete days keep counting.',
     descPt: 'Toque no seu Soulmon atual na página de Evolução. Travado, seu Soulmon nunca evolui — os dias completos seguem contando.',

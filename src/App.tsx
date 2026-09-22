@@ -25,6 +25,7 @@ import { GamePopups } from './components/GamePopups';
 import { EvolveTaskModal } from './components/EvolveTaskModal';
 import { EvolutionCeremony } from './components/EvolutionCeremony';
 import { useSpriteGeneration, libraryOf } from './hooks/useSpriteGeneration';
+import { incubationFor, incubationReady, isIncubating } from './utils/spriteTrigger';
 import { spriteText } from './utils/spriteCopy';
 import { emptySpriteLibrary, revertVisor, displaySprite, isNewbornLibrary, markTuneSeen, recordSprite, type SpriteLibrary } from './utils/spriteLibrary';
 import { getSpriteForStage } from './utils/sprites';
@@ -673,6 +674,76 @@ export default function App() {
     () => computeCarePattern(careHistory(gameState)),
     [gameState.completedTasks, gameState.activityLog],
   );
+
+  // ── INCUBAÇÃO (D-G8b/D-G8c, 22/09/2026). Duas peças, e as duas são finas de
+  //    propósito: a REGRA mora em `utils/spriteTrigger.ts` e nada dela é
+  //    reescrito aqui.
+  //
+  //    1. O relógio. Existe só para o botão acender sozinho quando a espera
+  //       termina — sem ele o jogador teria de recarregar a página para
+  //       descobrir que já pode, que é a "conferência compulsiva" que o parecer
+  //       R-K manda evitar. Tica de minuto em minuto e **só enquanto há forma
+  //       incubando**: fora disso o estado nunca muda e o app não re-renderiza.
+  //       ⚠️ Ele NÃO vira contagem na tela — o R-I proíbe dígito que decresce,
+  //       barra em tempo real e hora impressa. É relógio de porta, não de vitrine.
+  const [agoraParaIncubacao, setAgoraParaIncubacao] = useState(() => new Date());
+  const incubandoAlgo = useMemo(
+    () => Object.keys(gameState.incubation?.since ?? {}).some(
+      f => !incubationReady(gameState.incubation, f, agoraParaIncubacao),
+    ),
+    [gameState.incubation, agoraParaIncubacao],
+  );
+  useEffect(() => {
+    if (!incubandoAlgo) return;
+    const id = setInterval(() => setAgoraParaIncubacao(new Date()), 60_000);
+    return () => clearInterval(id);
+  }, [incubandoAlgo]);
+
+  /** A forma-destino está incubando AGORA? É o que o aviso da Home pergunta —
+   *  derivado, nunca persistido (o nível do Vínculo ensinou por que: dois
+   *  donos do mesmo número é o footgun 9 na forma mais cara). */
+  const incubandoAgora = useMemo(() => {
+    const { stage: proxima } = evolutionTarget({
+      points: { virus: gameState.virusPoints, data: gameState.dataPoints, vaccine: gameState.vaccinePoints },
+      reading: carePatternReading,
+      currentBranch: gameState.currentBranch,
+      evolutionStage: gameState.evolutionStage,
+      unlockedEvolutions: gameState.unlockedEvolutions,
+      perfectDays: gameState.perfectDays,
+    });
+    if (proxima === gameState.evolutionStage) return false;
+    return isIncubating(gameState.incubation, proxima, agoraParaIncubacao);
+  }, [gameState.incubation, gameState.virusPoints, gameState.dataPoints, gameState.vaccinePoints,
+      gameState.currentBranch, gameState.evolutionStage, gameState.unlockedEvolutions,
+      gameState.perfectDays, carePatternReading, agoraParaIncubacao]);
+
+  //    2. A escrita. Roda quando o jogador fica APTO, e de propósito **não
+  //       olha o acervo de sprites**: `spriteBatch` devolve `null` para conta
+  //       em `sprite-lifetime-cap`, forma em `sprite-form-cap` e geração
+  //       falha, e amarrar a escrita ao lote deixaria justamente esses
+  //       jogadores sem incubação — travados fora da própria evolução, já que
+  //       o portão exige uma. É o D-G8d, e o parecer R-M o transformou em régua.
+  useEffect(() => {
+    setGameState(prev => {
+      const novo = incubationFor(
+        {
+          evolutionStage: prev.evolutionStage,
+          perfectDays: prev.perfectDays,
+          points: { virus: prev.virusPoints, data: prev.dataPoints, vaccine: prev.vaccinePoints },
+          reading: carePatternReading,
+          currentBranch: prev.currentBranch,
+          unlockedEvolutions: prev.unlockedEvolutions,
+        },
+        prev.incubation,
+        new Date(),
+      );
+      // `incubationFor` é idempotente e devolve a MESMA referência quando nada
+      // muda — é isso que impede este efeito de virar spam de cloud save.
+      return novo === prev.incubation ? prev : { ...prev, incubation: novo };
+    });
+  }, [gameState.evolutionStage, gameState.perfectDays, gameState.virusPoints,
+      gameState.dataPoints, gameState.vaccinePoints, gameState.currentBranch,
+      carePatternReading, setGameState]);
 
   const [guideModalOpen, setGuideModalOpen] = useState(false);
   // Loja — fica fora do minigame: modal próprio, não uma view (ver BottomNav).
@@ -2635,6 +2706,11 @@ export default function App() {
         unlockedEvolutions: prev.unlockedEvolutions,
         perfectDays: prev.perfectDays,
       });
+      // INCUBAÇÃO (D-G8c): ficar apto abre a espera; o gesto só completa depois
+      // dela. Reconferida sobre o `prev` pelo mesmo motivo do `podeEvoluirDepoisDaQueda`
+      // acima — é este updater que commita, o botão é sinal de UI. A regra mora
+      // em `utils/spriteTrigger.ts` e NÃO é reescrita aqui.
+      if (!incubationReady(prev.incubation, alvo.stage, new Date())) return prev;
       const newCurrentBranch = alvo.branch;
       newEvolutionStage = alvo.stage;
       newHP = getMaxHPForStage(newEvolutionStage);
@@ -5092,6 +5168,36 @@ export default function App() {
                   ),
                 });
 
+                /* ── 1-A. INCUBAÇÃO (D-G8c, parecer R-N/R-O) ──────────────
+                   Depois do HP, que é a única coisa que cobra, e antes de tudo
+                   o mais: é raro (uma vez por evolução) e some sozinho.
+
+                   A copy diz a VERDADE INTEIRA na entrada, que é a condição
+                   R-N: leva um tempo · volta quando quiser · nada se perde.
+                   Quem não sabe que nada expira se comporta como se expirasse,
+                   e aí a mecânica vira o gate que ela não é.
+
+                   ⚠️ R-I: **nenhuma contagem**. Nada de dígito que decresce,
+                   barra em tempo real ou hora impressa — nem aqui, nem na
+                   Evolução, nem em fala do pet. Palavra grossa só ("leva um
+                   tempo"), porque relógio visível é o motor da reabertura
+                   compulsiva que o corte do push (#76) existe para evitar. */
+                if (incubandoAgora) avisos.push({
+                  key: 'incubacao',
+                  node: (
+                    <div className="sm2-notice">
+                      <div className="sm2-notice-row">
+                        <Icon name="egg" size={20} fill={1} tone="gold" />
+                        <p className="sm2-notice-body" style={{ flex: 1, minWidth: 0, marginTop: 0 }}>
+                          {isPtA
+                            ? 'A próxima forma está tomando corpo. Leva um tempo — volte quando quiser, ela espera por você.'
+                            : 'The next form is taking shape. It takes a while — come back whenever you like, it waits for you.'}
+                        </p>
+                      </div>
+                    </div>
+                  ),
+                });
+
                 /* ── 2. SEMANAL (domingo) ─────────────────────────────────
                    ⚠️ Ele vinha DEPOIS da triagem, e a auditoria de 06/09/2026
                    mostrou o efeito: `triageQueue` quase nunca está vazia para
@@ -5315,7 +5421,11 @@ export default function App() {
                     unlockedEvolutions: gameState.unlockedEvolutions,
                     perfectDays: gameState.perfectDays,
                   });
-                  return next !== gameState.evolutionStage;
+                  if (next === gameState.evolutionStage) return false;
+                  // INCUBAÇÃO (D-G8c) — mesma função que o `handleEvolve`
+                  // commita. Regra copiada diverge em silêncio (footgun 9), e
+                  // estes dois já divergiram uma vez.
+                  return incubationReady(gameState.incubation, next, agoraParaIncubacao);
                 })()}
                 onEvolveRequest={handleEvolveRequest}
                 careEvent={careEvent}

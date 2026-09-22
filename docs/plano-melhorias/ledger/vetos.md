@@ -65,6 +65,7 @@ Formato: data · WP ou proposta · parecer (`APROVADO` / `APROVADO COM RESSALVA`
 | 02/09/2026 | **O que perdoa demais** (a metade que ninguém pede): "esqueci de marcar" é o candidato a nono perdão; um coração perdido tem **três** caminhos de volta antes do almoço | `RESPONDIDO` (D4: a AURA é o que dói, e só ela) (decisão do dono, 06/09/2026 — §15 do plano) para qualquer perdão adicional | #17 | A resposta à D4 deve **nomear** quais mecanismos são a linha, não contar. Onde NÃO perdoa demais e está certo: Vínculo (teto suave, não decai), constância (14%/falta), Torneio (XP na derrota < vitória) |
 | 21/09/2026 | **Exceção da #20** (QA GERAL #29): `src/plugins/widgetSemCobranca.contract.test.ts` it "as chaves antigas são REMOVIDAS, não só deixadas de escrever" exige `editor.remove("constancy_pct"/"shields"/"bond_level")` em `SoulmonWidgetPlugin.kt` — a #14 (percentual cru) aplicada sobre o bridge quebrava a #20 (só acrescentar) sem registro | `APROVADO COM RESSALVA` — exceção inscrita | #20 (exceção), #14 | **Regra:** chave do bridge vetada por OUTRA proibição pode ser removida, e só assim: (a) por `remove()` explícito, nunca por deixar de escrever; (b) com tolerância a ausência provada no widget antigo (o layout lê a chave com default, nunca quebra); (c) registrada aqui com data e a proibição que a vetou. Fora disso, #20 continua: só acrescentar |
 | 21/09/2026 | **`'tasks-100'` em `src/utils/achievements.ts`** — conquista cosmética que lê `completedTasks.length + activityLog.length >= 100`: literalmente recompensa por CONTAGEM de tarefas (QA GERAL #30; `09-guardas.md` §2 #16) | `VETADO` na forma atual | #16 | **Será renomeada para gatilho de COMPORTAMENTO** (decisão do dono, 21/09/2026); o código é de outro agente nesta rodada — esta linha só registra o veto e a saída. Aceite: nenhuma conquista lê `.length` de tarefas — **exceto a migração** `gatilhoAntigoTasks100` (`conquistasHerdadas`, herança única de quem já tinha `tasks-100`), que lê a contagem antiga UMA vez para não tirar o que já foi dado; ressalva registrada em 21/09/2026 (QA Rodada 1, `06-guardas-squads-r1.md` #13) para a régua futura não reprovar o próprio conserto |
+| 22/09/2026 | **WP4.29** — geração tardia (D-G5b: nasce só o rookie) + incubação de 30 min (D-G8b/c/d) para **todo jogador do v1** | `APROVADO COM RESSALVA` (8 condições, **R-I..R-P**) | #15, #19 (a um passo) · **#13 vetada preventivamente** (R-J: espera comprável/encurtável) · pergunta 2 (R-L) | Parecer completo no fim deste arquivo. As bloqueantes: R-I sem contagem regressiva · R-J espera uniforme e nunca comprável · R-K marcador passivo + zero prêmio por voltar cedo · **R-L a espera é paga uma vez por `formId`** (hoje a §6.3 faz o HP recobrar) · R-M D-G8d vira teste + arte de reserva em silêncio · R-N copy diz na entrada que nada se perde · R-O um aviso, uma vez, pet não cobra · R-P `spriteTrigger.semPrazo.contract.test.ts` é condição de merge do v1 |
 
 ## Perguntas que este guarda faz a QUALQUER proposta
 
@@ -251,3 +252,93 @@ que pode ser desfeita a qualquer momento não é escolha, e um reset pago seria
 **#13 com outro nome** (vender saída de uma consequência). A permanência é o que
 dá significado à única decisão de identidade que o jogador toma sozinho; sem
 ela a mecânica esvazia.
+
+## Parecer — WP4.29: geração tardia (D-G5b) + incubação de 30 min (D-G8b/c/d) no **v1**, 22/09/2026
+
+**Veredito: `APROVADO COM RESSALVA`** — com **oito condições bloqueantes
+(R-I..R-P)**. Nenhuma das 21 linhas vermelhas é cruzada *pela forma decidida*.
+Duas ficam a um passo de serem cruzadas pela implementação (**#15**, FOMO que
+tira — travada por teste desde 21/09/2026 — e **#19**, querer a notificação), e
+uma terceira (**#13**, vender proteção contra punição) é **vetada
+preventivamente** na sua forma futura óbvia: vender o pulo da espera.
+
+### A pergunta que o autor pediu para responder
+
+*Trinta minutos obrigatórios entre "mereci" e "posso" ferem uma linha vermelha?*
+**Não, na forma decidida.** E a fronteira entre **ritual de incubação** e
+**timer gate** não é o tempo — é o que o relógio pode FAZER. Um timer gate tem
+três órgãos, e a proposta não tem nenhum dos três:
+
+| Órgão do timer gate | A proposta |
+|---|---|
+| **Expira** (voltar tarde custa) | Não. `agora − since ≥ INCUBATION_MIN_MS` só LIBERA (D-G8, D-G8b, régua `spriteTrigger.semPrazo.contract.test.ts`) |
+| **Puxa de volta** (push/badge) | Não. Decisão #76 cortou o push; só o aviso na fila da Home |
+| **Vende o pulo** (gema/moeda que acelera) | Não existe — e **R-J** o veta antes de alguém propor |
+
+Tirados os três, o que sobra é o v-pet clássico: o tempo é conteúdo, não
+alavanca. **`MANUAL_EVOLUTION` continua íntegro**: o portão decide o *quando
+mais cedo*, nunca o *se* nem o *quando de fato* — e o app já tem um portão de
+tempo dessa espécie aceito há muito (`perfectDays` são dias, não minutos).
+Passa na pergunta 1 (Errant Signal): a espera não é recompensa condicional nova
+e não converte tarefa em meio para um fim — ela não tem como ser farmada.
+
+**O 23h50 não perde nada** — confirmada a leitura do autor. `perfectDays` só
+acumulam, o gesto espera indefinidamente e nenhuma virada consome a incubação.
+**Mas isso só é verdade se R-L valer** (ver abaixo): hoje a §6.3 manda limpar a
+incubação quando `faltam > 1`, e é por aí que a espera vira cobrança.
+
+### As condições
+
+| # | Condição bloqueante | Por quê |
+|---|---|---|
+| **R-I** | **Nenhuma contagem regressiva, em lugar nenhum.** Nem na Home, nem na página de Evolução, nem na fala do pet, nem no título da aba: proibido dígito que decresce, barra que enche em tempo real e hora impressa de conclusão. A superfície diz em palavra grossa ("a forma seguinte está tomando corpo") e, depois de liberada, em palavra ("já pode nascer"). `hideMetrics` vale inteiro. | **Pergunta 4** (número que desce) na forma mais literal que existe. E um relógio visível tiquetaqueando é o motor exato da reabertura compulsória: quem vê o número olha o número. O aviso descritivo da §6.5 já entrega a informação útil — que há algo tomando corpo — sem instalar um cronômetro na cabeça do jogador. |
+| **R-J** | **VETO PREVENTIVO: a espera nunca é encurtável, comprável, pulável ou premiável.** Nada de item "choca na hora", Créditos/Bits que aceleram, "primeira evolução sem espera", redução por vínculo/assinatura/traço, nem espera menor para quem pagou. `INCUBATION_MIN_MS` é **uma constante única, uniforme para todo jogador** (teste: nenhum caminho de código multiplica, divide ou condiciona esse valor). E o inverso também: nunca **alongá-la** como consequência de nada que o jogador fez ou deixou de fazer. | É a **#13** com outro nome, e é a evolução comercial inevitável de qualquer espera em jogo mobile. Enquanto a espera é uniforme e não-comprável, ela é ritual (todo mundo incuba igual) e sobrevive à **pergunta 5**: mostrada por dentro, "seu bicho leva meia hora para tomar forma" não constrange. No instante em que existe um botão de pular, o mecanismo passa a ser *fabricar impaciência para vendê-la*, e a espera deixa de ser conteúdo para virar preço. Uma espera vendável também transformaria a **#4** (Emblemas não compram vantagem) em letra morta por analogia. |
+| **R-K** | **Sem push, o marcador tem de ser PASSIVO E DURÁVEL — e voltar cedo não pode render nada.** Aceites: (a) o estado "pronta para nascer" é persistente e aparece no MESMO lugar sempre, de modo que o jogador o **encontra** na próxima abertura em vez de precisar **conferir**; (b) nenhuma recompensa, bônus, cosmético, fala especial ou vantagem por evoluir logo aos 30 min em vez de dias depois — o resultado da evolução é **byte a byte o mesmo** (teste de unidade: mesma entrada, `since` de 30 min e de 30 dias ⇒ mesmo estado resultante); (c) proibido badge/contador no ícone do app e qualquer sinal fora do app (widget incluso, **#20**). | Sem push a pergunta legítima do autor é se a mecânica vira "abra o app para conferir". A resposta não é pôr push — é **tirar o motivo de conferir**. Só existe motivo se chegar antes valer mais; com (b) travado por teste, conferir é literalmente inútil, e a ansiedade morre na raiz. Um push aqui cairia direto na **#19**: uma notificação cuja resposta é *querer a notificação* (o pet está pronto!) e não *querer fazer a tarefa*. A #76 do dono está certa e deve continuar. |
+| **R-L** | **A espera é paga UMA VEZ por forma.** Se a incubação for limpa (§6.3, `faltam > 1` por degeneração ou por qualquer outro caminho), o `since` da forma **sobrevive** e é reaproveitado quando o jogador volta a ficar apto à MESMA `formId`; nunca um segundo relógio de 30 min. Aceite: guardar o carimbo por forma (não um campo único sobrescrito) e caso de teste "degenerar dentro da incubação e re-subir ⇒ libera imediatamente, sem nova espera". | **Esta é a única linha vermelha que a proposta cruza de verdade, e é por acidente de implementação.** Com a §6.3 como está, perder HP dentro da janela devolve o jogador a uma segunda espera: o HP — a **única punição sancionada, com teto, folga semanal e perdão por ausência** — passaria a cobrar *tempo sobre a evolução*, que é identidade e progresso (**pergunta 2**). Seria uma punição nova, sem teto declarado, nascida de um mecanismo que existe para ser neutro. R-G do parecer de 22/09 dizia isto para a alocação; vale igual para o relógio. |
+| **R-M** | **D-G8d vira teste, e a falha de arte nunca aparece como culpa nem como trabalho do jogador.** Aceites: (a) caso de unidade com acervo vazio + geração reprovada + `sprite-form-cap`/`sprite-lifetime-cap` ⇒ **libera aos 30 min**; (b) a cerimônia degrada para a arte de reserva por hash (`fallbackSpriteForStage`) **em silêncio** — sem erro, sem "tentar de novo", sem placeholder vazio, sem cadeado; (c) sprite que chegar depois preenche a forma pelo `formId`, sem repetir cerimônia. | D-G8d é a decisão certa e é do autor — este guarda a endossa e a transforma em régua. O risco que D-G5b acrescenta é concreto: hoje a ocasião A pré-gera o champion **justamente** para que a primeira evolução (o momento de maior significado de um jogador novo) tenha arte. Encolhendo o lote de nascimento, esse momento passa a depender de um terceiro. Aos 30 min a exposição é pequena, mas não-nula — e cobrar do jogador um erro que não é dele é exatamente o que a tese proíbe. |
+| **R-N** | **A copy diz a verdade inteira na ENTRADA da incubação**, em uma frase: que leva um tempo, que ele **volta quando quiser** e que **nada se perde**. Proibidos: "última chance", "não perca", "corra", "ainda dá tempo", "expira", "faltam N", hora impressa, e qualquer construção que sugira prazo (**#15**, travada por `src/copy.semFomo.contract.test.ts` — estender a varredura à copy nova). PT + EN no mesmo commit. | Perdão que o jogador não soube que recebeu faz a cobrança seguinte parecer arbitrária — é o argumento escrito do `lastDayReport.restDayUsed`. Aqui é pior: quem **não sabe** que nada expira vai se comportar como se expirasse, e a ausência de prazo deixa de ter efeito nenhum sobre a ansiedade que ela existe para evitar. Um desenho sem prazo com copy ambígua entrega o dano da #15 sem sequer entregar o ganho de retenção — o pior dos dois mundos. |
+| **R-O** | **Um aviso, uma vez, e o pet não cobra.** A incubação entra pela fila declarada da Home (§6.5, posição depois de HP), `notified` é one-shot, e **o pet nunca menciona a incubação de forma repetida nem ofertada** — sem fala idle sobre estar esperando, sem modal próprio, sem intersticial. Régua: `filaDeAvisos.contract.test.ts` + a cadência única de falas do WP3.2. | As DUAS FILAS existem porque avisos fora delas empilham, e a auditoria de 06/09 achou quatro superfícies fazendo isso. Um pet que lembra que está esperando é saudade-cobrança na voz mais eficaz que o produto tem (**#19**, e é o veto E1 mudando de superfície). |
+| **R-P** | **A régua `spriteTrigger.semPrazo.contract.test.ts` é condição de merge do v1, não da v2.0**, e nomeia explicitamente a ÚNICA comparação de data permitida (`agora − since >= INCUBATION_MIN_MS`), reprovando qualquer outra aritmética sobre `since` que produza perda — expirar, cancelar, fechar, devolver "tarde demais". Varredura de fonte, não só unidade. | D-G8b e D-G8c são inseparáveis da régua: sem ela, o campo `since` é um prazo esperando um agente futuro que leia "data no save" e escreva o `if` óbvio. É a mesma família do veto E5 (faixa que caducava) — nada anunciava a perda, ela simplesmente acontecia. Este é o item que impede a #15 de voltar por implementação seis meses depois. |
+
+### As duas perguntas restantes do autor
+
+**A página de Evolução sem arte da próxima forma é perda ou antecipação?**
+**Antecipação legítima, e já é a decisão §16.1-5 deste ledger** ("a Evolução
+nunca nomeia a próxima forma — silhueta/`?`") e C-P7 (`APROVADO`: sem sprite,
+silhueta; nunca placeholder de erro). O bestiário já ensinou esse vocabulário
+ao jogador. **Condição**: silhueta, não vazio, não cadeado, não "gerando…" com
+spinner — o estado tem de ler como *mistério*, que é ganho, e nunca como
+*conteúdo que falta*, que é perda. Isto já estava aprovado; D-G5b só o torna a
+rota principal.
+
+**Sem push a mecânica vira "conferir o app"?** Não, **se R-K(b) valer**. O
+remédio contra conferir é tirar o prêmio de chegar cedo, não acrescentar um
+puxão. Push aqui seria trocar uma ansiedade voluntária por uma involuntária, e
+essa é a que o produto proibiu.
+
+### Onde este parecer diz "isto perdoa demais"
+
+Em um ponto, e é contra o próprio autor. **R-L não pode virar "a espera nunca é
+paga"**: se o `since` sobreviver a *tudo* — inclusive ao Renascimento, que é
+uma criatura nova, e a uma troca de criatura pelo upgrade — a incubação deixa
+de existir como ritual e vira um carimbo herdado que libera na hora. A linha é
+**por `formId` dentro da mesma vida**: nova vida, nova criatura, nova
+incubação. Perdão que atravessa a fronteira de identidade esvazia a única
+mecânica de tempo do produto.
+
+E a fronteira geral que este guarda sustenta aqui: **a espera só se justifica
+enquanto for uniforme, silenciosa e inútil de encurtar.** No dia em que ela for
+encurtável por qualquer meio (R-J), ela não é mais incubação — é um preço, e o
+produto passou a fabricar a impaciência que vende.
+
+### As seis perguntas
+
+1. *Querer a tarefa ou a notificação?* A tarefa — não há notificação (#76), e
+   R-K(b) tira o prêmio de voltar cedo. 2. *Tira algo?* Não, **desde que R-L**;
+   sem ela, HP passa a cobrar tempo de evolução. 3. *Mais um perdão?* **Não** —
+   D4 continua em oito; a incubação não perdoa nada, ela adia. 4. *Número que
+   desce?* Só se alguém desenhar o contador — é R-I. 5. *Homem atrás da
+   cortina?* Passa: "seu bicho leva meia hora para tomar forma, e espera por
+   você" é dizível em voz alta. Falha no instante em que existir o botão de
+   pular (R-J). 6. *Cabe na tese?* Cabe — incubar é evoluir COM, em tempo de
+   criatura viva, não em tempo de jogo de espera.
