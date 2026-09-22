@@ -87,6 +87,8 @@ export interface SpecialItemState {
   foodInventory: Record<string, number>;
   perfectDays: number;
   totalPerfectDays?: number;
+  /** Dias completos vitalícios PARA AS MISSÕES — real + 🌀 (decisão #41/#60). */
+  missionPerfectDays?: number;
   virusPoints: number;
   dataPoints: number;
   vaccinePoints: number;
@@ -164,8 +166,29 @@ export function applySpecialItem<T extends SpecialItemState>(
   if (special.kind === 'glitchtama') {
     // 🌀 Glitchtama: cai zerando as 5 salas da masmorra e vale 1 dia perfeito —
     // isto é PONTO DE EVOLUÇÃO, não enfeite. `perfectDays` é o contador que a
-    // escada consome; `totalPerfectDays` é o vitalício das missões, e por isso
-    // ele NÃO é decrementado na evolução (ver `degeneratedPerfectDays`).
+    // escada consome.
+    //
+    // ⚠️ DECISÃO DO DONO #41/#60 (22/09/2026, `docs/PERGUNTAS-DO-DONO.md`):
+    // *"🌀 Glitchtama **não conta** para conquistas: `totalPerfectDays` só por
+    // dia completo real (segue contando para a missão)"*.
+    //
+    // O que isto conserta (QA rodada 2, §2.6): o perfil G — zero hábitos, uma
+    // run de masmorra por dia — terminava 90 dias com `totalPerfectDays = 90`
+    // e **nenhum** dia completo de verdade, abrindo `perfect-day` e
+    // `dias-completos-30` sem nunca ter cumprido uma meta. `dias-completos-30`
+    // é justamente a conquista que substituiu `tasks-100` para deixar de
+    // premiar CONTAGEM (linha vermelha #16); um minijogo inflando o contador
+    // reabria o veto pela porta dos fundos.
+    //
+    // Por isso o 🌀 escreve agora `missionPerfectDays` — contador separado,
+    // lido SÓ por `utils/missions.ts` (`mission-perfect-30`), que a decisão
+    // manda continuar contando o item. `totalPerfectDays` volta a significar
+    // uma coisa só: dias completos REAIS, e é ele que `achievements.ts` e
+    // `seasons.ts` leem. Duas perguntas diferentes, dois contadores — em vez de
+    // um número com dois significados (footgun 9 ao contrário).
+    //
+    // `computeDailyReset` incrementa os DOIS num dia completo real, então a
+    // missão nunca anda para trás nem fica mais difícil do que era.
     //
     // O contador do teto é escrito no MESMO retorno que dá o ponto: um lote do
     // React que aplicasse o ponto sem gravar o uso deixaria o próximo toque
@@ -175,7 +198,8 @@ export function applySpecialItem<T extends SpecialItemState>(
         ...prev,
         foodInventory,
         perfectDays: prev.perfectDays + 1,
-        totalPerfectDays: (prev.totalPerfectDays ?? 0) + 1,
+        // #41/#60: o vitalício REAL não é tocado — só o da missão.
+        missionPerfectDays: (prev.missionPerfectDays ?? prev.totalPerfectDays ?? 0) + 1,
         glitchtamaUse: {
           day: playerDayKey(now, prev.playerDayTz),
           used: glitchtamaUsedToday(prev, now) + 1,

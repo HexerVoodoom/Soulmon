@@ -98,15 +98,26 @@ remuneração nem contrapartida — se fosse, viciaria o consentimento. Por isso
 - [ ] `E0-PREREGISTRO.md` §9 assinado (o pré-registro congela junto com o 1º convite).
 - [ ] `TERMS_VERSION`/`PRIVACY_VERSION` não mudam durante os 14 dias.
 
-## 6. Revisão do controlador
+## 6. Revisão do controlador — **assinada em 22/09/2026**
+
+Decisão do dono **#71** (`docs/PERGUNTAS-DO-DONO.md`, "Respostas QA RODADAS 1 e
+2": *"Pré-registro e consentimento do E0: assinados em 22/09/2026"*).
 
 | Campo | Valor |
 |---|---|
-| Nome do controlador (aparece no §1) | `[dono preenche]` |
-| E-mail de contato (aparece no §1) | `[dono preenche]` |
+| Nome do controlador (aparece no §1) | ✅ **Mateus Sperandio** |
+| E-mail de contato (aparece no §1) | ✅ **mateus.sprnd@gmail.com** |
 | Serviço de transcrição, se houver | `[nenhum — local]` |
-| Encarregado (art. 41) — nomeado? (pergunta #44) | `[dono preenche]` |
-| Data da revisão | `[dono preenche]` |
+| Encarregado (art. 41) — nomeado? (pergunta **#44**) | ✅ **Sim: Mateus Sperandio, `mateus.sprnd@gmail.com`** — nomeado nominalmente na política de privacidade §9 (PT **e** EN) e em `docs/PLAY-DATA-SAFETY.md` §1. Controlador e encarregado são a mesma pessoa: o Soulmon é operado por uma pessoa física, e a LGPD não exige que sejam distintos |
+| **Data da revisão / assinatura** | ✅ **22/09/2026** |
+| **Assinatura** | ✅ **Mateus Sperandio**, controlador e encarregado |
+
+> ⚠️ A assinatura acima é a do **controlador**, e vale para o texto deste
+> documento. Ela **não substitui** o "concordo" de cada convidado (§1, §5) —
+> esse continua sendo por pessoa, por escrito e **antes** do `grant` de
+> cortesia. Mudar o texto do §1 ou a tabela do §2 daqui em diante pede
+> **assinatura nova, com data nova**, e reconsentimento de quem já assinou o
+> texto velho.
 
 ## 7. English text (for the same convite, when the person prefers EN)
 

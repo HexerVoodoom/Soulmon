@@ -33,6 +33,12 @@ function sujo(over: Record<string, unknown> = {}) {
     poopEventsCompleted: [] as number[],
     poopPenaltyClockAt: 0,
     lastResetDate: LIMPO_ONTEM,
+        /* ⚰️ 22/09/2026 — decisão #58b: o dreno passou a respeitar a carência de
+    começo de vida (`NEW_SAVE_GRACE_DAYS`), como a virada sempre fez. Sem este
+    `saveDay`, todo estado deste arquivo seria lido como SAVE NOVO e os testes
+    mediriam a carência em vez da regra — é a mesma linha que
+    `useDailyReset.test.ts` já carrega, e pelo mesmo motivo. */
+    lastDayReport: { saveDay: 90 },
     ...over,
   };
 }

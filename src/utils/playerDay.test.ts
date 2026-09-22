@@ -210,6 +210,9 @@ describe('o teto do dreno de cocô para de ser furado por troca de fuso', () => 
     poopEventsCompleted: [],
     poopPenaltyClockAt: INSTANTE.getTime() - 7 * POOP_DRAIN_PERIOD_MS,
     lastResetDate: playerDayKey(INSTANTE, BRASIL),
+    // #58b (22/09/2026): sem `saveDay` o dreno lê SAVE NOVO e a carência
+    // `NEW_SAVE_GRACE_DAYS` absorve a cobrança que este teste quer medir.
+    lastDayReport: { saveDay: 90 },
     playerDayTz: BRASIL,
   };
 

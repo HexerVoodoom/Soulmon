@@ -310,6 +310,52 @@ Formato: **decisão** · evidência · **alternativa que perdeu, e por quê** ·
 
 | **[provisório #55] Cota de chat por tier — demo 30 / paid 120 por dia; sem SKU recorrente, sem modelo acima do 8b** (22/09/2026) | `03-negocio-pesquisa-r2.md` §0.5: com o 8b e teto 120/dia a cauda do chat custa R$ 0,5–1/ano/conta (teto R$ 11/ano) — a compra única **sustenta**. O único cenário que a quebra é **trocar o modelo** (×60); e `AI_LIMITS.chat.perAccount` era igual para demo e pago: 1.000 demos no teto = R$ 950/mês, receita zero, alcançável por `curl` com conta grátis | Cota única para todos (o que havia); assinatura para cobrir IA (fica na linha "Assinatura recorrente" acima, ⏸️) | `functions/api/_aiGuard.js` › `AI_LIMITS.chat` (por tier); `PERGUNTAS-DO-DONO.md` #55 | ✅ **provisório aplicado, aguarda o dono.** Regra que fica até ele dizer o contrário: **não existe SKU recorrente e o modelo de chat não sobe do 8b** sem reabrir esta linha e a economia da Parte 3 do `PLANO-PRODUTO`. **Se mudar:** outro número = 2 constantes; modelo maior = refazer o custo antes |
 
+#### O modelo de receita decidido em 22/09/2026 (pergunta **#55**)
+
+O dono fechou o modelo. Isto é **registro de decisão, não autorização de
+código** — nada disto foi implementado, e a ordem é explícita: **construir
+DEPOIS do E0**.
+
+| Peça | O que é |
+|---|---|
+| **Entrada** | **compra única de R$ 29,90** — o jogo inteiro + as 11 formas. Segue sendo o produto principal e não é assinatura disfarçada |
+| **Assinatura de IA** | **R$ 9,90/mês com 300 mensagens**, **só texto e voz**: chat melhor, sugestões de tarefa, transcrição |
+| **Fora da assinatura** | **o sprite**. Geração de imagem tem custo por unidade que 300 mensagens não pagam — continua no teto vitalício (`_aiGuard.js` › `AI_LIMITS.sprite.perAccountLifetime`) e nos Créditos |
+| **Estourou a cota** | **compra créditos**. Não há degradação silenciosa nem cobrança automática por excedente |
+| **Cortesia** | **1º mês grátis para quem comprou o desbloqueio** — quem pagou os R$ 29,90 não descobre um segundo paywall no dia seguinte |
+| **Quando** | **depois do E0**. Até lá vale o teto por tier aplicado como provisório (demo 30 / paid 120 por dia, linha acima) |
+
+**Por que esta e não outra** — as duas alternativas que perderam:
+
+- **Só assinatura** (sem compra única): atravessa a linha de que o produto
+  é comprado, não alugado, e criaria a pergunta "o que acontece com a minha
+  criatura se eu parar de pagar?" — a resposta honesta ("nada, ela fica")
+  esvazia a assinatura, e a desonesta ("você perde") quebra o princípio de
+  que **cancelar não remove nada** (as 3 travas da linha "Assinatura
+  recorrente" acima).
+- **Só créditos** (sem SKU recorrente): é o que existe hoje. Faz o custo
+  variável de IA aparecer como micro-decisão de compra a cada uso — o
+  usuário passa a **contar** antes de conversar, que é o oposto do vínculo
+  que o produto vende. Os créditos ficam, mas como **válvula de excedente**,
+  não como a porta principal.
+
+**O que dispara revisão desta decisão** (os dois gatilhos, escritos antes do
+dado existir):
+
+1. **O custo do modelo de chat mudar.** A conta que sustenta R$ 9,90 por 300
+   mensagens assume o 8b (`03-negocio-pesquisa-r2.md` §0.5: R$ 0,5–1/ano/conta
+   no teto de 120/dia). **Trocar o modelo multiplica por ~60** e a assinatura
+   passa a dar prejuízo — refazer a conta ANTES de trocar, nunca depois.
+2. **O E0 mostrar que ninguém usa o chat.** Se os 10 convidados de 14 dias
+   praticamente não conversarem, a assinatura cobra por uma coisa que ninguém
+   quer: ela não se constrói, e o custo de IA deixa de ser problema por
+   evaporação da demanda. **O E0 é o instrumento** — por isso a ordem "depois
+   do E0" não é falta de sequenciamento, é a condição do dado.
+
+**Ponteiros:** `docs/PLANO-PRODUTO.md` Parte 3 ·
+`docs/manual/01-VISAO.md` §8 · `docs/PERGUNTAS-DO-DONO.md` #55 ·
+`src/utils/monetization.ts` (comentário-ponteiro apenas — **nenhum SKU novo**).
+
 ### 5.5 Camada social
 
 | Decisão | Evidência | Alternativa rejeitada | Onde | Estado |

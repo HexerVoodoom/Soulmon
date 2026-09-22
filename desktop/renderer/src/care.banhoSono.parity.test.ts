@@ -35,6 +35,11 @@ function save(extra: Record<string, unknown> = {}): Record<string, unknown> {
 /** Um save com cocô na tela e o relógio do dreno já correndo há 6h. */
 function sujo(extra: Record<string, unknown> = {}): Record<string, unknown> {
   return save({
+    // Veterano de propósito: desde 22/09/2026 (decisão #58b) o dreno respeita
+    // a carência de save NOVO, e um save sem histórico nenhum é lido como novo
+    // (`saveDaysLived`/`looksLikeVeteranSave`). O que este arquivo prova é o
+    // BANHO do overlay, não a carência — então o fixture tem histórico.
+    totalPerfectDays: 5,
     poopEventsShown: [0],
     poopEventsCompleted: [],
     poopPenaltyClockAt: AGORA.getTime() - POOP_DRAIN_PERIOD_MS,

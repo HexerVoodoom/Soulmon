@@ -96,6 +96,19 @@ async function writeEntitlement(env, saveId, ent) {
   return ent;
 }
 __name(writeEntitlement, "writeEntitlement");
+var REBIRTH_SPRITE_RESET_FIELD = "rebirthSpriteResetAt";
+async function resetSpriteLifetimeOnRebirth(env, saveId) {
+  const ent = await readEntitlement(env, saveId);
+  if (Number(ent[REBIRTH_SPRITE_RESET_FIELD] ?? 0) > 0) {
+    return { ent, jaFeito: true, anterior: 0 };
+  }
+  const anterior = Number(ent.aiLifetime?.sprite ?? 0) || 0;
+  ent.aiLifetime = { ...ent.aiLifetime || {}, sprite: 0 };
+  ent[REBIRTH_SPRITE_RESET_FIELD] = Date.now();
+  await writeEntitlement(env, saveId, ent);
+  return { ent, jaFeito: false, anterior };
+}
+__name(resetSpriteLifetimeOnRebirth, "resetSpriteLifetimeOnRebirth");
 function paidProviderOf(ent) {
   const details = Array.isArray(ent?.orderDetails) ? ent.orderDetails : [];
   for (let i = details.length - 1; i >= 0; i--) {
@@ -861,9 +874,9 @@ var NOT_INCLUDED = [
     en: 'For 30 days after deletion, the server keeps only your account identifier (the code derived from your email, without the email) marked as "deleted". It exists to refuse writes from an old device that was still signed in \u2014 without it the save came back on its own seconds later. Signing in again with the same email reopens: the account starts over from scratch. After 30 days the marker expires on its own.'
   },
   {
-    what: "ord:steam:own:<appid>:<steamid> (Steam) \u2014 provis\xF3rio / provisional",
-    "pt-BR": "Se voc\xEA ativou o Soulmon pela Steam, o v\xEDnculo entre o seu SteamID e a conta que ele ativou fica guardado por 5 anos, como o comprovante de compra: \xE9 o que impede uma mesma licen\xE7a Steam de virar v\xE1rias contas. Este prazo \xE9 provis\xF3rio e est\xE1 em revis\xE3o (pergunta #56 ao respons\xE1vel).",
-    en: "If you activated Soulmon through Steam, the link between your SteamID and the account it activated is kept for 5 years, like the purchase receipt: it is what stops one Steam licence from becoming several accounts. This period is provisional and under review (question #56 to the owner)."
+    what: "ord:steam:own:<appid>:<steamid> (Steam) \u2014 APAGADO / DELETED",
+    "pt-BR": "Se voc\xEA ativou o Soulmon pela Steam, o v\xEDnculo entre o seu SteamID e esta conta \xE9 APAGADO junto com ela \u2014 nada do seu SteamID fica guardado aqui. Em troca, a licen\xE7a Steam volta a ficar livre: ela pode ativar uma conta nova.",
+    en: "If you activated Soulmon through Steam, the link between your SteamID and this account is DELETED together with it \u2014 nothing about your SteamID is kept here. In exchange, the Steam licence becomes free again: it can activate a new account."
   },
   {
     what: "terceiros / third parties",
@@ -871,6 +884,11 @@ var NOT_INCLUDED = [
     en: "Messages you sent to the assistant were processed by AI providers outside of here. Soulmon does not store those conversations, so they are not in this export and this deletion does not reach whatever is on their side."
   }
 ];
+function steamLicenseKeysOf(ent) {
+  const orders = Array.isArray(ent?.consumedOrders) ? ent.consumedOrders : [];
+  return orders.filter((o) => typeof o === "string" && o.startsWith("steam:own:")).map((o) => `${ORDER_PREFIX}${o}`);
+}
+__name(steamLicenseKeysOf, "steamLicenseKeysOf");
 async function collect(env, saveId) {
   const store = kvOrThrow(env);
   const pid = await publicIdFor(saveId);
@@ -913,7 +931,8 @@ async function collect(env, saveId) {
   } catch {
     coopGroupId = null;
   }
-  return { pid, state, profile, gifts, entitlement, ranks, rankKeys, pidIndexed, sprites, coopGroupId };
+  const steamLicenseKeys = steamLicenseKeysOf(entitlement);
+  return { pid, state, profile, gifts, entitlement, ranks, rankKeys, pidIndexed, sprites, coopGroupId, steamLicenseKeys };
 }
 __name(collect, "collect");
 async function pidDeAmigo(env, friendSaveId) {
@@ -981,10 +1000,15 @@ function plan(c, saveId) {
       ...c.sprites.blobs,
       "men\xE7\xF5es a voc\xEA na lista de amigos de outros jogadores",
       "inscri\xE7\xF5es de notifica\xE7\xE3o (push:*/fcm:*) ligadas \xE0 sua conta",
-      ...c.coopGroupId ? [`coop:${c.coopGroupId} (sua vaga no grupo)`, coopOfKey(saveId), coopCkKey(c.coopGroupId, saveId)] : []
+      ...c.coopGroupId ? [`coop:${c.coopGroupId} (sua vaga no grupo)`, coopOfKey(saveId), coopCkKey(c.coopGroupId, saveId)] : [],
+      // #54: o vínculo SteamID ↔ conta. ⚰️ Até 22/09/2026 estas chaves apareciam
+      // em `sobrevive` (5 anos, justificativa fiscal que não se aplica a licença).
+      ...c.steamLicenseKeys
     ].filter(Boolean),
     minimiza: c.entitlement ? [`${ENT_PREFIX}${saveId} \u2014 sai o uso (IA, an\xFAncios), ficam os campos de compra`] : [],
-    sobrevive: Array.isArray(c.entitlement?.consumedOrders) ? c.entitlement.consumedOrders.map((o) => `${ORDER_PREFIX}${o}`) : []
+    // Sobrevive o comprovante de COMPRA (Play/cortesia). A licença Steam saiu
+    // desta lista em 22/09/2026 e passou para `apaga` (#54).
+    sobrevive: Array.isArray(c.entitlement?.consumedOrders) ? c.entitlement.consumedOrders.filter((o) => !(typeof o === "string" && o.startsWith("steam:own:"))).map((o) => `${ORDER_PREFIX}${o}`) : []
   };
 }
 __name(plan, "plan");
@@ -1069,13 +1093,15 @@ async function handleDeleteConfirm(env, saveId, body) {
   for (const k of c.sprites.blobs) await tentar(k, () => store.delete(k));
   for (const k of c.sprites.imgs) await tentar(k, () => store.delete(k));
   for (const k of c.sprites.locks) await tentar(k, () => store.delete(k));
+  for (const k of c.steamLicenseKeys) await tentar(k, () => store.delete(k));
   if (c.entitlement) {
     const ent = c.entitlement;
+    const ehSteam = /* @__PURE__ */ __name((o) => typeof o === "string" && o.startsWith("steam:own:"), "ehSteam");
     await tentar(`${ENT_PREFIX}${saveId}`, () => store.put(ENT_PREFIX + saveId, JSON.stringify({
       tier: ent.tier,
       credits: ent.credits,
-      consumedOrders: ent.consumedOrders,
-      orderDetails: ent.orderDetails,
+      consumedOrders: (Array.isArray(ent.consumedOrders) ? ent.consumedOrders : []).filter((o) => !ehSteam(o)),
+      orderDetails: (Array.isArray(ent.orderDetails) ? ent.orderDetails : []).filter((o) => !ehSteam(o?.orderId)),
       auditedAt: ent.auditedAt,
       aiLifetime: {},
       adDate: "1970-01-01",
@@ -1100,6 +1126,7 @@ async function handleDeleteConfirm(env, saveId, body) {
     pushVia: push.via,
     coopLeft: coop.left,
     spritesDeleted: c.sprites.imgs.length + c.sprites.locks.length + c.sprites.blobs.length,
+    steamLicensesDeleted: c.steamLicenseKeys.length,
     entitlementMinimized: !!c.entitlement,
     tombstoneTtlSeconds: TOMBSTONE_TTL_SECONDS,
     failedSteps: falhou.length
@@ -1112,6 +1139,7 @@ async function handleDeleteConfirm(env, saveId, body) {
       inscricoesDePushApagadas: push.deleted,
       grupoCooperativoDeixado: coop.left,
       spritesApagados: c.sprites.imgs.length + c.sprites.locks.length + c.sprites.blobs.length,
+      licencasSteamApagadas: c.steamLicenseKeys.length,
       // O que NÃO conseguiu apagar, pelo nome da chave. Vazio é o normal;
       // preenchido, o token continua válido e a pessoa pode confirmar de novo.
       falhou
@@ -2753,6 +2781,20 @@ async function onRequestPost3({ request, env }) {
     if (!ent) return json4({ ok: false, reason: "insufficient" }, 402);
     return json4({ ok: true, ...publicView(ent) });
   }
+  if (action === "rebirth-reset") {
+    const store = kv(env);
+    let state = null;
+    try {
+      state = JSON.parse(await store?.get(saveId) || "null");
+    } catch {
+      state = null;
+    }
+    const r = state?.rebirth;
+    const renasceu = !!r && typeof r === "object" && typeof r.at === "string" && r.at.length > 0 && typeof r.fromStage === "string" && r.fromStage.length > 0;
+    if (!renasceu) return json4({ ok: false, reason: "rebirth-not-found" }, 409);
+    const { ent, jaFeito } = await resetSpriteLifetimeOnRebirth(env, saveId);
+    return json4({ ok: true, jaFeito, ...publicView(ent) });
+  }
   if (action === "ad") {
     if (env.ADMOB_SSV_ENABLED !== "true") {
       return json4({ ok: false, reason: "ads-not-configured" }, 501);
@@ -4071,7 +4113,7 @@ async function onRequest5({ env }) {
 }
 __name(onRequest5, "onRequest");
 
-// ../.wrangler/tmp/pages-8Vwwki/functionsRoutes-0.830513451407122.mjs
+// ../.wrangler/tmp/pages-26cRDS/functionsRoutes-0.14467631027816863.mjs
 var routes = [
   {
     routePath: "/api/account",

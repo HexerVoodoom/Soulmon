@@ -152,3 +152,114 @@ export const BITS_EXCHANGE = [
 /** Recompensa em Emblemas por partida de torneio. */
 export const EMBLEMS_PER_WIN = 3;
 export const EMBLEMS_PER_LOSS = 1;   // consolo: jogar sempre rende alguma coisa
+
+// ──────────────────────────────────────────────── o teto de Bits do dia (#61/#63)
+
+/**
+ * 💠 QUANTOS BITS OS MINIJOGOS PODEM RENDER NUM DIA DO JOGADOR.
+ *
+ * ⚠️ DECISÃO DO DONO #61/#63 (22/09/2026, `docs/PERGUNTAS-DO-DONO.md`):
+ * *"Economia: **Bits por dia completo + teto de runs** por dia (números a
+ * calibrar na simulação)"*. A outra metade é `BITS_PER_COMPLETE_DAY`
+ * (`utils/dailyReset.ts`, 100 Bits — a loja inteira em ~90 dias de cuidado).
+ *
+ * ## Por que o teto é em BITS/dia e não em RUNS/dia
+ *
+ * É o achado que a simulação impôs à decisão, e ele merece estar escrito antes
+ * do número. A loja custa **8 900 Bits** (55 itens, `SHOP_ITEMS`). Medido na
+ * QA rodada 2 (§2.7):
+ *
+ *   · perfil **A** (faz tudo, todo dia, nunca joga): **0 Bits em 90 dias**;
+ *   · perfil **B** (3 runs/semana): 13 598 = 152% da loja;
+ *   · perfil **G** (zero hábitos, **1 run por dia**): **34 566 = 3,9× a loja**.
+ *
+ * Um teto de RUNS por dia não toca o perfil G — ele já faz exatamente uma run
+ * por dia. O que o faz juntar 34 mil é o VALOR da run, que sobe com a base
+ * semanal da masmorra (327 → 417 Bits). Ou seja: o teto que a decisão pede só
+ * morde em Bits/dia; escrito em runs/dia ele seria letra morta contra o
+ * jogador que a decisão nomeia. Está aqui por honestidade — quem reabrir isto
+ * não precisa remedir.
+ *
+ * ## O número
+ *
+ * **150 Bits/dia de minijogo**, contra os 100/dia de quem cuida. Em 90 dias:
+ * G cai de 3,9× para **1,5× a loja** (grinder diário compra tudo em ~60 dias),
+ * A compra tudo em ~90 dias, e B — que joga E cuida — fica no meio. A razão
+ * grinder/cuidador vira 1,5:1 em vez de ∞:1, e nenhum perfil passa a precisar
+ * de minijogo para ver a loja.
+ *
+ * ## O que o teto NÃO faz (linha vermelha)
+ *
+ * Não tira nada de ninguém, não bloqueia a masmorra, não cobra entrada e não
+ * toca coração — bater o teto só faz os Bits pararem de somar, exatamente como
+ * o teto suave do Vínculo (`bond.ts`). A run continua inteira: 🌀,
+ * placar, bestiário, andares, tudo. O `CLAUDE.md` já declara qual é a alavanca
+ * permitida ("se farmar Bits virar problema, a alavanca é custo de ENTRADA em
+ * Bits, nunca o retorno do custo em corações") — um teto de ganho é ainda mais
+ * suave que um custo de entrada, porque não pode deixar ninguém sem jogar.
+ */
+export const MINIGAME_BITS_PER_DAY = 150;
+
+/**
+ * O registro do teto, no SAVE, nunca no localStorage — mesmo argumento do
+ * `careCaps`, do `poopDrainCharge` e do `glitchtamaUse`: um teto que se fura
+ * trocando de aparelho não é um teto. E o dia é o **dia do jogador**
+ * (`utils/playerDay.ts`), não o do aparelho.
+ *
+ * Chave NOVA no save (`minigameBits`) — linha vermelha #20 (só ACRESCENTAR).
+ */
+export interface MinigameBitsCharge {
+  /** Chave do DIA DO JOGADOR, forma de `toDateString()`. */
+  day: string;
+  /** Bits de minijogo já creditados neste dia. */
+  earned: number;
+}
+
+/** Fatia do GameState que o crédito de Bits de minijogo lê e escreve. */
+export interface MinigameBitsState {
+  gamePoints?: number;
+  minigameBits?: MinigameBitsCharge;
+}
+
+/** Quantos Bits de minijogo já foram creditados HOJE. Dia diferente = zero — o
+ *  registro antigo não é apagado, é ignorado, o que torna a leitura idempotente
+ *  sob a virada. */
+export function minigameBitsToday(state: MinigameBitsState, dayKey: string): number {
+  const reg = state.minigameBits;
+  return reg && reg.day === dayKey ? Math.max(0, reg.earned) : 0;
+}
+
+/** Quanto o minijogo ainda PODE render hoje (0 = teto do dia gasto). */
+export function remainingMinigameBits(state: MinigameBitsState, dayKey: string): number {
+  return Math.max(0, MINIGAME_BITS_PER_DAY - minigameBitsToday(state, dayKey));
+}
+
+/**
+ * Credita Bits de MINIJOGO sobre o `prev`, respeitando o teto do dia.
+ *
+ * Função PURA e feita para rodar DENTRO de um updater (`setGameState`): o
+ * ledger é escrito no MESMO retorno que soma os Bits, senão dois créditos no
+ * mesmo lote do React leriam o mesmo estado e passariam os dois pelo teto — a
+ * família de bug do X-6, e a masmorra credita VÁRIAS vezes por run (por inimigo
+ * e por andar), dentro do mesmo tique de render.
+ *
+ * Devolve o MESMO objeto quando nada muda (teto gasto, ou `amount <= 0`).
+ *
+ * ⚠️ Os Bits do DIA COMPLETO **não passam por aqui** — são de `dailyReset.ts`,
+ * e o teto deles é o próprio calendário.
+ */
+export function creditMinigameBits<T extends MinigameBitsState>(
+  prev: T,
+  amount: number,
+  dayKey: string,
+): T {
+  const pedido = Math.max(0, Math.floor(amount));
+  if (pedido <= 0) return prev;
+  const ganho = Math.min(pedido, remainingMinigameBits(prev, dayKey));
+  if (ganho <= 0) return prev;
+  return {
+    ...prev,
+    gamePoints: (prev.gamePoints ?? 0) + ganho,
+    minigameBits: { day: dayKey, earned: minigameBitsToday(prev, dayKey) + ganho },
+  };
+}

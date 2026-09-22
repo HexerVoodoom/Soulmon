@@ -183,6 +183,51 @@ export async function writeEntitlement(env, saveId, ent) {
  * conferência e na leitura que decide se um "vínculo" medido veio de quem
  * pagou ou de quem ganhou. `orderDetails` inteiro continua não saindo.
  */
+/**
+ * Marca (epoch ms) de que o RENASCIMENTO já zerou o teto vitalício de sprite
+ * desta conta. Existe para o reset ser **uma vez só**, do mesmo jeito que o
+ * renascimento é um por save — sem ela, quem descobrisse a rota teria
+ * geração de sprite infinita a R$ 0,10 cada (o teto vitalício é 26).
+ */
+export const REBIRTH_SPRITE_RESET_FIELD = 'rebirthSpriteResetAt';
+
+/**
+ * **#62** (decisão do dono, 22/09/2026): o renascimento zera
+ * `aiLifetime.sprite`.
+ *
+ * Por quê: o Rebirth dá uma ÁRVORE NOVA (`src/utils/rebirth.ts`) — formas
+ * novas, que pedem sprites novos. Com o contador vitalício intacto, quem
+ * renasceu com 20 das 26 gerações gastas via a recompensa da escada inteira
+ * virar seis imagens. O teto continua existindo; ele só reconhece que a
+ * coleção recomeçou.
+ *
+ * O que NUNCA é zerado aqui:
+ *  · `aiForms` — é teto por FORMA (`{ 'mega-virus': 3 }`), e as formas de
+ *    depois do renascimento são outras; zerá-lo daria 3 gerações extras em
+ *    cada forma JÁ gerada, que é exatamente o abuso que o teto por forma
+ *    existe para fechar;
+ *  · `aiLifetime.chat`/`.suggest` — não têm teto vitalício hoje, e a decisão
+ *    do dono fala de sprite;
+ *  · nada de dinheiro (`tier`, `credits`, `consumedOrders`).
+ *
+ * **Idempotente por construção**: `REBIRTH_SPRITE_RESET_FIELD` é gravado junto,
+ * e a segunda chamada devolve `{ ent, jaFeito: true }` sem escrever. O
+ * renascimento é um por save; o reset também.
+ *
+ * @returns {Promise<{ ent: any, jaFeito: boolean, anterior: number }>}
+ */
+export async function resetSpriteLifetimeOnRebirth(env, saveId) {
+  const ent = await readEntitlement(env, saveId);
+  if (Number(ent[REBIRTH_SPRITE_RESET_FIELD] ?? 0) > 0) {
+    return { ent, jaFeito: true, anterior: 0 };
+  }
+  const anterior = Number(ent.aiLifetime?.sprite ?? 0) || 0;
+  ent.aiLifetime = { ...(ent.aiLifetime || {}), sprite: 0 };
+  ent[REBIRTH_SPRITE_RESET_FIELD] = Date.now();
+  await writeEntitlement(env, saveId, ent);
+  return { ent, jaFeito: false, anterior };
+}
+
 export function paidProviderOf(ent) {
   const details = Array.isArray(ent?.orderDetails) ? ent.orderDetails : [];
   // Do mais recente para o mais antigo, pulando o que foi ANULADO. Assim uma

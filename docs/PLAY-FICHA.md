@@ -35,6 +35,36 @@
 | Ícone 512×512 (PNG 32-bit, sem alfa) | `public/favicon-512x512.png` **depois de conferido a olho** | pedido §6.4 abaixo — a review 12 §1 suspeita que ainda seja a arte "D" do DigiApp |
 | Público-alvo | **18+** (não é app para crianças) | decisão #15 (`docs/PERGUNTAS-DO-DONO.md`); `PLAY-DATA-SAFETY.md` §0 |
 | Anúncios | **Não contém anúncios** | `docs/BILLING-SETUP.md` §4b (`ADMOB_SSV_ENABLED` ausente); decisão #14 mantém desligado |
+| Plataformas suportadas (não é campo do console — é a régua de "isto é bug nosso?") | **Android Chrome (PWA e APK) + desktop Chromium** = suportados; **iOS e Firefox Android** = melhor esforço (sem push, e no iOS o storage é separado e apagável) | decisão do dono **#49/#69**; detalhe em [`docs/manual/01-VISAO.md` §9b](manual/01-VISAO.md) |
+
+---
+
+## 0b. A tagline ÚNICA (decisão do dono **#70**, 22/09/2026)
+
+| | |
+|---|---|
+| **PT-BR** | **Ela cresce com o seu dia.** |
+| **EN** | **It grows with your day.** |
+
+Uma frase, em todas as superfícies. Onde ela já está aplicada:
+
+| Superfície | Campo | Estado |
+|---|---|---|
+| Site / link compartilhado | `index.html` › `<meta name="description">` e `<meta property="og:description">` | ✅ abre com a tagline + frase de apoio |
+| PWA (tela de instalar) | `public/manifest.json` › `description` | ✅ mesmo texto (o guard exige `manifest.description == meta description`) |
+| Feature graphic da Play | pedido §6.3 | ✅ já pedia esta frase — foi de onde ela saiu |
+| Ficha da Play (título/curta/longa) | §1 e §2 | ⬜ **de propósito não mudou**: título (30) e descrição curta (80) têm limite de caracteres e copy já validada pela squad-narrativa em 22/09; a tagline é a assinatura da MARCA, não o texto da vitrine |
+
+⚠️ **O que a decisão resolve:** havia **três** frases de abertura diferentes —
+`meta description`, `og:description` e o manifesto, cada uma com a sua. Quem
+colava o link, quem instalava o PWA e quem abria a loja lia produtos diferentes.
+A **frase de apoio** pode variar por superfície (limite de caracteres); a
+**tagline** não.
+
+**Guard executável:** `src/deploy/manifest.contract.test.ts` — exige que as
+três descrições **comecem** com a tagline PT, e que as duas versões da frase
+estejam neste arquivo. Mudar a tagline quebra o teste em vez de divergir em
+silêncio.
 
 ---
 

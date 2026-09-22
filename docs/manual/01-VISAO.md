@@ -357,11 +357,22 @@ personagens prontos" (Pyraka, Akashaoi, Nimbrata). São seis desde 15/09/2026;
 o código vence. Registrado em [`02 §59`](02-REGRAS-DE-NEGOCIO.md#divergencias), D28.
 
 Preço de entrada: `FULL_UNLOCK_PRICE_LABEL` (`src/utils/monetization.ts`) —
-compra ÚNICA, SKU `FULL_UNLOCK_SKU`. A decisão de modelo
-([`PLANO-PRODUTO.md`](../PLANO-PRODUTO.md), Parte 3, revisada em 19/08/2026) é
-**compra única como ENTRADA + camada recorrente opcional e não-bloqueante**; a
-camada recorrente (estação cosmética) está especificada e **não** implementada
-como cobrança.
+compra ÚNICA, SKU `FULL_UNLOCK_SKU`.
+
+⚠️ **A camada recorrente foi DECIDIDA em 22/09/2026** (pergunta **#55** do
+dono): **assinatura de IA de R$ 9,90/mês com 300 mensagens, só texto e voz**
+(chat, sugestões, transcrição) — **o sprite fica FORA** (custo de imagem por
+unidade); quem estoura compra créditos; quem comprou o desbloqueio ganha o
+**1º mês de cortesia**; e ela se **constrói DEPOIS do E0**. A decisão com as
+alternativas que perderam e os gatilhos de revisão está em
+[`REGISTRO-DE-DECISOES.md` §5.4](../REGISTRO-DE-DECISOES.md) —
+[`PLANO-PRODUTO.md`](../PLANO-PRODUTO.md) Parte 3 é o raciocínio que levou até
+lá, não o estado. ⚰️ Até esta data a camada recorrente aqui descrita era
+"estação cosmética" — **o conteúdo mudou para IA de texto/voz**.
+
+**Nada disto está implementado**: `monetization.ts` não tem SKU recorrente e o
+que vale hoje é o teto por tier (`_aiGuard.js` › `AI_LIMITS.chat`, demo 30 /
+paid 120 por dia).
 
 ### As três moedas, e a fronteira que nunca se cruza
 
@@ -416,6 +427,34 @@ A regra que atravessa as quatro: **regra copiada é regra que diverge em
 silêncio** (footgun 9 do `CLAUDE.md`). O overlay **importa** `careRules`,
 `careUpdaters`, `careCaps`, `playerDay`, `restWindow` e `poopDrain` de
 `src/utils/`, em vez de reimplementá-los.
+
+### 9b. Plataformas SUPORTADAS — e o que "melhor esforço" quer dizer
+
+Decisão do dono **#49/#69** (22/09/2026, QA Rodadas 1 e 2). Até aqui o projeto
+nunca tinha declarado em lugar nenhum onde promete funcionar — o que significa
+que todo bug de navegador era igualmente urgente, e nenhum era.
+
+| Nível | Plataformas | O que isso obriga |
+|---|---|---|
+| **SUPORTADO** | **Android com Chrome** (PWA instalada **e** APK) e **desktop Chromium** (Chrome/Edge) | bug aqui é bug: **bloqueia** lançamento e entra na fila. Toda regra de jogo, push, save na nuvem e áudio funcionam |
+| **MELHOR ESFORÇO** | **iOS** (Safari e qualquer navegador de lá — todos usam o WebKit) e **Firefox no Android** | o app carrega e se joga. Um bug exclusivo daqui é registrado, **não** bloqueia lançamento, e pode ser fechado como "conhecido" |
+
+**As duas limitações do iOS que não são bug nosso e não têm conserto por código:**
+
+1. **Sem notificação push** fora da PWA instalada na tela de início — e, mesmo
+   instalada, o comportamento é do sistema, não nosso. Todo o desenho de
+   lembrete assume que ele pode simplesmente **não chegar** no iOS.
+2. **Armazenamento SEPARADO e apagável**: o WebKit isola o storage do site do
+   storage da PWA instalada — são **dois saves locais diferentes** no mesmo
+   aparelho — e pode apagá-lo depois de ~7 dias sem uso. **O login é a única
+   rede de segurança** (o save na nuvem, `/api/save`), e é por isso que ele
+   nunca pode virar "opcional escondido" no onboarding do iOS.
+
+**O que o E0 faz com isso** (`docs/E0-PREREGISTRO.md`): o E0 assume que **há
+iPhone entre os 10 convidados**, então o dono dá **uma passada de teste em iOS
+antes do 1º convite** — instalar a PWA, criar conta, marcar uma tarefa, fechar
+e reabrir. Não é para suportar o iOS; é para saber o que dizer quando o
+convidado de iPhone reclamar, em vez de descobrir junto com ele.
 
 ---
 

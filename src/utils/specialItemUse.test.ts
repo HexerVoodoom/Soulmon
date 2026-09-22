@@ -30,12 +30,19 @@ function estado(over: Partial<SpecialItemState> = {}): SpecialItemState {
 const AGORA = new Date('2026-09-07T12:00:00Z');
 
 describe('glitchtama', () => {
-  it('vale exatamente 1 dia perfeito e 1 no vitalicio, e gasta 1 do inventario', () => {
-    const prev = estado({ foodInventory: { [GLITCHTAMA_EMOJI]: 2 }, perfectDays: 3, totalPerfectDays: 7 });
+  /* ⚰️ 22/09/2026 — decisão do dono #41/#60: o 🌀 deixou de somar em
+     `totalPerfectDays` (o vitalício que `achievements.ts` lê) e passou a somar
+     em `missionPerfectDays` (o da missão `mission-perfect-30`, que a decisão
+     manda continuar contando o item). Este teste afirmava `totalPerfectDays`
+     8 — e era justamente esse número que deixava o perfil G abrir
+     `dias-completos-30` com ZERO dias completos (QA rodada 2, §2.6). */
+  it('vale exatamente 1 dia perfeito, soma no vitalicio da MISSAO e gasta 1 do inventario', () => {
+    const prev = estado({ foodInventory: { [GLITCHTAMA_EMOJI]: 2 }, perfectDays: 3, totalPerfectDays: 7, missionPerfectDays: 7 });
     const { state, refused } = applySpecialItem(prev, GLITCHTAMA_EMOJI, AGORA);
     expect(refused).toBeUndefined();
     expect(state.perfectDays).toBe(4);
-    expect(state.totalPerfectDays).toBe(8);
+    expect(state.totalPerfectDays).toBe(7);      // #41/#60: intacto
+    expect(state.missionPerfectDays).toBe(8);
     expect(state.foodInventory[GLITCHTAMA_EMOJI]).toBe(1);
   });
 
@@ -52,11 +59,13 @@ describe('glitchtama', () => {
     expect(state.attributesSinceLastEvolution).toEqual({ virus: 0, data: 0, vaccine: 0 });
   });
 
-  it('totalPerfectDays ausente no save antigo comeca do zero, nao vira NaN', () => {
+  it('vitalicio ausente no save antigo comeca do zero, nao vira NaN', () => {
     const prev = estado({ foodInventory: { [GLITCHTAMA_EMOJI]: 1 } });
     delete (prev as Partial<SpecialItemState>).totalPerfectDays;
+    delete (prev as Partial<SpecialItemState>).missionPerfectDays;
     const { state } = applySpecialItem(prev, GLITCHTAMA_EMOJI, AGORA);
-    expect(state.totalPerfectDays).toBe(1);
+    expect(state.missionPerfectDays).toBe(1);
+    expect(state.totalPerfectDays).toBeUndefined();   // #41/#60: não é tocado
   });
 
   it('sem estoque nao concede dia perfeito nenhum', () => {

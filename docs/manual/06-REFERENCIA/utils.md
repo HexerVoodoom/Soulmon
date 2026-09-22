@@ -9,7 +9,7 @@ Cobertura: **120/120** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 
 ## Índice por família
 
-**Cuidado (corações, comida, ritmo, sono, renascimento)** — [`adventure.ts`](#srcutilsadventurets), [`anniversary.ts`](#srcutilsanniversaryts), [`bond.ts`](#srcutilsbondts), [`careCaps.ts`](#srcutilscarecapsts), [`carePattern.ts`](#srcutilscarepatternts), [`careRules.ts`](#srcutilscarerulests), [`careUpdaters.ts`](#srcutilscareupdatersts), [`collectionDates.ts`](#srcutilscollectiondatests), [`dayKeyLabel.ts`](#srcutilsdaykeylabelts), [`dailyReset.ts`](#srcutilsdailyresetts), [`evolutionTarget.ts`](#srcutilsevolutiontargetts), [`firstDay.ts`](#srcutilsfirstdayts), [`memories.ts`](#srcutilsmemoriests), [`mood.ts`](#srcutilsmoodts), [`nightmares.ts`](#srcutilsnightmarests), [`passives.ts`](#srcutilspassivests), [`petName.ts`](#srcutilspetnamets), [`petNeeds.ts`](#srcutilspetneedsts), [`petStage.ts`](#srcutilspetstagets), [`petVoice.ts`](#srcutilspetvoicets), [`poopDrain.ts`](#srcutilspoopdraints), [`rebirth.ts`](#srcutilsrebirthts), [`restWindow.ts`](#srcutilsrestwindowts), [`specialItemUse.ts`](#srcutilsspecialitemusets), [`steps.ts`](#srcutilsstepsts), [`welcomeBack.ts`](#srcutilswelcomebackts)
+**Cuidado (corações, comida, ritmo, sono, renascimento)** — [`adventure.ts`](#srcutilsadventurets), [`anniversary.ts`](#srcutilsanniversaryts), [`bond.ts`](#srcutilsbondts), [`careCaps.ts`](#srcutilscarecapsts), [`carePattern.ts`](#srcutilscarepatternts), [`careRules.ts`](#srcutilscarerulests), [`careUpdaters.ts`](#srcutilscareupdatersts), [`collectionDates.ts`](#srcutilscollectiondatests), [`completionUndo.ts`](#srcutilscompletionundots), [`dayKeyLabel.ts`](#srcutilsdaykeylabelts), [`dailyReset.ts`](#srcutilsdailyresetts), [`evolutionTarget.ts`](#srcutilsevolutiontargetts), [`firstDay.ts`](#srcutilsfirstdayts), [`memories.ts`](#srcutilsmemoriests), [`mood.ts`](#srcutilsmoodts), [`nightmares.ts`](#srcutilsnightmarests), [`passives.ts`](#srcutilspassivests), [`petName.ts`](#srcutilspetnamets), [`petNeeds.ts`](#srcutilspetneedsts), [`petStage.ts`](#srcutilspetstagets), [`petVoice.ts`](#srcutilspetvoicets), [`poopDrain.ts`](#srcutilspoopdraints), [`rebirth.ts`](#srcutilsrebirthts), [`restWindow.ts`](#srcutilsrestwindowts), [`specialItemUse.ts`](#srcutilsspecialitemusets), [`steps.ts`](#srcutilsstepsts), [`welcomeBack.ts`](#srcutilswelcomebackts)
 **Tarefas e hábitos** — [`goalToCategory.ts`](#srcutilsgoaltocategoryts), [`habitCreate.ts`](#srcutilshabitcreatets), [`habitRhythm.ts`](#srcutilshabitrhythmts), [`quickAdd.ts`](#srcutilsquickaddts), [`rituals.ts`](#srcutilsritualsts), [`taskSuggestions.ts`](#srcutilstasksuggestionsts), [`taskTriage.ts`](#srcutilstasktriagets), [`tinyOffer.ts`](#srcutilstinyofferts), [`weekBalance.ts`](#srcutilsweekbalancets)
 **Economia (moedas, loja, monetização)** — [`backgrounds.ts`](#srcutilsbackgroundsts), [`currencies.ts`](#srcutilscurrenciests), [`entitlements.ts`](#srcutilsentitlementsts), [`missions.ts`](#srcutilsmissionsts), [`monetization.ts`](#srcutilsmonetizationts), [`offerMoment.ts`](#srcutilsoffermomentts), [`playBilling.ts`](#srcutilsplaybillingts), [`priceLabel.ts`](#srcutilspricelabelts), [`seasons.ts`](#srcutilsseasonsts), [`shop.ts`](#srcutilsshopts), [`shopBuy.ts`](#srcutilsshopbuyts), [`weeklyMissions.ts`](#srcutilsweeklymissionsts)
 **Jogos (arena, masmorra, torneio)** — [`arena.ts`](#srcutilsarenats), [`dungeon.ts`](#srcutilsdungeonts), [`dungeonScenes.ts`](#srcutilsdungeonscenests), [`fxArt.ts`](#srcutilsfxartts), [`tournamentSeason.ts`](#srcutilstournamentseasonts), [`tournamentTiers.ts`](#srcutilstournamenttiersts)
@@ -420,6 +420,21 @@ Cobertura: **120/120** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 **Chamado por:** `src/components/SoulmonOnboarding.tsx`, `src/contexts/GameStateContext.tsx`, `src/utils/gateDraft.ts`, `src/utils/oracleDraft.ts`
 **Régua:** `consent.test.ts`
 **Regra de negócio:** Idade mínima e versão de termos aceitos, gravados no save. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+
+### `src/utils/completionUndo.ts`
+**Dono de:** A janela de 5 s para DESFAZER uma conclusão de hábito (decisão do dono #57, 22/09/2026) — o que a reversão devolve, e nada mais.
+**Exports:**
+- `CAMPOS_DA_CONCLUSAO` (const) — Os campos que UMA conclusão de hábito escreve (ritmo, comida, atributos, `activityLog`/`activityStats`, `totalXP`/`bondDaily`). Campo novo na conclusão entra AQUI, senão o desfazer fica pela metade em silêncio.
+- `CampoDaConclusao` / `CompletionSnapshot` (tipos) — a foto, opaca de propósito: quem guarda não precisa saber o que tem dentro.
+- `UNDO_WINDOW_MS` (const, 5000) — a duração do toast É o limite da reversão; duas durações dariam um botão que some antes de expirar ou que expira antes de sumir.
+- `function snapshotCompletion(state: object): CompletionSnapshot` — Fotografa o estado ANTES da conclusão. Chamado FORA do updater (o updater roda 2× no StrictMode).
+- `function undoCompletion<T extends object>(prev: T, snap: CompletionSnapshot): T` — Devolve o estado ao que era. Puro e idempotente; roda dentro do updater, sobre o `prev`.
+**Chamado por:** `src/App.tsx` (`ofereceDesfazer`, os dois handlers de conclusão), `src/utils/regrasDeJogo.qaRodada2.test.ts`
+**Régua:** `regrasDeJogo.qaRodada2.test.ts` (bloco `#57`)
+**Avisos do arquivo:**
+- ⚠️ É SNAPSHOT, não "aplicar o inverso": escrever o inverso de cada campo seria uma segunda regra de conclusão, e regra copiada diverge em silêncio (footgun 9).
+- ⚠️ Passada a janela, a conclusão volta a ser imutável — `handleToggleActivityCompletion` continua recusando desmarcar.
+**Regra de negócio:** Marcar um hábito abre 5 s de "Desfazer" que reverte comida, XP, Vínculo e constância; depois disso é imutável. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
 ### `src/utils/currencies.ts`
 **Dono de:** Modelo das três moedas (Bits/Emblemas/Créditos): cor, estilo visual e taxa de troca — nunca se misturam.

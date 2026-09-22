@@ -35,6 +35,20 @@
 //               Apagar aqui destruiria o direito pago junto com o dado.
 //               ⚠️ Esta escolha está ENDEREÇADA AO DONO, não decidida aqui.
 //               Nenhuma norma é afirmada neste arquivo.
+//  APAGA        ⚰️ **`ord:steam:own:<appid>:<steamid>` deixou de sobreviver**
+//  (#54)        em 22/09/2026 (decisão do dono #54, QA R2 `04-dados-r2` #4).
+//               O `orderId` de uma licença Steam É a string
+//               `steam:own:<appid>:<steamid>` — ou seja, a chave carrega um
+//               **SteamID64, identificador de TERCEIRO**, e a justificativa
+//               fiscal dos 5 anos não cobre licença de posse (não há
+//               transação nossa). As chaves são DERIVADAS de
+//               `consumedOrders` (`steamLicenseKeysOf`), sem varredura, e a
+//               mesma string sai de `consumedOrders`/`orderDetails` no
+//               passo 6 — apagar só a chave e deixar a linha no entitlement
+//               reteria o SteamID pela porta de trás. **Preço aceito:** a
+//               trava "um Steam, uma conta" se perde para quem apagou — a
+//               mesma licença ativa uma conta nova. Play/cortesia seguem
+//               sobrevivendo (o orderId deles não identifica pessoa).
 //  APAGA        Assinaturas de push (`push:*`, `fcm:*`, namespace
 //  (ÍNDICE)     `PUSH_SUBSCRIPTIONS`) da conta, via índice inverso
 //               `pushidx:<saveId>` (`_pushIdentity.js`; decisão #23 do QA
@@ -333,9 +347,9 @@ const NOT_INCLUDED = [
     en: 'For 30 days after deletion, the server keeps only your account identifier (the code derived from your email, without the email) marked as "deleted". It exists to refuse writes from an old device that was still signed in — without it the save came back on its own seconds later. Signing in again with the same email reopens: the account starts over from scratch. After 30 days the marker expires on its own.',
   },
   {
-    what: 'ord:steam:own:<appid>:<steamid> (Steam) — provisório / provisional',
-    'pt-BR': 'Se você ativou o Soulmon pela Steam, o vínculo entre o seu SteamID e a conta que ele ativou fica guardado por 5 anos, como o comprovante de compra: é o que impede uma mesma licença Steam de virar várias contas. Este prazo é provisório e está em revisão (pergunta #56 ao responsável).',
-    en: 'If you activated Soulmon through Steam, the link between your SteamID and the account it activated is kept for 5 years, like the purchase receipt: it is what stops one Steam licence from becoming several accounts. This period is provisional and under review (question #56 to the owner).',
+    what: 'ord:steam:own:<appid>:<steamid> (Steam) — APAGADO / DELETED',
+    'pt-BR': 'Se você ativou o Soulmon pela Steam, o vínculo entre o seu SteamID e esta conta é APAGADO junto com ela — nada do seu SteamID fica guardado aqui. Em troca, a licença Steam volta a ficar livre: ela pode ativar uma conta nova.',
+    en: 'If you activated Soulmon through Steam, the link between your SteamID and this account is DELETED together with it — nothing about your SteamID is kept here. In exchange, the Steam licence becomes free again: it can activate a new account.',
   },
   {
     what: 'terceiros / third parties',
@@ -345,6 +359,28 @@ const NOT_INCLUDED = [
 ];
 
 /** Junta tudo que o servidor tem sob este saveId. Fonte única da exportação E do inventário. */
+/**
+ * As chaves `ord:steam:own:<appid>:<steamid>` desta conta — DERIVADAS do
+ * próprio entitlement (`consumedOrders`), não de uma varredura: o `orderId` de
+ * uma licença Steam É a string `steam:own:<appid>:<steamid>`
+ * (`_billing.js` › `verifySteamOwnership`), e `claimOrder` grava
+ * `ORDER_PREFIX + orderId`. Por isso a exclusão alcança a chave sem saber o
+ * SteamID de antemão e sem `list`.
+ *
+ * Decisão do dono **#54** (22/09/2026): o SteamID64 é identificador de TERCEIRO
+ * e a justificativa fiscal de 5 anos da política §8 não cobre licença de posse
+ * (não há transação nossa) — privacidade vence a trava "um Steam, uma conta".
+ * O preço aceito: quem apaga a conta pode reativar a MESMA licença numa conta
+ * nova. `ord:<orderId>` de Play/cortesia continua sobrevivendo (é dinheiro, e o
+ * orderId da Play não carrega identificador de pessoa).
+ */
+function steamLicenseKeysOf(ent) {
+  const orders = Array.isArray(ent?.consumedOrders) ? ent.consumedOrders : [];
+  return orders
+    .filter(o => typeof o === 'string' && o.startsWith('steam:own:'))
+    .map(o => `${ORDER_PREFIX}${o}`);
+}
+
 async function collect(env, saveId) {
   const store = kvOrThrow(env);
   const pid = await publicIdFor(saveId);
@@ -384,7 +420,11 @@ async function collect(env, saveId) {
   let coopGroupId = null;
   try { coopGroupId = (await grupoDe(env, saveId))?.id ?? null; } catch { coopGroupId = null; }
 
-  return { pid, state, profile, gifts, entitlement, ranks, rankKeys, pidIndexed, sprites, coopGroupId };
+  // #54: as chaves de licença Steam saem da exclusão — derivadas, ver
+  // `steamLicenseKeysOf`. Lista vazia para quem nunca ativou pela Steam.
+  const steamLicenseKeys = steamLicenseKeysOf(entitlement);
+
+  return { pid, state, profile, gifts, entitlement, ranks, rankKeys, pidIndexed, sprites, coopGroupId, steamLicenseKeys };
 }
 
 /**
@@ -468,10 +508,17 @@ function plan(c, saveId) {
       'menções a você na lista de amigos de outros jogadores',
       'inscrições de notificação (push:*/fcm:*) ligadas à sua conta',
       ...(c.coopGroupId ? [`coop:${c.coopGroupId} (sua vaga no grupo)`, coopOfKey(saveId), coopCkKey(c.coopGroupId, saveId)] : []),
+      // #54: o vínculo SteamID ↔ conta. ⚰️ Até 22/09/2026 estas chaves apareciam
+      // em `sobrevive` (5 anos, justificativa fiscal que não se aplica a licença).
+      ...c.steamLicenseKeys,
     ].filter(Boolean),
     minimiza: c.entitlement ? [`${ENT_PREFIX}${saveId} — sai o uso (IA, anúncios), ficam os campos de compra`] : [],
+    // Sobrevive o comprovante de COMPRA (Play/cortesia). A licença Steam saiu
+    // desta lista em 22/09/2026 e passou para `apaga` (#54).
     sobrevive: Array.isArray(c.entitlement?.consumedOrders)
-      ? c.entitlement.consumedOrders.map(o => `${ORDER_PREFIX}${o}`)
+      ? c.entitlement.consumedOrders
+          .filter(o => !(typeof o === 'string' && o.startsWith('steam:own:')))
+          .map(o => `${ORDER_PREFIX}${o}`)
       : [],
   };
 }
@@ -576,16 +623,29 @@ async function handleDeleteConfirm(env, saveId, body) {
   for (const k of c.sprites.imgs) await tentar(k, () => store.delete(k));
   for (const k of c.sprites.locks) await tentar(k, () => store.delete(k));
 
+  // 5b) #54 — vínculo SteamID ↔ conta. Chaves DERIVADAS do entitlement (ver
+  //    `steamLicenseKeysOf`), por isso nenhuma varredura. Antes desta linha
+  //    elas sobreviviam 5 anos sob a justificação fiscal da política §8, que
+  //    não cobre licença de posse. Vem ANTES do passo 6 de propósito: se este
+  //    passo falhar, o `consumedOrders` minimizado ainda contém a linha
+  //    `steam:own:` e o retry dentro dos 15 min a reencontra.
+  for (const k of c.steamLicenseKeys) await tentar(k, () => store.delete(k));
+
   // 6) Entitlement: MINIMIZADO, não apagado. Ver o cabeçalho — apagar o
   //    registro de compra destrói o direito pago e a trava anti-fraude junto.
   //    O que sai é USO (não prova nada); o que fica é DINHEIRO.
+  //    #54: o que também sai é o SteamID — apagar `ord:steam:own:*` e deixar a
+  //    MESMA string em `consumedOrders`/`orderDetails` reteria o identificador
+  //    pelos mesmos 5 anos por outra porta. O tier já concedido fica (o
+  //    `tier: 'paid'` acima não é recalculado a partir da lista).
   if (c.entitlement) {
     const ent = c.entitlement;
+    const ehSteam = o => typeof o === 'string' && o.startsWith('steam:own:');
     await tentar(`${ENT_PREFIX}${saveId}`, () => store.put(ENT_PREFIX + saveId, JSON.stringify({
       tier: ent.tier,
       credits: ent.credits,
-      consumedOrders: ent.consumedOrders,
-      orderDetails: ent.orderDetails,
+      consumedOrders: (Array.isArray(ent.consumedOrders) ? ent.consumedOrders : []).filter(o => !ehSteam(o)),
+      orderDetails: (Array.isArray(ent.orderDetails) ? ent.orderDetails : []).filter(o => !ehSteam(o?.orderId)),
       auditedAt: ent.auditedAt,
       aiLifetime: {},
       adDate: '1970-01-01',
@@ -623,6 +683,7 @@ async function handleDeleteConfirm(env, saveId, body) {
     pushVia: push.via,
     coopLeft: coop.left,
     spritesDeleted: c.sprites.imgs.length + c.sprites.locks.length + c.sprites.blobs.length,
+    steamLicensesDeleted: c.steamLicenseKeys.length,
     entitlementMinimized: !!c.entitlement,
     tombstoneTtlSeconds: TOMBSTONE_TTL_SECONDS,
     failedSteps: falhou.length,
@@ -636,6 +697,7 @@ async function handleDeleteConfirm(env, saveId, body) {
       inscricoesDePushApagadas: push.deleted,
       grupoCooperativoDeixado: coop.left,
       spritesApagados: c.sprites.imgs.length + c.sprites.locks.length + c.sprites.blobs.length,
+      licencasSteamApagadas: c.steamLicenseKeys.length,
       // O que NÃO conseguiu apagar, pelo nome da chave. Vazio é o normal;
       // preenchido, o token continua válido e a pessoa pode confirmar de novo.
       falhou,

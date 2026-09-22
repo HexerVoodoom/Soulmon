@@ -7,6 +7,7 @@
 //   POST /api/entitlements?action=spend         { id, amount, reason }
 //   POST /api/entitlements?action=ad            { id }
 //   POST /api/entitlements?action=grant         { saveId }   ← CORTESIA (admin)
+//   POST /api/entitlements?action=rebirth-reset { id }       ← RENASCIMENTO (#62)
 //
 // SOBRE A CORTESIA (action=grant): é a única rota que concede tier pago sem
 // loja, e por isso não usa `authorizeSaveAccess` (que autentica o DONO DO
@@ -30,9 +31,28 @@
 // existir, a UI esconde a opção (o GET devolve `adsEnabled: false`) em vez de
 // mostrar um botão que não deveria funcionar.
 
+// SOBRE O RENASCIMENTO (action=rebirth-reset, decisão do dono **#62**,
+// 22/09/2026): o renascimento zera `aiLifetime.sprite`. O rebirth em si é
+// **de cliente** — mora no save (`src/utils/rebirth.ts`, `GameState.rebirth`)
+// e o servidor nunca o grava. Mas o contador vitalício de sprite mora em
+// `ent:<saveId>`, que **só o servidor escreve** (é o único limite de IA que o
+// cliente não alcança). Daí esta rota: o cliente AVISA que renasceu, e o
+// servidor CONFERE antes de zerar. Três travas, porque um reset de teto
+// vitalício é dinheiro (26 gerações × ~R$ 0,10):
+//   1. `authorizeSaveAccess` — só o dono do save, como `spend`;
+//   2. **prova no save**: o servidor lê `<saveId>` na KV e exige
+//      `state.rebirth` com `at`/`fromStage`. Sem isso a rota seria um botão de
+//      "zere meu teto" para qualquer dono de conta;
+//   3. **uma vez só**: `rebirthSpriteResetAt` no próprio entitlement
+//      (`resetSpriteLifetimeOnRebirth`) — o renascimento é um por save.
+// A 2ª trava é falsificável por um cliente adulterado (ele escreve o próprio
+// save), e isso é ACEITO: o dano máximo é **um** reset por conta, que é
+// exatamente o que a decisão concede. O que ela fecha é o caminho de `curl`
+// sem save renascido, e o acidente de um cliente chamar na hora errada.
+
 import {
   VALID_ID, publicView, spendCredits, grantAdReward, auditRefunds,
-  grantCourtesy, COURTESY_PROVIDER,
+  grantCourtesy, COURTESY_PROVIDER, resetSpriteLifetimeOnRebirth,
 } from './_entitlements.js';
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { isPlayPurchaseVoided, isSteamPurchaseVoided, isSteamOwnershipVoided } from './_billing.js';
@@ -168,6 +188,25 @@ export async function onRequestPost({ request, env }) {
     const ent = await spendCredits(env, saveId, amount, body?.opId);
     if (!ent) return json({ ok: false, reason: 'insufficient' }, 402);
     return json({ ok: true, ...publicView(ent) });
+  }
+
+  if (action === 'rebirth-reset') {
+    // Trava 2: a prova mora no save do próprio titular (ver a nota no topo).
+    // `kv(env)` já foi conferido acima (500 se ausente); a variável local é o
+    // que deixa o typecheck enxergar isso.
+    const store = kv(env);
+    let state = null;
+    try { state = JSON.parse((await store?.get(saveId)) || 'null'); } catch { state = null; }
+    const r = state?.rebirth;
+    const renasceu = !!r && typeof r === 'object'
+      && typeof r.at === 'string' && r.at.length > 0
+      && typeof r.fromStage === 'string' && r.fromStage.length > 0;
+    if (!renasceu) return json({ ok: false, reason: 'rebirth-not-found' }, 409);
+
+    const { ent, jaFeito } = await resetSpriteLifetimeOnRebirth(env, saveId);
+    // `jaFeito` não é erro: retry de rede e duplo toque respondem 200 igual,
+    // como o `opId` de `spend`. O que o corpo diz é se ALGO mudou agora.
+    return json({ ok: true, jaFeito, ...publicView(ent) });
   }
 
   if (action === 'ad') {

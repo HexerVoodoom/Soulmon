@@ -700,6 +700,15 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** nenhuma (`find src/components -maxdepth 1 -name 'TriagePile.*test.ts*'` vazio, 09/09/2026); a fila em si é travada em `src/utils/taskTriage.test.ts`.
 **Avisos do arquivo:** as quatro saídas têm o mesmo peso visual — "Deixar pra lá" não é o botão feio do canto; nenhum vermelho de cobrança, nenhum total de pendências gritando no topo; dá para sair no meio sem penalidade.
 
+### `src/components/UndoToast.tsx`
+**Dono de:** o toast de "Desfazer" da conclusão de hábito (decisão do dono #57, 22/09/2026) — o ÚNICO toast do app que o usuário precisa acionar, e por isso o único com marcação própria.
+**Props principais:** `language`, `mensagem` (já traduzida pelo chamador), `onUndo()`.
+**Exports:** `UndoToast(props)`.
+**Estado/efeitos relevantes:** nenhum — componente de apresentação, montado por `toast.custom` do `sonner` com `duration = UNDO_WINDOW_MS`.
+**Chamado por:** `src/App.tsx` (`ofereceDesfazer`).
+**Régua:** `regrasDeJogo.qaRodada2.test.ts` (bloco `#57`, a regra por trás).
+**Avisos do arquivo:** o `sonner` 2.0.3 não põe `role` nenhum no toast e o botão de ação dele tem ~24px de alvo — daí `role="status"` e o alvo de 44×44 escritos à mão aqui; PT+EN como todo texto do app.
+
 ### `src/components/UnlockAccountModal.tsx`
 **Dono de:** o desbloqueio completo DENTRO do jogo (não só na tela inicial) — o modal de compra e o convite discreto `UnlockNudge`.
 **Props principais:** `UnlockReason` (type: `'task-limit'|'evolution'|'report'|'shop'`) · `UnlockAccountModalProps` — `language`, entitlement atual, motivo do convite, callbacks de compra/restauração.

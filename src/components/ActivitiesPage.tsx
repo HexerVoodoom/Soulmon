@@ -73,7 +73,7 @@ interface GameCard {
   onClick: () => void;
 }
 
-export function ActivitiesPage({ evolutionStage, demoCharacterId, language, totalPoints, onDungeonEnter, onDungeonLose, onDungeonHeartDrop, onGlitchtama, onDungeonEnemyDefeated, onDinoScore, onEarnPoints, onSpendBits, onOpenTournament, soulmonSkills }: {
+export function ActivitiesPage({ evolutionStage, demoCharacterId, language, totalPoints, onDungeonEnter, onDungeonLose, onDungeonHeartDrop, onGlitchtama, onFloorCleared, onDungeonEnemyDefeated, onDinoScore, onEarnPoints, onSpendBits, onOpenTournament, soulmonSkills }: {
   evolutionStage: string;
   /** Modo demo (utils/monetization.ts): personagem pré-pronto — sobrepõe o sprite do pet nos minijogos. */
   demoCharacterId?: string;
@@ -83,6 +83,8 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, tota
   onDungeonLose: () => void;
   onDungeonHeartDrop: () => boolean;
   onGlitchtama: () => void;
+  /** 🔗 #59b — repassado à `DungeonGame`: um andar limpo é evento de Vínculo. */
+  onFloorCleared?: () => void;
   onDungeonEnemyDefeated: () => void;
   onDinoScore: (score: number) => void;
   onEarnPoints: (pts: number) => void;
@@ -261,6 +263,7 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, tota
           onLose={onDungeonLose}
           onHeartDrop={onDungeonHeartDrop}
           onGlitchtama={onGlitchtama}
+          onFloorCleared={onFloorCleared}
           onEnemyDefeated={onDungeonEnemyDefeated}
           onEarnPoints={onEarnPoints}
           /* WP4.5 — o sumidouro recorrente: comprar profundidade com Bits. */

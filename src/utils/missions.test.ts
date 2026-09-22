@@ -10,6 +10,7 @@ const base: MissionState = {
   dungeonRunsCompleted: 0,
   dinoBest: 0,
   totalPerfectDays: 0,
+  missionPerfectDays: 0,
 };
 
 describe('missions — progress', () => {
@@ -35,7 +36,7 @@ describe('missions — progress', () => {
   });
 
   it('counter missions clamp at the target', () => {
-    const p = getMissionProgress({ ...base, dungeonKills: 250, dinoBest: 5000, totalPerfectDays: 31, dungeonRunsCompleted: 10 });
+    const p = getMissionProgress({ ...base, dungeonKills: 250, dinoBest: 5000, totalPerfectDays: 31, missionPerfectDays: 31, dungeonRunsCompleted: 10 });
     expect(p['mission-kills-100']).toBe(100);
     expect(p['mission-dino-1000']).toBe(1000);
     expect(p['mission-perfect-30']).toBe(30);

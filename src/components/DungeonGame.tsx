@@ -54,7 +54,7 @@ type Phase = 'intro' | 'attack' | 'defend' | 'result' | 'enemy-down' | 'floor-cl
 interface Popup { icon: string; title: string; detail: string }
 
 // ── Game ───────────────────────────────────────────────────────────────────
-export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter, onLose, onHeartDrop, onGlitchtama, onEnemyDefeated, onEarnPoints, onExit, bits = 0, onSpendBits }: {
+export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter, onLose, onHeartDrop, onGlitchtama, onFloorCleared, onEnemyDefeated, onEarnPoints, onExit, bits = 0, onSpendBits }: {
   evolutionStage: string;
   /** Modo demo (utils/monetization.ts): personagem pré-pronto — sobrepõe o sprite do pet (nunca dos inimigos). */
   demoCharacterId?: string;
@@ -67,6 +67,12 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
   onHeartDrop: () => boolean;
   /** Completing all 5 floors grants a Glitchtama (added to Items). */
   onGlitchtama: () => void;
+  /** 🔗 #59b — um ANDAR limpo (os 6 inimigos da escada). O componente não
+   *  expunha este momento: só `onEnemyDefeated`, `onEarnPoints` e
+   *  `onGlitchtama` (a run inteira). Era por isso que o `BondEvent`
+   *  `dungeonFloor` da tabela do §55 nunca tinha emissor. Opcional para não
+   *  obrigar quem monta a masmorra fora da Home a saber do Vínculo. */
+  onFloorCleared?: () => void;
   /** Mission counter: called once per defeated enemy.
    *  WP4.6 — recebe também a CHAVE do inimigo, para o bestiário registrar o
    *  que o jogador enfrentou. A chave é a mesma do sprite (`stage`), que já é
@@ -267,6 +273,10 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
     if (enemyIdx + 1 >= enemies.length) {
       playFeed();
       addPoints(clearBonus(floor));
+      // 🔗 #59b — o andar limpo. Antes do `if (floor >= MAX_FLOORS)` de
+      // propósito: o 5º andar é um andar limpo E uma run completa, e a tabela
+      // do §55 paga os dois (o teto diário de `bond.ts` é quem limita).
+      onFloorCleared?.();
       recordDungeonScore(runScoreRef.current);
       setBest(getDungeonBest());
       setRunScore(runScoreRef.current);

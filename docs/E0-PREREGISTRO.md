@@ -117,14 +117,55 @@ Nenhuma regra de jogo, nenhuma cota, nenhum texto. O E0 mede o app como está em
 `TERMS_VERSION`/`PRIVACY_VERSION` **não mudam** durante o E0 (R1 `07` N9) — se mudarem, o
 banner de termos vira variável de confusão e é registrado como tal.
 
+### 8b. As duas condições do ar que o E0 aceita como são — e não como bug
+
+Decisões do dono **#50** e **#49/#69** (22/09/2026). Estão aqui porque as duas
+afetam o que os números do E0 podem dizer, e descobri-las no dia 7 seria
+confundi-las com achado.
+
+**(a) Push: o E0 roda COM Web Push (PWA) — o APK não recebe push.**
+O worker de push está deployado e `VAPID_JWK` está na borda, então o canal
+**Web Push da PWA funciona**. O canal **FCM (APK Android) não envia**, porque
+falta o secret `FIREBASE_SERVICE_ACCOUNT` no worker — pergunta **#66**, que é
+do dono. Consequência para a leitura: **convidado que usa o APK não recebe
+lembrete nenhum**, e "não voltou" nesse caso não mede desinteresse, mede
+ausência de lembrete. **Anotar qual superfície cada convidado usa** (PWA ou
+APK) no §9, ou o denominador do §3 mistura duas coisas. Se o dono colar o
+segredo antes do 1º convite, esta nota cai e a squad redeploya o worker.
+⚰️ Isto não contradiz o push D0 suprimido (decisão #50, primeira metade): o D0
+continua sem push **de propósito**; o que esta nota descreve é o D1–D14.
+
+**(b) iOS é "melhor esforço", e o E0 assume que há iPhone entre os 10.**
+As plataformas suportadas estão declaradas em
+[`docs/manual/01-VISAO.md` §9b](manual/01-VISAO.md): **Android Chrome (PWA/APK)
+e desktop Chromium** são suportados; **iOS e Firefox Android** são melhor
+esforço — no iOS **não há push confiável** e o **storage é separado da PWA
+instalada e pode ser apagado depois de ~7 dias sem uso** (o login é a única
+rede de segurança). Por isso o dono dá **uma passada de teste em iOS ANTES do
+1º convite** (instalar a PWA, criar conta, marcar uma tarefa, fechar e
+reabrir) — não para passar a suportar o iOS, mas para saber o que responder
+ao convidado de iPhone em vez de descobrir junto com ele. É item do §9.
+
 ## 9. Assinatura (o dono preenche — só depois disso o 1º convite sai)
 
 | Campo | Valor |
 |---|---|
+| **Pré-registro assinado em** | ✅ **22/09/2026** — decisão do dono **#71** (`docs/PERGUNTAS-DO-DONO.md`, "Respostas QA RODADAS 1 e 2": *"Pré-registro e consentimento do E0: assinados em 22/09/2026"*) |
+| **Assinatura** | ✅ **Mateus Sperandio** (`mateus.sprnd@gmail.com`) — controlador e encarregado (política §9, decisão #44), 22/09/2026 |
 | Data do congelamento | `[dono preenche]` |
 | SHA do build no ar (`curl -s …/sw.js \| grep -m1 CACHE_VERSION` + `git log -1 --format=%h main`) | `[dono preenche]` |
 | Data do 1º convite / do último convite | `[dono preenche]` / `[dono preenche]` |
-| `ENTITLEMENTS_ADMIN_KEY` e `COURTESY_MAX_ACCOUNTS=10` definidos (prova: grant com chave errada → 401) | `[ ]` |
-| `FIREBASE_SERVICE_ACCOUNT` no worker (ou "E0 sem push no APK" declarado) | `[ ]` |
+| `ENTITLEMENTS_ADMIN_KEY` e `COURTESY_MAX_ACCOUNTS=10` definidos (prova: grant com chave errada → 401) | `[ ]` — **#67, do dono. Sem isso o grant responde 404 e o E0 não começa** |
+| `FIREBASE_SERVICE_ACCOUNT` no worker — **ou** "E0 sem push no APK" declarado | ✅ **declarado**: o E0 roda com **Web Push (PWA)**; o APK não recebe push até **#66** (§8b (a)) |
+| **Passada de teste em iOS antes do 1º convite** (#49 — instalar PWA, criar conta, marcar tarefa, fechar e reabrir) | `[ ]` |
+| **Superfície de cada convidado anotada** (PWA / APK / iOS) — sem isso "não voltou" se confunde com "não foi lembrado" (§8b (a)) | `[ ]` |
 | Consentimento (`E0-CONSENTIMENTO.md`) assinado por cada convidado antes do grant | `[ ]` |
-| Assinatura | `[dono]` |
+
+> ⚠️ **O que a assinatura de 22/09/2026 congela, e o que ela não congela.** Ela
+> congela o **desenho do estudo** — a pergunta (§1), as hipóteses e o critério de
+> falseamento (§2), o denominador (§3), os dois roteiros literais (§4/§5) e a
+> tabela de decisão (§6), **antes de existir qualquer dado**: é isso que faz do
+> documento um pré-registro e não um relatório escrito depois. Ela **não**
+> dispensa as linhas `[ ]` acima — elas são de **execução**, e o 1º convite só
+> sai com todas marcadas. Mudar qualquer coisa do §1–§6 daqui em diante não é
+> editar: é **assinar de novo, com data nova e o motivo escrito**.

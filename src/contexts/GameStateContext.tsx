@@ -303,6 +303,10 @@ export interface GameState {
   /** Quantos 🌀 Glitchtama foram usados no DIA DO JOGADOR — o teto que impede
    *  a masmorra de comprar a escada de evolução (`utils/specialItemUse.ts`). */
   glitchtamaUse?: { day: string; used: number };
+  /** Bits de MINIJOGO já creditados no DIA DO JOGADOR — o teto que a decisão
+   *  #61/#63 pede (`utils/currencies.ts` › `MINIGAME_BITS_PER_DAY`). Os Bits do
+   *  dia completo NÃO passam por aqui. */
+  minigameBits?: { day: string; earned: number };
   /**
    * P2 — a folga da semana (`REST_DAYS_PER_WEEK`, `utils/dailyReset.ts`).
    *
@@ -366,7 +370,12 @@ export interface GameState {
   dungeonKills?: number;
   dungeonRunsCompleted?: number;
   dinoBest?: number;
+  /** Dias completos REAIS (virada). ⚠️ Desde a decisão #41/#60 (22/09/2026) o
+   *  🌀 Glitchtama NÃO entra aqui — é ele que `utils/achievements.ts` lê. */
   totalPerfectDays?: number;
+  /** Dias completos para a MISSÃO `mission-perfect-30`: reais + 🌀 (#41/#60).
+   *  Chave NOVA — linha vermelha #20 (save só ACRESCENTA). */
+  missionPerfectDays?: number;
   /** Conquistas abertas por um gatilho que NÃO existe mais, gravadas UMA vez na
    *  migração do load (`hydrateSave`) para quem já as tinha. Hoje só
    *  `'dias-completos-30'` (ex-`tasks-100`, decisão #30, 21/09/2026). É a única
@@ -970,6 +979,12 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
           const g = obj<unknown>(loadedState.glitchtamaUse);
           return typeof g.day === 'string' ? { day: g.day, used: num(g.used, 0) } : undefined;
         })(),
+        // Teto diário de Bits de minijogo (#61/#63). Mesmo argumento do
+        // Glitchtama: save antigo entra `undefined` e ganha o dia inteiro.
+        minigameBits: (() => {
+          const m = obj<unknown>(loadedState.minigameBits);
+          return typeof m.day === 'string' ? { day: m.day, earned: num(m.earned, 0) } : undefined;
+        })(),
         // Folga da semana (P2). `undefined` é o certo para save antigo: a
         // virada lê isso como "a folga daquela semana estava inteira".
         restDaysLeft: typeof loadedState.restDaysLeft === 'number'
@@ -1102,6 +1117,10 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
         dungeonRunsCompleted: num(loadedState.dungeonRunsCompleted, 0),
         dinoBest: num(loadedState.dinoBest, 0),
         totalPerfectDays: num(loadedState.totalPerfectDays, 0),
+        // #41/#60: save anterior à decisão não tem o campo, e o vitalício antigo
+        // JÁ somava os 🌀 — herdar `totalPerfectDays` é o que impede a missão de
+        // andar para trás para quem já usou o item.
+        missionPerfectDays: num(loadedState.missionPerfectDays, num(loadedState.totalPerfectDays, 0)),
         // Migração #30 (21/09/2026): `tasks-100` virou `dias-completos-30`. Save
         // que JÁ tem o campo mantém (mesmo `[]`); save sem o campo ganha a
         // conquista se o gatilho antigo estava batido — e só nessa hora, porque

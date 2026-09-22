@@ -107,6 +107,23 @@ instrumentação não.
 
 ## Parte 3 — Posicionamento e negócio
 
+> ### ⚠️ O modelo de receita foi DECIDIDO em 22/09/2026 — leia lá primeiro
+>
+> O dono fechou a pergunta **#55**: **compra única R$ 29,90** (entrada) **+
+> assinatura de IA R$ 9,90/mês com 300 mensagens**, **só texto e voz** (chat,
+> sugestões, transcrição) — **o sprite fica fora**; quem estoura a cota compra
+> créditos; quem comprou o desbloqueio ganha o **1º mês de cortesia**. E
+> **constrói-se DEPOIS do E0**.
+>
+> A decisão completa — as alternativas que perderam (só assinatura / só
+> créditos) e os dois gatilhos de revisão (custo do modelo de chat; o E0
+> mostrar que ninguém usa o chat) — mora em
+> [`REGISTRO-DE-DECISOES.md` §5.4](REGISTRO-DE-DECISOES.md), em
+> *"O modelo de receita decidido em 22/09/2026"*. **Esta Parte 3 é o
+> RACIOCÍNIO que levou até lá, não o estado atual**: o que estiver aqui e
+> contradisser o §5.4 perdeu. Nada disto está implementado — `monetization.ts`
+> não tem SKU recorrente.
+
 ### O benchmark
 
 O Finch passou de US$ 30M ARR **bootstrapped**, hoje ~US$ 4M/mês, com assinatura de US$ 9,99. Isso prova que "pet que te encoraja" é uma categoria de dezenas de milhões de dólares sem VC — exatamente o formato indie. Não precisamos de 1% dele; precisamos de 0,2%.

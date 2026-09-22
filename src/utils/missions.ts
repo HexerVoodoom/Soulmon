@@ -20,8 +20,24 @@ export interface MissionState {
   dungeonRunsCompleted: number;
   /** Best Dino Runner score. */
   dinoBest: number;
-  /** Perfect days earned in total (lifetime — does not reset on evolution). */
+  /** Perfect days earned in total (lifetime — does not reset on evolution).
+   *  ⚠️ Só dias completos REAIS desde a decisão #41/#60 (22/09/2026). */
   totalPerfectDays: number;
+  /**
+   * Dias completos vitalícios PARA A MISSÃO — reais **mais** os 🌀.
+   *
+   * Decisão do dono #41/#60 (`docs/PERGUNTAS-DO-DONO.md`, 22/09/2026):
+   * *"🌀 não conta para conquistas: `totalPerfectDays` só por dia
+   * completo real (**segue contando para a missão**)"*. São duas perguntas
+   * diferentes — "você cumpriu 30 dias?" (conquista) e "você acumulou 30
+   * marcas?" (missão) — e por isso são dois contadores, em vez de um número
+   * com dois significados.
+   *
+   * `?? totalPerfectDays` em quem monta o objeto: save anterior à decisão não
+   * tem o campo, e ali o vitalício antigo JÁ incluía os 🌀 — ou seja, a missão
+   * nunca anda para trás.
+   */
+  missionPerfectDays: number;
 }
 
 export interface Mission {
@@ -87,7 +103,9 @@ export const MISSIONS: Mission[] = [
     id: 'mission-perfect-30', icon: '⭐', iconName: 'star', target: 30, bgReward: 'bg-mission-aurora',
     namePt: 'Constância Perfeita', nameEn: 'Perfect Consistency',
     descPt: 'Acumule 30 dias completos (total)', descEn: 'Earn 30 complete days (lifetime)',
-    progress: s => s.totalPerfectDays,
+    // #41/#60: a MISSÃO segue contando o 🌀 (decisão literal do dono); quem
+    // deixou de contá-lo é `utils/achievements.ts`, que lê `totalPerfectDays`.
+    progress: s => s.missionPerfectDays,
   },
 ];
 

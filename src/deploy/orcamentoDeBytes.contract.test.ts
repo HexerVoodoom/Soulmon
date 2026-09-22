@@ -47,7 +47,13 @@ const FOLGA_JS_CSS = 8 * KB;
  * quando o arquivo couber no teto (o guard cobra).
  */
 const DIVIDA_ATUAL: Record<string, number> = {
-  'index.js': 641_016,           // 626 KB — 2,5× o teto; `06-perf-a11y.md` correção #2
+  // 637 KB — 2,5× o teto (`06-perf-a11y.md` correção #2). Re-medido em
+  // 22/09/2026: 641_016 → 652_255 (+11,2 KB, acima da folga de 8 KB) pela
+  // execução das respostas do dono — toast de desfazer (`UndoToast.tsx`,
+  // `completionUndo.ts`: snapshot de 11 campos) e os 6 emissores de `BondEvent`
+  // no `App.tsx`. Crescimento JUSTIFICADO, não perdoado: a dívida continua
+  // sendo paga pela correção #2 (auditar o chunk de entrada).
+  'index.js': 652_255,
   'index.css': 142_696,          // 139 KB — 1,4× o teto
   'evolution-bg.mp4': 3_917_240, // 3,7 MB — fundo de UMA cerimônia; correção #3 (WebM/CSS)
   'intro.mp4': 2_524_939,        // 2,4 MB — vídeo da intro

@@ -121,7 +121,19 @@ export const CREDIT_PACKS: CreditPack[] = [
   { id: 'soulmon.credits.400', credits: 400, priceLabel: 'R$ 19,90' },
 ];
 
-/** SKU do desbloqueio completo (compra única, NÃO consumível). */
+/**
+ * SKU do desbloqueio completo (compra única, NÃO consumível).
+ *
+ * ☞ **Ponteiro (decisão do dono #55, 22/09/2026)**: o modelo de receita ganhou
+ * uma segunda peça — **assinatura de IA de R$ 9,90/mês com 300 mensagens, só
+ * texto e voz (chat, sugestões, transcrição); o sprite fica FORA**; créditos
+ * para quem estoura; 1º mês de cortesia para quem comprou este SKU. Ela se
+ * **constrói DEPOIS do E0** e por isso **não existe SKU recorrente neste
+ * arquivo** — a ausência é proposital, não esquecimento. Decisão inteira
+ * (alternativas que perderam + gatilhos de revisão) em
+ * `docs/REGISTRO-DE-DECISOES.md` §5.4. Até lá o que limita custo de IA é o teto
+ * por tier em `functions/api/_aiGuard.js` › `AI_LIMITS`.
+ */
 export const FULL_UNLOCK_SKU = 'soulmon.unlock.full';
 /** Rotulo do preco do desbloqueio completo. **Ao mudar aqui, mude tambem
  *  `public/termos.html`** (secao 4, PT e EN) — o HTML estatico nao importa TS,

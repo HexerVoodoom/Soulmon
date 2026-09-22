@@ -99,6 +99,44 @@ export async function claimAdReward(): Promise<Entitlement | null> {
 }
 
 /**
+ * 🥚 #62 — ZERA O TETO VITALÍCIO DE SPRITE NO RENASCIMENTO.
+ *
+ * DECISÃO DO DONO #62 (22/09/2026, `docs/PERGUNTAS-DO-DONO.md`):
+ * *"Rebirth: **zerar `aiLifetime.sprite`** no renascimento"*.
+ *
+ * O contador vitalício mora no SERVIDOR (`ent:<saveId>.aiLifetime.sprite`,
+ * `functions/api/_aiGuard.js`) e não pode morar em outro lugar: o cliente é
+ * editável, e um teto de geração de imagem no save do jogador é um teto que
+ * não existe. Por isso o renascimento — que é do cliente — precisa PEDIR.
+ *
+ * A rota confere sozinha que o renascimento aconteceu (lê `state.rebirth` do
+ * save do titular) e é idempotente (`rebirthSpriteResetAt`), então esta
+ * chamada não carrega autoridade nenhuma: ela só avisa.
+ *
+ * ⚠️ Falha aqui **não pode bloquear o renascimento**. O renascimento é uma vez
+ * só na vida do save; perdê-lo por um 500 de rede seria trocar um teto de
+ * custo por um dano irreversível ao jogador. Devolve `false` em silêncio e o
+ * jogador segue — o pior caso é ele gerar menos sprites do que a decisão
+ * concede, e a rota continua idempotente para um retry futuro.
+ */
+export async function resetSpriteLifetimeAfterRebirth(): Promise<boolean> {
+  const id = currentSaveId();
+  if (!id) return false;
+  try {
+    const res = await fetch('/api/entitlements?action=rebirth-reset', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+      body: JSON.stringify({ id }),
+    });
+    if (!res.ok) return false;
+    const data = await res.json();
+    return !!data.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Manda um purchaseToken da Google Play para o servidor verificar. Só o
  * servidor decide se a compra vale — aqui só repassamos e lemos o resultado.
  */

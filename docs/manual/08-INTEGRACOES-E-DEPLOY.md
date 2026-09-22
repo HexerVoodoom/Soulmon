@@ -440,8 +440,12 @@ e o login confere a lápide ANTES do onboarding (`checarContaExcluidaNoLogin`);
 UMA conta, e apagá-lo destruiria o direito pago junto com o dado (em produção o
 vínculo mora no D1 — §2.8). A **exportação** (`action=export`) devolve `friends[]`
 como **pid público** (`pidDeAmigo`, desde `592e2c14` — ⚰️ era a única rota que
-entregava saveId de terceiro) e declara em `naoIncluido` a lápide (30 d) e o
-vínculo Steam (`ord:steam:own:*`, 5 anos, provisório #56).
+entregava saveId de terceiro) e declara em `naoIncluido` a lápide (30 d). ⚰️ O
+vínculo Steam (`ord:steam:own:*`) também era declarado ali como retido por 5 anos;
+desde **22/09/2026** ele é **APAGADO na exclusão** (decisão do dono **#54** — o
+SteamID64 é identificador de terceiro e a justificativa fiscal não cobre licença
+de posse), no passo **5b**, por chave **derivada** de `consumedOrders`
+(`steamLicenseKeysOf`) e não por varredura.
 
 **A ordem do `delete-confirm` mudou em `a6c1cd8a`** ("o que pode falhar vai
 primeiro", `03-arquitetura-r1.md` §2.4): token → inventário → lápide → varredura

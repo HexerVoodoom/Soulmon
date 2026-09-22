@@ -30,6 +30,31 @@ describe('manifest.json', () => {
     expect(m.description).toBe(meta);
   });
 
+  /**
+   * Decisão do dono **#70** (22/09/2026): existe UMA tagline, e ela é
+   * "Ela cresce com o seu dia." / "It grows with your day.". Antes havia três
+   * frases de abertura diferentes — `meta description`, `og:description` e a
+   * ficha da Play cada uma com a sua. A frase de apoio pode variar por
+   * superfície (limite de caracteres da loja); a **tagline** não.
+   * Canonizada também em `docs/PLAY-FICHA.md` §0b.
+   */
+  const TAGLINE_PT = 'Ela cresce com o seu dia.';
+
+  it('#70 — `meta description`, `og:description` e o manifesto abrem com a tagline ÚNICA', () => {
+    const meta = /<meta name="description" content="([^"]+)"/.exec(html)?.[1];
+    const og = /<meta property="og:description" content="([^"]+)"/.exec(html)?.[1];
+    expect(og, 'og:description existe — é o que aparece quando o link é colado').toBeDefined();
+    for (const [onde, texto] of [['meta description', meta], ['og:description', og], ['manifest.description', m.description]] as const) {
+      expect(texto!.startsWith(TAGLINE_PT), `${onde} deveria começar com "${TAGLINE_PT}", e começa com "${texto!.slice(0, 40)}…"`).toBe(true);
+    }
+  });
+
+  it('#70 — a tagline também está na ficha da Play, para as três não divergirem de novo', () => {
+    const ficha = read('docs/PLAY-FICHA.md');
+    expect(ficha).toContain(TAGLINE_PT);
+    expect(ficha, 'a versão EN da tagline mora na mesma seção').toContain('It grows with your day.');
+  });
+
   it('theme_color == --sm-primary do index.css == <meta theme-color> claro', () => {
     const token = /--sm-primary:\s*(#[0-9a-fA-F]{6})/.exec(css)?.[1];
     expect(token).toBeDefined();

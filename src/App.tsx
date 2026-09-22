@@ -60,7 +60,7 @@ import { applyDecorEquip, type SlotId } from './utils/petStage';
 const ACTIVITY_LOG_CAP = 90;
 const EMPTY_DECOR: Partial<Record<SlotId, string>> = {};
 const EMPTY_TROPHIES: Array<{ season: string; place: 1 | 2 | 3 }> = [];
-import { getNextEvolution, dailyGoalFor, degeneratedPerfectDays, registeredForDay, tasksToAvoidHeartLoss, applyRedemption } from './utils/dailyReset';
+import { getNextEvolution, dailyGoalFor, degeneratedPerfectDays, registeredForDay, tasksToAvoidHeartLoss, applyRedemption, podeEvoluirDepoisDaQueda } from './utils/dailyReset';
 import {
   feedFood, rubHeal, rubRefusal, completeTask,
   FOOD_LIMIT_PER_HOUR,
@@ -116,8 +116,10 @@ import {
   type WeeklyMissionId,
 } from './utils/weeklyMissions';
 import { sleepReminderCopy } from '../functions/api/_pushCopy.js';
-import { BITS_EXCHANGE } from './utils/currencies';
-import { fetchEntitlement, spendCredits, claimAdReward, type Entitlement } from './utils/entitlements';
+import { BITS_EXCHANGE, creditMinigameBits } from './utils/currencies';
+import { snapshotCompletion, undoCompletion, UNDO_WINDOW_MS } from './utils/completionUndo';
+import { UndoToast } from './components/UndoToast';
+import { fetchEntitlement, spendCredits, claimAdReward, resetSpriteLifetimeAfterRebirth, type Entitlement } from './utils/entitlements';
 import { purchase } from './utils/playBilling';
 
 /* ⚰️ `EVOLVE_SEGMENTS` (7/9/11/14/999) saiu em 06/09/2026, junto com
@@ -544,8 +546,20 @@ function withHabitCompletion(
     kind: 'completion', weight: HABIT_WEIGHT, habitTier: habitTier(after.totalDone),
   }, bondDayKey);
 
+  /* 🔗 #59b — 🌳 MARCO DE HÁBITO (7/21/66). Um dos 6 `BondEvent` que a tabela
+     do §55 declarava e ninguém emitia (QA rodada 2 §2.4: 7 dos 11 mudos).
+     `milestoneReached` é a MESMA detecção que a cerimônia usa — nada de
+     segunda tabela (footgun 9) —, e `completeHabit` é idempotente por dayKey,
+     então marcar o hábito duas vezes no mesmo dia não paga duas vezes.
+     Os dias saem de `HABIT_MILESTONES` (`types/taskModel.ts`), dono único dos
+     números, e não de literais. */
+  const marco = milestoneReached(before.totalDone, after.totalDone);
+  const comMarco = marco
+    ? awardBondXP(comXP, { kind: 'habitMilestone', days: after.totalDone }, bondDayKey)
+    : comXP;
+
   return {
-    ...comXP,
+    ...comMarco,
     habitRhythms: { ...(prev.habitRhythms ?? {}), [activityId]: after },
     virusPoints: prev.virusPoints + bonus.virus,
     dataPoints: prev.dataPoints + bonus.data,
@@ -1820,6 +1834,10 @@ export default function App() {
       playTaskComplete();
       if (justFinishedActivity) {
         queueTaskGains(justFinishedActivity.category);
+        // ↩️ #57 — a última etapa FECHA o hábito, então ela também abre a
+        // janela de desfazer. Sem isto, hábito com etapas seria a metade do
+        // app onde o toque errado continua sem volta.
+        ofereceDesfazer(gameState, justFinishedActivity.name);
         celebrateHabitMilestone(
           justFinishedActivity.id, justFinishedActivity.name, new Date().toDateString(),
         );
@@ -1937,6 +1955,13 @@ export default function App() {
     // Mesmo resumo das tarefas: uma ação, várias barras. Fora do updater porque
     // efeito colateral dentro de setGameState roda 2× no StrictMode.
     if (activity) queueTaskGains(activity.category);
+
+    // ↩️ #57 — a janela de 5 s. `gameState` aqui é o estado ANTES do updater
+    // acima (o React só o troca no próximo render), que é exatamente a foto
+    // que a reversão precisa.
+    if (activity && !(activity.completedToday && activity.lastCompletedDate === today)) {
+      ofereceDesfazer(gameState, activity.name);
+    }
 
     // Marco de maturidade (7/21/66 dias de Lally et al.) — celebra UMA vez, no
     // dia em que o corte é cruzado. Fora do updater pelo mesmo motivo.
@@ -2319,6 +2344,43 @@ export default function App() {
    * contarem como dois sinais distintos.
    */
   const [gainSignal, setGainSignal] = useState<{ category: ActivityCategory; n: number } | null>(null);
+  /**
+   * ↩️ #57 — A JANELA DE 5 SEGUNDOS PARA DESFAZER UMA CONCLUSÃO.
+   *
+   * DECISÃO DO DONO #57 (22/09/2026): *"Marcar feita: toast 'Desfazer' 5 s
+   * revertendo a conclusão inteira (comida/XP/vínculo/constância); depois
+   * disso, imutável"*.
+   *
+   * O `snapshot` é tirado FORA do updater, do `gameState` que o handler já tem
+   * em mãos — mesmo lugar e mesmo motivo de `habitMilestoneOf` (o updater roda
+   * 2× no StrictMode, e duas fotos do mesmo instante seriam iguais mas o toast
+   * sairia dobrado). A REVERSÃO é que roda dentro de um updater, sobre o
+   * `prev`: entre o clique no "Desfazer" e o commit pode ter havido outra
+   * mudança de estado, e o `prev` é a única leitura que enxerga ela.
+   *
+   * `duration` = `UNDO_WINDOW_MS` porque a janela do toast **é** a janela da
+   * reversão: o botão nunca some antes de expirar nem fica morto na tela.
+   */
+  const ofereceDesfazer = useCallback((antes: GameState, nomeDoHabito: string) => {
+    const snapshot = snapshotCompletion(antes);
+    const mensagem = language === 'pt-BR'
+      ? `${nomeDoHabito} — marcado como feito`
+      : `${nomeDoHabito} — marked as done`;
+    toast.custom(
+      (t) => (
+        <UndoToast
+          language={language}
+          mensagem={mensagem}
+          onUndo={() => {
+            setGameState(prev => undoCompletion(prev, snapshot));
+            toast.dismiss(t);
+          }}
+        />
+      ),
+      { duration: UNDO_WINDOW_MS },
+    );
+  }, [language, setGameState]);
+
   const queueTaskGains = useCallback((category: ActivityCategory) => {
     setGainSignal(prev => ({ category, n: (prev?.n ?? 0) + 1 }));
   }, []);
@@ -2522,7 +2584,7 @@ export default function App() {
    * empate vírus/vacina com leitura confiável anunciava `ultimate-data` e
    * gravava `ultimate-virus`. Ver `utils/evolutionTarget.ts` (footgun 9).
    */
-  const { virusPoints, dataPoints, vaccinePoints, evolutionStage, unlockedEvolutions, currentBranch, perfectDays } = gameState;
+  const { virusPoints, dataPoints, vaccinePoints, evolutionStage, unlockedEvolutions, currentBranch, perfectDays, degeneratedByHP } = gameState;
   const handleEvolveRequest = useCallback(() => {
     const { stage: next } = evolutionTarget({
       points: { virus: virusPoints, data: dataPoints, vaccine: vaccinePoints },
@@ -2532,8 +2594,12 @@ export default function App() {
       unlockedEvolutions,
       perfectDays,
     });
+    // #59 — a cerimônia não abre na mesma abertura da queda: ela tocaria POR
+    // causa de uma queda, e o `handleEvolve` do outro lado recusaria de
+    // qualquer jeito, deixando o jogador diante de um ritual que não commita.
+    if (degeneratedByHP) return;
     if (next !== evolutionStage) setEvolutionCeremony({ from: evolutionStage, to: next });
-  }, [virusPoints, dataPoints, vaccinePoints, evolutionStage, unlockedEvolutions, currentBranch, perfectDays, carePatternReading]);
+  }, [virusPoints, dataPoints, vaccinePoints, evolutionStage, unlockedEvolutions, currentBranch, perfectDays, carePatternReading, degeneratedByHP]);
 
   const handleEvolve = useCallback(() => {
     setGameState(prev => {
@@ -2542,6 +2608,13 @@ export default function App() {
       // Evolução manual: só evolui com a barra de dias perfeitos cheia.
       const req = FORM_REQUIREMENTS[getStageLevel(prev.evolutionStage)].required;
       if (prev.perfectDays < req) return prev;
+      // #59 (decisão do dono, 22/09/2026): "Queda: exigir uma virada completa
+      // antes de re-evoluir (acaba a cura grátis por um clique)". A regra mora
+      // em `utils/dailyReset.ts` — aqui só se delega, porque ela tem DOIS
+      // chamadores (este e o `canEvolve` que acende o botão) e regra copiada
+      // diverge em silêncio. Reconferida sobre o `prev`, e não só no botão: é
+      // o updater que commita, e o botão é sinal de UI.
+      if (!podeEvoluirDepoisDaQueda(prev)) return prev;
       let newEvolutionStage = prev.evolutionStage;
       let newHP = prev.healthPoints;
 
@@ -2886,6 +2959,13 @@ export default function App() {
     contarMissao('dungeon-runs');
   }, [contarMissao]);
 
+  /* 🔗 #59b — 🧱 ANDAR LIMPO DA MASMORRA. Um dos 6 `BondEvent` mudos que a
+     QA rodada 2 (§2.4) mediu: a tabela do §55 declarava `dungeonFloor` e
+     `grep -rn "kind: 'dungeonFloor'" src` não achava emissor nenhum. */
+  const handleDungeonFloorCleared = useCallback(() => {
+    setGameState(prev => awardBondXP(prev, { kind: 'dungeonFloor' }, playerDayKey(new Date(), prev.playerDayTz)));
+  }, []);
+
   // 🏅 Mission counters
   const handleDungeonEnemyDefeated = useCallback((enemyKey?: string) => {
     setGameState(prev => ({
@@ -2915,6 +2995,9 @@ export default function App() {
     dungeonRunsCompleted: gameState.dungeonRunsCompleted ?? 0,
     dinoBest: Math.max(gameState.dinoBest ?? 0, readNumber(STORAGE_KEYS.DINO_BEST, 0)),
     totalPerfectDays: gameState.totalPerfectDays ?? 0,
+    // #41/#60 (22/09/2026): a MISSÃO segue contando o 🌀; a CONQUISTA não.
+    // `?? totalPerfectDays` para save anterior à decisão não andar para trás.
+    missionPerfectDays: gameState.missionPerfectDays ?? gameState.totalPerfectDays ?? 0,
   };
   const missionProgress = getMissionProgress(missionState);
 
@@ -2942,7 +3025,15 @@ export default function App() {
       // de pé). O spread vem ANTES do `gamePoints` — invertido, o estado
       // devolvido por `consumeBuff` sobrescreveria os Bits recém-creditados.
       const base = mult > 1 ? consumeBuff(prev) : prev;
-      return { ...base, gamePoints: (base.gamePoints ?? 0) + total };
+      /* 💠 #61/#63 — o TETO DE BITS DE MINIJOGO do dia
+         (`MINIGAME_BITS_PER_DAY`, `utils/currencies.ts`, onde está escrito por
+         que ele é em Bits/dia e não em runs/dia). Este handler é o funil ÚNICO
+         de Dino, PPT e Masmorra, então uma linha aqui cobre os três. A regra é
+         pura e mora no updater junto do crédito: a masmorra credita várias
+         vezes por run no mesmo lote do React, e um teto lido de fora passaria
+         duas vezes (família de bug do X-6). Bater o teto não tira nada e não
+         interrompe minijogo nenhum — os Bits só param de somar. */
+      return creditMinigameBits(base, total, playerDayKey(new Date(), prev.playerDayTz));
     });
     if (mult > 1) {
       // Fora do updater (footgun 6): no StrictMode ele roda 2×.
@@ -3262,6 +3353,14 @@ export default function App() {
         },
       };
     });
+    /* 🥚 #62 — o teto VITALÍCIO de sprite volta a zero no renascimento
+       (decisão do dono, 22/09/2026). Ele mora no servidor
+       (`ent:<saveId>.aiLifetime.sprite`) porque o cliente é editável, então
+       tudo o que cabe aqui é avisar. `void` de propósito: a rota é idempotente
+       e confere sozinha que o renascimento aconteceu, e **falhar não pode
+       bloquear o renascimento** — ele é uma vez só na vida do save, e perdê-lo
+       por um erro de rede seria um dano irreversível para economizar imagem. */
+    void resetSpriteLifetimeAfterRebirth();
     return true;
   }, [gameState]);
 
@@ -3710,9 +3809,8 @@ export default function App() {
     const now = new Date();
     const weekAhead = new Date(now.getTime());
     weekAhead.setDate(weekAhead.getDate() + 7);
-    setGameState(prev => ({
-      ...prev,
-      tasks: prev.tasks.map(task => {
+    setGameState(prev => {
+      const tasks = prev.tasks.map(task => {
         if (task.id !== taskId) return task;
         switch (action) {
           case 'today': return toOpen({ ...task, startDate: isoDay(now) }, now);
@@ -3721,8 +3819,16 @@ export default function App() {
           case 'drop': return drop(task, now);
           default: return task;
         }
-      }),
-    }));
+      });
+      const proximo = { ...prev, tasks };
+      /* 🔗 #59b — 🧹 PILHA ARRUMADA. Premia ESVAZIAR a fila, nunca a carta:
+         pagar por carta seria recompensa por CONTAGEM (linha vermelha #16), e
+         o que alivia é ter terminado de planejar (Masicampo & Baumeister), não
+         ter mexido em N itens. A fila é recontada sobre o estado JÁ aplicado. */
+      return triageQueue(tasks, now).length === 0 && triageQueue(prev.tasks, now).length > 0
+        ? awardBondXP(proximo, { kind: 'triageCleared' }, playerDayKey(now, prev.playerDayTz))
+        : proximo;
+    });
   }, [setGameState]);
 
   /**
@@ -3746,7 +3852,22 @@ export default function App() {
     if (isSleeping) {
       // Perder isto só custa a hora de deitar da noite em curso. Silencioso.
       writeLocal(STORAGE_KEYS.SLEEP_STARTED_AT, now.toISOString(), { silent: true });
-      setGameState(prev => ({ ...prev, rest: recordNight(prev.rest ?? createRestState(), now) }));
+      /* 🔗 #59b — 🛏️ NOITE DE DESCANSO. Só a noite DENTRO da janela rende XP:
+         é a MESMA régua da missão `rest-nights` logo abaixo, e premiar toda
+         noite pagaria por ir dormir em vez de por ir no horário — o que a
+         Janela de Descanso existe para não fazer (nada de score de sono).
+         O guard `nights.some(...)` impede que deitar/levantar/deitar na mesma
+         noite pague duas vezes: `recordNight` é idempotente por manhã,
+         `awardBondXP` não é. */
+      setGameState(prev => {
+        const rest = prev.rest ?? createRestState();
+        const chaveDaNoite = playerDayKey(now, prev.playerDayTz);
+        const jaRegistrada = rest.nights.some(n => n.date === chaveDaNoite);
+        const comNoite = { ...prev, rest: recordNight(rest, now) };
+        return !jaRegistrada && isWithinWindow(rest.window, now)
+          ? awardBondXP(comNoite, { kind: 'restNight' }, chaveDaNoite)
+          : comNoite;
+      });
       // Conta a noite só quando o deitar caiu DENTRO da janela escolhida: a
       // missão premia o comportamento, exatamente como a Janela de Descanso —
       // contar toda noite pagaria por ir dormir, não por ir no horário.
@@ -3803,14 +3924,22 @@ export default function App() {
     writeLocal(STORAGE_KEYS.MORNING_DREAM_SHOWN, key, { silent: true });
     // WP4.10 — a data entra junto: coleção sem data é lista; com data é
     // história. Dia do JOGADOR, nunca do aparelho.
-    setGameState(prev => ({
-      ...prev,
-      rest: collectDream(
-        prev.rest ?? createRestState(),
-        dreamId,
-        playerDayKey(new Date(), prev.playerDayTz),
-      ),
-    }));
+    /* 🔗 #59b — 🌠 SONHO INÉDITO. Mesma régua da missão `dream-new` logo
+       abaixo: repetir um sonho que já está no dex não acrescenta ao acervo, e
+       por isso não paga. Um updater só, com o crédito junto da coleta. */
+    setGameState(prev => {
+      const comSonho = {
+        ...prev,
+        rest: collectDream(
+          prev.rest ?? createRestState(),
+          dreamId,
+          playerDayKey(new Date(), prev.playerDayTz),
+        ),
+      };
+      return isNew
+        ? awardBondXP(comSonho, { kind: 'dreamNew' }, playerDayKey(new Date(), prev.playerDayTz))
+        : comSonho;
+    });
     // Só o sonho INÉDITO conta: a missão é de coleção, e repetir um que já
     // está no dex não acrescenta nada ao acervo.
     if (isNew) contarMissao('dream-new');
@@ -3894,7 +4023,10 @@ export default function App() {
    * este caminho nem é chamado. O som/fala ficam FORA do updater (footgun 6).
    */
   const handleNightmareWin = useCallback((rewards: NightmareRewards) => {
-    setGameState(prev => ({
+    /* 🔗 #59b — 👻 PESADELO VENCIDO. `awardBondXP` envolve o MESMO updater que
+       grava `markFought` (footgun 6: nada de efeito colateral fora), e o dia é
+       o do JOGADOR, como todo ledger de teto do Vínculo. */
+    setGameState(prev => awardBondXP({
       ...prev,
       healthPoints: Math.min(prev.maxHealthPoints, prev.healthPoints + (rewards.hearts ?? 0)),
       energyPoints: Math.min(
@@ -3906,7 +4038,7 @@ export default function App() {
         prev.nightmares ?? EMPTY_NIGHTMARES,
         nightmareDayKey(new Date(), prev.rest?.playerDayTz),
       ),
-    }));
+    }, { kind: 'nightmareCleared' }, playerDayKey(new Date(), prev.playerDayTz)));
     setMessageTrigger(prev => prev + 1);
   }, [setGameState]);
 
@@ -5169,6 +5301,9 @@ export default function App() {
                 canEvolve={(() => {
                   const req = FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required;
                   if (gameState.evolutionLocked || gameState.perfectDays < req) return false;
+                  // #59 — depois de uma queda por HP, o botão só acende na
+                  // virada seguinte. Mesma função que o `handleEvolve` commita.
+                  if (!podeEvoluirDepoisDaQueda(gameState)) return false;
                   // Mesma fonte que anuncia e que commita (utils/evolutionTarget.ts):
                   // `getDominantBranch` mandava todo empate para `data` e podia
                   // liberar/travar o botão contra um destino que não era o real.
@@ -5810,6 +5945,10 @@ export default function App() {
                 onDungeonLose={handleDungeonLose}
                 onDungeonHeartDrop={handleDungeonHeartDrop}
                 onGlitchtama={handleGlitchtama}
+                /* 🔗 #59b — ⚔️ ANDAR LIMPO. O teto `BOND_DAILY_CAP.dungeon`
+                   (`bond.ts`) é quem decide quanto uma segunda run ainda
+                   rende; aqui só se emite o evento. */
+                onFloorCleared={handleDungeonFloorCleared}
                 onDungeonEnemyDefeated={handleDungeonEnemyDefeated}
                 onDinoScore={handleDinoScore}
                 onEarnPoints={handleEarnGamePoints}

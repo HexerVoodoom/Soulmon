@@ -52,11 +52,13 @@ abaixo continua valendo. **Nenhum número de loudness é constante deste arquivo
 - A referência de produção deste run é a **CLI `higgsfield`** e a skill global `higgsfield-generate`
   (carregue por `Skill`; `higgsfield --help` e `higgsfield generate --help` são a fonte). ⚰️ Esta
   linha apontava para `.agents/skills/higgsfield-game-generation/references/audio.md` — o
-  ponteiro `.claude/skills/higgsfield-*` do repo é um **symlink git** que o Windows
+  ponteiro `.claude/skills/higgsfield-*` do repo era um **symlink git** que o Windows
   (`core.symlinks=false`) materializa como arquivo de texto de 40 bytes, então a cópia do repo
   nunca carregou como skill e divergiu da global (QA Rodada 1, `08-governanca-docs-marca-r1.md`
-  §1.2; decisão do dono #53). Se precisar do texto de `audio.md`, leia a cópia da conta em
-  `~/.agents/skills/higgsfield-game-generation/references/audio.md`, nunca a do repo. ⚠️ **Os alvos numéricos dela foram DESEMPATADOS CONTRA em 08/09/2026** (S3,
+  §1.2). ⚰️ **Os três ponteiros foram APAGADOS do repo em 22/09/2026** (decisão do dono
+  **#53**: *"apagar do repo — a skill vive na conta"*), então não há mais o que confundir:
+  `higgsfield-generate` é sempre a da conta. Se precisar do texto de `audio.md`, leia a cópia
+  da conta em `~/.agents/skills/higgsfield-game-generation/references/audio.md`. ⚠️ **Os alvos numéricos dela foram DESEMPATADOS CONTRA em 08/09/2026** (S3,
   `docs/REGISTRO-DE-DECISOES.md` §6.1): os −10/−12 **dBFS** dali misturam régua de pico com
   régua de loudness, e as duas estão a **3,017 dB medidos** uma da outra. O alvo vigente é
   **≤ −16 LUFS integrado** (ITU-R BS.1770-4, K-weighting com gating) e **true peak ≤ −1 dBTP**

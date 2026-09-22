@@ -3,7 +3,10 @@ import { playerDayKey, type PlayerDayAnchor } from './playerDay';
 import {
   MAX_HEARTS_LOST_PER_DAY,
   ABSENCE_FORGIVENESS_DAYS,
+  NEW_SAVE_GRACE_DAYS,
   daysSinceLastReset,
+  saveDaysLived,
+  getPreviousForm,
 } from './dailyReset';
 
 // Dreno de cocô como função PURA — o dono único da regra.
@@ -63,6 +66,25 @@ export interface PoopDrainState {
   petPassive?: string;
   /** Data da última virada; é dela que sai a leitura de ausência. */
   lastResetDate?: string;
+  /**
+   * ⚠️ #58b — os campos abaixo existem para o dreno respeitar as MESMAS travas
+   * da virada. Todos já viajavam no save; nenhum é chave nova (linha vermelha
+   * #20). Opcionais porque save antigo pode não ter — e a ausência sempre cai
+   * do lado de NÃO cobrar.
+   */
+  /** Relatório da última virada: `saveDay` (carência de save novo) e
+   *  `returnGraceLeft` (rampa de retorno). Ver `utils/dailyReset.ts`. */
+  lastDayReport?: { saveDay?: number; returnGraceLeft?: number; [k: string]: unknown };
+  /** Estágio atual — é o que diz se este pet está na RAIZ da árvore (rookie),
+   *  onde não existe forma abaixo e o piso de 1 coração vale. */
+  evolutionStage?: string;
+  /** Galho atual, só para perguntar a `getPreviousForm` se há forma abaixo. */
+  currentBranch?: string;
+  /* Os campos abaixo são lidos por `saveDaysLived` quando o save é anterior ao
+     contador (`looksLikeVeteranSave`). Ficam como índice livre de propósito —
+     declará-los um a um aqui duplicaria a lista que `dailyReset.ts` já tem. */
+  totalPerfectDays?: number;
+  perfectDays?: number;
   /**
    * Fuso FIXO do dia do jogador (`utils/playerDay.ts`). Lido do ESTADO, e não
    * por um parâmetro novo em `PoopDrainOptions`, pela mesma razão do
@@ -130,10 +152,50 @@ export function applyPoopDrain<T extends PoopDrainState>(state: T, opts: PoopDra
   // Relógio parado: começa a contar agora.
   if (clock === 0) return { ...state, poopPenaltyClockAt: now };
 
+  // ── As TRÊS carências da virada, que o dreno ignorava ────────────────────
+  //
+  // ⚠️ DECISÃO DO DONO #58b (22/09/2026, `docs/PERGUNTAS-DO-DONO.md`):
+  // *"Dreno de cocô: **mesmas travas da virada** (carência de save novo, rampa
+  // de retorno, piso da raiz)"*.
+  //
+  // O cabeçalho deste arquivo e `02-REGRAS` §8 já afirmavam, por escrito, que o
+  // dreno respeitava "exatamente as mesmas travas da virada". Era falso em três
+  // de seis, e a QA rodada 2 (§2.5) mediu o preço:
+  //
+  //  · **Save novo** (`Dp`): perdia 1 coração em d1, d2 e d3 — a carência que
+  //    `NEW_SAVE_GRACE_DAYS` justifica em doze linhas não valia aqui.
+  //  · **Rampa de retorno**: quem voltava de uma ausência era perdoado pela
+  //    virada e cobrado pelo dreno no mesmo dia.
+  //  · **Piso da raiz**: como o piso só existia na virada, o rookie ficava em
+  //    **HP 0 todos os dias** — a virada devolvia 1, o dreno tirava de novo.
+  //    E o relatório anunciava `forgiven: true, heartsLost: 0` com a barra em
+  //    2/3, que é o relatório mentindo na direção mais fácil de acreditar.
+  //
+  // O que NÃO entrou, e continua sendo decisão do dono: a FOLGA da semana (ver
+  // o ⚠️ do cabeçalho, decisão de 08/09/2026, mantida) e o teto compartilhado
+  // do DIA entre virada e dreno (§2.5; o dono respondeu #58b sem ele). Este
+  // bloco aplica as três travas que a decisão nomeia, e só elas.
+  //
+  // Todas reancoram o relógio em `now`, pelo mesmo motivo da ausência: perdoar
+  // e guardar o período para o próximo tick é o perdão vazando por fora.
+
   // Ausência ≥ ABSENCE_FORGIVENESS_DAYS: quem volta encontra saudade, não
   // fatura. O relógio é REANCORADO em `now` (e não acumulado), senão a próxima
   // passagem cobraria a mesma ausência que acabou de ser perdoada.
   if (daysSinceLastReset(state.lastResetDate, new Date(now)) >= ABSENCE_FORGIVENESS_DAYS) {
+    return { ...state, poopPenaltyClockAt: now };
+  }
+
+  // #58b — carência de começo de vida. A MESMA leitura da virada
+  // (`saveDaysLived`), e não um contador próprio: duas contas para "quantos
+  // dias este save viveu" divergiriam em silêncio (footgun 9).
+  if (saveDaysLived(state as Record<string, any>) < NEW_SAVE_GRACE_DAYS) {
+    return { ...state, poopPenaltyClockAt: now };
+  }
+
+  // #58b — rampa pós-retorno. O crédito é da virada; o dreno só o respeita.
+  const rampa = state.lastDayReport?.returnGraceLeft;
+  if (typeof rampa === 'number' && Number.isFinite(rampa) && rampa > 0) {
     return { ...state, poopPenaltyClockAt: now };
   }
 
@@ -143,7 +205,20 @@ export function applyPoopDrain<T extends PoopDrainState>(state: T, opts: PoopDra
   // Teto do dia, com o traço Teimoso valendo aqui como vale na virada.
   const cap = heartLossCap(state.petPassive, MAX_HEARTS_LOST_PER_DAY);
   const already = chargedToday(state, now);
-  const lost = Math.min(periods * POOP_DRAIN_HEARTS_PER_PERIOD, Math.max(0, cap - already));
+  let lost = Math.min(periods * POOP_DRAIN_HEARTS_PER_PERIOD, Math.max(0, cap - already));
+
+  // #58b — O PISO DA RAIZ. Na virada, o rookie que zera o HP volta com 1
+  // coração porque não existe forma abaixo para onde cair; aqui não existia
+  // piso nenhum, e o resultado medido (perfil `Dp`) era HP 0 **todos os dias**:
+  // a virada devolvia o coração de manhã e o dreno o tirava à noite, para
+  // sempre. O piso é o mesmo da virada — 1, nunca 0 —, e vale só na RAIZ:
+  // quem tem forma abaixo continua podendo zerar e degenerar, que é a
+  // consequência que dá sentido ao cuidado.
+  const naRaiz = getPreviousForm(
+    state.evolutionStage ?? 'rookie',
+    (state.currentBranch as any) ?? 'data',
+  ) === (state.evolutionStage ?? 'rookie');
+  if (naRaiz) lost = Math.min(lost, Math.max(0, state.healthPoints - 1));
 
   // Sempre reancora em `now`: o resto dos períodos é PERDOADO, não guardado
   // para o próximo tick — guardar seria o teto voltando a vazar por fora.

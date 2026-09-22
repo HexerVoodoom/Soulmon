@@ -173,3 +173,53 @@ Sem decisão sua, nada acima muda. O que mudou nesta rodada, com teste: `src/uti
 | 69 | **iOS / Firefox Android são suportados?** Nunca foi declarado. O gate de WebView mandava Firefox Android "atualizar o WebView" (em correção); PWA iOS = storage separado, Web Push só instalado (16.4+) | **Declarar**: suportados = Android Chrome (PWA/APK) + desktop Chromium; iOS e Firefox Android = "melhor esforço", sem teste de paridade; entra em `PLAY-FICHA` e no portão | Suportar iOS = 1 passada de teste (R-D6) + guarda-plataforma ganha o alvo |
 | 70 | **Tagline única** — hoje são 3 em 3 lugares: `PLAY-FICHA.md` §6.3 "Ela cresce com o seu dia." (única escrita, sem `narrative-critic`), `og:description` do `index.html` ("cadastre…", "retrô, pixel art") e `manifest.json`. Qual vale? | **"Ela cresce com o seu dia." / "It grows with your day."** até o `narrative-critic` passar a ficha e o `<head>` juntos (R1 #6 ainda aberto); é a que os briefs L2/L3 usam | Outra frase = trocar na ficha, no `<head>`, no `manifest.json` e nos briefs — um lugar só de verdade |
 | 71 | **Pré-registro e consentimento do E0 — assinar.** `docs/E0-PREREGISTRO.md` (H1–H3 com critério de falseamento, morte precoce, roteiros D7/D14, o que n=10 não conclui) e `docs/E0-CONSENTIMENTO.md` (separado dos Termos: liga e-mail↔saveId a pessoa nomeada, grava fala, controlador = você, LGPD art. 7º I, 18+). Você é o controlador e o entrevistador | Docs prontos e indexados; **nenhum convite antes** de você datar os dois e de #67 estar definido | Mudar hipótese/critério = editar o pré-registro **antes** do 1º convite (depois, não muda mais — é o sentido do pré-registro) |
+
+## Respostas QA RODADAS 1 e 2 (22/09/2026, modal)
+
+As 32 (#40–#71) respondidas. Divergências da recomendada em **negrito**. Numeração: #57–#63 saíram
+duplicadas por dois agentes na mesma rodada; abaixo os pares estão desfeitos com sufixo `b`.
+
+| # | Resposta |
+|---|---|
+| 40 | Cortesia **sobrevive** ao reembolso da Play (como aplicado) |
+| 41/60 | 🌀 Glitchtama **não conta** para conquistas: `totalPerfectDays` só por dia completo real (segue contando para a missão) |
+| 42 | Dados ao Groq: **declarar** (política §2b/§6 + hints + guard) |
+| 43 | Transcrição: **nomear** Supabase (repasse) e Groq Whisper |
+| 44 | **Nomear encarregado LGPD** na política (dono, `mateus.sprnd@gmail.com`) |
+| 45 | Termos EN: redação **A** (`US$ 6.99` com fonte) |
+| 46 | Steam na política: manter "quando disponível" |
+| 47 | Save 365 d e `ent:` "5 anos a partir da exclusão": declarados, mantidos |
+| 48/68 | GitHub billing: **o dono resolve depois** — CI segue parado; compile Kotlin sem prova |
+| 49/69 | Suportados: **Android Chrome (PWA/APK) + desktop Chromium**; iOS e Firefox Android = melhor esforço. E0 assume que há iPhone: 1 passada antes do convite |
+| 50 | Push D0 suprimido (ok). E0 roda **com Web Push**; o FCM do APK espera #66 — declarar no pré-registro |
+| 51 | E0: dono convida e entrevista; squad lê (seg 09:00) e dá suporte |
+| 52 | ADRs: **aprovar a 006 agora** (versionamento do save); 004 e 005 depois do E0 |
+| 53 | Symlinks `higgsfield-*`: **apagar do repo** (a skill vive na conta) |
+| 54 | SteamID64: **apagar na exclusão** (perde a trava "um Steam, uma conta"; privacidade vence) |
+| 55 | **Modelo novo**: compra única R$ 29,90 (jogo + 11 formas) **+ assinatura de IA R$ 9,90/mês com 300 mensagens**, só **texto/voz** (chat melhor, sugestões, transcrição) — **sprite fica fora da assinatura** (custo de imagem); estourou a cota, compra créditos; 1º mês de cortesia para quem comprou o desbloqueio. **Construir DEPOIS do E0**; por ora vale o teto por tier (demo 30 / paid 120) |
+| 56 | Lápide: login posterior reabre a conta vazia (como aplicado) |
+| 57 | Marcar feita: **toast "Desfazer" 5 s** revertendo a conclusão inteira |
+| 57b | "3× por semana": coração **só cobra se a semana fechar sem a meta** |
+| 58 | Virada: **julgar o último dia aberto** (credita o dia de `lastResetDate` quando o app reabre depois de pular dias) |
+| 58b | Dreno de cocô: **mesmas travas da virada** (carência de save novo, rampa de retorno, piso da raiz) |
+| 59 | Queda: **exigir uma virada completa** antes de re-evoluir (acaba a cura grátis por um clique) |
+| 59b | Vínculo: **aplicar o patch** (emitir os 6 eventos mudos) **agora**, antes do E0; tabela do §55 passa a incluir a comida |
+| 61/63 | Economia: **Bits por dia completo + teto de runs** por dia (números a calibrar na simulação) |
+| 62 | Rebirth: **zerar `aiLifetime.sprite`** no renascimento |
+| 63b | E0 com **Higgsfield Starter** (não há `GEMINI_API_KEY` no ar) |
+| 64 | Workers Paid: **não contratar ainda**; runbook mede KV writes e a squad reduz puts por chamada de IA |
+| 65 | D1: **aplicado em 22/09/2026** — `0001` ok; `0002` falhou (`duplicate column name: expires_at`: a tabela já existia com a coluna, vinda do caminho `d1 execute --file` do README antigo) e foi **marcada como aplicada**; `PRAGMA table_info` confirma as 4 colunas; `migrations list` → "No migrations to apply". A 1ª compra da Play não dá mais 500 |
+| 66 | `FIREBASE_SERVICE_ACCOUNT`: **o dono cola o JSON** (comando abaixo); depois a squad redeploya o worker |
+| 67 | `ENTITLEMENTS_ADMIN_KEY` + `COURTESY_MAX_ACCOUNTS=10`: **o dono faz depois** — sem isso a cortesia responde 404 e o E0 não começa |
+| 70 | Tagline única: **"Ela cresce com o seu dia." / "It grows with your day."** (vai para `og:description`, `manifest.json` e ficha) |
+| 71 | Pré-registro e consentimento do E0: **assinados em 22/09/2026** |
+
+**Comandos que dependem do dono** (rodar no terminal dele, no repo):
+
+```
+cd workers && npx wrangler secret put FIREBASE_SERVICE_ACCOUNT   # cola o JSON da conta de serviço
+npx wrangler secret put ENTITLEMENTS_ADMIN_KEY                    # chave de 32+ bytes, só dele
+npx wrangler secret put COURTESY_MAX_ACCOUNTS                     # 10
+```
+
+Fila vazia até a próxima rodada.

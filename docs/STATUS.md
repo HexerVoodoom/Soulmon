@@ -110,6 +110,42 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > **Fora do delta, de propósito:** `11-GLOSSARIO` (termos "cortesia"/"dias completos 30" não indexados —
 > o delta não o lista) e `09-HISTORICO` (sem linha para `42b07bec`/`4a8b8049`).
 
+> ## 22/09/2026 — O DONO RESPONDEU AS 32 PERGUNTAS (#40–#71) E A SQUAD EXECUTOU
+>
+> Respostas literais em `docs/PERGUNTAS-DO-DONO.md` § "Respostas QA RODADAS 1 e 2". O que mudou:
+> **Modelo de negócio (#55, decisão nova):** compra única R$ 29,90 (jogo + 11 formas) **+ assinatura de IA
+> R$ 9,90/mês com 300 mensagens, só texto/voz** (chat melhor, sugestões, transcrição) — **sprite fica de
+> fora**, porque imagem é o custo caro; estourou a cota, compra créditos; 1º mês de cortesia para quem
+> comprou o desbloqueio. **Construir depois do E0.** Registro em `REGISTRO-DE-DECISOES.md` §5.4 com as duas
+> alternativas que perderam e os gatilhos de revisão; `PLANO-PRODUTO` Parte 3 e `01-VISAO` §8 apontam para lá.
+> **Regras de jogo (simulação 90 d, antes × depois):** 🌀 deixou de inflar `totalPerfectDays` (campo novo
+> `missionPerfectDays` só para a missão; perfil só-masmorra caiu de 90 para **0** dias completos) · toast
+> **"Desfazer" 5 s** com snapshot de 11 campos (`completionUndo.ts`, `UndoToast.tsx` com `role="status"` e
+> alvo 44 — o `sonner` não dava nenhum dos dois) · `timesPerWeek` só cobra coração **se a semana fechar sem
+> a meta** (perfil "3×/sem": 25 ♥ e 6 quedas → **0 e 0**) · a virada passa a julgar o **último dia aberto**
+> (perfil que só abre seg/qua/sex: 0 dias completos em 90 → **38**, rookie → mega) · dreno de cocô com as
+> travas da virada (save novo: 90 ♥ → **2**) · **uma virada completa antes de re-evoluir** (acabou a cura
+> grátis: o ioiô sumiu, B foi de 9 para 8 evoluções) · os **6 `BondEvent` mudos** ganharam emissor (os 11 da
+> tabela do §55 agora existem) · **Bits por dia completo (100) + teto de 150 Bits/dia de minijogo**: quem só
+> cuida compra a loja em ~90 dias (era 0 Bits em 90), quem só grinda caiu de 3,9× para 1,5× a loja — a
+> simulação mostrou que um teto por *runs* seria letra morta, porque o perfil já fazia 1 run/dia.
+> **Privacidade/legal:** SteamID64 **apagado na exclusão** (#54 — e o resíduo em `consumedOrders`/
+> `orderDetails` do `ent:` também) · encarregado LGPD nomeado na política §9 · plataformas declaradas
+> (Android Chrome + desktop Chromium suportados; iOS e Firefox Android = melhor esforço) · tagline única
+> **"Ela cresce com o seu dia."** em `index.html`, `manifest.json` e ficha, travada por contrato.
+> **Infra:** **migrações D1 aplicadas em produção** (#65) — `0001` ok e `0002` marcada como aplicada porque a
+> tabela já tinha `expires_at` (resíduo do `d1 execute --file` do README antigo); `PRAGMA table_info` = 4
+> colunas, `migrations list` = "No migrations to apply" → **a 1ª compra da Play não dá mais 500** ·
+> `POST /api/entitlements?action=rebirth-reset` (zera o teto vitalício de sprite no renascimento, com prova
+> no save e idempotência) ligado no cliente · ADR-006 **aceita** (plano em `docs/PLANO-SAVE-SCHEMA.md`, sem
+> implementar), 004/005 seguem Proposta até depois do E0 · symlinks `higgsfield-*` apagados do repo ·
+> `E0-PREREGISTRO.md` e `E0-CONSENTIMENTO.md` **assinados**.
+> **Continua com o dono:** `ENTITLEMENTS_ADMIN_KEY` + `COURTESY_MAX_ACCOUNTS=10` (#67 — sem isso a cortesia
+> é 404 e o E0 não começa), `FIREBASE_SERVICE_ACCOUNT` no worker (#66 — FCM do APK mudo), **GitHub Actions
+> parado por cobrança** (#48/#68). **Aberto por decisão:** teto do dia compartilhado entre virada e dreno, e
+> o XP de comida fora da tabela do §55.
+> **Portões:** `tsc` ×3 = 0 · `vitest` **354 arquivos, 4806 passed, 1 expected fail, 1 skipped, 4 todo** · `npm run build` ok. `CACHE_VERSION` v159 → **v160**. A dívida do JS de entrada foi RE-MEDIDA com justificativa (641 016 → 652 255 B: toast de desfazer + 6 emissores de vínculo), não perdoada.
+
 > ## 22/09/2026 — QA RODADA 2 (completa, lentes rotacionadas + simulação do jogo) e suas correções
 >
 > 10 relatórios em **`docs/reviews/2026-09-22-qa-rodada-2/`** (consolidado `00-CONSOLIDADO.md`; fila do dono
@@ -3453,7 +3489,7 @@ decisão sua.
 | 🔴 | Criar os 4 produtos no Play Console (`soulmon.unlock.full`, 3 pacotes de crédito) |
 | 🔴 | Conta de serviço do Google Play → `GOOGLE_PLAY_SERVICE_ACCOUNT` e `ANDROID_PACKAGE_NAME` |
 | 🔴 | **`PLAY_REQUIRE_ACCOUNT_BINDING = true`** — depois de publicar o app que manda `setObfuscatedAccountId(saveId)`. É o que impede um recibo de virar N contas pagas (ver docs/BILLING-SETUP.md) |
-| 🔴 | ~~Opcional:~~ banco **D1** vinculado como `DB` + tabela `order_claims`. Este é o conserto do **SEC-3**, que a §1.2 chama de *maior risco de dinheiro que sobrou*. ⚰️ **A metade "o `wrangler.jsonc` não tem binding `d1_databases`" morreu** (QA geral de 21/09/2026): o binding `DB` → `soulmon-billing` **existe**, e `claimOrder` (`functions/api/_entitlements.js`) desvia para `claimOrderAtomic` quando `env.DB` está presente. **Medido em 22/09/2026 (QA Rodada 2, `05` §1.1):** `npx wrangler d1 migrations list soulmon-billing --remote` → `0001_order_claims.sql` e `0002_order_claims_expires_at.sql` **"Migrations to be applied"** — a tabela **não existe em produção**. ⚰️ Esta linha dizia "sem a tabela, a query falha e o resgate cai no caminho antigo" — **era FALSO**: o primeiro `DELETE FROM order_claims` de `claimOrderAtomic` está fora do `try` e `billing.js` › `onRequestPost` não tem `catch` → **a 1ª compra Play daria 500**. Conserto de código (`try/catch` caindo para o KV com log) em curso na R2; aplicar a migração é **seu** (ou do operador logado, com o seu aval — pergunta **#65**): `npx wrangler d1 migrations apply soulmon-billing --remote`, prova = `d1 migrations list` vazio |
+| ✅ | ~~Opcional:~~ banco **D1** vinculado como `DB` + tabela `order_claims` — **APLICADO em 22/09/2026** (registro do dono **#65**). É o conserto do **SEC-3**, que a §1.2 chamava de *maior risco de dinheiro que sobrou*. O que aconteceu, para o próximo que perguntar "está aplicado?": `0001_order_claims.sql` rodou **ok**; `0002_order_claims_expires_at.sql` **falhou com `duplicate column name: expires_at`** — a tabela **já existia com a coluna**, vinda do caminho `d1 execute --remote --file` que o `migrations/README.md` antigo mandava usar — e por isso foi **marcada como aplicada**. Provas colhidas: `npx wrangler d1 execute soulmon-billing --remote --command "PRAGMA table_info(order_claims)"` → **4 colunas** (com `expires_at`); `npx wrangler d1 migrations list soulmon-billing --remote` → **"No migrations to apply"**. Consequência: **a 1ª compra da Play não dá mais 500** — `claimOrderAtomic` encontra a tabela. ⚰️ Esta linha já carregou duas mentiras mortas ("o `wrangler.jsonc` não tem binding `d1_databases`" e "sem a tabela, a query falha e o resgate cai no caminho antigo" — o `DELETE` inicial estava FORA do `try`, e a 1ª compra dava 500). A lápide do caminho `execute --file` está em [`migrations/README.md`](../migrations/README.md): **não use `execute --file` para migração**, foi ele que produziu a colisão |
 | 🔴 | URL da política de privacidade + formulário de Segurança de Dados |
 | ✅ | ~~`VITE_FIREBASE_*`~~ — **feito em 07/09/2026**, no `.env` LOCAL (não no painel: são de BUILD, o Vite as inlina). Projeto `soulmon-app`. Chave conferida contra a API do Firebase, não só transcrita. |
 | 🟠 | Conferir no painel do Cloudflare se já existe o projeto Pages `soulmon` — o `wrangler.jsonc` diz que sim. ⚠️ **A segunda metade desta linha era FALSA e saiu**: dizia que `capacitor.config.json` "ainda aponta o APK para `digiapp-a5e.pages.dev`". Conferido em `e8aef62a` — ele aponta para `https://soulmon.mateus-sprnd.workers.dev`, e as três fontes concordam (`capacitor.config.json`, `desktop/renderer/src/config.ts`, `desktop/electron/main.js`). É a **mesma mentira** que o `CLAUDE.md` e o `docs/PLANO-DESKTOP-STEAM.md` carregaram até 26/08 e que faria um agente decidir errado sobre deploy |

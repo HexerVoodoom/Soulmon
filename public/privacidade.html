@@ -433,13 +433,18 @@
 </p>
 <p>
   <strong>Se você ativou pela Steam:</strong> o vínculo entre o seu SteamID e a
-  conta que ele ativou fica guardado pelo mesmo prazo de <strong>5 anos</strong>,
-  para que uma mesma licença Steam não vire várias contas. Esse prazo é
-  <strong>provisório</strong> e está em revisão — pode ser encurtado numa
-  próxima versão desta política.
+  conta que ele ativou é <strong>apagado junto com a conta</strong> — o seu
+  SteamID não fica guardado aqui depois da exclusão. Em troca, a licença Steam
+  volta a ficar livre: ela pode ativar uma conta nova.
   <!-- `ord:steam:own:<appid>:<steamid>` (functions/api/_billing.js ›
-       verifySteamOwnership → claimOrder, RETENTION_TTL_SECONDS). Provisório:
-       pergunta #56 em docs/PERGUNTAS-DO-DONO.md (QA rodada 2, 04-dados #4). -->
+       verifySteamOwnership → claimOrder). ⚰️ Até 22/09/2026 este parágrafo
+       declarava retenção de 5 anos "provisória" — decisão do dono #54
+       (docs/PERGUNTAS-DO-DONO.md, QA rodada 2 `04-dados` #4): o SteamID64 é
+       identificador de terceiro e a justificativa fiscal do parágrafo acima
+       não cobre licença de posse (não há transação nossa). Apagado em
+       functions/api/account.js › `steamLicenseKeysOf` + passo 5b; o SteamID
+       também sai de `consumedOrders`/`orderDetails` no passo 6. Guard:
+       functions/api/account.steamLicense.qa2.test.js. -->
 </p>
 <p>
   Apagar o app do aparelho remove os dados locais, mas <strong>não</strong>
@@ -447,9 +452,20 @@
   abaixo, que faz o mesmo por você.
 </p>
 
-<h2>9. Contato</h2>
+<h2>9. Contato e encarregado</h2>
 <p>
   Dúvidas ou pedidos sobre privacidade: <strong>mateus.sprnd@gmail.com</strong>
+</p>
+<p>
+  <strong>Encarregado pelo tratamento de dados pessoais</strong> (LGPD, Lei
+  13.709/2018, art. 41) e <strong>controlador</strong>: <strong>Mateus
+  Sperandio</strong> — <strong>mateus.sprnd@gmail.com</strong>. É este o canal
+  para exercer qualquer um dos direitos do §8 e para falar com a Autoridade
+  Nacional de Proteção de Dados por nosso intermédio.
+  <!-- Decisão do dono #44 (22/09/2026), docs/PERGUNTAS-DO-DONO.md. O Soulmon é
+       operado por uma pessoa física: controlador e encarregado são a mesma
+       pessoa, e a lei não exige que sejam distintos. Espelhado em
+       docs/PLAY-DATA-SAFETY.md §1 e docs/E0-CONSENTIMENTO.md §6. -->
 </p>
 
 <hr>
@@ -820,10 +836,9 @@
 </p>
 <p>
   <strong>If you activated through Steam:</strong> the link between your SteamID
-  and the account it activated is kept for the same <strong>5 years</strong>, so
-  that one Steam licence cannot become several accounts. This period is
-  <strong>provisional</strong> and under review — it may be shortened in a
-  future version of this policy.
+  and the account it activated is <strong>deleted together with the
+  account</strong> — your SteamID is not kept here after deletion. In exchange,
+  the Steam licence becomes free again: it can activate a new account.
 </p>
 <p>
   Deleting the app removes local data but does <strong>not</strong> erase the
@@ -831,8 +846,15 @@
   the same for you.
 </p>
 
-<h2>9. Contact</h2>
+<h2>9. Contact and data protection officer</h2>
 <p>Privacy questions or requests: <strong>mateus.sprnd@gmail.com</strong></p>
+<p>
+  <strong>Data protection officer</strong> (Brazilian LGPD, Law 13.709/2018,
+  art. 41) and <strong>controller</strong>: <strong>Mateus Sperandio</strong> —
+  <strong>mateus.sprnd@gmail.com</strong>. This is the channel for exercising
+  any of the rights in §8 and for reaching the Brazilian data protection
+  authority (ANPD) through us.
+</p>
 
 </body>
 </html>

@@ -274,6 +274,58 @@ export function weeklyProgress(
  * `rhythm` ausente vira `emptyRhythm()` — a MESMA leitura que o laço de ritmo
  * de `computeDailyReset` faz, para não reabrir a divergência por outro caminho.
  */
+/**
+ * `date` é o ÚLTIMO dia da semana (sábado, porque `weekStart` é domingo)?
+ *
+ * Derivado de `weekStart`, e não de `getDay() === 6` escrito à mão, para as
+ * duas pontas da semana terem uma dona só: mudar o início da semana move o fim
+ * junto, em vez de deixar um literal apontando para o dia errado em silêncio.
+ */
+export function isWeekClosingDay(date: Date): boolean {
+  return dayKeyOf(addDays(weekStart(date), 6)) === dayKeyOf(date);
+}
+
+/**
+ * O hábito entra na META DE CORAÇÃO deste dia? (≠ `habitCountsOn`, que é a
+ * meta do DIA COMPLETO.)
+ *
+ * ⚠️ DECISÃO DO DONO #57b (22/09/2026, `docs/PERGUNTAS-DO-DONO.md`):
+ * *"'3× por semana': coração **só cobra se a semana fechar sem a meta**"*.
+ *
+ * O que isto conserta (QA rodada 2, §2.3 — medido): um hábito `timesPerWeek 3`
+ * feito seg/qua/sex custava **três** corações por semana. `habitCountsOn` diz
+ * "elegível enquanto `done < target`", e a meta de coração usava a MESMA lista:
+ * terça (1/3) e quinta (2/3) eram cobradas como falta, e domingo abria semana
+ * nova (0/3) cobrando a segunda. Resultado do perfil `Bt`: 25 corações e 6
+ * quedas em 90 dias — enquanto o MESMO jogador com `weekdays [1,3,5]` perdia
+ * ZERO. O preset que o `CreateModal` oferece a quem não quer compromisso
+ * diário era o que mais punia, e tanto `isDueOn` quanto `02-REGRAS` §24
+ * prometem por escrito que ele "tem perdão embutido".
+ *
+ * A regra agora é literal: um `timesPerWeek` só pode custar coração no dia em
+ * que a semana FECHA, e só se a meta não tiver sido cumprida. Nos outros dias
+ * ele simplesmente não está na meta de coração — não há o que faltar, porque
+ * quem escolhe os dias é a pessoa.
+ *
+ * O CRÉDITO não muda: `habitCountsOn` continua deixando o hábito contar para o
+ * dia completo em qualquer dia em que ele for feito. As duas réguas já eram
+ * duas (`HEART_GOAL_RATIO`, P1); esta decisão separa mais uma dobra.
+ */
+export function habitCountsForHeartsOn(
+  source: { schedule?: Schedule; weekDays?: number[] },
+  rhythm: HabitRhythm | undefined,
+  date: Date,
+): boolean {
+  const s = normalizeSchedule(source);
+  if (s.kind !== 'timesPerWeek') return habitCountsOn(source, rhythm, date);
+  const r = rhythm ?? emptyRhythm();
+  // Feito HOJE: entra na meta para que o feito e a meta usem o mesmo
+  // denominador (era esta simetria que o bug da elegibilidade quebrava).
+  if (r.done.includes(dayKeyOf(date))) return true;
+  if (weeklyProgress(r, s, date).done >= s.target) return false;
+  return isWeekClosingDay(date);
+}
+
 export function habitCountsOn(
   source: { schedule?: Schedule; weekDays?: number[] },
   rhythm: HabitRhythm | undefined,

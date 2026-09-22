@@ -36,7 +36,7 @@
 | Política de privacidade + exclusão de conta no ar | `https://soulmon.mateus-sprnd.workers.dev/privacidade.html` (`#exclusao`) | abrir a URL |
 | Termos com cláusula de IA/crise (§8, versão 2026-09-21) | `public/termos.html` | abrir `/termos.html` |
 | Login Firebase (`soulmon-app`) ligado no servidor | `wrangler.jsonc` › `vars.FIREBASE_PROJECT_ID` | STATUS §3.1 ✅ |
-| Binding D1 `DB` → `soulmon-billing` + migrações versionadas | `wrangler.jsonc`, `migrations/0001`, `0002` | falta **aplicar** (§E.4) |
+| Binding D1 `DB` → `soulmon-billing` + migrações versionadas | `wrangler.jsonc`, `migrations/0001`, `0002` | ✅ **aplicadas em 22/09/2026** (#65, §E.4) |
 | Catálogo de 4 produtos no servidor e no cliente | `functions/api/_billing.js` › `PRODUCTS`; `src/utils/monetization.ts` | IDs em §D.7 |
 | Ficha PT/EN, IARC, IA, roteiro de arte | `docs/PLAY-FICHA.md` | — |
 | Formulário de Segurança de Dados respondido | `docs/PLAY-DATA-SAFETY.md` §3 (lista-resumo) | — |
@@ -368,7 +368,7 @@ D.11 testado. E **só depois** de aprovado e no ar: §E.6.
 > **Fatos do ar medidos em 22/09/2026** (QA Rodada 2, `docs/reviews/2026-09-22-qa-rodada-2/05-operador-governanca-r2.md` §1.1 — `npx wrangler secret list`, `deployments list`, `d1 migrations list`, `curl`):
 > - raiz: **definidos** `GROQ_API_KEY`, `HF_API_KEY`, `HF_SECRET`, `METRICS_ADMIN_KEY` (✅ E.1 — `/api/metrics` → 401), `SEASON_ADMIN_KEY` + var `FIREBASE_PROJECT_ID`; **ausentes** `ENTITLEMENTS_ADMIN_KEY` (grant → 404; #67), `COURTESY_MAX_ACCOUNTS` (padrão 25), `GEMINI_API_KEY`, e os da Play/Steam (esperado até §E.5);
 > - worker de push: **deployado** 21/09 12:57Z (✅ E.2 deploy); `SEASON_ADMIN_KEY` e `VAPID_JWK` **definidos**; **`FIREBASE_SERVICE_ACCOUNT` ausente** (→ §C.3; FCM do APK não envia; #66);
-> - D1: `0001` e `0002` **pendentes** (E.4 não feito; #65);
+> - D1: ✅ **APLICADO em 22/09/2026** (#65) — `0001` ok, `0002` marcada como aplicada (a tabela já tinha `expires_at`); `migrations list` → "No migrations to apply" (§E.4). ⚰️ A medição de 22/09 pela manhã dizia "`0001` e `0002` **pendentes**";
 > - `sw.js` no ar = git (`v158`); política "22 de setembro" no ar; CSP 4/4.
 
 > ⚠️ **É um Worker, não Pages.** O `wrangler.jsonc` da raiz chama-se `soulmon` e a
@@ -438,27 +438,35 @@ O push da `main` publica sozinho (~2 min). Conferir:
 `curl -s https://soulmon.mateus-sprnd.workers.dev/sw.js | grep -m1 CACHE_VERSION`
 igual a `grep -m1 CACHE_VERSION public/sw.js`.
 
-### E.4 Migrações D1 (SEC-3 — "um recibo, uma conta") `[submissão: confirmar]`
+### E.4 Migrações D1 (SEC-3 — "um recibo, uma conta") ✅ **FEITO em 22/09/2026**
 
-Na raiz, **antes** de qualquer compra real:
+Registro do dono **#65**. **Não precisa rodar de novo** — o que segue é o que
+aconteceu e como conferir.
+
+| | |
+|---|---|
+| `0001_order_claims.sql` | ✅ aplicada, sem incidente |
+| `0002_order_claims_expires_at.sql` | ✅ **marcada como aplicada** depois de falhar com `duplicate column name: expires_at` — a tabela **já existia com a coluna**, criada pelo caminho `d1 execute --remote --file` que o `migrations/README.md` antigo mandava usar. **O erro foi a prova de que já estava feito**, não um problema |
+| `PRAGMA table_info(order_claims)` | ✅ **4 colunas**, `expires_at` entre elas |
+| `d1 migrations list … --remote` | ✅ **"No migrations to apply"** |
+
+Conferir a qualquer momento (**leitura, não muda nada**):
 
 ```
 npx wrangler d1 migrations list soulmon-billing --remote
+npx wrangler d1 execute soulmon-billing --remote --command "PRAGMA table_info(order_claims)"
 ```
 
-- Se listar `0001_order_claims.sql` e `0002_order_claims_expires_at.sql` como
-  **pendentes** → `npx wrangler d1 migrations apply soulmon-billing --remote`.
-- Se o `0002` falhar com *duplicate column* → ele já tinha sido aplicado à mão pelo
-  caminho antigo do `migrations/README.md` (`d1 execute --file`); nesse caso está
-  feito e o erro é a prova.
+⚠️ **NÃO use `npx wrangler d1 execute --remote --file <arquivo>` para migração.**
+Foi ele que criou a tabela por fora do registro `d1_migrations` e produziu a
+colisão acima. Lápide completa em [`migrations/README.md`](../migrations/README.md).
 
-**Feito quando:**
-`npx wrangler d1 execute soulmon-billing --remote --command "PRAGMA table_info(order_claims)"`
-lista a coluna `expires_at`. ⚰️ ~~Sem a tabela, `claimOrder` cai no caminho KV, não
-atômico~~ — **falso** (medido em 22/09/2026): com o binding `DB` presente e a tabela ausente,
-`claimOrderAtomic` **lança** (o primeiro `DELETE` está fora do `try`, `billing.js` sem `catch`)
-e a 1ª compra devolve **500**; o `try/catch` com fallback para o KV está em correção na R2. Em
-22/09 as duas migrações estavam **pendentes** (STATUS §3.2 🔴; pergunta #65).
+**O que isto destravou:** ⚰️ ~~Sem a tabela, `claimOrder` cai no caminho KV, não
+atômico~~ — **era falso**: com o binding `DB` presente e a tabela ausente,
+`claimOrderAtomic` **lançava** (o primeiro `DELETE` está fora do `try`, `billing.js`
+sem `catch`) e **a 1ª compra da Play devolvia 500**. Com a tabela no ar, não devolve
+mais. O `try/catch` com fallback para o KV (correção da R2) segue valendo como defesa
+em profundidade, não como o conserto deste item.
 
 ### E.5 Secrets que dependem da Play (depois de §D.8 e §D.10) `[dono digita segredo]`
 

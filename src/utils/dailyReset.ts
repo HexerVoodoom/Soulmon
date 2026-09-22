@@ -11,6 +11,7 @@ import {
 import {
   emptyRhythm,
   habitCountsOn,
+  habitCountsForHeartsOn,
   completeHabit,
   applyMissedDay,
   earnShield,
@@ -291,6 +292,63 @@ export function degeneratedPerfectDays(
     previousPerfectDays - DEGENERATION_PERFECT_DAYS_COST,
   );
 }
+
+/**
+ * PODE EVOLUIR? A trava da QUEDA — dono único da regra (#59).
+ *
+ * ⚠️ DECISÃO DO DONO #59 (22/09/2026, `docs/PERGUNTAS-DO-DONO.md`):
+ * *"Queda: **exigir uma virada completa** antes de re-evoluir (acaba a cura
+ * grátis por um clique)"*.
+ *
+ * O que isto conserta (QA rodada 2, §2.2 — medido): `degeneratedPerfectDays`
+ * devolve `max(piso, prev − 5)`, e `handleEvolve` só exigia
+ * `perfectDays >= required` do estágio ATUAL. Um mega com 26 dias completos
+ * que caía para ultimate reaparecia com 21 ≥ 5 — o botão Evoluir acendia **na
+ * mesma abertura**, a cerimônia tocava por causa de uma QUEDA, e a evolução
+ * devolvia `healthPoints = MAX_HP_BY_FORM` cheio. A queda virava cura grátis
+ * para todo jogador com `required + 5` dias no banco, e `applyRedemption`
+ * marcava `redeemed: true` por um botão apertado segundos depois de cair.
+ * Medido: `Dm` d46 e `B` em d54/d66/d89.
+ *
+ * A trava é UMA linha e não inventa número nenhum: `degeneratedByHP` é escrito
+ * pela virada (`wasDegeneratedByHP`) e reescrito como `false` na virada
+ * SEGUINTE. Logo "não evoluir enquanto ele estiver de pé" É, literalmente,
+ * "exigir uma virada completa depois da queda" — sem constante nova, sem
+ * carimbo de data novo no save (linha vermelha #20) e sem tirar nada de
+ * ninguém: os `perfectDays` continuam no banco, intactos, esperando.
+ *
+ * Mora aqui, e não no `App.tsx`, porque há DOIS chamadores (o `handleEvolve` e
+ * o `canEvolve` que acende o botão) e eles já divergiram uma vez — é o
+ * footgun 9, e a régua da linha vermelha #8 proíbe regra em updater inline.
+ */
+export function podeEvoluirDepoisDaQueda(
+  state: { degeneratedByHP?: boolean },
+): boolean {
+  return !state.degeneratedByHP;
+}
+
+/**
+ * 💠 BITS POR DIA COMPLETO — a única fonte de Bits que não é minijogo.
+ *
+ * ⚠️ DECISÃO DO DONO #61/#63 (22/09/2026): *"Economia: **Bits por dia completo
+ * + teto de runs** por dia (números a calibrar na simulação)"*.
+ *
+ * O que isto conserta (QA rodada 2, §2.7 — medido): a loja custa **8 900 Bits**
+ * (55 itens), e Bits só vinham de minijogo. O perfil A — faz tudo, todo dia,
+ * nunca joga — terminava 90 dias com **0 Bits** e a loja inteira invisível,
+ * enquanto o perfil G (zero hábitos, uma run por dia) juntava 34 566, quase
+ * **4× a loja**. O jogo cobra cuidado e paga minijogo.
+ *
+ * O número saiu da simulação, não do dedo: A faz **89** dias completos em 90
+ * dias, e `89 × 100 = 8 900` = exatamente o catálogo. Ou seja: **quem cuida
+ * compra a loja inteira em ~90 dias, e só então** — é alcançável sem ser
+ * gratuito, e a unidade paga é a que o produto já sanciona (o dia completo),
+ * nunca a CONTAGEM de tarefas (linha vermelha #16).
+ *
+ * O teto que segura o outro lado é `MINIGAME_BITS_PER_DAY` (`currencies.ts`).
+ * Ver ali por que o teto tem de ser em Bits/dia e não em runs/dia.
+ */
+export const BITS_PER_COMPLETE_DAY = 100;
 
 /** Quantos dias se passaram desde a última virada. 1 = virada normal de ontem. */
 export function daysSinceLastReset(lastResetDate: string | undefined, now: Date): number {
@@ -580,7 +638,30 @@ export const HEART_GOAL_RATIO = 0.6;
  * dos dois recalcula 0,6 na mão (footgun 9).
  */
 export function heartGoalFor(state: DailyGoalState, weekDay: number, dayKey?: string): number {
-  return heartGoalFromDailyGoal(dailyGoalFor(state, weekDay, dayKey));
+  return heartGoalFromDailyGoal(dailyGoalFor(soParaCoracao(state, dayKey), weekDay, dayKey));
+}
+
+/**
+ * O estado com as atividades que podem custar coração NESTE dia — #57b.
+ *
+ * ⚠️ DECISÃO DO DONO #57b: *"'3× por semana': coração só cobra se a SEMANA
+ * fechar sem a meta"*. A regra de quem entra é de `habitRhythm.ts`
+ * (`habitCountsForHeartsOn`, que explica o caso medido); aqui é só a
+ * composição — e ela passa por `dailyGoalFor` DE PROPÓSITO, em vez de repetir
+ * o `Math.min(…, required)`, que tem dono único e guard de origem
+ * (`dailyGoal.contract.test.ts`).
+ *
+ * Sem `dayKey` não há data, então não há semana a consultar: devolve o estado
+ * intacto, que é o comportamento de antes desta decisão. Devolve a MESMA
+ * referência quando nada é filtrado — `dailyGoalFor` é chamado em render.
+ */
+function soParaCoracao<T extends DailyGoalState>(state: T, dayKey?: string): T {
+  const parsed = dayKey ? new Date(dayKey) : null;
+  if (!parsed || Number.isNaN(parsed.getTime())) return state;
+  const filtradas = state.activities.filter(
+    a => habitCountsForHeartsOn(a, state.habitRhythms?.[String(a.id)], parsed),
+  );
+  return filtradas.length === state.activities.length ? state : { ...state, activities: filtradas };
 }
 
 /**
@@ -656,10 +737,50 @@ export interface DailyResetOptions {
  */
 export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: DailyResetOptions = {}): T {
   const now = opts.now ?? new Date();
-  const yesterday = new Date(now);
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayString = yesterday.toDateString();
-  const yesterdayWeekDay = yesterday.getDay();
+  const ontem = new Date(now);
+  ontem.setDate(ontem.getDate() - 1);
+
+  /**
+   * ⚠️ #58 — A VIRADA JULGA O ÚLTIMO DIA ABERTO, NÃO "ONTEM".
+   *
+   * DECISÃO DO DONO #58 (22/09/2026, `docs/PERGUNTAS-DO-DONO.md`):
+   * *"Virada: **julgar o último dia aberto** (credita o dia de `lastResetDate`
+   * quando o app reabre depois de pular dias)"*.
+   *
+   * O que isto conserta (QA rodada 2, §2.1 — medido): esta função julgava
+   * `now − 1` e só isso. Quem fazia tudo na segunda e reabria na quarta tinha a
+   * virada de quarta olhando a TERÇA: `lastCompletedDate === yesterdayString`
+   * falhava, `dailyDone = 0`, e como `daysAway >= ABSENCE_FORGIVENESS_DAYS` a
+   * virada perdoava — e **também não creditava**. Os perfis `Bx` e `Bsx`
+   * terminaram 90 dias com **ZERO** dias completos, rookie para sempre, tendo
+   * feito 100% dos hábitos três vezes por semana. O mesmo jogador abrindo todo
+   * dia (`Bs`) chegava a mega em 32 dias sem perder um coração.
+   *
+   * Não era perdão que esvazia: era **crédito que evapora**. `02-REGRAS` §1
+   * diz "não cobra de quem sumiu"; nada dizia "nem credita". E é a persona da
+   * métrica-norte (`01-VISAO` §3): a pessoa que abre para FAZER e fecha
+   * satisfeita era a única que o motor não enxergava.
+   *
+   * `lastResetDate` é o dia em que a pessoa esteve por último — e é nele que
+   * `withHabitCompletion` e `completedToday`/`lastCompletedDate` gravaram o que
+   * ela fez. Julgar esse dia é ler o que já está escrito, não inventar crédito:
+   * `dayWasPerfect` continua exigindo meta cumprida E energia cheia, então dia
+   * em que o jogador não fez nada segue não creditando nada (é o perfil `D`,
+   * medido: 0 dias completos, aqui igual a antes).
+   *
+   * Limites de propósito: nunca julga um dia à frente de ontem (save com data
+   * adulterada, relógio para trás) e nunca julga HOJE, que ainda não terminou.
+   * E julga UM dia, não todos os que passaram: creditar a semana inteira de uma
+   * vez por uma única abertura seria inventar dias que ninguém viveu.
+   */
+  const ultimoAberto = prev.lastResetDate ? new Date(prev.lastResetDate) : null;
+  const diaJulgado = ultimoAberto
+    && !Number.isNaN(ultimoAberto.getTime())
+    && ultimoAberto.getTime() < ontem.getTime()
+    ? ultimoAberto
+    : ontem;
+  const yesterdayString = diaJulgado.toDateString();
+  const yesterdayWeekDay = diaJulgado.getDay();
 
   const currentLevel = getStageLevel(prev.evolutionStage);
   const requirements = FORM_REQUIREMENTS[currentLevel];
@@ -768,7 +889,13 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
   // e limitada a MAX_HEARTS_LOST_PER_DAY. Sem tarefas cadastradas, nada a falhar.
   // P1: contra a meta de CORAÇÃO (60% da meta do dia), não contra a meta
   // inteira — que continua sendo o que `dayWasPerfect` exige, logo acima.
-  const heartGoal = heartGoalFromDailyGoal(dailyGoal);
+  // #57b — a meta de CORAÇÃO tem lista PRÓPRIA desde 22/09/2026: um hábito
+  // `timesPerWeek` só pode custar coração no dia em que a semana fecha sem a
+  // meta (`habitCountsForHeartsOn`, `habitRhythm.ts`, onde o caso medido está
+  // explicado). Paga-se uma segunda varredura das atividades — o comentário de
+  // `heartGoalFromDailyGoal` dizia que ela não cabia aqui; cabe, e o preço de
+  // NÃO pagá-la eram 25 corações em 90 dias no perfil `Bt`.
+  const heartGoal = heartGoalFor(prev as any, yesterdayWeekDay, yesterdayString);
   const rawHeartsLost = rawHeartsLostFor(dailyDone, heartGoal, prev.maxHealthPoints);
   // Teimoso (utils/passives.ts) aguenta melhor um dia ruim.
   const lossCap = heartLossCap(prev.petPassive, MAX_HEARTS_LOST_PER_DAY);
@@ -780,7 +907,16 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
   // de ser paga com a folga daquela semana. Recarregar antes daria, na virada
   // de segunda, duas folgas para a mesma pessoa: a que sobrou do domingo e a
   // da semana nova.
-  const semanaDeOntem = restWeekKeyFor(yesterday);
+  /* ⚠️ #58 — A FOLGA CONTINUA ANCORADA EM **ONTEM**, e não no dia julgado.
+     Foi medido: ancorá-la no dia julgado faz quem volta de uma ausência longa
+     cair numa semana ANTIGA, o que recarrega a folga (`semanaAgora !==
+     semanaDeOntem`) e adia a primeira cobrança em mais um dia
+     (`useDailyReset.test.ts` › "a rampa dura RETURN_GRACE_DAYS viradas"). Isso
+     seria um NONO perdão entrando pela porta dos fundos — linha vermelha #17,
+     que proíbe perdão novo sem responder à decisão D4. A decisão #58 é sobre
+     CREDITAR o dia que a pessoa viveu, não sobre alargar carência: o orçamento
+     semanal da folga continua sendo o da semana em que o jogador está. */
+  const semanaDeOntem = restWeekKeyFor(ontem);
   const folgasAntes = prev.restWeekKey === semanaDeOntem
     // Limitado ao teto NA LEITURA, não só na recarga: o save é escrito pelo
     // cliente e viaja pela nuvem, então um `restDaysLeft` inflado (edição,
@@ -1010,8 +1146,23 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
     unlockedEvolutions: finalUnlockedEvolutions,
     degeneratedByHP: wasDegeneratedByHP,
     lastDayWasPerfect: dayWasPerfect,
-    // Contador vitalício de dias perfeitos (missões) — nunca zera ao evoluir.
+    // Contador vitalício de dias completos REAIS — nunca zera ao evoluir.
+    // ⚠️ #41/#60 (22/09/2026): este é o número que `achievements.ts` lê, e desde
+    // a decisão do dono ele significa UMA coisa só — dia completo de verdade.
+    // O 🌀 deixou de somar aqui (`specialItemUse.ts`).
     totalPerfectDays: (prev.totalPerfectDays ?? 0) + (dayWasPerfect ? 1 : 0),
+    // #41/#60 — o vitalício da MISSÃO (`mission-perfect-30`), que a decisão
+    // manda continuar contando o 🌀. Um dia completo real soma nos DOIS, então
+    // a missão nunca fica mais difícil do que era.
+    missionPerfectDays:
+      (prev.missionPerfectDays ?? prev.totalPerfectDays ?? 0) + (dayWasPerfect ? 1 : 0),
+    /* 💠 #61/#63 — BITS POR DIA COMPLETO (`BITS_PER_COMPLETE_DAY`, acima).
+       Até 22/09/2026 Bits só vinham de minijogo, e o perfil que FAZ TUDO todo
+       dia terminava 90 dias com zero — a loja inteira invisível para quem o
+       produto diz querer. Paga a unidade já sancionada (o dia completo), nunca
+       a contagem de tarefas (linha vermelha #16), e não tem teto próprio: o
+       teto do dia completo é o próprio calendário. */
+    gamePoints: (prev.gamePoints ?? 0) + (dayWasPerfect ? BITS_PER_COMPLETE_DAY : 0),
     /* WP4.16 — a estação passa a existir para o jogador.
        `seasons.ts` estava escrito, testado e SEM CONSUMIDOR: ninguém chamava
        `ensureSeasonProgress`, ninguém chamava `applySeasonMedal`, e por isso a

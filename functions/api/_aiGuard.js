@@ -18,6 +18,15 @@
 //     número que casa custo (recorrente enquanto a conta viver) com receita
 //     (única, de R$ 29,90). Ver
 //     `squad-alpha-runs/soulmon-02/custo-geracao-sprite.md` §3.
+//     ⚠️ **Uma única coisa zera este contador, e não é o tempo: o
+//     RENASCIMENTO** (decisão do dono **#62**, 22/09/2026). O Rebirth entrega
+//     uma árvore NOVA, com formas novas — com o contador intacto, a recompensa
+//     de subir a escada inteira virava seis imagens. Quem zera é
+//     `resetSpriteLifetimeOnRebirth` (`_entitlements.js`), chamado só por
+//     `POST /api/entitlements?action=rebirth-reset`, **uma vez por conta**
+//     (`rebirthSpriteResetAt`) e só com `state.rebirth` no save do titular.
+//     `aiForms` (o teto por FORMA, item 2b) **não** é zerado: as formas de
+//     depois do renascimento são outras.
 //     ⚠️ Até 26/08/2026 esta linha dizia que o registro **não tem TTL**, e o
 //     argumento era "teto vitalício que expira não é vitalício". O argumento
 //     continua certo; o fato mudou. Desde a decisão de retenção (item 3.1 do
