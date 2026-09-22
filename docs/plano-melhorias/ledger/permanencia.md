@@ -33,3 +33,37 @@ Dono: `soulmon-guarda-permanencia`. Anexo: `../F-conteudo.md`.
 - Perda só sobre item recuperável (moedas, escudos), **nunca** sobre identidade ou progresso acumulado.
 - "Última chance" / FOMO que tira é **dark pattern nomeado** (C3). A vitrine da estação volta no ano seguinte.
 - O conteúdo real hoje é **muito menor do que o declarado** (mega em 14 dias perfeitos, não 100). Quem citar 10/20/30/40 está lendo dado morto.
+
+## WP4.22b — R-B verde: a medição (22/09/2026)
+
+Simulação adversarial exigida por R-B(ii): 17 planos de alocação, um
+concentrado em cada elemento base, 3000 runs cada, seed `20260818`, escola
+`conjuracao`, estágio rookie, pool real do bestiário.
+
+**A alocação dirige os atributos de verdade** — 17 pares `principal/secundario`
+distintos, um por elemento. O teste não passa por vacuidade (há trava própria
+exigindo os 17 distintos, porque um dia em que `getArenaAttributes` parasse de
+ler os pontos devolveria `vigor/vigor` 17 vezes e a janela passaria sem medir
+nada).
+
+| | |
+|---|---|
+| melhor escolha | `morte` — 63,8% |
+| pior escolha | `vigor` — 60,0% |
+| spread | **3,8pp** |
+| janela exigida | 40–80%, spread ≤20pp |
+
+**Veredito: passa, com folga larga.** A saída declarada na decisão #73 (a
+alocação perder efeito de combate) **não é acionada**. Contexto que ajuda a ler
+o número: 20pp é o mesmo teto que `arena.test.ts` já tolera entre as SEIS
+ESCOLAS — escolher elemento move menos o resultado do que escolher escola já
+movia.
+
+⚠️ **O que a medição não diz**: que a vantagem é zero. São 3,8pp entre a melhor
+e a pior escolha. Está dentro do padrão que o projeto pratica, e por isso R-B
+fecha — mas quem escrever a copy C-S1 ("pagar nunca deixa sua criatura mais
+forte") precisa saber que o número não é 0,0, e escrever o que é verdade.
+
+Aceite (iii) também verde: mudar só a alocação não muda `getArenaPlayerStats`
+em nenhum dos 17 casos — o orçamento de poder continua sendo do estágio e da
+escola.
