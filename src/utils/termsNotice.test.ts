@@ -55,8 +55,11 @@ describe('qualDocMudou — qual documento é mais novo que o aceito', () => {
   it('nenhum subiu (não deveria ser chamado) → both, nunca um título falso de um só', () => {
     expect(qualDocMudou(base, '2026-09-01', '2026-09-01')).toBe('both');
   });
-  it('versão ilegível conta como anterior (mesma regra de precisaAvisarTermos)', () => {
+  it('versão ilegível AVISA (precisaAvisarTermos) mas o título é genérico: `both`, nunca "os Termos mudaram" (skeptic R2 #6)', () => {
     const c = { termsVersion: 'desconhecida', privacyVersion: '2026-09-01' } as unknown as import('./consent').ConsentRecord;
-    expect(qualDocMudou(c, '2026-09-01', '2026-09-01')).toBe('terms');
+    expect(precisaAvisarTermos(c, '2026-09-01', '2026-09-01')).toBe(true);
+    expect(qualDocMudou(c, '2026-09-01', '2026-09-01')).toBe('both');
+    const c2 = { termsVersion: '2026-09-01', privacyVersion: undefined } as unknown as import('./consent').ConsentRecord;
+    expect(qualDocMudou(c2, '2026-09-20', '2026-09-01')).toBe('both');
   });
 });

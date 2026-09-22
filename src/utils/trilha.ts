@@ -8,8 +8,14 @@
  * aqui inteiras:
  * - **E0**: `document.hidden` → o `audioBus` já suspende o contexto; ao voltar,
  *   a trilha retoma **só se o jogador a ligou por gesto nesta sessão** (o
- *   gesto é o consentimento; o retorno da aba não é autoplay). `pausar()` é
- *   o gancho do App para dormir/janela de descanso.
+ *   gesto é o consentimento; o retorno da aba não é autoplay). `pausarTrilha()`
+ *   é o gancho do App para dormir / janela de descanso / mudo — e a pausa é
+ *   por MOTIVO (`MotivoDePausa`), não um booleano: até 22/09/2026 era um só
+ *   `pausada`, então desligar o mudo com o pet dormindo (`retomarTrilha()` do
+ *   mudo) apagava a pausa do sono e a trilha voltava com o pet dormindo — e o
+ *   sono AUTOMÁTICO nem chamava a pausa (achado S-1 da QA rodada 2). Enquanto
+ *   houver QUALQUER motivo vivo, `comecar()` recusa — inclusive o `ligarTrilha()`
+ *   do primeiro gesto da sessão com o pet já dormindo.
  * - **Chave própria** (`SOUND_TRACK_ENABLED`, separada do mudo global): o mudo
  *   global também cala a trilha — som nunca é o único canal de nada e o app
  *   funciona 100% mudo —, mas o inverso não vale.
@@ -26,7 +32,10 @@ import { isMuted } from './sounds';
 let fontes: AudioBufferSourceNode[] = [];
 let trim: GainNode | null = null;
 let ligadaNestaSessao = false;
-let pausada = false;
+/** E0 — por que a trilha está parada. Vazio = livre para tocar. */
+export type MotivoDePausa = 'sono' | 'descanso' | 'mudo';
+const pausas = new Set<MotivoDePausa>();
+const pausada = (): boolean => pausas.size > 0;
 let cicloLigado = false;
 
 function parar(): void {
@@ -39,14 +48,14 @@ function parar(): void {
 }
 
 async function comecar(): Promise<boolean> {
-  if (fontes.length || pausada || isMuted()) return fontes.length > 0;
+  if (fontes.length || pausada() || isMuted()) return fontes.length > 0;
   const b = garantirBarramento();
   if (!b) return false;
   const nomes = Object.keys(CAMADAS_DA_TRILHA) as CamadaDaTrilha[];
   const bufs = await Promise.all(nomes.map(n => carregarAsset(b.ctx, CAMADAS_DA_TRILHA[n])));
   // Só as camadas que chegaram tocam; o trim é o do NÚMERO que toca (medido, `loudness.ts`).
   const prontas = nomes.filter((_, i) => bufs[i] !== null);
-  if (prontas.length === 0 || fontes.length || pausada || !ligadaNestaSessao) return false;
+  if (prontas.length === 0 || fontes.length || pausada() || !ligadaNestaSessao) return false;
   try {
     if (b.ctx.state === 'suspended') void b.ctx.resume?.();
     const g = b.ctx.createGain();
@@ -79,7 +88,7 @@ async function comecar(): Promise<boolean> {
 
 function aoTrocarVisibilidade(): void {
   if (typeof document === 'undefined') return;
-  if (!document.hidden && ligadaNestaSessao && !pausada) void comecar();
+  if (!document.hidden && ligadaNestaSessao && !pausada()) void comecar();
 }
 
 function ligarCicloDeVida(): void {
@@ -103,16 +112,23 @@ export function desligarTrilha(): void {
   parar();
 }
 
-/** Gancho do App: dormir / janela de descanso / mudo global (E0). */
-export function pausarTrilha(): void {
-  pausada = true;
+/** Gancho do App: dormir / janela de descanso / mudo global (E0). Um motivo por chamada. */
+export function pausarTrilha(motivo: MotivoDePausa = 'sono'): void {
+  pausas.add(motivo);
   parar();
 }
 
-/** Fim da pausa: só retoma se o jogador tinha ligado por gesto nesta sessão. */
-export function retomarTrilha(): void {
-  pausada = false;
-  if (ligadaNestaSessao) void comecar();
+/** Fim de UMA pausa: só retoma se nenhum outro motivo segue vivo E o jogador
+ *  tinha ligado por gesto nesta sessão. Acordar não religa a trilha de quem
+ *  está no mudo; desligar o mudo não acorda a trilha de quem está dormindo. */
+export function retomarTrilha(motivo: MotivoDePausa = 'sono'): void {
+  pausas.delete(motivo);
+  if (!pausada() && ligadaNestaSessao) void comecar();
+}
+
+/** E0, para teste e para a UI: a trilha está parada por algum motivo? */
+export function trilhaPausada(): boolean {
+  return pausada();
 }
 
 let primeiroGestoVisto = false;
@@ -145,6 +161,6 @@ export function camadasTocando(): number {
 export function esquecerTrilha(): void {
   parar();
   ligadaNestaSessao = false;
-  pausada = false;
+  pausas.clear();
   primeiroGestoVisto = false;
 }

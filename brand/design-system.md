@@ -1,3 +1,12 @@
+> ⚰️ **LÁPIDE (22/09/2026, QA Rodada 2 `06-som-arte-design-marca-r2.md` M-1):** este arquivo é **documento
+> herdado da Consultech360** ("Plataforma de Conexão 360°", azul corporativo) — veio no fork da
+> squad genérica e **NÃO é o design system do Soulmon**. Nada aqui vale para o produto: tokens,
+> cores, tipografia e princípios do Soulmon moram em **`docs/manual/04-IDENTIDADE-VISUAL.md`**
+> (tese "O Visor", `--sm2-*`, Fredoka/Rubik, Material Symbols). Os agentes locais
+> `.claude/agents/design-critic.md` e `staff-frontend.md` carregavam este arquivo como
+> "canonical tokens" até 22/09/2026 — corrigidos para apontar o `04`. Mantido só como registro
+> do fork; candidato a apagar (decisão do dono — `06` M-1 propõe `docs/MARCA.md` no lugar).
+
 # Consultech360 — Design System
 
 > Consumed by `product-designer` and every visual artifact the squad produces.

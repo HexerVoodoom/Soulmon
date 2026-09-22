@@ -28,6 +28,7 @@ import { SoulTestItem, itemHint, itemPrompt } from './SoulTestItem';
 import { PREMADE_CHARACTERS, getDemoSprite, FULL_UNLOCK_SKU } from '../utils/monetization';
 import { useUnlockPriceLabel } from '../utils/priceLabel';
 import { purchase, isBillingAvailable } from '../utils/playBilling';
+import { checarContaExcluidaNoLogin } from '../utils/cloudSave';
 import {
   isAuthConfigured, getCurrentEmail, entrarComSenha, criarContaComSenha,
   entrarComGoogle, mandarResetDeSenha, type AuthErro,
@@ -329,11 +330,21 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   /** Adendo 11 (21/09/2026): o servidor respondeu 410 `account-deleted` e
    *  `reagirContaExcluida` limpou o aparelho e voltou para cá. A mensagem é
    *  lida UMA vez e apagada — não pode reaparecer na próxima abertura. */
-  const [avisoContaExcluida] = useState<string | null>(() => {
+  const [avisoContaExcluida, setAvisoContaExcluida] = useState<string | null>(() => {
     const m = readLocal(STORAGE_KEYS.ACCOUNT_DELETED_NOTICE);
     if (m) removeLocal(STORAGE_KEYS.ACCOUNT_DELETED_NOTICE, { silent: true });
     return m;
   });
+  /** A1 (QA rodada 2): região viva que já existe VAZIA na primeira pintura e
+   *  só recebe o texto DEPOIS de montar — leitor de tela não anuncia
+   *  `role=status` que já nasce com conteúdo. O `<h2>` dá âncora de
+   *  navegação por cabeçalho. */
+  const [avisoAnunciado, setAvisoAnunciado] = useState<string | null>(null);
+  useEffect(() => {
+    if (!avisoContaExcluida) { setAvisoAnunciado(null); return; }
+    const t = window.setTimeout(() => setAvisoAnunciado(avisoContaExcluida), 0);
+    return () => window.clearTimeout(t);
+  }, [avisoContaExcluida]);
   const [flow, setFlow] = useState<'oracle' | 'demo' | null>(draft || isUpgrade ? 'oracle' : null);
   /** `null` = ainda não sabemos (a checagem é assíncrona); string = e-mail já
    *  comprovado; `''` = deslogado. O portão só decide depois de saber. */
@@ -874,7 +885,24 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   /** Depois de autenticar, `App.tsx` recarrega a página e conclui a adoção do
    *  save. Aqui só registramos o e-mail e seguimos para a escolha — se o
    *  reload vier antes, melhor ainda. */
-  const aposAutenticar = (mail?: string) => {
+  const aposAutenticar = async (mail?: string) => {
+    // F1 (QA rodada 2, FATAL): e-mail com lápide (410) NÃO entra no
+    // onboarding. `checarContaExcluidaNoLogin` já deslogou e gravou o aviso;
+    // aqui a pessoa fica no portão, com a mensagem e o caminho de volta
+    // (o próximo login limpa a lápide no servidor).
+    if (mail) {
+      setAuthOcupado(true);
+      const excluida = await checarContaExcluidaNoLogin(mail).catch(() => null);
+      setAuthOcupado(false);
+      if (excluida) {
+        removeLocal(STORAGE_KEYS.ACCOUNT_DELETED_NOTICE, { silent: true });
+        setAvisoContaExcluida(excluida.mensagem);
+        setAuthEmail('');
+        setStep(IDENTITY_STEP);
+        return;
+      }
+    }
+    setAvisoContaExcluida(null);
     setAuthEmail(mail ?? '');
     setResetEnviado(false);
     // O carimbo do aceite é feito NO MOMENTO em que a conta nasce, não no fim
@@ -1007,7 +1035,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       redeGoogleRef.current = null;
     }
     setAuthOcupado(false);
-    if (r.ok) { aposAutenticar(r.email); return; }
+    if (r.ok) { await aposAutenticar(r.email); return; }
     setAuthErro(r.erro ?? 'desconhecido');
   };
 
@@ -1025,7 +1053,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       ? await criarContaComSenha(mail, senha)
       : await entrarComSenha(mail, senha);
     setAuthOcupado(false);
-    if (r.ok) { aposAutenticar(r.email ?? mail); return; }
+    if (r.ok) { await aposAutenticar(r.email ?? mail); return; }
     setAuthErro(r.erro ?? 'desconhecido');
   };
 
@@ -1287,11 +1315,19 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               fontWeight: 600, letterSpacing: '.01em', color: 'var(--sm2-ink)', lineHeight: 'var(--sm2-leading-title)',
             }}>Soulmon</span>
           </div>
-          {avisoContaExcluida && (
-            <p role="status" style={{ ...sm2Text, textAlign: 'center', margin: '12px 0 0' }} data-account-deleted-notice>
-              {avisoContaExcluida}
-            </p>
-          )}
+          {/* A1: a região viva está SEMPRE no DOM (vazia) e o texto entra
+              pós-montagem via `avisoAnunciado`; o cabeçalho só aparece com
+              o aviso. */}
+          <div aria-live="polite" aria-atomic="true" data-account-deleted-live>
+            {avisoAnunciado && (
+              <section aria-labelledby="sm2-conta-excluida-titulo" style={{ margin: '12px 0 0', textAlign: 'center' }} data-account-deleted-notice>
+                <h2 id="sm2-conta-excluida-titulo" style={{ ...sm2Label, margin: 0 }}>
+                  {isPt ? 'Conta excluída' : 'Account deleted'}
+                </h2>
+                <p style={{ ...sm2Text, margin: '4px 0 0' }}>{avisoAnunciado}</p>
+              </section>
+            )}
+          </div>
           <StepShell
             title={!mostrarAuth
               ? (isPt ? 'Antes de começar' : 'Before we start')

@@ -40,6 +40,7 @@
 | O app coleta ou compartilha algum dos tipos de dados exigidos? | **Sim** | Save na nuvem, e-mail e chat de IA |
 | Todos os dados coletados são criptografados em trânsito? | **Sim** | Tudo passa por HTTPS (Cloudflare Workers); não há endpoint em texto claro |
 | Você oferece um jeito de o usuário pedir a exclusão dos dados? | **Sim** | Autoatendimento no app (**Configurações → Seus dados**) e por e-mail |
+| Algum dado é retido depois da exclusão? (campo de texto livre da seção "Exclusão de dados") | **Sim, três coisas, todas declaradas na política §8:** (a) **marca de exclusão** `del:done:<saveId>` — só o hash do e-mail, por **30 dias**, para o servidor recusar escrita de um aparelho antigo ainda logado; um login posterior com o mesmo e-mail a retira e a conta recomeça do zero (`functions/api/_accountTombstone.js`); (b) **registro de compra** `ord:<orderId>` por 5 anos (fiscal; política §8); (c) **vínculo Steam** `ord:steam:own:<appid>:<steamid>` por 5 anos — **provisório**, pergunta #56 ao dono (QA rodada 2, `04-dados` #4). A exclusão **inclui** a saída do grupo cooperativo (`coop:`/`coopOf:`/`coopCk:`, `_coop.js` › `coopLeave`). | QA rodada 2 — `01-seguranca` §1.4, `04-dados` §1.1/§1.3 |
 
 ---
 

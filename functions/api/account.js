@@ -50,6 +50,11 @@
 //               aparelho, e a resposta DECLARA isso em vez de deixar a pessoa
 //               achar que já foi. Nunca se apaga por palpite (hash de e-mail
 //               não está no registro; um `petName` igual não prova nada).
+//  APAGA        Vaga no grupo cooperativo: sai de `coop:<gid>.members`, apaga
+//               `coopOf:<saveId>` e `coopCk:<gid>:<saveId>` (`_coop.js` ›
+//               `coopLeave`, o mesmo de "sair" com um toque). Grupo que fica
+//               vazio some com o código. Sem isto o membro apagado virava
+//               fantasma e a meta do grupo nunca mais fechava (QA R2).
 //  APAGA        Sprites gerados por IA: `sprite:img:<saveId>:<formId>` (cache
 //               de resultado), `sprite:lock:<saveId>:<formId>` (lock de
 //               geração) e os binários `sprite:blob:<token>` que os caches
@@ -73,7 +78,7 @@
 //
 //   0. token · 1. `collect` · 2. LÁPIDE · 3. `friends[]` alheios (varredura —
 //   pode estourar; ainda reversível, e a lápide é desfeita se estourar) ·
-//   4. push por índice · 5. sprites · 6. minimizar `ent:` · 7. `rank:*`,
+//   3b. grupo cooperativo · 4. push por índice · 5. sprites · 6. minimizar `ent:` · 7. `rank:*`,
 //   `gifts:`, `pid:`, `profile:` · 8. **o save** · 9. token de confirmação.
 //
 // O save é o ÚLTIMO a cair: é o que a pessoa mais quer ver sumir, e é também
@@ -92,8 +97,9 @@ import {
 } from './_entitlements.js';
 import { requireVerifiedOwner } from './_auth.js';
 import { kv, kvOrThrow } from './_kv.js';
-import { lerIndice, chaveDoIndice } from './_pushIdentity.js';
+import { lerIndice, chaveDoIndice, PUSHIDX_MAX } from './_pushIdentity.js';
 import { writeTombstone, clearTombstone, TOMBSTONE_TTL_SECONDS } from './_accountTombstone.js';
+import { coopLeave, grupoDe, coopOfKey, coopCkKey } from './_coop.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -152,7 +158,7 @@ const PUSH_PREFIXES = ['push:', 'fcm:'];
  * e não erro — a exclusão do resto não pode depender de um namespace que o
  * ambiente de teste ou preview pode não ter.
  *
- * @returns {Promise<{ deleted: number, scanned: number, via: 'index' | 'scan' | 'none' }>}
+ * @returns {Promise<{ deleted: number, scanned: number, via: 'index' | 'index+scan' | 'scan' | 'none' }>}
  */
 async function deletePushSubscriptions(env, saveId) {
   const pushStore = env?.PUSH_SUBSCRIPTIONS;
@@ -164,6 +170,7 @@ async function deletePushSubscriptions(env, saveId) {
   // subir devolvia 500 — e o que sobrou fica declarado em `naoIncluido`.
   //
   // CAMINHO PRINCIPAL: o índice inverso `pushidx:<saveId>`. Custo fixo.
+  let indiceCheio = false;
   try {
     const idx = await lerIndice(pushStore, saveId);
     if (idx.existe) {
@@ -178,7 +185,13 @@ async function deletePushSubscriptions(env, saveId) {
         deleted++;
       }
       await pushStore.delete(chaveDoIndice(saveId));
-      return { deleted, scanned, via: 'index' };
+      // Índice CHEIO (>= `PUSHIDX_MAX`) é índice que pode ter expulsado alguém
+      // antes de a expulsão passar a apagar a inscrição junto (QA rodada 2):
+      // cai na varredura também, para não deixar inscrição viva fora do
+      // alcance. Custo alto só neste caso raro; o normal continua O(1).
+      indiceCheio = Object.keys(idx.keys).length >= PUSHIDX_MAX;
+      if (!indiceCheio) return { deleted, scanned, via: 'index' };
+      log('account.delete.push-index-full', saveId, { deleted, scanned });
     }
   } catch (err) {
     log('account.delete.push-index-failed', saveId, { deleted, scanned, error: String(err?.message || err) });
@@ -207,7 +220,7 @@ async function deletePushSubscriptions(env, saveId) {
   } catch (err) {
     log('account.delete.push-scan-failed', saveId, { deleted, scanned, error: String(err?.message || err) });
   }
-  return { deleted, scanned, via: 'scan' };
+  return { deleted, scanned, via: indiceCheio ? 'index+scan' : 'scan' };
 }
 
 // ── Sprites gerados por IA ──────────────────────────────────────────────────
@@ -268,12 +281,12 @@ const COPY = {
     en: 'This is everything Soulmon keeps about you on its servers. Whatever is not here is listed under "notIncluded" — and most of it never left your device.',
   },
   deleteReady: {
-    'pt-BR': 'Está tudo pronto para apagar. Confirme quando quiser — seu bichinho vai sentir sua falta, e a porta fica aberta se você voltar.',
-    en: 'Everything is ready to be erased. Confirm whenever you want — your buddy will miss you, and the door stays open if you come back.',
+    'pt-BR': 'Está tudo pronto para apagar. Confirme quando quiser. Se você entrar de novo com o mesmo e-mail, a conta recomeça do zero.',
+    en: 'Everything is ready to be erased. Confirm whenever you want. If you sign in again with the same email, the account starts over from scratch.',
   },
   deleteDone: {
-    'pt-BR': 'Pronto, apagamos. Obrigado pelo tempo que você passou aqui — foi bom cuidar de você por um tempo.',
-    en: 'Done, it is erased. Thank you for the time you spent here — it was good to look after you for a while.',
+    'pt-BR': 'Pronto, apagamos. Obrigado pelo tempo aqui.',
+    en: 'Done, it is erased. Thank you for the time here.',
   },
   pending: {
     'pt-BR': 'Sem pressa: este pedido vale por 15 minutos. Se ele expirar, é só pedir de novo.',
@@ -313,6 +326,16 @@ const NOT_INCLUDED = [
     what: 'ord:<orderId>',
     'pt-BR': 'O vínculo entre um comprovante de compra e a conta que o resgatou NÃO é apagado. É o que impede que um mesmo comprovante vire várias contas pagas — e é o que deixa você restaurar a compra se voltar com o mesmo e-mail.',
     en: 'The link between a purchase receipt and the account that redeemed it is NOT deleted. It is what stops one receipt from becoming several paid accounts — and it is what lets you restore your purchase if you come back with the same email.',
+  },
+  {
+    what: 'del:done:<saveId> (marca de exclusão / deletion marker)',
+    'pt-BR': 'Por 30 dias depois da exclusão, o servidor guarda só o identificador da sua conta (o código derivado do e-mail, sem o e-mail) com a marca "excluída". Ele existe para recusar gravação de um aparelho antigo que ainda estivesse logado — sem isso o save voltava sozinho segundos depois. Entrar de novo com o mesmo e-mail reabre: a conta recomeça do zero. Depois de 30 dias a marca some sozinha.',
+    en: 'For 30 days after deletion, the server keeps only your account identifier (the code derived from your email, without the email) marked as "deleted". It exists to refuse writes from an old device that was still signed in — without it the save came back on its own seconds later. Signing in again with the same email reopens: the account starts over from scratch. After 30 days the marker expires on its own.',
+  },
+  {
+    what: 'ord:steam:own:<appid>:<steamid> (Steam) — provisório / provisional',
+    'pt-BR': 'Se você ativou o Soulmon pela Steam, o vínculo entre o seu SteamID e a conta que ele ativou fica guardado por 5 anos, como o comprovante de compra: é o que impede uma mesma licença Steam de virar várias contas. Este prazo é provisório e está em revisão (pergunta #56 ao responsável).',
+    en: 'If you activated Soulmon through Steam, the link between your SteamID and the account it activated is kept for 5 years, like the purchase receipt: it is what stops one Steam licence from becoming several accounts. This period is provisional and under review (question #56 to the owner).',
   },
   {
     what: 'terceiros / third parties',
@@ -357,11 +380,50 @@ async function collect(env, saveId) {
 
   const sprites = await collectSprites(env, saveId);
 
-  return { pid, state, profile, gifts, entitlement, ranks, rankKeys, pidIndexed, sprites };
+  // Grupo cooperativo (se houver). `grupoDe` já limpa `coopOf:` órfão.
+  let coopGroupId = null;
+  try { coopGroupId = (await grupoDe(env, saveId))?.id ?? null; } catch { coopGroupId = null; }
+
+  return { pid, state, profile, gifts, entitlement, ranks, rankKeys, pidIndexed, sprites, coopGroupId };
+}
+
+/**
+ * O pid PÚBLICO de um amigo, para a exportação — NUNCA o saveId dele.
+ *
+ * QA rodada 2 (`04-dados-r2` §2.3): a exportação devolvia `profile.friends[]`
+ * e `state.friends[]` crus, e era a ÚNICA rota que entregava o saveId de
+ * terceiros (até 5 por conta). Com o saveId de um amigo em mãos e a auth
+ * desligada, `GET /api/save?id=` lê o save dele — o vetor que a camada `pid:`
+ * existe para fechar. Aqui é SÓ LEITURA (não gera pid para quem não tem, ao
+ * contrário de `ensurePid` em `community.js`): amigo sem pid aleatório sai
+ * OMITIDO, nunca substituído pelo hash derivado do saveId (o pid legado, que
+ * `community.js` aposentou por ser calculável).
+ */
+async function pidDeAmigo(env, friendSaveId) {
+  if (typeof friendSaveId !== 'string' || !VALID_ID.test(friendSaveId)) return null;
+  let p = null;
+  try { p = JSON.parse((await kvOrThrow(env).get(`profile:${friendSaveId}`)) || 'null'); } catch { p = null; }
+  const pid = typeof p?.pid === 'string' ? p.pid : null;
+  if (!pid || pid === await publicIdFor(friendSaveId)) return null;
+  return pid;
+}
+
+async function amigosComoPids(env, friends) {
+  if (!Array.isArray(friends)) return friends;
+  return (await Promise.all(friends.map(f => pidDeAmigo(env, f)))).filter(Boolean);
 }
 
 async function handleExport(env, saveId) {
   const c = await collect(env, saveId);
+  // `friends[]` sai como pid público (ver `pidDeAmigo`) — nos DOIS lugares em
+  // que o save guarda saveId de terceiro. A contagem se preserva quando todos
+  // têm pid; quem não tem é omitido, e o campo `friendsNote` avisa.
+  const state = c.state && Array.isArray(c.state.friends)
+    ? { ...c.state, friends: await amigosComoPids(env, c.state.friends) }
+    : c.state;
+  const profile = c.profile && Array.isArray(c.profile.friends)
+    ? { ...c.profile, friends: await amigosComoPids(env, c.profile.friends) }
+    : c.profile;
   log('account.export', saveId, {
     hasState: !!c.state, hasProfile: !!c.profile, ranks: c.ranks.length, hasEntitlement: !!c.entitlement,
   });
@@ -374,8 +436,8 @@ async function handleExport(env, saveId) {
     data: {
       // As chaves do objeto são as PRÓPRIAS chaves do KV, para o arquivo ser
       // auditável contra o servidor sem precisar de um mapa à parte.
-      [`${saveId} (save)`]: c.state,
-      [`profile:${saveId}`]: c.profile,
+      [`${saveId} (save)`]: state,
+      [`profile:${saveId}`]: profile,
       [`pid:${c.pid}`]: c.pidIndexed ? saveId : null,
       [`gifts:${saveId}`]: c.gifts,
       [`${ENT_PREFIX}${saveId}`]: c.entitlement
@@ -405,6 +467,7 @@ function plan(c, saveId) {
       ...c.sprites.blobs,
       'menções a você na lista de amigos de outros jogadores',
       'inscrições de notificação (push:*/fcm:*) ligadas à sua conta',
+      ...(c.coopGroupId ? [`coop:${c.coopGroupId} (sua vaga no grupo)`, coopOfKey(saveId), coopCkKey(c.coopGroupId, saveId)] : []),
     ].filter(Boolean),
     minimiza: c.entitlement ? [`${ENT_PREFIX}${saveId} — sai o uso (IA, anúncios), ficam os campos de compra`] : [],
     sobrevive: Array.isArray(c.entitlement?.consumedOrders)
@@ -493,6 +556,15 @@ async function handleDeleteConfirm(env, saveId, body) {
     }
   };
 
+  // 3b) Grupo cooperativo (QA rodada 2, `04-dados-r2` §1.3): sai do grupo —
+  //    `coop:<gid>.members`, `coopOf:`, `coopCk:` — senão o membro apagado vira
+  //    fantasma e a meta do grupo (`members.length × 5`) nunca mais fecha.
+  //    Reversível (é o mesmo `coopLeave` de um toque); por isso vem antes da
+  //    primeira destruição, no bloco que só reporta.
+  /** @type {{ left: boolean, groupId: string | null, remaining: number }} */
+  let coop = { left: false, groupId: null, remaining: 0 };
+  await tentar('coop (grupo cooperativo)', async () => { coop = await coopLeave(env, saveId); });
+
   // 4) Inscrições de push ligadas à conta (decisão #23), pelo índice.
   //    Reversível na prática: o aparelho se reinscreve na próxima abertura.
   const push = await deletePushSubscriptions(env, saveId);
@@ -549,6 +621,7 @@ async function handleDeleteConfirm(env, saveId, body) {
     pushSubscriptionsDeleted: push.deleted,
     pushSubscriptionsScanned: push.scanned,
     pushVia: push.via,
+    coopLeft: coop.left,
     spritesDeleted: c.sprites.imgs.length + c.sprites.locks.length + c.sprites.blobs.length,
     entitlementMinimized: !!c.entitlement,
     tombstoneTtlSeconds: TOMBSTONE_TTL_SECONDS,
@@ -561,6 +634,7 @@ async function handleDeleteConfirm(env, saveId, body) {
       ...executed,
       listasDeAmigosLimpas: scrubbed,
       inscricoesDePushApagadas: push.deleted,
+      grupoCooperativoDeixado: coop.left,
       spritesApagados: c.sprites.imgs.length + c.sprites.locks.length + c.sprites.blobs.length,
       // O que NÃO conseguiu apagar, pelo nome da chave. Vazio é o normal;
       // preenchido, o token continua válido e a pessoa pode confirmar de novo.

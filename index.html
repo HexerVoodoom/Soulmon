@@ -140,10 +140,18 @@
             if (ok) return;
 
             var pt = (navigator.language || '').toLowerCase().indexOf('pt') === 0;
-            // Só o Android tem "Android System WebView" — iOS/Firefox/desktop
-            // caindo aqui recebem um diagnóstico genérico, não um link para a
-            // Play que não vale para eles (skeptic #4 / design D3, 21/09/2026).
-            var android = /Android/i.test(navigator.userAgent || '');
+            // Só o WEBVIEW do Android é "Android System WebView" — e o ramo
+            // com os dois botões da Play só serve para ele. Samsung Internet,
+            // Firefox Android e qualquer navegador de terceiro rodando em
+            // Android caíam no mesmo texto e eram mandados atualizar um
+            // componente que não usam (QA rodada 2, skeptic #5 / design A8).
+            // A marca do WebView é `; wv)` no UA (Android 5+), ou o UA antigo
+            // `Version/X.Y ... Chrome/` (WebView do Android 4.4). iOS/desktop
+            // seguem no genérico (skeptic #4 / design D3, 21/09/2026).
+            var ua = navigator.userAgent || '';
+            var android = /Android/i.test(ua)
+              && (/; wv\)/.test(ua) || /Version\/\d+\.\d+ .*Chrome\//.test(ua))
+              && !/Firefox|SamsungBrowser|EdgA|OPR\//.test(ua);
             try { document.documentElement.lang = pt ? 'pt-BR' : 'en'; } catch (e2) {}
             var titulo = pt ? 'Precisamos de uma atualização' : 'An update is needed';
             var corpo, comoT, como;

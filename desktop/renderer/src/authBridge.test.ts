@@ -28,6 +28,24 @@ import { describe, it, expect, beforeEach } from 'vitest';
 // `npx tsc -p desktop/tsconfig.json --noEmit` continua limpo.
 import fontePreload from '../../electron/auth-preload.js?raw';
 import fonteMain from '../../electron/main.js?raw';
+import fonteJwt from '../../electron/jwtExp.js?raw';
+
+/** `jwtExp.js` é CJS puro (sem `electron`); carregado do FONTE como o preload. */
+function carregarJwtExp(): { expDoJwtMs: (t: unknown) => number | null } {
+  const modulo = { exports: {} as { expDoJwtMs: (t: unknown) => number | null } };
+  // eslint-disable-next-line @typescript-eslint/no-implied-eval
+  new Function('require', 'module', 'exports', 'Buffer', fonteJwt)(
+    () => { throw new Error('jwtExp.js não pode depender de nada'); },
+    modulo, modulo.exports, (globalThis as unknown as { Buffer: unknown }).Buffer,
+  );
+  return modulo.exports;
+}
+
+/** JWT de brincadeira: header.payload.assinatura com o payload dado. */
+function jwtCom(payload: unknown): string {
+  const b64url = (s: string) => btoa(unescape(encodeURIComponent(s))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  return `${b64url('{"alg":"RS256"}')}.${b64url(JSON.stringify(payload))}.assinatura`;
+}
 
 type Sent = [channel: string, payload: unknown];
 
@@ -59,6 +77,7 @@ function carregarPreload(): { chave: string; bridge: Bridge; enviados: Sent[] } 
   const rodar = new Function('require', 'module', 'exports', fontePreload);
   rodar(
     (id: string) => {
+      if (id === './jwtExp.js') return carregarJwtExp();
       if (id !== 'electron') throw new Error(`preload pediu um módulo inesperado: ${id}`);
       return electronFalso;
     },
@@ -138,6 +157,40 @@ describe('ponte de login do desktop (auth-preload.js)', () => {
     it('validade legível passa intacta', () => {
       bridge.publish({ token: 'jwt', expiresAt: 1_700_000_000_000 });
       expect((enviados[0][1] as { exp: number }).exp).toBe(1_700_000_000_000);
+    });
+
+    // QA rodada 2 (segurança §10): sem `expiresAt`, o `exp` vem do PRÓPRIO
+    // token — não de um chute de 1h.
+    it('sem `expiresAt`, lê `exp` (segundos) do payload do JWT e manda em ms', () => {
+      bridge.publish({ token: jwtCom({ exp: 1_800_000_000, email: 'x' }), email: 'eu@exemplo.com' });
+      expect((enviados[0][1] as { exp: number }).exp).toBe(1_800_000_000_000);
+    });
+
+    it('`expiresAt` legível vence o `exp` do token (o app sabe melhor)', () => {
+      bridge.publish({ token: jwtCom({ exp: 1_800_000_000 }), expiresAt: 1_700_000_000_000 });
+      expect((enviados[0][1] as { exp: number }).exp).toBe(1_700_000_000_000);
+    });
+
+    it('`expDoJwtMs`: base64url com padding faltando, token torto, payload sem exp, exp 0 → null', () => {
+      const { expDoJwtMs } = carregarJwtExp();
+      expect(expDoJwtMs(jwtCom({ exp: 1_800_000_000 }))).toBe(1_800_000_000_000);
+      // payload que gera `-`/`_` e comprimento não múltiplo de 4
+      expect(expDoJwtMs(jwtCom({ exp: 1_800_000_000, sub: '???>>>~~~ééé' }))).toBe(1_800_000_000_000);
+      expect(expDoJwtMs('jwt')).toBeNull();
+      expect(expDoJwtMs('a.b')).toBeNull();
+      expect(expDoJwtMs('a.!!!.c')).toBeNull();
+      expect(expDoJwtMs(jwtCom({ iat: 1 }))).toBeNull();
+      expect(expDoJwtMs(jwtCom({ exp: 0 }))).toBeNull();
+      expect(expDoJwtMs(jwtCom({ exp: 'amanhã' }))).toBeNull();
+      expect(expDoJwtMs(null)).toBeNull();
+    });
+
+    it('token sem `exp` legível E sem `expiresAt` cai no 1h — nunca em 0', () => {
+      const antes = Date.now();
+      bridge.publish({ token: jwtCom({ iat: 1 }) });
+      const exp = (enviados[0][1] as { exp: number }).exp;
+      expect(exp).toBeGreaterThan(antes);
+      expect(exp - antes).toBeLessThanOrEqual(60 * 60 * 1000 + 1_000);
     });
 
     it('main.js não tem mais o ramo "exp falsy = nunca expira"', () => {

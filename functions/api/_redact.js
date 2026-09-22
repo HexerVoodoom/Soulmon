@@ -31,7 +31,15 @@
 //     texto chega lá pseudonimizado, e isso é verificado por teste.
 // ---------------------------------------------------------------------------
 
-/** Ordem importa: o mais específico primeiro (CPF antes de "sequência longa"). */
+/** Data com ano dentro deste prazo é compromisso/meta, não nascimento. */
+const DATE_RECENT_YEARS = 5;
+/** `0000`–`2359` (horário sem dois-pontos, que também cobre `19xx`/`20xx`/`21xx`
+ *  como ano). Telefone fixo no Brasil começa em 2–5 e celular em 9, então um
+ *  par em que AS DUAS metades cabem nessa faixa é horário/ano, não número. */
+const YEAR_OR_HOUR = /^(?:[01]\d\d\d|2[0-3]\d\d)$/;
+
+/** Ordem importa: o mais específico primeiro (CPF antes de "sequência longa").
+ *  `keep(match, ...groups)` opcional: `true` = NÃO redigir este match. */
 const RULES = [
   { kind: 'email', re: /[\w.+-]+@[\w-]+\.[\w.-]+/g, tag: '[email]' },
   { kind: 'url', re: /\b(?:https?:\/\/|www\.)\S+/gi, tag: '[link]' },
@@ -52,8 +60,16 @@ const RULES = [
   //    início é opcional para não deixar fixo passar; 8 dígitos contíguos
   //    (`20260921`) também caem aqui — quase-identificador de qualquer jeito.
   { kind: 'cep', re: /\b\d{5}-\d{3}\b/g, tag: '[cep]' },
-  { kind: 'date', re: /\b\d{2}\/\d{2}\/\d{4}\b/g, tag: '[data]' },
-  { kind: 'phone', re: /\b9?\d{4}[\s.-]?\d{4}\b/g, tag: '[telefone]' },
+  // QA rodada 2 (`01-seguranca-r2` §7): as duas regras de baixo marcavam
+  // faixa de ano (`2020-2024`), horário (`1000-1200`), qualquer data recente
+  // e `20260921` como identificador — e o texto útil da meta chegava ao
+  // modelo mastigado. Data só é quase-identificador quando é ANTIGA (nascimento,
+  // não "até 31/12/2026"); telefone curto exige SEPARADOR e não pode ser um
+  // par de anos/horas. O preço declarado: 9 dígitos contíguos sem separador
+  // (`987654321`) passam a passar — a regra de DDD e a de "sequência longa"
+  // continuam pegando o formato completo.
+  { kind: 'date', re: /\b(\d{2})\/(\d{2})\/(\d{4})\b/g, tag: '[data]', keep: (_m, _d, _mo, y) => Number(y) >= new Date().getUTCFullYear() - DATE_RECENT_YEARS },
+  { kind: 'phone', re: /\b(9?\d{4})[\s.-](\d{4})\b/g, tag: '[telefone]', keep: (_m, a, b) => YEAR_OR_HOUR.test(a) && YEAR_OR_HOUR.test(b) },
   { kind: 'digits', re: /\b\d[\d\s.-]{9,}\d\b/g, tag: '[número]' },
   { kind: 'handle', re: /(^|\s)@[A-Za-z0-9_.]{2,}/g, tag: '$1[perfil]' },
 ];
@@ -70,8 +86,9 @@ export function minimizeForAi(input, maxLength = 500) {
   /** @type {Record<string, number>} */
   const redactions = {};
 
-  for (const { kind, re, tag } of RULES) {
+  for (const { kind, re, tag, keep } of RULES) {
     text = text.replace(re, (match, ...rest) => {
+      if (keep && keep(match, ...rest)) return match;
       redactions[kind] = (redactions[kind] || 0) + 1;
       // A regra de handle preserva o espaço anterior ($1); as outras não capturam.
       return tag.includes('$1') ? `${rest[0] ?? ''}${tag.replace('$1', '')}` : tag;

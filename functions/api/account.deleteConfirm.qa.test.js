@@ -230,7 +230,7 @@ describe('(c) lápide → save.js responde 410 a GET e POST', () => {
 
     const post3s = await saveRoute({ request: saveReq('POST', { state: { petName: 'Bolha', hp: 3 } }), env: e });
     expect(post3s.status).toBe(410);
-    expect(await post3s.json()).toEqual({ error: 'account-deleted' });
+    expect(await post3s.json()).toMatchObject({ error: 'account-deleted', deletedAt: expect.any(Number) });
     expect(e.DIGIAPP_SAVES.store.has(ID), 'o save NÃO voltou').toBe(false);
 
     const get = await saveRoute({ request: saveReq('GET'), env: e });

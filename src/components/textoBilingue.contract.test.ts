@@ -52,8 +52,12 @@ const NEUTROS: Record<string, string> = {
 const ALVOS: Array<{ rx: RegExp; onde: string }> = [
   { rx: /(toast\.(?:error|success|info|warning|message|loading))\s*\(\s*(['"`])([^'"`]{6,})\2/g, onde: 'toast' },
   { rx: /(onSendMessage)\s*\(\s*(['"`])([^'"`]{6,})\2/g, onde: 'mensagem no chat' },
-  { rx: /(aria-label|title|placeholder|aria-description)\s*=\s*(['"])([^'"]{6,})\2/g, onde: 'atributo' },
-  { rx: /(aria-label|title|placeholder)\s*=\s*\{\s*(['"])([^'"]{6,})\2\s*\}/g, onde: 'atributo' },
+  { rx: /(aria-label|title|placeholder|aria-description|alt)\s*=\s*(['"])([^'"]{6,})\2/g, onde: 'atributo' },
+  { rx: /(aria-label|title|placeholder|alt)\s*=\s*\{\s*(['"])([^'"]{6,})\2\s*\}/g, onde: 'atributo' },
+  // A6 (QA rodada 2): o assunto do `mailto:` de feedback saía 'Soulmon — erro'
+  // para quem lê em inglês, e o guard não olhava `subject`. Vale para
+  // variável/propriedade `subject` E para `alt` de imagem (acima).
+  { rx: /\b(subject)\s*[:=]\s*(['"`])([^'"`]{6,})\2/g, onde: 'assunto de e-mail' },
 ];
 
 /** Identificador, caminho, URL, constante — não é frase. */
@@ -123,6 +127,18 @@ describe('🔴 nenhum texto de interface existe em um idioma só', () => {
     expect(m).toHaveLength(1);
     expect(m[0][3]).toBe('Audio transcription failed. Please try again.');
     expect(ESCOLHE_IDIOMA.test(linha)).toBe(false);
+  });
+
+  it('AUTOVERIFICAÇÃO: `subject` e `alt` só-PT são enxergados (A6)', () => {
+    const subj = "  const subject = 'Soulmon — erro';";
+    const rxS = ALVOS[4].rx; rxS.lastIndex = 0;
+    expect([...subj.matchAll(rxS)].map(m => m[3])).toEqual(['Soulmon — erro']);
+    const alt = '  <img alt="A criatura dormindo" />';
+    const rxA = ALVOS[2].rx; rxA.lastIndex = 0;
+    expect([...alt.matchAll(rxA)].map(m => m[3])).toEqual(['A criatura dormindo']);
+    // `alt=""` (imagem decorativa) NÃO é frase e não é achado.
+    rxA.lastIndex = 0;
+    expect([...'  <img alt="" />'.matchAll(rxA)]).toHaveLength(0);
   });
 
   it('AUTOVERIFICAÇÃO: e NÃO reclama de um par bilíngue de verdade', () => {

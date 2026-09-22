@@ -59,6 +59,12 @@ function Espiao() {
 }
 
 /** Carrega o save como o jogador o encontraria: gravado no storage, app abrindo. */
+/** QA rodada 2 (01-seguranca §1.3): o perfil público sai DEPOIS do cloud save
+ *  confirmar — uma microtask depois do timer. Os casos de perfil esperam. */
+async function esperarPerfil() {
+  await act(async () => { for (let i = 0; i < 4; i++) await Promise.resolve(); });
+}
+
 function abrirComSave(save: unknown) {
   if (save !== undefined) {
     localStorage.setItem(STORAGE_KEYS.GAME_STATE,
@@ -466,7 +472,7 @@ describe('backup na nuvem: só depois de uma mudança REAL, e com o conteúdo ce
     } finally { vi.useRealTimers(); }
   });
 
-  it('o perfil público leva o que o ranking mostra — e o nome tem par PT/EN', () => {
+  it('o perfil público leva o que o ranking mostra — e o nome tem par PT/EN', async () => {
     vi.useFakeTimers();
     try {
       localStorage.setItem(STORAGE_KEYS.LANGUAGE, 'pt-BR');
@@ -479,6 +485,7 @@ describe('backup na nuvem: só depois de uma mudança REAL, e com o conteúdo ce
       });
       act(() => { screen.getByText('mais').click(); });
       act(() => { vi.advanceTimersByTime(3000); });
+      await esperarPerfil();
 
       expect(perfis).toHaveLength(1);
       expect(perfis[0].name).toBe('Anônimo');
@@ -492,24 +499,26 @@ describe('backup na nuvem: só depois de uma mudança REAL, e com o conteúdo ce
     } finally { vi.useRealTimers(); }
   });
 
-  it('em inglês o padrão é "Anonymous" (o par que já faltou no push das 22h)', () => {
+  it('em inglês o padrão é "Anonymous" (o par que já faltou no push das 22h)', async () => {
     vi.useFakeTimers();
     try {
       localStorage.setItem(STORAGE_KEYS.LANGUAGE, 'en-US');
       abrirComSave({ activities: [], tasks: [], pvpEnabled: true });
       act(() => { screen.getByText('mais').click(); });
       act(() => { vi.advanceTimersByTime(3000); });
+      await esperarPerfil();
       expect(perfis[0].name).toBe('Anonymous');
     } finally { vi.useRealTimers(); }
   });
 
-  it('nome escolhido pelo jogador vence o padrão; sem pet, petName é string vazia', () => {
+  it('nome escolhido pelo jogador vence o padrão; sem pet, petName é string vazia', async () => {
     vi.useFakeTimers();
     try {
       localStorage.setItem(STORAGE_KEYS.USER_NAME, 'Mateus');
       abrirComSave({ activities: [], tasks: [], pvpEnabled: true });
       act(() => { screen.getByText('mais').click(); });
       act(() => { vi.advanceTimersByTime(3000); });
+      await esperarPerfil();
       expect(perfis[0].name).toBe('Mateus');
       expect(perfis[0].petName).toBe('');
       expect(perfis[0].tasksDone).toBe(0);

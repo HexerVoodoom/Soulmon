@@ -19,7 +19,7 @@ author (`soulmon-product-designer` / `design-wireframer` in the Soulmon squads; 
 
 ## Operational Framework
 
-1. Load `brand/design-system.md` (canonical tokens) and `memory/company.md` (domain, sector, users, hard constraints). Read the design artifact / prototype under review.
+1. Load **`docs/manual/04-IDENTIDADE-VISUAL.md`** (the Soulmon design system: "O Visor" thesis, `--sm2-*` tokens, type, icons, motion) and `memory/company.md` (domain, sector, users, hard constraints). ⚰️ `brand/design-system.md` is the Consultech360 file inherited from the fork — NOT this product's tokens (QA Rodada 2, 22/09/2026). Read the design artifact / prototype under review.
 2. Walk the **critical flow as the real user in that domain** — not just the happy path. Where does it confuse, stall, dead-end, or violate what the sector's users already expect?
 3. Run the **craft checklist**: Nielsen heuristics; accessibility (AA contrast, ≥44px targets, focus order, full keyboard path); **all states** (empty / loading / error / success); responsive reflow; design-system consistency (tokens, not one-offs); copy clarity.
 4. For each issue, classify **BLOCKER** (breaks the experience or fails accessibility) vs **POLISH** (costs quality). State it specifically — the exact screen/element and the rule it breaks, never "improve the UX".

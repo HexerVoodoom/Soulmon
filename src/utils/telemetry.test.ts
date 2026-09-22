@@ -700,6 +700,33 @@ describe('guard de segundo plano', () => {
     });
   });
 
+  it('skeptic R2 #4: a fila de oculto guarda o registro SANEADO — prop de texto nunca espera no localStorage', () => {
+    oculto(() => {
+      // `sanitizeEvent` recusa texto: o evento morre ANTES de entrar na fila.
+      track('activity_create', { kind: 0, path: 0, taskName: 'ligar pro médico' } as never);
+      expect(pendingHiddenTelemetry()).toEqual([]);
+      track('activity_create', { kind: 0, path: 0 });
+      expect(pendingHiddenTelemetry()).toHaveLength(1);
+    });
+    const cru = JSON.parse(localStorage.getItem('soulmon-telemetry-hidden') ?? '[]');
+    expect(cru).toEqual([{ e: 'activity_create', d: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/), p: { kind: 0, path: 0, tier: 0 } }]); // o tier já carimbado
+    expect(JSON.stringify(cru)).not.toContain('médico');
+  });
+
+  it('skeptic R2 #4: `ONCE_PER_DAY` deduplica na fila de oculto por (e, d) — a última vence, e o teto não descarta o fechamento', () => {
+    oculto(() => {
+      for (let i = 1; i <= MAX_HIDDEN + 5; i++) track('day_active', { effort: i }, '2026-09-20');
+      const fila = pendingHiddenTelemetry();
+      expect(fila.filter(r => r.e === 'day_active')).toHaveLength(1);
+      // outro dia é outro registro
+      track('day_active', { effort: 1 }, '2026-09-21');
+      expect(pendingHiddenTelemetry().filter(r => r.e === 'day_active')).toHaveLength(2);
+    });
+    drainHiddenTelemetry();
+    const d20 = pendingTelemetry().find(r => r.e === 'day_active' && r.d === '2026-09-20');
+    expect(d20?.p?.effort).toBe(MAX_HIDDEN + 5);
+  });
+
   it('desligar a telemetria apaga a fila de oculto também', () => {
     oculto(() => { track('install'); });
     expect(pendingHiddenTelemetry()).toHaveLength(1);

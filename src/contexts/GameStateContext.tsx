@@ -1040,6 +1040,34 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
         // Sem `?? padrão` de valor: aqui o padrão É a ausência. Save antigo
         // continua sem consentimento registrado — e continua jogando.
         consent: normalizeConsent(loadedState.consent),
+        // `soulmonDisplayName` faz `.trim()` em `petName`/`baseName` em TODO
+        // render (HUD, widget, aniversário). Um `petName: 5` vindo da nuvem
+        // era `TypeError` no primeiro render — tela branca permanente
+        // (achado do fuzz de 89 campos, QA rodada 2, 22/09/2026). Campo
+        // não-string sai; o objeto só sobrevive se for objeto.
+        soulmonMeta: (() => {
+          const m = loadedState.soulmonMeta;
+          if (!m || typeof m !== 'object' || Array.isArray(m)) return undefined;
+          const e = m as Record<string, unknown>;
+          return {
+            ...e,
+            baseName: str(e.baseName) ?? '',
+            petName: str(e.petName),
+          } as GameState['soulmonMeta'];
+        })(),
+        // 04-dados R2 §2: os quatro campos que passavam pelo spread cru.
+        // `soulmonMeta` está acima; os três abaixo têm forma própria:
+        // objeto (não array) ou ausente — é o `?? padrão` do CLAUDE.md, e o
+        // mesmo padrão que já produziu tela branca quando faltou.
+        soulmonSkills: (() => {
+          const v = loadedState.soulmonSkills;
+          return v && typeof v === 'object' && !Array.isArray(v) ? v as GameState['soulmonSkills'] : undefined;
+        })(),
+        soulmonClassTitles: (() => {
+          const v = loadedState.soulmonClassTitles;
+          return v && typeof v === 'object' && !Array.isArray(v) ? v as GameState['soulmonClassTitles'] : undefined;
+        })(),
+        evolutionLocked: loadedState.evolutionLocked === true,
         soulGoal: str(loadedState.soulGoal) ?? '',
         soulStruggle: str(loadedState.soulStruggle) ?? '',
         moodLog: arr<unknown>(loadedState.moodLog).filter(
@@ -1394,7 +1422,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       // introduzir: a reconciliação de conflito precisa de uma via própria,
       // fora deste efeito. Avisar por `toast` é seguro (não é estado do jogo).
       void cloudSaveComRetry(saveId!, gameState).then(resultado => {
-        if (resultado.ok) { falhaJaAvisada.current = null; return; }
+        if (resultado.ok) { falhaJaAvisada.current = null; publicarPerfil(); return; }
         // 410: a conta foi excluída. Não é aviso — é parada: limpa, desloga e
         // volta ao portão (não toca em `setGameState`, R-1 respeitado).
         if (resultado.kind === 'deleted') { void reagirContaExcluida(); return; }
@@ -1408,6 +1436,12 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       // Sem este gate, quem nunca ativou o PvP tinha nome, pet e atributos
       // publicados no diretório assim mesmo — `pvpEnabled: false` no corpo não
       // impede a publicação, só descreve o estado.
+      //
+      // E só DEPOIS do save confirmado (QA rodada 2, segurança §1.3 / dados
+      // §0): em paralelo, o `pushProfile` regravava `profile:`/`pid:` no mesmo
+      // tick em que o save tomava 410 — o diretório público renascia 3 s
+      // depois da exclusão. Save recusado = perfil não sobe.
+      function publicarPerfil() {
       if (!gameState.pvpEnabled) return;
       pushProfile({
         id: saveId!,
@@ -1435,10 +1469,10 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         //
         // ⚠️ E NÃO É UM CASO DE BORDA. O gate do cliente (`meetsPvpBond`,
         // `TournamentPage`) lê o XP LOCAL; o servidor lê o XP do save NA NUVEM.
-        // Os dois saem deste MESMO timer e o `pushProfile` não espera o
-        // `cloudSaveComRetry` — quem acabou de cruzar o nível e liga o PvP no
-        // mesmo minuto é avaliado contra o save anterior. Com o cloud save
-        // falhando, a divergência dura o que a falha durar.
+        // Desde a QA rodada 2 o `pushProfile` só sai DEPOIS do
+        // `cloudSaveComRetry` confirmar — mas com o cloud save falhando o
+        // perfil não sobe, e a divergência entre o interruptor local e o
+        // diretório dura o que a falha durar.
         //
         // 🔴 POR QUE ISTO NÃO VIOLA A NOTA R-1 acima, que proíbe `setGameState`
         // neste callback: a proibição existe porque tocar o estado reagenda o
@@ -1468,6 +1502,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
           { duration: 10000 },
         );
       }).catch(() => {});
+      }
     }, espera);
     return () => clearTimeout(timer);
   }, [gameState]);

@@ -191,10 +191,25 @@ export async function indexarInscricao(kv, saveId, chave) {
     if (jaTem && !velho) return false;
 
     const keys = { ...idx.keys, [chave]: agora };
-    // Teto: sai a mais velha até caber.
+    // Teto: sai a mais velha até caber — e a INSCRIÇÃO expulsa é apagada
+    // junto. INVARIANTE (QA rodada 2, `00-skeptic-r2` #2): toda inscrição viva
+    // com `saveId` está no índice. Sem isto, a 17ª reinstalação de PWA (caso
+    // benigno) deixava a inscrição real fora do índice, e a exclusão de conta
+    // não a alcançava mais — push continuando depois de "apaguei". Apagar a
+    // expulsa é o que mantém o custo da exclusão fixo E completo. Como só o
+    // dono provado consegue indexar (`subscribe.js` › `saveIdAutorizado`),
+    // a expulsão é sempre de um aparelho da própria pessoa.
     const ordenadas = Object.entries(keys).sort((a, b) => a[1] - b[1]);
-    while (ordenadas.length > PUSHIDX_MAX) ordenadas.shift();
+    const expulsas = [];
+    while (ordenadas.length > PUSHIDX_MAX) {
+      const fora = ordenadas.shift();
+      if (fora) expulsas.push(fora[0]);
+    }
     await gravarIndice(kv, saveId, Object.fromEntries(ordenadas));
+    for (const k of expulsas) {
+      if (k === chave) continue;
+      try { await kv.delete(k); } catch { /* entrada morta fica; inofensiva */ }
+    }
     return true;
   } catch {
     return false;

@@ -11,6 +11,8 @@
 //
 // Referência: https://firebase.google.com/docs/auth/admin/verify-id-tokens
 
+import { gateTombstone } from './_accountTombstone.js';
+
 const JWK_URL = 'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com';
 
 let jwksCache = null;
@@ -40,8 +42,15 @@ function b64urlToBytes(s) {
 }
 
 /**
- * Verifica um ID token do Firebase. Retorna { email } quando válido, ou null.
- * NUNCA lança — quem chama trata null como "não autenticado".
+ * Verifica um ID token do Firebase. Retorna `{ email, authTime }` quando
+ * válido, ou null. NUNCA lança — quem chama trata null como "não autenticado".
+ *
+ * `authTime` é o claim `auth_time` (segundos, epoch) — o instante em que a
+ * pessoa fez LOGIN, não o em que o token foi renovado (`iat`). É o que a
+ * lápide de conta apagada usa para distinguir "aparelho esquecido com sessão
+ * antiga" (bloqueia, 410) de "a pessoa voltou e logou de novo" (reabre). Um
+ * token sem `auth_time` numérico é tratado como login de sempre (`0`): nunca
+ * reabre nada, que é o lado seguro.
  */
 export async function verifyIdToken(idToken, projectId) {
   try {
@@ -79,7 +88,10 @@ export async function verifyIdToken(idToken, projectId) {
     );
     if (!ok) return null;
 
-    return { email: String(payload.email).trim().toLowerCase() };
+    return {
+      email: String(payload.email).trim().toLowerCase(),
+      authTime: typeof payload.auth_time === 'number' && Number.isFinite(payload.auth_time) ? payload.auth_time : 0,
+    };
   } catch {
     return null;
   }
@@ -108,22 +120,48 @@ export async function emailToSaveId(email) {
  * atuais no meio da migração. Ligue a variável assim que a versão com login
  * estiver publicada — enquanto ela estiver ausente, a proteção NÃO está ativa.
  *
- * @returns {Promise<{ ok: true, enforced: boolean, email?: string }
- *                 | { ok: false, enforced: true, reason: 'unauthenticated' | 'forbidden' }>}
+ * LÁPIDE (QA rodada 2, `01-seguranca-r2` §1.3 e `04-dados-r2` §0): a conta
+ * apagada é conferida AQUI, e não em cada rota, porque a rodada 1 pôs o 410
+ * só em `save.js` e o cliente recriou `profile:`/`pid:` pelo `community.js`
+ * 3 s depois da exclusão. Toda rota que autoriza "em nome de `saveId`" passa
+ * por esta função — então toda rota herda o 410. A conferência vem DEPOIS da
+ * autorização: quem não é o dono não descobre daqui que a conta existiu.
+ * Reabertura: login (`auth_time`) posterior à lápide = a pessoa voltou; a
+ * lápide sai e a chamada segue (`gateTombstone`). Sem projectId não há
+ * `auth_time`, logo lápide vigente sempre bloqueia.
+ *
+ * @returns {Promise<{ ok: true, enforced: boolean, email?: string, authTime?: number,
+ *                     tombstone: { deleted: boolean, reopened: boolean, at?: number } }
+ *                 | { ok: false, enforced: boolean, status: 401 | 403 | 410,
+ *                     reason: 'unauthenticated' | 'forbidden' | 'account-deleted', deletedAt?: number }>}
  */
 export async function authorizeSaveAccess(request, env, saveId) {
   const projectId = env.FIREBASE_PROJECT_ID;
-  if (!projectId) return { ok: true, enforced: false };
+  if (!projectId) {
+    const tombstone = await gateTombstone(env, saveId, 0);
+    if (tombstone.deleted) return { ok: false, enforced: false, status: 410, reason: 'account-deleted', deletedAt: tombstone.at };
+    return { ok: true, enforced: false, tombstone };
+  }
 
   const auth = request.headers.get('Authorization') || '';
   const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
   const claims = await verifyIdToken(token, projectId);
-  if (!claims) return { ok: false, enforced: true, reason: 'unauthenticated' };
+  if (!claims) return { ok: false, enforced: true, status: 401, reason: 'unauthenticated' };
 
   const expected = await emailToSaveId(claims.email);
-  if (expected !== saveId) return { ok: false, enforced: true, reason: 'forbidden' };
+  if (expected !== saveId) return { ok: false, enforced: true, status: 403, reason: 'forbidden' };
 
-  return { ok: true, enforced: true, email: claims.email };
+  const tombstone = await gateTombstone(env, saveId, claims.authTime);
+  if (tombstone.deleted) return { ok: false, enforced: true, status: 410, reason: 'account-deleted', deletedAt: tombstone.at };
+
+  return { ok: true, enforced: true, email: claims.email, authTime: claims.authTime, tombstone };
+}
+
+/** Status HTTP de uma recusa de `authorizeSaveAccess` — um lugar só para o mapa. */
+export function authStatus(auth) {
+  if (typeof auth?.status === 'number') return auth.status;
+  if (auth?.reason === 'account-deleted') return 410;
+  return auth?.reason === 'forbidden' ? 403 : 401;
 }
 
 /**

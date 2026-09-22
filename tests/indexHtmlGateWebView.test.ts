@@ -158,6 +158,41 @@ describe('4. ramo por plataforma (skeptic #4 / design D1, D3, D4, D2)', () => {
     expect(r.texto).not.toMatch(/WebView/);
   });
 
+  // QA rodada 2 (skeptic #5 / design A8): navegador de terceiro em Android
+  // NÃO é WebView — mandá-lo atualizar o "Android System WebView" é conselho
+  // errado. Só `; wv)` (ou o UA `Version/X.Y … Chrome/` do WebView antigo)
+  // ganha os botões da Play.
+  const UA_SAMSUNG = 'Mozilla/5.0 (Linux; Android 13; SAMSUNG SM-S911B) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/21.0 Chrome/110.0.0.0 Mobile Safari/537.36';
+  const UA_FIREFOX_ANDROID = 'Mozilla/5.0 (Android 13; Mobile; rv:109.0) Gecko/109.0 Firefox/109.0';
+  const UA_CHROME_ANDROID = 'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Mobile Safari/537.36';
+  const UA_WV_ANTIGO = 'Mozilla/5.0 (Linux; Android 4.4.2; Nexus 5 Build/KOT49H) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/30.0.0.0 Mobile Safari/537.36';
+
+  it('Samsung Internet em Android: genérico, sem link para a Play', () => {
+    const r = rodar({ css: undefined, userAgent: UA_SAMSUNG, language: 'en-US' });
+    expect(r.avisou).toBe(true);
+    expect(r.texto).not.toMatch(/Android System WebView/);
+    expect(r.links.some(l => l.href.includes('play.google.com'))).toBe(false);
+  });
+
+  it('Firefox Android: genérico, sem link para a Play', () => {
+    const r = rodar({ css: undefined, userAgent: UA_FIREFOX_ANDROID, language: 'pt-BR' });
+    expect(r.texto).toMatch(/navegador está desatualizado/);
+    expect(r.texto).not.toMatch(/WebView/);
+  });
+
+  it('Chrome (navegador, sem `wv`) em Android: genérico', () => {
+    const r = rodar({ css: undefined, userAgent: UA_CHROME_ANDROID, language: 'en-US' });
+    expect(r.texto).not.toMatch(/Android System WebView/);
+  });
+
+  it('WebView com `; wv)` E WebView antigo (`Version/4.0 … Chrome/`) → ramo do WebView', () => {
+    for (const ua of [UA_ANDROID_WV, UA_WV_ANTIGO]) {
+      const r = rodar({ css: undefined, userAgent: ua, language: 'en-US' });
+      expect(r.texto, ua).toMatch(/Android System WebView/);
+      expect(r.links.filter(l => l.href.includes('play.google.com'))).toHaveLength(2);
+    }
+  });
+
   it('`documentElement.lang` acompanha o idioma do aviso', () => {
     expect(rodar({ css: undefined, language: 'pt-BR' }).lang).toBe('pt-BR');
     expect(rodar({ css: undefined, language: 'en-US' }).lang).toBe('en');

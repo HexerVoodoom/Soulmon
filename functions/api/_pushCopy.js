@@ -89,7 +89,10 @@ export function eveningCopy(petName, language, hpBaixo) {
   const name = petName || 'Soulmon';
   if (hpBaixo) {
     return {
-      title: pt ? `${name} está meio pra baixo` : `${name} is a bit low`,
+      /* 22/09/2026 (QA R2 `02-narrativa` A13): "meio pra baixo" atribuía humor
+         da criatura ao HP, que caiu pelo dia ruim — L11 pela porta do placar.
+         Ela fala do corpo dela agora, sem dizer por quê. */
+      title: pt ? `${name} está quieto hoje` : `${name} is quiet today`,
       body: pt
         ? 'Se der, marque o que você já fez hoje. Se não der, amanhã seu Soulmon ainda vai estar aqui.'
         : "If you can, log what you did today. If not, it'll still be here tomorrow.",
@@ -97,10 +100,15 @@ export function eveningCopy(petName, language, hpBaixo) {
     };
   }
   return {
-    title: pt ? `🌙 ${name} está te esperando` : `🌙 ${name} is waiting for you`,
+    /* 22/09/2026 (QA R2 `02-narrativa` A5, BLOQUEANTE): "está te esperando"
+       é a palavra que §14.3 tirou de `welcomeBack.ts` e que R1 tirou da ficha
+       — e aqui ia por push, condicionado a meta NÃO cumprida: espera +
+       cobrança, à noite (bíblia §13, coluna ❌). "Fecha o dia completo" às 20h
+       para quem não vai fechar é a fatura do dia. */
+    title: pt ? `🌙 ${name} ainda está acordado` : `🌙 ${name} is still up`,
     body: pt
-      ? 'Marque o que você fez hoje e dê uma comidinha pro seu Soulmon — energia cheia fecha o dia completo.'
-      : 'Log what you did today and feed it — a full energy bar completes the day.',
+      ? 'Se fez algo hoje, marque. A comida vem daí.'
+      : 'If you did something today, log it. The food comes from that.',
     tag: 'evening-reminder',
   };
 }
@@ -164,10 +172,14 @@ export function pushCopy(brtHour, petName, language, ageDays) {
   }
   if (brtHour === 16) {
     return {
-      title: pt ? `${name} pensou em você` : `${name} thought of you`,
+      /* 22/09/2026 (QA R2 `02-narrativa` A13): "pensou em você" com a janela
+         fechada contradiz o sensório (sem contato não há leitura; o corpo não
+         guarda a pessoa — §5.10, livrinho §VII) e L11; "adora companhia" era a
+         necessidade da criatura como motivo para abrir (§17 item 16). */
+      title: pt ? `${name} está por aí` : `${name} is around`,
       body: pt
-        ? 'Se sobrar um minuto hoje, seu Soulmon adora companhia.'
-        : 'If you get a minute today, it loves the company.',
+        ? 'Se sobrar um minuto, a janela está aberta.'
+        : 'If you get a minute, the window is open.',
       tag: 'pet-nudge-16',
     };
   }

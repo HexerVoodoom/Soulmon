@@ -65,6 +65,18 @@ describe('CSP existe e não é decorativa', () => {
     }
   });
 
+  it('IGUALDADE: a política não carrega hash de script que não existe (fonte ∪ dist)', () => {
+    // QA rodada 2, skeptic #12: o teste só checava INCLUSÃO, e um hash morto
+    // (script que já mudou) ficava na política para sempre — é permissão
+    // para um script que ninguém mais consegue apontar. Igualdade de conjunto
+    // com o que existe na fonte E no dist servido: quando o dist for
+    // rebuildado, o hash antigo sobra e este teste manda tirá-lo.
+    const dist = readFileSync(resolve(raiz, 'dist/index.html'), 'utf8');
+    const existentes = new Set([...hashesDosScriptsInline(html), ...hashesDosScriptsInline(dist)]);
+    const naPolitica = (diretiva('script-src').match(/'sha256-[^']+'/g) ?? []).map(h => h.slice(1, -1));
+    expect(new Set(naPolitica)).toEqual(existentes);
+  });
+
   it('o guard enxerga: um script alterado produz hash que a política NÃO tem', () => {
     // Sem este caso, o anterior passaria por acidente se o extrator devolvesse
     // vazio ou sempre o mesmo hash.

@@ -155,6 +155,19 @@ pagou uma vez (o cabeçalho de `lowHp` em `petVoice.ts` conta a conta).
 | **kind novo `healCap`**; hoje array inline no efeito de `healCapSignal` (`src/components/CompanionHUD.tsx`), disparado pelo teto de `rubDecision` **e** por `specialRefusal === 'already-full'` | "Já firmou o que dava hoje. Continua que eu gosto." | "It's as steady as it gets today. Keep going, I like it." | L11, §5.4 | ⚠️ A parte importante é a segunda oração: **a animação de corações toca sempre e o carinho continua valendo como contato**. Sem ela, o teto lê como "pare" — e o gesto central do produto vira erro |
 | idem (caminho `already-full`, vida cheia) | "Tô firme. Guarda essa." | "I'm steady. Keep that one." | §5.4, L5 | Recusa que **protege o item**: ele volta para a pastinha. Nunca "você desperdiçou" |
 
+### 1.10 A escada de fallback do toque e do ócio — **a voz que o perfil D ouve** (22/09/2026)
+
+> **Aplicação:** ✅ branch `qa/rodada-2-2026-09-22` — seis `kind` novos em `PET_VOICE_LINES` (`dirty`, `hungry`, `energized`, `fine`, `peckish`, `starving`); o `CompanionHUD` só escolhe o `kind`. Origem: QA R2 `07-simulacao-jogo` §2.9 — as literais inline (`'Me limpa!'`, `'Me alimenta!'`, `'Me alimenta por favor!'`) eram a ÚNICA fala que o jogador que menos faz ouvia (89/90 dias), e eram pedido imperativo (L12, L2). `petVoice.test.ts` passa a varrê-las; `CompanionHUD.render.test.tsx` casa pelas frases do dono da voz, não por literal.
+
+| onde vai | PT-BR | EN | lei | nota |
+|---|---|---|---|---|
+| **`dirty`** — `careEvent.type === 'poop'` | "Tem uma coisa ali que não assentou." · "Tá pegajoso aqui do lado." · "Água ajudaria." | "There's something over there that didn't settle." · "It's sticky over here." · "Water would help." | L2, L3, §5.6 | Constata e aponta; nunca "me limpa", nunca "sujo" |
+| **`hungry`** — `careEvent.type === 'food'` | "Barriga fazendo barulho." · "Deu fome agora." · "Tô com fome. Só avisando." | "Belly is rumbling." · "Got hungry just now." · "I'm hungry. Just saying." | L2, L12 | Fala do corpo dela; nunca "me alimenta" |
+| **`energized`** — energia cheia | "Cheio. Tô inteiro." · "Dá pra sentir a borda toda." · "Tô aceso hoje." | "Full. All here." · "I can feel every edge." · "I'm lit up today." | §5.4 | "Borda" é o vocabulário da sustentação |
+| **`fine`** — energia ≥ 60% | "Tô bem assim." · "Assentado. Nada faltando." · "Tá bom aqui." | "I'm fine like this." · "Settled. Nothing missing." · "It's good here." | L11 | |
+| **`peckish`** — energia ≥ 10% | "Começando a dar fome." · "A barriga tá falando baixinho." · "Meio vazio por dentro." | "Starting to get hungry." · "Belly is whispering." · "A bit empty inside." | L2 | Nunca "preciso de comida!" (pedido) |
+| **`starving`** — energia < 10% (o piso do perfil D) | "Muita fome. Tô mole." · "Barriga vazia. Quieto por aqui." · "Tô perto do chão hoje." | "Very hungry. Soft all over." · "Empty belly. Quiet over here." · "I'm close to the ground today." | L2, L11, §13 | "Perto do chão" é a frase-modelo da bíblia §13; constata o corpo, não pede nem cobra |
+
 ---
 
 ## 2. Voz do mundo

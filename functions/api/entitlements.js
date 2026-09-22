@@ -34,7 +34,7 @@ import {
   VALID_ID, publicView, spendCredits, grantAdReward, auditRefunds,
   grantCourtesy, COURTESY_PROVIDER,
 } from './_entitlements.js';
-import { authorizeSaveAccess } from './_auth.js';
+import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { isPlayPurchaseVoided, isSteamPurchaseVoided, isSteamOwnershipVoided } from './_billing.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import { kv } from './_kv.js';
@@ -118,7 +118,7 @@ export async function onRequestGet({ request, env }) {
   if (!kv(env)) return json({ error: 'Storage not bound' }, 500);
 
   const auth = await authorizeSaveAccess(request, env, saveId);
-  if (!auth.ok) return json({ error: auth.reason }, auth.reason === 'forbidden' ? 403 : 401);
+  if (!auth.ok) return json({ error: auth.reason }, authStatus(auth));
 
   // Conferência de reembolso, no máximo 1×/dia por conta (auditRefunds decide).
   // Fica aqui, e não num cron, porque é o único ponto por onde toda conta ativa
@@ -158,7 +158,7 @@ export async function onRequestPost({ request, env }) {
 
   // Gastar crédito alheio seria vandalismo com custo real pro dono.
   const auth = await authorizeSaveAccess(request, env, saveId);
-  if (!auth.ok) return json({ error: auth.reason }, auth.reason === 'forbidden' ? 403 : 401);
+  if (!auth.ok) return json({ error: auth.reason }, authStatus(auth));
 
   if (action === 'spend') {
     const amount = Number(body?.amount);

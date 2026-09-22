@@ -10,10 +10,23 @@ import { readFileSync } from 'fs';
 // `src/deploy/versaoUnica.contract.test.ts` prende o gradle ao mesmo número.
 const APP_VERSION: string = JSON.parse(readFileSync(path.resolve(__dirname, 'package.json'), 'utf8')).version;
 
+// IDENTIDADE DO BUNDLE (QA rodada 2, skeptic #7): "1.1.4" não diz QUAL build
+// web a pessoa está rodando — a versão só muda quando alguém lembra de
+// bumpar, e o Pages publica a cada push. `__BUILD_ID__` = `CACHE_VERSION` do
+// `public/sw.js` (que já é o que decide quem fica preso em cache velho) + o
+// SHA curto do commit quando o CI o informa (Cloudflare Pages:
+// `CF_PAGES_COMMIT_SHA`; GitHub Actions: `GITHUB_SHA`). Vai no corpo do
+// e-mail de feedback (`FeedbackLink.tsx`).
+const CACHE_VERSION: string = readFileSync(path.resolve(__dirname, 'public/sw.js'), 'utf8')
+  .match(/const CACHE_VERSION = '([^']+)'/)?.[1] ?? 'v?';
+const COMMIT_SHA = (process.env.CF_PAGES_COMMIT_SHA || process.env.GITHUB_SHA || '').slice(0, 7);
+const BUILD_ID = COMMIT_SHA ? `${CACHE_VERSION}+${COMMIT_SHA}` : CACHE_VERSION;
+
 export default defineConfig({
   plugins: [react()],
   define: {
     __APP_VERSION__: JSON.stringify(APP_VERSION),
+    __BUILD_ID__: JSON.stringify(BUILD_ID),
   },
   resolve: {
     extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],

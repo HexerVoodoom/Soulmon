@@ -7,7 +7,7 @@ import type { ActivityCategory } from '../types/attributes';
 import { orderCategoriesForGoal } from '../utils/goalToCategory';
 import { CATEGORY_ICONS, categoryLabel } from '../types/category-icons';
 import { demoTintFilter } from '../utils/sprites';
-import { suggestTasks, type SuggestedTask } from '../utils/taskSuggestions';
+import { suggestTasksResult, type SuggestedTask } from '../utils/taskSuggestions';
 
 // ---------------------------------------------------------------------------
 // GameTutorialFlow — segundo onboarding: depois que o Soulmon nasce (ritual
@@ -158,6 +158,8 @@ export function GameTutorialFlow({
   const [suggestions, setSuggestions] = useState<SuggestedTask[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  /** E1 (QA rodada 2): "não veio nada" ≠ "sem rede/quebrou". */
+  const [falhaIa, setFalhaIa] = useState<'offline' | 'error' | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const toggleCat = (cat: ActivityCategory) => {
@@ -206,12 +208,14 @@ export function GameTutorialFlow({
   const handleGenerate = async () => {
     setLoading(true);
     setSearched(true);
-    const result = await suggestTasks(goalText.trim(), [...selectedCats], language);
-    // A IA devolve [] em QUALQUER falha (rede, provedor fora, resposta
+    const r = await suggestTasksResult(goalText.trim(), [...selectedCats], language);
+    const result = r.ok ? r.items : [];
+    setFalhaIa(r.ok ? null : r.reason);
+    // A IA devolve vazio em QUALQUER falha (rede, provedor fora, resposta
     // inválida). Sem um fallback local, quem digitasse só categorias ficava
     // numa tela sem nada selecionável — e o passo é obrigatório, então não
     // havia como entrar no app. Isso quebrava o princípio de o jogo continuar
-    // íntegro com o backend morto.
+    // íntegro com o backend morto. O MOTIVO (`falhaIa`) é mostrado à parte.
     setSuggestions(result.length > 0 ? result : fallbackTasks([...selectedCats], isPt));
     setLoading(false);
     // Reseta seleção a cada nova geração — evita "vazamento" de seleções de
@@ -423,8 +427,11 @@ export function GameTutorialFlow({
                 diz não passar por IA — então o aviso tem que dizer que ESTE
                 texto sai do aparelho, e só se a pessoa pedir sugestões.
                 Provisório "declarar" até o dono decidir declarar × cortar. */}
-            {!searched && (
-              <p style={{ ...sm2Hint, textAlign: 'center' }}>
+            {/* A10 (QA rodada 2): o aviso sumia depois da 1ª busca, mas o
+                botão continua vivo e o texto continua saindo a cada toque.
+                Fica enquanto o botão puder ser tocado. */}
+            {(goalText.trim() || selectedCats.size > 0) && !loading && (
+              <p style={{ ...sm2Hint, textAlign: 'center' }} data-ai-hint>
                 {isPt ? 'Este texto vai para o provedor de IA se você pedir sugestões.' : 'This text goes to the AI provider if you ask for suggestions.'}
               </p>
             )}
@@ -432,6 +439,14 @@ export function GameTutorialFlow({
             {searched && !loading && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {goalText.trim() && sugestao(customKey, goalText.trim(), selected.has(customKey))}
+                {/* E1: falha com nome. As sugestões locais vêm mesmo assim. */}
+                {falhaIa && (
+                  <p role="status" style={{ ...sm2Hint, textAlign: 'center', margin: '8px 0' }} data-ai-failure={falhaIa}>
+                    {falhaIa === 'offline'
+                      ? (isPt ? 'Sem conexão agora — estas são sugestões locais. Com rede, toque de novo para pedir à IA.' : 'No connection right now — these are local suggestions. Once online, tap again to ask the AI.')
+                      : (isPt ? 'A IA não respondeu agora — estas são sugestões locais. Pode tentar de novo.' : 'The AI did not answer right now — these are local suggestions. You can try again.')}
+                  </p>
+                )}
                 {suggestions.length === 0 ? (
                   <p style={{ ...sm2Hint, textAlign: 'center', margin: '8px 0' }}>
                     {isPt

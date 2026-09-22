@@ -1,6 +1,6 @@
 # Dados e save
 
-> **Dono:** doc-redator-arquitetura · **Data:** 22/09/2026 · **Estado:** verificado em 22/09/2026 por doc-verificador (delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §3.3 `deleted`/410, §4.1 `ACCOUNT_DELETED_NOTICE` + fila `soulmon-telemetry-hidden`, §8.1 `del:`/`del:done:`/`sprite:*`, §8.2 `pushidx:` conferidos símbolo a símbolo contra `cloudSave.ts`, `storageKeys.ts`, `telemetry.ts`, `_accountTombstone.js`, `_pushIdentity.js`, `account.js`; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §2.1 `conquistasHerdadas` e §4.1 `TERMS_NOTICE_SEEN` conferidos símbolo a símbolo; anterior: sincronizado com `2580b73a..dc72579e` em 20/09/2026 por doc-redator-arquitetura)
+> **Dono:** doc-redator-arquitetura · **Data:** 22/09/2026 (§8.1/§8.2 reescritos pelo doc-mantenedor a partir de `reviews/2026-09-22-qa-rodada-2/04-dados-r2.md` §1 — 25 famílias, TTLs reais, quem apaga na exclusão, marcas "em curso 22/09") · **Estado:** verificado em 22/09/2026 por doc-verificador (delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §3.3 `deleted`/410, §4.1 `ACCOUNT_DELETED_NOTICE` + fila `soulmon-telemetry-hidden`, §8.1 `del:`/`del:done:`/`sprite:*`, §8.2 `pushidx:` conferidos símbolo a símbolo contra `cloudSave.ts`, `storageKeys.ts`, `telemetry.ts`, `_accountTombstone.js`, `_pushIdentity.js`, `account.js`; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §2.1 `conquistasHerdadas` e §4.1 `TERMS_NOTICE_SEEN` conferidos símbolo a símbolo; anterior: sincronizado com `2580b73a..dc72579e` em 20/09/2026 por doc-redator-arquitetura)
 > **Verificação:** `npx vitest run src/contexts src/utils/careCaps.test.ts src/utils/playerDay.contract.test.ts functions/api/save.test.js functions/api/saveId.parity.test.js desktop/renderer/src/cloudSync.test.ts` — em especial `GameStateContext.hydrate.fuzz.test.tsx` (todo campo não-opcional tem linha em `hydrateSave`), `GameStateContext.saveContent.test.tsx`, `GameStateContext.hostile.test.tsx`, `migrateDecor.test.ts` e `functions/api/_kv.fiacao.test.js`.
 > **Não cobre:** o que cada regra FAZ com esses campos (→ `02-REGRAS-DE-NEGOCIO.md`), as rotas e credenciais (→ [08-INTEGRACOES-E-DEPLOY.md](08-INTEGRACOES-E-DEPLOY.md)), a arquitetura e as quatro superfícies (→ [05-ARQUITETURA.md](05-ARQUITETURA.md)), função por função (→ `06-REFERENCIA/`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -56,7 +56,7 @@ diz "—", o campo é opcional e o padrão É a ausência.
 | `perfectDays` | `number` | Dias completos acumulados desde a última evolução. Só cresce. | `src/utils/dailyReset.ts` | `0` | sim |
 | `totalPerfectDays?` | `number` | Contador LIFETIME de dias completos (insumo de missão e, desde `42b07bec`, da conquista `dias-completos-30` — `DIAS_COMPLETOS_PARA_CONQUISTA = 30`). | `src/utils/missions.ts`, `src/utils/achievements.ts` | `0` | sim |
 | `conquistasHerdadas?` | `AchievementId[]` | Conquistas abertas por gatilho que NÃO existe mais, gravadas UMA vez no load (decisão #30, 21/09/2026). Hoje só `'dias-completos-30'` (ex-`tasks-100`). A única conquista persistida — todas as outras são derivadas. | `src/utils/achievements.ts` (leitura), `hydrateSave` (escrita) | save com o campo mantém (filtrado por `ACHIEVEMENT_IDS`); sem o campo: `['dias-completos-30']` se `gatilhoAntigoTasks100` (≥ 100 em `completedTasks + activityLog`), senão `[]` | sim |
-| `lastDayWasPerfect` | `boolean` | O dia anterior fechou completo. | `src/utils/dailyReset.ts` | `false` | sim |
+| `lastDayWasPerfect` | `boolean` | O dia anterior fechou completo. ⚠️ **Escrito e nunca lido** (`grep -rnw lastDayWasPerfect src --include=*.ts --include=*.tsx \| grep -v test` → só tipo, hidrate e a escrita; `lastDayReport.wasPerfect` carrega a mesma informação — QA Rodada 2 `04` §2.1; candidato a morrer). | `src/utils/dailyReset.ts` | `false` | sim |
 | `totalXP` | `number` | XP do Vínculo. O NÍVEL nunca é salvo — é `bondLevelFor(totalXP)`. | `src/utils/bond.ts` | `0` | sim |
 | `virusPoints` · `dataPoints` · `vaccinePoints` | `number` | Os três atributos, que escolhem o galho. | `src/types/attributes.ts` | `0` cada | sim |
 | `attributesSinceLastEvolution` | `{ virus: number; data: number; vaccine: number }` | Atributos ganhos desde a última evolução — é este que decide o galho. | `src/utils/dailyReset.ts` | `{0,0,0}` campo a campo | sim |
@@ -134,7 +134,7 @@ diz "—", o campo é opcional e o padrão É a ausência.
 | `ownedFurniture?` | `string[]` | Decorações compradas. | `src/utils/shop.ts` | `[]` | sim |
 | `equippedDecor?` | `Partial<Record<SlotId, string>>` | Um item de decoração por espaço do palco. | `src/utils/petStage.ts` | `hydrateDecor(migrateDecor(loaded))` — §5.2 | sim |
 | `equippedFurniture?` | `string \| null` | ⚰️ **Depreciado.** Só existe para migrar. | — | forçado a `undefined`, some no primeiro `JSON.stringify` | não (some) |
-| `droppedItems?` | `string[]` | Ids de item de loja que JÁ dropou (destrava a compra). | `src/utils/shop.ts` (`unlock:'drop'`) | `[]` | sim |
+| `droppedItems?` | `string[]` | Ids de item de loja que JÁ dropou (destrava a compra). ⚠️ **Lido e nunca escrito**: o leitor é `StatsPage.tsx` (jornada); ⚰️ esta linha dizia "escrito por `shop.ts` (`unlock:'drop'`)" — `grep -n "'drop'" src/utils/shop.ts` → 0, o escritor não existe (QA Rodada 2 `04` §2.1). | — (nenhum escritor) | `[]` | sim |
 | `bestiary?` | `string[]` | Inimigos da masmorra já enfrentados (`linha-tier`). Só cresce. | `src/utils/dungeon.ts` (`enemyKey`) | `[]` | sim |
 | `weeklyMissions?` | `WeeklyMissionProgress` | `{week, counts, claimed}` da semana ISO corrente. | `src/utils/weeklyMissions.ts` (`forWeek`) | `undefined` se `week` não for string — a leitura seguinte devolve semana vazia | sim |
 | `season?` | `SeasonProgressState` | Estado da estação corrente. | `src/utils/seasons.ts` | `undefined` — a primeira virada tira a foto | sim |
@@ -580,20 +580,45 @@ fica declarado só como rede para o dado herdado continuar alcançável por
 `wrangler kv key get`. Como `_kv.js` prefere o primeiro, é ele que vale. O painel
 do Pages tem a própria lista de bindings, e é ela que vale em produção.
 
-| Prefixo de chave | Conteúdo | Escrito por | TTL |
-|---|---|---|---|
-| `<saveId>` | O `GameState` serializado (sem `accountTier`/`credits`), com `metadata: { t: <epoch ms> }`. | `functions/api/save.js` | `SAVE_TTL_SECONDS` = `86400 * 365`. **Renovado a cada acesso**: o `put` grava a data em metadata e o GET só reescreve quando passou de `RENEW_AFTER_SECONDS` = `86400 * 30` — no máximo uma escrita extra por mês por save. Sem isso, quem abre o app, olha o bicho e fecha sem gerar escrita ia envelhecendo o próprio save até perdê-lo. |
-| `ent:<saveId>` | O entitlement: `tier`, `credits`, `consumedOrders[]`, `orderDetails[]`, `auditedAt`, `aiLifetime{}`, `aiForms{}`, `adDate`, `adCount`, `updatedAt`. | `functions/api/_entitlements.js` (e **só** ele) | `RETENTION_TTL_SECONDS` = 5 anos, **renovado em TODA escrita**. Sem a renovação, o tier pago e o teto VITALÍCIO de IA passariam a expirar para quem nunca parou de jogar. |
-| `ord:<orderId>` | O `saveId` que reivindicou aquele comprovante. É a trava "um recibo, uma conta". | `claimOrder` | 5 anos, renovado por reivindicação do MESMO dono ("restaurar compras"). |
-| `profile:<saveId>` | Perfil público (nome, pet, formas, pvp, amigos). | `functions/api/community.js` | — |
-| `pid:<pid>` | Índice reverso identidade pública → `saveId`. **Nenhuma resposta pública devolve `saveId`** — há teste travando. | `community.js` | — |
-| `rank:<season>:<saveId>` | Pontos de rank da season (`YYYY-MM`). | `community.js` | — |
-| `gifts:<saveId>` | Bits pendentes de presente. | `community.js` | — |
-| `m:YYYY-MM-DD` | **Agregado diário** de telemetria — contadores somados de todo mundo. Não há chave por usuário, não há lista de eventos, não há nada de onde reconstruir o comportamento de uma pessoa. | `functions/api/metrics.js` | — |
-| `del:<saveId>` | O token de confirmação da exclusão (`delete-request` → `delete-confirm`). | `functions/api/account.js` | `CONFIRM_TTL_SECONDS` = 15 min; apagado no fim do `delete-confirm` só se nenhum passo falhou (senão o retry ainda vale). |
-| `del:done:<saveId>` | **Lápide de conta apagada** (`{ at }`), gravada ANTES da primeira destruição; enquanto viver, `save.js` responde **410 `account-deleted`** a GET e POST — sem ela outro aparelho do titular ainda logado recriava o save 3 s depois. Desde `a6c1cd8a`. | `functions/api/_accountTombstone.js` (`writeTombstone`; `clearTombstone` se a varredura de amigos estourar antes de destruir) | `TOMBSTONE_TTL_SECONDS` = **30 dias** (a review propunha 24 h — cobria só o token, não o aparelho desligado um fim de semana). Depois disso o mesmo e-mail cria conta nova do zero. |
-| `sprite:img:<saveId>:<formId>` · `sprite:lock:<saveId>:<formId>` · `sprite:blob:<token>` | Cache do sprite gerado (`{ image, provider, at }`), lock de geração e o binário republicado (o token só existe dentro da URL `image` do cache — é a linha "(token de 32 hex)" abaixo, vista pela rota que a serve). Desde `a6c1cd8a` a exclusão de conta lista `img`/`lock` por prefixo COM o saveId e apaga os três (blob → img → lock); blob cujo cache falhou ao gravar é órfão e fica declarado em `NOT_INCLUDED`. | `functions/api/generate-sprite.js` | lock `LOCK_TTL_SECONDS` = 120 s; os outros sem TTL próprio. |
-| (token de 32 hex) | O binário do sprite republicado, quando o provedor devolve `data:`. A chave é um TOKEN aleatório, **não** o `saveId` — o `saveId` é derivável de um e-mail. | `functions/api/sprite-image.js` | `Cache-Control: public, max-age=31536000, immutable` |
+**Inventário canônico — 25 famílias de chave em dois namespaces** (reescrito em
+22/09/2026 a partir de [`reviews/2026-09-22-qa-rodada-2/04-dados-r2.md`](../reviews/2026-09-22-qa-rodada-2/04-dados-r2.md)
+§1; comando-base: `grep -nE "'[a-zA-Z_]+:'|\`[a-zA-Z_]+:" functions/api/*.js workers/*.js | grep -v test`
++ `grep -nE "\.(put|get|getWithMetadata|delete|list)\(" functions/api/*.js workers/*.js | grep -v test`).
+⚰️ A versão anterior desta tabela documentava **11** famílias, com TTL "—" em `profile:`/`pid:`/
+`rank:`/`gifts:` onde o código tem 365/400/120/60 d, `sprite:blob:` sem o prefixo e `ord:`
+descrito como KV quando em produção (binding `DB` presente) o vínculo mora no D1.
+
+Coluna **Excl.** = o que `functions/api/account.js` › `handleDeleteConfirm` faz com a chave
+quando a conta é apagada. **em curso 22/09** = os agentes de execução da QA Rodada 2 estão
+fechando nesta rodada; até o commit aterrissar, o que vale é o código.
+
+**Namespace de saves** (`kv(env)` → `SOULMON_SAVES`):
+
+| # | Chave | Conteúdo | Escreve | TTL (constante) | Excl. |
+|---|---|---|---|---|---|
+| 1 | `<saveId>` | O `GameState` serializado (sem `accountTier`/`credits`), com `metadata: { t }`. **Três leitores do formato cru**: `save.js`, `_bond.js` (gate de PvP lê `totalXP`) e `account.js › collect` — importa para a ADR-004 (envelope quebraria os dois últimos). | `save.js` POST (e GET renova); **desktop** via `cloudSync.ts › pushCareAction` | `SAVE_TTL_SECONDS` = 365 d, renovado (`RENEW_AFTER_SECONDS` = 30 d — no máximo uma escrita extra por mês) | apaga (passo 8) |
+| 2 | `ent:<saveId>` | O entitlement: `tier`, `credits`, `consumedOrders[]`, `orderDetails[]`, `auditedAt`, `aiLifetime{}`, `aiForms{}`, `adDate`, `adCount`, `updatedAt`. | `_entitlements.js › writeEntitlement` (**só** ele) | `RETENTION_TTL_SECONDS` = 5 anos, renovado em toda escrita | **minimiza** (passo 6); o TTL corre até o fim (política §8) |
+| 3 | `ord:<orderId>` | O `saveId` que reivindicou o comprovante ("um recibo, uma conta"). **Só existe na KV quando `env.DB` está ausente**; em produção o binding `DB` existe e o vínculo mora em D1 `order_claims` (§8.3) — ⚠️ `plan().sobrevive` e `NOT_INCLUDED` ainda o citam como KV e a exportação não lista a linha D1. | `claimOrder` (sem `DB`) | 5 anos, renovado por reivindicação do mesmo dono | sobrevive (declarado) |
+| 4 | `ord:steam:own:<appid>:<steamid>` | O mesmo vínculo para licença de posse Steam — **SteamID64 é identificador de terceiro** e sobrevive 5 anos à exclusão sob a justificativa fiscal da política §8, que não se aplica a licença (não há transação nossa). Decisão do dono **#54**; provisório: declarar em `NOT_INCLUDED` + política. | `_billing.js › verifySteamOwnership` → `claimOrder` | 5 anos | sobrevive |
+| 5 | `spend:<saveId>:<opId>` | Idempotência do gasto de créditos; o valor é o entitlement inteiro. | `spendCredits` | `SPEND_TTL_SECONDS` = 24 h | não (expira) |
+| 6 | `courtesy:count` | Contador global de contas de cortesia (`grantCourtesy`, teto `COURTESY_MAX_ACCOUNTS`, padrão 25). RMW sem CAS — o teto pode passar por corrida; irrelevante no volume. | `grantCourtesy` | 5 anos | global |
+| 7 | `profile:<saveId>` | Perfil público (nome, pet, formas, pvp, `friends[]` = saveIds de até 5 terceiros). | `community.js › putProfile`; `account.js` (scrub de `friends`) | **365 d** (`putProfile`) | apaga (passo 7) — ⚠️ `pushProfile` do cliente o **recriava** no mesmo tick que recebia o 410 (`04` §0): **em curso 22/09** (`isAccountDeleted` em `community.js` + cliente só empurra depois do save ok) |
+| 8 | `pid:<pid>` | Índice reverso identidade pública → `saveId`. Nenhuma resposta pública devolve `saveId` (teste `community.test.js`) — ⚠️ exceto `handleExport`, que devolvia `profile.friends`/`state.friends` crus: **em curso 22/09** (mapear por `pidDeSaveId`). | `community.js › indexPublicId` | **400 d** (sobrevive 35 d ao perfil apontando para nada — inofensivo, `getProfile` devolve null) | apaga |
+| 9 | `rank:<season>:<saveId>` | Pontos de rank da season (`YYYY-MM`). | `community.js` | **120 d** | apaga |
+| 10 | `gifts:<saveId>` | Bits pendentes de presente. | `community.js` | **60 d** | apaga |
+| 11 | `closed:<season>` | Marca "esta season já foi premiada" (`closedKey`). **Sem TTL, imortal por desenho** — cresce 1 chave/mês. | `community.js` (fechamento de season) | — | global |
+| 12 | `coop:<gid>` | O grupo cooperativo: `members[]` = saveIds, código, meta (`target = members.length × COOP_CHECKINS_POR_MEMBRO`). ⚠️ **Fora da exclusão até 22/09**: membro apagado virava fantasma (`{ id: null … }`) e o grupo nunca mais batia a meta. **Em curso 22/09** (`coopLeave` extraído e chamado em `handleDeleteConfirm`). | `community.js › gravarGrupo` | `COOP_TTL` = 120 d | **em curso** (era: não) |
+| 13 | `coopOf:<saveId>` | Grupo do titular (chave COM o saveId). | `gravarGrupo` | 120 d | **em curso** (era: não) |
+| 14 | `coopCode:<code>` | Código de convite → `gid`. | `gravarGrupo` | 120 d | global |
+| 15 | `coopCk:<gid>:<saveId>` | Dias de presença do titular no grupo. | `gravarCheckins` | 120 d | **em curso** (era: não) |
+| 16 | `m:<YYYY-MM-DD>` | **Agregado diário** de telemetria — contadores somados de todo mundo; não há chave por usuário nem lista de eventos. | `metrics.js` POST | 730 d | global |
+| 17 | `ai:<bucket>:<saveId>:<dia>` | Reserva/consumo do teto diário de IA por conta (`_aiGuard.js › reserve/release`; fail-closed — `put` falho = 503). Desde 22/09 a cota de `chat` é por tier (demo 30 / paid 120, provisório #55). | `_aiGuard.js` | `TTL_SECONDS` = 30 h | não (expira) |
+| 18 | `ai:<bucket>:@all:<dia\|mês>` | O mesmo, global (teto de conta inteira e mensal). | `_aiGuard.js` | 30 h / 40 d | global |
+| 19 | `sprite:img:<saveId>:<formId>` | Cache do sprite gerado (`{ image, provider, at }`) — arte paga, **sem TTL de propósito**. | `generate-sprite.js` | — | apaga (desde `a6c1cd8a`, `collectSprites`) |
+| 20 | `sprite:lock:<saveId>:<formId>` | Lock de geração. | `generate-sprite.js` | 120 s | apaga |
+| 21 | `sprite:blob:<token>` | O binário republicado quando o provedor devolve `data:` — a chave é um **token de 32 hex**, não o `saveId` (derivável de um e-mail); o token só existe dentro da URL `image` do cache. Servido por `sprite-image.js` com `Cache-Control: immutable`. Blob órfão (cache falhou) declarado. | `guardarBlob` | — | apaga via cache (token da URL própria; `account.deleteConfirm.qa.test.js`) |
+| 22 | `del:<saveId>` | O token de confirmação da exclusão (`delete-request` → `delete-confirm`). | `account.js › handleDeleteRequest` | `CONFIRM_TTL_SECONDS` = 15 min | apagado no fim do `delete-confirm` só se `falhou.length === 0` |
+| 23 | `del:done:<saveId>` | **Lápide de conta apagada** (`{ at }`), gravada ANTES da primeira destruição. Lida por `save.js` (410 `account-deleted`) — ⚠️ **só** por `save.js` até 22/09 (`grep -rn isAccountDeleted functions/api/*.js` → 1): `community.js`, `subscribe.js`, `fcm-subscribe.js`, `generate-sprite.js`, `chat.js` não a consultavam — **em curso 22/09** (`isAccountDeleted` em `authorizeSaveAccess`). E bloqueava o **próprio titular** que fizesse login de novo (loop wipe + logout — FATAL da R2): **em curso 22/09** — `auth_time` do token > `at` limpa a lápide (provisório #56). Retém um hash derivado do e-mail por 30 d pós-exclusão: **não declarado** na política (compliance, `01` 1.4). | `_accountTombstone.js › writeTombstone` (`clearTombstone` se a varredura de amigos estourar antes de destruir) | `TOMBSTONE_TTL_SECONDS` = 30 d | — |
 
 Teto do save: `MAX_STATE_BYTES` = `5 * 1024 * 1024` (o KV aceita 25 MB por
 chave; 5 MB é ~50× o maior save real observado). Acima disso, **413**.
@@ -602,11 +627,10 @@ chave; 5 MB é ~50× o maior save real observado). Acima disso, **413**.
 
 Namespace separado, compartilhado pelos dois canais e lido pelo mesmo cron.
 
-| Prefixo | Conteúdo | Escrito por |
-|---|---|---|
-| `push:<hash do endpoint>` | `{ endpoint, keys: {p256dh, auth}, petName, bornAt?, language, saveId?, refreshedAt }` — Web Push (`saveId` desde `42b07bec`). | `functions/api/subscribe.js` |
-| `fcm:<…>` | O token de dispositivo do Android, com os mesmos campos de identidade. | `functions/api/fcm-subscribe.js` |
-| `pushidx:<saveId>` | **Índice inverso** (desde `a6c1cd8a`): `{ v: 1, keys: { 'push:<hash>': <epoch ms>, 'fcm:<hash>': … }, updatedAt }` — quais inscrições são desta conta. Teto `PUSHIDX_MAX = 16` (sai a mais velha); TTL `TTL_INSCRICAO` (1 ano) renovado a cada escrita. Escrito por `gravarSeMudou` → `indexarInscricao` **mesmo quando o registro não mudou** (é a migração sem script); `desindexarInscricao` nas rotas `DELETE`. É por ele, não por varredura, que `account.js` apaga o push na exclusão (≤ 1 + 16×2 + 1 operações — a varredura estourava o teto de subrequests em ~900 inscrições). RMW sem CAS: entrada perdida se cura na próxima abertura; entrada morta é pulada na leitura; o cron não o toca. | `functions/api/_pushIdentity.js` |
+| # | Prefixo | Conteúdo | Escrito por | TTL | Excl. |
+|---|---|---|---|---|---|
+| 24 | `push:<hash do endpoint>` / `fcm:<…>` | `{ endpoint, keys: {p256dh, auth}, petName, bornAt?, language, saveId?, refreshedAt }` — Web Push (`saveId` desde `42b07bec`); `fcm:` = token de dispositivo Android com os mesmos campos de identidade. Lida por `workers/push-scheduler.js › drainPrefix`, que apaga a morta (404/410) **sem desindexar** — a entrada fica em `pushidx:` até o TTL; `lerIndice` pula entrada morta ("índice aponta, não prova"), sem efeito. | `subscribe.js` / `fcm-subscribe.js` via `gravarSeMudou` | `TTL_INSCRICAO` = 365 d | apaga pelo índice (`via:'index'`); fallback varredura |
+| 25 | `pushidx:<saveId>` | **Índice inverso** (desde `a6c1cd8a`): `{ v: 1, keys: { 'push:<hash>': <epoch ms>, 'fcm:<hash>': … }, updatedAt }`. Teto `PUSHIDX_MAX = 16` (sai a mais velha). Escrito **mesmo quando o registro não mudou** (migração sem script). ⚠️ **Envenenável até 22/09**: 17 POSTs anônimos com o `saveId` da vítima expulsavam a inscrição real (também benigno: 16 reinstalações de PWA) — **em curso 22/09** (`authorizeSaveAccess` no `saveId` de `subscribe`/`fcm-subscribe`; não-ok → grava sem saveId; `kv.delete` do que sai do índice). | `_pushIdentity.js › indexarInscricao` | 365 d, renovado a cada escrita | apaga |
 
 O que as duas rotas compartilham (teto de 24 do apelido, lista fechada de idioma,
 `bornAt` como `YYYY-MM-DD` sem hora e sem fuso, limite de taxa e a escrita-só-

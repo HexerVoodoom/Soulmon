@@ -16,6 +16,7 @@
 
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import { VALID_ID } from './_entitlements.js';
+import { authorizeSaveAccess, authStatus } from './_auth.js';
 import {
   nomeDePet, idiomaDePush, dataDeNascimento, ehTokenFcm, gravarSeMudou,
   LIMITE_INSCRICAO, desindexarInscricao,
@@ -24,7 +25,8 @@ import {
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  // `Authorization` anunciado — mesma regra e mesmo motivo de `subscribe.js`.
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
 const json = (corpo, status) => new Response(JSON.stringify(corpo), {
@@ -69,6 +71,11 @@ export async function onRequestPost({ request, env }) {
   // entregar 3×/dia. O FCM devolveria `INVALID_ARGUMENT` para sempre.
   if (!ehTokenFcm(token)) return json({ error: 'Invalid token' }, 400);
 
+  // `saveId` só entra se o dono provou posse — mesma regra de `subscribe.js`
+  // (`saveIdAutorizado` de lá; o porquê inteiro está no comentário do campo).
+  const dono = await saveIdAutorizado(request, env, saveId);
+  if (dono.status) return json({ error: dono.reason }, dono.status);
+
   const registro = {
     token,
     petName: nomeDePet(petName),
@@ -78,7 +85,7 @@ export async function onRequestPost({ request, env }) {
     // linha. Opcional, não verificado, inválido descartado: o porquê inteiro
     // está no comentário equivalente de `subscribe.js` (mesma regra, os dois
     // canais são varridos pela mesma função).
-    ...(typeof saveId === 'string' && VALID_ID.test(saveId) ? { saveId } : {}),
+    ...(dono.saveId ? { saveId: dono.saveId } : {}),
   };
 
   await gravarSeMudou(env.PUSH_SUBSCRIPTIONS, `fcm:${await hashToken(token)}`, registro);
@@ -106,6 +113,16 @@ export async function onRequestDelete({ request, env }) {
   await env.PUSH_SUBSCRIPTIONS.delete(kvKey);
 
   return json({ ok: true }, 200);
+}
+
+/** Espelho de `subscribe.js` › `saveIdAutorizado`. Ver o comentário de lá. */
+async function saveIdAutorizado(request, env, saveId) {
+  if (typeof saveId !== 'string' || !VALID_ID.test(saveId)) return { saveId: null };
+  const auth = await authorizeSaveAccess(request, env, saveId);
+  if (auth.ok) return { saveId };
+  if (auth.reason === 'account-deleted') return { saveId: null, status: authStatus(auth), reason: auth.reason };
+  console.warn('[fcm-subscribe] saveId sem prova de posse, inscrição gravada sem conta', { reason: auth.reason });
+  return { saveId: null };
 }
 
 async function hashToken(token) {

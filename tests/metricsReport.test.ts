@@ -13,7 +13,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   medianaDeHistograma, diasDaJanela, razao, linhaDeRazao, barras,
-  histogramaGoalDays, renderRelatorio, MIN_DIAS_CONVERSAO,
+  histogramaGoalDays, renderRelatorio, MIN_DIAS_CONVERSAO, histogramaActiveDays, renderTudo,
 } from '../tools/metricsReport.mjs';
 
 const resposta = (totals: Record<string, number>, from = '2026-07-01', to = '2026-07-31') => ({
@@ -141,5 +141,44 @@ describe('o relatório inteiro', () => {
 
   it('o histograma de goal_days cobre 0..7 inteiro', () => {
     expect(Object.keys(histogramaGoalDays({}))).toEqual(['0','1','2','3','4','5','6','7']);
+  });
+});
+
+describe('active_days e a seção --full (QA rodada 2, 04-dados §4)', () => {
+  it('`week_active.active_days.<n>` ganha leitor: histograma, mediana e por tier', () => {
+    const txt = renderRelatorio(resposta({
+      'week_active.active_days.1': 9, 'week_active.active_days.7': 1,
+      'week_active.demo.active_days.1': 9, 'week_active.paid.active_days.7': 1,
+    })).join('\n');
+    expect(txt).toContain('APARECEU');
+    expect(txt).toContain('mediana: 1 dia(s) de 7   (n = 10 semanas)');
+    expect(txt).toContain('demo  │ mediana 1 dia(s)   (n = 9)');
+    expect(txt).toContain('paid  │ mediana 7 dia(s)   (n = 1)');
+    expect(histogramaActiveDays({ 'week_active.active_days.3': 4 })[3]).toBe(4);
+  });
+
+  it('sem active_days a seção diz "sem dados" — nunca zero', () => {
+    const txt = renderRelatorio(resposta({ day_active: 3 })).join('\n');
+    const secao = txt.slice(txt.indexOf('APARECEU'));
+    expect(secao.split('\n')[1]).toContain('sem dados');
+  });
+
+  it('`--full` imprime TODA chave gravada > 0, agrupada, e omite as zeradas', () => {
+    const totals = {
+      'sound_off.age_3': 2, 'dungeon_run.floors_5': 7, 'demo_cap_hit.create': 1,
+      'retained.demo.d7': 0, 'welcome_back.7d': 4,
+    };
+    const semFull = renderRelatorio(resposta(totals)).join('\n');
+    expect(semFull).not.toContain('TUDO QUE FOI GRAVADO');
+    const comFull = renderRelatorio(resposta(totals), { full: true }).join('\n');
+    expect(comFull).toContain('TUDO QUE FOI GRAVADO');
+    for (const k of ['sound_off.age_3', 'dungeon_run.floors_5', 'demo_cap_hit.create', 'welcome_back.7d']) {
+      expect(comFull).toContain(k);
+    }
+    expect(comFull).not.toContain('retained.demo.d7');
+    // Agrupado pelo primeiro segmento, em ordem.
+    const linhas = renderTudo(totals);
+    expect(linhas.indexOf('  demo_cap_hit')).toBeLessThan(linhas.indexOf('  dungeon_run'));
+    expect(renderTudo({})).toEqual(['TUDO QUE FOI GRAVADO', '  sem dados']);
   });
 });

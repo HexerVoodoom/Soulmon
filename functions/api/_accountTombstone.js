@@ -7,8 +7,10 @@
 // "apaguei por 3 segundos" — e a pessoa, que pediu para sumir, continuava no
 // servidor sem saber.
 //
-// A lápide é gravada ANTES da primeira destruição e lida por `save.js` em GET
-// e POST: com ela presente, a resposta é **410 `account-deleted`**, e o cliente
+// A lápide é gravada ANTES da primeira destruição e lida por `_auth.js` ›
+// `authorizeSaveAccess` (logo, por TODA rota que autoriza em nome de um
+// saveId: save, community, generate-sprite, entitlements, billing, chat,
+// subscribe com saveId): com ela presente, a resposta é **410 `account-deleted`**, e o cliente
 // trata 410 como "limpe o local e deslogue" (lado do cliente é da `alpha-frontend`;
 // aqui só o contrato). Nada mais é gravado sob aquele `saveId` enquanto ela
 // viver.
@@ -46,6 +48,72 @@ export async function writeTombstone(env, saveId, now = Date.now()) {
  *  depois dela e antes da primeira destruição. */
 export async function clearTombstone(env, saveId) {
   await kvOrThrow(env).delete(tombstoneKey(saveId));
+}
+
+/**
+ * Lê a lápide crua: `{ at }` (epoch ms da exclusão) ou `null`. Lápide gravada
+ * antes de `at` existir (ou ilegível) vale como `at: 0` — bloqueia qualquer
+ * sessão antiga e reabre para qualquer login com `auth_time` real, que é o
+ * comportamento certo para uma lápide de idade desconhecida.
+ * @returns {Promise<{ at: number } | null>}
+ */
+export async function readTombstone(env, saveId) {
+  const raw = await kvOrThrow(env).get(tombstoneKey(saveId));
+  if (raw === null) return null;
+  try {
+    const t = JSON.parse(raw);
+    return { at: Number.isFinite(t?.at) ? t.at : 0 };
+  } catch {
+    return { at: 0 };
+  }
+}
+
+/**
+ * O PORTÃO da lápide, com a regra de reabertura (QA rodada 2, `00-skeptic-r2`
+ * #1 — FATAL): a lápide bloqueava o MESMO e-mail por 30 dias, e o cliente,
+ * ao receber 410, limpava o local e deslogava — em loop, porque a pessoa
+ * logava de novo e criava conta nova sob o mesmo saveId.
+ *
+ * Regra: `authTime` (claim `auth_time` do JWT, em SEGUNDOS) posterior ao
+ * instante da exclusão = a pessoa LOGOU DE NOVO depois de apagar. Login
+ * posterior é intenção de voltar ("a porta fica aberta", `COPY.deleteDone`):
+ * a lápide sai e a chamada segue. Token cuja sessão nasceu ANTES da exclusão
+ * (o aparelho esquecido, que é o caso que a lápide existe para barrar)
+ * continua 410. Sem `authTime` (auth desligada, token sem o claim) nunca
+ * reabre.
+ *
+ * FAIL-OPEN na leitura do KV, como `isAccountDeleted`: KV fora do ar já vai
+ * derrubar a operação seguinte com o erro certo. A falha ao APAGAR a lápide
+ * na reabertura também não bloqueia: a chamada segue e a próxima tenta de
+ * novo.
+ *
+ * @param {number} [authTime] segundos (epoch) do login; 0/undefined = desconhecido
+ * @returns {Promise<{ deleted: boolean, reopened: boolean, at?: number }>}
+ */
+export async function gateTombstone(env, saveId, authTime) {
+  let t = null;
+  try {
+    t = await readTombstone(env, saveId);
+  } catch {
+    return { deleted: false, reopened: false };
+  }
+  if (!t) return { deleted: false, reopened: false };
+  const loginMs = typeof authTime === 'number' && authTime > 0 ? authTime * 1000 : 0;
+  if (loginMs > t.at) {
+    try {
+      await clearTombstone(env, saveId);
+    } catch (err) {
+      console.warn('tombstone: reabertura não conseguiu apagar a lápide, chamada segue', {
+        saveIdPrefix: String(saveId).slice(0, 8), err: String(err),
+      });
+    }
+    console.info('tombstone: conta reaberta por login posterior à exclusão', {
+      saveIdPrefix: String(saveId).slice(0, 8), deletedAt: t.at, loginAt: loginMs,
+    });
+    return { deleted: false, reopened: true };
+  }
+  // `at` sai junto para o cliente dizer "excluída em DD/MM" (contrato `deletedAt`, 22/09/2026).
+  return { deleted: true, reopened: false, at: t.at };
 }
 
 /**

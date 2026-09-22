@@ -29,7 +29,7 @@ const stage = document.getElementById('stage')!;
 const pet = document.createElement('div');
 pet.id = 'pet';
 pet.dataset.hit = '1';
-pet.innerHTML = `<img id="pet-img" alt="pet" draggable="false" /><div id="pet-fx"></div><div id="pet-zzz" aria-hidden="true"></div>`;
+pet.innerHTML = `<img id="pet-img" alt="" draggable="false" /><div id="pet-fx"></div><div id="pet-zzz" aria-hidden="true"></div>`;
 pet.querySelector<HTMLDivElement>('#pet-zzz')!.style.backgroundImage = `url("${sleepZ}")`;
 stage.appendChild(pet);
 

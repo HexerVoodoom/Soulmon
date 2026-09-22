@@ -26,6 +26,14 @@ export const FEEDBACK_EMAIL = 'mateus.sprnd@gmail.com';
  */
 export const APP_VERSION: string = typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : '0.0.0-dev';
 
+/**
+ * Identidade do BUNDLE web (QA rodada 2, skeptic #7): `CACHE_VERSION` do
+ * `public/sw.js` + SHA curto do commit quando o CI informa — ver
+ * `vite.config.ts` › `__BUILD_ID__`. A versão sozinha não distingue dois
+ * deploys no mesmo dia; isto distingue.
+ */
+export const BUILD_ID: string = typeof __BUILD_ID__ === 'string' ? __BUILD_ID__ : 'dev';
+
 /** Quantos caracteres do `saveId` vão no e-mail — o suficiente para achar o save
  *  com o dono na frente, e nada mais. */
 const SAVE_ID_PREVIEW = 8;
@@ -45,11 +53,13 @@ export function feedbackMailto(opts: {
     '',
     '---',
     `${isPt ? 'Versão' : 'Version'}: ${APP_VERSION}`,
+    `Build: ${BUILD_ID}`,
     `${isPt ? 'Código' : 'Code'}: ${saveId}`,
     `${isPt ? 'Origem' : 'From'}: ${originLabel(opts.origin, isPt)}`,
   ];
   if (opts.errorMessage) linhas.push(`${isPt ? 'Erro' : 'Error'}: ${opts.errorMessage}`);
-  const subject = opts.origin === 'error' ? 'Soulmon — erro' : 'Soulmon';
+  // A6 (QA rodada 2): o assunto era 'Soulmon — erro' para quem lê em inglês.
+  const subject = opts.origin === 'error' ? (isPt ? 'Soulmon — erro' : 'Soulmon — error') : 'Soulmon';
   return `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(linhas.join('\n'))}`;
 }
 

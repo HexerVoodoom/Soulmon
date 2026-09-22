@@ -1,6 +1,6 @@
 # Histórico — como chegamos aqui
 
-> **Dono:** doc-historiador · **Data:** 21/09/2026 (§1.5 e a nota do §5 — QA Rodada 1; anterior: 09/09/2026) · **Estado:** verificado em 10/09/2026 por doc-verificador (o §1.5 conferido em 21/09 contra `gh pr list` pelo doc-mantenedor)
+> **Dono:** doc-historiador · **Data:** 22/09/2026 (§1.5: SHA de `a6c1cd8a`/#100–#101 e a linha da QA Rodada 2; anterior: 21/09/2026, QA Rodada 1; 09/09/2026) · **Estado:** verificado em 10/09/2026 por doc-verificador (o §1.5 conferido em 21/09 contra `gh pr list` pelo doc-mantenedor)
 > **Verificação:** os comandos `git log` colados ao lado de cada afirmação nesta página — rode-os de novo para reconferir
 > **Não cobre:** o CONTEÚDO de cada decisão (isso é `10-DISCUSSOES-E-DECISOES.md`); o changelog linha a linha (`../CHANGELOG.md`, que não se reescreve); regras de jogo em vigor hoje (`02-REGRAS-DE-NEGOCIO.md`)
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -165,7 +165,7 @@ em detalhe na seção 2 (viradas de premissa); resumo cronológico:
   declarada em vez de removida (`06ef9ea0`), a Arena ganha tela
   (`b55ffa5a`), 38 assets de arte "arcano-tech" entram (`271e2185`).
 
-### 1.5 10–21/09/2026 — wireframes, identidade, narrativa, som S16, QA geral e QA Rodada 1
+### 1.5 10–22/09/2026 — wireframes, identidade, narrativa, som S16, QA geral, QA Rodadas 1 e 2
 
 Só o que existe no `git log` e no `gh pr list` em 21/09/2026 (`git log --oneline | wc -l` →
 **1.070**; `gh pr list --state merged --json number | jq length` → 95 PRs, maior **#99**). O
@@ -194,8 +194,23 @@ detalhe de cada PR está na mensagem do próprio merge; este bloco é o índice.
   31/08/2026) e a política de privacidade negando dados que de fato vão ao Groq. Achou também o
   STATUS afirmando um conserto do ledger (WP1.14/WP3.4) que não tinha acontecido. O que essa
   rodada corrigiu é o §3 do seu consolidado e o commit desta branch (`qa/rodada-a`); a fila do
-  dono ganhou #40–#53. ⚠️ Este parágrafo foi escrito **antes** do merge da rodada — o SHA fica
-  para o próximo `/manter-docs`.
+  dono ganhou #40–#53. ⚰️ ~~"este parágrafo foi escrito antes do merge — o SHA fica para o
+  próximo `/manter-docs`"~~ — o merge é **#100** `a6c1cd8a` (22/09 04:18Z; `git log -1 --format='%h %ci' a6c1cd8a`
+  → 22/09/2026 01:18 BRT: tier derivado, exclusão com tombstone/410, `pushidx`, telemetria oculta,
+  política fiel ao Groq, Billing 8, WebView por plataforma; 40 arquivos de teste, suíte 4 266 → 4 631)
+  e a sincronização do manual é **#101** `95b18314` (`gh pr list --state merged --json number,mergedAt`).
+- **22/09 — QA Rodada 2** (`docs/reviews/2026-09-22-qa-rodada-2/`, 9 frentes sobre `a6c1cd8a` + a
+  primeira **medição do ar** + uma **simulação de 90 dias** com as funções puras reais): a lápide
+  de conta bloqueava o **próprio titular** por 30 dias (FATAL); as migrações D1 **não estão
+  aplicadas** e a 1ª compra Play daria 500 (o STATUS dizia "cai no caminho antigo" — falso); o free
+  tier estoura por escrita de KV em ~18 DAU; `METRICS_ADMIN_KEY` estava definida e o worker de push
+  deployado desde 21/09 (três rodadas perguntaram sem medir), mas `ENTITLEMENTS_ADMIN_KEY` e
+  `FIREBASE_SERVICE_ACCOUNT` não; 3 correções "em correção" da R1 não tinham aterrissado; a
+  simulação mostrou que a virada julga só ontem (0 dias completos em 90 para quem faz e não abre
+  no dia seguinte), que cair e re-evoluir no mesmo dia cura de graça e que "3×/semana" cobra 3
+  corações. Fila do dono #54–#71; `E0-PREREGISTRO.md` e `E0-CONSENTIMENTO.md` nasceram; o inventário
+  KV do `07` passou de 11 para 25 famílias. Consolidado: `reviews/2026-09-22-qa-rodada-2/00-CONSOLIDADO.md`.
+  ⚠️ Escrito antes do merge da rodada 2 — o SHA fica para o próximo `/manter-docs`.
 
 ---
 

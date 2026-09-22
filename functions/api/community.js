@@ -31,10 +31,14 @@
 //   POST coopCheckin {id}              → "apareci hoje" (idempotente no dia)
 //   POST coopLeave   {id}              → sai, sem penalidade e sem confirmação
 
-import { authorizeSaveAccess } from './_auth.js';
+import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import { bondLevelOf, BOND_PVP_MIN_LEVEL } from './_bond.js';
 import { kv, kvOrThrow } from './_kv.js';
+import {
+  COOP_MAX_MEMBERS, COOP_CHECKINS_POR_MEMBRO, coopOfKey, coopCodeKey, semanaDe, novoCodigo,
+  lerGrupo, gravarGrupo, renovarPrazos, lerCheckins, gravarCheckins, rolarSemana, grupoDe, coopLeave,
+} from './_coop.js';
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -44,6 +48,8 @@ const CORS = {
 };
 const VALID_ID = /^[a-zA-Z0-9_-]{8,64}$/;
 const MATCHES_PER_DAY = 5;
+/** Prazo da marca `closed:<season>` ("já premiei"). Ver o fechamento de season. */
+export const CLOSED_SEASON_TTL = 86400 * 400;
 
 const json = (obj, status = 200) => Response.json(obj, { status, headers: CORS });
 
@@ -318,144 +324,9 @@ export async function onRequest(context) {
 // do grupo não paga Bits nem item (§5.2 do plano é decisão do dono, em
 // aberto), então não há o que farmar.
 
-const COOP_MAX_MEMBERS = 4;
-/** Check-ins por membro por semana. 5 e não 7: exigir dia perfeito por pressão
- *  social desfaz o perdão de ausência da Fase 1 (`PLANO-EVOLUCAO.md` §1.2). */
-const COOP_CHECKINS_POR_MEMBRO = 5;
-const COOP_TTL = 86400 * 120;
-
-/** Semana ISO (`YYYY-Www`) — a chave que faz o progresso rolar sozinho na
- *  virada, sem job agendado. Mesmo padrão da season. */
-function semanaDe(d = new Date()) {
-  const t = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
-  // A quinta-feira da mesma semana define o ano ISO.
-  t.setUTCDate(t.getUTCDate() + 4 - (t.getUTCDay() || 7));
-  const inicio = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
-  // `.getTime()` explícito: subtrair dois `Date` funciona em runtime (o JS
-  // coage por `valueOf`), mas o typecheck do servidor recusa — eram os outros
-  // 2 dos 5 erros que deixavam o CI vermelho. Mesma aritmética, zero mudança
-  // de comportamento.
-  const n = Math.ceil(((t.getTime() - inicio.getTime()) / 86400000 + 1) / 7);
-  return `${t.getUTCFullYear()}-W${String(n).padStart(2, '0')}`;
-}
-
-const coopKey = gid => `coop:${gid}`;
-const coopOfKey = save => `coopOf:${save}`;
-const coopCodeKey = code => `coopCode:${code}`;
-/**
- * Os check-ins de UM membro, numa chave só dele.
- *
- * ⚠️ ELES NÃO MORAM MAIS DENTRO DO BLOB DO GRUPO, e o motivo é uma corrida
- * real. O KV da Cloudflare não tem transação nem compare-and-set: `coopCheckin`
- * fazia ler-modificar-gravar sobre o objeto do grupo INTEIRO, então dois
- * membros marcando presença na mesma noite (o caso normal de um grupo de 4,
- * não um caso exótico) liam a mesma versão e a segunda gravação apagava a
- * primeira. O check-in sumia **em silêncio**: ninguém via erro, e o progresso
- * do grupo — que é a única coisa que o modo inteiro entrega — ficava menor que
- * a verdade.
- *
- * Com uma chave por membro, cada pessoa só escreve sobre si mesma e a corrida
- * deixa de existir: não há mais campo compartilhado no caminho quente. O blob
- * do grupo passa a mudar só em criar/entrar/sair, que são eventos raros.
- */
-const coopCkKey = (gid, save) => `coopCk:${gid}:${save}`;
-
-function novoCodigo() {
-  // Sem 0/O/1/I: o código é lido em voz alta e digitado à mão.
-  const alfabeto = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  return Array.from(crypto.getRandomValues(new Uint8Array(8)))
-    .map(x => alfabeto[x % alfabeto.length]).join('');
-}
-
-async function lerGrupo(env, groupId) {
-  if (!VALID_ID.test(groupId || '')) return null;
-  const raw = await kvOrThrow(env).get(coopKey(groupId));
-  return raw ? JSON.parse(raw) : null;
-}
-
-/**
- * Grava o grupo E RENOVA OS DOIS ÍNDICES que apontam para ele.
- *
- * ⚠️ Renovar os índices junto não é zelo, é correção. As três chaves nascem com
- * o mesmo `COOP_TTL`, mas só `coop:<gid>` era reescrita a cada movimento — e
- * `coopOf:<save>` e `coopCode:<code>` eram escritas UMA vez, na entrada. Um
- * grupo vivo e ativo, passados 120 dias, perdia os dois índices enquanto o
- * blob seguia lá: cada membro passava a ver "você não está em nenhum grupo"
- * (`grupoDe` não acha o ponteiro, e ainda apaga o que sobrou), e o código de
- * convite deixava de abrir o grupo. Nada disso dá erro — o modo simplesmente
- * evapora para todo mundo ao mesmo tempo, sem nenhum evento que explique.
- */
-async function gravarGrupo(env, g) {
-  await kvOrThrow(env).put(coopKey(g.id), JSON.stringify(g), { expirationTtl: COOP_TTL });
-  await Promise.all([
-    kvOrThrow(env).put(coopCodeKey(g.code), g.id, { expirationTtl: COOP_TTL }),
-    ...g.members.map(m => kvOrThrow(env).put(coopOfKey(m), g.id, { expirationTtl: COOP_TTL })),
-  ]);
-}
-
-/**
- * Os check-ins de um membro na semana corrente. Chave própria (ver `coopCkKey`),
- * com a semana DENTRO do registro: assim a virada de semana é lida, e não
- * escrita — quem abrir primeiro na semana nova simplesmente enxerga uma lista
- * vazia, sem job agendado e sem gravação de limpeza.
- */
-/**
- * Renova o prazo das três chaves do grupo, sem mudar nada.
- *
- * A RELEITURA IMEDIATAMENTE ANTES DA GRAVAÇÃO é o ponto: gravar de volta a
- * cópia que o handler leu no começo da requisição desfaria uma entrada que
- * tivesse acontecido no meio dela. Reler encolhe essa janela para o intervalo
- * entre o `get` e o `put` — não a fecha (o KV não tem compare-and-set), e é por
- * isso que `coopJoin` confere a própria entrada depois de gravar.
- *
- * As duas chaves de índice não correm risco nenhum: o valor delas é constante
- * (o id do grupo), então duas gravações concorrentes escrevem o mesmo byte.
- */
-async function renovarPrazos(env, gid) {
-  const fresco = await lerGrupo(env, gid);
-  if (fresco) await gravarGrupo(env, fresco);
-}
-
-async function lerCheckins(env, gid, save) {
-  const raw = await kvOrThrow(env).get(coopCkKey(gid, save));
-  if (!raw) return [];
-  try {
-    const r = JSON.parse(raw);
-    return r && r.weekKey === semanaDe() && Array.isArray(r.days) ? r.days : [];
-  } catch { return []; }
-}
-
-async function gravarCheckins(env, gid, save, days) {
-  await kvOrThrow(env).put(
-    coopCkKey(gid, save),
-    JSON.stringify({ weekKey: semanaDe(), days }),
-    { expirationTtl: COOP_TTL },
-  );
-}
-
-/**
- * Zera o progresso quando a semana virou. Leitura preguiçosa, sem cron: quem
- * abrir primeiro na semana nova paga o custo, e ninguém precisa operar nada.
- */
-function rolarSemana(g) {
-  const agora = semanaDe();
-  // `g.checkins` é resíduo de grupo criado antes de os check-ins ganharem chave
-  // própria. Ele é lido como fallback em `vistaDoGrupo` e some na virada da
-  // semana, como sempre somiu — nenhum caminho novo volta a escrever nele.
-  if (g.weekKey !== agora) { g.weekKey = agora; g.checkins = {}; }
-  return g;
-}
-
-/** O grupo de quem pergunta, já rolado para a semana corrente. `null` se não há. */
-async function grupoDe(env, saveId) {
-  const groupId = await kvOrThrow(env).get(coopOfKey(saveId));
-  if (!groupId) return null;
-  const g = await lerGrupo(env, groupId);
-  // Índice apontando para grupo morto (ou do qual a pessoa já saiu) se limpa
-  // aqui: é o mesmo custo de uma leitura e evita fantasma permanente no KV.
-  if (!g || !g.members.includes(saveId)) { await kvOrThrow(env).delete(coopOfKey(saveId)); return null; }
-  return rolarSemana(g);
-}
+// As chaves, os prazos, `lerGrupo`/`gravarGrupo`/`grupoDe` e o corpo de `coopLeave`
+// moram em `_coop.js` desde a QA rodada 2 — a exclusão de conta precisa deles
+// sem importar esta rota inteira. Ver o cabeçalho de lá.
 
 /**
  * A ÚNICA montagem de resposta do cooperativo. Ver o comentário do bloco: o
@@ -520,7 +391,9 @@ async function handleCommunity({ request, env }) {
     if (!VALID_ID.test(actorId || '')) return json({ error: 'invalid id' }, 400);
     const auth = await authorizeSaveAccess(request, env, actorId);
     if (auth.ok) return null;
-    return json({ error: auth.reason }, auth.reason === 'forbidden' ? 403 : 401);
+    // 410 `account-deleted` vem de `authorizeSaveAccess` (lápide) — sem isto o
+    // segundo aparelho recriava `profile:`/`pid:` 3 s depois da exclusão.
+    return json(auth.reason === 'account-deleted' ? { error: auth.reason, deletedAt: auth.deletedAt } : { error: auth.reason }, authStatus(auth));
   };
 
   // ── Perfil público (upsert; chamado junto do cloud save) ──────────────────
@@ -817,7 +690,10 @@ async function handleCommunity({ request, env }) {
       p.pendingTrophies.push({ season, place: i + 1 });
       await putProfile(env, top3[i].id, p);
     }
-    await kvOrThrow(env).put(closedKey, JSON.stringify({ at: Date.now(), awarded: top3.length }));
+    // TTL de 400 d (QA rodada 2, `04-dados-r2` #12): a marca só precisa
+    // sobreviver ao retry do cron e a `rank:<season>:*` (120 d). Sem prazo era
+    // a única chave imortal por acidente, crescendo uma por mês.
+    await kvOrThrow(env).put(closedKey, JSON.stringify({ at: Date.now(), awarded: top3.length }), { expirationTtl: CLOSED_SEASON_TTL });
     return json({ ok: true, season, awarded: top3.length });
   }
 
@@ -1020,24 +896,11 @@ async function handleCommunity({ request, env }) {
   if (action === 'coopLeave' && method === 'POST') {
     const denied = await denyUnlessOwner(id);
     if (denied) return denied;
-    const g = await grupoDe(env, id);
     // Sair é UM TOQUE, sem confirmação de ninguém e sem penalidade: nada de XP,
     // item ou streak se perde. Sem isso o grupo pressiona para ficar, que é o
-    // oposto do que a Fase 4.3 pede.
-    if (!g) return json({ ok: true });
-    g.members = g.members.filter(m => m !== id);
-    if (g.checkins) delete g.checkins[id];
-    await kvOrThrow(env).delete(coopOfKey(id));
-    // O progresso de quem saiu some junto — a meta encolhe com o grupo, então o
-    // que ele fez não pode continuar contando (`PLANO-COOP.md` §3.4).
-    await kvOrThrow(env).delete(coopCkKey(g.id, id));
-    if (g.members.length === 0) {
-      // Grupo vazio some na hora — sem lápide, sem "seu grupo morreu".
-      await kvOrThrow(env).delete(coopKey(g.id));
-      await kvOrThrow(env).delete(coopCodeKey(g.code));
-    } else {
-      await gravarGrupo(env, g);
-    }
+    // oposto do que a Fase 4.3 pede. O corpo mora em `_coop.js` (a exclusão de
+    // conta usa o mesmo).
+    await coopLeave(env, id);
     return json({ ok: true });
   }
 

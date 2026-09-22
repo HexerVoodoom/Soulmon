@@ -1,6 +1,7 @@
 // Cliente da API de comunidade (functions/api/community.js): perfil público,
 // Tournament (PvP assíncrono) e Biblioteca (diretório + amigos + presentes).
 import { authHeaders } from './auth';
+import { reagirContaExcluida } from './cloudSave';
 
 const BASE = '/api/community';
 
@@ -36,6 +37,15 @@ async function call<T>(action: string, opts: { method?: 'GET' | 'POST'; params?:
   } catch {
     if (!res.ok) throw new Error(`request failed (${res.status})`);
     throw new Error(`resposta ilegível (${res.status})`);
+  }
+  // 410 `account-deleted` (QA rodada 2, segurança §1.3): a lápide agora vale
+  // em toda rota autorizada por saveId, não só em `/api/save`. Mesma parada
+  // que o cloud save: limpa, desloga, portão. E lança, para o chamador não
+  // ler o corpo do 410 como resposta.
+  if (res.status === 410) {
+    const em = (data as { deletedAt?: unknown } | null)?.deletedAt;
+    void reagirContaExcluida({ excluidaEm: typeof em === 'number' ? em : undefined });
+    throw new Error('account-deleted');
   }
   if (!res.ok) throw new Error((data as { error?: string }).error || `request failed (${res.status})`);
   return data as T;

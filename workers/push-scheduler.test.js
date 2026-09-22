@@ -87,8 +87,11 @@ async function vapidJwk() {
   return JSON.stringify(await crypto.subtle.exportKey('jwk', pair.privateKey));
 }
 
-/** `event.scheduledTime` em UTC para uma hora de Brasília (UTC-3). */
-const brt = h => ({ scheduledTime: Date.UTC(2026, 7, 14, (h + 3) % 24, 0, 0) });
+/** `event.scheduledTime` em UTC para uma hora de Brasília (UTC-3), em 14/08/2026.
+ *  `h + 3` SEM módulo: 22h BRT é 01:00 UTC de 15/08; o `% 24` antigo devolvia
+ *  01:00 UTC de 14/08 (= 13/08 22h BRT), um dia atrás — e escondia o furo do
+ *  `00-skeptic-r2` #11 (push das 22h saindo no D0). */
+const brt = h => ({ scheduledTime: Date.UTC(2026, 7, 14, h + 3, 0, 0) });
 
 let pushed;
 beforeAll(async () => {

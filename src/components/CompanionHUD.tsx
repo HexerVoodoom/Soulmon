@@ -23,7 +23,7 @@ import { playShower, playVisorTune, playPresence } from '../utils/sounds';
 import { getStageLevel } from '../types/progression';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readFlag, writeFlag } from '../utils/safeStorage';
-import { ModalSheet, sm2Hint, sm2Text } from './form/FormKit';
+import { ModalSheet, sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 import { isSpecialItem } from '../utils/shop';
 import { getFoodName } from './ItemsWindow';
 
@@ -671,38 +671,28 @@ export const CompanionHUD = memo(function CompanionHUD({
   // Random idle speech every 3 min — preset shown immediately, then API updates it
   useEffect(() => {
     const getIdlePhrase = (): string => {
-      const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
       const p = propsRef.current;
       const ratio = p.maxEnergy > 0 ? p.energyPoints / p.maxEnergy : 0;
       const hpRatio = p.maxHealthPoints > 0 ? p.healthPoints / p.maxHealthPoints : 0;
       const isPt = p.language === 'pt-BR';
-      if (p.careEvent?.type === 'poop') return isPt
-        ? pick(['Preciso de banho!', 'Estou sujo!', 'Me limpa!'])
-        : pick(['Need a shower!', 'I made a mess!', 'Clean me!']);
-      if (p.careEvent?.type === 'food') return isPt
-        ? pick(['Estou com fome!', 'Me alimenta!', 'Com fome!'])
-        : pick(["I'm hungry!", 'Feed me!', 'So hungry!']);
+      // 22/09/2026 — a escada inteira mora em `utils/petVoice.ts` (QA R2 `07`
+      // §2.9): `'Me limpa!'`/`'Me alimenta por favor!'` eram pedido imperativo
+      // fora da régua de tom. Aqui só se escolhe o `kind`.
+      if (p.careEvent?.type === 'poop') return petVoiceLine('dirty', isPt, Math.random());
+      if (p.careEvent?.type === 'food') return petVoiceLine('hungry', isPt, Math.random());
       if (hpRatio <= 0.25) return isPt
         // A voz mora no DONO (`utils/petVoice.ts`), onde o teste de palavras
         // de cobrança varre. Estas três frases ('HP baixo...' entre elas) eram
         // o pet lendo a própria UI — ver o cabeçalho do kind `lowHp`.
         ? petVoiceLine('lowHp', true, Math.random())
         : petVoiceLine('lowHp', false, Math.random());
-      if (ratio >= 1) return isPt
-        ? pick(['Cheio de energia!', 'Pronto para tudo!', 'Totalmente carregado!'])
-        : pick(['Full power!', 'Ready for anything!', 'Fully charged!']);
-      if (ratio >= 0.6) return isPt
-        ? pick(['Me sentindo bem!', 'Tudo certo!', 'Energia boa!'])
-        : pick(['Feeling great!', 'All good!', 'Good energy!']);
+      if (ratio >= 1) return petVoiceLine('energized', isPt, Math.random());
+      if (ratio >= 0.6) return petVoiceLine('fine', isPt, Math.random());
       if (ratio >= 0.35) return isPt
         ? petVoiceLine('idle', true, Math.random())
         : petVoiceLine('idle', false, Math.random());
-      if (ratio >= 0.1) return isPt
-        ? pick(['Ficando com fome...', 'Preciso de comida!', 'Pouca energia...'])
-        : pick(['Getting hungry...', 'Need food!', 'Low energy...']);
-      return isPt
-        ? pick(['Com muita fome...', 'Me alimenta por favor!', 'Estômago vazio...'])
-        : pick(['So hungry...', 'Please feed me!', 'Empty stomach...']);
+      if (ratio >= 0.1) return petVoiceLine('peckish', isPt, Math.random());
+      return petVoiceLine('starving', isPt, Math.random());
     };
 
     const interval = setInterval(() => {
@@ -744,19 +734,19 @@ export const CompanionHUD = memo(function CompanionHUD({
       presencaTocadaRef.current = true;
       playPresence();
     }
-    const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
     const ratio = maxEnergy > 0 ? energyPoints / maxEnergy : 0;
     const hpRatio = maxHealthPoints > 0 ? healthPoints / maxHealthPoints : 0;
     const isPt = language === 'pt-BR';
     let fallback: string;
-    if (careEvent?.type === 'poop') fallback = isPt ? pick(['Preciso de banho!', 'Estou sujo!', 'Me limpa!']) : pick(['Need a shower!', 'I made a mess!', 'Clean me!']);
-    else if (careEvent?.type === 'food') fallback = isPt ? pick(['Estou com fome!', 'Me alimenta!', 'Com fome!']) : pick(["I'm hungry!", 'Feed me!', 'So hungry!']);
+    // 22/09/2026 — mesma escada do ócio; as frases moram em `utils/petVoice.ts`.
+    if (careEvent?.type === 'poop') fallback = petVoiceLine('dirty', isPt, Math.random());
+    else if (careEvent?.type === 'food') fallback = petVoiceLine('hungry', isPt, Math.random());
     else if (hpRatio <= 0.25) fallback = petVoiceLine('lowHp', isPt, Math.random());
-    else if (ratio >= 1) fallback = isPt ? pick(['Cheio de energia!', 'Pronto para tudo!', 'Totalmente carregado!']) : pick(['Full power!', 'Ready for anything!', 'Fully charged!']);
-    else if (ratio >= 0.6) fallback = isPt ? pick(['Me sentindo bem!', 'Tudo certo!', 'Energia boa!']) : pick(['Feeling great!', 'All good!', 'Good energy!']);
+    else if (ratio >= 1) fallback = petVoiceLine('energized', isPt, Math.random());
+    else if (ratio >= 0.6) fallback = petVoiceLine('fine', isPt, Math.random());
     else if (ratio >= 0.35) fallback = petVoiceLine('idle', isPt, Math.random());
-    else if (ratio >= 0.1) fallback = isPt ? pick(['Ficando com fome...', 'Preciso de comida!', 'Pouca energia...']) : pick(['Getting hungry...', 'Need food!', 'Low energy...']);
-    else fallback = isPt ? pick(['Com muita fome...', 'Me alimenta por favor!', 'Estômago vazio...']) : pick(['So hungry...', 'Please feed me!', 'Empty stomach...']);
+    else if (ratio >= 0.1) fallback = petVoiceLine('peckish', isPt, Math.random());
+    else fallback = petVoiceLine('starving', isPt, Math.random());
     speak(fallback, 4000);
 
     if (!useAI) return;
@@ -788,7 +778,13 @@ export const CompanionHUD = memo(function CompanionHUD({
 
   // O visor mostra a criatura, e só isso. Sprite próprio quando adotado; senão
   // a arte de reserva, imediatamente, sem placeholder e sem spinner.
-  const sprite = ownSpriteUrl ?? getSpriteForStage(evolutionStage, demoCharacterId);
+  /* E2 (QA rodada 2): o sprite próprio é uma URL de rede (acervo). Offline,
+     ou com o cache do provedor fora, o `<img>` falhava e o visor ficava
+     QUEBRADO — sem `onError`, nada caía na arte de reserva. Guarda a URL que
+     falhou; uma URL nova (regeneração) tenta de novo. */
+  const [spriteQuebrado, setSpriteQuebrado] = useState<string | null>(null);
+  const sprite = (ownSpriteUrl && ownSpriteUrl !== spriteQuebrado ? ownSpriteUrl : undefined)
+    ?? getSpriteForStage(evolutionStage, demoCharacterId);
 
   /* ── A SINTONIA, vista de dentro do visor (`spec` §2.1 e §2.3.1) ──────────
      A tabela do §2.1 é a tabela DESTA tela, e cobra a varredura de 400 ms nas
@@ -1204,8 +1200,11 @@ export const CompanionHUD = memo(function CompanionHUD({
           {/* Evolution flash overlay */}
           {evolutionFlash && (
             <div className="absolute inset-0 z-40 flex flex-col items-center justify-center pointer-events-none animate-in fade-in duration-200">
-              <div className="absolute inset-0 bg-white/70 animate-pulse" />
-              <span className="relative font-bold drop-shadow-lg text-center" style={{ fontFamily: 'monospace', fontSize: '1rem', color: '#2dd4bf', textShadow: '0 0 12px #2dd4bf' }}>
+              {/* L1 (QA rodada 2): `#2dd4bf` sobre branco/70 dava ~1,6:1. O
+                  flash é sobre o VIDRO (escuro nos dois temas), então a tinta
+                  é a do visor e o véu é o próprio fundo do visor pulsando. */}
+              <div className="absolute inset-0 animate-pulse" style={{ background: 'var(--sm2-viewport-bg)', opacity: .7 }} />
+              <span className="relative font-bold drop-shadow-lg text-center" style={{ fontFamily: 'monospace', fontSize: '1rem', color: 'var(--sm2-viewport-ink)', textShadow: '0 0 12px var(--sm2-viewport-ink)' }}>
                 {language === 'pt-BR' ? '✨ EVOLUÇÃO! ✨' : '✨ EVOLVE! ✨'}
               </span>
             </div>
@@ -1431,6 +1430,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                      e a inclinação some sozinha quando a pilha esvazia. */
                   className={`object-contain sm-visor-swap${hauntedWatching ? ' sm-pet-haunted' : ''}`}
                   key={sprite}
+                  onError={() => { if (ownSpriteUrl && sprite === ownSpriteUrl) setSpriteQuebrado(ownSpriteUrl); }}
                   style={{
                     width: PET_RENDER, height: PET_RENDER,
                     imageRendering: 'pixelated',
@@ -1686,7 +1686,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                 background: 'var(--sm2-surface)',
                 borderRadius: 'var(--sm2-radius-md)',
                 padding: '6px 12px',
-                boxShadow: '0 1px 2px rgba(4,18,20,.10), 0 4px 12px rgba(4,18,20,.10)',
+                boxShadow: SM2_SHADOW_CARD,
               }}
             >
               <p

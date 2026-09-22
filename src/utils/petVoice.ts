@@ -32,7 +32,8 @@
  */
 export type PetVoiceKind =
   | 'task' | 'haunted' | 'rub' | 'shower' | 'milestone' | 'cheer' | 'rare' | 'lowHp' | 'idle'
-  | 'full' | 'healCap' | 'steady' | 'sleep' | 'wake' | 'residue';
+  | 'full' | 'healCap' | 'steady' | 'sleep' | 'wake' | 'residue'
+  | 'dirty' | 'hungry' | 'energized' | 'fine' | 'peckish' | 'starving';
 
 /**
  * WP2.14 — a taxa da fala rara. ~5% das conclusões.
@@ -210,6 +211,43 @@ export const PET_VOICE_LINES: Record<PetVoiceKind, VoiceLines> = {
        (§5.10). `'Guardei esse momento'` saiu pelo mesmo motivo (memória). */
     pt: ['Isso aqui chegou bonito.', 'Tô com o peito quente agora.', 'Acho que estou orgulhoso. É isso?'],
     en: ['This one came in well.', 'My chest is warm right now.', 'I think I am proud. Is that it?'],
+  },
+  /* 22/09/2026 (QA R2 `07` §2.9) — a ESCADA DE FALLBACK do toque e do ócio
+     morava inline no `CompanionHUD` (duas cópias): `'Me limpa!'`,
+     `'Me alimenta!'`, `'Me alimenta por favor!'`. Era a única fala que o
+     jogador que menos faz ouvia (89/90 dias), e era pedido imperativo — L12
+     ("nomeia o ato, nunca instrução") e L2 (a criatura não é interface). Aqui
+     ela fala do corpo DELA e constata; nunca manda, nunca pede. A régua de
+     tom acima passa a alcançar. */
+  /* `careEvent.type === 'poop'` — a borra está lá e ninguém limpou ainda. */
+  dirty: {
+    pt: ['Tem uma coisa ali que não assentou.', 'Tá pegajoso aqui do lado.', 'Água ajudaria.'],
+    en: ["There's something over there that didn't settle.", "It's sticky over here.", 'Water would help.'],
+  },
+  /* `careEvent.type === 'food'` — pedido de comida ativo. */
+  hungry: {
+    pt: ['Barriga fazendo barulho.', 'Deu fome agora.', 'Tô com fome. Só avisando.'],
+    en: ['Belly is rumbling.', 'Got hungry just now.', "I'm hungry. Just saying."],
+  },
+  /* energia cheia (`ratio >= 1`). */
+  energized: {
+    pt: ['Cheio. Tô inteiro.', 'Dá pra sentir a borda toda.', 'Tô aceso hoje.'],
+    en: ['Full. All here.', 'I can feel every edge.', "I'm lit up today."],
+  },
+  /* energia boa (`ratio >= 0.6`). */
+  fine: {
+    pt: ['Tô bem assim.', 'Assentado. Nada faltando.', 'Tá bom aqui.'],
+    en: ["I'm fine like this.", 'Settled. Nothing missing.', "It's good here."],
+  },
+  /* começando a faltar (`ratio >= 0.1`). */
+  peckish: {
+    pt: ['Começando a dar fome.', 'A barriga tá falando baixinho.', 'Meio vazio por dentro.'],
+    en: ['Starting to get hungry.', 'Belly is whispering.', 'A bit empty inside.'],
+  },
+  /* fundo (`ratio < 0.1`) — o piso do perfil D. Constata o corpo, não cobra. */
+  starving: {
+    pt: ['Muita fome. Tô mole.', 'Barriga vazia. Quieto por aqui.', 'Tô perto do chão hoje.'],
+    en: ['Very hungry. Soft all over.', 'Empty belly. Quiet over here.', "I'm close to the ground today."],
   },
   milestone: {
     /* ⚠️ 21/09/2026: `'Você repetiu tanto que virou seu'` SAIU — põe a pessoa

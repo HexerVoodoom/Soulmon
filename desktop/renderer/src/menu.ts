@@ -404,6 +404,16 @@ async function syncNow(email: string) {
 
   const result = await fetchRemoteSnapshot(trimmed);
   if (!result.ok) {
+    if (result.reason === 'deleted') {
+      // 410 (QA rodada 2): a conta foi excluída pelo app. A sessão já foi
+      // descartada pelo `cloudSync`; aqui só se explica e se para de tentar.
+      session = null;
+      fail(t(
+        'Esta conta foi excluída. Se quiser voltar, entre de novo no Soulmon completo — o próximo login reabre.',
+        'This account was deleted. To come back, sign in again in the full Soulmon — the next sign-in reopens it.',
+      ));
+      return;
+    }
     if (result.reason === 'unauthenticated') {
       // O servidor exige login. Abrir o app completo resolve: é lá que o
       // Firebase Auth roda e devolve o token pro desktop (auth-preload.js).
@@ -476,9 +486,12 @@ function applySnapshot(s: RemoteSnapshot) {
 
 /** Erro de escrita → fala do pet, sem inventar sucesso. */
 function pushFailed(reason: string) {
-  status = reason === 'unauthenticated'
-    ? t('Precisa entrar na conta de novo.', 'You need to sign in again.')
-    : t('Não consegui falar com o servidor.', "Couldn't reach the server.");
+  if (reason === 'deleted') session = null;
+  status = reason === 'deleted'
+    ? t('Esta conta foi excluída. Entre de novo no Soulmon completo para reabrir.', 'This account was deleted. Sign in again in the full Soulmon to reopen it.')
+    : reason === 'unauthenticated'
+      ? t('Precisa entrar na conta de novo.', 'You need to sign in again.')
+      : t('Não consegui falar com o servidor.', "Couldn't reach the server.");
   render();
 }
 

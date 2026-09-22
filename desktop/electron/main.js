@@ -349,6 +349,15 @@ ipcMain.on('auth-token', (event, payload) => {
     win?.webContents.send('auth-changed', authSession ? { email: authSession.email } : null);
   }
 });
+// 410 `account-deleted` visto pelo overlay/menu (QA rodada 2): a sessão é
+// descartada aqui, no único lugar em que ela mora. Qualquer janela nossa pode
+// pedir isto (só apaga; não há o que forjar), e as duas são avisadas.
+ipcMain.on('auth-clear', () => {
+  authSession = null;
+  for (const win of [overlayWin, menuWin]) {
+    win?.webContents.send('auth-changed', null);
+  }
+});
 // Overlay/menu perguntam o token na hora de sincronizar. Devolve null se
 // expirou — o renderer trata como "não autenticado" e pede login de novo.
 ipcMain.handle('auth-get', () => {

@@ -1,6 +1,6 @@
 # Inventário de assets — o que existe, onde vai, o que falta
 
-> **Data:** 15/09/2026 · **Escopo:** TODO asset visual disponível para o Soulmon — no repo,
+> **Data:** 22/09/2026 (§0 recontado por comando e §2b — os 102 órfãos — pela QA Rodada 2, [`reviews/2026-09-22-qa-rodada-2/06-som-arte-design-marca-r2.md`](reviews/2026-09-22-qa-rodada-2/06-som-arte-design-marca-r2.md) §2; anterior: 15/09/2026) · **Escopo:** TODO asset visual disponível para o Soulmon — no repo,
 > nas levas do Gemini (`D:\Soulmon\_gemini_out\`), no kit de UI gerado no Gemini
 > (`E:\Soulmon-assets\`), no Class-System, e a marca. Medido por varredura de arquivo
 > (dimensão, alfa, referência no código), não por memória.
@@ -23,7 +23,7 @@
 
 | Origem | Arquivos de imagem | Estado |
 |---|---|---|
-| `repo/src/assets/` | **1.352** (816 são FX derivados de ataque, 137 ícones de elemento) | instalado; **~150 sem nenhuma referência no código** (§2) |
+| `repo/src/assets/` | **1.723** imagens/vídeos (`find src/assets -type f \| wc -l` → 1 726 = 1 723 + 2 `.md` + 1 `.ts`; por família: soulmon 1 618 · backgrounds 58 · decor 33 · brand 8 · icons 4 · raiz 3 · video 2; por extensão: png 1 716 · webp 3 · mp4 3 · svg 1; `du -sh src/assets` → **121 MB**, bg 43 M · backgrounds 36 M · fx-ataque 20 M; medido em 22/09/2026) — ⚰️ dizia **1.352** e "≈150 sem referência" (15/09): não contava os 371 que entraram depois (lines/icons 72, sigilos 45, elementos/fx-ataque…) e contava pastas já apagadas | instalado; **102 sem nenhum consumidor** (9,6 MB — §2b; nada disso entra em `dist/`) |
 | `repo/public/` | 6 (3 favicons + 3 screenshots) | instalado |
 | `repo/android/.../drawable/` | 21 (11 sprites `sprite_*`, splash, partner_area, ui_t_bg_01) | instalado no widget |
 | `D:\Soulmon\_gemini_out\` | ~1.900 (contando `raw/` e derivados) | **5 levas não instaladas** (§3) |
@@ -94,6 +94,11 @@ Fase 1 (`design/INVENTARIO-WIREFRAMES.md`).
 
 ## 2. Instalado mas SEM uso (≈150 arquivos) — veredito um a um
 
+> ⚰️ **Foto de 15/09/2026.** Em 22/09 (QA Rodada 2 `06` §2.1) **nenhuma destas pastas existe mais**:
+> `soulmon/buttons/` (13), `soulmon/ui/` (3), `soulmon/evolution/node-*` (4), `brand/mascot-*` (42),
+> `brand/logo-raw.svg` (`ls src/assets/soulmon/`, `ls src/assets/brand/`). A tabela fica como registro
+> do veredito que valeu; **o que ainda está no disco e sem consumidor é a §2b**.
+
 Varredura: basename de cada arquivo em `src/assets/` procurado em todo `src/**/*.{ts,tsx,css}` e `index.html`.
 
 | Pasta | Qtd | O que é | Veredito |
@@ -110,6 +115,34 @@ Varredura: basename de cada arquivo em `src/assets/` procurado em todo `src/**/*
 | `brand/mascot-candidates/` (15), `mascot-branches/` (18), `mascot-*.png` (8), `mascot-ingame/idle.png` | 42 · 2048² | exploração de mascote (Higgsfield/Gemini, jul/2026) | **fora do app** — arquivo de processo. Tirar do `src/` (pesa no repo, não no bundle). Guardar em `D:\Soulmon\brand-archive\` |
 | `brand/logo-raw.svg`, `logo-v1-raw.png`, `logo-preview.png` | 3 | rascunhos de logo | idem — arquivo |
 | `src/assets/7e77…png`, `9087…png`, `90d2…png` | 3 · hash como nome | sobras de export | remover |
+
+---
+
+## 2b. Os 102 órfãos de 22/09/2026 — PEDIDO DE LIMPEZA (nada apagado ainda)
+
+Método (QA Rodada 2 `06` §2.2, script `orfaos.mjs` da rodada): todo `'../…/*.png|webp|mp4|svg'` em
+`src/**/*.{ts,tsx}` (sem `.test.`) + `figma:asset/` + os 6 diretórios de `import.meta.glob` + `url()`
+do `index.css`; o que não é alcançado por nenhum é órfão. **Não é achado de bundle** — nada disso entra
+em `dist/`; é peso de repo (9,6 MB; `git count-objects -vH` → size-pack 553 MiB) e inventário mentindo.
+**Quem executa:** `arte-instalador`, com aval do dono para as linhas marcadas "decisão"; arquivo de
+processo vai para `D:\Soulmonrand-archive\`, nunca para o lixo.
+
+| Pasta / arquivo | Qtd | Veredito | Ação pedida |
+|---|---|---|---|
+| `soulmon/icons/` raiz + `categories/` + `games/` | 54 | pixel FORA do visor — `04` §1 e a §2 acima já vetam; continuam no repo | **apagar** |
+| `soulmon/lines/full/` | 29 | "guardar" (§2) — 29 × 256² sem mapa; se um dia entrarem, precisam de `*Art.ts` com glob | manter; registrar aqui que não têm consumidor |
+| `brand/final/` | 7 | `icon-512.png` é **byte a byte igual** a `public/favicon-512x512.png` (`md5sum` = `f46ba897…`); `logo.svg` (1 230 `<rect>`) ≠ `public/favicon.svg` (637 `<rect>`) — **duas vetorizações da mesma chama**; `loading.mp4` 1,6 MB + `loading-thumb.webp` sem consumidor | **decisão do dono**: declarar `public/favicon.svg` como a única chama vetorial (D8 diz que a fonte é `E:/logo/`) e apagar a cópia; `loading.*` → arquivo |
+| `backgrounds/home-scene-1547.png` | 1 · **4,2 MB** | a versão leve (`home-scene-texture.webp`, 32 KB) é a usada no CSS; o PNG é arquivo de processo | **arquivar** em `D:\Soulmonrand-archive\` |
+| `soulmon/progress/` (4), `windows/` (1), `hud/glyph-*` (2), `soulmon/bg/tournament.png` (1), `icons/confetti-burst.png` (1), `7e77…png` (1) | 10 | `tournament.png` 960×540 é o formato antigo já substituído por `tournament-night/final`; hash-PNG = sobra de export; os outros são "decisão do dono" na §2 há 7 dias | `tournament.png` e `7e77…png` **apagar**; os 8 restantes: decisão do dono |
+| **Total** | **102** | 9,6 MB | — |
+
+Contraparte que a mesma rodada fechou: **zero consumidor sem asset e zero asset de mapa sem
+consumidor** — `src/assets/artMaps.contract.test.ts` (novo, 14/14) cobre `emblemArt` (9/9),
+`lineIcons` (72/72), `BG_THUMBS` (28/28), `ITEM_ART` (13/13), `DREAM_ART` (30/30), `ADVENTURE_ART`
+(24/24), `DECOR_ART` (34/34) nas três direções. Tamanhos: 46 arquivos > 400 KB em `src/assets`
+(43 PNG viram WebP no `dist/`, maior 212 KB; os 2 MP4 acima do teto seguem na `DIVIDA_ATUAL`).
+**E1** (`dias-completos-30.png` ainda desenha 3 lajes ✓, e é renderizado) continua aberto —
+`ASSETS-A-GERAR.md` §5.
 
 ---
 

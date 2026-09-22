@@ -73,6 +73,12 @@ A separação de responsabilidade é física, não estilística: `desktop/electr
 **Régua:** `desktop/renderer/src/authBridge.test.ts` (desde `a6c1cd8a` fecha o buraco do `exp` em vez de documentá-lo: guard textual de que `main.js` não compara com `&&`).
 **Avisos do arquivo:** o token vai só para a MEMÓRIA do processo principal (`authSession` em `main.js`), nunca para disco; expira em ~1h e é reemitido pelo SDK dentro da própria janela. Desde `a6c1cd8a`: `DEFAULT_TOKEN_TTL_MS = 1h` — validade DESCONHECIDA (`expiresAt` NaN/ausente/0) é "vence em 1h", nunca "nunca vence" (⚰️ colapsava em `exp: 0`).
 
+### `desktop/electron/jwtExp.js` (novo em 22/09/2026 — QA Rodada 2, `01-seguranca-r2.md` #10; **em curso**, entrada provisória do doc-mantenedor até o próximo `/manter-docs`)
+**Dono de:** ler a validade (`exp`) do PRÓPRIO ID token do Firebase em vez de chutar "+1 h" — ⚰️ até `a6c1cd8a` o `auth-preload.js`/`main.js` usavam `DEFAULT_TOKEN_TTL_MS = 1h` quando `expiresAt` não vinha (token renovado há 50 min era tratado como novo).
+**Exports:** `expDoJwtMs(token)` → validade em ms (epoch) ou `null` se o token não tiver a forma `a.b.c` com `exp` numérico positivo no payload (base64url; **não verifica assinatura** — isso é do servidor).
+**Chamado por:** `desktop/electron/auth-preload.js`/`main.js` (o caminho do `expiresAt` ausente). CJS puro, sem `electron`, para o teste em `node` conseguir importá-lo.
+**Régua:** o teste que nasce com ele na R2 (`desktop/renderer/src/authBridge.test.ts` estendido ou arquivo próprio — conferir no commit).
+
 ---
 
 ## desktop/renderer/src — overlay

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { onRequest, onRequestOptions } from './save.js';
 
 // `functions/api/save.js` é o endpoint que guarda o save de TODO jogador e
@@ -240,6 +240,27 @@ describe('TTL do save — renovado a cada acesso (decisão do dono, 07/09/2026)'
     const e = env({ [ID]: JSON.stringify({ perfectDays: 3 }) });
     await onRequest({ request: new Request(`https://x/api/save?id=${ID}`), env: e });
     expect(e.DIGIAPP_SAVES.ttls.get(ID)).toBe(ANO);
+  });
+
+  it('MITIGAÇÃO (QA R2, 04-dados §3): se o conteúdo mudou entre a leitura e a renovação, o GET NÃO reescreve', async () => {
+    // Sem CAS no KV a janela não fecha (a saída real é a ADR-004, #52); o que
+    // dá para fazer é reler imediatamente antes do `put` e só renovar se o
+    // disco ainda tem o MESMO raw. Aqui o segundo `get` já vê o POST novo.
+    const e = env({ [ID]: JSON.stringify({ perfectDays: 7, versao: 'velha' }) });
+    e.DIGIAPP_SAVES.meta.set(ID, { t: Date.now() - 40 * 86400 * 1000 });
+    const getOriginal = e.DIGIAPP_SAVES.get;
+    e.DIGIAPP_SAVES.get = async (k) => {
+      // O POST concorrente "acontece" entre o getWithMetadata e a releitura
+      // (só na releitura do save — o `get` da lápide vem antes e não conta).
+      if (k === ID) e.DIGIAPP_SAVES.store.set(ID, JSON.stringify({ perfectDays: 8, versao: 'nova' }));
+      return getOriginal(k);
+    };
+    vi.spyOn(console, 'info').mockImplementation(() => {});
+    const res = await onRequest({ request: new Request(`https://x/api/save?id=${ID}`), env: e });
+    expect(res.status).toBe(200);
+    expect((await res.json()).state.versao, 'o GET devolve o que leu').toBe('velha');
+    expect(JSON.parse(e.DIGIAPP_SAVES.store.get(ID)).versao, 'mas NÃO sobrescreve o novo').toBe('nova');
+    expect(e.DIGIAPP_SAVES.ttls.has(ID), 'e não gastou a escrita').toBe(false);
   });
 
   it('falha ao renovar NÃO derruba a leitura — o jogador veio buscar o save', async () => {

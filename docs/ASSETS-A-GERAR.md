@@ -330,3 +330,60 @@ Regra desta rodada: **derivar do que existe sempre que a peça for redução da 
 
 Aceite do `arte-conferente` para esta família: legenda sem cobrança (grep das `PROIBIDAS_PT/EN` de `petVoice.ts` + o `copy.semFomo` sobre o texto da faixa), criatura de demonstração (nunca sprite derivado), nenhum vocabulário Bandai no briefing nem na legenda ("primeira/última forma", não "rookie/mega"), paleta do rebrand (nunca `#2bff95`). O `arte-instalador` só toca `public/`/`index.html` (L3) — `docs/loja/` é entrega, não asset do bundle.
 
+### 14.1 Briefs L2 e L3 — o corpo (QA Rodada 2, 22/09/2026, `reviews/2026-09-22-qa-rodada-2/06-som-arte-design-marca-r2.md` §4.4)
+
+Estado em 22/09: **não gerados** (a rodada proibia gerar); `og:image` continua = `favicon-512x512.png`
+e `twitter:card` = `summary`. Os dois briefs abaixo estão no padrão do `arte-gerador.md`; a família
+`loja` é **composição** (script Pillow/sharp), não geração — o bloco de geração só entra na única peça
+gerada, o fundo do vidro, e só se o dono quiser fundo pintado. A tagline usada é a provisória de #70
+("Ela cresce com o seu dia." / "It grows with your day."); se o `narrative-critic` a trocar, troca aqui
+— **nunca é desenhada pelo gerador**.
+
+#### BRIEF L2 — Feature graphic 1024×500 (PT e EN)
+
+```
+familia=loja  id=L2  método=COMPOSIÇÃO (script Pillow/sharp), saída sem alfa
+saída: docs/loja/play/pt/feature-1024x500.png · docs/loja/play/en/feature-1024x500.png
+grade: 1024×500 · margem segura 154 px por lado (15 %) e 75 px em cima/embaixo · tudo que
+       importa dentro de 716×350 central
+fundo: --sm2-bg escuro #08191A sólido (nada em pixel fora do visor; sem gradiente, sem textura)
+esquerda (x 154→470): wordmark "Soulmon" Fredoka 600, 64 px, --sm2-ink #E9F5F2, caixa alta como
+       .sm2-hud-wordmark; abaixo, 20 px de vão, tagline Rubik 400 28 px, --sm2-muted #9DBCB4:
+       PT "Ela cresce com o seu dia."  ·  EN "It grows with your day."
+       (uma linha; se o narrative-critic trocar a frase, troca aqui — nunca desenhada pelo gerador)
+direita (x 560→870, centrado em y): o VISOR do sistema — o mesmo `Viewport` da Home:
+       vidro 256×256 com anel de cobre (--sm2-gold-ink #EBBE84 sobre #8A5A2B), fundo do vidro
+       --sm2-viewport-bg #071413; DENTRO, uma criatura de demonstração (PREMADE_CHARACTERS —
+       sugerido `kaelen`/Pyraka rookie, `soulmon/lines/kaelen-rookie.png` 256² a 0,5× = 128,
+       nearest — escala inteira, como o `BirthCard` §27) centrada no chão do vidro (GROUND_Y 74 %)
+chama: BrandFlame scale 2 (38×60) no canto superior direito do vidro, dentro do anel — a marca
+       aparece 2× (palavra + símbolo), é o que o teste de troca de logo pede
+proibido: dígitos, "rookie/mega", emoji, #2bff95, magenta/roxo, texto pequeno, qualquer pixel
+       fora do vidro, sprite derivado (só demo)
+aceite (arte-conferente): copy.semFomo sobre a tagline; PROIBIDAS_PT/EN; formato exato;
+       amostra de pixel: fundo == #08191A em (10,10) e (1014,490); nada com alfa
+```
+
+Se o dono quiser um **fundo pintado** dentro do vidro (em vez de vidro liso), a única geração é uma
+cena `[PET-BOX]` (bloco §1, 1200×648) reduzida para 256² **dentro** do vidro, acrescentando no fim do
+prompt: *"Keep the composition simple and readable at 256 pixels wide: one stone floor, two
+vine-covered pillars at the edges, one floating turquoise crystal top-right, the centre empty for a
+creature."*
+
+#### BRIEF L3 — `og:image` 1200×630
+
+```
+familia=loja  id=L3  método=RECORTE/REENQUADRE de L2 (nunca um terceiro asset)
+saída: public/og-1200x630.png (+ index.html › og:image absoluto; twitter:card → summary_large_image)
+como: renderizar a MESMA composição de L2 numa grade 1200×630 (1,905:1 vs 2,048:1 — não esticar):
+      fundo #08191A, wordmark+tagline à esquerda (x 120→560), visor à direita (x 720→1080),
+      margem segura 60 px; a versão PT (og:locale pt_BR) — uma só, o crawler não troca idioma
+peso: ≤ 300 KB PNG (crawler do WhatsApp corta acima de ~600 KB); sem alfa
+instala: arte-instalador, depois do arte-conferente; CACHE_VERSION sobe (public/ muda)
+aceite: og:image resolve 200 com `curl -sI`; Facebook Sharing Debugger / opengraph.xyz mostra o
+      visor e a palavra inteiros no corte 1,91:1 e no corte quadrado (WhatsApp 1:1 → o visor tem
+      de caber sozinho no centro: por isso ele fica em x 720→1080 e não no canto)
+```
+
+Comando: `/squad-arte gerar loja L2 L3` → `arte-conferente` → `arte-instalador` (L3 toca `public/` e
+`index.html`, então `CACHE_VERSION` sobe).

@@ -114,6 +114,10 @@ export const STORAGE_KEYS = {
    *  pessoa dispensou com "Ok" (utils/termsNotice.ts, decisão #24). Fica no
    *  aparelho, não no save: é um aviso lido, não um consentimento. */
   TERMS_NOTICE_SEEN: 'soulmon-terms-notice-seen',
+  /** `marcaAvisoTermos(...)` da versão cuja PRIMEIRA exibição já aconteceu
+   *  (QA rodada 2, design A3): na primeira vez o banner entra em posição 1
+   *  da fila de avisos; depois volta a ser o último. Aparelho, não save. */
+  TERMS_NOTICE_SHOWN: 'soulmon-terms-notice-shown',
 } as const;
 
 /**

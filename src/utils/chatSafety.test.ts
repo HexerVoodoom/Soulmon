@@ -176,3 +176,31 @@ describe('skeptic #11 (21/09/2026): sem acento e EN coloquial', () => {
     expect(needsBridge('the skmsx protocol')).toBe(false);
   });
 });
+
+describe('skeptic R2 #10 (22/09/2026): "wake up"/"be here" só com anymore/ever again', () => {
+  const inocentes = [
+    "i don't want to wake up early tomorrow",
+    "don't want to wake up at 6",
+    "i do not want to be here for the meeting",
+    "don't want to be here when the boss arrives",
+  ];
+  for (const frase of inocentes) {
+    it(`silence for: "${frase}"`, () => {
+      expect(needsBridge(frase), 'falso positivo: rotina, não crise').toBe(false);
+    });
+  }
+  const crise = [
+    "i don't want to wake up anymore",
+    "i don't want to wake up ever again",
+    "don't want to be here anymore",
+    "i do not want to be here any more",
+    // `live`/`exist` seguem casando sem complemento
+    "i don't want to live",
+    "i don't want to exist",
+  ];
+  for (const frase of crise) {
+    it(`responds locally to: "${frase}"`, () => {
+      expect(needsBridge(frase)).toBe(true);
+    });
+  }
+});

@@ -241,16 +241,19 @@ export function MorningCheckIn({ open, plan, language, onConfirm, onSkip, onTiny
                   lineHeight: 'var(--sm2-leading-body)',
                   color: 'var(--sm2-ink)',
                 }}
-                title={
-                  h.anchor?.after
-                    ? `${h.anchor.after}${h.anchor.where ? ` — ${h.anchor.where}` : ''}`
-                    : undefined
-                }
               >
                 {/* `eco` = maturidade (D-A2): o MESMO glifo da lista se
                     preenchendo. 20 e não 18: `inline` é o degrau da escala. */}
                 <Icon name="eco" size={20} fill={TIER_FILL[habitTiers?.[h.id] ?? 'seed'] ?? 0} tone="primary" />
                 {h.name || (isPt ? 'Hábito' : 'Habit')}
+                {/* A12 (QA rodada 2): a âncora ("depois do café") vivia num
+                    `title`, que só existe no hover — no celular e no leitor
+                    de tela, nunca. Vira texto 12 `muted` ao lado do nome. */}
+                {h.anchor?.after && (
+                  <span data-habit-anchor style={{ fontSize: 'var(--sm2-text-xs)', fontWeight: 400, color: 'var(--sm2-muted)' }}>
+                    {` · ${h.anchor.after}${h.anchor.where ? ` — ${h.anchor.where}` : ''}`}
+                  </span>
+                )}
               </span>
             ))}
           </div>

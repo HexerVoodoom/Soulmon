@@ -19,6 +19,9 @@ interface SoulmonDesktopApi {
   onEffect(cb: (emoji: string, phrase: string) => void): void;
   getAuth(): Promise<SoulmonAuthSession | null>;
   onAuthChanged(cb: (session: { email: string } | null) => void): void;
+  /** Descarta a sessão no processo principal (410 `account-deleted`). Opcional:
+   *  preload antigo não tem. */
+  clearAuth?(): void;
 }
 
 interface Window {

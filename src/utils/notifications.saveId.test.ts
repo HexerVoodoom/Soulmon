@@ -65,9 +65,12 @@ describe('registerForPushNotifications (FCM)', () => {
     await registerForPushNotifications('Serah', 'pt-BR', undefined);
     expect(registrationCb).toBeTruthy();
     registrationCb!({ value: 'tok1' });
+    // O upload espera `authHeaders()` (QA rodada 2): um tick antes de olhar.
+    await new Promise(r => setTimeout(r, 0));
     // Login depois: `saveId` novo, listener antigo.
     await registerForPushNotifications('Serah', 'en-US', undefined, 'abc123');
     registrationCb!({ value: 'tok2' });
+    await new Promise(r => setTimeout(r, 0));
     const fcm = bodies().filter(b => b.url === '/api/fcm-subscribe');
     expect(fcm).toHaveLength(2);
     expect('saveId' in fcm[0].body).toBe(false);

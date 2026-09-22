@@ -28,6 +28,13 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { screen, fireEvent, within } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
 import { CompanionHUD } from './CompanionHUD';
+import { PET_VOICE_LINES } from '../utils/petVoice';
+
+/** A fala idle vem de `PET_VOICE_LINES.energized` — nunca literal copiado aqui
+ *  (22/09/2026, QA R2: as frases saíram do HUD para o dono único da voz). */
+const FALA_ENERGIZED = new RegExp(
+  PET_VOICE_LINES.energized.pt.map(l => l.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'),
+);
 
 const base = {
   companionMood: 'idle' as const,
@@ -67,7 +74,7 @@ describe('CompanionHUD — o balão de fala e o CTA de evolução', () => {
     fireEvent.click(screen.getByAltText('rookie'));
 
     const btn = screen.getByRole('button', { name: 'Evoluir' });
-    const faixa = faixaDoBalao(screen.getByText(/Cheio de energia!|Pronto para tudo!|Totalmente carregado!/));
+    const faixa = faixaDoBalao(screen.getByText(FALA_ENERGIZED));
 
     // "Evoluir" é ancorado no RODAPÉ (`bottom`); o balão, no TOPO (`top`) —
     // não há mais eixo comum para as duas faixas se cruzarem.
@@ -81,14 +88,14 @@ describe('CompanionHUD — o balão de fala e o CTA de evolução', () => {
   it('sem CTA na tela o balão continua no MESMO topo (a posição não depende do botão)', () => {
     renderWithCss(<CompanionHUD {...base} />);
     fireEvent.click(screen.getByAltText('rookie'));
-    const faixa = faixaDoBalao(screen.getByText(/Cheio de energia!|Pronto para tudo!|Totalmente carregado!/));
+    const faixa = faixaDoBalao(screen.getByText(FALA_ENERGIZED));
     expect(faixa.style.top).toBe(`${BUBBLE_GAP}px`);
   });
 
   it('a faixa de largura total do balão não intercepta toque; a caixa de fala sim', () => {
     renderWithCss(<CompanionHUD {...base} />);
     fireEvent.click(screen.getByAltText('rookie'));
-    const texto = screen.getByText(/Cheio de energia!|Pronto para tudo!|Totalmente carregado!/);
+    const texto = screen.getByText(FALA_ENERGIZED);
     const faixa = faixaDoBalao(texto);
     // A faixa cobre o palco inteiro na horizontal: se ela capturar ponteiro,
     // qualquer controle embaixo dela morre — foi assim que o bug aconteceu.
@@ -99,9 +106,9 @@ describe('CompanionHUD — o balão de fala e o CTA de evolução', () => {
   it('o clique na caixa de fala continua dispensando o balão', () => {
     renderWithCss(<CompanionHUD {...base} />);
     fireEvent.click(screen.getByAltText('rookie'));
-    const texto = screen.getByText(/Cheio de energia!|Pronto para tudo!|Totalmente carregado!/);
+    const texto = screen.getByText(FALA_ENERGIZED);
     fireEvent.click(texto.parentElement!);
-    expect(screen.queryByText(/Cheio de energia!|Pronto para tudo!|Totalmente carregado!/)).toBeNull();
+    expect(screen.queryByText(FALA_ENERGIZED)).toBeNull();
   });
 
   it('o "Evoluir" continua clicável com o balão aberto', () => {

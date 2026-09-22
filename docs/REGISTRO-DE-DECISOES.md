@@ -10,6 +10,13 @@
 >    uma decisão encontra aqui o que teria de derrubar primeiro.
 > 2. **Rever com honestidade** quando houver telemetria: a §7 transforma cada
 >    aposta grande numa hipótese com número e instrumento.
+>
+> **Regra do rastro (22/09/2026, QA Rodada 2 `05` §3.2):** todo **provisório** da fila do dono
+> (`PERGUNTAS-DO-DONO.md`) que muda **código, regra de dinheiro ou texto legal publicado** ganha
+> uma linha aqui com a etiqueta **`[provisório #N]`** no mesmo commit que o aplica — é o que torna
+> o "se mudar" executável. Sete provisórios da Rodada 1 (#40, #42 incl. o bump de `TERMS_VERSION`,
+> #43, #45, #46, #47, #50b) foram aplicados sem esse rastro; ficam para o próximo `/manter-docs`.
+> A primeira linha com a etiqueta é a #55 (§5.4).
 > 3. **Saber onde estamos expostos**: a §8 lista as decisões que não têm evidência
 >    nenhuma além da nossa própria tese.
 >
@@ -301,6 +308,8 @@ Formato: **decisão** · evidência · **alternativa que perdeu, e por quê** ·
 | **Preço regionalizado para o Brasil como prática JUSTA** | Rodada 2 🎥 | Preço US/EU | — | ⏸️ **Dono (H2)** |
 | **Cobrança na web (Pix/cartão) entra DEPOIS do 1º usuário real e antes de qualquer marketing** (21/09/2026) | 🧭 dono, QA GERAL #17. O plano mandava "priorizar o funil web" (`PLANO-PRODUTO.md` Parte 3) e o código não cobra na web: `playBilling.ts` devolve `'unavailable'`, `functions/api/_billing.js` só tem `PRODUCTS` (Play) e `STEAM_ITEMS` — 0 hits de Stripe/Mercado Pago/Pix. Receita possível hoje = 0 em todas as superfícies | (a) Cobrar na web antes da Play — infra antes de usuário; (b) "nunca" — apagaria a frase de priorização | `PLANO-PRODUTO.md` Parte 3 (nota corrigida em 21/09/2026: a frase é meta de margem, não estado) | ✅ decidido. **Gatilho:** o 1º usuário real; se virar "nunca", apagar "priorizar o funil web" |
 
+| **[provisório #55] Cota de chat por tier — demo 30 / paid 120 por dia; sem SKU recorrente, sem modelo acima do 8b** (22/09/2026) | `03-negocio-pesquisa-r2.md` §0.5: com o 8b e teto 120/dia a cauda do chat custa R$ 0,5–1/ano/conta (teto R$ 11/ano) — a compra única **sustenta**. O único cenário que a quebra é **trocar o modelo** (×60); e `AI_LIMITS.chat.perAccount` era igual para demo e pago: 1.000 demos no teto = R$ 950/mês, receita zero, alcançável por `curl` com conta grátis | Cota única para todos (o que havia); assinatura para cobrir IA (fica na linha "Assinatura recorrente" acima, ⏸️) | `functions/api/_aiGuard.js` › `AI_LIMITS.chat` (por tier); `PERGUNTAS-DO-DONO.md` #55 | ✅ **provisório aplicado, aguarda o dono.** Regra que fica até ele dizer o contrário: **não existe SKU recorrente e o modelo de chat não sobe do 8b** sem reabrir esta linha e a economia da Parte 3 do `PLANO-PRODUTO`. **Se mudar:** outro número = 2 constantes; modelo maior = refazer o custo antes |
+
 ### 5.5 Camada social
 
 | Decisão | Evidência | Alternativa rejeitada | Onde | Estado |
@@ -338,7 +347,7 @@ Formato: **decisão** · evidência · **alternativa que perdeu, e por quê** ·
 | **Emoji de interface só do bloco que a base de aparelhos desenha** | Achado do QA (08/09): **nove emojis do app renderizam como caixa vazia (▯), sem erro e sem aviso** — todos do bloco `Symbols and Pictographs Extended-A` (Emoji 12.0+). Atingem o **marco de 21 dias**, o traço Carinhoso, cinco mobílias da loja, **três das 24 cenas da aventura**, quatro dos 30 sonhos e um reino do Oráculo. É a **mesma família de dano** da fonte de ícones subsetada: renderiza vazio, sem erro | — | `emojiSuportado.contract.test.ts` congela a dívida e barra um emoji novo desse bloco | ⚠️ **Guard entrou; a troca dos nove é decisão do dono** (são catálogos curados por ele) |
 | **Rota de redenção visível** (o Numemon → Monzaemon) | V-Pet 97 📰: a forma-castigo tem saída, com janela de 48h. *"O bicho ruim não é um beco; é um retrato com saída"* | — | — | ⬜ **Não implementado.** O `carePattern` já é seletor sem "melhor"; falta a narrativa |
 | **Atividades acopladas a alguma necessidade mesmo depois de comprar tudo** | "Motivational sand traps" (Far Cry 3) 🎥: atividade desconectada vira **ruído**, não oportunidade | — | — | ⏸️ **Eixo D30–D90, o mais fraco do produto** |
-| **Camada 3 CONGELADA até 10 usuários × 14 dias de dado** (21/09/2026) | 🧭 dono, QA GERAL #13. Camada 3 = o que está ACIMA do núcleo tarefas→cuidado→evolução: Steam, coop, som novo, arte extra, narrativa. `PLANO-PRODUTO` Parte 5 mandou "só isso" há 5 semanas e a Camada 3 ganhou som, arte, torneio por season e coop enquanto a Camada 1 continua sem gerar moeda (`08-produto-maestro.md` §"Já coberto, NÃO corrigido") — drift sem registro | Continuar a Camada 3 e registrar o contrário (o que não pode é drift sem decisão) | `docs/reviews/2026-09-21-qa-geral/08-produto-maestro.md` item 8; `PERGUNTAS-DO-DONO.md` #11/#13 | ✅ decidido. **Gatilho de revisão:** 10 usuários conhecidos (PWA) com 14 dias de dado cada (`METRICS_ADMIN_KEY` + `scripts/metrics-report.mjs`) |
+| **Camada 3 CONGELADA até 10 usuários × 14 dias de dado** (21/09/2026) | 🧭 dono, QA GERAL #13. Camada 3 = o que está ACIMA do núcleo tarefas→cuidado→evolução: Steam, coop, som novo, arte extra, narrativa. `PLANO-PRODUTO` Parte 5 mandou "só isso" há 5 semanas e a Camada 3 ganhou som, arte, torneio por season e coop enquanto a Camada 1 continua sem gerar moeda (`08-produto-maestro.md` §"Já coberto, NÃO corrigido") — drift sem registro | Continuar a Camada 3 e registrar o contrário (o que não pode é drift sem decisão) | `docs/reviews/2026-09-21-qa-geral/08-produto-maestro.md` item 8; `PERGUNTAS-DO-DONO.md` #11/#13 | ✅ decidido. **Gatilho de revisão:** 10 usuários conhecidos (PWA) com 14 dias de dado cada (`METRICS_ADMIN_KEY` + `scripts/metrics-report.mjs`). **Exceção registrada (22/09/2026, QA Rodada 2 `05` §3.1):** `docs/BOOKLET-UNIVERSO.md` (`959e3bee`, 1 084 linhas de narrativa PT+EN) entrou em 22/09 **sob o congelamento** — é "narrativa", que esta linha lista. Fica como **exceção**: é doc de jogador derivado da bíblia, **sem asset, sem código, sem regra**; não abre precedente para som/arte/coop/Steam. Se o dono não a aceitar, o booklet é datado como pós-E0 e sai do MAPA §6.2 (etiqueta plano) |
 
 ### 5.7 Presença fora do app
 

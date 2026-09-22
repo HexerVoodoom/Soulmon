@@ -39,4 +39,9 @@ export interface MetricsPayload {
   totals?: Record<string, number>;
   notes?: { cohort?: string; unreadable?: string[] };
 }
-export declare function renderRelatorio(payload: MetricsPayload): string[];
+export declare function histogramaActiveDays(
+  totais: Record<string, number>,
+  prefixo?: string,
+): Record<string, number>;
+export declare function renderTudo(totais: Record<string, number> | null | undefined): string[];
+export declare function renderRelatorio(payload: MetricsPayload, opts?: { full?: boolean }): string[];

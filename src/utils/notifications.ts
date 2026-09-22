@@ -5,6 +5,7 @@ import { SoulmonAlarm } from '../plugins/SoulmonAlarmPlugin';
 import { VAPID_PUBLIC_KEY } from './vapid';
 import { STORAGE_KEYS } from './storageKeys';
 import { readJson, readLocal, removeLocal, writeJson, writeLocal } from './safeStorage';
+import { authHeaders } from './auth';
 
 export interface NotificationPermissionState {
   granted: boolean;
@@ -164,9 +165,14 @@ export const subscribeToPush = async (
       ...(saveId ? { saveId } : {}),
     };
 
+    // `Authorization` quando há sessão (QA rodada 2, segurança §2): o
+    // servidor só indexa `pushidx:<saveId>` para saveId AUTENTICADO — sem o
+    // token, 17 POSTs anônimos com o saveId de outra pessoa expulsavam a
+    // inscrição real do índice. Sem sessão o header não vai e a inscrição
+    // segue anônima (sem saveId indexado), que é o comportamento do servidor.
     const res = await fetch('/api/subscribe', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
       body: JSON.stringify(body),
     });
 
@@ -238,14 +244,15 @@ export const registerForPushNotifications = async (
       PushNotifications.addListener('registration', (token) => {
         // Token de push: falhar aqui só faz o app reenviar na próxima abertura.
         writeLocal(STORAGE_KEYS.FCM_TOKEN, token.value, { silent: true });
-        fetch('/api/fcm-subscribe', {
+        // Mesmo `Authorization` do Web Push (ver `subscribeToPush`).
+        authHeaders().then(auth => fetch('/api/fcm-subscribe', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...auth },
           body: JSON.stringify({
             token: token.value, petName: fcmPetName, language: fcmLanguage,
             ...(fcmSaveId ? { saveId: fcmSaveId } : {}),
           }),
-        }).catch((err) => console.error('FCM token upload failed:', err));
+        })).catch((err) => console.error('FCM token upload failed:', err));
       });
 
       PushNotifications.addListener('registrationError', (err) => {

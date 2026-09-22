@@ -30,6 +30,10 @@ interface BillingPlugin {
   /** WP5.8 — preço do Play já formatado na moeda do país da conta. */
   getLocalizedPrice?(options: { productId: string }): Promise<{ formattedPrice: string }>;
   consume(options: { purchaseToken: string }): Promise<void>;
+  /** Reconhece a compra (não consumível) — SÓ depois do verify do servidor
+   *  (QA rodada 2, 01-seguranca §8). Plugin antigo sem o método: o servidor
+   *  já concedeu; a Play estorna em 3 dias e o restore reverifica. */
+  acknowledge?(options: { purchaseToken: string }): Promise<void>;
   /** Compras não consumidas/não consumíveis da conta — usado no "restaurar compras". */
   getPurchases?(): Promise<{ purchases: Array<{ productId: string; purchaseToken: string }> }>;
 }
@@ -107,18 +111,35 @@ export async function purchase(productId: string): Promise<PurchaseResult> {
   const verified = await verifyPurchase(productId, purchaseToken);
   if (!verified.ok) return { ok: false, reason: verified.reason };
 
-  // Consumíveis precisam ser consumidos na Play para poderem ser recomprados.
-  if (verified.consumeToken) {
+  await fecharNaPlay(plugin, purchaseToken, verified.consumeToken);
+  return { ok: true, ent: verified.ent };
+}
+
+/**
+ * Fecha a compra na Play DEPOIS do servidor ter concedido: consumível é
+ * consumido (o consumo já reconhece), não-consumível é reconhecido. A ordem é
+ * a regra (01-seguranca §8): reconhecer ANTES do verify fechava a janela de
+ * estorno automático de 3 dias de uma compra que o servidor podia recusar.
+ * Falhar aqui não desfaz nada: o benefício já foi concedido, e o restore
+ * reverifica e fecha na próxima abertura.
+ */
+async function fecharNaPlay(plugin: BillingPlugin, purchaseToken: string, consumeToken?: string): Promise<void> {
+  if (consumeToken) {
     try {
-      await plugin.consume({ purchaseToken: verified.consumeToken });
+      await plugin.consume({ purchaseToken: consumeToken });
     } catch (err) {
       // O crédito JÁ foi concedido no servidor; falhar aqui só significa que a
       // Play ainda considera o item "em posse". O restore resolve na próxima.
       if (import.meta.env.DEV) console.warn('[billing] consume failed:', err);
     }
+    return;
   }
-
-  return { ok: true, ent: verified.ent };
+  if (typeof plugin.acknowledge !== 'function') return;
+  try {
+    await plugin.acknowledge({ purchaseToken });
+  } catch (err) {
+    if (import.meta.env.DEV) console.warn('[billing] acknowledge failed:', err);
+  }
 }
 
 export type RestoreResult =
@@ -145,8 +166,10 @@ export async function restorePurchases(): Promise<RestoreResult> {
     let blocked: string | null = null;
     for (const p of purchases ?? []) {
       const verified = await verifyPurchase(p.productId, p.purchaseToken);
-      if (verified.ok) latest = verified.ent;
-      else if (verified.reason === 'order-in-use') blocked = verified.reason;
+      if (verified.ok) {
+        latest = verified.ent;
+        await fecharNaPlay(plugin, p.purchaseToken, verified.consumeToken);
+      } else if (verified.reason === 'order-in-use') blocked = verified.reason;
     }
     if (latest) return { ok: true, ent: latest };
     return { ok: false, reason: blocked ?? 'nothing-to-restore' };

@@ -173,7 +173,9 @@ describe('ia.camposEnviados — a lista fechada do que sai para a IA', () => {
       const r = rel(f);
       if (r === 'src/utils/taskSuggestions.ts') continue;
       const src = read(f);
-      const re = /\bsuggestTasks\(\s*([^,]+?)\s*,/g;
+      // `suggestTasksResult` (QA rodada 2, E1) é o MESMO pedido com a falha
+      // nomeada — manda o mesmo texto, então conta como chamador.
+      const re = /\bsuggestTasks(?:Result)?\(\s*([^,]+?)\s*,/g;
       let m: RegExpExecArray | null;
       while ((m = re.exec(src))) (chamadores[r] ||= []).push(m[1].trim());
     }
@@ -185,6 +187,22 @@ describe('ia.camposEnviados — a lista fechada do que sai para a IA', () => {
       expect(src, `${arquivo} chama suggestTasks sem dizer na tela que o texto vai ao provedor de IA`).toMatch(/provedor de IA/);
       expect(src, `${arquivo}: falta o par EN`).toMatch(/AI provider/);
     }
+  });
+
+  // QA rodada 2 (22/09/2026): a lista só é fechada se TODA chamada às rotas de
+  // IA passar por `aiFetch`. Mutação `fetch('/api/chat', …)` direto no ChatBox
+  // ficou verde — esta régua fecha o desvio (rota literal ou em template).
+  it('nenhum `fetch` direto às rotas de IA fora de `aiClient.ts` — tudo passa por aiFetch', () => {
+    const rotas = Object.keys(CAMPOS_DECLARADOS).map(r => r.replace(/[/-]/g, '\\$&')).join('|');
+    const re = new RegExp(`\\bfetch\\s*\\([^)]*?(?:${rotas})`, 'g');
+    const desvios: string[] = [];
+    for (const f of listar(SRC)) {
+      if (rel(f) === 'src/utils/aiClient.ts') continue;
+      const src = read(f).replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+      if (re.test(src)) desvios.push(rel(f));
+      re.lastIndex = 0;
+    }
+    expect(desvios, 'chamada direta a rota de IA — use aiFetch e declare os campos').toEqual([]);
   });
 
   it('`getAIResponse` só existe no ChatBox', () => {

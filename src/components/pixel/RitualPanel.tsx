@@ -84,8 +84,11 @@ function RitualCheck({
       role="checkbox"
       aria-checked={checked}
       aria-label={label}
+      /* A11 (QA rodada 2): SÓ `aria-disabled`, nunca `disabled` junto. O
+         `disabled` nativo tira o checkbox da ordem de foco e do leitor de
+         tela — a pessoa deixa de saber que o item existe e está concluído.
+         Inerte = anunciado como inerte, alcançável, e o clique não faz nada. */
       aria-disabled={disabled || undefined}
-      disabled={disabled}
       onClick={disabled ? undefined : onToggle}
       style={{ ...alvo44, border: 'none', cursor: disabled ? 'default' : 'pointer' }}
     >

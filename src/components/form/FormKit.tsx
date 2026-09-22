@@ -1,7 +1,16 @@
 import { useId, useState, type CSSProperties, type ReactNode } from 'react';
 import { Icon } from '../ui/Icon';
-import type { Language } from '../../utils/i18n';
+import { resolveLanguage, type Language } from '../../utils/i18n';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
+import { readLocal } from '../../utils/safeStorage';
+import { STORAGE_KEYS } from '../../utils/storageKeys';
+
+/** Texto só para leitor de tela (não existe classe `sr-only` no `index.css`;
+ *  o CSS é o do WebAIM, inline de propósito — footgun 1). */
+const SR_ONLY: CSSProperties = {
+  position: 'absolute', width: 1, height: 1, padding: 0, margin: -1,
+  overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap', border: 0,
+};
 
 /**
  * ONDA 5 — O FORMULÁRIO SAI DO FLIPERAMA
@@ -530,17 +539,29 @@ export function SwitchRow({
 /** Linha que LEVA a algum lugar (outro painel, o guia, a política): 44 com
  *  `chevron_right` 24 `muted` pelado. Com `href` é um link na mesma linha. */
 export function ActionRow({
-  label, hint, onClick, href,
+  label, hint, onClick, href, language,
 }: {
   label: string;
   hint?: string;
   onClick?: () => void;
   href?: string;
+  /** Idioma do sufixo acessível "(abre em nova aba)" de `href` externo
+   *  (A5, QA rodada 2 — a mesma regra do `TermsUpdateBanner`). Sem ele,
+   *  PT só quando o aparelho é PT (`resolveLanguage`). */
+  language?: Language;
 }) {
+  // `_blank` DIZ que abre em aba nova no nome acessível — o texto fica
+  // visualmente escondido (mesmo padrão do banner de Termos, A3 de 21/09).
+  const externo = !!href && !href.startsWith('mailto:');
+  const pt = (language ?? resolveLanguage(readLocal(STORAGE_KEYS.LANGUAGE))) === 'pt-BR';
+  const novaAba = pt ? '(abre em nova aba)' : '(opens in a new tab)';
   const inner = (
     <>
       <span className="sm2-conta-swrow-tx">
-        <span className="sm2-conta-t">{label}</span>
+        <span className="sm2-conta-t">
+          {label}
+          {externo && <>{' '}<span style={SR_ONLY}>{novaAba}</span></>}
+        </span>
         {hint && <span className="sm2-conta-s">{hint}</span>}
       </span>
       {/* `chevron_right` nos dois casos: `open_in_new` NÃO está no inventário

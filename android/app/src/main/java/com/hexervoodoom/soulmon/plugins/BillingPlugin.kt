@@ -59,9 +59,12 @@ class BillingPlugin : Plugin() {
                     call.reject("pending")
                     return@PurchasesUpdatedListener
                 }
-                // Reconhecer a compra é OBRIGATÓRIO: a Play estorna
-                // automaticamente o que não for reconhecido em 3 dias.
-                acknowledgeIfNeeded(purchase)
+                // Reconhecer a compra é OBRIGATÓRIO (a Play estorna o que não
+                // for reconhecido em 3 dias) — mas NÃO AQUI. QA rodada 2
+                // (01-seguranca §8): reconhecer antes de `/api/billing` verificar
+                // fechava a janela de estorno automático de uma compra que o
+                // servidor ainda podia recusar. O JS chama `acknowledge` DEPOIS
+                // do verify ok (`src/utils/playBilling.ts`); o token só volta.
                 call.resolve(JSObject().put("purchaseToken", purchase.purchaseToken))
             }
             BillingClient.BillingResponseCode.USER_CANCELED -> call.reject("cancelled")
@@ -104,12 +107,44 @@ class BillingPlugin : Plugin() {
         })
     }
 
-    private fun acknowledgeIfNeeded(purchase: Purchase) {
-        if (purchase.isAcknowledged) return
+    private fun acknowledgeIfNeeded(purchase: Purchase, onDone: (BillingResult?) -> Unit) {
+        if (purchase.isAcknowledged) { onDone(null); return }
         val params = AcknowledgePurchaseParams.newBuilder()
             .setPurchaseToken(purchase.purchaseToken)
             .build()
-        billingClient?.acknowledgePurchase(params) { /* melhor esforço */ }
+        val client = billingClient
+        if (client == null) { onDone(null); return }
+        client.acknowledgePurchase(params) { result -> onDone(result) }
+    }
+
+    /**
+     * Reconhece uma compra JÁ VERIFICADA pelo servidor (QA rodada 2,
+     * 01-seguranca §8). Chamado pelo JS depois que `/api/billing?action=verify`
+     * respondeu ok — nunca antes: sem verificação, a Play estorna sozinha em
+     * 3 dias, que é exatamente a rede de segurança para um comprovante que o
+     * servidor recusou. Idempotente: compra já reconhecida resolve na hora.
+     */
+    @PluginMethod
+    fun acknowledge(call: PluginCall) {
+        val token = call.getString("purchaseToken") ?: run { call.reject("Missing purchaseToken"); return }
+        connect { ready ->
+            if (!ready) { call.reject("billing-unavailable"); return@connect }
+            val params = QueryPurchasesParams.newBuilder()
+                .setProductType(BillingClient.ProductType.INAPP)
+                .build()
+            billingClient?.queryPurchasesAsync(params) { result, purchases ->
+                if (result.responseCode != BillingClient.BillingResponseCode.OK) {
+                    call.reject("query-failed-${result.responseCode}")
+                    return@queryPurchasesAsync
+                }
+                val purchase = purchases.firstOrNull { it.purchaseToken == token }
+                if (purchase == null) { call.reject("not-owned"); return@queryPurchasesAsync }
+                acknowledgeIfNeeded(purchase) { ack ->
+                    if (ack == null || ack.responseCode == BillingClient.BillingResponseCode.OK) call.resolve()
+                    else call.reject("acknowledge-failed-${ack.responseCode}")
+                }
+            }
+        }
     }
 
     @PluginMethod
@@ -248,10 +283,11 @@ class BillingPlugin : Plugin() {
                     return@queryPurchasesAsync
                 }
                 val arr = JSArray()
+                // Sem reconhecer aqui: o restore também passa pelo verify do
+                // servidor antes, e o JS chama `acknowledge` só depois do ok.
                 purchases
                     .filter { it.purchaseState == Purchase.PurchaseState.PURCHASED }
                     .forEach { purchase ->
-                        acknowledgeIfNeeded(purchase)
                         purchase.products.forEach { productId ->
                             arr.put(JSObject()
                                 .put("productId", productId)

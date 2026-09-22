@@ -11,12 +11,14 @@
 // que a página leia nada do Electron nem execute nada no processo principal —
 // e o token vai só para a memória do main process, nunca para disco.
 const { contextBridge, ipcRenderer } = require('electron');
+const { expDoJwtMs } = require('./jwtExp.js');
 
 /**
  * Validade do ID token do Firebase por contrato do SDK: 1h. Só usada quando o
- * app não manda `expiresAt` legível (NaN/ausente/0). Validade DESCONHECIDA é
- * "vence em 1h", nunca "nunca vence": até 22/09/2026 ela colapsava em `exp: 0`
- * e `main.js` › `auth-get` lia zero como sessão eterna (QA rodada 1 §5).
+ * app não manda `expiresAt` legível E o próprio token não traz `exp` legível
+ * (`jwtExp.js`, QA rodada 2 §10). Validade DESCONHECIDA é "vence em 1h",
+ * nunca "nunca vence": até 22/09/2026 ela colapsava em `exp: 0` e `main.js` ›
+ * `auth-get` lia zero como sessão eterna (QA rodada 1 §5).
  */
 const DEFAULT_TOKEN_TTL_MS = 60 * 60 * 1000;
 
@@ -36,8 +38,11 @@ contextBridge.exposeInMainWorld('soulmonDesktopAuth', {
     ipcRenderer.send('auth-token', {
       token: payload.token,
       email: payload.email ?? '',
-      // NaN/ausente/0/negativo NÃO viram "nunca expira": viram "1h a partir de agora".
-      exp: Number.isFinite(exp) && exp > 0 ? exp : Date.now() + DEFAULT_TOKEN_TTL_MS,
+      // Ordem: `expiresAt` do app → `exp` do próprio JWT → 1h. NaN/ausente/0/
+      // negativo NÃO viram "nunca expira".
+      exp: Number.isFinite(exp) && exp > 0
+        ? exp
+        : (expDoJwtMs(payload.token) ?? Date.now() + DEFAULT_TOKEN_TTL_MS),
     });
   },
 });

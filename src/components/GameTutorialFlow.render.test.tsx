@@ -11,8 +11,11 @@ import { renderWithCss } from '../test/renderEnv';
 import { GameTutorialFlow } from './GameTutorialFlow';
 
 let sugestoes: Array<{ name: string; category: 'Study'; emoji: string }> = [];
+/** E1: `null` = a IA respondeu (com `sugestoes`); string = falhou com esse motivo. */
+let falha: 'offline' | 'error' | null = null;
 vi.mock('../utils/taskSuggestions', () => ({
-  suggestTasks: async () => sugestoes,
+  suggestTasks: async () => (falha ? [] : sugestoes),
+  suggestTasksResult: async () => (falha ? { ok: false, reason: falha } : { ok: true, items: sugestoes }),
 }));
 
 const btn = (nome: string | RegExp) => screen.getByRole('button', { name: nome }) as HTMLButtonElement;
@@ -111,6 +114,50 @@ describe('GameTutorialFlow — identidade do canvas', () => {
     fireEvent.click(inertes[0]);
     expect(document.querySelectorAll('button[data-suggestion="on"]').length).toBe(2);
     expect(btn('Add 2 and start').disabled).toBe(false);
+  });
+
+  it('E1 (QA rodada 2): OFFLINE tem texto próprio, diferente de "não veio sugestão" — e as locais vêm mesmo assim', async () => {
+    falha = 'offline';
+    try {
+      montar({ soulGoal: '' });
+      fireEvent.click(btn("Let's start"));
+      fireEvent.click(screen.getByRole('button', { name: 'Health' }));
+      await act(async () => { fireEvent.click(btn('Suggest tasks with AI')); });
+      const aviso = document.querySelector('[data-ai-failure="offline"]')!;
+      expect(aviso).toBeTruthy();
+      expect(aviso.textContent).toMatch(/No connection right now/);
+      expect(aviso.getAttribute('role')).toBe('status');
+      expect(screen.queryByText(/No AI suggestions came back/)).toBeNull();
+      expect(document.querySelectorAll('button[data-suggestion]').length).toBe(1); // a local
+    } finally { falha = null; }
+  });
+
+  it('E1: erro do provedor (com rede) é outro texto; vazio legítimo não mostra falha nenhuma', async () => {
+    falha = 'error';
+    try {
+      montar({ soulGoal: '' });
+      fireEvent.click(btn("Let's start"));
+      fireEvent.click(screen.getByRole('button', { name: 'Health' }));
+      await act(async () => { fireEvent.click(btn('Suggest tasks with AI')); });
+      expect(document.querySelector('[data-ai-failure="error"]')!.textContent).toMatch(/The AI did not answer/);
+    } finally { falha = null; }
+  });
+
+  it('E1: vazio legítimo (IA respondeu sem itens) não mostra falha nenhuma', async () => {
+    sugestoes = [];
+    montar({ soulGoal: '' });
+    fireEvent.click(btn("Let's start"));
+    fireEvent.click(screen.getByRole('button', { name: 'Health' }));
+    await act(async () => { fireEvent.click(btn('Suggest tasks with AI')); });
+    expect(document.querySelector('[data-ai-failure]')).toBeNull();
+  });
+
+  it('A10: o aviso da IA continua DEPOIS da 1ª busca, enquanto o botão está vivo', async () => {
+    montar({ soulGoal: 'study for the exam' });
+    fireEvent.click(btn("Let's start"));
+    await act(async () => { fireEvent.click(btn('Suggest tasks with AI')); });
+    expect(btn('Suggest tasks with AI').disabled).toBe(false);
+    expect(screen.getByText('This text goes to the AI provider if you ask for suggestions.')).toBeTruthy();
   });
 
   it('Erro: a IA devolve vazio → 4 tarefas locais de dois minutos, nenhuma selecionada sem objetivo, primário inerte até ≥1', async () => {

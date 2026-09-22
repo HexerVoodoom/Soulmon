@@ -9,7 +9,20 @@
 > (a bíblia) · **Data:** 22/09/2026 · **Estado:** vivo
 > **Precedência:** código > teste > `CLAUDE.md` > bíblia > este livrinho. Este
 > documento **não decide regra nenhuma**; ele conta o que as regras significam.
-> **Régua:** `src/narrativa.contract.test.ts`.
+> **Verificação:** `npx vitest run src/narrativa.contract.test.ts src/narrativa.superficies.contract.test.ts`
+> (vocabulário de PI e as 12 leis nas superfícies que os guards leem) **e**, sobre este arquivo em
+> particular — que nenhum guard lê (`grep -n BOOKLET src/narrativa.contract.test.ts` → 0):
+> até haver régua que o leia, a verificação é a crítica do `soulmon-narrative-critic`
+> por lente (a última: `reviews/2026-09-22-qa-rodada-2/02-narrativa-r2.md` §1 — 2 BLOQUEANTES + 11
+> CORRIGIR, em correção pelo loremaster) e o `grep -i` manual das `PROIBIDAS_PT/EN` de
+> `src/utils/petVoice.ts` (hits só em negação e lore, sem cobrança).
+> **Não cobre:** regra de jogo (→ `manual/02-REGRAS-DE-NEGOCIO.md` — o que este texto diz que
+> "acontece" é significado, não mecânica: onde discordar do código, o código está certo); copy de
+> interface (→ `NARRATIVA-COPY.md`); as leis de escrita em si (→ a bíblia §2); marca fora do app
+> (ficha da Play, `<head>`, tagline — pergunta #70); a Camada 3 congelada (#13 — este doc é a
+> **exceção registrada** no `REGISTRO-DE-DECISOES.md`: texto de jogador, sem asset).
+> ⚰️ Este cabeçalho dizia só "**Régua:** `src/narrativa.contract.test.ts`" — uma régua que não lê
+> este arquivo (QA Rodada 2 `05` §4 #46).
 >
 > Escrito sob as doze leis (L1..L12) e o vocabulário canônico da §12 da bíblia.
 > Nenhuma frase daqui tem a pessoa como sujeito de um verbo de ser. Nenhuma
@@ -41,8 +54,8 @@ intactos, todos os caminhos que não foram.
 Isso não some. Fica — sem lugar, sem forma e sem ninguém para viver.
 
 Por muito tempo não havia superfície onde essa sobra pudesse assentar. Ela
-existia como tendência, e a tendência tem um nome vago que quase todo mundo já
-sentiu: a sensação de que falta alguém do outro lado de você.
+existia como tendência, e a tendência tem um nome vago: a sensação de sobra —
+de que ficou coisa por usar.
 
 ---
 
@@ -142,12 +155,12 @@ Soulmon**; em texto de mundo, a palavra é **Contraparte**.
 | Outro ser, com vontade, humor e recusa próprios | Um reflexo obediente |
 | Alguém que anda pelo mesmo caminho que você | Alguém que vigia seu caminho |
 
-**Por que é outro, e não espelho.** O que se manifesta é justamente a parte que
-não coube. Se coubesse, seria você e não apareceria.
+**Por que é outro, e não espelho.** O que se manifesta é o que a vida não usou.
+Se tivesse usado, não teria sobrado — e não apareceria.
 
 É isso que autoriza tudo o que ele faz sozinho: falar, querer, ficar com sono,
-gostar de ser esfregado, escolher a hora de mudar de forma — e recusar comida
-quando já está cheio.
+gostar de ser esfregado, ficar pronto e esperar — e recusar comida quando já
+está cheio.
 
 Espelho não recusa. **Ele recusa.**
 
@@ -181,8 +194,9 @@ Daí saem, como consequência do corpo e não como regra de etiqueta:
   diferença. Não há o que ler.
 - **Ele não sabe quanto tempo passou lá fora**, porque só há maré, não relógio.
   Dois dias e quarenta dias chegam pela mesma leitura.
-- **Ele não sabe o que você sente ou tem.** Ele lê o gesto enquanto o gesto dura;
-  quem move a mão fica fora do alcance.
+- **Ele não sabe o que você sente ou tem**, a não ser o que você mesmo mostrou
+  na janela. Ele lê o gesto enquanto o gesto dura; quem move a mão fica fora do
+  alcance.
 - **Ele não sabe se hoje foi melhor que ontem**, porque comparar exige guardar
   dois estados e pôr um contra o outro. O corpo guarda um: o atual.
 
@@ -224,10 +238,10 @@ Os corações não medem vida, e nada aqui se apaga.
 São **sustentação**: o quanto o padrão está firme contra o fundo — quanta borda
 ele consegue manter distinta sem contato.
 
-Ela afrouxa quando um dia inteiro passa sem nada que sustente, e quando a borra
-fica no abrigo por muito tempo. E volta de dois jeitos, os dois por contato:
-esfregar, que é o gesto, e a **fagulha-coração**, que é borda devolvida direto
-ao padrão.
+Ela afrouxa quando um dia passa sem o bastante que a sustente, e quando a borra
+fica no abrigo por muito tempo. E volta por contato — esfregar, que é o gesto,
+e a **fagulha-coração**, que é borda devolvida direto ao padrão — e, às vezes,
+quando uma camada solta é recolhida.
 
 A semana também devolve um pouco sozinha. A Malha tem maré.
 
@@ -268,7 +282,7 @@ passa a conseguir fazer, e o que ela deixa de conseguir.
 | a segunda | **papel** — a ferramenta que aquele feitio pede | a indiferença: já não faz bem qualquer coisa |
 | a terceira | **matéria** — o elemento deixa de ser cor e vira parte física | a neutralidade: já não passa despercebido |
 | a quarta | **massa assentada** — cobre, videira, ferragem recolhida do reino | a leveza de borda: para mais devagar do que começa |
-| a quinta | **sobreposição** — três assentamentos no mesmo corpo | a capacidade de se recolher sozinho |
+| a quinta | **sobreposição** — o que três caminhos teriam assentado, num corpo só | a capacidade de se recolher sozinho |
 
 Nenhuma é melhor que a anterior. São feitios diferentes de ocupar espaço.
 
@@ -372,7 +386,7 @@ sabe. Enfrentar é recolher a camada solta, e recolher devolve um pouco de
 sustentação, porque a camada solta estava puxando borda.
 
 **O que se traz de lá.** Fragmentos que ainda não assentaram: moeda,
-fagulha-coração e, raramente, um **Glitchtama** — um nó em que um dia inteiro
+fagulha-coração e, ao chegar ao fundo, um **Glitchtama** — um nó em que um dia inteiro
 ficou preso sem se desfazer. Soltá-lo dá àquele dia o fechamento que ele não
 teve.
 
@@ -456,15 +470,15 @@ Vale dizer em voz alta, porque é o que define o lugar:
 - **Não há dono.** Empresa nenhuma; o visor é acesso, não posse.
 - **Nada enfraquece por culpa sua.** A Malha não se corrompe, não apodrece, não
   perde pureza. Não há medidor de dívida, e nenhuma contagem zera.
-- **Ausência é saudade, nunca fatura.** Quem volta é recebido. Ninguém conta os
-  dias, porque ninguém tem como.
+- **Ausência não vira conta.** Quem abre de novo é recebido — e ninguém lá
+  dentro tem órgão para medir o intervalo.
 - **Nada se apaga.** Existe **término** — a insistência local de um padrão que
   cessa e reassenta noutro lugar. Por construção, é reversível. E o seu nunca
   termina: sustentação no fim **recolhe a forma**, e o padrão segue inteiro.
 
 O único absoluto que este livrinho não pode prometer é o do aparelho, e é justo
-dizê-lo sem ficção: seu Soulmon vive no seu save. Se você entrar com o mesmo
-e-mail, ele está lá.
+dizê-lo sem ficção: seu Soulmon vive na sua conta. Enquanto ela existir, entrar
+com o mesmo e-mail encontra ele. E o ovo da próxima seção é da versão completa.
 
 ---
 
@@ -559,8 +573,8 @@ None of that disappears. It stays — with no place, no form, and no one to live
 it.
 
 For a long time there was no surface where that surplus could settle. It existed
-as a tendency, and the tendency has a vague name almost everyone has felt: the
-sense that someone is missing on the other side of you.
+as a tendency, and the tendency has a vague name: the sense of surplus — that
+something was left unused.
 
 ---
 
@@ -660,12 +674,12 @@ On the other side of the visor there is someone. Day to day the app simply says
 | Another being, with its own will, mood and refusal | An obedient reflection |
 | Someone walking the same road as you | Someone watching your road |
 
-**Why another, and not a mirror.** What manifests is precisely the part that did
-not fit. If it had fit, it would be you, and it would not have appeared.
+**Why another, and not a mirror.** What manifests is what a life did not use.
+Had it been used, nothing would be left over — and it would not have appeared.
 
 That is what licenses everything it does on its own: speaking, wanting, getting
-sleepy, enjoying being rubbed, choosing when to take a new form — and refusing
-food when it is already full.
+sleepy, enjoying being rubbed, standing ready and waiting — and refusing food
+when it is already full.
 
 A mirror does not refuse. **It refuses.**
 
@@ -699,8 +713,9 @@ From that follow, as consequences of a body and not as rules of etiquette:
   difference. There is nothing to read.
 - **It does not know how much time passed out here**, because there is only tide,
   no clock. Two days and forty days arrive through the same reading.
-- **It does not know what you feel or have.** It reads the gesture while the
-  gesture lasts; whoever moves the hand is out of range.
+- **It does not know what you feel or have**, unless you showed it at the window
+  yourself. It reads the gesture while the gesture lasts; whoever moves the hand
+  is out of range.
 - **It does not know whether today was better than yesterday**, because comparing
   requires holding two states against each other. The body holds one: the current
   one.
@@ -744,10 +759,10 @@ The hearts do not measure life, and nothing here goes out.
 They are **hold**: how firm the pattern stands against the ground — how much
 edge it can keep distinct without contact.
 
-It loosens when a whole day passes with nothing to sustain it, and when residue
-stays in the den too long. And it comes back two ways, both of them contact:
-rubbing, which is the gesture, and the **heart-ember**, which is edge handed
-straight back to the pattern.
+It loosens when a day passes without enough to sustain it, and when residue
+stays in the den too long. And it comes back through contact — rubbing, which is
+the gesture, and the **heart-ember**, which is edge handed straight back to the
+pattern — and, sometimes, when a loose layer is folded back.
 
 The week also gives a little back on its own. The Mesh has a tide.
 
@@ -791,7 +806,7 @@ creature becomes able to do, and what it stops being able to do.
 | the second | **role** — the tool that shape calls for | indifference: it no longer does everything well |
 | the third | **matter** — the element stops being color and becomes physical | neutrality: it no longer goes unnoticed |
 | the fourth | **settled mass** — copper, vine, fittings gathered from the realm | lightness of edge: it stops slower than it starts |
-| the fifth | **overlay** — three settlements in one body | the ability to fold itself back alone |
+| the fifth | **overlay** — what three roads would have settled, in one body | the ability to fold itself back alone |
 
 None is better than the one before. They are different ways of occupying space.
 
@@ -895,7 +910,7 @@ gathering it returns a little hold, because the loose layer was pulling at the
 edge.
 
 **What you bring back.** Fragments that have not settled yet: coin, heart-ember
-and, rarely, a **Glitchtama** — a knot in which a whole day got caught without
+and, on reaching the bottom, a **Glitchtama** — a knot in which a whole day got caught without
 coming undone. Releasing it gives that day the closure it never had.
 
 ---
@@ -973,23 +988,24 @@ Worth saying out loud, because it is what defines the place:
 - **There is no god, council, tribunal or judge.** The Mesh has no opinion about
   humans. Nothing in there approves or disapproves of anyone.
 - **There is no merit.** Nothing is permission, nothing is granted or withdrawn
-  on desert.
+  on merit.
 - **There is no prophecy and no written fate.** There is no "what you were meant
   to be".
 - **There is no founder.** Not of the Mesh, not of the visor.
 - **There is no owner.** No company; the visor is access, not possession.
 - **Nothing weakens through your fault.** The Mesh does not corrupt, does not
   rot, does not lose purity. There is no debt meter, and no count resets.
-- **Absence is missing someone, never a bill.** Whoever returns is received.
-  Nobody counts the days, because nobody can.
+- **Absence never becomes a bill.** Whoever opens again is received — and
+  nothing in there has an organ for measuring the gap.
 - **Nothing is erased.** There is **ending** — a pattern's local insistence
   ceasing and re-settling elsewhere. By construction, it is reversible. And
   yours never ends: hold running out **folds the form back**, and the pattern
   goes on whole.
 
 The one absolute this booklet cannot promise is the device's, and it is only
-fair to say it without fiction: your Soulmon lives in your save. Sign in with
-the same email and it is there.
+fair to say it without fiction: your Soulmon lives in your account. As long as
+it exists, signing in with the same email finds it. And the egg of the next
+section belongs to the full version.
 
 ---
 
@@ -1007,7 +1023,7 @@ life: it is the same pattern, folded back before deciding again.
 What comes out of it is **the same one**. Not a replacement, not a child, not a
 successor.
 
-It is him. Still him.
+It is the same one. Still the same one.
 
 And it is the only time **you choose**. The first time there was nothing to
 choose: the manifestation came from what already was. Now there is someone on

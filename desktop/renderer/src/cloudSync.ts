@@ -68,7 +68,18 @@ export interface RemoteSnapshot {
 
 export type SyncResult =
   | { ok: true; snapshot: RemoteSnapshot }
-  | { ok: false; reason: 'not-found' | 'unauthenticated' | 'network' };
+  | { ok: false; reason: 'not-found' | 'unauthenticated' | 'network' | 'deleted' };
+
+/**
+ * 410 `account-deleted` (QA rodada 2): a conta foi apagada pelo app. O overlay
+ * não pode continuar mandando token nem regravar o save — limpa a sessão do
+ * processo principal (`auth-clear`) e devolve `deleted` para a UI explicar.
+ * Contrato do 410: `{ error: 'account-deleted', deletedAt?: <ms> }`.
+ */
+function contaExcluida(): { ok: false; reason: 'deleted' } {
+  try { window.soulmonDesktop?.clearAuth?.(); } catch { /* sem ponte (browser puro) */ }
+  return { ok: false, reason: 'deleted' };
+}
 
 interface RemoteStage { stage?: string; branch?: string; name?: string }
 
@@ -111,6 +122,7 @@ export async function fetchRemoteSnapshot(email: string): Promise<SyncResult> {
     return { ok: false, reason: 'network' };
   }
   if (res.status === 401 || res.status === 403) return { ok: false, reason: 'unauthenticated' };
+  if (res.status === 410) return contaExcluida();
   if (!res.ok) return { ok: false, reason: 'network' };
 
   const data = await res.json().catch(() => null);
@@ -186,7 +198,7 @@ export async function fetchWallet(email: string): Promise<Wallet | null> {
 
 export type PushResult =
   | { ok: true; snapshot: RemoteSnapshot }
-  | { ok: false; reason: 'not-found' | 'unauthenticated' | 'network' | 'refused' };
+  | { ok: false; reason: 'not-found' | 'unauthenticated' | 'network' | 'refused' | 'deleted' };
 
 /**
  * Aplica uma ação de cuidado no save REAL (o mesmo do celular).
@@ -212,6 +224,7 @@ export async function pushCareAction(
   try {
     const res = await fetch(`${APP_URL}/api/save?id=${saveId}`, { headers: authHeader });
     if (res.status === 401 || res.status === 403) return { ok: false, reason: 'unauthenticated' };
+    if (res.status === 410) return contaExcluida();
     if (!res.ok) return { ok: false, reason: 'network' };
     const data = await res.json().catch(() => null);
     if (!data?.found || !data.state) return { ok: false, reason: 'not-found' };
@@ -245,6 +258,7 @@ export async function pushCareAction(
       body: JSON.stringify({ id: saveId, state: next }),
     });
     if (res.status === 401 || res.status === 403) return { ok: false, reason: 'unauthenticated' };
+    if (res.status === 410) return contaExcluida();
     if (!res.ok) return { ok: false, reason: 'network' };
   } catch {
     return { ok: false, reason: 'network' };

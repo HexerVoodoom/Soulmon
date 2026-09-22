@@ -123,11 +123,53 @@ export function histogramaGoalDays(totais, prefixo = 'week_active') {
   return balde;
 }
 
+/** O histograma de `active_days` (0..7) — presença, não meta. */
+export function histogramaActiveDays(totais, prefixo = 'week_active') {
+  const balde = {};
+  for (let i = 0; i <= 7; i++) balde[i] = n(totais, `${prefixo}.active_days.${i}`);
+  return balde;
+}
+
+/**
+ * Seção `--full`: TODO prefixo do agregado com contagem > 0, agrupado pelo
+ * primeiro segmento da chave, sem uma linha de código por evento.
+ *
+ * Por que (QA rodada 2, `04-dados-r2` §4): 14 famílias de chave eram gravadas
+ * por `metrics.js` › `applyAggregate` e lidas por ninguém — custo (e, no caso
+ * de `active_days`, privacidade) sem retorno. Um leitor genérico garante que
+ * chave nova NASCE com leitor; as seções nomeadas acima continuam sendo a
+ * leitura interpretada. Chave com contagem 0 não aparece (ruído).
+ * @param {Record<string, number>} totais
+ * @returns {string[]}
+ */
+export function renderTudo(totais) {
+  const out = [];
+  /** @type {Map<string, Array<[string, number]>>} */
+  const grupos = new Map();
+  for (const [k, v] of Object.entries(totais ?? {})) {
+    const num = Number(v);
+    if (!Number.isFinite(num) || num <= 0) continue;
+    const raiz = k.split('.')[0];
+    if (!grupos.has(raiz)) grupos.set(raiz, []);
+    grupos.get(raiz).push([k, num]);
+  }
+  if (grupos.size === 0) return ['TUDO QUE FOI GRAVADO', '  sem dados'];
+  out.push('TUDO QUE FOI GRAVADO (toda chave > 0, agrupada pelo primeiro segmento)');
+  for (const raiz of [...grupos.keys()].sort()) {
+    out.push(`  ${raiz}`);
+    for (const [k, v] of grupos.get(raiz).sort((a, b) => a[0].localeCompare(b[0]))) {
+      out.push(`    ${k.padEnd(48)} ${String(v).padStart(7)}`);
+    }
+  }
+  return out;
+}
+
 /**
  * O relatório inteiro, como linhas de texto.
  * @param {object} payload  o JSON de `GET /api/metrics`
+ * @param {{ full?: boolean }} [opts]  `full` acrescenta `renderTudo` no fim.
  */
-export function renderRelatorio(payload) {
+export function renderRelatorio(payload, opts = {}) {
   const out = [];
   const totais = payload?.totals ?? {};
   const dias = diasDaJanela(payload?.from, payload?.to);
@@ -186,6 +228,26 @@ export function renderRelatorio(payload) {
   if (semanas > 0) {
     out.push(...barras(hist));
     out.push(`  mediana: ${mediana} dia(s) de 7   (n = ${semanas} semanas)`);
+  } else {
+    out.push('  sem dados');
+  }
+  out.push('');
+
+  // ── Presença: `active_days` (QA rodada 1 review 07 N3, QA rodada 2 04 §4 —
+  //    a chave era gravada e não tinha leitor). É a hipótese de HÁBITO de E0
+  //    ("ativo em >= 2 de 4 dias"): `goal_days` mede meta batida, este mede
+  //    presença. Mediana pela mesma regra 2.
+  const histPresenca = histogramaActiveDays(totais);
+  const semanasPresenca = Object.values(histPresenca).reduce((s, v) => s + v, 0);
+  out.push('SEMANAS FECHADAS — dias em que a pessoa APARECEU (concluiu algo)');
+  if (semanasPresenca > 0) {
+    out.push(...barras(histPresenca));
+    out.push(`  mediana: ${medianaDeHistograma(histPresenca)} dia(s) de 7   (n = ${semanasPresenca} semanas)`);
+    for (const tier of ['demo', 'paid']) {
+      const h = histogramaActiveDays(totais, `week_active.${tier}`);
+      const nT = Object.values(h).reduce((s, v) => s + v, 0);
+      if (nT > 0) out.push(`  ${tier.padEnd(5)} │ mediana ${medianaDeHistograma(h)} dia(s)   (n = ${nT})`);
+    }
   } else {
     out.push('  sem dados');
   }
@@ -283,6 +345,11 @@ export function renderRelatorio(payload) {
   out.push('RITUAL DO DIA');
   out.push(`  ${linhaDeRazao('assumiram a meta ÷ ritual oferecido', razao(n(totais, 'checkin_commit'), ofertado))}`);
   out.push('');
+
+  if (opts?.full) {
+    out.push(...renderTudo(totais));
+    out.push('');
+  }
 
   return out;
 }

@@ -126,3 +126,40 @@ describe('Ajuda — falar com quem faz o Soulmon', () => {
     expect(screen.getByText(`Soulmon ${APP_VERSION}`)).toBeTruthy();
   });
 });
+
+describe('QA rodada 2 — Ajuda: Termos, #en e "(abre em nova aba)" (A4/A5/A6)', () => {
+  it('PT: "Termos de Uso" existe, abre /termos.html em nova aba e o nome acessível DIZ isso', () => {
+    renderSettings('pt-BR');
+    const a = screen.getByRole('link', { name: /Termos de Uso \(abre em nova aba\)/ }) as HTMLAnchorElement;
+    expect(a.getAttribute('href')).toBe('/termos.html');
+    expect(a.getAttribute('target')).toBe('_blank');
+    expect(a.getAttribute('rel')).toContain('noopener');
+    const p = screen.getByRole('link', { name: /Política de privacidade \(abre em nova aba\)/ }) as HTMLAnchorElement;
+    expect(p.getAttribute('href')).toBe('/privacidade.html');
+  });
+
+  it('EN: os dois links apontam para a âncora #en e avisam "(opens in a new tab)"', () => {
+    renderSettings('en-US');
+    expect((screen.getByRole('link', { name: /Terms of Use \(opens in a new tab\)/ }) as HTMLAnchorElement).getAttribute('href')).toBe('/termos.html#en');
+    expect((screen.getByRole('link', { name: /Privacy policy \(opens in a new tab\)/ }) as HTMLAnchorElement).getAttribute('href')).toBe('/privacidade.html#en');
+    // O sufixo é só para leitor de tela: não aparece como texto visível solto.
+    expect(screen.getByRole('link', { name: /Terms of Use/ }).querySelector('.sm2-conta-t')!.textContent).toContain('(opens in a new tab)');
+  });
+
+  it('o mailto NÃO ganha o sufixo (não abre aba)', () => {
+    renderSettings('en-US');
+    const a = screen.getByRole('link', { name: /Talk to the people who make Soulmon/ });
+    expect(a.textContent).not.toContain('opens in a new tab');
+  });
+
+  it('A6 + skeptic #7: o e-mail de erro tem assunto por idioma e o corpo leva o BUILD_ID', async () => {
+    const { feedbackMailto, BUILD_ID } = await import('./FeedbackLink');
+    const pt = new URLSearchParams(feedbackMailto({ language: 'pt-BR', origin: 'error' }).split('?')[1]);
+    const en = new URLSearchParams(feedbackMailto({ language: 'en-US', origin: 'error' }).split('?')[1]);
+    expect(pt.get('subject')).toBe('Soulmon — erro');
+    expect(en.get('subject')).toBe('Soulmon — error');
+    expect(BUILD_ID).toMatch(/^v\d+/); // CACHE_VERSION do sw.js, via define
+    expect(pt.get('body')).toContain(`Build: ${BUILD_ID}`);
+    expect(en.get('body')).toContain(`Build: ${BUILD_ID}`);
+  });
+});

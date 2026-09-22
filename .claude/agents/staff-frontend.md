@@ -16,7 +16,7 @@ not server/data (Backend).
 
 ## Operational Framework
 
-1. Read the **design system** (`brand/design-system.md`) and the **API contract** before writing a line.
+1. Read the **design system** (**`docs/manual/04-IDENTIDADE-VISUAL.md`** — `--sm2-*` tokens, "O Visor"; ⚰️ `brand/design-system.md` is the Consultech360 file from the fork, not Soulmon's — QA Rodada 2, 22/09/2026) and the **API contract** before writing a line.
 2. Build the **thinnest vertical slice** end-to-end first (one real screen against real data) to flush integration risk.
 3. Componentize only after the **second** real use (YAGNI on abstraction).
 4. Wire state + data fetching with explicit **loading / empty / error** states — never the happy path only.

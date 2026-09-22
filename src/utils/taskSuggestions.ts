@@ -18,19 +18,45 @@ export async function suggestTasks(
   categories: ActivityCategory[],
   language: 'pt-BR' | 'en-US',
 ): Promise<SuggestedTask[]> {
+  const r = await suggestTasksResult(goalText, categories, language);
+  return r.ok ? r.items : [];
+}
+
+/** O mesmo pedido, sem apagar a diferença entre "veio vazio" e "quebrou". */
+export type SuggestTasksResult =
+  | { ok: true; items: SuggestedTask[] }
+  /** `offline`: o aparelho declara sem rede, ou a requisição nem saiu.
+   *  `error`: o servidor/provedor respondeu, mas não com sugestões. */
+  | { ok: false; reason: 'offline' | 'error' };
+
+/**
+ * E1 (QA rodada 2): o tutorial tratava rede caída como "a IA não sugeriu
+ * nada", e a pessoa lia isso como "digitei errado". Aqui a falha vem com
+ * nome; `suggestTasks` continua devolvendo `[]` para quem não precisa saber.
+ * Nunca lança.
+ */
+export async function suggestTasksResult(
+  goalText: string,
+  categories: ActivityCategory[],
+  language: 'pt-BR' | 'en-US',
+): Promise<SuggestTasksResult> {
+  const semRede = typeof navigator !== 'undefined' && navigator.onLine === false;
   try {
     const { aiFetch } = await import('./aiClient');
     const res = await aiFetch('/api/suggest-tasks', { goalText, categories, language });
-    if (!res.ok) return [];
+    if (!res.ok) return { ok: false, reason: semRede ? 'offline' : 'error' };
     const data = await res.json();
     const raw = Array.isArray(data.suggestions) ? data.suggestions : [];
-    return raw.map((s: { name: string; category: ActivityCategory }) => ({
-      name: s.name,
-      category: s.category,
-      emoji: CATEGORY_ICONS[s.category] ?? '✨',
-    }));
+    return {
+      ok: true,
+      items: raw.map((s: { name: string; category: ActivityCategory }) => ({
+        name: s.name,
+        category: s.category,
+        emoji: CATEGORY_ICONS[s.category] ?? '✨',
+      })),
+    };
   } catch {
-    return [];
+    return { ok: false, reason: semRede ? 'offline' : 'error' };
   }
 }
 

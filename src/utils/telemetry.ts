@@ -951,14 +951,6 @@ export function track(event: TelemetryEvent, props?: TelemetryProps, day?: strin
     // O dado é do dia que fechou, não da sessão; ele espera numa fila
     // própria e é reprocessado por `track` quando a aba volta
     // (`drainHiddenTelemetry`, ligado em `installTelemetryAutoFlush` e no boot).
-    if (isDocumentHidden()) {
-      const pendente = readJson<HiddenRecord[]>(K_HIDDEN, []);
-      if (pendente.length >= MAX_HIDDEN) return;
-      pendente.push({ e: event, p: props, d: day ?? telemetryDayKey() });
-      writeJson(K_HIDDEN, pendente, { silent: true });
-      return;
-    }
-
     // Carimbo do tier: aqui, um lugar só, e no ENFILEIRAMENTO — não no envio.
     // A diferença importa: quem compra dispara `purchase` e converte no mesmo
     // segundo; carimbar no flush marcaria a compra como vinda de um pagante,
@@ -970,6 +962,23 @@ export function track(event: TelemetryEvent, props?: TelemetryProps, day?: strin
 
     const record = sanitizeEvent(event, withTier as Record<string, unknown> | undefined, day ?? telemetryDayKey());
     if (!record) return;
+
+    // A fila de oculto guarda o registro JÁ SANEADO (QA rodada 2, skeptic
+    // #4): props cruas no localStorage eram o único lugar por onde um texto
+    // podia esperar horas antes de a allowlist recusá-lo. E `ONCE_PER_DAY`
+    // deduplica aqui também, por `(e, d)`: uma noite de aba oculta gerava
+    // dezenas de `day_active` do mesmo dia até bater o teto — e o teto
+    // descartava justamente os eventos que vinham DEPOIS.
+    if (isDocumentHidden()) {
+      let pendente = readJson<HiddenRecord[]>(K_HIDDEN, []);
+      if (ONCE_PER_DAY.includes(record.e)) {
+        pendente = pendente.filter(r => !(r.e === record.e && r.d === record.d));
+      }
+      if (pendente.length >= MAX_HIDDEN) return;
+      pendente.push(record);
+      writeJson(K_HIDDEN, pendente, { silent: true });
+      return;
+    }
 
     const seenKey = seenKeyFor(record);
     if (seenKey && readSeen().includes(seenKey)) return;
@@ -1009,9 +1018,10 @@ export function track(event: TelemetryEvent, props?: TelemetryProps, day?: strin
   }
 }
 
-/** O que espera em `K_HIDDEN`: a chamada crua de `track`, com o dia carimbado
- *  na hora (não no drain — o drain pode ser amanhã). */
-type HiddenRecord = { e: TelemetryEvent; p?: TelemetryProps; d: string };
+/** O que espera em `K_HIDDEN`: o registro já SANEADO por `sanitizeEvent`
+ *  (mesma forma da fila principal), com o dia carimbado na hora (não no
+ *  drain — o drain pode ser amanhã). */
+type HiddenRecord = TelemetryRecord;
 /** Teto da fila de oculto. Menor que `MAX_QUEUE`: aba oculta por dias não
  *  deveria acumular mais do que um punhado de viradas. */
 export const MAX_HIDDEN = 50;

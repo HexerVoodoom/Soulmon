@@ -14,13 +14,30 @@ Regras:
 - **Toda migração declara o que acontece com as linhas existentes**, no
   cabeçalho do próprio arquivo. Um banco vazio não é o caso interessante.
 
-Aplicar (o binding é `DB`, ver `docs/BILLING-SETUP.md`):
+Aplicar (o binding é `DB`, banco `soulmon-billing`, ver `docs/BILLING-SETUP.md`) — o caminho
+canônico é o **`migrations apply`** do wrangler, que registra o que rodou na tabela
+`d1_migrations` do próprio banco e torna a pergunta "está aplicado?" respondível por comando:
 
 ```
-npx wrangler d1 execute <nome-do-banco> --remote --file migrations/0001_order_claims.sql
-npx wrangler d1 execute <nome-do-banco> --remote --file migrations/0002_order_claims_expires_at.sql
+npx wrangler d1 migrations list  soulmon-billing --remote   # o que falta
+npx wrangler d1 migrations apply soulmon-billing --remote   # aplica em ordem, uma vez cada
 ```
 
-O `0001` é `IF NOT EXISTS`: num banco que já rodou o SQL da doc antiga, ele é
-no-op. O `0002` falha alto se já tiver rodado (SQLite não tem `ADD COLUMN IF NOT
-EXISTS`), e falhar alto é o comportamento desejado.
+Prova de feito: `migrations list` vazio, e
+`npx wrangler d1 execute soulmon-billing --remote --command "PRAGMA table_info(order_claims)"`
+listando `expires_at`.
+
+⚰️ **Este README mandava `d1 execute --remote --file <arquivo>` por migração** (até 22/09/2026).
+Os dois caminhos coexistiam e **colidem**: um banco migrado à mão pelo `execute` e depois
+submetido ao `apply` tenta o `0002` de novo e falha em *duplicate column* (o `0001` é
+`IF NOT EXISTS` e passa; o `0002` não tem `ADD COLUMN IF NOT EXISTS`). Se isso acontecer, o
+erro é a prova de que já estava aplicado — registre as duas como aplicadas
+(`wrangler d1 migrations` não tem "mark applied"; o jeito é `INSERT` manual em `d1_migrations`
+com o nome do arquivo, com aval do dono). Não use mais o `execute --file` para migração.
+
+**Estado medido em 22/09/2026** (QA Rodada 2, `docs/reviews/2026-09-22-qa-rodada-2/05-operador-governanca-r2.md`
+§1.1): `migrations list … --remote` → `0001_order_claims.sql` e `0002_order_claims_expires_at.sql`
+**pendentes** — a tabela não existe em produção. Enquanto isso, `claimOrder` desvia para
+`claimOrderAtomic` (o binding `DB` existe) e a 1ª compra Play daria **500** (o `DELETE` inicial
+está fora do `try`); o `try/catch` com fallback para o KV está em correção. Aplicar é do dono ou
+do operador com aval (pergunta #65 em `docs/PERGUNTAS-DO-DONO.md`).

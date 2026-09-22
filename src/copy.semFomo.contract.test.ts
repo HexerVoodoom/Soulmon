@@ -73,9 +73,13 @@ function superficies(): string[] {
   const saida: string[] = [];
   anda(join(RAIZ, 'src', 'components'), saida);
   anda(join(RAIZ, 'workers'), saida);
+  // QA rodada 2 (22/09/2026): `src/utils` tem copy do jogador (missões,
+  // conquistas, oráculo, pesadelos…) e não era varrido — mutação
+  // "Última chance" em `missions.ts` ficou verde.
+  anda(join(RAIZ, 'src', 'utils'), saida);
   anda(join(RAIZ, 'android', 'app', 'src', 'main', 'java'), saida);
   anda(join(RAIZ, 'android', 'app', 'src', 'main', 'res', 'values'), saida);
-  for (const f of ['src/utils/i18n.ts', 'src/utils/petVoice.ts', 'src/utils/welcomeBack.ts', 'functions/api/_pushCopy.js']) {
+  for (const f of ['functions/api/_pushCopy.js']) {
     const cheio = join(RAIZ, f);
     if (existsSync(cheio)) saida.push(cheio);
   }

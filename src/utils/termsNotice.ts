@@ -63,6 +63,11 @@ export function qualDocMudou(
   termsVersion: string,
   privacyVersion: string,
 ): DocMudado {
+  // Versão ILEGÍVEL não sabe dizer qual documento mudou (QA rodada 2,
+  // skeptic #6): `anterior` a trata como "anterior" para AVISAR, mas titular
+  // "os Termos mudaram" a partir de um campo que faltava é afirmar o que não
+  // se sabe. Ilegível → banner genérico.
+  if (!VERSAO_RE.test(String(consent.termsVersion)) || !VERSAO_RE.test(String(consent.privacyVersion))) return 'both';
   const t = anterior(consent.termsVersion, termsVersion);
   const p = anterior(consent.privacyVersion, privacyVersion);
   if (t && !p) return 'terms';

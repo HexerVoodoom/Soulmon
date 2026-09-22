@@ -28,8 +28,15 @@ const RAIZ = resolve(__dirname, '../..');
 const ALLOWLIST: Record<string, string> = {
   '@capacitor/android':
     'plataforma nativa: entra pelo Gradle (`android/capacitor.settings.gradle` → `node_modules/@capacitor/android`), não por import JS.',
-  '@capacitor/cli':
-    'binário `cap`: `npx cap sync android` no CI (`.github/workflows/android-build.yml`); não é código do app.',
+};
+
+/** Pacotes que NÃO PODEM voltar para `dependencies` (QA rodada 2, segurança
+ *  §11): `@capacitor/cli` é ferramenta de CI (`npm install -g @capacitor/cli`
+ *  + `npx cap sync android` em `android-build.yml`) e trazia `tar` com
+ *  advisory crítica para o `npm audit --omit=dev` de produção. Vive em
+ *  `devDependencies`. */
+const SO_DEV: Record<string, string> = {
+  '@capacitor/cli': 'binário `cap` do CI; puxa `tar` vulnerável para o audit de produção.',
 };
 
 /** Onde procurar imports. `dist/` fica de fora — é saída, não fonte. */
@@ -63,8 +70,9 @@ function pacotesMortos(deps: readonly string[], fontes: readonly string[], allow
   return deps.filter(d => !(d in allowlist) && !fontes.some(c => regexDeImport(d).test(c)));
 }
 
-const pkgJson = JSON.parse(readFileSync(resolve(RAIZ, 'package.json'), 'utf8')) as { dependencies: Record<string, string> };
+const pkgJson = JSON.parse(readFileSync(resolve(RAIZ, 'package.json'), 'utf8')) as { dependencies: Record<string, string>; devDependencies: Record<string, string> };
 const deps = Object.keys(pkgJson.dependencies);
+const devDeps = Object.keys(pkgJson.devDependencies ?? {});
 const fontes = RAIZES.flatMap(r => arquivos(resolve(RAIZ, r))).map(p => readFileSync(p, 'utf8'));
 
 describe('dependencies vivas — todo pacote tem quem o importe', () => {
@@ -100,6 +108,16 @@ describe('dependencies vivas — todo pacote tem quem o importe', () => {
       expect(motivo.length, `${pkg}: allowlist sem motivo`).toBeGreaterThan(20);
       expect(fontes.some(c => regexDeImport(pkg).test(c)), `${pkg} passou a ser importado; tire da ALLOWLIST`).toBe(false);
     }
+  });
+
+  it('ferramenta de CI fica em devDependencies: `@capacitor/cli` AUSENTE de dependencies e presente em devDependencies', () => {
+    for (const [pkg, motivo] of Object.entries(SO_DEV)) {
+      expect(motivo.length).toBeGreaterThan(20);
+      expect(deps, `${pkg} voltou para dependencies — ${motivo}`).not.toContain(pkg);
+      expect(devDeps, `${pkg} sumiu de devDependencies; o CI (android-build.yml) precisa dele`).toContain(pkg);
+    }
+    const wf = readFileSync(resolve(RAIZ, '.github/workflows/android-build.yml'), 'utf8');
+    expect(wf).toMatch(/npm install -g @capacitor\/cli/);
   });
 
   it('o scaffold shadcn não volta: nenhum `@radix-ui/*` nem seus utilitários em dependencies', () => {

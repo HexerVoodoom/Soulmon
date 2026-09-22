@@ -43,8 +43,12 @@
 ### 1.1 Título — máx. 30 · **28**
 
 ```
-Soulmon: Bichinho de Hábitos
+Soulmon: Nasce das Respostas
 ```
+
+> 22/09/2026 (QA rodada 2, `02-narrativa` §2): a squad-narrativa validou a sugestão
+> registrada em §2.1 — criatura como sujeito, sem espelho, sem espera; e o título
+> PT passa a falar a mesma língua da descrição curta e do título EN.
 
 ### 1.2 Descrição curta — máx. 80 · **72**
 
@@ -52,14 +56,14 @@ Soulmon: Bichinho de Hábitos
 Uma criatura que nasce das suas respostas e muda de forma com o seu dia.
 ```
 
-### 1.3 Descrição longa — máx. 4.000 · **3.347**
+### 1.3 Descrição longa — máx. 4.000 · **3.376**
 
 ```
-Ele nasce de quem você é. E muda de forma com o que você faz.
+Ele nasce das suas respostas. E muda de forma com o que você faz.
 
 Responda ao Oráculo — seis perguntas sobre você — e uma criatura se assenta no visor. A linha de formas dela é gerada a partir das suas respostas: cada resposta diferente gera uma criatura diferente, e mudar uma resposta muda quem ela vai ser. Do outro lado da tela, o seu dia é o que dá corpo a ela.
 
-Não há veredito aqui. O Soulmon não te dá nota, não pune um dia sem marcar, não manda mensagem cobrando. Depois de dois dias seguidos sem marcar, ele pergunta — e oferece uma versão menor. Ele mostra. Você olha, e decide.
+Não há veredito aqui. O Soulmon não te dá nota, perdoa um dia sem marcar por semana, sozinho, e não manda mensagem cobrando. Depois de dois dias seguidos sem marcar, ele pergunta — e oferece uma versão menor. Ele mostra. Você olha, e decide.
 
 ━━━━━━━━━━━━━━━━━━━━━━
 
@@ -78,7 +82,7 @@ Não há veredito aqui. O Soulmon não te dá nota, não pune um dia sem marcar,
 • Alimente, e a comida que você escolhe inclina a forma seguinte.
 • Faça carinho, dê banho, ponha para dormir, recolha o que ela deixa pelo abrigo.
 • Converse com ela. Ela fala pouco, tem sono, tem opinião — e fala do que está sentindo, não do que você fez.
-• Se você se afasta, ela recua para uma forma que se sustenta com menos. Voltar sempre dá, e nada do que você construiu se apaga.
+• Num dia sem o bastante, ela recua para uma forma que se sustenta com menos. Voltar sempre dá, e nada do que você construiu se apaga.
 
 ★ QUANDO O DIA ACABA
 
@@ -140,14 +144,14 @@ Soulmon: Born of Your Answers
 A creature born from your answers. It takes new forms as your days do.
 ```
 
-### 2.3 Full description — max 4,000 · **3,319**
+### 2.3 Full description — max 4,000 · **3,338**
 
 ```
-It is born from who you are. And it takes new forms from what you do.
+It is born from your answers. And it takes new forms from what you do.
 
 Answer the Oracle — six questions about you — and a creature settles in the visor. Its line of forms is generated from your answers: every different answer generates a different creature, and changing one answer changes who it becomes. On the other side of the screen, your day is what gives it a body.
 
-There is no verdict here. Soulmon doesn't grade you, doesn't punish a day without a check, doesn't message you to nag. After two days in a row without one, it asks — and offers a smaller version. It shows. You look, and you decide.
+There is no verdict here. Soulmon doesn't grade you, forgives one unmarked day a week on its own, and doesn't message you to nag. After two days in a row without one, it asks — and offers a smaller version. It shows. You look, and you decide.
 
 ━━━━━━━━━━━━━━━━━━━━━━
 
@@ -166,7 +170,7 @@ There is no verdict here. Soulmon doesn't grade you, doesn't punish a day withou
 • Feed it, and the food you choose leans the next form.
 • Pet it, bathe it, put it to sleep, clean up what it leaves around the den.
 • Talk to it. It says little, gets sleepy, has opinions — and talks about what it feels, not about what you did.
-• If you step away, it falls back to a form it can hold with less. Coming back always works, and nothing you built is erased.
+• On a day without enough, it folds back to a form it can hold with less. Coming back always works, and nothing you built is erased.
 
 ★ WHEN THE DAY IS DONE
 
@@ -214,12 +218,12 @@ a frase correspondente sai da ficha **antes** do próximo envio.
 | Mudança de forma é manual, o jogador toca | `MANUAL_EVOLUTION = true`; `handleEvolve` em `src/App.tsx` | `CLAUDE.md` › 🔒 Cadeado de evolução |
 | "N das últimas 7", nunca zera | `src/utils/habitRhythm.ts` › `CONSTANCY_WINDOW_DAYS` | teste trava streak que zera |
 | Escudos consumidos sozinhos | `applyMissedDay`; `REST_SHIELD_*` | `CLAUDE.md` › 🛡️ |
-| "não pune um dia sem marcar; depois de dois seguidos, pergunta" / versão de 5 minutos | `MISS_INTERVENTION_AT` = 2; `needsIntervention`; `applyMissedDay` | `CLAUDE.md` › 🚫 Never miss twice. A ficha NÃO diz mais "não conta os dias que você faltou": o app conta (`CONSTANCY_WINDOW_DAYS`), o que ele não faz é cobrar (L6) |
+| "perdoa um dia sem marcar por semana, sozinho; depois de dois seguidos, pergunta" / versão de 5 minutos | `REST_DAYS_PER_WEEK` = 1 (a 1ª perda da semana é absorvida na virada); `MAX_HEARTS_LOST_PER_DAY`; `MISS_INTERVENTION_AT` = 2; `needsIntervention`; `applyMissedDay` | `CLAUDE.md` › 🚫 Never miss twice. A ficha NÃO diz mais "não conta os dias que você faltou": o app conta (`CONSTANCY_WINDOW_DAYS`), o que ele não faz é cobrar (L6) |
 | Fecho "nasce das suas respostas — e cresce com o que você faz" | `ORACLE_QUESTIONS`; `perfectDays` / `handleEvolve` | sem L2 (espelho) nem L11 (espera/saudade); "cresce" descreve `perfectDays` acumulando |
 | Comida inclina o galho | `careRules.ts`; atributos vírus/dado/vacina | `CLAUDE.md` › 🍎 |
 | Carinho, banho, sono, recolher | `careRules.ts`, `poopDrain.ts` | `CLAUDE.md` › 🫶 🚿 💤 💩 |
 | Chat: fala do que sente, não do que você fez | `functions/api/chat.js` (cláusula SAFETY); `src/utils/chatSafety.ts`; bíblia §5.10/§13 | IA sem revisão humana — declarado em §5 abaixo |
-| Recua para uma forma que se sustenta com menos; nada se apaga | degeneração por HP 0 (`CLAUDE.md` › ❤️); `applyFreshStart` nunca toca `perfectDays`/marcos | frase-modelo da bíblia §13 ✅ |
+| "Num dia sem o bastante" recua para uma forma que se sustenta com menos; nada se apaga | degeneração por HP 0 (`CLAUDE.md` › ❤️); `applyFreshStart` nunca toca `perfectDays`/marcos | frase-modelo da bíblia §13 ✅. ⚠️ Dizia "Se você se afasta" até 22/09/2026 (QA R2 A2): afastar-se é o que NÃO custa (`ABSENCE_FORGIVENESS_DAYS` = 2), e L4 proíbe atribuir causa — a causa real é o dia sem o bastante |
 | Fendas: 5 camadas × 6 encontros | `MAX_FLOORS` em `src/components/DungeonGame.tsx`; `LADDER_TIERS` | `CLAUDE.md` › ⚔️ |
 | Torneio de fim de semana, faixas antes do ranking | `src/utils/tournamentSeason.ts`, `tournamentTiers.ts`; `functions/api/community.js` › `match`, `rank` | **se o PvP for desligado, a linha sai** |
 | Grupo cooperativo por código: "apareceu hoje" | `functions/api/community.js` › `coopCreate`/`coopJoin`/`coopCheckin` | `docs/PLANO-COOP.md` |

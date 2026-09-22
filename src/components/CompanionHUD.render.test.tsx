@@ -13,6 +13,12 @@ import { screen, fireEvent } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
 import { CompanionHUD } from './CompanionHUD';
 import { BASE_SLOTS } from '../utils/petStage';
+import { PET_VOICE_LINES } from '../utils/petVoice';
+
+/** Casa qualquer uma das frases do kind — o texto vem de `PET_VOICE_LINES`,
+ *  nunca de literal copiado aqui (22/09/2026, QA R2 `07` §2.9). */
+const regexDasFalas = (linhas: string[]) =>
+  new RegExp(linhas.map(l => l.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'));
 
 const base = {
   companionMood: 'idle' as const,
@@ -49,9 +55,8 @@ describe('CompanionHUD', () => {
     // rejeitando, e mesmo assim o balão aparece com texto em PT.
     renderWithCss(<CompanionHUD {...base} useAI energyPoints={4} maxEnergyPoints={4} />);
     fireEvent.click(screen.getByAltText('rookie'));
-    const bubble = screen.getByText(
-      /Cheio de energia!|Pronto para tudo!|Totalmente carregado!/,
-    );
+    // 22/09/2026: energia cheia → kind `energized`, frases do dono da voz.
+    const bubble = screen.getByText(regexDasFalas(PET_VOICE_LINES.energized.pt));
     expect(bubble).toBeTruthy();
   });
 
@@ -60,7 +65,7 @@ describe('CompanionHUD', () => {
       <CompanionHUD {...base} language="en-US" useAI energyPoints={4} maxEnergyPoints={4} />,
     );
     fireEvent.click(screen.getByAltText('rookie'));
-    expect(screen.getByText(/Full power!|Ready for anything!|Fully charged!/)).toBeTruthy();
+    expect(screen.getByText(regexDasFalas(PET_VOICE_LINES.energized.en))).toBeTruthy();
   });
 
   it('o botão Evoluir NÃO existe quando `canEvolve` é falso', () => {
@@ -155,7 +160,9 @@ describe('CompanionHUD', () => {
     // com o regex — desde 27/08/2026 o rótulo "Energia" do HUD compacto
     // (migrou para dentro do `.sm2-device`) também casa com /energia/i, mas
     // vive num `<span>`, não num `<p>`.
-    const balao = screen.getByText(/Estômago vazio|Me alimenta|Com muita fome|fome|energia/i, { selector: 'p' });
+    // 22/09/2026: sem energia nos props a escada cai em `starving`, e o texto
+    // vem do DONO da voz (`PET_VOICE_LINES`), não de literal do componente.
+    const balao = screen.getByText(regexDasFalas(PET_VOICE_LINES.starving.pt), { selector: 'p' });
     expect(visor.contains(balao)).toBe(false);
   });
 

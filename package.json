@@ -4,7 +4,6 @@
   "private": true,
   "dependencies": {
     "@capacitor/android": "^8.4.0",
-    "@capacitor/cli": "^8.4.0",
     "@capacitor/core": "^8.4.0",
     "@capacitor/push-notifications": "^8.1.1",
     "@capgo/capacitor-pedometer": "^8.0.38",
@@ -16,6 +15,7 @@
     "sonner": "^2.0.3"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.4.0",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.2",
     "@types/node": "^20.19.43",

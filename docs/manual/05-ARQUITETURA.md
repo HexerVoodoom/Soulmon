@@ -1,6 +1,6 @@
 # Arquitetura
 
-> **Dono:** doc-redator-arquitetura · **Data:** 22/09/2026 · **Estado:** verificado em 22/09/2026 por doc-verificador (delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §1.1 `version` 1.1.4, §1.3 `billing-ktx` 8.3.0, §4 ADR-004..006 em Proposta, §7 hash novo, §9 guards novos conferidos contra `package.json`, `build.gradle`, `ls docs/adr`, `ls src/deploy src/plugins src/*.contract.test.ts`; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §1.1, §1.3, §2.1 `scripts/`, §2.2 `src/deploy/`, §3, §7 `cacheavel` e §9 conferidos símbolo a símbolo; anterior: linhas de áudio da §2.1, §2.2, §5 e §7, delta `5ac3d351..8d318529`, som/S16; o resto: sincronizado com `dc72579e..9875477b` em 21/09/2026 por doc-redator-arquitetura; conferido em `5ac3d351`)
+> **Dono:** doc-redator-arquitetura · **Data:** 22/09/2026 (§9 ganha os 3 portões da QA Rodada 2 — mutação, orçamento de tempo, git × ar) · **Estado:** verificado em 22/09/2026 por doc-verificador (delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §1.1 `version` 1.1.4, §1.3 `billing-ktx` 8.3.0, §4 ADR-004..006 em Proposta, §7 hash novo, §9 guards novos conferidos contra `package.json`, `build.gradle`, `ls docs/adr`, `ls src/deploy src/plugins src/*.contract.test.ts`; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §1.1, §1.3, §2.1 `scripts/`, §2.2 `src/deploy/`, §3, §7 `cacheavel` e §9 conferidos símbolo a símbolo; anterior: linhas de áudio da §2.1, §2.2, §5 e §7, delta `5ac3d351..8d318529`, som/S16; o resto: sincronizado com `dc72579e..9875477b` em 21/09/2026 por doc-redator-arquitetura; conferido em `5ac3d351`)
 > **Verificação:** `npx tsc --noEmit` · `npx tsc -p tsconfig.server.json --noEmit` · `npx tsc -p desktop/tsconfig.json --noEmit` · `npx vitest run` · `npm run build`; os contratos de fronteira são `src/deploy/appUrl.contract.test.ts`, `src/deploy/firebaseNoBuild.contract.test.ts`, `src/deploy/swCache.contract.test.ts`, `src/security/csp.test.ts`
 > **Não cobre:** as regras do jogo (→ `02-REGRAS-DE-NEGOCIO.md`), as telas (→ `03-FLUXO-DE-TELAS.md`), tokens e estilo (→ `04-IDENTIDADE-VISUAL.md`), função por função (→ `06-REFERENCIA/`), o esquema do save e as chaves de storage (→ `07-DADOS-E-SAVE.md`), credenciais e deploy (→ `08-INTEGRACOES-E-DEPLOY.md`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -335,6 +335,14 @@ datado: o Actions ficou parado por cobrança de 16/09 a pelo menos 22/09/2026**
 (#48) — nesse período os portões só rodaram na máquina local, e é por isso que
 `gh run list --limit 5` virou a primeira linha do runbook do operador
 ([08 §3.3](08-INTEGRACOES-E-DEPLOY.md), [12 §7](12-COMO-MANTER.md)).
+
+**Três portões que a QA Rodada 2 (22/09/2026) acrescentou ao método, fora do `npm test`:**
+
+| Portão | Comando | O que pega |
+|---|---|---|
+| **Prova de vermelho por mutação** | mutar o alvo do guard (`sed` na constante/versão/símbolo) → `npx vitest run <guard>` → reverter (formato em `reviews/2026-09-22-qa-rodada-2/05-operador-governanca-r2.md` §2.2, `mutation.log` da rodada: `depsVivas`, `versaoUnica`, `manifest` — 3/3 ficaram vermelhos) | guard **tautológico** (verde por vazio, grep de texto que não lê o alvo) — a classe que a R1 achou em `billingPbl8` (prova que o texto mudou, não que compila) e `orcamentoDeBytes` (a dívida era parâmetro do teste). Toda régua nova nasce com a prova colada no PR |
+| **Orçamento de tempo** | `node scripts/orcamento-de-tempo.mjs --rodadas 2` em máquina ociosa; baseline e dívida nomeada em [`docs/orcamento-de-tempo.md`](../orcamento-de-tempo.md) | teste que passa gastando > 25 % do `TEST_TIMEOUT_MS` (§10.2) — em 22/09: **4 casos de `src/components/ShopModal.canvas.render.test.tsx`** (29,7–33,5 %), 7 em atenção, 0 críticos. Não entra no gate de propósito (contenção mede a máquina) |
+| **Git × ar** | o runbook do `soulmon-operador` (`curl` do `sw.js`, `index.html` e rotas admin; `wrangler deployments list`, `secret list`, `d1 migrations list`) | o que o repo **não prova**: secret ausente, migração não aplicada, worker não deployado. Em 22/09 achou as migrações D1 pendentes (1ª compra = 500) e dois secrets faltando — 3 rodadas antes tinham perguntado sem medir |
 
 ---
 

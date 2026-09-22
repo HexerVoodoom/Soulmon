@@ -14,6 +14,7 @@
 import { authHeaders } from './auth';
 import { STORAGE_KEYS, RECONCILE_KEYS } from './storageKeys';
 import { writeLocal, readLocal, removeLocal } from './safeStorage';
+import { resolveLanguage } from './i18n';
 
 export async function emailToSaveId(email: string): Promise<string> {
   const norm = email.trim().toLowerCase();
@@ -105,11 +106,43 @@ function falha(status: number): CloudSaveFailure {
   return { ok: false, kind, status, ...CLOUD_SAVE_POLICY[kind] };
 }
 
-/** Mensagem PT/EN do portão depois de uma conta excluída (adendo 11, 21/09/2026). */
-export function mensagemContaExcluida(pt: boolean): string {
-  return pt
-    ? 'Esta conta foi excluída neste ou em outro aparelho.'
-    : 'This account was deleted on this or another device.';
+/** `DD/MM` do carimbo da lápide, no fuso do aparelho. Vazio se não veio. */
+function diaMesDaExclusao(excluidaEm?: number): string {
+  if (typeof excluidaEm !== 'number' || !Number.isFinite(excluidaEm)) return '';
+  const d = new Date(excluidaEm);
+  if (Number.isNaN(d.getTime())) return '';
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  return `${dd}/${mm}`;
+}
+
+/**
+ * Mensagem PT/EN do portão depois de uma conta excluída (adendo 11,
+ * 21/09/2026; reescrita na QA rodada 2 para o fluxo real). O servidor limpa a
+ * lápide quando o login é POSTERIOR à exclusão (`auth_time` do token >
+ * `tombstone.at`), então na prática o segundo login passa — a mensagem diz
+ * exatamente isso, em vez de só "foi excluída" sem saída.
+ */
+export function mensagemContaExcluida(pt: boolean, excluidaEm?: number): string {
+  const dia = diaMesDaExclusao(excluidaEm);
+  if (pt) {
+    return `Esta conta foi excluída${dia ? ` em ${dia}` : ''}. `
+      + 'O servidor libera o e-mail no próximo login — tente entrar de novo.';
+  }
+  return `This account was deleted${dia ? ` on ${dia}` : ''}. `
+    + 'The server frees the email on your next sign-in — try signing in again.';
+}
+
+/** Idioma do aviso: escolha gravada, senão o do aparelho (`resolveLanguage`). */
+function avisoEmPt(): boolean {
+  return resolveLanguage(readLocal(STORAGE_KEYS.LANGUAGE)) === 'pt-BR';
+}
+
+/** Grava a mensagem que o portão lê UMA vez depois do reload. */
+export function gravarAvisoContaExcluida(excluidaEm?: number): string {
+  const m = mensagemContaExcluida(avisoEmPt(), excluidaEm);
+  writeLocal(STORAGE_KEYS.ACCOUNT_DELETED_NOTICE, m, { silent: true });
+  return m;
 }
 
 /**
@@ -121,12 +154,30 @@ export function mensagemContaExcluida(pt: boolean): string {
  * lança; `recarregar` é injetável para teste.
  */
 let contaExcluidaTratada = false;
-export async function reagirContaExcluida(opts: { recarregar?: () => void } = {}): Promise<void> {
+export async function reagirContaExcluida(
+  opts: { recarregar?: () => void; excluidaEm?: number } = {},
+): Promise<void> {
   if (contaExcluidaTratada) return;
   contaExcluidaTratada = true;
   try {
-    const pt = (readLocal(STORAGE_KEYS.LANGUAGE) ?? '').toLowerCase().startsWith('pt');
-    writeLocal(STORAGE_KEYS.ACCOUNT_DELETED_NOTICE, mensagemContaExcluida(pt), { silent: true });
+    gravarAvisoContaExcluida(opts.excluidaEm);
+    // Cópia do save local ANTES de apagar (QA rodada 2, segurança §5 / skeptic
+    // 1b): o 410 pode ter vindo de um aparelho que ainda tinha progresso não
+    // sincronizado. A cópia é a mesma de `reconcileSaveId` — um único lugar
+    // onde o suporte procura "o que se perdeu". Se a cópia falhar (storage
+    // cheio), a limpeza segue mesmo assim: continuar sincronizando recriaria
+    // o que a pessoa mandou apagar, e isso é pior do que perder a cópia.
+    const estadoLocal = readLocal(STORAGE_KEYS.GAME_STATE);
+    if (estadoLocal) {
+      let state: unknown = estadoLocal;
+      try { state = JSON.parse(estadoLocal); } catch { /* guarda o texto cru */ }
+      writeLocal(RECONCILE_KEYS.CONFLICT_BACKUP, JSON.stringify({
+        saveId: readLocal(STORAGE_KEYS.SAVE_ID) ?? '',
+        salvoEm: new Date().toISOString(),
+        motivo: 'account-deleted',
+        state,
+      }), { silent: true });
+    }
     removeLocal(STORAGE_KEYS.GAME_STATE, { silent: true });
     removeLocal(STORAGE_KEYS.SAVE_ID, { silent: true });
     removeLocal(STORAGE_KEYS.LAST_CLOUD_SYNC, { silent: true });
@@ -267,16 +318,35 @@ export async function cloudSaveComRetry(
 }
 
 /** Leitura do save da nuvem que distingue "não existe" de "não sei". */
-type LeituraNuvem =
+export type LeituraNuvem =
   | { estado: 'encontrado'; state: unknown }
   | { estado: 'vazio' }
-  | { estado: 'excluida' }
+  /** 410 `account-deleted`. `excluidaEm` é o `deletedAt` (ms) do corpo, se o servidor mandou. */
+  | { estado: 'excluida'; excluidaEm?: number }
   | { estado: 'indeterminado' };
 
-async function lerNuvem(saveId: string): Promise<LeituraNuvem> {
+/**
+ * Contrato do 410 que este cliente espera de `/api/save` (e das rotas com
+ * lápide): `{ error: 'account-deleted', deletedAt?: <ms epoch> }`. Sem
+ * `deletedAt` a mensagem sai sem a data — nunca quebra.
+ */
+export async function lerDeletedAt(res: Response): Promise<number | undefined> {
+  try {
+    const data = await res.clone().json() as { deletedAt?: unknown } | null;
+    const v = data?.deletedAt;
+    if (typeof v === 'number' && Number.isFinite(v)) return v;
+    if (typeof v === 'string') {
+      const t = Date.parse(v);
+      if (Number.isFinite(t)) return t;
+    }
+  } catch { /* corpo vazio ou não-JSON */ }
+  return undefined;
+}
+
+export async function lerNuvem(saveId: string): Promise<LeituraNuvem> {
   try {
     const res = await fetch(`/api/save?id=${saveId}`, { headers: await authHeaders() });
-    if (res.status === 410) return { estado: 'excluida' };
+    if (res.status === 410) return { estado: 'excluida', excluidaEm: await lerDeletedAt(res) };
     if (!res.ok) return { estado: 'indeterminado' };
     const data = await res.json();
     return data.found ? { estado: 'encontrado', state: data.state } : { estado: 'vazio' };
@@ -285,11 +355,40 @@ async function lerNuvem(saveId: string): Promise<LeituraNuvem> {
   }
 }
 
+/**
+ * Checagem de LOGIN (QA rodada 2, F1/1.2 — FATAL): antes de deixar a pessoa
+ * entrar no onboarding com um e-mail cuja conta tem lápide. Sem isto o fluxo
+ * era login → onboarding inteiro → POST 410 → wipe + logout → de novo.
+ *
+ * Se a chave derivada responde 410: grava o aviso do portão (idioma por
+ * `resolveLanguage`), encerra a sessão que acabou de nascer e devolve a
+ * mensagem. O servidor limpa a lápide quando `auth_time` > `tombstone.at`,
+ * então o PRÓXIMO login desse mesmo e-mail passa — o texto diz isso.
+ *
+ * Qualquer outro estado (vazio, encontrado, indeterminado) devolve `null`: a
+ * dúvida de rede não barra o login, quem trata é o fluxo normal.
+ */
+export async function checarContaExcluidaNoLogin(email: string): Promise<{ mensagem: string; saveId: string } | null> {
+  const norm = email.trim().toLowerCase();
+  if (!norm) return null;
+  const saveId = await emailToSaveId(norm);
+  const r = await lerNuvem(saveId);
+  if (r.estado !== 'excluida') return null;
+  const mensagem = gravarAvisoContaExcluida(r.excluidaEm);
+  try {
+    const { signOut } = await import('./auth');
+    await signOut();
+  } catch { /* sem sessão para encerrar */ }
+  return { mensagem, saveId };
+}
+
 export async function cloudLoad(saveId: string): Promise<unknown | null> {
   const r = await lerNuvem(saveId);
   // GET também recebe o 410: só reage se ESTE aparelho ainda carrega o save
   // dessa conta — carregar o save de outro id (login) não é "minha conta sumiu".
-  if (r.estado === 'excluida' && readLocal(STORAGE_KEYS.SAVE_ID) === saveId) void reagirContaExcluida();
+  if (r.estado === 'excluida' && readLocal(STORAGE_KEYS.SAVE_ID) === saveId) {
+    void reagirContaExcluida({ excluidaEm: r.excluidaEm });
+  }
   return r.estado === 'encontrado' ? r.state : null;
 }
 
@@ -412,7 +511,9 @@ export type ReconcileResult =
   /** O storage recusou a gravação. A identidade NÃO trocou. */
   | { estado: 'storage'; saveId: string }
   /** Sem e-mail autenticado: não há de onde derivar. */
-  | { estado: 'sem-email' };
+  | { estado: 'sem-email' }
+  /** A chave derivada tem lápide (410). Nada foi movido; `reagirContaExcluida` já correu. */
+  | { estado: 'excluida'; saveId: string; excluidaEm?: number };
 
 /**
  * Realinha o `saveId` local com o e-mail autenticado, sem perder progresso.
@@ -439,6 +540,14 @@ export async function reconcileSaveId(
   if (naNuvem.estado === 'indeterminado') {
     console.warn('[cloudSave] reconciliação adiada: não deu para ler a chave derivada');
     return { estado: 'indeterminado', saveId: derivado };
+  }
+  // Lápide na chave derivada: esta sessão é ANTERIOR à exclusão (o servidor
+  // limpa a lápide quando o login é posterior). Tratar como "vazio" subia o
+  // estado local, tomava 410 no POST e entrava no loop wipe+logout (QA rodada
+  // 2, skeptic #1). Aqui se para de vez: backup, limpeza, logout e portão.
+  if (naNuvem.estado === 'excluida') {
+    await reagirContaExcluida({ excluidaEm: naNuvem.excluidaEm });
+    return { estado: 'excluida', saveId: derivado, excluidaEm: naNuvem.excluidaEm };
   }
 
   const anterior = atual ?? '';

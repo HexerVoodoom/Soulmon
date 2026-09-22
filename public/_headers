@@ -19,10 +19,12 @@
 # data, hora e local de nascimento) do localStorage. Isso importa mais aqui do
 # que no site médio porque a origem é COMPARTILHADA com o DigiApp (N-6).
 #
-# Os três `sha256-` são os TRÊS <script> inline do `index.html`, na ordem em que
-# aparecem: tema antes da primeira pintura · aviso de WebView antigo (troca a
-# tela branca por uma frase acionável em aparelho com Chromium < 112) · registro
-# do service worker (gate do WebView com `selector(&)` desde 21/09/2026).
+# Os `sha256-` são os QUATRO <script> inline do `index.html`, na ordem em que
+# aparecem: tema antes da primeira pintura · splash localizada antes do bundle ·
+# aviso de WebView antigo (troca a tela branca por uma frase acionável em
+# aparelho com Chromium < 112; ramo Android só para `; wv)` desde 22/09/2026;
+# o guard exige IGUALDADE do conjunto de hashes fonte ∪ dist) · registro do
+# service worker (gate do WebView com `selector(&)` desde 21/09/2026).
 # Não use 'unsafe-inline' para resolver isso — seria devolver exatamente o
 # que a política existe para tirar.
 # `src/security/csp.test.ts` recalcula os hashes a partir do HTML e falha se
@@ -53,4 +55,4 @@
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
   Strict-Transport-Security: max-age=31536000; includeSubDomains
-  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' https://apis.google.com 'sha256-ZpbXoJAYQEB9rJBNQCGdUhQphNAnAOIcYiIOgvMGvFg=' 'sha256-c6QQgFbjfCzeF0+hvpAF/HkyXkTYWEchvMDHPeDGxFQ=' 'sha256-/a0iipZRaG3K1EFAgvKFptrOkl+bW9WR3WHWhaYOBoQ=' 'sha256-9dTtYE4pgtpNvqECJDrGuRpL2eDNBOmoCFJlP4iQ/Mo='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://*.firebaseapp.com https://*.firebaseio.com wss://*.firebaseio.com; worker-src 'self'; manifest-src 'self'; frame-src 'self' https://*.firebaseapp.com https://apis.google.com https://accounts.google.com
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' https://apis.google.com 'sha256-ZpbXoJAYQEB9rJBNQCGdUhQphNAnAOIcYiIOgvMGvFg=' 'sha256-c6QQgFbjfCzeF0+hvpAF/HkyXkTYWEchvMDHPeDGxFQ=' 'sha256-I6VkHdCs21CF1GgemooM+GLxMbok0nqFVGKt5iQjjgs=' 'sha256-9dTtYE4pgtpNvqECJDrGuRpL2eDNBOmoCFJlP4iQ/Mo='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://*.firebaseapp.com https://*.firebaseio.com wss://*.firebaseio.com; worker-src 'self'; manifest-src 'self'; frame-src 'self' https://*.firebaseapp.com https://apis.google.com https://accounts.google.com

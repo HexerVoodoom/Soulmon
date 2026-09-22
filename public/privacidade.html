@@ -388,11 +388,28 @@
   <strong>O que a exclusão apaga:</strong> o seu save inteiro (criatura,
   atividades, itens, moedas), <strong>a imagem gerada da sua criatura</strong>,
   o seu perfil público, o seu apelido, as posições nos rankings, os presentes do
-  grupo, o registro de uso da sua conta paga (contadores de IA e afins) e as
+  grupo, <strong>a sua vaga no grupo cooperativo</strong> (você sai do grupo
+  automaticamente; um grupo que fica vazio some junto com o código), o registro
+  de uso da sua conta paga (contadores de IA e afins) e as
   inscrições de notificação que o servidor consegue ligar à sua conta. O app
   também desfaz a inscrição de notificações <strong>deste aparelho</strong> na
   mesma hora; se você usa o Soulmon em mais de um aparelho, desligue as
   notificações em cada um deles.
+  <!-- 2026-09-22: grupo cooperativo — `account.js` › delete-confirm passo 3b
+       (`_coop.js` › `coopLeave`). QA rodada 2, 04-dados §1.3. -->
+</p>
+<p>
+  <strong>A marca de exclusão (30 dias):</strong> depois de apagar, o servidor
+  guarda por <strong>30 dias</strong> só o identificador da sua conta (o código
+  derivado do seu e-mail, que não permite reconstruí-lo) com a marca
+  "excluída". Ela existe para <strong>recusar gravação de um aparelho antigo</strong>
+  que ainda estivesse logado — sem ela, o save voltava sozinho segundos depois
+  da exclusão. Se você <strong>entrar de novo com o mesmo e-mail</strong>, a
+  marca é retirada e a conta recomeça do zero. Passados os 30 dias, a marca
+  some sozinha.
+  <!-- functions/api/_accountTombstone.js › TOMBSTONE_TTL_SECONDS = 30 d;
+       reabertura por `auth_time` posterior à exclusão. QA rodada 2,
+       01-seguranca §1.4. -->
   <!-- 2026-09-21: "imagem gerada" e "inscrições ligadas à conta" são decisão
        provisória do coordenador (QA rodada 1 — 06-guardas #2 e compliance #7).
        O apagamento de sprite:img:/sprite:blob: no delete-confirm é tarefa do
@@ -413,6 +430,16 @@
   derivado do seu e-mail, que não permite reconstruí-lo) — <strong>não contém
   o seu e-mail nem nenhum outro dado sobre você</strong>. Ele também é o que
   impede um mesmo comprovante de virar várias contas pagas.
+</p>
+<p>
+  <strong>Se você ativou pela Steam:</strong> o vínculo entre o seu SteamID e a
+  conta que ele ativou fica guardado pelo mesmo prazo de <strong>5 anos</strong>,
+  para que uma mesma licença Steam não vire várias contas. Esse prazo é
+  <strong>provisório</strong> e está em revisão — pode ser encurtado numa
+  próxima versão desta política.
+  <!-- `ord:steam:own:<appid>:<steamid>` (functions/api/_billing.js ›
+       verifySteamOwnership → claimOrder, RETENTION_TTL_SECONDS). Provisório:
+       pergunta #56 em docs/PERGUNTAS-DO-DONO.md (QA rodada 2, 04-dados #4). -->
 </p>
 <p>
   Apagar o app do aparelho remove os dados locais, mas <strong>não</strong>
@@ -759,11 +786,23 @@
 <p>
   <strong>What deletion erases:</strong> your whole save (creature, activities,
   items, currencies), <strong>your creature's generated image</strong>, your
-  public profile, your nickname, your ranking entries, group gifts, the usage
+  public profile, your nickname, your ranking entries, group gifts,
+  <strong>your place in the cooperative group</strong> (you leave the group
+  automatically; a group left empty disappears along with its code), the usage
   record of your paid account (AI counters and the like) and the notification
   subscriptions the server can link to your account. The app also unsubscribes
   <strong>this device</strong> from notifications right away; if you use Soulmon
   on more than one device, turn notifications off on each of them.
+</p>
+<p>
+  <strong>The deletion marker (30 days):</strong> after you delete, the server
+  keeps for <strong>30 days</strong> only your account identifier (the code
+  derived from your email, which cannot be turned back into it) marked as
+  "deleted". It exists to <strong>refuse writes from an old device</strong> that
+  was still signed in — without it, the save came back on its own seconds after
+  deletion. If you <strong>sign in again with the same email</strong>, the
+  marker is removed and the account starts over from scratch. After 30 days the
+  marker expires on its own.
 </p>
 <p>
   <strong>Unused save:</strong> a save that goes <strong>12 months</strong>
@@ -778,6 +817,13 @@
   code derived from your email that cannot be turned back into it) — it
   <strong>does not contain your email or any other data about you</strong>. It
   is also what stops one receipt from becoming several paid accounts.
+</p>
+<p>
+  <strong>If you activated through Steam:</strong> the link between your SteamID
+  and the account it activated is kept for the same <strong>5 years</strong>, so
+  that one Steam licence cannot become several accounts. This period is
+  <strong>provisional</strong> and under review — it may be shortened in a
+  future version of this policy.
 </p>
 <p>
   Deleting the app removes local data but does <strong>not</strong> erase the

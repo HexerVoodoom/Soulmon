@@ -3,6 +3,7 @@
 
 import { isAllowedPushEndpoint } from './_pushTargets.js';
 import { VALID_ID } from './_entitlements.js';
+import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import {
   nomeDePet, idiomaDePush, dataDeNascimento, gravarSeMudou, LIMITE_INSCRICAO,
@@ -26,7 +27,9 @@ function costGate(request) {
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  // `Authorization` anunciado: o cliente manda `Bearer <idToken>` junto do
+  // `saveId` para a inscrição ser ligada à conta (ver `saveIdAutorizado`).
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
 export async function onRequestOptions() {
@@ -78,6 +81,16 @@ export async function onRequestPost({ request, env }) {
     });
   }
 
+  // `saveId` só entra no registro (e no índice `pushidx:`) se quem manda PROVOU
+  // ser o dono — ver `saveIdAutorizado`. Lápide vigente → 410.
+  const dono = await saveIdAutorizado(request, env, saveId);
+  if (dono.status) {
+    return new Response(JSON.stringify({ error: dono.reason }), {
+      status: dono.status,
+      headers: { 'Content-Type': 'application/json', ...CORS },
+    });
+  }
+
   const kvKey = `push:${await hashEndpoint(endpoint)}`;
   const record = {
     endpoint,
@@ -102,15 +115,16 @@ export async function onRequestPost({ request, env }) {
     language: idiomaDePush(language),
     /* Decisão #23 do QA GERAL (21/09/2026) — a CONTA dona da inscrição.
        Existe por um motivo só: a exclusão de conta (`account.js`,
-       `deletePushSubscriptions`) varre `push:*` e apaga o que carrega este
-       campo — sem ele, a chave é hash do endpoint e o servidor não tem como
-       achar as inscrições do titular. OPCIONAL e não verificado: quem manda é
-       o mesmo cliente anônimo que já manda o endpoint, e um `saveId` alheio
-       aqui só faria a inscrição DESTE aparelho ser apagada quando o outro
-       excluir a conta — dano para quem mentiu, não para o alvo. Inválido é
-       DESCARTADO, nunca corrigido (um id torto nunca casaria com ninguém e
-       viraria lixo de um ano). O worker de push não lê este campo. */
-    ...(typeof saveId === 'string' && VALID_ID.test(saveId) ? { saveId } : {}),
+       `deletePushSubscriptions`) acha pelo índice `pushidx:<saveId>` o que
+       carrega este campo — sem ele, a chave é hash do endpoint e o servidor
+       não tem como achar as inscrições do titular.
+       ⚠️ "Não verificado" era mentira cara (QA rodada 2, `01-seguranca-r2`
+       §2): o `saveId` alheio entrava no ÍNDICE da vítima, e 17 POSTs anônimos
+       expulsavam a inscrição real dela pelo teto `PUSHIDX_MAX` — push cortado
+       em silêncio. Hoje só entra AUTORIZADO (`saveIdAutorizado`); sem prova
+       o registro é gravado SEM `saveId` (compat: continua recebendo push, só
+       não é ligado a conta nenhuma). O worker de push não lê este campo. */
+    ...(dono.saveId ? { saveId: dono.saveId } : {}),
   };
 
   // A chave é o hash do endpoint, então reenviar a MESMA inscrição já era
@@ -162,6 +176,29 @@ export async function onRequestDelete({ request, env }) {
     status: 200,
     headers: { 'Content-Type': 'application/json', ...CORS },
   });
+}
+
+/**
+ * Decide se o `saveId` do corpo pode ser LIGADO a esta inscrição.
+ *
+ *  - sem `saveId` (ou inválido): grava sem conta — `{ saveId: null }`;
+ *  - `authorizeSaveAccess` ok (dono provado, ou auth desligada — fail-open
+ *    declarado de `_auth.js`): `{ saveId }`;
+ *  - lápide vigente (conta apagada): `{ status: 410 }` — inscrever de novo
+ *    uma conta que pediu para sumir é recriar o que a exclusão apagou;
+ *  - sem prova (401/403): grava SEM `saveId` — compat com cliente antigo que
+ *    ainda não manda `Authorization`; o push continua chegando, só não é
+ *    ligado a conta nenhuma (e nunca envenena o índice de terceiro).
+ *
+ * @returns {Promise<{ saveId: string | null, status?: number, reason?: string }>}
+ */
+async function saveIdAutorizado(request, env, saveId) {
+  if (typeof saveId !== 'string' || !VALID_ID.test(saveId)) return { saveId: null };
+  const auth = await authorizeSaveAccess(request, env, saveId);
+  if (auth.ok) return { saveId };
+  if (auth.reason === 'account-deleted') return { saveId: null, status: authStatus(auth), reason: auth.reason };
+  console.warn('[subscribe] saveId sem prova de posse, inscrição gravada sem conta', { reason: auth.reason });
+  return { saveId: null };
 }
 
 /** Base64url com teto. Ver o comentário no `onRequestPost`. */

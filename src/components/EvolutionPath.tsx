@@ -55,7 +55,7 @@ import { RitualDialog } from './ritual/RitualKit';
 import { useIsOnline } from './ui/OfflineSeal';
 import { Icon } from './ui/Icon';
 import { playVisorTune } from '../utils/sounds';
-import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
+import { sm2Button, sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 
 type Attr = 'virus' | 'data' | 'vaccine';
 // ALIGN_TO_ATTR mudou para types/attributes.ts quando o EvoTrail da Home
@@ -126,7 +126,7 @@ const card: CSSProperties = {
   backgroundColor: 'var(--sm2-surface)',
   border: '1px solid var(--sm2-line)',
   borderRadius: 12,
-  boxShadow: '0 1px 2px rgba(4, 18, 20, .10), 0 4px 12px rgba(4, 18, 20, .10)',
+  boxShadow: SM2_SHADOW_CARD,
   padding: 16,
 };
 
@@ -231,7 +231,11 @@ export function EvolutionPath({
    * Invariante nº 1, e nunca um erro.
    */
   const acervo = spriteLibrary ?? emptySpriteLibrary();
-  const spriteAtual = displaySprite(acervo, currentStageId)?.url
+  /* E2 (QA rodada 2): URL própria que falhou ao carregar (offline, cache do
+     provedor fora) cai na reserva em vez de deixar o vidro quebrado. */
+  const [spriteQuebrado, setSpriteQuebrado] = useState<string | null>(null);
+  const spriteProprioAtual = displaySprite(acervo, currentStageId)?.url;
+  const spriteAtual = (spriteProprioAtual && spriteProprioAtual !== spriteQuebrado ? spriteProprioAtual : undefined)
     ?? getSpriteForStage(currentStageId, demoCharacterId);
   const auraElemental = auraForElement(dominantElement);
   // A sintonia: o fade de 120ms vive na classe do `<img>`; a varredura de
@@ -886,6 +890,7 @@ export function EvolutionPath({
                  `prefers-reduced-motion` no `index.css`. */
               className="sm-visor-swap"
               key={spriteAtual}
+              onError={() => { if (spriteProprioAtual && spriteAtual === spriteProprioAtual) setSpriteQuebrado(spriteProprioAtual); }}
             />
             {/* A FAÍSCA da evolução pronta (X2): `anim-sparkle-pop` quadro 4
                 (a dispersão), 64² a 2× = 128, no canto superior direito do

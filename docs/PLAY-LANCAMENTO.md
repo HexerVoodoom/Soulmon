@@ -365,6 +365,12 @@ D.11 testado. E **só depois** de aprovado e no ar: §E.6.
 
 ## E. Cloudflare — secrets, worker de push, D1
 
+> **Fatos do ar medidos em 22/09/2026** (QA Rodada 2, `docs/reviews/2026-09-22-qa-rodada-2/05-operador-governanca-r2.md` §1.1 — `npx wrangler secret list`, `deployments list`, `d1 migrations list`, `curl`):
+> - raiz: **definidos** `GROQ_API_KEY`, `HF_API_KEY`, `HF_SECRET`, `METRICS_ADMIN_KEY` (✅ E.1 — `/api/metrics` → 401), `SEASON_ADMIN_KEY` + var `FIREBASE_PROJECT_ID`; **ausentes** `ENTITLEMENTS_ADMIN_KEY` (grant → 404; #67), `COURTESY_MAX_ACCOUNTS` (padrão 25), `GEMINI_API_KEY`, e os da Play/Steam (esperado até §E.5);
+> - worker de push: **deployado** 21/09 12:57Z (✅ E.2 deploy); `SEASON_ADMIN_KEY` e `VAPID_JWK` **definidos**; **`FIREBASE_SERVICE_ACCOUNT` ausente** (→ §C.3; FCM do APK não envia; #66);
+> - D1: `0001` e `0002` **pendentes** (E.4 não feito; #65);
+> - `sw.js` no ar = git (`v158`); política "22 de setembro" no ar; CSP 4/4.
+
 > ⚠️ **É um Worker, não Pages.** O `wrangler.jsonc` da raiz chama-se `soulmon` e a
 > produção é `soulmon.mateus-sprnd.workers.dev`. Os docs mais antigos dizem "Pages" e
 > "Settings → Environment variables"; o caminho hoje é **Workers & Pages → soulmon →
@@ -448,8 +454,11 @@ npx wrangler d1 migrations list soulmon-billing --remote
 
 **Feito quando:**
 `npx wrangler d1 execute soulmon-billing --remote --command "PRAGMA table_info(order_claims)"`
-lista a coluna `expires_at`. Sem a tabela, `claimOrder` cai no caminho KV, não
-atômico, e o mesmo recibo pode valer para N contas (STATUS §3.2 🟡).
+lista a coluna `expires_at`. ⚰️ ~~Sem a tabela, `claimOrder` cai no caminho KV, não
+atômico~~ — **falso** (medido em 22/09/2026): com o binding `DB` presente e a tabela ausente,
+`claimOrderAtomic` **lança** (o primeiro `DELETE` está fora do `try`, `billing.js` sem `catch`)
+e a 1ª compra devolve **500**; o `try/catch` com fallback para o KV está em correção na R2. Em
+22/09 as duas migrações estavam **pendentes** (STATUS §3.2 🔴; pergunta #65).
 
 ### E.5 Secrets que dependem da Play (depois de §D.8 e §D.10) `[dono digita segredo]`
 

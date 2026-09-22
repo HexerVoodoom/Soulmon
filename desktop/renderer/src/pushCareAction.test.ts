@@ -118,3 +118,32 @@ describe('a escrita de volta do desktop chega no servidor', () => {
     expect(new URL(urls[0]).searchParams.get('id')).toBe(await emailToSaveId(EMAIL));
   });
 });
+
+describe('410 account-deleted (QA rodada 2): o overlay para, limpa a sessão e devolve `deleted`', () => {
+  // Servidor real, com a LÁPIDE gravada no KV do jeito que `account.js` grava
+  // (`del:done:<saveId>`). Assim o teste prova o contrato de verdade — se o
+  // backend mudar o formato da lápide ou o status, isto quebra aqui.
+  it('GET (fetchRemoteSnapshot) e POST (pushCareAction) → `deleted`; `clearAuth` da ponte é chamado; nada é gravado', async () => {
+    const { emailToSaveId } = await import('./cloudSync');
+    const id = await emailToSaveId(EMAIL);
+    await kv.put(`del:done:${id}`, JSON.stringify({ at: Date.now() }));
+    const clearAuth = vi.fn();
+    vi.stubGlobal('window', { soulmonDesktop: { clearAuth, getAuth: async () => null } });
+    const antes = kv.store.get(id);
+
+    const leitura = await fetchRemoteSnapshot(EMAIL);
+    expect(leitura).toEqual({ ok: false, reason: 'deleted' });
+
+    const escrita = await pushCareAction(EMAIL, s => ({ ...s, healthPoints: 3 }));
+    expect(escrita).toEqual({ ok: false, reason: 'deleted' });
+    expect(kv.store.get(id)).toBe(antes);
+    expect(clearAuth).toHaveBeenCalledTimes(2);
+  });
+
+  it('sem a ponte (browser puro) o 410 não lança — só devolve `deleted`', async () => {
+    const { emailToSaveId } = await import('./cloudSync');
+    await kv.put(`del:done:${await emailToSaveId(EMAIL)}`, JSON.stringify({ at: Date.now() }));
+    vi.stubGlobal('window', { soulmonDesktop: undefined });
+    await expect(fetchRemoteSnapshot(EMAIL)).resolves.toEqual({ ok: false, reason: 'deleted' });
+  });
+});

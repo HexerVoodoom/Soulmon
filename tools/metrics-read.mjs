@@ -50,7 +50,8 @@ async function main() {
     payload = await r.json();
   }
 
-  console.log(renderRelatorio(payload).join('\n'));
+  // `--full`: acrescenta toda chave gravada > 0 (leitor genérico, QA R2 04 §4).
+  console.log(renderRelatorio(payload, { full: process.argv.includes('--full') }).join('\n'));
 }
 
 main().catch(err => { console.error(err?.message ?? err); process.exit(1); });

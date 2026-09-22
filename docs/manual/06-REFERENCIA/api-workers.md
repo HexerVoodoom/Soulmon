@@ -9,7 +9,7 @@
 - [Rotas HTTP (functions/api/*.js exportando onRequest*)](#rotas-http)
   - [`account.js`](#functionsapiaccountjs) · [`billing.js`](#functionsapibillingjs) · [`chat.js`](#functionsapichatjs) · [`community.js`](#functionsapicommunityjs) · [`config.js`](#functionsapiconfigjs) · [`entitlements.js`](#functionsapientitlementsjs) · [`fcm-subscribe.js`](#functionsapifcm-subscribejs) · [`generate-sprite.js`](#functionsapigenerate-spritejs) · [`metrics.js`](#functionsapimetricsjs) · [`save.js`](#functionsapisavejs) · [`sprite-image.js`](#functionsapisprite-imagejs) · [`subscribe.js`](#functionsapisubscribejs) · [`suggest-tasks.js`](#functionsapisuggest-tasksjs) · [`transcribe.js`](#functionsapitranscribejs)
 - [Módulos internos (`_*.js`)](#módulos-internos)
-  - [`_accountTombstone.js`](#functionsapi_accounttombstonejs) · [`_aiGuard.js`](#functionsapi_aiguardjs) · [`_auth.js`](#functionsapi_authjs) · [`_billing.js`](#functionsapi_billingjs) · [`_bond.js`](#functionsapi_bondjs) · [`_entitlements.js`](#functionsapi_entitlementsjs) · [`_kv.js`](#functionsapi_kvjs) · [`_pushCopy.js`](#functionsapi_pushcopyjs) · [`_pushIdentity.js`](#functionsapi_pushidentityjs) · [`_pushTargets.js`](#functionsapi_pushtargetsjs) · [`_rateLimit.js`](#functionsapi_ratelimitjs) · [`_redact.js`](#functionsapi_redactjs)
+  - [`_accountTombstone.js`](#functionsapi_accounttombstonejs) · [`_aiGuard.js`](#functionsapi_aiguardjs) · [`_auth.js`](#functionsapi_authjs) · [`_billing.js`](#functionsapi_billingjs) · [`_bond.js`](#functionsapi_bondjs) · [`_coop.js`](#functionsapi_coopjs) · [`_entitlements.js`](#functionsapi_entitlementsjs) · [`_kv.js`](#functionsapi_kvjs) · [`_pushCopy.js`](#functionsapi_pushcopyjs) · [`_pushIdentity.js`](#functionsapi_pushidentityjs) · [`_pushTargets.js`](#functionsapi_pushtargetsjs) · [`_rateLimit.js`](#functionsapi_ratelimitjs) · [`_redact.js`](#functionsapi_redactjs)
 - [workers](#workers) — [`fcm.js`](#workersfcmjs) · [`push-scheduler.js`](#workerspush-schedulerjs) · [`webpush.js`](#workerswebpushjs)
 
 ## Convenções desta página
@@ -231,6 +231,12 @@
 **Chamado por:** `community.js` (ação `profile`, gate de PvP).
 **Régua:** `functions/api/bond.parity.test.js` — varre milhares de valores de `totalXP` e exige que este arquivo e `src/utils/bond.ts` respondam o MESMO nível (footgun 9: cópia deliberada, travada por paridade comportamental porque Pages Functions não importam de `src/`).
 **Avisos do arquivo:** o que NÃO foi copiado, de propósito: tabela de XP por evento, tetos diários, escada de recompensas e títulos. Limite honesto: `bondLevelOf` barra quem forja só o `pvpEnabled`, não quem forja o `totalXP` do save inteiro.
+
+### `functions/api/_coop.js`
+**Dono de:** o ESTADO do grupo cooperativo — chaves (`coop:<gid>`, `coopOf:<saveId>`, `coopCode:<code>`, `coopCk:<gid>:<saveId>`), `COOP_TTL` (120 d), `COOP_MAX_MEMBERS`, `COOP_CHECKINS_POR_MEMBRO`, `semanaDe`, `lerGrupo`/`gravarGrupo`/`renovarPrazos`, `lerCheckins`/`gravarCheckins`, `rolarSemana`, `grupoDe` — e a operação de SAIR, `coopLeave(env, saveId)` (idempotente; devolve `{ left, groupId, remaining }`; grupo vazio some com o código). Extraído de `community.js` na QA Rodada 2 (`04-dados-r2` §1.3): a exclusão de conta precisava tirar o titular do grupo sem importar a rota inteira — o membro apagado virava fantasma e a meta (`members.length × 5`) nunca mais fechava.
+**Não faz:** montar resposta — `vistaDoGrupo` continua em `community.js`, única montagem do que sai para o cliente.
+**Chamado por:** `community.js` (todas as ações `coop*`) · `account.js` (`collect` lista a vaga em `plan().apaga`; `handleDeleteConfirm` passo 3b chama `coopLeave`).
+**Régua:** `functions/api/community.coop.test.js` (comportamento via rota) · `functions/api/account.coopExport.qa2.test.js` (exclusão tira do grupo).
 
 ### `functions/api/_entitlements.js` (620 linhas — `wc -l`, 22/09/2026; 598 em 21/09, 489 antes da cortesia)
 **Dono de:** FONTE DA VERDADE de tudo que envolve dinheiro real — tier, créditos, uso de IA vitalício, resgate de comprovante de compra, auditoria de reembolso. O cliente NUNCA dita tier nem saldo.

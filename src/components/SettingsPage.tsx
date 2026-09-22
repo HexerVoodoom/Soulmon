@@ -397,9 +397,18 @@ export function SettingsPage({
       <Group title={isPt ? 'Ajuda' : 'Help'}>
         <ActionRow label={t.settings.openGuide} onClick={onOpenGuide} />
         <ActionRow label={t.settings.openGlossary} onClick={onOpenGlossary} />
+        {/* A4/A5 (QA rodada 2): os Termos não tinham link dentro do app, e a
+            Política abria sempre a versão PT. Em EN os dois apontam para a
+            âncora `#en` (mesma tabela do `TermsUpdateBanner`). */}
+        <ActionRow
+          label={isPt ? 'Termos de Uso' : 'Terms of Use'}
+          href={isPt ? '/termos.html' : '/termos.html#en'}
+          language={language}
+        />
         <ActionRow
           label={isPt ? 'Política de privacidade' : 'Privacy policy'}
-          href="/privacidade.html"
+          href={isPt ? '/privacidade.html' : '/privacidade.html#en'}
+          language={language}
         />
         {/* O canal de feedback fica em Ajuda, logo acima da versão que vai no
             e-mail: é onde a pessoa procura quando algo não funciona
@@ -451,6 +460,7 @@ export function SettingsPage({
           label={isPt ? 'O que o chat recebe' : 'What the chat receives'}
           hint={isPt ? 'Na política de privacidade.' : 'In the privacy policy.'}
           href={isPt ? '/privacidade.html#chat-contexto' : '/privacidade.html#chat-context'}
+          language={language}
         />
       </Group>
 

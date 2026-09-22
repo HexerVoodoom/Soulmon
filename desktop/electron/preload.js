@@ -26,4 +26,11 @@ contextBridge.exposeInMainWorld('soulmonDesktop', {
    */
   getAuth: () => ipcRenderer.invoke('auth-get'),
   onAuthChanged: (cb) => ipcRenderer.on('auth-changed', (_e, session) => cb(session)),
+  /**
+   * 410 `account-deleted` (QA rodada 2): a conta foi apagada pelo app; o
+   * overlay descarta a sessão para não continuar mandando token de uma conta
+   * que não existe. Canal próprio (`auth-clear`), porque `auth-token` só
+   * aceita a janela do app completo como remetente.
+   */
+  clearAuth: () => ipcRenderer.send('auth-clear'),
 });

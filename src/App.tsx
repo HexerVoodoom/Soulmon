@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense, Fragment } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, useId, lazy, Suspense, Fragment } from 'react';
 import type { ReactNode } from 'react';
 import { Icon } from './components/ui/Icon';
 import { ScreenSkeleton } from './components/ui/ScreenSkeleton';
@@ -268,6 +268,15 @@ function PostponeNudgeSheet({
 }) {
   const isPt = language === 'pt-BR';
   const [state, setState] = useState<DecomposeState>({ kind: 'idle' });
+  /* A9 (QA rodada 2): o nome acessível do botão era título + explicação (30
+     palavras). O título nomeia (`aria-labelledby`), a explicação descreve
+     (`aria-describedby`) — o leitor de tela lê o nome e, só depois, a ajuda. */
+  const idBase = useId();
+  const ids = {
+    decT: `${idBase}-dec-t`, decH: `${idBase}-dec-h`,
+    encT: `${idBase}-enc-t`, encH: `${idBase}-enc-h`,
+    dxT: `${idBase}-dx-t`, dxH: `${idBase}-dx-h`,
+  };
   const [picked, setPicked] = useState<Record<string, boolean>>({});
 
   // Trocar de tarefa (ou fechar) zera o painel — senão o próximo sheet abriria
@@ -341,12 +350,14 @@ function PostponeNudgeSheet({
           onClick={runDecompose}
           disabled={state.kind === 'loading'}
           aria-busy={state.kind === 'loading' || undefined}
+          aria-labelledby={ids.decT}
+          aria-describedby={ids.decH}
         >
-          <span style={optTitle}>
+          <span style={optTitle} id={ids.decT}>
             <Icon name="psychology" size={24} />
             {isPt ? 'Decompor' : 'Break it down'}
           </span>
-          <span style={optHint()}>
+          <span style={optHint()} id={ids.decH}>
             {isPt
               ? 'O pet pensa em primeiros passos pequenos e você escolhe quais viram tarefa. O nome da tarefa vai para o provedor de IA.'
               : 'Your pet thinks up small first steps and you pick which become tasks. The task name goes to the AI provider.'}
@@ -435,12 +446,14 @@ function PostponeNudgeSheet({
         disabled={!canShrink}
         aria-disabled={!canShrink || undefined}
         onClick={() => { onShrink(task.id); onClose(); }}
+        aria-labelledby={ids.encT}
+        aria-describedby={ids.encH}
       >
-        <span style={optTitle}>
+        <span style={optTitle} id={ids.encT}>
           <Icon name="do_not_disturb_on" size={24} />
           {isPt ? 'Encolher' : 'Shrink it'}
         </span>
-        <span className="sm2-num" style={optHint(!canShrink)}>
+        <span className="sm2-num" style={optHint(!canShrink)} id={ids.encH}>
           {canShrink
             ? (isPt
               ? `esforço ${effort} → ${effort - 1} · zera o contador`
@@ -456,12 +469,14 @@ function PostponeNudgeSheet({
         type="button"
         style={opt()}
         onClick={() => { onDrop(task.id); onClose(); }}
+        aria-labelledby={ids.dxT}
+        aria-describedby={ids.dxH}
       >
-        <span style={optTitle}>
+        <span style={optTitle} id={ids.dxT}>
           <Icon name="archive" size={24} />
           {isPt ? 'Deixar pra lá' : 'Let it go'}
         </span>
-        <span style={optHint()}>
+        <span style={optHint()} id={ids.dxH}>
           {isPt
             ? 'Sai da lista sem ser concluída e sem ser apagada. Fica guardada, e dá pra trazer de volta quando quiser.'
             : 'Leaves the list without being completed and without being deleted. It stays tucked away, and you can bring it back any time.'}
@@ -806,6 +821,17 @@ export default function App() {
   // Termos/Política atualizados (decisão #24): a marca da última versão que a
   // pessoa dispensou com "Ok" fica no aparelho — aviso lido, não consentimento.
   const [termsNoticeSeen, setTermsNoticeSeen] = useState<string | null>(() => readLocal(STORAGE_KEYS.TERMS_NOTICE_SEEN));
+  // A3 (QA rodada 2): o banner de Termos ficava preso atrás do "+N" desde a
+  // primeira aparição. Lido UMA vez por abertura: se a marca desta versão
+  // ainda não foi exibida, o banner entra em posição 1 nesta sessão inteira
+  // (a marca é gravada no efeito abaixo, mas o estado não muda até o reload).
+  const [termsNoticeShown] = useState<string | null>(() => readLocal(STORAGE_KEYS.TERMS_NOTICE_SHOWN));
+  const termsNoticePrimeiraVez = termsNoticeShown !== marcaAvisoTermos(TERMS_VERSION, PRIVACY_VERSION);
+  useEffect(() => {
+    if (!termsNoticePrimeiraVez) return;
+    if (!precisaAvisarTermos(gameState.consent, TERMS_VERSION, PRIVACY_VERSION, termsNoticeSeen)) return;
+    writeLocal(STORAGE_KEYS.TERMS_NOTICE_SHOWN, marcaAvisoTermos(TERMS_VERSION, PRIVACY_VERSION), { silent: true });
+  }, [termsNoticePrimeiraVez, gameState.consent, termsNoticeSeen]);
   // O COMBATE do pesadelo: a outra face da mesma noite que rendeu o sonho.
   // Também só de manhã, também nunca à noite (ver o efeito lá embaixo).
   const [nightmareOpen, setNightmareOpen] = useState(false);
@@ -1016,7 +1042,13 @@ export default function App() {
       if (cancelled || !res.ok || !res.email) return;
       // O saveId é derivado do e-mail agora COMPROVADO — realinha e recarrega
       // para o estado inteiro vir da conta certa.
-      const { emailToSaveId, cloudLoad, adoptCloudSave } = await import('./utils/cloudSave');
+      const { emailToSaveId, cloudLoad, adoptCloudSave, checarContaExcluidaNoLogin } = await import('./utils/cloudSave');
+      // F1 (QA rodada 2): conta com lápide não entra — o helper já deslogou e
+      // gravou o aviso; o reload devolve ao portão, que o mostra.
+      if (await checarContaExcluidaNoLogin(res.email)) {
+        if (!cancelled) window.location.reload();
+        return;
+      }
       const id = await emailToSaveId(res.email);
       // Se já existe save nesse e-mail, `adoptCloudSave` grava o DADO antes da
       // identidade — a ordem inversa (identidade primeiro) com storage cheio
@@ -2737,9 +2769,40 @@ export default function App() {
        A criatura fala do corpo dela — ⚠️ `wake` nunca comenta a noite de quem
        lê (veto #12); há teste em `petVoice.test.ts`. */
     falar(isSleeping ? 'wake' : 'sleep');
-    // E0 (S13, peça extraída): dormindo, a trilha para; acordar é gesto e ela volta se estava ligada.
-    if (isSleeping) retomarTrilha(); else pausarTrilha();
+    // E0: a trilha NÃO é pausada aqui — é no `useEffect([isSleeping])` logo
+    // abaixo, que cobre o gesto manual E o sono automático com um caminho só.
   }, [isSleeping, falar]);
+
+  /* E0 (S13, peça extraída; `SOM.md` §2.1): dormindo, a trilha para — e
+     "dormindo" inclui o sono AUTOMÁTICO e o app aberto com o pet já dormindo.
+     Até 22/09/2026 a pausa vivia dentro de `handleSleep`, então só o gesto
+     manual parava a trilha: o `useEffect` da janela de sono automático
+     (`AUTO_SLEEP_*`) trocava `isSleeping` sem tocar nela, e o primeiro gesto
+     sonoro de uma sessão aberta depois das 23h religava a trilha com o pet
+     dormindo (achado S-1 da QA rodada 2). Efeito sobre o ESTADO, não sobre o
+     gesto: quem quer que mude `isSleeping`, a trilha obedece. */
+  useEffect(() => {
+    if (isSleeping) pausarTrilha('sono'); else retomarTrilha('sono');
+  }, [isSleeping]);
+
+  /* E0, a outra metade: a janela de descanso (`rest.window`, `restWindow.ts`)
+     também cala a trilha, pelo relógio — sem a tolerância de 45 min do
+     `isWithinWindow`, que existe para premiar DEITAR cedo, não para calar som
+     antes da hora. Checado a cada 60 s, como o sono automático. */
+  const restWindowStart = gameState.rest?.window?.start;
+  const restWindowEnd = gameState.rest?.window?.end;
+  useEffect(() => {
+    const janela = restWindowStart && restWindowEnd
+      ? { start: restWindowStart, end: restWindowEnd }
+      : createRestState().window;
+    const check = () => {
+      if (isWithinWindow(janela, new Date(), 0)) pausarTrilha('descanso');
+      else retomarTrilha('descanso');
+    };
+    check();
+    const id = setInterval(check, 60000);
+    return () => clearInterval(id);
+  }, [restWindowStart, restWindowEnd]);
 
   /* Copy §1.6: a borra apareceu — ela constata e aponta (L3, §5.6). Só na
      CHEGADA do evento; o dreno cobrando sustentação segue mudo de propósito
@@ -4119,7 +4182,7 @@ export default function App() {
     setMuted(mudo);
     setSoundMuted(mudo);
     // E0: o mudo global também cala a trilha; religar devolve só se ela estava ligada por gesto.
-    if (mudo) pausarTrilha(); else retomarTrilha();
+    if (mudo) pausarTrilha('mudo'); else retomarTrilha('mudo');
     // som-01 — só a transição LIGADO → MUDO é medida, e só ela. É o
     // único evento que mede o perfil "usuário em público" sendo
     // punido, e ele mede por REJEIÇÃO explícita, nunca por inferência.
@@ -4450,9 +4513,20 @@ export default function App() {
     return <IntroScreen onFinish={() => setShowIntro(false)} />;
   }
 
+  // E1 (QA rodada 2): o selo de "sem sinal" era montado só na Home, então o
+  // onboarding, o tutorial e o ritual de upgrade — as três telas com mais
+  // chamada de rede por minuto (login, geração da criatura, compra) — não
+  // sabiam dizer que estavam offline. O mesmo selo, acima dos três `return`.
+  const selo = <OfflineSeal language={language} topOffset={8} />;
+
   // Show onboarding if not completed — Soulmon: quiz da alma no lugar do ovo
   if (!hasCompletedOnboarding) {
-    return <Suspense fallback={<ScreenSkeleton language={language} />}><SoulmonOnboarding onComplete={handleCompleteOnboarding} /></Suspense>;
+    return (
+      <>
+        {selo}
+        <Suspense fallback={<ScreenSkeleton language={language} />}><SoulmonOnboarding onComplete={handleCompleteOnboarding} /></Suspense>
+      </>
+    );
   }
 
   // Segundo onboarding: tutorial do jogo + criação obrigatória da 1ª tarefa —
@@ -4460,6 +4534,7 @@ export default function App() {
   if (!hasCompletedTutorial) {
     return (
       <Suspense fallback={<ScreenSkeleton language={language} />}>
+        {selo}
         <GameTutorialFlow
           language={language}
           maxActivities={activityCap}
@@ -4485,6 +4560,7 @@ export default function App() {
   if (upgradeRitual) {
     return (
       <Suspense fallback={<ScreenSkeleton language={language} />}>
+        {selo}
         <SoulmonOnboarding
           mode="upgrade"
           onComplete={handleCompleteOnboarding}
@@ -5022,10 +5098,18 @@ export default function App() {
                 // Informativo, sem re-aceite, o ÚLTIMO da fila: é o único
                 // aviso que não fala do dia da pessoa. A regra de quando
                 // aparecer é de `utils/termsNotice.ts`.
-                if (precisaAvisarTermos(gameState.consent, TERMS_VERSION, PRIVACY_VERSION, termsNoticeSeen)) avisos.push({
-                  key: 'termos',
-                  node: <TermsUpdateBanner language={language} changed={qualDocMudou(gameState.consent!, TERMS_VERSION, PRIVACY_VERSION)} onOk={handleTermsNoticeOk} />,
-                });
+                // EXCEÇÃO (A3, QA rodada 2): na PRIMEIRA abertura em que a
+                // versão nova aparece, ele vai para a posição 1 — senão a
+                // triagem diária o escondia atrás do "+N" e ninguém ficava
+                // sabendo que o texto mudou. Da abertura seguinte em diante,
+                // último de novo (`termsNoticePrimeiraVez`).
+                if (precisaAvisarTermos(gameState.consent, TERMS_VERSION, PRIVACY_VERSION, termsNoticeSeen)) {
+                  const termos = {
+                    key: 'termos',
+                    node: <TermsUpdateBanner language={language} changed={qualDocMudou(gameState.consent!, TERMS_VERSION, PRIVACY_VERSION)} onOk={handleTermsNoticeOk} />,
+                  };
+                  if (termsNoticePrimeiraVez) avisos.unshift(termos); else avisos.push(termos);
+                }
 
                 if (avisos.length === 0) return null;
                 const resto = avisos.length - 1;
@@ -5563,7 +5647,10 @@ export default function App() {
                 return true;
               }}
               onLoginWithEmail={async (email) => {
-                const { emailToSaveId, cloudLoad, cloudSave, adoptCloudSave } = await import('./utils/cloudSave');
+                const { emailToSaveId, cloudLoad, cloudSave, adoptCloudSave, checarContaExcluidaNoLogin } = await import('./utils/cloudSave');
+                // F1 (QA rodada 2): e-mail com lápide não vira identidade —
+                // lançar cai no estado de erro do SettingsPage.
+                if (await checarContaExcluidaNoLogin(email)) throw new Error('account-deleted');
                 const id = await emailToSaveId(email);
                 const state = await cloudLoad(id);
                 if (state) {

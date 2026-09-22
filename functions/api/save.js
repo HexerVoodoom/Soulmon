@@ -8,9 +8,9 @@
 // dar créditos infinitos.
 
 import { VALID_ID, readEntitlement, publicView } from './_entitlements.js';
-import { authorizeSaveAccess } from './_auth.js';
+import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { kv, kvOrThrow } from './_kv.js';
-import { isAccountDeleted } from './_accountTombstone.js';
+import { gateTombstone } from './_accountTombstone.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -90,7 +90,10 @@ export async function onRequest({ request, env }) {
   // FIREBASE_PROJECT_ID não estiver configurado isto passa direto (ver _auth.js).
   const auth = await authorizeSaveAccess(request, env, saveId);
   if (!auth.ok) {
-    return Response.json({ error: auth.reason }, { status: auth.reason === 'forbidden' ? 403 : 401, headers: CORS });
+    if (auth.reason === 'account-deleted') {
+      console.warn('save: recusado, conta apagada (lápide)', { saveIdPrefix: saveId.slice(0, 8), method: request.method });
+    }
+    return Response.json(auth.reason === 'account-deleted' ? { error: auth.reason, deletedAt: auth.deletedAt } : { error: auth.reason }, { status: authStatus(auth), headers: CORS });
   }
 
   // CONTA APAGADA → 410, em GET e POST, DEPOIS da autorização (quem não é o
@@ -98,9 +101,17 @@ export async function onRequest({ request, env }) {
   // titular ainda logado recriava o save 3 s depois da exclusão — ver
   // `_accountTombstone.js`. O POST é recusado ANTES de ler o corpo por
   // tamanho/forma: nada do que vier é gravado sob um saveId com lápide.
-  if (await isAccountDeleted(env, saveId)) {
+  //
+  // Desde a QA rodada 2 o portão mora em `authorizeSaveAccess` (toda rota
+  // herda). O save confere de novo SÓ quando a autorização não trouxe o
+  // veredito (um `authorizeSaveAccess` substituído em teste, por exemplo):
+  // este é o endpoint que a lápide existe para proteger, e ele não confia
+  // que alguém conferiu por ele. Reabertura por login posterior à exclusão
+  // (`auth_time` > `tombstone.at`) segue com a lápide já apagada.
+  const tombstone = auth.tombstone ?? await gateTombstone(env, saveId, auth.authTime);
+  if (tombstone.deleted) {
     console.warn('save: recusado, conta apagada (lápide)', { saveIdPrefix: saveId.slice(0, 8), method: request.method });
-    return Response.json({ error: 'account-deleted' }, { status: 410, headers: CORS });
+    return Response.json({ error: 'account-deleted', deletedAt: tombstone.at }, { status: 410, headers: CORS });
   }
 
   if (request.method === 'GET') {
@@ -109,15 +120,30 @@ export async function onRequest({ request, env }) {
     // Renovação preguiçosa do prazo — ver SAVE_TTL_SECONDS. Falha aqui não
     // pode derrubar a leitura: o jogador veio buscar o save, e não conseguir
     // esticar o prazo é um problema de amanhã, não de agora.
+    //
+    // ⚠️ A renovação REESCREVE O CONTEÚDO — o KV não tem "renovar só o prazo"
+    // nem compare-and-set. Um POST que chegue entre o `getWithMetadata` e o
+    // `put` daqui é sobrescrito pelo save VELHO, com 200 para os dois lados
+    // (`save.concorrencia.qa.test.js`, `04-dados-r2` §3). MITIGAÇÃO, não
+    // conserto: reler imediatamente antes do `put` e só renovar se o disco
+    // ainda tem o MESMO raw que foi lido. Isso encolhe a janela ao intervalo
+    // `get`→`put` (a mesma técnica de `community.js` › `renovarPrazos`); não
+    // a fecha. A saída real é a ADR-004 (`revision` + 409), decisão do dono
+    // (#52) — e o `it.fails` daquele arquivo continua aberto de propósito.
     const gravadoEm = Number(metadata?.t) || 0;
     if ((Date.now() - gravadoEm) / 1000 > RENEW_AFTER_SECONDS) {
       try {
-        await kvOrThrow(env).put(saveId, raw, {
-          expirationTtl: SAVE_TTL_SECONDS,
-          metadata: { t: Date.now() },
-        });
+        const aindaIgual = (await kvOrThrow(env).get(saveId)) === raw;
+        if (aindaIgual) {
+          await kvOrThrow(env).put(saveId, raw, {
+            expirationTtl: SAVE_TTL_SECONDS,
+            metadata: { t: Date.now() },
+          });
+        } else {
+          console.info('save: renovação de TTL pulada, conteúdo mudou entre leitura e renovação', { saveIdPrefix: saveId.slice(0, 8) });
+        }
       } catch (err) {
-        console.warn('save: renovação de TTL falhou, leitura segue', { saveId, err: String(err) });
+        console.warn('save: renovação de TTL falhou, leitura segue', { saveIdPrefix: saveId.slice(0, 8), err: String(err) });
       }
     }
     const state = JSON.parse(raw);

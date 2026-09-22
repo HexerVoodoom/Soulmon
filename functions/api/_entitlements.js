@@ -391,6 +391,14 @@ export async function claimOrder(env, saveId, orderId) {
  *
  * @returns {Promise<{ ok: true } | { ok: false, reason: 'order-in-use' }>}
  */
+/** `UNIQUE constraint failed` / `PRIMARY KEY` — o texto que o SQLite do D1 devolve. */
+export function ehViolacaoDeChave(err) {
+
+  const msg = String(err?.message ?? err?.cause?.message ?? err ?? '');
+  return /UNIQUE|PRIMARY KEY/i.test(msg);
+}
+
+/** @returns {Promise<{ ok: true } | { ok: false, reason: 'order-in-use' }>} */
 async function claimOrderAtomic(env, saveId, orderId) {
   const agora = Date.now();
   const vence = agora + RETENTION_TTL_SECONDS * 1000;
@@ -408,14 +416,19 @@ async function claimOrderAtomic(env, saveId, orderId) {
       .bind(orderId, saveId, agora, vence)
       .run();
     return { ok: true };
-  } catch {
+  } catch (err) {
+    // SÓ a violação de chave cai aqui. Qualquer outro erro (D1 fora do ar no
+    // meio, coluna ausente) SOBE — vira 500 honesto e retry, em vez de cair
+    // no SELECT, achar `null` e responder `order-in-use` acusando o comprador
+    // (QA rodada 2, `04-dados-r2` §5).
+    if (!ehViolacaoDeChave(err)) throw err;
     // Violou a PRIMARY KEY: alguém já reivindicou, e a linha não estava vencida
     // (se estivesse, o DELETE acima teria aberto caminho). Quem?
     const row = await env.DB
       .prepare('SELECT save_id FROM order_claims WHERE order_id = ?')
       .bind(orderId)
       .first();
-    if (row?.save_id !== saveId) return { ok: false, reason: 'order-in-use' };
+    if (row?.save_id !== saveId) return { ok: false, reason: /** @type {const} */ ('order-in-use') };
 
     // Mesmo dono: renova o prazo e só ele.
     await env.DB
@@ -424,6 +437,32 @@ async function claimOrderAtomic(env, saveId, orderId) {
       .run();
     return { ok: true };
   }
+}
+
+/** Teto das listas de histórico de pedidos guardadas no entitlement. */
+export const ORDER_HISTORY_MAX = 200;
+
+/**
+ * Poda `orderDetails` ao teto SEM nunca descartar um pedido pago VIVO
+ * (`grantTier === 'paid'` e não `voided`).
+ *
+ * Por que (QA rodada 2, `00-skeptic-r2` #3): o `slice(-200)` cego podava o
+ * pedido que sustenta o tier; na conferência seguinte `auditRefunds` derivava
+ * `tier` de `paidProviderOf(ent)` — que não achava mais nada — e REBAIXAVA
+ * uma conta paga para demo. Precisava de 200 pedidos de crédito depois da
+ * compra do tier, o que é raro, mas é dinheiro real virando demo sem nenhum
+ * evento que explique. Os pedidos pagos vivos ficam todos (nunca são mais do
+ * que um punhado: Play, Steam, cortesia); o resto é o mais recente até o teto.
+ */
+export function podarOrderDetails(details, max = ORDER_HISTORY_MAX) {
+  if (!Array.isArray(details) || details.length <= max) return details;
+  const pagosVivos = details.filter(o => o?.grantTier === 'paid' && !o?.voided);
+  const resto = details.filter(o => !(o?.grantTier === 'paid' && !o?.voided));
+  const vaga = Math.max(0, max - pagosVivos.length);
+  const recentes = vaga > 0 ? resto.slice(-vaga) : [];
+  // Preserva a ordem original (cronológica) do que sobrou.
+  const fica = new Set([...pagosVivos, ...recentes]);
+  return details.filter(o => fica.has(o));
 }
 
 /**
@@ -451,8 +490,8 @@ export async function applyVerifiedPurchase(env, saveId, {
       grantCredits: grantCredits ?? 0,
     });
     // Mantém as listas limitadas — só precisamos do histórico recente.
-    if (ent.consumedOrders.length > 200) ent.consumedOrders = ent.consumedOrders.slice(-200);
-    if (ent.orderDetails.length > 200) ent.orderDetails = ent.orderDetails.slice(-200);
+    if (ent.consumedOrders.length > ORDER_HISTORY_MAX) ent.consumedOrders = ent.consumedOrders.slice(-ORDER_HISTORY_MAX);
+    ent.orderDetails = podarOrderDetails(ent.orderDetails);
   }
   await writeEntitlement(env, saveId, ent);
   return { ent, duplicate: false };

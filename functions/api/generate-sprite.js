@@ -57,7 +57,7 @@
 
 import { guardAiRequest, VALID_FORM_ID } from './_aiGuard.js';
 import { requirePaidTier } from './_entitlements.js';
-import { authorizeSaveAccess } from './_auth.js';
+import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { kvOrThrow } from './_kv.js';
 
 const CORS = {
@@ -399,7 +399,7 @@ export async function onRequestPost({ request, env }) {
     if (!auth.ok) {
       return Response.json(
         { error: auth.reason },
-        { status: auth.reason === 'forbidden' ? 403 : 401, headers: CORS },
+        { status: authStatus(auth), headers: CORS },
       );
     }
 

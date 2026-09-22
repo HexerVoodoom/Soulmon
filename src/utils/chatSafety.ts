@@ -82,7 +82,11 @@ const LEXICO: RegExp[] = [
   // EN — mesma régua
   /(want|wanted|going)\s+to\s+(kill myself|end (my life|it all)|die)/i,
   /(i|I)('| a)?m going to kill myself/i,
-  /(don'?t|do not) want to (live|exist|wake up|be here) (any\s?more)?/i,
+  // `live`/`exist` casam sós; `wake up`/`be here` EXIGEM `anymore`/`ever
+  // again` (skeptic R2 #10): "don't want to wake up early" e "don't want to
+  // be here for the meeting" são frases de segunda-feira, não de crise.
+  /(don'?t|do not) want to (live|exist)\b/i,
+  /(don'?t|do not) want to (wake up|be here) (any\s?more|ever again)\b/i,
   /(better off|be better) (dead|without me|if i (was|were) gone)/i,
   /(hurt|harm|cut)\s+myself/i,
   /suicidal (thought|ideation)/i,

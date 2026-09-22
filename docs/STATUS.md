@@ -71,6 +71,44 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > **Fora do delta, de propósito:** `11-GLOSSARIO` (termos "cortesia"/"dias completos 30" não indexados —
 > o delta não o lista) e `09-HISTORICO` (sem linha para `42b07bec`/`4a8b8049`).
 
+> ## 22/09/2026 — QA RODADA 2 (completa, lentes rotacionadas + simulação do jogo) e suas correções
+>
+> 10 relatórios em **`docs/reviews/2026-09-22-qa-rodada-2/`** (consolidado `00-CONSOLIDADO.md`; fila do dono
+> **#54–#71**; docs novos `E0-PREREGISTRO.md`, `E0-CONSENTIMENTO.md`, `orcamento-de-tempo.md`). A rodada
+> atacou as correções da R1 e o que nenhuma rodada alcançou (simulação de 90 dias × 15 perfis, mutation test
+> dos guards, inventário KV de 25 famílias, economia por unidade, o ar medido por `curl`/`wrangler`).
+> **FATAIS achados e fechados no mesmo dia:** (1) a lápide da R1 bloqueava o PRÓPRIO e-mail por 30 dias
+> (login → onboarding → 410 → wipe em loop) → `gateTombstone`: login com `auth_time` posterior à exclusão
+> reabre; portão checa a lápide ANTES do onboarding; 410 agora em toda rota autorizada (community, sprite,
+> entitlements, billing, IA, subscribe com saveId), cliente e desktop reagem (backup local em
+> `CONFLICT_BACKUP`, `deletedAt` na mensagem); (2) **migrações D1 não aplicadas em produção** e
+> `claimOrderAtomic` daria 500 na 1ª compra Play — o STATUS dizia "cai no caminho antigo" (falso) → só o
+> dono aplica (#65); `catch` passou a engolir só violação de chave; (3) **free tier do Cloudflare estoura por
+> escritas de KV em ~18 usuários/dia** (`_aiGuard` fail-closed → 503 no chat) → #64.
+> **ALTOS fechados:** `pushidx` envenenável (saveId de inscrição só indexa autenticado; expulso é apagado;
+> varredura quando índice cheio) · coop fora da exclusão (`_coop.js` › `coopLeave` no `delete-confirm`) ·
+> exportação vazava `saveId` de terceiros (agora `pid`) · `pushProfile` só após save ok · `soulmonMeta` cru
+> no hydrate derrubava a tela (fuzz de 89 campos × 14 valores hostis) · push das 22h BRT saía no D0
+> (`ageDaysOf` em UTC; base `T03:00:00Z`) · 6 bloqueantes narrativos (tela de exclusão "vai sentir sua
+> falta"/"porta aberta", ficha "se você se afasta, ela recua", booklet ovo/saudade, push "está te
+> esperando", widget "partner") · voz do perfil D ("Me alimenta por favor!") migrada para `PET_VOICE_LINES`
+> · trilha não pausava no sono automático/janela de descanso · `XP_PERFECT_DAY` nunca emitido ·
+> `brand/design-system.md` era da Consultech360 e 2 agentes o carregavam como canônico · ack da compra
+> só após `/api/billing` ok · `@capacitor/cli` → devDependencies (`npm audit --omit=dev` = 0) · cota de
+> chat por tier (demo 30 / paid 120, provisório #55) · `orderDetails` nunca poda pedido pago · Ajuda com
+> Termos, "(abre em nova aba)", `#en`, Firefox/Samsung fora do ramo WebView, `OfflineSeal` no onboarding,
+> `onError` no sprite, hydrate de 3 campos crus, desktop com 410 e `exp` lido do JWT, frases de vigilância
+> do overlay trocadas. **Mutation test:** 10 guards novos, nenhum tautológico; 2 buracos fechados
+> (`fetch` cru a rota de IA; `semFomo` não varria `src/utils`). **Orçamento de tempo:** 4 casos do
+> `ShopModal.canvas.render` em dívida nomeada. **Flakiness:** 3 rodadas, 0 oscilação.
+> **Regras de jogo (simulação):** só o que contradizia a doc foi corrigido; o resto virou #57–#63
+> (virada julga só ontem → perfil 3×/sem que só abre nesses dias = 0 dias completos; queda = cura grátis;
+> Glitchtama = 51 % dos dias completos do perfil B; quem só cuida = 0 Bits em 90 d) com `it.todo`.
+> **Ar medido (22/09):** produção = `a6c1cd8a`; `METRICS_ADMIN_KEY` ✅ definida (o §3.2 estava velho);
+> `ENTITLEMENTS_ADMIN_KEY` ausente; worker de push deployado 21/09 mas sem `FIREBASE_SERVICE_ACCOUNT`;
+> GitHub Actions **ainda parado** (260 runs falhando desde 16/09).
+> **Portões:** `tsc` ×3 = 0 · `vitest` **351 arquivos, 4758 passed, 1 expected fail (GET renova TTL × POST — ADR-004), 1 skipped, 10 todo (regras #57–#63)** · `npm run build` ok · `npm audit --omit=dev` 0. `CACHE_VERSION` v158 → **v159**.
+
 > ## 22/09/2026 — QA RODADA 1 (completa, todas as squads + SQUAD-Alpha) e suas correções
 >
 > 13 relatórios em **`docs/reviews/2026-09-21-qa-rodada-1/`** (consolidado `00-CONSOLIDADO.md`; fila do dono
@@ -3171,6 +3209,10 @@ suprimentos inteira nunca tinha sido auditada** — dependências, CVEs, permiss
 de CI, `vendor/`. Foi auditada. Documento:
 `squad-alpha-runs/soulmon-02/security/auditoria-suprimentos.md`.
 
+#### 🔴 `npm audit` em 22/09/2026: **16 vulnerabilidades (4 moderate, 11 high, 1 critical `tar`)** — via `@capacitor/cli` em `dependencies`
+
+Medido na QA Rodada 2 (`05` §1.1): `npm audit --json` → 16; `npm audit --omit=dev` → 1 critical + 2 high, **todos por `@capacitor/cli`**, que continua em `dependencies` do `package.json` (`package-lock.json` intocado desde `4a8b8049`). A QA Rodada 1 (`00-seguranca-a` B4, consolidado §3.4) declarou "→ `devDependencies` + `npm audit fix`" como **em correção** e não aterrissou em `a6c1cd8a`. **Em curso na R2** (frente frontend move para `devDependencies`; `depsVivas.contract.test.ts` passa a exigir a ausência). Cadeia de dev/build (`sharp`, `vite`, `wrangler`/`miniflare`), não o runtime do worker — mas ninguém vigia `npm audit` (sem guard, sem CI): sem dono.
+
 #### 🔴 O achado que importa: **o gate do CI estava MORTO**
 
 **Confirmado no `ci.yml` desta árvore, com o comando colado no próprio
@@ -3367,21 +3409,22 @@ decisão sua.
 
 | # | O quê |
 |---|---|
+| 🔴 | **GitHub Actions parado por cobrança desde 16/09/2026 — ainda parado em 22/09** (`gh run list --limit 1000 --json conclusion,createdAt` → 260 runs `failure` desde 16/09, anotação *"recent account payments have failed…"*; último `success` = `docs-sync` 15/09 02:54Z). Nenhum portão roda fora da máquina local; o compile Android (`billing-ktx` 8.3.0, `BillingPlugin.kt`) **não está provado**. Só você regulariza *Billing & plans* (#48 → #68) |
 | 🔴 | Registrar o pacote no Firebase + baixar `google-services.json` |
 | 🔴 | Criar os 4 produtos no Play Console (`soulmon.unlock.full`, 3 pacotes de crédito) |
 | 🔴 | Conta de serviço do Google Play → `GOOGLE_PLAY_SERVICE_ACCOUNT` e `ANDROID_PACKAGE_NAME` |
 | 🔴 | **`PLAY_REQUIRE_ACCOUNT_BINDING = true`** — depois de publicar o app que manda `setObfuscatedAccountId(saveId)`. É o que impede um recibo de virar N contas pagas (ver docs/BILLING-SETUP.md) |
-| 🟡 | ~~Opcional:~~ banco **D1** vinculado como `DB` + tabela `order_claims`. Este é o conserto do **SEC-3**, que a §1.2 chama de *maior risco de dinheiro que sobrou*. ⚰️ **A metade "o `wrangler.jsonc` não tem binding `d1_databases`" morreu** (QA geral de 21/09/2026): o binding `DB` → `soulmon-billing` **existe** no `wrangler.jsonc`, e `claimOrder` (`functions/api/_entitlements.js`) desvia para `claimOrderAtomic` quando `env.DB` está presente. O que **não dá para provar pelo repo** é se as migrações `migrations/0001_order_claims.sql` e `0002_order_claims_expires_at.sql` foram **aplicadas** no banco (`wrangler d1 migrations apply soulmon-billing`) — sem a tabela, a query falha e o resgate cai no caminho antigo. Confirmar no painel/CLI é do dono |
+| 🔴 | ~~Opcional:~~ banco **D1** vinculado como `DB` + tabela `order_claims`. Este é o conserto do **SEC-3**, que a §1.2 chama de *maior risco de dinheiro que sobrou*. ⚰️ **A metade "o `wrangler.jsonc` não tem binding `d1_databases`" morreu** (QA geral de 21/09/2026): o binding `DB` → `soulmon-billing` **existe**, e `claimOrder` (`functions/api/_entitlements.js`) desvia para `claimOrderAtomic` quando `env.DB` está presente. **Medido em 22/09/2026 (QA Rodada 2, `05` §1.1):** `npx wrangler d1 migrations list soulmon-billing --remote` → `0001_order_claims.sql` e `0002_order_claims_expires_at.sql` **"Migrations to be applied"** — a tabela **não existe em produção**. ⚰️ Esta linha dizia "sem a tabela, a query falha e o resgate cai no caminho antigo" — **era FALSO**: o primeiro `DELETE FROM order_claims` de `claimOrderAtomic` está fora do `try` e `billing.js` › `onRequestPost` não tem `catch` → **a 1ª compra Play daria 500**. Conserto de código (`try/catch` caindo para o KV com log) em curso na R2; aplicar a migração é **seu** (ou do operador logado, com o seu aval — pergunta **#65**): `npx wrangler d1 migrations apply soulmon-billing --remote`, prova = `d1 migrations list` vazio |
 | 🔴 | URL da política de privacidade + formulário de Segurança de Dados |
 | ✅ | ~~`VITE_FIREBASE_*`~~ — **feito em 07/09/2026**, no `.env` LOCAL (não no painel: são de BUILD, o Vite as inlina). Projeto `soulmon-app`. Chave conferida contra a API do Firebase, não só transcrita. |
 | 🟠 | Conferir no painel do Cloudflare se já existe o projeto Pages `soulmon` — o `wrangler.jsonc` diz que sim. ⚠️ **A segunda metade desta linha era FALSA e saiu**: dizia que `capacitor.config.json` "ainda aponta o APK para `digiapp-a5e.pages.dev`". Conferido em `e8aef62a` — ele aponta para `https://soulmon.mateus-sprnd.workers.dev`, e as três fontes concordam (`capacitor.config.json`, `desktop/renderer/src/config.ts`, `desktop/electron/main.js`). É a **mesma mentira** que o `CLAUDE.md` e o `docs/PLANO-DESKTOP-STEAM.md` carregaram até 26/08 e que faria um agente decidir errado sobre deploy |
 | ⚰️ | ~~**Comentário mentiroso encontrado e NÃO consertado**: `desktop/renderer/src/config.ts` diz *"A URL ainda aponta pro Pages herdado do DigiApp"*~~ — **fechado**: o `config.ts` já era lápide antes do QA de 21/09/2026, e a mesma mentira tinha **migrado** para `desktop/electron/main.js` acima de `FULL_APP_URL` ("Ainda aponta pro Pages compartilhado") — corrigida nessa rodada, apontando a régua `src/deploy/appUrl.contract.test.ts` |
-| ✅ | ~~Endereço de contato do VAPID~~ — **resolvido em 07/09/2026**: o dono escolheu `mateus.sprnd@gmail.com`. É endereço de CONTATO (RFC 8292 `sub`), para onde o serviço de push escreve em caso de falha de entrega; nunca aparece para o usuário e trocá-lo não invalida subscription nenhuma. Substituir por um endereço do domínio do Soulmon quando ele existir. ⚠️ **Só vale na borda depois de um `wrangler deploy` dentro de `workers/`** — aquele worker não builda no push da `main`. |
+| ✅ | ~~Endereço de contato do VAPID~~ — **resolvido em 07/09/2026**: o dono escolheu `mateus.sprnd@gmail.com`. É endereço de CONTATO (RFC 8292 `sub`), para onde o serviço de push escreve em caso de falha de entrega; nunca aparece para o usuário e trocá-lo não invalida subscription nenhuma. Substituir por um endereço do domínio do Soulmon quando ele existir. ⚰️ ~~"Só vale na borda depois de um `wrangler deploy` dentro de `workers/`"~~ — o worker **foi deployado em 21/09/2026 12:57Z** (medido em 22/09, `wrangler deployments list --name digiapp-push-scheduler`); o endereço está na borda. |
 | 🟠 | **Decidir se a Fase 4 (sensores via Health Connect) vale o custo** — só o dono pode: exige **conta de organização verificada** no Play (enforcement jan/2026; conta pessoal é bloqueador), declaração de health app, política de privacidade dedicada e consentimento LGPD art. 11 específico por finalidade, além de APK novo. A Fase 3 (Janela de Descanso + Sonhos) já roda **sem sensor nenhum**, igual na PWA e no APK — a Fase 4 é opt-in, só Android, e o plano só a previa **se** a Fase 3 provar que move retenção. Caminho técnico, se aprovada: `@capgo/capacitor-health` (único plugin Capacitor vivo em 2026 que expõe sono). **Google Fit está morrendo (APIs até o fim de 2026) — nada deve ser escrito contra ele.** |
 | 🟡 | `ASSETLINKS_PACKAGE_NAME` e `ASSETLINKS_SHA256` no Pages (fingerprint sai do Play Console → Integridade do app) |
 | 🟠 | 🆕 **Gerar um APK novo** — três pacotes estão prontos no repo e SÓ passam a valer no aparelho com um build novo do Android: **WP0.6** (`setObfuscatedAccountId`, que amarra a compra do Play ao save), **WP5.8** (preço localizado vindo do próprio Play, em vez do rótulo fixo em BRL — hoje quem está fora do Brasil vê um número errado na tela de compra) e **WP2.6** (o widget passa a mostrar constância, escudos e a oferta dos 5 minutos). O `android-build.yml` builda no push; o artefato fica em `github.com/HexerVoodoom/Soulmon/actions/runs/<id>`. ⚠️ **Só depois desse APK publicado** ligue `PLAY_REQUIRE_ACCOUNT_BINDING=true` — antes disso ele recusaria toda compra (é a linha abaixo, que continua valendo). |
-| 🟡 | 🆕 **`SEASON_ADMIN_KEY` como secret do worker de push** (`wrangler secret put SEASON_ADMIN_KEY` dentro de `workers/`, com o MESMO valor que está no Pages) — a partir do WP4.18 o cron das 10h BRT do dia 1 fecha a season do Torneio e entrega os troféus 🥇🥈🥉. Sem o secret (ou sem `APP_URL`, que já vai versionado em `wrangler.toml`) o fechamento é **pulado com log**, nunca tentado às cegas — e os troféus voltam a depender de você lembrar. Exige um `wrangler deploy` dentro de `workers/`: aquele worker **não** builda no push da `main`. |
-| 🟡 | **`METRICS_ADMIN_KEY` no Pages** — a rota de leitura das métricas (`functions/api/metrics.js`) é **fail-closed**: sem o secret ela responde **404**, não 401, de propósito (401 confirmaria que o endpoint existe). Ou seja: a métrica-norte está instrumentada e agregada, mas **você não consegue ler nada até definir esse segredo**. |
+| ✅ | ~~🆕 **`SEASON_ADMIN_KEY` como secret do worker de push**~~ — **medido em 22/09/2026** (`npx wrangler secret list --name digiapp-push-scheduler` → `SEASON_ADMIN_KEY`, `VAPID_JWK`): está lá, e o worker **está deployado** (`npx wrangler deployments list --name digiapp-push-scheduler` → 21/09/2026 12:57:29Z, posterior ao último commit em `workers/`, `3e758a81` de 20/09 — #50(a) respondida; ⚰️ "só vale depois de um `wrangler deploy`" já valeu). **O que FALTA no worker: `FIREBASE_SERVICE_ACCOUNT`** (o JSON da conta de serviço do projeto `soulmon-app`) — sem ele o canal **FCM (APK Android) nunca envia**; só o Web Push (PWA) funciona. `cd workers && npx wrangler secret put FIREBASE_SERVICE_ACCOUNT` (pergunta **#66**). Sem `SEASON_ADMIN_KEY`/`APP_URL` o fechamento da season é pulado com log — isso continua valendo como desenho |
+| ✅ | ~~**`METRICS_ADMIN_KEY` no Pages**~~ — **definida** (medido em 22/09/2026, QA Rodada 2 `05` §1.1: `curl -s -w '%{http_code}' https://soulmon.mateus-sprnd.workers.dev/api/metrics` → **401** `Unauthorized`, que só sai depois de `env.METRICS_ADMIN_KEY` truthy — sem a chave a rota responde 404; `npx wrangler secret list` na raiz → `GROQ_API_KEY`, `HF_API_KEY`, `HF_SECRET`, `METRICS_ADMIN_KEY`, `SEASON_ADMIN_KEY`). ⚰️ "você não consegue ler nada até definir esse segredo" — já consegue: `node scripts/metrics-report.mjs` com a chave. **O que FALTA na raiz: `ENTITLEMENTS_ADMIN_KEY`** — `POST /api/entitlements?action=grant` responde **404** no ar (a rota de cortesia não existe sem a chave) → **nenhuma cortesia pode ser concedida → o E0 não começa**; e `COURTESY_MAX_ACCOUNTS` (padrão 25 no código ≠ plano de 10). `npx wrangler secret put ENTITLEMENTS_ADMIN_KEY` e `… COURTESY_MAX_ACCOUNTS` (pergunta **#67**); prova: grant com chave errada → 401. Também ausente: `GEMINI_API_KEY` (sem Higgsfield o sprite morre, não cai no fallback — #63) |
 
 ### 3.3 Steam
 

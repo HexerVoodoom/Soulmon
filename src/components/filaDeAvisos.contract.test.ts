@@ -58,6 +58,19 @@ describe('o slot de avisos não tem cartão solto', () => {
     expect(chaves.filter(k => k === 'termos')).toHaveLength(1);
   });
 
+  it("…EXCETO na primeira exibição da versão, quando vai para a posição 1 (A3, QA rodada 2)", () => {
+    // Ajuste do contrato, com justificativa: "último da fila" + "+N recolhido"
+    // + triagem que aparece todo dia = o banner nunca era visto na primeira
+    // vez. A decisão #24 (informativo, sem re-aceite) continua; o que muda é
+    // que a PRIMEIRA abertura o mostra na frente, e as seguintes voltam ao
+    // último lugar. A marca de "já exibido" fica no aparelho
+    // (`TERMS_NOTICE_SHOWN`), separada do "Ok" (`TERMS_NOTICE_SEEN`).
+    expect(app).toContain("if (termsNoticePrimeiraVez) avisos.unshift(termos); else avisos.push(termos);");
+    expect(app).toContain('STORAGE_KEYS.TERMS_NOTICE_SHOWN');
+    // O `unshift` é o ÚNICO na fila: nenhum outro aviso fura a ordem.
+    expect((app.match(/avisos\.unshift\(/g) ?? []).length).toBe(1);
+  });
+
   it('o banner de termos recebe `changed` de `qualDocMudou` (não afirma mudança nos dois quando só um mudou)', () => {
     expect(app).toMatch(/<TermsUpdateBanner[^>]*changed=\{qualDocMudou\(/);
   });

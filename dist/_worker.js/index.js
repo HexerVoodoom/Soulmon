@@ -165,6 +165,11 @@ async function claimOrder(env, saveId, orderId) {
   return { ok: true };
 }
 __name(claimOrder, "claimOrder");
+function ehViolacaoDeChave(err) {
+  const msg = String(err?.message ?? err?.cause?.message ?? err ?? "");
+  return /UNIQUE|PRIMARY KEY/i.test(msg);
+}
+__name(ehViolacaoDeChave, "ehViolacaoDeChave");
 async function claimOrderAtomic(env, saveId, orderId) {
   const agora = Date.now();
   const vence = agora + RETENTION_TTL_SECONDS * 1e3;
@@ -172,14 +177,29 @@ async function claimOrderAtomic(env, saveId, orderId) {
   try {
     await env.DB.prepare("INSERT INTO order_claims (order_id, save_id, claimed_at, expires_at) VALUES (?, ?, ?, ?)").bind(orderId, saveId, agora, vence).run();
     return { ok: true };
-  } catch {
+  } catch (err) {
+    if (!ehViolacaoDeChave(err)) throw err;
     const row = await env.DB.prepare("SELECT save_id FROM order_claims WHERE order_id = ?").bind(orderId).first();
-    if (row?.save_id !== saveId) return { ok: false, reason: "order-in-use" };
+    if (row?.save_id !== saveId) return { ok: false, reason: (
+      /** @type {const} */
+      "order-in-use"
+    ) };
     await env.DB.prepare("UPDATE order_claims SET expires_at = ? WHERE order_id = ?").bind(vence, orderId).run();
     return { ok: true };
   }
 }
 __name(claimOrderAtomic, "claimOrderAtomic");
+var ORDER_HISTORY_MAX = 200;
+function podarOrderDetails(details, max = ORDER_HISTORY_MAX) {
+  if (!Array.isArray(details) || details.length <= max) return details;
+  const pagosVivos = details.filter((o) => o?.grantTier === "paid" && !o?.voided);
+  const resto = details.filter((o) => !(o?.grantTier === "paid" && !o?.voided));
+  const vaga = Math.max(0, max - pagosVivos.length);
+  const recentes = vaga > 0 ? resto.slice(-vaga) : [];
+  const fica = /* @__PURE__ */ new Set([...pagosVivos, ...recentes]);
+  return details.filter((o) => fica.has(o));
+}
+__name(podarOrderDetails, "podarOrderDetails");
 async function applyVerifiedPurchase(env, saveId, {
   orderId,
   grantTier,
@@ -204,8 +224,8 @@ async function applyVerifiedPurchase(env, saveId, {
       grantTier: grantTier ?? null,
       grantCredits: grantCredits ?? 0
     });
-    if (ent.consumedOrders.length > 200) ent.consumedOrders = ent.consumedOrders.slice(-200);
-    if (ent.orderDetails.length > 200) ent.orderDetails = ent.orderDetails.slice(-200);
+    if (ent.consumedOrders.length > ORDER_HISTORY_MAX) ent.consumedOrders = ent.consumedOrders.slice(-ORDER_HISTORY_MAX);
+    ent.orderDetails = podarOrderDetails(ent.orderDetails);
   }
   await writeEntitlement(env, saveId, ent);
   return { ent, duplicate: false };
@@ -272,6 +292,65 @@ async function auditRefunds(env, saveId, isVoided, now = Date.now()) {
 }
 __name(auditRefunds, "auditRefunds");
 
+// api/_accountTombstone.js
+var TOMBSTONE_PREFIX = "del:done:";
+var TOMBSTONE_TTL_SECONDS = 30 * 24 * 60 * 60;
+function tombstoneKey(saveId) {
+  return `${TOMBSTONE_PREFIX}${saveId}`;
+}
+__name(tombstoneKey, "tombstoneKey");
+async function writeTombstone(env, saveId, now = Date.now()) {
+  await kvOrThrow(env).put(
+    tombstoneKey(saveId),
+    JSON.stringify({ at: now }),
+    { expirationTtl: TOMBSTONE_TTL_SECONDS }
+  );
+}
+__name(writeTombstone, "writeTombstone");
+async function clearTombstone(env, saveId) {
+  await kvOrThrow(env).delete(tombstoneKey(saveId));
+}
+__name(clearTombstone, "clearTombstone");
+async function readTombstone(env, saveId) {
+  const raw = await kvOrThrow(env).get(tombstoneKey(saveId));
+  if (raw === null) return null;
+  try {
+    const t = JSON.parse(raw);
+    return { at: Number.isFinite(t?.at) ? t.at : 0 };
+  } catch {
+    return { at: 0 };
+  }
+}
+__name(readTombstone, "readTombstone");
+async function gateTombstone(env, saveId, authTime) {
+  let t = null;
+  try {
+    t = await readTombstone(env, saveId);
+  } catch {
+    return { deleted: false, reopened: false };
+  }
+  if (!t) return { deleted: false, reopened: false };
+  const loginMs = typeof authTime === "number" && authTime > 0 ? authTime * 1e3 : 0;
+  if (loginMs > t.at) {
+    try {
+      await clearTombstone(env, saveId);
+    } catch (err) {
+      console.warn("tombstone: reabertura n\xE3o conseguiu apagar a l\xE1pide, chamada segue", {
+        saveIdPrefix: String(saveId).slice(0, 8),
+        err: String(err)
+      });
+    }
+    console.info("tombstone: conta reaberta por login posterior \xE0 exclus\xE3o", {
+      saveIdPrefix: String(saveId).slice(0, 8),
+      deletedAt: t.at,
+      loginAt: loginMs
+    });
+    return { deleted: false, reopened: true };
+  }
+  return { deleted: true, reopened: false, at: t.at };
+}
+__name(gateTombstone, "gateTombstone");
+
 // api/_auth.js
 var JWK_URL = "https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com";
 var jwksCache = null;
@@ -330,7 +409,10 @@ async function verifyIdToken(idToken, projectId) {
       new TextEncoder().encode(`${parts[0]}.${parts[1]}`)
     );
     if (!ok) return null;
-    return { email: String(payload.email).trim().toLowerCase() };
+    return {
+      email: String(payload.email).trim().toLowerCase(),
+      authTime: typeof payload.auth_time === "number" && Number.isFinite(payload.auth_time) ? payload.auth_time : 0
+    };
   } catch {
     return null;
   }
@@ -344,16 +426,28 @@ async function emailToSaveId(email) {
 __name(emailToSaveId, "emailToSaveId");
 async function authorizeSaveAccess(request, env, saveId) {
   const projectId = env.FIREBASE_PROJECT_ID;
-  if (!projectId) return { ok: true, enforced: false };
+  if (!projectId) {
+    const tombstone2 = await gateTombstone(env, saveId, 0);
+    if (tombstone2.deleted) return { ok: false, enforced: false, status: 410, reason: "account-deleted", deletedAt: tombstone2.at };
+    return { ok: true, enforced: false, tombstone: tombstone2 };
+  }
   const auth = request.headers.get("Authorization") || "";
   const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
   const claims = await verifyIdToken(token, projectId);
-  if (!claims) return { ok: false, enforced: true, reason: "unauthenticated" };
+  if (!claims) return { ok: false, enforced: true, status: 401, reason: "unauthenticated" };
   const expected = await emailToSaveId(claims.email);
-  if (expected !== saveId) return { ok: false, enforced: true, reason: "forbidden" };
-  return { ok: true, enforced: true, email: claims.email };
+  if (expected !== saveId) return { ok: false, enforced: true, status: 403, reason: "forbidden" };
+  const tombstone = await gateTombstone(env, saveId, claims.authTime);
+  if (tombstone.deleted) return { ok: false, enforced: true, status: 410, reason: "account-deleted", deletedAt: tombstone.at };
+  return { ok: true, enforced: true, email: claims.email, authTime: claims.authTime, tombstone };
 }
 __name(authorizeSaveAccess, "authorizeSaveAccess");
+function authStatus(auth) {
+  if (typeof auth?.status === "number") return auth.status;
+  if (auth?.reason === "account-deleted") return 410;
+  return auth?.reason === "forbidden" ? 403 : 401;
+}
+__name(authStatus, "authStatus");
 async function requireVerifiedOwner(request, env, saveId) {
   const projectId = env?.FIREBASE_PROJECT_ID;
   if (!projectId) return { ok: false, status: 503, reason: "auth-unavailable" };
@@ -460,8 +554,19 @@ async function indexarInscricao(kv2, saveId, chave) {
     if (jaTem && !velho) return false;
     const keys = { ...idx.keys, [chave]: agora };
     const ordenadas = Object.entries(keys).sort((a, b) => a[1] - b[1]);
-    while (ordenadas.length > PUSHIDX_MAX) ordenadas.shift();
+    const expulsas = [];
+    while (ordenadas.length > PUSHIDX_MAX) {
+      const fora = ordenadas.shift();
+      if (fora) expulsas.push(fora[0]);
+    }
     await gravarIndice(kv2, saveId, Object.fromEntries(ordenadas));
+    for (const k of expulsas) {
+      if (k === chave) continue;
+      try {
+        await kv2.delete(k);
+      } catch {
+      }
+    }
     return true;
   } catch {
     return false;
@@ -489,33 +594,101 @@ async function desindexarInscricao(kv2, chave) {
 }
 __name(desindexarInscricao, "desindexarInscricao");
 
-// api/_accountTombstone.js
-var TOMBSTONE_PREFIX = "del:done:";
-var TOMBSTONE_TTL_SECONDS = 30 * 24 * 60 * 60;
-function tombstoneKey(saveId) {
-  return `${TOMBSTONE_PREFIX}${saveId}`;
+// api/_coop.js
+var COOP_MAX_MEMBERS = 4;
+var COOP_CHECKINS_POR_MEMBRO = 5;
+var COOP_TTL = 86400 * 120;
+function semanaDe(d = /* @__PURE__ */ new Date()) {
+  const t = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  t.setUTCDate(t.getUTCDate() + 4 - (t.getUTCDay() || 7));
+  const inicio = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+  const n = Math.ceil(((t.getTime() - inicio.getTime()) / 864e5 + 1) / 7);
+  return `${t.getUTCFullYear()}-W${String(n).padStart(2, "0")}`;
 }
-__name(tombstoneKey, "tombstoneKey");
-async function writeTombstone(env, saveId, now = Date.now()) {
-  await kvOrThrow(env).put(
-    tombstoneKey(saveId),
-    JSON.stringify({ at: now }),
-    { expirationTtl: TOMBSTONE_TTL_SECONDS }
-  );
+__name(semanaDe, "semanaDe");
+var coopKey = /* @__PURE__ */ __name((gid) => `coop:${gid}`, "coopKey");
+var coopOfKey = /* @__PURE__ */ __name((save) => `coopOf:${save}`, "coopOfKey");
+var coopCodeKey = /* @__PURE__ */ __name((code) => `coopCode:${code}`, "coopCodeKey");
+var coopCkKey = /* @__PURE__ */ __name((gid, save) => `coopCk:${gid}:${save}`, "coopCkKey");
+function novoCodigo() {
+  const alfabeto = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  return Array.from(crypto.getRandomValues(new Uint8Array(8))).map((x) => alfabeto[x % alfabeto.length]).join("");
 }
-__name(writeTombstone, "writeTombstone");
-async function clearTombstone(env, saveId) {
-  await kvOrThrow(env).delete(tombstoneKey(saveId));
+__name(novoCodigo, "novoCodigo");
+async function lerGrupo(env, groupId) {
+  if (!VALID_ID.test(groupId || "")) return null;
+  const raw = await kvOrThrow(env).get(coopKey(groupId));
+  return raw ? JSON.parse(raw) : null;
 }
-__name(clearTombstone, "clearTombstone");
-async function isAccountDeleted(env, saveId) {
+__name(lerGrupo, "lerGrupo");
+async function gravarGrupo(env, g) {
+  await kvOrThrow(env).put(coopKey(g.id), JSON.stringify(g), { expirationTtl: COOP_TTL });
+  await Promise.all([
+    kvOrThrow(env).put(coopCodeKey(g.code), g.id, { expirationTtl: COOP_TTL }),
+    ...g.members.map((m) => kvOrThrow(env).put(coopOfKey(m), g.id, { expirationTtl: COOP_TTL }))
+  ]);
+}
+__name(gravarGrupo, "gravarGrupo");
+async function renovarPrazos(env, gid) {
+  const fresco = await lerGrupo(env, gid);
+  if (fresco) await gravarGrupo(env, fresco);
+}
+__name(renovarPrazos, "renovarPrazos");
+async function lerCheckins(env, gid, save) {
+  const raw = await kvOrThrow(env).get(coopCkKey(gid, save));
+  if (!raw) return [];
   try {
-    return await kvOrThrow(env).get(tombstoneKey(saveId)) !== null;
+    const r = JSON.parse(raw);
+    return r && r.weekKey === semanaDe() && Array.isArray(r.days) ? r.days : [];
   } catch {
-    return false;
+    return [];
   }
 }
-__name(isAccountDeleted, "isAccountDeleted");
+__name(lerCheckins, "lerCheckins");
+async function gravarCheckins(env, gid, save, days) {
+  await kvOrThrow(env).put(
+    coopCkKey(gid, save),
+    JSON.stringify({ weekKey: semanaDe(), days }),
+    { expirationTtl: COOP_TTL }
+  );
+}
+__name(gravarCheckins, "gravarCheckins");
+function rolarSemana(g) {
+  const agora = semanaDe();
+  if (g.weekKey !== agora) {
+    g.weekKey = agora;
+    g.checkins = {};
+  }
+  return g;
+}
+__name(rolarSemana, "rolarSemana");
+async function grupoDe(env, saveId) {
+  const groupId = await kvOrThrow(env).get(coopOfKey(saveId));
+  if (!groupId) return null;
+  const g = await lerGrupo(env, groupId);
+  if (!g || !g.members.includes(saveId)) {
+    await kvOrThrow(env).delete(coopOfKey(saveId));
+    return null;
+  }
+  return rolarSemana(g);
+}
+__name(grupoDe, "grupoDe");
+async function coopLeave(env, saveId) {
+  const g = await grupoDe(env, saveId);
+  if (!g) return { left: false, groupId: null, remaining: 0 };
+  g.members = g.members.filter((m) => m !== saveId);
+  if (g.checkins) delete g.checkins[saveId];
+  await kvOrThrow(env).delete(coopOfKey(saveId));
+  await kvOrThrow(env).delete(coopCkKey(g.id, saveId));
+  if (g.members.length === 0) {
+    await kvOrThrow(env).delete(coopKey(g.id));
+    await kvOrThrow(env).delete(coopCodeKey(g.code));
+  } else {
+    await gravarGrupo(env, g);
+  }
+  return { left: true, groupId: g.id, remaining: g.members.length };
+}
+__name(coopLeave, "coopLeave");
 
 // api/account.js
 var CORS = {
@@ -558,6 +731,7 @@ async function deletePushSubscriptions(env, saveId) {
   if (!pushStore || typeof pushStore.get !== "function") return { deleted: 0, scanned: 0, via: "none" };
   let deleted = 0;
   let scanned = 0;
+  let indiceCheio = false;
   try {
     const idx = await lerIndice(pushStore, saveId);
     if (idx.existe) {
@@ -574,7 +748,9 @@ async function deletePushSubscriptions(env, saveId) {
         deleted++;
       }
       await pushStore.delete(chaveDoIndice(saveId));
-      return { deleted, scanned, via: "index" };
+      indiceCheio = Object.keys(idx.keys).length >= PUSHIDX_MAX;
+      if (!indiceCheio) return { deleted, scanned, via: "index" };
+      log("account.delete.push-index-full", saveId, { deleted, scanned });
     }
   } catch (err) {
     log("account.delete.push-index-failed", saveId, { deleted, scanned, error: String(err?.message || err) });
@@ -599,7 +775,7 @@ async function deletePushSubscriptions(env, saveId) {
   } catch (err) {
     log("account.delete.push-scan-failed", saveId, { deleted, scanned, error: String(err?.message || err) });
   }
-  return { deleted, scanned, via: "scan" };
+  return { deleted, scanned, via: indiceCheio ? "index+scan" : "scan" };
 }
 __name(deletePushSubscriptions, "deletePushSubscriptions");
 var SPRITE_IMG_PREFIX = "sprite:img:";
@@ -638,12 +814,12 @@ var COPY = {
     en: 'This is everything Soulmon keeps about you on its servers. Whatever is not here is listed under "notIncluded" \u2014 and most of it never left your device.'
   },
   deleteReady: {
-    "pt-BR": "Est\xE1 tudo pronto para apagar. Confirme quando quiser \u2014 seu bichinho vai sentir sua falta, e a porta fica aberta se voc\xEA voltar.",
-    en: "Everything is ready to be erased. Confirm whenever you want \u2014 your buddy will miss you, and the door stays open if you come back."
+    "pt-BR": "Est\xE1 tudo pronto para apagar. Confirme quando quiser. Se voc\xEA entrar de novo com o mesmo e-mail, a conta recome\xE7a do zero.",
+    en: "Everything is ready to be erased. Confirm whenever you want. If you sign in again with the same email, the account starts over from scratch."
   },
   deleteDone: {
-    "pt-BR": "Pronto, apagamos. Obrigado pelo tempo que voc\xEA passou aqui \u2014 foi bom cuidar de voc\xEA por um tempo.",
-    en: "Done, it is erased. Thank you for the time you spent here \u2014 it was good to look after you for a while."
+    "pt-BR": "Pronto, apagamos. Obrigado pelo tempo aqui.",
+    en: "Done, it is erased. Thank you for the time here."
   },
   pending: {
     "pt-BR": "Sem pressa: este pedido vale por 15 minutos. Se ele expirar, \xE9 s\xF3 pedir de novo.",
@@ -678,6 +854,16 @@ var NOT_INCLUDED = [
     what: "ord:<orderId>",
     "pt-BR": "O v\xEDnculo entre um comprovante de compra e a conta que o resgatou N\xC3O \xE9 apagado. \xC9 o que impede que um mesmo comprovante vire v\xE1rias contas pagas \u2014 e \xE9 o que deixa voc\xEA restaurar a compra se voltar com o mesmo e-mail.",
     en: "The link between a purchase receipt and the account that redeemed it is NOT deleted. It is what stops one receipt from becoming several paid accounts \u2014 and it is what lets you restore your purchase if you come back with the same email."
+  },
+  {
+    what: "del:done:<saveId> (marca de exclus\xE3o / deletion marker)",
+    "pt-BR": 'Por 30 dias depois da exclus\xE3o, o servidor guarda s\xF3 o identificador da sua conta (o c\xF3digo derivado do e-mail, sem o e-mail) com a marca "exclu\xEDda". Ele existe para recusar grava\xE7\xE3o de um aparelho antigo que ainda estivesse logado \u2014 sem isso o save voltava sozinho segundos depois. Entrar de novo com o mesmo e-mail reabre: a conta recome\xE7a do zero. Depois de 30 dias a marca some sozinha.',
+    en: 'For 30 days after deletion, the server keeps only your account identifier (the code derived from your email, without the email) marked as "deleted". It exists to refuse writes from an old device that was still signed in \u2014 without it the save came back on its own seconds later. Signing in again with the same email reopens: the account starts over from scratch. After 30 days the marker expires on its own.'
+  },
+  {
+    what: "ord:steam:own:<appid>:<steamid> (Steam) \u2014 provis\xF3rio / provisional",
+    "pt-BR": "Se voc\xEA ativou o Soulmon pela Steam, o v\xEDnculo entre o seu SteamID e a conta que ele ativou fica guardado por 5 anos, como o comprovante de compra: \xE9 o que impede uma mesma licen\xE7a Steam de virar v\xE1rias contas. Este prazo \xE9 provis\xF3rio e est\xE1 em revis\xE3o (pergunta #56 ao respons\xE1vel).",
+    en: "If you activated Soulmon through Steam, the link between your SteamID and the account it activated is kept for 5 years, like the purchase receipt: it is what stops one Steam licence from becoming several accounts. This period is provisional and under review (question #56 to the owner)."
   },
   {
     what: "terceiros / third parties",
@@ -721,11 +907,37 @@ async function collect(env, saveId) {
   }
   const pidIndexed = await store.get(`pid:${pid}`) === saveId;
   const sprites = await collectSprites(env, saveId);
-  return { pid, state, profile, gifts, entitlement, ranks, rankKeys, pidIndexed, sprites };
+  let coopGroupId = null;
+  try {
+    coopGroupId = (await grupoDe(env, saveId))?.id ?? null;
+  } catch {
+    coopGroupId = null;
+  }
+  return { pid, state, profile, gifts, entitlement, ranks, rankKeys, pidIndexed, sprites, coopGroupId };
 }
 __name(collect, "collect");
+async function pidDeAmigo(env, friendSaveId) {
+  if (typeof friendSaveId !== "string" || !VALID_ID.test(friendSaveId)) return null;
+  let p = null;
+  try {
+    p = JSON.parse(await kvOrThrow(env).get(`profile:${friendSaveId}`) || "null");
+  } catch {
+    p = null;
+  }
+  const pid = typeof p?.pid === "string" ? p.pid : null;
+  if (!pid || pid === await publicIdFor(friendSaveId)) return null;
+  return pid;
+}
+__name(pidDeAmigo, "pidDeAmigo");
+async function amigosComoPids(env, friends) {
+  if (!Array.isArray(friends)) return friends;
+  return (await Promise.all(friends.map((f) => pidDeAmigo(env, f)))).filter(Boolean);
+}
+__name(amigosComoPids, "amigosComoPids");
 async function handleExport(env, saveId) {
   const c = await collect(env, saveId);
+  const state = c.state && Array.isArray(c.state.friends) ? { ...c.state, friends: await amigosComoPids(env, c.state.friends) } : c.state;
+  const profile = c.profile && Array.isArray(c.profile.friends) ? { ...c.profile, friends: await amigosComoPids(env, c.profile.friends) } : c.profile;
   log("account.export", saveId, {
     hasState: !!c.state,
     hasProfile: !!c.profile,
@@ -741,8 +953,8 @@ async function handleExport(env, saveId) {
     data: {
       // As chaves do objeto são as PRÓPRIAS chaves do KV, para o arquivo ser
       // auditável contra o servidor sem precisar de um mapa à parte.
-      [`${saveId} (save)`]: c.state,
-      [`profile:${saveId}`]: c.profile,
+      [`${saveId} (save)`]: state,
+      [`profile:${saveId}`]: profile,
       [`pid:${c.pid}`]: c.pidIndexed ? saveId : null,
       [`gifts:${saveId}`]: c.gifts,
       [`${ENT_PREFIX}${saveId}`]: c.entitlement ? { ...c.entitlement, orderDetails: maskOrderDetails(c.entitlement.orderDetails) } : null,
@@ -768,7 +980,8 @@ function plan(c, saveId) {
       ...c.sprites.locks,
       ...c.sprites.blobs,
       "men\xE7\xF5es a voc\xEA na lista de amigos de outros jogadores",
-      "inscri\xE7\xF5es de notifica\xE7\xE3o (push:*/fcm:*) ligadas \xE0 sua conta"
+      "inscri\xE7\xF5es de notifica\xE7\xE3o (push:*/fcm:*) ligadas \xE0 sua conta",
+      ...c.coopGroupId ? [`coop:${c.coopGroupId} (sua vaga no grupo)`, coopOfKey(saveId), coopCkKey(c.coopGroupId, saveId)] : []
     ].filter(Boolean),
     minimiza: c.entitlement ? [`${ENT_PREFIX}${saveId} \u2014 sai o uso (IA, an\xFAncios), ficam os campos de compra`] : [],
     sobrevive: Array.isArray(c.entitlement?.consumedOrders) ? c.entitlement.consumedOrders.map((o) => `${ORDER_PREFIX}${o}`) : []
@@ -848,6 +1061,10 @@ async function handleDeleteConfirm(env, saveId, body) {
       log("account.delete.step-failed", saveId, { step: rotulo, error: String(err?.message || err) });
     }
   }, "tentar");
+  let coop = { left: false, groupId: null, remaining: 0 };
+  await tentar("coop (grupo cooperativo)", async () => {
+    coop = await coopLeave(env, saveId);
+  });
   const push = await deletePushSubscriptions(env, saveId);
   for (const k of c.sprites.blobs) await tentar(k, () => store.delete(k));
   for (const k of c.sprites.imgs) await tentar(k, () => store.delete(k));
@@ -881,6 +1098,7 @@ async function handleDeleteConfirm(env, saveId, body) {
     pushSubscriptionsDeleted: push.deleted,
     pushSubscriptionsScanned: push.scanned,
     pushVia: push.via,
+    coopLeft: coop.left,
     spritesDeleted: c.sprites.imgs.length + c.sprites.locks.length + c.sprites.blobs.length,
     entitlementMinimized: !!c.entitlement,
     tombstoneTtlSeconds: TOMBSTONE_TTL_SECONDS,
@@ -892,6 +1110,7 @@ async function handleDeleteConfirm(env, saveId, body) {
       ...executed,
       listasDeAmigosLimpas: scrubbed,
       inscricoesDePushApagadas: push.deleted,
+      grupoCooperativoDeixado: coop.left,
       spritesApagados: c.sprites.imgs.length + c.sprites.locks.length + c.sprites.blobs.length,
       // O que NÃO conseguiu apagar, pelo nome da chave. Vazio é o normal;
       // preenchido, o token continua válido e a pessoa pode confirmar de novo.
@@ -1227,7 +1446,7 @@ async function onRequestPost({ request, env }) {
   const saveId = body?.id;
   if (!saveId || !VALID_ID.test(saveId)) return json2({ error: "Invalid save ID" }, 400);
   const auth = await authorizeSaveAccess(request, env, saveId);
-  if (!auth.ok) return json2({ error: auth.reason }, auth.reason === "forbidden" ? 403 : 401);
+  if (!auth.ok) return json2({ error: auth.reason }, authStatus(auth));
   let result;
   if (provider === "play") {
     result = await verifyPlayPurchase(env, {
@@ -1282,7 +1501,13 @@ __name(onRequestPost, "onRequestPost");
 
 // api/_aiGuard.js
 var AI_LIMITS = {
-  chat: { perAccount: 120, global: 2e4 },
+  // `perAccountByTier` sobrepõe `perAccount` quando o tier da conta está na
+  // tabela. PROVISÓRIO #55 (coordenador, QA rodada 2, `03-negocio-r2` §5): a
+  // demo tinha a MESMA cota de chat (120/dia) que a conta paga — o custo da
+  // cauda do chat era pago igual por quem nunca pagou. Demo 30 / paid 120 até
+  // o dono responder; o `perAccount` continua sendo o teto de quem não tem
+  // tier conhecido (fail-closed no lado barato).
+  chat: { perAccount: 120, perAccountByTier: { demo: 30, paid: 120 }, global: 2e4 },
   suggest: { perAccount: 30, global: 3e3 },
   // 6/dia = o maior lote possível (empate triplo = 3) + retentativas do dia.
   //
@@ -1365,7 +1590,7 @@ async function guardAiRequest(request, env, bucket, saveId, units = 1, formId = 
   }
   const auth = await authorizeSaveAccess(request, env, saveId);
   if (!auth.ok) {
-    return { ok: false, status: auth.reason === "forbidden" ? 403 : 401, reason: auth.reason };
+    return { ok: false, status: authStatus(auth), reason: auth.reason };
   }
   const now = /* @__PURE__ */ new Date();
   const today3 = day(now);
@@ -1382,16 +1607,22 @@ async function guardAiRequest(request, env, bucket, saveId, units = 1, formId = 
     }
   }
   const hasFormCap = typeof limits.perFormLifetime === "number" && typeof formId === "string" && formId.length > 0;
+  const hasTierCap = !!limits.perAccountByTier;
   let ent = null;
+  let perAccount = limits.perAccount;
   let usedLifetime = 0;
   let usedForm = 0;
   let usedGlobal = 0;
   let usedAccount = 0;
   try {
-    if (hasLifetime || hasFormCap) {
+    if (hasLifetime || hasFormCap || hasTierCap) {
       ent = await readEntitlement(env, saveId);
       if (hasLifetime) usedLifetime = lifetimeUsed(ent, bucket);
       if (hasFormCap) usedForm = formUsed(ent, formId);
+      if (hasTierCap) {
+        const porTier = limits.perAccountByTier[ent?.tier];
+        if (typeof porTier === "number") perAccount = porTier;
+      }
     }
     usedGlobal = await readCounter(env, globalKey);
     usedAccount = await readCounter(env, accountKey);
@@ -1405,7 +1636,7 @@ async function guardAiRequest(request, env, bucket, saveId, units = 1, formId = 
   if (hasFormCap && usedForm + units > limits.perFormLifetime) {
     return refuse(409, "sprite-form-cap");
   }
-  if (usedAccount + units > limits.perAccount) {
+  if (usedAccount + units > perAccount) {
     return refuse(429, "ai-daily-limit");
   }
   if (usedGlobal + units > globalLimit) {
@@ -1452,6 +1683,8 @@ function makeRelease(env, ctx) {
 __name(makeRelease, "makeRelease");
 
 // api/_redact.js
+var DATE_RECENT_YEARS = 5;
+var YEAR_OR_HOUR = /^(?:[01]\d\d\d|2[0-3]\d\d)$/;
 var RULES = [
   { kind: "email", re: /[\w.+-]+@[\w-]+\.[\w.-]+/g, tag: "[email]" },
   { kind: "url", re: /\b(?:https?:\/\/|www\.)\S+/gi, tag: "[link]" },
@@ -1472,8 +1705,16 @@ var RULES = [
   //    início é opcional para não deixar fixo passar; 8 dígitos contíguos
   //    (`20260921`) também caem aqui — quase-identificador de qualquer jeito.
   { kind: "cep", re: /\b\d{5}-\d{3}\b/g, tag: "[cep]" },
-  { kind: "date", re: /\b\d{2}\/\d{2}\/\d{4}\b/g, tag: "[data]" },
-  { kind: "phone", re: /\b9?\d{4}[\s.-]?\d{4}\b/g, tag: "[telefone]" },
+  // QA rodada 2 (`01-seguranca-r2` §7): as duas regras de baixo marcavam
+  // faixa de ano (`2020-2024`), horário (`1000-1200`), qualquer data recente
+  // e `20260921` como identificador — e o texto útil da meta chegava ao
+  // modelo mastigado. Data só é quase-identificador quando é ANTIGA (nascimento,
+  // não "até 31/12/2026"); telefone curto exige SEPARADOR e não pode ser um
+  // par de anos/horas. O preço declarado: 9 dígitos contíguos sem separador
+  // (`987654321`) passam a passar — a regra de DDD e a de "sequência longa"
+  // continuam pegando o formato completo.
+  { kind: "date", re: /\b(\d{2})\/(\d{2})\/(\d{4})\b/g, tag: "[data]", keep: /* @__PURE__ */ __name((_m, _d, _mo, y) => Number(y) >= (/* @__PURE__ */ new Date()).getUTCFullYear() - DATE_RECENT_YEARS, "keep") },
+  { kind: "phone", re: /\b(9?\d{4})[\s.-](\d{4})\b/g, tag: "[telefone]", keep: /* @__PURE__ */ __name((_m, a, b) => YEAR_OR_HOUR.test(a) && YEAR_OR_HOUR.test(b), "keep") },
   { kind: "digits", re: /\b\d[\d\s.-]{9,}\d\b/g, tag: "[n\xFAmero]" },
   { kind: "handle", re: /(^|\s)@[A-Za-z0-9_.]{2,}/g, tag: "$1[perfil]" }
 ];
@@ -1481,8 +1722,9 @@ function minimizeForAi(input, maxLength = 500) {
   const original = (input ?? "").toString();
   let text = original;
   const redactions = {};
-  for (const { kind, re, tag } of RULES) {
+  for (const { kind, re, tag, keep } of RULES) {
     text = text.replace(re, (match2, ...rest) => {
+      if (keep && keep(match2, ...rest)) return match2;
       redactions[kind] = (redactions[kind] || 0) + 1;
       return tag.includes("$1") ? `${rest[0] ?? ""}${tag.replace("$1", "")}` : tag;
     });
@@ -1871,6 +2113,7 @@ var CORS4 = {
 };
 var VALID_ID2 = /^[a-zA-Z0-9_-]{8,64}$/;
 var MATCHES_PER_DAY = 5;
+var CLOSED_SEASON_TTL = 86400 * 400;
 var json3 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS4 }), "json");
 var HEAVY_ACTIONS = /* @__PURE__ */ new Set(["players", "opponents", "rank", "seasonResult"]);
 var HEAVY_LIMIT = { limit: 20, windowMs: 6e4 };
@@ -2011,84 +2254,6 @@ async function onRequest2(context) {
   return res;
 }
 __name(onRequest2, "onRequest");
-var COOP_MAX_MEMBERS = 4;
-var COOP_CHECKINS_POR_MEMBRO = 5;
-var COOP_TTL = 86400 * 120;
-function semanaDe(d = /* @__PURE__ */ new Date()) {
-  const t = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
-  t.setUTCDate(t.getUTCDate() + 4 - (t.getUTCDay() || 7));
-  const inicio = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
-  const n = Math.ceil(((t.getTime() - inicio.getTime()) / 864e5 + 1) / 7);
-  return `${t.getUTCFullYear()}-W${String(n).padStart(2, "0")}`;
-}
-__name(semanaDe, "semanaDe");
-var coopKey = /* @__PURE__ */ __name((gid) => `coop:${gid}`, "coopKey");
-var coopOfKey = /* @__PURE__ */ __name((save) => `coopOf:${save}`, "coopOfKey");
-var coopCodeKey = /* @__PURE__ */ __name((code) => `coopCode:${code}`, "coopCodeKey");
-var coopCkKey = /* @__PURE__ */ __name((gid, save) => `coopCk:${gid}:${save}`, "coopCkKey");
-function novoCodigo() {
-  const alfabeto = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  return Array.from(crypto.getRandomValues(new Uint8Array(8))).map((x) => alfabeto[x % alfabeto.length]).join("");
-}
-__name(novoCodigo, "novoCodigo");
-async function lerGrupo(env, groupId) {
-  if (!VALID_ID2.test(groupId || "")) return null;
-  const raw = await kvOrThrow(env).get(coopKey(groupId));
-  return raw ? JSON.parse(raw) : null;
-}
-__name(lerGrupo, "lerGrupo");
-async function gravarGrupo(env, g) {
-  await kvOrThrow(env).put(coopKey(g.id), JSON.stringify(g), { expirationTtl: COOP_TTL });
-  await Promise.all([
-    kvOrThrow(env).put(coopCodeKey(g.code), g.id, { expirationTtl: COOP_TTL }),
-    ...g.members.map((m) => kvOrThrow(env).put(coopOfKey(m), g.id, { expirationTtl: COOP_TTL }))
-  ]);
-}
-__name(gravarGrupo, "gravarGrupo");
-async function renovarPrazos(env, gid) {
-  const fresco = await lerGrupo(env, gid);
-  if (fresco) await gravarGrupo(env, fresco);
-}
-__name(renovarPrazos, "renovarPrazos");
-async function lerCheckins(env, gid, save) {
-  const raw = await kvOrThrow(env).get(coopCkKey(gid, save));
-  if (!raw) return [];
-  try {
-    const r = JSON.parse(raw);
-    return r && r.weekKey === semanaDe() && Array.isArray(r.days) ? r.days : [];
-  } catch {
-    return [];
-  }
-}
-__name(lerCheckins, "lerCheckins");
-async function gravarCheckins(env, gid, save, days) {
-  await kvOrThrow(env).put(
-    coopCkKey(gid, save),
-    JSON.stringify({ weekKey: semanaDe(), days }),
-    { expirationTtl: COOP_TTL }
-  );
-}
-__name(gravarCheckins, "gravarCheckins");
-function rolarSemana(g) {
-  const agora = semanaDe();
-  if (g.weekKey !== agora) {
-    g.weekKey = agora;
-    g.checkins = {};
-  }
-  return g;
-}
-__name(rolarSemana, "rolarSemana");
-async function grupoDe(env, saveId) {
-  const groupId = await kvOrThrow(env).get(coopOfKey(saveId));
-  if (!groupId) return null;
-  const g = await lerGrupo(env, groupId);
-  if (!g || !g.members.includes(saveId)) {
-    await kvOrThrow(env).delete(coopOfKey(saveId));
-    return null;
-  }
-  return rolarSemana(g);
-}
-__name(grupoDe, "grupoDe");
 async function vistaDoGrupo(env, g, euSave) {
   const hoje = today2();
   const dias = await Promise.all(g.members.map(async (m) => {
@@ -2132,7 +2297,7 @@ async function handleCommunity({ request, env }) {
     if (!VALID_ID2.test(actorId || "")) return json3({ error: "invalid id" }, 400);
     const auth = await authorizeSaveAccess(request, env, actorId);
     if (auth.ok) return null;
-    return json3({ error: auth.reason }, auth.reason === "forbidden" ? 403 : 401);
+    return json3(auth.reason === "account-deleted" ? { error: auth.reason, deletedAt: auth.deletedAt } : { error: auth.reason }, authStatus(auth));
   }, "denyUnlessOwner");
   if (action === "profile" && method === "POST") {
     const denied = await denyUnlessOwner(id);
@@ -2338,7 +2503,7 @@ async function handleCommunity({ request, env }) {
       p.pendingTrophies.push({ season, place: i + 1 });
       await putProfile(env, top3[i].id, p);
     }
-    await kvOrThrow(env).put(closedKey, JSON.stringify({ at: Date.now(), awarded: top3.length }));
+    await kvOrThrow(env).put(closedKey, JSON.stringify({ at: Date.now(), awarded: top3.length }), { expirationTtl: CLOSED_SEASON_TTL });
     return json3({ ok: true, season, awarded: top3.length });
   }
   if (action === "trophies" && method === "GET") {
@@ -2477,18 +2642,7 @@ async function handleCommunity({ request, env }) {
   if (action === "coopLeave" && method === "POST") {
     const denied = await denyUnlessOwner(id);
     if (denied) return denied;
-    const g = await grupoDe(env, id);
-    if (!g) return json3({ ok: true });
-    g.members = g.members.filter((m) => m !== id);
-    if (g.checkins) delete g.checkins[id];
-    await kvOrThrow(env).delete(coopOfKey(id));
-    await kvOrThrow(env).delete(coopCkKey(g.id, id));
-    if (g.members.length === 0) {
-      await kvOrThrow(env).delete(coopKey(g.id));
-      await kvOrThrow(env).delete(coopCodeKey(g.code));
-    } else {
-      await gravarGrupo(env, g);
-    }
+    await coopLeave(env, id);
     return json3({ ok: true });
   }
   return json3({ error: "unknown action" }, 400);
@@ -2572,7 +2726,7 @@ async function onRequestGet2({ request, env }) {
   if (!saveId || !VALID_ID.test(saveId)) return json4({ error: "Invalid save ID" }, 400);
   if (!kv(env)) return json4({ error: "Storage not bound" }, 500);
   const auth = await authorizeSaveAccess(request, env, saveId);
-  if (!auth.ok) return json4({ error: auth.reason }, auth.reason === "forbidden" ? 403 : 401);
+  if (!auth.ok) return json4({ error: auth.reason }, authStatus(auth));
   const { ent } = await auditRefunds(env, saveId, (order) => {
     if (order.provider === COURTESY_PROVIDER) return Promise.resolve(false);
     if (order.provider !== "steam") {
@@ -2592,7 +2746,7 @@ async function onRequestPost3({ request, env }) {
   const saveId = body?.id;
   if (!saveId || !VALID_ID.test(saveId)) return json4({ error: "Invalid save ID" }, 400);
   const auth = await authorizeSaveAccess(request, env, saveId);
-  if (!auth.ok) return json4({ error: auth.reason }, auth.reason === "forbidden" ? 403 : 401);
+  if (!auth.ok) return json4({ error: auth.reason }, authStatus(auth));
   if (action === "spend") {
     const amount = Number(body?.amount);
     const ent = await spendCredits(env, saveId, amount, body?.opId);
@@ -2615,7 +2769,8 @@ __name(onRequestPost3, "onRequestPost");
 var CORS7 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type"
+  // `Authorization` anunciado — mesma regra e mesmo motivo de `subscribe.js`.
+  "Access-Control-Allow-Headers": "Content-Type, Authorization"
 };
 var json5 = /* @__PURE__ */ __name((corpo, status) => new Response(JSON.stringify(corpo), {
   status,
@@ -2648,6 +2803,8 @@ async function onRequestPost4({ request, env }) {
   const { token, petName, language, bornAt, saveId } = body;
   if (!token) return json5({ error: "Missing token" }, 400);
   if (!ehTokenFcm(token)) return json5({ error: "Invalid token" }, 400);
+  const dono = await saveIdAutorizado(request, env, saveId);
+  if (dono.status) return json5({ error: dono.reason }, dono.status);
   const registro = {
     token,
     petName: nomeDePet(petName),
@@ -2657,7 +2814,7 @@ async function onRequestPost4({ request, env }) {
     // linha. Opcional, não verificado, inválido descartado: o porquê inteiro
     // está no comentário equivalente de `subscribe.js` (mesma regra, os dois
     // canais são varridos pela mesma função).
-    ...typeof saveId === "string" && VALID_ID.test(saveId) ? { saveId } : {}
+    ...dono.saveId ? { saveId: dono.saveId } : {}
   };
   await gravarSeMudou(env.PUSH_SUBSCRIPTIONS, `fcm:${await hashToken(token)}`, registro);
   return json5({ ok: true }, 201);
@@ -2677,6 +2834,15 @@ async function onRequestDelete({ request, env }) {
   return json5({ ok: true }, 200);
 }
 __name(onRequestDelete, "onRequestDelete");
+async function saveIdAutorizado(request, env, saveId) {
+  if (typeof saveId !== "string" || !VALID_ID.test(saveId)) return { saveId: null };
+  const auth = await authorizeSaveAccess(request, env, saveId);
+  if (auth.ok) return { saveId };
+  if (auth.reason === "account-deleted") return { saveId: null, status: authStatus(auth), reason: auth.reason };
+  console.warn("[fcm-subscribe] saveId sem prova de posse, inscri\xE7\xE3o gravada sem conta", { reason: auth.reason });
+  return { saveId: null };
+}
+__name(saveIdAutorizado, "saveIdAutorizado");
 async function hashToken(token) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token));
   return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 32);
@@ -2915,7 +3081,7 @@ async function onRequestPost5({ request, env }) {
     if (!auth.ok) {
       return Response.json(
         { error: auth.reason },
-        { status: auth.reason === "forbidden" ? 403 : 401, headers: CORS8 }
+        { status: authStatus(auth), headers: CORS8 }
       );
     }
     if (typeof formId === "string" && formId.length > 0) {
@@ -3446,11 +3612,15 @@ async function onRequest4({ request, env }) {
   }
   const auth = await authorizeSaveAccess(request, env, saveId);
   if (!auth.ok) {
-    return Response.json({ error: auth.reason }, { status: auth.reason === "forbidden" ? 403 : 401, headers: CORS10 });
+    if (auth.reason === "account-deleted") {
+      console.warn("save: recusado, conta apagada (l\xE1pide)", { saveIdPrefix: saveId.slice(0, 8), method: request.method });
+    }
+    return Response.json(auth.reason === "account-deleted" ? { error: auth.reason, deletedAt: auth.deletedAt } : { error: auth.reason }, { status: authStatus(auth), headers: CORS10 });
   }
-  if (await isAccountDeleted(env, saveId)) {
+  const tombstone = auth.tombstone ?? await gateTombstone(env, saveId, auth.authTime);
+  if (tombstone.deleted) {
     console.warn("save: recusado, conta apagada (l\xE1pide)", { saveIdPrefix: saveId.slice(0, 8), method: request.method });
-    return Response.json({ error: "account-deleted" }, { status: 410, headers: CORS10 });
+    return Response.json({ error: "account-deleted", deletedAt: tombstone.at }, { status: 410, headers: CORS10 });
   }
   if (request.method === "GET") {
     const { value: raw, metadata } = await kvOrThrow(env).getWithMetadata(saveId);
@@ -3458,12 +3628,17 @@ async function onRequest4({ request, env }) {
     const gravadoEm = Number(metadata?.t) || 0;
     if ((Date.now() - gravadoEm) / 1e3 > RENEW_AFTER_SECONDS) {
       try {
-        await kvOrThrow(env).put(saveId, raw, {
-          expirationTtl: SAVE_TTL_SECONDS,
-          metadata: { t: Date.now() }
-        });
+        const aindaIgual = await kvOrThrow(env).get(saveId) === raw;
+        if (aindaIgual) {
+          await kvOrThrow(env).put(saveId, raw, {
+            expirationTtl: SAVE_TTL_SECONDS,
+            metadata: { t: Date.now() }
+          });
+        } else {
+          console.info("save: renova\xE7\xE3o de TTL pulada, conte\xFAdo mudou entre leitura e renova\xE7\xE3o", { saveIdPrefix: saveId.slice(0, 8) });
+        }
       } catch (err) {
-        console.warn("save: renova\xE7\xE3o de TTL falhou, leitura segue", { saveId, err: String(err) });
+        console.warn("save: renova\xE7\xE3o de TTL falhou, leitura segue", { saveIdPrefix: saveId.slice(0, 8), err: String(err) });
       }
     }
     const state = JSON.parse(raw);
@@ -3574,7 +3749,9 @@ __name(costGate2, "costGate");
 var CORS11 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type"
+  // `Authorization` anunciado: o cliente manda `Bearer <idToken>` junto do
+  // `saveId` para a inscrição ser ligada à conta (ver `saveIdAutorizado`).
+  "Access-Control-Allow-Headers": "Content-Type, Authorization"
 };
 async function onRequestOptions11() {
   return new Response(null, { status: 204, headers: CORS11 });
@@ -3611,6 +3788,13 @@ async function onRequestPost6({ request, env }) {
       headers: { "Content-Type": "application/json", ...CORS11 }
     });
   }
+  const dono = await saveIdAutorizado2(request, env, saveId);
+  if (dono.status) {
+    return new Response(JSON.stringify({ error: dono.reason }), {
+      status: dono.status,
+      headers: { "Content-Type": "application/json", ...CORS11 }
+    });
+  }
   const kvKey = `push:${await hashEndpoint(endpoint)}`;
   const record = {
     endpoint,
@@ -3635,15 +3819,16 @@ async function onRequestPost6({ request, env }) {
     language: idiomaDePush(language),
     /* Decisão #23 do QA GERAL (21/09/2026) — a CONTA dona da inscrição.
        Existe por um motivo só: a exclusão de conta (`account.js`,
-       `deletePushSubscriptions`) varre `push:*` e apaga o que carrega este
-       campo — sem ele, a chave é hash do endpoint e o servidor não tem como
-       achar as inscrições do titular. OPCIONAL e não verificado: quem manda é
-       o mesmo cliente anônimo que já manda o endpoint, e um `saveId` alheio
-       aqui só faria a inscrição DESTE aparelho ser apagada quando o outro
-       excluir a conta — dano para quem mentiu, não para o alvo. Inválido é
-       DESCARTADO, nunca corrigido (um id torto nunca casaria com ninguém e
-       viraria lixo de um ano). O worker de push não lê este campo. */
-    ...typeof saveId === "string" && VALID_ID.test(saveId) ? { saveId } : {}
+       `deletePushSubscriptions`) acha pelo índice `pushidx:<saveId>` o que
+       carrega este campo — sem ele, a chave é hash do endpoint e o servidor
+       não tem como achar as inscrições do titular.
+       ⚠️ "Não verificado" era mentira cara (QA rodada 2, `01-seguranca-r2`
+       §2): o `saveId` alheio entrava no ÍNDICE da vítima, e 17 POSTs anônimos
+       expulsavam a inscrição real dela pelo teto `PUSHIDX_MAX` — push cortado
+       em silêncio. Hoje só entra AUTORIZADO (`saveIdAutorizado`); sem prova
+       o registro é gravado SEM `saveId` (compat: continua recebendo push, só
+       não é ligado a conta nenhuma). O worker de push não lê este campo. */
+    ...dono.saveId ? { saveId: dono.saveId } : {}
   };
   await gravarSeMudou(env.PUSH_SUBSCRIPTIONS, kvKey, record);
   return new Response(JSON.stringify({ ok: true }), {
@@ -3680,6 +3865,15 @@ async function onRequestDelete2({ request, env }) {
   });
 }
 __name(onRequestDelete2, "onRequestDelete");
+async function saveIdAutorizado2(request, env, saveId) {
+  if (typeof saveId !== "string" || !VALID_ID.test(saveId)) return { saveId: null };
+  const auth = await authorizeSaveAccess(request, env, saveId);
+  if (auth.ok) return { saveId };
+  if (auth.reason === "account-deleted") return { saveId: null, status: authStatus(auth), reason: auth.reason };
+  console.warn("[subscribe] saveId sem prova de posse, inscri\xE7\xE3o gravada sem conta", { reason: auth.reason });
+  return { saveId: null };
+}
+__name(saveIdAutorizado2, "saveIdAutorizado");
 function ehChaveWebPush(v) {
   return typeof v === "string" && v.length >= 16 && v.length <= 256 && /^[A-Za-z0-9_-]+=*$/.test(v);
 }
@@ -3877,7 +4071,7 @@ async function onRequest5({ env }) {
 }
 __name(onRequest5, "onRequest");
 
-// ../.wrangler/tmp/pages-MvzGF6/functionsRoutes-0.22509629089755834.mjs
+// ../.wrangler/tmp/pages-8Vwwki/functionsRoutes-0.830513451407122.mjs
 var routes = [
   {
     routePath: "/api/account",

@@ -17,6 +17,8 @@ import {
   type HabitRhythm,
 } from './habitRhythm';
 import { ensureSeasonProgress, applySeasonMedal } from './seasons';
+import { awardBondXP } from './bond';
+import { playerDayKey } from './playerDay';
 
 // Tipos necessários para o reset
 interface Activity {
@@ -976,8 +978,20 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
   const finalStageLevel = getStageLevel(newEvolutionStage);
   const newMaxHP = MAX_HP_BY_FORM[finalStageLevel];
 
+  /* 🔗 Vínculo — `XP_PERFECT_DAY` (`utils/bond.ts`; `02-REGRAS` §55). A tabela
+     declara o dia completo como fonte de XP "em `utils/dailyReset.ts`", e até
+     22/09/2026 ninguém emitia o evento: `bond.wiring.test.ts` testava a função
+     pura com TODOS os `kind`s, e a simulação da QA rodada 2 (§2.4) mediu 7 dos
+     11 eventos mudos. Este é o que mora aqui; o resto é do `App.tsx`.
+     O ledger do teto usa o dia do JOGADOR de `now` (o dia em que a virada roda),
+     como todo `awardBondXP`; `perfectDay` não tem teto, então o ledger só troca
+     de dia — e `totalXP` nunca desce (invariante 1). */
+  const comVinculo = dayWasPerfect
+    ? awardBondXP(prev as any, { kind: 'perfectDay' }, playerDayKey(now, prev.playerDayTz))
+    : prev;
+
   return {
-    ...prev,
+    ...comVinculo,
     activities: resetActivities,
     // P2 — a folga vive no save (um contador por JOGADOR, não por aparelho).
     restDaysLeft,

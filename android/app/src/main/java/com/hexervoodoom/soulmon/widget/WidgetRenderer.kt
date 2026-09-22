@@ -133,18 +133,23 @@ object WidgetRenderer {
     /* ⚰️ "Don't forget about me today!" SAIU (PRINCÍPIOS §12, veto registrado no
        STATUS): é a frase de culpa por excelência — o pet cobrando presença. Teto do pool
        ~22 caracteres (§30 (c), copy com o `redator-ux`); o `ellipsize` do layout é só a rede. */
+    /* 22/09/2026 (QA rodada 2, `02-narrativa` §3): "You're my favorite partner!"
+       SAIU — L1 (pessoa como sujeito de "ser", no elogio) e `partner` é o termo
+       da franquia para o humano (bíblia §12 ⚠️). "Let's tackle our tasks
+       together?" (L2, criatura falando de tarefas como interface), "Together
+       we're stronger!" (slogan; "stronger" contradiz §5.8 — muda o corpo, não a
+       força), "I'm rooting for you!" (§13: não motiva) e "Ready to evolve
+       today?" (cutucada; o widget não sabe se a barra está cheia) saíram junto. */
     private val CHAT_FIXED_PHRASES = listOf(
         "Glad you're back!",
-        "Let's tackle our tasks together?",
-        "You're my favorite partner!",
-        "Ready to evolve today?",
+        "Want company?",
+        "Same road, you and me.",
         // "I missed you!" saiu em 22/09/2026 (QA rodada 1 §4.2, L11): a criatura
         // nunca sente por causa da ausência da pessoa. Reação ao AGORA, não ao tempo.
         "Here when you are.",
         "You can always count on me!",
         "Good to see you!",
-        "Together we're stronger!",
-        "I'm rooting for you!"
+        "Side by side."
     )
 
     // Widget D (chat, 180×40): criatura a 32 + nome + frases girando.
@@ -178,8 +183,11 @@ object WidgetRenderer {
         // 06/09/2026 — contar o que falta, na tela inicial, é cobrança.
         val contextual = mutableListOf<String>()
         // HP baixo: "I miss you..." saiu em 22/09/2026 (L11 + L6 — ligava saudade ao
-        // placar de HP). "Quiet day. Me too." é o exemplo literal permitido da L11.
-        if (hp <= 20) contextual.add("Quiet day. Me too.")
+        // placar de HP). "Quiet day. Me too." saiu no mesmo dia (QA R2): a frase
+        // era o exemplo permitido da L11, mas o GATILHO é HP baixo — o placar do
+        // dia em que a meta não foi cumprida — e ali vira atribuição ("quiet day"
+        // afirma como foi o dia da pessoa). A criatura fala de si (§13).
+        if (hp <= 20) contextual.add("Resting close to the ground today.")
         // (o ramo "digiegg" saiu junto com os nomes da Bandai: a árvore nasce
         //  em rookie desde `types/progression.ts`, não existe estágio de ovo)
         when {
@@ -369,13 +377,17 @@ object WidgetRenderer {
         // consigo mesma, e um ⚠️ ali converte culpa em vergonha. Também não é
         // saudade da criatura ("I've been missing you" saiu em 22/09/2026, L11):
         // a frase fica no presente, ao lado da pessoa.
-        if (hp <= 20) return "Quiet day. Me too."
+        // "Quiet day. Me too." saiu em 22/09/2026 (QA R2): frase certa, gatilho
+        // errado — no placar de HP ela afirma como foi o dia da pessoa.
+        if (hp <= 20) return "Resting close to the ground today."
         // Quem faltou duas vezes seguidas precisa da porta pequena, não do placar.
         if (needsIntervention) return "Today, just five minutes?"
         if (total == 0) {
             // Sem tarefa hoje, a FAIXA de constância ainda tem o que dizer —
             // e ela é uma faixa, nunca o percentual (ver `habit_steady`).
-            if (habitSteady == true) return "You've been steady"
+            // "You've been steady" saiu em 22/09/2026 (L1: pessoa como sujeito de
+            // verbo de ser, no elogio). O sujeito passa para o ritmo.
+            if (habitSteady == true) return "The rhythm held."
             return "One day at a time"
         }
         val ratio = if (total > 0) completed.toDouble() / total else 0.0

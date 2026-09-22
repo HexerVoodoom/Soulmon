@@ -56,7 +56,7 @@
 // queima dinheiro real, a dúvida nega.
 
 import { VALID_ID, readEntitlement, writeEntitlement } from './_entitlements.js';
-import { authorizeSaveAccess } from './_auth.js';
+import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { kv, kvOrThrow } from './_kv.js';
 
 /**
@@ -69,7 +69,13 @@ import { kv, kvOrThrow } from './_kv.js';
  * - `globalMonth`     → todas as contas, por MÊS (substitui `global` quando existe).
  */
 export const AI_LIMITS = {
-  chat: { perAccount: 120, global: 20000 },
+  // `perAccountByTier` sobrepõe `perAccount` quando o tier da conta está na
+  // tabela. PROVISÓRIO #55 (coordenador, QA rodada 2, `03-negocio-r2` §5): a
+  // demo tinha a MESMA cota de chat (120/dia) que a conta paga — o custo da
+  // cauda do chat era pago igual por quem nunca pagou. Demo 30 / paid 120 até
+  // o dono responder; o `perAccount` continua sendo o teto de quem não tem
+  // tier conhecido (fail-closed no lado barato).
+  chat: { perAccount: 120, perAccountByTier: { demo: 30, paid: 120 }, global: 20000 },
   suggest: { perAccount: 30, global: 3000 },
   // 6/dia = o maior lote possível (empate triplo = 3) + retentativas do dia.
   //
@@ -228,7 +234,7 @@ export async function guardAiRequest(request, env, bucket, saveId, units = 1, fo
   // Quando o login estiver ligado, isto amarra a chamada à conta de verdade.
   const auth = await authorizeSaveAccess(request, env, saveId);
   if (!auth.ok) {
-    return { ok: false, status: auth.reason === 'forbidden' ? 403 : 401, reason: auth.reason };
+    return { ok: false, status: authStatus(auth), reason: auth.reason };
   }
 
   const now = new Date();
@@ -251,17 +257,24 @@ export async function guardAiRequest(request, env, bucket, saveId, units = 1, fo
   }
   const hasFormCap =
     typeof limits.perFormLifetime === 'number' && typeof formId === 'string' && formId.length > 0;
+  const hasTierCap = !!limits.perAccountByTier;
 
   let ent = null;
+  let perAccount = limits.perAccount;
   let usedLifetime = 0;
   let usedForm = 0;
   let usedGlobal = 0;
   let usedAccount = 0;
   try {
-    if (hasLifetime || hasFormCap) {
+    if (hasLifetime || hasFormCap || hasTierCap) {
+      // Uma leitura só do entitlement, reaproveitada pelos três tetos.
       ent = await readEntitlement(env, saveId);
       if (hasLifetime) usedLifetime = lifetimeUsed(ent, bucket);
       if (hasFormCap) usedForm = formUsed(ent, formId);
+      if (hasTierCap) {
+        const porTier = limits.perAccountByTier[ent?.tier];
+        if (typeof porTier === 'number') perAccount = porTier;
+      }
     }
     usedGlobal = await readCounter(env, globalKey);
     usedAccount = await readCounter(env, accountKey);
@@ -285,7 +298,7 @@ export async function guardAiRequest(request, env, bucket, saveId, units = 1, fo
   if (hasFormCap && usedForm + units > limits.perFormLifetime) {
     return refuse(409, 'sprite-form-cap');
   }
-  if (usedAccount + units > limits.perAccount) {
+  if (usedAccount + units > perAccount) {
     return refuse(429, 'ai-daily-limit');
   }
   if (usedGlobal + units > globalLimit) {

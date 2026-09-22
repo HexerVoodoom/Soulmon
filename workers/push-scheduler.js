@@ -44,11 +44,28 @@ const CONTACT = 'mailto:mateus.sprnd@gmail.com';
  * cancelar o push apaga a idade junto. Ausente ou ilegível devolve `null`, e
  * `pushCopy` entende `null` como "copy de sempre" — nunca como dia 0.
  */
+/**
+ * A BASE do dia é MEIA-NOITE EM BRT (`T03:00:00Z`), não meia-noite UTC
+ * (`00-skeptic-r2` #11): o cron das 22h BRT é 01:00 UTC do dia seguinte —
+ * com base em UTC, quem nasceu hoje já contava `dias = 1` às 22h e recebia
+ * um push no D0, que é o único dia em que ele não pode sair. O jogador
+ * brasileiro é o caso principal; para fusos à frente do UTC vale a regra do
+ * `-1 → 0` abaixo. `PUSH_HOURS_BRT` já assume o mesmo fuso.
+ */
+export const AGE_DAY_BASE_UTC = 'T03:00:00Z';
+
 export function ageDaysOf(sub, now) {
-  const nascimento = Date.parse(`${sub?.bornAt ?? ''}T00:00:00Z`);
+  const nascimento = Date.parse(`${sub?.bornAt ?? ''}${AGE_DAY_BASE_UTC}`);
   if (!Number.isFinite(nascimento)) return null;
   const dias = Math.floor((now.getTime() - nascimento) / 86_400_000);
-  return dias >= 0 ? dias : null;
+  // `bornAt` é o DIA DO JOGADOR (`playerDayKey`), e o jogador pode estar até
+  // 14 h À FRENTE do UTC: o dia dele já é T enquanto o UTC ainda está em T-1
+  // (ex.: Tóquio, 00:30 do dia T = 15:30 UTC de T-1). `dias` sai -1 nesse
+  // caso, e -1 NÃO é "idade desconhecida" — é D0, o único dia em que o push
+  // não pode sair (`_pushCopy.js`). Só `bornAt` além de um dia no futuro
+  // (relógio adulterado) vira `null`. QA rodada 2, 22/09/2026.
+  if (dias >= 0) return dias;
+  return dias === -1 ? 0 : null;
 }
 
 async function drainPrefix(env, prefix, handle, counts) {
