@@ -305,12 +305,37 @@ export function generateOracleAxes(inputs: OracleAxesInput): OracleAxes {
   // reais os shares grudam na média (p50 9,9 · p90 15,4 · p99 18,6 · máx
   // ~23), então escalar o valor mal separa um mapa marcante de um comum.
   // GAIN amplifica o desvio: planeta mediano → elemento ≈ BASE; planeta no
-  // p99 → BASE+36, competindo com os 6 compartilhados (25-55) SÓ nos mapas
-  // em que ele realmente domina — que é a semântica pretendida. Calibrado
-  // por simulação com mapas REAIS, como os demais coeficientes.
+  // p99 → BASE+36.
+  //
+  // ⚠️ **BASE era 15, e virou 45 em 22/09/2026** (decisão do dono: "o
+  // class-system deve ser explorado ao máximo, com mesma chance pra todas as
+  // combinações e classes").
+  //
+  // O 15 vinha com a justificativa de que o cósmico competiria "SÓ nos mapas
+  // em que o planeta realmente domina". O efeito medido disso era uma escala
+  // INCOMENSURÁVEL: os 6 compartilhados entram na escala crua do eixo de
+  // elementos (25-55) e os 11 cósmicos numa âncora de base 15, então o
+  // cósmico só alcançava o clássico no p99 de proeminência. Medido em 400
+  // perfis pelo pipeline real: clássicos com média 9,4 contra 4,0 dos
+  // cósmicos (**2,4× de vantagem estrutural**), e **7 dos 17 nunca
+  // dominavam**. A razão era idêntica nos dois caminhos do ritual (2,36× só
+  // com as 6 perguntas, 2,41× com os 20 itens), o que descarta a camada
+  // psicométrica como causa.
+  //
+  // 45 emparelha as duas escalas. A/B com protocolo idêntico (800 perfis ×
+  // mega+ultra = 1600 fichas):
+  //
+  //   | | BASE 15 | BASE 45 |
+  //   | classes que VENCEM      | 70/79  | 75/79  |
+  //   | classes que QUALIFICAM  | 77/79  | 79/79  |
+  //   | pares destravados       | 102/136| 132/136|
+  //
+  // `arauto_do_fim` e `demiurgo_absoluto`, que NUNCA se qualificavam, passam
+  // a existir. Continua calibrado por simulação com mapas REAIS, como os
+  // demais coeficientes — a régua viva é `classeElementoOcorrencia.test.ts`.
   const P = (body: string) => inputs.planetProminence?.[body] ?? 10;
   const dev = (body: string) => P(body) - 10;
-  const ANCHOR_BASE = 15;
+  const ANCHOR_BASE = 45;
   const ANCHOR_GAIN = 4.2;
   const anchored = (d: number, extra: number) => Math.max(0, ANCHOR_BASE + d * ANCHOR_GAIN + extra);
   const assertividade = facet(inputs, 'extraversion', 'assertividade', traits.extraversion);

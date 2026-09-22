@@ -7,6 +7,45 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 22/09/2026 — BALANCEAMENTO 3: os 17 elementos em pé de igualdade (ANCHOR_BASE 15 → 45)
+>
+> **Decisão do dono:** "o class-system deve ser explorado ao máximo, com mesma chance
+> pra todas as combinações e classes".
+>
+> **A causa era escala incomensurável.** Os 6 elementos de nome compartilhado com o jogo
+> entravam na escala CRUA do eixo de elementos (25-55); os 11 cósmicos, numa âncora de
+> base 15. Por desenho, o cósmico só alcançava o clássico no p99 de proeminência
+> planetária. Medido em 400 perfis: **2,4× de vantagem estrutural** e **7 dos 17 nunca
+> dominando**.
+>
+> A razão é IDÊNTICA nos dois caminhos do ritual — 2,36× só com as 6 perguntas, 2,41%
+> com os 20 itens — o que descartou a camada psicométrica como causa e apontou a escala.
+>
+> **A/B com protocolo idêntico** (800 perfis × mega+ultra = 1600 fichas):
+>
+> | | BASE 15 | BASE 45 |
+> |---|---|---|
+> | classes que VENCEM | 70/79 | **75/79** |
+> | classes que QUALIFICAM | 77/79 | **79/79** |
+> | pares destravados | 102/136 | **132/136** |
+>
+> `arauto_do_fim` e `demiurgo_absoluto`, que **nunca se qualificavam**, passam a existir.
+>
+> **Duas correções minhas, registradas porque a lição se repetiu:** eu havia reportado
+> "24 de 136 pares" e "59 de 79 classes" — os dois eram **limite de amostra**, não de
+> cobertura. As linhas de base honestas são 102/136 e 70/79. Cobertura agora só se
+> reporta com A/B de protocolo idêntico.
+>
+> **Uma hipótese minha que o teste derrubou:** escrevi que `morte` sombreia `vileza` por
+> ter média maior. Falso — as médias são praticamente iguais (5,777 × 5,787, `vileza` de
+> leve à frente). O que separa as duas é quem leva o topo nos picos. `vileza` segue sendo
+> a única dos 17 que não chega a dominar, por compartilhar Plutão com `morte`; está
+> MEDIDO em `classeElementoOcorrencia.test.ts`, não escondido.
+>
+> A régua trava o RESULTADO (razão entre grupos ≤1,45×, ≥15/17 dominando, nenhum acima de
+> 22%), não o coeficiente — quem mexer em 45, em `ANCHOR_GAIN` ou nos termos de traço
+> precisa manter isso de pé.
+
 > ## 22/09/2026 — BALANCEAMENTO 2: o class-system explorado ao máximo (9 → 59 classes)
 >
 > **Decisão do dono:** "o class-system deve ser explorado ao máximo, com mesma chance
