@@ -7,6 +7,49 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 22/09/2026 — BALANCEAMENTO 2: o class-system explorado ao máximo (9 → 59 classes)
+>
+> **Decisão do dono:** "o class-system deve ser explorado ao máximo, com mesma chance
+> pra todas as combinações e classes". Defeito, não calibração — mesma família do da
+> escola.
+>
+> **O achado começou numa pergunta do dono** ("como todos saíram Red Mage??") sobre três
+> prompts de exemplo. A leitura literal dos três estava errada (só um era Red Mage), mas
+> a suspeita estava certa e a medição confirmou algo pior.
+>
+> **Medido antes** (120 perfis pelo pipeline real, ultra): `mago_vermelho` em **73 de 120
+> (61%)**, e era o mais comum em TODOS os cinco papéis — inclusive tanque (10/23) e
+> suporte (19/26). Só **9 classes** venciam, de um catálogo de **79**.
+>
+> **A causa não era falta de conteúdo — era a seleção jogando-o fora:**
+>
+> | | |
+> |---|---|
+> | arquétipos que se qualificam em ≥1 ficha | **76 de 79** |
+> | arquétipos qualificados POR ficha | mediana **24,7** (mín 13, máx 46) |
+> | arquétipos que venciam | **9** |
+>
+> `melhorArquetipo` escolhia "sempre o de condição mais específica" — função só da
+> CONDIÇÃO do arquétipo, não da pessoa. Mesmo conjunto qualificado ⇒ mesmo vencedor, e
+> as fichas do Soulmon se concentram nos mesmos eixos.
+>
+> **Conserto:** a escolha passa a ser determinística pela IDENTIDADE entre os
+> qualificados. `especificidade` vira desempate fino em vez de critério único, e a lista
+> é ordenada por `id` antes do índice — sem isso, um reordenamento dentro do motor
+> vendorizado trocaria a classe de todo mundo em silêncio.
+>
+> **Medido depois** (300 perfis): **59 classes distintas** (eram 9), a mais comum em
+> **5,7%** (era 61%).
+>
+> Duas propriedades travadas em `ficha/classeOcorrencia.test.ts` porque não podem se
+> perder: a classe continua **EMERGENTE** (só entra arquétipo que a ficha conquistou — há
+> teste conferindo contra a lista do motor) e **ESTÁVEL** (mesma pessoa, mesma classe;
+> ela é cache determinístico no save, e classe que muda sozinha entre aparelhos é a QA
+> rodada 1 de novo).
+>
+> Onde isso aparece: `promptClassFlavor`, o 4º traço do prompt de sprite, nas 11 formas.
+> 61% dos jogadores pagantes teriam "Red Mage" escrito nos onze prompts da criatura.
+
 > ## 22/09/2026 — o texto do jogador sai do ritual v1 (só depois do Renascimento)
 >
 > **Decisão do dono:** o jogador só insere texto que vai para o PROMPT depois do

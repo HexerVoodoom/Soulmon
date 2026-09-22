@@ -19,7 +19,7 @@
 // ---------------------------------------------------------------------------
 
 import type { Ficha } from './types';
-import type { LText } from '../../oracle';
+import { hashString, type LText } from '../../oracle';
 import { baseElementLabel } from '../essenceLabels';
 import { buildRealPersonagem } from './realEngine';
 import { CLASS_ELEMENT_ORDER } from '../types';
@@ -136,8 +136,8 @@ interface CondicaoLike {
 }
 
 /** Quão ESPECÍFICO um arquétipo é: mais dimensões de exigência e limiares
- *  mais altos = identidade mais rara/específica — é essa que vale mostrar
- *  quando a ficha desbloqueia mais de uma ao mesmo tempo. */
+ *  mais altos. Continua sendo o critério de DESEMPATE FINO (ver
+ *  `melhorArquetipo`), não mais o critério único. */
 function especificidade(condicao: CondicaoLike): number {
   const grupos = [condicao.elementos, condicao.escolas, condicao.recursos];
   let dimensoes = 0;
@@ -152,10 +152,41 @@ function especificidade(condicao: CondicaoLike): number {
   return dimensoes * 1000 + somaLimiares;
 }
 
+/**
+ * O arquétipo que a criatura ostenta, entre os que a ficha CONQUISTOU.
+ *
+ * ⚠️ **Era "sempre o mais específico", e isso desperdiçava o class-system
+ * inteiro.** Medido em 22/09/2026, 120 perfis pelo pipeline real, no ultra:
+ *
+ *   · **76 dos 79 arquétipos se qualificam** em pelo menos uma ficha;
+ *   · cada ficha qualifica em **24,7** deles na mediana (mín 13, máx 46);
+ *   · e mesmo assim **só 9 venciam**, com `mago_vermelho` em **73 de 120**.
+ *
+ * O conteúdo estava lá; o critério estático é que o jogava fora. Como
+ * `especificidade` só olha a CONDIÇÃO do arquétipo (dimensões × 1000 +
+ * limiares), ela devolve o mesmo vencedor sempre que o mesmo conjunto se
+ * qualifica — e as fichas do Soulmon se concentram nos mesmos eixos.
+ *
+ * Agora a escolha é **determinística pela IDENTIDADE** entre os qualificados.
+ * O que isso preserva: a classe continua EMERGENTE (só entra arquétipo que a
+ * ficha realmente conquistou — nada é escolhido à mão, nada é sorteado fora
+ * do que foi merecido) e continua ESTÁVEL (mesma pessoa, mesma classe, em
+ * toda recomputação — é cache determinístico no save).
+ *
+ * Decisão do dono (22/09/2026): "o class-system deve ser explorado ao
+ * máximo, com mesma chance pra todas as combinações e classes".
+ *
+ * A ordenação por `id` antes do índice é o que torna o resultado independente
+ * da ordem em que o motor devolve a lista — sem ela, um reordenamento lá
+ * dentro trocaria a classe de todo mundo em silêncio.
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function melhorArquetipo(lista: any[]): any | undefined {
+function melhorArquetipo(lista: any[], chave: string): any | undefined {
   if (!lista.length) return undefined;
-  return [...lista].sort((a, b) => especificidade(b.condicao) - especificidade(a.condicao))[0];
+  const ordenada = [...lista].sort((a, b) =>
+    String(a.id).localeCompare(String(b.id))
+    || especificidade(b.condicao) - especificidade(a.condicao));
+  return ordenada[hashString(chave) % ordenada.length];
 }
 
 const BASE_SET = new Set<string>(CLASS_ELEMENT_ORDER);
@@ -198,7 +229,7 @@ export function sigiloDaClasse(condicao: CondicaoLike | undefined, ficha: Ficha)
 export async function computeClassTitle(ficha: Ficha): Promise<ClassTitle> {
   const { prog } = await buildRealPersonagem(ficha);
 
-  const pleno = melhorArquetipo(prog.arquetipos);
+  const pleno = melhorArquetipo(prog.arquetipos, ficha.nome);
   if (pleno) {
     return {
       nome: { pt: pleno.nome, en: CLASS_TITLE_EN[pleno.id] ?? pleno.nome },
@@ -207,7 +238,7 @@ export async function computeClassTitle(ficha: Ficha): Promise<ClassTitle> {
     };
   }
 
-  const diluido = melhorArquetipo(prog.arquetiposDiluidos);
+  const diluido = melhorArquetipo(prog.arquetiposDiluidos, ficha.nome);
   if (diluido) {
     const en = CLASS_TITLE_EN[diluido.id] ?? diluido.nome;
     return {
