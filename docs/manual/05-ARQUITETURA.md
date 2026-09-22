@@ -1,6 +1,6 @@
 # Arquitetura
 
-> **Dono:** doc-redator-arquitetura · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (linhas de áudio da §2.1, §2.2, §5 e §7, delta `5ac3d351..8d318529`, som/S16; o resto: sincronizado com `dc72579e..9875477b` em 21/09/2026 por doc-redator-arquitetura; conferido em `5ac3d351`)
+> **Dono:** doc-redator-arquitetura · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §1.1, §1.3, §2.1 `scripts/`, §2.2 `src/deploy/`, §3, §7 `cacheavel` e §9 conferidos símbolo a símbolo; anterior: linhas de áudio da §2.1, §2.2, §5 e §7, delta `5ac3d351..8d318529`, som/S16; o resto: sincronizado com `dc72579e..9875477b` em 21/09/2026 por doc-redator-arquitetura; conferido em `5ac3d351`)
 > **Verificação:** `npx tsc --noEmit` · `npx tsc -p tsconfig.server.json --noEmit` · `npx tsc -p desktop/tsconfig.json --noEmit` · `npx vitest run` · `npm run build`; os contratos de fronteira são `src/deploy/appUrl.contract.test.ts`, `src/deploy/firebaseNoBuild.contract.test.ts`, `src/deploy/swCache.contract.test.ts`, `src/security/csp.test.ts`
 > **Não cobre:** as regras do jogo (→ `02-REGRAS-DE-NEGOCIO.md`), as telas (→ `03-FLUXO-DE-TELAS.md`), tokens e estilo (→ `04-IDENTIDADE-VISUAL.md`), função por função (→ `06-REFERENCIA/`), o esquema do save e as chaves de storage (→ `07-DADOS-E-SAVE.md`), credenciais e deploy (→ `08-INTEGRACOES-E-DEPLOY.md`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -29,8 +29,7 @@ do arquivo indicado, lidas em 09/09/2026 no commit `4e77a08a`.
 | Efemérides do Oráculo | `astronomy-engine` | `^2.1.19` |
 | Fonte de display | `@fontsource/silkscreen` | `^5.3.0` |
 | Toasts | `sonner` | `^2.0.3` |
-| Gráficos | `recharts` | `^2.15.2` |
-| Primitivos de UI | `@radix-ui/react-*` (26 pacotes) | ver `package.json` |
+| ⚰️ Gráficos · primitivos de UI · scaffold shadcn | `recharts`, `@radix-ui/react-*` (26 pacotes), `vaul`, `cmdk`, `hono`, `clsx`, `tailwind-merge`, `class-variance-authority`, `embla-carousel-react`, `input-otp`, `next-themes`, `react-day-picker`, `react-hook-form`, `react-resizable-panels`, `@jsr/supabase__supabase-js` | **saíram em `4a8b8049`** (decisão #33): 40 pacotes de `dependencies` sem um único import (`git diff f02a3166..4a8b8049 -- package.json \| grep -c '^-    "'` → 41, menos `sonner`, que só mudou de linha). Sobram **11** (`sed -n '/"dependencies"/,/}/p' package.json \| grep -c '"\^'` → 11). Régua: `src/deploy/depsVivas.contract.test.ts` — todo pacote de `dependencies` precisa de um import em `src`/`functions`/`workers`/`desktop`/`scripts`/`public`/`index.html`/`vite.config.ts`, salvo a allowlist com motivo (`@capacitor/android` entra pelo Gradle; `@capacitor/cli` é o binário `cap` do CI). |
 | Cloudflare | `wrangler` | `^4.114.0` |
 | Conversão de imagem no build | `sharp` | `^0.35.1` |
 | Tipos | `@types/node` `^20.19.43` · `@types/react` `^19.2.17` · `@types/react-dom` `^19.2.3` | — |
@@ -63,10 +62,10 @@ aponta para o GitHub `HexerVoodoom/Soulmon`.
 | `sourceCompatibility`/`targetCompatibility` | `JavaVersion.VERSION_17` |
 | `kotlinOptions.jvmTarget` | `'17'` |
 | `minSdkVersion` | `26` |
-| `compileSdkVersion` / `targetSdkVersion` | `35` |
+| `compileSdkVersion` / `targetSdkVersion` | `36` (desde `4a8b8049`, etapa 6 do QA geral — a Play pede target 36 para atualizações; eram 35; `[verificar no android-build.yml do CI após o merge]`) |
 | `applicationId` / `namespace` | `com.hexervoodoom.soulmon` |
-| `versionCode` / `versionName` | `14` / `1.1.3` |
-| Billing | `com.android.billingclient:billing-ktx:6.2.1` |
+| `versionCode` / `versionName` | `15` / `1.1.4` (desde `4a8b8049`; eram 14 / 1.1.3 — primeiro bundle com `setObfuscatedAccountId`, preço localizado e widget novo) |
+| Billing | `com.android.billingclient:billing-ktx:6.2.1` — ⚠️ fica em 6.2.1 de propósito: `BillingPlugin.kt` chama `enablePendingPurchases()` sem argumento, forma que a 7.x removeu; se a Play exigir ≥ 7 no upload, o conserto é no Kotlin, não só nesta linha (`[a confirmar no Play Console]`) |
 | FCM | `firebaseMessagingVersion = '24.1.0'` |
 | WorkManager | `androidx.work:work-runtime-ktx:2.9.0` |
 
@@ -90,7 +89,7 @@ do `apply from: 'capacitor.build.gradle'`, porque o arquivo regenerado pelo
 | `android/` | O projeto Capacitor: `app/src/main/java/com/hexervoodoom/soulmon/` com `MainActivity.java`, `plugins/` (widget, alarme, billing), `widget/` (5 providers + `WidgetRenderer.kt` + `WidgetRefreshWorker.kt`) e `notifications/` (`AlarmReceiver.kt`, `BootReceiver.kt`). Em `res/`, desde 20/09/2026 (`6affd501`): `drawable-nodpi/` (os `sprite_*.png` de 384², `push_large.png`, `fx_poop.png` — sem bucket de densidade, decodificados crus pelo renderer), `drawable-v31/widget_bg.xml` (o mesmo anel de `drawable/widget_bg.xml`, com o raio do sistema) e `drawable/ic_notification.xml` (a chama, ícone mono do push). |
 | `public/` | O que é servido cru: `sw.js` (service worker), `_headers` (CSP e cache), `manifest.json`, `privacidade.html`, `termos.html`, `fonts/`, `screenshots/` e, desde `ee79fd44` (21/09/2026, S16), `sounds/` — os cinco `.webm` gerados por IA (3 SFX + 2 camadas da trilha), listados com hash em `src/utils/sonsAssets.ts` e em `docs/Attributions.md`; **nunca importados** por `src/` e **fora de `PRECACHE_URLS`** (régua: `src/utils/sonsAssets.contract.test.ts`). |
 | `dist/` | O build publicado — **é commitado** (481 arquivos rastreados, `git ls-files dist \| wc -l`, 09/09/2026). |
-| `scripts/` | Ferramentas de build e de manutenção (`convert-to-webp.mjs`, `docs-inventario.mjs`, `sync-oracle-data.mjs`, `vendor-class-system.mjs`, `orcamento-de-tempo.mjs`, geradores de arte). |
+| `scripts/` | Ferramentas de build e de manutenção (`convert-to-webp.mjs` — desde `4a8b8049` reescreve `.png` → `.webp` em `dist/` e só então apaga os PNG —, `docs-inventario.mjs`, `docs-delta.mjs`, `sync-oracle-data.mjs`, `vendor-class-system.mjs`, `orcamento-de-tempo.mjs`, geradores de arte) e, desde `42b07bec` (decisão #18), **`metrics-report.mjs`** — o funil da semana lido de `GET /api/metrics` com `METRICS_ADMIN_KEY` (sai com código 2 sem a chave; sem shebang, porque `tests/metricsReportFunil.test.ts` o importa — regra da memória; detalhe em [08 §2.12](08-INTEGRACOES-E-DEPLOY.md)). |
 | `tools/` | Leitura das métricas fora do app: `metrics-read.mjs` (transporte) + `metricsReport.mjs` (regras puras, testadas). |
 | `tests/` | Testes do código que não mora em nenhum bundle — em 10/09/2026, `swOrigemDaResposta.test.ts` (o `public/sw.js`) e `metricsReport.test.ts` (`ls tests`). |
 | `migrations/` | O schema do D1 versionado: `0001_order_claims.sql`, `0002_order_claims_expires_at.sql` e o `README.md` com as regras de aplicação. |
@@ -119,7 +118,7 @@ do `apply from: 'capacitor.build.gradle'`, porque o arquivo regenerado pelo
 | `src/types/` | `progression.ts` (a árvore de formas, HP e requisitos), `taskModel.ts` (dono único das constantes do motor de tarefas), `attributes.ts`, `category-icons.ts`. |
 | `src/plugins/` | As pontes com o Android: `SoulmonWidgetPlugin.ts` e `SoulmonAlarmPlugin.ts` (`registerPlugin` do Capacitor). |
 | `src/security/` | Só testes: `csp.test.ts`, `oldWebview.test.ts`, `supabase.contract.test.ts`. |
-| `src/deploy/` | Só testes: `appUrl.contract.test.ts`, `firebaseNoBuild.contract.test.ts`, `swCache.contract.test.ts`. |
+| `src/deploy/` | Só testes: `appUrl.contract.test.ts`, `firebaseNoBuild.contract.test.ts`, `swCache.contract.test.ts` e, desde `4a8b8049`, `depsVivas.contract.test.ts` (#33) e `orcamentoDeBytes.contract.test.ts` (#31) — os dois em §9. |
 | `src/styles/` | `tokens.md` e cinco guards de estilo (contraste, escala de ícone, rótulo da nav, inventário de ícones, suporte a emoji). |
 | `src/constants/` | `labels.ts` — 1 módulo. |
 | `src/assets/` | A arte: `soulmon/` (as linhas próprias), `backgrounds/`, `decor/`, `icons/`, `brand/`, `video/`, mais **dois** PNGs com nome de hash (alvos do alias `figma:asset/*`; `git ls-tree dc72579e src/assets/ \| grep -c png` → 2, em 20/09/2026). ⚰️ Eram três até 16/09/2026: o alias `figma:asset/9087038914….png` e o arquivo saíram em `f5ead7c0` (canvas Home, `vite.config.ts`). |
@@ -134,7 +133,9 @@ do `apply from: 'capacitor.build.gradle'`, porque o arquivo regenerado pelo
 
 ```
 index.html (4 <script> inline: tema antes do paint · texto da splash · aviso de
-             WebView antigo · registro do SW — e são os MESMOS 4 hashes
+             WebView antigo (desde `42b07bec`, #19, exige também
+             `CSS.supports('selector(&)')` — aninhamento CSS, Chromium ≥ 112;
+             antes só oklch/color-mix, Chromium 111) · registro do SW — e são os MESMOS 4 hashes
              `sha256-` do `script-src` em `public/_headers`, §7)
   └─ src/main.tsx
        1. migrateLegacyStorageKeys()      ← ANTES de qualquer provider
@@ -268,7 +269,7 @@ texto novo nesses arquivos achando que ele aparece em algum lugar.**
 |---|---|---|
 | Service worker | `public/sw.js` | `CACHE_VERSION` mora nas **primeiras linhas** do arquivo e é a origem dos nomes `soulmon-static-<v>` e `soulmon-runtime-<v>`. Ao mudar asset estático/HTML de forma incompatível, **abra o arquivo e some 1** — o número NÃO é repetido em documentação nenhuma, de propósito (já apodreceu três vezes). |
 | Navegação | `public/sw.js` | **Network-first**: busca a rede primeiro e só cai no cache no `.catch`. É o que impede o bundle novo de ficar inalcançável. |
-| O que pode entrar no cache | `public/sw.js`, `cacheavel` | Só resposta `ok` **e** `type === 'basic'` **e** `!redirected` — as três fecham caminhos distintos de servir conteúdo de outra origem sob a nossa chave. |
+| O que pode entrar no cache | `public/sw.js`, `cacheavel` | Só resposta **`status === 200`** (desde `4a8b8049`: ⚰️ `res.ok` deixava passar um 206 de range request do `<video>` `.mp4` e o `Cache.put` lançava "Partial response … unsupported") **e** `type === 'basic'` **e** `!redirected` — as três fecham caminhos distintos de servir conteúdo de outra origem sob a nossa chave. |
 | Precache do install | `public/sw.js`, `PRECACHE_URLS` | Só `/`, `/index.html`, `/manifest.json`, `/favicon-192x192.png` e, desde 20/09/2026 (`3e758a81`), os dois ícones do push `/push-large-192.png` e `/badge-96.png` (`PUSH_ICON`/`PUSH_BADGE`, usados nos handlers `message` e `push` — detalhe em [08-INTEGRACOES-E-DEPLOY.md](08-INTEGRACOES-E-DEPLOY.md) §2.6). **Nenhum JS/CSS**, para o install não conseguir fixar um bundle. **Nenhum `/sounds/*.webm`** (S6; `src/utils/sonsAssets.contract.test.ts` varre a lista): os áudios entram pelo ramo "outros recursos da mesma origem" — network-first, cópia em `RUNTIME_CACHE` — e só depois do primeiro `play*`. |
 | Assunção imediata | `public/sw.js` | `skipWaiting()` no install e `clients.claim()` no activate: o SW novo assume na PRIMEIRA carga. |
 | Cabeçalhos HTTP | `public/_headers` | `/assets/*` `immutable` por 1 ano (o nome tem hash); `/index.html` e `/sw.js` `no-cache, no-store, must-revalidate`. |
@@ -295,7 +296,7 @@ lista, para você saber que existe o que procurar:
 5. **`useCallback` com deps certas** — lambda inline anula o `memo()` do `CompanionHUD`.
 6. **Nada de side effect dentro de updater do `setGameState`** (StrictMode invoca 2×).
 7. **O sandbox de dev não acessa a URL de produção** — teste local com `vite preview` + Playwright, semeando o `localStorage` por `addInitScript`.
-8. **Sprites entram pelo alias `figma:asset/<hash>.png`** (mapa em `vite.config.ts`), com `assetsInlineLimit: 0`.
+8. **Sprites entram pelo alias `figma:asset/<hash>.png`** (mapa em `vite.config.ts`), com `assetsInlineLimit: 0`. ⚰️ Os 37 aliases `pkg@versão → pkg` do scaffold shadcn saíram do mesmo mapa em `4a8b8049` (#33; `git diff f02a3166..4a8b8049 -- vite.config.ts \| grep -c "^-      '"` → 37 — ⚠️ o comentário deixado no arquivo diz "38"); ficaram `class-system`, `sonner@2.0.3`, `lucide-react@0.487.0`, os dois `figma:asset` e `@`.
 9. **Regra copiada = regra que diverge em silêncio** — o item mais longo, com o inventário datado do que ainda é cópia (em 10/09/2026: a derivação do `saveId`, em três árvores) e do que deixou de ser.
 10. **Dois sistemas de tema no mesmo CSS** — `[data-theme]` (o do app) e o scaffold shadcn (`--foreground`/`--background`, preso no valor claro).
 
@@ -310,7 +311,7 @@ Rodar **antes de todo commit**:
 | `npx tsc --noEmit` | `include: ["src", "tests"]`, `strict: true` (`tsconfig.json`) | Tipos do app e dos testes de raiz. **Não olha** `functions/`, `workers/`, `desktop/` nem `src/supabase/functions` (excluída). |
 | `npx tsc -p tsconfig.server.json --noEmit` | `functions/**/*.js`, `workers/**/*.js`, `types/**/*.d.ts` | O código de **dinheiro, conta e save**, via `allowJs` + `checkJs` sobre o JSDoc que o servidor já escrevia. `strict: true` de propósito (sem `strictNullChecks` o TS não estreita união discriminada por `ok: true`). **Fora**: `**/*.test.js`, `scripts/`, `desktop/`. |
 | `npx tsc -p desktop/tsconfig.json --noEmit` | `renderer/src/**/*.ts` | O overlay. `allowJs: true` + `checkJs: false` — o teste de contrato importa `functions/api/save.js` e sem isso o gate ficava vermelho por `TS7016`. |
-| `npx vitest run` | ver §10 | Toda a suíte, incluindo os guards de fiação por AST, os contratos de deploy e de segurança, e os testes de paridade do desktop. |
+| `npx vitest run` | ver §10 | Toda a suíte, incluindo os guards de fiação por AST, os contratos de deploy e de segurança, e os testes de paridade do desktop. Dois portões novos em `4a8b8049`: **`src/deploy/depsVivas.contract.test.ts`** (#33 — pacote de `dependencies` sem import reprova; allowlist com motivo obrigatório) e **`src/deploy/orcamentoDeBytes.contract.test.ts`** (#31 — lê `dist/` depois do `npm run build`: JS de entrada ≤ 250 KB, CSS ≤ 100 KB, imagem ≤ 400 KB, vídeo ≤ 800 KB, 0 `.png` em `dist/assets`; a dívida atual é NOMEADA em `DIVIDA_ATUAL` — `index.js` 641 016 B, `index.css` 142 696 B, `evolution-bg.mp4`, `intro.mp4` — e o teste reprova arquivo novo acima do teto ou dívida que cresce mais que `FOLGA_JS_CSS = 8 KB`). |
 | `npm run build` | `vite build && node scripts/convert-to-webp.mjs && npx wrangler pages functions build --outdir=./dist/_worker.js/` | Compila o bundle, converte PNG→WebP **e reescreve as referências `nome-HASH.png` → `.webp` em todo JS/CSS/HTML de `dist/` antes de apagar os PNG** (desde 21/09/2026, decisão #32: `dist/` caiu de 123 MB para 24 MB; qualquer referência sobrando aborta com `exit 1` e o PNG fica — régua `src/deploy/orcamentoDeBytes.contract.test.ts`, que também trava 0 `.png` em `dist/assets`), e **compila as Pages Functions para dentro de `dist/`**. ⚠️ O `CLAUDE.md` descreve este comando só como "vite build + conversão PNG→WebP" — o terceiro passo está no `package.json` e não está lá. |
 
 O CI (`.github/workflows/ci.yml`, job `gate`) roda os quatro primeiros na ordem

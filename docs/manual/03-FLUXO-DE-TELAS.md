@@ -1,6 +1,6 @@
 # Fluxo de telas do Soulmon
 
-> **Dono:** doc-redator-telas · **Data:** 09/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (§4.23/§4.23b, delta `5ac3d351..8d318529`, som/S16 + grupo "Som" na `SettingsPage`; verificação anterior do mesmo dia: delta `dc72579e..9875477b`, 30 commits: copy da bíblia §1–§6-bis, superfície de suporte, rodada 2 da arte; verificação anterior do delta `2580b73a..dc72579e`, Fase 2, identidade "O Visor", 14 fluxos: 21/09/2026)
+> **Dono:** doc-redator-telas · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §2.1 aviso de WebView, §3.2 item 6 `termos`, §4.23 grupo Sobre, §4.23a/§4.23b ⚰️ `SettingsModal`, §4.25 `ErrorBoundary` conferidos símbolo a símbolo; anterior: §4.23/§4.23b, delta `5ac3d351..8d318529`, som/S16 + grupo "Som" na `SettingsPage`; verificação anterior do mesmo dia: delta `dc72579e..9875477b`, 30 commits: copy da bíblia §1–§6-bis, superfície de suporte, rodada 2 da arte; verificação anterior do delta `2580b73a..dc72579e`, Fase 2, identidade "O Visor", 14 fluxos: 21/09/2026)
 > **Verificação:** `npx vitest run src/components/filaDeAvisos.contract.test.ts src/components/evolucaoManual.contract.test.ts src/components/ofertaDoisCanais.contract.test.ts src/components/upgradeReveal.contract.test.ts src/components/textoBilingue.contract.test.ts src/plugins/widgetSemCobranca.contract.test.ts src/components/SoulmonOnboarding.oraculo.render.test.tsx src/components/StatsPage.render.test.tsx src/utils/petVoice.test.ts src/narrativa.contract.test.ts` · guard do manual: `npx vitest run src/docsManual.contract.test.ts`
 > **Não cobre:** aparência (cor, tipografia, espaçamento, tokens `--sm2-*`) — é do `04-IDENTIDADE-VISUAL.md`; as REGRAS que as telas aplicam (corações, meta do dia, evolução, moedas) — são do `02-REGRAS-DE-NEGOCIO.md`; a assinatura de cada componente — é de [`06-REFERENCIA/components.md`](06-REFERENCIA/components.md); percurso real com o app rodando — é do procedimento "Inventário de superfícies" de `.claude/skills/squad-design/METODO.md` (⚰️ agente `soulmon-screen-cartographer`, 21/09/2026), cuja medição de 19/08/2026 está em [`../INVENTARIO-TELAS.md`](../INVENTARIO-TELAS.md).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -182,14 +182,18 @@ pela decisão S1 do canvas Home (§5); a célula Evolução da barra é o único
   é agendado **fora** do rAF, como rede de segurança.
 - **Aparece quando**: sempre. `<div id="splash" aria-hidden="true">`.
 - **Estados**: **erro de WebView** — um `<script>` inline testa
-  `CSS.supports('color','oklch(0 0 0)')` e `color-mix`; falhando, ele monta um
+  `CSS.supports('color','oklch(0 0 0)')`, `color-mix` e, desde `42b07bec`
+  (decisão #19), **`CSS.supports('selector(&)')`** — o aninhamento CSS que o
+  `src/index.css` usa em mais de cem regras (`grep -c "^\s*&" src/index.css` → 101, 21/09/2026; o comentário do `index.html` diz 122) só existe a partir do Chromium 112, e um WebView
+  111 passava no teste antigo e abria o app sem hover/foco/variante (pior que a
+  tela branca, porque parece bug nosso); falhando, ele monta um
   aviso bilíngue ("Precisamos de uma atualização" / "An update is needed") no
   `#root` **e remove a splash**, senão o aviso ficaria por baixo dela para sempre.
   **Idioma**: um segundo script troca `LOADING DATA...` por `CARREGANDO DADOS...`
   quando `navigator.language` começa com `pt`.
 - **O que se vê/faz**: nada é clicável.
 - **Dono**: `index.html` (`#splash`) + `src/main.tsx` (`remover`).
-- **Régua**: nenhuma.
+- **Régua**: `src/security/oldWebview.test.ts` (o aviso em vez de tela branca; ⚠️ o caso "antigo" só falha em oklch/color-mix — `selector(&)` não é exercitado sozinho) e `src/security/csp.test.ts` (o hash do script mudou em `42b07bec`, e a CSP em `public/_headers` acompanhou).
 
 ⚠️ O rAF sozinho não era rede de segurança: numa aba em segundo plano ele nunca
 dispara, e o `setTimeout` agendado dentro dele também não — a splash ficava por
@@ -468,6 +472,7 @@ ordem literal dos `push`, com a chave de cada um:
 | 3 | `'triagem'` | `triageQueue(gameState.tasks, agoraA).length > 0` | botão "Arrumar a pilha" → `handleOpenTriage` |
 | 4 | `'priming'` | `mostrarPrimingDePush` (`shouldPrimePush`, `utils/pushPriming.ts`) | seção inline com "Pode sim" / "Agora não" |
 | 5 | `'recomeco'` | `freshStartDismissed ? null : freshStartOffer(gameState, agoraA, language)` | bloco `sm2-notice` inline |
+| 6 | `'termos'` | `precisaAvisarTermos(gameState.consent, TERMS_VERSION, PRIVACY_VERSION, termsNoticeSeen)` (`utils/termsNotice.ts`, desde `42b07bec`, decisão #24 — só quem já consentiu a uma versão ANTERIOR; save sem registro nunca vê) | `TermsUpdateBanner` (`.sm2-notice`, `role="status"`: "Os Termos e a Política de Privacidade mudaram" + "Ler os Termos" / "Ler a Política" em aba nova + "Ok", que grava `marcaAvisoTermos` em `STORAGE_KEYS.TERMS_NOTICE_SEEN`). Informativo, **sem re-aceite**; o comentário do código o chama de "7." porque conta o `hp` como 1 |
 
 - **Régua**: `src/components/filaDeAvisos.contract.test.ts` — exige as chaves
   `'firstDay'` e `'priming'`, exige que `shouldShowFirstDay(` e
@@ -476,7 +481,10 @@ ordem literal dos `push`, com a chave de cada um:
 
 ⚠️ O comentário do slot no `App.tsx` numera "1. HP" duas vezes (a primeira antes
 do item 0). É defeito de comentário, não de comportamento: a ordem executada é a
-dos `push`, que é a da tabela acima.
+dos `push`, que é a da tabela acima — sete itens desde `42b07bec`, o banner de
+termos por último ("é o único aviso que não fala do dia da pessoa"). Régua do
+banner: `src/components/TermsUpdateBanner.render.test.tsx` e
+`src/utils/termsNotice.test.ts`.
 
 ---
 
@@ -1540,7 +1548,18 @@ Três blocos, com condições literais:
   nada"; o app "não sabe nada sobre a sua vida além do que você escreveu nele" —
   e um `sm2Hint` de fecho ("Nada do que aparece aqui é uma afirmação sobre a sua
   saúde, a sua mente ou o seu futuro"). Sempre montado, entre "Ajuda" e "Seu
-  ritmo"; sem botão, sem link. `régua: nenhuma` para o grupo.
+  ritmo". Desde `42b07bec` o grupo ganhou três linhas (⚰️ "sem botão, sem
+  link"): o **aviso de IA** (decisão #22, tom de fato — "A imagem da sua criatura
+  e as falas do chat são geradas por IA (Higgsfield e Gemini para a imagem, Groq
+  para a conversa)"), o `ActionRow` **"O que o chat recebe"** →
+  `/privacidade.html#chat-contexto`, e a linha de **feedback** `FeedbackRow`
+  ("Falar com quem faz o Soulmon" / "Talk to the people who make Soulmon", hint
+  "Abre seu e-mail. A versão do app já vai preenchida.") — um `mailto:` para
+  `FEEDBACK_EMAIL` com assunto "Soulmon", `APP_VERSION`, 8 caracteres do `saveId`
+  e `Origem: settings` (`src/components/FeedbackLink.tsx`; não é formulário porque
+  não há backend de suporte). A linha "Soulmon 1.0.2" do grupo Ajuda lê a mesma
+  `APP_VERSION`. Régua: `src/components/SettingsPage.sobre.render.test.tsx` (5
+  casos).
   **Grupo "Som" / "Sound"** (`980bc84c`, 21/09/2026 — achado do
   doc-mantenedor: o `SettingsModal` ficou sem gatilho e com ele o mudo e a
   trilha eram inalcançáveis): dois `SwitchRow`, entre "Sua história" e "O que o
@@ -1566,14 +1585,15 @@ Três blocos, com condições literais:
   `stepsConsent === 'declined'` — `'declined'` é definitivo, porque insistir
   depois de um "não" é assédio. O consentimento vem **antes** do diálogo do
   sistema.
-- **`SettingsModal`** (o painel rápido de IA) e **`AISettingsModal`** são
-  separados: `{settingsOpen && (…)}` na raiz do `App`. ⚠️ Esta linha dizia
-  "aberto pelo menu" e era falso — `settingsOpen` não tem gatilho vivo, e o
-  caminho real de "Personalidade" é esta página: ver §4.23a (13/09/2026).
-  Desde `ee79fd44` (21/09/2026) o modal tem um **quarto** switch, "Trilha" /
-  "Music" — ver §4.23b; o gatilho morto continua morto, e desde `980bc84c` o
-  par "Sons"/"Trilha" vive também nesta página (grupo "Som", acima) — o modal
-  é candidato a remoção.
+- ⚰️ **`SettingsModal`** (o painel rápido "Ajustes rápidos") **foi apagado em
+  `4a8b8049`** (decisão do dono #37): `{settingsOpen && (…)}`, `settingsOpen`,
+  `handleOpenAISettings` e o `lazy()` saíram do `App.tsx`, e a prop
+  `onOpenAISettings` saiu de `CompanionHUD` e `ChatBox` (`grep -rn
+  "onOpenAISettings\|SettingsModal" src --include=*.tsx` → só três comentários
+  ⚰️, 21/09/2026). O
+  caminho real de "Personalidade" continua sendo esta página (§4.23a), e o par
+  "Sons"/"Trilha" só existe no grupo "Som" acima — a `SettingsPage` é o ÚNICO
+  caminho do mudo (comentário da prop `soundMuted`).
 - **Dono**: `src/components/SettingsPage.tsx` e vizinhos · **Régua**:
   `AccountDataSection.render.test.tsx`,
   `src/components/settingsTelemetry.render.test.tsx`,
@@ -1604,13 +1624,15 @@ $ grep -n "onOpenAISettings" src/components/ChatBox.tsx
 48:  onOpenAISettings,
 ```
 
-A prop desce `App.tsx` → `CompanionHUD` → `ChatBox`, e o `ChatBox` **nunca a
-chama**: as duas ocorrências são a declaração no tipo e a desestruturação.
-Como `handleOpenAISettings` é o único chamador de `setSettingsOpen(true)`,
-`{settingsOpen && (…SettingsModal…)}` **nunca monta** — e com ele fica
-inalcançável a **segunda** instância de `AISettingsModal`, a que vive dentro do
-`SettingsModal`. É a mesma família do §4.9 (`OraclePage`): componente montado
-atrás de um estado sem gatilho. Vai para o [`../STATUS.md`](../STATUS.md).
+A prop descia `App.tsx` → `CompanionHUD` → `ChatBox`, e o `ChatBox` **nunca a
+chamava**: as duas ocorrências eram a declaração no tipo e a desestruturação.
+Como `handleOpenAISettings` era o único chamador de `setSettingsOpen(true)`,
+`{settingsOpen && (…SettingsModal…)}` **nunca montava** — e com ele ficava
+inalcançável a **segunda** instância de `AISettingsModal`, a que vivia dentro do
+`SettingsModal`. Era a mesma família do §4.9 (`OraclePage`): componente montado
+atrás de um estado sem gatilho. ⚰️ **Fechado em `4a8b8049`** (decisão #37): o
+modal, o estado, o handler e a prop foram apagados — a medição acima fica como
+registro; hoje só existe UMA instância de `AISettingsModal`, a desta página.
 
 **Aparece quando**: `<AISettingsModal isOpen={showAISettings} … />` — a folha é o
 próprio componente (`ModalSheet` com `open={isOpen}`, `role="dialog"`,
@@ -1640,17 +1662,18 @@ salva) e "Salvar" / "Save".
 `grep -rln "AISettingsModal" src --include=*.test.tsx` devolve um único arquivo,
 `src/components/settingsTelemetry.render.test.tsx`, e **só por `import type`** —
 ele monta a `SettingsPage`, nunca a folha (13/09/2026).
-⚠️ **Nada trava o caminho de abertura**, nem a morte do `SettingsModal`.
+⚠️ **Nada trava o caminho de abertura** (a morte do `SettingsModal` já aconteceu).
 
-### 4.23b `SettingsModal` "Ajustes rápidos" / "Quick settings" — o switch "Trilha" / "Music" (21/09/2026)
+### 4.23b ⚰️ `SettingsModal` "Ajustes rápidos" / "Quick settings" — apagado em `4a8b8049` (21/09/2026, decisão #37)
 
-**Chega por**: o mesmo `{settingsOpen && (…SettingsModal…)}` da raiz do `App`
-— e, reconferido em 21/09/2026 (em `8d318529`), **continua sem gatilho vivo**
-(§4.23a: `handleOpenAISettings` é o único `setSettingsOpen(true)`, e
-`onOpenAISettings` morre no `ChatBox`). Desde `980bc84c` o par "Sons"/"Trilha"
-tem caminho vivo na `SettingsPage` (§4.23, grupo "Som"); este modal é
-candidato a remoção. Tudo abaixo descreve o que o código monta **se** o modal
-abrir · **Sai para**: X/Escape do `ModalSheet` (`onClose`).
+**Registro histórico.** O arquivo `src/components/SettingsModal.tsx` não existe
+mais (`ls src/components/SettingsModal.tsx` → não encontrado, 21/09/2026); tudo
+abaixo descreve o que ele montava **se** abrisse — e ele nunca abria (§4.23a).
+Motivo da remoção: duplicata da `SettingsPage` (as quatro linhas já viviam lá)
+sem gatilho vivo. **Chegava por**: `{settingsOpen && (…SettingsModal…)}` da raiz
+do `App` — reconferido em `8d318529`, sem gatilho vivo. Desde `980bc84c` o par
+"Sons"/"Trilha" tem caminho vivo na `SettingsPage` (§4.23, grupo "Som") ·
+**Saía para**: X/Escape do `ModalSheet` (`onClose`).
 
 **O que se vê/faz** — `ModalSheet` com `title` "Ajustes rápidos" / "Quick
 settings" e, desde `ee79fd44`, **quatro** linhas de `SwitchRow`/`ActionRow`, na
@@ -1687,11 +1710,11 @@ grupo "Som"; `grep -rln "ligarTrilha" src/components` → `SettingsModal.tsx`,
 **duas** (`CAMADAS_DA_TRILHA`, `8a930657`) — D33 em
 [`02` §59](02-REGRAS-DE-NEGOCIO.md#divergencias), fechada em `980bc84c`.
 
-**Dono**: `src/components/SettingsModal.tsx` · `src/App.tsx` (`handleToggleSound`,
-`handleSleep`) · **Régua: nenhuma** para o modal (`find src/components -maxdepth 1
--name 'SettingsModal.*test.ts*'` vazio, 21/09/2026); o mesmo par de chaves na
-`SettingsPage` é travado por `src/components/settingsSom.render.test.tsx`, e a
-chave separada do mudo por `src/utils/audioBus.contract.test.ts`.
+**Dono (era)**: `src/components/SettingsModal.tsx` (⚰️ `4a8b8049`) · `src/App.tsx`
+(`handleToggleSound`, `handleSleep` — continuam, agora só para a `SettingsPage`) ·
+**Régua: nenhuma** para o modal, nunca houve; o par de chaves na `SettingsPage` é
+travado por `src/components/settingsSom.render.test.tsx`, e a chave separada do
+mudo por `src/utils/audioBus.contract.test.ts`.
 
 ### 4.24 Créditos e Nova Leitura
 

@@ -1,6 +1,6 @@
 # Referência — plugins, constants, i18n e guards de repositório
 
-> **Dono:** doc-redator-referencia · **Data:** 09/09/2026 · **Estado:** verificado em 10/09/2026 por doc-verificador (mecânico completo)
+> **Dono:** doc-redator-referencia · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — só a lista de `src/deploy/`, conferida com `ls src/deploy`; anterior: verificado em 10/09/2026, mecânico completo)
 > **Verificação:** `npx vitest run src/plugins src/constants src/i18nSemPtSozinho.contract.test.ts src/docsSemMentira.contract.test.ts src/docsManual.contract.test.ts src/index.css.contract.test.ts src/security src/deploy src/styles src/test`
 > **Não cobre:** regra de negócio em profundidade (→ `02-REGRAS-DE-NEGOCIO.md`), o deploy em si (→ `08-INTEGRACOES-E-DEPLOY.md`), tokens de cor/CSS em detalhe (→ `04-IDENTIDADE-VISUAL.md`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -97,6 +97,8 @@ O inventário (`node scripts/docs-inventario.mjs`, 09/09/2026) mostra **0 módul
 - **`appUrl.contract.test.ts`** — reprova as três fontes da URL de produção (`capacitor.config.json`, `desktop/renderer/src/config.ts`, `desktop/electron/main.js`) divergindo entre si; nasceu do primeiro APK do CI que abriu o DigiApp com nome e ícone do Soulmon.
 - **`firebaseNoBuild.contract.test.ts`** — reprova a ausência de `.env.production` versionado (as quatro `VITE_FIREBASE_*`, públicas por design); sem ele o build automático do CI, que não vê `.env` local, publica um bundle sem login por cima de qualquer deploy manual — medido em produção em 07/09/2026 (deploy manual 19:51:16, build automático 19:52:19, login quebrado).
 - **`swCache.contract.test.ts`** — reprova a quebra de qualquer uma das seis invariantes que impedem "JS novo, cache velho" de prender um usuário em bundle antigo mesmo que alguém esqueça de bumpar `CACHE_VERSION` em `public/sw.js`.
+- **`depsVivas.contract.test.ts`** (desde `4a8b8049`, decisão #33) — reprova pacote de `dependencies` do `package.json` sem um único import/require/`@import` em `src`, `functions`, `workers`, `desktop`, `scripts`, `public`, `index.html` ou `vite.config.ts`; allowlist com motivo obrigatório (`@capacitor/android` entra pelo Gradle, `@capacitor/cli` é o binário do CI). Nasceu de 40 pacotes do scaffold shadcn instalados sem uso — porta encostada para o próximo `import` sem decisão.
+- **`orcamentoDeBytes.contract.test.ts`** (desde `4a8b8049`, decisão #31) — lê `dist/` **depois** do `npm run build` e reprova: JS de entrada > 250 KB, CSS > 100 KB, imagem > 400 KB, vídeo > 800 KB, qualquer `.png` em `dist/assets` ou referência `/assets/*.png` no bundle (a 1ª visita sem SW receberia 404); a dívida atual é nomeada em `DIVIDA_ATUAL` (`index.js`, `index.css`, `evolution-bg.mp4`, `intro.mp4`) e só pode diminuir — folga de 8 KB para JS/CSS. Ver [05 §9](../05-ARQUITETURA.md).
 
 ### `src/styles/`
 - **`emojiSuportado.contract.test.ts`** — reprova emoji usado na UI que a fonte do navegador não desenha (vira caixa vazia `▯`); mede por canvas comparando o desenho do glifo com um caractere garantidamente ausente. Achado real: o card de sonho do relatório noturno mostrava caixa vazia para emojis Unicode 13.0/14.0.

@@ -1,6 +1,6 @@
 # Integrações e deploy
 
-> **Dono:** doc-redator-arquitetura · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: §3.6, delta `5ac3d351..8d318529`, som/S16 — os quatro bumps do dia conferidos com `git log --format=%h 5ac3d351..73be1a2f -- public/sw.js`; `980bc84c` deu o quinto, v155; o resto: sincronizado com `dc72579e..9875477b` em 21/09/2026 por doc-redator-arquitetura; conferido em `5ac3d351`)
+> **Dono:** doc-redator-arquitetura · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §0, §1, §2.5, §2.6, §2.10, §2.12, §2.13, §3.3, §3.4 e §4 conferidos símbolo a símbolo; anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: §3.6, delta `5ac3d351..8d318529`, som/S16 — os quatro bumps do dia conferidos com `git log --format=%h 5ac3d351..73be1a2f -- public/sw.js`; `980bc84c` deu o quinto, v155; o resto: sincronizado com `dc72579e..9875477b` em 21/09/2026 por doc-redator-arquitetura; conferido em `5ac3d351`)
 > **Verificação:** `npx vitest run src/deploy src/security functions/api workers` — em especial `src/deploy/appUrl.contract.test.ts` (as quatro fontes da URL), `src/deploy/firebaseNoBuild.contract.test.ts` (o `.env.production` versionado), `src/deploy/swCache.contract.test.ts`, `src/security/csp.test.ts`, `src/security/supabase.contract.test.ts`, `workers/pushCopy.parity.test.js` e `workers/vapid.parity.test.js`.
 > **Não cobre:** o esquema do save e as chaves de storage (→ [07-DADOS-E-SAVE.md](07-DADOS-E-SAVE.md)), a arquitetura e os portões (→ [05-ARQUITETURA.md](05-ARQUITETURA.md)), as regras do jogo (→ `02-REGRAS-DE-NEGOCIO.md`), função por função (→ `06-REFERENCIA/`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -18,6 +18,10 @@ projeto:
 | **`wrangler secret`** (Cloudflare Pages → Settings → Environment variables) | Tudo que é segredo de servidor. | `wrangler secret put <NOME>` — ou o painel. |
 | **`wrangler.jsonc` → `vars`** | Variável de runtime **pública** (em 10/09/2026, só `FIREBASE_PROJECT_ID`). Mora no arquivo, e não no painel, porque **variável comum é substituída pelo conteúdo do arquivo a cada `wrangler deploy`** — posta só no painel, o próximo deploy a apagaria e o servidor voltaria ao modo aberto em silêncio. |
 | **`.env.production`** (COMMITADO) | As quatro `VITE_FIREBASE_*`, que são **públicas por design**: o Vite as inlina no bundle que todo visitante baixa. |
+
+⚠️ **Produção é um WORKER, não Pages** (achado do `soulmon-operador` na etapa 6 do QA geral, 21/09/2026 — [`PLAY-LANCAMENTO.md`](../PLAY-LANCAMENTO.md) §E): o `wrangler.jsonc` da raiz chama-se `soulmon` e a URL é `soulmon.mateus-sprnd.workers.dev`. O caminho no painel é **Workers & Pages → soulmon → Settings → Variables and Secrets** (ou `npx wrangler secret put <NOME>` na raiz), e uma **variável comum posta no painel some a cada `wrangler deploy`** — por isso o checklist manda **tudo como secret**: `ENTITLEMENTS_ADMIN_KEY`, `COURTESY_MAX_ACCOUNTS`, `METRICS_ADMIN_KEY`, `SEASON_ADMIN_KEY`, as da Play e do Supabase. "Pages" nas linhas abaixo é herança de texto, não o painel de hoje.
+
+⚠️ **Produção é um WORKER, não Pages** (achado do `soulmon-operador` na etapa 6 do QA geral, 21/09/2026 — [`PLAY-LANCAMENTO.md`](../PLAY-LANCAMENTO.md) §E): o `wrangler.jsonc` da raiz chama-se `soulmon` e a URL é `soulmon.mateus-sprnd.workers.dev`. O caminho no painel é **Workers & Pages → soulmon → Settings → Variables and Secrets** (ou `npx wrangler secret put <NOME>` na raiz), e uma **variável comum posta no painel some a cada `wrangler deploy`** — por isso o checklist manda **tudo como secret**: `ENTITLEMENTS_ADMIN_KEY`, `COURTESY_MAX_ACCOUNTS`, `METRICS_ADMIN_KEY`, `SEASON_ADMIN_KEY`, as da Play e do Supabase. "Pages" nas linhas abaixo é herança de texto, não o painel de hoje.
 
 ⚠️ **Por que `.env.production` é commitado** (`.gitignore` tem `!.env.production`):
 as `VITE_*` são inlinadas em **BUILD**, não lidas em runtime. Como o CI builda de
@@ -42,7 +46,7 @@ São **14**, medidas pelo inventário em 09/09/2026. Todas moram em
 | `/api/chat` | `OPTIONS`, `POST` | `chat.js` |
 | `/api/community` | `OPTIONS`, `ANY` (17 ações) | `community.js` |
 | `/api/config` | `OPTIONS`, `GET` | `config.js` |
-| `/api/entitlements` | `OPTIONS`, `GET`, `POST` (`?action=spend` · `?action=ad`) | `entitlements.js` |
+| `/api/entitlements` | `OPTIONS`, `GET`, `POST` (`?action=spend` · `?action=ad` · `?action=grant` — cortesia do dono, desde `42b07bec`) | `entitlements.js` |
 | `/api/fcm-subscribe` | `OPTIONS`, `POST`, `DELETE` | `fcm-subscribe.js` |
 | `/api/generate-sprite` | `OPTIONS`, `POST` | `generate-sprite.js` |
 | `/api/metrics` | `OPTIONS`, `GET`, `ANY` | `metrics.js` |
@@ -217,7 +221,7 @@ nenhum de `transcribe.js`, e não pode haver.
 |---|---|
 | **Para quê** | Notificação em navegador e PWA instalada — e também dentro do WebView do Capacitor, onde `PushManager` é suportado. |
 | **Cliente** | `src/utils/notifications.ts` → `subscribeToPush` / `unsubscribeFromPush`; o `push`/`notificationclick` é tratado em `public/sw.js`. **Ícones (20/09/2026, `3e758a81`, canvas Fora do app — `docs/design/DECISOES-WIREFRAME.md` §30, D-F14/D-F15):** `icon` = `/push-large-192.png` (`PUSH_ICON` no `sw.js`; mini-visor REDONDO `#071413` com a chama de `src/brand/flame.ts` a 1× — o Android 12+ recorta o `largeIcon` em círculo, então o PNG já nasce círculo) e `badge` = `/badge-96.png` (`PUSH_BADGE`; ALFA-ONLY, chama branca em transparente — a barra de status descarta cor). Os mesmos dois caminhos estão em `showNotification` de `notifications.ts` e no `PRECACHE_URLS`. ⚰️ Até então os dois eram `/favicon-192x192.png`, e o favicon (quadrado escuro cheio) virava um BLOCO PRETO na barra de status — inclusive no WebView do APK, onde o Web Push também roda. |
-| **Servidor** | `functions/api/subscribe.js` (`POST` grava, `DELETE` remove) → chaves `push:<hash do endpoint>` em `PUSH_SUBSCRIPTIONS`. O envio é `workers/webpush.js` (RFC 8292 VAPID + RFC 8291 + RFC 8188 aes128gcm, tudo em WebCrypto). |
+| **Servidor** | `functions/api/subscribe.js` (`POST` grava, `DELETE` remove) → chaves `push:<hash do endpoint>` em `PUSH_SUBSCRIPTIONS`; desde `42b07bec` (decisão #23) o registro leva `saveId` opcional, que é o que a exclusão de conta (`account.js` › `deletePushSubscriptions`) usa para achá-lo. O envio é `workers/webpush.js` (RFC 8292 VAPID + RFC 8291 + RFC 8188 aes128gcm, tudo em WebCrypto). |
 | **Credencial** | `VAPID_JWK` — **`wrangler secret put VAPID_JWK` dentro de `workers/`** (a chave privada ECDSA P-256 como JSON). A chave PÚBLICA correspondente é `VAPID_PUBLIC_KEY`, que vai em `[vars]` do `workers/wrangler.toml` (é pública por definição). O endereço de contato do VAPID (RFC 8292 `sub`) é uma constante no `workers/push-scheduler.js`: é para onde o SERVIÇO de push escreve em caso de falha de entrega e **nunca aparece para o usuário**. |
 | **Sem ela** | O cron não consegue assinar e nenhum push web sai. |
 | **Régua** | `functions/api/subscribe.test.js`, `workers/vapid.parity.test.js`, `functions/api/_pushTargets.test.js`. |
@@ -228,7 +232,7 @@ nenhum de `transcribe.js`, e não pode haver.
 |---|---|
 | **Para quê** | Canal NATIVO extra, só no app Android. FCM tem tratamento mais confiável contra Doze e otimização de bateria em ROMs de fabricante (MIUI, EMUI) do que uma subscription de Web Push crua, e dá visibilidade de entrega pelo Firebase Console. |
 | **Cliente** | `src/utils/notifications.ts` → `registerForPushNotifications` / `unregisterFromPushNotifications`, via `@capacitor/push-notifications`. O token fica em `FCM_TOKEN` (`localStorage`). |
-| **Servidor** | `functions/api/fcm-subscribe.js` (`POST`/`DELETE`) → chaves `fcm:*` no MESMO namespace `PUSH_SUBSCRIPTIONS`. O envio é `workers/fcm.js` (HTTP v1, JWT assinado em WebCrypto — sem `firebase-admin`). Desde 20/09/2026 (`3e758a81`) o payload `android.notification` leva `icon: 'ic_notification'` (a chama de `android/.../drawable/ic_notification.xml`, silhueta que o Android pinta no acento) e `color: '#0B6F68'` (`primary-ink` claro, 6,02:1 sobre a bandeja clara) — **sem `image`**: no FCM v1 não existe `largeIcon`, e `image` vira BigPictureStyle. O mini-visor redondo fica só no Web Push e no alarme local. ⚠️ **Isso está no worker, que NÃO foi deployado** (§3.5): em produção o FCM continua mandando o payload anterior até alguém rodar `wrangler deploy` dentro de `workers/`. |
+| **Servidor** | `functions/api/fcm-subscribe.js` (`POST`/`DELETE`) → chaves `fcm:*` no MESMO namespace `PUSH_SUBSCRIPTIONS` (com `saveId` opcional desde `42b07bec`, como em `subscribe.js`). O envio é `workers/fcm.js` (HTTP v1, JWT assinado em WebCrypto — sem `firebase-admin`). Desde 20/09/2026 (`3e758a81`) o payload `android.notification` leva `icon: 'ic_notification'` (a chama de `android/.../drawable/ic_notification.xml`, silhueta que o Android pinta no acento) e `color: '#0B6F68'` (`primary-ink` claro, 6,02:1 sobre a bandeja clara) — **sem `image`**: no FCM v1 não existe `largeIcon`, e `image` vira BigPictureStyle. O mini-visor redondo fica só no Web Push e no alarme local. ⚠️ **Isso está no worker, que NÃO foi deployado** (§3.5): em produção o FCM continua mandando o payload anterior até alguém rodar `wrangler deploy` dentro de `workers/`. |
 | **Credencial** | `FIREBASE_SERVICE_ACCOUNT` — **`wrangler secret put` dentro de `workers/`**, com o JSON COMPLETO baixado em Firebase Console → Configurações do projeto → Contas de serviço → Gerar nova chave privada. Exige também `android/app/google-services.json` (**commitado**; a API key ali é restrita por pacote e não é segredo) e o canal `soulmon_push` criado em `MainActivity.java`. O `AndroidManifest.xml` aponta `com.google.firebase.messaging.default_notification_icon` para `@drawable/ic_notification` (⚰️ era `@mipmap/ic_launcher` até 15/09/2026, `005a2941`). |
 | **Sem ela** | O cron pula o canal FCM; o Web Push continua funcionando. |
 | **Régua** | `functions/api/fcm-subscribe.test.js`. |
@@ -316,8 +320,8 @@ loja diz de quem é a compra, e recibo alheio não vale em conta nenhuma.
 |---|---|
 | **Para quê** | Ler o tier/saldo e gastar Créditos. |
 | **Cliente** | `src/utils/entitlements.ts` — `fetchEntitlement`, `spendCredits`, `claimAdReward`, `verifyPurchase`. |
-| **Servidor** | `GET ?id=<saveId>` → `{ tier, credits, adsLeft }` (`publicView`); `POST ?action=spend` `{ id, amount, reason }` — **idempotente por `opId`**, porque guarda de cliente não protege dinheiro (o cliente é editável e a rede repete sozinha); `POST ?action=ad` `{ id }`. |
-| **Credencial** | `ADMOB_SSV_ENABLED` — variável de servidor. |
+| **Servidor** | `GET ?id=<saveId>` → `{ tier, credits, adsLeft }` (`publicView`; `+ provider` só com tier pago — `play`/`steam`/`courtesy`); `POST ?action=spend` `{ id, amount, reason }` — **idempotente por `opId`**, porque guarda de cliente não protege dinheiro (o cliente é editável e a rede repete sozinha); `POST ?action=ad` `{ id }`; **`POST ?action=grant` `{ saveId }`** (desde `42b07bec`, decisão #12) — cortesia: tier pago sem loja, `provider: 'courtesy'`, zero crédito, idempotente por conta, teto global (`courtesy:count`). `Authorization: Bearer <ENTITLEMENTS_ADMIN_KEY>`; sem a variável a rota responde **404** (fail-closed, como `metrics.js`); teto por IP 10/min. Detalhe em [`06-REFERENCIA/api-workers.md`](06-REFERENCIA/api-workers.md). |
+| **Credencial** | `ADMOB_SSV_ENABLED` — variável de servidor. `ENTITLEMENTS_ADMIN_KEY` (secret — a chave da cortesia; sem ela a rota não existe) e `COURTESY_MAX_ACCOUNTS` (secret, inteiro ≥ 0; ausente ou inválida → `COURTESY_DEFAULT_MAX = 25`). Nomes só, nunca valores (§0). |
 | **Sem ela** | ⚠️ **O anúncio recompensado fica DESLIGADO por padrão**, e o GET devolve `adsEnabled: false` para a UI esconder a opção. Um endpoint aberto que dá crédito só porque o cliente pediu é farmável com um `curl`. Ligar de verdade exige Server-Side Verification do AdMob (o próprio Google chamando uma URL nossa assinada). |
 | **Régua** | `functions/api/entitlements.test.js`. |
 
@@ -347,7 +351,7 @@ o cliente exibe esses, nunca uma constante própria.
 | **Servidor** | `functions/api/metrics.js`. Escrita: agrega em **uma chave por DIA** (`m:YYYY-MM-DD`) com contadores somados de todo mundo. Leitura: `GET`, janela FECHADA lida chave a chave (nada de `list()` por prefixo), com teto `MAX_READ_DAYS`. Espelha o cliente: `EVENT_SCHEMA` com `reason` 0–4 em `unlock_view`/`unlock_dismiss` e `REASON_LABEL` com o 5º rótulo `reveal_demo` (20/09/2026); `PURCHASE_REASON_LABEL` = os 4 primeiros + `onboarding` (`REASON_LABEL.slice(0, 4)`), para o 4 da compra não virar `reveal_demo`. A régua da paridade cliente↔servidor é `src/utils/telemetry.test.ts`. |
 | **Credencial** | `METRICS_ADMIN_KEY` — `wrangler secret`, enviada num header próprio (`METRICS_KEY_HEADER`), comparada por `secretEquals`. |
 | **Sem ela** | ⚠️ **A rota de leitura responde 404, não 401**, de propósito: um 401 confirmaria que o endpoint existe. Ou seja, a métrica está instrumentada e agregada e **ninguém consegue ler nada** até o segredo existir. |
-| **Leitura fora do app** | `tools/metrics-read.mjs` (transporte) + `tools/metricsReport.mjs` (regras puras, testadas em `tests/metricsReport.test.ts`). `METRICS_ADMIN_KEY=… node tools/metrics-read.mjs --from … --to …`, ou `--file resposta.json` offline. |
+| **Leitura fora do app** | `tools/metrics-read.mjs` (transporte, janela livre) + `tools/metricsReport.mjs` (regras puras, testadas em `tests/metricsReport.test.ts`). `METRICS_ADMIN_KEY=… node tools/metrics-read.mjs --from … --to …`, ou `--file resposta.json` offline. **O funil da semana** (desde `42b07bec`, decisão #18): `METRICS_ADMIN_KEY=… node scripts/metrics-report.mjs [--url $APP_URL] [--to AAAA-MM-DD] [--days 7] [--full]` — últimos 7 dias, tabela install → onboarding_step → first_task_done → day_active → week_active → retained d1/d7/d30 com `n` e "% do topo" (rotulada APROXIMADA: o agregado é por dia de evento, sem coorte); `--full` anexa o relatório de `tools/metricsReport.mjs`. Saídas: 0 ok · **2 sem chave** · 3 chave recusada (404/401) · 4 outro HTTP · 1 erro. |
 | **Régua** | `functions/api/metrics.test.js`, `tests/metricsReport.test.ts`. |
 
 Três princípios que são responsabilidade do arquivo de servidor: **agregados,
@@ -376,8 +380,14 @@ desligado, as duas respondem **503 `auth-unavailable`** — **indisponível é m
 que perigosa**.
 
 O que a exclusão faz, declarado no cabeçalho de `account.js`: **APAGA** o save,
-`profile:`, `pid:`, `rank:` (todas as seasons), `gifts:` e a menção do usuário na
-lista de amigos de terceiros; **MINIMIZA** `ent:<saveId>` (some o que é USO —
+`profile:`, `pid:`, `rank:` (todas as seasons), `gifts:`, a menção do usuário na
+lista de amigos de terceiros e, desde `42b07bec` (decisão #23), as inscrições
+`push:*`/`fcm:*` de `PUSH_SUBSCRIPTIONS` cujo valor carrega o `saveId` do titular
+(varredura por prefixo com teto `MAX_SCAN_PAGES = 20`; registro sem `saveId` —
+inscrição anterior a `42b07bec` — fica fora do alcance, e o cliente chama os
+`DELETE` dos dois canais **antes** do `delete-confirm`: `revokePushBeforeDelete`
+em `src/utils/accountData.ts`; a resposta devolve
+`executado.inscricoesDePushApagadas`); **MINIMIZA** `ent:<saveId>` (some o que é USO —
 `aiLifetime`, `adDate`, `adCount` — e ficam os campos de DINHEIRO); e
 **SOBREVIVE** `ord:<orderId>`, porque é a trava que faz um comprovante valer por
 UMA conta, e apagá-lo destruiria o direito pago junto com o dado.
@@ -426,7 +436,7 @@ nome e o ícone do Soulmon.
 | Workflow | Dispara em | `permissions` | O que faz |
 |---|---|---|---|
 | `ci.yml` — *CI (typecheck + testes)* | `pull_request`, `push: [main]`, `workflow_dispatch` | `contents: read` | Job `gate` (Node 22, `npm ci`, timeout 20 min): integridade do `vendor/` (sha256 do blob × `_provenance.json`) → `npx tsc --noEmit` → `npx tsc -p desktop/tsconfig.json --noEmit` → `npx tsc -p tsconfig.server.json --noEmit` → `npx vitest run`. `concurrency` cancela o run anterior **exceto** na `main` (vermelho na main tem que aparecer). |
-| `android-build.yml` — *Android APK Build* | `push: [main]` (⚰️ `version-b`, branch do DigiApp, saiu em `f9faf7a7`), `workflow_dispatch` | `contents: read` | Job `build`: `npm ci` → `npm run build` → Java 21 → SDK Android → `npx cap sync android` → `./gradlew assembleDebug`, artefato `digiapp-debug-<sha>`. Se os secrets de keystore existirem, também restaura o keystore, builda o **bundle assinado** (`.aab`, artefato `soulmon-release-<sha>`) e **apaga o keystore do runner** com `if: always()`. Job `smoke`: baixa o APK, liga KVM e roda um smoke em emulador (`reactivecircus/android-emulator-runner`), com evidência em artefato. |
+| `android-build.yml` — *Android APK Build* | `push: [main]` (⚰️ `version-b`, branch do DigiApp, saiu em `f9faf7a7`), `workflow_dispatch` | `contents: read` | Job `build`: `npm ci` → `npm run build` → Java 21 → SDK Android → `npx cap sync android` → `./gradlew assembleDebug`, artefato `soulmon-debug-<sha>` (⚰️ `digiapp-debug-<sha>` até `4a8b8049`), artefato `digiapp-debug-<sha>`. Se os secrets de keystore existirem, também restaura o keystore, builda o **bundle assinado** (`.aab`, artefato `soulmon-release-<sha>`) e **apaga o keystore do runner** com `if: always()`. Job `smoke`: baixa o APK, liga KVM e roda um smoke em emulador (`reactivecircus/android-emulator-runner`), com evidência em artefato. |
 | `desktop-build.yml` — *Desktop Windows Build* | `push: [main]` com filtro de caminhos (`desktop/**`, `src/utils/sprites.ts`, `src/assets/**`, o próprio arquivo), `workflow_dispatch` | **`contents: read`** | **SÓ BUILDA. NÃO PUBLICA NADA.** Produz artefato de Actions (retido 30 dias, que ninguém instala sozinho). |
 | `desktop-release.yml` — *Desktop Windows Release* | **só `push: tags: 'v[0-9]+.[0-9]+.[0-9]+'`**; **sem `workflow_dispatch`** | **`contents: write`** | O **ÚNICO** caminho de publicação do desktop: `electron-builder --publish always` cria/atualiza um GitHub Release. |
 | `sync-irmaos.yml` — *Sync repos irmãos* | `schedule: '17 6 * * 1'` (segunda, 06:17 UTC), `workflow_dispatch` | `contents: write` + `pull-requests: write` | Roda `npm run vendor:class-system` **e** `npm run sync:oracle-data` sobre o MESMO clone, na MESMA execução, e verifica que `vendor/class-system/_provenance.json:sha` bate com o `_provenance.sha` do `classSystem.data.json`. **NUNCA empurra para a `main`** — abre PR. |
@@ -460,7 +470,21 @@ por isso o `android-build.yml` decide com um step que grava `outputs.ready`.
 
 O **APK carrega a URL de produção** (`server.url` em `capacitor.config.json`),
 então **mudança web NÃO precisa de APK novo**. Só mudança em `android/` precisa.
-O artefato fica em `github.com/HexerVoodoom/Soulmon/actions/runs/<id>`.
+O artefato fica em `github.com/HexerVoodoom/Soulmon/actions/runs/<id>`, com o nome
+`soulmon-debug-<sha>` (desde `4a8b8049`).
+
+**Preparo para a Play (etapa 6 do QA geral, `4a8b8049`, decisão #16):** `versionCode`
+**15** / `versionName` **1.1.4** (`android/app/build.gradle` — eram 14 / 1.1.3; é o primeiro
+bundle com `setObfuscatedAccountId`, preço localizado e o widget novo, e a Play recusa
+`versionCode` repetido — bump manual, sem automação); `compileSdkVersion` /
+`targetSdkVersion` **36** (`android/variables.gradle`, eram 35 —
+`[verificar no android-build.yml do CI após o merge]`: se o `assembleDebug` reclamar da
+plataforma 36, o conserto é subir o AGP, não voltar para 35); `billing-ktx` **fica em
+6.2.1** porque `BillingPlugin.kt` chama `enablePendingPurchases()` sem argumento e a 7.x
+exige `PendingPurchasesParams` — `[a confirmar no Play Console]` se a loja aceita o
+upload. A ficha pronta para colar está em [`PLAY-FICHA.md`](../PLAY-FICHA.md) e o passo a
+passo do console em [`PLAY-LANCAMENTO.md`](../PLAY-LANCAMENTO.md) (§A–§I, etiquetas
+`[dono digita segredo]` / `[submissão: confirmar]` / `[squad pode dirigir o Chrome]`).
 
 Guia operacional: [../APK-BUILD-INFO.md](../APK-BUILD-INFO.md).
 ⚠️ **Aquele arquivo é da era do fork** (cabeçalho: "última atualização declarada:
@@ -503,7 +527,11 @@ estão em `PRECACHE_URLS` (S6, `src/utils/sonsAssets.contract.test.ts`) e são
 servidos network-first com cópia em `RUNTIME_CACHE`; o bump existe porque um
 arquivo de **mesmo nome e conteúdo diferente** (o `evolve.webm` que saiu e
 voltou) ficaria na cópia offline de quem já o tinha tocado. Quem precisar do
-valor de hoje abre `public/sw.js`, não este parágrafo.
+valor de hoje abre `public/sw.js`, não este parágrafo. Em `42b07bec` ele andou
+de novo (uma unidade, sem o número aqui — hash novo do aviso de WebView na CSP), e em `4a8b8049`
+`cacheavel(res)` passou a exigir `status === 200` em vez de `res.ok`: um **206**
+(range request do `<video>` `.mp4`) é `ok` e o `Cache.put` lançava "Partial
+response (status code 206) is unsupported" — visto no console na etapa 4 do QA geral.
 
 ---
 
@@ -524,7 +552,8 @@ Os itens em aberto que tocam ESTE documento, em 09/09/2026:
 |---|---|
 | `GOOGLE_PLAY_SERVICE_ACCOUNT` + `ANDROID_PACKAGE_NAME` | A rota da Play responde 503 e nenhuma compra é concedida. |
 | `PLAY_REQUIRE_ACCOUNT_BINDING = true` (só **depois** de publicar o APK que manda `setObfuscatedAccountId`) | Compra **sem vínculo de conta é aceita** — um recibo pode virar N contas pagas. |
-| `METRICS_ADMIN_KEY` no Pages | A leitura de métricas responde **404**. Está tudo instrumentado e ninguém lê nada. |
+| `METRICS_ADMIN_KEY` (secret do Worker — ver §0) | A leitura de métricas responde **404**. Está tudo instrumentado e ninguém lê nada — e `scripts/metrics-report.mjs` sai com código 2. |
+| `ENTITLEMENTS_ADMIN_KEY` e `COURTESY_MAX_ACCOUNTS` (secrets do Worker, desde `42b07bec`, #12/#18) | Sem a chave, `POST /api/entitlements?action=grant` responde 404 e os 10 primeiros testadores só veem o demo; sem o teto, vale `COURTESY_DEFAULT_MAX = 25`. |
 | `SEASON_ADMIN_KEY` como secret do worker (com o MESMO valor do Pages) | O fechamento de season é pulado com log, e os troféus dependem de alguém lembrar. |
 | `ASSETLINKS_PACKAGE_NAME` e `ASSETLINKS_SHA256` no Pages | Os Digital Asset Links não validam. |
 | Registrar o pacote `com.hexervoodoom.soulmon` no Firebase + `google-services.json` novo | ⚠️ O **build do Android FALHA** com `No matching client found for package name` — ver [../BILLING-SETUP.md](../BILLING-SETUP.md). |

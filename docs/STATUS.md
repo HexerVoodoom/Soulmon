@@ -7,6 +7,36 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 21/09/2026 — sincronização do manual pós-merge `4a8b8049` (execução das respostas #11–#39)
+>
+> Delta `f02a3166..4a8b8049` (`42b07bec` + `4a8b8049`), `/manter-docs auto` feito inline pelo
+> doc-mantenedor (redatores e verificador na mesma sessão, doc por doc, cada afirmação nova conferida
+> por grep). **15 docs recarimbados:** `06-REFERENCIA/api-workers` (cortesia `action=grant`,
+> `grantCourtesy`/`COURTESY_*`/`paidProviderOf`, `saveId` em `subscribe`/`fcm-subscribe`, varredura de
+> push em `account.js` — corrigida a frase "hoje não escrevem `saveId`", que virou falsa em `42b07bec`),
+> `utils` (`revokePushBeforeDelete`, `dias-completos-30`/`DIAS_COMPLETOS_PARA_CONQUISTA`/
+> `gatilhoAntigoTasks100`, `FULL_UNLOCK_PRICE_LABEL_USD`, `saveId` em `notifications.ts`,
+> `TERMS_NOTICE_SEEN`, ⚰️ `SettingsModal` nos "chamado por"), `components` (⚰️ `SettingsModal` no índice
+> e nos chamadores, `NotificationManager.saveId`, `ErrorBoundary` + `FeedbackLink`, grupo Sobre da
+> `SettingsPage`, item `termos` do `App.tsx`, 36 `useState`), `hooks-contexts-types` + `07`
+> (`GameState.conquistasHerdadas`, 89 campos), `plugins-constants` (os dois guards de `src/deploy/`),
+> `08` (§0 "produção é Worker → tudo secret", §1 `grant`, §2.10 credenciais `ENTITLEMENTS_ADMIN_KEY`/
+> `COURTESY_MAX_ACCOUNTS`, §2.12 `scripts/metrics-report.mjs`, §2.13 push na exclusão, §3.3/§3.4
+> `soulmon-debug`, `versionCode` 15, target 36, billing 6.2.1 `[a confirmar]`, §3.6 `cacheavel` 200),
+> `05` (⚰️ 40 deps + 37 aliases, `depsVivas`/`orcamentoDeBytes` em §9, Android 15/1.1.4/36,
+> `selector(&)` no `index.html`), `03` (§2.1 gate `selector(&)`, §3.2 item 6 `termos`, §4.23 Sobre com
+> IA/feedback, §4.23a/§4.23b viraram lápide), `04` (gate de WebView em §10.2, ⚰️ `SettingsModal`), `02`
+> (§46 cortesia, §56 banner sem re-aceite, §57-A herança, §58-A ⚰️), `01` (§3 18+ é ICP + primeiro
+> usuário, §7 linha 16 vale para o cosmético, §10 as 29 respostas), `10` (18 linhas de 21/09/2026 nos
+> temas 3/4/6/7/8/11/13/14/15, §17 `PLAY-FICHA`/`PLAY-LANCAMENTO`/`adr`/`plataforma`, §18 fila
+> vazia), `12` (Medir é passo, `soulmon-operador` e `soulmon-guarda-plataforma` em §7/§9), `00-MAPA`
+> (§3 linha de plataforma, §5 `scripts/`, §6.1 roster 37 com `arte-gerador`). Guards `docsManual` +
+> `docsSemMentira` verdes (2 files / 10 tests). **Divergências novas:** nenhuma de código; o comentário
+> do `vite.config.ts` diz "38 aliases" e o diff mostra 37 (`git diff f02a3166..4a8b8049 -- vite.config.ts
+> | grep -c "^-      '"`); `src/security/oldWebview.test.ts` não exercita `selector(&)` sozinho.
+> **Fora do delta, de propósito:** `11-GLOSSARIO` (termos "cortesia"/"dias completos 30" não indexados —
+> o delta não o lista) e `09-HISTORICO` (sem linha para `42b07bec`/`4a8b8049`).
+
 > ## 21/09/2026 — EXECUÇÃO das respostas do dono, etapas 4 (limpeza) e 6 (Play)
 >
 > **#37** `SettingsModal` apagado (prop `onOpenAISettings` saiu da cadeia App → CompanionHUD → ChatBox).

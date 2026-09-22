@@ -1,6 +1,6 @@
 # Referência — functions/api e workers
 
-> **Dono:** doc-redator-referencia · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (mecânico completo; delta `dc72579e..9875477b` conferido símbolo a símbolo, sha a sha)
+> **Dono:** doc-redator-referencia · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — seções tocadas conferidas símbolo a símbolo: `account.js`, `entitlements.js`, `subscribe.js`, `fcm-subscribe.js`, `_entitlements.js`; anterior: mecânico completo; delta `dc72579e..9875477b` conferido símbolo a símbolo, sha a sha)
 > **Verificação:** `npx tsc -p tsconfig.server.json --noEmit && npx vitest run functions/api workers` — cada rota e cada `_*.js` foi lido no corpo, não só no comentário de cabeçalho.
 > **Não cobre:** regra de negócio em profundidade (→ `02-REGRAS-DE-NEGOCIO.md`), o schema D1/KV completo (→ `07-DADOS-E-SAVE.md`), como fazer deploy do worker (→ `08-INTEGRACOES-E-DEPLOY.md`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -25,10 +25,10 @@
 **Dono de:** exportação (`action=export`) e exclusão (`action=delete-request` + `action=delete-confirm`) dos dados do titular guardados no servidor.
 **Auth:** `requireVerifiedOwner` (`_auth.js`) — **FAIL-CLOSED**, diferente do resto do app. Sem `FIREBASE_PROJECT_ID`, as duas ações respondem **503 `auth-unavailable`** em vez de abrir (comentário: "indisponível é melhor que perigosa" — o `saveId` é SHA-256 de e-mail por algoritmo público, então fail-open aqui seria "apague a conta de qualquer um cujo e-mail eu conheça").
 **Rate limit:** nenhum próprio (a rota é rara por natureza — exportar/excluir conta).
-**Grava/lê:** `kv(env)` — lê `<saveId>` (save), `profile:<saveId>`, `pid:<pid>`, `gifts:<saveId>`, `ent:<saveId>`, `rank:<season>:<saveId>` (via varredura `rank:` limitada a `MAX_SCAN_PAGES=20`); na exclusão, APAGA save/profile/pid/gifts/ranks, MINIMIZA o entitlement (remove uso — `aiLifetime`/`adDate`/`adCount` — mantém tier/créditos/`consumedOrders`/`orderDetails`), e limpa menções ao `saveId` em `friends[]` de outros perfis (varredura limitada de `profile:`). `ord:<orderId>` (comprovante de compra) NÃO é tocado — declarado na resposta em `naoIncluido`. **Push (21/09/2026, decisão #23 do QA GERAL):** `deletePushSubscriptions` varre `env.PUSH_SUBSCRIPTIONS` pelos prefixos `PUSH_PREFIXES` (`push:`/`fcm:`, teto `MAX_SCAN_PAGES`) e apaga só os registros cujo VALOR tem `saveId` igual ao do titular; registro sem o campo (gravado por `subscribe.js`/`fcm-subscribe.js`, que hoje **não escrevem `saveId`**) fica fora do alcance e o cliente segue chamando os `DELETE` por aparelho. Sem o binding, 0 apagadas e a exclusão segue. A resposta traz `executado.inscricoesDePushApagadas`.
+**Grava/lê:** `kv(env)` — lê `<saveId>` (save), `profile:<saveId>`, `pid:<pid>`, `gifts:<saveId>`, `ent:<saveId>`, `rank:<season>:<saveId>` (via varredura `rank:` limitada a `MAX_SCAN_PAGES=20`); na exclusão, APAGA save/profile/pid/gifts/ranks, MINIMIZA o entitlement (remove uso — `aiLifetime`/`adDate`/`adCount` — mantém tier/créditos/`consumedOrders`/`orderDetails`), e limpa menções ao `saveId` em `friends[]` de outros perfis (varredura limitada de `profile:`). `ord:<orderId>` (comprovante de compra) NÃO é tocado — declarado na resposta em `naoIncluido`. **Push (21/09/2026, decisão #23 do QA GERAL):** `deletePushSubscriptions` varre `env.PUSH_SUBSCRIPTIONS` pelos prefixos `PUSH_PREFIXES` (`push:`/`fcm:`, teto `MAX_SCAN_PAGES`) e apaga só os registros cujo VALOR tem `saveId` igual ao do titular; registro sem o campo (as inscrições gravadas ANTES de `42b07bec` — desde ele `subscribe.js`/`fcm-subscribe.js` gravam `saveId` quando o cliente manda) fica fora do alcance e o cliente segue chamando os `DELETE` por aparelho (`revokePushBeforeDelete` em `src/utils/accountData.ts`, antes do `delete-confirm`). Sem o binding, 0 apagadas e a exclusão segue. A resposta traz `executado.inscricoesDePushApagadas`.
 **Erros:** `400 Invalid save ID` · `500 storage-not-bound` · `{401|403|503} auth-unavailable|unauthenticated|forbidden` (de `requireVerifiedOwner`) · `409 confirmation-required` (delete-confirm sem token válido, ou expirado após 15 min) · `400 Unknown action`.
-**Régua:** `functions/api/account.test.js`.
-**Chamado por:** cliente web (fluxo de conta — não localizado neste levantamento como tendo UI própria ainda; a rota existe e é testada).
+**Régua:** `functions/api/account.test.js` (21 `it(` — `grep -c "it(" functions/api/account.test.js`, 21/09/2026; dois deles, desde `42b07bec`, cobrem a varredura de push: apaga só as inscrições do titular, e sem o binding devolve 0 sem erro).
+**Chamado por:** `src/utils/accountData.ts` (`requestExport`, `requestDelete`, `confirmDelete`) → `src/components/AccountDataSection.tsx`.
 
 ### `functions/api/billing.js`
 **Rota:** `/api/billing` · **Métodos:** `OPTIONS`, `POST`.
@@ -71,14 +71,14 @@
 **Chamado por:** `desktop/renderer/src/cloudSync.ts` (`isAuthRequired`), e o cliente web para decidir se desenha o microfone do chat.
 
 ### `functions/api/entitlements.js`
-**Rota:** `/api/entitlements` · **Métodos:** `OPTIONS`, `GET`, `POST`.
-**Dono de:** leitura de tier/créditos (`GET`) e gasto (`POST action=spend`) ou recompensa por anúncio (`POST action=ad`, desligado por padrão — só liga com `ADMOB_SSV_ENABLED==='true'`, porque sem Server-Side Verification do AdMob a rota seria farmável com `curl`).
-**Auth:** `authorizeSaveAccess` nas duas ações POST e no GET.
-**Rate limit:** nenhum próprio (o custo está no KV, não em rede externa).
+**Rota:** `/api/entitlements` · **Métodos:** `OPTIONS`, `GET`, `POST` (`action=spend` · `action=ad` · `action=grant`, desde `42b07bec`).
+**Dono de:** leitura de tier/créditos (`GET`), cortesia do dono (`POST action=grant`, ver abaixo) e gasto (`POST action=spend`) ou recompensa por anúncio (`POST action=ad`, desligado por padrão — só liga com `ADMOB_SSV_ENABLED==='true'`, porque sem Server-Side Verification do AdMob a rota seria farmável com `curl`).
+**Auth:** `authorizeSaveAccess` em `spend`/`ad` e no GET; `grant` autentica o ADMIN (`Bearer ENTITLEMENTS_ADMIN_KEY`, `secretEquals` local — cópia consciente da de `metrics.js`), nunca o dono do save.
+**Rate limit:** nenhum próprio em `spend`/`ad`/GET (o custo está no KV, não em rede externa); `grant` tem `GRANT_RATE = { limit: 10, windowMs: 60_000 }` por IP (bucket `entitlements-grant`).
 **Grava/lê:** `kv` via `_entitlements.js` (`ent:<saveId>`); o GET também roda `auditRefunds` (no máximo 1×/dia por conta) contra `isPlayPurchaseVoided`/`isSteamPurchaseVoided`/`isSteamOwnershipVoided` de `_billing.js`.
 **Erros:** `400 Invalid save ID` · `500 Storage not bound` · `{401|403} unauthenticated|forbidden` · `402 insufficient` (spend sem saldo) · `501 ads-not-configured` · `429 daily-cap` (recompensa de anúncio, teto `AD_DAILY_CAP=3`).
-**Régua:** `functions/api/entitlements.test.js`, `_entitlements.test.js`, `_entitlements.ttl.test.js`, `_entitlements.d1Retencao.test.js`.
-**Chamado por:** `desktop/renderer/src/cloudSync.ts` (`fetchWallet`), cliente web (loja/carteira).
+**Régua:** `functions/api/entitlements.test.js` (28 `it(`, dos quais 8 no `describe` "cortesia (action=grant)" — 404 sem chave, 401 chave errada, concede pago/zero crédito/`courtesy`, idempotente, 429 no teto, `COURTESY_MAX_ACCOUNTS` inválido cai no padrão, 400 só depois da chave, sobrevive ao `auditRefunds`), `_entitlements.test.js`, `_entitlements.ttl.test.js`, `_entitlements.d1Retencao.test.js`.
+**Chamado por:** `desktop/renderer/src/cloudSync.ts` (`fetchWallet`), cliente web (loja/carteira); `grant` só por `curl` do dono (nenhum chamador no código: `grep -rn "action=grant" src desktop` vazio, 21/09/2026).
 **Cortesia (21/09/2026, decisão #12 do QA GERAL):** `POST /api/entitlements?action=grant` com `Authorization: Bearer <ENTITLEMENTS_ADMIN_KEY>` e corpo `{ saveId }` — `handleGrant` em `entitlements.js`. **Fail-closed** no padrão de `metrics.js`: sem `ENTITLEMENTS_ADMIN_KEY` no ambiente a rota responde **404** (não 401); chave errada 401; teto por IP (`GRANT_RATE`, 10/min). Concede `tier:'paid'` via `_entitlements.js:grantCourtesy` → `applyVerifiedPurchase` com `provider:'courtesy'`, `orderId = courtesy:<saveId>` (`courtesyOrderId`; idempotente por construção — a repetição devolve `duplicate:true` sem consumir vaga), **nunca crédito** (`grantCredits: 0`). Teto global `COURTESY_MAX_ACCOUNTS` (padrão `COURTESY_DEFAULT_MAX = 25`; contador `courtesy:count` na KV de saves, só sobe) → **429 `courtesy-cap`**. A resposta e o `GET` público carregam `provider` (`publicView` → `paidProviderOf`) só quando há tier pago. O `auditRefunds` do GET trata `courtesy` como válida (não há loja para perguntar). Uso: `curl -X POST "$APP_URL/api/entitlements?action=grant" -H "Authorization: Bearer $ENTITLEMENTS_ADMIN_KEY" -H "Content-Type: application/json" -d '{"saveId":"<32 hex>"}'`.
 
 ### `functions/api/fcm-subscribe.js`
@@ -86,10 +86,10 @@
 **Dono de:** registro/remoção de token FCM (push nativo Android — a WebView do Capacitor não tem Web Push).
 **Auth:** nenhuma (rota anônima) — a defesa de custo é o rate limit.
 **Rate limit:** `_rateLimit.js`, bucket `fcm-subscribe`, `LIMITE_INSCRICAO` de `_pushIdentity.js` (`{limit:10, windowMs:60_000}`) — compartilha o NÚMERO com `subscribe.js`, cada canal com balde próprio.
-**Grava/lê:** `env.PUSH_SUBSCRIPTIONS` (namespace diferente de `kv(env)`) — chave `fcm:<hash do token>`, TTL de 1 ano, escreve só quando o registro mudou (`gravarSeMudou`).
+**Grava/lê:** `env.PUSH_SUBSCRIPTIONS` (namespace diferente de `kv(env)`) — chave `fcm:<hash do token>`, TTL de 1 ano, escreve só quando o registro mudou (`gravarSeMudou`). Desde `42b07bec` (decisão #23) o registro leva **`saveId` opcional** (`VALID_ID` de `_entitlements.js`; inválido é descartado, nunca corrigido) — é o campo que `account.js` › `deletePushSubscriptions` usa para apagar a inscrição na exclusão da conta; o worker de push não o lê.
 **Erros:** `400 Invalid JSON|Missing token|Invalid token` · `429` (rate limit).
 **Régua:** `functions/api/fcm-subscribe.test.js`.
-**Chamado por:** `src/utils/notifications.ts` (`registerForPushNotifications`, via `@capacitor/push-notifications`), só no Android nativo.
+**Chamado por:** `src/utils/notifications.ts` (`registerForPushNotifications(petName, language, onForeground?, saveId?)`, via `@capacitor/push-notifications`), só no Android nativo.
 **Avisos do arquivo:** até 09/09/2026 era cópia parada da irmã (`subscribe.js`) — sem teto de apelido, sem validação de chave, sem rate limit; hoje compartilha `_pushIdentity.js`.
 
 ### `functions/api/generate-sprite.js` (557 linhas — corrigido de "558" por doc-verificador, `wc -l`, 10/09/2026)
@@ -138,10 +138,10 @@
 **Dono de:** registro/remoção de subscription Web Push (browser/PWA, também funciona dentro do WebView do Capacitor via `PushManager`).
 **Auth:** nenhuma (rota anônima).
 **Rate limit:** `_rateLimit.js`, bucket `subscribe`, `LIMITE_INSCRICAO` (mesmo número de `fcm-subscribe.js`).
-**Grava/lê:** `env.PUSH_SUBSCRIPTIONS`, chave `push:<hash do endpoint>`, TTL de 1 ano, `gravarSeMudou`. Valida `endpoint` contra `isAllowedPushEndpoint` (`_pushTargets.js`) e as chaves de criptografia contra `ehChaveWebPush` (base64url com teto).
+**Grava/lê:** `env.PUSH_SUBSCRIPTIONS`, chave `push:<hash do endpoint>`, TTL de 1 ano, `gravarSeMudou`. Valida `endpoint` contra `isAllowedPushEndpoint` (`_pushTargets.js`) e as chaves de criptografia contra `ehChaveWebPush` (base64url com teto). Desde `42b07bec` (decisão #23) aceita **`saveId` opcional** no corpo (mesma regra de `fcm-subscribe.js`: `VALID_ID`, inválido descartado, não verificado — um `saveId` alheio só faz a inscrição DESTE aparelho sumir quando o outro excluir a conta) e o grava no registro para a varredura de `account.js`.
 **Erros:** `400 Missing required fields|Unsupported push endpoint|Malformed keys|Invalid JSON` · `429` (rate limit).
 **Régua:** `functions/api/subscribe.test.js`.
-**Chamado por:** `src/components/NotificationManager.tsx`, `public/sw.js`.
+**Chamado por:** `src/utils/notifications.ts` (`subscribeToPush(petName, language, bornAt?, saveId?)`, chamada pelo `src/components/NotificationManager.tsx`), `public/sw.js`.
 **Avisos do arquivo:** sem a validação de endpoint, o worker de push faria `fetch()` num host arbitrário 4×/dia por um ano, com o JWT VAPID de produção no cabeçalho — SSRF.
 
 ### `functions/api/suggest-tasks.js`
@@ -217,7 +217,7 @@
 **Régua:** `functions/api/bond.parity.test.js` — varre milhares de valores de `totalXP` e exige que este arquivo e `src/utils/bond.ts` respondam o MESMO nível (footgun 9: cópia deliberada, travada por paridade comportamental porque Pages Functions não importam de `src/`).
 **Avisos do arquivo:** o que NÃO foi copiado, de propósito: tabela de XP por evento, tetos diários, escada de recompensas e títulos. Limite honesto: `bondLevelOf` barra quem forja só o `pvpEnabled`, não quem forja o `totalXP` do save inteiro.
 
-### `functions/api/_entitlements.js` (489 linhas — corrigido de "490" por doc-verificador, `wc -l`, 10/09/2026)
+### `functions/api/_entitlements.js` (598 linhas — `wc -l`, 21/09/2026; eram 489 antes da cortesia)
 **Dono de:** FONTE DA VERDADE de tudo que envolve dinheiro real — tier, créditos, uso de IA vitalício, resgate de comprovante de compra, auditoria de reembolso. O cliente NUNCA dita tier nem saldo.
 **Exports:**
 - `ENT_PREFIX='ent:'`, `ORDER_PREFIX='ord:'`, `VALID_ID` — namespace e validação de id.
@@ -225,15 +225,17 @@
 - `requirePaidTier(env, saveId)` — fail-closed; portão de tier para rotas que gastam COGS caro (hoje só sprite).
 - `AD_REWARD_CREDITS=5`, `AD_DAILY_CAP=3` — recompensa por anúncio.
 - `readEntitlement`/`writeEntitlement(env, saveId, ent)` — leitura com merge de padrão (`emptyEntitlement`), escrita com TTL renovado.
-- `publicView(ent)` — o que o cliente pode saber (`tier`, `credits`, `adsLeft`).
+- `publicView(ent)` — o que o cliente pode saber (`tier`, `credits`, `adsLeft` e, **só quando há tier pago**, `provider` — `play`/`steam`/`courtesy`, via `paidProviderOf`; conta demo continua `{ tier, credits, adsLeft }`).
+- `paidProviderOf(ent)` (desde `42b07bec`) — o `provider` da compra mais recente de `orderDetails` que concedeu `paid` e não foi `voided`; `null` sem tier pago. Existe para a cortesia ser DISTINGUÍVEL de compra de verdade.
 - `spendCredits(env, saveId, amount, opId)` — gasta crédito; idempotente por `opId` (WP5.3 — repetir o mesmo gesto devolve o mesmo resultado, nunca debita duas vezes).
 - `grantAdReward(env, saveId)` — credita recompensa de anúncio, respeitando o teto diário.
 - `claimOrder(env, saveId, orderId)` — amarra um comprovante a UMA conta globalmente; usa D1 atômico (`INSERT` com `order_id` PRIMARY KEY) quando `env.DB` existe, senão KV best-effort (janela de propagação de até ~60s).
 - `applyVerifiedPurchase(env, saveId, {...})` — aplica compra já verificada; ignora `orderId` já consumido.
+- **Cortesia** (desde `42b07bec`, decisão #12 do QA GERAL): `COURTESY_PROVIDER = 'courtesy'`, `COURTESY_COUNT_KEY = 'courtesy:count'`, `COURTESY_DEFAULT_MAX = 25`, `courtesyOrderId(saveId)` → `courtesy:<saveId>`, `courtesyMaxFrom(env)` (lê `COURTESY_MAX_ACCOUNTS`; qualquer coisa que não seja inteiro ≥ 0 cai no padrão) e `grantCourtesy(env, saveId, max?)` → `{ ok: true, ent, duplicate, count, max }` ou `{ ok: false, reason: 'courtesy-cap', count, max }`. Passa por `applyVerifiedPurchase` (uma porta só de escrita do tier), `grantCredits: 0` sempre, idempotente por construção (o `orderId` deriva da conta; repetição devolve `duplicate: true` sem consumir vaga), contador global que **só sobe** (apagar a conta não devolve a vaga) e sobe ANTES da concessão (na dúvida, a vaga some; o tier não aparece).
 - `AUDIT_INTERVAL_MS` — 24h entre conferências de reembolso da mesma conta.
 - `auditRefunds(env, saveId, isVoided, now)` — desfaz compras reembolsadas, no máximo 1×/dia por conta, na leitura do saldo (sem cron); créditos já gastos nunca ficam negativos.
-**Chamado por:** `billing.js`, `entitlements.js`, `save.js`, `account.js`, `_aiGuard.js`, `generate-sprite.js`.
-**Régua:** `functions/api/_entitlements.test.js`, `.ttl.test.js`, `.d1Retencao.test.js`.
+**Chamado por:** `billing.js`, `entitlements.js`, `save.js`, `account.js`, `_aiGuard.js`, `generate-sprite.js`; `VALID_ID` também por `subscribe.js` e `fcm-subscribe.js` (desde `42b07bec`).
+**Régua:** `functions/api/_entitlements.test.js`, `.ttl.test.js`, `.d1Retencao.test.js`; a cortesia é testada por `entitlements.test.js` (8 casos).
 **Avisos do arquivo:** limitação conhecida — KV não tem transação; um read-modify-write concorrente pode perder escrita (aceitável na escala do app; D1 é a saída se virar problema).
 
 ### `functions/api/_kv.js`

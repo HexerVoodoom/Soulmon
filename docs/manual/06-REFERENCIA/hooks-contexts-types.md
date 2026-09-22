@@ -1,6 +1,6 @@
 # Referência — hooks, contexts, types
 
-> **Dono:** doc-redator-referencia · **Data:** 20/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (mecânico completo)
+> **Dono:** doc-redator-referencia · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — entrada `GameStateContext.tsx` conferida símbolo a símbolo: `conquistasHerdadas` e a migração em `hydrateSave`; anterior: mecânico completo)
 > **Verificação:** `npx vitest run src/hooks src/contexts src/types` — cada símbolo abaixo foi lido no corpo do arquivo, não só no JSDoc.
 > **Não cobre:** regra de negócio em profundidade (→ `02-REGRAS-DE-NEGOCIO.md`), `src/App.tsx` (→ `06-REFERENCIA/components.md`), `src/utils/*` que os hooks/contexts importam (→ `06-REFERENCIA/utils.md`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -78,12 +78,12 @@
 
 ## src/contexts
 
-### `src/contexts/GameStateContext.tsx` (1463 linhas — `wc -l src/contexts/GameStateContext.tsx`, 10/09/2026, corrigido de "1464" por doc-verificador)
+### `src/contexts/GameStateContext.tsx` (1485 linhas — `wc -l src/contexts/GameStateContext.tsx`, 21/09/2026; 1463 em 10/09/2026)
 **Dono de:** o `GameState` inteiro (tipo + valor inicial + hidratação de save + persistência local e na nuvem). É o maior contexto do app e a única fonte do estado do jogo.
 **Exports:**
 - `migrateDecor(loaded)` — save antigo guardava UMA decoração (`equippedFurniture`, badge de canto); a migração devolve o mapa `equippedDecor` novo, colocando o item antigo no espaço (`slot`) que ele declara. Roda uma vez no load; checa a PRESENÇA de `equippedDecor` (não se está vazio) para não confundir "nunca migrou" com "desequipou tudo".
 - `Step`, `Activity`, `Task`, `CompletedTask`, `ActivityStats` — interfaces de dados do jogo. `Activity` é o contrato de CONSTÂNCIA (hábito); `Task` é o contrato de EXECUÇÃO (tarefa pontual) — campos novos de `Task` são todos opcionais com padrão seguro (save antigo lê `effort:1`, `status:'open'`, sem `daysStale`), para não assombrar em massa o backlog de quem só atualizou o app.
-- `GameState` — a interface do save inteiro (88 campos de topo — `sed -n '160,506p' src/contexts/GameStateContext.tsx | grep -cE '^  [A-Za-z_][A-Za-z0-9_]*\??:'`, 10/09/2026, corrigido de "110" por doc-verificador; ver `docs/manual/07-DADOS-E-SAVE.md` para a lista — se aquele doc ainda citar "110", a divergência é dele, não deste arquivo). `demoCharacterId` aceita 6 ids desde 15/09/2026 (`c11dc49d`; `'kaelen' | 'orrin' | 'thalindra' | 'igni' | 'nautilu' | 'astrase'`; eram só os 3 primeiros).
+- `GameState` — a interface do save inteiro (89 campos de topo — `sed -n '161,512p' src/contexts/GameStateContext.tsx | grep -cE '^  [A-Za-z_][A-Za-z0-9_]*\??:'`, 21/09/2026; eram 88 em 10/09/2026, corrigido de "110" por doc-verificador; ver `docs/manual/07-DADOS-E-SAVE.md` para a lista — se aquele doc ainda citar "110", a divergência é dele, não deste arquivo). `demoCharacterId` aceita 6 ids desde 15/09/2026 (`c11dc49d`; `'kaelen' | 'orrin' | 'thalindra' | 'igni' | 'nautilu' | 'astrase'`; eram só os 3 primeiros). Campo novo em `42b07bec` (decisão #30): **`conquistasHerdadas?: AchievementId[]`** — conquistas abertas por um gatilho que NÃO existe mais, gravadas UMA vez na migração do load; hoje só `'dias-completos-30'` (ex-`tasks-100`). É a única conquista persistida. `hydrateSave`: save que JÁ tem o campo mantém (filtrado contra `ACHIEVEMENT_IDS`, mesmo `[]`); save sem o campo ganha `['dias-completos-30']` se `gatilhoAntigoTasks100(loadedState)` (≥ 100 em `completedTasks + activityLog`), senão `[]` — só nessa hora, porque `activityLog`/`completedTasks` são podados e a leitura derivada fecharia. Régua: `GameStateContext.legacySave.test.tsx`.
 - `getMaxHPForStage(stage)` — `MAX_HP_BY_FORM[getStageLevel(stage)]`.
 - `CLOUD_SAVE_DEBOUNCE_MS = 3000` — debounce de CAUDA do cloud save; reinicia a cada mutação. Medido: colapsa ~23 mutações de uma sessão cheia em ~14 POSTs.
 - `CLOUD_SAVE_MAX_WAIT_MS = 15000` — teto absoluto de espera (R-4): sem ele, um fluxo sustentado de mutações a menos de 3s de distância nunca dispara o POST e o cloud save para em silêncio.

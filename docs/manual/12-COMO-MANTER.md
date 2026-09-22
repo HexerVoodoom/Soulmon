@@ -1,6 +1,6 @@
 # Como manter o manual
 
-> **Dono:** doc-bibliotecario · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: sincronização pós-merge `dc72579e..9875477b`, conferida em `5ac3d351`)
+> **Dono:** doc-bibliotecario · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §3 passo Medir, §7 (agentes/squads) e §9 donos conferidos contra `ls .claude/agents` (37) e `CONTRACT.md`; anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: sincronização pós-merge `dc72579e..9875477b`, conferida em `5ac3d351`)
 > **Verificação:** `npx vitest run src/docsManual.contract.test.ts src/docsSemMentira.contract.test.ts` (as duas travas descritas aqui) + `node scripts/docs-inventario.mjs` (a medição que alimenta o ciclo)
 > **Não cobre:** o CONTEÚDO de nenhum doc (cada um tem dono declarado no próprio cabeçalho) e as regras do jogo ([02-REGRAS-DE-NEGOCIO.md](02-REGRAS-DE-NEGOCIO.md)). Aqui só se responde "como se escreve, verifica e trava documentação neste repositório".
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -55,7 +55,7 @@ exige `Dono:` e `Verificação:`.
 
 | Passo | O que acontece | Quem |
 |---|---|---|
-| **Medir** | `node scripts/docs-inventario.mjs > <scratchpad>/inventario.md`. O inventário é a ÚNICA lista de módulos, exports, campos, chaves e rotas que os redatores recebem. **Ninguém lista de memória.** | `doc-cartografo` |
+| **Medir** | `node scripts/docs-inventario.mjs > <scratchpad>/inventario.md`. O inventário é a ÚNICA lista de módulos, exports, campos, chaves e rotas que os redatores recebem. **Ninguém lista de memória.** | o orquestrador da squad-docs, como PASSO do `METODO.md` (⚰️ `doc-cartografo`, agente, saiu em `42b07bec`, decisão #28 — a medição é um comando, não uma pessoa) |
 | **Redigir** | Cada redator escreve **um** doc, lendo o CÓDIGO (não o `CLAUDE.md`), com as âncoras da R2 e o cabeçalho da R6. | os `doc-redator-*` e `doc-historiador` |
 | **Verificar** | Adversarial, doc por doc, com a pergunta "o que aqui é falso?". Devolve `caminho — afirmação — evidência — veredito`. Corrige o trivial; devolve ao redator o que muda sentido. **É bloqueante.** | `doc-verificador` |
 | **Indexar** | [00-MAPA.md](00-MAPA.md) ganha o doc novo nos três índices (assunto, pergunta, arquivo); [11-GLOSSARIO.md](11-GLOSSARIO.md) ganha os termos novos. | `doc-bibliotecario` |
@@ -168,7 +168,7 @@ rascunho  →  verificado em dd/mm/aaaa por doc-verificador  →  desatualizado 
 | Um módulo, tela ou regra mudou e o doc dono precisa acompanhar | `/squad-docs atualizar <assunto ou caminho>` — despacha só o redator dono |
 | Suspeita de que a documentação apodreceu | `/squad-docs verificar [doc]` — devolve a lista `afirmação — evidência — veredito` |
 | Um doc nasceu à mão fora da squad e o guard ficou vermelho no item (a) | `/squad-docs indice` |
-| Nasceu um agente ou uma skill em `.claude/` (ex.: os 8 `arte-*` e `.claude/skills/squad-arte/SKILL.md`, 15/09/2026) | **O guard não vê `.claude/`** — o item (a) só varre `docs/`, então nada fica vermelho. O `doc-bibliotecario` acrescenta a linha em [00-MAPA.md](00-MAPA.md) §6.1 (contagem de `ls .claude/agents/*.md \| wc -l` com data) e, se a squad tem comando próprio, a situação que o aciona entra nesta tabela. |
+| Nasceu ou morreu um agente ou uma skill em `.claude/` (ex.: os 8 `arte-*` de 15/09/2026 — ⚰️ reduzidos a `arte-gerador` + `arte-conferente` + `arte-instalador` em `42b07bec` —, e o roster 64 → 37 do QA geral, decisão #28: `ls .claude/agents/*.md \| wc -l` → 37 em 21/09/2026, com dois novos — **`soulmon-operador`** (git × ar: worker de push, D1, secrets, `CACHE_VERSION`, incidentes) e **`soulmon-guarda-plataforma`** (paridade web/APK/overlay, EN, a11y; ledger `plataforma.md`); ⚰️ `/revisao-soulmon`, `prod-squad` do repo, 4 skills higgsfield) | **O guard não vê `.claude/`** — o item (a) só varre `docs/`, então nada fica vermelho. O `doc-bibliotecario` acrescenta a linha em [00-MAPA.md](00-MAPA.md) §6.1 (contagem de `ls .claude/agents/*.md \| wc -l` com data) e, se a squad tem comando próprio, a situação que o aciona entra nesta tabela. |
 | Vai escrever ou revisar TEXTO que o jogador lê (fala do pet, modal, push, guia, glossário), ou dar significado de universo a uma mecânica | **Não é da squad de docs.** `/squad-narrativa [lore <assunto> \| copy <superficie> \| criticar <arquivo\|texto> \| verificar]` (desde 21/09/2026: 3 agentes `soulmon-loremaster`/`soulmon-copy-redator`/`soulmon-narrative-critic`, régua `src/narrativa.contract.test.ts`). A bíblia é [`NARRATIVA-E-UNIVERSO.md`](../NARRATIVA-E-UNIVERSO.md), a copy é [`NARRATIVA-COPY.md`](../NARRATIVA-COPY.md); nenhuma das duas decide regra — o manual continua descrevendo o que o código faz, e a precedência é código > teste > `CLAUDE.md` > manual > bíblia. |
 | Nasceu ou morreu um ASSET, ou um mapa `src/utils/*Art.ts` ganhou/perdeu entrada | `/squad-arte inventario` re-varre; o manual só descreve o resultado ([04-IDENTIDADE-VISUAL.md](04-IDENTIDADE-VISUAL.md) §8 e a entrada do mapa em `06-REFERENCIA/utils.md`) — a fila e o inventário vivem em [`ASSETS-A-GERAR.md`](../ASSETS-A-GERAR.md) e [`INVENTARIO-ASSETS.md`](../INVENTARIO-ASSETS.md), fora do manual. |
 | Só quer saber o estado (dono, carimbo, data, guard) | `/squad-docs status` — não escreve nada |
@@ -210,6 +210,8 @@ glossário registra o símbolo real e marca a divergência; o `CLAUDE.md` fica c
 | [09-HISTORICO.md](09-HISTORICO.md) · [10-DISCUSSOES-E-DECISOES.md](10-DISCUSSOES-E-DECISOES.md) | `doc-historiador` |
 | a MEDIÇÃO (`scripts/docs-inventario.mjs`) | o orquestrador da squad-docs, passo Medir (⚰️ `doc-cartografo`, 21/09/2026) |
 | o carimbo `verificado` — **bloqueante** | `doc-verificador` |
+| o que está NO AR × o que está no git (deploy do worker, D1, secrets, `CACHE_VERSION`) — não é doc do manual, mas é quem o `08` cita como fonte da nota "produção é Worker" | `soulmon-operador` (desde `42b07bec`) |
+| paridade web/APK/overlay/EN/a11y — dono do ledger [`plataforma.md`](../plano-melhorias/ledger/plataforma.md); o manual só descreve | `soulmon-guarda-plataforma` (desde `42b07bec`) |
 | `src/docsManual.contract.test.ts` (o guard) | `doc-bibliotecario` |
 | a linha do manual no [`STATUS.md`](../STATUS.md) | quem conduz a rodada |
 

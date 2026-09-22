@@ -1,6 +1,6 @@
 # Identidade visual e sonora do Soulmon
 
-> **Dono:** doc-redator-identidade · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: delta `dc72579e..9875477b`, conferido em `5ac3d351`: rodada 2 da SQUAD-ARTE, SQUAD-SOM retomada, superfície de suporte do chat) · §9 verificado em 21/09/2026 por doc-verificador (delta `5ac3d351..8d318529`: S16, trilha em duas camadas, escolha do dono nos 3 eventos longos, chaves na `SettingsPage`)
+> **Dono:** doc-redator-identidade · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §9 linha da trilha (⚰️ `SettingsModal`) e §10.2 gate de WebView conferidos por grep; `.sm2-notice` do banner de termos não é classe nova (`grep -n "^.sm2-notice" src/index.css`); anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: delta `dc72579e..9875477b`, conferido em `5ac3d351`: rodada 2 da SQUAD-ARTE, SQUAD-SOM retomada, superfície de suporte do chat) · §9 verificado em 21/09/2026 por doc-verificador (delta `5ac3d351..8d318529`: S16, trilha em duas camadas, escolha do dono nos 3 eventos longos, chaves na `SettingsPage`)
 > **Verificação:** `npx vitest run src/styles/ src/index.css.contract.test.ts src/utils/sprites.dungeonRoster.test.ts src/utils/loudness.contract.test.ts src/utils/cortes.contract.test.ts src/utils/sonsAssets.contract.test.ts src/components/ui/Viewport.contract.test.tsx src/components/ui/foundation.render.test.tsx src/brand/brandFlame.parity.test.ts src/assets/assets.contract.test.ts` — os 11 arquivos de 09/09/2026 (216 testes, verde) mais os dois que nasceram com a marca vetorizada e a leva de arte de 15/09/2026, mais `sonsAssets.contract.test.ts` (21/09/2026, S16).
 > **Não cobre:** o fluxo entre telas e o que cada superfície mostra (doc `03-FLUXO-DE-TELAS.md`); as regras de jogo por trás dos números que a UI pinta (doc `02-REGRAS-DE-NEGOCIO.md`); a assinatura de cada componente (`06-REFERENCIA/components.md`); o pipeline de build/deploy dos assets (doc `08-INTEGRACOES-E-DEPLOY.md`). Este doc descreve o som — **não** decide nada sobre ele: quem decide é o `REGISTRO-DE-DECISOES.md` (§6.1, S1..S16 — não existe S14).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -1263,8 +1263,8 @@ ponta. Só as camadas que chegaram tocam, e o trim é o do NÚMERO que toca:
 a máquina E0–E6: o módulo não decide estado nenhum — liga, desliga, pausa.
 
 Ciclo: `ligarTrilha`/`desligarTrilha` (gesto — o switch "Trilha/Music" da
-`SettingsPage`, grupo "Som", desde `980bc84c`, e o mesmo par no `SettingsModal`, que
-segue sem gatilho vivo; persistem a chave própria `SOUND_TRACK_ENABLED`, separada do mudo),
+`SettingsPage`, grupo "Som", desde `980bc84c`; ⚰️ o mesmo par vivia no `SettingsModal`,
+sem gatilho vivo, apagado em `4a8b8049` (#37); persiste a chave própria `SOUND_TRACK_ENABLED`, separada do mudo),
 `pausarTrilha`/`retomarTrilha` (E0 — ganchos do `App.tsx` para dormir e para o mudo
 global), `aoGestoSonoro` (chamado pelo `play()` de `sounds.ts`: no PRIMEIRO gesto da
 sessão, se a preferência persistida estiver ligada, a trilha começa — o gesto é o
@@ -1495,6 +1495,14 @@ Três decisões medidas que sobreviveram à reescrita:
 - O selo `SOUL_LINK` **era um selo dentro de uma caixa com borda de cobre de
   2px** ⚰️. A caixa saiu: o que informa é a palavra, não a moldura — a mesma
   regra do dono que tirou a placa do ícone.
+- O gate de WebView antigo (o `<script>` inline que troca a tela branca pelo
+  aviso "Precisamos de uma atualização") testa, desde `42b07bec` (decisão #19),
+  **`CSS.supports('selector(&)')`** além de `oklch`/`color-mix`: o kit inteiro
+  depende de aninhamento CSS (`&:hover`, `&:focus-visible`, variantes), que só
+  existe a partir do Chromium 112 — um WebView 111 passava no teste antigo e
+  abria o app sem hover/foco. O hash do script mudou e a CSP em
+  `public/_headers` acompanhou (`src/security/csp.test.ts`). Fluxo em
+  [03 §2.1](03-FLUXO-DE-TELAS.md).
 
 O que morreu com o `<style>`: os `fill` do sprite antigo entravam por token
 (`#5df0e0` → `--sm2-primary-ink`) "sem tocar nos 109 `rect`" ⚰️ — a chama nova

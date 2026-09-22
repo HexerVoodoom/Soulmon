@@ -1,6 +1,6 @@
 # Regras de negócio — todas as regras do jogo, por sistema
 
-> **Dono:** doc-redator-regras · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: §59 D31–D33 reconferidas no delta `15164e4c..7e5d0ba9` — D32 ⚰️ fechada confere com o `CLAUDE.md` no disco (cinco arquivos, S1..S16) e com `ls public/sounds`; D31 segue ABERTA (o `CLAUDE.md` ainda diz `DÍVIDA`); verificação anterior: §58-A e §59 D32–D33, delta `5ac3d351..8d318529`, som/S16 + chaves na `SettingsPage`; verificação anterior do mesmo dia: só as seções do delta `dc72579e..9875477b` — §2, §3, §8, §10, §12, §45, §48, §59 D31; verificação anterior: 21/09/2026, seções do delta `2580b73a..dc72579e` — §22, §28, §41, §43, §46, §57-A, §57-B, §59 D28–D30; doc inteiro: 10/09/2026, em duas metades)
+> **Dono:** doc-redator-regras · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §46 cortesia, §56 aviso de termos, §57-A `dias-completos-30`/`conquistasHerdadas`, §58-A ⚰️ `SettingsModal` conferidos símbolo a símbolo; anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: §59 D31–D33 reconferidas no delta `15164e4c..7e5d0ba9` — D32 ⚰️ fechada confere com o `CLAUDE.md` no disco (cinco arquivos, S1..S16) e com `ls public/sounds`; D31 segue ABERTA (o `CLAUDE.md` ainda diz `DÍVIDA`); verificação anterior: §58-A e §59 D32–D33, delta `5ac3d351..8d318529`, som/S16 + chaves na `SettingsPage`; verificação anterior do mesmo dia: só as seções do delta `dc72579e..9875477b` — §2, §3, §8, §10, §12, §45, §48, §59 D31; verificação anterior: 21/09/2026, seções do delta `2580b73a..dc72579e` — §22, §28, §41, §43, §46, §57-A, §57-B, §59 D28–D30; doc inteiro: 10/09/2026, em duas metades)
 > **Verificação:** `npx vitest run src/utils src/types src/hooks` — cada sistema abaixo declara a sua régua própria na linha **Régua**. Números medidos trazem o comando na própria linha.
 > **Não cobre:** o porquê estratégico e as linhas vermelhas (→ [`01-VISAO.md`](01-VISAO.md)), telas e navegação (→ `03-FLUXO-DE-TELAS.md`), função por função (→ `06-REFERENCIA/`), formato do save (→ `07-DADOS-E-SAVE.md`), infraestrutura de push, deploy e API (→ `08-INTEGRACOES-E-DEPLOY.md`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -3444,6 +3444,17 @@ Constantes, todas em `src/utils/currencies.ts` salvo indicação:
 | `AD_DAILY_CAP` (`functions/api/_entitlements.js`) | 3 | anúncios por dia, contados **no servidor** |
 | `ADS_ENABLED` (`src/utils/monetization.ts`) | `false` | o caminho do anúncio está DESLIGADO no cliente |
 
+**Tier pago sem compra existe, e chama-se cortesia** (desde `42b07bec`, decisão
+#12 do QA geral): `POST /api/entitlements?action=grant` (chave de admin
+`ENTITLEMENTS_ADMIN_KEY`; sem ela a rota não existe) concede `accountTier:'paid'`
+com `provider:'courtesy'`, **zero Créditos** (cortesia abre o portão do Oráculo,
+não paga a conta de IA), idempotente por conta e sob teto global
+(`COURTESY_MAX_ACCOUNTS`, padrão 25, contador que só sobe). Existe porque, até a
+Play existir, nenhum humano tem como comprar o tier — e os 10 primeiros
+testadores só veriam o demo. O `GET` devolve `provider` para que a leitura de
+vínculo saiba quem pagou e quem ganhou. Detalhe em
+[`06-REFERENCIA/api-workers.md`](06-REFERENCIA/api-workers.md) › `_entitlements.js`.
+
 **Não existe Bits → Créditos.** A ausência é a regra, e há teste que varre os
 exports do módulo procurando qualquer coisa com nome `BITS_TO_CREDIT` /
 `bitsToCredit`. Créditos são a única moeda que libera gerar o pet próprio; um
@@ -4300,7 +4311,17 @@ já tinha sido republicada em 08/09 — duas semanas de provas apontando para um
 texto que não era o publicado (achado do QA geral de 21/09/2026). Régua:
 `src/utils/consent.versoes.contract.test.ts` lê o "Última atualização"/"Last
 updated" de `public/termos.html` e `public/privacidade.html` e reprova se
-divergirem da constante.
+divergirem da constante. **Quando as versões sobem** (desde `42b07bec`, decisão
+#24): quem já consentiu a uma versão ANTERIOR vê um **banner informativo** na
+fila de avisos da Home (`TermsUpdateBanner`, último da fila — [03 §3.2](03-FLUXO-DE-TELAS.md)),
+nunca um modal, **nunca re-aceite obrigatório** — barrar quem já joga por um
+texto que mudou seria tirar o jogo de alguém por um problema nosso. A regra é a
+função pura `precisaAvisarTermos` (`src/utils/termsNotice.ts`): save sem
+registro de consentimento não vê banner (o onboarding é o lugar do primeiro
+aceite); versão ilegível (`'desconhecida'`) conta como anterior; "Ok" grava
+`marcaAvisoTermos(termsVersion, privacyVersion)` em
+`STORAGE_KEYS.TERMS_NOTICE_SEEN` (aparelho, não save — aviso lido, não
+consentimento). Régua: `src/utils/termsNotice.test.ts` (5 casos).
 
 ### O cooperativo
 
@@ -4465,12 +4486,16 @@ original mandava isto para a aba Missões da loja, que não existe mais.
 ## 57-A. 🏆 Conquistas (emblemas de arte)
 
 **Em uma frase.** Nove emblemas que se abrem lendo contadores que já existem no
-save — nada é gravado, nada se compra, nada fecha depois de aberto.
+save — nada é gravado (única exceção: `conquistasHerdadas`, a herança da
+`tasks-100` ⚰️, gravada UMA vez no load), nada se compra, nada fecha depois de
+aberto, e **nenhuma conta tarefas** (decisão #30, 21/09/2026).
 
 **A regra.** Dono: `src/utils/achievements.ts` → `ACHIEVEMENT_IDS`,
 `ACHIEVEMENT_LABELS` (PT/EN), `unlockedAchievements(save)` — função PURA que
 devolve os ids abertos na ordem canônica. Todas **derivadas na leitura**
-(footgun 9: duas fontes para o mesmo fato), e cada uma lê um contador que
+(footgun 9: duas fontes para o mesmo fato) — salvo `dias-completos-30`, que
+também lê `conquistasHerdadas` (o campo que `hydrateSave` grava uma vez para
+quem já tinha a `tasks-100` aberta) —, e cada uma lê um contador que
 **nunca decresce**, então uma conquista lida como aberta não fecha:
 
 | Id | Abre quando | O contador que lê |
@@ -4708,7 +4733,8 @@ a ligar.
   se `ligadaNestaSessao`), ao dormir (`handleSleep` em `App.tsx` chama
   `pausarTrilha`; acordar chama `retomarTrilha`) e no mudo global
   (`handleToggleSound` em `App.tsx`, único desde `980bc84c`, passado como
-  `onToggleSound` à `SettingsPage` e ao `SettingsModal` — mesmos dois símbolos).
+  `onToggleSound` à `SettingsPage`; ⚰️ o `SettingsModal`, que também o recebia, foi
+  apagado em `4a8b8049`, #37).
 - **Loop e camadas**: as duas camadas partem no mesmo `t0` e fecham em
   `loopEnd = duracaoS` (12 compassos a 100 BPM — o arquivo carrega 1 s de cauda
   além disso); o ganho da soma vem de `TRIM_TRILHA_POR_CAMADAS_DB[n]` em
@@ -4766,10 +4792,10 @@ um estado só). Não muda a categoria de um som pelo nível do arquivo (R-CAT).
 e switch **"Trilha" / "Music"** (`ligarTrilha`/`desligarTrilha`, estado local
 por `trilhaPreferida()`), com hint que troca conforme `soundMuted` ("Duas
 camadas calmas, em loop…"). O grupo só monta se `onToggleSound` chegar
-(`App.tsx` passa `handleToggleSound`). O mesmo par existe no `SettingsModal`
-("Ajustes rápidos"), que **segue sem gatilho vivo** (`setSettingsOpen(true)`
-só em `handleOpenAISettings`, cuja prop morre no `ChatBox` —
-[`03` §4.23a/§4.23b](03-FLUXO-DE-TELAS.md)) e é candidato a remoção. ⚰️ Entre
+(`App.tsx` passa `handleToggleSound`). ⚰️ O mesmo par existia no `SettingsModal`
+("Ajustes rápidos"), que nunca teve gatilho vivo e foi **apagado em `4a8b8049`**
+(decisão #37 — [`03` §4.23a/§4.23b](03-FLUXO-DE-TELAS.md)); a `SettingsPage` é o
+único caminho. ⚰️ Entre
 `ee79fd44` e `980bc84c` (mesmo dia) não existia caminho vivo para o jogador
 ligar a trilha nem o mudo global — achado do doc-mantenedor, fechado em
 `980bc84c` (régua `settingsSom.render.test.tsx`); ver D33.

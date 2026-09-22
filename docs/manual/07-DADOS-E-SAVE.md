@@ -1,6 +1,6 @@
 # Dados e save
 
-> **Dono:** doc-redator-arquitetura · **Data:** 20/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (sincronizado com `2580b73a..dc72579e` em 20/09/2026 por doc-redator-arquitetura)
+> **Dono:** doc-redator-arquitetura · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §2.1 `conquistasHerdadas` e §4.1 `TERMS_NOTICE_SEEN` conferidos símbolo a símbolo; anterior: sincronizado com `2580b73a..dc72579e` em 20/09/2026 por doc-redator-arquitetura)
 > **Verificação:** `npx vitest run src/contexts src/utils/careCaps.test.ts src/utils/playerDay.contract.test.ts functions/api/save.test.js functions/api/saveId.parity.test.js desktop/renderer/src/cloudSync.test.ts` — em especial `GameStateContext.hydrate.fuzz.test.tsx` (todo campo não-opcional tem linha em `hydrateSave`), `GameStateContext.saveContent.test.tsx`, `GameStateContext.hostile.test.tsx`, `migrateDecor.test.ts` e `functions/api/_kv.fiacao.test.js`.
 > **Não cobre:** o que cada regra FAZ com esses campos (→ `02-REGRAS-DE-NEGOCIO.md`), as rotas e credenciais (→ [08-INTEGRACOES-E-DEPLOY.md](08-INTEGRACOES-E-DEPLOY.md)), a arquitetura e as quatro superfícies (→ [05-ARQUITETURA.md](05-ARQUITETURA.md)), função por função (→ `06-REFERENCIA/`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -30,7 +30,7 @@ GET /api/save?id=<saveId>  →  kv(env).getWithMetadata(<saveId>)
 ## 2. O `GameState`, campo a campo
 
 **Fonte:** `interface GameState` em `src/contexts/GameStateContext.tsx`.
-**Contagem:** **88 campos de topo** em 09/09/2026 (extraídos do corpo da
+**Contagem:** **89 campos de topo** em 21/09/2026 (`sed -n '161,512p' src/contexts/GameStateContext.tsx | grep -cE '^  [A-Za-z_][A-Za-z0-9_]*\??:'` → 89; eram 88 em 09/09/2026 — entrou `conquistasHerdadas` em `42b07bec`; extraídos do corpo da
 interface, ignorando comentários e campos aninhados). O inventário
 (`node scripts/docs-inventario.mjs`) diz **110** porque conta também as
 sub-chaves de `soulmonMeta` e de `lastDayReport`, que aqui aparecem dentro da
@@ -54,7 +54,8 @@ diz "—", o campo é opcional e o padrão É a ausência.
 | `maxHealthPoints` | `number` | Teto de HP da forma atual. | `src/types/progression.ts` (`MAX_HP_BY_FORM`) | **recalculado** de `evolutionStage` a cada load, nunca lido do save | sim |
 | `energyPoints` | `number` | Barras de energia; enche só comendo, zera na virada. | `src/utils/careRules.ts` | `0` | sim |
 | `perfectDays` | `number` | Dias completos acumulados desde a última evolução. Só cresce. | `src/utils/dailyReset.ts` | `0` | sim |
-| `totalPerfectDays?` | `number` | Contador LIFETIME de dias completos (insumo de missão). | `src/utils/missions.ts` | `0` | sim |
+| `totalPerfectDays?` | `number` | Contador LIFETIME de dias completos (insumo de missão e, desde `42b07bec`, da conquista `dias-completos-30` — `DIAS_COMPLETOS_PARA_CONQUISTA = 30`). | `src/utils/missions.ts`, `src/utils/achievements.ts` | `0` | sim |
+| `conquistasHerdadas?` | `AchievementId[]` | Conquistas abertas por gatilho que NÃO existe mais, gravadas UMA vez no load (decisão #30, 21/09/2026). Hoje só `'dias-completos-30'` (ex-`tasks-100`). A única conquista persistida — todas as outras são derivadas. | `src/utils/achievements.ts` (leitura), `hydrateSave` (escrita) | save com o campo mantém (filtrado por `ACHIEVEMENT_IDS`); sem o campo: `['dias-completos-30']` se `gatilhoAntigoTasks100` (≥ 100 em `completedTasks + activityLog`), senão `[]` | sim |
 | `lastDayWasPerfect` | `boolean` | O dia anterior fechou completo. | `src/utils/dailyReset.ts` | `false` | sim |
 | `totalXP` | `number` | XP do Vínculo. O NÍVEL nunca é salvo — é `bondLevelFor(totalXP)`. | `src/utils/bond.ts` | `0` | sim |
 | `virusPoints` · `dataPoints` · `vaccinePoints` | `number` | Os três atributos, que escolhem o galho. | `src/types/attributes.ts` | `0` cada | sim |

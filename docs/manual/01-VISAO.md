@@ -1,6 +1,6 @@
 # Visão — o que o Soulmon é, para quem, e o que ele nunca pode virar
 
-> **Dono:** doc-redator-regras · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `15164e4c..7e5d0ba9`: §7 "A bíblia narrativa obedece às 21" e §10 conferidos contra `REGISTRO-DE-DECISOES.md` §14.1–§14.4, `NARRATIVA-PROPOSTAS.md` e `src/narrativa.contract.test.ts` — P1/P2/P5/P8/P9/P10 fechadas, `EXCECOES`, faixas de `welcomeBack`, trava de crise; verificação anterior: último item do adendo da §10, delta `5ac3d351..8d318529`, som/S16 + chaves na `SettingsPage`; o resto: sincronizado com `9875477b`, delta `dc72579e..9875477b`: decisões do dono no `REGISTRO-DE-DECISOES.md` §14, copy da bíblia em tela, trava de crise no chat — só nas §7 e §10; verificação anterior do delta `2580b73a..dc72579e`: 21/09/2026)
+> **Dono:** doc-redator-regras · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §3 tabela do público (18+ é ICP, primeiro usuário), §7 linha 16 e §10 adendo (Camada 3 congelada, cobrança web depois) conferidos contra `REGISTRO-DE-DECISOES.md` e `PERGUNTAS-DO-DONO.md`; anterior: delta `15164e4c..7e5d0ba9`: §7 "A bíblia narrativa obedece às 21" e §10 conferidos contra `REGISTRO-DE-DECISOES.md` §14.1–§14.4, `NARRATIVA-PROPOSTAS.md` e `src/narrativa.contract.test.ts` — P1/P2/P5/P8/P9/P10 fechadas, `EXCECOES`, faixas de `welcomeBack`, trava de crise; verificação anterior: último item do adendo da §10, delta `5ac3d351..8d318529`, som/S16 + chaves na `SettingsPage`; o resto: sincronizado com `9875477b`, delta `dc72579e..9875477b`: decisões do dono no `REGISTRO-DE-DECISOES.md` §14, copy da bíblia em tela, trava de crise no chat — só nas §7 e §10; verificação anterior do delta `2580b73a..dc72579e`: 21/09/2026)
 > **Verificação:** `npx vitest run src/utils/currencies.test.ts src/utils/monetization.fronteira.test.ts src/utils/restWindow.test.ts src/utils/passives.test.ts src/utils/bond.test.ts src/utils/habitRhythm.test.ts src/hooks/useDailyReset.test.ts src/plugins/widgetSemCobranca.contract.test.ts` — são os testes que travam, em código, as linhas vermelhas citadas aqui. Toda contagem deste doc traz, na própria linha, o comando que a mediu em 09/09/2026.
 > **Não cobre:** as regras de jogo em si (→ `02-REGRAS-DE-NEGOCIO.md`), telas e navegação (→ `03-FLUXO-DE-TELAS.md`), identidade visual (→ `04-IDENTIDADE-VISUAL.md`), arquitetura, deploy e integrações (→ `05-ARQUITETURA.md`, `08-INTEGRACOES-E-DEPLOY.md`), o histórico das decisões (→ `09-HISTORICO.md`, `10-DISCUSSOES-E-DECISOES.md`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -116,6 +116,8 @@ O que está decidido sobre público, e onde:
 | **Nicho estimado** de ~300 mil pessoas no Brasil | idem, seção "Modelo — decisão revista" |
 | **Os quatro públicos que o desenho protege** (e como cada regra os protege) | [`REGISTRO-DE-DECISOES.md`](../REGISTRO-DE-DECISOES.md) §4.3 |
 | A pessoa em crise, doente ou deprimida é o público que a tese anti-punição existe para não expulsar | [`PLANO-EVOLUCAO.md`](../PLANO-EVOLUCAO.md), tabela da falha |
+| **18+ é o ICP, não só defesa legal** (21/09/2026, decisão #15): a persona adolescente ("adolescente com TDAH que some e volta", nº 1 do check-up de ago/2026) **sai dos check-ups**; o muro `MIN_AGE_YEARS = 18` (`src/utils/consent.ts`) e o público que "cresceu com Digimon/Tamagotchi" (25–40 em 2026) apontam para a mesma pessoa. Gatilho de revisão: o 1º dado real de idade | [`REGISTRO-DE-DECISOES.md`](../REGISTRO-DE-DECISOES.md), linha "18+ é o ICP" (QA GERAL #15) |
+| **O primeiro usuário real = 10 conhecidos, no PWA, por 14 dias** (21/09/2026, decisão #11) — sem Play, sem domínio; o tier pago chega a eles por cortesia (#12, [`02` §46](02-REGRAS-DE-NEGOCIO.md#moedas)) e o funil é lido por `scripts/metrics-report.mjs` (#18) | [`PERGUNTAS-DO-DONO.md`](../PERGUNTAS-DO-DONO.md), "Respostas QA GERAL" #11/#12/#18 |
 
 **North star** (`PLANO-PRODUTO.md`, Parte 2, decidido em 26/08/2026): *peso de
 esforço real concluído por usuário ativo por semana*. Com as duas definições que
@@ -237,7 +239,7 @@ lista curta também está em [`docs/PLANO-MELHORIAS.md`](../PLANO-MELHORIAS.md)
 | 13 | **Nunca vender proteção contra punição.** Foi o veto E2/C-S3; consequência aplicada no código: `HEART_COST_CREDITS` foi apagado e o 💗 saiu da loja de Bits (ambos em 06/09/2026) |
 | 14 | **Nunca percentual cru de constância na UI** |
 | 15 | **Nunca "última chance" / FOMO que tira** |
-| 16 | **Nunca recompensa por CONTAGEM de tarefas** (o pool de `weeklyMissions.ts` obedece, e há teste varrendo o vocabulário) |
+| 16 | **Nunca recompensa por CONTAGEM de tarefas** (o pool de `weeklyMissions.ts` obedece, e há teste varrendo o vocabulário). Desde 21/09/2026 vale também para o **cosmético**: ⚰️ a conquista `tasks-100` virou `dias-completos-30` (decisão #30, `vetos.md`; [`02` §57-A](02-REGRAS-DE-NEGOCIO.md)) |
 | 17 | **Nunca um nono perdão** sem responder à decisão D4 |
 | 18 | **Nunca texto do usuário em IA ou telemetria** sem decisão explícita do dono |
 | 19 | **Nunca mecânica cuja resposta seja "querer a notificação"** e não "querer fazer a tarefa" |
@@ -475,6 +477,22 @@ O que está aberto e **depende do dono** está na seção 3 de
   crise do chat ganhou caminho curado (§14.2 — ver §7 acima) e o reencontro
   continua por FAIXAS de ausência (§14.3, WP2.7 mantido). O que segue **aberto e
   não depende do dono**: o caminho determinístico de crise no servidor.
+- **QA geral de 21/09/2026 — as 29 respostas (#11–#39) executadas em
+  `42b07bec` + `4a8b8049`** (blocos datados do [`STATUS.md`](../STATUS.md)). As
+  que mudam a VISÃO: **Camada 3 congelada** (#13 — Steam, coop, som novo, arte
+  extra, narrativa param até **10 usuários × 14 dias de dado**; o núcleo
+  tarefas→cuidado→evolução é o que se mede primeiro), **18+ é ICP** (#15, §3),
+  **cobrança na web (Pix/cartão) só DEPOIS do 1º usuário real** e antes de
+  qualquer marketing (#17 — hoje receita possível = 0 em todas as superfícies;
+  a frase do `PLANO-PRODUTO` Parte 3 é meta de margem, não estado), **Play
+  preparada pela squad, executada pelo dono** (#16 — `PLAY-FICHA.md`,
+  `PLAY-LANCAMENTO.md`, APK `versionCode` 15) e o roster **64 → 37 agentes**
+  (#28). Registro canônico com a alternativa que perdeu:
+  [`REGISTRO-DE-DECISOES.md`](../REGISTRO-DE-DECISOES.md) (linhas datadas de
+  21/09/2026 "QA GERAL #13/#15/#17"). O que segue **do dono**: as três chaves
+  no painel do Worker (`ENTITLEMENTS_ADMIN_KEY`, `COURTESY_MAX_ACCOUNTS`,
+  `METRICS_ADMIN_KEY`), 1 h com profissional na trava de crise (#20) e o
+  console da Play.
 - **Som: o dono escolheu o GERADO nos três eventos longos (21/09/2026, S16 +
   nota do fim do dia no §6.1 do registro).** Primeiro disse "Coloca o A"
   (aplicado literal em `c703c8bc`); perguntado, corrigiu — *"quero o gerado nos
