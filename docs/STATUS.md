@@ -7,6 +7,41 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 22/09/2026 — BALANCEAMENTO 1/4: a escola voltou a seguir a pessoa
+>
+> Primeira frente do balanceamento pré-Renascimento. **Defeito, não calibração.**
+>
+> **Medido antes** (400 perfis pelo pipeline real — efemérides + numerologia + as 6
+> respostas do ritual): `combate_fisico` dominava **100%** das fichas, e a fidelidade
+> papel→escola era **0,0%** para `alcance`, `magico` e `suporte`. Um perfil de suporte
+> recebia escola de lutador. A fidelidade global aparente (42,8%) só existia porque
+> `fisico` e `tanque` calham de apontar para a escola que vencia de qualquer jeito.
+>
+> **Causa, estrutural:** `ROLE_TO_ESCOLA` manda `fisico` E `tanque` para `combate_fisico`
+> (~40 de peso somado), enquanto a fatia de `suporte` racha entre `benca` e `maldicao`
+> (~8 cada). Com os eixos normalizados em 100 e achatados (~20 por papel), nenhuma
+> variação individual reverte isso — a escola não era desequilibrada, era **constante**.
+>
+> **Conserto:** `DOMINANT_SCHOOL_LEAD` (1,15) em `buildSheet.ts` — piso que garante que a
+> escola do papel dominante lidere a segunda colocada. **Medido depois: fidelidade 100%
+> nos cinco papéis**, e `suporte` racha `benca` 75% / `maldicao` 25% pelo alinhamento
+> (as duas alcançáveis — `maldicao` já foi a escola que "nunca recebia um ponto").
+>
+> ⚠️ **A régua tem duas metades e confundi-las desfaz o desenho** (decisão do dono):
+> a PROPORÇÃO POPULACIONAL pode e deve ser desigual — o gênero trabalha com ~3 dps :
+> 1 tanque : 1 suporte, e os papéis já saem assim (medido: 58,5% / 24,8% / 16,8%). Mais
+> fichas de combate que de cura é o resultado CERTO. O que não pode é a escola discordar
+> da pessoa. `ficha/escolaFidelidade.test.ts` afirma as duas metades, e o teste da
+> proporção afirma a FORMA (dps > tanque, dps > suporte, nenhum papel a zero), nunca
+> uniformidade.
+>
+> **Ainda em aberto, medido e não consertado** (frentes 2 a 4): bestiário — `besta` 33,8%
+> e **26,3% das criaturas saem sem família**; pares de elemento — só **24 de 136** já
+> apareceram, `aurora` em 27,3%; elemento do class-system — só **6 de 17** já dominaram;
+> `sombra` a 1,3% entre os 8 do jogo e `akasha` a 5,3% entre os 9 reinos. ⚠️ A
+> documentação afirma cobertura 17/17 — o que foi medido lá é *alcançabilidade* com pisos
+> de 0,1%, não OCORRÊNCIA. São coisas diferentes, e é a segunda que o jogador sente.
+
 > ## 22/09/2026 — sincronização do manual pós-merge `89554b5d` (alocação de elemento parqueada)
 >
 > Delta `fadb1167..89554b5d`, 10 commits. **5 docs recarimbados**, quatro redatores em

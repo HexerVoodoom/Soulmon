@@ -141,6 +141,18 @@ function applyElementBias(shares: Record<ElementoBaseId, number>, elementoId: st
   }
 }
 
+/**
+ * Margem com que a escola do papel DOMINANTE lidera a segunda colocada.
+ *
+ * 1,15 e não mais: é o bastante para a liderança ser inequívoca depois do
+ * arredondamento do `apportion`, e pouco o bastante para as outras escolas
+ * continuarem visíveis na ficha — a segunda escola é textura da pessoa, não
+ * ruído a ser apagado. Um valor alto transformaria toda ficha numa
+ * monocultura da escola do papel, que é o defeito oposto ao que este piso
+ * conserta.
+ */
+const DOMINANT_SCHOOL_LEAD = 1.15;
+
 const ROLE_TO_ESCOLA: Record<RoleId, EscolaId> = {
   fisico: 'combate_fisico',
   tanque: 'combate_fisico',
@@ -348,6 +360,35 @@ export function buildFicha(
     }
     const escola = ROLE_TO_ESCOLA[role];
     if (escola !== 'evocacao') roleEscolaShares[escola as keyof typeof roleEscolaShares] += share;
+  }
+  // A ESCOLA TEM DE SEGUIR O PAPEL DOMINANTE — piso de liderança.
+  //
+  // Sem isto a soma acima decide sozinha, e ela é estruturalmente viciada:
+  // `fisico` e `tanque` apontam os DOIS para `combate_fisico`, enquanto a
+  // fatia de `suporte` é rachada entre `benca` e `maldicao`. Como os eixos
+  // somam 100 e são achatados (~20 por papel), combate físico recebe ~40 e
+  // as escolas de suporte ~8 cada: combate físico vence SEMPRE, qualquer que
+  // seja a pessoa.
+  //
+  // Medido em 22/09/2026, 400 perfis pelo pipeline real, ANTES deste piso:
+  // `combate_fisico` dominava 100% das fichas, e a fidelidade papel→escola
+  // era 0,0% para `alcance`, `magico` e `suporte` — um perfil de suporte
+  // recebia escola de lutador. Global: 42,8%, e só porque `fisico`/`tanque`
+  // calham de apontar para a escola que vencia de qualquer jeito.
+  //
+  // O piso não achata a população: quem decide a frequência das escolas
+  // continua sendo a distribuição de PAPÉIS, que já sai na proporção clássica
+  // de ~3 dps : 1 tanque : 1 suporte (medida: 58,5% / 24,8% / 16,8%). Mais
+  // gente de combate é esperado e correto; o que não pode é a escola
+  // discordar da pessoa.
+  const escolaDoDominante: keyof typeof roleEscolaShares = oracle.dominantRole === 'suporte'
+    ? (bencaFraction >= maldicaoFraction ? 'benca' : 'maldicao')
+    : ROLE_TO_ESCOLA[oracle.dominantRole] as keyof typeof roleEscolaShares;
+  const maiorRival = Math.max(
+    ...DISTRIBUTED_ESCOLAS.filter(e => e !== escolaDoDominante).map(e => roleEscolaShares[e]),
+  );
+  if (roleEscolaShares[escolaDoDominante] <= maiorRival * DOMINANT_SCHOOL_LEAD) {
+    roleEscolaShares[escolaDoDominante] = maiorRival * DOMINANT_SCHOOL_LEAD;
   }
   const distributedEscolas = apportion(roleEscolaShares, [...DISTRIBUTED_ESCOLAS], budget.escolasDistribuidas);
   const escolas: Partial<Record<EscolaId, number>> = { evocacao: budget.evocacaoFixo };
