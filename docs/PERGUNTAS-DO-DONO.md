@@ -223,3 +223,18 @@ npx wrangler secret put COURTESY_MAX_ACCOUNTS                     # 10
 ```
 
 Fila vazia até a próxima rodada.
+
+## Respostas ALOCAÇÃO DE ELEMENTO (22/09/2026, modal)
+
+As sete (#72–#78) da spec `docs/plano-melhorias/G-alocacao-elemento.md`.
+Divergência da recomendada em **negrito**.
+
+| # | Resposta |
+|---|---|
+| 72 | `ALLOC_FRACTION` = **0,25** — o jogador redistribui 1/4 do `ELEMENT_ORCAMENTO_BY_STAGE`, o oráculo segue dono de 3/4 (no ultra, 187 pontos = os dois componentes de um par) |
+| 73 | Se a simulação adversarial de arena reprovar, **a alocação perde efeito de combate**: `getArenaAttributes` passa a ler a distribuição automática. Nunca afrouxar a janela 40–80% |
+| 74 | Sem v1 da forma, a referência cai para o **ancestral da mesma linha** (rookie no limite). Galho irmão **nunca** |
+| 75 | **A referência é CONDIÇÃO** (diverge da recomendada, que era best-effort): com referência a enviar, a geração espera o provedor que aceita imagem em vez de cair para o Gemini. Responde 202/reserva; o Invariante nº 1 cede aqui e só aqui — ver §9.4 |
+| 76 | **Só o aviso na Home**, nenhum push. WP4.30b cortado |
+| 77 | **Construir agora**, validando com os portões locais; os PRs esperam o runner para mergear (o GitHub Actions segue parado, #48) |
+| 78 | O elemento alocado **troca a arte do golpe**, sem tocar em dano — usa as 1.078 peças de `fx-ataque/` que a D9 mantém sem uso. Escopo: só o pet renascido (WP4.33) |

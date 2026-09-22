@@ -520,25 +520,45 @@ quase sempre resolve.
 (b) forma sem v1 ⇒ ancestral existente; (c) galho irmão **nunca** é escolhido;
 (d) acervo vazio ⇒ `[]` e a geração segue sem referência.
 
-### 9.4 Fallback de provedor: a semelhança é BEST-EFFORT, e fica visível
+### 9.4 Fallback de provedor: a referência é CONDIÇÃO (decisão do dono #75)
 
 `generateWithProviders` tenta Higgsfield (aceita imagem) e cai para Gemini
 (**texto puro** — `generateGemini(env, prompt)` ignora a referência).
 
-**Decisão da spec: aceitar, e tornar visível.** Fazer da referência uma
-*condição* faria a geração **esperar** sempre que o Higgsfield estivesse fora —
-e uma forma sem sprite no dia da evolução é pior, pelo Invariante nº 1, do que
-uma forma com parecença menor. O que muda:
+**Decisão do dono, 22/09/2026 (#75): a referência é condição, não preferência.**
+Quando o lote é do renascido E existe uma referência a enviar, a geração **não
+cai para o Gemini** — ela espera o provedor que aceita imagem.
 
-- `SpriteEntry` ganha `referenced?: boolean`, escrito a partir do que o servidor
-  já devolve (`provider`) + se o array foi enviado. Hidratação: booleano ou
-  `undefined`.
-- **O jogador vê**: no cartão da forma, uma linha discreta —
-  PT "ecoa a forma anterior" / EN "echoes its former shape" quando
-  `referenced === true`; **nada** quando `false` (ausência não é erro, e não se
-  anuncia falha que o jogador não pode consertar). A saída dele é o botão manual
-  que já existe (`SPRITE_MANUAL_RETRY_CAP` 3, cooldown 60 s), que pode pegar o
-  Higgsfield de volta. **Sem toast de erro, sem contagem regressiva.**
+Esta spec recomendava o contrário (best-effort), pelo Invariante nº 1: uma forma
+sem sprite no dia da evolução seria pior que uma forma com parecença menor. O
+dono decidiu ao contrário, e a razão é de produto: a continuidade visual entre
+as duas vidas É a recompensa do Renascimento — uma v2 que não lembra a v1 não
+entrega o que a cerimônia prometeu. Fica registrado que o Invariante nº 1 cede
+aqui, **e só aqui**: no lote do renascido com referência disponível.
+
+O que muda:
+
+- **`referenceRequired`** entra no corpo do pedido quando há referência. O
+  servidor, ao recebê-lo, não chama `generateGemini`: devolve o **202 que já
+  existe** (`{ pending: true, retryAfter }`), que o cliente já sabe tratar como
+  "fica na reserva, card `GERANDO`, repergunta". **Não é caminho de erro novo** —
+  é o caminho de espera que o contrato da rota já tem.
+- **O jogador nunca fica sem nada na tela**: a forma mostra a **arte de reserva**
+  enquanto espera, exatamente como já faz hoje entre a evolução e a chegada do
+  sprite. O que a condição muda é o que ele recebe no fim, não se vê algo agora.
+- `SpriteEntry` ganha `referenced?: boolean` (booleano ou `undefined` na
+  hidratação). Com a condição valendo, ele é `true` sempre que há referência —
+  então a linha discreta do cartão (PT "ecoa a forma anterior" / EN "echoes its
+  former shape") passa a ser a regra, não a exceção.
+- **Sem toast de erro e sem contagem regressiva.** A espera é silenciosa, e o
+  botão manual que já existe (`SPRITE_MANUAL_RETRY_CAP` 3, cooldown 60 s)
+  continua sendo a saída.
+
+⚠️ **O risco que a decisão aceita, escrito para quem vier depois**: se o
+Higgsfield ficar fora por muito tempo, a segunda vida fica em arte de reserva
+indefinidamente. Não há prazo e não há degradação automática para o Gemini — foi
+isso que se decidiu. Se um dia isso doer, a alavanca é um teto de espera
+**declarado ao jogador**, nunca uma queda silenciosa para texto puro.
 
 ---
 
@@ -679,7 +699,8 @@ Cada pacote é mergeável sozinho, e nenhum é visível ao jogador antes do WP4.
 | **WP4.28** | `soulmonStages` tardio: `rebirthCreature` (com salt), escrita por estágio, consumidores tolerando array curto | `soulmonStagesParcial` verde + screenshot Playwright da página de Evolução com árvore de 2 entradas |
 | **WP4.29** | Incubação **sem prazo**: `incubationFor`, estado no save, idempotência, limpeza na degeneração; `locked` escrito só no `handleEvolve` | `spriteTrigger` + `spriteTrigger.semPrazo` + `evolucaoManual` verdes |
 | **WP4.30** | Incubação visível: aviso **descritivo** na fila da Home, posição declarada, PT/EN | `filaDeAvisos` + `narrativa.contract` verdes + screenshot do aviso |
-| **WP4.30b** | *(opcional, mergeável separado)* convite único de incubação por push, sob as quatro travas de R-D | teste da copy em `_pushCopy.js` sem hora/"faltam N"/contagem + teste da cessão à janela de descanso |
+| ~~WP4.30b~~ | ⚰️ **CORTADO pela decisão #76 do dono (22/09/2026)**: não existe push de incubação, nem o convite neutro. Só o aviso na Home. Não reabrir como novidade — a alternativa perdeu com a medição na mão. | — |
+| **WP4.33** | **Decisão #78**: o elemento alocado troca a ARTE do golpe, sem tocar em um ponto de dano. Usa `attackFxArt.ts` e as 1.078 peças de `fx-ataque/` (154 elementos × 6 estados), das quais só `aura` é chamada hoje pela D9. Escopo: **só o pet renascido** — a D9 continua valendo para todo o resto | `attackFxArt` verde + teste novo provando que trocar o elemento alocado muda a peça e **não** muda `getArenaPlayerStats` nem `playerHitDamage` |
 | **WP4.31** | Tela de alocação: barras por base, prévia da cascata com o "faltam N", `hideMetrics` qualitativo, textos de ensino em rookie/champion, marcador na página de Evolução | `AlocacaoPage.render` + `alocacaoForaDoPvP` + `narrativa.contract` verdes + screenshot Playwright nos dois modos de `hideMetrics` |
 | **WP4.32** | **R-H**: lápide no `rebirth.ts` + contrato de que ninguém apaga o registro | `rebirth.chaveDeModo.contract` verde |
 

@@ -188,18 +188,85 @@ function apportion<K extends string>(shares: Record<K, number>, order: K[], tota
 }
 
 /**
+ * Fatia do orçamento de elementos que o JOGADOR redistribui, quando ele tem
+ * um plano de alocação (WP4.22 — decisão #72 do dono, 22/09/2026).
+ *
+ * 0,25 e não outro número, e o motivo são as constantes vizinhas:
+ *
+ * - precisa superar `DERIVED_SPEND_FRACTION` (0,2), que é o que o sistema já
+ *   gasta sozinho em pares. Abaixo disso a escolha do jogador pesaria menos
+ *   que o automatismo, e a tela seria decorativa;
+ * - no ultra com o multiplicador do renascimento (750) dá 187 pontos, que é
+ *   exatamente o custo dos dois componentes de um par completo — ou seja, a
+ *   fatia é grande o bastante para comprar uma identidade inteira;
+ * - e para de crescer aí, porque o oráculo continua dono de 3/4. A leitura é
+ *   a origem da criatura; a alocação tempera, não substitui.
+ *
+ * ⚠️ Mexer neste número sem refazer a 5ª simulação do `pipeline.test.ts`
+ * (WP4.23, planos adversariais) reabre o buraco que ela fecha.
+ */
+export const ALLOC_FRACTION = 0.25;
+
+/**
+ * O plano do jogador: peso relativo por elemento BASE. Só pesos — nunca
+ * pontos prontos, e nunca um id de PAR (o par continua vindo da cascata, que
+ * é o que impede a alocação de comprar geração adiantada).
+ */
+export type ElementPlan = Partial<Record<ElementoBaseId, number>>;
+
+/** Pesos utilizáveis: base conhecida, número finito e positivo. */
+function sanitizePlan(plano: ElementPlan | undefined): Record<ElementoBaseId, number> | null {
+  if (!plano) return null;
+  const limpo = {} as Record<ElementoBaseId, number>;
+  let soma = 0;
+  for (const el of CLASS_ELEMENT_ORDER) {
+    const bruto = plano[el];
+    const peso = typeof bruto === 'number' && Number.isFinite(bruto) && bruto > 0 ? bruto : 0;
+    limpo[el] = peso;
+    soma += peso;
+  }
+  return soma > 0 ? limpo : null;
+}
+
+/**
  * Distribui o orçamento de elementos pela ALOCAÇÃO GERACIONAL, como um
  * jogador jogaria: primeiro tudo nas bases (proporcional às afinidades da
  * leitura); se a cascata destravar algum par, o passe 2 reserva
  * `DERIVED_SPEND_FRACTION` do orçamento para pontos diretos no MELHOR par
  * destravado (o mais equilibrado nas afinidades) e devolve o resto às bases.
  * Duas passadas, sem realimentação — determinístico.
+ *
+ * Com `plano` (pet renascido), o orçamento é partido em dois antes disso:
+ * `ALLOC_FRACTION` vai para as bases que o JOGADOR pediu, o resto roda o
+ * caminho automático de sempre. Os dois mapas são somados ANTES da cascata,
+ * então os pontos do jogador contam para destravar par — mas o par em si
+ * continua sendo comprado com o orçamento automático, nunca com a fatia dele.
+ *
+ * **Sem `plano`, esta função é idêntica à de antes do WP4.22**: `manualOrc`
+ * é 0, `autoOrc` é o orçamento inteiro e não há mapa manual para somar. Há
+ * teste exigindo isso forma por forma, porque é o que mantém a cobertura de
+ * `pipeline.test.ts` (17/65/11/32) sem trocar uma fixture.
  */
 function allocateElementos(
   shares: Record<ElementoBaseId, number>,
   orcamento: number,
+  plano?: ElementPlan,
 ): Partial<Record<string, number>> {
-  const passe1 = apportion(shares, CLASS_ELEMENT_ORDER, orcamento);
+  const pesos = sanitizePlan(plano);
+  const manualOrc = pesos ? Math.floor(orcamento * ALLOC_FRACTION) : 0;
+  const autoOrc = orcamento - manualOrc;
+  const manualBases = pesos
+    ? apportion(pesos, CLASS_ELEMENT_ORDER, manualOrc)
+    : null;
+
+  const somaManual = (base: Record<ElementoBaseId, number>) => {
+    if (!manualBases) return base;
+    const out = { ...base };
+    for (const el of CLASS_ELEMENT_ORDER) out[el] += manualBases[el];
+    return out;
+  };
+
+  const passe1 = somaManual(apportion(shares, CLASS_ELEMENT_ORDER, autoOrc));
   const destravados = cascataDosPares(passe1).filter(c => c.destravado);
   if (destravados.length === 0) {
     for (const el of CLASS_ELEMENT_ORDER) if (passe1[el] === 0) delete passe1[el];
@@ -212,9 +279,12 @@ function allocateElementos(
     const my = Math.min(shares[y.def.componentes[0]], shares[y.def.componentes[1]]);
     return my - mx || x.def.id.localeCompare(y.def.id);
   })[0];
-  const pontosPar = Math.floor((orcamento * DERIVED_SPEND_FRACTION) / CUSTO_PONTO_PAR);
-  const orcamentoBases = orcamento - pontosPar * CUSTO_PONTO_PAR;
-  const bases = apportion(shares, CLASS_ELEMENT_ORDER, orcamentoBases);
+  // O par sai do orçamento AUTOMÁTICO, nunca da fatia do jogador: a alocação
+  // manual é de bases (T-LEGAL), e deixar a fatia dele pagar um par abriria a
+  // compra de geração adiantada que a cascata existe para impedir.
+  const pontosPar = Math.floor((autoOrc * DERIVED_SPEND_FRACTION) / CUSTO_PONTO_PAR);
+  const orcamentoBases = autoOrc - pontosPar * CUSTO_PONTO_PAR;
+  const bases = somaManual(apportion(shares, CLASS_ELEMENT_ORDER, orcamentoBases));
   // o passe 2 precisa MANTER o destrave: se o corte de orçamento das bases
   // derrubasse os passivos abaixo do limiar, o ponto direto seria ilegal no
   // class-system — nesse caso o par não é comprado (volta ao passe 1).
@@ -247,6 +317,7 @@ export function buildFicha(
   stage: FichaStage = 'rookie',
   seedKey: string = nome,
   boost?: RebirthBoost,
+  plano?: ElementPlan,
 ): Ficha {
   const budget = budgetForStage(stage, boost);
 
@@ -260,6 +331,7 @@ export function buildFicha(
   const elementos = allocateElementos(
     focoShares,
     Math.round(ELEMENT_ORCAMENTO_BY_STAGE[stage] * (boost?.multiplier ?? 1)),
+    plano,
   );
 
   const DISTRIBUTED_ESCOLAS = ['combate_fisico', 'longo_alcance', 'conjuracao', 'benca', 'maldicao'] as const;
@@ -302,7 +374,14 @@ export function buildFicha(
   // reusada em todo estágio — os insumos maiores dos estágios altos faziam a
   // profissão "re-rolar" em 35% dos perfis (medido no laboratório).
   const rookieBudget = stage === 'rookie' ? budget : budgetForStage('rookie');
-  const rookieElementos = stage === 'rookie' ? elementos : allocateElementos(elementoShares, ELEMENT_ORCAMENTO_BY_STAGE.rookie);
+  // ⚠️ A profissão NUNCA enxerga o plano do jogador (WP4.22). No rookie esta
+  // linha reusava `elementos`, e com alocação manual isso faria mover uma
+  // barra RE-ROLAR a profissão — o mesmo defeito de 35% que o comentário
+  // acima descreve, reintroduzido por outra porta. Com plano, recalcula-se a
+  // escala rookie AUTOMÁTICA; sem plano, o reuso de antes continua idêntico.
+  const rookieElementos = stage === 'rookie' && !plano
+    ? elementos
+    : allocateElementos(elementoShares, ELEMENT_ORCAMENTO_BY_STAGE.rookie);
   const rookieDistributed = stage === 'rookie' ? distributedEscolas : apportion(roleEscolaShares, [...DISTRIBUTED_ESCOLAS], rookieBudget.escolasDistribuidas);
   const rookieEscolas: Partial<Record<EscolaId, number>> = { evocacao: rookieBudget.evocacaoFixo, ...rookieDistributed };
   const rookieRecursos: Partial<Record<RecursoId, number>> = { [ROLE_TO_RECURSO[dominantRole]]: rookieBudget.recursos };
