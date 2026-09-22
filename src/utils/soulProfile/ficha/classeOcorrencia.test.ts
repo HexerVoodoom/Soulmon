@@ -36,6 +36,7 @@ import { applyRitualAnswers } from '../ritualAnswers';
 import { ORACLE_QUESTIONS, mulberry32 } from '../../oracle';
 import { CLASS_TITLE_EN } from './classTitle';
 import type { Answers } from '../personality/types';
+import { nomeSintetico, nascimentoSintetico } from '../perfisSinteticos';
 
 const N = 200;
 const SEED = 20260922;
@@ -45,11 +46,11 @@ async function amostrar() {
   const out: { nome: string; classe: string; origem: string }[] = [];
   for (let i = 0; i < N; i++) {
     const c = CITIES[Math.floor(rng() * CITIES.length)];
-    const nome = `Perfil ${i} Teste`;
+    // ⚠️ Nome VARIADO — ver `perfisSinteticos.ts`.
+    const nome = nomeSintetico(rng);
     const perfil = buildSoulProfile({
       fullName: nome,
-      birthDate: `${1970 + Math.floor(rng() * 40)}-${String(1 + Math.floor(rng() * 12)).padStart(2, '0')}-${String(1 + Math.floor(rng() * 28)).padStart(2, '0')}`,
-      birthTime: `${String(Math.floor(rng() * 24)).padStart(2, '0')}:${String(Math.floor(rng() * 60)).padStart(2, '0')}`,
+      ...nascimentoSintetico(rng),
       timeUnknown: false,
       placeLabel: c.name,
       latitude: c.latitude, longitude: c.longitude, timeZone: c.timeZone,
@@ -99,7 +100,7 @@ describe('ocorrência das classes do class-system', () => {
     const rng = mulberry32(SEED);
     for (let i = 0; i < 20; i++) {
       const c = CITIES[Math.floor(rng() * CITIES.length)];
-      const nome = `Emerg ${i}`;
+      const nome = nomeSintetico(rng);
       const perfil = buildSoulProfile({
         fullName: nome, birthDate: '1990-05-05', birthTime: '10:00', timeUnknown: false,
         placeLabel: c.name, latitude: c.latitude, longitude: c.longitude, timeZone: c.timeZone,

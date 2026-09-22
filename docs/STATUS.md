@@ -7,6 +7,42 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 22/09/2026 — `vileza` desacoplada (17/17) + ⚠️ ERRO DE MEDIÇÃO MEU, corrigido
+>
+> **1. Desacoplamento (decisão do dono).** `vileza` e `morte` saíam do MESMO planeta
+> (Plutão, fatores 0,9 × 1,0) e o termo que deveria separá-las é neutro no caminho das 6
+> perguntas. `vileza` era a única dos 17 que nunca dominava. Agora ela é **Plutão +
+> Marte** (os dois maléficos clássicos) e `morte` segue Plutão puro. Medido: **17/17
+> dominam**, razão entre grupos 1,08×, maior fatia 13,0%.
+>
+> **2. ⚠️ O erro de medição, e ele invalidou números que eu já tinha reportado.** As
+> medições de balanceamento usavam nomes formulaicos — `Perfil 1 Teste`, `Ana Silva 0`.
+> Como `normalizeName` só preserva A–Z, **o índice é descartado**: centenas de perfis
+> herdavam UMA única numerologia, que alimenta alinhamento e elemento.
+>
+> O tamanho do erro, medido trocando SÓ o prefixo do nome e mais nada: `harmonia` como
+> alinhamento dominante saltou de **57,7% para 7,0%**. Quarenta e cinco pontos
+> percentuais entre dois arnês que só discordavam no nome.
+>
+> **A linha de base honesta, com 782 nomes distintos em 800 perfis:**
+>
+> | eixo | spread | extremos |
+> |---|---|---|
+> | alinhamento | 17,1pp | harmonia 41,9% × benevolência 24,8% |
+> | reino | 15,1pp | floresta 20,3% × pântano 5,1% |
+> | elemento (8) | 12,8pp | ar 17,0% × sombra 4,3% |
+> | papel | 12,3pp | mágico 27,3% × alcance 15,0% |
+>
+> Muito mais saudável do que os números contaminados sugeriam, e comparável ao que o
+> `ORACULO.md` já registrava.
+>
+> **As conclusões das frentes 1–3 foram RE-VALIDADAS com nomes reais e sobrevivem**
+> (razão 1,08×, 17/17 dominando, fidelidade de escola total). O conserto era estrutural,
+> não artefato da amostra.
+>
+> Novo módulo `soulProfile/perfisSinteticos.ts` com a regra escrita, e as três réguas
+> passaram a usá-lo. Nome com índice não é amostra — é um perfil repetido.
+
 > ## 22/09/2026 — BALANCEAMENTO 3: os 17 elementos em pé de igualdade (ANCHOR_BASE 15 → 45)
 >
 > **Decisão do dono:** "o class-system deve ser explorado ao máximo, com mesma chance

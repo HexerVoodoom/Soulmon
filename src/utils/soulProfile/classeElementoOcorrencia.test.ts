@@ -25,6 +25,7 @@ import { applyRitualAnswers } from './ritualAnswers';
 import { CLASS_ELEMENT_ORDER } from './types';
 import { ORACLE_QUESTIONS, mulberry32 } from '../oracle';
 import type { Answers } from './personality/types';
+import { nomeSintetico, nascimentoSintetico } from './perfisSinteticos';
 
 const N = 250;
 const SEED = 31337;
@@ -41,11 +42,13 @@ function medir() {
 
   for (let i = 0; i < N; i++) {
     const c = CITIES[Math.floor(rng() * CITIES.length)];
-    const nome = `Elem ${i} Teste`;
+    // ⚠️ Nome VARIADO, não `Elem ${i}`: `normalizeName` descarta dígitos, e
+    // índice no nome dá numerologia idêntica à amostra inteira. Ver
+    // `perfisSinteticos.ts` — custou 45pp de erro de medição.
+    const nome = nomeSintetico(rng);
     const perfil = buildSoulProfile({
       fullName: nome,
-      birthDate: `${1955 + Math.floor(rng() * 55)}-${String(1 + Math.floor(rng() * 12)).padStart(2, '0')}-${String(1 + Math.floor(rng() * 28)).padStart(2, '0')}`,
-      birthTime: `${String(Math.floor(rng() * 24)).padStart(2, '0')}:${String(Math.floor(rng() * 60)).padStart(2, '0')}`,
+      ...nascimentoSintetico(rng),
       timeUnknown: false,
       placeLabel: c.name,
       latitude: c.latitude, longitude: c.longitude, timeZone: c.timeZone,
@@ -78,13 +81,14 @@ describe('ocorrência dos 17 elementos do class-system', () => {
       .toBeLessThanOrEqual(1.45);
   });
 
-  it('a grande maioria dos 17 chega a dominar alguma ficha', () => {
+  it('TODOS os 17 chegam a dominar alguma ficha', () => {
     const nunca = CLASS_ELEMENT_ORDER.filter(e => dominou[e] === 0);
-    // Eram 7 os que nunca dominavam; medido depois, 1 (`vileza`). O piso de
-    // 15/17 protege contra a regressão sem exigir o 17/17, que `vileza` não
-    // alcança por razão PRÓPRIA — ver o teste abaixo.
+    // Eram 7 os que nunca dominavam. Depois de `ANCHOR_BASE` 45 sobrou 1
+    // (`vileza`); depois de desacoplá-la de Plutão, **nenhum**. Medido:
+    // 17/17 em 400 perfis. O piso de 16 dá folga para a amostra menor do CI
+    // sem admitir a volta de elemento inalcançável.
     expect(CLASS_ELEMENT_ORDER.length - nunca.length, `nunca dominam: ${nunca.join(', ') || '(nenhum)'}`)
-      .toBeGreaterThanOrEqual(15);
+      .toBeGreaterThanOrEqual(16);
   });
 
   it('nenhum elemento vira o dominante da maioria', () => {
@@ -92,27 +96,19 @@ describe('ocorrência dos 17 elementos do class-system', () => {
     expect(maior, `maior fatia: ${(maior * 100).toFixed(1)}%`).toBeLessThanOrEqual(0.22);
   });
 
-  it('⚠️ `vileza` e `morte` são gêmeas de Plutão — medido, não escondido', () => {
-    // As duas saem do MESMO planeta (`vileza` com fator 0,9, `morte` com
-    // 1,0), e no caminho das 6 perguntas os termos de traço que deveriam
-    // separá-las — Honestidade-Humildade baixa × neuroticismo — são neutros.
+  it('`vileza` e `morte` estão DESACOPLADAS — as duas alcançam o topo', () => {
+    // Histórico, para não ser redescoberto: as duas saíam do MESMO planeta
+    // (`vileza` com fator 0,9 contra 1,0 de `morte`), e o termo que deveria
+    // separá-las — Honestidade-Humildade baixa × neuroticismo — é NEUTRO no
+    // caminho das 6 perguntas, metade dos jogadores. As médias empatavam
+    // (5,78 × 5,79) e `vileza` nunca dominava: `morte` levava o topo nos
+    // picos.
     //
-    // ⚠️ A primeira versão deste teste afirmava que `morte` tem média maior e
-    // por isso sombreia `vileza`. **Falso, e o teste pegou**: as médias são
-    // praticamente idênticas (medido: 5,777 × 5,787 — `vileza` de leve à
-    // frente). O que separa as duas não é o nível médio, é quem leva o TOPO
-    // nos picos, e aí `morte` costuma ganhar.
-    //
-    // Consequência prática: `vileza` é a única dos 17 que não chega a
-    // dominar. Não é regressão de escala; é a assimetria de compartilharem
-    // planeta, e só se conserta desacoplando as duas ou dando peso real ao
-    // termo de Honestidade-Humildade. Fica registrado aqui para não ser
-    // redescoberto como novidade.
-    const mediaMorte = soma.morte / N;
-    const mediaVileza = soma.vileza / N;
-    expect(Math.abs(mediaMorte - mediaVileza), `morte ${mediaMorte.toFixed(2)} × vileza ${mediaVileza.toFixed(2)}`)
-      .toBeLessThan(0.5);
-    expect(dominou.morte, `morte domina ${dominou.morte}× · vileza ${dominou.vileza}×`)
-      .toBeGreaterThanOrEqual(dominou.vileza);
+    // Desde 22/09/2026 `vileza` é Plutão + Marte (os dois maléficos
+    // clássicos) e `morte` segue Plutão puro. Cada uma tem mapa próprio em
+    // que vencer.
+    expect(dominou.vileza, `vileza domina ${dominou.vileza}× · morte ${dominou.morte}×`)
+      .toBeGreaterThan(0);
+    expect(dominou.morte).toBeGreaterThan(0);
   });
 });

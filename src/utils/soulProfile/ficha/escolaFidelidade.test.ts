@@ -33,18 +33,12 @@ import { applyRitualAnswers } from '../ritualAnswers';
 import { ORACLE_QUESTIONS, mulberry32 } from '../../oracle';
 import type { Answers } from '../personality/types';
 import type { EscolaId } from './types';
+import { nomeSintetico, nascimentoSintetico } from '../perfisSinteticos';
 
 /** 200 perfis: suficiente para a fidelidade (que é 100% ou não é) e para a
  *  proporção grossa, sem pagar 400 mapas astrais em toda rodada de CI. */
 const N = 200;
 const SEED = 20260922;
-
-const NOMES = [
-  'Ana Silva', 'Bruno Costa', 'Carla Mendes', 'Diego Alves', 'Elena Souza',
-  'Felipe Rocha', 'Gabriela Lima', 'Hugo Martins', 'Isabela Dias', 'Joao Pereira',
-  'Karen Barbosa', 'Lucas Fernandes', 'Mariana Gomes', 'Nuno Ribeiro', 'Olivia Castro',
-  'Pedro Nunes', 'Quesia Moraes', 'Rafael Teixeira', 'Sofia Cardoso', 'Tiago Ferreira',
-];
 
 /** A escola que cada papel dominante DEVE produzir. `suporte` aceita as duas
  *  de alinhamento — qual das duas é decidido por `benca`/`maldicao` fraction. */
@@ -67,17 +61,14 @@ function amostrar(): Amostra[] {
   const out: Amostra[] = [];
   for (let i = 0; i < N; i++) {
     const cidade = CITIES[Math.floor(rng() * CITIES.length)];
-    const ano = 1970 + Math.floor(rng() * 40);
-    const mes = 1 + Math.floor(rng() * 12);
-    const dia = 1 + Math.floor(rng() * 28);
-    const hora = Math.floor(rng() * 24);
-    const minuto = Math.floor(rng() * 60);
-    const nome = `${NOMES[Math.floor(rng() * NOMES.length)]} ${i}`;
+    // ⚠️ Nome VARIADO, não `<nome> ${i}`: o índice é descartado por
+    // `normalizeName`, então 20 nomes davam 20 numerologias para 200 perfis.
+    // Ver `perfisSinteticos.ts`.
+    const nome = nomeSintetico(rng);
 
     const perfil = buildSoulProfile({
       fullName: nome,
-      birthDate: `${ano}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`,
-      birthTime: `${String(hora).padStart(2, '0')}:${String(minuto).padStart(2, '0')}`,
+      ...nascimentoSintetico(rng),
       timeUnknown: false,
       placeLabel: `${cidade.name}, ${cidade.region || cidade.country}`,
       latitude: cidade.latitude,

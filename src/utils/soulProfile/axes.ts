@@ -344,9 +344,20 @@ export function generateOracleAxes(inputs: OracleAxesInput): OracleAxes {
     sombra: elements.sombra, luz: elements.luz,
     eletricidade: anchored(dev('Urano'), traits.extraversion * 0.06),
     arcano: anchored(dev('Netuno'), traits.openness * 0.1 + soft(100 - jung.SN) * 0.06),
-    // vileza e morte dividem Plutão; o desvio menor + o termo de
-    // Honestidade-Humildade baixa é o que separa "sombrio" de "vil".
-    vileza: anchored(dev('Plutão') * 0.9, (100 - traits.honestyHumility) * 0.12),
+    // ⚠️ **`vileza` DEIXOU de ser só Plutão em 22/09/2026** (decisão do dono:
+    // desacoplar). Antes ela era `dev('Plutão') * 0.9` contra o `1.0` de
+    // `morte` — mesmo planeta, fator menor —, e o termo que deveria separá-las
+    // (Honestidade-Humildade baixa × neuroticismo) é NEUTRO no caminho das 6
+    // perguntas, que é metade dos jogadores. Resultado medido: as médias das
+    // duas ficavam empatadas (5,78 × 5,79) e `vileza` era a ÚNICA dos 17 que
+    // nunca chegava a dominar uma ficha — `morte` levava o topo nos picos.
+    //
+    // Agora ela é a soma dos DOIS maléficos clássicos: Plutão (decomposição,
+    // o submundo) e Marte (violência). É a mesma forma que `vigor`,
+    // `gravidade` e `espaco` já usam — mistura de dois corpos —, e dá à
+    // `vileza` um mapa próprio em que dominar: quem tem Marte forte e Plutão
+    // médio agora a alcança, e antes não alcançava nada.
+    vileza: anchored(dev('Plutão') * 0.55 + dev('Marte') * 0.55, (100 - traits.honestyHumility) * 0.12),
     morte: anchored(dev('Plutão'), traits.neuroticism * 0.12),
     vida: anchored(dev('Vênus'), traits.agreeableness * 0.08),
     vigor: anchored(dev('Marte') * 0.65 + dev('Sol') * 0.65, traits.conscientiousness * 0.05),
