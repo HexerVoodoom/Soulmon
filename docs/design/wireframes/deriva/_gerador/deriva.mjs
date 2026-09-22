@@ -98,10 +98,11 @@ artboard('AvisoTermos', {
 </div>
 
 <div class="sec">
-  <p class="lab">A fila 2, agora com 8</p>
+  <p class="lab">A fila 2, agora com 9</p>
   <div class="card avisos">
-    <p class="cap">0. <code>'firstDay'</code> · 1. <code>'hp'</code> · 2. <code>'semanal'</code> · 3. <code>'triagem'</code> · 4. <code>'priming'</code> · 5. <code>'recomeco'</code> · 6. <code>'carga'</code></p>
-    <p class="cap" style="color:var(--sm2-primary-ink)">7. <code>'termos'</code> — <b>novo</b> · condição <code>qualDocMudou(consent, TERMS_VERSION, PRIVACY_VERSION)</code> · é o último porque nada que ele diz é perecível: os outros sete morrem na virada do dia, este espera</p>
+    <p class="cap">0. <code>'firstDay'</code> · 1. <code>'hp'</code> · <b>2. <code>'incubacao'</code></b> · 3. <code>'semanal'</code> · 4. <code>'triagem'</code> · 5. <code>'priming'</code> · 6. <code>'recomeco'</code> · 7. <code>'carga'</code></p>
+    <p class="cap" style="color:var(--sm2-primary-ink)">8. <code>'termos'</code> — condição <code>qualDocMudou(consent, TERMS_VERSION, PRIVACY_VERSION)</code> · é o último porque nada que ele diz é perecível: os outros oito morrem sozinhos, este espera</p>
+    <p class="cap">A <code>'incubacao'</code> entrou na posição 2 em 22/09/2026 (WP4.29) — desenhada em <b>DER-26</b>.</p>
   </div>
 </div>
 `,

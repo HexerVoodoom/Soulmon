@@ -6,7 +6,7 @@
       "x": 0,
       "y": 0,
       "w": 390,
-      "h": 1669,
+      "h": 1734,
       "page": "page-1"
     },
     {
@@ -79,6 +79,15 @@
       "y": 0,
       "w": 390,
       "h": 1189,
+      "page": "page-1"
+    },
+    {
+      "file": "Incubacao.dc.html",
+      "title": "DER-23 → 27 · incubação — a barra cheia que não evolui (WP4.29)",
+      "x": 4410,
+      "y": 0,
+      "w": 390,
+      "h": 2265,
       "page": "page-1"
     }
   ],

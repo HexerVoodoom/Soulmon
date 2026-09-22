@@ -27,6 +27,7 @@ grupo, `toast`, `dock` e alerta), para a peça nova nascer no mesmo sistema.
 | `DER-19 · 20` | `VozKindsTracos` | os outros 10 `kind` + a matriz de 5 traços | idem |
 | `DER-21` | `GlifosNavDeck` | 20 dos 39 glifos autorais | ver abaixo |
 | `DER-22` | `GlifosUtilitarios` | os outros 19 | ver abaixo |
+| `DER-23…27` | `Incubacao` | a **incubação** (WP4.29): a página de Evolução incubando × pronta, o aviso da Home, a fila 2 com 9 e as entradas do Guia e do Glossário | o canvas Evolução (§24) desenhou a página **antes** da mecânica existir — e a página chegou a prometer "toque para evoluir" durante a incubação (`355959b4`) |
 
 ## ⚠️ A divergência que passa deste canvas
 
@@ -55,6 +56,14 @@ node docs/design/wireframes/deriva/_gerador/deriva-glifos.mjs
 ⚠️ O `h` de cada artboard no `canvas.json` é **medido no navegador**, não estimado — um `h`
 errado abre buraco na grade da página única de export. Depois de mexer no conteúdo de um
 artboard, remedir.
+
+⚠️ **Medir só DEPOIS de converter os ícones em SVG.** Na página de export a fonte Material
+não é embarcada (os ícones viram SVG), então, enquanto os `<span class="ico">` ainda são
+texto de ligadura, eles renderizam como a PALAVRA (`check_circle`, `egg`) numa fonte de
+sistema — quebram linha e incham o artboard. Medir nesse estado deu **30 artboards
+divergentes**, com um deles 1.145 px mais alto do que é; medir depois da conversão devolveu
+os 12 de sempre. Ordem certa: `merge` → converter ícones → medir → gravar o `h` → `merge` de
+novo.
 
 ## Onde isto é consumido
 
