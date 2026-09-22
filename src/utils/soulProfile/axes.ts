@@ -147,8 +147,40 @@ export function generateOracleAxes(inputs: OracleAxesInput): OracleAxes {
     fogo: (astrologyElements.fogo / astroTotal) * 60 + traits.extraversion * 0.4,
     terra: (astrologyElements.terra / astroTotal) * 60 + traits.conscientiousness * 0.47,
     ar: (astrologyElements.ar / astroTotal) * 60 + traits.openness * 0.35,
-    sombra: traits.neuroticism * 0.45 + (100 - traits.honestyHumility) * 0.15 +
-      (astrologyPolarities.noturno / (astrologyPolarities.diurno + astrologyPolarities.noturno || 1)) * 12,
+    // ⚠️ `sombra` dominava **3,8%** dos perfis (medido em 600 pelo pipeline
+    // real, 22/09/2026), a metade do penúltimo — e a causa NÃO era a média,
+    // que já estava em linha com as outras sete. Era a VARIÂNCIA: quem ganha
+    // o argmax precisa de PICO, e `sombra` era a única sem nenhuma das duas
+    // fontes de pico deste arquivo. Não divide o pool astrológico de 60 (isso
+    // é dos quatro clássicos, que por isso sobem a 40+ num mapa concentrado)
+    // e é primária em UM dos doze números de `NUMBER_ELEMENTS` (o 7) e
+    // secundária em nenhum, contra seis primários de `luz`. Sobrava-lhe o
+    // neuroticismo, que é NEUTRO no caminho das 6 perguntas — metade dos
+    // jogadores.
+    //
+    // O conserto tem duas partes, e a segunda é a que importa:
+    //
+    //   1. `sombra` passa a beber do pool astrológico, pela fatia
+    //      água+terra — que é o que "noturno" SIGNIFICA no mapa, então o
+    //      sinal é temático e não remendo. É daí que vem o pico.
+    //   2. **o −20 é um deslocamento, não um corte de peso.** Subtrair
+    //      constante derruba a MÉDIA sem tocar a variância, e era disso que
+    //      se precisava: `sombra` é vocabulário COMPARTILHADO — o
+    //      `classElements` lá embaixo a repassa crua —, e do outro lado ela
+    //      já era a MAIS comum dos 17 (15,7%). Levantar o nível dela
+    //      consertava o jogo e estourava o class-system: medido, 0,45→0,38 no
+    //      neuroticismo com a polaridade a 26 dava 8,8% de dominância aqui e
+    //      **22,1%** lá, reprovando `classeElementoOcorrencia.test.ts`.
+    //
+    // Por isso o coeficiente do neuroticismo fica em 0,45: baixá-lo era o
+    // caminho que apagava o sentido psicológico de `sombra` (foram medidos
+    // 0,05 e 0,10 — funcionavam pelo motivo errado).
+    // Medido depois: dominância 10,3% aqui (par de `industrial`, 10,7%) e
+    // 15,7% no class-system — **exatamente a mesma de antes**, que é o ponto.
+    // Réguas: `elementoOcorrencia.test.ts` e `classeElementoOcorrencia.test.ts`.
+    sombra: Math.max(0, traits.neuroticism * 0.45 + (100 - traits.honestyHumility) * 0.15 +
+      (astrologyPolarities.noturno / (astrologyPolarities.diurno + astrologyPolarities.noturno || 1)) * 12 +
+      ((astrologyElements['água'] + astrologyElements.terra) / astroTotal) * 40 - 20),
     luz: traits.honestyHumility * 0.45 +
       (astrologyPolarities.diurno / (astrologyPolarities.diurno + astrologyPolarities.noturno || 1)) * 12 +
       traits.agreeableness * 0.15,

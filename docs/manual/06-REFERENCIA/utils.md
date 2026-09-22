@@ -1429,7 +1429,7 @@ Cobertura: **120/120** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 - `OracleAxesInput` (interface) — campos: `facets`, `jung`, `astrologyElements`, `astrologyPolarities`, `numerologyNumbers`, `planetProminence`.
 - `function generateOracleAxes(inputs: OracleAxesInput): OracleAxes` — Constrói os eixos do oráculo a partir das leituras psicométrica, junguiana, astrológica e numerológica.
 **Chamado por:** `src/utils/soulProfile/index.ts`, `src/utils/soulProfile/profile.ts`
-**Régua:** `axes.test.ts`
+**Régua:** `axes.test.ts`, `elementoOcorrencia.test.ts` (os 8 elementos do jogo e os 9 reinos), `classeElementoOcorrencia.test.ts` (os 17 do class-system)
 **Regra de negócio:** Os coeficientes dos eixos foram calibrados para nenhum elemento/papel/reino ter vantagem estrutural. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
 ### `src/utils/soulProfile/bestiary/select.ts`
@@ -1773,7 +1773,7 @@ Cobertura: **120/120** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 
 ⚠️ **Existe por causa de um erro de medição real (22/09/2026).** As primeiras medições de balanceamento usaram nomes formulaicos (`Perfil 1 Teste`, `Ana Silva 0`). Como `normalizeName` só preserva A–Z, **o índice é descartado** — e centenas de perfis herdavam UMA única numerologia, que alimenta alinhamento e elemento. O tamanho do erro, medido trocando só o prefixo do nome: `harmonia` como alinhamento dominante saltou de **57,7% para 7,0%**. Régua de ocorrência do oráculo usa este módulo; nome com índice não é amostra, é um perfil repetido.
 
-**Chamado por:** `src/utils/soulProfile/classeElementoOcorrencia.test.ts`, `src/utils/soulProfile/ficha/classeOcorrencia.test.ts`, `src/utils/soulProfile/ficha/escolaFidelidade.test.ts`
+**Chamado por:** `src/utils/soulProfile/classeElementoOcorrencia.test.ts`, `src/utils/soulProfile/elementoOcorrencia.test.ts`, `src/utils/soulProfile/ficha/classeOcorrencia.test.ts`, `src/utils/soulProfile/ficha/escolaFidelidade.test.ts`
 **Régua:** nenhuma — é ferramenta DE régua.
 
 ### `src/utils/soulProfile/pipeline.ts`

@@ -7,6 +7,52 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 22/09/2026 — BALANCEAMENTO 4: `sombra` e `pântano`, os dois outliers que sobraram
+>
+> Fechamento da série de balanceamento do oráculo. Sobravam dois pontos fora
+> da faixa dos pares, medidos em 600 perfis pelo pipeline real (efemérides +
+> numerologia + as 6 respostas do ritual, com nomes de `perfisSinteticos.ts`):
+> o elemento **`sombra` dominava 3,8%** e o reino **`pântano` 4,8%**.
+>
+> **`sombra` — a causa não era a média, era a variância.** A média dela já
+> estava em linha com as outras sete; o que faltava era PICO. Ela era o único
+> elemento sem nenhuma das duas fontes de pico do `axes.ts`: não divide o pool
+> astrológico de 60 (isso é dos quatro clássicos, que sobem a 40+ num mapa
+> concentrado) e é primária em UM dos doze números de `NUMBER_ELEMENTS` contra
+> seis de `luz`. Sobrava-lhe o neuroticismo, neutro no caminho das 6 perguntas
+> — metade dos jogadores.
+>
+> **A armadilha, e é ela que vale registrar:** `sombra` é vocabulário
+> COMPARTILHADO — o `classElements` a repassa crua —, e do outro lado ela já
+> era a MAIS comum dos 17 (15,7%). Levantar o NÍVEL dela consertava o jogo e
+> estourava o class-system: medido, o primeiro conserto (0,45→0,38 no
+> neuroticismo, polaridade 12→26) deu 8,8% aqui e **22,1%** lá, reprovando
+> `classeElementoOcorrencia.test.ts`. O conserto que ficou dá a `sombra` a
+> fatia água+terra do pool astrológico (que é o que "noturno" significa no
+> mapa) e **subtrai uma constante de 20** — deslocamento derruba a média sem
+> tocar a variância, que era exatamente o que se precisava. O coeficiente do
+> neuroticismo ficou em 0,45: baixá-lo apagava o sentido psicológico de
+> `sombra` (0,05 e 0,10 foram medidos e funcionavam pelo motivo errado).
+>
+> Resultado: **3,8% → 10,3%** no jogo (par de `industrial`, 10,7%) e **15,7%
+> → 15,7%** no class-system, exatamente a mesma de antes.
+>
+> **`pântano` andou pouco — 4,8% → 5,0% — e isso foi decidido, não aceito por
+> omissão.** Ele é o único reino cujo peso não tem nenhum elemento em 3
+> (`{ agua: 2, sombra: 2, planta: 2 }`), então soma três elementos de
+> dominância baixa e nunca tem pico próprio. As duas saídas foram medidas e
+> recusadas: `{ agua: 2, sombra: 3, planta: 2 }` o leva a **32,3%**, porque o
+> escore do reino é soma CRUA e o peso total passaria de 6 para 7 — os nove
+> reinos empatam em 6 de propósito; `{ agua: 1, sombra: 3, planta: 2 }`
+> mantém o total, anda 0,2pp e tira a água da liderança de um pântano. A
+> tabela ficou como está: o resto da diferença é FIDELIDADE, que é o critério
+> que o dono fixou — o reino segue os elementos da pessoa, e os dele
+> continuam entre os menos dominantes.
+>
+> **Régua nova:** `src/utils/soulProfile/elementoOcorrencia.test.ts` (os 8
+> elementos do jogo e os 9 reinos — piso, teto e a explicação do que NÃO se
+> consertou). A dos 17 do class-system já existia e continua verde.
+
 > ## 22/09/2026 — `vileza` desacoplada (17/17) + ⚠️ ERRO DE MEDIÇÃO MEU, corrigido
 >
 > **1. Desacoplamento (decisão do dono).** `vileza` e `morte` saíam do MESMO planeta
