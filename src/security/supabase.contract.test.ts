@@ -58,7 +58,7 @@ const DIVIDA: Record<string, string> = {
   'src/supabase/functions/server/transcribe.tsx':
     'a transcrição em si, do lado do provedor.',
   'src/vite-env.d.ts':
-    'declaração de tipo do pacote `@jsr/supabase__supabase-js`, que segue no package.json.',
+    'só a LÁPIDE do `declare module` de `@jsr/supabase__supabase-js` — o pacote saiu do package.json em 21/09/2026 (decisão #33, zero imports; a Edge Function usa `jsr:` no Deno, não `node_modules`).',
 };
 
 function arquivos(dir: string, saida: string[] = []): string[] {

@@ -210,7 +210,6 @@ interface CompanionHUDProps {
   onCareEventComplete?: () => void;
   useAI: boolean;
   aiSettings?: any;
-  onOpenAISettings?: () => void;
   onCreateActivity?: (activity: {
     name: string;
     category: string;
@@ -281,7 +280,6 @@ export const CompanionHUD = memo(function CompanionHUD({
   onCareEventComplete,
   useAI,
   aiSettings,
-  onOpenAISettings,
   onCreateActivity,
   language,
   foodInventory = {},
@@ -1090,7 +1088,6 @@ export const CompanionHUD = memo(function CompanionHUD({
         useAI={useAI}
         onSendMessage={handleChatMessage}
         aiSettings={aiSettings}
-        onOpenAISettings={onOpenAISettings}
         onCreateActivity={onCreateActivity}
         chatContext={chatContext}
         language={language}

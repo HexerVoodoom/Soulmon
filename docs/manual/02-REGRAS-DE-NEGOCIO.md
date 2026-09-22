@@ -4481,7 +4481,7 @@ devolve os ids abertos na ordem canônica. Todas **derivadas na leitura**
 | `mega-form` | `evolutionStage` começa por `mega` ou é `ultra` | [§14](#escada) |
 | `dungeon-10` | `dungeonRunsCompleted ≥ 10` | [§51](#masmorra) |
 | `tournament-champion` | algum `trophies[].place === 1` | [§53](#torneio) — 2º e 3º lugar **não** abrem |
-| `tasks-100` | `completedTasks.length + activityLog.length ≥ 100` | cosmética, sem moeda — ver abaixo |
+| `dias-completos-30` | `totalPerfectDays ≥ DIAS_COMPLETOS_PARA_CONQUISTA` (30) | cosmética, sem moeda — ⚰️ era `tasks-100` (≥100 tarefas) até 21/09/2026, decisão #30: contagem de tarefas saiu, o gatilho é o dia completo (§7); quem já tinha a antiga herda via `conquistasHerdadas` em `hydrateSave` |
 
 A arte é `src/utils/emblemArt.ts` → `emblemArt(id)` (glob de
 `src/assets/soulmon/emblems/*.png`, 64² com alfa, chave = nome do arquivo = id da
@@ -4501,10 +4501,12 @@ aparece **dentro do visor** — Ficha do Pet, slot `trophy`, segmento Torneio da
 loja. A colocação na Ficha é do canvas Pet (`DECISOES-WIREFRAME.md` §22).
 
 **Casos de borda.**
-- **`tasks-100` é a única que conta tarefas**, e é aceita porque é **cosmética**
-  — não paga Bits, Emblema nem atributo, o mesmo estatuto do bestiário. A
-  proibição #16 ([`01 §7`](01-VISAO.md#as-linhas-vermelhas)) é sobre recompensa
-  **paga** por contagem; o cabeçalho do módulo declara a fronteira.
+- ⚰️ **Nenhuma conquista conta tarefas desde 21/09/2026** (decisão #30 do QA
+  geral; `vetos.md`): `tasks-100` virou `dias-completos-30`, gatilho por dia
+  completo. A proibição #16 ([`01 §7`](01-VISAO.md#as-linhas-vermelhas)) passou a
+  valer também para o cosmético. Migração única no load: save sem o campo
+  `conquistasHerdadas` e com ≥100 no gatilho antigo herda a conquista nova
+  (`GameStateContext.legacySave.test.tsx`).
 - **`habit-*` lê `totalDone`**, que a poda de `HISTORY_CAP` não toca — por isso
   o de 66 continua alcançável.
 - **Save antigo sem os campos**: todo acesso tem `?? 0` / `?? []`; nenhuma

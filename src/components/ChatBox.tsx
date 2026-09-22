@@ -16,7 +16,6 @@ interface ChatBoxProps {
   useAI: boolean;
   onSendMessage: (response: string) => void;
   aiSettings?: AISettings;
-  onOpenAISettings?: () => void;
   language?: Language;
   /** WP3.1 — o estado de AGORA, em INTEIROS (contrato `CONTEXT_SCHEMA` de
    *  `functions/api/chat.js`). Nunca texto: `soulGoal`/`soulStruggle` não
@@ -45,7 +44,6 @@ export function ChatBox({
   useAI,
   onSendMessage,
   aiSettings,
-  onOpenAISettings,
   onCreateActivity,
   chatContext,
   language = 'en-US',

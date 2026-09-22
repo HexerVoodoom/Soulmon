@@ -1,7 +1,15 @@
 ext {
     minSdkVersion = 26
-    compileSdkVersion = 35 // Upgraded to 35 to support VANILLA_ICE_CREAM reference
-    targetSdkVersion = 35  
+    // 21/09/2026 — 35 → 36 nos dois. Motivo: `docs/reviews/2026-09-21-qa-geral/
+    // 15-superficies-secundarias.md` §B registra que a Play pede target 36 para
+    // atualizações desde 31/08/2026 (target ≥ 35 já era o piso para app novo
+    // desde nov/2025). compileSdk acompanha o target (o SDK 36 precisa estar
+    // instalado; o AGP 8.2.1 daqui só AVISA para compileSdk acima do que testou,
+    // como já fazia com 35). [verificar no android-build.yml do CI após o merge]
+    // — se o `assembleDebug` reclamar de plataforma 36 ausente ou de AGP, o
+    // conserto é subir o AGP em `android/build.gradle`, não voltar para 35.
+    compileSdkVersion = 36
+    targetSdkVersion = 36
     // Keep libraries at stable versions compatible with AGP 8.2 & Java 21
     androidxActivityVersion = '1.8.2'
     androidxAppCompatVersion = '1.6.1'

@@ -84,7 +84,7 @@ describe('visor de emblemas (D-P5)', () => {
   });
 
   it('uma conquista da 2ª linha aberta sozinha fica na 2ª linha (casa fixa, sem subir)', () => {
-    montar(['tasks-100']);
+    montar(['dias-completos-30']);
     const linhas = Array.from(document.querySelectorAll('[data-emblem-row]'));
     expect(linhas[0].querySelectorAll('[data-emblem]')).toHaveLength(0);
     expect(linhas[1].querySelectorAll('[data-emblem]')).toHaveLength(1);

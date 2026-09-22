@@ -4,7 +4,8 @@
  *
  * Achado do doc-mantenedor em 21/09/2026: o `SettingsModal` ("Ajustes
  * rápidos") ficou sem gatilho vivo, e com ele o mudo global e a trilha eram
- * inalcançáveis pela UI — a fiação existia, ninguém chegava nela. Este teste
+ * inalcançáveis pela UI — a fiação existia, ninguém chegava nela. ⚰️ 21/09/2026
+ * (decisão #37): o modal foi APAGADO; a SettingsPage é o único caminho. Este teste
  * prova que a `SettingsPage` (a tela que o jogador abre de verdade) expõe as
  * duas chaves, em PT e EN, e que cada toque chega ao dono certo: o mudo no
  * `onToggleSound` do App, a trilha em `ligarTrilha`/`desligarTrilha` (S2: o

@@ -195,3 +195,29 @@ describe('save corrompido nunca pode dar tela branca', () => {
     expect(() => montar()).not.toThrow();
   });
 });
+
+describe('#30 (21/09/2026) — `tasks-100` virou `dias-completos-30`; quem já tinha mantém', () => {
+  it('save sem o campo e com o gatilho antigo batido ganha `conquistasHerdadas`', () => {
+    localStorage.setItem(STORAGE_KEYS.GAME_STATE, JSON.stringify({
+      ...SAVE_LEGADO, completedTasks: new Array(70).fill('t'), activityLog: new Array(30).fill('2026-01-01'),
+    }));
+    expect(montar().conquistasHerdadas).toEqual(['dias-completos-30']);
+  });
+  it('save sem o campo e SEM o gatilho antigo fica com `[]`', () => {
+    localStorage.setItem(STORAGE_KEYS.GAME_STATE, JSON.stringify({ ...SAVE_LEGADO, activityLog: new Array(97).fill('x') }));
+    expect(montar().conquistasHerdadas).toEqual([]);
+  });
+  it('`[]` já gravado nunca vira herança depois — a migração roda UMA vez', () => {
+    // O campo existe: mesmo que o jogador bata 100 tarefas, a herança não abre.
+    localStorage.setItem(STORAGE_KEYS.GAME_STATE, JSON.stringify({
+      ...SAVE_LEGADO, conquistasHerdadas: [], activityLog: new Array(200).fill('x'),
+    }));
+    expect(montar().conquistasHerdadas).toEqual([]);
+  });
+  it('id desconhecido no campo é descartado (higiene do que vem da nuvem)', () => {
+    localStorage.setItem(STORAGE_KEYS.GAME_STATE, JSON.stringify({
+      ...SAVE_LEGADO, conquistasHerdadas: ['tasks-100', 'dias-completos-30', 42],
+    }));
+    expect(montar().conquistasHerdadas).toEqual(['dias-completos-30']);
+  });
+});

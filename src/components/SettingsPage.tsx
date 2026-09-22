@@ -29,9 +29,9 @@ import { APP_VERSION, FeedbackRow } from './FeedbackLink';
  * revelação. Toda linha de configuração é alvo de toque inteiro.
  */
 interface SettingsPageProps {
-  /** Mudo global (S-som). Sem estes dois, o jogador não alcança o mudo: o
-   *  `SettingsModal` ("Ajustes rápidos") ficou sem gatilho vivo depois do
-   *  canvas Conta (§29) — achado do doc-mantenedor em 21/09/2026. */
+  /** Mudo global (S-som). Sem estes dois, o jogador não alcança o mudo — esta
+   *  página é o ÚNICO caminho. ⚰️ 21/09/2026: o `SettingsModal` ("Ajustes
+   *  rápidos"), duplicata destas chaves, foi apagado (decisão do dono #37). */
   soundMuted?: boolean;
   onToggleSound?: () => void;
   useAI: boolean;

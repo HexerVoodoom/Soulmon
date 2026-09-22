@@ -24,47 +24,9 @@ declare module '*.png' {
 declare module 'sonner@*' {
   export * from 'sonner';
 }
-declare module 'vaul@*' {
-  export * from 'vaul';
-}
-declare module 'recharts@*' {
-  export * from 'recharts';
-}
-declare module 'cmdk@*' {
-  export * from 'cmdk';
-}
-declare module 'input-otp@*' {
-  export * from 'input-otp';
-}
-declare module 'embla-carousel-react@*' {
-  export * from 'embla-carousel-react';
-  export { default } from 'embla-carousel-react';
-}
-declare module 'next-themes@*' {
-  export * from 'next-themes';
-}
-declare module 'react-hook-form@*' {
-  export * from 'react-hook-form';
-}
-declare module 'react-day-picker@*' {
-  export * from 'react-day-picker';
-}
-declare module 'react-resizable-panels@*' {
-  export * from 'react-resizable-panels';
-}
-declare module 'class-variance-authority@*' {
-  export * from 'class-variance-authority';
-}
-// Specific Radix packages that use named imports (export * from the real installed package)
-declare module '@radix-ui/react-slot@*' {
-  export * from '@radix-ui/react-slot';
-}
-
-// Wildcard fallback for all other @radix-ui/* packages (namespace imports)
-declare module '@radix-ui/*' {
-  const mod: Record<string, any>;
-  export = mod;
-}
-declare module '@jsr/supabase__supabase-js@*' {
-  export * from '@jsr/supabase__supabase-js';
-}
+// ⚰️ 21/09/2026 (decisão #33): os `declare module` de `vaul@*`, `recharts@*`,
+// `cmdk@*`, `input-otp@*`, `embla-carousel-react@*`, `next-themes@*`,
+// `react-hook-form@*`, `react-day-picker@*`, `react-resizable-panels@*`,
+// `class-variance-authority@*`, `@radix-ui/react-slot@*`, `@radix-ui/*` e
+// `@jsr/supabase__supabase-js@*` saíram junto com os pacotes (38 sem import).
+// Guard: `src/deploy/depsVivas.contract.test.ts`.

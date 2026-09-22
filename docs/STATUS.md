@@ -7,6 +7,34 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 21/09/2026 — EXECUÇÃO das respostas do dono, etapas 4 (limpeza) e 6 (Play)
+>
+> **#37** `SettingsModal` apagado (prop `onOpenAISettings` saiu da cadeia App → CompanionHUD → ChatBox).
+> **#30** `tasks-100` → `dias-completos-30` (`totalPerfectDays ≥ DIAS_COMPLETOS_PARA_CONQUISTA`); herança única no
+> load por `conquistasHerdadas` (`hydrateSave`); arte do emblema renomeada, ainda desenha "100" — squad-arte.
+> **#33** 40 dependências sem import removidas (26 `@radix-ui/*`, `hono`, `recharts`, `vaul`, `cmdk`,
+> `@jsr/supabase__supabase-js`…; 11 sobram); 37 aliases mortos do `vite.config.ts`; guard
+> `src/deploy/depsVivas.contract.test.ts`. **#32** `scripts/convert-to-webp.mjs` reescreve as referências
+> `.png` → `.webp` em `dist/` e só então apaga os PNG (o SW NÃO cobria a 1ª visita nem `fetch()` cru):
+> `dist/` **123 MB → 24 MB**, provado no `vite preview` + Chrome. **#31** guard
+> `src/deploy/orcamentoDeBytes.contract.test.ts` (JS entrada ≤ 250 KB, CSS ≤ 100 KB, imagem ≤ 400 KB, vídeo
+> ≤ 800 KB) com a dívida atual nomeada: `index.js` 641 KB, `index.css` 143 KB, `evolution-bg.mp4` 3,9 MB,
+> `intro.mp4` 2,5 MB — reprova arquivo novo acima do teto ou dívida que cresce.
+> **Achados colaterais consertados:** `public/sw.js` › `cacheavel` exigia só `res.ok` e um 206 do `.mp4`
+> estourava `Cache.put` (agora `status === 200`); shebang em `scripts/metrics-report.mjs` derrubava
+> `tests/metricsReportFunil.test.ts` (regra da memória: sem shebang em `.mjs` importado por teste);
+> `PLAY-DATA-SAFETY.md` §2.3/§3 ganharam Higgsfield + Gemini (a review 11 tinha apontado e a etapa 2 só
+> fez §2.7/§3b).
+> **#16 Play (etapa 6):** `docs/PLAY-FICHA.md` (ficha PT/EN completa, IARC, declaração de IA, pedidos de
+> arte para os 8 screenshots + feature graphic) e `docs/PLAY-LANCAMENTO.md` (checklist §A–§I do console,
+> passo a passo com URL, o que colar, critério de "feito", etiquetas `[dono digita segredo]` /
+> `[submissão: confirmar]` / `[squad pode dirigir o Chrome]`). Android: `versionCode` 15 / `1.1.4`,
+> `compileSdk`/`targetSdk` 36 (`[verificar no android-build.yml do CI após o merge]`), artefato
+> `soulmon-debug-<sha>`; `billing-ktx` fica em 6.2.1 porque `BillingPlugin.kt` usa
+> `enablePendingPurchases()` sem argumento (7.x quebra) — `[a confirmar no Play Console]`. Achado do
+> operador: produção é **Worker**, não Pages — variável comum do painel some a cada deploy, então o checklist
+> manda tudo como `wrangler secret`.
+
 > ## 21/09/2026 — EXECUÇÃO das respostas do dono (#11–#39), etapas 1–3 e 5
 >
 > Cinco frentes em paralelo sobre a mesma árvore, arquivos disjuntos, um commit no fim.

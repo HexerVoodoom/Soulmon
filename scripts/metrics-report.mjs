@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * O FUNIL DA SEMANA — a tabela que o dono lê toda segunda.
  * ========================================================

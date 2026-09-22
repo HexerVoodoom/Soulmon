@@ -1,6 +1,8 @@
-// Arte pixel dos 8 EMBLEMAS de conquista (leva sprites-20260915, gpt_image_2 com
+// Arte pixel dos 9 EMBLEMAS de conquista (leva sprites-20260915, gpt_image_2 com
 // alfa real, 64²). Fronteira de troca no molde de `sigilArt.ts`: chave = id da
-// conquista (`utils/achievements.ts`). Emblema-MOEDA (`emblems` no save,
+// conquista (`utils/achievements.ts`). ⚰️ 21/09/2026: `tasks-100.png` foi
+// renomeado para `dias-completos-30.png` (decisão #30); a arte ainda é a mesma
+// — redesenhar é da squad-arte. Emblema-MOEDA (`emblems` no save,
 // `currencies.ts`) continua sendo NÚMERO — este mapa é de conquistas, e
 // conquista nunca se compra.
 //
@@ -24,7 +26,7 @@ for (const [path, url] of Object.entries(modules)) {
 /** URL do emblema de uma conquista, ou `undefined` (sem arte → não desenha). */
 export const emblemArt = (id: AchievementId): string | undefined => EMBLEM_ART[id];
 
-/** Quantos emblemas o glob encontrou — guard de instalação (8). */
+/** Quantos emblemas o glob encontrou — guard de instalação (9). */
 export const EMBLEM_COUNT = Object.keys(EMBLEM_ART).length;
 
 /**

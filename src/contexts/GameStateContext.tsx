@@ -16,6 +16,7 @@ import { normalizeConsent, type ConsentRecord } from '../utils/consent';
 import { normalizeSpriteLibrary, type SpriteLibrary } from '../utils/spriteLibrary';
 import { mergeCareCaps, type CareCaps } from '../utils/careCaps';
 import type { BondDailyLedger, BondDailyXP } from '../utils/bond';
+import { ACHIEVEMENT_IDS, gatilhoAntigoTasks100, type AchievementId } from '../utils/achievements';
 import {
   resolvePlayerDayAnchor, sanitizePlayerDayAnchor, deviceOffsetMs,
   type PlayerDayAnchor,
@@ -366,6 +367,11 @@ export interface GameState {
   dungeonRunsCompleted?: number;
   dinoBest?: number;
   totalPerfectDays?: number;
+  /** Conquistas abertas por um gatilho que NÃO existe mais, gravadas UMA vez na
+   *  migração do load (`hydrateSave`) para quem já as tinha. Hoje só
+   *  `'dias-completos-30'` (ex-`tasks-100`, decisão #30, 21/09/2026). É a única
+   *  conquista persistida — todas as outras são derivadas (`utils/achievements.ts`). */
+  conquistasHerdadas?: AchievementId[];
   /** Estado da estação corrente (`utils/seasons.ts`). Fiado em 06/09/2026
    *  (WP4.16): o módulo existia inteiro e nunca era chamado por ninguém. */
   season?: SeasonProgressState;
@@ -1068,6 +1074,13 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
         dungeonRunsCompleted: num(loadedState.dungeonRunsCompleted, 0),
         dinoBest: num(loadedState.dinoBest, 0),
         totalPerfectDays: num(loadedState.totalPerfectDays, 0),
+        // Migração #30 (21/09/2026): `tasks-100` virou `dias-completos-30`. Save
+        // que JÁ tem o campo mantém (mesmo `[]`); save sem o campo ganha a
+        // conquista se o gatilho antigo estava batido — e só nessa hora, porque
+        // `activityLog`/`completedTasks` são podados e a leitura derivada fecharia.
+        conquistasHerdadas: Array.isArray(loadedState.conquistasHerdadas)
+          ? loadedState.conquistasHerdadas.filter((id): id is AchievementId => (ACHIEVEMENT_IDS as readonly string[]).includes(id))
+          : (gatilhoAntigoTasks100(loadedState) ? ['dias-completos-30'] : []),
         // `?? undefined`: save antigo simplesmente não tem estação, e a
         // primeira virada tira a foto. Nada a migrar.
         season: (loadedState as { season?: SeasonProgressState }).season ?? undefined,

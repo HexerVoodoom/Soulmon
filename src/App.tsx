@@ -599,7 +599,6 @@ const SettingsPage = lazy(() => import('./components/SettingsPage').then(m => ({
 const ActivitiesPage = lazy(() => import('./components/ActivitiesPage').then(m => ({ default: m.ActivitiesPage })));
 const SoulmonOnboarding = lazy(() => import('./components/SoulmonOnboarding').then(m => ({ default: m.SoulmonOnboarding })));
 const BalanceWeekModal = lazy(() => import('./components/BalanceWeekModal').then(m => ({ default: m.BalanceWeekModal })));
-const SettingsModal = lazy(() => import('./components/SettingsModal').then(m => ({ default: m.SettingsModal })));
 const EditModal = lazy(() => import('./components/EditModal').then(m => ({ default: m.EditModal })));
 const TaskEditModal = lazy(() => import('./components/TaskEditModal').then(m => ({ default: m.TaskEditModal })));
 const OraclePage = lazy(() => import('./components/OraclePage').then(m => ({ default: m.OraclePage })));
@@ -673,7 +672,6 @@ export default function App() {
   const [feedAnim, setFeedAnim] = useState<{ emoji: string; n: number } | null>(null);
   const [careEvent, setCareEvent] = useState<CareEvent | null>(null);
   const [showEvolutionChoice, setShowEvolutionChoice] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [useAI, setUseAI] = useState(true);
   const [soundMuted, setSoundMuted] = useState(() => isMuted());
   const [evolutionFlash, setEvolutionFlash] = useState(false);
@@ -4110,9 +4108,9 @@ export default function App() {
     setShowEvolutionChoice(false);
   }, []);
 
-  const handleOpenAISettings = useCallback(() => setSettingsOpen(true), []);
   // Um só handler para o mudo, usado pela SettingsPage (o caminho vivo do jogador,
-  // canvas Conta §29) e pelo SettingsModal.
+  // canvas Conta §29). ⚰️ 21/09/2026: o `SettingsModal` ("Ajustes rápidos"), que
+  // também o usava, foi apagado — era duplicata da SettingsPage (decisão #37).
   const handleToggleSound = useCallback(() => {
     const mudo = !soundMuted;
     setMuted(mudo);
@@ -5135,7 +5133,6 @@ export default function App() {
                 equippedBackground={gameState.equippedBackground ?? null}
                 useAI={useAI}
                 aiSettings={aiSettings}
-                onOpenAISettings={handleOpenAISettings}
                 onCreateActivity={handleAICreateActivity}
                 language={language}
                 evolutionFlash={evolutionFlash}
@@ -5901,23 +5898,6 @@ export default function App() {
         confirmLabel={language === 'pt-BR' ? 'Refazer' : 'Redo'}
         cancelLabel={language === 'pt-BR' ? 'Cancelar' : 'Cancel'}
       />
-
-      {settingsOpen && (
-        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
-          <SettingsModal
-            isOpen={settingsOpen}
-            onClose={() => setSettingsOpen(false)}
-            useAI={useAI}
-            onToggleAI={() => setUseAI(!useAI)}
-            soundMuted={soundMuted}
-            onToggleSound={handleToggleSound}
-            aiSettings={aiSettings}
-            onSaveAISettings={(settings) => {
-              setAiSettings(settings);
-            }}
-          />
-        </Suspense>
-      )}
 
       <ContentModals
         guideModalOpen={guideModalOpen}

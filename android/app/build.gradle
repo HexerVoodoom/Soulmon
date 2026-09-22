@@ -8,8 +8,15 @@ android {
         applicationId "com.hexervoodoom.soulmon"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 14
-        versionName "1.1.3"
+        // 21/09/2026 (QA geral, etapa 4 — preparo do lançamento na Play):
+        // 14/1.1.3 → 15/1.1.4. É o PRIMEIRO bundle que carrega os três pacotes
+        // que só valem no aparelho com build novo (docs/STATUS.md §3.2 🟠):
+        // WP0.6 `setObfuscatedAccountId` (BillingPlugin.kt), WP5.8 preço
+        // localizado vindo da Play, WP2.6 widget com constância/escudos/oferta.
+        // A Play recusa AAB com versionCode repetido — bump manual, sem
+        // automação no CI (15-superficies-secundarias.md §B "Versão").
+        versionCode 15
+        versionName "1.1.4"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
@@ -59,6 +66,17 @@ dependencies {
     implementation "androidx.work:work-runtime-ktx:2.9.0"
     // Google Play Billing — compras dentro do app (ver plugins/BillingPlugin.kt).
     // Obrigatório pela Play para conteúdo digital; não dá para usar Stripe/Pix aqui.
+    //
+    // ⚠️ VERSÃO MÍNIMA EXIGIDA PELA PLAY — [a confirmar no Play Console] antes do
+    // primeiro upload de AAB. `docs/reviews/2026-09-21-qa-geral/15-superficies-
+    // secundarias.md` §B registra (sem fonte primária no repo) que a Play exige
+    // Billing Library ≥ 7 para atualizações desde 31/08/2025 e ≥ 8 a partir de
+    // 31/08/2026; com 6.2.1 o upload seria rejeitado na loja, não no build.
+    // NÃO foi bumpado aqui de propósito: `BillingPlugin.kt` chama
+    // `enablePendingPurchases()` SEM argumento, forma que a 7.x removeu (exige
+    // `PendingPurchasesParams`) — subir só esta linha quebra o compile do Kotlin,
+    // e o CI é o único lugar que prova o contrário. Roteiro completo em
+    // `docs/PLAY-LANCAMENTO.md` §G (Android).
     implementation "com.android.billingclient:billing-ktx:6.2.1"
     implementation project(':capacitor-android')
     testImplementation "junit:junit:$junitVersion"

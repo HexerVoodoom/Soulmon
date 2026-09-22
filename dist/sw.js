@@ -34,7 +34,10 @@ const PRECACHE_URLS = [
  *                   redirect para fora numa navegacao, que volta 'basic'.
  */
 function cacheavel(res) {
-  return !!res && res.ok && res.type === 'basic' && !res.redirected;
+  // `status === 200`, nao `ok`: um 206 (range request do <video>, `.mp4`)
+  // e `ok` e o `Cache.put` lanca "Partial response (status code 206) is
+  // unsupported" — visto no console em 21/09/2026 (QA geral, etapa 4).
+  return !!res && res.status === 200 && res.type === 'basic' && !res.redirected;
 }
 
 self.addEventListener('install', (event) => {

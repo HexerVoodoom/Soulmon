@@ -75,6 +75,7 @@ usuário escolhe.
 | Tipo do Google | Coletado? | Compartilhado? | Finalidade | Obrigatório? | Onde |
 |---|---|---|---|---|---|
 | **Outras mensagens no app** | ✅ Sim | ✅ Sim — **Groq** (provedor de IA, EUA) | Funcionalidades do app (a criatura responder) | Opcional | `functions/api/chat.js` |
+| **Outras mensagens no app** — descrição da criatura para gerar a imagem (inclui o campo opcional "criatura favorita" e a escolha do Renascimento, texto livre) | ✅ Sim | ✅ Sim — **Higgsfield** e **Google Gemini** (geração de imagem) | Funcionalidades do app (desenhar a criatura) | Opcional (só quem gera/regenera o sprite) | `functions/api/generate-sprite.js` (`generateHiggsfield`, `generateGemini`) — achado do QA de 21/09/2026 (`reviews/2026-09-21-qa-geral/11-compliance.md` §1); política §6 já declara |
 
 > **Não esconda isto.** É o item mais fácil de esquecer e o mais caro: o texto
 > que a pessoa escreve no chat sai do país. O app minimiza antes de enviar
@@ -201,7 +202,7 @@ lado certo para errar.
 
 **Coletado e compartilhado:**
 - E-mail → Firebase (Google)
-- Outras mensagens no app → Groq
+- Outras mensagens no app → Groq (chat, sugestões) e Higgsfield + Google Gemini (descrição da criatura para a imagem)
 - **Gravações de voz ou som** → serviço de transcrição, via `functions/api/transcribe.js` *(opcional; processamento efêmero — ver 2.4)*
 
 **Coletado, não compartilhado:**
