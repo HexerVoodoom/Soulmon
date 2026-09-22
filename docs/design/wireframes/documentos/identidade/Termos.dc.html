@@ -1,0 +1,395 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"></head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+
+  :root { color-scheme: light dark; }
+  body {
+    max-width: 720px; margin: 0 auto; padding: 32px 20px 64px;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.65; color: #2a2440; background: #f7f6fb;
+  }
+  @media (prefers-color-scheme: dark) {
+    body { color: #e8e6f2; background: #17141f; }
+    code { background: #241f33 !important; }
+    th, td { border-color: #3a3350 !important; }
+  }
+  h1 { font-size: 1.6rem; margin-bottom: 4px; }
+  h2 { font-size: 1.15rem; margin-top: 32px; }
+  .sub { color: #8b86a3; font-size: .9rem; margin-top: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: .9rem; display: block; overflow-x: auto; }
+  th, td { border: 1px solid #e9e6f2; padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { font-weight: 700; }
+  code { background: #efecfb; padding: 1px 5px; border-radius: 4px; font-size: .85em; }
+  .lang { margin: 24px 0; font-size: .9rem; }
+  hr { border: none; border-top: 1px solid #e9e6f2; margin: 48px 0; }
+
+/* o documento e servido em <body> proprio; aqui ele vira uma folha dentro do
+   artboard, com a mesma medida de linha (720px) e a mesma cor */
+.folha{max-width:760px;box-sizing:border-box}
+.ab{width:760px}
+
+  </style>
+</helmet>
+<div class="ab">
+<div class="folha">
+<h1>Termos de Uso — Soulmon</h1>
+<p class="sub">Última atualização: 22 de setembro de 2026</p>
+
+<p class="lang">
+  <a href="#en">English version below ↓</a> ·
+  <a href="/privacidade.html">Política de Privacidade</a>
+</p>
+
+<p>
+  O Soulmon é um app de produtividade gamificado: você cuida de uma criatura que
+  evolui junto com você, completando hábitos e tarefas de verdade. Estes Termos
+  explicam o que você pode esperar do serviço e o que esperamos de você — em
+  linguagem direta, sem juridiquês. Ao criar uma conta ou usar o app, você
+  concorda com eles.
+</p>
+
+<h2>1. O que o serviço é</h2>
+<p>
+  O Soulmon gera uma criatura única a partir de respostas que você dá (nome,
+  data de nascimento e um pequeno questionário). Essa criatura evolui conforme
+  você completa hábitos e tarefas dentro do app. O app funciona no navegador,
+  como aplicativo instalado (PWA), no Android e — quando disponível — em outras
+  plataformas, sempre com a <strong>mesma conta e o mesmo save</strong>.
+</p>
+
+<h2>2. Conta e save</h2>
+<p>
+  Sua conta é identificada pelo seu e-mail. Seu progresso (criatura, atividades,
+  tarefas, itens, moedas) fica guardado nos nossos servidores para você não
+  perder nada ao trocar de aparelho. Você é responsável por manter o acesso ao
+  seu e-mail; é por ele que recuperamos sua conta. Consulte a
+  <a href="/privacidade.html">Política de Privacidade</a> para saber exatamente
+  quais dados guardamos e por quê.
+</p>
+
+<h2>3. Idade mínima</h2>
+<p>
+  O Soulmon é para <strong>maiores de 18 anos</strong>. Ao criar a conta você
+  declara ter 18 anos ou mais. Se você informar sua data de nascimento para
+  montar o mapa astral da sua criatura, ela também confirma a idade mínima —
+  o app não segue com uma data de menor de 18.
+</p>
+
+<h2>4. Compras e Créditos</h2>
+<p>O Soulmon vende duas coisas com dinheiro real:</p>
+<ul>
+  <li>
+    <!-- O preco vive dentro de data-price="full-unlock" nos DOIS idiomas.
+       src/utils/publishedPrice.test.ts compara com FULL_UNLOCK_PRICE_LABEL
+       (src/utils/monetization.ts) e reprova se divergirem. Nao escreva preco
+       fora do marcador: o mesmo teste reprova preco solto. -->
+    <strong>Desbloqueio completo</strong> (pagamento único, <span data-price="full-unlock">R$ 29,90</span>): libera
+    gerar sua própria criatura, em vez de escolher entre os personagens de
+    demonstração.
+  </li>
+  <li>
+    <strong>Créditos</strong>: uma moeda paga que você usa na Nova Leitura
+    (gerar sua criatura de novo a partir das suas próprias respostas — veja a
+    seção 5).
+  </li>
+</ul>
+<p>
+  Créditos <strong>não podem ser trocados de volta por dinheiro</strong> e não
+  têm valor fora do app. Eles também não podem ser convertidos em Bits (a moeda
+  gratuita) além da taxa de troca declarada dentro do app.
+</p>
+<!-- Cortesia: decisão provisória do coordenador (QA rodada 1, 21/09/2026) —
+     "cortesia sobrevive a reembolso". Fonte: functions/api/_entitlements.js ›
+     grantCourtesy / COURTESY_PROVIDER / auditRefunds (que só pergunta à loja
+     pelas compras da loja). O bug de auditRefunds rebaixar para demo com
+     cortesia válida (00-skeptic #1) é do backend; o texto abaixo descreve a
+     regra decidida, não o estado do bug. -->
+<p>
+  <strong>Cortesia.</strong> Em alguns casos — testes com convidados, por
+  exemplo — podemos liberar o desbloqueio completo para uma conta
+  <strong>sem cobrar</strong>. A cortesia é concedida por nós, por conta, e vale
+  enquanto a conta existir. Ela não inclui Créditos, não pode ser transferida
+  nem trocada por dinheiro, e não é uma compra: se você também tiver comprado o
+  desbloqueio e essa compra for reembolsada, <strong>a cortesia continua
+  valendo</strong> — reembolso desfaz a compra, não a cortesia.
+</p>
+
+<h2>5. A Nova Leitura</h2>
+<p>
+  A Nova Leitura gera uma criatura a partir das <strong>suas respostas</strong>,
+  mantendo suas atividades, tarefas, hábitos e Bits. É uma compra de dinheiro
+  real, e o resultado <strong>não é sorteado</strong>: ele vem do que você
+  responde. Mesmas respostas, mesma criatura — mudar uma resposta é o que muda
+  quem ela vai ser. A tela mostra as perguntas antes de qualquer cobrança.
+</p>
+<p>
+  Até 06/09/2026 esta seção descrevia um <em>reroll</em> com resultado sorteado
+  aleatoriamente. Essa mecânica foi removida: pagar por um resultado aleatório
+  é o que se chama de sorteio pago, e ela contradizia a ideia central do
+  produto, que é a criatura vir de você.
+</p>
+<p>
+  Isso importa porque vale saber: <strong>todo pet do Soulmon é mecanicamente
+  igual</strong>. Elemento, espécie e aparência mudam a identidade da sua
+  criatura, não o que ela faz por você — atributos, evolução e benefícios
+  funcionam do mesmo jeito em qualquer resultado. O reroll muda
+  <strong>quem</strong> seu pet é, nunca <strong>o quanto</strong> ele te ajuda.
+</p>
+
+<h2>6. Conduta</h2>
+<p>
+  Pedimos que você não use o Soulmon para: tentar acessar a conta de outra
+  pessoa, explorar falhas do sistema para gerar moedas ou itens sem jogar de
+  verdade, ou usar o apelido público (Biblioteca/Torneio) para assédio, discurso
+  de ódio ou conteúdo ilegal. Contas que fizerem isso podem ser suspensas ou
+  encerradas.
+</p>
+
+<h2>7. Encerramento</h2>
+<p>
+  Você pode parar de usar o Soulmon quando quiser e pedir a exclusão da sua
+  conta e dos seus dados (veja a Política de Privacidade, seção "Seus
+  direitos"). Nós podemos suspender ou encerrar contas que violem a seção 6,
+  avisando você por e-mail sempre que possível antes de uma medida definitiva.
+</p>
+
+<h2>8. Limitação de responsabilidade, IA e momentos difíceis</h2>
+<p>
+  O Soulmon é uma ferramenta de apoio a hábitos e organização pessoal — não é
+  aconselhamento médico, psicológico ou financeiro, e o progresso do seu pet não
+  é uma medida de valor pessoal. Fazemos o possível para manter o app no ar e
+  seu save seguro, mas não garantimos operação ininterrupta nem podemos prometer
+  que uma falha técnica nunca vai acontecer.
+</p>
+<p>
+  <strong>O que é gerado por inteligência artificial.</strong> A conversa com a
+  sua criatura é escrita por um modelo de linguagem, na hora, sem revisão
+  humana. A imagem da sua criatura e alguns sons (evolução, regressão,
+  conclusão de tarefa) também são gerados por IA. Por isso o chat pode errar, inventar ou responder de um jeito
+  que não combina com o momento — leia o que ele diz como fala de um
+  personagem, não como informação nem orientação.
+</p>
+<p>
+  <strong>O chat não é um serviço de emergência.</strong> A criatura não é uma
+  pessoa, não é profissional de saúde e não substitui ninguém que possa ajudar
+  de verdade. Se você escrever algo que indique um momento de risco, acontecem
+  duas coisas, nesta ordem. Primeiro, o app responde com uma <strong>mensagem
+  fixa, escrita por gente — não pelo modelo</strong>, ainda na voz do
+  personagem, que aponta quem sabe ajudar: em português, o <strong>CVV</strong>,
+  que atende de graça, 24 horas, no <strong>188</strong>; em inglês, o diretório
+  <a href="https://findahelpline.com">findahelpline.com</a>, que acha a linha do
+  seu país — e esse link fica sempre visível logo abaixo do chat. Depois, se a conversa seguir, o modelo é
+  instruído a <strong>sair do personagem</strong>: dizer que ouviu, que isso é
+  maior do que ele, e pedir que você procure hoje uma pessoa de verdade — sem
+  citar número nem site (quem cita é a lista fixa), sem se usar como motivo
+  para você ficar. Se você precisar de ajuda agora, procure um desses canais ou
+  alguém de confiança.
+  <!-- Fonte: src/utils/chatSafety.ts › bridgeReply (camada 1, local, não chama
+       a IA; PT = CVV 188, EN = findahelpline.com desde 22/09/2026);
+       ChatBox.tsx › link permanente findahelpline + CVV/988/116 123;
+       functions/api/chat.js › bloco SAFETY (camada 2). Compliance #8 / E2. -->
+</p>
+
+<h2>9. Base para leitura de dados de uso</h2>
+<p>
+  Para calcular sua evolução, seu ritmo de cuidado e os relatórios que o app te
+  devolve (diário e semanal), lemos as tarefas e hábitos que você já concluiu
+  (<code>completedTasks</code> e o histórico de atividades recorrentes) — dados
+  que já fazem parte do seu save. Essa leitura serve só para o funcionamento do
+  próprio jogo (evolução, desempate de galho, relatórios que voltam pra você) e
+  nunca é usada para decidir se você pode ou não usar o app, nem compartilhada
+  fora dele. A única saída de nome de tarefa para fora é a que você mesmo aciona
+  ao tocar em "Decompor" (Política de Privacidade, seção 2b).
+</p>
+
+<h2>10. Alterações a estes Termos</h2>
+<p>
+  Podemos atualizar estes Termos de vez em quando. Se a mudança for relevante,
+  avisamos dentro do app antes de ela valer.
+</p>
+
+<h2>Contato</h2>
+<p>Dúvidas sobre estes Termos: <strong>mateus.sprnd@gmail.com</strong></p>
+
+<hr>
+
+<h1 id="en">Terms of Use — Soulmon</h1>
+<p class="sub">Last updated: September 22, 2026</p>
+
+<p class="lang"><a href="/privacidade.html#en">Privacy Policy</a></p>
+
+<p>
+  Soulmon is a gamified productivity app: you take care of a creature that
+  evolves alongside you as you complete real habits and tasks. These Terms
+  explain what you can expect from the service and what we expect from you — in
+  plain language, no legal jargon. By creating an account or using the app, you
+  agree to them.
+</p>
+
+<h2>1. What the service is</h2>
+<p>
+  Soulmon generates a unique creature from information you provide (name, birth
+  date and a short questionnaire). That creature evolves as you complete habits
+  and tasks inside the app. It runs in the browser, as an installed app (PWA),
+  on Android and — when available — on other platforms, always with the
+  <strong>same account and the same save</strong>.
+</p>
+
+<h2>2. Account and save</h2>
+<p>
+  Your account is identified by your email. Your progress (creature, activities,
+  tasks, items, currencies) is stored on our servers so you don't lose anything
+  when you switch devices. You're responsible for keeping access to your email —
+  it's how we recover your account. See the
+  <a href="/privacidade.html#en">Privacy Policy</a> for exactly what data we
+  store and why.
+</p>
+
+<h2>3. Minimum age</h2>
+<p>
+  Soulmon is for people <strong>18 and older</strong>. When you create your
+  account you declare that you are 18 or older. If you enter your birth date to
+  build your creature's astral chart, it also confirms the minimum age — the app
+  does not continue with a date under 18.
+</p>
+
+<h2>4. Purchases and Credits</h2>
+<p>Soulmon sells two things for real money:</p>
+<ul>
+  <li>
+    <!-- EN shows the price in US dollars (owner decision #25, 2026-09-21).
+       The label lives in FULL_UNLOCK_PRICE_LABEL_USD (src/utils/monetization.ts);
+       src/utils/publishedPrice.test.ts compares this marker with it. The
+       number comes from docs/PLANO-PRODUTO.md Part 3 (the declared BRL/USD
+       pair) — confirm against the Play Console price before the first sale.
+       Do not write a price in this comment: the same test flags loose prices. -->
+    <strong>Full unlock</strong> (one-time payment, <span data-price="full-unlock">US$ 6.99</span>): lets you generate
+    your own creature instead of picking from the demo characters. The dollar
+    amount is the reference price; Google Play charges in your local currency,
+    and the price shown in the app at checkout is the one that applies.
+    <!-- Redação A (decisão provisória do coordenador, QA rodada 1 #15):
+         US$ como referência, moeda local cobra. Critério "feito" em
+         PLAY-LANCAMENTO §D.7: confirmar o USD no console. -->
+  </li>
+  <li>
+    <strong>Credits</strong>: a paid currency you spend on a New Reading
+    (generate your creature again from your own answers — see section 5).
+  </li>
+</ul>
+<p>
+  Credits <strong>cannot be exchanged back for money</strong> and have no value
+  outside the app. They also cannot be converted into Bits (the free currency)
+  beyond the exchange rate displayed inside the app.
+</p>
+<p>
+  <strong>Courtesy.</strong> In some cases — tests with invited players, for
+  example — we may unlock the full version for an account <strong>at no
+  charge</strong>. A courtesy is granted by us, per account, and lasts as long
+  as the account exists. It does not include Credits, cannot be transferred or
+  exchanged for money, and is not a purchase: if you also bought the unlock and
+  that purchase is refunded, <strong>the courtesy still stands</strong> — a
+  refund undoes the purchase, not the courtesy.
+</p>
+
+<h2>5. The New Reading</h2>
+<p>
+  A New Reading generates a creature from <strong>your own answers</strong>,
+  keeping your activities, tasks, habits and Bits. It is a real-money purchase,
+  and the outcome is <strong>not a random roll</strong>: it comes from what you
+  answer. Same answers, same creature — changing an answer is what changes who
+  they become. The screen shows the questions before anything is charged.
+</p>
+<p>
+  Until 2026-09-06 this section described a <em>reroll</em> with a randomly
+  rolled outcome. That mechanic was removed: paying for a random result is what
+  a paid roll is, and it contradicted the product's central idea — that the
+  creature comes from you.
+</p>
+<p>
+  Worth knowing: <strong>every Soulmon pet is mechanically equal</strong>.
+  Element, species and look change your creature's identity, not what it does for
+  you — stats, evolution and benefits work the same way no matter the result.
+  Reroll changes <strong>who</strong> your pet is, never <strong>how much</strong>
+  it helps you.
+</p>
+
+<h2>6. Conduct</h2>
+<p>
+  We ask that you don't use Soulmon to: try to access someone else's account,
+  exploit system bugs to generate currency or items without actually playing, or
+  use your public nickname (Library/Tournament) for harassment, hate speech or
+  illegal content. Accounts that do this may be suspended or terminated.
+</p>
+
+<h2>7. Termination</h2>
+<p>
+  You can stop using Soulmon anytime and request deletion of your account and
+  data (see the Privacy Policy, "Your rights" section). We may suspend or
+  terminate accounts that violate section 6, notifying you by email whenever
+  possible before a final action.
+</p>
+
+<h2>8. Limitation of liability, AI and hard moments</h2>
+<p>
+  Soulmon is a support tool for habits and personal organization — not medical,
+  psychological or financial advice, and your pet's progress is not a measure of
+  your worth. We do our best to keep the app running and your save safe, but we
+  can't guarantee uninterrupted operation or promise a technical failure will
+  never happen.
+</p>
+<p>
+  <strong>What is generated by artificial intelligence.</strong> The
+  conversation with your creature is written by a language model, live, with no
+  human review. Your creature's image and some sounds (evolution, regression,
+  task completion) are also AI-generated. That means the chat can get things wrong, make things
+  up or answer in a way that doesn't fit the moment — read what it says as a
+  character speaking, not as information or guidance.
+</p>
+<p>
+  <strong>The chat is not an emergency service.</strong> The creature is not a
+  person, not a health professional, and not a replacement for anyone who can
+  actually help. If you write something that suggests you may be at risk, two
+  things happen, in this order. First, the app answers with a <strong>fixed
+  message, written by people — not by the model</strong>, still in the
+  character's voice, pointing to who can help: in Portuguese, <strong>CVV</strong>,
+  free, 24 hours, at <strong>188</strong>; in English, the
+  <a href="https://findahelpline.com">findahelpline.com</a> directory, which
+  finds the line for your country — and that link stays visible right below the
+  chat. Then, if the conversation goes
+  on, the model is instructed to <strong>step out of character</strong>: say it
+  heard you, that this is bigger than it, and ask you to reach a real person
+  today — without naming a number or a website (the fixed list does that), and
+  without using itself as a reason for you to stay. If you need help now, reach
+  one of those channels or someone you trust.
+</p>
+
+<h2>9. Basis for reading your usage data</h2>
+<p>
+  To calculate your evolution, your care rhythm and the reports the app gives
+  back to you (daily and weekly), we read the tasks and habits you've already
+  completed (<code>completedTasks</code> and the recurring-activity history) —
+  data that's already part of your save. This reading is only used to run the
+  game itself (evolution, branch tie-breaks, reports that come back to you) and
+  is never used to decide whether you can use the app, nor shared outside it.
+  The only way a task name leaves is the one you trigger yourself by tapping
+  "Break down" (Privacy Policy, section 2b).
+</p>
+
+<h2>10. Changes to these Terms</h2>
+<p>
+  We may update these Terms from time to time. If a change is significant, we'll
+  notify you inside the app before it takes effect.
+</p>
+
+<h2>Contact</h2>
+<p>Questions about these Terms: <strong>mateus.sprnd@gmail.com</strong></p>
+</div>
+<footer class="foot"><p><span style="font-weight:700">Artboard</span> · <span class="tg">DOC-01</span> · canvas <b>Documentos</b> · origem: <code>public/termos.html</code> (servido como página própria, abre em nova aba)</p><h4>Pergunta</h4><p>"O que eu aceitei, e o que eles fazem com o que eu escrevo?" — a resposta não mora no app: mora nesta página, e ela é tão parte do produto quanto qualquer tela.</p><h4>Notas</h4><ul><li>Medida de linha de <b>720px</b> e tipografia de sistema — não é o aparelho, é documento; misturar Fredoka aqui seria vestir de jogo o que é contrato.</li><li>PT e EN na <b>mesma</b> página, com âncora <code>#en</code>: um só endereço para os dois idiomas, e nada quebra quando o app troca de língua.</li><li>É para onde apontam <code>TermsUpdateBanner</code> (DER-01), a linha "What the chat receives" (DER-13) e os links legais do portão.</li></ul></footer>
+</div>
+</x-dc>
+</body>
+</html>
