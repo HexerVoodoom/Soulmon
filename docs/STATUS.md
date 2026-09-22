@@ -7,6 +7,62 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 22/09/2026 — alocação de ELEMENTO: construída até o WP4.23 e ⏸️ PARQUEADA PARA A v2.0
+>
+> **Decisão do dono ao fim da sessão:** priorizar o balanceamento PRÉ-RENASCIMENTO
+> agora e lançar a alocação de elemento junto do Renascimento na **v2.0 do app**.
+> A spec fica completa e o trabalho salvo; nada mais entra antes disso.
+>
+> **Spec:** `docs/plano-melhorias/G-alocacao-elemento.md` (13 seções, com o
+> cabeçalho de parqueamento). **Decisões #72–#78** em `PERGUNTAS-DO-DONO.md`.
+> **Pareceres:** `ledger/vetos.md` (linha vermelha, APROVADO COM RESSALVA,
+> R-A..R-H) e o parecer de psicologia comportamental, que revogou o prazo de 24h.
+>
+> **O que está no código e é INERTE** — ninguém passa plano de alocação (sem
+> campo no save, sem tela, sem chamador), e sem plano `allocateElementos` é byte
+> a byte a função de sempre, com teste exigindo isso estágio por estágio:
+> · **WP4.22** carve-out em `ficha/buildSheet.ts` (+ `buildSheet.aloc.test.ts`, 30 testes)
+> · **WP4.22b** R-B **verde** (`arena.alocacao.test.ts`): 17 planos adversariais,
+>   3000 runs cada — melhor `morte` 63,8%, pior `vigor` 60,0%, **spread 3,8pp**,
+>   dentro da janela 40–80%. Inclui trava anti-vacuidade (17 atributos distintos),
+>   que foi o que pegou uma regressão minha antes de ela ser enviada.
+> · **WP4.23 T-PISO REPROVOU**, e é aqui que o trabalho parou.
+>
+> **⚠️ A pendência que trava a retomada (seção 3).** A régua de §10.2 da spec
+> ("pares destravados ≥ os da ficha automática em ≥95%") **não é atingível** —
+> três mecanismos medidos, nenhum passa, e a causa é estrutural: par destrava
+> com ≥50 pontos em CADA componente contra um orçamento de 500, com a maior base
+> típica em 62 pontos. Os elementos ficam em cima do limiar. O trade-off medido:
+>
+> | Mecanismo | Pares ≥ auto | Fichas zeradas | Identidades de combate |
+> |---|---|---|---|
+> | carve-out (o que está no ar) | 49,7% | 62 | **17** |
+> | bias multiplicativo | 62,5% | 6 | **1** |
+>
+> Ou a alocação significa algo, ou ela não quebra nada. **Quatro saídas medidas
+> no bloco WP4.23 do `ledger/permanencia.md`** — o dono escolhe ao retomar.
+> A régua NÃO foi movida; o teste trava os valores medidos como piso de
+> regressão, com a divergência escrita no cabeçalho. Nenhum teste desativado.
+>
+> **CI:** o GitHub Actions não executa nada desde antes desta sessão — seis runs,
+> quatro commits, três workflows, todos morrendo entre 2 e 15 s sem rodar um
+> passo. Cloudflare publica normal. Já registrado na resposta #48 (o dono resolve
+> depois) e comentado no PR #110. A verificação desta sessão foi local: `tsc`,
+> `tsc` server, `tsc` desktop e `build` limpos, **4841 testes passando** — a única
+> falha é `tests/convertToWebp.test.ts`, que exige erro ao escrever em arquivo
+> somente-leitura e não reproduz rodando como root (falha de ambiente do sandbox,
+> não do código).
+>
+> **🔬 Achado colateral, não investigado (não é desta sessão):**
+> `src/components/SoulmonOnboarding.portao.render.test.tsx` › "entrar com Google
+> não pede e-mail nenhum" é **INTERMITENTE na suíte completa** — falhou em 2 de
+> 4 execuções cheias, e passa **3/3 rodando isolado** (25 testes verdes). Não é
+> do diff desta sessão (apareceu antes dele e o diff era markdown). O padrão —
+> verde sozinho, vermelho no conjunto — aponta para poluição entre testes ou
+> corrida de timing, não para regressão do portão de identidade. Fica registrado
+> porque teste instável num portão de AUTENTICAÇÃO é o tipo de coisa que passa a
+> ser ignorada como "flaky" até esconder um defeito real.
+
 > ## 22/09/2026 — sincronização do manual pós-merge `cf6315e1` (as 32 respostas do dono)
 >
 > Delta `cd66940f..cf6315e1` (5 commits: `917c9465`/`7d80f8d7`/`19f0d1f3` de narrativa, `592e2c14` já carimbado, e

@@ -1,3 +1,33 @@
+> # ⏸️ PARQUEADO PARA A v2.0 — decisão do dono, 22/09/2026
+>
+> **Esta spec não é trabalho em andamento.** O dono decidiu priorizar o
+> balanceamento PRÉ-RENASCIMENTO e lançar a alocação de elemento junto do
+> Renascimento na **v2.0 do app**. Nada aqui entra antes disso.
+>
+> **O que já está no código, e é INERTE.** Dois pacotes foram construídos e
+> mergeados antes da decisão. Eles não fazem nada hoje porque **ninguém passa
+> um plano de alocação**: não há campo no save, não há tela e não há chamador.
+> Sem plano, `allocateElementos` é byte a byte a função de sempre — há teste
+> exigindo isso estágio por estágio.
+>
+> | Pacote | Estado | Onde |
+> |---|---|---|
+> | WP4.22 — carve-out em `allocateElementos` | pronto, inerte | `ficha/buildSheet.ts` + `buildSheet.aloc.test.ts` |
+> | WP4.22b — R-B, a alocação não compra combate | **verde**, medido | `arena.alocacao.test.ts` |
+> | WP4.23 — T-PISO | **reprovou**, medido | `buildSheet.piso.test.ts` |
+> | WP4.24…WP4.33 | não começados | — |
+>
+> ⚠️ **Ao retomar, comece lendo o bloco WP4.23 do `ledger/permanencia.md`** —
+> a régua de §10.2 desta spec **não é atingível** pelos mecanismos testados, e
+> o motivo é estrutural (par destrava com ≥50 pontos em cada componente contra
+> um orçamento de 500). Há uma decisão do dono pendente ali, com quatro saídas
+> medidas. **Não recomece a implementação antes de resolvê-la** — foi o que
+> parou este trabalho, não falta de tempo.
+>
+> As sete decisões que sustentam esta spec (#72–#78) estão em
+> `docs/PERGUNTAS-DO-DONO.md`, seção "ALOCAÇÃO DE ELEMENTO". Elas continuam
+> valendo; o que mudou foi o QUANDO.
+
 # G — Alocação manual de ELEMENTO destravada pelo Renascimento (SPEC)
 
 > **Estado: SPEC. Nada implementado.** Escrita em 22/09/2026 pelo
