@@ -21,7 +21,11 @@
 // (retina) e `kernel: 'nearest'`, porque reamostrar pixel art com Lanczos
 // borra a grade — e a grade É a estética do visor.
 //
-// Uso: `npm run booklet:pdf`
+// Uso: `npm run booklet:pdf` (o livrinho) ou
+//      `node scripts/booklet-pdf.mjs docs/<outro>.md` para qualquer doc da
+//      mesma família — a história de prólogo usa o MESMO gerador de propósito:
+//      dois renderizadores dariam dois PDFs com tipografia diferente para o
+//      mesmo universo, e a divergência apareceria só no telefone de quem lê.
 
 import { readFile, writeFile, mkdir, rm } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
@@ -30,9 +34,21 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import sharp from 'sharp';
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const MD = path.join(RAIZ, 'docs/BOOKLET-UNIVERSO.md');
-const PDF = path.join(RAIZ, 'docs/BOOKLET-UNIVERSO.pdf');
+
+/** O `.md` de entrada vem por argumento; sem argumento, o livrinho. O PDF sai
+ *  ao lado dele, com o mesmo nome. */
+const ENTRADA = process.argv[2] ?? 'docs/BOOKLET-UNIVERSO.md';
+const MD = path.resolve(RAIZ, ENTRADA);
+const PDF = MD.replace(/\.md$/, '.pdf');
 const TMP = path.join(RAIZ, '.booklet-pdf-tmp');
+
+/** Os caminhos de imagem no `.md` são relativos AO DOC, não à raiz, então um
+ *  doc numa subpasta (`docs/historias/`) usa `../../src/assets/…`. É daqui que
+ *  sai quantos `../` o regex precisa aceitar. */
+const PREFIXO = path
+  .relative(path.dirname(MD), path.join(RAIZ, 'src/assets'))
+  .replace(/\\/g, '/')
+  .replace(/src\/assets$/, '');
 
 /** Página do PDF, em pontos. 390 × 844 é a caixa de telefone que o resto do
  *  projeto já usa como referência (os artboards da squad-design são 390×844). */
@@ -178,7 +194,8 @@ async function reamostrar(md) {
   await rm(TMP, { recursive: true, force: true });
   await mkdir(TMP, { recursive: true });
 
-  const refs = [...md.matchAll(/<img\s+src="\.\.\/([^"]+)"[^>]*?width="(\d+)"/g)];
+  const escapado = PREFIXO.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const refs = [...md.matchAll(new RegExp(`<img\\s+src="${escapado}([^"]+)"[^>]*?width="(\\d+)"`, 'g'))];
   const maior = new Map();
   for (const [, rel, w] of refs) {
     maior.set(rel, Math.max(maior.get(rel) ?? 0, Number(w)));
@@ -312,7 +329,7 @@ async function main() {
 
   let corpo = md;
   for (const [rel, url] of mapa) {
-    corpo = corpo.split(`"../${rel}"`).join(`"${url}"`);
+    corpo = corpo.split(`"${PREFIXO}${rel}"`).join(`"${url}"`);
   }
 
   const css = CSS
