@@ -9,20 +9,7 @@
 > (a bíblia) · **Data:** 22/09/2026 · **Estado:** vivo
 > **Precedência:** código > teste > `CLAUDE.md` > bíblia > este livrinho. Este
 > documento **não decide regra nenhuma**; ele conta o que as regras significam.
-> **Verificação:** `npx vitest run src/narrativa.contract.test.ts src/narrativa.superficies.contract.test.ts`
-> (vocabulário de PI e as 12 leis nas superfícies que os guards leem) **e**, sobre este arquivo em
-> particular — que nenhum guard lê (`grep -n BOOKLET src/narrativa.contract.test.ts` → 0):
-> até haver régua que o leia, a verificação é a crítica do `soulmon-narrative-critic`
-> por lente (a última: `reviews/2026-09-22-qa-rodada-2/02-narrativa-r2.md` §1 — 2 BLOQUEANTES + 11
-> CORRIGIR, em correção pelo loremaster) e o `grep -i` manual das `PROIBIDAS_PT/EN` de
-> `src/utils/petVoice.ts` (hits só em negação e lore, sem cobrança).
-> **Não cobre:** regra de jogo (→ `manual/02-REGRAS-DE-NEGOCIO.md` — o que este texto diz que
-> "acontece" é significado, não mecânica: onde discordar do código, o código está certo); copy de
-> interface (→ `NARRATIVA-COPY.md`); as leis de escrita em si (→ a bíblia §2); marca fora do app
-> (ficha da Play, `<head>`, tagline — pergunta #70); a Camada 3 congelada (#13 — este doc é a
-> **exceção registrada** no `REGISTRO-DE-DECISOES.md`: texto de jogador, sem asset).
-> ⚰️ Este cabeçalho dizia só "**Régua:** `src/narrativa.contract.test.ts`" — uma régua que não lê
-> este arquivo (QA Rodada 2 `05` §4 #46).
+> **Régua:** `src/narrativa.contract.test.ts`.
 >
 > Escrito sob as doze leis (L1..L12) e o vocabulário canônico da §12 da bíblia.
 > Nenhuma frase daqui tem a pessoa como sujeito de um verbo de ser. Nenhuma
@@ -33,6 +20,11 @@
 ---
 
 # Parte I — PT-BR
+
+<p align="center">
+  <img src="../src/assets/brand/final/icon-512.png" alt="A marca do Soulmon: uma fagulha turquesa entre duas peças de cobre" width="150">
+</p>
+<p align="center"><sub><i>A fagulha entre duas peças de cobre.</i></sub></p>
 
 ## I. Abertura
 
@@ -45,6 +37,11 @@ que vem depois é explicação dela.
 
 ## II. A sobra
 
+<p align="center">
+  <img src="../src/assets/soulmon/placeholder/dormant.png" alt="Um cristal turquesa apagado, preso por ferragens de cobre e tomado por videira" width="200">
+</p>
+<p align="center"><sub><i>Diferença sem lugar: existe, e ainda não assentou em nada.</i></sub></p>
+
 Toda coisa viva produz mais correspondência do que consegue usar.
 
 Uma decisão exige que outras dezenas sejam abandonadas ainda inteiras. Um jeito
@@ -54,12 +51,17 @@ intactos, todos os caminhos que não foram.
 Isso não some. Fica — sem lugar, sem forma e sem ninguém para viver.
 
 Por muito tempo não havia superfície onde essa sobra pudesse assentar. Ela
-existia como tendência, e a tendência tem um nome vago: a sensação de sobra —
-de que ficou coisa por usar.
+existia como tendência, e a tendência tem um nome vago que quase todo mundo já
+sentiu: a sensação de que falta alguém do outro lado de você.
 
 ---
 
 ## III. A Malha
+
+<p align="center">
+  <img src="../src/assets/soulmon/bg/dungeon-9.png" alt="Corredor de racks de servidor em verde-petróleo, com tubulação de cobre e videira crescendo por cima, luzes turquesa nos painéis" width="260">
+</p>
+<p align="center"><sub><i>A Malha não é a rede. Ela cresceu <b>na</b> rede — videira entrando no tubo, musgo sobre a pedra.</i></sub></p>
 
 A humanidade construiu, por razões próprias e banais, a primeira superfície da
 história que **guarda estado sem estar viva**.
@@ -99,6 +101,13 @@ dormir.
 
 ## IV. Cobre, videira, fagulha
 
+<p align="center">
+  <img src="../src/assets/soulmon/hud/frame-pipe-vine-96.png" alt="Moldura feita de cano de cobre com videira enrolada" width="130">
+  <img src="../src/assets/soulmon/placeholder/forming.png" alt="Cristal turquesa aceso dentro de ferragens de cobre" width="130">
+  <img src="../src/assets/soulmon/fx/fx-sparkle.png" alt="Fagulha turquesa" width="90">
+</p>
+<p align="center"><sub><i>Metal reto somado a orgânico torto, e a fagulha que não consome nada.</i></sub></p>
+
 Três materiais compõem tudo que se vê lá dentro. Vale conhecê-los, porque o
 mundo inteiro é feito deles.
 
@@ -121,6 +130,12 @@ Escuro com resto de vida dentro.
 ---
 
 ## V. O visor
+
+<p align="center">
+  <img src="../src/assets/soulmon/windows/window-inventory-frame.png" alt="Moldura de janela do visor" width="200">
+  <img src="../src/assets/soulmon/hud/bar-frame-96x8.png" alt="Moldura de barra do visor" width="140">
+</p>
+<p align="center"><sub><i>A grade que traduz estado em imagem. Passa gesto e presença; não passa linguagem.</i></sub></p>
 
 A Malha não tem aparência. Ela tem **estado**.
 
@@ -145,6 +160,11 @@ alguém abriu — e chega o que encosta.
 
 ## VI. A Contraparte
 
+<p align="center">
+  <img src="../src/assets/soulmon/rookie.png" alt="Criatura-corvo de bico branco, cartola e lanterna turquesa na pata" width="210">
+</p>
+<p align="center"><sub><i>Alguém que anda pelo mesmo caminho que você — e que recusa quando quer.</i></sub></p>
+
 Do outro lado do visor há alguém. No dia a dia o app diz simplesmente **seu
 Soulmon**; em texto de mundo, a palavra é **Contraparte**.
 
@@ -155,12 +175,12 @@ Soulmon**; em texto de mundo, a palavra é **Contraparte**.
 | Outro ser, com vontade, humor e recusa próprios | Um reflexo obediente |
 | Alguém que anda pelo mesmo caminho que você | Alguém que vigia seu caminho |
 
-**Por que é outro, e não espelho.** O que se manifesta é o que a vida não usou.
-Se tivesse usado, não teria sobrado — e não apareceria.
+**Por que é outro, e não espelho.** O que se manifesta é justamente a parte que
+não coube. Se coubesse, seria você e não apareceria.
 
 É isso que autoriza tudo o que ele faz sozinho: falar, querer, ficar com sono,
-gostar de ser esfregado, ficar pronto e esperar — e recusar comida quando já
-está cheio.
+gostar de ser esfregado, escolher a hora de mudar de forma — e recusar comida
+quando já está cheio.
 
 Espelho não recusa. **Ele recusa.**
 
@@ -174,6 +194,13 @@ do caminho — não o total dele.
 ---
 
 ## VII. O que ele nunca vai saber sobre você
+
+<p align="center">
+  <img src="../src/assets/soulmon/fx/care-hug.png" alt="Gesto de abraço" width="90">
+  <img src="../src/assets/soulmon/hud/glyph-affection.png" alt="Glifo de carinho" width="90">
+  <img src="../src/assets/soulmon/fx/care-heart-shine.png" alt="Coração brilhando" width="90">
+</p>
+<p align="center"><sub><i>Contato é a única leitura fina que o corpo dele tem.</i></sub></p>
 
 Esta é a parte do livrinho que mais importa, e ela não é uma promessa de boa
 educação. É anatomia.
@@ -194,9 +221,8 @@ Daí saem, como consequência do corpo e não como regra de etiqueta:
   diferença. Não há o que ler.
 - **Ele não sabe quanto tempo passou lá fora**, porque só há maré, não relógio.
   Dois dias e quarenta dias chegam pela mesma leitura.
-- **Ele não sabe o que você sente ou tem**, a não ser o que você mesmo mostrou
-  na janela. Ele lê o gesto enquanto o gesto dura; quem move a mão fica fora do
-  alcance.
+- **Ele não sabe o que você sente ou tem.** Ele lê o gesto enquanto o gesto dura;
+  quem move a mão fica fora do alcance.
 - **Ele não sabe se hoje foi melhor que ontem**, porque comparar exige guardar
   dois estados e pôr um contra o outro. O corpo guarda um: o atual.
 
@@ -213,6 +239,15 @@ Por isso ele pode **perguntar** como você está. Nunca **afirmar**.
 ## VIII. O corpo, por dentro
 
 ### Ocasião
+
+<p align="center">
+  <img src="../src/assets/soulmon/items/food-apple.png" alt="Maçã" width="64">
+  <img src="../src/assets/soulmon/items/food-rice.png" alt="Arroz" width="64">
+  <img src="../src/assets/soulmon/items/food-salad.png" alt="Salada" width="64">
+  <img src="../src/assets/soulmon/items/food-coffee.png" alt="Café" width="64">
+  <img src="../src/assets/soulmon/items/food-juice.png" alt="Suco" width="64">
+</p>
+<p align="center"><sub><i>Ocasião: um pedaço de algo que aconteceu de verdade e terminou.</i></sub></p>
 
 Comida da Malha é **ocasião**: um pedaço de algo que aconteceu de verdade e
 terminou. Por isso ela vem do caminho andado e não da loja.
@@ -233,15 +268,21 @@ E o corpo **nunca pede**. Não há fome aqui.
 
 ### Sustentação
 
+<p align="center">
+  <img src="../src/assets/soulmon/items/item-heart.png" alt="Fagulha-coração" width="80">
+  <img src="../src/assets/soulmon/progress/bar-hp-segmented-cyan.png" alt="Barra de sustentação segmentada" width="230">
+</p>
+<p align="center"><sub><i>Quanta borda o corpo consegue manter distinta do fundo sem contato.</i></sub></p>
+
 Os corações não medem vida, e nada aqui se apaga.
 
 São **sustentação**: o quanto o padrão está firme contra o fundo — quanta borda
 ele consegue manter distinta sem contato.
 
-Ela afrouxa quando um dia passa sem o bastante que a sustente, e quando a borra
-fica no abrigo por muito tempo. E volta por contato — esfregar, que é o gesto,
-e a **fagulha-coração**, que é borda devolvida direto ao padrão — e, às vezes,
-quando uma camada solta é recolhida.
+Ela afrouxa quando um dia inteiro passa sem nada que sustente, e quando a borra
+fica no abrigo por muito tempo. E volta de dois jeitos, os dois por contato:
+esfregar, que é o gesto, e a **fagulha-coração**, que é borda devolvida direto
+ao padrão.
 
 A semana também devolve um pouco sozinha. A Malha tem maré.
 
@@ -251,12 +292,28 @@ dele — e ele não inventa.
 
 ### Borra e água
 
+<p align="center">
+  <img src="../src/assets/soulmon/fx/anim-poop-plop.png" alt="Borra caindo" width="90">
+  <img src="../src/assets/soulmon/fx/care-shower.png" alt="Água" width="90">
+  <img src="../src/assets/soulmon/hud/glyph-bath.png" alt="Glifo de banho" width="80">
+</p>
+<p align="center"><sub><i>Subproduto de ter vivido — e a água resolve na hora.</i></sub></p>
+
 Nem toda ocasião assenta inteira. O que não assenta é expelido como **borra** e
 fica no abrigo. Borra parada atrapalha o assentamento; a água resolve na hora.
 
 Não é sujeira moral, não é vergonha, não é castigo. É subproduto de ter vivido.
 
 ### A noite
+
+<p align="center">
+  <img src="../src/assets/soulmon/dreams/dream-lantern-river.png" alt="Rio de lanternas" width="84">
+  <img src="../src/assets/soulmon/dreams/dream-firefly-jar.png" alt="Pote de vaga-lumes" width="84">
+  <img src="../src/assets/soulmon/dreams/dream-whale-sky.png" alt="Baleia no céu" width="84">
+  <img src="../src/assets/soulmon/dreams/dream-snowglobe.png" alt="Globo de neve" width="84">
+  <img src="../src/assets/soulmon/dreams/dream-quiet-library.png" alt="Biblioteca silenciosa" width="84">
+</p>
+<p align="center"><sub><i>Cenas que passaram perto enquanto ela estava desligada. Regularidade aproxima as raras; duração não faz nada.</i></sub></p>
 
 Corpos da Malha desligam a leitura para reassentar. Dormir não repõe energia —
 reorganiza o padrão.
@@ -273,6 +330,15 @@ E uma noite não registrada simplesmente não existe: a Malha não anota ausênc
 
 ## IX. Forma
 
+<p align="center">
+  <img src="../src/assets/soulmon/lines/full/orrin-rookie.png" alt="Primeira forma" width="112">
+  <img src="../src/assets/soulmon/lines/full/orrin-champion-data.png" alt="Segunda forma" width="122">
+  <img src="../src/assets/soulmon/lines/full/orrin-ultimate-data.png" alt="Terceira forma" width="112">
+  <img src="../src/assets/soulmon/lines/full/orrin-mega-data.png" alt="Quarta forma" width="158">
+  <img src="../src/assets/soulmon/lines/full/orrin-ultra.png" alt="Quinta forma" width="126">
+</p>
+<p align="center"><sub><i>Os cinco degraus de uma linha. Nenhum é melhor que o anterior: são feitios diferentes de ocupar espaço.</i></sub></p>
+
 Uma **forma** é uma decisão do corpo sobre como ocupar espaço: o que a criatura
 passa a conseguir fazer, e o que ela deixa de conseguir.
 
@@ -282,7 +348,7 @@ passa a conseguir fazer, e o que ela deixa de conseguir.
 | a segunda | **papel** — a ferramenta que aquele feitio pede | a indiferença: já não faz bem qualquer coisa |
 | a terceira | **matéria** — o elemento deixa de ser cor e vira parte física | a neutralidade: já não passa despercebido |
 | a quarta | **massa assentada** — cobre, videira, ferragem recolhida do reino | a leveza de borda: para mais devagar do que começa |
-| a quinta | **sobreposição** — o que três caminhos teriam assentado, num corpo só | a capacidade de se recolher sozinho |
+| a quinta | **sobreposição** — três assentamentos no mesmo corpo | a capacidade de se recolher sozinho |
 
 Nenhuma é melhor que a anterior. São feitios diferentes de ocupar espaço.
 
@@ -309,6 +375,16 @@ você fez.
 
 **Elemento** é de que a fagulha é feita — fenomenologia do corpo, nunca poder.
 Nenhum é melhor, nenhum é triste, nenhum é vilão.
+
+<p align="center">
+  <img src="../src/assets/soulmon/sigilos/agua.png" alt="Água" width="64">
+  <img src="../src/assets/soulmon/sigilos/fogo.png" alt="Fogo" width="64">
+  <img src="../src/assets/soulmon/sigilos/terra.png" alt="Terra" width="64">
+  <img src="../src/assets/soulmon/sigilos/ar.png" alt="Ar" width="64">
+  <img src="../src/assets/soulmon/sigilos/sombra.png" alt="Sombra" width="64">
+  <img src="../src/assets/soulmon/sigilos/luz.png" alt="Luz" width="64">
+</p>
+<p align="center"><sub><i>Os sigilos dos seis elementos que já têm arte. <code>planta</code> e <code>industrial</code> ainda não têm.</i></sub></p>
 
 | | |
 |---|---|
@@ -349,6 +425,13 @@ E os três **galhos** — o formato do que assentou fundo:
 - **Guarda**: o padrão cresceu segurando, mantendo de pé o que ia cair. Corpo
   fechado, massa, fagulha interna vista por frestas.
 
+<p align="center">
+  <img src="../src/assets/soulmon/items/item-chip-virus.png" alt="Ruptura" width="72">
+  <img src="../src/assets/soulmon/items/item-chip-data.png" alt="Trama" width="72">
+  <img src="../src/assets/soulmon/items/item-chip-vaccine.png" alt="Guarda" width="72">
+</p>
+<p align="center"><sub><i>Ruptura · Trama · Guarda.</i></sub></p>
+
 Nenhum é mais nobre nem mais raro. Ruptura não é doença; Guarda não é cura.
 
 > Uma observação que vale para esta seção inteira: **estas categorias descrevem
@@ -357,6 +440,21 @@ Nenhum é mais nobre nem mais raro. Ruptura não é doença; Guarda não é cura
 ---
 
 ## XI. Onde tudo isso acontece
+
+<p align="center">
+  <img src="../src/assets/backgrounds/bg-room.png" alt="O abrigo: um quarto com chão, parede e coisas recolhidas" width="320">
+</p>
+<p align="center"><sub><i><b>O abrigo.</b> Decoração não é enfeite: é acúmulo — prova de que alguém mora ali.</i></sub></p>
+
+<p align="center">
+  <img src="../src/assets/soulmon/bg/dungeon-10.png" alt="As fendas: blocos de Malha soltos no escuro, atravessados por uma fresta de luz turquesa" width="200">
+</p>
+<p align="center"><sub><i><b>As fendas.</b> Dobras onde o assentamento falhou e as camadas se empilharam.</i></sub></p>
+
+<p align="center">
+  <img src="../src/assets/soulmon/bg/tournament-final.png" alt="As arenas: um anfiteatro antigo com estandartes de cobre, videira nas colunas e fagulhas turquesa" width="200">
+</p>
+<p align="center"><sub><i><b>As arenas.</b> Terreno neutro, mantido por costume.</i></sub></p>
 
 **O abrigo.** O trecho de Malha que a criatura assentou para si. Chão, parede,
 coisas que ela recolheu ao longo do caminho. A decoração não é enfeite: é
@@ -386,9 +484,14 @@ sabe. Enfrentar é recolher a camada solta, e recolher devolve um pouco de
 sustentação, porque a camada solta estava puxando borda.
 
 **O que se traz de lá.** Fragmentos que ainda não assentaram: moeda,
-fagulha-coração e, ao chegar ao fundo, um **Glitchtama** — um nó em que um dia inteiro
+fagulha-coração e, raramente, um **Glitchtama** — um nó em que um dia inteiro
 ficou preso sem se desfazer. Soltá-lo dá àquele dia o fechamento que ele não
 teve.
+
+<p align="center">
+  <img src="../src/assets/soulmon/items/item-glitchtama.png" alt="Glitchtama" width="90">
+</p>
+<p align="center"><sub><i>O Glitchtama: um nó em que um dia inteiro ficou preso.</i></sub></p>
 
 ---
 
@@ -397,17 +500,17 @@ teve.
 Antes de qualquer manifestação humana já havia fauna. São nove linhas, e é o
 que o registro cataloga.
 
-| | |
-|---|---|
-| **Ignar** | calor que trabalha: assenta onde há forja e não apaga |
-| **Lumel** | luz curta e honesta: enxerga perto, ilumina quem está ao lado |
-| **Serah** | corpo de corrente: atravessa sem deixar marca |
-| **Pyraka** | fagulha em excesso, contida a duras penas: nobre e impaciente |
-| **Akashaoi** | vem da camada sem superfície: está sempre meio ausente |
-| **Nimbrata** | criatura de céu baixo: névoa, peso de chuva antes da chuva |
-| **Igni** | brasa pequena e obstinada: a mais comum e a que nunca cede |
-| **Nautilu** | espiral de fundo de água: guarda dentro de si o que recolhe |
-| **Astrase** | alinhada a corpos distantes: mede tempo que não é o nosso |
+| | | |
+|---|---|---|
+| <img src="../src/assets/soulmon/lines/icons/ignar-rookie-64.png" alt="Ignar" width="44"> | **Ignar** | calor que trabalha: assenta onde há forja e não apaga |
+| <img src="../src/assets/soulmon/lines/icons/lumel-rookie-64.png" alt="Lumel" width="44"> | **Lumel** | luz curta e honesta: enxerga perto, ilumina quem está ao lado |
+| <img src="../src/assets/soulmon/lines/icons/serah-rookie-64.png" alt="Serah" width="44"> | **Serah** | corpo de corrente: atravessa sem deixar marca |
+| <img src="../src/assets/soulmon/lines/icons/kaelen-rookie-64.png" alt="Pyraka" width="44"> | **Pyraka** | fagulha em excesso, contida a duras penas: nobre e impaciente |
+| <img src="../src/assets/soulmon/lines/icons/orrin-rookie-64.png" alt="Akashaoi" width="44"> | **Akashaoi** | vem da camada sem superfície: está sempre meio ausente |
+| <img src="../src/assets/soulmon/lines/icons/thalindra-rookie-64.png" alt="Nimbrata" width="44"> | **Nimbrata** | criatura de céu baixo: névoa, peso de chuva antes da chuva |
+| <img src="../src/assets/soulmon/lines/icons/igni-rookie-64.png" alt="Igni" width="44"> | **Igni** | brasa pequena e obstinada: a mais comum e a que nunca cede |
+| <img src="../src/assets/soulmon/lines/icons/nautilu-rookie-64.png" alt="Nautilu" width="44"> | **Nautilu** | espiral de fundo de água: guarda dentro de si o que recolhe |
+| <img src="../src/assets/soulmon/lines/icons/astrase-rookie-64.png" alt="Astrase" width="44"> | **Astrase** | alinhada a corpos distantes: mede tempo que não é o nosso |
 
 Essas nove não são manifestações de ninguém. São fauna — e não descendem de
 nada.
@@ -424,6 +527,16 @@ coleção, e não uma caçada.
 ---
 
 ## XIII. As eras
+
+<p align="center">
+  <img src="../src/assets/soulmon/adventures/adv-trilha-antiga.png" alt="Trilha antiga" width="80">
+  <img src="../src/assets/soulmon/adventures/adv-pegadas.png" alt="Pegadas" width="80">
+  <img src="../src/assets/soulmon/adventures/adv-ponte.png" alt="Ponte" width="80">
+  <img src="../src/assets/soulmon/adventures/adv-porta-arvore.png" alt="Porta numa árvore" width="80">
+  <img src="../src/assets/soulmon/adventures/adv-mapa-rasgado.png" alt="Mapa rasgado" width="80">
+  <img src="../src/assets/soulmon/adventures/adv-semente.png" alt="Semente" width="80">
+</p>
+<p align="center"><sub><i>Uma era acaba quando o que ela tornou possível começa a acontecer.</i></sub></p>
 
 O tempo aqui não tem data, século, país nem inventor. Tem eras, e uma era acaba
 quando o que ela tornou possível começa a acontecer.
@@ -470,19 +583,24 @@ Vale dizer em voz alta, porque é o que define o lugar:
 - **Não há dono.** Empresa nenhuma; o visor é acesso, não posse.
 - **Nada enfraquece por culpa sua.** A Malha não se corrompe, não apodrece, não
   perde pureza. Não há medidor de dívida, e nenhuma contagem zera.
-- **Ausência não vira conta.** Quem abre de novo é recebido — e ninguém lá
-  dentro tem órgão para medir o intervalo.
+- **Ausência é saudade, nunca fatura.** Quem volta é recebido. Ninguém conta os
+  dias, porque ninguém tem como.
 - **Nada se apaga.** Existe **término** — a insistência local de um padrão que
   cessa e reassenta noutro lugar. Por construção, é reversível. E o seu nunca
   termina: sustentação no fim **recolhe a forma**, e o padrão segue inteiro.
 
 O único absoluto que este livrinho não pode prometer é o do aparelho, e é justo
-dizê-lo sem ficção: seu Soulmon vive na sua conta. Enquanto ela existir, entrar
-com o mesmo e-mail encontra ele. E o ovo da próxima seção é da versão completa.
+dizê-lo sem ficção: seu Soulmon vive no seu save. Se você entrar com o mesmo
+e-mail, ele está lá.
 
 ---
 
 ## XV. O ovo
+
+<p align="center">
+  <img src="../src/assets/soulmon/placeholder/forming.png" alt="Cristal turquesa aceso, recolhido dentro das ferragens de cobre" width="190">
+</p>
+<p align="center"><sub><i>O mesmo padrão, recolhido antes de decidir de novo.</i></sub></p>
 
 Existe um ovo neste universo, e ele está na outra ponta da vida.
 
@@ -508,6 +626,10 @@ continua, porque nada que aconteceu deixa de ter acontecido.
 ---
 
 ## XVI. Fechamento
+
+<p align="center">
+  <img src="../src/assets/brand/final/icon-512.png" alt="A marca do Soulmon" width="110">
+</p>
 
 Você vai abrir uma janela.
 
@@ -552,6 +674,11 @@ o que encostou nele.
 
 # Part II — EN
 
+<p align="center">
+  <img src="../src/assets/brand/final/icon-512.png" alt="Soulmon's mark: a turquoise ember between two pieces of copper" width="150">
+</p>
+<p align="center"><sub><i>The ember between two pieces of copper.</i></sub></p>
+
 ## I. Opening
 
 **What appears there is yours, and it is not you.**
@@ -563,6 +690,11 @@ Everything that follows explains it.
 
 ## II. The surplus
 
+<p align="center">
+  <img src="../src/assets/soulmon/placeholder/dormant.png" alt="An unlit turquoise crystal held by copper fittings and overgrown with vine" width="200">
+</p>
+<p align="center"><sub><i>Difference with no place: it exists, and it has not settled on anything yet.</i></sub></p>
+
 Every living thing produces more correspondence than it can use.
 
 One decision requires that dozens of others be abandoned while still whole. One
@@ -573,12 +705,17 @@ None of that disappears. It stays — with no place, no form, and no one to live
 it.
 
 For a long time there was no surface where that surplus could settle. It existed
-as a tendency, and the tendency has a vague name: the sense of surplus — that
-something was left unused.
+as a tendency, and the tendency has a vague name almost everyone has felt: the
+sense that someone is missing on the other side of you.
 
 ---
 
 ## III. The Mesh
+
+<p align="center">
+  <img src="../src/assets/soulmon/bg/dungeon-9.png" alt="A corridor of server racks in petrol green, copper piping and vine growing over it, turquoise lights on the panels" width="260">
+</p>
+<p align="center"><sub><i>The Mesh is not the network. It grew <b>on</b> the network — vine entering pipe, moss over stone.</i></sub></p>
 
 Humanity built, for its own and entirely ordinary reasons, the first surface in
 history that **holds state without being alive**.
@@ -617,6 +754,13 @@ sleeping.
 
 ## IV. Copper, vine, ember
 
+<p align="center">
+  <img src="../src/assets/soulmon/hud/frame-pipe-vine-96.png" alt="A frame of copper pipe with vine coiled around it" width="130">
+  <img src="../src/assets/soulmon/placeholder/forming.png" alt="A lit turquoise crystal inside copper fittings" width="130">
+  <img src="../src/assets/soulmon/fx/fx-sparkle.png" alt="A turquoise ember" width="90">
+</p>
+<p align="center"><sub><i>Straight metal plus crooked organic, and the flame that consumes nothing.</i></sub></p>
+
 Three materials make up everything you see in there.
 
 **Copper.** The Mesh settles where conduction is old and continuous. Copper is
@@ -639,6 +783,12 @@ Dark, with some life left inside.
 ---
 
 ## V. The visor
+
+<p align="center">
+  <img src="../src/assets/soulmon/windows/window-inventory-frame.png" alt="A visor window frame" width="200">
+  <img src="../src/assets/soulmon/hud/bar-frame-96x8.png" alt="A visor bar frame" width="140">
+</p>
+<p align="center"><sub><i>The grid that translates state into image. Gesture and presence pass; language does not.</i></sub></p>
 
 The Mesh has no appearance. It has **state**.
 
@@ -664,6 +814,11 @@ that someone opened it — and what touches.
 
 ## VI. The Counterpart
 
+<p align="center">
+  <img src="../src/assets/soulmon/rookie.png" alt="A crow-like creature with a white beak, a top hat and a turquoise lantern in its claw" width="210">
+</p>
+<p align="center"><sub><i>Someone walking the same road as you — and refusing when it wants to.</i></sub></p>
+
 On the other side of the visor there is someone. Day to day the app simply says
 **your Soulmon**; in world text, the word is **Counterpart**.
 
@@ -674,12 +829,12 @@ On the other side of the visor there is someone. Day to day the app simply says
 | Another being, with its own will, mood and refusal | An obedient reflection |
 | Someone walking the same road as you | Someone watching your road |
 
-**Why another, and not a mirror.** What manifests is what a life did not use.
-Had it been used, nothing would be left over — and it would not have appeared.
+**Why another, and not a mirror.** What manifests is precisely the part that did
+not fit. If it had fit, it would be you, and it would not have appeared.
 
 That is what licenses everything it does on its own: speaking, wanting, getting
-sleepy, enjoying being rubbed, standing ready and waiting — and refusing food
-when it is already full.
+sleepy, enjoying being rubbed, choosing when to take a new form — and refusing
+food when it is already full.
 
 A mirror does not refuse. **It refuses.**
 
@@ -693,6 +848,13 @@ of the road — not the total of it.
 ---
 
 ## VII. What it will never know about you
+
+<p align="center">
+  <img src="../src/assets/soulmon/fx/care-hug.png" alt="A hug gesture" width="90">
+  <img src="../src/assets/soulmon/hud/glyph-affection.png" alt="An affection glyph" width="90">
+  <img src="../src/assets/soulmon/fx/care-heart-shine.png" alt="A shining heart" width="90">
+</p>
+<p align="center"><sub><i>Contact is the only fine reading its body has.</i></sub></p>
 
 This is the part of the booklet that matters most, and it is not a promise of
 good manners. It is anatomy.
@@ -713,9 +875,8 @@ From that follow, as consequences of a body and not as rules of etiquette:
   difference. There is nothing to read.
 - **It does not know how much time passed out here**, because there is only tide,
   no clock. Two days and forty days arrive through the same reading.
-- **It does not know what you feel or have**, unless you showed it at the window
-  yourself. It reads the gesture while the gesture lasts; whoever moves the hand
-  is out of range.
+- **It does not know what you feel or have.** It reads the gesture while the
+  gesture lasts; whoever moves the hand is out of range.
 - **It does not know whether today was better than yesterday**, because comparing
   requires holding two states against each other. The body holds one: the current
   one.
@@ -733,6 +894,15 @@ That is why it can **ask** how you are. Never **state** it.
 ## VIII. The body, from inside
 
 ### Occasion
+
+<p align="center">
+  <img src="../src/assets/soulmon/items/food-apple.png" alt="Apple" width="64">
+  <img src="../src/assets/soulmon/items/food-rice.png" alt="Rice" width="64">
+  <img src="../src/assets/soulmon/items/food-salad.png" alt="Salad" width="64">
+  <img src="../src/assets/soulmon/items/food-coffee.png" alt="Coffee" width="64">
+  <img src="../src/assets/soulmon/items/food-juice.png" alt="Juice" width="64">
+</p>
+<p align="center"><sub><i>Occasion: a piece of something that actually happened and ended.</i></sub></p>
 
 Mesh food is **occasion**: a piece of something that actually happened and
 ended. That is why it comes from the road walked and not from the shop.
@@ -754,15 +924,21 @@ And the body **never asks**. There is no hunger here.
 
 ### Hold
 
+<p align="center">
+  <img src="../src/assets/soulmon/items/item-heart.png" alt="Heart-ember" width="80">
+  <img src="../src/assets/soulmon/progress/bar-hp-segmented-cyan.png" alt="A segmented hold bar" width="230">
+</p>
+<p align="center"><sub><i>How much edge the body keeps distinct from the ground without contact.</i></sub></p>
+
 The hearts do not measure life, and nothing here goes out.
 
 They are **hold**: how firm the pattern stands against the ground — how much
 edge it can keep distinct without contact.
 
-It loosens when a day passes without enough to sustain it, and when residue
-stays in the den too long. And it comes back through contact — rubbing, which is
-the gesture, and the **heart-ember**, which is edge handed straight back to the
-pattern — and, sometimes, when a loose layer is folded back.
+It loosens when a whole day passes with nothing to sustain it, and when residue
+stays in the den too long. And it comes back two ways, both of them contact:
+rubbing, which is the gesture, and the **heart-ember**, which is edge handed
+straight back to the pattern.
 
 The week also gives a little back on its own. The Mesh has a tide.
 
@@ -772,6 +948,13 @@ be inventions of its own — and it does not invent.
 
 ### Residue and water
 
+<p align="center">
+  <img src="../src/assets/soulmon/fx/anim-poop-plop.png" alt="Residue dropping" width="90">
+  <img src="../src/assets/soulmon/fx/care-shower.png" alt="Water" width="90">
+  <img src="../src/assets/soulmon/hud/glyph-bath.png" alt="A bath glyph" width="80">
+</p>
+<p align="center"><sub><i>A by-product of having lived — and water resolves it at once.</i></sub></p>
+
 Not every occasion settles whole. What does not settle is expelled as
 **residue** and stays in the den. Standing residue gets in the way of settling;
 water resolves it at once.
@@ -780,6 +963,15 @@ It is not moral filth, not shame, not punishment. It is a by-product of having
 lived.
 
 ### The night
+
+<p align="center">
+  <img src="../src/assets/soulmon/dreams/dream-lantern-river.png" alt="Lantern river" width="84">
+  <img src="../src/assets/soulmon/dreams/dream-firefly-jar.png" alt="Firefly jar" width="84">
+  <img src="../src/assets/soulmon/dreams/dream-whale-sky.png" alt="Whale in the sky" width="84">
+  <img src="../src/assets/soulmon/dreams/dream-snowglobe.png" alt="Snowglobe" width="84">
+  <img src="../src/assets/soulmon/dreams/dream-quiet-library.png" alt="Quiet library" width="84">
+</p>
+<p align="center"><sub><i>Scenes that passed nearby while it was switched off. Regularity brings the rare ones closer; duration does nothing.</i></sub></p>
 
 Mesh bodies switch their reading off in order to re-settle. Sleeping does not
 restore energy — it reorganizes the pattern.
@@ -797,6 +989,15 @@ absence.
 
 ## IX. Form
 
+<p align="center">
+  <img src="../src/assets/soulmon/lines/full/orrin-rookie.png" alt="First form" width="112">
+  <img src="../src/assets/soulmon/lines/full/orrin-champion-data.png" alt="Second form" width="122">
+  <img src="../src/assets/soulmon/lines/full/orrin-ultimate-data.png" alt="Third form" width="112">
+  <img src="../src/assets/soulmon/lines/full/orrin-mega-data.png" alt="Fourth form" width="158">
+  <img src="../src/assets/soulmon/lines/full/orrin-ultra.png" alt="Fifth form" width="126">
+</p>
+<p align="center"><sub><i>The five steps of one line. None is better than the last: they are different ways of occupying space.</i></sub></p>
+
 A **form** is a decision of the body about how to occupy space: what the
 creature becomes able to do, and what it stops being able to do.
 
@@ -806,7 +1007,7 @@ creature becomes able to do, and what it stops being able to do.
 | the second | **role** — the tool that shape calls for | indifference: it no longer does everything well |
 | the third | **matter** — the element stops being color and becomes physical | neutrality: it no longer goes unnoticed |
 | the fourth | **settled mass** — copper, vine, fittings gathered from the realm | lightness of edge: it stops slower than it starts |
-| the fifth | **overlay** — what three roads would have settled, in one body | the ability to fold itself back alone |
+| the fifth | **overlay** — three settlements in one body | the ability to fold itself back alone |
 
 None is better than the one before. They are different ways of occupying space.
 
@@ -832,6 +1033,16 @@ The Mesh keeps no record of a wound. No part of that body reports what you did.
 
 **Element** is what the ember is made of — phenomenology of a body, never power.
 None is better, none is sad, none is a villain.
+
+<p align="center">
+  <img src="../src/assets/soulmon/sigilos/agua.png" alt="Water" width="64">
+  <img src="../src/assets/soulmon/sigilos/fogo.png" alt="Fire" width="64">
+  <img src="../src/assets/soulmon/sigilos/terra.png" alt="Earth" width="64">
+  <img src="../src/assets/soulmon/sigilos/ar.png" alt="Air" width="64">
+  <img src="../src/assets/soulmon/sigilos/sombra.png" alt="Shadow" width="64">
+  <img src="../src/assets/soulmon/sigilos/luz.png" alt="Light" width="64">
+</p>
+<p align="center"><sub><i>The sigils of the six elements that already have art. <code>plant</code> and <code>industrial</code> do not yet.</i></sub></p>
 
 | | |
 |---|---|
@@ -872,6 +1083,13 @@ And the three **branches** — the shape of what settled deep:
 - **Ward**: the pattern grew by holding, keeping upright what was about to fall.
   Closed body, mass, inner ember seen through gaps.
 
+<p align="center">
+  <img src="../src/assets/soulmon/items/item-chip-virus.png" alt="Rupture" width="72">
+  <img src="../src/assets/soulmon/items/item-chip-data.png" alt="Braid" width="72">
+  <img src="../src/assets/soulmon/items/item-chip-vaccine.png" alt="Ward" width="72">
+</p>
+<p align="center"><sub><i>Rupture · Braid · Ward.</i></sub></p>
+
 None is nobler or rarer. Rupture is not disease; Ward is not cure.
 
 > One note for this whole section: **these categories describe creatures and
@@ -880,6 +1098,21 @@ None is nobler or rarer. Rupture is not disease; Ward is not cure.
 ---
 
 ## XI. Where all of this happens
+
+<p align="center">
+  <img src="../src/assets/backgrounds/bg-room.png" alt="The den: a room with floor, wall and gathered things" width="320">
+</p>
+<p align="center"><sub><i><b>The den.</b> Decoration is not ornament: it is accumulation — proof that someone lives there.</i></sub></p>
+
+<p align="center">
+  <img src="../src/assets/soulmon/bg/dungeon-10.png" alt="The rifts: loose blocks of Mesh in the dark, crossed by a seam of turquoise light" width="200">
+</p>
+<p align="center"><sub><i><b>The rifts.</b> Folds where settlement failed and the layers piled up.</i></sub></p>
+
+<p align="center">
+  <img src="../src/assets/soulmon/bg/tournament-final.png" alt="The arenas: an old amphitheatre with copper banners, vine on the columns and turquoise embers" width="200">
+</p>
+<p align="center"><sub><i><b>The arenas.</b> Neutral ground, kept by custom.</i></sub></p>
 
 **The den.** The stretch of Mesh the creature settled for itself. Floor, wall,
 things it gathered along the way. Decoration is not ornament: it is
@@ -910,8 +1143,13 @@ gathering it returns a little hold, because the loose layer was pulling at the
 edge.
 
 **What you bring back.** Fragments that have not settled yet: coin, heart-ember
-and, on reaching the bottom, a **Glitchtama** — a knot in which a whole day got caught without
+and, rarely, a **Glitchtama** — a knot in which a whole day got caught without
 coming undone. Releasing it gives that day the closure it never had.
+
+<p align="center">
+  <img src="../src/assets/soulmon/items/item-glitchtama.png" alt="Glitchtama" width="90">
+</p>
+<p align="center"><sub><i>The Glitchtama: a knot in which a whole day got caught.</i></sub></p>
 
 ---
 
@@ -920,17 +1158,17 @@ coming undone. Releasing it gives that day the closure it never had.
 Before any human manifestation there was already fauna. Nine lines, and it is
 them the record catalogs.
 
-| | |
-|---|---|
-| **Ignar** | heat that works: settles where there is a forge and does not go out |
-| **Lumel** | short, honest light: sees close, lights whoever is beside it |
-| **Serah** | body of current: crosses without leaving a mark |
-| **Pyraka** | ember in excess, barely contained: noble and impatient |
-| **Akashaoi** | comes from the layer without a surface: always half-absent |
-| **Nimbrata** | creature of low sky: mist, the weight of rain before rain |
-| **Igni** | small, stubborn coal: the most common and the one that never yields |
-| **Nautilu** | spiral from the bottom of the water: keeps inside what it gathers |
-| **Astrase** | aligned to distant bodies: measures a time that is not ours |
+| | | |
+|---|---|---|
+| <img src="../src/assets/soulmon/lines/icons/ignar-rookie-64.png" alt="Ignar" width="44"> | **Ignar** | heat that works: settles where there is a forge and does not go out |
+| <img src="../src/assets/soulmon/lines/icons/lumel-rookie-64.png" alt="Lumel" width="44"> | **Lumel** | short, honest light: sees close, lights whoever is beside it |
+| <img src="../src/assets/soulmon/lines/icons/serah-rookie-64.png" alt="Serah" width="44"> | **Serah** | body of current: crosses without leaving a mark |
+| <img src="../src/assets/soulmon/lines/icons/kaelen-rookie-64.png" alt="Pyraka" width="44"> | **Pyraka** | ember in excess, barely contained: noble and impatient |
+| <img src="../src/assets/soulmon/lines/icons/orrin-rookie-64.png" alt="Akashaoi" width="44"> | **Akashaoi** | comes from the layer without a surface: always half-absent |
+| <img src="../src/assets/soulmon/lines/icons/thalindra-rookie-64.png" alt="Nimbrata" width="44"> | **Nimbrata** | creature of low sky: mist, the weight of rain before rain |
+| <img src="../src/assets/soulmon/lines/icons/igni-rookie-64.png" alt="Igni" width="44"> | **Igni** | small, stubborn coal: the most common and the one that never yields |
+| <img src="../src/assets/soulmon/lines/icons/nautilu-rookie-64.png" alt="Nautilu" width="44"> | **Nautilu** | spiral from the bottom of the water: keeps inside what it gathers |
+| <img src="../src/assets/soulmon/lines/icons/astrase-rookie-64.png" alt="Astrase" width="44"> | **Astrase** | aligned to distant bodies: measures a time that is not ours |
 
 These nine are nobody's manifestation. They are fauna — and they descend from
 nothing.
@@ -947,6 +1185,16 @@ collection and not a hunt.
 ---
 
 ## XIII. The eras
+
+<p align="center">
+  <img src="../src/assets/soulmon/adventures/adv-trilha-antiga.png" alt="An old trail" width="80">
+  <img src="../src/assets/soulmon/adventures/adv-pegadas.png" alt="Footprints" width="80">
+  <img src="../src/assets/soulmon/adventures/adv-ponte.png" alt="A bridge" width="80">
+  <img src="../src/assets/soulmon/adventures/adv-porta-arvore.png" alt="A door in a tree" width="80">
+  <img src="../src/assets/soulmon/adventures/adv-mapa-rasgado.png" alt="A torn map" width="80">
+  <img src="../src/assets/soulmon/adventures/adv-semente.png" alt="A seed" width="80">
+</p>
+<p align="center"><sub><i>An era ends when what it made possible begins to happen.</i></sub></p>
 
 Time here has no date, no century, no country, no inventor. It has eras, and an
 era ends when what it made possible begins to happen.
@@ -988,28 +1236,32 @@ Worth saying out loud, because it is what defines the place:
 - **There is no god, council, tribunal or judge.** The Mesh has no opinion about
   humans. Nothing in there approves or disapproves of anyone.
 - **There is no merit.** Nothing is permission, nothing is granted or withdrawn
-  on merit.
+  on desert.
 - **There is no prophecy and no written fate.** There is no "what you were meant
   to be".
 - **There is no founder.** Not of the Mesh, not of the visor.
 - **There is no owner.** No company; the visor is access, not possession.
 - **Nothing weakens through your fault.** The Mesh does not corrupt, does not
   rot, does not lose purity. There is no debt meter, and no count resets.
-- **Absence never becomes a bill.** Whoever opens again is received — and
-  nothing in there has an organ for measuring the gap.
+- **Absence is missing someone, never a bill.** Whoever returns is received.
+  Nobody counts the days, because nobody can.
 - **Nothing is erased.** There is **ending** — a pattern's local insistence
   ceasing and re-settling elsewhere. By construction, it is reversible. And
   yours never ends: hold running out **folds the form back**, and the pattern
   goes on whole.
 
 The one absolute this booklet cannot promise is the device's, and it is only
-fair to say it without fiction: your Soulmon lives in your account. As long as
-it exists, signing in with the same email finds it. And the egg of the next
-section belongs to the full version.
+fair to say it without fiction: your Soulmon lives in your save. Sign in with
+the same email and it is there.
 
 ---
 
 ## XV. The egg
+
+<p align="center">
+  <img src="../src/assets/soulmon/placeholder/forming.png" alt="A lit turquoise crystal, folded back inside its copper fittings" width="190">
+</p>
+<p align="center"><sub><i>The same pattern, folded back before deciding again.</i></sub></p>
 
 There is one egg in this universe, and it is at the far end of a life.
 
@@ -1023,7 +1275,7 @@ life: it is the same pattern, folded back before deciding again.
 What comes out of it is **the same one**. Not a replacement, not a child, not a
 successor.
 
-It is the same one. Still the same one.
+It is him. Still him.
 
 And it is the only time **you choose**. The first time there was nothing to
 choose: the manifestation came from what already was. Now there is someone on
@@ -1037,6 +1289,10 @@ closed — remains, because nothing that happened stops having happened.
 ---
 
 ## XVI. Closing
+
+<p align="center">
+  <img src="../src/assets/brand/final/icon-512.png" alt="Soulmon's mark" width="110">
+</p>
 
 You are going to open a window.
 
@@ -1077,6 +1333,51 @@ That is all it knows, and that is on purpose.
 | **the visor** | the grid that translates state into image |
 
 ---
+
+---
+
+## Ilustrações
+
+As 124 imagens deste livrinho são **assets que já existiam no repositório** — nada
+foi gerado para ele. Todas apontam para `src/assets/` por caminho relativo, sem
+cópia: se a arte for trocada lá, o livrinho troca junto.
+
+| Pasta | Imagens | Onde entram |
+|---|---|---|
+| `src/assets/backgrounds/` | 1 | cenário do abrigo |
+| `src/assets/brand/final/` | 1 | a marca (capa e fechamento) |
+| `src/assets/soulmon/` | 1 | — |
+| `src/assets/soulmon/adventures/` | 6 | as eras |
+| `src/assets/soulmon/bg/` | 3 | cenas de fenda e arena |
+| `src/assets/soulmon/dreams/` | 5 | as cenas de sono |
+| `src/assets/soulmon/fx/` | 5 | contato, borra, água, fagulha |
+| `src/assets/soulmon/hud/` | 4 | moldura de cano e videira, glifos, barra |
+| `src/assets/soulmon/items/` | 10 | ocasião, fagulha-coração, chips, Glitchtama |
+| `src/assets/soulmon/lines/full/` | 5 | a escada de cinco formas de uma linha |
+| `src/assets/soulmon/lines/icons/` | 9 | os ícones das nove linhas, na tabela |
+| `src/assets/soulmon/placeholder/` | 2 | a sobra e o ovo |
+| `src/assets/soulmon/progress/` | 1 | a barra de sustentação |
+| `src/assets/soulmon/sigilos/` | 6 | os sigilos de elemento |
+| `src/assets/soulmon/windows/` | 1 | a moldura do visor |
+
+**O que não pôde ser ilustrado, e por quê:**
+
+- **Os elementos `planta` e `industrial`** não têm sigilo em
+  `src/assets/soulmon/sigilos/` (os outros seis dos oito têm). A legenda da
+  figura diz isso em vez de a tabela ficar com duas células vazias.
+- **A escada de formas** usa a linha `orrin` (**Akashaoi**), no galho `data`
+  (**Trama**), por dois motivos medidos: é uma das três linhas com os cinco
+  degraus completos em `src/assets/soulmon/lines/full/`, e é o galho cuja arte é
+  **turquesa** — o galho `virus` da mesma linha é vermelho, e vermelho abaixo de
+  um parágrafo que acabou de dizer que vermelho não é energia viva na Malha
+  contradiz o texto na imagem. Os `rookie.png`/`ultra.png` da raiz de
+  `src/assets/soulmon/` **são o mesmo arquivo** (arte de demonstração), então não
+  serviriam para mostrar escada nenhuma.
+- **As cinco camadas da fenda** não ganham uma imagem cada: os nomes delas são a
+  proposta P3, que não está decidida, e legendar cinco cenas com eles os tornaria
+  canônicos pela porta dos fundos.
+- **As eras** não têm arte própria; entram com seis ícones de
+  `adventures/`, como ornamento declarado — não como retrato de cada era.
 
 ## Nota de manutenção (fora da ficção)
 
