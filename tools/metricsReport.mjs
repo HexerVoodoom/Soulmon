@@ -271,7 +271,7 @@ export function renderRelatorio(payload) {
   }
   // WP0.11: a decisão é uma só — cortar push que abre o app e não vira dia
   // ativo. Sem a origem no agregado, push e abertura direta eram um número só.
-  const origens = ['direct', 'push', 'widget', 'shortcut'];
+  const origens = ['direct', 'push', 'widget', 'shortcut', 'invite'];
   if (origens.some(o => n(totais, `app_open.${o}`) > 0)) {
     out.push('  aberturas por origem:');
     for (const o of origens) out.push(`    ${o.padEnd(9)} │ ${String(n(totais, `app_open.${o}`)).padStart(5)}`);

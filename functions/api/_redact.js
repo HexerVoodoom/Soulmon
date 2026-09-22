@@ -16,8 +16,10 @@
 //   pelo cloud save e são lidos localmente. Zero ocorrências em `taskSuggestions`.
 //
 // O que esta camada faz e o que não faz:
-//   - FAZ: tirar identificadores DIRETOS (e-mail, telefone, CPF/CNPJ, cartão,
-//     URL, @handle) antes de o texto sair da nossa borda, e limitar tamanho.
+//   - FAZ: tirar identificadores DIRETOS (e-mail, telefone com ou sem DDD,
+//     CPF/CNPJ, cartão, URL, @handle) e três QUASE-identificadores baratos de
+//     pegar (CEP, data `dd/mm/aaaa`) antes de o texto sair da nossa borda, e
+//     limitar tamanho.
 //     Isso é minimização (LGPD art. 6º, III) e reduz o dano de um vazamento no
 //     processador.
 //   - NÃO FAZ: tornar o conteúdo não-sensível. "Estou em depressão" continua
@@ -36,6 +38,22 @@ const RULES = [
   { kind: 'cpf', re: /\b\d{3}\.\d{3}\.\d{3}-\d{2}\b/g, tag: '[documento]' },
   { kind: 'cnpj', re: /\b\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}\b/g, tag: '[documento]' },
   { kind: 'phone', re: /(?:\+?\d{1,3}[\s.-]?)?(?:\(\d{2,3}\)[\s.-]?|\b\d{2,3}[\s.-])\d{4,5}[\s.-]?\d{4}\b/g, tag: '[telefone]' },
+  // QA rodada 1 (achado 06 §6.1, baixo): três quase-identificadores que
+  // passavam inteiros. CEP e data ANTES do celular curto — `12345-678` e
+  // `21/09/1990` não podem ser mastigados pela metade por outra regra.
+  //  · CEP `12345-678`: sozinho localiza um quarteirão; junto com o resto da
+  //    frase, uma pessoa.
+  //  · data `dd/mm/aaaa`: no texto livre de um app deste tipo é, quase sempre,
+  //    a data de nascimento — o mesmo dado que `soulmon-profile` guarda só no
+  //    aparelho de propósito.
+  //  · celular SEM DDD (8 ou 9 dígitos, `98765-4321`/`987654321`/`3456-7890`):
+  //    a regra de telefone exigia DDD e a de "sequência longa" exigia ≥ 11
+  //    dígitos, então o número mais comum de se digitar caía no vão. O 9 no
+  //    início é opcional para não deixar fixo passar; 8 dígitos contíguos
+  //    (`20260921`) também caem aqui — quase-identificador de qualquer jeito.
+  { kind: 'cep', re: /\b\d{5}-\d{3}\b/g, tag: '[cep]' },
+  { kind: 'date', re: /\b\d{2}\/\d{2}\/\d{4}\b/g, tag: '[data]' },
+  { kind: 'phone', re: /\b9?\d{4}[\s.-]?\d{4}\b/g, tag: '[telefone]' },
   { kind: 'digits', re: /\b\d[\d\s.-]{9,}\d\b/g, tag: '[número]' },
   { kind: 'handle', re: /(^|\s)@[A-Za-z0-9_.]{2,}/g, tag: '$1[perfil]' },
 ];

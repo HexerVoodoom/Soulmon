@@ -27,6 +27,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 // Vite traz o arquivo como texto sem sair desse universo de tipos, e o gate
 // `npx tsc -p desktop/tsconfig.json --noEmit` continua limpo.
 import fontePreload from '../../electron/auth-preload.js?raw';
+import fonteMain from '../../electron/main.js?raw';
 
 type Sent = [channel: string, payload: unknown];
 
@@ -118,29 +119,35 @@ describe('ponte de login do desktop (auth-preload.js)', () => {
     expect(enviados.map(([, p]) => (p as { email: string }).email)).toEqual(['', '']);
   });
 
-  describe('validade do token — o ponto cego desta ponte', () => {
-    // auth.ts:188 manda `Date.parse(result.expirationTime)`. Se o Firebase
-    // devolver algo que o Date.parse não entenda, isso é NaN.
-    it('validade ilegível ou ausente colapsa em exp = 0', () => {
-      for (const ruim of [Number.NaN, undefined, null, 'amanhã', 0]) {
+  describe('validade do token — desconhecida é "vence em 1h", nunca eterna', () => {
+    // auth.ts manda `Date.parse(result.expirationTime)`. Se o Firebase devolver
+    // algo que o Date.parse não entenda, isso é NaN. Até 22/09/2026 o preload
+    // colapsava NaN em `exp: 0` e main.js lia 0 como "nunca expira": um overlay
+    // aberto por dias mandava ID token vencido para /api/save em loop de 401.
+    it('validade ilegível ou ausente vira "1h a partir de agora", nunca 0', () => {
+      const antes = Date.now();
+      for (const ruim of [Number.NaN, undefined, null, 'amanhã', 0, -5]) {
         enviados.length = 0;
         bridge.publish({ token: 'jwt', email: 'eu@exemplo.com', expiresAt: ruim });
-        expect((enviados[0][1] as { exp: number }).exp, String(ruim)).toBe(0);
+        const exp = (enviados[0][1] as { exp: number }).exp;
+        expect(exp, String(ruim)).toBeGreaterThan(antes);
+        expect(exp - antes, String(ruim)).toBeLessThanOrEqual(60 * 60 * 1000 + 1_000);
       }
     });
 
-    it('exp = 0 é lido por main.js:295 como "nunca expira" — está documentado, não consertado', () => {
-      // A regra viva de main.js:295 é:
-      //     if (authSession.exp && Date.now() >= authSession.exp - 30_000) return null;
-      // Reproduzida aqui como PREDICADO, não como cópia de comportamento: o
-      // teste existe para tornar visível que `exp: 0` cai no ramo "sem
-      // validade conhecida" e a sessão é entregue para sempre.
-      const expirou = (exp: number, agora: number) => !!exp && agora >= exp - 30_000;
+    it('validade legível passa intacta', () => {
+      bridge.publish({ token: 'jwt', expiresAt: 1_700_000_000_000 });
+      expect((enviados[0][1] as { exp: number }).exp).toBe(1_700_000_000_000);
+    });
 
-      expect(expirou(0, Date.now())).toBe(false);              // <- o ponto cego
-      expect(expirou(1_000_000, 1_000_000)).toBe(true);
-      expect(expirou(1_000_000, 1_000_000 - 30_000)).toBe(true); // margem de 30s
-      expect(expirou(1_000_000, 1_000_000 - 30_001)).toBe(false);
+    it('main.js não tem mais o ramo "exp falsy = nunca expira"', () => {
+      // Guard textual no FONTE (mesmo padrão do widget): o `&&` que abria o
+      // buraco não pode voltar, e a normalização para 1h tem que existir no
+      // receptor também — a defesa fica nos dois lados da ponte.
+      expect(fonteMain).not.toMatch(/authSession\.exp\s*&&\s*Date\.now\(\)/);
+      expect(fonteMain).toMatch(/Date\.now\(\)\s*>=\s*authSession\.exp\s*-\s*30_000/);
+      expect(fonteMain).not.toMatch(/exp:\s*Number\(payload\.exp\)\s*\|\|\s*0/);
+      expect(fonteMain).toMatch(/Number\.isFinite\(expBruto\) && expBruto > 0/);
     });
   });
 });

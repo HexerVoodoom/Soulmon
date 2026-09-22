@@ -10,6 +10,7 @@
 import { VALID_ID, readEntitlement, publicView } from './_entitlements.js';
 import { authorizeSaveAccess } from './_auth.js';
 import { kv, kvOrThrow } from './_kv.js';
+import { isAccountDeleted } from './_accountTombstone.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -90,6 +91,16 @@ export async function onRequest({ request, env }) {
   const auth = await authorizeSaveAccess(request, env, saveId);
   if (!auth.ok) {
     return Response.json({ error: auth.reason }, { status: auth.reason === 'forbidden' ? 403 : 401, headers: CORS });
+  }
+
+  // CONTA APAGADA → 410, em GET e POST, DEPOIS da autorização (quem não é o
+  // dono não descobre daqui que a conta existiu). Sem isto, outro aparelho do
+  // titular ainda logado recriava o save 3 s depois da exclusão — ver
+  // `_accountTombstone.js`. O POST é recusado ANTES de ler o corpo por
+  // tamanho/forma: nada do que vier é gravado sob um saveId com lápide.
+  if (await isAccountDeleted(env, saveId)) {
+    console.warn('save: recusado, conta apagada (lápide)', { saveIdPrefix: saveId.slice(0, 8), method: request.method });
+    return Response.json({ error: 'account-deleted' }, { status: 410, headers: CORS });
   }
 
   if (request.method === 'GET') {

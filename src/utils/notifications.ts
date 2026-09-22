@@ -272,18 +272,22 @@ export const unregisterFromPushNotifications = async (): Promise<void> => {
   if (Capacitor.getPlatform() !== 'android') return;
 
   const token = readLocal(STORAGE_KEYS.FCM_TOKEN);
-  removeLocal(STORAGE_KEYS.FCM_TOKEN, { silent: true });
   if (!token) return;
 
-  try {
-    await fetch('/api/fcm-subscribe', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token }),
-    });
-  } catch (err) {
-    console.error('FCM token removal failed:', err);
-  }
+  // O token local só sai DEPOIS do servidor confirmar a remoção. Apagar antes
+  // (como era) deixava o aparelho sem saber que ainda está inscrito: um DELETE
+  // que falha (rede, 5xx) não pode ser repetido porque o token sumiu, e o
+  // servidor segue mandando push para uma conta que a pessoa mandou apagar.
+  // A falha é propagada — `revokePushBeforeDelete` (accountData.ts) já a trata
+  // com `allSettled` e não bloqueia a exclusão. Achado do skeptic (rodada A,
+  // 21/09/2026, #2).
+  const res = await fetch('/api/fcm-subscribe', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token }),
+  });
+  if (!res.ok) throw new Error(`FCM token removal failed: HTTP ${res.status}`);
+  removeLocal(STORAGE_KEYS.FCM_TOKEN, { silent: true });
 };
 
 // ── Check & fire due notifications ────────────────────────────────────────

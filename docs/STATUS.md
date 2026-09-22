@@ -37,6 +37,38 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > **Fora do delta, de propósito:** `11-GLOSSARIO` (termos "cortesia"/"dias completos 30" não indexados —
 > o delta não o lista) e `09-HISTORICO` (sem linha para `42b07bec`/`4a8b8049`).
 
+> ## 22/09/2026 — QA RODADA 1 (completa, todas as squads + SQUAD-Alpha) e suas correções
+>
+> 13 relatórios em **`docs/reviews/2026-09-21-qa-rodada-1/`** (consolidado `00-CONSOLIDADO.md`; fila do dono
+> **#40–#53** em `PERGUNTAS-DO-DONO.md`). Três FATAIS novos: (1) **GitHub Actions parado por cobrança desde
+> 16/09** — 339 runs falhando em segundos, nenhum portão de CI rodou desde então; produção não caiu porque o
+> Cloudflare deploya sozinho (só o dono: `github.com/settings/billing`); (2) **`billing-ktx` 6.2.1 recusada pela
+> Play** (v6 desde 31/08/2025, v7 desde 31/08/2026 — deprecation-faq) → **8.3.0** + `BillingPlugin.kt` na API
+> nova (compile só o CI prova — e o CI está parado); (3) **a política negava envios de texto ao Groq que o
+> código faz** (`customKeywords`, humor, nome da tarefa em Decompor, `soulGoal` pré-preenchido no tutorial) →
+> declarados (§2b/§6 reescritos, hints nas telas, guard `src/ia.camposEnviados.contract.test.ts` fecha a
+> fronteira); `TERMS_VERSION`/`PRIVACY_VERSION` **2026-09-22** (mudança material).
+> **Corrigido:** `auditRefunds` derivava `tier` por pedido e derrubava a cortesia no reembolso da Play → tier
+> derivado de `paidProviderOf` (cortesia sobrevive, #40 provisório) · exclusão de conta reordenada (tombstone
+> `del:done:` 30 d + `save.js` **410**, sprites `sprite:img/lock/blob` apagados, save por último, índice
+> inverso `pushidx:<saveId>` em vez de varrer o namespace) · cliente do 410 (`reagirContaExcluida`) · `FCM_TOKEN`
+> só sai do aparelho após `res.ok` · `confirmDelete` com teto de 8 s · `handleGrant` recusa `saveId` não-string
+> · telemetria em aba oculta vai para fila `soulmon-telemetry-hidden` em vez de morrer (`day_active` na virada) ·
+> `?src=convite` (`app_open.source` 4, servidor e leitor) · `week_active.active_days` agregado · push **D0 = nulo**
+> · `minimizeForAi` cobre CEP/data/celular curto · `chatSafety` normaliza acentos e cobre EN coloquial,
+> `bridgeReply` EN cita findahelpline · gate de WebView com ramo Android (links Play) × não-Android, `lang`, mailto ·
+> `TermsUpdateBanner` diz qual doc mudou, `region`, "(abre em nova aba)", "Entendi" · `APP_VERSION` única
+> (`__APP_VERSION__` ← `package.json` 1.1.4 = `versionName`; contrato `versaoUnica`) · feedback em Ajuda ·
+> Sobre declara sons/sem revisão humana/não é emergência · `manifest.json` sem copy do fork · alarme exato com
+> `canScheduleExactAlarms()` + fallback · widget sem "I miss you" (L11) e `petName` = `soulmonDisplayName` ·
+> desktop `exp` ilegível = agora+1h · termos §8 fiel às duas camadas, §4 cortesia, US$ redação A · `PLAY-FICHA`
+> sem L2/L11 no fecho, título EN próprio · `PLAY-LANCAMENTO` §A.0 (Actions) e §G (Billing 8) · ledgers WP1.14/
+> WP3.4 corrigidos de verdade · LV #15 virou teste (`copy.semFomo`) · ADR-004..006 promovidas como Proposta ·
+> glossário/histórico atualizados · `CACHE_VERSION` **v158**.
+> **Testes novos:** ~150 (grant, pushScan, deleteConfirm, pushidx, tombstone, webview gate, convertToWebp,
+> swCacheavel, conquistas, ia.camposEnviados, versaoUnica, manifest, billingPbl8, widgetNome, semFomo…).
+> **Depende do dono:** GitHub billing (#48), #40–#53, e o compile Kotlin só o CI prova.
+
 > ## 21/09/2026 — EXECUÇÃO das respostas do dono, etapas 4 (limpeza) e 6 (Play)
 >
 > **#37** `SettingsModal` apagado (prop `onOpenAISettings` saiu da cadeia App → CompanionHUD → ChatBox).

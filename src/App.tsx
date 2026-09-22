@@ -9,7 +9,7 @@ import { useCareSystem } from './hooks/useCareSystem';
 import { useDailyReset } from './hooks/useDailyReset';
 import {
   track, flush as flushTelemetry, installTelemetryAutoFlush,
-  setTelemetryTier, trackDayClosed, telemetryDayKey, trackSoundOff,
+  setTelemetryTier, trackDayClosed, telemetryDayKey, trackSoundOff, limparOrigemDaUrl,
   TELEMETRY_UNLOCK_REASON, TELEMETRY_PURCHASE_REASON, TELEMETRY_ACTIVITY_KIND, TELEMETRY_CREATE_PATH,
   unlockReasonCode, TELEMETRY_BAD_DAY,
   openSourceFromUrl, afterBadDayGapBucket, trackRetentionOnOpen,
@@ -41,7 +41,7 @@ import { CATEGORY_ATTRIBUTES, type ActivityCategory, XP_THRESHOLDS } from './typ
 import { type CareEvent } from './components/CareSystem';
 import { FORM_REQUIREMENTS, getStageLevel, canSelectWeekdays, getMaxEnergyForStage } from './types/progression';
 import { type Language, useTranslation, resolveLanguage } from './utils/i18n';
-import { SoulmonWidget } from './plugins/SoulmonWidgetPlugin';
+import { SoulmonWidget, widgetPetName } from './plugins/SoulmonWidgetPlugin';
 import { unlockedAchievements } from './utils/achievements';
 import { useGameState, getMaxHPForStage, type GameState, type Activity, type Task, type Step } from './contexts/GameStateContext';
 import { STORAGE_KEYS } from './utils/storageKeys';
@@ -99,7 +99,7 @@ import {
 } from './utils/firstDay';
 import { FirstDayCard } from './components/FirstDayCard';
 import { TermsUpdateBanner } from './components/TermsUpdateBanner';
-import { marcaAvisoTermos, precisaAvisarTermos } from './utils/termsNotice';
+import { marcaAvisoTermos, precisaAvisarTermos, qualDocMudou } from './utils/termsNotice';
 import { PRIVACY_VERSION, TERMS_VERSION } from './utils/consent';
 import { MilestoneCeremony } from './components/MilestoneCeremony';
 import {
@@ -348,8 +348,8 @@ function PostponeNudgeSheet({
           </span>
           <span style={optHint()}>
             {isPt
-              ? 'O pet pensa em primeiros passos pequenos e você escolhe quais viram tarefa.'
-              : 'Your pet thinks up small first steps and you pick which become tasks.'}
+              ? 'O pet pensa em primeiros passos pequenos e você escolhe quais viram tarefa. O nome da tarefa vai para o provedor de IA.'
+              : 'Your pet thinks up small first steps and you pick which become tasks. The task name goes to the AI provider.'}
           </span>
         </button>
 
@@ -1172,6 +1172,9 @@ export default function App() {
        dia ativo — comparar `app_open.1` com `day_active` responde isso, e
        nenhuma outra leitura é o propósito declarado desta métrica. */
     track('app_open', { source: openSourceFromUrl(window.location.search) });
+    /* Lida, a origem sai da URL: o portão recarrega a página e um favorito
+       com `?src=convite` reemitiria `invite` toda semana (review 07 §2). */
+    limparOrigemDaUrl();
     /* WP0.2 — RETENÇÃO. Emitida NA ABERTURA e não no fechamento: o ledger
        semanal só despacha no dia seguinte, então quem abandona nunca despacha
        — viés aceitável para a métrica-norte e inaceitável justamente para
@@ -1479,7 +1482,6 @@ export default function App() {
 
   // Sync game state to Android home screen widget
   useEffect(() => {
-    const petName = gameState.evolutionStage.charAt(0).toUpperCase() + gameState.evolutionStage.slice(1);
     SoulmonWidget.updateWidgetData({
       /* ⚠️ Este campo se chamava `digimonName`, e o comentário aqui dizia que
          ele NÃO era renomeado de propósito, "porque o APK instalado lê
@@ -1487,7 +1489,8 @@ export default function App() {
          atualizasse". Não havia APK instalado: ninguém nunca usou o app em
          produção (07/09/2026). O Kotlin foi renomeado junto (`pet_name`), e o
          widget exige APK novo de qualquer forma. */
-      petName: petName,
+      // O nome da Home, não o estágio — dono: `widgetPetName` (utils/petName por baixo).
+      petName: widgetPetName(gameState.soulmonMeta),
       currentStage: gameState.evolutionStage,
       eggType: gameState.eggType ?? 'ignar',
       branchType: gameState.currentBranch,
@@ -1527,7 +1530,7 @@ export default function App() {
   }, [gameState.evolutionStage, gameState.currentBranch, gameState.eggType,
       gameState.healthPoints, gameState.maxHealthPoints, gameState.energyPoints,
       gameState.poopEventsShown, gameState.poopEventsCompleted, dailyDone, dailyTotal,
-      gameState.habitRhythms, gameState.totalXP]);
+      gameState.habitRhythms, gameState.totalXP, gameState.soulmonMeta]);
 
   /**
    * A fatia que `utils/petNeeds.ts` lê. `hasPoop` é DERIVADO (o dono do cocô é
@@ -5021,7 +5024,7 @@ export default function App() {
                 // aparecer é de `utils/termsNotice.ts`.
                 if (precisaAvisarTermos(gameState.consent, TERMS_VERSION, PRIVACY_VERSION, termsNoticeSeen)) avisos.push({
                   key: 'termos',
-                  node: <TermsUpdateBanner language={language} onOk={handleTermsNoticeOk} />,
+                  node: <TermsUpdateBanner language={language} changed={qualDocMudou(gameState.consent!, TERMS_VERSION, PRIVACY_VERSION)} onOk={handleTermsNoticeOk} />,
                 });
 
                 if (avisos.length === 0) return null;

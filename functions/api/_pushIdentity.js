@@ -90,11 +90,139 @@ export async function gravarSeMudou(kv, chave, registro) {
       JSON.stringify({ ...registro, refreshedAt: undefined });
   const velho = !anterior?.refreshedAt || Date.now() - anterior.refreshedAt > REFRESCA_APOS_MS;
 
+  let gravou = false;
   if (!igual || velho) {
     await kv.put(chave, JSON.stringify({ ...registro, refreshedAt: Date.now() }), {
       expirationTtl: TTL_INSCRICAO,
     });
-    return true;
+    gravou = true;
   }
-  return false;
+  // O índice roda MESMO quando o registro não mudou: é assim que uma inscrição
+  // gravada antes do índice existir (com `saveId`, sem `pushidx:`) se indexa
+  // sozinha na próxima abertura do app, sem script de migração.
+  if (typeof registro?.saveId === 'string' && registro.saveId) {
+    await indexarInscricao(kv, registro.saveId, chave);
+  }
+  return gravou;
+}
+
+// ---------------------------------------------------------------------------
+// ÍNDICE INVERSO `pushidx:<saveId>` → chaves de inscrição da conta.
+//
+// Por que existe (QA rodada 1, `03-arquitetura-r1.md` §2): a chave de uma
+// inscrição é o HASH do endpoint/token, então "quais inscrições são desta
+// conta?" só tinha resposta por VARREDURA do namespace inteiro, com um `get`
+// por chave — `account.js` › `deletePushSubscriptions` estourava o teto de
+// subrequests do Worker em ~900 inscrições totais, e estourava DEPOIS de o
+// save já ter sido apagado. Com o índice a exclusão custa <= 1 + 16x2 + 1
+// operações, fixo, independente de quantas pessoas usam push.
+//
+// Forma: `{ v: 1, keys: { 'push:<hash>': <epoch ms>, 'fcm:<hash>': ... }, updatedAt }`.
+//  - TETO de 16 entradas — uma pessoa tem poucos aparelhos; 16 é folga de 5x.
+//    Ao exceder, sai a mais VELHA. O teto é o que mantém a exclusão em O(1)
+//    mesmo contra um cliente que grava lixo com o mesmo `saveId`.
+//  - TTL `TTL_INSCRICAO` (1 ano), renovado a cada escrita: o índice nunca vive
+//    mais que a inscrição mais nova que aponta. Entrada MORTA (o cron apagou a
+//    inscrição num 410; a rota DELETE falhou no meio) é inofensiva: quem lê
+//    faz `get` do membro, acha `null` e pula.
+//  - Escreve só quando precisa: chave ausente do índice, ou índice mais velho
+//    que `REFRESCA_APOS_MS` (mesma constante de `gravarSeMudou`). Custo por
+//    abertura do app: +1 `get`; +1 `put` por aparelho novo ou por mês.
+//  - RMW sem CAS (KV não tem): dois aparelhos da mesma conta inscrevendo no
+//    mesmo minuto podem perder uma entrada. AUTOCURA: o cliente reenvia a
+//    inscrição a cada abertura, e a chave ausente é regravada. Declarado.
+//  - O cron (`push-scheduler.js`) NÃO toca o índice: pagar 2 ops por inscrição
+//    morta não compensa; a entrada morta é pulada na leitura.
+//
+// Registros SEM `saveId` (anteriores a 21/09/2026) não são indexáveis — o
+// valor não tem a conta, e nenhum backfill consegue ligá-los a alguém sem
+// adivinhar. Eles se regravam com `saveId` (e se indexam) na próxima abertura
+// do aparelho, ou morrem no TTL/410. `account.js` mantém a varredura como
+// FALLBACK só quando o índice não existe, e declara em `NOT_INCLUDED`.
+// ---------------------------------------------------------------------------
+
+export const PUSHIDX_PREFIX = 'pushidx:';
+export const PUSHIDX_MAX = 16;
+
+export function chaveDoIndice(saveId) {
+  return `${PUSHIDX_PREFIX}${saveId}`;
+}
+
+/** Lê o índice; qualquer coisa ilegível ou fora da forma vira índice vazio. */
+export async function lerIndice(kv, saveId) {
+  let idx = null;
+  try {
+    idx = JSON.parse((await kv.get(chaveDoIndice(saveId))) || 'null');
+  } catch {
+    idx = null;
+  }
+  const keys = idx && idx.keys && typeof idx.keys === 'object' && !Array.isArray(idx.keys) ? idx.keys : null;
+  if (!keys) return { existe: false, keys: {}, updatedAt: 0 };
+  /** @type {Record<string, number>} */
+  const limpo = {};
+  for (const [k, t] of Object.entries(keys)) {
+    if (typeof k === 'string' && (k.startsWith('push:') || k.startsWith('fcm:'))) {
+      limpo[k] = Number.isFinite(t) ? t : 0;
+    }
+  }
+  return { existe: true, keys: limpo, updatedAt: Number(idx.updatedAt) || 0 };
+}
+
+async function gravarIndice(kv, saveId, keys) {
+  await kv.put(
+    chaveDoIndice(saveId),
+    JSON.stringify({ v: 1, keys, updatedAt: Date.now() }),
+    { expirationTtl: TTL_INSCRICAO },
+  );
+}
+
+/**
+ * Acrescenta `chave` ao índice da conta. Melhor-esforço: falha aqui não pode
+ * derrubar a inscrição (o push da pessoa vale mais que o índice; a próxima
+ * abertura tenta de novo).
+ * @returns {Promise<boolean>} `true` se escreveu.
+ */
+export async function indexarInscricao(kv, saveId, chave) {
+  try {
+    const idx = await lerIndice(kv, saveId);
+    const agora = Date.now();
+    const jaTem = Object.prototype.hasOwnProperty.call(idx.keys, chave);
+    const velho = !idx.updatedAt || agora - idx.updatedAt > REFRESCA_APOS_MS;
+    if (jaTem && !velho) return false;
+
+    const keys = { ...idx.keys, [chave]: agora };
+    // Teto: sai a mais velha até caber.
+    const ordenadas = Object.entries(keys).sort((a, b) => a[1] - b[1]);
+    while (ordenadas.length > PUSHIDX_MAX) ordenadas.shift();
+    await gravarIndice(kv, saveId, Object.fromEntries(ordenadas));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Remove `chave` do índice da conta dona do registro. Chamado pelas rotas
+ * DELETE ANTES de apagar a inscrição (precisa ler o registro para saber a
+ * conta). Melhor-esforço: entrada que sobrar é morta e inofensiva.
+ * @returns {Promise<boolean>} `true` se mexeu no índice.
+ */
+export async function desindexarInscricao(kv, chave) {
+  try {
+    const registro = JSON.parse((await kv.get(chave)) || 'null');
+    const saveId = registro?.saveId;
+    if (typeof saveId !== 'string' || !saveId) return false;
+    const idx = await lerIndice(kv, saveId);
+    if (!idx.existe || !Object.prototype.hasOwnProperty.call(idx.keys, chave)) return false;
+    const resto = { ...idx.keys };
+    delete resto[chave];
+    if (Object.keys(resto).length === 0) {
+      await kv.delete(chaveDoIndice(saveId));
+    } else {
+      await gravarIndice(kv, saveId, resto);
+    }
+    return true;
+  } catch {
+    return false;
+  }
 }

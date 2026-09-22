@@ -4,7 +4,7 @@
 **Dono:** `alpha-architect` (autor original); custódia em `docs/adr/`: `doc-mantenedor`
 **Data:** copiado para o repo em 21/09/2026 (QA GERAL #35); a data da decisão está no corpo
 **Estado:** `registro` — cópia FIEL de `squad-alpha-runs/soulmon-02/adr-repos-irmaos.md` (pasta fora do git, `.gitignore`); o corpo abaixo NÃO foi reescrito, e cita código por `arquivo:linha` como estava na época — linhas escorregaram, procure pelo SÍMBOLO
-**Verificação:** `git ls-files docs/adr` (existe no git) · `diff <(tail -n +14 docs/adr/ADR-002-repos-irmaos.md) squad-alpha-runs/soulmon-02/adr-repos-irmaos.md` (corpo idêntico ao original, enquanto a pasta local existir)
+**Verificação:** `git ls-files docs/adr` (existe no git) · `diff <(tail -n +14 docs/adr/ADR-002-repos-irmaos.md | tr -d '\r') <(tr -d '\r' < squad-alpha-runs/soulmon-02/adr-repos-irmaos.md)` (corpo idêntico ao original, enquanto a pasta local existir; o `tr` existe porque este arquivo está em CRLF no working tree do Windows — sem ele o comando reprovava com 572 linhas de diff, QA Rodada 1 `08` A2)
 **Não cobre:** o estado atual do código — para isso leia a linha "Vale em" abaixo e o `docs/manual/05-ARQUITETURA.md`
 **Precedência:** código > teste > `CLAUDE.md` > manual > esta ADR
 

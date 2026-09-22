@@ -1,4 +1,19 @@
 import { registerPlugin } from '@capacitor/core';
+import { soulmonDisplayName } from '../utils/petName';
+
+/**
+ * O nome que vai para `pet_name` no widget — e é o MESMO da Home.
+ *
+ * ⚠️ Até 22/09/2026 o `App.tsx` mandava o ESTÁGIO capitalizado ("Rookie",
+ * "Champion") enquanto o app inteiro exibe `soulmonDisplayName` — a criatura
+ * chamada "Pyraka" na Home aparecia como "Rookie" nos widgets A, B e D.
+ * Footgun 9 (regra copiada): o nome tem dono (`utils/petName.ts`) e o bridge
+ * tinha reimplementado "nome = estágio". Quem chama o bridge passa por aqui;
+ * `widgetNome.contract.test.ts` trava o `App.tsx` nisso.
+ */
+export function widgetPetName(meta?: { baseName?: string; petName?: string } | null): string {
+  return soulmonDisplayName(meta) || 'Soulmon';
+}
 
 export interface DigiWidgetData {
   petName: string;

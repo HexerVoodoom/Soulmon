@@ -160,14 +160,22 @@ describe('entitlements.js — gastar crédito (dinheiro real)', () => {
     expect(saldo(e)).toBe(0);
   });
 
-  it('action desconhecida é 400 (nada de rota implícita)', async () => {
+  it('action desconhecida é 404 "Not found" — INDISTINGUÍVEL de `grant` sem chave (nada de rota implícita)', async () => {
     // Este caso usava `action=grant` como exemplo de rota inexistente. Desde
     // 21/09/2026 ela EXISTE (cortesia, bloco no fim do arquivo) e sem a chave
-    // no ambiente responde 404 — coberto lá. Aqui fica uma ação que não existe.
+    // no ambiente responde 404. Enquanto a ação desconhecida respondia 400,
+    // uma sonda distinguia `grant` (404) de `steal` (400) e confirmava a rota
+    // que o comentário jurava não existir (achado B1, segurança rodada A).
+    // Agora as duas respostas são byte a byte iguais.
     const e = env({ tier: 'paid', credits: 10, adDate: hoje(), adCount: 0 });
     const res = await onRequestPost({ request: post('https://x/api/entitlements?action=steal', { id: ID, amount: 5 }), env: e });
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(404);
+    const corpo = await res.json();
     expect(saldo(e)).toBe(10);
+
+    const semChave = await onRequestPost({ request: post('https://x/api/entitlements?action=grant', { saveId: ID }), env: e });
+    expect(semChave.status).toBe(404);
+    expect(await semChave.json()).toEqual(corpo);
   });
 
   it('corpo não-JSON é 400 e não debita', async () => {

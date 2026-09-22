@@ -19,6 +19,7 @@
 | Emblemas | `arte-emblema` | as 8 conquistas exibíveis no visor |
 | Marca | `arte-marca` | logo canônico (kit E:), favicons, manifest, launcher, splash, ícone de notificação |
 | HUD do visor | `arte-hud-visor` | barras HP/XP, moldura 9-slice, sigilos, nós da EvoArvore, glifos do overlay |
+| **Loja (material da Play)** | `arte-gerador familia=loja` (desde 21/09/2026) | 8 screenshots ×2 idiomas (captura + legenda, não geração), feature graphic 1024×500 ×2 e o recorte `og:image` 1200×630 — §14 |
 | Instalação | `arte-instalador` | copia para o repo, registra nos mapas, bump de cache, testes |
 | Conferência | `arte-conferente` | alfa real, xadrez, paleta, tamanho, chão 74%, costura, folha de contato |
 
@@ -156,14 +157,31 @@ Uso: sinal de fome no visor (`HomeHudEstados`), 3 quadros. Falhou 2× por sair b
 
 ---
 
-## 5. Emblemas — `arte-emblema` (aprovado: 8 conquistas)
+## 5. Emblemas — `arte-gerador familia=emblema` (9 conquistas — `ACHIEVEMENT_IDS`)
 
-Uso: conquistas exibíveis no slot `trophy` do palco (`Home`), na `Pet › FichaEstados` e na `Loja › TorneioSegmento` (ao lado da moeda Emblema, que continua sendo número). Formato 64² alfa, pixel, sem texto. Gerar em **uma folha 4×2** sobre branco. Destino `src/assets/soulmon/emblems/`; mapa novo `emblemArt.ts` (chave = id da conquista); gatilhos já existem no código (ver `INVENTARIO-ASSETS.md` §7.1). Nenhuma conquista pode ser comprada.
+> ⚰️ 21/09/2026 (QA Rodada 1, `06-guardas-squads-r1.md` §11): esta seção dizia **8** conquistas e usava os ids `streak-7`, `milestone-21` e `tasks-100`, que **não existem** em `src/utils/achievements.ts` — os reais são `habit-7`/`habit-21`/`habit-66` (marcos de hábito, Lally 2010) e `dias-completos-30` (decisão #30; ⚰️ `tasks-100`, vetada pela #16). "streak" como id é ainda pior: é a proibição #1 no nome. A régua é o array, não este doc: `node -e "import('./src/utils/achievements.ts')"` não roda em Node puro; use `grep -c "^  '" src/utils/achievements.ts` (→ 9) ou `ls src/assets/soulmon/emblems/ | wc -l` (→ 9).
+
+Uso: conquistas exibíveis no slot `trophy` do palco (`Home`), na `Pet › FichaEstados` e na `Loja › TorneioSegmento` (ao lado da moeda Emblema, que continua sendo número). Formato 64² alfa, pixel, sem texto. Destino `src/assets/soulmon/emblems/<id>.png`; mapa `src/utils/emblemArt.ts` (chave = id da conquista). Nenhuma conquista pode ser comprada.
+
+### Tem (instalado, 9/9 arquivos)
+
+`perfect-day` · `habit-7` · `habit-21` · `habit-66` · `first-evolution` · `mega-form` · `dungeon-10` · `tournament-champion` · `dias-completos-30` — todos em `src/assets/soulmon/emblems/`, mesma folha (aro de cobre, face petróleo, símbolo ciano).
+
+### Falta — E1: rearte de `dias-completos-30` (a arte ainda desenha "100")
+
+`dias-completos-30.png` é o **antigo `tasks-100.png` renomeado** (cabeçalho de `emblemArt.ts`: "três lajes marcadas, cem tarefas") — o símbolo é de pilha de tarefas, exatamente a contagem que a #16 veta. Gerar **uma** peça, mesma folha das outras 8 (anexar `perfect-day.png` + `habit-66.png` como âncora de estilo):
+
+```
+[SPRITE] One achievement badge for a virtual-pet game, same small round-ish medal with a copper rim and a dark teal face as the reference badges, the symbol in neon cyan: a small sun with a ring of thirty tiny notches around it — thirty complete days, a cycle closed, NOT a pile of tasks, NOT a checklist, NOT a calendar grid. No digits, no letters. Same size, same rim as the references. Solid white background. Square 1:1 full-bleed composition.
+```
+
+Aceite: `arte-conferente` confere aro/face/paleta contra as 8 irmãs a 32px; `arte-instalador` substitui o arquivo **com o mesmo nome** (o mapa não muda) e sobe `CACHE_VERSION`. Conferir também `habit-66` (o prompt antigo só tinha "21 days"; o 66 nasceu depois — se a arte for a de 21 reaproveitada, entra no mesmo pedido).
+
+### Prompt da folha original (registro — não regerar as 8 que já existem)
 
 ```
 [SPRITE] Eight achievement badges for a virtual-pet game, 4 columns by 2 rows, each a small round-ish medal with a copper rim and a dark teal face, the symbol in neon cyan: (1) a single perfect star; (2) a seven-notch ring like a week wheel; (3) a sprouting seed inside a ring, "21 days"; (4) an upward chevron with a spark, first evolution; (5) a crown-like crest, mega form; (6) a stone gate with the number of steps hinted as 10 notches, dungeon floor 10; (7) a laurel wreath, tournament champion; (8) a stack of three checked slabs, one hundred tasks. No digits, no letters. Same size, same rim. Square 1:1 full-bleed composition.
 ```
-ids: `perfect-day`, `streak-7`, `milestone-21`, `first-evolution`, `mega-form`, `dungeon-10`, `tournament-champion`, `tasks-100`.
 
 ---
 
@@ -291,3 +309,24 @@ Regra desta rodada: **derivar do que existe sempre que a peça for redução da 
 | R2-4 ✅ `118131f4`/`66e32d43` | `anim-sleep-z` em tom claro — `ANIM_ART.sleepZLight`, `CompanionHUD` escolhe por `isDarkBackground` (luminância da `baseColor` < 0,5; hoje os 28 cenários são escuros → a clara sempre) | Home dormindo sobre cenário escuro (D-H?) | `src/assets/soulmon/fx/anim-sleep-z-light.png` (mesma grade 3 quadros) | derivar: recolor da folha atual para `#E9F5F2`/`#5FF3E0`, alfa intacto; `animArt.sleepZLight` |
 | R2-5 | Glifos pixel comida/sono do overlay | `ForaDoApp.dc.html` overlay (D-F10) | folha 1×, 2 glifos 32² alfa real → `desktop/renderer/assets/glyph-food-32.png`, `glyph-sleep-32.png`; `EFFECT_ICON` do `main.ts` passa a usar PNG | gerar 1 folha `gpt_image_2 --quality medium --background transparent`, fatiar `fatiar-alfa.mjs`  ✅ 21/09 — 1 cr; folha 3:2 (`2:1` não existe no modelo), alfa binarizado a 128 antes de fatiar; sha256 food `1d284628…3b61`, sleep `d6e81945…c39b`; `EFFECT_ART` mapeia 🍎/🍖/💤, `EFFECT_ICON` removido. Leva `_gemini_out/rodada2-20260921/` |
 | R2-6 | `bg-gameboy` regerado | Loja/cenário equipado | 1200×648 → `src/assets/backgrounds/bg-gameboy.png` (substitui) | gerar `nano_banana_pro` 2k 16:9 com referência NOVA: recorte real de LCD de console (verde-oliva, grade de pixel visível), prompt do §4 + "the whole image IS the LCD surface, no device, no hands"; `hf-finalize-bg.mjs`  ✅ 21/09 — 6 cr (3 gerações: t0 perdida numa corrida de jobs, t1 reprovada por virar masmorra, t2 aprovada com prompt sem [PET-BOX], ver §2); chão 73,8 % medido à mão (`findFloor` do `hf-finalize-bg.mjs` pegou a vinheta em 60,5 %); sha256 `378b9f43…64d10`; thumb 96×52 sha256 `d08d8015…0b93`. **`dist/` ainda não rebuildado** |
+
+---
+
+## 14. Material de loja — `arte-gerador familia=loja` (pedido de 21/09/2026)
+
+> Origem: `docs/PLAY-FICHA.md` §6 pedia 8 screenshots ×2 idiomas + feature graphic ×2 + ícone 512 e
+> **nenhuma família do `arte-gerador` fazia isso** — pedido sem executor (QA Rodada 1,
+> `06-guardas-squads-r1.md` §11, `08-governanca-docs-marca-r1.md` §3.4). A spec (formatos, roteiro
+> das 8 telas, legendas PT/EN já passadas pela bíblia §13, composição da feature graphic) **mora na
+> ficha, não aqui** — esta seção só dá o id, o destino e o método. Trocar uma legenda = passar pelo
+> `soulmon-narrative-critic`.
+
+| # | Peça | Formato / destino | Método |
+|---|---|---|---|
+| L1 | 8 screenshots PT + 8 EN (roteiro em `PLAY-FICHA.md` §6.2) | 1080×1920 PNG, `docs/loja/play/<pt|en>/0<n>-<slug>.png` | **captura**, não geração: PWA em viewport 360×780 (Browser pane) ou APK no emulador, tema escuro, uma das 6 criaturas de demonstração; legenda em faixa superior composta por script (Rubik, `--sm2-*`), nunca desenhada pelo gerador |
+| L2 | Feature graphic PT + EN | 1024×500 sem alfa, margem segura 15 % por lado, `docs/loja/play/<pt|en>/feature-1024x500.png` | **composição**: wordmark (`familia=marca`, vetor) à esquerda + visor da identidade com uma criatura demo dentro à direita + tagline de `PLAY-FICHA.md` §6.3 em Rubik; nada em pixel fora do visor |
+| L3 | `og:image` 1200×630 | `public/og-1200x630.png` + `index.html` `og:image` (hoje aponta para `favicon-512x512.png` — funciona como ícone, não como key visual, `manual/04` §10.0) | **recorte/reenquadre de L2**, nunca um terceiro asset — é o mesmo pedido em dois lugares (`04` §10.0 e `PLAY-FICHA` §6.3) com um id só |
+| L4 | Ícone 512 sem alfa | `docs/loja/play/icon-512.png` | derivar de `public/favicon-512x512.png` (a marca canônica desde `005a2941`, chama + cristal) sobre fundo sólido — `familia=marca` |
+
+Aceite do `arte-conferente` para esta família: legenda sem cobrança (grep das `PROIBIDAS_PT/EN` de `petVoice.ts` + o `copy.semFomo` sobre o texto da faixa), criatura de demonstração (nunca sprite derivado), nenhum vocabulário Bandai no briefing nem na legenda ("primeira/última forma", não "rookie/mega"), paleta do rebrand (nunca `#2bff95`). O `arte-instalador` só toca `public/`/`index.html` (L3) — `docs/loja/` é entrega, não asset do bundle.
+

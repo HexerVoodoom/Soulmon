@@ -1,5 +1,8 @@
 /// <reference types="vite/client" />
 
+/** `version` do `package.json`, injetado por `define` em `vite.config.ts`. */
+declare const __APP_VERSION__: string;
+
 // Figma asset imports resolve to string URLs via vite.config.ts aliases
 declare module 'figma:asset/*.png' {
   const url: string;

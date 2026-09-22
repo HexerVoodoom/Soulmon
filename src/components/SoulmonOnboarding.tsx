@@ -326,6 +326,14 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   // marca ("Começar") e a conta vinha três telas depois; o dono pediu a conta
   // logo após o carregamento, e a marca virou o cabeçalho do próprio portão.
   const [step, setStep] = useState(draft ? draft.step : isUpgrade ? 1 : IDENTITY_STEP);
+  /** Adendo 11 (21/09/2026): o servidor respondeu 410 `account-deleted` e
+   *  `reagirContaExcluida` limpou o aparelho e voltou para cá. A mensagem é
+   *  lida UMA vez e apagada — não pode reaparecer na próxima abertura. */
+  const [avisoContaExcluida] = useState<string | null>(() => {
+    const m = readLocal(STORAGE_KEYS.ACCOUNT_DELETED_NOTICE);
+    if (m) removeLocal(STORAGE_KEYS.ACCOUNT_DELETED_NOTICE, { silent: true });
+    return m;
+  });
   const [flow, setFlow] = useState<'oracle' | 'demo' | null>(draft || isUpgrade ? 'oracle' : null);
   /** `null` = ainda não sabemos (a checagem é assíncrona); string = e-mail já
    *  comprovado; `''` = deslogado. O portão só decide depois de saber. */
@@ -1279,6 +1287,11 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               fontWeight: 600, letterSpacing: '.01em', color: 'var(--sm2-ink)', lineHeight: 'var(--sm2-leading-title)',
             }}>Soulmon</span>
           </div>
+          {avisoContaExcluida && (
+            <p role="status" style={{ ...sm2Text, textAlign: 'center', margin: '12px 0 0' }} data-account-deleted-notice>
+              {avisoContaExcluida}
+            </p>
+          )}
           <StepShell
             title={!mostrarAuth
               ? (isPt ? 'Antes de começar' : 'Before we start')

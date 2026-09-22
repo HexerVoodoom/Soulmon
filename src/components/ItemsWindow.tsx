@@ -58,7 +58,10 @@ interface ItemsWindowProps {
   language?: Language;
 }
 
-function getFoodName(emoji: string, lang: Language): string {
+/** Nome do alimento/item no idioma da pessoa — dono único (PL-5, 21/09/2026):
+ *  o `CompanionHUD` usava `FOOD_BY_CATEGORY[].name` (só EN) para o MESMO item
+ *  e o leitor de tela em PT ouvia "Protein × 2" no deck e "Proteína ×2" aqui. */
+export function getFoodName(emoji: string, lang: Language): string {
   const special = SPECIAL_ITEMS[emoji];
   if (special) return lang === 'pt-BR' ? special.namePt : special.nameEn;
   const entry = FOOD_NAMES[emoji];

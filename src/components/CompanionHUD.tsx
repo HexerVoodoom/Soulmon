@@ -25,7 +25,7 @@ import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readFlag, writeFlag } from '../utils/safeStorage';
 import { ModalSheet, sm2Hint, sm2Text } from './form/FormKit';
 import { isSpecialItem } from '../utils/shop';
-import { FOOD_BY_CATEGORY } from '../constants/labels';
+import { getFoodName } from './ItemsWindow';
 
 /* ── Escala INTEIRA do sprite ──────────────────────────────────────────────
    Os PNGs das linhas (`src/assets/soulmon/lines/*`) são 256×256 (53 arquivos)
@@ -846,9 +846,6 @@ export const CompanionHUD = memo(function CompanionHUD({
   const foodStock = Object.entries(foodInventory)
     .filter(([emoji, n]) => n > 0 && !isSpecialItem(emoji))
     .sort((a, b) => b[1] - a[1]);
-  const FOOD_NAME_BY_EMOJI: Record<string, string> = Object.fromEntries(
-    Object.values(FOOD_BY_CATEGORY).map(f => [f.emoji, f.name]),
-  );
 
   /* Alimentar pelo deck NÃO reimplementa a regra: chama o mesmo `onFeed` do
      `ItemsWindow`. Quem decide teto por hora, recusa por estar cheio e pontos
@@ -1844,12 +1841,12 @@ export const CompanionHUD = memo(function CompanionHUD({
                   type="button"
                   onClick={() => handleDeckFeed(emoji)}
                   className="sm2-gcell"
-                  aria-label={`${FOOD_NAME_BY_EMOJI[emoji] ?? emoji} × ${n}`}
+                  aria-label={`${getFoodName(emoji, language)} × ${n}`}
                 >
                   <span className="sm2-gcell-art" aria-hidden="true">
                     {ITEM_ART[emoji] && <img src={ITEM_ART[emoji]} alt="" width={48} height={48} />}
                   </span>
-                  <span className="sm2-gcell-name">{FOOD_NAME_BY_EMOJI[emoji] ?? ''}</span>
+                  <span className="sm2-gcell-name">{getFoodName(emoji, language)}</span>
                   <span className="sm2-gcell-count sm2-num">×{n}</span>
                 </button>
               ))}

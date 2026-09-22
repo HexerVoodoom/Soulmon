@@ -118,7 +118,7 @@ export const EVENT_SCHEMA = {
   dungeon_run: { floors: { min: 1, max: 5 } },
   bond_level: { level: { min: 1, max: 30 } },
   after_bad_day: { gap: { min: 0, max: 3 }, kind: { min: 0, max: 1 } },
-  app_open: { source: { min: 0, max: 3 } },
+  app_open: { source: { min: 0, max: 4 } }, // 4 = invite (?src=convite, E0 — 22/09/2026)
   push_optout: null,
   retained: { bucket: { min: 0, max: 2 }, tier: { min: 0, max: 2 } },
   // som-01 (SQUAD-SOM) — ESPELHO de src/utils/telemetry.ts. Sem `tier` de
@@ -302,7 +302,7 @@ const KIND_LABEL = ['task', 'habit'];
 /* WP0.2 — os marcos de retenção, na ORDEM de `RETENTION_MARKS`. */
 const RETENTION_LABEL = ['d1', 'd7', 'd30'];
 /* WP0.11 — de onde a abertura veio. */
-const OPEN_SOURCE_LABEL = ['direct', 'push', 'widget', 'shortcut'];
+const OPEN_SOURCE_LABEL = ['direct', 'push', 'widget', 'shortcut', 'invite'];
 /* Faixas de dias fora (`welcome_back`) e de dias até voltar depois de um dia
    ruim (`after_bad_day`). */
 const BUCKET_LABEL = ['0', '1', '2', '3'];
@@ -490,6 +490,16 @@ export function applyAggregate(agg, events) {
     if (record.e === 'week_active') {
       bump(`week_active.goal_days.${p.goal_days}`);
       if (tier) bump(`week_active.${tier}.goal_days.${p.goal_days}`);
+      // `active_days` saía do aparelho (declarado na política: "em quantos
+      // dias você concluiu alguma coisa"), passava pelo `EVENT_SCHEMA` e
+      // MORRIA aqui — custo de privacidade sem retorno, o defeito que o
+      // cabeçalho deste arquivo condena. É a leitura honesta da hipótese de
+      // HÁBITO de E0 ("ativo em ≥2 de 4 dias"): `goal_days` mede meta batida,
+      // `active_days` mede presença. QA rodada 1, review 07 §1.4.
+      if (Number.isInteger(p.active_days)) {
+        bump(`week_active.active_days.${p.active_days}`);
+        if (tier) bump(`week_active.${tier}.active_days.${p.active_days}`);
+      }
     }
   }
   return out;
@@ -675,10 +685,18 @@ export async function onRequestGet({ request, env }) {
     north_star: summarizeNorthStar(totals),
     // Dito na própria resposta, para quem ler o JSON não inferir o que ele não
     // diz: o agregado é por dia de EVENTO, nunca por coorte de instalação.
-    // Retenção e "conversão em N dias" NÃO são calculáveis a partir daqui.
+    // "Conversão em N dias" e qualquer série por usuário NÃO são calculáveis a
+    // partir daqui. `retained.d1/d7/d30` EXISTE (marco cruzado, contado no
+    // aparelho e emitido 1× por marco — `applyAggregate`), então a nota
+    // antiga que listava "D7" como ilegível estava errada e contradizia o
+    // próprio JSON que a carregava (QA rodada 1, review 07). O que continua
+    // ilegível é a retenção CLÁSSICA por coorte: `d7` aqui é "voltou em algum
+    // dia de D7–D29 desde a primeira carga", não "% da coorte de instalação
+    // viva no 7º dia".
     notes: {
       cohort: 'nao existe: agregado por dia de evento, sem identidade nem dia de instalacao',
-      unreadable: ['retencao', 'D7', 'conversao em N dias', 'qualquer serie por usuario'],
+      retained: 'retained.d1/d7/d30 = maior marco cruzado por pessoa, emitido 1x na vida (d7 = voltou em algum dia de D7-D29); nao e retencao por coorte',
+      unreadable: ['retencao por coorte de instalacao', 'conversao em N dias', 'qualquer serie por usuario'],
     },
   }, { headers: CORS });
 }

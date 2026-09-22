@@ -145,10 +145,20 @@ export function requestDelete(saveId: string): Promise<AccountResult<DeleteReque
  * token que não deu para revogar não é motivo para negar isso. O caso pior é
  * uma notificação órfã, que o worker descarta no primeiro 404/410.
  */
-export async function revokePushBeforeDelete(): Promise<{ webPush: boolean; fcm: boolean }> {
+export const REVOKE_PUSH_TIMEOUT_MS = 8_000;
+
+export async function revokePushBeforeDelete(timeoutMs = REVOKE_PUSH_TIMEOUT_MS): Promise<{ webPush: boolean; fcm: boolean }> {
   try {
     const { unsubscribeFromPush, unregisterFromPushNotifications } = await import('./notifications');
-    const [web, fcm] = await Promise.allSettled([unsubscribeFromPush(), unregisterFromPushNotifications()]);
+    // Teto de tempo: um `fetch` DELETE pendurado (rede que não responde, nem
+    // falha) segurava `confirmDelete` PARA SEMPRE — a pessoa via o botão de
+    // apagar rodando sem fim. Achado do QA (rodada A, 21/09/2026). Estourar o
+    // teto conta como falha do push, que já não bloqueia a exclusão.
+    const comTeto = <T,>(p: Promise<T>) => new Promise<T>((resolve, reject) => {
+      const t = setTimeout(() => reject(new Error('push-revoke-timeout')), timeoutMs);
+      p.then(v => { clearTimeout(t); resolve(v); }, e => { clearTimeout(t); reject(e); });
+    });
+    const [web, fcm] = await Promise.allSettled([comTeto(unsubscribeFromPush()), comTeto(unregisterFromPushNotifications())]);
     return { webPush: web.status === 'fulfilled', fcm: fcm.status === 'fulfilled' };
   } catch {
     // O módulo nem carregou (ambiente sem Capacitor, etc.): a exclusão segue.

@@ -19,10 +19,10 @@
 // zero `.png` em `dist/assets` e zero referência a `.png` de assets no bundle.
 import { readdir, stat, readFile, writeFile, unlink } from 'fs/promises';
 import { join } from 'path';
+import { pathToFileURL } from 'url';
 import sharp from 'sharp';
 
 const DIST_DIR = 'dist';
-const ASSETS_DIR = join(DIST_DIR, 'assets');
 /** Arquivos de texto da saída onde a URL do asset pode aparecer. */
 const TEXTO = /\.(js|mjs|css|html|json|webmanifest|map)$/;
 
@@ -35,41 +35,72 @@ async function arquivosDeTexto(dir, saida = []) {
   return saida;
 }
 
-async function main() {
+/**
+ * Conversor padrão: PNG → WebP via sharp. Injetável (`opts.converterUm`) para
+ * o teste simular uma conversão que falha sem depender de um PNG corrompido.
+ */
+async function converterUm(inputPath, outputPath) {
+  await sharp(inputPath).webp({ quality: 85, effort: 4 }).toFile(outputPath);
+}
+
+/**
+ * Faz o trabalho inteiro sobre `distDir` e DEVOLVE o resultado — nunca chama
+ * `process.exit` nem escreve no console por conta própria (`log`/`error` são
+ * injetáveis). Extraído de `main()` em 21/09/2026 (QA, rodada A) para que o
+ * comportamento "referência sobrando → PNG intacto" seja PROVADO por teste em
+ * pasta temporária, não lido do código. `npm run build` continua chamando
+ * `main()`, que mapeia o resultado para os mesmos códigos de saída.
+ *
+ * @param {string} distDir
+ * @param {{ log?: (s: string) => void, error?: (s: string) => void, converterUm?: typeof converterUm }} [opts]
+ * @returns {Promise<{
+ *   ok: boolean,
+ *   motivo: 'sem-dist' | 'sem-png' | 'sobras' | 'falhas' | null,
+ *   convertidos: string[], falhas: string[], sobras: string[],
+ *   referencias: number, arquivosReescritos: number, savedBytes: number, total: number,
+ * }>}
+ */
+export async function converter(distDir = DIST_DIR, opts = {}) {
+  const log = opts.log ?? console.log;
+  const error = opts.error ?? console.error;
+  const conv = opts.converterUm ?? converterUm;
+  const assetsDir = join(distDir, 'assets');
+  const vazio = { convertidos: [], falhas: [], sobras: [], referencias: 0, arquivosReescritos: 0, savedBytes: 0, total: 0 };
+
   let files;
   try {
-    files = await readdir(ASSETS_DIR);
+    files = await readdir(assetsDir);
   } catch {
-    console.error(`Directory not found: ${ASSETS_DIR}. Run "npm run build" first.`);
-    process.exit(1);
+    error(`Directory not found: ${assetsDir}. Run "npm run build" first.`);
+    return { ok: false, motivo: 'sem-dist', ...vazio };
   }
 
   const pngs = files.filter((f) => f.endsWith('.png'));
   if (pngs.length === 0) {
-    console.log('No PNG assets found.');
-    return;
+    log('No PNG assets found.');
+    return { ok: true, motivo: 'sem-png', ...vazio };
   }
 
   // 1. Converter. Só entra no mapa de reescrita o que converteu de verdade.
   const convertidos = new Map(); // nome.png → nome.webp
   let savedBytes = 0;
-  let falhas = 0;
+  const falhas = [];
   for (const file of pngs) {
-    const inputPath = join(ASSETS_DIR, file);
+    const inputPath = join(assetsDir, file);
     const webpName = file.replace(/\.png$/, '.webp');
-    const outputPath = join(ASSETS_DIR, webpName);
+    const outputPath = join(assetsDir, webpName);
     const { size: inputSize } = await stat(inputPath);
     try {
-      await sharp(inputPath).webp({ quality: 85, effort: 4 }).toFile(outputPath);
+      await conv(inputPath, outputPath);
       const { size: outputSize } = await stat(outputPath);
       savedBytes += inputSize - outputSize;
       convertidos.set(file, webpName);
-      console.log(
+      log(
         `  ✓ ${file.slice(0, 40).padEnd(40)} ${(inputSize / 1024).toFixed(0).padStart(6)} kB → ${(outputSize / 1024).toFixed(0).padStart(5)} kB WebP`
       );
     } catch (err) {
-      falhas++;
-      console.error(`  ✗ ${file}: ${err.message}`);
+      falhas.push(file);
+      error(`  ✗ ${file}: ${err.message}`);
     }
   }
 
@@ -77,7 +108,7 @@ async function main() {
   //    desambigua — troca textual exata, sem regex sobre o conteúdo.
   let arquivosReescritos = 0;
   let referencias = 0;
-  for (const p of await arquivosDeTexto(DIST_DIR)) {
+  for (const p of await arquivosDeTexto(distDir)) {
     const antes = await readFile(p, 'utf8');
     let depois = antes;
     for (const [png, webp] of convertidos) {
@@ -94,28 +125,41 @@ async function main() {
 
   // 3. Apagar o PNG — só o convertido, e só se nenhuma referência sobrou.
   const sobras = [];
-  for (const p of await arquivosDeTexto(DIST_DIR)) {
+  for (const p of await arquivosDeTexto(distDir)) {
     const c = await readFile(p, 'utf8');
     for (const png of convertidos.keys()) if (c.includes(png)) sobras.push(`${p} → ${png}`);
   }
+  const base = {
+    convertidos: [...convertidos.keys()], falhas, sobras, referencias, arquivosReescritos, savedBytes, total: pngs.length,
+  };
   if (sobras.length > 0) {
-    console.error(`\n✗ ${sobras.length} referência(s) a PNG sobraram após a reescrita; PNGs mantidos:\n  ${sobras.join('\n  ')}`);
-    process.exit(1);
+    error(`\n✗ ${sobras.length} referência(s) a PNG sobraram após a reescrita; PNGs mantidos:\n  ${sobras.join('\n  ')}`);
+    return { ok: false, motivo: 'sobras', ...base };
   }
-  for (const png of convertidos.keys()) await unlink(join(ASSETS_DIR, png));
+  for (const png of convertidos.keys()) await unlink(join(assetsDir, png));
 
   const savedMB = (savedBytes / 1024 / 1024).toFixed(2);
-  console.log(
+  log(
     `\nConverted ${convertidos.size}/${pngs.length} PNGs → WebP (${savedMB} MB a menos), ` +
     `${referencias} referência(s) reescrita(s) em ${arquivosReescritos} arquivo(s), PNGs apagados.`
   );
-  if (falhas > 0) {
-    console.error(`✗ ${falhas} PNG(s) não converteram e ficaram como .png no dist/.`);
-    process.exit(1);
+  if (falhas.length > 0) {
+    error(`✗ ${falhas.length} PNG(s) não converteram e ficaram como .png no dist/.`);
+    return { ok: false, motivo: 'falhas', ...base };
   }
+  return { ok: true, motivo: null, ...base };
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+async function main() {
+  const r = await converter(DIST_DIR);
+  if (!r.ok) process.exit(1);
+}
+
+// Só roda quando invocado direto (`node scripts/convert-to-webp.mjs`); importado
+// pelo teste, não faz nada. `process.argv[1]` é o caminho do script executado.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}

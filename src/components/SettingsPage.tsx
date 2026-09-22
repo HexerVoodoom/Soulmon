@@ -401,6 +401,10 @@ export function SettingsPage({
           label={isPt ? 'Política de privacidade' : 'Privacy policy'}
           href="/privacidade.html"
         />
+        {/* O canal de feedback fica em Ajuda, logo acima da versão que vai no
+            e-mail: é onde a pessoa procura quando algo não funciona
+            (design-critic B3, 21/09/2026; `FeedbackLink.tsx`). */}
+        <FeedbackRow language={language} saveId={saveId} />
         <p className="sm2-num" style={{ ...sm2Hint, minHeight: 24, display: 'flex', alignItems: 'center' }}>Soulmon {APP_VERSION}</p>
       </Group>
 
@@ -425,7 +429,9 @@ export function SettingsPage({
             ? 'O Soulmon não sabe nada sobre a sua vida além do que você escreveu nele.'
             : 'Soulmon knows nothing about your life beyond what you typed into it.'}
         </p>
-        <p style={sm2Hint}>
+        {/* §16.3 da bíblia é um dos três limites, não uma nota de rodapé:
+            mesmo peso tipográfico dos outros dois (design-critic C2). */}
+        <p style={sm2Text}>
           {isPt
             ? 'Nada do que aparece aqui é uma afirmação sobre a sua saúde, a sua mente ou o seu futuro.'
             : 'Nothing shown here is a statement about your health, your mind or your future.'}
@@ -438,17 +444,14 @@ export function SettingsPage({
             e a política já os dizem — divergir seria pior que repetir. */}
         <p style={sm2Text}>
           {isPt
-            ? 'A imagem da sua criatura e as falas do chat são geradas por IA (Higgsfield e Gemini para a imagem, Groq para a conversa).'
-            : 'Your creature’s image and the chat lines are AI-generated (Higgsfield and Gemini for the image, Groq for the conversation).'}
+            ? 'A imagem da sua criatura, as falas do chat e alguns sons (evolução, regressão e conclusão de tarefa) são gerados por IA (Higgsfield e Gemini para a imagem, Groq para a conversa), sem revisão humana. O chat não é um serviço de emergência.'
+            : 'Your creature’s image, the chat lines and some sounds (evolution, regression and task completion) are AI-generated (Higgsfield and Gemini for the image, Groq for the conversation), with no human review. The chat is not an emergency service.'}
         </p>
         <ActionRow
           label={isPt ? 'O que o chat recebe' : 'What the chat receives'}
           hint={isPt ? 'Na política de privacidade.' : 'In the privacy policy.'}
-          href="/privacidade.html#chat-contexto"
+          href={isPt ? '/privacidade.html#chat-contexto' : '/privacidade.html#chat-context'}
         />
-        {/* O canal de feedback vive em "Sobre" porque é a conversa com quem
-            faz o app — mesmo assunto deste grupo (`FeedbackLink.tsx`). */}
-        <FeedbackRow language={language} saveId={saveId} />
       </Group>
 
       {/* ── SEU RITMO — encosta na Janela de Descanso, que o App desenha logo

@@ -11,7 +11,7 @@
 > dado pessoal". Cada linha abaixo aponta para o código que a sustenta, então dá
 > para reconferir em vez de acreditar.
 >
-> **Atualizado em:** 21/09/2026 (§2.7 e §3b) · **Confira antes de enviar** se nada mudou desde
+> **Atualizado em:** 22/09/2026 (§2.3, §2.4, §2.7, §3b, "Anúncios" — QA rodada 1) · **Confira antes de enviar** se nada mudou desde
 > essa data — a fonte viva é `public/privacidade.html` e o inventário de eventos
 > em `functions/api/metrics.js`.
 
@@ -24,7 +24,7 @@
 | **URL da política de privacidade** | `https://soulmon.mateus-sprnd.workers.dev/privacidade` ✅ **já está no ar** |
 | **URL de exclusão de conta** (obrigatória desde 2024) | `https://soulmon.mateus-sprnd.workers.dev/privacidade#exclusao` — e, no app, **Configurações → Seus dados → Excluir conta** |
 | **Público-alvo (Content rating)** | Maiores de 18. A política declara isso na seção 7, e o app tem caixa de confirmação de maioridade na tela de conta |
-| **Anúncios** | Não. O app não tem publicidade e não usa ID de publicidade |
+| **Anúncios** | Não. O app não tem publicidade e não usa ID de publicidade — ver a seção "Anúncios" abaixo do §3b para o que muda se isso ligar |
 
 > ⚠️ **A exclusão precisa funcionar no dia da revisão.** Ela depende do
 > `FIREBASE_PROJECT_ID` ligado no worker (feito em 07/09/2026) — `/api/account`
@@ -74,8 +74,8 @@ usuário escolhe.
 
 | Tipo do Google | Coletado? | Compartilhado? | Finalidade | Obrigatório? | Onde |
 |---|---|---|---|---|---|
-| **Outras mensagens no app** | ✅ Sim | ✅ Sim — **Groq** (provedor de IA, EUA) | Funcionalidades do app (a criatura responder) | Opcional | `functions/api/chat.js` |
-| **Outras mensagens no app** — descrição da criatura para gerar a imagem (inclui o campo opcional "criatura favorita" e a escolha do Renascimento, texto livre) | ✅ Sim | ✅ Sim — **Higgsfield** e **Google Gemini** (geração de imagem) | Funcionalidades do app (desenhar a criatura) | Opcional (só quem gera/regenera o sprite) | `functions/api/generate-sprite.js` (`generateHiggsfield`, `generateGemini`) — achado do QA de 21/09/2026 (`reviews/2026-09-21-qa-geral/11-compliance.md` §1); política §6 já declara |
+| **Outras mensagens no app** — chat da criatura (mensagem + 3 últimas trocas; nome/estágio/galho/humor da criatura; vida/energia/vínculo/dias fora em números; humor do dia se marcado; `customKeywords` e ajustes de tom), objetivo digitado em "sugerir tarefas" (no tutorial, pré-preenchido com `soulGoal`) e nome da tarefa em "Decompor" | ✅ Sim | ✅ Sim — **Groq** (provedor de IA, EUA) | Funcionalidades do app (a criatura responder; sugerir e decompor tarefas) | Opcional | `functions/api/chat.js` (`buildSystemPrompt`, `CONTEXT_SCHEMA`, `CHAT_MEMORY_TURNS`), `functions/api/suggest-tasks.js`, `src/App.tsx` › `runDecompose`, `GameTutorialFlow.tsx` › `useState(soulGoal)` — **declarado, não cortado** (decisão provisória do coordenador, QA rodada 1, 21/09/2026); política §2b/§6 |
+| **Outras mensagens no app** — descrição da criatura para gerar a imagem (inclui o campo opcional "criatura favorita" e a escolha do Renascimento, texto livre) | ✅ Sim | ✅ Sim — **Higgsfield** e **Google Gemini** (geração de imagem) | Funcionalidades do app (desenhar a criatura) | Opcional (só quem gera/regenera o sprite) | `functions/api/generate-sprite.js` (`generateHiggsfield`, `generateGemini`); política §6 declara |
 
 > **Não esconda isto.** É o item mais fácil de esquecer e o mais caro: o texto
 > que a pessoa escreve no chat sai do país. O app minimiza antes de enviar
@@ -87,7 +87,7 @@ usuário escolhe.
 
 | Tipo do Google | Coletado? | Compartilhado? | Finalidade | Obrigatório? | Onde no código |
 |---|---|---|---|---|---|
-| **Gravações de voz ou som** | ✅ Sim | ✅ Sim — serviço de transcrição | Funcionalidades do app (falar com a criatura em vez de digitar) | Opcional | `src/components/ChatBox.tsx` → `functions/api/transcribe.js` |
+| **Gravações de voz ou som** | ✅ Sim | ✅ Sim — **Supabase** (repasse) e **Groq** (transcrição, modelo Whisper) | Funcionalidades do app (falar com a criatura em vez de digitar) | Opcional | `src/components/ChatBox.tsx` → `functions/api/transcribe.js` → Supabase → Groq Whisper; política §2c/§6 nomeia os dois |
 | Fotos, vídeos, contatos, calendário, arquivos, músicas | ❌ Não | — | — | — | O app não pede nenhuma dessas permissões |
 
 > ⚠️ **Marque "Sim" mesmo não guardando o áudio.** O formulário pergunta se o
@@ -169,7 +169,9 @@ declarar sim:
   **estatísticas de uso**, onde ele realmente nunca entra — não para o save.
 - **`soulGoal` / `soulStruggle`** — texto livre escrito pela pessoa, que pode
   conter o que ela quiser, inclusive algo sobre a saúde dela. Sobe no save; não
-  passa por IA nem por métricas.
+  entra em métricas. `soulStruggle` não passa por IA; `soulGoal` só sai se a
+  pessoa pedir sugestões no tutorial com o campo pré-preenchido (§2.3, política
+  §2b — declarado desde 21/09/2026).
 
 Nada disso é dado clínico, e o app não é de saúde. Mas o formulário pergunta se
 você **coleta**, não se você trata como sensível — e como esses campos saem do
@@ -181,7 +183,7 @@ lado certo para errar.
 | Tipo do Google | Coletado? | Observação |
 |---|---|---|
 | Localização aproximada ou precisa | ❌ Não | Nenhuma permissão de localização. `ACTIVITY_RECOGNITION` **não** é localização: ela dá acesso ao contador de passos, não a onde você esteve |
-| **IDs do dispositivo ou outros IDs** | ✅ **Sim** | **Token do FCM** (app Android, `functions/api/fcm-subscribe.js`, chaves `fcm:*`) e **endpoint do Web Push** (PWA/navegador, `functions/api/subscribe.js`, chaves `push:*`). Finalidade: **funcionalidades do app** (entregar lembretes). **Opcional** — só existe com as notificações ligadas e é apagado ao desligá-las ou ao excluir a conta pelo app. Não compartilhado (o FCM é o transporte, não um destinatário). O identificador das métricas continua **fora** desta linha: é gerado no aparelho, aleatório, e o servidor o descarta antes de gravar (`functions/api/metrics.js`) |
+| **IDs do dispositivo ou outros IDs** | ✅ **Sim** | **Token do FCM** (app Android, `functions/api/fcm-subscribe.js`, chaves `fcm:*`) e **endpoint do Web Push** (PWA/navegador, `functions/api/subscribe.js`, chaves `push:*`). Finalidade: **funcionalidades do app** (entregar lembretes). **Opcional** — só existe com as notificações ligadas e é apagado ao desligá-las ou ao excluir a conta. O registro carrega o **`saveId` (identificador da conta = hash do e-mail)** — **não o e-mail** — justamente para a exclusão de conta conseguir achá-lo e apagá-lo (`functions/api/account.js` › `deletePushSubscriptions`). Não compartilhado (o FCM é o transporte, não um destinatário). O identificador das métricas continua **fora** desta linha: é gerado no aparelho, aleatório, e o servidor o descarta antes de gravar (`functions/api/metrics.js`) |
 | Registros de erro / diagnóstico | ❌ Não | Não há Crashlytics, Sentry ou similar |
 
 > **Por que "sim" (decisão do dono, 21/09/2026 — pergunta #21 do QA geral).**
@@ -190,11 +192,20 @@ lado certo para errar.
 > de push é um identificador estável por instalação que sai do aparelho e
 > fica guardado no nosso servidor; a zona é cinzenta, e o lado seguro de errar
 > numa ficha da Play é **declarar**. Subdeclarar é motivo de remoção;
-> sobredeclarar, no máximo, uma linha a mais na ficha pública. Se o revisor
-> perguntar: o token existe só enquanto as notificações estiverem ligadas,
-> não é ID de publicidade, e não é cruzado com e-mail nem com o save
-> (`account.js` diz por escrito que o servidor **não consegue** achar as
-> inscrições a partir da conta).
+> sobredeclarar, no máximo, uma linha a mais na ficha pública.
+>
+> **Sobre o vínculo com a conta (reescrito em 22/09/2026 — compliance #7 da
+> rodada 1).** Uma versão anterior deste parágrafo dizia que o token "não é
+> cruzado com e-mail nem com o save". Isso deixou de ser verdade em 21/09/2026:
+> para a exclusão de conta alcançar as inscrições (decisão #23 do QA geral),
+> `subscribe.js`/`fcm-subscribe.js` passaram a gravar o **`saveId`** no valor
+> do registro, e `account.js` › `deletePushSubscriptions` varre por ele. O que
+> **continua** verdade: o registro **não tem o e-mail** (só o hash), não é ID de
+> publicidade, existe só enquanto as notificações estiverem ligadas, e
+> registros gravados antes dessa data (sem `saveId`) só são apagados pelo
+> próprio aparelho — a resposta da exclusão declara isso. Se o revisor
+> perguntar: "ligado ao identificador da conta para poder ser apagado na
+> exclusão", que é o que a política §2 diz ao usuário.
 
 ---
 
@@ -202,8 +213,8 @@ lado certo para errar.
 
 **Coletado e compartilhado:**
 - E-mail → Firebase (Google)
-- Outras mensagens no app → Groq (chat, sugestões) e Higgsfield + Google Gemini (descrição da criatura para a imagem)
-- **Gravações de voz ou som** → serviço de transcrição, via `functions/api/transcribe.js` *(opcional; processamento efêmero — ver 2.4)*
+- Outras mensagens no app → Groq (chat com contexto, sugestões de tarefa, nome da tarefa em "Decompor") e Higgsfield + Google Gemini (descrição da criatura para a imagem)
+- **Gravações de voz ou som** → Supabase (repasse) + Groq Whisper, via `functions/api/transcribe.js` *(opcional; processamento efêmero — ver 2.4)*
 
 **Coletado, não compartilhado:**
 - Nome de usuário
@@ -256,9 +267,15 @@ apps instalados, dados de pagamento, documentos.
 1. **Ficha da Play** — na seção de conteúdo gerado por IA do Play Console
    (declarar sprite, chat e sons; a arte estática curada é indistinguível de
    arte encomendada para efeito de ficha, mas nada impede citá-la).
-2. **Aviso in-app** — **Configurações › Sobre**, texto curto PT/EN: o chat é
-   escrito por IA sem revisão humana e não é serviço de emergência; a imagem da
-   criatura e os sons de marco/evolução são gerados por IA.
+2. **Aviso in-app** — **Configurações › Sobre** (`src/components/SettingsPage.tsx`),
+   texto curto PT/EN. **Texto real, desde 22/09/2026** (compliance #6 / design
+   C1 da rodada 1; até 21/09 dizia só "imagem e falas são geradas por IA", sem
+   "sem revisão humana", sem "não é emergência" e sem os sons):
+   > PT: "A imagem da sua criatura, as falas do chat e alguns sons (evolução, regressão e conclusão de tarefa) são gerados por IA (Higgsfield e Gemini para a imagem, Groq para a conversa), sem revisão humana. O chat não é um serviço de emergência."
+   > EN: "Your creature’s image, the chat lines and some sounds (evolution, regression and task completion) are AI-generated (Higgsfield and Gemini for the image, Groq for the conversation), with no human review. The chat is not an emergency service."
+
+   É esta a frase que a ficha pode citar. Régua:
+   `src/components/SettingsPage.sobre.render.test.tsx`.
 3. **Termos §8** (`public/termos.html`, PT e EN, versão 2026-09-21) — a
    cláusula completa: modelo sem revisão humana, não é aconselhamento nem
    emergência, canais de ajuda fixos (CVV 188 / findahelpline.com), sprite e
@@ -266,6 +283,28 @@ apps instalados, dados de pagamento, documentos.
 
 A procedência asset a asset (modelo, provedor, data, onde vive o prompt) mora
 em `docs/Attributions.md`, não aqui.
+
+## 3c. Anúncios — o que existe no código e o que muda se ligar
+
+Decisão #14 do dono: **anúncios desligados**. A ficha responde "Não contém
+anúncios" (§0) e "ID de publicidade: não coletado" (§3). O que sustenta isso, e
+o que virar cada peça implicaria:
+
+| Peça | Estado hoje | Onde |
+|---|---|---|
+| Flag do cliente | `ADS_ENABLED = false` — a UI de "assistir anúncio por créditos" não renderiza | `src/utils/monetization.ts` (`ADS_ENABLED`, `AD_REWARD_CREDITS = 5`, `AD_DAILY_CAP = 3`) |
+| Rota do servidor | `/api/entitlements?action=ad` responde **501 `ads-not-configured`** sem `ADMOB_SSV_ENABLED` | `functions/api/entitlements.js`; `docs/BILLING-SETUP.md` §4b |
+| SDK de anúncios | **Nenhum** no bundle nem no APK (sem AdMob, sem `AdvertisingId`) | `package.json`, `android/app/build.gradle` |
+| `watchRewardedAd()` | simulação sem SDK, atrás da flag | `src/utils/monetization.ts` (comentário no topo) |
+
+**Se um dia ligar** (`ADS_ENABLED = true` + `ADMOB_SSV_ENABLED` + SDK), muda **antes
+do build ir ao ar**: (1) §0 "Anúncios" → Sim; (2) §2.7 passa a coletar **ID de
+publicidade** e a compartilhá-lo com a rede; (3) §2.5 "Interações no app" ganha a
+finalidade "Publicidade ou marketing"; (4) a ficha da loja (`PLAY-FICHA.md` §0 e
+"Sem anúncios" na descrição) e o IARC "Anúncios: Não" viram falsos e saem; (5) a
+política §6 ganha a rede como terceiro e a frase "não os usamos para publicidade
+direcionada" precisa ser revista; (6) a declaração de IA não muda. Nada disso é
+automático — e é por isso que o item está aqui, não só no `BILLING-SETUP`.
 
 ## 4. O que NÃO declarar por engano
 
@@ -292,5 +331,10 @@ Gatilhos concretos para revisitar este arquivo:
   aparelho — aí muda de categoria e passa a exigir conta verificada e política
   dedicada;
 - o modo cooperativo passar a mostrar mais do que "apareceu hoje";
-- `soulGoal`/`soulStruggle` passarem a ir para alguma rota de IA;
+- `soulStruggle` passar a ir para alguma rota de IA, ou `soulGoal` sair por
+  outro caminho além do pré-preenchimento do tutorial já declarado (§2.3,
+  política §2b);
+- qualquer campo novo entrar no contexto do chat (`CONTEXT_SCHEMA`) ou no
+  prompt de sistema (`buildSystemPrompt`) — a lista da política §2b é fechada;
+- anúncios ligarem (§3c);
 - qualquer permissão nova no `AndroidManifest.xml`.

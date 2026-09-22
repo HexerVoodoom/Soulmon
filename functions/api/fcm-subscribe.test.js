@@ -57,7 +57,10 @@ function req(body, { method = 'POST', ip = '203.0.113.7', cru = null } = {}) {
 let n = 0;
 const ipNovo = () => `192.0.2.${(n = (n + 1) % 250) + 1}`;
 
-const gravado = env => JSON.parse(env.PUSH_SUBSCRIPTIONS.gravacoes.at(-1).v);
+/** A ÚLTIMA gravação de inscrição (`fcm:*`). Desde o índice inverso `pushidx:`
+ *  (22/09/2026) uma inscrição com `saveId` gera uma 2ª escrita, a do índice —
+ *  que não é o registro e não pode ser lida como se fosse. */
+const gravado = env => JSON.parse(env.PUSH_SUBSCRIPTIONS.gravacoes.filter(g => g.k.startsWith('fcm:')).at(-1).v);
 
 describe('POST — o que é recusado ANTES de tocar o KV', () => {
   let env;

@@ -36,17 +36,49 @@
 //               ⚠️ Esta escolha está ENDEREÇADA AO DONO, não decidida aqui.
 //               Nenhuma norma é afirmada neste arquivo.
 //  APAGA        Assinaturas de push (`push:*`, `fcm:*`, namespace
-//  (VARREDURA)  `PUSH_SUBSCRIPTIONS`) cujo VALOR carrega `saveId` igual ao do
-//               titular (decisão #23 do QA GERAL, 21/09/2026). A chave é hash
-//               do endpoint/token, então não dá para achá-las pela chave — é
-//               varredura por prefixo com teto (`MAX_SCAN_PAGES`), comparando o
-//               campo do valor. ⚠️ Registro SEM `saveId` (os gravados por
-//               `subscribe.js`/`fcm-subscribe.js` até esta data não têm o
-//               campo) fica FORA DO ALCANCE: o cliente continua chamando
+//  (ÍNDICE)     `PUSH_SUBSCRIPTIONS`) da conta, via índice inverso
+//               `pushidx:<saveId>` (`_pushIdentity.js`; decisão #23 do QA
+//               GERAL + `03-arquitetura-r1.md` §2). Custo fixo: <= 1 + 16x2 + 1
+//               operações. Cada membro é CONFERIDO (`rec.saveId === saveId`)
+//               antes de apagar — o índice aponta, não prova. Só quando o
+//               índice NÃO EXISTE (conta inscrita antes de 22/09/2026 e que
+//               nunca reabriu o app) cai na varredura antiga por prefixo, com
+//               teto (`MAX_SCAN_PAGES`) — compat, não caminho principal.
+//               ⚠️ Registro SEM `saveId` (gravados até 21/09/2026) fica FORA
+//               DO ALCANCE nos dois caminhos: o cliente continua chamando
 //               `DELETE /api/subscribe` e `DELETE /api/fcm-subscribe` no
 //               aparelho, e a resposta DECLARA isso em vez de deixar a pessoa
 //               achar que já foi. Nunca se apaga por palpite (hash de e-mail
 //               não está no registro; um `petName` igual não prova nada).
+//  APAGA        Sprites gerados por IA: `sprite:img:<saveId>:<formId>` (cache
+//               de resultado), `sprite:lock:<saveId>:<formId>` (lock de
+//               geração) e os binários `sprite:blob:<token>` que os caches
+//               apontam (o token está na URL `/api/sprite-image?k=<token>`
+//               gravada no cache — ver `generate-sprite.js`). ⚠️ Blob cujo
+//               cache NÃO gravou (falha declarada em `generate-sprite.js`,
+//               "falha ao cachear o resultado") fica ÓRFÃO: a chave é token
+//               aleatório, sem ligação com a conta, e não há como achá-lo.
+//               Declarado em `NOT_INCLUDED`.
+//  GRAVA        Lápide `del:done:<saveId>` (30 dias, `_accountTombstone.js`)
+//               ANTES da primeira destruição: `save.js` responde 410 a GET e
+//               POST enquanto ela viver, para outro aparelho logado não
+//               recriar o save 3 s depois (achado 03-arquitetura §2.5).
+//
+// ## Ordem de `delete-confirm` — o que pode falhar vai primeiro
+//
+// Princípio (03-arquitetura §2.4): enquanto nada foi destruído, uma falha
+// devolve 500 e o titular tenta de novo com o mesmo token (15 min). Depois
+// da primeira destruição irreversível, nada mais lança — cada passo é
+// `try/catch` que só reporta em `executado.falhou`, e a resposta é 200.
+//
+//   0. token · 1. `collect` · 2. LÁPIDE · 3. `friends[]` alheios (varredura —
+//   pode estourar; ainda reversível, e a lápide é desfeita se estourar) ·
+//   4. push por índice · 5. sprites · 6. minimizar `ent:` · 7. `rank:*`,
+//   `gifts:`, `pid:`, `profile:` · 8. **o save** · 9. token de confirmação.
+//
+// O save é o ÚLTIMO a cair: é o que a pessoa mais quer ver sumir, e é também
+// o que, apagado cedo, deixava o retry encontrar 404 com o token ainda válido
+// e nada mais para apagar.
 //
 // ## Confirmação — handshake de duas chamadas
 //
@@ -60,6 +92,8 @@ import {
 } from './_entitlements.js';
 import { requireVerifiedOwner } from './_auth.js';
 import { kv, kvOrThrow } from './_kv.js';
+import { lerIndice, chaveDoIndice } from './_pushIdentity.js';
+import { writeTombstone, clearTombstone, TOMBSTONE_TTL_SECONDS } from './_accountTombstone.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -118,27 +152,97 @@ const PUSH_PREFIXES = ['push:', 'fcm:'];
  * e não erro — a exclusão do resto não pode depender de um namespace que o
  * ambiente de teste ou preview pode não ter.
  *
- * @returns {Promise<{ deleted: number, scanned: number }>}
+ * @returns {Promise<{ deleted: number, scanned: number, via: 'index' | 'scan' | 'none' }>}
  */
 async function deletePushSubscriptions(env, saveId) {
   const pushStore = env?.PUSH_SUBSCRIPTIONS;
-  if (!pushStore || typeof pushStore.list !== 'function') return { deleted: 0, scanned: 0 };
+  if (!pushStore || typeof pushStore.get !== 'function') return { deleted: 0, scanned: 0, via: 'none' };
   let deleted = 0;
   let scanned = 0;
-  for (const prefix of PUSH_PREFIXES) {
-    for (const key of await listPrefix(env, prefix, pushStore)) {
-      scanned++;
-      let rec;
-      try { rec = JSON.parse((await pushStore.get(key)) || 'null'); } catch { continue; }
-      // Igualdade ESTRITA com o saveId inteiro. Prefixo, `petName` ou qualquer
-      // outro campo não identificam conta — apagar a inscrição de outra pessoa
-      // é cortar o push dela em silêncio.
-      if (!rec || rec.saveId !== saveId) continue;
-      await pushStore.delete(key);
-      deleted++;
+  // Melhor-esforço, como no cliente (`accountData.ts:revokePushBeforeDelete`).
+  // Se o namespace de push cair no meio (get/delete rejeitando), deixar o erro
+  // subir devolvia 500 — e o que sobrou fica declarado em `naoIncluido`.
+  //
+  // CAMINHO PRINCIPAL: o índice inverso `pushidx:<saveId>`. Custo fixo.
+  try {
+    const idx = await lerIndice(pushStore, saveId);
+    if (idx.existe) {
+      for (const key of Object.keys(idx.keys)) {
+        scanned++;
+        let rec;
+        try { rec = JSON.parse((await pushStore.get(key)) || 'null'); } catch { continue; }
+        // O índice APONTA, não prova: a mesma igualdade estrita da varredura.
+        // Entrada morta (`null`) ou de outra conta é pulada, nunca apagada.
+        if (!rec || rec.saveId !== saveId) continue;
+        await pushStore.delete(key);
+        deleted++;
+      }
+      await pushStore.delete(chaveDoIndice(saveId));
+      return { deleted, scanned, via: 'index' };
     }
+  } catch (err) {
+    log('account.delete.push-index-failed', saveId, { deleted, scanned, error: String(err?.message || err) });
+    return { deleted, scanned, via: 'index' };
   }
-  return { deleted, scanned };
+
+  // FALLBACK (compat): sem índice, varredura por prefixo com teto. Só alcança
+  // conta que se inscreveu antes do índice existir e nunca mais abriu o app —
+  // quem abriu já foi indexado por `gravarSeMudou`. Continua sendo o caminho
+  // caro (um `get` por chave do namespace); a saída é a extinção natural.
+  if (typeof pushStore.list !== 'function') return { deleted: 0, scanned: 0, via: 'none' };
+  try {
+    for (const prefix of PUSH_PREFIXES) {
+      for (const key of await listPrefix(env, prefix, pushStore)) {
+        scanned++;
+        let rec;
+        try { rec = JSON.parse((await pushStore.get(key)) || 'null'); } catch { continue; }
+        // Igualdade ESTRITA com o saveId inteiro. Prefixo, `petName` ou qualquer
+        // outro campo não identificam conta — apagar a inscrição de outra pessoa
+        // é cortar o push dela em silêncio.
+        if (!rec || rec.saveId !== saveId) continue;
+        await pushStore.delete(key);
+        deleted++;
+      }
+    }
+  } catch (err) {
+    log('account.delete.push-scan-failed', saveId, { deleted, scanned, error: String(err?.message || err) });
+  }
+  return { deleted, scanned, via: 'scan' };
+}
+
+// ── Sprites gerados por IA ──────────────────────────────────────────────────
+// Chaves de `generate-sprite.js`: `sprite:img:<saveId>:<formId>` (cache do
+// resultado, valor `{ image, provider, at }`), `sprite:lock:<saveId>:<formId>`
+// (TTL 120 s) e `sprite:blob:<token>` (binário republicado; o token só existe
+// dentro da URL `image` do cache). Os prefixos são REPETIDOS aqui em vez de
+// importados porque `generate-sprite.js` não os exporta e importar a rota
+// arrastaria o provedor de IA para dentro da exclusão — há teste de paridade
+// travando os três literais contra o fonte de lá.
+const SPRITE_IMG_PREFIX = 'sprite:img:';
+const SPRITE_LOCK_PREFIX = 'sprite:lock:';
+const SPRITE_BLOB_PREFIX = 'sprite:blob:';
+const SPRITE_TOKEN = /\/api\/sprite-image\?k=([0-9a-f]{32})\b/;
+
+/**
+ * Lista o que é de sprite desta conta: caches, locks e os blobs que os caches
+ * apontam. As duas listagens são por prefixo COM o saveId — não varrem o
+ * namespace, e não há `get` por chave alheia.
+ * @returns {Promise<{ imgs: string[], locks: string[], blobs: string[] }>}
+ */
+async function collectSprites(env, saveId) {
+  const store = kvOrThrow(env);
+  const imgs = await listPrefix(env, `${SPRITE_IMG_PREFIX}${saveId}:`);
+  const locks = await listPrefix(env, `${SPRITE_LOCK_PREFIX}${saveId}:`);
+  const blobs = [];
+  for (const k of imgs) {
+    let rec = null;
+    try { rec = JSON.parse((await store.get(k)) || 'null'); } catch { rec = null; }
+    const m = typeof rec?.image === 'string' ? SPRITE_TOKEN.exec(rec.image) : null;
+    // Só URL da NOSSA rota carrega token de blob. URL do provedor (Higgsfield)
+    // não tem blob aqui — fica declarado em NOT_INCLUDED.
+    if (m) blobs.push(`${SPRITE_BLOB_PREFIX}${m[1]}`);
+  }
+  return { imgs, locks, blobs };
 }
 
 /**
@@ -201,6 +305,11 @@ const NOT_INCLUDED = [
     en: 'Your notification subscriptions are stored by device address, not by your account. The server erases the ones it could link to your account; the ones without that link (subscriptions made by older app versions) can only be undone by the device. The app unsubscribes this device along with the deletion; if you use Soulmon on more than one device, turn notifications off on each.',
   },
   {
+    what: 'sprite:blob:* órfão / imagem no provedor',
+    'pt-BR': 'As imagens da sua criatura geradas por IA são apagadas junto com a conta (cache, lock e o arquivo que o cache aponta). Duas coisas ficam fora do alcance: um arquivo cujo registro de cache falhou na hora de gerar (ele tem um nome aleatório, sem ligação com a sua conta, e não há como achá-lo — ele não tem nada seu além da imagem), e a cópia que o provedor de IA guardou quando a imagem veio pela URL dele. A imagem também pode continuar no cache do seu aparelho até você limpar os dados do app.',
+    en: 'The AI-generated images of your creature are erased together with the account (cache, lock and the file the cache points to). Two things are out of reach: a file whose cache record failed to be written at generation time (it has a random name with no link to your account, and there is no way to find it — it holds nothing of yours but the image), and the copy the AI provider kept when the image came from its URL. The image may also remain in your device cache until you clear the app data.',
+  },
+  {
     what: 'ord:<orderId>',
     'pt-BR': 'O vínculo entre um comprovante de compra e a conta que o resgatou NÃO é apagado. É o que impede que um mesmo comprovante vire várias contas pagas — e é o que deixa você restaurar a compra se voltar com o mesmo e-mail.',
     en: 'The link between a purchase receipt and the account that redeemed it is NOT deleted. It is what stops one receipt from becoming several paid accounts — and it is what lets you restore your purchase if you come back with the same email.',
@@ -246,7 +355,9 @@ async function collect(env, saveId) {
 
   const pidIndexed = (await store.get(`pid:${pid}`)) === saveId;
 
-  return { pid, state, profile, gifts, entitlement, ranks, rankKeys, pidIndexed };
+  const sprites = await collectSprites(env, saveId);
+
+  return { pid, state, profile, gifts, entitlement, ranks, rankKeys, pidIndexed, sprites };
 }
 
 async function handleExport(env, saveId) {
@@ -271,6 +382,10 @@ async function handleExport(env, saveId) {
         ? { ...c.entitlement, orderDetails: maskOrderDetails(c.entitlement.orderDetails) }
         : null,
       ranks: c.ranks,
+      // Só as CHAVES: o binário sai pela própria URL (`/api/sprite-image?k=`),
+      // que o save já carrega em `soulmonStages`. Listar aqui é o que deixa a
+      // exportação conferível contra o inventário da exclusão.
+      sprites: [...c.sprites.imgs, ...c.sprites.locks, ...c.sprites.blobs],
     },
     naoIncluido: NOT_INCLUDED,
   });
@@ -285,6 +400,9 @@ function plan(c, saveId) {
       c.pidIndexed ? `pid:${c.pid}` : null,
       c.gifts ? `gifts:${saveId}` : null,
       ...c.rankKeys,
+      ...c.sprites.imgs,
+      ...c.sprites.locks,
+      ...c.sprites.blobs,
       'menções a você na lista de amigos de outros jogadores',
       'inscrições de notificação (push:*/fcm:*) ligadas à sua conta',
     ].filter(Boolean),
@@ -333,42 +451,65 @@ async function handleDeleteConfirm(env, saveId, body) {
     return json({ error: 'confirmation-required', aviso: COPY.confirmMissing }, 409);
   }
 
+  // 1) Inventário. Ainda nada foi destruído: qualquer erro daqui até o fim do
+  //    passo 3 sobe como 500 e o retry com o mesmo token refaz tudo.
   const c = await collect(env, saveId);
   const executed = plan(c, saveId);
 
-  // 1) O que é do titular e só dele.
-  if (c.state) await store.delete(saveId);
-  if (c.profile) await store.delete(`profile:${saveId}`);
-  if (c.pidIndexed) await store.delete(`pid:${c.pid}`);
-  if (c.gifts) await store.delete(`gifts:${saveId}`);
-  for (const k of c.rankKeys) await store.delete(k);
+  // 2) LÁPIDE, antes de qualquer destruição. A partir daqui `save.js` responde
+  //    410 e nenhum aparelho recria o save no meio do processo.
+  await writeTombstone(env, saveId);
 
-  // 2) Menções em perfis de terceiros. O saveId da pessoa mora dentro do
+  // 3) Menções em perfis de terceiros. O saveId da pessoa mora dentro do
   //    `friends[]` alheio — apagar só o que é "dela" deixaria o identificador
-  //    espalhado por aí. Varredura limitada (ver MAX_SCAN_PAGES).
+  //    espalhado por aí. Varredura limitada (ver MAX_SCAN_PAGES) — é o único
+  //    passo que ainda pode ESTOURAR, por isso vem antes da primeira
+  //    destruição. Se estourar, a lápide é desfeita: conta que não foi apagada
+  //    não pode ficar 30 dias respondendo 410.
   let scrubbed = 0;
-  for (const key of await listPrefix(env, 'profile:')) {
-    if (key === `profile:${saveId}`) continue;
-    let p;
-    try { p = JSON.parse((await store.get(key)) || 'null'); } catch { continue; }
-    if (!p || !Array.isArray(p.friends) || !p.friends.includes(saveId)) continue;
-    p.friends = p.friends.filter(f => f !== saveId);
-    await store.put(key, JSON.stringify(p), { expirationTtl: 86400 * 365 });
-    scrubbed++;
+  try {
+    for (const key of await listPrefix(env, 'profile:')) {
+      if (key === `profile:${saveId}`) continue;
+      let p;
+      try { p = JSON.parse((await store.get(key)) || 'null'); } catch { continue; }
+      if (!p || !Array.isArray(p.friends) || !p.friends.includes(saveId)) continue;
+      p.friends = p.friends.filter(f => f !== saveId);
+      await store.put(key, JSON.stringify(p), { expirationTtl: 86400 * 365 });
+      scrubbed++;
+    }
+  } catch (err) {
+    try { await clearTombstone(env, saveId); } catch { /* a lápide expira sozinha em 30 dias */ }
+    log('account.delete.aborted', saveId, { step: 'friends-scrub', error: String(err?.message || err) });
+    throw err;
   }
 
-  // 2b) Inscrições de push ligadas à conta (decisão #23). Vem DEPOIS do save
-  //     e ANTES do entitlement: se a varredura falhar no meio, o que já foi
-  //     apagado é o que a pessoa mais quer ver sumir, e o que sobra é o que o
-  //     cabeçalho declara como fora do alcance.
+  // ── Daqui em diante NADA lança. Cada passo reporta o que falhou. ──────────
+  /** @type {string[]} */
+  const falhou = [];
+  const tentar = async (rotulo, fn) => {
+    try { await fn(); } catch (err) {
+      falhou.push(rotulo);
+      log('account.delete.step-failed', saveId, { step: rotulo, error: String(err?.message || err) });
+    }
+  };
+
+  // 4) Inscrições de push ligadas à conta (decisão #23), pelo índice.
+  //    Reversível na prática: o aparelho se reinscreve na próxima abertura.
   const push = await deletePushSubscriptions(env, saveId);
 
-  // 3) Entitlement: MINIMIZADO, não apagado. Ver o cabeçalho — apagar o
+  // 5) Sprites: caches, locks e os blobs que os caches apontam. Blob antes do
+  //    cache — se o processo cair entre os dois, o cache ainda diz onde o blob
+  //    está e o retry o encontra; a ordem inversa deixaria o blob órfão.
+  for (const k of c.sprites.blobs) await tentar(k, () => store.delete(k));
+  for (const k of c.sprites.imgs) await tentar(k, () => store.delete(k));
+  for (const k of c.sprites.locks) await tentar(k, () => store.delete(k));
+
+  // 6) Entitlement: MINIMIZADO, não apagado. Ver o cabeçalho — apagar o
   //    registro de compra destrói o direito pago e a trava anti-fraude junto.
   //    O que sai é USO (não prova nada); o que fica é DINHEIRO.
   if (c.entitlement) {
     const ent = c.entitlement;
-    await store.put(ENT_PREFIX + saveId, JSON.stringify({
+    await tentar(`${ENT_PREFIX}${saveId}`, () => store.put(ENT_PREFIX + saveId, JSON.stringify({
       tier: ent.tier,
       credits: ent.credits,
       consumedOrders: ent.consumedOrders,
@@ -379,26 +520,52 @@ async function handleDeleteConfirm(env, saveId, body) {
       adCount: 0,
       accountDeletedAt: Date.now(),
       updatedAt: Date.now(),
-    }), { expirationTtl: RETENTION_TTL_SECONDS });
+    }), { expirationTtl: RETENTION_TTL_SECONDS }));
     // ↑ O resíduo mínimo também tem prazo, e este é o único caso em que o prazo
     // corre até o fim de verdade: depois da exclusão nada mais escreve neste
     // registro, então nada mais o renova. Sem o TTL, o único artefato que
     // sobrava de uma conta APAGADA seria justamente o imortal.
   }
 
-  await store.delete(DEL_PREFIX + saveId);
+  // 7) O que é do titular e só dele — chaves já conhecidas, sem varredura.
+  for (const k of c.rankKeys) await tentar(k, () => store.delete(k));
+  if (c.gifts) await tentar(`gifts:${saveId}`, () => store.delete(`gifts:${saveId}`));
+  if (c.pidIndexed) await tentar(`pid:${c.pid}`, () => store.delete(`pid:${c.pid}`));
+  if (c.profile) await tentar(`profile:${saveId}`, () => store.delete(`profile:${saveId}`));
+
+  // 8) O SAVE, por último. É o que a pessoa mais quer ver sumir — e é o que,
+  //    apagado cedo, deixava o retry encontrar 404 com o token ainda válido.
+  if (c.state) await tentar(`${saveId} (save)`, () => store.delete(saveId));
+
+  // 9) O token de confirmação sai só no fim: se algo acima falhou, o retry
+  //    dentro dos 15 min ainda é possível — e `collect` recalcula o que sobrou.
+  if (falhou.length === 0) {
+    await tentar(`${DEL_PREFIX}${saveId}`, () => store.delete(DEL_PREFIX + saveId));
+  }
 
   log('account.delete.done', saveId, {
     deletedKeys: executed.apaga.length,
     scrubbedFriendLists: scrubbed,
     pushSubscriptionsDeleted: push.deleted,
     pushSubscriptionsScanned: push.scanned,
+    pushVia: push.via,
+    spritesDeleted: c.sprites.imgs.length + c.sprites.locks.length + c.sprites.blobs.length,
     entitlementMinimized: !!c.entitlement,
+    tombstoneTtlSeconds: TOMBSTONE_TTL_SECONDS,
+    failedSteps: falhou.length,
   });
 
   return json({
     ok: true,
-    executado: { ...executed, listasDeAmigosLimpas: scrubbed, inscricoesDePushApagadas: push.deleted },
+    executado: {
+      ...executed,
+      listasDeAmigosLimpas: scrubbed,
+      inscricoesDePushApagadas: push.deleted,
+      spritesApagados: c.sprites.imgs.length + c.sprites.locks.length + c.sprites.blobs.length,
+      // O que NÃO conseguiu apagar, pelo nome da chave. Vazio é o normal;
+      // preenchido, o token continua válido e a pessoa pode confirmar de novo.
+      falhou,
+    },
     naoIncluido: NOT_INCLUDED,
     aviso: COPY.deleteDone,
   });

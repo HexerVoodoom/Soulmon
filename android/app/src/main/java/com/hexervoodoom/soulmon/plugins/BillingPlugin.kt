@@ -6,10 +6,12 @@ import com.android.billingclient.api.BillingClientStateListener
 import com.android.billingclient.api.BillingFlowParams
 import com.android.billingclient.api.BillingResult
 import com.android.billingclient.api.ConsumeParams
+import com.android.billingclient.api.PendingPurchasesParams
 import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
+import com.android.billingclient.api.QueryProductDetailsResult
 import com.android.billingclient.api.QueryPurchasesParams
 import com.getcapacitor.JSArray
 import com.getcapacitor.JSObject
@@ -70,7 +72,17 @@ class BillingPlugin : Plugin() {
     override fun load() {
         billingClient = BillingClient.newBuilder(context)
             .setListener(purchasesUpdatedListener)
-            .enablePendingPurchases()
+            // PBL 8 (bump 6.2.1 → 8.3.0 em 22/09/2026, QA rodada 1 §1): a forma sem
+            // argumento não existe mais. `enableOneTimeProducts()` é o equivalente
+            // exato do que a 6.x fazia (só INAPP; sem prepaid plans) — release notes
+            // 8.0.0: "functionally equivalent to enablePendingPurchases(
+            // PendingPurchasesParams.newBuilder().enableOneTimeProducts().build())".
+            .enablePendingPurchases(
+                PendingPurchasesParams.newBuilder().enableOneTimeProducts().build()
+            )
+            // Reconexão automática (disponível desde a 8.0.0): substitui o
+            // "a próxima operação chama connect()" de onBillingServiceDisconnected.
+            .enableAutoServiceReconnection()
             .build()
         connect(null)
     }
@@ -86,7 +98,8 @@ class BillingPlugin : Plugin() {
                 onReady?.invoke(result.responseCode == BillingClient.BillingResponseCode.OK)
             }
             override fun onBillingServiceDisconnected() {
-                // A próxima operação chama connect() de novo.
+                // enableAutoServiceReconnection() (PBL 8) reconecta sozinho; a
+                // próxima operação ainda passa por connect() como cinto extra.
             }
         })
     }
@@ -131,14 +144,21 @@ class BillingPlugin : Plugin() {
                 ))
                 .build()
 
-            client.queryProductDetailsAsync(queryParams) { result, productDetailsList ->
+            // PBL 8: o 2º parâmetro virou QueryProductDetailsResult
+            // (`.productDetailsList` + `.unfetchedProductList`), não List<ProductDetails>.
+            client.queryProductDetailsAsync(queryParams) { result, queryResult: QueryProductDetailsResult ->
                 if (result.responseCode != BillingClient.BillingResponseCode.OK) {
                     call.reject("product-query-failed-${result.responseCode}")
                     return@queryProductDetailsAsync
                 }
-                val details: ProductDetails = productDetailsList.firstOrNull() ?: run {
+                val details: ProductDetails = queryResult.productDetailsList.firstOrNull() ?: run {
                     // Produto não existe no Play Console ou o app não está
-                    // publicado numa faixa de teste.
+                    // publicado numa faixa de teste. O motivo por produto
+                    // (`unfetchedProductList[i].statusCode`) só vai para o log:
+                    // src/utils/playBilling.ts compara "product-not-found" como
+                    // string opaca e um sufixo quebraria o contrato JS.
+                    val motivo = queryResult.unfetchedProductList.firstOrNull()?.statusCode
+                    android.util.Log.w("BillingPlugin", "product-not-found productId=$productId statusCode=$motivo")
                     call.reject("product-not-found")
                     return@queryProductDetailsAsync
                 }
@@ -192,9 +212,9 @@ class BillingPlugin : Plugin() {
                         .build(),
                 ))
                 .build()
-            client.queryProductDetailsAsync(queryParams) { result, list ->
+            client.queryProductDetailsAsync(queryParams) { result, queryResult: QueryProductDetailsResult ->
                 val preco = if (result.responseCode == BillingClient.BillingResponseCode.OK) {
-                    list.firstOrNull()?.oneTimePurchaseOfferDetails?.formattedPrice ?: ""
+                    queryResult.productDetailsList.firstOrNull()?.oneTimePurchaseOfferDetails?.formattedPrice ?: ""
                 } else ""
                 call.resolve(JSObject().put("formattedPrice", preco))
             }

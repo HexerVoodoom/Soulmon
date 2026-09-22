@@ -1,5 +1,7 @@
+import { useId } from 'react';
 import { sm2Button } from './form/FormKit';
 import type { Language } from '../utils/i18n';
+import type { DocMudado } from '../utils/termsNotice';
 
 /**
  * BANNER "OS TERMOS MUDARAM" (decisão #24 do QA geral, 21/09/2026).
@@ -8,34 +10,60 @@ import type { Language } from '../utils/i18n';
  * contract.test.ts`), com a mesma casca `.sm2-notice` do recomeço: um cartão
  * discreto, sem moldura de alerta, que a lista inteira continua viva por
  * baixo. Não bloqueia, não pede re-aceite — a regra e o porquê estão em
- * `utils/termsNotice.ts`, que decide QUANDO; aqui só se desenha.
+ * `utils/termsNotice.ts`, que decide QUANDO e QUAL (`qualDocMudou`); aqui só
+ * se desenha.
  *
- * "Ler" são dois links (Termos e Privacidade), em aba nova, para que o
- * banner continue na tela quando a pessoa voltar. "Ok" grava a marca e o
- * cartão some — o dono da gravação é o App, por `onOk`.
+ * `changed` escolhe o título e os links: afirmar "os Termos e a Política
+ * mudaram" quando só um mudou era mentira de interface (design-critic A1).
+ * O link abre em aba nova (o banner segue na tela quando a pessoa volta) e
+ * DIZ isso no nome acessível (A3). É `region` com rótulo, não `status`:
+ * `status` é para texto que muda sozinho, e este cartão tem controles (A4).
+ * Em EN o link aponta para a âncora `#en` dos documentos (A5).
  */
-export function TermsUpdateBanner({ language, onOk }: { language: Language; onOk: () => void }) {
+const HREF = {
+  terms: { 'pt-BR': '/termos.html', 'en-US': '/termos.html#en' },
+  privacy: { 'pt-BR': '/privacidade.html', 'en-US': '/privacidade.html#en' },
+} as const;
+
+const TITULO: Record<DocMudado, { pt: string; en: string }> = {
+  terms: { pt: 'Os Termos de Uso mudaram', en: 'The Terms of Use changed' },
+  privacy: { pt: 'A Política de Privacidade mudou', en: 'The Privacy Policy changed' },
+  both: { pt: 'Os Termos e a Política de Privacidade mudaram', en: 'The Terms and the Privacy Policy changed' },
+};
+
+export function TermsUpdateBanner({ language, changed = 'both', onOk }: { language: Language; changed?: DocMudado; onOk: () => void }) {
   const isPt = language === 'pt-BR';
+  const lang: 'pt-BR' | 'en-US' = isPt ? 'pt-BR' : 'en-US';
   const link = { ...sm2Button('outline', false, 'sm'), textDecoration: 'none' } as const;
+  const novaAba = isPt ? '(abre em nova aba)' : '(opens in a new tab)';
+  const titleId = useId();
+  const showTerms = changed !== 'privacy';
+  const showPrivacy = changed !== 'terms';
+  const lerTermos = isPt ? 'Ler os Termos' : 'Read the Terms';
+  const lerPolitica = isPt ? 'Ler a Política' : 'Read the Policy';
   return (
-    <div className="sm2-notice" role="status">
-      <p className="sm2-notice-title">
-        {isPt ? 'Os Termos e a Política de Privacidade mudaram' : 'The Terms and the Privacy Policy changed'}
+    <div className="sm2-notice" role="region" aria-labelledby={titleId}>
+      <p className="sm2-notice-title" id={titleId}>
+        {isPt ? TITULO[changed].pt : TITULO[changed].en}
       </p>
       <p className="sm2-notice-body">
         {isPt
-          ? 'Nada muda no seu jogo. Se quiser ler o que foi atualizado, está aqui.'
-          : 'Nothing changes in your game. If you want to read what was updated, it is here.'}
+          ? 'Você continua jogando normalmente. Se quiser ler o que mudou, está aqui.'
+          : 'You keep playing as usual. If you want to read what changed, it is here.'}
       </p>
       <div className="sm2-notice-actions">
-        <a href="/termos.html" target="_blank" rel="noopener noreferrer" style={link}>
-          {isPt ? 'Ler os Termos' : 'Read the Terms'}
-        </a>
-        <a href="/privacidade.html" target="_blank" rel="noopener noreferrer" style={link}>
-          {isPt ? 'Ler a Política' : 'Read the Policy'}
-        </a>
+        {showTerms && (
+          <a href={HREF.terms[lang]} target="_blank" rel="noopener noreferrer" style={link} aria-label={`${lerTermos} ${novaAba}`}>
+            {lerTermos}
+          </a>
+        )}
+        {showPrivacy && (
+          <a href={HREF.privacy[lang]} target="_blank" rel="noopener noreferrer" style={link} aria-label={`${lerPolitica} ${novaAba}`}>
+            {lerPolitica}
+          </a>
+        )}
         <button type="button" onClick={onOk} style={sm2Button('quiet', false, 'sm')}>
-          Ok
+          {isPt ? 'Entendi' : 'Got it'}
         </button>
       </div>
     </div>

@@ -140,14 +140,34 @@
             if (ok) return;
 
             var pt = (navigator.language || '').toLowerCase().indexOf('pt') === 0;
+            // Só o Android tem "Android System WebView" — iOS/Firefox/desktop
+            // caindo aqui recebem um diagnóstico genérico, não um link para a
+            // Play que não vale para eles (skeptic #4 / design D3, 21/09/2026).
+            var android = /Android/i.test(navigator.userAgent || '');
+            try { document.documentElement.lang = pt ? 'pt-BR' : 'en'; } catch (e2) {}
             var titulo = pt ? 'Precisamos de uma atualização' : 'An update is needed';
-            var corpo = pt
-              ? 'O componente que desenha páginas no seu aparelho (Android System WebView) está desatualizado e não consegue abrir o Soulmon.'
-              : 'The component that renders pages on your device (Android System WebView) is out of date and cannot open Soulmon.';
-            var comoT = pt ? 'Como resolver' : 'How to fix it';
-            var como = pt
-              ? 'Abra a Play Store, procure por "Android System WebView" e por "Google Chrome", atualize os dois e abra o Soulmon de novo.'
-              : 'Open the Play Store, search for "Android System WebView" and "Google Chrome", update both, then open Soulmon again.';
+            var corpo, comoT, como;
+            if (android) {
+              corpo = pt
+                ? 'O componente que desenha páginas no seu aparelho (Android System WebView) está desatualizado e não consegue abrir o Soulmon.'
+                : 'The component that renders pages on your device (Android System WebView) is out of date and cannot open Soulmon.';
+              comoT = pt ? 'Como resolver' : 'How to fix it';
+              como = pt
+                ? 'Atualize os dois na Play Store e abra o Soulmon de novo:'
+                : 'Update both on the Play Store, then open Soulmon again:';
+            } else {
+              corpo = pt
+                ? 'Seu navegador está desatualizado e não consegue abrir o Soulmon.'
+                : 'Your browser is out of date and cannot open Soulmon.';
+              comoT = pt ? 'Como resolver' : 'How to fix it';
+              como = pt
+                ? 'Atualize o navegador (ou abra o Soulmon em outro mais recente) e tente de novo.'
+                : 'Update your browser (or open Soulmon in a newer one) and try again.';
+            }
+            var contato = pt ? 'Se continuar travado, escreva para ' : 'If it stays stuck, write to ';
+            // Mesmo endereço de `src/components/FeedbackLink.tsx` › FEEDBACK_EMAIL
+            // (contrato em tests/indexHtmlGateWebView.test.ts compara os dois).
+            var email = 'mateus.sprnd@gmail.com';
 
             // Montado com createElement + textContent, não com concatenação de
             // HTML. O user agent é dado de fora; filtrar caractere depois de
@@ -168,13 +188,37 @@
               el.textContent = texto;
               el.setAttribute('style', estilo);
               caixa.appendChild(el);
+              return el;
+            }
+            function botaoLoja(texto, pacote) {
+              var a = document.createElement('a');
+              a.textContent = texto;
+              a.setAttribute('href', 'https://play.google.com/store/apps/details?id=' + pacote);
+              a.setAttribute('rel', 'noopener');
+              a.setAttribute(
+                'style',
+                'display:block;min-height:44px;box-sizing:border-box;padding:12px 16px;margin:0 0 10px;' +
+                  'border-radius:10px;background:#0f766e;color:#ffffff;text-decoration:none;font-weight:600;text-align:center'
+              );
+              caixa.appendChild(a);
             }
 
             linha('h1', titulo, 'font-size:1.35rem;margin:0 0 12px;color:#5eead4');
             linha('p', corpo, 'margin:0 0 16px');
             linha('h2', comoT, 'font-size:1rem;margin:0 0 8px;color:#5eead4');
-            linha('p', como, 'margin:0 0 20px');
-            linha('p', 'WebView: ' + (navigator.userAgent || ''), 'margin:0;font-size:.8rem;opacity:.6');
+            linha('p', como, 'margin:0 0 ' + (android ? '12px' : '20px'));
+            if (android) {
+              botaoLoja(pt ? 'Atualizar Android System WebView' : 'Update Android System WebView', 'com.google.android.webview');
+              botaoLoja(pt ? 'Atualizar Google Chrome' : 'Update Google Chrome', 'com.android.chrome');
+            }
+            var pc = linha('p', contato, 'margin:' + (android ? '10px' : '0') + ' 0 16px;font-size:.9rem');
+            var mail = document.createElement('a');
+            mail.textContent = email;
+            mail.setAttribute('href', 'mailto:' + email);
+            mail.setAttribute('style', 'color:#5eead4');
+            pc.appendChild(mail);
+            pc.appendChild(document.createTextNode('.'));
+            linha('p', (android ? 'WebView: ' : 'Browser: ') + (navigator.userAgent || ''), 'margin:0;font-size:.8rem;opacity:.6');
 
             fundo.appendChild(caixa);
             raiz.innerHTML = '';

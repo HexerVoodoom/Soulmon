@@ -117,6 +117,15 @@ export function pushCopy(brtHour, petName, language, ageDays) {
      Três travas, e as três importam:
       · **nunca no D0.** O dia do nascimento é o dia em que a pessoa está
         dentro do app; mandar push nele é interromper quem já está aqui.
+        Isto vale para TODAS as horas, não só para a copy de recém-nascido:
+        até 22/09/2026 o texto prometia isso e o código só desviava a copy do
+        D0 para a frase padrão das 10h/16h/22h — o push saía do mesmo jeito
+        (QA rodada 1). Agora idade 0 devolve `null`, e quem chama trata
+        `null` como "não manda" (o scheduler já faz isso: `'skipped'`).
+        Não há decisão do dono em contrário no `REGISTRO-DE-DECISOES.md`
+        (§vínculo só proíbe cobrança; o D0 sem push é a regra escrita aqui).
+        Quem não sabe a idade (inscrição sem `bornAt`) não é D0: recebe a
+        copy de sempre — a trava só age quando há certeza.
       · **sem condição de meta.** Estas duas não perguntam se a pessoa fez
         alguma coisa — no dia 1 não existe "atrasado", e cobrar aqui é a
         forma mais rápida de a primeira notificação da vida do app ser uma
@@ -126,6 +135,7 @@ export function pushCopy(brtHour, petName, language, ageDays) {
      `ageDays` é opcional: quem não sabe a idade (subscription antiga) recebe
      a copy de sempre, nunca um texto pela metade. */
   const idade = Number.isFinite(ageDays) ? ageDays : null;
+  if (idade === 0) return null;
   if (brtHour === 10 && (idade === 1 || idade === 2)) {
     return {
       title: pt ? `${name} acordou` : `${name} woke up`,

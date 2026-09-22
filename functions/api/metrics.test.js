@@ -408,6 +408,24 @@ describe('A METRICA-NORTE fica LEGIVEL no agregado', () => {
     expect(agg['week_active.paid.goal_days.6']).toBe(1);
   });
 
+  it('week_active TAMBÉM vira histograma de active_days (a hipótese de hábito de E0), por tier', () => {
+    // Até 22/09/2026 `active_days` chegava ao servidor e morria aqui (review
+    // 07 §1.4): só `goal_days` virava chave.
+    const agg = applyAggregate({}, [
+      { e: 'week_active', d: DAY, p: { active_days: 5, goal_days: 4, tier: 1 } },
+      { e: 'week_active', d: DAY, p: { active_days: 3, goal_days: 1, tier: 1 } },
+      { e: 'week_active', d: DAY, p: { active_days: 7, goal_days: 6, tier: 2 } },
+      { e: 'week_active', d: DAY, p: { active_days: 3, goal_days: 0 } },
+    ]);
+    expect(agg['week_active.active_days.5']).toBe(1);
+    expect(agg['week_active.active_days.3']).toBe(2);
+    expect(agg['week_active.active_days.7']).toBe(1);
+    expect(agg['week_active.demo.active_days.5']).toBe(1);
+    expect(agg['week_active.paid.active_days.7']).toBe(1);
+    // Sem tier: só o total, nenhum balde inventado.
+    expect(Object.keys(agg).filter(k => k.includes('unknown.active_days'))).toEqual([]);
+  });
+
   it('summarizeNorthStar responde "quantos ativos batem >=4 de 7"', () => {
     const totals = {
       week_active: 10,
@@ -467,6 +485,26 @@ describe('G-7: a rota de leitura existe, e falha FECHADA', () => {
     expect(body.totals.effort_sum).toBe(12);
     expect(body.north_star.weekly_active).toBe(2);
     expect(body.north_star.on_target).toBe(1);
+  });
+
+  it('as notas NÃO chamam de ilegível o que o próprio JSON carrega: `retained.d7` existe, "D7" saiu da lista', async () => {
+    // QA rodada 1 (review 07): `notes.unreadable` listava 'D7' enquanto
+    // `applyAggregate` gravava `retained.d7` — a resposta se contradizia.
+    const e = {
+      ...env({ 'm:2026-08-24': JSON.stringify({ 'retained.d7': 2 }) }),
+      METRICS_ADMIN_KEY: ADMIN,
+    };
+    const res = await onRequestGet({
+      request: getReq('?from=2026-08-24&to=2026-08-24', { 'X-Metrics-Key': ADMIN }),
+      env: e,
+    });
+    const body = await res.json();
+    expect(body.totals['retained.d7']).toBe(2);
+    expect(body.notes.unreadable).not.toContain('D7');
+    expect(body.notes.unreadable).not.toContain('retencao');
+    expect(body.notes.retained).toMatch(/d7/);
+    // O que continua ilegível continua declarado.
+    expect(body.notes.unreadable).toEqual(expect.arrayContaining(['conversao em N dias', 'qualquer serie por usuario']));
   });
 
   it('a janela tem teto — ninguem varre o namespace inteiro numa requisicao', async () => {

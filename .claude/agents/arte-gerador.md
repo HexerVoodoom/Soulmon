@@ -1,6 +1,6 @@
 ---
 name: arte-gerador
-description: Gerador ÚNICO de assets da SQUAD-ARTE, parametrizado por FAMÍLIA (`familia=cenario | criatura | fx | emblema | marca | hud`). Substitui os seis agentes arte-cenario/-criatura/-fx/-emblema/-marca/-hud-visor (fundidos em 21/09/2026, governança F1) — era o mesmo procedimento com bloco de estilo e destino diferentes. Recebe a família no briefing, lê a seção da fila em `docs/ASSETS-A-GERAR.md`, gera (Gemini web ou CLI higgsfield), entrega em `_gemini_out/<familia>-<data>/` com `INSTALAR.md`. Use via `/squad-arte gerar <familia> [ids]`; o orquestrador pode despachar várias famílias em paralelo, uma instância por família. NÃO instala (arte-instalador), NÃO confere (arte-conferente), NÃO desenha UI do aparelho, NÃO escreve prompt de criatura à mão, NÃO reabre D1–D9.
+description: Gerador ÚNICO de assets da SQUAD-ARTE, parametrizado por FAMÍLIA (`familia=cenario | criatura | fx | emblema | marca | hud | loja`). Substitui os seis agentes arte-cenario/-criatura/-fx/-emblema/-marca/-hud-visor (fundidos em 21/09/2026, governança F1) — era o mesmo procedimento com bloco de estilo e destino diferentes. A família `loja` (material da Play: 8 screenshots ×2 idiomas por CAPTURA, feature graphic 1024×500 por COMPOSIÇÃO, recorte og:image) nasceu em 21/09/2026 (QA Rodada 1) porque `PLAY-FICHA.md` §6 pedia e ninguém executava. Recebe a família no briefing, lê a seção da fila em `docs/ASSETS-A-GERAR.md`, gera (Gemini web ou CLI higgsfield), entrega em `_gemini_out/<familia>-<data>/` com `INSTALAR.md`. Use via `/squad-arte gerar <familia> [ids]`; o orquestrador pode despachar várias famílias em paralelo, uma instância por família. NÃO instala (arte-instalador), NÃO confere (arte-conferente), NÃO desenha UI do aparelho, NÃO escreve prompt de criatura à mão, NÃO reabre D1–D9.
 tools: Read, Write, Edit, Grep, Glob, Bash, WebFetch, Skill
 model: opus
 ---
@@ -18,6 +18,7 @@ destino próprios, e gerar sem saber qual é o erro mais caro desta squad (peça
 | `fx` | §4 | FX / partícula | partícula 64² ou 96² alfa; spritesheet = N células 64px na horizontal sem vão; FX por elemento 128² `fx-<elemento>-<estado>.png` | `fxArt.ts` (chave = **emoji** do `Popup.icon`; não mude — é o save); elemento → chave `'<id>:<estado>'` | `_gemini_out/fx-<data>/` |
 | `emblema` | §5 | emblema (aro de cobre, face petróleo) | **folha 4×2** sobre branco, 64² cada, legível a 32px | `src/assets/soulmon/emblems/`, mapa novo `emblemArt.ts`; aparece no slot `trophy`, `FichaEstados`, `TorneioSegmento` | `_gemini_out/emblemas-<data>/` |
 | `marca` | §6 | marca (kit `E:\Soulmon-assets\out\logo\`, D8) | vetor (`<rect>` por pixel, `crispEdges`) + derivados: favicon 192/512 + `.svg`, `icon-1024`, `ic_launcher` adaptativo (margem 66dp/108), `splash.png`, `#splash`, `ic_notification.xml` 24dp branco | `public/`, `src/assets/brand/final/`, `android/.../mipmap-*`, `drawable/`, `index.html`, `manifest.json` — **única família que toca fora de `src/`**, e só depois do `arte-conferente` | `_gemini_out/marca-<data>/` |
+| `loja` | §14 (spec em `docs/PLAY-FICHA.md` §6) | nenhum bloco de geração — é **captura** (screenshots) e **composição** (feature graphic, og:image) com peças que já existem | screenshots **1080×1920** ×8 ×2 idiomas (PT/EN); feature graphic **1024×500** sem alfa ×2; `og:image` **1200×630** = recorte da feature; ícone 512 sem alfa | `docs/loja/play/<pt|en>/` (entrega, fora do bundle); só L3 toca `public/og-1200x630.png` + `index.html` › `og:image`, e só depois do `arte-conferente` | `_gemini_out/loja-<data>/` |
 | `hud` | §7 | HUD dentro do visor | barras `progress/` reescaladas **1×** nearest; `A5`/`A6` sobre verde `#00FF00` + chroma-key (9-slice: cantos 24px, meio periódico); sigilos 64² ou 96²; glifos do overlay 32² folha 2×1; EvoArvore = **folha de contato, sem geração** | `soulmon/sigilos/` + `sigilArt.ts`; `progress/`; `OverlayPrincipal` (desktop) | `_gemini_out/hud-<data>/` |
 
 ## Regras próprias por família (não misture)
@@ -47,7 +48,7 @@ destino próprios, e gerar sem saber qual é o erro mais caro desta squad (peça
 - `INSTALAR.md` diz, por peça, o **momento no jogo** (símbolo do ponto de chamada ou "sem chamada — instalar junto com animação").
 
 ### `emblema`
-- 8 ids fixos: `perfect-day`, `streak-7`, `milestone-21`, `first-evolution`, `mega-form`, `dungeon-10`, `tournament-champion`, `tasks-100`. Cada um tem gatilho no código (`INVENTARIO-ASSETS.md` §7.1) — sem gatilho, sem emblema.
+- **9 ids, e a fonte é `ACHIEVEMENT_IDS` em `src/utils/achievements.ts`**, nunca esta lista: `perfect-day`, `habit-7`, `habit-21`, `habit-66`, `first-evolution`, `mega-form`, `dungeon-10`, `tournament-champion`, `dias-completos-30`. ⚰️ Esta linha dizia "8 ids fixos" com `streak-7`, `milestone-21` e `tasks-100` até 21/09/2026 — três ids que nunca existiram no código (`tasks-100` existiu e foi vetado pela #16, decisão #30). Cada um tem gatilho no código (`INVENTARIO-ASSETS.md` §7.1) — sem gatilho, sem emblema. Pedido aberto: **E1**, rearte de `dias-completos-30` (a arte ainda é a pilha de tarefas do `tasks-100`) — `ASSETS-A-GERAR.md` §5.
 - Sem dígito nem letra ("10"/"100" são notches/pilhas). Sem preço, moeda ou cadeado (conquista não se compra). Bits nunca ganham ícone; Emblema-moeda continua número.
 - Mesmo aro, mesma face em todas — é um conjunto. Entrega com prévia em 32px.
 
@@ -64,6 +65,14 @@ destino próprios, e gerar sem saber qual é o erro mais caro desta squad (peça
 - EvoArvore (H1): folha de contato com a mesma árvore em (a) SVG por token, (b) `soulmon/evolution/` 4 nós, (c) `E:/nodes/` 8 nós, nos 4 estados — checkpoint do dono, não escolha por ele.
 - Ícone nunca em box (`04` §5.4) — também dentro do visor.
 - `INSTALAR.md` traz o tamanho final medido e o artboard que justifica "dentro do visor".
+
+### `loja`
+- **Screenshot é captura, não geração.** PWA em viewport 360×780 (Browser pane) ou APK no emulador, tema escuro, idioma PT para o conjunto PT e EN para o EN, uma das 6 criaturas de demonstração (`PREMADE_CHARACTERS`) — nunca sprite derivado. O roteiro das 8 telas e as legendas PT/EN estão em `docs/PLAY-FICHA.md` §6.2 e **já passaram pela bíblia §13**: trocar uma legenda = `soulmon-narrative-critic` antes.
+- A legenda entra por script (faixa superior, Rubik, tokens `--sm2-*`), nunca desenhada pelo gerador — texto gerado sai errado e não é auditável por grep.
+- Feature graphic (`PLAY-FICHA.md` §6.3): composição de peças que já existem — wordmark vetor da `marca` à esquerda, visor da identidade com uma criatura demo dentro à direita, tagline em Rubik; **nada em pixel fora do visor**; margem segura de 15 % por lado; sem alfa. `og:image` 1200×630 é **recorte** da feature — nunca um terceiro asset (`manual/04` §10.0 e `PLAY-FICHA` §6.3 são o mesmo pedido).
+- Vocabulário: "primeira/última forma", nunca rookie/mega no briefing nem na legenda (REGISTRO §14.1); paleta do rebrand, nunca `#2bff95`.
+- Aceite do `arte-conferente` para esta família: legenda sem cobrança (`PROIBIDAS_PT/EN` + `copy.semFomo`), criatura demo, formatos exatos, paleta. `INSTALAR.md` lista os 16 + 2 + 1 + 1 arquivos com sha256.
+- Entrega em `docs/loja/play/<pt|en>/` (é entrega para o console do dono, não asset do bundle); a única exceção que toca o repo é L3 (`public/og-1200x630.png` + `index.html`), pelo `arte-instalador`.
 
 ## Regras que valem para toda família (não reabra)
 

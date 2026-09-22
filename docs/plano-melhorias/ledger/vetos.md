@@ -8,18 +8,19 @@ incentivo para relativizar a própria proibição.
 
 ## As proibições, e o que cada uma protege
 
-**21 proibições: 12 travadas por teste (#1–#12) e 9 por tese (#13–#21)** — contagem de 21/09/2026 sobre `docs/manual/01-VISAO.md` §7 (`awk '/^## 7/{f=1} f' docs/manual/01-VISAO.md | grep -cE '^\| \*?\*?[0-9]+'` → 21). ⚰️ "20 proibições, oito por tese" valeu até 02/09/2026, quando a #21 foi inscrita.
+**21 proibições: 13 travadas por teste (#1–#12 e #15) e 8 por tese (#13, #14, #16–#21)** — contagem de 21/09/2026 (noite) sobre `docs/manual/01-VISAO.md` §7 (`awk '/^## 7/{f=1} f' docs/manual/01-VISAO.md | grep -cE '^\| \*?\*?[0-9]+'` → 21). ⚰️ "12 por teste e 9 por tese" valeu de 02/09 até 21/09/2026, quando a #15 ganhou `src/copy.semFomo.contract.test.ts` (QA Rodada 1, `06-guardas-squads-r1.md` §7); ⚰️ "20 proibições, oito por tese" valeu até 02/09/2026, quando a #21 foi inscrita.
 
 ### Travadas por TESTE (remover o teste é remover o produto)
 1. Streak que zera · 2. Humor como pontuação · 3. Bits→Créditos ·
 4. Emblemas comprando vantagem · 5. `bondLevel` persistido · 6. Dia da regra
 diária pelo relógio do aparelho · 7. Aritmética de HP no `App.tsx` · 8. Regra
 dentro de updater inline · 9. `MAX_DAILY_FOCUS ≠ 3` · 10. `ABSENCE_FORGIVENESS_DAYS ≠ 2`
-· 11. Traço de nascimento negativo · 12. Punição por sono ruim / score de sono.
+· 11. Traço de nascimento negativo · 12. Punição por sono ruim / score de sono ·
+**15. Nunca "última chance"/FOMO que tira** (`src/copy.semFomo.contract.test.ts`, 21/09/2026 — mantém o id 15).
 
 ### Travadas por TESE (sem teste, e por isso mais frágeis)
 13. Nunca vender proteção contra punição · 14. Nunca percentual cru de
-constância na UI · 15. Nunca "última chance"/FOMO que tira · 16. Nunca
+constância na UI · 16. Nunca
 recompensa por contagem de tarefas · 17. **Nunca um nono perdão sem responder
 D4** · 18. Nunca texto do usuário em IA/telemetria sem D8 · 19. **Nunca mecânica
 cuja resposta seja "querer a notificação" e não "querer fazer a tarefa"** ·
@@ -63,7 +64,7 @@ Formato: data · WP ou proposta · parecer (`APROVADO` / `APROVADO COM RESSALVA`
 | 02/09/2026 | WP5.1 oferta no 1º dia perfeito (padrão Me+) | `APROVADO COM RESSALVA` | — | Linha do pet primeiro; nunca no modal em que `heartsLost > 0`; cap 1/semana; `×` persistente (Garmin) |
 | 02/09/2026 | **O que perdoa demais** (a metade que ninguém pede): "esqueci de marcar" é o candidato a nono perdão; um coração perdido tem **três** caminhos de volta antes do almoço | `RESPONDIDO` (D4: a AURA é o que dói, e só ela) (decisão do dono, 06/09/2026 — §15 do plano) para qualquer perdão adicional | #17 | A resposta à D4 deve **nomear** quais mecanismos são a linha, não contar. Onde NÃO perdoa demais e está certo: Vínculo (teto suave, não decai), constância (14%/falta), Torneio (XP na derrota < vitória) |
 | 21/09/2026 | **Exceção da #20** (QA GERAL #29): `src/plugins/widgetSemCobranca.contract.test.ts` it "as chaves antigas são REMOVIDAS, não só deixadas de escrever" exige `editor.remove("constancy_pct"/"shields"/"bond_level")` em `SoulmonWidgetPlugin.kt` — a #14 (percentual cru) aplicada sobre o bridge quebrava a #20 (só acrescentar) sem registro | `APROVADO COM RESSALVA` — exceção inscrita | #20 (exceção), #14 | **Regra:** chave do bridge vetada por OUTRA proibição pode ser removida, e só assim: (a) por `remove()` explícito, nunca por deixar de escrever; (b) com tolerância a ausência provada no widget antigo (o layout lê a chave com default, nunca quebra); (c) registrada aqui com data e a proibição que a vetou. Fora disso, #20 continua: só acrescentar |
-| 21/09/2026 | **`'tasks-100'` em `src/utils/achievements.ts`** — conquista cosmética que lê `completedTasks.length + activityLog.length >= 100`: literalmente recompensa por CONTAGEM de tarefas (QA GERAL #30; `09-guardas.md` §2 #16) | `VETADO` na forma atual | #16 | **Será renomeada para gatilho de COMPORTAMENTO** (decisão do dono, 21/09/2026); o código é de outro agente nesta rodada — esta linha só registra o veto e a saída. Aceite: nenhuma conquista lê `.length` de tarefas |
+| 21/09/2026 | **`'tasks-100'` em `src/utils/achievements.ts`** — conquista cosmética que lê `completedTasks.length + activityLog.length >= 100`: literalmente recompensa por CONTAGEM de tarefas (QA GERAL #30; `09-guardas.md` §2 #16) | `VETADO` na forma atual | #16 | **Será renomeada para gatilho de COMPORTAMENTO** (decisão do dono, 21/09/2026); o código é de outro agente nesta rodada — esta linha só registra o veto e a saída. Aceite: nenhuma conquista lê `.length` de tarefas — **exceto a migração** `gatilhoAntigoTasks100` (`conquistasHerdadas`, herança única de quem já tinha `tasks-100`), que lê a contagem antiga UMA vez para não tirar o que já foi dado; ressalva registrada em 21/09/2026 (QA Rodada 1, `06-guardas-squads-r1.md` #13) para a régua futura não reprovar o próprio conserto |
 
 ## Perguntas que este guarda faz a QUALQUER proposta
 

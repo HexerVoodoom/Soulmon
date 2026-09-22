@@ -73,6 +73,16 @@ describe('o widget não cobra', () => {
     expect(codigo).not.toMatch(/forget about me/i);
   });
 
+  it('não sente saudade nem culpa a pessoa pela ausência — em EN também (L11/L6)', () => {
+    // A 13.18 tornou o widget só EN e este guard ficou vigiando `saudade` (PT).
+    // "I missed you!", "I miss you..." (hp≤20) e "I've been missing you" passaram
+    // até 22/09/2026 (QA rodada 1 §4.2): a criatura nunca sente por causa do que
+    // a pessoa fez ou deixou de fazer — e ligar saudade ao placar de HP é pior.
+    expect(codigo).not.toMatch(/miss(ed|ing)? you|waited for you|lonely|alone without/i);
+    // D-F3: sem emoji — o ✨ tinha sobrevivido.
+    expect(codigo).not.toMatch(/✨/);
+  });
+
   it('a escada é só EN e sem emoji (13.18, D-F3)', () => {
     // As frases PT com emoji do fabricante eram o que o widget dizia até 20/09/2026.
     expect(codigo).not.toMatch(/saudade|Quase lá|Continue assim|Dia perfeito|Um dia de cada vez/);

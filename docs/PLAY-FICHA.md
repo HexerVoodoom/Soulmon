@@ -13,7 +13,7 @@
 > **Quem cola é o dono** (decisão #16). O passo a passo do console, com a ordem e o
 > critério de "feito", está em [`PLAY-LANCAMENTO.md`](PLAY-LANCAMENTO.md) §C.
 >
-> **Atualizado em:** 21/09/2026. Antes de colar, confira: o nome "dia completo"
+> **Atualizado em:** 22/09/2026 (QA rodada 1 — fecho, título EN, claims "igual"/"faltou", UGC, §5, D.7). Antes de colar, confira: o nome "dia completo"
 > (`CLAUDE.md` › Regras do jogo ⭐), o Torneio ainda ligado (`functions/api/community.js`
 > › `match`), e a lista de permissões de `docs/PLAY-DATA-SAFETY.md` §2.4.
 
@@ -52,14 +52,14 @@ Soulmon: Bichinho de Hábitos
 Uma criatura que nasce das suas respostas e muda de forma com o seu dia.
 ```
 
-### 1.3 Descrição longa — máx. 4.000 · **3.181**
+### 1.3 Descrição longa — máx. 4.000 · **3.347**
 
 ```
 Ele nasce de quem você é. E muda de forma com o que você faz.
 
-Responda ao Oráculo — seis perguntas sobre você — e uma criatura se assenta no visor. Única: a linha de formas dela é gerada a partir das suas respostas, e ninguém tem outra igual. Do outro lado da tela, o seu dia é o que dá corpo a ela.
+Responda ao Oráculo — seis perguntas sobre você — e uma criatura se assenta no visor. A linha de formas dela é gerada a partir das suas respostas: cada resposta diferente gera uma criatura diferente, e mudar uma resposta muda quem ela vai ser. Do outro lado da tela, o seu dia é o que dá corpo a ela.
 
-Não há veredito aqui. O Soulmon não te dá nota, não conta os dias em que você faltou, não manda mensagem cobrando. Ele mostra. Você olha, e decide.
+Não há veredito aqui. O Soulmon não te dá nota, não pune um dia sem marcar, não manda mensagem cobrando. Depois de dois dias seguidos sem marcar, ele pergunta — e oferece uma versão menor. Ele mostra. Você olha, e decide.
 
 ━━━━━━━━━━━━━━━━━━━━━━
 
@@ -71,7 +71,7 @@ Não há veredito aqui. O Soulmon não te dá nota, não conta os dias em que vo
 • A mudança de forma é sua: quando o caminho está pronto, você toca nela. Nunca acontece sem você.
 • Constância, não sequência: o app conta "quantas das últimas sete", então uma falha custa pouco — nunca zera tudo.
 • Escudos de descanso: dias de boa constância geram proteção, usada sozinha quando você precisa. Sem lembrar de ativar.
-• Duas faltas seguidas e a criatura oferece uma versão de cinco minutos. Aceitar conta.
+• Dois dias seguidos sem marcar e a criatura oferece uma versão de cinco minutos. Aceitar conta.
 
 ★ CUIDAR É PARTE DO DIA
 
@@ -107,18 +107,32 @@ A imagem da sua criatura e as falas dela são geradas por inteligência artifici
 
 ━━━━━━━━━━━━━━━━━━━━━━
 
-Ela está esperando. Ela vai se parecer com você.
+Sua criatura nasce das suas respostas — e cresce com o que você faz.
 ```
+
+> Fecho anterior — *"Ela está esperando. Ela vai se parecer com você."* — saiu em
+> 22/09/2026: reprovava L2 (a criatura não é espelho) e L11 (emoção da criatura
+> causada pela ausência da pessoa). Achado de `00-design-narrativa-a` /
+> `06-guardas-squads-r1` #3. O fecho novo não afirma espera nem semelhança.
 
 ---
 
 ## 2. Ficha EN (English — United States) — idioma padrão
 
-### 2.1 Title — max 30 · **18**
+### 2.1 Title — max 30 · **29**
 
 ```
-Soulmon: Habit Pet
+Soulmon: Born of Your Answers
 ```
+
+> Escolha de 22/09/2026 (marca-crítico §3.1: `Habit Pet` falhava o teste de troca de
+> logo — servia igual para o Finch). Duas opções avaliadas, ambas ≤ 30:
+> **(A) `Soulmon: Born of Your Answers`** (29) — o Oráculo é o único gancho que só o
+> Soulmon tem; é a mesma frase da descrição curta, então título e curta falam a
+> mesma língua. **(B) `Soulmon: Pet That Takes Form`** (27) — o mecanismo, mas
+> "takes form" sozinho é obscuro na busca. Fica **A**. O PT (`Bichinho de Hábitos`,
+> 28) falha pelo mesmo motivo e deve seguir A quando a squad-narrativa validar:
+> sugestão `Soulmon: Nasce das Respostas` (28).
 
 ### 2.2 Short description — max 80 · **70**
 
@@ -126,14 +140,14 @@ Soulmon: Habit Pet
 A creature born from your answers. It takes new forms as your days do.
 ```
 
-### 2.3 Full description — max 4,000 · **3,069**
+### 2.3 Full description — max 4,000 · **3,319**
 
 ```
 It is born from who you are. And it takes new forms from what you do.
 
-Answer the Oracle — six questions about you — and a creature settles in the visor. Unique: its line of forms is generated from your answers, and nobody else has the same one. On the other side of the screen, your day is what gives it a body.
+Answer the Oracle — six questions about you — and a creature settles in the visor. Its line of forms is generated from your answers: every different answer generates a different creature, and changing one answer changes who it becomes. On the other side of the screen, your day is what gives it a body.
 
-There is no verdict here. Soulmon doesn't grade you, doesn't count the days you missed, doesn't message you to nag. It shows. You look, and you decide.
+There is no verdict here. Soulmon doesn't grade you, doesn't punish a day without a check, doesn't message you to nag. After two days in a row without one, it asks — and offers a smaller version. It shows. You look, and you decide.
 
 ━━━━━━━━━━━━━━━━━━━━━━
 
@@ -145,7 +159,7 @@ There is no verdict here. Soulmon doesn't grade you, doesn't count the days you 
 • Taking a new form is your move: when the path is ready, you touch it. It never happens without you.
 • Consistency, not streaks: the app counts "how many of the last seven", so one miss costs little — it never resets everything.
 • Rest shields: days of good consistency earn protection, spent on its own when you need it. Nothing to remember to activate.
-• Two misses in a row and the creature offers a five-minute version. Accepting counts.
+• Two days in a row without a check and the creature offers a five-minute version. Accepting counts.
 
 ★ CARING IS PART OF THE DAY
 
@@ -178,6 +192,10 @@ You start with one of the demo creatures, at no cost. A single one-time unlock g
 ★ ABOUT THE AI
 
 Your creature's image and its lines are generated by artificial intelligence, without human review. The conversation is not advice and not an emergency service. Details are in the privacy policy and terms, inside the app.
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+Your creature is born from your answers — and grows with what you do.
 ```
 
 ---
@@ -190,13 +208,14 @@ a frase correspondente sai da ficha **antes** do próximo envio.
 
 | Frase da ficha | Onde no código | Observação |
 |---|---|---|
-| Oráculo com seis perguntas; linha de formas gerada | `src/utils/oracle.ts` › `ORACLE_QUESTIONS`; `functions/api/generate-sprite.js` | 6 respostas → semente determinística (`src/utils/newReading.ts`) |
+| Oráculo com seis perguntas; linha de formas gerada; "cada resposta diferente gera uma criatura diferente" | `src/utils/oracle.ts` › `ORACLE_QUESTIONS`; `src/utils/newReading.ts` ("mesma resposta, mesma criatura"); `functions/api/generate-sprite.js` | semente **determinística** — por isso a ficha NÃO diz "ninguém tem outra igual" (dois jogadores com as mesmas 6 respostas recebem a mesma linha; marca-crítico §3.2) |
 | Tarefa pesa pelo esforço | `src/types/taskModel.ts` › `HABIT_WEIGHT`, `effort`; `src/utils/dailyReset.ts` › `dailyGoalFor` | `CLAUDE.md` › Motor de tarefas ⚖️ |
 | Dia completo (não "perfeito") | `CLAUDE.md` › Regras do jogo ⭐; textos PT/EN dizem "dia completo"/"complete day" | o campo interno continua `perfectDays` |
 | Mudança de forma é manual, o jogador toca | `MANUAL_EVOLUTION = true`; `handleEvolve` em `src/App.tsx` | `CLAUDE.md` › 🔒 Cadeado de evolução |
 | "N das últimas 7", nunca zera | `src/utils/habitRhythm.ts` › `CONSTANCY_WINDOW_DAYS` | teste trava streak que zera |
 | Escudos consumidos sozinhos | `applyMissedDay`; `REST_SHIELD_*` | `CLAUDE.md` › 🛡️ |
-| Versão de 5 minutos na 2ª falta | `MISS_INTERVENTION_AT` = 2; `needsIntervention` | `CLAUDE.md` › 🚫 Never miss twice |
+| "não pune um dia sem marcar; depois de dois seguidos, pergunta" / versão de 5 minutos | `MISS_INTERVENTION_AT` = 2; `needsIntervention`; `applyMissedDay` | `CLAUDE.md` › 🚫 Never miss twice. A ficha NÃO diz mais "não conta os dias que você faltou": o app conta (`CONSTANCY_WINDOW_DAYS`), o que ele não faz é cobrar (L6) |
+| Fecho "nasce das suas respostas — e cresce com o que você faz" | `ORACLE_QUESTIONS`; `perfectDays` / `handleEvolve` | sem L2 (espelho) nem L11 (espera/saudade); "cresce" descreve `perfectDays` acumulando |
 | Comida inclina o galho | `careRules.ts`; atributos vírus/dado/vacina | `CLAUDE.md` › 🍎 |
 | Carinho, banho, sono, recolher | `careRules.ts`, `poopDrain.ts` | `CLAUDE.md` › 🫶 🚿 💤 💩 |
 | Chat: fala do que sente, não do que você fez | `functions/api/chat.js` (cláusula SAFETY); `src/utils/chatSafety.ts`; bíblia §5.10/§13 | IA sem revisão humana — declarado em §5 abaixo |
@@ -241,7 +260,7 @@ configuração de hoje (mesma regra de `PLAY-DATA-SAFETY.md` §2.4).
 | Os usuários podem interagir entre si | **Sim, limitado**: diretório público de jogadores (apelido + forma), Torneio assíncrono (sem chat), presentes de moeda entre amigos, grupo cooperativo com "apareci hoje". **Não há mensagens entre usuários.** | `functions/api/community.js` › `players`, `match`, `gift`, `coop*` |
 | Compartilha localização | Não | nenhuma permissão de localização (`PLAY-DATA-SAFETY.md` §2.7) |
 | Compartilha informações pessoais com terceiros (via interação) | Só o apelido escolhido, e só se o jogador entrar no diretório | `community.directoryConsent.test.js` |
-| Conteúdo gerado pelo usuário visível a outros | **Apelido e nome da criatura** — texto livre curto; sem moderação prévia | `community.js` › `profile` |
+| Conteúdo gerado pelo usuário visível a outros | **Apelido, nome da criatura e o nome do grupo cooperativo** (escrito por quem cria o grupo, visto por quem entra pelo código) — texto livre curto; sem moderação prévia | `community.js` › `profile`, `coopCreate` (nome do grupo); política §2 "Grupo cooperativo" |
 | Chat sem moderação humana | **Sim, com IA** (não entre usuários) — declarar aqui **e** na seção de IA (§5) | `chat.js`; `docs/PLAY-DATA-SAFETY.md` §3b |
 | Anúncios | Não | — |
 | Acesso à câmera/microfone | **Microfone** (recado falado, opcional) | `RECORD_AUDIO` no manifesto; `PLAY-DATA-SAFETY.md` §2.4 |
@@ -267,12 +286,11 @@ em `docs/Attributions.md`.
 | Há filtro/segurança? | Cláusula SAFETY no prompt do chat (`functions/api/chat.js`) + ponte local de crise com lista curada (`src/utils/chatSafety.ts`, CVV 188 / findahelpline.com); minimização de dado pessoal antes de enviar (`functions/api/_redact.js`); cotas por conta e teto global do dia (`functions/api/_aiGuard.js`) |
 | Há revisão humana? | **Não, no caminho em tempo real** (chat, sprite do jogador pago). Sim para toda arte estática e sons (curados antes de instalar) |
 | Como o usuário reporta conteúdo? | E-mail de contato da ficha; dentro do app, Configurações › Sobre traz o aviso de IA e o link para a política |
-| Onde está avisado ao usuário? | Configurações › Sobre (aviso curto PT/EN) · `public/termos.html` §8 (versão 2026-09-21) · `public/privacidade.html` §2b |
+| Onde está avisado ao usuário? | Configurações › Sobre (aviso curto PT/EN — texto exato e o que entra em 22/09 em `PLAY-DATA-SAFETY.md` §3b item 2) · `public/termos.html` §8 (versão 2026-09-21) · `public/privacidade.html` §2b |
 
-Também vale para o **formulário de Segurança de Dados** (§2.3 "Outras mensagens no
-app" → Groq **e**, como a review 11 apontou, os provedores de imagem: as respostas
-do Oráculo saem para Higgsfield/Gemini como prompt — `PLAY-DATA-SAFETY.md` §2.3 ainda
-cita só o Groq; corrigir lá antes de enviar é tarefa da `alpha-compliance`).
+Também vale para o **formulário de Segurança de Dados**: `PLAY-DATA-SAFETY.md` §2.3
+já declara "Outras mensagens no app" → Groq (chat com contexto, sugestões, Decompor)
+**e** Higgsfield/Gemini (descrição da criatura como prompt de imagem). Transcreva de lá.
 
 ---
 
@@ -347,6 +365,11 @@ Roteiro de 25 s existe em `docs/reviews/2026-08-03/soulmon-growth-aso.md` A.6/B.
 ## 7. O que ficou de fora, e por quê
 
 - **Preço** — não vai na ficha; é o que estiver no console (`docs/BILLING-SETUP.md` §1).
+  Os Termos EN publicam **US$ 6.99 como preço de referência** (redação A, decisão
+  provisória do coordenador, 21/09/2026); o critério de "feito" de
+  `PLAY-LANCAMENTO.md` §D.7 inclui **confirmar esse USD no console** — se a Play
+  converter para outro valor, quem muda é o `FULL_UNLOCK_PRICE_LABEL_USD`
+  (`src/utils/monetization.ts`), e o teste `publishedPrice.test.ts` puxa os Termos junto.
 - **"Funciona offline"** — o APK carrega a URL de produção; prometer seria falso.
 - **Número de usuários / prova social** — não existe ainda. Adicionar quando houver.
 - **Steam / desktop** — outra loja, outro documento (`docs/PLANO-DESKTOP-STEAM.md`).

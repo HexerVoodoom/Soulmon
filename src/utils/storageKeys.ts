@@ -39,6 +39,8 @@ export const STORAGE_KEYS = {
   SCHEDULED_NOTIFICATIONS: 'soulmon-scheduled-notifications',
   DAILY_NOTIFICATION_CHECK: 'soulmon-daily-notification-check',
   SAVE_ID: 'soulmon-save-id',
+  /** Mensagem do portão depois de um 410 `account-deleted` (cloudSave.ts › reagirContaExcluida). Lida e apagada uma vez. */
+  ACCOUNT_DELETED_NOTICE: 'soulmon-account-deleted-notice',
   USER_EMAIL: 'soulmon-user-email',
   /** Última vez que o app pediu o e-mail para proteger o progresso (epoch ms). */
   PROTECT_PROMPT_AT: 'soulmon-protect-prompt-at',

@@ -13,7 +13,7 @@
 // cycles, one rule.
 import { authHeaders } from './auth';
 import { STORAGE_KEYS, RECONCILE_KEYS } from './storageKeys';
-import { writeLocal, readLocal } from './safeStorage';
+import { writeLocal, readLocal, removeLocal } from './safeStorage';
 
 export async function emailToSaveId(email: string): Promise<string> {
   const norm = email.trim().toLowerCase();
@@ -45,6 +45,7 @@ export type CloudSaveFailureKind =
   | 'conflict'   // 409: outro aparelho escreveu antes (fatia 1)
   | 'stale'      // 412: pré-condição falhou; o cliente está atrasado
   | 'too-large'  // 413: o save passou do teto do servidor
+  | 'deleted'    // 410 `account-deleted`: a conta foi excluída (tombstone de 30 d no servidor)
   | 'server'     // 5xx: o servidor caiu, o save continua válido
   | 'client';    // 4xx restante: o cliente mandou algo que o servidor recusa
 
@@ -71,6 +72,10 @@ export const CLOUD_SAVE_POLICY: Record<CloudSaveFailureKind, CloudSavePolicy> = 
   stale: { retentavel: false, avisaJogador: true },
   // Reenviar os mesmos bytes grandes dá o mesmo 413. Só o jogador pode agir.
   'too-large': { retentavel: false, avisaJogador: true },
+  // 410: a conta foi apagada (neste ou em outro aparelho). Reenviar o save
+  // recriaria o que a pessoa mandou apagar; o caminho é PARAR — limpar o save
+  // local, deslogar e voltar ao portão (`reagirContaExcluida`). Sem retry.
+  deleted: { retentavel: false, avisaJogador: true },
   server: { retentavel: true, avisaJogador: false },
   client: { retentavel: false, avisaJogador: true },
 };
@@ -83,6 +88,7 @@ export function classifyCloudSaveStatus(status: number): CloudSaveFailureKind {
   if (status === 409) return 'conflict';
   if (status === 412) return 'stale';
   if (status === 413) return 'too-large';
+  if (status === 410) return 'deleted';
   if (status >= 500) return 'server';
   return 'client';
 }
@@ -98,6 +104,44 @@ function falha(status: number): CloudSaveFailure {
   const kind = classifyCloudSaveStatus(status);
   return { ok: false, kind, status, ...CLOUD_SAVE_POLICY[kind] };
 }
+
+/** Mensagem PT/EN do portão depois de uma conta excluída (adendo 11, 21/09/2026). */
+export function mensagemContaExcluida(pt: boolean): string {
+  return pt
+    ? 'Esta conta foi excluída neste ou em outro aparelho.'
+    : 'This account was deleted on this or another device.';
+}
+
+/**
+ * O servidor respondeu 410 `account-deleted`: a conta não existe mais e o
+ * aparelho ainda tem o save dela. Continuar sincronizando recriaria no KV o
+ * que a pessoa pediu para apagar (e o tombstone recusa mesmo). Aqui se PARA:
+ * apaga o save local e a identidade, desloga e volta ao portão — a mensagem
+ * fica gravada para o portão mostrar depois do reload. Idempotente; nunca
+ * lança; `recarregar` é injetável para teste.
+ */
+let contaExcluidaTratada = false;
+export async function reagirContaExcluida(opts: { recarregar?: () => void } = {}): Promise<void> {
+  if (contaExcluidaTratada) return;
+  contaExcluidaTratada = true;
+  try {
+    const pt = (readLocal(STORAGE_KEYS.LANGUAGE) ?? '').toLowerCase().startsWith('pt');
+    writeLocal(STORAGE_KEYS.ACCOUNT_DELETED_NOTICE, mensagemContaExcluida(pt), { silent: true });
+    removeLocal(STORAGE_KEYS.GAME_STATE, { silent: true });
+    removeLocal(STORAGE_KEYS.SAVE_ID, { silent: true });
+    removeLocal(STORAGE_KEYS.LAST_CLOUD_SYNC, { silent: true });
+    removeLocal(STORAGE_KEYS.USER_EMAIL, { silent: true });
+    try {
+      const { signOut } = await import('./auth');
+      await signOut();
+    } catch { /* sem sessão para encerrar */ }
+  } finally {
+    const recarregar = opts.recarregar ?? (() => { try { globalThis.location?.reload(); } catch { /* sem window */ } });
+    recarregar();
+  }
+}
+/** Só para teste. */
+export function __resetContaExcluida(): void { contaExcluidaTratada = false; }
 
 /**
  * Envia o save para a nuvem. `ok: true` só quando o SERVIDOR confirmou.
@@ -226,11 +270,13 @@ export async function cloudSaveComRetry(
 type LeituraNuvem =
   | { estado: 'encontrado'; state: unknown }
   | { estado: 'vazio' }
+  | { estado: 'excluida' }
   | { estado: 'indeterminado' };
 
 async function lerNuvem(saveId: string): Promise<LeituraNuvem> {
   try {
     const res = await fetch(`/api/save?id=${saveId}`, { headers: await authHeaders() });
+    if (res.status === 410) return { estado: 'excluida' };
     if (!res.ok) return { estado: 'indeterminado' };
     const data = await res.json();
     return data.found ? { estado: 'encontrado', state: data.state } : { estado: 'vazio' };
@@ -241,6 +287,9 @@ async function lerNuvem(saveId: string): Promise<LeituraNuvem> {
 
 export async function cloudLoad(saveId: string): Promise<unknown | null> {
   const r = await lerNuvem(saveId);
+  // GET também recebe o 410: só reage se ESTE aparelho ainda carrega o save
+  // dessa conta — carregar o save de outro id (login) não é "minha conta sumiu".
+  if (r.estado === 'excluida' && readLocal(STORAGE_KEYS.SAVE_ID) === saveId) void reagirContaExcluida();
   return r.estado === 'encontrado' ? r.state : null;
 }
 

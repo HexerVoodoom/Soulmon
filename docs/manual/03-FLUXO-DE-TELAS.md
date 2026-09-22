@@ -158,7 +158,7 @@ Cada chip chama `setCurrentView(view)`. Os rótulos são "Evolução"/"Evolution
     │     triage → dailyReport → checkIn → dream → nightmare → welcome
     │
     └── FILA 2: slot de avisos da Home (só o primeiro; resto vira "+N")
-          firstDay → hp → semanal → triagem → priming → recomeco
+          firstDay → hp → semanal → triagem → priming → recomeco → carga → termos
 ```
 
 Os únicos `setCurrentView('<literal>')` fora da `BottomNav` em todo o `src/` são
@@ -472,7 +472,8 @@ ordem literal dos `push`, com a chave de cada um:
 | 3 | `'triagem'` | `triageQueue(gameState.tasks, agoraA).length > 0` | botão "Arrumar a pilha" → `handleOpenTriage` |
 | 4 | `'priming'` | `mostrarPrimingDePush` (`shouldPrimePush`, `utils/pushPriming.ts`) | seção inline com "Pode sim" / "Agora não" |
 | 5 | `'recomeco'` | `freshStartDismissed ? null : freshStartOffer(gameState, agoraA, language)` | bloco `sm2-notice` inline |
-| 6 | `'termos'` | `precisaAvisarTermos(gameState.consent, TERMS_VERSION, PRIVACY_VERSION, termsNoticeSeen)` (`utils/termsNotice.ts`, desde `42b07bec`, decisão #24 — só quem já consentiu a uma versão ANTERIOR; save sem registro nunca vê) | `TermsUpdateBanner` (`.sm2-notice`, `role="status"`: "Os Termos e a Política de Privacidade mudaram" + "Ler os Termos" / "Ler a Política" em aba nova + "Ok", que grava `marcaAvisoTermos` em `STORAGE_KEYS.TERMS_NOTICE_SEEN`). Informativo, **sem re-aceite**; o comentário do código o chama de "7." porque conta o `hp` como 1 |
+| 6 | `'carga'` | `isOvercommitted(plannedEffort(gameState.tasks, gameState.activities, dayKeyOf(agoraA), gameState.habitRhythms))` (`utils/taskTriage.ts`; `OVERCOMMIT_EFFORT` em `types/taskModel.ts`) — **é AVISO, NUNCA BLOQUEIO** (`CLAUDE.md` › Carga do dia); canvas Atividades D10 | `<p role="status">` inline com `Icon info` dourado: "É bastante pra um dia só — quer deixar uma pra amanhã? (Tudo bem de qualquer jeito.)". ⚰️ esta tabela omitia a linha até 21/09/2026 (QA Rodada 1, `07-growth-comportamento-r1.md` N5) |
+| 7 | `'termos'` | `precisaAvisarTermos(gameState.consent, TERMS_VERSION, PRIVACY_VERSION, termsNoticeSeen)` (`utils/termsNotice.ts`, desde `42b07bec`, decisão #24 — só quem já consentiu a uma versão ANTERIOR; save sem registro nunca vê) | `TermsUpdateBanner` (`.sm2-notice`, `role="status"`: "Os Termos e a Política de Privacidade mudaram" + "Ler os Termos" / "Ler a Política" em aba nova + "Ok", que grava `marcaAvisoTermos` em `STORAGE_KEYS.TERMS_NOTICE_SEEN`). Informativo, **sem re-aceite**, e **o último da fila** — é o único aviso que não fala do dia da pessoa; o comentário do código o chama de "7." porque conta o `hp` como 1 |
 
 - **Régua**: `src/components/filaDeAvisos.contract.test.ts` — exige as chaves
   `'firstDay'` e `'priming'`, exige que `shouldShowFirstDay(` e
@@ -1889,7 +1890,7 @@ export const PUSH_HOURS_UTC = PUSH_HOURS_BRT.map(h => (h + 3) % 24).sort((a, b) 
 | 6 | "`ArenaGame` é código morto" | `docs/INVENTARIO-TELAS.md` §6.3 (19/08/2026) | é o segundo card da `ActivitiesPage` desde então |
 | 7 | "`OraclePage` é alcançável pelo atalho de dono (segurar o mascote)" | `SoulmonOnboarding.tsx` (comentário) e `docs/INVENTARIO-TELAS.md` §5.13 | `startOracleDebugHold`/`cancelOracleDebugHold` **não têm chamador** — a intro que os usava foi apagada. `OraclePage` e `PixelizerCard` são inalcançáveis por qualquer caminho |
 | 8 | ⚰️ frase do widget e nome do dia | `WidgetRenderer.kt` | **fechada em `6affd501`** (20/09/2026): a escada é só em inglês por decisão (REGISTRO 13.18) e o topo diz "Complete day!" (P5) — §5.1 |
-| 9 | comentário do slot de avisos numera "1. HP" duas vezes | `src/App.tsx` | a ordem executada é a dos `push`: firstDay → hp → semanal → triagem → priming → recomeco |
+| 9 | comentário do slot de avisos numera "1. HP" duas vezes | `src/App.tsx` | a ordem executada é a dos `push`: firstDay → hp → semanal → triagem → priming → recomeco → carga → termos (8 desde 21/09/2026) |
 | 10 | "Brincar" é um card na Home (`PlayCard`), e a IIFE do `PlayCard` no `App.tsx` é consumidora de `playLog` | `CLAUDE.md` (linha 🧮, "**brincar** `playLog` (`utils/petNeeds.ts` + a IIFE do `PlayCard` no `App.tsx`)") | o `PlayCard` não é montado desde `f5ead7c0`; Brincar é a célula `play` do deck do `CompanionHUD`, alimentada por `playDeck` (`useMemo` no `App.tsx`) — §4.2, §4.14. `src/components/PlayCard.tsx` segue no repo sem consumidor |
 | 11 | "o fundo do widget é vetor `pet_grid.xml`" | `CLAUDE.md` (footgun 4) | `android/app/src/main/res/drawable/pet_grid.xml` foi **apagado** no delta (`6affd501`); o fundo é `widget_bg.xml` (`<shape>`, `drawable/` e `drawable-v31/`) — §5.1 |
 | 12 | "uma **run = 5 andares**", "Concluir os 5 andares", "bônus de andar" | `CLAUDE.md` (linha ⚔️ Masmorra) e linha ⭐ ("os 5 andares da masmorra") | desde `84ae4937` (21/09/2026) o jogador lê **descida** e **camada** ("Camada N de 5", "Descer", "Descer de novo", "As 5 camadas ficaram para trás"); `run`/`floor`/`MAX_FLOORS` continuam sendo os nomes de código — vocabulário, não mecânica — §4.14 |

@@ -185,6 +185,13 @@ export async function writeEntitlement(env, saveId, ent) {
  */
 export function paidProviderOf(ent) {
   const details = Array.isArray(ent?.orderDetails) ? ent.orderDetails : [];
+  // Do mais recente para o mais antigo, pulando o que foi ANULADO. Assim uma
+  // Play reembolsada não esconde a cortesia que ainda vale — e, no sentido
+  // inverso, uma Play válida vinda DEPOIS da cortesia é ela que aparece: quem
+  // pagou de verdade não vê `provider: 'courtesy'` no próprio saldo. Play
+  // válida vinda ANTES da cortesia continua reportando `courtesy` (o pedido
+  // mais recente não anulado) — para trocar isso seria preciso ranquear
+  // provedores, e ninguém pediu essa regra ainda.
   for (let i = details.length - 1; i >= 0; i--) {
     const o = details[i];
     if (o && o.grantTier === 'paid' && !o.voided) return typeof o.provider === 'string' ? o.provider : null;
@@ -585,12 +592,27 @@ export async function auditRefunds(env, saveId, isVoided, now = Date.now()) {
 
     order.voided = true;
     revoked.push(order.orderId);
-    if (order.grantTier === 'paid') ent.tier = 'demo';
     // Créditos já gastos não voltam do nada: o saldo nunca fica negativo.
     // O jogador que reembolsa depois de gastar sai no lucro dessa diferença —
     // cobrar dele um saldo que não existe mais só criaria uma conta travada.
     if (order.grantCredits > 0) ent.credits = Math.max(0, ent.credits - order.grantCredits);
   }
+
+  // O TIER É DERIVADO, não decrementado. A versão anterior fazia
+  // `if (order.grantTier === 'paid') ent.tier = 'demo'` por pedido desfeito,
+  // sem olhar se OUTRO pedido pago ainda valia. Enquanto só havia um pedido
+  // pago por conta isso era inalcançável; a cortesia (`grantCourtesy`) criou o
+  // segundo, e com ele o estado em que `ent.tier === 'demo'` com
+  // `paidProviderOf(ent) === 'courtesy'` — o mesmo arquivo dando duas respostas
+  // para "esta conta é paga?" (QA rodada 1, `_entitlements.tierDerivado.qa.test.js`).
+  //
+  // Invariante: `tier === 'paid'` SE E SOMENTE SE existe pedido pago não
+  // desfeito. Consequência PROVISÓRIA (pendente do dono, `PERGUNTAS-DO-DONO`):
+  // a cortesia SOBREVIVE ao reembolso da Play, porque a loja não tem como
+  // desfazer um pedido que não é dela. Se o dono decidir que reembolso derruba
+  // a cortesia também, o conserto é marcar o pedido `courtesy:*` como `voided`
+  // aqui — a derivação abaixo continua certa.
+  ent.tier = paidProviderOf(ent) ? 'paid' : 'demo';
 
   ent.auditedAt = now;
   await writeEntitlement(env, saveId, ent);

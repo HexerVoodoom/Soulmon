@@ -64,7 +64,7 @@ describe('GameTutorialFlow — identidade do canvas', () => {
     const ia = btn('Suggest tasks with AI');
     expect(ia.disabled).toBe(false);
     expect(variante(ia)).toBe('primary');
-    expect(screen.getByText('Your goal is sent to the AI to write suggestions.')).toBeTruthy();
+    expect(screen.getByText('This text goes to the AI provider if you ask for suggestions.')).toBeTruthy();
     expect(btn('Select at least 1 task').disabled).toBe(true);
   });
 

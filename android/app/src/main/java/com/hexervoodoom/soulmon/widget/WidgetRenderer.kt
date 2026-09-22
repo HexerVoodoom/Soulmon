@@ -138,7 +138,9 @@ object WidgetRenderer {
         "Let's tackle our tasks together?",
         "You're my favorite partner!",
         "Ready to evolve today?",
-        "I missed you!",
+        // "I missed you!" saiu em 22/09/2026 (QA rodada 1 §4.2, L11): a criatura
+        // nunca sente por causa da ausência da pessoa. Reação ao AGORA, não ao tempo.
+        "Here when you are.",
         "You can always count on me!",
         "Good to see you!",
         "Together we're stronger!",
@@ -175,12 +177,15 @@ object WidgetRenderer {
         // o placar dela. "N task(s) left, let's go!" saiu na auditoria de
         // 06/09/2026 — contar o que falta, na tela inicial, é cobrança.
         val contextual = mutableListOf<String>()
-        if (hp <= 20) contextual.add("I miss you...")
+        // HP baixo: "I miss you..." saiu em 22/09/2026 (L11 + L6 — ligava saudade ao
+        // placar de HP). "Quiet day. Me too." é o exemplo literal permitido da L11.
+        if (hp <= 20) contextual.add("Quiet day. Me too.")
         // (o ramo "digiegg" saiu junto com os nomes da Bandai: a árvore nasce
         //  em rookie desde `types/progression.ts`, não existe estágio de ovo)
         when {
             total == 0 -> contextual.add("Let's add a task?")
-            completed >= total -> contextual.add("We crushed it today! ✨")
+            // "We crushed it today! ✨" saiu (D-F3 sem emoji; L12 nomeia o ato, não elogia a pessoa).
+            completed >= total -> contextual.add("That closed a stretch.")
             else -> contextual.add("Whenever you're ready, I'm here.")
         }
         val result = (contextual + CHAT_FIXED_PHRASES.shuffled()).toMutableList()
@@ -360,9 +365,11 @@ object WidgetRenderer {
         // emoji (D-F3: o RemoteViews não tem fonte de ícone e o emoji é do fabricante;
         // no visor a frase lê sozinha). As 7 frases são a copy do canvas Fora do app
         // (Escada.dc.html), sujeita ao `redator-ux` (V7/X5).
-        // HP baixo é saudade, nunca alarme: o HP representa o cuidado que a
-        // pessoa teve consigo mesma, e um ⚠️ ali converte culpa em vergonha.
-        if (hp <= 20) return "I've been missing you"
+        // HP baixo nunca é alarme: o HP representa o cuidado que a pessoa teve
+        // consigo mesma, e um ⚠️ ali converte culpa em vergonha. Também não é
+        // saudade da criatura ("I've been missing you" saiu em 22/09/2026, L11):
+        // a frase fica no presente, ao lado da pessoa.
+        if (hp <= 20) return "Quiet day. Me too."
         // Quem faltou duas vezes seguidas precisa da porta pequena, não do placar.
         if (needsIntervention) return "Today, just five minutes?"
         if (total == 0) {

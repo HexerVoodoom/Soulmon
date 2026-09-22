@@ -17,11 +17,14 @@ import type { Language } from '../utils/i18n';
 export const FEEDBACK_EMAIL = 'mateus.sprnd@gmail.com';
 
 /**
- * Versão que a tela mostra ("Soulmon 1.0.2" em Configurações › Ajuda). Mora
- * aqui, e não repetida em cada tela, para que a linha do rodapé e o corpo do
- * e-mail de feedback nunca divirjam (footgun 9).
+ * Versão que a tela mostra ("Soulmon 1.1.4" em Configurações › Ajuda). Vem do
+ * `version` do `package.json` via `define` do Vite (`vite.config.ts`) — antes
+ * era um literal aqui, e havia TRÊS versões no repositório (design-critic B1,
+ * 21/09/2026). `src/deploy/versaoUnica.contract.test.ts` prende o
+ * `build.gradle` ao mesmo número. O `typeof` é para o arquivo carregar fora
+ * do Vite (ex.: script Node) sem estourar.
  */
-export const APP_VERSION = '1.0.2';
+export const APP_VERSION: string = typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : '0.0.0-dev';
 
 /** Quantos caracteres do `saveId` vão no e-mail — o suficiente para achar o save
  *  com o dono na frente, e nada mais. */
@@ -43,11 +46,17 @@ export function feedbackMailto(opts: {
     '---',
     `${isPt ? 'Versão' : 'Version'}: ${APP_VERSION}`,
     `${isPt ? 'Código' : 'Code'}: ${saveId}`,
-    `${isPt ? 'Origem' : 'From'}: ${opts.origin}`,
+    `${isPt ? 'Origem' : 'From'}: ${originLabel(opts.origin, isPt)}`,
   ];
   if (opts.errorMessage) linhas.push(`${isPt ? 'Erro' : 'Error'}: ${opts.errorMessage}`);
   const subject = opts.origin === 'error' ? 'Soulmon — erro' : 'Soulmon';
   return `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(linhas.join('\n'))}`;
+}
+
+/** "Origem: settings" era inglês no meio de um e-mail em PT (design B4). */
+function originLabel(origin: 'settings' | 'error', isPt: boolean): string {
+  if (origin === 'error') return isPt ? 'tela de erro' : 'error screen';
+  return isPt ? 'configurações' : 'settings';
 }
 
 export function feedbackLabel(language: Language): string {
@@ -60,7 +69,7 @@ export function FeedbackRow({ language, saveId }: { language: Language; saveId?:
   return (
     <ActionRow
       label={feedbackLabel(language)}
-      hint={isPt ? 'Abre seu e-mail. A versão do app já vai preenchida.' : 'Opens your email app. The app version is filled in.'}
+      hint={isPt ? `Abre seu e-mail para ${FEEDBACK_EMAIL}. A versão do app já vai preenchida.` : `Opens your email app to ${FEEDBACK_EMAIL}. The app version is filled in.`}
       href={feedbackMailto({ language, saveId, origin: 'settings' })}
     />
   );

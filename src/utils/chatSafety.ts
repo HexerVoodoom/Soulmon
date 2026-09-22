@@ -87,14 +87,38 @@ const LEXICO: RegExp[] = [
   /(hurt|harm|cut)\s+myself/i,
   /suicidal (thought|ideation)/i,
   /no one would miss me/i,
+  // EN coloquial (skeptic #11, 21/09/2026): é assim que se escreve num chat.
+  /\b(i )?wanna die\b/i,
+  /\bkms\b/i,
+  /\bkill myself\b/i,
+  /\bend it all\b/i,
+  /\bno reason to live\b/i,
 ];
+
+/**
+ * Sem acento, minúsculo. "nao quero mais viver" é como MUITA gente escreve
+ * no celular, e o léxico com "não" não casava (skeptic #11). A MESMA
+ * normalização vai no texto e nos padrões — senão o `ã` do padrão nunca
+ * encontra o `a` do texto. `ç` também vira `c` (a cedilha é marca combinante).
+ */
+export function normalizarParaLexico(texto: string): string {
+  return tirarAcentos(texto).toLowerCase();
+}
+function tirarAcentos(texto: string): string {
+  return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+/** S\u00f3 tira acento do padr\u00e3o \u2014 NUNCA `toLowerCase()`, que transformaria `\S`
+ *  em `\s` e inverteria a classe. As flags j\u00e1 t\u00eam `i`. */
+const semAcento = (r: RegExp): RegExp => new RegExp(tirarAcentos(r.source), r.flags);
+const NUNCA_CASA_N = NUNCA_CASA.map(semAcento);
+const LEXICO_N = LEXICO.map(semAcento);
 
 /** A pessoa escreveu algo que pede a ponte? */
 export function needsBridge(mensagem: string): boolean {
-  const texto = String(mensagem ?? '');
+  const texto = normalizarParaLexico(String(mensagem ?? ''));
   if (!texto.trim()) return false;
-  if (NUNCA_CASA.some(r => r.test(texto))) return false;
-  return LEXICO.some(r => r.test(texto));
+  if (NUNCA_CASA_N.some(r => r.test(texto))) return false;
+  return LEXICO_N.some(r => r.test(texto));
 }
 
 /**
@@ -109,7 +133,7 @@ export function needsBridge(mensagem: string): boolean {
 export function bridgeReply(language: ChatSafetyLanguage): string {
   return language === 'pt-BR'
     ? 'Eu tô aqui com você. Não vou saber o que dizer, mas tem gente que sabe: o CVV atende de graça, 24 horas, no 188. Você não precisa passar por isso sozinho.'
-    : "I'm right here with you. I won't know what to say, but there are people who do — a crisis line can talk with you any time, for free. You don't have to go through this alone.";
+    : "I'm right here with you. I won't know what to say, but there are people who do — a crisis line can talk with you any time, for free: findahelpline.com lists the one for your country. You don't have to go through this alone.";
 }
 
 /**

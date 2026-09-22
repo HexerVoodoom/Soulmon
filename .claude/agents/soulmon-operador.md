@@ -45,6 +45,7 @@ tem, **registre como "não medido — exige painel/login do dono"**, nunca chute
 
 | Pergunta | Comando | O que comparar |
 |---|---|---|
+| **O CI está vivo?** (rode PRIMEIRO — o resto do runbook supõe portões que rodaram) | `gh run list --limit 5 --json name,conclusion,createdAt,url` | os 5 últimos runs têm de ter `conclusion` ≠ `failure` em < 10 s. **Runs `failure` em 2–6 s com a anotação "The job was not started because recent account payments have failed or your spending limit needs to be increased" = Actions parado por COBRANÇA** — aconteceu de 16/09 a 21/09/2026 (339 runs vermelhos, ninguém viu, produção não caiu porque o Cloudflare builda sozinho; QA Rodada 1 `08` §0). Só o dono regulariza *Billing & plans*; você registra no STATUS com a data e para de dizer "CI verde" até voltar |
 | Versão da raiz no ar | `npx wrangler deployments list` (na raiz; `--name soulmon`) | o id do deployment do Cloudflare **não é SHA do git** (o STATUS já confundiu `e90f05a6`); cruze pela data com `git log -1 --format='%h %ci' origin/main` |
 | Worker de push no ar | `cd workers && npx wrangler deployments list` | último deploy ≥ último commit que tocou `workers/` (`git log -1 --format=%ci -- workers/`). Se não há deployment, o worker **nunca subiu** (STATUS §3 desde 06/09/2026) |
 | Crons do worker | `cd workers && npx wrangler triggers list` (ou o `[triggers]` do `.toml`) | `0 1,13,19 * * *` = 22h/10h/16h BRT; `pushCopy.parity.test.js` trava contra `PUSH_HOURS_BRT` |
@@ -54,7 +55,7 @@ tem, **registre como "não medido — exige painel/login do dono"**, nunca chute
 | Cache dos clientes | `grep -m1 CACHE_VERSION public/sw.js` vs. o `sw.js` servido (`curl -s https://soulmon.mateus-sprnd.workers.dev/sw.js \| grep -m1 CACHE_VERSION`) | git > ar = deploy não chegou; ar > git = alguém bumpou fora do repo (footgun) |
 | Login em produção | `curl -sI https://soulmon.mateus-sprnd.workers.dev/ \| head -1` + `src/deploy/firebaseNoBuild.contract.test.ts` verde | as quatro `VITE_FIREBASE_*` têm de estar em `.env.production` (commitado); `FIREBASE_PROJECT_ID` em `wrangler.jsonc` › `vars`, **nunca só no painel** (o próximo deploy apaga) |
 | Repos irmãos | `gh run list --workflow sync-irmaos.yml --limit 3` | roda segunda 06:17 UTC; sem `SIBLING_REPOS_TOKEN` cai em clone anônimo (só funciona se os irmãos forem públicos) |
-| CI | `gh run list --workflow ci.yml --limit 3` | os três `tsc` + vitest + build |
+| CI | `gh run list --workflow ci.yml --limit 3` | os três `tsc` + vitest + integridade do `vendor/class-system` (`_provenance.json`). **O `ci.yml` NÃO roda `npm run build`** (declarado no último comentário do próprio arquivo) — quem builda é `android-build.yml` no push da `main` e a máquina de quem commita `dist/`; ⚰️ esta linha dizia "+ build" até 21/09/2026 (QA Rodada 1 `08` §1.3) |
 
 ### Secrets esperados (nome, dono, sintoma da ausência — **nunca o valor**)
 

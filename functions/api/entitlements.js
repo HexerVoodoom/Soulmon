@@ -13,7 +13,9 @@
 // SAVE — e o dono do save é justamente quem não pode se dar o tier). Ela exige
 // `Authorization: Bearer <ENTITLEMENTS_ADMIN_KEY>`, e é FAIL-CLOSED no mesmo
 // padrão de `METRICS_ADMIN_KEY` em `metrics.js`: sem a variável, a rota NÃO
-// EXISTE (404, não 401 — 401 confirma o endpoint a quem sonda). O teto, a
+// EXISTE (404, não 401 — 401 confirma o endpoint a quem sonda; e a ação
+// DESCONHECIDA também responde 404, senão a diferença 404/400 a confirmaria
+// do mesmo jeito). O teto, a
 // idempotência e o "nunca crédito" moram em `_entitlements.js:grantCourtesy`.
 //
 // SOBRE O ANÚNCIO RECOMPENSADO (action=ad): um endpoint aberto que dá crédito
@@ -80,7 +82,10 @@ async function handleGrant(request, env) {
   if (!kv(env)) return json({ error: 'Storage not bound' }, 500);
   const body = await request.json().catch(() => null);
   const saveId = body?.saveId;
-  if (!saveId || !VALID_ID.test(saveId)) return json({ error: 'Invalid save ID' }, 400);
+  // `typeof` antes do regex: `RegExp.test` coage o argumento, então `[id]` e
+  // `12345678` (array/número) passavam e viravam chave de KV por `String()`.
+  // Achado do QA (rodada A, 21/09/2026) — id é string, ou não é id.
+  if (typeof saveId !== 'string' || !VALID_ID.test(saveId)) return json({ error: 'Invalid save ID' }, 400);
 
   const r = await grantCourtesy(env, saveId);
   if (!r.ok) {
@@ -176,5 +181,11 @@ export async function onRequestPost({ request, env }) {
     return json({ ok: true, ...publicView(ent) });
   }
 
-  return json({ error: 'Unknown action' }, 400);
+  // 404 "Not found", o MESMO corpo e status de `handleGrant` sem chave no
+  // ambiente. Quando isto era 400 "Unknown action", uma sonda sem chave
+  // distinguia `?action=grant` (404) de `?action=qualquer` (400) — e o 404
+  // que existia para esconder a rota passava a confirmá-la (achado B1 da
+  // segurança, rodada A). Padrão de `metrics.js`: o que não está configurado
+  // e o que não existe respondem igual.
+  return json({ error: 'Not found' }, 404);
 }

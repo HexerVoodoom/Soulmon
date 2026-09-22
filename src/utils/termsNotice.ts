@@ -48,3 +48,24 @@ export function precisaAvisarTermos(
   if (avisoVisto === marcaAvisoTermos(termsVersion, privacyVersion)) return false;
   return anterior(consent.termsVersion, termsVersion) || anterior(consent.privacyVersion, privacyVersion);
 }
+
+/** Qual documento mudou desde o aceite — o banner só titula e linka o que mudou. */
+export type DocMudado = 'terms' | 'privacy' | 'both';
+
+/**
+ * Diz QUAL documento é mais novo que o aceito. Só faz sentido quando
+ * `precisaAvisarTermos` é verdadeiro; se nenhum for anterior (não deveria
+ * acontecer nesse caso), devolve `'both'` — o banner genérico, nunca um
+ * título que afirme uma mudança que não houve num só documento.
+ */
+export function qualDocMudou(
+  consent: ConsentRecord,
+  termsVersion: string,
+  privacyVersion: string,
+): DocMudado {
+  const t = anterior(consent.termsVersion, termsVersion);
+  const p = anterior(consent.privacyVersion, privacyVersion);
+  if (t && !p) return 'terms';
+  if (p && !t) return 'privacy';
+  return 'both';
+}

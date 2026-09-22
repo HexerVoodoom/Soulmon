@@ -16,6 +16,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   track,
   flush,
+  installTelemetryAutoFlush,
   isTelemetryEnabled,
   setTelemetryEnabled,
   telemetryConsentCopy,
@@ -32,6 +33,10 @@ import {
   TELEMETRY_PURCHASE_REASON,
   TELEMETRY_OPEN_SOURCE,
   openSourceFromUrl,
+  limparOrigemDaUrl,
+  drainHiddenTelemetry,
+  pendingHiddenTelemetry,
+  MAX_HIDDEN,
   afterBadDayGapBucket,
   revealDurationBucket,
   trackRetentionOnOpen,
@@ -522,13 +527,51 @@ describe('política de privacidade ↔ EVENT_SCHEMA (WP0.3)', () => {
   });
 });
 
+/**
+ * DIVERGÊNCIAS DECLARADAS entre o schema do cliente e o do servidor.
+ *
+ * O cliente é editado pela squad; `functions/api/metrics.js` é do backend
+ * (fora do escopo da rodada A, 21/09/2026). Enquanto o backend não acompanha,
+ * a diferença fica AQUI, com data, motivo e a linha exata a mudar — e o teste
+ * abaixo falha nos DOIS sentidos: se aparecer divergência não declarada, ou se
+ * o backend já acompanhou e a declaração ficou para trás (aí é apagar a linha).
+ *
+ * Efeito em produção enquanto durar: `app_open {source: 4}` (convite) passa no
+ * cliente e é RECUSADO por `sanitizeEvent` do servidor — o evento morre em
+ * silêncio, `app_open.invite` fica em zero. Não é perda de outro evento.
+ */
+const DIVERGENCIAS_DECLARADAS: Array<{ evento: string; prop: string; cliente: number; servidor: number; backend: string }> = [
+  // (vazio em 22/09/2026: o backend acompanhou `app_open.source.max = 4` no mesmo
+  // commit — a linha de `invite` saiu daqui. O mecanismo fica para a próxima.)
+];
+
 describe('paridade cliente ↔ servidor (footgun 9)', () => {
   it('os dois EVENT_SCHEMA têm exatamente os mesmos eventos', () => {
     expect(Object.keys(SERVER_SCHEMA as object).sort()).toEqual(Object.keys(EVENT_SCHEMA).sort());
   });
 
-  it('e as mesmas props, com as mesmas faixas', () => {
-    expect(JSON.parse(JSON.stringify(SERVER_SCHEMA))).toEqual(JSON.parse(JSON.stringify(EVENT_SCHEMA)));
+  it('e as mesmas props, com as mesmas faixas — fora as divergências DECLARADAS acima', () => {
+    const servidor = JSON.parse(JSON.stringify(SERVER_SCHEMA)) as Record<string, Record<string, { min: number; max: number }> | null>;
+    const cliente = JSON.parse(JSON.stringify(EVENT_SCHEMA)) as Record<string, Record<string, { min: number; max: number }> | null>;
+    for (const d of DIVERGENCIAS_DECLARADAS) {
+      const s = servidor[d.evento]?.[d.prop];
+      const c = cliente[d.evento]?.[d.prop];
+      expect(c?.max, `cliente ${d.evento}.${d.prop}.max`).toBe(d.cliente);
+      expect(
+        s?.max,
+        `${d.evento}.${d.prop}.max no servidor já é ${s?.max}: o backend acompanhou — APAGUE esta linha de DIVERGENCIAS_DECLARADAS`,
+      ).toBe(d.servidor);
+      // Neutraliza a divergência declarada e compara o resto.
+      servidor[d.evento]![d.prop] = { ...s!, max: d.cliente };
+    }
+    expect(servidor, 'divergência NÃO declarada entre cliente e servidor').toEqual(cliente);
+  });
+
+  it('cada divergência declarada diz a linha exata que o backend precisa mudar', () => {
+    for (const d of DIVERGENCIAS_DECLARADAS) {
+      expect(d.backend).toMatch(/functions\/api\/metrics\.js/);
+      expect(d.backend).toMatch(/max: \d/);
+    }
   });
 });
 
@@ -590,22 +633,94 @@ describe('funil: demo e pago nunca caem no mesmo contador', () => {
 // ---------------------------------------------------------------------------
 
 describe('guard de segundo plano', () => {
-  it('nada é enfileirado com o app oculto', () => {
+  function oculto<T>(fn: () => T): T {
     const original = Object.getOwnPropertyDescriptor(Document.prototype, 'visibilityState');
     try {
       Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
       expect(isDocumentHidden()).toBe(true);
-      track('install');
-      track('day_active', { effort: 4 });
-      track('onboarding_step', { step: 1, funnel: TELEMETRY_FUNNEL.demo });
-      expect(pendingTelemetry()).toEqual([]);
+      return fn();
     } finally {
       Object.defineProperty(document, 'visibilityState', original ?? { value: 'visible', configurable: true });
     }
+  }
+
+  it('nada entra na fila PRINCIPAL com o app oculto — mas nada é descartado: espera na fila de oculto', () => {
+    oculto(() => {
+      track('install');
+      track('day_active', { effort: 4 }, '2026-09-20');
+      track('onboarding_step', { step: 1, funnel: TELEMETRY_FUNNEL.demo });
+      expect(pendingTelemetry()).toEqual([]);
+      expect(pendingHiddenTelemetry().map(r => r.e)).toEqual(['install', 'day_active', 'onboarding_step']);
+    });
     // De volta à vista, o mesmo evento passa — o guard não é um opt-out oculto.
     expect(isDocumentHidden()).toBe(false);
     track('install');
     expect(pendingTelemetry()).toHaveLength(1);
+  });
+
+  it('review 07 §1.5: `day_active` gerado à meia-noite com a aba oculta chega à fila quando a aba volta, com o DIA de quando fechou', () => {
+    oculto(() => {
+      track('day_active', { effort: 3 }, '2026-09-20');
+      expect(pendingTelemetry()).toEqual([]);
+    });
+    const n = drainHiddenTelemetry();
+    expect(n).toBe(1);
+    const q = pendingTelemetry();
+    expect(q).toHaveLength(1);
+    expect(q[0].e).toBe('day_active');
+    expect(q[0].d).toBe('2026-09-20'); // não o dia do drain
+    expect(q[0].p?.effort).toBe(3);
+    expect(pendingHiddenTelemetry()).toEqual([]);
+    // Idempotente: drenar de novo não duplica.
+    expect(drainHiddenTelemetry()).toBe(0);
+    expect(pendingTelemetry()).toHaveLength(1);
+  });
+
+  it('o drain respeita o dedupe da fila principal (ONCE_PER_DAY substitui, não duplica)', () => {
+    track('day_active', { effort: 1 }, '2026-09-20');
+    oculto(() => { track('day_active', { effort: 5 }, '2026-09-20'); });
+    drainHiddenTelemetry();
+    const dias = pendingTelemetry().filter(r => r.e === 'day_active');
+    expect(dias).toHaveLength(1);
+    expect(dias[0].p?.effort).toBe(5); // o fechamento vence
+  });
+
+  it('drenar com a aba AINDA oculta é no-op (senão devolveria tudo à mesma fila)', () => {
+    oculto(() => {
+      track('install');
+      expect(drainHiddenTelemetry()).toBe(0);
+      expect(pendingHiddenTelemetry()).toHaveLength(1);
+    });
+  });
+
+  it('a fila de oculto tem teto e não cresce sem fim', () => {
+    oculto(() => {
+      for (let i = 0; i < MAX_HIDDEN + 20; i++) track('activity_create', { kind: 0, path: 0 });
+      expect(pendingHiddenTelemetry().length).toBeLessThanOrEqual(MAX_HIDDEN);
+    });
+  });
+
+  it('desligar a telemetria apaga a fila de oculto também', () => {
+    oculto(() => { track('install'); });
+    expect(pendingHiddenTelemetry()).toHaveLength(1);
+    setTelemetryEnabled(false);
+    expect(pendingHiddenTelemetry()).toEqual([]);
+  });
+
+  it('`installTelemetryAutoFlush` drena no boot e quando a aba volta a ficar visível', () => {
+    oculto(() => { track('install'); });
+    const stop = installTelemetryAutoFlush();
+    expect(pendingHiddenTelemetry()).toEqual([]);
+    expect(pendingTelemetry().map(r => r.e)).toEqual(['install']);
+    oculto(() => {
+      track('day_active', { effort: 2 }, '2026-09-19');
+      document.dispatchEvent(new Event('visibilitychange')); // hidden → flush (rede mockada), não drena
+      expect(pendingHiddenTelemetry()).toHaveLength(1);
+    });
+    document.dispatchEvent(new Event('visibilitychange')); // visible → drena
+    expect(pendingHiddenTelemetry()).toEqual([]);
+    expect(pendingTelemetry().some(r => r.e === 'day_active' && r.d === '2026-09-19')).toBe(true);
+    stop();
   });
 });
 
@@ -792,10 +907,11 @@ describe('WP0.9/0.10/0.11/0.12 — os eventos novos e seus limites', () => {
     expect(sanitizeEvent('purchase', { tier: 1, reason: 5 })).toBeNull();
   });
 
-  it('`app_open` só aceita as quatro origens', () => {
+  it('`app_open` só aceita as cinco origens (4 = convite desde 21/09/2026)', () => {
     expect(sanitizeEvent('app_open', { source: 0 })).not.toBeNull();
     expect(sanitizeEvent('app_open', { source: 3 })).not.toBeNull();
-    expect(sanitizeEvent('app_open', { source: 4 })).toBeNull();
+    expect(sanitizeEvent('app_open', { source: 4 })).not.toBeNull();
+    expect(sanitizeEvent('app_open', { source: 5 })).toBeNull();
   });
 
   it('`app_open` deduplica por dia E por origem', () => {
@@ -807,6 +923,27 @@ describe('WP0.9/0.10/0.11/0.12 — os eventos novos e seus limites', () => {
     track('app_open', { source: TELEMETRY_OPEN_SOURCE.direct });
     const abertos = pendingTelemetry().filter(r => r.e === 'app_open');
     expect(abertos).toHaveLength(2);
+  });
+
+  it('`?src=convite` (e `invite`) é a origem 4 — o link do E0 (review 07 §2)', () => {
+    expect(openSourceFromUrl('?src=convite')).toBe(TELEMETRY_OPEN_SOURCE.invite);
+    expect(openSourceFromUrl('?src=invite')).toBe(TELEMETRY_OPEN_SOURCE.invite);
+    expect(TELEMETRY_OPEN_SOURCE.invite).toBe(4);
+    expect(EVENT_SCHEMA.app_open!.source.max).toBe(4);
+    track('app_open', { source: TELEMETRY_OPEN_SOURCE.invite });
+    expect(pendingTelemetry().filter(r => r.e === 'app_open')).toHaveLength(1);
+  });
+
+  it('`limparOrigemDaUrl` apaga o `?src=` e preserva caminho e hash; sem `src`, não toca na URL', () => {
+    history.replaceState(null, '', '/?src=convite&x=1#h');
+    limparOrigemDaUrl();
+    expect(location.search).toBe('');
+    expect(location.pathname).toBe('/');
+    expect(location.hash).toBe('#h');
+    const spy = vi.spyOn(history, 'replaceState');
+    limparOrigemDaUrl();
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
   });
 
   it('`openSourceFromUrl` não deixa a URL inventar origem', () => {

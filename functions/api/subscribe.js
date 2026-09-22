@@ -6,6 +6,7 @@ import { VALID_ID } from './_entitlements.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import {
   nomeDePet, idiomaDePush, dataDeNascimento, gravarSeMudou, LIMITE_INSCRICAO,
+  desindexarInscricao,
 } from './_pushIdentity.js';
 
 // Esta rota ESCREVE em KV sem custo para quem chama, e cada linha gravada vira
@@ -152,6 +153,9 @@ export async function onRequestDelete({ request, env }) {
   }
 
   const kvKey = `push:${await hashEndpoint(endpoint)}`;
+  // Tira do índice inverso ANTES de apagar (precisa ler o registro para saber
+  // a conta). Melhor-esforço — ver `_pushIdentity.js`, bloco do `pushidx:`.
+  await desindexarInscricao(env.PUSH_SUBSCRIPTIONS, kvKey);
   await env.PUSH_SUBSCRIPTIONS.delete(kvKey);
 
   return new Response(JSON.stringify({ ok: true }), {

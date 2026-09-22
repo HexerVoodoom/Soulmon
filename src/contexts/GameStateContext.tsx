@@ -3,7 +3,7 @@ import { type ActivityCategory } from '../types/attributes';
 import { MAX_HP_BY_FORM, getStageLevel, FORM_REQUIREMENTS } from '../types/progression';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import type { SeasonProgressState } from '../utils/seasons';
-import { cloudSaveComRetry } from '../utils/cloudSave';
+import { cloudSaveComRetry, reagirContaExcluida } from '../utils/cloudSave';
 import { pushProfile } from '../utils/community';
 import type { CreatureStage, ElementId, AlignmentId, RealmId } from '../utils/oracle';
 import type { StageSkills } from '../utils/soulProfile/ficha/skills';
@@ -1395,6 +1395,9 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       // fora deste efeito. Avisar por `toast` é seguro (não é estado do jogo).
       void cloudSaveComRetry(saveId!, gameState).then(resultado => {
         if (resultado.ok) { falhaJaAvisada.current = null; return; }
+        // 410: a conta foi excluída. Não é aviso — é parada: limpa, desloga e
+        // volta ao portão (não toca em `setGameState`, R-1 respeitado).
+        if (resultado.kind === 'deleted') { void reagirContaExcluida(); return; }
         if (!resultado.avisaJogador) return;
         if (falhaJaAvisada.current === resultado.kind) return;
         falhaJaAvisada.current = resultado.kind;

@@ -44,7 +44,7 @@ a pesquisa contradiz uma decisão, a tensão está em **§14** e **não foi deci
 - **Nome do pet imediatamente acima ou abaixo da criatura**, nunca em página secundária. É convergência (b) do dossiê 5 e hoje é LACUNA medida (`M-vinc §1`, Replika: pílula nome-em-bold + relação em cinza).
 - **Sombra de contato elíptica** sob o sprite: convergência (a) de 5 apps (Finch, Yazio, Abode, Tolan, BitePal) e a única invariante de presença ausente (`M-vinc §4`).
 - **Estado por pose / adereço / balão, nunca por frase que descreve o estado.** "Nenhum app do dossiê escreve 'seu pet está feliz'" (`MOB §6`; `M-vinc §1`, Ahead). Balão com **cauda** apontando para o pet (Yazio) — já existe.
-- **Slot de avisos com UM cartão + botão `+N`**, na ordem literal `firstDay → hp → semanal → triagem → priming → recomeço` (`03 §3.2`; W7).
+- **Slot de avisos com UM cartão + botão `+N`**, na ordem literal `firstDay → hp → semanal → triagem → priming → recomeço → carga → termos` (8 desde 21/09/2026; `03 §3.2`; W7) — `termos` é sempre o último.
 - Teto de **5 leituras numéricas simultâneas**: HP, energia, x/y de rituais, Bits, Vínculo (`PD §5.1`). Atributos e Créditos **saem da Home** por decisão do mesmo §.
 - Máx. **8 ícones** no chrome somado (`PD §5`); ícone grande e **pelado**, nunca em box (`PD §0.7`).
 
@@ -369,7 +369,7 @@ a pesquisa contradiz uma decisão, a tensão está em **§14** e **não foi deci
 
 **Navegação inferior.** 4 destinos + menu (`PD §5`; a Biblioteca sai da nav e vira card em Atividades). Seleção = **sublinhado ciano**, nunca placa preenchida; ícone nunca em box (`PD §0.7`). Rótulo sob o ícone é a convergência do acervo (Finch, Mimo, Garmin), mas o teto de ícones manda.
 
-**As duas filas são estrutura, não overlay (W7).** Intersticiais: `triagem → relatório → check-in → sonho → pesadelo → welcome`, um por vez, nada descartado. Slot de avisos: renderiza `avisos[0]`, o resto colapsa em `+N`, ordem `firstDay → hp → semanal → triagem → priming → recomeço` (`03 §3.1`/`§3.2`). **Superfície nova entra numa das duas, com posição declarada** — a auditoria de 06/09/2026 achou quatro superfícies fora das filas, e é ali que empilhava (`CLAUDE.md` › UI).
+**As duas filas são estrutura, não overlay (W7).** Intersticiais: `triagem → relatório → check-in → sonho → pesadelo → welcome`, um por vez, nada descartado. Slot de avisos: renderiza `avisos[0]`, o resto colapsa em `+N`, ordem `firstDay → hp → semanal → triagem → priming → recomeço → carga → termos` (`03 §3.1`/`§3.2`; ⚰️ dizia 6 até 21/09/2026 — `carga` entrou no canvas Atividades D10 e `termos` na decisão #24). **Superfície nova entra numa das duas, com posição declarada** — a auditoria de 06/09/2026 achou quatro superfícies fora das filas, e é ali que empilhava (`CLAUDE.md` › UI).
 
 **Celebração × toast.** Modal que espera o gesto **só** para marco, evolução e dia completo; toast para transição de estado. O acervo tem 10 modais e **um único toast** — o limite é da ferramenta (celebração não-bloqueante é estado transitório de 100–800 ms que a captura estática não pega), não evidência de que toast não sirva (`MOB §6B`, "o que falta em 6B — declarado").
 

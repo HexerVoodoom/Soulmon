@@ -52,7 +52,12 @@ describe('aviso de WebView antigo (index.html)', () => {
   it('num navegador sem oklch/color-mix mostra o aviso em vez de tela branca', () => {
     const html = rodar(ANTIGO);
     expect(html).not.toBe('');
-    expect(html).toContain('WebView');
+    // O UA do jsdom NÃO é Android: desde 21/09/2026 (skeptic #4) o ramo
+    // não-Android fala de "navegador", não de WebView — a Play Store não vale
+    // para iOS/Firefox/desktop. O ramo Android é coberto em
+    // tests/indexHtmlGateWebView.test.ts.
+    expect(html).toContain('navegador');
+    expect(html).not.toContain('play.google.com');
     expect(html).toMatch(/atualiza/i);
   });
 

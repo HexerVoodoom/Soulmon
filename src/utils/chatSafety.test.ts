@@ -50,6 +50,12 @@ describe('a ponte NÃO dispara no que é linguagem comum', () => {
     'me sinto sozinho às vezes',
     'não quero mais trabalhar nesse projeto',
     'não aguento mais essa semana',
+    // Sem acento também tem que ficar em silêncio: a normalização (skeptic
+    // #11) não pode abrir falso positivo novo.
+    'nao quero mais trabalhar nesse projeto',
+    'nao aguento mais essa semana',
+    'to morrendo de rir',
+    'quero morrer de tanto trabalhar',
   ];
   for (const frase of inocentes) {
     it(`silêncio para: "${frase}"`, () => {
@@ -94,10 +100,13 @@ describe('a forma da resposta', () => {
     expect(pt).toContain('CVV');
   });
 
-  it('em inglês não inventa um número local — o app não sabe o país', () => {
+  it('em inglês não inventa um número local — o app não sabe o país; aponta o diretório internacional', () => {
     const en = bridgeReply('en-US');
     expect(en).toMatch(/crisis line/i);
     expect(en, 'número local errado é pior que nenhum').not.toMatch(/\b188\b|\b988\b/);
+    // Compliance #8 (21/09/2026): "uma linha de crise" sem dizer ONDE achar
+    // não é ponte. findahelpline.com lista por país.
+    expect(en).toContain('findahelpline.com');
   });
 
   it('não diagnostica, não alarma, não julga', () => {
@@ -140,5 +149,30 @@ describe('fiação: a frase não sai do aparelho, e não vira dado', () => {
     expect(src, 'o pior momento de alguém virou métrica').not.toMatch(/track\(/);
     const seg = readFileSync(resolve(process.cwd(), 'src/utils/chatSafety.ts'), 'utf-8');
     expect(seg).not.toMatch(/track\(|telemetry|localStorage|fetch\(/);
+  });
+});
+
+describe('skeptic #11 (21/09/2026): sem acento e EN coloquial', () => {
+  const semAcento = [
+    'nao quero mais viver',
+    'nao aguento mais essa vida',
+    'NAO QUERO MAIS EXISTIR',
+    'ninguem ia sentir minha falta',
+    'seria melhor se eu nao existisse',
+    'não quero mais viver',   // com acento continua casando
+  ];
+  for (const frase of semAcento) {
+    it(`responde localmente a: "${frase}"`, () => {
+      expect(needsBridge(frase)).toBe(true);
+    });
+  }
+  const coloquialEn = ['i wanna die', 'wanna die tbh', 'kms', 'gonna kill myself', 'i just want to end it all', 'there is no reason to live'];
+  for (const frase of coloquialEn) {
+    it(`responds locally to: "${frase}"`, () => {
+      expect(needsBridge(frase)).toBe(true);
+    });
+  }
+  it('`\\b` de verdade: "kms" dentro de outra palavra não casa', () => {
+    expect(needsBridge('the skmsx protocol')).toBe(false);
   });
 });

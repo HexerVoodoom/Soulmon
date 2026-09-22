@@ -77,7 +77,12 @@ dependencies {
     // `PendingPurchasesParams`) — subir só esta linha quebra o compile do Kotlin,
     // e o CI é o único lugar que prova o contrário. Roteiro completo em
     // `docs/PLAY-LANCAMENTO.md` §G (Android).
-    implementation "com.android.billingclient:billing-ktx:6.2.1"
+    // Play recusa PBL < 8 em app novo/update desde 31/08/2026
+    // (developer.android.com/google/play/billing/deprecation-faq, lido em 21/09/2026).
+    // 8.3.0 = última 8.x nas release notes (2025-12-23; 8.1.0 era a citada no
+    // relatório 05-plataforma-r1, mas as notes já listam 8.2.0/8.2.1/8.3.0).
+    // Conferir no Maven antes do AAB. Guard textual: src/plugins/billingPbl8.contract.test.ts
+    implementation "com.android.billingclient:billing-ktx:8.3.0"
     implementation project(':capacitor-android')
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"

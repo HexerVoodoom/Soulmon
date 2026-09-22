@@ -33,7 +33,10 @@ Implemente um pacote de trabalho do `docs/PLANO-MELHORIAS.md`.
 5. Rode o gate: `npx tsc --noEmit`, `npx tsc -p tsconfig.server.json --noEmit`
    (`functions/` e `workers/` — dinheiro, conta, save; já voltou vermelho no CI
    por ficar de fora daqui), `npx tsc -p desktop/tsconfig.json --noEmit`,
-   `npx vitest run`. Se o WP mexe em UI, screenshot via Playwright.
+   `npx vitest run`. **Se o WP tocou `src/` (ou `public/`, `index.html`), rode também
+   `npm run build`** — `dist/` é COMMITADO (`CLAUDE.md` › Deploy) e o `ci.yml` não builda em
+   PR; quem segue este command sem o build entrega código sem o `dist/` correspondente
+   (QA Rodada 1, `08` §1.3). Se o WP mexe em UI, screenshot via Playwright.
 
 6. **Chame o guarda dono para verificar o aceite** — ele roda o comando da
    tabela, cola a saída e move o estado no ledger dele. É ele quem decide se

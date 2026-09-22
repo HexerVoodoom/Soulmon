@@ -12,6 +12,14 @@
 // e o token vai só para a memória do main process, nunca para disco.
 const { contextBridge, ipcRenderer } = require('electron');
 
+/**
+ * Validade do ID token do Firebase por contrato do SDK: 1h. Só usada quando o
+ * app não manda `expiresAt` legível (NaN/ausente/0). Validade DESCONHECIDA é
+ * "vence em 1h", nunca "nunca vence": até 22/09/2026 ela colapsava em `exp: 0`
+ * e `main.js` › `auth-get` lia zero como sessão eterna (QA rodada 1 §5).
+ */
+const DEFAULT_TOKEN_TTL_MS = 60 * 60 * 1000;
+
 contextBridge.exposeInMainWorld('soulmonDesktopAuth', {
   /** Marca de presença: o app web usa isto pra saber que roda no desktop. */
   isDesktop: true,
@@ -24,10 +32,12 @@ contextBridge.exposeInMainWorld('soulmonDesktopAuth', {
       ipcRenderer.send('auth-token', null);
       return;
     }
+    const exp = Number(payload.expiresAt);
     ipcRenderer.send('auth-token', {
       token: payload.token,
       email: payload.email ?? '',
-      exp: Number(payload.expiresAt) || 0,
+      // NaN/ausente/0/negativo NÃO viram "nunca expira": viram "1h a partir de agora".
+      exp: Number.isFinite(exp) && exp > 0 ? exp : Date.now() + DEFAULT_TOKEN_TTL_MS,
     });
   },
 });

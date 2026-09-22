@@ -49,4 +49,16 @@ describe('o slot de avisos não tem cartão solto', () => {
     // superfície reflexiva da semana já nascia colapsada atrás do "+N".
     expect(app.indexOf("key: 'semanal',")).toBeLessThan(app.indexOf("key: 'triagem',"));
   });
+
+  it("'termos' é o ÚLTIMO da fila (decisão #24: é o único aviso que não fala do dia da pessoa)", () => {
+    // Skeptic #3 / design A7 (21/09/2026): a ordem estava só em comentário.
+    const chaves = [...app.matchAll(/key: '([a-zA-Z]+)',/g)].map(m => m[1]);
+    expect(chaves).toContain('termos');
+    expect(chaves[chaves.length - 1]).toBe('termos');
+    expect(chaves.filter(k => k === 'termos')).toHaveLength(1);
+  });
+
+  it('o banner de termos recebe `changed` de `qualDocMudou` (não afirma mudança nos dois quando só um mudou)', () => {
+    expect(app).toMatch(/<TermsUpdateBanner[^>]*changed=\{qualDocMudou\(/);
+  });
 });

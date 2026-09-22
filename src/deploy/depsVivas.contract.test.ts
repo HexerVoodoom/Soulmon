@@ -53,6 +53,16 @@ function regexDeImport(pkg: string): RegExp {
   return new RegExp(`(from\\s*|import\\s*\\(?\\s*|require\\s*\\(\\s*|@import\\s*(?:url\\()?\\s*)['"]${escapar(pkg)}(['"/])`);
 }
 
+/**
+ * O VEREDITO, como função pura: quais `deps` não têm import em nenhuma das
+ * `fontes` nem entrada na `allowlist`. Extraída (QA, rodada A, 21/09/2026)
+ * para que o guard prove que REPROVA um caso sintético — guard que nunca viu
+ * um vermelho passa pelo motivo errado.
+ */
+function pacotesMortos(deps: readonly string[], fontes: readonly string[], allowlist: Record<string, string>): string[] {
+  return deps.filter(d => !(d in allowlist) && !fontes.some(c => regexDeImport(d).test(c)));
+}
+
 const pkgJson = JSON.parse(readFileSync(resolve(RAIZ, 'package.json'), 'utf8')) as { dependencies: Record<string, string> };
 const deps = Object.keys(pkgJson.dependencies);
 const fontes = RAIZES.flatMap(r => arquivos(resolve(RAIZ, r))).map(p => readFileSync(p, 'utf8'));
@@ -70,8 +80,17 @@ describe('dependencies vivas — todo pacote tem quem o importe', () => {
     expect(regexDeImport('recharts').test(`// saiu: 'recharts'`)).toBe(false);
   });
 
+  it('TESTE-DO-TESTE: um pacote fantasma injetado REPROVA; o mesmo pacote na allowlist ou importado passa', () => {
+    const fantasma = 'pacote-fantasma-que-nao-existe';
+    expect(pacotesMortos([...deps, fantasma], fontes, ALLOWLIST)).toEqual([fantasma]);
+    expect(pacotesMortos([fantasma], [`import x from '${fantasma}/sub';`], {})).toEqual([]);
+    expect(pacotesMortos([fantasma], [], { [fantasma]: 'motivo qualquer' })).toEqual([]);
+    // Menção sem import NÃO salva o pacote.
+    expect(pacotesMortos([fantasma], [`// usamos '${fantasma}' um dia`], {})).toEqual([fantasma]);
+  });
+
   it('todo pacote de `dependencies` é importado por código, ou está na ALLOWLIST com motivo', () => {
-    const mortos = deps.filter(d => !(d in ALLOWLIST) && !fontes.some(c => regexDeImport(d).test(c)));
+    const mortos = pacotesMortos(deps, fontes, ALLOWLIST);
     expect(mortos, 'pacote em `dependencies` sem um único import — `npm uninstall` ou registre na ALLOWLIST com quem o carrega').toEqual([]);
   });
 

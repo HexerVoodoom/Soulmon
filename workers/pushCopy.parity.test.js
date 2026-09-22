@@ -237,8 +237,17 @@ describe('a copy dos dias 1 e 2 (WP1.17)', () => {
     expect(dez(1).body).not.toBe(dez(2).body);
   });
 
-  it('NUNCA no D0 — o dia do nascimento é o dia em que a pessoa está no app', () => {
-    expect(dez(0).tag).not.toBe('pet-newborn');
+  it('NUNCA no D0 — o dia do nascimento é o dia em que a pessoa está no app: nenhuma hora manda nada', () => {
+    // Antes de 22/09/2026 o D0 caía na copy padrão e o push saía — o
+    // comentário prometia uma trava que não existia. `null` é o contrato de
+    // "não manda" (o scheduler devolve 'skipped').
+    for (const hora of PUSH_HOURS_BRT) {
+      expect(pushCopy(hora, 'Bito', 'pt-BR', 0), `D0 às ${hora}h`).toBeNull();
+      expect(pushCopy(hora, 'Bito', 'en-US', 0), `D0 às ${hora}h (en)`).toBeNull();
+    }
+    // E a trava só age com CERTEZA: idade desconhecida não é D0.
+    expect(pushCopy(10, 'Bito', 'pt-BR', undefined)).not.toBeNull();
+    expect(pushCopy(10, 'Bito', 'pt-BR', null)).not.toBeNull();
   });
 
   it('do D3 em diante volta a copy de sempre', () => {

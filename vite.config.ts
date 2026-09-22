@@ -2,9 +2,19 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import path from 'path';
+import { readFileSync } from 'fs';
+
+// VERSÃO ÚNICA (design-critic B1, 21/09/2026): a tela mostrava "1.0.2", o
+// `package.json` dizia 0.1.0 e o `build.gradle` 1.1.4. Fonte única = o
+// `version` do `package.json`; a UI lê `__APP_VERSION__` (FeedbackLink.tsx) e
+// `src/deploy/versaoUnica.contract.test.ts` prende o gradle ao mesmo número.
+const APP_VERSION: string = JSON.parse(readFileSync(path.resolve(__dirname, 'package.json'), 'utf8')).version;
 
 export default defineConfig({
   plugins: [react()],
+  define: {
+    __APP_VERSION__: JSON.stringify(APP_VERSION),
+  },
   resolve: {
     extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
     alias: {

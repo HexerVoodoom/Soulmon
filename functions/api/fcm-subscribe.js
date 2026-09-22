@@ -18,7 +18,7 @@ import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import { VALID_ID } from './_entitlements.js';
 import {
   nomeDePet, idiomaDePush, dataDeNascimento, ehTokenFcm, gravarSeMudou,
-  LIMITE_INSCRICAO,
+  LIMITE_INSCRICAO, desindexarInscricao,
 } from './_pushIdentity.js';
 
 const CORS = {
@@ -100,7 +100,10 @@ export async function onRequestDelete({ request, env }) {
   // antes desta validação existir.
   if (typeof token !== 'string') return json({ error: 'Invalid token' }, 400);
 
-  await env.PUSH_SUBSCRIPTIONS.delete(`fcm:${await hashToken(token)}`);
+  const kvKey = `fcm:${await hashToken(token)}`;
+  // Índice inverso primeiro — mesma regra e mesmo motivo de `subscribe.js`.
+  await desindexarInscricao(env.PUSH_SUBSCRIPTIONS, kvKey);
+  await env.PUSH_SUBSCRIPTIONS.delete(kvKey);
 
   return json({ ok: true }, 200);
 }

@@ -122,14 +122,23 @@ describe('CompanionHUD — ALIMENTAR é controle de primeira classe', () => {
     renderWithCss(<CompanionHUD {...base} foodInventory={{ '🍎': 2 }} onFeed={() => {}} />);
     fireEvent.click(screen.getByRole('button', { name: 'Alimentar' }));
     expect(screen.getByRole('dialog', { name: 'Alimentar' })).toBeTruthy();
+    // PL-5 (21/09/2026): o nome acessível segue o idioma — em PT o leitor de
+    // tela ouvia "Apple × 2" aqui e "Maçã ×2" na pastinha, para o mesmo item.
+    expect(screen.getByRole('button', { name: 'Maçã × 2' })).toBeTruthy();
+  });
+
+  it('PL-5: o nome do alimento no deck é o MESMO da pastinha, por idioma (getFoodName)', () => {
+    const en = renderWithCss(<CompanionHUD {...base} language="en-US" foodInventory={{ '🍎': 2 }} onFeed={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Feed' }));
     expect(screen.getByRole('button', { name: 'Apple × 2' })).toBeTruthy();
+    en.unmount();
   });
 
   it('escolher a comida chama `onFeed` — a REGRA continua no App, não aqui', () => {
     const onFeed = vi.fn();
     renderWithCss(<CompanionHUD {...base} foodInventory={{ '🍎': 2 }} onFeed={onFeed} />);
     fireEvent.click(screen.getByRole('button', { name: 'Alimentar' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Apple × 2' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Maçã × 2' }));
     expect(onFeed).toHaveBeenCalledWith('🍎');
     // e a folha fecha sozinha: escolher comida é uma ação, não um menu preso
     expect(screen.queryByRole('dialog', { name: 'Alimentar' })).toBeNull();
@@ -145,7 +154,7 @@ describe('CompanionHUD — ALIMENTAR é controle de primeira classe', () => {
     // textContent voltaria a passar/falhar ao sabor de como a arte é rendida.
     expect(within(folha).queryByRole('button', { name: /💗|Coração|Heart/ })).toBeNull();
     expect(within(folha).queryByRole('button', { name: /🌀|Glitchtama/ })).toBeNull();
-    expect(within(folha).getByRole('button', { name: 'Apple × 1' })).toBeTruthy();
+    expect(within(folha).getByRole('button', { name: 'Maçã × 1' })).toBeTruthy();
   });
 
   it('ESTADO VAZIO: sem comida a folha explica como conseguir, não some', () => {

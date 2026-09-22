@@ -1,6 +1,6 @@
 # Histórico — como chegamos aqui
 
-> **Dono:** doc-historiador · **Data:** 09/09/2026 · **Estado:** verificado em 10/09/2026 por doc-verificador
+> **Dono:** doc-historiador · **Data:** 21/09/2026 (§1.5 e a nota do §5 — QA Rodada 1; anterior: 09/09/2026) · **Estado:** verificado em 10/09/2026 por doc-verificador (o §1.5 conferido em 21/09 contra `gh pr list` pelo doc-mantenedor)
 > **Verificação:** os comandos `git log` colados ao lado de cada afirmação nesta página — rode-os de novo para reconferir
 > **Não cobre:** o CONTEÚDO de cada decisão (isso é `10-DISCUSSOES-E-DECISOES.md`); o changelog linha a linha (`../CHANGELOG.md`, que não se reescreve); regras de jogo em vigor hoje (`02-REGRAS-DE-NEGOCIO.md`)
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -165,6 +165,38 @@ em detalhe na seção 2 (viradas de premissa); resumo cronológico:
   declarada em vez de removida (`06ef9ea0`), a Arena ganha tela
   (`b55ffa5a`), 38 assets de arte "arcano-tech" entram (`271e2185`).
 
+### 1.5 10–21/09/2026 — wireframes, identidade, narrativa, som S16, QA geral e QA Rodada 1
+
+Só o que existe no `git log` e no `gh pr list` em 21/09/2026 (`git log --oneline | wc -l` →
+**1.070**; `gh pr list --state merged --json number | jq length` → 95 PRs, maior **#99**). O
+detalhe de cada PR está na mensagem do próprio merge; este bloco é o índice.
+
+- **10–15/09**: a SQUAD-DESIGN desenha os 13 canvases da Fase 1 (wireframes) e fecha a
+  Fase 2 (identidade) — PRs **#50–#84** (`docs/design/`); **#85–#87** (15/09) são a sincronização
+  do manual e os dois handoffs da identidade (`55a3940c`, `4f313269`, `4b695322`).
+- **21/09 (manhã)**: a bíblia do universo (**#88**, `34f7a851`, `docs/NARRATIVA-E-UNIVERSO.md`)
+  e o **QA geral** (**#89**, `f9faf7a7`: 19 frentes, mentiras legais corrigidas, fila do dono
+  #11–#39), com a sincronização do manual em **#90/#91** (`f02a3166`, `954a7c03`).
+- **21/09 (tarde)**: as 29 respostas do dono (**#92**, `11e9b237`) e a **execução** delas —
+  **#93** `42b07bec` (cortesia `grantCourtesy`, `scripts/metrics-report.mjs`, aviso de WebView,
+  `FeedbackLink`, banner de termos, roster 64 → 37 com `soulmon-operador` e
+  `soulmon-guarda-plataforma`, ADRs 001–003 em `docs/adr/`, fósseis da raiz em
+  `historico-digiapp/`) e **#94** `4a8b8049` (`SettingsModal` fora, 40 deps mortas removidas +
+  `depsVivas`, `dist/` sem PNG + `orcamentoDeBytes`, `targetSdk 36`, `versionCode 15`,
+  `PLAY-FICHA`/`PLAY-LANCAMENTO`). Sincronização do manual em **#95–#98** (`7f0cbf56`, `07d08d7e`,
+  `f4086ce0`, `5228145e`).
+- **22/09 (UTC; noite de 21/09 BRT)**: **#99** `959e3bee` — o livrinho da Malha (booklet PT+EN
+  do universo, `docs/BOOKLET-UNIVERSO.md`; ainda não está nesta branch — só na `main`).
+- **21/09 (noite) — QA Rodada 1** (`docs/reviews/2026-09-21-qa-rodada-1/`, 12 frentes sobre a
+  execução acima): três FATAIS que nenhuma sessão tinha visto — **GitHub Actions parado por
+  cobrança desde 16/09** (`gh run list` → 339 runs `failure` em 2–6 s; nenhum portão de CI rodou
+  em 6 dias e ninguém registrou), `billing-ktx:6.2.1` recusada pela Play (só 8.x passa desde
+  31/08/2026) e a política de privacidade negando dados que de fato vão ao Groq. Achou também o
+  STATUS afirmando um conserto do ledger (WP1.14/WP3.4) que não tinha acontecido. O que essa
+  rodada corrigiu é o §3 do seu consolidado e o commit desta branch (`qa/rodada-a`); a fila do
+  dono ganhou #40–#53. ⚠️ Este parágrafo foi escrito **antes** do merge da rodada — o SHA fica
+  para o próximo `/manter-docs`.
+
 ---
 
 ## 2. Marcos por sistema — quando cada módulo nasceu
@@ -289,6 +321,12 @@ request"`):
 | 18/08 | `28e24d02` | #19 | idem |
 | 18/08 | `d2d6478f` | #18 | idem |
 | 17/08 | `85390ab4` | #17 | idem |
+
+> **Atualizado em 21/09/2026 (QA Rodada 1):** as contagens abaixo são as de 09/09 e param no
+> **#45**. Desde então entraram os PRs **#46–#99** (ver §1.5 para o índice por tema; a lista
+> completa é `gh pr list --state merged --limit 100 --json number,title,mergedAt`) — quase todos
+> squash com `(#N)` no fim da mensagem (formato B). Não foram recontados linha a linha aqui:
+> o comando é a régua, e `docs-delta.mjs` nunca lista este doc (`08-governanca-docs-marca-r1.md` §2.2).
 
 **(B) Squash com `(#N)` no fim da mensagem, sem "Merge pull request" — 15 no
 total** (`git log --format='%ad %h %s' --date=short | grep -E '\(#[0-9]+\)$'`):

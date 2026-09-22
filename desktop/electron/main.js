@@ -337,8 +337,13 @@ ipcMain.on('auth-token', (event, payload) => {
   // `sender` da janela mas tem URL propria.
   const senderUrl = event.senderFrame ? event.senderFrame.url : undefined;
   if (!isTrustedAuthSender(senderUrl, APP_ORIGIN)) return;
+  // `exp` é normalizado AQUI também (o preload já faz, mas a defesa fica nos
+  // dois lados): validade ilegível = 1h a partir de agora (contrato do SDK do
+  // Firebase), NUNCA 0 — zero era lido como "sessão eterna" (QA rodada 1 §5).
+  const expBruto = payload ? Number(payload.exp) : Number.NaN;
+  const exp = Number.isFinite(expBruto) && expBruto > 0 ? expBruto : Date.now() + 60 * 60 * 1000;
   authSession = payload && payload.token
-    ? { token: String(payload.token), email: String(payload.email ?? ''), exp: Number(payload.exp) || 0 }
+    ? { token: String(payload.token), email: String(payload.email ?? ''), exp }
     : null;
   for (const win of [overlayWin, menuWin]) {
     win?.webContents.send('auth-changed', authSession ? { email: authSession.email } : null);
@@ -348,7 +353,9 @@ ipcMain.on('auth-token', (event, payload) => {
 // expirou — o renderer trata como "não autenticado" e pede login de novo.
 ipcMain.handle('auth-get', () => {
   if (!authSession) return null;
-  if (authSession.exp && Date.now() >= authSession.exp - 30_000) return null;
+  // exp é SEMPRE > 0 depois da normalização acima; sem `&&` para nenhum zero
+  // passar como "nunca expira" (guard textual em authBridge.test.ts).
+  if (Date.now() >= authSession.exp - 30_000) return null;
   return authSession;
 });
 

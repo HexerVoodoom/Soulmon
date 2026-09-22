@@ -263,9 +263,9 @@ async function auditRefunds(env, saveId, isVoided, now = Date.now()) {
     if (voided !== true) continue;
     order.voided = true;
     revoked.push(order.orderId);
-    if (order.grantTier === "paid") ent.tier = "demo";
     if (order.grantCredits > 0) ent.credits = Math.max(0, ent.credits - order.grantCredits);
   }
+  ent.tier = paidProviderOf(ent) ? "paid" : "demo";
   ent.auditedAt = now;
   await writeEntitlement(env, saveId, ent);
   return { ent, revoked };
@@ -377,6 +377,146 @@ async function requireVerifiedOwner(request, env, saveId) {
 }
 __name(requireVerifiedOwner, "requireVerifiedOwner");
 
+// api/_pushIdentity.js
+function nomeDePet(v) {
+  return String(v ?? "").replace(/\s+/g, " ").trim().slice(0, 24) || "Soulmon";
+}
+__name(nomeDePet, "nomeDePet");
+function idiomaDePush(v) {
+  return v === "pt-BR" ? "pt-BR" : "en-US";
+}
+__name(idiomaDePush, "idiomaDePush");
+function dataDeNascimento(v) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(v ?? "")) ? v : void 0;
+}
+__name(dataDeNascimento, "dataDeNascimento");
+function ehTokenFcm(v) {
+  return typeof v === "string" && v.length >= 32 && v.length <= 512 && /^[A-Za-z0-9_:.-]+$/.test(v);
+}
+__name(ehTokenFcm, "ehTokenFcm");
+var TTL_INSCRICAO = 60 * 60 * 24 * 365;
+var LIMITE_INSCRICAO = { limit: 10, windowMs: 6e4 };
+var REFRESCA_APOS_MS = 30 * 24 * 60 * 60 * 1e3;
+async function gravarSeMudou(kv2, chave, registro) {
+  let anterior = null;
+  try {
+    anterior = JSON.parse(await kv2.get(chave) || "null");
+  } catch {
+    anterior = null;
+  }
+  const igual = anterior && JSON.stringify({ ...anterior, refreshedAt: void 0 }) === JSON.stringify({ ...registro, refreshedAt: void 0 });
+  const velho = !anterior?.refreshedAt || Date.now() - anterior.refreshedAt > REFRESCA_APOS_MS;
+  let gravou = false;
+  if (!igual || velho) {
+    await kv2.put(chave, JSON.stringify({ ...registro, refreshedAt: Date.now() }), {
+      expirationTtl: TTL_INSCRICAO
+    });
+    gravou = true;
+  }
+  if (typeof registro?.saveId === "string" && registro.saveId) {
+    await indexarInscricao(kv2, registro.saveId, chave);
+  }
+  return gravou;
+}
+__name(gravarSeMudou, "gravarSeMudou");
+var PUSHIDX_PREFIX = "pushidx:";
+var PUSHIDX_MAX = 16;
+function chaveDoIndice(saveId) {
+  return `${PUSHIDX_PREFIX}${saveId}`;
+}
+__name(chaveDoIndice, "chaveDoIndice");
+async function lerIndice(kv2, saveId) {
+  let idx = null;
+  try {
+    idx = JSON.parse(await kv2.get(chaveDoIndice(saveId)) || "null");
+  } catch {
+    idx = null;
+  }
+  const keys = idx && idx.keys && typeof idx.keys === "object" && !Array.isArray(idx.keys) ? idx.keys : null;
+  if (!keys) return { existe: false, keys: {}, updatedAt: 0 };
+  const limpo = {};
+  for (const [k, t] of Object.entries(keys)) {
+    if (typeof k === "string" && (k.startsWith("push:") || k.startsWith("fcm:"))) {
+      limpo[k] = Number.isFinite(t) ? t : 0;
+    }
+  }
+  return { existe: true, keys: limpo, updatedAt: Number(idx.updatedAt) || 0 };
+}
+__name(lerIndice, "lerIndice");
+async function gravarIndice(kv2, saveId, keys) {
+  await kv2.put(
+    chaveDoIndice(saveId),
+    JSON.stringify({ v: 1, keys, updatedAt: Date.now() }),
+    { expirationTtl: TTL_INSCRICAO }
+  );
+}
+__name(gravarIndice, "gravarIndice");
+async function indexarInscricao(kv2, saveId, chave) {
+  try {
+    const idx = await lerIndice(kv2, saveId);
+    const agora = Date.now();
+    const jaTem = Object.prototype.hasOwnProperty.call(idx.keys, chave);
+    const velho = !idx.updatedAt || agora - idx.updatedAt > REFRESCA_APOS_MS;
+    if (jaTem && !velho) return false;
+    const keys = { ...idx.keys, [chave]: agora };
+    const ordenadas = Object.entries(keys).sort((a, b) => a[1] - b[1]);
+    while (ordenadas.length > PUSHIDX_MAX) ordenadas.shift();
+    await gravarIndice(kv2, saveId, Object.fromEntries(ordenadas));
+    return true;
+  } catch {
+    return false;
+  }
+}
+__name(indexarInscricao, "indexarInscricao");
+async function desindexarInscricao(kv2, chave) {
+  try {
+    const registro = JSON.parse(await kv2.get(chave) || "null");
+    const saveId = registro?.saveId;
+    if (typeof saveId !== "string" || !saveId) return false;
+    const idx = await lerIndice(kv2, saveId);
+    if (!idx.existe || !Object.prototype.hasOwnProperty.call(idx.keys, chave)) return false;
+    const resto = { ...idx.keys };
+    delete resto[chave];
+    if (Object.keys(resto).length === 0) {
+      await kv2.delete(chaveDoIndice(saveId));
+    } else {
+      await gravarIndice(kv2, saveId, resto);
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+__name(desindexarInscricao, "desindexarInscricao");
+
+// api/_accountTombstone.js
+var TOMBSTONE_PREFIX = "del:done:";
+var TOMBSTONE_TTL_SECONDS = 30 * 24 * 60 * 60;
+function tombstoneKey(saveId) {
+  return `${TOMBSTONE_PREFIX}${saveId}`;
+}
+__name(tombstoneKey, "tombstoneKey");
+async function writeTombstone(env, saveId, now = Date.now()) {
+  await kvOrThrow(env).put(
+    tombstoneKey(saveId),
+    JSON.stringify({ at: now }),
+    { expirationTtl: TOMBSTONE_TTL_SECONDS }
+  );
+}
+__name(writeTombstone, "writeTombstone");
+async function clearTombstone(env, saveId) {
+  await kvOrThrow(env).delete(tombstoneKey(saveId));
+}
+__name(clearTombstone, "clearTombstone");
+async function isAccountDeleted(env, saveId) {
+  try {
+    return await kvOrThrow(env).get(tombstoneKey(saveId)) !== null;
+  } catch {
+    return false;
+  }
+}
+__name(isAccountDeleted, "isAccountDeleted");
+
 // api/account.js
 var CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -415,26 +555,75 @@ __name(listPrefix, "listPrefix");
 var PUSH_PREFIXES = ["push:", "fcm:"];
 async function deletePushSubscriptions(env, saveId) {
   const pushStore = env?.PUSH_SUBSCRIPTIONS;
-  if (!pushStore || typeof pushStore.list !== "function") return { deleted: 0, scanned: 0 };
+  if (!pushStore || typeof pushStore.get !== "function") return { deleted: 0, scanned: 0, via: "none" };
   let deleted = 0;
   let scanned = 0;
-  for (const prefix of PUSH_PREFIXES) {
-    for (const key of await listPrefix(env, prefix, pushStore)) {
-      scanned++;
-      let rec;
-      try {
-        rec = JSON.parse(await pushStore.get(key) || "null");
-      } catch {
-        continue;
+  try {
+    const idx = await lerIndice(pushStore, saveId);
+    if (idx.existe) {
+      for (const key of Object.keys(idx.keys)) {
+        scanned++;
+        let rec;
+        try {
+          rec = JSON.parse(await pushStore.get(key) || "null");
+        } catch {
+          continue;
+        }
+        if (!rec || rec.saveId !== saveId) continue;
+        await pushStore.delete(key);
+        deleted++;
       }
-      if (!rec || rec.saveId !== saveId) continue;
-      await pushStore.delete(key);
-      deleted++;
+      await pushStore.delete(chaveDoIndice(saveId));
+      return { deleted, scanned, via: "index" };
     }
+  } catch (err) {
+    log("account.delete.push-index-failed", saveId, { deleted, scanned, error: String(err?.message || err) });
+    return { deleted, scanned, via: "index" };
   }
-  return { deleted, scanned };
+  if (typeof pushStore.list !== "function") return { deleted: 0, scanned: 0, via: "none" };
+  try {
+    for (const prefix of PUSH_PREFIXES) {
+      for (const key of await listPrefix(env, prefix, pushStore)) {
+        scanned++;
+        let rec;
+        try {
+          rec = JSON.parse(await pushStore.get(key) || "null");
+        } catch {
+          continue;
+        }
+        if (!rec || rec.saveId !== saveId) continue;
+        await pushStore.delete(key);
+        deleted++;
+      }
+    }
+  } catch (err) {
+    log("account.delete.push-scan-failed", saveId, { deleted, scanned, error: String(err?.message || err) });
+  }
+  return { deleted, scanned, via: "scan" };
 }
 __name(deletePushSubscriptions, "deletePushSubscriptions");
+var SPRITE_IMG_PREFIX = "sprite:img:";
+var SPRITE_LOCK_PREFIX = "sprite:lock:";
+var SPRITE_BLOB_PREFIX = "sprite:blob:";
+var SPRITE_TOKEN = /\/api\/sprite-image\?k=([0-9a-f]{32})\b/;
+async function collectSprites(env, saveId) {
+  const store = kvOrThrow(env);
+  const imgs = await listPrefix(env, `${SPRITE_IMG_PREFIX}${saveId}:`);
+  const locks = await listPrefix(env, `${SPRITE_LOCK_PREFIX}${saveId}:`);
+  const blobs = [];
+  for (const k of imgs) {
+    let rec = null;
+    try {
+      rec = JSON.parse(await store.get(k) || "null");
+    } catch {
+      rec = null;
+    }
+    const m = typeof rec?.image === "string" ? SPRITE_TOKEN.exec(rec.image) : null;
+    if (m) blobs.push(`${SPRITE_BLOB_PREFIX}${m[1]}`);
+  }
+  return { imgs, locks, blobs };
+}
+__name(collectSprites, "collectSprites");
 function maskOrderDetails(details) {
   if (!Array.isArray(details)) return [];
   return details.map((d) => ({
@@ -479,6 +668,11 @@ var NOT_INCLUDED = [
     what: "push:* / fcm:*",
     "pt-BR": "Suas inscri\xE7\xF5es de notifica\xE7\xE3o s\xE3o guardadas pelo endere\xE7o do aparelho, n\xE3o pela sua conta. O servidor apaga as que conseguiu ligar \xE0 sua conta; as que n\xE3o carregam essa liga\xE7\xE3o (inscri\xE7\xF5es feitas por vers\xF5es antigas do app) s\xF3 o aparelho desfaz. O app desfaz a inscri\xE7\xE3o deste aparelho junto com a exclus\xE3o; se voc\xEA usa o Soulmon em mais de um aparelho, desligue as notifica\xE7\xF5es em cada um.",
     en: "Your notification subscriptions are stored by device address, not by your account. The server erases the ones it could link to your account; the ones without that link (subscriptions made by older app versions) can only be undone by the device. The app unsubscribes this device along with the deletion; if you use Soulmon on more than one device, turn notifications off on each."
+  },
+  {
+    what: "sprite:blob:* \xF3rf\xE3o / imagem no provedor",
+    "pt-BR": "As imagens da sua criatura geradas por IA s\xE3o apagadas junto com a conta (cache, lock e o arquivo que o cache aponta). Duas coisas ficam fora do alcance: um arquivo cujo registro de cache falhou na hora de gerar (ele tem um nome aleat\xF3rio, sem liga\xE7\xE3o com a sua conta, e n\xE3o h\xE1 como ach\xE1-lo \u2014 ele n\xE3o tem nada seu al\xE9m da imagem), e a c\xF3pia que o provedor de IA guardou quando a imagem veio pela URL dele. A imagem tamb\xE9m pode continuar no cache do seu aparelho at\xE9 voc\xEA limpar os dados do app.",
+    en: "The AI-generated images of your creature are erased together with the account (cache, lock and the file the cache points to). Two things are out of reach: a file whose cache record failed to be written at generation time (it has a random name with no link to your account, and there is no way to find it \u2014 it holds nothing of yours but the image), and the copy the AI provider kept when the image came from its URL. The image may also remain in your device cache until you clear the app data."
   },
   {
     what: "ord:<orderId>",
@@ -526,7 +720,8 @@ async function collect(env, saveId) {
     }
   }
   const pidIndexed = await store.get(`pid:${pid}`) === saveId;
-  return { pid, state, profile, gifts, entitlement, ranks, rankKeys, pidIndexed };
+  const sprites = await collectSprites(env, saveId);
+  return { pid, state, profile, gifts, entitlement, ranks, rankKeys, pidIndexed, sprites };
 }
 __name(collect, "collect");
 async function handleExport(env, saveId) {
@@ -551,7 +746,11 @@ async function handleExport(env, saveId) {
       [`pid:${c.pid}`]: c.pidIndexed ? saveId : null,
       [`gifts:${saveId}`]: c.gifts,
       [`${ENT_PREFIX}${saveId}`]: c.entitlement ? { ...c.entitlement, orderDetails: maskOrderDetails(c.entitlement.orderDetails) } : null,
-      ranks: c.ranks
+      ranks: c.ranks,
+      // Só as CHAVES: o binário sai pela própria URL (`/api/sprite-image?k=`),
+      // que o save já carrega em `soulmonStages`. Listar aqui é o que deixa a
+      // exportação conferível contra o inventário da exclusão.
+      sprites: [...c.sprites.imgs, ...c.sprites.locks, ...c.sprites.blobs]
     },
     naoIncluido: NOT_INCLUDED
   });
@@ -565,6 +764,9 @@ function plan(c, saveId) {
       c.pidIndexed ? `pid:${c.pid}` : null,
       c.gifts ? `gifts:${saveId}` : null,
       ...c.rankKeys,
+      ...c.sprites.imgs,
+      ...c.sprites.locks,
+      ...c.sprites.blobs,
       "men\xE7\xF5es a voc\xEA na lista de amigos de outros jogadores",
       "inscri\xE7\xF5es de notifica\xE7\xE3o (push:*/fcm:*) ligadas \xE0 sua conta"
     ].filter(Boolean),
@@ -613,29 +815,46 @@ async function handleDeleteConfirm(env, saveId, body) {
   }
   const c = await collect(env, saveId);
   const executed = plan(c, saveId);
-  if (c.state) await store.delete(saveId);
-  if (c.profile) await store.delete(`profile:${saveId}`);
-  if (c.pidIndexed) await store.delete(`pid:${c.pid}`);
-  if (c.gifts) await store.delete(`gifts:${saveId}`);
-  for (const k of c.rankKeys) await store.delete(k);
+  await writeTombstone(env, saveId);
   let scrubbed = 0;
-  for (const key of await listPrefix(env, "profile:")) {
-    if (key === `profile:${saveId}`) continue;
-    let p;
-    try {
-      p = JSON.parse(await store.get(key) || "null");
-    } catch {
-      continue;
+  try {
+    for (const key of await listPrefix(env, "profile:")) {
+      if (key === `profile:${saveId}`) continue;
+      let p;
+      try {
+        p = JSON.parse(await store.get(key) || "null");
+      } catch {
+        continue;
+      }
+      if (!p || !Array.isArray(p.friends) || !p.friends.includes(saveId)) continue;
+      p.friends = p.friends.filter((f) => f !== saveId);
+      await store.put(key, JSON.stringify(p), { expirationTtl: 86400 * 365 });
+      scrubbed++;
     }
-    if (!p || !Array.isArray(p.friends) || !p.friends.includes(saveId)) continue;
-    p.friends = p.friends.filter((f) => f !== saveId);
-    await store.put(key, JSON.stringify(p), { expirationTtl: 86400 * 365 });
-    scrubbed++;
+  } catch (err) {
+    try {
+      await clearTombstone(env, saveId);
+    } catch {
+    }
+    log("account.delete.aborted", saveId, { step: "friends-scrub", error: String(err?.message || err) });
+    throw err;
   }
+  const falhou = [];
+  const tentar = /* @__PURE__ */ __name(async (rotulo, fn) => {
+    try {
+      await fn();
+    } catch (err) {
+      falhou.push(rotulo);
+      log("account.delete.step-failed", saveId, { step: rotulo, error: String(err?.message || err) });
+    }
+  }, "tentar");
   const push = await deletePushSubscriptions(env, saveId);
+  for (const k of c.sprites.blobs) await tentar(k, () => store.delete(k));
+  for (const k of c.sprites.imgs) await tentar(k, () => store.delete(k));
+  for (const k of c.sprites.locks) await tentar(k, () => store.delete(k));
   if (c.entitlement) {
     const ent = c.entitlement;
-    await store.put(ENT_PREFIX + saveId, JSON.stringify({
+    await tentar(`${ENT_PREFIX}${saveId}`, () => store.put(ENT_PREFIX + saveId, JSON.stringify({
       tier: ent.tier,
       credits: ent.credits,
       consumedOrders: ent.consumedOrders,
@@ -646,19 +865,38 @@ async function handleDeleteConfirm(env, saveId, body) {
       adCount: 0,
       accountDeletedAt: Date.now(),
       updatedAt: Date.now()
-    }), { expirationTtl: RETENTION_TTL_SECONDS });
+    }), { expirationTtl: RETENTION_TTL_SECONDS }));
   }
-  await store.delete(DEL_PREFIX + saveId);
+  for (const k of c.rankKeys) await tentar(k, () => store.delete(k));
+  if (c.gifts) await tentar(`gifts:${saveId}`, () => store.delete(`gifts:${saveId}`));
+  if (c.pidIndexed) await tentar(`pid:${c.pid}`, () => store.delete(`pid:${c.pid}`));
+  if (c.profile) await tentar(`profile:${saveId}`, () => store.delete(`profile:${saveId}`));
+  if (c.state) await tentar(`${saveId} (save)`, () => store.delete(saveId));
+  if (falhou.length === 0) {
+    await tentar(`${DEL_PREFIX}${saveId}`, () => store.delete(DEL_PREFIX + saveId));
+  }
   log("account.delete.done", saveId, {
     deletedKeys: executed.apaga.length,
     scrubbedFriendLists: scrubbed,
     pushSubscriptionsDeleted: push.deleted,
     pushSubscriptionsScanned: push.scanned,
-    entitlementMinimized: !!c.entitlement
+    pushVia: push.via,
+    spritesDeleted: c.sprites.imgs.length + c.sprites.locks.length + c.sprites.blobs.length,
+    entitlementMinimized: !!c.entitlement,
+    tombstoneTtlSeconds: TOMBSTONE_TTL_SECONDS,
+    failedSteps: falhou.length
   });
   return json({
     ok: true,
-    executado: { ...executed, listasDeAmigosLimpas: scrubbed, inscricoesDePushApagadas: push.deleted },
+    executado: {
+      ...executed,
+      listasDeAmigosLimpas: scrubbed,
+      inscricoesDePushApagadas: push.deleted,
+      spritesApagados: c.sprites.imgs.length + c.sprites.locks.length + c.sprites.blobs.length,
+      // O que NÃO conseguiu apagar, pelo nome da chave. Vazio é o normal;
+      // preenchido, o token continua válido e a pessoa pode confirmar de novo.
+      falhou
+    },
     naoIncluido: NOT_INCLUDED,
     aviso: COPY.deleteDone
   });
@@ -1220,6 +1458,22 @@ var RULES = [
   { kind: "cpf", re: /\b\d{3}\.\d{3}\.\d{3}-\d{2}\b/g, tag: "[documento]" },
   { kind: "cnpj", re: /\b\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}\b/g, tag: "[documento]" },
   { kind: "phone", re: /(?:\+?\d{1,3}[\s.-]?)?(?:\(\d{2,3}\)[\s.-]?|\b\d{2,3}[\s.-])\d{4,5}[\s.-]?\d{4}\b/g, tag: "[telefone]" },
+  // QA rodada 1 (achado 06 §6.1, baixo): três quase-identificadores que
+  // passavam inteiros. CEP e data ANTES do celular curto — `12345-678` e
+  // `21/09/1990` não podem ser mastigados pela metade por outra regra.
+  //  · CEP `12345-678`: sozinho localiza um quarteirão; junto com o resto da
+  //    frase, uma pessoa.
+  //  · data `dd/mm/aaaa`: no texto livre de um app deste tipo é, quase sempre,
+  //    a data de nascimento — o mesmo dado que `soulmon-profile` guarda só no
+  //    aparelho de propósito.
+  //  · celular SEM DDD (8 ou 9 dígitos, `98765-4321`/`987654321`/`3456-7890`):
+  //    a regra de telefone exigia DDD e a de "sequência longa" exigia ≥ 11
+  //    dígitos, então o número mais comum de se digitar caía no vão. O 9 no
+  //    início é opcional para não deixar fixo passar; 8 dígitos contíguos
+  //    (`20260921`) também caem aqui — quase-identificador de qualquer jeito.
+  { kind: "cep", re: /\b\d{5}-\d{3}\b/g, tag: "[cep]" },
+  { kind: "date", re: /\b\d{2}\/\d{2}\/\d{4}\b/g, tag: "[data]" },
+  { kind: "phone", re: /\b9?\d{4}[\s.-]?\d{4}\b/g, tag: "[telefone]" },
   { kind: "digits", re: /\b\d[\d\s.-]{9,}\d\b/g, tag: "[n\xFAmero]" },
   { kind: "handle", re: /(^|\s)@[A-Za-z0-9_.]{2,}/g, tag: "$1[perfil]" }
 ];
@@ -2289,7 +2543,7 @@ async function handleGrant(request, env) {
   if (!kv(env)) return json4({ error: "Storage not bound" }, 500);
   const body = await request.json().catch(() => null);
   const saveId = body?.saveId;
-  if (!saveId || !VALID_ID.test(saveId)) return json4({ error: "Invalid save ID" }, 400);
+  if (typeof saveId !== "string" || !VALID_ID.test(saveId)) return json4({ error: "Invalid save ID" }, 400);
   const r = await grantCourtesy(env, saveId);
   if (!r.ok) {
     log2("entitlements.courtesy.refused", saveId, { reason: r.reason, count: r.count, max: r.max });
@@ -2353,48 +2607,9 @@ async function onRequestPost3({ request, env }) {
     if (!ent) return json4({ ok: false, reason: "daily-cap" }, 429);
     return json4({ ok: true, ...publicView(ent) });
   }
-  return json4({ error: "Unknown action" }, 400);
+  return json4({ error: "Not found" }, 404);
 }
 __name(onRequestPost3, "onRequestPost");
-
-// api/_pushIdentity.js
-function nomeDePet(v) {
-  return String(v ?? "").replace(/\s+/g, " ").trim().slice(0, 24) || "Soulmon";
-}
-__name(nomeDePet, "nomeDePet");
-function idiomaDePush(v) {
-  return v === "pt-BR" ? "pt-BR" : "en-US";
-}
-__name(idiomaDePush, "idiomaDePush");
-function dataDeNascimento(v) {
-  return /^\d{4}-\d{2}-\d{2}$/.test(String(v ?? "")) ? v : void 0;
-}
-__name(dataDeNascimento, "dataDeNascimento");
-function ehTokenFcm(v) {
-  return typeof v === "string" && v.length >= 32 && v.length <= 512 && /^[A-Za-z0-9_:.-]+$/.test(v);
-}
-__name(ehTokenFcm, "ehTokenFcm");
-var TTL_INSCRICAO = 60 * 60 * 24 * 365;
-var LIMITE_INSCRICAO = { limit: 10, windowMs: 6e4 };
-var REFRESCA_APOS_MS = 30 * 24 * 60 * 60 * 1e3;
-async function gravarSeMudou(kv2, chave, registro) {
-  let anterior = null;
-  try {
-    anterior = JSON.parse(await kv2.get(chave) || "null");
-  } catch {
-    anterior = null;
-  }
-  const igual = anterior && JSON.stringify({ ...anterior, refreshedAt: void 0 }) === JSON.stringify({ ...registro, refreshedAt: void 0 });
-  const velho = !anterior?.refreshedAt || Date.now() - anterior.refreshedAt > REFRESCA_APOS_MS;
-  if (!igual || velho) {
-    await kv2.put(chave, JSON.stringify({ ...registro, refreshedAt: Date.now() }), {
-      expirationTtl: TTL_INSCRICAO
-    });
-    return true;
-  }
-  return false;
-}
-__name(gravarSeMudou, "gravarSeMudou");
 
 // api/fcm-subscribe.js
 var CORS7 = {
@@ -2456,7 +2671,9 @@ async function onRequestDelete({ request, env }) {
   const { token } = body;
   if (!token) return json5({ error: "Missing token" }, 400);
   if (typeof token !== "string") return json5({ error: "Invalid token" }, 400);
-  await env.PUSH_SUBSCRIPTIONS.delete(`fcm:${await hashToken(token)}`);
+  const kvKey = `fcm:${await hashToken(token)}`;
+  await desindexarInscricao(env.PUSH_SUBSCRIPTIONS, kvKey);
+  await env.PUSH_SUBSCRIPTIONS.delete(kvKey);
   return json5({ ok: true }, 200);
 }
 __name(onRequestDelete, "onRequestDelete");
@@ -2842,7 +3059,8 @@ var EVENT_SCHEMA = {
   dungeon_run: { floors: { min: 1, max: 5 } },
   bond_level: { level: { min: 1, max: 30 } },
   after_bad_day: { gap: { min: 0, max: 3 }, kind: { min: 0, max: 1 } },
-  app_open: { source: { min: 0, max: 3 } },
+  app_open: { source: { min: 0, max: 4 } },
+  // 4 = invite (?src=convite, E0 — 22/09/2026)
   push_optout: null,
   retained: { bucket: { min: 0, max: 2 }, tier: { min: 0, max: 2 } },
   // som-01 (SQUAD-SOM) — ESPELHO de src/utils/telemetry.ts. Sem `tier` de
@@ -2942,7 +3160,7 @@ var PURCHASE_REASON_LABEL = [...REASON_LABEL.slice(0, 4), "onboarding"];
 var PATH_LABEL = ["create_modal", "home_edit", "ai_chat", "tutorial", "onboarding"];
 var KIND_LABEL = ["task", "habit"];
 var RETENTION_LABEL = ["d1", "d7", "d30"];
-var OPEN_SOURCE_LABEL = ["direct", "push", "widget", "shortcut"];
+var OPEN_SOURCE_LABEL = ["direct", "push", "widget", "shortcut", "invite"];
 var BUCKET_LABEL = ["0", "1", "2", "3"];
 var WEEK_GOAL_PREFIX = "week_active";
 var NORTH_STAR_GOAL_DAYS = 4;
@@ -3026,6 +3244,10 @@ function applyAggregate(agg, events) {
     if (record.e === "week_active") {
       bump(`week_active.goal_days.${p.goal_days}`);
       if (tier) bump(`week_active.${tier}.goal_days.${p.goal_days}`);
+      if (Number.isInteger(p.active_days)) {
+        bump(`week_active.active_days.${p.active_days}`);
+        if (tier) bump(`week_active.${tier}.active_days.${p.active_days}`);
+      }
     }
   }
   return out;
@@ -3129,10 +3351,18 @@ async function onRequestGet3({ request, env }) {
     north_star: summarizeNorthStar(totals),
     // Dito na própria resposta, para quem ler o JSON não inferir o que ele não
     // diz: o agregado é por dia de EVENTO, nunca por coorte de instalação.
-    // Retenção e "conversão em N dias" NÃO são calculáveis a partir daqui.
+    // "Conversão em N dias" e qualquer série por usuário NÃO são calculáveis a
+    // partir daqui. `retained.d1/d7/d30` EXISTE (marco cruzado, contado no
+    // aparelho e emitido 1× por marco — `applyAggregate`), então a nota
+    // antiga que listava "D7" como ilegível estava errada e contradizia o
+    // próprio JSON que a carregava (QA rodada 1, review 07). O que continua
+    // ilegível é a retenção CLÁSSICA por coorte: `d7` aqui é "voltou em algum
+    // dia de D7–D29 desde a primeira carga", não "% da coorte de instalação
+    // viva no 7º dia".
     notes: {
       cohort: "nao existe: agregado por dia de evento, sem identidade nem dia de instalacao",
-      unreadable: ["retencao", "D7", "conversao em N dias", "qualquer serie por usuario"]
+      retained: "retained.d1/d7/d30 = maior marco cruzado por pessoa, emitido 1x na vida (d7 = voltou em algum dia de D7-D29); nao e retencao por coorte",
+      unreadable: ["retencao por coorte de instalacao", "conversao em N dias", "qualquer serie por usuario"]
     }
   }, { headers: CORS9 });
 }
@@ -3217,6 +3447,10 @@ async function onRequest4({ request, env }) {
   const auth = await authorizeSaveAccess(request, env, saveId);
   if (!auth.ok) {
     return Response.json({ error: auth.reason }, { status: auth.reason === "forbidden" ? 403 : 401, headers: CORS10 });
+  }
+  if (await isAccountDeleted(env, saveId)) {
+    console.warn("save: recusado, conta apagada (l\xE1pide)", { saveIdPrefix: saveId.slice(0, 8), method: request.method });
+    return Response.json({ error: "account-deleted" }, { status: 410, headers: CORS10 });
   }
   if (request.method === "GET") {
     const { value: raw, metadata } = await kvOrThrow(env).getWithMetadata(saveId);
@@ -3438,6 +3672,7 @@ async function onRequestDelete2({ request, env }) {
     });
   }
   const kvKey = `push:${await hashEndpoint(endpoint)}`;
+  await desindexarInscricao(env.PUSH_SUBSCRIPTIONS, kvKey);
   await env.PUSH_SUBSCRIPTIONS.delete(kvKey);
   return new Response(JSON.stringify({ ok: true }), {
     status: 200,
@@ -3642,7 +3877,7 @@ async function onRequest5({ env }) {
 }
 __name(onRequest5, "onRequest");
 
-// ../.wrangler/tmp/pages-T4YGux/functionsRoutes-0.4940335164974733.mjs
+// ../.wrangler/tmp/pages-MvzGF6/functionsRoutes-0.22509629089755834.mjs
 var routes = [
   {
     routePath: "/api/account",

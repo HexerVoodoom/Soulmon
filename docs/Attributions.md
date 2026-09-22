@@ -51,10 +51,23 @@ do plano antigo: substituir por arte e nomenclatura originais.
   `src/types/evolution-lines.ts`, `EggSelection.tsx` e `OnboardingScreen.tsx`.
 - Os itens de digievolução da loja e o roster nominal da masmorra, que eram a
   única superfície onde esses nomes apareciam para o jogador.
-- Os nomes de franquia que iam dentro do **prompt de geração de sprite**
-  (`src/utils/oracle.ts`): pedir "inspirado em Digimon, Pokémon, Palworld…"
-  convidava o gerador a devolver algo perto demais de personagem registrado —
-  e o resultado ia direto pro app de um usuário real. Há teste travando isso.
+- ⚠️ **Os nomes de franquia NÃO saíram do prompt de geração de sprite — esta
+  linha dizia que sim, e era falso** (corrigido em 22/09/2026, compliance #9 da
+  QA rodada 1). O que existe em `src/utils/oracle.ts` › `composeSpritePrompts`
+  são **duas variantes**: `imagePrompt`, a **principal**, cita as referências de
+  gênero (`GENRE_REFERENCES`: Digimon, Pokémon, Monster Rancher, Yu-Gi-Oh,
+  Warhammer, Palworld, Legend of Mana, Final Fantasy, Hello Kitty, Tamagotchi,
+  Ragnarok Online, World of Warcraft) porque o resultado sai visivelmente melhor
+  — decisão do dono; e `imagePromptFallback`, sem citar ninguém, usada quando o
+  provedor recusa por política de conteúdo (`generate-sprite.js` › `isRefusal`).
+  **As duas** carregam "Generate an original creature … Do not copy any existing
+  franchise character". O que saiu de verdade foi o nome de **personagem**
+  (Agumon, Greymon…) de qualquer prompt — o teste varre isso
+  (`sprites.dungeonRoster.test.ts` no bundle; `pipeline.test.ts` no pool). O risco
+  residual — citar a franquia puxar um design perto demais de personagem
+  registrado — fica contido pela cláusula anti-cópia e pelo fallback, não por
+  ausência das referências. Ver `CLAUDE.md` › "Prompt do gerador tem DUAS
+  variantes".
 
 ### O que entrou no lugar
 
@@ -207,9 +220,11 @@ e este arquivo aponta para ele). Os arquivos não têm hash registrado aqui:
 
 Registro pedido pelo dono em 21/09/2026 (pergunta #26 do QA geral), no mesmo
 espírito da tabela de áudio: **procedência é auditável, originalidade não.** As
-regras que valem para toda linha: nenhum prompt cita franquia nem nome de
-personagem registrado (`src/utils/sprites.dungeonRoster.test.ts` varre o
-bundle); nenhum prompt contém texto do usuário exceto o do sprite pago, que é
+regras que valem para toda linha: nenhum prompt cita nome de **personagem**
+registrado (`src/utils/sprites.dungeonRoster.test.ts` varre o bundle) — a
+**franquia** como referência de gênero aparece só na variante principal do
+sprite pago (`composeSpritePrompts`, ver "O que saiu" acima), nunca na arte
+curada desta tabela; nenhum prompt contém texto do usuário exceto o do sprite pago, que é
 higienizado e delimitado (`src/utils/oracle.ts`); a arte curada foi vista por
 gente antes de entrar — o único caminho **sem** revisão humana é o sprite gerado
 sob demanda para a conta paga.

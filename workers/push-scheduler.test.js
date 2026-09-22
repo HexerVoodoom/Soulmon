@@ -118,6 +118,27 @@ describe('push-scheduler — quem recebe', () => {
     expect(env.PUSH_SUBSCRIPTIONS.store.size).toBe(2);
   });
 
+  it('D0 (nasceu hoje) não recebe push em NENHUMA das três horas; D1 recebe — a inscrição fica', async () => {
+    // O `brt()` fixa o evento em 14/08/2026. Quem nasceu nesse dia está
+    // dentro do app; push no D0 é interromper quem já está aqui (`_pushCopy.js`).
+    for (const h of [10, 16, 22]) {
+      pushed.length = 0;
+      stubPush();
+      const env = {
+        PUSH_SUBSCRIPTIONS: fakeKV({
+          'push:d0': sub({ bornAt: '2026-08-14' }),
+          'push:d1': sub({ bornAt: '2026-08-13', endpoint: 'https://fcm.googleapis.com/fcm/send/d1' }),
+        }),
+        VAPID_JWK: await vapidJwk(),
+      };
+      await worker.scheduled(brt(h), env);
+      expect(pushed, `às ${h}h`).toHaveLength(1);
+      expect(pushed[0].url).toContain('/d1');
+      // Pular não é apagar: amanhã ela é D1 e recebe.
+      expect(env.PUSH_SUBSCRIPTIONS.store.has('push:d0')).toBe(true);
+    }
+  });
+
   it('NÃO envia nada quando o VAPID_JWK não está configurado', async () => {
     stubPush();
     const env = { PUSH_SUBSCRIPTIONS: fakeKV({ 'push:1': sub() }), VAPID_JWK: undefined };

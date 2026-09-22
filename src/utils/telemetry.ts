@@ -194,10 +194,11 @@ export const EVENT_SCHEMA: Record<TelemetryEvent, Record<string, { min: number; 
      que o produto proíbe. */
   after_bad_day: { gap: { min: 0, max: 3 }, kind: { min: 0, max: 1 } },
   /* WP0.11 — de onde o app foi aberto (0 = direto, 1 = push, 2 = widget,
-     3 = atalho). Existe para uma decisão só: CORTAR push que abre o app e não
+     3 = atalho, 4 = convite — `?src=convite`, o link que o dono manda no
+     WhatsApp para os 10 do E0; review 07 §2, 21/09/2026). Existe para uma decisão só: CORTAR push que abre o app e não
      vira `day_active`. Um push que traz alguém que não faz nada é interrupção
      paga com atenção alheia. Dedupe por dia e origem. */
-  app_open: { source: { min: 0, max: 3 } },
+  app_open: { source: { min: 0, max: 4 } },
   /** WP0.11 — desligou o push. Sem prop: é o fato, não o motivo. */
   push_optout: null,
   /* WP0.2 — RETENÇÃO por marco, fechada no aparelho. `bucket` 0 = D1, 1 = D7,
@@ -301,8 +302,10 @@ export function unlockReasonCode(reason: 'task-limit' | 'evolution' | 'report' |
  */
 export const TELEMETRY_BAD_DAY = { heart: 0, degeneration: 1 } as const;
 
-/** WP0.11 — origem da abertura. */
-export const TELEMETRY_OPEN_SOURCE = { direct: 0, push: 1, widget: 2, shortcut: 3 } as const;
+/** WP0.11 — origem da abertura. `invite` (4) é o `?src=convite` do link de
+ *  E0 (review 07 §2, 21/09/2026): sem ele, chegada por convite conta como
+ *  `direct` e o experimento não distingue. */
+export const TELEMETRY_OPEN_SOURCE = { direct: 0, push: 1, widget: 2, shortcut: 3, invite: 4 } as const;
 
 /**
  * Lê a origem da abertura do `?src=` da URL (posto pelo `sw.js` no clique da
@@ -315,7 +318,27 @@ export function openSourceFromUrl(search: string): number {
   if (v === 'push') return TELEMETRY_OPEN_SOURCE.push;
   if (v === 'widget') return TELEMETRY_OPEN_SOURCE.widget;
   if (v === 'shortcut') return TELEMETRY_OPEN_SOURCE.shortcut;
+  // PT porque é o que vai no WhatsApp; EN aceito para não depender de quem
+  // digita o link. Continua allowlist: qualquer outro valor é `direct`.
+  if (v === 'convite' || v === 'invite') return TELEMETRY_OPEN_SOURCE.invite;
   return TELEMETRY_OPEN_SOURCE.direct;
+}
+
+/**
+ * Lê a origem UMA vez e apaga o `?src=` da URL (review 07 §2 item 2). Sem
+ * isto, o portão troca `saveId` e recarrega a página com a query, e quem
+ * salva o link nos favoritos reemite `invite` toda semana. Chamar DEPOIS do
+ * `track('app_open', …)` do boot. Nunca lança; sem `history`, não faz nada.
+ */
+export function limparOrigemDaUrl(): void {
+  try {
+    const w = (globalThis as { location?: Location; history?: History });
+    if (!w.location || !w.history?.replaceState) return;
+    if (!new URLSearchParams(w.location.search || '').has('src')) return;
+    w.history.replaceState(null, '', w.location.pathname + w.location.hash);
+  } catch {
+    /* princípio 5 */
+  }
 }
 
 /** WP0.12 — faixas de tempo no reveal, em segundos. Faixa, nunca o segundo. */
@@ -487,6 +510,8 @@ const FLUSH_DEBOUNCE_MS = 5000;
 const K_ENABLED = 'soulmon-telemetry-enabled';
 const K_ID = 'soulmon-telemetry-id';
 const K_QUEUE = 'soulmon-telemetry-queue';
+/** Eventos gerados com o app OCULTO, à espera de a aba voltar (ver `track`). */
+const K_HIDDEN = 'soulmon-telemetry-hidden';
 /** Marcas de dedupe (`install`, `first_task_done`, `day_active:<dia>`). */
 const K_SEEN = 'soulmon-telemetry-seen';
 /** Tier ambiente (ver `setTelemetryTier`). Um número, nada mais. */
@@ -731,6 +756,7 @@ export function setTelemetryEnabled(on: boolean): void {
     writeLocal(K_ENABLED, on ? 'true' : 'false', { silent: true });
     if (!on) {
       removeLocal(K_QUEUE, { silent: true });
+      removeLocal(K_HIDDEN, { silent: true }); // a fila de oculto é fila igual
       removeLocal(K_ID, { silent: true });
       // A contagem da semana também some. Ela nunca saiu do aparelho, mas
       // "desliguei e ele continuou contando meus dias" é uma frase que o opt-out
@@ -915,10 +941,23 @@ export function isDocumentHidden(): boolean {
 export function track(event: TelemetryEvent, props?: TelemetryProps, day?: string): void {
   try {
     if (!isTelemetryEnabled()) return;
-    // Segundo plano não gera evento (ver `isDocumentHidden`). O `flush` de
-    // saída continua valendo — o que está na fila foi enfileirado com o app
-    // à vista.
-    if (isDocumentHidden()) return;
+    // Segundo plano não ENVIA nem entra na fila principal — mas também não
+    // descarta mais. Até 21/09/2026 este `if` era um `return`, e a virada do
+    // dia (timer de 30s em `useDailyReset`, que não para com a aba oculta)
+    // gerava `day_active` justamente à meia-noite com o PWA em segundo plano:
+    // o evento morria aqui, `lastDayReport` não mudava mais, e o dia ativo
+    // nunca era enviado — `week_active` (escrito depois) ficava certo e
+    // `day_active` menor, sem ninguém saber por quê (review 07 §1.5, alto).
+    // O dado é do dia que fechou, não da sessão; ele espera numa fila
+    // própria e é reprocessado por `track` quando a aba volta
+    // (`drainHiddenTelemetry`, ligado em `installTelemetryAutoFlush` e no boot).
+    if (isDocumentHidden()) {
+      const pendente = readJson<HiddenRecord[]>(K_HIDDEN, []);
+      if (pendente.length >= MAX_HIDDEN) return;
+      pendente.push({ e: event, p: props, d: day ?? telemetryDayKey() });
+      writeJson(K_HIDDEN, pendente, { silent: true });
+      return;
+    }
 
     // Carimbo do tier: aqui, um lugar só, e no ENFILEIRAMENTO — não no envio.
     // A diferença importa: quem compra dispara `purchase` e converte no mesmo
@@ -968,6 +1007,38 @@ export function track(event: TelemetryEvent, props?: TelemetryProps, day?: strin
   } catch {
     /* princípio 5: telemetria não tem permissão de falhar em voz alta */
   }
+}
+
+/** O que espera em `K_HIDDEN`: a chamada crua de `track`, com o dia carimbado
+ *  na hora (não no drain — o drain pode ser amanhã). */
+type HiddenRecord = { e: TelemetryEvent; p?: TelemetryProps; d: string };
+/** Teto da fila de oculto. Menor que `MAX_QUEUE`: aba oculta por dias não
+ *  deveria acumular mais do que um punhado de viradas. */
+export const MAX_HIDDEN = 50;
+
+/**
+ * Reprocessa o que foi gerado com o app oculto, passando cada chamada por
+ * `track` de novo — agora à vista, então todo o dedupe (`ONCE_PER_DAY`,
+ * `app_open` por origem, `seen`) vale igual. Idempotente: a fila é esvaziada
+ * ANTES do replay, e uma chamada com o app ainda oculto é no-op (senão o
+ * replay devolveria tudo para a mesma fila).
+ */
+export function drainHiddenTelemetry(): number {
+  try {
+    if (isDocumentHidden()) return 0;
+    const pendente = readJson<HiddenRecord[]>(K_HIDDEN, []);
+    if (pendente.length === 0) return 0;
+    removeLocal(K_HIDDEN, { silent: true });
+    for (const r of pendente) track(r.e, r.p, r.d);
+    return pendente.length;
+  } catch {
+    return 0;
+  }
+}
+
+/** Só para teste — o que espera a aba voltar. */
+export function pendingHiddenTelemetry(): Array<{ e: TelemetryEvent; d: string }> {
+  return readJson<HiddenRecord[]>(K_HIDDEN, []).map(r => ({ e: r.e, d: r.d }));
 }
 
 // ---------------------------------------------------------------------------
@@ -1272,8 +1343,14 @@ export function installTelemetryAutoFlush(): () => void {
   try {
     const doc = (globalThis as { document?: Document }).document;
     if (!doc?.addEventListener) return noop;
-    const onHide = () => { if (doc.visibilityState === 'hidden') flush(); };
+    const onHide = () => {
+      if (doc.visibilityState === 'hidden') flush();
+      // A aba voltou: o que foi gerado no escuro entra agora (review 07 §1.5).
+      else drainHiddenTelemetry();
+    };
     doc.addEventListener('visibilitychange', onHide);
+    // Boot: a aba pode ter sido fechada com a fila de oculto cheia.
+    drainHiddenTelemetry();
     return () => {
       try { doc.removeEventListener('visibilitychange', onHide); } catch { /* idem */ }
     };
@@ -1285,6 +1362,7 @@ export function installTelemetryAutoFlush(): () => void {
 /** Só para teste — o estado real mora no localStorage de propósito. */
 export function resetTelemetryForTest(): void {
   removeLocal(K_QUEUE, { silent: true });
+  removeLocal(K_HIDDEN, { silent: true });
   removeLocal(K_SEEN, { silent: true });
   removeLocal(K_ID, { silent: true });
   removeLocal(K_ENABLED, { silent: true });

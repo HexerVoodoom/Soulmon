@@ -10,6 +10,13 @@ describe('minimizeForAi — o que NÃO pode sair da nossa borda', () => {
     ['link', 'olha https://meu.site/segredo?token=abc', 'meu.site', 'url'],
     ['@perfil', 'meu insta é @joao_silva.99', '@joao_silva.99', 'handle'],
     ['sequência longa', 'cartão 4111 1111 1111 1111', '4111 1111 1111 1111', null],
+    // QA rodada 1, achado 06 §6.1 — passavam inteiros até 22/09/2026.
+    ['celular sem DDD, 9 dígitos com hífen', 'me liga 98765-4321 depois', '98765-4321', 'phone'],
+    ['celular sem DDD, 9 dígitos contíguos', 'me liga 987654321 depois', '987654321', 'phone'],
+    ['fixo sem DDD, 8 dígitos', 'ligue 3456-7890 à tarde', '3456-7890', 'phone'],
+    ['CEP', 'moro no 01310-100 perto da av', '01310-100', 'cep'],
+    ['CEP do enunciado', 'cep 12345-678', '12345-678', 'cep'],
+    ['data dd/mm/aaaa', 'nasci em 21/09/1990 e quero', '21/09/1990', 'date'],
   ];
 
   for (const [nome, entrada, vazamento] of casos) {
@@ -24,6 +31,26 @@ describe('minimizeForAi — o que NÃO pode sair da nossa borda', () => {
     const { text, redactions } = minimizeForAi('quero correr 3 vezes por semana');
     expect(text).toBe('quero correr 3 vezes por semana');
     expect(redactionCount(redactions)).toBe(0);
+  });
+
+  it('as regras novas não comem número curto do dia a dia (ano, hora, quantidade, R$)', () => {
+    for (const frase of [
+      'em 2026 quero ler 12 livros',
+      'acordar às 06:30 e dormir 22h',
+      'economizar R$ 1.500 até dezembro',
+      'fazer 10000 passos por dia',
+      'meta: 3/4 dos dias',
+    ]) {
+      const { text, redactions } = minimizeForAi(frase);
+      expect(text, frase).toBe(frase);
+      expect(redactionCount(redactions), frase).toBe(0);
+    }
+  });
+
+  it('os rótulos das regras novas são os declarados — o log conta por tipo', () => {
+    const { redactions, text } = minimizeForAi('cep 12345-678, nasci 01/02/1990, zap 987654321');
+    expect(redactions).toMatchObject({ cep: 1, date: 1, phone: 1 });
+    expect(text).toBe('cep [cep], nasci [data], zap [telefone]');
   });
 
   it('o conteúdo sensível de saúde CONTINUA passando — e isso é declarado, não acidente', () => {

@@ -30,7 +30,7 @@
 <body>
 
 <h1>Política de Privacidade — Soulmon</h1>
-<p class="sub">Última atualização: 21 de setembro de 2026</p>
+<p class="sub">Última atualização: 22 de setembro de 2026</p>
 
 <p class="lang">
   <a href="#en">English version below ↓</a> ·
@@ -86,6 +86,20 @@
         das respostas e dos dados de nascimento — os campos originais não sobem.</td>
   </tr>
   <tr>
+    <td>Inscrição de notificações (só se você ligar as notificações)</td>
+    <td>O endereço técnico que o seu aparelho nos dá para receber push (token do
+        FCM no Android, endpoint do Web Push no navegador), o idioma, o fuso e a
+        hora do lembrete. A inscrição fica <strong>ligada ao identificador da
+        sua conta</strong> (o código derivado do e-mail, não o e-mail em si)
+        <strong>para poder ser apagada na exclusão da conta</strong> — sem esse
+        vínculo o servidor não saberia qual inscrição é sua. Desligar as
+        notificações também a apaga.
+        <!-- 2026-09-21 (QA rodada 1, compliance #7): subscribe.js/fcm-subscribe.js
+             passaram a gravar saveId no registro; account.js › deletePushSubscriptions
+             varre por ele. Registros anteriores a essa data não têm o campo e só
+             são apagados pelo próprio aparelho (DELETE /api/subscribe). --></td>
+  </tr>
+  <tr>
     <td>Data de nascimento da sua criatura (só se você ligar as notificações)</td>
     <td>Guardada junto da inscrição de notificação, no formato dia/mês/ano, para
         as mensagens dos dois primeiros dias falarem dela em vez de falarem de
@@ -104,8 +118,11 @@
     <td>Fazem parte do save e voltam para você em momentos-chave do jogo. É
         <strong>texto livre escrito por você</strong>, então pode conter o que
         você quiser — inclusive algo sobre a sua saúde. Fica guardado com o
-        resto do save e <strong>não passa por nenhuma rota de IA</strong> nem
-        entra nas estatísticas de uso.</td>
+        resto do save e <strong>não entra nas estatísticas de uso</strong>. Ele
+        <strong>não vai para a IA por conta própria</strong>; a única exceção é
+        se você mesmo pedir sugestões de tarefas no tutorial com esse texto
+        ainda preenchido no campo — aí ele sai como o objetivo da sugestão
+        (ver seção 2b).</td>
   </tr>
   <tr>
     <td>Check-in de humor (uma nota de 1 a 5 por dia, se você responder)</td>
@@ -136,17 +153,46 @@
   O armazenamento é feito na infraestrutura da <strong>Cloudflare</strong>.
 </p>
 
-<h2 id="chat-contexto">2b. O que o chat da criatura recebe</h2>
+<h2 id="chat-contexto">2b. O que a IA recebe</h2>
+<!-- Decisão provisória do coordenador (QA rodada 1, 21/09/2026): os dados que
+     hoje saem para o Groq são DECLARADOS aqui, não cortados do código. Fonte de
+     cada item: functions/api/chat.js › buildSystemPrompt + CONTEXT_SCHEMA +
+     CHAT_MEMORY_TURNS; functions/api/suggest-tasks.js; App.tsx › runDecompose;
+     GameTutorialFlow.tsx › useState(soulGoal). Se algum desses campos deixar de
+     sair, esta seção e a linha Groq da §6 encolhem juntas. -->
 <p>
   Quando você conversa com sua criatura, o texto da sua mensagem vai para o
-  provedor de IA (Groq) para gerar a resposta. Junto com ele vão as
-  <strong>mensagens anteriores dessa conversa</strong> (para a resposta fazer
-  sentido), o <strong>nome da sua criatura</strong> e um pequeno bloco de
-  <strong>números</strong> sobre o momento — quanta vida e energia o bichinho
-  tem, o nível de vínculo e se você acabou de voltar de alguns dias fora.
-  <strong>Fora isso, nunca texto seu</strong>: o que você escreveu no
-  onboarding (seu objetivo e a sua dificuldade) e o conteúdo das suas tarefas
-  <strong>não passam por nenhuma rota de IA</strong>.
+  provedor de IA (Groq) para gerar a resposta. Junto com ele vai, exatamente,
+  isto:
+</p>
+<ul>
+  <li>as <strong>últimas três trocas dessa conversa</strong> (sua mensagem e a
+      resposta, três vezes), para a resposta fazer sentido — a conversa some
+      quando você fecha o app, ela não fica no save;</li>
+  <li>o <strong>nome, o estágio e o galho da sua criatura</strong>, e o humor
+      dela no momento (feliz, cansada e afins);</li>
+  <li>um pequeno bloco de <strong>números</strong> sobre o momento: quanta vida
+      e energia o bichinho tem, o nível de vínculo e há quantos dias você estava
+      fora (em faixa);</li>
+  <li>o <strong>seu humor do dia</strong>, em faixa — só se você marcou o
+      check-in naquele dia;</li>
+  <li>as <strong>palavras-chave de personalidade</strong> que você mesmo
+      escreveu em Configurações → Conversa com IA — isso é <strong>texto
+      seu</strong>, e vai como instrução de estilo (higienizado para não virar
+      comando); e os <strong>ajustes de tom</strong> dessa mesma tela (tom,
+      emojis, estilo de motivação).</li>
+</ul>
+<p>
+  Fora do chat, a mesma IA recebe texto seu em dois lugares, e só quando você
+  aperta o botão: o <strong>campo de sugestões de tarefas</strong> — o objetivo
+  que você digita ali (no tutorial ele vem <strong>pré-preenchido com o que
+  você escreveu no onboarding</strong>; apague ou troque antes de pedir, se não
+  quiser que ele saia) — e o <strong>nome da tarefa</strong> que você pede para
+  quebrar em passos menores em <strong>"Decompor"</strong>. O que você escreveu
+  no onboarding como <strong>dificuldade</strong> e o nome das suas outras
+  tarefas <strong>não saem</strong> para a IA. Antes de enviar, o app remove
+  e-mails, telefones, documentos, cartões, endereços de site e @perfis do
+  texto.
 </p>
 
 <h2 id="microfone">2c. O recado falado (microfone)</h2>
@@ -159,7 +205,8 @@
       você está com a gravação aberta. Nada é capturado em segundo plano, com o
       app fechado ou com a tela desligada.</li>
   <li><strong>Para onde vai:</strong> o áudio é enviado ao nosso servidor
-      (Cloudflare) e repassado a um serviço de transcrição, que devolve o texto.
+      (Cloudflare) e repassado, via Supabase, ao Groq (modelo Whisper), que devolve
+      o texto.
       O texto aparece no campo de escrita para você <strong>revisar antes de
       enviar</strong> — ele não é mandado para a criatura sozinho.</li>
   <li><strong>Por quanto tempo fica:</strong> <strong>não guardamos o áudio.</strong>
@@ -183,7 +230,8 @@
   diário e semanal que devolvemos a você. Essa leitura roda dentro do seu
   próprio save, serve só para fazer o jogo funcionar, e o
   <strong>conteúdo</strong> das suas tarefas nunca é usado para nenhuma outra
-  finalidade nem compartilhado com terceiros. Os
+  finalidade nem compartilhado com terceiros — a única saída é a que você mesmo
+  aciona ao tocar em "Decompor" (seção 2b). Os
   <a href="/termos.html">Termos de Uso</a> descrevem a mesma regra na seção 9.
 </p>
 
@@ -270,9 +318,14 @@
   <tr><th>Serviço</th><th>O que recebe</th><th>Quando</th></tr>
   <tr>
     <td>Groq (IA)</td>
-    <td>As mensagens que você escreve no chat do pet (com as anteriores da
-        mesma conversa e o nome da criatura) e o texto do objetivo que você
-        digita ao pedir sugestões de tarefas.</td>
+    <td>As mensagens que você escreve no chat do pet, com as três últimas trocas
+        da mesma conversa; o nome, estágio, galho e humor da criatura; vida,
+        energia, vínculo e dias fora (números); seu humor do dia, se marcado; as
+        palavras-chave de personalidade e os ajustes de tom que você configurou.
+        Fora do chat: o texto do objetivo que você digita ao pedir sugestões de
+        tarefas (no tutorial, pré-preenchido com o seu objetivo do onboarding)
+        e o nome da tarefa que você pede para decompor. Ver a
+        <a href="#chat-contexto">seção 2b</a>.</td>
     <td>Só quando você usa esses recursos.</td>
   </tr>
   <tr>
@@ -293,16 +346,23 @@
     <td>Se você fizer login e/ou ativar notificações.</td>
   </tr>
   <tr>
-    <td>Serviço de transcrição</td>
-    <td>O <strong>áudio</strong> que você grava no chat, para virar texto. Não
-        guardamos o áudio nem enviamos junto qualquer coisa que identifique
-        você. Ver a <a href="#microfone">seção 2c</a>.</td>
+    <td>Supabase (repasse) e Groq (transcrição de áudio)</td>
+    <td>O <strong>áudio</strong> que você grava no chat, para virar texto: passa
+        pela Supabase e é transcrito pelo Groq (Whisper). Não guardamos o áudio
+        nem enviamos junto qualquer coisa que identifique você. Ver a
+        <a href="#microfone">seção 2c</a>.</td>
     <td>Só quando você usa o botão de gravar.</td>
   </tr>
   <tr>
     <td>Google Play</td>
     <td>Processamento das compras dentro do app.</td>
     <td>Só quando você faz uma compra.</td>
+  </tr>
+  <tr>
+    <td>Steam (quando disponível)</td>
+    <td>Processamento das compras na versão para computador, se e quando ela
+        for publicada na Steam. Hoje não há versão na Steam.</td>
+    <td>Só quando você faz uma compra por lá.</td>
   </tr>
 </table>
 <p>
@@ -326,17 +386,30 @@
 </p>
 <p>
   <strong>O que a exclusão apaga:</strong> o seu save inteiro (criatura,
-  atividades, itens, moedas), o seu perfil público, o seu apelido, as posições
-  nos rankings, os presentes do grupo e o registro de uso da sua conta paga
-  (contadores de IA e afins). O app também desfaz a inscrição de notificações
-  <strong>deste aparelho</strong> na mesma hora; se você usa o Soulmon em mais
-  de um aparelho, desligue as notificações em cada um deles.
+  atividades, itens, moedas), <strong>a imagem gerada da sua criatura</strong>,
+  o seu perfil público, o seu apelido, as posições nos rankings, os presentes do
+  grupo, o registro de uso da sua conta paga (contadores de IA e afins) e as
+  inscrições de notificação que o servidor consegue ligar à sua conta. O app
+  também desfaz a inscrição de notificações <strong>deste aparelho</strong> na
+  mesma hora; se você usa o Soulmon em mais de um aparelho, desligue as
+  notificações em cada um deles.
+  <!-- 2026-09-21: "imagem gerada" e "inscrições ligadas à conta" são decisão
+       provisória do coordenador (QA rodada 1 — 06-guardas #2 e compliance #7).
+       O apagamento de sprite:img:/sprite:blob: no delete-confirm é tarefa do
+       staff-backend; enquanto não entrar, esta frase está adiantada. -->
+</p>
+<p>
+  <strong>Save sem uso:</strong> um save que fica <strong>12 meses</strong> sem
+  ser aberto em nenhum aparelho é apagado sozinho do servidor. Abrir o app
+  renova o prazo.
+  <!-- functions/api/save.js › SAVE_TTL_SECONDS = 86400 * 365, renovado na
+       leitura (RENEW_AFTER_SECONDS). Compliance #11. -->
 </p>
 <p>
   <strong>O que fica, e por quanto tempo:</strong> o registro das suas compras
   (qual comprovante foi resgatado e o que ele liberou) fica guardado por
-  <strong>5 anos</strong>, por obrigação fiscal e contábil, e depois é apagado
-  sozinho. Esse registro é guardado por um identificador de conta (um código
+  <strong>5 anos a partir da exclusão da conta</strong>, por obrigação fiscal e
+  contábil, e depois é apagado sozinho. Esse registro é guardado por um identificador de conta (um código
   derivado do seu e-mail, que não permite reconstruí-lo) — <strong>não contém
   o seu e-mail nem nenhum outro dado sobre você</strong>. Ele também é o que
   impede um mesmo comprovante de virar várias contas pagas.
@@ -355,7 +428,7 @@
 <hr>
 
 <h1 id="en">Privacy Policy — Soulmon</h1>
-<p class="sub">Last updated: September 21, 2026</p>
+<p class="sub">Last updated: September 22, 2026</p>
 
 <p class="lang"><a href="/termos.html#en">Terms of Use</a></p>
 
@@ -405,6 +478,16 @@
         your answers and birth details — the original fields are not uploaded.</td>
   </tr>
   <tr>
+    <td>Notification subscription (only if you turn notifications on)</td>
+    <td>The technical address your device gives us to receive push (FCM token on
+        Android, Web Push endpoint in the browser), your language, time zone and
+        reminder hour. The subscription is <strong>linked to your account
+        identifier</strong> (the code derived from your email, not the email
+        itself) <strong>so that it can be deleted when you delete your
+        account</strong> — without that link the server could not tell which
+        subscription is yours. Turning notifications off deletes it too.</td>
+  </tr>
+  <tr>
     <td>Your creature's birth date (only if you turn notifications on)</td>
     <td>Stored with the notification subscription, as a day/month/year, so the
         messages of the first two days talk about them instead of talking about
@@ -418,8 +501,11 @@
     <td>Part of your save; the game gives it back to you at key moments. It is
         <strong>free text written by you</strong>, so it may contain anything you
         choose — including something about your health. It is stored with the
-        rest of the save and <strong>never goes through any AI route</strong>,
-        nor into usage stats.</td>
+        rest of the save and <strong>never enters usage stats</strong>. It
+        <strong>does not go to the AI on its own</strong>; the one exception is
+        if you yourself ask for task suggestions in the tutorial with that text
+        still filled in the field — then it leaves as the suggestion's goal
+        (see section 2b).</td>
   </tr>
   <tr>
     <td>Mood check-in (one 1-to-5 rating per day, if you answer it)</td>
@@ -451,17 +537,39 @@
 </table>
 <p>Storage is hosted on <strong>Cloudflare</strong> infrastructure.</p>
 
-<h2 id="chat-context">2b. What the creature's chat receives</h2>
+<h2 id="chat-context">2b. What the AI receives</h2>
 <p>
   When you talk to your creature, the text of your message goes to the AI
-  provider (Groq) to generate the reply. Along with it go the <strong>earlier
-  messages of that conversation</strong> (so the reply makes sense), your
-  <strong>creature's name</strong> and a small block of <strong>numbers</strong>
-  about the moment — how much life and energy the creature has, the bond level
-  and whether you just came back after a few days away. <strong>Beyond that,
-  never your text</strong>: what you wrote in onboarding (your goal and your
-  struggle) and the contents of your tasks <strong>never go through any AI
-  route</strong>.
+  provider (Groq) to generate the reply. Along with it goes exactly this:
+</p>
+<ul>
+  <li>the <strong>last three exchanges of that conversation</strong> (your
+      message and the reply, three times), so the reply makes sense — the
+      conversation is gone when you close the app; it is not in your save;</li>
+  <li>your <strong>creature's name, stage and branch</strong>, and its mood at
+      the moment (happy, tired and the like);</li>
+  <li>a small block of <strong>numbers</strong> about the moment: how much life
+      and energy the creature has, the bond level and how many days you were
+      away (as a range);</li>
+  <li><strong>your mood of the day</strong>, as a range — only if you marked the
+      check-in that day;</li>
+  <li>the <strong>personality keywords</strong> you yourself wrote in Settings →
+      AI chat — that is <strong>your text</strong>, and it goes as a style
+      instruction (sanitized so it cannot become a command); and the
+      <strong>tone settings</strong> from that same screen (tone, emojis,
+      motivation style).</li>
+</ul>
+<p>
+  Outside the chat, the same AI receives your text in two places, and only when
+  you press the button: the <strong>task suggestions field</strong> — the goal
+  you type there (in the tutorial it comes <strong>pre-filled with what you
+  wrote in onboarding</strong>; clear or change it before asking if you don't
+  want it to leave) — and the <strong>name of the task</strong> you ask to be
+  broken into smaller steps in <strong>"Break down"</strong>. What you wrote in
+  onboarding as your <strong>struggle</strong> and the names of your other
+  tasks <strong>do not leave</strong> for the AI. Before sending, the app strips
+  emails, phone numbers, documents, cards, website addresses and @handles from
+  the text.
 </p>
 
 <h2 id="microphone">2c. Spoken messages (microphone)</h2>
@@ -474,8 +582,8 @@
       you have recording open. Nothing is captured in the background, with the
       app closed, or with the screen off.</li>
   <li><strong>Where it goes:</strong> the audio is sent to our server
-      (Cloudflare) and passed on to a transcription service, which returns the
-      text. The text lands in the input box for you to <strong>review before
+      (Cloudflare) and passed on, via Supabase, to Groq (Whisper model), which
+      returns the text. The text lands in the input box for you to <strong>review before
       sending</strong> — it is not sent to your creature on its own.</li>
   <li><strong>How long it is kept:</strong> <strong>we do not store the audio.</strong>
       It is passed through and discarded; it is not saved on your device, on our
@@ -499,7 +607,9 @@
   history) to calculate your evolution, your care rhythm, and the daily/weekly
   reports we give back to you. This reading happens within your own save, is
   only used to make the game work, and the <strong>content</strong> of your
-  tasks is never used for any other purpose nor shared with third parties. The
+  tasks is never used for any other purpose nor shared with third parties — the
+  only way out is the one you trigger yourself by tapping "Break down"
+  (section 2b). The
   <a href="/termos.html#en">Terms of Use</a> state the same rule in section 9.
 </p>
 
@@ -584,9 +694,13 @@
   <tr><th>Service</th><th>What it receives</th><th>When</th></tr>
   <tr>
     <td>Groq (AI)</td>
-    <td>Messages you write in the pet chat (with the earlier messages of the
-        same conversation and the creature's name), and the goal text you type
-        when asking for task suggestions.</td>
+    <td>Messages you write in the pet chat, with the last three exchanges of the
+        same conversation; the creature's name, stage, branch and mood; life,
+        energy, bond and days away (numbers); your mood of the day, if marked;
+        the personality keywords and tone settings you configured. Outside the
+        chat: the goal text you type when asking for task suggestions (in the
+        tutorial, pre-filled with your onboarding goal) and the name of the task
+        you ask to break down. See <a href="#chat-context">section 2b</a>.</td>
     <td>Only when you use those features.</td>
   </tr>
   <tr>
@@ -607,16 +721,23 @@
     <td>If you sign in and/or enable notifications.</td>
   </tr>
   <tr>
-    <td>Transcription service</td>
-    <td>The <strong>audio</strong> you record in the chat, to turn it into text.
-        We do not store the audio and we do not send anything identifying you
-        along with it. See <a href="#microphone">section 2c</a>.</td>
+    <td>Supabase (relay) and Groq (audio transcription)</td>
+    <td>The <strong>audio</strong> you record in the chat, to turn it into text:
+        it passes through Supabase and is transcribed by Groq (Whisper). We do
+        not store the audio and we do not send anything identifying you along
+        with it. See <a href="#microphone">section 2c</a>.</td>
     <td>Only when you use the record button.</td>
   </tr>
   <tr>
     <td>Google Play</td>
     <td>Processing in-app purchases.</td>
     <td>Only when you make a purchase.</td>
+  </tr>
+  <tr>
+    <td>Steam (when available)</td>
+    <td>Processing purchases in the desktop version, if and when it is published
+        on Steam. There is no Steam version today.</td>
+    <td>Only when you make a purchase there.</td>
   </tr>
 </table>
 <p>We do not sell your data and do not use it for targeted advertising.</p>
@@ -637,17 +758,23 @@
 </p>
 <p>
   <strong>What deletion erases:</strong> your whole save (creature, activities,
-  items, currencies), your public profile, your nickname, your ranking entries,
-  group gifts and the usage record of your paid account (AI counters and the
-  like). The app also unsubscribes <strong>this device</strong> from
-  notifications right away; if you use Soulmon on more than one device, turn
-  notifications off on each of them.
+  items, currencies), <strong>your creature's generated image</strong>, your
+  public profile, your nickname, your ranking entries, group gifts, the usage
+  record of your paid account (AI counters and the like) and the notification
+  subscriptions the server can link to your account. The app also unsubscribes
+  <strong>this device</strong> from notifications right away; if you use Soulmon
+  on more than one device, turn notifications off on each of them.
+</p>
+<p>
+  <strong>Unused save:</strong> a save that goes <strong>12 months</strong>
+  without being opened on any device is deleted from the server automatically.
+  Opening the app renews the period.
 </p>
 <p>
   <strong>What stays, and for how long:</strong> the record of your purchases
   (which receipt was redeemed and what it unlocked) is kept for
-  <strong>5 years</strong>, as required by tax and accounting rules, and is then
-  deleted automatically. That record is stored under an account identifier (a
+  <strong>5 years from the deletion of the account</strong>, as required by tax
+  and accounting rules, and is then deleted automatically. That record is stored under an account identifier (a
   code derived from your email that cannot be turned back into it) — it
   <strong>does not contain your email or any other data about you</strong>. It
   is also what stops one receipt from becoming several paid accounts.

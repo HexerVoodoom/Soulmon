@@ -550,6 +550,9 @@ export function ActionRow({
     </>
   );
   if (href) {
+    // `mailto:` não abre aba: `_blank` nele deixava uma aba em branco atrás
+    // do app de e-mail em alguns navegadores (design-critic B2, 21/09/2026).
+    if (href.startsWith('mailto:')) return <a href={href} className="sm2-conta-arow">{inner}</a>;
     return <a href={href} target="_blank" rel="noopener noreferrer" className="sm2-conta-arow">{inner}</a>;
   }
   return <button type="button" onClick={onClick} className="sm2-conta-arow">{inner}</button>;

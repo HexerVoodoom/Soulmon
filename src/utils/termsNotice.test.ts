@@ -4,7 +4,7 @@
  * registro de consentimento.
  */
 import { describe, it, expect } from 'vitest';
-import { marcaAvisoTermos, precisaAvisarTermos } from './termsNotice';
+import { marcaAvisoTermos, precisaAvisarTermos, qualDocMudou } from './termsNotice';
 import { PRIVACY_VERSION, TERMS_VERSION, buildConsentRecord, normalizeConsent } from './consent';
 
 const T = '2026-09-21';
@@ -38,5 +38,25 @@ describe('precisaAvisarTermos', () => {
     expect(precisaAvisarTermos(velho, T, P, marcaAvisoTermos(T, P))).toBe(false);
     expect(precisaAvisarTermos(velho, T, P, marcaAvisoTermos('2026-09-08', '2026-09-08'))).toBe(true);
     expect(precisaAvisarTermos(velho, T, P, null)).toBe(true);
+  });
+});
+
+describe('qualDocMudou — qual documento é mais novo que o aceito', () => {
+  const base = { termsVersion: '2026-09-01', privacyVersion: '2026-09-01' } as unknown as import('./consent').ConsentRecord;
+  it('só os Termos subiram → terms', () => {
+    expect(qualDocMudou(base, '2026-09-20', '2026-09-01')).toBe('terms');
+  });
+  it('só a Política subiu → privacy', () => {
+    expect(qualDocMudou(base, '2026-09-01', '2026-09-20')).toBe('privacy');
+  });
+  it('os dois subiram → both', () => {
+    expect(qualDocMudou(base, '2026-09-20', '2026-09-20')).toBe('both');
+  });
+  it('nenhum subiu (não deveria ser chamado) → both, nunca um título falso de um só', () => {
+    expect(qualDocMudou(base, '2026-09-01', '2026-09-01')).toBe('both');
+  });
+  it('versão ilegível conta como anterior (mesma regra de precisaAvisarTermos)', () => {
+    const c = { termsVersion: 'desconhecida', privacyVersion: '2026-09-01' } as unknown as import('./consent').ConsentRecord;
+    expect(qualDocMudou(c, '2026-09-01', '2026-09-01')).toBe('terms');
   });
 });

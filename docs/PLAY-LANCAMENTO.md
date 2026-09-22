@@ -47,11 +47,29 @@
 
 ## A. Ordem geral (a que evita ficar fora do ar)
 
+### A.0 ⚠️ GitHub Actions parado por cobrança desde 16/09/2026 `[dono digita segredo]`
+
+**Nada abaixo que dependa do CI funciona hoje.** `gh run list` mostra **339 runs em
+`failure`** desde 16/09/2026 — não é bug de workflow, é a conta: o GitHub bloqueou
+o Actions do repositório por cobrança (limite/pagamento do plano). Enquanto isso
+durar: §B.4 não produz AAB, §G não prova `targetSdk 36` nem a Billing Library,
+`docs-sync.yml` não sincroniza o manual, e todo PR fica com check vermelho por
+motivo que não é o código.
+
+**Corrigir antes de qualquer passo que dependa do CI:**
+`https://github.com/settings/billing` (conta `HexerVoodoom`) → regularizar
+pagamento/limite de gasto do Actions → depois `gh run rerun <id>` do último run da
+`main` ou um push vazio. **Feito quando:** `gh run list --limit 5` mostra
+`success` num run posterior à correção (não basta o painel dizer "ativo").
+
+Só você alcança essa tela — a squad não tem acesso à cobrança da conta.
+
 `docs/STATUS.md` §3.4 diz: nada de mexer em `server.url` antes de o destino existir.
 Hoje o destino **já existe** (`soulmon.mateus-sprnd.workers.dev` é a produção e o
 `capacitor.config.json` já aponta para ela — `src/deploy/appUrl.contract.test.ts`),
 então a ordem para a Play é:
 
+0. **§A.0 GitHub billing** — sem isso o CI não roda e nada do §B acontece.
 1. **§B GitHub** — keystore → o CI passa a produzir `app-release.aab`.
 2. **§C Firebase** — registrar o pacote → `google-services.json` novo → push do FCM.
 3. **§E.1–E.3 Cloudflare (parte 1)** — secrets que não dependem da Play
@@ -237,7 +255,7 @@ Na mesma tela, uma por uma:
 | **Público-alvo e conteúdo** | 18 anos ou mais; "não atrai crianças" | decisão #15; `PLAY-DATA-SAFETY.md` §0 |
 | **Apps de notícias** | Não | — |
 | **Rastreamento de contatos COVID / saúde** | Não é app de saúde. `ACTIVITY_RECOGNITION` é o contador de passos do aparelho, **não** Health Connect | `PLAY-DATA-SAFETY.md` §2.6 |
-| **Segurança de dados** | transcrever `PLAY-DATA-SAFETY.md` §3 (a lista-resumo — é dela que se preenche), item por item. ⚠️ Antes: a `alpha-compliance` precisa acrescentar Higgsfield/Gemini em §2.3 (review 11); se ainda não estiver, declare "Outras mensagens no app: compartilhado" mesmo assim — sobredeclarar é o lado seguro | `PLAY-DATA-SAFETY.md` |
+| **Segurança de dados** | transcrever `PLAY-DATA-SAFETY.md` §3 (a lista-resumo — é dela que se preenche), item por item. Groq, Higgsfield/Gemini e Supabase+Groq (áudio) já estão declarados em §2.3/§2.4 | `PLAY-DATA-SAFETY.md` |
 | **Apps governamentais** | Não | — |
 | **Recursos financeiros** | Nenhum (compras digitais não contam aqui) | — |
 | **Recursos de IA generativa** | Sim — responder com `PLAY-FICHA.md` §5 | decisão #22 |
@@ -268,7 +286,12 @@ Google com dados bancários e fiscais. **Só você.** Sem isso, D.7 não abre.
 > se o formulário pede o tipo explicitamente]`. Preço: defina em BRL e deixe a
 > Play converter (WP5.8 mostra o preço localizado da própria Play no app).
 
-Depois de criar cada um: **Ativar**. **Feito quando:** os 4 aparecem como *Ativo*.
+Depois de criar cada um: **Ativar**. **Feito quando:** os 4 aparecem como *Ativo*
+**e** o preço em **US$** que o console mostra para `soulmon.unlock.full` (país:
+Estados Unidos) foi conferido contra `FULL_UNLOCK_PRICE_LABEL_USD`
+(`src/utils/monetization.ts`, hoje US$ 6.99 — é o que os Termos EN publicam como
+preço de referência, redação A). Se divergir, muda-se a constante (o teste
+`src/utils/publishedPrice.test.ts` puxa os Termos junto), não o console.
 
 ### D.8 Acesso à API + conta de serviço `[dono digita segredo]` `[submissão: confirmar]`
 
@@ -371,9 +394,21 @@ Conferir: `npx wrangler secret list` (mostra nomes, nunca valores).
 | `COURTESY_MAX_ACCOUNTS` | `10` (os 10 de E0) — o padrão do código vale se ausente | teto padrão de `functions/api/_entitlements.js` › `COURTESY_MAX_ACCOUNTS` | decisão #12 |
 | `SEASON_ADMIN_KEY` (raiz) | string aleatória — **o MESMO valor** vai no worker em E.2 | `closeSeason` responde 401 | `functions/api/community.js` › `closeSeason` |
 
-**Feito quando:** `npx wrangler secret list` lista os 4, e
-`METRICS_ADMIN_KEY=… APP_URL=https://soulmon.mateus-sprnd.workers.dev node scripts/metrics-report.mjs`
-imprime o agregado (não 404). Guarde os valores no gerenciador de senhas.
+**Feito quando:** `npx wrangler secret list` lista os 4, e o relatório de métricas
+imprime o agregado (não 404) **sem o segredo passar pela linha de comando** — o
+histórico do shell guarda tudo que vai na linha. Faça assim (PowerShell):
+
+```
+$env:APP_URL = "https://soulmon.mateus-sprnd.workers.dev"
+$env:METRICS_ADMIN_KEY = Read-Host -AsSecureString "METRICS_ADMIN_KEY" | ConvertFrom-SecureString -AsPlainText
+node scripts/metrics-report.mjs
+Remove-Item Env:METRICS_ADMIN_KEY
+```
+
+(`Read-Host -AsSecureString` não ecoa nem fica no histórico; em bash use `read -rs
+METRICS_ADMIN_KEY && export METRICS_ADMIN_KEY`.) Guarde os valores no gerenciador
+de senhas. Os `wrangler secret put` acima já são interativos: o valor é digitado no
+prompt, nunca como argumento.
 
 ### E.2 Worker de push `[dono digita segredo]`
 
@@ -469,7 +504,7 @@ Cada aprovação vale para **aquele** passo — não é "pode tudo daqui em dian
 |---|---|---|
 | `android/app/build.gradle` | `versionCode 14 → 15`, `versionName 1.1.3 → 1.1.4`, com comentário do porquê | — |
 | `android/variables.gradle` | `compileSdkVersion` e `targetSdkVersion` `35 → 36` | **`[verificar no android-build.yml do CI após o merge]`**: o AGP é 8.2.1 (`android/build.gradle`) e só avisa para compileSdk acima do que testou (já era assim com 35); o SDK 36 é baixado pelo Gradle se o `sdkmanager --licenses` do workflow tiver aceitado. Se falhar, o conserto é subir o AGP, não voltar para 35. Fonte da exigência: review 15 §B (target 36 para atualizações desde 31/08/2026; piso 35 para app novo desde nov/2025) |
-| `android/app/build.gradle` › `billing-ktx` | **não mudou** (`6.2.1`); ganhou comentário | `[a confirmar no Play Console]` a versão mínima da Billing Library (review 15 §B diz ≥ 7 desde 31/08/2025, ≥ 8 desde 31/08/2026, sem fonte primária no repo). Subir exige mudar `BillingPlugin.kt` (`enablePendingPurchases()` sem argumento não existe na 7.x) — é pacote de código, não de config, e só o CI prova. **Se o upload do AAB em D.9 for recusado por versão da Billing Library, é isto.** |
+| `android/app/build.gradle` › `billing-ktx` | `6.2.1 → 8.3.0` (QA rodada 1, 22/09/2026; régua `src/plugins/billingPbl8.contract.test.ts`) | 🔴 **`billing-ktx` 8.x é OBRIGATÓRIO antes do primeiro upload — não é mais `[a confirmar]`.** Fonte primária: `developer.android.com/google/play/billing/deprecation-faq` — a Play **recusa** app novo/atualização com Billing Library **v6 desde 31/08/2025** e **v7 desde 31/08/2026**; hoje (22/09/2026) só a **v8** é aceita. Com a `6.2.1` anterior **o upload do AAB em D.9 seria recusado**. O bump veio junto com `BillingPlugin.kt` (`enablePendingPurchases(PendingPurchasesParams…)` — da 7.x em diante o método sem argumento não existe); **só o CI prova que compila** (§A.0 antes). Trava de doc: `docs/BILLING-SETUP.md` deve citar a mesma versão. |
 | `.github/workflows/android-build.yml` | artefato `digiapp-debug-<sha>` → `soulmon-debug-<sha>` (nos dois lugares: upload e o download do job `smoke`) | — |
 | `android/app/google-services.json` | **não mudou** — é do dono (§C.2) | o build passa **sem FCM** até trocar |
 
@@ -486,9 +521,9 @@ Cada aprovação vale para **aquele** passo — não é "pode tudo daqui em dian
    N contas (SEC-3). A ordem "AAB 15 no ar → só então ligar" não tem atalho.
 3. **§D.5 Segurança de dados.** Subdeclarar é motivo de remoção depois de
    publicado, e a ficha é pública. O lado seguro é sempre declarar (é a regra de
-   `PLAY-DATA-SAFETY.md` §0 e das decisões #21/#22). Há um buraco conhecido ainda
-   aberto: Higgsfield/Gemini em §2.3 (review 11) — se a `alpha-compliance` não
-   fechar antes de você preencher, declare "compartilhado" mesmo assim.
+   `PLAY-DATA-SAFETY.md` §0 e das decisões #21/#22). Antes de preencher, releia
+   a lista-resumo do §3 de lá contra o código — ela é a mesma verdade escrita
+   duas vezes, e a segunda é a que vai para o formulário.
 
 ---
 

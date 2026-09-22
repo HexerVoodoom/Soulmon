@@ -142,7 +142,7 @@ O problema real da compra única é estrutural: **receita = instalações × con
 ### Economia unitária *(estimativas — medir antes de confiar)*
 
 - Custo de IA por usuário pago: **R$ 3–8** (11 formas via Higgsfield). COGS de 10–27% sobre R$ 29,90 — saudável, e travado atrás de `accountTier:'paid'`, então só quem paga gera.
-- Receita líquida: ~R$ 25,40 na Play Store (15% de taxa), ~R$ 27 no funil web direto. **Priorizar o funil web.**
+- Receita líquida: ~R$ 25,40 na Play Store (15% de taxa), ~R$ 27 no funil web direto. ~~**Priorizar o funil web.**~~ ⚰️ 21/09/2026 (QA Rodada 1, `01-dossie-estado.md` §2.2): riscado porque a web **não cobra** — a frase era meta de margem e lia como estado atual; a nota abaixo é o que vale.
 
 > **Nota de 21/09/2026 (decisão do dono, pergunta #17 do QA geral):** a web
 > **hoje NÃO cobra**. A única compra que existe é pela Play (`functions/api/billing.js`

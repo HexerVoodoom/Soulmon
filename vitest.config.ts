@@ -51,9 +51,14 @@ if (!(process.env.NODE_OPTIONS ?? '').includes(FLAG_WEBSTORAGE)) {
 // existido teste de componente aqui. Em vez de copiar a tabela (footgun 9,
 // "regra copiada diverge em silêncio"), reusamos a do build.
 const alias = (viteConfig as { resolve?: { alias?: Record<string, string> } }).resolve?.alias ?? {};
+// Mesmo motivo para o `define`: `__APP_VERSION__` (versão única, 21/09/2026)
+// tem que existir no teste como existe no build — senão `FeedbackLink.tsx`
+// cai no fallback e `versaoUnica.contract.test.ts` não prova nada.
+const define = (viteConfig as { define?: Record<string, string> }).define ?? {};
 
 export default defineConfig({
   resolve: { alias },
+  define,
   test: {
     // Padrão continua `node`: os testes de regra pura não pagam o custo do DOM.
     // Os testes de RENDER pedem jsdom por arquivo, com o docblock

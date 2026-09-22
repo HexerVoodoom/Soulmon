@@ -62,6 +62,28 @@ const semHash = (nome: string) => nome.replace(/-[A-Za-z0-9_-]{8}(\.[a-z0-9]+)$/
 const tamanho = (p: string) => statSync(p).size;
 const kb = (n: number) => `${(n / KB).toFixed(0)} KB`;
 
+/**
+ * Linhas de dívida que não valem mais (arquivo sumiu ou já cabe no teto), como
+ * função pura sobre uma lista de nomes e um medidor — extraída (QA, rodada A,
+ * 21/09/2026) para ser provada com fixture sintética, não só com o dist/ real.
+ */
+function dividasMortas(dividas: Record<string, number>, nomes: readonly string[], tamanhoDe: (nome: string) => number, tetoDe: (chave: string) => number): string[] {
+  return Object.keys(dividas).filter(chave => {
+    // Vários chunks podem compartilhar a chave sem hash (`index-*.js` é o de
+    // entrada E chunks pequenos de mesmo nome, medido em 22/09/2026: 4
+    // arquivos, de 438 B a 629 KB). A dívida é do MAIOR — `find` pegava o
+    // primeiro da listagem e declarava a dívida paga com o chunk de 438 B.
+    const reais = nomes.filter(f => semHash(f) === chave);
+    if (reais.length === 0) return true;
+    return Math.max(...reais.map(tamanhoDe)) <= tetoDe(chave);
+  });
+}
+const tetoPorExtensao = (chave: string) =>
+  chave.endsWith('.js') ? TETO_JS_DE_ENTRADA
+  : chave.endsWith('.css') ? TETO_CSS_DE_ENTRADA
+  : /\.(mp4|webm)$/.test(chave) ? TETO_VIDEO
+  : TETO_IMAGEM;
+
 const html = existsSync(join(DIST, 'index.html')) ? readFileSync(join(DIST, 'index.html'), 'utf8') : null;
 const arquivos = existsSync(ASSETS) ? readdirSync(ASSETS) : [];
 
@@ -124,16 +146,26 @@ describe('orçamento de bytes (decisão #31) — lido do dist/', () => {
     expect(problemas).toEqual([]);
   });
 
+  it('TESTE-DO-TESTE: arquivo grande FALSO reprova; dívida falsa sem arquivo é linha morta; nome sem hash não é mutilado', () => {
+    // Imagem nova de 401 KB, sem linha de dívida → reprovada com o nome dela.
+    const problema = avaliar('gigante-Abcdefgh.webp', TETO_IMAGEM + 1, TETO_IMAGEM, 0);
+    expect(problema).toContain('gigante-Abcdefgh.webp');
+    expect(problema).toMatch(/arquivo novo/);
+    // Vídeo em dívida que CRESCEU 1 byte (mídia não tem folga) → reprovado.
+    expect(avaliar('intro-Abcdefgh.mp4', DIVIDA_ATUAL['intro.mp4'] + 1, TETO_VIDEO, 0)).toMatch(/cresceu/);
+    // Dívida registrada para arquivo que não existe → linha morta (o guard cobra a remoção).
+    const medidor = (n: string) => (n === 'index-Abcdefgh.js' ? DIVIDA_ATUAL['index.js'] : 0);
+    expect(dividasMortas({ 'index.js': 1, 'fantasma.webp': 999_999 }, ['index-Abcdefgh.js'], medidor, tetoPorExtensao)).toEqual(['fantasma.webp']);
+    // Dívida cujo arquivo já cabe no teto → linha morta.
+    expect(dividasMortas({ 'index.js': 999_999 }, ['index-Abcdefgh.js'], () => TETO_JS_DE_ENTRADA, tetoPorExtensao)).toEqual(['index.js']);
+    // `semHash` não mutila nome sem hash nem hash de tamanho errado.
+    expect(semHash('index.js')).toBe('index.js');
+    expect(semHash('bar-frame-96x8.webp')).toBe('bar-frame-96x8.webp');
+    expect(semHash('a-abc.js')).toBe('a-abc.js');
+  });
+
   it('dívida registrada é a REAL — linha de arquivo que já cabe no teto (ou sumiu) sai da lista', () => {
-    const tetoDe = (chave: string) =>
-      chave.endsWith('.js') ? TETO_JS_DE_ENTRADA
-      : chave.endsWith('.css') ? TETO_CSS_DE_ENTRADA
-      : /\.(mp4|webm)$/.test(chave) ? TETO_VIDEO
-      : TETO_IMAGEM;
-    const mortas = Object.keys(DIVIDA_ATUAL).filter(chave => {
-      const real = arquivos.find(f => semHash(f) === chave);
-      return !real || tamanho(join(ASSETS, real)) <= tetoDe(chave);
-    });
+    const mortas = dividasMortas(DIVIDA_ATUAL, arquivos, f => tamanho(join(ASSETS, f)), tetoPorExtensao);
     expect(mortas, 'dívida paga (ou arquivo apagado): tire a linha de DIVIDA_ATUAL').toEqual([]);
   });
 

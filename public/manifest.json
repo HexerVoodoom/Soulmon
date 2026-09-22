@@ -1,7 +1,7 @@
 {
   "short_name": "Soulmon",
-  "name": "Soulmon - Gamified Productivity",
-  "description": "Complete real-life tasks to evolve and care for your digital companion in this retro pixel-art productivity app",
+  "name": "Soulmon",
+  "description": "Soulmon: um bichinho virtual que evolui com o que você faz na vida real. Hábitos e tarefas viram cuidado, evolução e história — nunca cobrança.",
   "icons": [
     {
       "src": "/favicon-192x192.png",
@@ -21,7 +21,11 @@
   "orientation": "portrait-primary",
   "theme_color": "#0f766e",
   "background_color": "#071413",
-  "categories": ["productivity", "lifestyle", "games"],
+  "categories": [
+    "productivity",
+    "lifestyle",
+    "games"
+  ],
   "lang": "pt-BR",
   "dir": "ltr",
   "scope": "/",

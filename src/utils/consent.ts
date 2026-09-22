@@ -31,8 +31,8 @@ export const MIN_AGE_YEARS = 18;
  * seja, toda prova de consentimento apontava para um texto que não era o
  * publicado.
  */
-export const TERMS_VERSION = '2026-09-21';
-export const PRIVACY_VERSION = '2026-09-21';
+export const TERMS_VERSION = '2026-09-22';
+export const PRIVACY_VERSION = '2026-09-22';
 
 export interface ConsentRecord {
   /** ISO de quando o usuário marcou a caixa. */

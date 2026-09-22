@@ -30,7 +30,7 @@
 <body>
 
 <h1>Termos de Uso — Soulmon</h1>
-<p class="sub">Última atualização: 21 de setembro de 2026</p>
+<p class="sub">Última atualização: 22 de setembro de 2026</p>
 
 <p class="lang">
   <a href="#en">English version below ↓</a> ·
@@ -93,7 +93,22 @@
 <p>
   Créditos <strong>não podem ser trocados de volta por dinheiro</strong> e não
   têm valor fora do app. Eles também não podem ser convertidos em Bits (a moeda
-  gratuita) além da taxa de troca declarada dentro do app, quando existir.
+  gratuita) além da taxa de troca declarada dentro do app.
+</p>
+<!-- Cortesia: decisão provisória do coordenador (QA rodada 1, 21/09/2026) —
+     "cortesia sobrevive a reembolso". Fonte: functions/api/_entitlements.js ›
+     grantCourtesy / COURTESY_PROVIDER / auditRefunds (que só pergunta à loja
+     pelas compras da loja). O bug de auditRefunds rebaixar para demo com
+     cortesia válida (00-skeptic #1) é do backend; o texto abaixo descreve a
+     regra decidida, não o estado do bug. -->
+<p>
+  <strong>Cortesia.</strong> Em alguns casos — testes com convidados, por
+  exemplo — podemos liberar o desbloqueio completo para uma conta
+  <strong>sem cobrar</strong>. A cortesia é concedida por nós, por conta, e vale
+  enquanto a conta existir. Ela não inclui Créditos, não pode ser transferida
+  nem trocada por dinheiro, e não é uma compra: se você também tiver comprado o
+  desbloqueio e essa compra for reembolsada, <strong>a cortesia continua
+  valendo</strong> — reembolso desfaz a compra, não a cortesia.
 </p>
 
 <h2>5. A Nova Leitura</h2>
@@ -146,21 +161,30 @@
 <p>
   <strong>O que é gerado por inteligência artificial.</strong> A conversa com a
   sua criatura é escrita por um modelo de linguagem, na hora, sem revisão
-  humana. A imagem da sua criatura e os sons de marco e de evolução também são
-  gerados por IA. Por isso o chat pode errar, inventar ou responder de um jeito
+  humana. A imagem da sua criatura e alguns sons (evolução, regressão,
+  conclusão de tarefa) também são gerados por IA. Por isso o chat pode errar, inventar ou responder de um jeito
   que não combina com o momento — leia o que ele diz como fala de um
   personagem, não como informação nem orientação.
 </p>
 <p>
   <strong>O chat não é um serviço de emergência.</strong> A criatura não é uma
   pessoa, não é profissional de saúde e não substitui ninguém que possa ajudar
-  de verdade. Se você escrever algo que indique um momento de risco, o app
-  deixa a voz do personagem de lado e mostra canais de ajuda: no Brasil, o
-  <strong>CVV</strong> atende de graça, 24 horas, no <strong>188</strong>; em
-  qualquer outro país, <a href="https://findahelpline.com">findahelpline.com</a>
-  encontra um serviço perto de você. Esses contatos são uma lista fixa,
-  escolhida por gente — o modelo nunca inventa número nem site. Se você
-  precisar de ajuda agora, procure um desses canais ou alguém de confiança.
+  de verdade. Se você escrever algo que indique um momento de risco, acontecem
+  duas coisas, nesta ordem. Primeiro, o app responde com uma <strong>mensagem
+  fixa, escrita por gente — não pelo modelo</strong>, ainda na voz do
+  personagem, que aponta quem sabe ajudar: em português, o <strong>CVV</strong>,
+  que atende de graça, 24 horas, no <strong>188</strong>; em inglês, o diretório
+  <a href="https://findahelpline.com">findahelpline.com</a>, que acha a linha do
+  seu país — e esse link fica sempre visível logo abaixo do chat. Depois, se a conversa seguir, o modelo é
+  instruído a <strong>sair do personagem</strong>: dizer que ouviu, que isso é
+  maior do que ele, e pedir que você procure hoje uma pessoa de verdade — sem
+  citar número nem site (quem cita é a lista fixa), sem se usar como motivo
+  para você ficar. Se você precisar de ajuda agora, procure um desses canais ou
+  alguém de confiança.
+  <!-- Fonte: src/utils/chatSafety.ts › bridgeReply (camada 1, local, não chama
+       a IA; PT = CVV 188, EN = findahelpline.com desde 22/09/2026);
+       ChatBox.tsx › link permanente findahelpline + CVV/988/116 123;
+       functions/api/chat.js › bloco SAFETY (camada 2). Compliance #8 / E2. -->
 </p>
 
 <h2>9. Base para leitura de dados de uso</h2>
@@ -171,7 +195,8 @@
   que já fazem parte do seu save. Essa leitura serve só para o funcionamento do
   próprio jogo (evolução, desempate de galho, relatórios que voltam pra você) e
   nunca é usada para decidir se você pode ou não usar o app, nem compartilhada
-  fora dele.
+  fora dele. A única saída de nome de tarefa para fora é a que você mesmo aciona
+  ao tocar em "Decompor" (Política de Privacidade, seção 2b).
 </p>
 
 <h2>10. Alterações a estes Termos</h2>
@@ -186,7 +211,7 @@
 <hr>
 
 <h1 id="en">Terms of Use — Soulmon</h1>
-<p class="sub">Last updated: September 21, 2026</p>
+<p class="sub">Last updated: September 22, 2026</p>
 
 <p class="lang"><a href="/privacidade.html#en">Privacy Policy</a></p>
 
@@ -236,8 +261,12 @@
        pair) — confirm against the Play Console price before the first sale.
        Do not write a price in this comment: the same test flags loose prices. -->
     <strong>Full unlock</strong> (one-time payment, <span data-price="full-unlock">US$ 6.99</span>): lets you generate
-    your own creature instead of picking from the demo characters. Google Play
-    charges in your local currency; the dollar amount is the reference price.
+    your own creature instead of picking from the demo characters. The dollar
+    amount is the reference price; Google Play charges in your local currency,
+    and the price shown in the app at checkout is the one that applies.
+    <!-- Redação A (decisão provisória do coordenador, QA rodada 1 #15):
+         US$ como referência, moeda local cobra. Critério "feito" em
+         PLAY-LANCAMENTO §D.7: confirmar o USD no console. -->
   </li>
   <li>
     <strong>Credits</strong>: a paid currency you spend on a New Reading
@@ -247,7 +276,16 @@
 <p>
   Credits <strong>cannot be exchanged back for money</strong> and have no value
   outside the app. They also cannot be converted into Bits (the free currency)
-  beyond whatever in-app exchange rate is displayed.
+  beyond the exchange rate displayed inside the app.
+</p>
+<p>
+  <strong>Courtesy.</strong> In some cases — tests with invited players, for
+  example — we may unlock the full version for an account <strong>at no
+  charge</strong>. A courtesy is granted by us, per account, and lasts as long
+  as the account exists. It does not include Credits, cannot be transferred or
+  exchanged for money, and is not a purchase: if you also bought the unlock and
+  that purchase is refunded, <strong>the courtesy still stands</strong> — a
+  refund undoes the purchase, not the courtesy.
 </p>
 
 <h2>5. The New Reading</h2>
@@ -299,21 +337,27 @@
 <p>
   <strong>What is generated by artificial intelligence.</strong> The
   conversation with your creature is written by a language model, live, with no
-  human review. Your creature's image and the milestone and evolution sounds
-  are also AI-generated. That means the chat can get things wrong, make things
+  human review. Your creature's image and some sounds (evolution, regression,
+  task completion) are also AI-generated. That means the chat can get things wrong, make things
   up or answer in a way that doesn't fit the moment — read what it says as a
   character speaking, not as information or guidance.
 </p>
 <p>
   <strong>The chat is not an emergency service.</strong> The creature is not a
   person, not a health professional, and not a replacement for anyone who can
-  actually help. If you write something that suggests you may be at risk, the
-  app sets the character's voice aside and shows help channels: in Brazil,
-  <strong>CVV</strong> is free, 24 hours, at <strong>188</strong>; anywhere else,
-  <a href="https://findahelpline.com">findahelpline.com</a> finds a service near
-  you. Those contacts are a fixed list, chosen by people — the model never makes
-  up a number or a website. If you need help now, reach one of those channels or
-  someone you trust.
+  actually help. If you write something that suggests you may be at risk, two
+  things happen, in this order. First, the app answers with a <strong>fixed
+  message, written by people — not by the model</strong>, still in the
+  character's voice, pointing to who can help: in Portuguese, <strong>CVV</strong>,
+  free, 24 hours, at <strong>188</strong>; in English, the
+  <a href="https://findahelpline.com">findahelpline.com</a> directory, which
+  finds the line for your country — and that link stays visible right below the
+  chat. Then, if the conversation goes
+  on, the model is instructed to <strong>step out of character</strong>: say it
+  heard you, that this is bigger than it, and ask you to reach a real person
+  today — without naming a number or a website (the fixed list does that), and
+  without using itself as a reason for you to stay. If you need help now, reach
+  one of those channels or someone you trust.
 </p>
 
 <h2>9. Basis for reading your usage data</h2>
@@ -324,6 +368,8 @@
   data that's already part of your save. This reading is only used to run the
   game itself (evolution, branch tie-breaks, reports that come back to you) and
   is never used to decide whether you can use the app, nor shared outside it.
+  The only way a task name leaves is the one you trigger yourself by tapping
+  "Break down" (Privacy Policy, section 2b).
 </p>
 
 <h2>10. Changes to these Terms</h2>

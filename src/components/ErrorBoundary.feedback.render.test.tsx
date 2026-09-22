@@ -32,6 +32,7 @@ describe('ErrorBoundary — feedback', () => {
     const a = screen.getByRole('link', { name: /Falar com quem faz o Soulmon/ }) as HTMLAnchorElement;
     const body = decodeURIComponent(a.getAttribute('href') ?? '');
     expect(body).toContain(`Versão: ${APP_VERSION}`);
+    expect(body).toContain('Origem: tela de erro');
     expect(body).toContain('Código: 01234567');
     expect(body).toContain('Erro: boom de teste');
     expect(body).toContain('Soulmon — erro');

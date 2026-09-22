@@ -90,7 +90,9 @@ export function NotificationManager({
       }
     } else {
       if (isNativeAndroid) {
-        unregisterFromPushNotifications();
+        // Rejeita quando o servidor não confirma — o token local fica para a
+        // próxima tentativa (ver `unregisterFromPushNotifications`).
+        unregisterFromPushNotifications().catch(err => console.error('FCM token removal failed:', err));
       } else {
         unsubscribeFromPush();
       }

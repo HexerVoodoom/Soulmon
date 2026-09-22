@@ -23,7 +23,7 @@ Dono permanente de duas coisas que sobrevivem a qualquer troca de fornecedor:
   dois lugares que diverge sem ficar vermelha.
 
 **A fonte de produção é declarada pelo §8 do bloco de contexto do run, não por este arquivo.**
-Em `som-01` é geração por IA via `higgsfield-generate` (`seed_audio`, `sonilo_music`). Se um
+Em `som-01` é geração por IA pela **CLI `higgsfield`** (`higgsfield generate --model seed_audio` / `sonilo_music`; a skill `higgsfield-generate` que ensina a CLI vive na **conta** — `~/.claude/skills/higgsfield-generate` — e é ela que a sessão carrega). Se um
 run futuro licenciar de banco, gravar foley ou trocar de CLI, muda a fonte e o framework
 abaixo continua valendo. **Nenhum número de loudness é constante deste arquivo.**
 
@@ -49,8 +49,14 @@ abaixo continua valendo. **Nenhum número de loudness é constante deste arquivo
   `play()` abre um `AudioContext`"* está obsoleta, e `src/utils/sounds.ts` exporta **8**
   símbolos `play*`, não 11.
 - `docs/Attributions.md` — onde a linha de cada asset vai.
-- `.agents/skills/higgsfield-game-generation/references/audio.md` — referência de produção
-  deste run. ⚠️ **Os alvos numéricos dela foram DESEMPATADOS CONTRA em 08/09/2026** (S3,
+- A referência de produção deste run é a **CLI `higgsfield`** e a skill global `higgsfield-generate`
+  (carregue por `Skill`; `higgsfield --help` e `higgsfield generate --help` são a fonte). ⚰️ Esta
+  linha apontava para `.agents/skills/higgsfield-game-generation/references/audio.md` — o
+  ponteiro `.claude/skills/higgsfield-*` do repo é um **symlink git** que o Windows
+  (`core.symlinks=false`) materializa como arquivo de texto de 40 bytes, então a cópia do repo
+  nunca carregou como skill e divergiu da global (QA Rodada 1, `08-governanca-docs-marca-r1.md`
+  §1.2; decisão do dono #53). Se precisar do texto de `audio.md`, leia a cópia da conta em
+  `~/.agents/skills/higgsfield-game-generation/references/audio.md`, nunca a do repo. ⚠️ **Os alvos numéricos dela foram DESEMPATADOS CONTRA em 08/09/2026** (S3,
   `docs/REGISTRO-DE-DECISOES.md` §6.1): os −10/−12 **dBFS** dali misturam régua de pico com
   régua de loudness, e as duas estão a **3,017 dB medidos** uma da outra. O alvo vigente é
   **≤ −16 LUFS integrado** (ITU-R BS.1770-4, K-weighting com gating) e **true peak ≤ −1 dBTP**

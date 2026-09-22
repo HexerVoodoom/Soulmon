@@ -418,10 +418,14 @@ export function GameTutorialFlow({
                 ? <span data-sm-spin="" aria-hidden="true" style={{ display: 'inline-flex', animation: 'tutspin 1.1s linear infinite' }}><Icon name="sync" size={24} /></span>
                 : (isPt ? 'Sugerir tarefas com IA' : 'Suggest tasks with AI')}
             </button>
-            {/* O aviso da IA (O6): o objetivo sai do aparelho só neste toque. */}
+            {/* O aviso da IA (O6 + compliance #2, 21/09/2026): o campo nasce
+                pré-preenchido com o `soulGoal` do onboarding — que a política
+                diz não passar por IA — então o aviso tem que dizer que ESTE
+                texto sai do aparelho, e só se a pessoa pedir sugestões.
+                Provisório "declarar" até o dono decidir declarar × cortar. */}
             {!searched && (
               <p style={{ ...sm2Hint, textAlign: 'center' }}>
-                {isPt ? 'Seu objetivo é enviado à IA para escrever as sugestões.' : 'Your goal is sent to the AI to write suggestions.'}
+                {isPt ? 'Este texto vai para o provedor de IA se você pedir sugestões.' : 'This text goes to the AI provider if you ask for suggestions.'}
               </p>
             )}
 

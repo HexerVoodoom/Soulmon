@@ -231,6 +231,9 @@ lista curta também está em [`docs/PLANO-MELHORIAS.md`](../PLANO-MELHORIAS.md)
 | 10 | **`ABSENCE_FORGIVENESS_DAYS ≠ 2`** (literal travado) | `src/hooks/useDailyReset.test.ts`, `src/hooks/useDailyReset.clock.test.ts`, `src/utils/poopDrain.regression.test.ts` |
 | 11 | **Traço de nascimento negativo** | `src/utils/passives.test.ts` |
 | 12 | **Punição por sono ruim / score de sono** | `src/utils/restWindow.test.ts` (nenhuma função devolve número que diminui) |
+| 15 | **Nunca "última chance" / FOMO que tira** | `src/copy.semFomo.contract.test.ts` (desde 21/09/2026, QA Rodada 1 — varre `src/components/**`, `workers/*.js`, o Kotlin do widget, `res/values`, `i18n.ts`, `petVoice.ts`, `welcomeBack.ts`, `_pushCopy.js` e `public/*.html` com 18 regex PT/EN fora de comentário, e exige que nenhum item de `ALL_SHOP_ITEMS`/`SPECIAL_ITEMS` tenha campo de prazo nem descrição de escassez). Mantém o número 15 — a numeração é o id do ledger, não a ordem da tabela |
+
+**Contagem em 21/09/2026: 13 por teste, 8 por tese** (⚰️ "12 por teste, 9 por tese" valeu de 02/09 a 21/09/2026, até a #15 ganhar régua; ⚰️ "12 e 8" valeu até 02/09, quando a #21 foi inscrita).
 
 ### Travadas por TESE — sem teste, e por isso as frágeis
 
@@ -238,7 +241,6 @@ lista curta também está em [`docs/PLANO-MELHORIAS.md`](../PLANO-MELHORIAS.md)
 |---|---|
 | 13 | **Nunca vender proteção contra punição.** Foi o veto E2/C-S3; consequência aplicada no código: `HEART_COST_CREDITS` foi apagado e o 💗 saiu da loja de Bits (ambos em 06/09/2026) |
 | 14 | **Nunca percentual cru de constância na UI** |
-| 15 | **Nunca "última chance" / FOMO que tira** |
 | 16 | **Nunca recompensa por CONTAGEM de tarefas** (o pool de `weeklyMissions.ts` obedece, e há teste varrendo o vocabulário). Desde 21/09/2026 vale também para o **cosmético**: ⚰️ a conquista `tasks-100` virou `dias-completos-30` (decisão #30, `vetos.md`; [`02` §57-A](02-REGRAS-DE-NEGOCIO.md)) |
 | 17 | **Nunca um nono perdão** sem responder à decisão D4 |
 | 18 | **Nunca texto do usuário em IA ou telemetria** sem decisão explícita do dono |

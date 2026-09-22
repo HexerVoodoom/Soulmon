@@ -9,7 +9,7 @@
 - [Rotas HTTP (functions/api/*.js exportando onRequest*)](#rotas-http)
   - [`account.js`](#functionsapiaccountjs) · [`billing.js`](#functionsapibillingjs) · [`chat.js`](#functionsapichatjs) · [`community.js`](#functionsapicommunityjs) · [`config.js`](#functionsapiconfigjs) · [`entitlements.js`](#functionsapientitlementsjs) · [`fcm-subscribe.js`](#functionsapifcm-subscribejs) · [`generate-sprite.js`](#functionsapigenerate-spritejs) · [`metrics.js`](#functionsapimetricsjs) · [`save.js`](#functionsapisavejs) · [`sprite-image.js`](#functionsapisprite-imagejs) · [`subscribe.js`](#functionsapisubscribejs) · [`suggest-tasks.js`](#functionsapisuggest-tasksjs) · [`transcribe.js`](#functionsapitranscribejs)
 - [Módulos internos (`_*.js`)](#módulos-internos)
-  - [`_aiGuard.js`](#functionsapi_aiguardjs) · [`_auth.js`](#functionsapi_authjs) · [`_billing.js`](#functionsapi_billingjs) · [`_bond.js`](#functionsapi_bondjs) · [`_entitlements.js`](#functionsapi_entitlementsjs) · [`_kv.js`](#functionsapi_kvjs) · [`_pushCopy.js`](#functionsapi_pushcopyjs) · [`_pushIdentity.js`](#functionsapi_pushidentityjs) · [`_pushTargets.js`](#functionsapi_pushtargetsjs) · [`_rateLimit.js`](#functionsapi_ratelimitjs) · [`_redact.js`](#functionsapi_redactjs)
+  - [`_accountTombstone.js`](#functionsapi_accounttombstonejs) · [`_aiGuard.js`](#functionsapi_aiguardjs) · [`_auth.js`](#functionsapi_authjs) · [`_billing.js`](#functionsapi_billingjs) · [`_bond.js`](#functionsapi_bondjs) · [`_entitlements.js`](#functionsapi_entitlementsjs) · [`_kv.js`](#functionsapi_kvjs) · [`_pushCopy.js`](#functionsapi_pushcopyjs) · [`_pushIdentity.js`](#functionsapi_pushidentityjs) · [`_pushTargets.js`](#functionsapi_pushtargetsjs) · [`_rateLimit.js`](#functionsapi_ratelimitjs) · [`_redact.js`](#functionsapi_redactjs)
 - [workers](#workers) — [`fcm.js`](#workersfcmjs) · [`push-scheduler.js`](#workerspush-schedulerjs) · [`webpush.js`](#workerswebpushjs)
 
 ## Convenções desta página
@@ -167,6 +167,19 @@
 ---
 
 ## Módulos internos
+
+### `functions/api/_accountTombstone.js`
+**Dono de:** a **lápide de conta apagada** `del:done:<saveId>` — o registro que impede outro aparelho do titular, ainda logado, de recriar o save 3 s depois da exclusão (QA Rodada 1, `03-arquitetura-r1.md` §2.5; nasceu na `qa/rodada-a`, 21/09/2026). Mora em módulo próprio porque tem dois leitores e `save.js` não pode importar `account.js`.
+**Exports:**
+- `TOMBSTONE_PREFIX = 'del:done:'` · `TOMBSTONE_TTL_SECONDS` — **30 dias** (o QA pediu 30; a review propunha 24 h — 24 h cobria só o token de 1 h, não o aparelho que passa um fim de semana desligado).
+- `tombstoneKey(saveId)`.
+- `writeTombstone(env, saveId, now?)` — grava `{ at }` com o TTL; lança se o KV falhar (em `account.js` isso acontece ANTES de qualquer destruição → 500 e retry).
+- `clearTombstone(env, saveId)` — apaga (usado se um passo anterior à destruição falhar).
+- `isAccountDeleted(env, saveId)` — leitura de `save.js`.
+**Grava/lê:** `kv(env)` (mesmo namespace do save).
+**Chamado por:** `account.js` › `handleDeleteConfirm` (grava antes do primeiro `delete`, apaga se falhar antes de destruir) · `save.js` › `GET`/`POST` (com a lápide presente → **410 `account-deleted`**, o POST recusado antes de ler o corpo; o cliente trata 410 como "limpe o local e deslogue" — `CLOUD_SAVE_POLICY` em `src/utils/cloudSave.ts`).
+**Régua:** `functions/api/account.deleteConfirm.qa.test.js`.
+**Avisos do arquivo:** depois dos 30 dias o mesmo e-mail cria conta nova do zero — é o que `COPY.deleteDone` promete ("a porta fica aberta").
 
 ### `functions/api/_aiGuard.js` (366 linhas — corrigido de "367" por doc-verificador, `wc -l`, 10/09/2026)
 **Dono de:** o portão de TODA rota que gasta dinheiro em API de terceiro (chat, suggest-tasks, sprite) — três travas por conta/dia, por conta vitalício (só sprite), por forma vitalício (só sprite), e global por dia/mês — fail-closed (contador ilegível recusa, nunca libera).
