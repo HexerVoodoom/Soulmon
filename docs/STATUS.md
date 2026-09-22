@@ -7,6 +7,27 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 22/09/2026 — sincronização do manual pós-merge `89554b5d` (alocação de elemento parqueada)
+>
+> Delta `fadb1167..89554b5d`, 10 commits. **5 docs recarimbados**, quatro redatores em
+> paralelo + verificação bloqueante. `00-MAPA` §6.4 reetiquetou a spec `G-alocacao-elemento.md`
+> de "plano (spec, nada implementado)" para **plano PARQUEADO (v2.0)** — as duas metades da
+> etiqueta antiga ficaram falsas no mesmo dia — e corrigiu a faixa para WP4.22…**WP4.33**;
+> `10-DISCUSSOES` §3 ganhou 6 linhas e §18 o registro de que a alocação está aberta **por
+> decisão**, não por esquecimento; `01-VISAO` §10 ganhou o adendo do parqueamento e do CI
+> parado; `02-REGRAS` registrou a alocação como **capacidade dormente** dentro da §20
+> (Renascimento) em vez de abrir seção — a mecânica não é regra que o jogador vive;
+> `06-REFERENCIA/utils` ganhou `ALLOC_FRACTION`, `ElementPlan` e o 6º parâmetro de `buildFicha`.
+>
+> **A verificação pegou um eufemismo e o corrigiu:** a entrada de referência dizia que o
+> T-PISO "diverge de propósito da régua da spec". Ele **REPROVOU** — 49,7% contra os 95%
+> exigidos, régua não movida. Doc que suaviza reprovação vira doc que mente.
+>
+> Conferido no fonte, símbolo por símbolo: a alocação é **INERTE** (`grep` por chamadores de
+> `buildFicha` → só o próprio módulo, `fromInput.ts` e os testes, e nenhum passa o 6º
+> argumento), e nenhum dos cinco docs a apresenta como viva. 56 testes das réguas citadas
+> passando; guards do manual verdes (10/10).
+
 > ## 22/09/2026 — alocação de ELEMENTO: construída até o WP4.23 e ⏸️ PARQUEADA PARA A v2.0
 >
 > **Decisão do dono ao fim da sessão:** priorizar o balanceamento PRÉ-RENASCIMENTO
