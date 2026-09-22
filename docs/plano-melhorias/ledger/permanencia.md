@@ -67,3 +67,63 @@ forte") precisa saber que o número não é 0,0, e escrever o que é verdade.
 Aceite (iii) também verde: mudar só a alocação não muda `getArenaPlayerStats`
 em nenhum dos 17 casos — o orçamento de poder continua sendo do estágio e da
 escola.
+
+## WP4.23 — T-PISO: a régua da spec NÃO passa (22/09/2026) — DEPENDE DO DONO
+
+Medição com 120 perfis sintéticos (seed 20260922) × 3 planos adversários
+(tudo-num-só · espalhado · contra-o-oráculo), estágio ultra, orçamento 500.
+
+**A régua de §10.2 — "pares destravados ≥ os da ficha sem plano em ≥95%" — não
+foi atingida por nenhum dos três mecanismos tentados:**
+
+| Mecanismo | Pares ≥ auto | Sobra ≥1 par | Identidades de combate |
+|---|---|---|---|
+| **carve-out de orçamento** (o que está no ar) | 49,7% | 82,6% | **17** |
+| média ponderada das afinidades | 41,7% | — | — |
+| bias multiplicativo com piso | **62,5%** | **98,3%** | **1** |
+
+**O trade-off é o achado principal, e ele é direto.** O bias multiplicativo
+compra o piso — sobe o estrito para 62,5% e o não-desastre para 98,3%, com só
+6 fichas zerando em vez de 62 — mas **colapsa as identidades de combate de 17
+para 1**: a escolha do jogador deixa de mudar `getArenaAttributes`. Quem pegou
+isso foi a trava anti-vacuidade de `arena.alocacao.test.ts`, escrita no
+WP4.22b justamente para esse caso. O carve-out preserva as 17 identidades e
+paga com 62 fichas zeradas. **Nenhum dos dois atende a régua**, e escolher
+entre "a alocação significa algo" e "a alocação não quebra nada" é decisão do
+dono.
+
+**A causa é estrutural, não de implementação.** Par destrava com
+`min(floor(a/5), floor(b/5)) >= 10`, ou seja **≥50 pontos em cada componente**.
+O orçamento do ultra é 500 e a maior base típica tem **62 pontos** (mediana;
+mín. 45, máx. 100) — os elementos ficam EM CIMA do limiar. Redistribuir um
+quarto da influência empurra vários através dele, nos dois sentidos:
+
+| | |
+|---|---|
+| ganhou pares | 14,4% |
+| ficou igual | 48,1% |
+| perdeu 1 | 0,6% |
+| perdeu 2+ | 36,9% |
+
+A alocação não DEGRADA a ficha — ela TROCA pares, que é o que escolher
+significa. Mas a régua como está escrita proíbe a troca.
+
+**A leitura alternativa, e a medição dela.** O parecer de psicologia (R6.2)
+pediu em palavras que o jogador "possa escolher diferente, nunca escolher
+quebrado". Por essa formulação, no mecanismo que está no ar: **82,6%
+(295/357) mantêm ≥1 par**, e **62 casos zeram**. 62 é muito — é a razão de o
+trade-off acima não ser uma escolha óbvia. Os casos que zeram são o gatilho
+previsto em R-A(c): a tela nomeia o fato antes do commit, sem impedir a
+escolha.
+
+**Estado: a régua da spec segue NÃO ATENDIDA e não foi movida.** O teste
+`buildSheet.piso.test.ts` trava os valores medidos como piso de REGRESSÃO
+(0,49 estrito e 0,82 não-desastre, os do mecanismo no ar), com a divergência
+escrita no cabeçalho. As
+três saídas postas ao dono: (a) trocar a métrica para não-desastre; (b) baixar
+`ALLOC_FRACTION` até o estrito passar, com o risco de a alocação virar
+decorativa (o que a #72 rejeitou); (c) manter a régua e procurar um quarto
+mecanismo — sem garantia de que exista, dada a causa acima; (d) trocar o
+mecanismo para o bias multiplicativo, aceitando que a alocação não influa no
+combate (o que a decisão #73 já autoriza como saída) em troca de 98,3% de
+não-desastre.
