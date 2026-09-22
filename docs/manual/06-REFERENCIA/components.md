@@ -575,7 +575,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** nenhuma (`find src/components -maxdepth 1 -name 'RestWindowCard.*test.ts*'` vazio, 09/09/2026); a regra "sem score" é travada em `src/utils/restWindow.test.ts`.
 **Avisos do arquivo:** PROIBIDO nesta tela e em qualquer tela de sono do app: score 0–100, gráfico de estágios, texto que julgue a noite, meta de duração — ortossonia atinge 3–14% da população (~23% de 18–35 anos relatam estresse com apps de sono); o único número exibido é constância de HORÁRIO, nunca resultado fisiológico; `hideMetrics` esconde números e preserva recompensas.
 
-### `src/components/SettingsModal.tsx`
+### `src/components/SettingsModal.tsx` — ⚰️ apagado em `4a8b8049`
 
 ⚰️ **Apagado em 21/09/2026** (rodada QA GERAL, decisão do dono #37). Era o painel "Ajustes rápidos" (Sons / Trilha / Conversa com IA / Personalidade), aberto pelo `App.tsx` via `lazy()` a partir de `handleOpenAISettings` → `CompanionHUD` → `ChatBox.onOpenAISettings` — prop que o `ChatBox` destruturava e **nunca chamava** (sem gatilho vivo). Todas as quatro linhas já existiam na [`SettingsPage.tsx`](#srccomponentssettingspagetsx) (grupo "Som" + "Conversa com IA" + "Personalidade"), que é o único caminho do jogador; o mudo global tinha dois donos de UI e agora tem um. Saíram junto: `settingsOpen`, `handleOpenAISettings` (`App.tsx`) e a prop `onOpenAISettings` em `CompanionHUD`/`ChatBox`. Régua do caminho vivo: `src/components/settingsSom.render.test.tsx`.
 
