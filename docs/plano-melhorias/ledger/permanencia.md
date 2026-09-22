@@ -127,3 +127,92 @@ mecanismo — sem garantia de que exista, dada a causa acima; (d) trocar o
 mecanismo para o bias multiplicativo, aceitando que a alocação não influa no
 combate (o que a decisão #73 já autoriza como saída) em troca de 98,3% de
 não-desastre.
+
+## WP4.29 — incubação de 30 min na elegibilidade (D-G5b/D-G8b/c/d): `VERIFICADO COM UM FURO` (22/09/2026)
+
+Commit `8be8f9c`, branch `claude/soulmon-creation-process-01ujcm`, **não
+mergeado**. Verificação feita contra o CÓDIGO, não contra a descrição do autor.
+
+**Portões, rodados aqui (não herdados):**
+
+```
+npx tsc --noEmit                          → TSC_APP_OK
+npx tsc -p tsconfig.server.json --noEmit  → TSC_SERVER_OK
+npx tsc -p desktop/tsconfig.json --noEmit → TSC_DESKTOP_OK
+
+npx vitest run
+ Test Files  1 failed | 362 passed (363)
+      Tests  1 failed | 4885 passed | 1 expected fail | 2 skipped | 4 todo (4893)
+ FAIL tests/convertToWebp.test.ts > reescrita que FALHA (arquivo somente-leitura)
+
+npx vitest run src/utils/spriteTrigger.esperaMinima.test.ts \
+  src/utils/spriteTrigger.semPrazo.contract.test.ts \
+  src/utils/spriteTrigger.test.ts src/components/filaDeAvisos.contract.test.ts
+ Test Files  4 passed (4) · Tests  55 passed (55)
+```
+
+A única falha é o artefato conhecido do sandbox rodar como root (root ignora
+permissão somente-leitura) — confirmado isolando o arquivo. ⚠️ **Na PRIMEIRA
+execução da suíte inteira houve uma SEGUNDA falha**
+(`SoulmonOnboarding.portao.render.test.tsx:247`) que **não reproduziu** nem
+isolada nem na segunda execução completa: é flake de poluição entre arquivos,
+não regressão deste pacote — mas fica registrada, porque flake que ninguém
+anota é flake que vira "sempre foi assim".
+
+**Veredito por condição do parecer (`vetos.md` › Parecer — WP4.29):**
+
+| # | Veredito | Prova lida no código |
+|---|---|---|
+| **R-I** | `CUMPRIDA` | `semPrazo.contract.test.ts` recorta o bloco do aviso no `App.tsx` e reprova dígito, unidade de tempo, `setInterval`/`Date.now`/`progress`/`remaining`; e trava o ticker em `60_000`, reprovando `1_000`/`setTimeout`. A copy é palavra grossa nos dois idiomas |
+| **R-J** | `CUMPRIDA` | `INCUBATION_MIN_MS` tem dono único provado por `grep -rln` em `src/` (um arquivo); nenhum `* / +` sobre o valor; o bloco não menciona `accountTier`/`paid`/`bondLevel`/`petPassive`/`gamePoints`/`credits`/`emblems` |
+| **R-K(b)** | `CUMPRIDA` | `R-K(b): o ESTADO é idêntico com 30 min e com 30 dias` compara `JSON.stringify` dos dois. Nenhum caminho premia chegar cedo. Nenhum push, badge ou chave de widget foi acrescentado (o bridge não conhece `incubation`) |
+| **R-L** | `CUMPRIDA PELA METADE` | A metade da degeneração está certa e testada (`voltou.since['champion-virus'] === T0`; libera aos 30 min do relógio ORIGINAL). **A fronteira de identidade NÃO está implementada** — ver o furo abaixo |
+| **R-M** | `CUMPRIDA` | Estrutural, que é mais forte que o caso de teste: `incubationFor` não recebe `library` (travado na assinatura pela régua), o efeito do `App.tsx` não consulta `spriteBatch`, e `grep` por `hasSprite\|isFormCapped\|isAccountCapped` em `App.tsx`/`EvolutionPath.tsx`/cerimônia → **zero**. Jogador em `sprite-lifetime-cap`, em `sprite-form-cap` ou com geração falha **evolui aos 30 min**; a cerimônia cai em `fallbackSpriteForStage` em silêncio, como já era |
+| **R-N** | `CUMPRIDA` | Aviso da Home + `GuideModal` + `HelpModal` dizem as três metades (leva um tempo · volte quando quiser · nada se perde), PT+EN no mesmo commit. ⚠️ **Ressalva de cobertura**: `copy.semFomo.contract.test.ts` varre `src/components`, `src/utils`, `workers`, `android` e `_pushCopy.js` — **não varre `src/App.tsx`**, que é justamente onde a copy nova do aviso mora. O Guia e o Glossário estão cobertos; o aviso da Home só está coberto pela varredura R-I. Lacuna pré-existente, exposta por este pacote |
+| **R-O** | `CUMPRIDA COM DESVIO` | O aviso entra na fila declarada, na posição certa (`filaDeAvisos.contract.test.ts` exige `hp` < `incubacao` < `semanal`), e não há fala do pet, modal nem intersticial. **Mas `notified` está no tipo e no higienizador e não é consumido por ninguém**: o aviso reaparece enquanto durar a incubação, em vez de uma vez só. Erra para o lado de informar, não de cobrar — é desvio registrado, não veto |
+| **R-P** | `CUMPRIDA` | `spriteTrigger.semPrazo.contract.test.ts` existe, é varredura de FONTE, nomeia a única comparação permitida (`now.getTime() - t >= INCUBATION_MIN_MS`) e reprova vocabulário de expiração. Confirmado que `incubationReady` é a única aritmética de data do módulo, e que ela só libera (sem `since` → `true`; `since` corrompido → `true`) |
+
+### O furo (bloqueante antes do merge)
+
+**A incubação atravessa a fronteira de identidade.** Nem `applyRebirth`
+(`src/utils/rebirth.ts`) nem `handleUpgradeRevealed` (`src/App.tsx`) limpam
+`incubation` — `grep` por `incubation` em `rebirth.ts` → zero.
+
+O caso é alcançável e não é teórico: o Renascimento **preserva `perfectDays`**
+(regra escrita) e devolve o jogador a `rookie`, então ele fica apto na hora; o
+`since` da forma de champion que já correu na vida anterior continua no save,
+tem semanas de idade, e `incubationReady` devolve `true`. **A primeira
+evolução da criatura nova nasce sem incubação nenhuma** — exatamente o
+"carimbo herdado que libera na hora" que o parecer nomeou como o ponto em que
+R-L perdoa demais. A troca de criatura pelo upgrade é o mesmo defeito, mais
+brando (o estágio não volta).
+
+Conserto: `incubation: emptyIncubation()` nos dois pontos + um caso de teste em
+cada, e a lista campo-a-campo do teste do Renascimento precisa ganhar a linha —
+hoje ela prova que `incubation` passa intacto, que é o comportamento errado.
+
+### Escopo puxado, e o que continua faltando
+
+**O aviso da Home é escopo do WP4.30 e foi puxado para o 4.29**, de propósito:
+entregar o portão sem explicação seria a regressão já documentada no
+`CLAUDE.md` (barra cheia, gesto sem efeito, "lê como defeito"). Registrado
+aqui para que ninguém conte o 4.30 como feito por causa dele.
+
+**WP4.30 NÃO está pronto.** Faltam (a) a superfície da página de Evolução — a
+silhueta da próxima forma, aprovada em R-M/§16.1-5 e que é o marcador passivo e
+durável que R-K(a) pede — e (b) o consumo one-shot de `notified`. Sem (a), o
+jogador que fica pronto **não encontra** o estado "pode nascer" em lugar
+nenhum além do botão da Evolução acendendo.
+
+**Alocação de elemento**: confirmado PARQUEADA. `grep -rn "ElementPlan"` em
+`src/` → zero; nenhum caminho de produção passa `plano` de alocação (o único
+`pending.plano` é o da exportação de dados, outro assunto).
+
+### A conta dos Bits não se move
+
+O WP4.29 não toca economia: não cria nem drena Bits, não muda preço nem
+catálogo. **A janela D15–D23 continua exata** — 56 itens permanentes somando
+8.900 Bits contra ~360–470/dia (WP4.5 já tinha medido que o deep-start não a
+movia). A incubação adia o GESTO da evolução em 30 minutos; ela não adia
+nenhuma compra, e portanto não estende o conteúdo por um dia sequer. Quem citar
+a incubação como resposta ao esgotamento do catálogo está trocando de assunto.

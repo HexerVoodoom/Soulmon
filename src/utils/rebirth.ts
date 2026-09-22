@@ -33,6 +33,7 @@
 import { BASE_ELEMENT_LABELS, DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
 import { CLASS_ELEMENT_ORDER } from './soulProfile/types';
 import { CLASS_DATA } from './soulProfile/ficha/buildSheet';
+import { emptyIncubation } from './spriteTrigger';
 import type { EscolaId } from './soulProfile/ficha/types';
 
 /** Estágio que habilita o Rebirth. O ápice da escada, não um número solto. */
@@ -163,6 +164,8 @@ export interface RebirthTarget {
   vaccinePoints?: number;
   accountTier?: 'demo' | 'paid';
   rebirth?: RebirthRecord | null;
+  /** WP4.29 — o relógio da incubação. Zerado aqui, ver abaixo. */
+  incubation?: import('./spriteTrigger').Incubation;
 }
 
 export interface RebirthOutcome<T> {
@@ -213,6 +216,21 @@ export function applyRebirth<T extends RebirthTarget>(
       dataPoints: 0,
       vaccinePoints: 0,
       rebirth: record,
+      // ⚠️ **A incubação zera, e é a ÚNICA coisa além de estágio e atributos
+      // que o Renascimento apaga** — por isso está aqui e não na lista do que
+      // "passa intacto".
+      //
+      // O relógio da incubação é por FORMA, e sobrevive de propósito à
+      // degeneração (WP4.29, parecer R-L): cair e re-subir não pode cobrar um
+      // segundo relógio. Mas a fronteira daquele perdão é *dentro da mesma
+      // vida*. Sem esta linha o furo é alcançável, não teórico: o Renascimento
+      // PRESERVA `perfectDays` e devolve a `rookie`, então o jogador fica apto
+      // no mesmo instante — e o `since` do champion da vida anterior tem
+      // semanas de idade, o que faz `incubationReady` responder `true`. **A
+      // primeira evolução da criatura nova nasceria sem incubação nenhuma**,
+      // que é exatamente o "carimbo herdado que libera na hora" nomeado no
+      // parecer como o ponto em que a R-L perdoaria demais.
+      incubation: emptyIncubation(),
     },
     applied: true,
     refusal: null,

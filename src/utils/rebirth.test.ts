@@ -14,6 +14,13 @@ import {
   REBIRTH_BUDGET_MULTIPLIER, REBIRTH_CRIATURA_MAX,
 } from './rebirth';
 import type { RebirthRecord } from './rebirth';
+import { incubationFor, incubationReady, type Incubation } from './spriteTrigger';
+import { CARE_PATTERNS, type CareReading } from './carePattern';
+
+const LEITURA: CareReading = {
+  pattern: CARE_PATTERNS.equilibrado,
+  activeDays: 10, total: 30, concentration: 0.2, confident: true,
+};
 
 const NOW = new Date('2026-09-06T12:00:00Z');
 const ESCOLHAS = { criatura: 'uma raposa de vidro', escola: 'evocacao' as const, elemento: 'vapor' };
@@ -24,6 +31,7 @@ const noTopo = (extra: Record<string, unknown> = {}) => ({
   accountTier: 'paid' as 'demo' | 'paid' | undefined,
   virusPoints: 40, dataPoints: 31, vaccinePoints: 12,
   rebirth: undefined as RebirthRecord | null | undefined,
+  incubation: undefined as Incubation | undefined,
   ...extra,
 });
 
@@ -71,6 +79,35 @@ describe('rebirth — o que se perde é o estágio e os atributos, e SÓ', () =>
     for (const [k, v] of Object.entries(colecao)) {
       expect(state[k as keyof typeof state], `campo '${k}' foi alterado pelo rebirth`).toEqual(v);
     }
+  });
+
+  it('a INCUBAÇÃO zera — carimbo herdado não pode liberar a primeira evolução da vida nova', () => {
+    // WP4.29 / parecer R-L. O relógio da incubação é por FORMA e sobrevive de
+    // propósito à degeneração — mas a fronteira daquele perdão é *dentro da
+    // mesma vida*. Sem esta limpeza o furo é ALCANÇÁVEL, não teórico: o
+    // Renascimento preserva `perfectDays` (o teste acima trava isso) e devolve
+    // a `rookie`, então o jogador fica apto no mesmo instante; com um `since`
+    // de semanas atrás, `incubationReady` responde `true` e a primeira
+    // evolução da criatura nova nasceria SEM incubação nenhuma.
+    const velho = {
+      incubation: {
+        v: 1 as const,
+        since: { 'champion-virus': '2026-08-01T00:00:00.000Z' },
+        notified: ['champion-virus'],
+      },
+    };
+    const { state } = applyRebirth(noTopo(velho), ESCOLHAS, NOW);
+    expect(state.incubation).toEqual({ v: 1, since: {}, notified: [] });
+    // E o efeito que importa: a forma-alvo da vida nova NÃO está liberada de graça.
+    expect(incubationReady(state.incubation, 'champion-virus', NOW)).toBe(true);
+    const comRelogio = incubationFor(
+      { evolutionStage: 'rookie', perfectDays: 4,
+        points: { virus: 9, data: 0, vaccine: 0 }, reading: LEITURA,
+        currentBranch: 'virus', unlockedEvolutions: [] },
+      state.incubation, NOW,
+    );
+    expect(comRelogio.since['champion-virus']).toBe(NOW.toISOString());
+    expect(incubationReady(comRelogio, 'champion-virus', NOW)).toBe(false);
   });
 
   it('grava o registro com a origem — a prova de que a escada foi subida', () => {

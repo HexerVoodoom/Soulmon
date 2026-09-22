@@ -25,7 +25,7 @@ import { GamePopups } from './components/GamePopups';
 import { EvolveTaskModal } from './components/EvolveTaskModal';
 import { EvolutionCeremony } from './components/EvolutionCeremony';
 import { useSpriteGeneration, libraryOf } from './hooks/useSpriteGeneration';
-import { incubationFor, incubationReady, isIncubating } from './utils/spriteTrigger';
+import { emptyIncubation, incubationFor, incubationReady, isIncubating } from './utils/spriteTrigger';
 import { spriteText } from './utils/spriteCopy';
 import { emptySpriteLibrary, revertVisor, displaySprite, isNewbornLibrary, markTuneSeen, recordSprite, type SpriteLibrary } from './utils/spriteLibrary';
 import { getSpriteForStage } from './utils/sprites';
@@ -3499,6 +3499,17 @@ export default function App() {
         dominantAlignment: result.dominantAlignment,
         dominantRealm: result.dominantRealm,
       },
+      /* WP4.29 — o relógio da incubação zera com a criatura, pelo MESMO motivo
+         que zera no Renascimento (`utils/rebirth.ts`): ele é por FORMA e
+         sobrevive de propósito à degeneração (parecer R-L), mas a fronteira
+         daquele perdão é *dentro da mesma vida*. As formas aqui são outras
+         (`soulmonStages` acabou de ser substituído), então um `since` da
+         criatura anterior seria carimbo herdado — liberaria a primeira
+         evolução da criatura nova sem incubação nenhuma.
+         ⚠️ Note que isto NÃO contradiz o `bornAt` logo acima: lá o que se
+         preserva é o tempo JUNTOS, que é do jogador; aqui o que se descarta é
+         um relógio que pertencia a formas que não existem mais. */
+      incubation: emptyIncubation(),
     }));
   }, []);
 

@@ -79,7 +79,13 @@ function superficies(): string[] {
   anda(join(RAIZ, 'src', 'utils'), saida);
   anda(join(RAIZ, 'android', 'app', 'src', 'main', 'java'), saida);
   anda(join(RAIZ, 'android', 'app', 'src', 'main', 'res', 'values'), saida);
-  for (const f of ['functions/api/_pushCopy.js']) {
+  // ⚠️ WP4.29 (22/09/2026): `src/App.tsx` NÃO era varrido, e é onde mora o
+  // slot de avisos da Home — a superfície que o jogador lê todo dia. A lacuna
+  // era pré-existente e ficou exposta quando o aviso da incubação entrou ali:
+  // ele só estava coberto pela varredura do R-I, que olha contagem de tempo,
+  // não FOMO. Achado pelo `soulmon-guarda-permanencia` na verificação do
+  // aceite. É um arquivo só porque `src/` inteiro arrastaria os testes.
+  for (const f of ['src/App.tsx', 'functions/api/_pushCopy.js']) {
     const cheio = join(RAIZ, f);
     if (existsSync(cheio)) saida.push(cheio);
   }
@@ -108,6 +114,7 @@ describe('proibição #15 — nenhuma frase de "última chance" alcança o jogad
     expect(arquivos.length).toBeGreaterThan(50);
     expect(arquivos.some(a => a.endsWith('_pushCopy.js'))).toBe(true);
     expect(arquivos.some(a => /SettingsPage\.tsx$/.test(a))).toBe(true);
+    expect(arquivos.some(a => /src[/\\]App\.tsx$/.test(a)), 'App.tsx fora da varredura').toBe(true);
   });
 
   it('nenhuma superfície contém frase de FOMO fora de comentário', () => {
