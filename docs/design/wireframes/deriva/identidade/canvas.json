@@ -1,0 +1,88 @@
+{
+  "artboards": [
+    {
+      "file": "AvisoTermos.dc.html",
+      "title": "DER-01 → 04 · o aviso de termos (8ª chave da fila 2)",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1669,
+      "page": "page-1"
+    },
+    {
+      "file": "ToastDesfazer.dc.html",
+      "title": "DER-05 · 06 · 07 · o toast de desfazer (5 s)",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1148,
+      "page": "page-1"
+    },
+    {
+      "file": "ChatSuporte.dc.html",
+      "title": "DER-08 · 09 · 10 · o caminho de crise no chat",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 1476,
+      "page": "page-1"
+    },
+    {
+      "file": "ConfigSomSobre.dc.html",
+      "title": "DER-11 → 14 · Configurações: Som, Sobre e o feedback",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 1635,
+      "page": "page-1"
+    },
+    {
+      "file": "ContaExcluida.dc.html",
+      "title": "DER-15 · 16 · 17 · a lápide (conta excluída, 410)",
+      "x": 1960,
+      "y": 0,
+      "w": 390,
+      "h": 1363,
+      "page": "page-1"
+    },
+    {
+      "file": "VozKinds.dc.html",
+      "title": "DER-18 · a voz da criatura — 11 dos 21 kind",
+      "x": 2450,
+      "y": 0,
+      "w": 390,
+      "h": 1763,
+      "page": "page-1"
+    },
+    {
+      "file": "VozKindsTracos.dc.html",
+      "title": "DER-19 · 20 · corpo, sono, silêncio e a matriz de traço",
+      "x": 2940,
+      "y": 0,
+      "w": 390,
+      "h": 2349,
+      "page": "page-1"
+    },
+    {
+      "file": "GlifosNavDeck.dc.html",
+      "title": "DER-21 · glifos próprios — nav e deck (20)",
+      "x": 3430,
+      "y": 0,
+      "w": 390,
+      "h": 1189,
+      "page": "page-1"
+    },
+    {
+      "file": "GlifosUtilitarios.dc.html",
+      "title": "DER-22 · glifos próprios — lista e utilitários (19)",
+      "x": 3920,
+      "y": 0,
+      "w": 390,
+      "h": 1189,
+      "page": "page-1"
+    }
+  ],
+  "pages": [
+    "page-1"
+  ]
+}

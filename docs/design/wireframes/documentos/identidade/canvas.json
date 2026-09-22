@@ -1,0 +1,29 @@
+{
+  "artboards": [
+    {
+      "file": "Termos.dc.html",
+      "title": "DOC-01 · Termos de Uso (PT + EN na mesma página)",
+      "x": 0,
+      "y": 0,
+      "w": 760,
+      "h": 6520,
+      "page": "page-1"
+    },
+    {
+      "file": "Privacidade.dc.html",
+      "title": "DOC-02 · Política de Privacidade (PT + EN)",
+      "x": 0,
+      "y": 0,
+      "w": 760,
+      "h": 15966,
+      "page": "page-1"
+    }
+  ],
+  "pages": [
+    "page-1"
+  ],
+  "grid": {
+    "cols": 2,
+    "colW": 860
+  }
+}
