@@ -1,6 +1,6 @@
 # Regras de negócio — todas as regras do jogo, por sistema
 
-> **Dono:** doc-redator-regras · **Data:** 22/09/2026 (2ª sincronização do dia, delta `a6c1cd8a..592e2c14`, QA Rodada 2: §46 cota de chat por tier (provisório #55); §55 `XP_PERFECT_DAY` passou a ser emitido; §7/§18/§46 ganharam só a NOTA "aberto ao dono" dos provisórios #58/#59/#61 — nenhuma regra de jogo mudou) · **Estado:** verificado em 22/09/2026 por doc-verificador (delta `a6c1cd8a..592e2c14` — `_aiGuard.js` › `AI_LIMITS.chat.perAccountByTier`, `dailyReset.ts` › `awardBondXP(..., { kind: 'perfectDay' })` e os `it.todo` de `regrasDeJogo.qaRodada2.test.ts` conferidos; anterior no mesmo dia: delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §46 cortesia × reembolso (`auditRefunds`/`paidProviderOf`) e §56 versões `2026-09-22` + `qualDocMudou` conferidos símbolo a símbolo contra `_entitlements.js`, `consent.ts`, `termsNotice.ts`; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §46 cortesia, §56 aviso de termos, §57-A `dias-completos-30`/`conquistasHerdadas`, §58-A ⚰️ `SettingsModal` conferidos símbolo a símbolo; anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: §59 D31–D33 reconferidas no delta `15164e4c..7e5d0ba9` — D32 ⚰️ fechada confere com o `CLAUDE.md` no disco (cinco arquivos, S1..S16) e com `ls public/sounds`; D31 segue ABERTA (o `CLAUDE.md` ainda diz `DÍVIDA`); verificação anterior: §58-A e §59 D32–D33, delta `5ac3d351..8d318529`, som/S16 + chaves na `SettingsPage`; verificação anterior do mesmo dia: só as seções do delta `dc72579e..9875477b` — §2, §3, §8, §10, §12, §45, §48, §59 D31; verificação anterior: 21/09/2026, seções do delta `2580b73a..dc72579e` — §22, §28, §41, §43, §46, §57-A, §57-B, §59 D28–D30; doc inteiro: 10/09/2026, em duas metades)
+> **Dono:** doc-redator-regras · **Data:** 22/09/2026 (3ª sincronização do dia, delta `cd66940f..cf6315e1` (execução das 32 respostas do dono — **oito regras de jogo mudaram**): §7 a virada julga o último dia aberto + os quatro campos que ela escreve; §8 as três travas novas do dreno (#58b); §18 uma virada completa antes de re-evoluir (#59); §24 `habitCountsForHeartsOn` (#57b); **§24-A novo** — desfazer a conclusão (#57); §46 Bits por dia completo + teto de minijogo (#61/#63) e o ponteiro do modelo (#55); §48/§49 o 🌀 escreve `missionPerfectDays`; §55 os 11 eventos ganharam emissor (#59b) e a comida ficou de fora; §57-A o 🌀 saiu das conquistas (#41/#60); anterior: 2ª sincronização do dia, delta `a6c1cd8a..592e2c14`, QA Rodada 2: §46 cota de chat por tier (provisório #55); §55 `XP_PERFECT_DAY` passou a ser emitido; §7/§18/§46 ganharam só a NOTA "aberto ao dono" dos provisórios #58/#59/#61 — nenhuma regra de jogo mudou) · **Estado:** verificado em 22/09/2026 por doc-verificador (delta `cd66940f..cf6315e1` — `dailyReset.ts` (`diaJulgado`, `BITS_PER_COMPLETE_DAY`, `podeEvoluirDepoisDaQueda`, `soParaCoracao`), `poopDrain.ts` (`saveDaysLived`/`returnGraceLeft`/`getPreviousForm`), `habitRhythm.ts` (`habitCountsForHeartsOn`/`isWeekClosingDay`), `currencies.ts` (`MINIGAME_BITS_PER_DAY`/`creditMinigameBits`), `missions.ts`, `specialItemUse.ts`, `completionUndo.ts` e os 11 `kind` de `bond.ts` × os emissores do `App.tsx` conferidos símbolo a símbolo; a AUSÊNCIA de `kind` de comida conferida por `grep`); anterior: verificado em 22/09/2026 por doc-verificador (delta `a6c1cd8a..592e2c14` — `_aiGuard.js` › `AI_LIMITS.chat.perAccountByTier`, `dailyReset.ts` › `awardBondXP(..., { kind: 'perfectDay' })` e os `it.todo` de `regrasDeJogo.qaRodada2.test.ts` conferidos; anterior no mesmo dia: delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §46 cortesia × reembolso (`auditRefunds`/`paidProviderOf`) e §56 versões `2026-09-22` + `qualDocMudou` conferidos símbolo a símbolo contra `_entitlements.js`, `consent.ts`, `termsNotice.ts`; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §46 cortesia, §56 aviso de termos, §57-A `dias-completos-30`/`conquistasHerdadas`, §58-A ⚰️ `SettingsModal` conferidos símbolo a símbolo; anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: §59 D31–D33 reconferidas no delta `15164e4c..7e5d0ba9` — D32 ⚰️ fechada confere com o `CLAUDE.md` no disco (cinco arquivos, S1..S16) e com `ls public/sounds`; D31 segue ABERTA (o `CLAUDE.md` ainda diz `DÍVIDA`); verificação anterior: §58-A e §59 D32–D33, delta `5ac3d351..8d318529`, som/S16 + chaves na `SettingsPage`; verificação anterior do mesmo dia: só as seções do delta `dc72579e..9875477b` — §2, §3, §8, §10, §12, §45, §48, §59 D31; verificação anterior: 21/09/2026, seções do delta `2580b73a..dc72579e` — §22, §28, §41, §43, §46, §57-A, §57-B, §59 D28–D30; doc inteiro: 10/09/2026, em duas metades)
 > **Verificação:** `npx vitest run src/utils src/types src/hooks` — cada sistema abaixo declara a sua régua própria na linha **Régua**. Números medidos trazem o comando na própria linha.
 > **Não cobre:** o porquê estratégico e as linhas vermelhas (→ [`01-VISAO.md`](01-VISAO.md)), telas e navegação (→ `03-FLUXO-DE-TELAS.md`), função por função (→ `06-REFERENCIA/`), formato do save (→ `07-DADOS-E-SAVE.md`), infraestrutura de push, deploy e API (→ `08-INTEGRACOES-E-DEPLOY.md`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -459,8 +459,14 @@ dayWasPerfect = totalTasks > 0
 ```
 
 **A MESMA meta nos dois eixos, e a meta INTEIRA** — não a de coração. Quando
-verdadeiro: `perfectDays++` e `totalPerfectDays++` (o vitalício das missões, que
-**nunca zera ao evoluir**).
+verdadeiro, a virada escreve **quatro** coisas (`computeDailyReset`, desde
+22/09/2026): `perfectDays++` (o contador que a escada consome),
+**`totalPerfectDays++`** (o vitalício REAL, que **nunca zera ao evoluir** e é o
+que `achievements.ts` lê), **`missionPerfectDays++`** (o vitalício da MISSÃO —
+decisão do dono **#41/#60**, [§57-A](#conquistas)) e **`gamePoints +=
+BITS_PER_COMPLETE_DAY`** (100 💠 — decisão do dono **#61/#63**,
+[§46](#moedas)). ⚰️ Até 22/09/2026 eram só os dois primeiros, e
+`totalPerfectDays` era "o vitalício das missões".
 
 **O nome mudou em 07/09/2026 (P5), o mecanismo não.** Os textos PT/EN dizem "dia
 completo"/"complete day"; os símbolos `perfectDays`, `wasPerfect` e
@@ -484,15 +490,33 @@ separação das duas metas).
   `totalTasks === 0` e a virada NEGAR o dia completo — com a barra da tela em
   100%.
 - Item **🌀 Glitchtama** dá +1 `perfectDays` ao ser usado, **no máximo 1 por dia
-  do jogador** (`GLITCHTAMA_PER_DAY`) — ver [§48](#itens-especiais).
+  do jogador** (`GLITCHTAMA_PER_DAY`) — ver [§48](#itens-especiais). ⚰️ Desde
+  22/09/2026 ele **não** soma em `totalPerfectDays`, só em `missionPerfectDays`
+  ([§57-A](#conquistas), decisão **#41/#60**).
 - A **folga da semana não vira dia completo**: não ganha, não perde.
-- **A virada julga só ONTEM** (`yesterdayString`): quem faz tudo na segunda e só
-  reabre na quarta nunca recebe o dia completo de segunda — o perfil "3×/semana
-  que só abre nesses dias" fechou **0 dias completos em 90** na simulação da QA
-  Rodada 2 (`07-simulacao-jogo-r2.md` §2.1). **É a regra escrita e continua
-  valendo; aberto ao dono (#58)** — o provisório proposto (julgar o dia de
-  `lastResetDate`) está como `it.todo` em `src/utils/regrasDeJogo.qaRodada2.test.ts`
-  e NÃO foi aplicado. Este parágrafo não muda regra: registra a medição.
+- ⚰️ **A virada julgava só ONTEM** (`yesterdayString = now − 1`) até 22/09/2026.
+  Quem fazia tudo na segunda e só reabria na quarta nunca recebia o dia completo
+  de segunda: a virada de quarta olhava a TERÇA, `dailyDone = 0`, e como
+  `daysAway >= ABSENCE_FORGIVENESS_DAYS` ela perdoava **e também não creditava**.
+  Os perfis "3×/semana que só abrem nesses dias" fecharam **0 dias completos em
+  90** na simulação da QA Rodada 2 (`07-simulacao-jogo-r2.md` §2.1), rookie para
+  sempre, tendo feito 100% dos hábitos.
+- ✅ **A virada julga o ÚLTIMO DIA ABERTO** (decisão do dono **#58**,
+  22/09/2026). `computeDailyReset` calcula `diaJulgado`: se `lastResetDate` for
+  anterior a ontem, é ELE que a virada julga; senão, ontem. Não é perdão novo —
+  é ler o que `withHabitCompletion`/`lastCompletedDate` já gravaram naquele dia.
+  `dayWasPerfect` continua exigindo meta cumprida **e** energia cheia, então dia
+  em que ninguém fez nada segue não creditando nada. Limites de propósito:
+  **nunca** julga um dia à frente de ontem (save adulterado, relógio para trás),
+  **nunca** julga hoje (que não terminou) e julga **um** dia, não todos os que
+  passaram. Medido: o perfil que só abre seg/qua/sex foi de 0 para **38** dias
+  completos em 90, rookie → mega.
+- ⚠️ **A FOLGA da semana continua ancorada em ONTEM**, e não no dia julgado —
+  de propósito (`semanaDeOntem = restWeekKeyFor(ontem)`). Ancorá-la no dia
+  julgado faria quem volta de ausência longa cair numa semana ANTIGA, o que
+  recarrega a folga e adia a cobrança mais um dia: um **nono perdão** entrando
+  pela porta dos fundos (linha vermelha #17). A #58 é sobre CREDITAR o dia
+  vivido, não sobre alargar carência.
 - Desde `592e2c14` o dia completo **emite `XP_PERFECT_DAY`** de verdade
   ([§55](#vinculo)) — a tabela já dizia, ninguém emitia.
 
@@ -526,9 +550,32 @@ não de ser agendado. Polling de 10 s. Nunca aparece dormindo.
 
 O teto é **diário e persistido** em `poopDrainCharge {day, hearts}`, com `day` no
 **dia do jogador** — **nunca por tick**: sem isso, quatro ticks de 6 h custariam
-4 corações, cada um "dentro do teto". As três travas que ele respeita:
-`MAX_HEARTS_LOST_PER_DAY`, `heartLossCap` (Teimoso) e
-`ABSENCE_FORGIVENESS_DAYS`.
+4 corações, cada um "dentro do teto".
+
+**As travas da virada que o dreno respeita** (decisão do dono **#58b**,
+22/09/2026 — ⚰️ o cabeçalho deste arquivo e este § já **afirmavam** que ele
+respeitava "exatamente as mesmas travas da virada", e era falso em três de seis):
+
+| Trava | Como o dreno a lê |
+|---|---|
+| `MAX_HEARTS_LOST_PER_DAY` + `heartLossCap` (Teimoso) | já valia |
+| `ABSENCE_FORGIVENESS_DAYS` | já valia — reancora o relógio em `now` |
+| **`NEW_SAVE_GRACE_DAYS`** (carência de save novo) | ✅ desde 22/09/2026, pela MESMA leitura da virada (`saveDaysLived`), não por contador próprio |
+| **rampa de retorno** (`lastDayReport.returnGraceLeft > 0`) | ✅ desde 22/09/2026 — o crédito é da virada; o dreno só o respeita |
+| **piso da raiz** (rookie nunca abaixo de 1 ♥) | ✅ desde 22/09/2026, via `getPreviousForm(stage, branch) === stage`; quem tem forma abaixo continua podendo zerar e degenerar |
+
+O que a QA Rodada 2 (§2.5) mediu antes disso: save novo perdia 1 coração em d1,
+d2 e d3; quem voltava de ausência era perdoado pela virada e cobrado pelo dreno
+no mesmo dia; e o rookie ficava em **HP 0 todos os dias** — a virada devolvia 1
+de manhã, o dreno tirava à noite —, com o relatório anunciando
+`forgiven: true, heartsLost: 0` e a barra em 2/3. As três novas também
+**reancoram o relógio em `now`**: perdoar e guardar o período para o próximo
+tick é o perdão vazando por fora.
+
+⚠️ **O que NÃO entrou e segue com o dono:** a **folga da semana** (ver "O que NÃO
+faz", abaixo) e o **teto do DIA compartilhado** entre virada e dreno — o dono
+respondeu a #58b sem ele, e hoje os dois tetos são independentes, então um dia
+ruim pode custar `MAX_HEARTS_LOST_PER_DAY` na virada **e** de novo no dreno.
 
 O relógio é **sempre reancorado em `now`** quando cobra: o resto dos períodos é
 PERDOADO, não guardado para o próximo tick.
@@ -1301,14 +1348,27 @@ tarefas, hábitos, moedas, coleção nem `unlockedEvolutions`. Não se chama mor
 Não é comprável — não existe cura por Créditos ([§46](#moedas)). O cadeado de
 evolução não protege contra ela.
 
-**Aberto ao dono (#59, QA Rodada 2 — `07-simulacao-jogo-r2.md` §2.2): a queda é
-cura grátis.** `degeneratedPerfectDays` devolve `max(floor(req/2), prev − 5)`,
-que costuma ser ≥ `required` do estágio novo — um mega com 26 dias que cai para
-ultimate reaparece com 21 ≥ 5, o botão Evoluir acende **na mesma abertura** e a
-redenção devolve HP cheio por um clique (`redeemed: true`). É o comportamento
-escrito acima e **continua valendo**; o provisório proposto (exigir uma virada
-com `dayWasPerfect` depois da queda) está como `it.todo` em
-`src/utils/regrasDeJogo.qaRodada2.test.ts` e não foi aplicado.
+**✅ UMA VIRADA COMPLETA ANTES DE RE-EVOLUIR** (decisão do dono **#59**,
+22/09/2026). ⚰️ Até esta data a queda era **cura grátis**:
+`degeneratedPerfectDays` devolve `max(floor(req/2), prev − 5)`, que costuma ser
+≥ `required` do estágio novo — um mega com 26 dias que caía para ultimate
+reaparecia com 21 ≥ 5, o botão Evoluir acendia **na mesma abertura**, a
+cerimônia tocava por causa de uma QUEDA, a evolução devolvia
+`MAX_HP_BY_FORM` cheio e `applyRedemption` marcava `redeemed: true` por um botão
+apertado segundos depois de cair. Medido na simulação de 90 dias (`Dm` d46, `B`
+d54/d66/d89): o ioiô rendia uma evolução a mais.
+
+A trava é **`podeEvoluirDepoisDaQueda(state) = !state.degeneratedByHP`**
+(`src/utils/dailyReset.ts`, dono único). Não inventa constante, não carimba data
+nova no save (linha vermelha #20) e não tira `perfectDays` de ninguém:
+`degeneratedByHP` é escrito pela virada que derrubou e reescrito como `false` na
+virada SEGUINTE, logo "não evoluir enquanto ele estiver de pé" **é**, literalmente,
+"exigir uma virada completa depois da queda". Tem **três** chamadores, todos
+delegando: o `handleEvolve` do `App.tsx` (reconferido sobre o `prev`, porque é o
+updater que commita), o `canEvolve` que acende o botão, e o efeito que abre a
+cerimônia — que passa a não abrir na mesma abertura da queda, senão o jogador
+veria um ritual que o commit recusa. Medido: o perfil `B` caiu de 9 para **8**
+evoluções em 90 dias.
 
 **Onde a UI mostra.** `src/components/DailyReportModal.tsx` (`degenerated` muda
 manchete e ícone — a composição de LUTO com coração partido e fundo rosa saiu),
@@ -1802,7 +1862,9 @@ desktop, que não carregam este motor. Quem escreve grava os **dois** campos.
 `src/utils/habitRhythm.ts` → `isDueOn`, `weeklyProgress`, `weekStart` e
 **`habitCountsOn`**, que é o dono único da pergunta "este hábito conta neste
 dia?" — a pergunta já esteve implementada três vezes, a partir de duas fontes de
-dados diferentes.
+dados diferentes. Desde 22/09/2026, **`habitCountsForHeartsOn`** e
+**`isWeekClosingDay`** (mesmo arquivo) são os donos da pergunta gêmea "este
+hábito pode custar CORAÇÃO neste dia?" — ver o caso de borda abaixo.
 
 **Régua.** `src/utils/habitRhythm.test.ts` (bloco `isDueOn — cada tipo de
 Schedule`), `src/utils/habitEligibility.regression.test.ts` (os três consumidores
@@ -1818,6 +1880,25 @@ linhas "Recorrência contada da CONCLUSÃO" e "3× por semana";
   conta enquanto `weeklyProgress().done < target`, e o dia em que a meta foi
   cumprida continua contando (senão o crédito sumiria junto com a cobrança).
   Depois disso, os dias restantes são de graça.
+- ✅ **`timesPerWeek` só pode custar CORAÇÃO no dia em que a semana FECHA**
+  (decisão do dono **#57b**, 22/09/2026 — `habitCountsForHeartsOn`). ⚰️ Até
+  então a meta de coração usava a **mesma** lista do dia completo: um "3× por
+  semana" feito seg/qua/sex era cobrado na terça (1/3) e na quinta (2/3), e o
+  domingo abria semana nova (0/3) cobrando a segunda — **três** corações por
+  semana. Medido na QA Rodada 2 (§2.3): o perfil `Bt` perdeu **25 corações e
+  caiu 6 vezes em 90 dias**, enquanto o MESMO jogador com `weekdays [1,3,5]`
+  perdia **zero**. O preset que o `CreateModal` oferece a quem não quer
+  compromisso diário era o que mais punia, e este § e `isDueOn` prometem por
+  escrito que ele "tem perdão embutido". Agora: feito hoje → entra na meta (para
+  o feito e a meta usarem o mesmo denominador); meta da semana já cumprida →
+  fora; nos demais dias, só entra se `isWeekClosingDay(date)` (sábado, derivado
+  de `weekStart + 6`, e não de um `getDay() === 6` escrito à mão). Medido depois:
+  **0 corações e 0 quedas**. **O CRÉDITO não mudou** — `habitCountsOn` continua
+  deixando o hábito contar para o dia completo em qualquer dia em que for feito.
+  Quem compõe as duas listas é `heartGoalFor` › `soParaCoracao` em
+  `dailyReset.ts`, que passa pelo `dailyGoalFor` de sempre em vez de repetir o
+  `Math.min(…, required)` (dono único, `dailyGoal.contract.test.ts`); sem
+  `dayKey` não há semana a consultar e o estado volta intacto.
 - **Semana começa no DOMINGO** (`weekStart`), a mesma convenção do `weekDays` que
   o widget e o desktop leem. Duas convenções produziriam um "2 de 3" que discorda
   de si mesmo entre telas.
@@ -1836,6 +1917,70 @@ pura.
 "Personalizar"), `src/components/HabitConstancy.tsx` (a janela de pontos),
 `src/components/QuickAddBar.tsx` e `src/utils/quickAdd.ts` ([§35](#quickadd),
 que sabe escrever as três variantes a partir de uma linha de texto).
+
+---
+
+<a id="desfazer"></a>
+## 24-A. ↩️ Desfazer a conclusão (a janela de 5 segundos)
+
+**Em uma frase.** Marcar um hábito abre **5 segundos** de "Desfazer" que reverte
+a conclusão inteira; passada a janela, ela volta a ser imutável.
+
+**A regra** (decisão do dono **#57**, 22/09/2026). ⚰️ Marcar era IRREVERSÍVEL
+por desenho — `handleToggleActivityCompletion` abre com
+`if (activity?.completedToday …) return;`, e o comentário ao lado diz que
+*"completed activities cannot be unchecked — only daily reset restores them"*. A
+razão é boa (desmarcar à vontade transforma o contador de dia completo em
+brinquedo e o `foodInventory` em torneira), mas ela também significava que **o
+toque errado** — o dedo no item de cima da lista, a linha vizinha, o hábito
+homônimo — custava comida, atributo, XP de Vínculo e constância **sem volta**,
+até a meia-noite.
+
+`UNDO_WINDOW_MS` = **5000** (`src/utils/completionUndo.ts`) é a duração do toast
+**e** o limite da reversão, de propósito: duas durações diferentes dariam um
+botão que some antes de expirar (promessa quebrada) ou que expira antes de sumir
+(botão morto na tela).
+
+**É SNAPSHOT, não "aplicar o inverso".** A conclusão toca **11** campos em três
+arquivos (`CAMPOS_DA_CONCLUSAO`: `activities`, `activityStats`, `activityLog`,
+`foodInventory`, `habitRhythms`, `virusPoints`, `dataPoints`, `vaccinePoints`,
+`attributesSinceLastEvolution`, `totalXP`, `bondDaily`). Escrever o inverso de
+cada um seria uma SEGUNDA regra de conclusão, e regra copiada diverge em
+silêncio (footgun 9): quem acrescentasse um campo amanhã deixaria o desfazer
+pela metade sem nada ficar vermelho. O snapshot guarda o valor ANTES e devolve
+ele; campo novo entra em `CAMPOS_DA_CONCLUSAO`, e há teste varrendo.
+
+**O que o desfazer NÃO reverte, de propósito.** Só os campos listados.
+`perfectDays`, `totalPerfectDays`, `healthPoints`, `evolutionStage` e as moedas
+**não estão na lista** — a conclusão não os escreve, e desfazer não pode virar
+porta dos fundos para mexer em progressão. Em compensação, dentro da janela ele
+devolve **inclusive a comida já gasta**, que é o preço de reverter "a conclusão
+inteira": cai sempre do lado seguro (o jogador fica com o estado de antes do
+erro, nunca com um a mais).
+
+**Dono.** `src/utils/completionUndo.ts` — `CAMPOS_DA_CONCLUSAO`,
+`UNDO_WINDOW_MS`, `snapshotCompletion` (chamada FORA do updater, porque o
+updater roda 2× no StrictMode), `undoCompletion` (pura, idempotente, rodando
+DENTRO do updater sobre o `prev`). `src/App.tsx` › `ofereceDesfazer` é quem
+monta o toast; `src/components/UndoToast.tsx` é a peça
+([§03 §4](03-FLUXO-DE-TELAS.md), [04 §10](04-IDENTIDADE-VISUAL.md)).
+
+**Régua.** `src/utils/regrasDeJogo.qaRodada2.test.ts` (bloco `#57`).
+
+**Casos de borda.**
+- **Hábito com etapas**: a ÚLTIMA etapa fecha o hábito, então ela também abre a
+  janela — sem isso, hábito com etapas seria a metade do app onde o toque errado
+  continua sem volta.
+- **Virada do dia no meio da janela**: seguro, porque os campos são
+  sobrescritos pelos do snapshot e a virada reescreve `activities`/`habitRhythms`
+  na abertura seguinte de qualquer jeito.
+- **Desfazer duas vezes** escreve os mesmos valores (idempotente por construção).
+- A conclusão **já feita hoje** não reabre a janela (`completedToday &&
+  lastCompletedDate === today`).
+
+**O que NÃO faz.** Não transforma a conclusão em reversível: passada a janela,
+`handleToggleActivityCompletion` continua recusando desmarcar. Não toca
+progressão. Não persiste nada — o snapshot vive na *closure* do toast.
 
 ---
 
@@ -3445,7 +3590,7 @@ tem um campo próprio, e são três campos distintos (há teste contando o conju
 
 | Moeda | `field` | Origem | Onde gasta | Onde mora |
 |---|---|---|---|---|
-| 💠 Bits | `gamePoints` | minijogos (Dino, PPT, Masmorra, Arena) | loja comum, `deepStartCost` da masmorra | save do cliente |
+| 💠 Bits | `gamePoints` | **dia completo (100/dia)** + minijogos (Dino, PPT, Masmorra, Arena), estes com teto de **150/dia** | loja comum, `deepStartCost` da masmorra | save do cliente |
 | 🎖️ Emblemas | `emblems` | Torneio (`EMBLEMS_PER_WIN` / `EMBLEMS_PER_LOSS`) e missões semanais | só `TOURNAMENT_ITEMS` | save do cliente |
 | 💎 Créditos | `credits` | **dinheiro real** (ou anúncio, ver abaixo) | reroll, câmbio por Bits, `accountTier:'paid'` | servidor, `ENT_PREFIX` + saveId |
 
@@ -3455,6 +3600,8 @@ Constantes, todas em `src/utils/currencies.ts` salvo indicação:
 |---|---|---|
 | `EMBLEMS_PER_WIN` | 3 | Emblemas por vitória de partida do Torneio |
 | `EMBLEMS_PER_LOSS` | 1 | consolo — jogar sempre rende alguma coisa |
+| `BITS_PER_COMPLETE_DAY` (`src/utils/dailyReset.ts`) | 100 | 💠 creditados pela virada a cada **dia completo** (#61/#63, 22/09/2026). Sem teto próprio: o teto é o calendário |
+| `MINIGAME_BITS_PER_DAY` | 150 | teto de 💠 que **os minijogos** podem render num dia do jogador (#61/#63). Ledger `minigameBits {day, earned}` no save |
 | `CREDIT_TO_BITS` | 10 | 1 Crédito = 10 Bits, **só nesta direção** |
 | `BITS_EXCHANGE` | 3 pacotes (10/25/60 Créditos) | cada pacote é `credits × CREDIT_TO_BITS` |
 | `REROLL_COST_CREDITS` (`src/utils/monetization.ts`) | 50 | refazer a leitura do Oráculo |
@@ -3502,14 +3649,49 @@ zero, alcançável por `curl` (`03-negocio-pesquisa-r2.md` §5). Não é moeda �
 `429 ai-daily-limit` com `AI_REFUSAL_MESSAGES`, honesta, nunca como convite de
 compra. Régua: `functions/api/_aiGuard.tierCap.qa2.test.js`.
 
-**Aberto ao dono (#61, QA Rodada 2 — `07-simulacao-jogo-r2.md` §2.7): quem só
-cuida fica com 0 Bits em 90 dias.** Bits vêm só de minijogo (masmorra 327–417
-por run, sem teto de runs); hábito, tarefa, dia completo e evolução rendem 0.
-O perfil que faz tudo todo dia nunca vê a loja; o perfil que só roda masmorra
-compra a loja 4× e 288 chips (+864 de atributo — o galho vira comprável). É a
-regra escrita na tabela acima (origem dos Bits = "minijogos (Dino, PPT, Masmorra, Arena)") e **continua valendo**; a
-alavanca proposta (Bits por dia completo, ou teto diário de runs) não foi
-aplicada.
+**✅ BITS POR DIA COMPLETO + TETO DIÁRIO DE MINIJOGO** (decisão do dono
+**#61/#63**, 22/09/2026). ⚰️ Até esta data Bits vinham **só** de minijogo, e a
+simulação de 90 dias (`07-simulacao-jogo-r2.md` §2.7) mediu o desequilíbrio
+contra a loja de **8 900 💠** (55 itens — o catálogo de `src/utils/shop.ts`;
+os dois docstrings o chamam de `SHOP_ITEMS`, e o export é `ALL_SHOP_ITEMS`):
+perfil **A** (faz
+tudo, todo dia, nunca joga) = **0 Bits**, loja inteira invisível; perfil **B**
+(3 runs/semana) = 13 598 (152% da loja); perfil **G** (zero hábitos, 1 run/dia)
+= 34 566 = **3,9× a loja**, mais 288 chips (o galho virava comprável). O jogo
+cobrava cuidado e pagava minijogo.
+
+As duas metades, e por que são duas:
+
+1. **`BITS_PER_COMPLETE_DAY = 100`** (`dailyReset.ts`), creditado pela virada
+   junto com o dia completo ([§7](#dia-completo)). O número saiu da simulação,
+   não do dedo: o perfil A faz **89** dias completos em 90, e `89 × 100 = 8 900`
+   = exatamente o catálogo — **quem cuida compra a loja inteira em ~90 dias, e
+   só então**. A unidade paga é a que o produto já sanciona (o **dia completo**),
+   **nunca** a contagem de tarefas (linha vermelha #16).
+2. **`MINIGAME_BITS_PER_DAY = 150`** (`currencies.ts`), com
+   `creditMinigameBits(prev, amount, dayKey)` puro, rodando **dentro** do
+   updater e gravando o ledger `minigameBits {day, earned}` no MESMO retorno que
+   soma os Bits — a masmorra credita várias vezes por run no mesmo lote do
+   React, e um teto lido de fora passaria duas vezes (família de bug do X-6). No
+   save, nunca no `localStorage`: teto que se fura trocando de aparelho não é
+   teto. O dia é o **dia do jogador**.
+
+⚠️ **Por que o teto é em BITS/dia e não em RUNS/dia**, embora a pergunta do dono
+dissesse "teto de runs": o perfil G **já faz exatamente uma run por dia**. O que
+o faz juntar 34 mil é o VALOR da run, que sobe com a base semanal da masmorra
+(327 → 417). Um teto de runs seria letra morta contra o jogador que a própria
+decisão nomeia; só em Bits/dia ele morde. Medido depois: G cai de 3,9× para
+**1,5× a loja** (~60 dias para comprar tudo), A compra em ~90, e a razão
+grinder/cuidador vira **1,5:1** em vez de ∞:1.
+
+**O teto não tira nada de ninguém:** bater nele só faz os Bits **pararem de
+somar** — exatamente como o teto suave do Vínculo ([§55](#vinculo)). Não
+bloqueia a masmorra, não cobra entrada, não toca coração; 🌀, placar, bestiário
+e andares continuam inteiros. O `CLAUDE.md` já declarava qual é a alavanca
+permitida ("se farmar Bits virar problema, a alavanca é custo de ENTRADA em
+Bits, nunca o retorno do custo em corações"), e um teto de **ganho** é mais
+suave ainda, porque não pode deixar ninguém sem jogar. Régua:
+`src/utils/regrasDeJogo.qaRodada2.test.ts` (bloco `#61/#63`).
 
 **Não existe Bits → Créditos.** A ausência é a regra, e há teste que varre os
 exports do módulo procurando qualquer coisa com nome `BITS_TO_CREDIT` /
@@ -3550,6 +3732,19 @@ ausência do caminho inverso, "o torneio só vende cosmético"),
 **Decisão.** [`docs/REGISTRO-DE-DECISOES.md`](../REGISTRO-DE-DECISOES.md) §5.4
 (monetização: o que nunca se vende) e §5.6 (recompensa com teto).
 [`docs/BILLING-SETUP.md`](../BILLING-SETUP.md) para o caminho da compra.
+
+☞ **O MODELO DE RECEITA foi decidido em 22/09/2026** (pergunta **#55** do dono) e
+o registro inteiro — as duas alternativas que perderam e os dois gatilhos de
+revisão — mora em [`REGISTRO-DE-DECISOES.md` §5.4](../REGISTRO-DE-DECISOES.md),
+resumido em [`01 §8`](01-VISAO.md#o-modelo-de-monetização). Em uma linha: compra
+única R$ 29,90 **+ assinatura de IA R$ 9,90/mês com 300 mensagens, só texto e
+voz** (chat, sugestões, transcrição); **o sprite fica FORA** (imagem é o custo
+caro); créditos para quem estoura; 1º mês de cortesia para quem comprou o
+desbloqueio; **construir DEPOIS do E0**. ⚠️ **Nada disso muda regra hoje**:
+`monetization.ts` **não tem SKU recorrente** — a ausência é proposital, e está
+declarada no docstring de `FULL_UNLOCK_SKU` — e o que limita custo de IA
+continua sendo a cota por tier de `_aiGuard.js` (logo acima). Este § descreve
+moedas; a receita não é moeda.
 
 **Casos de borda.**
 - **Emblemas são farmáveis por quem editar o `localStorage`**, e isso é aceito
@@ -3674,7 +3869,7 @@ cura, Glitchtama dá um dia completo — e nenhum conta no teto de comida.
 
 | Emoji | `kind` | Efeito ao USAR |
 |---|---|---|
-| 🌀 `GLITCHTAMA_EMOJI` | `glitchtama` | `perfectDays +1` **e** `totalPerfectDays +1` |
+| 🌀 `GLITCHTAMA_EMOJI` | `glitchtama` | `perfectDays +1` **e** `missionPerfectDays +1`. ⚰️ Até 22/09/2026 o segundo era `totalPerfectDays` — o 🌀 saiu das conquistas por decisão do dono **#41/#60** ([§57-A](#conquistas)) |
 | 💗 `HEART_ITEM_EMOJI` | `heart` | `+HEART_HEAL` de coração, clampado em `maxHealthPoints` |
 | 🦠 / 💾 / 💉 `CHIP_EMOJI` | `chip` | `+CHIP_BOOST` no atributo, `+CHIP_BOOST × 10` de `totalXP`, e o mesmo no `attributesSinceLastEvolution` |
 
@@ -3732,7 +3927,7 @@ recusa, o teto e a virada do dia), `src/utils/x6Updaters.contract.test.ts`.
   reconfere a recusa sobre o `prev`. Vale para os três tipos, e há teste para
   cada um.
 - **Último do estoque** some da pastinha (`delete`) em vez de virar `0`.
-- **`totalPerfectDays` ausente** em save antigo começa do zero, nunca `NaN`.
+- **`missionPerfectDays` ausente** em save antigo cai em `totalPerfectDays ?? 0` — o vitalício antigo JÁ somava os 🌀, então a missão nunca anda para trás para quem já usou o item. ⚰️ Este caso de borda falava de `totalPerfectDays`, que o 🌀 deixou de tocar.
 - **Virada do dia do jogador** devolve o direito ao Glitchtama; o registro velho
   não é apagado, é ignorado — o que torna a leitura idempotente.
 - **Emoji que não é especial** (comida comum) passa batido por
@@ -3770,11 +3965,16 @@ se usa), `src/components/ShopModal.tsx` (os chips à venda),
 | `mission-kills-100` | 100 | `dungeonKills` | `bg-mission-coliseum` |
 | `mission-runs-3` | 3 | `dungeonRunsCompleted` | `bg-mission-abyss` |
 | `mission-dino-1000` | 1000 | `dinoBest` | `bg-mission-dinoland` |
-| `mission-perfect-30` | 30 | `totalPerfectDays` | `bg-mission-aurora` |
+| `mission-perfect-30` | 30 | `missionPerfectDays` | `bg-mission-aurora` |
 
-Os contadores são **lifetime** e vivem no `GameState`. `totalPerfectDays` é o
-vitalício das missões e por isso **não** é decrementado na evolução (ao
-contrário de `perfectDays`, ver [§17](#evolucao)).
+Os contadores são **lifetime** e vivem no `GameState`, e por isso **não** são
+decrementados na evolução (ao contrário de `perfectDays`, ver
+[§17](#evolucao)). ⚰️ **`mission-perfect-30` lia `totalPerfectDays` até
+22/09/2026**; desde a decisão do dono **#41/#60** ele lê **`missionPerfectDays`**
+— dias completos reais **mais** os 🌀. São duas perguntas diferentes: "você
+cumpriu 30 dias?" (conquista, [§57-A](#conquistas), que lê `totalPerfectDays`) e
+"você acumulou 30 marcas?" (esta missão). A virada incrementa os **dois** num dia
+completo real, então a missão nunca ficou mais difícil do que era.
 
 `getMissionProgress` limita cada progresso ao `target` (nunca `104/100`).
 `isMissionComplete` compara com o alvo. `isShopItemUnlocked` é a porta que
@@ -3786,7 +3986,8 @@ degenerou, ou renasceu ([§20](#rebirth)), continua com a missão cumprida.
 
 **Dono.** `src/utils/missions.ts`. Os contadores são escritos no `src/App.tsx`
 (`handleDungeonEnemyDefeated`, `handleGlitchtama`, `handleDinoScore`) e na
-virada (`src/utils/dailyReset.ts`, `totalPerfectDays`).
+virada (`src/utils/dailyReset.ts` — `totalPerfectDays` **e**
+`missionPerfectDays`); o 🌀 escreve só o segundo (`src/utils/specialItemUse.ts`).
 
 **Régua.** `src/utils/missions.test.ts` (progresso, clamp, `every mission unlocks
 a distinct shop item, with CSS defined for bg rewards` e `plain (unlock-less)
@@ -4262,16 +4463,39 @@ de peso concluída · `XP_PERFECT_DAY` 50 · `XP_REST_NIGHT` 15 · `XP_NEW_DREAM
 `XP_TOURNAMENT_WIN` 15 / `XP_TOURNAMENT_LOSS` 8 · `XP_HABIT_MILESTONE`
 {7: 100, 21: 200, 66: 400} · `XP_TRIAGE_CLEARED` 30 · `XP_CHECK_IN` 10. Tetos por
 fonte em `BOND_DAILY_CAP`; o ledger é `bondDaily {day, spent}` e o `day` é o dia
-do jogador. ⚠️ **`XP_PERFECT_DAY` só passou a ser EMITIDO em `592e2c14`**
-(`computeDailyReset` › `awardBondXP(prev, { kind: 'perfectDay' }, playerDayKey(now, prev.playerDayTz))`
-quando `dayWasPerfect`): a tabela dizia "em `utils/dailyReset.ts`" e ninguém
-chamava — `bond.wiring.test.ts` testava a função pura com todos os `kind`s, e a
-simulação da QA Rodada 2 (`07` §2.4) mediu **7 dos 11 eventos mudos**. Este é
-o único que mora na virada e foi ligado; os outros seis são do `App.tsx` e
-seguem mudos — o patch está em
-`reviews/2026-09-22-qa-rodada-2/sim/patch-vinculo-app-eventos.md`, **não
-aplicado**. `perfectDay` não tem teto em `BOND_DAILY_CAP`; `totalXP` nunca
-desce. Régua: `src/utils/bond.diaCompleto.test.ts`.
+do jogador.
+
+✅ **OS 11 EVENTOS DA TABELA TÊM EMISSOR** (decisão do dono **#59b**,
+22/09/2026). ⚰️ A tabela descrevia 11 `BondEvent` e a simulação da QA Rodada 2
+(`07` §2.4) mediu **7 dos 11 mudos**: `bond.wiring.test.ts` testava a função
+pura com todos os `kind`s, e `grep -rn "kind: 'dungeonFloor'" src` não achava
+chamador nenhum. `XP_PERFECT_DAY` foi ligado em `592e2c14` (é o único que mora
+na virada); os **seis do `App.tsx`** foram ligados em `cf6315e1`:
+
+| `kind` | Onde é emitido | A régua que impede pagar duas vezes |
+|---|---|---|
+| `habitMilestone` | `withHabitCompletion`, via `milestoneReached(before, after)` — a MESMA detecção da cerimônia, e os dias vêm de `HABIT_MILESTONES` | `completeHabit` é idempotente por `dayKey` |
+| `dungeonFloor` | `handleDungeonFloorCleared`, ligado por `onFloorCleared` (`App.tsx` → `ActivitiesPage` → `DungeonGame`, prop nova) | `BOND_DAILY_CAP.dungeon` |
+| `triageCleared` | `App.tsx`, ao ESVAZIAR a fila de triagem — a fila é recontada sobre o estado já aplicado | só paga na transição "tinha → vazia"; pagar por carta seria recompensa por CONTAGEM (linha vermelha #16) |
+| `restNight` | ao registrar a noite, **só dentro da Janela de Descanso** — a mesma régua da missão `rest-nights` | `rest.nights.some(n => n.date === chaveDaNoite)`: `recordNight` é idempotente por manhã, `awardBondXP` não é |
+| `dreamNew` | ao coletar um sonho **inédito** (`isNew`) — mesma régua da missão `dream-new` | repetir sonho que já está no dex não acrescenta ao acervo, e não paga |
+| `nightmareCleared` | no MESMO updater que grava `markFought` (footgun 6) | — |
+
+O `dungeonFloor` é emitido **antes** do `if (floor >= MAX_FLOORS)` de propósito:
+o 5º andar é um andar limpo **e** uma run completa, e a tabela paga os dois — o
+teto diário de `bond.ts` é quem limita. `perfectDay` não tem teto em
+`BOND_DAILY_CAP`; `totalXP` nunca desce. Régua:
+`src/utils/bond.diaCompleto.test.ts`, `src/utils/bond.wiring.test.ts`.
+
+⚠️ **Aberto por decisão: a COMIDA continua FORA da tabela.** A resposta #55/#59b
+do dono diz "a tabela do §55 passa a incluir a comida", e isso **não foi
+implementado**: não existe `kind` de alimentar em `BondEvent` (a união tem 11
+membros, `grep` em `src/utils/bond.ts`) e nenhum caminho de `feedPet` chama
+`awardBondXP`. Registrado como aberto no bloco de 22/09/2026 do
+[`STATUS.md`](../STATUS.md). Acrescentar um evento novo é a única mudança aqui
+que precisa passar pela regra de desenho acima — **a trilha não pode pedir ação
+nova**; alimentar já existe no jogo, então ela cabe, mas é decisão de quem for
+implementar, não deste doc.
 
 **O gate de PvP.** `BOND_PVP_MIN_LEVEL` = **5**, e não é número escolhido: os
 níveis 1–4 são o funil de retenção D1–D7 e o 5 é o primeiro degrau fora dele
@@ -4606,6 +4830,25 @@ loja. A colocação na Ficha é do canvas Pet (`DECISOES-WIREFRAME.md` §22).
   valer também para o cosmético. Migração única no load: save sem o campo
   `conquistasHerdadas` e com ≥100 no gatilho antigo herda a conquista nova
   (`GameStateContext.legacySave.test.tsx`).
+- ✅ **O 🌀 Glitchtama saiu das CONQUISTAS** (decisão do dono **#41/#60**,
+  22/09/2026). ⚰️ Até esta data `applySpecialItem` somava **`totalPerfectDays++`**
+  ao usar o item, e `achievements.ts` lê exatamente esse campo: o perfil G da
+  simulação — zero hábitos, uma run de masmorra por dia — terminava 90 dias com
+  `totalPerfectDays = 90` e **nenhum** dia completo de verdade, abrindo
+  `perfect-day` e `dias-completos-30` sem nunca ter cumprido uma meta. E
+  `dias-completos-30` é justamente a conquista que substituiu `tasks-100` para
+  deixar de premiar CONTAGEM (proibição #16) — um minijogo inflando o contador
+  reabria o veto pela porta dos fundos. Agora o 🌀 escreve **`missionPerfectDays`**,
+  campo NOVO no save (linha vermelha #20: save só ACRESCENTA), lido **só** por
+  `utils/missions.ts` (`mission-perfect-30`), que a decisão manda continuar
+  contando o item. `totalPerfectDays` volta a significar uma coisa só — dias
+  completos REAIS —, e é ele que `achievements.ts` e `seasons.ts` leem. Duas
+  perguntas diferentes ("você cumpriu 30 dias?" × "você acumulou 30 marcas?"),
+  dois contadores, em vez de um número com dois significados. `computeDailyReset`
+  incrementa os **dois** num dia completo real, e `hydrateSave` lê
+  `missionPerfectDays ?? totalPerfectDays` — então a missão **nunca anda para
+  trás** nem fica mais difícil para quem já usou o item. Medido: o perfil
+  só-masmorra caiu de 90 para **0** dias completos.
 - **`habit-*` lê `totalDone`**, que a poda de `HISTORY_CAP` não toca — por isso
   o de 66 continua alcançável.
 - **Save antigo sem os campos**: todo acesso tem `?? 0` / `?? []`; nenhuma

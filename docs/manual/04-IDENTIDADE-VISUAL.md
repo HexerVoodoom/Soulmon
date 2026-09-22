@@ -1,6 +1,6 @@
 # Identidade visual e sonora do Soulmon
 
-> **Dono:** doc-redator-identidade · **Data:** 22/09/2026 (2ª sincronização do dia, delta `a6c1cd8a..592e2c14`, QA Rodada 2: §10.2 o ramo Android do gate exige `; wv)` e a CSP por igualdade; o flash de evolução do `CompanionHUD` passou a usar `--sm2-viewport-bg`/`--sm2-viewport-ink` — ⚰️ `#2dd4bf` sobre branco/70, ~1,6:1 — sem seção própria aqui, registrado no `06-REFERENCIA/components.md`) · **Estado:** verificado em 22/09/2026 por doc-verificador (delta `a6c1cd8a..592e2c14` — `index.html`, `public/_headers` e `CompanionHUD.tsx` conferidos; anterior no mesmo dia: delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §10.1 `name`/`description` do `manifest.json` e §10.2 gate por plataforma conferidos contra `public/manifest.json`, `index.html`, `src/deploy/manifest.contract.test.ts`; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §9 linha da trilha (⚰️ `SettingsModal`) e §10.2 gate de WebView conferidos por grep; `.sm2-notice` do banner de termos não é classe nova (`grep -n "^.sm2-notice" src/index.css`); anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: delta `dc72579e..9875477b`, conferido em `5ac3d351`: rodada 2 da SQUAD-ARTE, SQUAD-SOM retomada, superfície de suporte do chat) · §9 verificado em 21/09/2026 por doc-verificador (delta `5ac3d351..8d318529`: S16, trilha em duas camadas, escolha do dono nos 3 eventos longos, chaves na `SettingsPage`)
+> **Dono:** doc-redator-identidade · **Data:** 22/09/2026 (3ª sincronização do dia, delta `cd66940f..cf6315e1`: §10.0 a tagline ÚNICA travada por contrato (#70) e §10.1 a `description` do manifesto; §3 (réguas) ganhou a nota do `UndoToast` sem `className` — desenho inline por token, decisão e não descuido; anterior: 2ª sincronização do dia, delta `a6c1cd8a..592e2c14`, QA Rodada 2: §10.2 o ramo Android do gate exige `; wv)` e a CSP por igualdade; o flash de evolução do `CompanionHUD` passou a usar `--sm2-viewport-bg`/`--sm2-viewport-ink` — ⚰️ `#2dd4bf` sobre branco/70, ~1,6:1 — sem seção própria aqui, registrado no `06-REFERENCIA/components.md`) · **Estado:** verificado em 22/09/2026 por doc-verificador (delta `cd66940f..cf6315e1` — `index.html`, `public/manifest.json`, os dois casos `#70` de `src/deploy/manifest.contract.test.ts` e `src/components/UndoToast.tsx` conferidos); anterior: verificado em 22/09/2026 por doc-verificador (delta `a6c1cd8a..592e2c14` — `index.html`, `public/_headers` e `CompanionHUD.tsx` conferidos; anterior no mesmo dia: delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §10.1 `name`/`description` do `manifest.json` e §10.2 gate por plataforma conferidos contra `public/manifest.json`, `index.html`, `src/deploy/manifest.contract.test.ts`; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §9 linha da trilha (⚰️ `SettingsModal`) e §10.2 gate de WebView conferidos por grep; `.sm2-notice` do banner de termos não é classe nova (`grep -n "^.sm2-notice" src/index.css`); anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: delta `dc72579e..9875477b`, conferido em `5ac3d351`: rodada 2 da SQUAD-ARTE, SQUAD-SOM retomada, superfície de suporte do chat) · §9 verificado em 21/09/2026 por doc-verificador (delta `5ac3d351..8d318529`: S16, trilha em duas camadas, escolha do dono nos 3 eventos longos, chaves na `SettingsPage`)
 > **Verificação:** `npx vitest run src/styles/ src/index.css.contract.test.ts src/utils/sprites.dungeonRoster.test.ts src/utils/loudness.contract.test.ts src/utils/cortes.contract.test.ts src/utils/sonsAssets.contract.test.ts src/components/ui/Viewport.contract.test.tsx src/components/ui/foundation.render.test.tsx src/brand/brandFlame.parity.test.ts src/assets/assets.contract.test.ts` — os 11 arquivos de 09/09/2026 (216 testes, verde) mais os dois que nasceram com a marca vetorizada e a leva de arte de 15/09/2026, mais `sonsAssets.contract.test.ts` (21/09/2026, S16).
 > **Não cobre:** o fluxo entre telas e o que cada superfície mostra (doc `03-FLUXO-DE-TELAS.md`); as regras de jogo por trás dos números que a UI pinta (doc `02-REGRAS-DE-NEGOCIO.md`); a assinatura de cada componente (`06-REFERENCIA/components.md`); o pipeline de build/deploy dos assets (doc `08-INTEGRACOES-E-DEPLOY.md`). Este doc descreve o som — **não** decide nada sobre ele: quem decide é o `REGISTRO-DE-DECISOES.md` (§6.1, S1..S16 — não existe S14).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -405,6 +405,20 @@ em `src/components/ui/`. **Não reintroduza `var(--foreground)` /
 | Movimento | idem | durações fora de 120/200/320 numa curva só; a varredura de 400ms como literal solto |
 | Visor escuro nos dois temas | idem | `--sm2-viewport-bg` claro no tema claro |
 | Classe fantasma | `src/index.css.contract.test.ts` | classe utilitária usada no JSX que não existe no CSS pré-compilado (footgun 1) |
+
+**O `UndoToast` não tem `className` nenhuma — por decisão, não por descuido**
+(22/09/2026, decisão do dono **#57**). Todo o desenho dele é **inline** com os
+tokens `--sm2-*` (`--sm2-surface`, `--sm2-ink`, `--sm2-line`, `--sm2-radius-md`,
+`--sm2-radius-sm`, `--sm2-primary-ink`, `--sm2-text-sm`), e o comentário no
+arquivo diz por quê: **classe que não existe em `index.css` não aplica nada** —
+é o footgun 1, e é exatamente o que a régua "Classe fantasma"
+(`src/index.css.contract.test.ts`) reprova. Como o componente nasceu fora do CSS
+pré-compilado, escrever estilo por token inline é o caminho que o guard aprova
+sem precisar de classe nova. Os dois números que ele fixa à mão são de
+acessibilidade, não de estética: **`role="status"`** (o `sonner` 2.0.3 não põe
+`role` nenhum no `<li>` do toast) e **alvo de 44×44** no botão (o `action` do
+`sonner` herda a altura do texto, ~24px, contra os 44 que o sistema exige em
+`src/styles/tokens.md`) — ver [03 §4.25](03-FLUXO-DE-TELAS.md).
 
 O contraste é medido **numericamente**, não visualmente, e o motivo está escrito
 no cabeçalho do teste: na faixa de 3:1 a 5:1 o olho mente e o pixel não. O CSS é
@@ -1387,6 +1401,21 @@ worker; por isso ela é a quarta fonte que `src/deploy/appUrl.contract.test.ts` 
 concordar com `capacitor.config.json`, `desktop/renderer/src/config.ts` e
 `desktop/electron/main.js`. Trocar por um key visual 1200×630 quando a squad-arte gerar.
 
+**A TAGLINE é ÚNICA e está travada por contrato** (decisão do dono **#70**,
+22/09/2026): **"Ela cresce com o seu dia." / "It grows with your day."** ⚰️ Havia
+**três** frases de abertura diferentes — `meta name="description"`,
+`og:description` e `manifest.description` —, então quem colava o link, quem
+instalava a PWA e quem abria a loja lia três produtos. Hoje as três **começam**
+com a tagline e seguem com a mesma frase de apoio ("Hábitos e tarefas viram
+cuidado, evolução e história — nunca cobrança."). A frase de apoio **pode** variar
+por superfície (limite de caracteres da loja); a tagline, não. Régua:
+`src/deploy/manifest.contract.test.ts` — dois casos `#70`, um exigindo o prefixo
+nas três superfícies e outro exigindo as duas versões da tagline em
+[`docs/PLAY-FICHA.md`](../PLAY-FICHA.md) §0b, para não divergirem de novo.
+⚰️ As descrições antigas ("Soulmon: um bichinho virtual que evolui com o que você
+faz na vida real…" e "Cadastre hábitos e tarefas de verdade; sua criatura
+cresce…") saíram em `cf6315e1`.
+
 ### 10.1 `public/manifest.json`
 
 ⚠️ O arquivo é **`public/manifest.json`**, não `manifest.webmanifest`
@@ -1396,7 +1425,7 @@ concordar com `capacitor.config.json`, `desktop/renderer/src/config.ts` e
 |---|---|
 | `short_name` | `Soulmon` |
 | `name` | `Soulmon` (desde `a6c1cd8a` — a marca, sem slogan; ⚰️ `Soulmon - Gamified Productivity`, copy do fork) |
-| `description` | `Soulmon: um bichinho virtual que evolui com o que você faz na vida real. Hábitos e tarefas viram cuidado, evolução e história — nunca cobrança.` — **igual ao `<meta name="description">` do `index.html`**, a fonte que o dono revisou (desde `a6c1cd8a`, perf-a11y R1 + design; ⚰️ a descrição EN "Complete real-life tasks to evolve and care for your digital companion…" de outra era). Régua: `src/deploy/manifest.contract.test.ts` — `name`/`short_name` = `Soulmon`, `description` = a meta, `theme_color` = `--sm-primary` = `<meta theme-color>` claro. |
+| `description` | `Ela cresce com o seu dia. Hábitos e tarefas viram cuidado, evolução e história — nunca cobrança.` — a **tagline única** #70 (§10.0), **igual ao `<meta name="description">` e ao `og:description` do `index.html`**, a fonte que o dono revisou (desde `a6c1cd8a`, perf-a11y R1 + design; ⚰️ a descrição EN "Complete real-life tasks to evolve and care for your digital companion…" de outra era). Régua: `src/deploy/manifest.contract.test.ts` — `name`/`short_name` = `Soulmon`, `description` = a meta, `theme_color` = `--sm-primary` = `<meta theme-color>` claro. |
 | `icons` | `/favicon-192x192.png` e `/favicon-512x512.png`, ambos `purpose: "any maskable"` |
 | `start_url` / `scope` | `/` |
 | `display` | `standalone` |

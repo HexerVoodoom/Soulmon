@@ -1,6 +1,6 @@
 # Histórico — como chegamos aqui
 
-> **Dono:** doc-historiador · **Data:** 22/09/2026 (§1.5: SHA de `a6c1cd8a`/#100–#101 e a linha da QA Rodada 2; anterior: 21/09/2026, QA Rodada 1; 09/09/2026) · **Estado:** verificado em 10/09/2026 por doc-verificador (o §1.5 conferido em 21/09 contra `gh pr list` pelo doc-mantenedor)
+> **Dono:** doc-historiador · **Data:** 22/09/2026 (3ª sincronização do dia, delta `cd66940f..cf6315e1`: §1.5 ganha **#102–#107** — merge da QA Rodada 2, o livrinho ilustrado + PDF + gerador, o one shot de prólogo e a execução das 32 respostas do dono; anterior no mesmo dia: SHA de `a6c1cd8a`/#100–#101 e a linha da QA Rodada 2; anterior: 21/09/2026, QA Rodada 1; 09/09/2026) · **Estado:** verificado em 22/09/2026 por doc-verificador (§1.5 conferido contra `gh pr list --state merged --json number,title,mergedAt` e `git log --oneline` → **1.080** commits; anterior: 10/09/2026, doc inteiro)
 > **Verificação:** os comandos `git log` colados ao lado de cada afirmação nesta página — rode-os de novo para reconferir
 > **Não cobre:** o CONTEÚDO de cada decisão (isso é `10-DISCUSSOES-E-DECISOES.md`); o changelog linha a linha (`../CHANGELOG.md`, que não se reescreve); regras de jogo em vigor hoje (`02-REGRAS-DE-NEGOCIO.md`)
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -168,7 +168,8 @@ em detalhe na seção 2 (viradas de premissa); resumo cronológico:
 ### 1.5 10–22/09/2026 — wireframes, identidade, narrativa, som S16, QA geral, QA Rodadas 1 e 2
 
 Só o que existe no `git log` e no `gh pr list` em 21/09/2026 (`git log --oneline | wc -l` →
-**1.070**; `gh pr list --state merged --json number | jq length` → 95 PRs, maior **#99**). O
+**1.080** em 22/09/2026, 1.070 em 21/09; `gh pr list --state merged --json number | jq length` →
+maior PR **#107** em 22/09/2026, **#99** em 21/09). O
 detalhe de cada PR está na mensagem do próprio merge; este bloco é o índice.
 
 - **10–15/09**: a SQUAD-DESIGN desenha os 13 canvases da Fase 1 (wireframes) e fecha a
@@ -210,7 +211,29 @@ detalhe de cada PR está na mensagem do próprio merge; este bloco é o índice.
   no dia seguinte), que cair e re-evoluir no mesmo dia cura de graça e que "3×/semana" cobra 3
   corações. Fila do dono #54–#71; `E0-PREREGISTRO.md` e `E0-CONSENTIMENTO.md` nasceram; o inventário
   KV do `07` passou de 11 para 25 famílias. Consolidado: `reviews/2026-09-22-qa-rodada-2/00-CONSOLIDADO.md`.
-  ⚠️ Escrito antes do merge da rodada 2 — o SHA fica para o próximo `/manter-docs`.
+  O merge é **#102** `592e2c14` (22/09 05:35Z) e a sincronização do manual, **#103** `cd66940f`
+  + **#104** `6f29aba0` (o carimbo).
+- **22/09 — narrativa ilustrada**: **#105** `917c9465` (o livrinho da Malha ganha **124 figuras**
+  — 60 arquivos únicos — em PT e EN, todas por caminho relativo para `src/assets/`: nenhuma cópia,
+  nenhum asset novo; se a arte mudar lá, o livrinho muda junto) e **#106** `19f0d1f3`
+  (`docs/historias/01-A-CAMADA-QUE-NAO-FECHOU.md` — o **one shot de prólogo**, PT + EN, ilustrado:
+  ficção SOBRE o cânone, nunca fonte dele). No meio dos dois, `7d80f8d7` trouxe o
+  **PDF mobile-first** do livrinho (`docs/BOOKLET-UNIVERSO.pdf`, 41 páginas, 2,3 MB) e o gerador
+  reprodutível `scripts/booklet-pdf.mjs`, atrás de `npm run booklet:pdf` — o PDF é **gerado, nunca
+  editado à mão**, e quem mexer no `.md` roda o comando e commita os dois juntos. Página de
+  **390 × 844** (a caixa de telefone dos artboards da squad-design), imagens reamostradas por
+  `sharp` a 2× a largura de exibição com kernel *nearest* (12,0 MB → 1,1 MB; em Lanczos a grade,
+  que É a estética do visor, borraria).
+- **22/09 — as 32 respostas do dono (#40–#71) e a execução delas**: **#107** `cf6315e1`
+  (22/09 11:52Z). Modelo de receita novo (compra única + **assinatura de IA**, sprite fora,
+  construir depois do E0) · oito regras de jogo mexidas pela simulação de 90 dias (🌀 fora das
+  conquistas, "Desfazer" de 5 s, `timesPerWeek` só cobra na virada da semana, a virada julga o
+  último dia aberto, dreno com as travas da virada, uma virada completa antes de re-evoluir, os 6
+  `BondEvent` mudos ligados, Bits por dia completo + teto de minijogo) · SteamID apagado na
+  exclusão · encarregado LGPD nomeado · plataformas declaradas · tagline única travada por
+  contrato · rota `rebirth-reset` · **ADR-006 aceita** · symlinks `higgsfield-*` fora ·
+  **migrações D1 aplicadas em produção**. `CACHE_VERSION` v159 → **v160**; suíte 4 758 → **4 806**.
+  Sincronização do manual: **esta**, em `docs/sync-cf6315e1`.
 
 ---
 

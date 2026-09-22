@@ -7,6 +7,47 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 22/09/2026 — sincronização do manual pós-merge `cf6315e1` (as 32 respostas do dono)
+>
+> Delta `cd66940f..cf6315e1` (5 commits: `917c9465`/`7d80f8d7`/`19f0d1f3` de narrativa, `592e2c14` já carimbado, e
+> `cf6315e1` — a execução das 32 respostas), `/manter-docs auto` inline pelo doc-mantenedor numa worktree própria
+> (`docs/sync-cf6315e1`), doc por doc, cada afirmação conferida por grep/`wc -l` contra o fonte.
+> **14 docs recarimbados:** `02` — **oito regras de jogo mudaram, e este é o delta que mais mexe em regra desde a fundação**:
+> §7 a virada julga o **último dia aberto** (`diaJulgado`; a folga segue ancorada em ONTEM de propósito, senão seria o nono perdão)
+> e escreve quatro campos (`perfectDays`, `totalPerfectDays`, `missionPerfectDays`, `gamePoints`); §8 o dreno ganhou as **três
+> travas** que o próprio doc já afirmava ter (carência de save novo, rampa de retorno, piso da raiz — o teto do dia
+> compartilhado ficou com o dono); §18 **uma virada completa antes de re-evoluir** (`podeEvoluirDepoisDaQueda`, 3 chamadores);
+> §24 `timesPerWeek` só cobra coração na **virada da semana** (`habitCountsForHeartsOn`/`isWeekClosingDay`); **§24-A novo** —
+> desfazer a conclusão, janela de 5 s por snapshot de 11 campos; §46 **Bits por dia completo (100)** e **teto de minijogo
+> (150/dia)** com o porquê de o teto ser em Bits e não em runs, mais o ponteiro do modelo de receita (§5.4 do REGISTRO);
+> §48/§49 o 🌀 passou a escrever `missionPerfectDays`; §55 o ⚠️ virou a **tabela dos 6 emissores novos** (os 11 `BondEvent`
+> têm emissor; a comida continua FORA, e isso está declarado); §57-A o 🌀 saiu das conquistas. `06-REFERENCIA/utils`
+> (`currencies` com as 6 entradas do teto, `dailyReset` `podeEvoluirDepoisDaQueda`/`BITS_PER_COMPLETE_DAY`, `habitRhythm`
+> `isWeekClosingDay`/`habitCountsForHeartsOn`, `missions`, `entitlements` `resetSpriteLifetimeAfterRebirth`, `poopDrain`,
+> `specialItemUse`), `components` (`App.tsx` **6384** linhas/**81** handlers + o bloco da execução, `DungeonGame` **577** e
+> `onFloorCleared`, `ActivitiesPage` **306**), `hooks-contexts-types` (**1542** linhas, **91** campos), `api-workers`
+> (`_entitlements` **704** + `resetSpriteLifetimeOnRebirth`, `_aiGuard` **388** + a nota do renascimento, a lápide do
+> "tabela ausente"), `07` (**91** campos, `missionPerfectDays`, `minigameBits`, `rebirthSpriteResetAt` no `ent:`),
+> `08` (**D1 aplicado em produção** com a nota do `0002` marcado, rota `rebirth-reset`, secrets que seguem do dono),
+> `03` (toast de desfazer na Home/Atividades + `UndoToast` entre as superfícies globais), `04` (tagline única travada por
+> `manifest.contract.test.ts`; `UndoToast` sem classe, inline por decisão), `05` (**ADR-006 ACEITA** + `PLANO-SAVE-SCHEMA.md`,
+> `booklet-pdf.mjs` em §2.1, dívida do JS de entrada re-medida **641 016 → 652 255 B** com justificativa),
+> `09` (**#102–#107**: merge da R2, livrinho ilustrado, PDF + gerador, one shot, execução das 32; 1.080 commits),
+> `10` (**8 linhas novas** — cinco no tema 1 e três no tema 6 — e o §18 fechando a fila das 32), `11` (5 termos novos:
+> assinatura de IA, desfazer, `missionPerfectDays`, teto de minijogo, reabertura de conta), `00-MAPA` (`booklet-pdf.mjs`;
+> a narrativa de `917c9465`/`7d80f8d7`/`19f0d1f3` **já estava indexada** em §6.2 com etiqueta `vivo`, e os dois cabeçalhos
+> foram conferidos), `01` (§8 e §9b relidos — entraram no próprio `cf6315e1`).
+> Guards `docsManual` + `docsSemMentira` + `narrativa` **verdes (3 files / 15 tests)** na worktree.
+> **Divergências novas (doc ≠ decisão do dono — nenhuma de código):** (1) a resposta **#59b** diz "a tabela do §55 passa a
+> incluir a comida" e isso **não foi implementado** — `BondEvent` tem 11 membros e nenhum é de alimentar (`grep` em
+> `src/utils/bond.ts`), e nenhum caminho de `feedPet` chama `awardBondXP`; (2) os dois docstrings de `dailyReset.ts`/
+> `currencies.ts` chamam o catálogo da loja de `SHOP_ITEMS`, e o export é `ALL_SHOP_ITEMS` (`src/utils/shop.ts`).
+> **Observações:** `rebirth-reset` **tem** chamador no cliente desde `cf6315e1` (`handleRebirth` › `void
+> resetSpriteLifetimeAfterRebirth()`) — a entrada de `api-workers` escrita no próprio commit dizia "ainda sem chamador";
+> `AGE_DAY_BASE_UTC` segue no git e não no ar (worker de push sem redeploy desde 21/09). **Fora do delta, de propósito:**
+> `12-COMO-MANTER` (os dois arquivos que o delta lhe atribui são a remoção dos symlinks `higgsfield-*` e o
+> `som-produtor-assets`, ambos já descritos em `05` §2.2 e no MAPA §6.1).
+
 > ## 22/09/2026 — sincronização do manual pós-merge `592e2c14` (QA Rodada 2)
 >
 > Delta `a6c1cd8a..592e2c14` (`95b18314` carimbo da R1, `592e2c14` correções da rodada 2), `/manter-docs auto` inline pelo
