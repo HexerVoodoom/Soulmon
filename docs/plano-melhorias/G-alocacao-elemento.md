@@ -49,9 +49,10 @@
 | D-G3 | **Pontos**: uma FATIA do `ELEMENT_ORCAMENTO_BY_STAGE` que já existe. Redistribuição, não pontos novos. Sem ganho por desempenho, sem compra. |
 | D-G4 | **Reversibilidade**: permanente, acumulando entre estágios. |
 | D-G5 | **Geração tardia (só renascido)**: `soulmonStages` passa a ser escrito POR ESTÁGIO. Não renascido continua com as 11 de uma vez. |
-| D-G6 | **Incubação**: a ocasião B de `utils/spriteTrigger.ts` (`faltam === 1`) ganha nome, estado persistido e visibilidade — aviso na fila da Home, **sem contagem regressiva**. Encaixar nas ocasiões A/B/C, não reinventar. |
-| D-G8 | ⚠️ **REVOGADO em 22/09/2026 o prazo de 24h.** A alocação de um estágio **fecha no GESTO DE EVOLUIR** — o toque na criatura, na cerimônia — e **nunca antes**. Não existe relógio de parede, tolerância em horas nem contagem de tempo de espécie nenhuma. A incubação **espera o jogador indefinidamente**. Motivos registrados: (a) seria a primeira mecânica do app em que *não abrir o app* produz perda permanente, contra `ABSENCE_FORGIVENESS_DAYS`, `REST_DAYS_PER_WEEK`, escudos automáticos e constância em janela; (b) com `MANUAL_EVOLUTION = true` o disparo já pertence ao jogador — pôr um relógio ao lado dele acrescenta coerção onde havia autonomia. |
-| D-G9 | Enquanto o estágio está aberto, a alocação é **livremente editável** — não é reversão, é *ainda não commitado*. Depois do gesto é permanente, e **reset de pontos (grátis, por Bits, por Créditos ou por item) está vetado preventivamente** (`ledger/vetos.md`, 22/09/2026). |
+| D-G6 | **Incubação**: a ocasião B de `utils/spriteTrigger.ts` (`faltam === 1`) ganha nome, estado persistido e visibilidade — aviso na fila da Home. Encaixar nas ocasiões A/B/C, não reinventar. ⚠️ **Revisto em 22/09/2026 (D-G8b)**: a incubação passa a ter DURAÇÃO — `INCUBATION_MIN_MS` = 30 min —, então o aviso pode dizer quando a forma fica pronta. O que continua proibido é contagem regressiva de PERDA: nada expira ao fim dos 30 min. |
+| D-G8 | ⚠️ **REVOGADO em 22/09/2026 o prazo de 24h.** Não existe relógio de parede que FECHE nada, tolerância em horas nem contagem de tempo de espécie nenhuma. Motivos registrados: (a) seria a primeira mecânica do app em que *não abrir o app* produz perda permanente, contra `ABSENCE_FORGIVENESS_DAYS`, `REST_DAYS_PER_WEEK`, escudos automáticos e constância em janela; (b) com `MANUAL_EVOLUTION = true` o disparo já pertence ao jogador — pôr um relógio ao lado dele acrescenta coerção onde havia autonomia. **O gesto de evoluir continua sendo do jogador, e a incubação espera por ele indefinidamente.** |
+| D-G8b | 🆕 **A incubação tem uma ESPERA MÍNIMA de 30 minutos** (decisão do dono, 22/09/2026 — `INCUBATION_MIN_MS`). Ao entrar em incubação o lote de sprite começa a ser gerado; a evolução só fica disponível depois dos 30 min, e o jogador volta para dar o gesto. **Isto NÃO reabre o D-G8, e a diferença é a única coisa que importa aqui: 30 min é um PISO, nunca um teto.** Voltar em 30 minutos, em três dias ou em três semanas dá exatamente o mesmo resultado — nada expira, nada fecha sozinho, nada é perdido por não abrir o app. A régua que separa os dois é `spriteTrigger.semPrazo.contract.test.ts`: proibida qualquer aritmética de data que PRODUZA perda; a comparação `agora − since ≥ INCUBATION_MIN_MS`, que só LIBERA, é a única permitida, e o teste a nomeia explicitamente para que a proibição não a engula. |
+| D-G9 | Enquanto o estágio está aberto, a alocação é **livremente editável** — não é reversão, é *ainda não commitado*. Depois é permanente, e **reset de pontos (grátis, por Bits, por Créditos ou por item) está vetado preventivamente** (`ledger/vetos.md`, 22/09/2026). ⚠️ **O ponto de fechamento MUDOU com o D-G8b, por consequência necessária:** a alocação fecha no **início da incubação**, não mais no gesto de evoluir. O motivo é que o sprite é gerado A PARTIR da ficha, e a ficha é o que a alocação mexe — deixar a alocação editável durante os 30 min significaria gerar a forma a partir de uma alocação que o jogador ainda pode trocar, e então a alocação **não influenciaria a forma**, que é a razão inteira da funcionalidade existir. Isto RESTAURA o desenho original do dono ("o último dia é de incubação, deve deixar claro que status novos não influenciarão mais na evolução"), que o D-G8 tinha desfeito junto com o prazo de 24h. |
 | D-G10 | **A alocação NÃO abre na cerimônia de evolução.** Cerimônia é celebração; decidir sob excitação piora a escolha. Ao fechar, a cerimônia deixa um **marcador calmo e persistente** na página de Evolução. |
 | D-G11 | **Prévia obrigatória da cascata**, incluindo o que ainda FALTA ("faltam N pontos em Fogo para Vapor começar a despertar"). Arrependimento é função da opacidade, não da permanência. |
 | D-G12 | **Vocabulário**: é *assinatura*, não otimização. Proibidos "distribua seus pontos", "build", "otimizar", "mais forte", "melhor". O pet **nunca** comenta a alocação avaliativamente — reage à essência, jamais à qualidade da decisão. |
@@ -330,18 +331,46 @@ que é exatamente o que torna §8 (tetos) o ponto de pressão desta spec.
 
 ---
 
-## 6. A incubação — estado narrativo, **sem prazo**
+## 6. A incubação — espera mínima de 30 min, **sem prazo de perda**
 
 ### 6.0 O que a incubação É e o que ela NÃO é
 
 **É**: o nome, o estado persistido e a visibilidade da ocasião B que já existe
-(`faltam === 1` ⇒ o lote da próxima forma começa a ser gerado).
-**NÃO é**: janela, prazo, tranca, ou gatilho de fechamento de nada. Ela
-**espera o jogador indefinidamente** (D-G8).
+(`faltam === 1` ⇒ o lote da próxima forma começa a ser gerado) — agora com uma
+**espera mínima de 30 minutos** (`INCUBATION_MIN_MS`, D-G8b). O jogador entra
+em incubação, o sprite da forma seguinte é gerado nesse intervalo, e ele volta
+depois para dar o gesto de evoluir.
 
-**Quem fecha a alocação é o GESTO DE EVOLUIR.** No `handleEvolve` — o mesmo
-updater que aplica a evolução, nunca um efeito paralelo — o estágio de onde se
-sai entra em `elementAllocation.locked`. Antes disso, nada fecha.
+**NÃO é**: janela, prazo de perda, tranca ou gatilho de expiração. Os 30
+minutos são **piso, nunca teto** — voltar em 30 min, em três dias ou em três
+semanas dá o mesmo resultado. Nada fecha sozinho, nada é perdido por não abrir
+o app (D-G8 continua inteiro).
+
+**A diferença que a régua tem de enxergar**, porque é sutil e é toda a
+segurança do desenho: há **uma** comparação de data permitida no módulo,
+`agora − since ≥ INCUBATION_MIN_MS`, e ela só **LIBERA**. Qualquer aritmética
+de data que **produza perda** — fechar alocação, expirar lote, cancelar
+incubação, devolver "tarde demais" — continua proibida, e o teste
+`spriteTrigger.semPrazo.contract.test.ts` nomeia a permitida justamente para
+que a proibição não a engula por acidente.
+
+**Quem fecha a alocação é o INÍCIO DA INCUBAÇÃO** (D-G9, revisto pelo D-G8b).
+No mesmo updater que grava `incubation`, o estágio de onde se sai entra em
+`elementAllocation.locked`. ⚠️ **Isto mudou**: até 22/09/2026 esta seção dizia
+que quem fechava era o gesto de evoluir. Não podia ser — o sprite é gerado A
+PARTIR da ficha, e a ficha é o que a alocação mexe; com a alocação editável
+durante os 30 minutos, a forma seria gerada de uma alocação que o jogador ainda
+pode trocar, e a alocação **deixaria de influenciar a forma**, que é a razão
+inteira desta funcionalidade existir. O fechamento no início da incubação
+RESTAURA o desenho original do dono ("o último dia é de incubação, deve deixar
+claro que status novos não influenciarão mais na evolução"), que a revogação do
+prazo de 24h tinha desfeito por tabela.
+
+**Consequência de UI, obrigatória**: como o fechamento agora acontece ANTES do
+gesto, a tela tem de dizer isso **na entrada da incubação**, não na cerimônia —
+é o último momento em que a escolha ainda é do jogador, e um fechamento que a
+pessoa não soube que aconteceu é a definição de arbitrário (mesmo argumento do
+`lastDayReport.restDayUsed`).
 
 ### 6.1 Onde mora e quem escreve
 
@@ -380,7 +409,9 @@ cobrar **identidade permanente**.
 
 ### 6.4 Se o jogador não abrir o app
 
-Nada acontece. Nada fecha, nada expira, nada é perdido. **R-F**: um estágio que
+Nada acontece. Nada fecha, nada expira, nada é perdido. Passados os 30 minutos
+a evolução fica **disponível e assim permanece** — ela espera. A única coisa
+que o relógio faz neste sistema é LIBERAR; ele nunca tira. **R-F**: um estágio que
 chega ao gesto de evoluir sem alocação nenhuma é distribuído pelo oráculo
 exatamente como hoje — a alocação fecha a *escolha*, nunca o *recurso*, e a tela
 diz isso em palavra antes do commit.
@@ -708,7 +739,8 @@ Três aceites, os três verificáveis:
 | `src/utils/soulProfile/ficha/buildSheet.piso.test.ts` | **novo** | **T-PISO** (§10.2): 120 perfis × 3 planos, pares destravados ≥ os da ficha sem plano em ≥95% |
 | `src/utils/rebirth.chaveDeModo.contract.test.ts` | **novo** | **R-H(b)**: nenhum caminho apaga/sobrescreve `rebirth` (nuvem, higienização, migração, `applyFreshStart`, 2ª chamada) |
 | `src/components/AlocacaoPage.render.test.tsx` | **novo** | prévia da cascata com o "faltam N" vindo das constantes; `hideMetrics` ligado ⇒ zero dígito e os mesmos controles; sem `rebirth` a tela não existe; estágio em `locked` não aceita edição |
-| `src/utils/spriteTrigger.semPrazo.contract.test.ts` | **novo** | **D-G8**: nenhuma aritmética de data sobre `incubation.since`; nenhuma constante de horas no módulo; quem escreve `locked` é só `handleEvolve` |
+| `src/utils/spriteTrigger.semPrazo.contract.test.ts` | **novo** | **D-G8 + D-G8b**: a ÚNICA aritmética de data permitida sobre `incubation.since` é `agora − since ≥ INCUBATION_MIN_MS` (só libera), nomeada no teste; nenhuma outra, e nenhuma que produza perda; `INCUBATION_MIN_MS` tem dono único e não é reescrito em outro arquivo; quem escreve `locked` é só o updater que grava `incubation` (D-G9 revisto) |
+| `src/utils/spriteTrigger.esperaMinima.test.ts` | **novo** | **D-G8b**: antes de 30 min a evolução não libera; depois libera e **continua liberada** indefinidamente (o caso que separa piso de prazo); a alocação está `locked` já na ENTRADA da incubação, não no gesto |
 | `src/narrativa.contract.test.ts` | alterado | vocabulário PT/EN novo (incubação, eco da forma anterior) passa nas doze leis |
 
 ---
@@ -727,7 +759,7 @@ Cada pacote é mergeável sozinho, e nenhum é visível ao jogador antes do WP4.
 | **WP4.26** | Era no acervo: `acervoKey`, `SpriteLibrary.era`, `applyRebirth` incrementa; gatilho e caps por chave de era | `spriteLibrary.era` verde; `acervoKey(f,0)===f` para todas as 11 formas (sem migração) |
 | **WP4.27** | `referenceFormFor` + fiação de `referenceImageUrls` no lote do renascido; `referenced` no `SpriteEntry` | `referenciaRenascimento` verde; grep: `referenceImageUrls` aparece no chamador do lote (não só no tipo) |
 | **WP4.28** | `soulmonStages` tardio: `rebirthCreature` (com salt), escrita por estágio, consumidores tolerando array curto | `soulmonStagesParcial` verde + screenshot Playwright da página de Evolução com árvore de 2 entradas |
-| **WP4.29** | Incubação **sem prazo**: `incubationFor`, estado no save, idempotência, limpeza na degeneração; `locked` escrito só no `handleEvolve` | `spriteTrigger` + `spriteTrigger.semPrazo` + `evolucaoManual` verdes |
+| **WP4.29** | Incubação com **espera mínima de 30 min e sem prazo de perda**: `incubationFor`, `INCUBATION_MIN_MS`, estado no save, idempotência, limpeza na degeneração; `locked` escrito no updater que grava `incubation` (D-G9 revisto) | `spriteTrigger` + `spriteTrigger.semPrazo` + `spriteTrigger.esperaMinima` + `evolucaoManual` verdes |
 | **WP4.30** | Incubação visível: aviso **descritivo** na fila da Home, posição declarada, PT/EN | `filaDeAvisos` + `narrativa.contract` verdes + screenshot do aviso |
 | ~~WP4.30b~~ | ⚰️ **CORTADO pela decisão #76 do dono (22/09/2026)**: não existe push de incubação, nem o convite neutro. Só o aviso na Home. Não reabrir como novidade — a alternativa perdeu com a medição na mão. | — |
 | **WP4.33** | **Decisão #78**: o elemento alocado troca a ARTE do golpe, sem tocar em um ponto de dano. Usa `attackFxArt.ts` e as 1.078 peças de `fx-ataque/` (154 elementos × 6 estados), das quais só `aura` é chamada hoje pela D9. Escopo: **só o pet renascido** — a D9 continua valendo para todo o resto | `attackFxArt` verde + teste novo provando que trocar o elemento alocado muda a peça e **não** muda `getArenaPlayerStats` nem `playerHitDamage` |

@@ -238,3 +238,24 @@ Divergência da recomendada em **negrito**.
 | 76 | **Só o aviso na Home**, nenhum push. WP4.30b cortado |
 | 77 | **Construir agora**, validando com os portões locais; os PRs esperam o runner para mergear (o GitHub Actions segue parado, #48) |
 | 78 | O elemento alocado **troca a arte do golpe**, sem tocar em dano — usa as 1.078 peças de `fx-ataque/` que a D9 mantém sem uso. Escopo: só o pet renascido (WP4.33) |
+
+## Decisão AVULSA — incubação de 30 min (22/09/2026, na conversa)
+
+Não veio de pergunta minha; foi instrução direta do dono. Fica aqui porque
+altera duas decisões já registradas da spec `G-alocacao-elemento.md`.
+
+| # | Decisão |
+|---|---|
+| 79 | **A incubação tem espera mínima de 30 minutos** (`INCUBATION_MIN_MS`). Palavras do dono: *"A incubação deve começar um processo de 30min peo usuário voltar depois e evoluir de fato. Nesse tempo o sprite é gerado."* Entra como **D-G8b** na spec. É PISO, não prazo: passados os 30 min a evolução fica disponível e assim permanece — o relógio só LIBERA, nunca tira. O D-G8 (nada se perde por não abrir o app) continua inteiro. |
+| 79b | **Consequência necessária, não uma segunda decisão:** a alocação passa a fechar no **início da incubação**, e não mais no gesto de evoluir (D-G9 revisto). O sprite é gerado a partir da ficha, e a ficha é o que a alocação mexe — editável durante os 30 min, a alocação deixaria de influenciar a forma, que é a razão de a funcionalidade existir. Isto RESTAURA o desenho original do dono (*"o último dia é de incubação (…) deve deixar claro que status novos não influenciarão mais na evolução"*), desfeito por tabela quando o prazo de 24h foi revogado. Se o dono quiser o contrário — alocação editável até o gesto —, o preço é a forma não refletir a alocação, e aí a funcionalidade inteira perde o sentido. |
+
+⚠️ **Pendente, e é do dono:** isto vale só para o **renascido** (v2.0, onde a
+geração é tardia por estágio — D-G5) ou a espera de 30 min também entra no
+**v1**, para todo jogador? No v1 as 11 formas já nascem todas de uma vez, então
+não há o que incubar em relação à alocação — mas a ocasião B do
+`spriteTrigger.ts` já gera o sprite da próxima forma na véspera, e hoje quem
+evolui na hora em que o último ponto cai pode pegar a forma sem sprite pronto
+(quem atende é a ocasião C, de resgate). Pôr os 30 min no v1 resolveria isso e
+**acrescentaria uma espera à evolução de todo mundo** — é troca de produto, não
+detalhe técnico. Não implementado em nenhum dos dois casos: a funcionalidade
+segue PARQUEADA para a v2.0.
