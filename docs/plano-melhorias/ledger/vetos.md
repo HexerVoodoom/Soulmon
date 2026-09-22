@@ -202,3 +202,52 @@ Nenhuma violada, enfraquecida ou contornada. #20 respeitada explicitamente
    propõe nenhum; L4 precisa de R1 para não proibir os que já existem.
    5. *Homem atrás da cortina?* É o ponto frágil, e é R4. 6. *Cabe na tese?*
    Cabe em "evolui COM"; só cabe em "encoraja" depois de R2 e R3.
+
+## Parecer — alocação manual de pontos de ELEMENTO destravada pelo Renascimento, 22/09/2026
+
+**Veredito: `APROVADO COM RESSALVA`** — com **oito condições bloqueantes**
+(R-A..R-H). Nenhuma das 21 linhas vermelhas é cruzada *pela forma decidida*;
+duas ficam a um passo de serem cruzadas **pela implementação**, e é sobre esse
+passo que as condições valem. Nada aqui reabre a decisão do dono sobre a forma.
+
+O que faz a proposta passar na pergunta 1 (querer fazer a tarefa vs. querer a
+notificação): a alocação **não é ganho por desempenho e não é comprável** — é
+redistribuição de um orçamento que o oráculo já distribui sozinho. Ela não cria
+recompensa condicional nova, então não converte a tarefa em meio para um fim
+(Errant Signal). O ponto de ruptura é o **push de incubação** (R-D) e a
+**vantagem de combate** (R-B), não a alocação em si.
+
+### As condições
+
+| # | Condição bloqueante | Por quê |
+|---|---|---|
+| **R-A** | **A cascata não-linear precisa de PRÉ-VISUALIZAÇÃO e de CONFIRMAÇÃO em dois tempos, dentro do estágio.** Exigências mínimas: (a) a tela mostra, ANTES de confirmar, o que a alocação atual DESTRAVA e o que ela deixa a N pontos de destravar (`CUSTO_PONTO_PAR = 2`, par em `passivos >= 10` — os dois números saem das constantes, nunca escritos à mão); (b) enquanto o estágio está aberto a alocação é **livremente refeita** (só fecha na virada declarada); (c) **piso anti-armadilha**: nenhuma alocação válida pode resultar em ficha com zero par destravado — se a escolha do jogador levar a isso, o sistema **não o impede**, mas a tela nomeia o fato em palavra antes do commit. | "Subiu a escada inteira e pagou" **não atenua nada** — agrava. Perda sobre identidade/progresso permanente é a proibição da pergunta 2, e aqui o jogador não perde por escolha errada: ele perde por **não ter como saber**. Cascata com transbordo de sinergia de alvo único não é computável de cabeça. Sem (a), isto falha na pergunta 5 (homem atrás da cortina) do jeito mais caro: o mecanismo é oculto *e* o resultado é permanente. |
+| **R-B** | **`getArenaAttributes` é a brecha, e tem de ser blindada explicitamente.** `getArenaPlayerStats` já é imune (hp/dmg vêm de `STAGE_BUDGET` + `ROLE_SHAPE`, hp×dmg ≈ constante — está certo e não pode mudar). Mas `principal`/`secundario` saem **dos pontos de elemento**, e alimentam `ADVANTAGE_MULT`/`DISADVANTAGE_MULT` em `enemyHitDamage`/`playerHitDamage`. Alocar para cobrir os elementos mais comuns do roster **é** vantagem mecânica. Aceites: (i) a alocação **nunca** altera `STAGE_BUDGET`, `ROLE_SHAPE`, `SPECIAL_EFFECTS` nem nenhuma saída de `realSkillPower.ts`; (ii) a distribuição de elementos dos inimigos de masmorra/Arena **não pode ser previsível o bastante** para haver um principal dominante — ou a simulação de `arena.test.ts` roda de novo com fichas ALOCADAS adversarialmente e a janela 40–80% / spread ≤20pp se mantém; (iii) **teste novo** exigindo que, para a mesma ficha, mudar só a alocação não mude `getArenaPlayerStats`; (iv) `REBIRTH_BUDGET_MULTIPLIER` 1.5 **não** pode virar mais pontos alocáveis do que a fatia declarada — o multiplicador já existe para a geração de arte, não para poder. | A equivalência "é identidade, não poder" (modelo shiny) é o que sustenta a #4 e a decisão §16.1-1 (o grátis não pode ser pet pior, exposto socialmente). Renascer é PAGO. Se a alocação mexer em resultado de combate, o app vende poder — e vende para quem já tinha tudo. |
+| **R-C** | **O ganho do renascido é declarado como ESCOLHA, nunca como força — e a copy tem de ser verdadeira no dia 1.** Nenhum texto pode dizer "mais forte", "melhor", "otimizar" ou "build". A palavra é *escolher a essência*. E a frase "Pagar nunca deixa sua criatura mais forte" (C-S1) **só pode ser escrita depois que R-B tiver teste verde** — senão o app mente na tela em que cobra. | Princípio 1: dinheiro compra identidade, nunca comportamento. A forma decidida passa (ver §4 abaixo) **porque** o conteúdo destravado é escolha estética/identitária. Some R-B e a frase vira propaganda falsa. |
+| **R-D** | **O push de incubação é VETADO na forma proposta. Fica o aviso na fila da Home; o push só entra sob as quatro travas:** (a) só para quem já ligou notificações; (b) **cede a vez à janela de descanso** com a mesma regra da copy das 20h — se a janela do jogador começa em ≤2h30, ele não sai; (c) **nunca dispara com o pet dormindo**, e nunca depois do `sleepReminderAt`; (d) copy na fonte única `_pushCopy.js`, sem hora impressa, sem "última chance", sem "falta(m) N", sem contagem regressiva — e **sem condicionar a nada que o jogador tenha ou não feito no dia**. Se alguma das quatro não couber, o push não existe: o aviso na fila basta. | 24h com fechamento automático **é** prazo, mesmo sem contador na tela — tirar o dígito não tira o relógio. Um push que diz "isto fecha" é exatamente a mecânica cuja resposta é *querer a notificação* (**#19**), e a beira de **#15** (FOMO que tira: fechar a alocação tira uma escolha). O que salva é a janela ser longa, a alocação já estar pré-visualizada (R-A) e o fechamento não tirar NADA — ver R-E. |
+| **R-E** | **`hideMetrics` vale aqui inteiro**: com ele ligado, nenhum número da alocação aparece na Home nem em push — a superfície vira palavra ("a essência deste estágio já se fixou"). E a alocação **nunca** vai ao widget nem ao `publicProfile` (**#21**: elemento alocado é métrica de build de outro jogador). | #14/#21. A tela do outro só mostra presença. |
+| **R-F** | **Fechar a janela sem alocar NUNCA pode resultar em pontos perdidos.** Não alocar = o oráculo distribui aquele estágio como distribui hoje, e a tela diz isso antes. A incubação fecha a *escolha*, não o *recurso*. | Pergunta 2. Perda por omissão sobre progresso permanente é a linha vermelha mais dura que existe aqui — e o jogador que não abriu o app em 24h é, por definição, o que estava em falta. Cobrar dele é a tese invertida. |
+| **R-G** | **Degeneração dentro da incubação: a trava 3 de `spriteTrigger` (§3.5, "queda não gera lote") vale IGUAL para a janela de alocação.** Degenerar **não** abre janela, **não** fecha a janela aberta e **não** desfaz alocação já feita. Re-subir a mesma forma **não** reabre alocação (o chaveamento é por `sprites[formId]`/alocação AUSENTE, nunca por "já passei aqui"). Teste exigindo isso. | Degeneração é caminho normal até o ultra. Se a queda mexesse na alocação, o HP — a única punição sancionada, com teto e perdões — passaria a cobrar **identidade permanente**. Isso é cruzar a pergunta 2 por via indireta, e seria a punição mais severa do produto inteiro. |
+| **R-H** | **`rebirth` vira CHAVE DE MODO, e isso tem de ficar escrito no código.** Aceites: (a) comentário-lápide no `src/utils/rebirth.ts` dizendo que o registro deixou de ser só histórico e que apagá-lo **rebaixa o pet, apaga um modo pago e é irreversível**; (b) **teste de contrato** provando que nenhum caminho (load da nuvem, higienização, migração, fresh start, `applyFreshStart`) remove ou sobrescreve `rebirth`; (c) a alocação **não é lida de `rebirth`**: grava-se um campo próprio (`elementAllocation`) que existe por si — dois fatos, dois campos, e o modo sobrevive mesmo se alguém mexer no registro. | O `CLAUDE.md` já diz "o registro `rebirth` no save é o que impede a segunda vez, então ele nunca é apagado" — mas o motivo escrito hoje é *impedir repetição*, e um agente futuro lê isso como "histórico". Sobrecarregar um campo com dois significados é o footgun 9 na forma mais cara: aqui o dano é apagar conteúdo pago sem nada ficar vermelho. |
+
+### As seis perguntas
+
+1. *Querer a tarefa ou a notificação?* A alocação, a tarefa. O **push**, a
+   notificação — por isso R-D. 2. *Tira algo?* Só se R-A, R-F ou R-G caírem;
+   nas três o que se perderia é **identidade permanente**, que é proibido.
+   3. *Mais um perdão?* **Não** — a contagem de D4 continua em oito.
+   4. *Número que desce?* Não (R-E cuida da exibição). 5. *Homem atrás da
+   cortina?* É o ponto frágil: cascata não-linear invisível. R-A é a resposta.
+   6. *Cabe na tese?* Cabe — "evolui COM" fica mais literal, já que o jogador
+   passa a dizer para ONDE.
+
+### Onde este parecer diz "isto perdoa demais"
+
+**R-F é perdão, e é o certo. R-A(b) é onde a linha tem de parar**: refazer
+livremente *dentro do estágio* é o perdão suficiente. **Alocação reversível
+depois do fechamento é vetada** — e este guarda veta preventivamente qualquer
+futuro "reset de pontos" (grátis, por Bits, por Créditos ou por item). Escolha
+que pode ser desfeita a qualquer momento não é escolha, e um reset pago seria
+**#13 com outro nome** (vender saída de uma consequência). A permanência é o que
+dá significado à única decisão de identidade que o jogador toma sozinho; sem
+ela a mecânica esvazia.
