@@ -28,3 +28,15 @@ Dono: `soulmon-guarda-nascimento`. Anexo: `../A-onboarding.md`.
 - `soulStruggle` é coletado e **nunca lido**. Qualquer WP que o use fecha uma dívida antiga.
 - Push **nunca** é pedido antes de o app ter entregue algo (`jaConcluiuAlgo`) — isso está certo e não se mexe.
 - A descrição da criatura diz **de onde ela veio**, nunca **como se comporta** (I.3.4: personalidade fechada impede projeção).
+
+## Trabalho fora dos WP1.x deste guarda
+- **22/09/2026 — SPEC escrita, nada implementado**: `../G-alocacao-elemento.md`
+  (alocação manual de ELEMENTO destravada pelo Renascimento + sprite v1 como
+  referência da v2). Pacotes **WP4.22…WP4.32**, que pertencem ao domínio de
+  **permanência** (`permanencia.md`) — foram escritos aqui por encomenda do
+  coordenador e **devem ser transcritos para aquele ledger** quando entrarem em
+  construção. Absorve as condições bloqueantes R-A..R-H (`vetos.md`, 22/09/2026)
+  e a revogação do prazo de 24h (a alocação fecha no gesto de evoluir).
+  Ordem inegociável: **WP4.22b (R-B, `getArenaAttributes`) antes de qualquer
+  pacote visível**. Pendência do dono registrada: `perAccountLifetime` 26 não
+  comporta duas vidas com retry (§8.2).
