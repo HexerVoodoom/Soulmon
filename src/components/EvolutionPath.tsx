@@ -70,6 +70,11 @@ interface EvolutionPathProps {
   dataPoints: number;
   vaccinePoints: number;
   perfectDays: number;
+  /** WP4.29 — a forma seguinte está incubando (D-G8c). Com a barra cheia e a
+   *  incubação correndo, o toque NÃO evolui: a página tem de dizer por quê,
+   *  senão repete o defeito que o `MANUAL_EVOLUTION` já custou uma vez — barra
+   *  cheia, nada acontece, lê como defeito. */
+  incubating?: boolean;
   gateDays: number;
   onDegenerate?: (targetStageId: string) => void;
   /** As 11 formas ÚNICAS do jogador (utils/oracle.ts). */
@@ -167,6 +172,7 @@ export function EvolutionPath({
   dataPoints,
   vaccinePoints,
   perfectDays,
+  incubating = false,
   gateDays,
   onDegenerate,
   stages,
@@ -404,7 +410,15 @@ export function EvolutionPath({
   const ratio = gateDays > 0
     ? Math.min(1, perfectDays / gateDays)
     : 1;
-  const fraseProgresso = prontoParaEvoluir
+  const fraseProgresso = prontoParaEvoluir && incubating
+    /* INCUBAÇÃO (D-G8c). Vem ANTES do cadeado porque é o estado mais recente:
+       a barra encheu agora e a forma está sendo feita. As três metades que o
+       parecer R-N exige estão aqui — leva um tempo · volta quando quiser ·
+       nada se perde —, e sem número nem unidade de tempo (R-I). */
+    ? (isPt
+        ? 'A próxima forma está tomando corpo. Leva um tempo — volte quando quiser, ela espera por você.'
+        : 'The next form is taking shape. It takes a while — come back whenever you like, it waits for you.')
+    : prontoParaEvoluir
     ? (evolutionLocked
         /* Copy §3.3 (21/09/2026): a linha canônica da §5.7, verbatim. O "mas
            você segurou" que estava aqui punha a pessoa como causa de um MAS —
@@ -430,11 +444,16 @@ export function EvolutionPath({
   /* O TOQUE no visor (V2): com a barra cheia e o cadeado aberto, evolui; nos
      outros casos alterna o cadeado. O rótulo diz qual dos dois vai acontecer
      — "tap to lock" num visor que também evolui era o gesto duplo sem nome. */
-  const evoluiNoToque = prontoParaEvoluir && !evolutionLocked && Boolean(onEvolveRequest);
+  // `!incubating`: com a forma ainda tomando corpo o toque não evolui — e o
+  // rótulo abaixo passa a dizer isso, em vez de prometer um gesto que o
+  // `handleEvolve` vai recusar em silêncio.
+  const evoluiNoToque = prontoParaEvoluir && !incubating && !evolutionLocked && Boolean(onEvolveRequest);
   const acaoDoVisor = evoluiNoToque ? onEvolveRequest : onToggleEvolutionLock;
   const nomeAtual = formaAtual?.name ?? (isPt ? 'Seu Soulmon' : 'Your Soulmon');
   const rotuloDoVisor = `${nomeAtual}, ${isPt ? 'forma atual' : 'current form'}. ${
-    evoluiNoToque
+    prontoParaEvoluir && incubating
+      ? (isPt ? 'A próxima forma está tomando corpo' : 'The next form is taking shape')
+      : evoluiNoToque
       ? (isPt ? 'Pronto — toque para evoluir' : 'Ready — tap to evolve')
       : !onToggleEvolutionLock
         ? ''

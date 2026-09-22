@@ -5645,6 +5645,7 @@ export default function App() {
               dataPoints={gameState.dataPoints}
               vaccinePoints={gameState.vaccinePoints}
               perfectDays={gameState.perfectDays}
+              incubating={incubandoAgora}
               gateDays={FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required}
               onDegenerate={handleDegenerate}
               stages={gameState.soulmonStages ?? []}

@@ -140,4 +140,39 @@ describe('🔴 nenhum texto promete evolução automática', () => {
     }
     expect(linha).toMatch(/o JOGADOR dispara|jogador dispara/);
   });
+
+  it('a INCUBAÇÃO tem voz na página de Evolução — barra cheia e nada acontecendo é defeito (WP4.29)', () => {
+    // Este arquivo existe porque a página já prometeu um comportamento que o
+    // código não tinha, e o dano foi exatamente este: barra cheia, jogador
+    // esperando, nada acontece — "lê como defeito". A incubação reintroduzia a
+    // MESMA forma de dano por outra porta, e o aviso da Home só alcança quem
+    // está na Home.
+    const evo = readFileSync(join(RAIZ, 'src/components/EvolutionPath.tsx'), 'utf8');
+
+    // 1. a página SABE da incubação (prop, não adivinhação)
+    expect(evo).toMatch(/incubating\??\s*:\s*boolean/);
+
+    // 2. com a barra cheia e incubando, o toque NÃO evolui — prometer um gesto
+    //    que o `handleEvolve` recusa em silêncio é pior que não prometer.
+    expect(evo).toMatch(/const evoluiNoToque = prontoParaEvoluir && !incubating/);
+
+    // 3. a frase de progresso e o rótulo acessível dizem o estado, nos dois idiomas
+    expect(evo).toMatch(/prontoParaEvoluir && incubating/);
+    expect(evo).toMatch(/tomando corpo/);
+    expect(evo).toMatch(/taking shape/);
+
+    // 4. e diz a verdade inteira (R-N), sem número nem unidade de tempo (R-I)
+    expect(evo).toMatch(/volte quando quiser/);
+    expect(evo).toMatch(/come back whenever you like/);
+    const frases = [...evo.matchAll(/'([^'\n]*tomando corpo[^'\n]*)'/g)].map(m => m[1]);
+    expect(frases.length).toBeGreaterThan(0);
+    for (const f of frases) expect(f, `número na copy: ${f}`).not.toMatch(/\d/);
+  });
+
+  // O App precisa PASSAR a prop — uma prop opcional que ninguém passa é o
+  // defeito X-3 deste mesmo arquivo (`NOVO` existia e era inalcançável).
+  it('o App.tsx liga a incubação na página de Evolução', () => {
+    const app = readFileSync(join(RAIZ, 'src/App.tsx'), 'utf8');
+    expect(app).toMatch(/incubating=\{incubandoAgora\}/);
+  });
 });
