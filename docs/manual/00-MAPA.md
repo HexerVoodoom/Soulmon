@@ -1,6 +1,6 @@
 # Mapa do manual do Soulmon — comece por aqui
 
-> **Dono:** doc-bibliotecario · **Data:** 21/09/2026 (noite: §6.5 indexa `reviews/2026-09-21-qa-rodada-1/` — 13 arquivos + 3 rascunhos de ADR; §6.2 `docs/adr` passa a 6 com ADR-004..006 em Proposta; §6.7 donos ⚰️ dos dois docs de design corrigidos) · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §3 (linha nova de plataforma), §6.1 `.claude/agents/` e §6.2/§6.4 (`PLAY-FICHA`, `PLAY-LANCAMENTO`, `docs/adr`, `ledger/plataforma` já indexados) conferidos contra `ls .claude/agents` (37) e `ls docs/adr`; anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: sincronização pós-merge `5ac3d351..8d318529`, tema som — `sonsAssets.ts`, `trilha.ts`, `public/sounds/` e `Attributions.md` › Áudio conferidos; anterior: `dc72579e..9875477b`, conferida em `5ac3d351`; guard verde)
+> **Dono:** doc-bibliotecario · **Data:** 22/09/2026 (§5 ganha `functions/api/_accountTombstone.js` e os guards da raiz `src/*.contract.test.ts`; §7 relido dos cabeçalhos após a sincronização `f4086ce0..a6c1cd8a`; anterior: 21/09/2026 noite — §6.5 indexa `reviews/2026-09-21-qa-rodada-1/`, 13 arquivos + 3 rascunhos de ADR; §6.2 `docs/adr` passa a 6 com ADR-004..006 em Proposta; §6.7 donos ⚰️ dos dois docs de design corrigidos) · **Estado:** verificado em 22/09/2026 por doc-verificador (delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §5 conferido com `ls functions/api/_accountTombstone.js src/*.contract.test.ts`, §7 com o `grep` de cabeçalhos abaixo; `BOOKLET-UNIVERSO.md` (`959e3bee`) já estava em §6.2; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §3 (linha nova de plataforma), §6.1 `.claude/agents/` e §6.2/§6.4 (`PLAY-FICHA`, `PLAY-LANCAMENTO`, `docs/adr`, `ledger/plataforma` já indexados) conferidos contra `ls .claude/agents` (37) e `ls docs/adr`; anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: sincronização pós-merge `5ac3d351..8d318529`, tema som — `sonsAssets.ts`, `trilha.ts`, `public/sounds/` e `Attributions.md` › Áudio conferidos; anterior: `dc72579e..9875477b`, conferida em `5ac3d351`; guard verde)
 > **Verificação:** `npx vitest run src/docsManual.contract.test.ts` — o item (a) exige que TODO `.md` de `docs/` (exceto `historico-digiapp/`) esteja citado neste arquivo, e o item (b) exige que todo link relativo do manual resolva. O item (d) proíbe referência `arquivo` + número de linha em qualquer doc do manual.
 > **Não cobre:** o conteúdo de nada. Este documento **aponta**; quem responde é o doc dono de cada assunto. Se você está lendo uma regra AQUI, o índice tem defeito.
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -271,6 +271,8 @@ Você tem um caminho e quer saber quem o documenta. A referência função a fun
 | `src/test/**` | [06-REFERENCIA/plugins-constants.md](06-REFERENCIA/plugins-constants.md) | [05-ARQUITETURA.md](05-ARQUITETURA.md) §10.3 |
 | `src/assets/soulmon/**` | — (arte, sem módulo) | [04-IDENTIDADE-VISUAL.md](04-IDENTIDADE-VISUAL.md) §8, [`Attributions.md`](../Attributions.md) |
 | `functions/api/**` | [06-REFERENCIA/api-workers.md](06-REFERENCIA/api-workers.md) | [08-INTEGRACOES-E-DEPLOY.md](08-INTEGRACOES-E-DEPLOY.md) §1–§2 |
+| `functions/api/_accountTombstone.js` (desde `a6c1cd8a`, 22/09/2026 — a lápide `del:done:<saveId>` de 30 dias; `save.js` responde 410 enquanto ela viver) | [06-REFERENCIA/api-workers.md](06-REFERENCIA/api-workers.md) | [07-DADOS-E-SAVE.md](07-DADOS-E-SAVE.md) §3.3 e §8.1, [08-INTEGRACOES-E-DEPLOY.md](08-INTEGRACOES-E-DEPLOY.md) §2.13 |
+| `src/*.contract.test.ts` (guards da raiz: `docsManual`, `docsSemMentira`, `i18nSemPtSozinho`, `index.css`, `narrativa` e, desde `a6c1cd8a`, `ia.camposEnviados` — a fronteira do que o cliente manda à IA — e `copy.semFomo` — a proibição #15 por teste) | [06-REFERENCIA/plugins-constants.md](06-REFERENCIA/plugins-constants.md) › Guards | [05-ARQUITETURA.md](05-ARQUITETURA.md) §9, [01-VISAO.md](01-VISAO.md) §7, [12-COMO-MANTER.md](12-COMO-MANTER.md) §5 |
 | `workers/**` | [06-REFERENCIA/api-workers.md](06-REFERENCIA/api-workers.md) | [08-INTEGRACOES-E-DEPLOY.md](08-INTEGRACOES-E-DEPLOY.md) §2.5–§2.7 |
 | `desktop/electron/**`, `desktop/renderer/src/**` | [06-REFERENCIA/desktop.md](06-REFERENCIA/desktop.md) | [05-ARQUITETURA.md](05-ARQUITETURA.md) §4, [`PLANO-DESKTOP-STEAM.md`](../PLANO-DESKTOP-STEAM.md) |
 | `desktop/renderer/src/tokens.css` | — (CSS, fora das árvores medidas) — cópia DECLARADA do bloco `--sm2-*` de `src/index.css`, travada por `src/styles/overlayTokens.parity.test.ts` | [04-IDENTIDADE-VISUAL.md](04-IDENTIDADE-VISUAL.md) §2.8; o canvas Fora do app `design/wireframes/fora-do-app/identidade/` (§6.7) |
@@ -486,24 +488,26 @@ Lido dos cabeçalhos em 10/09/2026 com `grep -o '\*\*Dono:\*\* [a-z-]*\|\*\*Data
 
 | Doc | Dono | Carimbo | Data |
 |---|---|---|---|
-| [00-MAPA.md (este)](00-MAPA.md) | doc-bibliotecario | verificado em 21/09/2026 | 21/09/2026 |
-| [01-VISAO.md](01-VISAO.md) | doc-redator-regras | verificado em 10/09/2026 | 09/09/2026 |
-| [02-REGRAS-DE-NEGOCIO.md](02-REGRAS-DE-NEGOCIO.md) | doc-redator-regras | verificado em 10/09/2026 | 10/09/2026 |
-| [03-FLUXO-DE-TELAS.md](03-FLUXO-DE-TELAS.md) | doc-redator-telas | verificado em 10/09/2026 | 09/09/2026 |
-| [04-IDENTIDADE-VISUAL.md](04-IDENTIDADE-VISUAL.md) | doc-redator-identidade | verificado em 10/09/2026 | 09/09/2026 |
-| [05-ARQUITETURA.md](05-ARQUITETURA.md) | doc-redator-arquitetura | verificado em 10/09/2026 | 09/09/2026 |
-| [07-DADOS-E-SAVE.md](07-DADOS-E-SAVE.md) | doc-redator-arquitetura | verificado em 10/09/2026 | 09/09/2026 |
-| [08-INTEGRACOES-E-DEPLOY.md](08-INTEGRACOES-E-DEPLOY.md) | doc-redator-arquitetura | verificado em 10/09/2026 | 09/09/2026 |
-| [09-HISTORICO.md](09-HISTORICO.md) | doc-historiador | verificado em 10/09/2026 | 09/09/2026 |
-| [10-DISCUSSOES-E-DECISOES.md](10-DISCUSSOES-E-DECISOES.md) | doc-historiador | verificado em 21/09/2026 | 21/09/2026 |
-| [11-GLOSSARIO.md](11-GLOSSARIO.md) | doc-bibliotecario | verificado em 10/09/2026 | 09/09/2026 |
-| [12-COMO-MANTER.md](12-COMO-MANTER.md) | doc-bibliotecario | verificado em 21/09/2026 | 21/09/2026 |
-| [06-REFERENCIA/api-workers.md](06-REFERENCIA/api-workers.md) | doc-redator-referencia | verificado em 10/09/2026 | 09/09/2026 |
-| [06-REFERENCIA/components.md](06-REFERENCIA/components.md) | doc-redator-referencia | verificado em 10/09/2026 | 09/09/2026 |
-| [06-REFERENCIA/desktop.md](06-REFERENCIA/desktop.md) | doc-redator-referencia | verificado em 10/09/2026 | 09/09/2026 |
-| [06-REFERENCIA/hooks-contexts-types.md](06-REFERENCIA/hooks-contexts-types.md) | doc-redator-referencia | verificado em 10/09/2026 | 09/09/2026 |
-| [06-REFERENCIA/plugins-constants.md](06-REFERENCIA/plugins-constants.md) | doc-redator-referencia | verificado em 10/09/2026 | 09/09/2026 |
-| [06-REFERENCIA/utils.md](06-REFERENCIA/utils.md) | doc-redator-referencia | verificado em 10/09/2026 | 09/09/2026 |
+| [00-MAPA.md (este)](00-MAPA.md) | doc-bibliotecario | verificado em 22/09/2026 | 22/09/2026 |
+| [01-VISAO.md](01-VISAO.md) | doc-redator-regras | verificado em 22/09/2026 | 22/09/2026 |
+| [02-REGRAS-DE-NEGOCIO.md](02-REGRAS-DE-NEGOCIO.md) | doc-redator-regras | verificado em 22/09/2026 | 22/09/2026 |
+| [03-FLUXO-DE-TELAS.md](03-FLUXO-DE-TELAS.md) | doc-redator-telas | verificado em 22/09/2026 | 22/09/2026 |
+| [04-IDENTIDADE-VISUAL.md](04-IDENTIDADE-VISUAL.md) | doc-redator-identidade | verificado em 22/09/2026 | 22/09/2026 |
+| [05-ARQUITETURA.md](05-ARQUITETURA.md) | doc-redator-arquitetura | verificado em 22/09/2026 | 22/09/2026 |
+| [07-DADOS-E-SAVE.md](07-DADOS-E-SAVE.md) | doc-redator-arquitetura | verificado em 22/09/2026 | 22/09/2026 |
+| [08-INTEGRACOES-E-DEPLOY.md](08-INTEGRACOES-E-DEPLOY.md) | doc-redator-arquitetura | verificado em 22/09/2026 | 22/09/2026 |
+| [09-HISTORICO.md](09-HISTORICO.md) | doc-historiador | verificado em 10/09/2026 (§1.5 conferido em 21/09) | 21/09/2026 |
+| [10-DISCUSSOES-E-DECISOES.md](10-DISCUSSOES-E-DECISOES.md) | doc-historiador | verificado em 22/09/2026 | 22/09/2026 |
+| [11-GLOSSARIO.md](11-GLOSSARIO.md) | doc-bibliotecario | verificado em 10/09/2026 (9 termos conferidos em 21/09) | 21/09/2026 |
+| [12-COMO-MANTER.md](12-COMO-MANTER.md) | doc-bibliotecario | verificado em 22/09/2026 | 22/09/2026 |
+| [06-REFERENCIA/api-workers.md](06-REFERENCIA/api-workers.md) | doc-redator-referencia | verificado em 22/09/2026 | 22/09/2026 |
+| [06-REFERENCIA/components.md](06-REFERENCIA/components.md) | doc-redator-referencia | verificado em 22/09/2026 | 22/09/2026 |
+| [06-REFERENCIA/desktop.md](06-REFERENCIA/desktop.md) | doc-redator-referencia | verificado em 22/09/2026 | 22/09/2026 |
+| [06-REFERENCIA/hooks-contexts-types.md](06-REFERENCIA/hooks-contexts-types.md) | doc-redator-referencia | verificado em 22/09/2026 | 22/09/2026 |
+| [06-REFERENCIA/plugins-constants.md](06-REFERENCIA/plugins-constants.md) | doc-redator-referencia | verificado em 22/09/2026 | 22/09/2026 |
+| [06-REFERENCIA/utils.md](06-REFERENCIA/utils.md) | doc-redator-referencia | verificado em 22/09/2026 | 22/09/2026 |
+
+(⚰️ Esta tabela ficou parada em "10/09/2026" até 22/09/2026 — três sincronizações recarimbaram os cabeçalhos sem relê-la; o comando do parágrafo acima é a medida, a tabela é o retrato.)
 
 ---
 

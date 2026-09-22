@@ -1,6 +1,6 @@
 # Integrações e deploy
 
-> **Dono:** doc-redator-arquitetura · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §0, §1, §2.5, §2.6, §2.10, §2.12, §2.13, §3.3, §3.4 e §4 conferidos símbolo a símbolo; anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: §3.6, delta `5ac3d351..8d318529`, som/S16 — os quatro bumps do dia conferidos com `git log --format=%h 5ac3d351..73be1a2f -- public/sw.js`; `980bc84c` deu o quinto, v155; o resto: sincronizado com `dc72579e..9875477b` em 21/09/2026 por doc-redator-arquitetura; conferido em `5ac3d351`)
+> **Dono:** doc-redator-arquitetura · **Data:** 22/09/2026 · **Estado:** verificado em 22/09/2026 por doc-verificador (delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §2.5/§2.6 (`pushidx`, `res.ok`), §2.7 (D0 `null`), §2.8 (`billing-ktx` 8.3.0), §2.10 (404, tier derivado), §2.12 (`invite`, `active_days`, `notes`), §2.13 (410, ordem, sprites), §3.3 (Actions parado — fato datado), §3.4 (`__APP_VERSION__`, alarme exato), §3.6 e §4 conferidos símbolo a símbolo contra `build.gradle`, `BillingPlugin.kt`, `SoulmonAlarmPlugin.kt`, `AndroidManifest.xml`, `functions/api/*.js`, `public/sw.js`; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §0, §1, §2.5, §2.6, §2.10, §2.12, §2.13, §3.3, §3.4 e §4 conferidos símbolo a símbolo; anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: §3.6, delta `5ac3d351..8d318529`, som/S16 — os quatro bumps do dia conferidos com `git log --format=%h 5ac3d351..73be1a2f -- public/sw.js`; `980bc84c` deu o quinto, v155; o resto: sincronizado com `dc72579e..9875477b` em 21/09/2026 por doc-redator-arquitetura; conferido em `5ac3d351`)
 > **Verificação:** `npx vitest run src/deploy src/security functions/api workers` — em especial `src/deploy/appUrl.contract.test.ts` (as quatro fontes da URL), `src/deploy/firebaseNoBuild.contract.test.ts` (o `.env.production` versionado), `src/deploy/swCache.contract.test.ts`, `src/security/csp.test.ts`, `src/security/supabase.contract.test.ts`, `workers/pushCopy.parity.test.js` e `workers/vapid.parity.test.js`.
 > **Não cobre:** o esquema do save e as chaves de storage (→ [07-DADOS-E-SAVE.md](07-DADOS-E-SAVE.md)), a arquitetura e os portões (→ [05-ARQUITETURA.md](05-ARQUITETURA.md)), as regras do jogo (→ `02-REGRAS-DE-NEGOCIO.md`), função por função (→ `06-REFERENCIA/`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -147,9 +147,13 @@ estática, nunca do modelo.
 
 **A ponte de ajuda** (`src/utils/chatSafety.ts`) roda **antes de a mensagem sair
 do aparelho**: reconhece um punhado de frases de sofrimento agudo e devolve uma
-resposta local, fixa, na voz do pet, com o CVV 188 em português e a linha
-internacional em inglês. Não diagnostica, não classifica risco e não guarda
-histórico.
+resposta local, fixa, na voz do pet, com o CVV 188 em português e, em inglês,
+**findahelpline.com** (desde `a6c1cd8a` — ⚰️ "a crisis line" sem apontar
+nenhuma). Não diagnostica, não classifica risco e não guarda histórico. Desde
+`a6c1cd8a` (skeptic #11, QA Rodada 1) o texto E os padrões passam por
+`normalizarParaLexico` (NFD sem marcas + minúsculo): "nao quero mais viver" sem
+acento passa a casar, e o léxico EN ganhou o coloquial de chat (`wanna die`,
+`kms`, `kill myself`, `end it all`, `no reason to live`).
 
 ### 2.3 Higgsfield (e Gemini de reserva) — geração de sprite
 
@@ -221,7 +225,7 @@ nenhum de `transcribe.js`, e não pode haver.
 |---|---|
 | **Para quê** | Notificação em navegador e PWA instalada — e também dentro do WebView do Capacitor, onde `PushManager` é suportado. |
 | **Cliente** | `src/utils/notifications.ts` → `subscribeToPush` / `unsubscribeFromPush`; o `push`/`notificationclick` é tratado em `public/sw.js`. **Ícones (20/09/2026, `3e758a81`, canvas Fora do app — `docs/design/DECISOES-WIREFRAME.md` §30, D-F14/D-F15):** `icon` = `/push-large-192.png` (`PUSH_ICON` no `sw.js`; mini-visor REDONDO `#071413` com a chama de `src/brand/flame.ts` a 1× — o Android 12+ recorta o `largeIcon` em círculo, então o PNG já nasce círculo) e `badge` = `/badge-96.png` (`PUSH_BADGE`; ALFA-ONLY, chama branca em transparente — a barra de status descarta cor). Os mesmos dois caminhos estão em `showNotification` de `notifications.ts` e no `PRECACHE_URLS`. ⚰️ Até então os dois eram `/favicon-192x192.png`, e o favicon (quadrado escuro cheio) virava um BLOCO PRETO na barra de status — inclusive no WebView do APK, onde o Web Push também roda. |
-| **Servidor** | `functions/api/subscribe.js` (`POST` grava, `DELETE` remove) → chaves `push:<hash do endpoint>` em `PUSH_SUBSCRIPTIONS`; desde `42b07bec` (decisão #23) o registro leva `saveId` opcional, que é o que a exclusão de conta (`account.js` › `deletePushSubscriptions`) usa para achá-lo. O envio é `workers/webpush.js` (RFC 8292 VAPID + RFC 8291 + RFC 8188 aes128gcm, tudo em WebCrypto). |
+| **Servidor** | `functions/api/subscribe.js` (`POST` grava, `DELETE` remove) → chaves `push:<hash do endpoint>` em `PUSH_SUBSCRIPTIONS`; desde `42b07bec` (decisão #23) o registro leva `saveId` opcional, e desde `a6c1cd8a` (QA Rodada 1) `gravarSeMudou` também o indexa em **`pushidx:<saveId>`** (`_pushIdentity.js`; teto 16, TTL 1 ano; indexa mesmo quando o registro não mudou — inscrição antiga se indexa na próxima abertura) — é por esse índice, não por varredura, que a exclusão de conta (`account.js` › `deletePushSubscriptions`) acha as inscrições; o `DELETE` chama `desindexarInscricao` antes de apagar. O envio é `workers/webpush.js` (RFC 8292 VAPID + RFC 8291 + RFC 8188 aes128gcm, tudo em WebCrypto). |
 | **Credencial** | `VAPID_JWK` — **`wrangler secret put VAPID_JWK` dentro de `workers/`** (a chave privada ECDSA P-256 como JSON). A chave PÚBLICA correspondente é `VAPID_PUBLIC_KEY`, que vai em `[vars]` do `workers/wrangler.toml` (é pública por definição). O endereço de contato do VAPID (RFC 8292 `sub`) é uma constante no `workers/push-scheduler.js`: é para onde o SERVIÇO de push escreve em caso de falha de entrega e **nunca aparece para o usuário**. |
 | **Sem ela** | O cron não consegue assinar e nenhum push web sai. |
 | **Régua** | `functions/api/subscribe.test.js`, `workers/vapid.parity.test.js`, `functions/api/_pushTargets.test.js`. |
@@ -231,8 +235,8 @@ nenhum de `transcribe.js`, e não pode haver.
 | | |
 |---|---|
 | **Para quê** | Canal NATIVO extra, só no app Android. FCM tem tratamento mais confiável contra Doze e otimização de bateria em ROMs de fabricante (MIUI, EMUI) do que uma subscription de Web Push crua, e dá visibilidade de entrega pelo Firebase Console. |
-| **Cliente** | `src/utils/notifications.ts` → `registerForPushNotifications` / `unregisterFromPushNotifications`, via `@capacitor/push-notifications`. O token fica em `FCM_TOKEN` (`localStorage`). |
-| **Servidor** | `functions/api/fcm-subscribe.js` (`POST`/`DELETE`) → chaves `fcm:*` no MESMO namespace `PUSH_SUBSCRIPTIONS` (com `saveId` opcional desde `42b07bec`, como em `subscribe.js`). O envio é `workers/fcm.js` (HTTP v1, JWT assinado em WebCrypto — sem `firebase-admin`). Desde 20/09/2026 (`3e758a81`) o payload `android.notification` leva `icon: 'ic_notification'` (a chama de `android/.../drawable/ic_notification.xml`, silhueta que o Android pinta no acento) e `color: '#0B6F68'` (`primary-ink` claro, 6,02:1 sobre a bandeja clara) — **sem `image`**: no FCM v1 não existe `largeIcon`, e `image` vira BigPictureStyle. O mini-visor redondo fica só no Web Push e no alarme local. ⚠️ **Isso está no worker, que NÃO foi deployado** (§3.5): em produção o FCM continua mandando o payload anterior até alguém rodar `wrangler deploy` dentro de `workers/`. |
+| **Cliente** | `src/utils/notifications.ts` → `registerForPushNotifications` / `unregisterFromPushNotifications`, via `@capacitor/push-notifications`. O token fica em `FCM_TOKEN` (`localStorage`) — e desde `a6c1cd8a` (skeptic #2, QA Rodada 1) **só sai do aparelho depois de `res.ok`** do `DELETE`; falha lança e o token fica para a próxima tentativa (⚰️ era apagado ANTES do `fetch`: um DELETE que falhava não podia ser repetido e o servidor seguia mandando push a uma conta que a pessoa mandou apagar). |
+| **Servidor** | `functions/api/fcm-subscribe.js` (`POST`/`DELETE`) → chaves `fcm:*` no MESMO namespace `PUSH_SUBSCRIPTIONS` (com `saveId` opcional desde `42b07bec`, como em `subscribe.js`; índice `pushidx:` e `desindexarInscricao` no `DELETE` desde `a6c1cd8a`, como em §2.5). O envio é `workers/fcm.js` (HTTP v1, JWT assinado em WebCrypto — sem `firebase-admin`). Desde 20/09/2026 (`3e758a81`) o payload `android.notification` leva `icon: 'ic_notification'` (a chama de `android/.../drawable/ic_notification.xml`, silhueta que o Android pinta no acento) e `color: '#0B6F68'` (`primary-ink` claro, 6,02:1 sobre a bandeja clara) — **sem `image`**: no FCM v1 não existe `largeIcon`, e `image` vira BigPictureStyle. O mini-visor redondo fica só no Web Push e no alarme local. ⚠️ **Isso está no worker, que NÃO foi deployado** (§3.5): em produção o FCM continua mandando o payload anterior até alguém rodar `wrangler deploy` dentro de `workers/`. |
 | **Credencial** | `FIREBASE_SERVICE_ACCOUNT` — **`wrangler secret put` dentro de `workers/`**, com o JSON COMPLETO baixado em Firebase Console → Configurações do projeto → Contas de serviço → Gerar nova chave privada. Exige também `android/app/google-services.json` (**commitado**; a API key ali é restrita por pacote e não é segredo) e o canal `soulmon_push` criado em `MainActivity.java`. O `AndroidManifest.xml` aponta `com.google.firebase.messaging.default_notification_icon` para `@drawable/ic_notification` (⚰️ era `@mipmap/ic_launcher` até 15/09/2026, `005a2941`). |
 | **Sem ela** | O cron pula o canal FCM; o Web Push continua funcionando. |
 | **Régua** | `functions/api/fcm-subscribe.test.js`. |
@@ -264,6 +268,7 @@ baixo. Foi reintroduzido de propósito para o lançamento na Play. Os dois convi
 |---|---|
 | **Para quê** | Disparar os pushes do dia para os DOIS canais numa única passada de cron. |
 | **Onde a copy mora** | `functions/api/_pushCopy.js` — **dono único** das três árvores. `PUSH_HOURS_BRT = [10, 16, 22]`; `PUSH_HOURS_UTC` é **derivado** (`(h + 3) % 24`, ordenado). O `workers/wrangler.toml` declara `crons = ["0 1 * * *", "0 13 * * *", "0 19 * * *"]`, e `workers/pushCopy.parity.test.js` trava essa lista contra o módulo — foi assim que o cron das 21h saiu junto com o nudge das 21h, que a auditoria de tom já tinha removido do cliente. |
+| **D0 = nulo** | Desde `a6c1cd8a` (QA Rodada 1; provisório de #50-b): `pushCopy(hora, nome, idioma, ageDays)` devolve **`null` quando `ageDays === 0`**, em QUALQUER hora, e o scheduler trata `null` como `'skipped'` — o dia do nascimento é o dia em que a pessoa está dentro do app. ⚰️ Até `f4086ce0` o cabeçalho prometia "nunca no D0" e o código só desviava a copy de recém-nascido para a frase padrão: o push saía do mesmo jeito. Inscrição sem `bornAt` não é D0 e recebe a copy de sempre. |
 | **A copy das 20h** | `eveningCopy`, no MESMO `_pushCopy.js`. Ela era inline no `NotificationManager.tsx` e por isso sobreviveu ao WP3.4 — o teste de paridade compara as horas de `PUSH_HOURS_BRT`, e não existe hora 20 para comparar. Só o TEXTO veio; a **CONDIÇÃO continua no cliente**, porque o worker não sabe se a meta do dia foi cumprida (a assinatura guarda só endpoint, chaves, nome e idioma). Ela **cede a vez quando há janela de descanso**: com a janela padrão (23:00) a noite mandava três pushes em 2h30. |
 | **O lembrete de deitar** | O ÚNICO push da Janela de Descanso, e a hora dele não é fixa: sai de `sleepReminderAt` (`src/utils/restWindow.ts`), `SLEEP_REMINDER_LEAD_MIN` (30) minutos antes do início da janela que a PESSOA escolheu. Por isso não entra em `pushCopy(hora)`. Ele **não diz a hora** — "São 22h30" é um relógio cobrando. |
 | **Fechamento de season** | O cron das 10h BRT do dia 1 chama `POST /api/community?action=closeSeason` da season anterior, e entrega os troféus 🥇🥈🥉. |
@@ -280,7 +285,7 @@ das 21h ficou vivo aqui depois de ter sido removido do cliente.
 | | |
 |---|---|
 | **Para quê** | A compra de conteúdo digital dentro do app Android. É obrigatória pela Play — não dá para usar Stripe/Pix ali. |
-| **Cliente** | `src/utils/playBilling.ts` (`purchase`, `restorePurchases`, `getLocalizedPrice`, `isBillingAvailable`) sobre o plugin nativo `plugins/BillingPlugin.kt` (`com.android.billingclient:billing-ktx:6.2.1`); depois `src/utils/entitlements.ts` → `verifyPurchase`. |
+| **Cliente** | `src/utils/playBilling.ts` (`purchase`, `restorePurchases`, `getLocalizedPrice`, `isBillingAvailable`) sobre o plugin nativo `plugins/BillingPlugin.kt` (`com.android.billingclient:billing-ktx:8.3.0` desde `a6c1cd8a` — ⚰️ `6.2.1`: **a Play recusa PBL < 8** em app novo/update desde 31/08/2026 (v6 desde 31/08/2025; `deprecation-faq`, lido em 21/09/2026); o plugin passou à API da 8.x: `enablePendingPurchases(PendingPurchasesParams…enableOneTimeProducts())`, `enableAutoServiceReconnection()`, `queryProductDetailsAsync` lendo `QueryProductDetailsResult.productDetailsList`; guard textual PL-8 `src/plugins/billingPbl8.contract.test.ts` — **o compile só o CI prova, e o CI está parado** (§3.3, #48)); depois `src/utils/entitlements.ts` → `verifyPurchase`. |
 | **Servidor** | `functions/api/billing.js` → `POST ?action=verify[&provider=play]` com `{ id, productId, purchaseToken }`, que chama `verifyPlayPurchase` (`_billing.js`) e, só se a **própria loja** confirmar, `claimOrder` + `applyVerifiedPurchase` (`_entitlements.js`). |
 | **Catálogo** | `PRODUCTS` em `_billing.js`: `soulmon.unlock.full` (`grantTier: 'paid'`, NÃO consumível) e `soulmon.credits.60` / `.150` / `.400` (consumíveis). Produto consumível devolve `consumeToken`, e o app precisa chamar `consumeAsync()` depois — senão o jogador não consegue recomprar o mesmo pacote. |
 | **Credencial** | `GOOGLE_PLAY_SERVICE_ACCOUNT` e `ANDROID_PACKAGE_NAME` — `wrangler secret`. Mais a variável de política `PLAY_REQUIRE_ACCOUNT_BINDING`. |
@@ -323,7 +328,9 @@ loja diz de quem é a compra, e recibo alheio não vale em conta nenhuma.
 | **Servidor** | `GET ?id=<saveId>` → `{ tier, credits, adsLeft }` (`publicView`; `+ provider` só com tier pago — `play`/`steam`/`courtesy`); `POST ?action=spend` `{ id, amount, reason }` — **idempotente por `opId`**, porque guarda de cliente não protege dinheiro (o cliente é editável e a rede repete sozinha); `POST ?action=ad` `{ id }`; **`POST ?action=grant` `{ saveId }`** (desde `42b07bec`, decisão #12) — cortesia: tier pago sem loja, `provider: 'courtesy'`, zero crédito, idempotente por conta, teto global (`courtesy:count`). `Authorization: Bearer <ENTITLEMENTS_ADMIN_KEY>`; sem a variável a rota responde **404** (fail-closed, como `metrics.js`); teto por IP 10/min. Detalhe em [`06-REFERENCIA/api-workers.md`](06-REFERENCIA/api-workers.md). |
 | **Credencial** | `ADMOB_SSV_ENABLED` — variável de servidor. `ENTITLEMENTS_ADMIN_KEY` (secret — a chave da cortesia; sem ela a rota não existe) e `COURTESY_MAX_ACCOUNTS` (secret, inteiro ≥ 0; ausente ou inválida → `COURTESY_DEFAULT_MAX = 25`). Nomes só, nunca valores (§0). |
 | **Sem ela** | ⚠️ **O anúncio recompensado fica DESLIGADO por padrão**, e o GET devolve `adsEnabled: false` para a UI esconder a opção. Um endpoint aberto que dá crédito só porque o cliente pediu é farmável com um `curl`. Ligar de verdade exige Server-Side Verification do AdMob (o próprio Google chamando uma URL nossa assinada). |
-| **Régua** | `functions/api/entitlements.test.js`. |
+| **Régua** | `functions/api/entitlements.test.js`, `entitlements.grant.qa.test.js` e `_entitlements.tierDerivado.qa.test.js` (os dois desde `a6c1cd8a`). |
+
+Desde `a6c1cd8a` (QA Rodada 1): (1) `handleGrant` exige `typeof saveId === 'string'` ANTES do regex (`RegExp.test` coage array/número) e a **ação desconhecida responde 404 `Not found`**, o mesmo corpo do `grant` sem chave — ⚰️ `400 Unknown action` deixava uma sonda sem chave distinguir `?action=grant` (404) de `?action=x` (400), e o 404 que existia para esconder a rota passava a confirmá-la (achado B1); (2) **o tier é DERIVADO na auditoria de reembolso**: `auditRefunds` termina com `ent.tier = paidProviderOf(ent) ? 'paid' : 'demo'` — ⚰️ rebaixava para `demo` por pedido desfeito sem olhar os outros, e com a cortesia isso deixava `tier: 'demo'` com `provider: 'courtesy'`. **Consequência provisória (#40): a cortesia SOBREVIVE ao reembolso da Play**; se o dono decidir o contrário, marca-se o pedido `courtesy:*` como `voided` ali.
 
 ### 2.11 Comunidade e cooperativo — `/api/community`
 
@@ -361,9 +368,26 @@ de retenção que alguém precisa lembrar de aplicar, é a **forma do dado**);
 não aparece em lugar nenhum do arquivo); e **sem PII derivável** (a maior
 resolução é o DIA, e dia fora de `MAX_DAY_SKEW_DAYS` é descartado).
 
-⚠️ **O que este agregado não consegue responder, e não é bug**: **retenção D1,
-D7, D30**. A chave é o dia do EVENTO; não existe dia de instalação em lugar
-nenhum, logo não existe coorte.
+⚠️ **O que este agregado não consegue responder, e não é bug**: **retenção por
+COORTE de instalação** e conversão em N dias. A chave é o dia do EVENTO; não
+existe dia de instalação em lugar nenhum, logo não existe coorte. O que existe
+é `retained.d1/d7/d30` — o maior marco cruzado por pessoa, contado no aparelho
+e emitido 1× por marco (`d7` = "voltou em algum dia de D7–D29"). ⚰️ Até
+`f4086ce0` este parágrafo e o `notes.unreadable` do próprio GET diziam "retenção
+D1/D7/D30" ilegível, contradizendo o `retained.d7` do mesmo JSON (review 07, QA
+Rodada 1); desde `a6c1cd8a` a resposta traz `notes.retained` com a definição.
+
+**Mais três mudanças de `a6c1cd8a`** (review 07): `app_open.source` aceita **4 =
+`invite`** (`?src=convite`, o link do E0; `TELEMETRY_OPEN_SOURCE.invite` no
+cliente, `OPEN_SOURCE_LABEL` no servidor e em `tools/metricsReport.mjs`;
+`limparOrigemDaUrl()` apaga o `?src=` da URL depois do `track` do boot, senão um
+favorito reemitia `invite` toda semana) · `applyAggregate` soma
+**`week_active.active_days.<n>`** (⚰️ o campo saía do aparelho, passava pelo
+schema e morria no servidor — custo de privacidade sem retorno; é a leitura da
+hipótese de hábito do E0) · no cliente, evento gerado com a **aba oculta** vai
+para a fila `soulmon-telemetry-hidden` e é reprocessado quando a aba volta
+(⚰️ era descartado — o `day_active` da virada à meia-noite morria com o PWA em
+segundo plano; ver `07-DADOS-E-SAVE.md` §4.1).
 
 ### 2.13 `/api/config` e `/api/account`
 
@@ -381,16 +405,33 @@ que perigosa**.
 
 O que a exclusão faz, declarado no cabeçalho de `account.js`: **APAGA** o save,
 `profile:`, `pid:`, `rank:` (todas as seasons), `gifts:`, a menção do usuário na
-lista de amigos de terceiros e, desde `42b07bec` (decisão #23), as inscrições
-`push:*`/`fcm:*` de `PUSH_SUBSCRIPTIONS` cujo valor carrega o `saveId` do titular
-(varredura por prefixo com teto `MAX_SCAN_PAGES = 20`; registro sem `saveId` —
-inscrição anterior a `42b07bec` — fica fora do alcance, e o cliente chama os
-`DELETE` dos dois canais **antes** do `delete-confirm`: `revokePushBeforeDelete`
-em `src/utils/accountData.ts`; a resposta devolve
-`executado.inscricoesDePushApagadas`); **MINIMIZA** `ent:<saveId>` (some o que é USO —
+lista de amigos de terceiros, desde `42b07bec` (decisão #23) as inscrições
+`push:*`/`fcm:*` de `PUSH_SUBSCRIPTIONS` da conta — desde `a6c1cd8a` pelo
+**índice inverso `pushidx:<saveId>`** (custo fixo, sem `list`; ⚰️ a varredura por
+prefixo com teto `MAX_SCAN_PAGES = 20` ficou como fallback só para conta sem
+índice, porque estourava o teto de subrequests com ~900 inscrições; registro sem
+`saveId` fica fora do alcance, e o cliente chama os `DELETE` dos dois canais
+**antes** do `delete-confirm`: `revokePushBeforeDelete` em
+`src/utils/accountData.ts`, agora com teto de 8 s por canal) e, desde `a6c1cd8a`,
+os **sprites de IA** (`sprite:img:`/`sprite:lock:` por prefixo com o saveId e o
+`sprite:blob:` que cada cache aponta; blob órfão declarado em `NOT_INCLUDED`);
+**GRAVA** a lápide `del:done:<saveId>` (30 dias, `_accountTombstone.js`) ANTES da
+primeira destruição — `save.js` responde **410 `account-deleted`** a GET e POST
+enquanto ela viver, e o cliente (`cloudSave.ts` › `reagirContaExcluida`) limpa o
+aparelho e desloga; **MINIMIZA** `ent:<saveId>` (some o que é USO —
 `aiLifetime`, `adDate`, `adCount` — e ficam os campos de DINHEIRO); e
 **SOBREVIVE** `ord:<orderId>`, porque é a trava que faz um comprovante valer por
 UMA conta, e apagá-lo destruiria o direito pago junto com o dado.
+
+**A ordem do `delete-confirm` mudou em `a6c1cd8a`** ("o que pode falhar vai
+primeiro", `03-arquitetura-r1.md` §2.4): token → inventário → lápide → varredura
+de amigos (a única que ainda pode estourar; se estourar, a lápide é desfeita e
+sobe 500 — retry com o mesmo token em 15 min) → **daqui nada lança** (cada passo
+em `try/catch`, o que falhou vai em `executado.falhou`) → push por índice →
+sprites → minimizar `ent:` → `rank:`/`gifts:`/`pid:`/`profile:` → **o save por
+último** → o token só sai se nada falhou. ⚰️ O save era o PRIMEIRO delete: o retry
+encontrava 404 com o token ainda válido e nada mais para apagar. A resposta traz
+`executado.inscricoesDePushApagadas`, `spritesApagados` e `falhou`.
 
 ---
 
@@ -460,6 +501,17 @@ o comentário da versão ao lado **obrigatório** — sem ele o arquivo vira 40
 caracteres opacos que ninguém ousa atualizar. Tag móvel (`@v4`) é reapontável
 pelo dono da action; o SHA não.
 
+⚠️ **FATO DATADO — o GitHub Actions ficou PARADO POR COBRANÇA de 16/09 a pelo
+menos 22/09/2026** (achado da QA Rodada 1, #48): 339 runs em `failure` em
+segundos, com *"recent account payments have failed…"* — **nenhum dos cinco
+workflows rodou** nesse período, e ninguém viu porque a produção não caiu (o
+Cloudflare deploya sozinho no push da `main`, sem passar pelo Actions). Tudo o
+que "o CI prova" (compile Kotlin do `BillingPlugin.kt` na 8.x, `assembleDebug`
+com SDK 36, os três `tsc` e o `vitest` fora da máquina local) está **sem prova
+desde 16/09**. Só o dono regulariza (`github.com/settings/billing`). Desde
+`a6c1cd8a` a PRIMEIRA linha do runbook do `soulmon-operador` é `gh run list
+--limit 5` — o CI pode estar morto sem que nada fique vermelho no repositório.
+
 **Secrets do CI**: `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`,
 `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` (assinatura do bundle),
 `SIBLING_REPOS_TOKEN` e `SYNC_PR_TOKEN` (do `sync-irmaos.yml`), mais o
@@ -479,12 +531,31 @@ bundle com `setObfuscatedAccountId`, preço localizado e o widget novo, e a Play
 `versionCode` repetido — bump manual, sem automação); `compileSdkVersion` /
 `targetSdkVersion` **36** (`android/variables.gradle`, eram 35 —
 `[verificar no android-build.yml do CI após o merge]`: se o `assembleDebug` reclamar da
-plataforma 36, o conserto é subir o AGP, não voltar para 35); `billing-ktx` **fica em
-6.2.1** porque `BillingPlugin.kt` chama `enablePendingPurchases()` sem argumento e a 7.x
-exige `PendingPurchasesParams` — `[a confirmar no Play Console]` se a loja aceita o
-upload. A ficha pronta para colar está em [`PLAY-FICHA.md`](../PLAY-FICHA.md) e o passo a
-passo do console em [`PLAY-LANCAMENTO.md`](../PLAY-LANCAMENTO.md) (§A–§I, etiquetas
-`[dono digita segredo]` / `[submissão: confirmar]` / `[squad pode dirigir o Chrome]`).
+plataforma 36, o conserto é subir o AGP, não voltar para 35); ⚰️ "`billing-ktx` fica em
+6.2.1 porque `BillingPlugin.kt` chama `enablePendingPurchases()` sem argumento" valeu só
+de `4a8b8049` a `a6c1cd8a` — a Play RECUSA PBL < 8 (§2.8), então em `a6c1cd8a` o plugin
+foi portado para a **8.3.0** (guard `billingPbl8.contract.test.ts`; compile sem prova
+enquanto o CI estiver parado, §3.3). A ficha pronta para colar está em
+[`PLAY-FICHA.md`](../PLAY-FICHA.md) e o passo a passo do console em
+[`PLAY-LANCAMENTO.md`](../PLAY-LANCAMENTO.md) (§A–§I, etiquetas `[dono digita segredo]` /
+`[submissão: confirmar]` / `[squad pode dirigir o Chrome]`; §A.0 Actions e §G Billing 8
+desde `a6c1cd8a`).
+
+**Versão única (`a6c1cd8a`, design-critic B1):** `versionName` **1.1.4** é o mesmo
+`version` do `package.json` (⚰️ `0.1.0`), e é dele que o Vite injeta
+`__APP_VERSION__` (`define` em `vite.config.ts`; `vitest.config.ts` repassa) para
+`FeedbackLink.tsx` › `APP_VERSION` (⚰️ literal `'1.0.2'` — três versões no
+repositório). Régua: `src/deploy/versaoUnica.contract.test.ts`. Bump de versão =
+`package.json` **e** `versionName`/`versionCode` no Gradle, no mesmo commit.
+
+**Alarme exato (`a6c1cd8a`, PL-9):** `SoulmonAlarmPlugin.kt` só chama
+`setExactAndAllowWhileIdle` atrás de `canScheduleExactAlarms()`, com fallback
+`setAndAllowWhileIdle`; o manifesto e o `BootReceiver` recebem
+`SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED` e reagendam; o lado JS ganhou
+`canScheduleExact()`/`openExactAlarmSettings()` (`src/plugins/SoulmonAlarmPlugin.ts`,
+ainda sem chamador na UI). ⚰️ Android 14+ com target ≥ 33 não pré-concede a
+permissão, o `setExact*` lançava `SecurityException` e o JS engolia — **nenhum
+lembrete de tarefa tocava no APK**. Como tudo em `android/`, só chega com APK novo.
 
 Guia operacional: [../APK-BUILD-INFO.md](../APK-BUILD-INFO.md).
 ⚠️ **Aquele arquivo é da era do fork** (cabeçalho: "última atualização declarada:
@@ -532,6 +603,9 @@ de novo (uma unidade, sem o número aqui — hash novo do aviso de WebView na CS
 `cacheavel(res)` passou a exigir `status === 200` em vez de `res.ok`: um **206**
 (range request do `<video>` `.mp4`) é `ok` e o `Cache.put` lançava "Partial
 response (status code 206) is unsupported" — visto no console na etapa 4 do QA geral.
+Em `a6c1cd8a` andou de novo (uma unidade — hash novo do gate de WebView na CSP de
+`public/_headers`, `index.html` e `manifest.json` reescritos), e `cacheavel` ganhou
+teste direto: `tests/swCacheavel.test.ts`.
 
 ---
 
@@ -546,10 +620,12 @@ Esta lista **não é mantida aqui**. As duas fontes vivas são:
   (🔴 urgente · 🟠 antes de qualquer coisa com dinheiro · 🟡 decisões de produto ·
   🔵 lançamento · 🟢 ambiente), com o que já foi resolvido riscado no fim.
 
-Os itens em aberto que tocam ESTE documento, em 09/09/2026:
+Os itens em aberto que tocam ESTE documento, em 09/09/2026 (linha do Actions acrescentada em 22/09/2026):
 
 | Item | Consequência enquanto não for feito |
 |---|---|
+| **Regularizar a cobrança do GitHub** (`github.com/settings/billing`, #48 — parado desde 16/09/2026) | Nenhum workflow de §3.3 roda: o compile Kotlin da 8.x, o APK e os portões fora da máquina local ficam sem prova; `gh run list --limit 5` é a medição. |
+| Deploy do worker de push (`cd workers && wrangler deploy`, #50-a) | O E0 roda **sem push** — e a hipótese H1 fica confundida; `pushCopy` D0 nulo e o índice `pushidx` só valem com o worker/rotas no ar. |
 | `GOOGLE_PLAY_SERVICE_ACCOUNT` + `ANDROID_PACKAGE_NAME` | A rota da Play responde 503 e nenhuma compra é concedida. |
 | `PLAY_REQUIRE_ACCOUNT_BINDING = true` (só **depois** de publicar o APK que manda `setObfuscatedAccountId`) | Compra **sem vínculo de conta é aceita** — um recibo pode virar N contas pagas. |
 | `METRICS_ADMIN_KEY` (secret do Worker — ver §0) | A leitura de métricas responde **404**. Está tudo instrumentado e ninguém lê nada — e `scripts/metrics-report.mjs` sai com código 2. |

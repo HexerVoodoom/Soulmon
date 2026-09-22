@@ -1,6 +1,6 @@
 # Como manter o manual
 
-> **Dono:** doc-bibliotecario · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §3 passo Medir, §7 (agentes/squads) e §9 donos conferidos contra `ls .claude/agents` (37) e `CONTRACT.md`; anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: sincronização pós-merge `dc72579e..9875477b`, conferida em `5ac3d351`)
+> **Dono:** doc-bibliotecario · **Data:** 22/09/2026 · **Estado:** verificado em 22/09/2026 por doc-verificador (delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §7 linha do `/implementar-wp` (`.claude/commands/implementar-wp.md`, passo 5 com `npm run build`) e §9 linha do operador (`gh run list` como primeira medição, `.claude/agents/soulmon-operador.md`) conferidas por grep; §10 checklist com a linha do CI; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §3 passo Medir, §7 (agentes/squads) e §9 donos conferidos contra `ls .claude/agents` (37) e `CONTRACT.md`; anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: sincronização pós-merge `dc72579e..9875477b`, conferida em `5ac3d351`)
 > **Verificação:** `npx vitest run src/docsManual.contract.test.ts src/docsSemMentira.contract.test.ts` (as duas travas descritas aqui) + `node scripts/docs-inventario.mjs` (a medição que alimenta o ciclo)
 > **Não cobre:** o CONTEÚDO de nenhum doc (cada um tem dono declarado no próprio cabeçalho) e as regras do jogo ([02-REGRAS-DE-NEGOCIO.md](02-REGRAS-DE-NEGOCIO.md)). Aqui só se responde "como se escreve, verifica e trava documentação neste repositório".
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -168,6 +168,7 @@ rascunho  →  verificado em dd/mm/aaaa por doc-verificador  →  desatualizado 
 | Um módulo, tela ou regra mudou e o doc dono precisa acompanhar | `/squad-docs atualizar <assunto ou caminho>` — despacha só o redator dono |
 | Suspeita de que a documentação apodreceu | `/squad-docs verificar [doc]` — devolve a lista `afirmação — evidência — veredito` |
 | Um doc nasceu à mão fora da squad e o guard ficou vermelho no item (a) | `/squad-docs indice` |
+| Um WP do ledger vai ser implementado (`/implementar-wp`, `.claude/commands/implementar-wp.md`) | Desde `a6c1cd8a` (QA Rodada 1, `08` §1.3) o passo 5 do command exige **`npm run build`** sempre que o WP tocou `src/`, `public/` ou `index.html` — `dist/` é COMMITADO e o `ci.yml` não builda em PR; quem seguia o command sem o build entregava código sem o `dist/` correspondente. O doc-mantenedor entra depois, no fechamento (§11). |
 | Nasceu ou morreu um agente ou uma skill em `.claude/` (ex.: os 8 `arte-*` de 15/09/2026 — ⚰️ reduzidos a `arte-gerador` + `arte-conferente` + `arte-instalador` em `42b07bec` —, e o roster 64 → 37 do QA geral, decisão #28: `ls .claude/agents/*.md \| wc -l` → 37 em 21/09/2026, com dois novos — **`soulmon-operador`** (git × ar: worker de push, D1, secrets, `CACHE_VERSION`, incidentes) e **`soulmon-guarda-plataforma`** (paridade web/APK/overlay, EN, a11y; ledger `plataforma.md`); ⚰️ `/revisao-soulmon`, `prod-squad` do repo, 4 skills higgsfield) | **O guard não vê `.claude/`** — o item (a) só varre `docs/`, então nada fica vermelho. O `doc-bibliotecario` acrescenta a linha em [00-MAPA.md](00-MAPA.md) §6.1 (contagem de `ls .claude/agents/*.md \| wc -l` com data) e, se a squad tem comando próprio, a situação que o aciona entra nesta tabela. |
 | Vai escrever ou revisar TEXTO que o jogador lê (fala do pet, modal, push, guia, glossário), ou dar significado de universo a uma mecânica | **Não é da squad de docs.** `/squad-narrativa [lore <assunto> \| copy <superficie> \| criticar <arquivo\|texto> \| verificar]` (desde 21/09/2026: 3 agentes `soulmon-loremaster`/`soulmon-copy-redator`/`soulmon-narrative-critic`, régua `src/narrativa.contract.test.ts`). A bíblia é [`NARRATIVA-E-UNIVERSO.md`](../NARRATIVA-E-UNIVERSO.md), a copy é [`NARRATIVA-COPY.md`](../NARRATIVA-COPY.md); nenhuma das duas decide regra — o manual continua descrevendo o que o código faz, e a precedência é código > teste > `CLAUDE.md` > manual > bíblia. |
 | Nasceu ou morreu um ASSET, ou um mapa `src/utils/*Art.ts` ganhou/perdeu entrada | `/squad-arte inventario` re-varre; o manual só descreve o resultado ([04-IDENTIDADE-VISUAL.md](04-IDENTIDADE-VISUAL.md) §8 e a entrada do mapa em `06-REFERENCIA/utils.md`) — a fila e o inventário vivem em [`ASSETS-A-GERAR.md`](../ASSETS-A-GERAR.md) e [`INVENTARIO-ASSETS.md`](../INVENTARIO-ASSETS.md), fora do manual. |
@@ -210,7 +211,7 @@ glossário registra o símbolo real e marca a divergência; o `CLAUDE.md` fica c
 | [09-HISTORICO.md](09-HISTORICO.md) · [10-DISCUSSOES-E-DECISOES.md](10-DISCUSSOES-E-DECISOES.md) | `doc-historiador` |
 | a MEDIÇÃO (`scripts/docs-inventario.mjs`) | o orquestrador da squad-docs, passo Medir (⚰️ `doc-cartografo`, 21/09/2026) |
 | o carimbo `verificado` — **bloqueante** | `doc-verificador` |
-| o que está NO AR × o que está no git (deploy do worker, D1, secrets, `CACHE_VERSION`) — não é doc do manual, mas é quem o `08` cita como fonte da nota "produção é Worker" | `soulmon-operador` (desde `42b07bec`) |
+| o que está NO AR × o que está no git (deploy do worker, D1, secrets, `CACHE_VERSION`) — e, desde `a6c1cd8a`, **se o GitHub Actions está VIVO**: `gh run list --limit 5 --json name,conclusion,createdAt,url` é a PRIMEIRA linha do runbook, porque o CI ficou parado por cobrança de 16 a 21/09/2026 (339 runs vermelhos em segundos) sem ninguém ver — a produção não caiu, o Cloudflare deploya sozinho; a linha "CI" do runbook também foi corrigida (o `ci.yml` **não** builda). Não é doc do manual, mas é quem o `08` cita como fonte da nota "produção é Worker" | `soulmon-operador` (desde `42b07bec`) |
 | paridade web/APK/overlay/EN/a11y — dono do ledger [`plataforma.md`](../plano-melhorias/ledger/plataforma.md); o manual só descreve | `soulmon-guarda-plataforma` (desde `42b07bec`) |
 | `src/docsManual.contract.test.ts` (o guard) | `doc-bibliotecario` |
 | a linha do manual no [`STATUS.md`](../STATUS.md) | quem conduz a rodada |
@@ -230,6 +231,10 @@ Antes de fechar qualquer sessão que tenha tocado em código ou em documentaçã
 - [ ] **Guard verde:**
       `npx vitest run src/docsManual.contract.test.ts src/docsSemMentira.contract.test.ts`
 - [ ] **Portões, se `src/` mudou:** `npx tsc --noEmit`, `npx vitest run`, `npm run build`.
+- [ ] **O CI rodou de verdade?** `gh run list --limit 5` — `failure` em 2–6 s com "recent
+      account payments have failed" é o Actions parado por cobrança (aconteceu de 16 a
+      21/09/2026 e ninguém viu); nesse estado nada do que "o CI prova" está provado, e
+      o STATUS tem que dizer isso com data em vez de "CI verde".
 - [ ] **Commit** em PT-BR, no formato `docs(manual): <resumo>` — e, pela regra de
       autonomia do [`CLAUDE.md`](../../CLAUDE.md), PR e merge ff-only na hora, sem loop de
       check-in.

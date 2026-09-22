@@ -1,6 +1,6 @@
 # Dados e save
 
-> **Dono:** doc-redator-arquitetura · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §2.1 `conquistasHerdadas` e §4.1 `TERMS_NOTICE_SEEN` conferidos símbolo a símbolo; anterior: sincronizado com `2580b73a..dc72579e` em 20/09/2026 por doc-redator-arquitetura)
+> **Dono:** doc-redator-arquitetura · **Data:** 22/09/2026 · **Estado:** verificado em 22/09/2026 por doc-verificador (delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §3.3 `deleted`/410, §4.1 `ACCOUNT_DELETED_NOTICE` + fila `soulmon-telemetry-hidden`, §8.1 `del:`/`del:done:`/`sprite:*`, §8.2 `pushidx:` conferidos símbolo a símbolo contra `cloudSave.ts`, `storageKeys.ts`, `telemetry.ts`, `_accountTombstone.js`, `_pushIdentity.js`, `account.js`; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §2.1 `conquistasHerdadas` e §4.1 `TERMS_NOTICE_SEEN` conferidos símbolo a símbolo; anterior: sincronizado com `2580b73a..dc72579e` em 20/09/2026 por doc-redator-arquitetura)
 > **Verificação:** `npx vitest run src/contexts src/utils/careCaps.test.ts src/utils/playerDay.contract.test.ts functions/api/save.test.js functions/api/saveId.parity.test.js desktop/renderer/src/cloudSync.test.ts` — em especial `GameStateContext.hydrate.fuzz.test.tsx` (todo campo não-opcional tem linha em `hydrateSave`), `GameStateContext.saveContent.test.tsx`, `GameStateContext.hostile.test.tsx`, `migrateDecor.test.ts` e `functions/api/_kv.fiacao.test.js`.
 > **Não cobre:** o que cada regra FAZ com esses campos (→ `02-REGRAS-DE-NEGOCIO.md`), as rotas e credenciais (→ [08-INTEGRACOES-E-DEPLOY.md](08-INTEGRACOES-E-DEPLOY.md)), a arquitetura e as quatro superfícies (→ [05-ARQUITETURA.md](05-ARQUITETURA.md)), função por função (→ `06-REFERENCIA/`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -273,6 +273,7 @@ código** as duas decisões que importam (`CLOUD_SAVE_POLICY`):
 | `stale` | `412` | não | sim |
 | `too-large` | `413` | não | sim |
 | `server` | `5xx` | sim | não |
+| `deleted` | `410` (`account-deleted`, desde `a6c1cd8a` — a conta foi excluída neste ou em outro aparelho; lápide de 30 dias no servidor, §8.1) | **não** (reenviar recriaria o que a pessoa mandou apagar) | sim — mas não é aviso, é PARADA: `reagirContaExcluida` grava `ACCOUNT_DELETED_NOTICE`, remove `GAME_STATE`/`SAVE_ID`/`LAST_CLOUD_SYNC`/`USER_EMAIL`, desloga e recarrega; o portão mostra a frase uma vez. O `cloudLoad` só reage ao 410 se `SAVE_ID` local for o mesmo id (carregar o save de outro id no login não é "minha conta sumiu"). |
 | `client` | outro `4xx` | não | sim |
 
 **Orçamento de retry, por `saveId` e não por chamada**: `CLOUD_SAVE_RETRY_TETO`
@@ -349,6 +350,7 @@ de forma é `GAME_STATE`, que usa `_` e versão: `soulmon_state_v1` (era
 | `SOUND_CATEGORY_VOLUMES` | `soulmon-sound-category-volumes` | Volume por categoria (0..1, JSON). Chave NOVA: `SOUND_MUTED` não foi renomeada, só se ACRESCENTA. | `audioBus.ts` |
 | `SOUND_TRACK_ENABLED` | `soulmon-sound-track-enabled` | Trilha ligada. **Polaridade invertida de propósito**: a chave guarda LIGADA, então sem ela `readFlag` devolve `false` e a trilha nasce DESLIGADA — pendurar trilha no mudo global seria autoplay, que a D11 veta. | `audioBus.ts` |
 | `TERMS_NOTICE_SEEN` | `soulmon-terms-notice-seen` | Versão dos termos/política cujo banner de atualização já foi visto (decisão #24, 21/09/2026). Sem ela, quem aceitou versão anterior vê o banner uma vez. | `termsNotice.ts`, `App.tsx` |
+| `ACCOUNT_DELETED_NOTICE` | `soulmon-account-deleted-notice` | A frase do portão depois de um 410 `account-deleted` (§3.3). Escrita por `reagirContaExcluida`, **lida e apagada uma vez** pelo inicializador de estado do `SoulmonOnboarding` — não reaparece na abertura seguinte. Desde `a6c1cd8a`. | `cloudSave.ts`, `SoulmonOnboarding.tsx` |
 | `FCM_TOKEN` | `soulmon-fcm-token` | O token FCM deste aparelho. | `notifications.ts` |
 | `LAST_CLOUD_SYNC` | `soulmon-last-cloud-sync` | ISO do último save confirmado PELO SERVIDOR. | `cloudSave.ts`, `SettingsPage.tsx` |
 | `ORACLE_FORM` | `soulmon-oracle-form` | Estado do formulário da página do Oráculo (ferramenta de criação). | `OraclePage.tsx` |
@@ -359,6 +361,15 @@ de forma é `GAME_STATE`, que usa `_` e versão: `soulmon_state_v1` (era
 | `PENDING_LOGIN_EMAIL` | `soulmon-pending-login-email` | O e-mail entre o envio do link de login e o retorno (o Firebase exige reconfirmar). | `auth.ts` |
 | `SLEEP_STARTED_AT` | `soulmon-sleep-started-at` | ISO de quando o pet deitou — a "outra ponta" da noite, lida ao acordar para `recordNight` gravar deitar E acordar. | `App.tsx` |
 | `MORNING_DREAM_SHOWN` | `soulmon-morning-dream-shown` | Dia da última manhã em que o sonho foi mostrado. Um por manhã: o feedback de sono é SÓ de manhã e SÓ uma vez. | `App.tsx` |
+
+Fora da tabela, de propósito (moram no próprio módulo, como `K_QUEUE`): as duas
+filas da telemetria em `src/utils/telemetry.ts` — `soulmon-telemetry-queue`
+(`K_QUEUE`, teto `MAX_QUEUE`) e, desde `a6c1cd8a`, **`soulmon-telemetry-hidden`**
+(`K_HIDDEN`, teto `MAX_HIDDEN = 50`): o que `track` gerou com a aba OCULTA,
+com o dia carimbado na hora, à espera de `drainHiddenTelemetry` quando a aba
+volta. ⚰️ Até `f4086ce0` o evento em aba oculta era descartado — e o `day_active`
+da virada (timer de 30 s que não para em segundo plano) morria à meia-noite.
+As duas são apagadas juntas por `setTelemetryEnabled(false)`.
 
 ⚰️ **`soulmon-demo-tasks-created-today` foi aposentada em 26/08/2026** — era o
 contador do cap DIÁRIO de criação no demo, que virou teto TOTAL
@@ -579,6 +590,9 @@ do Pages tem a própria lista de bindings, e é ela que vale em produção.
 | `rank:<season>:<saveId>` | Pontos de rank da season (`YYYY-MM`). | `community.js` | — |
 | `gifts:<saveId>` | Bits pendentes de presente. | `community.js` | — |
 | `m:YYYY-MM-DD` | **Agregado diário** de telemetria — contadores somados de todo mundo. Não há chave por usuário, não há lista de eventos, não há nada de onde reconstruir o comportamento de uma pessoa. | `functions/api/metrics.js` | — |
+| `del:<saveId>` | O token de confirmação da exclusão (`delete-request` → `delete-confirm`). | `functions/api/account.js` | `CONFIRM_TTL_SECONDS` = 15 min; apagado no fim do `delete-confirm` só se nenhum passo falhou (senão o retry ainda vale). |
+| `del:done:<saveId>` | **Lápide de conta apagada** (`{ at }`), gravada ANTES da primeira destruição; enquanto viver, `save.js` responde **410 `account-deleted`** a GET e POST — sem ela outro aparelho do titular ainda logado recriava o save 3 s depois. Desde `a6c1cd8a`. | `functions/api/_accountTombstone.js` (`writeTombstone`; `clearTombstone` se a varredura de amigos estourar antes de destruir) | `TOMBSTONE_TTL_SECONDS` = **30 dias** (a review propunha 24 h — cobria só o token, não o aparelho desligado um fim de semana). Depois disso o mesmo e-mail cria conta nova do zero. |
+| `sprite:img:<saveId>:<formId>` · `sprite:lock:<saveId>:<formId>` · `sprite:blob:<token>` | Cache do sprite gerado (`{ image, provider, at }`), lock de geração e o binário republicado (o token só existe dentro da URL `image` do cache — é a linha "(token de 32 hex)" abaixo, vista pela rota que a serve). Desde `a6c1cd8a` a exclusão de conta lista `img`/`lock` por prefixo COM o saveId e apaga os três (blob → img → lock); blob cujo cache falhou ao gravar é órfão e fica declarado em `NOT_INCLUDED`. | `functions/api/generate-sprite.js` | lock `LOCK_TTL_SECONDS` = 120 s; os outros sem TTL próprio. |
 | (token de 32 hex) | O binário do sprite republicado, quando o provedor devolve `data:`. A chave é um TOKEN aleatório, **não** o `saveId` — o `saveId` é derivável de um e-mail. | `functions/api/sprite-image.js` | `Cache-Control: public, max-age=31536000, immutable` |
 
 Teto do save: `MAX_STATE_BYTES` = `5 * 1024 * 1024` (o KV aceita 25 MB por
@@ -590,8 +604,9 @@ Namespace separado, compartilhado pelos dois canais e lido pelo mesmo cron.
 
 | Prefixo | Conteúdo | Escrito por |
 |---|---|---|
-| `push:<hash do endpoint>` | `{ endpoint, keys: {p256dh, auth}, petName, bornAt?, language, refreshedAt }` — Web Push. | `functions/api/subscribe.js` |
+| `push:<hash do endpoint>` | `{ endpoint, keys: {p256dh, auth}, petName, bornAt?, language, saveId?, refreshedAt }` — Web Push (`saveId` desde `42b07bec`). | `functions/api/subscribe.js` |
 | `fcm:<…>` | O token de dispositivo do Android, com os mesmos campos de identidade. | `functions/api/fcm-subscribe.js` |
+| `pushidx:<saveId>` | **Índice inverso** (desde `a6c1cd8a`): `{ v: 1, keys: { 'push:<hash>': <epoch ms>, 'fcm:<hash>': … }, updatedAt }` — quais inscrições são desta conta. Teto `PUSHIDX_MAX = 16` (sai a mais velha); TTL `TTL_INSCRICAO` (1 ano) renovado a cada escrita. Escrito por `gravarSeMudou` → `indexarInscricao` **mesmo quando o registro não mudou** (é a migração sem script); `desindexarInscricao` nas rotas `DELETE`. É por ele, não por varredura, que `account.js` apaga o push na exclusão (≤ 1 + 16×2 + 1 operações — a varredura estourava o teto de subrequests em ~900 inscrições). RMW sem CAS: entrada perdida se cura na próxima abertura; entrada morta é pulada na leitura; o cron não o toca. | `functions/api/_pushIdentity.js` |
 
 O que as duas rotas compartilham (teto de 24 do apelido, lista fechada de idioma,
 `bornAt` como `YYYY-MM-DD` sem hora e sem fuso, limite de taxa e a escrita-só-

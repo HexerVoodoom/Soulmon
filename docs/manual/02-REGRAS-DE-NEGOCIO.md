@@ -1,6 +1,6 @@
 # Regras de negócio — todas as regras do jogo, por sistema
 
-> **Dono:** doc-redator-regras · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §46 cortesia, §56 aviso de termos, §57-A `dias-completos-30`/`conquistasHerdadas`, §58-A ⚰️ `SettingsModal` conferidos símbolo a símbolo; anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: §59 D31–D33 reconferidas no delta `15164e4c..7e5d0ba9` — D32 ⚰️ fechada confere com o `CLAUDE.md` no disco (cinco arquivos, S1..S16) e com `ls public/sounds`; D31 segue ABERTA (o `CLAUDE.md` ainda diz `DÍVIDA`); verificação anterior: §58-A e §59 D32–D33, delta `5ac3d351..8d318529`, som/S16 + chaves na `SettingsPage`; verificação anterior do mesmo dia: só as seções do delta `dc72579e..9875477b` — §2, §3, §8, §10, §12, §45, §48, §59 D31; verificação anterior: 21/09/2026, seções do delta `2580b73a..dc72579e` — §22, §28, §41, §43, §46, §57-A, §57-B, §59 D28–D30; doc inteiro: 10/09/2026, em duas metades)
+> **Dono:** doc-redator-regras · **Data:** 22/09/2026 · **Estado:** verificado em 22/09/2026 por doc-verificador (delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §46 cortesia × reembolso (`auditRefunds`/`paidProviderOf`) e §56 versões `2026-09-22` + `qualDocMudou` conferidos símbolo a símbolo contra `_entitlements.js`, `consent.ts`, `termsNotice.ts`; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §46 cortesia, §56 aviso de termos, §57-A `dias-completos-30`/`conquistasHerdadas`, §58-A ⚰️ `SettingsModal` conferidos símbolo a símbolo; anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: §59 D31–D33 reconferidas no delta `15164e4c..7e5d0ba9` — D32 ⚰️ fechada confere com o `CLAUDE.md` no disco (cinco arquivos, S1..S16) e com `ls public/sounds`; D31 segue ABERTA (o `CLAUDE.md` ainda diz `DÍVIDA`); verificação anterior: §58-A e §59 D32–D33, delta `5ac3d351..8d318529`, som/S16 + chaves na `SettingsPage`; verificação anterior do mesmo dia: só as seções do delta `dc72579e..9875477b` — §2, §3, §8, §10, §12, §45, §48, §59 D31; verificação anterior: 21/09/2026, seções do delta `2580b73a..dc72579e` — §22, §28, §41, §43, §46, §57-A, §57-B, §59 D28–D30; doc inteiro: 10/09/2026, em duas metades)
 > **Verificação:** `npx vitest run src/utils src/types src/hooks` — cada sistema abaixo declara a sua régua própria na linha **Régua**. Números medidos trazem o comando na própria linha.
 > **Não cobre:** o porquê estratégico e as linhas vermelhas (→ [`01-VISAO.md`](01-VISAO.md)), telas e navegação (→ `03-FLUXO-DE-TELAS.md`), função por função (→ `06-REFERENCIA/`), formato do save (→ `07-DADOS-E-SAVE.md`), infraestrutura de push, deploy e API (→ `08-INTEGRACOES-E-DEPLOY.md`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -3455,6 +3455,23 @@ testadores só veriam o demo. O `GET` devolve `provider` para que a leitura de
 vínculo saiba quem pagou e quem ganhou. Detalhe em
 [`06-REFERENCIA/api-workers.md`](06-REFERENCIA/api-workers.md) › `_entitlements.js`.
 
+**A cortesia SOBREVIVE a um reembolso da Play — regra PROVISÓRIA (#40,
+`PERGUNTAS-DO-DONO.md`), desde `a6c1cd8a`.** O tier passou a ser DERIVADO dos
+pedidos de pé: `auditRefunds` termina com `tier = paidProviderOf(ent) ? 'paid' :
+'demo'` — "`paid` se e somente se existe pedido pago não desfeito". ⚰️ Antes ele
+rebaixava para `demo` a cada pedido desfeito sem olhar os outros; com um pedido
+por conta era inalcançável, mas a cortesia criou o segundo, e uma Play
+reembolsada deixava `tier: 'demo'` com `provider: 'courtesy'` — o mesmo arquivo
+dando duas respostas para "esta conta é paga?". A loja não tem como desfazer um
+pedido que não é dela, então a cortesia fica; se o dono decidir que reembolso
+derruba a cortesia também, o conserto é marcar o pedido `courtesy:*` como
+`voided` na auditoria, e a derivação continua certa. Consequência lateral já
+observada em teste: cortesia ANTES + Play válida DEPOIS reporta `provider:
+'play'` (o mais recente não anulado); Play válida ANTES + cortesia DEPOIS
+reporta `courtesy` — ranquear provedores ninguém pediu. Régua:
+`functions/api/_entitlements.tierDerivado.qa.test.js`,
+`entitlements.grant.qa.test.js`.
+
 **Não existe Bits → Créditos.** A ausência é a regra, e há teste que varre os
 exports do módulo procurando qualquer coisa com nome `BITS_TO_CREDIT` /
 `bitsToCredit`. Créditos são a única moeda que libera gerar o pet próprio; um
@@ -4304,7 +4321,11 @@ criatura tem, há quanto tempo joga.
 apelido e o pet passam a aparecer numa lista pública, e com o botão de desligar
 sempre disponível. O consentimento de Termos/Privacidade é outro assunto e mora
 em `src/utils/consent.ts` (`MIN_AGE_YEARS` = 18, `TERMS_VERSION` e
-`PRIVACY_VERSION` = `'2026-09-21'`, `buildConsentRecord`) — guardar só um booleano
+`PRIVACY_VERSION` = **`'2026-09-22'`** desde `a6c1cd8a` — mudança MATERIAL: a
+política passou a declarar os envios de texto ao Groq que o código já fazia
+(`customKeywords`, humor, nome da tarefa em Decompor, `soulGoal` pré-preenchido
+do tutorial) e nomeou Supabase/Whisper; ⚰️ `'2026-09-21'` valeu um dia;
+`buildConsentRecord`) — guardar só um booleano
 não diz A QUE texto a pessoa disse sim, e **save antigo sem o registro nunca é
 bloqueado**. ⚰️ As duas constantes ficaram em `'2026-08-25'` enquanto a política
 já tinha sido republicada em 08/09 — duas semanas de provas apontando para um
@@ -4321,7 +4342,12 @@ registro de consentimento não vê banner (o onboarding é o lugar do primeiro
 aceite); versão ilegível (`'desconhecida'`) conta como anterior; "Ok" grava
 `marcaAvisoTermos(termsVersion, privacyVersion)` em
 `STORAGE_KEYS.TERMS_NOTICE_SEEN` (aparelho, não save — aviso lido, não
-consentimento). Régua: `src/utils/termsNotice.test.ts` (5 casos).
+consentimento). Desde `a6c1cd8a` o banner diz **qual** documento mudou
+(`qualDocMudou` → `'terms' | 'privacy' | 'both'`, prop `changed`) e só linka
+esse — afirmar "os Termos e a Política mudaram" quando só um mudou era mentira
+de interface (design-critic A1); com as duas versões subindo juntas em
+`2026-09-22`, quem consentiu antes vê o "ambos". Régua:
+`src/utils/termsNotice.test.ts` + `termsNotice.qa.test.ts`.
 
 ### O cooperativo
 

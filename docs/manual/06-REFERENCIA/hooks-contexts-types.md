@@ -1,6 +1,6 @@
 # Referência — hooks, contexts, types
 
-> **Dono:** doc-redator-referencia · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — entrada `GameStateContext.tsx` conferida símbolo a símbolo: `conquistasHerdadas` e a migração em `hydrateSave`; anterior: mecânico completo)
+> **Dono:** doc-redator-referencia · **Data:** 22/09/2026 · **Estado:** verificado em 22/09/2026 por doc-verificador (delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — entrada `GameStateContext.tsx` conferida símbolo a símbolo: `reagirContaExcluida` no `.then` do cloud save, `wc -l`; anterior: delta `f02a3166..4a8b8049`, `conquistasHerdadas` e a migração em `hydrateSave`; anterior: mecânico completo)
 > **Verificação:** `npx vitest run src/hooks src/contexts src/types` — cada símbolo abaixo foi lido no corpo do arquivo, não só no JSDoc.
 > **Não cobre:** regra de negócio em profundidade (→ `02-REGRAS-DE-NEGOCIO.md`), `src/App.tsx` (→ `06-REFERENCIA/components.md`), `src/utils/*` que os hooks/contexts importam (→ `06-REFERENCIA/utils.md`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -78,7 +78,7 @@
 
 ## src/contexts
 
-### `src/contexts/GameStateContext.tsx` (1485 linhas — `wc -l src/contexts/GameStateContext.tsx`, 21/09/2026; 1463 em 10/09/2026)
+### `src/contexts/GameStateContext.tsx` (1503 linhas — `wc -l src/contexts/GameStateContext.tsx`, 22/09/2026; 1485 em 21/09, 1463 em 10/09/2026)
 **Dono de:** o `GameState` inteiro (tipo + valor inicial + hidratação de save + persistência local e na nuvem). É o maior contexto do app e a única fonte do estado do jogo.
 **Exports:**
 - `migrateDecor(loaded)` — save antigo guardava UMA decoração (`equippedFurniture`, badge de canto); a migração devolve o mapa `equippedDecor` novo, colocando o item antigo no espaço (`slot`) que ele declara. Roda uma vez no load; checa a PRESENÇA de `equippedDecor` (não se está vazio) para não confundir "nunca migrou" com "desequipou tudo".
@@ -93,7 +93,8 @@
 ⚠️ **`hydrateRest` descartava `dreamDates` a cada load, achado em 20/09/2026** (WP4.10, a data da PRIMEIRA coleta de cada sonho): `collectDream` carimbava a data, o save gravava, e a próxima abertura do app apagava de novo — o "#NN · data" do Dex nunca ficava persistido. Desde `8bc55437` (20/09/2026) `hydrateRest` preserva só entradas string→string não vazias de `raw.dreamDates`; o resto some, mas nunca vira data inventada.
 
 **Chamado por:** `useGameState` tem 2 consumidores fora deste arquivo — `src/App.tsx` e `src/main.tsx` (monta o `GameStateProvider`). `getMaxHPForStage`, `migrateDecor` e as interfaces (`Activity`, `Task`, …) são importados por dezenas de componentes em `src/components/`.
-**Régua:** `src/contexts/GameStateContext.bond.test.tsx`, `.careCaps.test.tsx`, `.cloudErrors.test.tsx`, `.hostile.test.tsx`, `.hydrate.fuzz.test.tsx`, `.legacySave.test.tsx`, `.pvpBlocked.test.tsx`, `.saveContent.test.tsx`, `.storage.test.tsx`, `migrateDecor.test.ts`.
+**Régua:** `src/contexts/GameStateContext.bond.test.tsx`, `.careCaps.test.tsx`, `.cloudErrors.test.tsx`, `.hostile.test.tsx`, `.hydrate.fuzz.test.tsx`, `.legacySave.test.tsx`, `.pvpBlocked.test.tsx`, `.saveContent.test.tsx`, `.storage.test.tsx`, `.conquistas.qa.test.tsx` (desde `a6c1cd8a` — saves tortos que a migração `tasks-100` → `dias-completos-30` pode encontrar na nuvem, provados por EXECUÇÃO do provider), `migrateDecor.test.ts`.
+**Conta excluída (desde `a6c1cd8a`):** quando `cloudSaveComRetry` devolve `kind: 'deleted'` (410 `account-deleted`), o `.then` chama `reagirContaExcluida()` de `utils/cloudSave.ts` e retorna — limpa o local, desloga e volta ao portão SEM tocar em `setGameState` (R-1 respeitado; não é aviso, é parada).
 **Avisos do arquivo:** R-1 (nada de `setGameState` dentro do `.then` do cloud save, exceto o caso declarado do `pvpBlocked`, que fecha a porta em vez de reabrir o ciclo — há teste travando: `GameStateContext.pvpBlocked.test.tsx`) · R-3 (um aviso por classe de falha, por sessão — não a cada gesto) · R-4 (teto de espera contra a inanição do debounce). `CLOUD_SAVE_DEBOUNCE_MS` não deve ser reduzido "para encurtar a janela de conflito" sem refazer a conta — piora o 409 e o custo.
 
 ### `src/contexts/LanguageContext.tsx`

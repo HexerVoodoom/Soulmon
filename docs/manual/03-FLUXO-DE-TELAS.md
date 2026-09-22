@@ -1,6 +1,6 @@
 # Fluxo de telas do Soulmon
 
-> **Dono:** doc-redator-telas · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §2.1 aviso de WebView, §3.2 item 6 `termos`, §4.23 grupo Sobre, §4.23a/§4.23b ⚰️ `SettingsModal`, §4.25 `ErrorBoundary` conferidos símbolo a símbolo; anterior: §4.23/§4.23b, delta `5ac3d351..8d318529`, som/S16 + grupo "Som" na `SettingsPage`; verificação anterior do mesmo dia: delta `dc72579e..9875477b`, 30 commits: copy da bíblia §1–§6-bis, superfície de suporte, rodada 2 da arte; verificação anterior do delta `2580b73a..dc72579e`, Fase 2, identidade "O Visor", 14 fluxos: 21/09/2026)
+> **Dono:** doc-redator-telas · **Data:** 22/09/2026 · **Estado:** verificado em 22/09/2026 por doc-verificador (delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §2.1 gate por plataforma (`index.html`), §2.3 aviso de conta excluída no portão (`SoulmonOnboarding.tsx` › `avisoContaExcluida`), §2.4 hint de IA, §3.2 item 7 `changed`/`region`/"Entendi", §4.23 Sobre e Ajuda conferidos símbolo a símbolo contra o fonte; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §2.1 aviso de WebView, §3.2 item 6 `termos`, §4.23 grupo Sobre, §4.23a/§4.23b ⚰️ `SettingsModal`, §4.25 `ErrorBoundary` conferidos símbolo a símbolo; anterior: §4.23/§4.23b, delta `5ac3d351..8d318529`, som/S16 + grupo "Som" na `SettingsPage`; verificação anterior do mesmo dia: delta `dc72579e..9875477b`, 30 commits: copy da bíblia §1–§6-bis, superfície de suporte, rodada 2 da arte; verificação anterior do delta `2580b73a..dc72579e`, Fase 2, identidade "O Visor", 14 fluxos: 21/09/2026)
 > **Verificação:** `npx vitest run src/components/filaDeAvisos.contract.test.ts src/components/evolucaoManual.contract.test.ts src/components/ofertaDoisCanais.contract.test.ts src/components/upgradeReveal.contract.test.ts src/components/textoBilingue.contract.test.ts src/plugins/widgetSemCobranca.contract.test.ts src/components/SoulmonOnboarding.oraculo.render.test.tsx src/components/StatsPage.render.test.tsx src/utils/petVoice.test.ts src/narrativa.contract.test.ts` · guard do manual: `npx vitest run src/docsManual.contract.test.ts`
 > **Não cobre:** aparência (cor, tipografia, espaçamento, tokens `--sm2-*`) — é do `04-IDENTIDADE-VISUAL.md`; as REGRAS que as telas aplicam (corações, meta do dia, evolução, moedas) — são do `02-REGRAS-DE-NEGOCIO.md`; a assinatura de cada componente — é de [`06-REFERENCIA/components.md`](06-REFERENCIA/components.md); percurso real com o app rodando — é do procedimento "Inventário de superfícies" de `.claude/skills/squad-design/METODO.md` (⚰️ agente `soulmon-screen-cartographer`, 21/09/2026), cuja medição de 19/08/2026 está em [`../INVENTARIO-TELAS.md`](../INVENTARIO-TELAS.md).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -189,11 +189,23 @@ pela decisão S1 do canvas Home (§5); a célula Evolução da barra é o único
   tela branca, porque parece bug nosso); falhando, ele monta um
   aviso bilíngue ("Precisamos de uma atualização" / "An update is needed") no
   `#root` **e remove a splash**, senão o aviso ficaria por baixo dela para sempre.
+  **Desde `a6c1cd8a` o aviso tem DOIS ramos por plataforma** (skeptic #4 /
+  design D1–D4, QA Rodada 1): `/Android/i.test(navigator.userAgent)` → corpo
+  "Android System WebView desatualizado" + **dois `<a>` para a Play** (criados
+  por `createElement`, 44 px de altura: "Atualizar Android System WebView" →
+  `com.google.android.webview` e "Atualizar Google Chrome" →
+  `com.android.chrome`); **não-Android** (iOS/Firefox/desktop) → "Seu navegador
+  está desatualizado" + "Atualize o navegador (ou abra o Soulmon em outro mais
+  recente)" — ⚰️ antes todo mundo recebia a instrução da Play, que não vale para
+  iPhone. Os dois ramos trazem `documentElement.lang` (`pt-BR`/`en`) e um
+  `mailto:` de contato (o mesmo endereço de `FEEDBACK_EMAIL` — contrato em
+  `tests/indexHtmlGateWebView.test.ts`); a última linha diz "WebView: …" ou
+  "Browser: …" conforme o ramo.
   **Idioma**: um segundo script troca `LOADING DATA...` por `CARREGANDO DADOS...`
   quando `navigator.language` começa com `pt`.
 - **O que se vê/faz**: nada é clicável.
 - **Dono**: `index.html` (`#splash`) + `src/main.tsx` (`remover`).
-- **Régua**: `src/security/oldWebview.test.ts` (o aviso em vez de tela branca; ⚠️ o caso "antigo" só falha em oklch/color-mix — `selector(&)` não é exercitado sozinho) e `src/security/csp.test.ts` (o hash do script mudou em `42b07bec`, e a CSP em `public/_headers` acompanhou).
+- **Régua**: `src/security/oldWebview.test.ts` (o aviso em vez de tela branca; ⚠️ o caso "antigo" só falha em oklch/color-mix — `selector(&)` não é exercitado sozinho), `tests/indexHtmlGateWebView.test.ts` (desde `a6c1cd8a`: os dois ramos, os dois links da Play só no Android, `lang`, o e-mail igual ao de `FeedbackLink.tsx`) e `src/security/csp.test.ts` (o hash do script mudou em `42b07bec` e de novo em `a6c1cd8a`, e a CSP em `public/_headers` acompanhou as duas vezes).
 
 ⚠️ O rAF sozinho não era rede de segurança: numa aba em segundo plano ele nunca
 dispara, e o `setTimeout` agendado dentro dele também não — a splash ficava por
@@ -280,6 +292,17 @@ if (!hasCompletedOnboarding) {
   exatamente para isso, e o cabeçalho diz que "falta de configuração vira
   ausência de conta, nunca porta trancada" — mas o aceite e o 18+ continuam
   obrigatórios (`podeAutenticar`).
+- **Aviso de conta excluída** (desde `a6c1cd8a`, adendo 11): quando o servidor
+  respondeu **410 `account-deleted`** ao cloud save (a conta foi apagada neste
+  ou em outro aparelho), `reagirContaExcluida` (`utils/cloudSave.ts`) limpou o
+  save local, deslogou e recarregou — e o portão é para onde a pessoa volta.
+  `avisoContaExcluida` é um `useState` cujo inicializador **lê e apaga**
+  `STORAGE_KEYS.ACCOUNT_DELETED_NOTICE` (uma vez; não reaparece na abertura
+  seguinte) e renderiza `<p role="status" data-account-deleted-notice>` com
+  "Esta conta foi excluída neste ou em outro aparelho." / "This account was
+  deleted on this or another device." Sem ele, o aparelho reaparecia no portão
+  sem explicação — e, pior, antes do 410 existir ele recriava o save 3 s depois
+  da exclusão.
 - **Estados**: `authEmail === null` = ainda não se sabe (checagem assíncrona);
   `''` = deslogado; string = comprovado. `authOcupado` desabilita o botão, e
   `GOOGLE_SEM_RESPOSTA_MS` (120 000 ms) é a **rede de segurança**: passado o
@@ -372,10 +395,19 @@ grátis é atravessado nos testes por `src/test/ritualDemo`).
   áreas de vida (`CATEGORIES`, 8) e recebe sugestões da API.
 - **Estados**: **erro/offline** — `fallbackTasks` devolve até 4 tarefas locais
   de dois minutos (`FALLBACK_BY_CATEGORY`); **primeira ordenação** —
-  `orderCategoriesForGoal` põe na frente a área que o `soulGoal` descreveu, e o
-  texto não sai do aparelho (decisão D8).
+  `orderCategoriesForGoal` põe na frente a área que o `soulGoal` descreveu, e
+  essa ORDENAÇÃO não sai do aparelho (decisão D8). ⚠️ **Mas o campo do objetivo
+  nasce pré-preenchido com o `soulGoal`** (`useState(soulGoal ?? '')`), e o que
+  está no campo VAI ao provedor de IA quando a pessoa pede sugestões — a
+  política dizia que o `soulGoal` não passava por IA (compliance #2, QA Rodada
+  1). Desde `a6c1cd8a` o hint sob o campo diz "Este texto vai para o provedor
+  de IA se você pedir sugestões." (⚰️ "Seu objetivo é enviado à IA para
+  escrever as sugestões."), a tela de conceito diz "O nome da tarefa vai para o
+  provedor de IA", e a política §2b declara os dois; provisório "declarar" até
+  o dono decidir declarar × cortar (#42). A fronteira tem dono:
+  `src/ia.camposEnviados.contract.test.ts`.
 - **Dono**: `src/components/GameTutorialFlow.tsx`.
-- **Régua**: nenhuma (a régua do texto bilíngue é `textoBilingue.contract.test.ts`).
+- **Régua**: `src/components/GameTutorialFlow.render.test.tsx` (desde `5513b5b6`, 20/09/2026; ⚰️ "nenhuma") e `textoBilingue.contract.test.ts` para o texto bilíngue.
 
 ⚰️ As **5 páginas de conceito** (HP, comida/energia, dia perfeito, cocô/banho/sono,
 loja/moedas) **não existem mais** — quatro estavam ditas melhor no `GuideModal`, e
@@ -473,7 +505,7 @@ ordem literal dos `push`, com a chave de cada um:
 | 4 | `'priming'` | `mostrarPrimingDePush` (`shouldPrimePush`, `utils/pushPriming.ts`) | seção inline com "Pode sim" / "Agora não" |
 | 5 | `'recomeco'` | `freshStartDismissed ? null : freshStartOffer(gameState, agoraA, language)` | bloco `sm2-notice` inline |
 | 6 | `'carga'` | `isOvercommitted(plannedEffort(gameState.tasks, gameState.activities, dayKeyOf(agoraA), gameState.habitRhythms))` (`utils/taskTriage.ts`; `OVERCOMMIT_EFFORT` em `types/taskModel.ts`) — **é AVISO, NUNCA BLOQUEIO** (`CLAUDE.md` › Carga do dia); canvas Atividades D10 | `<p role="status">` inline com `Icon info` dourado: "É bastante pra um dia só — quer deixar uma pra amanhã? (Tudo bem de qualquer jeito.)". ⚰️ esta tabela omitia a linha até 21/09/2026 (QA Rodada 1, `07-growth-comportamento-r1.md` N5) |
-| 7 | `'termos'` | `precisaAvisarTermos(gameState.consent, TERMS_VERSION, PRIVACY_VERSION, termsNoticeSeen)` (`utils/termsNotice.ts`, desde `42b07bec`, decisão #24 — só quem já consentiu a uma versão ANTERIOR; save sem registro nunca vê) | `TermsUpdateBanner` (`.sm2-notice`, `role="status"`: "Os Termos e a Política de Privacidade mudaram" + "Ler os Termos" / "Ler a Política" em aba nova + "Ok", que grava `marcaAvisoTermos` em `STORAGE_KEYS.TERMS_NOTICE_SEEN`). Informativo, **sem re-aceite**, e **o último da fila** — é o único aviso que não fala do dia da pessoa; o comentário do código o chama de "7." porque conta o `hp` como 1 |
+| 7 | `'termos'` | `precisaAvisarTermos(gameState.consent, TERMS_VERSION, PRIVACY_VERSION, termsNoticeSeen)` (`utils/termsNotice.ts`, desde `42b07bec`, decisão #24 — só quem já consentiu a uma versão ANTERIOR; save sem registro nunca vê) | `TermsUpdateBanner changed={qualDocMudou(gameState.consent!, TERMS_VERSION, PRIVACY_VERSION)}` (`.sm2-notice`, **`role="region"` + `aria-labelledby`** desde `a6c1cd8a` — ⚰️ `role="status"`): o título diz **qual documento mudou** ("Os Termos de Uso mudaram" / "A Política de Privacidade mudou" / "Os Termos e a Política de Privacidade mudaram", por `changed`), só o link do que mudou ("Ler os Termos" / "Ler a Política", em aba nova, com "(abre em nova aba)" no nome acessível; EN aponta para `#en`), subtítulo "Você continua jogando normalmente. Se quiser ler o que mudou, está aqui." (⚰️ "Nada muda no seu jogo…") e **"Entendi" / "Got it"** (⚰️ "Ok"), que grava `marcaAvisoTermos` em `STORAGE_KEYS.TERMS_NOTICE_SEEN`. Informativo, **sem re-aceite**, e **o último da fila** — é o único aviso que não fala do dia da pessoa; travado como último em `filaDeAvisos.contract.test.ts` desde `a6c1cd8a`; o comentário do código o chama de "7." porque conta o `hp` como 1. As versões subiram para **2026-09-22** em `a6c1cd8a` (mudança material da política — o que vai ao Groq), então quem consentiu antes vê o banner de "ambos" uma vez |
 
 - **Régua**: `src/components/filaDeAvisos.contract.test.ts` — exige as chaves
   `'firstDay'` e `'priming'`, exige que `shouldShowFirstDay(` e
@@ -1553,14 +1585,19 @@ Três blocos, com condições literais:
   link"): o **aviso de IA** (decisão #22, tom de fato — "A imagem da sua criatura
   e as falas do chat são geradas por IA (Higgsfield e Gemini para a imagem, Groq
   para a conversa)"), o `ActionRow` **"O que o chat recebe"** →
-  `/privacidade.html#chat-contexto`, e a linha de **feedback** `FeedbackRow`
+  `/privacidade.html#chat-contexto` (EN: `#chat-context`), e a linha de **feedback** `FeedbackRow`
   ("Falar com quem faz o Soulmon" / "Talk to the people who make Soulmon", hint
-  "Abre seu e-mail. A versão do app já vai preenchida.") — um `mailto:` para
+  "Abre seu e-mail para <endereço>. A versão do app já vai preenchida.") — um `mailto:` para
   `FEEDBACK_EMAIL` com assunto "Soulmon", `APP_VERSION`, 8 caracteres do `saveId`
-  e `Origem: settings` (`src/components/FeedbackLink.tsx`; não é formulário porque
-  não há backend de suporte). A linha "Soulmon 1.0.2" do grupo Ajuda lê a mesma
-  `APP_VERSION`. Régua: `src/components/SettingsPage.sobre.render.test.tsx` (5
-  casos).
+  e `Origem: configurações` (`src/components/FeedbackLink.tsx`; não é formulário porque
+  não há backend de suporte). **Desde `a6c1cd8a` (QA Rodada 1, design-critic B3/C1/C2) a linha de
+  feedback mora no grupo AJUDA**, logo acima da linha "Soulmon `APP_VERSION`" (que mostra
+  **1.1.4**, vinda do `package.json` via `__APP_VERSION__` — ⚰️ "1.0.2"); o aviso de IA
+  passou a dizer "A imagem da sua criatura, as falas do chat e alguns sons (evolução,
+  regressão e conclusão de tarefa) são gerados por IA (…), sem revisão humana. O chat não é
+  um serviço de emergência."; e o fecho da §16.3 é `sm2Text` como os outros dois limites
+  (⚰️ `sm2Hint`). O `ActionRow` de `mailto:` abre sem `_blank` (`FormKit.tsx`). Régua:
+  `src/components/SettingsPage.sobre.render.test.tsx`.
   **Grupo "Som" / "Sound"** (`980bc84c`, 21/09/2026 — achado do
   doc-mantenedor: o `SettingsModal` ficou sem gatilho e com ele o mudo e a
   trilha eram inalcançáveis): dois `SwitchRow`, entre "Sua história" e "O que o

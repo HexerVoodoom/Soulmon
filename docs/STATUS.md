@@ -7,6 +7,40 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 22/09/2026 — sincronização do manual pós-merge `a6c1cd8a` (QA Rodada 1)
+>
+> Delta `f4086ce0..a6c1cd8a` (`5228145e` carimbo, `959e3bee` BOOKLET-UNIVERSO — já indexado no MAPA §6.2 —,
+> `a6c1cd8a` correções da rodada 1), `/manter-docs auto` inline pelo doc-mantenedor, doc por doc, cada afirmação
+> nova conferida por grep/`wc -l`/`ls` contra o fonte. **16 docs recarimbados em 22/09/2026:** `06-REFERENCIA/api-workers`
+> (`account.js` ordem do `delete-confirm` + lápide + sprites + `via`, `save.js` 410, `entitlements.js` 404 e `typeof`,
+> `subscribe`/`fcm-subscribe` `desindexarInscricao`, `metrics.js` `invite`/`active_days`/`notes.retained`, `_entitlements`
+> tier derivado + 620 linhas, `_pushCopy` D0 `null`, `_pushIdentity` `pushidx`, `_redact` cep/data/celular), `utils`
+> (`REVOKE_PUSH_TIMEOUT_MS`, `normalizarParaLexico`, `deleted`/`reagirContaExcluida`/`mensagemContaExcluida`, versões
+> `2026-09-22`, `unregisterFromPushNotifications` pós-`res.ok`, `ACCOUNT_DELETED_NOTICE` + fila `soulmon-telemetry-hidden`,
+> `invite`/`limparOrigemDaUrl`/`drainHiddenTelemetry`/`MAX_HIDDEN`, `qualDocMudou`), `components` (`widgetPetName` e
+> `limparOrigemDaUrl` no `App.tsx`, `getFoodName` exportado de `ItemsWindow` e usado no `CompanionHUD`, `APP_VERSION` ←
+> `__APP_VERSION__`, feedback em Ajuda, Sobre com sons/sem revisão humana, `TermsUpdateBanner` `changed`/`region`/"Entendi",
+> aviso de conta excluída no portão, `mailto:` sem `_blank`, ⚰️ "nenhuma" régua do `GameTutorialFlow`), `hooks-contexts-types`
+> (1503 linhas, `.conquistas.qa`, 410 no `.then`), `plugins-constants` (`canScheduleExact`/`openExactAlarmSettings`,
+> `widgetPetName`, guards novos: `ia.camposEnviados`, `copy.semFomo`, `manifest`, `versaoUnica`, `billingPbl8`, `widgetNome`),
+> `desktop` (`exp` ilegível = agora + 1 h), `07` (§3.3 `deleted`, §4.1 `ACCOUNT_DELETED_NOTICE` + filas da telemetria, §8.1
+> `del:`/`del:done:`/`sprite:*`, §8.2 `pushidx:`), `08` (§2.5/§2.6 índice e `res.ok`, §2.7 D0 nulo, §2.8 Billing 8.3.0,
+> §2.10 404 + tier derivado, §2.12 três mudanças + nota de retenção corrigida, §2.13 ordem/410/sprites, §3.3 **Actions parado
+> por cobrança como fato datado**, §3.4 versão única + alarme exato, §3.6, §4), `03` (§2.1 gate por plataforma, §2.3 aviso de
+> conta excluída, §2.4 hint de IA, §3.2 item 7, §4.23 Ajuda/Sobre), `02` (§46 cortesia sobrevive a reembolso — provisório #40;
+> §56 versões e `qualDocMudou`), `05` (§1.1 1.1.4, §1.3 8.3.0, §4 ADR-004..006 Proposta, §7, §9 guards + CI parado), `04`
+> (§10.1 `manifest.json`, §10.2 gate por plataforma), `12` (§7 `/implementar-wp` com build, §9 operador com `gh run list`,
+> §10 checklist), `01` (§7 recarimbo — a linha 15 já estava em `a6c1cd8a`), `10` (13 linhas de 22/09/2026 nos temas 4/6/7/8/13/14
+> e §18 com #40–#53), `00-MAPA` (§5 `_accountTombstone.js` + guards da raiz; **§7 relido — estava parado em 10/09/2026 há
+> três sincronizações**). Guards `docsManual` + `docsSemMentira` verdes (2 files / 10 tests), rodados numa worktree limpa
+> em `a6c1cd8a` + o diff do manual — **na árvore compartilhada o item (a) reprova por `docs/reviews/2026-09-22-qa-rodada-2/`
+> (untracked, de outra sessão, fora deste delta)**; quem fechar a rodada 2 indexa no MAPA §6.5.
+> **Divergências novas:** nenhuma de código. **Observações:** `@capacitor/cli` continua em `dependencies` (o consolidado
+> §3.4 dizia → `devDependencies`; não aconteceu em `a6c1cd8a`); `canScheduleExact`/`openExactAlarmSettings` sem chamador
+> na UI. **Fora do delta, de
+> propósito:** `09-HISTORICO` (sem linha nova para `a6c1cd8a`) e `11-GLOSSARIO` (os 9 termos da rodada já entraram em
+> `a6c1cd8a`; "tier derivado" e "fila de oculto" não indexados).
+
 > ## 21/09/2026 — sincronização do manual pós-merge `4a8b8049` (execução das respostas #11–#39)
 >
 > Delta `f02a3166..4a8b8049` (`42b07bec` + `4a8b8049`), `/manter-docs auto` feito inline pelo

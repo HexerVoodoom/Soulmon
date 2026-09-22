@@ -1,6 +1,6 @@
 # Referência — desktop (Electron)
 
-> **Dono:** doc-redator-referencia · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: mecânico completo; delta `dc72579e..9875477b` conferido símbolo a símbolo, sha a sha)
+> **Dono:** doc-redator-referencia · **Data:** 22/09/2026 · **Estado:** verificado em 22/09/2026 por doc-verificador (delta `f4086ce0..a6c1cd8a`, QA Rodada 1 §5 — `auth-preload.js` › `DEFAULT_TOKEN_TTL_MS` e `main.js` › `auth-get` conferidos no fonte; anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: mecânico completo; delta `dc72579e..9875477b` conferido símbolo a símbolo, sha a sha)
 > **Verificação:** `npx tsc -p desktop/tsconfig.json --noEmit && npx vitest run desktop`
 > **Não cobre:** regra de negócio em profundidade (→ `02-REGRAS-DE-NEGOCIO.md`), o build/release do desktop (→ `08-INTEGRACOES-E-DEPLOY.md`, `desktop/README.md`), as regras de cuidado em si (→ `src/utils/careRules.ts` em `06-REFERENCIA/utils.md`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -35,7 +35,7 @@ A separação de responsabilidade é física, não estilística: `desktop/electr
 - `createMenuWindow(petCenterX)` — janela de menu posicionada colada ao pet (`positionMenuNearPet`), transparente para o CSS desenhar cantos arredondados. O card visível mede `MENU_CARD = {340, 520}`; a janela Electron soma `MENU_SHADOW = 12` de cada lado (`MENU_SIZE`), que é o espaço onde a sombra e os cantos arredondados aparecem sobre o desktop — o `body` de `menu.css` usa o mesmo padding.
 - `createTray()` — ícone de bandeja com menu (mostrar/ocultar, abrir menu, abrir app completo, sair).
 - `openFullApp()` — abre o app web completo numa `BrowserWindow` própria, com `auth-preload.js`, partição persistente (`persist:soulmon-app`) e as duas travas de navegação (`will-navigate`/`will-redirect` → `decideNavigation`; `setWindowOpenHandler` → `decideWindowOpen`), descritas no achado F-2 da auditoria (ver `navigationPolicy.js`).
-- Canais IPC: `set-interactive`, `open-menu`, `open-full-app`, `app-quit`, `menu-minimize`, `state-changed` (propaga entre overlay/menu), `pet-effect` (menu → overlay, toca animação), `auth-token` (auth-preload → main, checado por origem via `isTrustedAuthSender`), `auth-get` (`ipcMain.handle`, devolve `null` se expirado em até 30s de folga).
+- Canais IPC: `set-interactive`, `open-menu`, `open-full-app`, `app-quit`, `menu-minimize`, `state-changed` (propaga entre overlay/menu), `pet-effect` (menu → overlay, toca animação), `auth-token` (auth-preload → main, checado por origem via `isTrustedAuthSender`; desde `a6c1cd8a` o `exp` é normalizado AQUI também — ilegível/ausente/0/negativo vira `Date.now() + 1h`, o contrato do SDK do Firebase), `auth-get` (`ipcMain.handle`, devolve `null` se expirado em até 30s de folga; ⚰️ até `f4086ce0` a checagem era `authSession.exp && …`, e `exp: 0` era lido como **sessão eterna** — QA Rodada 1 §5; hoje `exp` é sempre > 0 e a comparação não tem `&&`).
 - `isFirstRun()` — marca em `userData/first-run-done`; primeiro lançamento abre o menu sozinho depois de 1,2s.
 
 ### `desktop/electron/navigationPolicy.js`
@@ -70,8 +70,8 @@ A separação de responsabilidade é física, não estilística: `desktop/electr
 **Dono de:** a ponte de LOGIN — exposta só na janela do app web completo (`openFullApp`), nunca no overlay/menu.
 **Exports:** `window.soulmonDesktopAuth = { isDesktop: true, publish(payload) }` — `publish` é o ÚNICO canal, e é de SAÍDA: a página não consegue ler nada do Electron nem executar nada no processo principal. `payload.token === null` sinaliza logout.
 **Chamado por:** o app web completo (`src/`), quando roda dentro desta janela — detecta `window.soulmonDesktopAuth?.isDesktop` para saber que está no desktop e publica o ID token do Firebase sempre que ele muda/renova.
-**Régua:** `desktop/renderer/src/authBridge.test.ts`.
-**Avisos do arquivo:** o token vai só para a MEMÓRIA do processo principal (`authSession` em `main.js`), nunca para disco; expira em ~1h e é reemitido pelo SDK dentro da própria janela.
+**Régua:** `desktop/renderer/src/authBridge.test.ts` (desde `a6c1cd8a` fecha o buraco do `exp` em vez de documentá-lo: guard textual de que `main.js` não compara com `&&`).
+**Avisos do arquivo:** o token vai só para a MEMÓRIA do processo principal (`authSession` em `main.js`), nunca para disco; expira em ~1h e é reemitido pelo SDK dentro da própria janela. Desde `a6c1cd8a`: `DEFAULT_TOKEN_TTL_MS = 1h` — validade DESCONHECIDA (`expiresAt` NaN/ausente/0) é "vence em 1h", nunca "nunca vence" (⚰️ colapsava em `exp: 0`).
 
 ---
 

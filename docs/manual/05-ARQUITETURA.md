@@ -1,6 +1,6 @@
 # Arquitetura
 
-> **Dono:** doc-redator-arquitetura · **Data:** 21/09/2026 · **Estado:** verificado em 21/09/2026 por doc-verificador (delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §1.1, §1.3, §2.1 `scripts/`, §2.2 `src/deploy/`, §3, §7 `cacheavel` e §9 conferidos símbolo a símbolo; anterior: linhas de áudio da §2.1, §2.2, §5 e §7, delta `5ac3d351..8d318529`, som/S16; o resto: sincronizado com `dc72579e..9875477b` em 21/09/2026 por doc-redator-arquitetura; conferido em `5ac3d351`)
+> **Dono:** doc-redator-arquitetura · **Data:** 22/09/2026 · **Estado:** verificado em 22/09/2026 por doc-verificador (delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §1.1 `version` 1.1.4, §1.3 `billing-ktx` 8.3.0, §4 ADR-004..006 em Proposta, §7 hash novo, §9 guards novos conferidos contra `package.json`, `build.gradle`, `ls docs/adr`, `ls src/deploy src/plugins src/*.contract.test.ts`; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §1.1, §1.3, §2.1 `scripts/`, §2.2 `src/deploy/`, §3, §7 `cacheavel` e §9 conferidos símbolo a símbolo; anterior: linhas de áudio da §2.1, §2.2, §5 e §7, delta `5ac3d351..8d318529`, som/S16; o resto: sincronizado com `dc72579e..9875477b` em 21/09/2026 por doc-redator-arquitetura; conferido em `5ac3d351`)
 > **Verificação:** `npx tsc --noEmit` · `npx tsc -p tsconfig.server.json --noEmit` · `npx tsc -p desktop/tsconfig.json --noEmit` · `npx vitest run` · `npm run build`; os contratos de fronteira são `src/deploy/appUrl.contract.test.ts`, `src/deploy/firebaseNoBuild.contract.test.ts`, `src/deploy/swCache.contract.test.ts`, `src/security/csp.test.ts`
 > **Não cobre:** as regras do jogo (→ `02-REGRAS-DE-NEGOCIO.md`), as telas (→ `03-FLUXO-DE-TELAS.md`), tokens e estilo (→ `04-IDENTIDADE-VISUAL.md`), função por função (→ `06-REFERENCIA/`), o esquema do save e as chaves de storage (→ `07-DADOS-E-SAVE.md`), credenciais e deploy (→ `08-INTEGRACOES-E-DEPLOY.md`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -12,7 +12,7 @@
 Todas as linhas abaixo são cópia literal do campo `dependencies`/`devDependencies`
 do arquivo indicado, lidas em 09/09/2026 no commit `4e77a08a`.
 
-### 1.1 App web (`package.json`, `"name": "soulmon"`, `"version": "0.1.0"`)
+### 1.1 App web (`package.json`, `"name": "soulmon"`, `"version": "1.1.4"` — desde `a6c1cd8a` é a FONTE ÚNICA da versão: `vite.config.ts` injeta `__APP_VERSION__` dela e `src/deploy/versaoUnica.contract.test.ts` prende o `versionName` do Gradle ao mesmo número; ⚰️ `"0.1.0"`, enquanto a tela dizia "1.0.2" e o Gradle 1.1.4)
 
 | Peça | Pacote | Versão declarada |
 |---|---|---|
@@ -65,7 +65,7 @@ aponta para o GitHub `HexerVoodoom/Soulmon`.
 | `compileSdkVersion` / `targetSdkVersion` | `36` (desde `4a8b8049`, etapa 6 do QA geral — a Play pede target 36 para atualizações; eram 35; `[verificar no android-build.yml do CI após o merge]`) |
 | `applicationId` / `namespace` | `com.hexervoodoom.soulmon` |
 | `versionCode` / `versionName` | `15` / `1.1.4` (desde `4a8b8049`; eram 14 / 1.1.3 — primeiro bundle com `setObfuscatedAccountId`, preço localizado e widget novo) |
-| Billing | `com.android.billingclient:billing-ktx:6.2.1` — ⚠️ fica em 6.2.1 de propósito: `BillingPlugin.kt` chama `enablePendingPurchases()` sem argumento, forma que a 7.x removeu; se a Play exigir ≥ 7 no upload, o conserto é no Kotlin, não só nesta linha (`[a confirmar no Play Console]`) |
+| Billing | `com.android.billingclient:billing-ktx:8.3.0` (desde `a6c1cd8a`, PL-8 — a Play RECUSA PBL < 8 em app novo/update desde 31/08/2026; `BillingPlugin.kt` portado: `enablePendingPurchases(PendingPurchasesParams…)`, `enableAutoServiceReconnection()`, `QueryProductDetailsResult`; guard textual `src/plugins/billingPbl8.contract.test.ts`; **o compile só o CI prova, e o CI está parado por cobrança desde 16/09 — [08 §3.3](08-INTEGRACOES-E-DEPLOY.md)**). ⚰️ "fica em 6.2.1 de propósito porque `enablePendingPurchases()` sem argumento não compila na 7.x" valeu de `4a8b8049` a `a6c1cd8a` — o motivo era verdadeiro, a conclusão não: a resposta era portar o Kotlin, não segurar a versão (`[a confirmar no Play Console]`) |
 | FCM | `firebaseMessagingVersion = '24.1.0'` |
 | WorkManager | `androidx.work:work-runtime-ktx:2.9.0` |
 
@@ -197,7 +197,18 @@ implementações, um teste de paridade. Detalhe em
 ⚠️ O que essa arquitetura **não** resolve sozinha: dois aparelhos escrevendo em
 paralelo. `save.js` faz um `put` cego, sem revisão. O caminho tipado do 409 já
 existe em `src/utils/cloudSave.ts` (`CLOUD_SAVE_POLICY.conflict`), mas o
-`revision` que o produziria não está implementado.
+`revision` que o produziria não está implementado. **Três ADRs em estado
+"Proposta (aguarda o dono)"** desde 21/09/2026 (QA Rodada 1, #52), promovidas
+dos rascunhos da review para `docs/adr/`: [`ADR-004`](../adr/ADR-004-concorrencia-do-save.md)
+(concorrência do save — `revision` no servidor, `GET` antes de `POST` no cliente;
+executa o que a ADR-001 §3 já decidiu e ficou 27 dias parado — exceção declarada
+a "UI antes de infra"), [`ADR-005`](../adr/ADR-005-namespace-kv-unico.md) (um
+namespace KV para tudo: manter como cache/estado, tirar o DINHEIRO para o D1 que
+já existe) e [`ADR-006`](../adr/ADR-006-versionamento-do-esquema-do-save.md)
+(número de versão no envelope do save, migrações nomeadas, fixture por versão).
+Nada delas está implementado; o estado vive no cabeçalho de cada arquivo, não
+aqui. O que **está** implementado da mesma família (`a6c1cd8a`): a lápide
+`del:done:` + 410 para conta apagada ([07 §8.1](07-DADOS-E-SAVE.md)).
 
 ---
 
@@ -279,7 +290,10 @@ texto novo nesses arquivos achando que ele aparece em algum lugar.**
 hash · precache sem bundle · navegação network-first · limpeza dos caches
 antigos · `skipWaiting`/`claim` · cabeçalhos) e `src/security/csp.test.ts`
 (recalcula os hashes a partir do HTML da fonte **e** do `dist` servido e falha se
-alguém editar um script inline sem atualizar a política).
+alguém editar um script inline sem atualizar a política). O terceiro hash mudou
+em `a6c1cd8a` (gate de WebView com ramo Android × não-Android — [03 §2.1](03-FLUXO-DE-TELAS.md));
+o `cacheavel` do SW ganhou teste direto, `tests/swCacheavel.test.ts`, e o
+`manifest.json` ganhou régua contra o `index.html` (`src/deploy/manifest.contract.test.ts`).
 
 ---
 
@@ -311,12 +325,16 @@ Rodar **antes de todo commit**:
 | `npx tsc --noEmit` | `include: ["src", "tests"]`, `strict: true` (`tsconfig.json`) | Tipos do app e dos testes de raiz. **Não olha** `functions/`, `workers/`, `desktop/` nem `src/supabase/functions` (excluída). |
 | `npx tsc -p tsconfig.server.json --noEmit` | `functions/**/*.js`, `workers/**/*.js`, `types/**/*.d.ts` | O código de **dinheiro, conta e save**, via `allowJs` + `checkJs` sobre o JSDoc que o servidor já escrevia. `strict: true` de propósito (sem `strictNullChecks` o TS não estreita união discriminada por `ok: true`). **Fora**: `**/*.test.js`, `scripts/`, `desktop/`. |
 | `npx tsc -p desktop/tsconfig.json --noEmit` | `renderer/src/**/*.ts` | O overlay. `allowJs: true` + `checkJs: false` — o teste de contrato importa `functions/api/save.js` e sem isso o gate ficava vermelho por `TS7016`. |
-| `npx vitest run` | ver §10 | Toda a suíte, incluindo os guards de fiação por AST, os contratos de deploy e de segurança, e os testes de paridade do desktop. Dois portões novos em `4a8b8049`: **`src/deploy/depsVivas.contract.test.ts`** (#33 — pacote de `dependencies` sem import reprova; allowlist com motivo obrigatório) e **`src/deploy/orcamentoDeBytes.contract.test.ts`** (#31 — lê `dist/` depois do `npm run build`: JS de entrada ≤ 250 KB, CSS ≤ 100 KB, imagem ≤ 400 KB, vídeo ≤ 800 KB, 0 `.png` em `dist/assets`; a dívida atual é NOMEADA em `DIVIDA_ATUAL` — `index.js` 641 016 B, `index.css` 142 696 B, `evolution-bg.mp4`, `intro.mp4` — e o teste reprova arquivo novo acima do teto ou dívida que cresce mais que `FOLGA_JS_CSS = 8 KB`). |
+| `npx vitest run` | ver §10 | Toda a suíte, incluindo os guards de fiação por AST, os contratos de deploy e de segurança, e os testes de paridade do desktop. Dois portões novos em `4a8b8049`: **`src/deploy/depsVivas.contract.test.ts`** (#33 — pacote de `dependencies` sem import reprova; allowlist com motivo obrigatório) e **`src/deploy/orcamentoDeBytes.contract.test.ts`** (#31 — lê `dist/` depois do `npm run build`: JS de entrada ≤ 250 KB, CSS ≤ 100 KB, imagem ≤ 400 KB, vídeo ≤ 800 KB, 0 `.png` em `dist/assets`; a dívida atual é NOMEADA em `DIVIDA_ATUAL` — `index.js` 641 016 B, `index.css` 142 696 B, `evolution-bg.mp4`, `intro.mp4` — e o teste reprova arquivo novo acima do teto ou dívida que cresce mais que `FOLGA_JS_CSS = 8 KB`; desde `a6c1cd8a` a dívida de uma chave sem hash é do MAIOR arquivo com aquele nome — ⚰️ `find` pegava o primeiro `index-*.js`, de 438 B, e declarava a dívida paga). **Portões novos em `a6c1cd8a` (QA Rodada 1):** `src/deploy/versaoUnica.contract.test.ts` (uma versão só — `package.json` = `versionName` = `__APP_VERSION__`), `src/deploy/manifest.contract.test.ts` (`manifest.json` = `index.html`/tokens), `src/plugins/billingPbl8.contract.test.ts` (PL-8 Billing ≥ 8 e PL-9 alarme exato, lendo o fonte Kotlin/Gradle), `src/plugins/widgetNome.contract.test.ts` (o widget chama o pet pelo nome da Home), `src/ia.camposEnviados.contract.test.ts` (o DONO da fronteira "o que o cliente manda para a IA": lista fechada de chaves por rota e por arquivo chamador de `aiFetch`), `src/copy.semFomo.contract.test.ts` (proibição #15 por teste), `tests/indexHtmlGateWebView.test.ts`, `tests/swCacheavel.test.ts`, `tests/convertToWebp.test.ts` (o script de build ganhou `.d.mts`) — todos descritos em [`06-REFERENCIA/plugins-constants.md`](06-REFERENCIA/plugins-constants.md) › Guards. |
 | `npm run build` | `vite build && node scripts/convert-to-webp.mjs && npx wrangler pages functions build --outdir=./dist/_worker.js/` | Compila o bundle, converte PNG→WebP **e reescreve as referências `nome-HASH.png` → `.webp` em todo JS/CSS/HTML de `dist/` antes de apagar os PNG** (desde 21/09/2026, decisão #32: `dist/` caiu de 123 MB para 24 MB; qualquer referência sobrando aborta com `exit 1` e o PNG fica — régua `src/deploy/orcamentoDeBytes.contract.test.ts`, que também trava 0 `.png` em `dist/assets`), e **compila as Pages Functions para dentro de `dist/`**. ⚠️ O `CLAUDE.md` descreve este comando só como "vite build + conversão PNG→WebP" — o terceiro passo está no `package.json` e não está lá. |
 
 O CI (`.github/workflows/ci.yml`, job `gate`) roda os quatro primeiros na ordem
 typecheck do app → do overlay → do servidor → `vitest`, mais um step de
-integridade do `vendor/` (sha256 do blob contra `_provenance.json`).
+integridade do `vendor/` (sha256 do blob contra `_provenance.json`). ⚠️ **Fato
+datado: o Actions ficou parado por cobrança de 16/09 a pelo menos 22/09/2026**
+(#48) — nesse período os portões só rodaram na máquina local, e é por isso que
+`gh run list --limit 5` virou a primeira linha do runbook do operador
+([08 §3.3](08-INTEGRACOES-E-DEPLOY.md), [12 §7](12-COMO-MANTER.md)).
 
 ---
 
