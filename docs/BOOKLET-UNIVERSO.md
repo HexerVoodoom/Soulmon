@@ -1360,6 +1360,14 @@ cópia: se a arte for trocada lá, o livrinho troca junto.
 | `src/assets/soulmon/sigilos/` | 6 | os sigilos de elemento |
 | `src/assets/soulmon/windows/` | 1 | a moldura do visor |
 
+**Versão para ler no telefone.** `docs/BOOKLET-UNIVERSO.pdf` é este mesmo
+documento em PDF, com página de **390 × 844** — a caixa de um telefone —, para
+ser lido a 100% de zoom, sem pinçar e sem rolagem horizontal. Ele é **gerado**,
+nunca editado à mão: `npm run booklet:pdf` (`scripts/booklet-pdf.mjs`)
+reconstrói a partir deste `.md`. Se você mudar o texto aqui, rode o comando e
+commite os dois juntos — PDF e `.md` fora de sincronia é a mesma família de
+mentira que o `CLAUDE.md` persegue nos números.
+
 **O que não pôde ser ilustrado, e por quê:**
 
 - **Os elementos `planta` e `industrial`** não têm sigilo em

@@ -36,6 +36,7 @@
     "vendor:class-system": "node scripts/vendor-class-system.mjs",
     "gen:cascata-fixtures": "node scripts/gen-cascata-fixtures.mjs",
     "dev": "vite",
+    "booklet:pdf": "node scripts/booklet-pdf.mjs",
     "build": "vite build && node scripts/convert-to-webp.mjs && npx wrangler pages functions build --outdir=./dist/_worker.js/",
     "test": "vitest run",
     "test:watch": "vitest",

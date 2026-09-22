@@ -39,3 +39,6 @@ state/
 
 # Scratch de medição de asset (sessões de arte/QA escrevem esses na raiz)
 *.tmp.mjs
+
+# temporario do gerador do PDF do livrinho (scripts/booklet-pdf.mjs)
+.booklet-pdf-tmp/
