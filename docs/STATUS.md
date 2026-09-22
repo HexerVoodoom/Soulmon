@@ -7,6 +7,39 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 22/09/2026 — o texto do jogador sai do ritual v1 (só depois do Renascimento)
+>
+> **Decisão do dono:** o jogador só insere texto que vai para o PROMPT depois do
+> Renascimento. Antes disso a criatura é inteiramente leitura — quem a pessoa é, não
+> o que ela digitou.
+>
+> O degrau **"Qual sua criatura favorita?"** (`FAVORITE_STEP`, o 5º do ritual) saiu do
+> onboarding. O achado que o motivou, medido no pipeline real: o campo entrava como
+> **prefixo literal nos 11 prompts**, e o prompt é inglês — um jogador brasileiro
+> digitando "lobo" produzia `transparent background: lobo ant-rose, Tide Priestess, …`
+> nas onze formas.
+>
+> ⚠️ **O NÚMERO do passo ficou, e não virou 4**: `utils/oracleDraft.ts` PERSISTE o
+> `step`, então renumerar mandaria quem retomou um ritual para a tela errada — mesmo
+> motivo pelo qual os passos de "porquê" usam ids negativos. A escada segue inteira, o
+> degrau é pulado na ida e na volta, e **rascunho parado nele é levado adiante** (senão
+> quem retomasse veria o casco do onboarding vazio, sem título, sem botão e sem saída —
+> o dano que o comentário do piso `1` em `back()` já descrevia).
+>
+> `ORACLE_DRAFT_VERSION` **não subiu** de propósito: chave a mais é ignorada na leitura,
+> e subir a versão descartaria rascunhos válidos de quem está no meio do ritual agora.
+>
+> Um teste de render foi ATUALIZADO, não desativado: ele afirmava que o voltar da 1ª
+> pergunta ia para a criatura favorita; agora afirma que vai para o local de nascimento,
+> e o que ele protege continua sendo o mesmo — a 1ª pergunta TEM saída.
+>
+> **`petDescription` não era v1** e foi parqueado junto: só a `OraclePage` o coleta, e ela
+> não tem entrada na navegação. O defeito da bio em inglês saindo em português (quando há
+> descrição livre) alcança a ferramenta interna, não o jogador — fica para a v2.
+>
+> A capacidade continua em `oracle.ts` (`favoriteCreature` no `OracleInput` e no
+> compositor de prompt), inerte e testada, porque é dela que a v2 vai precisar.
+
 > ## 22/09/2026 — BALANCEAMENTO 1/4: a escola voltou a seguir a pessoa
 >
 > Primeira frente do balanceamento pré-Renascimento. **Defeito, não calibração.**

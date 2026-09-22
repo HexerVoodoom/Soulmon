@@ -264,6 +264,21 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   // depois delas — e ANTES do reveal, de propósito: assim a criatura nasce uma
   // vez só, já com a leitura que a pessoa escolheu. Oferecer depois do reveal
   // significaria trocar por outra a criatura que ela acabou de conhecer.
+  // ⚰️ FAVORITE_STEP — "Qual sua criatura favorita?" SAIU DO RITUAL em
+  // 22/09/2026 (decisão do dono).
+  //
+  // Regra nova: **o jogador só insere texto que vai para o prompt depois do
+  // Renascimento**. Antes disso a criatura é inteiramente leitura — quem a
+  // pessoa é, não o que ela digitou. O campo entrava como prefixo LITERAL nos
+  // 11 prompts, e o prompt é inglês: um jogador brasileiro digitando "lobo"
+  // produzia `transparent background: lobo ant-rose, Tide Priestess, …` nas
+  // onze formas. Medido em 22/09/2026, com o pipeline real.
+  //
+  // O NÚMERO fica, e não vira 4: `utils/oracleDraft.ts` PERSISTE o `step` do
+  // rascunho, então renumerar mandaria quem retomou um ritual para a tela
+  // errada — é o mesmo motivo pelo qual os passos de "porquê" usam ids
+  // negativos (ver `GOAL_STEP`). A escada continua inteira; o degrau é pulado
+  // na navegação, e um rascunho parado nele é levado adiante.
   const FAVORITE_STEP = 5;
   const QUIZ_START = FAVORITE_STEP + 1;
   const QUIZ_END = QUIZ_START + ORACLE_QUESTIONS.length; // primeiro passo pós-quiz
@@ -326,7 +341,15 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   // O onboarding ABRE no portão de identidade. Antes abria numa intro de
   // marca ("Começar") e a conta vinha três telas depois; o dono pediu a conta
   // logo após o carregamento, e a marca virou o cabeçalho do próprio portão.
-  const [step, setStep] = useState(draft ? draft.step : isUpgrade ? 1 : IDENTITY_STEP);
+  const [step, setStep] = useState(() => {
+    if (!draft) return isUpgrade ? 1 : IDENTITY_STEP;
+    // ⚰️ Rascunho salvo ANTES de 22/09/2026 pode estar parado no degrau da
+    // criatura favorita, que não renderiza mais: quem retomasse veria o casco
+    // do onboarding vazio, sem título, sem botão e sem saída — o mesmo dano
+    // que o comentário do piso `1` em `back()` descreve. Segue para a 1ª
+    // pergunta do ritual, que é para onde ele iria de qualquer jeito.
+    return draft.step === FAVORITE_STEP ? QUIZ_START : draft.step;
+  });
   /** Adendo 11 (21/09/2026): o servidor respondeu 410 `account-deleted` e
    *  `reagirContaExcluida` limpou o aparelho e voltou para cá. A mensagem é
    *  lida UMA vez e apagada — não pode reaparecer na próxima abertura. */
@@ -423,8 +446,6 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const [birthCity, setBirthCity] = useState<City | null>(draft?.birthCity ?? null);
   const birthPlace = birthCity ? cityLabel(birthCity) : '';
   const [timeUnknown, setTimeUnknown] = useState(draft?.timeUnknown ?? false);
-  const [favoriteCreature, setFavoriteCreature] = useState(draft?.favoriteCreature ?? '');
-  const [skipFavorite, setSkipFavorite] = useState(draft?.skipFavorite ?? false);
   /** As 6 perguntas do ritual — todo mundo responde. */
   const [answers, setAnswers] = useState<Record<string, string>>(draft?.answers ?? {});
   /** Os 20 itens psicométricos — só de quem aceitou refinar. */
@@ -597,10 +618,10 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     if (!inRitual) return;
     writeOracleDraft({
       mode, step, soulGoal, soulStruggle, fullName, birthDate, birthDateText, birthTime,
-      birthCity, timeUnknown, favoriteCreature, skipFavorite, answers, testAnswers, refine, consent,
+      birthCity, timeUnknown, answers, testAnswers, refine, consent,
     });
   }, [inRitual, mode, step, soulGoal, soulStruggle, fullName, birthDate, birthDateText, birthTime,
-    birthCity, timeUnknown, favoriteCreature, skipFavorite, answers, testAnswers, refine, consent]);
+    birthCity, timeUnknown, answers, testAnswers, refine, consent]);
 
   /** Dispara a geração e, se ela falhar, devolve o usuário à última pergunta
    *  com um aviso — travar na animação de "revelando" para sempre é o pior
@@ -649,7 +670,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       // As 6 do ritual entram na leitura sempre — são o único sinal de
       // personalidade de quem não faz o teste longo.
       answers,
-      favoriteCreature: skipFavorite ? undefined : (favoriteCreature.trim() || undefined),
+      // ⚰️ `favoriteCreature` não é mais coletado no ritual (ver FAVORITE_STEP).
+      // Texto do jogador no prompt só depois do Renascimento.
       soulProfile,
     };
     let r: OracleResult;
@@ -733,6 +755,10 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     // `isAgeBlocked` só bloqueia data legível de menor — data vazia ou
     // ilegível segue o fluxo, que é o que impede barrar alguém por engano.
     if (step === 2 && isAgeBlocked(birthDate)) { setStep(AGE_BLOCK); return; }
+    // ⚰️ O degrau da criatura favorita foi pulado (ver FAVORITE_STEP): do
+    // local de nascimento vai-se direto à 1ª pergunta do ritual. Nada
+    // renderiza em FAVORITE_STEP, e cair nele mostraria o casco vazio.
+    if (step === FAVORITE_STEP - 1) { setStep(QUIZ_START); return; }
     if (step === DEEP_END - 1) {
       // último item do teste longo respondido → tela de geração e gera
       setStep(GENERATING);
@@ -772,6 +798,9 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     // continua lá); da 1ª pergunta do ritual grátis, à escolha grátis/completo.
     if (step === DEMO_PICK) { setStep(demoReading ? REVEAL_DEMO : CHOICE_STEP); return; }
     if (step === QUIZ_START && flow === 'demo') { setFlow(null); setStep(CHOICE_STEP); return; }
+    // ⚰️ E na volta também se pula o degrau da criatura favorita: da 1ª
+    // pergunta do ritual volta-se ao local de nascimento.
+    if (step === QUIZ_START) { setStep(FAVORITE_STEP - 1); return; }
     // O "Back" do cadastro demo (canvas ONB-34, B1): volta à escolha do
     // personagem — o passo anterior na numeração é o REVEAL, que só existe
     // no caminho do oráculo e renderizaria vazio.
@@ -1800,26 +1829,6 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         )}
 
         {/* 5 — Criatura favorita (opcional) */}
-        {step === FAVORITE_STEP && (
-          <StepShell title={isPt ? 'Qual sua criatura favorita?' : "What's your favorite creature?"}
-            hint={isPt ? 'Opcional — até 2 palavras. Ela influencia a aparência da sua criatura.' : 'Optional — up to 2 words. It shapes how your creature looks.'}>
-            <Field type="text" value={favoriteCreature} autoFocus
-              readOnly={skipFavorite}
-              aria-disabled={skipFavorite || undefined}
-              tabIndex={skipFavorite ? -1 : undefined}
-              aria-label={isPt ? 'Criatura favorita' : 'Favorite creature'}
-              style={skipFavorite ? inertFieldStyle : undefined}
-              onChange={e => setFavoriteCreature(e.target.value.split(/\s+/).slice(0, 2).join(' '))}
-              placeholder={isPt ? 'Ex.: axolote' : 'E.g.: axolotl'}
-              onKeyDown={e => e.key === 'Enter' && next()} />
-            <div style={{ marginTop: 8 }}>
-              <CheckRow checked={skipFavorite} onChange={setSkipFavorite}>
-                {isPt ? 'Prefiro não influenciar o resultado' : "I'd rather not influence the result"}
-              </CheckRow>
-            </div>
-          </StepShell>
-        )}
-
         {/* 6..11 — As 6 perguntas do ritual (uma por página). O NÚMERO delas é
             regra de produto e não muda: só a roupa mudou. */}
         {step >= QUIZ_START && step < QUIZ_END && (() => {

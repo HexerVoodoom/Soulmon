@@ -125,13 +125,20 @@ describe('as 6 perguntas, a bifurcação e os 20 itens (D-Q4, D-Q5, D-Q12)', () 
     expect(document.body.textContent).toContain('Question 1 of 6');
   });
 
-  it('§17 V2: a PRIMEIRA pergunta tem voltar (→ criatura favorita), pelado num alvo 44', () => {
+  // ⚰️ Este teste afirmava que o voltar da 1ª pergunta ia para "Qual sua
+  // criatura favorita?". O degrau SAIU em 22/09/2026 (decisão do dono: o
+  // jogador só insere texto que vai para o prompt depois do Renascimento), e
+  // o voltar passa direto ao local de nascimento. O que o teste protege
+  // continua sendo o mesmo: a 1ª pergunta TEM saída, e ela é pelada num alvo
+  // de 44 — sem isso o jogador fica preso na primeira pergunta do ritual.
+  it('§17 V2: a PRIMEIRA pergunta tem voltar (→ local de nascimento), pelado num alvo 44', () => {
     writeOracleDraft(rascunho(QUIZ_START));
     renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
     const back = btn('Back');
     expect(back.className).toContain('sm2-ora-back');
     fireEvent.click(back);
-    expect(screen.getByText("What's your favorite creature?")).toBeTruthy();
+    expect(screen.queryByText("What's your favorite creature?")).toBeNull();
+    expect(screen.getByText('Where were you born?')).toBeTruthy();
   });
 
   it('D-Q5: a bifurcação tem as DUAS portas em `outline`, o teste primeiro; o erro de geração é âmbar', () => {

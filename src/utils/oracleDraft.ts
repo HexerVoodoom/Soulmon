@@ -45,8 +45,13 @@ export interface OracleDraft {
   birthTime: string;
   birthCity: City | null;
   timeUnknown: boolean;
-  favoriteCreature: string;
-  skipFavorite: boolean;
+  /* ⚰️ `favoriteCreature` e `skipFavorite` SAÍRAM em 22/09/2026, com o degrau
+     "Qual sua criatura favorita?" do ritual (ver `FAVORITE_STEP` em
+     `SoulmonOnboarding.tsx`). Regra nova do dono: o jogador só insere texto
+     que vai para o prompt DEPOIS do Renascimento. Rascunho antigo que ainda
+     carregue as duas chaves continua legível — chave a mais é ignorada na
+     leitura —, por isso `ORACLE_DRAFT_VERSION` NÃO sobe: subir descartaria
+     rascunhos válidos de quem está no meio do ritual agora. */
   answers: Record<string, string>;
   testAnswers: SoulAnswers;
   refine: boolean | null;
@@ -82,8 +87,6 @@ export function readOracleDraft(
     birthTime: typeof d.birthTime === 'string' ? d.birthTime : '12:00',
     birthCity: d.birthCity && typeof d.birthCity === 'object' ? (d.birthCity as City) : null,
     timeUnknown: d.timeUnknown === true,
-    favoriteCreature: typeof d.favoriteCreature === 'string' ? d.favoriteCreature : '',
-    skipFavorite: d.skipFavorite === true,
     answers: d.answers && typeof d.answers === 'object' ? (d.answers as Record<string, string>) : {},
     testAnswers: d.testAnswers && typeof d.testAnswers === 'object' ? (d.testAnswers as SoulAnswers) : {},
     refine: d.refine === true ? true : d.refine === false ? false : null,
