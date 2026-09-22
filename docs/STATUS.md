@@ -7,6 +7,35 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 22/09/2026 — Manual sincronizado com `c7bca6d`
+>
+> Delta `89554b5d..c7bca6d` (7 commits, série BALANCEAMENTO DO ORÁCULO + a saída
+> do texto livre do ritual). Docs tocados, todos recarimbados pelo
+> `doc-verificador` no mesmo dia:
+>
+> | doc | o que entrou |
+> |---|---|
+> | `02-REGRAS-DE-NEGOCIO.md` §22 | ⚰️ o degrau da criatura favorita; a tabela das 4 frentes de rebalanceamento (`DOMINANT_SCHOOL_LEAD`, `melhorArquetipo`, `ANCHOR_BASE`/`vileza`, `sombra`); o aviso do erro de medição de `normalizeName` |
+> | `03-FLUXO-DE-TELAS.md` | a linha `FAVORITE_STEP` virou ⚰️ + o degrau pulado nos dois sentidos e o rascunho antigo desviado |
+> | `06-REFERENCIA/utils.md` | `oracleDraft.ts`, `soulProfile/axes.ts`, `ficha/buildSheet.ts`, `ficha/classTitle.ts` |
+> | `06-REFERENCIA/components.md` | `SoulmonOnboarding.tsx` |
+> | `10-DISCUSSOES-E-DECISOES.md` | 2 linhas novas (a decisão do texto livre e a série de balanceamento) |
+>
+> **Nenhuma regra que o jogador VIVE mudou** — as quatro frentes corrigem
+> vantagem estrutural na LEITURA, e o §22 já dizia que nenhum elemento, papel ou
+> reino pode tê-la.
+>
+> **Divergências novas: nenhuma.** A que continua aberta e não é desta série: o
+> T-PISO (`ficha/buildSheet.piso.test.ts`) **REPROVOU** — 0,49 estrito / 0,82 sem
+> desastre contra a meta de 0,95 da §10.2 da spec, que **não foi movida**; os
+> valores medidos ficam como piso de regressão e a escolha entre as quatro saídas
+> de `docs/plano-melhorias/ledger/permanencia.md` (bloco WP4.23) **depende do
+> dono**. Não é "diverge de propósito".
+>
+> `perfisSinteticos.ts` (módulo novo) já tinha entrada em
+> `06-REFERENCIA/utils.md`, escrita pela própria série; nada a indexar no
+> `00-MAPA.md`.
+
 > ## 22/09/2026 — BALANCEAMENTO 4: `sombra` e `pântano`, os dois outliers que sobraram
 >
 > Fechamento da série de balanceamento do oráculo. Sobravam dois pontos fora

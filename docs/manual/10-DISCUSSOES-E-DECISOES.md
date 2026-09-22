@@ -1,6 +1,13 @@
 # Discussões e decisões — onde cada uma vive
 
-> **Dono:** doc-historiador · **Data:** 22/09/2026 (4ª sincronização do dia,
+> **Dono:** doc-historiador · **Data:** 22/09/2026 (5ª sincronização do dia,
+> delta `89554b5d..c7bca6d`: **2 linhas novas** na tabela do tema 6 — a saída
+> do degrau da criatura favorita do ritual v1 e a série de balanceamento do
+> oráculo (quatro frentes), cada uma com a alternativa que perdeu e o gatilho
+> de revisão. **Verificado em 22/09/2026 por doc-verificador** (delta
+> `89554b5d..c7bca6d` — as duas linhas conferidas contra os commits `1da55d0`,
+> `627542d`, `50830a3`, `7b65613`, `131dce2`, `c7bca6d` e contra os símbolos
+> citados no fonte); anterior: 4ª sincronização do dia,
 > delta `fadb1167..89554b5d`: **7 linhas novas no tema 3** (a spec de alocação
 > manual de ELEMENTO destravada pelo Renascimento, o parecer de linha vermelha,
 > as duas medições WP4.22b/WP4.23 e o parqueamento para a v2.0) + **1 item novo
@@ -239,6 +246,8 @@ tabela do documento). Estudo: `../plano-melhorias/estudo/vinculo.md`,
 | 22/09/2026 | `05-plataforma-r1.md` §2, `00-seguranca-a.md` M2; `SoulmonAlarmPlugin.kt`, `BootReceiver.kt`, `AndroidManifest.xml`, `billingPbl8.contract.test.ts` (PL-9) | squad, sem pergunta ao dono: **alarme exato só atrás de `canScheduleExactAlarms()`**, com fallback inexato e reagendamento quando a permissão muda — Android 14+ não pré-concede `SCHEDULE_EXACT_ALARM`, o `setExact*` lançava e o JS engolia: nenhum lembrete tocava no APK | Pedir a permissão automaticamente (o convite "Alarmes e lembretes" é por gesto, e ainda não tem chamador na UI) | — |
 | 22/09/2026 | `../reviews/2026-09-22-qa-rodada-2/00-skeptic-r2.md` #2/#11, `01-seguranca-r2.md` §2, `02-narrativa-r2.md` A5/A13/§3; `functions/api/subscribe.js`/`fcm-subscribe.js` › `saveIdAutorizado`, `_pushIdentity.js` (expulsa apagada), `workers/push-scheduler.js` › `AGE_DAY_BASE_UTC`, `_pushCopy.js`, `WidgetRenderer.kt`, `desktop/renderer/src/phrases.ts` | **`pushidx` só indexa com prova de posse** (17 POSTs anônimos cortavam o push da vítima); a inscrição expulsa do teto é apagada junto (invariante "toda inscrição viva com saveId está no índice"); **a base do dia do push é meia-noite BRT** (o das 22h saía no D0); ⚰️ "está te esperando"/"pensou em você"/"favorite partner"/"tô de olho na sua produtividade" saíram do push, do widget e do overlay ([08 §2.5–§2.7](08-INTEGRACOES-E-DEPLOY.md)) | `saveId` "não verificado, dano só para quem mentiu" (era o comentário — mentira cara) | — |
 | 22/09/2026 | `../reviews/2026-09-22-qa-rodada-2/05-operador-governanca-r2.md` §1, **#66**; `08 §3.5` | **medido**: o worker de push está deployado desde 21/09 12:57Z, mas **`FIREBASE_SERVICE_ACCOUNT` está ausente** — o FCM do APK nunca envia; só Web Push. Três rodadas perguntaram "está no ar?" e nenhuma "tem os secrets?" | repetir a pergunta #5/#50-a | o dono rodar `wrangler secret put` dentro de `workers/` |
+| 22/09/2026 | `src/components/SoulmonOnboarding.tsx` › `FAVORITE_STEP`, `src/utils/oracleDraft.ts` | **dono**: o jogador só insere texto que vai para o prompt DEPOIS do Renascimento — ⚰️ o degrau "criatura favorita" saiu do ritual v1. O campo entrava como prefixo LITERAL nos 11 prompts, em inglês ("lobo ant-rose, Tide Priestess…", medido). `FAVORITE_STEP` fica em **5** (o rascunho persiste o `step`) e `ORACLE_DRAFT_VERSION` **não sobe** (chave a mais é ignorada; subir descartaria rascunho em andamento) — [02 §22](02-REGRAS-DE-NEGOCIO.md#oraculo), [03](03-FLUXO-DE-TELAS.md) | Renumerar os passos; bumpar a versão do rascunho | a v2.0 do Renascimento |
+| 22/09/2026 | `ficha/buildSheet.ts` › `DOMINANT_SCHOOL_LEAD`, `ficha/classTitle.ts` › `melhorArquetipo`, `soulProfile/axes.ts` › `ANCHOR_BASE`/`vileza`/`sombra`; réguas `escolaFidelidade`/`classeOcorrencia`/`classeElementoOcorrencia`/`elementoOcorrencia.test.ts` | **dono** ("o class-system deve ser explorado ao máximo, com mesma chance pra todas as combinações e classes"): quatro vantagens estruturais medidas e corrigidas — escola fiel ao papel (0 % → 100 %), 9 → **59** classes distintas, 17/17 elementos dominam (razão 2,47× → 1,10×), `sombra` 3,8 % → 10,3 % no jogo sem mexer nos 15,7 % do class-system. `pântano` **medido e mantido**. Nada do que o jogador FAZ mudou — [02 §22](02-REGRAS-DE-NEGOCIO.md#oraculo) | Baixar o coeficiente do neuroticismo de `sombra` (0,05/0,10 funcionavam pelo motivo errado, apagando o sentido psicológico); manter "sempre o arquétipo mais específico" | nova medição de ocorrência que mostre um elemento/classe fora da faixa |
 
 ---
 
