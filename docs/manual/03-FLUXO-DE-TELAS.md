@@ -1,6 +1,6 @@
 # Fluxo de telas do Soulmon
 
-> **Dono:** doc-redator-telas · **Data:** 22/09/2026 · **Estado:** verificado em 22/09/2026 por doc-verificador (delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §2.1 gate por plataforma (`index.html`), §2.3 aviso de conta excluída no portão (`SoulmonOnboarding.tsx` › `avisoContaExcluida`), §2.4 hint de IA, §3.2 item 7 `changed`/`region`/"Entendi", §4.23 Sobre e Ajuda conferidos símbolo a símbolo contra o fonte; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §2.1 aviso de WebView, §3.2 item 6 `termos`, §4.23 grupo Sobre, §4.23a/§4.23b ⚰️ `SettingsModal`, §4.25 `ErrorBoundary` conferidos símbolo a símbolo; anterior: §4.23/§4.23b, delta `5ac3d351..8d318529`, som/S16 + grupo "Som" na `SettingsPage`; verificação anterior do mesmo dia: delta `dc72579e..9875477b`, 30 commits: copy da bíblia §1–§6-bis, superfície de suporte, rodada 2 da arte; verificação anterior do delta `2580b73a..dc72579e`, Fase 2, identidade "O Visor", 14 fluxos: 21/09/2026)
+> **Dono:** doc-redator-telas · **Data:** 22/09/2026 (2ª sincronização do dia, delta `a6c1cd8a..592e2c14`, QA Rodada 2: §2.1 gate `; wv)`, §2.3 portão com lápide ANTES do onboarding + região viva + `OfflineSeal`, §2.4 falha de IA com nome e hint que fica, §3.2 banner de termos em posição 1 na primeira vez, §4.2 fallback do sprite e falas do fallback, §4.17 âncora visível, §4.23 Termos na Ajuda e `#en`, §4.25 selo nas telas pré-Home) · **Estado:** verificado em 22/09/2026 por doc-verificador (delta `a6c1cd8a..592e2c14` — as seções acima conferidas símbolo a símbolo contra `index.html`, `SoulmonOnboarding.tsx`, `GameTutorialFlow.tsx`, `App.tsx`, `CompanionHUD.tsx`, `MorningCheckIn.tsx`, `SettingsPage.tsx`; anterior no mesmo dia: delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §2.1 gate por plataforma (`index.html`), §2.3 aviso de conta excluída no portão (`SoulmonOnboarding.tsx` › `avisoContaExcluida`), §2.4 hint de IA, §3.2 item 7 `changed`/`region`/"Entendi", §4.23 Sobre e Ajuda conferidos símbolo a símbolo contra o fonte; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §2.1 aviso de WebView, §3.2 item 6 `termos`, §4.23 grupo Sobre, §4.23a/§4.23b ⚰️ `SettingsModal`, §4.25 `ErrorBoundary` conferidos símbolo a símbolo; anterior: §4.23/§4.23b, delta `5ac3d351..8d318529`, som/S16 + grupo "Som" na `SettingsPage`; verificação anterior do mesmo dia: delta `dc72579e..9875477b`, 30 commits: copy da bíblia §1–§6-bis, superfície de suporte, rodada 2 da arte; verificação anterior do delta `2580b73a..dc72579e`, Fase 2, identidade "O Visor", 14 fluxos: 21/09/2026)
 > **Verificação:** `npx vitest run src/components/filaDeAvisos.contract.test.ts src/components/evolucaoManual.contract.test.ts src/components/ofertaDoisCanais.contract.test.ts src/components/upgradeReveal.contract.test.ts src/components/textoBilingue.contract.test.ts src/plugins/widgetSemCobranca.contract.test.ts src/components/SoulmonOnboarding.oraculo.render.test.tsx src/components/StatsPage.render.test.tsx src/utils/petVoice.test.ts src/narrativa.contract.test.ts` · guard do manual: `npx vitest run src/docsManual.contract.test.ts`
 > **Não cobre:** aparência (cor, tipografia, espaçamento, tokens `--sm2-*`) — é do `04-IDENTIDADE-VISUAL.md`; as REGRAS que as telas aplicam (corações, meta do dia, evolução, moedas) — são do `02-REGRAS-DE-NEGOCIO.md`; a assinatura de cada componente — é de [`06-REFERENCIA/components.md`](06-REFERENCIA/components.md); percurso real com o app rodando — é do procedimento "Inventário de superfícies" de `.claude/skills/squad-design/METODO.md` (⚰️ agente `soulmon-screen-cartographer`, 21/09/2026), cuja medição de 19/08/2026 está em [`../INVENTARIO-TELAS.md`](../INVENTARIO-TELAS.md).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -190,7 +190,10 @@ pela decisão S1 do canvas Home (§5); a célula Evolução da barra é o único
   aviso bilíngue ("Precisamos de uma atualização" / "An update is needed") no
   `#root` **e remove a splash**, senão o aviso ficaria por baixo dela para sempre.
   **Desde `a6c1cd8a` o aviso tem DOIS ramos por plataforma** (skeptic #4 /
-  design D1–D4, QA Rodada 1): `/Android/i.test(navigator.userAgent)` → corpo
+  design D1–D4, QA Rodada 1): o ramo Android exige a marca de WebView no UA —
+  **`/; wv\)/`** ou o UA antigo `Version/x.y … Chrome/` (desde `592e2c14`,
+  `00-skeptic-r2` #5; ⚰️ `/Android/i` sozinho mandava Samsung Internet e Firefox
+  no Android, que NÃO são WebView, atualizar o "Android System WebView") → corpo
   "Android System WebView desatualizado" + **dois `<a>` para a Play** (criados
   por `createElement`, 44 px de altura: "Atualizar Android System WebView" →
   `com.google.android.webview` e "Atualizar Google Chrome" →
@@ -292,17 +295,31 @@ if (!hasCompletedOnboarding) {
   exatamente para isso, e o cabeçalho diz que "falta de configuração vira
   ausência de conta, nunca porta trancada" — mas o aceite e o 18+ continuam
   obrigatórios (`podeAutenticar`).
-- **Aviso de conta excluída** (desde `a6c1cd8a`, adendo 11): quando o servidor
-  respondeu **410 `account-deleted`** ao cloud save (a conta foi apagada neste
-  ou em outro aparelho), `reagirContaExcluida` (`utils/cloudSave.ts`) limpou o
-  save local, deslogou e recarregou — e o portão é para onde a pessoa volta.
-  `avisoContaExcluida` é um `useState` cujo inicializador **lê e apaga**
-  `STORAGE_KEYS.ACCOUNT_DELETED_NOTICE` (uma vez; não reaparece na abertura
-  seguinte) e renderiza `<p role="status" data-account-deleted-notice>` com
-  "Esta conta foi excluída neste ou em outro aparelho." / "This account was
-  deleted on this or another device." Sem ele, o aparelho reaparecia no portão
-  sem explicação — e, pior, antes do 410 existir ele recriava o save 3 s depois
-  da exclusão.
+- **Aviso de conta excluída** (desde `a6c1cd8a`, adendo 11; **reescrito em
+  `592e2c14`**, QA Rodada 2 F1/A1/A2): quando o servidor respondeu **410
+  `account-deleted`** ao cloud save (a conta foi apagada neste ou em outro
+  aparelho), `reagirContaExcluida` (`utils/cloudSave.ts`) guardou o local em
+  `CONFLICT_BACKUP`, limpou o save, deslogou e recarregou — e o portão é para
+  onde a pessoa volta. `avisoContaExcluida` é um `useState` cujo inicializador
+  **lê e apaga** `STORAGE_KEYS.ACCOUNT_DELETED_NOTICE` (uma vez; não reaparece
+  na abertura seguinte). **O portão também confere a lápide NO LOGIN, antes de
+  qualquer passo do ritual**: `aposAutenticar(mail)` (os dois logins, senha e
+  Google) chama `checarContaExcluidaNoLogin` — conta com lápide **não entra no
+  "porquê"**: apaga a notice, mostra o aviso, limpa o e-mail e volta a
+  `IDENTITY_STEP`. ⚰️ Na R1 a lápide só era vista DEPOIS de a pessoa criar conta
+  nova sob o mesmo saveId — 410 → wipe → login → onboarding → 410, em loop, por
+  30 dias (FATAL). O aviso hoje é uma `<section aria-labelledby>` com cabeçalho
+  **"Conta excluída" / "Account deleted"** e a frase de `mensagemContaExcluida`
+  com a data: "Esta conta foi excluída em DD/MM. O servidor libera o e-mail no
+  próximo login — tente entrar de novo." (⚰️ "excluída neste ou em outro
+  aparelho", sem saída para "se não foi você"). A região
+  `<div aria-live="polite" aria-atomic data-account-deleted-live>` existe
+  **vazia na primeira pintura** e o texto entra pós-montagem
+  (`avisoAnunciado`, `setTimeout(0)`) — senão o leitor de tela não anuncia.
+  Idioma por `resolveLanguage`. O `OfflineSeal` cobre o onboarding, o tutorial
+  e o upgrade desde `592e2c14` (E1 — ⚰️ o portão não tinha selo; um login
+  offline falhava sem dizer por quê). Régua:
+  `SoulmonOnboarding.contaExcluida.render.test.tsx`.
 - **Estados**: `authEmail === null` = ainda não se sabe (checagem assíncrona);
   `''` = deslogado; string = comprovado. `authOcupado` desabilita o botão, e
   `GOOGLE_SEM_RESPOSTA_MS` (120 000 ms) é a **rede de segurança**: passado o
@@ -394,7 +411,17 @@ grátis é atravessado nos testes por `src/test/ritualDemo`).
   **obrigatória** da primeira atividade. O jogador digita o objetivo, escolhe
   áreas de vida (`CATEGORIES`, 8) e recebe sugestões da API.
 - **Estados**: **erro/offline** — `fallbackTasks` devolve até 4 tarefas locais
-  de dois minutos (`FALLBACK_BY_CATEGORY`); **primeira ordenação** —
+  de dois minutos (`FALLBACK_BY_CATEGORY`); **desde `592e2c14` a falha tem
+  nome** (E1, QA Rodada 2): `suggestTasksResult` distingue `offline`
+  (`navigator.onLine === false` ou a requisição nem saiu) de `error` (o
+  provedor não respondeu), e a tela mostra `<p role="status"
+  data-ai-failure="offline|error">` — "Sem conexão agora — estas são sugestões
+  locais. Com rede, toque de novo para pedir à IA." / "A IA não respondeu agora
+  — estas são sugestões locais. Pode tentar de novo." (⚰️ os três casos —
+  offline, erro e vazio legítimo — mostravam o mesmo "não veio sugestão"); vazio
+  legítimo não mostra falha nenhuma. O hint "Este texto vai para o provedor de
+  IA…" (`data-ai-hint`) **fica enquanto o botão puder ser tocado** (A10; ⚰️
+  sumia depois da 1ª busca com o texto ainda saindo a cada toque); **primeira ordenação** —
   `orderCategoriesForGoal` põe na frente a área que o `soulGoal` descreveu, e
   essa ORDENAÇÃO não sai do aparelho (decisão D8). ⚠️ **Mas o campo do objetivo
   nasce pré-preenchido com o `soulGoal`** (`useState(soulGoal ?? '')`), e o que
@@ -515,9 +542,16 @@ ordem literal dos `push`, com a chave de cada um:
 ⚠️ O comentário do slot no `App.tsx` numera "1. HP" duas vezes (a primeira antes
 do item 0). É defeito de comentário, não de comportamento: a ordem executada é a
 dos `push`, que é a da tabela acima — sete itens desde `42b07bec`, o banner de
-termos por último ("é o único aviso que não fala do dia da pessoa"). Régua do
-banner: `src/components/TermsUpdateBanner.render.test.tsx` e
-`src/utils/termsNotice.test.ts`.
+termos por último ("é o único aviso que não fala do dia da pessoa") — **exceto
+na PRIMEIRA aparição de cada versão, que entra em posição 1** (desde
+`592e2c14`, QA Rodada 2 A3: `termsNoticePrimeiraVez` = `STORAGE_KEYS.TERMS_NOTICE_SHOWN`
+≠ `marcaAvisoTermos(...)` → `avisos.unshift(termos)`, senão `push`; um
+`useEffect` grava `TERMS_NOTICE_SHOWN` na primeira exibição; ⚰️ um banner que
+nunca chegava ao topo nunca era lido — o "+N" o escondia atrás do HP e da
+triagem todo dia). `filaDeAvisos.contract.test.ts` trava o `unshift`/`push`
+literal. Régua do banner: `src/components/TermsUpdateBanner.render.test.tsx` e
+`src/utils/termsNotice.test.ts` (`qualDocMudou` com versão ilegível → `'both'`,
+desde `592e2c14`).
 
 ---
 
@@ -576,6 +610,16 @@ hoje + concluídas de hoje (a tarefa concluída fica riscada na lista até a vir
 
 **Chega por**: está montado o tempo todo na Home · **Sai para**: nada (não navega).
 
+- **O balão ocioso e o do toque** (desde `592e2c14`, QA Rodada 2 `07` §2.9): a
+  escada de fallback — borra (`dirty`), pedido de comida (`hungry`) e as quatro
+  faixas de energia (`energized` ≥ 1 / `fine` ≥ 0,6 / `peckish` ≥ 0,1 / `starving`)
+  — vem de `petVoiceLine` (`utils/petVoice.ts`), nunca de literal no componente.
+  ⚰️ "Me limpa!", "Me alimenta!", "Me alimenta por favor!" — a única fala que o
+  jogador que menos faz ouvia (89 de 90 dias na simulação), e era pedido
+  imperativo (L12). Hoje a criatura fala do corpo dela e constata ("Barriga
+  fazendo barulho.", "Tô perto do chão hoje."). **O sprite próprio** (URL do
+  acervo) cai na arte de reserva por `onError` quando não carrega (offline, cache
+  do provedor fora — E2; ⚰️ visor quebrado).
 - **O gesto de carinho**: um `<button>` transparente sobreposto ao sprite
   (`className="sm2-rub"`), com `aria-label` "Fazer carinho no Soulmon (segure
   para curar)" / "Pet your Soulmon (hold to heal)", `onPointerDown/Move/Up` e
@@ -1446,6 +1490,10 @@ o `CLAUDE.md` já registra que ele **não** está em `utils/dungeon.ts`).
   `MAX_DAILY_FOCUS` focos, humor. Na segunda falta seguida o pet oferece a
   **versão reduzida**, e aceitar usa o **mesmo** caminho de conclusão
   (`onTinyHabit={handleToggleActivityCompletion}`).
+  A **âncora** do hábito ("depois do café — na cozinha", `h.anchor.after`/`where`)
+  é texto visível ao lado do nome (`data-habit-anchor`, 12 px `--sm2-muted`) desde
+  `592e2c14` (A12 — ⚰️ vivia num `title`, que só existe no hover: no celular e no
+  leitor de tela, nunca).
 - **Dono**: `src/components/MorningCheckIn.tsx` · **Régua**:
   `MorningCheckIn.commit.render.test.tsx`,
   `MorningCheckIn.ofertaReduzida.render.test.tsx`.
@@ -1586,6 +1634,13 @@ Três blocos, com condições literais:
   e as falas do chat são geradas por IA (Higgsfield e Gemini para a imagem, Groq
   para a conversa)"), o `ActionRow` **"O que o chat recebe"** →
   `/privacidade.html#chat-contexto` (EN: `#chat-context`), e a linha de **feedback** `FeedbackRow`
+  (no grupo **Ajuda** desde `a6c1cd8a` — que desde `592e2c14`, QA Rodada 2 A4/A5/A6,
+  também tem o `ActionRow` **"Termos de Uso" / "Terms of Use"** → `/termos.html`
+  (⚰️ os Termos não tinham link dentro do app) e a **Política** abrindo por idioma:
+  em EN os dois vão para a âncora **`#en`** (`/termos.html#en`, `/privacidade.html#en`;
+  ⚰️ abria sempre a versão PT), com o sufixo só-para-leitor-de-tela "(abre em nova
+  aba)" / "(opens in a new tab)" em todo `ActionRow` externo — o `mailto:` não
+  ganha o sufixo; régua `SettingsPage.sobre.render.test.tsx`)
   ("Falar com quem faz o Soulmon" / "Talk to the people who make Soulmon", hint
   "Abre seu e-mail para <endereço>. A versão do app já vai preenchida.") — um `mailto:` para
   `FEEDBACK_EMAIL` com assunto "Soulmon", `APP_VERSION`, 8 caracteres do `saveId`
@@ -1775,7 +1830,7 @@ mudo por `src/utils/audioBus.contract.test.ts`.
 | Superfície | Aparece quando | O que faz | Dono |
 |---|---|---|---|
 | `ErrorBoundary` | envolve a árvore inteira em `main.tsx` | `getDerivedStateFromError` troca a tela pelo fallback; loga só em `DEV` | `ErrorBoundary.tsx` |
-| `OfflineSeal` | montado na raiz do `App`, sempre | acende pelos eventos `online`/`offline`; **não bloqueia nada** | `ui/OfflineSeal` |
+| `OfflineSeal` | montado na raiz do `App`, sempre — e desde `592e2c14` também nas três telas ANTES da Home (onboarding, tutorial, upgrade: `const selo = <OfflineSeal language={language} topOffset={8} />` antes do `Suspense`; ⚰️ o portão ficava sem selo, E1) | acende pelos eventos `online`/`offline`; **não bloqueia nada** | `ui/OfflineSeal` |
 | "Pular para o conteúdo" | primeiro nó focável do documento | `<a href="#conteudo">` para o `<main tabIndex={-1}>` | `App.tsx` |
 | região `aria-live` do visor | sempre, fora da tela | anuncia `spriteText('tuned', language)` quando `visorAnunciou` | `App.tsx` |
 | `Toaster` (sonner) | último nó do `App` | avisos de uma linha | `ui/sonner.tsx` |

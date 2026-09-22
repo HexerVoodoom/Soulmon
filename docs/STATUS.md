@@ -7,6 +7,45 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 22/09/2026 — sincronização do manual pós-merge `592e2c14` (QA Rodada 2)
+>
+> Delta `a6c1cd8a..592e2c14` (`95b18314` carimbo da R1, `592e2c14` correções da rodada 2), `/manter-docs auto` inline pelo
+> doc-mantenedor numa worktree própria (`docs/sync-592e2c14`), doc por doc, cada afirmação nova conferida por grep/`wc -l`/`ls`
+> contra o fonte. **16 docs recarimbados:** `06-REFERENCIA/api-workers` (`_coop.js` completa; `_accountTombstone` `gateTombstone`/
+> `readTombstone`; `_auth` `authTime`/`authStatus`/`tombstone`; `save.js` releitura antes da renovação + `deletedAt`; `subscribe`/
+> `fcm-subscribe` `saveIdAutorizado` + CORS `Authorization`; `_pushIdentity` expulsa apagada; `account.js` `coopLeave`/`pidDeAmigo`/
+> `index+scan`/`NOT_INCLUDED`/`COPY`; `_entitlements` `podarOrderDetails`/`ORDER_HISTORY_MAX`/`ehViolacaoDeChave`; `_aiGuard`
+> `perAccountByTier`; `community.js` 908 linhas/`CLOSED_SEASON_TTL`/410; `_redact` `keep`/`YEAR_OR_HOUR`; `_pushCopy` textos;
+> `push-scheduler` `AGE_DAY_BASE_UTC`; 410 em `billing`/`entitlements`/`generate-sprite`), `utils` (`cloudSave` `checarContaExcluidaNoLogin`/
+> `LeituraNuvem.excluidaEm`/`reconcileSaveId` `'excluida'`/`CONFLICT_BACKUP`; `community` 410; `notifications` `Bearer`; `playBilling`
+> `fecharNaPlay`; `telemetry` fila saneada; `termsNotice` `'both'`; `taskSuggestions` `suggestTasksResult`; `trilha` `MotivoDePausa`/
+> `trilhaPausada`; `bond`/`dailyReset` `perfectDay` emitido; `petVoice` 6 kinds; `chatSafety` EN; `storageKeys` 49 chaves +
+> `TERMS_NOTICE_SHOWN`), `components` (⚰️ `figma/ImageWithFallback.tsx`; `CompanionHUD`/`EvolutionPath` `onError` + escada de fallback
+> em `PET_VOICE_LINES` — ⚰️ "Me alimenta por favor!"; `FeedbackLink` `BUILD_ID`; `GameTutorialFlow` `falhaIa`; `MorningCheckIn` âncora;
+> `SettingsPage` Termos/`#en`; `SoulmonOnboarding` `aposAutenticar` + região viva; `FormKit.ActionRow` `language`/sr-only; `RitualPanel`
+> `aria-disabled`; `OfflineSeal` pré-Home; `App.tsx` `termsNoticePrimeiraVez`/trilha por estado/`PostponeNudgeSheet` ids),
+> `hooks-contexts-types` (1523 linhas, `publicarPerfil` só após save ok, hydrate de `soulmonMeta`/`soulmonSkills`/`soulmonClassTitles`/
+> `evolutionLocked`), `plugins-constants` (`BillingPlugin.kt` `acknowledge`, frases do widget, `csp` por igualdade, `depsVivas` `SO_DEV`,
+> `ia.camposEnviados` sem `fetch` cru, `copy.semFomo` em `src/utils`, guards novos `artMaps`/`narrativa.superficies`/`regrasDeJogo.qaRodada2`),
+> `desktop` (`jwtExp.js` completa — 32 linhas, `main.js` 374 `auth-clear`, `preload` `clearAuth`, `cloudSync` `'deleted'`, `menu.ts` 735,
+> `phrases`, `alt=""`), `07` (as marcas "em curso 22/09" viraram fato: `del:done:` reabre + toda rota, `pushidx` invariante, coop/export,
+> `closed:` 400 d; §3.3/§3.4/§4.1/§4.2), `08` (§1.1, §2.5–§2.8 ack + D1 sem fallback, §2.10/§2.11, §2.13, §3.5 e §4 **secrets medidos no
+> ar** — `METRICS_ADMIN_KEY` ✅, `SEASON_ADMIN_KEY` ✅, `ENTITLEMENTS_ADMIN_KEY`/`FIREBASE_SERVICE_ACCOUNT`/`GEMINI_API_KEY` ausentes,
+> D1 não aplicado), `03` (§2.1 `; wv)`, §2.3 portão com lápide antes do onboarding, §2.4 falha de IA com nome, §3.2 banner em posição 1
+> na 1ª vez, §4.2 balão, §4.17, §4.23 Termos, §4.25), `02` (§46 cota por tier #55 + nota #61; §55 `perfectDay` emitido; §7 nota #58;
+> §18 nota #59 — **nenhuma regra mudou**), `04` (§10.2 gate `; wv)` + CSP), `05` (§1.1 `@capacitor/cli` dev, §4 lápide em `_auth`,
+> §7, §9 guards novos), `01` (§7 relido, sem mudança), `10` (15 linhas de 22/09/2026 nos temas 1/4/5/6/7/8/12/13/14 e §18 com #54–#71),
+> `12` (§9 runbook que mede), `00-MAPA` (§5 `_coop.js`, `jwtExp.js`, guards novos, ⚰️ `figma/`; §7 relido).
+> Guards `docsManual` + `docsSemMentira` **verdes (2 files / 10 tests)** na worktree; `node scripts/docs-delta.mjs` → "Nada a sincronizar".
+> **Divergências novas (doc ≠ o que o consolidado prometeu — nenhuma de código):** (1) `00-CONSOLIDADO.md` §3.1 lista "`drainPrefix`
+> desindexa a entrada morta" — **não aterrissou** (`grep desindexar workers/push-scheduler.js` vazio; o cron segue sem tocar `pushidx:`);
+> (2) §3.3 diz que `narrativa.superficies.contract.test.ts` foi "estendido a `_pushCopy.js`/`account.js` + trava `partner`" — **não**:
+> a régua varre booklet/ficha/`public/*.html`/`android/**.kt` e `partner` só aparece no comentário; (3) a entrada provisória
+> de `desktop.md` (escrita "em curso" na R2) dizia que `main.js` importa `jwtExp.js` — só o `auth-preload.js` importa. **Observações:** `AGE_DAY_BASE_UTC`
+> está no git, não no ar (worker de push sem redeploy desde 21/09); os 6 eventos do Vínculo do `App.tsx` seguem mudos (patch em
+> `sim/patch-vinculo-app-eventos.md`, não aplicado). **Fora do delta, de propósito:** `09-HISTORICO` (a linha da R2 já está em
+> `592e2c14`; falta só o SHA do merge desta rodada — próximo `/manter-docs`) e `11-GLOSSARIO` (os 5 termos da R2 entraram em `592e2c14`).
+
 > ## 22/09/2026 — sincronização do manual pós-merge `a6c1cd8a` (QA Rodada 1)
 >
 > Delta `f4086ce0..a6c1cd8a` (`5228145e` carimbo, `959e3bee` BOOKLET-UNIVERSO — já indexado no MAPA §6.2 —,

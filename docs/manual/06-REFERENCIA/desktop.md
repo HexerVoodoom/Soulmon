@@ -1,6 +1,6 @@
 # Referência — desktop (Electron)
 
-> **Dono:** doc-redator-referencia · **Data:** 22/09/2026 · **Estado:** verificado em 22/09/2026 por doc-verificador (delta `f4086ce0..a6c1cd8a`, QA Rodada 1 §5 — `auth-preload.js` › `DEFAULT_TOKEN_TTL_MS` e `main.js` › `auth-get` conferidos no fonte; anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: mecânico completo; delta `dc72579e..9875477b` conferido símbolo a símbolo, sha a sha)
+> **Dono:** doc-redator-referencia · **Data:** 22/09/2026 (2ª sincronização do dia: delta `a6c1cd8a..592e2c14`, QA Rodada 2 — `jwtExp.js` completa, `main.js` `auth-clear`, `preload.js` `clearAuth`, `cloudSync.ts` `'deleted'`, `menu.ts` sessão zerada no 410, `phrases.ts` frases de vigilância trocadas, `main.ts` `alt=""`) · **Estado:** verificado em 22/09/2026 por doc-verificador (delta `a6c1cd8a..592e2c14` — conferido símbolo a símbolo; `wc -l` `main.js` 374, `menu.ts` 735, `jwtExp.js` 32; anterior no mesmo dia: delta `f4086ce0..a6c1cd8a`, QA Rodada 1 §5 — `auth-preload.js` › `DEFAULT_TOKEN_TTL_MS` e `main.js` › `auth-get` conferidos no fonte; anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: mecânico completo; delta `dc72579e..9875477b` conferido símbolo a símbolo, sha a sha)
 > **Verificação:** `npx tsc -p desktop/tsconfig.json --noEmit && npx vitest run desktop`
 > **Não cobre:** regra de negócio em profundidade (→ `02-REGRAS-DE-NEGOCIO.md`), o build/release do desktop (→ `08-INTEGRACOES-E-DEPLOY.md`, `desktop/README.md`), as regras de cuidado em si (→ `src/utils/careRules.ts` em `06-REFERENCIA/utils.md`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -23,9 +23,9 @@ A separação de responsabilidade é física, não estilística: `desktop/electr
 
 ## desktop/electron — processo principal
 
-### `desktop/electron/main.js` (349 linhas — corrigido de "350" por doc-verificador, `wc -l`, 10/09/2026)
+### `desktop/electron/main.js` (374 linhas — `wc -l`, 22/09/2026; 349 em 10/09/2026)
 **Dono de:** o processo principal do Electron — cria a janela do overlay (transparente, sempre no topo, click-through exceto sobre o pet) e a janela de menu, gerencia a bandeja (Tray), o IPC entre as janelas, a sessão de auth capturada da janela do app completo, e o auto-update (delegando a DECISÃO a `updatePolicy.js`).
-**Exports:** nenhum (`module.exports` ausente) — é o entrypoint do processo principal, carregado pelo `package.json` (`main`), sem chamador dentro do próprio repositório em JS.
+**Exports:** nenhum (`module.exports` ausente) — é o entrypoint do processo principal, carregado pelo `package.json` (`main`), sem chamador dentro do próprio repositório em JS. Desde `592e2c14` escuta **`ipcMain.on('auth-clear')`**: zera `authSession` (o único lugar em que a sessão mora) e manda `auth-changed(null)` às duas janelas — é o que o overlay/menu pedem ao ver um 410 `account-deleted`; qualquer janela pode pedir (só apaga; não há o que forjar).
 **Chamado por:** processo Electron (entrypoint), não por outro módulo.
 **Régua:** nenhuma direta (não é importável); as decisões que ele delega são travadas por `desktop/renderer/src/navigationPolicy.test.ts` e `updatePolicy.test.ts`.
 **Avisos do arquivo:** a DECISÃO de quem pode navegar e de quem pode publicar token mora em `navigationPolicy.js` "porque este aqui não é importável por teste nenhum" (comentário próprio, em PT sem acento — estilo do autor original desta seção). ⚰️ `FULL_APP_URL` citava, em comentário, "aponta pro Pages compartilhado" — resíduo de antes da migração de URL, corrigido em `f9faf7a7` (QA geral de 21/09/2026; o comentário agora nomeia as três fontes e a régua); a URL efetiva (`https://soulmon.mateus-sprnd.workers.dev`) já está certa nas três fontes, travada por `src/deploy/appUrl.contract.test.ts`.
@@ -61,7 +61,7 @@ A separação de responsabilidade é física, não estilística: `desktop/electr
 
 ### `desktop/electron/preload.js`
 **Dono de:** a ponte `window.soulmonDesktop` exposta na janela do overlay/menu — o único canal entre o renderer (sandboxed, `contextIsolation:true`) e o processo principal.
-**Exports:** (via `contextBridge.exposeInMainWorld`, não `module.exports`) `setInteractive`, `openMenu`, `minimizeMenu`, `openFullApp`, `quit`, `onUpdateReady`, `notifyStateChanged`, `onStateChanged`, `sendEffect`, `onEffect`, `getAuth` (invoke → `auth-get`), `onAuthChanged`.
+**Exports:** (via `contextBridge.exposeInMainWorld`, não `module.exports`) `setInteractive`, `openMenu`, `minimizeMenu`, `openFullApp`, `quit`, `onUpdateReady`, `notifyStateChanged`, `onStateChanged`, `sendEffect`, `onEffect`, `getAuth` (invoke → `auth-get`), `onAuthChanged`, e desde `592e2c14` **`clearAuth()`** (`send('auth-clear')` — descarta a sessão no processo principal depois de um 410; declarado opcional em `desktop-api.d.ts` para o renderer rodar contra um preload antigo).
 **Chamado por:** `desktop/renderer/src/main.ts` e `menu.ts`, como `window.soulmonDesktop`.
 **Régua:** nenhuma direta; a superfície é exercitada pelos testes que montam `window.soulmonDesktop` como mock (`care.*.parity.test.ts`, `pushCareAction.test.ts`).
 **Avisos do arquivo:** nenhum comentário de aviso próprio além dos JSDoc de cada método citados nos exports.
@@ -71,13 +71,13 @@ A separação de responsabilidade é física, não estilística: `desktop/electr
 **Exports:** `window.soulmonDesktopAuth = { isDesktop: true, publish(payload) }` — `publish` é o ÚNICO canal, e é de SAÍDA: a página não consegue ler nada do Electron nem executar nada no processo principal. `payload.token === null` sinaliza logout.
 **Chamado por:** o app web completo (`src/`), quando roda dentro desta janela — detecta `window.soulmonDesktopAuth?.isDesktop` para saber que está no desktop e publica o ID token do Firebase sempre que ele muda/renova.
 **Régua:** `desktop/renderer/src/authBridge.test.ts` (desde `a6c1cd8a` fecha o buraco do `exp` em vez de documentá-lo: guard textual de que `main.js` não compara com `&&`).
-**Avisos do arquivo:** o token vai só para a MEMÓRIA do processo principal (`authSession` em `main.js`), nunca para disco; expira em ~1h e é reemitido pelo SDK dentro da própria janela. Desde `a6c1cd8a`: `DEFAULT_TOKEN_TTL_MS = 1h` — validade DESCONHECIDA (`expiresAt` NaN/ausente/0) é "vence em 1h", nunca "nunca vence" (⚰️ colapsava em `exp: 0`).
+**Avisos do arquivo:** o token vai só para a MEMÓRIA do processo principal (`authSession` em `main.js`), nunca para disco; expira em ~1h e é reemitido pelo SDK dentro da própria janela. Desde `a6c1cd8a`: `DEFAULT_TOKEN_TTL_MS = 1h` — validade DESCONHECIDA é "vence em 1h", nunca "nunca vence" (⚰️ colapsava em `exp: 0`). **Ordem desde `592e2c14`:** `expiresAt` legível do app → **`exp` do próprio JWT** (`expDoJwtMs(payload.token)`, `jwtExp.js`) → 1 h.
 
-### `desktop/electron/jwtExp.js` (novo em 22/09/2026 — QA Rodada 2, `01-seguranca-r2.md` #10; **em curso**, entrada provisória do doc-mantenedor até o próximo `/manter-docs`)
-**Dono de:** ler a validade (`exp`) do PRÓPRIO ID token do Firebase em vez de chutar "+1 h" — ⚰️ até `a6c1cd8a` o `auth-preload.js`/`main.js` usavam `DEFAULT_TOKEN_TTL_MS = 1h` quando `expiresAt` não vinha (token renovado há 50 min era tratado como novo).
-**Exports:** `expDoJwtMs(token)` → validade em ms (epoch) ou `null` se o token não tiver a forma `a.b.c` com `exp` numérico positivo no payload (base64url; **não verifica assinatura** — isso é do servidor).
-**Chamado por:** `desktop/electron/auth-preload.js`/`main.js` (o caminho do `expiresAt` ausente). CJS puro, sem `electron`, para o teste em `node` conseguir importá-lo.
-**Régua:** o teste que nasce com ele na R2 (`desktop/renderer/src/authBridge.test.ts` estendido ou arquivo próprio — conferir no commit).
+### `desktop/electron/jwtExp.js` (32 linhas — `wc -l`, 22/09/2026; novo em `592e2c14`, QA Rodada 2, `01-seguranca-r2.md` #10)
+**Dono de:** ler a validade (`exp`) do PRÓPRIO ID token do Firebase em vez de chutar "+1 h" — ⚰️ até `a6c1cd8a` o `auth-preload.js` usava `DEFAULT_TOKEN_TTL_MS = 1h` sempre que `expiresAt` não vinha (token renovado há 50 min era tratado como novo).
+**Exports:** `expDoJwtMs(token)` (`module.exports`) → `exp × 1000` (ms, epoch) ou `null` se o token não é string com a forma `a.b.c`, o payload (base64url, padding reposto) não é JSON, ou `exp` não é número positivo (`0`, `'amanhã'`, ausente → `null`). **Não verifica assinatura** — isso é do servidor; aqui só se lê um prazo.
+**Chamado por:** `desktop/electron/auth-preload.js` (`publish`: `expiresAt` legível → `exp` do JWT → 1 h). ⚰️ "`main.js`" não o importa — `main.js` só lê o `exp` que o preload já resolveu. CJS puro, sem `electron`, para o teste em `node` carregá-lo do FONTE (`?raw` + `new Function`).
+**Régua:** `desktop/renderer/src/authBridge.test.ts` (+4 casos em `592e2c14`: sem `expiresAt` lê `exp` em segundos e manda ms; `expiresAt` legível vence o token; base64url sem padding/token torto/sem `exp`/`exp 0` → `null`; sem nada cai no 1 h, nunca em 0).
 
 ---
 
@@ -105,14 +105,15 @@ A separação de responsabilidade é física, não estilística: `desktop/electr
 **Exports:**
 - `isAuthRequired()` — pergunta a `/api/config`; em caso de dúvida responde `true` (melhor pedir login à toa do que deixar o campo de e-mail livre com um servidor que já exige token).
 - `emailToSaveId(email)` — a MESMA derivação do cliente web e do servidor (`soulmon:` + SHA-256, corte em 32) — a terceira das três implementações do footgun 9 citado em `CLAUDE.md`.
-- `RemoteSnapshot`, `SyncResult` — tipos do snapshot exibido no overlay.
+- `RemoteSnapshot`, `SyncResult` — tipos do snapshot exibido no overlay; `SyncResult` e `PushResult` ganharam `reason: 'deleted'` em `592e2c14`.
 - `fetchRemoteSnapshot(email)` — GET `/api/save?id=`, com o ID token de `window.soulmonDesktop.getAuth()` quando existe; extrai `stage`, `stageName` (via `stageDisplayName`, procurando o nome na árvore única do jogador em `soulmonStages`), `hearts`/`maxHearts` (via `MAX_HP_BY_FORM[getStageLevel(stage)]`), `energy`/`maxEnergy`, `foodInventory`, `tasks` pendentes.
 - `Wallet`, `fetchWallet(email)` — GET `/api/entitlements?id=`; a MESMA carteira de todas as plataformas (crédito comprado no celular aparece aqui); só leitura.
 - `PushResult`, `pushCareAction(email, mutate)` — SEMPRE relê o save antes de escrever (KV é last-write-wins), aplica `mutate` sobre `normalizeForRules(current)`, valida com `isSaneCareState` antes de gravar (nunca salva `NaN`/estado incompleto), faz o POST com `?id=` na URL (contrato de `save.js`).
-- `normalizeForRules(state)` — completa campos derivados que as regras de cuidado leem (`maxHealthPoints` derivado do estágio, `energyPoints`/atributos com fallback numérico).
+- `normalizeForRules(state)` — completa campos derivados que as regras de cuidado leem (`maxHealthPoints` derivado do estágio via `MAX_HP_BY_FORM`, `energyPoints`/atributos com fallback numérico).
+- **410 `account-deleted` (desde `592e2c14`, QA Rodada 2 `04-dados-r2` #5/#13):** `fetchRemoteSnapshot` e os dois `fetch` de `pushCareAction` (releitura e POST) devolvem `{ ok: false, reason: 'deleted' }` via `contaExcluida()`, que chama `window.soulmonDesktop?.clearAuth?.()` (sem a ponte — browser puro — não lança) e NUNCA grava. ⚰️ O overlay tratava 410 como erro de rede e continuava tentando escrever num save com lápide.
 - `isSaneCareState(state)` — os números que acabaram de ser mexidos continuam sendo números finitos e não-negativos?
 **Chamado por:** `desktop/renderer/src/menu.ts`.
-**Régua:** `desktop/renderer/src/cloudSync.test.ts`, `cloudSync.snapshot.test.ts`, `pushCareAction.test.ts`.
+**Régua:** `desktop/renderer/src/cloudSync.test.ts`, `cloudSync.snapshot.test.ts`, `pushCareAction.test.ts` (+2 em `592e2c14`: GET e POST com lápide → `deleted`, `clearAuth` chamado 2×, nada gravado; sem ponte não lança).
 **Avisos do arquivo:** até `d56bba7a` este arquivo tinha TRÊS cópias próprias (`MAX_HP_BY_LEVEL`, `ENERGY_BY_LEVEL`, uma `stageLevel` própria que só lia o PREFIXO do id) — a justificativa escrita ("importar `types/progression` arrasta o roster legado da masmorra") era falsa, e a cópia rebaixava save antigo de mega para rookie no overlay (3 corações em vez de 4), e o `maxHealthPoints` errado voltava para o SAVE em `normalizeForRules`, cortando a cura do mega no teto de um rookie. Hoje importa `MAX_HP_BY_FORM`/`getStageLevel`/`getMaxEnergyForStage` direto de `src/types/progression.ts`.
 
 ### `desktop/renderer/src/config.ts`
@@ -151,25 +152,25 @@ A separação de responsabilidade é física, não estilística: `desktop/electr
 ### `desktop/renderer/src/phrases.ts`
 **Dono de:** as falas do pet no overlay — curtas, fofas, sem emoji (mesma convenção do `speak()` do app), PT-BR + EN sempre.
 **Exports:**
-- `idlePhrase(lang)` — fala aleatória do banco `IDLE` (ocioso, chamado periodicamente por `main.ts`).
+- `idlePhrase(lang)` — fala aleatória do banco `IDLE` (ocioso, chamado periodicamente por `main.ts`). **`592e2c14`** (QA Rodada 2, `02b-design-i18n-estados-r2` A13): ⚰️ "Eu vi você digitando bem rápido!" / "Tô de olho na sua produtividade." (e os pares EN) — vigilância que o overlay não faz e L11 — → "Estou por aqui, se precisar." / "Hoje a gente vai no nosso ritmo." ("Around, if you need." / "Today we go at our own pace.").
 - `eventPhrase(event, lang)` — fala aleatória de `BY_EVENT[event]` (`pet`, `petHealed`, `feed`, `full`, `noFood`, `shower`, `sleep`, `wake`, `taskDone`, `taskNew`).
 **Chamado por:** `desktop/renderer/src/main.ts` (idle), `menu.ts` (evento de cuidado, repassado via `sendEffect`/`onEffect`).
-**Régua:** nenhum teste próprio; conteúdo estático de texto.
+**Régua:** nenhum teste próprio; conteúdo estático de texto (`narrativa.contract.test.ts` não varre `desktop/` por termos — só confere que caminhos `desktop/…` citados na bíblia existem).
 **Avisos do arquivo:** nenhum.
 
 ### `desktop/renderer/src/main.ts`
 **Dono de:** o overlay visível — o pet andando na faixa, o balão de fala, os efeitos de partícula, e a ponte com o processo principal via `window.soulmonDesktop`. Não é importado por nenhum outro módulo (é o entrypoint do `dist-renderer/index.html`).
-**Exports:** nenhum (script de entrypoint, sem `export`).
+**Exports:** nenhum (script de entrypoint, sem `export`). Desde `592e2c14` o `<img id="pet-img">` tem `alt=""` (⚰️ `alt="pet"` — imagem decorativa anunciada pelo leitor de tela, R2 A13).
 **Chamado por:** carregado como script pela janela do overlay (`createOverlay` em `main.js`).
 **Régua:** nenhuma direta — comportamento coberto pelos testes dos módulos que ele orquestra (`sprites.ts`, `state.ts`, `phrases.ts`).
 **Avisos do arquivo:** nenhum comentário de aviso formal; a lógica de caminhada (`tick`, `PET_SIZE=64`, `SPEED=28px/s`) e o espelhamento do sprite (`facesLeft`) estão descritos no corpo. Desde `e2e196b2` (canvas "Fora do app"): `PET_SIZE` caiu de 96 para 64 (espelha o mesmo valor em `desktop/electron/main.js`); o balão (`positionBubble`) passou a se posicionar AO LADO da criatura (`BUBBLE_GAP`), com o rabicho trocando de lado (`side-right`/`side-left`) perto da borda direita, em vez de centralizado acima dela; `burst()` desenha os efeitos com os PNGs de `EFFECT_ART` — carinho/banho (`glyph-affection`/`glyph-bath`, do HUD do app) e, desde `02d483af` (21/09/2026, R2-5), comida/sono (`glyph-food-32`/`glyph-sleep-32`, só do desktop, em `desktop/renderer/assets/`); emoji sem glifo cai no ícone Material `favorite` (nunca emoji do sistema). ⚰️ `EFFECT_ICON` (o mapa emoji → ícone Material `restaurant`/`bedtime`) foi apagado em `02d483af`.
 
-### `desktop/renderer/src/menu.ts` (636 linhas — corrigido de "637" por doc-verificador, `wc -l`, 10/09/2026)
+### `desktop/renderer/src/menu.ts` (735 linhas — `wc -l`, 22/09/2026; 636 em 10/09/2026)
 **Dono de:** a UI da janela de menu — painéis (principal, tarefas, configurações), os botões de ação de cuidado, e a orquestração de sincronização/carteira. NÃO decide regra de cuidado — delega tudo a `care.ts`/`cloudSync.ts`/`careRules.ts` (`completeTask` importado direto do app). Toca o DOM no topo do módulo (`document.getElementById`), por isso **nenhum teste em `node` consegue importá-lo** — foi assim que o teto de carinho ficou por aparelho sem ninguém ver, antes de `care.ts` existir.
 **Exports:** nenhum (script de entrypoint da janela de menu, sem `export`).
 **Chamado por:** carregado como script pela janela de menu (`createMenuWindow` em `main.js`).
 **Régua:** nenhuma direta (não importável); a fronteira de cuidado que ele invoca é travada pelos testes de `care.ts`/`cloudSync.ts` listados acima.
-**Avisos do arquivo:** o próprio cabeçalho explica por que a fronteira de cuidado mora em `care.ts` e não aqui. Estrutura interna (não exportada): `renderMain`/`renderTasks`/`renderSettings` (painéis), `doPet`/`doFeed`/`doShower`/`doSleepToggle`/`doCompleteTask` (as seis chamadas de `pushCareAction`, via `care.ts`), `syncNow(email)` (sincronização manual), `applySnapshot(s)`/`pushFailed(reason)` (aplica o resultado da sincronização ao `DesktopState` local).
+**Avisos do arquivo:** o próprio cabeçalho explica por que a fronteira de cuidado mora em `care.ts` e não aqui. Estrutura interna (não exportada): `renderMain`/`renderTasks`/`renderSettings` (painéis), `doPet`/`doFeed`/`doShower`/`doSleepToggle`/`doCompleteTask` (as seis chamadas de `pushCareAction`, via `care.ts`), `syncNow(email)` (sincronização manual — desde `592e2c14` `reason === 'deleted'` zera `session` e mostra "Esta conta foi excluída. Se quiser voltar, entre de novo no Soulmon completo — o próximo login reabre." PT/EN; o mesmo `deleted` em `pushFailed` zera a sessão e troca o status), `applySnapshot(s)`/`pushFailed(reason)` (aplica o resultado da sincronização ao `DesktopState` local).
 Desde `e2e196b2` (canvas "Fora do app", identidade visual Fase 2): a UI foi reformada sobre os tokens de `tokens.css` (ver entrada abaixo), mas a fronteira de comportamento não mudou — segue nenhum export, mesmas seis chamadas de `care.ts`. Mudanças de estrutura interna (não decisão de design, só o que passou a existir na função): `icon(name, size, fill)` monta um `<span class="ico">` da Material Symbols Rounded (ícone sempre pelado, nunca em caixa); `statusLine()` substituiu `heartsLabel()` — desenha corações/energia/comida como ícones (`favorite`/`bolt`/`restaurant`) em vez de string de emoji; `button()` ganhou parâmetro `iconName` (ícone + texto, nunca mais `innerHTML` com emoji); `careButton()` idem, ícone 24 pelado na fileira de cuidado; `labelTitlebar()` é novo — aplica `aria-label`/`title` em PT/EN nos três botões da barra de título (o HTML é estático, sem idioma); `body()` é novo — cria o container `.pb` (corpo do painel) que cada `render*` usa no lugar de anexar direto em `content`. "Tarefas de hoje" não exibe mais contagem numérica (nenhum `badge`) — decisão de produto registrada como 13.17 no `REGISTRO-DE-DECISOES.md`, não deste doc.
 
 ### `desktop/renderer/src/tokens.css`

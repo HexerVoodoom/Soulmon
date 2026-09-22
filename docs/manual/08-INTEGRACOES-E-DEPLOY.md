@@ -1,6 +1,6 @@
 # Integrações e deploy
 
-> **Dono:** doc-redator-arquitetura · **Data:** 22/09/2026 · **Estado:** verificado em 22/09/2026 por doc-verificador (delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §2.5/§2.6 (`pushidx`, `res.ok`), §2.7 (D0 `null`), §2.8 (`billing-ktx` 8.3.0), §2.10 (404, tier derivado), §2.12 (`invite`, `active_days`, `notes`), §2.13 (410, ordem, sprites), §3.3 (Actions parado — fato datado), §3.4 (`__APP_VERSION__`, alarme exato), §3.6 e §4 conferidos símbolo a símbolo contra `build.gradle`, `BillingPlugin.kt`, `SoulmonAlarmPlugin.kt`, `AndroidManifest.xml`, `functions/api/*.js`, `public/sw.js`; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §0, §1, §2.5, §2.6, §2.10, §2.12, §2.13, §3.3, §3.4 e §4 conferidos símbolo a símbolo; anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: §3.6, delta `5ac3d351..8d318529`, som/S16 — os quatro bumps do dia conferidos com `git log --format=%h 5ac3d351..73be1a2f -- public/sw.js`; `980bc84c` deu o quinto, v155; o resto: sincronizado com `dc72579e..9875477b` em 21/09/2026 por doc-redator-arquitetura; conferido em `5ac3d351`)
+> **Dono:** doc-redator-arquitetura · **Data:** 22/09/2026 (2ª sincronização do dia, delta `a6c1cd8a..592e2c14`, QA Rodada 2: §1.1 lápide em `_auth.js` + `_coop.js`, §2.5/§2.6 `Authorization` e `saveIdAutorizado`, §2.7 `AGE_DAY_BASE_UTC` e as copies trocadas, §2.8 ack pelo JS após o verify + D1 sem fallback, §2.10/§2.11 410, §2.13 reabertura/coop/export por pid, §3.5 e §4 secrets MEDIDOS no ar em 22/09) · **Estado:** verificado em 22/09/2026 por doc-verificador (delta `a6c1cd8a..592e2c14` — as seções acima conferidas contra `_auth.js`, `_accountTombstone.js`, `_coop.js`, `subscribe.js`, `fcm-subscribe.js`, `push-scheduler.js`, `BillingPlugin.kt`, `playBilling.ts`, `_entitlements.js`, `account.js` e `05-operador-governanca-r2.md` §1; anterior no mesmo dia: delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §2.5/§2.6 (`pushidx`, `res.ok`), §2.7 (D0 `null`), §2.8 (`billing-ktx` 8.3.0), §2.10 (404, tier derivado), §2.12 (`invite`, `active_days`, `notes`), §2.13 (410, ordem, sprites), §3.3 (Actions parado — fato datado), §3.4 (`__APP_VERSION__`, alarme exato), §3.6 e §4 conferidos símbolo a símbolo contra `build.gradle`, `BillingPlugin.kt`, `SoulmonAlarmPlugin.kt`, `AndroidManifest.xml`, `functions/api/*.js`, `public/sw.js`; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §0, §1, §2.5, §2.6, §2.10, §2.12, §2.13, §3.3, §3.4 e §4 conferidos símbolo a símbolo; anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: §3.6, delta `5ac3d351..8d318529`, som/S16 — os quatro bumps do dia conferidos com `git log --format=%h 5ac3d351..73be1a2f -- public/sw.js`; `980bc84c` deu o quinto, v155; o resto: sincronizado com `dc72579e..9875477b` em 21/09/2026 por doc-redator-arquitetura; conferido em `5ac3d351`)
 > **Verificação:** `npx vitest run src/deploy src/security functions/api workers` — em especial `src/deploy/appUrl.contract.test.ts` (as quatro fontes da URL), `src/deploy/firebaseNoBuild.contract.test.ts` (o `.env.production` versionado), `src/deploy/swCache.contract.test.ts`, `src/security/csp.test.ts`, `src/security/supabase.contract.test.ts`, `workers/pushCopy.parity.test.js` e `workers/vapid.parity.test.js`.
 > **Não cobre:** o esquema do save e as chaves de storage (→ [07-DADOS-E-SAVE.md](07-DADOS-E-SAVE.md)), a arquitetura e os portões (→ [05-ARQUITETURA.md](05-ARQUITETURA.md)), as regras do jogo (→ `02-REGRAS-DE-NEGOCIO.md`), função por função (→ `06-REFERENCIA/`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -61,7 +61,9 @@ São **14**, medidas pelo inventário em 09/09/2026. Todas moram em
 | Módulo | Papel |
 |---|---|
 | `_kv.js` | `kv(env)` (guarda) e `kvOrThrow(env)` (uso). **Nunca leia `env.*_SAVES` direto** — guard em `_kv.fiacao.test.js`. |
-| `_auth.js` | `verifyIdToken` (verifica o JWT do Firebase à mão, contra o JWK do Google, porque `firebase-admin` não roda em Workers), `emailToSaveId`, `authorizeSaveAccess` (**fail-open** sem `FIREBASE_PROJECT_ID`) e `requireVerifiedOwner` (**fail-closed**, 503 sem a variável). |
+| `_auth.js` | `verifyIdToken` (verifica o JWT do Firebase à mão, contra o JWK do Google, porque `firebase-admin` não roda em Workers; devolve `{ email, authTime }` — o claim `auth_time`, desde `592e2c14`), `emailToSaveId`, `authorizeSaveAccess` (**fail-open** sem `FIREBASE_PROJECT_ID`; **desde `592e2c14` confere a lápide de conta apagada DEPOIS da autorização** — `gateTombstone` de `_accountTombstone.js` — e por isso TODA rota que autoriza em nome de um `saveId` responde **410 `account-deleted`** + `deletedAt`: `save`, `community`, `generate-sprite`, `entitlements`, `billing`, `chat`/`suggest-tasks` via `_aiGuard`, `subscribe`/`fcm-subscribe` com `saveId`; login com `auth_time` posterior à exclusão REABRE), `authStatus(auth)` (401/403/410 num lugar só) e `requireVerifiedOwner` (**fail-closed**, 503 sem a variável). |
+| `_accountTombstone.js` | A lápide `del:done:<saveId>` (30 d): `writeTombstone`/`clearTombstone`/`readTombstone` e o portão `gateTombstone(env, saveId, authTime)` — `{ deleted, reopened, at? }`. |
+| `_coop.js` (desde `592e2c14`) | O ESTADO do grupo cooperativo (chaves `coop:`/`coopOf:`/`coopCode:`/`coopCk:`, `COOP_*`, `gravarGrupo` renovando os índices, `grupoDe`) e `coopLeave` — usado por `community.js` E pela exclusão de conta. |
 | `_entitlements.js` | A fonte da verdade de dinheiro. `requirePaidTier` é **fail-closed**. |
 | `_billing.js` | `verifyPlayPurchase`, `verifySteamOwnership`, `verifySteamPurchase`, `isPlayPurchaseVoided`, `isSteamPurchaseVoided`, `isSteamOwnershipVoided`, e os catálogos `PRODUCTS`/`STEAM_ITEMS`. |
 | `_aiGuard.js` | O portão das rotas que gastam dinheiro em API de terceiro: **três** travas — cota por conta e por DIA (`ai:<bucket>:<saveId>:<dia>`), teto **VITALÍCIO** por conta (`ent:<saveId>.aiLifetime.<bucket>`) e teto por **FORMA** (`aiForms`, dicionário fechado nas 11 formas, validado por `VALID_FORM_ID`). |
@@ -225,7 +227,7 @@ nenhum de `transcribe.js`, e não pode haver.
 |---|---|
 | **Para quê** | Notificação em navegador e PWA instalada — e também dentro do WebView do Capacitor, onde `PushManager` é suportado. |
 | **Cliente** | `src/utils/notifications.ts` → `subscribeToPush` / `unsubscribeFromPush`; o `push`/`notificationclick` é tratado em `public/sw.js`. **Ícones (20/09/2026, `3e758a81`, canvas Fora do app — `docs/design/DECISOES-WIREFRAME.md` §30, D-F14/D-F15):** `icon` = `/push-large-192.png` (`PUSH_ICON` no `sw.js`; mini-visor REDONDO `#071413` com a chama de `src/brand/flame.ts` a 1× — o Android 12+ recorta o `largeIcon` em círculo, então o PNG já nasce círculo) e `badge` = `/badge-96.png` (`PUSH_BADGE`; ALFA-ONLY, chama branca em transparente — a barra de status descarta cor). Os mesmos dois caminhos estão em `showNotification` de `notifications.ts` e no `PRECACHE_URLS`. ⚰️ Até então os dois eram `/favicon-192x192.png`, e o favicon (quadrado escuro cheio) virava um BLOCO PRETO na barra de status — inclusive no WebView do APK, onde o Web Push também roda. |
-| **Servidor** | `functions/api/subscribe.js` (`POST` grava, `DELETE` remove) → chaves `push:<hash do endpoint>` em `PUSH_SUBSCRIPTIONS`; desde `42b07bec` (decisão #23) o registro leva `saveId` opcional, e desde `a6c1cd8a` (QA Rodada 1) `gravarSeMudou` também o indexa em **`pushidx:<saveId>`** (`_pushIdentity.js`; teto 16, TTL 1 ano; indexa mesmo quando o registro não mudou — inscrição antiga se indexa na próxima abertura) — é por esse índice, não por varredura, que a exclusão de conta (`account.js` › `deletePushSubscriptions`) acha as inscrições; o `DELETE` chama `desindexarInscricao` antes de apagar. O envio é `workers/webpush.js` (RFC 8292 VAPID + RFC 8291 + RFC 8188 aes128gcm, tudo em WebCrypto). |
+| **Servidor** | `functions/api/subscribe.js` (`POST` grava, `DELETE` remove) → chaves `push:<hash do endpoint>` em `PUSH_SUBSCRIPTIONS`; desde `42b07bec` (decisão #23) o registro leva `saveId` opcional, e desde `a6c1cd8a` (QA Rodada 1) `gravarSeMudou` também o indexa em **`pushidx:<saveId>`** (`_pushIdentity.js`; teto 16, TTL 1 ano; indexa mesmo quando o registro não mudou — inscrição antiga se indexa na próxima abertura) — **e desde `592e2c14` o `saveId` só é LIGADO ao registro com prova de posse** (`saveIdAutorizado` → `authorizeSaveAccess`; o cliente manda `Authorization: Bearer` via `authHeaders()`, e o CORS anuncia o header; sem prova o registro é gravado SEM `saveId`; lápide → 410; a inscrição expulsa do índice pelo teto é apagada junto) — é por esse índice, não por varredura, que a exclusão de conta (`account.js` › `deletePushSubscriptions`) acha as inscrições; o `DELETE` chama `desindexarInscricao` antes de apagar. O envio é `workers/webpush.js` (RFC 8292 VAPID + RFC 8291 + RFC 8188 aes128gcm, tudo em WebCrypto). |
 | **Credencial** | `VAPID_JWK` — **`wrangler secret put VAPID_JWK` dentro de `workers/`** (a chave privada ECDSA P-256 como JSON). A chave PÚBLICA correspondente é `VAPID_PUBLIC_KEY`, que vai em `[vars]` do `workers/wrangler.toml` (é pública por definição). O endereço de contato do VAPID (RFC 8292 `sub`) é uma constante no `workers/push-scheduler.js`: é para onde o SERVIÇO de push escreve em caso de falha de entrega e **nunca aparece para o usuário**. |
 | **Sem ela** | O cron não consegue assinar e nenhum push web sai. |
 | **Régua** | `functions/api/subscribe.test.js`, `workers/vapid.parity.test.js`, `functions/api/_pushTargets.test.js`. |
@@ -268,13 +270,13 @@ baixo. Foi reintroduzido de propósito para o lançamento na Play. Os dois convi
 |---|---|
 | **Para quê** | Disparar os pushes do dia para os DOIS canais numa única passada de cron. |
 | **Onde a copy mora** | `functions/api/_pushCopy.js` — **dono único** das três árvores. `PUSH_HOURS_BRT = [10, 16, 22]`; `PUSH_HOURS_UTC` é **derivado** (`(h + 3) % 24`, ordenado). O `workers/wrangler.toml` declara `crons = ["0 1 * * *", "0 13 * * *", "0 19 * * *"]`, e `workers/pushCopy.parity.test.js` trava essa lista contra o módulo — foi assim que o cron das 21h saiu junto com o nudge das 21h, que a auditoria de tom já tinha removido do cliente. |
-| **D0 = nulo** | Desde `a6c1cd8a` (QA Rodada 1; provisório de #50-b): `pushCopy(hora, nome, idioma, ageDays)` devolve **`null` quando `ageDays === 0`**, em QUALQUER hora, e o scheduler trata `null` como `'skipped'` — o dia do nascimento é o dia em que a pessoa está dentro do app. ⚰️ Até `f4086ce0` o cabeçalho prometia "nunca no D0" e o código só desviava a copy de recém-nascido para a frase padrão: o push saía do mesmo jeito. Inscrição sem `bornAt` não é D0 e recebe a copy de sempre. |
+| **D0 = nulo** | Desde `a6c1cd8a` (QA Rodada 1; provisório de #50-b): `pushCopy(hora, nome, idioma, ageDays)` devolve **`null` quando `ageDays === 0`**, em QUALQUER hora, e o scheduler trata `null` como `'skipped'` — o dia do nascimento é o dia em que a pessoa está dentro do app. **E a base do dia é meia-noite em BRT** (`AGE_DAY_BASE_UTC = 'T03:00:00Z'`, desde `592e2c14`, `00-skeptic-r2` #11): o cron das 22h BRT é 01:00 UTC do dia seguinte e, com base UTC, quem nasceu hoje já era D1 às 22h — o push saía no D0. `ageDaysOf` devolve `-1 → 0` (jogador até 14 h à frente do UTC) e `null` só para `bornAt` além de um dia no futuro. **Copies trocadas em `592e2c14`** (`02-narrativa-r2` A5/A13): ⚰️ "está te esperando" (20h) → "ainda está acordado / Se fez algo hoje, marque. A comida vem daí."; ⚰️ "meio pra baixo" → "está quieto hoje"; 16h ⚰️ "pensou em você" → "está por aí / a janela está aberta". ⚰️ Até `f4086ce0` o cabeçalho prometia "nunca no D0" e o código só desviava a copy de recém-nascido para a frase padrão: o push saía do mesmo jeito. Inscrição sem `bornAt` não é D0 e recebe a copy de sempre. |
 | **A copy das 20h** | `eveningCopy`, no MESMO `_pushCopy.js`. Ela era inline no `NotificationManager.tsx` e por isso sobreviveu ao WP3.4 — o teste de paridade compara as horas de `PUSH_HOURS_BRT`, e não existe hora 20 para comparar. Só o TEXTO veio; a **CONDIÇÃO continua no cliente**, porque o worker não sabe se a meta do dia foi cumprida (a assinatura guarda só endpoint, chaves, nome e idioma). Ela **cede a vez quando há janela de descanso**: com a janela padrão (23:00) a noite mandava três pushes em 2h30. |
 | **O lembrete de deitar** | O ÚNICO push da Janela de Descanso, e a hora dele não é fixa: sai de `sleepReminderAt` (`src/utils/restWindow.ts`), `SLEEP_REMINDER_LEAD_MIN` (30) minutos antes do início da janela que a PESSOA escolheu. Por isso não entra em `pushCopy(hora)`. Ele **não diz a hora** — "São 22h30" é um relógio cobrando. |
 | **Fechamento de season** | O cron das 10h BRT do dia 1 chama `POST /api/community?action=closeSeason` da season anterior, e entrega os troféus 🥇🥈🥉. |
 | **Credencial** | `VAPID_JWK` e `FIREBASE_SERVICE_ACCOUNT` (secrets do worker) + `SEASON_ADMIN_KEY` (secret do worker, com o **MESMO** valor que está no Pages). `APP_URL` e `VAPID_PUBLIC_KEY` já vão em `[vars]` do `workers/wrangler.toml`. |
 | **Sem `SEASON_ADMIN_KEY`** | O fechamento é **pulado com log**, nunca tentado às cegas. |
-| **Régua** | `workers/push-scheduler.test.js`, `workers/pushCopy.parity.test.js`. |
+| **Régua** | `workers/push-scheduler.test.js`, `workers/push-scheduler.qa2.test.js` (desde `592e2c14`), `workers/pushCopy.parity.test.js`. |
 
 ⚠️ **Este worker NÃO é uma Pages Function e NÃO builda no push da `main`.**
 Deploy manual: `wrangler deploy` **dentro de `workers/`**. Foi assim que o nudge
@@ -286,7 +288,8 @@ das 21h ficou vivo aqui depois de ter sido removido do cliente.
 |---|---|
 | **Para quê** | A compra de conteúdo digital dentro do app Android. É obrigatória pela Play — não dá para usar Stripe/Pix ali. |
 | **Cliente** | `src/utils/playBilling.ts` (`purchase`, `restorePurchases`, `getLocalizedPrice`, `isBillingAvailable`) sobre o plugin nativo `plugins/BillingPlugin.kt` (`com.android.billingclient:billing-ktx:8.3.0` desde `a6c1cd8a` — ⚰️ `6.2.1`: **a Play recusa PBL < 8** em app novo/update desde 31/08/2026 (v6 desde 31/08/2025; `deprecation-faq`, lido em 21/09/2026); o plugin passou à API da 8.x: `enablePendingPurchases(PendingPurchasesParams…enableOneTimeProducts())`, `enableAutoServiceReconnection()`, `queryProductDetailsAsync` lendo `QueryProductDetailsResult.productDetailsList`; guard textual PL-8 `src/plugins/billingPbl8.contract.test.ts` — **o compile só o CI prova, e o CI está parado** (§3.3, #48)); depois `src/utils/entitlements.ts` → `verifyPurchase`. |
-| **Servidor** | `functions/api/billing.js` → `POST ?action=verify[&provider=play]` com `{ id, productId, purchaseToken }`, que chama `verifyPlayPurchase` (`_billing.js`) e, só se a **própria loja** confirmar, `claimOrder` + `applyVerifiedPurchase` (`_entitlements.js`). |
+| **Servidor** | `functions/api/billing.js` → `POST ?action=verify[&provider=play]` com `{ id, productId, purchaseToken }`, que chama `verifyPlayPurchase` (`_billing.js`) e, só se a **própria loja** confirmar, `claimOrder` + `applyVerifiedPurchase` (`_entitlements.js`). Conta com lápide → 410 (via `authStatus`, desde `592e2c14`). |
+| **Reconhecimento (ack) — desde `592e2c14`** | A compra não consumível é **reconhecida na Play SÓ depois do `/api/billing` ok**: `playBilling.ts` › `fecharNaPlay` chama `plugin.acknowledge({ purchaseToken })` (método novo do `BillingPlugin.kt`, que confere por `queryPurchasesAsync` que o token é da conta) ou `consume` quando há `consumeToken`. ⚰️ O `BillingPlugin.kt` reconhecia no próprio `purchasesUpdatedListener`/`getPurchases` (`acknowledgeIfNeeded`) — fechava a compra na Play ANTES de o servidor conceder o tier: verify recusado deixava a pessoa sem benefício e sem o estorno automático de 3 dias. `restorePurchases` reconhece cada compra que o verify aprovar. Régua: `src/utils/playBilling.ackAposVerify.test.ts` (9, três deles leem o `.kt`). |
 | **Catálogo** | `PRODUCTS` em `_billing.js`: `soulmon.unlock.full` (`grantTier: 'paid'`, NÃO consumível) e `soulmon.credits.60` / `.150` / `.400` (consumíveis). Produto consumível devolve `consumeToken`, e o app precisa chamar `consumeAsync()` depois — senão o jogador não consegue recomprar o mesmo pacote. |
 | **Credencial** | `GOOGLE_PLAY_SERVICE_ACCOUNT` e `ANDROID_PACKAGE_NAME` — `wrangler secret`. Mais a variável de política `PLAY_REQUIRE_ACCOUNT_BINDING`. |
 | **Sem elas** | A rota da Play responde **503 e NUNCA concede nada**. |
@@ -300,8 +303,15 @@ recusaria toda compra. Ver [../STATUS.md](../STATUS.md) §3.2.
 **`claimOrder` é a trava "um recibo, uma conta"** e ela só é **atômica** com o
 binding D1 (`env.DB`). O `wrangler.jsonc` declara `d1_databases` com o banco
 `soulmon-billing`; o schema está em `migrations/` (ver
-[07-DADOS-E-SAVE.md](07-DADOS-E-SAVE.md) §8.3). Sem D1 o caminho cai no KV, que é
+[07-DADOS-E-SAVE.md](07-DADOS-E-SAVE.md) §8.3). Sem o binding `DB` o caminho cai no KV, que é
 eventualmente consistente (~60 s) e deixa o mesmo comprovante valer para N contas.
+⚠️ **Com o binding e SEM a tabela não há fallback — há 500** (medido em 22/09/2026,
+`05-operador-governanca-r2.md` §1: `wrangler d1 migrations list soulmon-billing --remote`
+lista as DUAS migrações como "to be applied"; a 1ª compra Play em produção daria 500 — #65,
+só o dono aplica: `npx wrangler d1 migrations apply soulmon-billing --remote`). Desde `592e2c14`
+o `catch` de `claimOrderAtomic` engole SÓ violação de chave (`ehViolacaoDeChave`) e relança o
+resto — erro honesto com retry, em vez de acusar o comprador com `order-in-use`. ⚰️ O STATUS
+dizia "sem a tabela, a query falha e o resgate cai no caminho antigo" — falso.
 
 **A defesa REAL não é `claimOrder`, é o vínculo na origem**:
 `obfuscatedExternalAccountId` na Play e o session ticket na Steam. Lá a própria
@@ -328,7 +338,7 @@ loja diz de quem é a compra, e recibo alheio não vale em conta nenhuma.
 | **Servidor** | `GET ?id=<saveId>` → `{ tier, credits, adsLeft }` (`publicView`; `+ provider` só com tier pago — `play`/`steam`/`courtesy`); `POST ?action=spend` `{ id, amount, reason }` — **idempotente por `opId`**, porque guarda de cliente não protege dinheiro (o cliente é editável e a rede repete sozinha); `POST ?action=ad` `{ id }`; **`POST ?action=grant` `{ saveId }`** (desde `42b07bec`, decisão #12) — cortesia: tier pago sem loja, `provider: 'courtesy'`, zero crédito, idempotente por conta, teto global (`courtesy:count`). `Authorization: Bearer <ENTITLEMENTS_ADMIN_KEY>`; sem a variável a rota responde **404** (fail-closed, como `metrics.js`); teto por IP 10/min. Detalhe em [`06-REFERENCIA/api-workers.md`](06-REFERENCIA/api-workers.md). |
 | **Credencial** | `ADMOB_SSV_ENABLED` — variável de servidor. `ENTITLEMENTS_ADMIN_KEY` (secret — a chave da cortesia; sem ela a rota não existe) e `COURTESY_MAX_ACCOUNTS` (secret, inteiro ≥ 0; ausente ou inválida → `COURTESY_DEFAULT_MAX = 25`). Nomes só, nunca valores (§0). |
 | **Sem ela** | ⚠️ **O anúncio recompensado fica DESLIGADO por padrão**, e o GET devolve `adsEnabled: false` para a UI esconder a opção. Um endpoint aberto que dá crédito só porque o cliente pediu é farmável com um `curl`. Ligar de verdade exige Server-Side Verification do AdMob (o próprio Google chamando uma URL nossa assinada). |
-| **Régua** | `functions/api/entitlements.test.js`, `entitlements.grant.qa.test.js` e `_entitlements.tierDerivado.qa.test.js` (os dois desde `a6c1cd8a`). |
+| **Régua** | `functions/api/entitlements.test.js`, `entitlements.grant.qa.test.js` e `_entitlements.tierDerivado.qa.test.js` (os dois desde `a6c1cd8a`), `_entitlements.qa2.test.js` (desde `592e2c14` — `podarOrderDetails` nunca poda o pedido pago vivo que sustenta o tier; `ORDER_HISTORY_MAX = 200`). Conta com lápide → 410 no GET e no POST (desde `592e2c14`). |
 
 Desde `a6c1cd8a` (QA Rodada 1): (1) `handleGrant` exige `typeof saveId === 'string'` ANTES do regex (`RegExp.test` coage array/número) e a **ação desconhecida responde 404 `Not found`**, o mesmo corpo do `grant` sem chave — ⚰️ `400 Unknown action` deixava uma sonda sem chave distinguir `?action=grant` (404) de `?action=x` (400), e o 404 que existia para esconder a rota passava a confirmá-la (achado B1); (2) **o tier é DERIVADO na auditoria de reembolso**: `auditRefunds` termina com `ent.tier = paidProviderOf(ent) ? 'paid' : 'demo'` — ⚰️ rebaixava para `demo` por pedido desfeito sem olhar os outros, e com a cortesia isso deixava `tier: 'demo'` com `provider: 'courtesy'`. **Consequência provisória (#40): a cortesia SOBREVIVE ao reembolso da Play**; se o dono decidir o contrário, marca-se o pedido `courtesy:*` como `voided` ali.
 
@@ -338,7 +348,7 @@ Desde `a6c1cd8a` (QA Rodada 1): (1) `handleGrant` exige `typeof saveId === 'stri
 |---|---|
 | **Para quê** | Perfis públicos, diretório, Torneio (PvP assíncrono), amigos, presentes, seasons e o modo cooperativo. |
 | **Cliente** | `src/utils/community.ts` — `pushProfile` e as leituras. **O `pushProfile` só é chamado com `gameState.pvpEnabled` verdadeiro**: sem esse portão, quem nunca ativou o PvP tinha nome, pet e atributos publicados assim mesmo. |
-| **Servidor** | 17 ações em `functions/api/community.js`: `profile`, `players`, `player`, `opponents`, `match`, `rank`, `seasonResult`, `closeSeason`, `trophies`, `friends`, `gift`, `gifts`, `coop`, `coopCreate`, `coopJoin`, `coopCheckin`, `coopLeave`. |
+| **Servidor** | 17 ações em `functions/api/community.js`: `profile`, `players`, `player`, `opponents`, `match`, `rank`, `seasonResult`, `closeSeason`, `trophies`, `friends`, `gift`, `gifts`, `coop`, `coopCreate`, `coopJoin`, `coopCheckin`, `coopLeave`. Desde `592e2c14` o estado do coop mora em `_coop.js` (a exclusão de conta usa o mesmo `coopLeave`), `closed:<season>` tem TTL de 400 d (`CLOSED_SEASON_TTL`) e toda ação com `id` = ator responde **410** para conta com lápide — o cliente (`src/utils/community.ts`) reage com `reagirContaExcluida`, e o `GameStateContext` só publica o perfil DEPOIS do save ok. |
 | **Identidade** | O `id` de ENTRADA é sempre o `saveId` do PRÓPRIO dono (autenticado). Alvos de outra pessoa (`friendId`, `opponentId`, o `?id=` do `player`) chegam como **pid público** e são resolvidos pelo índice `pid:<pid>`. **Nenhuma resposta pública devolve `saveId`** — há teste travando. |
 | **Credencial** | `SEASON_ADMIN_KEY` — `wrangler secret` (e o MESMO valor no worker de push). |
 | **Sem ela** | `closeSeason` não pode ser chamada e os troféus não são entregues. |
@@ -416,18 +426,29 @@ prefixo com teto `MAX_SCAN_PAGES = 20` ficou como fallback só para conta sem
 os **sprites de IA** (`sprite:img:`/`sprite:lock:` por prefixo com o saveId e o
 `sprite:blob:` que cada cache aponta; blob órfão declarado em `NOT_INCLUDED`);
 **GRAVA** a lápide `del:done:<saveId>` (30 dias, `_accountTombstone.js`) ANTES da
-primeira destruição — `save.js` responde **410 `account-deleted`** a GET e POST
-enquanto ela viver, e o cliente (`cloudSave.ts` › `reagirContaExcluida`) limpa o
-aparelho e desloga; **MINIMIZA** `ent:<saveId>` (some o que é USO —
+primeira destruição — desde `592e2c14` **toda rota autorizada** responde **410
+`account-deleted`** (+ `deletedAt`) enquanto ela viver (⚰️ só `save.js`), e o cliente
+(`cloudSave.ts` › `reagirContaExcluida`) guarda o local em `CONFLICT_BACKUP`, limpa o
+aparelho e desloga; **um login posterior à exclusão REABRE** (`auth_time` > `at`,
+`gateTombstone` — ⚰️ a R1 bloqueava o próprio titular por 30 d, em loop; provisório #56),
+e o login confere a lápide ANTES do onboarding (`checarContaExcluidaNoLogin`);
+**SAI do grupo cooperativo** (`_coop.js` › `coopLeave`, passo 3b, desde `592e2c14` —
+⚰️ o membro apagado ficava fantasma por 120 d e a meta nunca mais fechava);
+**MINIMIZA** `ent:<saveId>` (some o que é USO —
 `aiLifetime`, `adDate`, `adCount` — e ficam os campos de DINHEIRO); e
 **SOBREVIVE** `ord:<orderId>`, porque é a trava que faz um comprovante valer por
-UMA conta, e apagá-lo destruiria o direito pago junto com o dado.
+UMA conta, e apagá-lo destruiria o direito pago junto com o dado (em produção o
+vínculo mora no D1 — §2.8). A **exportação** (`action=export`) devolve `friends[]`
+como **pid público** (`pidDeAmigo`, desde `592e2c14` — ⚰️ era a única rota que
+entregava saveId de terceiro) e declara em `naoIncluido` a lápide (30 d) e o
+vínculo Steam (`ord:steam:own:*`, 5 anos, provisório #56).
 
 **A ordem do `delete-confirm` mudou em `a6c1cd8a`** ("o que pode falhar vai
 primeiro", `03-arquitetura-r1.md` §2.4): token → inventário → lápide → varredura
 de amigos (a única que ainda pode estourar; se estourar, a lápide é desfeita e
 sobe 500 — retry com o mesmo token em 15 min) → **daqui nada lança** (cada passo
-em `try/catch`, o que falhou vai em `executado.falhou`) → push por índice →
+em `try/catch`, o que falhou vai em `executado.falhou`) → 3b `coopLeave` (desde
+`592e2c14`) → push por índice (`via: 'index+scan'` se o índice estiver cheio) →
 sprites → minimizar `ent:` → `rank:`/`gifts:`/`pid:`/`profile:` → **o save por
 último** → o token só sai se nada falhou. ⚰️ O save era o PRIMEIRO delete: o retry
 encontrava 404 com o token ainda válido e nada mais para apagar. A resposta traz
@@ -577,6 +598,15 @@ cd workers && wrangler deploy
 Os secrets (`VAPID_JWK`, `FIREBASE_SERVICE_ACCOUNT`, `SEASON_ADMIN_KEY`) também
 se definem **dentro de `workers/`**, com `wrangler secret put`.
 
+**Medido no ar em 22/09/2026** (`05-operador-governanca-r2.md` §1, `npx wrangler
+deployments list --name digiapp-push-scheduler` e `secret list`): o worker **está
+deployado** (21/09 12:57Z, posterior ao último commit de `workers/`, `3e758a81`) com
+`SEASON_ADMIN_KEY` e `VAPID_JWK` definidos — e **`FIREBASE_SERVICE_ACCOUNT` ausente**:
+o FCM (APK Android) nunca envia; só o Web Push (PWA) funciona. Três rodadas
+perguntaram "está no ar?" e nenhuma "tem os secrets?" — a régua do operador é
+`secret list`, não `deployments list`. ⚠️ `AGE_DAY_BASE_UTC` (§2.7) está no git em
+`592e2c14`, **não no ar** até o próximo `wrangler deploy` dentro de `workers/`.
+
 ### 3.6 `CACHE_VERSION`
 
 Ao mudar assets estáticos ou HTML de forma incompatível, **bump `CACHE_VERSION`**
@@ -620,17 +650,24 @@ Esta lista **não é mantida aqui**. As duas fontes vivas são:
   (🔴 urgente · 🟠 antes de qualquer coisa com dinheiro · 🟡 decisões de produto ·
   🔵 lançamento · 🟢 ambiente), com o que já foi resolvido riscado no fim.
 
-Os itens em aberto que tocam ESTE documento, em 09/09/2026 (linha do Actions acrescentada em 22/09/2026):
+Os itens em aberto que tocam ESTE documento, em 09/09/2026 (linha do Actions acrescentada em 22/09/2026; **estado do ar medido por `wrangler secret list`/`d1 migrations list` em 22/09/2026, `05-operador-governanca-r2.md` §1** — as linhas riscadas abaixo são as que a medição fechou):
+
+| Item | Consequência enquanto não for feito |
+|---|---|
+| **Aplicar as migrações D1** (`npx wrangler d1 migrations apply soulmon-billing --remote`, #65 — as duas "to be applied" em 22/09/2026) | A tabela `order_claims` não existe: **a 1ª compra Play em produção responde 500** (`claimOrderAtomic` sem fallback — §2.8). Zero risco de aplicar; destrava dinheiro. |
+| **`FIREBASE_SERVICE_ACCOUNT` no worker de push** (`cd workers && npx wrangler secret put FIREBASE_SERVICE_ACCOUNT`) | O FCM do APK nunca envia (§3.5); o worker em si está deployado desde 21/09. |
+| Redeploy do worker de push (`cd workers && wrangler deploy`) depois de `592e2c14` | `AGE_DAY_BASE_UTC` fica só no git: o push das 22h BRT ainda sai no D0 para quem nasceu hoje. |
 
 | Item | Consequência enquanto não for feito |
 |---|---|
 | **Regularizar a cobrança do GitHub** (`github.com/settings/billing`, #48 — parado desde 16/09/2026) | Nenhum workflow de §3.3 roda: o compile Kotlin da 8.x, o APK e os portões fora da máquina local ficam sem prova; `gh run list --limit 5` é a medição. |
-| Deploy do worker de push (`cd workers && wrangler deploy`, #50-a) | O E0 roda **sem push** — e a hipótese H1 fica confundida; `pushCopy` D0 nulo e o índice `pushidx` só valem com o worker/rotas no ar. |
+| ~~Deploy do worker de push (`cd workers && wrangler deploy`, #50-a)~~ — **medido em 22/09/2026: deployado em 21/09 12:57Z** (`wrangler deployments list --name digiapp-push-scheduler`) | ⚰️ A pergunta #50-a era repetição da #5; o que faltava era o secret (linha acima), não o deploy. |
 | `GOOGLE_PLAY_SERVICE_ACCOUNT` + `ANDROID_PACKAGE_NAME` | A rota da Play responde 503 e nenhuma compra é concedida. |
 | `PLAY_REQUIRE_ACCOUNT_BINDING = true` (só **depois** de publicar o APK que manda `setObfuscatedAccountId`) | Compra **sem vínculo de conta é aceita** — um recibo pode virar N contas pagas. |
-| `METRICS_ADMIN_KEY` (secret do Worker — ver §0) | A leitura de métricas responde **404**. Está tudo instrumentado e ninguém lê nada — e `scripts/metrics-report.mjs` sai com código 2. |
-| `ENTITLEMENTS_ADMIN_KEY` e `COURTESY_MAX_ACCOUNTS` (secrets do Worker, desde `42b07bec`, #12/#18) | Sem a chave, `POST /api/entitlements?action=grant` responde 404 e os 10 primeiros testadores só veem o demo; sem o teto, vale `COURTESY_DEFAULT_MAX = 25`. |
-| `SEASON_ADMIN_KEY` como secret do worker (com o MESMO valor do Pages) | O fechamento de season é pulado com log, e os troféus dependem de alguém lembrar. |
+| ~~`METRICS_ADMIN_KEY` (secret do Worker — ver §0)~~ — **medido em 22/09/2026: DEFINIDA** (`GET /api/metrics` → 401, que só sai com a chave presente; `wrangler secret list` a lista) | ⚰️ "responde 404, ninguém lê nada" — o STATUS §3.2 e a R1 estavam velhos; `scripts/metrics-report.mjs` funciona com a chave em mãos. |
+| `ENTITLEMENTS_ADMIN_KEY` e `COURTESY_MAX_ACCOUNTS` (secrets do Worker, desde `42b07bec`, #12/#18) — **medido em 22/09/2026: AUSENTES** (`POST ?action=grant` → 404 com e sem chave) | Sem a chave, `POST /api/entitlements?action=grant` responde 404 e o E0 não recebe grant de cortesia; sem o teto, vale `COURTESY_DEFAULT_MAX = 25` (ok). Prova depois de definir: grant com chave errada → 401. |
+| `GEMINI_API_KEY` (secret do Worker) — **medido em 22/09/2026: AUSENTE** | Sem o fallback do sprite (`generate-sprite.js` › `if (env.GEMINI_API_KEY)`), Higgsfield fora = geração morre em vez de cair no Gemini (§2.3). |
+| ~~`SEASON_ADMIN_KEY` como secret do worker (com o MESMO valor do Pages)~~ — **medido em 22/09/2026: DEFINIDA nos dois lados** | ⚰️ fechamento pulado — a season fecha. |
 | `ASSETLINKS_PACKAGE_NAME` e `ASSETLINKS_SHA256` no Pages | Os Digital Asset Links não validam. |
 | Registrar o pacote `com.hexervoodoom.soulmon` no Firebase + `google-services.json` novo | ⚠️ O **build do Android FALHA** com `No matching client found for package name` — ver [../BILLING-SETUP.md](../BILLING-SETUP.md). |
 | Host do CDN do Higgsfield | `isSafeSpriteUrl` fecha esquema, mas não fecha o beacon `https://atacante.example/x.png` (§2.3). |

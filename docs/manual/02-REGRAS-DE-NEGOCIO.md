@@ -1,6 +1,6 @@
 # Regras de negócio — todas as regras do jogo, por sistema
 
-> **Dono:** doc-redator-regras · **Data:** 22/09/2026 · **Estado:** verificado em 22/09/2026 por doc-verificador (delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §46 cortesia × reembolso (`auditRefunds`/`paidProviderOf`) e §56 versões `2026-09-22` + `qualDocMudou` conferidos símbolo a símbolo contra `_entitlements.js`, `consent.ts`, `termsNotice.ts`; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §46 cortesia, §56 aviso de termos, §57-A `dias-completos-30`/`conquistasHerdadas`, §58-A ⚰️ `SettingsModal` conferidos símbolo a símbolo; anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: §59 D31–D33 reconferidas no delta `15164e4c..7e5d0ba9` — D32 ⚰️ fechada confere com o `CLAUDE.md` no disco (cinco arquivos, S1..S16) e com `ls public/sounds`; D31 segue ABERTA (o `CLAUDE.md` ainda diz `DÍVIDA`); verificação anterior: §58-A e §59 D32–D33, delta `5ac3d351..8d318529`, som/S16 + chaves na `SettingsPage`; verificação anterior do mesmo dia: só as seções do delta `dc72579e..9875477b` — §2, §3, §8, §10, §12, §45, §48, §59 D31; verificação anterior: 21/09/2026, seções do delta `2580b73a..dc72579e` — §22, §28, §41, §43, §46, §57-A, §57-B, §59 D28–D30; doc inteiro: 10/09/2026, em duas metades)
+> **Dono:** doc-redator-regras · **Data:** 22/09/2026 (2ª sincronização do dia, delta `a6c1cd8a..592e2c14`, QA Rodada 2: §46 cota de chat por tier (provisório #55); §55 `XP_PERFECT_DAY` passou a ser emitido; §7/§18/§46 ganharam só a NOTA "aberto ao dono" dos provisórios #58/#59/#61 — nenhuma regra de jogo mudou) · **Estado:** verificado em 22/09/2026 por doc-verificador (delta `a6c1cd8a..592e2c14` — `_aiGuard.js` › `AI_LIMITS.chat.perAccountByTier`, `dailyReset.ts` › `awardBondXP(..., { kind: 'perfectDay' })` e os `it.todo` de `regrasDeJogo.qaRodada2.test.ts` conferidos; anterior no mesmo dia: delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §46 cortesia × reembolso (`auditRefunds`/`paidProviderOf`) e §56 versões `2026-09-22` + `qualDocMudou` conferidos símbolo a símbolo contra `_entitlements.js`, `consent.ts`, `termsNotice.ts`; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §46 cortesia, §56 aviso de termos, §57-A `dias-completos-30`/`conquistasHerdadas`, §58-A ⚰️ `SettingsModal` conferidos símbolo a símbolo; anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: §59 D31–D33 reconferidas no delta `15164e4c..7e5d0ba9` — D32 ⚰️ fechada confere com o `CLAUDE.md` no disco (cinco arquivos, S1..S16) e com `ls public/sounds`; D31 segue ABERTA (o `CLAUDE.md` ainda diz `DÍVIDA`); verificação anterior: §58-A e §59 D32–D33, delta `5ac3d351..8d318529`, som/S16 + chaves na `SettingsPage`; verificação anterior do mesmo dia: só as seções do delta `dc72579e..9875477b` — §2, §3, §8, §10, §12, §45, §48, §59 D31; verificação anterior: 21/09/2026, seções do delta `2580b73a..dc72579e` — §22, §28, §41, §43, §46, §57-A, §57-B, §59 D28–D30; doc inteiro: 10/09/2026, em duas metades)
 > **Verificação:** `npx vitest run src/utils src/types src/hooks` — cada sistema abaixo declara a sua régua própria na linha **Régua**. Números medidos trazem o comando na própria linha.
 > **Não cobre:** o porquê estratégico e as linhas vermelhas (→ [`01-VISAO.md`](01-VISAO.md)), telas e navegação (→ `03-FLUXO-DE-TELAS.md`), função por função (→ `06-REFERENCIA/`), formato do save (→ `07-DADOS-E-SAVE.md`), infraestrutura de push, deploy e API (→ `08-INTEGRACOES-E-DEPLOY.md`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -486,6 +486,15 @@ separação das duas metas).
 - Item **🌀 Glitchtama** dá +1 `perfectDays` ao ser usado, **no máximo 1 por dia
   do jogador** (`GLITCHTAMA_PER_DAY`) — ver [§48](#itens-especiais).
 - A **folga da semana não vira dia completo**: não ganha, não perde.
+- **A virada julga só ONTEM** (`yesterdayString`): quem faz tudo na segunda e só
+  reabre na quarta nunca recebe o dia completo de segunda — o perfil "3×/semana
+  que só abre nesses dias" fechou **0 dias completos em 90** na simulação da QA
+  Rodada 2 (`07-simulacao-jogo-r2.md` §2.1). **É a regra escrita e continua
+  valendo; aberto ao dono (#58)** — o provisório proposto (julgar o dia de
+  `lastResetDate`) está como `it.todo` em `src/utils/regrasDeJogo.qaRodada2.test.ts`
+  e NÃO foi aplicado. Este parágrafo não muda regra: registra a medição.
+- Desde `592e2c14` o dia completo **emite `XP_PERFECT_DAY`** de verdade
+  ([§55](#vinculo)) — a tabela já dizia, ninguém emitia.
 
 **O que NÃO faz.** Dia não-completo **não tira** `perfectDays`. Não conta itens
 — conta PESO DE ESFORÇO ([§23](#meta-ponderada)).
@@ -1291,6 +1300,15 @@ massa.
 tarefas, hábitos, moedas, coleção nem `unlockedEvolutions`. Não se chama morte.
 Não é comprável — não existe cura por Créditos ([§46](#moedas)). O cadeado de
 evolução não protege contra ela.
+
+**Aberto ao dono (#59, QA Rodada 2 — `07-simulacao-jogo-r2.md` §2.2): a queda é
+cura grátis.** `degeneratedPerfectDays` devolve `max(floor(req/2), prev − 5)`,
+que costuma ser ≥ `required` do estágio novo — um mega com 26 dias que cai para
+ultimate reaparece com 21 ≥ 5, o botão Evoluir acende **na mesma abertura** e a
+redenção devolve HP cheio por um clique (`redeemed: true`). É o comportamento
+escrito acima e **continua valendo**; o provisório proposto (exigir uma virada
+com `dayWasPerfect` depois da queda) está como `it.todo` em
+`src/utils/regrasDeJogo.qaRodada2.test.ts` e não foi aplicado.
 
 **Onde a UI mostra.** `src/components/DailyReportModal.tsx` (`degenerated` muda
 manchete e ícone — a composição de LUTO com coração partido e fundo rosa saiu),
@@ -3472,6 +3490,27 @@ reporta `courtesy` — ranquear provedores ninguém pediu. Régua:
 `functions/api/_entitlements.tierDerivado.qa.test.js`,
 `entitlements.grant.qa.test.js`.
 
+**Cota de chat por tier — regra PROVISÓRIA (#55, `PERGUNTAS-DO-DONO.md`),
+desde `592e2c14`.** `AI_LIMITS.chat` em `functions/api/_aiGuard.js` ganhou
+`perAccountByTier: { demo: 30, paid: 120 }` sobre o `perAccount: 120` (que
+continua sendo o teto de quem não tem tier conhecido). ⚰️ Demo e paga tinham a
+MESMA cota (120/dia): 1.000 demos no teto = ~R$ 950/mês de Groq com receita
+zero, alcançável por `curl` (`03-negocio-pesquisa-r2.md` §5). Não é moeda — é o
+único lugar do produto em que `accountTier` compra USO, e por isso mora aqui:
+`paid` continua sem SKU recorrente e sem modelo acima do 8b (linha
+`[provisório #55]` no `REGISTRO-DE-DECISOES.md`). A recusa chega como
+`429 ai-daily-limit` com `AI_REFUSAL_MESSAGES`, honesta, nunca como convite de
+compra. Régua: `functions/api/_aiGuard.tierCap.qa2.test.js`.
+
+**Aberto ao dono (#61, QA Rodada 2 — `07-simulacao-jogo-r2.md` §2.7): quem só
+cuida fica com 0 Bits em 90 dias.** Bits vêm só de minijogo (masmorra 327–417
+por run, sem teto de runs); hábito, tarefa, dia completo e evolução rendem 0.
+O perfil que faz tudo todo dia nunca vê a loja; o perfil que só roda masmorra
+compra a loja 4× e 288 chips (+864 de atributo — o galho vira comprável). É a
+regra escrita na tabela acima (origem dos Bits = "minijogos (Dino, PPT, Masmorra, Arena)") e **continua valendo**; a
+alavanca proposta (Bits por dia completo, ou teto diário de runs) não foi
+aplicada.
+
 **Não existe Bits → Créditos.** A ausência é a regra, e há teste que varre os
 exports do módulo procurando qualquer coisa com nome `BITS_TO_CREDIT` /
 `bitsToCredit`. Créditos são a única moeda que libera gerar o pet próprio; um
@@ -4223,7 +4262,16 @@ de peso concluída · `XP_PERFECT_DAY` 50 · `XP_REST_NIGHT` 15 · `XP_NEW_DREAM
 `XP_TOURNAMENT_WIN` 15 / `XP_TOURNAMENT_LOSS` 8 · `XP_HABIT_MILESTONE`
 {7: 100, 21: 200, 66: 400} · `XP_TRIAGE_CLEARED` 30 · `XP_CHECK_IN` 10. Tetos por
 fonte em `BOND_DAILY_CAP`; o ledger é `bondDaily {day, spent}` e o `day` é o dia
-do jogador.
+do jogador. ⚠️ **`XP_PERFECT_DAY` só passou a ser EMITIDO em `592e2c14`**
+(`computeDailyReset` › `awardBondXP(prev, { kind: 'perfectDay' }, playerDayKey(now, prev.playerDayTz))`
+quando `dayWasPerfect`): a tabela dizia "em `utils/dailyReset.ts`" e ninguém
+chamava — `bond.wiring.test.ts` testava a função pura com todos os `kind`s, e a
+simulação da QA Rodada 2 (`07` §2.4) mediu **7 dos 11 eventos mudos**. Este é
+o único que mora na virada e foi ligado; os outros seis são do `App.tsx` e
+seguem mudos — o patch está em
+`reviews/2026-09-22-qa-rodada-2/sim/patch-vinculo-app-eventos.md`, **não
+aplicado**. `perfectDay` não tem teto em `BOND_DAILY_CAP`; `totalXP` nunca
+desce. Régua: `src/utils/bond.diaCompleto.test.ts`.
 
 **O gate de PvP.** `BOND_PVP_MIN_LEVEL` = **5**, e não é número escolhido: os
 níveis 1–4 são o funil de retenção D1–D7 e o 5 é o primeiro degrau fora dele

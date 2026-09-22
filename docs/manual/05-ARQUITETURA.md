@@ -1,6 +1,6 @@
 # Arquitetura
 
-> **Dono:** doc-redator-arquitetura · **Data:** 22/09/2026 (§9 ganha os 3 portões da QA Rodada 2 — mutação, orçamento de tempo, git × ar) · **Estado:** verificado em 22/09/2026 por doc-verificador (delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §1.1 `version` 1.1.4, §1.3 `billing-ktx` 8.3.0, §4 ADR-004..006 em Proposta, §7 hash novo, §9 guards novos conferidos contra `package.json`, `build.gradle`, `ls docs/adr`, `ls src/deploy src/plugins src/*.contract.test.ts`; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §1.1, §1.3, §2.1 `scripts/`, §2.2 `src/deploy/`, §3, §7 `cacheavel` e §9 conferidos símbolo a símbolo; anterior: linhas de áudio da §2.1, §2.2, §5 e §7, delta `5ac3d351..8d318529`, som/S16; o resto: sincronizado com `dc72579e..9875477b` em 21/09/2026 por doc-redator-arquitetura; conferido em `5ac3d351`)
+> **Dono:** doc-redator-arquitetura · **Data:** 22/09/2026 (2ª sincronização do dia, delta `a6c1cd8a..592e2c14`, QA Rodada 2: §1.1 `@capacitor/cli` para `devDependencies`, §4 a lápide agora em `_auth.js` e a reabertura, §7 terceiro hash mudou de novo + CSP por igualdade, §9 os guards novos e a régua `SO_DEV`; anterior no mesmo dia: §9 ganha os 3 portões da QA Rodada 2 — mutação, orçamento de tempo, git × ar) · **Estado:** verificado em 22/09/2026 por doc-verificador (delta `a6c1cd8a..592e2c14` — `package.json`, `_auth.js`, `public/_headers`, `ls src/*.contract.test.ts src/assets/*.test.ts src/utils/regrasDeJogo*` conferidos; anterior no mesmo dia: delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §1.1 `version` 1.1.4, §1.3 `billing-ktx` 8.3.0, §4 ADR-004..006 em Proposta, §7 hash novo, §9 guards novos conferidos contra `package.json`, `build.gradle`, `ls docs/adr`, `ls src/deploy src/plugins src/*.contract.test.ts`; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §1.1, §1.3, §2.1 `scripts/`, §2.2 `src/deploy/`, §3, §7 `cacheavel` e §9 conferidos símbolo a símbolo; anterior: linhas de áudio da §2.1, §2.2, §5 e §7, delta `5ac3d351..8d318529`, som/S16; o resto: sincronizado com `dc72579e..9875477b` em 21/09/2026 por doc-redator-arquitetura; conferido em `5ac3d351`)
 > **Verificação:** `npx tsc --noEmit` · `npx tsc -p tsconfig.server.json --noEmit` · `npx tsc -p desktop/tsconfig.json --noEmit` · `npx vitest run` · `npm run build`; os contratos de fronteira são `src/deploy/appUrl.contract.test.ts`, `src/deploy/firebaseNoBuild.contract.test.ts`, `src/deploy/swCache.contract.test.ts`, `src/security/csp.test.ts`
 > **Não cobre:** as regras do jogo (→ `02-REGRAS-DE-NEGOCIO.md`), as telas (→ `03-FLUXO-DE-TELAS.md`), tokens e estilo (→ `04-IDENTIDADE-VISUAL.md`), função por função (→ `06-REFERENCIA/`), o esquema do save e as chaves de storage (→ `07-DADOS-E-SAVE.md`), credenciais e deploy (→ `08-INTEGRACOES-E-DEPLOY.md`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -22,7 +22,7 @@ do arquivo indicado, lidas em 09/09/2026 no commit `4e77a08a`.
 | Linguagem | `typescript` | `^6.0.3` |
 | Testes | `vitest` · `@vitest/ui` · `@vitest/coverage-v8` | `^4.1.9` |
 | DOM de teste | `jsdom` | `^29.1.1` · `@testing-library/react` `^16.3.2` · `@testing-library/jest-dom` `^7.0.1` |
-| Casca nativa | `@capacitor/core` · `@capacitor/cli` · `@capacitor/android` | `^8.4.0` |
+| Casca nativa | `@capacitor/core` · `@capacitor/android` (`dependencies`) · `@capacitor/cli` (**`devDependencies` desde `592e2c14`** — é o binário `cap` do CI, e puxava `tar` vulnerável para o `npm audit --omit=dev`, hoje 0; `android-build.yml` o instala por `npm install -g`; régua `SO_DEV` em `depsVivas.contract.test.ts`. Pendência da R1 que "em correção" não tinha aterrissado) | `^8.4.0` |
 | Push nativo | `@capacitor/push-notifications` | `^8.1.1` |
 | Passos | `@capgo/capacitor-pedometer` | `^8.0.38` |
 | Login | `firebase` | `^12.16.0` |
@@ -207,8 +207,14 @@ namespace KV para tudo: manter como cache/estado, tirar o DINHEIRO para o D1 que
 já existe) e [`ADR-006`](../adr/ADR-006-versionamento-do-esquema-do-save.md)
 (número de versão no envelope do save, migrações nomeadas, fixture por versão).
 Nada delas está implementado; o estado vive no cabeçalho de cada arquivo, não
-aqui. O que **está** implementado da mesma família (`a6c1cd8a`): a lápide
-`del:done:` + 410 para conta apagada ([07 §8.1](07-DADOS-E-SAVE.md)).
+aqui. O que **está** implementado da mesma família: a lápide `del:done:` + 410
+para conta apagada (`a6c1cd8a`, [07 §8.1](07-DADOS-E-SAVE.md)) — e, desde
+`592e2c14` (QA Rodada 2), o portão mora em **`_auth.js` › `authorizeSaveAccess`**
+(`gateTombstone`), logo toda rota autorizada herda o 410, e **login posterior à
+exclusão reabre** (`auth_time` > `at`; a R1 bloqueava o próprio titular por 30
+dias). Da ADR-004 só entrou a **mitigação**: o GET de `save.js` relê a chave
+antes de renovar o TTL (`save.concorrencia.qa.test.js` mantém um `it.fails`
+aberto para a corrida real, que só o `revision` fecha).
 
 ---
 
@@ -290,8 +296,11 @@ texto novo nesses arquivos achando que ele aparece em algum lugar.**
 hash · precache sem bundle · navegação network-first · limpeza dos caches
 antigos · `skipWaiting`/`claim` · cabeçalhos) e `src/security/csp.test.ts`
 (recalcula os hashes a partir do HTML da fonte **e** do `dist` servido e falha se
-alguém editar um script inline sem atualizar a política). O terceiro hash mudou
-em `a6c1cd8a` (gate de WebView com ramo Android × não-Android — [03 §2.1](03-FLUXO-DE-TELAS.md));
+alguém editar um script inline sem atualizar a política — e, desde `592e2c14`,
+exige **igualdade** do conjunto de hashes fonte ∪ `dist`, não só inclusão; o
+comentário do `_headers` lista os QUATRO na ordem). O terceiro hash mudou
+em `a6c1cd8a` (gate de WebView com ramo Android × não-Android — [03 §2.1](03-FLUXO-DE-TELAS.md))
+e de novo em `592e2c14` (o ramo Android exige `; wv)` no UA);
 o `cacheavel` do SW ganhou teste direto, `tests/swCacheavel.test.ts`, e o
 `manifest.json` ganhou régua contra o `index.html` (`src/deploy/manifest.contract.test.ts`).
 
@@ -327,6 +336,8 @@ Rodar **antes de todo commit**:
 | `npx tsc -p desktop/tsconfig.json --noEmit` | `renderer/src/**/*.ts` | O overlay. `allowJs: true` + `checkJs: false` — o teste de contrato importa `functions/api/save.js` e sem isso o gate ficava vermelho por `TS7016`. |
 | `npx vitest run` | ver §10 | Toda a suíte, incluindo os guards de fiação por AST, os contratos de deploy e de segurança, e os testes de paridade do desktop. Dois portões novos em `4a8b8049`: **`src/deploy/depsVivas.contract.test.ts`** (#33 — pacote de `dependencies` sem import reprova; allowlist com motivo obrigatório) e **`src/deploy/orcamentoDeBytes.contract.test.ts`** (#31 — lê `dist/` depois do `npm run build`: JS de entrada ≤ 250 KB, CSS ≤ 100 KB, imagem ≤ 400 KB, vídeo ≤ 800 KB, 0 `.png` em `dist/assets`; a dívida atual é NOMEADA em `DIVIDA_ATUAL` — `index.js` 641 016 B, `index.css` 142 696 B, `evolution-bg.mp4`, `intro.mp4` — e o teste reprova arquivo novo acima do teto ou dívida que cresce mais que `FOLGA_JS_CSS = 8 KB`; desde `a6c1cd8a` a dívida de uma chave sem hash é do MAIOR arquivo com aquele nome — ⚰️ `find` pegava o primeiro `index-*.js`, de 438 B, e declarava a dívida paga). **Portões novos em `a6c1cd8a` (QA Rodada 1):** `src/deploy/versaoUnica.contract.test.ts` (uma versão só — `package.json` = `versionName` = `__APP_VERSION__`), `src/deploy/manifest.contract.test.ts` (`manifest.json` = `index.html`/tokens), `src/plugins/billingPbl8.contract.test.ts` (PL-8 Billing ≥ 8 e PL-9 alarme exato, lendo o fonte Kotlin/Gradle), `src/plugins/widgetNome.contract.test.ts` (o widget chama o pet pelo nome da Home), `src/ia.camposEnviados.contract.test.ts` (o DONO da fronteira "o que o cliente manda para a IA": lista fechada de chaves por rota e por arquivo chamador de `aiFetch`), `src/copy.semFomo.contract.test.ts` (proibição #15 por teste), `tests/indexHtmlGateWebView.test.ts`, `tests/swCacheavel.test.ts`, `tests/convertToWebp.test.ts` (o script de build ganhou `.d.mts`) — todos descritos em [`06-REFERENCIA/plugins-constants.md`](06-REFERENCIA/plugins-constants.md) › Guards. |
 | `npm run build` | `vite build && node scripts/convert-to-webp.mjs && npx wrangler pages functions build --outdir=./dist/_worker.js/` | Compila o bundle, converte PNG→WebP **e reescreve as referências `nome-HASH.png` → `.webp` em todo JS/CSS/HTML de `dist/` antes de apagar os PNG** (desde 21/09/2026, decisão #32: `dist/` caiu de 123 MB para 24 MB; qualquer referência sobrando aborta com `exit 1` e o PNG fica — régua `src/deploy/orcamentoDeBytes.contract.test.ts`, que também trava 0 `.png` em `dist/assets`), e **compila as Pages Functions para dentro de `dist/`**. ⚠️ O `CLAUDE.md` descreve este comando só como "vite build + conversão PNG→WebP" — o terceiro passo está no `package.json` e não está lá. |
+
+Guards novos em `592e2c14` (QA Rodada 2, todos em `npx vitest run`): `src/assets/artMaps.contract.test.ts` (id do domínio ↔ PNG nos mapas `*Art.ts`), `src/narrativa.superficies.contract.test.ts` (booklet, ficha, `public/*.html`, `android/**.kt`), `src/utils/regrasDeJogo.qaRodada2.test.ts` (o que a simulação contradisse, com os `it.todo` do dono #57–#62), e os guards da R1 fechados por mutação — `ia.camposEnviados` reprova `fetch` cru a rota de IA; `copy.semFomo` varre `src/utils/**`; `csp.test.ts` por igualdade; `depsVivas` com `SO_DEV`. Ver `06-REFERENCIA/plugins-constants.md`.
 
 O CI (`.github/workflows/ci.yml`, job `gate`) roda os quatro primeiros na ordem
 typecheck do app → do overlay → do servidor → `vitest`, mais um step de

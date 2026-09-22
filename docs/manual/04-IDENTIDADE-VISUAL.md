@@ -1,6 +1,6 @@
 # Identidade visual e sonora do Soulmon
 
-> **Dono:** doc-redator-identidade · **Data:** 22/09/2026 · **Estado:** verificado em 22/09/2026 por doc-verificador (delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §10.1 `name`/`description` do `manifest.json` e §10.2 gate por plataforma conferidos contra `public/manifest.json`, `index.html`, `src/deploy/manifest.contract.test.ts`; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §9 linha da trilha (⚰️ `SettingsModal`) e §10.2 gate de WebView conferidos por grep; `.sm2-notice` do banner de termos não é classe nova (`grep -n "^.sm2-notice" src/index.css`); anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: delta `dc72579e..9875477b`, conferido em `5ac3d351`: rodada 2 da SQUAD-ARTE, SQUAD-SOM retomada, superfície de suporte do chat) · §9 verificado em 21/09/2026 por doc-verificador (delta `5ac3d351..8d318529`: S16, trilha em duas camadas, escolha do dono nos 3 eventos longos, chaves na `SettingsPage`)
+> **Dono:** doc-redator-identidade · **Data:** 22/09/2026 (2ª sincronização do dia, delta `a6c1cd8a..592e2c14`, QA Rodada 2: §10.2 o ramo Android do gate exige `; wv)` e a CSP por igualdade; o flash de evolução do `CompanionHUD` passou a usar `--sm2-viewport-bg`/`--sm2-viewport-ink` — ⚰️ `#2dd4bf` sobre branco/70, ~1,6:1 — sem seção própria aqui, registrado no `06-REFERENCIA/components.md`) · **Estado:** verificado em 22/09/2026 por doc-verificador (delta `a6c1cd8a..592e2c14` — `index.html`, `public/_headers` e `CompanionHUD.tsx` conferidos; anterior no mesmo dia: delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §10.1 `name`/`description` do `manifest.json` e §10.2 gate por plataforma conferidos contra `public/manifest.json`, `index.html`, `src/deploy/manifest.contract.test.ts`; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §9 linha da trilha (⚰️ `SettingsModal`) e §10.2 gate de WebView conferidos por grep; `.sm2-notice` do banner de termos não é classe nova (`grep -n "^.sm2-notice" src/index.css`); anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: delta `dc72579e..9875477b`, conferido em `5ac3d351`: rodada 2 da SQUAD-ARTE, SQUAD-SOM retomada, superfície de suporte do chat) · §9 verificado em 21/09/2026 por doc-verificador (delta `5ac3d351..8d318529`: S16, trilha em duas camadas, escolha do dono nos 3 eventos longos, chaves na `SettingsPage`)
 > **Verificação:** `npx vitest run src/styles/ src/index.css.contract.test.ts src/utils/sprites.dungeonRoster.test.ts src/utils/loudness.contract.test.ts src/utils/cortes.contract.test.ts src/utils/sonsAssets.contract.test.ts src/components/ui/Viewport.contract.test.tsx src/components/ui/foundation.render.test.tsx src/brand/brandFlame.parity.test.ts src/assets/assets.contract.test.ts` — os 11 arquivos de 09/09/2026 (216 testes, verde) mais os dois que nasceram com a marca vetorizada e a leva de arte de 15/09/2026, mais `sonsAssets.contract.test.ts` (21/09/2026, S16).
 > **Não cobre:** o fluxo entre telas e o que cada superfície mostra (doc `03-FLUXO-DE-TELAS.md`); as regras de jogo por trás dos números que a UI pinta (doc `02-REGRAS-DE-NEGOCIO.md`); a assinatura de cada componente (`06-REFERENCIA/components.md`); o pipeline de build/deploy dos assets (doc `08-INTEGRACOES-E-DEPLOY.md`). Este doc descreve o som — **não** decide nada sobre ele: quem decide é o `REGISTRO-DE-DECISOES.md` (§6.1, S1..S16 — não existe S14).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -1508,7 +1508,15 @@ Três decisões medidas que sobreviveram à reescrita:
   (iOS/Firefox/desktop), "Seu navegador está desatualizado", sem link para uma
   loja que não vale para eles, e "Browser: …". Os dois ganham
   `documentElement.lang` e um `mailto:` de contato em `#5eead4`. O hash mudou
-  de novo e a CSP acompanhou. Fluxo em [03 §2.1](03-FLUXO-DE-TELAS.md).
+  de novo e a CSP acompanhou. **Desde `592e2c14` (QA Rodada 2, `00-skeptic-r2`
+  #5) o ramo Android só dispara com a marca de WebView no UA — `/; wv\)/` ou o
+  UA antigo `Version/x.y … Chrome/`**: ⚰️ `/Android/i` sozinho mandava Samsung
+  Internet e Firefox no Android, que não são WebView, "atualizar o Android
+  System WebView" — instrução que não resolve nada para eles; hoje caem no
+  ramo "Seu navegador está desatualizado". O hash mudou pela terceira vez, o
+  `_headers` lista os QUATRO scripts inline na ordem (tema · splash · WebView ·
+  SW) e `csp.test.ts` passou a exigir igualdade do conjunto (fonte ∪ `dist`).
+  Fluxo em [03 §2.1](03-FLUXO-DE-TELAS.md).
 
 O que morreu com o `<style>`: os `fill` do sprite antigo entravam por token
 (`#5df0e0` → `--sm2-primary-ink`) "sem tocar nos 109 `rect`" ⚰️ — a chama nova
