@@ -3829,7 +3829,7 @@ loja comum nem Bits comprar na aba de Torneio (`shopBalanceFor` lê a moeda do
 item). Não guarda o saldo de Créditos no save como verdade — o `credits` do
 `GameState` é espelho do servidor. Não usa o mesmo ícone para duas moedas.
 
-**Onde a UI mostra.** `src/components/ShopModal.tsx` (saldo da moeda do segmento
+**Onde a UI mostra.** `src/components/mercado/MercadoSheets.tsx` (saldo da moeda do segmento
 + os três botões de câmbio), `src/components/ActivitiesPage.tsx` (saldo de
 Bits), `src/components/TournamentPage.tsx` (Emblemas e o `+3`/`+1` do fim da
 partida), `src/components/CreditsModal.tsx` (pacotes, anúncio, custo do reroll).
@@ -3885,8 +3885,8 @@ gate de missão, o retorno do botão e a ausência de som).
 (fronteira de moeda, CSS de todo cenário à venda, mobília de torneio
 renderizável), `src/utils/missions.test.ts` (o gate),
 `src/utils/x6Updaters.contract.test.ts`,
-`src/components/ShopModal.missoes.render.test.tsx`,
-`src/components/ShopModal.convitePassivo.render.test.tsx`.
+`src/components/mercado/MercadoSheets.render.test.tsx`,
+`src/utils/mercadoCatalog.test.ts`.
 
 **Decisão.** [`docs/SHOP-PLAN.md`](../SHOP-PLAN.md) (o catálogo);
 [`docs/PALCO-E-DECORACAO.md`](../PALCO-E-DECORACAO.md) (espaços e `fits`);
@@ -3915,7 +3915,7 @@ moedas. Não tem cinco abas — ⚠️ **divergência**, ver [§59](#divergencia
 toca som de compra: a categoria "transação" ainda não tem som próprio, e o canal
 é o visual (saldo e posse já aparecem no próximo render).
 
-**Onde a UI mostra.** `src/components/ShopModal.tsx`, aberto da
+**Onde a UI mostra.** `src/components/mercado/MercadoSheets.tsx`, aberto da
 `src/components/ActivitiesPage.tsx`. Dois segmentos (`ShopSegment`): **Loja**
 (seções Itens / Cenários / Mobílias num scroll único) e **Torneio**
 (`TOURNAMENT_ITEMS` + as missões da semana no topo).
@@ -4008,7 +4008,7 @@ três entra no `FOOD_LIMIT_PER_HOUR` ([§3](#comida)). O `petPassive` não entra
 recusa: nenhum traço mexe em item especial (se um dia mexer, vem do ESTADO).
 
 **Onde a UI mostra.** `src/components/ItemsWindow.tsx` (a pastinha, e é dela que
-se usa), `src/components/ShopModal.tsx` (os chips à venda),
+se usa), `src/components/mercado/MercadoSheets.tsx` (os chips à venda),
 `src/components/CompanionHUD.tsx` (a animação de comer e o piscar do
 `healCapSignal`).
 
@@ -4078,7 +4078,7 @@ acabou — é justamente essa finitude que motivou as missões semanais
 própria**: a aba Missões da loja não existe mais (a explicação passou a ficar na
 linha do próprio item travado).
 
-**Onde a UI mostra.** `src/components/ShopModal.tsx` — o cadeado, a descrição da
+**Onde a UI mostra.** `src/components/mercado/MercadoSheets.tsx` — o cadeado, a descrição da
 missão e o progresso, na linha do cenário travado.
 
 ---
@@ -4129,7 +4129,7 @@ de tarefas, recompensa só em Emblemas, pagamento único) e
 **`src/utils/weeklyMissions.fiacao.test.ts`** — guard de FIAÇÃO: exige um
 `contarMissao('<id>')` no `App.tsx` para **toda** missão do pool, exige que
 `bumpWeekly` apareça uma vez só, e exige que a lista chegue ao segmento Torneio
-do `ShopModal`.
+das lojinhas do Mercado (⚰️ `ShopModal`).
 
 **Decisão.** WP4.7. Até 06/09/2026 o módulo tinha **zero consumidores** — a
 terceira repetição do padrão do `bestiary` e das estações. O custo era de
@@ -4153,8 +4153,9 @@ tempo.
 (dinheiro real não se ganha jogando). Não expira o Emblema já pago. Não muda a
 lista quando o app reabre.
 
-**Onde a UI mostra.** `src/components/ShopModal.tsx`, no **topo do segmento
-Torneio** — onde a moeda é gasta, a torneira e o ralo na mesma tela.
+**Onde a UI mostra.** `src/components/TournamentPage.tsx`, aba **Missões** da folha
+do Torneio (Arena; minimal-ui F5, 24/09/2026 — ⚰️ era o topo do segmento Torneio da
+`ShopModal`) — onde a moeda é gasta, a torneira e o ralo na mesma folha.
 
 ---
 

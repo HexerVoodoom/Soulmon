@@ -16,7 +16,8 @@ import { weeklyMissionPool } from './weeklyMissions';
 // construção, não conseguem ver.
 // ---------------------------------------------------------------------------
 const app = readFileSync('src/App.tsx', 'utf8');
-const shop = readFileSync('src/components/ShopModal.tsx', 'utf8');
+// minimal-ui F5: as missões da semana moram no Torneio (Arena), aba Missões.
+const torneio = readFileSync('src/components/TournamentPage.tsx', 'utf8');
 
 describe('as missões semanais estão plugadas', () => {
   it('existe UM ponto de contagem, e ele vira a semana no mesmo updater', () => {
@@ -50,10 +51,11 @@ describe('as missões semanais estão plugadas', () => {
   });
 
   it('a lista chega à tela', () => {
-    expect(app).toContain('weeklyMissions={missoesDaSemana}');
-    expect(app).toContain('onClaimWeekly={resgatarMissao}');
+    // Chega ao Torneio pelo objeto `tournament` do `AreaView` (minimal-ui F5).
+    expect(app).toMatch(/weeklyMissions[:=] ?\{?missoesDaSemana/);
+    expect(app).toMatch(/onClaimWeekly[:=] ?\{?resgatarMissao/);
     // No segmento do Torneio: é onde os Emblemas são gastos, e a missão é de
     // onde eles vêm — a torneira e o ralo na mesma tela.
-    expect(shop).toMatch(/seg === 'tournament' && \(weeklyMissions\?\.length/);
+    expect(torneio).toMatch(/tab === 'missions' && \(\s*<WeeklyMissionList[^>]*weeklyMissions=\{weeklyMissions/);
   });
 });

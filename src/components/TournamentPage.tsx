@@ -52,6 +52,14 @@
  * visor 288×112 da arena e as duas criaturas a 64 na vitória.
  */
 import { useEffect, useState } from 'react';
+import type { Language } from '../utils/i18n';
+import { TOURNAMENT_TIERS } from '../utils/tournamentTiers';
+import { tournamentShopItems } from '../utils/mercadoCatalog';
+import type { WeeklyMission, WeeklyMissionId } from '../utils/weeklyMissions';
+import {
+  CurrencyBalance, ShopShelf, ShopStatus, WeeklyMissionList, useShopFlash,
+  type ShopActions, type ShopOwnership,
+} from './mercado/ShopShelf';
 import { getSpriteForStage } from '../utils/sprites';
 import { lineIconForStage } from '../utils/lineIcons';
 import { getStageLevel } from '../types/progression';
@@ -88,6 +96,13 @@ interface TournamentPageProps {
    *  derrota rende XP igual (menos que a vitória, mas rende), e deduzir o
    *  resultado a partir do número de Emblemas seria regra copiada. */
   onMatchPlayed: (won: boolean) => void;
+  /** WP4.7 — as 3 missões da semana + progresso, prontas (moram no save). */
+  weeklyMissions?: { mission: WeeklyMission; count: number; done: boolean; claimed: boolean }[];
+  /** Paga os Emblemas de uma missão pronta. Idempotente do outro lado. */
+  onClaimWeekly?: (id: WeeklyMissionId) => void;
+  /** A loja de Emblemas (minimal-ui F5: mora no Torneio, na Arena). A
+   *  compra continua sendo do `handleShopBuy`; aqui só a prateleira. */
+  shop?: { ownership: ShopOwnership; actions: ShopActions };
 }
 
 /** Emblemas: serifa de medalha (regra das três moedas) em ouro-TINTA. */
@@ -160,8 +175,9 @@ function Switch({ checked, onToggle, label, disabled = false }: {
   );
 }
 
-export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trophies, language, emblems, onEarnEmblems, totalXP, onMatchPlayed }: TournamentPageProps) {
+export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trophies, language, emblems, onEarnEmblems, totalXP, onMatchPlayed, weeklyMissions, onClaimWeekly, shop }: TournamentPageProps) {
   const isPt = language === 'pt-BR';
+  const lang: Language = isPt ? 'pt-BR' : 'en-US';
   const [opponents, setOpponents] = useState<Opponent[] | null>(null);
   /** `null` = o servidor não disse quantas sobraram (offline ou resposta velha). */
   const [matchesLeft, setMatchesLeft] = useState<number | null>(null);
@@ -196,7 +212,11 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
   const visibleRank = rankExpanded || myIndex < 0
     ? rankRows
     : rankRows.slice(Math.max(0, myIndex - RANK_WINDOW), myIndex + RANK_WINDOW + 1);
-  const [tab, setTab] = useState<'arena' | 'rank'>('arena');
+  /* minimal-ui F5 — a folha do Torneio abre na FAIXA (mock aprovado,
+     `propostas/arena/mock.html`): é a leitura que mede o jogador contra ele
+     mesmo, e por isso vem antes de desafiar e antes do ranking. */
+  const [tab, setTab] = useState<'rank' | 'arena' | 'missions' | 'shop'>('rank');
+  const { flash, say } = useShopFlash();
 
   const loadOpponents = () => {
     if (!pvpEnabled) return;
@@ -254,34 +274,22 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
   };
 
   const TABS = [
-    { key: 'arena' as const, icon: 'swords', label: isPt ? 'Arena' : 'Arena' },
-    { key: 'rank' as const, icon: 'leaderboard', label: isPt ? 'Ranking' : 'Ranking' },
+    { key: 'rank' as const, label: isPt ? 'Faixa' : 'Tier' },
+    { key: 'arena' as const, label: isPt ? 'Desafiar' : 'Challenge' },
+    { key: 'missions' as const, label: isPt ? 'Missões' : 'Missions' },
+    ...(shop ? [{ key: 'shop' as const, label: isPt ? 'Loja' : 'Shop' }] : []),
   ];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 24 }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <h1
-            style={{
-              fontFamily: 'var(--sm2-font-display)',
-              fontSize: 'var(--sm2-text-xl)',
-              fontWeight: 600,
-              lineHeight: 'var(--sm2-leading-title)',
-              color: 'var(--sm2-ink)',
-              margin: 0,
-            }}
-          >
-            {isPt ? 'Torneio' : 'Tournament'}
-          </h1>
-          <p style={{ ...sm2Hint, marginTop: 4 }}>
-            {isPt ? 'Desafie os pets de outros jogadores.' : "Challenge other players' pets."}
-          </p>
-        </div>
-        {/* Emblemas: ícone em ouro + número com serifa. As três moedas
-            continuam impossíveis de confundir. */}
+      {/* minimal-ui F5 — o título "Torneio" é do `AreaSheet`; aqui fica a
+          rodada da semana (RITUAL, não tranca — `utils/tournamentSeason.ts`)
+          e os Emblemas, ícone em ouro + número com serifa: as três moedas
+          continuam impossíveis de confundir. */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <p style={{ ...sm2Hint, flex: 1, minWidth: 0, margin: 0 }}>{tournamentWindowLabel(round, isPt ? 'pt-BR' : 'en-US')}</p>
         <span
-          title={isPt ? 'Emblemas — só compram itens da aba Torneio na loja' : 'Emblems — only buy Tournament items in the shop'}
+          title={isPt ? 'Emblemas — só compram os prêmios do Torneio' : 'Emblems — only buy Tournament rewards'}
           aria-label={`${isPt ? 'Emblemas' : 'Emblems'}: ${emblems}`}
           style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, minHeight: 28 }}
         >
@@ -330,7 +338,14 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
 
           📝 Copy FUNCIONAL — diz a coisa certa, mas não passou pelo redator.
           A voz é pendente do `alpha-redator-ux`. */}
-      {(() => {
+      <PixelTabs
+        items={TABS.map(t => ({ key: t.key, label: t.label }))}
+        value={tab}
+        onChange={setTab}
+        ariaLabel={isPt ? 'Seções do torneio' : 'Tournament sections'}
+      />
+
+      {tab === 'arena' && (() => {
         const liberado = meetsPvpBond(totalXP);
         const podeMexer = liberado || pvpEnabled;
         const faltam = xpToPvpBond(totalXP);
@@ -377,23 +392,6 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
           </div>
         );
       })()}
-
-      {/* A rodada semanal é RITUAL, não tranca: fora dela o Torneio continua
-          inteiro disponível. Trancar conteúdo fora de um horário é o erro dos
-          Remote Raid Passes de 2023 — quem não consegue estar lá na hora
-          combinada não se esforça mais, sai. Ver utils/tournamentSeason.ts.
-          Aberto × fechado é dito pela TINTA e pelo ícone, nunca por um
-          `#facc15` cravado nem por emoji do sistema. */}
-      <p style={sm2Hint}>{tournamentWindowLabel(round, isPt ? 'pt-BR' : 'en-US')}</p>
-
-      {/* Duas abas com sublinhado ciano (SIS-04, como a Ficha) — a mesma
-          pista da nav: uma barra não é uma caixa. */}
-      <PixelTabs
-        items={TABS.map(t => ({ key: t.key, iconName: t.icon, label: t.label }))}
-        value={tab}
-        onChange={setTab}
-        ariaLabel={isPt ? 'Seções do torneio' : 'Tournament sections'}
-      />
 
       {tab === 'arena' && !pvpEnabled && (
         <div style={{ ...cardStyle, textAlign: 'center', padding: 12 }}>
@@ -535,6 +533,30 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
                 </p>
               </div>
 
+              {/* As cinco faixas em fila (mock aprovado): as já passadas em
+                  ouro, a atual em ciano, as próximas em `muted`. Só sobe. */}
+              <ol aria-label={isPt ? 'Faixas do Torneio' : 'Tournament tiers'} style={{ display: 'flex', justifyContent: 'space-between', gap: 4, listStyle: 'none', margin: 0, padding: 0 }}>
+                {TOURNAMENT_TIERS.map((t, mine) => {
+                  const idx = TOURNAMENT_TIERS.findIndex(x => x.id === standing.tier.id);
+                  const on = mine === idx;
+                  const passed = mine < idx;
+                  return (
+                    <li
+                      key={t.id}
+                      data-tier={t.id}
+                      data-tier-state={on ? 'current' : passed ? 'passed' : 'next'}
+                      aria-current={on ? 'step' : undefined}
+                      style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}
+                    >
+                      <Icon name={TIER_ICON[t.id] ?? 'military_tech'} size={24} fill={on || passed ? 1 : 0} tone={on ? 'primary' : passed ? 'gold' : 'muted'} />
+                      <span style={{ ...sm2Hint, fontSize: 'var(--sm2-text-xs)', fontWeight: on ? 600 : 400, color: on ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>
+                        {isPt ? t.namePt : t.nameEn}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ol>
+
               {/* Progresso DENTRO da faixa, em `gold-fill` — só sobe. */}
               <PixelMeter ratio={standing.progress} tone="gold" height={12} label={isPt ? 'Progresso na faixa' : 'Tier progress'} />
 
@@ -608,6 +630,37 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
               {isPt ? 'Ver a season inteira' : 'See the whole season'}
             </button>
           )}
+        </div>
+      )}
+
+      {/* ─── AS MISSÕES DA SEMANA ──────────────────────────────────────────
+          Pagas em Emblemas, e por isso moram aqui: a torneira e o ralo na
+          mesma folha. Nenhuma premia CONTAGEM DE TAREFAS (há teste). */}
+      {tab === 'missions' && (
+        <WeeklyMissionList language={lang} weeklyMissions={weeklyMissions ?? []} onClaimWeekly={onClaimWeekly} />
+      )}
+
+      {/* ─── A LOJA DE EMBLEMAS ────────────────────────────────────────────
+          Só cosmético (`tournamentShopItems` filtra; há teste), só Emblemas —
+          saldo e preço na MESMA moeda, nenhuma outra aparece aqui. */}
+      {tab === 'shop' && shop && (
+        <div data-tournament-shop style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <ShopStatus flash={flash} idle={isPt ? 'Emblemas só vêm do Torneio — e só compram cosmético.' : 'Emblems only come from the Tournament — and only buy cosmetics.'} />
+            </div>
+            <CurrencyBalance currency="emblems" value={emblems} language={lang} />
+          </div>
+          <ShopShelf
+            language={lang}
+            items={tournamentShopItems()}
+            currency="emblems"
+            balance={emblems}
+            ownership={shop.ownership}
+            actions={shop.actions}
+            say={say}
+            flash={flash}
+          />
         </div>
       )}
 

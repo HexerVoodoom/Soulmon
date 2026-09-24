@@ -23,3 +23,20 @@ export const AREA_NPC_ART: Record<AreaId, string> = {
   exploracao: npcExploracao,
   hall: npcHall,
 };
+
+import npcLojaItens from './npc-loja-itens.png';
+import npcLojaDecoracao from './npc-loja-decoracao.png';
+import npcLojaBackground from './npc-loja-background.png';
+
+/**
+ * Os vendedores das lojinhas do Mercado (minimal-ui F5), um por lojinha, como
+ * no mock `propostas/loja/mock.html`. Originais em `npcs/final/npc-loja-*.png`
+ * (768², alfa real). ⚠️ São os rascunhos em média qualidade — refazer em alta
+ * está na fila (`BACKLOG-CREDITOS.md` #5–#7). Conquistas ainda não tem NPC
+ * próprio (#1, o carneiro paladino): cai no anfitrião do Mercado.
+ */
+export const STALL_NPC_ART = {
+  itens: npcLojaItens,
+  decoracao: npcLojaDecoracao,
+  background: npcLojaBackground,
+} as const;

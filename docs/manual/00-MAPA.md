@@ -189,7 +189,7 @@ Quatro campos por linha, e nenhum fica vazio: onde **ler**, o **dono** (o símbo
 | Barra de conversa (`ChatBox`) | 03 §4.3 | `src/components/ChatBox.tsx` + `functions/api/chat.js` | `src/security/supabase.contract.test.ts` | 10 §7 |
 | Página Atividades | 03 §4.4 | `src/components/ActivitiesPage.tsx` | `src/utils/activityCreate.contract.test.ts` | 10 §2 |
 | Lista de atividades e seus modais | 03 §4.5 | `src/components/EditModal.tsx`, `src/hooks/useItemForm.ts` | `src/utils/habitCreate.test.ts` | 10 §2 |
-| Loja (abas) | 03 §4.6 | `src/components/ShopModal.tsx` + `src/utils/shopBuy.ts` | `src/utils/shopBuy.test.ts` | 10 §6 |
+| Loja (abas) | 03 §4.6 | `src/components/mercado/MercadoSheets.tsx` (⚰️ `ShopModal`, 24/09/2026) + `src/utils/mercadoCatalog.ts` + `src/utils/shopBuy.ts` | `src/utils/shopBuy.test.ts` | 10 §6 |
 | Página Soulmon | 03 §4.7 | `src/App.tsx` (`currentView === 'pet'`) | `nenhuma` | 10 §11 |
 | Estatísticas (inclui bestiário) | 03 §4.8 | `src/App.tsx` (`currentView === 'stats'`) | `src/utils/sprites.dungeonRoster.test.ts` | 10 §6 |
 | `OraclePage` (inalcançável pela navegação) | 03 §4.9 | `src/components/OraclePage.tsx` | `src/utils/oracle.test.ts` | 10 §3 |

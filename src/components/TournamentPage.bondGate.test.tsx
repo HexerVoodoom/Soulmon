@@ -13,9 +13,21 @@
  * tela ANTES do gesto, não num termo que ninguém abre.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { render as rtlRender, screen, cleanup, fireEvent } from '@testing-library/react';
 import { TournamentPage } from './TournamentPage';
 import { xpForLevel, BOND_PVP_MIN_LEVEL } from '../utils/bond';
+
+/**
+ * minimal-ui F5 — a folha do Torneio abre na Faixa; o interruptor do PvP e o
+ * aviso do nick moram na aba de desafiar, que é onde o gesto acontece. O
+ * `render` daqui abre a folha e vai direto para essa aba — a intenção dos
+ * testes (o gate e o aviso ANTES do gesto) não mudou.
+ */
+function render(ui: Parameters<typeof rtlRender>[0]) {
+  const r = rtlRender(ui);
+  fireEvent.click(screen.getByRole('tab', { name: /Desafiar|Challenge/ }));
+  return r;
+}
 
 const props = {
   saveId: 'a'.repeat(32),

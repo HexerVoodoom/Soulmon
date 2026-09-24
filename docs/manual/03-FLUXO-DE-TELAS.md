@@ -959,8 +959,8 @@ type ShopSegment = 'shop' | 'tournament';
   eager em `BG_THUMBS`); cenário sem miniatura cai na ilustração 1200×648
   reduzida por CSS, ⚰️ que era o caminho de todos até então ("transição
   declarada").
-- **Dono**: `src/components/ShopModal.tsx` · **Régua**:
-  `ShopModal.missoes.render.test.tsx`, `ShopModal.convitePassivo.render.test.tsx`,
+- **Dono**: `src/components/mercado/MercadoSheets.tsx` · **Régua**:
+  `mercado/MercadoSheets.render.test.tsx`, `mercadoCatalog.test.ts`,
   `src/utils/weeklyMissions.fiacao.test.ts`.
 
 ### 4.6a Loja — o card sem saldo (medido em 13/09/2026, a pedido do inventário de wireframes)
@@ -1006,16 +1006,16 @@ const failing = flash?.id === item.id && !flash.ok;               // 2600 ms
   minijogo, nem convite de Créditos no ponto da recusa.
 
 ⚠️ **A frase é a mesma para as duas recusas de `shopBuyRefusal`** (`'no-funds'`
-e `'already-owned'`): o `ShopModal` lê só o `boolean`, nunca o motivo. Na prática
+e `'already-owned'`): a prateleira (`mercado/ShopShelf.tsx`) lê só o `boolean`, nunca o motivo. Na prática
 só `'no-funds'` chega pelo card, pelo desvio de ação descrito acima.
 
-**Dono**: `src/components/ShopModal.tsx` (`buy`, `say`, `affordable`, `failing`)
+**Dono**: `src/components/mercado/ShopShelf.tsx` (`buy`, `say`, `affordable`, `failing`)
 para a TELA; a regra é de `src/utils/shopBuy.ts` (`shopBuyRefusal`, reconferida
 sobre o `prev` em `applyShopBuy`) e do `handleShopBuy` (`src/App.tsx`) ·
 **Régua**: `src/utils/shopBuy.test.ts` (a recusa `'no-funds'` e o duplo clique
-com saldo exatamente igual ao preço). ⚠️ **O ESTADO VISUAL não tem régua** —
-`grep -n "Saldo\|afford" src/components/ShopModal.missoes.render.test.tsx src/components/ShopModal.convitePassivo.render.test.tsx`
-não devolve nada (13/09/2026).
+com saldo exatamente igual ao preço) e, para o ESTADO VISUAL (preço em tinta
+`muted`, filete e região em `gold-ink`, nunca `danger`), desde 24/09/2026
+`src/components/mercado/MercadoSheets.render.test.tsx` ("saldo insuficiente").
 
 ### 4.6b Loja — a troca Créditos → Bits (medido em 13/09/2026, a pedido do inventário de wireframes)
 

@@ -14,7 +14,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 - **Atividades e tarefas:** [`ActivitiesPage.tsx`](#srccomponentsactivitiespagetsx) · [`DailyRituals.tsx`](#srccomponentsdailyritualstsx) · [`CreateModal.tsx`](#srccomponentscreatemodaltsx) · [`EditModal.tsx`](#srccomponentseditmodaltsx) · [`TaskEditModal.tsx`](#srccomponentstaskeditmodaltsx) · [`TaskMeta.tsx`](#srccomponentstaskmetatsx) · [`TriagePile.tsx`](#srccomponentstriagepiletsx) · [`QuickAddBar.tsx`](#srccomponentsquickaddbartsx) · [`EvolveTaskModal.tsx`](#srccomponentsevolvetaskmodaltsx) · [`HabitConstancy.tsx`](#srccomponentshabitconstancytsx) · [`MilestoneCeremony.tsx`](#srccomponentsmilestoneceremonytsx) · [`MorningCheckIn.tsx`](#srccomponentsmorningcheckintsx) · [`WeeklyReportCard.tsx`](#srccomponentsweeklyreportcardtsx) · [`FirstDayCard.tsx`](#srccomponentsfirstdaycardtsx)
 - **Evolução:** [`EvolutionPath.tsx`](#srccomponentsevolutionpathtsx) · [`EvolutionCeremony.tsx`](#srccomponentsevolutionceremonytsx) · [`EvoTrail.tsx`](#srccomponentsevotrailtsx) · [`FormAlbum.tsx`](#srccomponentsformalbumtsx) · [`BestiaryCard.tsx`](#srccomponentsbestiarycardtsx) · [`RebirthModal.tsx`](#srccomponentsrebirthmodaltsx)
 - **Jogos:** [`DungeonGame.tsx`](#srccomponentsdungeongametsx) · [`ArenaGame.tsx`](#srccomponentsarenagametsx) · [`DinoGame.tsx`](#srccomponentsdinogametsx) · [`RPSGame.tsx`](#srccomponentsrpsgametsx) · [`pixel/TimingBar.tsx`](#srccomponentspixeltimingbartsx) · [`games/GameKit.tsx`](#srccomponentsgamesgamekittsx)
-- **Loja e economia:** [`ShopModal.tsx`](#srccomponentsshopmodaltsx) · [`home/Mochila.tsx`](#srccomponentshomemochilatsx) · [`ItemsWindow.tsx`](#srccomponentsitemswindowtsx) · [`CreditsModal.tsx`](#srccomponentscreditsmodaltsx) · [`UnlockAccountModal.tsx`](#srccomponentsunlockaccountmodaltsx)
+- **Loja e economia:** [`mercado/MercadoSheets.tsx`](#srccomponentsmercadomercadosheetstsx) · [`mercado/ShopShelf.tsx`](#srccomponentsmercadoshopshelftsx) · [`home/Mochila.tsx`](#srccomponentshomemochilatsx) · [`ItemsWindow.tsx`](#srccomponentsitemswindowtsx) · [`CreditsModal.tsx`](#srccomponentscreditsmodaltsx) · [`UnlockAccountModal.tsx`](#srccomponentsunlockaccountmodaltsx)
 - **Rituais e relatórios:** [`DailyReportModal.tsx`](#srccomponentsdailyreportmodaltsx) · [`MemoriesCard.tsx`](#srccomponentsmemoriescardtsx) · [`BalanceWeekModal.tsx`](#srccomponentsbalanceweekmodaltsx) · [`ProtectProgressModal.tsx`](#srccomponentsprotectprogressmodaltsx) · [`StatsPage.tsx`](#srccomponentsstatspagetsx) · [`BirthCard.tsx`](#srccomponentsbirthcardtsx)
 - **Conta e configurações:** [`SettingsPage.tsx`](#srccomponentssettingspagetsx) · ⚰️ [`SettingsModal.tsx`](#srccomponentssettingsmodaltsx) (apagado em `4a8b8049`) · [`FeedbackLink.tsx`](#srccomponentsfeedbacklinktsx) · [`TermsUpdateBanner.tsx`](#srccomponentstermsupdatebannertsx) · [`AccountSection.tsx`](#srccomponentsaccountsectiontsx) · [`AccountDataSection.tsx`](#srccomponentsaccountdatasectiontsx) · [`AISettingsModal.tsx`](#srccomponentsaisettingsmodaltsx) · [`NotificationManager.tsx`](#srccomponentsnotificationmanagertsx) · [`InstallPrompt.tsx`](#srccomponentsinstallprompttsx) · [`GuideModal.tsx`](#srccomponentsguidemodaltsx) · [`HelpModal.tsx`](#srccomponentshelpmodaltsx) · [`GameTutorialFlow.tsx`](#srccomponentsgametutorialflowtsx) · [`WelcomePromptModal.tsx`](#srccomponentswelcomepromptmodaltsx) · [`CityPicker.tsx`](#srccomponentscitypickertsx)
 - **Onboarding e oráculo:** [`SoulmonOnboarding.tsx`](#srccomponentssoulmononboardingtsx) · [`OraclePage.tsx`](#srccomponentsoraclepagetsx) · [`SoulTestItem.tsx`](#srccomponentssoultestitemtsx) · [`AlignmentIcons.tsx`](#srccomponentsalignmenticonstsx) · [`PixelizerCard.tsx`](#srccomponentspixelizercardtsx) · [`NewReadingModal.tsx`](#srccomponentsnewreadingmodaltsx)
@@ -123,6 +123,33 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Chamado por:** `src/App.tsx`.
 **Régua:** `src/components/nav/nav.render.test.tsx`.
 
+### `src/components/arena/DueloSheet.tsx`
+**Dono de:** a folha do lote **Duelo** da Arena (minimal-ui F5, 24/09/2026) — mostra a ficha (elemento e habilidade especial do estágio, de `soulmonSkills`; sem ficha no aparelho, o par padrão) e abre a `ArenaGame` em tela cheia. Não decide nada da luta: rodadas (`ARENA_ROUNDS`), balanceamento e recompensa (Bits) continuam na `ArenaGame`.
+**Props principais:** `language`, `evolutionStage`, `skills?`, `onStart`.
+**Exports:** `DueloSheet(props)`.
+**Chamado por:** `src/components/nav/AreaView.tsx` (lazy, dentro do `AreaSheet` da Arena).
+**Régua:** `src/components/arena/arenaSheets.render.test.tsx`.
+
+### `src/components/mercado/MercadoSheets.tsx`
+**Dono de:** o conteúdo das 4 lojinhas do Mercado (minimal-ui F5, 24/09/2026; mock `propostas/loja/mock.html`) — `MercadoStallSheet` (Itens / Decoração / Background, com abas POR MOEDA vindas de `STALL_CURRENCIES`; saldo sempre da moeda da aba; aba de Créditos = a troca Créditos → Bits + o convite passivo `UnlockNudge reason="shop"` só para `demo`) e `ConquistasSheet` (as missões de `utils/missions.ts` filtradas por `category`, sem moeda nenhuma; sem "0/N" sem progresso — WP4.12). Substitui a `ShopModal` (⚰️ 24/09/2026).
+**Props principais:** `MercadoStallProps` — `stall`, `language`, `points`/`emblems`/`credits`, posse (`ownedBackgrounds`, `equippedBackground`, `ownedFurniture`, `equippedDecor`, `missionProgress`), `onBuy`/`onEquip`/`onEquipFurniture`, `onExchangeCredits`, `accountTier?`, `onUnlock?`.
+**Exports:** `MercadoStallSheet(props)`, `MercadoStallProps`, `ConquistasSheet(props)`.
+**Chamado por:** `src/components/nav/AreaView.tsx` (lazy, dentro do `AreaSheet` do Mercado).
+**Régua:** `src/components/mercado/MercadoSheets.render.test.tsx`, `src/utils/mercadoCatalog.test.ts`, `src/components/ofertaDoisCanais.contract.test.ts`.
+
+### `src/components/mercado/ShopShelf.tsx`
+**Dono de:** as peças da loja (canvas Loja, D-L1…D-L11), extraídas da `ShopModal` para servir o Mercado e a loja de Emblemas do Torneio — o card de item (mini-visor, estados por FORMA: travado, equipado, comprado, sem saldo em âmbar), o saldo de UMA moeda, a região `status`, a troca Créditos → Bits e a lista das missões da semana. Não decide compra: `onBuy` é o `handleShopBuy` do `App.tsx`; a prateleira descarta item de outra moeda (defesa das três moedas).
+**Exports:** `ShopShelf(props)`, `CurrencyBalance(props)`, `CreditExchange(props)`, `WeeklyMissionList(props)`, `ShopStatus(props)`, `useShopFlash()`, `Bits(props)`, `shopTagStyle`, `ShopFlash`, `ShopOwnership`, `ShopActions`.
+**Chamado por:** `src/components/mercado/MercadoSheets.tsx`, `src/components/TournamentPage.tsx`.
+**Régua:** `src/components/mercado/MercadoSheets.render.test.tsx`, `src/components/arena/arenaSheets.render.test.tsx`, `src/utils/weeklyMissions.fiacao.test.ts`.
+
+### `src/components/nav/AreaView.tsx`
+**Dono de:** UMA área do Mapa inteira (minimal-ui F5, 24/09/2026) — a `AreaScene`, o lote aberto (`AreaSheet`, estado LOCAL; o `App` monta com `key` da view, então trocar de área fecha a folha) e o conteúdo: no Mercado as 4 lojinhas (fundo, arte dos lotes e os vendedores de `STALL_NPC_ART`), na Arena o Torneio (`TournamentPage` com a loja de Emblemas) e o Duelo (`DueloSheet` → `ArenaGame` em tela cheia); nas outras 4 áreas, o lote de exemplo do molde F4. Entra por `lazy()` no `App` para ficar fora do chunk de entrada (orçamento de bytes, decisão #31). Não decide regra: compra, troca, partida e luta chegam prontas por props.
+**Props principais:** `AreaViewProps` — `area`, `language`, `ownership`/`actions` (os mesmos para Mercado e Torneio), `points`/`emblems`/`credits`, `onExchangeCredits`, `accountTier?`/`onUnlock?`, `tournament` (as props do `TournamentPage` menos `shop`), `evolutionStage`, `demoCharacterId?`, `skills?`, `onEarnPoints`.
+**Exports:** `AreaView(props)`, `AreaViewProps`.
+**Chamado por:** `src/App.tsx` (lazy).
+**Régua:** `src/components/nav/areaShell.render.test.tsx` (o molde), `src/components/mercado/MercadoSheets.render.test.tsx`, `src/components/arena/arenaSheets.render.test.tsx`.
+
 ### `src/components/nav/CornerLink.tsx`
 **Dono de:** o link de canto entre as duas telas de topo — Mapa no canto inferior direito da Home, Home no canto inferior esquerdo do Mapa. Glifo pelado de 32 (papel `nav`), alvo 56 no botão.
 **Props principais:** `icon: NavGlyphName`, `label`, `side: 'left' | 'right'`, `onClick`.
@@ -132,16 +159,16 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 
 ### `src/components/nav/AreaScene.tsx`
 **Dono de:** o MOLDE de uma área do Mapa (minimal-ui F4) — fundo de cena, "lotes" (construções clicáveis, posicionadas em % sobre a cena) e o NPC anfitrião da área com balão de fala (a fala vem de `src/utils/areaNpcVoice.ts`, nunca escrita aqui). Não decide o conteúdo de cada folha — isso é F5.
-**Props principais:** `areaId: AreaId`, `language`, `lots: AreaLot[]` (`id`, `label`, `left`/`top`, `ariaLabel`, `onOpen`), `children?` (onde entra o `AreaSheet` aberto, no mesmo empilhamento da cena).
+**Props principais:** `areaId: AreaId`, `language`, `lots: AreaLot[]` (`id`, `label`, `left`/`top`, `ariaLabel`, `onOpen`, `art?` — a arte isométrica do lote, desde F5), `background?` (fundo pintado 9:16 em `cover`, desde F5; sem ele, o degradê de tokens), `children?` (onde entra o `AreaSheet` aberto, no mesmo empilhamento da cena).
 **Exports:** `AreaScene(props)`, `AreaLot` (interface).
-**Chamado por:** `src/App.tsx`.
+**Chamado por:** `src/components/nav/AreaView.tsx`.
 **Régua:** `src/components/nav/areaShell.render.test.tsx`.
 
 ### `src/components/nav/AreaSheet.tsx`
 **Dono de:** a folha (bottom-sheet) de um lote de área (minimal-ui F4) — `min-height: 62%`, o NPC da área espiando ATRÁS/ACIMA da folha (nunca dentro do conteúdo rolável), backdrop fecha ao tocar fora, Escape fecha, foco vai para o botão de fechar ao abrir. Só o MOLDE: o conteúdo de cada folha por área é F5 (aqui é sempre `children` — placeholder até lá).
-**Props principais:** `areaId: AreaId`, `title`, `closeLabel`, `open`, `onClose`, `children`.
+**Props principais:** `areaId: AreaId`, `title`, `closeLabel`, `open`, `onClose`, `npcArt?` (NPC próprio da lojinha — F5, os vendedores do Mercado; sem ele, o anfitrião da área), `children`.
 **Exports:** `AreaSheet(props)`.
-**Chamado por:** `src/App.tsx`.
+**Chamado por:** `src/components/nav/AreaView.tsx`.
 **Régua:** `src/components/nav/areaShell.render.test.tsx`.
 
 ### `src/components/home/Mochila.tsx`
@@ -635,15 +662,6 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** `src/components/SettingsPage.sobre.render.test.tsx` (aviso de IA PT/EN com sons e "sem revisão humana", link da política por idioma, `mailto:` com versão e trecho do `saveId`; +4 em `592e2c14`: Termos PT/EN com `#en` e "(abre em nova aba)" no nome acessível, `mailto:` sem o sufixo, `subject` por idioma + `BUILD_ID` no corpo), `src/components/settingsTelemetry.render.test.tsx` e, para o grupo Som, `src/components/settingsSom.render.test.tsx` (as duas chaves em PT/EN, o toque chega ao dono, sem `onToggleSound` o grupo não monta).
 **Avisos do arquivo:** era ONZE cartões empilhados na ordem histórica de implementação — hoje nove grupos (`grep -c "<Group title=" src/components/SettingsPage.tsx` → 9, 21/09/2026; ⚰️ "cinco" era a contagem de 09/09/2026); o que é avançado (código de recuperação, restauração manual) vive atrás de revelação.
 
-### `src/components/ShopModal.tsx`
-**Dono de:** a Loja — dois segmentos por MOEDA (Bits/Torneio), missões embutidas no próprio card bloqueado.
-**Props principais:** sem interface nomeada no trecho lido — recebe inventário do save, saldo de Bits/Emblemas, `language` e callbacks de compra (arquivo de 487 linhas — corrigido de "488" por doc-verificador, `wc -l`, 10/09/2026).
-**Exports:** `ShopModal(props)`.
-**Estado/efeitos relevantes:** `useState` (`seg: ShopSegment`, `flash`, `exchanging`); lê `SHOP_ITEMS`/`TOURNAMENT_ITEMS` de `src/utils/shop.ts`, `MISSIONS`/`isShopItemUnlocked` de `src/utils/missions.ts`; renderiza `UnlockNudge`. Desde `66e32d43` (21/09/2026, R2-1) o mini-visor de cenário (96×52) usa `BG_THUMBS` — glob eager de `assets/backgrounds/thumbs/<id>.png`, no molde de `attackFxArt.ts`; cenário sem miniatura cai na ilustração 1200×648 reduzida por CSS (`bgImage(bg.css)`), o que era antes.
-**Chamado por:** `grep -rl "from '.*/ShopModal'" src` (testes); consumo real em `src/App.tsx` via `lazy(() => import('./components/ShopModal'))` (09/09/2026).
-**Régua:** `src/components/ShopModal.convitePassivo.render.test.tsx`, `.missoes.render.test.tsx`.
-**Avisos do arquivo:** as 5 abas antigas (Itens/Cenários/Mobílias/Torneio/Missões) viraram 2 segmentos — a única troca de contexto real é a MOEDA (Bits/Emblemas não se misturam, regra de produto); a aba Missões morreu — o card bloqueado agora diz a missão e o progresso na própria linha; toda arte de ícone de interface (8 PNGs + 15 símbolos de terceiro) saiu — o card mostra o que o item É (prévia CSS, arte pixel, emoji).
-
 ### `src/components/SoulTestItem.tsx`
 **Dono de:** desenha UMA pergunta do teste de personalidade (Likert/escolha forçada/cenário) — usado tanto no onboarding quanto na `OraclePage`.
 **Props principais:** `SoulTestItemProps` — `item: Item`, resposta atual, callback de resposta, `optionStyle?` (agora com padrão `choiceStyle` de `form/FormKit.tsx`, em vez de exigir que todo chamador passasse o próprio estilo).
@@ -726,12 +744,12 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Avisos do arquivo:** roxo do assombro (`--sm2-*`, não mais hex cru `#7c5cbf`) — NÃO é vermelho, é a mecânica; opacidade global (`opacity: 0.72`) foi removida porque derrubava o contraste de todo o conteúdo junto (chips caíam para 2,94:1); tarefa assombrada anuncia bônus de alívio, é mini-chefe, não acusação.
 
 ### `src/components/TournamentPage.tsx`
-**Dono de:** a página do Torneio (PvP assíncrono) — faixa de constância ANTES do ranking, ranking em janela de ±3 posições, placar de derrota em tinta neutra.
-**Props principais:** `TournamentPageProps` — `saveId`, `pvpEnabled` (gate de vínculo mínimo), `language`, callbacks de partida.
+**Dono de:** o conteúdo da folha **Torneio** da Arena (PvP assíncrono; desde minimal-ui F5, 24/09/2026, mora dentro do `AreaSheet` — o `<h1>` saiu, o título é da folha). Abas: **Faixa** (abre nela — as 5 faixas em fila, progresso, ranking em janela de ±3), **Desafiar** (opt-in do PvP com o gate de Vínculo e o aviso do nick, oponentes), **Missões** (as missões da semana, pagas em Emblemas) e **Loja** (os prêmios de `TOURNAMENT_ITEMS`, só cosmético, só Emblemas). Placar de derrota em tinta neutra.
+**Props principais:** `TournamentPageProps` — `saveId`, `pvpEnabled` (gate de vínculo mínimo), `language`, callbacks de partida, `weeklyMissions?`/`onClaimWeekly?` (antes na `ShopModal`), `shop?` (`ownership` + `actions` da prateleira; sem ele, não há aba Loja).
 **Exports:** `TournamentPage(props)`.
 **Estado/efeitos relevantes:** `useState` para `opponents`, `matchesLeft`, `loadFailed`, `rank`, `rankFailed`, `fighting`, `result`, `fightError`, `rankExpanded`, `tab`; `useEffect` (`loadOpponents`) recarrega ao mudar `pvpEnabled`/`saveId`; partida resolvida no servidor (`playMatch`), sem frame de combate local. Desde `66e32d43` (21/09/2026, R2-2 — D-J13 cumprida) a criatura do oponente (mini-visor 64) e a do ranking (mini-visor 32, a cabeça) vêm de `lineIconForStage(stage, 64 | 32)` (`utils/lineIcons.ts`), `pixelated`; quando o estágio não é de linha cai em `getSpriteForStage` (0,25× / 0,125× com filtro `auto`).
 **Chamado por:** `grep -rl "from '.*/TournamentPage'" src` → `src/components/TournamentPage.bondGate.test.tsx`; consumo real em `src/App.tsx` via `lazy(() => import('./components/TournamentPage'))` (09/09/2026).
-**Régua:** `src/components/TournamentPage.bondGate.test.tsx`.
+**Régua:** `src/components/TournamentPage.bondGate.test.tsx`, `src/components/arena/arenaSheets.render.test.tsx`, `src/utils/weeklyMissions.fiacao.test.ts`.
 **Avisos do arquivo:** cena de arena NÃO existe aqui — a moldura antiga (fundo pintado + véu) saiu inteira, junto da razão de a tela ser escura no tema claro; a FAIXA sempre vem ANTES do ranking (posição absoluta é associada a comparação tóxica); ranking é janela de ±3, nunca lista completa; derrota é tinta neutra, nunca vermelho.
 
 ### `src/components/TriagePile.tsx`

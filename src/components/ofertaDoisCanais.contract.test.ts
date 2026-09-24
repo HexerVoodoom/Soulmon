@@ -19,7 +19,9 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { shouldOfferAtValueMoment } from '../utils/offerMoment';
 
-const shop = readFileSync('src/components/ShopModal.tsx', 'utf8');
+// minimal-ui F5: a `ShopModal` saiu; o card passivo mora na lojinha de Itens
+// do Mercado, aba de Créditos.
+const shop = readFileSync('src/components/mercado/MercadoSheets.tsx', 'utf8');
 const report = readFileSync('src/components/DailyReportModal.tsx', 'utf8');
 const app = readFileSync('src/App.tsx', 'utf8');
 
@@ -35,10 +37,12 @@ describe('canal PASSIVO — a Loja', () => {
     expect(shop).toMatch(/accountTier === 'demo'/);
   });
 
-  it('fica no segmento da Loja, nunca no do Torneio', () => {
+  it('fica na aba de Créditos (dinheiro real), nunca na de Emblemas', () => {
     // O Torneio cobra em Emblemas, que são cosméticos por regra; misturar o
     // convite de dinheiro real ali embaralharia as três moedas.
-    expect(shop).toMatch(/seg === 'shop' && accountTier === 'demo'/);
+    expect(shop).toMatch(/cur === 'credits' && accountTier === 'demo'/);
+    const torneio = readFileSync('src/components/TournamentPage.tsx', 'utf8');
+    expect(torneio).not.toContain('<UnlockNudge');
   });
 
   it('está fiado no App', () => {
@@ -93,7 +97,8 @@ describe('o × é terminal, e só para o canal proativo', () => {
   it('mas o card da Loja NÃO depende disso', () => {
     // Dispensar o que te interrompe não é dizer que você nunca mais quer
     // procurar. O card passivo não lê `offerDismissed` em lugar nenhum.
-    const bloco = shop.slice(shop.indexOf("seg === 'shop' && accountTier"), shop.indexOf('AS MISSÕES DA SEMANA'));
+    const bloco = shop.slice(shop.indexOf("cur === 'credits' && accountTier"), shop.indexOf('</section>', shop.indexOf("cur === 'credits' && accountTier")));
+    expect(bloco).toContain('<UnlockNudge');
     expect(bloco).not.toContain('offerDismissed');
   });
 });
