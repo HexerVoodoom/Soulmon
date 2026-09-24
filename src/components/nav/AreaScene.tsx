@@ -27,12 +27,17 @@ export interface AreaLot {
   /** O que o leitor de tela anuncia ao focar o botão. */
   ariaLabel: string;
   onOpen: () => void;
+  /** Arte isométrica do lote (alfa real). Sem ela, o bloco neutro do molde F4. */
+  art?: string;
 }
 
-export function AreaScene({ areaId, language, lots, children }: {
+export function AreaScene({ areaId, language, lots, background, children }: {
   areaId: AreaId;
   language: Language;
   lots: AreaLot[];
+  /** Fundo pintado da área (9:16, `cover` centrado — minimal-ui F5). Sem ele,
+   *  o degradê de tokens do molde F4. */
+  background?: string;
   /** O `AreaSheet` aberto, se houver — filho para ficar no mesmo empilhamento da cena. */
   children?: ReactNode;
 }) {
@@ -51,7 +56,9 @@ export function AreaScene({ areaId, language, lots, children }: {
         // `docs/design/minimal-ui/BACKLOG-CREDITOS.md`): um degradê dos
         // tokens da própria área faz as vezes de cena até a arte chegar —
         // nunca uma cor inventada fora de `--sm2-*`.
-        background: 'radial-gradient(circle at 50% 20%, var(--sm2-surface-2), var(--sm2-bg) 75%)',
+        background: background
+          ? `url(${background}) center / cover no-repeat, var(--sm2-bg)`
+          : 'radial-gradient(circle at 50% 20%, var(--sm2-surface-2), var(--sm2-bg) 75%)',
       }}
     >
       {/* Os "lotes" — construções clicáveis, uma delas prova o molde (F4); o
@@ -73,7 +80,15 @@ export function AreaScene({ areaId, language, lots, children }: {
             background: 'transparent', border: 'none', padding: 0, cursor: 'pointer',
           }}
         >
-          <span
+          {lot.art ? (
+            <img
+              src={lot.art}
+              alt=""
+              aria-hidden="true"
+              data-area-lot-art
+              style={{ width: '100%', display: 'block', filter: 'drop-shadow(0 6px 6px rgba(0,0,0,.55))' }}
+            />
+          ) : <span
             aria-hidden="true"
             style={{
               width: '100%', aspectRatio: '1 / 1',
@@ -82,7 +97,7 @@ export function AreaScene({ areaId, language, lots, children }: {
               background: 'var(--sm2-surface)',
               boxShadow: '0 6px 6px rgba(0,0,0,.35)',
             }}
-          />
+          />}
           <span
             data-area-lot-label
             style={{

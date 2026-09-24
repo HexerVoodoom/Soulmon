@@ -17,9 +17,6 @@ import {
 import { CornerLink } from './components/nav/CornerLink';
 import { AreaTopBar } from './components/nav/AreaTopBar';
 import { MapPage } from './components/nav/MapPage';
-import { AreaScene, type AreaLot } from './components/nav/AreaScene';
-import { AreaSheet } from './components/nav/AreaSheet';
-import { areaDemoLot } from './utils/areaSheetCopy';
 import { HomeMenuSheet } from './components/nav/HomeMenuSheet';
 import { NavGlyph } from './components/ui/NavGlyphs';
 import {
@@ -641,9 +638,13 @@ const BalanceWeekModal = lazy(() => import('./components/BalanceWeekModal').then
 const EditModal = lazy(() => import('./components/EditModal').then(m => ({ default: m.EditModal })));
 const TaskEditModal = lazy(() => import('./components/TaskEditModal').then(m => ({ default: m.TaskEditModal })));
 const OraclePage = lazy(() => import('./components/OraclePage').then(m => ({ default: m.OraclePage })));
-const TournamentPage = lazy(() => import('./components/TournamentPage').then(m => ({ default: m.TournamentPage })));
 const LibraryPage = lazy(() => import('./components/LibraryPage').then(m => ({ default: m.LibraryPage })));
-const ShopModal = lazy(() => import('./components/ShopModal').then(m => ({ default: m.ShopModal })));
+// minimal-ui F5 — a `ShopModal` saiu: a vitrine virou as lojinhas do Mercado
+// (`components/mercado/`) e a loja de Emblemas mora no Torneio (Arena).
+// A área inteira (cena + lotes + folhas + Torneio/Duelo) entra por `lazy`:
+// nada dela é necessário para a Home abrir, e o chunk de entrada está acima do
+// orçamento de bytes (decisão #31).
+const AreaView = lazy(() => import('./components/nav/AreaView').then(m => ({ default: m.AreaView })));
 const PetPage = lazy(() => import('./components/PetPage').then(m => ({ default: m.PetPage })));
 
 /** O que o `<main>` desenha. É a tabela antiga de views, agora DERIVADA da
@@ -678,11 +679,6 @@ export default function App() {
   const pane = paneFor(currentView, labTab);
   /** A área do Mapa da view atual, ou `null` fora de uma área (minimal-ui F4). */
   const area = areaOf(currentView);
-  /** A folha (`AreaSheet`) do lote de exemplo, aberta por área (minimal-ui F4:
-   *  só o molde — o conteúdo completo por área é F5). Fecha sozinha ao trocar
-   *  de view, pra não reabrir "fantasma" numa área diferente. */
-  const [areaSheetOpen, setAreaSheetOpen] = useState(false);
-  useEffect(() => { setAreaSheetOpen(false); }, [currentView]);
   /** O menu ícone da Home (D6). */
   const [homeMenuOpen, setHomeMenuOpen] = useState(false);
   const currentViewRef = useRef(currentView);
@@ -5219,35 +5215,62 @@ export default function App() {
             />
           )}
 
-          {/* ── O MOLDE DE ÁREA (minimal-ui F4) ──────────────────────────────
-              `AreaScene` (fundo + lotes + NPC anfitrião) + UM `AreaSheet` de
-              exemplo por área, com placeholder — o conteúdo completo de cada
-              área (abas por moeda, Torneio, Masmorra, etc.) é F5. Substitui,
-              por ora, as páginas antigas que só essas 6 áreas alcançavam
-              (`!area` nas condições abaixo) — eram o pane 'shop'/'games'/
-              'tournament'/'library'/'evolution'/'pet'/parte de 'stats'. */}
+          {/* ── AS ÁREAS DO MAPA (minimal-ui F4 molde + F5 conteúdo) ─────────
+              `AreaScene` (fundo + lotes + NPC anfitrião) + o `AreaSheet` do
+              lote aberto. Mercado e Arena já têm o conteúdo real (F5): as
+              lojinhas com abas por moeda, Conquistas, Torneio e Duelo. As
+              outras quatro áreas seguem com UM lote de exemplo e placeholder
+              até a fatia delas — e as páginas antigas que só elas alcançavam
+              continuam suspensas (`!area` nas condições abaixo). */}
           {area && (
-            <AreaScene
-              areaId={area}
-              language={language}
-              lots={[{
-                id: 'exemplo',
-                label: areaDemoLot(area, language).label,
-                left: '50%', top: '38%',
-                ariaLabel: areaDemoLot(area, language).label,
-                onOpen: () => setAreaSheetOpen(true),
-              } satisfies AreaLot]}
-            >
-              <AreaSheet
-                areaId={area}
-                title={areaDemoLot(area, language).label}
-                closeLabel={language === 'pt-BR' ? 'Fechar' : 'Close'}
-                open={areaSheetOpen}
-                onClose={() => setAreaSheetOpen(false)}
-              >
-                <p style={{ ...sm2Text, margin: 0 }}>{areaDemoLot(area, language).placeholder}</p>
-              </AreaSheet>
-            </AreaScene>
+            <Suspense fallback={<ScreenSkeleton language={language} />}>
+              {/* `key` da view: trocar de área remonta e fecha a folha aberta. */}
+              <AreaView
+                key={currentView}
+                area={area}
+                language={language}
+                ownership={{
+                  ownedBackgrounds: gameState.ownedBackgrounds ?? [],
+                  equippedBackground: gameState.equippedBackground ?? null,
+                  ownedFurniture: gameState.ownedFurniture ?? [],
+                  equippedDecor: gameState.equippedDecor ?? EMPTY_DECOR,
+                  missionProgress,
+                }}
+                actions={{ onBuy: handleShopBuy, onEquip: handleEquipBackground, onEquipFurniture: handleEquipFurniture }}
+                points={gameState.gamePoints ?? 0}
+                emblems={gameState.emblems ?? 0}
+                credits={gameState.credits ?? 0}
+                onExchangeCredits={handleExchangeCredits}
+                accountTier={gameState.accountTier}
+                onUnlock={() => setUnlockReason('shop')}
+                tournament={{
+                  saveId,
+                  petStage: gameState.evolutionStage,
+                  pvpEnabled: !!gameState.pvpEnabled,
+                  onTogglePvp: (enabled) => setGameState(prev => ({ ...prev, pvpEnabled: enabled })),
+                  trophies: gameState.trophies ?? [],
+                  language,
+                  emblems: gameState.emblems ?? 0,
+                  onEarnEmblems: amount => {
+                    setGameState(prev => ({ ...prev, emblems: (prev.emblems ?? 0) + amount }));
+                    // A missão conta a PARTIDA, não a vitória: pagar só por
+                    // vitória faria a missão semanal recompensar resultado, e o
+                    // Torneio já mede o jogador contra ele mesmo pela faixa.
+                    contarMissao('tournament-match');
+                  },
+                  totalXP: gameState.totalXP,
+                  onMatchPlayed: won => setGameState(prev => awardBondXP(
+                    prev, { kind: 'tournamentMatch', won }, playerDayKey(new Date(), prev.playerDayTz),
+                  )),
+                  weeklyMissions: missoesDaSemana,
+                  onClaimWeekly: resgatarMissao,
+                }}
+                evolutionStage={gameState.evolutionStage}
+                demoCharacterId={gameState.demoCharacterId}
+                skills={gameState.soulmonSkills}
+                onEarnPoints={handleEarnGamePoints}
+              />
+            </Suspense>
           )}
 
           {pane === 'main' && (
@@ -6197,30 +6220,6 @@ export default function App() {
             </Suspense>
           )}
 
-          {pane === 'tournament' && !area && (
-            <Suspense fallback={<ScreenSkeleton language={language} />}>
-              <TournamentPage
-                saveId={saveId}
-                petStage={gameState.evolutionStage}
-                pvpEnabled={!!gameState.pvpEnabled}
-                onTogglePvp={(enabled) => setGameState(prev => ({ ...prev, pvpEnabled: enabled }))}
-                trophies={gameState.trophies ?? []}
-                language={language}
-                emblems={gameState.emblems ?? 0}
-                onEarnEmblems={amount => {
-                  setGameState(prev => ({ ...prev, emblems: (prev.emblems ?? 0) + amount }));
-                  // A missão conta a PARTIDA, não a vitória: pagar só por
-                  // vitória faria a missão semanal recompensar resultado, e o
-                  // Torneio já mede o jogador contra ele mesmo pela faixa.
-                  contarMissao('tournament-match');
-                }}
-                totalXP={gameState.totalXP}
-                onMatchPlayed={won => setGameState(prev => awardBondXP(
-                  prev, { kind: 'tournamentMatch', won }, playerDayKey(new Date(), prev.playerDayTz),
-                ))}
-              />
-            </Suspense>
-          )}
 
           {pane === 'library' && !area && (
             <Suspense fallback={<ScreenSkeleton language={language} />}>
@@ -6237,31 +6236,6 @@ export default function App() {
             </Suspense>
           )}
 
-          {pane === 'shop' && !area && (
-            <Suspense fallback={<ScreenSkeleton language={language} />}>
-              <ShopModal
-                asPage
-                weeklyMissions={missoesDaSemana}
-                onClaimWeekly={resgatarMissao}
-                accountTier={gameState.accountTier}
-                onUnlock={() => setUnlockReason('shop')}
-                language={language}
-                points={gameState.gamePoints ?? 0}
-                ownedBackgrounds={gameState.ownedBackgrounds ?? []}
-                equippedBackground={gameState.equippedBackground ?? null}
-                ownedFurniture={gameState.ownedFurniture ?? []}
-                equippedDecor={gameState.equippedDecor ?? EMPTY_DECOR}
-                missionProgress={missionProgress}
-                emblems={gameState.emblems ?? 0}
-                credits={gameState.credits ?? 0}
-                onBuy={handleShopBuy}
-                onExchangeCredits={handleExchangeCredits}
-                onEquip={handleEquipBackground}
-                onEquipFurniture={handleEquipFurniture}
-                onClose={goBack}
-              />
-            </Suspense>
-          )}
 
           {pane === 'games' && !area && (
             <Suspense fallback={<ScreenSkeleton language={language} />}>

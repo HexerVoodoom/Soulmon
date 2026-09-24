@@ -40,8 +40,18 @@ export interface MissionState {
   missionPerfectDays: number;
 }
 
+/**
+ * Categoria da conquista — o filtro da folha de Conquistas do Mercado
+ * (minimal-ui F5: "Conquistas filtra por categoria em vez de moeda"). Dado da
+ * missão, não da tela: acrescentar uma missão sem categoria não compila.
+ */
+export type MissionCategory = 'evolution' | 'dungeon' | 'games' | 'constancy';
+
+export const MISSION_CATEGORIES: readonly MissionCategory[] = ['evolution', 'dungeon', 'games', 'constancy'];
+
 export interface Mission {
   id: string;
+  category: MissionCategory;
   /** Emoji — chave curta para TEXTO. Não é o visual da loja. */
   icon: string;
   /** Ligature da Material Symbols (inventário de `styles/tokens.md`) — é
@@ -70,37 +80,37 @@ function reachedLevel(s: MissionState, level: EvolutionStage): number {
 
 export const MISSIONS: Mission[] = [
   {
-    id: 'mission-champion', icon: '🥋', iconName: 'military_tech', target: 1, bgReward: 'bg-mission-filecity',
+    id: 'mission-champion', category: 'evolution', icon: '🥋', iconName: 'military_tech', target: 1, bgReward: 'bg-mission-filecity',
     namePt: 'Primeiro Campeão', nameEn: 'First Champion',
     descPt: 'Evolua até o nível CAMPEÃO', descEn: 'Evolve to CHAMPION level',
     progress: s => reachedLevel(s, 'champion'),
   },
   {
-    id: 'mission-mega', icon: '👑', iconName: 'emoji_events', target: 1, bgReward: 'bg-mission-infinity',
+    id: 'mission-mega', category: 'evolution', icon: '👑', iconName: 'emoji_events', target: 1, bgReward: 'bg-mission-infinity',
     namePt: 'Lenda Mega', nameEn: 'Mega Legend',
     descPt: 'Evolua até o nível MEGA', descEn: 'Evolve to MEGA level',
     progress: s => reachedLevel(s, 'mega'),
   },
   {
-    id: 'mission-kills-100', icon: '⚔️', iconName: 'swords', target: 100, bgReward: 'bg-mission-coliseum',
+    id: 'mission-kills-100', category: 'dungeon', icon: '⚔️', iconName: 'swords', target: 100, bgReward: 'bg-mission-coliseum',
     namePt: 'Gladiador', nameEn: 'Gladiator',
     descPt: 'Derrote 100 inimigos na masmorra', descEn: 'Defeat 100 dungeon enemies',
     progress: s => s.dungeonKills,
   },
   {
-    id: 'mission-runs-3', icon: '🏰', iconName: 'flag', target: 3, bgReward: 'bg-mission-abyss',
+    id: 'mission-runs-3', category: 'dungeon', icon: '🏰', iconName: 'flag', target: 3, bgReward: 'bg-mission-abyss',
     namePt: 'Conquistador do Abismo', nameEn: 'Abyss Conqueror',
     descPt: 'Conclua 3 runs completas da masmorra', descEn: 'Complete 3 full dungeon runs',
     progress: s => s.dungeonRunsCompleted,
   },
   {
-    id: 'mission-dino-1000', icon: '🦖', iconName: 'pets', target: 1000, bgReward: 'bg-mission-dinoland',
+    id: 'mission-dino-1000', category: 'games', icon: '🦖', iconName: 'pets', target: 1000, bgReward: 'bg-mission-dinoland',
     namePt: 'Maratonista Jurássico', nameEn: 'Jurassic Marathoner',
     descPt: 'Faça 1000 de score na Corrida do Dino', descEn: 'Score 1000 in Dino Runner',
     progress: s => s.dinoBest,
   },
   {
-    id: 'mission-perfect-30', icon: '⭐', iconName: 'star', target: 30, bgReward: 'bg-mission-aurora',
+    id: 'mission-perfect-30', category: 'constancy', icon: '⭐', iconName: 'star', target: 30, bgReward: 'bg-mission-aurora',
     namePt: 'Constância Perfeita', nameEn: 'Perfect Consistency',
     descPt: 'Acumule 30 dias completos (total)', descEn: 'Earn 30 complete days (lifetime)',
     // #41/#60: a MISSÃO segue contando o 🌀 (decisão literal do dono); quem

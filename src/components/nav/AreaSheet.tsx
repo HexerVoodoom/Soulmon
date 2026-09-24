@@ -9,12 +9,15 @@ import { AREA_NPC_ART } from '../../assets/soulmon/npcs';
  * plano), o NPC da área espia ATRÁS/ACIMA da folha (`top: -215px` no mock;
  * aqui escalado para a largura da folha), backdrop fecha ao tocar fora.
  *
- * **Só o molde.** O conteúdo de cada folha (abas por moeda, listas, etc.) é
- * F5 — aqui é sempre um placeholder textual, para provar que abrir/fechar,
- * o NPC visível e a min-height funcionam ponta a ponta.
+ * **Só o molde.** O conteúdo de cada folha (abas por moeda, listas, etc.)
+ * vem de quem chama (F5: Mercado e Arena em `App.tsx`); o molde só garante
+ * abrir/fechar, o NPC visível e a min-height.
  */
-export function AreaSheet({ areaId, title, closeLabel, open, onClose, children }: {
+export function AreaSheet({ areaId, title, closeLabel, open, onClose, npcArt, children }: {
   areaId: AreaId;
+  /** NPC próprio da lojinha (ex.: os três vendedores do Mercado). Sem ele,
+   *  o anfitrião da área. */
+  npcArt?: string;
   title: string;
   /** Rótulo acessível do fechar — PT/EN, decidido por quem chama (a `AreaScene` sabe o idioma). */
   closeLabel: string;
@@ -67,7 +70,7 @@ export function AreaSheet({ areaId, title, closeLabel, open, onClose, children }
         {/* O NPC da área, espiando por cima da folha — atrás/acima, nunca
             dentro do conteúdo rolável. */}
         <img
-          src={AREA_NPC_ART[areaId]}
+          src={npcArt ?? AREA_NPC_ART[areaId]}
           alt=""
           aria-hidden="true"
           data-area-sheet-npc

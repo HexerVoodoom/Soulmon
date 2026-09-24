@@ -1,0 +1,452 @@
+import { useState, type CSSProperties, type ReactNode } from 'react';
+import { bitsStyle, emblemStyle, BITS_EXCHANGE, CREDIT_COLOR, type CurrencyId } from '../../utils/currencies';
+import { Icon } from '../ui/Icon';
+import { MiniGlass } from '../ui/MiniGlass';
+import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
+import type { ShopItem } from '../../utils/shop';
+import { PET_BACKGROUNDS } from '../../utils/backgrounds';
+import { DECOR_ART } from '../../utils/decorArt';
+import { ITEM_ART } from '../../utils/itemArt';
+import { MISSIONS, isShopItemUnlocked } from '../../utils/missions';
+import { itemCurrency } from '../../utils/mercadoCatalog';
+import { decorFitsSetting, type SlotId } from '../../utils/petStage';
+import type { WeeklyMission, WeeklyMissionId } from '../../utils/weeklyMissions';
+import type { Language } from '../../utils/i18n';
+
+/**
+ * A PRATELEIRA — as peças da loja, reempacotadas para morar dentro do
+ * `AreaSheet` (minimal-ui F5). Tudo aqui veio da `ShopModal` (canvas "Loja",
+ * DECISÕES §26, D-L1…D-L11), que saiu: a mesma prateleira agora serve as
+ * lojinhas do Mercado e a loja de Emblemas do Torneio, e a regra de compra
+ * continua fora daqui (`onBuy` → `handleShopBuy` do `App.tsx`).
+ *
+ * ─── O aparelho em vetor, pixel só no vidro (D-L1, D-L2, D-L3) ─────────────
+ * Cada card é um botão SIS-03 inteiro; o item é a ARTE REAL dentro de um
+ * mini-visor sem anel (`MiniGlass`): 72² para chip e mobília (0,5×), 96×52
+ * para cenário (miniatura de `backgrounds/thumbs/`). O emoji é a CHAVE
+ * (`item.icon` indexa `ITEM_ART`), nunca o desenho.
+ *
+ * ─── Estados por FORMA, nunca por alfa (D-L6…D-L9) ────────────────────────
+ *   · travado    → borda tracejada `muted`, véu no vidro, tag "locked",
+ *                  `aria-disabled`, fora do Tab;
+ *   · equipado   → anel 2px `primary-ink` por FORA do vidro + tag
+ *                  `check_circle` na coluna de texto;
+ *   · comprado   → "Equip" outline dentro do card;
+ *   · sem saldo  → preço em tinta `muted`; no toque, SÓ o filete `gold-ink`
+ *                  + a região `status` em `gold-ink`. Nunca `danger`.
+ *
+ * ─── AS TRÊS MOEDAS (regra de produto, D-L4, D-L10, D-L11) ─────────────────
+ *   Bits      → "N Bits" em mono `primary-ink` (`bitsStyle`), SEM ícone.
+ *   Emblemas  → `military_tech` FILL + número em serifa `gold-ink`.
+ *   Créditos  → `diamond` FILL em `--sm2-credit-ink`, só na troca.
+ */
+
+/** Ícone ao lado de palavra, na mesma linha: saldo, cabeçalho da troca. */
+const ICON_INLINE = 20;
+/** Ícone dentro de tag (check_circle, lock, military_tech do prêmio) — o
+ *  canvas desenha 18; a escala viva (`tokens.md` §6.1) só tem 20/24/32. */
+const ICON_TAG = 20;
+
+/** Mini-visor de item/decoração (D-L3). */
+const GLASS_ITEM = 72;
+/** Mini-visor de cenário (D-L3: miniatura 96×52 a 1×). */
+const GLASS_BG_W = 96;
+const GLASS_BG_H = 52;
+
+const BG_THUMBS: Record<string, string> = Object.fromEntries(
+  Object.entries(import.meta.glob('../../assets/backgrounds/thumbs/*.png', { eager: true, import: 'default' }) as Record<string, string>)
+    .map(([p, url]) => [p.replace(/^.*\/([^/]+)\.png$/, '$1'), url]),
+);
+
+const bitsNum: CSSProperties = { ...bitsStyle, fontSize: 'var(--sm2-text-md)' };
+const emblemNum: CSSProperties = { ...emblemStyle, fontSize: 'var(--sm2-text-lg)' };
+
+/** Tag SIS (chip.tag): 28 de altura, `surface-2`, raio 999, texto 12. */
+export const shopTagStyle: CSSProperties = {
+  display: 'inline-flex', alignItems: 'center', gap: 4, minHeight: 28, padding: '0 8px',
+  borderRadius: 999, backgroundColor: 'var(--sm2-surface-2)', flex: 'none',
+  fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-xs)', fontWeight: 500,
+  lineHeight: 'var(--sm2-leading-body)', whiteSpace: 'nowrap',
+};
+
+/** "Bits" / "Emblems" ao lado do número: Rubik 12 `muted`. */
+const unitStyle: CSSProperties = {
+  fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-xs)', fontWeight: 400,
+  letterSpacing: 0, color: 'var(--sm2-muted)',
+};
+
+/** "N Bits" — o valor em mono `primary-ink`, a unidade em Rubik `muted`. */
+export function Bits({ value, dim = false, sign = '' }: { value: number; dim?: boolean; sign?: string }) {
+  return (
+    <span className="sm2-num" style={{ ...bitsNum, display: 'inline-flex', alignItems: 'baseline', gap: 4, whiteSpace: 'nowrap', color: dim ? 'var(--sm2-muted)' : bitsNum.color }}>
+      {sign}{value}<span style={unitStyle}>Bits</span>
+    </span>
+  );
+}
+
+/**
+ * O SALDO — UMA leitura só, a da moeda que compra o que está na tela. É um
+ * `<p>` com texto (não `aria-label` em `<span>` — X6). Mostrar as três juntas
+ * aqui seria justamente o que a regra das moedas proíbe: saldo de uma moeda
+ * ao lado do preço de outra.
+ */
+export function CurrencyBalance({ currency, value, language }: { currency: CurrencyId; value: number; language: Language }) {
+  const isPt = language === 'pt-BR';
+  if (currency === 'emblems') {
+    return (
+      <p data-balance="emblems" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
+        <Icon name="military_tech" size={ICON_INLINE} fill={1} tone="gold" />
+        <span className="sm2-num" style={emblemNum}>{value}</span>
+        <span style={{ ...unitStyle, marginLeft: 2 }}>{isPt ? 'Emblemas' : 'Emblems'}</span>
+      </p>
+    );
+  }
+  if (currency === 'credits') {
+    return (
+      <p data-balance="credits" style={{ ...sm2Text, margin: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
+        <Icon name="diamond" size={ICON_INLINE} fill={1} tone="inherit" style={{ color: CREDIT_COLOR, flexShrink: 0 }} />
+        <span className="sm2-num">{value}</span>
+        <span style={{ ...unitStyle, marginLeft: 2 }}>{isPt ? 'Créditos' : 'Credits'}</span>
+      </p>
+    );
+  }
+  return <p data-balance="bits" style={{ margin: 0 }}><Bits value={value} /></p>;
+}
+
+/** Extrai a URL da arte de um cenário pintado; `null` para gradiente. */
+function bgImage(css: string | undefined): string | null {
+  const m = css?.match(/url\((['"]?)(.*?)\1\)/);
+  return m ? m[2] : null;
+}
+
+/** Última compra/troca: alimenta a região `aria-live` e o filete do card. */
+export interface ShopFlash { id: string; ok: boolean; msg: ReactNode }
+
+/** O "falar" da loja: região `status` + vibração curta. Um por prateleira. */
+export function useShopFlash() {
+  const [flash, setFlash] = useState<ShopFlash | null>(null);
+  const say = (id: string, ok: boolean, msg: ReactNode) => {
+    setFlash({ id, ok, msg });
+    setTimeout(() => setFlash(f => (f && f.id === id ? null : f)), 2600);
+    try { navigator.vibrate?.(ok ? 25 : 60); } catch { /* noop */ }
+  };
+  return { flash, say };
+}
+
+/** A região viva da prateleira. Existe sempre no DOM (região que aparece vazia
+ *  não é anunciada em alguns leitores). Recusa é ÂMBAR, nunca `danger`. */
+export function ShopStatus({ flash, idle }: { flash: ShopFlash | null; idle: ReactNode }) {
+  return (
+    <p
+      role="status"
+      aria-live="polite"
+      style={{
+        ...sm2Hint, minHeight: 18, margin: 0,
+        fontWeight: flash ? 500 : 400,
+        color: flash ? (flash.ok ? 'var(--sm2-ink)' : 'var(--sm2-gold-ink)') : 'var(--sm2-muted)',
+      }}
+    >
+      {flash ? flash.msg : idle}
+    </p>
+  );
+}
+
+export interface ShopOwnership {
+  ownedBackgrounds: string[];
+  equippedBackground: string | null;
+  ownedFurniture: string[];
+  /** Decoração equipada por espaço do palco (utils/petStage.ts). */
+  equippedDecor: Partial<Record<SlotId, string>>;
+  /** Progresso por missão (utils/missions.ts) — decide o cadeado. */
+  missionProgress: Record<string, number>;
+}
+
+export interface ShopActions {
+  /** A compra. Quem decide é o `handleShopBuy` do `App.tsx`; devolve false na recusa. */
+  onBuy: (itemId: string) => boolean;
+  onEquip: (id: string | null) => void;
+  /** `id` null limpa o espaço; o slot é sempre obrigatório. */
+  onEquipFurniture: (id: string | null, slot: SlotId) => void;
+}
+
+/**
+ * A lista de itens de UMA moeda. `balance` é o saldo DESSA moeda — o
+ * "sem saldo" de cada card é lido contra ele, e é por isso que a prateleira
+ * recusa item de outra moeda (ele seria julgado contra o saldo errado).
+ */
+export function ShopShelf({
+  language, items, currency, balance, ownership, actions, say, flash, emptyHint,
+}: {
+  language: Language;
+  items: ShopItem[];
+  currency: 'bits' | 'emblems';
+  balance: number;
+  ownership: ShopOwnership;
+  actions: ShopActions;
+  say: (id: string, ok: boolean, msg: ReactNode) => void;
+  flash: ShopFlash | null;
+  emptyHint?: string;
+}) {
+  const isPt = language === 'pt-BR';
+  const { ownedBackgrounds, equippedBackground, ownedFurniture, equippedDecor, missionProgress } = ownership;
+  // Defesa das três moedas: item cobrado em outra moeda não entra nesta
+  // prateleira, mesmo que alguém o passe por engano.
+  const shelf = items.filter(i => itemCurrency(i) === currency);
+
+  const buy = (item: ShopItem) => {
+    const name = isPt ? item.namePt : item.nameEn;
+    const ok = actions.onBuy(item.id);
+    say(item.id, ok, ok
+      ? (isPt ? `${name} comprado.` : `${name} purchased.`)
+      : (isPt ? `Saldo insuficiente para ${name}.` : `Not enough to buy ${name}.`));
+  };
+
+  /** Missão que destrava o item + progresso, na LINHA do item. */
+  const lockLine = (item: ShopItem): string => {
+    const m = MISSIONS.find(x => x.id === item.unlock?.missionId);
+    if (!m) return '';
+    const cur = Math.min(missionProgress[m.id] ?? 0, m.target);
+    /* WP4.12 (achado E4) — ZERO NÃO É PROGRESSO, é a ausência dele. */
+    const prog = m.target > 1 && cur > 0 ? ` · ${cur}/${m.target}` : '';
+    return `${isPt ? m.descPt : m.descEn}${prog}`;
+  };
+
+  const art = (item: ShopItem, locked: boolean, selected: boolean) => {
+    const ring: CSSProperties = selected ? { boxShadow: '0 0 0 2px var(--sm2-primary-ink)' } : {};
+    const veil = locked && <span aria-hidden="true" className="sm2-shop-veil" />;
+    if (item.kind === 'bg') {
+      const bg = PET_BACKGROUNDS[item.id];
+      const src = BG_THUMBS[item.id] ?? bgImage(bg?.css);
+      return (
+        <MiniGlass size={GLASS_ITEM} style={{ width: GLASS_BG_W, height: GLASS_BG_H, ...ring }}>
+          {src
+            ? <img src={src} alt="" width={GLASS_BG_W} height={GLASS_BG_H} className="sm2-shop-bg" />
+            : <span aria-hidden="true" style={{ position: 'absolute', inset: 0, background: bg?.css }} />}
+          {veil}
+        </MiniGlass>
+      );
+    }
+    const png = DECOR_ART[item.id] ?? ITEM_ART[item.icon];
+    // Peça de CHÃO fica a 1× (textura; o vidro recorta), o resto a 0,5×.
+    const scale = item.slot === 'rug' ? 1 : 0.5;
+    return (
+      <MiniGlass size={GLASS_ITEM} style={ring}>
+        {png
+          ? <img src={png} alt="" className="sm2-shop-art" style={{ transform: `translate(-50%, -50%) scale(${scale})` }} />
+          : <span aria-hidden="true" style={{ fontSize: 28, lineHeight: 1 }}>{item.icon}</span>}
+        {veil}
+      </MiniGlass>
+    );
+  };
+
+  const renderItem = (item: ShopItem) => {
+    const unlocked = isShopItemUnlocked(item, missionProgress);
+    const isEquippable = item.kind === 'bg' || item.kind === 'furniture';
+    const ownedList = item.kind === 'bg' ? ownedBackgrounds : item.kind === 'furniture' ? ownedFurniture : [];
+    const owned = isEquippable && ownedList.includes(item.id);
+    const equippedId = item.kind === 'bg' ? equippedBackground
+      : item.kind === 'furniture' && item.slot ? (equippedDecor[item.slot] ?? null)
+      : null;
+    const equipped = owned && equippedId === item.id;
+    const stageBg = equippedBackground ? PET_BACKGROUNDS[equippedBackground] : null;
+    const showsHere = item.kind !== 'furniture' || !item.slot || !stageBg
+      ? true
+      : stageBg.slots.includes(item.slot) && decorFitsSetting(item.fits ?? 'any', stageBg.setting);
+    const isEmblem = currency === 'emblems';
+    const affordable = balance >= item.price;
+    const name = isPt ? item.namePt : item.nameEn;
+    const failing = flash?.id === item.id && !flash.ok;
+
+    const action = owned
+      ? () => { if (item.kind === 'bg') actions.onEquip(equipped ? null : item.id); else if (item.slot) actions.onEquipFurniture(equipped ? null : item.id, item.slot); }
+      : unlocked ? () => buy(item) : undefined;
+
+    const status = owned
+      ? (equipped ? (isPt ? 'Equipado' : 'Equipped') : (isPt ? 'Equipar' : 'Equip'))
+      : null;
+
+    const sub = !unlocked ? lockLine(item)
+      : equipped && !showsHere ? (isPt ? 'Não aparece no cenário atual' : "Doesn't show in the current scene")
+      : (isPt ? item.descPt : item.descEn);
+
+    return (
+      <button
+        key={item.id}
+        type="button"
+        data-shop-item={item.id}
+        className={`sm2-shop-item${unlocked ? '' : ' is-locked'}`}
+        onClick={action}
+        aria-disabled={unlocked ? undefined : true}
+        tabIndex={unlocked ? undefined : -1}
+        aria-label={unlocked
+          ? `${name} — ${owned ? status : `${item.price} ${isEmblem ? (isPt ? 'Emblemas' : 'Emblems') : 'Bits'}`}`
+          : `${name} — ${isPt ? 'bloqueado' : 'locked'}: ${lockLine(item)}`}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+          minHeight: 64, padding: '8px 12px', textAlign: 'left', boxSizing: 'border-box',
+          borderRadius: 'var(--sm2-radius-lg)',
+          border: unlocked ? '1px solid var(--sm2-line)' : '1px dashed var(--sm2-muted)',
+          backgroundColor: unlocked ? 'var(--sm2-surface)' : 'transparent',
+          boxShadow: failing ? 'inset 0 0 0 1px var(--sm2-gold-ink)' : 'none',
+          cursor: action ? 'pointer' : 'default',
+          transition: 'box-shadow var(--sm2-dur-tap) var(--sm2-ease)',
+        }}
+      >
+        {art(item, !unlocked, equipped)}
+
+        <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <span style={{ ...sm2Text, fontWeight: 500, color: unlocked ? 'var(--sm2-ink)' : 'var(--sm2-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
+          {sub && <span style={sm2Hint}>{sub}</span>}
+          {equipped && (
+            <span style={{ ...shopTagStyle, alignSelf: 'flex-start', marginTop: 2, color: 'var(--sm2-primary-ink)' }}>
+              <Icon name="check_circle" size={ICON_TAG} fill={1} tone="primary" />
+              {status}
+            </span>
+          )}
+        </span>
+
+        {!unlocked ? (
+          <span aria-hidden="true" style={{ ...shopTagStyle, color: 'var(--sm2-muted)' }}>
+            <Icon name="lock" size={ICON_TAG} tone="muted" />
+            {isPt ? 'bloqueado' : 'locked'}
+          </span>
+        ) : owned ? (
+          !equipped && (
+            <span style={{ ...sm2Button('outline', false, 'sm'), padding: '0 12px', flex: 'none' }}>{status}</span>
+          )
+        ) : isEmblem ? (
+          <span className="sm2-num" style={{ ...emblemNum, display: 'inline-flex', alignItems: 'baseline', gap: 4, whiteSpace: 'nowrap', flex: 'none', color: affordable ? emblemNum.color : 'var(--sm2-muted)' }}>
+            {item.price}<span style={unitStyle}>{isPt ? 'Emblemas' : 'Emblems'}</span>
+          </span>
+        ) : (
+          <Bits value={item.price} dim={!affordable} />
+        )}
+      </button>
+    );
+  };
+
+  return (
+    <div data-shop-shelf={currency} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      {shelf.length === 0
+        ? <p style={{ ...sm2Hint, textAlign: 'center', padding: '16px 0', margin: 0 }}>{emptyHint ?? (isPt ? 'Nada por aqui ainda.' : 'Nothing here yet.')}</p>
+        : shelf.map(renderItem)}
+    </div>
+  );
+}
+
+/** A troca Créditos → Bits (a única coisa que Créditos fazem no Mercado).
+ *  Não existe o caminho contrário — ver `utils/currencies.ts`. */
+export function CreditExchange({ language, credits, onExchangeCredits, say }: {
+  language: Language;
+  credits: number;
+  /** Devolve false se o servidor recusar o gasto. */
+  onExchangeCredits: (credits: number) => Promise<boolean>;
+  say: (id: string, ok: boolean, msg: ReactNode) => void;
+}) {
+  const isPt = language === 'pt-BR';
+  const [exchanging, setExchanging] = useState<number | null>(null);
+  return (
+    <div data-credit-exchange style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 4 }}>
+      <p style={{ ...sm2Text, margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+        <Icon name="diamond" size={ICON_INLINE} fill={1} tone="inherit" style={{ color: CREDIT_COLOR, flexShrink: 0 }} />
+        <span>
+          {isPt ? 'Trocar Créditos por Bits — você tem ' : 'Swap Credits for Bits — you have '}
+          <span className="sm2-num">{credits}</span>
+        </span>
+      </p>
+      {BITS_EXCHANGE.map(pack => {
+        const busy = exchanging === pack.credits;
+        const can = credits >= pack.credits && exchanging === null;
+        return (
+          <button
+            key={pack.credits}
+            type="button"
+            disabled={!can}
+            aria-busy={busy || undefined}
+            aria-label={isPt ? `Trocar ${pack.credits} Créditos por ${pack.bits} Bits` : `Swap ${pack.credits} Credits for ${pack.bits} Bits`}
+            onClick={async () => {
+              setExchanging(pack.credits);
+              let ok = false;
+              try { ok = await onExchangeCredits(pack.credits); } finally { setExchanging(null); }
+              say(`exch-${pack.credits}`, ok, ok
+                ? <><Bits value={pack.bits} sign="+" />.</>
+                : (isPt ? 'A troca não foi concluída. Tente de novo.' : 'The swap did not go through. Try again.'));
+            }}
+            style={{ ...sm2Button('outline', !can), width: '100%', gap: 8 }}
+          >
+            {busy && <Icon name="sync" size={ICON_INLINE} tone="muted" />}
+            <span>
+              {isPt ? 'Trocar ' : 'Swap '}<span className="sm2-num">{pack.credits}</span>{isPt ? ' Créditos por ' : ' Credits for '}
+            </span>
+            <span className="sm2-num" style={{ ...bitsNum, color: can ? bitsNum.color : 'var(--sm2-muted)' }}>{pack.bits} Bits</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * AS MISSÕES DA SEMANA (WP4.7) — pagas em Emblemas. Moram no Torneio, onde os
+ * Emblemas são gastos: a torneira e o ralo na mesma folha.
+ *
+ * Nenhuma missão premia CONTAGEM DE TAREFAS (proibição escrita do CLAUDE.md;
+ * há teste varrendo o pool).
+ */
+export function WeeklyMissionList({ language, weeklyMissions, onClaimWeekly }: {
+  language: Language;
+  weeklyMissions: { mission: WeeklyMission; count: number; done: boolean; claimed: boolean }[];
+  onClaimWeekly?: (id: WeeklyMissionId) => void;
+}) {
+  const isPt = language === 'pt-BR';
+  if (weeklyMissions.length === 0) {
+    return <p style={{ ...sm2Hint, textAlign: 'center', padding: '16px 0', margin: 0 }}>{isPt ? 'As missões da semana aparecem aqui.' : "This week's missions show up here."}</p>;
+  }
+  return (
+    <ul data-weekly-missions style={{ display: 'flex', flexDirection: 'column', gap: 6, listStyle: 'none', margin: 0, padding: 0 }}>
+      {weeklyMissions.map(({ mission, count, done, claimed }) => (
+        <li
+          key={mission.id}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 10, minHeight: 56, padding: '8px 12px',
+            boxSizing: 'border-box',
+            borderRadius: 'var(--sm2-radius-lg)', border: '1px solid var(--sm2-line)',
+            backgroundColor: 'var(--sm2-surface)',
+          }}
+        >
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {/* Missão paga vira registro: tinta `muted`, nunca `opacity`. */}
+            <p style={{ ...sm2Text, margin: 0, color: claimed ? 'var(--sm2-muted)' : 'var(--sm2-ink)' }}>{isPt ? mission.descPt : mission.descEn}</p>
+            {/* Progresso só quando ele JÁ COMEÇOU (WP4.12). */}
+            {!done && count > 0 && (
+              <>
+                <p className="sm2-num" style={{ ...sm2Hint, margin: 0 }}>{count}/{mission.target}</p>
+                <span aria-hidden="true" className="sm2-shop-meter" style={{ width: 120 }}>
+                  <i style={{ width: `${Math.round(Math.min(1, count / mission.target) * 100)}%` }} />
+                </span>
+              </>
+            )}
+          </div>
+          {claimed ? (
+            <span style={{ ...sm2Hint, whiteSpace: 'nowrap', flex: 'none' }}>{isPt ? 'recebido' : 'claimed'}</span>
+          ) : done ? (
+            <button
+              type="button"
+              onClick={() => onClaimWeekly?.(mission.id)}
+              aria-label={isPt ? `Receber ${mission.emblems} Emblemas` : `Claim ${mission.emblems} Emblems`}
+              style={{ ...sm2Button('primary', false, 'sm'), whiteSpace: 'nowrap', flex: 'none', gap: 4 }}
+            >
+              <Icon name="military_tech" size={ICON_TAG} fill={1} tone="inherit" />
+              <span className="sm2-num" style={{ ...emblemStyle, color: 'inherit', fontSize: 'var(--sm2-text-md)' }}>+{mission.emblems}</span>
+            </button>
+          ) : (
+            <span aria-label={isPt ? `${mission.emblems} Emblemas` : `${mission.emblems} Emblems`} role="img" style={{ ...shopTagStyle, color: 'var(--sm2-gold-ink)' }}>
+              <Icon name="military_tech" size={ICON_TAG} fill={1} tone="gold" />
+              <span className="sm2-num" style={{ ...emblemStyle, fontSize: 'var(--sm2-text-md)' }}>+{mission.emblems}</span>
+            </span>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+}
