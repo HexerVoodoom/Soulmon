@@ -5196,7 +5196,13 @@ export default function App() {
           })()}
 
           {pane === 'map' && (
-            <MapPage language={language} onOpenArea={(id: AreaId) => goTo(areaView(id))} />
+            <MapPage
+              language={language}
+              onOpenArea={(id: AreaId) => goTo(areaView(id))}
+              bits={gameState.gamePoints ?? 0}
+              emblems={gameState.emblems ?? 0}
+              credits={gameState.credits ?? 0}
+            />
           )}
 
           {pane === 'main' && (
@@ -6268,6 +6274,7 @@ export default function App() {
           side="left"
           label={language === 'pt-BR' ? 'Início' : 'Home'}
           onClick={goBack}
+          glow
         />
       )}
       <HomeMenuSheet

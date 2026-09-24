@@ -21,22 +21,27 @@ import { MapPage } from './MapPage';
 import { CornerLink } from './CornerLink';
 import { AreaTopBar } from './AreaTopBar';
 import { HomeMenuSheet } from './HomeMenuSheet';
+import { AREAS } from '../../navigation';
+
+const mapProps = { bits: 260, emblems: 12, credits: 3 };
 
 describe('MapPage', () => {
   it('teto: exatamente as 6 áreas, na ordem do dono', () => {
-    const { container } = renderWithCss(<MapPage language="en-US" onOpenArea={() => {}} />);
+    const { container } = renderWithCss(<MapPage language="en-US" onOpenArea={() => {}} {...mapProps} />);
     const ids = Array.from(container.querySelectorAll('[data-map-area]')).map(b => b.getAttribute('data-map-area'));
     expect(ids).toEqual(['mercado', 'jogos', 'arena', 'exploracao', 'laboratorio', 'hall']);
   });
 
   it('par PT/EN: o rótulo visível É o nome acessível, e os idiomas diferem', () => {
     const nomes = (lang: 'en-US' | 'pt-BR') => {
-      const r = renderWithCss(<MapPage language={lang} onOpenArea={() => {}} />);
+      const r = renderWithCss(<MapPage language={lang} onOpenArea={() => {}} {...mapProps} />);
       const out = Array.from(r.container.querySelectorAll('[data-map-area]'))
         .map(b => (b.querySelector('[data-map-label]')?.textContent ?? '').trim());
+      const ariaOut = Array.from(r.container.querySelectorAll('[data-map-area]'))
+        .map(b => b.getAttribute('aria-label'));
       const h1 = r.container.querySelector('h1')?.textContent;
       r.unmount();
-      return { out, h1 };
+      return { out, ariaOut, h1 };
     };
     const en = nomes('en-US');
     const pt = nomes('pt-BR');
@@ -44,13 +49,45 @@ describe('MapPage', () => {
     expect(pt.h1).toBe('Mapa');
     expect(en.out).toEqual(['Market', 'Games', 'Arena', 'Exploration', 'Laboratory', 'Hall']);
     expect(pt.out).toEqual(['Mercado', 'Jogos', 'Arena', 'Exploração', 'Laboratório', 'Hall']);
+    // rótulo visível == nome acessível (aria-label do botão)
+    expect(en.ariaOut).toEqual(en.out);
+    expect(pt.ariaOut).toEqual(pt.out);
   });
 
   it('tocar num cartão abre a área dele', () => {
     const onOpen = vi.fn();
-    const { container } = renderWithCss(<MapPage language="en-US" onOpenArea={onOpen} />);
+    const { container } = renderWithCss(<MapPage language="en-US" onOpenArea={onOpen} {...mapProps} />);
     fireEvent.click(container.querySelector('[data-map-area="arena"]')!);
     expect(onOpen).toHaveBeenCalledWith('arena');
+  });
+
+  it('as 6 áreas navegam para a rota certa (reusa AREAS de navigation.ts)', () => {
+    const onOpen = vi.fn();
+    const { container } = renderWithCss(<MapPage language="pt-BR" onOpenArea={onOpen} {...mapProps} />);
+    for (const id of AREAS) {
+      fireEvent.click(container.querySelector(`[data-map-area="${id}"]`)!);
+    }
+    expect(onOpen.mock.calls.map(c => c[0])).toEqual([...AREAS]);
+  });
+
+  it('menu discreto de moedas: as 3, com o saldo passado por prop', () => {
+    const { container } = renderWithCss(<MapPage language="en-US" onOpenArea={() => {}} {...mapProps} />);
+    const menu = container.querySelector('[data-map-currencies]')!;
+    expect(menu.textContent).toContain('260');
+    expect(menu.textContent).toContain('Bits');
+    expect(menu.textContent).toContain('12');
+    expect(menu.textContent).toContain('Emblems');
+    expect(menu.textContent).toContain('3');
+    expect(menu.textContent).toContain('Credits');
+  });
+
+  it('fundo isométrico real (imagem de cena, não placeholder de ícone)', () => {
+    const { container } = renderWithCss(<MapPage language="en-US" onOpenArea={() => {}} {...mapProps} />);
+    const bg = container.querySelector('[data-map-page] > img')!;
+    expect(bg.getAttribute('aria-hidden')).toBe('true');
+    // cada área carrega arte própria (não é mais só um glifo do Material)
+    const arts = Array.from(container.querySelectorAll('[data-map-area] img'));
+    expect(arts.length).toBe(6);
   });
 });
 
@@ -68,6 +105,17 @@ describe('CornerLink', () => {
     expect(parseFloat(btn.style.height)).toBeGreaterThanOrEqual(44);
     const svg = btn.querySelector('svg')!;
     expect(svg.getAttribute('width')).toBe('32');
+  });
+
+  it('brilho sutil opcional (F3: a casa no Mapa) sem virar caixa', () => {
+    const semGlow = renderWithCss(<CornerLink icon="home" side="left" label="Home" onClick={() => {}} />);
+    expect(semGlow.container.querySelector('button')!.style.filter).toBeFalsy();
+    semGlow.unmount();
+    const comGlow = renderWithCss(<CornerLink icon="home" side="left" label="Home" onClick={() => {}} glow />);
+    const btn = comGlow.container.querySelector('button')!;
+    expect(btn.style.filter).toContain('drop-shadow');
+    expect(btn.style.background).toBe('transparent');
+    expect(btn.style.border === 'none' || btn.style.border === '' || btn.style.borderStyle === 'none').toBe(true);
   });
 
   it('Home no canto ESQUERDO, Mapa no DIREITO', () => {

@@ -13,11 +13,14 @@ import { NavGlyph, type NavGlyphName } from '../ui/NavGlyphs';
  * O rótulo existe no `aria-label` e no `title`; na tela o glifo fala sozinho,
  * como nos mocks aprovados.
  */
-export function CornerLink({ icon, label, side, onClick }: {
+export function CornerLink({ icon, label, side, onClick, glow = false }: {
   icon: NavGlyphName;
   label: string;
   side: 'left' | 'right';
   onClick: () => void;
+  /** Brilho sutil (F3, mock do Mapa): a casa recebe um halo leve para não
+   *  sumir no canto vinhetado sobre a arte isométrica. */
+  glow?: boolean;
 }) {
   return (
     <button
@@ -26,6 +29,7 @@ export function CornerLink({ icon, label, side, onClick }: {
       aria-label={label}
       title={label}
       data-corner-link={side}
+      data-corner-glow={glow || undefined}
       className="sm2-corner-link"
       style={{
         position: 'fixed',
@@ -36,6 +40,7 @@ export function CornerLink({ icon, label, side, onClick }: {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         background: 'transparent', border: 'none', padding: 0, cursor: 'pointer',
         color: 'var(--sm2-primary-ink)',
+        filter: glow ? 'drop-shadow(0 0 6px rgba(95, 243, 224, 0.45))' : undefined,
       }}
     >
       <NavGlyph name={icon} size={32} tone="primary" />

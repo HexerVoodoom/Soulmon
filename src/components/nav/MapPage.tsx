@@ -1,99 +1,177 @@
 import type { Language } from '../../utils/i18n';
-import { Icon } from '../ui/Icon';
-import { AREAS, areaHint, areaLabel, type AreaId } from '../../navigation';
+import { AREAS, areaLabel, type AreaId } from '../../navigation';
+import { bitsStyle, emblemStyle, CREDIT_COLOR } from '../../utils/currencies';
+
+import bgMapa from '../../assets/soulmon/mapa/bg-mapa.png';
+import zonaMercado from '../../assets/soulmon/mapa/zona-mercado.png';
+import zonaJogos from '../../assets/soulmon/mapa/zona-jogos.png';
+import zonaArena from '../../assets/soulmon/mapa/zona-arena.png';
+import zonaExploracao from '../../assets/soulmon/mapa/zona-exploracao.png';
+import zonaLaboratorio from '../../assets/soulmon/mapa/zona-laboratorio.png';
+import zonaHall from '../../assets/soulmon/mapa/zona-hall.png';
 
 /**
- * O MAPA — a segunda tela de topo (minimal-ui F1).
+ * O MAPA — arte real (minimal-ui F3).
  *
- * **Placeholder limpo de propósito.** A arte isométrica (fundo 9:16 + 6
- * construções posicionadas em %) é a fatia F3; aqui o Mapa é uma grade 2×3 de
- * cartões com ícone, nome e uma linha do que há dentro. A ordem é a do `AREAS`
- * (`navigation.ts`) — um dono só.
+ * Fundo 9:16 isométrico (`bg-mapa`, D2: pixel art liberada fora do visor)
+ * cobrindo a tela inteira (`object-fit: cover`, centrado); as 6 construções
+ * são posicionadas em PORCENTAGEM sobre esse fundo — a mesma técnica do mock
+ * aprovado (`product/squad-minimal-ui/propostas/mapa/mock.html`), para a
+ * posição não depender do tamanho físico da imagem. Cada construção é um
+ * `<button>` (não link) que chama `onOpenArea`; o roteamento em si é de
+ * `navigation.ts`, um dono só.
  *
- * O link da Home (canto inferior esquerdo) NÃO mora aqui: é o `CornerLink`
- * montado pelo `App`, o mesmo componente do link do Mapa na Home.
+ * O canto inferior esquerdo é vinhetado (mesmo truque do mock: um gradiente
+ * radial escurecendo, para o link da Home — `CornerLink glow` — se destacar
+ * sem caixa em volta).
  *
- * Ícones: os glifos autorais onde existe um (`shop`, `activities`,
- * `evolution`), Material honesto onde não existe (`emoji_events`, `swords`,
- * `groups`) — o mesmo critério de corte do `NavGlyphs.tsx`, e os mesmos
- * ícones que essas páginas já usavam.
+ * O saldo das 3 moedas é um menu discreto no topo, dentro da própria cena —
+ * não uma lista separada. Formatação e cor vêm de `utils/currencies.ts`
+ * (dono único: nenhuma moeda pode ser confundida com outra).
  */
-const AREA_ICON: Record<AreaId, string> = {
-  mercado: 'shop',
-  jogos: 'activities',
-  arena: 'emoji_events',
-  exploracao: 'swords',
-  laboratorio: 'evolution',
-  hall: 'groups',
+const AREA_ART: Record<AreaId, string> = {
+  mercado: zonaMercado,
+  jogos: zonaJogos,
+  arena: zonaArena,
+  exploracao: zonaExploracao,
+  laboratorio: zonaLaboratorio,
+  hall: zonaHall,
 };
 
-export function MapPage({ language, onOpenArea }: {
+/** Posição do CENTRO da base de cada construção, em % do fundo (do mock aprovado). */
+const AREA_POS: Record<AreaId, { left: string; top: string }> = {
+  mercado: { left: '30%', top: '17%' },
+  jogos: { left: '74%', top: '16.8%' },
+  exploracao: { left: '23%', top: '44%' },
+  arena: { left: '79%', top: '41.5%' },
+  laboratorio: { left: '49%', top: '74.9%' },
+  hall: { left: '81.5%', top: '66%' },
+};
+
+export function MapPage({ language, onOpenArea, bits, emblems, credits }: {
   language: Language;
   onOpenArea: (id: AreaId) => void;
+  bits: number;
+  emblems: number;
+  credits: number;
 }) {
   const isPt = language === 'pt-BR';
   return (
-    <section aria-labelledby="sm-map-title" data-map-page>
-      <h1
-        id="sm-map-title"
-        style={{
-          margin: '0 0 var(--sm2-space-4)',
-          textAlign: 'center',
-          fontFamily: 'var(--sm2-font-display)',
-          fontSize: 'var(--sm2-text-xl)',
-          fontWeight: 600,
-          lineHeight: 'var(--sm2-leading-title)',
-          color: 'var(--sm2-ink)',
-        }}
-      >
+    <section
+      aria-labelledby="sm-map-title"
+      data-map-page
+      style={{
+        position: 'relative',
+        margin: 'calc(var(--sm2-space-4) * -1)',
+        width: 'calc(100% + var(--sm2-space-4) * 2)',
+        minHeight: 'calc(100dvh - 2px)',
+        overflow: 'hidden',
+        borderRadius: 0,
+      }}
+    >
+      <h1 id="sm-map-title" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>
         {isPt ? 'Mapa' : 'Map'}
       </h1>
-      <ul
+
+      {/* Fundo 9:16, cobrindo — object-fit: cover centrado. */}
+      <img
+        src={bgMapa}
+        alt=""
+        aria-hidden="true"
         style={{
-          listStyle: 'none', margin: 0, padding: 0,
-          display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-          gap: 'var(--sm2-space-3)',
+          position: 'absolute', inset: 0,
+          width: '100%', height: '100%',
+          objectFit: 'cover', objectPosition: 'center',
+        }}
+      />
+
+      {/* Vinheta leve no canto inferior esquerdo — onde mora o link da Home. */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute', left: 0, bottom: 0, width: '48%', height: '28%',
+          background: 'radial-gradient(circle at 0% 100%, rgba(4,10,10,.55), transparent 70%)',
+          pointerEvents: 'none',
+        }}
+      />
+
+      {/* Saldo das 3 moedas — menu discreto dentro da cena, canto superior direito. */}
+      <div
+        data-map-currencies
+        style={{
+          position: 'absolute', top: 'var(--sm2-space-3)', right: 'var(--sm2-space-3)',
+          display: 'flex', flexDirection: 'column', alignItems: 'flex-end',
+          gap: 2,
+          padding: '6px 10px',
+          background: 'rgba(8,25,26,.6)',
+          borderRadius: 'var(--sm2-radius-md)',
+          backdropFilter: 'blur(2px)',
         }}
       >
-        {AREAS.map(id => (
-          <li key={id}>
-            <button
-              type="button"
-              data-map-area={id}
-              onClick={() => onOpenArea(id)}
+        <span aria-label={isPt ? `${bits} Bits` : `${bits} Bits`} style={{ ...bitsStyle, fontSize: 'var(--sm2-text-sm)' }}>
+          {bits} Bits
+        </span>
+        <span aria-label={isPt ? `${emblems} Emblemas` : `${emblems} Emblems`} style={{ ...emblemStyle, fontSize: 'var(--sm2-text-sm)' }}>
+          {emblems} {isPt ? 'Emblemas' : 'Emblems'}
+        </span>
+        <span
+          aria-label={isPt ? `${credits} Créditos` : `${credits} Credits`}
+          style={{ color: CREDIT_COLOR, fontFamily: 'var(--sm2-font-text)', fontWeight: 700, fontSize: 'var(--sm2-text-sm)', fontVariantNumeric: 'tabular-nums' }}
+        >
+          {credits} {isPt ? 'Créditos' : 'Credits'}
+        </span>
+      </div>
+
+      {/* As 6 construções, posicionadas em % sobre o fundo. */}
+      {AREAS.map(id => {
+        const pos = AREA_POS[id];
+        return (
+          <button
+            key={id}
+            type="button"
+            data-map-area={id}
+            onClick={() => onOpenArea(id)}
+            aria-label={areaLabel(id, isPt)}
+            style={{
+              position: 'absolute',
+              left: pos.left, top: pos.top,
+              transform: 'translate(-50%, -78%)',
+              width: '34%',
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              background: 'transparent', border: 'none', padding: 0, cursor: 'pointer',
+            }}
+          >
+            <img
+              src={AREA_ART[id]}
+              alt=""
+              aria-hidden="true"
+              style={{ width: '100%', filter: 'drop-shadow(0 6px 6px rgba(0,0,0,.55))' }}
+            />
+            <span
+              data-map-label
               style={{
-                width: '100%', minHeight: 120,
-                display: 'flex', flexDirection: 'column', alignItems: 'center',
-                justifyContent: 'center', gap: 'var(--sm2-space-2)',
-                padding: 'var(--sm2-space-4) var(--sm2-space-3)',
-                background: 'var(--sm2-surface)',
-                border: '1px solid var(--sm2-line)',
-                borderRadius: 'var(--sm2-radius-md)',
-                color: 'var(--sm2-ink)', cursor: 'pointer', textAlign: 'center',
+                marginTop: -4,
+                padding: '2px 9px',
+                borderRadius: 999,
+                background: 'rgba(8,25,26,.82)',
+                border: '1px solid rgba(95,243,224,.35)',
+                fontFamily: 'var(--sm2-font-display)',
+                fontSize: 'var(--sm2-text-xs)',
+                fontWeight: 800,
+                letterSpacing: '0.06em',
+                // Fixo, não o token de tema: o fundo do rótulo é sempre
+                // escuro translúcido (sobre a arte da cena), nos dois temas —
+                // usar `--sm2-ink` faria o texto ficar escuro-sobre-escuro
+                // no tema claro (achado nos screenshots do F3).
+                color: '#E9F5F2',
+                textAlign: 'center',
               }}
             >
-              <Icon name={AREA_ICON[id]} size={32} tone="primary" />
-              <span
-                data-map-label
-                style={{
-                  fontFamily: 'var(--sm2-font-display)', fontSize: 'var(--sm2-text-md)',
-                  fontWeight: 600, lineHeight: 'var(--sm2-leading-title)',
-                }}
-              >
-                {areaLabel(id, isPt)}
-              </span>
-              <span
-                style={{
-                  fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-xs)',
-                  lineHeight: 'var(--sm2-leading-body)', color: 'var(--sm2-muted)',
-                }}
-              >
-                {areaHint(id, isPt)}
-              </span>
-            </button>
-          </li>
-        ))}
-      </ul>
+              {areaLabel(id, isPt)}
+            </span>
+          </button>
+        );
+      })}
     </section>
   );
 }
