@@ -778,6 +778,12 @@ Cobertura: **120/120** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 **Chamado por:** `src/App.tsx`, `src/components/nav/MapPage.tsx`, `AreaScene.tsx`, `AreaSheet.tsx`, `AreaView.tsx`, `HomeMenuSheet.tsx`, `src/utils/areaNpcVoice.ts`, `areaSheetCopy.ts`, `src/assets/soulmon/npcs/index.ts` (`grep -rl "navigation'" src`, 24/09/2026).
 **Régua:** `src/components/nav/nav.render.test.tsx`, `src/styles/navRotulo.contract.test.ts`.
 
+### `src/utils/androidBack.ts`
+**Dono de:** o botão físico de voltar do Android (`@capacitor/app`, evento `backButton`, 24/09/2026). Segue o grafo de `viewBack` (`src/navigation.ts`) chamando o `goBack` do `App.tsx`; na Home (`viewBack` = `null`) devolve ao sistema com `App.minimizeApp()` (e `App.exitApp()` se falhar), porque registrar o listener desliga o padrão do Capacitor. Só registra quando `Capacitor.isNativePlatform()` — na web/PWA fica o `popstate`.
+**Exports:** `registerAndroidBack(getView, goBack)` — devolve a função de limpeza.
+**Chamado por:** `src/App.tsx`.
+**Régua:** `src/utils/androidBack.test.ts`.
+
 ### `src/utils/playAreaLots.ts`
 **Dono de:** a copy e a posição dos lotes das áreas de jogar (minimal-ui F5) — Exploração (`masmorra`, `dino`) e Jogos (`ppt`): rótulo PT/EN, rótulo acessível e o centro da base em % da cena, tirados dos mocks aprovados. O lote de Jogos se chama "Pedra, papel e tesoura" (não "Duelo", que já é o lote da Arena).
 **Exports:** `ExploracaoLotId`, `JogosLotId` (types), `exploracaoLots(language)`, `jogosLots(language)`.
