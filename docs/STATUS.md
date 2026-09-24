@@ -7,6 +7,23 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 24/09/2026 — Manual sincronizado com `78ef5367`
+>
+> Delta `c7bca6d..78ef5367` (19 commits: incubação WP4.29 + minimal-ui F1–F6 + Vesca),
+> rodado por `/manter-docs`. Docs tocados, todos recarimbados pelo `doc-verificador`
+> em 24/09: 00-MAPA, 01, 02 (§7, §17 incubação, §20, §47, §49, §51, §54, §59 D3), 03
+> (aviso `incubacao`, §4.10, §4.9 `pane === 'oracle'`, Oráculo alcançável pelo menu),
+> 04 (`--sm-corner-h`, exceção D1, `sm3-blink`/`sm3-sobe`), 05, 07 (92 campos,
+> `incubation?`), 08 (7 bumps do `CACHE_VERSION`), 06/components, 06/utils,
+> 06/hooks-contexts-types, 09, 10. Isto fecha o ⚠️ "não é uma sincronização completa"
+> do bloco da F6 abaixo.
+>
+> - ⚠️ **`CLAUDE.md` diverge do código** (é do dono, não mexido): ainda diz Loja "na
+>   página Atividades (`ShopModal`)" e Missões "aba na loja"; §5.4 de identidade não cita
+>   a exceção D1 e ainda fala da "nav inferior 32px".
+> - Pendências menores fora do delta: 02 ainda cita `EvoTrail.tsx` em seções não
+>   tocadas; `06-REFERENCIA/utils.md` diz cobertura 120/120 mas há 121 módulos contados.
+
 > ## 24/09/2026 — minimal-ui F6 (fechamento), branch `chore/minimal-ui-f6`
 >
 > - **Código morto removido**: a tela `ItemsWindow` (pastinha) + `showItemsWindow`/
