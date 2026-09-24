@@ -18,7 +18,7 @@ import { CornerLink } from './components/nav/CornerLink';
 import { AreaTopBar } from './components/nav/AreaTopBar';
 import { MapPage } from './components/nav/MapPage';
 import { HomeMenuSheet } from './components/nav/HomeMenuSheet';
-import { NavGlyph } from './components/ui/NavGlyphs';
+import { PixelIcon } from './components/ui/PixelIcon';
 import {
   type ViewType, type AreaId, areaOf, menuPageOf, viewBack, areaView, areaLabel, menuPageLabel,
 } from './navigation';
@@ -5578,7 +5578,8 @@ export default function App() {
                 focusSealed={focoDoDiaCompleto}
                 language={language}
                 /* D6 — o menu SÓ ÍCONE da Home: tudo que morava no sanduíche
-                   da barra inferior. Glifo `menu` pelado (regra do dono),
+                   da barra inferior. Ícone `acoes` (grade 3×3 de gemas, arte
+                   do squad de arte) pelado (regra do dono),
                    alvo de 44 no botão, divulgação com `aria-expanded`. */
                 trailing={(
                   <button
@@ -5595,7 +5596,7 @@ export default function App() {
                       background: 'transparent', border: 'none', padding: 0, cursor: 'pointer',
                     }}
                   >
-                    <NavGlyph name="menu" size={24} tone="muted" />
+                    <PixelIcon name="acoes" size={32} />
                   </button>
                 )}
               />
@@ -6231,7 +6232,7 @@ export default function App() {
           foco tem que visitar o conteúdo antes (WCAG 2.4.3). */}
       {currentView === 'home' && (
         <CornerLink
-          icon="map"
+          icon="mapa"
           side="right"
           label={language === 'pt-BR' ? 'Mapa' : 'Map'}
           onClick={() => goTo('map')}

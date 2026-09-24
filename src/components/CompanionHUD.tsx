@@ -5,6 +5,7 @@ import { getSpriteForStage, demoTintFilter } from '../utils/sprites';
 import { petVoiceLine, type PetVoiceKind } from '../utils/petVoice';
 import { welcomeBackLine } from '../utils/welcomeBack';
 import { Icon } from './ui/Icon';
+import { PixelIcon } from './ui/PixelIcon';
 import { Viewport, usePrefersReducedMotion, useVarreduraDeSintonia } from './ui/Viewport';
 import { NEST_ART, DEFAULT_NEST } from './nestArt';
 import { ITEM_ART } from '../utils/itemArt';
@@ -1780,7 +1781,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                   ? `Corações: ${fmt(healthPoints)} de ${maxHealthPoints}${hpBaixo ? ' (baixo)' : ''}`
                   : `Hearts: ${fmt(healthPoints)} of ${maxHealthPoints}${hpBaixo ? ' (low)' : ''}`}
               >
-                <Icon name="favorite" size={20} fill={1} tone="viewport-danger" />
+                <PixelIcon name="hp" size={20} />
                 <span className="sm2-num" aria-hidden="true">{fmt(healthPoints)}/{maxHealthPoints}</span>
               </span>
               <span
@@ -1791,7 +1792,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                   ? `Energia: ${energyPoints} de ${maxEnergy}${enBaixo ? ' (vazia)' : ''}`
                   : `Energy: ${energyPoints} of ${maxEnergy}${enBaixo ? ' (empty)' : ''}`}
               >
-                <Icon name="bolt" size={20} fill={1} tone="viewport" />
+                <PixelIcon name="energia" size={20} />
                 <span className="sm2-num" aria-hidden="true">{energyPoints}/{maxEnergy}</span>
               </span>
             </div>
@@ -1801,7 +1802,8 @@ export const CompanionHUD = memo(function CompanionHUD({
         {/* ── OS TRÊS CUIDADOS — canto inferior DIREITO (abordagem B) ─────────
             Mochila · lua/sol (dormir) · banho. EXCEÇÃO D1 do dono (23/09/2026):
             estes três podem ter anel/fundo — é a única caixa em volta de ícone
-            na Home. Glifo autoral 24 (degrau `action`), alvo de 44 no botão.
+            na Home. Ícone em pixel art do squad de arte (`itens`/`dormir`/`banho`,
+            `assets/soulmon/icones-ui`), 24 (degrau `action`), alvo de 44 no botão.
             Carinho e brincar NÃO têm botão: são gesto sobre o pet.
 
             CÉLULA INERTE continua sendo `aria-disabled` + forma (tracejado),
@@ -1823,7 +1825,7 @@ export const CompanionHUD = memo(function CompanionHUD({
               : (hasNewItems ? 'Backpack — new item' : 'Backpack')}
           >
             {hasNewItems && <span className="sm2-deck-dot" aria-hidden="true" />}
-            <Icon name="inventory_2" size={24} fill={hasNewItems ? 1 : 0} tone="viewport" />
+            <PixelIcon name="itens" size={24} />
           </button>
           <button
             type="button"
@@ -1836,7 +1838,11 @@ export const CompanionHUD = memo(function CompanionHUD({
               ? (isSleeping ? 'Acordar' : 'Dormir')
               : (isSleeping ? 'Wake' : 'Sleep')}
           >
-            <Icon name={isSleeping ? 'wb_sunny' : 'bedtime'} size={24} fill={isSleeping ? 1 : 0} tone="viewport" />
+            {/* Dormindo, o botão vira "Acordar": o set de arte não tem sol, então
+                esse estado continua no glifo `wb_sunny` até existir a arte. */}
+            {isSleeping
+              ? <Icon name="wb_sunny" size={24} fill={1} tone="viewport" />
+              : <PixelIcon name="dormir" size={24} />}
           </button>
           <button
             type="button"
@@ -1848,7 +1854,7 @@ export const CompanionHUD = memo(function CompanionHUD({
               ? (showerCooldown ? 'Banho — só um instante' : 'Banho')
               : (showerCooldown ? 'Bath — just a moment' : 'Bath')}
           >
-            <Icon name="shower" size={24} tone="viewport" />
+            <PixelIcon name="banho" size={24} />
           </button>
         </div>
         </div>

@@ -1,4 +1,4 @@
-import { NavGlyph, type NavGlyphName } from '../ui/NavGlyphs';
+import { PixelIcon } from '../ui/PixelIcon';
 
 /**
  * O LINK DE CANTO — a única navegação entre as duas telas de topo.
@@ -10,11 +10,13 @@ import { NavGlyph, type NavGlyphName } from '../ui/NavGlyphs';
  * **Ícone pelado, 32px (papel `nav` da escala, tokens.md §6.1)** — a regra
  * "ícone nunca dentro de box" vale aqui sem exceção (a exceção D1 é só do
  * voltar em círculo e dos cuidados). O alvo de 44px é do BOTÃO, invisível.
- * O rótulo existe no `aria-label` e no `title`; na tela o glifo fala sozinho,
- * como nos mocks aprovados.
+ * O rótulo existe no `aria-label` e no `title`; na tela o ícone fala sozinho,
+ * como nos mocks aprovados. O ícone é a ARTE do squad de arte (`mapa.png` /
+ * `home.png`, `assets/soulmon/icones-ui`) — até a correção pós-F3 era um glifo
+ * vetorial de linha fina no lugar dela, por engano.
  */
 export function CornerLink({ icon, label, side, onClick, glow = false }: {
-  icon: NavGlyphName;
+  icon: 'mapa' | 'home';
   label: string;
   side: 'left' | 'right';
   onClick: () => void;
@@ -43,7 +45,7 @@ export function CornerLink({ icon, label, side, onClick, glow = false }: {
         filter: glow ? 'drop-shadow(0 0 6px rgba(95, 243, 224, 0.45))' : undefined,
       }}
     >
-      <NavGlyph name={icon} size={32} tone="primary" />
+      <PixelIcon name={icon} size={32} />
     </button>
   );
 }

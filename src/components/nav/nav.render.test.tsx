@@ -92,9 +92,9 @@ describe('MapPage', () => {
 });
 
 describe('CornerLink', () => {
-  it('um botão com nome acessível, glifo de 32 (papel nav) e SEM caixa', () => {
+  it('um botão com nome acessível, ícone de arte de 32 (papel nav) e SEM caixa', () => {
     const { container } = renderWithCss(
-      <CornerLink icon="map" side="right" label="Map" onClick={() => {}} />,
+      <CornerLink icon="mapa" side="right" label="Map" onClick={() => {}} />,
     );
     const btn = container.querySelector('button')!;
     expect(btn.getAttribute('aria-label')).toBe('Map');
@@ -103,8 +103,14 @@ describe('CornerLink', () => {
     // alvo ≥ 44 é do BOTÃO
     expect(parseFloat(btn.style.width)).toBeGreaterThanOrEqual(44);
     expect(parseFloat(btn.style.height)).toBeGreaterThanOrEqual(44);
-    const svg = btn.querySelector('svg')!;
-    expect(svg.getAttribute('width')).toBe('32');
+    // o ícone é a ARTE do squad de arte (pixel art, alfa real), 32 = papel nav,
+    // decorativo (o nome é do botão) — e pelado: nenhuma caixa em volta dele
+    const img = btn.querySelector('img[data-pixel-icon="mapa"]') as HTMLImageElement;
+    expect(img).not.toBeNull();
+    expect(img.getAttribute('width')).toBe('32');
+    expect(img.getAttribute('alt')).toBe('');
+    expect(img.getAttribute('aria-hidden')).toBe('true');
+    expect(btn.querySelector('svg')).toBeNull();
   });
 
   it('brilho sutil opcional (F3: a casa no Mapa) sem virar caixa', () => {
@@ -122,7 +128,7 @@ describe('CornerLink', () => {
     const l = renderWithCss(<CornerLink icon="home" side="left" label="Home" onClick={() => {}} />);
     expect(l.container.querySelector('button')!.style.left).not.toBe('');
     l.unmount();
-    const r = renderWithCss(<CornerLink icon="map" side="right" label="Map" onClick={() => {}} />);
+    const r = renderWithCss(<CornerLink icon="mapa" side="right" label="Map" onClick={() => {}} />);
     expect(r.container.querySelector('button')!.style.right).not.toBe('');
   });
 });
