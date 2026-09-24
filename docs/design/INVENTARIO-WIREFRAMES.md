@@ -5,6 +5,19 @@
 > **Precedência:** onde os dois discordam, **o `03` manda** — e a divergência está anotada na linha ou na §3. Acima dos dois: código > teste > `CLAUDE.md` > manual.
 > **Não cobre:** aparência (cor, tipografia, espaçamento, tokens `--sm2-*`) — é do `04-IDENTIDADE-VISUAL.md` e da Fase 2; as REGRAS que as telas aplicam — são do `02-REGRAS-DE-NEGOCIO.md`; **o que cada wireframe deve mostrar** — é do `design-wireframer` e do `PRINCIPIOS-DE-WIREFRAME.md`; percurso novo com o app rodando — **não foi feito** (por briefing: mede-se o documento, que já cita o código).
 
+> ⚠️ **Telas novas da minimal-ui (23–24/09/2026, fatias F1–F6)** — não estão na
+> tabela-mestra abaixo (que é a Fase 1 fechada, contagens congeladas): **Mapa**
+> (`nav/MapPage.tsx`), as **6 áreas** Mercado · Jogos · Arena · Exploração ·
+> Laboratório · Hall (`nav/AreaView.tsx` + `AreaScene`), as **folhas de lote**
+> (`AreaSheet`: 4 lojinhas do Mercado, Torneio, Duelo, Masmorra, Corrida do
+> Dino, Pedra-papel-tesoura, Evolução/Soulmon/Estatísticas, Biblioteca), a
+> **Mochila** da Home (`home/Mochila.tsx`) e o **menu ícone** da Home
+> (`nav/HomeMenuSheet.tsx`). Saíram: a barra inferior, a página de Atividades,
+> a Loja como página e a pastinha. Os mocks aprovados moram fora do git
+> (`D:\Soulmon\product\squad-minimal-ui\propostas\`, ver
+> [`minimal-ui/README.md`](minimal-ui/README.md)); o fluxo atual está em
+> [`../manual/03-FLUXO-DE-TELAS.md`](../manual/03-FLUXO-DE-TELAS.md) §1.
+
 ---
 
 ## 0. Como ler

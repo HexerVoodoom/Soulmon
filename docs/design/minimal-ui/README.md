@@ -1,7 +1,8 @@
 # Minimal UI — a nova arquitetura Home + Mapa (23/09/2026)
 
 Proposta aprovada pelo dono, rodada a rodada, em 23/09/2026 com a SQUAD-Minimal-UI (instância da SQUAD-Alpha).
-**Ainda não está no código.** Este diretório guarda o que foi decidido e o plano para implementar.
+**Implementada no código** nas fatias F1–F6 do [plano](PLANO-IMPLEMENTACAO.md) (23–24/09/2026); o comportamento atual
+está descrito em `docs/manual/03-FLUXO-DE-TELAS.md` §1. Este diretório guarda o que foi decidido e o plano que foi seguido.
 
 ## Onde está cada coisa
 
