@@ -59,8 +59,8 @@ const AREA_NPC_VOICE: Record<AreaId, AreaNpcVoice> = {
   hall: {
     namePt: 'Lumi, a anfitriã',
     nameEn: 'Lumi, the host',
-    linePt: 'Seja bem-vindo ao Hall! Em breve você vai encontrar amigos e outros Soulmons por aqui.',
-    lineEn: "Welcome to the Hall! Soon you'll find friends and other Soulmons here.",
+    linePt: 'Seja bem-vindo ao Hall! Na Biblioteca você encontra amigos e outros Soulmons.',
+    lineEn: 'Welcome to the Hall! In the Library you can meet friends and other Soulmons.',
   },
 };
 

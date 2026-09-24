@@ -1,0 +1,1 @@
+const o="/assets/npc-mercado-BiUImQ2d.webp",a="/assets/npc-arena-BkndVpbF.webp",n="/assets/npc-laboratorio-DV5zVjey.webp",s="/assets/npc-jogos-c2paOyNF.webp",c="/assets/npc-exploracao-B6g_RNX2.webp",p="/assets/npc-hall-DtT0kZyw.webp",t={mercado:o,arena:a,laboratorio:n,jogos:s,exploracao:c,hall:p};export{t as A};

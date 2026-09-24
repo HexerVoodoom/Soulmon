@@ -17,8 +17,7 @@ import {
 import { CornerLink } from './components/nav/CornerLink';
 import { AreaTopBar } from './components/nav/AreaTopBar';
 import { MapPage } from './components/nav/MapPage';
-import { AreaScene, type AreaLot } from './components/nav/AreaScene';
-import { AreaSheet } from './components/nav/AreaSheet';
+import type { AreaLot } from './components/nav/AreaScene';
 import { areaDemoLot } from './utils/areaSheetCopy';
 import { HomeMenuSheet } from './components/nav/HomeMenuSheet';
 import { NavGlyph } from './components/ui/NavGlyphs';
@@ -642,6 +641,10 @@ const EditModal = lazy(() => import('./components/EditModal').then(m => ({ defau
 const TaskEditModal = lazy(() => import('./components/TaskEditModal').then(m => ({ default: m.TaskEditModal })));
 const OraclePage = lazy(() => import('./components/OraclePage').then(m => ({ default: m.OraclePage })));
 const TournamentPage = lazy(() => import('./components/TournamentPage').then(m => ({ default: m.TournamentPage })));
+// minimal-ui F5: o molde de área entra por `lazy()` — a Home não precisa dele
+// e o chunk de entrada está acima do orçamento (`orcamentoDeBytes.contract`).
+const AreaScene = lazy(() => import('./components/nav/AreaScene').then(m => ({ default: m.AreaScene })));
+const AreaSheet = lazy(() => import('./components/nav/AreaSheet').then(m => ({ default: m.AreaSheet })));
 const LibraryPage = lazy(() => import('./components/LibraryPage').then(m => ({ default: m.LibraryPage })));
 const ShopModal = lazy(() => import('./components/ShopModal').then(m => ({ default: m.ShopModal })));
 const PetPage = lazy(() => import('./components/PetPage').then(m => ({ default: m.PetPage })));
@@ -4920,6 +4923,310 @@ export default function App() {
     );
   }
 
+  /* ── CONTEÚDO DO LABORATÓRIO E DO HALL (minimal-ui F5) ──────────────
+     Montado aqui, antes do `return`, porque cada peça mora em DOIS lugares
+     ou dentro do `AreaSheet`: Estatísticas é também página do menu da Home
+     (D6), e Evolução/Soulmon/Biblioteca só existem dentro da folha do lote.
+     Nenhuma regra nasce aqui — são os mesmos componentes e handlers de antes
+     (`EvolutionPath` + `handleEvolveRequest`, `LibraryPage`), só reempacotados. */
+  const statsPage = (<Suspense fallback={<ScreenSkeleton language={language} />}><StatsPage
+              /* WP1.6 — a MESMA peça do reveal, agora como lembrança. */
+              birth={gameState.bornAt || gameState.soulmonMeta?.baseName || gameState.demoCharacterId ? {
+                /* ⚠️ O jogador GRÁTIS tinha o cartão de nascimento
+                   permanentemente sem criatura (auditoria de 06/09/2026):
+                   `displaySprite` lê o ACERVO, e o demo nunca gera sprite —
+                   embora a arte dele exista e seja desenhada todo dia na Home
+                   por `getSpriteForStage`.
+                   A regra "nunca arte de reserva" no `BirthCard` foi escrita
+                   para o oráculo, onde reserva significa OUTRA criatura. No
+                   demo o pré-pronto É a criatura da pessoa, então a regra
+                   estava bloqueando justamente o caso em que ela não se
+                   aplica — e a faixa grátis é a que menos posse recebe. */
+                spriteUrl: displaySprite(spriteAcervo, 'rookie')?.url
+                  ?? (gameState.demoCharacterId
+                    ? getSpriteForStage('rookie', gameState.demoCharacterId)
+                    : null),
+                name: soulmonDisplayName(gameState.soulmonMeta) || '—',
+                soulGoal: gameState.soulGoal ?? null,
+                bornAt: gameState.bornAt ?? null,
+              } : null}
+              bestiary={gameState.bestiary ?? []}
+              /* WP4.6/WP4.10 — o álbum das formas: as onze da árvore, com a
+                 arte que já existe e a data de quando cada uma chegou. */
+              album={(gameState.soulmonStages ?? []).map(st => {
+                const id = st.branch ? `${st.stage}-${st.branch}` : st.stage;
+                return { id, name: st.name, spriteUrl: displaySprite(spriteAcervo, id)?.url ?? null };
+              })}
+              formReachedAt={gameState.formReachedAt}
+              completedTasks={gameState.completedTasks}
+              activityStats={gameState.activityStats}
+              language={language}
+              gamePoints={gameState.gamePoints}
+              totalXP={gameState.totalXP}
+              streakDays={gameState.totalPerfectDays ?? 0}
+              virusPoints={gameState.virusPoints}
+              dataPoints={gameState.dataPoints}
+              vaccinePoints={gameState.vaccinePoints}
+              petPassive={gameState.petPassive}
+              carePattern={carePatternReading.confident ? carePatternReading.pattern : null}
+              /* Janela de Descanso: esconde os números da tela, preserva as
+                 recompensas (DECISÕES §13 V3; canvas §27, achado 6). */
+              hideMetrics={gameState.rest?.hideMetrics === true}
+              /* WP2.11 — "N dias juntos". Lê de `bornAt` (WP1.16) e não de um
+                 segundo contador: três guardas propuseram medir "há quanto
+                 tempo" de três jeitos diferentes, e uma fonte só é o conserto.
+                 `null` quando o save não tem data — e aí a linha não aparece,
+                 em vez de aparecer com um número inventado. */
+              daysTogether={daysTogether(gameState.bornAt, playerDayKey(new Date(), gameState.playerDayTz))}
+              season={{
+                state: gameState.season,
+                counters: {
+                  totalPerfectDays: gameState.totalPerfectDays ?? 0,
+                  dungeonRunsCompleted: gameState.dungeonRunsCompleted ?? 0,
+                },
+                rest: gameState.rest,
+              }}
+              journey={{
+                unlockedEvolutions: gameState.unlockedEvolutions,
+                soulmonStages: gameState.soulmonStages,
+                totalPerfectDays: gameState.totalPerfectDays,
+                dungeonKills: gameState.dungeonKills,
+                dungeonRunsCompleted: gameState.dungeonRunsCompleted,
+                dinoBest: gameState.dinoBest,
+                droppedItems: gameState.droppedItems,
+                soulGoal: gameState.soulGoal,
+              }}
+            /></Suspense>);
+  const labContent = (
+    <>
+          {/* O TOPO NOVO DO LABORATÓRIO (minimal-ui F5, mock `evolucao`):
+              Evolução / Soulmon / Stats como abas SUBLINHADAS (`.tabs` do
+              mock) — seleção é sublinhado ciano, nunca placa cheia (regra do
+              dono; e a sub-aba é seleção, não ação — canvas Pet §22, D-P1).
+              `minWidth: 0` + `nowrap`: "Estatísticas" é uma palavra só e
+              `flex:1` com `min-width:auto` não encolhe (medido em 390px). */}
+          <div role="tablist" aria-label={language === 'pt-BR' ? 'Seções do Laboratório' : 'Laboratory sections'} data-lab-tabs
+            style={{ display: 'flex', gap: 4, borderBottom: '1px solid var(--sm2-line)', marginBottom: 'var(--sm2-space-3)' }}>
+            {([
+              { view: 'evolution' as const, label: language === 'pt-BR' ? 'Evolução' : 'Evolution' },
+              { view: 'pet' as const, label: 'Soulmon' },
+              { view: 'stats' as const, label: 'Stats' },
+            ]).map(({ view, label }) => (
+              <button
+                key={view}
+                type="button"
+                role="tab"
+                aria-selected={labTab === view}
+                data-lab-tab={view}
+                onClick={() => setLabTab(view)}
+                style={{
+                  flex: 1, minWidth: 0, minHeight: 44, whiteSpace: 'nowrap',
+                  position: 'relative', background: 'none', border: 0, cursor: 'pointer',
+                  fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm)', fontWeight: 500,
+                  color: labTab === view ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)',
+                  boxShadow: labTab === view ? 'inset 0 -3px 0 var(--sm2-primary-ink)' : 'none',
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          {/* Ponto de conversão natural: quem está de frente para a árvore de
+              um personagem de demonstração (as 3 linhas iguais) é exatamente
+              quem entende o que a própria árvore significa. Só aqui e no
+              limite de criação — em nenhum outro lugar do jogo. */}
+          {labTab === 'evolution' && gameState.demoCharacterId && (
+            <div style={{ padding: '0 4px 10px' }}>
+              <UnlockNudge
+                language={language}
+                reason="evolution"
+                variant={gameState.accountTier === 'paid' ? 'reveal' : 'buy'}
+                onOpen={() => {
+                  if (gameState.accountTier === 'paid') setUpgradeRitual(true);
+                  else setUnlockReason('evolution');
+                }}
+              />
+            </div>
+          )}
+
+          {labTab === 'evolution' && (
+            <Suspense fallback={<ScreenSkeleton language={language} />}><EvolutionPath
+              currentStageId={gameState.evolutionStage}
+              currentBranch={getDominantBranch() === 'balanced' ? 'data' : getDominantBranch() as 'virus' | 'data' | 'vaccine'}
+              virusPoints={gameState.virusPoints}
+              dataPoints={gameState.dataPoints}
+              vaccinePoints={gameState.vaccinePoints}
+              perfectDays={gameState.perfectDays}
+              incubating={incubandoAgora}
+              gateDays={FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required}
+              onDegenerate={handleDegenerate}
+              stages={gameState.soulmonStages ?? []}
+              eggType={gameState.eggType}
+              demoCharacterId={gameState.demoCharacterId}
+              unlockedEvolutions={gameState.unlockedEvolutions}
+              evolutionLocked={gameState.evolutionLocked ?? false}
+              onToggleEvolutionLock={handleToggleEvolutionLock}
+              // O visor da forma atual é o gesto (V2): com a barra cheia e o
+              // cadeado aberto, o toque abre a MESMA cerimônia que o HUD abre.
+              onEvolveRequest={handleEvolveRequest}
+              language={language}
+              carePattern={carePatternReading.confident ? carePatternReading.pattern : null}
+              spriteLibrary={spriteAcervo}
+              dominantElement={gameState.soulmonMeta?.dominantElement}
+              onTuneVisor={handleTuneVisor}
+              onRetrySprite={handleRetrySprite}
+              onRevertVisor={handleRevertVisor}
+              onSeenTune={handleSeenTune}
+              // O lote VIVO: sem esta prop o card `GERANDO` (§2.2) existia na
+              // copy e em `cardState` e nunca aparecia em runtime.
+              generatingSprites={spriteGen.generating}
+              forecastBranch={resolveBranch(
+                { virus: gameState.virusPoints, data: gameState.dataPoints, vaccine: gameState.vaccinePoints },
+                carePatternReading,
+                gameState.currentBranch,
+              )}
+            /></Suspense>
+          )}
+
+          {/* RENASCIMENTO — mora na página de Evolução porque é o último
+              degrau da escada que essa página conta, e só aparece para quem
+              PODE (ultra + comprou + nunca usou). Nunca abre sozinho: o
+              convite é um card, o gesto é do jogador. Quem já renasceu vê a
+              marca, não o botão — é um registro, não uma oferta repetida. */}
+          {labTab === 'evolution' && canRebirth(gameState) && (
+            <div
+              data-rebirth-block
+              style={{ marginTop: 16, padding: 12, borderRadius: 'var(--sm2-radius-md)', border: '1px solid var(--sm2-line)', backgroundColor: 'var(--sm2-surface)', display: 'flex', flexDirection: 'column', gap: 8 }}
+            >
+              <p style={{ ...sm2Text, margin: 0 }}>
+                {language === 'pt-BR'
+                  ? 'Sua criatura chegou ao topo. Você pode devolvê-la ao ovo e escolher quem ela renasce.'
+                  : 'Your creature reached the top. You can return them to the egg and choose who they are reborn as.'}
+              </p>
+              {/* "Rebirth" primário com `egg` 24 pelado (canvas EVO-16). */}
+              <button
+                type="button"
+                onClick={() => setRebirthOpen(true)}
+                style={{ ...sm2Button('primary'), width: '100%' }}
+              >
+                <Icon name="egg" size={24} tone="inherit" />
+                {language === 'pt-BR' ? 'Renascimento' : 'Rebirth'}
+              </button>
+            </div>
+          )}
+          {/* ⚠️ A recusa MOTIVADA, que a auditoria de 06/09/2026 achou morta.
+              `rebirthRefusal` distingue `not-paid` de `not-ultra` justamente
+              porque cada motivo tem uma saída diferente — e o app só usava
+              `canRebirth`, então um jogador `demo` no ultra via NADA, enquanto
+              o guia prometia o Renascimento a todos sem dizer que é pago.
+              Beco sem saída no ponto mais alto da escada, para o usuário mais
+              engajado que existe.
+              Só o `not-paid` vira convite: `not-ultra` é "continue subindo" (a
+              própria página já conta isso) e `already-used` é registro, não
+              oferta repetida. O motivo de telemetria continua sendo
+              `evolution` porque é literalmente onde o card está. */}
+          {/* Canvas Evolução EVO-20: a recusa `not-paid` é o MESMO card-convite
+              âmbar, sem frase em cima — a frase antiga dizia "chegou ao topo"
+              para um rookie demo, porque `rebirthRefusal` responde `not-paid`
+              antes de olhar o estágio. E só quando o convite do demo (o
+              primeiro bloco da página) não está montado: dois convites iguais
+              na mesma tela é cobrança, não convite. */}
+          {labTab === 'evolution' && rebirthRefusal(gameState) === 'not-paid' && !gameState.demoCharacterId && (
+            <div style={{ marginTop: 16 }} data-rebirth-block>
+              <UnlockNudge
+                language={language}
+                reason="evolution"
+                onOpen={() => setUnlockReason('evolution')}
+              />
+            </div>
+          )}
+          {/* Copy §5.4 (21/09/2026): `not-ultra` ganha a sua frase — contexto
+              em `sm2Hint`, e acabou. NÃO vira convite nem botão: a saída é a
+              própria página, que já conta a escada (canvas Evolução §24:
+              "not-ultra sem convite"). Só fora do demo, que tem o convite dele. */}
+          {labTab === 'evolution' && rebirthRefusal(gameState) === 'not-ultra' && !gameState.demoCharacterId && (
+            <p style={{ ...sm2Hint, marginTop: 16, textAlign: 'center' }} data-rebirth-block>
+              {language === 'pt-BR'
+                ? 'O padrão ainda não chegou ao limite do que esta forma ocupa.'
+                : "The pattern hasn't yet reached the edge of what this form can hold."}
+            </p>
+          )}
+          {/* EVO-21: o registro — linha 12 `muted` com `egg` FILL 1 20; memória,
+              nunca oferta repetida (a linha `rebirth` do save nunca é apagada).
+              Copy §5.6: a 2ª frase é a família obrigatória da §11 ("É ele.
+              Ainda é ele.") — sem ela, somada a "parte da alma" e ao fato de
+              renascer ser compra, a cena lê como morte de um ente. Proibidas
+              aqui: morrer, morte, partir, despedida, adeus. */}
+          {labTab === 'evolution' && gameState.rebirth && (
+            <p style={{ ...sm2Hint, marginTop: 16, display: 'flex', alignItems: 'center', gap: 8 }} data-rebirth-block>
+              <Icon name="egg" size={20} fill={1} tone="muted" />
+              <span>
+                {language === 'pt-BR'
+                  ? `Já aconteceu, uma vez. Renasceu do ${gameState.rebirth.fromStage} como "${gameState.rebirth.criatura}". É ele. Ainda é ele.`
+                  : `It already happened, once. Reborn from ${gameState.rebirth.fromStage} as "${gameState.rebirth.criatura}". Same pattern. Still the same one.`}
+              </span>
+            </p>
+          )}
+
+          {labTab === 'pet' && (
+            <Suspense fallback={<ScreenSkeleton language={language} />}><PetPage
+              headingLevel={2}
+              stages={gameState.soulmonStages ?? []}
+              dominantElement={gameState.soulmonMeta?.dominantElement}
+              achievements={unlockedAchievements(gameState)}
+              unlockedEvolutions={gameState.unlockedEvolutions}
+              currentStageId={gameState.evolutionStage}
+              demoCharacterId={gameState.demoCharacterId}
+              petName={soulmonDisplayName(gameState.soulmonMeta) || undefined}
+              savedSkills={gameState.soulmonSkills}
+              onSkillsComputed={handleSkillsComputed}
+              savedClassTitles={gameState.soulmonClassTitles}
+              onClassTitlesComputed={handleClassTitlesComputed}
+              language={language}
+            /></Suspense>
+          )}
+
+          {/* DEX DE SONHOS na página do PET, e não em Configurações: é uma
+              COLEÇÃO do bicho — cenas dele dormindo —, então mora onde já vive
+              a ficha dele (formas, descrições, habilidades). Em Configurações
+              ele leria como um painel de métrica de sono, que é exatamente a
+              leitura que a Parte 3 do plano manda evitar. */}
+          {labTab === 'pet' && (
+            <div style={{ marginTop: 16 }}>
+              <Suspense fallback={<ScreenSkeleton language={language} />}>
+                <DreamDex rest={gameState.rest ?? createRestState()} language={language} />
+              </Suspense>
+            </div>
+          )}
+
+          {/* O diário de aventuras fica ao lado do Dex pelo mesmo motivo dele:
+              é coleção DA CRIATURA, não métrica do jogador. Numa tela de
+              estatísticas viraria painel de desempenho. */}
+          {labTab === 'pet' && (
+            <div style={{ marginTop: 16 }}>
+              <Suspense fallback={<ScreenSkeleton language={language} />}>
+                <AdventureDiary entries={gameState.adventures ?? []} language={language} />
+              </Suspense>
+            </div>
+          )}
+          {labTab === 'stats' && statsPage}
+    </>
+  );
+  const hallContent = (<Suspense fallback={<ScreenSkeleton language={language} />}>
+              <LibraryPage
+                saveId={saveId}
+                friends={gameState.friends ?? []}
+                canGiftToday={gameState.energyPoints >= getMaxEnergyForStage(gameState.evolutionStage)}
+                onFriendsChange={(friends) => setGameState(prev => ({ ...prev, friends }))}
+                onGiftSent={() => {}}
+                onVisitPlayer={() => contarMissao('friend-visit')}
+                metaDoDiaCumprida={dailyTotal > 0 && dailyDone >= dailyTotal}
+                language={language}
+                embedded
+              />
+            </Suspense>);
+
+
   return (
     <div className="fixed inset-0 overflow-hidden flex flex-col sm-app-bg">
         {/* ── O VISOR SINTONIZOU SOZINHO ───────────────────────────────────
@@ -5225,13 +5532,15 @@ export default function App() {
               área (abas por moeda, Torneio, Masmorra, etc.) é F5. Substitui,
               por ora, as páginas antigas que só essas 6 áreas alcançavam
               (`!area` nas condições abaixo) — eram o pane 'shop'/'games'/
-              'tournament'/'library'/'evolution'/'pet'/parte de 'stats'. */}
+              'tournament'. F5: Laboratório (`labContent`) e Hall
+              (`hallContent`) já devolveram Evolução/Soulmon/Stats e a
+              Biblioteca para dentro da folha. */}
           {area && (
-            <AreaScene
+            <Suspense fallback={<ScreenSkeleton language={language} />}><AreaScene
               areaId={area}
               language={language}
               lots={[{
-                id: 'exemplo',
+                id: area === 'laboratorio' ? 'evolucao' : area === 'hall' ? 'biblioteca' : 'exemplo',
                 label: areaDemoLot(area, language).label,
                 left: '50%', top: '38%',
                 ariaLabel: areaDemoLot(area, language).label,
@@ -5240,14 +5549,22 @@ export default function App() {
             >
               <AreaSheet
                 areaId={area}
-                title={areaDemoLot(area, language).label}
+                title={area === 'laboratorio' && labTab !== 'evolution'
+                  ? (labTab === 'pet' ? 'Soulmon' : (language === 'pt-BR' ? 'Estatísticas' : 'Stats'))
+                  : areaDemoLot(area, language).label}
                 closeLabel={language === 'pt-BR' ? 'Fechar' : 'Close'}
                 open={areaSheetOpen}
                 onClose={() => setAreaSheetOpen(false)}
               >
-                <p style={{ ...sm2Text, margin: 0 }}>{areaDemoLot(area, language).placeholder}</p>
+                {/* minimal-ui F5: Laboratório (a árvore de Evolução, com as
+                    abas Evolução/Soulmon/Stats do topo novo) e Hall (a
+                    Biblioteca, decisão D4) já recebem o conteúdo real; as
+                    outras áreas seguem no placeholder até a fatia delas. */}
+                {area === 'laboratorio' ? labContent
+                  : area === 'hall' ? hallContent
+                  : <p style={{ ...sm2Text, margin: 0 }}>{areaDemoLot(area, language).placeholder}</p>}
               </AreaSheet>
-            </AreaScene>
+            </AreaScene></Suspense>
           )}
 
           {pane === 'main' && (
@@ -5781,299 +6098,7 @@ export default function App() {
             </div>
           )}
 
-          {/* Evolução, Pet e Estatísticas dividem o mesmo ícone da barra
-              inferior — alternadas por essas abas em vez de botões separados
-              (a barra tem 6 botões travados por teste). A página do Pet é a
-              ficha viva: formas desbloqueadas, descrições e habilidades. */}
-          {areaOf(currentView) === 'laboratorio' && !area && (
-            <div className="flex gap-2 mb-4">
-              {/* `minWidth: 0` + fonte menor são obrigatórios aqui: "Estatísticas"
-                  é uma palavra só (min-content ~168px) e `flex:1` com o
-                  `min-width:auto` padrão NÃO encolhe — com a chegada do chip
-                  "Pet" a fileira passou de 323 para 412px num viewport de 390 e
-                  o terceiro rótulo era cortado no meio ("ESTATÍSTIC").
-                  A fileira parou de estourar a página, mas o rótulo continuava
-                  4px maior que o próprio chip (medido em 390px: scrollWidth 109
-                  contra clientWidth 105) e o "S" final morria no chanfro. Os
-                  4px vêm do `letter-spacing: .03em` do `.sm-btn` somado a 12px
-                  de padding: zerar o espaçamento (a bitmap já tem folga entre
-                  glifos) e apertar o padding para 4px devolve ~6px de sobra. */}
-              {([
-                { view: 'evolution' as const, label: language === 'pt-BR' ? 'Evolução' : 'Evolution' },
-                { view: 'pet' as const, label: 'Soulmon' },
-                { view: 'stats' as const, label: language === 'pt-BR' ? 'Estatísticas' : 'Stats' },
-              ]).map(({ view, label }) => (
-                <button
-                  key={view}
-                  onClick={() => setLabTab(view)}
-                  aria-current={labTab === view ? 'page' : undefined}
-                  /* Sub-aba = SELEÇÃO, não ação (canvas Pet §22, D-P1): a ativa
-                     vai em `primary-soft` + `primary-ink`, nunca na placa cheia
-                     do primário. Sai o `.sm-btn` pixel (fora do visor). Texto
-                     no piso de 12px (`--sm2-text-xs`), alvo 44 do `sm2Button`. */
-                  style={{
-                    ...sm2Button('outline', false, 'sm'),
-                    flex: 1, minWidth: 0, padding: '0 8px', whiteSpace: 'nowrap',
-                    fontSize: 'var(--sm2-text-xs)',
-                    ...(labTab === view
-                      ? { backgroundColor: 'var(--sm2-primary-soft)', color: 'var(--sm2-primary-ink)', border: '1px solid var(--sm2-primary-ink)' }
-                      : {}),
-                  }}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Ponto de conversão natural: quem está de frente para a árvore de
-              um personagem de demonstração (as 3 linhas iguais) é exatamente
-              quem entende o que a própria árvore significa. Só aqui e no
-              limite de criação — em nenhum outro lugar do jogo. */}
-          {pane === 'evolution' && gameState.demoCharacterId && !area && (
-            <div style={{ padding: '0 4px 10px' }}>
-              <UnlockNudge
-                language={language}
-                reason="evolution"
-                variant={gameState.accountTier === 'paid' ? 'reveal' : 'buy'}
-                onOpen={() => {
-                  if (gameState.accountTier === 'paid') setUpgradeRitual(true);
-                  else setUnlockReason('evolution');
-                }}
-              />
-            </div>
-          )}
-
-          {pane === 'evolution' && !area && (
-            <Suspense fallback={<ScreenSkeleton language={language} />}><EvolutionPath
-              currentStageId={gameState.evolutionStage}
-              currentBranch={getDominantBranch() === 'balanced' ? 'data' : getDominantBranch() as 'virus' | 'data' | 'vaccine'}
-              virusPoints={gameState.virusPoints}
-              dataPoints={gameState.dataPoints}
-              vaccinePoints={gameState.vaccinePoints}
-              perfectDays={gameState.perfectDays}
-              incubating={incubandoAgora}
-              gateDays={FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required}
-              onDegenerate={handleDegenerate}
-              stages={gameState.soulmonStages ?? []}
-              eggType={gameState.eggType}
-              demoCharacterId={gameState.demoCharacterId}
-              unlockedEvolutions={gameState.unlockedEvolutions}
-              evolutionLocked={gameState.evolutionLocked ?? false}
-              onToggleEvolutionLock={handleToggleEvolutionLock}
-              // O visor da forma atual é o gesto (V2): com a barra cheia e o
-              // cadeado aberto, o toque abre a MESMA cerimônia que o HUD abre.
-              onEvolveRequest={handleEvolveRequest}
-              language={language}
-              carePattern={carePatternReading.confident ? carePatternReading.pattern : null}
-              spriteLibrary={spriteAcervo}
-              dominantElement={gameState.soulmonMeta?.dominantElement}
-              onTuneVisor={handleTuneVisor}
-              onRetrySprite={handleRetrySprite}
-              onRevertVisor={handleRevertVisor}
-              onSeenTune={handleSeenTune}
-              // O lote VIVO: sem esta prop o card `GERANDO` (§2.2) existia na
-              // copy e em `cardState` e nunca aparecia em runtime.
-              generatingSprites={spriteGen.generating}
-              forecastBranch={resolveBranch(
-                { virus: gameState.virusPoints, data: gameState.dataPoints, vaccine: gameState.vaccinePoints },
-                carePatternReading,
-                gameState.currentBranch,
-              )}
-            /></Suspense>
-          )}
-
-          {/* RENASCIMENTO — mora na página de Evolução porque é o último
-              degrau da escada que essa página conta, e só aparece para quem
-              PODE (ultra + comprou + nunca usou). Nunca abre sozinho: o
-              convite é um card, o gesto é do jogador. Quem já renasceu vê a
-              marca, não o botão — é um registro, não uma oferta repetida. */}
-          {pane === 'evolution' && canRebirth(gameState) && !area && (
-            <div
-              data-rebirth-block
-              style={{ marginTop: 16, padding: 12, borderRadius: 'var(--sm2-radius-md)', border: '1px solid var(--sm2-line)', backgroundColor: 'var(--sm2-surface)', display: 'flex', flexDirection: 'column', gap: 8 }}
-            >
-              <p style={{ ...sm2Text, margin: 0 }}>
-                {language === 'pt-BR'
-                  ? 'Sua criatura chegou ao topo. Você pode devolvê-la ao ovo e escolher quem ela renasce.'
-                  : 'Your creature reached the top. You can return them to the egg and choose who they are reborn as.'}
-              </p>
-              {/* "Rebirth" primário com `egg` 24 pelado (canvas EVO-16). */}
-              <button
-                type="button"
-                onClick={() => setRebirthOpen(true)}
-                style={{ ...sm2Button('primary'), width: '100%' }}
-              >
-                <Icon name="egg" size={24} tone="inherit" />
-                {language === 'pt-BR' ? 'Renascimento' : 'Rebirth'}
-              </button>
-            </div>
-          )}
-          {/* ⚠️ A recusa MOTIVADA, que a auditoria de 06/09/2026 achou morta.
-              `rebirthRefusal` distingue `not-paid` de `not-ultra` justamente
-              porque cada motivo tem uma saída diferente — e o app só usava
-              `canRebirth`, então um jogador `demo` no ultra via NADA, enquanto
-              o guia prometia o Renascimento a todos sem dizer que é pago.
-              Beco sem saída no ponto mais alto da escada, para o usuário mais
-              engajado que existe.
-              Só o `not-paid` vira convite: `not-ultra` é "continue subindo" (a
-              própria página já conta isso) e `already-used` é registro, não
-              oferta repetida. O motivo de telemetria continua sendo
-              `evolution` porque é literalmente onde o card está. */}
-          {/* Canvas Evolução EVO-20: a recusa `not-paid` é o MESMO card-convite
-              âmbar, sem frase em cima — a frase antiga dizia "chegou ao topo"
-              para um rookie demo, porque `rebirthRefusal` responde `not-paid`
-              antes de olhar o estágio. E só quando o convite do demo (o
-              primeiro bloco da página) não está montado: dois convites iguais
-              na mesma tela é cobrança, não convite. */}
-          {pane === 'evolution' && rebirthRefusal(gameState) === 'not-paid' && !gameState.demoCharacterId && !area && (
-            <div style={{ marginTop: 16 }} data-rebirth-block>
-              <UnlockNudge
-                language={language}
-                reason="evolution"
-                onOpen={() => setUnlockReason('evolution')}
-              />
-            </div>
-          )}
-          {/* Copy §5.4 (21/09/2026): `not-ultra` ganha a sua frase — contexto
-              em `sm2Hint`, e acabou. NÃO vira convite nem botão: a saída é a
-              própria página, que já conta a escada (canvas Evolução §24:
-              "not-ultra sem convite"). Só fora do demo, que tem o convite dele. */}
-          {pane === 'evolution' && rebirthRefusal(gameState) === 'not-ultra' && !gameState.demoCharacterId && !area && (
-            <p style={{ ...sm2Hint, marginTop: 16, textAlign: 'center' }} data-rebirth-block>
-              {language === 'pt-BR'
-                ? 'O padrão ainda não chegou ao limite do que esta forma ocupa.'
-                : "The pattern hasn't yet reached the edge of what this form can hold."}
-            </p>
-          )}
-          {/* EVO-21: o registro — linha 12 `muted` com `egg` FILL 1 20; memória,
-              nunca oferta repetida (a linha `rebirth` do save nunca é apagada).
-              Copy §5.6: a 2ª frase é a família obrigatória da §11 ("É ele.
-              Ainda é ele.") — sem ela, somada a "parte da alma" e ao fato de
-              renascer ser compra, a cena lê como morte de um ente. Proibidas
-              aqui: morrer, morte, partir, despedida, adeus. */}
-          {pane === 'evolution' && gameState.rebirth && !area && (
-            <p style={{ ...sm2Hint, marginTop: 16, display: 'flex', alignItems: 'center', gap: 8 }} data-rebirth-block>
-              <Icon name="egg" size={20} fill={1} tone="muted" />
-              <span>
-                {language === 'pt-BR'
-                  ? `Já aconteceu, uma vez. Renasceu do ${gameState.rebirth.fromStage} como "${gameState.rebirth.criatura}". É ele. Ainda é ele.`
-                  : `It already happened, once. Reborn from ${gameState.rebirth.fromStage} as "${gameState.rebirth.criatura}". Same pattern. Still the same one.`}
-              </span>
-            </p>
-          )}
-
-          {pane === 'pet' && !area && (
-            <Suspense fallback={<ScreenSkeleton language={language} />}><PetPage
-              stages={gameState.soulmonStages ?? []}
-              dominantElement={gameState.soulmonMeta?.dominantElement}
-              achievements={unlockedAchievements(gameState)}
-              unlockedEvolutions={gameState.unlockedEvolutions}
-              currentStageId={gameState.evolutionStage}
-              demoCharacterId={gameState.demoCharacterId}
-              petName={soulmonDisplayName(gameState.soulmonMeta) || undefined}
-              savedSkills={gameState.soulmonSkills}
-              onSkillsComputed={handleSkillsComputed}
-              savedClassTitles={gameState.soulmonClassTitles}
-              onClassTitlesComputed={handleClassTitlesComputed}
-              language={language}
-            /></Suspense>
-          )}
-
-          {/* DEX DE SONHOS na página do PET, e não em Configurações: é uma
-              COLEÇÃO do bicho — cenas dele dormindo —, então mora onde já vive
-              a ficha dele (formas, descrições, habilidades). Em Configurações
-              ele leria como um painel de métrica de sono, que é exatamente a
-              leitura que a Parte 3 do plano manda evitar. */}
-          {pane === 'pet' && !area && (
-            <div style={{ marginTop: 16 }}>
-              <Suspense fallback={<ScreenSkeleton language={language} />}>
-                <DreamDex rest={gameState.rest ?? createRestState()} language={language} />
-              </Suspense>
-            </div>
-          )}
-
-          {/* O diário de aventuras fica ao lado do Dex pelo mesmo motivo dele:
-              é coleção DA CRIATURA, não métrica do jogador. Numa tela de
-              estatísticas viraria painel de desempenho. */}
-          {pane === 'pet' && !area && (
-            <div style={{ marginTop: 16 }}>
-              <Suspense fallback={<ScreenSkeleton language={language} />}>
-                <AdventureDiary entries={gameState.adventures ?? []} language={language} />
-              </Suspense>
-            </div>
-          )}
-
-          {pane === 'stats' && !area && (
-            <Suspense fallback={<ScreenSkeleton language={language} />}><StatsPage
-              /* WP1.6 — a MESMA peça do reveal, agora como lembrança. */
-              birth={gameState.bornAt || gameState.soulmonMeta?.baseName || gameState.demoCharacterId ? {
-                /* ⚠️ O jogador GRÁTIS tinha o cartão de nascimento
-                   permanentemente sem criatura (auditoria de 06/09/2026):
-                   `displaySprite` lê o ACERVO, e o demo nunca gera sprite —
-                   embora a arte dele exista e seja desenhada todo dia na Home
-                   por `getSpriteForStage`.
-                   A regra "nunca arte de reserva" no `BirthCard` foi escrita
-                   para o oráculo, onde reserva significa OUTRA criatura. No
-                   demo o pré-pronto É a criatura da pessoa, então a regra
-                   estava bloqueando justamente o caso em que ela não se
-                   aplica — e a faixa grátis é a que menos posse recebe. */
-                spriteUrl: displaySprite(spriteAcervo, 'rookie')?.url
-                  ?? (gameState.demoCharacterId
-                    ? getSpriteForStage('rookie', gameState.demoCharacterId)
-                    : null),
-                name: soulmonDisplayName(gameState.soulmonMeta) || '—',
-                soulGoal: gameState.soulGoal ?? null,
-                bornAt: gameState.bornAt ?? null,
-              } : null}
-              bestiary={gameState.bestiary ?? []}
-              /* WP4.6/WP4.10 — o álbum das formas: as onze da árvore, com a
-                 arte que já existe e a data de quando cada uma chegou. */
-              album={(gameState.soulmonStages ?? []).map(st => {
-                const id = st.branch ? `${st.stage}-${st.branch}` : st.stage;
-                return { id, name: st.name, spriteUrl: displaySprite(spriteAcervo, id)?.url ?? null };
-              })}
-              formReachedAt={gameState.formReachedAt}
-              completedTasks={gameState.completedTasks}
-              activityStats={gameState.activityStats}
-              language={language}
-              gamePoints={gameState.gamePoints}
-              totalXP={gameState.totalXP}
-              streakDays={gameState.totalPerfectDays ?? 0}
-              virusPoints={gameState.virusPoints}
-              dataPoints={gameState.dataPoints}
-              vaccinePoints={gameState.vaccinePoints}
-              petPassive={gameState.petPassive}
-              carePattern={carePatternReading.confident ? carePatternReading.pattern : null}
-              /* Janela de Descanso: esconde os números da tela, preserva as
-                 recompensas (DECISÕES §13 V3; canvas §27, achado 6). */
-              hideMetrics={gameState.rest?.hideMetrics === true}
-              /* WP2.11 — "N dias juntos". Lê de `bornAt` (WP1.16) e não de um
-                 segundo contador: três guardas propuseram medir "há quanto
-                 tempo" de três jeitos diferentes, e uma fonte só é o conserto.
-                 `null` quando o save não tem data — e aí a linha não aparece,
-                 em vez de aparecer com um número inventado. */
-              daysTogether={daysTogether(gameState.bornAt, playerDayKey(new Date(), gameState.playerDayTz))}
-              season={{
-                state: gameState.season,
-                counters: {
-                  totalPerfectDays: gameState.totalPerfectDays ?? 0,
-                  dungeonRunsCompleted: gameState.dungeonRunsCompleted ?? 0,
-                },
-                rest: gameState.rest,
-              }}
-              journey={{
-                unlockedEvolutions: gameState.unlockedEvolutions,
-                soulmonStages: gameState.soulmonStages,
-                totalPerfectDays: gameState.totalPerfectDays,
-                dungeonKills: gameState.dungeonKills,
-                dungeonRunsCompleted: gameState.dungeonRunsCompleted,
-                dinoBest: gameState.dinoBest,
-                droppedItems: gameState.droppedItems,
-                soulGoal: gameState.soulGoal,
-              }}
-            /></Suspense>
-          )}
+          {pane === 'stats' && !area && statsPage}
 
           {pane === 'settings' && (
             <Suspense fallback={<ScreenSkeleton language={language} />}><SettingsPage
@@ -6222,20 +6247,6 @@ export default function App() {
             </Suspense>
           )}
 
-          {pane === 'library' && !area && (
-            <Suspense fallback={<ScreenSkeleton language={language} />}>
-              <LibraryPage
-                saveId={saveId}
-                friends={gameState.friends ?? []}
-                canGiftToday={gameState.energyPoints >= getMaxEnergyForStage(gameState.evolutionStage)}
-                onFriendsChange={(friends) => setGameState(prev => ({ ...prev, friends }))}
-                onGiftSent={() => {}}
-                onVisitPlayer={() => contarMissao('friend-visit')}
-                metaDoDiaCumprida={dailyTotal > 0 && dailyDone >= dailyTotal}
-                language={language}
-              />
-            </Suspense>
-          )}
 
           {pane === 'shop' && !area && (
             <Suspense fallback={<ScreenSkeleton language={language} />}>
