@@ -187,7 +187,7 @@ Quatro campos por linha, e nenhum fica vazio: onde **ler**, o **dono** (o símbo
 | Home | 03 §4.1 | `src/App.tsx` (`currentView === 'main'`) | `src/components/filaDeAvisos.contract.test.ts` | 10 §11 |
 | Área do pet (`CompanionHUD`) | 03 §4.2 | `src/components/CompanionHUD.tsx` | `src/components/sintonia-chiado.render.test.tsx` | 10 §11 |
 | Barra de conversa (`ChatBox`) | 03 §4.3 | `src/components/ChatBox.tsx` + `functions/api/chat.js` | `src/security/supabase.contract.test.ts` | 10 §7 |
-| Página Atividades | 03 §4.4 | `src/components/ActivitiesPage.tsx` | `src/utils/activityCreate.contract.test.ts` | 10 §2 |
+| Página Atividades | 03 §4.4 | `src/components/nav/AreaView.tsx` (Exploração + Jogos) | `src/utils/activityCreate.contract.test.ts` | 10 §2 |
 | Lista de atividades e seus modais | 03 §4.5 | `src/components/EditModal.tsx`, `src/hooks/useItemForm.ts` | `src/utils/habitCreate.test.ts` | 10 §2 |
 | Loja (abas) | 03 §4.6 | `src/components/mercado/MercadoSheets.tsx` (⚰️ `ShopModal`, 24/09/2026) + `src/utils/mercadoCatalog.ts` + `src/utils/shopBuy.ts` | `src/utils/shopBuy.test.ts` | 10 §6 |
 | Página Soulmon | 03 §4.7 | `src/App.tsx` (`currentView === 'pet'`) | `nenhuma` | 10 §11 |

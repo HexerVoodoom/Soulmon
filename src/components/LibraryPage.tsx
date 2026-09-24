@@ -47,6 +47,10 @@ interface LibraryPageProps {
    *  (`useProgressTracking`) e o painel não pode ter uma segunda cópia dela. */
   metaDoDiaCumprida?: boolean;
   language: Language;
+  /** minimal-ui F5 — dentro da folha do Hall (`AreaSheet`), que já nomeia a
+   *  Biblioteca no próprio título: a página não repete o `<h1>` (uma tela, um
+   *  heading de topo — o `<h1>` é o do `AreaTopBar`), só a linha de apoio. */
+  embedded?: boolean;
 }
 
 // Entrada unificada da lista — jogador real ou NPC de teste (ver
@@ -114,7 +118,7 @@ function RowAction({
   );
 }
 
-export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, onGiftSent, onVisitPlayer, metaDoDiaCumprida = false, language }: LibraryPageProps) {
+export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, onGiftSent, onVisitPlayer, metaDoDiaCumprida = false, language, embedded = false }: LibraryPageProps) {
   const isPt = language === 'pt-BR';
   const [search, setSearch] = useState('');
   const [players, setPlayers] = useState<DirectoryPlayer[] | null>(null);
@@ -228,10 +232,12 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
     <div className="sm2-lib">
       <div className="sm2-lib-ttl">
         {/* `groups` 24 pelado marca a Biblioteca (D-S2) — nunca `person` em box. */}
-        <h1 className="sm2-lib-h2">
-          <Icon name="groups" size={24} tone="muted" />
-          {isPt ? 'Biblioteca' : 'Library'}
-        </h1>
+        {!embedded && (
+          <h1 className="sm2-lib-h2">
+            <Icon name="groups" size={24} tone="muted" />
+            {isPt ? 'Biblioteca' : 'Library'}
+          </h1>
+        )}
         <p className="sm2-lib-s" style={{ margin: 0 }}>
           {isPt ? 'Veja outros jogadores e seus Soulmon.' : 'See other players and their Soulmon.'}
         </p>

@@ -37,8 +37,8 @@ const HANDS = [
   { art: handPaper, pt: 'Papel', en: 'Paper' },
   { art: handScissors, pt: 'Tesoura', en: 'Scissors' },
 ] as const;
-const MATCH_POINTS = 5;
-const WINS_NEEDED = 3;
+export const MATCH_POINTS = 5;
+export const WINS_NEEDED = 3;
 
 export function RPSGame({ language, onEarnPoints, onExit }: {
   evolutionStage: string;

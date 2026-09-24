@@ -1,12 +1,13 @@
-import { lazy, Suspense, useState, type ComponentProps } from 'react';
+import { lazy, Suspense, useState, type ComponentProps, type ReactNode } from 'react';
 import type { AreaId } from '../../navigation';
 import type { Language } from '../../utils/i18n';
 import { AreaScene, type AreaLot } from './AreaScene';
 import { AreaSheet } from './AreaSheet';
 import { areaDemoLot, mercadoLots, arenaLots, type MercadoLotId } from '../../utils/areaSheetCopy';
-import { AREA_BG, MERCADO_LOT_ART, ARENA_LOT_ART } from '../../assets/soulmon/areas';
+import { AREA_BG, MERCADO_LOT_ART, ARENA_LOT_ART, PLAY_AREA_BG, EXPLORACAO_LOT_ART, JOGOS_LOT_ART } from '../../assets/soulmon/areas';
+import { exploracaoLots, jogosLots } from '../../utils/playAreaLots';
 import { STALL_NPC_ART } from '../../assets/soulmon/npcs';
-import { sm2Hint, sm2Text } from '../form/FormKit';
+import { sm2Hint } from '../form/FormKit';
 import type { ShopActions, ShopOwnership } from '../mercado/ShopShelf';
 import type { TournamentPage as TournamentPageT } from '../TournamentPage';
 import type { StageSkills } from '../../utils/soulProfile/ficha/skills';
@@ -32,6 +33,32 @@ const ConquistasSheet = lazy(() => import('../mercado/MercadoSheets').then(m => 
 const TournamentPage = lazy(() => import('../TournamentPage').then(m => ({ default: m.TournamentPage })));
 const DueloSheet = lazy(() => import('../arena/DueloSheet').then(m => ({ default: m.DueloSheet })));
 const ArenaGame = lazy(() => import('../ArenaGame').then(m => ({ default: m.ArenaGame })));
+// Exploração + Jogos (F5, ex-PR #118): as folhas-porta e os minijogos de
+// sempre (os mesmos que a antiga `ActivitiesPage` abria).
+const MasmorraSheet = lazy(() => import('../play/PlaySheets').then(m => ({ default: m.MasmorraSheet })));
+const DinoSheet = lazy(() => import('../play/PlaySheets').then(m => ({ default: m.DinoSheet })));
+const PptSheet = lazy(() => import('../play/PlaySheets').then(m => ({ default: m.PptSheet })));
+const DungeonGame = lazy(() => import('../DungeonGame').then(m => ({ default: m.DungeonGame })));
+const DinoGame = lazy(() => import('../DinoGame').then(m => ({ default: m.DinoGame })));
+const RPSGame = lazy(() => import('../RPSGame').then(m => ({ default: m.RPSGame })));
+
+/** Os handlers dos minijogos da Exploração e de Jogos — prontos no `App`, os
+ *  MESMOS que a antiga `ActivitiesPage` repassava. Nenhuma regra nasce aqui:
+ *  a Masmorra não tem gate de entrada, nem limite diário, nem cobra coração
+ *  ao perder — quem decide isso são `utils/dungeon` e a `DungeonGame`. */
+export interface PlayHandlers {
+  onDungeonEnter: () => { ok: true; level: number; best: number };
+  onDungeonLose: () => void;
+  onDungeonHeartDrop: () => boolean;
+  onGlitchtama: () => void;
+  onFloorCleared?: () => void;
+  onDungeonEnemyDefeated: (enemyKey?: string) => void;
+  onDinoScore: (score: number) => void;
+  onSpendBits?: (pts: number) => boolean;
+}
+
+type PlayGame = 'masmorra' | 'dino' | 'ppt';
+export type LabTab = 'evolution' | 'pet' | 'stats';
 
 type TournamentProps = Omit<ComponentProps<typeof TournamentPageT>, 'shop'>;
 
@@ -54,6 +81,16 @@ export interface AreaViewProps {
   demoCharacterId?: string;
   skills?: Partial<Record<FichaStage, StageSkills>>;
   onEarnPoints: (points: number) => void;
+  /** Exploração + Jogos (F5). */
+  play: PlayHandlers;
+  /** Laboratório (F5, ex-PR #117): a aba ativa (estado do `App`, porque ela
+   *  também decide o `pane`) e o conteúdo já montado — Evolução/Soulmon/Stats
+   *  dependem de dezenas de handlers do `App` (cerimônia, renascimento…), que
+   *  continuam donos dele. */
+  labTab: LabTab;
+  labContent: ReactNode;
+  /** Hall (F5, ex-PR #117): a `LibraryPage` embutida, montada no `App`. */
+  hallContent: ReactNode;
 }
 
 /** Espera curta dentro da folha — o conteúdo é `lazy`, e a folha já está
@@ -70,6 +107,7 @@ export function AreaView(props: AreaViewProps) {
   const { area, language, ownership, actions } = props;
   const [sheet, setSheet] = useState<string | null>(null);
   const [duelOpen, setDuelOpen] = useState(false);
+  const [game, setGame] = useState<PlayGame | null>(null);
   const closeLabel = language === 'pt-BR' ? 'Fechar' : 'Close';
   const close = () => setSheet(null);
 
@@ -158,16 +196,85 @@ export function AreaView(props: AreaViewProps) {
     );
   }
 
-  // Áreas ainda sem F5: UM lote de exemplo com placeholder (o molde F4).
+  if (area === 'exploracao' || area === 'jogos') {
+    const start = (g: PlayGame) => { setSheet(null); setGame(g); };
+    const exitGame = () => setGame(null);
+    const lots: AreaLot[] = area === 'exploracao'
+      ? exploracaoLots(language).map(l => ({ ...l, art: EXPLORACAO_LOT_ART[l.id], onOpen: () => setSheet(l.id) }))
+      : jogosLots(language).map(l => ({ ...l, art: JOGOS_LOT_ART[l.id], onOpen: () => setSheet(l.id) }));
+    const open = lots.find(l => l.id === sheet) ?? null;
+    const { play } = props;
+    return (
+      <AreaScene areaId={area} language={language} background={PLAY_AREA_BG[area]} lots={lots}>
+        <AreaSheet areaId={area} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close}>
+          <Suspense fallback={<SheetLoading language={language} />}>
+            {open?.id === 'masmorra' && <MasmorraSheet language={language} onStart={() => start('masmorra')} />}
+            {open?.id === 'dino' && <DinoSheet language={language} onStart={() => start('dino')} />}
+            {open?.id === 'ppt' && <PptSheet language={language} onStart={() => start('ppt')} />}
+          </Suspense>
+        </AreaSheet>
+        {game && (
+          <Suspense fallback={<SheetLoading language={language} />}>
+            {game === 'masmorra' && (
+              <DungeonGame
+                evolutionStage={props.evolutionStage}
+                demoCharacterId={props.demoCharacterId}
+                language={language}
+                onEnter={play.onDungeonEnter}
+                onLose={play.onDungeonLose}
+                onHeartDrop={play.onDungeonHeartDrop}
+                onGlitchtama={play.onGlitchtama}
+                onFloorCleared={play.onFloorCleared}
+                onEnemyDefeated={play.onDungeonEnemyDefeated}
+                onEarnPoints={props.onEarnPoints}
+                /* WP4.5 — o sumidouro recorrente: comprar profundidade com Bits. */
+                bits={props.points}
+                onSpendBits={play.onSpendBits}
+                onExit={exitGame}
+              />
+            )}
+            {game === 'dino' && (
+              <DinoGame
+                evolutionStage={props.evolutionStage}
+                demoCharacterId={props.demoCharacterId}
+                language={language}
+                onEarnPoints={props.onEarnPoints}
+                onScore={play.onDinoScore}
+                onExit={exitGame}
+              />
+            )}
+            {game === 'ppt' && (
+              <RPSGame
+                evolutionStage={props.evolutionStage}
+                demoCharacterId={props.demoCharacterId}
+                language={language}
+                onEarnPoints={props.onEarnPoints}
+                onExit={exitGame}
+              />
+            )}
+          </Suspense>
+        )}
+      </AreaScene>
+    );
+  }
+
+  // Laboratório e Hall (F5, ex-PR #117): UM lote cada — a folha do
+  // Laboratório traz a árvore de Evolução com as abas Evolução/Soulmon/Stats;
+  // a do Hall, a Biblioteca (decisão D4). Sem arte de lote ainda (bloco neutro
+  // do molde F4) e sem fundo pintado (degradê de tokens).
   const demo = areaDemoLot(area, language);
+  const lotId = area === 'laboratorio' ? 'evolucao' : 'biblioteca';
+  const title = area === 'laboratorio' && props.labTab !== 'evolution'
+    ? (props.labTab === 'pet' ? 'Soulmon' : (language === 'pt-BR' ? 'Estatísticas' : 'Stats'))
+    : demo.label;
   return (
     <AreaScene
       areaId={area}
       language={language}
-      lots={[{ id: 'exemplo', label: demo.label, left: '50%', top: '38%', ariaLabel: demo.label, onOpen: () => setSheet('exemplo') } satisfies AreaLot]}
+      lots={[{ id: lotId, label: demo.label, left: '50%', top: '38%', ariaLabel: demo.label, onOpen: () => setSheet(lotId) } satisfies AreaLot]}
     >
-      <AreaSheet areaId={area} title={demo.label} closeLabel={closeLabel} open={sheet === 'exemplo'} onClose={close}>
-        <p style={{ ...sm2Text, margin: 0 }}>{demo.placeholder}</p>
+      <AreaSheet areaId={area} title={title} closeLabel={closeLabel} open={sheet === lotId} onClose={close}>
+        {area === 'laboratorio' ? props.labContent : props.hallContent}
       </AreaSheet>
     </AreaScene>
   );
