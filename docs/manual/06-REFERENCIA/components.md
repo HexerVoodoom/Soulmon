@@ -9,7 +9,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 
 ## Índice por página/família
 
-- **Orquestração:** [`src/App.tsx`](#srcapptsx) · [`src/main.tsx`](#srcmaintsx) · [`ErrorBoundary.tsx`](#srccomponentserrorboundarytsx) · [`ContentModals.tsx`](#srccomponentscontentmodalstsx) · [`BottomNav.tsx`](#srccomponentsbottomnavtsx) · [`IntroScreen.tsx`](#srccomponentsintroscreentsx)
+- **Orquestração:** [`src/App.tsx`](#srcapptsx) · [`src/main.tsx`](#srcmaintsx) · [`ErrorBoundary.tsx`](#srccomponentserrorboundarytsx) · [`ContentModals.tsx`](#srccomponentscontentmodalstsx) · ⚰️ [`BottomNav.tsx`](#srccomponentsbottomnavtsx) · [`nav/CornerLink.tsx`](#srccomponentsnavcornerlinktsx) · [`nav/MapPage.tsx`](#srccomponentsnavmappagetsx) · [`nav/AreaTopBar.tsx`](#srccomponentsnavareatopbartsx) · [`nav/HomeMenuSheet.tsx`](#srccomponentsnavhomemenusheettsx) · [`IntroScreen.tsx`](#srccomponentsintroscreentsx)
 - **Home e pet:** [`CompanionHUD.tsx`](#srccomponentscompanionhudtsx) · [`CareSystem.tsx`](#srccomponentscaresystemtsx) · [`ChatBox.tsx`](#srccomponentschatboxtsx) · [`PetPage.tsx`](#srccomponentspetpagetsx) · [`PetStageDecor.tsx`](#srccomponentspetstagedecortsx) · [`PlayCard.tsx`](#srccomponentsplaycardtsx) · [`GamePopups.tsx`](#srccomponentsgamepopupstsx) · [`FirstTaskCompletedPopup.tsx`](#srccomponentsfirsttaskcompletedpopuptsx) · [`nestArt.ts`](#srccomponentsnestartts) · [`evolution/SoulNode.tsx`](#srccomponentsevolutionsoulnodetsx) · [`evolution/nodeArt.tsx`](#srccomponentsevolutionnodearttsx) · [`RestWindowCard.tsx`](#srccomponentsrestwindowcardtsx) · [`DreamDex.tsx`](#srccomponentsdreamdextsx) · [`AdventureDiary.tsx`](#srccomponentsadventurediarytsx) · [`MorningDream.tsx`](#srccomponentsmorningdreamtsx) · [`NightmareBattle.tsx`](#srccomponentsnightmarebattletsx) · [`StepsCard.tsx`](#srccomponentsstepscardtsx) · [`StepRow.tsx`](#srccomponentssteprowtsx)
 - **Atividades e tarefas:** [`ActivitiesPage.tsx`](#srccomponentsactivitiespagetsx) · [`DailyRituals.tsx`](#srccomponentsdailyritualstsx) · [`CreateModal.tsx`](#srccomponentscreatemodaltsx) · [`EditModal.tsx`](#srccomponentseditmodaltsx) · [`TaskEditModal.tsx`](#srccomponentstaskeditmodaltsx) · [`TaskMeta.tsx`](#srccomponentstaskmetatsx) · [`TriagePile.tsx`](#srccomponentstriagepiletsx) · [`QuickAddBar.tsx`](#srccomponentsquickaddbartsx) · [`EvolveTaskModal.tsx`](#srccomponentsevolvetaskmodaltsx) · [`HabitConstancy.tsx`](#srccomponentshabitconstancytsx) · [`MilestoneCeremony.tsx`](#srccomponentsmilestoneceremonytsx) · [`MorningCheckIn.tsx`](#srccomponentsmorningcheckintsx) · [`WeeklyReportCard.tsx`](#srccomponentsweeklyreportcardtsx) · [`FirstDayCard.tsx`](#srccomponentsfirstdaycardtsx)
 - **Evolução:** [`EvolutionPath.tsx`](#srccomponentsevolutionpathtsx) · [`EvolutionCeremony.tsx`](#srccomponentsevolutionceremonytsx) · [`EvoTrail.tsx`](#srccomponentsevotrailtsx) · [`FormAlbum.tsx`](#srccomponentsformalbumtsx) · [`BestiaryCard.tsx`](#srccomponentsbestiarycardtsx) · [`RebirthModal.tsx`](#srccomponentsrebirthmodaltsx)
@@ -114,13 +114,35 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Avisos do arquivo:** nenhum número (nem dias, nem nível, nem contagem) — é certidão, não painel; nenhum verbo de personalidade fechada — diz DE ONDE a criatura veio, nunca COMO ela é; data por extenso, sem ano-mês-dia numérico.
 
 ### `src/components/BottomNav.tsx`
-**Dono de:** navegação principal do app — teto de 4 destinos + menu sanduíche para o resto.
-**Props principais:** `BottomNavProps` — `currentView: ViewType`, `onNavigate(view)`, `onResetOnboarding?`, `onOpenCredits?`, `language?`.
-**Exports:** `BottomNav(props)`.
-**Estado/efeitos relevantes:** `useState` (`menuOpen`); `useRef` (`menuBtnRef`); `useCallback` para `closeMenuAndFocus`, `onNavKeyDown`, `onMenuBlur`, `toggleMenu`, `closeMenu` (navegação por teclado e foco do menu sanduíche).
-**Chamado por:** `src/App.tsx` (`grep -rl "from '.*/BottomNav'" src`, 09/09/2026).
-**Régua:** `src/components/BottomNav.render.test.tsx`.
-**Avisos do arquivo:** os cinco glifos da nav são NOSSOS (`ui/NavGlyphs.tsx`), não Material — copiam a métrica dele (caixa 24dp) para conviver sem parecer adesivo; o eixo FILL é o sistema de estado (inativo `fill 0`, ativo `fill 1` + sublinhado de 3px — nunca placa/moldura/halo); rótulo em Rubik 12px (piso da escala tipográfica), não Silkscreen 8px (que fecharia contornos ilegíveis e hoje é reservada ao "aparelho").
+⚰️ **Apagado na fatia F1 do minimal-ui (23/09/2026, branch `feat/nav-home-mapa`).** A barra inferior de 5 abas saiu (decisão 1 do dono); a navegação virou Home ↔ Mapa → áreas — ver `src/components/nav/*` abaixo e `src/navigation.ts`. A régua `BottomNav.render.test.tsx` foi reescrita como `src/components/nav/nav.render.test.tsx`, e `navRotulo.contract.test.ts` passou a medir os rótulos das áreas.
+
+### `src/components/nav/AreaTopBar.tsx`
+**Dono de:** o topo de uma área do Mapa e das páginas do menu da Home — voltar (seta em círculo, exceção D1 do dono) + título centralizado.
+**Props principais:** `title`, `backLabel` (diz PARA ONDE), `onBack`, `ownsHeading?` (`false` quando a página de baixo já tem `<h1>`: o título vira `<p aria-hidden>`).
+**Exports:** `AreaTopBar(props)`.
+**Chamado por:** `src/App.tsx`.
+**Régua:** `src/components/nav/nav.render.test.tsx`.
+
+### `src/components/nav/CornerLink.tsx`
+**Dono de:** o link de canto entre as duas telas de topo — Mapa no canto inferior direito da Home, Home no canto inferior esquerdo do Mapa. Glifo pelado de 32 (papel `nav`), alvo 56 no botão.
+**Props principais:** `icon: NavGlyphName`, `label`, `side: 'left' | 'right'`, `onClick`.
+**Exports:** `CornerLink(props)`.
+**Chamado por:** `src/App.tsx`.
+**Régua:** `src/components/nav/nav.render.test.tsx`.
+
+### `src/components/nav/HomeMenuSheet.tsx`
+**Dono de:** o menu só ícone da Home (D6) — folha (`ModalSheet`) com Configurações, Oráculo, Estatísticas, Guia, Créditos e Refazer o ritual. A Biblioteca mora no Hall (D4), não aqui.
+**Props principais:** `open`, `onClose`, `language`, `onOpenPage(MenuPageId)`, `onOpenGuide`, `onOpenCredits?`, `onResetOnboarding?`.
+**Exports:** `HomeMenuSheet(props)`.
+**Chamado por:** `src/App.tsx`.
+**Régua:** `src/components/nav/nav.render.test.tsx`.
+
+### `src/components/nav/MapPage.tsx`
+**Dono de:** a tela do Mapa — por ora grade 2×3 das seis áreas (`AREAS` de `src/navigation.ts`) com ícone, nome e dica; a arte isométrica é a fatia F3.
+**Props principais:** `language`, `onOpenArea(AreaId)`.
+**Exports:** `MapPage(props)`.
+**Chamado por:** `src/App.tsx`.
+**Régua:** `src/components/nav/nav.render.test.tsx`, `src/styles/navRotulo.contract.test.ts`.
 
 ### `src/components/CareSystem.tsx`
 **Dono de:** o sprite flutuante de cocô/comida que aparece sobre o palco do pet quando um evento de cuidado está pendente.

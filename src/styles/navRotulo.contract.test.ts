@@ -1,173 +1,89 @@
 /**
- * O RÓTULO DA BARRA DE BAIXO cabe na célula dele — nos dois idiomas.
+ * O RÓTULO DE NAVEGAÇÃO cabe no lugar dele — nos dois idiomas.
  *
- * ## O que aconteceu
+ * ## De onde vem
  *
- * O `index.css` afirmava, em comentário, que `overflow: hidden` na
- * `.sm-bottom-nav-label` era "rede de segurança para um idioma futuro:
- * nenhum rótulo atual chega perto de precisar dele", e que o pior caso em
- * PT-BR media "53px numa célula de 64,7px".
+ * Este guard nasceu na barra inferior de 5 abas (09/09/2026): medido em
+ * **320×640**, a célula tinha 60px, a caixa do rótulo 54px e "ATIVIDADES"
+ * precisava de 61px — com `text-overflow: clip`, a pessoa lia "ATIVIDADE",
+ * palavra completa no singular, sem sinal de corte. Só acontecia em PT-BR, e
+ * por isso não aparecia para quem desenvolvia em inglês.
  *
- * As duas medidas foram tomadas num viewport largo. Medido no navegador em
- * **320×640** (09/09/2026): a célula tem 60px, a caixa do rótulo tem 54px e
- * "ATIVIDADES" precisa de 61px. `scrollWidth > clientWidth` no elemento real.
- * A rede estava em uso, em português, todos os dias — e com
- * `text-overflow: clip`, que tirava o "S" final sem sinal nenhum: a pessoa lia
- * "ATIVIDADE", palavra completa no singular, sem como saber que faltava algo.
+ * A barra SAIU em 23/09/2026 (minimal-ui F1). Os rótulos de navegação agora
+ * são os nomes das SEIS ÁREAS do Mapa (`areaLabel`, `navigation.ts`), num
+ * cartão de meia largura. A lição continua valendo, e é ela que este arquivo
+ * trava:
  *
- * Em inglês, no mesmo viewport, ZERO rótulos cortavam. É o tipo de defeito que
- * só aparece num idioma, e por isso não aparece para quem desenvolve no outro.
+ *  1. o rótulo mais longo tem teto de caracteres medido contra a caixa real;
+ *  2. o rótulo nunca é cortado EM SILÊNCIO — no cartão ele quebra linha, e a
+ *     fonte do `MapPage` não pode ganhar `nowrap`/`clip` no rótulo;
+ *  3. o rótulo é Fredoka/Rubik, nunca Silkscreen (a voz do aparelho só mora
+ *     dentro do visor);
+ *  4. a AUTOVERIFICAÇÃO prova que os rótulos foram lidos da fonte de verdade.
  *
- * ## Por que este teste existe, e o que ele NÃO é
- *
- * ⚠️ Ele não mede pixel de tela — jsdom não faz layout, e medir texto exige
- * fonte carregada. O que ele mede é o par que o defeito violou: **quantos
- * caracteres o rótulo mais largo tem** contra o teto que a própria régua do
- * CSS declara. É um limite de CONTAGEM, deliberadamente grosseiro, e a
- * justificativa está no cabeçalho: um número medido uma vez e afirmado para
- * sempre foi exatamente o que apodreceu.
- *
- * A medição fina continua sendo trabalho de navegador, e o resultado dela está
- * escrito no comentário do `index.css` com o viewport ao lado — que é o
- * formato que faltava.
+ * ⚠️ Não mede pixel — jsdom não faz layout. É um limite de CONTAGEM,
+ * deliberadamente grosseiro; a conta está no `MAX_CARACTERES`.
  */
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { AREAS, areaLabel } from '../navigation';
 
 const RAIZ = resolve(__dirname, '../..');
 const ler = (p: string) => readFileSync(join(RAIZ, p), 'utf8');
 
 /**
- * Teto de caracteres do rótulo. Sai da medição real: "ATIVIDADES" (10) precisa
- * de 61px numa caixa de 54px em 320px — ou seja, 10 já NÃO cabe. 9 caracteres
- * na fonte pixel de 12px ficam em ~55px, no limite. O teto é 9 e não 10 porque
- * o caso conhecido de estouro tem 10.
+ * Teto de caracteres do nome da área. O cartão do Mapa em **320px**: 320 − 48
+ * de gutter (px-6) − 12 de vão = 260 → 130px por cartão, − 24 de padding =
+ * **106px de caixa**. Fredoka 600 a 16px mede ~8,5px por caractere em média:
+ * 12 caracteres ≈ 102px, no limite. O teto é 12.
  */
-const MAX_CARACTERES = 9;
+const MAX_CARACTERES = 12;
 
-/**
- * Os rótulos, lidos da FONTE — não copiados para cá (footgun 9).
- *
- * ⚠️ Duas versões deste helper mediram o vácuo antes desta, e as duas foram
- * pegas pela AUTOVERIFICAÇÃO abaixo — que é o motivo de ela existir:
- *   1. varria o `App.tsx`, onde os rótulos NÃO moram: achava zero e passava;
- *   2. casava `className="sm-bottom-nav-label"` e capturava a palavra "label";
- *   3. casava `label={isPt ? … : …}` solto e pegava OITO rótulos do arquivo,
- *      não os cinco da barra.
- *
- * A leitura agora é ESTREITA de propósito: os quatro destinos vêm do array
- * `items` (`label: isPt ? … : …`, com dois-pontos — a forma que só o array
- * usa), e o quinto é afirmado explicitamente. Se o botão do Menu mudar de
- * forma, o teste reclama alto em vez de silenciosamente medir menos.
- */
-const MENU_NA_FONTE = "label={isPt ? 'Menu' : 'Menu'}";
-
-function rotulosDaNav(): Array<{ pt: string; en: string }> {
-  const src = ler('src/components/BottomNav.tsx');
-  const pares: Array<{ pt: string; en: string }> = [];
-  for (const m of src.matchAll(/label:\s*isPt\s*\?\s*'([^']{2,20})'\s*:\s*'([^']{2,20})'/g)) {
-    pares.push({ pt: m[1], en: m[2] });
-  }
-  if (src.includes(MENU_NA_FONTE)) pares.push({ pt: 'Menu', en: 'Menu' });
-  return pares;
+/** Os rótulos vêm da FONTE (`areaLabel`), nunca copiados para cá (footgun 9). */
+function rotulos(): Array<{ pt: string; en: string }> {
+  return AREAS.map(id => ({ pt: areaLabel(id, true), en: areaLabel(id, false) }));
 }
 
-describe('🔴 o rótulo da barra de baixo cabe na célula', () => {
-  it('a lista de rótulos LONGOS é a medida, e não cresce sem alguém olhar', () => {
-    /* ⚠️ Este caso NÃO exige que todos caibam: hoje "Atividades" (10) e
-       "Activities" (10) NÃO cabem, e encurtá-los é decisão do dono (está em
-       `docs/STATUS.md`). O que ele impede é a lista CRESCER — um rótulo novo
-       longo entraria cortado, e com `ellipsis` isso é feio; com `clip`, que era
-       o estado anterior, seria invisível. */
-    const longos = rotulosDaNav()
+describe('🔴 o nome da área cabe no cartão do Mapa', () => {
+  it('nenhum rótulo passa do teto, em nenhum dos dois idiomas', () => {
+    const longos = rotulos()
       .flatMap(p => [p.pt, p.en])
-      .filter((t, i, a) => a.indexOf(t) === i)
-      .filter(t => t.length > MAX_CARACTERES)
-      .sort();
+      .filter(t => t.length > MAX_CARACTERES);
     expect(
       longos,
-      `Rótulo de nav com mais de ${MAX_CARACTERES} caracteres é cortado na célula em 320px (medido: "ATIVIDADES", 10 caracteres, precisa de 61px numa caixa de 54px). Encurte a palavra; NÃO conte com o \`overflow: hidden\`, que foi o que escondeu este defeito por meses.`,
+      `Nome de área com mais de ${MAX_CARACTERES} caracteres não cabe numa linha do cartão em 320px. Encurte a palavra.`,
     ).toEqual([]);
   });
 
-  it('🔴 o corte é DECLARADO (`ellipsis`), nunca silencioso (`clip`)', () => {
-    // Este é o caso que mais importa. Enquanto a palavra em PT-BR for longa, o
-    // corte vai acontecer — e o dano não é perder um caractere, é perder um
-    // caractere de um jeito que parece intencional. `clip` transformou
-    // "ATIVIDADES" em "ATIVIDADE", que é uma palavra portuguesa válida.
-    const css = ler('src/index.css');
-    const bloco = css.slice(css.indexOf('.sm-bottom-nav-label {'));
-    const regra = bloco.slice(0, bloco.indexOf('}'));
-    expect(regra, 'a nav corta texto em 320px: o corte tem que aparecer').toContain('text-overflow: ellipsis');
-    expect(regra).not.toContain('text-overflow: clip');
+  it('🔴 o rótulo nunca é cortado em silêncio: sem `nowrap`/`clip` no MapPage', () => {
+    /* `clip` transformou "ATIVIDADES" em "ATIVIDADE", uma palavra portuguesa
+       válida. No cartão o rótulo QUEBRA LINHA — e quem quiser mudar isso tem
+       que reabrir esta decisão, não escorregar num estilo. */
+    const src = ler('src/components/nav/MapPage.tsx');
+    expect(src).not.toMatch(/textOverflow:\s*'clip'/);
+    expect(src).not.toMatch(/whiteSpace:\s*'nowrap'/);
   });
 
-  it('a afirmação falsa do comentário só existe MARCADA como falsa', () => {
-    /* A frase "nenhum rótulo atual chega perto de precisar dele" é o que fez
-       ninguém olhar por meses, e ela precisa continuar LEGÍVEL no arquivo — é
-       a história da decisão, e apagá-la faria o próximo leitor refazer a
-       análise do zero.
-   
-       ⚠️ A primeira versão deste caso proibia a frase, e reprovou a minha
-       PRÓPRIA correção, que a cita para dizer que era falsa. É a aceitação
-       autodestrutiva que o `utils/dungeon.ts` já registra ter consertado uma
-       vez ("um comentário histórico que repete as frases proibidas
-       reprovaria"). A regra certa não é "a frase não existe": é "onde ela
-       existir, existe a correção junto". */
-    const css = ler('src/index.css');
-    const frase = 'nenhum rótulo atual chega perto';
-    let de = css.indexOf(frase);
-    while (de !== -1) {
-      const vizinhanca = css.slice(Math.max(0, de - 1200), de + 1200);
-      expect(
-        /era FALSA|CORREÇÃO/.test(vizinhanca),
-        'a frase voltou como AFIRMAÇÃO. Ela só pode aparecer marcada como corrigida.',
-      ).toBe(true);
-      de = css.indexOf(frase, de + 1);
-    }
-
-    // E a medição que sobrou tem que carregar o VIEWPORT junto — número sem
-    // viewport é o formato exato que apodreceu.
-    const i = css.indexOf('.sm-bottom-nav-label {');
-    expect(css.slice(Math.max(0, i - 2200), i)).toMatch(/320px/);
+  it('🔴 Silkscreen nunca sai do vidro: o rótulo é Fredoka/Rubik', () => {
+    const src = ler('src/components/nav/MapPage.tsx');
+    expect(src).toMatch(/var\(--sm2-font-display\)/);
+    expect(src).not.toMatch(/font-pixel|Silkscreen/);
+    expect(src).not.toMatch(/textTransform:\s*'uppercase'/);
   });
 
-  it('🔴 o rótulo é Rubik 12/500 no CSS — Silkscreen nunca sai do vidro (canvas Home, SIS achado 3)', () => {
-    /* Até 16/09/2026 a regra dizia `--sm-font-pixel` (Silkscreen, caixa alta)
-       e o JSX sobrescrevia inline com Rubik: duas fontes declaradas para o
-       mesmo nó, e a regra do CSS era a mentira que sobrevivia a qualquer
-       refactor do inline. Agora a REGRA é medida. */
-    const css = ler('src/index.css');
-    const bloco = css.slice(css.indexOf('.sm-bottom-nav-label {'));
-    // sem os comentários: a prosa da regra cita a Silkscreen para dizer que saiu
-    const regra = bloco.slice(0, bloco.indexOf('}')).replace(/\/\*[\s\S]*?\*\//g, '');
-    expect(regra).toMatch(/font-family:\s*var\(--sm2-font-text\)/);
-    expect(regra).toMatch(/font-size:\s*var\(--sm2-text-xs\)/);
-    expect(regra).toMatch(/font-weight:\s*500/);
-    expect(regra).not.toMatch(/font-pixel|Silkscreen/);
-    expect(regra).not.toMatch(/text-transform:\s*uppercase/);
-    // e a tinta é da fundação nova, não da era `--sm-*`
-    expect(regra).toMatch(/color:\s*var\(--sm2-muted\)/);
-  });
-
-  it('AUTOVERIFICAÇÃO: a leitura dos pares de idioma encontra rótulos de verdade', () => {
-    // Guard que não acha nada passa sempre. Este caso prova que o arquivo foi
-    // lido e que o padrão `isPt ? … : …` casa.
-    // Cinco destinos, e os cinco nomeados: leitura frouxa ("achou mais que
-    // zero") deixaria passar um regex que casa só metade da nav — foi por uma
-    // leitura frouxa que a primeira versão deste arquivo mediu o vácuo.
-    const pares = rotulosDaNav();
-    expect(
-      ler('src/components/BottomNav.tsx'),
-      `o botão do Menu mudou de forma; ajuste MENU_NA_FONTE`,
-    ).toContain(MENU_NA_FONTE);
-    expect(pares.map(p => p.pt).sort()).toEqual(
-      ['Jogos', 'Evolução', 'Início', 'Loja', 'Menu'].sort(),
+  it('AUTOVERIFICAÇÃO: seis áreas, os seis nomeados, par de idioma real', () => {
+    // Guard que não acha nada passa sempre. Leitura frouxa ("achou mais que
+    // zero") foi o que fez a primeira versão deste arquivo medir o vácuo.
+    const pares = rotulos();
+    expect(pares.map(p => p.pt)).toEqual(
+      ['Mercado', 'Jogos', 'Arena', 'Exploração', 'Laboratório', 'Hall'],
     );
-    // E o par de idioma é REAL em pelo menos um deles (senão o regex casou só
-    // o lado português e o teto do inglês nunca seria medido).
-    // "Menu" é igual nos dois idiomas de propósito; os outros quatro diferem.
+    expect(pares.map(p => p.en)).toEqual(
+      ['Market', 'Games', 'Arena', 'Exploration', 'Laboratory', 'Hall'],
+    );
+    // Arena e Hall são iguais nos dois idiomas de propósito; os outros quatro
+    // diferem — senão o teto do inglês nunca seria medido.
     expect(pares.filter(p => p.pt !== p.en).length).toBe(4);
   });
 });

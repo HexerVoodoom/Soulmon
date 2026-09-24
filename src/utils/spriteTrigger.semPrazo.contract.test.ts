@@ -55,7 +55,10 @@ describe('R-J — a espera é UNIFORME e nada a encurta', () => {
       `grep -rln "INCUBATION_MIN_MS\\s*=" ${SRC} || true`,
       { encoding: 'utf8' },
     ).trim().split('\n').filter(Boolean);
-    expect(saida).toEqual([join(SRC, 'utils/spriteTrigger.ts')]);
+    // Separador normalizado: no Windows o `grep` devolve `src/utils/…` com `/`
+    // depois de um `SRC` em `\`, e a comparação crua reprovava o dono certo.
+    const norm = (p: string) => p.trim().replace(/\\/g, '/');
+    expect(saida.map(norm)).toEqual([norm(join(SRC, 'utils/spriteTrigger.ts'))]);
   });
 
   it('o valor não é condicionado, multiplicado nem dividido em lugar nenhum', () => {

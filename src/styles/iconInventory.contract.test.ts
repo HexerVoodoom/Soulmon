@@ -47,11 +47,13 @@ function arquivosTsx(dir: string, saida: string[] = []): string[] {
 }
 
 /**
- * Nomes que NÃO são ícones da fonte: a `BottomNav` usa esses rótulos como
- * chave das próprias artes. Ficam de fora explicitamente, e não por um filtro
- * esperto — assim acrescentar um terceiro caso obriga a decidir de novo.
+ * Nomes que NÃO são ícones da fonte: são glifos AUTORAIS (`ui/NavGlyphs.tsx`)
+ * sem par no subset. `activities`/`evolution`/`shop` eram a barra inferior e
+ * hoje são os ícones das áreas no Mapa; `map` é o link de canto da Home
+ * (minimal-ui F1, 23/09/2026). Ficam de fora explicitamente, e não por um
+ * filtro esperto — assim acrescentar outro caso obriga a decidir de novo.
  */
-const NAO_SAO_ICONES = new Set(['activities', 'evolution', 'shop']);
+const NAO_SAO_ICONES = new Set(['activities', 'evolution', 'shop', 'map']);
 
 describe('inventário de ícones', () => {
   it('todo `<Icon name="…">` literal existe no subset da fonte', () => {

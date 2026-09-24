@@ -49,7 +49,7 @@ export function GameRoot({ children, style }: { children: ReactNode; style?: CSS
         display: 'flex', flexDirection: 'column', gap: 12,
         boxSizing: 'border-box',
         padding: '10px 16px 16px',
-        paddingBottom: 'calc(var(--sm-bottomnav-h) + env(safe-area-inset-bottom, 0px) + 16px)',
+        paddingBottom: 'calc(var(--sm-corner-h) + env(safe-area-inset-bottom, 0px) + 16px)',
         overflowY: 'auto',
         backgroundColor: 'var(--sm2-bg)',
         color: 'var(--sm2-ink)',

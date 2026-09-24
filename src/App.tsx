@@ -14,7 +14,14 @@ import {
   unlockReasonCode, TELEMETRY_BAD_DAY,
   openSourceFromUrl, afterBadDayGapBucket, trackRetentionOnOpen,
 } from './utils/telemetry';
-import { BottomNav } from './components/BottomNav';
+import { CornerLink } from './components/nav/CornerLink';
+import { AreaTopBar } from './components/nav/AreaTopBar';
+import { MapPage } from './components/nav/MapPage';
+import { HomeMenuSheet } from './components/nav/HomeMenuSheet';
+import { NavGlyph } from './components/ui/NavGlyphs';
+import {
+  type ViewType, type AreaId, areaOf, menuPageOf, viewBack, areaView, areaLabel, menuPageLabel,
+} from './navigation';
 import { CompanionHUD } from './components/CompanionHUD';
 import { HomeHud } from './components/pixel/HomeHud';
 import { DailyRituals } from './components/DailyRituals';
@@ -637,12 +644,40 @@ const LibraryPage = lazy(() => import('./components/LibraryPage').then(m => ({ d
 const ShopModal = lazy(() => import('./components/ShopModal').then(m => ({ default: m.ShopModal })));
 const PetPage = lazy(() => import('./components/PetPage').then(m => ({ default: m.PetPage })));
 
-type ViewType = 'main' | 'evolution' | 'stats' | 'pet' | 'settings' | 'games' | 'oracle' | 'tournament' | 'library' | 'shop';
+/** O que o `<main>` desenha. É a tabela antiga de views, agora DERIVADA da
+ *  navegação nova (`navigation.ts`): cada área do Mapa ainda renderiza a página
+ *  que já existia (minimal-ui F1, D4) — F5 reparte essas páginas por área. */
+type Pane = 'main' | 'map' | 'evolution' | 'stats' | 'pet' | 'settings' | 'games' | 'oracle' | 'tournament' | 'library' | 'shop';
+type LabTab = 'evolution' | 'pet' | 'stats';
+
+function paneFor(view: ViewType, labTab: LabTab): Pane {
+  if (view === 'home') return 'main';
+  if (view === 'map') return 'map';
+  const page = menuPageOf(view);
+  if (page) return page;
+  switch (areaOf(view)) {
+    case 'mercado': return 'shop';
+    case 'jogos': return 'games';
+    // A masmorra e o Dino ainda moram na página de Jogos; F5 os separa.
+    case 'exploracao': return 'games';
+    case 'arena': return 'tournament';
+    case 'laboratorio': return labTab;
+    case 'hall': return 'library';
+    default: return 'main';
+  }
+}
 
 export default function App() {
   const { gameState, setGameState } = useGameState();
   const [showIntro, setShowIntro] = useState(true);
-  const [currentView, setCurrentView] = useState<ViewType>('main');
+  const [currentView, setCurrentView] = useState<ViewType>('home');
+  /** Sub-aba do Laboratório (Evolução / Soulmon / Estatísticas). */
+  const [labTab, setLabTab] = useState<LabTab>('evolution');
+  const pane = paneFor(currentView, labTab);
+  /** O menu ícone da Home (D6). */
+  const [homeMenuOpen, setHomeMenuOpen] = useState(false);
+  const currentViewRef = useRef(currentView);
+  currentViewRef.current = currentView;
   // Id estável de comunidade (Tournament/Biblioteca) — mesmo id do cloud save.
   // Vira o hash do e-mail assim que o onboarding cadastra um (ver
   // handleCompleteOnboarding) — daí o setter, ao contrário do resto do app
@@ -746,7 +781,7 @@ export default function App() {
       carePatternReading, setGameState]);
 
   const [guideModalOpen, setGuideModalOpen] = useState(false);
-  // Loja — fica fora do minigame: modal próprio, não uma view (ver BottomNav).
+  // Loja — hoje é a área Mercado do Mapa (`navigation.ts`).
   // Créditos (monetização) — modal próprio, aberto pelo menu sanduíche.
   const [creditsOpen, setCreditsOpen] = useState(false);
   /** WP5.7 — a Nova Leitura (o que era o reroll por sorteio). */
@@ -3019,6 +3054,78 @@ export default function App() {
     });
   }, []);
 
+  /* ── NAVEGAÇÃO (minimal-ui F1): Home ↔ Mapa → áreas ────────────────────
+     O grafo do voltar é `viewBack` (`navigation.ts`), UM só para os três
+     caminhos: o voltar da tela, o voltar do navegador (`popstate`) e o botão
+     físico do Android. A pilha do `history` acompanha a PROFUNDIDADE do
+     grafo (Home 0 · Mapa/menu 1 · área 2): ir mais fundo empilha, trocar de
+     área para área substitui, e voltar pela tela é `history.back()` — assim o
+     voltar do sistema e o da tela nunca discordam sobre onde a pessoa está. */
+  const goTo = useCallback((v: ViewType) => {
+    const atual = currentViewRef.current;
+    if (v === atual) return;
+    // A missão "visite a árvore de evolução" conta a NAVEGAÇÃO até ela.
+    if (areaOf(v) === 'laboratorio') contarMissao('evolve-view');
+    const lateral = areaOf(v) !== null && areaOf(atual) !== null;
+    try {
+      if (lateral) window.history.replaceState({ smView: v }, '');
+      else window.history.pushState({ smView: v }, '');
+    } catch { /* history indisponível (sandbox): a navegação segue sem ela */ }
+    setCurrentView(v);
+  }, [contarMissao]);
+
+  const goBack = useCallback(() => {
+    if (viewBack(currentViewRef.current) === null) return;
+    const st = window.history.state as { smView?: string } | null;
+    // Só delega ao `history` se a entrada atual é NOSSA; senão (recarga no meio
+    // do caminho) resolve direto pelo grafo.
+    if (st && typeof st.smView === 'string' && st.smView !== 'home') window.history.back();
+    else setCurrentView(v => viewBack(v) ?? v);
+  }, []);
+
+  useEffect(() => {
+    try { window.history.replaceState({ smView: 'home' }, ''); } catch { /* idem */ }
+    const onPop = () => {
+      const alvo = viewBack(currentViewRef.current);
+      if (alvo) setCurrentView(alvo);
+    };
+    window.addEventListener('popstate', onPop);
+    /* Botão voltar do ANDROID. O `@capacitor/app` não está instalado (o APK
+       precisaria de build nativo novo), então o plugin é procurado em tempo de
+       execução: se um APK futuro o registrar, o voltar físico segue o MESMO
+       grafo; sem ele, o voltar do WebView cai no `popstate` acima. */
+    type CapHandle = { remove: () => void };
+    type CapApp = {
+      addListener?: (ev: string, cb: () => void) => Promise<CapHandle> | CapHandle;
+      exitApp?: () => void;
+    };
+    const capApp = (window as unknown as { Capacitor?: { Plugins?: { App?: CapApp } } }).Capacitor?.Plugins?.App;
+    let handle: CapHandle | undefined;
+    let vivo = true;
+    if (capApp?.addListener) {
+      Promise.resolve(capApp.addListener('backButton', () => {
+        if (viewBack(currentViewRef.current)) goBack();
+        else capApp.exitApp?.();
+      })).then(h => { if (vivo) handle = h; else h.remove(); }).catch(() => {});
+    }
+    return () => {
+      vivo = false;
+      window.removeEventListener('popstate', onPop);
+      handle?.remove();
+    };
+  }, [goBack]);
+
+  /* O foco acompanha a troca de tela: sem isto, depois de tocar numa área o
+     foco fica num botão que não existe mais e o leitor de tela não anuncia a
+     tela nova. Vai para o `<main>` (tabIndex -1), não para o primeiro botão. */
+  const primeiraTela = useRef(true);
+  useEffect(() => {
+    if (primeiraTela.current) { primeiraTela.current = false; return; }
+    const main = document.getElementById('conteudo');
+    main?.focus({ preventScroll: true });
+    if (main) main.scrollTop = 0;
+  }, [currentView]);
+
   // 🌀 Glitchtama — guaranteed reward for clearing all 5 dungeon floors.
   // Also counts a completed run for the missions.
   const handleGlitchtama = useCallback(() => {
@@ -4989,11 +5096,11 @@ export default function App() {
             `.sm-pet-sticky` (index.css) repete a mesma camada com
             `background-attachment: fixed` para a faixa fixa do pet casar
             pixel a pixel com o fundo que rola por baixo dela. */}
-        {currentView === 'main' && (
+        {pane === 'main' && (
           <div aria-hidden="true" className="sm2-home-bg" data-home-texture />
         )}
 
-        {/* Scrollable Content - padding bottom pra não ficar atrás da bottom nav (+ chat na home)
+        {/* Scrollable Content - padding bottom pra não ficar atrás do link de canto (+ chat na home)
 
             `<main>` e não `<div>`: o app só tinha `<nav>`. Sem landmark de
             conteúdo principal, um leitor de tela não tem para onde pular
@@ -5009,7 +5116,7 @@ export default function App() {
           /* Gutter 16 na Home (canvas Home, P1) — TEM de casar com o
              `margin-inline: -16px` do `.sm-pet-sticky` (index.css). As outras
              views seguem em 24. */
-          className={currentView === 'main' ? 'flex-1 overflow-y-auto px-4' : 'flex-1 overflow-y-auto px-6'}
+          className={pane === 'main' ? 'flex-1 overflow-y-auto px-4' : 'flex-1 overflow-y-auto px-6'}
           style={{
             position: 'relative', zIndex: 1,
             /* RODADA 4: o `pt-3` virou TOKEN porque a área fixa do pet precisa
@@ -5021,9 +5128,12 @@ export default function App() {
             paddingTop: 'var(--sm-scroll-pt)',
             /* B5: `--sm-chatdock-h` (altura real do dock) + 16px de folga,
                no lugar do `100px` mágico. Ver o token no index.css. */
-            paddingBottom: currentView === 'main'
-              ? 'calc(var(--sm-bottomnav-h) + env(safe-area-inset-bottom, 0px) + var(--sm-chatdock-h) + 16px)'
-              : 'calc(var(--sm-bottomnav-h) + env(safe-area-inset-bottom, 0px) + 16px)',
+            /* `--sm-corner-h`: a faixa do link de canto (Mapa na Home, Home
+               no Mapa). A barra inferior saiu; as áreas não têm link de canto,
+               mas a folga igual evita o último item colado no rodapé. */
+            paddingBottom: pane === 'main'
+              ? 'calc(var(--sm-corner-h) + env(safe-area-inset-bottom, 0px) + var(--sm-chatdock-h) + 16px)'
+              : 'calc(var(--sm-corner-h) + env(safe-area-inset-bottom, 0px) + 16px)',
           }}
         >
           {/* ── O `<h1>` DA TELA ──────────────────────────────────────────────
@@ -5046,33 +5156,35 @@ export default function App() {
               dela não tiver `<h1>` — e nunca as duas coisas.
               Título de tela nasce em inglês com par PT-BR, como todo texto. */}
           {(() => {
+            /* minimal-ui F1: o `<h1>` das áreas e das páginas do menu vem do
+               TOPO NOVO (`AreaTopBar`: voltar em círculo + título central).
+               Donas do próprio `<h1>` recebem o título como texto
+               `aria-hidden` (`ownsHeading={false}`): Jogos/Exploração
+               (`ActivitiesPage`), Arena (`TournamentPage`), Hall
+               (`LibraryPage`) e o Soulmon do Laboratório (`PetPage`). A Home
+               tem o wordmark do `HomeHud`; o Mapa, o `<h1>` do `MapPage`. */
             const isPtH = language === 'pt-BR';
-            const titulos: Partial<Record<typeof currentView, string>> = {
-              evolution: isPtH ? 'Evolução' : 'Evolution',
-              stats: isPtH ? 'Estatísticas' : 'Stats',
-              settings: isPtH ? 'Configurações' : 'Settings',
-              shop: isPtH ? 'Loja' : 'Shop',
-              oracle: isPtH ? 'Oráculo' : 'Oracle',
-            };
-            const titulo = titulos[currentView];
-            if (!titulo) return null;
+            const area = areaOf(currentView);
+            const page = menuPageOf(currentView);
+            if (!area && !page) return null;
+            const donaDoH1 = pane === 'games' || pane === 'tournament' || pane === 'library' || pane === 'pet';
             return (
-              <h1
-                style={{
-                  fontFamily: 'var(--sm2-font-display)',
-                  fontSize: 'var(--sm2-text-xl)',
-                  fontWeight: 600,
-                  lineHeight: 'var(--sm2-leading-title)',
-                  color: 'var(--sm2-ink)',
-                  margin: '0 0 12px',
-                }}
-              >
-                {titulo}
-              </h1>
+              <AreaTopBar
+                title={area ? areaLabel(area, isPtH) : menuPageLabel(page!, isPtH)}
+                backLabel={area
+                  ? (isPtH ? 'Voltar ao mapa' : 'Back to map')
+                  : (isPtH ? 'Voltar ao início' : 'Back to home')}
+                onBack={goBack}
+                ownsHeading={!donaDoH1}
+              />
             );
           })()}
 
-          {currentView === 'main' && (
+          {pane === 'map' && (
+            <MapPage language={language} onOpenArea={(id: AreaId) => goTo(areaView(id))} />
+          )}
+
+          {pane === 'main' && (
             <div className="space-y-4">
               {/* HUD do topo: SÓ a marca (o `<h1>` da Home) + o selo do dia.
                   A leitura de HP/energia mora no VIDRO (`VisorBar`, em pixel,
@@ -5085,6 +5197,27 @@ export default function App() {
                    selo". Binário de propósito: nunca "2 de 3". */
                 focusSealed={focoDoDiaCompleto}
                 language={language}
+                /* D6 — o menu SÓ ÍCONE da Home: tudo que morava no sanduíche
+                   da barra inferior. Glifo `menu` pelado (regra do dono),
+                   alvo de 44 no botão, divulgação com `aria-expanded`. */
+                trailing={(
+                  <button
+                    type="button"
+                    onClick={() => setHomeMenuOpen(true)}
+                    aria-label={language === 'pt-BR' ? 'Menu' : 'Menu'}
+                    aria-expanded={homeMenuOpen}
+                    title={language === 'pt-BR' ? 'Menu' : 'Menu'}
+                    data-home-menu-btn
+                    className="sm2-corner-link"
+                    style={{
+                      width: 44, height: 44, flex: '0 0 44px',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      background: 'transparent', border: 'none', padding: 0, cursor: 'pointer',
+                    }}
+                  >
+                    <NavGlyph name="menu" size={24} tone="muted" />
+                  </button>
+                )}
               />
 
               {/* ═══════════════════════════════════════════════════════════
@@ -5578,7 +5711,7 @@ export default function App() {
               inferior — alternadas por essas abas em vez de botões separados
               (a barra tem 6 botões travados por teste). A página do Pet é a
               ficha viva: formas desbloqueadas, descrições e habilidades. */}
-          {(currentView === 'evolution' || currentView === 'stats' || currentView === 'pet') && (
+          {areaOf(currentView) === 'laboratorio' && (
             <div className="flex gap-2 mb-4">
               {/* `minWidth: 0` + fonte menor são obrigatórios aqui: "Estatísticas"
                   é uma palavra só (min-content ~168px) e `flex:1` com o
@@ -5598,8 +5731,8 @@ export default function App() {
               ]).map(({ view, label }) => (
                 <button
                   key={view}
-                  onClick={() => setCurrentView(view)}
-                  aria-current={currentView === view ? 'page' : undefined}
+                  onClick={() => setLabTab(view)}
+                  aria-current={labTab === view ? 'page' : undefined}
                   /* Sub-aba = SELEÇÃO, não ação (canvas Pet §22, D-P1): a ativa
                      vai em `primary-soft` + `primary-ink`, nunca na placa cheia
                      do primário. Sai o `.sm-btn` pixel (fora do visor). Texto
@@ -5608,7 +5741,7 @@ export default function App() {
                     ...sm2Button('outline', false, 'sm'),
                     flex: 1, minWidth: 0, padding: '0 8px', whiteSpace: 'nowrap',
                     fontSize: 'var(--sm2-text-xs)',
-                    ...(currentView === view
+                    ...(labTab === view
                       ? { backgroundColor: 'var(--sm2-primary-soft)', color: 'var(--sm2-primary-ink)', border: '1px solid var(--sm2-primary-ink)' }
                       : {}),
                   }}
@@ -5623,7 +5756,7 @@ export default function App() {
               um personagem de demonstração (as 3 linhas iguais) é exatamente
               quem entende o que a própria árvore significa. Só aqui e no
               limite de criação — em nenhum outro lugar do jogo. */}
-          {currentView === 'evolution' && gameState.demoCharacterId && (
+          {pane === 'evolution' && gameState.demoCharacterId && (
             <div style={{ padding: '0 4px 10px' }}>
               <UnlockNudge
                 language={language}
@@ -5637,7 +5770,7 @@ export default function App() {
             </div>
           )}
 
-          {currentView === 'evolution' && (
+          {pane === 'evolution' && (
             <Suspense fallback={<ScreenSkeleton language={language} />}><EvolutionPath
               currentStageId={gameState.evolutionStage}
               currentBranch={getDominantBranch() === 'balanced' ? 'data' : getDominantBranch() as 'virus' | 'data' | 'vaccine'}
@@ -5681,7 +5814,7 @@ export default function App() {
               PODE (ultra + comprou + nunca usou). Nunca abre sozinho: o
               convite é um card, o gesto é do jogador. Quem já renasceu vê a
               marca, não o botão — é um registro, não uma oferta repetida. */}
-          {currentView === 'evolution' && canRebirth(gameState) && (
+          {pane === 'evolution' && canRebirth(gameState) && (
             <div
               data-rebirth-block
               style={{ marginTop: 16, padding: 12, borderRadius: 'var(--sm2-radius-md)', border: '1px solid var(--sm2-line)', backgroundColor: 'var(--sm2-surface)', display: 'flex', flexDirection: 'column', gap: 8 }}
@@ -5719,7 +5852,7 @@ export default function App() {
               antes de olhar o estágio. E só quando o convite do demo (o
               primeiro bloco da página) não está montado: dois convites iguais
               na mesma tela é cobrança, não convite. */}
-          {currentView === 'evolution' && rebirthRefusal(gameState) === 'not-paid' && !gameState.demoCharacterId && (
+          {pane === 'evolution' && rebirthRefusal(gameState) === 'not-paid' && !gameState.demoCharacterId && (
             <div style={{ marginTop: 16 }} data-rebirth-block>
               <UnlockNudge
                 language={language}
@@ -5732,7 +5865,7 @@ export default function App() {
               em `sm2Hint`, e acabou. NÃO vira convite nem botão: a saída é a
               própria página, que já conta a escada (canvas Evolução §24:
               "not-ultra sem convite"). Só fora do demo, que tem o convite dele. */}
-          {currentView === 'evolution' && rebirthRefusal(gameState) === 'not-ultra' && !gameState.demoCharacterId && (
+          {pane === 'evolution' && rebirthRefusal(gameState) === 'not-ultra' && !gameState.demoCharacterId && (
             <p style={{ ...sm2Hint, marginTop: 16, textAlign: 'center' }} data-rebirth-block>
               {language === 'pt-BR'
                 ? 'O padrão ainda não chegou ao limite do que esta forma ocupa.'
@@ -5745,7 +5878,7 @@ export default function App() {
               Ainda é ele.") — sem ela, somada a "parte da alma" e ao fato de
               renascer ser compra, a cena lê como morte de um ente. Proibidas
               aqui: morrer, morte, partir, despedida, adeus. */}
-          {currentView === 'evolution' && gameState.rebirth && (
+          {pane === 'evolution' && gameState.rebirth && (
             <p style={{ ...sm2Hint, marginTop: 16, display: 'flex', alignItems: 'center', gap: 8 }} data-rebirth-block>
               <Icon name="egg" size={20} fill={1} tone="muted" />
               <span>
@@ -5756,7 +5889,7 @@ export default function App() {
             </p>
           )}
 
-          {currentView === 'pet' && (
+          {pane === 'pet' && (
             <Suspense fallback={<ScreenSkeleton language={language} />}><PetPage
               stages={gameState.soulmonStages ?? []}
               dominantElement={gameState.soulmonMeta?.dominantElement}
@@ -5778,7 +5911,7 @@ export default function App() {
               a ficha dele (formas, descrições, habilidades). Em Configurações
               ele leria como um painel de métrica de sono, que é exatamente a
               leitura que a Parte 3 do plano manda evitar. */}
-          {currentView === 'pet' && (
+          {pane === 'pet' && (
             <div style={{ marginTop: 16 }}>
               <Suspense fallback={<ScreenSkeleton language={language} />}>
                 <DreamDex rest={gameState.rest ?? createRestState()} language={language} />
@@ -5789,7 +5922,7 @@ export default function App() {
           {/* O diário de aventuras fica ao lado do Dex pelo mesmo motivo dele:
               é coleção DA CRIATURA, não métrica do jogador. Numa tela de
               estatísticas viraria painel de desempenho. */}
-          {currentView === 'pet' && (
+          {pane === 'pet' && (
             <div style={{ marginTop: 16 }}>
               <Suspense fallback={<ScreenSkeleton language={language} />}>
                 <AdventureDiary entries={gameState.adventures ?? []} language={language} />
@@ -5797,7 +5930,7 @@ export default function App() {
             </div>
           )}
 
-          {currentView === 'stats' && (
+          {pane === 'stats' && (
             <Suspense fallback={<ScreenSkeleton language={language} />}><StatsPage
               /* WP1.6 — a MESMA peça do reveal, agora como lembrança. */
               birth={gameState.bornAt || gameState.soulmonMeta?.baseName || gameState.demoCharacterId ? {
@@ -5868,7 +6001,7 @@ export default function App() {
             /></Suspense>
           )}
 
-          {currentView === 'settings' && (
+          {pane === 'settings' && (
             <Suspense fallback={<ScreenSkeleton language={language} />}><SettingsPage
               soundMuted={soundMuted}
               onToggleSound={handleToggleSound}
@@ -5938,7 +6071,7 @@ export default function App() {
               janela de sono automático, que ela conversa. O switch "não quero
               ver métricas" também é preferência — e esconder números sem tirar
               recompensa é a regra do `restWindow.ts`. */}
-          {currentView === 'settings' && (
+          {pane === 'settings' && (
             <div style={{ marginTop: 16 }}>
               <Suspense fallback={<ScreenSkeleton language={language} />}>
                 <RestWindowCard
@@ -5971,7 +6104,7 @@ export default function App() {
               Some por completo quando não há sensor (PWA, a maior parte da
               base) e quando a pessoa já disse não: `'declined'` é definitivo,
               porque insistir depois de um "não" é assédio. */}
-          {currentView === 'settings' && stepsAvailable === true && gameState.stepsConsent !== 'declined' && (
+          {pane === 'settings' && stepsAvailable === true && gameState.stepsConsent !== 'declined' && (
             <div style={{ marginTop: 16 }}>
               <StepsCard
                 steps={stepsToday}
@@ -5984,13 +6117,13 @@ export default function App() {
             </div>
           )}
 
-          {currentView === 'oracle' && (
+          {pane === 'oracle' && (
             <Suspense fallback={<ScreenSkeleton language={language} />}>
               <OraclePage language={language} />
             </Suspense>
           )}
 
-          {currentView === 'tournament' && (
+          {pane === 'tournament' && (
             <Suspense fallback={<ScreenSkeleton language={language} />}>
               <TournamentPage
                 saveId={saveId}
@@ -6015,7 +6148,7 @@ export default function App() {
             </Suspense>
           )}
 
-          {currentView === 'library' && (
+          {pane === 'library' && (
             <Suspense fallback={<ScreenSkeleton language={language} />}>
               <LibraryPage
                 saveId={saveId}
@@ -6030,7 +6163,7 @@ export default function App() {
             </Suspense>
           )}
 
-          {currentView === 'shop' && (
+          {pane === 'shop' && (
             <Suspense fallback={<ScreenSkeleton language={language} />}>
               <ShopModal
                 asPage
@@ -6051,12 +6184,12 @@ export default function App() {
                 onExchangeCredits={handleExchangeCredits}
                 onEquip={handleEquipBackground}
                 onEquipFurniture={handleEquipFurniture}
-                onClose={() => setCurrentView('main')}
+                onClose={goBack}
               />
             </Suspense>
           )}
 
-          {currentView === 'games' && (
+          {pane === 'games' && (
             <Suspense fallback={<ScreenSkeleton language={language} />}>
               <ActivitiesPage
                 evolutionStage={gameState.evolutionStage}
@@ -6084,37 +6217,44 @@ export default function App() {
                     : { ...prev, gamePoints: (prev.gamePoints ?? 0) - pts });
                   return true;
                 }}
-                onOpenTournament={() => setCurrentView('tournament')}
+                onOpenTournament={() => goTo(areaView('arena'))}
                 soulmonSkills={gameState.soulmonSkills}
               />
             </Suspense>
           )}
         </main>
 
-      {/* Navegação principal — barra fixa no rodapé (abaixo do chat).
-          **Depois do `<main>` no DOM, de propósito.** Ela é `position: fixed`
-          (z-index 45 contra o z-index 1 do `<main>`), então a posição no JSX
-          não muda um pixel — muda a ORDEM DE FOCO, e essa estava invertida:
-          a barra mora no RODAPÉ da tela e era percorrida ANTES do conteúdo,
-          em toda troca de view. Medido: o Tab visitava os 5 botões da nav
-          (y≈843) antes do primeiro controle do conteúdo (y≈205). É a ordem
-          significativa da WCAG 2.4.3/1.3.2 — e vale igual para quem lê a tela
-          com leitor, que agora encontra o conteúdo antes do rodapé.
-          O atalho "pular para o conteúdo" continua no topo: ele é a saída
-          para a ordem inversa (conteúdo longo → rodapé) e o único caminho
-          curto quando o foco já entrou na lista. */}
-      <BottomNav
-        currentView={currentView}
-        onNavigate={(v) => {
-          // A missão "visite a árvore de evolução" conta a NAVEGAÇÃO, e é a
-          // mais barata do pool de propósito: ela existe para levar quem nunca
-          // abriu a página até ela, não para pagar por esforço.
-          if (v === 'evolution') contarMissao('evolve-view');
-          setCurrentView(v);
-        }}
-        onResetOnboarding={handleResetOnboarding}
-        onOpenCredits={openCredits}
+      {/* ── NAVEGAÇÃO (minimal-ui F1) ──────────────────────────────────────
+          A barra inferior de 5 abas SAIU (decisão 1 do dono, 23/09/2026).
+          Sobra UM link de canto por tela de topo: o Mapa no canto inferior
+          direito da Home e a Home no canto inferior esquerdo do Mapa. As
+          áreas voltam pelo topo (`AreaTopBar`). **Depois do `<main>` no DOM**,
+          pelo mesmo motivo da barra antiga: é `fixed` no rodapé, e a ordem de
+          foco tem que visitar o conteúdo antes (WCAG 2.4.3). */}
+      {currentView === 'home' && (
+        <CornerLink
+          icon="map"
+          side="right"
+          label={language === 'pt-BR' ? 'Mapa' : 'Map'}
+          onClick={() => goTo('map')}
+        />
+      )}
+      {currentView === 'map' && (
+        <CornerLink
+          icon="home"
+          side="left"
+          label={language === 'pt-BR' ? 'Início' : 'Home'}
+          onClick={goBack}
+        />
+      )}
+      <HomeMenuSheet
+        open={homeMenuOpen}
+        onClose={() => setHomeMenuOpen(false)}
         language={language}
+        onOpenPage={(p) => goTo(`page:${p}`)}
+        onOpenGuide={() => setGuideModalOpen(true)}
+        onOpenCredits={openCredits}
+        onResetOnboarding={handleResetOnboarding}
       />
 
       {/* P4 — a tela de antes/depois. Nunca monta sozinha: só por gesto no

@@ -204,6 +204,21 @@ const SHOP_BAG =
 const SHOP_RIM = 'M4.2 9.4h15.6';
 const SHOP_HANDLE = 'M9.2 9.4V7.6a2.8 2.8 0 0 1 5.6 0v1.8';
 
+/**
+ * MAPA (minimal-ui F1, 23/09/2026) — a folha dobrada em três painéis, com o
+ * NÓ marcando o lugar. É o link único da Home para o Mapa (a barra inferior
+ * saiu), então precisa ler como "mapa" sozinho, sem rótulo ao lado.
+ *
+ * As DOBRAS são traço de contorno e viram VAZIO no estado cheio
+ * (`strokeHole`) — sem isso a folha cheia vira um retângulo torto e perde a
+ * leitura. O nó fica no painel do meio, que é o motivo da assinatura (o NÓ);
+ * cheio, ele se esvazia, pela mesma regra da porta do Início.
+ */
+const MAP_SHEET = 'M3.6 6.4 9 4.2l6 2.4 5.4-2.2v13.2L15 19.8l-6-2.4-5.4 2.2Z';
+const MAP_FOLDS = 'M9 4.2v13.2M15 6.6v13.2';
+const MAP_PIN: [number, number, number] = [12, 11.6, 1.6];
+const MAP_PIN_HOLE: [number, number, number] = [12, 11.6, 2];
+
 /** Menu: quatro nós. O mesmo círculo da Evolução, em grade. */
 const MENU_NODES: [number, number, number][] = [
   [7.6, 7.6, 2.4], [16.4, 7.6, 2.4], [7.6, 16.4, 2.4], [16.4, 16.4, 2.4],
@@ -518,6 +533,13 @@ const GLYPHS: Record<string, GlyphDef> = {
     outline: <>{circles(MENU_NODES)}</>,
     solid: <>{circles(MENU_NODES)}</>,
   },
+  map: {
+    outline: (
+      <><path d={MAP_SHEET} /><path d={MAP_FOLDS} /><g fill="currentColor" stroke="none">{node(MAP_PIN)}</g></>
+    ),
+    solid: <path d={MAP_SHEET} />,
+    holes: <>{strokeHole(MAP_FOLDS)}{nodeHole(MAP_PIN_HOLE)}</>,
+  },
 
   /* ── Deck do aparelho: aparece em TODA sessão ─────────────────────────── */
   favorite: { outline: <path d={HEART} />, solid: <path d={HEART} /> },
@@ -644,7 +666,9 @@ GLYPHS.storefront = GLYPHS.shop;
 GLYPHS.shopping_bag = GLYPHS.shop;
 GLYPHS.more_horiz = GLYPHS.menu;
 
-export type NavGlyphName = 'home' | 'activities' | 'evolution' | 'shop' | 'menu';
+/** Os glifos que a NAVEGAÇÃO usa: Home ↔ Mapa, o menu da Home, o voltar das
+ *  áreas e os ícones das áreas no Mapa. */
+export type NavGlyphName = 'home' | 'map' | 'menu' | 'arrow_back' | 'activities' | 'evolution' | 'shop';
 export type GlyphName = string;
 
 /** Existe glifo próprio para este nome? É o que o `Icon` pergunta. */

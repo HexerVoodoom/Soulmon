@@ -28,8 +28,8 @@
  *    o título da página em bitmap; ele volta a ser Fredoka, porque "Atividades"
  *    é a voz do PRODUTO, não a do aparelho.
  *
- * A Loja **não** é card daqui: ela é destino da `BottomNav` (ver
- * `BottomNav.tsx`), e duplicar a entrada seria dois caminhos para a mesma
+ * A Loja **não** é card daqui: ela é a área Mercado do Mapa (ver
+ * `navigation.ts`), e duplicar a entrada seria dois caminhos para a mesma
  * tela no mesmo polegar.
  *
  * Nomes de ícone conferidos UM A UM contra o inventário de `tokens.md` — nome

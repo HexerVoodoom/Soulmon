@@ -3928,11 +3928,13 @@ html {
   --sm-energy: #16a34a;
   --sm-energy-track: #e3ece9;
   --sm-radius: 16px;
-  /* 68px → 80px na rodada 5: com o ícone grande (36px) da regra "ícone nunca
-     dentro de box", o rótulo passava do fim da barra e saía cortado na borda
-     da tela. O token é consumido também pelo `.sm-chat-fixed` (bottom), então
-     subir aqui reposiciona o dock junto — por isso é token e não número solto. */
-  --sm-bottomnav-h: 80px;       /* altura de conteúdo da barra de navegação inferior */
+  /* A FAIXA DO LINK DE CANTO (minimal-ui F1, 23/09/2026). Substitui a
+     altura da barra inferior de 5 abas (80px), que SAIU. Sobrou um botão de
+     56px por tela de topo (Mapa na Home, Home no Mapa), a 12px do rodapé:
+     56 + 12 = 68, e é essa faixa que o dock de chat (`.sm-chat-fixed`) e o
+     padding do `<main>` deixam livre. Continua token, e não número solto,
+     pelo mesmo motivo de antes: os consumidores se movem juntos. */
+  --sm-corner-h: 68px;
   /* B5 (rodada 3): altura MEDIDA do dock de chat (`.sm-chat-fixed`), que
      flutua entre a nav e o conteúdo. Era um `+ 100px` mágico no App.tsx, e
      o CTA largo do fim do painel de rituais — a peça que substituiu o FAB —
@@ -4010,129 +4012,11 @@ html {
   color: var(--sm-primary);
 }
 
-/* Barra de navegação inferior: ícones abertos (sem menu colapsado), fixa no
-   rodapé, ABAIXO da barra de chat (que flutua logo acima dela). */
-.sm-bottom-nav {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 45;
-  height: var(--sm-bottomnav-h);
-  padding: 6px 10px calc(6px + env(safe-area-inset-bottom, 0px));
-  background: var(--sm-surface);
-  /* Rodada 2 (T2): a sombra difusa (`0 -2px 10px rgba(42,36,64,.06)`) era a
-     ULTIMA sombra Material do app, e por estar na nav aparecia em TODA tela —
-     um unico item do inventario contaminando o portao inteiro. A separacao
-     agora e a linha de cobre, que e a mesma que separa qualquer peca do kit. */
-  border-top: 2px solid var(--sm-px-copper);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 2px;
-}
-/* B7 (rodada 3): a célula da nav virou ícone + RÓTULO. Coluna, não linha —
-   e o raio 12 do sistema antigo saiu junto: a placa do item ativo usa o
-   chanfro do kit, como toda superfície do app. */
-.sm-bottom-nav-btn {
-  flex: 1;
-  min-width: 0;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  padding: 2px 1px;
-  box-sizing: border-box;
-  background: transparent;
-  border: 2px solid transparent;
-  color: var(--sm-muted);
-  transition: background .15s ease, color .15s ease;
-  &:active { transform: scale(.96); }
-  &:focus-visible { outline: 3px solid var(--sm-px-cyan); outline-offset: -3px; }
-}
-/* SELEÇÃO PELO PREENCHIMENTO (regra da rodada 2, agora também na nav): o
-   destino ativo é o ÚNICO bloco sólido da fileira, e o inativo nunca é
-   preenchido. Por ser uma comparação absoluta e não relativa, não inverte
-   quando o tema inverte. O brilho do ícone e a cor do rótulo são reforço. */
-/* RODADA 5 — ÍCONE NUNCA DENTRO DE BOX (regra do dono, vale no app INTEIRO).
-   A placa preenchida do item ativo SAIU: era literalmente um box em volta do
-   ícone. Trocada por ícone GRANDE + sublinhado.
-
-   O sublinhado não é decoração: a regra da rodada 2 dizia que a seleção tem
-   que ser carregada por algo que NÃO seja só cor (daltonismo, tema invertido,
-   modo alto-contraste). Sem a placa, sobrava só "ciano vs cinza" — cor pura.
-   A barra devolve uma pista de FORMA, e uma barra não é uma caixa em volta do
-   ícone, então respeita a regra nova sem reabrir o buraco de acessibilidade
-   que a placa fechava. */
-.sm-bottom-nav-btn-on {
-  position: relative;
-  &::after {
-    content: '';
-    position: absolute;
-    left: 22%;
-    right: 22%;
-    bottom: 0;
-    height: 3px;
-    background: var(--sm-px-cyan);
-    box-shadow: 0 0 8px color-mix(in srgb, var(--sm-px-cyan) 70%, transparent);
-  }
-}
-/* Rótulo persistente. 8px na Silkscreen com `letter-spacing: 0` — o
-   espaçamento de 0.06em usado no resto do kit é o que estourava
-   "ATIVIDADES"/"BIBLIOTECA" (10 caracteres, pior caso em PT-BR) na célula
-   de ~63px.
-
-   ⚠️ CORREÇÃO (09/09/2026). A frase que estava aqui — "`overflow: hidden` é
-   rede de segurança para um idioma futuro: nenhum rótulo atual chega perto de
-   precisar dele" — era FALSA, e a de baixo ("53px numa célula de 64,7px")
-   também: as duas foram medidas num viewport largo. Em **320px** a célula tem
-   60px, a caixa do rótulo tem 54px e "ATIVIDADES" precisa de 61px. A rede de
-   segurança estava em uso, em PT-BR, todos os dias.
-
-   E o pior não era o corte: era `text-overflow: clip`, que tirava o "S" final
-   SEM sinal nenhum. A pessoa lia "ATIVIDADE" — uma palavra portuguesa
-   completa, no singular — e não tinha como saber que faltava algo. Agora é
-   `ellipsis`: continua cortando (não há folga na barra para os cinco itens em
-   320px, e diminuir a fonte sai da escala), mas passa a DIZER que cortou.
-
-   O conserto de verdade é uma palavra mais curta em PT-BR, e isso é decisão do
-   dono, não minha — está registrado em `docs/STATUS.md`.
-   `src/styles/navRotulo.contract.test.ts` mede a caixa contra o texto nos dois
-   idiomas, para o número nunca mais ser "medido uma vez e afirmado para
-   sempre". */
-.sm-bottom-nav-label {
-  /* Rubik 12/500, caixa mista (canvas Home, `NavEstados` / SIS achado 3;
-     16/09/2026). Era Silkscreen aqui no CSS e Rubik só no inline do JSX —
-     duas fontes declaradas para o mesmo nó. A regra e o JSX agora dizem a
-     mesma coisa; `navRotulo.contract.test.ts` e `BottomNav.render.test.tsx`
-     medem a fonte. Silkscreen é a voz do aparelho: só dentro do vidro e em
-     selos, nunca na nav. */
-  font-family: var(--sm2-font-text);
-  font-size: var(--sm2-text-xs);
-  font-weight: 500;
-  letter-spacing: 0;
-  line-height: 1.2;
-  text-transform: none;
-  white-space: nowrap;
-  overflow: hidden;
-  /* Ver o bloco acima: `clip` escondia o corte; `ellipsis` o declara. */
-  text-overflow: ellipsis;
-  max-width: 100%;
-  -webkit-font-smoothing: antialiased;
-  color: var(--sm2-muted);
-}
-/* SEM `font-weight: 700` aqui, e isso foi MEDIDO: o rótulo mais largo em
-   PT-BR ("Atividades") mede 53px numa célula de 64,7px; a placa do ativo
-   consome 4px em borda, e o negrito da Silkscreen empurrava o texto para
-   ~60px — "ATIVIDADES" saía cortado em "ATIVIDADE". É também a regra da
-   rodada 2: quem carrega a seleção é o preenchimento, e só ele. */
-/* Sem a placa, `--sm-px-sel-ink` (tinta PARA a placa) não tem mais fundo que
-   a justifique — sobre `--sm-surface` ela sairia clara-sobre-clara no tema
-   claro, o mesmo erro de contexto que o comentário acima descreve. O rótulo
-   ativo passa a ser o ciano do kit, que é legível nos dois temas. */
-.sm-bottom-nav-btn-on .sm-bottom-nav-label { color: var(--sm-px-cyan); }
+/* A BARRA DE NAVEGAÇÃO INFERIOR SAIU (minimal-ui F1, 23/09/2026) — e com ela
+   as regras da barra, das células e do rótulo. A história delas (o rótulo que
+   cortava "ATIVIDADES" em 320px, a placa do ativo que virou sublinhado) está
+   no git; o guard que media o rótulo, `navRotulo.contract.test.ts`, agora
+   mede os rótulos das ÁREAS do Mapa. */
 
 /* Botão primário: inspiração Duolingo (forma arredondada, cor chapada,
    barra 3D embaixo que "afunda" no :active) ajustada pro nosso estilo —
@@ -4276,7 +4160,7 @@ select:focus-visible {
   position: fixed;
   left: 0;
   right: 0;
-  bottom: calc(var(--sm-bottomnav-h) + env(safe-area-inset-bottom, 0px));
+  bottom: calc(var(--sm-corner-h) + env(safe-area-inset-bottom, 0px));
   z-index: 40;
   padding: 8px 24px 12px;
   background: linear-gradient(180deg, color-mix(in srgb, var(--sm-bg) 0%, transparent) 0%, color-mix(in srgb, var(--sm-bg) 92%, transparent) 35%, var(--sm-bg) 100%);
@@ -5783,6 +5667,19 @@ select:focus-visible {
   100% { transform: translateY(0); }
 }
 
+/* ── NAVEGAÇÃO Home ↔ Mapa (minimal-ui F1) ─────────────────────────────────
+   O link de canto, o menu da Home e o voltar das áreas são estilizados inline
+   (footgun 1); aqui fica só o que inline não alcança: o foco visível e o
+   toque. Ícone pelado — nada de fundo no :hover (regra do dono). O corte do
+   `:active` em movimento reduzido mora no bloco CANÔNICO, abaixo. */
+.sm2-corner-link { -webkit-tap-highlight-color: transparent; }
+.sm2-area-back { -webkit-tap-highlight-color: transparent; }
+.sm2-corner-link:focus-visible { outline: 3px solid var(--sm2-primary-ink); outline-offset: 2px; }
+.sm2-area-back:focus-visible { outline: 3px solid var(--sm2-primary-ink); outline-offset: 2px; }
+[data-map-area]:focus-visible { outline: 3px solid var(--sm2-primary-ink); outline-offset: 2px; }
+.sm2-corner-link:active { transform: scale(.94); }
+.sm2-area-back:active { transform: scale(.94); }
+
 /* ── MOVIMENTO REDUZIDO ──────────────────────────────────────────────────
    O bloco global logo acima já zera `animation`/`transition` de tudo; este é
    explícito sobre as duas peças desta onda porque `font-variation-settings` e
@@ -5806,6 +5703,8 @@ select:focus-visible {
   .sm-milestone-pop { animation: none !important; }
   .sm2-viewport { animation: none !important; }
   .sm2-icon { transition: none !important; }
+  /* minimal-ui F1: o link de canto e o voltar não encolhem no toque. */
+  .sm2-corner-link:active, .sm2-area-back:active { transform: none; }
   /* A sintonia do Visor (troca da arte de reserva pelo sprite próprio) vira
      CORTE SECO: a troca continua acontecendo, só sem a transição
      (`spec-geracao-incremental.md` §6). Mora AQUI, e não num segundo bloco no

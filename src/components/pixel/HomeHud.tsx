@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 /**
  * HUD do topo da Home — a MARCA (o `<h1>` da página) e o selo do dia. Só.
  *
@@ -50,9 +51,15 @@ interface HomeHudProps {
    * emite. Ou está completo, ou não há selo.
    */
   focusSealed?: boolean;
+  /**
+   * O que vai na PONTA DIREITA da linha da marca — o menu só ícone da Home
+   * (minimal-ui D6). Slot e não botão embutido: o HUD não sabe o que o menu
+   * abre, e não deveria.
+   */
+  trailing?: ReactNode;
 }
 
-export function HomeHud({ language = 'en-US', focusSealed = false }: HomeHudProps) {
+export function HomeHud({ language = 'en-US', focusSealed = false, trailing }: HomeHudProps) {
   return (
     <div className="sm2-hud">
       {/* A marca é a PALAVRA, sem ícone ao lado.
@@ -90,6 +97,7 @@ export function HomeHud({ language = 'en-US', focusSealed = false }: HomeHudProp
             <span>{language === 'pt-BR' ? 'foco do dia' : 'focus done'}</span>
           </span>
         )}
+        {trailing && <div style={{ marginLeft: 'auto', display: 'flex' }}>{trailing}</div>}
       </div>
     </div>
   );
