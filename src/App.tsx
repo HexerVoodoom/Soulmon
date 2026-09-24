@@ -22,6 +22,7 @@ import { NavGlyph } from './components/ui/NavGlyphs';
 import {
   type ViewType, type AreaId, areaOf, menuPageOf, viewBack, areaView, areaLabel, menuPageLabel,
 } from './navigation';
+import { registerAndroidBack } from './utils/androidBack';
 import { CompanionHUD } from './components/CompanionHUD';
 import { HomeHud } from './components/pixel/HomeHud';
 import { DailyRituals } from './components/DailyRituals';
@@ -3100,28 +3101,13 @@ export default function App() {
       if (alvo) setCurrentView(alvo);
     };
     window.addEventListener('popstate', onPop);
-    /* Botão voltar do ANDROID. O `@capacitor/app` não está instalado (o APK
-       precisaria de build nativo novo), então o plugin é procurado em tempo de
-       execução: se um APK futuro o registrar, o voltar físico segue o MESMO
-       grafo; sem ele, o voltar do WebView cai no `popstate` acima. */
-    type CapHandle = { remove: () => void };
-    type CapApp = {
-      addListener?: (ev: string, cb: () => void) => Promise<CapHandle> | CapHandle;
-      exitApp?: () => void;
-    };
-    const capApp = (window as unknown as { Capacitor?: { Plugins?: { App?: CapApp } } }).Capacitor?.Plugins?.App;
-    let handle: CapHandle | undefined;
-    let vivo = true;
-    if (capApp?.addListener) {
-      Promise.resolve(capApp.addListener('backButton', () => {
-        if (viewBack(currentViewRef.current)) goBack();
-        else capApp.exitApp?.();
-      })).then(h => { if (vivo) handle = h; else h.remove(); }).catch(() => {});
-    }
+    /* Botão voltar do ANDROID (`@capacitor/app`): o MESMO grafo, e na Home
+       devolve ao sistema (minimiza). Só registra em plataforma nativa — na
+       web/PWA fica o `popstate` acima. Dono: `utils/androidBack.ts`. */
+    const offBack = registerAndroidBack(() => currentViewRef.current, goBack);
     return () => {
-      vivo = false;
       window.removeEventListener('popstate', onPop);
-      handle?.remove();
+      offBack();
     };
   }, [goBack]);
 

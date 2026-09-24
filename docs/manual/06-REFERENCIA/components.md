@@ -185,7 +185,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** `src/components/nav/nav.render.test.tsx`.
 
 ### `src/components/nav/MapPage.tsx`
-**Dono de:** a tela do Mapa (minimal-ui F1 + arte isométrica F3) — cena com as seis construções (`AREAS` de `src/navigation.ts`), cada uma um `<button>` com `aria-label` = `areaLabel` que chama `onOpenArea`, posicionada em % da cena; o saldo das 3 moedas num menu discreto no topo (formato e cor de `utils/currencies.ts`); o canto inferior esquerdo vinhetado para o `CornerLink glow` da Home. `<h1>` visualmente oculto (`#sm-map-title`).
+**Dono de:** a tela do Mapa (minimal-ui F1 + arte isométrica F3) — cena com as seis construções (`AREAS` de `src/navigation.ts`), cada uma um `<button>` com `aria-label` = `areaLabel` que chama `onOpenArea`, posicionada em % da cena; o saldo das 3 moedas num menu discreto no canto inferior direito, acima da arte (`zIndex` 2; até 24/09/2026 ficava no topo e a arte do "Jogos" o cobria) (formato e cor de `utils/currencies.ts`); o canto inferior esquerdo vinhetado para o `CornerLink glow` da Home. `<h1>` visualmente oculto (`#sm-map-title`).
 **Props principais:** `language`, `onOpenArea(AreaId)`, `bits`, `emblems`, `credits`.
 **Exports:** `MapPage(props)`.
 **Chamado por:** `src/App.tsx`.

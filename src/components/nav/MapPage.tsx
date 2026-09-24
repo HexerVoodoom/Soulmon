@@ -25,7 +25,7 @@ import zonaHall from '../../assets/soulmon/mapa/zona-hall.png';
  * radial escurecendo, para o link da Home — `CornerLink glow` — se destacar
  * sem caixa em volta).
  *
- * O saldo das 3 moedas é um menu discreto no topo, dentro da própria cena —
+ * O saldo das 3 moedas é um menu discreto no canto inferior direito, dentro da própria cena —
  * não uma lista separada. Formatação e cor vêm de `utils/currencies.ts`
  * (dono único: nenhuma moeda pode ser confundida com outra).
  */
@@ -95,16 +95,28 @@ export function MapPage({ language, onOpenArea, bits, emblems, credits }: {
         }}
       />
 
-      {/* Saldo das 3 moedas — menu discreto dentro da cena, canto superior direito. */}
+      {/* Saldo das 3 moedas — menu discreto dentro da cena, canto INFERIOR
+          direito (espelho do link da Home, no esquerdo). ⚠️ Morava no canto
+          superior direito e a arte do "Jogos" (74%/16.8%, renderizada depois
+          no DOM) pintava POR CIMA dele — o saldo sumia atrás do cogumelo e o
+          contraste ia a quase zero. O canto inferior direito não tem área
+          nenhuma; o fundo usa o MESMO escuro dos rótulos das áreas (.82), que
+          segura o texto sobre qualquer trecho da arte. É painel de TEXTO, não
+          ícone — a regra "ícone nunca dentro de box" não se aplica. */}
       <div
         data-map-currencies
         style={{
-          position: 'absolute', top: 'var(--sm2-space-3)', right: 'var(--sm2-space-3)',
+          position: 'absolute',
+          right: 'var(--sm2-space-3)',
+          bottom: 'calc(var(--sm2-space-3) + env(safe-area-inset-bottom, 0px))',
+          zIndex: 2,
           display: 'flex', flexDirection: 'column', alignItems: 'flex-end',
           gap: 2,
           padding: '6px 10px',
-          background: 'rgba(8,25,26,.6)',
+          background: 'rgba(8,25,26,.82)',
+          border: '1px solid rgba(95,243,224,.35)',
           borderRadius: 'var(--sm2-radius-md)',
+          boxShadow: '0 4px 10px rgba(0,0,0,.45)',
           backdropFilter: 'blur(2px)',
         }}
       >
