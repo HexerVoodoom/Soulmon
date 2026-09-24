@@ -59,6 +59,9 @@ interface PetPageProps {
   demoCharacterId?: string;
   petName?: string;
   language?: 'pt-BR' | 'en-US';
+  /** minimal-ui F5 — dentro da folha do Laboratório o `<h1>` da tela é o do
+   *  `AreaTopBar`; aqui o nome da criatura desce para `<h2>`. Padrão 1. */
+  headingLevel?: 1 | 2;
 }
 
 const card: CSSProperties = {
@@ -190,9 +193,10 @@ function SkillRow({ skill, isPt }: { skill: StageSkill; isPt: boolean }) {
 export function PetPage({
   stages,
   dominantElement, achievements = [], unlockedEvolutions, currentStageId, demoCharacterId, petName,
-  savedSkills, onSkillsComputed, savedClassTitles, onClassTitlesComputed, language = 'pt-BR',
+  savedSkills, onSkillsComputed, savedClassTitles, onClassTitlesComputed, language = 'pt-BR', headingLevel = 1,
 }: PetPageProps) {
   const isPt = language === 'pt-BR';
+  const H = headingLevel === 2 ? 'h2' : 'h1';
   const L = (t: { pt: string; en: string }) => (isPt ? t.pt : t.en);
 
   const [skills, setSkills] = useState<Record<FichaStage, StageSkills> | null>(savedSkills ?? null);
@@ -343,7 +347,7 @@ export function PetPage({
           })()}
 
           <div style={{ textAlign: 'center', maxWidth: 420 }}>
-            <h1 style={h1Style}>{atual.name}</h1>
+            <H style={h1Style}>{atual.name}</H>
             {/* Estágio e CLASSE: duas palavras nomeadas, e nenhum número. */}
             <p style={{ ...sm2Hint, marginTop: 4 }}>
               {L(atual.stageName)}
@@ -358,9 +362,9 @@ export function PetPage({
           {/* O ESTADO VAZIO também tem `<h1>`: sem ele esta tela ficava sem
               heading nenhum, e é justamente o estado em que a pessoa mais
               precisa saber onde está. */}
-          <h1 style={{ ...h1Style, fontSize: 'var(--sm2-text-lg)', marginTop: 8 }}>
+          <H style={{ ...h1Style, fontSize: 'var(--sm2-text-lg)', marginTop: 8 }}>
             {isPt ? 'Seu Soulmon' : 'Your Soulmon'}
-          </h1>
+          </H>
           <p style={{ ...sm2Text, marginTop: 8 }}>
             {isPt ? 'Nenhuma forma revelada ainda.' : 'No form revealed yet.'}
           </p>

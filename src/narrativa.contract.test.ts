@@ -180,7 +180,8 @@ const EXCECOES: Record<string, { arquivos: string[]; proposta: string }> = {
     proposta: 'P5 — rótulo do item. ACEITO PELO DONO em 21/09/2026',
     arquivos: [
       'src/App.tsx',
-      'src/components/ActivitiesPage.tsx',
+      'src/components/nav/AreaView.tsx',
+      'src/components/play/PlaySheets.tsx',
       'src/components/CompanionHUD.tsx',
       'src/components/DungeonGame.tsx',
       'src/components/HelpModal.tsx',

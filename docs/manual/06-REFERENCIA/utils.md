@@ -772,6 +772,12 @@ Cobertura: **120/120** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 **Chamado por:** `src/components/nav/AreaView.tsx`.
 **Régua:** nenhuma direta (`ls src/utils/areaSheetCopy*.test.ts` vazio) — coberta indiretamente pelos testes de `App.tsx`/`areaShell.render.test.tsx`.
 
+### `src/utils/playAreaLots.ts`
+**Dono de:** a copy e a posição dos lotes das áreas de jogar (minimal-ui F5) — Exploração (`masmorra`, `dino`) e Jogos (`ppt`): rótulo PT/EN, rótulo acessível e o centro da base em % da cena, tirados dos mocks aprovados. O lote de Jogos se chama "Pedra, papel e tesoura" (não "Duelo", que já é o lote da Arena).
+**Exports:** `ExploracaoLotId`, `JogosLotId` (types), `exploracaoLots(language)`, `jogosLots(language)`.
+**Chamado por:** `src/components/nav/AreaView.tsx`.
+**Régua:** `src/components/play/playArea.render.test.tsx` (indireta).
+
 ### `src/utils/lineIcons.ts`
 **Dono de:** os ícones-ficha das 9 linhas × 4 tiers (rodada 2 da SQUAD-ARTE, 21/09/2026 — `docs/ASSETS-A-GERAR.md` §13 R2-2, D-J13 do canvas Jogos): 64² para o Dino e os oponentes do Torneio, 32² (a cabeça) para o mini-visor do ranking. São DERIVADOS do sprite 256² de `lines/` (`scripts-arte/derivar-rodada2.mjs`, fora do repo), então D5 (um sprite por criatura) continua valendo — ícone é redução, não pose. Fronteira no molde de `attackFxArt.ts`: glob eager sobre `assets/soulmon/lines/icons/*.png`, `undefined` quando não há arte → o consumidor cai no sprite 256² reduzido.
 **Exports:**

@@ -28,3 +28,18 @@ export const MERCADO_LOT_ART = {
 } as const;
 
 export const ARENA_LOT_ART = { torneio: loteTorneio, duelo: loteDuelo } as const;
+
+// ── Exploração e Jogos (F5, PR #118) ───────────────────────────────────────
+// Fundos reduzidos para 760×1344 (a mesma medida do Mercado/Arena) para caber
+// no teto de 400 KB por imagem de `orcamentoDeBytes.contract.test.ts`.
+import bgExploracao from './bg-exploracao.png';
+import bgJogos from './bg-jogos.png';
+import loteMasmorra from './lote-exploracao-masmorra.png';
+import loteDino from './lote-exploracao-dino.png';
+import lotePpt from './lote-jogos-ppt.png';
+
+export const PLAY_AREA_BG = { exploracao: bgExploracao, jogos: bgJogos } as const;
+
+export const EXPLORACAO_LOT_ART = { masmorra: loteMasmorra, dino: loteDino } as const;
+
+export const JOGOS_LOT_ART = { ppt: lotePpt } as const;
