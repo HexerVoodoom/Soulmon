@@ -579,6 +579,20 @@ function countsForGoal(t: any): boolean {
 }
 
 /**
+ * O DIA COMPLETO (ex-"dia perfeito"), numa função só.
+ *
+ * `peso feito ≥ meta && ≥1 cadastrada && energia ≥ meta` — a MESMA meta nos
+ * dois eixos (ver a linha ⭐ do CLAUDE.md). Mora aqui porque é a regra da
+ * VIRADA (`computeDailyReset` chama esta função sobre o dia que terminou) e a
+ * Home precisa da mesma resposta para o selo "Dia completo" do dia corrente
+ * (minimal-ui F2). Duas cópias desta conta divergiriam em silêncio — foi o que
+ * aconteceu com o `isDayPerfect` que dormia no `useProgressTracking`.
+ */
+export function completeDayReached(p: { registered: number; goal: number; done: number; energy: number }): boolean {
+  return p.registered > 0 && p.done >= p.goal && p.energy >= p.goal;
+}
+
+/**
  * O PESO cadastrado PARA ESTE dia: atividades do dia + tarefas ativas ainda na
  * lista + tarefas do dia que já saíram da lista por terem sido feitas.
  *
@@ -845,7 +859,7 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
   // (min) e energia contra o requisito cru — a Fase 1 do fix de
   // `tasksCompletedOn` repetida no outro eixo.
   const energyWasFull = (prev.energyPoints ?? 0) >= dailyGoal;
-  const dayWasPerfect = totalTasks > 0 && dailyDone >= dailyGoal && energyWasFull;
+  const dayWasPerfect = completeDayReached({ registered: totalTasks, goal: dailyGoal, done: dailyDone, energy: prev.energyPoints ?? 0 });
 
   // Ausência: se o app ficou dias sem abrir, não há o que cobrar — as tarefas
   // daqueles dias nem chegaram a ser registradas. Cobrar aqui puniria o retorno,

@@ -69,7 +69,7 @@ export function getFoodName(emoji: string, lang: Language): string {
   return lang === 'pt-BR' ? entry.pt : entry.en;
 }
 
-function getFoodDesc(emoji: string, lang: Language): string {
+export function getFoodDesc(emoji: string, lang: Language): string {
   const special = SPECIAL_ITEMS[emoji];
   if (special) return lang === 'pt-BR' ? special.descPt : special.descEn;
   return FOOD_NAMES[emoji] ? (lang === 'pt-BR' ? FOOD_NAMES[emoji].descPt : FOOD_NAMES[emoji].descEn) : '';

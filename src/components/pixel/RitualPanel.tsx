@@ -301,12 +301,76 @@ export interface RitualPanelProps {
   /** Mensagem do estado vazio (lista sem nenhum item cadastrado). */
   emptyMessage?: string;
   language: Language;
+  /** `home` = a lista da Home B (minimal-ui F2, mock aprovado): cabeçalho
+   *  "HOJE N/M" com um botão "+" que faz o papel do CTA (abre o CreateModal),
+   *  sem o painel em volta. `panel` (padrão) é o painel de sempre. */
+  variant?: 'panel' | 'home';
+  /** Home B: o selo "Dia completo" — quem decide é a regra da virada
+   *  (`completeDayReached`), nunca este componente. */
+  dayComplete?: boolean;
 }
 
 export function RitualPanel({
   done, total, titleIconName, children, ctaLabel, onCta, emptyMessage, language,
+  variant = 'panel', dayComplete = false,
 }: RitualPanelProps) {
   const isPt = language === 'pt-BR';
+  /* Vazio do SIS-06: `task_alt` 48 ciano + Rubik 14 `muted` — um vazio que
+     CONVIDA. Um bloco só para as duas variantes (a Home B acrescenta o CTA
+     largo, que ali é o único primário da tela). */
+  const vazio = (cta?: ReactNode) => (
+    <div style={{ padding: '8px 16px 4px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: cta ? 8 : 4 }}>
+      <Icon name="task_alt" size={48} tone="primary" />
+      <p style={{ ...sm2Hint, fontSize: 'var(--sm2-text-sm)' }}>{emptyMessage}</p>
+      {cta}
+    </div>
+  );
+  if (variant === 'home') {
+    return (
+      <section aria-labelledby="sm2-ritual-title" data-ritual-home>
+        <div className="sm3-hoje-head">
+          <h2 id="sm2-ritual-title" className="sm3-hoje-titulo">
+            {isPt ? 'Hoje' : 'Today'}
+            {/* Piso de dígitos E5: o contador só existe com feitos ≥ 1 —
+                "0/5" é a fatura, não o dado. */}
+            {total > 0 && done >= 1 && (
+              <b
+                className="sm2-num"
+                aria-label={isPt ? `${done} de ${total} concluídos` : `${done} of ${total} done`}
+              >
+                {done}/{total}
+              </b>
+            )}
+            {dayComplete && (
+              <span className="sm3-selo" data-dia-completo>{isPt ? 'Dia completo' : 'Day complete'}</span>
+            )}
+          </h2>
+          <button
+            type="button"
+            className="sm3-add"
+            onClick={onCta}
+            aria-label={ctaLabel}
+            title={ctaLabel}
+            data-ritual-add
+          >
+            <span aria-hidden="true">+</span>
+          </button>
+        </div>
+        {emptyMessage ? (
+          /* Vazio que CONVIDA: o CTA largo continua aqui — é o único
+             primário da tela quando não há nada cadastrado (ListaVazia). */
+          vazio(
+            <button type="button" onClick={onCta} style={{ ...sm2Button('primary'), width: '100%' }}>
+              <Icon name="add" size={24} />
+              {ctaLabel}
+            </button>,
+          )
+        ) : (
+          <ul className="sm2-ritual-list">{children}</ul>
+        )}
+      </section>
+    );
+  }
   const titulo = isPt ? 'Rituais diários' : 'Daily rituals';
   const completo = total > 0 && done >= total;
   return (
@@ -327,12 +391,8 @@ export function RitualPanel({
         )}
       </div>
       {emptyMessage ? (
-        /* Vazio do SIS-06: `task_alt` 48 ciano + Rubik 14 `muted` — um vazio
-           que CONVIDA, e o CTA logo abaixo é a saída (o único primário). */
-        <div style={{ padding: '8px 16px 4px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-          <Icon name="task_alt" size={48} tone="primary" />
-          <p style={{ ...sm2Hint, fontSize: 'var(--sm2-text-sm)' }}>{emptyMessage}</p>
-        </div>
+        /* O CTA logo abaixo é a saída (o único primário). */
+        vazio()
       ) : (
         <ul className="sm2-ritual-list">{children}</ul>
       )}

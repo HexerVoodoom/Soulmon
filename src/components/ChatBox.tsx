@@ -94,6 +94,9 @@ export function ChatBox({
   
   // Anti-autofill trick
   const [isInputReadOnly, setIsInputReadOnly] = useState(true);
+  /* minimal-ui F2 — o TERMINAL: o `_` pisca colado no `>` e SOME quando a
+     pessoa começa a escrever (foco ou texto no campo), como no mock aprovado. */
+  const [focado, setFocado] = useState(false);
   const [randomName] = useState(`chat-${Math.random().toString(36).substring(7)}`);
 
   // Soulmon responses based on keywords and mood
@@ -439,8 +442,22 @@ export function ChatBox({
        ciano do kit tinha UM valor nos dois temas e dava ~1,4:1 no claro;
        agora o foco e o hover saem de `--sm2-primary-ink`/`--sm2-primary-soft`,
        que respondem ao tema e estão medidos na nota do `index.css`. */
-    <div className="sm2-chatbar">
-      <div className="flex gap-2">
+    <div
+      className="sm2-chatbar sm3-chatbar"
+      /* O foco mora na BARRA inteira (campo, botão e o link de apoio): sair do
+         campo para tocar no link não pode esconder o link antes do toque. */
+      onFocus={() => setFocado(true)}
+      onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setFocado(false); }}
+    >
+      {/* O TERMINAL `>_` (minimal-ui F2): sempre aberto, o prompt `>` e o
+          cursor `_` piscando à esquerda do campo. É um `<label>`: tocar em
+          qualquer ponto da barra foca o campo. O `>` e o `_` são desenho
+          (`aria-hidden`); o nome acessível do campo continua sendo o dele. */}
+      <label className={`sm3-term${focado || inputValue ? ' sm3-term-digitando' : ''}`} data-terminal>
+        <span className="sm3-term-prompt" aria-hidden="true">&gt;</span>
+        {!(focado || inputValue) && (
+          <span className="sm3-term-cur" aria-hidden="true" data-terminal-cursor>_</span>
+        )}
         <input
           type="text"
           value={inputValue}
@@ -449,17 +466,12 @@ export function ChatBox({
           onFocus={() => { setIsInputReadOnly(false); void garantirConfig(); }}
           onBlur={() => setIsInputReadOnly(true)}
           readOnly={isInputReadOnly}
-          placeholder=">_"
-          /* NOME ACESSÍVEL. O único rótulo do campo era o placeholder `>_`,
-             que um leitor de tela anuncia como "maior que sublinhado" — ou
-             não anuncia nada. É o campo de conversa com o pet, o controle de
-             texto mais visível da Home. */
+          /* NOME ACESSÍVEL. O `>_` é desenho, não rótulo — um leitor de tela
+             o anunciaria como "maior que sublinhado". */
           aria-label={language === 'pt-BR' ? 'Falar com seu Soulmon' : 'Talk to your Soulmon'}
           /* NÃO usar `disabled` durante o envio: um controle focado que fica
-             `disabled` joga o foco no `<body>` (medido), e quem navega por
-             teclado teria que tabular a Home inteira de novo a cada mensagem.
-             `aria-busy` anuncia o estado e o `handleSendMessage` já ignora
-             envio repetido enquanto `isLoading`. */
+             `disabled` joga o foco no `<body>` (medido). `aria-busy` anuncia o
+             estado e o `handleSendMessage` já ignora envio repetido. */
           aria-busy={isLoading || undefined}
           autoComplete="new-password"
           data-form-type="other"
@@ -467,42 +479,12 @@ export function ChatBox({
           autoCapitalize="off"
           name={randomName}
           id={randomName}
-          /* Cor, borda, foco e o mínimo de 16px (anti auto-zoom do iOS
-             Safari) vivem em `.sm2-chat-input` no index.css. A fonte do
-             campo continua MONOESPAÇADA (`--sm2-font-mono`), não a bitmap: é
-             onde se digita frase livre em português, com acento. */
-          className="sm2-chat-input"
+          /* Fonte MONO de dado (frase livre com acento) e o piso de 16px
+             anti auto-zoom do iOS vivem em `.sm3-term-input` (index.css). */
+          className="sm3-term-input"
           maxLength={200}
         />
 
-        {/* Enviar ou Gravar — o microfone aparece com o campo vazio, o enviar
-            aparece quando há texto.
-
-            Antes esta barra sozinha carregava TRÊS linguagens visuais mortas:
-            dois PNGs raster (`icon-send`/`icon-mic`), o `Square` do
-            lucide-react e o `.sm-px-chat-btn-send` com o ciano do kit
-            (chapado nos dois temas, hardcode `#04211f` por cima). Como a
-            barra é `position: fixed`, isso aparecia em 100% da Home. Agora é
-            só `<Icon>` + tokens `--sm2-*`.
-
-            Sem preenchimento no botão de enviar: ícone NUNCA dentro de box
-            (regra do dono). O estado "ativo" é o próprio glifo em tom
-            primário, não uma placa colorida atrás dele. */}
-        {/* UM botão só, que TROCA de ação — e não dois que se substituem.
-            Eram dois elementos irmãos em `? :`: ao enviar, o campo esvazia no
-            mesmo tique, o botão "enviar" DESMONTA e o "gravar" monta no lugar.
-            Para o teclado isso é o foco caindo no `<body>` no instante exato
-            em que a pessoa acabou de agir (medido) — e ela volta a tabular a
-            Home desde o começo. Com um `<button>` estável só mudam o rótulo,
-            o ícone e o handler; o nó do foco continua o mesmo.
-
-            `flex-shrink: 0` e o mínimo de 44px de altura vivem em
-            `.sm2-chat-btn`: sem eles o botão encolhia até ~18px num flex row
-            de 320px (medido com Playwright).
-
-            Sem preenchimento no botão de enviar: ícone NUNCA dentro de box
-            (regra do dono). O estado "ativo" é o próprio glifo em tom
-            primário, não uma placa colorida atrás dele. */}
         <button
           type="button"
           onClick={hasText || micDisponivel === false ? handleSendMessage : handleMicClick}
@@ -533,7 +515,7 @@ export function ChatBox({
             <Icon name="mic" size={32} tone="ink" />
           )}
         </button>
-      </div>
+      </label>
 
       {/* A SUPERFÍCIE DE SUPORTE — parecer clínico de 21/09/2026.
           (`docs/NARRATIVA-COPY.md` §6; `docs/NARRATIVA-E-UNIVERSO.md` §16.)
@@ -561,6 +543,11 @@ export function ChatBox({
           SEM telefone e SEM nome de serviço, de propósito: caducam por país, e
           uma linha errada numa tela de crise pune quem teve a coragem de pedir
           ajuda. Se entra um diretório externo (e qual), é decisão do dono. */}
+      {/* minimal-ui F2: com o terminal SEMPRE aberto no rodapé, a frase fica
+          visível enquanto a pessoa ESCREVE (campo focado ou com texto) — é o
+          momento em que o parecer quer o caminho na tela. Decisão de desenho
+          registrada para o dono (PERGUNTAS-DO-DONO). */}
+      {(focado || inputValue) && (
       <p className="sm2-chat-support">
         {isPt
           ? 'Se você está num momento difícil, procure ajuda de verdade: um serviço de saúde, uma linha de apoio da sua região, ou alguém de confiança. O Soulmon é um app de hábitos e não substitui isso.'
@@ -594,6 +581,7 @@ export function ChatBox({
         </a>
         {isPt ? ' · No Brasil: CVV, 188 (24h, gratuito).' : ' · US/Canada: 988. UK/IE: 116 123.'}
       </p>
+      )}
     </div>
   );
 }

@@ -68,7 +68,7 @@ import { applyDecorEquip, type SlotId } from './utils/petStage';
 const ACTIVITY_LOG_CAP = 90;
 const EMPTY_DECOR: Partial<Record<SlotId, string>> = {};
 const EMPTY_TROPHIES: Array<{ season: string; place: 1 | 2 | 3 }> = [];
-import { getNextEvolution, dailyGoalFor, degeneratedPerfectDays, registeredForDay, tasksToAvoidHeartLoss, applyRedemption, podeEvoluirDepoisDaQueda } from './utils/dailyReset';
+import { getNextEvolution, dailyGoalFor, degeneratedPerfectDays, registeredForDay, tasksToAvoidHeartLoss, applyRedemption, podeEvoluirDepoisDaQueda, completeDayReached } from './utils/dailyReset';
 import {
   feedFood, rubHeal, rubRefusal, completeTask,
   FOOD_LIMIT_PER_HOUR,
@@ -629,7 +629,6 @@ const GameTutorialFlow = lazy(() => import('./components/GameTutorialFlow').then
 const CreateModal = lazy(() => import('./components/CreateModal').then(m => ({ default: m.CreateModal })));
 // A barra de captura NÃO é lazy: ela fica na primeira tela e o ganho dela é
 // justamente não ter espera nenhuma entre lembrar e anotar.
-import { QuickAddBar } from './components/QuickAddBar';
 import type { QuickAddResult } from './utils/quickAdd';
 const StatsPage = lazy(() => import('./components/StatsPage').then(m => ({ default: m.StatsPage })));
 const SettingsPage = lazy(() => import('./components/SettingsPage').then(m => ({ default: m.SettingsPage })));
@@ -1598,6 +1597,17 @@ export default function App() {
   // Quantos itens de HOJE evitam a perda de coração na virada — regra única em
   // `utils/dailyReset.ts`, derivada da própria fórmula da perda.
   const hpSafeToday = tasksToAvoidHeartLoss(gameState, new Date().getDay(), new Date().toDateString());
+  /* O selo "Dia completo" da lista (minimal-ui F2). A condição é a da VIRADA —
+     `completeDayReached`, a mesma função que `computeDailyReset` usa para
+     contar o dia — aplicada ao dia de hoje: meta inteira feita, ≥1 cadastrada
+     e energia ≥ meta. Se a tela e a virada lessem réguas diferentes, o selo
+     prometeria um dia que a virada não conta. */
+  const diaCompletoHoje = completeDayReached({
+    registered: registeredForDay(gameState as any, new Date().getDay(), new Date().toDateString()),
+    goal: dailyTotal,
+    done: dailyDone,
+    energy: gameState.energyPoints ?? 0,
+  });
 
   /**
    * "O jogador já concluiu ALGUMA coisa, algum dia?"
@@ -3643,6 +3653,9 @@ export default function App() {
     setShowItemsWindow(prev => !prev);
     setNewItemsReady(false);
   }, []);
+  /* minimal-ui F2: a MOCHILA da Home substitui a pastinha como entrada de
+     item. Abrir a mochila apaga o ponto de "item novo", como a pastinha fazia. */
+  const handleBackpackSeen = useCallback(() => setNewItemsReady(false), []);
 
   // Show the daily report once when a fresh reset summary exists.
   useEffect(() => {
@@ -5131,8 +5144,10 @@ export default function App() {
             /* `--sm-corner-h`: a faixa do link de canto (Mapa na Home, Home
                no Mapa). A barra inferior saiu; as áreas não têm link de canto,
                mas a folga igual evita o último item colado no rodapé. */
+            /* minimal-ui F2: na Home o terminal e o link do Mapa dividem a
+               MESMA faixa do rodapé — a folga é a do dock, só. */
             paddingBottom: pane === 'main'
-              ? 'calc(var(--sm-corner-h) + env(safe-area-inset-bottom, 0px) + var(--sm-chatdock-h) + 16px)'
+              ? 'calc(env(safe-area-inset-bottom, 0px) + var(--sm-chatdock-h) + 16px)'
               : 'calc(var(--sm-corner-h) + env(safe-area-inset-bottom, 0px) + 16px)',
           }}
         >
@@ -5220,6 +5235,102 @@ export default function App() {
                 )}
               />
 
+              {/* Pet — acima, sem estar contido em uma caixa */}
+              <CompanionHUD
+                companionMood={getCompanionMood()}
+                energyLevel={progress}
+                message={getCompanionMessage()}
+                currentStage={getCurrentStageName()}
+                evolutionStage={gameState.evolutionStage}
+                eggType={gameState.eggType}
+                demoCharacterId={gameState.demoCharacterId}
+                /* Sprite próprio SÓ depois de adotado (§2.3.1) — senão o visor
+                   segue na arte de reserva, que nunca é erro. */
+                ownSpriteUrl={displaySprite(spriteAcervo, gameState.evolutionStage)?.url}
+                healthPoints={gameState.healthPoints}
+                maxHealthPoints={gameState.maxHealthPoints}
+                dominantBranch={getDominantBranch()}
+                currentXP={gameState.totalXP}
+                nextLevelXP={getNextLevelXP()}
+                triggerMessage={messageTrigger}
+                energyPoints={gameState.energyPoints}
+                maxEnergyPoints={getMaxEnergyForStage(gameState.evolutionStage)}
+                equippedDecor={gameState.equippedDecor ?? EMPTY_DECOR}
+                trophies={gameState.trophies ?? EMPTY_TROPHIES}
+                fullSignal={fullSignal}
+                perfectDays={gameState.perfectDays}
+                onEvolve={handleEvolve}
+                canEvolve={(() => {
+                  const req = FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required;
+                  if (gameState.evolutionLocked || gameState.perfectDays < req) return false;
+                  // #59 — depois de uma queda por HP, o botão só acende na
+                  // virada seguinte. Mesma função que o `handleEvolve` commita.
+                  if (!podeEvoluirDepoisDaQueda(gameState)) return false;
+                  // Mesma fonte que anuncia e que commita (utils/evolutionTarget.ts):
+                  // `getDominantBranch` mandava todo empate para `data` e podia
+                  // liberar/travar o botão contra um destino que não era o real.
+                  const { stage: next } = evolutionTarget({
+                    points: { virus: gameState.virusPoints, data: gameState.dataPoints, vaccine: gameState.vaccinePoints },
+                    reading: carePatternReading,
+                    currentBranch: gameState.currentBranch,
+                    evolutionStage: gameState.evolutionStage,
+                    unlockedEvolutions: gameState.unlockedEvolutions,
+                    perfectDays: gameState.perfectDays,
+                  });
+                  if (next === gameState.evolutionStage) return false;
+                  // INCUBAÇÃO (D-G8c) — mesma função que o `handleEvolve`
+                  // commita. Regra copiada diverge em silêncio (footgun 9), e
+                  // estes dois já divergiram uma vez.
+                  return incubationReady(gameState.incubation, next, agoraParaIncubacao);
+                })()}
+                onEvolveRequest={handleEvolveRequest}
+                careEvent={careEvent}
+                onCareEventComplete={handleCareEventComplete}
+                foodInventory={gameState.foodInventory}
+                onFeed={handleFeed}
+                onShower={handleShower}
+                hasNewItems={newItemsReady}
+                onBackpackSeen={handleBackpackSeen}
+                onSleep={handleSleep}
+                isSleeping={isSleeping}
+                onPet={handlePet}
+                healCapSignal={healCapSignal}
+                speakSignal={speakSignal}
+                /* WP3.10 — o traço de nascimento chega à VOZ. Ele existia só
+                   como efeito de regra e uma linha em Estatísticas: dois pets
+                   do mesmo estágio se comportavam diferente e falavam igual. */
+                petPassive={gameState.petPassive}
+                /* WP3.1 — o chat passa a saber há quanto tempo estão juntos. */
+                bondLevel={bondLevelFor(gameState.totalXP ?? 0)}
+                /* WP1.12 — a tonalidade do demo. Cosmética e só. */
+                demoTint={gameState.demoTint}
+                /* WP3.3 — nome e título do Vínculo na home. O título é
+                   DERIVADO na leitura (`bondLevelFor(totalXP)`); guardá-lo no
+                   save seria duas fontes para o mesmo número (footgun 9). */
+                petDisplayName={soulmonDisplayName(gameState.soulmonMeta) || undefined}
+                bondTitleText={bondTitle(bondLevelFor(gameState.totalXP ?? 0), language)}
+                redeemedMark={!!gameState.redeemed && !!gameState.showRedeemed}
+                hauntedWatching={hauntedWatching}
+                /* WP2.7 — o reencontro é por DIAS. `welcomeBack` do relatório
+                   já sabia quantos; a VOZ é que não sabia. */
+                daysAway={gameState.lastDayReport?.welcomeBack ? (gameState.lastDayReport.daysAway ?? 0) : 0}
+                /* WP3.1 — humor de HOJE para o chat. Mesma leitura do
+                   DailyReportModal; opcional por definição (o check-in é
+                   opcional) e nunca alimenta pontuação. */
+                moodToday={moodFor(gameState.moodLog, playerDayKey(new Date(), gameState.playerDayTz))}
+                equippedBackground={gameState.equippedBackground ?? null}
+                useAI={useAI}
+                aiSettings={aiSettings}
+                onCreateActivity={handleAICreateActivity}
+                language={language}
+                evolutionFlash={evolutionFlash}
+                feedAnim={feedAnim}
+                play={playDeck}
+              />
+
+              {/* minimal-ui F2 (abordagem B): o SLOT DO DIA mora logo abaixo da
+                  faixa do pet — a ordem da tela é marca → cena → avisos → lista.
+                  A fila e a prioridade não mudaram (filaDeAvisos.contract). */}
               {/* ═══════════════════════════════════════════════════════════
                   SLOT DO DIA — UM cartão contextual por vez, e essa é a REGRA
                   ═══════════════════════════════════════════════════════════
@@ -5523,99 +5634,6 @@ export default function App() {
                 );
               })()}
 
-              {/* Pet — acima, sem estar contido em uma caixa */}
-              <CompanionHUD
-                companionMood={getCompanionMood()}
-                energyLevel={progress}
-                message={getCompanionMessage()}
-                currentStage={getCurrentStageName()}
-                evolutionStage={gameState.evolutionStage}
-                eggType={gameState.eggType}
-                demoCharacterId={gameState.demoCharacterId}
-                /* Sprite próprio SÓ depois de adotado (§2.3.1) — senão o visor
-                   segue na arte de reserva, que nunca é erro. */
-                ownSpriteUrl={displaySprite(spriteAcervo, gameState.evolutionStage)?.url}
-                healthPoints={gameState.healthPoints}
-                maxHealthPoints={gameState.maxHealthPoints}
-                dominantBranch={getDominantBranch()}
-                currentXP={gameState.totalXP}
-                nextLevelXP={getNextLevelXP()}
-                triggerMessage={messageTrigger}
-                energyPoints={gameState.energyPoints}
-                maxEnergyPoints={getMaxEnergyForStage(gameState.evolutionStage)}
-                equippedDecor={gameState.equippedDecor ?? EMPTY_DECOR}
-                trophies={gameState.trophies ?? EMPTY_TROPHIES}
-                fullSignal={fullSignal}
-                perfectDays={gameState.perfectDays}
-                onEvolve={handleEvolve}
-                canEvolve={(() => {
-                  const req = FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required;
-                  if (gameState.evolutionLocked || gameState.perfectDays < req) return false;
-                  // #59 — depois de uma queda por HP, o botão só acende na
-                  // virada seguinte. Mesma função que o `handleEvolve` commita.
-                  if (!podeEvoluirDepoisDaQueda(gameState)) return false;
-                  // Mesma fonte que anuncia e que commita (utils/evolutionTarget.ts):
-                  // `getDominantBranch` mandava todo empate para `data` e podia
-                  // liberar/travar o botão contra um destino que não era o real.
-                  const { stage: next } = evolutionTarget({
-                    points: { virus: gameState.virusPoints, data: gameState.dataPoints, vaccine: gameState.vaccinePoints },
-                    reading: carePatternReading,
-                    currentBranch: gameState.currentBranch,
-                    evolutionStage: gameState.evolutionStage,
-                    unlockedEvolutions: gameState.unlockedEvolutions,
-                    perfectDays: gameState.perfectDays,
-                  });
-                  if (next === gameState.evolutionStage) return false;
-                  // INCUBAÇÃO (D-G8c) — mesma função que o `handleEvolve`
-                  // commita. Regra copiada diverge em silêncio (footgun 9), e
-                  // estes dois já divergiram uma vez.
-                  return incubationReady(gameState.incubation, next, agoraParaIncubacao);
-                })()}
-                onEvolveRequest={handleEvolveRequest}
-                careEvent={careEvent}
-                onCareEventComplete={handleCareEventComplete}
-                foodInventory={gameState.foodInventory}
-                onFeed={handleFeed}
-                onShower={handleShower}
-                hasNewItems={newItemsReady}
-                onOpenItems={handleOpenItems}
-                onSleep={handleSleep}
-                isSleeping={isSleeping}
-                onPet={handlePet}
-                healCapSignal={healCapSignal}
-                speakSignal={speakSignal}
-                /* WP3.10 — o traço de nascimento chega à VOZ. Ele existia só
-                   como efeito de regra e uma linha em Estatísticas: dois pets
-                   do mesmo estágio se comportavam diferente e falavam igual. */
-                petPassive={gameState.petPassive}
-                /* WP3.1 — o chat passa a saber há quanto tempo estão juntos. */
-                bondLevel={bondLevelFor(gameState.totalXP ?? 0)}
-                /* WP1.12 — a tonalidade do demo. Cosmética e só. */
-                demoTint={gameState.demoTint}
-                /* WP3.3 — nome e título do Vínculo na home. O título é
-                   DERIVADO na leitura (`bondLevelFor(totalXP)`); guardá-lo no
-                   save seria duas fontes para o mesmo número (footgun 9). */
-                petDisplayName={soulmonDisplayName(gameState.soulmonMeta) || undefined}
-                bondTitleText={bondTitle(bondLevelFor(gameState.totalXP ?? 0), language)}
-                redeemedMark={!!gameState.redeemed && !!gameState.showRedeemed}
-                hauntedWatching={hauntedWatching}
-                /* WP2.7 — o reencontro é por DIAS. `welcomeBack` do relatório
-                   já sabia quantos; a VOZ é que não sabia. */
-                daysAway={gameState.lastDayReport?.welcomeBack ? (gameState.lastDayReport.daysAway ?? 0) : 0}
-                /* WP3.1 — humor de HOJE para o chat. Mesma leitura do
-                   DailyReportModal; opcional por definição (o check-in é
-                   opcional) e nunca alimenta pontuação. */
-                moodToday={moodFor(gameState.moodLog, playerDayKey(new Date(), gameState.playerDayTz))}
-                equippedBackground={gameState.equippedBackground ?? null}
-                useAI={useAI}
-                aiSettings={aiSettings}
-                onCreateActivity={handleAICreateActivity}
-                language={language}
-                evolutionFlash={evolutionFlash}
-                feedAnim={feedAnim}
-                play={playDeck}
-              />
-
               {/* BRINCAR saiu do card (`PlayCard`) e virou a 5ª célula do deck
                   do `CompanionHUD` (canvas Home, E1+E2 / PlayEstados): é um
                   gesto de CUIDADO, ao lado de banho/dormir/itens. A linha do
@@ -5645,10 +5663,9 @@ export default function App() {
                 return (
                   <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                  {/* Captura de uma linha (`docs/PLANO-TAREFAS.md` §2.5). Fica
-                      ACIMA de tudo porque o custo de anotar é o que decide se a
-                      pessoa continua usando o app na segunda semana. */}
-                  <QuickAddBar language={language} onCommit={handleQuickAdd} />
+                  {/* minimal-ui F2: a captura de uma linha (`QuickAddBar`) saiu da
+                      Home — o mock aprovado tem só o "+" do cabeçalho da lista,
+                      que abre o `CreateModal`. O componente segue no repo. */}
 
                   {/* P4 — "Equilibrar minha semana". Convite, nunca alarme:
                       aparece só quando algum dia passou do requisito E a
@@ -5699,6 +5716,12 @@ export default function App() {
                     onCreate={handleAddNewActivity}
                     ctaLabel={t.activities.addNew}
                     emptyMessage={t.main.noActivityRegistered}
+                    /* Home B: cabeçalho "Hoje N/M" + botão "+" (CreateModal) e o
+                       selo do DIA COMPLETO — derivado da MESMA regra da virada
+                       (`completeDayReached`, utils/dailyReset.ts), nunca uma
+                       segunda definição (footgun 9). */
+                    variant="home"
+                    dayComplete={diaCompletoHoje}
                   />
                   </div>
                   </div>

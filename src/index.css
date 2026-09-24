@@ -5714,6 +5714,10 @@ select:focus-visible {
      dele. Um bloco novo no fim tira a trava da fundação do alcance do teste
      sem ninguém notar. */
   .sm-visor-swap { animation: none !important; }
+  /* minimal-ui F2 (Home B): o cursor do terminal fica ACESO e parado; o "+1"
+     aparece sem subir; a mochila abre e desce por corte, sem deslizar. */
+  .sm3-term-cur, .sm3-mais { animation: none !important; }
+  .sm3-mochila, .sm3-mochila-bg { transition: none !important; }
   /* Onboarding-oráculo (D-Q11/R1): o casulo para de pulsar e continua sendo o
      cristal aceso; o `sync` da espera para de girar — o `role=status` anuncia. */
   .sm2-ora-pulse, .sm2-ora-spin { animation: none !important; }
@@ -7417,3 +7421,360 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
   text-underline-offset: 2px;
   padding: 2px 0;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   minimal-ui F2 — HOME, ABORDAGEM B (mock aprovado `propostas/home/
+   mock-sleep.html`, 23/09/2026). Prefixo `sm3-` = peças da arquitetura nova;
+   tokens SEMPRE `--sm2-*`.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* A altura da FAIXA de cenário. 330 na referência 390×844 do mock; em tela
+   baixa encolhe para a lista continuar tendo linhas acima da dobra. O
+   `CompanionHUD` MEDE este token (tela do `Viewport` = h / VIEW_SCALE). */
+:root { --sm3-cena-h: 330px; }
+@media (max-height: 800px) { :root { --sm3-cena-h: 280px; } }
+
+/* A área fixa da Home deixa de ter gutter: a faixa vai de ponta a ponta. O
+   `margin-inline: -16px` do `.sm-pet-sticky` continua cancelando o `px-4`. */
+.sm3-home-sticky { padding: 0; }
+/* A faixa: a tela do `Viewport` ocupa a largura inteira, sem o anel de cobre
+   nem a respiração dele — o que vale da regra do visor (escala inteira, tela
+   escura nos dois temas, `role="img"`) continua valendo. */
+.sm3-cena { max-width: none; }
+.sm3-cena .sm3-cena-viewport {
+  display: block;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  animation: none;
+}
+.sm3-cena .sm3-cena-viewport .sm2-viewport-screen,
+.sm3-cena .sm3-cena-viewport .sm2-viewport-glass { border-radius: 0; margin-inline: auto; }
+/* A costura do mock: a cena se funde ao fundo da página em cima e embaixo
+   (36px). Decorativo, sem ponteiro. */
+.sm3-cena::before,
+.sm3-cena::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 36px;
+  z-index: 2;
+  pointer-events: none;
+}
+.sm3-cena::before { top: 0; background: linear-gradient(var(--sm2-bg), transparent); }
+.sm3-cena::after { bottom: 0; background: linear-gradient(transparent, var(--sm2-bg)); }
+
+/* HP / EN — canto inferior esquerdo. Sobre a cena (escura nos dois temas):
+   tinta `viewport-ink`, sombra de 1px para descolar do cenário pintado. */
+.sm3-stats {
+  position: absolute;
+  left: var(--sm2-space-4);
+  bottom: 22px;
+  z-index: 12;
+  display: flex;
+  gap: 14px;
+  font-family: var(--sm2-font-text);
+  font-size: var(--sm2-text-sm);
+  font-weight: 800;
+  color: var(--sm2-viewport-ink);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, .6);
+}
+.sm3-stat { display: inline-flex; align-items: center; gap: 5px; }
+.sm3-stat[data-low] { color: var(--sm2-viewport-danger); }
+
+/* OS TRÊS CUIDADOS — canto inferior direito. EXCEÇÃO D1 (decisão do dono,
+   23/09/2026): estes três ícones podem ter fundo/anel. Fundo = o próprio vidro
+   do visor a 55%, anel = a tinta do vidro a 22%; nada de cor nova. */
+.sm3-cuidar {
+  position: absolute;
+  right: var(--sm2-space-3);
+  bottom: 10px;
+  z-index: 12;
+  display: flex;
+  gap: 4px;
+}
+.sm3-cuidado {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background-color: color-mix(in srgb, var(--sm2-viewport-bg) 55%, transparent);
+  border: 1px solid color-mix(in srgb, var(--sm2-viewport-ink) 22%, transparent);
+  border-radius: var(--sm2-radius-md);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.sm3-cuidado:focus-visible { outline: 3px solid var(--sm2-primary-fill); outline-offset: 2px; }
+.sm3-cuidado:active { transform: scale(.94); }
+/* Dormindo: o botão ACENDE (mock `.dorme.on`). */
+.sm3-cuidado[data-on] {
+  background-color: color-mix(in srgb, var(--sm2-viewport-ink) 25%, transparent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--sm2-viewport-ink) 50%, transparent);
+}
+/* Inerte (banho em cooldown): pela FORMA — tracejado —, nunca opacidade. */
+.sm3-cuidado-inerte { border-style: dashed; cursor: default; }
+.sm3-cuidado .sm2-deck-dot { top: 4px; right: 4px; }
+
+/* O item arrastado está SOBRE o pet: o pet acende (mock `.pet.alvo`). */
+.sm3-pet-alvo { filter: drop-shadow(0 0 10px var(--sm2-viewport-ink)) !important; }
+
+/* O "+1" que sobe quando o pet come (mock `.mais`). */
+.sm3-mais {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  z-index: 40;
+  font-family: var(--sm2-font-display);
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--sm2-viewport-ink);
+  text-shadow: 0 2px 0 var(--sm2-viewport-bg);
+  pointer-events: none;
+  animation: sm3-sobe 1s forwards;
+}
+@keyframes sm3-sobe { to { transform: translateY(-50px); opacity: 0; } }
+
+.sm3-nameline { flex-direction: row; justify-content: center; gap: 8px; align-items: baseline; margin-top: 4px; }
+
+/* ── A LISTA DO DIA (variante `home` do `RitualPanel`) ─────────────────── */
+.sm3-hoje-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 4px 6px 12px;
+}
+.sm3-hoje-titulo {
+  margin: 0;
+  flex: 1;
+  font-family: var(--sm2-font-text);
+  font-size: var(--sm2-text-xs);
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--sm2-muted);
+}
+.sm3-hoje-titulo b { color: var(--sm2-gold-ink); font-weight: 800; margin-left: 6px; }
+/* O selo do dia completo (mock `dia-completo`): cobre sólido, texto `on-gold`. */
+.sm3-selo {
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background-color: var(--sm2-gold-fill);
+  color: var(--sm2-on-gold);
+  font-size: var(--sm2-text-xs);
+  letter-spacing: .1em;
+  vertical-align: middle;
+}
+/* O "+" que abre o CreateModal: um círculo com o sinal — botão de TEXTO do
+   mock, não ícone em caixa. Alvo de 44 no botão; o círculo desenhado tem 30. */
+.sm3-add {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--sm2-primary-ink);
+}
+.sm3-add > span {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 2px solid var(--sm2-primary-ink);
+  background-color: var(--sm2-surface);
+  font: 900 18px/1 var(--sm2-font-text);
+}
+.sm3-add:focus-visible { outline: 3px solid var(--sm2-primary-ink); outline-offset: 2px; border-radius: 50%; }
+
+/* ── O TERMINAL (ChatBox sempre aberto, `>_`) ───────────────────────────
+   A barra de chat fica no rodapé, com o link do Mapa (`CornerLink`) à
+   direita na MESMA linha — o dock reserva o canto dele. */
+.sm3-dock.sm-chat-fixed {
+  bottom: 0;
+  padding: 10px calc(56px + var(--sm2-space-3) + 6px) calc(16px + env(safe-area-inset-bottom, 0px)) 14px;
+  background: linear-gradient(transparent, var(--sm2-bg) 30%);
+}
+.sm3-term {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 48px;
+  padding: 0 2px 0 14px;
+  box-sizing: border-box;
+  background-color: var(--sm2-surface);
+  border: 2px solid var(--sm2-line);
+  border-radius: var(--sm2-radius-sm);
+  font-family: var(--sm2-font-mono);
+  font-size: var(--sm2-text-md);
+  color: var(--sm2-primary-ink);
+  cursor: text;
+}
+.sm3-term:focus-within { border-color: var(--sm2-primary-ink); }
+.sm3-term-prompt { flex: none; }
+/* O `_` pisca COLADO no `>` e some quando a pessoa digita (mock). */
+.sm3-term-cur { flex: none; margin-left: -4px; animation: sm3-blink 1s step-end infinite; }
+@keyframes sm3-blink { 50% { opacity: 0; } }
+.sm3-term-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  outline: 0;
+  color: var(--sm2-ink);
+  caret-color: var(--sm2-primary-ink);
+  font-family: inherit;
+  /* 16px é o piso anti auto-zoom do iOS (ver `.sm2-chat-input`). */
+  font-size: 16px;
+}
+.sm3-term .sm2-chat-btn { width: 44px; }
+.sm3-dock .sm2-chat-support { margin: 8px 2px 0; }
+
+/* ── A MOCHILA ──────────────────────────────────────────────────────────── */
+.sm3-mochila-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(4, 18, 20, .55);
+  transition: background-color var(--sm2-dur-tap) var(--sm2-ease);
+}
+.sm3-mochila {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 520px;
+  min-height: 56vh;
+  max-height: 92vh;
+  overflow-y: auto;
+  padding: 10px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+  background-color: var(--sm2-surface);
+  border-top: 2px solid var(--sm2-viewport-ring);
+  border-radius: 18px 18px 0 0;
+  transition: transform .2s var(--sm2-ease);
+}
+/* Durante o ARRASTO a folha desce e o véu some — o pet tem de aparecer. */
+.sm3-arrastando { background: transparent; }
+.sm3-arrastando .sm3-mochila { transform: translateY(78%); }
+.sm3-mochila-alca { width: 40px; height: 4px; border-radius: 2px; background-color: var(--sm2-line); margin: 0 auto 10px; }
+.sm3-mochila-head { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
+.sm3-mochila-titulo {
+  margin: 0;
+  font-family: var(--sm2-font-display);
+  font-size: var(--sm2-text-md);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--sm2-gold-ink);
+}
+.sm3-mochila-dica { margin: 2px 0 0; font-size: var(--sm2-text-xs); font-weight: 600; color: var(--sm2-muted); }
+.sm3-mochila-x {
+  width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
+  background: none; border: none; cursor: pointer; padding: 0;
+}
+.sm3-mochila-abas { display: flex; border-bottom: 1px solid var(--sm2-line); margin-bottom: 12px; }
+.sm3-mochila-abas button {
+  flex: 1;
+  position: relative;
+  min-height: 44px;
+  background: none;
+  border: 0;
+  padding: 10px 0;
+  color: var(--sm2-muted);
+  font-family: var(--sm2-font-text);
+  font-size: var(--sm2-text-xs);
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.sm3-mochila-abas button[data-on] { color: var(--sm2-primary-ink); }
+.sm3-mochila-abas button[data-on]::after {
+  content: "";
+  position: absolute;
+  left: 25%;
+  right: 25%;
+  bottom: -1px;
+  height: 3px;
+  background-color: var(--sm2-primary-ink);
+}
+.sm3-mochila-abas button:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: -2px; }
+.sm3-mochila-grade { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.sm3-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-height: 88px;
+  padding: 10px 4px;
+  border: 2px solid var(--sm2-line);
+  border-radius: var(--sm2-radius-sm);
+  background-color: var(--sm2-bg);
+  color: var(--sm2-ink);
+  font-family: var(--sm2-font-text);
+  font-size: var(--sm2-text-xs);
+  font-weight: 600;
+  cursor: grab;
+  /* O arrasto é do item: sem isto o toque vira rolagem da página. */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.sm3-item[data-on] { border-color: var(--sm2-primary-ink); }
+.sm3-item:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
+.sm3-item-arte { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+.sm3-item-arte img { image-rendering: pixelated; }
+.sm3-item-nome { text-align: center; line-height: 1.2; overflow-wrap: anywhere; }
+.sm3-item small { color: var(--sm2-muted); font-size: var(--sm2-text-xs); }
+.sm3-mochila-vazia { margin: 18px 0; text-align: center; color: var(--sm2-muted); font-size: var(--sm2-text-sm); }
+.sm3-mochila-usar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--sm2-line);
+  border-radius: var(--sm2-radius-md);
+  background-color: var(--sm2-surface-2);
+}
+.sm3-mochila-usar-nome { margin: 0; font-weight: 700; font-size: var(--sm2-text-sm); color: var(--sm2-ink); }
+.sm3-mochila-usar-desc { margin: 2px 0 0; font-size: var(--sm2-text-xs); color: var(--sm2-muted); }
+.sm3-mochila-usar-btn {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: var(--sm2-radius-sm);
+  background-color: var(--sm2-primary-fill);
+  color: var(--sm2-on-primary);
+  font-family: var(--sm2-font-text);
+  font-size: var(--sm2-text-sm);
+  font-weight: 800;
+  cursor: pointer;
+}
+.sm3-mochila-usar-btn:focus-visible { outline: 3px solid var(--sm2-primary-ink); outline-offset: 2px; }
+.sm3-fantasma {
+  position: fixed;
+  z-index: 130;
+  width: 52px;
+  height: 52px;
+  pointer-events: none;
+  transform: translate(-50%, -60%) scale(1.15);
+  filter: drop-shadow(0 6px 6px rgba(0, 0, 0, .5));
+}
+.sm3-fantasma img { image-rendering: pixelated; }
+/* O terminal já é a caixa: a barra em volta dele perde a placa do `.sm2-chatbar`. */
+.sm3-chatbar { padding: 0; background: none; border: 0; box-shadow: none; }
+.sm3-mochila-painel { min-height: 120px; }

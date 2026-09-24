@@ -279,3 +279,12 @@ falhado, sido recusada, ou o jogador esteja em `sprite-form-cap` /
 `sprite-lifetime-cap` — que é o estado normal de quem bateu o teto. Amarrar o
 portão ao sprite prenderia o jogador fora da própria evolução por falha de
 terceiro. Se o dono quiser o contrário, é aqui que se muda.
+
+## minimal-ui F2 — Home B (23/09/2026, decididas pela recomendação, pendentes do dono)
+
+| # | Pergunta | O que foi feito (recomendação) |
+|---|---|---|
+| F2-1 | A frase de apoio do chat (`.sm2-chat-support`, parecer clínico de 21/09) aparecia SEMPRE sob a barra. Com o terminal sempre aberto no rodapé, ela comia ~3 linhas da lista. | Aparece **enquanto a pessoa escreve** (campo focado, com texto, ou foco em qualquer peça da barra — o link não some antes do toque). Se o dono quiser a frase sempre visível, é uma linha em `ChatBox.tsx` (`focado \|\| inputValue`). |
+| F2-2 | A captura de uma linha (`QuickAddBar`) não está no mock aprovado; o "+" do cabeçalho abre o `CreateModal`. | Saiu da Home; o componente e o `handleQuickAdd` ficaram no repo. Voltar é recolocar o JSX acima do `DailyRituals`. |
+| F2-3 | Brincar perdeu a célula do deck ("brincar e carinho seguem no gesto sobre o pet"). Qual gesto? | **Toque duplo** no pet (e a tecla **P** com o foco nele). Toque simples continua sendo a fala; segurar e esfregar, o carinho. |
+

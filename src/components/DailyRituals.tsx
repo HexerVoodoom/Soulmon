@@ -98,12 +98,17 @@ export interface DailyRitualsProps {
   onCreate: () => void;
   ctaLabel: string;
   emptyMessage: string;
+  /** Home B (minimal-ui F2): cabeçalho "Hoje N/M" + botão "+" no lugar do CTA largo. */
+  variant?: 'panel' | 'home';
+  /** Home B: o selo "Dia completo" (regra da virada, `completeDayReached`). */
+  dayComplete?: boolean;
 }
 
 export function DailyRituals({
   tasks, activities, completedTasks, habitRhythms, hideMetrics = false, language, now,
   expanded, onExpand, onToggleTask, onEditTask, onPostponeNudge,
   onEditActivity, onToggleActivity, onUpdateStep, onRestoreTask, onCreate, ctaLabel, emptyMessage,
+  variant = 'panel', dayComplete = false,
 }: DailyRitualsProps) {
   const isPt = language === 'pt-BR';
   const today = now.getDay(); // 0 = domingo, 6 = sábado
@@ -156,6 +161,8 @@ export function DailyRituals({
         onCta={onCreate}
         /* Vazio de VERDADE: nada cadastrado — um hábito fora do dia ainda é lista. */
         emptyMessage={tarefas.length + atividades.length + feitasHoje.length === 0 ? emptyMessage : undefined}
+        variant={variant}
+        dayComplete={dayComplete}
       >
         {tarefas.map(task => (
           <RitualRow

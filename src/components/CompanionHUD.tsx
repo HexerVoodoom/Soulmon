@@ -11,7 +11,6 @@ import { ITEM_ART } from '../utils/itemArt';
 import { FX_ART } from '../utils/fxArt';
 import { ANIM_ART } from '../utils/animArt';
 import { SpriteAnim } from './pixel/SpriteAnim';
-import { VisorBar } from './pixel/VisorBar';
 import { HUD_ART } from '../utils/hudArt';
 import { type SlotId, BASE_SLOTS, PET_TOP_OFFSET, PET_BOX, PET_RENDER, STAGE_HEIGHT } from '../utils/petStage';
 import { PetStageDecor } from './PetStageDecor';
@@ -23,9 +22,8 @@ import { playShower, playVisorTune, playPresence } from '../utils/sounds';
 import { getStageLevel } from '../types/progression';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readFlag, writeFlag } from '../utils/safeStorage';
-import { ModalSheet, sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
-import { isSpecialItem } from '../utils/shop';
-import { getFoodName } from './ItemsWindow';
+import { SM2_SHADOW_CARD } from './form/FormKit';
+import { Mochila } from './home/Mochila';
 
 /* ── Escala INTEIRA do sprite ──────────────────────────────────────────────
    Os PNGs das linhas (`src/assets/soulmon/lines/*`) são 256×256 (53 arquivos)
@@ -71,9 +69,22 @@ const PET_GROUND_KEEP = PET_BOX - PET_RENDER;
    `STAGE_HEIGHT`, então `GROUND_Y`, o berço e a decoração ficam onde estavam;
    quem corta (pelo topo, onde era ar) é a janela. */
 const VIEW_SCALE = 2 as const;
-const RING_PX = 4;          // o anel de cobre do Viewport (padding real)
-const STAGE_FALLBACK_H = 215;
+/* minimal-ui F2 (abordagem B): a Home virou uma FAIXA DE CENÁRIO de ponta a
+   ponta (`.sm3-cena`, index.css) — o `Viewport` continua sendo a tela (`role=
+   "img"`, escala inteira), mas sem o anel de cobre em volta. Sem anel, a
+   folga que a geometria descontava é zero. */
+const RING_PX = 0;
+/* A altura da faixa vem do token `--sm3-cena-h` (330 na referência de 390×844
+   do mock aprovado; encolhe em tela baixa). Este é só o fallback do jsdom. */
+const STAGE_FALLBACK_H = 330;
 const STAGE_FALLBACK_W = 320;
+/* O PET GRANDE da abordagem B. O sprite continua renderizado em `PET_RENDER`
+   (a escala inteira da fonte, guardada pelo teste de render); o que cresce é o
+   GRUPO do pet (berço, sprite, corações, comida), com origem na linha de baixo
+   do sprite — os pés não saem do chão. 1,5 × 128 = 192 CSS, o que o mock pede
+   (220 num aparelho de 390) sem cortar a cabeça numa faixa de 280. A decoração
+   do palco NÃO cresce: os espaços têm posição em % e sairiam da tela. */
+const CENA_ZOOM = 1.5;
 /* Distância dos pés do sprite até o fundo da composição — derivada, nunca
    digitada: é o que permite pendurar o ALVO DO CARINHO exatamente sobre o
    pet sem duplicar a regra do palco. */
@@ -219,7 +230,9 @@ interface CompanionHUDProps {
   foodInventory?: Record<string, number>;
   onFeed?: (foodEmoji: string) => void;
   onShower?: () => void;
-  onOpenItems?: () => void;
+  /** A mochila abriu: o ponto de "item novo" do botão pode apagar. Quem guarda
+   *  o sinal é o App (`newItemsReady`). */
+  onBackpackSeen?: () => void;
   onSleep?: () => void;
   isSleeping?: boolean;
   onPet?: () => void;
@@ -285,7 +298,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   foodInventory = {},
   onFeed,
   onShower,
-  onOpenItems,
+  onBackpackSeen,
   onSleep,
   isSleeping = false,
   onPet,
@@ -403,7 +416,15 @@ export const CompanionHUD = memo(function CompanionHUD({
      de comida é um botão de +1), e a REGRA continua inteira em `onFeed`
      (`handleFeed` no App) — teto por hora, recusa quando cheio, pontos de
      atributo. Este botão só encurta o caminho até ela. */
-  const [feedOpen, setFeedOpen] = useState(false);
+  /* minimal-ui F2: a escolha da comida virou a MOCHILA (`home/Mochila.tsx`),
+     que junta a folha de Alimentar e a pastinha de Itens. A regra continua
+     inteira no `onFeed` (`handleFeed` do App). */
+  const [mochilaOpen, setMochilaOpen] = useState(false);
+  /** O item está sendo arrastado SOBRE o pet — o alvo acende. */
+  const [petIsTarget, setPetIsTarget] = useState(false);
+  /** O "+1" que sobe do pet quando ele come (mock aprovado). */
+  const [plusOne, setPlusOne] = useState(0);
+  const rubBtnRef = useRef<HTMLButtonElement | null>(null);
 
   // Always-current snapshot of props for stable intervals
   const propsRef = useRef({ useAI, language, currentStage, companionMood, evolutionStage, dominantBranch, aiSettings, healthPoints, energyPoints, maxEnergy, maxHealthPoints, careEvent, isSleeping, daysAway });
@@ -480,7 +501,9 @@ export const CompanionHUD = memo(function CompanionHUD({
     setEatKey(k => k + 1);
     setIsMunching(true);
     showHug();
-    speakRaw('+1⚡');
+    /* O "+1" flutuante do mock no lugar do balão `+1⚡`: o balão é a VOZ do
+       pet, e um número não é fala. Sai do DOM sozinho (1s). */
+    setPlusOne(n => n + 1);
     setTimeout(() => setEatingEmoji(null), 1500);
     setTimeout(() => setIsMunching(false), 600);
   }, [feedAnim?.n, speakRaw]);
@@ -552,7 +575,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   useEffect(() => {
     const medir = () => {
       const raiz = typeof window !== 'undefined' ? window.getComputedStyle(document.documentElement) : null;
-      const janela = parseFloat(raiz?.getPropertyValue('--sm-petstage-h') || '') || STAGE_FALLBACK_H;
+      const janela = parseFloat(raiz?.getPropertyValue('--sm3-cena-h') || '') || STAGE_FALLBACK_H;
       const corpo = stageRef.current?.clientWidth || STAGE_FALLBACK_W;
       setTela({
         w: Math.max(16, Math.floor((corpo - RING_PX * 2) / VIEW_SCALE)),
@@ -581,7 +604,9 @@ export const CompanionHUD = memo(function CompanionHUD({
      ainda custa bateria) e não anda em `prefers-reduced-motion`. */
   useEffect(() => {
     if (reducedMotion || isSleeping) return;
-    const alcance = telaW / 2 - PET_RENDER / 2 - 6;
+    /* O grupo do pet cresce `CENA_ZOOM` a partir do centro: cada passo lógico
+       anda `CENA_ZOOM` na tela, então o alcance lógico encolhe na mesma razão. */
+    const alcance = telaW / 2 / CENA_ZOOM - PET_RENDER / 2 - 6;
     if (alcance < WALK_STEP_PX) return;
     let passos = 0;
     const id = setInterval(() => {
@@ -835,21 +860,22 @@ export const CompanionHUD = memo(function CompanionHUD({
     }
   };
 
-  /* A comida do DECK. Só comida de verdade: chips de atributo, coraçãozinho e
-     Glitchtama continuam na pastinha (`ItemsWindow`), que é onde se USA item —
-     misturá-los aqui faria "Alimentar" gastar um consumível caro por engano.
-     `isSpecialItem` é o dono dessa fronteira (utils/shop.ts). */
-  const foodStock = Object.entries(foodInventory)
-    .filter(([emoji, n]) => n > 0 && !isSpecialItem(emoji))
-    .sort((a, b) => b[1] - a[1]);
-
-  /* Alimentar pelo deck NÃO reimplementa a regra: chama o mesmo `onFeed` do
-     `ItemsWindow`. Quem decide teto por hora, recusa por estar cheio e pontos
-     de atributo é o `handleFeed` do App — a animação volta por `feedAnim`,
-     como no caminho antigo (animar aqui TAMBÉM daria dois "nhac" por comida). */
-  const handleDeckFeed = (emoji: string) => {
-    setFeedOpen(false);
+  /* Usar um item da MOCHILA — por arrasto até o pet ou pelo botão "Usar" (a
+     alternativa acessível). NÃO reimplementa regra nenhuma: chama o mesmo
+     `onFeed` que a pastinha antiga chamava. Quem decide teto por hora, recusa
+     por barriga cheia, cura do coraçãozinho, teto diário do Glitchtama e pontos
+     de atributo é o `handleFeed` do App (→ `careRules` / `specialItemUse`). A
+     animação de comer e o "+1" voltam por `feedAnim`, só quando o App aceitou —
+     recusa não anima. */
+  const handleUseItem = useCallback((emoji: string) => {
+    setMochilaOpen(false);
+    setPetIsTarget(false);
     onFeed?.(emoji);
+  }, [onFeed]);
+
+  const openMochila = () => {
+    setMochilaOpen(true);
+    onBackpackSeen?.();
   };
 
   /* Brincar pelo deck. Célula inerte nem chega aqui (o botão não chama). Sem
@@ -1017,7 +1043,8 @@ export const CompanionHUD = memo(function CompanionHUD({
        erro que as duas tentativas anteriores de animar `filter` cometeram —
        ver a nota grande abaixo). Some sozinha quando não há tint. */
     const tint = demoTintFilter(demoTint);
-    const comTint = tint ? `${base} ${tint}` : base;
+    const comTint0 = tint ? `${base} ${tint}` : base;
+    const comTint = isSleeping ? `${comTint0} brightness(.55) saturate(.6)` : comTint0;
     return isBlinking ? `${comTint} brightness(.86)` : comTint;
   };
 
@@ -1072,7 +1099,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   })();
 
   const chatDock = (
-    <div className="sm-chat-fixed">
+    <div className="sm-chat-fixed sm3-dock">
       <ChatBox
         petName={currentStage}
         mood={companionMood}
@@ -1089,7 +1116,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   );
 
   return (
-    <div className="relative sm-pet-sticky">
+    <div className="relative sm-pet-sticky sm3-home-sticky">
       {/* ── O CORPO DO APARELHO = A PÁGINA (canvas Home, D-H1 / SIS-01) ─────
           Até 16/09/2026 o palco vivia num card com borda de cobre
           (`.sm2-device`, 16px de bisel + foto atrás) e a barra DOM de
@@ -1104,7 +1131,7 @@ export const CompanionHUD = memo(function CompanionHUD({
         {/* A janela do palco: ancora os CONTROLES que ficam por cima da tela
             (evoluir, balão, alvo do carinho) e é a caixa que dá a largura
             medida para a escala inteira do visor. */}
-        <div className="sm2-device-stage" ref={stageRef}>
+        <div className="sm2-device-stage sm3-cena" ref={stageRef}>
         {/* ── O VISOR — elemento de marca nº 1 ────────────────────────────────
             O palco deixa de ser um retângulo de raio 28 e passa a ser a TELA de
             um aparelho v-pet: bisel de cobre por fora, interior escuro nos dois
@@ -1123,6 +1150,8 @@ export const CompanionHUD = memo(function CompanionHUD({
             dele. Só quando não há cenário equipado o céu do visor acompanha a
             hora (`.sm2-sky-*`). */}
         <Viewport
+          className="sm3-cena-viewport"
+          breathing={false}
           width={tela.w}
           height={tela.h}
           scale={VIEW_SCALE}
@@ -1139,37 +1168,9 @@ export const CompanionHUD = memo(function CompanionHUD({
           // preenche a tela inteira.
           screenStyle={cenario ? (cenarioBase ? { backgroundColor: cenarioBase } : { background: cenario }) : undefined}
         >
-        {/* Mini-HUD pixel DENTRO do visor (D3, 16/09/2026): HP e energia como
-            barras segmentadas de arte, sobre a PLACA escura de D-H3 —
-            `color-mix(in srgb, var(--sm2-viewport-bg) 78%, transparent)`,
-            cantos retos, canto inferior esquerdo do VIDRO (canvas Home,
-            `HomeHudEstados`). Pior caso medido pelo crítico: Silkscreen sobre
-            pixel branco do `bg-room` = 8,46:1; segmento 4,97 (≥3). É a única
-            leitura de HP/energia da Home (a barra DOM do topo SAIU, §19).
-
-            Filho direto do `.screen`, e NÃO da janela do palco logo abaixo: a
-            composição de 250px é ancorada em `bottom: 0` e vaza pelo TOPO.
-
-            Rótulos "HP"/"EN" e dígitos em Silkscreen 14 (`--sm2-font-pixel`,
-            a voz do aparelho — só aqui, dentro do vidro), tabulares. DÍGITO SÓ
-            COM VALOR ≥ 1 (E5, canvas): 0 e 0,5 mostram só os segmentos —
-            `viewport-danger` não tem onde entrar e não entra (nada vermelho
-            na Home). A `VisorBar` desenha a 1× e recebe o MESMO `scale` do
-            Viewport (SIS-05): barra e sprite na mesma grade de pixel. */}
-        <div className="sm2-visor-plate" data-visor-hud style={{ left: 4 * VIEW_SCALE, bottom: 4 * VIEW_SCALE }}>
-          {([
-            { key: 'hp', tag: 'HP', value: healthPoints, max: maxHealthPoints, label: language === 'pt-BR' ? 'Corações' : 'Hearts' },
-            { key: 'en', tag: 'EN', value: energyPoints, max: maxEnergy, label: language === 'pt-BR' ? 'Energia' : 'Energy' },
-          ] as const).map(m => (
-            <div key={m.key} className="sm2-visor-row">
-              <span className="sm2-visor-tag" aria-hidden="true">{m.tag}</span>
-              <VisorBar value={m.value} max={m.max} scale={VIEW_SCALE} label={m.label} />
-              {m.value >= 1 && (
-                <span className="sm2-visor-num sm2-num" aria-hidden="true">{m.value}/{m.max}</span>
-              )}
-            </div>
-          ))}
-        </div>
+        {/* A leitura de HP/EN saiu do vidro (a placa pixel `VisorBar`) e foi
+            para o canto inferior ESQUERDO da faixa, em vetor (`.sm3-stats`,
+            fora do `role="img"`), como no mock aprovado da abordagem B. */}
         <div
           className="p-3"
           style={{
@@ -1230,8 +1231,30 @@ export const CompanionHUD = memo(function CompanionHUD({
           {/* Care Event Sprite */}
           {careEvent && <CareSystem careEvent={careEvent} onCareEventComplete={onCareEventComplete || (() => {})} language={language} />}
 
-          {/* Soulmon Sprite - Centered with walking animation */}
-          <div className="absolute inset-0 flex items-center justify-center">
+          {/* O VÉU DA NOITE (mock `dormindo`): escurece a cena INTEIRA — sobe
+              além do topo da composição para cobrir o céu da faixa — e fica
+              ANTES do grupo do pet no DOM: o Z do sono pinta aceso por cima
+              dele, e quem escurece o pet e o berço é o filtro deles. */}
+          {isSleeping && (
+            <div
+              aria-hidden="true"
+              data-sleep-veil
+              style={{ position: 'absolute', left: 0, right: 0, bottom: 0, top: -400, pointerEvents: 'none', background: 'rgba(4, 10, 24, .55)' }}
+            />
+          )}
+
+          {/* Soulmon Sprite - Centered with walking animation.
+              O GRUPO do pet cresce `CENA_ZOOM` (abordagem B, "pet grande") com
+              origem na linha de baixo do sprite: os pés ficam no chão e a
+              decoração, fora deste grupo, não se mexe. */}
+          <div
+            className="absolute inset-0 flex items-center justify-center"
+            data-pet-group
+            style={{
+              transform: `scale(${CENA_ZOOM})`,
+              transformOrigin: `50% ${STAGE_HEIGHT - PET_BOTTOM_IN_STAGE}px`,
+            }}
+          >
             {/* Burst of hearts exploding from the pet center and radiating out */}
             {rubHearts.map(h => (
               <span
@@ -1335,6 +1358,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                 objectFit: 'contain',
                 imageRendering: 'pixelated',
                 pointerEvents: 'none',
+                filter: isSleeping ? 'brightness(.55) saturate(.6)' : undefined,
                 /* RODADA 5, tentado e revertido: aro na frente (zIndex 2)
                    esconde o corpo do pet — o berço de 148px cobre o meio do
                    sprite de 200px. O "sentado na bacia" da Ref C precisa de
@@ -1428,7 +1452,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                      que não existia em lugar nenhum deste arquivo. É gesto,
                      não cobrança: nenhum texto acompanha, nada fica vermelho
                      e a inclinação some sozinha quando a pilha esvazia. */
-                  className={`object-contain sm-visor-swap${hauntedWatching ? ' sm-pet-haunted' : ''}`}
+                  className={`object-contain sm-visor-swap${hauntedWatching ? ' sm-pet-haunted' : ''}${petIsTarget ? ' sm3-pet-alvo' : ''}`}
                   key={sprite}
                   onError={() => { if (ownSpriteUrl && sprite === ownSpriteUrl) setSpriteQuebrado(ownSpriteUrl); }}
                   style={{
@@ -1501,28 +1525,24 @@ export const CompanionHUD = memo(function CompanionHUD({
                 </div>
               )}
             </div>
+
+            {/* O Z do sono mora DENTRO do grupo do pet: cresce e anda com ele.
+                Quadro a quadro (entrega 4), acima e à direita da cabeça (X8). O
+                `sleep-z` é teal escuro e some sobre `bg-room` — sobre cenário
+                escuro (`isDarkBackground`) entra a folha clara `sleepZLight`. */}
+            {isSleeping && (
+                <SpriteAnim
+                  sheet={isDarkBackground(equippedBackground) ? ANIM_ART.sleepZLight : ANIM_ART.sleepZ}
+                  size={FX_PX / 2}
+                  durationMs={1800}
+                  loop
+                  /* Célula 64 a 1× DENTRO do grupo, que amplia `CENA_ZOOM`:
+                     acima e à direita da cabeça (X8), nunca sobre o rosto. */
+                  style={{ position: 'absolute', left: `calc(${position}% + 28px)`, top: `calc(50% + ${PET_TOP_OFFSET + PET_GROUND_KEEP + 16 - FX_PX / 2}px)` }}
+                />
+            )}
           </div>
 
-          {/* Sleeping overlay */}
-          {isSleeping && (
-            <div className="absolute inset-0 z-20 pointer-events-none">
-              <div className="absolute inset-0 bg-black/40" />
-              {/* Z quadro a quadro (entrega 4): pequeno e baixo → maior e mais alto →
-                  sumindo. Até 15/09/2026 eram três "Z" em monospace — texto do
-                  aparelho dentro do visor. */}
-              {/* 2× (D-H4), acima e à direita da cabeça (X8). O `sleep-z` é
-                  teal escuro e some sobre `bg-room` — sobre cenário escuro
-                  (`isDarkBackground`, luminância da `baseColor` < 0,5) entra a
-                  folha clara `sleepZLight` (R2-4, achado 5 do canvas). */}
-              <SpriteAnim
-                sheet={isDarkBackground(equippedBackground) ? ANIM_ART.sleepZLight : ANIM_ART.sleepZ}
-                size={FX_PX}
-                durationMs={1800}
-                loop
-                style={{ position: 'absolute', left: `calc(${position}% + 48px - ${FX_PX / 2}px)`, top: `calc(50% + ${PET_TOP_OFFSET + PET_GROUND_KEEP - 44}px - ${FX_PX}px)` }}
-              />
-            </div>
-          )}
 
         </div>
 
@@ -1570,19 +1590,32 @@ export const CompanionHUD = memo(function CompanionHUD({
              cobre, discretos; quando há HP a recuperar eles trocam para a cor
              de alerta e piscam, porque é a hora em que o controle precisa ser
              encontrado. Nada de `title`: não existe hover no toque. */
+          ref={rubBtnRef}
           className={`sm2-rub${healthPoints < maxHealthPoints ? ' sm2-rub-heal' : ''}`}
+          data-pet-target
           aria-label={language === 'pt-BR'
             ? 'Fazer carinho no Soulmon (segure para curar)'
             : 'Pet your Soulmon (hold to heal)'}
+          /* BRINCAR virou gesto sobre o pet (minimal-ui F2: "brincar e carinho
+             seguem no gesto sobre o pet"): toque DUPLO no pet, ou a tecla P com
+             o foco nele. A regra é a mesma de antes (`handleDeckPlay` →
+             `play.onPlay`, que é o `handlePlay` do App); recusa é fala. */
+          aria-keyshortcuts="P"
           style={{
-            left: `calc(50% + ${walkPx}px)`,
+            /* O grupo do pet cresce `CENA_ZOOM` a partir do centro e da linha
+               dos pés — o alvo acompanha, derivado, nunca digitado. */
+            left: `calc(50% + ${walkPx * CENA_ZOOM}px)`,
             bottom: PET_BOTTOM_IN_STAGE + RING_PX,
-            width: PET_RENDER,
-            height: PET_RENDER,
+            width: PET_RENDER * CENA_ZOOM,
+            height: PET_RENDER * CENA_ZOOM,
             transform: 'translateX(-50%)',
           }}
           onClick={() => { if (rubMovedRef.current) { rubMovedRef.current = false; return; } handlePetClick(); }}
-          onKeyDown={handleRubKeyDown}
+          onDoubleClick={handleDeckPlay}
+          onKeyDown={(e) => {
+            if (e.key === 'p' || e.key === 'P') { e.preventDefault(); handleDeckPlay(); return; }
+            handleRubKeyDown(e);
+          }}
           onPointerDown={startRub}
           onPointerMove={moveRub}
           onPointerUp={endRub}
@@ -1614,7 +1647,7 @@ export const CompanionHUD = memo(function CompanionHUD({
             durationMs={900}
             loop
             /* 2× (D-H4), acima e à ESQUERDA da cabeça (X8): nunca sobre o rosto. */
-            style={{ position: 'absolute', zIndex: 25, left: `calc(${position}% - 104px)`, top: -40 + stageDrop, pointerEvents: 'none' }}
+            style={{ position: 'absolute', zIndex: 25, left: `calc(${50 + (position - 50) * CENA_ZOOM}% - 104px)`, top: 8 + stageDrop, pointerEvents: 'none' }}
           />
         )}
         {/* "EVOLVE" fala a língua do vidro (canvas Home, X3): UMA palavra em
@@ -1633,7 +1666,9 @@ export const CompanionHUD = memo(function CompanionHUD({
             className="sm2-pxbtn"
             aria-label={language === 'pt-BR' ? 'Evoluir' : 'Evolve'}
             style={{
-              position: 'absolute', zIndex: 30, right: EVOLVE_BTN_BOTTOM + RING_PX, bottom: EVOLVE_BTN_BOTTOM + RING_PX,
+              /* Acima dos três cuidados (canto inferior direito da faixa), e
+                 ainda ancorado no RODAPÉ — longe do balão, que é do topo. */
+              position: 'absolute', zIndex: 30, right: EVOLVE_BTN_BOTTOM + RING_PX + 4, bottom: EVOLVE_BTN_BOTTOM + RING_PX + 52,
               borderImageSource: `url(${HUD_ART.frame})`,
               borderImageSlice: HUD_ART.frameSlice,
               animation: reducedMotion ? undefined : 'evo-btn-pulse 1.6s ease-in-out infinite',
@@ -1715,27 +1750,122 @@ export const CompanionHUD = memo(function CompanionHUD({
             </div>
           </div>
         )}
+
+        {/* O "+1" do mock: sobe do pet quando o App ACEITOU a comida (vem por
+            `feedAnim`, então recusa não pinta nada). Decorativo — a fala e o
+            HP/EN já dizem o resultado em texto. */}
+        {plusOne > 0 && (
+          <span key={`mais-${plusOne}`} className="sm3-mais" aria-hidden="true">+1</span>
+        )}
+
+        {/* ── HP / EN — canto inferior ESQUERDO da faixa (abordagem B) ─────────
+            Vetor, fora do `role="img"`: glifo autoral (`favorite`/`bolt`, 20)
+            + número tabular. Sobre a CENA, que é escura nos dois temas — por
+            isso os tons `viewport*`. O estado BAIXO (HP ≤ 1 ou energia 0) muda
+            a TINTA do número e ganha a palavra no nome acessível; o aviso em
+            texto continua sendo o da fila da Home (HP), nunca um segundo
+            cartão aqui (filaDeAvisos). */}
+        {(() => {
+          const isPt = language === 'pt-BR';
+          const fmt = (n: number) => (isPt ? String(n).replace('.', ',') : String(n));
+          const hpBaixo = healthPoints <= 1;
+          const enBaixo = energyPoints <= 0;
+          return (
+            <div className="sm3-stats" data-cena-stats>
+              <span
+                className="sm3-stat"
+                data-low={hpBaixo || undefined}
+                role="img"
+                aria-label={isPt
+                  ? `Corações: ${fmt(healthPoints)} de ${maxHealthPoints}${hpBaixo ? ' (baixo)' : ''}`
+                  : `Hearts: ${fmt(healthPoints)} of ${maxHealthPoints}${hpBaixo ? ' (low)' : ''}`}
+              >
+                <Icon name="favorite" size={20} fill={1} tone="viewport-danger" />
+                <span className="sm2-num" aria-hidden="true">{fmt(healthPoints)}/{maxHealthPoints}</span>
+              </span>
+              <span
+                className="sm3-stat"
+                data-low={enBaixo || undefined}
+                role="img"
+                aria-label={isPt
+                  ? `Energia: ${energyPoints} de ${maxEnergy}${enBaixo ? ' (vazia)' : ''}`
+                  : `Energy: ${energyPoints} of ${maxEnergy}${enBaixo ? ' (empty)' : ''}`}
+              >
+                <Icon name="bolt" size={20} fill={1} tone="viewport" />
+                <span className="sm2-num" aria-hidden="true">{energyPoints}/{maxEnergy}</span>
+              </span>
+            </div>
+          );
+        })()}
+
+        {/* ── OS TRÊS CUIDADOS — canto inferior DIREITO (abordagem B) ─────────
+            Mochila · lua/sol (dormir) · banho. EXCEÇÃO D1 do dono (23/09/2026):
+            estes três podem ter anel/fundo — é a única caixa em volta de ícone
+            na Home. Glifo autoral 24 (degrau `action`), alvo de 44 no botão.
+            Carinho e brincar NÃO têm botão: são gesto sobre o pet.
+
+            CÉLULA INERTE continua sendo `aria-disabled` + forma (tracejado),
+            nunca opacidade: o banho em cooldown. */}
+        <div
+          className="sm3-cuidar"
+          role="group"
+          aria-label={language === 'pt-BR' ? 'Cuidar do pet' : 'Care for your pet'}
+        >
+          <button
+            type="button"
+            className="sm3-cuidado"
+            data-cuidado="mochila"
+            onClick={openMochila}
+            aria-haspopup="dialog"
+            aria-expanded={mochilaOpen}
+            aria-label={language === 'pt-BR'
+              ? (hasNewItems ? 'Mochila — item novo' : 'Mochila')
+              : (hasNewItems ? 'Backpack — new item' : 'Backpack')}
+          >
+            {hasNewItems && <span className="sm2-deck-dot" aria-hidden="true" />}
+            <Icon name="inventory_2" size={24} fill={hasNewItems ? 1 : 0} tone="viewport" />
+          </button>
+          <button
+            type="button"
+            className="sm3-cuidado"
+            data-cuidado="dormir"
+            data-on={isSleeping || undefined}
+            onClick={onSleep}
+            aria-pressed={isSleeping}
+            aria-label={language === 'pt-BR'
+              ? (isSleeping ? 'Acordar' : 'Dormir')
+              : (isSleeping ? 'Wake' : 'Sleep')}
+          >
+            <Icon name={isSleeping ? 'wb_sunny' : 'bedtime'} size={24} fill={isSleeping ? 1 : 0} tone="viewport" />
+          </button>
+          <button
+            type="button"
+            className={showerCooldown ? 'sm3-cuidado sm3-cuidado-inerte' : 'sm3-cuidado'}
+            data-cuidado="banho"
+            onClick={showerCooldown ? undefined : handleShowerClick}
+            aria-disabled={showerCooldown || undefined}
+            aria-label={language === 'pt-BR'
+              ? (showerCooldown ? 'Banho — só um instante' : 'Banho')
+              : (showerCooldown ? 'Bath — just a moment' : 'Bath')}
+          >
+            <Icon name="shower" size={24} tone="viewport" />
+          </button>
+        </div>
         </div>
 
-
-        {/* WP3.3 — NOME + TÍTULO DO VÍNCULO, sob o vidro (canvas Home: nome em
-            Fredoka 20 + "Companion" Rubik 12 `muted`, entre a tela e o deck).
-            O comentário de `BOND_REWARDS` prometia, por escrito, que o título
-            "aparece na home, sob o nome do pet". O título é DERIVADO
-            (`bondTitle(bondLevelFor(totalXP))`), nunca persistido — guardar
-            `bondLevel` no save é o footgun 9 na forma mais cara. */}
+        {/* WP3.3 — NOME + TÍTULO DO VÍNCULO, logo abaixo da faixa (uma linha
+            só). O título é DERIVADO (`bondTitle(bondLevelFor(totalXP))`),
+            nunca persistido — guardar `bondLevel` no save é o footgun 9. */}
         {(petDisplayName || bondTitleText || redeemedMark) && (
-          <div className="sm2-home-nameline">
+          <div className="sm2-home-nameline sm3-nameline">
             {petDisplayName && (
               <p className="sm2-home-petname">{petDisplayName}</p>
             )}
             {bondTitleText && (
               <p className="sm2-home-petsub">{bondTitleText}</p>
             )}
-            {/* WP4.19 — a marca da VOLTA. Lê como prestígio e nunca como queda:
-                não diz o que aconteceu, só que houve recuperação. Aparece só se
-                o jogador ligou (padrão desligado) — a história é dele. Tinta
-                sólida (`gold-ink`), nunca opacidade. */}
+            {/* WP4.19 — a marca da VOLTA. Lê como prestígio e nunca como queda.
+                Aparece só se o jogador ligou (padrão desligado). */}
             {redeemedMark && (
               <p className="sm2-home-petsub" style={{ color: 'var(--sm2-gold-ink)' }}>
                 {language === 'pt-BR' ? '✦ Voltou inteiro' : '✦ Came back whole'}
@@ -1743,131 +1873,35 @@ export const CompanionHUD = memo(function CompanionHUD({
             )}
           </div>
         )}
-
-        {/* ── O DECK — cinco células sobre o corpo do aparelho (a página) ─────
-            Feed · Items · Bath · Sleep · Play (canvas Home, E1+E2: Brincar
-            virou 5ª célula para fechar a dobra). Ícone Material pelado 24
-            (degrau `action`, escala fechada de tokens.md §6.1) + rótulo Rubik
-            12/500 em `--sm2-ink`; alvo de 44px é do BOTÃO. FILL carrega o
-            estado (`bedtime` cheio dormindo; `inventory_2` cheio com item
-            novo + ponto de cobre 8px, `gold-fill`, presença e não placar).
-
-            CÉLULA INERTE = a ação não existe agora por regra (banho em
-            cooldown, brincar já usado hoje, brincar antes da 1ª conclusão):
-            `aria-disabled`, tracejado `muted` 1px, tinta `muted` — por FORMA,
-            nunca só por cor, e NUNCA por opacidade (0 elementos com alfa < 1
-            no canvas). Ela continua na ordem de Tab (o rótulo diz o porquê).
-            CÉLULA VIVA + fala do pet = a ação existe e a criatura recusa
-            (barriga cheia, sem energia, HP cheio). Regra única (r3). */}
-        <div className="sm2-deck" role="group" aria-label={language === 'pt-BR' ? 'Cuidar do pet' : 'Care for your pet'}>
-          {([
-            /* Alimentar PRIMEIRO: é a ação que define o gênero, e a leitura da
-               fileira é da esquerda para a direita. */
-            { key: 'feed', icon: 'restaurant', fill: 0, en: 'Feed', pt: 'Alimentar', onClick: () => setFeedOpen(true), inert: false, badge: false },
-            { key: 'items', icon: 'inventory_2', fill: hasNewItems ? 1 : 0, en: hasNewItems ? 'Items — new' : 'Items', pt: hasNewItems ? 'Itens — novo' : 'Itens', short: { en: 'Items', pt: 'Itens' }, onClick: onOpenItems ?? (() => {}), inert: false, badge: hasNewItems },
-            { key: 'bath', icon: 'shower', fill: 0, en: showerCooldown ? 'Bath — just a moment' : 'Bath', pt: showerCooldown ? 'Banho — só um instante' : 'Banho', short: { en: 'Bath', pt: 'Banho' }, onClick: handleShowerClick, inert: showerCooldown, badge: false },
-            { key: 'sleep', icon: isSleeping ? 'wb_sunny' : 'bedtime', fill: isSleeping ? 1 : 0, en: isSleeping ? 'Wake' : 'Sleep', pt: isSleeping ? 'Acordar' : 'Dormir', onClick: onSleep ?? (() => {}), inert: false, badge: false },
-            {
-              key: 'play', icon: 'toys', fill: 0,
-              en: !play || !play.available ? 'Play — after your first activity' : play.playedToday ? 'Play — already played today' : 'Play',
-              pt: !play || !play.available ? 'Brincar — depois da primeira atividade' : play.playedToday ? 'Brincar — já brincamos hoje' : 'Brincar',
-              short: { en: 'Play', pt: 'Brincar' },
-              onClick: handleDeckPlay, inert: !play || !play.available || play.playedToday, badge: false,
-            },
-          ] as { key: string; icon: string; fill: number; en: string; pt: string; short?: { en: string; pt: string }; onClick: () => void; inert: boolean; badge: boolean | undefined }[]).map(a => (
-            <button
-              key={a.key}
-              type="button"
-              /* Inerte NÃO é `disabled`: continua na ordem de Tab, com o
-                 rótulo explicando; o clique só não faz nada. */
-              onClick={a.inert ? undefined : a.onClick}
-              aria-disabled={a.inert || undefined}
-              className={a.inert ? 'sm2-deck-btn sm2-deck-btn-inert' : 'sm2-deck-btn'}
-              aria-label={language === 'pt-BR' ? a.pt : a.en}
-              data-deck={a.key}
-            >
-              {a.badge && (
-                <span className="sm2-deck-dot" aria-hidden="true" />
-              )}
-              <Icon name={a.icon} size={24} fill={a.fill} weight={500} tone={a.inert ? 'muted' : a.fill ? 'primary' : 'ink'} />
-              <span className="sm2-deck-label">
-                {language === 'pt-BR' ? (a.short?.pt ?? a.pt) : (a.short?.en ?? a.en)}
-              </span>
-            </button>
-          ))}
-        </div>
         </div>
       </div>
 
       </div>
 
-      {/* A escolha da comida. Bottom sheet porque o polegar chega lá, e porque
-          é a mesma superfície `--sm2-*` do resto do app fora do visor.
-          Os TRÊS estados existem: com estoque (a grade), vazio (o que fazer
-          para conseguir comida) e recusa (o pet fala, via `fullSignal`). */}
-      {/* A folha nasce DENTRO do `.sm-pet-sticky` (contexto de empilhamento,
-          z 5) dentro do `<main>` (z 1): a folha `fixed` de z 120 ficava PRESA
-          sob o dock de chat (z 40) e sob a nav (z 45) — medido em 16/09/2026,
-          o campo do chat cobria a grade de comida. Sai por portal para o
-          `<body>`, onde um overlay de tela inteira pertence (o `ItemsWindow`
-          já é irmão do `<main>` pelo mesmo motivo). Sem `document`
-          (jsdom/SSR) fica onde estava. Foco preso e Escape são do
-          `ModalSheet` (`useDialogA11y`), portal não muda isso. */}
-      {(() => { const folha = (
-      <ModalSheet
-        open={feedOpen}
-        onClose={() => setFeedOpen(false)}
-        title={language === 'pt-BR' ? 'Alimentar' : 'Feed'}
-        language={language}
-      >
-        {foodStock.length === 0 ? (
-          <p style={{ ...sm2Text, margin: 0 }}>
-            {language === 'pt-BR'
-              ? 'Sua pastinha está sem comida. Conclua uma tarefa ou hábito para ganhar comida — é assim que seu Soulmon come.'
-              : "You're out of food. Complete a task or habit to earn some — that's how your Soulmon eats."}
-          </p>
-        ) : (
-          <>
-            {/* Grade de 3 (canvas `AlimentarFolha`, D-H6): a ARTE do item é
-                pixel (96² a ½× = 48) dentro de uma célula VETOR — `surface-2`
-                + `muted` 1px, raio 12, 96 de altura: o slot do SIS-07 em
-                tamanho de célula, um mini-visor sem anel. Nome em Rubik 12 e
-                `×N` tabular. Sem emoji do sistema: item sem arte mostra o
-                quadro vazio (`.sm2-gcell-art` reserva a caixa). */}
-            <div className="sm2-gcell-grid">
-              {foodStock.map(([emoji, n]) => (
-                <button
-                  key={emoji}
-                  type="button"
-                  onClick={() => handleDeckFeed(emoji)}
-                  className="sm2-gcell"
-                  aria-label={`${getFoodName(emoji, language)} × ${n}`}
-                >
-                  <span className="sm2-gcell-art" aria-hidden="true">
-                    {ITEM_ART[emoji] && <img src={ITEM_ART[emoji]} alt="" width={48} height={48} />}
-                  </span>
-                  <span className="sm2-gcell-name">{getFoodName(emoji, language)}</span>
-                  <span className="sm2-gcell-count sm2-num">×{n}</span>
-                </button>
-              ))}
-            </div>
-            <p style={sm2Hint}>
-              {language === 'pt-BR'
-                ? 'Cada comida dá +1 de energia e pontos de atributo. Se a barriga estiver cheia, seu Soulmon avisa.'
-                : 'Each food gives +1 energy and attribute points. If its belly is full, your Soulmon will say so.'}
-            </p>
-          </>
-        )}
-      </ModalSheet>
-      ); return typeof document !== 'undefined' ? createPortal(folha, document.body) : folha; })()}
+      {/* A MOCHILA (minimal-ui F2). Portal para o `<body>` pelo mesmo motivo da
+          folha de Alimentar que ela substitui: nascida dentro do
+          `.sm-pet-sticky` (z 5) ela ficaria presa sob o dock de chat. Sem
+          `document` (SSR) fica onde está. */}
+      {(() => {
+        const folha = (
+          <Mochila
+            open={mochilaOpen}
+            onClose={() => { setMochilaOpen(false); setPetIsTarget(false); }}
+            foodInventory={foodInventory}
+            language={language}
+            onUse={handleUseItem}
+            petTargetRef={rubBtnRef}
+            onTargetChange={setPetIsTarget}
+            petName={petDisplayName || currentStage}
+          />
+        );
+        return typeof document !== 'undefined' ? createPortal(folha, document.body) : folha;
+      })()}
 
-      {/* Chat Box — fixo no rodapé da tela (não rola com o conteúdo), e ainda
-          dentro do `<main>` do app: assim modais (z-index maior, irmãos do
-          `<main>`) continuam corretamente acima dele, o que um portal para o
-          `<body>` quebraria — foi por isso que o portal externo saiu daqui uma
-          vez. O que muda agora é só o PONTO DE MONTAGEM dentro do `<main>`
-          (último filho, depois da lista e do CTA): ver a nota de ORDEM DE FOCO
-          lá em cima. */}
+      {/* Chat Box — o TERMINAL fixo no rodapé (minimal-ui F2: sempre aberto,
+          `>` + `_` piscando). Continua dentro do `<main>`: modais (irmãos do
+          `<main>`, z maior) seguem por cima dele. O ponto de montagem é o
+          ÚLTIMO filho do `<main>` — ver a nota de ORDEM DE FOCO lá em cima. */}
       {chatHost ? createPortal(chatDock, chatHost) : chatDock}
     </div>
   );
