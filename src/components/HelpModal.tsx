@@ -102,8 +102,8 @@ const TERMS: Term[] = [
   },
   {
     icon: '💗', en: 'Little Heart', pt: 'Coraçãozinho',
-    descEn: 'Shop item and rare dungeon drop. Using it from the Items folder heals 1 HP.',
-    descPt: 'Item da loja e drop raro da masmorra. Usar na pastinha de itens cura 1 HP.',
+    descEn: 'Shop item and rare dungeon drop. Using it from the Backpack heals 1 HP.',
+    descPt: 'Item da loja e drop raro da masmorra. Usar pela mochila cura 1 HP.',
   },
   {
     icon: '📈', en: 'Consistency', pt: 'Constância',

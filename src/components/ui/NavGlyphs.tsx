@@ -659,7 +659,8 @@ const GLYPHS: Record<string, GlyphDef> = {
 };
 
 /* Os nomes Material que a nav já resolvia à mão. Ficam como ALIAS para que um
-   call-site fora da `BottomNav` (`Icon name="home"`) receba o mesmo desenho —
+   call-site qualquer (`Icon name="home"`, hoje o `CornerLink`; antes, fora da
+   `BottomNav` que saiu na minimal-ui F1) receba o mesmo desenho —
    duas casas diferentes na mesma sessão seria o pior dos dois mundos. */
 GLYPHS.casino = GLYPHS.activities;
 GLYPHS.storefront = GLYPHS.shop;

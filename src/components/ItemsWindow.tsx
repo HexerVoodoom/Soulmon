@@ -1,15 +1,12 @@
-import { useState } from 'react';
-import { ITEM_ART } from '../utils/itemArt';
-import ravenMascot from '../assets/soulmon/mascot-raven.png';
 import type { Language } from '../utils/i18n';
-import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
-import { Viewport } from './ui/Viewport';
-import { FOOD_BY_CATEGORY } from '../constants/labels';
-import { CATEGORY_ATTRIBUTES, ATTR_LABEL } from '../types/attributes';
-import { SPECIAL_ITEMS, CHIP_BOOST, HEART_HEAL } from '../utils/shop';
+import { SPECIAL_ITEMS } from '../utils/shop';
 
 /**
- * PASTINHA — revamp minimalista.
+ * Nomes e descrições de comida/item (PT+EN). A tela da pastinha que morava
+ * aqui saiu na minimal-ui (a MOCHILA da Home, `home/Mochila.tsx`, é a entrada
+ * de item desde a F2); ficaram só os helpers que a Mochila e o HUD leem.
+ *
+ * Histórico — PASTINHA, revamp minimalista:
  *
  * Uma ação dominante: USAR um item. Tudo o que não ajuda a escolher qual
  * item usar saiu:
@@ -51,13 +48,6 @@ const FOOD_NAMES: Record<string, { en: string; pt: string; descEn: string; descP
   '📞': { en: 'SocialPill',  pt: 'SocialPil',  descEn: 'A fizzy drink that boosts your social battery',      descPt: 'Uma bebida gaseificada que recarrega sua bateria social' },
 };
 
-interface ItemsWindowProps {
-  foodInventory: Record<string, number>;
-  onFeed: (emoji: string) => void;
-  onClose: () => void;
-  language?: Language;
-}
-
 /** Nome do alimento/item no idioma da pessoa — dono único (PL-5, 21/09/2026):
  *  o `CompanionHUD` usava `FOOD_BY_CATEGORY[].name` (só EN) para o MESMO item
  *  e o leitor de tela em PT ouvia "Protein × 2" no deck e "Proteína ×2" aqui. */
@@ -73,101 +63,4 @@ export function getFoodDesc(emoji: string, lang: Language): string {
   const special = SPECIAL_ITEMS[emoji];
   if (special) return lang === 'pt-BR' ? special.descPt : special.descEn;
   return FOOD_NAMES[emoji] ? (lang === 'pt-BR' ? FOOD_NAMES[emoji].descPt : FOOD_NAMES[emoji].descEn) : '';
-}
-
-/**
- * O que o item FAZ, em uma frase. Comida soma atributo pela categoria; chip,
- * coraçãozinho e Glitchtama têm efeito fixo (utils/shop.ts é o dono da regra —
- * aqui só se lê `CHIP_BOOST`/`HEART_HEAL`, nunca um número à mão).
- */
-function effectLine(emoji: string, isPt: boolean): string {
-  const special = SPECIAL_ITEMS[emoji];
-  if (special?.kind === 'chip' && special.attr) {
-    return `+${CHIP_BOOST} ${isPt ? ATTR_LABEL[special.attr].pt : ATTR_LABEL[special.attr].en}`;
-  }
-  if (special?.kind === 'heart') return isPt ? `+${HEART_HEAL} coração` : `+${HEART_HEAL} heart`;
-  if (special?.kind === 'glitchtama') return isPt ? '+1 dia completo' : '+1 complete day';
-  const food = Object.values(FOOD_BY_CATEGORY).find(f => f.emoji === emoji);
-  if (!food) return '';
-  const attrs = CATEGORY_ATTRIBUTES[food.category];
-  const parts = (['vaccine', 'data', 'virus'] as const)
-    .filter(k => attrs[k] > 0)
-    .map(k => `+${attrs[k]} ${isPt ? ATTR_LABEL[k].pt : ATTR_LABEL[k].en}`);
-  return [isPt ? '+1 energia' : '+1 energy', ...parts].join(' · ');
-}
-
-export function ItemsWindow({ foodInventory, onFeed, onClose, language = 'en-US' }: ItemsWindowProps) {
-  const isPt = language === 'pt-BR';
-  const [selected, setSelected] = useState<string | null>(null);
-
-  const items = Object.entries(foodInventory).filter(([, c]) => c > 0);
-  const detail = selected && foodInventory[selected] > 0 ? selected : null;
-
-  const use = (emoji: string) => {
-    onFeed(emoji);
-    setSelected(null);
-  };
-
-  return (
-    <ModalSheet
-      open
-      title={isPt ? 'Itens' : 'Items'}
-      onClose={onClose}
-      language={language}
-      footer={detail ? (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ ...sm2Text, fontWeight: 500, margin: 0 }}>{getFoodName(detail, language)}</p>
-            <p style={{ ...sm2Hint, margin: 0 }}>{effectLine(detail, isPt) || getFoodDesc(detail, language)}</p>
-          </div>
-          <button type="button" onClick={() => use(detail)} style={sm2Button('primary')}>
-            {isPt ? 'Usar' : 'Use'}
-          </button>
-        </div>
-      ) : undefined}
-    >
-      {items.length === 0 ? (
-        /* Estado vazio — ilustração, não texto cru. O mascote é pixel, e pixel
-           só vive DENTRO de um vidro (canvas Home, `ItensVazio` / D-H7): vidro
-           96² (32 lógicos × 3), sem opacidade na arte. */
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '24px 0' }}>
-          <Viewport width={32} height={32} scale={3} breathing={false} screenStyle={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <img src={ravenMascot} alt="" width={72} height={72} style={{ objectFit: 'contain', display: 'block' }} />
-          </Viewport>
-          <p style={{ ...sm2Hint, textAlign: 'center' }}>
-            {isPt
-              ? 'Sua pastinha está vazia. Conclua uma atividade para ganhar comida.'
-              : 'Your item folder is empty. Complete an activity to earn food.'}
-          </p>
-        </div>
-      ) : (
-        /* Grade de 3 (canvas `ItensPastinha` / `ItensUsar`, D-H6): a ARTE é
-           pixel (48) dentro de uma célula VETOR — `surface-2` + `muted` 1px,
-           raio 12, 96 de altura (`.sm2-gcell`, index.css). Seleção = anel
-           `primary-ink` 2px + `primary-soft`, por `aria-pressed`. Nome Rubik 12
-           e `×N` tabular. Sem emoji do sistema: sem arte, a caixa fica vazia. */
-        <div className="sm2-gcell-grid">
-          {items.map(([emoji, count]) => {
-            const active = detail === emoji;
-            return (
-              <button
-                key={emoji}
-                type="button"
-                className="sm2-gcell"
-                onClick={() => setSelected(active ? null : emoji)}
-                aria-pressed={active}
-                aria-label={`${getFoodName(emoji, language)} ×${count}`}
-              >
-                <span className="sm2-gcell-art" aria-hidden="true">
-                  {ITEM_ART[emoji] && <img src={ITEM_ART[emoji]} alt="" width={48} height={48} />}
-                </span>
-                <span className="sm2-gcell-name">{getFoodName(emoji, language)}</span>
-                <span className="sm2-gcell-count sm2-num">×{count}</span>
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </ModalSheet>
-  );
 }

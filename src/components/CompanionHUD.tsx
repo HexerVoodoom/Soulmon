@@ -347,8 +347,8 @@ export const CompanionHUD = memo(function CompanionHUD({
      precisaria descer é o `CompanionHUD`, e ele é o pet, que fica em cima.
      A correção é dar ao dock o PONTO DE MONTAGEM que a posição visual dele
      pede: ÚLTIMO filho do `<main id="conteudo">` — depois da lista e do CTA,
-     e ainda antes da `BottomNav` (que é irmã do `<main>` e mora abaixo do
-     chat na tela). A ordem de foco passa a ser a ordem visual, ponto a ponto.
+     e antes do `CornerLink` do Mapa (irmão do `<main>`; a `BottomNav` que
+     ocupava esse lugar saiu na minimal-ui F1). A ordem de foco passa a ser a ordem visual, ponto a ponto.
 
      Por que NÃO muda um pixel:
       · `position: fixed` não depende da posição no documento;
