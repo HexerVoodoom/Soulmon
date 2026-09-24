@@ -130,6 +130,20 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Chamado por:** `src/App.tsx`.
 **Régua:** `src/components/nav/nav.render.test.tsx`.
 
+### `src/components/nav/AreaScene.tsx`
+**Dono de:** o MOLDE de uma área do Mapa (minimal-ui F4) — fundo de cena, "lotes" (construções clicáveis, posicionadas em % sobre a cena) e o NPC anfitrião da área com balão de fala (a fala vem de `src/utils/areaNpcVoice.ts`, nunca escrita aqui). Não decide o conteúdo de cada folha — isso é F5.
+**Props principais:** `areaId: AreaId`, `language`, `lots: AreaLot[]` (`id`, `label`, `left`/`top`, `ariaLabel`, `onOpen`), `children?` (onde entra o `AreaSheet` aberto, no mesmo empilhamento da cena).
+**Exports:** `AreaScene(props)`, `AreaLot` (interface).
+**Chamado por:** `src/App.tsx`.
+**Régua:** `src/components/nav/areaShell.render.test.tsx`.
+
+### `src/components/nav/AreaSheet.tsx`
+**Dono de:** a folha (bottom-sheet) de um lote de área (minimal-ui F4) — `min-height: 62%`, o NPC da área espiando ATRÁS/ACIMA da folha (nunca dentro do conteúdo rolável), backdrop fecha ao tocar fora, Escape fecha, foco vai para o botão de fechar ao abrir. Só o MOLDE: o conteúdo de cada folha por área é F5 (aqui é sempre `children` — placeholder até lá).
+**Props principais:** `areaId: AreaId`, `title`, `closeLabel`, `open`, `onClose`, `children`.
+**Exports:** `AreaSheet(props)`.
+**Chamado por:** `src/App.tsx`.
+**Régua:** `src/components/nav/areaShell.render.test.tsx`.
+
 ### `src/components/home/Mochila.tsx`
 **Dono de:** a MOCHILA da Home B (minimal-ui F2, 23/09/2026) — folha de baixo (`min-height` 56vh) com as abas "Comida e chips" / "Especiais" sobre o `foodInventory`. Uso por ARRASTO até o pet (pointer events: fantasma segue o dedo, a folha desce durante o arrasto, soltar sobre o alvo do carinho chama `onUse`); tocar sem arrastar só seleciona; o item selecionado (toque ou foco) mostra o botão "Usar"/"Use" — a alternativa acessível. Não decide regra: `onUse` é o `handleFeed` do App.
 **Props principais:** `open`, `onClose`, `foodInventory`, `language`, `onUse(emoji)`, `petTargetRef`, `onTargetChange?`, `petName?`.

@@ -760,6 +760,18 @@ Cobertura: **120/120** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 **Chamado por:** `src/components/LibraryPage.tsx`
 **Régua:** nenhuma (`ls src/utils/libraryNpcs*.test.ts` vazio).
 
+### `src/utils/areaNpcVoice.ts`
+**Dono de:** a fala dos 6 NPCs anfitriões de área (minimal-ui F4) — nome (PT/EN) e a linha de diálogo do balão. Dono único da copy: nenhum componente escreve fala de NPC solta em JSX (regra do `narrativa.contract` e do redator de UX). Nomes (Grom, Vultrak, Brisa, Pipo, Lumi) são a decisão D5 do dono; o NPC do Laboratório ainda não tem nome próprio decidido, recebe descrição de ofício.
+**Exports:** `AreaNpcVoice` (interface), `areaNpcVoice(id, language)`.
+**Chamado por:** `src/components/nav/AreaScene.tsx`.
+**Régua:** `src/components/nav/areaShell.render.test.tsx` (indireta, via `AreaScene`).
+
+### `src/utils/areaSheetCopy.ts`
+**Dono de:** a copy do lote de exemplo por área (minimal-ui F4) — rótulo do lote e o texto placeholder do `AreaSheet` de demonstração. F4 é só o molde; o conteúdo completo de cada folha é F5.
+**Exports:** `areaDemoLot(id, language)`.
+**Chamado por:** `src/App.tsx`.
+**Régua:** nenhuma direta (`ls src/utils/areaSheetCopy*.test.ts` vazio) — coberta indiretamente pelos testes de `App.tsx`/`areaShell.render.test.tsx`.
+
 ### `src/utils/lineIcons.ts`
 **Dono de:** os ícones-ficha das 9 linhas × 4 tiers (rodada 2 da SQUAD-ARTE, 21/09/2026 — `docs/ASSETS-A-GERAR.md` §13 R2-2, D-J13 do canvas Jogos): 64² para o Dino e os oponentes do Torneio, 32² (a cabeça) para o mini-visor do ranking. São DERIVADOS do sprite 256² de `lines/` (`scripts-arte/derivar-rodada2.mjs`, fora do repo), então D5 (um sprite por criatura) continua valendo — ícone é redução, não pose. Fronteira no molde de `attackFxArt.ts`: glob eager sobre `assets/soulmon/lines/icons/*.png`, `undefined` quando não há arte → o consumidor cai no sprite 256² reduzido.
 **Exports:**

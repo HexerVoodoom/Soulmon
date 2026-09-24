@@ -17,6 +17,9 @@ import {
 import { CornerLink } from './components/nav/CornerLink';
 import { AreaTopBar } from './components/nav/AreaTopBar';
 import { MapPage } from './components/nav/MapPage';
+import { AreaScene, type AreaLot } from './components/nav/AreaScene';
+import { AreaSheet } from './components/nav/AreaSheet';
+import { areaDemoLot } from './utils/areaSheetCopy';
 import { HomeMenuSheet } from './components/nav/HomeMenuSheet';
 import { NavGlyph } from './components/ui/NavGlyphs';
 import {
@@ -673,6 +676,13 @@ export default function App() {
   /** Sub-aba do Laboratório (Evolução / Soulmon / Estatísticas). */
   const [labTab, setLabTab] = useState<LabTab>('evolution');
   const pane = paneFor(currentView, labTab);
+  /** A área do Mapa da view atual, ou `null` fora de uma área (minimal-ui F4). */
+  const area = areaOf(currentView);
+  /** A folha (`AreaSheet`) do lote de exemplo, aberta por área (minimal-ui F4:
+   *  só o molde — o conteúdo completo por área é F5). Fecha sozinha ao trocar
+   *  de view, pra não reabrir "fantasma" numa área diferente. */
+  const [areaSheetOpen, setAreaSheetOpen] = useState(false);
+  useEffect(() => { setAreaSheetOpen(false); }, [currentView]);
   /** O menu ícone da Home (D6). */
   const [homeMenuOpen, setHomeMenuOpen] = useState(false);
   const currentViewRef = useRef(currentView);
@@ -5182,7 +5192,11 @@ export default function App() {
             const area = areaOf(currentView);
             const page = menuPageOf(currentView);
             if (!area && !page) return null;
-            const donaDoH1 = pane === 'games' || pane === 'tournament' || pane === 'library' || pane === 'pet';
+            /* minimal-ui F4: nenhuma área renderiza mais a página antiga (o
+               conteúdo virou placeholder no `AreaSheet`, F5 devolve o real) —
+               então nenhuma delas é dona do próprio `<h1>` mais; sempre o
+               `AreaTopBar`. */
+            const donaDoH1 = !area && (pane === 'games' || pane === 'tournament' || pane === 'library' || pane === 'pet');
             return (
               <AreaTopBar
                 title={area ? areaLabel(area, isPtH) : menuPageLabel(page!, isPtH)}
@@ -5203,6 +5217,37 @@ export default function App() {
               emblems={gameState.emblems ?? 0}
               credits={gameState.credits ?? 0}
             />
+          )}
+
+          {/* ── O MOLDE DE ÁREA (minimal-ui F4) ──────────────────────────────
+              `AreaScene` (fundo + lotes + NPC anfitrião) + UM `AreaSheet` de
+              exemplo por área, com placeholder — o conteúdo completo de cada
+              área (abas por moeda, Torneio, Masmorra, etc.) é F5. Substitui,
+              por ora, as páginas antigas que só essas 6 áreas alcançavam
+              (`!area` nas condições abaixo) — eram o pane 'shop'/'games'/
+              'tournament'/'library'/'evolution'/'pet'/parte de 'stats'. */}
+          {area && (
+            <AreaScene
+              areaId={area}
+              language={language}
+              lots={[{
+                id: 'exemplo',
+                label: areaDemoLot(area, language).label,
+                left: '50%', top: '38%',
+                ariaLabel: areaDemoLot(area, language).label,
+                onOpen: () => setAreaSheetOpen(true),
+              } satisfies AreaLot]}
+            >
+              <AreaSheet
+                areaId={area}
+                title={areaDemoLot(area, language).label}
+                closeLabel={language === 'pt-BR' ? 'Fechar' : 'Close'}
+                open={areaSheetOpen}
+                onClose={() => setAreaSheetOpen(false)}
+              >
+                <p style={{ ...sm2Text, margin: 0 }}>{areaDemoLot(area, language).placeholder}</p>
+              </AreaSheet>
+            </AreaScene>
           )}
 
           {pane === 'main' && (
@@ -5740,7 +5785,7 @@ export default function App() {
               inferior — alternadas por essas abas em vez de botões separados
               (a barra tem 6 botões travados por teste). A página do Pet é a
               ficha viva: formas desbloqueadas, descrições e habilidades. */}
-          {areaOf(currentView) === 'laboratorio' && (
+          {areaOf(currentView) === 'laboratorio' && !area && (
             <div className="flex gap-2 mb-4">
               {/* `minWidth: 0` + fonte menor são obrigatórios aqui: "Estatísticas"
                   é uma palavra só (min-content ~168px) e `flex:1` com o
@@ -5785,7 +5830,7 @@ export default function App() {
               um personagem de demonstração (as 3 linhas iguais) é exatamente
               quem entende o que a própria árvore significa. Só aqui e no
               limite de criação — em nenhum outro lugar do jogo. */}
-          {pane === 'evolution' && gameState.demoCharacterId && (
+          {pane === 'evolution' && gameState.demoCharacterId && !area && (
             <div style={{ padding: '0 4px 10px' }}>
               <UnlockNudge
                 language={language}
@@ -5799,7 +5844,7 @@ export default function App() {
             </div>
           )}
 
-          {pane === 'evolution' && (
+          {pane === 'evolution' && !area && (
             <Suspense fallback={<ScreenSkeleton language={language} />}><EvolutionPath
               currentStageId={gameState.evolutionStage}
               currentBranch={getDominantBranch() === 'balanced' ? 'data' : getDominantBranch() as 'virus' | 'data' | 'vaccine'}
@@ -5843,7 +5888,7 @@ export default function App() {
               PODE (ultra + comprou + nunca usou). Nunca abre sozinho: o
               convite é um card, o gesto é do jogador. Quem já renasceu vê a
               marca, não o botão — é um registro, não uma oferta repetida. */}
-          {pane === 'evolution' && canRebirth(gameState) && (
+          {pane === 'evolution' && canRebirth(gameState) && !area && (
             <div
               data-rebirth-block
               style={{ marginTop: 16, padding: 12, borderRadius: 'var(--sm2-radius-md)', border: '1px solid var(--sm2-line)', backgroundColor: 'var(--sm2-surface)', display: 'flex', flexDirection: 'column', gap: 8 }}
@@ -5881,7 +5926,7 @@ export default function App() {
               antes de olhar o estágio. E só quando o convite do demo (o
               primeiro bloco da página) não está montado: dois convites iguais
               na mesma tela é cobrança, não convite. */}
-          {pane === 'evolution' && rebirthRefusal(gameState) === 'not-paid' && !gameState.demoCharacterId && (
+          {pane === 'evolution' && rebirthRefusal(gameState) === 'not-paid' && !gameState.demoCharacterId && !area && (
             <div style={{ marginTop: 16 }} data-rebirth-block>
               <UnlockNudge
                 language={language}
@@ -5894,7 +5939,7 @@ export default function App() {
               em `sm2Hint`, e acabou. NÃO vira convite nem botão: a saída é a
               própria página, que já conta a escada (canvas Evolução §24:
               "not-ultra sem convite"). Só fora do demo, que tem o convite dele. */}
-          {pane === 'evolution' && rebirthRefusal(gameState) === 'not-ultra' && !gameState.demoCharacterId && (
+          {pane === 'evolution' && rebirthRefusal(gameState) === 'not-ultra' && !gameState.demoCharacterId && !area && (
             <p style={{ ...sm2Hint, marginTop: 16, textAlign: 'center' }} data-rebirth-block>
               {language === 'pt-BR'
                 ? 'O padrão ainda não chegou ao limite do que esta forma ocupa.'
@@ -5907,7 +5952,7 @@ export default function App() {
               Ainda é ele.") — sem ela, somada a "parte da alma" e ao fato de
               renascer ser compra, a cena lê como morte de um ente. Proibidas
               aqui: morrer, morte, partir, despedida, adeus. */}
-          {pane === 'evolution' && gameState.rebirth && (
+          {pane === 'evolution' && gameState.rebirth && !area && (
             <p style={{ ...sm2Hint, marginTop: 16, display: 'flex', alignItems: 'center', gap: 8 }} data-rebirth-block>
               <Icon name="egg" size={20} fill={1} tone="muted" />
               <span>
@@ -5918,7 +5963,7 @@ export default function App() {
             </p>
           )}
 
-          {pane === 'pet' && (
+          {pane === 'pet' && !area && (
             <Suspense fallback={<ScreenSkeleton language={language} />}><PetPage
               stages={gameState.soulmonStages ?? []}
               dominantElement={gameState.soulmonMeta?.dominantElement}
@@ -5940,7 +5985,7 @@ export default function App() {
               a ficha dele (formas, descrições, habilidades). Em Configurações
               ele leria como um painel de métrica de sono, que é exatamente a
               leitura que a Parte 3 do plano manda evitar. */}
-          {pane === 'pet' && (
+          {pane === 'pet' && !area && (
             <div style={{ marginTop: 16 }}>
               <Suspense fallback={<ScreenSkeleton language={language} />}>
                 <DreamDex rest={gameState.rest ?? createRestState()} language={language} />
@@ -5951,7 +5996,7 @@ export default function App() {
           {/* O diário de aventuras fica ao lado do Dex pelo mesmo motivo dele:
               é coleção DA CRIATURA, não métrica do jogador. Numa tela de
               estatísticas viraria painel de desempenho. */}
-          {pane === 'pet' && (
+          {pane === 'pet' && !area && (
             <div style={{ marginTop: 16 }}>
               <Suspense fallback={<ScreenSkeleton language={language} />}>
                 <AdventureDiary entries={gameState.adventures ?? []} language={language} />
@@ -5959,7 +6004,7 @@ export default function App() {
             </div>
           )}
 
-          {pane === 'stats' && (
+          {pane === 'stats' && !area && (
             <Suspense fallback={<ScreenSkeleton language={language} />}><StatsPage
               /* WP1.6 — a MESMA peça do reveal, agora como lembrança. */
               birth={gameState.bornAt || gameState.soulmonMeta?.baseName || gameState.demoCharacterId ? {
@@ -6152,7 +6197,7 @@ export default function App() {
             </Suspense>
           )}
 
-          {pane === 'tournament' && (
+          {pane === 'tournament' && !area && (
             <Suspense fallback={<ScreenSkeleton language={language} />}>
               <TournamentPage
                 saveId={saveId}
@@ -6177,7 +6222,7 @@ export default function App() {
             </Suspense>
           )}
 
-          {pane === 'library' && (
+          {pane === 'library' && !area && (
             <Suspense fallback={<ScreenSkeleton language={language} />}>
               <LibraryPage
                 saveId={saveId}
@@ -6192,7 +6237,7 @@ export default function App() {
             </Suspense>
           )}
 
-          {pane === 'shop' && (
+          {pane === 'shop' && !area && (
             <Suspense fallback={<ScreenSkeleton language={language} />}>
               <ShopModal
                 asPage
@@ -6218,7 +6263,7 @@ export default function App() {
             </Suspense>
           )}
 
-          {pane === 'games' && (
+          {pane === 'games' && !area && (
             <Suspense fallback={<ScreenSkeleton language={language} />}>
               <ActivitiesPage
                 evolutionStage={gameState.evolutionStage}
