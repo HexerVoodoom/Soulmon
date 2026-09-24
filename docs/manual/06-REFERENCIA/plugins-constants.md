@@ -47,7 +47,7 @@
 - `FOOD_BY_CATEGORY` — uma comida (nome + emoji) por `ActivityCategory` — ex. `Fitness → Protein 🥩`, `Study → Apple 🍎`.
 - `CATEGORY_EMOJIS` — emoji de cada categoria (distinto do emoji de comida acima).
 - `AI_CATEGORY_MAP` — categoria devolvida por uma IA externa (`Physical`/`Mental`/`Social`/`Creative`) → `ActivityCategory` do jogo.
-**Chamado por:** `src/components/ItemsWindow.tsx`, `src/components/CompanionHUD.tsx`, `src/App.tsx`, `src/utils/careRules.ts`.
+**Chamado por:** `src/components/CompanionHUD.tsx`, `src/App.tsx`, `src/utils/careRules.ts` (⚰️ `ItemsWindow.tsx` deixou de importar na minimal-ui F6).
 **Régua:** nenhum teste próprio; coberto indiretamente pelos testes de `careRules.ts` e pelos testes de render dos componentes citados.
 **Avisos do arquivo:** nenhum comentário de aviso — arquivo de dado estático puro.
 

@@ -7,6 +7,27 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 24/09/2026 — minimal-ui F6 (fechamento), branch `chore/minimal-ui-f6`
+>
+> - **Código morto removido**: a tela `ItemsWindow` (pastinha) + `showItemsWindow`/
+>   `handleOpenItems` no `App.tsx` (sem chamador desde a F2; o arquivo ficou só com
+>   `getFoodName`/`getFoodDesc`); o placeholder "chega na próxima fatia" do
+>   `areaSheetCopy.ts`; o `donaDoH1` (sempre falso desde a F5) e os `Pane` mortos
+>   (`games`/`tournament`/`library`/`shop`) do `App.tsx`.
+> - **Texto**: a aba "Stats" do Laboratório era só EN — agora "Estatísticas"/"Stats"; a
+>   copy que mandava para a "pastinha" (chips do Mercado, Glitchtama da masmorra,
+>   coraçãozinho no `HelpModal`) agora diz "mochila"/"Backpack".
+> - ⚠️ **Achado visual (não corrigido, anterior à F6)**: no Mapa, o saldo das 3 moedas
+>   no topo direito fica por cima da arte do cogumelo de Jogos e "Emblemas"/"Créditos"
+>   perdem leitura (`E:/soulmon-shots-f6/mapa.png`); na F3 o toast de nuvem escondia.
+> - **Manual**: `03-FLUXO-DE-TELAS.md` §1 reescrito (Home + Mapa + 6 áreas) e as
+>   menções vivas a `BottomNav`/`ActivitiesPage`/`ShopModal`/`ItemsWindow` em 02, 03,
+>   04, 06 e 00-MAPA viraram caminho novo ou lápide ⚰️; `src/navigation.ts` ganhou
+>   entrada em `06-REFERENCIA/utils.md`. `CACHE_VERSION` v166 → v167.
+> - ⚠️ **Não é uma sincronização completa**: `docs/manual/.sincronizado.json` segue em
+>   `c7bca6d` — o delta desde lá (fatias F1–F5 e o que veio antes delas) não passou
+>   pelo `doc-verificador`; falta rodar `/manter-docs` na `main` depois do merge.
+
 > ## 22/09/2026 — Manual sincronizado com `c7bca6d`
 >
 > Delta `89554b5d..c7bca6d` (7 commits, série BALANCEAMENTO DO ORÁCULO + a saída

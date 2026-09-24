@@ -55,7 +55,8 @@ linha diz:
   `font-family: var(--sm2-font-text)` (Rubik) 12/500, caixa mista,
   `text-transform: none` — Silkscreen só dentro do vidro e em selos.
   Réguas: `src/styles/navRotulo.contract.test.ts` e
-  `src/components/BottomNav.render.test.tsx` medem a fonte.
+  `src/components/nav/nav.render.test.tsx` (sucessor do ⚰️
+  `BottomNav.render.test.tsx`, minimal-ui F1) medem a fonte.
 
 O **teste de aceitação da identidade** do plano ("recorte de 200×200px sem logo:
 dá para dizer que é o Soulmon?") **não tem régua executável** — é critério

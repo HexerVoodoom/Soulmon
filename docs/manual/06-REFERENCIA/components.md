@@ -1,6 +1,6 @@
 # Referência — `src/components`
 
-> **Dono:** doc-redator-referencia · **Data:** 22/09/2026 (5ª sincronização do dia, delta `89554b5d..c7bca6d`: `SoulmonOnboarding.tsx` — ⚰️ `FAVORITE_STEP` não renderiza nada, `favoriteCreature`/`skipFavorite` saíram do estado e do `writeOracleDraft`, degrau pulado nos dois sentidos, constante e `ORACLE_DRAFT_VERSION` mantidas de propósito; anterior: 22/09/2026 (3ª sincronização do dia, delta `cd66940f..cf6315e1`: `App.tsx` **6384 linhas** e **81** handlers (`handleDungeonFloorCleared` entrou), mais o bloco da execução das respostas (`ofereceDesfazer`, os 6 emissores de `BondEvent`, a trava #59, o teto de Bits, `rebirth-reset`, `missionPerfectDays`); `DungeonGame.tsx` **577 linhas** e a prop nova `onFloorCleared`; `ActivitiesPage.tsx` **306 linhas** repassando-a; `UndoToast.tsx` já entrou em `cf6315e1`; anterior: 2ª sincronização do dia: delta `a6c1cd8a..592e2c14`, QA Rodada 2 — ⚰️ `figma/ImageWithFallback.tsx` apagado; `CompanionHUD`/`EvolutionPath` `onError` no sprite próprio e falas do fallback em `PET_VOICE_LINES`; `FeedbackLink` `BUILD_ID`; `GameTutorialFlow` `falhaIa`; `MorningCheckIn` âncora visível; `SettingsPage` Termos; `SoulmonOnboarding` `aposAutenticar` + região viva; `FormKit.ActionRow` `language`/sr-only; `RitualPanel` `aria-disabled`; `App.tsx` `termsNoticePrimeiraVez`/selo/`PostponeNudgeSheet` ids/trilha por estado)) · **Estado:** verificado em 22/09/2026 por doc-verificador (delta `89554b5d..c7bca6d` — conferido no fonte: nenhum `step === FAVORITE_STEP` renderiza, `useState`/`setFavoriteCreature`/`setSkipFavorite` ausentes, `writeOracleDraft` sem as duas chaves, e o `OracleInput` sem `favoriteCreature`); anterior: verificado em 22/09/2026 por doc-verificador (delta `cd66940f..cf6315e1` — `wc -l` refeito nos três arquivos, `grep -c "const handle[A-Za-z0-9_]* *=" src/App.tsx` → 81, e cada símbolo citado conferido no fonte); anterior: verificado em 22/09/2026 por doc-verificador (delta `a6c1cd8a..592e2c14` — as entradas acima conferidas símbolo a símbolo contra o fonte; anterior no mesmo dia: delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — seções tocadas conferidas símbolo a símbolo contra o fonte: `App.tsx` (`widgetPetName`, `limparOrigemDaUrl`, `changed`), `CompanionHUD.tsx` (`getFoodName`), `FeedbackLink.tsx` (`__APP_VERSION__`, `originLabel`), `GameTutorialFlow.tsx`, `ItemsWindow.tsx` (`getFoodName` exportado), `NotificationManager.tsx`, `SettingsPage.tsx` (Sobre/Ajuda), `SoulmonOnboarding.tsx` (`avisoContaExcluida`), `TermsUpdateBanner.tsx` (`changed`, `region`), `form/FormKit.tsx` (`mailto:`); anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — `App.tsx`, `ChatBox.tsx`, `CompanionHUD.tsx`, `ErrorBoundary.tsx`, `FeedbackLink.tsx`, `NotificationManager.tsx`, ⚰️ `SettingsModal.tsx`, `SettingsPage.tsx`, `TermsUpdateBanner.tsx`; anterior: entradas `src/App.tsx`, `src/components/SettingsModal.tsx` e `src/components/SettingsPage.tsx`, delta `5ac3d351..8d318529`, som/S16 + grupo Som; o resto: mecânico completo; delta `dc72579e..9875477b` conferido símbolo a símbolo, sha a sha)
+> **Dono:** doc-redator-referencia · **Data:** 24/09/2026 (fechamento F6 da minimal-ui: `ItemsWindow.tsx` perdeu a tela (só `getFoodName`/`getFoodDesc`), `MapPage`/`CornerLink`/`AreaSheet`/`AreaScene`/`AreaTopBar` atualizados, "Chamado por" de `ArenaGame`/`DinoGame`/`DungeonGame`/`RPSGame`/`Icon`/`NavGlyphs` trocados de `ActivitiesPage`/`BottomNav` para `AreaView`/`nav/*`); anterior: 22/09/2026 (5ª sincronização do dia, delta `89554b5d..c7bca6d`: `SoulmonOnboarding.tsx` — ⚰️ `FAVORITE_STEP` não renderiza nada, `favoriteCreature`/`skipFavorite` saíram do estado e do `writeOracleDraft`, degrau pulado nos dois sentidos, constante e `ORACLE_DRAFT_VERSION` mantidas de propósito; anterior: 22/09/2026 (3ª sincronização do dia, delta `cd66940f..cf6315e1`: `App.tsx` **6384 linhas** e **81** handlers (`handleDungeonFloorCleared` entrou), mais o bloco da execução das respostas (`ofereceDesfazer`, os 6 emissores de `BondEvent`, a trava #59, o teto de Bits, `rebirth-reset`, `missionPerfectDays`); `DungeonGame.tsx` **577 linhas** e a prop nova `onFloorCleared`; `ActivitiesPage.tsx` **306 linhas** repassando-a; `UndoToast.tsx` já entrou em `cf6315e1`; anterior: 2ª sincronização do dia: delta `a6c1cd8a..592e2c14`, QA Rodada 2 — ⚰️ `figma/ImageWithFallback.tsx` apagado; `CompanionHUD`/`EvolutionPath` `onError` no sprite próprio e falas do fallback em `PET_VOICE_LINES`; `FeedbackLink` `BUILD_ID`; `GameTutorialFlow` `falhaIa`; `MorningCheckIn` âncora visível; `SettingsPage` Termos; `SoulmonOnboarding` `aposAutenticar` + região viva; `FormKit.ActionRow` `language`/sr-only; `RitualPanel` `aria-disabled`; `App.tsx` `termsNoticePrimeiraVez`/selo/`PostponeNudgeSheet` ids/trilha por estado)) · **Estado:** verificado em 22/09/2026 por doc-verificador (delta `89554b5d..c7bca6d` — conferido no fonte: nenhum `step === FAVORITE_STEP` renderiza, `useState`/`setFavoriteCreature`/`setSkipFavorite` ausentes, `writeOracleDraft` sem as duas chaves, e o `OracleInput` sem `favoriteCreature`); anterior: verificado em 22/09/2026 por doc-verificador (delta `cd66940f..cf6315e1` — `wc -l` refeito nos três arquivos, `grep -c "const handle[A-Za-z0-9_]* *=" src/App.tsx` → 81, e cada símbolo citado conferido no fonte); anterior: verificado em 22/09/2026 por doc-verificador (delta `a6c1cd8a..592e2c14` — as entradas acima conferidas símbolo a símbolo contra o fonte; anterior no mesmo dia: delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — seções tocadas conferidas símbolo a símbolo contra o fonte: `App.tsx` (`widgetPetName`, `limparOrigemDaUrl`, `changed`), `CompanionHUD.tsx` (`getFoodName`), `FeedbackLink.tsx` (`__APP_VERSION__`, `originLabel`), `GameTutorialFlow.tsx`, `ItemsWindow.tsx` (`getFoodName` exportado), `NotificationManager.tsx`, `SettingsPage.tsx` (Sobre/Ajuda), `SoulmonOnboarding.tsx` (`avisoContaExcluida`), `TermsUpdateBanner.tsx` (`changed`, `region`), `form/FormKit.tsx` (`mailto:`); anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — `App.tsx`, `ChatBox.tsx`, `CompanionHUD.tsx`, `ErrorBoundary.tsx`, `FeedbackLink.tsx`, `NotificationManager.tsx`, ⚰️ `SettingsModal.tsx`, `SettingsPage.tsx`, `TermsUpdateBanner.tsx`; anterior: entradas `src/App.tsx`, `src/components/SettingsModal.tsx` e `src/components/SettingsPage.tsx`, delta `5ac3d351..8d318529`, som/S16 + grupo Som; o resto: mecânico completo; delta `dc72579e..9875477b` conferido símbolo a símbolo, sha a sha)
 > **Verificação:** `npx vitest run src/docsManual.contract.test.ts` (item c — cobertura de referência) e a lista de `.test.tsx`/`.test.ts` citada em cada entrada.
 > **Não cobre:** regra de negócio em profundidade (→ [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md)), fluxo de tela a tela (→ [03-FLUXO-DE-TELAS.md](../03-FLUXO-DE-TELAS.md)), identidade visual/tokens (→ [04-IDENTIDADE-VISUAL.md](../04-IDENTIDADE-VISUAL.md)).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -75,7 +75,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Props principais:** `ArenaGameProps` (exportado).
 **Exports:** `ArenaGameProps` (interface) · `ArenaGame(props)`.
 **Estado/efeitos relevantes:** `useState` para `pool`, `fase`, `rodada`, `inimigos`, `hp`, `carga`, `eco`, `enfraquecidos`, `defensor`, `pontos`, `popup`, `sprites`; `useRef` (`popupTimer`); `useEffect` carrega sprites e limpa o timer do popup ao desmontar; `useCallback`/`useMemo` para `stats`, `mostrarPopup`, `montarRodada`, `comecar`, `abrirDefesa`, `limparRodada`, `atacar`, `defender`. Usa `TimingBar` (`src/components/pixel/TimingBar.tsx`) para a precisão do jogador (em vez de `sampleAcc()` do motor).
-**Chamado por:** `src/components/ActivitiesPage.tsx` (`grep -rl "from '.*/ArenaGame'" src`, 09/09/2026).
+**Chamado por:** `src/components/nav/AreaView.tsx` (lote Duelo da Arena, minimal-ui F5; ⚰️ até então `ActivitiesPage.tsx`) (`grep -rl "ArenaGame'" src`, 24/09/2026).
 **Régua:** `src/components/ArenaGame.render.test.tsx`; a ordem de turno é travada por `arena.test.ts` (motor puro `src/utils/arena.ts`, `simulateArenaRun`), que calibrou os especiais por 300+ runs/arquétipo (taxa de vitória 40–80%, dispersão ≤20pp).
 **Avisos do arquivo:** ⚠️ a ordem de turno DEVE ser idêntica à de `simulateArenaRun` — trocar a sequência (eco → ação do jogador → revide de todo inimigo vivo → enfraquecimento da maldição) invalida o balanceamento sem ficar vermelho; a única diferença permitida é a origem da precisão (aqui vem da `TimingBar`, não de `sampleAcc()`); a Arena não cobra corações, não toca no cuidado do pet e não tem porta de entrada paga — perder custa só a run.
 
@@ -111,7 +111,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 
 ### `src/components/nav/AreaTopBar.tsx`
 **Dono de:** o topo de uma área do Mapa e das páginas do menu da Home — voltar (seta em círculo, exceção D1 do dono) + título centralizado.
-**Props principais:** `title`, `backLabel` (diz PARA ONDE), `onBack`, `ownsHeading?` (`false` quando a página de baixo já tem `<h1>`: o título vira `<p aria-hidden>`).
+**Props principais:** `title`, `backLabel` (diz PARA ONDE), `onBack`, `ownsHeading?` (`false` quando a página de baixo já tem `<h1>`: o título vira `<p aria-hidden>`; desde a F5 o `App` não passa mais — nenhuma área tem página dona do `<h1>` —, fica o padrão `true`).
 **Exports:** `AreaTopBar(props)`.
 **Chamado por:** `src/App.tsx`.
 **Régua:** `src/components/nav/nav.render.test.tsx`.
@@ -151,20 +151,20 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 
 ### `src/components/nav/CornerLink.tsx`
 **Dono de:** o link de canto entre as duas telas de topo — Mapa no canto inferior direito da Home, Home no canto inferior esquerdo do Mapa. Glifo pelado de 32 (papel `nav`), alvo 56 no botão.
-**Props principais:** `icon: NavGlyphName`, `label`, `side: 'left' | 'right'`, `onClick`.
+**Props principais:** `icon: NavGlyphName`, `label`, `side: 'left' | 'right'`, `onClick`, `glow?` (o halo do link da Home sobre a cena do Mapa).
 **Exports:** `CornerLink(props)`.
 **Chamado por:** `src/App.tsx`.
 **Régua:** `src/components/nav/nav.render.test.tsx`.
 
 ### `src/components/nav/AreaScene.tsx`
-**Dono de:** o MOLDE de uma área do Mapa (minimal-ui F4) — fundo de cena, "lotes" (construções clicáveis, posicionadas em % sobre a cena) e o NPC anfitrião da área com balão de fala (a fala vem de `src/utils/areaNpcVoice.ts`, nunca escrita aqui). Não decide o conteúdo de cada folha — isso é F5.
+**Dono de:** o MOLDE de uma área do Mapa (minimal-ui F4) — fundo de cena, "lotes" (construções clicáveis, posicionadas em % sobre a cena) e o NPC anfitrião da área com balão de fala (a fala vem de `src/utils/areaNpcVoice.ts`, nunca escrita aqui). Não decide o conteúdo de cada folha — isso é do `AreaView`.
 **Props principais:** `areaId: AreaId`, `language`, `lots: AreaLot[]` (`id`, `label`, `left`/`top`, `ariaLabel`, `onOpen`, `art?` — a arte isométrica do lote, desde F5), `background?` (fundo pintado 9:16 em `cover`, desde F5; sem ele, o degradê de tokens), `children?` (onde entra o `AreaSheet` aberto, no mesmo empilhamento da cena).
 **Exports:** `AreaScene(props)`, `AreaLot` (interface).
 **Chamado por:** `src/components/nav/AreaView.tsx`.
 **Régua:** `src/components/nav/areaShell.render.test.tsx`.
 
 ### `src/components/nav/AreaSheet.tsx`
-**Dono de:** a folha (bottom-sheet) de um lote de área (minimal-ui F4) — `min-height: 62%`, o NPC da área espiando ATRÁS/ACIMA da folha (nunca dentro do conteúdo rolável), backdrop fecha ao tocar fora, Escape fecha, foco vai para o botão de fechar ao abrir. Só o MOLDE: o conteúdo de cada folha por área é F5 (aqui é sempre `children` — placeholder até lá).
+**Dono de:** a folha (bottom-sheet) de um lote de área (minimal-ui F4) — `min-height: 62%`, o NPC da área espiando ATRÁS/ACIMA da folha (nunca dentro do conteúdo rolável), backdrop fecha ao tocar fora, Escape fecha, foco vai para o botão de fechar ao abrir. O conteúdo vem sempre por `children` (desde F5, o conteúdo real de cada lote, montado pelo `AreaView`).
 **Props principais:** `areaId: AreaId`, `title`, `closeLabel`, `open`, `onClose`, `npcArt?` (NPC próprio da lojinha — F5, os vendedores do Mercado; sem ele, o anfitrião da área), `children`.
 **Exports:** `AreaSheet(props)`.
 **Chamado por:** `src/components/nav/AreaView.tsx`.
@@ -185,8 +185,8 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** `src/components/nav/nav.render.test.tsx`.
 
 ### `src/components/nav/MapPage.tsx`
-**Dono de:** a tela do Mapa — por ora grade 2×3 das seis áreas (`AREAS` de `src/navigation.ts`) com ícone, nome e dica; a arte isométrica é a fatia F3.
-**Props principais:** `language`, `onOpenArea(AreaId)`.
+**Dono de:** a tela do Mapa (minimal-ui F1 + arte isométrica F3) — cena com as seis construções (`AREAS` de `src/navigation.ts`), cada uma um `<button>` com `aria-label` = `areaLabel` que chama `onOpenArea`, posicionada em % da cena; o saldo das 3 moedas num menu discreto no topo (formato e cor de `utils/currencies.ts`); o canto inferior esquerdo vinhetado para o `CornerLink glow` da Home. `<h1>` visualmente oculto (`#sm-map-title`).
+**Props principais:** `language`, `onOpenArea(AreaId)`, `bits`, `emblems`, `credits`.
 **Exports:** `MapPage(props)`.
 **Chamado por:** `src/App.tsx`.
 **Régua:** `src/components/nav/nav.render.test.tsx`, `src/styles/navRotulo.contract.test.ts`.
@@ -283,10 +283,10 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 
 ### `src/components/DinoGame.tsx`
 **Dono de:** o minijogo Dino Runner — o pet pulando obstáculos que sobem de tier (Bakemon→Tuskmon→Gigadramon→Titamon) conforme o tempo decorrido.
-**Props principais:** não documentado por interface própria no trecho lido (arquivo de 292 linhas — corrigido de "293" por doc-verificador, `wc -l`, 10/09/2026 — ver props recebidas do `ActivitiesPage`).
+**Props principais:** não documentado por interface própria no trecho lido (arquivo de 292 linhas — corrigido de "293" por doc-verificador, `wc -l`, 10/09/2026 — ver props recebidas do `AreaView`, ⚰️ antes da `ActivitiesPage`).
 **Exports:** `DinoGame(props)`.
 **Estado/efeitos relevantes:** `useRef` para `canvasRef`, `scoreElRef`, `petImgRef`, `tierImgsRef`, `phaseRef`, o laço de física (`g`); `useState` (`phase`, `finalScore`, `earned`, `best` — lido de `STORAGE_KEYS.DINO_BEST` via `readNumber`); `useCallback` (`jump`); toca `playTaskComplete` (`src/utils/sounds.ts`); grava recorde com `writeLocal`. Desde `66e32d43` (21/09/2026, R2-2/D-J13) o sprite do pet é `lineIconForStage(evolutionStage, 64, demoCharacterId)` (`utils/lineIcons.ts`, ícone-ficha 64² com bbox cheia) e só cai em `getSpriteForStage` quando o estágio não é de linha.
-**Chamado por:** `src/components/ActivitiesPage.tsx` (`grep -rl "from '.*/DinoGame'" src`, 09/09/2026).
+**Chamado por:** `src/components/nav/AreaView.tsx` (lote Corrida do Dino da Exploração, minimal-ui F5; ⚰️ até então `ActivitiesPage.tsx`) (24/09/2026).
 **Régua:** nenhuma (`find src/components -maxdepth 1 -name 'DinoGame.*test.ts*'` vazio, 09/09/2026).
 **Avisos do arquivo:** fronteira retrô interna ao arquivo — DENTRO do `<canvas>` é território diegético/retrô e não migra para o kit `--sm2-*`; FORA é chrome em Material Symbols; `expand_less` (não `arrow_upward`) no botão de pular porque `arrow_upward` não está no subset da fonte (`src/styles/tokens.md`) e renderizaria vazio.
 
@@ -301,10 +301,10 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 
 ### `src/components/DungeonGame.tsx`
 **Dono de:** o minijogo Masmorra — run de até 5 andares (`MAX_FLOORS`, declarado NESTE arquivo, não em `utils/dungeon.ts`), escada de 6 inimigos por andar, combate por `TimingBar`.
-**Props principais:** `Popup` (interface interna) e as props recebidas do `ActivitiesPage` (não redeclaradas aqui em detalhe — arquivo de **577 linhas**, `wc -l`, 22/09/2026; eram 568 em 10/09/2026). **Nova em `cf6315e1`: `onFloorCleared?: () => void`** (decisão do dono #59b) — o componente não expunha o momento "andar limpo": só `onEnemyDefeated`, `onEarnPoints` e `onGlitchtama` (a run inteira), e era por isso que o `BondEvent` `dungeonFloor` da tabela do §55 nunca tinha emissor. É chamada em `onFloorCleared?.()` **antes** do `if (floor >= MAX_FLOORS)`, de propósito: o 5º andar é um andar limpo **e** uma run completa, e a tabela paga os dois — quem limita é o teto diário de `bond.ts`.
+**Props principais:** `Popup` (interface interna) e as props recebidas do `AreaView` (⚰️ antes da `ActivitiesPage`; não redeclaradas aqui em detalhe — arquivo de **577 linhas**, `wc -l`, 22/09/2026; eram 568 em 10/09/2026). **Nova em `cf6315e1`: `onFloorCleared?: () => void`** (decisão do dono #59b) — o componente não expunha o momento "andar limpo": só `onEnemyDefeated`, `onEarnPoints` e `onGlitchtama` (a run inteira), e era por isso que o `BondEvent` `dungeonFloor` da tabela do §55 nunca tinha emissor. É chamada em `onFloorCleared?.()` **antes** do `if (floor >= MAX_FLOORS)`, de propósito: o 5º andar é um andar limpo **e** uma run completa, e a tabela paga os dois — quem limita é o teto diário de `bond.ts`.
 **Exports:** `DungeonGame(props)`.
 **Estado/efeitos relevantes:** `useState` para `enemies`, `enemyIdx`, `enemyHp`, `playerHp`, `phase`, `popup`, `hitFx`, `rewardMsg`, `defendTimeLeft`, `baseLevel` (de `getDungeonDifficulty()`), `floor`, `best` (de `getDungeonBest()`), `runScore`, `runScenes` (de `buildRunScenes()`); `useRef`/`useCallback` (`after`, temporizadores); toca `playFeed` (`src/utils/sounds.ts`); chama `buildDungeonWave`, `recordDungeonScore`, `setDungeonDifficultyAtLeast`, `deepStartCost`/`canBuyDeepStart` de `src/utils/dungeon.ts`.
-**Chamado por:** `src/components/ActivitiesPage.tsx` (`grep -rl "from '.*/DungeonGame'" src`, 09/09/2026).
+**Chamado por:** `src/components/nav/AreaView.tsx` (lote Masmorra da Exploração, minimal-ui F5; ⚰️ até então `ActivitiesPage.tsx`) (24/09/2026).
 **Régua:** nenhuma (`find src/components -maxdepth 1 -name 'DungeonGame.*test.ts*'` vazio, 09/09/2026); a régua de tetos globais (Glitchtama, coraçãozinhos) vive nos testes de `src/utils/dungeon.ts`/`specialItemUse.ts`.
 **Avisos do arquivo:** ⚠️ `MAX_FLOORS` mora AQUI, não em `utils/dungeon.ts` — achado na auditoria de 09/09/2026 (`CLAUDE.md`, linha ⚔️ Masmorra); sem limite diário e sem gate de entrada; perder custa só a run (nunca corações). Desde `84ae4937` (21/09/2026, copy §4 da bíblia): o VOCABULÁRIO de jogador mudou — "camada"/"layer" (não andar), "descer"/"descida" (não entrar/run), vencer é o inimigo "parar de insistir" (nunca "derrotado"/"defeated"; EN nunca "passed"), a derrota é "Você subiu. A descida ficou pelo caminho" + a linha dos corações intactos; contagens vêm de `MAX_FLOORS`/`ladderLen`, nunca à mão; duas linhas de contexto (a fenda como assentamento falho; a camada mais antiga) e a frase do Glitchtama com o nome mantido (P5 decidida pelo dono em 21/09/2026). Os SÍMBOLOS (`MAX_FLOORS`, `floor`, `startRun`, `exitRun`) não mudaram.
 
@@ -467,13 +467,12 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Avisos do arquivo:** puramente cosmético, self-dismiss via `onFinish`; cai para o wordmark raven/gradiente se o vídeo falhar (WebView antiga sem suporte ao formato).
 
 ### `src/components/ItemsWindow.tsx`
-**Dono de:** a Pastinha — inventário de itens (chips, coraçãozinho, especiais) com uma ação dominante: usar.
-**Props principais:** `ItemsWindowProps` — inventário do save, callback de uso, `language`.
-**Exports:** `ItemsWindow(props)` · `getFoodName(emoji, lang)` (exportada desde `a6c1cd8a`, PL-5 — dono único do nome do alimento/item no idioma da pessoa; o `CompanionHUD` a importa em vez de derivar um nome só EN de `FOOD_BY_CATEGORY`).
-**Estado/efeitos relevantes:** `useState` (`selected`); lê `ITEM_ART`, `SPECIAL_ITEMS`/`CHIP_BOOST`/`HEART_HEAL` de `src/utils/shop.ts`.
-**Chamado por:** `src/App.tsx`, `src/components/CompanionHUD.tsx` (`getFoodName`, desde `a6c1cd8a`).
+**Dono de:** os nomes e descrições (PT/EN) de comida e item especial. ⚰️ **A tela da Pastinha (`ItemsWindow(props)`, `ItemsWindowProps`, `effectLine`) foi apagada no fechamento da minimal-ui (F6, 24/09/2026)**: desde a F2 a entrada de item é a Mochila da Home (`home/Mochila.tsx`) e nada mais abria a pastinha (`handleOpenItems` sem chamador).
+**Exports:** `getFoodDesc(emoji, lang)` · `getFoodName(emoji, lang)` (exportada desde `a6c1cd8a`, PL-5 — dono único do nome do alimento/item no idioma da pessoa; o `CompanionHUD` a importa em vez de derivar um nome só EN de `FOOD_BY_CATEGORY`).
+**Estado/efeitos relevantes:** nenhum; lê `SPECIAL_ITEMS` de `src/utils/shop.ts`.
+**Chamado por:** `src/components/CompanionHUD.tsx` (`getFoodName`, desde `a6c1cd8a`), `src/components/home/Mochila.tsx` (`getFoodName`, `getFoodDesc`).
 **Régua:** nenhuma (`find src/components -maxdepth 1 -name 'ItemsWindow.*test.ts*'` vazio, 09/09/2026).
-**Avisos do arquivo:** o emoji É a chave de inventário (`utils/shop.ts`) — nenhum PNG paralelo, para não repetir o bug de moeda que a loja teve com duas representações do mesmo item; efeito virou frase ("+2 Benevolência, +1 Poder") no lugar de cor chapada; sem contador "N itens" (a grade já mostra).
+**Avisos do arquivo:** o emoji É a chave de inventário (`utils/shop.ts`) — nenhum PNG paralelo, para não repetir o bug de moeda que a loja teve com duas representações do mesmo item.
 
 ### `src/components/LibraryPage.tsx`
 **Dono de:** a Biblioteca — diretório de jogadores, amigos e o painel cooperativo, com quatro estados explícitos (carregando/vazio/erro/sem rede).
@@ -625,7 +624,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Props principais:** props inline (sem interface nomeada) — `language`, `onEarnPoints`, `onExit`; `evolutionStage` e `demoCharacterId?` SEGUEM no tipo (assinatura comum dos minijogos, o `App.tsx` ainda passa) mas não são lidos — desde o canvas Jogos o pet não aparece na cena, e o visor vem do kit `games/GameKit.tsx`.
 **Exports:** `RPSGame(props)`.
 **Estado/efeitos relevantes:** `useState` (`playerWins`, `petWins`, `playerHand`, `petHand`, `thinking`, `roundMsg`, `matchOver`); `useRef`/`useEffect` limpam o timer da IA ao desmontar; toca `playTaskComplete` (`src/utils/sounds.ts`).
-**Chamado por:** `src/components/ActivitiesPage.tsx` (`grep -rl "from '.*/RPSGame'" src`, 09/09/2026).
+**Chamado por:** `src/components/nav/AreaView.tsx` (lote Pedra, papel e tesoura de Jogos, minimal-ui F5; ⚰️ até então `ActivitiesPage.tsx`) (24/09/2026).
 **Régua:** nenhuma (`find src/components -maxdepth 1 -name 'RPSGame.*test.ts*'` vazio, 09/09/2026).
 **Avisos do arquivo:** as três peças eram emoji do sistema (dívida de arte, `docs/BACKLOG-ARTE-GERAR.md` item A11) — hoje são sprites próprios; cada peça carrega rótulo PT/EN próprio porque `<img>` não carrega nome acessível como o emoji carregava.
 
@@ -774,7 +773,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Props principais:** `UnlockReason` (type: `'task-limit'|'evolution'|'report'|'shop'`) · `UnlockAccountModalProps` — `language`, entitlement atual, motivo do convite, callbacks de compra/restauração.
 **Exports:** `UnlockReason` (type) · `UnlockAccountModal(props)` · `UnlockNudge(props)` — convite discreto, uma linha clicável, só para contas `demo`.
 **Estado/efeitos relevantes:** `useState` (`loading: 'buy'|'restore'|null`, `message`); usa `purchase`/`restorePurchases`/`isBillingAvailable` (`src/utils/playBilling.ts`), `useUnlockPriceLabel` (`src/utils/priceLabel.ts`), `track`/`unlockReasonCode` (`src/utils/telemetry.ts`).
-**Chamado por:** `src/App.tsx`, `src/components/CreateModal.tsx`, `src/components/DailyReportModal.tsx`, `src/components/EditModal.tsx`, `src/components/ShopModal.tsx` (`grep -rl "from '.*/UnlockAccountModal'" src`, 09/09/2026); também tocado por `src/components/telemetryWiring.render.test.tsx`.
+**Chamado por:** `src/App.tsx`, `src/components/CreateModal.tsx`, `src/components/DailyReportModal.tsx`, `src/components/EditModal.tsx`, `src/components/ShopModal.tsx` (`grep -rl "from '.*/UnlockAccountModal'" src`, 09/09/2026; ⚰️ `ShopModal.tsx` apagado na minimal-ui F5 — o convite do Mercado mora em `mercado/MercadoSheets.tsx`); também tocado por `src/components/telemetryWiring.render.test.tsx`.
 **Régua:** `src/components/UnlockAccountModal.copy.render.test.tsx`, `.dismiss.render.test.tsx`.
 **Avisos do arquivo:** ⚠️ eram "dois lugares" documentados para o `UnlockNudge` (limite de criação + Evolução); `src/components/EditModal.tsx` passou a ser o terceiro — era o caminho que contornava o teto do demo, salvando sem checar cap; "Agora não" tem a mesma largura do botão de compra (recusar é resposta legítima); "restaurar" sussurra (`quiet`), não é uma segunda oferta.
 
@@ -904,7 +903,7 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 **Props principais:** `IconProps` (exportado) — `name` (nome Material, mesmo com glifo próprio), `size`, `fill` (eixo de estado), `weight` (espessura de traço no SVG), `tone`, `label`.
 **Exports:** `IconTone` (type — tokens de TINTA, nunca fill) · `IconProps` (interface) · `Icon` (`const`, `memo`) · `default`.
 **Estado/efeitos relevantes:** nenhum — componente puro; `memo` porque é o mais instanciado do app (nav, cada card de tarefa, cada ação do pet), todas as props primitivas.
-**Chamado por:** dezenas de arquivos (`grep -rl "from '.*/Icon'" src` — `App.tsx`, `AISettingsModal`, `ActivitiesPage`, `ArenaGame`, `BottomNav`, `CompanionHUD`, `CreateModal`, `EvolutionPath`, `ShopModal`, `TournamentPage` etc.) e `src/styles/iconScale.contract.test.ts` (09/09/2026).
+**Chamado por:** dezenas de arquivos (`grep -rl "from '.*/Icon'" src` — `App.tsx`, `AISettingsModal`, `ArenaGame`, `CompanionHUD`, `CreateModal`, `EvolutionPath`, `TournamentPage`, `home/Mochila`, `mercado/*`, `nav/HomeMenuSheet` etc.; ⚰️ `ActivitiesPage`, `BottomNav` e `ShopModal` saíram na minimal-ui) e `src/styles/iconScale.contract.test.ts` (09/09/2026).
 **Régua:** exercitado por `src/components/ui/foundation.render.test.tsx`; a regra "ícone nunca dentro de box" é travada por teste próprio.
 **Avisos do arquivo:** ícone NUNCA dentro de box — nenhuma moldura/fundo/borda/chanfro/padding, em nenhuma prop; se existir glifo próprio com o mesmo nome em `NavGlyphs.tsx`, o `Icon` o desenha, senão cai na ligature Material — a troca é invisível para quem chama.
 
@@ -913,7 +912,7 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 **Props principais:** `GlyphSvgProps` (exportado), `NavGlyphProps` (exportado) — `name`/`GlyphName`, `size`, `weight`, `fill`, `tone`.
 **Exports:** `NavGlyphName` (type) · `GlyphName` (type) · `hasGlyph(name)` — existe glifo próprio? · `GLYPH_NAMES` (const, para inspeção/teste) · `GlyphSvgProps` (interface) · `GlyphSvg(props)` — o desenho puro, sem casca · `NavGlyphTone` (type) · `NavGlyphProps` (interface) · `NavGlyph` (`const`, `memo`) · `default`.
 **Estado/efeitos relevantes:** `useState`/`useEffect`/`useId` para detectar `prefers-reduced-motion` (`reduced`).
-**Chamado por:** `src/components/BottomNav.tsx`, `src/components/ui/Icon.tsx` (`grep -rl "from '.*/NavGlyphs'" src`, 09/09/2026).
+**Chamado por:** `src/App.tsx`, `src/components/nav/AreaTopBar.tsx`, `src/components/nav/CornerLink.tsx`, `src/components/ui/Icon.tsx` (`grep -rl "from '.*/NavGlyphs'" src`, 24/09/2026; ⚰️ `BottomNav.tsx` apagado na minimal-ui F1).
 **Régua:** exercitado por `src/components/ui/foundation.render.test.tsx`.
 **Avisos do arquivo:** critério de corte é "um Material honesto é melhor que um glifo próprio feio" — nem todo ícone do app tem glifo próprio, de propósito; copiam a métrica do Material para não parecer adesivo colado.
 

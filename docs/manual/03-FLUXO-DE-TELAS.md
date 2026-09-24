@@ -1,6 +1,6 @@
 # Fluxo de telas do Soulmon
 
-> **Dono:** doc-redator-telas · **Data:** 22/09/2026 (5ª sincronização do dia, delta `89554b5d..c7bca6d`: a linha `FAVORITE_STEP` da tabela de passos do ritual virou ⚰️ e ganhou o parágrafo do degrau pulado nos dois sentidos (e do rascunho antigo desviado); anterior: 22/09/2026 (3ª sincronização do dia, delta `cd66940f..cf6315e1`: §4.5 marcar feito abre 5 s de "Desfazer" (os dois handlers, inclusive a última etapa) e §4.25 ganhou a linha do `UndoToast` entre as superfícies globais (#57); anterior: 2ª sincronização do dia, delta `a6c1cd8a..592e2c14`, QA Rodada 2: §2.1 gate `; wv)`, §2.3 portão com lápide ANTES do onboarding + região viva + `OfflineSeal`, §2.4 falha de IA com nome e hint que fica, §3.2 banner de termos em posição 1 na primeira vez, §4.2 fallback do sprite e falas do fallback, §4.17 âncora visível, §4.23 Termos na Ajuda e `#en`, §4.25 selo nas telas pré-Home)) · **Estado:** verificado em 22/09/2026 por doc-verificador (delta `89554b5d..c7bca6d` — `FAVORITE_STEP = 5` e `QUIZ_START = FAVORITE_STEP + 1` intactos no fonte; os dois desvios (`next()` em `FAVORITE_STEP - 1`, `back()` em `QUIZ_START`) e o inicializador de `step` conferidos em `SoulmonOnboarding.tsx`; nenhum bloco `step === FAVORITE_STEP` renderiza); anterior: verificado em 22/09/2026 por doc-verificador (delta `cd66940f..cf6315e1` — `src/components/UndoToast.tsx` e as duas chamadas de `ofereceDesfazer` no `src/App.tsx` conferidas); anterior: verificado em 22/09/2026 por doc-verificador (delta `a6c1cd8a..592e2c14` — as seções acima conferidas símbolo a símbolo contra `index.html`, `SoulmonOnboarding.tsx`, `GameTutorialFlow.tsx`, `App.tsx`, `CompanionHUD.tsx`, `MorningCheckIn.tsx`, `SettingsPage.tsx`; anterior no mesmo dia: delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §2.1 gate por plataforma (`index.html`), §2.3 aviso de conta excluída no portão (`SoulmonOnboarding.tsx` › `avisoContaExcluida`), §2.4 hint de IA, §3.2 item 7 `changed`/`region`/"Entendi", §4.23 Sobre e Ajuda conferidos símbolo a símbolo contra o fonte; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §2.1 aviso de WebView, §3.2 item 6 `termos`, §4.23 grupo Sobre, §4.23a/§4.23b ⚰️ `SettingsModal`, §4.25 `ErrorBoundary` conferidos símbolo a símbolo; anterior: §4.23/§4.23b, delta `5ac3d351..8d318529`, som/S16 + grupo "Som" na `SettingsPage`; verificação anterior do mesmo dia: delta `dc72579e..9875477b`, 30 commits: copy da bíblia §1–§6-bis, superfície de suporte, rodada 2 da arte; verificação anterior do delta `2580b73a..dc72579e`, Fase 2, identidade "O Visor", 14 fluxos: 21/09/2026)
+> **Dono:** doc-redator-telas · **Data:** 24/09/2026 (fechamento F6 da minimal-ui: §1 reescrito para Home + Mapa + 6 áreas — `navigation.ts`, `goTo`/`goBack`/`viewBack`, `HomeMenuSheet`, `AreaView`; lápides ⚰️ em §4.2b `ItemsWindow`, §4.4 `ActivitiesPage`, §4.6 `ShopModal`; §4.1/§4.9/§4.10/§4.13/§4.14/§4.15/§4.22/§4.23a e a tabela do §6 com o caminho novo; conferido contra o fonte, sem passar pelo doc-verificador); anterior: 22/09/2026 (5ª sincronização do dia, delta `89554b5d..c7bca6d`: a linha `FAVORITE_STEP` da tabela de passos do ritual virou ⚰️ e ganhou o parágrafo do degrau pulado nos dois sentidos (e do rascunho antigo desviado); anterior: 22/09/2026 (3ª sincronização do dia, delta `cd66940f..cf6315e1`: §4.5 marcar feito abre 5 s de "Desfazer" (os dois handlers, inclusive a última etapa) e §4.25 ganhou a linha do `UndoToast` entre as superfícies globais (#57); anterior: 2ª sincronização do dia, delta `a6c1cd8a..592e2c14`, QA Rodada 2: §2.1 gate `; wv)`, §2.3 portão com lápide ANTES do onboarding + região viva + `OfflineSeal`, §2.4 falha de IA com nome e hint que fica, §3.2 banner de termos em posição 1 na primeira vez, §4.2 fallback do sprite e falas do fallback, §4.17 âncora visível, §4.23 Termos na Ajuda e `#en`, §4.25 selo nas telas pré-Home)) · **Estado:** verificado em 22/09/2026 por doc-verificador (delta `89554b5d..c7bca6d` — `FAVORITE_STEP = 5` e `QUIZ_START = FAVORITE_STEP + 1` intactos no fonte; os dois desvios (`next()` em `FAVORITE_STEP - 1`, `back()` em `QUIZ_START`) e o inicializador de `step` conferidos em `SoulmonOnboarding.tsx`; nenhum bloco `step === FAVORITE_STEP` renderiza); anterior: verificado em 22/09/2026 por doc-verificador (delta `cd66940f..cf6315e1` — `src/components/UndoToast.tsx` e as duas chamadas de `ofereceDesfazer` no `src/App.tsx` conferidas); anterior: verificado em 22/09/2026 por doc-verificador (delta `a6c1cd8a..592e2c14` — as seções acima conferidas símbolo a símbolo contra `index.html`, `SoulmonOnboarding.tsx`, `GameTutorialFlow.tsx`, `App.tsx`, `CompanionHUD.tsx`, `MorningCheckIn.tsx`, `SettingsPage.tsx`; anterior no mesmo dia: delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §2.1 gate por plataforma (`index.html`), §2.3 aviso de conta excluída no portão (`SoulmonOnboarding.tsx` › `avisoContaExcluida`), §2.4 hint de IA, §3.2 item 7 `changed`/`region`/"Entendi", §4.23 Sobre e Ajuda conferidos símbolo a símbolo contra o fonte; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §2.1 aviso de WebView, §3.2 item 6 `termos`, §4.23 grupo Sobre, §4.23a/§4.23b ⚰️ `SettingsModal`, §4.25 `ErrorBoundary` conferidos símbolo a símbolo; anterior: §4.23/§4.23b, delta `5ac3d351..8d318529`, som/S16 + grupo "Som" na `SettingsPage`; verificação anterior do mesmo dia: delta `dc72579e..9875477b`, 30 commits: copy da bíblia §1–§6-bis, superfície de suporte, rodada 2 da arte; verificação anterior do delta `2580b73a..dc72579e`, Fase 2, identidade "O Visor", 14 fluxos: 21/09/2026)
 > **Verificação:** `npx vitest run src/components/filaDeAvisos.contract.test.ts src/components/evolucaoManual.contract.test.ts src/components/ofertaDoisCanais.contract.test.ts src/components/upgradeReveal.contract.test.ts src/components/textoBilingue.contract.test.ts src/plugins/widgetSemCobranca.contract.test.ts src/components/SoulmonOnboarding.oraculo.render.test.tsx src/components/StatsPage.render.test.tsx src/utils/petVoice.test.ts src/narrativa.contract.test.ts` · guard do manual: `npx vitest run src/docsManual.contract.test.ts`
 > **Não cobre:** aparência (cor, tipografia, espaçamento, tokens `--sm2-*`) — é do `04-IDENTIDADE-VISUAL.md`; as REGRAS que as telas aplicam (corações, meta do dia, evolução, moedas) — são do `02-REGRAS-DE-NEGOCIO.md`; a assinatura de cada componente — é de [`06-REFERENCIA/components.md`](06-REFERENCIA/components.md); percurso real com o app rodando — é do procedimento "Inventário de superfícies" de `.claude/skills/squad-design/METODO.md` (⚰️ agente `soulmon-screen-cartographer`, 21/09/2026), cuja medição de 19/08/2026 está em [`../INVENTARIO-TELAS.md`](../INVENTARIO-TELAS.md).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -67,16 +67,32 @@ mudou depois dela está medido aqui no código e marcado com a data.
 
 ## 1. Mapa de navegação
 
+> **Reescrito em 24/09/2026 (minimal-ui F6).** A navegação de 5 abas
+> (`BottomNav` + `ActivitiesPage` + `ShopModal` como página) saiu nas fatias
+> F1–F5 da minimal-ui (`docs/design/minimal-ui/`, PRs das fatias F1–F5). O que
+> segue descreve a navegação **Home + Mapa + 6 áreas**. As seções de §4 que
+> ainda citam `currentView === '<aba>'` descrevem o CONTEÚDO da tela, que
+> continua o mesmo; o caminho até ela é o desta seção.
+
 ### 1.1 O estado que decide a tela
 
-Não existe roteador. A tela vem de **um** estado no `src/App.tsx`:
+Não existe roteador. A tela vem de **um** estado no `src/App.tsx`, com o tipo
+definido em `src/navigation.ts`:
 
 ```ts
-type ViewType = 'main' | 'evolution' | 'stats' | 'pet' | 'settings' | 'games' | 'oracle' | 'tournament' | 'library' | 'shop';
-const [currentView, setCurrentView] = useState<ViewType>('main');
+export const AREAS = ['mercado', 'jogos', 'arena', 'exploracao', 'laboratorio', 'hall'] as const;
+export const MENU_PAGES = ['settings', 'oracle', 'stats'] as const;
+export type ViewType = 'home' | 'map' | `area:${AreaId}` | `page:${MenuPageId}`;
+const [currentView, setCurrentView] = useState<ViewType>('home');
 ```
 
-São dez valores. **Nove são alcançáveis; `'oracle'` não é** — ver §4.9.
+Toda troca passa por `goTo(v)` (empilha no `history`; área → área substitui) e
+todo voltar por `goBack()`. O grafo do voltar é **uma** função pura,
+`viewBack` (`navigation.ts`): área → Mapa → Home; página do menu → Home; Home →
+`null` (o voltar é do sistema). O mesmo grafo serve ao voltar da tela
+(`AreaTopBar`), ao voltar do navegador (`popstate`) e ao botão físico do
+Android (`backButton` do `@capacitor/app`, procurado em tempo de execução —
+na Home ele chama `exitApp`). Régua: `src/components/nav/nav.render.test.tsx`.
 
 Antes de `currentView` chegar a decidir qualquer coisa, o `App` tem **quatro portões
 de tela cheia**, nesta ordem literal (`src/App.tsx`, `showIntro` →
@@ -89,42 +105,48 @@ showIntro            → <IntroScreen>            (retorna, nada mais renderiza)
 upgradeRitual           → <SoulmonOnboarding mode="upgrade">  (retorna)
 ```
 
-### 1.2 A barra inferior
+### 1.2 Home, Mapa e o menu ícone
 
-Dono: `src/components/BottomNav.tsx` (`BottomNav`, lista `items`). São **quatro
-destinos + o menu sanduíche** — teto declarado no cabeçalho do componente:
+- **Home** (`'home'`): um único link para o Mapa, `CornerLink icon="map"` no
+  canto inferior direito ("Mapa"/"Map"). O menu ícone do topo (`HomeHud`)
+  abre o `HomeMenuSheet` (decisão D6), com seis linhas (`MenuRow`):
+  Configurações (`page:settings`), Oráculo (`page:oracle`), Estatísticas
+  (`page:stats`), Guia (`GuideModal`), Créditos (`CreditsModal`, só se a prop
+  existir) e "Refazer o ritual" (só se a prop existir).
+- **Mapa** (`'map'`, `src/components/nav/MapPage.tsx`): cena isométrica com as
+  6 construções (cada uma um `<button>` que chama `goTo(areaView(id))`), o
+  saldo das 3 moedas no topo e um único link para a Home, `CornerLink
+  icon="home"` no canto inferior esquerdo ("Início"/"Home", `goBack`).
+- **Páginas do menu** (`page:*`): `AreaTopBar` com "Voltar ao início"/"Back to
+  home"; Configurações, Oráculo e Estatísticas renderizam as páginas de sempre.
 
-| Célula | `view` | Rótulo PT / EN | Glifo (`NavGlyphs.tsx`) |
-|---|---|---|---|
-| 1 | `main` | Início / Home | `home` |
-| 2 | `games` | Jogos / Games | `activities` |
-| 3 | `evolution` | Evolução / Evolution | `evolution` |
-| 4 | `shop` | Loja / Shop | `shop` |
-| 5 | — (popover) | Menu / Menu | `menu` |
+### 1.3 As 6 áreas
 
-⚰️ **A Biblioteca não é mais célula da barra** — passou para o menu sanduíche, e o
-comentário do `BottomNav` registra por quê (seis células de 68px é onde o rótulo
-deixa de caber). O menu tem quatro linhas (`MenuRow`): Biblioteca
-(`onNavigate('library')`), Créditos (`onOpenCredits`, só se a prop existir),
-Configurações (`onNavigate('settings')`) e "Refazer o ritual"
-(`onResetOnboarding`, só se a prop existir).
+Toda área é desenhada por **um** componente, `src/components/nav/AreaView.tsx`
+(lazy), sob o `AreaTopBar` ("Voltar ao mapa"/"Back to map" + título da área).
+Cada uma é uma `AreaScene` (fundo + lotes/construções + NPC anfitrião com fala
+de `utils/areaNpcVoice.ts`) e cada lote abre um `AreaSheet` (folha de baixo,
+o NPC aparece atrás/acima dela):
 
-⚠️ O rótulo da célula 2 é **"Jogos"/"Games"**, não "Atividades" — trocado em
-09/09/2026 por dois motivos escritos no próprio `BottomNav.tsx`: "ATIVIDADES"
-precisa de 61px numa caixa de 54px em 320×640, e `gameState.activities` são os
-hábitos do jogador, que não moram nessa página.
+| Área (`AreaId`) | Rótulo PT / EN | Lotes → o que a folha abre |
+|---|---|---|
+| `mercado` | Mercado / Market | Itens, Decoração, Background (abas por moeda, `MercadoSheets` + `utils/mercadoCatalog.ts`) · Conquistas |
+| `jogos` | Jogos / Games | Pedra, papel e tesoura (`PptSheet` → `RPSGame`) |
+| `arena` | Arena | Torneio (`TournamentPage`, com a loja de Emblemas) · Duelo (`DueloSheet` → `ArenaGame`) |
+| `exploracao` | Exploração / Exploration | Masmorra (`MasmorraSheet` → `DungeonGame`) · Corrida do Dino (`DinoSheet` → `DinoGame`) |
+| `laboratorio` | Laboratório / Laboratory | Evolução — abas sublinhadas Evolução / Soulmon / Estatísticas (`labTab`) |
+| `hall` | Hall | Biblioteca (`LibraryPage`, decisão D4) |
 
-### 1.3 As sub-abas de Evolução / Soulmon / Estatísticas
+Rótulos: `areaLabel` (`navigation.ts`); lotes: `utils/areaSheetCopy.ts`
+(Mercado, Arena, lote único de Laboratório/Hall) e `utils/playAreaLots.ts`
+(Exploração, Jogos). Os jogos montam **por cima** da área e voltam a ela no
+`onExit`. Réguas: `areaShell.render.test.tsx`, `areaLabHall.render.test.tsx`,
+`play/playArea.render.test.tsx`, `mercado/MercadoSheets.render.test.tsx`.
 
-`evolution`, `pet` e `stats` **dividem a mesma célula da barra** e se alternam por
-uma fileira de três chips renderizada no `App.tsx` sob a condição:
-
-```jsx
-{(currentView === 'evolution' || currentView === 'stats' || currentView === 'pet') && (
-```
-
-Cada chip chama `setCurrentView(view)`. Os rótulos são "Evolução"/"Evolution",
-`Soulmon` (o mesmo nos dois idiomas) e "Estatísticas"/"Stats".
+⚰️ **Saíram na minimal-ui**: `BottomNav.tsx` (F1), `ActivitiesPage.tsx` e
+`ShopModal.tsx` (F5), a tela `ItemsWindow` (pastinha, F6 — a Mochila da Home,
+`home/Mochila.tsx`, é a entrada de item desde a F2; o arquivo ficou só com os
+helpers `getFoodName`/`getFoodDesc`).
 
 ### 1.4 Diagrama
 
@@ -136,24 +158,12 @@ Cada chip chama `setCurrentView(view)`. Os rótulos são "Evolução"/"Evolution
                                     │                                        (handleCompleteTutorial)
                                     └─ mode='upgrade' (compra no meio do jogo) ──(onRevealed)──▶ app
 
-                    ┌──────────────────────── BottomNav ─────────────────────────┐
-                    │                                                            │
-   Home (main) ◀────┤   Jogos (games) ──▶ Torneio (tournament)                    │
-    │ ▲             │        │                                                   │
-    │ │             │        ├─ DungeonGame · ArenaGame · DinoGame · RPSGame      │
-    │ │             │        │   (montam DENTRO da página, openGame)              │
-    │ │             │   Evolução (evolution) ⇄ Soulmon (pet) ⇄ Estatísticas (stats)
-    │ │             │        │                                                   │
-    │ │             │   Loja (shop)  ── ShopModal asPage, 2 segmentos             │
-    │ │             │        │                                                   │
-    │ │             │   Menu ▸ Biblioteca (library) · Créditos (modal) ·          │
-    │ │             │          Configurações (settings) · Refazer o ritual        │
-    │ │             └────────────────────────────────────────────────────────────┘
-    │ │
-    │ └── ShopModal `onClose` → setCurrentView('main')
-    │     ActivitiesPage `onOpenTournament` → setCurrentView('tournament')
-    │     ⚰️ EvoTrail `onOpen` → setCurrentView('evolution') — não existe mais (20/09/2026, ver abaixo)
-    │
+   Home ('home') ──CornerLink map──▶ Mapa ('map') ──construção──▶ área ('area:<id>')
+    │  ▲                               │  ▲                          │  (AreaTopBar voltar → Mapa)
+    │  └──────── CornerLink home ──────┘  └──────────────────────────┘
+    │                                        área ─lote─▶ AreaSheet ─▶ jogo por cima (onExit volta)
+    ├── menu ícone ▸ HomeMenuSheet ▸ page:settings · page:oracle · page:stats (voltar → Home)
+    │                               · Guia · Créditos · Refazer o ritual (modais)
     ├── FILA 1: intersticiais (um por vez, tela cheia)
     │     triage → dailyReport → checkIn → dream → nightmare → welcome
     │
@@ -161,14 +171,11 @@ Cada chip chama `setCurrentView(view)`. Os rótulos são "Evolução"/"Evolution
           firstDay → hp → semanal → triagem → priming → recomeco → carga → termos
 ```
 
-Os únicos `setCurrentView('<literal>')` fora da `BottomNav` em todo o `src/` são
-**dois** (medido em 20/09/2026 com
-`grep -rn "setCurrentView(" src/ --include=*.tsx | grep -o "setCurrentView('[a-z]*'" | sort | uniq -c`):
-`'main'` (do `ShopModal onClose`) e `'tournament'` (do `ActivitiesPage`).
-⚰️ Eram três em 09/09/2026 — o `'evolution'` vinha do `EvoTrail`, apagado em
-`72196da2` (canvas Evolução, `DECISOES-WIREFRAME.md` §24) depois de sair da Home
-pela decisão S1 do canvas Home (§5); a célula Evolução da barra é o único caminho.
-**Nenhum leva a `'oracle'`.**
+Não há mais `setCurrentView('<literal>')` espalhado: os três únicos
+`setCurrentView` do `App.tsx` estão em `goTo`, `goBack` e no `popstate`
+(medido em 24/09/2026 com `grep -n "setCurrentView(" src/App.tsx`).
+**O Oráculo agora é alcançável** (menu da Home → `page:oracle`); a nota de §4.9
+de que ele era inalcançável vale só até a F1.
 
 ---
 
@@ -564,11 +571,16 @@ desde `592e2c14`).
 
 ## 4. As superfícies, uma a uma
 
-### 4.1 Home — `currentView === 'main'`
+### 4.1 Home — `currentView === 'home'` (`pane === 'main'`)
 
-**Chega por**: célula 1 da `BottomNav`, `setCurrentView('main')` (também é o
-valor inicial e o destino do `onClose` da Loja) · **Sai para**: qualquer célula
-da barra.
+**Chega por**: valor inicial de `currentView`; `CornerLink icon="home"` do Mapa
+(`goBack`) e o voltar de qualquer página do menu (§1.1) · **Sai para**:
+`CornerLink icon="map"` → `goTo('map')`, ou o menu ícone (`HomeMenuSheet`,
+§1.2). ⚠️ Desde a minimal-ui F2 a Home segue a abordagem B (faixa de cenário
+com o pet grande, HP/EN, 3 cuidados — mochila, lua/sol, banho —, lista do dia
+com botão +, `ChatBox` sempre aberto); onde o texto abaixo descreve o deck de
+cinco ações ou a pastinha, vale o que o `CompanionHUD` e `home/Mochila.tsx`
+desenham hoje.
 
 A Home empilha, nesta ordem de render:
 
@@ -750,6 +762,13 @@ comida, exige que o especial NÃO apareça e que o vazio explique como conseguir
 
 ### 4.2b `ItemsWindow` — a pastinha: o vazio e o uso de item especial (medido em 13/09/2026, a pedido do inventário de wireframes)
 
+> ⚰️ **A tela da pastinha foi apagada no fechamento da minimal-ui (F6,
+> 24/09/2026)**: desde a F2 nada abria `showItemsWindow` (o `handleOpenItems`
+> ficou sem chamador quando a Mochila da Home, `src/components/home/Mochila.tsx`,
+> virou a entrada de item — itens se usam arrastando até o pet). O
+> `ItemsWindow.tsx` guarda só `getFoodName`/`getFoodDesc`. O texto abaixo é
+> registro histórico.
+
 **Chega por**: a ação `items` do deck → `onOpenItems` → `handleOpenItems`, que
 **alterna** (`setShowItemsWindow(prev => !prev)`) e apaga o selo
 (`setNewItemsReady(false)`) · **Sai para**:
@@ -866,7 +885,12 @@ recusas, inclusive os dois toques no mesmo lote do React).
   a linha de suporte: `régua: nenhuma` (`grep -rl "sm2-chat-support" src --include=*.test.*`
   → vazio em 21/09/2026).
 
-### 4.4 `ActivitiesPage` — `currentView === 'games'`
+### 4.4 ⚰️ `ActivitiesPage` — `currentView === 'games'` (apagada na minimal-ui F5)
+
+> **Registro histórico.** O hub de cartões saiu: Masmorra e Corrida do Dino são
+> lotes da área Exploração, Pedra-papel-tesoura é lote de Jogos, a Arena (duelo)
+> é lote da área Arena e o Torneio é o outro lote da Arena — todos no
+> `AreaView` (§1.3). Os jogos montam por cima da área e saem por `onExit`.
 
 **Chega por**: célula 2 da `BottomNav` · **Sai para**: `onOpenTournament` →
 `setCurrentView('tournament')`; cada jogo monta **dentro** desta página.
@@ -930,9 +954,17 @@ sendo irreversível — não existe caminho de desmarcar na UI.
 `HabitConstancy.hideMetrics.render.test.tsx`,
 `BalanceWeekModal.render.test.tsx`.
 
-### 4.6 Loja — `currentView === 'shop'`
+### 4.6 Loja — `currentView === 'shop'` (hoje: área Mercado)
 
-**Chega por**: célula 4 da `BottomNav` · **Sai para**: `onClose={() => setCurrentView('main')}`.
+> ⚠️ **Minimal-ui F5**: o `ShopModal` foi apagado. A vitrine virou as lojinhas
+> do Mercado (`area:mercado` → lotes Itens/Decoração/Background com abas por
+> moeda e Conquistas, `src/components/mercado/MercadoSheets.tsx` +
+> `ShopShelf.tsx`, catálogo em `src/utils/mercadoCatalog.ts`), e a loja de
+> Emblemas mora no Torneio da Arena. O texto abaixo descreve o comportamento
+> que as lojinhas herdaram (card sem saldo, troca Créditos → Bits); onde cita
+> `ShopModal`, leia `ShopShelf`/`MercadoSheets`.
+
+**Chega por** (histórico): célula 4 da `BottomNav` · **Sai para**: `onClose={() => setCurrentView('main')}`.
 
 ⚠️ **Divergência com o `CLAUDE.md`**, que descreve "Loja em ABAS
 (Itens/Cenários/Mobílias/Torneio/Missões)". O código tem **dois segmentos**:
@@ -1189,7 +1221,11 @@ continuam com `BirthCard.render.test.tsx`, `BestiaryCard.render.test.tsx` e
 `FormAlbum.render.test.tsx`. A linha "Nível 0" e o `progressbar` da tabela acima
 **somem** com `hideMetrics` (§4.8).
 
-### 4.9 `OraclePage` — `currentView === 'oracle'`, inalcançável
+### 4.9 `OraclePage` — `currentView === 'oracle'`, inalcançável (até a minimal-ui F1)
+
+> ⚠️ **Mudou em 23/09/2026 (minimal-ui F1, decisão D6)**: o Oráculo é linha do
+> menu ícone da Home (`HomeMenuSheet` → `goTo('page:oracle')`), e portanto
+> **alcançável**. As medições abaixo são o registro de antes.
 
 - **Aparece quando**: `{currentView === 'oracle' && (…)}`.
 - **Como se sabe que é inalcançável** — duas medições de 09/09/2026:
@@ -1211,9 +1247,11 @@ continuam com `BirthCard.render.test.tsx`, `BestiaryCard.render.test.tsx` e
 
 ### 4.10 Evolução — `currentView === 'evolution'`
 
-**Chega por**: célula 3 da `BottomNav` (que também chama `contarMissao('evolve-view')`)
-— **único caminho**; ⚰️ `EvoTrail.onOpen` não existe mais (`72196da2`,
-20/09/2026) · **Sai para**: os chips das sub-abas.
+**Chega por**: área Laboratório (`area:laboratorio`, lote Evolução — `goTo`
+chama `contarMissao('evolve-view')` ao entrar na área); ⚰️ a célula 3 da
+`BottomNav` saiu na minimal-ui F1 e `EvoTrail.onOpen` não existe mais
+(`72196da2`, 20/09/2026) · **Sai para**: as abas sublinhadas Evolução /
+Soulmon / Estatísticas (`labTab`) ou o voltar ao Mapa.
 
 Seis blocos, com estas condições literais (a quarta ganhou `!gameState.demoCharacterId`
 em `acf4413e` — dois convites iguais na mesma tela é cobrança, EVO-20; o quinto
@@ -1357,7 +1395,7 @@ nasceu em `84ae4937`, 21/09/2026 — eram cinco):
   | `CreateModal.tsx` | `task-limit` | teto do demo |
   | ⚰️ `EditModal.tsx` | `task-limit` | **saiu em `d044fb2e`** (A1 do canvas Atividades: um modal de criação só — o `EditModal` não cria mais, então não há teto para bater) |
   | `SoulmonOnboarding.tsx` (`REVEAL_DEMO`) | `reveal-demo` | `step === REVEAL_DEMO && demoReading` — novo em `a1181a5b` (§2.3) |
-  | `ShopModal.tsx` | `shop` | `seg === 'shop' && accountTier === 'demo' && onUnlock` |
+  | `mercado/MercadoSheets.tsx` (⚰️ antes `ShopModal.tsx`, apagado na minimal-ui F5) | `shop` | `seg === 'shop' && accountTier === 'demo' && onUnlock` |
   | `DailyReportModal.tsx` | `report` | `showOffer` (`ofereceNoRelatorio`, com cap semanal por `offerShownWeek`) |
   | `App.tsx` (Evolução) | `evolution` | `currentView === 'evolution' && gameState.demoCharacterId` |
   | `App.tsx` (Renascimento) | `evolution` | `rebirthRefusal(gameState) === 'not-paid' && !gameState.demoCharacterId` |
@@ -1370,10 +1408,10 @@ nasceu em `84ae4937`, 21/09/2026 — eram cinco):
 
 | Jogo | Chega por | Sai para | Estados | Dono |
 |---|---|---|---|---|
-| `DungeonGame` | card na `ActivitiesPage` | `onExit` | `phase`: `intro` → `attack`/`defend`/`result` → `enemy-down` → `floor-clear` → `run-complete` \| `lost`; `floor` até `MAX_FLOORS` (5). **O vocabulário na tela é o da bíblia desde `84ae4937` (21/09/2026, copy §4)**: o subtítulo diz "Camada N de 5" / "Layer N of 5" (números de `MAX_FLOORS`, nunca à mão); o primário do `intro` é "Descer" / "Go down" (⚰️ "Entrar na masmorra"); `enemy-down` diz "‹nome› parou de insistir aqui." (⚰️ "derrotado!" — nenhuma criatura da Malha morre); `floor-clear` = "Camada N limpa."; `run-complete` = "As 5 camadas ficaram para trás." + a frase do Glitchtama "com um dia inteiro preso dentro" + "Descer de novo" (⚰️ "Nova run"); `lost` = "Você subiu. A descida ficou pelo caminho — e só ela." + "Seus corações continuam intactos." | `DungeonGame.tsx` |
-| `ArenaGame` | card na `ActivitiesPage` | `onExit` | usa a ficha (`skills`, elemento) | `ArenaGame.tsx` |
-| `DinoGame` | card na `ActivitiesPage` | `onExit` | `onScore={onDinoScore}` alimenta o recorde; o corredor é `lineIconForStage(evolutionStage, 64, demoCharacterId) ?? getSpriteForStage(…)` (`utils/lineIcons.ts`, rodada 2, 21/09/2026 — o ícone-ficha 64² da linha; sprite a 0,25× quando o estágio não é de linha) | `DinoGame.tsx` |
-| `RPSGame` | card na `ActivitiesPage` | `onExit` | duelo curto | `RPSGame.tsx` |
+| `DungeonGame` | lote da área Exploração (⚰️ card na `ActivitiesPage` até a F5) | `onExit` | `phase`: `intro` → `attack`/`defend`/`result` → `enemy-down` → `floor-clear` → `run-complete` \| `lost`; `floor` até `MAX_FLOORS` (5). **O vocabulário na tela é o da bíblia desde `84ae4937` (21/09/2026, copy §4)**: o subtítulo diz "Camada N de 5" / "Layer N of 5" (números de `MAX_FLOORS`, nunca à mão); o primário do `intro` é "Descer" / "Go down" (⚰️ "Entrar na masmorra"); `enemy-down` diz "‹nome› parou de insistir aqui." (⚰️ "derrotado!" — nenhuma criatura da Malha morre); `floor-clear` = "Camada N limpa."; `run-complete` = "As 5 camadas ficaram para trás." + a frase do Glitchtama "com um dia inteiro preso dentro" + "Descer de novo" (⚰️ "Nova run"); `lost` = "Você subiu. A descida ficou pelo caminho — e só ela." + "Seus corações continuam intactos." | `DungeonGame.tsx` |
+| `ArenaGame` | lote Duelo da área Arena (⚰️ card na `ActivitiesPage` até a F5) | `onExit` | usa a ficha (`skills`, elemento) | `ArenaGame.tsx` |
+| `DinoGame` | lote da área Exploração (⚰️ card na `ActivitiesPage` até a F5) | `onExit` | `onScore={onDinoScore}` alimenta o recorde; o corredor é `lineIconForStage(evolutionStage, 64, demoCharacterId) ?? getSpriteForStage(…)` (`utils/lineIcons.ts`, rodada 2, 21/09/2026 — o ícone-ficha 64² da linha; sprite a 0,25× quando o estágio não é de linha) | `DinoGame.tsx` |
+| `RPSGame` | lote da área Jogos (⚰️ card na `ActivitiesPage` até a F5) | `onExit` | duelo curto | `RPSGame.tsx` |
 | `NightmareBattle` | **fila de intersticiais** | `onWin={handleNightmareWin}` / `onLose`/`onClose` = `closeNightmare`; desde `6fe6c73a` é um `RitualDialog` (trap, Escape, devolução de foco) | perder não custa nada, e a tela diz isso | `NightmareBattle.tsx` |
 | ⚰️ `PlayCard` | **não é mais montado** (`f5ead7c0`, 16/09/2026) — Brincar é a célula `play` do deck do `CompanionHUD` (§4.2) | — | `available` / `canPlay` / `playedToday` (`playDeck` no `App.tsx`) | `PlayCard.tsx` segue no repo sem consumidor |
 
@@ -1384,8 +1422,9 @@ legítimo) › `GameHeader` (título + × 44 que chama `onClose` = o `onExit` do
 é **o primeiro interativo** da tela) › `GameVisor` (o minijogo é o conteúdo do
 vidro) › `HpBars`/`TimingBar`/`FxPopup` (`role="status"`) embaixo (`TimingBar` mora em
 `src/components/pixel/TimingBar.tsx`; os outros dois no `GameKit`). Sem `Suspense`
-novo: o ponto de montagem continua `{openGame === '<id>' && (…)}` na
-`ActivitiesPage`.
+novo: ⚰️ o ponto de montagem era `{openGame === '<id>' && (…)}` na
+`ActivitiesPage`; desde a minimal-ui F5 é `{game === '<id>' && (…)}` no
+`AreaView`, por cima da área, dentro de um `Suspense`.
 
 **`NightmareBattle` — aparece quando** (efeito no `App.tsx`, transcrito):
 
@@ -1418,7 +1457,8 @@ o `CLAUDE.md` já registra que ele **não** está em `utils/dungeon.ts`).
 
 ### 4.15 Torneio — `currentView === 'tournament'`
 
-**Chega por**: `onOpenTournament` da `ActivitiesPage` · **Sai para**: a barra.
+**Chega por**: área Arena → lote Torneio (`AreaSheet`, minimal-ui F5); ⚰️ antes,
+`onOpenTournament` da `ActivitiesPage` · **Sai para**: fechar a folha ou voltar ao Mapa.
 
 - **O que se vê/faz**: a **faixa** (`getTierStanding`) vem **antes** do ranking;
   o ranking é uma **janela de ±`RANK_WINDOW` (3) posições**, com a season inteira a um toque; o
@@ -1591,8 +1631,9 @@ o `CLAUDE.md` já registra que ele **não** está em `utils/dungeon.ts`).
 
 ### 4.22 Biblioteca — `currentView === 'library'`
 
-**Chega por**: linha "Biblioteca" do menu sanduíche (**único caminho**) ·
-**Sai para**: a barra.
+**Chega por**: área Hall → lote Biblioteca (minimal-ui F5, decisão D4); ⚰️ antes,
+linha "Biblioteca" do menu sanduíche da `BottomNav` · **Sai para**: fechar a
+folha ou voltar ao Mapa.
 
 - **O que se vê/faz**: uma ação dominante por linha — tocar no jogador abre o
   `PlayerDetailModal` (e chama `onVisitPlayer` → `contarMissao('friend-visit')`).
@@ -1711,9 +1752,9 @@ Três blocos, com condições literais:
 
 **Chega por**: **`SettingsPage` → `ActionRow` "Personalidade" / "Personality" →
 `setShowAISettings(true)`**, no mesmo grupo que tem o switch "Conversa com IA" /
-"AI chat". E a `SettingsPage` chega-se pela linha "Configurações" do menu
-sanduíche da `BottomNav` (`onClick={() => { onNavigate('settings'); setMenuOpen(false); }}`
-→ `currentView === 'settings'`) · **Sai para**:
+"AI chat". E a `SettingsPage` chega-se pela linha "Configurações" do menu ícone
+da Home (`HomeMenuSheet` → `goTo('page:settings')`; ⚰️ antes, o menu
+sanduíche da `BottomNav`) · **Sai para**:
 `onClose={() => setShowAISettings(false)}`; "Salvar" / "Save" faz
 `onSave(settings)` e fecha no mesmo gesto.
 
@@ -1991,12 +2032,12 @@ export const PUSH_HOURS_UTC = PUSH_HOURS_BRT.map(h => (h + 3) % 24).sort((a, b) 
 | # | Afirmação | Onde está | O que o código diz (09/09/2026; recheado em 20/09/2026 sobre `dc72579e`; linhas 12–13 medidas em 21/09/2026 sobre `9875477b`) |
 |---|---|---|---|
 | 1 | "Loja em ABAS (Itens/Cenários/Mobílias/Torneio/Missões)" | `CLAUDE.md` | `type ShopSegment = 'shop' \| 'tournament'` — **dois** segmentos; Itens/Cenários/Mobílias são seções de um scroll, e a aba Missões não existe |
-| 2 | "a página é dungeon + dino + pedra-papel-tesoura + torneio" | comentário de `BottomNav.tsx` | `openGame` aceita `'dungeon' \| 'arena' \| 'dino' \| 'rps'` — **quatro** minijogos |
+| 2 | ⚰️ "a página é dungeon + dino + pedra-papel-tesoura + torneio" — **fechada na minimal-ui** (`BottomNav.tsx` e `ActivitiesPage.tsx` apagados; os jogos são lotes das áreas, §1.3) | comentário de `BottomNav.tsx` | `openGame` aceita `'dungeon' \| 'arena' \| 'dino' \| 'rps'` — **quatro** minijogos |
 | 3 | "`UnlockNudge` só aparece em dois lugares… hoje são TRÊS", e "o `EditModal` passou a exibir o `UnlockNudge` também" | `CLAUDE.md` | `grep -rn "<UnlockNudge" src --include=*.tsx \| grep -v "\.test\." \| wc -l` → **6**; e o `EditModal` **não** monta mais o convite desde `d044fb2e` (o sexto lugar é o `REVEAL_DEMO` do onboarding) — §4.13 |
 | 4 | "sem elas o botão de microfone **não é desenhado**" | `CLAUDE.md` | o `<button>` continua montado; com `micDisponivel === false` ele vira o botão de enviar, com `aria-disabled` quando não há texto |
 | 5 | ⚰️ "a cerimônia de marco… some sozinha em 2,5s" | comentário do `src/App.tsx` | **fechada em `4f5d2aac`** (20/09/2026): o comentário passou a dizer "não pede nada além do gesto"; o componente segue sem `setTimeout`, `zIndex: 300` |
-| 6 | "`ArenaGame` é código morto" | `docs/INVENTARIO-TELAS.md` §6.3 (19/08/2026) | é o segundo card da `ActivitiesPage` desde então |
-| 7 | "`OraclePage` é alcançável pelo atalho de dono (segurar o mascote)" | `SoulmonOnboarding.tsx` (comentário) e `docs/INVENTARIO-TELAS.md` §5.13 | `startOracleDebugHold`/`cancelOracleDebugHold` **não têm chamador** — a intro que os usava foi apagada. `OraclePage` e `PixelizerCard` são inalcançáveis por qualquer caminho |
+| 6 | "`ArenaGame` é código morto" | `docs/INVENTARIO-TELAS.md` §6.3 (19/08/2026) | foi o segundo card da `ActivitiesPage`; desde a minimal-ui F5 é o lote Duelo da área Arena (`DueloSheet` → `ArenaGame`) |
+| 7 | "`OraclePage` é alcançável pelo atalho de dono (segurar o mascote)" — o atalho segue morto, mas desde a minimal-ui F1 o Oráculo é linha do menu da Home (§4.9) | `SoulmonOnboarding.tsx` (comentário) e `docs/INVENTARIO-TELAS.md` §5.13 | `startOracleDebugHold`/`cancelOracleDebugHold` **não têm chamador** — a intro que os usava foi apagada. `OraclePage` e `PixelizerCard` são inalcançáveis por qualquer caminho |
 | 8 | ⚰️ frase do widget e nome do dia | `WidgetRenderer.kt` | **fechada em `6affd501`** (20/09/2026): a escada é só em inglês por decisão (REGISTRO 13.18) e o topo diz "Complete day!" (P5) — §5.1 |
 | 9 | comentário do slot de avisos numera "1. HP" duas vezes | `src/App.tsx` | a ordem executada é a dos `push`: firstDay → hp → semanal → triagem → priming → recomeco → carga → termos (8 desde 21/09/2026) |
 | 10 | "Brincar" é um card na Home (`PlayCard`), e a IIFE do `PlayCard` no `App.tsx` é consumidora de `playLog` | `CLAUDE.md` (linha 🧮, "**brincar** `playLog` (`utils/petNeeds.ts` + a IIFE do `PlayCard` no `App.tsx`)") | o `PlayCard` não é montado desde `f5ead7c0`; Brincar é a célula `play` do deck do `CompanionHUD`, alimentada por `playDeck` (`useMemo` no `App.tsx`) — §4.2, §4.14. `src/components/PlayCard.tsx` segue no repo sem consumidor |

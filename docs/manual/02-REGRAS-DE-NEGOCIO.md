@@ -292,7 +292,9 @@ de `MAX_STAGE_REQUIREMENT`.
 Glitchtama no limite (itens especiais têm caminho próprio — [§48](#itens-especiais)).
 Não tem teto diário.
 
-**Onde a UI mostra.** `src/components/ItemsWindow.tsx` (a pastinha),
+**Onde a UI mostra.** `src/components/home/Mochila.tsx` (a mochila da Home —
+arrastar o item até o pet; ⚰️ a tela da pastinha `ItemsWindow` saiu na
+minimal-ui F6 e o arquivo guarda só os nomes dos itens),
 `src/components/CompanionHUD.tsx` (a animação de comer),
 `src/components/pixel/HomeHud.tsx` (a barra segmentada de energia; ⚰️ o
 `EnergyBar.tsx` foi apagado em 07/09/2026, sem uma única referência viva).
@@ -3830,8 +3832,8 @@ item). Não guarda o saldo de Créditos no save como verdade — o `credits` do
 `GameState` é espelho do servidor. Não usa o mesmo ícone para duas moedas.
 
 **Onde a UI mostra.** `src/components/mercado/MercadoSheets.tsx` (saldo da moeda do segmento
-+ os três botões de câmbio), `src/components/ActivitiesPage.tsx` (saldo de
-Bits), `src/components/TournamentPage.tsx` (Emblemas e o `+3`/`+1` do fim da
++ os três botões de câmbio), `src/components/nav/MapPage.tsx` (o saldo das
+3 moedas no topo do Mapa; ⚰️ a `ActivitiesPage` mostrava Bits até a minimal-ui F5), `src/components/TournamentPage.tsx` (Emblemas e o `+3`/`+1` do fim da
 partida), `src/components/CreditsModal.tsx` (pacotes, anúncio, custo do reroll).
 
 ---
@@ -3915,10 +3917,12 @@ moedas. Não tem cinco abas — ⚠️ **divergência**, ver [§59](#divergencia
 toca som de compra: a categoria "transação" ainda não tem som próprio, e o canal
 é o visual (saldo e posse já aparecem no próximo render).
 
-**Onde a UI mostra.** `src/components/mercado/MercadoSheets.tsx`, aberto da
-`src/components/ActivitiesPage.tsx`. Dois segmentos (`ShopSegment`): **Loja**
-(seções Itens / Cenários / Mobílias num scroll único) e **Torneio**
-(`TOURNAMENT_ITEMS` + as missões da semana no topo).
+**Onde a UI mostra.** `src/components/mercado/MercadoSheets.tsx` (+ `ShopShelf.tsx`
+e o catálogo `src/utils/mercadoCatalog.ts`), aberto pelos lotes da área
+Mercado (minimal-ui F5): **Itens**, **Decoração** e **Background**, cada um com
+abas por moeda, e **Conquistas**. A loja de Emblemas (`TOURNAMENT_ITEMS`) mora
+no Torneio da área Arena. ⚰️ Antes: `ShopModal` com dois segmentos
+(`ShopSegment`) aberto pela barra inferior.
 
 ---
 
@@ -4007,8 +4011,8 @@ Coraçãozinho **não dá atributo nem energia**. Glitchtama **não cura**. Nenh
 três entra no `FOOD_LIMIT_PER_HOUR` ([§3](#comida)). O `petPassive` não entra na
 recusa: nenhum traço mexe em item especial (se um dia mexer, vem do ESTADO).
 
-**Onde a UI mostra.** `src/components/ItemsWindow.tsx` (a pastinha, e é dela que
-se usa), `src/components/mercado/MercadoSheets.tsx` (os chips à venda),
+**Onde a UI mostra.** `src/components/home/Mochila.tsx` (a aba "especiais" da
+mochila, e é dela que se usa — ⚰️ antes a pastinha `ItemsWindow`), `src/components/mercado/MercadoSheets.tsx` (os chips à venda),
 `src/components/CompanionHUD.tsx` (a animação de comer e o piscar do
 `healCapSignal`).
 
@@ -4259,8 +4263,9 @@ limite diário de runs. **Não dropa comida** (só coraçãozinho). Não vende
 Glitchtama. Não usa o som de conclusão na morte de inimigo (corte C-1: uma run
 são 30 disparos, e gastar celebração no evento frequente é gastá-la).
 
-**Onde a UI mostra.** `src/components/DungeonGame.tsx`, aberta da
-`src/components/ActivitiesPage.tsx` (card de minijogo).
+**Onde a UI mostra.** `src/components/DungeonGame.tsx`, aberta pelo lote
+Masmorra da área Exploração (`AreaView` → `MasmorraSheet`; ⚰️ antes, card da
+`ActivitiesPage`).
 
 ---
 
@@ -4438,7 +4443,7 @@ nada. A Arena **não cobra coração nem tem porta de entrada paga**.
 
 **Onde a UI mostra.** `src/components/TournamentPage.tsx` (faixa → ranking →
 oponentes → troféus → o toggle de PvP), `src/components/ArenaGame.tsx` (aberta
-da `src/components/ActivitiesPage.tsx`).
+pelo lote Duelo da área Arena — `DueloSheet`; ⚰️ antes, da `ActivitiesPage`).
 
 ---
 
@@ -4482,8 +4487,8 @@ os minijogos são fonte de Bits e nada mais; a moeda nunca compra progresso.
 **O que NÃO faz.** Nenhum dos dois toca HP, energia, atributo, `perfectDays` ou
 evolução. Nenhum dos dois tem limite diário. Nenhum dos dois dropa item.
 
-**Onde a UI mostra.** `src/components/ActivitiesPage.tsx` (os cards de minijogo)
-e as telas próprias de cada jogo.
+**Onde a UI mostra.** os lotes das áreas Exploração e Jogos (`src/components/play/PlaySheets.tsx`,
+minimal-ui F5; ⚰️ antes, os cards da `ActivitiesPage`) e as telas próprias de cada jogo.
 
 ---
 
@@ -4541,7 +4546,7 @@ na virada); os **seis do `App.tsx`** foram ligados em `cf6315e1`:
 | `kind` | Onde é emitido | A régua que impede pagar duas vezes |
 |---|---|---|
 | `habitMilestone` | `withHabitCompletion`, via `milestoneReached(before, after)` — a MESMA detecção da cerimônia, e os dias vêm de `HABIT_MILESTONES` | `completeHabit` é idempotente por `dayKey` |
-| `dungeonFloor` | `handleDungeonFloorCleared`, ligado por `onFloorCleared` (`App.tsx` → `ActivitiesPage` → `DungeonGame`, prop nova) | `BOND_DAILY_CAP.dungeon` |
+| `dungeonFloor` | `handleDungeonFloorCleared`, ligado por `onFloorCleared` (`App.tsx` → `AreaView` → `DungeonGame`; ⚰️ passava pela `ActivitiesPage` até a F5) | `BOND_DAILY_CAP.dungeon` |
 | `triageCleared` | `App.tsx`, ao ESVAZIAR a fila de triagem — a fila é recontada sobre o estado já aplicado | só paga na transição "tinha → vazia"; pagar por carta seria recompensa por CONTAGEM (linha vermelha #16) |
 | `restNight` | ao registrar a noite, **só dentro da Janela de Descanso** — a mesma régua da missão `rest-nights` | `rest.nights.some(n => n.date === chaveDaNoite)`: `recordNight` é idempotente por manhã, `awardBondXP` não é |
 | `dreamNew` | ao coletar um sonho **inédito** (`isNew`) — mesma régua da missão `dream-new` | repetir sonho que já está no dex não acrescenta ao acervo, e não paga |
@@ -5213,7 +5218,7 @@ registraram divergência nenhuma**.
 | D8 | tabela 🎪 | fala só da "Rodada do Torneio" (semanal) | existem **três** calendários com nomes parecidos: a **rodada** semanal (`src/utils/tournamentSeason.ts`), a **season** do ranking, que é **MENSAL** (`currentSeason()` em `functions/api/community.js`, `YYYY-MM`, e é ela que fecha e dá troféu), e as **estações** trimestrais (`src/utils/seasons.ts`) | `grep -n "const currentSeason" functions/api/community.js` |
 | D9 | tabela ⚔️, bestiário | "as 24 artes possíveis (6 linhas × 4 tiers de arte — baby-i/ii reusam o rookie)" | a GRADE é 24, mas a **chave gravada não é colapsada**: `enemyKey(tier, line)` grava `linha-baby-i` e `linha-baby-ii`, que `BestiaryCard` nunca lê. O save recebe até **36** chaves, e um encontro em baby-i não revela a célula de rookie | `grep -n "LADDER_TIERS" src/utils/dungeon.ts` × `const TIERS` em `src/components/BestiaryCard.tsx` |
 | D10 | tabela 🧮 | "o DIA de todo registro diário que mora no save é o DIA DO JOGADOR", com sete famílias listadas | os registros da masmorra **não moram no save**: `DUNGEON_HEART_DROPS` usa `new Date().toDateString()` (o dia do APARELHO) e o `localStorage`; `DUNGEON_DIFFICULTY` usa um `weekKey()` local; `DUNGEON_BEST` idem. O teto de 2 coraçõezinhos/dia e a base semanal são, portanto, **furáveis trocando de aparelho** — o mesmo furo que `careCaps` fechou para carinho e comida | `grep -n "toDateString\|STORAGE_KEYS.DUNGEON" src/utils/dungeon.ts` |
-| D11 | comentário de `src/utils/arena.ts` | o cabeçalho afirma, com data (07/09/2026), "**SEM CONSUMIDOR** — nenhuma tela chama nada daqui" | falso desde 09/09/2026: `src/components/ArenaGame.tsx` importa 15 símbolos do módulo e é aberta pela `ActivitiesPage`. O `CLAUDE.md` também não menciona a Arena em lugar nenhum | `grep -rn "utils/arena" src --include=*.tsx` |
+| D11 | comentário de `src/utils/arena.ts` | o cabeçalho afirma, com data (07/09/2026), "**SEM CONSUMIDOR** — nenhuma tela chama nada daqui" | falso desde 09/09/2026: `src/components/ArenaGame.tsx` importa 15 símbolos do módulo e é aberta pela `ActivitiesPage` (desde a minimal-ui F5, pelo lote Duelo da área Arena). O `CLAUDE.md` também não menciona a Arena em lugar nenhum | `grep -rn "utils/arena" src --include=*.tsx` |
 | D12 | comentário de `src/utils/specialItemUse.ts` | chama o coraçãozinho de "a **única cura comprável**" (duas vezes) | consequência do D1: ele não é comprável desde 06/09/2026 | `grep -n "comprável" src/utils/specialItemUse.ts` |
 | D13 | tabela 🥚 (§20) | Renascimento perde "o estágio e os três atributos, e SÓ" | `handleRebirth` (`src/App.tsx`) também grava `maxActivityCap: FORM_REQUIREMENTS.rookie.cap` — o teto de hábitos cai de até 10 para 6; é a única regra que encolhe esse teto | `grep -n "maxActivityCap" src/App.tsx` |
 | D14 | tabela 🔒 (§17) | — | o comentário de `src/utils/dailyReset.ts` acima do ramo `!MANUAL_EVOLUTION` ainda diz que "a evolução acontece na virada seguinte ao destravar" — a frase que `evolucaoManual.contract.test.ts` proibiu na UI; o guard só varre strings | `grep -n "virada seguinte" src/utils/dailyReset.ts` |
