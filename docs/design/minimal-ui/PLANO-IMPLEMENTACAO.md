@@ -16,6 +16,16 @@ Ordem pensada para cada fatia ir para a `main` sozinha, com `tsc`/`vitest`/`buil
 | D5 | Nomes definitivos dos NPCs; onde entram a gata e o caranguejo | F4 (só texto) |
 | D6 | Onde moram Configurações, Oráculo, Estatísticas, Créditos, Guia (menu ícone da Home) | F1 |
 
+### Respostas do dono (23/09/2026)
+
+- **D1** exceção aberta: os 3 cuidados e o voltar em círculo podem ter anel.
+- **D2** pixel art liberada no Mapa e nas áreas; a UI de sistema continua vetorial.
+- **D3** fica **Emblemas**.
+- **D4** o Hall recebe a Biblioteca/comunidade.
+- **D5** os nomes Grom, Vultrak, Brisa, Pipo e Lumi ficam; a gata e o caranguejo ficam de reserva para o futuro.
+- **D6** tudo vai para o menu ícone da Home.
+- Próximo passo: F1 no código.
+
 ## F1 — Navegação: duas telas de topo
 
 - `ViewType` (`src/components/BottomNav.tsx`) e `currentView` (`App.tsx`): trocar as 5 abas por
