@@ -43,12 +43,12 @@ import type { Language } from '../utils/i18n';
  * nunca corações). Coraçõezinhos (raramente) dropam; o placar alimenta o ranking.
  */
 
-const MAX_FLOORS = 5;
+export const MAX_FLOORS = 5;
 const PERFECT = 0.92;
 const DEFEND_TIME = 3.0;   // seconds to react on defense
 const POPUP_MS = 1400;     // how long result popups stay before the next phase
 // Bits for clearing a floor — scales with how deep you are (10/15/20/25/30).
-const clearBonus = (floor: number) => 10 + 5 * (floor - 1);
+export const clearBonus = (floor: number) => 10 + 5 * (floor - 1);
 
 type Phase = 'intro' | 'attack' | 'defend' | 'result' | 'enemy-down' | 'floor-clear' | 'run-complete' | 'lost';
 interface Popup { icon: string; title: string; detail: string }

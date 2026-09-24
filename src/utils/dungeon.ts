@@ -77,7 +77,7 @@ export const LADDER_TIERS: EnemyTier[] = ['baby-i', 'baby-ii', 'rookie', 'champi
 // Heart drops are deliberately rare — and they are the ONLY way the dungeon
 // touches the heart bar, always upward. Losing never subtracts a heart.
 const HEART_DROP_DAILY_CAP = 2;            // hearts the dungeon can drop per day
-const HEART_DROP_CHANCE = 0.05;            // per enemy defeated (very low)
+export const HEART_DROP_CHANCE = 0.05;           // per enemy defeated (very low)
 
 // Base enemy stats per tier, before the per-wave difficulty scaling.
 const TIER_BASE: Record<EnemyTier, { hp: number; atk: number; speed: number; points: number }> = {

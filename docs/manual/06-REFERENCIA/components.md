@@ -11,7 +11,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 
 - **Orquestração:** [`src/App.tsx`](#srcapptsx) · [`src/main.tsx`](#srcmaintsx) · [`ErrorBoundary.tsx`](#srccomponentserrorboundarytsx) · [`ContentModals.tsx`](#srccomponentscontentmodalstsx) · ⚰️ [`BottomNav.tsx`](#srccomponentsbottomnavtsx) · [`nav/CornerLink.tsx`](#srccomponentsnavcornerlinktsx) · [`nav/MapPage.tsx`](#srccomponentsnavmappagetsx) · [`nav/AreaTopBar.tsx`](#srccomponentsnavareatopbartsx) · [`nav/HomeMenuSheet.tsx`](#srccomponentsnavhomemenusheettsx) · [`IntroScreen.tsx`](#srccomponentsintroscreentsx)
 - **Home e pet:** [`CompanionHUD.tsx`](#srccomponentscompanionhudtsx) · [`CareSystem.tsx`](#srccomponentscaresystemtsx) · [`ChatBox.tsx`](#srccomponentschatboxtsx) · [`PetPage.tsx`](#srccomponentspetpagetsx) · [`PetStageDecor.tsx`](#srccomponentspetstagedecortsx) · [`PlayCard.tsx`](#srccomponentsplaycardtsx) · [`GamePopups.tsx`](#srccomponentsgamepopupstsx) · [`FirstTaskCompletedPopup.tsx`](#srccomponentsfirsttaskcompletedpopuptsx) · [`nestArt.ts`](#srccomponentsnestartts) · [`evolution/SoulNode.tsx`](#srccomponentsevolutionsoulnodetsx) · [`evolution/nodeArt.tsx`](#srccomponentsevolutionnodearttsx) · [`RestWindowCard.tsx`](#srccomponentsrestwindowcardtsx) · [`DreamDex.tsx`](#srccomponentsdreamdextsx) · [`AdventureDiary.tsx`](#srccomponentsadventurediarytsx) · [`MorningDream.tsx`](#srccomponentsmorningdreamtsx) · [`NightmareBattle.tsx`](#srccomponentsnightmarebattletsx) · [`StepsCard.tsx`](#srccomponentsstepscardtsx) · [`StepRow.tsx`](#srccomponentssteprowtsx)
-- **Atividades e tarefas:** [`ActivitiesPage.tsx`](#srccomponentsactivitiespagetsx) · [`DailyRituals.tsx`](#srccomponentsdailyritualstsx) · [`CreateModal.tsx`](#srccomponentscreatemodaltsx) · [`EditModal.tsx`](#srccomponentseditmodaltsx) · [`TaskEditModal.tsx`](#srccomponentstaskeditmodaltsx) · [`TaskMeta.tsx`](#srccomponentstaskmetatsx) · [`TriagePile.tsx`](#srccomponentstriagepiletsx) · [`QuickAddBar.tsx`](#srccomponentsquickaddbartsx) · [`EvolveTaskModal.tsx`](#srccomponentsevolvetaskmodaltsx) · [`HabitConstancy.tsx`](#srccomponentshabitconstancytsx) · [`MilestoneCeremony.tsx`](#srccomponentsmilestoneceremonytsx) · [`MorningCheckIn.tsx`](#srccomponentsmorningcheckintsx) · [`WeeklyReportCard.tsx`](#srccomponentsweeklyreportcardtsx) · [`FirstDayCard.tsx`](#srccomponentsfirstdaycardtsx)
+- **Atividades e tarefas:** [`DailyRituals.tsx`](#srccomponentsdailyritualstsx) · [`CreateModal.tsx`](#srccomponentscreatemodaltsx) · [`EditModal.tsx`](#srccomponentseditmodaltsx) · [`TaskEditModal.tsx`](#srccomponentstaskeditmodaltsx) · [`TaskMeta.tsx`](#srccomponentstaskmetatsx) · [`TriagePile.tsx`](#srccomponentstriagepiletsx) · [`QuickAddBar.tsx`](#srccomponentsquickaddbartsx) · [`EvolveTaskModal.tsx`](#srccomponentsevolvetaskmodaltsx) · [`HabitConstancy.tsx`](#srccomponentshabitconstancytsx) · [`MilestoneCeremony.tsx`](#srccomponentsmilestoneceremonytsx) · [`MorningCheckIn.tsx`](#srccomponentsmorningcheckintsx) · [`WeeklyReportCard.tsx`](#srccomponentsweeklyreportcardtsx) · [`FirstDayCard.tsx`](#srccomponentsfirstdaycardtsx)
 - **Evolução:** [`EvolutionPath.tsx`](#srccomponentsevolutionpathtsx) · [`EvolutionCeremony.tsx`](#srccomponentsevolutionceremonytsx) · [`EvoTrail.tsx`](#srccomponentsevotrailtsx) · [`FormAlbum.tsx`](#srccomponentsformalbumtsx) · [`BestiaryCard.tsx`](#srccomponentsbestiarycardtsx) · [`RebirthModal.tsx`](#srccomponentsrebirthmodaltsx)
 - **Jogos:** [`DungeonGame.tsx`](#srccomponentsdungeongametsx) · [`ArenaGame.tsx`](#srccomponentsarenagametsx) · [`DinoGame.tsx`](#srccomponentsdinogametsx) · [`RPSGame.tsx`](#srccomponentsrpsgametsx) · [`pixel/TimingBar.tsx`](#srccomponentspixeltimingbartsx) · [`games/GameKit.tsx`](#srccomponentsgamesgamekittsx)
 - **Loja e economia:** [`ShopModal.tsx`](#srccomponentsshopmodaltsx) · [`home/Mochila.tsx`](#srccomponentshomemochilatsx) · [`ItemsWindow.tsx`](#srccomponentsitemswindowtsx) · [`CreditsModal.tsx`](#srccomponentscreditsmodaltsx) · [`UnlockAccountModal.tsx`](#srccomponentsunlockaccountmodaltsx)
@@ -50,14 +50,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** nenhuma (`find src/components -maxdepth 1 -name 'AccountSection.*test.ts*'` vazio, 09/09/2026).
 **Avisos do arquivo:** "Restaurar compras" não é opcional — a Play exige restauração para compras não consumíveis, sem isso quem reinstala perde o que pagou; "Sair da conta" é ação comum, sem vermelho `#e0483e` cravado.
 
-### `src/components/ActivitiesPage.tsx`
-**Dono de:** hub de MINIJOGOS (Dungeon/Arena/Dino/RPS) — não é a lista de hábitos, apesar do nome. A Loja não é card daqui (é destino da `BottomNav`).
-**Props principais:** não documentado por interface própria no topo do arquivo lido; recebe callbacks de jogo e dados de progresso (ver o corpo para a lista completa — arquivo de **306 linhas**, `wc -l`, 22/09/2026; eram 298 em 10/09/2026). Desde `cf6315e1` repassa **`onFloorCleared?`** à `DungeonGame` (decisão do dono #59b — um andar limpo é evento de Vínculo; opcional, para não obrigar quem montar a masmorra fora da Home a saber do Vínculo).
-**Exports:** `ActivitiesPage(props)`.
-**Estado/efeitos relevantes:** `useState<'dungeon' | 'arena' | 'dino' | 'rps' | null>` (`openGame`) controla qual minijogo está aberto sobre a página.
-**Chamado por:** `src/App.tsx` via `lazy(() => import('./components/ActivitiesPage'))` (`grep -n "lazy(" src/App.tsx`, 09/09/2026).
-**Régua:** nenhuma (`find src/components -maxdepth 1 -name 'ActivitiesPage.*test.ts*'` vazio, 09/09/2026).
-**Avisos do arquivo:** rótulo nomeado no lugar do número de balanceamento (ex.: "Ranking" em vez de "Bits por inimigo + ranking"); sem PNG/Silkscreen — só o título da página é bitmap; nome de ícone fora do inventário de `tokens.md` renderiza vazio, sem erro.
+⚰️ **`ActivitiesPage.tsx` saiu em 24/09/2026 (minimal-ui F5, Exploração + Jogos).** O hub de cartões virou lotes nas áreas do Mapa: Masmorra e Corrida do Dino na Exploração, Pedra-papel-tesoura em Jogos — ver `src/components/play/PlayAreaView.tsx`. O Torneio e a Arena moram na área Arena.
 
 ### `src/components/AdventureDiary.tsx`
 **Dono de:** diário de aventuras — o que a criatura trouxe, noite após noite; mora ao lado do Dex de Sonhos na página do pet.
@@ -130,18 +123,38 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Chamado por:** `src/App.tsx`.
 **Régua:** `src/components/nav/nav.render.test.tsx`.
 
+### `src/components/play/PlayAreaView.tsx`
+**Dono de:** as áreas de JOGAR do Mapa (minimal-ui F5) — Exploração (lotes Masmorra e Corrida do Dino, NPC Brisa) e Jogos (lote Pedra, papel e tesoura, NPC Pipo). Monta `AreaScene` + `AreaSheet` com a folha do lote aberto e, pelo CTA da folha, o MESMO minijogo de antes (`DungeonGame`, `DinoGame`, `RPSGame`), por cima de tudo. Substitui a antiga `ActivitiesPage`. Nenhuma regra nasce aqui: os handlers chegam prontos do `App`.
+**Props principais:** `area: 'exploracao' | 'jogos'`, `language`, `evolutionStage`, `demoCharacterId?`, `totalPoints`, `onDungeonEnter`, `onDungeonLose`, `onDungeonHeartDrop`, `onGlitchtama`, `onFloorCleared?`, `onDungeonEnemyDefeated`, `onDinoScore`, `onEarnPoints`, `onSpendBits?`.
+**Exports:** `PlayAreaView(props)`, `PlayAreaViewProps` (interface).
+**Chamado por:** `src/App.tsx` via `lazy()`, com `key` da view (trocar de área zera folha e jogo).
+**Régua:** `src/components/play/playArea.render.test.tsx`.
+
+### `src/components/play/PlaySheets.tsx`
+**Dono de:** as três folhas-porta dos minijogos (minimal-ui F5): `MasmorraSheet` (5 andares, dificuldade da semana, melhor placar, o que pode cair, "perder custa só a run"), `DinoSheet` (recorde e Bits no recorde) e `PptSheet` (Bits por vitória, rodadas para vencer). Os números vêm das constantes dos donos (`MAX_FLOORS`/`clearBonus` da `DungeonGame`, `HEART_DROP_CHANCE` de `utils/dungeon.ts`, `MATCH_POINTS`/`WINS_NEEDED` do `RPSGame`) e os placares das mesmas chaves que os jogos gravam (`DUNGEON_BEST`, `DUNGEON_DIFFICULTY`, `DINO_BEST`). O CTA da Masmorra nunca fica desabilitado (sem gate de entrada).
+**Exports:** `MasmorraSheet`, `DinoSheet`, `PptSheet`.
+**Chamado por:** `src/components/play/PlayAreaView.tsx`.
+**Régua:** `src/components/play/playArea.render.test.tsx`.
+
 ### `src/components/nav/AreaScene.tsx`
 **Dono de:** o MOLDE de uma área do Mapa (minimal-ui F4) — fundo de cena, "lotes" (construções clicáveis, posicionadas em % sobre a cena) e o NPC anfitrião da área com balão de fala (a fala vem de `src/utils/areaNpcVoice.ts`, nunca escrita aqui). Não decide o conteúdo de cada folha — isso é F5.
 **Props principais:** `areaId: AreaId`, `language`, `lots: AreaLot[]` (`id`, `label`, `left`/`top`, `ariaLabel`, `onOpen`), `children?` (onde entra o `AreaSheet` aberto, no mesmo empilhamento da cena).
 **Exports:** `AreaScene(props)`, `AreaLot` (interface).
-**Chamado por:** `src/App.tsx`.
+**Chamado por:** `src/components/nav/DemoAreaView.tsx` e `src/components/play/PlayAreaView.tsx`.
 **Régua:** `src/components/nav/areaShell.render.test.tsx`.
+
+### `src/components/nav/DemoAreaView.tsx`
+**Dono de:** a área do Mapa cuja fatia de F5 ainda não chegou — o molde F4 (`AreaScene` + `AreaSheet`) com UM lote de exemplo e placeholder (`areaDemoLot`). Saiu do `App.tsx` para entrar por `lazy()` (orçamento de bytes, decisão #31).
+**Props principais:** `area: AreaId`, `language`.
+**Exports:** `DemoAreaView(props)`.
+**Chamado por:** `src/App.tsx` via `lazy()`, com `key` da view.
+**Régua:** `src/components/nav/areaShell.render.test.tsx` (indireta, via o molde).
 
 ### `src/components/nav/AreaSheet.tsx`
 **Dono de:** a folha (bottom-sheet) de um lote de área (minimal-ui F4) — `min-height: 62%`, o NPC da área espiando ATRÁS/ACIMA da folha (nunca dentro do conteúdo rolável), backdrop fecha ao tocar fora, Escape fecha, foco vai para o botão de fechar ao abrir. Só o MOLDE: o conteúdo de cada folha por área é F5 (aqui é sempre `children` — placeholder até lá).
 **Props principais:** `areaId: AreaId`, `title`, `closeLabel`, `open`, `onClose`, `children`.
 **Exports:** `AreaSheet(props)`.
-**Chamado por:** `src/App.tsx`.
+**Chamado por:** `src/components/nav/DemoAreaView.tsx` e `src/components/play/PlayAreaView.tsx`.
 **Régua:** `src/components/nav/areaShell.render.test.tsx`.
 
 ### `src/components/home/Mochila.tsx`

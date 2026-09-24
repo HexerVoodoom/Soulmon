@@ -17,9 +17,6 @@ import {
 import { CornerLink } from './components/nav/CornerLink';
 import { AreaTopBar } from './components/nav/AreaTopBar';
 import { MapPage } from './components/nav/MapPage';
-import { AreaScene, type AreaLot } from './components/nav/AreaScene';
-import { AreaSheet } from './components/nav/AreaSheet';
-import { areaDemoLot } from './utils/areaSheetCopy';
 import { HomeMenuSheet } from './components/nav/HomeMenuSheet';
 import { NavGlyph } from './components/ui/NavGlyphs';
 import {
@@ -635,7 +632,13 @@ const CreateModal = lazy(() => import('./components/CreateModal').then(m => ({ d
 import type { QuickAddResult } from './utils/quickAdd';
 const StatsPage = lazy(() => import('./components/StatsPage').then(m => ({ default: m.StatsPage })));
 const SettingsPage = lazy(() => import('./components/SettingsPage').then(m => ({ default: m.SettingsPage })));
-const ActivitiesPage = lazy(() => import('./components/ActivitiesPage').then(m => ({ default: m.ActivitiesPage })));
+// minimal-ui F5 — a `ActivitiesPage` (hub de cartões) saiu: Masmorra e Corrida
+// do Dino são lotes da Exploração, o Pedra, papel e tesoura é lote de Jogos.
+// Entra por `lazy` (orçamento de bytes, decisão #31).
+// As áreas cuja fatia de F5 ainda não chegou: o molde F4 com o lote de exemplo,
+// também por `lazy` (orçamento de bytes).
+const DemoAreaView = lazy(() => import('./components/nav/DemoAreaView').then(m => ({ default: m.DemoAreaView })));
+const PlayAreaView = lazy(() => import('./components/play/PlayAreaView').then(m => ({ default: m.PlayAreaView })));
 const SoulmonOnboarding = lazy(() => import('./components/SoulmonOnboarding').then(m => ({ default: m.SoulmonOnboarding })));
 const BalanceWeekModal = lazy(() => import('./components/BalanceWeekModal').then(m => ({ default: m.BalanceWeekModal })));
 const EditModal = lazy(() => import('./components/EditModal').then(m => ({ default: m.EditModal })));
@@ -678,11 +681,6 @@ export default function App() {
   const pane = paneFor(currentView, labTab);
   /** A área do Mapa da view atual, ou `null` fora de uma área (minimal-ui F4). */
   const area = areaOf(currentView);
-  /** A folha (`AreaSheet`) do lote de exemplo, aberta por área (minimal-ui F4:
-   *  só o molde — o conteúdo completo por área é F5). Fecha sozinha ao trocar
-   *  de view, pra não reabrir "fantasma" numa área diferente. */
-  const [areaSheetOpen, setAreaSheetOpen] = useState(false);
-  useEffect(() => { setAreaSheetOpen(false); }, [currentView]);
   /** O menu ícone da Home (D6). */
   const [homeMenuOpen, setHomeMenuOpen] = useState(false);
   const currentViewRef = useRef(currentView);
@@ -5226,28 +5224,49 @@ export default function App() {
               por ora, as páginas antigas que só essas 6 áreas alcançavam
               (`!area` nas condições abaixo) — eram o pane 'shop'/'games'/
               'tournament'/'library'/'evolution'/'pet'/parte de 'stats'. */}
-          {area && (
-            <AreaScene
-              areaId={area}
-              language={language}
-              lots={[{
-                id: 'exemplo',
-                label: areaDemoLot(area, language).label,
-                left: '50%', top: '38%',
-                ariaLabel: areaDemoLot(area, language).label,
-                onOpen: () => setAreaSheetOpen(true),
-              } satisfies AreaLot]}
-            >
-              <AreaSheet
-                areaId={area}
-                title={areaDemoLot(area, language).label}
-                closeLabel={language === 'pt-BR' ? 'Fechar' : 'Close'}
-                open={areaSheetOpen}
-                onClose={() => setAreaSheetOpen(false)}
-              >
-                <p style={{ ...sm2Text, margin: 0 }}>{areaDemoLot(area, language).placeholder}</p>
-              </AreaSheet>
-            </AreaScene>
+          {/* minimal-ui F5 — Exploração e Jogos com conteúdo real: a cena,
+              os lotes (Masmorra, Corrida do Dino, Pedra-papel-tesoura) e os
+              minijogos de sempre, com os MESMOS handlers que a antiga
+              `ActivitiesPage` recebia. `key` da view: trocar de área zera a
+              folha e o jogo aberto. */}
+          {(area === 'exploracao' || area === 'jogos') && (
+            <Suspense fallback={<ScreenSkeleton language={language} />}>
+              <PlayAreaView
+                key={currentView}
+                area={area}
+                language={language}
+                evolutionStage={gameState.evolutionStage}
+                demoCharacterId={gameState.demoCharacterId}
+                totalPoints={gameState.gamePoints ?? 0}
+                onDungeonEnter={handleDungeonEnter}
+                onDungeonLose={handleDungeonLose}
+                onDungeonHeartDrop={handleDungeonHeartDrop}
+                onGlitchtama={handleGlitchtama}
+                /* 🔗 #59b — ⚔️ ANDAR LIMPO. O teto `BOND_DAILY_CAP.dungeon`
+                   (`bond.ts`) é quem decide quanto uma segunda run ainda
+                   rende; aqui só se emite o evento. */
+                onFloorCleared={handleDungeonFloorCleared}
+                onDungeonEnemyDefeated={handleDungeonEnemyDefeated}
+                onDinoScore={handleDinoScore}
+                onEarnPoints={handleEarnGamePoints}
+                /* WP4.5 — o sumidouro. A cobrança é conferida sobre o `prev`
+                   (dois toques no mesmo lote do React leriam o mesmo saldo e
+                   comprariam duas vezes com o dinheiro de uma). */
+                onSpendBits={(pts) => {
+                  if ((gameState.gamePoints ?? 0) < pts) return false;
+                  setGameState(prev => (prev.gamePoints ?? 0) < pts
+                    ? prev
+                    : { ...prev, gamePoints: (prev.gamePoints ?? 0) - pts });
+                  return true;
+                }}
+              />
+            </Suspense>
+          )}
+
+          {area && area !== 'exploracao' && area !== 'jogos' && (
+            <Suspense fallback={<ScreenSkeleton language={language} />}>
+              <DemoAreaView key={currentView} area={area} language={language} />
+            </Suspense>
           )}
 
           {pane === 'main' && (
@@ -6263,39 +6282,6 @@ export default function App() {
             </Suspense>
           )}
 
-          {pane === 'games' && !area && (
-            <Suspense fallback={<ScreenSkeleton language={language} />}>
-              <ActivitiesPage
-                evolutionStage={gameState.evolutionStage}
-                demoCharacterId={gameState.demoCharacterId}
-                language={language}
-                totalPoints={gameState.gamePoints ?? 0}
-                onDungeonEnter={handleDungeonEnter}
-                onDungeonLose={handleDungeonLose}
-                onDungeonHeartDrop={handleDungeonHeartDrop}
-                onGlitchtama={handleGlitchtama}
-                /* 🔗 #59b — ⚔️ ANDAR LIMPO. O teto `BOND_DAILY_CAP.dungeon`
-                   (`bond.ts`) é quem decide quanto uma segunda run ainda
-                   rende; aqui só se emite o evento. */
-                onFloorCleared={handleDungeonFloorCleared}
-                onDungeonEnemyDefeated={handleDungeonEnemyDefeated}
-                onDinoScore={handleDinoScore}
-                onEarnPoints={handleEarnGamePoints}
-                /* WP4.5 — o sumidouro. A cobrança é conferida sobre o `prev`
-                   (dois toques no mesmo lote do React leriam o mesmo saldo e
-                   comprariam duas vezes com o dinheiro de uma). */
-                onSpendBits={(pts) => {
-                  if ((gameState.gamePoints ?? 0) < pts) return false;
-                  setGameState(prev => (prev.gamePoints ?? 0) < pts
-                    ? prev
-                    : { ...prev, gamePoints: (prev.gamePoints ?? 0) - pts });
-                  return true;
-                }}
-                onOpenTournament={() => goTo(areaView('arena'))}
-                soulmonSkills={gameState.soulmonSkills}
-              />
-            </Suspense>
-          )}
         </main>
 
       {/* ── NAVEGAÇÃO (minimal-ui F1) ──────────────────────────────────────
