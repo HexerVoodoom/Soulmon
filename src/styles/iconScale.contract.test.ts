@@ -90,7 +90,7 @@ const ESCALA = new Set(DEGRAUS.values());
 interface CallSite {
   arquivo: string;   // relativo à raiz, com `/`
   linha: number;
-  tag: 'Icon' | 'NavGlyph';
+  tag: 'Icon' | 'NavGlyph' | 'PixelIcon';
   /** O número desenhado, quando dá para saber. `null` = forma não resolvível. */
   size: number | null;
   /** O que estava escrito entre as chaves (`24`, `ICON_ACTION`, `props.size`). */
@@ -133,7 +133,8 @@ function constantesLiterais(src: string): Map<string, number> {
 }
 
 /**
- * Varre um fonte por `<Icon …>` / `<NavGlyph …>` e extrai o `size={…}`.
+ * Varre um fonte por `<Icon …>` / `<NavGlyph …>` / `<PixelIcon …>` (a arte
+ * em pixel do squad de arte segue a MESMA escala) e extrai o `size={…}`.
  *
  * Não é um regex de uma linha só de propósito: uma prop pode conter `>` (arrow
  * function, comparação) e um `[^>]*?` pararia cedo, deixando o call-site
@@ -147,7 +148,7 @@ function constantesLiterais(src: string): Map<string, number> {
 export function varrerFonte(src: string, arquivo = '<memória>'): CallSite[] {
   const CONSTS = constantesLiterais(src);
   const achados: CallSite[] = [];
-  const abertura = /<(Icon|NavGlyph)(?=[\s/>])/g;
+  const abertura = /<(Icon|NavGlyph|PixelIcon)(?=[\s/>])/g;
   for (const m of src.matchAll(abertura)) {
     let i = m.index! + m[0].length;
     let chaves = 0;
@@ -423,8 +424,9 @@ describe('guard da escala de ícone — autoverificação (o instrumento enxerga
     expect(achados[0].linha).toBe(2);
   });
 
-  it('o parser cobre NavGlyph também', () => {
+  it('o parser cobre NavGlyph e PixelIcon também', () => {
     expect(varrerFonte('<NavGlyph name="home" size={32} />')[0].tag).toBe('NavGlyph');
+    expect(varrerFonte('<PixelIcon name="mapa" size={32} />')[0].tag).toBe('PixelIcon');
   });
 
   it('`size` AUSENTE não é acusado (aí não há escolha: vale o padrão 24)', () => {

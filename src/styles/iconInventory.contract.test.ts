@@ -49,11 +49,13 @@ function arquivosTsx(dir: string, saida: string[] = []): string[] {
 /**
  * Nomes que NÃO são ícones da fonte: são glifos AUTORAIS (`ui/NavGlyphs.tsx`)
  * sem par no subset. `activities`/`evolution`/`shop` eram a barra inferior e
- * hoje são os ícones das áreas no Mapa; `map` é o link de canto da Home
- * (minimal-ui F1, 23/09/2026). Ficam de fora explicitamente, e não por um
+ * hoje são os ícones das áreas no Mapa. `mapa` é o link de canto da Home:
+ * desde a correção pós-F3 (24/09/2026) ele é ARTE em pixel do squad de arte
+ * (`assets/soulmon/icones-ui`, via `PixelIcon`), não fonte — era o glifo
+ * `map` antes. Ficam de fora explicitamente, e não por um
  * filtro esperto — assim acrescentar outro caso obriga a decidir de novo.
  */
-const NAO_SAO_ICONES = new Set(['activities', 'evolution', 'shop', 'map']);
+const NAO_SAO_ICONES = new Set(['activities', 'evolution', 'shop', 'mapa']);
 
 describe('inventário de ícones', () => {
   it('todo `<Icon name="…">` literal existe no subset da fonte', () => {

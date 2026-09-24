@@ -9,6 +9,21 @@ import zonaArena from '../../assets/soulmon/mapa/zona-arena.png';
 import zonaExploracao from '../../assets/soulmon/mapa/zona-exploracao.png';
 import zonaLaboratorio from '../../assets/soulmon/mapa/zona-laboratorio.png';
 import zonaHall from '../../assets/soulmon/mapa/zona-hall.png';
+import { CHIP_MOEDA_ART, CHIP_MOEDA_SLICE } from '../../assets/soulmon/icones-ui';
+
+/** A pílula de moeda: moldura `chip-moeda` em 9-slice. A arte tem 256×92 e é
+ *  desenhada a 1/3 (tampas de 16px, bordas de 6px) — a altura final fica
+ *  ~30px com uma linha de `text-sm`. `fill` pinta o miolo teal escuro. */
+const S = CHIP_MOEDA_SLICE;
+const CHIP: import('react').CSSProperties = {
+  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+  minWidth: 88,
+  padding: '1px 4px',
+  borderStyle: 'solid',
+  borderWidth: `${S.top / 3}px ${S.right / 3}px ${S.bottom / 3}px ${S.left / 3}px`,
+  borderImage: `url(${CHIP_MOEDA_ART}) ${S.top} ${S.right} ${S.bottom} ${S.left} fill / ${S.top / 3}px ${S.right / 3}px ${S.bottom / 3}px ${S.left / 3}px stretch`,
+  lineHeight: 1.2,
+};
 
 /**
  * O MAPA — arte real (minimal-ui F3).
@@ -95,14 +110,14 @@ export function MapPage({ language, onOpenArea, bits, emblems, credits }: {
         }}
       />
 
-      {/* Saldo das 3 moedas — menu discreto dentro da cena, canto INFERIOR
-          direito (espelho do link da Home, no esquerdo). ⚠️ Morava no canto
-          superior direito e a arte do "Jogos" (74%/16.8%, renderizada depois
-          no DOM) pintava POR CIMA dele — o saldo sumia atrás do cogumelo e o
-          contraste ia a quase zero. O canto inferior direito não tem área
-          nenhuma; o fundo usa o MESMO escuro dos rótulos das áreas (.82), que
-          segura o texto sobre qualquer trecho da arte. É painel de TEXTO, não
-          ícone — a regra "ícone nunca dentro de box" não se aplica. */}
+      {/* Saldo das 3 moedas — canto INFERIOR direito (espelho do link da
+          Home, no esquerdo). ⚠️ Morava no canto superior direito e a arte do
+          "Jogos" pintava POR CIMA dele (fix1). Cada moeda é uma pílula com a
+          moldura `chip-moeda` do squad de arte (cobre + cristais, miolo teal
+          escuro opaco) em 9-slice via `border-image` — a pílula estica com o
+          texto sem deformar as tampas, e o miolo opaco segura o contraste
+          sobre qualquer trecho da arte. É moldura de TEXTO, não de ícone — a
+          regra "ícone nunca dentro de box" não se aplica. */}
       <div
         data-map-currencies
         style={{
@@ -111,24 +126,20 @@ export function MapPage({ language, onOpenArea, bits, emblems, credits }: {
           bottom: 'calc(var(--sm2-space-3) + env(safe-area-inset-bottom, 0px))',
           zIndex: 2,
           display: 'flex', flexDirection: 'column', alignItems: 'flex-end',
-          gap: 2,
-          padding: '6px 10px',
-          background: 'rgba(8,25,26,.82)',
-          border: '1px solid rgba(95,243,224,.35)',
-          borderRadius: 'var(--sm2-radius-md)',
-          boxShadow: '0 4px 10px rgba(0,0,0,.45)',
-          backdropFilter: 'blur(2px)',
+          gap: 4,
+          filter: 'drop-shadow(0 3px 6px rgba(0,0,0,.5))',
         }}
       >
-        <span aria-label={isPt ? `${bits} Bits` : `${bits} Bits`} style={{ ...bitsStyle, fontSize: 'var(--sm2-text-sm)' }}>
+        <span data-map-chip aria-label={isPt ? `${bits} Bits` : `${bits} Bits`} style={{ ...CHIP, ...bitsStyle, fontSize: 'var(--sm2-text-sm)' }}>
           {bits} Bits
         </span>
-        <span aria-label={isPt ? `${emblems} Emblemas` : `${emblems} Emblems`} style={{ ...emblemStyle, fontSize: 'var(--sm2-text-sm)' }}>
+        <span data-map-chip aria-label={isPt ? `${emblems} Emblemas` : `${emblems} Emblems`} style={{ ...CHIP, ...emblemStyle, fontSize: 'var(--sm2-text-sm)' }}>
           {emblems} {isPt ? 'Emblemas' : 'Emblems'}
         </span>
         <span
+          data-map-chip
           aria-label={isPt ? `${credits} Créditos` : `${credits} Credits`}
-          style={{ color: CREDIT_COLOR, fontFamily: 'var(--sm2-font-text)', fontWeight: 700, fontSize: 'var(--sm2-text-sm)', fontVariantNumeric: 'tabular-nums' }}
+          style={{ ...CHIP, color: CREDIT_COLOR, fontFamily: 'var(--sm2-font-text)', fontWeight: 700, fontSize: 'var(--sm2-text-sm)', fontVariantNumeric: 'tabular-nums' }}
         >
           {credits} {isPt ? 'Créditos' : 'Credits'}
         </span>
