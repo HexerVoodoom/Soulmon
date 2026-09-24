@@ -1,6 +1,6 @@
 # Regras de negócio — todas as regras do jogo, por sistema
 
-> **Dono:** doc-redator-regras · **Data:** 22/09/2026 (5ª sincronização do dia, delta `89554b5d..c7bca6d` (balanceamento do oráculo): §22 ganhou a lápide do degrau da criatura favorita (`FAVORITE_STEP`, `ORACLE_DRAFT_VERSION` intacta) e a tabela das quatro frentes de rebalanceamento da leitura (`DOMINANT_SCHOOL_LEAD`, `melhorArquetipo`, `ANCHOR_BASE`/`vileza`, `sombra`) mais o aviso do erro de medição de `normalizeName`. **Nenhuma regra que o jogador VIVE mudou**; anterior: 22/09/2026 (4ª sincronização do dia, delta `fadb1167..89554b5d`: **nenhuma regra de jogo mudou** — §20 ganhou a nota da capacidade DORMENTE do motor de ficha (`ElementPlan`/`ALLOC_FRACTION` em `buildSheet.ts`, sem chamador, ⏸️ parqueada para a v2.0) e a única mudança de comportamento interna: a profissão lê sempre a escala rookie automática quando há plano; anterior: 3ª sincronização do dia, delta `cd66940f..cf6315e1` (execução das 32 respostas do dono — **oito regras de jogo mudaram**): §7 a virada julga o último dia aberto + os quatro campos que ela escreve; §8 as três travas novas do dreno (#58b); §18 uma virada completa antes de re-evoluir (#59); §24 `habitCountsForHeartsOn` (#57b); **§24-A novo** — desfazer a conclusão (#57); §46 Bits por dia completo + teto de minijogo (#61/#63) e o ponteiro do modelo (#55); §48/§49 o 🌀 escreve `missionPerfectDays`; §55 os 11 eventos ganharam emissor (#59b) e a comida ficou de fora; §57-A o 🌀 saiu das conquistas (#41/#60); anterior: 2ª sincronização do dia, delta `a6c1cd8a..592e2c14`, QA Rodada 2: §46 cota de chat por tier (provisório #55); §55 `XP_PERFECT_DAY` passou a ser emitido; §7/§18/§46 ganharam só a NOTA "aberto ao dono" dos provisórios #58/#59/#61 — nenhuma regra de jogo mudou)) · **Estado:** verificado em 22/09/2026 por doc-verificador (delta `89554b5d..c7bca6d` — `DOMINANT_SCHOOL_LEAD` = 1.15, `melhorArquetipo(lista, ficha.nome)` com `hashString` sobre a lista ordenada por `id`, `ANCHOR_BASE` = 45, `vileza` = `dev('Plutão')*0.55 + dev('Marte')*0.55`, `sombra` com a fatia água+terra ×40 e o deslocamento −20 sob `Math.max(0, …)`, e a ausência de `favoriteCreature` no `OracleInput` montado pelo `SoulmonOnboarding.tsx` — todos conferidos símbolo a símbolo no fonte; os quatro arquivos de régua conferidos por `ls`); anterior: verificado em 22/09/2026 por doc-verificador (delta `fadb1167..89554b5d` — o bloco de capacidade dormente da §20 conferido símbolo a símbolo em `src/utils/soulProfile/ficha/buildSheet.ts` (`ALLOC_FRACTION` = 0.25, `ElementPlan`, `sanitizePlan`, `allocateElementos`, `buildFicha` com `plano` como 6º parâmetro, ramo `stage === 'rookie' && !plano`) e a inércia por `grep` (nenhum chamador); `buildSheet.aloc` + `buildSheet.piso` + `arena.alocacao` + `pipeline` verdes (56 testes, fixture intocada)); anterior: verificado em 22/09/2026 por doc-verificador (delta `cd66940f..cf6315e1` — `dailyReset.ts` (`diaJulgado`, `BITS_PER_COMPLETE_DAY`, `podeEvoluirDepoisDaQueda`, `soParaCoracao`), `poopDrain.ts` (`saveDaysLived`/`returnGraceLeft`/`getPreviousForm`), `habitRhythm.ts` (`habitCountsForHeartsOn`/`isWeekClosingDay`), `currencies.ts` (`MINIGAME_BITS_PER_DAY`/`creditMinigameBits`), `missions.ts`, `specialItemUse.ts`, `completionUndo.ts` e os 11 `kind` de `bond.ts` × os emissores do `App.tsx` conferidos símbolo a símbolo; a AUSÊNCIA de `kind` de comida conferida por `grep`); anterior: verificado em 22/09/2026 por doc-verificador (delta `a6c1cd8a..592e2c14` — `_aiGuard.js` › `AI_LIMITS.chat.perAccountByTier`, `dailyReset.ts` › `awardBondXP(..., { kind: 'perfectDay' })` e os `it.todo` de `regrasDeJogo.qaRodada2.test.ts` conferidos; anterior no mesmo dia: delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §46 cortesia × reembolso (`auditRefunds`/`paidProviderOf`) e §56 versões `2026-09-22` + `qualDocMudou` conferidos símbolo a símbolo contra `_entitlements.js`, `consent.ts`, `termsNotice.ts`; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §46 cortesia, §56 aviso de termos, §57-A `dias-completos-30`/`conquistasHerdadas`, §58-A ⚰️ `SettingsModal` conferidos símbolo a símbolo; anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: §59 D31–D33 reconferidas no delta `15164e4c..7e5d0ba9` — D32 ⚰️ fechada confere com o `CLAUDE.md` no disco (cinco arquivos, S1..S16) e com `ls public/sounds`; D31 segue ABERTA (o `CLAUDE.md` ainda diz `DÍVIDA`); verificação anterior: §58-A e §59 D32–D33, delta `5ac3d351..8d318529`, som/S16 + chaves na `SettingsPage`; verificação anterior do mesmo dia: só as seções do delta `dc72579e..9875477b` — §2, §3, §8, §10, §12, §45, §48, §59 D31; verificação anterior: 21/09/2026, seções do delta `2580b73a..dc72579e` — §22, §28, §41, §43, §46, §57-A, §57-B, §59 D28–D30; doc inteiro: 10/09/2026, em duas metades)
+> **Dono:** doc-redator-regras · **Data:** 22/09/2026 (5ª sincronização do dia, delta `89554b5d..c7bca6d` (balanceamento do oráculo): §22 ganhou a lápide do degrau da criatura favorita (`FAVORITE_STEP`, `ORACLE_DRAFT_VERSION` intacta) e a tabela das quatro frentes de rebalanceamento da leitura (`DOMINANT_SCHOOL_LEAD`, `melhorArquetipo`, `ANCHOR_BASE`/`vileza`, `sombra`) mais o aviso do erro de medição de `normalizeName`. **Nenhuma regra que o jogador VIVE mudou**; anterior: 22/09/2026 (4ª sincronização do dia, delta `fadb1167..89554b5d`: **nenhuma regra de jogo mudou** — §20 ganhou a nota da capacidade DORMENTE do motor de ficha (`ElementPlan`/`ALLOC_FRACTION` em `buildSheet.ts`, sem chamador, ⏸️ parqueada para a v2.0) e a única mudança de comportamento interna: a profissão lê sempre a escala rookie automática quando há plano; anterior: 3ª sincronização do dia, delta `cd66940f..cf6315e1` (execução das 32 respostas do dono — **oito regras de jogo mudaram**): §7 a virada julga o último dia aberto + os quatro campos que ela escreve; §8 as três travas novas do dreno (#58b); §18 uma virada completa antes de re-evoluir (#59); §24 `habitCountsForHeartsOn` (#57b); **§24-A novo** — desfazer a conclusão (#57); §46 Bits por dia completo + teto de minijogo (#61/#63) e o ponteiro do modelo (#55); §48/§49 o 🌀 escreve `missionPerfectDays`; §55 os 11 eventos ganharam emissor (#59b) e a comida ficou de fora; §57-A o 🌀 saiu das conquistas (#41/#60); anterior: 2ª sincronização do dia, delta `a6c1cd8a..592e2c14`, QA Rodada 2: §46 cota de chat por tier (provisório #55); §55 `XP_PERFECT_DAY` passou a ser emitido; §7/§18/§46 ganharam só a NOTA "aberto ao dono" dos provisórios #58/#59/#61 — nenhuma regra de jogo mudou)) · **Estado:** verificado em 24/09/2026 por doc-verificador (código em `78ef5367` — §7 `completeDayReached`/`diaCompletoHoje`, §17 incubação (`INCUBATION_MIN_MS`, `incubationFor`, `incubationReady`, `isIncubating`, `birthBatch` só `rookie`, `SpriteOccasion`), §20 `applyRebirth` com `emptyIncubation()`, §47 `mercadoCatalog.ts`, §49 `MissionCategory`/`MISSION_CATEGORIES`, §51 `HEART_DROP_CHANCE`, §54 `playAreaLots.ts`, §59 D3 conferidos símbolo a símbolo; corrigido: `EvoTrail.tsx` inexistente virou lápide); anterior: verificado em 22/09/2026 por doc-verificador (delta `89554b5d..c7bca6d` — `DOMINANT_SCHOOL_LEAD` = 1.15, `melhorArquetipo(lista, ficha.nome)` com `hashString` sobre a lista ordenada por `id`, `ANCHOR_BASE` = 45, `vileza` = `dev('Plutão')*0.55 + dev('Marte')*0.55`, `sombra` com a fatia água+terra ×40 e o deslocamento −20 sob `Math.max(0, …)`, e a ausência de `favoriteCreature` no `OracleInput` montado pelo `SoulmonOnboarding.tsx` — todos conferidos símbolo a símbolo no fonte; os quatro arquivos de régua conferidos por `ls`); anterior: verificado em 22/09/2026 por doc-verificador (delta `fadb1167..89554b5d` — o bloco de capacidade dormente da §20 conferido símbolo a símbolo em `src/utils/soulProfile/ficha/buildSheet.ts` (`ALLOC_FRACTION` = 0.25, `ElementPlan`, `sanitizePlan`, `allocateElementos`, `buildFicha` com `plano` como 6º parâmetro, ramo `stage === 'rookie' && !plano`) e a inércia por `grep` (nenhum chamador); `buildSheet.aloc` + `buildSheet.piso` + `arena.alocacao` + `pipeline` verdes (56 testes, fixture intocada)); anterior: verificado em 22/09/2026 por doc-verificador (delta `cd66940f..cf6315e1` — `dailyReset.ts` (`diaJulgado`, `BITS_PER_COMPLETE_DAY`, `podeEvoluirDepoisDaQueda`, `soParaCoracao`), `poopDrain.ts` (`saveDaysLived`/`returnGraceLeft`/`getPreviousForm`), `habitRhythm.ts` (`habitCountsForHeartsOn`/`isWeekClosingDay`), `currencies.ts` (`MINIGAME_BITS_PER_DAY`/`creditMinigameBits`), `missions.ts`, `specialItemUse.ts`, `completionUndo.ts` e os 11 `kind` de `bond.ts` × os emissores do `App.tsx` conferidos símbolo a símbolo; a AUSÊNCIA de `kind` de comida conferida por `grep`); anterior: verificado em 22/09/2026 por doc-verificador (delta `a6c1cd8a..592e2c14` — `_aiGuard.js` › `AI_LIMITS.chat.perAccountByTier`, `dailyReset.ts` › `awardBondXP(..., { kind: 'perfectDay' })` e os `it.todo` de `regrasDeJogo.qaRodada2.test.ts` conferidos; anterior no mesmo dia: delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §46 cortesia × reembolso (`auditRefunds`/`paidProviderOf`) e §56 versões `2026-09-22` + `qualDocMudou` conferidos símbolo a símbolo contra `_entitlements.js`, `consent.ts`, `termsNotice.ts`; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §46 cortesia, §56 aviso de termos, §57-A `dias-completos-30`/`conquistasHerdadas`, §58-A ⚰️ `SettingsModal` conferidos símbolo a símbolo; anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: §59 D31–D33 reconferidas no delta `15164e4c..7e5d0ba9` — D32 ⚰️ fechada confere com o `CLAUDE.md` no disco (cinco arquivos, S1..S16) e com `ls public/sounds`; D31 segue ABERTA (o `CLAUDE.md` ainda diz `DÍVIDA`); verificação anterior: §58-A e §59 D32–D33, delta `5ac3d351..8d318529`, som/S16 + chaves na `SettingsPage`; verificação anterior do mesmo dia: só as seções do delta `dc72579e..9875477b` — §2, §3, §8, §10, §12, §45, §48, §59 D31; verificação anterior: 21/09/2026, seções do delta `2580b73a..dc72579e` — §22, §28, §41, §43, §46, §57-A, §57-B, §59 D28–D30; doc inteiro: 10/09/2026, em duas metades)
 > **Verificação:** `npx vitest run src/utils src/types src/hooks` — cada sistema abaixo declara a sua régua própria na linha **Régua**. Números medidos trazem o comando na própria linha.
 > **Não cobre:** o porquê estratégico e as linhas vermelhas (→ [`01-VISAO.md`](01-VISAO.md)), telas e navegação (→ `03-FLUXO-DE-TELAS.md`), função por função (→ `06-REFERENCIA/`), formato do save (→ `07-DADOS-E-SAVE.md`), infraestrutura de push, deploy e API (→ `08-INTEGRACOES-E-DEPLOY.md`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -452,13 +452,20 @@ foi apagado em 07/09/2026 (zero referências vivas).
 **Em uma frase.** Fez o peso da própria meta, tinha pelo menos uma coisa
 cadastrada e a energia chegou na meta → +1 ponto de evolução.
 
-**A regra.** Em `computeDailyReset`:
+**A regra.** Em `completeDayReached` (`src/utils/dailyReset.ts`), que
+`computeDailyReset` chama sobre o dia que terminou:
 
 ```
-dayWasPerfect = totalTasks > 0
-             && dailyDone >= dailyGoal
-             && energyPoints >= dailyGoal
+completeDayReached({ registered, goal, done, energy }) =
+  registered > 0 && done >= goal && energy >= goal
+dayWasPerfect = completeDayReached({ registered: totalTasks, goal: dailyGoal,
+                                     done: dailyDone, energy: energyPoints })
 ```
+
+A função existe desde a minimal-ui F2 para que a **Home** responda com a MESMA
+conta o selo "Dia completo" do dia corrente (`diaCompletoHoje` no `App.tsx`).
+⚰️ Antes a virada tinha a conta inline, e um `isDayPerfect` à parte dormia no
+`useProgressTracking` — duas cópias da mesma regra.
 
 **A MESMA meta nos dois eixos, e a meta INTEIRA** — não a de coração. Quando
 verdadeiro, a virada escreve **quatro** coisas (`computeDailyReset`, desde
@@ -476,7 +483,8 @@ completo"/"complete day"; os símbolos `perfectDays`, `wasPerfect` e
 como o contador nunca decresce, "perfeito" é a palavra que transforma um dia bom
 em fracasso para quem tem traço perfeccionista.
 
-**Dono.** `src/utils/dailyReset.ts` → `computeDailyReset` (`dayWasPerfect`).
+**Dono.** `src/utils/dailyReset.ts` → `completeDayReached` (a conta) e
+`computeDailyReset` (`dayWasPerfect`, a escrita na virada).
 
 **Régua.** `src/hooks/useDailyReset.test.ts`,
 `src/components/p5DiaCompleto.contract.test.ts` (o NOME nos textos),
@@ -526,8 +534,10 @@ separação das duas metas).
 — conta PESO DE ESFORÇO ([§23](#meta-ponderada)).
 
 **Onde a UI mostra.** `src/components/DailyReportModal.tsx`,
-`src/components/EvolutionPath.tsx` (a barra de dias até a evolução),
-`src/components/EvoTrail.tsx` na Home.
+`src/components/EvolutionPath.tsx` (a barra de dias até a evolução)
+(⚰️ o `EvoTrail` saiu da Home, decisão S1 — arquivo apagado), e o selo "Dia completo" da Home
+(`src/components/DailyRituals.tsx`, `src/components/pixel/RitualPanel.tsx`),
+alimentado por `completeDayReached`.
 
 ---
 
@@ -1198,6 +1208,8 @@ está **morto**.
 3. `evolutionTarget({ points, reading: computeCarePattern(careHistory(prev)),
    currentBranch, evolutionStage, unlockedEvolutions, perfectDays })` decide
    galho e forma-destino ([§15](#atributos));
+3b. `if (!incubationReady(prev.incubation, alvo.stage, new Date())) return prev`
+   — a forma-destino ainda está incubando (ver **A incubação**, abaixo);
 4. `applyRedemption(prev, evoluiu)` fecha o arco de quem tinha caído
    ([§18](#degeneracao));
 5. grava `evolutionStage`, `currentBranch`, `healthPoints` e `maxHealthPoints`
@@ -1206,9 +1218,38 @@ está **morto**.
    `unlockedEvolutions` (sem duplicar) e carimba `formReachedAt` com a chave do
    **dia do jogador** — data que **nunca é reescrita**.
 
-`canEvolve` (o botão, no HUD) repete as três condições da mesma fonte:
-`evolutionLocked`, `perfectDays >= required`, e `evolutionTarget(...).stage !==
-evolutionStage`. `handleEvolveRequest` abre a cerimônia com o mesmo alvo.
+`canEvolve` (o botão, no HUD) repete as condições da mesma fonte:
+`evolutionLocked`, `perfectDays >= required`, `evolutionTarget(...).stage !==
+evolutionStage` e `incubationReady(...)` — a mesma função que o `handleEvolve`
+commita. `handleEvolveRequest` abre a cerimônia com o mesmo alvo.
+
+**A incubação (WP4.29, desde 22/09/2026).** Ficar APTO a evoluir abre uma
+espera mínima de `INCUBATION_MIN_MS` (30 min) antes de o gesto completar; nesse
+tempo a forma seguinte é gerada. Dono: `src/utils/spriteTrigger.ts`.
+- `incubationFor(input, prev, now)` — pura e idempotente (devolve a **mesma
+  referência** quando nada muda). Quando `pointsToEvolve` chega a 0, grava em
+  `incubation.since[formId]` o instante para **todos os líderes empatados** do
+  galho (`vesperForms`) que ainda não têm relógio. Não olha o acervo de sprites:
+  o relógio é "apto desde X", não "gerando desde X" (D-G8d) — senão conta em
+  `sprite-lifetime-cap`/`sprite-form-cap` ou geração falha ficaria sem
+  incubação e travada fora da evolução. Um `useEffect` do `App.tsx` a chama
+  quando estágio, dias ou atributos mudam.
+- `incubationReady(inc, formId, now)` — a **única** aritmética de data, e só
+  LIBERA: `now − since ≥ INCUBATION_MIN_MS`. Forma sem `since` (save anterior)
+  ou data inválida → `true`.
+- `isIncubating` — alimenta o aviso da Home (`incubandoAgora`, derivado, nunca
+  persistido; `notified` guarda o one-shot) e a cerimônia.
+- **É piso, nunca prazo**: passados os 30 min a evolução espera
+  indefinidamente. O relógio de UI (`agoraParaIncubacao`) tica de minuto em
+  minuto **só enquanto há forma incubando**, e não vira contagem na tela.
+- **O `since` é por forma e sobrevive à degeneração** (parecer R-L): voltar à
+  mesma forma reaproveita o relógio. `incubationFor` nunca limpa nada; quem
+  zera é o Renascimento ([§20](#rebirth)) e a troca de criatura do upgrade.
+- Com isso a geração de sprite passou a ter duas ocasiões: **A** (nascimento,
+  `birthBatch` = **só `rookie`**, D-G5b) e **C** (incubação, `faltam <= 0`, o
+  lote dos líderes empatados). ⚰️ A ocasião **B** (véspera, `faltam === 1`)
+  não existe mais (D-G8c); `'B'` fica no tipo `SpriteOccasion` só como lápide.
+  ⚰️ Até 22/09/2026 o nascimento gerava `rookie` + o champion previsto.
 
 **O cadeado.** `evolutionLocked` é alternado por `handleToggleEvolutionLock` —
 tocando na criatura atual no grafo, ou no botão "Segurar evolução". Travado: os
@@ -1218,19 +1259,26 @@ HP 0 continua valendo. Destravado: nada acontece sem o toque.
 
 **Dono.** `src/App.tsx` → `handleEvolve` / `handleEvolveRequest` /
 `handleToggleEvolutionLock` (fiação e commit); `src/utils/evolutionTarget.ts`
-(o destino); `src/types/progression.ts` (`MANUAL_EVOLUTION`, `FORM_REQUIREMENTS`).
+(o destino); `src/types/progression.ts` (`MANUAL_EVOLUTION`, `FORM_REQUIREMENTS`);
+`src/utils/spriteTrigger.ts` (a incubação e `INCUBATION_MIN_MS`, dono único do
+número).
 
 **Régua.** `src/components/evolucaoManual.contract.test.ts` — enquanto
 `MANUAL_EVOLUTION` for `true`, **nenhum literal de interface** pode dizer que a
 virada evolui; `src/utils/evolutionTarget.regression.test.ts`;
 `src/types/progression.test.ts` ("quem decide a evolução manual continua sendo
-`required`").
+`required`"); `src/utils/spriteTrigger.esperaMinima.test.ts` e
+`src/utils/spriteTrigger.semPrazo.contract.test.ts` (a incubação: uma só
+comparação de data, que só libera; o número não é copiado nem encurtado).
 
 **Decisão.** A varredura de 09/09/2026 documentada no cabeçalho do próprio
 guard: **quatro** descrições da mesma regra, **três erradas** — inclusive os
 textos de travado e destravado **invertidos** na `EvolutionPath.tsx`. Quem
 enchia a barra e esperava a virada não via nada acontecer, com a barra cheia na
-tela, o que lê como defeito do jogo.
+tela, o que lê como defeito do jogo. A incubação: decisões do dono **#79/#80**
+(D-G8b) em [`docs/PERGUNTAS-DO-DONO.md`](../PERGUNTAS-DO-DONO.md), D-G5b/D-G8c/
+D-G8d na spec, e o bloco **WP4.29** de
+[`ledger/permanencia.md`](../plano-melhorias/ledger/permanencia.md).
 
 **Casos de borda.**
 - **Barra cheia e travada**: a frase é "Pronto para evoluir — mas você segurou a
@@ -1464,9 +1512,13 @@ escada); `already-used` é registro, nunca oferta repetida.
 derivados; **para no 2º nível** porque o motor de ficha só sabe alocar aridade 1
 e 2 — oferecer tripla seria prometer no menu o que a cozinha não faz).
 
-**`applyRebirth(prev, choices, now)`** reescreve **cinco campos e mais nada**:
-`evolutionStage: 'rookie'`, `virusPoints`/`dataPoints`/`vaccinePoints` = 0, e
-grava `rebirth: { criatura, escola, elemento, at, fromStage }`. Passam intactos
+**`applyRebirth(prev, choices, now)`** reescreve **seis campos e mais nada**:
+`evolutionStage: 'rookie'`, `virusPoints`/`dataPoints`/`vaccinePoints` = 0,
+`incubation: emptyIncubation()` (desde WP4.29) e grava `rebirth: { criatura,
+escola, elemento, at, fromStage }`. ⚰️ Até 22/09/2026 eram cinco. A incubação
+zera porque o `perfectDays` preservado deixa o renascido apto na hora e o
+`since` do champion da vida anterior liberaria a primeira evolução sem espera
+([§17](#evolucao)). Passam intactos
 pelo spread: Bits, Emblemas, Créditos, decoração, cenários, sonhos,
 `habitRhythms`, `perfectDays`, `totalPerfectDays`, `unlockedEvolutions`,
 tarefas, hábitos, `bornAt`.
@@ -3864,7 +3916,8 @@ do pet; há teste travando a ausência de id repetido no catálogo inteiro.
 **A compra.** Dono: `src/utils/shopBuy.ts` → `shopBuyRefusal` + `applyShopBuy`.
 Duas recusas, `'no-funds'` e `'already-owned'`. O efeito por `kind`:
 
-- `chip` / `heart` → `+1` na pastinha (`foodInventory`, chaveada pelo **emoji**);
+- `chip` / `heart` → `+1` na mochila (`foodInventory`, chaveada pelo **emoji**;
+  a descrição dos chips diz "Vai pra mochila" — ⚰️ antes "pastinha");
   o efeito acontece no USO ([§48](#itens-especiais)), nunca na compra.
 - `bg` → entra em `ownedBackgrounds` **e equipa na hora**.
 - `furniture` → entra em `ownedFurniture` e equipa no `slot` que o item declara;
@@ -3920,7 +3973,15 @@ toca som de compra: a categoria "transação" ainda não tem som próprio, e o c
 **Onde a UI mostra.** `src/components/mercado/MercadoSheets.tsx` (+ `ShopShelf.tsx`
 e o catálogo `src/utils/mercadoCatalog.ts`), aberto pelos lotes da área
 Mercado (minimal-ui F5): **Itens**, **Decoração** e **Background**, cada um com
-abas por moeda, e **Conquistas**. A loja de Emblemas (`TOURNAMENT_ITEMS`) mora
+abas por moeda, e **Conquistas**. A vitrine é repartida por
+`src/utils/mercadoCatalog.ts` (não é catálogo novo — itens e preços seguem em
+`shop.ts`): `STALL_CURRENCIES` dá as abas de cada lojinha (Itens: Bits +
+Créditos, onde Créditos é só a troca `BITS_EXCHANGE` e `stallItems` devolve
+lista vazia; Decoração e Background: Bits + Emblemas); `stallItems` lista só
+itens do `kind` da lojinha **cobrados na moeda da aba**; na aba de Emblemas só
+cosmético (`isCosmetic` = `bg`/`furniture`); e `isNeverForSale` tira da vitrine
+o coraçãozinho e o 🌀 mesmo que voltem ao catálogo. `tournamentShopItems` é a
+loja de Emblemas do Torneio, com o mesmo filtro. A loja de Emblemas (`TOURNAMENT_ITEMS`) mora
 no Torneio da área Arena. ⚰️ Antes: `ShopModal` com dois segmentos
 (`ShopSegment`) aberto pela barra inferior.
 
@@ -4036,6 +4097,12 @@ mochila, e é dela que se usa — ⚰️ antes a pastinha `ItemsWindow`), `src/c
 | `mission-dino-1000` | 1000 | `dinoBest` | `bg-mission-dinoland` |
 | `mission-perfect-30` | 30 | `missionPerfectDays` | `bg-mission-aurora` |
 
+Cada missão tem `category: MissionCategory` (`'evolution' | 'dungeon' | 'games' |
+'constancy'`, em `MISSION_CATEGORIES`): as duas de estágio são `evolution`, kills
+e runs são `dungeon`, o Dino é `games`, `mission-perfect-30` é `constancy`. É
+dado da missão, não da tela — missão sem categoria não compila — e é o filtro da
+folha de Conquistas do Mercado (minimal-ui F5).
+
 Os contadores são **lifetime** e vivem no `GameState`, e por isso **não** são
 decrementados na evolução (ao contrário de `perfectDays`, ver
 [§17](#evolucao)). ⚰️ **`mission-perfect-30` lia `totalPerfectDays` até
@@ -4083,7 +4150,9 @@ própria**: a aba Missões da loja não existe mais (a explicação passou a fic
 linha do próprio item travado).
 
 **Onde a UI mostra.** `src/components/mercado/MercadoSheets.tsx` — o cadeado, a descrição da
-missão e o progresso, na linha do cenário travado.
+missão e o progresso, na linha do cenário travado; e a folha **Conquistas** do
+Mercado, que lista as missões com abas por `MISSION_CATEGORIES` (e não por
+moeda).
 
 ---
 
@@ -4265,7 +4334,9 @@ são 30 disparos, e gastar celebração no evento frequente é gastá-la).
 
 **Onde a UI mostra.** `src/components/DungeonGame.tsx`, aberta pelo lote
 Masmorra da área Exploração (`AreaView` → `MasmorraSheet`; ⚰️ antes, card da
-`ActivitiesPage`).
+`ActivitiesPage`). A `MasmorraSheet` (`src/components/play/PlaySheets.tsx`)
+mostra a chance de coraçãozinho lendo `HEART_DROP_CHANCE` (exportado para isso)
+em %, nunca um número escrito à mão.
 
 ---
 
@@ -4489,6 +4560,9 @@ evolução. Nenhum dos dois tem limite diário. Nenhum dos dois dropa item.
 
 **Onde a UI mostra.** os lotes das áreas Exploração e Jogos (`src/components/play/PlaySheets.tsx`,
 minimal-ui F5; ⚰️ antes, os cards da `ActivitiesPage`) e as telas próprias de cada jogo.
+Os lotes vêm de `src/utils/playAreaLots.ts`: Exploração tem **Masmorra** e
+**Corrida do Dino**; Jogos tem **Pedra, papel e tesoura** (e não "Duelo", como no
+mock, porque a Arena já tem um lote Duelo que abre outro jogo).
 
 ---
 
@@ -5210,7 +5284,7 @@ registraram divergência nenhuma**.
 |---|---|---|---|---|
 | D1 | tabela 🫶 e 🛒 | o **coraçãozinho** é "comprado na loja ou dropado na masmorra", a 150 Bits | ⚰️ **não é mais vendido** desde 06/09/2026 (D7+D15). Continua existindo e curando por `SPECIAL_ITEMS`; a única fonte é o drop da masmorra | `SHOP_ITEMS.filter(i => i.kind === 'heart').length === 0`; a lápide está no lugar do item em `src/utils/shop.ts` |
 | D2 | tabela 💎 | Créditos gastam em "reroll (50), **cura instantânea (10)** e troca por Bits" | ⚰️ a **cura instantânea não existe** — `utils/instantHeal.ts` foi apagado junto. Restam reroll (`REROLL_COST_CREDITS`) e `BITS_EXCHANGE` | `ls src/utils/instantHeal.ts` falha; a lápide D7+D15 está em `src/App.tsx`, logo ABAIXO de `handleBuyCreditPack`. [`REGISTRO-DE-DECISOES.md`](../REGISTRO-DE-DECISOES.md) §5.4 já registra "REMOVIDA ✅ resolvido" |
-| D3 | tabela 🛒 | "Loja em ABAS (Itens/Cenários/Mobílias/**Torneio**/Missões)" — cinco | **dois segmentos** (`ShopSegment = 'shop' \| 'tournament'`). Itens/Cenários/Mobílias viraram seções de um scroll único, e ⚰️ **a aba Missões morreu** — a explicação do cadeado passou para a linha do próprio item | `grep -n "ShopSegment" src/components/ShopModal.tsx`; o cabeçalho do arquivo documenta os dois cortes |
+| D3 | tabela 🛒 | "Loja em ABAS (Itens/Cenários/Mobílias/**Torneio**/Missões)" — cinco | ⚰️ a `ShopModal` (e o `ShopSegment`) saiu na minimal-ui. A loja são **quatro lojinhas** na área Mercado — Itens, Decoração, Background (abas por moeda, `STALL_CURRENCIES`) e Conquistas (abas por `MISSION_CATEGORIES`) — e a loja de Emblemas mora no Torneio da área Arena (`tournamentShopItems`). O `CLAUDE.md` ainda diz "Na página Atividades (`ShopModal`)" e "Missões (…, aba na loja)" | `ls src/components/ShopModal.tsx` falha; `src/utils/mercadoCatalog.ts` (`MERCADO_STALLS`, `STALL_CURRENCIES`) |
 | D4 | footgun 9, item do Vínculo | o gate de PvP usa "cliente (**`canPvp`**)" | o símbolo **não existe**. O cliente tem `meetsPvpBond` e `xpToPvpBond` (`src/utils/bond.ts`); o servidor decide em `functions/api/community.js` ação `profile`, com `bondLevelOf` de `functions/api/_bond.js` | `grep -rn canPvp src desktop functions` não devolve nada |
 | D5 | tabela ⚔️ | "`getDungeonEnemySprite(tier, petStage)` tira do sorteio a linha que o jogador está usando, pra ninguém encarar um espelho de si mesmo" | a assinatura é `getDungeonEnemySprite(tier, excludeLine)` e `excludeLine` é comparado com **ids de LINHA** (`ignar`…`thalindra`). `buildDungeonWave(level, petStage)` repassa o **estágio de evolução** (`rookie`, `champion-virus`…), que nunca casa — **a exclusão não dispara em jogo**. O `demoCharacterId`, que É um id de linha, chega ao `DungeonGame` e é usado só para o sprite do próprio jogador | `grep -n "buildDungeonWave(" src/components/DungeonGame.tsx` e `grep -n "getDungeonEnemySprite" src/utils/dungeon.ts`; a função em si está correta e tem teste (`src/utils/sprites.dungeonRoster.test.ts`, "excludeLine tira a linha do jogador do sorteio") — o defeito é do CHAMADOR |
 | D6 | tabela ⚔️ | "**Sem limite diário e SEM gate de entrada**… Se farmar Bits virar problema, a alavanca é custo de ENTRADA em Bits" — escrito como hipótese futura | a alavanca **já existe** (WP4.5): `DEEP_START_BASE_COST` = 40, `deepStartCost(n) = 40 × n`, `DEEP_START_MAX_LEVEL` = 5, `canBuyDeepStart`. Não contradiz o "sem gate" (a compra é opcional e sobe a base), mas a tabela não a menciona | `grep -n "DEEP_START" src/utils/dungeon.ts`; `src/utils/dungeon.deepStart.test.ts` |

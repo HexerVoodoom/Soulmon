@@ -1,6 +1,6 @@
 # Histórico — como chegamos aqui
 
-> **Dono:** doc-historiador · **Data:** 22/09/2026 (3ª sincronização do dia, delta `cd66940f..cf6315e1`: §1.5 ganha **#102–#107** — merge da QA Rodada 2, o livrinho ilustrado + PDF + gerador, o one shot de prólogo e a execução das 32 respostas do dono; anterior no mesmo dia: SHA de `a6c1cd8a`/#100–#101 e a linha da QA Rodada 2; anterior: 21/09/2026, QA Rodada 1; 09/09/2026) · **Estado:** verificado em 22/09/2026 por doc-verificador (§1.5 conferido contra `gh pr list --state merged --json number,title,mergedAt` e `git log --oneline` → **1.080** commits; anterior: 10/09/2026, doc inteiro)
+> **Dono:** doc-historiador · **Data:** 24/09/2026 (delta `c7bca6d0..78ef5367`: §1.5 ganha dois itens — a incubação WP4.29 de 22/09 e as fatias F1–F6 da minimal-ui de 23–24/09; anterior: 22/09/2026, 3ª sincronização do dia, delta `cd66940f..cf6315e1`: §1.5 ganha **#102–#107** — merge da QA Rodada 2, o livrinho ilustrado + PDF + gerador, o one shot de prólogo e a execução das 32 respostas do dono; anterior no mesmo dia: SHA de `a6c1cd8a`/#100–#101 e a linha da QA Rodada 2; anterior: 21/09/2026, QA Rodada 1; 09/09/2026) · **Estado:** verificado em 24/09/2026 por doc-verificador (delta `c7bca6d0..78ef5367` — os 18 SHAs dos dois itens novos da §1.5 conferidos por `git log -1`, `git log --merges c7bca6d0..78ef5367` → vazio, `git log --oneline 78ef5367 | wc -l` → **1.117**; título da §1.5 passa a 10–24/09, âncora sem link em `docs/`; anterior: 22/09/2026, §1.5 conferido contra `gh pr list --state merged --json number,title,mergedAt` e `git log --oneline` → **1.080** commits; anterior: 10/09/2026, doc inteiro)
 > **Verificação:** os comandos `git log` colados ao lado de cada afirmação nesta página — rode-os de novo para reconferir
 > **Não cobre:** o CONTEÚDO de cada decisão (isso é `10-DISCUSSOES-E-DECISOES.md`); o changelog linha a linha (`../CHANGELOG.md`, que não se reescreve); regras de jogo em vigor hoje (`02-REGRAS-DE-NEGOCIO.md`)
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -165,7 +165,7 @@ em detalhe na seção 2 (viradas de premissa); resumo cronológico:
   declarada em vez de removida (`06ef9ea0`), a Arena ganha tela
   (`b55ffa5a`), 38 assets de arte "arcano-tech" entram (`271e2185`).
 
-### 1.5 10–22/09/2026 — wireframes, identidade, narrativa, som S16, QA geral, QA Rodadas 1 e 2
+### 1.5 10–24/09/2026 — wireframes, identidade, narrativa, som S16, QA geral, QA Rodadas 1 e 2, incubação, minimal-ui
 
 Só o que existe no `git log` e no `gh pr list` em 21/09/2026 (`git log --oneline | wc -l` →
 **1.080** em 22/09/2026, 1.070 em 21/09; `gh pr list --state merged --json number | jq length` →
@@ -234,6 +234,17 @@ detalhe de cada PR está na mensagem do próprio merge; este bloco é o índice.
   contrato · rota `rebirth-reset` · **ADR-006 aceita** · symlinks `higgsfield-*` fora ·
   **migrações D1 aplicadas em produção**. `CACHE_VERSION` v159 → **v160**; suíte 4 758 → **4 806**.
   Sincronização do manual: **esta**, em `docs/sync-cf6315e1`.
+- **22/09 — incubação de 30 min (WP4.29)**, sem PR no assunto (`git log --merges c7bca6d0..78ef5367` →
+  vazio): a spec muda em `a04b9a71` (D-G8b), `c03df6c8` (D-G5b + escopo v1) e `9e65601a` (D-G8c);
+  o código em `8be8f9c5`; o furo do Renascimento/upgrade em `ae16d213`; a página de Evolução deixa
+  de dizer "toque para evoluir" durante a incubação em `355959b4`; o canvas de deriva DER-23…27 em
+  `7e1fa45d`. Discussão: [10 §3](10-DISCUSSOES-E-DECISOES.md).
+- **23–24/09 — minimal-ui (Home + Mapa)**: arquitetura e plano em `70292e34`, respostas D1–D6 em
+  `17765819`; fatias **F1** `292533a6` (Home e Mapa de topo, barra inferior sai), **F2** `78dc6ddb`
+  (Home B), **F3** `aa76886b` (Mapa com as 6 áreas), **F4** `1f1b969c` (`AreaScene`+`AreaSheet` e
+  os 6 NPCs), **F5** `ac631987` + `708fa034` (áreas com conteúdo, `AreaView`), **F6** `11d9bf31` +
+  `cfee570b` (código morto, copy PT/EN, manual); `78ef5367` nomeia o NPC do Laboratório. Discussão:
+  [10 §11](10-DISCUSSOES-E-DECISOES.md). Contagem: `git log --oneline 78ef5367 | wc -l` → **1.117**.
 
 ---
 

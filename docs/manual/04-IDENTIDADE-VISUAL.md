@@ -1,6 +1,6 @@
 # Identidade visual e sonora do Soulmon
 
-> **Dono:** doc-redator-identidade · **Data:** 22/09/2026 (3ª sincronização do dia, delta `cd66940f..cf6315e1`: §10.0 a tagline ÚNICA travada por contrato (#70) e §10.1 a `description` do manifesto; §3 (réguas) ganhou a nota do `UndoToast` sem `className` — desenho inline por token, decisão e não descuido; anterior: 2ª sincronização do dia, delta `a6c1cd8a..592e2c14`, QA Rodada 2: §10.2 o ramo Android do gate exige `; wv)` e a CSP por igualdade; o flash de evolução do `CompanionHUD` passou a usar `--sm2-viewport-bg`/`--sm2-viewport-ink` — ⚰️ `#2dd4bf` sobre branco/70, ~1,6:1 — sem seção própria aqui, registrado no `06-REFERENCIA/components.md`) · **Estado:** verificado em 22/09/2026 por doc-verificador (delta `cd66940f..cf6315e1` — `index.html`, `public/manifest.json`, os dois casos `#70` de `src/deploy/manifest.contract.test.ts` e `src/components/UndoToast.tsx` conferidos); anterior: verificado em 22/09/2026 por doc-verificador (delta `a6c1cd8a..592e2c14` — `index.html`, `public/_headers` e `CompanionHUD.tsx` conferidos; anterior no mesmo dia: delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §10.1 `name`/`description` do `manifest.json` e §10.2 gate por plataforma conferidos contra `public/manifest.json`, `index.html`, `src/deploy/manifest.contract.test.ts`; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §9 linha da trilha (⚰️ `SettingsModal`) e §10.2 gate de WebView conferidos por grep; `.sm2-notice` do banner de termos não é classe nova (`grep -n "^.sm2-notice" src/index.css`); anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: delta `dc72579e..9875477b`, conferido em `5ac3d351`: rodada 2 da SQUAD-ARTE, SQUAD-SOM retomada, superfície de suporte do chat) · §9 verificado em 21/09/2026 por doc-verificador (delta `5ac3d351..8d318529`: S16, trilha em duas camadas, escolha do dono nos 3 eventos longos, chaves na `SettingsPage`)
+> **Dono:** doc-redator-identidade · **Data:** 22/09/2026 (3ª sincronização do dia, delta `cd66940f..cf6315e1`: §10.0 a tagline ÚNICA travada por contrato (#70) e §10.1 a `description` do manifesto; §3 (réguas) ganhou a nota do `UndoToast` sem `className` — desenho inline por token, decisão e não descuido; anterior: 2ª sincronização do dia, delta `a6c1cd8a..592e2c14`, QA Rodada 2: §10.2 o ramo Android do gate exige `; wv)` e a CSP por igualdade; o flash de evolução do `CompanionHUD` passou a usar `--sm2-viewport-bg`/`--sm2-viewport-ink` — ⚰️ `#2dd4bf` sobre branco/70, ~1,6:1 — sem seção própria aqui, registrado no `06-REFERENCIA/components.md`) · **Estado:** verificado em 24/09/2026 por doc-verificador (HEAD `78ef5367` — §1 `.sm-bottom-nav-label` ⚰️ e `navRotulo.contract.test.ts` medindo `areaLabel`; §2 `--sm-corner-h: 68px` (`CornerLink` 56px a `--sm2-space-3` = 12px), `.sm-nav-btn` com `--sm-muted`, `--sm-px-cyan` em `.sm-px-chat-btn`/`-send`, `--sm-px-copper` em `.sm-px-field`; §5.4 `.sm3-cuidado` (55%/22%/`--sm2-radius-md`, `.sm3-cuidado-inerte` tracejado) e o CSS de `.sm2-corner-link`/`.sm2-area-back`/`[data-map-area]`; §6 `@keyframes sm3-blink`/`sm3-sobe` e o movimento reduzido de `.sm3-term-cur`/`.sm3-mais`/`.sm3-mochila` — tudo em `src/index.css`, sem correção); anterior: verificado em 22/09/2026 por doc-verificador (delta `cd66940f..cf6315e1` — `index.html`, `public/manifest.json`, os dois casos `#70` de `src/deploy/manifest.contract.test.ts` e `src/components/UndoToast.tsx` conferidos); anterior: verificado em 22/09/2026 por doc-verificador (delta `a6c1cd8a..592e2c14` — `index.html`, `public/_headers` e `CompanionHUD.tsx` conferidos; anterior no mesmo dia: delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §10.1 `name`/`description` do `manifest.json` e §10.2 gate por plataforma conferidos contra `public/manifest.json`, `index.html`, `src/deploy/manifest.contract.test.ts`; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §9 linha da trilha (⚰️ `SettingsModal`) e §10.2 gate de WebView conferidos por grep; `.sm2-notice` do banner de termos não é classe nova (`grep -n "^.sm2-notice" src/index.css`); anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: delta `dc72579e..9875477b`, conferido em `5ac3d351`: rodada 2 da SQUAD-ARTE, SQUAD-SOM retomada, superfície de suporte do chat) · §9 verificado em 21/09/2026 por doc-verificador (delta `5ac3d351..8d318529`: S16, trilha em duas camadas, escolha do dono nos 3 eventos longos, chaves na `SettingsPage`)
 > **Verificação:** `npx vitest run src/styles/ src/index.css.contract.test.ts src/utils/sprites.dungeonRoster.test.ts src/utils/loudness.contract.test.ts src/utils/cortes.contract.test.ts src/utils/sonsAssets.contract.test.ts src/components/ui/Viewport.contract.test.tsx src/components/ui/foundation.render.test.tsx src/brand/brandFlame.parity.test.ts src/assets/assets.contract.test.ts` — os 11 arquivos de 09/09/2026 (216 testes, verde) mais os dois que nasceram com a marca vetorizada e a leva de arte de 15/09/2026, mais `sonsAssets.contract.test.ts` (21/09/2026, S16).
 > **Não cobre:** o fluxo entre telas e o que cada superfície mostra (doc `03-FLUXO-DE-TELAS.md`); as regras de jogo por trás dos números que a UI pinta (doc `02-REGRAS-DE-NEGOCIO.md`); a assinatura de cada componente (`06-REFERENCIA/components.md`); o pipeline de build/deploy dos assets (doc `08-INTEGRACOES-E-DEPLOY.md`). Este doc descreve o som — **não** decide nada sobre ele: quem decide é o `REGISTRO-DE-DECISOES.md` (§6.1, S1..S16 — não existe S14).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -49,14 +49,17 @@ linha diz:
   (`PixelKit` em vetor, `a482dfd5`, 16/09/2026 — a API `Pixel*` ficou; o
   9-slice PNG, o chanfro de cobre e a Silkscreen fora do vidro saíram). O que
   ainda cita `.sm-px-*` é resíduo, não tese.
-- ⚰️ **A `.sm-bottom-nav-label` NÃO desenha mais Silkscreen.** Até 16/09/2026
+- ⚰️ **A `.sm-bottom-nav-label` NÃO desenha mais Silkscreen** — e desde o
+  minimal-ui F1 (23/09/2026) nem existe mais: a barra inferior de 5 abas saiu
+  inteira do CSS (§5.4). Até 16/09/2026
   ela usava Silkscreen em `--sm2-text-xs` = `12px`, fora do visor e abaixo do
   piso de 14px. Desde o canvas Home (`NavEstados`, SIS achado 3) a regra é
   `font-family: var(--sm2-font-text)` (Rubik) 12/500, caixa mista,
   `text-transform: none` — Silkscreen só dentro do vidro e em selos.
   Réguas: `src/styles/navRotulo.contract.test.ts` e
   `src/components/nav/nav.render.test.tsx` (sucessor do ⚰️
-  `BottomNav.render.test.tsx`, minimal-ui F1) medem a fonte.
+  `BottomNav.render.test.tsx`, minimal-ui F1) medem a fonte; a
+  `navRotulo.contract.test.ts` agora mede os rótulos das ÁREAS do Mapa.
 
 O **teste de aceitação da identidade** do plano ("recorte de 200×200px sem logo:
 dá para dizer que é o Soulmon?") **não tem régua executável** — é critério
@@ -99,7 +102,7 @@ preso — a distinção importa por causa do footgun 10, ver §3).
 | `--sm-bg` | `#f3f9f8` | `#0e2323` | superfície geral da página | `body` no preflight (`background-color`) |
 | `--sm-surface` | `#ffffff` | `#173a37` | card, painel, barra | `.sm-surface`, `.sm-nav` |
 | `--sm-ink` | `#142e2a` | `#eaf5f2` | texto principal | `body` no preflight (`color`) |
-| `--sm-muted` | `#54736c` | `#8fb0a8` | rótulo, subtítulo, título de seção | `.sm-bottom-nav-label` |
+| `--sm-muted` | `#54736c` | `#8fb0a8` | rótulo, subtítulo, título de seção | `.sm-nav-btn` (`color`) — ⚰️ era `.sm-bottom-nav-label`, que saiu no minimal-ui F1 |
 | `--sm-line` | `#e0ece9` | `#1f3733` | borda suave, trilho | `.sm-px-help-item` (`border`) |
 | `--sm-primary` | `#0f766e` | `#2dd4bf` | teal da marca, ação primária | `.sm-btn` via `--sm-btn-fill` |
 | `--sm-primary-deep` | `#0b6b64` | `#14b8a6` | sombra 3D do botão primário | `.sm-btn` via `--sm-btn-deep` |
@@ -111,7 +114,7 @@ preso — a distinção importa por causa do footgun 10, ver §3).
 | `--sm-energy` | `#16a34a` | `#4ade80` | verde da barra de energia | **nenhum** — ver §2.7 |
 | `--sm-energy-track` | `#e3ece9` | `#1f332e` | trilho da barra de energia | **nenhum** — ver §2.7 |
 | `--sm-radius` | `16px` | — | raio do sistema antigo | `.sm-card` (`border-radius`) |
-| `--sm-bottomnav-h` | `80px` | — | altura da barra inferior | `.sm-bottom-nav` (`height`) e `.sm-chat-fixed` (`bottom`) |
+| `--sm-corner-h` | `68px` | — | faixa do link de canto (minimal-ui F1, 23/09/2026): botão de 56px a 12px do rodapé (Mapa na Home, Home no Mapa) | `.sm-chat-fixed` (`bottom`) e o padding do `<main>`. ⚰️ Substitui `--sm-bottomnav-h` (`80px`), que morreu com a barra inferior de 5 abas |
 | `--sm-chatdock-h` | `82px` | — | altura medida do dock de chat | `src/App.tsx`, padding do scroller |
 | `--sm-btn-text` | `#ffffff` | `var(--sm-bg)` | tinta do `.sm-btn` | `.sm-btn` (`color`) |
 
@@ -131,8 +134,8 @@ escuro sobre página clara.
 | token | claro | escuro | para quê | um uso |
 |---|---|---|---|---|
 | `--sm-px-ink` | `#eaf5f2` | — | tinta DENTRO de peça escura | **nenhum** desde 16/09/2026 (`.sm-px-btn` saiu ⚰️) — ver §2.7 |
-| `--sm-px-cyan` | `#5df0e0` | — | neon do kit (destaque/aceso) — **decorativo** | `.sm-bottom-nav-btn-on::after` (sublinhado) e o `outline` de foco de `.sm-bottom-nav-btn` |
-| `--sm-px-copper` | `#c68642` | — | cobre do kit (moldura/borda fina) — **decorativo** | `.sm-bottom-nav` (`border-top`), `.sm-px-field` (`border`) |
+| `--sm-px-cyan` | `#5df0e0` | — | neon do kit (destaque/aceso) — **decorativo** | `.sm-px-chat-btn` (`:hover`) e `.sm-px-chat-btn-send` (`background`). ⚰️ O sublinhado `.sm-bottom-nav-btn-on::after` e o foco de `.sm-bottom-nav-btn` saíram com a barra (minimal-ui F1) |
+| `--sm-px-copper` | `#c68642` | — | cobre do kit (moldura/borda fina) — **decorativo** | `.sm-px-field` (`border`). ⚰️ O `border-top` de `.sm-bottom-nav` saiu com a barra (minimal-ui F1) |
 | `--sm-px-track` · `--sm-px-track-line` | ⚰️ | — | eram o trilho e a linha da barra segmentada `.sm-px-bar` | **saíram em 16/09/2026** — a barra é `VisorBar` (pixel, dentro do vidro) ou medidor do kit vetor |
 | `--sm-px-panel-bg` | `var(--sm-surface)` | `#10312f` | fundo do painel do kit | **nenhum** desde 16/09/2026 (`.sm-px-panel` saiu ⚰️) — ver §2.7 |
 | `--sm-px-panel-ink` | `var(--sm-ink)` | `var(--sm-ink)` | tinta do painel do kit | **nenhum** desde 16/09/2026 — ver §2.7 |
@@ -604,6 +607,18 @@ Sistema) o `CLAUDE.md` passou a dizer **32 / 24 / 32**, citando `tokens.md`
 
 ### 5.4 Ícone NUNCA dentro de box
 
+> **Exceção D1 (decisão do dono, 23/09/2026, minimal-ui F2 — Home B):** os
+> **três botões de cuidado** sobre a cena da Home (`.sm3-cuidado`, 44×44)
+> podem ter fundo e anel — fundo = o vidro do visor (`--sm2-viewport-bg`) a
+> 55%, anel de 1px = a tinta do vidro (`--sm2-viewport-ink`) a 22%, raio
+> `--sm2-radius-md`; nenhuma cor nova. Inerte (banho em cooldown) é dito pela
+> FORMA — borda tracejada —, nunca por opacidade. Só esses três; a regra abaixo
+> segue valendo para o resto do app.
+>
+> ⚠️ **Divergência:** o `CLAUDE.md` ainda enuncia a regra como "vale no app
+> inteiro", sem citar a exceção D1, e ainda cita o ícone da "nav inferior
+> 32px" — barra que saiu no minimal-ui F1.
+
 Regra do dono, datada de 18/08/2026 no `CLAUDE.md`, e vale no app inteiro: nada
 de moldura, placa, chanfro ou fundo em volta de um ícone. O `Icon` **não desenha
 moldura, fundo, borda, chanfro nem padding — em nenhuma prop, nunca**; alvo de
@@ -613,7 +628,16 @@ toque de 44px é responsabilidade do BOTÃO que envolve o ícone.
 `.sm2-icon` não desenha box nenhuma"* (lê o CSS) + o teste de render
 `src/components/ui/foundation.render.test.tsx` (lê o componente).
 
-**Seleção na nav = sublinhado ciano, e o sublinhado não é decoração.** A placa
+⚰️ **A barra inferior de 5 abas SAIU (minimal-ui F1, 23/09/2026)** — com ela
+`.sm-bottom-nav`, `.sm-bottom-nav-btn`, `.sm-bottom-nav-btn-on` e
+`.sm-bottom-nav-label`. A navegação passou a ser Home ↔ Mapa: link de canto
+(`.sm2-corner-link`), voltar das áreas (`.sm2-area-back`) e as áreas do Mapa
+(`[data-map-area]`), estilizados inline; o CSS só guarda o que inline não
+alcança — foco visível `3px solid var(--sm2-primary-ink)` com `offset 2px`,
+toque sem realce e `:active` em `scale(.94)`, zerado no bloco de movimento
+reduzido. Ícone pelado: nada de fundo no `:hover`. O texto abaixo é histórico.
+
+**(Histórico) Seleção na nav = sublinhado ciano, e o sublinhado não é decoração.** A placa
 preenchida do item ativo SAIU (era literalmente um box em volta do ícone). Mas a
 regra de acessibilidade dizia que a seleção tem que ser carregada por algo que
 NÃO seja só cor (daltonismo, tema invertido, alto contraste) — sem a placa
@@ -736,7 +760,11 @@ menção dentro de comentário. (Eram 33/32 em 09/09/2026.) As 34, por família:
   `sm2-pet-greet`, `sm2-rub-call`, `sm2-viewport-breathe`, `sm2-kit-spin`
   (nova — o kit vetor), `sm2-ora-cocoon` e `sm2-ora-spin` (novas — o casulo do
   oráculo, canvas Onboarding), `sm2-splash-flick` e `sm2-splash-seg` (novas — a
-  chama e a barra da splash, §10.2).
+  chama e a barra da splash, §10.2). Nasceram depois da contagem acima, com a
+  Home B (minimal-ui F2, 23/09/2026): `sm3-blink` (o `_` do terminal) e
+  `sm3-sobe` (o "+1" quando o pet come) — no movimento reduzido o cursor fica
+  aceso e parado, o "+1" aparece sem subir e a mochila (`.sm3-mochila`) abre e
+  desce por corte.
 - **Do pet e do cuidado**: `pet-munch`, `pet-rub`, `pet-shower-shake`,
   `rub-heart`, `shower-drop`, `float-up`.
 - **Da masmorra e do CRT**: `dungeon-idle`, `vhs-distort`, `crt-off`,
