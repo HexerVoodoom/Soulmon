@@ -42,7 +42,6 @@ import { DailyReportModal } from './components/DailyReportModal';
 import { adventureOfDay, collectAdventure } from './utils/adventure';
 import { WelcomePromptModal } from './components/WelcomePromptModal';
 import { IntroScreen } from './components/IntroScreen';
-import { ItemsWindow } from './components/ItemsWindow';
 import { HelpModal } from './components/HelpModal';
 import { ProtectProgressModal } from './components/ProtectProgressModal';
 import { CATEGORY_ATTRIBUTES, type ActivityCategory, XP_THRESHOLDS } from './types/attributes';
@@ -649,10 +648,11 @@ const LibraryPage = lazy(() => import('./components/LibraryPage').then(m => ({ d
 const AreaView = lazy(() => import('./components/nav/AreaView').then(m => ({ default: m.AreaView })));
 const PetPage = lazy(() => import('./components/PetPage').then(m => ({ default: m.PetPage })));
 
-/** O que o `<main>` desenha. É a tabela antiga de views, agora DERIVADA da
- *  navegação nova (`navigation.ts`): cada área do Mapa ainda renderiza a página
- *  que já existia (minimal-ui F1, D4) — F5 reparte essas páginas por área. */
-type Pane = 'main' | 'map' | 'evolution' | 'stats' | 'pet' | 'settings' | 'games' | 'oracle' | 'tournament' | 'library' | 'shop';
+/** O que o `<main>` desenha fora das áreas, DERIVADO da navegação
+ *  (`navigation.ts`). Desde a F5 toda área é desenhada pelo `AreaView`; o
+ *  `pane` delas só importa no Laboratório, onde a sub-aba (`labTab`) decide a
+ *  folha. As outras cinco áreas viram `'area'`. */
+type Pane = 'main' | 'map' | 'area' | 'evolution' | 'stats' | 'pet' | 'settings' | 'oracle';
 type LabTab = 'evolution' | 'pet' | 'stats';
 
 function paneFor(view: ViewType, labTab: LabTab): Pane {
@@ -660,16 +660,9 @@ function paneFor(view: ViewType, labTab: LabTab): Pane {
   if (view === 'map') return 'map';
   const page = menuPageOf(view);
   if (page) return page;
-  switch (areaOf(view)) {
-    case 'mercado': return 'shop';
-    case 'jogos': return 'games';
-    // A masmorra e o Dino ainda moram na página de Jogos; F5 os separa.
-    case 'exploracao': return 'games';
-    case 'arena': return 'tournament';
-    case 'laboratorio': return labTab;
-    case 'hall': return 'library';
-    default: return 'main';
-  }
+  const area = areaOf(view);
+  if (area === 'laboratorio') return labTab;
+  return area ? 'area' : 'main';
 }
 
 export default function App() {
@@ -817,7 +810,6 @@ export default function App() {
   const [useAI, setUseAI] = useState(true);
   const [soundMuted, setSoundMuted] = useState(() => isMuted());
   const [evolutionFlash, setEvolutionFlash] = useState(false);
-  const [showItemsWindow, setShowItemsWindow] = useState(false);
   const [newItemsReady, setNewItemsReady] = useState(false);
   // Sleep state persists across app close/reopen — the pet stays asleep until woken.
   const [isSleeping, setIsSleeping] = useState(() => readFlag(STORAGE_KEYS.IS_SLEEPING));
@@ -3656,11 +3648,6 @@ export default function App() {
     setGameState(prev => ({ ...prev, evolutionLocked: !(prev.evolutionLocked ?? false) }));
   }, []);
 
-  // Stable identity so CompanionHUD's memo() isn't defeated by an inline lambda.
-  const handleOpenItems = useCallback(() => {
-    setShowItemsWindow(prev => !prev);
-    setNewItemsReady(false);
-  }, []);
   /* minimal-ui F2: a MOCHILA da Home substitui a pastinha como entrada de
      item. Abrir a mochila apaga o ponto de "item novo", como a pastinha fazia. */
   const handleBackpackSeen = useCallback(() => setNewItemsReady(false), []);
@@ -5005,7 +4992,7 @@ export default function App() {
             {([
               { view: 'evolution' as const, label: language === 'pt-BR' ? 'Evolução' : 'Evolution' },
               { view: 'pet' as const, label: 'Soulmon' },
-              { view: 'stats' as const, label: 'Stats' },
+              { view: 'stats' as const, label: language === 'pt-BR' ? 'Estatísticas' : 'Stats' },
             ]).map(({ view, label }) => (
               <button
                 key={view}
@@ -5312,16 +5299,6 @@ export default function App() {
           language={language}
         />
 
-        {/* Floating Items Window */}
-        {showItemsWindow && (
-          <ItemsWindow
-            foodInventory={gameState.foodInventory}
-            onFeed={handleFeed}
-            onClose={() => setShowItemsWindow(false)}
-            language={language}
-          />
-        )}
-
         {/* Créditos (monetização) — modal próprio, aberto pelo menu sanduíche. */}
         {creditsOpen && (
           <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
@@ -5485,20 +5462,14 @@ export default function App() {
           {(() => {
             /* minimal-ui F1: o `<h1>` das áreas e das páginas do menu vem do
                TOPO NOVO (`AreaTopBar`: voltar em círculo + título central).
-               Donas do próprio `<h1>` recebem o título como texto
-               `aria-hidden` (`ownsHeading={false}`): Jogos/Exploração
-               (`ActivitiesPage`), Arena (`TournamentPage`), Hall
-               (`LibraryPage`) e o Soulmon do Laboratório (`PetPage`). A Home
-               tem o wordmark do `HomeHud`; o Mapa, o `<h1>` do `MapPage`. */
+               Desde a F5 nenhuma área renderiza uma página dona do próprio
+               `<h1>` (o conteúdo mora nas folhas do `AreaView`), então o
+               `AreaTopBar` é sempre o dono do título. A Home tem o wordmark
+               do `HomeHud`; o Mapa, o `<h1>` do `MapPage`. */
             const isPtH = language === 'pt-BR';
             const area = areaOf(currentView);
             const page = menuPageOf(currentView);
             if (!area && !page) return null;
-            /* minimal-ui F4: nenhuma área renderiza mais a página antiga (o
-               conteúdo virou placeholder no `AreaSheet`, F5 devolve o real) —
-               então nenhuma delas é dona do próprio `<h1>` mais; sempre o
-               `AreaTopBar`. */
-            const donaDoH1 = !area && (pane === 'games' || pane === 'tournament' || pane === 'library' || pane === 'pet');
             return (
               <AreaTopBar
                 title={area ? areaLabel(area, isPtH) : menuPageLabel(page!, isPtH)}
@@ -5506,7 +5477,6 @@ export default function App() {
                   ? (isPtH ? 'Voltar ao mapa' : 'Back to map')
                   : (isPtH ? 'Voltar ao início' : 'Back to home')}
                 onBack={goBack}
-                ownsHeading={!donaDoH1}
               />
             );
           })()}

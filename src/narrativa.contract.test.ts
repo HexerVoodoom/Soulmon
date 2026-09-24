@@ -185,7 +185,6 @@ const EXCECOES: Record<string, { arquivos: string[]; proposta: string }> = {
       'src/components/CompanionHUD.tsx',
       'src/components/DungeonGame.tsx',
       'src/components/HelpModal.tsx',
-      'src/components/ItemsWindow.tsx',
       'src/components/NightmareBattle.tsx',
       'src/contexts/GameStateContext.tsx',
       'src/utils/dungeon.ts',

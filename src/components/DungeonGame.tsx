@@ -527,11 +527,11 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
               <p style={phaseLine}>{isPt ? 'Da fenda ele trouxe fragmentos que ainda não assentaram.' : "From the rift he brought fragments that haven't settled yet."}</p>
               {/* Copy §4, o nó (§7, L4): a P5 foi decidida pelo dono em
                   21/09/2026 — o nome `Glitchtama` FICA (`EXCECOES` da régua),
-                  então a frase entra com ele. "Usar" é o verbo da pastinha. */}
+                  então a frase entra com ele. "Usar" é o verbo da mochila (ex-pastinha). */}
               <p style={phaseLine}>
                 {isPt
-                  ? 'Um Glitchtama, com um dia inteiro preso dentro. Usar dá àquele dia o fechamento que ele não teve. (pastinha de itens)'
-                  : 'A Glitchtama, with a whole day caught inside. Using it gives that day the closing it never had. (Items folder)'}
+                  ? 'Um Glitchtama, com um dia inteiro preso dentro. Usar dá àquele dia o fechamento que ele não teve. (mochila)'
+                  : 'A Glitchtama, with a whole day caught inside. Using it gives that day the closing it never had. (Backpack)'}
               </p>
               <p style={phaseLine}>{isPt ? 'A próxima descida ficou mais difícil.' : 'The next descent got harder.'}</p>
               <div style={{ display: 'flex', gap: 8 }}>

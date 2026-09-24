@@ -109,13 +109,13 @@ export const SHOP_ITEMS: ShopItem[] = [
   // AlignmentIcons.tsx) — Poder/Harmonia/Benevolência, não mais Vírus/Dado/Vacina.
   { id: 'chip-virus',   kind: 'chip', icon: CHIP_EMOJI.virus, attr: 'virus',
     namePt: 'Chip de Poder',  nameEn: 'Power Chip',
-    descPt: `Vai pra pastinha; usar dá +${CHIP_BOOST} de Poder`, descEn: `Goes to Items; use for +${CHIP_BOOST} Power`, price: 120 },
+    descPt: `Vai pra mochila; usar dá +${CHIP_BOOST} de Poder`, descEn: `Goes to your Backpack; use for +${CHIP_BOOST} Power`, price: 120 },
   { id: 'chip-data',    kind: 'chip', icon: CHIP_EMOJI.data, attr: 'data',
     namePt: 'Chip de Harmonia',   nameEn: 'Harmony Chip',
-    descPt: `Vai pra pastinha; usar dá +${CHIP_BOOST} de Harmonia`, descEn: `Goes to Items; use for +${CHIP_BOOST} Harmony`, price: 120 },
+    descPt: `Vai pra mochila; usar dá +${CHIP_BOOST} de Harmonia`, descEn: `Goes to your Backpack; use for +${CHIP_BOOST} Harmony`, price: 120 },
   { id: 'chip-vaccine', kind: 'chip', icon: CHIP_EMOJI.vaccine, attr: 'vaccine',
     namePt: 'Chip de Benevolência', nameEn: 'Benevolence Chip',
-    descPt: `Vai pra pastinha; usar dá +${CHIP_BOOST} de Benevolência`, descEn: `Goes to Items; use for +${CHIP_BOOST} Benevolence`, price: 120 },
+    descPt: `Vai pra mochila; usar dá +${CHIP_BOOST} de Benevolência`, descEn: `Goes to your Backpack; use for +${CHIP_BOOST} Benevolence`, price: 120 },
   // ⚰️ O CORAÇÃOZINHO NÃO É MAIS VENDIDO (06/09/2026, D7+D15). Ele custava 150
   // Bits, e Créditos compram Bits (`BITS_EXCHANGE`, 1→10): eram 15 Créditos por
   // +1 coração, sem cap — dinheiro comprando a volta do único recurso que a
