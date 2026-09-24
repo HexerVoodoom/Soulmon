@@ -6,8 +6,7 @@
  * que o jogador lê não nasce solto dentro de JSX). Os nomes (Grom, Vultrak,
  * Brisa, Pipo, Lumi) são a decisão D5 do dono (23/09/2026,
  * `docs/design/minimal-ui/PLANO-IMPLEMENTACAO.md`); o NPC do Laboratório
- * ainda não tem nome próprio decidido — recebe uma descrição de ofício, não
- * um nome inventado aqui.
+ * (Vesca) foi nomeado em 24/09/2026, no mesmo estilo dos outros cinco.
  *
  * As falas em PT-BR vêm dos mocks aprovados
  * (`product/squad-minimal-ui/propostas/<area>/mock.html`, classe `.npc-fala`);
@@ -50,9 +49,8 @@ const AREA_NPC_VOICE: Record<AreaId, AreaNpcVoice> = {
     lineEn: 'Ooh, a visitor! Want to play a bit with your Soulmon?',
   },
   laboratorio: {
-    // Sem nome próprio decidido (D5): recebe a descrição de ofício.
-    namePt: 'A alquimista do Laboratório',
-    nameEn: 'The Laboratory alchemist',
+    namePt: 'Vesca, a alquimista',
+    nameEn: 'Vesca, the alchemist',
     linePt: 'Toda evolução começa aqui, numa mistura certa. Vamos ver como seu Soulmon está crescendo.',
     lineEn: 'Every evolution starts here, in the right mix. Let’s see how your Soulmon is growing.',
   },
