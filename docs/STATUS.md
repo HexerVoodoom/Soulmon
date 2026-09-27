@@ -7,6 +7,17 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 27/09/2026 — Manual sincronizado com `2336e4e7`
+>
+> Delta `c510c7e4..2336e4e7` (4 commits). Docs tocados: 02 (§22 D-B1 — o nome da
+> inspiração vai no `imagePrompt`, reversão do dono com lápide; pool 617; §17
+> `notified` ⚰️), 04 (§8.3 corte do bestiário, §8.4 D-B1), 06/utils, 06/components
+> (o aviso da `OraclePage` ainda dizia "nunca entra em prompt"), 06/hooks-contexts-types,
+> 07 (`incubation.notified` ⚰️), 10 (2 linhas no tema 10, frase do dono verbatim).
+> 00-MAPA já tinha a entrada de `BESTIARIO-PROCEDENCIA.md` — conferida, sem duplicar.
+> Exceção conhecida: `scripts/bestiario-procedencia.mjs` fica fora do inventário
+> (`docs-inventario.mjs` não cobre `scripts/`). Divergências novas: nenhuma.
+
 > ## 27/09/2026 — Manual sincronizado com `c510c7e4`
 >
 > Delta `78ef5367..c510c7e4` (3 commits, sendo 1 o próprio commit de docs anterior),
