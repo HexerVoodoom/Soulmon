@@ -157,3 +157,47 @@ describe('biologia dos animais reais sem categoria óbvia', () => {
     expect(dragaoAzul?.biologia).toEqual(['Molusco']);
   });
 });
+
+// Verificação exaustiva — TODAS as criaturas, não só as 37 bases-chave.
+// Objetivo do dono (27/09/2026): "loops no bestiário até ter tdas as
+// criaturas verificadas que estão com tags e descrições corretas". Os blocos
+// acima travam CASOS nomeados; este trava o POOL INTEIRO, campo a campo, para
+// que "verificado" seja o resultado de rodar `npx vitest run` e não de uma
+// auditoria manual que não se repete no próximo sync.
+describe('verificação exaustiva das 630 criaturas — tags e descrição completas', () => {
+  const TAMANHOS_VALIDOS = new Set(['Pequeno', 'Medio', 'Enorme', 'Colossal']);
+
+  it('nenhuma criatura tem campo de tag ausente', () => {
+    const CAMPOS = ['nome', 'origem', 'descricao', 'elementos', 'familia', 'biologia', 'bioma', 'tamanho', 'hostilidade', 'atributos'] as const;
+    for (const campo of CAMPOS) {
+      const faltando = BESTIARY_POOL.filter(c => (c as any)[campo] === undefined).map(c => c.nome);
+      expect(faltando, `campo "${campo}" ausente em`).toEqual([]);
+    }
+  });
+
+  it('toda descrição termina em pontuação e corrobora o nome (varredura completa, não só as 10 primeiras)', () => {
+    const truncadas = BESTIARY_POOL.filter(c => !/[.!?…"'”)]$/.test(c.descricao.trim())).map(c => c.nome);
+    expect(truncadas).toEqual([]);
+    const semCorroboracao = BESTIARY_POOL.filter(c => !corroboraNomeDescricao(c.nome, c.descricao)).map(c => c.nome);
+    expect(semCorroboracao).toEqual([]);
+  });
+
+  it('nenhum nome duplicado no pool', () => {
+    const nomes = BESTIARY_POOL.map(c => c.nome);
+    const dup = [...new Set(nomes.filter((n, i) => nomes.indexOf(n) !== i))];
+    expect(dup).toEqual([]);
+  });
+
+  it('tamanho de toda criatura é um dos 4 valores válidos', () => {
+    const invalidos = BESTIARY_POOL.filter(c => !TAMANHOS_VALIDOS.has(c.tamanho)).map(c => `${c.nome}: ${c.tamanho}`);
+    expect(invalidos).toEqual([]);
+  });
+
+  it('atributos de toda criatura são números finitos não-negativos', () => {
+    const invalidos = BESTIARY_POOL.filter(c => {
+      const vals = Object.values(c.atributos ?? {});
+      return vals.length === 0 || vals.some(v => typeof v !== 'number' || !Number.isFinite(v) || v < 0);
+    }).map(c => c.nome);
+    expect(invalidos).toEqual([]);
+  });
+});
