@@ -4310,3 +4310,16 @@ já usava quase toda a diversidade real disponível antes desta rodada.
 Portões: `tsc` ×3 limpo, `vitest run` 4984 passando (1 falha pré-existente,
 `convertToWebp.test.ts`, causada por rodar como `root` — ignora `chmod
 0o444` —, não é regressão), `npm run build` ok.
+
+## 27/09/2026 — sincronização do manual pós-merge 1d9e278d
+
+Delta `8fbf6990..1d9e278d` (3 commits: verificação exaustiva do bestiário, e
+os arquétipos genéricos de fantasia como alternativa ao pedido de nome de
+franquia vetado). Redatores despachados: `doc-redator-regras`
+(02-REGRAS-DE-NEGOCIO.md; 01-VISAO.md não mudou), `doc-redator-referencia`
+(06-REFERENCIA/utils.md), `doc-historiador` (10-DISCUSSOES-E-DECISOES.md —
+registra com precisão que foi um PEDIDO DO DONO RECUSADO pela sessão),
+`doc-bibliotecario` (linha do 00-MAPA.md, incluindo a §11 que faltava citar
+desde a rodada anterior). `doc-verificador` conferiu os 4 docs símbolo por
+símbolo, sem devoluções, e carimbou todos. Guard `docsManual.contract.test.ts`
+e `docsSemMentira.contract.test.ts`: 10/10 verdes.
