@@ -4279,3 +4279,34 @@ bloco de verificação EXAUSTIVA (todas as 630 criaturas, não amostra): campos
 obrigatórios presentes, descrição sem truncamento e corroborando o nome,
 nomes únicos, tamanho dentro do vocabulário válido e atributos numéricos
 sãos. 17/17 testes verdes no arquivo.
+
+## 27/09/2026 — bestiário: pedido de nome de franquia VETADO, arquétipos genéricos no lugar
+
+O dono pediu para usar as ~4.000 linhas de franquia do corpus `Besti-rio-`
+(Pokémon/Digimon/D&D/Warcraft/etc.) como inspiração pro gerador de sprite,
+citando o NOME do personagem no prompt de imagem. `soulmon-ip-brand-guardian`
+deu parecer **VETADO** (registro completo: `docs/REGISTRO-DE-DECISOES.md`
+§15) — risco real de bloqueio de loja e DMCA contra a hospedagem, sem
+mitigação por titular, categoricamente diferente da mitologia de domínio
+público já citada desde D-B1. A sessão recusou implementar mesmo depois do
+dono manter o pedido: o próprio parecer diz que passa do limiar de risco de
+produto e exige revisão jurídica formal **antes** do primeiro commit.
+
+Implementado em vez disso, pela alternativa do parecer:
+`scripts/bestiario-arquetipos-genericos.mjs` — extrai as FAMÍLIAS genéricas
+recorrentes na ficção de fantasia (gigante/autômato/espectro/limo/aberração/
+morto-vivo, presentes em pokemon/digimon/dnd.json como vocabulário de gênero,
+não nome próprio) e escreve descrição ORIGINAL para cada uma. Pool:
+630 → **732** criaturas; famílias cobertas em `REALM_TO_FAMILIAS`
+(`bestiary/select.ts`): 6 → **12** de 14 (faltam `ignea`/`humanoide`, fora por
+ambiguidade — ver `docs/BESTIARIO-PROCEDENCIA.md` §12).
+
+Repo irmão `Besti-rio-` foi clonado nesta sessão (`/home/user/besti-rio-`) e
+confirmou que os "14 mil" que o dono via são majoritariamente inflação
+combinatória: `faunaflora.json` (2.000 linhas) tem só 6 espécies reais
+distintas, `enriched.json` (parte real, 200 linhas) tem 20 — o pool de 630
+já usava quase toda a diversidade real disponível antes desta rodada.
+
+Portões: `tsc` ×3 limpo, `vitest run` 4984 passando (1 falha pré-existente,
+`convertToWebp.test.ts`, causada por rodar como `root` — ignora `chmod
+0o444` —, não é regressão), `npm run build` ok.

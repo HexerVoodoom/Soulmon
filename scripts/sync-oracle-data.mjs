@@ -27,6 +27,7 @@ import { fileURLToPath } from 'node:url';
 import { entradaPermitida } from './bestiario-procedencia.mjs';
 import { curarEntrada } from './bestiario-curadoria.mjs';
 import { aplicarPonte } from './bestiario-ponte-elementos.mjs';
+import { gerarArquetipos } from './bestiario-arquetipos-genericos.mjs';
 import { DERIVED_ELEMENT_PAIRS } from '../src/utils/soulProfile/derivedElements.ts';
 
 /** Corte defensivo — SÓ pro texto cru de base sem curadoria ainda. Nunca no
@@ -281,11 +282,21 @@ const derivedToBase = Object.fromEntries(DERIVED_ELEMENT_PAIRS.map(d => [d.id, d
 const baseElementos = (els) => els.flatMap(id => derivedToBase[id] ?? [id]);
 const poolComPonte = aplicarPonte(pool, baseElementos).map(curarEntrada);
 
+// ARQUÉTIPOS GENÉRICOS — pedido do dono (27/09/2026) para usar as ~4.000
+// linhas de franquia do corpus como inspiração. O parecer de PI vetou nome
+// de personagem e texto de descrição específico (`docs/REGISTRO-DE-DECISOES.md`);
+// a via aprovada foi extrair só as FAMÍLIAS genéricas que se repetem em toda
+// ficção de fantasia (gigante, autômato, espectro, limo, aberração,
+// morto-vivo) e escrever descrição ORIGINAL para cada uma — nunca copiando
+// nome nem texto de nenhuma entrada específica. Ver
+// `bestiario-arquetipos-genericos.mjs` e `docs/BESTIARIO-PROCEDENCIA.md` §12.
+const poolComArquetipos = [...poolComPonte, ...gerarArquetipos().map(curarEntrada)];
+
 const bestDir = path.join(ROOT, 'src/utils/soulProfile/bestiary');
 mkdirSync(bestDir, { recursive: true });
-const poolOut = { _provenance: provenance(BEST_DIR, BEST_REF), _corpusElegivel: corpus.length, criaturas: poolComPonte };
+const poolOut = { _provenance: provenance(BEST_DIR, BEST_REF), _corpusElegivel: corpus.length, criaturas: poolComArquetipos };
 writeFileSync(path.join(bestDir, 'pool.json'), JSON.stringify(poolOut) + '\n');
 
-const els = new Set(poolComPonte.map(c => c.elementos[0]));
-const fams = new Set(poolComPonte.filter(c => c.familia).map(c => c.familia));
-console.log(`pool: ${poolComPonte.length} criaturas (+${poolComPonte.length - pool.length} de ponte) · ${els.size} elementos primários · ${fams.size} famílias @ ${poolOut._provenance.sha.slice(0, 8)}`);
+const els = new Set(poolComArquetipos.map(c => c.elementos[0]));
+const fams = new Set(poolComArquetipos.filter(c => c.familia).map(c => c.familia));
+console.log(`pool: ${poolComArquetipos.length} criaturas (+${poolComPonte.length - pool.length} de ponte, +${poolComArquetipos.length - poolComPonte.length} de arquétipos) · ${els.size} elementos primários · ${fams.size} famílias @ ${poolOut._provenance.sha.slice(0, 8)}`);

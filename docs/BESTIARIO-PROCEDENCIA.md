@@ -337,4 +337,45 @@ editar o script.
 
 Régua: nenhuma ainda travando a auto-retirada por teste (a função é pura e
 testável, mas não há `*.test.ts` dedicado até 27/09/2026 — pendência).
+
+## 12. Arquétipos genéricos de fantasia (27/09/2026) — a alternativa ao nome vetado
+
+Decorre do pedido do dono para usar as ~4.000 linhas de franquia do corpus
+(Pokémon/Digimon/D&D/Warcraft/etc.) como inspiração para o gerador, citando o
+nome do personagem no prompt — **vetado** pelo `soulmon-ip-brand-guardian`
+(registro completo em `docs/REGISTRO-DE-DECISOES.md` §15: nome de personagem
+registrado é expressão identificada de obra de titular ativo, categoricamente
+diferente da mitologia de domínio público que a D-B1 já permite citar; risco
+alto de bloqueio de loja e de DMCA contra a própria hospedagem; sem mitigação
+por titular).
+
+**O que sobrevive do pedido**: medido nas linhas de franquia com
+`classificacaoConfianca: 'alta'` e `elementos` preenchidos, a `descricao` é
+texto específico do personagem (ex.: a própria entrada de Pokédex do
+Bulbasaur) — não dá para reescrever sem parafrasear texto protegido. O que
+ELAS revelam de útil é a distribuição de **família**: `gigante`, `construto`,
+`morto_vivo`, `espirito`, `aberracao` aparecem centenas de vezes em
+pokemon/digimon/dnd.json, mas são vocabulário GENÉRICO de gênero de fantasia
+— não nome próprio, não proprietário de ninguém. E é justamente isso que
+faltava: `REALM_TO_FAMILIAS` (`bestiary/select.ts`) espera 14 famílias e o
+pool só cobria 6 antes deste módulo.
+
+**`scripts/bestiario-arquetipos-genericos.mjs`** escreve descrição ORIGINAL
+para seis arquétipos (Gigante, Autômato, Espectro, Limo, Aberração,
+Morto-Vivo) — folclore/mitologia de domínio público (jötnar nórdicos, golem
+do folclore judaico medieval, fantasmas de toda cultura humana, oozes de
+ficção de fantasia anteriores a qualquer jogo específico), nunca copiando
+nome nem texto de nenhuma entrada do corpus. Cada arquétipo vira 17 entradas
+(uma por elemento de `CLASS_ELEMENT_ORDER`, prefixo de
+`PREFIXOS_PROCEDURAIS` escolhido por hash determinístico), marcadas com
+`_arquetipo` no JSON. Resultado: pool 630 → **732**; famílias cobertas em
+`REALM_TO_FAMILIAS`: 6 → **12** de 14 (faltam `ignea` e `humanoide`, deixadas
+de fora por ambiguidade — `ignea` era literalmente o nome da corrupção de
+família do bug já corrigido nesta mesma sessão, e não há certeza de que seja
+uma família legítima pretendida).
+
+Régua: `curadoria.contract.test.ts` cobre os arquétipos pelos mesmos testes
+exaustivos do resto do pool (descrição não-truncada, corroboração nome↔texto,
+família/biologia consistente, atributos numéricos sãos). Não há teste
+dedicado à distribuição de família por reino — pendência.
 </content>

@@ -22,7 +22,7 @@ import { BESTIARY_POOL } from './select';
 // MESMOS que `sync-oracle-data.mjs` importa (régua copiada mente nos dois).
 import { chaveDeCuradoria, CURADORIA } from '../../../../scripts/bestiario-curadoria.mjs';
 // @ts-expect-error — idem
-import { corroboraNomeDescricao } from '../../../../scripts/bestiario-procedencia.mjs';
+import { corroboraNomeDescricao, DESCRICAO_DE_FRANQUIA } from '../../../../scripts/bestiario-procedencia.mjs';
 import { DERIVED_ELEMENT_PAIRS } from '../derivedElements';
 import { CLASS_ELEMENT_ORDER } from '../types';
 
@@ -155,6 +155,46 @@ describe('biologia dos animais reais sem categoria óbvia', () => {
     const dragaoAzul = BESTIARY_POOL.find(c => c.nome.includes('Dragão-azul'));
     expect(urso?.biologia).toEqual(['Invertebrado']);
     expect(dragaoAzul?.biologia).toEqual(['Molusco']);
+  });
+});
+
+// Arquétipos genéricos de fantasia (27/09/2026) — a alternativa ao pedido
+// vetado de citar nome de personagem de franquia (Pokémon/Digimon/D&D/
+// Warcraft…) no prompt de imagem. Ver docs/REGISTRO-DE-DECISOES.md §15 e
+// docs/BESTIARIO-PROCEDENCIA.md §12: nenhuma linha aqui copia nome ou texto
+// de nenhuma entrada específica do corpus — só a FAMÍLIA (vocabulário
+// genérico de gênero) e uma descrição ORIGINAL por arquétipo.
+describe('arquétipos genéricos de fantasia — nunca nome de franquia', () => {
+  const ARQUETIPOS = ['Gigante', 'Autômato', 'Espectro', 'Limo', 'Aberração', 'Morto-Vivo'];
+  const FAMILIA_POR_ARQUETIPO: Record<string, string> = {
+    Gigante: 'gigante', Autômato: 'construto', Espectro: 'espirito',
+    Limo: 'geleia', Aberração: 'aberracao', 'Morto-Vivo': 'morto_vivo',
+  };
+
+  it('cada arquétipo cobre os 17 elementos e tem família correta', () => {
+    for (const base of ARQUETIPOS) {
+      const linhas = BESTIARY_POOL.filter(c => chaveDeCuradoria(c.nome) === base);
+      expect(linhas.length, `${base}: só ${linhas.length} linhas`).toBe(17);
+      for (const c of linhas) expect(c.familia, c.nome).toBe(FAMILIA_POR_ARQUETIPO[base]);
+    }
+  });
+
+  it('nenhuma descrição de arquétipo cita nome de franquia ou personagem específico', () => {
+    // Rede de segurança: a mesma régua que filtra o corpus (camada 2) não
+    // pode achar vocabulário de franquia nas descrições ORIGINAIS que este
+    // módulo escreveu — se achar, alguém colou texto da fonte por engano.
+    const arquetipos = BESTIARY_POOL.filter(c => (c as any)._arquetipo);
+    expect(arquetipos.length).toBeGreaterThan(0);
+    for (const c of arquetipos) {
+      expect(DESCRICAO_DE_FRANQUIA.test(`${c.nome} ${c.descricao}`), c.nome).toBe(false);
+    }
+  });
+
+  it('famílias que faltavam em REALM_TO_FAMILIAS agora têm criatura alcançável', () => {
+    const antesFaltavam = ['gigante', 'construto', 'espirito', 'geleia', 'aberracao', 'morto_vivo'];
+    for (const familia of antesFaltavam) {
+      expect(BESTIARY_POOL.some(c => c.familia === familia), familia).toBe(true);
+    }
   });
 });
 

@@ -51,10 +51,20 @@ export const BASES_PERMITIDAS = new Set([
   'Sakura (Cerejeira)',
   'Carvalho Sagrado (Quercus)',
   'Sangue-de-dragão (Dracaena cinnabari)',
+  // Arquétipos genéricos de fantasia (27/09/2026, ver
+  // bestiario-arquetipos-genericos.mjs e docs/BESTIARIO-PROCEDENCIA.md §12).
+  // Não vêm do corpus por `entradaPermitida` — são geradas direto pelo
+  // módulo, como a ponte de elementos. Ficam aqui só como registro de que
+  // já passaram por avaliação, para o inventário de bases "permitidas"
+  // continuar completo.
+  'Gigante', 'Autômato', 'Espectro', 'Limo', 'Aberração', 'Morto-Vivo',
 ]);
 
-/** As origens que o `pool.json` aceita (a camada que já existia). */
-export const ORIGENS_PERMITIDAS = [/procedural/i, /fauna/i, /flora/i, /mitolog/i];
+/** As origens que o `pool.json` aceita (a camada que já existia).
+ *  `arqu[ée]tipo` cobre `bestiario-arquetipos-genericos.mjs` — texto ORIGINAL
+ *  sobre uma família recorrente da ficção de fantasia, nunca sobre um
+ *  personagem específico (ver docs/BESTIARIO-PROCEDENCIA.md §12). */
+export const ORIGENS_PERMITIDAS = [/procedural/i, /fauna/i, /flora/i, /mitolog/i, /arqu[ée]tipo/i];
 
 /**
  * CAMADA 2 — rede, não filtro principal. Se algo chega aqui depois das
