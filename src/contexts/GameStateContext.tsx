@@ -1100,7 +1100,7 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
         })(),
         evolutionLocked: loadedState.evolutionLocked === true,
         incubation: (() => {
-          const v = loadedState.incubation as { v?: unknown; since?: unknown; notified?: unknown } | undefined;
+          const v = loadedState.incubation as { v?: unknown; since?: unknown } | undefined;
           if (!v || typeof v !== 'object' || Array.isArray(v)) return undefined;
           const since = v.since;
           if (!since || typeof since !== 'object' || Array.isArray(since)) return undefined;
@@ -1112,11 +1112,11 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
           for (const [k, val] of Object.entries(since as Record<string, unknown>)) {
             if (typeof val === 'string') limpo[k] = val;
           }
-          return {
-            v: 1 as const,
-            since: limpo,
-            notified: Array.isArray(v.notified) ? (v.notified as unknown[]).filter((x): x is string => typeof x === 'string') : [],
-          };
+          // `notified` NÃO é copiado de propósito (⚰️ 27/09/2026 — ver a lápide
+          // em `utils/spriteTrigger.ts`): o aviso é marcador PERSISTENTE, não
+          // one-shot. Save antigo que ainda tenha a chave a perde aqui, em
+          // silêncio, que é o certo — ela nunca foi lida por ninguém.
+          return { v: 1 as const, since: limpo };
         })(),
         soulGoal: str(loadedState.soulGoal) ?? '',
         soulStruggle: str(loadedState.soulStruggle) ?? '',

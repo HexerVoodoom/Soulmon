@@ -126,3 +126,35 @@ describe('R-I — a incubação nunca vira contagem na tela', () => {
     expect(ticker).not.toMatch(/1_?000\)|setTimeout/);
   });
 });
+
+describe('⚰️ `notified` não volta — o aviso é marcador PERSISTENTE (R-K(a))', () => {
+  it('o tipo `Incubation` não tem campo de "já avisei"', () => {
+    // Ele existiu de 22 a 27/09/2026: escrito no save de todo jogador, lido
+    // por ninguém — a quarta repetição do padrão dos WP4.15/4.16 e do
+    // bestiário. E consumi-lo teria sido PIOR que deixá-lo morto: o R-K(a)
+    // pede o oposto de one-shot, porque um aviso gasto deixa sem explicação
+    // exatamente quem abre o app no meio da incubação e encontra a barra
+    // cheia com o botão apagado.
+    const bloco = trigger.slice(
+      trigger.indexOf('export interface Incubation'),
+      trigger.indexOf('export function emptyIncubation'),
+    );
+    const semComentario = bloco.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+    expect(semComentario).not.toMatch(/notified/);
+    expect(semComentario).toMatch(/since:\s*Record<string, string>/);
+  });
+
+  it('o load do save não copia a chave antiga', () => {
+    const ctx = readFileSync(join(SRC, 'contexts/GameStateContext.tsx'), 'utf8');
+    const bloco = ctx.slice(ctx.indexOf('incubation: (() =>'), ctx.indexOf('soulGoal: str('));
+    expect(bloco.replace(/\/\/.*$/gm, '')).not.toMatch(/notified/);
+  });
+
+  it('o aviso da Home NÃO é condicionado a "já mostrei" — ele dura o que a incubação durar', () => {
+    const app = readFileSync(join(SRC, 'App.tsx'), 'utf8');
+    expect(app).toMatch(/if \(incubandoAgora\) avisos\.push\(/);
+    // A condição é só o estado vivo; qualquer `&& !jaAvisei` aqui seria o
+    // one-shot voltando por outra porta.
+    expect(app).not.toMatch(/incubandoAgora && [^)]*notif/i);
+  });
+});
