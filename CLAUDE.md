@@ -491,8 +491,20 @@ Estágios/HP máx: rookie/champion/ultimate=3 · mega=4 · ultra=5. (A árvore *
   procedência (`npm run sync:oracle-data`, clones irmãos) — nunca cópia à mão.
   Cobertura travada por simulação: 17/17 elementos, 65/65 talentos, 11/11
   profissões, 32/32 criaturas do class-system, pool inteiro do bestiário. O
-  nome da criatura-inspiração NUNCA entra em prompt (teste em
-  `pipeline.test.ts`); o jogador vê só a linha de essência no reveal.
+  ⚠️ **O nome da criatura-inspiração PASSOU a entrar no prompt em 27/09/2026
+  (D-B1, decisão do dono).** Esta linha dizia "NUNCA entra em prompt", e era
+  verdade até então — `pipeline.ts` cortava o nome e havia teste travando a
+  ausência dele nos 11 prompts. O dono decidiu o contrário **sabendo do risco
+  de direito autoral**, com o desenho que o app já usa para as referências de
+  gênero: o nome entra **só em `imagePrompt`** (1ª tentativa) e o
+  `imagePromptFallback` segue limpo, então uma recusa do provedor
+  (`isRefusal`, em `functions/api/generate-sprite.js`) degrada para a variante
+  sem nome em vez de falhar. **Quem decide o limite é o provedor, não uma
+  lista nossa.** Duas coisas NÃO mudaram e não podem cair junto: a cláusula
+  `Do not copy any existing franchise character` continua nas duas variantes,
+  e o nome continua **fora do que o jogador lê** — nome, bio e descrição por
+  forma seguem sem ele; o jogador vê só a linha de essência no reveal. A régua
+  viva é `pipeline.test.ts` (o caso mudou de nome junto com a regra).
 - **Desbloqueio no meio do jogo** (`src/components/UnlockAccountModal.tsx`): a
   compra também existe DENTRO do app, não só na tela inicial (que o usuário vê
   uma vez). `UnlockNudge` só aparece em dois lugares — ao bater o limite de

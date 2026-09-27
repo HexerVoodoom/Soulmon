@@ -63,6 +63,39 @@ produzido, e essa corrida já foi perdida uma vez.
 Registrar a distinção é o ponto: quem fundir os dois grupos numa lápide só vai
 achar que o SRD é proibido e jogar fora liberdade que o projeto tem.
 
+## 3-A. ⚠️ Decisão do dono, 27/09/2026 (D-B1): o nome VAI no prompt
+
+Posterior ao corte desta página, e muda uma premissa dela. A §4 abaixo
+descreve como a inspiração era passada ao gerador **sem o nome**; hoje ela vai
+**com**.
+
+> *"pode deixar o nome da criatura aparecer no prompt, mesmo se tiver questão
+> de direito autoral. Se não aceitar, você dá fallback para tirar."*
+
+O desenho é o mesmo que o app já usava para as referências de gênero:
+
+| | leva o nome? |
+|---|---|
+| `imagePrompt` (1ª tentativa) | **sim** — `Draw inspiration from <base>.` |
+| `imagePromptFallback` (2ª) | não |
+
+`functions/api/generate-sprite.js` já refaz com o fallback quando `isRefusal`
+reconhece uma recusa por política de conteúdo. **Quem decide o limite é o
+provedor**, não uma lista nossa — e por isso o par de variantes é a parte que
+não pode cair.
+
+**O que NÃO mudou**, e está travado em `pipeline.test.ts`:
+- a cláusula `Do not copy any existing franchise character` continua nas DUAS
+  variantes (citar a inspiração não é licença para devolver personagem
+  registrado);
+- o nome continua **fora do que o jogador lê** — nome, bio e descrição por
+  forma seguem sem ele.
+
+**Interação com o corte desta página:** o pool filtrado não tem mais nome de
+franquia, então na prática o que viaja hoje são as 12 bases de fauna/flora
+real e a mitologia — domínio público. A decisão vale para o mecanismo, e a
+premissa muda se o pool voltar a receber franquia.
+
 ## 4. O drift de descrição — sistêmico, e o risco mais alto
 
 O campo `descricao` do upstream veio de busca textual que **não valida se o

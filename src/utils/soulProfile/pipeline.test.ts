@@ -61,19 +61,57 @@ describe('pipeline completo do oráculo', () => {
     expect(a.companion?.id).toBe(b.companion?.id);
   });
 
-  it('o NOME da criatura do bestiário nunca aparece em prompt, nome ou bio', async () => {
-    // A inspiração é interna. O corpus tem nomes de franquia (o dono decidiu
-    // que tudo bem PORQUE não sai no prompt final) — este teste é essa regra.
+  it('o NOME da inspiração VAI no prompt da 1ª tentativa, e NÃO no fallback', async () => {
+    /* ⚠️ **ESTA REGRA VIROU AO CONTRÁRIO em 27/09/2026 (D-B1, decisão do
+       dono).** Este caso se chamava "o NOME da criatura do bestiário nunca
+       aparece em prompt" e travava a ausência dele nos 11 prompts.
+
+       O dono decidiu deixar o nome passar, **sabendo do risco de direito
+       autoral**, com o desenho de sempre: tenta COM o nome, e se o provedor
+       recusar por política de conteúdo (`isRefusal`), a 2ª tentativa vai sem.
+       Quem decide o limite é o PROVEDOR, não uma lista nossa — e é por isso
+       que o par de variantes é a parte que não pode cair.
+
+       O que este teste protege agora é o fallback existir de verdade: um
+       `imagePromptFallback` que também carregasse o nome deixaria a recusa
+       sem saída, e a geração falharia em vez de degradar. */
     for (const seed of [3, 14, 62, 240]) {
+      const input = makeInput(`Pessoa Teste ${seed}`, QUIZ, seed % 2 === 0);
+      const { result, bestiaryPick } = await generateOracleComplete(input, seed);
+      const base = /^(?:Titânico|Espiritual|Cristalino|Corrompido|Ancião)\s+(.+?)\s+de\s+\S+$/
+        .exec(bestiaryPick.creature.nome)?.[1] ?? bestiaryPick.creature.nome;
+      const alvo = base.trim().toLowerCase();
+
+      for (const stage of result.creature.stages) {
+        expect(stage.imagePrompt.toLowerCase(), 'a 1ª tentativa leva a inspiração nomeada')
+          .toContain(alvo);
+        expect(stage.imagePromptFallback.toLowerCase(), 'o FALLBACK tem de ficar limpo')
+          .not.toContain(alvo);
+      }
+    }
+  });
+
+  it('a cláusula "não copie personagem de franquia" continua nas DUAS variantes', async () => {
+    // Citar de onde veio a inspiração não é licença para devolver personagem
+    // registrado. Se esta cláusula cair junto com a mudança acima, o prompt
+    // deixa de pedir criatura ORIGINAL — que é outra decisão, e não foi tomada.
+    const { result } = await generateOracleComplete(makeInput('Ana Clausula', QUIZ), 9);
+    for (const stage of result.creature.stages) {
+      expect(stage.imagePrompt).toContain('Do not copy any existing franchise character');
+      expect(stage.imagePromptFallback).toContain('Do not copy any existing franchise character');
+    }
+  });
+
+  it('o nome da inspiração continua FORA do que o jogador lê', async () => {
+    // A mudança do dono é sobre o PROMPT. Nome, bio e descrição por forma
+    // seguem sem a inspiração: o jogador vê a criatura dele, não a fonte.
+    for (const seed of [3, 62]) {
       const input = makeInput(`Pessoa Teste ${seed}`, QUIZ, seed % 2 === 0);
       const { result, bestiaryPick } = await generateOracleComplete(input, seed);
       const nome = bestiaryPick.creature.nome.toLowerCase();
       expect(result.creature.baseName.toLowerCase()).not.toContain(nome);
       const bioTudo = `${result.creature.bio.pt} ${result.creature.bio.en}`.toLowerCase();
       expect(bioTudo).not.toContain(nome);
-      for (const stage of result.creature.stages) {
-        expect(stage.imagePrompt.toLowerCase()).not.toContain(nome);
-      }
     }
   });
 
