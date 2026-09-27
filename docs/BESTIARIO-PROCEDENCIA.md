@@ -145,11 +145,14 @@ sync **e** pelo guard de `pipeline.test.ts`.
    fauna e flora reais — a biodiversidade real é maior que a Pokédex e é
    domínio público. **Exige rodar `npm run sync:oracle-data` com os repos
    irmãos clonados**, o que não é possível na sessão em nuvem.
-2. **CC BY-SA.** As descrições são texto da Wikipédia lusófona e da Wowpedia,
-   ambas CC BY-SA. Redistribuir sem atribuição viola a licença **inclusive nas
-   114 entradas de domínio público que ficaram**. `docs/Attributions.md` não
-   menciona Wikipedia nem Creative Commons. **Cortar as 64 bases não fecha este
-   item.**
+2. ⚠️ **RESOLVIDO em 27/09/2026 pela curadoria (§9), para o pool de hoje.**
+   As descrições eram texto da Wikipédia lusófona e da Wowpedia, ambas CC
+   BY-SA — redistribuir sem atribuição violava a licença inclusive nas
+   entradas de domínio público. A curadoria substituiu as 37 bases por texto
+   ORIGINAL. **Continua sendo item a vigiar**: a régua de cobertura
+   (`curadoria.contract.test.ts`) reprova qualquer base nova que chegue sem
+   entrada na `CURADORIA` — é isso que impede o problema de voltar por um
+   sync futuro sem que ninguém perceba.
 3. **A saída que fecha 1 e 2 de uma vez** (recomendação arquitetural do
    guardião, para a v1.1): **parar de embarcar prosa de terceiro**. O pipeline
    só precisa de `elementos`, `familia`, `biologia`, `bioma`, `tamanho`,
@@ -160,6 +163,45 @@ sync **e** pelo guard de `pipeline.test.ts`.
 4. **Revisão jurídica** — acima do limiar do guardião: a distribuição já
    ocorrida, o drift alimentando o gerador de imagem, a conformidade CC BY-SA,
    e se as três do SRD podem voltar.
+
+## 9. Curadoria (27/09/2026) — nome, tags e descrição coerentes
+
+Pedido do dono, depois do corte: *"vamos trabalhar no pool e no próprio
+bestiário pra que tenha o nome da criatura, tags e descrições coerentes e
+corretas"*.
+
+Medido no pool JÁ filtrado (617 criaturas, 37 bases distintas):
+
+| Problema | Medida |
+|---|---|
+| Descrição terminando no meio de uma palavra | **442/617 (72%)** — `.slice(0, 200)` cortava sem olhar limite de frase |
+| `familia` corrompida pelo elemento | toda variante "de Fogo" de Cão/Elefante Africano/Urso-d'água virava `familia: "ignea"`, perdendo a família real (20 entradas) |
+| `familia` fisicamente impossível | Mantícora (fera terrestre) e Welwitschia (planta do deserto) vinham `"aquatica"` |
+| Drift não-franquia | Urso-d'água tinha variantes com a descrição de "zona habitável" (astronomia) e de um filo de **fungos** — nada a ver com o animal |
+
+**Por que a `familia` corrompida importa e não é só estética:** ela decide o
+bônus de continuidade de linhagem em `bestiary/select.ts` (a regra que faz
+"dragão tender a dragão"). Um Cão de Fogo com `familia: "ignea"` ficava cego
+para essa continuidade justamente nas 5 variantes de fogo.
+
+**Conserto:** `scripts/bestiario-curadoria.mjs`, dono único, aplicado depois
+de `entradaPermitida` — no script de sync (sobrevive ao próximo sync) e na
+poda do `pool.json` atual. Cobertura: **37/37 bases** (as 12 espécies reais
+procedurais + os 19 tipos/entradas únicas não-procedurais), com descrição
+completa, família e biologia coerentes, e corroboração nome↔descrição
+mantida (mesma régua da procedência).
+
+**Efeito colateral que resolve a pendência §7.2 (CC BY-SA), para o que foi
+curado**: as descrições novas são texto ORIGINAL, escrito a partir de
+conhecimento geral de biologia e mitologia de domínio público — não mais
+cópia da Wikipédia ou da Wowpedia. Como a cobertura é 100% do pool atual, a
+obrigação de atribuição CC BY-SA **deixa de se aplicar** às 617 criaturas de
+hoje. Ela volta a valer se um sync futuro trouxer descrição não-curada (base
+nova fora da tabela) — por isso a régua `curadoria.contract.test.ts` exige
+que toda base do pool tenha entrada na `CURADORIA`, e reprova silenciosamente
+o que não tiver.
+
+Régua: `src/utils/soulProfile/bestiary/curadoria.contract.test.ts`.
 
 ## 8. Sem migração de save
 

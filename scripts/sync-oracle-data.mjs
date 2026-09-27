@@ -25,6 +25,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { entradaPermitida } from './bestiario-procedencia.mjs';
+import { curarEntrada } from './bestiario-curadoria.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CLASS_DIR = process.env.CLASS_SYSTEM_DIR ?? path.resolve(ROOT, '../Class-System');
@@ -223,8 +224,9 @@ for (let round = 0; picked.length < POOL_TARGET; round++) {
     const list = strata.get(k);
     if (round < list.length && picked.length < POOL_TARGET) {
       took = true;
-      const c = list[round];
+      let c = list[round];
       if (!entradaPermitida(c)) continue;
+      c = curarEntrada(c); // nome/tags/descrição coerentes — dono: bestiario-curadoria.mjs
       if (nomesVistos.has(c.nome)) continue;
       nomesVistos.add(c.nome);
       picked.push(c);
