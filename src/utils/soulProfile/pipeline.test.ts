@@ -12,6 +12,9 @@ import { CLASS_ELEMENT_ORDER } from './types';
 import { FICHA_STAGE_ORDER } from './ficha/types';
 import { poderCaptura } from './ficha/capture';
 import { BESTIARY_POOL, BESTIARY_PROVENANCE } from './bestiary/select';
+// @ts-expect-error — módulo .mjs de build, sem tipos; é de propósito o MESMO
+// arquivo que o `sync-oracle-data.mjs` importa (régua copiada mente nos dois).
+import { entradaPermitida } from '../../../scripts/bestiario-procedencia.mjs';
 import { DERIVED_ELEMENT_PAIRS, BASE_ELEMENT_LABELS } from './derivedElements';
 import { essenceHasEn, PROFISSAO_EN } from './essenceLabels';
 import { computeClassTitle } from './ficha/classTitle';
@@ -269,16 +272,47 @@ describe('dados sincronizados dos repositórios', () => {
   });
 
   it('nenhuma criatura do pool vem de franquia protegida', () => {
-    // O pipeline usa a criatura-inspiração por ELEMENTO, família, bioma,
-    // tamanho e atributos — tudo genérico. Nome e descrição de terceiro nunca
-    // foram necessários, e o nome já era proibido em prompt (teste abaixo);
-    // o que faltava era ele não estar no repositório.
-    const permitidas = [/procedural/i, /fauna/i, /flora/i, /mitolog/i];
-    const proibidos = /\b(agumon|greymon|veemon|gatomon|patamon|gabumon|taichi|digimon|pokemon|pikachu|charizard|goku)\b/i;
-    const sujas = BESTIARY_POOL.filter(c =>
-      !permitidas.some(re => re.test(String(c.origem ?? '')))
-      || proibidos.test(`${c.nome} ${c.descricao ?? ''}`));
-    expect(sujas.map(c => `${c.origem}: ${c.nome}`)).toEqual([]);
+    /* ⚠️ **ESTE TESTE ESTAVA VERDE E ERA FALSO** (achado em 27/09/2026).
+       Ele afirmava exatamente a propriedade que o pool violava, usando a MESMA
+       lista de onze nomes que o `sync-oracle-data.mjs` usava — duas cópias do
+       mesmo regex furado, em dois arquivos. As duas erraram igual e nada ficou
+       vermelho, enquanto **1.101 das 1.718 entradas** eram de franquia: a
+       Pokédex Gen I inteira, Beholder, Mind Flayer, Displacer Beast, Murloc,
+       Deathwing, Zergling, Chocobo, Tonberry, Rathalos, Balrog, e dois X-Men
+       (a `Ciclope` do pool era o Scott Summers).
+
+       A causa-raiz não precisava de regex: `sync-oracle-data.mjs` LIA
+       `pokemon.json`, `digimon.json` e `dnd.json` de propósito e filtrava
+       depois por `origem`, que nesses arquivos vem "Geração Procedural".
+
+       Hoje o critério é de `scripts/bestiario-procedencia.mjs`, IMPORTADO —
+       não copiado — por este teste e pelo script. */
+    const sujas = BESTIARY_POOL.filter(c => !entradaPermitida(c));
+    expect(sujas.slice(0, 10).map(c => `${c.origem}: ${c.nome}`)).toEqual([]);
+  });
+
+  it('AUTOVERIFICAÇÃO: o critério ENXERGA o que a régua antiga deixava passar', () => {
+    /* Sem este caso, um critério que aprova tudo faria o teste acima passar
+       pelo mesmo motivo que o anterior passava. */
+    const exemplosReais = [
+      { nome: 'Titânico Zubat de Morte', origem: 'Geração Procedural (Class-System)',
+        descricao: 'A primeira geração (Geração I) da franquia Pokémon apresentou 151 criaturas fictícias' },
+      { nome: 'Espiritual Beholder de Fogo', origem: 'Geração Procedural (Class-System)',
+        descricao: 'Beholder é um monstro fictício de Dungeons & Dragons' },
+      { nome: 'Ciclope Celeste', origem: 'Criaturas Mitologicas',
+        descricao: 'Emma Grace Frost é uma personagem fictícia que aparece nas histórias em quadrinhos da Marvel Comics.' },
+      // Drift: nome limpo, descrição de OUTRA criatura registrada.
+      { nome: 'Ancião Tarrasque de Fogo', origem: 'Geração Procedural (Class-System)',
+        descricao: 'Deathclaw é uma espécie reptiliana fictícia da franquia Fallout' },
+    ];
+    for (const c of exemplosReais) {
+      expect(entradaPermitida(c), `deixou passar: ${c.nome}`).toBe(false);
+    }
+    // …e NÃO reprova o que é do mundo (fauna real com descrição de biologia).
+    expect(entradaPermitida({
+      nome: 'Titânico Ocapi (Okapia johnstoni) de Água', origem: 'Geração Procedural (Class-System)',
+      descricao: 'O ocapi (Okapia johnstoni) é um mamífero artiodáctilo da família Giraffidae.',
+    })).toBe(true);
   });
 
   it('o pool do bestiário é grande, único por nome e com descrição real', () => {
@@ -291,9 +325,20 @@ describe('dados sincronizados dos repositórios', () => {
        regra escrita em duas seções do `CLAUDE.md`.
        O filtro está no `scripts/sync-oracle-data.mjs` (na FONTE, para não
        voltar no próximo sync) e o guard está logo abaixo. */
-    expect(BESTIARY_POOL.length).toBeGreaterThanOrEqual(1700);
+    /* ⚠️ O piso foi 2000, depois 1700, e **caiu para 600 em 27/09/2026**.
+       Não é afrouxamento: é a conta do corte. O pool tinha 1.718 entradas e
+       **1.101 saíram** por PI de terceiro (60,6%), deixando **617**. O
+       `pool.json` passou de 832 KB para 374 KB no bundle servido.
+       O número é MEDIDO, não escolhido — e ele deve SUBIR de novo quando o
+       `POOL_TARGET` for recalibrado sobre fauna e flora reais, que é a
+       pendência registrada em `docs/BESTIARIO-PROCEDENCIA.md` §"o que falta":
+       sobraram 617 entradas, mas de apenas **12 espécies** procedurais, e é
+       diversidade de FAMÍLIA que dá caráter à criatura — cinco prefixos sobre
+       o mesmo cachorro não são cinco criaturas. */
+    expect(BESTIARY_POOL.length).toBeGreaterThanOrEqual(600);
     expect(new Set(BESTIARY_POOL.map(c => c.nome)).size).toBe(BESTIARY_POOL.length);
-    for (const c of BESTIARY_POOL.slice(0, 50)) {
+    // Varre TUDO: é um pool em memória, e `slice(0, 50)` validava 3% dele.
+    for (const c of BESTIARY_POOL) {
       expect(c.descricao.length).toBeGreaterThan(10);
       expect(c.elementos.length).toBeGreaterThan(0);
     }

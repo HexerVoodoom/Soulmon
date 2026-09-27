@@ -24,6 +24,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { entradaPermitida } from './bestiario-procedencia.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CLASS_DIR = process.env.CLASS_SYSTEM_DIR ?? path.resolve(ROOT, '../Class-System');
@@ -146,7 +147,23 @@ console.log(`  diais gen-2: divisor ${geracoes.divisorCascata['2']} · limiar ${
 //    estratificada por (elemento primário × família), depois por tamanho.
 // ---------------------------------------------------------------------------
 if (!existsSync(BEST_DIR)) throw new Error(`Besti-rio- não encontrado em ${BEST_DIR}`);
-const FILES = ['variantes', 'enriched', 'faunaflora', 'pokemon', 'digimon', 'dnd'];
+/* ⚠️ **CAMADA 0 — `pokemon`, `digimon` e `dnd` SAÍRAM em 27/09/2026.**
+ *
+ * Esta linha era a causa-raiz e ninguém precisava de regex para achá-la: o
+ * script BUSCAVA os três arquivos de propósito, toda vez, e só DEPOIS tentava
+ * filtrar por `origem` — que neles vem rotulada "Geração Procedural
+ * (Class-System)". O filtro inspecionava o rótulo errado de um dado que tinha
+ * sido pedido deliberadamente, então ele nunca teve chance.
+ *
+ * Resultado medido no pool commitado: **1.101 das 1.718 entradas** eram de
+ * franquia — a Pokédex Gen I inteira, mais Beholder, Mind Flayer, Displacer
+ * Beast, Murloc, Deathwing, Zergling, Chocobo, Tonberry, Rathalos e Balrog.
+ *
+ * Não reintroduza os três nomes. O que o pipeline usa da criatura-inspiração
+ * é elemento, família, biologia, bioma, tamanho e atributos — tudo genérico e
+ * disponível em fauna e flora reais, que são domínio público e mais diversas
+ * que qualquer Pokédex. */
+const FILES = ['variantes', 'enriched', 'faunaflora'];
 const corpus = [];
 for (const f of FILES) {
   let raw;
@@ -183,39 +200,20 @@ const keys = [...strata.keys()].sort();
 // arquivos, e nome duplicado no pool vira criatura que "não existe" para a
 // cobertura (o sorteio nunca distingue as duas).
 /**
- * ⚠️ ORIGENS PROIBIDAS — o filtro que faltava, acrescentado em 07/09/2026.
+ * ⚠️ O CRITÉRIO NÃO MORA MAIS AQUI — ele é de `scripts/bestiario-procedencia.mjs`,
+ * importado por ESTE script **e** pelo guard de `pipeline.test.ts`.
  *
- * O pool commitado tinha **242 criaturas de franquia protegida** com a
- * DESCRIÇÃO OFICIAL copiada palavra por palavra: Pokémon (50), D&D (78),
- * Warcraft (26), Digimon (22), Ragnarok Online, Final Fantasy, Warhammer,
- * Senhor dos Anéis. Tudo isso ia no `pool.json` de 947 KB que entra no bundle
- * servido pela Cloudflare, e o `CLAUDE.md` declara em duas seções que "nada de
- * terceiro entra no bundle".
+ * Até 27/09/2026 a regra era uma lista de onze nomes escrita nos DOIS lugares
+ * (`agumon|…|pokemon|pikachu|charizard|goku`). As duas cópias erraram igual, e
+ * por isso o teste chamado "nenhuma criatura do pool vem de franquia
+ * protegida" passava VERDE com 1.101 entradas de franquia no pool. Régua
+ * copiada não diverge um pouco: ela mente nos dois lugares ao mesmo tempo.
  *
- * A regra do produto é sobre INSPIRAÇÃO, e inspiração não precisa do nome nem
- * do texto de ninguém: o que a criatura-inspiração entrega ao pipeline é
- * elemento, família, bioma, tamanho e atributos — tudo genérico. O que fica é
- * o que é nosso ou é do mundo: geração procedural, fauna e flora reais, e
- * mitologia (que é domínio público).
- *
- * Filtrar AQUI e não no consumidor é o ponto: o dado não pode chegar ao
- * repositório, senão volta no próximo `npm run sync:oracle-data`.
+ * O módulo único aplica quatro camadas — não ingerir (o `FILES` acima),
+ * allowlist de BASES procedurais, rede de segurança sobre a descrição, e a
+ * corroboração nome↔descrição que pega o drift de texto do upstream. A
+ * fundamentação está em `docs/BESTIARIO-PROCEDENCIA.md`.
  */
-const ORIGENS_PERMITIDAS = [
-  /procedural/i,
-  /fauna/i,
-  /flora/i,
-  /mitolog/i,
-];
-/** Nomes que aparecem DENTRO de entradas procedurais ("Titânico Agumon de
- *  Gravidade"): a origem é limpa e o nome não. */
-const NOMES_PROIBIDOS = /\b(agumon|greymon|veemon|gatomon|patamon|gabumon|taichi|digimon|pokemon|pikachu|charizard|goku)\b/i;
-
-const origemPermitida = (c) => {
-  const origem = String(c.origem ?? '');
-  if (!ORIGENS_PERMITIDAS.some(re => re.test(origem))) return false;
-  return !NOMES_PROIBIDOS.test(`${c.nome ?? ''} ${c.descricao ?? ''}`);
-};
 
 const picked = [];
 const nomesVistos = new Set();
@@ -226,7 +224,7 @@ for (let round = 0; picked.length < POOL_TARGET; round++) {
     if (round < list.length && picked.length < POOL_TARGET) {
       took = true;
       const c = list[round];
-      if (!origemPermitida(c)) continue;
+      if (!entradaPermitida(c)) continue;
       if (nomesVistos.has(c.nome)) continue;
       nomesVistos.add(c.nome);
       picked.push(c);
