@@ -7,6 +7,36 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 27/09/2026 — Manual sincronizado com `c510c7e4`
+>
+> Delta `78ef5367..c510c7e4` (3 commits, sendo 1 o próprio commit de docs anterior),
+> rodado por `/manter-docs auto`. As duas frentes grossas — **WP4.29 (incubação)** e
+> **minimal-ui F1–F6** — já tinham entrado no manual em `d433a607`; o que faltava eram
+> as **duas correções pós-F3** de 24/09.
+>
+> Docs tocados e recarimbados: **00-MAPA** (§5 ganha `src/utils/androidBack.ts` e
+> `src/components/ui/PixelIcon.tsx` + `assets/soulmon/icones-ui/`), **03** (§1.1 voltar
+> físico do Android; §1.2 `icon="mapa"` e o saldo do Mapa no canto inferior direito em
+> pílulas `chip-moeda`; §4.2 o deck de CINCO ações vira ⚰️ e no lugar entram OS TRÊS
+> CUIDADOS), **04** (§5.1 ganha o terceiro caminho de ícone), **05** (§1.1 `@capacitor/app`;
+> §2.2 `App.tsx` 6659 → 6646), **06/components** (`CornerLink`, `MapPage`),
+> **06/utils** (cobertura re-medida), **08** (só o carimbo: §3.6 não repete o número),
+> **09** (§1.5 ganha a linha das duas correções).
+>
+> - ⚰️ **Duas mentiras corrigidas, as duas da família "a régua descreve o app de ontem"**:
+>   o manual dizia que o plugin do Android era procurado em tempo de execução porque
+>   `@capacitor/app` não estava instalado e que na Home ele chamava `exitApp` (FECHAR o app
+>   onde o Android manda só mandar a tarefa para trás) — hoje o pacote é dependência e
+>   `utils/androidBack.ts` **minimiza**; e o §4.2 de telas descrevia um deck de CINCO
+>   ações que tinha morrido na F2 (`grep -c 'sm2-deck"' src/components/CompanionHUD.tsx`
+>   → 0), incluindo um botão de comer que hoje é arrasto da Mochila.
+> - **Divergências novas: nenhuma.** As duas já registradas continuam abertas e são do
+>   dono: o `CLAUDE.md` ainda descreve a Loja "na página Atividades (`ShopModal`)" e
+>   Missões como "aba na loja", e ainda fala da "nav inferior 32px" sem citar a exceção D1.
+> - Fechada a pendência menor do bloco anterior: `06-REFERENCIA/utils.md` dizia
+>   "120/120 módulos" (medição certa de 09/09, árvore que cresceu 19 módulos desde então);
+>   re-medido por `scripts/docs-inventario.mjs` → **139/139**, sem nenhum faltando.
+
 > ## 24/09/2026 — Manual sincronizado com `78ef5367`
 >
 > Delta `c7bca6d..78ef5367` (19 commits: incubação WP4.29 + minimal-ui F1–F6 + Vesca),

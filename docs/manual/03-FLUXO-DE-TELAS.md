@@ -1,6 +1,6 @@
 # Fluxo de telas do Soulmon
 
-> **Dono:** doc-redator-telas · **Data:** 24/09/2026 (fechamento F6 da minimal-ui: §1 reescrito para Home + Mapa + 6 áreas — `navigation.ts`, `goTo`/`goBack`/`viewBack`, `HomeMenuSheet`, `AreaView`; lápides ⚰️ em §4.2b `ItemsWindow`, §4.4 `ActivitiesPage`, §4.6 `ShopModal`; §4.1/§4.9/§4.10/§4.13/§4.14/§4.15/§4.22/§4.23a e a tabela do §6 com o caminho novo; conferido contra o fonte, sem passar pelo doc-verificador); anterior: 22/09/2026 (5ª sincronização do dia, delta `89554b5d..c7bca6d`: a linha `FAVORITE_STEP` da tabela de passos do ritual virou ⚰️ e ganhou o parágrafo do degrau pulado nos dois sentidos (e do rascunho antigo desviado); anterior: 22/09/2026 (3ª sincronização do dia, delta `cd66940f..cf6315e1`: §4.5 marcar feito abre 5 s de "Desfazer" (os dois handlers, inclusive a última etapa) e §4.25 ganhou a linha do `UndoToast` entre as superfícies globais (#57); anterior: 2ª sincronização do dia, delta `a6c1cd8a..592e2c14`, QA Rodada 2: §2.1 gate `; wv)`, §2.3 portão com lápide ANTES do onboarding + região viva + `OfflineSeal`, §2.4 falha de IA com nome e hint que fica, §3.2 banner de termos em posição 1 na primeira vez, §4.2 fallback do sprite e falas do fallback, §4.17 âncora visível, §4.23 Termos na Ajuda e `#en`, §4.25 selo nas telas pré-Home)) · **Estado:** verificado em 24/09/2026 por doc-verificador (HEAD `78ef5367` — §3.2 slot `'incubacao'` (`incubandoAgora`, `isIncubating`, `Icon egg`, copy) e §4.10 `evoluiNoToque`/`incubating`/`fraseProgresso`/`rotuloDoVisor` conferidos em `App.tsx` e `EvolutionPath.tsx`; §1 e amostra de §4.1/§4.9/§4.13–§4.15/§4.22/§4.23a/§6 contra `navigation.ts`, `goTo`/`goBack`/`backButton`, `HomeMenuSheet`, `CornerLink`, `AreaView`; corrigidos: fila 2 sem `incubacao` no diagrama §1.4 e §6 #9, contagem "oito"→"nove", §4.9 `pane === 'oracle'` e `OraclePage`/`PixelizerCard` alcançáveis em §4.9 e §6 #7); anterior: verificado em 22/09/2026 por doc-verificador (delta `89554b5d..c7bca6d` — `FAVORITE_STEP = 5` e `QUIZ_START = FAVORITE_STEP + 1` intactos no fonte; os dois desvios (`next()` em `FAVORITE_STEP - 1`, `back()` em `QUIZ_START`) e o inicializador de `step` conferidos em `SoulmonOnboarding.tsx`; nenhum bloco `step === FAVORITE_STEP` renderiza); anterior: verificado em 22/09/2026 por doc-verificador (delta `cd66940f..cf6315e1` — `src/components/UndoToast.tsx` e as duas chamadas de `ofereceDesfazer` no `src/App.tsx` conferidas); anterior: verificado em 22/09/2026 por doc-verificador (delta `a6c1cd8a..592e2c14` — as seções acima conferidas símbolo a símbolo contra `index.html`, `SoulmonOnboarding.tsx`, `GameTutorialFlow.tsx`, `App.tsx`, `CompanionHUD.tsx`, `MorningCheckIn.tsx`, `SettingsPage.tsx`; anterior no mesmo dia: delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §2.1 gate por plataforma (`index.html`), §2.3 aviso de conta excluída no portão (`SoulmonOnboarding.tsx` › `avisoContaExcluida`), §2.4 hint de IA, §3.2 item 7 `changed`/`region`/"Entendi", §4.23 Sobre e Ajuda conferidos símbolo a símbolo contra o fonte; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §2.1 aviso de WebView, §3.2 item 6 `termos`, §4.23 grupo Sobre, §4.23a/§4.23b ⚰️ `SettingsModal`, §4.25 `ErrorBoundary` conferidos símbolo a símbolo; anterior: §4.23/§4.23b, delta `5ac3d351..8d318529`, som/S16 + grupo "Som" na `SettingsPage`; verificação anterior do mesmo dia: delta `dc72579e..9875477b`, 30 commits: copy da bíblia §1–§6-bis, superfície de suporte, rodada 2 da arte; verificação anterior do delta `2580b73a..dc72579e`, Fase 2, identidade "O Visor", 14 fluxos: 21/09/2026)
+> **Dono:** doc-redator-telas · **Data:** 27/09/2026 (sincronização do delta `78ef5367..c510c7e4`, correções pós-F3 da minimal-ui: §1.1 o voltar físico do Android sai do `App.tsx` para `utils/androidBack.ts` (minimiza, não fecha), §1.2 `CornerLink icon="mapa"` e o saldo do Mapa no canto inferior direito em pílulas `chip-moeda`, §4.2 ⚰️ o deck de CINCO ações (não existe desde a F2) e no lugar dele OS TRÊS CUIDADOS (`sm3-cuidar`) com a arte em pixel; anterior: 24/09/2026 (fechamento F6 da minimal-ui: §1 reescrito para Home + Mapa + 6 áreas — `navigation.ts`, `goTo`/`goBack`/`viewBack`, `HomeMenuSheet`, `AreaView`; lápides ⚰️ em §4.2b `ItemsWindow`, §4.4 `ActivitiesPage`, §4.6 `ShopModal`; §4.1/§4.9/§4.10/§4.13/§4.14/§4.15/§4.22/§4.23a e a tabela do §6 com o caminho novo; conferido contra o fonte, sem passar pelo doc-verificador); anterior: 22/09/2026 (5ª sincronização do dia, delta `89554b5d..c7bca6d`: a linha `FAVORITE_STEP` da tabela de passos do ritual virou ⚰️ e ganhou o parágrafo do degrau pulado nos dois sentidos (e do rascunho antigo desviado); anterior: 22/09/2026 (3ª sincronização do dia, delta `cd66940f..cf6315e1`: §4.5 marcar feito abre 5 s de "Desfazer" (os dois handlers, inclusive a última etapa) e §4.25 ganhou a linha do `UndoToast` entre as superfícies globais (#57); anterior: 2ª sincronização do dia, delta `a6c1cd8a..592e2c14`, QA Rodada 2: §2.1 gate `; wv)`, §2.3 portão com lápide ANTES do onboarding + região viva + `OfflineSeal`, §2.4 falha de IA com nome e hint que fica, §3.2 banner de termos em posição 1 na primeira vez, §4.2 fallback do sprite e falas do fallback, §4.17 âncora visível, §4.23 Termos na Ajuda e `#en`, §4.25 selo nas telas pré-Home))) · **Estado:** verificado em 27/09/2026 por doc-verificador (delta `78ef5367..c510c7e4` — §1.1 contra `src/utils/androidBack.ts` (`Capacitor.isNativePlatform`, `App.minimizeApp`/`exitApp`) e `src/App.tsx`; §1.2 contra `CornerLink.tsx` (`icon: 'mapa' | 'home'`) e `MapPage.tsx` (`zIndex: 2`, `bottom`, `border-image`); §4.2 contra `CompanionHUD.tsx` (`sm3-cuidar`, `data-cuidado`, `sm3-cuidado-inerte`, `aria-pressed`) e `grep -c 'sm2-deck"'` → 0; alvo de 44 medido em `.sm3-cuidado` do `index.css`); anterior: verificado em 24/09/2026 por doc-verificador (HEAD `78ef5367` — §3.2 slot `'incubacao'` (`incubandoAgora`, `isIncubating`, `Icon egg`, copy) e §4.10 `evoluiNoToque`/`incubating`/`fraseProgresso`/`rotuloDoVisor` conferidos em `App.tsx` e `EvolutionPath.tsx`; §1 e amostra de §4.1/§4.9/§4.13–§4.15/§4.22/§4.23a/§6 contra `navigation.ts`, `goTo`/`goBack`/`backButton`, `HomeMenuSheet`, `CornerLink`, `AreaView`; corrigidos: fila 2 sem `incubacao` no diagrama §1.4 e §6 #9, contagem "oito"→"nove", §4.9 `pane === 'oracle'` e `OraclePage`/`PixelizerCard` alcançáveis em §4.9 e §6 #7); anterior: verificado em 22/09/2026 por doc-verificador (delta `89554b5d..c7bca6d` — `FAVORITE_STEP = 5` e `QUIZ_START = FAVORITE_STEP + 1` intactos no fonte; os dois desvios (`next()` em `FAVORITE_STEP - 1`, `back()` em `QUIZ_START`) e o inicializador de `step` conferidos em `SoulmonOnboarding.tsx`; nenhum bloco `step === FAVORITE_STEP` renderiza); anterior: verificado em 22/09/2026 por doc-verificador (delta `cd66940f..cf6315e1` — `src/components/UndoToast.tsx` e as duas chamadas de `ofereceDesfazer` no `src/App.tsx` conferidas); anterior: verificado em 22/09/2026 por doc-verificador (delta `a6c1cd8a..592e2c14` — as seções acima conferidas símbolo a símbolo contra `index.html`, `SoulmonOnboarding.tsx`, `GameTutorialFlow.tsx`, `App.tsx`, `CompanionHUD.tsx`, `MorningCheckIn.tsx`, `SettingsPage.tsx`; anterior no mesmo dia: delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §2.1 gate por plataforma (`index.html`), §2.3 aviso de conta excluída no portão (`SoulmonOnboarding.tsx` › `avisoContaExcluida`), §2.4 hint de IA, §3.2 item 7 `changed`/`region`/"Entendi", §4.23 Sobre e Ajuda conferidos símbolo a símbolo contra o fonte; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §2.1 aviso de WebView, §3.2 item 6 `termos`, §4.23 grupo Sobre, §4.23a/§4.23b ⚰️ `SettingsModal`, §4.25 `ErrorBoundary` conferidos símbolo a símbolo; anterior: §4.23/§4.23b, delta `5ac3d351..8d318529`, som/S16 + grupo "Som" na `SettingsPage`; verificação anterior do mesmo dia: delta `dc72579e..9875477b`, 30 commits: copy da bíblia §1–§6-bis, superfície de suporte, rodada 2 da arte; verificação anterior do delta `2580b73a..dc72579e`, Fase 2, identidade "O Visor", 14 fluxos: 21/09/2026)
 > **Verificação:** `npx vitest run src/components/filaDeAvisos.contract.test.ts src/components/evolucaoManual.contract.test.ts src/components/ofertaDoisCanais.contract.test.ts src/components/upgradeReveal.contract.test.ts src/components/textoBilingue.contract.test.ts src/plugins/widgetSemCobranca.contract.test.ts src/components/SoulmonOnboarding.oraculo.render.test.tsx src/components/StatsPage.render.test.tsx src/utils/petVoice.test.ts src/narrativa.contract.test.ts` · guard do manual: `npx vitest run src/docsManual.contract.test.ts`
 > **Não cobre:** aparência (cor, tipografia, espaçamento, tokens `--sm2-*`) — é do `04-IDENTIDADE-VISUAL.md`; as REGRAS que as telas aplicam (corações, meta do dia, evolução, moedas) — são do `02-REGRAS-DE-NEGOCIO.md`; a assinatura de cada componente — é de [`06-REFERENCIA/components.md`](06-REFERENCIA/components.md); percurso real com o app rodando — é do procedimento "Inventário de superfícies" de `.claude/skills/squad-design/METODO.md` (⚰️ agente `soulmon-screen-cartographer`, 21/09/2026), cuja medição de 19/08/2026 está em [`../INVENTARIO-TELAS.md`](../INVENTARIO-TELAS.md).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -91,8 +91,16 @@ todo voltar por `goBack()`. O grafo do voltar é **uma** função pura,
 `viewBack` (`navigation.ts`): área → Mapa → Home; página do menu → Home; Home →
 `null` (o voltar é do sistema). O mesmo grafo serve ao voltar da tela
 (`AreaTopBar`), ao voltar do navegador (`popstate`) e ao botão físico do
-Android (`backButton` do `@capacitor/app`, procurado em tempo de execução —
-na Home ele chama `exitApp`). Régua: `src/components/nav/nav.render.test.tsx`.
+Android. ⚠️ Até 24/09/2026 o plugin do Android era **procurado em tempo de
+execução** (`window.Capacitor.Plugins.App`) porque `@capacitor/app` não estava
+instalado, e na Home ele chamava `exitApp` — FECHAR o app onde o Android manda
+apenas mandar a tarefa para trás. Hoje o pacote é dependência de verdade e o
+dono da fiação é `src/utils/androidBack.ts` (`registerAndroidBack`): mesmo
+grafo, e na Home `App.minimizeApp()` (com `exitApp()` só se o minimizar
+falhar), porque registrar o listener DESLIGA o padrão do Capacitor e sem esse
+ramo o voltar na Home travaria o app. Só registra em plataforma nativa
+(`Capacitor.isNativePlatform()`) — na web/PWA fica o `popstate`. Réguas:
+`src/components/nav/nav.render.test.tsx` e `src/utils/androidBack.test.ts`.
 
 Antes de `currentView` chegar a decidir qualquer coisa, o `App` tem **quatro portões
 de tela cheia**, nesta ordem literal (`src/App.tsx`, `showIntro` →
@@ -107,7 +115,7 @@ upgradeRitual           → <SoulmonOnboarding mode="upgrade">  (retorna)
 
 ### 1.2 Home, Mapa e o menu ícone
 
-- **Home** (`'home'`): um único link para o Mapa, `CornerLink icon="map"` no
+- **Home** (`'home'`): um único link para o Mapa, `CornerLink icon="mapa"` no
   canto inferior direito ("Mapa"/"Map"). O menu ícone do topo (`HomeHud`)
   abre o `HomeMenuSheet` (decisão D6), com seis linhas (`MenuRow`):
   Configurações (`page:settings`), Oráculo (`page:oracle`), Estatísticas
@@ -115,8 +123,13 @@ upgradeRitual           → <SoulmonOnboarding mode="upgrade">  (retorna)
   existir) e "Refazer o ritual" (só se a prop existir).
 - **Mapa** (`'map'`, `src/components/nav/MapPage.tsx`): cena isométrica com as
   6 construções (cada uma um `<button>` que chama `goTo(areaView(id))`), o
-  saldo das 3 moedas no topo e um único link para a Home, `CornerLink
-  icon="home"` no canto inferior esquerdo ("Início"/"Home", `goBack`).
+  saldo das 3 moedas no canto inferior **direito** (⚠️ ficava no topo até
+  24/09/2026, e a arte do "Jogos" pintava por cima dele; hoje `zIndex` 2, e é
+  o espelho do link da Home, no esquerdo) e um único link para a Home,
+  `CornerLink icon="home"` no canto inferior esquerdo ("Início"/"Home",
+  `goBack`). Cada moeda é uma **pílula** com a moldura `chip-moeda` do squad
+  de arte em 9-slice (`border-image`, miolo opaco) — é moldura de TEXTO, não
+  de ícone, então a regra "ícone nunca dentro de box" não se aplica.
 - **Páginas do menu** (`page:*`): `AreaTopBar` com "Voltar ao início"/"Back to
   home"; Configurações, Oráculo e Estatísticas renderizam as páginas de sempre.
 
@@ -158,7 +171,7 @@ helpers `getFoodName`/`getFoodDesc`).
                                     │                                        (handleCompleteTutorial)
                                     └─ mode='upgrade' (compra no meio do jogo) ──(onRevealed)──▶ app
 
-   Home ('home') ──CornerLink map──▶ Mapa ('map') ──construção──▶ área ('area:<id>')
+   Home ('home') ──CornerLink mapa─▶ Mapa ('map') ──construção──▶ área ('area:<id>')
     │  ▲                               │  ▲                          │  (AreaTopBar voltar → Mapa)
     │  └──────── CornerLink home ──────┘  └──────────────────────────┘
     │                                        área ─lote─▶ AreaSheet ─▶ jogo por cima (onExit volta)
@@ -576,7 +589,7 @@ desde `592e2c14`).
 
 **Chega por**: valor inicial de `currentView`; `CornerLink icon="home"` do Mapa
 (`goBack`) e o voltar de qualquer página do menu (§1.1) · **Sai para**:
-`CornerLink icon="map"` → `goTo('map')`, ou o menu ícone (`HomeMenuSheet`,
+`CornerLink icon="mapa"` → `goTo('map')`, ou o menu ícone (`HomeMenuSheet`,
 §1.2). ⚠️ Desde a minimal-ui F2 a Home segue a abordagem B (faixa de cenário
 com o pet grande, HP/EN, 3 cuidados — mochila, lua/sol, banho —, lista do dia
 com botão +, `ChatBox` sempre aberto); onde o texto abaixo descreve o deck de
@@ -645,25 +658,32 @@ hoje + concluídas de hoje (a tarefa concluída fica riscada na lista até a vir
   para curar)" / "Pet your Soulmon (hold to heal)", `onPointerDown/Move/Up` e
   `onKeyDown` (Enter/Espaço rodam um ciclo de 2 s). A regra e o teto de cura são
   de `onPet` (`handlePet` no `App.tsx`), nunca daqui.
-- **O deck de CINCO ações** (`div.sm2-deck`, `role="group"`), na ordem literal
-  do array (`key`): `feed` (abre o seletor de comida, `setFeedOpen(true)`), `items`
-  (`onOpenItems` → `handleOpenItems`, que **alterna** `showItemsWindow`), `bath`
-  (`handleShowerClick`; `inert: showerCooldown` é um cooldown de 5 s contra o
-  toque duplo — não existe gate de regra, o banho está sempre disponível), `sleep`
-  (`onSleep`, glifo `bedtime`/`wb_sunny`) e **`play`** (novo em `f5ead7c0`,
-  canvas Home E1+E2 / `PlayEstados`, `DECISOES-WIREFRAME.md` §19 — Brincar saiu do
-  `PlayCard` e virou gesto de cuidado). A regra de `play` é única
-  (`handleDeckPlay`): célula **inerte** (`aria-disabled`, tracejado, rótulo diz o
-  porquê — "Brincar — depois da primeira atividade" / "Brincar — já brincamos
-  hoje") quando `!play.available || play.playedToday`; célula viva com
-  `!play.canPlay` → o pet **recusa no balão** ("Brincar pede 1 de energia…"),
-  nunca toast; só então `play.onPlay()` (`handlePlay` do `App.tsx`). Célula
-  inerte **não é `disabled`**: fica na ordem de Tab e o clique não faz nada.
+- ⚰️ **O deck de CINCO ações** (`div.sm2-deck`, `role="group"`: `feed`, `items`,
+  `bath`, `sleep`, `play`) **não existe mais** — saiu na Home B da minimal-ui
+  (F2, `78dc6ddb`). `grep -n "sm2-deck\"" src/components/CompanionHUD.tsx` → 0.
+  Comer virou **arrasto da Mochila até o pet** (`components/home/Mochila.tsx`);
+  **brincar e carinho não têm botão**, são gesto sobre o pet.
+- **OS TRÊS CUIDADOS** (`div.sm3-cuidar`, `role="group"`, `aria-label`
+  "Cuidar do pet"/"Care for your pet"), no canto inferior DIREITO da cena, na
+  ordem literal: **mochila** (`data-cuidado="mochila"` → `openMochila`, com
+  `aria-haspopup="dialog"` + `aria-expanded`), **dormir**
+  (`data-cuidado="dormir"` → `onSleep`, `aria-pressed={isSleeping}`,
+  `data-on` quando dormindo) e **banho** (`data-cuidado="banho"` →
+  `handleShowerClick`; `showerCooldown` põe a classe `sm3-cuidado-inerte` e
+  `aria-disabled` — é cooldown de 5 s contra o toque duplo, **não** gate de
+  regra: o banho está sempre disponível). Ícone de **24** (degrau `action`),
+  alvo de 44 no botão. Estes três são a **exceção D1** do dono (23/09/2026): é
+  a única caixa em volta de ícone na Home. Desde 24/09/2026 o ícone é a ARTE em
+  pixel do squad (`PixelIcon` `itens`/`dormir`/`banho`); só o estado "acordar"
+  segue no glifo `wb_sunny`, porque o set de arte não tem sol.
 - **Botão "Evoluir"**: montado sob `{canEvolve && !isSleeping && (…)}`, chama
   `onEvolveRequest` — hoje é a placa "EVOLVE" na moldura do vidro.
 - **Estados**: `hauntedWatching` acrescenta a classe `sm-pet-haunted` ao sprite —
   é gesto, sem texto junto; `hasNewItems` acende o selo do botão de itens
-  (`inventory_2` FILL + ponto); `isSleeping` troca a ação de dormir por acordar.
+  (o ponto `sm2-deck-dot` sobre o ícone `itens` — ⚰️ era o glifo `inventory_2`
+  com `fill={1}`, e a arte em pixel **não tem eixo de FILL**, então desde
+  24/09/2026 o selo é só o ponto); `isSleeping` troca a ação de dormir por
+  acordar.
 - **A voz do gesto (21/09/2026, copy §1 da bíblia)**: `fullSignal` e
   `healCapSignal` continuam sendo os contadores que o `App.tsx` acende, mas a
   frase vem do dono único `PET_VOICE_LINES` (`src/utils/petVoice.ts`, kinds
