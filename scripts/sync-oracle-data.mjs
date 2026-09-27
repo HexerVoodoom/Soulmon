@@ -26,6 +26,20 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { entradaPermitida } from './bestiario-procedencia.mjs';
 import { curarEntrada } from './bestiario-curadoria.mjs';
+import { aplicarPonte } from './bestiario-ponte-elementos.mjs';
+import { DERIVED_ELEMENT_PAIRS } from '../src/utils/soulProfile/derivedElements.ts';
+
+/** Corte defensivo — SÓ pro texto cru de base sem curadoria ainda. Nunca no
+ *  meio da palavra: corta no fim da última frase completa dentro do teto, ou
+ *  na última palavra inteira se não houver frase completa. */
+function truncarPorPalavra(texto, teto = 320) {
+  if (texto.length <= teto) return texto;
+  const janela = texto.slice(0, teto);
+  const fimDeFrase = Math.max(janela.lastIndexOf('. '), janela.lastIndexOf('! '), janela.lastIndexOf('? '));
+  if (fimDeFrase > teto * 0.4) return janela.slice(0, fimDeFrase + 1);
+  const fimDePalavra = janela.lastIndexOf(' ');
+  return fimDePalavra > 0 ? `${janela.slice(0, fimDePalavra)}…` : `${janela}…`;
+}
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CLASS_DIR = process.env.CLASS_SYSTEM_DIR ?? path.resolve(ROOT, '../Class-System');
@@ -226,6 +240,15 @@ for (let round = 0; picked.length < POOL_TARGET; round++) {
       took = true;
       let c = list[round];
       if (!entradaPermitida(c)) continue;
+      // ⚠️ O truncamento defensivo vem AQUI, ANTES da curadoria — não depois
+      // (27/09/2026). A ordem antiga era curar e SÓ DEPOIS cortar em 200
+      // chars na montagem final do pool: 20 das 37 descrições curadas passam
+      // de 200 (a mais longa, 236), e o corte reintroduzia o mesmo defeito
+      // que a curadoria existe para consertar — no meio da palavra. Truncar
+      // primeiro protege só o texto CRU (upstream, de base sem curadoria
+      // ainda), e `curarEntrada` sobrescreve por inteiro quando há entrada
+      // na tabela — o resultado dela nunca é cortado de novo.
+      c = { ...c, descricao: truncarPorPalavra(String(c.descricao).replace(/\s+/g, ' ')) };
       c = curarEntrada(c); // nome/tags/descrição coerentes — dono: bestiario-curadoria.mjs
       if (nomesVistos.has(c.nome)) continue;
       nomesVistos.add(c.nome);
@@ -238,7 +261,9 @@ for (let round = 0; picked.length < POOL_TARGET; round++) {
 const pool = picked.map(c => ({
   nome: c.nome,
   origem: c.origem ?? '',
-  descricao: String(c.descricao).replace(/\s+/g, ' ').slice(0, 200),
+  // já truncado/curado acima — NÃO reaplique slice(0, N) aqui, isso corta
+  // no meio da palavra o que a curadoria acabou de consertar.
+  descricao: String(c.descricao).replace(/\s+/g, ' '),
   elementos: c.elementos,
   familia: c.familia ?? null,
   biologia: Array.isArray(c.biologia) ? c.biologia : [],
@@ -247,11 +272,20 @@ const pool = picked.map(c => ({
   hostilidade: typeof c.hostilidade === 'number' ? c.hostilidade : 5,
   atributos: c.atributos ?? null,
 }));
+// PONTE — garante piso de cobertura pros 17 elementos do class-system (achado
+// do soulmon-guarda-permanencia, 27/09/2026: eletricidade/marcial tinham ZERO
+// ocorrência no corpus upstream, sombra só 2). Autolimitada: se um sync
+// futuro trouxer criatura de verdade pra esses elementos, ela deixa de clonar
+// — ver `bestiario-ponte-elementos.mjs`.
+const derivedToBase = Object.fromEntries(DERIVED_ELEMENT_PAIRS.map(d => [d.id, d.componentes]));
+const baseElementos = (els) => els.flatMap(id => derivedToBase[id] ?? [id]);
+const poolComPonte = aplicarPonte(pool, baseElementos).map(curarEntrada);
+
 const bestDir = path.join(ROOT, 'src/utils/soulProfile/bestiary');
 mkdirSync(bestDir, { recursive: true });
-const poolOut = { _provenance: provenance(BEST_DIR, BEST_REF), _corpusElegivel: corpus.length, criaturas: pool };
+const poolOut = { _provenance: provenance(BEST_DIR, BEST_REF), _corpusElegivel: corpus.length, criaturas: poolComPonte };
 writeFileSync(path.join(bestDir, 'pool.json'), JSON.stringify(poolOut) + '\n');
 
-const els = new Set(pool.map(c => c.elementos[0]));
-const fams = new Set(pool.filter(c => c.familia).map(c => c.familia));
-console.log(`pool: ${pool.length} criaturas · ${els.size} elementos primários · ${fams.size} famílias @ ${poolOut._provenance.sha.slice(0, 8)}`);
+const els = new Set(poolComPonte.map(c => c.elementos[0]));
+const fams = new Set(poolComPonte.filter(c => c.familia).map(c => c.familia));
+console.log(`pool: ${poolComPonte.length} criaturas (+${poolComPonte.length - pool.length} de ponte) · ${els.size} elementos primários · ${fams.size} famílias @ ${poolOut._provenance.sha.slice(0, 8)}`);

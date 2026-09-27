@@ -270,7 +270,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -563,7 +565,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -1016,7 +1020,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -1156,7 +1162,7 @@
     "Mamífero"
    ],
    "bioma": [
-    "Variado"
+    "Costa"
    ],
    "tamanho": "Medio",
    "hostilidade": 8,
@@ -1177,7 +1183,7 @@
    "familia": "planta",
    "biologia": [],
    "bioma": [
-    "Variado"
+    "Costa"
    ],
    "tamanho": "Medio",
    "hostilidade": 7,
@@ -1265,7 +1271,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -1767,7 +1775,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -1812,7 +1822,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -2108,7 +2120,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -2265,7 +2279,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -2333,7 +2349,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -2606,7 +2624,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -2720,7 +2740,9 @@
     "vileza"
    ],
    "familia": "aquatica",
-   "biologia": [],
+   "biologia": [
+    "Molusco"
+   ],
    "bioma": [
     "Oceano"
    ],
@@ -2812,7 +2834,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -3423,7 +3447,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -3812,7 +3838,7 @@
     "Mamífero"
    ],
    "bioma": [
-    "Variado"
+    "Subterrâneo"
    ],
    "tamanho": "Medio",
    "hostilidade": 7,
@@ -4126,7 +4152,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -4240,7 +4268,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -4353,7 +4383,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -4468,7 +4500,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -4949,7 +4983,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -5017,7 +5053,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -5200,7 +5238,7 @@
    "familia": "planta",
    "biologia": [],
    "bioma": [
-    "Variado"
+    "Costa"
    ],
    "tamanho": "Medio",
    "hostilidade": 7,
@@ -5681,7 +5719,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -5796,7 +5836,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -5842,7 +5884,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -6232,7 +6276,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -6367,7 +6413,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -6459,7 +6507,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -6547,7 +6597,9 @@
     "vida"
    ],
    "familia": "aquatica",
-   "biologia": [],
+   "biologia": [
+    "Molusco"
+   ],
    "bioma": [
     "Oceano"
    ],
@@ -6639,7 +6691,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -6754,7 +6808,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -6891,7 +6947,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -7096,7 +7154,9 @@
     "fogo"
    ],
    "familia": "aquatica",
-   "biologia": [],
+   "biologia": [
+    "Molusco"
+   ],
    "bioma": [
     "Oceano"
    ],
@@ -7139,7 +7199,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -7438,7 +7500,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -7507,7 +7571,7 @@
    "familia": "planta",
    "biologia": [],
    "bioma": [
-    "Variado"
+    "Caverna"
    ],
    "tamanho": "Medio",
    "hostilidade": 9,
@@ -7709,7 +7773,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -7844,7 +7910,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -7891,7 +7959,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -8254,7 +8324,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -8366,7 +8438,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -8411,7 +8485,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -8477,7 +8553,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -8547,7 +8625,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -8642,7 +8722,7 @@
    "familia": "planta",
    "biologia": [],
    "bioma": [
-    "Variado"
+    "Selva"
    ],
    "tamanho": "Medio",
    "hostilidade": 10,
@@ -8727,7 +8807,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -8842,7 +8924,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -8911,7 +8995,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -9093,7 +9179,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -9185,7 +9273,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -9299,7 +9389,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -9408,7 +9500,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -9615,7 +9709,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -9910,7 +10006,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -10160,7 +10258,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -10207,7 +10307,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -10257,7 +10359,7 @@
     "Mamífero"
    ],
    "bioma": [
-    "Variado"
+    "Caverna"
    ],
    "tamanho": "Medio",
    "hostilidade": 10,
@@ -10322,7 +10424,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -10417,7 +10521,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -10464,7 +10570,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -10488,7 +10596,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -10559,7 +10669,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -10697,7 +10809,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -10838,7 +10952,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -10862,7 +10978,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -10932,7 +11050,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -11049,7 +11169,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -11073,7 +11195,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -11144,7 +11268,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -11191,7 +11317,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -11306,7 +11434,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -11352,7 +11482,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -11446,7 +11578,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -11470,7 +11604,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -11494,7 +11630,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -11566,7 +11704,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -11634,7 +11774,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -11658,7 +11800,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -11681,7 +11825,9 @@
     "agua"
    ],
    "familia": "aquatica",
-   "biologia": [],
+   "biologia": [
+    "Molusco"
+   ],
    "bioma": [
     "Oceano"
    ],
@@ -11937,7 +12083,7 @@
    "familia": "planta",
    "biologia": [],
    "bioma": [
-    "Variado"
+    "Caverna"
    ],
    "tamanho": "Medio",
    "hostilidade": 10,
@@ -11980,7 +12126,9 @@
     "agua"
    ],
    "familia": "besta",
-   "biologia": [],
+   "biologia": [
+    "Invertebrado"
+   ],
    "bioma": [
     "Musgos",
     "Água",
@@ -12260,7 +12408,7 @@
     "Mamífero"
    ],
    "bioma": [
-    "Variado"
+    "Ártico"
    ],
    "tamanho": "Medio",
    "hostilidade": 9,
@@ -12388,7 +12536,9 @@
     "gravidade"
    ],
    "familia": "aquatica",
-   "biologia": [],
+   "biologia": [
+    "Molusco"
+   ],
    "bioma": [
     "Oceano"
    ],
@@ -12434,7 +12584,7 @@
    "familia": "planta",
    "biologia": [],
    "bioma": [
-    "Variado"
+    "Montanha"
    ],
    "tamanho": "Medio",
    "hostilidade": 10,
@@ -12523,7 +12673,7 @@
     "Mamífero"
    ],
    "bioma": [
-    "Variado"
+    "Pântano"
    ],
    "tamanho": "Medio",
    "hostilidade": 8,
@@ -12611,7 +12761,7 @@
     "Mamífero"
    ],
    "bioma": [
-    "Variado"
+    "Deserto"
    ],
    "tamanho": "Medio",
    "hostilidade": 10,
@@ -12721,7 +12871,7 @@
     "Mamífero"
    ],
    "bioma": [
-    "Variado"
+    "Selva"
    ],
    "tamanho": "Medio",
    "hostilidade": 10,
@@ -12742,7 +12892,7 @@
    "familia": "planta",
    "biologia": [],
    "bioma": [
-    "Variado"
+    "Subterrâneo"
    ],
    "tamanho": "Medio",
    "hostilidade": 7,
@@ -12765,7 +12915,7 @@
     "Mamífero"
    ],
    "bioma": [
-    "Variado"
+    "Selva"
    ],
    "tamanho": "Medio",
    "hostilidade": 7,
@@ -12805,7 +12955,9 @@
     "arcano"
    ],
    "familia": "aquatica",
-   "biologia": [],
+   "biologia": [
+    "Molusco"
+   ],
    "bioma": [
     "Oceano"
    ],
@@ -12918,7 +13070,7 @@
     "Mamífero"
    ],
    "bioma": [
-    "Variado"
+    "Pântano"
    ],
    "tamanho": "Medio",
    "hostilidade": 9,
@@ -12984,7 +13136,7 @@
     "Mamífero"
    ],
    "bioma": [
-    "Variado"
+    "Costa"
    ],
    "tamanho": "Medio",
    "hostilidade": 9,
@@ -13094,7 +13246,7 @@
     "Mamífero"
    ],
    "bioma": [
-    "Variado"
+    "Caverna"
    ],
    "tamanho": "Medio",
    "hostilidade": 10,
@@ -13203,7 +13355,7 @@
    "familia": "planta",
    "biologia": [],
    "bioma": [
-    "Variado"
+    "Costa"
    ],
    "tamanho": "Medio",
    "hostilidade": 7,
@@ -13270,7 +13422,7 @@
     "Mamífero"
    ],
    "bioma": [
-    "Variado"
+    "Montanha"
    ],
    "tamanho": "Medio",
    "hostilidade": 8,
@@ -13291,7 +13443,7 @@
    "familia": "planta",
    "biologia": [],
    "bioma": [
-    "Variado"
+    "Pântano"
    ],
    "tamanho": "Medio",
    "hostilidade": 9,
@@ -13314,7 +13466,7 @@
     "Mamífero"
    ],
    "bioma": [
-    "Variado"
+    "Montanha"
    ],
    "tamanho": "Medio",
    "hostilidade": 9,
@@ -13335,7 +13487,7 @@
    "familia": "planta",
    "biologia": [],
    "bioma": [
-    "Variado"
+    "Ártico"
    ],
    "tamanho": "Medio",
    "hostilidade": 9,
@@ -13467,7 +13619,7 @@
    "familia": "planta",
    "biologia": [],
    "bioma": [
-    "Variado"
+    "Pântano"
    ],
    "tamanho": "Medio",
    "hostilidade": 8,
@@ -13577,7 +13729,7 @@
    "familia": "planta",
    "biologia": [],
    "bioma": [
-    "Variado"
+    "Ártico"
    ],
    "tamanho": "Medio",
    "hostilidade": 7,
@@ -13596,7 +13748,9 @@
     "ar"
    ],
    "familia": "aquatica",
-   "biologia": [],
+   "biologia": [
+    "Molusco"
+   ],
    "bioma": [
     "Oceano"
    ],
@@ -13642,7 +13796,7 @@
    "familia": "planta",
    "biologia": [],
    "bioma": [
-    "Variado"
+    "Montanha"
    ],
    "tamanho": "Medio",
    "hostilidade": 10,
@@ -13661,7 +13815,9 @@
     "luz"
    ],
    "familia": "aquatica",
-   "biologia": [],
+   "biologia": [
+    "Molusco"
+   ],
    "bioma": [
     "Oceano"
    ],
@@ -13748,7 +13904,9 @@
     "arcano"
    ],
    "familia": "aquatica",
-   "biologia": [],
+   "biologia": [
+    "Molusco"
+   ],
    "bioma": [
     "Oceano"
    ],
@@ -13838,7 +13996,7 @@
    "familia": "planta",
    "biologia": [],
    "bioma": [
-    "Variado"
+    "Deserto"
    ],
    "tamanho": "Medio",
    "hostilidade": 7,
@@ -13904,7 +14062,7 @@
    "familia": "planta",
    "biologia": [],
    "bioma": [
-    "Variado"
+    "Selva"
    ],
    "tamanho": "Medio",
    "hostilidade": 8,
@@ -13949,7 +14107,7 @@
     "Mamífero"
    ],
    "bioma": [
-    "Variado"
+    "Subterrâneo"
    ],
    "tamanho": "Medio",
    "hostilidade": 7,
@@ -14024,6 +14182,314 @@
     "velocidade": 10,
     "inteligencia": 5
    }
+  },
+  {
+   "nome": "Corrompido Axolote (Ambystoma mexicanum) de Eletricidade",
+   "origem": "Geração Procedural (Class-System)",
+   "descricao": "O axolote (Ambystoma mexicanum) é uma salamandra mexicana que mantém características larvais a vida toda, como as brânquias externas — um fenômeno chamado neotenia. Vive só em lagos de água doce e está criticamente ameaçado na natureza.",
+   "elementos": [
+    "eletricidade"
+   ],
+   "familia": "aquatica",
+   "biologia": [
+    "Anfíbio"
+   ],
+   "bioma": [
+    "Rios",
+    "Lagos"
+   ],
+   "tamanho": "Medio",
+   "hostilidade": 4,
+   "atributos": {
+    "forca": 3,
+    "inteligencia": 3,
+    "velocidade": 4,
+    "magia": 1
+   },
+   "_ponte": "bestiario-ponte-elementos.mjs — cobertura sintética, ver docs/BESTIARIO-PROCEDENCIA.md §11"
+  },
+  {
+   "nome": "Cristalino Ocapi (Okapia johnstoni) de Eletricidade",
+   "origem": "Geração Procedural (Class-System)",
+   "descricao": "O ocapi (Okapia johnstoni) é um mamífero da família das girafas, nativo das florestas da República Democrática do Congo. As listras nas pernas lembram uma zebra, mas seu parente mais próximo é mesmo a girafa.",
+   "elementos": [
+    "eletricidade"
+   ],
+   "familia": "besta",
+   "biologia": [
+    "Mamífero"
+   ],
+   "bioma": [
+    "Floresta"
+   ],
+   "tamanho": "Medio",
+   "hostilidade": 2,
+   "atributos": {
+    "forca": 5,
+    "inteligencia": 4,
+    "velocidade": 7,
+    "magia": 1
+   },
+   "_ponte": "bestiario-ponte-elementos.mjs — cobertura sintética, ver docs/BESTIARIO-PROCEDENCIA.md §11"
+  },
+  {
+   "nome": "Cristalino Peixe-gota (Blobfish) de Eletricidade",
+   "origem": "Geração Procedural (Class-System)",
+   "descricao": "O peixe-gota (Psychrolutes marcidus) vive nas profundezas geladas ao largo da Austrália e da Tasmânia. Sob a alta pressão das águas abissais, sua carne gelatinosa o sustenta sem precisar de bexiga natatória.",
+   "elementos": [
+    "eletricidade"
+   ],
+   "familia": "aquatica",
+   "biologia": [
+    "Peixe"
+   ],
+   "bioma": [
+    "Abissal"
+   ],
+   "tamanho": "Medio",
+   "hostilidade": 1,
+   "atributos": {
+    "forca": 1,
+    "inteligencia": 2,
+    "velocidade": 2,
+    "magia": 1
+   },
+   "_ponte": "bestiario-ponte-elementos.mjs — cobertura sintética, ver docs/BESTIARIO-PROCEDENCIA.md §11"
+  },
+  {
+   "nome": "Ancião Welwitschia mirabilis de Eletricidade",
+   "origem": "Geração Procedural (Class-System)",
+   "descricao": "Welwitschia mirabilis é uma planta do deserto do Namibe, entre a Namíbia e Angola, que pode viver mais de mil anos. Ao longo de toda a vida produz só duas folhas, que crescem sem parar e se rasgam com o vento.",
+   "elementos": [
+    "eletricidade"
+   ],
+   "familia": "planta",
+   "biologia": [],
+   "bioma": [
+    "Deserto"
+   ],
+   "tamanho": "Enorme",
+   "hostilidade": 2,
+   "atributos": {
+    "forca": 6,
+    "inteligencia": 0,
+    "velocidade": 0,
+    "magia": 4
+   },
+   "_ponte": "bestiario-ponte-elementos.mjs — cobertura sintética, ver docs/BESTIARIO-PROCEDENCIA.md §11"
+  },
+  {
+   "nome": "Corrompido Cão (Canis lupus familiaris) de Eletricidade",
+   "origem": "Geração Procedural (Class-System)",
+   "descricao": "O cão (Canis lupus familiaris) é uma subespécie do lobo domesticada há milênios, e o primeiro animal a viver ao lado dos humanos. Existem centenas de raças, todas descendentes do mesmo ancestral selvagem.",
+   "elementos": [
+    "eletricidade"
+   ],
+   "familia": "besta",
+   "biologia": [
+    "Mamífero"
+   ],
+   "bioma": [
+    "Urbano",
+    "Planície"
+   ],
+   "tamanho": "Medio",
+   "hostilidade": 5,
+   "atributos": {
+    "forca": 5,
+    "inteligencia": 6,
+    "velocidade": 6,
+    "magia": 2
+   },
+   "_ponte": "bestiario-ponte-elementos.mjs — cobertura sintética, ver docs/BESTIARIO-PROCEDENCIA.md §11"
+  },
+  {
+   "nome": "Titânico Flor-cadáver (Rafflesia arnoldii) de Marcial",
+   "origem": "Geração Procedural (Class-System)",
+   "descricao": "Rafflesia arnoldii, a flor-cadáver, produz a maior flor individual do mundo, nativa das florestas de Sumatra e Bornéu. Sem folhas nem caule próprio, ela libera um cheiro de carne podre para atrair moscas polinizadoras.",
+   "elementos": [
+    "marcial"
+   ],
+   "familia": "planta",
+   "biologia": [],
+   "bioma": [
+    "Floresta Tropical"
+   ],
+   "tamanho": "Colossal",
+   "hostilidade": 5,
+   "atributos": {
+    "forca": 6,
+    "inteligencia": 0,
+    "velocidade": 0,
+    "magia": 4
+   },
+   "_ponte": "bestiario-ponte-elementos.mjs — cobertura sintética, ver docs/BESTIARIO-PROCEDENCIA.md §11"
+  },
+  {
+   "nome": "Espiritual Urso-d'água (Tardígrado) de Marcial",
+   "origem": "Geração Procedural (Class-System)",
+   "descricao": "Os tardígrados, ou ursos-d'água, são animais microscópicos capazes de sobreviver ao vácuo do espaço, a temperaturas extremas e à radiação, entrando num estado de vida suspensa chamado criptobiose.",
+   "elementos": [
+    "marcial"
+   ],
+   "familia": "besta",
+   "biologia": [
+    "Invertebrado"
+   ],
+   "bioma": [
+    "Musgos",
+    "Água",
+    "Espaço"
+   ],
+   "tamanho": "Pequeno",
+   "hostilidade": 1,
+   "atributos": {
+    "forca": 1,
+    "inteligencia": 1,
+    "velocidade": 1,
+    "magia": 1
+   },
+   "_ponte": "bestiario-ponte-elementos.mjs — cobertura sintética, ver docs/BESTIARIO-PROCEDENCIA.md §11"
+  },
+  {
+   "nome": "Fênix de Marcial",
+   "origem": "Criaturas Mitologicas",
+   "descricao": "A fênix é uma ave mitológica que renasce das próprias cinzas ao final da vida, presente em lendas do Egito à Grécia antiga. Seu ciclo de morte e renascimento é símbolo universal de renovação.",
+   "elementos": [
+    "marcial"
+   ],
+   "familia": "ave",
+   "biologia": [],
+   "bioma": [
+    "Variado"
+   ],
+   "tamanho": "Medio",
+   "hostilidade": 6,
+   "atributos": {
+    "forca": 4,
+    "magia": 5,
+    "velocidade": 5,
+    "inteligencia": 5
+   },
+   "_ponte": "bestiario-ponte-elementos.mjs — cobertura sintética, ver docs/BESTIARIO-PROCEDENCIA.md §11"
+  },
+  {
+   "nome": "Dragão de Marcial",
+   "origem": "Criaturas Mitologicas",
+   "descricao": "O dragão é uma criatura lendária presente em mitologias de quase todos os povos do mundo, geralmente descrito como um réptil colossal capaz de cuspir fogo e guardar tesouros em covis escondidos.",
+   "elementos": [
+    "marcial"
+   ],
+   "familia": "draconico",
+   "biologia": [],
+   "bioma": [
+    "Variado"
+   ],
+   "tamanho": "Medio",
+   "hostilidade": 5,
+   "atributos": {
+    "forca": 5,
+    "magia": 4,
+    "velocidade": 6,
+    "inteligencia": 3
+   },
+   "_ponte": "bestiario-ponte-elementos.mjs — cobertura sintética, ver docs/BESTIARIO-PROCEDENCIA.md §11"
+  },
+  {
+   "nome": "Ancião Elefante Africano de Marcial",
+   "origem": "Geração Procedural (Class-System)",
+   "descricao": "O elefante-africano (Loxodonta) é o maior animal terrestre vivo, reconhecido pelas orelhas grandes e presas longas. Vive em manadas lideradas por fêmeas mais velhas, nas savanas e florestas da África.",
+   "elementos": [
+    "marcial"
+   ],
+   "familia": "besta",
+   "biologia": [
+    "Mamífero"
+   ],
+   "bioma": [
+    "Savana"
+   ],
+   "tamanho": "Enorme",
+   "hostilidade": 5,
+   "atributos": {
+    "forca": 10,
+    "inteligencia": 8,
+    "velocidade": 5,
+    "magia": 3
+   },
+   "_ponte": "bestiario-ponte-elementos.mjs — cobertura sintética, ver docs/BESTIARIO-PROCEDENCIA.md §11"
+  },
+  {
+   "nome": "Hipopótamo de Sombra",
+   "origem": "Fauna e Flora Real",
+   "descricao": "O hipopótamo é um mamífero semiaquático da África subsaariana, um dos animais terrestres mais pesados do planeta. Apesar do corpo robusto, é considerado um dos mais perigosos por sua agressividade territorial.",
+   "elementos": [
+    "sombra"
+   ],
+   "familia": "besta",
+   "biologia": [
+    "Mamífero"
+   ],
+   "bioma": [
+    "Variado"
+   ],
+   "tamanho": "Medio",
+   "hostilidade": 2,
+   "atributos": {
+    "forca": 3,
+    "magia": 5,
+    "velocidade": 9,
+    "inteligencia": 8
+   },
+   "_ponte": "bestiario-ponte-elementos.mjs — cobertura sintética, ver docs/BESTIARIO-PROCEDENCIA.md §11"
+  },
+  {
+   "nome": "Crocodilo de Sombra",
+   "origem": "Fauna e Flora Real",
+   "descricao": "Os crocodilos são répteis predadores que existem quase sem mudanças há mais de 80 milhões de anos. Vivem em rios e pântanos tropicais, à espreita, e têm uma das mordidas mais fortes do reino animal.",
+   "elementos": [
+    "sombra"
+   ],
+   "familia": "besta",
+   "biologia": [
+    "Réptil"
+   ],
+   "bioma": [
+    "Variado"
+   ],
+   "tamanho": "Medio",
+   "hostilidade": 3,
+   "atributos": {
+    "forca": 3,
+    "magia": 3,
+    "velocidade": 5,
+    "inteligencia": 5
+   },
+   "_ponte": "bestiario-ponte-elementos.mjs — cobertura sintética, ver docs/BESTIARIO-PROCEDENCIA.md §11"
+  },
+  {
+   "nome": "Tubarão de Sombra",
+   "origem": "Fauna e Flora Real",
+   "descricao": "O tubarão é um peixe cartilaginoso que existe há mais de 400 milhões de anos, antes das árvores. Seus sentidos apurados de olfato e vibração o tornam um dos predadores mais eficientes dos oceanos.",
+   "elementos": [
+    "sombra"
+   ],
+   "familia": "aquatica",
+   "biologia": [
+    "Peixe"
+   ],
+   "bioma": [
+    "Variado"
+   ],
+   "tamanho": "Medio",
+   "hostilidade": 1,
+   "atributos": {
+    "forca": 4,
+    "magia": 1,
+    "velocidade": 7,
+    "inteligencia": 2
+   },
+   "_ponte": "bestiario-ponte-elementos.mjs — cobertura sintética, ver docs/BESTIARIO-PROCEDENCIA.md §11"
   }
  ],
  "_filtroIP": {
@@ -14033,10 +14499,12 @@
  },
  "_procedencia": {
   "filtradoEm": "2026-09-27",
-  "por": "scripts/bestiario-curadoria.mjs",
-  "motivo": "nome/tags/descrição coerentes — pedido do dono",
+  "por": "scripts/bestiario-ponte-elementos.mjs",
+  "motivo": "eletricidade/marcial/sombra tinham cobertura zero ou quase zero — parecer soulmon-guarda-permanencia",
   "antes": 1718,
   "depois": 617,
-  "curadoEm": "2026-09-27"
+  "curadoEm": "2026-09-27",
+  "ponteEm": "2026-09-27",
+  "biomaCorrigidoEm": "2026-09-27"
  }
 }

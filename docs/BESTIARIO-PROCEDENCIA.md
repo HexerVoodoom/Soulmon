@@ -207,3 +207,100 @@ Régua: `src/utils/soulProfile/bestiary/curadoria.contract.test.ts`.
 
 O pool não é persistido. `bestiaryPick` é derivado de `identityKey` + salt, então
 trocar o pool muda a inspiração de um reroll futuro e **não quebra save nenhum**.
+
+## 10. Segunda checagem (27/09/2026) — as 37 descrições curadas + D-B1
+
+Pedido do dono, depois de eu (Claude, agente principal) ter escrito as 37
+descrições de `CURADORIA`. **Não é parecer jurídico.** Vereditos por item.
+
+### 10.1 — As 37 descrições novas, quanto a paráfrase de fonte identificável
+
+**APROVADO — as 37, sem ressalva.** Li o objeto `CURADORIA` inteiro. Nenhuma
+soa como a voz de uma obra específica (livro, wiki, documentário). São frases
+curtas, factuais, no registro de "verbete de enciclopédia genérica" — nome
+científico, bioma, um ou dois fatos amplamente conhecidos e citados em
+dezenas de fontes independentes (neotenia do axolote, criptobiose do
+tardígrado, a dieta do dragão-azul, o hanami da sakura, o duelo
+Belerofonte/Quimera). Fato não é protegido por direito autoral; só a
+EXPRESSÃO de um fato é, e aqui a expressão é curta, redundante com múltiplas
+fontes e sem floreio narrativo distintivo de uma obra só.
+
+Dois pontos que verifiquei especificamente por serem os mais expostos a
+"drift residual" (a doença que motivou a curadoria):
+
+- **Cérbero**: "guardião do portão do submundo de Hades... impedir que os
+  mortos escapassem e que os vivos entrassem" — é o resumo mais genérico
+  possível do mito (Hesíodo/Apolodoro, domínio público há milênios), não a
+  frase de nenhuma adaptação moderna específica (não é a voz da Wikipédia, da
+  Percy Jackson, de Hades-o-jogo ou de God of War). **Aprovado.**
+- **Quimera**: cita Belerofonte e Pégaso — núcleo do mito de Homero/Hesíodo,
+  contado da mesma forma em qualquer verbete de mitologia grega há séculos.
+  **Aprovado.**
+
+Nenhuma das 37 precisa de reescrita.
+
+### 10.2 — D-B1 (nome no prompt de imagem): reabre risco em algum dos 37 nomes?
+
+**APROVADO para as 37 bases, com uma observação registrada (não bloqueante).**
+
+As 37 bases que sobrevivem à procedência já passaram pela allowlist de bases
+reais + as camadas 2/3 de corroboração; nenhuma é nome de personagem, item,
+local ou obra protegida por marca/direito autoral — são espécies (Axolote,
+Ocapi, Peixe-gota…) ou entidades de mitologia de domínio público (Fênix,
+Dragão, Cérbero, Quimera, Mantícora, Lobisomem, Mandrágora). Isso não muda com
+D-B1: o texto que entra no prompt (`Draw inspiration from <base>.`) é
+igualmente genérico levando nome de espécie/mito como levando descrição.
+
+**Observação que registro, não como veto**: nomes de mitologia amplamente
+usados por múltiplas franquias de fantasia (Dragão, Quimera, Mantícora,
+Cérbero, Fênix, Lobisomem) têm, sim, uma "iconografia dominante" que
+generative models tendem a puxar — ex.: "Quimera" tende a puxar para o design
+tripartido (leão/cabra/serpente) que é o PRÓPRIO mito, não uma franquia; não
+identifico nenhum desses 7 como associado esmagadoramente a UMA obra
+específica ao ponto de a saída visual reproduzir personagem registrado de
+franquia única (ao contrário de, digamos, "Pikachu" ou "Sonic", que colapsam
+para um design único e protegido). O risco residual é o mesmo risco genérico
+que qualquer gerador de imagem de fantasia já corre com vocabulário
+mitológico comum, e é mitigado pela cláusula que já está fixada nas duas
+variantes de prompt (`Do not copy any existing franchise character`) e pelo
+fallback sem nome em caso de recusa. **Não vejo motivo para excluir nenhum dos
+37 nomes do prompt com nome; a arquitetura de fallback já cobre o cenário em
+que o provedor achar risco alto.**
+
+Nada aqui muda meu parecer original sobre os 37 — seguem aprovados também sob
+D-B1.
+
+### 10.3 — `familia`/`biologia`: taxonomia proprietária de terceiro?
+
+**APROVADO.** Os valores usados —
+`aquatica/besta/planta/ave/draconico/ignea/demonio` (família) e
+`Anfíbio/Mamífero/Réptil/Inseto-Aracnídeo/Peixe/Ave` (biologia) — são
+categorias genéricas do próprio motor (família já existia como enum livre do
+Soulmon antes desta curadoria) e classes biológicas científicas padrão
+(taxonomia de Lineu, ensinada em qualquer currículo escolar). Nenhuma bate com
+nomenclatura proprietária reconhecível de D&D (que usa "creature type":
+aberration/beast/celestial/construct/dragon/elemental/fey/fiend/giant/
+humanoid/monstrosity/ooze/plant/undead — set diferente, embora "besta" e
+"planta" sejam palavras do idioma comum também usadas lá, o que é inevitável
+e não é o tipo de coisa protegível), nem com os "types" do Pokémon (fire/
+water/grass/electric/etc. — aqui o análogo seria o campo `elementos`, que já
+existia antes desta curadoria e está fora do escopo desta checagem), nem com
+tags de RPG de vídeo game específico. `demonio` para Cérbero é categorização
+de senso comum (guardião do submundo), não termo de sistema de jogo de
+terceiro.
+
+### Veredito consolidado
+
+| Item | Veredito |
+|---|---|
+| 37 descrições novas (paráfrase de fonte) | **APROVADO** — nenhuma reescrita necessária |
+| Nomes das 37 bases indo no prompt de imagem (D-B1) | **APROVADO** — observação registrada em 10.2, não bloqueante |
+| `familia`/`biologia` (taxonomia) | **APROVADO** — vocabulário genérico/científico, sem termo de sistema proprietário |
+
+Nenhum item recebeu AJUSTAR ou VETADO nesta checagem. Como sempre: isto não é
+parecer jurídico; o limiar de revisão jurídica continua sendo o da §7.4
+(distribuição já ocorrida, CC BY-SA, e o gate de D-B1 em produção de fato —
+i.e., confirmar com o provedor de geração de imagem os termos de uso
+comercial de output que referencia nome de entidade mitológica, que é uma
+checagem de contrato, não de risco de PI em si).
+</content>

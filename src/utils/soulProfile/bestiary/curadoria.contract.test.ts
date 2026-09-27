@@ -23,6 +23,8 @@ import { BESTIARY_POOL } from './select';
 import { chaveDeCuradoria, CURADORIA } from '../../../../scripts/bestiario-curadoria.mjs';
 // @ts-expect-error — idem
 import { corroboraNomeDescricao } from '../../../../scripts/bestiario-procedencia.mjs';
+import { DERIVED_ELEMENT_PAIRS } from '../derivedElements';
+import { CLASS_ELEMENT_ORDER } from '../types';
 
 describe('curadoria do bestiário', () => {
   it('nenhuma descrição termina no meio de uma palavra', () => {
@@ -73,5 +75,85 @@ describe('curadoria do bestiário', () => {
       && c.elementos.includes('fogo'));
     expect(afetados.length).toBeGreaterThan(0); // chão embaixo: os casos existem
     for (const c of afetados) expect(c.familia, c.nome).toBe('besta');
+  });
+});
+
+describe('ponte de cobertura dos 17 elementos', () => {
+  // ⚠️ Achado do `soulmon-guarda-permanencia` (27/09/2026): `scoreCreature`
+  // (select.ts) soma, por elemento, o share que a leitura deu — é o termo de
+  // maior peso da função. `eletricidade` e `marcial` tinham ZERO criaturas no
+  // pool (nem base, nem via nenhum dos 16 derivados de cada); `sombra` só 2
+  // de 617. Um jogador com um desses elementos dominante nunca tinha
+  // criatura nenhuma pra "cobrar" o share mais alto da própria leitura.
+  //
+  // Não é bug de código — é buraco de CORPUS upstream, que só se fecha de
+  // verdade com um sync novo (fora desta sessão). A ponte
+  // (`bestiario-ponte-elementos.mjs`) clona linhas já curadas com o elemento
+  // trocado, como piso temporário — e este teste é o que impede o buraco de
+  // voltar em silêncio, seja por um sync futuro que não traga o elemento, seja
+  // por alguém apagar a ponte sem perceber por quê ela existe.
+  const DERIVED_TO_BASE: Record<string, string[]> = Object.fromEntries(
+    DERIVED_ELEMENT_PAIRS.map(d => [d.id, d.componentes as unknown as string[]]),
+  );
+  const baseElementos = (els: string[]) => els.flatMap(id => DERIVED_TO_BASE[id] ?? [id]);
+
+  it('todo elemento de CLASS_ELEMENT_ORDER tem pelo menos 1 criatura alcançável', () => {
+    const semCobertura = CLASS_ELEMENT_ORDER.filter(
+      el => !BESTIARY_POOL.some(c => baseElementos(c.elementos).includes(el)),
+    );
+    expect(semCobertura).toEqual([]);
+  });
+
+  it('eletricidade/marcial/sombra têm um piso real, não só 1 criatura solitária', () => {
+    for (const el of ['eletricidade', 'marcial', 'sombra']) {
+      const n = BESTIARY_POOL.filter(c => baseElementos(c.elementos).includes(el)).length;
+      expect(n, `${el}: ${n}`).toBeGreaterThanOrEqual(5);
+    }
+  });
+
+  it('as linhas de ponte continuam nomeadas de forma única e curadas', () => {
+    const pontes = BESTIARY_POOL.filter(c => (c as any)._ponte);
+    // chão embaixo: a ponte existe hoje (upstream ainda não resolveu)
+    expect(pontes.length).toBeGreaterThan(0);
+    const nomes = pontes.map(c => c.nome);
+    expect(new Set(nomes).size).toBe(nomes.length);
+  });
+});
+
+describe('bioma corrigido pelo modificador geográfico do nome', () => {
+  it('AUTOVERIFICAÇÃO: "do Pântano"/"da Caverna"/"Costeiro" não ficam mais em "Variado"', () => {
+    // Achado do soulmon-guarda-permanencia: 84 entradas com modificador
+    // geográfico no nome tinham TODAS bioma "Variado" fixo, e REALM_TO_BIOMA
+    // (select.ts) só pontua quando bioma contém a keyword do reino — essas
+    // entradas nunca cobravam o bônus, mesmo quando o nome já dizia o bioma.
+    const casos = [
+      ['Pântano', 'Pântano'], ['Caverna', 'Caverna'], ['Costeiro', 'Costa'],
+      ['Montanha', 'Montanha'], ['Selva', 'Selva'], ['Deserto', 'Deserto'],
+      ['Subterrâneo', 'Subterrâneo'], ['Ártico', 'Ártico'],
+    ] as const;
+    for (const [pista, biomaEsperado] of casos) {
+      const achados = BESTIARY_POOL.filter(c => c.nome.includes(pista) && /Venenos[oa]$/.test(c.nome));
+      expect(achados.length, `nenhuma entrada com "${pista}" achada`).toBeGreaterThan(0);
+      for (const c of achados) expect(c.bioma, c.nome).toEqual([biomaEsperado]);
+    }
+  });
+
+  it('modificador AMBÍGUO (cor/gentílico) continua "Variado" — não é fato inventado', () => {
+    // A fronteira do que NÃO se corrige, nomeada: "Negro"/"Pardo" são cor,
+    // "Africano"/"Asiático"/"Siberiano" são flavor sem garantia de habitat
+    // real. Forçar um bioma aqui seria inventar dado, não corrigir um errado.
+    const ambiguos = BESTIARY_POOL.filter(c =>
+      /\b(Negro|Pardo|Africano|Asiático|Siberiano|Vulcânico|Tropical|Polar)\s+Venenos[oa]$/.test(c.nome));
+    expect(ambiguos.length).toBeGreaterThan(0);
+    for (const c of ambiguos) expect(c.bioma, c.nome).toEqual(['Variado']);
+  });
+});
+
+describe('biologia dos animais reais sem categoria óbvia', () => {
+  it("AUTOVERIFICAÇÃO: Urso-d'água e Dragão-azul deixam de ter biologia vazia", () => {
+    const urso = BESTIARY_POOL.find(c => c.nome.includes('Tardígrado'));
+    const dragaoAzul = BESTIARY_POOL.find(c => c.nome.includes('Dragão-azul'));
+    expect(urso?.biologia).toEqual(['Invertebrado']);
+    expect(dragaoAzul?.biologia).toEqual(['Molusco']);
   });
 });

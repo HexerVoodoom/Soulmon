@@ -50,8 +50,16 @@ export function chaveDeCuradoria(nome) {
   const base = baseDe(nome);
   if (base !== nome) return base; // procedural — já resolvido
 
+  // ⚠️ Generalizado em 27/09/2026: era uma lista fixa de 6 elementos
+  // (Fogo/Água/Terra/Ar/Sombra/Luz) e ficava CEGA para qualquer elemento
+  // novo que ganhasse uma variante não-procedural — foi assim que
+  // "Fênix de Marcial"/"Dragão de Marcial" (`bestiario-ponte-elementos.mjs`)
+  // apareceram SEM curadoria na primeira rodada. Nenhum modificador de
+  // bioma do pool usa a preposição "de" (são "do"/"da"/"das" ou adjetivo
+  // solto — ver TIPOS_COM_VARIANTE_DE_BIOMA abaixo), então generalizar para
+  // "de <qualquer palavra>" no FIM do nome é seguro.
   let s = String(nome ?? '')
-    .replace(/\s+de\s+(Fogo|Água|Terra|Ar|Sombra|Luz)$/i, '')
+    .replace(/\s+de\s+\S+$/i, '')
     .replace(/\s+Venenos[oa]$/i, '')
     .replace(/\s+Veneno$/i, '')
     .trim();
@@ -106,7 +114,12 @@ export const CURADORIA = {
   },
   "Urso-d'água (Tardígrado)": {
     familia: 'besta',
-    biologia: [], // filo próprio (Tardigrada); nenhuma categoria existente encaixa sem forçar
+    // FIX (27/09/2026, achado soulmon-guarda-permanencia): vinha `[]`,
+    // quebrando o padrão que toda outra espécie animal real segue (Axolote→
+    // Anfíbio, Aranha→Inseto/Aracnídeo). Tardígrados são invertebrados —
+    // filo próprio (Tardigrada), mas "Invertebrado" é a categoria correta
+    // no nível de generalidade que as outras já usam.
+    biologia: ['Invertebrado'],
     descricao: "Os tardígrados, ou ursos-d'água, são animais microscópicos capazes de sobreviver ao vácuo do espaço, a temperaturas extremas e à radiação, entrando num estado de vida suspensa chamado criptobiose.",
   },
   Fênix: {
@@ -131,7 +144,9 @@ export const CURADORIA = {
   },
   'Dragão-azul (Glaucus atlanticus)': {
     familia: 'aquatica',
-    biologia: [], // molusco marinho; nenhuma categoria existente encaixa sem forçar
+    // FIX (27/09/2026, achado soulmon-guarda-permanencia): vinha `[]`, mesmo
+    // motivo do Urso-d'água acima — é um molusco real, não planta nem mito.
+    biologia: ['Molusco'],
     descricao: 'O dragão-azul (Glaucus atlanticus) é uma lesma-do-mar minúscula que flutua de barriga para cima na superfície do oceano. Alimenta-se de caravelas-portuguesas e guarda as células urticantes delas para se defender.',
   },
   'Sakura (Cerejeira)': {
@@ -263,14 +278,62 @@ export const CURADORIA = {
   },
 };
 
+
+/**
+ * CORREÇÃO DE BIOMA PELO MODIFICADOR GEOGRÁFICO DO NOME.
+ *
+ * ⚠️ Achado do `soulmon-guarda-permanencia` (27/09/2026): as 84 entradas não-
+ * procedurais com modificador geográfico no nome ("Tigre do Pântano
+ * Venenoso", "Leão da Caverna Venenoso"…) vinham TODAS com `bioma:
+ * ["Variado"]` fixo, mesmo quando o nome anuncia o bioma — e `REALM_TO_BIOMA`
+ * (`bestiary/select.ts`) só pontua quando `bioma` contém a palavra-chave do
+ * reino dominante. "Variado" nunca bate com nenhuma keyword, então essas 84
+ * entradas perdiam sempre esse bônus, inclusive quando o nome já dizia a
+ * resposta certa.
+ *
+ * **Conserta só os casos INEQUÍVOCOS** — o modificador bate 1:1 com uma
+ * palavra-chave que `REALM_TO_BIOMA` já usa. Ficam de fora de propósito os
+ * modificadores que são cor ("Negro", "Pardo") ou gentílico/flavor sem
+ * relação confiável com habitat real ("Africano", "Asiático", "Siberiano",
+ * "Vulcânico", "Tropical", "Polar", "das Profundezas", "Abissal", "do
+ * Himalaia", "do Saara") — mapeá-los exigiria inventar palavra-chave nova em
+ * `REALM_TO_BIOMA` (mudança de CÓDIGO, não de dado) ou um julgamento arriscado
+ * (um "Baobá Siberiano" não vem de lugar nenhum real; forçar um bioma "frio"
+ * nele seria inventar fato, não corrigir um errado). Ficam `["Variado"]"`, que
+ * é honesto sobre o que não se sabe.
+ */
+const BIOMA_POR_MODIFICADOR = {
+  'Costeiro': ['Costa'],
+  'Subterrâneo': ['Subterrâneo'],
+  'da Caverna': ['Caverna'],
+  'da Montanha': ['Montanha'],
+  'da Selva': ['Selva'],
+  'do Deserto': ['Deserto'],
+  'do Pântano': ['Pântano'],
+  'Ártico': ['Ártico'],
+};
+
+/** Aplica a correção de bioma a UMA criatura, se o nome tiver um modificador
+ *  conhecido. Devolve a MESMA referência quando não há correção. */
+function corrigirBiomaGeografico(criatura) {
+  const nome = String(criatura?.nome ?? '');
+  for (const [modificador, bioma] of Object.entries(BIOMA_POR_MODIFICADOR)) {
+    if (new RegExp(`(^|\\s)${modificador}\\s+Venenos[oa]$`).test(nome)) {
+      return { ...criatura, bioma };
+    }
+  }
+  return criatura;
+}
+
 /** Aplica a curadoria a UMA criatura. Devolve um objeto NOVO quando há
  *  correção, e a MESMA referência quando não há (nenhuma base fora da
  *  tabela é tocada — a curadoria não inventa dado para o que não conhece). */
 export function curarEntrada(criatura) {
-  const correcao = CURADORIA[chaveDeCuradoria(criatura?.nome)];
-  if (!correcao) return criatura;
+  const comBioma = corrigirBiomaGeografico(criatura);
+  const correcao = CURADORIA[chaveDeCuradoria(comBioma?.nome)];
+  if (!correcao) return comBioma;
   return {
-    ...criatura,
+    ...comBioma,
     descricao: correcao.descricao,
     familia: correcao.familia,
     biologia: correcao.biologia,
