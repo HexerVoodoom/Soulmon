@@ -4253,3 +4253,29 @@ Três saídas, e a escolha é do dono porque muda alcance de loja:
 Recomendação: **(2) agora** (barata, honesta com o usuário) e (1) junto, com o
 `minSdk` refletindo o que o app realmente aguenta. (3) só se houver dado de que
 o público de aparelho antigo importa.
+
+## 27/09/2026 — sincronização do manual pós-merge 8fbf6990
+
+Delta `2336e4e7..8fbf6990` (4 commits: curadoria das 37 bases do bestiário,
+registro da decisão do dono sobre "Profissão", revisão multiagente com ponte
+de elementos/bioma/biologia). Redatores despachados: `doc-redator-regras`
+(02-REGRAS-DE-NEGOCIO.md; 01-VISAO.md não mudou), `doc-redator-referencia`
+(06-REFERENCIA/utils.md), `doc-historiador` (10-DISCUSSOES-E-DECISOES.md +
+escreveu a §11 que faltava em `BESTIARIO-PROCEDENCIA.md`), `doc-bibliotecario`
+(uma linha na §6 do 00-MAPA.md). `doc-verificador` conferiu os 5 docs símbolo
+por símbolo, corrigiu uma imprecisão de redação (contagem dos 84 biomas
+"Variado") e carimbou os 4 docs do manual. Guard `docsManual.contract.test.ts`
+e `docsSemMentira.contract.test.ts`: verdes.
+
+Divergência registrada (não é código errado, é lacuna de régua):
+`BESTIARIO-PROCEDENCIA.md` §11 documenta que a ponte de elementos
+(`scripts/bestiario-ponte-elementos.mjs`) ainda não tem teste dedicado
+travando a auto-retirada quando o corpus upstream trouxer cobertura real —
+hoje só a régua de piso (`curadoria.contract.test.ts`) existe.
+
+Nesta mesma sessão, em resposta ao objetivo do dono ("loop no bestiário até
+ter todas as criaturas verificadas"), `curadoria.contract.test.ts` ganhou um
+bloco de verificação EXAUSTIVA (todas as 630 criaturas, não amostra): campos
+obrigatórios presentes, descrição sem truncamento e corroborando o nome,
+nomes únicos, tamanho dentro do vocabulário válido e atributos numéricos
+sãos. 17/17 testes verdes no arquivo.

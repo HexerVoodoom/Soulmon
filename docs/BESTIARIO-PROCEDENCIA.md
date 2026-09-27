@@ -303,4 +303,38 @@ parecer jurídico; o limiar de revisão jurídica continua sendo o da §7.4
 i.e., confirmar com o provedor de geração de imagem os termos de uso
 comercial de output que referencia nome de entidade mitológica, que é uma
 checagem de contrato, não de risco de PI em si).
+
+## 11. Ponte sintética de elementos (27/09/2026)
+
+Decorre do **Achado real #1** do `guarda-permanencia`
+(`docs/plano-melhorias/ledger/permanencia.md`, "Auditoria de completude do
+bestiário"): `eletricidade` e `marcial` tinham **zero** ocorrências em todo o
+pool (nem direta nem via nenhum dos 16 derivados de cada), e `sombra` tinha
+só **2 de 617**. Como o termo de elemento é o de MAIOR peso em
+`scoreCreature` (`bestiary/select.ts`), um jogador com um desses três
+dominante na leitura nunca via a escolha de criatura-inspiração responder ao
+eixo mais forte do próprio perfil — degradava sempre para
+família/bioma/hostilidade/tamanho (teto +7 fixo).
+
+**Não é buraco de código, é buraco de CORPUS**: o upstream (`Besti-rio-`) não
+tinha nenhuma criatura marcada com esses elementos na amostra puxada por
+`sync-oracle-data.mjs`, e não há como consertar sem o repo irmão clonado
+(fora desta sessão).
+
+**Ponte temporária**: `scripts/bestiario-ponte-elementos.mjs`
+(`aplicarPonte`). Para cada um dos três elementos com menos de
+`PISO_POR_ELEMENTO` (5) ocorrências, clona linhas de bases DIFERENTES do
+próprio pool — preservando `familia`/`biologia`/`descricao`/`bioma`/
+`tamanho`/`hostilidade`/`atributos` (esses campos descrevem a ESPÉCIE, não o
+elemento) — e troca só `elementos` e o sufixo "de `<Elemento>`" do nome.
+Linhas geradas carregam `_ponte` apontando para esta seção, para não serem
+confundidas com dado de corpus real.
+
+**Ela se retira sozinha**: a checagem de cobertura roda a cada aplicação: se
+um sync futuro trouxer criatura de verdade com esses elementos, o piso deixa
+de faltar e a ponte para de gerar linha para aquele elemento — sem precisar
+editar o script.
+
+Régua: nenhuma ainda travando a auto-retirada por teste (a função é pura e
+testável, mas não há `*.test.ts` dedicado até 27/09/2026 — pendência).
 </content>
