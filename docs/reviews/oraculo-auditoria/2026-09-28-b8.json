@@ -1,0 +1,611 @@
+{
+  "geradoEm": "2026-09-28T18:37:09.977Z",
+  "n": 800,
+  "seedsAuditoria": [
+    19870412,
+    31415926
+  ],
+  "seedCalibracaoExcluida": 20260928,
+  "porEixo": {
+    "elemento": {
+      "razao": 1.56,
+      "piso": 10.3,
+      "topo": 16,
+      "k": 8,
+      "ruido": 1.33,
+      "fatia": {
+        "ar": 94,
+        "agua": 108,
+        "luz": 100,
+        "planta": 128,
+        "industrial": 82,
+        "terra": 85,
+        "sombra": 94,
+        "fogo": 109
+      }
+    },
+    "caminho": {
+      "razao": 1.27,
+      "piso": 29.1,
+      "topo": 36.9,
+      "k": 3,
+      "ruido": 1.1,
+      "fatia": {
+        "harmonia": 272,
+        "benevolencia": 295,
+        "poder": 233
+      }
+    },
+    "papel": {
+      "razao": 1.42,
+      "piso": 16.1,
+      "topo": 22.9,
+      "k": 5,
+      "ruido": 1.2,
+      "fatia": {
+        "alcance": 155,
+        "suporte": 183,
+        "tanque": 129,
+        "magico": 167,
+        "fisico": 166
+      }
+    },
+    "reino": {
+      "razao": 1.36,
+      "piso": 9.6,
+      "topo": 13.1,
+      "k": 9,
+      "ruido": 1.38,
+      "fatia": {
+        "gelo": 81,
+        "oceano": 88,
+        "campina": 87,
+        "floresta": 105,
+        "cavernas": 80,
+        "pantano": 89,
+        "picos": 77,
+        "deserto": 89,
+        "akasha": 104
+      }
+    }
+  },
+  "c1_cobertura": {
+    "elementosVistos": 8,
+    "elementosEsperados": 17,
+    "classesVistas": 78,
+    "classesEsperadas": 79,
+    "classesNuncaSaidas": [
+      "Jardineiro Eterno"
+    ],
+    "companheirosVistos": 32,
+    "companheirosEsperados": 32,
+    "especiesVistas": 181,
+    "criaturasEsperadas": 194,
+    "familiasVisuaisVistas": 72,
+    "familiasVisuaisEsperadas": 72,
+    "nuncaEscolhidasBestiario": [
+      "Cão (Canis lupus familiaris)",
+      "Carvalho Sagrado (Quercus)",
+      "Lobo",
+      "Sucuri",
+      "Gorila",
+      "Sequoia-gigante (Sequoiadendron giganteum)",
+      "Árvore-de-lótus-sagrado (Nelumbo nucifera)",
+      "Morcego-vampiro (Desmodus rotundus)",
+      "Cachalote (Physeter macrocephalus)",
+      "Centauro",
+      "Talos de bronze"
+    ]
+  },
+  "c3_escolaDominante": {
+    "razao": 1.44,
+    "piso": 13.5,
+    "topo": 19.4,
+    "k": 6,
+    "ruido": 1.25,
+    "fatia": {
+      "longo_alcance": 155,
+      "benca": 134,
+      "evocacao": 135,
+      "conjuracao": 132,
+      "maldicao": 108,
+      "combate_fisico": 136
+    }
+  },
+  "c4_grupos": {
+    "grupoBestiario": {
+      "razao": 1.8,
+      "piso": 3.1,
+      "topo": 5.6,
+      "k": 23,
+      "ruido": 1.92,
+      "fatia": {
+        "ave": 25,
+        "peixe": 41,
+        "mamifero": 27,
+        "etereo": 45,
+        "extraplanetario": 39,
+        "demonio": 43,
+        "humanoide": 28,
+        "verme": 31,
+        "inseto": 36,
+        "geologico": 29,
+        "anfibio": 32,
+        "molusco": 32,
+        "reptil": 39,
+        "crustaceo": 40,
+        "fungo": 39,
+        "planta": 41,
+        "elemental": 35,
+        "construto": 36,
+        "aracnideo": 25,
+        "monstro": 28,
+        "morto_vivo": 39,
+        "angelical": 39,
+        "cnidario": 31
+      }
+    },
+    "familiaVisual": {
+      "razao": 6.67,
+      "piso": 0.4,
+      "topo": 2.5,
+      "k": 72,
+      "ruido": 4.75,
+      "fatia": {
+        "Primata": 10,
+        "Peixe de Recife": 11,
+        "Fantasma": 11,
+        "Felino": 14,
+        "Extraplanetário": 17,
+        "Demônio": 14,
+        "Licantropo": 11,
+        "Goblinoide": 13,
+        "Verme": 6,
+        "Libélula": 9,
+        "Gigante": 15,
+        "Flor": 13,
+        "Ave Aquática": 10,
+        "Borboleta": 11,
+        "Peixe Abissal": 10,
+        "Gênio": 7,
+        "Trepadeira": 14,
+        "Esqueleto": 10,
+        "Cetáceo": 16,
+        "Cefalópode": 12,
+        "Réptil": 12,
+        "Árvore": 15,
+        "Fungo": 17,
+        "Gosma": 10,
+        "Dragão": 16,
+        "Tubarão e Arraia": 11,
+        "Enguia": 9,
+        "Dinossauro": 10,
+        "Ave de Rapina": 6,
+        "Bovino": 11,
+        "Besouro": 11,
+        "Louva-a-deus": 9,
+        "Yokai": 15,
+        "Mustelídeo": 17,
+        "Centopeia": 14,
+        "Escorpião": 7,
+        "Feérico": 20,
+        "Canino": 17,
+        "Mito Aquático": 13,
+        "Anfíbio": 13,
+        "Celestial": 11,
+        "Ave Marinha": 9,
+        "Abelha e Vespa": 12,
+        "Caranguejo": 18,
+        "Proboscídeo": 9,
+        "Planta Carnívora": 8,
+        "Meio-humano": 11,
+        "Cnidário": 15,
+        "Quimérico": 9,
+        "Ratita": 12,
+        "Golem": 9,
+        "Elemental": 15,
+        "Urso": 5,
+        "Lagosta e Camarão": 11,
+        "Zumbi": 12,
+        "Ave Canora": 11,
+        "Coruja": 8,
+        "Morcego": 10,
+        "Cervídeo": 8,
+        "Equino Mítico": 10,
+        "Peixe de Mar Aberto": 5,
+        "Grilo e Cigarra": 8,
+        "Fruto": 11,
+        "Aranha": 9,
+        "Vampiro": 12,
+        "Ave Ornamental": 8,
+        "Planta do Deserto": 8,
+        "Equino": 9,
+        "Autômato": 6,
+        "Corvídeo": 6,
+        "Roedor": 3,
+        "Geológico": 15
+      }
+    },
+    "estrutural": {
+      "n": 2400,
+      "grupoBestiario": {
+        "razao": 1.6,
+        "piso": 3.3,
+        "topo": 5.3,
+        "k": 23,
+        "ruido": 1.46,
+        "fatia": {
+          "humanoide": 95,
+          "geologico": 80,
+          "etereo": 128,
+          "molusco": 123,
+          "inseto": 116,
+          "construto": 110,
+          "extraplanetario": 110,
+          "crustaceo": 106,
+          "demonio": 87,
+          "planta": 110,
+          "cnidario": 114,
+          "angelical": 104,
+          "peixe": 99,
+          "aracnideo": 115,
+          "reptil": 109,
+          "anfibio": 100,
+          "morto_vivo": 98,
+          "ave": 101,
+          "mamifero": 87,
+          "elemental": 94,
+          "fungo": 95,
+          "verme": 103,
+          "monstro": 116
+        }
+      },
+      "familiaVisual": {
+        "razao": 2.58,
+        "piso": 0.8,
+        "topo": 2,
+        "k": 72,
+        "ruido": 2.35,
+        "fatia": {
+          "Proboscídeo": 26,
+          "Felino": 32,
+          "Peixe de Recife": 30,
+          "Cefalópode": 44,
+          "Primata": 35,
+          "Libélula": 29,
+          "Borboleta": 38,
+          "Quimérico": 24,
+          "Planta Carnívora": 30,
+          "Demônio": 28,
+          "Fruto": 26,
+          "Yokai": 48,
+          "Coruja": 34,
+          "Ave Aquática": 33,
+          "Celestial": 37,
+          "Peixe de Mar Aberto": 28,
+          "Aranha": 43,
+          "Geológico": 42,
+          "Árvore": 26,
+          "Vampiro": 39,
+          "Caranguejo": 39,
+          "Ave Canora": 44,
+          "Extraplanetário": 48,
+          "Bovino": 37,
+          "Elemental": 36,
+          "Golem": 28,
+          "Peixe Abissal": 27,
+          "Equino Mítico": 24,
+          "Roedor": 35,
+          "Flor": 49,
+          "Equino": 30,
+          "Esqueleto": 36,
+          "Enguia": 27,
+          "Corvídeo": 33,
+          "Lagosta e Camarão": 22,
+          "Meio-humano": 34,
+          "Gênio": 39,
+          "Anfíbio": 39,
+          "Zumbi": 23,
+          "Cetáceo": 32,
+          "Tubarão e Arraia": 45,
+          "Planta do Deserto": 27,
+          "Dinossauro": 27,
+          "Gosma": 42,
+          "Cnidário": 43,
+          "Licantropo": 28,
+          "Gigante": 33,
+          "Mito Aquático": 35,
+          "Canino": 35,
+          "Autômato": 35,
+          "Besouro": 26,
+          "Ave Marinha": 38,
+          "Morcego": 26,
+          "Goblinoide": 35,
+          "Ratita": 39,
+          "Trepadeira": 40,
+          "Ave de Rapina": 30,
+          "Centopeia": 30,
+          "Ave Ornamental": 35,
+          "Louva-a-deus": 19,
+          "Escorpião": 32,
+          "Dragão": 25,
+          "Mustelídeo": 30,
+          "Grilo e Cigarra": 40,
+          "Fungo": 36,
+          "Feérico": 42,
+          "Urso": 35,
+          "Verme": 25,
+          "Abelha e Vespa": 36,
+          "Fantasma": 21,
+          "Cervídeo": 31,
+          "Réptil": 25
+        }
+      }
+    }
+  },
+  "c7_linhagem": {
+    "taxaAtravessaFamilia": 0.573,
+    "taxaParesContinuos": 0.847
+  },
+  "c8_unicidade": {
+    "tuplasUnicas": 0.944,
+    "colisaoNomeCriatura": 0.0175,
+    "totalNomesConsiderados": 800,
+    "premadeExcluidos": [
+      "Pyraka",
+      "Akashaoi",
+      "Nimbrata",
+      "Igni",
+      "Nautilu",
+      "Astrase"
+    ]
+  },
+  "edgeCases": {
+    "timeUnknown": {
+      "n": 165,
+      "elemento": {
+        "razao": 2.27,
+        "piso": 6.7,
+        "topo": 15.2,
+        "k": 8,
+        "ruido": 1.87
+      },
+      "papel": {
+        "razao": 1.5,
+        "piso": 15.8,
+        "topo": 23.6,
+        "k": 5,
+        "ruido": 1.5
+      },
+      "reino": {
+        "razao": 2.33,
+        "piso": 7.3,
+        "topo": 17,
+        "k": 9,
+        "ruido": 2
+      },
+      "tuplasUnicas": 0.988
+    },
+    "soCincoPerguntasSemTesteLongo": {
+      "n": 225,
+      "elemento": {
+        "razao": 1.64,
+        "piso": 9.8,
+        "topo": 16,
+        "k": 8,
+        "ruido": 1.71
+      },
+      "papel": {
+        "razao": 1.56,
+        "piso": 16,
+        "topo": 24.9,
+        "k": 5,
+        "ruido": 1.41
+      },
+      "reino": {
+        "razao": 2.33,
+        "piso": 6.7,
+        "topo": 15.6,
+        "k": 9,
+        "ruido": 1.81
+      },
+      "tuplasUnicas": 0.987
+    },
+    "completo": {
+      "n": 410,
+      "elemento": {
+        "razao": 2.2,
+        "piso": 8.5,
+        "topo": 18.8,
+        "k": 8,
+        "ruido": 1.49
+      },
+      "papel": {
+        "razao": 1.64,
+        "piso": 14.1,
+        "topo": 23.2,
+        "k": 5,
+        "ruido": 1.29
+      },
+      "reino": {
+        "razao": 2.24,
+        "piso": 7.1,
+        "topo": 15.9,
+        "k": 9,
+        "ruido": 1.56
+      },
+      "tuplasUnicas": 0.978
+    }
+  },
+  "c9_divergenciaComportamental": {
+    "pares": 4000,
+    "leituraConstante": "constante",
+    "leituraExplosivo": "explosivo",
+    "oraculoDiverge": 0,
+    "formaFinalDiverge": 0.14,
+    "caminhoDiverge": 0.414,
+    "decisoesEmpatadas": 0.215,
+    "referenciaAtributosIndependentes": 0.689
+  },
+  "fatiasEstruturais": {
+    "timeUnknown": {
+      "elemento": {
+        "razao": 1.32,
+        "piso": 11.2,
+        "topo": 14.8,
+        "k": 8,
+        "ruido": 1.17,
+        "fatia": {
+          "fogo": 287,
+          "agua": 315,
+          "ar": 304,
+          "terra": 282,
+          "sombra": 292,
+          "luz": 298,
+          "planta": 354,
+          "industrial": 268
+        }
+      },
+      "papel": {
+        "razao": 1.1,
+        "piso": 18.9,
+        "topo": 20.8,
+        "k": 5,
+        "ruido": 1.11,
+        "fatia": {
+          "magico": 498,
+          "suporte": 492,
+          "alcance": 453,
+          "tanque": 467,
+          "fisico": 490
+        }
+      },
+      "reino": {
+        "razao": 1.31,
+        "piso": 9.7,
+        "topo": 12.6,
+        "k": 9,
+        "ruido": 1.2,
+        "fatia": {
+          "picos": 256,
+          "gelo": 278,
+          "deserto": 303,
+          "oceano": 255,
+          "floresta": 265,
+          "campina": 232,
+          "cavernas": 244,
+          "akasha": 288,
+          "pantano": 279
+        }
+      }
+    },
+    "curto": {
+      "elemento": {
+        "razao": 1.35,
+        "piso": 10.1,
+        "topo": 13.7,
+        "k": 8,
+        "ruido": 1.17,
+        "fatia": {
+          "terra": 295,
+          "industrial": 290,
+          "planta": 318,
+          "agua": 294,
+          "luz": 308,
+          "ar": 329,
+          "fogo": 323,
+          "sombra": 243
+        }
+      },
+      "papel": {
+        "razao": 1.13,
+        "piso": 18.7,
+        "topo": 21.2,
+        "k": 5,
+        "ruido": 1.11,
+        "fatia": {
+          "magico": 500,
+          "tanque": 508,
+          "suporte": 472,
+          "alcance": 448,
+          "fisico": 472
+        }
+      },
+      "reino": {
+        "razao": 1.19,
+        "piso": 10.3,
+        "topo": 12.2,
+        "k": 9,
+        "ruido": 1.2,
+        "fatia": {
+          "cavernas": 257,
+          "pantano": 247,
+          "floresta": 280,
+          "oceano": 254,
+          "akasha": 252,
+          "campina": 289,
+          "deserto": 271,
+          "picos": 257,
+          "gelo": 293
+        }
+      }
+    },
+    "completo": {
+      "elemento": {
+        "razao": 1.29,
+        "piso": 11.5,
+        "topo": 14.9,
+        "k": 8,
+        "ruido": 1.17,
+        "fatia": {
+          "terra": 291,
+          "agua": 295,
+          "ar": 302,
+          "sombra": 311,
+          "luz": 288,
+          "planta": 357,
+          "industrial": 280,
+          "fogo": 276
+        }
+      },
+      "papel": {
+        "razao": 1.15,
+        "piso": 18.3,
+        "topo": 21,
+        "k": 5,
+        "ruido": 1.11,
+        "fatia": {
+          "magico": 505,
+          "suporte": 501,
+          "alcance": 439,
+          "tanque": 473,
+          "fisico": 482
+        }
+      },
+      "reino": {
+        "razao": 1.33,
+        "piso": 9.2,
+        "topo": 12.2,
+        "k": 9,
+        "ruido": 1.2,
+        "fatia": {
+          "cavernas": 246,
+          "gelo": 293,
+          "picos": 257,
+          "deserto": 280,
+          "oceano": 260,
+          "floresta": 274,
+          "campina": 220,
+          "akasha": 286,
+          "pantano": 284
+        }
+      }
+    }
+  },
+  "naoCoberto": [
+    "C5 (fidelidade direcional por eixo) — desenhado em rodada2-regua.md §5, não implementado nesta rodada.",
+    "reroll — desenho pendente (rodada2-regua.md §8).",
+    "rebirth (orçamento ×1.5) — fora do escopo da régua C1-C8 por decisão registrada em rodada2-regua.md §8.",
+    "nome não-latino/vazio/gigante — robustez de entrada, não distribuição; fica para o sweeper de robustez."
+  ]
+}

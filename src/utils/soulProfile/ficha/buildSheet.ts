@@ -168,11 +168,23 @@ const ESCOLAS_TODAS: EscolaId[] = ['combate_fisico', 'longo_alcance', 'evocacao'
  * bênção; mago de poder = maldição, harmônico = conjuração, benevolente =
  * evocação; suporte de poder = maldição, harmônico = conjuração, benevolente
  * = bênção). Medido (N=800): toda escola dominante entre 11% e 21%.
+ *
+ * ⚠️ B8 (28/09/2026): depois que ficha/bestiário/reveal passaram a ler o MESMO
+ * papel/caminho (PRs #147/#149), papel e caminho saem CORRELACIONADOS
+ * (suporte↔benevolência 17%, físico↔poder 14%, mágico↔harmonia 13% das
+ * pessoas), e a tabela — desenhada supondo independência — deu escola
+ * dominante 3,14× (bênção 25,5% vs evocação 8,1%). Os pesos
+ * (`ALIGNMENT_SCHOOL_WEIGHT`, `DOMINANT_SCHOOL_LEAD`) não mexem nisso: o piso
+ * de liderança faz a escola dominante ser SEMPRE a célula desta tabela. A
+ * correção é de célula: tanque benevolente → evocação (convoca guardiões, em
+ * vez de somar à bênção que o suporte benevolente já enche) e alcance de
+ * poder → maldição (arqueiro de pragas/venenos). Medido nas seeds de
+ * validação (N=800): 1,44× (13,5%–19,4%), piso de ruído 1,25×.
  */
 const ROLE_SCHOOL_BY_ALIGNMENT: Record<RoleId, Record<AlignmentId, EscolaId>> = {
   fisico: { poder: 'combate_fisico', harmonia: 'longo_alcance', benevolencia: 'combate_fisico' },
-  tanque: { poder: 'maldicao', harmonia: 'evocacao', benevolencia: 'benca' },
-  alcance: { poder: 'longo_alcance', harmonia: 'longo_alcance', benevolencia: 'longo_alcance' },
+  tanque: { poder: 'maldicao', harmonia: 'evocacao', benevolencia: 'evocacao' },
+  alcance: { poder: 'maldicao', harmonia: 'longo_alcance', benevolencia: 'longo_alcance' },
   magico: { poder: 'maldicao', harmonia: 'conjuracao', benevolencia: 'evocacao' },
   suporte: { poder: 'maldicao', harmonia: 'conjuracao', benevolencia: 'benca' },
 };
