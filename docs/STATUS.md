@@ -15,6 +15,16 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > apontava `docs/STATUS.md`/`docs/BESTIARIO-PROCEDENCIA.md` como gatilho, sem
 > exigir mudança nesses três).
 >
+> ## 28/09/2026 — Revisão do sistema de criação (3 loops) + manual sincronizado com `f465d266`
+>
+> PR #131. Companheiro capturável (calculado e descartado) passa a fechar a
+> bio do reveal; bio × card de classe do Pet no rookie não nomeiam mais
+> elementos opostos (~50% dos perfis antes). Refutados: profissão e poder de
+> skill têm consumidor de UI. Novas réguas: `ficha/capture.test.ts` e a
+> concordância em `ficha/classTitle.test.ts`. Docs: 02 §22, 06/utils,
+> 06/components (`PetPage`), 10 tema 3. Flake conhecido sob carga:
+> `SoulmonOnboarding.portao.render.test.tsx` (passa isolado).
+>
 > ## 28/09/2026 — Manual sincronizado com `25fd3c41`
 >
 > Delta `83a9aac6..25fd3c41` (2 commits, PR #129). O caminho (poder/harmonia/
