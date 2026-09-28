@@ -41,6 +41,13 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** `src/components/AccountDataSection.render.test.tsx`.
 **Avisos do arquivo:** 503 é ESTADO (login ainda não existe), não erro — botão desabilitado com o motivo escrito antes do toque; o inventário do que apaga/minimiza/sobrevive vem ANTES da confirmação; `naoIncluido` aparece NA TELA, não só no arquivo exportado; voz sem "tem certeza?", sem culpa, sem cancelar destacado.
 
+### `src/components/catalog/CatalogMindNotice.tsx`
+**Dono de:** o cartão de aviso (A1 da revisão de psicologia, `docs/reviews/2026-09-28-catalogo-psicologia.md`) mostrado antes de adicionar um item `optInOnly` do catálogo (protocolos de TCC da área "mente"). Disclaimer "autocuidado, não tratamento", a linha de crise reaproveitada de `chatSafety.crisisLineText`, as `contraindications` do item, e um checkbox "Entendi" que precisa estar marcado para o botão "Adicionar" habilitar.
+**Props principais:** `CatalogMindNoticeProps` — `item: CatalogItem`, `language?`, `onCancel()`, `onConfirm()`.
+**Estado/efeitos relevantes:** `useState` local (`understood: boolean`) — sem persistência; reabrir o cartão sempre começa desmarcado (não é dispensável para sempre, de propósito).
+**Chamado por:** (ainda não ligado ao navegador de catálogo — F4 do plano); hoje só `src/components/catalog/CatalogMindNotice.render.test.tsx`.
+**Régua:** `src/components/catalog/CatalogMindNotice.render.test.tsx`.
+
 ### `src/components/AccountSection.tsx`
 **Dono de:** bloco "Conta & compras" dentro do grupo "Sua conta" da `SettingsPage` — sair da conta e restaurar compras.
 **Props principais:** `AccountSectionProps` — `language`, `onEntitlementChange?(ent: Entitlement)`.

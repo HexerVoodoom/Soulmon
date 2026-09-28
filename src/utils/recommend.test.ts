@@ -41,4 +41,22 @@ describe('recommendStarterSet', () => {
     const set = recommendStarterSet({ areas: [], struggles: [], strengths: [] }, []);
     expect(set).toEqual([]);
   });
+
+  // V1 da revisão de psicologia (docs/reviews/2026-09-28-catalogo-psicologia.md):
+  // itens optInOnly (protocolos de TCC) nunca podem sair no starter set
+  // automático, nem para o perfil que mais os pontuaria.
+  it('NUNCA devolve item optInOnly, mesmo para o perfil que mais o pontuaria', () => {
+    const set = recommendStarterSet(
+      { areas: ['mente'], struggles: ['ansiedade', 'perfeccionismo'], strengths: ['calma'] },
+      ACTIVITY_CATALOG,
+    );
+    expect(set.some((item) => item.optInOnly)).toBe(false);
+  });
+
+  it('nunca devolve item optInOnly com um catálogo sintético só de itens optInOnly + 1 elegível', () => {
+    const optIn = ACTIVITY_CATALOG.find((i) => i.optInOnly)!;
+    const elegivel = ACTIVITY_CATALOG.find((i) => !i.optInOnly)!;
+    const set = recommendStarterSet({ areas: [], struggles: [], strengths: [] }, [optIn, elegivel]);
+    expect(set.map((i) => i.id)).not.toContain(optIn.id);
+  });
 });

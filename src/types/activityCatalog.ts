@@ -128,7 +128,14 @@ export interface CatalogItem {
   name: { pt: string; en: string };
   /** Uma frase: "por que funciona", mostrada no cartão do catálogo. */
   why: { pt: string; en: string };
-  levels: [CatalogLevelSpec, CatalogLevelSpec, CatalogLevelSpec];
+  /**
+   * Normalmente as 3 entradas de nível. **Exceção (A5 da revisão de
+   * psicologia)**: itens de exposição gradual têm um único nível ("Seu
+   * ritmo") porque o mecanismo é a GRADAÇÃO de cada passo, não a repetição
+   * semanal — oferecer "Nível 3 = 3x/semana" faria a pessoa ler o nível mais
+   * alto como "o certo" e acumular falhas contra ele.
+   */
+  levels: [CatalogLevelSpec, CatalogLevelSpec, CatalogLevelSpec] | [CatalogLevelSpec];
   /** Implementation intention sugerida (Gollwitzer & Sheeran 2006). */
   anchorSuggestion?: { pt: string; en: string };
   addresses: StruggleId[];
@@ -138,4 +145,12 @@ export interface CatalogItem {
    *  de texto; a exclusão de área "mente"/tratamento é regra própria). */
   contraindications?: string[];
   evidence: CatalogEvidence;
+  /**
+   * V1 da revisão de psicologia (`docs/reviews/2026-09-28-catalogo-psicologia.md`):
+   * item que NUNCA aparece no starter set automático do onboarding — só no
+   * navegador do catálogo, atrás de um cartão de aviso (CVV 188/192 PT,
+   * linha de crise EN) com "Entendi" explícito antes de poder adicionar.
+   * `recommendStarterSet` filtra `optInOnly` antes de pontuar.
+   */
+  optInOnly?: boolean;
 }

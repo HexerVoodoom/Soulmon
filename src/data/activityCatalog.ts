@@ -173,8 +173,15 @@ export const ACTIVITY_CATALOG: CatalogItem[] = [
     anchorSuggestion: { pt: 'antes de abrir o celular de manhã', en: 'before opening your phone in the morning' },
     addresses: ['ansiedade'],
     leverages: ['calma'],
-    contraindications: [],
-    evidence: { level: 'A', refs: ['Balban et al. 2023 (Cell Reports Medicine)'] },
+    contraindications: [
+      'se sentir tontura ou falta de ar, pare e respire normalmente',
+      'não usar como substituto de atendimento em crise de pânico recorrente',
+    ],
+    evidence: {
+      level: 'B',
+      refs: ['Balban et al. 2023 (Cell Reports Medicine)'],
+      note: 'RCT único, remoto, n=108 (24 no controle) — sem poder estatístico para superioridade entre os braços e sem mudança medida em VFC. Um RCT pequeno não sustenta nível A (revisão psicológica de 28/09/2026).',
+    },
   },
   {
     id: 'mente-gratidao',
@@ -195,7 +202,12 @@ export const ACTIVITY_CATALOG: CatalogItem[] = [
     anchorSuggestion: { pt: 'antes de dormir, na cama', en: 'before sleep, in bed' },
     addresses: ['ansiedade', 'perfeccionismo'],
     leverages: ['calma'],
-    evidence: { level: 'A', refs: ['Emmons & McCullough 2003 (Journal of Personality and Social Psychology)'] },
+    contraindications: ['se listar coisas boas num dia difícil te deixar culpado, pule — não é obrigação'],
+    evidence: {
+      level: 'B',
+      refs: ['Emmons & McCullough 2003 (Journal of Personality and Social Psychology)'],
+      note: 'O RCT original existe, mas meta-análises posteriores (Davis et al. 2016; Dickens 2017) mostram efeito pequeno, perto de zero contra controle ativo. Nível B (revisão psicológica de 28/09/2026).',
+    },
   },
   {
     id: 'mente-autocompaixao',
@@ -204,7 +216,7 @@ export const ACTIVITY_CATALOG: CatalogItem[] = [
     category: 'Wellness',
     emoji: '💗',
     name: { pt: 'Praticar autocompaixão', en: 'Practice self-compassion' },
-    why: { pt: 'A escala e o programa de autocompaixão de Neff associam-se a menor ansiedade e maior bem-estar em revisões da área.', en: "Neff's self-compassion framework is linked to lower anxiety and higher well-being in the research literature." },
+    why: { pt: 'Praticar frases gentis consigo mesmo é uma prática leve de autocompaixão, associada a menor ansiedade e maior bem-estar em revisões da área. Aqui é autocuidado, não é uma intervenção clínica.', en: 'Practicing kind self-talk is a light self-compassion practice, linked to lower anxiety and higher well-being in the research literature. This is self-care, not a clinical intervention.' },
     levels: [
       { label: { pt: 'Nível 1', en: 'Level 1' }, target: { pt: 'Uma frase gentil a si mesmo, 2x/semana', en: 'One kind sentence to yourself, 2x/week' }, effort: 1, defaultSchedule: x2 },
       { label: { pt: 'Nível 2', en: 'Level 2' }, target: { pt: '3x/semana', en: '3x/week' }, effort: 1, defaultSchedule: x3 },
@@ -212,7 +224,11 @@ export const ACTIVITY_CATALOG: CatalogItem[] = [
     ],
     addresses: ['perfeccionismo', 'ansiedade'],
     leverages: ['calma'],
-    evidence: { level: 'B', refs: ['Neff 2003 (Self and Identity)'] },
+    evidence: {
+      level: 'B',
+      refs: ['Ferrari et al. 2019 (Mindfulness) — meta-análise de intervenções de autocompaixão'],
+      note: 'Neff 2003 é o artigo da ESCALA de autocompaixão, não de uma intervenção — a fonte correta para "praticar" é a meta-análise de intervenções (revisão psicológica de 28/09/2026).',
+    },
   },
   {
     id: 'mente-ativacao-comportamental',
@@ -222,8 +238,8 @@ export const ACTIVITY_CATALOG: CatalogItem[] = [
     emoji: '☀️',
     name: { pt: 'Fazer 1 coisa prazerosa', en: 'Do 1 pleasurable thing' },
     why: {
-      pt: 'Meta-análise (Cuijpers et al. 2007): ativação comportamental — programar atividades prazerosas/de valor — tem efeito grande sobre sintomas depressivos, comparável a terapia cognitiva.',
-      en: 'Meta-analysis (Cuijpers et al. 2007): behavioral activation — scheduling pleasurable/valued activities — has a large effect on depressive symptoms, comparable to cognitive therapy.',
+      pt: 'Programar pequenas atividades de que você gosta, ou que importam para você, é o núcleo da ativação comportamental, uma abordagem bem estudada para o humor (Cuijpers et al. 2007). Aqui é só uma prática leve.',
+      en: 'Scheduling small activities you enjoy, or that matter to you, is the core of behavioral activation, a well-studied approach for mood (Cuijpers et al. 2007). This is just a light practice.',
     },
     levels: [
       { label: { pt: 'Nível 1', en: 'Level 1' }, target: { pt: '2x/semana', en: '2x/week' }, effort: 1, defaultSchedule: x2 },
@@ -232,7 +248,10 @@ export const ACTIVITY_CATALOG: CatalogItem[] = [
     ],
     addresses: ['energia', 'ansiedade'],
     leverages: ['curiosidade'],
-    contraindications: ['não substitui ajuda profissional para depressão/ansiedade clínica'],
+    contraindications: [
+      'não substitui ajuda profissional para depressão/ansiedade clínica',
+      'em sofrimento intenso ou pensamento de se machucar, ligue 188 (CVV) ou 192',
+    ],
     evidence: { level: 'A', refs: ['Cuijpers, van Straten & Warmerdam 2007 (Clinical Psychology Review)'] },
   },
   {
@@ -241,23 +260,36 @@ export const ACTIVITY_CATALOG: CatalogItem[] = [
     area: 'mente',
     category: 'Wellness',
     emoji: '📝',
+    optInOnly: true,
     name: { pt: 'Registrar um pensamento difícil', en: 'Log a difficult thought' },
     why: {
-      pt: 'O registro de pensamentos (reestruturação cognitiva) é componente central da TCC; meta-análise (2021, 45 estudos, n=3.382) mostra melhora consistente vs. cuidado usual. Não substitui ajuda profissional — se a angústia for intensa ou persistente, procure um psicólogo/psiquiatra. No Brasil, CVV 188 (24h, gratuito).',
-      en: "Thought records (cognitive restructuring) are a core CBT component; a 2021 meta-analysis (45 studies, n=3,382) shows consistent improvement vs. usual care. This does not replace professional help — if distress is intense or persistent, seek a psychologist/psychiatrist.",
+      pt: 'Anotar um pensamento e o que o confirma ou contradiz é uma técnica usada na TCC. Aqui é uma versão simples, de autocuidado — não é diagnóstico e não substitui acompanhamento profissional.',
+      en: 'Writing down a thought and what confirms or contradicts it is a technique used in CBT. Here it is a simple, self-care version — this is not a diagnosis and does not replace professional care.',
     },
     levels: [
-      { label: { pt: 'Nível 1', en: 'Level 1' }, target: { pt: '1x/semana, escrever 1 pensamento e o fato que o testa', en: '1x/week, write 1 thought and the fact that tests it' }, effort: 1, defaultSchedule: { kind: 'timesPerWeek', target: 1 } },
-      { label: { pt: 'Nível 2', en: 'Level 2' }, target: { pt: '2x/semana', en: '2x/week' }, effort: 1, defaultSchedule: x2 },
-      { label: { pt: 'Nível 3', en: 'Level 3' }, target: { pt: '3x/semana', en: '3x/week' }, effort: 2, defaultSchedule: x3 },
+      {
+        label: { pt: 'Seu ritmo', en: 'Your pace' },
+        target: {
+          pt: '1x/semana, escrever 1 pensamento e o fato que o testa — sem pressa de aumentar',
+          en: '1x/week, write 1 thought and the fact that tests it — no rush to increase',
+        },
+        effort: 1,
+        defaultSchedule: { kind: 'timesPerWeek', target: 1 },
+      },
     ],
     addresses: ['ansiedade', 'perfeccionismo'],
     leverages: ['calma'],
     contraindications: [
-      'não é diagnóstico nem tratamento — não usar em crise aguda ou ideação suicida (buscar CVV 188 ou emergência)',
+      'não é diagnóstico nem tratamento — não usar em crise aguda ou ideação suicida (ligue 188/CVV ou 192)',
+      'se escrever sobre o pensamento te deixa ruminando (voltando ao mesmo assunto por muito tempo), pare, e prefira uma atividade prazerosa',
+      'em TOC, checar pensamentos pode virar ritual; converse com um profissional',
       'não substitui acompanhamento profissional',
     ],
-    evidence: { level: 'A', refs: ['Meta-análise 2021 sobre reestruturação cognitiva, ativação comportamental e TCC para depressão (45 estudos, n=3.382)'] },
+    evidence: {
+      level: 'B',
+      refs: ['Ciharova et al. 2021, Journal of Consulting and Clinical Psychology 89(6):563-574 (45 estudos, n=3.382)'],
+      note: 'A meta-análise confirma o número, mas avalia reestruturação cognitiva PRESENCIAL e INDIVIDUAL, com terapeuta, contra lista de espera ou cuidado usual — não sustenta um registro semanal feito sozinho. Extrapolação registrada (revisão psicológica de 28/09/2026).',
+    },
   },
   {
     id: 'mente-exposicao-leve',
@@ -265,24 +297,39 @@ export const ACTIVITY_CATALOG: CatalogItem[] = [
     area: 'mente',
     category: 'Wellness',
     emoji: '🌤️',
+    optInOnly: true,
     name: { pt: 'Encarar, de leve, algo que evito', en: 'Gently face something I avoid' },
     why: {
-      pt: 'Exposição gradual é tratamento de primeira linha para ansiedade em revisões sistemáticas e meta-análises. Aqui é uma versão de AUTOAJUDA muito leve (evitações pequenas do dia a dia, nunca fobia/trauma/pânico clínico) — não substitui terapia. Se a evitação vier de trauma, pânico ou fobia incapacitante, procure ajuda profissional; CVV 188 (24h, gratuito) para crise.',
-      en: 'Graded exposure is a first-line anxiety treatment in systematic reviews and meta-analyses. This is a very light self-help version (small everyday avoidances, never clinical phobia/trauma/panic) — it does not replace therapy.',
+      pt: 'Aproximar-se aos poucos do que a gente evita costuma diminuir o medo com o tempo. Aqui é para evitações pequenas do dia a dia — não é uma intervenção clínica.',
+      en: 'Gradually approaching what we avoid tends to reduce fear over time. This is for small, everyday avoidances — this is not a clinical intervention.',
     },
     levels: [
-      { label: { pt: 'Nível 1', en: 'Level 1' }, target: { pt: '1x/semana, um passo pequeno', en: '1x/week, one small step' }, effort: 2, defaultSchedule: { kind: 'timesPerWeek', target: 1 } },
-      { label: { pt: 'Nível 2', en: 'Level 2' }, target: { pt: '2x/semana', en: '2x/week' }, effort: 2, defaultSchedule: x2 },
-      { label: { pt: 'Nível 3', en: 'Level 3' }, target: { pt: '3x/semana', en: '3x/week' }, effort: 2, defaultSchedule: x3 },
+      {
+        label: { pt: 'Seu ritmo', en: 'Your pace' },
+        target: {
+          pt: 'Escolha um passo que dê para fazer hoje; se ficou fácil, o próximo pode ser um pouquinho maior',
+          en: 'Choose a step you can do today; if it felt easy, the next one can be a little bigger',
+        },
+        effort: 1,
+        defaultSchedule: { kind: 'timesPerWeek', target: 1 },
+      },
     ],
     addresses: ['ansiedade', 'comecar'],
     leverages: ['persistencia'],
     contraindications: [
       'não usar para fobia clínica, pânico, trauma ou TEPT — isso exige acompanhamento profissional',
-      'nunca em crise aguda ou ideação suicida (buscar CVV 188 ou emergência)',
-      'não é tratamento; é prática de autoajuda de baixa intensidade',
+      'não usar para comida, corpo ou peso — exposição alimentar em transtorno alimentar é clínica',
+      'nunca em crise aguda ou ideação suicida (ligue 188/CVV ou 192)',
+      'não é tratamento; é prática de autoajuda de baixa intensidade, e o mecanismo é a GRADAÇÃO — não a repetição do mesmo passo',
     ],
-    evidence: { level: 'A', refs: ['Meta-análises de exposição para transtornos de ansiedade (ex.: Springer/BMC Psychiatry, 2011; PMC 9735589)'] },
+    evidence: {
+      level: 'B',
+      refs: [
+        'Haug et al. 2012 (Clinical Psychology Review) — self-help para transtornos de ansiedade, meta-análise',
+        'Domhardt et al. 2019 (Depression and Anxiety) — componentes de intervenções digitais para ansiedade',
+      ],
+      note: 'Evidência A é de exposição conduzida ou guiada por terapeuta para transtorno; a autoajuda não guiada tem efeito menor e menor adesão, e aqui é extrapolada para evitações cotidianas (revisão psicológica de 28/09/2026, que também vetou a referência anterior: PMC9735589/Heo & Park 2022 é exposição em realidade virtual PARA TEPT, conduzida por terapeuta — a fonte tratava exatamente da condição que este item contraindica).',
+    },
   },
 
   // ---------------------------------------------------------------- foco

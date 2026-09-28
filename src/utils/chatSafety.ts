@@ -141,6 +141,21 @@ export function bridgeReply(language: ChatSafetyLanguage): string {
 }
 
 /**
+ * A LINHA DE CRISE — reaproveitada fora do chat (A1 da revisão de psicologia,
+ * `docs/reviews/2026-09-28-catalogo-psicologia.md`): o navegador do catálogo
+ * precisa do mesmo número, na mesma voz, sem inventar uma segunda versão. Em
+ * português cita CVV 188 e a emergência 192 (a linha do chat só citava o
+ * 188); em inglês, como o app não sabe o país de quem lê, aponta o recurso
+ * internacional (mesmo padrão de `bridgeReply`, nunca um número de país
+ * específico que pode estar errado).
+ */
+export function crisisLineText(language: ChatSafetyLanguage): string {
+  return language === 'pt-BR'
+    ? 'Se você está em sofrimento intenso ou pensando em se machucar, ligue 188 (CVV, 24h, gratuito) ou 192 (emergência).'
+    : 'If you are in intense distress or thinking of harming yourself, contact a crisis line — findahelpline.com lists the one for your country — or your local emergency number.';
+}
+
+/**
  * O que o chat deve fazer com esta mensagem.
  * `local` = responde daqui e **não chama a IA**.
  */

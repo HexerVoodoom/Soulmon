@@ -20,6 +20,29 @@ import {
 import { ensureSeasonProgress, applySeasonMedal } from './seasons';
 import { awardBondXP } from './bond';
 import { playerDayKey } from './playerDay';
+import { ACTIVITY_CATALOG_BY_ID } from '../data/activityCatalog';
+
+/**
+ * V2 da revisão de psicologia (`docs/reviews/2026-09-28-catalogo-psicologia.md`):
+ * um item `optInOnly` do catálogo (protocolos de TCC — registro de
+ * pensamentos, exposição gradual leve) NUNCA pode custar coração. Se
+ * entrasse na meta ponderada, EVITAR o item (a própria evitação ansiosa, que
+ * é o sintoma) faria a criatura perder vida — punição sobre a identidade em
+ * vez de convite. Por isso o peso de um item `optInOnly` na meta do dia é
+ * **0**: nem soma no que falta fazer, nem no que foi feito. Concluir o item
+ * continua dando recompensa (comida/XP) — isso é regra de `careRules.ts`,
+ * não desta função.
+ */
+function isOptInOnlyActivity(activity: { catalogId?: string }): boolean {
+  const catalogId = activity?.catalogId;
+  return !!catalogId && ACTIVITY_CATALOG_BY_ID[catalogId]?.optInOnly === true;
+}
+
+/** Peso de UM hábito na meta ponderada — 0 para item `optInOnly` do catálogo,
+ *  `HABIT_WEIGHT` (1) para todos os outros (o padrão de sempre). */
+function habitWeightOf(activity: { catalogId?: string }): number {
+  return isOptInOnlyActivity(activity) ? 0 : HABIT_WEIGHT;
+}
 
 // Tipos necessários para o reset
 interface Activity {
@@ -600,7 +623,8 @@ export function completeDayReached(p: { registered: number; goal: number; done: 
  * nele) porque o papel é o mesmo — o que mudou é a UNIDADE: esforço, não itens.
  */
 export function registeredForDay(state: DailyGoalState, weekDay: number, dayKey?: string): number {
-  return activitiesForWeekDay(state, weekDay, dayKey).length * HABIT_WEIGHT
+  return activitiesForWeekDay(state, weekDay, dayKey)
+    .reduce((s: number, a: any) => s + habitWeightOf(a), 0)
     + state.tasks.filter(countsForGoal).reduce((s, t: any) => s + normalizeEffort(t?.effort), 0)
     + (dayKey ? tasksCompletedOn(state as any, dayKey) : 0);
 }
@@ -819,7 +843,7 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
     } else {
       isComplete = !!activity.completedToday && activity.lastCompletedDate === yesterdayString;
     }
-    if (isComplete) dailyDone += HABIT_WEIGHT;
+    if (isComplete) dailyDone += habitWeightOf(activity);
   });
 
   // Tarefas avulsas: as que ainda estão na lista marcadas (janela de 3s entre o
@@ -1097,7 +1121,11 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
      salvou alguém. */
   let shieldsSpent = 0;
   if (!wasAway) {
-    availableActivities.forEach((activity: any) => {
+    // V2 da revisão de psicologia: item `optInOnly` NUNCA acumula histórico
+    // de constância — sem histórico não há `needsIntervention` ("never miss
+    // twice"), não há gasto/ganho de escudo e não há razão de constância
+    // baixa. Evitar o item continua sem NENHUMA consequência de jogo.
+    availableActivities.filter((a: any) => !isOptInOnlyActivity(a)).forEach((activity: any) => {
       const current = rhythms[activity.id] ?? emptyRhythm();
       // Sem `isDueOn` de novo aqui: `availableActivities` JÁ foi filtrada pela
       // mesma regra (`habitCountsOn`, que chama `isDueOn` para `everyNDays`).

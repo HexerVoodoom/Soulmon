@@ -57,7 +57,14 @@ export function recommendStarterSet(
   n = 4,
 ): CatalogItem[] {
   const target = Math.max(3, Math.min(5, n));
-  const scored = catalog
+  // V1 da revisão de psicologia (docs/reviews/2026-09-28-catalogo-psicologia.md):
+  // itens `optInOnly` (protocolos de TCC) NUNCA entram no starter set
+  // automático — só aparecem no navegador do catálogo, atrás do cartão de
+  // aviso. Filtrar ANTES de pontuar, não depois: pontuar e descartar deixaria
+  // a pontuação vazar (ex.: um item quase escolhido "empurrando" outro para
+  // fora por engano de ordenação).
+  const eligible = catalog.filter((item) => !item.optInOnly);
+  const scored = eligible
     .map((item, index) => ({ item, index, score: scoreItem(item, profile) }))
     .sort((a, b) => (b.score !== a.score ? b.score - a.score : a.index - b.index));
 
