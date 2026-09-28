@@ -5,7 +5,37 @@
  * Substitui os 4 números que o `oracle.ts` calculava (caminho de vida,
  * expressão, motivação, impressão) por 8 números + lições cármicas, paixão
  * oculta, 4 desafios, 4 pináculos e dívidas cármicas. Única mudança em relação
- * à origem: os rótulos dos desafios viraram LText (PT+EN).
+ * à origem: os rótulos dos desafios viraram LText (PT+EN) — e, desde a Fase 3
+ * do Oráculo, na voz do app (ver abaixo).
+ *
+ * ## Vocabulário — auditoria da Fase 3 (28/09/2026, PLANO-ORACULO.md §7.5)
+ *
+ * O vocabulário tradicional da numerologia carrega julgamento sobre a PESSOA
+ * ("dívida cármica" soa a punição; "lição" e "desafio" a déficit), e a bíblia
+ * (`docs/NARRATIVA-E-UNIVERSO.md` L1/L8/L9) proíbe exatamente isso: o mundo
+ * descreve a criatura, nunca diagnostica a pessoa. Medido nesta auditoria:
+ * **nenhum desses campos chega ao jogador hoje** — `oracle.ts` só consome os
+ * 4 números centrais como afinidade de elemento, e a única tela que imprime
+ * numerologia (`OraclePage`, ferramenta de criação sem entrada na navegação)
+ * mostra só os 4 números com `NUMBER_MEANINGS`. A régua que impede exposição
+ * nova sem tradução é `numerologiaVocabulario.contract.test.ts`.
+ *
+ * Os NOMES dos campos (`karmicDebts`, `karmicLessons`, `challenges`,
+ * `pinnacles`, `hiddenPassion`) ficam como na origem — são API interna, com
+ * paridade ao laboratório (`teste-personalidade`), e renomear API não protege
+ * ninguém. O que se traduz é o que poderia virar TEXTO. Tabela para quem um
+ * dia for expor algo daqui (e só sobre a criatura, nunca sobre a pessoa):
+ *
+ * | interno            | NUNCA escrever                 | voz do app (PT / EN)                           |
+ * |--------------------|--------------------------------|------------------------------------------------|
+ * | `karmicDebts`      | dívida cármica / karmic debt   | marca antiga do padrão / an old mark on the pattern |
+ * | `karmicLessons`    | lição cármica / karmic lesson  | tom que o padrão ainda não tem / a tone the pattern does not carry yet |
+ * | `challenges`       | desafio / challenge            | travessia / crossing                            |
+ * | `pinnacles`        | pináculo / pinnacle            | maré / tide (§12 da bíblia: o ciclo da Malha)   |
+ * | `hiddenPassion`    | paixão oculta / hidden passion | tom mais forte do nome / the strongest tone in the name |
+ *
+ * A única string desta família que já existia como LText (`challenges[].label`)
+ * foi trocada para a coluna da direita.
  *
  * ---
  *
@@ -186,7 +216,9 @@ export function computeNumerology(fullName: string, birthDate: string, reference
           .filter(([, count]) => count === maxFrequency)
           .map(([digit]) => Number(digit));
 
-  // --- Challenges: absolute differences, never preserving master numbers. ---
+  // --- Challenges: absolute differences, never preserving master numbers.
+  //     Rótulos na voz do app ("travessia"/"crossing", nunca "desafio" —
+  //     ver a tabela do cabeçalho); as faixas de idade são as tradicionais. ---
   const m1 = reduce(month, false);
   const d1 = reduce(day, false);
   const y1 = reduce(year, false);
@@ -195,10 +227,10 @@ export function computeNumerology(fullName: string, birthDate: string, reference
   const c3 = Math.abs(c1 - c2);
   const c4 = Math.abs(m1 - y1);
   const challenges = [
-    { index: 1, value: c1, label: { pt: "Primeiro desafio (juventude)", en: "First challenge (youth)" } },
-    { index: 2, value: c2, label: { pt: "Segundo desafio (maturidade)", en: "Second challenge (maturity)" } },
-    { index: 3, value: c3, label: { pt: "Desafio principal (toda a vida)", en: "Main challenge (whole life)" } },
-    { index: 4, value: c4, label: { pt: "Quarto desafio (últimos anos)", en: "Fourth challenge (later years)" } },
+    { index: 1, value: c1, label: { pt: "Primeira travessia (juventude)", en: "First crossing (youth)" } },
+    { index: 2, value: c2, label: { pt: "Segunda travessia (maturidade)", en: "Second crossing (maturity)" } },
+    { index: 3, value: c3, label: { pt: "Travessia principal (toda a vida)", en: "Main crossing (whole life)" } },
+    { index: 4, value: c4, label: { pt: "Quarta travessia (últimos anos)", en: "Fourth crossing (later years)" } },
   ];
 
   // --- Pinnacles: sums, with master numbers preserved. ---
