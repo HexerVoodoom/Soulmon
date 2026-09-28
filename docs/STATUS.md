@@ -7,6 +7,32 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 28/09/2026 — Manual sincronizado com `83a9aac6`
+>
+> Delta `8110efc5..83a9aac6` (2 commits, PR #127). Docs tocados: 02 (§22
+> Oráculo), 06/utils (`oracle.ts`, `bestiary/select.ts`, `pipeline.ts`). Guard
+> verde. 00-MAPA/10-DISCUSSÕES/01-VISÃO sem edição de conteúdo (delta só
+> apontava `docs/STATUS.md`/`docs/BESTIARIO-PROCEDENCIA.md` como gatilho, sem
+> exigir mudança nesses três).
+>
+> ## 28/09/2026 — Oráculo passou a explorar de verdade o bestiário curado
+>
+> PR #127 (`83a9aac6`). Pedido do dono: garantir que o bestiário atualizado
+> (corte de procedência + curadoria + arquétipos, 27/09/2026) fosse bem
+> aproveitado na criação E na evolução do personagem, embasado só em dado
+> que já existe. Achados corrigidos, todos "dado calculado e descartado":
+> `bestiaryInspiration.familia`/`.biologia` nunca eram lidos por `oracle.ts`
+> (agora reforçam a escolha de família visual via nova ponte
+> `bestiaryFamilyIds`); a linhagem por estágio (`selectBestiaryLineage`) era
+> calculada e jogada fora em produção (agora cada forma de evolução usa o
+> pick da própria linhagem no prompt de imagem); ponte de família para
+> `humanoide` (via `biologia` real); rebalanceio dos 4 bônus fixos de
+> `scoreCreature` (teto 7→14, pedido explícito do dono) porque o termo de
+> elemento sozinho costumava superar todos os outros juntos. `ignea` ficou
+> **de propósito** sem ponte — é resíduo suspeito de bug, registrado como
+> pendência. Diagnóstico e detalhe completo: `docs/BESTIARIO-PROCEDENCIA.md`
+> §13.
+>
 > ## 28/09/2026 — Manual sincronizado com `8110efc5`
 >
 > Delta `1d9e278d..8110efc5` (2 commits, PR #125). NPC por sub-loja no lugar do
