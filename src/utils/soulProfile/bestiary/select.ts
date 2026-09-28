@@ -275,6 +275,24 @@ function selectFromPool(
   return { creature: chosen.creature, score: chosen.score, bandSize: band.length };
 }
 
+/**
+ * Peso de cada GRUPO no sorteio inicial (padrão 1). ⚠️ Fase 1 B3
+ * (28/09/2026): mesmo com chance igual DENTRO da faixa, a frequência com que
+ * cada grupo ENTRA na faixa varia com o catálogo (quantos reinos o listam em
+ * `REALM_TO_FAMILIAS`, quantos elementos comuns ele tem) — a auditoria mediu
+ * demônio 7,2% × aracnídeo 1,4% (5,3×). O peso compensa só essa frequência
+ * de entrada; quem entra continua sendo decidido pela leitura. Calibrado por
+ * simulação (seed 20260928), validado por `npm run oraculo:auditoria`.
+ * Exportado mutável só para o script de calibração.
+ */
+export const GRUPO_PESO: Record<string, number> = {
+  anfibio: 1.55, angelical: 1.13, aracnideo: 1.54, ave: 0.47, cnidario: 1.16,
+  construto: 0.98, crustaceo: 1.73, demonio: 0.88, elemental: 0.78,
+  etereo: 1.43, extraplanetario: 1.23, fungo: 1.65, geologico: 1.0,
+  humanoide: 0.57, inseto: 2.21, mamifero: 0.44, molusco: 2.1, monstro: 0.7,
+  morto_vivo: 0.94, peixe: 1.07, planta: 0.81, reptil: 1.08, verme: 1.49,
+};
+
 /** Grupos mínimos na faixa do sorteio inicial. */
 const MIN_GRUPOS = 6;
 /** Faixa DENTRO do grupo escolhido — mais larga que `BAND_WIDTH` porque o
@@ -303,7 +321,12 @@ function sortearPorGrupo(scored: { creature: BestiaryCreature; score: number }[]
   let faixa = grupos.filter(([, l]) => l[0].score >= top - BAND_WIDTH);
   if (faixa.length < MIN_GRUPOS) faixa = grupos.slice(0, MIN_GRUPOS);
   const rng = mulberry32(hashString(seedString));
-  const [, lista] = faixa[Math.floor(rng() * faixa.length)];
+  // Peso por grupo (Fase 1 B3) — ver `GRUPO_PESO`.
+  const pesos = faixa.map(([g]) => GRUPO_PESO[g] ?? 1);
+  let alvo = rng() * pesos.reduce((a, b) => a + b, 0);
+  let idx = faixa.length - 1;
+  for (let i = 0; i < faixa.length; i++) { alvo -= pesos[i]; if (alvo < 0) { idx = i; break; } }
+  const [, lista] = faixa[idx];
   const dentro = lista.filter(s => s.score >= lista[0].score - BAND_WIDTH_NO_GRUPO);
   const chosen = dentro[Math.floor(rng() * dentro.length)];
   const bandSize = faixa.reduce((n, [, l]) => n + l.filter(s => s.score >= l[0].score - BAND_WIDTH).length, 0);

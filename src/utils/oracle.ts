@@ -1310,7 +1310,7 @@ interface CreatureFamily {
 const sf = (pt: string, en: string, nounPt: string, nounEn: string): Subfamily =>
   ({ pt, en, noun: { pt: nounPt, en: nounEn } });
 
-const CREATURE_FAMILIES: CreatureFamily[] = [
+export const CREATURE_FAMILIES: CreatureFamily[] = [
   // ---- Animais ----
   { id: 'dinosaur', name: { pt: 'Dinossauro', en: 'Dinosaur' }, elements: ['terra', 'fogo'], realms: ['deserto', 'floresta', 'cavernas'], subs: [
     sf('ceratopsídeo', 'ceratopsian', 'triceratops', 'triceratops'),
@@ -1881,11 +1881,39 @@ const BESTIARY_FAMILY_PULL = 0.5;
  * declaração mais larga. Chance de inclusão ≈ 1 − P(nenhum dos 2 elementos
  * bate) × P(reino não bate).
  */
+/**
+ * Correção EMPÍRICA por família (id), multiplicada sobre o peso inverso de
+ * `pickFamiliaCompensada` (padrão 1). ⚠️ Fase 1 B3 (28/09/2026): o peso
+ * inverso só enxerga a DECLARAÇÃO (quantos elementos/reinos), não o que puxa
+ * a família de fora — o bestiário (`FAMILIA_TO_FAMILY_IDS`: Yokai vem de
+ * etéreo E demônio) e os motivos de `MOTIVO_ELEMENTO_CLASSE`. Estrutural
+ * (N=2400): Yokai 3,3% × Primata 0,7% (4,6×). Calibrado por simulação (seed
+ * 20260928); exportado mutável só para o script de calibração.
+ */
+export const FAMILIA_PESO: Record<string, number> = {
+  amphibian: 0.43, aquamyth: 1.97, beetle: 1.57, bovine: 1.71, butterfly: 1.94,
+  canine: 0.42, carniplant: 2.29, celestial: 0.87, cephalopod: 0.35,
+  cetacean: 1.56, chimeric: 1.33, chiroptera: 1.23, cnidarian: 0.29,
+  construct: 0.48, corvid: 1.64, crab: 0.89, deepsea: 1.63, deer: 1.24,
+  desertplant: 1.6, dinosaur: 1.31, dragon: 0.95, dragonfly: 2.12, eel: 1.55,
+  elemental: 1.16, equine: 1.76, extraterrestrial: 0.16, fae: 0.78,
+  feline: 1.47, fiend: 0.48, flower: 1.68, fruitgourd: 1.79, fungus: 0.37,
+  genie: 1.33, geological: 0.15, ghost: 1.52, giantkin: 0.94, goblinoid: 1.96,
+  golem: 1.11, halfhuman: 1.56, hymenopteran: 0.3, lobster: 0.86, lycan: 1.23,
+  mantis: 1.64, mustelid: 2.52, myriapod: 1.11, ornamentalbird: 1.78,
+  orthopteran: 1.6, owl: 1.52, pelagicfish: 1.41, primate: 2.68,
+  proboscidean: 1.3, raptor: 1.58, ratite: 1.25, reeffish: 1.8, reptile: 0.91,
+  rodent: 1.85, scorpion: 0.76, seabird: 2.1, shark: 1.97, skeleton: 1.52,
+  slime: 1.93, songbird: 2.55, spider: 0.78, tree: 1.26, unicornkin: 0.8,
+  ursine: 2.02, vampire: 1.83, vine: 2.47, waterfowl: 1.75, worm: 0.63,
+  yokai: 0.34, zombie: 1.09,
+};
+
 function pickFamiliaCompensada(rng: () => number, pool: CreatureFamily[]): CreatureFamily {
   const peso = (f: CreatureFamily) => {
     const semElemento = Math.pow(1 - Math.min(f.elements.length, 8) / 8, 2);
     const semReino = 1 - Math.min(f.realms.length, 9) / 9;
-    return 1 / Math.max(0.05, 1 - semElemento * semReino);
+    return (FAMILIA_PESO[f.id] ?? 1) / Math.max(0.05, 1 - semElemento * semReino);
   };
   const total = pool.reduce((s, f) => s + peso(f), 0);
   let alvo = rng() * total;

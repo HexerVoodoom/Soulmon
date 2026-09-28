@@ -230,6 +230,20 @@ it('auditoria do oráculo — C1/C2/C3/C4/C7/C8, N>=800, seeds de validação', 
     }
   }
 
+  // ---- C4 ESTRUTURAL (Fase 1 B3): 72 famílias visuais em N=800 dão ~11 por
+  // caixa e piso de ruído ~4,75× — a razão topo/piso ali mede a roleta. Aqui
+  // N=2400 extra (população mista, seeds de validação +29), só grupo/família.
+  const c4e = { grupo: {} as Record<string, number>, familia: {} as Record<string, number>, n: 0 };
+  for (const seed of SEEDS) {
+    const ps = pessoas(seed + 29, 1200);
+    for (let i = 0; i < ps.length; i++) {
+      const r = await generateOracleComplete(ps[i].input, 9000 + seed + i);
+      inc(c4e.grupo, String(r.bestiaryPick.creature.familia));
+      inc(c4e.familia, r.result.creature.family.primary.family.pt);
+      c4e.n++;
+    }
+  }
+
   // ---- C8: colisão de NOME DA CRIATURA (não do humano), excluindo premade.
   const nomesNaoPremade = Object.entries(M.nomeCriatura).filter(([nome]) => !premadeNomes.has(nome));
   const totalNaoPremade = nomesNaoPremade.reduce((a, [, v]) => a + v, 0);
@@ -264,6 +278,7 @@ it('auditoria do oráculo — C1/C2/C3/C4/C7/C8, N>=800, seeds de validação', 
     c4_grupos: {
       grupoBestiario: { ...razao(M.grupoBestiario, n), fatia: M.grupoBestiario },
       familiaVisual: { ...razao(M.familiaVisual, n), fatia: M.familiaVisual },
+      estrutural: { n: c4e.n, grupoBestiario: { ...razao(c4e.grupo, c4e.n), fatia: c4e.grupo }, familiaVisual: { ...razao(c4e.familia, c4e.n), fatia: c4e.familia } },
     },
     c7_linhagem: {
       taxaAtravessaFamilia: +(atravessaram / n).toFixed(3),
@@ -286,8 +301,8 @@ it('auditoria do oráculo — C1/C2/C3/C4/C7/C8, N>=800, seeds de validação', 
       completo: fatiaEstrutural('completo'),
     },
     naoCoberto: [
-      'C5 (fidelidade direcional por eixo) — desenhado em rodada2-regua.md §5, não implementado nesta rodada.',
       'C9 (divergência comportamental / trajetória) — Fase 1, plano §6.',
+      'C5 (fidelidade direcional por eixo) — desenhado em rodada2-regua.md §5, não implementado nesta rodada.',
       'reroll — desenho pendente (rodada2-regua.md §8).',
       'rebirth (orçamento ×1.5) — fora do escopo da régua C1-C8 por decisão registrada em rodada2-regua.md §8.',
       'nome não-latino/vazio/gigante — robustez de entrada, não distribuição; fica para o sweeper de robustez.',
@@ -339,6 +354,8 @@ ${linhaEixo('Escola', relatorio.c3_escolaDominante)}
 |---|---|---|---|---|
 ${linhaEixo('Grupo do bestiário', relatorio.c4_grupos.grupoBestiario)}
 ${linhaEixo('Família visual', relatorio.c4_grupos.familiaVisual)}
+${linhaEixo('Grupo — estrutural N=' + relatorio.c4_grupos.estrutural.n, relatorio.c4_grupos.estrutural.grupoBestiario)}
+${linhaEixo('Família visual — estrutural N=' + relatorio.c4_grupos.estrutural.n, relatorio.c4_grupos.estrutural.familiaVisual)}
 
 ## C7 — linhagem
 
