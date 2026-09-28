@@ -287,6 +287,61 @@ export function generateOracleAxes(inputs: OracleAxesInput): OracleAxes {
     alignments[NUMBER_ALIGNMENT[n]] += 4;
   }
 
+  // ---- Peso do CAMINHO sobre o elemento (pedido do dono, 28/09/2026):
+  // "cada um dos 3 caminhos [tenha] 1/3 dos elementos neutro, 1/3 favorecido
+  // e 1/3 dificultado [...] talvez 20% de influência". Tabela declarada, não
+  // fórmula — mais fácil de auditar e de o dono corrigir do que coeficientes
+  // escondidos em soma ponderada. Cada caminho classifica os 8 elementos (3
+  // favorecidos / 3 neutros / 2 dificultados — a partição mais perto de
+  // terços que FECHA sem duplicar dificultado no mesmo elemento em dois
+  // caminhos, ver nota de robustez abaixo) e o efeito é um multiplicador
+  // flat de ±20% sobre o escore CRU do elemento — modesto de propósito:
+  // nenhum par vira impossível (`elementoOcorrencia.test.ts` segue travando
+  // o piso de 5% por elemento), só mais ou menos provável dentro do que a
+  // pessoa já é.
+  //
+  // A lógica temática (não é psicologia real, é vocabulário de jogo):
+  // - `poder` (domínio, força, assertividade) favorece o intenso/
+  //   confrontador (fogo/sombra/terra), dificulta o gentil (agua/luz) — é
+  //   aqui que poder+sombra fica fácil.
+  // - `benevolencia` (cuidado, bondade) favorece o gentil/nutritivo
+  //   (luz/agua/planta), dificulta o frio/intenso (sombra/industrial) — é
+  //   aqui que benevolencia+luz fica fácil e benevolencia+sombra fica
+  //   difícil (nunca impossível — dificultado é ×0.8, não zero).
+  // - `harmonia` (equilíbrio, abertura) favorece o que flui/estrutura
+  //   (ar/agua/industrial), dificulta os dois elementos "quentes"
+  //   (fogo/terra) — fica de fora dos extremos sombra/luz de propósito
+  //   (neutro nos dois), porque `harmonia` é o caminho mais comum
+  //   (`ROLE_ALIGNMENT` manda 2 papéis pra ele) e dificultar um elemento já
+  //   fragilizado (sombra) em DOIS dos três caminhos foi medido derrubando a
+  //   dominância dele abaixo do piso de 5% — cada elemento historicamente
+  //   fraco (sombra/luz/planta/industrial/agua — ver os comentários deles
+  //   acima) recebe DIFICULTADO em NO MÁXIMO um caminho.
+  //
+  // Réguas: `elementoOcorrencia.test.ts` (piso/teto de dominância intactos)
+  // e `alinhamentoElemento.test.ts` (a assimetria pedida, nova).
+  const FAVORECIDO = 1.15;
+  const DIFICULTADO = 0.85;
+  const ALIGNMENT_ELEMENT_AFFINITY: Record<AlignmentId, Partial<Record<ElementId, number>>> = {
+    poder: {
+      fogo: FAVORECIDO, sombra: FAVORECIDO, terra: FAVORECIDO,
+      agua: DIFICULTADO, luz: DIFICULTADO,
+    },
+    harmonia: {
+      ar: FAVORECIDO, agua: FAVORECIDO, industrial: FAVORECIDO,
+      fogo: DIFICULTADO, terra: DIFICULTADO,
+    },
+    benevolencia: {
+      luz: FAVORECIDO, agua: FAVORECIDO, planta: FAVORECIDO,
+      sombra: DIFICULTADO, industrial: DIFICULTADO,
+    },
+  };
+  const dominantAlignment = argmax(alignments, ALIGNMENT_ORDER);
+  const affinity = ALIGNMENT_ELEMENT_AFFINITY[dominantAlignment];
+  for (const e of ELEMENT_ORDER) {
+    elements[e] *= affinity[e] ?? 1;
+  }
+
   // ---- Reinos: escore dos elementos pela tabela de geografia do mundo do
   // próprio Soulmon, mais o mesmo tipo de "assinatura" determinística por
   // pessoa que o oracle.ts adiciona (`hashString(...) % 4`) — sem ela, todo
@@ -410,7 +465,7 @@ export function generateOracleAxes(inputs: OracleAxesInput): OracleAxes {
     classElements: sharedClassElements,
     dominantElement: argmax(elements, ELEMENT_ORDER),
     dominantRole: argmax(roles, ROLE_ORDER),
-    dominantAlignment: argmax(alignments, ALIGNMENT_ORDER),
+    dominantAlignment,
     dominantRealm: argmax(realms, REALM_ORDER),
     dominantClassElements: computeDominantClassElements(sharedClassElements),
   };
