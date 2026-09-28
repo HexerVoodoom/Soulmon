@@ -58,6 +58,7 @@ import {
 } from './utils/safeStorage';
 import { hashString, creatureFormId } from './utils/oracle';
 import type { OracleInput, OracleResult } from './utils/oracle';
+import type { Manifestacao } from './utils/soulProfile/ficha/manifestacaoSave';
 import { applyDecorEquip, type SlotId } from './utils/petStage';
 
 // Identidades estáveis: CompanionHUD é memo() e um `?? {}` inline cria um
@@ -3630,6 +3631,37 @@ export default function App() {
     setGameState(prev => (prev.soulmonClassTitles ? prev : { ...prev, soulmonClassTitles: titles }));
   }, [setGameState]);
 
+  // Fase 3 do Oráculo (decisão 2): o companheiro visível e nomeado, mesmo
+  // padrão de cache — grava uma vez, nunca sobrescreve o que já está no save.
+  const handleCompanheiroComputed = useCallback((companheiro: NonNullable<GameState['soulmonCompanheiro']>) => {
+    setGameState(prev => (prev.soulmonCompanheiro ? prev : { ...prev, soulmonCompanheiro: companheiro }));
+  }, [setGameState]);
+
+  /* Fase 3 do Oráculo (§3, "nenhum cálculo sem manifestação"): talento →
+     fala do pet, profissão → jeito na masmorra. Computado AQUI, na primeira
+     abertura com perfil, e não só quando a Ficha é visitada — a Home e a fenda
+     são as superfícies que consomem, então o cache não pode depender de uma
+     visita à página do Pet (o precedente de `soulmonSkills` tem esse buraco).
+     Imports dinâmicos: só a ficha (0,06 ms), nunca o barril `soulProfile`. */
+  const manifestacaoPronta = !!gameState.soulmonManifestacao;
+  useEffect(() => {
+    if (manifestacaoPronta) return;
+    const saved = readJson<(OracleInput & { seed: number }) | null>(STORAGE_KEYS.SOULMON_PROFILE, null);
+    if (!saved?.soulProfile) return;
+    let vivo = true;
+    Promise.all([
+      import('./utils/soulProfile/ficha/fromInput'),
+      import('./utils/soulProfile/identity'),
+      import('./utils/soulProfile/ficha/manifestacao'),
+    ]).then(([{ buildFichaESkills }, { identityKey }, { manifestacaoDaFicha }]) => {
+      if (!vivo) return;
+      const m = manifestacaoDaFicha(buildFichaESkills(saved, identityKey(saved)).fichaByStage);
+      setGameState(prev => (prev.soulmonManifestacao ? prev : { ...prev, soulmonManifestacao: m }));
+    }).catch(() => { /* perfil corrompido: a masmorra e a voz seguem no padrão */ });
+    return () => { vivo = false; };
+  }, [manifestacaoPronta, setGameState]);
+  const manifestacaoAtual = gameState.soulmonManifestacao?.[getStageLevel(gameState.evolutionStage) as keyof Manifestacao];
+
   const handleToggleEvolutionLock = useCallback(() => {
     setGameState(prev => ({ ...prev, evolutionLocked: !(prev.evolutionLocked ?? false) }));
   }, []);
@@ -5150,6 +5182,8 @@ export default function App() {
               onSkillsComputed={handleSkillsComputed}
               savedClassTitles={gameState.soulmonClassTitles}
               onClassTitlesComputed={handleClassTitlesComputed}
+              savedCompanheiro={gameState.soulmonCompanheiro}
+              onCompanheiroComputed={handleCompanheiroComputed}
               language={language}
             /></Suspense>
           )}
@@ -5530,6 +5564,8 @@ export default function App() {
                 evolutionStage={gameState.evolutionStage}
                 demoCharacterId={gameState.demoCharacterId}
                 skills={gameState.soulmonSkills}
+                profissao={manifestacaoAtual?.profissao}
+                profissaoNome={manifestacaoAtual?.profissaoNome}
                 onEarnPoints={handleEarnGamePoints}
                 /* Exploração + Jogos: os MESMOS handlers que a antiga
                    `ActivitiesPage` recebia. */
@@ -5621,6 +5657,7 @@ export default function App() {
                 triggerMessage={messageTrigger}
                 energyPoints={gameState.energyPoints}
                 maxEnergyPoints={getMaxEnergyForStage(gameState.evolutionStage)}
+                talento={manifestacaoAtual?.talento}
                 equippedDecor={gameState.equippedDecor ?? EMPTY_DECOR}
                 trophies={gameState.trophies ?? EMPTY_TROPHIES}
                 fullSignal={fullSignal}

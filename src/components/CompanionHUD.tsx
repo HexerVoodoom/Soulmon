@@ -191,6 +191,10 @@ interface CompanionHUDProps {
   bondLevel?: number;
   /** WP3.10 — traço de nascimento (`utils/passives.ts`), para a voz. */
   petPassive?: string;
+  /** Fase 3 do Oráculo — o talento dominante da ficha do estágio
+   *  (`ficha/manifestacao.ts`): vira traço de personalidade na fala
+   *  (`utils/talentoVoice.ts`), a `TALENTO_VOICE_RATE` das falas de ócio. */
+  talento?: string | null;
   /** WP2.7 — dias fora, de `lastDayReport.daysAway`. 0 = não houve ausência. */
   daysAway?: number;
   /** WP3.1 — humor do check-in de hoje (`MoodValue` 1..5), ou `null`. O chat
@@ -277,6 +281,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   hauntedWatching = false,
   daysAway = 0,
   petPassive,
+  talento = null,
   bondLevel,
   moodToday,
   demoTint,
@@ -430,6 +435,28 @@ export const CompanionHUD = memo(function CompanionHUD({
   // Always-current snapshot of props for stable intervals
   const propsRef = useRef({ useAI, language, currentStage, companionMood, evolutionStage, dominantBranch, aiSettings, healthPoints, energyPoints, maxEnergy, maxHealthPoints, careEvent, isSleeping, daysAway });
   propsRef.current = { useAI, language, currentStage, companionMood, evolutionStage, dominantBranch, aiSettings, healthPoints, energyPoints, maxEnergy, maxHealthPoints, careEvent, isSleeping, daysAway };
+
+  /* Fase 3 do Oráculo — a fala do TALENTO. A tabela (65 pares PT+EN,
+     `utils/talentoVoice.ts`) entra por import DINÂMICO: no bundle de entrada
+     ela custava ~9 KB contra o orçamento de bytes (decisão #31), para uma
+     frase que só existe com perfil. Resolvida uma vez por (talento, idioma);
+     até chegar, a escada genérica fala — nunca um vazio. */
+  const talentoRef = useRef<{ fala: string; taxa: number } | null>(null);
+  useEffect(() => {
+    talentoRef.current = null;
+    if (!talento) return;
+    let vivo = true;
+    import('../utils/talentoVoice').then(({ talentoLine, TALENTO_VOICE_RATE }) => {
+      if (!vivo) return;
+      const fala = talentoLine(talento, language === 'pt-BR');
+      talentoRef.current = fala ? { fala, taxa: TALENTO_VOICE_RATE } : null;
+    }).catch(() => { /* sem o traço — a escada genérica já funcionava sozinha */ });
+    return () => { vivo = false; };
+  }, [talento, language]);
+  const falaDoTalento = (): string | undefined => {
+    const t = talentoRef.current;
+    return t && Math.random() < t.taxa ? t.fala : undefined;
+  };
 
   // speak: strips all emojis, shows bubble, auto-hides after durationMs
   const speak = useCallback((text: string, durationMs = 4000) => {
@@ -713,6 +740,13 @@ export const CompanionHUD = memo(function CompanionHUD({
         ? petVoiceLine('lowHp', true, Math.random())
         : petVoiceLine('lowHp', false, Math.random());
       if (ratio >= 1) return petVoiceLine('energized', isPt, Math.random());
+      // Fase 3 do Oráculo: nos degraus sem urgência ('fine'/'idle'), o TALENTO
+      // da ficha fala às vezes — o traço de personalidade que o class-system
+      // manifesta sem nunca mostrar a ficha (`utils/talentoVoice.ts`).
+      if (ratio >= 0.35) {
+        const traco = falaDoTalento();
+        if (traco) return traco;
+      }
       if (ratio >= 0.6) return petVoiceLine('fine', isPt, Math.random());
       if (ratio >= 0.35) return isPt
         ? petVoiceLine('idle', true, Math.random())
@@ -764,11 +798,14 @@ export const CompanionHUD = memo(function CompanionHUD({
     const hpRatio = maxHealthPoints > 0 ? healthPoints / maxHealthPoints : 0;
     const isPt = language === 'pt-BR';
     let fallback: string;
+    // o mesmo traço do ócio, no toque (Fase 3 do Oráculo) — só nos degraus sem urgência
+    const traco = ratio >= 0.35 ? falaDoTalento() : undefined;
     // 22/09/2026 — mesma escada do ócio; as frases moram em `utils/petVoice.ts`.
     if (careEvent?.type === 'poop') fallback = petVoiceLine('dirty', isPt, Math.random());
     else if (careEvent?.type === 'food') fallback = petVoiceLine('hungry', isPt, Math.random());
     else if (hpRatio <= 0.25) fallback = petVoiceLine('lowHp', isPt, Math.random());
     else if (ratio >= 1) fallback = petVoiceLine('energized', isPt, Math.random());
+    else if (traco) fallback = traco;
     else if (ratio >= 0.6) fallback = petVoiceLine('fine', isPt, Math.random());
     else if (ratio >= 0.35) fallback = petVoiceLine('idle', isPt, Math.random());
     else if (ratio >= 0.1) fallback = petVoiceLine('peckish', isPt, Math.random());

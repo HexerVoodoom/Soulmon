@@ -13,6 +13,8 @@ import {
   type DungeonEnemy,
 } from '../utils/dungeon';
 import { buildRunScenes, DUNGEON_SCENES, type DungeonScene } from '../utils/dungeonScenes';
+import { jeitoDaProfissao, fraseDaProfissao } from '../utils/profissaoMasmorra';
+import type { LText } from '../utils/oracle';
 import type { Language } from '../utils/i18n';
 
 /**
@@ -44,8 +46,12 @@ import type { Language } from '../utils/i18n';
  */
 
 export const MAX_FLOORS = 5;
-const PERFECT = 0.92;
-const DEFEND_TIME = 3.0;   // seconds to react on defense
+/* Fase 3 do Oráculo: o limiar do PERFEITO, o tempo de defesa, a cura por
+   camada e as velocidades das barras são os valores de `JEITO_PADRAO`
+   (`utils/profissaoMasmorra.ts`), e a PROFISSÃO da ficha move UM deles de
+   leve — é o "jeito de agir na masmorra" (PLANO-ORACULO.md §3). Sem
+   profissão, a masmorra é exatamente a de antes. */
+const DEFEND_TIME = 3.0;   // seconds to react on defense (base; the craft may add)
 const POPUP_MS = 1400;     // how long result popups stay before the next phase
 // Bits for clearing a floor — scales with how deep you are (10/15/20/25/30).
 export const clearBonus = (floor: number) => 10 + 5 * (floor - 1);
@@ -54,10 +60,18 @@ type Phase = 'intro' | 'attack' | 'defend' | 'result' | 'enemy-down' | 'floor-cl
 interface Popup { icon: string; title: string; detail: string }
 
 // ── Game ───────────────────────────────────────────────────────────────────
-export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter, onLose, onHeartDrop, onGlitchtama, onFloorCleared, onEnemyDefeated, onEarnPoints, onExit, bits = 0, onSpendBits }: {
+export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profissaoNome, language, onEnter, onLose, onHeartDrop, onGlitchtama, onFloorCleared, onEnemyDefeated, onEarnPoints, onExit, bits = 0, onSpendBits }: {
   evolutionStage: string;
   /** Modo demo (utils/monetization.ts): personagem pré-pronto — sobrepõe o sprite do pet (nunca dos inimigos). */
   demoCharacterId?: string;
+  /** Fase 3 do Oráculo — id da profissão da ficha (`ficha/manifestacao.ts`).
+   *  Ausente = `JEITO_PADRAO`. Nunca toca Bits, drops nem dificuldade. */
+  profissao?: string | null;
+  /** O nome do ofício, já PT+EN (vem do cache `soulmonManifestacao`) — este
+   *  componente NÃO importa o snapshot do class-system: `buildSheet.ts`
+   *  arrasta o `oracle.ts` inteiro, e a folha lazy da fenda passava a demorar
+   *  segundos para abrir. Sem nome, a linha do lobby não aparece. */
+  profissaoNome?: LText | null;
   language: Language;
   /** Inicia a run. Sem gate: a masmorra não cobra da barra de cuidado. */
   onEnter: () => { ok: true; level: number; best: number };
@@ -88,7 +102,13 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
   onExit: () => void;
 }) {
   const isPt = language === 'pt-BR';
-  const playerStats = playerStatsFor(evolutionStage);
+  const jeito = jeitoDaProfissao(profissao);
+  const base = playerStatsFor(evolutionStage);
+  const playerStats = { hp: Math.round(base.hp * jeito.hp), dmg: base.dmg * jeito.dmg };
+  const PERFECT = jeito.perfeito;
+  const defendTime = DEFEND_TIME + jeito.tempoDefesaExtra;
+  const profissaoRotulo = profissao && profissaoNome ? (isPt ? profissaoNome.pt : profissaoNome.en) : undefined;
+  const profissaoFrase = fraseDaProfissao(profissao, isPt);
 
   const [enemies, setEnemies] = useState<DungeonEnemy[]>([]);
   const [enemyIdx, setEnemyIdx] = useState(0);
@@ -100,7 +120,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
   const [rewardMsg, setRewardMsg] = useState('');
   /** O coraçãozinho caiu neste inimigo (JOGO-10) — vira glifo, não emoji na string. */
   const [gotHeart, setGotHeart] = useState(false);
-  const [defendTimeLeft, setDefendTimeLeft] = useState(DEFEND_TIME);
+  const [defendTimeLeft, setDefendTimeLeft] = useState(defendTime);
   const [baseLevel, setBaseLevel] = useState(() => getDungeonDifficulty());
   const [floor, setFloor] = useState(1);
   const [best, setBest] = useState(() => getDungeonBest());
@@ -177,7 +197,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
   const handleAttack = (acc: number) => {
     const crit = acc >= PERFECT;
     const raw = playerStats.dmg * (0.25 + 0.75 * acc * acc) * (crit ? 1.5 : 1);
-    const dmg = Math.max(1, Math.round(raw * (1 - enemy.dmgReduction)));
+    const guarda = enemy.dmgReduction * (1 - jeito.atravessaGuarda);
+    const dmg = Math.max(1, Math.round(raw * (1 - guarda)));
     const newHp = Math.max(0, enemyHp - dmg);
     setEnemyHp(newHp);
     flash('enemy');
@@ -195,7 +216,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
     after(POPUP_MS, () => {
       setPopup(null);
       defendResolvedRef.current = false;
-      setDefendTimeLeft(DEFEND_TIME);
+      setDefendTimeLeft(defendTime);
       setPhase('defend');
     });
   };
@@ -206,7 +227,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
     defendResolvedRef.current = true;
 
     if (!timedOut && acc >= PERFECT) {
-      const counter = Math.max(1, Math.round(2 * (1 - enemy.dmgReduction)));
+      const counter = Math.max(1, Math.round(2 * jeito.contraAtaque * (1 - enemy.dmgReduction)));
       const newEnemyHp = Math.max(0, enemyHp - counter);
       setEnemyHp(newEnemyHp);
       flash('enemy');
@@ -223,7 +244,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
     }
 
     const effAcc = timedOut ? 0 : acc;
-    const taken = Math.max(1, Math.ceil(enemy.atk * (1 - effAcc)));
+    const taken = Math.max(1, Math.ceil(enemy.atk * (1 - effAcc)) - jeito.reducaoDano);
     const newHp = Math.max(0, playerHp - taken);
     setPlayerHp(newHp);
     flash('player');
@@ -286,7 +307,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
         setPhase('run-complete');
         return;
       }
-      const heal = Math.ceil(playerStats.hp * 0.25);
+      const heal = Math.ceil(playerStats.hp * jeito.curaAndar);
       setPlayerHp(hp => Math.min(playerStats.hp, hp + heal));
       setRewardMsg(isPt ? `Recuperou ${heal} de HP` : `Recovered ${heal} HP`);
       setPhase('floor-clear');
@@ -396,6 +417,14 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
               ? 'Aqui o assentamento falhou e as camadas se empilharam. Ninguém mora numa fenda.'
               : 'Here the settling failed and the layers piled up. Nobody lives in a rift.'}
           </p>
+          {/* Fase 3 do Oráculo: o OFÍCIO da ficha e o jeito dele na fenda —
+              uma palavra nomeada e uma frase de mundo sobre a criatura; o
+              número fica dentro da run. Sem profissão, nada aqui. */}
+          {profissaoRotulo && profissaoFrase && (
+            <p style={phaseLine} data-profissao={profissao}>
+              {isPt ? `Ofício ${profissaoRotulo} — ${profissaoFrase}` : `${profissaoRotulo} craft — ${profissaoFrase}`}
+            </p>
+          )}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
             <button type="button" onClick={startRun} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 320 }}>
               {/* Copy §4: fenda se DESCE; não se "entra" nem se "inicia run". */}
@@ -447,7 +476,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
               <p style={phaseTitle}>
                 {isPt ? 'Seu turno — mire no centro!' : 'Your turn — aim for the center!'}
               </p>
-              <TimingBar key={`atk-${floor}-${enemyIdx}-${enemyHp}-${playerHp}`} speed={enemy.speed} label={isPt ? 'Atacar!' : 'Attack!'} onStop={handleAttack} />
+              <TimingBar key={`atk-${floor}-${enemyIdx}-${enemyHp}-${playerHp}`} speed={enemy.speed * jeito.velocidadeAtaque} label={isPt ? 'Atacar!' : 'Attack!'} onStop={handleAttack} />
             </>
           )}
           {phase === 'defend' && (
@@ -458,7 +487,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
                 {isPt ? `${enemy.name} atacando — desvie!` : `${enemy.name} attacking — dodge!`}{' '}
                 <span className="sm2-num">{defendTimeLeft.toFixed(1)}s</span>
               </p>
-              <TimingBar key={`def-${floor}-${enemyIdx}-${enemyHp}-${playerHp}`} speed={enemy.speed * 1.2} label={isPt ? 'Desviar!' : 'Dodge!'} onStop={a => handleDefend(a)} />
+              <TimingBar key={`def-${floor}-${enemyIdx}-${enemyHp}-${playerHp}`} speed={enemy.speed * 1.2 * jeito.velocidadeDefesa} label={isPt ? 'Desviar!' : 'Dodge!'} onStop={a => handleDefend(a)} />
             </>
           )}
           {phase === 'result' && popup && (
