@@ -79,6 +79,10 @@ export interface AreaViewProps {
   evolutionStage: string;
   demoCharacterId?: string;
   skills?: Partial<Record<FichaStage, StageSkills>>;
+  /** Fase 3 do Oráculo — a profissão da ficha (`ficha/manifestacao.ts`), o
+   *  jeito de agir na fenda (`utils/profissaoMasmorra.ts`). Só a masmorra lê. */
+  profissao?: string | null;
+  profissaoNome?: { pt: string; en: string } | null;
   onEarnPoints: (points: number) => void;
   /** Exploração + Jogos (F5). */
   play: PlayHandlers;
@@ -219,6 +223,8 @@ export function AreaView(props: AreaViewProps) {
               <DungeonGame
                 evolutionStage={props.evolutionStage}
                 demoCharacterId={props.demoCharacterId}
+                profissao={props.profissao}
+                profissaoNome={props.profissaoNome}
                 language={language}
                 onEnter={play.onDungeonEnter}
                 onLose={play.onDungeonLose}
