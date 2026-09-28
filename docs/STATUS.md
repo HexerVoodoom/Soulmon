@@ -15,6 +15,18 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > apontava `docs/STATUS.md`/`docs/BESTIARIO-PROCEDENCIA.md` como gatilho, sem
 > exigir mudança nesses três).
 >
+> ## 28/09/2026 — Criação única e proporcional (3 loops) + manual sincronizado com `cf8a851d`
+>
+> PR #133. Antes (N=400) → depois (900, 3 seeds): elementos 5,4× → 1,13×;
+> caminhos 46/32,5/21,5 → ~36/36/28%; famílias visuais 13 → 44/44;
+> companheiros 12 → 32/32; classes 72 → 78/79; evolução que atravessa
+> família 21 → 43%; tupla visível única 26 → 95%. Régua nova
+> `criacaoDistribuicao.test.ts` (seed fora da calibração). **Pendências do
+> dono** (sem decisão tomada, detalhe em `REGISTRO-DE-DECISOES.md` §5.3):
+> corpus do bestiário 55% `besta` / 3 `ave` (conserto é sync com o repo
+> irmão); `combate_fisico` 40% (proporção clássica documentada); "Arauto do
+> Fim" inalcançável; akasha ~2% / pântano ~4%.
+>
 > ## 28/09/2026 — Revisão do sistema de criação (3 loops) + manual sincronizado com `f465d266`
 >
 > PR #131. Companheiro capturável (calculado e descartado) passa a fechar a
