@@ -876,6 +876,41 @@ export const ORACLE_QUESTIONS: OracleQuestion[] = [
   },
 ];
 
+/**
+ * Escala do efeito do ritual por chave, para que NENHUM elemento/caminho
+ * ganhe só por aparecer em mais opções das perguntas. ⚠️ Achado do Loop B
+ * (28/09/2026): com respostas uniformes, o ganho esperado por pessoa era
+ * sombra 2,42 · ar 1,67 · luz 1,37 · … · industrial 0,75 (sombra em 6
+ * opções, industrial em 1), e harmonia 4,15 contra benevolência 3,0 — o
+ * ritual inclinava a população inteira antes de qualquer resposta dizer algo
+ * da pessoa. A escala = média esperada ÷ esperado da chave: cada resposta
+ * continua apontando o MESMO elemento/caminho, só a moeda é igualada.
+ * Derivada das próprias perguntas (não é tabela à mão): mudar uma opção
+ * recalibra sozinha. Usada pelo caminho do perfil novo em `generateOracle`
+ * e por `soulProfile/ritualAnswers.ts` — o caminho legado fica intocado.
+ */
+function escalaDoRitual<K extends string>(chaves: readonly K[], efeito: (fx: QuestionEffects) => Partial<Record<K, number>> | undefined): Record<K, number> {
+  const esperado = Object.fromEntries(chaves.map(k => [k, 0])) as Record<K, number>;
+  for (const q of ORACLE_QUESTIONS) {
+    for (const o of q.options) {
+      for (const [k, v] of Object.entries(efeito(o.effects) ?? {}) as Array<[K, number]>) {
+        if (k in esperado) esperado[k] += v / q.options.length;
+      }
+    }
+  }
+  const presentes = chaves.filter(k => esperado[k] > 0);
+  const media = presentes.reduce((s, k) => s + esperado[k], 0) / (presentes.length || 1);
+  return Object.fromEntries(chaves.map(k => [k, esperado[k] > 0 ? media / esperado[k] : 1])) as Record<K, number>;
+}
+
+export const RITUAL_ELEMENT_SCALE = escalaDoRitual(ELEMENT_ORDER, fx => fx.elements);
+/** Ver o uso em `generateOracle` (caminho do perfil novo). Pontos de share
+ *  (a média de um elemento é 12,5). */
+const ELEMENT_DOMINANCE_COMPENSATION: Record<ElementId, number> = {
+  agua: 0.2, fogo: -0.8, terra: -0.5, ar: -0.9, sombra: 1.2, luz: 0.1, planta: 0.5, industrial: 0.6,
+};
+export const RITUAL_ALIGNMENT_SCALE = escalaDoRitual(ALIGNMENT_ORDER, fx => fx.alignments);
+
 // ----- Alinhamento (poder / harmonia / benevolência) -----
 
 export const NUMBER_ALIGNMENT: Record<number, AlignmentId> = {
@@ -1610,6 +1645,26 @@ function makeSlot(fam: CreatureFamily, sub: Subfamily): FamilySlot {
  *  - Slot 2 (impacto menor): ~65% MESMA família (mono), ~30% 2ª família
  *    distinta, ~5% um OBJETO (pool especial, só aqui).
  */
+/** Famílias/subfamílias citadas pelo nome num texto já normalizado. */
+function familiasCitadas(text: string): Array<{ f: CreatureFamily; s: Subfamily }> {
+  if (!text) return [];
+  return CREATURE_FAMILIES.flatMap(f => f.subs.filter(s =>
+    text.includes(normalizeText(s.noun.en)) || text.includes(normalizeText(s.noun.pt)) ||
+    text.includes(normalizeText(f.name.en)) || text.includes(normalizeText(f.name.pt)),
+  ).map(s => ({ f, s })));
+}
+
+/**
+ * Chance de o slot 1 seguir a sugestão do bestiário (quando há sugestão
+ * compatível com a afinidade). ⚠️ Achado do Loop A (28/09/2026, N=400): com
+ * a sugestão do bestiário DETERMINÍSTICA, só 13 das 44 famílias apareciam
+ * (Canino 28% — toda inspiração "Cão" virava Canino, sempre) e a tupla
+ * visível (elemento, família, base) colidia em 74% dos perfis. Como
+ * puxão, o bestiário segue pesando — metade das vezes decide sozinho —
+ * mas a afinidade elemento/reino da PESSOA volta a ter voz.
+ */
+const BESTIARY_FAMILY_PULL = 0.5;
+
 function pickFamilies(
   rng: () => number,
   dominantElement: ElementId,
@@ -1617,14 +1672,10 @@ function pickFamilies(
   dominantRealm: RealmId,
   descText: string,
   bestiaryFamilyHint?: string[] | null,
+  bestiaryText?: string,
 ): FamilyResult {
-  // Descrição do pet: procura família/subfamília citada pelo nome
-  const mentioned = descText
-    ? CREATURE_FAMILIES.flatMap(f => f.subs.filter(s =>
-        descText.includes(normalizeText(s.noun.en)) || descText.includes(normalizeText(s.noun.pt)) ||
-        descText.includes(normalizeText(f.name.en)) || descText.includes(normalizeText(f.name.pt)),
-      ).map(s => ({ f, s })))
-    : [];
+  // Descrição do PRÓPRIO jogador: bicho citado pelo nome manda (é dado dele).
+  const mentioned = familiasCitadas(descText);
 
   const affinity = (f: CreatureFamily) =>
     f.elements.includes(dominantElement) ||
@@ -1632,17 +1683,20 @@ function pickFamilies(
     f.realms.includes(dominantRealm);
 
   const pool1 = CREATURE_FAMILIES.filter(affinity);
-  // Sem menção textual explícita, a taxonomia do bestiário (`familia`/
-  // `biologia` já calculados por `select.ts` para a criatura-inspiração
-  // escolhida) reforça o slot 1: dentro da afinidade elemento/reino de
-  // sempre, prioriza as famílias que a taxonomia do bestiário sugere. Some
-  // não substitui: se a interseção vier vazia, cai no `pool1` de sempre.
-  const bestiaryPool = bestiaryFamilyHint?.length
-    ? pool1.filter(f => bestiaryFamilyHint.includes(f.id))
-    : [];
+  // Sugestão do bestiário = taxonomia estruturada (`familia`/`biologia`) +
+  // bichos citados na descrição da criatura-inspiração. Até 28/09/2026 a
+  // citação no texto do bestiário tinha o MESMO poder da descrição do
+  // jogador (override determinístico) — ver `BESTIARY_FAMILY_PULL`.
+  const citadasBestiario = familiasCitadas(bestiaryText ?? '');
+  const sugeridas = new Set<string>([...(bestiaryFamilyHint ?? []), ...citadasBestiario.map(m => m.f.id)]);
+  const bestiaryPool = pool1.filter(f => sugeridas.has(f.id));
+  const seguirBestiario = bestiaryPool.length > 0 && rng() < BESTIARY_FAMILY_PULL;
   const fam1 = mentioned[0]?.f
-    ?? pick(rng, bestiaryPool.length ? bestiaryPool : (pool1.length ? pool1 : CREATURE_FAMILIES));
-  const sub1 = mentioned[0]?.s ?? pick(rng, fam1.subs);
+    ?? pick(rng, seguirBestiario ? bestiaryPool : (pool1.length ? pool1 : CREATURE_FAMILIES));
+  // Se a família escolhida é uma que o texto do bestiário citou, usa a
+  // subfamília citada (coerência: "Cão" → canino/cão, não canino/raposa).
+  const citadaNaFam = mentioned[0]?.f === fam1 ? mentioned[0] : citadasBestiario.find(m => m.f === fam1);
+  const sub1 = citadaNaFam?.s ?? pick(rng, fam1.subs);
   const primary = makeSlot(fam1, sub1);
 
   // Slot 2
@@ -3015,6 +3069,16 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       }
     };
     replace(elementScores, elementBreakdown, ELEMENT_ORDER, axes.elements);
+    // Compensação de DOMINÂNCIA dos 8 elementos do jogo — só aqui, no eixo
+    // que a bio e o reveal mostram. ⚠️ Achado do Loop B (28/09/2026): com o
+    // ritual igualado (`RITUAL_ELEMENT_SCALE`), apareceu o que ele escondia —
+    // `sombra` dominava 3% dos perfis e `ar` 19%: a leitura base de `sombra`
+    // é baixa aqui porque o valor é COMPARTILHADO com o class-system, onde
+    // ela já é a mais comum dos 17 (`axes.ts` documenta por que não dá pra
+    // subi-la lá). Compensar AQUI mexe só no rótulo de 8, nunca na ficha.
+    // Calibrado por medição até todos ficarem perto de 1/8; régua
+    // `criacaoDistribuicao.test.ts`.
+    for (const el of ELEMENT_ORDER) elementScores[el] += ELEMENT_DOMINANCE_COMPENSATION[el];
     replace(roleScores, roleBreakdown, ROLE_ORDER, axes.roles);
     replace(alignmentScores, alignmentBreakdown, ALIGNMENT_ORDER, axes.alignments);
     for (const realm of REALM_ORDER) realmScores[realm] = axes.realms[realm];
@@ -3034,13 +3098,13 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     // ×3 faria uma única resposta decidir o bioma sozinha.
     for (const fx of questionEffects) {
       for (const [el, pts] of Object.entries(fx.elements ?? {}) as Array<[ElementId, number]>) {
-        addScore(elementScores, elementBreakdown, el, pts, answerSource);
+        addScore(elementScores, elementBreakdown, el, pts * RITUAL_ELEMENT_SCALE[el], answerSource);
       }
       for (const [role, pts] of Object.entries(fx.roles ?? {}) as Array<[RoleId, number]>) {
         addScore(roleScores, roleBreakdown, role, pts, answerSource);
       }
       for (const [al, pts] of Object.entries(fx.alignments ?? {}) as Array<[AlignmentId, number]>) {
-        addScore(alignmentScores, alignmentBreakdown, al, pts, answerSource);
+        addScore(alignmentScores, alignmentBreakdown, al, pts * RITUAL_ALIGNMENT_SCALE[al], answerSource);
       }
       for (const realm of REALM_ORDER) {
         realmScores[realm] += fx.realms?.[realm] ?? 0;
@@ -3188,7 +3252,11 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
   const bestiaryFamilyHint = input.bestiaryInspiration
     ? bestiaryFamilyIds(input.bestiaryInspiration.familia, input.bestiaryInspiration.biologia)
     : null;
-  const family = pickFamilies(rng, dominantElement, secondaryElement, dominantRealm, familyHintText, bestiaryFamilyHint);
+  const family = pickFamilies(
+    rng, dominantElement, secondaryElement, dominantRealm,
+    descText, bestiaryFamilyHint,
+    descText ? '' : familyHintText,
+  );
   // fusionA/fusionB = substantivos concretos dos dois slots (compat + conceito)
   const fusionA = family.primary.noun;
   const fusionB = family.secondary.noun;

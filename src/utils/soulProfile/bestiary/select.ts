@@ -211,6 +211,30 @@ export function speciesProximity(prev: BestiaryCreature, c: BestiaryCreature): n
   return bonus;
 }
 
+/**
+ * Peso do parentesco (`speciesProximity`) na escolha de cada estágio da
+ * linhagem. ⚠️ Achado do Loop A (28/09/2026, N=400): a peso cheio (até
+ * +11,5 contra uma faixa de sorteio de 4) o parentesco decidia sozinho —
+ * 79% dos perfis passavam os 5 estágios na MESMA família, e a leitura da
+ * pessoa quase não mexia na evolução. Calibrado por medição (ver
+ * `criacaoDistribuicao.test.ts`): continuidade continua sendo o normal,
+ * travessia deixa de ser rara demais.
+ */
+const LINEAGE_PROXIMITY_WEIGHT = 0.5;
+
+const PREFIXO_PROCEDURAL = /^(?:Titânico|Espiritual|Cristalino|Corrompido|Ancião)\s+/;
+/** A ESPÉCIE de uma entrada do pool: sem prefixo procedural, sem o sufixo
+ *  de elemento ("de Fogo") e sem o modificador "Veneno/Venenoso" — as
+ *  variantes da mesma espécie contam como uma só. */
+export function especieDe(nome: string): string {
+  return nome
+    .replace(PREFIXO_PROCEDURAL, '')
+    .replace(/\s+de\s+\S+$/, '')
+    .replace(/\s+Venenos[oa]$/, '')
+    .replace(/\s+Veneno$/, '')
+    .trim();
+}
+
 function selectFromPool(
   axes: OracleAxes,
   seedString: string,
@@ -221,14 +245,30 @@ function selectFromPool(
     .filter(c => !exclude.has(c.nome))
     .map(creature => ({
       creature,
-      score: scoreCreature(creature, axes) + (prev ? speciesProximity(prev, creature) : 0),
+      score: scoreCreature(creature, axes)
+        + (prev ? speciesProximity(prev, creature) * LINEAGE_PROXIMITY_WEIGHT : 0),
     }));
   scored.sort((a, b) => b.score - a.score);
   const top = scored[0].score;
   let band = scored.filter(s => s.score >= top - BAND_WIDTH);
   if (band.length < MIN_BAND) band = scored.slice(0, MIN_BAND);
+  // Sorteio com chance IGUAL por espécie dentro da faixa, não por entrada.
+  // ⚠️ Achado do Loop A (28/09/2026): o sorteio uniforme por entrada dava
+  // vantagem a quem tem mais VARIANTES no pool (a base "Cão" sozinha em 10%
+  // das criações) — tamanho de corpus decidindo, não a leitura da pessoa.
+  const porEspecie = new Map<string, number>();
+  for (const s of band) {
+    const e = especieDe(s.creature.nome);
+    porEspecie.set(e, (porEspecie.get(e) ?? 0) + 1);
+  }
   const rng = mulberry32(hashString(seedString));
-  const chosen = pick(rng, band);
+  const total = porEspecie.size; // soma de 1/n sobre as entradas = nº de espécies
+  let alvo = rng() * total;
+  let chosen = band[band.length - 1];
+  for (const s of band) {
+    alvo -= 1 / porEspecie.get(especieDe(s.creature.nome))!;
+    if (alvo < 0) { chosen = s; break; }
+  }
   return { creature: chosen.creature, score: chosen.score, bandSize: band.length };
 }
 

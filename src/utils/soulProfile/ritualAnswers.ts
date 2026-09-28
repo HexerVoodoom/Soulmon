@@ -16,7 +16,7 @@
 // forte move um elemento em ~⅓ da média sem apagar mapa astral e teste.
 // ---------------------------------------------------------------------------
 
-import { ORACLE_QUESTIONS } from '../oracle';
+import { ORACLE_QUESTIONS, RITUAL_ALIGNMENT_SCALE } from '../oracle';
 import type { AlignmentId, ElementId, RealmId, RoleId } from '../oracle';
 import { CLASS_ELEMENT_ORDER, type ClassElementId, type OracleAxes } from './types';
 import { computeDominantClassElements } from './derivedElements';
@@ -73,6 +73,12 @@ export function applyRitualAnswers(
     const fx = escolhida.effects;
     for (const [el, pts] of Object.entries(fx.elements ?? {}) as Array<[ElementId, number]>) {
       for (const [classId, peso] of Object.entries(RITUAL_TO_CLASS[el] ?? {}) as Array<[ClassElementId, number]>) {
+        // SEM `RITUAL_ELEMENT_SCALE` de propósito: os 17 do class-system têm
+        // calibração própria (`classeElementoOcorrencia.test.ts`) feita sobre
+        // estes pesos, e `RITUAL_TO_CLASS` já espalha planta/industrial em
+        // vários ids. Medido (Loop B, 28/09/2026): com a escala aqui, `vileza`
+        // deixava de alcançar o topo. A escala vive só no rótulo de 8
+        // elementos (`generateOracle`), onde o viés do ritual aparecia.
         classElements[classId] += pts * peso;
       }
     }
@@ -80,7 +86,7 @@ export function applyRitualAnswers(
       roles[role] += pts;
     }
     for (const [al, pts] of Object.entries(fx.alignments ?? {}) as Array<[AlignmentId, number]>) {
-      alignments[al] += pts;
+      alignments[al] += pts * RITUAL_ALIGNMENT_SCALE[al];
     }
     for (const [realm, pts] of Object.entries(fx.realms ?? {}) as Array<[RealmId, number]>) {
       realms[realm] += pts;

@@ -361,6 +361,17 @@ export function buildFicha(
     const escola = ROLE_TO_ESCOLA[role];
     if (escola !== 'evocacao') roleEscolaShares[escola as keyof typeof roleEscolaShares] += share;
   }
+  // O CAMINHO também alimenta as duas escolas de fé, para TODO mundo — não só
+  // para quem tem suporte como papel. ⚠️ Achado do Loop B (28/09/2026, N=400):
+  // bênção/maldição só recebiam a fatia do papel `suporte` (~18% das pessoas),
+  // então as 7 classes do class-system que exigem uma delas ≥10–15 (Tecelão
+  // de Sangue, Epidemiologista, Hipnotizador, Faroleiro, Arauto do Fim,
+  // Semeador, Luthier de Guerra) NUNCA apareciam, e maldição dominava 4,75%
+  // das fichas. O piso de liderança logo abaixo continua garantindo que a
+  // escola do papel dominante vença — o caminho vira a SEGUNDA voz da ficha.
+  const ALIGNMENT_SCHOOL_WEIGHT = 0.15;
+  roleEscolaShares.benca += ALIGNMENT_SCHOOL_WEIGHT * (oracle.alignments.benevolencia + oracle.alignments.harmonia * 0.5);
+  roleEscolaShares.maldicao += ALIGNMENT_SCHOOL_WEIGHT * (oracle.alignments.poder + oracle.alignments.harmonia * 0.5);
   // A ESCOLA TEM DE SEGUIR O PAPEL DOMINANTE — piso de liderança.
   //
   // Sem isto a soma acima decide sozinha, e ela é estruturalmente viciada:

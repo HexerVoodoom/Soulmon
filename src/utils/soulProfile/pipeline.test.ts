@@ -185,10 +185,12 @@ describe('pipeline completo do oráculo', () => {
     }
   });
 
-  it('o companheiro é uma captura LEGAL da ficha rookie (mecânica, não flavor)', async () => {
+  it('o companheiro é uma captura LEGAL da ficha mega (mecânica, não flavor)', async () => {
+    // ⚠️ Era a ficha ROOKIE até 28/09/2026 — ver o comentário de
+    // `selectCompanion` em `pipeline.ts` (12/32 criaturas alcançáveis).
     const { fichaByStage, companion } = await generateOracleComplete(makeInput('Carla Captura', QUIZ), 11);
     expect(companion).not.toBeNull();
-    const poder = poderCaptura(fichaByStage.rookie, companion!.criatura);
+    const poder = poderCaptura(fichaByStage.mega, companion!.criatura);
     expect(poder).toBeGreaterThanOrEqual(companion!.criatura.poderBase);
   });
 

@@ -81,7 +81,13 @@ export async function generateOracleComplete(input: OracleInput, seed?: number):
   // ficha + skills pela fonte única (a página do Pet consome a MESMA função)
   const { fichaByStage, stageSkills } = buildFichaESkills(input, idKey);
 
-  const companion = selectCompanion(fichaByStage.rookie, idKey);
+  // A captura é avaliada na ficha MEGA — a mesma mecânica real (Evocação +
+  // afinidade elemental contra `poderBase`), mas sobre a alma já
+  // concentrada. ⚠️ Até 28/09/2026 era a ficha ROOKIE: com o orçamento do
+  // primeiro estágio só criaturas de `poderBase` baixo eram capturáveis, e o
+  // Loop A (N=400) mediu 12 das 32 criaturas do registro como companheiro de
+  // alguém, 5 delas cobrindo 80%. Na mega: 32/32, top 5 = 22%.
+  const companion = selectCompanion(fichaByStage.mega, idKey);
 
   const bestiaryLineage = selectBestiaryLineage(
     oracleAxes, `${idKey}|${salt}`, FICHA_STAGE_ORDER,

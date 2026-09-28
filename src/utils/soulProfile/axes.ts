@@ -286,6 +286,15 @@ export function generateOracleAxes(inputs: OracleAxesInput): OracleAxes {
   for (const n of numerologyNumbers) {
     alignments[NUMBER_ALIGNMENT[n]] += 4;
   }
+  // Compensação estrutural dos CAMINHOS, no mesmo espírito do
+  // `REALM_SPLIT_COMPENSATION` dos reinos (abaixo). ⚠️ Achado do Loop B
+  // (28/09/2026, N=400, pipeline real): harmonia vencia 44% das leituras
+  // ANTES do ritual (benevolência 25%, poder 31%) — o caminho é o que decide
+  // qual das 3 linhas de evolução o jogador vê primeiro, então ele precisa
+  // vencer pela pessoa, não pela forma da fórmula. Calibrado por medição até
+  // os três ficarem perto de 1/3; régua `alinhamentoElemento.test.ts`.
+  const ALIGNMENT_COMPENSATION: Record<AlignmentId, number> = { poder: 0.5, harmonia: -1, benevolencia: 0.5 };
+  for (const a of ALIGNMENT_ORDER) alignments[a] += ALIGNMENT_COMPENSATION[a];
 
   // ---- Peso do CAMINHO sobre o elemento (pedido do dono, 28/09/2026):
   // "cada um dos 3 caminhos [tenha] 1/3 dos elementos neutro, 1/3 favorecido
