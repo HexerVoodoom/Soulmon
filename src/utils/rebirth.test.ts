@@ -232,7 +232,8 @@ describe('rebirth — as escolhas CHEGAM ao prompt (senão a tela é decorativa)
   });
 
   it('o traço herdado entra nas ONZE formas, nas duas variantes, e preenche só o 2º elemento vazio', async () => {
-    const { generateOracle, ELEMENT_INFO } = await import('./oracle');
+    const { generateOracle } = await import('../test/oracleSync');
+    const { ELEMENT_INFO } = await import('./oracle');
     // sem herança: o dominante e o (eventual) secundário que a leitura dá
     const sem = generateOracle({ ...BASE, rebirth: { criatura: 'raposa de vidro', escolaNome: 'Evocação', elementoNome: 'Vapor' } }, 42);
     // herda um elemento que NÃO é o dominante
@@ -254,7 +255,7 @@ describe('rebirth — as escolhas CHEGAM ao prompt (senão a tela é decorativa)
   });
 
   it('herdar o próprio dominante não faz nada — e um id inválido também não', async () => {
-    const { generateOracle } = await import('./oracle');
+    const { generateOracle } = await import('../test/oracleSync');
     const sem = generateOracle({ ...BASE, rebirth: { criatura: 'raposa de vidro', escolaNome: 'Evocação', elementoNome: 'Vapor' } }, 42);
     const igual = generateOracle({
       ...BASE,
