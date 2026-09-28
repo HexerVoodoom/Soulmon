@@ -9,6 +9,7 @@ import type { CreatureStage, ElementId, AlignmentId, RealmId } from '../utils/or
 import type { StageSkills } from '../utils/soulProfile/ficha/skills';
 import type { ClassTitle } from '../utils/soulProfile/ficha/classTitle';
 import type { CompanheiroVisivel } from '../utils/soulProfile/ficha/companheiro';
+import { sanitizeManifestacao, type Manifestacao } from '../utils/soulProfile/ficha/manifestacaoSave';
 import type { FichaStage } from '../utils/soulProfile/ficha/types';
 import type { SlotId } from '../utils/petStage';
 import { ALL_SHOP_ITEMS } from '../utils/shop';
@@ -281,6 +282,11 @@ export interface GameState {
    *  `soulmonSkills`: determinístico pela identidade, recomputável só de um
    *  perfil que não vai à nuvem. Decisão 2 do PLANO-ORACULO.md §9. */
   soulmonCompanheiro?: CompanheiroVisivel;
+  /** Talento e profissão da ficha por estágio (`ficha/manifestacao.ts`) — o
+   *  que o class-system MANIFESTA (fala do pet, jeito na masmorra) sem que a
+   *  ficha apareça. Cache pelo mesmo motivo de `soulmonSkills`; preenchido
+   *  pelo `App` a partir do perfil local na primeira abertura. */
+  soulmonManifestacao?: Manifestacao;
   /** Metadados do oráculo usados fora da árvore (fallback de sprite genérico,
    *  telas de perfil etc.). */
   soulmonMeta?: {
@@ -1111,6 +1117,7 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
           if (typeof v.id !== 'string' || typeof v.nome?.pt !== 'string' || typeof v.nome?.en !== 'string') return undefined;
           return { id: v.id, nome: { pt: v.nome.pt, en: v.nome.en } };
         })(),
+        soulmonManifestacao: sanitizeManifestacao(loadedState.soulmonManifestacao),
         evolutionLocked: loadedState.evolutionLocked === true,
         incubation: (() => {
           const v = loadedState.incubation as { v?: unknown; since?: unknown } | undefined;
