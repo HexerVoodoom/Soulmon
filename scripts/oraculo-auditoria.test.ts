@@ -32,7 +32,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { buildSoulProfile } from '../src/utils/soulProfile/profile';
 import { CITIES } from '../src/utils/soulProfile/cities';
-import { ORACLE_QUESTIONS, mulberry32, ELEMENT_ORDER, ALIGNMENT_ORDER } from '../src/utils/oracle';
+import { ORACLE_QUESTIONS, mulberry32, ELEMENT_ORDER, ALIGNMENT_ORDER, generateOracle } from '../src/utils/oracle';
 import type { OracleInput } from '../src/utils/oracle';
 import type { Answers, Answer } from '../src/utils/soulProfile/personality/types';
 import { items as PERSONALITY_ITEMS } from '../src/utils/soulProfile/personality/questions';
@@ -44,7 +44,9 @@ import { PREMADE_CHARACTERS } from '../src/utils/monetization';
 
 const ROOT = path.resolve(__dirname, '..');
 const OUT_DIR = path.join(ROOT, 'docs/reviews/oraculo-auditoria');
-const TODAY = new Date().toISOString().slice(0, 10);
+// `ORACULO_TAG=b2 npm run oraculo:auditoria` grava `<data>-b2.{json,md}` —
+// preserva a medição ANTES de cada conserto (Fase 1) em vez de sobrescrevê-la.
+const TODAY = new Date().toISOString().slice(0, 10) + (process.env.ORACULO_TAG ? `-${process.env.ORACULO_TAG}` : '');
 
 // Seeds de VALIDAÇÃO — nenhuma pode coincidir com a de calibração 20260928.
 const SEEDS = [19870412, 31415926] as const;
@@ -53,11 +55,28 @@ const N_PER_SEED = 400; // N total ≥ 800 (2 seeds × 400)
 const inc = (o: Record<string, number>, k: string) => { o[k] = (o[k] ?? 0) + 1; };
 const razao = (o: Record<string, number>, n: number) => {
   const vals = Object.values(o);
-  if (vals.length === 0) return { razao: Infinity, piso: 0, topo: 0, k: 0 };
+  if (vals.length === 0) return { razao: Infinity, piso: 0, topo: 0, k: 0, ruido: 1 };
   const min = Math.min(...vals);
   const max = Math.max(...vals);
-  return { razao: min === 0 ? Infinity : +(max / min).toFixed(2), piso: +(min / n * 100).toFixed(1), topo: +(max / n * 100).toFixed(1), k: vals.length };
+  return { razao: min === 0 ? Infinity : +(max / min).toFixed(2), piso: +(min / n * 100).toFixed(1), topo: +(max / n * 100).toFixed(1), k: vals.length, ruido: pisoRuido(n, vals.length) };
 };
+/** Piso de RUÍDO da razão topo/piso: mediana da razão max/min de uma
+ *  multinomial PERFEITAMENTE uniforme com o mesmo n e k (Fase 1, Etapa A).
+ *  Com k=9 e n=165, uma roleta honesta já dá ~2× — uma razão medida só é
+ *  buraco estrutural se passa BEM do próprio piso. */
+function pisoRuido(n: number, k: number): number {
+  if (n <= 0 || k <= 1) return 1;
+  const rng = mulberry32(424242 + n * 31 + k);
+  const rs: number[] = [];
+  for (let t = 0; t < 400; t++) {
+    const c = new Array(k).fill(0);
+    for (let i = 0; i < n; i++) c[Math.floor(rng() * k)]++;
+    const mn = Math.min(...c);
+    rs.push(mn === 0 ? 99 : Math.max(...c) / mn);
+  }
+  rs.sort((a, b) => a - b);
+  return +rs[Math.floor(rs.length / 2)].toFixed(2);
+}
 const top = (o: Partial<Record<string, number>>) => Object.entries(o).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))[0]?.[0] ?? '-';
 
 /** Respostas sintéticas para os 20 itens do teste longo — determinísticas
@@ -105,6 +124,35 @@ function pessoas(seed: number, n: number): Pessoa[] {
     out.push({ input, grupo });
   }
   return out;
+}
+
+const N_FATIA_POR_SEED = 1200; // N=2400 por fatia
+/** Fatias ESTRUTURAIS (Fase 1, Etapa A): cada fatia com N=2400 próprio, só
+ *  pelo `generateOracle` (os 4 eixos não dependem do resto do pipeline). As
+ *  fatias da população mista têm n de 165-410 e o piso de ruído delas passa
+ *  de 1,5× sozinho — medir a meta lá é medir a roleta. */
+function fatiaEstrutural(grupo: Grupo): Record<'elemento' | 'papel' | 'reino', { razao: number; piso: number; topo: number; k: number; ruido: number; fatia: Record<string, number> }> {
+  const M = { elemento: {} as Record<string, number>, papel: {} as Record<string, number>, reino: {} as Record<string, number> };
+  let n = 0;
+  for (const seed of SEEDS) {
+    const rng = mulberry32(seed + 17);
+    for (let i = 0; i < N_FATIA_POR_SEED; i++) {
+      const c = CITIES[Math.floor(rng() * CITIES.length)];
+      const nome = nomeSintetico(rng);
+      const nasc = nascimentoSintetico(rng);
+      const quiz: Record<string, string> = {};
+      for (const q of ORACLE_QUESTIONS) quiz[q.id] = q.options[Math.floor(rng() * q.options.length)].id;
+      const answers: Answers = grupo === 'curto' ? {} : respostasSinteticas(rng);
+      const soulProfile = buildSoulProfile({
+        fullName: nome, ...nasc, timeUnknown: grupo === 'timeUnknown', placeLabel: c.name,
+        latitude: c.latitude, longitude: c.longitude, timeZone: c.timeZone,
+      }, answers);
+      const r = generateOracle({ fullName: nome, birthDate: nasc.birthDate, birthTime: nasc.birthTime, birthPlace: c.name, answers: quiz, soulProfile } as OracleInput, 1);
+      inc(M.elemento, r.dominantElement); inc(M.papel, r.dominantRole); inc(M.reino, r.dominantRealm);
+      n++;
+    }
+  }
+  return { elemento: { ...razao(M.elemento, n), fatia: M.elemento }, papel: { ...razao(M.papel, n), fatia: M.papel }, reino: { ...razao(M.reino, n), fatia: M.reino } };
 }
 
 it('auditoria do oráculo — C1/C2/C3/C4/C7/C8, N>=800, seeds de validação', async () => {
@@ -232,6 +280,11 @@ it('auditoria do oráculo — C1/C2/C3/C4/C7/C8, N>=800, seeds de validação', 
       soCincoPerguntasSemTesteLongo: { n: porGrupo.curto.n, elemento: razao(porGrupo.curto.elemento, porGrupo.curto.n), papel: razao(porGrupo.curto.papel, porGrupo.curto.n), reino: razao(porGrupo.curto.reino, porGrupo.curto.n), tuplasUnicas: +(Object.keys(porGrupo.curto.tupla).length / (porGrupo.curto.n || 1)).toFixed(3) },
       completo: { n: porGrupo.completo.n, elemento: razao(porGrupo.completo.elemento, porGrupo.completo.n), papel: razao(porGrupo.completo.papel, porGrupo.completo.n), reino: razao(porGrupo.completo.reino, porGrupo.completo.n), tuplasUnicas: +(Object.keys(porGrupo.completo.tupla).length / (porGrupo.completo.n || 1)).toFixed(3) },
     },
+    fatiasEstruturais: {
+      timeUnknown: fatiaEstrutural('timeUnknown'),
+      curto: fatiaEstrutural('curto'),
+      completo: fatiaEstrutural('completo'),
+    },
     naoCoberto: [
       'C5 (fidelidade direcional por eixo) — desenhado em rodada2-regua.md §5, não implementado nesta rodada.',
       'C9 (divergência comportamental / trajetória) — Fase 1, plano §6.',
@@ -245,8 +298,9 @@ it('auditoria do oráculo — C1/C2/C3/C4/C7/C8, N>=800, seeds de validação', 
   writeFileSync(path.join(OUT_DIR, `${TODAY}.json`), JSON.stringify(relatorio, null, 2));
 
   const pct = (x: number) => `${x}%`;
-  const linhaEixo = (nome: string, r: { razao: number; piso: number; topo: number; k: number }) =>
-    `| ${nome} | ${r.k} | ${pct(r.piso)}–${pct(r.topo)} | ${r.razao === Infinity ? '∞ (zero em algum)' : r.razao + '×'} |`;
+  const linhaEixo = (nome: string, r: { razao: number; piso: number; topo: number; k: number; ruido: number }) =>
+    `| ${nome} | ${r.k} | ${pct(r.piso)}–${pct(r.topo)} | ${r.razao === Infinity ? '∞ (zero em algum)' : r.razao + '×'} | ${r.ruido}× |`;
+  const rz = (r: { razao: number; ruido: number }) => `${r.razao} (ruído ${r.ruido})`;
 
   const md = `# Auditoria do Oráculo — ${TODAY}
 
@@ -255,8 +309,8 @@ N = ${n} (${SEEDS.map(s => `seed ${s} × ${N_PER_SEED}`).join(' + ')}). Seed de 
 
 ## C2 — 4 eixos, sem vencedor estrutural
 
-| Eixo | k distintos | faixa | razão topo/piso |
-|---|---|---|---|
+| Eixo | k distintos | faixa | razão topo/piso | piso de ruído (uniforme, mesmo n) |
+|---|---|---|---|---|
 ${linhaEixo('Elemento', relatorio.porEixo.elemento)}
 ${linhaEixo('Caminho (alinhamento)', relatorio.porEixo.caminho)}
 ${linhaEixo('Papel', relatorio.porEixo.papel)}
@@ -275,10 +329,14 @@ primeira vez nesta régua (achado do crítico em rodada2-critica.md).
 
 ## C3 — escola dominante
 
+| Eixo | k | faixa | razão | ruído |
+|---|---|---|---|---|
 ${linhaEixo('Escola', relatorio.c3_escolaDominante)}
 
 ## C4 — grupos do bestiário e famílias visuais
 
+| Eixo | k | faixa | razão | ruído |
+|---|---|---|---|---|
 ${linhaEixo('Grupo do bestiário', relatorio.c4_grupos.grupoBestiario)}
 ${linhaEixo('Família visual', relatorio.c4_grupos.familiaVisual)}
 
@@ -296,9 +354,17 @@ ${linhaEixo('Família visual', relatorio.c4_grupos.familiaVisual)}
 
 | Fatia | n | elemento (razão) | papel (razão) | reino (razão) | tuplas únicas |
 |---|---|---|---|---|---|
-| timeUnknown (~20%) | ${relatorio.edgeCases.timeUnknown.n} | ${relatorio.edgeCases.timeUnknown.elemento.razao} | ${relatorio.edgeCases.timeUnknown.papel.razao} | ${relatorio.edgeCases.timeUnknown.reino.razao} | ${(relatorio.edgeCases.timeUnknown.tuplasUnicas * 100).toFixed(1)}% |
-| só 6 perguntas, sem teste longo (~30%) | ${relatorio.edgeCases.soCincoPerguntasSemTesteLongo.n} | ${relatorio.edgeCases.soCincoPerguntasSemTesteLongo.elemento.razao} | ${relatorio.edgeCases.soCincoPerguntasSemTesteLongo.papel.razao} | ${relatorio.edgeCases.soCincoPerguntasSemTesteLongo.reino.razao} | ${(relatorio.edgeCases.soCincoPerguntasSemTesteLongo.tuplasUnicas * 100).toFixed(1)}% |
-| completo (mapa + teste longo) | ${relatorio.edgeCases.completo.n} | ${relatorio.edgeCases.completo.elemento.razao} | ${relatorio.edgeCases.completo.papel.razao} | ${relatorio.edgeCases.completo.reino.razao} | ${(relatorio.edgeCases.completo.tuplasUnicas * 100).toFixed(1)}% |
+| timeUnknown (~20%) | ${relatorio.edgeCases.timeUnknown.n} | ${rz(relatorio.edgeCases.timeUnknown.elemento)} | ${rz(relatorio.edgeCases.timeUnknown.papel)} | ${rz(relatorio.edgeCases.timeUnknown.reino)} | ${(relatorio.edgeCases.timeUnknown.tuplasUnicas * 100).toFixed(1)}% |
+| só 6 perguntas, sem teste longo (~30%) | ${relatorio.edgeCases.soCincoPerguntasSemTesteLongo.n} | ${rz(relatorio.edgeCases.soCincoPerguntasSemTesteLongo.elemento)} | ${rz(relatorio.edgeCases.soCincoPerguntasSemTesteLongo.papel)} | ${rz(relatorio.edgeCases.soCincoPerguntasSemTesteLongo.reino)} | ${(relatorio.edgeCases.soCincoPerguntasSemTesteLongo.tuplasUnicas * 100).toFixed(1)}% |
+| completo (mapa + teste longo) | ${relatorio.edgeCases.completo.n} | ${rz(relatorio.edgeCases.completo.elemento)} | ${rz(relatorio.edgeCases.completo.papel)} | ${rz(relatorio.edgeCases.completo.reino)} | ${(relatorio.edgeCases.completo.tuplasUnicas * 100).toFixed(1)}% |
+
+## Fatias estruturais (N=2400 POR fatia, só generateOracle)
+
+| Fatia | elemento | papel | reino |
+|---|---|---|---|
+| timeUnknown + teste longo | ${rz(relatorio.fatiasEstruturais.timeUnknown.elemento)} | ${rz(relatorio.fatiasEstruturais.timeUnknown.papel)} | ${rz(relatorio.fatiasEstruturais.timeUnknown.reino)} |
+| só 6 perguntas | ${rz(relatorio.fatiasEstruturais.curto.elemento)} | ${rz(relatorio.fatiasEstruturais.curto.papel)} | ${rz(relatorio.fatiasEstruturais.curto.reino)} |
+| completo | ${rz(relatorio.fatiasEstruturais.completo.elemento)} | ${rz(relatorio.fatiasEstruturais.completo.papel)} | ${rz(relatorio.fatiasEstruturais.completo.reino)} |
 
 ## Não coberto por esta auditoria (registrado, não escondido)
 

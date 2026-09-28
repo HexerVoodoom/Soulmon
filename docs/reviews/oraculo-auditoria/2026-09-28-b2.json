@@ -1,0 +1,485 @@
+{
+  "geradoEm": "2026-09-28T16:56:16.585Z",
+  "n": 800,
+  "seedsAuditoria": [
+    19870412,
+    31415926
+  ],
+  "seedCalibracaoExcluida": 20260928,
+  "porEixo": {
+    "elemento": {
+      "razao": 1.56,
+      "piso": 10.3,
+      "topo": 16,
+      "k": 8,
+      "ruido": 1.33,
+      "fatia": {
+        "ar": 94,
+        "agua": 108,
+        "luz": 100,
+        "planta": 128,
+        "industrial": 82,
+        "terra": 85,
+        "sombra": 94,
+        "fogo": 109
+      }
+    },
+    "caminho": {
+      "razao": 1.27,
+      "piso": 29.1,
+      "topo": 36.9,
+      "k": 3,
+      "ruido": 1.1,
+      "fatia": {
+        "harmonia": 272,
+        "benevolencia": 295,
+        "poder": 233
+      }
+    },
+    "papel": {
+      "razao": 1.42,
+      "piso": 16.1,
+      "topo": 22.9,
+      "k": 5,
+      "ruido": 1.2,
+      "fatia": {
+        "alcance": 155,
+        "suporte": 183,
+        "tanque": 129,
+        "magico": 167,
+        "fisico": 166
+      }
+    },
+    "reino": {
+      "razao": 1.36,
+      "piso": 9.6,
+      "topo": 13.1,
+      "k": 9,
+      "ruido": 1.38,
+      "fatia": {
+        "gelo": 81,
+        "oceano": 88,
+        "campina": 87,
+        "floresta": 105,
+        "cavernas": 80,
+        "pantano": 89,
+        "picos": 77,
+        "deserto": 89,
+        "akasha": 104
+      }
+    }
+  },
+  "c1_cobertura": {
+    "elementosVistos": 8,
+    "elementosEsperados": 17,
+    "classesVistas": 79,
+    "classesEsperadas": 79,
+    "classesNuncaSaidas": [],
+    "companheirosVistos": 32,
+    "companheirosEsperados": 32,
+    "especiesVistas": 181,
+    "criaturasEsperadas": 194,
+    "familiasVisuaisVistas": 72,
+    "familiasVisuaisEsperadas": 72,
+    "nuncaEscolhidasBestiario": [
+      "Hipopótamo",
+      "Aranha",
+      "Aberração",
+      "Fungo-zumbi (Ophiocordyceps unilateralis)",
+      "Sequoia-gigante (Sequoiadendron giganteum)",
+      "Opilião (Leiobunum rotundum)",
+      "Gavial (Gavialis gangeticus)",
+      "Água-viva-imortal (Turritopsis dohrnii)",
+      "Coral-cérebro (Diploria labyrinthiformis)",
+      "Lesma-do-mar-folha (Elysia chlorotica)",
+      "Serpente-marinha"
+    ]
+  },
+  "c3_escolaDominante": {
+    "razao": 2.47,
+    "piso": 10.4,
+    "topo": 25.6,
+    "k": 6,
+    "ruido": 1.25,
+    "fatia": {
+      "evocacao": 83,
+      "benca": 205,
+      "conjuracao": 157,
+      "maldicao": 102,
+      "longo_alcance": 153,
+      "combate_fisico": 100
+    }
+  },
+  "c4_grupos": {
+    "grupoBestiario": {
+      "razao": 58,
+      "piso": 0.1,
+      "topo": 7.2,
+      "k": 24,
+      "ruido": 1.95,
+      "fatia": {
+        "mamifero": 55,
+        "peixe": 29,
+        "planta": 43,
+        "extraplanetario": 49,
+        "demonio": 58,
+        "monstro": 29,
+        "humanoide": 46,
+        "anfibio": 26,
+        "inseto": 27,
+        "cnidario": 26,
+        "molusco": 14,
+        "ave": 53,
+        "reptil": 29,
+        "angelical": 44,
+        "crustaceo": 30,
+        "etereo": 49,
+        "invertebrado": 1,
+        "construto": 45,
+        "fungo": 21,
+        "verme": 18,
+        "morto_vivo": 42,
+        "geologico": 14,
+        "elemental": 41,
+        "aracnideo": 11
+      }
+    },
+    "familiaVisual": {
+      "razao": 27,
+      "piso": 0.1,
+      "topo": 3.4,
+      "k": 72,
+      "ruido": 4.75,
+      "fatia": {
+        "Proboscídeo": 11,
+        "Peixe de Recife": 8,
+        "Meio-humano": 18,
+        "Felino": 10,
+        "Extraplanetário": 24,
+        "Demônio": 17,
+        "Gosma": 10,
+        "Gigante": 19,
+        "Verme": 14,
+        "Libélula": 8,
+        "Fungo": 15,
+        "Ave Marinha": 8,
+        "Aranha": 9,
+        "Enguia": 11,
+        "Yokai": 27,
+        "Fruto": 8,
+        "Quimérico": 10,
+        "Dinossauro": 10,
+        "Cefalópode": 10,
+        "Morcego": 14,
+        "Árvore": 10,
+        "Dragão": 18,
+        "Coruja": 9,
+        "Zumbi": 19,
+        "Licantropo": 10,
+        "Caranguejo": 14,
+        "Canino": 23,
+        "Ave de Rapina": 5,
+        "Cervídeo": 10,
+        "Abelha e Vespa": 25,
+        "Escorpião": 6,
+        "Mito Aquático": 5,
+        "Anfíbio": 13,
+        "Ratita": 15,
+        "Celestial": 11,
+        "Ave Ornamental": 3,
+        "Equino Mítico": 17,
+        "Equino": 7,
+        "Flor": 12,
+        "Gênio": 16,
+        "Trepadeira": 7,
+        "Autômato": 19,
+        "Planta Carnívora": 9,
+        "Feérico": 18,
+        "Goblinoide": 7,
+        "Cnidário": 18,
+        "Golem": 10,
+        "Louva-a-deus": 7,
+        "Corvídeo": 7,
+        "Fantasma": 6,
+        "Borboleta": 8,
+        "Ave Canora": 12,
+        "Réptil": 13,
+        "Ave Aquática": 9,
+        "Centopeia": 6,
+        "Urso": 10,
+        "Elemental": 9,
+        "Peixe Abissal": 14,
+        "Lagosta e Camarão": 11,
+        "Cetáceo": 9,
+        "Planta do Deserto": 6,
+        "Primata": 6,
+        "Bovino": 9,
+        "Grilo e Cigarra": 8,
+        "Mustelídeo": 9,
+        "Besouro": 4,
+        "Tubarão e Arraia": 6,
+        "Peixe de Mar Aberto": 5,
+        "Esqueleto": 8,
+        "Vampiro": 11,
+        "Geológico": 9,
+        "Roedor": 1
+      }
+    }
+  },
+  "c7_linhagem": {
+    "taxaAtravessaFamilia": 0.527,
+    "taxaParesContinuos": 0.857
+  },
+  "c8_unicidade": {
+    "tuplasUnicas": 0.959,
+    "colisaoNomeCriatura": 0.0225,
+    "totalNomesConsiderados": 800,
+    "premadeExcluidos": [
+      "Pyraka",
+      "Akashaoi",
+      "Nimbrata",
+      "Igni",
+      "Nautilu",
+      "Astrase"
+    ]
+  },
+  "edgeCases": {
+    "timeUnknown": {
+      "n": 165,
+      "elemento": {
+        "razao": 2.27,
+        "piso": 6.7,
+        "topo": 15.2,
+        "k": 8,
+        "ruido": 1.87
+      },
+      "papel": {
+        "razao": 1.5,
+        "piso": 15.8,
+        "topo": 23.6,
+        "k": 5,
+        "ruido": 1.5
+      },
+      "reino": {
+        "razao": 2.33,
+        "piso": 7.3,
+        "topo": 17,
+        "k": 9,
+        "ruido": 2
+      },
+      "tuplasUnicas": 1
+    },
+    "soCincoPerguntasSemTesteLongo": {
+      "n": 225,
+      "elemento": {
+        "razao": 1.64,
+        "piso": 9.8,
+        "topo": 16,
+        "k": 8,
+        "ruido": 1.71
+      },
+      "papel": {
+        "razao": 1.56,
+        "piso": 16,
+        "topo": 24.9,
+        "k": 5,
+        "ruido": 1.41
+      },
+      "reino": {
+        "razao": 2.33,
+        "piso": 6.7,
+        "topo": 15.6,
+        "k": 9,
+        "ruido": 1.81
+      },
+      "tuplasUnicas": 0.996
+    },
+    "completo": {
+      "n": 410,
+      "elemento": {
+        "razao": 2.2,
+        "piso": 8.5,
+        "topo": 18.8,
+        "k": 8,
+        "ruido": 1.49
+      },
+      "papel": {
+        "razao": 1.64,
+        "piso": 14.1,
+        "topo": 23.2,
+        "k": 5,
+        "ruido": 1.29
+      },
+      "reino": {
+        "razao": 2.24,
+        "piso": 7.1,
+        "topo": 15.9,
+        "k": 9,
+        "ruido": 1.56
+      },
+      "tuplasUnicas": 0.968
+    }
+  },
+  "fatiasEstruturais": {
+    "timeUnknown": {
+      "elemento": {
+        "razao": 1.32,
+        "piso": 11.2,
+        "topo": 14.8,
+        "k": 8,
+        "ruido": 1.17,
+        "fatia": {
+          "fogo": 287,
+          "agua": 315,
+          "ar": 304,
+          "terra": 282,
+          "sombra": 292,
+          "luz": 298,
+          "planta": 354,
+          "industrial": 268
+        }
+      },
+      "papel": {
+        "razao": 1.1,
+        "piso": 18.9,
+        "topo": 20.8,
+        "k": 5,
+        "ruido": 1.11,
+        "fatia": {
+          "magico": 498,
+          "suporte": 492,
+          "alcance": 453,
+          "tanque": 467,
+          "fisico": 490
+        }
+      },
+      "reino": {
+        "razao": 1.31,
+        "piso": 9.7,
+        "topo": 12.6,
+        "k": 9,
+        "ruido": 1.2,
+        "fatia": {
+          "picos": 256,
+          "gelo": 278,
+          "deserto": 303,
+          "oceano": 255,
+          "floresta": 265,
+          "campina": 232,
+          "cavernas": 244,
+          "akasha": 288,
+          "pantano": 279
+        }
+      }
+    },
+    "curto": {
+      "elemento": {
+        "razao": 1.35,
+        "piso": 10.1,
+        "topo": 13.7,
+        "k": 8,
+        "ruido": 1.17,
+        "fatia": {
+          "terra": 295,
+          "industrial": 290,
+          "planta": 318,
+          "agua": 294,
+          "luz": 308,
+          "ar": 329,
+          "fogo": 323,
+          "sombra": 243
+        }
+      },
+      "papel": {
+        "razao": 1.13,
+        "piso": 18.7,
+        "topo": 21.2,
+        "k": 5,
+        "ruido": 1.11,
+        "fatia": {
+          "magico": 500,
+          "tanque": 508,
+          "suporte": 472,
+          "alcance": 448,
+          "fisico": 472
+        }
+      },
+      "reino": {
+        "razao": 1.19,
+        "piso": 10.3,
+        "topo": 12.2,
+        "k": 9,
+        "ruido": 1.2,
+        "fatia": {
+          "cavernas": 257,
+          "pantano": 247,
+          "floresta": 280,
+          "oceano": 254,
+          "akasha": 252,
+          "campina": 289,
+          "deserto": 271,
+          "picos": 257,
+          "gelo": 293
+        }
+      }
+    },
+    "completo": {
+      "elemento": {
+        "razao": 1.29,
+        "piso": 11.5,
+        "topo": 14.9,
+        "k": 8,
+        "ruido": 1.17,
+        "fatia": {
+          "terra": 291,
+          "agua": 295,
+          "ar": 302,
+          "sombra": 311,
+          "luz": 288,
+          "planta": 357,
+          "industrial": 280,
+          "fogo": 276
+        }
+      },
+      "papel": {
+        "razao": 1.15,
+        "piso": 18.3,
+        "topo": 21,
+        "k": 5,
+        "ruido": 1.11,
+        "fatia": {
+          "magico": 505,
+          "suporte": 501,
+          "alcance": 439,
+          "tanque": 473,
+          "fisico": 482
+        }
+      },
+      "reino": {
+        "razao": 1.33,
+        "piso": 9.2,
+        "topo": 12.2,
+        "k": 9,
+        "ruido": 1.2,
+        "fatia": {
+          "cavernas": 246,
+          "gelo": 293,
+          "picos": 257,
+          "deserto": 280,
+          "oceano": 260,
+          "floresta": 274,
+          "campina": 220,
+          "akasha": 286,
+          "pantano": 284
+        }
+      }
+    }
+  },
+  "naoCoberto": [
+    "C5 (fidelidade direcional por eixo) — desenhado em rodada2-regua.md §5, não implementado nesta rodada.",
+    "C9 (divergência comportamental / trajetória) — Fase 1, plano §6.",
+    "reroll — desenho pendente (rodada2-regua.md §8).",
+    "rebirth (orçamento ×1.5) — fora do escopo da régua C1-C8 por decisão registrada em rodada2-regua.md §8.",
+    "nome não-latino/vazio/gigante — robustez de entrada, não distribuição; fica para o sweeper de robustez."
+  ]
+}

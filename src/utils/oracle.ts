@@ -913,6 +913,35 @@ export const RITUAL_ALIGNMENT_SCALE = escalaDoRitual(ALIGNMENT_ORDER, fx => fx.a
 /** Mesma lógica para os REINOS (floresta esperava 1,17 por pessoa, akasha 0,17). */
 export const RITUAL_REALM_SCALE = escalaDoRitual(REALM_ORDER, fx => fx.realms);
 
+/** Caminho do ritual: `curto` = só as 6 perguntas; `longo` = + os 20 itens. */
+export type CaminhoRitual = 'curto' | 'longo';
+/**
+ * Compensação de DOMINÂNCIA de papel e reino, no mesmo espírito de
+ * `ELEMENT_DOMINANCE_COMPENSATION`, mas POR CAMINHO do ritual. ⚠️ Fase 1 do
+ * Oráculo (28/09/2026): a auditoria (`npm run oraculo:auditoria`, seeds de
+ * validação) mediu papel 1,89× e reino 2,75× — `magico` ~26% contra
+ * `alcance` ~11%, e `akasha`/`floresta` ~16% contra `cavernas`/`deserto`
+ * ~7%. A forma do viés é DIFERENTE nos dois caminhos (sem os 20 itens todo
+ * traço fica em 50 e só `akasha` sobra; com eles, `floresta` sobe e
+ * `cavernas`/`deserto` caem), então uma tabela só não fecha os dois.
+ * Unidades: pontos de share (média 20 num papel, ~11 num reino), somados
+ * ANTES do ritual e da normalização. Calibrado por simulação com a seed de
+ * CALIBRAÇÃO 20260928 (N=3000 por caminho), validado pela auditoria.
+ * Exportado mutável só para o script de calibração; ninguém mais escreve.
+ */
+export const ROLE_DOMINANCE_COMPENSATION: Record<CaminhoRitual, Record<RoleId, number>> = {
+  curto: { suporte: 0.46, tanque: -0.49, fisico: 0.39, magico: -0.71, alcance: 0.35 },
+  longo: { suporte: -0.27, tanque: -0.18, fisico: 1.52, magico: -1.66, alcance: 0.58 },
+};
+export const ELEMENT_PATH_COMPENSATION: Record<CaminhoRitual, Record<ElementId, number>> = {
+  curto: { agua: 0, fogo: 0, terra: 0, ar: 0, sombra: 0, luz: 0, planta: 0, industrial: 0 },
+  longo: { agua: -0.45, fogo: 1.05, terra: 0.65, ar: -0.1, sombra: 0.93, luz: -0.82, planta: -0.73, industrial: -0.53 },
+};
+export const REALM_DOMINANCE_COMPENSATION: Record<CaminhoRitual, Record<RealmId, number>> = {
+  curto: { deserto: 0.51, picos: 0.21, oceano: 0.05, pantano: -0.03, floresta: 0.01, cavernas: 0, gelo: -0.12, campina: 0.16, akasha: -0.79 },
+  longo: { deserto: 1.31, picos: 0.39, oceano: 0.02, pantano: -0.07, floresta: -0.5, cavernas: 0.53, gelo: -0.38, campina: -0.27, akasha: -1.03 },
+};
+
 // ----- Alinhamento (poder / harmonia / benevolência) -----
 
 export const NUMBER_ALIGNMENT: Record<number, AlignmentId> = {
@@ -3302,9 +3331,19 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     // Calibrado por medição até todos ficarem perto de 1/8; régua
     // `criacaoDistribuicao.test.ts`.
     for (const el of ELEMENT_ORDER) elementScores[el] += ELEMENT_DOMINANCE_COMPENSATION[el];
+    // Fase 1 (28/09/2026): ajuste POR CAMINHO por cima da tabela acima, que
+    // foi calibrada só no caminho curto — com os 20 itens o elemento ia a
+    // 2,68× (auditoria). Ver `ROLE_DOMINANCE_COMPENSATION`.
+    const caminhoEl: CaminhoRitual = soul.psychometric.answeredCount > 0 ? 'longo' : 'curto';
+    for (const el of ELEMENT_ORDER) elementScores[el] += ELEMENT_PATH_COMPENSATION[caminhoEl][el];
     replace(roleScores, roleBreakdown, ROLE_ORDER, axes.roles);
     replace(alignmentScores, alignmentBreakdown, ALIGNMENT_ORDER, axes.alignments);
     for (const realm of REALM_ORDER) realmScores[realm] = axes.realms[realm];
+    // Compensação de DOMINÂNCIA de papel e reino, por caminho do ritual
+    // (Fase 1 do Oráculo, 28/09/2026 — ver `ROLE_DOMINANCE_COMPENSATION`).
+    const caminhoRitual: CaminhoRitual = soul.psychometric.answeredCount > 0 ? 'longo' : 'curto';
+    for (const role of ROLE_ORDER) roleScores[role] += ROLE_DOMINANCE_COMPENSATION[caminhoRitual][role];
+    for (const realm of REALM_ORDER) realmScores[realm] += REALM_DOMINANCE_COMPENSATION[caminhoRitual][realm];
 
     // As 6 perguntas do ritual entram DE NOVO, por cima dos eixos do motor.
     // Elas fazem parte da leitura nos DOIS caminhos, e para quem não responde
@@ -3350,6 +3389,7 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     order: K[],
     pref: K | undefined,
     hits: Record<K, number> | null,
+    arredondar = true,
   ): Record<K, number> {
     const totalBase = order.reduce((s, k) => s + base[k], 0) || 1;
     const totalHits = hits ? order.reduce((s, k) => s + hits[k], 0) : 0;
@@ -3361,7 +3401,7 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       let f = wBase * (base[k] / totalBase);
       if (pref && k === pref) f += wPref;
       if (hits && totalHits > 0) f += wDesc * (hits[k] / totalHits);
-      out[k] = Math.round(f * 100);
+      out[k] = arredondar ? Math.round(f * 100) : f * 100;
     }
     return out;
   }
@@ -3391,9 +3431,16 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       ? sortedElements[1]
       : null;
 
-  dominantRole = [...ROLE_ORDER].sort((a, b) => finalRoleScores[b] - finalRoleScores[a])[0];
+  // Papel e reino decidem pelo escore NÃO arredondado (Fase 1, 28/09/2026):
+  // com shares inteiros de ~11 (reino) e ~20 (papel), o empate era comum e
+  // caía na ordem fixa de `ROLE_ORDER`/`REALM_ORDER` — viés estrutural sem
+  // significado, e o que deixava a calibração por simulação oscilando.
+  // Os escores exibidos (`finalRoleScores`/`finalRealmScores`) seguem inteiros.
+  const roleExato = combineAxis(roleScores, ROLE_ORDER, undefined, descHits.roles, false);
+  const realmExato = combineAxis(realmScores, REALM_ORDER, input.preferences?.realm, descHits.realms, false);
+  dominantRole = [...ROLE_ORDER].sort((a, b) => roleExato[b] - roleExato[a])[0];
   let dominantAlignment = [...ALIGNMENT_ORDER].sort((a, b) => finalAlignmentScores[b] - finalAlignmentScores[a])[0];
-  let dominantRealm = [...REALM_ORDER].sort((a, b) => finalRealmScores[b] - finalRealmScores[a])[0];
+  let dominantRealm = [...REALM_ORDER].sort((a, b) => realmExato[b] - realmExato[a])[0];
 
   // ----- Ajustes manuais do usuário (override direto dos vencedores) -----
   if (overrides) {

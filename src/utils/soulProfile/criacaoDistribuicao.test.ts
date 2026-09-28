@@ -95,30 +95,24 @@ describe('distribuição da criação — pipeline completo, população sintét
     }
   });
 
-  it('papel: os 5 são alcançáveis — ⚠️ NÃO bate a meta de 1,5× ainda (Fase 1)', () => {
-    // Achado do crítico (rodada2-critica.md): C2 nunca mediu papel/reino.
-    // Medido aqui (N=240, seed 19870412): mágico 26,3% · suporte 21,7% ·
-    // tanque 20,4% · físico 16,7% · alcance 15,0% — razão topo/piso 1,75×.
-    // O script grande (`scripts/oraculo-auditoria.mjs`, N=800, 2 seeds de
-    // validação) mediu 1,89×. Meta do plano é ≤1,5× — NÃO recalibrado aqui
-    // por decisão explícita da tarefa: recalibrar `ROLE_*` é Fase 1. Este
-    // teste trava REGRESSÃO a partir da baseline medida, não a meta ainda
-    // não alcançada — apertar os números abaixo antes de mexer em
-    // `oracle.ts` › pesos de papel é o jeito de reabrir sem querer o
-    // problema que o crítico achou.
+  it('papel: os 5 são alcançáveis e nenhum passa de ~1/4 (Fase 1, C2)', () => {
+    // Fase 0 (N=240, esta seed): mágico 26,3% · alcance 15,0% — 1,75×; a
+    // auditoria (N=800, 2 seeds de validação) mediu 1,89×. Fase 1 (28/09/2026):
+    // `ROLE_DOMINANCE_COMPENSATION` por caminho + argmax sem arredondar
+    // (`oracle.ts`); a auditoria passou a 1,42× (ruído 1,2×) e as fatias
+    // estruturais N=2400 a 1,10–1,15×. Com N=240 o piso de ruído de 5 caixas
+    // é ~1,4×, então aqui trava o PISO e o TETO, não a razão.
     for (const p of ROLE_ORDER) {
-      expect((papeis[p] ?? 0) / N, `${p} — ${fatia(papeis)}`).toBeGreaterThanOrEqual(0.1);
+      expect((papeis[p] ?? 0) / N, `${p} — ${fatia(papeis)}`).toBeGreaterThanOrEqual(0.13);
     }
-    expect(Math.max(...Object.values(papeis)) / N, fatia(papeis)).toBeLessThanOrEqual(0.3);
+    expect(Math.max(...Object.values(papeis)) / N, fatia(papeis)).toBeLessThanOrEqual(0.27);
   });
 
-  it('reino: os 9 são alcançáveis — ⚠️ instável entre seeds, meta de 1,5× não confirmada', () => {
-    // Medido aqui (N=240, seed 19870412): 8,8%–12,9%, razão 1,47× (dentro da
-    // meta NESTA seed). O script grande (N=800, 2 seeds de validação, mais
-    // robusto) mediu 2,75× — pior, porque pega mais reinos raros na cauda.
-    // A meta ≤1,5× do plano NÃO está confirmada; registrado para a Fase 1
-    // decidir se é recalibração de `REALM_*` ou aceite-por-design de reino
-    // raro. Não recalibrado nesta tarefa.
+  it('reino: os 9 são alcançáveis, nenhum passa de ~1/6 (Fase 1, C2)', () => {
+    // Fase 0: auditoria 2,75× (akasha/floresta ~16% × cavernas/deserto ~7%).
+    // Fase 1: `REALM_DOMINANCE_COMPENSATION` por caminho + argmax sem
+    // arredondar; auditoria 1,36× (ruído 1,38×), fatias estruturais N=2400
+    // 1,19–1,33×. N=240 com 9 caixas tem ruído ~2× — só piso e teto aqui.
     for (const r of REALM_ORDER) {
       expect((reinos[r] ?? 0) / N, `${r} — ${fatia(reinos)}`).toBeGreaterThanOrEqual(0.06);
     }
