@@ -1763,10 +1763,11 @@ const FAMILIA_TO_FAMILY_IDS: Record<string, string[]> = {
   ave: ['raptor', 'corvid', 'owl', 'songbird', 'waterfowl', 'seabird', 'ornamentalbird', 'ratite'],
   mamifero: ['feline', 'canine', 'ursine', 'rodent', 'equine', 'bovine', 'deer', 'primate', 'mustelid', 'proboscidean', 'chiroptera', 'cetacean'],
   cnidario: ['cnidarian'],
-  verme: ['worm'],
+  // Fase 1 B1 (28/09/2026): o tardígrado saiu do grupo `invertebrado` (1
+  // criatura só) para `verme`, e a centopeia que ele puxava veio junto.
+  verme: ['worm', 'myriapod'],
   molusco: ['cephalopod'],
   crustaceo: ['crab', 'lobster'],
-  invertebrado: ['worm', 'myriapod'],
   monstro: ['chimeric', 'slime', 'aquamyth', 'lycan', 'dragon'],
   humanoide: ['halfhuman', 'goblinoid', 'giantkin', 'lycan'],
   construto: ['construct'],

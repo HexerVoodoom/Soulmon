@@ -28,12 +28,11 @@ import { CATALOGO, GRUPOS } from './bestiario-catalogo-curado.mjs';
 const BIOLOGIA_DO_GRUPO = {
   ...Object.fromEntries(Object.entries(GRUPOS).map(([g, def]) => [g, def.biologia])),
   draconico: [],
-  invertebrado: ['Invertebrado'],
 };
 
 const ORIGEM_DO_GRUPO = (grupo) => {
   if (grupo === 'planta' || grupo === 'fungo') return 'Flora Real';
-  if (['peixe', 'inseto', 'aracnideo', 'anfibio', 'reptil', 'ave', 'mamifero', 'cnidario', 'verme', 'molusco', 'crustaceo', 'invertebrado'].includes(grupo)) return 'Fauna Real';
+  if (['peixe', 'inseto', 'aracnideo', 'anfibio', 'reptil', 'ave', 'mamifero', 'cnidario', 'verme', 'molusco', 'crustaceo'].includes(grupo)) return 'Fauna Real';
   if (['construto', 'extraplanetario', 'geologico'].includes(grupo)) return 'Arquétipo Genérico (Fantasia)';
   return 'Mitologia e Folclore';
 };
@@ -53,7 +52,7 @@ const ORIGINAIS = {
   'Welwitschia mirabilis': ['planta', ['terra', 'tempo'], ['Deserto', 'Árido'], 'Medio', 1, [3, 2, 1, 5]],
   'Cão (Canis lupus familiaris)': ['mamifero', ['vigor', 'marcial'], ['Campina', 'Planície'], 'Medio', 4, [5, 6, 7, 1]],
   'Flor-cadáver (Rafflesia arnoldii)': ['planta', ['morte', 'vida'], ['Floresta', 'Selva'], 'Grande', 2, [2, 1, 1, 6]],
-  "Urso-d'água (Tardígrado)": ['invertebrado', ['tempo', 'gravidade'], ['Oceano', 'Gelo'], 'Miudo', 1, [1, 2, 2, 6]],
+  "Urso-d'água (Tardígrado)": ['verme', ['tempo', 'gravidade'], ['Oceano', 'Gelo'], 'Miudo', 1, [1, 2, 2, 6]],
   'Fênix': ['ave', ['fogo', 'vida', 'luz'], ['Montanha', 'Etéreo'], 'Grande', 4, [5, 7, 8, 9]],
   'Dragão': ['monstro', ['fogo', 'ar'], ['Montanha', 'Caverna'], 'Colossal', 8, [10, 8, 6, 9]],
   'Elefante Africano': ['mamifero', ['terra', 'vigor'], ['Campina', 'Pradaria'], 'Enorme', 4, [10, 7, 4, 2]],
@@ -115,4 +114,4 @@ export function montarPool() {
 }
 
 /** Os ids de família (= grupo) que o pool usa. */
-export const FAMILIAS_DO_POOL = [...new Set([...Object.keys(GRUPOS), 'draconico', 'invertebrado'])];
+export const FAMILIAS_DO_POOL = [...new Set([...Object.keys(GRUPOS), 'draconico'])];

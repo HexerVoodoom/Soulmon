@@ -58,8 +58,8 @@ function baseElements(elementos: string[]): string[] {
  *  criatura (`scripts/bestiario-originais.mjs` — fungo, planta, peixe,
  *  inseto, aracnídeo, anfíbio, réptil, ave, mamífero, cnidário, verme,
  *  molusco, crustáceo, monstro, humanoide, construto, etéreo, morto-vivo,
- *  extraplanetário, geológico, elemental, demônio, angelical, dracônico,
- *  invertebrado). As antigas (`besta`, `aquatica`, `gigante`, `geleia`,
+ *  extraplanetário, geológico, elemental, demônio, angelical, dracônico).
+ *  `invertebrado` saiu na Fase 1 (B1): tinha 1 criatura. As antigas (`besta`, `aquatica`, `gigante`, `geleia`,
  *  `espirito`, `aberracao`, `ignea`) saíram com as entradas geradas. Todo
  *  grupo aparece em pelo menos um reino. */
 const REALM_TO_FAMILIAS: Record<RealmId, string[]> = {
