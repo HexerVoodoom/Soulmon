@@ -57,7 +57,10 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // visuais do Oráculo (48 → 72, pedido do dono: subdividir artrópodes,
   // mortos-vivos, aves, peixes, elementais). Candidato óbvio para pagar:
   // `CREATURE_FAMILIES` só é usado na criação — mover para chunk preguiçoso.
-  'index.js': 667_718,
+  // PAGO na Fase 2 do Oráculo (28/09/2026): famílias em `oracle/familias.ts`
+  // atrás de `generateOracleAsync` (chunk `familias-*.js`, 22_292 B).
+  // Medido (`ls -l`, build limpo): 671_803 → 649_474 (−22,3 KB).
+  'index.js': 649_474,
   'index.css': 142_696,          // 139 KB — 1,4× o teto
   'evolution-bg.mp4': 3_917_240, // 3,7 MB — fundo de UMA cerimônia; correção #3 (WebM/CSS)
   'intro.mp4': 2_524_939,        // 2,4 MB — vídeo da intro
