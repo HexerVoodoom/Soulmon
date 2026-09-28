@@ -477,3 +477,14 @@ describe('WP1.11 — o hint diz DE ONDE a resposta entra, nunca como a criatura 
     }
   });
 });
+
+// Fase 2, PR 1 — paridade temporária sync × async (apagar no PR 2, quando o
+// alias síncrono sair).
+describe('generateOracleAsync (paridade com o alias sync)', () => {
+  it('mesma seed e overrides → mesma saída', async () => {
+    const { generateOracleAsync } = await import('./oracle');
+    for (const seed of [1, 12345, 987654]) {
+      expect(await generateOracleAsync(INPUT, seed)).toEqual(generateOracle(INPUT, seed));
+    }
+  });
+});
