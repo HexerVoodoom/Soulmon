@@ -369,6 +369,25 @@ Sono e exercício via Health Connect **não entram**. O motivo não é técnico 
 
 **Não haverá Fase 5 de "mais medidores"** — ver Parte 3c. Brincar e cansaço derivado fecham o kit; qualquer parâmetro novo passa antes pela regra de ouro.
 
+**Fase 6 — o catálogo de atividades curado (28/09/2026)** — 🟡 **parcial**
+`docs/PLANO-CATALOGO-ATIVIDADES.md` é o plano completo; aqui só o
+pé-de-página que amarra este arquivo a ele. ✅ Tipos + pool (28 itens, 9
+áreas) + revisão de evidência + revisão de psicologia (vetos e ajustes
+aplicados, `docs/reviews/2026-09-28-catalogo-psicologia.md`) + recomendador
+do starter set (`utils/recommend.ts`, esforço ponderado ≤4, sem itens
+`optInOnly`) + progressão de nível (`utils/catalogLevel.ts`, sem gate de
+estágio do pet) + `Activity.catalogId?`/`level?` opcionais, hidratando saves
+antigos sem tocar neles + onboarding do catálogo (retroativo, uma vez, fila
+única de intersticiais) + navegador do catálogo (substitui a primeira tela
+do "+"; "Algo que não está aqui?" preserva o formulário de sempre). ⬜
+Falta: ligar `CatalogLevelInviteModal` ao ciclo real de constância (hoje só
+componente + teste, sem gatilho automático na virada); ampliar o pool rumo
+aos ~60 itens do plano original (hoje 28, todos com fonte verificada —
+priorizou-se evidência sobre volume); simulação de economia além do teste
+determinístico (`utils/catalogEconomy.simulation.test.ts`) rodada em produção
+com jogadores reais (não existe base de jogadores — ver `CLAUDE.md`, "Ninguém
+nunca usou o app em produção").
+
 **Nunca**: Google Fit; Health Connect enquanto o custo de conformidade não se pagar; punição por sono ruim; score de sono na home; recompensa que escale com a **duração** do sono; streak que zera; recompensa por contagem de tarefas.
 
 ---

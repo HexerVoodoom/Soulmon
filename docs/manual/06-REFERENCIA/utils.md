@@ -750,6 +750,12 @@ Cobertura: **139/139** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 **Chamado por:** (pendente de ligação em `EvolveTaskModal` — F4 do plano); hoje só `src/utils/catalogLevel.test.ts`.
 **Régua:** `src/utils/catalogLevel.test.ts`.
 
+### `src/utils/catalogOnboarding.ts`
+**Dono de:** a flag de "uma vez só" do convite do catálogo (F3, docs/PLANO-CATALOGO-ATIVIDADES.md), gravada no SAVE (`catalogOnboardingSeenAt`), nunca no localStorage.
+**Exports:** `needsCatalogOnboarding(state)` — precisa mostrar o convite? · `markCatalogOnboardingSeen(state, now)` — grava a flag, idempotente.
+**Chamado por:** `src/App.tsx` (condição de entrada do intersticial `catalogOnboarding`).
+**Régua:** `src/utils/catalogOnboarding.test.ts`.
+
 ### `src/utils/i18n.ts`
 **Dono de:** As traduções PT-BR/EN de toda a UI e o resolvedor de idioma inicial.
 **Exports:**

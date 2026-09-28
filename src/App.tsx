@@ -184,6 +184,9 @@ import {
 } from './utils/habitRhythm';
 import { normalizeSchedule, weekDaysForSchedule, HABIT_WEIGHT, MAX_DAILY_FOCUS, cheerReached } from './types/taskModel';
 import { equilibrarSemana, valeEquilibrar } from './utils/weekBalance';
+import { needsCatalogOnboarding, markCatalogOnboardingSeen } from './utils/catalogOnboarding';
+import { CatalogOnboardingFlow, activitiesFromCatalogChoice } from './components/catalog/CatalogOnboardingFlow';
+import { CatalogBrowserModal } from './components/catalog/CatalogBrowserModal';
 
 import type { Schedule, HabitAnchor, Effort } from './types/taskModel';
 import {
@@ -697,6 +700,10 @@ export default function App() {
 
   const [taskEditModalOpen, setTaskEditModalOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  // F4 do catálogo: o CTA de "+" abre o NAVEGADOR primeiro (docs/PLANO-CATALOGO-ATIVIDADES.md
+  // §5); "Algo que não está aqui?" dentro dele é que abre o `CreateModal`
+  // legado (inalterado) para criar do zero/tarefa avulsa.
+  const [catalogBrowserOpen, setCatalogBrowserOpen] = useState(false);
   const [evolveModalStage, setEvolveModalStage] = useState<string | null>(null);
   // Cerimônia de evolução manual (botão sobre o pet) — {from,to} enquanto aberta
   const [evolutionCeremony, setEvolutionCeremony] = useState<{ from: string; to: string } | null>(null);
@@ -1587,13 +1594,20 @@ export default function App() {
   // declare a CONDIÇÃO DE ENTRADA. Nenhum intersticial pede permissão de
   // sistema antes de o app ter entregado alguma coisa.
   // ═══════════════════════════════════════════════════════════════════════════
-  const interstitial: 'triage' | 'dailyReport' | 'checkIn' | 'dream' | 'nightmare' | 'welcome' =
+  // F3 do catálogo de atividades (docs/PLANO-CATALOGO-ATIVIDADES.md): o
+  // convite roda no MENOR grau de prioridade da fila — depois de tudo que é
+  // ritual diário (relatório/check-in/sonho/pesadelo) ou pedido explícito
+  // (triagem), porque é um convite de UMA VEZ SÓ (`needsCatalogOnboarding`),
+  // não um ritual recorrente. Mesmo mecanismo serve o jogador NOVO e o
+  // ANTIGO — ver `src/utils/catalogOnboarding.ts`.
+  const interstitial: 'triage' | 'dailyReport' | 'checkIn' | 'dream' | 'nightmare' | 'catalogOnboarding' | 'welcome' =
     triageTasks ? 'triage'
       : showDailyReport && gameState.lastDayReport ? 'dailyReport'
         : checkInPlanData ? 'checkIn'
           : morningDream ? 'dream'
             : nightmareOpen ? 'nightmare'
-              : 'welcome';
+              : needsCatalogOnboarding(gameState as any) ? 'catalogOnboarding'
+                : 'welcome';
 
   const { dailyTotal, dailyDone, progress } = useProgressTracking(gameState);
   // Quantos itens de HOJE evitam a perda de coração na virada — regra única em
@@ -2676,7 +2690,7 @@ export default function App() {
    * o caminho de criação (e com ele o nudge do teto, ATIV-18).
    */
   const handleAddNewActivity = useCallback(() => {
-    setCreateModalOpen(true);
+    setCatalogBrowserOpen(true);
   }, []);
 
   /**
@@ -6373,6 +6387,17 @@ export default function App() {
         </Suspense>
       )}
 
+      <CatalogBrowserModal
+        isOpen={catalogBrowserOpen}
+        onClose={() => setCatalogBrowserOpen(false)}
+        language={language}
+        onAdd={(item) => {
+          commitHabitCreate(activitiesFromCatalogChoice([item]), TELEMETRY_CREATE_PATH.create_modal);
+          setCatalogBrowserOpen(false);
+        }}
+        onCreateFromScratch={() => { setCatalogBrowserOpen(false); setCreateModalOpen(true); }}
+      />
+
       {createModalOpen && (
         <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}><CreateModal
           isOpen={createModalOpen}
@@ -6683,6 +6708,21 @@ export default function App() {
           o convite de instalar volta na sessão seguinte. Perder um convite
           adiável é mais barato que dois diálogos empilhados com dois
           focus-traps. */}
+      {interstitial === 'catalogOnboarding' && (
+        <CatalogOnboardingFlow
+          language={language}
+          onSkip={() => setGameState(prev => markCatalogOnboardingSeen(prev as any, new Date()) as any)}
+          onComplete={(chosen) => setGameState(prev => {
+            const withFlag = markCatalogOnboardingSeen(prev as any, new Date()) as any;
+            return {
+              ...withFlag,
+              // ACRESCENTA, nunca substitui — nenhuma atividade existente é
+              // tocada (decisão do dono, 28/09/2026).
+              activities: [...(prev.activities ?? []), ...activitiesFromCatalogChoice(chosen)],
+            };
+          })}
+        />
+      )}
       {interstitial === 'welcome' && (
         <WelcomePromptModal
           language={language}

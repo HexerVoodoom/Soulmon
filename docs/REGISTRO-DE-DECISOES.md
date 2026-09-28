@@ -1092,3 +1092,33 @@ tomou quatro decisões durante a execução, antes do checkpoint de F3/F4.
 geram confusão com tratamento clínico (ex.: usuário relatando ter entendido
 o app como terapia), a decisão 4 volta à mesa com o
 `soulmon-behavioral-psychologist`.
+
+### 16.1 Fechamento de F1–F4 (28/09/2026, mesma sessão)
+
+A revisão do `soulmon-behavioral-psychologist`
+(`docs/reviews/2026-09-28-catalogo-psicologia.md`) foi aplicada por completo
+antes de qualquer UI ir ao ar: todos os VETOS (V1–V3) e AJUSTES OBRIGATÓRIOS
+(A1–A6) do documento estão no código, cada um com teste (`recommend.test.ts`,
+`catalogOptInWeight.test.ts`, `activityCatalog.copyPromessa.contract.test.ts`,
+`CatalogMindNotice.render.test.tsx`, `catalogLevel.test.ts`).
+
+F3 (onboarding) e F4 (navegador do catálogo) foram implementados de forma
+ADITIVA, sem tocar na máquina de estados do ritual do Oráculo
+(`SoulmonOnboarding.tsx`) nem no formulário de criação existente
+(`CreateModal.tsx`) — os dois continuam servindo exatamente o que serviam. O
+convite do catálogo (`CatalogOnboardingFlow`) e o navegador
+(`CatalogBrowserModal`) são superfícies novas, ligadas pela fila única de
+intersticiais e pelo botão "+", respectivamente. **Decisão consciente**: dado
+o histórico de bugs de reordenação naquela máquina de estados (ids negativos,
+`GOAL_STEP`/`STRUGGLE_STEP`), o risco de regredir o primeiro contato de TODO
+jogador não valia a economia de manter só um caminho de onboarding — dois
+mecanismos que não se sobrepõem (o ritual do Oráculo continua perguntando
+`soulGoal`/`soulStruggle` em texto livre; o convite do catálogo pergunta
+áreas/dificuldades/forças em escolha múltipla) foram preferidos a um só
+mecanismo mais arriscado de editar.
+
+**O que ficou para uma próxima sessão** (registrado em
+`docs/PERGUNTAS-DO-DONO.md`): `CatalogLevelInviteModal` existe e tem teste,
+mas não está ligado a um gatilho automático de constância na virada — hoje é
+só convite manual; o pool tem 28 dos ~60 itens do plano original (ver Fase 6
+do `docs/PLANO-TAREFAS.md`).

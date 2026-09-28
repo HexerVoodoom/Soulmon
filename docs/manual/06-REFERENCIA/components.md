@@ -48,6 +48,25 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Chamado por:** (ainda não ligado ao navegador de catálogo — F4 do plano); hoje só `src/components/catalog/CatalogMindNotice.render.test.tsx`.
 **Régua:** `src/components/catalog/CatalogMindNotice.render.test.tsx`.
 
+### `src/components/catalog/CatalogOnboardingFlow.tsx`
+**Dono de:** o convite do catálogo (F3) — áreas/dificuldades/forças (até 3 cada) e a tela "Seu ponto de partida", com `recommendStarterSet`. Roda para jogador novo e antigo pelo MESMO mecanismo (ver `catalogOnboarding.ts`). Pulável em qualquer passo.
+**Props principais:** `CatalogOnboardingFlowProps` — `language?`, `onSkip()`, `onComplete(chosen: CatalogItem[])`.
+**Exports:** `CatalogOnboardingFlow(props)` · `activitiesFromCatalogChoice(items)` — monta as `Activity` (nível 1, agenda do nível 1 do item, id novo).
+**Chamado por:** `src/App.tsx` (intersticial `catalogOnboarding`, menor prioridade da fila).
+**Régua:** `src/components/catalog/CatalogOnboardingFlow.render.test.tsx`.
+
+### `src/components/catalog/CatalogBrowserModal.tsx`
+**Dono de:** o navegador do catálogo (F4) — busca, abas por área, cartão "por que funciona", "Algo que não está aqui?" (abre o `CreateModal` legado, inalterado). Item `optInOnly` abre `CatalogMindNotice` antes de adicionar.
+**Props principais:** `CatalogBrowserModalProps` — `isOpen`, `onClose()`, `language?`, `onAdd(item)`, `onCreateFromScratch()`.
+**Chamado por:** `src/App.tsx` (substitui a abertura direta do `CreateModal` pelo botão "+" — `handleAddNewActivity`).
+**Régua:** `src/components/catalog/CatalogBrowserModal.render.test.tsx`.
+
+### `src/components/catalog/CatalogLevelInviteModal.tsx`
+**Dono de:** o convite de subir/descer nível de um item do catálogo (F4, `utils/catalogLevel.ts`). A6 da revisão de psicologia: o convite de descer nunca mostra "descer" nem "Nível 1" (`catalogLevelDownCopy`), botões com peso visual igual.
+**Props principais:** `CatalogLevelInviteModalProps` — `isOpen`, `direction: 'up'|'down'`, `itemName`, `language?`, `onAccept()`, `onDecline()`.
+**Chamado por:** (ainda sem gatilho automático na virada — pendência registrada em `docs/PERGUNTAS-DO-DONO.md`); hoje só `src/components/catalog/CatalogLevelInviteModal.render.test.tsx`.
+**Régua:** `src/components/catalog/CatalogLevelInviteModal.render.test.tsx`.
+
 ### `src/components/AccountSection.tsx`
 **Dono de:** bloco "Conta & compras" dentro do grupo "Sua conta" da `SettingsPage` — sair da conta e restaurar compras.
 **Props principais:** `AccountSectionProps` — `language`, `onEntitlementChange?(ent: Entitlement)`.
