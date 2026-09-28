@@ -150,10 +150,14 @@ export interface OracleInput {
    * mais específico) — NUNCA em nome, bio ou descrição por forma; o dono
    * pediu explicitamente que a classe não apareça pro jogador em lugar
    * nenhum da UI. Só o pipeline (soulProfile/pipeline.ts) preenche isto —
-   * generateOracle sozinho (caminho legado, OraclePage) nunca tem acesso ao
-   * motor pesado, que só é alcançado por import dinâmico.
+   * a UI (caminho legado, OraclePage) nunca tem acesso ao motor pesado, que
+   * só é alcançado por import dinâmico.
+   *
+   * Contrato por TIPO (Oráculo Fase 2, PR 6): aqui é `never` — quem monta um
+   * `OracleInput` (UI, rascunho salvo, testes) não pode preencher. O campo
+   * real vive em `OracleInputWithClass`, que só o pipeline constrói.
    */
-  promptClassFlavor?: string; // EN, curto (ex.: "Volcanologist")
+  promptClassFlavor?: never;
   /**
    * Leitura ROBUSTA (utils/soulProfile/). Quando presente, ela SUBSTITUI a
    * leitura antiga — signo solar, ascendente aproximado pela hora, horóscopo
@@ -258,7 +262,7 @@ export function creatureFormId(form: Pick<CreatureStage, 'stage' | 'branch'>): s
 }
 
 export interface OracleResult {
-  input: OracleInput;
+  input: OracleInputSync | OracleInputWithClass; // o do pipeline guarda promptClassFlavor
   seed: number;                // salt usado — repassar para reproduzir
   numerology: NumerologyResult;
   western: { sun: SignInfo; ascendant: SignInfo };
@@ -2707,13 +2711,22 @@ function addScore<K extends string>(
  * é o caminho de PRODUÇÃO: mantém `CREATURE_FAMILIES` fora do chunk de
  * entrada. Mesma seed → mesma saída que `generateOracleWithFamilies`.
  */
-export async function generateOracleAsync(input: OracleInput, seed?: number, overrides?: OracleOverrides): Promise<OracleResult> {
+/** Entrada sem classe calculada — UI, rascunho, testes, caminho legado. */
+export type OracleInputSync = OracleInput;
+/** Entrada do pipeline: a classe real já foi calculada (`computeClassTitle`).
+ *  A chave é OBRIGATÓRIA — `undefined` é decisão explícita ("sem traço de
+ *  arquétipo"), nunca esquecimento. */
+export type OracleInputWithClass = Omit<OracleInput, 'promptClassFlavor'> & {
+  promptClassFlavor: string | undefined; // EN, curto (ex.: "Volcanologist")
+};
+
+export async function generateOracleAsync(input: OracleInputSync | OracleInputWithClass, seed?: number, overrides?: OracleOverrides): Promise<OracleResult> {
   const familias = await import('./oracle/familias');
   return generateOracleWithFamilies(input, familias, seed, overrides);
 }
 
 /** O corpo puro da geração: as famílias entram por parâmetro. */
-export function generateOracleWithFamilies(input: OracleInput, familias: FamiliasOraculo, seed?: number, overrides?: OracleOverrides): OracleResult {
+export function generateOracleWithFamilies(input: OracleInputSync | OracleInputWithClass, familias: FamiliasOraculo, seed?: number, overrides?: OracleOverrides): OracleResult {
   const { CREATURE_FAMILIES, MOTIVO_ELEMENTO_CLASSE } = familias;
   const [year, month, day] = input.birthDate.split('-').map(Number);
   const [hour, minute] = (input.birthTime || '12:00').split(':').map(Number);

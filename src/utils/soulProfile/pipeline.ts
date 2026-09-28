@@ -17,7 +17,7 @@
 // ---------------------------------------------------------------------------
 
 import { generateOracleAsync } from '../oracle';
-import type { OracleInput, OracleResult } from '../oracle';
+import type { OracleInput, OracleInputWithClass, OracleResult } from '../oracle';
 import type { SoulProfile } from './profile';
 import { buildFichaESkills } from './ficha/fromInput';
 import { selectCompanion, type CapturaAvaliacao } from './ficha/capture';
@@ -154,7 +154,7 @@ export async function generateOracleComplete(input: OracleInput, seed?: number):
     // sem o traço extra — o prompt de 3 traços já funcionava sozinho
   }
 
-  const result = await generateOracleAsync({
+  const entrada: OracleInputWithClass = {
     ...input,
     bestiaryInspiration: {
       texto,
@@ -169,7 +169,8 @@ export async function generateOracleComplete(input: OracleInput, seed?: number):
     // verdade da mecânica (Evocação + afinidade elemental) achou alguém.
     companionName: companion ? companion.criatura.nome : undefined,
     promptClassFlavor,
-  }, salt);
+  };
+  const result = await generateOracleAsync(entrada, salt);
 
   return { result, fichaByStage, companion, bestiaryPick, bestiaryLineage, stageSkills };
 }
