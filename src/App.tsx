@@ -56,8 +56,8 @@ import { STORAGE_KEYS } from './utils/storageKeys';
 import {
   readFlag, readJson, readLocal, readNumber, removeLocal, writeFlag, writeJson, writeLocal,
 } from './utils/safeStorage';
-import { hashString, creatureFormId } from './utils/oracle';
-import type { OracleInput, OracleResult } from './utils/oracle';
+import { hashString, creatureFormId, ELEMENT_INFO } from './utils/oracle';
+import type { OracleInput, OracleResult, ElementId } from './utils/oracle';
 import type { Manifestacao } from './utils/soulProfile/ficha/manifestacaoSave';
 import { applyDecorEquip, type SlotId } from './utils/petStage';
 
@@ -112,7 +112,7 @@ import { marcaAvisoTermos, precisaAvisarTermos, qualDocMudou } from './utils/ter
 import { PRIVACY_VERSION, TERMS_VERSION } from './utils/consent';
 import { MilestoneCeremony } from './components/MilestoneCeremony';
 import {
-  applyRebirth, canRebirth, rebirthRefusal, rebirthEscolaOptions, rebirthElementOptions,
+  applyRebirth, canRebirth, rebirthRefusal, rebirthEscolaOptions, rebirthElementOptions, herancaDoCiclo,
 } from './utils/rebirth';
 import type { RebirthChoices } from './utils/rebirth';
 import { anniversaryOn, daysTogether } from './utils/anniversary';
@@ -3482,9 +3482,16 @@ export default function App() {
     const elementoNome = rebirthElementOptions().find(o => o.id === choices.elemento)?.nome ?? '';
     if (!escolaNome || !elementoNome) return false;
 
+    // Fase 3 (decisão 1): o traço herdado do ciclo anterior sai do save
+    // (`herancaDoCiclo`), nunca da tela — o jogador escolhe três coisas, e a
+    // quarta é o que ficou dele mesmo.
+    const heranca = herancaDoCiclo(gameState);
     const comEscolhas: OracleInput = {
       ...saved,
-      rebirth: { criatura: choices.criatura, escolaNome, elementoNome },
+      rebirth: {
+        criatura: choices.criatura, escolaNome, elementoNome,
+        ...(heranca ? { herdado: { elemento: heranca.elemento as ElementId } } : {}),
+      },
     };
     // Semente própria: duas pessoas que escolherem a mesma criatura, escola e
     // elemento sobre leituras diferentes continuam recebendo bichos
@@ -5164,6 +5171,15 @@ export default function App() {
                 {language === 'pt-BR'
                   ? `Já aconteceu, uma vez. Renasceu do ${gameState.rebirth.fromStage} como "${gameState.rebirth.criatura}". É ele. Ainda é ele.`
                   : `It already happened, once. Reborn from ${gameState.rebirth.fromStage} as "${gameState.rebirth.criatura}". Same pattern. Still the same one.`}
+                {/* Fase 3 (decisão 1): o traço que ficou do ciclo anterior — o
+                    mundo nomeia o que continuou, nunca o que se perdeu (L4/L5). */}
+                {gameState.rebirth.heranca && ELEMENT_INFO[gameState.rebirth.heranca.elemento as ElementId] && (
+                  <span data-rebirth-heranca={gameState.rebirth.heranca.elemento}>
+                    {language === 'pt-BR'
+                      ? ` Do ciclo anterior ficou ${ELEMENT_INFO[gameState.rebirth.heranca.elemento as ElementId].name.pt.toLowerCase()}.`
+                      : ` From the previous cycle, ${ELEMENT_INFO[gameState.rebirth.heranca.elemento as ElementId].name.en.toLowerCase()} stayed.`}
+                  </span>
+                )}
               </span>
             </p>
           )}

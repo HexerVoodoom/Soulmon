@@ -85,7 +85,14 @@ export interface OracleInput {
    * higienizados; este módulo não valida catálogo (quem valida é
    * `applyRebirth`, na entrada).
    */
-  rebirth?: { criatura: string; escolaNome: string; elementoNome: string };
+  rebirth?: {
+    criatura: string; escolaNome: string; elementoNome: string;
+    /** Fase 3 (decisão 1): o traço herdado do ciclo anterior
+     *  (`utils/rebirth.ts` › `herancaDoCiclo`). Preenche o elemento
+     *  SECUNDÁRIO quando a leitura não deu nenhum e entra nas 11 formas do
+     *  prompt — nunca substitui o dominante. */
+    herdado?: { elemento: ElementId };
+  };
   /**
    * Inspiração vinda do bestiário (utils/soulProfile/bestiary/select.ts):
    * a DESCRIÇÃO da criatura escolhida (sem o nome), cuja função é uma só —
@@ -3051,6 +3058,16 @@ export function generateOracleWithFamilies(input: OracleInputSync | OracleInputW
       ? sortedElements[1]
       : null;
 
+  // Renascimento (Fase 3, decisão 1): o traço herdado do ciclo anterior. Só
+  // preenche o 2º slot quando ele está VAZIO e o elemento herdado não é o
+  // dominante — influência leve, registrada no breakdown por transparência.
+  const herdado = input.rebirth?.herdado?.elemento;
+  if (herdado && ELEMENT_ORDER.includes(herdado) && herdado !== dominantElement && secondaryElement === null) {
+    secondaryElement = herdado;
+    addScore(elementScores, elementBreakdown, herdado, 0,
+      { pt: 'Herança do ciclo anterior', en: 'Inherited from the previous cycle' });
+  }
+
   // Papel e reino decidem pelo escore NÃO arredondado (Fase 1, 28/09/2026):
   // com shares inteiros de ~11 (reino) e ~20 (papel), o empate era comum e
   // caía na ordem fixa de `ROLE_ORDER`/`REALM_ORDER` — viés estrutural sem
@@ -3310,10 +3327,16 @@ export function generateOracleWithFamilies(input: OracleInputSync | OracleInputW
   // Renascimento: a criatura é campo ABERTO e por isso vai entre aspas no
   // prompt — delimitar é o que impede o texto do jogador de ser lido como
   // instrução. Escola e elemento são de catálogo fechado e entram soltos.
+  // O traço herdado (Fase 3, decisão 1) é a marca de continuidade — "É ele.
+  // Ainda é ele." — e por isso vai em TODAS as formas, nas duas variantes.
+  const herdadoEl = input.rebirth?.herdado?.elemento;
+  const herancaClause = herdadoEl && ELEMENT_INFO[herdadoEl]
+    ? ` Carries a trace of its previous cycle: subtle ${ELEMENT_INFO[herdadoEl].name.en.toLowerCase()} tones in its markings.`
+    : '';
   const rebirthClause = input.rebirth
     ? `Reborn form: shaped after "${input.rebirth.criatura}", `
       + `of the ${input.rebirth.escolaNome} school, `
-      + `${input.rebirth.elementoNome} element.`
+      + `${input.rebirth.elementoNome} element.` + herancaClause
     : undefined;
   // Bio: descrição breve e legível da criatura (não some no prompt, é exibida
   // na página/exportação). Se o dono descreveu o pet, essa descrição vale.

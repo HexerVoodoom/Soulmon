@@ -71,6 +71,26 @@ export interface RebirthChoices {
   elemento: string;
 }
 
+/**
+ * O TRAÇO HERDADO do ciclo anterior — decisão 1 do dono (PLANO-ORACULO.md §9,
+ * 28/09/2026): "Rebirth herda um traço do ciclo anterior (família visual ou
+ * elemento); nunca reset puro". Hoje é o ELEMENTO dominante da criatura
+ * anterior (`soulmonMeta.dominantElement`, os 8 do Oráculo): é o único dos
+ * dois traços que o save guarda — a família visual vive só no `OracleResult`
+ * e nunca foi persistida, então herdá-la exigiria campo novo gravado no
+ * reveal (registrado como fora de escopo na Fase 3; o gatilho para reabrir é
+ * a família passar a ser gravada). Como age: `oracle.ts` recebe `herdado` e
+ * (a) preenche o elemento SECUNDÁRIO quando a leitura não deu nenhum — nunca
+ * o dominante, que é a escolha do jogador na cerimônia —, e (b) cita o traço
+ * nas 11 formas do prompt. Influência leve, de propósito: é "É ele. Ainda é
+ * ele." (§11 da bíblia), não uma segunda escolha.
+ */
+export interface HerancaDoCiclo {
+  tipo: 'elemento';
+  /** `ElementId` do Oráculo (agua/fogo/terra/ar/sombra/luz/planta/industrial). */
+  elemento: string;
+}
+
 export interface RebirthRecord extends RebirthChoices {
   /** ISO. Existe para a tela poder contar a data, e para o registro ser
    *  auditável — nunca para derivar "quantos rebirths", que é sempre 1. */
@@ -78,6 +98,16 @@ export interface RebirthRecord extends RebirthChoices {
   /** Estágio de onde se renasceu. Guardado porque é a única prova de que a
    *  escada foi subida inteira uma vez; a tela pode contá-la. */
   fromStage: string;
+  /** O que ficou do ciclo anterior (ver `HerancaDoCiclo`). Ausente só em save
+   *  sem `soulmonMeta.dominantElement` (criatura legada/demo) e nos registros
+   *  anteriores à Fase 3. */
+  heranca?: HerancaDoCiclo;
+}
+
+/** O traço que o ciclo anterior deixa — lido do save, nunca escolhido. */
+export function herancaDoCiclo(prev: { soulmonMeta?: { dominantElement?: string } }): HerancaDoCiclo | undefined {
+  const elemento = prev.soulmonMeta?.dominantElement;
+  return elemento ? { tipo: 'elemento', elemento } : undefined;
 }
 
 /** Teto do campo aberto. Ele entra em prompt de gerador de imagem: texto
@@ -166,6 +196,9 @@ export interface RebirthTarget {
   rebirth?: RebirthRecord | null;
   /** WP4.29 — o relógio da incubação. Zerado aqui, ver abaixo. */
   incubation?: import('./spriteTrigger').Incubation;
+  /** Só lido (`herancaDoCiclo`), nunca escrito aqui — quem troca a criatura
+   *  (e o `soulmonMeta`) é o `App`, com o resultado da geração. */
+  soulmonMeta?: { dominantElement?: string };
 }
 
 export interface RebirthOutcome<T> {
@@ -200,12 +233,14 @@ export function applyRebirth<T extends RebirthTarget>(
     return { state: prev, applied: false, refusal: 'not-ultra' };
   }
 
+  const heranca = herancaDoCiclo(prev);
   const record: RebirthRecord = {
     criatura,
     escola: choices.escola,
     elemento: choices.elemento,
     at: now.toISOString(),
     fromStage: prev.evolutionStage ?? REBIRTH_REQUIRED_STAGE,
+    ...(heranca ? { heranca } : {}),
   };
 
   return {
