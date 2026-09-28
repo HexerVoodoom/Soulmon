@@ -40,7 +40,7 @@ export function buildFichaESkills(
   input: OracleInput,
   seedKey: string,
 ): FichaESkills {
-  const oracleAxes = applyRitualAnswers(input.soulProfile!.oracle, input.answers);
+  const oracleAxes = applyRitualAnswers(input.soulProfile!.oracle, input.answers, input.soulProfile!.psychometric.answeredCount > 0 ? 'longo' : 'curto');
   const fichaByStage = Object.fromEntries(
     FICHA_STAGE_ORDER.map(stage => [stage, buildFicha(input.fullName, oracleAxes, stage, seedKey)]),
   ) as Record<FichaStage, Ficha>;

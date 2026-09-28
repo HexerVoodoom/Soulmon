@@ -76,7 +76,7 @@ export async function generateOracleComplete(input: OracleInput, seed?: number):
   // ritual — é a mesma leitura que o `generateOracle` usa para criar a
   // criatura. Sem isso, ficha, companheiro, skills e bestiário ficavam surdos
   // ao ritual (medido: respostas opostas davam resultado idêntico).
-  const oracleAxes = applyRitualAnswers(soul.oracle, input.answers);
+  const oracleAxes = applyRitualAnswers(soul.oracle, input.answers, soul.psychometric.answeredCount > 0 ? 'longo' : 'curto');
 
   // ficha + skills pela fonte única (a página do Pet consome a MESMA função)
   const { fichaByStage, stageSkills } = buildFichaESkills(input, idKey);

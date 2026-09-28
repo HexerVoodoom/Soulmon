@@ -16,8 +16,8 @@
 // forte move um elemento em ~⅓ da média sem apagar mapa astral e teste.
 // ---------------------------------------------------------------------------
 
-import { ORACLE_QUESTIONS, RITUAL_ALIGNMENT_SCALE, RITUAL_REALM_SCALE } from '../oracle';
-import type { AlignmentId, ElementId, RealmId, RoleId } from '../oracle';
+import { ORACLE_QUESTIONS, RITUAL_ALIGNMENT_SCALE, RITUAL_REALM_SCALE, ROLE_DOMINANCE_COMPENSATION, REALM_DOMINANCE_COMPENSATION } from '../oracle';
+import type { AlignmentId, CaminhoRitual, ElementId, RealmId, RoleId } from '../oracle';
 import { CLASS_ELEMENT_ORDER, type ClassElementId, type OracleAxes } from './types';
 import { computeDominantClassElements } from './derivedElements';
 
@@ -47,6 +47,14 @@ function renormalize<K extends string>(scores: Record<K, number>, keys: readonly
   return out;
 }
 
+/** Escore cru + compensação — a mesma soma que o `generateOracle` faz antes
+ *  de normalizar (o argmax não muda com a normalização). */
+function somaComp<K extends string>(scores: Record<K, number>, comp: Record<K, number>): Record<K, number> {
+  const out = { ...scores };
+  for (const k of Object.keys(comp) as K[]) out[k] = (out[k] ?? 0) + comp[k];
+  return out;
+}
+
 function argmax<K extends string>(scores: Record<K, number>, keys: readonly K[]): K {
   return keys.reduce((melhor, k) => (scores[k] > scores[melhor] ? k : melhor), keys[0]);
 }
@@ -59,6 +67,12 @@ function argmax<K extends string>(scores: Record<K, number>, keys: readonly K[])
 export function applyRitualAnswers(
   axes: OracleAxes,
   answers: Record<string, string> | undefined,
+  /** Caminho do ritual (`soul.psychometric.answeredCount > 0` → `longo`).
+   *  Com ele, `dominantRole`/`dominantRealm` levam a MESMA compensação de
+   *  dominância do `generateOracle` (Fase 1, 28/09/2026) — sem ela o
+   *  bestiário e o reveal liam um papel/reino e a criatura nascia de outro.
+   *  Os SHARES (`roles`/`realms`) não mudam: a ficha é calibrada sobre eles. */
+  caminho?: CaminhoRitual,
 ): OracleAxes {
   if (!answers || Object.keys(answers).length === 0) return axes;
 
@@ -109,9 +123,13 @@ export function applyRitualAnswers(
     ...normalizados,
     // dominantes recomputados — senão a linha do reveal ("Essência X · Ofício
     // Y") continuaria anunciando a leitura sem ritual
-    dominantRole: argmax(normalizados.roles, roleKeys),
+    dominantRole: caminho
+      ? argmax(somaComp(roles, ROLE_DOMINANCE_COMPENSATION[caminho]), roleKeys)
+      : argmax(normalizados.roles, roleKeys),
     dominantAlignment: argmax(normalizados.alignments, alignmentKeys),
-    dominantRealm: argmax(normalizados.realms, realmKeys),
+    dominantRealm: caminho
+      ? argmax(somaComp(realms, REALM_DOMINANCE_COMPENSATION[caminho]), realmKeys)
+      : argmax(normalizados.realms, realmKeys),
     dominantClassElements: computeDominantClassElements(normalizados.classElements),
   };
 }
