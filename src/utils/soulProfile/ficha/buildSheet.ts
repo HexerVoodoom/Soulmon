@@ -447,9 +447,22 @@ export function buildFicha(
   }
 
   const dominantRole = oracle.dominantRole;
-  const recursos: Partial<Record<RecursoId, number>> = {
-    [ROLE_TO_RECURSO[dominantRole]]: budget.recursos,
-  };
+  // O SEGUNDO papel também tem voz no recurso. ⚠️ 28/09/2026: o recurso ia
+  // inteiro para o papel dominante, então classe que pede recurso de UM papel
+  // e escola de OUTRO nunca aparecia — Paladino (fé de suporte + combate
+  // físico) saiu 2 vezes em 1.600, mesmo com o híbrido suporte/lutador sendo
+  // comum. Metade da fatia proporcional do segundo papel vai para o recurso
+  // dele; o dominante fica sempre com a maior parte.
+  const [papel2] = (Object.keys(oracle.roles) as RoleId[])
+    .filter(r => r !== dominantRole)
+    .sort((a, b) => oracle.roles[b] - oracle.roles[a]);
+  const recurso1 = ROLE_TO_RECURSO[dominantRole];
+  const recurso2 = ROLE_TO_RECURSO[papel2];
+  const fatia2 = recurso2 === recurso1 ? 0 : Math.round(
+    budget.recursos * 0.5 * oracle.roles[papel2] / Math.max(1e-9, oracle.roles[dominantRole] + oracle.roles[papel2]),
+  );
+  const recursos: Partial<Record<RecursoId, number>> = { [recurso1]: budget.recursos - fatia2 };
+  if (fatia2 > 0) recursos[recurso2] = fatia2;
 
   const talentos = allocateTalentos(dominantRole, escolas, recursos, budget.talentoRanks, seedKey);
 

@@ -35,7 +35,10 @@ describe('computeClassTitle', () => {
       const titulo = await computeClassTitle(fichaByStage[stage]);
       expect(titulo.nome.pt.length).toBeGreaterThan(0);
       expect(titulo.nome.en.length).toBeGreaterThan(0);
-      expect(titulo.nome.en).not.toBe(titulo.nome.pt);
+      // Nome próprio se escreve igual nas duas línguas; o que a régua pega é
+      // tradução FALTANDO. (Bokor e Berserker entraram em 28/09/2026.)
+      const NOMES_PROPRIOS = new Set(['Bokor', 'Berserker']);
+      if (!NOMES_PROPRIOS.has(titulo.nome.pt)) expect(titulo.nome.en).not.toBe(titulo.nome.pt);
       expect(['arquetipo', 'diluido', 'generico']).toContain(titulo.origem);
       // o sigilo da classe (canvas Pet, D-P4) sempre aponta para uma arte que existe
       expect(titulo.sigilo, `sigilo de ${stage}`).toBeTruthy();
