@@ -204,43 +204,43 @@ para o `SOULMON_PROFILE` no localStorage junto com a seed.
 
 ## Equilíbrio medido (e a dívida conhecida)
 
-Simulação de 400 perfis sintéticos por caminho (nomes, datas, horas e cidades
-sorteadas; respostas sorteadas uniformemente), comparando com o oráculo
-**legado** como linha de base. Distribuição do vencedor de cada eixo:
+⚠️ **Tabela substituída em 28/09/2026 (Fase 0 do `PLANO-ORACULO.md`).** A
+versão anterior (400 perfis, sem soulProfile de verdade, comparando com o
+oráculo legado) está desatualizada desde a troca do motor de leitura. Os
+números atuais vêm de `scripts/oraculo-auditoria.mjs` (`npm run
+oraculo:auditoria`), N=800 (seeds de validação `19870412` + `31415926`,
+nenhuma delas a seed de calibração `20260928`), pipeline real
+(`generateOracleComplete`), população sintética cobrindo `timeUnknown` (~20%)
+e "só 6 perguntas, sem teste longo" (~30%). Relatório completo, com JSON:
+`docs/reviews/oraculo-auditoria/2026-09-28.md`.
 
-| Eixo (linha de base) | Legado | Só as 6 | 6 + 20 |
-|---|---|---|---|
-| elemento (12,5%) | 21,3% … **1,3%** | 19,5% … 4,5% | 17,8% … 6,3% |
-| papel (20%) | 28,5% … 14,5% | 28,2% … 9,5% | **31,3% … 10,5%** |
-| alinhamento (33%) | 54,3 / 28,7 / 17,0 | 50,7 / 30,8 / 18,5 | 49,5 / 26,8 / 23,8 |
-| reino (11%) | 18,5% … 1,5% | 22,8% … **0,5%** | 22,5% … 1,0% |
+| Eixo | k distintos | faixa (piso–topo) | razão topo/piso | meta do plano |
+|---|---|---|---|---|
+| Elemento | 8/17 | 9,6%–17,3% | 1,79× | ≤1,5× |
+| Caminho (alinhamento) | 3/3 | 29,1%–36,9% | 1,27× | ≤1,5× — ✅ |
+| Papel | 5/5 | 14,5%–27,4% | 1,89× | ≤1,5× |
+| Reino | 9/9 | 6,5%–17,9% | 2,75× | ≤1,5× |
 
-O que melhorou em relação ao legado: **elemento** (planta e industrial eram
-praticamente inalcançáveis, 2,0% e 1,3%) e **alinhamento** (harmonia dominava
-54% dos perfis).
+**Papel e reino nunca tinham sido medidos por esta régua antes** — achado do
+crítico da rodada 2 (`docs/oraculo-plano/rodada2-critica.md`): "a régua não
+mede papel nem reino". Agora medem, e os dois ficam **vermelhos** contra a
+meta de 1,5× (registrado, não recalibrado — recalibração é trabalho da
+**Fase 1**, não desta tarefa). O teste bloqueante
+(`criacaoDistribuicao.test.ts`) trava REGRESSÃO a partir da baseline medida
+em N pequeno, não a meta ainda não alcançada.
 
-O que **piorou, e é dívida conhecida**:
+"Elemento" mostra 8/17: os "17 elementos" do plano (§6) são do **class-system**
+(a ficha invisível); o oráculo mede **8 elementos cósmicos** próprios
+(`ELEMENT_ORDER`) — os dois números não são a mesma coisa e a tabela antiga
+os confundia implicitamente. Cobertura real dos 17 do class-system está em
+C1 do relatório de auditoria (companheiros 32/32, classes 79/79).
 
-- **Papel**: `magico` e `alcance` juntos vencem ~62% dos perfis no caminho
-  longo, contra 40% de linha de base para dois papéis entre cinco. Causa
-  identificada: cada eixo junguiano é medido por **um único item de escolha
-  forçada**, então o escore é sempre exatamente 0 ou 100 — nunca um meio-termo
-  — e os coeficientes foram calibrados assumindo variação contínua. O
-  amortecedor `JUNG_DAMPING` (`axes.ts`) corta esse salto pela metade
-  preservando a média, e levou o par de 66% para 62%. **Não fecha o buraco**:
-  fechar exige recalibrar os coeficientes de papel contra uma simulação que
-  sorteie RESPOSTAS (não traços), que é o que o app realmente recebe.
-- **Reino**: `akasha` cai para 0,5% no caminho das 6 (era 16,5% no legado). No
-  legado, sombra e luz ganhavam pontos fortes do yin/yang chinês e do
-  nascimento noturno; no motor novo, sem camada psicométrica, os dois ficam
-  presos num termo de traço constante e `akasha` (`{luz:3, sombra:3}`) some.
-  `pantano` fica em ~1,5% nos três caminhos — esse é **pré-existente**, não
-  entrou com a troca.
-
-Nenhum eixo é inalcançável em nenhum caminho, e nenhum passa de 32%. A
-simulação que produziu esta tabela não está commitada; ela é reconstruível a
-partir desta descrição, e vale reconstruí-la antes de mexer em qualquer
-coeficiente.
+Outros achados da auditoria de 800: colisão de nome de criatura **3,00%**
+(meta ≤2% — vermelho), grupo do bestiário com razão 58× e família visual
+9,67× (ambos muito acima da meta ≤4×/topo≤4% do plano — vermelho, herda o
+mesmo "não recalibrar aqui"). Linhagem (C7) dentro da meta: 85,7% de pares
+contínuos, 52,7% atravessam família ao menos uma vez. Unicidade de tupla
+(C8) em 95,4%, dentro da meta.
 
 ---
 

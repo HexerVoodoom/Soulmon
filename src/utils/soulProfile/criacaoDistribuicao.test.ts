@@ -32,6 +32,7 @@ import type { Answers } from './personality/types';
 import { nomeSintetico, nascimentoSintetico } from './perfisSinteticos';
 import { generateOracleComplete, type OracleComplete } from './pipeline';
 import { especieDe } from './bestiary/select';
+import { REALM_ORDER, ROLE_ORDER } from '../oracle';
 
 const N = 240;
 const SEED = 19870412; // ≠ 20260928, a seed da calibração
@@ -75,6 +76,8 @@ describe('distribuição da criação — pipeline completo, população sintét
   const familias = conta(rs.map(r => r.result.creature.family.primary.family.pt));
   const companheiros = conta(rs.map(r => r.companion?.criatura.nome ?? 'nenhum'));
   const especies = conta(rs.map(r => especieDe(r.bestiaryPick.creature.nome)));
+  const papeis = conta(rs.map(r => r.result.dominantRole));
+  const reinos = conta(rs.map(r => r.result.dominantRealm));
 
   it('os 8 elementos do jogo: todos alcançáveis, nenhum vencedor estrutural', () => {
     // Medido depois do Loop B: 10,5%–14,5%. Antes: industrial 4,5% · ar 24,5%.
@@ -90,6 +93,36 @@ describe('distribuição da criação — pipeline completo, população sintét
       expect((caminhos[a] ?? 0) / N, `${a} — ${fatia(caminhos)}`).toBeGreaterThanOrEqual(0.2);
       expect((caminhos[a] ?? 0) / N, `${a} — ${fatia(caminhos)}`).toBeLessThanOrEqual(0.42);
     }
+  });
+
+  it('papel: os 5 são alcançáveis — ⚠️ NÃO bate a meta de 1,5× ainda (Fase 1)', () => {
+    // Achado do crítico (rodada2-critica.md): C2 nunca mediu papel/reino.
+    // Medido aqui (N=240, seed 19870412): mágico 26,3% · suporte 21,7% ·
+    // tanque 20,4% · físico 16,7% · alcance 15,0% — razão topo/piso 1,75×.
+    // O script grande (`scripts/oraculo-auditoria.mjs`, N=800, 2 seeds de
+    // validação) mediu 1,89×. Meta do plano é ≤1,5× — NÃO recalibrado aqui
+    // por decisão explícita da tarefa: recalibrar `ROLE_*` é Fase 1. Este
+    // teste trava REGRESSÃO a partir da baseline medida, não a meta ainda
+    // não alcançada — apertar os números abaixo antes de mexer em
+    // `oracle.ts` › pesos de papel é o jeito de reabrir sem querer o
+    // problema que o crítico achou.
+    for (const p of ROLE_ORDER) {
+      expect((papeis[p] ?? 0) / N, `${p} — ${fatia(papeis)}`).toBeGreaterThanOrEqual(0.1);
+    }
+    expect(Math.max(...Object.values(papeis)) / N, fatia(papeis)).toBeLessThanOrEqual(0.3);
+  });
+
+  it('reino: os 9 são alcançáveis — ⚠️ instável entre seeds, meta de 1,5× não confirmada', () => {
+    // Medido aqui (N=240, seed 19870412): 8,8%–12,9%, razão 1,47× (dentro da
+    // meta NESTA seed). O script grande (N=800, 2 seeds de validação, mais
+    // robusto) mediu 2,75× — pior, porque pega mais reinos raros na cauda.
+    // A meta ≤1,5× do plano NÃO está confirmada; registrado para a Fase 1
+    // decidir se é recalibração de `REALM_*` ou aceite-por-design de reino
+    // raro. Não recalibrado nesta tarefa.
+    for (const r of REALM_ORDER) {
+      expect((reinos[r] ?? 0) / N, `${r} — ${fatia(reinos)}`).toBeGreaterThanOrEqual(0.06);
+    }
+    expect(Math.max(...Object.values(reinos)) / N, fatia(reinos)).toBeLessThanOrEqual(0.16);
   });
 
   it('família visual: a base inteira aparece, nenhuma domina', () => {

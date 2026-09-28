@@ -7,6 +7,25 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 28/09/2026 — Fase 0 do Oráculo: régua única (auditoria N=800 + papel/reino no bloqueante)
+>
+> `docs/PLANO-ORACULO.md` §8 Fase 0. Novo `scripts/oraculo-auditoria.test.ts`
+> (`npm run oraculo:auditoria`, config separado `vitest.oraculo.config.ts`,
+> fora do include default — nunca trava PR), N=800, seeds de validação
+> `19870412`+`31415926` (nunca a de calibração `20260928`), população
+> cobrindo `timeUnknown` (~20%) e "só 6 perguntas sem teste longo" (~30%).
+> Relatório: `docs/reviews/oraculo-auditoria/2026-09-28.md`. Tabela velha de
+> `docs/ORACULO.md` §"Equilíbrio medido" corrigida com os números novos.
+> `criacaoDistribuicao.test.ts` passou a medir papel e reino (achado do
+> crítico: a régua nunca mediu os dois). **Vermelho, registrado e NÃO
+> recalibrado** (recalibração é Fase 1): papel 1,79–1,89× e reino
+> 2,31–2,75× contra a meta ≤1,5×; colisão de nome de criatura 3,00% contra
+> meta ≤2%; grupo do bestiário (58×) e família visual (9,67×) muito acima da
+> meta ≤4×. Dentro da meta: caminho (1,27×), linhagem (85,7%/52,7%),
+> unicidade de tupla (95,4%). C5 (fidelidade direcional) e C9 (divergência
+> comportamental) seguem não implementados — documentado como não coberto no
+> relatório, não escondido.
+>
 > ## 28/09/2026 — Manual sincronizado com `83a9aac6`
 >
 > Delta `8110efc5..83a9aac6` (2 commits, PR #127). Docs tocados: 02 (§22
