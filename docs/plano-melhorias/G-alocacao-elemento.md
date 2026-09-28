@@ -59,7 +59,7 @@
 | D-G4 | **Reversibilidade**: permanente, acumulando entre estágios. |
 | D-G5 | ~~**Geração tardia (só renascido)**: `soulmonStages` passa a ser escrito POR ESTÁGIO. Não renascido continua com as 11 de uma vez.~~ ⚠️ **SUBSTITUÍDO em 22/09/2026 pelo D-G5b — a geração tardia deixou de ser exclusiva do renascido.** |
 | D-G5b | 🆕 **Geração tardia para TODO MUNDO, inclusive v1** (decisão do dono, 22/09/2026): *"Só nasce o rookie e o restante é sob demanda, na incubação."* **Nasce só a forma rookie**; cada forma seguinte é produzida sob demanda, na incubação daquela evolução. ⚠️ **Isto é MUDANÇA de comportamento, não descrição do que existe** — ver §6.6 para o estado medido hoje. Consequência direta em `utils/spriteTrigger.ts`: a ocasião A (`birthBatch`) deixa de ser `['rookie', champion previsto]` e passa a ser `['rookie']`. |
-| D-G6 | **Incubação**: a ocasião B de `utils/spriteTrigger.ts` (`faltam === 1`) ganha nome, estado persistido e visibilidade — aviso na fila da Home. Encaixar nas ocasiões A/B/C, não reinventar. ⚠️ **Revisto em 22/09/2026 (D-G8b)**: a incubação passa a ter DURAÇÃO — `INCUBATION_MIN_MS` = 30 min —, então o aviso pode dizer quando a forma fica pronta. O que continua proibido é contagem regressiva de PERDA: nada expira ao fim dos 30 min. |
+| D-G6 | **Incubação**: a ocasião B de `utils/spriteTrigger.ts` (`faltam === 1`) ganha nome, estado persistido e visibilidade — aviso na fila da Home. Encaixar nas ocasiões A/B/C, não reinventar. ⚠️ **Revisto em 22/09/2026 (D-G8b)**: a incubação passa a ter DURAÇÃO — `INCUBATION_MIN_MS` = 30 min —, então o aviso pode dizer quando a forma fica pronta. O que continua proibido é contagem regressiva de PERDA: nada expira ao fim dos 30 min. | ⚰️ **27/09/2026 — o `notified` (one-shot) SAIU, e não volta.** Ele foi escrito no save de todo jogador por cinco dias e lido por ninguém, mas o motivo de apagar não é esse: consumi-lo seria contrariar o **R-K(a)**, que pede um marcador **persistente**, *"que se ENCONTRA em vez de conferir"*. Um aviso gasto deixaria sem explicação exatamente quem abre o app no meio da incubação e encontra a barra cheia com o botão apagado. O aviso dura o que a incubação durar. Régua: `spriteTrigger.semPrazo.contract.test.ts`.
 | D-G8 | ⚠️ **REVOGADO em 22/09/2026 o prazo de 24h.** Não existe relógio de parede que FECHE nada, tolerância em horas nem contagem de tempo de espécie nenhuma. Motivos registrados: (a) seria a primeira mecânica do app em que *não abrir o app* produz perda permanente, contra `ABSENCE_FORGIVENESS_DAYS`, `REST_DAYS_PER_WEEK`, escudos automáticos e constância em janela; (b) com `MANUAL_EVOLUTION = true` o disparo já pertence ao jogador — pôr um relógio ao lado dele acrescenta coerção onde havia autonomia. **O gesto de evoluir continua sendo do jogador, e a incubação espera por ele indefinidamente.** |
 | D-G8b | 🆕 **A incubação tem uma ESPERA MÍNIMA de 30 minutos, no v1 também** (decisão do dono, 22/09/2026 — `INCUBATION_MIN_MS`; escopo v1 confirmado por ele na mesma conversa: *"No v1 mesmo"*). Vale para todo jogador, renascido ou não — é a primeira peça desta spec que NÃO espera a v2.0. Ao entrar em incubação o lote de sprite começa a ser gerado; a evolução só fica disponível depois dos 30 min, e o jogador volta para dar o gesto. **Isto NÃO reabre o D-G8, e a diferença é a única coisa que importa aqui: 30 min é um PISO, nunca um teto.** Voltar em 30 minutos, em três dias ou em três semanas dá exatamente o mesmo resultado — nada expira, nada fecha sozinho, nada é perdido por não abrir o app. A régua que separa os dois é `spriteTrigger.semPrazo.contract.test.ts`: proibida qualquer aritmética de data que PRODUZA perda; a comparação `agora − since ≥ INCUBATION_MIN_MS`, que só LIBERA, é a única permitida, e o teste a nomeia explicitamente para que a proibição não a engula. |
 | D-G8c | 🆕 **A incubação começa na ELEGIBILIDADE** (decisão do dono, 22/09/2026): *"Quando pode evoluir começa a incubação e depois de 30min volta e completa sob o comando do user."* Gatilho = `faltam <= 0`, **não** `faltam === 1`. ⚠️ **Isto REVERTE, de propósito, a instrução original de "pra evitar espera"** — a véspera existia para que a forma já estivesse pronta quando o último ponto caísse, e agora a espera é o ponto: ela é o tempo de incubar. Consequências: a **ocasião B (véspera) deixa de existir** e a **C (resgate) vira a própria incubação** — o lote da forma-destino é pedido quando o jogador fica apto, e a lógica de líderes empatados (`vesperForms`) migra para ela sem mudar de critério. Quem completa continua sendo o GESTO do jogador (`MANUAL_EVOLUTION`): passados os 30 min a evolução fica disponível e **espera indefinidamente** (D-G8). |
@@ -461,6 +461,27 @@ Tirando-a do nascimento, a página de Evolução passa a mostrar a forma seguint
 **sem arte** até a incubação. Isso pode ser ganho (silhueta = antecipação, e o
 bestiário já usa esse vocabulário) ou perda (a página fica vazia justo no lugar
 que existe para dar o que esperar). É escolha do dono, e está em aberto.
+
+### 6.4-B ⚠️ O WP4.30, medido — o que faltava era menos do que se dizia
+
+Registrado em 27/09/2026, depois de medir em vez de repetir o parecer.
+
+**A SILHUETA já existe, e é anterior ao WP4.29.** O R-M pedia que a forma
+seguinte lesse como MISTÉRIO e não como conteúdo que falta. A página já fazia
+isso por três mecanismos próprios, nenhum deles escrito por este pacote:
+
+| Mecanismo | Onde | O que mostra |
+|---|---|---|
+| nome oculto (§16.1-5) | `EvolutionPath` › `hidden` | `'???'`, com "Revelar (spoiler)" por toque explícito, e a espiada **não persiste** |
+| placeholder de geração | `placeholderDoNo` › `PLACEHOLDER_ART.forming` | o cristal aceso enquanto o lote roda |
+| reserva muda | `case 'RESERVA_VESPERA'` | devolve `null` sem falha gravada — "ficou com o traço antigo" seria mentira, o lote nem partiu |
+
+**Não havia silhueta a construir.** A frase "falta a silhueta" veio do parecer e
+foi repetida sem medição até aqui.
+
+**O que restava era o `notified`, e a resposta certa era APAGÁ-LO** — ver a
+lápide no D-G6 e em `utils/spriteTrigger.ts`. Com isso o WP4.30 fecha sem
+código de tela novo.
 
 ### 6.5 Visibilidade — posição declarada na fila
 

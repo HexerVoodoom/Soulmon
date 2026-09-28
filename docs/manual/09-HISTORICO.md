@@ -1,6 +1,6 @@
 # Histórico — como chegamos aqui
 
-> **Dono:** doc-historiador · **Data:** 24/09/2026 (delta `c7bca6d0..78ef5367`: §1.5 ganha dois itens — a incubação WP4.29 de 22/09 e as fatias F1–F6 da minimal-ui de 23–24/09; anterior: 22/09/2026, 3ª sincronização do dia, delta `cd66940f..cf6315e1`: §1.5 ganha **#102–#107** — merge da QA Rodada 2, o livrinho ilustrado + PDF + gerador, o one shot de prólogo e a execução das 32 respostas do dono; anterior no mesmo dia: SHA de `a6c1cd8a`/#100–#101 e a linha da QA Rodada 2; anterior: 21/09/2026, QA Rodada 1; 09/09/2026) · **Estado:** verificado em 24/09/2026 por doc-verificador (delta `c7bca6d0..78ef5367` — os 18 SHAs dos dois itens novos da §1.5 conferidos por `git log -1`, `git log --merges c7bca6d0..78ef5367` → vazio, `git log --oneline 78ef5367 | wc -l` → **1.117**; título da §1.5 passa a 10–24/09, âncora sem link em `docs/`; anterior: 22/09/2026, §1.5 conferido contra `gh pr list --state merged --json number,title,mergedAt` e `git log --oneline` → **1.080** commits; anterior: 10/09/2026, doc inteiro)
+> **Dono:** doc-historiador · **Data:** 27/09/2026 (sincronização do delta `78ef5367..c510c7e4`, correções pós-F3 da minimal-ui: §1.5 ganha a linha das duas correções pós-F3 de 24/09 (`7b4819e6`, `c510c7e4`); anterior: 24/09/2026 (delta `c7bca6d0..78ef5367`: §1.5 ganha dois itens — a incubação WP4.29 de 22/09 e as fatias F1–F6 da minimal-ui de 23–24/09; anterior: 22/09/2026, 3ª sincronização do dia, delta `cd66940f..cf6315e1`: §1.5 ganha **#102–#107** — merge da QA Rodada 2, o livrinho ilustrado + PDF + gerador, o one shot de prólogo e a execução das 32 respostas do dono; anterior no mesmo dia: SHA de `a6c1cd8a`/#100–#101 e a linha da QA Rodada 2; anterior: 21/09/2026, QA Rodada 1; 09/09/2026)) · **Estado:** verificado em 27/09/2026 por doc-verificador (delta `78ef5367..c510c7e4` — os dois hashes, as mensagens e os arquivos conferidos com `git show --stat`); anterior: verificado em 24/09/2026 por doc-verificador (delta `c7bca6d0..78ef5367` — os 18 SHAs dos dois itens novos da §1.5 conferidos por `git log -1`, `git log --merges c7bca6d0..78ef5367` → vazio, `git log --oneline 78ef5367 | wc -l` → **1.117**; título da §1.5 passa a 10–24/09, âncora sem link em `docs/`; anterior: 22/09/2026, §1.5 conferido contra `gh pr list --state merged --json number,title,mergedAt` e `git log --oneline` → **1.080** commits; anterior: 10/09/2026, doc inteiro)
 > **Verificação:** os comandos `git log` colados ao lado de cada afirmação nesta página — rode-os de novo para reconferir
 > **Não cobre:** o CONTEÚDO de cada decisão (isso é `10-DISCUSSOES-E-DECISOES.md`); o changelog linha a linha (`../CHANGELOG.md`, que não se reescreve); regras de jogo em vigor hoje (`02-REGRAS-DE-NEGOCIO.md`)
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -245,6 +245,13 @@ detalhe de cada PR está na mensagem do próprio merge; este bloco é o índice.
   os 6 NPCs), **F5** `ac631987` + `708fa034` (áreas com conteúdo, `AreaView`), **F6** `11d9bf31` +
   `cfee570b` (código morto, copy PT/EN, manual); `78ef5367` nomeia o NPC do Laboratório. Discussão:
   [10 §11](10-DISCUSSOES-E-DECISOES.md). Contagem: `git log --oneline 78ef5367 | wc -l` → **1.117**.
+- **24/09 — as duas correções pós-F3**: `7b4819e6` tira o saldo do Mapa de cima da arte do "Jogos"
+  (canto inferior direito, `zIndex` 2) e instala `@capacitor/app` de verdade, movendo o botão físico
+  de voltar do Android para `src/utils/androidBack.ts` — na Home ele passa a **minimizar** em vez de
+  fechar o app; `c510c7e4` troca os glifos vetoriais de linha fina pela **arte em pixel do squad de
+  arte** (`src/assets/soulmon/icones-ui/`, componente `PixelIcon`) nos nove ícones de UI e põe a
+  moldura `chip-moeda` em 9-slice no saldo do Mapa. As fatias F1–F3 tinham usado os glifos por
+  engano.
 
 ---
 

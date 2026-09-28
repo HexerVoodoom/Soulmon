@@ -425,6 +425,57 @@ Connect — todos dependem do dono ou de fora do código.
 
 ---
 
+## 16. Decisão do dono (27/09/2026) — Profissão sem campo, cosmética, nas habilidades
+
+Registrado para implementação futura — **nada abaixo foi implementado ainda**.
+Palavras do dono, verbatim:
+
+> "Profissão deve ser algo que aparece para poucos usuários e influencia
+> diretamente na criatura e suas habilidades mas não deve haver um campo
+> 'profissão' - é apenas mais um elemento pra definir a criatura unica e deve
+> aparecer em suas habilidades. Nao deve haver impacto em performance para
+> quem tem profissão, é apenas cosmético."
+
+### O que isso significa, decomposto
+
+| Exigência | Leitura |
+|---|---|
+| Aparece para POUCOS usuários | não é um eixo que toda ficha exibe — é raro/notável, não universal |
+| Influencia DIRETAMENTE a criatura e as habilidades | entra na identidade e no NOME/flavor das skills, não é decorativo solto |
+| **Sem campo "profissão"** | nenhuma UI nomeia "Profissão: Ferreiro" em lugar nenhum — dissolve no que já existe, não vira mais um rótulo |
+| "mais um elemento pra definir a criatura única" | é insumo de UNICIDADE, no mesmo espírito do que `dominantClass`/arquétipo já faz para o prompt de sprite (nunca aparece na UI, só molda o resultado) |
+| Deve aparecer nas habilidades | ao contrário da classe (que NUNCA aparece pro jogador — ver `CLAUDE.md` § Arquitetura), a profissão flavoreia nome/descrição de skill |
+| Sem impacto de performance | puramente cosmético — nenhum número de jogo (dano, HP, atributo) muda por causa dela |
+
+### Onde isso encosta no código, para quem pegar depois
+
+- **`src/utils/soulProfile/ficha/buildSheet.ts`** já computa `profissoes:
+  Partial<Record<ProfissaoId, number>>` por ficha (11 profissões do
+  class-system, mesma fonte de `elementos`/`escolas`/`talentos`) — o dado JÁ
+  EXISTE, só não é consumido em lugar nenhum hoje.
+- **`src/utils/soulProfile/ficha/skills.ts`** (`StageSkills`, básica/especial
+  por estágio) é onde a exigência "aparece nas habilidades" provavelmente
+  entra — hoje o nome da skill vem só de escola+elemento (`NOMES` por
+  `EscolaId`); a profissão dominante poderia entrar como uma terceira camada
+  de flavor no nome/descrição, no mesmo padrão de "ingrediente extra" que a
+  classe já usa no prompt de sprite (`pipeline.ts` › `promptClassFlavor`),
+  mas SEM o veto de nunca aparecer — aqui é o oposto, tem que aparecer.
+- "Aparece para poucos usuários" sugere um LIMIAR de dominância (só quando a
+  profissão líder passa de X% da distribuição, análogo ao
+  `DOMINANT_SCHOOL_LEAD` de `buildSheet.ts`) — a maioria das fichas não teria
+  profissão "notável" nenhuma, e é isso que a torna rara.
+- **Não decidido, e é decisão de quem implementar**: o LIMIAR exato, ONDE no
+  texto da skill ela entra, e se afeta 1 estágio ou os 5.
+
+### Regras que este trabalho NÃO pode violar
+
+- **Zero impacto mecânico** — nenhum dano/atributo/custo de recurso muda.
+  Régua esperada: um teste que gera duas fichas idênticas exceto a
+  profissão dominante e afirma `poderCombate`/atributos IDÊNTICOS.
+- **Nenhuma UI nomeia "Profissão"** — nem rótulo, nem ícone dedicado, nem
+  linha na ficha. Régua esperada: `grep -ri "profiss" src/components/` não
+  pode achar string visível ao jogador fora de comentário.
+
 ## Anexos (`docs/plano-melhorias/`)
 
 | Arquivo | O que fundamenta |

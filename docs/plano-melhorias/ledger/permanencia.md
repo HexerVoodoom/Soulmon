@@ -216,3 +216,151 @@ catálogo. **A janela D15–D23 continua exata** — 56 itens permanentes somand
 movia). A incubação adia o GESTO da evolução em 30 minutos; ela não adia
 nenhuma compra, e portanto não estende o conteúdo por um dia sequer. Quem citar
 a incubação como resposta ao esgotamento do catálogo está trocando de assunto.
+
+## Auditoria de completude do bestiário (WP4.6, 27/09/2026)
+
+Escopo: `src/utils/soulProfile/bestiary/pool.json` (617 criaturas), depois do
+corte de PI (`779f7815`) e da curadoria nome/tags/descrição (`b6ae2dc0`).
+**Não** é sobre design de jogo nem PI — é sobre se o dado bate com o que
+`select.ts` (`scoreCreature`) e o pipeline realmente CONSOMEM. Não mexi em
+código nem no pool; tudo abaixo é achado, não conserto.
+
+### Achado real #1 — 3 dos 17 elementos-base do class-system não têm NENHUMA
+criatura que os alcance na pontuação
+
+`scoreCreature` pontua por `baseElements(c.elementos)`, que resolve um
+elemento derivado (`veneno`, `plasma`, `trovao`...) para os componentes base
+via `DERIVED_TO_BASE` (tabela de `derivedElements.ts`). O termo de elemento é
+o de MAIOR peso na função (`* 0.35` por base batida, é o único termo
+proporcional ao vetor de 17 elementos da leitura — os outros quatro somam no
+máximo +7 fixo).
+
+Rodei um scan de `elementos` sobre as 617 entradas e cruzei com
+`DERIVED_ELEMENT_PAIRS`: **`eletricidade` e `marcial` não aparecem em NENHUMA
+criatura**, nem como base direta nem como componente de nenhum dos 16
+derivados de eletricidade (plasma, trovão, magnetismo, tempestade, fulgor...)
+ou dos 16 de marcial (forja, têmpera, aço, esgrima, arsenal...) — zero desses
+32 ids de elemento derivado aparece em `elementos` de qualquer entrada do
+pool. **`sombra` está quase tão vazio: só 2 de 617** (as duas variantes do
+Sangue-de-dragão — Espiritual e Cristalino — de um total de 5 prefixos
+possíveis; nenhum derivado de sombra — abismo, obsidiana, crepúsculo,
+espectro, vazio... — aparece tampouco).
+
+Consequência prática: um jogador cuja leitura do oráculo é dominada por
+Eletricidade, Marcial ou Sombra (3/17 elementos, uma fatia real de perfis)
+recebe pontuação de elemento **ZERO contra as 617 criaturas do pool inteiro**
+— a escolha da criatura-inspiração degrada para família/bioma/hostilidade/
+tamanho (teto +7), ignorando por completo o eixo mais forte da própria
+leitura. Não é falha de código (o pipeline não quebra, sempre há uma faixa de
+`MIN_BAND`=24 candidatas por hostilidade/tamanho/família) — é buraco de DADO:
+o corpus upstream (`sync-oracle-data.mjs`) simplesmente não gerou nenhuma
+criatura com esses 3 elementos entre os 17 do class-system.
+
+Comando usado (reproduzível):
+```
+node -e "... coleta elementos de pool.json, cruza com DERIVED_ELEMENT_PAIRS de derivedElements.ts ..."
+```
+Resultado: `eletricidade`→0 ocorrências (direta ou via 16 derivados),
+`marcial`→0 (via outros 16 derivados), `sombra`→2 diretas / 0 via 16 derivados.
+
+**Recomendação**: não é conserto de uma linha — precisa de novas entradas no
+corpus upstream (space real ou mitológico) com esses 3 elementos, ou ao menos
+com os derivados mais óbvios (Trovão/Aço para Eletricidade+Marcial, algo
+sombrio para Sombra). Registro para o dono decidir prioridade; não é WP4.6
+puro, é upstream de `sync-oracle-data.mjs`.
+
+### Achado real #2 — `bioma` é "Variado" fixo nas 84 variantes "Venenoso",
+mesmo quando o NOME cita geografia específica
+
+Confirmado como bug de dado, não decisão de design: as 84 entradas da linha
+"Venenoso" (Tigre do Himalaia Venenoso, Urso Polar Venenoso, Leão Subterrâneo
+Venenoso, Baobá do Pântano Venenoso etc. — 12 espécies × até 7 variantes
+geográficas) têm **100% delas** `bioma: ["Variado"]`, sem exceção — o
+modificador geográfico no nome nunca chega ao campo `bioma`. Isso não é
+neutro: `scoreCreature` usa `REALM_TO_BIOMA` (`c.bioma.some(b =>
+biomas.some(k => b.toLowerCase().includes(k)))`) para dar +2 quando o bioma
+da criatura casa com o reino dominante da leitura — e `"variado".includes(k)`
+nunca bate com nenhuma palavra-chave de `REALM_TO_BIOMA` (`montanha`,
+`pântano`, `gelo`, `oceano`...). Resultado: as 84 entradas "Venenoso" perdem
+sempre o bônus de bioma, mesmo para o jogador cujo reino dominante é
+literalmente o bioma anunciado no NOME da criatura ("Urso Polar Venenoso"
+nunca ganha o bônus de reino `gelo`, apesar do nome). ~14% do pool carrega um
+campo estruturalmente inerte.
+
+**Recomendação**: mapear o modificador geográfico do nome (Himalaia→gelo/
+picos, Pântano→pantano, Saara/Deserto→deserto, Abissal/Profundezas→oceano,
+Selva/Tropical→floresta, etc.) para `bioma` real nessas 84 entradas. É
+conserto de DADO (reescrever o campo), não de código — `select.ts` já lê
+`bioma` corretamente, só falta o corpus preencher com algo além de
+"Variado".
+
+### Não são bugs — checados e descartados
+
+- **`atributos`/`hostilidade`/`tamanho` por prefixo (Titânico/Espiritual/
+  Cristalino/Corrompido/Ancião)**: `tamanho` é 100% determinístico por
+  prefixo (Titânico=Colossal, Ancião=Enorme, Corrompido=Cristalino=Medio,
+  Espiritual=Pequeno — SEMPRE, sem exceção nas 509 entradas com prefixo).
+  A soma de atributos escala PERFEITAMENTE com esse mesmo prefixo: nas 95
+  famílias que têm as 5 variantes completas, **100% são monótonas** na ordem
+  Espiritual < Cristalino < Corrompido < Ancião < Titânico — zero inversão.
+  `hostilidade` NÃO segue essa ordem (Corrompido tem a maior média, 4.84,
+  maior que Ancião e Titânico) — mas isso lê como temperamento
+  (Corrompido=agressivo, Ancião=sábio/calmo), eixo independente de poder, e
+  não achei nenhuma inversão DENTRO da mesma família que sugerisse ruído
+  aleatório — é consistente entre as 95 famílias completas. O caso citado no
+  pedido ("Enorme tem hostilidade média menor que Medio no pool inteiro") é
+  real em agregado (2.84 vs 4.68) mas é epifenômeno do fato de `tamanho` ser
+  1:1 com prefixo — não é ruído, é o prefixo Ancião (sempre Enorme) sendo
+  tematicamente menos hostil. Nenhum conserto necessário.
+- **Duplicação Elefante Africano (60, procedural) × Elefante Veneno (1,
+  fauna-real)**: são dois MECANISMOS de amostragem diferentes
+  (`origem` distingue), overlap pequeno (1/617) e não vale consolidar —
+  consolidar exigiria decidir qual dos dois mecanismos "vence", e o custo de
+  decisão é maior que o ganho de remover 1 entrada redundante.
+- **`biologia` vazio (`[]`) em plantas e criaturas mitológicas**: intencional
+  e testado (`curadoria.contract.test.ts` afirma explicitamente que a
+  Mantícora deve ter `biologia: []`). Todas as bases com `familia: 'planta'`
+  têm `biologia: []` de forma 100% consistente (Welwitschia, Rafflesia,
+  Girassol, Carvalho, Baobá, Sakura, Sangue-de-dragão, Mandrágora — 8 bases,
+  ~184 entradas) — não é buraco, é convenção (biologia = classe taxonômica
+  animal; planta não usa o campo).
+- **MAS dois casos dentro desse padrão SÃO buraco real, não convenção**:
+  `Urso-d'água (Tardígrado)` (70 entradas, `familia: 'besta'`) e `Dragão-azul
+  (Glaucus atlanticus)` (9 entradas, `familia: 'aquatica'`) são ANIMAIS REAIS
+  (tardígrado = invertebrado; Glaucus atlanticus = molusco/lesma-do-mar), não
+  plantas nem mito, e ainda assim têm `biologia: []` — quebrando o padrão que
+  toda espécie animal real do pool segue (Axolote→Anfíbio, Aranha→
+  Inseto/Aracnídeo, Cão→Mamífero...). **79 entradas (70+9) deveriam ter
+  `biologia: ["Invertebrado"]` (tardígrado) e `["Molusco"]` (dragão-azul)** e
+  não têm. É a mesma classe de conserto do achado #2: dado de corpus
+  incompleto, não decisão de design.
+- **`familia` só tem 6 valores usados no pool inteiro** (`aquatica` 120,
+  `besta` 315, `planta` 178, `ave` 2, `draconico` 1, `demonio` 1) — bem
+  menos que os "12 reais + ~7 temáticas" que eu assumi no pedido original.
+  Rodei o teste real de continuidade de linhagem (`pipeline.test.ts`,
+  "maioria das transições preserva a família", limiar `same/total > 0.5`)
+  com 80 perfis variados e a razão observada foi **0,98** (315/320) — passa
+  com folga folgadíssima, mas não porque o mecanismo de bônus (+4 por família
+  igual) seja robusto: é porque a distribuição de família no pool é tão
+  desequilibrada (besta=51% das entradas) que, para o conjunto de perfis que
+  testei, **98% de TODAS as 400 escolhas em 5 estágios × 80 perfis caíram em
+  `besta`** — `ave`/`draconico`/`demonio` (2/1/1 entradas) nunca foram
+  escolhidas nenhuma vez. O teste passa, mas mede um efeito quase trivial: a
+  "continuidade de linhagem" na prática é "quase tudo vira besta", não uma
+  demonstração real de que dragões puxam dragões (há só 1 entrada de
+  `draconico` no pool inteiro — literalmente não há segunda entrada dessa
+  família para uma linhagem "continuar" nela). Registro isto para quem for
+  mexer em balanceamento (fora do meu escopo de completude), mas é
+  estruturalmente relevante: o mecanismo de linhagem não tem instância
+  suficiente em 4 das 6 famílias (`ave`, `draconico`, `demonio`, e em menor
+  grau `aquatica`) para produzir o efeito que o nome do teste descreve.
+- **`atributos` com algum valor 0**: só acontece em `familia: 'planta'` (131
+  de 178 entradas de planta) — inteligência/velocidade zeradas em planta faz
+  sentido temático (sem sistema nervoso, sem locomoção). Nenhum outro campo
+  nulo/ausente encontrado fora de `biologia` (achados acima).
+
+### Conta dos Bits
+
+Não mexi em economia — este WP é auditoria de dado do bestiário, não toca
+`shop.ts` nem preço. A conta **D15–D23** (56 itens / 8.900 Bits contra
+~360–470/dia) continua valendo, sem alteração.

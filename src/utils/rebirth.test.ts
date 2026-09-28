@@ -93,11 +93,10 @@ describe('rebirth — o que se perde é o estágio e os atributos, e SÓ', () =>
       incubation: {
         v: 1 as const,
         since: { 'champion-virus': '2026-08-01T00:00:00.000Z' },
-        notified: ['champion-virus'],
       },
     };
     const { state } = applyRebirth(noTopo(velho), ESCOLHAS, NOW);
-    expect(state.incubation).toEqual({ v: 1, since: {}, notified: [] });
+    expect(state.incubation).toEqual({ v: 1, since: {} });
     // E o efeito que importa: a forma-alvo da vida nova NÃO está liberada de graça.
     expect(incubationReady(state.incubation, 'champion-virus', NOW)).toBe(true);
     const comRelogio = incubationFor(

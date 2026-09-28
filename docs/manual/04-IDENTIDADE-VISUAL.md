@@ -1,6 +1,6 @@
 # Identidade visual e sonora do Soulmon
 
-> **Dono:** doc-redator-identidade · **Data:** 22/09/2026 (3ª sincronização do dia, delta `cd66940f..cf6315e1`: §10.0 a tagline ÚNICA travada por contrato (#70) e §10.1 a `description` do manifesto; §3 (réguas) ganhou a nota do `UndoToast` sem `className` — desenho inline por token, decisão e não descuido; anterior: 2ª sincronização do dia, delta `a6c1cd8a..592e2c14`, QA Rodada 2: §10.2 o ramo Android do gate exige `; wv)` e a CSP por igualdade; o flash de evolução do `CompanionHUD` passou a usar `--sm2-viewport-bg`/`--sm2-viewport-ink` — ⚰️ `#2dd4bf` sobre branco/70, ~1,6:1 — sem seção própria aqui, registrado no `06-REFERENCIA/components.md`) · **Estado:** verificado em 24/09/2026 por doc-verificador (HEAD `78ef5367` — §1 `.sm-bottom-nav-label` ⚰️ e `navRotulo.contract.test.ts` medindo `areaLabel`; §2 `--sm-corner-h: 68px` (`CornerLink` 56px a `--sm2-space-3` = 12px), `.sm-nav-btn` com `--sm-muted`, `--sm-px-cyan` em `.sm-px-chat-btn`/`-send`, `--sm-px-copper` em `.sm-px-field`; §5.4 `.sm3-cuidado` (55%/22%/`--sm2-radius-md`, `.sm3-cuidado-inerte` tracejado) e o CSS de `.sm2-corner-link`/`.sm2-area-back`/`[data-map-area]`; §6 `@keyframes sm3-blink`/`sm3-sobe` e o movimento reduzido de `.sm3-term-cur`/`.sm3-mais`/`.sm3-mochila` — tudo em `src/index.css`, sem correção); anterior: verificado em 22/09/2026 por doc-verificador (delta `cd66940f..cf6315e1` — `index.html`, `public/manifest.json`, os dois casos `#70` de `src/deploy/manifest.contract.test.ts` e `src/components/UndoToast.tsx` conferidos); anterior: verificado em 22/09/2026 por doc-verificador (delta `a6c1cd8a..592e2c14` — `index.html`, `public/_headers` e `CompanionHUD.tsx` conferidos; anterior no mesmo dia: delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §10.1 `name`/`description` do `manifest.json` e §10.2 gate por plataforma conferidos contra `public/manifest.json`, `index.html`, `src/deploy/manifest.contract.test.ts`; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §9 linha da trilha (⚰️ `SettingsModal`) e §10.2 gate de WebView conferidos por grep; `.sm2-notice` do banner de termos não é classe nova (`grep -n "^.sm2-notice" src/index.css`); anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: delta `dc72579e..9875477b`, conferido em `5ac3d351`: rodada 2 da SQUAD-ARTE, SQUAD-SOM retomada, superfície de suporte do chat) · §9 verificado em 21/09/2026 por doc-verificador (delta `5ac3d351..8d318529`: S16, trilha em duas camadas, escolha do dono nos 3 eventos longos, chaves na `SettingsPage`)
+> **Dono:** doc-redator-identidade · **Data:** 27/09/2026 (sincronização do delta `c510c7e4..2336e4e7`: §8.3 o corte do bestiário e o dono do critério; §8.4 o nome da inspiração no `imagePrompt`); anterior: 27/09/2026 (sincronização do delta `78ef5367..c510c7e4`, correções pós-F3 da minimal-ui: §5.1 ganha o TERCEIRO caminho de ícone — `PixelIcon` + o pacote `assets/soulmon/icones-ui/` (nove nomes, sem `fill`/`weight`/`tone`), a escala compartilhada e a moldura de texto `chip-moeda`; anterior: 22/09/2026 (3ª sincronização do dia, delta `cd66940f..cf6315e1`: §10.0 a tagline ÚNICA travada por contrato (#70) e §10.1 a `description` do manifesto; §3 (réguas) ganhou a nota do `UndoToast` sem `className` — desenho inline por token, decisão e não descuido; anterior: 2ª sincronização do dia, delta `a6c1cd8a..592e2c14`, QA Rodada 2: §10.2 o ramo Android do gate exige `; wv)` e a CSP por igualdade; o flash de evolução do `CompanionHUD` passou a usar `--sm2-viewport-bg`/`--sm2-viewport-ink` — ⚰️ `#2dd4bf` sobre branco/70, ~1,6:1 — sem seção própria aqui, registrado no `06-REFERENCIA/components.md`)) · **Estado:** verificado em 27/09/2026 por doc-verificador (delta `78ef5367..c510c7e4` — §5.1 conferida contra `src/components/ui/PixelIcon.tsx`, `src/assets/soulmon/icones-ui/index.ts` (`UI_ICON_ART` com 9 chaves, `CHIP_MOEDA_SLICE` 18/48/18/48), `iconScale.contract.test.ts` (tag `PixelIcon` no regex) e `iconInventory.contract.test.ts` (`mapa` no `NAO_SAO_ICONES`)); anterior: verificado em 24/09/2026 por doc-verificador (HEAD `78ef5367` — §1 `.sm-bottom-nav-label` ⚰️ e `navRotulo.contract.test.ts` medindo `areaLabel`; §2 `--sm-corner-h: 68px` (`CornerLink` 56px a `--sm2-space-3` = 12px), `.sm-nav-btn` com `--sm-muted`, `--sm-px-cyan` em `.sm-px-chat-btn`/`-send`, `--sm-px-copper` em `.sm-px-field`; §5.4 `.sm3-cuidado` (55%/22%/`--sm2-radius-md`, `.sm3-cuidado-inerte` tracejado) e o CSS de `.sm2-corner-link`/`.sm2-area-back`/`[data-map-area]`; §6 `@keyframes sm3-blink`/`sm3-sobe` e o movimento reduzido de `.sm3-term-cur`/`.sm3-mais`/`.sm3-mochila` — tudo em `src/index.css`, sem correção); anterior: verificado em 22/09/2026 por doc-verificador (delta `cd66940f..cf6315e1` — `index.html`, `public/manifest.json`, os dois casos `#70` de `src/deploy/manifest.contract.test.ts` e `src/components/UndoToast.tsx` conferidos); anterior: verificado em 22/09/2026 por doc-verificador (delta `a6c1cd8a..592e2c14` — `index.html`, `public/_headers` e `CompanionHUD.tsx` conferidos; anterior no mesmo dia: delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §10.1 `name`/`description` do `manifest.json` e §10.2 gate por plataforma conferidos contra `public/manifest.json`, `index.html`, `src/deploy/manifest.contract.test.ts`; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §9 linha da trilha (⚰️ `SettingsModal`) e §10.2 gate de WebView conferidos por grep; `.sm2-notice` do banner de termos não é classe nova (`grep -n "^.sm2-notice" src/index.css`); anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: delta `dc72579e..9875477b`, conferido em `5ac3d351`: rodada 2 da SQUAD-ARTE, SQUAD-SOM retomada, superfície de suporte do chat) · §9 verificado em 21/09/2026 por doc-verificador (delta `5ac3d351..8d318529`: S16, trilha em duas camadas, escolha do dono nos 3 eventos longos, chaves na `SettingsPage`)
 > **Verificação:** `npx vitest run src/styles/ src/index.css.contract.test.ts src/utils/sprites.dungeonRoster.test.ts src/utils/loudness.contract.test.ts src/utils/cortes.contract.test.ts src/utils/sonsAssets.contract.test.ts src/components/ui/Viewport.contract.test.tsx src/components/ui/foundation.render.test.tsx src/brand/brandFlame.parity.test.ts src/assets/assets.contract.test.ts` — os 11 arquivos de 09/09/2026 (216 testes, verde) mais os dois que nasceram com a marca vetorizada e a leva de arte de 15/09/2026, mais `sonsAssets.contract.test.ts` (21/09/2026, S16).
 > **Não cobre:** o fluxo entre telas e o que cada superfície mostra (doc `03-FLUXO-DE-TELAS.md`); as regras de jogo por trás dos números que a UI pinta (doc `02-REGRAS-DE-NEGOCIO.md`); a assinatura de cada componente (`06-REFERENCIA/components.md`); o pipeline de build/deploy dos assets (doc `08-INTEGRACOES-E-DEPLOY.md`). Este doc descreve o som — **não** decide nada sobre ele: quem decide é o `REGISTRO-DE-DECISOES.md` (§6.1, S1..S16 — não existe S14).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -514,7 +514,7 @@ isso o valor "dança" na horizontal a cada tick e a barra inteira parece tremer.
 
 ## 5. Ícones
 
-### 5.1 Dois motores, uma API — `Icon`
+### 5.1 Dois motores, uma API — `Icon` (e, desde 24/09/2026, um terceiro caminho)
 
 **Dono único: `src/components/ui/Icon.tsx` → `Icon`.** É o único ponto de ícone
 do app, e a troca de motor é invisível para quem chama:
@@ -532,6 +532,33 @@ Medido em 09/09/2026: `GLYPHS` tem **35** chaves próprias (`home`, `activities`
 `auto_awesome`) mais **4** apelidos (`casino`, `storefront`, `shopping_bag`,
 `more_horiz`). `hasGlyph` é o que o `Icon` pergunta; `GLYPH_NAMES` existe só
 para inspeção.
+
+⚠️ **Nem todo ícone do app passa pelo `Icon`, desde a correção pós-F3 da
+minimal-ui (24/09/2026).** As superfícies da navegação nova desenham **arte em
+pixel** do squad de arte por um componente próprio,
+`src/components/ui/PixelIcon.tsx` → `PixelIcon`, que lê o pacote
+`src/assets/soulmon/icones-ui/` (`UI_ICON_ART`): `mapa`, `home`, `itens`,
+`dormir`, `banho`, `acoes`, `enviar`, `hp`, `energia` — nove nomes, PNG com
+alfa real, 128px no lado maior, convertidos para WebP no build. É um `<img>`
+decorativo (`alt=""` + `aria-hidden`), caixa quadrada de `size` com
+`object-fit: contain` (a arte não é quadrada e **não pode esticar**), sem fundo
+nem moldura. **Não é um motor do `Icon`**: não tem eixo `fill` nem `weight` nem
+`tone` — quem precisa de estado (o "acordar" do botão de dormir, por exemplo)
+segue no glifo, porque o set de arte ainda não tem a peça. As fatias F1–F3
+tinham usado glifos de linha fina (`NavGlyphs`) no lugar desta arte **por
+engano**; este é o material aprovado.
+
+A **escala é a mesma** (§6.1): o `size` do `PixelIcon` entra na varredura de
+`src/styles/iconScale.contract.test.ts`, que passou a reconhecer a tag junto de
+`Icon` e `NavGlyph`. E o inventário de ícones da fonte
+(`src/styles/iconInventory.contract.test.ts`) trocou `map` por `mapa` na lista
+explícita do que **não** é ícone de fonte.
+
+O mesmo pacote traz uma peça que **não é ícone**: `CHIP_MOEDA_ART` +
+`CHIP_MOEDA_SLICE` (256×92, tampas de 48px e bordas de 18), a moldura de pílula
+de cobre e cristais usada pelo `MapPage` em 9-slice (`border-image … fill`) no
+saldo das 3 moedas. Moldura de **texto**, não de ícone — a linha vermelha
+"ícone nunca dentro de box" não se aplica a ela.
 
 Três decisões que não afrouxam, escritas no cabeçalho do componente:
 
@@ -1110,7 +1137,14 @@ nomes para registrar o que não pode voltar. O guard também exige que
 exatamente 9 linhas, cada uma com as 4 artes')`; exigia 6 até 15/09/2026),
 reprova o sufixo `-mon` e reprova a volta da string duplicada de nome.
 
-O filtro de origem do bestiário mora em `scripts/sync-oracle-data.mjs`, **na
+⚠️ **27/09/2026 (`779f7815`):** os "242" eram subcontagem — o pool tinha 1.101 de
+1.718 criaturas de franquia, e o teste do `pipeline.test.ts` estava verde e falso.
+O critério saiu do script para **`scripts/bestiario-procedencia.mjs`** (dono único,
+importado pelo sync e pelo teste); pool hoje **617** (374 KB), e o guard do bundle
+servido é `src/utils/soulProfile/bestiary/bundleSemFranquia.contract.test.ts`. Ver
+[`BESTIARIO-PROCEDENCIA.md`](../BESTIARIO-PROCEDENCIA.md).
+
+O filtro de origem do bestiário é aplicado por `scripts/sync-oracle-data.mjs`, **na
 FONTE** — senão volta no próximo `npm run sync:oracle-data`. Só ficam
 procedural, fauna/flora real e mitologia.
 
@@ -1155,6 +1189,10 @@ Dois dicionários de esquema divergiriam exatamente onde dói: um fecharia
 character`**, e há teste travando os dois lados (referências presentes na
 primeira, ausentes no fallback). Citar inspiração não é licença para devolver
 personagem registrado: o sprite vai para o app de um usuário real.
+
+⚠️ **Desde 27/09/2026 (D-B1, reversão do dono)** `imagePrompt` também leva
+`Draw inspiration from <base>.` — a base do nome da criatura-inspiração do
+bestiário; `imagePromptFallback` não. ⚠️ **Até `2336e4e7` esta regra dizia o oposto** — "o nome da criatura-inspiração **nunca** entra em prompt", com teste travando a ausência. Revertida em 27/09/2026 pelo dono (D-B1), sabendo do risco de PI: *"pode deixar o nome da criatura aparecer no prompt, mesmo se tiver questão de direito autoral. Se não aceitar, você dá fallback para tirar."*
 
 O restante do prompt é o mesmo nos dois: `Retro virtual-pet sprite, 16x16 pixel
 art, no background, transparent background`, cores chapadas com acento, `no

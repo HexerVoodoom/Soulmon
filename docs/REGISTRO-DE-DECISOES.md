@@ -988,3 +988,52 @@ novo é escolha nova, e ela passa a ser visível em vez de silenciosa.
 
 **Gatilho de revisão:** o mesmo de 14.1 — comunicação formal de titular ou de
 loja, ou reprovação de ficha.
+
+## 15. Bestiário — nome de personagem de franquia no prompt: VETADO (27/09/2026)
+
+**O pedido:** o dono pediu para usar as ~4.000 linhas de franquia do corpus
+`Besti-rio-` (Pokémon, Digimon, D&D, Warcraft, Final Fantasy, Tolkien, Marvel
+etc. — mapeadas em `docs/BESTIARIO-PROCEDENCIA.md` §1–§2) como inspiração para
+o gerador de sprite, citando o NOME do personagem no prompt de imagem
+(`imagePrompt`), inclusive combinando dois nomes ("Chocobo Deathwing").
+
+**O parecer (`soulmon-ip-brand-guardian`, 27/09/2026): VETADO, sem ressalva.**
+Resumo dos pontos que sustentam o veredito:
+- Mitologia de domínio público (Fênix, Dragão, Cérbero — já citados no prompt
+  desde a decisão D-B1) é GÊNERO, sem titular. Nome de personagem registrado é
+  EXPRESSÃO IDENTIFICADA de uma obra de titular vivo e comercialmente ativo —
+  categoricamente diferente, e combinar dois nomes não neutraliza nenhum dos
+  dois.
+- Risco de bloqueio de loja: ALTO e mensurável (política de PI e de conteúdo
+  gerado por IA da Play/App Store trata nome de personagem registrado em
+  prompt como sinal de geração infratora).
+- Risco de DMCA/ação de titular direto: ALTO — Nintendo e Bandai (a própria
+  origem do Soulmon como ex-DigiApp já é exposição concreta) têm histórico
+  documentado de ação agressiva; DMCA atinge a HOSPEDAGEM (Cloudflare), não só
+  a loja. Beholder/Mind Flayer/Displacer Beast são os 3 itens que a WotC
+  processa por serem Product Identity fora da OGL.
+- Sem mitigação por titular: fair use/paródia não é isenção preventiva para um
+  app comercial monetizado.
+- Termos do provedor de imagem (Higgsfield/Gemini): não confirmados nesta
+  sessão — lacuna registrada, não risco zero.
+
+**O dono manteve o pedido mesmo depois do veto ser exposto.** A sessão
+**recusou implementar** — não por desacordo de produto, mas porque o próprio
+parecer diz que isso passa do limiar de risco de produto e exige revisão
+jurídica formal **antes** do primeiro commit, não depois, e a sessão não tem
+como suprir essa revisão. Nenhum prompt com nome de personagem de franquia foi
+escrito, nem em código nem como texto avulso.
+
+**O que foi implementado em vez disso** (via alternativa do próprio parecer,
+aceita pelo dono): `scripts/bestiario-arquetipos-genericos.mjs` — extrai só as
+FAMÍLIAS genéricas que se repetem em toda ficção de fantasia (gigante,
+autômato, espectro, limo, aberração, morto-vivo — presentes centenas de vezes
+em pokemon/digimon/dnd.json, mas como vocabulário genérico, não nome próprio)
+e escreve descrição ORIGINAL para cada uma, nunca copiando nome nem texto de
+nenhuma entrada específica. Ver `docs/BESTIARIO-PROCEDENCIA.md` §12. Pool:
+630 → 732 criaturas; famílias cobertas em `REALM_TO_FAMILIAS`
+(`bestiary/select.ts`): 6 → 12 de 14.
+
+**Gatilho de revisão:** revisão jurídica formal, por escrito, aceitando o
+risco residual com o dono ciente — só então a citação de nome de franquia
+volta à mesa. Enquanto isso não existir, esta decisão está fechada.

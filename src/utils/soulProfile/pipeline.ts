@@ -56,6 +56,15 @@ export interface OracleComplete {
  * dentro de `await import('../utils/soulProfile')`, então só ganham um
  * `await` a mais.
  */
+/** A BASE de um nome do bestiário — tira o prefixo procedural e o elemento.
+ *  Mesma forma que `scripts/bestiario-procedencia.mjs` usa para filtrar; aqui
+ *  é só para o prompt, então é uma regex local e não um import de script de
+ *  build (o bundle não carrega `scripts/`). */
+function baseDeInspiracao(nome: string): string {
+  const m = /^(?:Titânico|Espiritual|Cristalino|Corrompido|Ancião)\s+(.+?)\s+de\s+\S+$/.exec(nome);
+  return (m ? m[1] : nome).trim();
+}
+
 export async function generateOracleComplete(input: OracleInput, seed?: number): Promise<OracleComplete> {
   const soul: SoulProfile | undefined = input.soulProfile;
   if (!soul) throw new Error('generateOracleComplete exige soulProfile — use generateOracle para o caminho legado');
@@ -79,13 +88,37 @@ export async function generateOracleComplete(input: OracleInput, seed?: number):
   ) as Record<FichaStage, BestiaryPick>;
   const bestiaryPick = bestiaryLineage[FICHA_STAGE_ORDER[0]];
 
-  // O texto de inspiração é a DESCRIÇÃO com o nome da criatura removido —
-  // o que sobra são as menções de bicho/matéria que a máquina de famílias
-  // sabe ler. O nome fica só no bestiaryPick, para transparência interna.
+  // O texto de inspiração é a DESCRIÇÃO com o nome removido — o que sobra são
+  // as menções de bicho/matéria que a máquina de famílias sabe ler.
   const nome = bestiaryPick.creature.nome;
   const texto = bestiaryPick.creature.descricao
     .split(new RegExp(nome.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'))
     .join(' ');
+
+  /* ⚠️ **O NOME passou a ir NO PROMPT em 27/09/2026 (D-B1, decisão do dono).**
+   *
+   * Até aqui ele era deliberadamente retido ("o nome fica só no bestiaryPick,
+   * para transparência interna") e `pipeline.test.ts` travava a ausência dele
+   * nos 11 prompts. O dono decidiu o contrário **sabendo do risco de direito
+   * autoral**, e o desenho que ele pediu é este: tenta COM o nome; se o
+   * provedor recusar, a 2ª tentativa vai sem.
+   *
+   * Duas coisas que fazem isso NÃO ser "pedir uma cópia", e que não podem cair
+   * junto:
+   *   1. o nome entra só em `imagePrompt`. O `imagePromptFallback` segue
+   *      limpo, e é ele que `functions/api/generate-sprite.js` usa quando
+   *      `isRefusal` reconhece a recusa do provedor. **Quem decide o limite é
+   *      o provedor**, não uma lista nossa;
+   *   2. a cláusula `Do not copy any existing franchise character` continua
+   *      nas DUAS variantes (`oracle.ts` › `composeSpritePrompt`). Citar de
+   *      onde veio a inspiração não é licença para devolver personagem
+   *      registrado.
+   *
+   * Vai a BASE, não o nome procedural inteiro: "Ocapi (Okapia johnstoni)" é
+   * dica de desenho; "Titânico Ocapi (Okapia johnstoni) de Água" só gasta
+   * prompt com o prefixo e o elemento, que já estão descritos em outro lugar.
+   */
+  const nomeInspiracao = baseDeInspiracao(nome);
 
   // Classe REAL só como ingrediente extra do prompt de sprite — nunca em
   // texto que o jogador vê (nome/bio/descrição por forma continuam sem
@@ -107,6 +140,7 @@ export async function generateOracleComplete(input: OracleInput, seed?: number):
       texto,
       familia: bestiaryPick.creature.familia,
       biologia: bestiaryPick.creature.biologia,
+      nome: nomeInspiracao,
     },
     promptClassFlavor,
   }, salt);

@@ -200,13 +200,27 @@ export interface Incubation {
    *  não um campo só, porque o empate de galho põe 2–3 formas incubando ao
    *  mesmo tempo e porque voltar a uma forma reaproveita o relógio dela (R-L). */
   since: Record<string, string>;
-  /** Formas cujo aviso da Home já foi mostrado — one-shot (parecer R-O: um
-   *  aviso, uma vez; o pet nunca repete). */
-  notified: string[];
+  /* ⚰️ **`notified: string[]` SAIU em 27/09/2026, e não deve voltar.**
+   *
+   * Ele nasceu no D-G6 para o aviso da Home ser one-shot ("um aviso, uma
+   * vez"), foi escrito no save de TODO jogador desde 22/09/2026 e **lido por
+   * ninguém** — a quarta repetição do padrão dos WP4.15/4.16 e do bestiário.
+   *
+   * E consumi-lo teria sido pior que deixá-lo morto, porque a regra que vale
+   * é a OPOSTA: o parecer R-K(a) pede um **marcador persistente**, "que se
+   * ENCONTRA em vez de conferir". Um aviso one-shot deixaria sem explicação
+   * nenhuma exatamente quem mais precisa dela — o jogador que abre o app no
+   * meio da incubação, vê a barra cheia, o botão apagado, e já tinha gastado
+   * a única exibição do aviso. O aviso fica enquanto a incubação durar; é
+   * isso que o R-K(a) chama de marcador, e é ele que substitui o push que a
+   * decisão #76 do dono cortou.
+   *
+   * Save antigo que ainda carrega a chave é inofensivo: o load monta o objeto
+   * campo a campo e simplesmente não a copia. */
 }
 
 export function emptyIncubation(): Incubation {
-  return { v: 1, since: {}, notified: [] };
+  return { v: 1, since: {} };
 }
 
 /**

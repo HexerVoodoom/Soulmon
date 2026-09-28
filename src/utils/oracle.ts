@@ -83,7 +83,26 @@ export interface OracleInput {
    * entra na bio e NÃO entra em prompt de imagem. Só o pipeline
    * (soulProfile/pipeline.ts) preenche isto.
    */
-  bestiaryInspiration?: { texto: string; familia: string | null; biologia: string[] };
+  bestiaryInspiration?: {
+    texto: string;
+    familia: string | null;
+    biologia: string[];
+    /**
+     * O NOME da criatura-inspiração (a base, sem prefixo procedural nem
+     * elemento) — ⚠️ **passou a entrar no prompt em 27/09/2026, por decisão
+     * do dono.** Até então ele era removido de propósito e havia teste
+     * travando isso.
+     *
+     * Entra **só na 1ª variante** (`imagePrompt`, a que cita as referências
+     * de gênero). O `imagePromptFallback` continua sem ele — e é esse par
+     * que dá o fallback que o dono pediu: tenta COM o nome; se o provedor
+     * recusar por política de conteúdo (`isRefusal`, em
+     * `functions/api/generate-sprite.js`), a 2ª tentativa vai sem.
+     * Quem decide não somos nós nem uma lista nossa: é o provedor, e a
+     * recusa dele já tem caminho tratado.
+     */
+    nome?: string;
+  };
   /**
    * Classe REAL da criatura — arquétipo do class-system (`ficha/classTitle.ts`,
    * motor real, `calcularProgressao`), calculada a partir da ficha ULTRA (a
@@ -2382,6 +2401,9 @@ function composeSpritePrompt(args: {
   /** Cláusula do renascimento, já composta (ver `rebirthPromptClause`). Entra
    *  nas DUAS variantes: é escolha do jogador, não referência de franquia. */
   rebirth?: string;
+  /** Nome da criatura-inspiração do bestiário. Entra SÓ na variante com
+   *  referências — ver `OracleInput.bestiaryInspiration.nome`. */
+  inspiracao?: string;
   /** true = cita GENRE_REFERENCES (1ª tentativa); false = prompt limpo (2ª). */
   withReferences: boolean;
 }): string {
@@ -2389,6 +2411,11 @@ function composeSpritePrompt(args: {
   return (
     `Generate an original creature for a monster-raising RPG` +
     (args.withReferences ? ` inspired by ${GENRE_REFERENCES}` : '') + `. ` +
+    // A inspiração do bestiário, nomeada, só na 1ª tentativa (D-B1,
+    // 27/09/2026). A cláusula logo abaixo FICA: citar de onde veio a
+    // inspiração não é pedir uma cópia, e é ela que mantém o pedido em
+    // "criatura original" nas duas variantes.
+    (args.withReferences && args.inspiracao ? `Draw inspiration from ${args.inspiracao}. ` : '') +
     // Vale nas DUAS variantes: mesmo citando inspirações, o que sai não pode ser
     // um personagem registrado — o sprite vai pro app de um usuário real.
     `Do not copy any existing franchise character. ` +
@@ -3044,6 +3071,13 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
   // chegar aqui). Só a ESCOLHA de família lê este texto: bio, conceito e
   // prompts continuam saindo dos bancos de palavras próprios.
   const familyHintText = descText || (input.bestiaryInspiration ? normalizeText(input.bestiaryInspiration.texto) : '');
+  /* ⚠️ **O NOME da inspiração passou a ir no prompt em 27/09/2026 (D-B1,
+     decisão do dono).** Antes ele era removido de propósito — `pipeline.ts`
+     cortava o nome da descrição e havia teste travando a ausência dele nos 11
+     prompts. O dono decidiu o contrário, sabendo do risco de direito autoral:
+     tenta COM o nome, e se o provedor recusar, a 2ª tentativa vai sem.
+     Entra SÓ em `imagePrompt`; `imagePromptFallback` segue limpo. */
+  const inspiracaoNome = input.bestiaryInspiration?.nome?.trim() || undefined;
   const family = pickFamilies(rng, dominantElement, secondaryElement, dominantRealm, familyHintText);
   // fusionA/fusionB = substantivos concretos dos dois slots (compat + conceito)
   const fusionA = family.primary.noun;
@@ -3229,7 +3263,7 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     },
     ...composeSpritePrompts({
       concept: spriteConcept, colorDesc, accent: ALIGNMENT_ACCENT[dominantAlignment],
-      favoriteCreature, rebirth: rebirthClause,
+      favoriteCreature, rebirth: rebirthClause, inspiracao: inspiracaoNome,
       levelBlock: rookieLevel,
     }),
   });
@@ -3267,7 +3301,7 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       },
       ...composeSpritePrompts({
         concept: spriteConcept, colorDesc, accent: bAccent,
-        favoriteCreature, rebirth: rebirthClause,
+        favoriteCreature, rebirth: rebirthClause, inspiracao: inspiracaoNome,
         levelBlock: `it has evolved into ${champShape.en}`,
       }),
     });
@@ -3283,7 +3317,7 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       },
       ...composeSpritePrompts({
         concept: spriteConcept, colorDesc, accent: bAccent,
-        favoriteCreature, rebirth: rebirthClause,
+        favoriteCreature, rebirth: rebirthClause, inspiracao: inspiracaoNome,
         levelBlock: `it has transformed into ${perfShape.en}`,
       }),
     });
@@ -3299,7 +3333,7 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       },
       ...composeSpritePrompts({
         concept: spriteConcept, colorDesc, accent: bAccent,
-        favoriteCreature, rebirth: rebirthClause,
+        favoriteCreature, rebirth: rebirthClause, inspiracao: inspiracaoNome,
         levelBlock: `in its final form, it is ${megaShape.en}`,
       }),
     });
@@ -3320,7 +3354,7 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     },
     ...composeSpritePrompts({
       concept: spriteConcept, colorDesc, accent: 'red, cyan and gold',
-      favoriteCreature, rebirth: rebirthClause,
+      favoriteCreature, rebirth: rebirthClause, inspiracao: inspiracaoNome,
       levelBlock: `${pick(rng, ULTRA_LOOK)}, the ultra fusion of its three mega forms`,
     }),
   });

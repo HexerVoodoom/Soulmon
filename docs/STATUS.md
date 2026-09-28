@@ -7,6 +7,47 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 27/09/2026 — Manual sincronizado com `2336e4e7`
+>
+> Delta `c510c7e4..2336e4e7` (4 commits). Docs tocados: 02 (§22 D-B1 — o nome da
+> inspiração vai no `imagePrompt`, reversão do dono com lápide; pool 617; §17
+> `notified` ⚰️), 04 (§8.3 corte do bestiário, §8.4 D-B1), 06/utils, 06/components
+> (o aviso da `OraclePage` ainda dizia "nunca entra em prompt"), 06/hooks-contexts-types,
+> 07 (`incubation.notified` ⚰️), 10 (2 linhas no tema 10, frase do dono verbatim).
+> 00-MAPA já tinha a entrada de `BESTIARIO-PROCEDENCIA.md` — conferida, sem duplicar.
+> Exceção conhecida: `scripts/bestiario-procedencia.mjs` fica fora do inventário
+> (`docs-inventario.mjs` não cobre `scripts/`). Divergências novas: nenhuma.
+
+> ## 27/09/2026 — Manual sincronizado com `c510c7e4`
+>
+> Delta `78ef5367..c510c7e4` (3 commits, sendo 1 o próprio commit de docs anterior),
+> rodado por `/manter-docs auto`. As duas frentes grossas — **WP4.29 (incubação)** e
+> **minimal-ui F1–F6** — já tinham entrado no manual em `d433a607`; o que faltava eram
+> as **duas correções pós-F3** de 24/09.
+>
+> Docs tocados e recarimbados: **00-MAPA** (§5 ganha `src/utils/androidBack.ts` e
+> `src/components/ui/PixelIcon.tsx` + `assets/soulmon/icones-ui/`), **03** (§1.1 voltar
+> físico do Android; §1.2 `icon="mapa"` e o saldo do Mapa no canto inferior direito em
+> pílulas `chip-moeda`; §4.2 o deck de CINCO ações vira ⚰️ e no lugar entram OS TRÊS
+> CUIDADOS), **04** (§5.1 ganha o terceiro caminho de ícone), **05** (§1.1 `@capacitor/app`;
+> §2.2 `App.tsx` 6659 → 6646), **06/components** (`CornerLink`, `MapPage`),
+> **06/utils** (cobertura re-medida), **08** (só o carimbo: §3.6 não repete o número),
+> **09** (§1.5 ganha a linha das duas correções).
+>
+> - ⚰️ **Duas mentiras corrigidas, as duas da família "a régua descreve o app de ontem"**:
+>   o manual dizia que o plugin do Android era procurado em tempo de execução porque
+>   `@capacitor/app` não estava instalado e que na Home ele chamava `exitApp` (FECHAR o app
+>   onde o Android manda só mandar a tarefa para trás) — hoje o pacote é dependência e
+>   `utils/androidBack.ts` **minimiza**; e o §4.2 de telas descrevia um deck de CINCO
+>   ações que tinha morrido na F2 (`grep -c 'sm2-deck"' src/components/CompanionHUD.tsx`
+>   → 0), incluindo um botão de comer que hoje é arrasto da Mochila.
+> - **Divergências novas: nenhuma.** As duas já registradas continuam abertas e são do
+>   dono: o `CLAUDE.md` ainda descreve a Loja "na página Atividades (`ShopModal`)" e
+>   Missões como "aba na loja", e ainda fala da "nav inferior 32px" sem citar a exceção D1.
+> - Fechada a pendência menor do bloco anterior: `06-REFERENCIA/utils.md` dizia
+>   "120/120 módulos" (medição certa de 09/09, árvore que cresceu 19 módulos desde então);
+>   re-medido por `scripts/docs-inventario.mjs` → **139/139**, sem nenhum faltando.
+
 > ## 24/09/2026 — Manual sincronizado com `78ef5367`
 >
 > Delta `c7bca6d..78ef5367` (19 commits: incubação WP4.29 + minimal-ui F1–F6 + Vesca),
@@ -4212,3 +4253,73 @@ Três saídas, e a escolha é do dono porque muda alcance de loja:
 Recomendação: **(2) agora** (barata, honesta com o usuário) e (1) junto, com o
 `minSdk` refletindo o que o app realmente aguenta. (3) só se houver dado de que
 o público de aparelho antigo importa.
+
+## 27/09/2026 — sincronização do manual pós-merge 8fbf6990
+
+Delta `2336e4e7..8fbf6990` (4 commits: curadoria das 37 bases do bestiário,
+registro da decisão do dono sobre "Profissão", revisão multiagente com ponte
+de elementos/bioma/biologia). Redatores despachados: `doc-redator-regras`
+(02-REGRAS-DE-NEGOCIO.md; 01-VISAO.md não mudou), `doc-redator-referencia`
+(06-REFERENCIA/utils.md), `doc-historiador` (10-DISCUSSOES-E-DECISOES.md +
+escreveu a §11 que faltava em `BESTIARIO-PROCEDENCIA.md`), `doc-bibliotecario`
+(uma linha na §6 do 00-MAPA.md). `doc-verificador` conferiu os 5 docs símbolo
+por símbolo, corrigiu uma imprecisão de redação (contagem dos 84 biomas
+"Variado") e carimbou os 4 docs do manual. Guard `docsManual.contract.test.ts`
+e `docsSemMentira.contract.test.ts`: verdes.
+
+Divergência registrada (não é código errado, é lacuna de régua):
+`BESTIARIO-PROCEDENCIA.md` §11 documenta que a ponte de elementos
+(`scripts/bestiario-ponte-elementos.mjs`) ainda não tem teste dedicado
+travando a auto-retirada quando o corpus upstream trouxer cobertura real —
+hoje só a régua de piso (`curadoria.contract.test.ts`) existe.
+
+Nesta mesma sessão, em resposta ao objetivo do dono ("loop no bestiário até
+ter todas as criaturas verificadas"), `curadoria.contract.test.ts` ganhou um
+bloco de verificação EXAUSTIVA (todas as 630 criaturas, não amostra): campos
+obrigatórios presentes, descrição sem truncamento e corroborando o nome,
+nomes únicos, tamanho dentro do vocabulário válido e atributos numéricos
+sãos. 17/17 testes verdes no arquivo.
+
+## 27/09/2026 — bestiário: pedido de nome de franquia VETADO, arquétipos genéricos no lugar
+
+O dono pediu para usar as ~4.000 linhas de franquia do corpus `Besti-rio-`
+(Pokémon/Digimon/D&D/Warcraft/etc.) como inspiração pro gerador de sprite,
+citando o NOME do personagem no prompt de imagem. `soulmon-ip-brand-guardian`
+deu parecer **VETADO** (registro completo: `docs/REGISTRO-DE-DECISOES.md`
+§15) — risco real de bloqueio de loja e DMCA contra a hospedagem, sem
+mitigação por titular, categoricamente diferente da mitologia de domínio
+público já citada desde D-B1. A sessão recusou implementar mesmo depois do
+dono manter o pedido: o próprio parecer diz que passa do limiar de risco de
+produto e exige revisão jurídica formal **antes** do primeiro commit.
+
+Implementado em vez disso, pela alternativa do parecer:
+`scripts/bestiario-arquetipos-genericos.mjs` — extrai as FAMÍLIAS genéricas
+recorrentes na ficção de fantasia (gigante/autômato/espectro/limo/aberração/
+morto-vivo, presentes em pokemon/digimon/dnd.json como vocabulário de gênero,
+não nome próprio) e escreve descrição ORIGINAL para cada uma. Pool:
+630 → **732** criaturas; famílias cobertas em `REALM_TO_FAMILIAS`
+(`bestiary/select.ts`): 6 → **12** de 14 (faltam `ignea`/`humanoide`, fora por
+ambiguidade — ver `docs/BESTIARIO-PROCEDENCIA.md` §12).
+
+Repo irmão `Besti-rio-` foi clonado nesta sessão (`/home/user/besti-rio-`) e
+confirmou que os "14 mil" que o dono via são majoritariamente inflação
+combinatória: `faunaflora.json` (2.000 linhas) tem só 6 espécies reais
+distintas, `enriched.json` (parte real, 200 linhas) tem 20 — o pool de 630
+já usava quase toda a diversidade real disponível antes desta rodada.
+
+Portões: `tsc` ×3 limpo, `vitest run` 4984 passando (1 falha pré-existente,
+`convertToWebp.test.ts`, causada por rodar como `root` — ignora `chmod
+0o444` —, não é regressão), `npm run build` ok.
+
+## 27/09/2026 — sincronização do manual pós-merge 1d9e278d
+
+Delta `8fbf6990..1d9e278d` (3 commits: verificação exaustiva do bestiário, e
+os arquétipos genéricos de fantasia como alternativa ao pedido de nome de
+franquia vetado). Redatores despachados: `doc-redator-regras`
+(02-REGRAS-DE-NEGOCIO.md; 01-VISAO.md não mudou), `doc-redator-referencia`
+(06-REFERENCIA/utils.md), `doc-historiador` (10-DISCUSSOES-E-DECISOES.md —
+registra com precisão que foi um PEDIDO DO DONO RECUSADO pela sessão),
+`doc-bibliotecario` (linha do 00-MAPA.md, incluindo a §11 que faltava citar
+desde a rodada anterior). `doc-verificador` conferiu os 4 docs símbolo por
+símbolo, sem devoluções, e carimbou todos. Guard `docsManual.contract.test.ts`
+e `docsSemMentira.contract.test.ts`: 10/10 verdes.

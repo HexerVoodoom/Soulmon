@@ -109,7 +109,7 @@ describe('o save antigo e o relógio quebrado nunca prendem ninguém', () => {
   });
 
   it('`since` corrompido libera, nunca tranca', () => {
-    const inc = { v: 1 as const, since: { 'champion-virus': 'não é data' }, notified: [] };
+    const inc = { v: 1 as const, since: { 'champion-virus': 'não é data' } };
     expect(incubationReady(inc, 'champion-virus', T0)).toBe(true);
   });
 });
