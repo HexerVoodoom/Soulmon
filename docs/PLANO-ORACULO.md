@@ -75,8 +75,8 @@ Critérios C1–C8 (cobertura, sem vencedor estrutural nos 4 eixos ≤1,5×, esc
 
 **Fase 3 — manifestação e jogador.** Régua "classe/pontuação nunca renderizada"; traduzir numerologia negativa (compliance); companheiro nomeado e visível; talento→traço, profissão→masmorra; teste cego de Barnum (planejar; executar com usuários).
 
-## 9. Decisões novas que dependem do dono
-1. Rebirth herda um traço do ciclo anterior (recomendado) ou reset puro?
-2. Companheiro vira parceiro **visível e nomeado** na Home/masmorra (recomendado) ou continua só na bio?
-3. Class-system como balanceador oculto de masmorra/torneio (recomendado — usa a ficha que hoje é morta) ou a ficha fica só nas skills?
-4. Raridade comunicada por NPC/forma (recomendado) — confirma que **nunca** haverá selo/porcentagem?
+## 9. Decisões novas — DECIDIDAS pelo dono (28/09/2026, todas pela recomendação)
+1. Rebirth **herda um traço** do ciclo anterior (família visual ou elemento); nunca reset puro. ✅
+2. Companheiro vira **parceiro visível e nomeado** (Home/masmorra). ✅
+3. Class-system é **balanceador oculto** de masmorra/torneio (dificuldade, drops). ✅
+4. Raridade comunicada só por NPC/forma; **nunca** selo, porcentagem ou "faltam N". ✅
