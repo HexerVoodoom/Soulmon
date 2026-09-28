@@ -113,8 +113,8 @@ describe('distribuição da criação — pipeline completo, população sintét
   });
 
   it('evolução: continuidade é o normal, mas atravessar família não é raro', () => {
-    // Medido: 43% trocam de família ao menos uma vez; 80% dos pares
-    // consecutivos continuam. Antes: 21% e 91%.
+    // Medido (28/09, pool de originais, peso 3): 56% trocam de família ao menos uma vez; 84% dos pares
+    // consecutivos continuam. Antes: 43%/80% (peso 0,5) e 21%/91% (original).
     const estagios = ['rookie', 'champion', 'ultimate', 'mega', 'ultra'] as const;
     let atravessaram = 0; let pares = 0; let continuas = 0;
     for (const r of rs) {

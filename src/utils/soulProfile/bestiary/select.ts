@@ -63,15 +63,15 @@ function baseElements(elementos: string[]): string[] {
  *  `espirito`, `aberracao`, `ignea`) saíram com as entradas geradas. Todo
  *  grupo aparece em pelo menos um reino. */
 const REALM_TO_FAMILIAS: Record<RealmId, string[]> = {
-  deserto: ['reptil', 'aracnideo', 'inseto', 'geologico', 'elemental', 'monstro'],
-  picos: ['ave', 'humanoide', 'geologico', 'draconico', 'angelical'],
-  oceano: ['peixe', 'cnidario', 'molusco', 'crustaceo', 'monstro', 'invertebrado'],
-  pantano: ['anfibio', 'reptil', 'verme', 'fungo', 'peixe', 'morto_vivo'],
-  floresta: ['mamifero', 'planta', 'fungo', 'inseto', 'ave', 'etereo'],
-  cavernas: ['aracnideo', 'verme', 'geologico', 'morto_vivo', 'demonio', 'construto'],
-  gelo: ['mamifero', 'ave', 'peixe', 'humanoide', 'elemental', 'invertebrado'],
-  campina: ['mamifero', 'ave', 'inseto', 'planta', 'humanoide'],
-  akasha: ['etereo', 'angelical', 'demonio', 'extraplanetario', 'elemental', 'construto'],
+  deserto: ['reptil', 'aracnideo', 'inseto', 'geologico', 'elemental'],
+  picos: ['ave', 'humanoide', 'geologico', 'angelical', 'monstro'],
+  oceano: ['peixe', 'cnidario', 'molusco', 'crustaceo', 'monstro'],
+  pantano: ['anfibio', 'reptil', 'verme', 'fungo', 'morto_vivo', 'crustaceo'],
+  floresta: ['mamifero', 'planta', 'inseto', 'anfibio', 'etereo', 'molusco'],
+  cavernas: ['aracnideo', 'verme', 'fungo', 'demonio', 'construto', 'morto_vivo'],
+  gelo: ['mamifero', 'ave', 'peixe', 'humanoide', 'elemental', 'cnidario'],
+  campina: ['planta', 'mamifero', 'ave', 'construto', 'extraplanetario'],
+  akasha: ['etereo', 'angelical', 'demonio', 'extraplanetario'],
 };
 
 /** Reino → palavras de bioma do bestiário (o corpus tem bioma textual). */
@@ -247,6 +247,7 @@ function selectFromPool(
     }));
   scored.sort((a, b) => b.score - a.score);
   const top = scored[0].score;
+  if (!prev) return sortearPorGrupo(scored, top, seedString);
   let band = scored.filter(s => s.score >= top - BAND_WIDTH);
   const minBand = prev ? MIN_BAND_LINHAGEM : MIN_BAND;
   if (band.length < minBand) band = scored.slice(0, minBand);
@@ -272,6 +273,37 @@ function selectFromPool(
     if (alvo < 0) { chosen = s; break; }
   }
   return { creature: chosen.creature, score: chosen.score, bandSize: band.length };
+}
+
+/** Grupos mínimos na faixa do sorteio inicial. */
+const MIN_GRUPOS = 6;
+
+/**
+ * Sorteio INICIAL em duas etapas: primeiro o GRUPO, depois a criatura.
+ * ⚠️ 28/09/2026: sortear por entrada (mesmo com peso 1/n por grupo) deixava
+ * o grupo refém de quantas criaturas dele caíam perto do topo — hostilidade e
+ * tamanho favorecem monstros/aves/mamíferos, e o resultado ia de 1% a 9%
+ * (7×). Aqui cada grupo entra na faixa pela SUA melhor criatura (a leitura
+ * continua decidindo quem entra), a faixa tem pelo menos `MIN_GRUPOS`, e
+ * todo grupo da faixa tem a mesma chance.
+ */
+function sortearPorGrupo(scored: { creature: BestiaryCreature; score: number }[], top: number, seedString: string): BestiaryPick {
+  const porGrupo = new Map<string, { creature: BestiaryCreature; score: number }[]>();
+  for (const s of scored) {
+    const g = s.creature.familia ?? especieDe(s.creature.nome);
+    if (!porGrupo.has(g)) porGrupo.set(g, []);
+    porGrupo.get(g)!.push(s);
+  }
+  // `scored` já vem ordenado: o primeiro de cada lista é o melhor do grupo.
+  const grupos = [...porGrupo.entries()].sort((a, b) => b[1][0].score - a[1][0].score);
+  let faixa = grupos.filter(([, l]) => l[0].score >= top - BAND_WIDTH);
+  if (faixa.length < MIN_GRUPOS) faixa = grupos.slice(0, MIN_GRUPOS);
+  const rng = mulberry32(hashString(seedString));
+  const [, lista] = faixa[Math.floor(rng() * faixa.length)];
+  const dentro = lista.filter(s => s.score >= lista[0].score - BAND_WIDTH);
+  const chosen = dentro[Math.floor(rng() * dentro.length)];
+  const bandSize = faixa.reduce((n, [, l]) => n + l.filter(s => s.score >= l[0].score - BAND_WIDTH).length, 0);
+  return { creature: chosen.creature, score: chosen.score, bandSize };
 }
 
 /**
