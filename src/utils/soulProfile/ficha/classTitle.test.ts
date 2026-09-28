@@ -84,6 +84,36 @@ describe('computeClassTitle', () => {
   });
 });
 
+describe('consistência com a bio do reveal (achado do LOOP 2/3, 28/09/2026)', () => {
+  // A bio (`oracle.ts` › `generateOracle`) nomeia a criatura pelo elemento
+  // dominante da LEITURA (8 elementos). O fallback genérico do rookie (que a
+  // suíte acima mede como o único caminho que o estágio rookie alcança,
+  // sempre) nomeava pelo elemento dominante de um sistema DIFERENTE — os 17
+  // elementos do class-system, `Ficha.elementos` — sem nenhuma reconciliação.
+  // Medido antes do conserto: ~50% dos perfis sintéticos davam bio e card do
+  // Pet contradizendo o elemento um do outro no estágio mais visto de todos.
+  it('quando dominantElement é um dos 6 elementos compartilhados, o sigilo do rookie CONCORDA com ele — nunca contradiz', async () => {
+    let comparaveis = 0;
+    for (let i = 0; i < 30; i++) {
+      const input = makeInput(`Consistencia Elemento ${i}`, i % 2 === 0);
+      const seedKey = `consistencia-elemento-${i}`;
+      const { fichaByStage, dominantElement } = buildFichaESkills(input, seedKey);
+      const titulo = await computeClassTitle(fichaByStage.rookie, dominantElement);
+      expect(titulo.origem, 'a suíte de cobertura já mede que o rookie é sempre fallback genérico').toBe('generico');
+      // Só é comparável quando dominantElement tem equivalente nos 17 do
+      // class-system (fogo/agua/terra/ar/sombra/luz) — planta/industrial não
+      // têm par lá, e nesses casos o sigilo pode legitimamente divergir.
+      if (['fogo', 'agua', 'terra', 'ar', 'sombra', 'luz'].includes(dominantElement)) {
+        comparaveis++;
+        expect(titulo.sigilo, `perfil ${i}: dominantElement=${dominantElement}`).toBe(dominantElement);
+      }
+    }
+    // Autoverificação: a amostra realmente exercitou o caso comparável —
+    // senão o teste passaria vazio sem provar nada.
+    expect(comparaveis).toBeGreaterThan(0);
+  });
+});
+
 describe('paridade da tradução EN dos arquétipos (antídoto do footgun 9)', () => {
   it('todo arquétipo real do class-system tem tradução EN, e nenhuma tradução é órfã', async () => {
     const { ARQUETIPOS } = await import('class-system');

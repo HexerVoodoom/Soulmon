@@ -191,9 +191,27 @@ function melhorArquetipo(lista: any[], chave: string): any | undefined {
 
 const BASE_SET = new Set<string>(CLASS_ELEMENT_ORDER);
 
-/** Elemento BASE dominante da ficha (maior pontuação direta), pro fallback
- *  genérico quando a ficha ainda não destravou arquétipo nenhum. */
-function elementoBaseDominante(ficha: Ficha): string {
+/**
+ * Elemento BASE dominante da ficha (maior pontuação direta), pro fallback
+ * genérico quando a ficha ainda não destravou arquétipo nenhum.
+ *
+ * ⚠️ **28/09/2026, achado do LOOP 2/3 da revisão do sistema de criação**:
+ * sem `dominantElement`, este fallback e a bio do reveal (`oracle.ts`, que
+ * usa `OracleAxes.dominantElement` — o sistema de 8 elementos) podiam
+ * nomear elementos OPOSTOS pra mesma criatura (medido: ~50% dos perfis
+ * sintéticos no estágio rookie, o mais visto de todos — ex.: bio dizia
+ * "terra", o card da página do Pet dizia "Adepto de Ar"). São vocabulários
+ * de granularidade DIFERENTE de propósito (8 vs 17) e não dá pra fundir os
+ * dois sistemas de pontuação — mas quando `dominantElement` já é um dos 6
+ * nomes COMPARTILHADOS (fogo/agua/terra/ar/sombra/luz), não há razão pra
+ * este fallback discordar dele: é justamente o caminho que roda quando a
+ * ficha NÃO tem arquétipo próprio forte o bastante pra ter opinião melhor.
+ * Fora dos 6 compartilhados (`planta`/`industrial`, sem equivalente no
+ * class-system), cai no comportamento de sempre — não dá pra reconciliar o
+ * que não existe dos dois lados.
+ */
+function elementoBaseDominante(ficha: Ficha, dominantElement?: string): string {
+  if (dominantElement && BASE_SET.has(dominantElement)) return dominantElement;
   let melhor: string = CLASS_ELEMENT_ORDER[0];
   let melhorPts = -1;
   for (const [id, pts] of Object.entries(ficha.elementos)) {
@@ -210,7 +228,7 @@ function elementoBaseDominante(ficha: Ficha): string {
  * nenhum dos dois (fallback genérico), o elemento base dominante da ficha —
  * que é o mesmo que dá nome ao "Adepto de …". Pura e determinística.
  */
-export function sigiloDaClasse(condicao: CondicaoLike | undefined, ficha: Ficha): string {
+export function sigiloDaClasse(condicao: CondicaoLike | undefined, ficha: Ficha, dominantElement?: string): string {
   const maior = (grupo?: Record<string, number>): string | undefined => {
     let melhor: string | undefined;
     let melhorPts = -Infinity;
@@ -219,14 +237,18 @@ export function sigiloDaClasse(condicao: CondicaoLike | undefined, ficha: Ficha)
     }
     return melhor;
   };
-  return maior(condicao?.escolas) ?? maior(condicao?.elementos) ?? elementoBaseDominante(ficha);
+  return maior(condicao?.escolas) ?? maior(condicao?.elementos) ?? elementoBaseDominante(ficha, dominantElement);
 }
 
 /**
  * Classe de UM estágio. Determinística: função da ficha (que já é função da
  * identidade), então reroll não troca a classe — mesmo padrão das skills.
+ *
+ * `dominantElement` (opcional, ver `elementoBaseDominante`): o elemento
+ * dominante da LEITURA (8 elementos, o mesmo que a bio do reveal usa) —
+ * sem ele, o comportamento é idêntico ao de antes do LOOP 2/3.
  */
-export async function computeClassTitle(ficha: Ficha): Promise<ClassTitle> {
+export async function computeClassTitle(ficha: Ficha, dominantElement?: string): Promise<ClassTitle> {
   const { prog } = await buildRealPersonagem(ficha);
 
   const pleno = melhorArquetipo(prog.arquetipos, ficha.nome);
@@ -234,7 +256,7 @@ export async function computeClassTitle(ficha: Ficha): Promise<ClassTitle> {
     return {
       nome: { pt: pleno.nome, en: CLASS_TITLE_EN[pleno.id] ?? pleno.nome },
       origem: 'arquetipo',
-      sigilo: sigiloDaClasse(pleno.condicao, ficha),
+      sigilo: sigiloDaClasse(pleno.condicao, ficha, dominantElement),
     };
   }
 
@@ -244,11 +266,11 @@ export async function computeClassTitle(ficha: Ficha): Promise<ClassTitle> {
     return {
       nome: { pt: `Aspirante a ${diluido.nome}`, en: `${en} Aspirant` },
       origem: 'diluido',
-      sigilo: sigiloDaClasse(diluido.condicao, ficha),
+      sigilo: sigiloDaClasse(diluido.condicao, ficha, dominantElement),
     };
   }
 
-  const elId = elementoBaseDominante(ficha);
+  const elId = elementoBaseDominante(ficha, dominantElement);
   return {
     nome: {
       pt: `Adepto de ${baseElementLabel(elId, true)}`,
@@ -262,11 +284,12 @@ export async function computeClassTitle(ficha: Ficha): Promise<ClassTitle> {
 /** `computeClassTitle` pra todos os estágios de uma vez. */
 export async function computeClassTitlesAllStages(
   fichaByStage: Record<string, Ficha>,
+  dominantElement?: string,
 ): Promise<Record<string, ClassTitle>> {
   const entries = await Promise.all(
     Object.entries(fichaByStage).map(async ([stage, ficha]) => {
       try {
-        return [stage, await computeClassTitle(ficha)] as const;
+        return [stage, await computeClassTitle(ficha, dominantElement)] as const;
       } catch {
         return [stage, undefined] as const;
       }

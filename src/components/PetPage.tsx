@@ -219,7 +219,7 @@ export function PetPage({
           import('../utils/soulProfile/ficha/fromInput'),
           import('../utils/soulProfile/identity'),
         ]);
-        const { fichaByStage, stageSkills } = buildFichaESkills(saved, identityKey(saved));
+        const { fichaByStage, stageSkills, dominantElement } = buildFichaESkills(saved, identityKey(saved));
         if (!vivo) return;
         setSkills(stageSkills);
         // guarda no save: o perfil do oráculo vive só no localStorage e não
@@ -245,7 +245,7 @@ export function PetPage({
         // aqui nunca pode tirar formas/skills da tela.
         try {
           const { computeClassTitlesAllStages } = await import('../utils/soulProfile/ficha/classTitle');
-          const titulos = await computeClassTitlesAllStages(fichaByStage);
+          const titulos = await computeClassTitlesAllStages(fichaByStage, dominantElement);
           if (!vivo) return;
           setClassTitles(titulos as Record<FichaStage, ClassTitle>);
           onClassTitlesComputed?.(titulos as Record<FichaStage, ClassTitle>);

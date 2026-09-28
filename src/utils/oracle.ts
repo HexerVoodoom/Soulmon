@@ -104,6 +104,18 @@ export interface OracleInput {
     nome?: string;
   };
   /**
+   * Nome do companheiro inicial capturado (achado de 28/09/2026 — LOOP 1 da
+   * revisão do sistema de criação: `ficha/capture.ts` calcula a captura de
+   * verdade, mecânica REAL copiada do class-system, e o resultado morria
+   * sempre em `App.tsx`/`SoulmonOnboarding.tsx`, que descartavam `companion`
+   * na desestruturação de `generateOracleComplete`). Vocabulário próprio do
+   * dono (`HexerVoodoom/Class-System`, sem risco de PI — não é o bestiário de
+   * terceiro). Só entra na bio quando NÃO há `petDescription` (a bio deixa de
+   * ser texto do próprio jogador para virar a frase gerada — nunca mistura
+   * as duas fontes).
+   */
+  companionName?: string;
+  /**
    * Achado de 28/09/2026: `pipeline.ts` já calcula uma LINHAGEM de inspiração
    * do bestiário — um pick por estágio, encadeado por proximidade de espécie
    * (`selectBestiaryLineage`, testado) — mas até aqui só o pick do primeiro
@@ -3307,12 +3319,18 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
   // "marcado por algo X" evita o problema de concordância: os flavors vêm em
   // formatos diferentes (adjetivo "aquático", locução "de maré-viva") e
   // "de traços cintilante" saía sem plural nem gênero.
-  const richConceptEn = secondaryFlavor
+  // Companheiro capturado (achado do LOOP 1, ver `companionName` acima):
+  // sentença final opcional, do mesmo jeito que `secondaryFlavor` já soma —
+  // nunca substitui nada, só acrescenta se existir.
+  const companionName = input.companionName?.trim() || undefined;
+  const companionClauseEn = companionName ? ` Bonded with a ${companionName} companion.` : '';
+  const companionClausePt = companionName ? ` Vínculo com um companheiro ${companionName}.` : '';
+  const richConceptEn = (secondaryFlavor
     ? `${upperFirst(dominantClass.en)} of the ${identity.en} bloodline, marked by something ${secondaryFlavor.en}.`
-    : `${upperFirst(dominantClass.en)} of the ${identity.en} bloodline.`;
-  const richConceptPt = secondaryFlavor
+    : `${upperFirst(dominantClass.en)} of the ${identity.en} bloodline.`) + companionClauseEn;
+  const richConceptPt = (secondaryFlavor
     ? `${upperFirst(dominantClass.pt)} da linhagem ${identity.pt}, marcado por algo ${secondaryFlavor.pt}.`
-    : `${upperFirst(dominantClass.pt)} da linhagem ${identity.pt}.`;
+    : `${upperFirst(dominantClass.pt)} da linhagem ${identity.pt}.`) + companionClausePt;
   const petConceptRaw = input.petDescription?.trim()
     ? input.petDescription.trim().replace(/\s+/g, ' ').slice(0, 200)
     : null;

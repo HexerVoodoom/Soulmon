@@ -142,7 +142,7 @@ export async function generateOracleComplete(input: OracleInput, seed?: number):
   // desse. Falha aqui nunca pode derrubar a geração inteira.
   let promptClassFlavor: string | undefined;
   try {
-    const classe = await computeClassTitle(fichaByStage.ultra);
+    const classe = await computeClassTitle(fichaByStage.ultra, oracleAxes.dominantElement);
     if (classe.origem === 'arquetipo') promptClassFlavor = classe.nome.en;
   } catch {
     // sem o traço extra — o prompt de 3 traços já funcionava sozinho
@@ -157,6 +157,11 @@ export async function generateOracleComplete(input: OracleInput, seed?: number):
       nome: nomeInspiracao,
     },
     bestiaryLineageNomes,
+    // Achado do LOOP 1 (28/09/2026): `companion` já era calculado por
+    // `selectCompanion` acima e nunca chegava ao jogador — agora vira a
+    // última frase da bio (via `companionName`), só quando a captura de
+    // verdade da mecânica (Evocação + afinidade elemental) achou alguém.
+    companionName: companion ? companion.criatura.nome : undefined,
     promptClassFlavor,
   }, salt);
 
