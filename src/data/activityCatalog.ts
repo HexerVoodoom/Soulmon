@@ -10,11 +10,12 @@
  * (starter set do onboarding) e o navegador de catálogo em `CreateModal`.
  */
 import type { CatalogItem } from '../types/activityCatalog';
+import type { Schedule } from '../types/taskModel';
 
-const daily = { kind: 'weekdays', days: [0, 1, 2, 3, 4, 5, 6] } as const;
-const weekdays5 = { kind: 'weekdays', days: [1, 2, 3, 4, 5] } as const;
-const x3 = { kind: 'timesPerWeek', target: 3 } as const;
-const x2 = { kind: 'timesPerWeek', target: 2 } as const;
+const daily: Schedule = { kind: 'weekdays', days: [0, 1, 2, 3, 4, 5, 6] };
+const weekdays5: Schedule = { kind: 'weekdays', days: [1, 2, 3, 4, 5] };
+const x3: Schedule = { kind: 'timesPerWeek', target: 3 };
+const x2: Schedule = { kind: 'timesPerWeek', target: 2 };
 
 export const ACTIVITY_CATALOG: CatalogItem[] = [
   // ---------------------------------------------------------------- sono
@@ -233,6 +234,55 @@ export const ACTIVITY_CATALOG: CatalogItem[] = [
     leverages: ['curiosidade'],
     contraindications: ['não substitui ajuda profissional para depressão/ansiedade clínica'],
     evidence: { level: 'A', refs: ['Cuijpers, van Straten & Warmerdam 2007 (Clinical Psychology Review)'] },
+  },
+  {
+    id: 'mente-registro-pensamentos',
+    kind: 'especifica',
+    area: 'mente',
+    category: 'Wellness',
+    emoji: '📝',
+    name: { pt: 'Registrar um pensamento difícil', en: 'Log a difficult thought' },
+    why: {
+      pt: 'O registro de pensamentos (reestruturação cognitiva) é componente central da TCC; meta-análise (2021, 45 estudos, n=3.382) mostra melhora consistente vs. cuidado usual. Não substitui ajuda profissional — se a angústia for intensa ou persistente, procure um psicólogo/psiquiatra. No Brasil, CVV 188 (24h, gratuito).',
+      en: "Thought records (cognitive restructuring) are a core CBT component; a 2021 meta-analysis (45 studies, n=3,382) shows consistent improvement vs. usual care. This does not replace professional help — if distress is intense or persistent, seek a psychologist/psychiatrist.",
+    },
+    levels: [
+      { label: { pt: 'Nível 1', en: 'Level 1' }, target: { pt: '1x/semana, escrever 1 pensamento e o fato que o testa', en: '1x/week, write 1 thought and the fact that tests it' }, effort: 1, defaultSchedule: { kind: 'timesPerWeek', target: 1 } },
+      { label: { pt: 'Nível 2', en: 'Level 2' }, target: { pt: '2x/semana', en: '2x/week' }, effort: 1, defaultSchedule: x2 },
+      { label: { pt: 'Nível 3', en: 'Level 3' }, target: { pt: '3x/semana', en: '3x/week' }, effort: 2, defaultSchedule: x3 },
+    ],
+    addresses: ['ansiedade', 'perfeccionismo'],
+    leverages: ['calma'],
+    contraindications: [
+      'não é diagnóstico nem tratamento — não usar em crise aguda ou ideação suicida (buscar CVV 188 ou emergência)',
+      'não substitui acompanhamento profissional',
+    ],
+    evidence: { level: 'A', refs: ['Meta-análise 2021 sobre reestruturação cognitiva, ativação comportamental e TCC para depressão (45 estudos, n=3.382)'] },
+  },
+  {
+    id: 'mente-exposicao-leve',
+    kind: 'abrangente',
+    area: 'mente',
+    category: 'Wellness',
+    emoji: '🌤️',
+    name: { pt: 'Encarar, de leve, algo que evito', en: 'Gently face something I avoid' },
+    why: {
+      pt: 'Exposição gradual é tratamento de primeira linha para ansiedade em revisões sistemáticas e meta-análises. Aqui é uma versão de AUTOAJUDA muito leve (evitações pequenas do dia a dia, nunca fobia/trauma/pânico clínico) — não substitui terapia. Se a evitação vier de trauma, pânico ou fobia incapacitante, procure ajuda profissional; CVV 188 (24h, gratuito) para crise.',
+      en: 'Graded exposure is a first-line anxiety treatment in systematic reviews and meta-analyses. This is a very light self-help version (small everyday avoidances, never clinical phobia/trauma/panic) — it does not replace therapy.',
+    },
+    levels: [
+      { label: { pt: 'Nível 1', en: 'Level 1' }, target: { pt: '1x/semana, um passo pequeno', en: '1x/week, one small step' }, effort: 2, defaultSchedule: { kind: 'timesPerWeek', target: 1 } },
+      { label: { pt: 'Nível 2', en: 'Level 2' }, target: { pt: '2x/semana', en: '2x/week' }, effort: 2, defaultSchedule: x2 },
+      { label: { pt: 'Nível 3', en: 'Level 3' }, target: { pt: '3x/semana', en: '3x/week' }, effort: 2, defaultSchedule: x3 },
+    ],
+    addresses: ['ansiedade', 'comecar'],
+    leverages: ['persistencia'],
+    contraindications: [
+      'não usar para fobia clínica, pânico, trauma ou TEPT — isso exige acompanhamento profissional',
+      'nunca em crise aguda ou ideação suicida (buscar CVV 188 ou emergência)',
+      'não é tratamento; é prática de autoajuda de baixa intensidade',
+    ],
+    evidence: { level: 'A', refs: ['Meta-análises de exposição para transtornos de ansiedade (ex.: Springer/BMC Psychiatry, 2011; PMC 9735589)'] },
   },
 
   // ---------------------------------------------------------------- foco

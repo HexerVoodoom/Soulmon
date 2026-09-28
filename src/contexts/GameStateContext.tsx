@@ -98,6 +98,13 @@ export interface Activity {
   schedule?: Schedule;
   /** Implementation intention: "depois do café, na mesa da cozinha". */
   anchor?: HabitAnchor;
+  /** Id do item do catálogo (`src/data/activityCatalog.ts`) que originou esta
+   *  atividade. OPCIONAL: ausente = legado/custom ("criar do zero"). Save
+   *  antigo hidrata sem este campo e continua funcionando exatamente como
+   *  antes — nenhuma migração destrutiva (docs/PLANO-CATALOGO-ATIVIDADES.md §1). */
+  catalogId?: string;
+  /** Nível 1–3 do item do catálogo. Só tem sentido junto de `catalogId`. */
+  level?: 1 | 2 | 3;
 }
 
 /**

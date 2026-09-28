@@ -83,14 +83,38 @@ Testes determinísticos (mesmo perfil → mesmo set).
   ponderada (`dailyGoalFor`). Não criar segunda fórmula.
 - Gate por estágio do pet é opcional: nível 3 só depois de Champion — decidir com
   o balanceador; padrão = sem gate (progresso é da pessoa, não do pet).
+  ⚠️ **Decidido pelo dono em 28/09/2026: SEM gate.** Nível 3 fica disponível
+  a qualquer estágio do pet — progresso de nível é da PESSOA, nunca do pet.
+  Ver `docs/REGISTRO-DE-DECISOES.md`.
 
 ## 5. UI
 
 - `CreateModal` vira **Catálogo**: abas por categoria/área, busca, filtro de nível,
   cartão com "por que funciona" (1 linha + fonte). "Criar do zero" continua, mas atrás
   de "Algo que não está aqui?" (legado/custom, peso fixo effort 1).
+  ⚠️ **Confirmado pelo dono em 28/09/2026**: "criar do zero" fica ESCONDIDO
+  atrás de "Algo que não está aqui?", mantém-se disponível, esforço fixo 1.
 - `EvolveTaskModal` (já existe) vira o convite de subir/descer nível.
 - Identidade Fase 2 travada: só tokens `--sm2-*` e os 39 glifos. Nada de cor nova.
+- **Onboarding retroativo (decisão do dono, 28/09/2026)**: jogadores que já
+  têm save REFAZEM o onboarding na próxima abertura — passam pelas perguntas
+  novas (áreas/dificuldades/forças) e recebem sugestões de starter set.
+  **Não apaga nenhuma atividade existente**: as antigas continuam como
+  legado (sem `catalogId`), e as sugeridas se somam. Roda **uma vez só**
+  (flag persistida no save, ex. `catalogOnboardingSeenAt`), pulável mas
+  **curto**, e entra pela **fila única de intersticiais** do `App.tsx` (ver
+  `src/components/filaDeAvisos.contract.test.ts`) — nunca como modal solto.
+  Pendente de implementação (F3).
+- **Área "mente" — protocolos TCC (decisão do dono, 28/09/2026)**: incluir
+  itens derivados de TCC com evidência A/B (registro de pensamentos,
+  ativação comportamental agendada, exposição gradual leve,
+  reestruturação cognitiva simples) — feito em F1 (`mente-registro-pensamentos`,
+  `mente-exposicao-leve` em `src/data/activityCatalog.ts`, revisão reforçada em
+  `docs/CATALOGO-EVIDENCIAS.md`). Regras obrigatórias, ainda pendentes na UI
+  (F3/F4): copy nunca usa "trata"/"cura"; aviso "não substitui ajuda
+  profissional" + CVV 188 visível nesses itens; contraindicação sempre
+  marcada e lida antes de sugerir (crise aguda/ideação suicida → nunca
+  sugerir, sempre apontar CVV 188).
 
 ## 6. Conteúdo — pool inicial (~60 itens, 9 áreas)
 

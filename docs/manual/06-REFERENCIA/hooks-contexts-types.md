@@ -204,3 +204,8 @@ Os dois são **acréscimo**, nunca renomeação (linha vermelha #20 — save só
 **Chamado por:** 33 arquivos (`grep -rl "from '.*/taskModel'" src | wc -l`, 09/09/2026, reconferido em 10/09/2026 por doc-verificador — bate) — `TaskEditModal.tsx`, `RestWindowCard.tsx`, `GuideModal.tsx`, `MorningCheckIn.tsx`, `HelpModal.tsx`, `CreateModal.tsx`, `HabitConstancy.tsx`, `EditModal.tsx`, e utils como `habitRhythm.ts`/`taskTriage.ts`/`restWindow.ts`/`dailyReset.ts`.
 **Avisos do arquivo:** `HABIT_TIER_ICONS` — "TODOS TÊM DE SER Emoji 11.0 OU ANTERIOR" (`🪴` U+1FAB4 é 13.0 e renderizava como caixa vazia). Nenhum outro módulo deve reinventar número deste domínio — os módulos de `src/utils/habitRhythm.ts`, `taskTriage.ts`, `restWindow.ts`, `rituals.ts` só APLICAM as constantes daqui.
 **Régua:** cobertura indireta via `src/utils/habitRhythm.test.ts`, `taskTriage.test.ts`, `restWindow.test.ts` e os testes de render dos formulários listados acima.
+
+### `src/types/activityCatalog.ts`
+**Dono de:** Os tipos do catálogo de atividades curado (docs/PLANO-CATALOGO-ATIVIDADES.md §1) — `CatalogItem`, `LifeArea`, `StruggleId`, `StrengthId`, `CatalogLevel`, `CatalogLevelSpec`, `CatalogEvidence`/`EvidenceLevel`, e os rótulos bilíngues `LIFE_AREA_LABEL`/`STRUGGLE_LABEL`/`STRENGTH_LABEL`. O pool em si é dado, não tipo — mora em `src/data/activityCatalog.ts`.
+**Chamado por:** `src/data/activityCatalog.ts`, `src/utils/recommend.ts`, `src/utils/catalogLevel.ts`.
+**Régua:** `src/utils/recommend.test.ts`, `src/utils/catalogLevel.test.ts`; a evidência de cada item do pool é conferida em `docs/CATALOGO-EVIDENCIAS.md`.

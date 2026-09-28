@@ -1050,3 +1050,45 @@ nenhuma entrada específica. Ver `docs/BESTIARIO-PROCEDENCIA.md` §12. Pool:
 **Gatilho de revisão:** revisão jurídica formal, por escrito, aceitando o
 risco residual com o dono ciente — só então a citação de nome de franquia
 volta à mesa. Enquanto isso não existir, esta decisão está fechada.
+
+## 16. Catálogo de atividades — quatro decisões do dono (28/09/2026)
+
+Contexto: execução do `docs/PLANO-CATALOGO-ATIVIDADES.md` (F1/F2). O dono
+tomou quatro decisões durante a execução, antes do checkpoint de F3/F4.
+
+1. **Nível 3 do catálogo: SEM gate por estágio do pet.** O plano deixava a
+   porta aberta para exigir Champion+ antes do nível 3. Decisão: progresso de
+   nível é da PESSOA, nunca do pet — nenhum gate. `src/utils/catalogLevel.ts`
+   já nasceu sem gate; esta linha fecha a decisão que o §4 do plano deixava
+   em aberto.
+2. **"Criar do zero" continua, mas escondido.** Fica atrás de "Algo que não
+   está aqui?" no novo Catálogo (substituindo o `CreateModal` atual), com
+   esforço fixo 1 (mesmo do legado). Não é removido — é a saída para quem
+   quer registrar algo fora do pool.
+3. **Onboarding retroativo para jogadores existentes.** Quem já tem save
+   REFAZ o onboarding na próxima abertura — passa pelas perguntas novas
+   (áreas/dificuldades/forças, ver `activityCatalog.ts` → `LifeArea` /
+   `StruggleId` / `StrengthId`) e recebe sugestões de starter set.
+   **Nenhuma atividade existente é apagada** — as antigas seguem como legado
+   (sem `catalogId`); as sugeridas se somam. Roda **uma única vez** via flag
+   persistida no save; é pulável mas deve ser curto, e entra pela fila única
+   de intersticiais do `App.tsx` (nunca como modal solto fora da fila — ver
+   `src/components/filaDeAvisos.contract.test.ts`). Pendente de implementação
+   (F3, não coberta nesta sessão).
+4. **Área "mente" ganha protocolos derivados de TCC**, com evidência A/B
+   apenas: registro de pensamentos (reestruturação cognitiva), ativação
+   comportamental agendada, exposição gradual leve, reestruturação cognitiva
+   simples. Feito nesta sessão: `mente-registro-pensamentos` e
+   `mente-exposicao-leve` em `src/data/activityCatalog.ts`, com revisão
+   reforçada em `docs/CATALOGO-EVIDENCIAS.md` (meta-análises citadas,
+   contraindicações marcadas). **Regra que a UI ainda precisa cumprir (F3/F4,
+   pendente)**: copy nunca usa "trata"/"cura"; aviso "não substitui ajuda
+   profissional" + CVV 188 visível especificamente nesses itens; item nunca
+   sugerido a quem sinalizar crise aguda/ideação suicida — nesse caso a
+   resposta do app é sempre apontar o CVV 188, nunca uma atividade do
+   catálogo.
+
+**Gatilho de revisão**: se a métrica de F5/F6 mostrar que os itens de TCC
+geram confusão com tratamento clínico (ex.: usuário relatando ter entendido
+o app como terapia), a decisão 4 volta à mesa com o
+`soulmon-behavioral-psychologist`.

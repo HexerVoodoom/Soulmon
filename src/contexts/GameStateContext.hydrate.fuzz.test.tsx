@@ -83,6 +83,13 @@ const SAVES_HOSTIS: Array<[string, unknown]> = [
   ['activityStats array', { activities: [], tasks: [], activityStats: [] }],
   ['lastResetDate numérico', { activities: [], tasks: [], lastResetDate: 0 }],
   ['atividade sem `steps`', { activities: [{ id: 'a', weekDays: [0, 1, 2, 3, 4, 5, 6] }], tasks: [] }],
+  // Campos do catálogo (docs/PLANO-CATALOGO-ATIVIDADES.md): OPCIONAIS, save
+  // antigo não os tem e tem de continuar hidratando igual. `level` com lixo
+  // (fora de 1|2|3) e `catalogId` de tipo errado não podem quebrar o load —
+  // ninguém no motor lê estes campos ainda (F1/F2), então nenhuma normalização
+  // é exigida hoje, só a garantia de que `hydrateSave` não lança.
+  ['atividade com catalogId/level de save novo', { activities: [{ id: 'a', weekDays: [0, 1, 2, 3, 4, 5, 6], steps: [], catalogId: 'sono-horario-fixo', level: 2 }], tasks: [] }],
+  ['atividade com level lixo e catalogId não-string', { activities: [{ id: 'a', weekDays: [0, 1, 2, 3, 4, 5, 6], steps: [], catalogId: 7, level: 'alto' }], tasks: [] }],
   ['tudo negativo/NaN', { activities: [], tasks: [], perfectDays: -3, energyPoints: -1, gamePoints: null, emblems: 'x', totalXP: null }],
 
   // --- RODADA 7: campos que passavam pela checagem "é objeto" e explodiam

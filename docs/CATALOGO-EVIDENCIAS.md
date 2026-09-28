@@ -36,6 +36,8 @@ na própria linha do catálogo, campo `evidence.note`).
 | Diário de gratidão | A | Emmons & McCullough 2003, *Journal of Personality and Social Psychology* | RCT: registrar gratidão semanalmente aumentou bem-estar vs. controle. |
 | Praticar autocompaixão | B | Neff 2003, *Self and Identity* | Escala/framework de autocompaixão associados a menor ansiedade em revisões da área; nível B por não ser meta-análise única e definitiva. |
 | Fazer 1 coisa prazerosa (ativação comportamental) | A | Cuijpers, van Straten & Warmerdam 2007, *Clinical Psychology Review* (meta-análise, 16 estudos, n=780) | Ativação comportamental tem efeito grande sobre sintomas depressivos, comparável a terapia cognitiva. |
+| Registrar um pensamento difícil (reestruturação cognitiva) | A | Meta-análise 2021 sobre reestruturação cognitiva, ativação comportamental e TCC (45 estudos, n=3.382) | As três abordagens melhoraram desfechos vs. cuidado usual, sem diferença significativa entre elas — reestruturação cognitiva tem suporte robusto. **Revisão reforçada (decisão do dono, 28/09/2026)**: item é autoajuda, não diagnóstico; copy sem "trata/cura"; contraindicado para crise aguda/ideação suicida; aviso de CVV 188 obrigatório na UI (F3/F4, pendente). |
+| Encarar, de leve, algo que evito (exposição gradual leve) | A | Meta-análises de exposição para ansiedade (BMC Psychiatry/Springer 2011; PMC 9735589) | Exposição é tratamento de primeira linha para ansiedade em revisões sistemáticas. **Revisão reforçada**: aqui é versão de autoajuda de baixíssima intensidade para evitações cotidianas — contraindicada para fobia clínica, pânico, trauma/TEPT (exige profissional); aviso de CVV 188 obrigatório na UI (F3/F4, pendente). |
 
 ## Foco
 

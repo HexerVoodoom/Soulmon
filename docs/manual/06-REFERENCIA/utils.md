@@ -733,6 +733,23 @@ Cobertura: **139/139** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 **Régua:** `habitRhythm.test.ts`
 **Regra de negócio:** Constância ('N das últimas 7') substitui streak — nunca zera de vez. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
+### `src/utils/recommend.ts`
+**Dono de:** O recomendador do onboarding — starter set do catálogo de atividades (docs/PLANO-CATALOGO-ATIVIDADES.md §3).
+**Exports:**
+- `recommendStarterSet(profile, catalog, n=4)` — Pontua itens do catálogo pelo perfil (áreas/dificuldades/forças), respeita `STARTER_MAX_PER_AREA` (2 por área) e `STARTER_EFFORT_BUDGET` (4), garante ao menos 1 item `especifica` quando couber. Determinístico: mesmo perfil + mesmo catálogo = mesmo set (empate decide pela ordem do catálogo, nunca por `Math.random()`).
+- `STARTER_EFFORT_BUDGET`, `STARTER_MAX_PER_AREA` — as constantes do orçamento inicial.
+**Chamado por:** (pendente de ligação na UI — F3 do plano); hoje só `src/utils/recommend.test.ts`.
+**Régua:** `src/utils/recommend.test.ts`.
+
+### `src/utils/catalogLevel.ts`
+**Dono de:** A sugestão (nunca aplicação automática) de subir/descer nível de um item do catálogo (docs/PLANO-CATALOGO-ATIVIDADES.md §4).
+**Exports:**
+- `suggestLevelChange(input)` — `'up' | 'down' | null`. Sobe com constância ≥80% e ≥21 dias no nível atual; desce (oferta gentil) com constância <40% sustentada por ≥14 dias. Nunca sai de [1,3]. **Sem gate por estágio do pet** — decisão do dono, 28/09/2026.
+- `applyLevelChange(currentLevel, direction)` — Aplica a mudança já aceita pelo jogador; clampa em [1,3].
+- `LEVEL_UP_CONSTANCY_RATIO`, `LEVEL_MIN_DAYS`, `LEVEL_DOWN_CONSTANCY_RATIO`, `LEVEL_DOWN_WINDOW_DAYS`.
+**Chamado por:** (pendente de ligação em `EvolveTaskModal` — F4 do plano); hoje só `src/utils/catalogLevel.test.ts`.
+**Régua:** `src/utils/catalogLevel.test.ts`.
+
 ### `src/utils/i18n.ts`
 **Dono de:** As traduções PT-BR/EN de toda a UI e o resolvedor de idioma inicial.
 **Exports:**
