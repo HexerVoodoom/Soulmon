@@ -288,22 +288,28 @@ terceiro. Se o dono quiser o contrário, é aqui que se muda.
 | F2-2 | A captura de uma linha (`QuickAddBar`) não está no mock aprovado; o "+" do cabeçalho abre o `CreateModal`. | Saiu da Home; o componente e o `handleQuickAdd` ficaram no repo. Voltar é recolocar o JSX acima do `DailyRituals`. |
 | F2-3 | Brincar perdeu a célula do deck ("brincar e carinho seguem no gesto sobre o pet"). Qual gesto? | **Toque duplo** no pet (e a tecla **P** com o foco nele). Toque simples continua sendo a fala; segurar e esfregar, o carinho. |
 
-## Catálogo de atividades (28/09/2026) — F1/F2 fechadas nesta sessão, F3–F6 pendentes
+## Catálogo de atividades (28/09/2026) — F1–F6 fechados nesta sessão (2 rodadas)
 
-As quatro decisões que o dono já tomou nesta sessão (nível 3 sem gate,
-"criar do zero" escondido, onboarding retroativo, protocolos de TCC em
-"mente") estão registradas em `docs/REGISTRO-DE-DECISOES.md` §16 e já
-aplicadas no plano e no código de F1/F2 — **não são perguntas em aberto**,
-só o registro. O que fica de fato pendente, por falta de tempo nesta sessão
-(escopo de F1–F2 já era grande: tipos, ~28 itens de catálogo com evidência
-verificada por busca, recomendador, progressão de nível, hidratação segura):
+Rodada 1 entregou F1/F2 e deixou F3–F6 como CAT-1..CAT-6 abaixo. Rodada 2
+(mesmo dia) aplicou a revisão de psicologia inteira (vetos V1–V3 e ajustes
+A1–A6 de `docs/reviews/2026-09-28-catalogo-psicologia.md`) e fechou F3–F6 de
+forma ADITIVA — ver `docs/REGISTRO-DE-DECISOES.md` §16.1. Status de cada
+pendência antiga:
+
+| # | Pendência (rodada 1) | Status (rodada 2) |
+|---|---|---|
+| CAT-1 | Onboarding com seletores + starter set + retroativo | **Feito**, sem tocar em `SoulmonOnboarding.tsx`: `CatalogOnboardingFlow.tsx` roda como intersticial de "uma vez só" (`utils/catalogOnboarding.ts`), mesmo mecanismo para novo e antigo. `soulGoal`/`soulStruggle` continuam intocados. |
+| CAT-2 | `CreateModal` → navegador; `EvolveTaskModal` → convite de nível | **Parcial.** `CatalogBrowserModal.tsx` substitui a abertura direta do `CreateModal` pelo "+" (busca, abas, "por que funciona", "Algo que não está aqui?"). O convite de nível é um componente NOVO (`CatalogLevelInviteModal.tsx`, testado) em vez de reaproveitar `EvolveTaskModal` — mas **ainda não tem gatilho automático** ligado à constância real na virada. Ver CAT-7. |
+| CAT-3 | UI dos itens de TCC (aviso + CVV + copy sem promessa) | **Feito**: `CatalogMindNotice.tsx` (A1), copy reescrita (A2, com teste que reprova trata/cura/terapia), itens `optInOnly` com peso 0 na meta (V2) e nunca no starter set automático (V1). |
+| CAT-4 | Pool com 28 de ~60 itens | **Ainda 28.** Não expandido nesta rodada — manteve-se o foco em fechar a revisão de segurança antes de crescer o pool. |
+| CAT-5 | Simulação de economia + verificação visual | **Feito**: `utils/catalogEconomy.simulation.test.ts` (200 perfis sintéticos) + verificação no navegador (localStorage limpo e save legado, sem erro de console). |
+| CAT-6 | Docs (`PLANO-TAREFAS.md`, `CHANGELOG.md`) | **Feito**: `CHANGELOG.md` criado, `PLANO-TAREFAS.md` Fase 6 e `REGISTRO-DE-DECISOES.md` §16.1 atualizados. |
+
+### O que fica de fato pendente agora
 
 | # | Pendência | Por que não decidir sozinho |
 |---|---|---|
-| CAT-1 | F3 (onboarding): trocar `soulGoal`/`soulStruggle` de texto livre para os seletores de área/dificuldade/força + tela de starter set, e o fluxo de onboarding retroativo (flag `catalogOnboardingSeenAt` ou nome equivalente, entrando na fila única de intersticiais). Não implementado. | É a superfície mais sensível de UX do plano (primeira impressão do produto novo) — melhor ver um mock antes de trocar o fluxo de quem já joga. |
-| CAT-2 | F4 (UI): `CreateModal` → navegador de catálogo (abas por área, busca, filtro de nível, cartão "por que funciona", "Algo que não está aqui?" escondendo "criar do zero"); `EvolveTaskModal` → convite de subir/descer nível ligado a `catalogLevel.ts`. Não implementado — hoje `recommend.ts`/`catalogLevel.ts` só têm teste unitário, nada os chama na UI. | Trabalho de tela grande, e o plano trava identidade Fase 2 (só tokens `--sm2-*` e os 39 glifos) — precisa de mock revisado antes do código, não só implementação direta. |
-| CAT-3 | UI dos itens de TCC em "mente" (`mente-registro-pensamentos`, `mente-exposicao-leve`): aviso "não substitui ajuda profissional" + CVV 188 visível, copy sem "trata/cura", e a checagem de que o app nunca sugere esses itens a quem sinalizar crise — tudo isso é regra de UI, ainda não existe UI. | Depende de CAT-2 (o cartão do catálogo ainda não existe) e merece revisão do `soulmon-behavioral-psychologist` antes de ir ao ar. |
-| CAT-4 | Pool reduzido a 28 itens (o plano pedia ~60). Todos com evidência verificada por busca nesta sessão — nenhum inventado — mas a cobertura por área é desigual (ex.: "casa" e "financas" têm só 2 itens cada). | Expandir o pool é trabalho do `catalogo-curador` + `catalogo-evidencia` revisando cada item novo; preferi qualidade da evidência a bater o número nesta rodada. |
-| CAT-5 | F5 (balanceamento + QA): simulação de economia (XP/effort por nível), verificação visual no navegador com localStorage limpo. Não feito — falta a UI de CAT-2 para ter o que simular/screenshot. | Depende de CAT-2. |
-| CAT-6 | F6 (docs): `PLANO-TAREFAS.md` e `CHANGELOG.md` ainda não citam o catálogo (só `PLANO-CATALOGO-ATIVIDADES.md`, `CATALOGO-EVIDENCIAS.md` e `REGISTRO-DE-DECISOES.md` §16 foram atualizados). | Melhor atualizar junto da entrega de F3/F4, quando o recurso realmente existir na UI — `CHANGELOG.md` registrando algo que o jogador não vê ainda seria a mesma mentira documental que o `CLAUDE.md` já lista como footgun. |
+| CAT-7 | `CatalogLevelInviteModal` não tem gatilho automático: hoje é preciso chamar `suggestLevelChange` manualmente com `ratio`/`daysAtLevel`/`lowConstancyDays` calculados por quem invocar — nenhum lugar do `App.tsx` faz esse cálculo por hábito de catálogo ainda. | Calcular `ratio` sobre a janela de 21 dias (`LEVEL_UP_WINDOW_DAYS`) e excluir dias perdoados de `lowConstancyDays` exige tocar `habitRhythm.ts`/a virada — trabalho de regra de jogo, não só de tela; melhor com o dono vendo o cálculo antes de ligá-lo. |
+| CAT-4 | Pool com 28 de ~60 itens do plano original. | Expandir é trabalho do `catalogo-curador` + `catalogo-evidencia` revisando cada item novo com a mesma régua desta sessão (evidência verificada por busca, revisão de psicologia reforçada em itens sensíveis). |
+| CAT-8 | O ritual do Oráculo (`SoulmonOnboarding.tsx`, `soulGoal`/`soulStruggle`) e o convite do catálogo (`CatalogOnboardingFlow`) são dois mecanismos de onboarding que não se sobrepõem, por decisão de risco (ver §16.1). Se o dono preferir um único ritual fundido, é redesenho, não continuação. | Decisão de produto sobre risco vs. elegância de UX — o dono decide se a duplicação de rituais vale a pena. |
 
