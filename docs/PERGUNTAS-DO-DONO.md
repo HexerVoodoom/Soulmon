@@ -288,3 +288,22 @@ terceiro. Se o dono quiser o contrário, é aqui que se muda.
 | F2-2 | A captura de uma linha (`QuickAddBar`) não está no mock aprovado; o "+" do cabeçalho abre o `CreateModal`. | Saiu da Home; o componente e o `handleQuickAdd` ficaram no repo. Voltar é recolocar o JSX acima do `DailyRituals`. |
 | F2-3 | Brincar perdeu a célula do deck ("brincar e carinho seguem no gesto sobre o pet"). Qual gesto? | **Toque duplo** no pet (e a tecla **P** com o foco nele). Toque simples continua sendo a fala; segurar e esfregar, o carinho. |
 
+## Catálogo de atividades (28/09/2026) — F1/F2 fechadas nesta sessão, F3–F6 pendentes
+
+As quatro decisões que o dono já tomou nesta sessão (nível 3 sem gate,
+"criar do zero" escondido, onboarding retroativo, protocolos de TCC em
+"mente") estão registradas em `docs/REGISTRO-DE-DECISOES.md` §16 e já
+aplicadas no plano e no código de F1/F2 — **não são perguntas em aberto**,
+só o registro. O que fica de fato pendente, por falta de tempo nesta sessão
+(escopo de F1–F2 já era grande: tipos, ~28 itens de catálogo com evidência
+verificada por busca, recomendador, progressão de nível, hidratação segura):
+
+| # | Pendência | Por que não decidir sozinho |
+|---|---|---|
+| CAT-1 | F3 (onboarding): trocar `soulGoal`/`soulStruggle` de texto livre para os seletores de área/dificuldade/força + tela de starter set, e o fluxo de onboarding retroativo (flag `catalogOnboardingSeenAt` ou nome equivalente, entrando na fila única de intersticiais). Não implementado. | É a superfície mais sensível de UX do plano (primeira impressão do produto novo) — melhor ver um mock antes de trocar o fluxo de quem já joga. |
+| CAT-2 | F4 (UI): `CreateModal` → navegador de catálogo (abas por área, busca, filtro de nível, cartão "por que funciona", "Algo que não está aqui?" escondendo "criar do zero"); `EvolveTaskModal` → convite de subir/descer nível ligado a `catalogLevel.ts`. Não implementado — hoje `recommend.ts`/`catalogLevel.ts` só têm teste unitário, nada os chama na UI. | Trabalho de tela grande, e o plano trava identidade Fase 2 (só tokens `--sm2-*` e os 39 glifos) — precisa de mock revisado antes do código, não só implementação direta. |
+| CAT-3 | UI dos itens de TCC em "mente" (`mente-registro-pensamentos`, `mente-exposicao-leve`): aviso "não substitui ajuda profissional" + CVV 188 visível, copy sem "trata/cura", e a checagem de que o app nunca sugere esses itens a quem sinalizar crise — tudo isso é regra de UI, ainda não existe UI. | Depende de CAT-2 (o cartão do catálogo ainda não existe) e merece revisão do `soulmon-behavioral-psychologist` antes de ir ao ar. |
+| CAT-4 | Pool reduzido a 28 itens (o plano pedia ~60). Todos com evidência verificada por busca nesta sessão — nenhum inventado — mas a cobertura por área é desigual (ex.: "casa" e "financas" têm só 2 itens cada). | Expandir o pool é trabalho do `catalogo-curador` + `catalogo-evidencia` revisando cada item novo; preferi qualidade da evidência a bater o número nesta rodada. |
+| CAT-5 | F5 (balanceamento + QA): simulação de economia (XP/effort por nível), verificação visual no navegador com localStorage limpo. Não feito — falta a UI de CAT-2 para ter o que simular/screenshot. | Depende de CAT-2. |
+| CAT-6 | F6 (docs): `PLANO-TAREFAS.md` e `CHANGELOG.md` ainda não citam o catálogo (só `PLANO-CATALOGO-ATIVIDADES.md`, `CATALOGO-EVIDENCIAS.md` e `REGISTRO-DE-DECISOES.md` §16 foram atualizados). | Melhor atualizar junto da entrega de F3/F4, quando o recurso realmente existir na UI — `CHANGELOG.md` registrando algo que o jogador não vê ainda seria a mesma mentira documental que o `CLAUDE.md` já lista como footgun. |
+
