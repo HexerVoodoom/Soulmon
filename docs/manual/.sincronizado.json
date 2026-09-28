@@ -1,5 +1,5 @@
 {
-  "sha": "83a9aac65f7193ddfe76187384144e7f7ab7c300",
+  "sha": "25fd3c41107efff60c05aa04ab51aea350ab95e5",
   "data": "28/09/2026",
   "por": "doc-mantenedor (/manter-docs auto, sessão)",
   "nota": "Escrito pelo doc-mantenedor ao fechar cada sincronização. Lido por scripts/docs-delta.mjs e pelo hook de sessão. Nunca edite à mão."

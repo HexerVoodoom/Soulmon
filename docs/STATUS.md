@@ -15,6 +15,14 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > apontava `docs/STATUS.md`/`docs/BESTIARIO-PROCEDENCIA.md` como gatilho, sem
 > exigir mudança nesses três).
 >
+> ## 28/09/2026 — Manual sincronizado com `25fd3c41`
+>
+> Delta `83a9aac6..25fd3c41` (2 commits, PR #129). O caminho (poder/harmonia/
+> benevolencia) passa a pesar sobre o elemento: tabela declarada
+> `ALIGNMENT_ELEMENT_AFFINITY` (`axes.ts`), ±15%, 3 favorecidos/3 neutros/2
+> dificultados por caminho. Docs tocados: 02 (§22), 06/utils (`axes.ts`), 10
+> (tema 3). Guard verde. Decisão em `REGISTRO-DE-DECISOES.md` §5.3.
+>
 > ## 28/09/2026 — Oráculo passou a explorar de verdade o bestiário curado
 >
 > PR #127 (`83a9aac6`). Pedido do dono: garantir que o bestiário atualizado
