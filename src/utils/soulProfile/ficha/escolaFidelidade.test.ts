@@ -46,8 +46,8 @@ const SEED = 20260922;
  *  combate físico dominava 40% das fichas; evocação, 0%). */
 const ESCOLA_ESPERADA: Record<string, Record<string, EscolaId>> = {
   fisico: { poder: 'combate_fisico', harmonia: 'longo_alcance', benevolencia: 'combate_fisico' },
-  tanque: { poder: 'maldicao', harmonia: 'evocacao', benevolencia: 'benca' },
-  alcance: { poder: 'longo_alcance', harmonia: 'longo_alcance', benevolencia: 'longo_alcance' },
+  tanque: { poder: 'maldicao', harmonia: 'evocacao', benevolencia: 'evocacao' },
+  alcance: { poder: 'maldicao', harmonia: 'longo_alcance', benevolencia: 'longo_alcance' },
   magico: { poder: 'maldicao', harmonia: 'conjuracao', benevolencia: 'evocacao' },
   suporte: { poder: 'maldicao', harmonia: 'conjuracao', benevolencia: 'benca' },
 };
