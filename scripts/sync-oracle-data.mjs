@@ -5,9 +5,9 @@
 //   • Class-System  → src/utils/soulProfile/ficha/classSystem.data.json
 //     (profissões, talentos, criaturas capturáveis, famílias, escolas,
 //     recursos — o vocabulário que a distribuição de pontos usa)
-//   • Besti-rio-    → src/utils/soulProfile/bestiary/pool.json
-//     (amostra ESTRATIFICADA do corpus canônico: cobre todos os elementos,
-//     todas as famílias e todos os tamanhos, com descrição real)
+//   • bestiário     → src/utils/soulProfile/bestiary/pool.json
+//     (desde 28/09/2026 SÓ entradas originais curadas no próprio repo —
+//     scripts/bestiario-originais.mjs; o corpus do Besti-rio- não entra mais)
 //
 // Por que snapshot commitado e não dependência de git como no
 // teste-personalidade: o Soulmon builda para APK/Cloudflare com dist/
@@ -16,8 +16,7 @@
 // é rodar `npm run sync:oracle-data` com os clones irmãos presentes.
 //
 // Uso:  node scripts/sync-oracle-data.mjs
-//       CLASS_SYSTEM_DIR=/x BESTIARIO_DIR=/y node scripts/sync-oracle-data.mjs
-//       BESTIARIO_REF=<ref>            (default: origin/main)
+//       CLASS_SYSTEM_DIR=/x node scripts/sync-oracle-data.mjs
 // ---------------------------------------------------------------------------
 
 import { execFileSync } from 'node:child_process';
@@ -25,35 +24,10 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { entradaPermitida } from './bestiario-procedencia.mjs';
-import { curarEntrada } from './bestiario-curadoria.mjs';
-import { aplicarPonte } from './bestiario-ponte-elementos.mjs';
-import { gerarArquetipos } from './bestiario-arquetipos-genericos.mjs';
-import { DERIVED_ELEMENT_PAIRS } from '../src/utils/soulProfile/derivedElements.ts';
-
-/** Corte defensivo — SÓ pro texto cru de base sem curadoria ainda. Nunca no
- *  meio da palavra: corta no fim da última frase completa dentro do teto, ou
- *  na última palavra inteira se não houver frase completa. */
-function truncarPorPalavra(texto, teto = 320) {
-  if (texto.length <= teto) return texto;
-  const janela = texto.slice(0, teto);
-  const fimDeFrase = Math.max(janela.lastIndexOf('. '), janela.lastIndexOf('! '), janela.lastIndexOf('? '));
-  if (fimDeFrase > teto * 0.4) return janela.slice(0, fimDeFrase + 1);
-  const fimDePalavra = janela.lastIndexOf(' ');
-  return fimDePalavra > 0 ? `${janela.slice(0, fimDePalavra)}…` : `${janela}…`;
-}
+import { montarPool } from './bestiario-originais.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CLASS_DIR = process.env.CLASS_SYSTEM_DIR ?? path.resolve(ROOT, '../Class-System');
-const BEST_DIR = process.env.BESTIARIO_DIR ?? path.resolve(ROOT, '../Besti-rio-');
-// A classificação canônica (elementos/família/biologia/classificacaoConfianca)
-// foi MERGEADA na `main` do Besti-rio- em 25/ago/2026 (merge 56933df). Antes
-// disso o default era a branch de trabalho `claude/canonical-classification`:
-// TODO o pool.json dependia de uma ref não mergeada de OUTRO repositório, e o
-// sumiço/renomeação dela quebrava o sync em silêncio. Não volte a apontar para
-// branch de trabalho — se o canônico mudar, ele vira main lá.
-const BEST_REF = process.env.BESTIARIO_REF ?? 'origin/main';
-
-const POOL_TARGET = 2000;
 
 function sh(cwd, cmd, args) {
   return execFileSync(cmd, args, { cwd, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
@@ -82,12 +56,6 @@ function provenance(dir, ref) {
     syncedAt: new Date().toISOString(),
     script: 'scripts/sync-oracle-data.mjs',
   };
-}
-/** FNV-1a — o mesmo hash do oracle.ts, para a amostragem ser determinística. */
-function hashString(s) {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); }
-  return h >>> 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -159,144 +127,33 @@ console.log(`class-system: ${Object.keys(classData.talentos).length} talentos ·
 console.log(`  diais gen-2: divisor ${geracoes.divisorCascata['2']} · limiar ${geracoes.limiarDestravamento['2']} · custo direto ${geracoes.custoPontoAlocacao['2']} (base ${geracoes.custoPontoAlocacao['1']})`);
 
 // ---------------------------------------------------------------------------
-// 2. Besti-rio- — corpus canônico lido por `git show` na ref pinada; amostra
-//    estratificada por (elemento primário × família), depois por tamanho.
+// 2. Bestiário — SÓ ENTRADAS ORIGINAIS (decisão do dono, 28/09/2026).
+//
+// ⚠️ Até 28/09/2026 este bloco lia o corpus do Besti-rio- (variantes,
+// enriched, faunaflora), amostrava 2.000 entradas, aplicava procedência,
+// curadoria, ponte de elementos e arquétipos — e o resultado eram 732
+// VARIANTES GERADAS de ~42 bases ('Titânico Cão de Fogo', 'Leão do Saara
+// Venenoso'…), nenhuma entrada limpa. O dono mandou desativar as geradas e
+// usar só as originais, com diversidade real de grupos. O pool agora é
+// montado por `scripts/bestiario-originais.mjs` (41 bases originais com
+// texto curado + o catálogo curado de `bestiario-catalogo-curado.mjs`), e
+// o corpus do Besti-rio- não entra mais — ele não tem fauna real além de
+// meia dúzia de mamíferos grandes (ver docs/BESTIARIO-PROCEDENCIA.md §14).
 // ---------------------------------------------------------------------------
-if (!existsSync(BEST_DIR)) throw new Error(`Besti-rio- não encontrado em ${BEST_DIR}`);
-/* ⚠️ **CAMADA 0 — `pokemon`, `digimon` e `dnd` SAÍRAM em 27/09/2026.**
- *
- * Esta linha era a causa-raiz e ninguém precisava de regex para achá-la: o
- * script BUSCAVA os três arquivos de propósito, toda vez, e só DEPOIS tentava
- * filtrar por `origem` — que neles vem rotulada "Geração Procedural
- * (Class-System)". O filtro inspecionava o rótulo errado de um dado que tinha
- * sido pedido deliberadamente, então ele nunca teve chance.
- *
- * Resultado medido no pool commitado: **1.101 das 1.718 entradas** eram de
- * franquia — a Pokédex Gen I inteira, mais Beholder, Mind Flayer, Displacer
- * Beast, Murloc, Deathwing, Zergling, Chocobo, Tonberry, Rathalos e Balrog.
- *
- * Não reintroduza os três nomes. O que o pipeline usa da criatura-inspiração
- * é elemento, família, biologia, bioma, tamanho e atributos — tudo genérico e
- * disponível em fauna e flora reais, que são domínio público e mais diversas
- * que qualquer Pokédex. */
-const FILES = ['variantes', 'enriched', 'faunaflora'];
-const corpus = [];
-for (const f of FILES) {
-  let raw;
-  try { raw = sh(BEST_DIR, 'git', ['show', `${BEST_REF}:src/registry/data/${f}.json`]); }
-  catch { continue; }
-  const parsed = JSON.parse(raw);
-  const arr = Array.isArray(parsed) ? parsed : Object.values(parsed)[0];
-  for (const c of arr) {
-    // Só entra o que a classificação declarou confiável E tem descrição real —
-    // é a descrição que vira inspiração; ficha vazia não inspira nada.
-    if (c.classificacaoConfianca !== 'alta') continue;
-    if (!c.descricao || /sem registro f/i.test(c.descricao)) continue;
-    // `familia` é OPCIONAL: 5.354 variantes de confiança alta têm elementos e
-    // descrição mas não têm família — exigir o campo jogava fora metade da
-    // biblioteca. A seleção pontua por elementos; família é bônus quando há.
-    if (!Array.isArray(c.elementos) || c.elementos.length === 0) continue;
-    corpus.push({ ...c, _fonte: f });
-  }
-}
-console.log(`bestiário: corpus elegível = ${corpus.length}`);
-
-// Estratos: (elemento primário, família). Ordena cada estrato por hash do nome
-// (determinístico) e colhe em rodadas — 1 de cada estrato por vez — até o
-// alvo. Estratos raros entram inteiros; os comuns são cortados por igual.
-const strata = new Map();
-for (const c of corpus) {
-  const key = `${c.elementos[0]}|${c.familia ?? c.biologia?.[0] ?? '-'}`;
-  if (!strata.has(key)) strata.set(key, []);
-  strata.get(key).push(c);
-}
-for (const list of strata.values()) list.sort((a, b) => hashString(a.nome) - hashString(b.nome));
-const keys = [...strata.keys()].sort();
-// Dedup por nome DURANTE a colheita: o corpus tem variantes homônimas entre
-// arquivos, e nome duplicado no pool vira criatura que "não existe" para a
-// cobertura (o sorteio nunca distingue as duas).
-/**
- * ⚠️ O CRITÉRIO NÃO MORA MAIS AQUI — ele é de `scripts/bestiario-procedencia.mjs`,
- * importado por ESTE script **e** pelo guard de `pipeline.test.ts`.
- *
- * Até 27/09/2026 a regra era uma lista de onze nomes escrita nos DOIS lugares
- * (`agumon|…|pokemon|pikachu|charizard|goku`). As duas cópias erraram igual, e
- * por isso o teste chamado "nenhuma criatura do pool vem de franquia
- * protegida" passava VERDE com 1.101 entradas de franquia no pool. Régua
- * copiada não diverge um pouco: ela mente nos dois lugares ao mesmo tempo.
- *
- * O módulo único aplica quatro camadas — não ingerir (o `FILES` acima),
- * allowlist de BASES procedurais, rede de segurança sobre a descrição, e a
- * corroboração nome↔descrição que pega o drift de texto do upstream. A
- * fundamentação está em `docs/BESTIARIO-PROCEDENCIA.md`.
- */
-
-const picked = [];
-const nomesVistos = new Set();
-for (let round = 0; picked.length < POOL_TARGET; round++) {
-  let took = false;
-  for (const k of keys) {
-    const list = strata.get(k);
-    if (round < list.length && picked.length < POOL_TARGET) {
-      took = true;
-      let c = list[round];
-      if (!entradaPermitida(c)) continue;
-      // ⚠️ O truncamento defensivo vem AQUI, ANTES da curadoria — não depois
-      // (27/09/2026). A ordem antiga era curar e SÓ DEPOIS cortar em 200
-      // chars na montagem final do pool: 20 das 37 descrições curadas passam
-      // de 200 (a mais longa, 236), e o corte reintroduzia o mesmo defeito
-      // que a curadoria existe para consertar — no meio da palavra. Truncar
-      // primeiro protege só o texto CRU (upstream, de base sem curadoria
-      // ainda), e `curarEntrada` sobrescreve por inteiro quando há entrada
-      // na tabela — o resultado dela nunca é cortado de novo.
-      c = { ...c, descricao: truncarPorPalavra(String(c.descricao).replace(/\s+/g, ' ')) };
-      c = curarEntrada(c); // nome/tags/descrição coerentes — dono: bestiario-curadoria.mjs
-      if (nomesVistos.has(c.nome)) continue;
-      nomesVistos.add(c.nome);
-      picked.push(c);
-    }
-  }
-  if (!took) break; // corpus esgotado antes do alvo
-}
-
-const pool = picked.map(c => ({
-  nome: c.nome,
-  origem: c.origem ?? '',
-  // já truncado/curado acima — NÃO reaplique slice(0, N) aqui, isso corta
-  // no meio da palavra o que a curadoria acabou de consertar.
-  descricao: String(c.descricao).replace(/\s+/g, ' '),
-  elementos: c.elementos,
-  familia: c.familia ?? null,
-  biologia: Array.isArray(c.biologia) ? c.biologia : [],
-  bioma: Array.isArray(c.bioma) ? c.bioma : [],
-  tamanho: c.tamanho ?? 'Medio',
-  hostilidade: typeof c.hostilidade === 'number' ? c.hostilidade : 5,
-  atributos: c.atributos ?? null,
-}));
-// PONTE — garante piso de cobertura pros 17 elementos do class-system (achado
-// do soulmon-guarda-permanencia, 27/09/2026: eletricidade/marcial tinham ZERO
-// ocorrência no corpus upstream, sombra só 2). Autolimitada: se um sync
-// futuro trouxer criatura de verdade pra esses elementos, ela deixa de clonar
-// — ver `bestiario-ponte-elementos.mjs`.
-const derivedToBase = Object.fromEntries(DERIVED_ELEMENT_PAIRS.map(d => [d.id, d.componentes]));
-const baseElementos = (els) => els.flatMap(id => derivedToBase[id] ?? [id]);
-const poolComPonte = aplicarPonte(pool, baseElementos).map(curarEntrada);
-
-// ARQUÉTIPOS GENÉRICOS — pedido do dono (27/09/2026) para usar as ~4.000
-// linhas de franquia do corpus como inspiração. O parecer de PI vetou nome
-// de personagem e texto de descrição específico (`docs/REGISTRO-DE-DECISOES.md`);
-// a via aprovada foi extrair só as FAMÍLIAS genéricas que se repetem em toda
-// ficção de fantasia (gigante, autômato, espectro, limo, aberração,
-// morto-vivo) e escrever descrição ORIGINAL para cada uma — nunca copiando
-// nome nem texto de nenhuma entrada específica. Ver
-// `bestiario-arquetipos-genericos.mjs` e `docs/BESTIARIO-PROCEDENCIA.md` §12.
-const poolComArquetipos = [...poolComPonte, ...gerarArquetipos().map(curarEntrada)];
-
 const bestDir = path.join(ROOT, 'src/utils/soulProfile/bestiary');
 mkdirSync(bestDir, { recursive: true });
-const poolOut = { _provenance: provenance(BEST_DIR, BEST_REF), _corpusElegivel: corpus.length, criaturas: poolComArquetipos };
+const criaturas = montarPool();
+for (const c of criaturas) {
+  if (!entradaPermitida(c)) throw new Error(`entrada reprovada pela procedência: ${c.nome}`);
+}
+const poolOut = {
+  _provenance: {
+    repo: 'HexerVoodoom/Soulmon', ref: 'scripts/bestiario-originais.mjs', sha: 'curado-no-repo',
+    syncedAt: new Date().toISOString().slice(0, 10),
+    fonte: 'scripts/bestiario-originais.mjs + scripts/bestiario-catalogo-curado.mjs (só entradas originais)',
+  },
+  criaturas,
+};
 writeFileSync(path.join(bestDir, 'pool.json'), JSON.stringify(poolOut) + '\n');
-
-const els = new Set(poolComArquetipos.map(c => c.elementos[0]));
-const fams = new Set(poolComArquetipos.filter(c => c.familia).map(c => c.familia));
-console.log(`pool: ${poolComArquetipos.length} criaturas (+${poolComPonte.length - pool.length} de ponte, +${poolComArquetipos.length - poolComPonte.length} de arquétipos) · ${els.size} elementos primários · ${fams.size} famílias @ ${poolOut._provenance.sha.slice(0, 8)}`);
+const fams = new Set(criaturas.map(c => c.familia));
+console.log(`pool: ${criaturas.length} criaturas originais · ${fams.size} famílias`);

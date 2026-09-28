@@ -16,7 +16,8 @@
 // registro de talentos.
 // ---------------------------------------------------------------------------
 
-import { hashString, mulberry32, pick } from '../../oracle';
+import { ALIGNMENT_ORDER, hashString, mulberry32, pick } from '../../oracle';
+import type { AlignmentId } from '../../oracle';
 import type { OracleAxes } from '../types';
 import { CLASS_ELEMENT_ORDER } from '../types';
 import type {
@@ -153,15 +154,54 @@ function applyElementBias(shares: Record<ElementoBaseId, number>, elementoId: st
  */
 const DOMINANT_SCHOOL_LEAD = 1.15;
 
-const ROLE_TO_ESCOLA: Record<RoleId, EscolaId> = {
-  fisico: 'combate_fisico',
-  tanque: 'combate_fisico',
-  alcance: 'longo_alcance',
-  magico: 'conjuracao',
-  // suporte racha entre benca/maldicao pelo alinhamento — ver abaixo. É o
-  // que torna maldição alcançável (antes nunca recebia um ponto).
-  suporte: 'benca',
+const ESCOLAS_TODAS: EscolaId[] = ['combate_fisico', 'longo_alcance', 'evocacao', 'conjuracao', 'benca', 'maldicao'];
+
+/**
+ * Papel × CAMINHO → escola. ⚠️ Até 28/09/2026 era só papel → escola
+ * (`fisico` e `tanque` apontavam os dois para `combate_fisico`, só `suporte`
+ * rachava pelo caminho, e `evocacao` nunca entrava na disputa): medido,
+ * combate físico era a escola dominante de 40% das fichas e evocação de 0%.
+ * Pedido do dono: todas as escolas com chance proporcional e o caminho
+ * pesando na evolução. Cada papel continua com a SUA escola na maioria dos
+ * caminhos — o caminho só escolhe a variante temática (lutador harmônico =
+ * arqueiro; tanque de poder = maldição, harmônico = evocação, benevolente =
+ * bênção; mago de poder = maldição, harmônico = conjuração, benevolente =
+ * evocação; suporte de poder = maldição, harmônico = conjuração, benevolente
+ * = bênção). Medido (N=800): toda escola dominante entre 11% e 21%.
+ */
+const ROLE_SCHOOL_BY_ALIGNMENT: Record<RoleId, Record<AlignmentId, EscolaId>> = {
+  fisico: { poder: 'combate_fisico', harmonia: 'longo_alcance', benevolencia: 'combate_fisico' },
+  tanque: { poder: 'maldicao', harmonia: 'evocacao', benevolencia: 'benca' },
+  alcance: { poder: 'longo_alcance', harmonia: 'longo_alcance', benevolencia: 'longo_alcance' },
+  magico: { poder: 'maldicao', harmonia: 'conjuracao', benevolencia: 'evocacao' },
+  suporte: { poder: 'maldicao', harmonia: 'conjuracao', benevolencia: 'benca' },
 };
+
+/**
+ * Reparte o orçamento de escolas e soma o piso fixo de evocação (que existe
+ * para toda ficha poder capturar companheiro). Como o piso fica FORA da
+ * repartição, ele pode fazer evocação passar a escola que devia liderar —
+ * por isso a liderança é reconferida em PONTOS, depois do piso, até 6
+ * rodadas (determinístico).
+ */
+function distribuirEscolas(
+  shares: Record<EscolaId, number>, lider: EscolaId, orcamento: number, evocacaoFixo: number,
+): Partial<Record<EscolaId, number>> {
+  const s = { ...shares };
+  let out: Partial<Record<EscolaId, number>> = {};
+  for (let i = 0; i < 6; i++) {
+    const dist = apportion(s, [...ESCOLAS_TODAS], orcamento);
+    out = {};
+    for (const e of ESCOLAS_TODAS) {
+      const pts = (dist[e] ?? 0) + (e === 'evocacao' ? evocacaoFixo : 0);
+      if (pts > 0) out[e] = pts;
+    }
+    const rival = Math.max(...ESCOLAS_TODAS.filter(e => e !== lider).map(e => out[e] ?? 0));
+    if ((out[lider] ?? 0) > rival) break;
+    s[lider] *= 1.25;
+  }
+  return out;
+}
 
 /** tanque → soullink (paga com a própria vida para proteger — guardião), em
  *  vez de colidir com fisico em furia: os 5 recursos ficam alcançáveis. */
@@ -346,20 +386,17 @@ export function buildFicha(
     plano,
   );
 
-  const DISTRIBUTED_ESCOLAS = ['combate_fisico', 'longo_alcance', 'conjuracao', 'benca', 'maldicao'] as const;
-  const roleEscolaShares = { combate_fisico: 0, longo_alcance: 0, conjuracao: 0, benca: 0, maldicao: 0 } as Record<(typeof DISTRIBUTED_ESCOLAS)[number], number>;
+  const DISTRIBUTED_ESCOLAS = ESCOLAS_TODAS;
+  const roleEscolaShares = Object.fromEntries(ESCOLAS_TODAS.map(e => [e, 0])) as Record<EscolaId, number>;
   const alignmentTotal = (Object.values(oracle.alignments) as number[]).reduce((a, b) => a + b, 0) || 1;
-  const bencaFraction = (oracle.alignments.benevolencia + oracle.alignments.harmonia * 0.5) / alignmentTotal;
-  const maldicaoFraction = (oracle.alignments.poder + oracle.alignments.harmonia * 0.5) / alignmentTotal;
+  // Cada papel reparte a sua fatia entre as escolas do SEU papel em cada
+  // caminho, na proporção contínua dos três caminhos da pessoa — ver
+  // `ROLE_SCHOOL_BY_ALIGNMENT`.
   for (const role of Object.keys(oracle.roles) as RoleId[]) {
     const share = oracle.roles[role];
-    if (role === 'suporte') {
-      roleEscolaShares.benca += share * bencaFraction;
-      roleEscolaShares.maldicao += share * maldicaoFraction;
-      continue;
+    for (const al of ALIGNMENT_ORDER) {
+      roleEscolaShares[ROLE_SCHOOL_BY_ALIGNMENT[role][al]] += share * (oracle.alignments[al] / alignmentTotal);
     }
-    const escola = ROLE_TO_ESCOLA[role];
-    if (escola !== 'evocacao') roleEscolaShares[escola as keyof typeof roleEscolaShares] += share;
   }
   // O CAMINHO também alimenta as duas escolas de fé, para TODO mundo — não só
   // para quem tem suporte como papel. ⚠️ Achado do Loop B (28/09/2026, N=400):
@@ -392,20 +429,14 @@ export function buildFicha(
   // de ~3 dps : 1 tanque : 1 suporte (medida: 58,5% / 24,8% / 16,8%). Mais
   // gente de combate é esperado e correto; o que não pode é a escola
   // discordar da pessoa.
-  const escolaDoDominante: keyof typeof roleEscolaShares = oracle.dominantRole === 'suporte'
-    ? (bencaFraction >= maldicaoFraction ? 'benca' : 'maldicao')
-    : ROLE_TO_ESCOLA[oracle.dominantRole] as keyof typeof roleEscolaShares;
+  const escolaDoDominante = ROLE_SCHOOL_BY_ALIGNMENT[oracle.dominantRole][oracle.dominantAlignment];
   const maiorRival = Math.max(
     ...DISTRIBUTED_ESCOLAS.filter(e => e !== escolaDoDominante).map(e => roleEscolaShares[e]),
   );
   if (roleEscolaShares[escolaDoDominante] <= maiorRival * DOMINANT_SCHOOL_LEAD) {
     roleEscolaShares[escolaDoDominante] = maiorRival * DOMINANT_SCHOOL_LEAD;
   }
-  const distributedEscolas = apportion(roleEscolaShares, [...DISTRIBUTED_ESCOLAS], budget.escolasDistribuidas);
-  const escolas: Partial<Record<EscolaId, number>> = { evocacao: budget.evocacaoFixo };
-  for (const [escola, pontos] of Object.entries(distributedEscolas)) {
-    if (pontos > 0) escolas[escola as EscolaId] = pontos;
-  }
+  const escolas = distribuirEscolas(roleEscolaShares, escolaDoDominante, budget.escolasDistribuidas, budget.evocacaoFixo);
   if (boost) {
     // Piso da escola escolhida: ela termina com a MAIOR pontuação da ficha.
     // Escolher e não ver diferença é o pior resultado possível de uma tela de
@@ -434,8 +465,9 @@ export function buildFicha(
   const rookieElementos = stage === 'rookie' && !plano
     ? elementos
     : allocateElementos(elementoShares, ELEMENT_ORCAMENTO_BY_STAGE.rookie);
-  const rookieDistributed = stage === 'rookie' ? distributedEscolas : apportion(roleEscolaShares, [...DISTRIBUTED_ESCOLAS], rookieBudget.escolasDistribuidas);
-  const rookieEscolas: Partial<Record<EscolaId, number>> = { evocacao: rookieBudget.evocacaoFixo, ...rookieDistributed };
+  const rookieEscolas = stage === 'rookie' && !boost
+    ? escolas
+    : distribuirEscolas(roleEscolaShares, escolaDoDominante, rookieBudget.escolasDistribuidas, rookieBudget.evocacaoFixo);
   const rookieRecursos: Partial<Record<RecursoId, number>> = { [ROLE_TO_RECURSO[dominantRole]]: rookieBudget.recursos };
 
   const profissoes: Partial<Record<ProfissaoId, number>> = {

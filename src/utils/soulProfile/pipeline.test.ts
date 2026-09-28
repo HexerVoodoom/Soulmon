@@ -386,7 +386,13 @@ describe('dados sincronizados dos repositórios', () => {
        sobraram 617 entradas, mas de apenas **12 espécies** procedurais, e é
        diversidade de FAMÍLIA que dá caráter à criatura — cinco prefixos sobre
        o mesmo cachorro não são cinco criaturas. */
-    expect(BESTIARY_POOL.length).toBeGreaterThanOrEqual(600);
+    /* ⚠️ E caiu para 150 em 28/09/2026 — de propósito, e é a conta certa:
+       decisão do dono de usar SÓ entradas originais. As 617/732 de antes eram
+       variantes geradas de ~42 bases; hoje são 194 CRIATURAS DISTINTAS em 25
+       grupos (`scripts/bestiario-originais.mjs`). Menos linhas, muito mais
+       criaturas. O piso de diversidade real mora em
+       `bestiary/curadoria.contract.test.ts`. */
+    expect(BESTIARY_POOL.length).toBeGreaterThanOrEqual(150);
     expect(new Set(BESTIARY_POOL.map(c => c.nome)).size).toBe(BESTIARY_POOL.length);
     // Varre TUDO: é um pool em memória, e `slice(0, 50)` validava 3% dele.
     for (const c of BESTIARY_POOL) {

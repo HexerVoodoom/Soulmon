@@ -40,18 +40,21 @@ import { nomeSintetico, nascimentoSintetico } from '../perfisSinteticos';
 const N = 200;
 const SEED = 20260922;
 
-/** A escola que cada papel dominante DEVE produzir. `suporte` aceita as duas
- *  de alinhamento — qual das duas é decidido por `benca`/`maldicao` fraction. */
-const ESCOLA_ESPERADA: Record<string, EscolaId[]> = {
-  fisico: ['combate_fisico'],
-  tanque: ['combate_fisico'],
-  magico: ['conjuracao'],
-  alcance: ['longo_alcance'],
-  suporte: ['benca', 'maldicao'],
+/** A escola que cada (papel, caminho) dominante DEVE produzir — espelho de
+ *  `ROLE_SCHOOL_BY_ALIGNMENT` em `buildSheet.ts`. Desde 28/09/2026 o caminho
+ *  escolhe a variante temática da escola do papel (era só papel → escola, e
+ *  combate físico dominava 40% das fichas; evocação, 0%). */
+const ESCOLA_ESPERADA: Record<string, Record<string, EscolaId>> = {
+  fisico: { poder: 'combate_fisico', harmonia: 'longo_alcance', benevolencia: 'combate_fisico' },
+  tanque: { poder: 'maldicao', harmonia: 'evocacao', benevolencia: 'benca' },
+  alcance: { poder: 'longo_alcance', harmonia: 'longo_alcance', benevolencia: 'longo_alcance' },
+  magico: { poder: 'maldicao', harmonia: 'conjuracao', benevolencia: 'evocacao' },
+  suporte: { poder: 'maldicao', harmonia: 'conjuracao', benevolencia: 'benca' },
 };
 
 interface Amostra {
   papel: string;
+  caminho: string;
   escolaTopo: string;
   escolas: Partial<Record<EscolaId, number>>;
 }
@@ -83,12 +86,11 @@ function amostrar(): Amostra[] {
     const eixos = applyRitualAnswers(perfil.oracle, respostas);
     const ficha = buildFicha(nome, eixos, 'ultra', nome);
 
-    // `evocacao` fica fora da disputa: é ponto FIXO do orçamento, não sai da
-    // distribuição por papel, então incluí-la mediria outra coisa.
-    const concorrentes = Object.entries(ficha.escolas).filter(([k]) => k !== 'evocacao');
-    const escolaTopo = concorrentes.sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))[0][0];
+    // Desde 28/09/2026 `evocacao` DISPUTA (papel × caminho pode levar a ela);
+    // o total dela inclui o piso fixo, e é o total que o jogador vê.
+    const escolaTopo = Object.entries(ficha.escolas).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))[0][0];
 
-    out.push({ papel: eixos.dominantRole, escolaTopo, escolas: ficha.escolas });
+    out.push({ papel: eixos.dominantRole, caminho: eixos.dominantAlignment, escolaTopo, escolas: ficha.escolas });
   }
   return out;
 }
@@ -98,8 +100,8 @@ describe('a escola segue o papel dominante da pessoa', () => {
 
   it('fidelidade é TOTAL — nenhuma ficha recebe escola de outro papel', () => {
     const erros = amostra
-      .filter(a => !ESCOLA_ESPERADA[a.papel]?.includes(a.escolaTopo as EscolaId))
-      .map(a => `${a.papel} → ${a.escolaTopo}`);
+      .filter(a => ESCOLA_ESPERADA[a.papel]?.[a.caminho] !== a.escolaTopo)
+      .map(a => `${a.papel}/${a.caminho} → ${a.escolaTopo}`);
     expect(erros.length, `fichas com escola discordante: ${erros.slice(0, 8).join(' | ')}`).toBe(0);
   });
 
@@ -108,7 +110,7 @@ describe('a escola segue o papel dominante da pessoa', () => {
     for (const a of amostra) {
       const reg = porPapel.get(a.papel) ?? { ok: 0, n: 0 };
       reg.n++;
-      if (ESCOLA_ESPERADA[a.papel]?.includes(a.escolaTopo as EscolaId)) reg.ok++;
+      if (ESCOLA_ESPERADA[a.papel]?.[a.caminho] === a.escolaTopo) reg.ok++;
       porPapel.set(a.papel, reg);
     }
     for (const [papel, { ok, n }] of porPapel) {

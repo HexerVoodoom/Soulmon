@@ -449,4 +449,25 @@ constar, não decidir sozinho:
 Régua: `src/utils/soulProfile/pipeline.test.ts` (o caso do nome no prompt
 passou a conferir por ESTÁGIO, contra a linhagem, não mais um nome único
 repetido 11 vezes).
+
+## 14. Só entradas originais (28/09/2026) — decisão do dono
+
+"desative as criaturas geradas no bestiário e vamos utilizar apenas as
+entradas originais". O pool deixou de vir do corpus sincronizado: hoje é
+`montarPool()` de `scripts/bestiario-originais.mjs` = 41 bases originais
+(texto de `bestiario-curadoria.mjs`, já aprovado na §10, com elementos e
+bioma NATURAIS) + o catálogo curado de `scripts/bestiario-catalogo-curado.mjs`
+(153 criaturas em 23 grupos: fungo, planta, peixe, inseto, aracnídeo,
+anfíbio, réptil, ave, mamífero, cnidário, verme, molusco, crustáceo,
+monstro, humanoide, construto, etéreo, morto-vivo, extraplanetário,
+geológico, elemental, demônio, angelical). Total 194, zero variante gerada.
+Toda entrada continua passando por `entradaPermitida` (sem franquia).
+
+Por que o corpus não servia (a pergunta do dono foi "não houve problema de
+tag?" — não houve): a "fauna real" do Besti-rio- é 1.000 combinações geradas
+de leão/tigre/urso com modificador de bioma; as únicas aves eram Chocobo e
+Owlbear (franquia, filtradas); 1.894 entradas não têm `elementos`.
+
+Régua: `src/utils/soulProfile/bestiary/curadoria.contract.test.ts` (pool ==
+`montarPool`, todo grupo ≥6, nenhum >12%, os 17 elementos com ≥8 cada).
 </content>

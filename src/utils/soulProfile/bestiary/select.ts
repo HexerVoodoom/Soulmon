@@ -54,24 +54,24 @@ function baseElements(elementos: string[]): string[] {
 }
 
 /** Reino → famílias com afinidade de bioma (geografia, não personalidade).
- *  ⚠️ `ignea` (deserto) não tem NENHUMA criatura no pool hoje (0/732) — e,
- *  segundo `docs/BESTIARIO-PROCEDENCIA.md` §12, o próprio nome já foi visto
- *  como resíduo de um bug de corrupção de família (curadoria de 27/09/2026),
- *  sem certeza de que seja uma família pretendida de verdade. Por isso NÃO
- *  ganhou ponte sintética como `humanoide` ganhou (ver `scoreCreature`) —
- *  sintetizar linha para uma família cuja legitimidade está em dúvida seria
- *  inventar em cima de incerteza, não consertar dado real. Fica sem bônus
- *  até o dono decidir (manter/remover/gerar de verdade). */
+ *  ⚠️ Vocabulário trocado em 28/09/2026: `familia` passou a ser o GRUPO da
+ *  criatura (`scripts/bestiario-originais.mjs` — fungo, planta, peixe,
+ *  inseto, aracnídeo, anfíbio, réptil, ave, mamífero, cnidário, verme,
+ *  molusco, crustáceo, monstro, humanoide, construto, etéreo, morto-vivo,
+ *  extraplanetário, geológico, elemental, demônio, angelical, dracônico,
+ *  invertebrado). As antigas (`besta`, `aquatica`, `gigante`, `geleia`,
+ *  `espirito`, `aberracao`, `ignea`) saíram com as entradas geradas. Todo
+ *  grupo aparece em pelo menos um reino. */
 const REALM_TO_FAMILIAS: Record<RealmId, string[]> = {
-  deserto: ['besta', 'aberracao', 'ignea'],
-  picos: ['ave', 'gigante', 'draconico'],
-  oceano: ['aquatica', 'geleia'],
-  pantano: ['planta', 'aberracao', 'geleia'],
-  floresta: ['besta', 'planta', 'espirito'],
-  cavernas: ['morto_vivo', 'construto', 'demonio'],
-  gelo: ['besta', 'espirito', 'gigante'],
-  campina: ['besta', 'ave', 'humanoide'],
-  akasha: ['espirito', 'aberracao', 'demonio'],
+  deserto: ['reptil', 'aracnideo', 'inseto', 'geologico', 'elemental', 'monstro'],
+  picos: ['ave', 'humanoide', 'geologico', 'draconico', 'angelical'],
+  oceano: ['peixe', 'cnidario', 'molusco', 'crustaceo', 'monstro', 'invertebrado'],
+  pantano: ['anfibio', 'reptil', 'verme', 'fungo', 'peixe', 'morto_vivo'],
+  floresta: ['mamifero', 'planta', 'fungo', 'inseto', 'ave', 'etereo'],
+  cavernas: ['aracnideo', 'verme', 'geologico', 'morto_vivo', 'demonio', 'construto'],
+  gelo: ['mamifero', 'ave', 'peixe', 'humanoide', 'elemental', 'invertebrado'],
+  campina: ['mamifero', 'ave', 'inseto', 'planta', 'humanoide'],
+  akasha: ['etereo', 'angelical', 'demonio', 'extraplanetario', 'elemental', 'construto'],
 };
 
 /** Reino → palavras de bioma do bestiário (o corpus tem bioma textual). */
@@ -107,6 +107,12 @@ const ROLE_TO_TAMANHOS: Record<RoleId, string[]> = {
  *  demais desalinha a escolha das respostas. */
 const BAND_WIDTH = 4;
 const MIN_BAND = 24;
+/** Faixa mínima nos estágios de EVOLUÇÃO (com pick anterior). ⚠️ 28/09/2026:
+ *  com o pool só de entradas originais (194, cada família com 6–18), a faixa
+ *  de 24 sempre misturava várias famílias e o parentesco não pesava nada —
+ *  97% das evoluções trocavam de família. O sorteio INICIAL mantém a faixa
+ *  larga (é ela que garante que toda criatura seja alcançável). */
+const MIN_BAND_LINHAGEM = 6;
 
 export function scoreCreature(c: BestiaryCreature, axes: OracleAxes): number {
   let score = 0;
@@ -137,18 +143,7 @@ export function scoreCreature(c: BestiaryCreature, axes: OracleAxes): number {
   const TAMANHO_BONUS = 3;
 
   const familiaEsperada = REALM_TO_FAMILIAS[axes.dominantRealm];
-  if (c.familia && familiaEsperada.includes(c.familia)) {
-    score += FAMILIA_BONUS;
-  } else if (
-    // Ponte de dado real (não invenção): nenhuma criatura do pool de hoje
-    // tem `familia: 'humanoide'` (0/732, `docs/BESTIARIO-PROCEDENCIA.md`
-    // §7.1), mas várias já têm `biologia: ['Humanoide']` (os arquétipos de
-    // Gigante/Autômato etc.) — usa esse campo, que É real e já curado, como
-    // evidência equivalente só onde o reino esperaria a família ausente.
-    familiaEsperada.includes('humanoide') && c.biologia.includes('Humanoide')
-  ) {
-    score += FAMILIA_BONUS;
-  }
+  if (c.familia && familiaEsperada.includes(c.familia)) score += FAMILIA_BONUS;
   const biomas = REALM_TO_BIOMA[axes.dominantRealm];
   if (c.bioma.some(b => biomas.some(k => b.toLowerCase().includes(k)))) score += BIOMA_BONUS;
 
@@ -216,11 +211,13 @@ export function speciesProximity(prev: BestiaryCreature, c: BestiaryCreature): n
  * linhagem. ⚠️ Achado do Loop A (28/09/2026, N=400): a peso cheio (até
  * +11,5 contra uma faixa de sorteio de 4) o parentesco decidia sozinho —
  * 79% dos perfis passavam os 5 estágios na MESMA família, e a leitura da
- * pessoa quase não mexia na evolução. Calibrado por medição (ver
- * `criacaoDistribuicao.test.ts`): continuidade continua sendo o normal,
- * travessia deixa de ser rara demais.
+ * pessoa quase não mexia na evolução. Com o pool só de entradas originais
+ * (194, famílias de 6–18) o problema virou o oposto — 97% trocavam de
+ * família — e o valor foi recalibrado para 3 junto com `MIN_BAND_LINHAGEM`.
+ * Régua: `criacaoDistribuicao.test.ts` (continuidade é o normal, travessia
+ * não é rara).
  */
-const LINEAGE_PROXIMITY_WEIGHT = 0.5;
+const LINEAGE_PROXIMITY_WEIGHT = 3;
 
 const PREFIXO_PROCEDURAL = /^(?:Titânico|Espiritual|Cristalino|Corrompido|Ancião)\s+/;
 /** A ESPÉCIE de uma entrada do pool: sem prefixo procedural, sem o sufixo
@@ -251,22 +248,27 @@ function selectFromPool(
   scored.sort((a, b) => b.score - a.score);
   const top = scored[0].score;
   let band = scored.filter(s => s.score >= top - BAND_WIDTH);
-  if (band.length < MIN_BAND) band = scored.slice(0, MIN_BAND);
-  // Sorteio com chance IGUAL por espécie dentro da faixa, não por entrada.
-  // ⚠️ Achado do Loop A (28/09/2026): o sorteio uniforme por entrada dava
-  // vantagem a quem tem mais VARIANTES no pool (a base "Cão" sozinha em 10%
-  // das criações) — tamanho de corpus decidindo, não a leitura da pessoa.
-  const porEspecie = new Map<string, number>();
-  for (const s of band) {
-    const e = especieDe(s.creature.nome);
-    porEspecie.set(e, (porEspecie.get(e) ?? 0) + 1);
-  }
+  const minBand = prev ? MIN_BAND_LINHAGEM : MIN_BAND;
+  if (band.length < minBand) band = scored.slice(0, minBand);
+  // Sorteio com chance IGUAL por GRUPO (família) dentro da faixa, não por
+  // entrada. ⚠️ Histórico (28/09/2026): primeiro era por entrada, e a base
+  // com mais variantes no pool ganhava ("Cão" em 10% das criações); depois
+  // por espécie; com o pool só de originais cada entrada JÁ é uma espécie, e
+  // o que desequilibrava era o tamanho do GRUPO (mamíferos com 18 criaturas
+  // saíam em 11,6%, anfíbios com 7 em 1,9%). O pedido do dono é chance
+  // proporcional entre grupos — quem decide o grupo é a leitura da pessoa
+  // (quem entra na faixa), não quantas criaturas o catálogo tem nele.
+  // Só no sorteio INICIAL: na linhagem, igualar grupos anularia o parentesco
+  // (medido: 83% atravessavam família), então lá cada entrada vale 1.
+  const grupoDe = (c: BestiaryCreature) => (prev ? c.nome : (c.familia ?? especieDe(c.nome)));
+  const porGrupo = new Map<string, number>();
+  for (const s of band) porGrupo.set(grupoDe(s.creature), (porGrupo.get(grupoDe(s.creature)) ?? 0) + 1);
   const rng = mulberry32(hashString(seedString));
-  const total = porEspecie.size; // soma de 1/n sobre as entradas = nº de espécies
+  const total = porGrupo.size; // soma de 1/n sobre as entradas = nº de grupos
   let alvo = rng() * total;
   let chosen = band[band.length - 1];
   for (const s of band) {
-    alvo -= 1 / porEspecie.get(especieDe(s.creature.nome))!;
+    alvo -= 1 / porGrupo.get(grupoDe(s.creature))!;
     if (alvo < 0) { chosen = s; break; }
   }
   return { creature: chosen.creature, score: chosen.score, bandSize: band.length };

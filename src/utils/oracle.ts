@@ -910,6 +910,8 @@ const ELEMENT_DOMINANCE_COMPENSATION: Record<ElementId, number> = {
   agua: 0.2, fogo: -0.8, terra: -0.5, ar: -0.9, sombra: 1.2, luz: 0.1, planta: 0.5, industrial: 0.6,
 };
 export const RITUAL_ALIGNMENT_SCALE = escalaDoRitual(ALIGNMENT_ORDER, fx => fx.alignments);
+/** Mesma lógica para os REINOS (floresta esperava 1,17 por pessoa, akasha 0,17). */
+export const RITUAL_REALM_SCALE = escalaDoRitual(REALM_ORDER, fx => fx.realms);
 
 // ----- Alinhamento (poder / harmonia / benevolência) -----
 
@@ -1531,6 +1533,32 @@ const CREATURE_FAMILIES: CreatureFamily[] = [
     sf('golem mecânico', 'mech golem', 'golem mecânico', 'mech golem'),
     sf('dínamo vivo', 'living dynamo', 'dínamo vivo', 'living dynamo'),
   ]},
+  // Quatro famílias visuais novas (28/09/2026): o dono pediu vermes,
+  // cnidários, extraplanetários e geológicos entre os grupos do bestiário, e
+  // nenhuma das 44 famílias do Oráculo desenhava algo assim.
+  { id: 'worm', name: { pt: 'Verme', en: 'Worm' }, elements: ['terra', 'sombra'], realms: ['cavernas', 'pantano', 'deserto'], subs: [
+    sf('minhoca', 'earthworm', 'minhoca', 'earthworm'),
+    sf('sanguessuga', 'leech', 'sanguessuga', 'leech'),
+    sf('verme-tubo', 'tube worm', 'verme-tubo', 'tube worm'),
+    sf('poliqueta', 'bristle worm', 'poliqueta', 'bristle worm'),
+  ]},
+  { id: 'cnidarian', name: { pt: 'Cnidário', en: 'Cnidarian' }, elements: ['agua', 'luz'], realms: ['oceano'], subs: [
+    sf('água-viva', 'jellyfish', 'água-viva', 'jellyfish'),
+    sf('anêmona', 'sea anemone', 'anêmona', 'sea anemone'),
+    sf('coral', 'coral', 'coral', 'coral'),
+    sf('caravela', "man-o'-war", 'caravela', "man-o'-war"),
+  ]},
+  { id: 'extraterrestrial', name: { pt: 'Extraplanetário', en: 'Otherworldly' }, elements: ['luz', 'ar', 'industrial'], realms: ['akasha'], subs: [
+    sf('viajante estelar', 'star wanderer', 'viajante estelar', 'star wanderer'),
+    sf('semente de cometa', 'comet seed', 'semente de cometa', 'comet seed'),
+    sf('medusa do vácuo', 'void jellyfish', 'medusa do vácuo', 'void jellyfish'),
+  ]},
+  { id: 'geological', name: { pt: 'Geológico', en: 'Mineral' }, elements: ['terra', 'fogo'], realms: ['cavernas', 'picos', 'deserto'], subs: [
+    sf('geodo', 'geode', 'geodo', 'geode'),
+    sf('golem de cristal', 'crystal golem', 'golem de cristal', 'crystal golem'),
+    sf('rocha vulcânica', 'lava rock', 'rocha vulcânica', 'lava rock'),
+    sf('estalagmite', 'stalagmite', 'estalagmite', 'stalagmite'),
+  ]},
 ];
 
 /**
@@ -1546,6 +1574,8 @@ const CREATURE_FAMILIES: CreatureFamily[] = [
  * bestiário tem.
  */
 const BIOLOGIA_TO_FAMILY_IDS: Record<string, string[]> = {
+  'Fungo': ['fungus'],
+  'Planta': ['flower', 'tree', 'carniplant', 'desertplant', 'vine', 'fruitgourd'],
   'Anfíbio': ['amphibian'],
   'Ave': ['bird'],
   'Humanoide': ['halfhuman', 'goblinoid'],
@@ -1557,33 +1587,49 @@ const BIOLOGIA_TO_FAMILY_IDS: Record<string, string[]> = {
   'Réptil': ['reptile', 'dinosaur'],
 };
 
+/** ⚠️ Vocabulário trocado em 28/09/2026: a `familia` do pool passou a ser o
+ *  GRUPO da criatura (os grupos pedidos pelo dono — `scripts/bestiario-
+ *  originais.mjs`), fino o bastante para decidir sozinho. Por isso a
+ *  família agora vence a biologia em `bestiaryFamilyIds` (cnidário e verme
+ *  compartilham `biologia: ['Invertebrado']`). */
 const FAMILIA_TO_FAMILY_IDS: Record<string, string[]> = {
-  aberracao: ['chimeric', 'aquamyth', 'elemental'],
-  aquatica: ['fish', 'cephalopod', 'crustacean', 'cetacean', 'aquamyth'],
+  fungo: ['fungus'],
+  planta: ['flower', 'tree', 'carniplant', 'desertplant', 'vine', 'fruitgourd'],
+  peixe: ['fish'],
+  inseto: ['insect'],
+  aracnideo: ['arachnid'],
+  anfibio: ['amphibian'],
+  reptil: ['reptile', 'dinosaur'],
   ave: ['bird'],
-  besta: ['feline', 'canine', 'ursine', 'rodent', 'equine', 'bovine', 'deer', 'primate', 'mustelid', 'proboscidean', 'chiroptera', 'insect', 'arachnid', 'reptile', 'dinosaur'],
+  mamifero: ['feline', 'canine', 'ursine', 'rodent', 'equine', 'bovine', 'deer', 'primate', 'mustelid', 'proboscidean', 'chiroptera', 'cetacean'],
+  cnidario: ['cnidarian'],
+  verme: ['worm'],
+  molusco: ['cephalopod'],
+  crustaceo: ['crustacean'],
+  invertebrado: ['worm', 'crustacean'],
+  monstro: ['chimeric', 'slime', 'aquamyth', 'lycan'],
+  humanoide: ['halfhuman', 'goblinoid', 'giantkin', 'lycan'],
   construto: ['construct'],
-  demonio: ['fiend'],
-  draconico: ['dragon'],
-  espirito: ['fae', 'yokai', 'celestial'],
-  geleia: ['slime'],
-  gigante: ['giantkin'],
-  humanoide: ['halfhuman', 'goblinoid'],
-  ignea: ['elemental', 'dragon'],
+  etereo: ['fae', 'yokai'],
   morto_vivo: ['undead'],
-  planta: ['flower', 'tree', 'fungus', 'carniplant', 'desertplant', 'vine', 'fruitgourd'],
+  extraplanetario: ['extraterrestrial'],
+  geologico: ['geological'],
+  elemental: ['elemental'],
+  demonio: ['fiend', 'yokai'],
+  angelical: ['celestial', 'unicornkin'],
+  draconico: ['dragon'],
 };
 
 /** Ids de `CREATURE_FAMILIES` sugeridos pela inspiração do bestiário — `null`
  *  se ela não render nenhum id conhecido (aí `pickFamilies` cai no comportamento
  *  de sempre, só por elemento/reino). */
 function bestiaryFamilyIds(familia: string | null, biologia: string[]): string[] | null {
-  for (const b of biologia) {
-    const ids = BIOLOGIA_TO_FAMILY_IDS[b];
-    if (ids) return ids;
-  }
   if (familia) {
     const ids = FAMILIA_TO_FAMILY_IDS[familia];
+    if (ids) return ids;
+  }
+  for (const b of biologia) {
+    const ids = BIOLOGIA_TO_FAMILY_IDS[b];
     if (ids) return ids;
   }
   return null;
@@ -3107,7 +3153,7 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
         addScore(alignmentScores, alignmentBreakdown, al, pts * RITUAL_ALIGNMENT_SCALE[al], answerSource);
       }
       for (const realm of REALM_ORDER) {
-        realmScores[realm] += fx.realms?.[realm] ?? 0;
+        realmScores[realm] += (fx.realms?.[realm] ?? 0) * RITUAL_REALM_SCALE[realm];
       }
     }
   }

@@ -16,7 +16,7 @@
 // forte move um elemento em ~⅓ da média sem apagar mapa astral e teste.
 // ---------------------------------------------------------------------------
 
-import { ORACLE_QUESTIONS, RITUAL_ALIGNMENT_SCALE } from '../oracle';
+import { ORACLE_QUESTIONS, RITUAL_ALIGNMENT_SCALE, RITUAL_REALM_SCALE } from '../oracle';
 import type { AlignmentId, ElementId, RealmId, RoleId } from '../oracle';
 import { CLASS_ELEMENT_ORDER, type ClassElementId, type OracleAxes } from './types';
 import { computeDominantClassElements } from './derivedElements';
@@ -89,7 +89,7 @@ export function applyRitualAnswers(
       alignments[al] += pts * RITUAL_ALIGNMENT_SCALE[al];
     }
     for (const [realm, pts] of Object.entries(fx.realms ?? {}) as Array<[RealmId, number]>) {
-      realms[realm] += pts;
+      realms[realm] += pts * RITUAL_REALM_SCALE[realm];
     }
   }
 

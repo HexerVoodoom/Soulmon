@@ -371,8 +371,14 @@ export function generateOracleAxes(inputs: OracleAxesInput): OracleAxes {
   // bônus de alinhamento poder e elementos fortes (fogo/terra) — o gelo não
   // tem nada disso e oscilava em 2,5-4% no agregado; o piso menor reflete o
   // racha 2/2 (metade do buraco dos 2/1/1).
+  // ⚠️ Recalibrada em 28/09/2026 (pedido do dono: chance proporcional), junto
+  // com `RITUAL_REALM_SCALE` (`oracle.ts`), que igualou o peso do ritual por
+  // reino (floresta esperava 1,17 ponto por pessoa, akasha 0,17). Medido em
+  // 600 perfis / 2 seeds pelo resultado final: antes akasha 1,5% e floresta
+  // 21%; depois todos os nove entre 10,3% e 12%. Régua:
+  // `criacaoDistribuicao.test.ts`.
   const REALM_SPLIT_COMPENSATION: Partial<Record<RealmId, number>> = {
-    pantano: 28, akasha: 28, gelo: 15,
+    pantano: 36, akasha: 54, gelo: 16, deserto: -22, floresta: 8, cavernas: 10, oceano: 6, picos: -12, campina: -10,
   };
   const inputKey = JSON.stringify(inputs);
   const realms: Record<RealmId, number> = Object.fromEntries(
