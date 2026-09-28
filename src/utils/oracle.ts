@@ -1599,7 +1599,7 @@ const FAMILIA_TO_FAMILY_IDS: Record<string, string[]> = {
   inseto: ['insect'],
   aracnideo: ['arachnid'],
   anfibio: ['amphibian'],
-  reptil: ['reptile', 'dinosaur'],
+  reptil: ['reptile', 'dinosaur', 'dragon'],
   ave: ['bird'],
   mamifero: ['feline', 'canine', 'ursine', 'rodent', 'equine', 'bovine', 'deer', 'primate', 'mustelid', 'proboscidean', 'chiroptera', 'cetacean'],
   cnidario: ['cnidarian'],
@@ -1607,7 +1607,7 @@ const FAMILIA_TO_FAMILY_IDS: Record<string, string[]> = {
   molusco: ['cephalopod'],
   crustaceo: ['crustacean'],
   invertebrado: ['worm', 'crustacean'],
-  monstro: ['chimeric', 'slime', 'aquamyth', 'lycan'],
+  monstro: ['chimeric', 'slime', 'aquamyth', 'lycan', 'dragon'],
   humanoide: ['halfhuman', 'goblinoid', 'giantkin', 'lycan'],
   construto: ['construct'],
   etereo: ['fae', 'yokai'],
@@ -1711,6 +1711,27 @@ function familiasCitadas(text: string): Array<{ f: CreatureFamily; s: Subfamily 
  */
 const BESTIARY_FAMILY_PULL = 0.5;
 
+/**
+ * Sorteio de família com peso INVERSO à chance dela entrar no pool de
+ * afinidade. ⚠️ 28/09/2026: o sorteio era uniforme dentro do pool, e família
+ * que declara muitos elementos/reinos entra em quase todo pool — medido
+ * (N=800): Inseto 6,1% contra Planta Carnívora 0,4% (15×). A leitura continua
+ * decidindo QUEM entra no pool; o peso só tira a vantagem de ter uma
+ * declaração mais larga. Chance de inclusão ≈ 1 − P(nenhum dos 2 elementos
+ * bate) × P(reino não bate).
+ */
+function pickFamiliaCompensada(rng: () => number, pool: CreatureFamily[]): CreatureFamily {
+  const peso = (f: CreatureFamily) => {
+    const semElemento = Math.pow(1 - Math.min(f.elements.length, 8) / 8, 2);
+    const semReino = 1 - Math.min(f.realms.length, 9) / 9;
+    return 1 / Math.max(0.05, 1 - semElemento * semReino);
+  };
+  const total = pool.reduce((s, f) => s + peso(f), 0);
+  let alvo = rng() * total;
+  for (const f of pool) { alvo -= peso(f); if (alvo < 0) return f; }
+  return pool[pool.length - 1];
+}
+
 function pickFamilies(
   rng: () => number,
   dominantElement: ElementId,
@@ -1738,7 +1759,7 @@ function pickFamilies(
   const bestiaryPool = pool1.filter(f => sugeridas.has(f.id));
   const seguirBestiario = bestiaryPool.length > 0 && rng() < BESTIARY_FAMILY_PULL;
   const fam1 = mentioned[0]?.f
-    ?? pick(rng, seguirBestiario ? bestiaryPool : (pool1.length ? pool1 : CREATURE_FAMILIES));
+    ?? pickFamiliaCompensada(rng, seguirBestiario ? bestiaryPool : (pool1.length ? pool1 : CREATURE_FAMILIES));
   // Se a família escolhida é uma que o texto do bestiário citou, usa a
   // subfamília citada (coerência: "Cão" → canino/cão, não canino/raposa).
   const citadaNaFam = mentioned[0]?.f === fam1 ? mentioned[0] : citadasBestiario.find(m => m.f === fam1);
