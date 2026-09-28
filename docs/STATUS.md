@@ -7,6 +7,23 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 28/09/2026 — Manual sincronizado com `8110efc5`
+>
+> Delta `1d9e278d..8110efc5` (2 commits, PR #125). NPC por sub-loja no lugar do
+> anfitrião fixo da área: `AreaScene` deixou de desenhar NPC no rodapé da cena;
+> `AreaSheet` ganhou altura fixa em 2/3 da tela, com a metade de cima dedicada
+> ao NPC do lote (`lotNpcArt`, `src/assets/soulmon/npcs/index.ts`) + balão de
+> fala. Sub-lojas sem NPC próprio (Conquistas, Duelo, Corrida do Dino) usam
+> placeholders (`PLACEHOLDER_NPC_ART`: coruja-cervo/poring, sobras de geração
+> do Higgsfield de 23/09/2026, nunca instaladas antes). Docs tocados: 03
+> (§1.3), 06/components (`AreaScene`, `AreaSheet`). Guard verde
+> (`docsManual.contract.test.ts`, `docsSemMentira.contract.test.ts`).
+>
+> **Follow-up em aberto:** a fala (nome + linha) do NPC continua por ÁREA
+> (`areaNpcVoice`), não por sub-loja — a imagem já mudou por loja, o texto do
+> balão ainda não. Dar fala própria a cada NPC de sub-loja é trabalho de
+> conteúdo/narrativa (squad-narrativa), fora do escopo do PR #125.
+>
 > ## 27/09/2026 — Manual sincronizado com `2336e4e7`
 >
 > Delta `c510c7e4..2336e4e7` (4 commits). Docs tocados: 02 (§22 D-B1 — o nome da
