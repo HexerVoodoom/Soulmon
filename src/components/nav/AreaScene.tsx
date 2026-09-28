@@ -1,21 +1,23 @@
 import type { ReactNode } from 'react';
 import type { Language } from '../../utils/i18n';
 import type { AreaId } from '../../navigation';
-import { areaNpcVoice } from '../../utils/areaNpcVoice';
-import { AREA_NPC_ART } from '../../assets/soulmon/npcs';
 
 /**
  * O MOLDE DE UMA ÁREA (minimal-ui F4) — reusado pelas 6 áreas do Mapa.
  *
- * Espelha `.cena-area`/`.lote`/`.npc-fala` dos mocks aprovados
+ * Espelha `.cena-area`/`.lote` dos mocks aprovados
  * (`product/squad-minimal-ui/propostas/<area>/mock.html`): a área é uma cena
  * cheia (a `AreaTopBar` já entra pelo `App.tsx`, então aqui só o corpo); os
- * "lotes" são construções clicáveis posicionadas em % sobre o fundo; o NPC
- * anfitrião aparece no rodapé, com balão de fala — a fala vem de
- * `areaNpcVoice` (dono único da copy), nunca escrita aqui.
+ * "lotes" são construções clicáveis posicionadas em % sobre o fundo.
+ *
+ * ⚠️ **Decisão do dono, 28/09/2026**: não existe mais NPC anfitrião fixo no
+ * rodapé da cena. Cada sub-loja (lote) tem o NPC dela própria, mostrado só
+ * dentro da folha que abre ao tocar o lote (`AreaSheet`) — ver
+ * `assets/soulmon/npcs/index.ts` › `lotNpcArt`. A fala continua vindo de
+ * `areaNpcVoice` (dono único da copy), lida agora pelo `AreaSheet`.
  *
  * `AreaScene` NÃO decide o conteúdo de cada `AreaSheet` — isso é F5. Aqui só
- * o molde: fundo + lotes + NPC + o encaixe do `AreaSheet` quando aberto.
+ * o molde: fundo + lotes + o encaixe do `AreaSheet` quando aberto.
  */
 export interface AreaLot {
   id: string;
@@ -42,7 +44,6 @@ export function AreaScene({ areaId, language, lots, background, children }: {
   children?: ReactNode;
 }) {
   const isPt = language === 'pt-BR';
-  const npc = areaNpcVoice(areaId, language);
   return (
     <div
       data-area-scene={areaId}
@@ -118,46 +119,6 @@ export function AreaScene({ areaId, language, lots, background, children }: {
           </span>
         </button>
       ))}
-
-      {/* NPC anfitrião + balão de fala, no rodapé da cena — mesma posição do
-          mock (`.npc-fala`). Fica ATRÁS do `AreaSheet` (z-index menor). */}
-      <div
-        data-area-npc
-        style={{
-          position: 'absolute', zIndex: 1,
-          left: 12, right: 12, bottom: 16,
-          display: 'flex', alignItems: 'flex-end', gap: 8,
-        }}
-      >
-        <img
-          src={AREA_NPC_ART[areaId]}
-          alt=""
-          aria-hidden="true"
-          style={{
-            width: 180, flex: 'none',
-            marginLeft: -14, marginRight: -20,
-            filter: 'drop-shadow(0 4px 8px rgba(0,0,0,.6))',
-          }}
-        />
-        <p
-          style={{
-            position: 'relative', zIndex: 1,
-            margin: '0 0 60px',
-            padding: '14px 16px',
-            background: 'rgba(15,42,41,.96)',
-            border: '2px solid var(--sm2-gold-fill)',
-            borderRadius: '14px 14px 14px 2px',
-            font: '500 15px/1.45 var(--sm2-font-text)',
-            color: '#E9F5F2',
-            boxShadow: '0 6px 14px rgba(0,0,0,.45)',
-          }}
-        >
-          <b style={{ display: 'block', marginBottom: 4, fontSize: 13, letterSpacing: '0.06em', color: 'var(--sm2-gold-ink)' }}>
-            {npc.name}
-          </b>
-          {npc.line}
-        </p>
-      </div>
 
       {lots.length === 0 && (
         <p

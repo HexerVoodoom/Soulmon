@@ -6,7 +6,6 @@ import { AreaSheet } from './AreaSheet';
 import { areaDemoLot, mercadoLots, arenaLots, type MercadoLotId } from '../../utils/areaSheetCopy';
 import { AREA_BG, MERCADO_LOT_ART, ARENA_LOT_ART, PLAY_AREA_BG, EXPLORACAO_LOT_ART, JOGOS_LOT_ART } from '../../assets/soulmon/areas';
 import { exploracaoLots, jogosLots } from '../../utils/playAreaLots';
-import { STALL_NPC_ART } from '../../assets/soulmon/npcs';
 import { sm2Hint } from '../form/FormKit';
 import type { ShopActions, ShopOwnership } from '../mercado/ShopShelf';
 import type { TournamentPage as TournamentPageT } from '../TournamentPage';
@@ -124,10 +123,11 @@ export function AreaView(props: AreaViewProps) {
       >
         <AreaSheet
           areaId={area}
+          lotId={open?.id}
+          language={language}
           title={open?.label ?? ''}
           closeLabel={closeLabel}
           open={!!open}
-          npcArt={stall ? STALL_NPC_ART[stall] : undefined}
           onClose={close}
         >
           <Suspense fallback={<SheetLoading language={language} />}>
@@ -165,7 +165,7 @@ export function AreaView(props: AreaViewProps) {
         background={AREA_BG.arena}
         lots={lots.map(l => ({ ...l, art: ARENA_LOT_ART[l.id], onOpen: () => setSheet(l.id) } satisfies AreaLot))}
       >
-        <AreaSheet areaId={area} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close}>
+        <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close}>
           <Suspense fallback={<SheetLoading language={language} />}>
             {open?.id === 'torneio' && (
               <TournamentPage {...props.tournament} shop={{ ownership, actions }} />
@@ -206,7 +206,7 @@ export function AreaView(props: AreaViewProps) {
     const { play } = props;
     return (
       <AreaScene areaId={area} language={language} background={PLAY_AREA_BG[area]} lots={lots}>
-        <AreaSheet areaId={area} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close}>
+        <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close}>
           <Suspense fallback={<SheetLoading language={language} />}>
             {open?.id === 'masmorra' && <MasmorraSheet language={language} onStart={() => start('masmorra')} />}
             {open?.id === 'dino' && <DinoSheet language={language} onStart={() => start('dino')} />}
@@ -273,7 +273,7 @@ export function AreaView(props: AreaViewProps) {
       language={language}
       lots={[{ id: lotId, label: demo.label, left: '50%', top: '38%', ariaLabel: demo.label, onOpen: () => setSheet(lotId) } satisfies AreaLot]}
     >
-      <AreaSheet areaId={area} title={title} closeLabel={closeLabel} open={sheet === lotId} onClose={close}>
+      <AreaSheet areaId={area} lotId={lotId} language={language} title={title} closeLabel={closeLabel} open={sheet === lotId} onClose={close}>
         {area === 'laboratorio' ? props.labContent : props.hallContent}
       </AreaSheet>
     </AreaScene>

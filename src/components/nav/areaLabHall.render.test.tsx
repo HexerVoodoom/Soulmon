@@ -17,6 +17,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { renderWithCss } from '../../test/renderEnv';
 import { AreaScene } from './AreaScene';
+import { AreaSheet } from './AreaSheet';
 import { areaNpcVoice } from '../../utils/areaNpcVoice';
 
 vi.mock('../../utils/community', async (orig) => {
@@ -93,8 +94,16 @@ describe('Hall — a Biblioteca (D4) com a saudação da Lumi', () => {
       const { name, line } = areaNpcVoice('hall', lang);
       expect(name).toContain('Lumi');
       expect(line).not.toMatch(/em breve|soon/i);
-      const r = renderWithCss(<AreaScene areaId="hall" language={lang} lots={[]} />);
-      expect(r.container.querySelector('[data-area-npc]')!.textContent).toContain(line);
+      // A Lumi é o NPC do lote único do Hall (`biblioteca`) — mora dentro da
+      // folha aberta, não mais num anfitrião fixo da cena.
+      const r = renderWithCss(
+        <AreaScene areaId="hall" language={lang} lots={[]}>
+          <AreaSheet areaId="hall" lotId="biblioteca" language={lang} title="Biblioteca" closeLabel="x" open onClose={() => {}}>
+            <p>x</p>
+          </AreaSheet>
+        </AreaScene>,
+      );
+      expect(r.container.querySelector('[data-area-sheet-npc-line]')!.textContent).toContain(line);
       r.unmount();
     }
   });

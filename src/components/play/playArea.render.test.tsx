@@ -96,12 +96,14 @@ async function achar(container: HTMLElement, sel: string): Promise<HTMLElement> 
 }
 
 describe('Exploração — Brisa, Masmorra e Corrida do Dino', () => {
-  it('a cena tem a Brisa e os dois lotes, com arte', () => {
+  it('a cena tem os dois lotes com arte; a Brisa fala dentro da folha da Masmorra (NPC por sub-loja)', () => {
     const { container } = renderWithCss(<PlayAreaView {...props()} />);
-    expect(container.querySelector('[data-area-npc]')!.textContent).toContain('Brisa');
+    expect(container.querySelector('[data-area-npc]')).toBeNull();
     expect(container.querySelector('[data-area-lot="masmorra"] [data-area-lot-art]')).toBeTruthy();
     expect(container.querySelector('[data-area-lot="dino"] [data-area-lot-art]')).toBeTruthy();
     expect(container.querySelector('[data-area-lot="ppt"]')).toBeNull();
+    fireEvent.click(container.querySelector('[data-area-lot="masmorra"]')!);
+    expect(container.querySelector('[data-area-sheet-npc-line]')!.textContent).toContain('Brisa');
   });
 
   it('Masmorra: folha mostra dificuldade e placar lidos das chaves do jogo, e diz que perder não custa coração', async () => {
@@ -180,11 +182,12 @@ describe('Exploração — Brisa, Masmorra e Corrida do Dino', () => {
 });
 
 describe('Jogos — Pipo e Pedra, papel e tesoura', () => {
-  it('a cena tem o Pipo e só o lote do PPT', () => {
+  it('a cena tem só o lote do PPT; o Pipo fala dentro da folha dele', () => {
     const { container } = renderWithCss(<PlayAreaView {...props({ area: 'jogos' })} />);
-    expect(container.querySelector('[data-area-npc]')!.textContent).toContain('Pipo');
     expect(container.querySelectorAll('[data-area-lot]')).toHaveLength(1);
     expect(container.querySelector('[data-area-lot="ppt"] [data-area-lot-art]')).toBeTruthy();
+    fireEvent.click(container.querySelector('[data-area-lot="ppt"]')!);
+    expect(container.querySelector('[data-area-sheet-npc-line]')!.textContent).toContain('Pipo');
   });
 
   it('a folha mostra 5 Bits por vitória e o CTA abre o RPSGame com o onEarnPoints do App', async () => {

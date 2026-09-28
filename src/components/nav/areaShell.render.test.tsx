@@ -1,9 +1,13 @@
 // @vitest-environment jsdom
 /**
  * O MOLDE DE ÁREA (minimal-ui F4) — `AreaScene` + `AreaSheet`, reusado pelas
- * 6 áreas do Mapa. Cobre só o MOLDE (abrir/fechar, NPC visível, min-height,
- * backdrop fecha ao tocar fora, título correto por área) — o conteúdo de
- * cada folha é F5.
+ * 6 áreas do Mapa. Cobre só o MOLDE (abrir/fechar, NPC por SUB-LOJA, altura
+ * 2/3, backdrop fecha ao tocar fora, título correto por área) — o conteúdo
+ * de cada folha é F5.
+ *
+ * ⚠️ Desde 28/09/2026 (decisão do dono) não existe mais NPC anfitrião fixo
+ * na `AreaScene` — o NPC vive só dentro da `AreaSheet` aberta, um por lote
+ * (`lotId`), nunca um único "da área inteira".
  */
 import { describe, it, expect, vi } from 'vitest';
 import { fireEvent } from '@testing-library/react';
@@ -11,38 +15,17 @@ import { useState } from 'react';
 import { renderWithCss } from '../../test/renderEnv';
 import { AreaScene, type AreaLot } from './AreaScene';
 import { AreaSheet } from './AreaSheet';
-import { AREAS } from '../../navigation';
 
 const lot = (onOpen: () => void): AreaLot[] => [{
   id: 'exemplo', label: 'Itens', left: '50%', top: '38%', ariaLabel: 'Itens', onOpen,
 }];
 
 describe('AreaScene', () => {
-  it('desenha o NPC anfitrião da área certa, com a fala dele', () => {
+  it('não desenha NPC nenhum fora de uma folha aberta (o anfitrião fixo saiu)', () => {
     const { container } = renderWithCss(
       <AreaScene areaId="mercado" language="pt-BR" lots={lot(() => {})} />,
     );
-    const npc = container.querySelector('[data-area-npc]')!;
-    expect(npc.textContent).toContain('Grom');
-    expect(npc.querySelector('img')?.getAttribute('src')).toBeTruthy();
-  });
-
-  it('a fala do NPC muda por área e por idioma', () => {
-    const arena = renderWithCss(<AreaScene areaId="arena" language="en-US" lots={[]} />);
-    expect(arena.container.querySelector('[data-area-npc]')!.textContent).toContain('Vultrak');
-    arena.unmount();
-    const hallPt = renderWithCss(<AreaScene areaId="hall" language="pt-BR" lots={[]} />);
-    expect(hallPt.container.querySelector('[data-area-npc]')!.textContent).toContain('Lumi');
-  });
-
-  it('as 6 áreas têm NPC próprio (nenhuma cai no mesmo genérico)', () => {
-    const nomes = AREAS.map(id => {
-      const r = renderWithCss(<AreaScene areaId={id} language="pt-BR" lots={[]} />);
-      const src = r.container.querySelector('[data-area-npc] img')!.getAttribute('src');
-      r.unmount();
-      return src;
-    });
-    expect(new Set(nomes).size).toBe(6);
+    expect(container.querySelector('[data-area-sheet-npc]')).toBeNull();
   });
 
   it('lote de exemplo: toque abre a folha (via callback do lote)', () => {
@@ -59,7 +42,7 @@ function Cenario({ open: initialOpen }: { open: boolean }) {
   const [open, setOpen] = useState(initialOpen);
   return (
     <AreaScene areaId="mercado" language="pt-BR" lots={lot(() => setOpen(true))}>
-      <AreaSheet areaId="mercado" title="Itens" closeLabel="Fechar" open={open} onClose={() => setOpen(false)}>
+      <AreaSheet areaId="mercado" lotId="itens" language="pt-BR" title="Itens" closeLabel="Fechar" open={open} onClose={() => setOpen(false)}>
         <p>placeholder</p>
       </AreaSheet>
     </AreaScene>
@@ -73,21 +56,58 @@ describe('AreaSheet', () => {
     expect(container.querySelector('[data-area-sheet-npc]')).toBeNull();
   });
 
-  it('aberta: diálogo modal nomeado, min-height 62%, NPC visível acima da folha', () => {
+  it('aberta: diálogo modal nomeado, altura fixa em 2/3 da tela, NPC do LOTE dentro da folha, com fala', () => {
     const { container } = renderWithCss(<Cenario open />);
     const dlg = container.querySelector('[role="dialog"]') as HTMLElement;
     expect(dlg).not.toBeNull();
     expect(dlg.getAttribute('aria-modal')).toBe('true');
     expect(dlg.getAttribute('aria-label')).toBe('Itens');
-    expect(dlg.style.minHeight).toBe('62%');
+    expect(dlg.style.height).toBe('66.6667dvh');
+    // O NPC vive dentro do primeiro 1/3 da tela (metade de cima da folha) — nunca fora dela.
+    const npcZone = container.querySelector('[data-area-sheet-npc-zone]') as HTMLElement;
+    expect(npcZone).not.toBeNull();
+    expect(dlg.contains(npcZone)).toBe(true);
+    expect(npcZone.style.flex).toBe('0 0 50%');
     const npc = container.querySelector('[data-area-sheet-npc]');
     expect(npc).not.toBeNull();
     expect(npc!.getAttribute('src')).toBeTruthy();
+    // Espaço de balão de fala reservado, com a fala da área (Grom no Mercado).
+    const line = container.querySelector('[data-area-sheet-npc-line]')!;
+    expect(line.textContent).toContain('Grom');
+  });
+
+  it('o NPC muda por SUB-LOJA dentro da mesma área (não é mais um único anfitrião)', () => {
+    const itens = renderWithCss(
+      <AreaSheet areaId="mercado" lotId="itens" language="pt-BR" title="Itens" closeLabel="Fechar" open onClose={() => {}}>
+        <p>x</p>
+      </AreaSheet>,
+    );
+    const srcItens = itens.container.querySelector('[data-area-sheet-npc]')!.getAttribute('src');
+    itens.unmount();
+    const decoracao = renderWithCss(
+      <AreaSheet areaId="mercado" lotId="decoracao" language="pt-BR" title="Decoração" closeLabel="Fechar" open onClose={() => {}}>
+        <p>x</p>
+      </AreaSheet>,
+    );
+    const srcDecoracao = decoracao.container.querySelector('[data-area-sheet-npc]')!.getAttribute('src');
+    decoracao.unmount();
+    expect(srcItens).toBeTruthy();
+    expect(srcDecoracao).toBeTruthy();
+    expect(srcItens).not.toBe(srcDecoracao);
+  });
+
+  it('sub-loja sem NPC próprio cai no placeholder (nunca quebra)', () => {
+    const { container } = renderWithCss(
+      <AreaSheet areaId="mercado" lotId="conquistas" language="pt-BR" title="Conquistas" closeLabel="Fechar" open onClose={() => {}}>
+        <p>x</p>
+      </AreaSheet>,
+    );
+    expect(container.querySelector('[data-area-sheet-npc]')!.getAttribute('src')).toBeTruthy();
   });
 
   it('título correto por área', () => {
     const { container } = renderWithCss(
-      <AreaSheet areaId="arena" title="Torneio" closeLabel="Fechar" open onClose={() => {}}>
+      <AreaSheet areaId="arena" lotId="torneio" language="pt-BR" title="Torneio" closeLabel="Fechar" open onClose={() => {}}>
         <p>x</p>
       </AreaSheet>,
     );
@@ -97,7 +117,7 @@ describe('AreaSheet', () => {
   it('backdrop fecha ao tocar fora; tocar dentro da folha não fecha', () => {
     const onClose = vi.fn();
     const { container } = renderWithCss(
-      <AreaSheet areaId="mercado" title="Itens" closeLabel="Fechar" open onClose={onClose}>
+      <AreaSheet areaId="mercado" lotId="itens" language="pt-BR" title="Itens" closeLabel="Fechar" open onClose={onClose}>
         <p>conteúdo</p>
       </AreaSheet>,
     );
@@ -110,7 +130,7 @@ describe('AreaSheet', () => {
   it('Escape fecha, e o botão de fechar tem nome acessível', () => {
     const onClose = vi.fn();
     const { container } = renderWithCss(
-      <AreaSheet areaId="mercado" title="Itens" closeLabel="Fechar" open onClose={onClose}>
+      <AreaSheet areaId="mercado" lotId="itens" language="pt-BR" title="Itens" closeLabel="Fechar" open onClose={onClose}>
         <p>conteúdo</p>
       </AreaSheet>,
     );
