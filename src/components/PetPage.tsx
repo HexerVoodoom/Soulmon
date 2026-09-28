@@ -10,9 +10,15 @@
  * O que a página mostra (a lógica é a mesma de antes, nada foi inventado):
  * TODAS as formas já desbloqueadas (nunca as futuras), a descrição gerada pelo
  * oráculo e as DUAS habilidades do estágio (básica e especial). A CLASSE do
- * estágio (`classTitle`) já era computada aqui e nunca era renderizada — agora
- * ela aparece, porque é exatamente o tipo de dado que esta tela deveria dar:
- * uma PALAVRA nomeada, não um número.
+ * estágio (`classTitle`) continua sendo computada aqui — pelo SIGILO no canto
+ * do visor e pelo cache do save — mas **o nome dela nunca é renderizado**
+ * (`docs/PLANO-ORACULO.md` §2, decisão 3 do dono, 28/09/2026: "a classe nunca
+ * aparece ao jogador; age por trás"). ⚰️ Até a Fase 3 do Oráculo esta página
+ * escrevia `· <nome do arquétipo>` ao lado do estágio, na forma atual e nas anteriores,
+ * contra a decisão registrada em `docs/ORACULO.md` (rodada 7) e contra a
+ * régua de comportamento (`plano-comportamento.md` §6.7: expor a classe é
+ * rótulo fixo — "você é um Guardião das Sombras"). A régua viva é
+ * `src/components/classeNuncaVisivel.contract.test.tsx`.
  *
  * As skills são recomputadas sob demanda do perfil salvo (SOULMON_PROFILE =
  * OracleInput + seed) pelo pipeline completo — determinístico, mesma
@@ -29,6 +35,7 @@ import { readJson } from '../utils/safeStorage';
 import { FICHA_STAGE_ORDER, type FichaStage } from '../utils/soulProfile/ficha/types';
 import type { StageSkills, StageSkill } from '../utils/soulProfile/ficha/skills';
 import type { ClassTitle } from '../utils/soulProfile/ficha/classTitle';
+import type { CompanheiroVisivel } from '../utils/soulProfile/ficha/companheiro';
 import { auraForElement } from '../utils/attackFxArt';
 import { sigilArt } from '../utils/sigilArt';
 import { ACHIEVEMENT_IDS, ACHIEVEMENT_LABELS, type AchievementId } from '../utils/achievements';
@@ -54,6 +61,10 @@ interface PetPageProps {
    *  cache de `savedSkills`/`onSkillsComputed`. */
   savedClassTitles?: Record<FichaStage, ClassTitle>;
   onClassTitlesComputed?: (titles: Record<FichaStage, ClassTitle>) => void;
+  /** O companheiro capturado (`ficha/companheiro.ts`) — visível e nomeado
+   *  (decisão 2 do PLANO-ORACULO.md §9). Mesmo padrão de cache. */
+  savedCompanheiro?: CompanheiroVisivel;
+  onCompanheiroComputed?: (companheiro: CompanheiroVisivel) => void;
   unlockedEvolutions: string[];
   currentStageId: string;
   demoCharacterId?: string;
@@ -193,7 +204,8 @@ function SkillRow({ skill, isPt }: { skill: StageSkill; isPt: boolean }) {
 export function PetPage({
   stages,
   dominantElement, achievements = [], unlockedEvolutions, currentStageId, demoCharacterId, petName,
-  savedSkills, onSkillsComputed, savedClassTitles, onClassTitlesComputed, language = 'pt-BR', headingLevel = 1,
+  savedSkills, onSkillsComputed, savedClassTitles, onClassTitlesComputed,
+  savedCompanheiro, onCompanheiroComputed, language = 'pt-BR', headingLevel = 1,
 }: PetPageProps) {
   const isPt = language === 'pt-BR';
   const H = headingLevel === 2 ? 'h2' : 'h1';
@@ -201,6 +213,7 @@ export function PetPage({
 
   const [skills, setSkills] = useState<Record<FichaStage, StageSkills> | null>(savedSkills ?? null);
   const [classTitles, setClassTitles] = useState<Record<FichaStage, ClassTitle> | null>(savedClassTitles ?? null);
+  const [companheiro, setCompanheiro] = useState<CompanheiroVisivel | null>(savedCompanheiro ?? null);
   useEffect(() => {
     let vivo = true;
     (async () => {
@@ -226,6 +239,24 @@ export function PetPage({
         // sobe para a nuvem, então sem este cache um aparelho novo (ou um save
         // restaurado) mostrava as formas e perdia as habilidades em silêncio.
         onSkillsComputed?.(stageSkills);
+
+        // O companheiro (Fase 3, decisão 2): a MESMA captura do pipeline
+        // (`selectCompanion` sobre a ficha mega, semente = identidade), reduzida
+        // ao nome PT+EN. Síncrono e barato; falhar aqui não tira nada da tela.
+        try {
+          const [{ selectCompanion }, { companheiroVisivel }] = await Promise.all([
+            import('../utils/soulProfile/ficha/capture'),
+            import('../utils/soulProfile/ficha/companheiro'),
+          ]);
+          const visivel = companheiroVisivel(selectCompanion(fichaByStage.mega, identityKey(saved)));
+          if (!vivo) return;
+          if (visivel) {
+            setCompanheiro(visivel);
+            onCompanheiroComputed?.(visivel);
+          }
+        } catch {
+          // sem companheiro é melhor que sem página
+        }
 
         // Poder REAL via `calcularSkill` do motor — puxa o registro completo
         // do class-system, por isso vem DEPOIS e não bloqueia a primeira
@@ -257,7 +288,7 @@ export function PetPage({
       }
     })();
     return () => { vivo = false; };
-  }, [onSkillsComputed, onClassTitlesComputed]);
+  }, [onSkillsComputed, onClassTitlesComputed, onCompanheiroComputed]);
 
   // Só as formas JÁ desbloqueadas, em ordem de estágio — nunca as futuras.
   const formas = useMemo(() => {
@@ -348,10 +379,10 @@ export function PetPage({
 
           <div style={{ textAlign: 'center', maxWidth: 420 }}>
             <H style={h1Style}>{atual.name}</H>
-            {/* Estágio e CLASSE: duas palavras nomeadas, e nenhum número. */}
+            {/* Só o estágio: uma palavra nomeada, nenhum número — e nunca a
+                classe (decisão 3 do plano do Oráculo; ver o cabeçalho). */}
             <p style={{ ...sm2Hint, marginTop: 4 }}>
               {L(atual.stageName)}
-              {classeAtual ? ` · ${L(classeAtual.nome)}` : ''}
             </p>
             <p style={{ ...sm2Text, marginTop: 12 }}>{L(atual.description)}</p>
           </div>
@@ -389,6 +420,28 @@ export function PetPage({
         </section>
       )}
 
+      {/* ─────────── O companheiro ─────────── */}
+      {/* Decisão 2 (PLANO-ORACULO.md §9): visível e NOMEADO. Só o nome e uma
+          linha de mundo — nada de poder, afinidade ou família do class-system
+          (ficha invisível, decisão 3). Voz do mundo: descreve a criatura
+          (L1/L2), nunca a pessoa; "companheiro/companion", nunca "parceiro"
+          (vocabulário canônico §12). Na Ficha, e não na Home: é a tela que já
+          recomputa a ficha e já cacheia o que dela se mostra — nenhum campo
+          novo no HUD, nenhuma arte nova. */}
+      {companheiro && (
+        <section style={card} data-companheiro={companheiro.id}>
+          <h2 style={{ ...h2Style, marginBottom: 8 }}>
+            {isPt ? 'Quem anda junto' : 'Who walks alongside'}
+          </h2>
+          <p style={{ ...sm2Text, fontWeight: 500, margin: 0 }}>{L(companheiro.nome)}</p>
+          <p style={{ ...sm2Hint, marginTop: 4 }}>
+            {isPt
+              ? 'Assentou perto do seu Soulmon e ficou. Não foi escolhido — veio por afinidade.'
+              : 'It settled near your Soulmon and stayed. Not chosen — it came by affinity.'}
+          </p>
+        </section>
+      )}
+
       {/* ─────────── As formas anteriores ─────────── */}
       {anteriores.length > 0 && (
         <section>
@@ -398,8 +451,6 @@ export function PetPage({
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {anteriores.map(form => {
               const formId = creatureFormId(form);
-              const stageKey = getStageLevel(formId) as FichaStage;
-              const classe = classTitles?.[stageKey];
               return (
                 <article key={formId} style={{ ...card, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                   {/* A forma anterior num vidro 80² sem anel, sprite 256² a 64
@@ -419,7 +470,7 @@ export function PetPage({
                   <div style={{ minWidth: 0 }}>
                     <p style={{ ...sm2Text, fontWeight: 500, margin: 0 }}>{form.name}</p>
                     <p style={{ ...sm2Hint, marginTop: 2 }}>
-                      {L(form.stageName)}{classe ? ` · ${L(classe.nome)}` : ''}
+                      {L(form.stageName)}
                     </p>
                     <p style={{ ...sm2Hint, marginTop: 6 }}>{L(form.description)}</p>
                   </div>
