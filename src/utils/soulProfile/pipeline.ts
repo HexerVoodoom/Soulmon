@@ -120,6 +120,20 @@ export async function generateOracleComplete(input: OracleInput, seed?: number):
    */
   const nomeInspiracao = baseDeInspiracao(nome);
 
+  // ⚠️ Achado de 28/09/2026: a linhagem inteira (um pick por estágio,
+  // encadeado por proximidade de espécie) já era calculada aqui e descartada
+  // — nada em `generateOracle` recebia mais que o pick do estágio 0. Agora a
+  // base de cada estágio (mesma extração de nome que o estágio 0 já usa) vai
+  // junto, para variar só o `imagePrompt` de champion/perfeito/mega/ultra —
+  // nome, família e identidade continuam fixos pelo estágio 0.
+  const bestiaryLineageNomes = {
+    rookie: nomeInspiracao,
+    champion: baseDeInspiracao(bestiaryLineage.champion.creature.nome),
+    perfeito: baseDeInspiracao(bestiaryLineage.ultimate.creature.nome),
+    mega: baseDeInspiracao(bestiaryLineage.mega.creature.nome),
+    ultra: baseDeInspiracao(bestiaryLineage.ultra.creature.nome),
+  };
+
   // Classe REAL só como ingrediente extra do prompt de sprite — nunca em
   // texto que o jogador vê (nome/bio/descrição por forma continuam sem
   // tocar nisso). Usa a ficha ULTRA (a mais concentrada; mede 100% de
@@ -142,6 +156,7 @@ export async function generateOracleComplete(input: OracleInput, seed?: number):
       biologia: bestiaryPick.creature.biologia,
       nome: nomeInspiracao,
     },
+    bestiaryLineageNomes,
     promptClassFlavor,
   }, salt);
 

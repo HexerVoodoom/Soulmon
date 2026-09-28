@@ -75,15 +75,26 @@ describe('pipeline completo do oráculo', () => {
        O que este teste protege agora é o fallback existir de verdade: um
        `imagePromptFallback` que também carregasse o nome deixaria a recusa
        sem saída, e a geração falharia em vez de degradar. */
+    /* ⚠️ Achado de 28/09/2026: `bestiaryLineage` (um pick por estágio,
+       calculado por `selectBestiaryLineage`) alimenta o `inspiracao` de
+       CADA estágio agora — não mais sempre o nome do estágio 0 repetido nos
+       11 prompts. Este caso passou a checar, por estágio, a base do pick DA
+       LINHAGEM daquele estágio (mapeando `CreatureStage.stage` para a chave
+       de `FichaStage` correspondente — `perfeito` ↔ `ultimate`). */
+    const baseOf = (nome: string): string =>
+      (/^(?:Titânico|Espiritual|Cristalino|Corrompido|Ancião)\s+(.+?)\s+de\s+\S+$/
+        .exec(nome)?.[1] ?? nome).trim().toLowerCase();
+    const FICHA_STAGE_FOR: Record<string, 'rookie' | 'champion' | 'ultimate' | 'mega' | 'ultra'> = {
+      rookie: 'rookie', champion: 'champion', perfeito: 'ultimate', mega: 'mega', ultra: 'ultra',
+    };
+
     for (const seed of [3, 14, 62, 240]) {
       const input = makeInput(`Pessoa Teste ${seed}`, QUIZ, seed % 2 === 0);
-      const { result, bestiaryPick } = await generateOracleComplete(input, seed);
-      const base = /^(?:Titânico|Espiritual|Cristalino|Corrompido|Ancião)\s+(.+?)\s+de\s+\S+$/
-        .exec(bestiaryPick.creature.nome)?.[1] ?? bestiaryPick.creature.nome;
-      const alvo = base.trim().toLowerCase();
+      const { result, bestiaryLineage } = await generateOracleComplete(input, seed);
 
       for (const stage of result.creature.stages) {
-        expect(stage.imagePrompt.toLowerCase(), 'a 1ª tentativa leva a inspiração nomeada')
+        const alvo = baseOf(bestiaryLineage[FICHA_STAGE_FOR[stage.stage]].creature.nome);
+        expect(stage.imagePrompt.toLowerCase(), `a 1ª tentativa (${stage.stage}) leva a inspiração nomeada`)
           .toContain(alvo);
         expect(stage.imagePromptFallback.toLowerCase(), 'o FALLBACK tem de ficar limpo')
           .not.toContain(alvo);

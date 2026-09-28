@@ -53,7 +53,15 @@ function baseElements(elementos: string[]): string[] {
   return elementos.flatMap(id => DERIVED_TO_BASE[id] ?? [id]);
 }
 
-/** Reino → famílias com afinidade de bioma (geografia, não personalidade). */
+/** Reino → famílias com afinidade de bioma (geografia, não personalidade).
+ *  ⚠️ `ignea` (deserto) não tem NENHUMA criatura no pool hoje (0/732) — e,
+ *  segundo `docs/BESTIARIO-PROCEDENCIA.md` §12, o próprio nome já foi visto
+ *  como resíduo de um bug de corrupção de família (curadoria de 27/09/2026),
+ *  sem certeza de que seja uma família pretendida de verdade. Por isso NÃO
+ *  ganhou ponte sintética como `humanoide` ganhou (ver `scoreCreature`) —
+ *  sintetizar linha para uma família cuja legitimidade está em dúvida seria
+ *  inventar em cima de incerteza, não consertar dado real. Fica sem bônus
+ *  até o dono decidir (manter/remover/gerar de verdade). */
 const REALM_TO_FAMILIAS: Record<RealmId, string[]> = {
   deserto: ['besta', 'aberracao', 'ignea'],
   picos: ['ave', 'gigante', 'draconico'],
@@ -114,14 +122,40 @@ export function scoreCreature(c: BestiaryCreature, axes: OracleAxes): number {
   // normaliza pelo número de elementos além do primeiro.
   score = score / Math.sqrt(bases.length || 1);
 
-  if (c.familia && REALM_TO_FAMILIAS[axes.dominantRealm].includes(c.familia)) score += 2;
+  // ⚠️ Rebalanceio de 28/09/2026 (pedido do dono): os quatro bônus fixos
+  // abaixo dobraram (2→4 / 2→4 / 1,5→3 / 1,5→3, teto combinado 7→14) porque
+  // o termo de elemento, sendo contínuo sobre 17 valores medidos, tipicamente
+  // supera o teto antigo para qualquer criatura bem alinhada — deixando
+  // papel/alinhamento/reino do jogador (que só entram por aqui) incapazes de
+  // vencer um elemento razoavelmente concentrado, mesmo quando são o sinal
+  // mais forte da própria leitura. Dobrar aproxima a ordem de grandeza sem
+  // apagar o peso do elemento (ele continua sendo o único termo CONTÍNUO,
+  // sensível a nuance; os quatro abaixo continuam binários — bate ou não).
+  const FAMILIA_BONUS = 4;
+  const BIOMA_BONUS = 4;
+  const HOSTILIDADE_BONUS = 3;
+  const TAMANHO_BONUS = 3;
+
+  const familiaEsperada = REALM_TO_FAMILIAS[axes.dominantRealm];
+  if (c.familia && familiaEsperada.includes(c.familia)) {
+    score += FAMILIA_BONUS;
+  } else if (
+    // Ponte de dado real (não invenção): nenhuma criatura do pool de hoje
+    // tem `familia: 'humanoide'` (0/732, `docs/BESTIARIO-PROCEDENCIA.md`
+    // §7.1), mas várias já têm `biologia: ['Humanoide']` (os arquétipos de
+    // Gigante/Autômato etc.) — usa esse campo, que É real e já curado, como
+    // evidência equivalente só onde o reino esperaria a família ausente.
+    familiaEsperada.includes('humanoide') && c.biologia.includes('Humanoide')
+  ) {
+    score += FAMILIA_BONUS;
+  }
   const biomas = REALM_TO_BIOMA[axes.dominantRealm];
-  if (c.bioma.some(b => biomas.some(k => b.toLowerCase().includes(k)))) score += 2;
+  if (c.bioma.some(b => biomas.some(k => b.toLowerCase().includes(k)))) score += BIOMA_BONUS;
 
   const [hMin, hMax] = ALIGNMENT_TO_HOSTILIDADE[axes.dominantAlignment];
-  if (c.hostilidade >= hMin && c.hostilidade <= hMax) score += 1.5;
+  if (c.hostilidade >= hMin && c.hostilidade <= hMax) score += HOSTILIDADE_BONUS;
 
-  if (ROLE_TO_TAMANHOS[axes.dominantRole].includes(c.tamanho)) score += 1.5;
+  if (ROLE_TO_TAMANHOS[axes.dominantRole].includes(c.tamanho)) score += TAMANHO_BONUS;
 
   return score;
 }

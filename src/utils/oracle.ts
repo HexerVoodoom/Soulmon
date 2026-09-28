@@ -104,6 +104,21 @@ export interface OracleInput {
     nome?: string;
   };
   /**
+   * Achado de 28/09/2026: `pipeline.ts` já calcula uma LINHAGEM de inspiração
+   * do bestiário — um pick por estágio, encadeado por proximidade de espécie
+   * (`selectBestiaryLineage`, testado) — mas até aqui só o pick do primeiro
+   * estágio alimentava alguma coisa; os outros quatro eram descartados. Este
+   * campo é a BASE (mesma extração de `baseDeInspiracao`) do pick de CADA
+   * estágio, opcional e só usado se presente. Varia só o `inspiracao` do
+   * `imagePrompt` (1ª tentativa) de cada estágio — nunca nome, família ou
+   * bio, que continuam vindo do estágio 0 (`bestiaryInspiration`), para o
+   * jogador nunca ver a identidade "mudar de bicho" no texto. Sem este
+   * campo, todo estágio cai no nome único de sempre.
+   */
+  bestiaryLineageNomes?: {
+    rookie?: string; champion?: string; perfeito?: string; mega?: string; ultra?: string;
+  };
+  /**
    * Classe REAL da criatura — arquétipo do class-system (`ficha/classTitle.ts`,
    * motor real, `calcularProgressao`), calculada a partir da ficha ULTRA (a
    * mais concentrada — 100% de arquétipo pleno medido lá) e constante nos 11
@@ -1471,6 +1486,62 @@ const CREATURE_FAMILIES: CreatureFamily[] = [
   ]},
 ];
 
+/**
+ * Ponte entre a taxonomia GROSSA do bestiário (`BestiaryCreature.familia`/
+ * `.biologia`, `utils/soulProfile/bestiary/select.ts` — 12 valores de família
+ * e 9 de biologia hoje no pool) e a taxonomia FINA daqui (`CREATURE_FAMILIES`,
+ * 43 ids, cada um com subfamílias próprias). Nenhum dos dois lados inventa
+ * bicho novo — é só a tradução necessária para `pickFamilies` conseguir usar
+ * o que `pipeline.ts` já calcula e manda em `bestiaryInspiration.familia`/
+ * `.biologia`, hoje escrito e nunca lido (achado de 28/09/2026). `biologia`
+ * é mais específica que `familia` e vence quando as duas apontam famílias
+ * diferentes — é o campo mais próximo de uma classificação inequívoca que o
+ * bestiário tem.
+ */
+const BIOLOGIA_TO_FAMILY_IDS: Record<string, string[]> = {
+  'Anfíbio': ['amphibian'],
+  'Ave': ['bird'],
+  'Humanoide': ['halfhuman', 'goblinoid'],
+  'Inseto/Aracnídeo': ['insect', 'arachnid'],
+  'Invertebrado': ['cephalopod', 'crustacean'],
+  'Mamífero': ['feline', 'canine', 'ursine', 'rodent', 'equine', 'bovine', 'deer', 'primate', 'mustelid', 'proboscidean', 'chiroptera'],
+  'Molusco': ['cephalopod'],
+  'Peixe': ['fish', 'cetacean'],
+  'Réptil': ['reptile', 'dinosaur'],
+};
+
+const FAMILIA_TO_FAMILY_IDS: Record<string, string[]> = {
+  aberracao: ['chimeric', 'aquamyth', 'elemental'],
+  aquatica: ['fish', 'cephalopod', 'crustacean', 'cetacean', 'aquamyth'],
+  ave: ['bird'],
+  besta: ['feline', 'canine', 'ursine', 'rodent', 'equine', 'bovine', 'deer', 'primate', 'mustelid', 'proboscidean', 'chiroptera', 'insect', 'arachnid', 'reptile', 'dinosaur'],
+  construto: ['construct'],
+  demonio: ['fiend'],
+  draconico: ['dragon'],
+  espirito: ['fae', 'yokai', 'celestial'],
+  geleia: ['slime'],
+  gigante: ['giantkin'],
+  humanoide: ['halfhuman', 'goblinoid'],
+  ignea: ['elemental', 'dragon'],
+  morto_vivo: ['undead'],
+  planta: ['flower', 'tree', 'fungus', 'carniplant', 'desertplant', 'vine', 'fruitgourd'],
+};
+
+/** Ids de `CREATURE_FAMILIES` sugeridos pela inspiração do bestiário — `null`
+ *  se ela não render nenhum id conhecido (aí `pickFamilies` cai no comportamento
+ *  de sempre, só por elemento/reino). */
+function bestiaryFamilyIds(familia: string | null, biologia: string[]): string[] | null {
+  for (const b of biologia) {
+    const ids = BIOLOGIA_TO_FAMILY_IDS[b];
+    if (ids) return ids;
+  }
+  if (familia) {
+    const ids = FAMILIA_TO_FAMILY_IDS[familia];
+    if (ids) return ids;
+  }
+  return null;
+}
+
 // Pool ESPECIAL de OBJETOS — só pode aparecer no 2º slot de família e é raro.
 const FAMILY_OBJECTS: Subfamily[] = [
   sf('lâmina', 'blade', 'espada', 'sword'),
@@ -1533,6 +1604,7 @@ function pickFamilies(
   secondaryElement: ElementId | null,
   dominantRealm: RealmId,
   descText: string,
+  bestiaryFamilyHint?: string[] | null,
 ): FamilyResult {
   // Descrição do pet: procura família/subfamília citada pelo nome
   const mentioned = descText
@@ -1548,7 +1620,16 @@ function pickFamilies(
     f.realms.includes(dominantRealm);
 
   const pool1 = CREATURE_FAMILIES.filter(affinity);
-  const fam1 = mentioned[0]?.f ?? pick(rng, pool1.length ? pool1 : CREATURE_FAMILIES);
+  // Sem menção textual explícita, a taxonomia do bestiário (`familia`/
+  // `biologia` já calculados por `select.ts` para a criatura-inspiração
+  // escolhida) reforça o slot 1: dentro da afinidade elemento/reino de
+  // sempre, prioriza as famílias que a taxonomia do bestiário sugere. Some
+  // não substitui: se a interseção vier vazia, cai no `pool1` de sempre.
+  const bestiaryPool = bestiaryFamilyHint?.length
+    ? pool1.filter(f => bestiaryFamilyHint.includes(f.id))
+    : [];
+  const fam1 = mentioned[0]?.f
+    ?? pick(rng, bestiaryPool.length ? bestiaryPool : (pool1.length ? pool1 : CREATURE_FAMILIES));
   const sub1 = mentioned[0]?.s ?? pick(rng, fam1.subs);
   const primary = makeSlot(fam1, sub1);
 
@@ -3078,7 +3159,24 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
      tenta COM o nome, e se o provedor recusar, a 2ª tentativa vai sem.
      Entra SÓ em `imagePrompt`; `imagePromptFallback` segue limpo. */
   const inspiracaoNome = input.bestiaryInspiration?.nome?.trim() || undefined;
-  const family = pickFamilies(rng, dominantElement, secondaryElement, dominantRealm, familyHintText);
+  // Por estágio, prefere a base da LINHAGEM (proximidade de espécie já
+  // calculada); sem lineage (caminho legado/`generateOracle` puro), cai no
+  // nome único de sempre — nunca quebra quem não passa o campo novo.
+  const inspiracaoPorEstagio = input.bestiaryLineageNomes;
+  const inspiracaoRookie = inspiracaoPorEstagio?.rookie?.trim() || inspiracaoNome;
+  const inspiracaoChampion = inspiracaoPorEstagio?.champion?.trim() || inspiracaoNome;
+  const inspiracaoPerfeito = inspiracaoPorEstagio?.perfeito?.trim() || inspiracaoNome;
+  const inspiracaoMega = inspiracaoPorEstagio?.mega?.trim() || inspiracaoNome;
+  const inspiracaoUltra = inspiracaoPorEstagio?.ultra?.trim() || inspiracaoNome;
+  // ⚠️ Achado de 28/09/2026: `familia`/`biologia` chegavam em
+  // `bestiaryInspiration` e nunca eram lidos aqui — a taxonomia que
+  // `select.ts` já calculou com confiança (bônus de `REALM_TO_FAMILIAS`) era
+  // jogada fora na hora de escolher a família visual. Hoje reforça o slot 1
+  // quando a descrição do usuário não citou bicho nenhum explicitamente.
+  const bestiaryFamilyHint = input.bestiaryInspiration
+    ? bestiaryFamilyIds(input.bestiaryInspiration.familia, input.bestiaryInspiration.biologia)
+    : null;
+  const family = pickFamilies(rng, dominantElement, secondaryElement, dominantRealm, familyHintText, bestiaryFamilyHint);
   // fusionA/fusionB = substantivos concretos dos dois slots (compat + conceito)
   const fusionA = family.primary.noun;
   const fusionB = family.secondary.noun;
@@ -3263,7 +3361,7 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     },
     ...composeSpritePrompts({
       concept: spriteConcept, colorDesc, accent: ALIGNMENT_ACCENT[dominantAlignment],
-      favoriteCreature, rebirth: rebirthClause, inspiracao: inspiracaoNome,
+      favoriteCreature, rebirth: rebirthClause, inspiracao: inspiracaoRookie,
       levelBlock: rookieLevel,
     }),
   });
@@ -3301,7 +3399,7 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       },
       ...composeSpritePrompts({
         concept: spriteConcept, colorDesc, accent: bAccent,
-        favoriteCreature, rebirth: rebirthClause, inspiracao: inspiracaoNome,
+        favoriteCreature, rebirth: rebirthClause, inspiracao: inspiracaoChampion,
         levelBlock: `it has evolved into ${champShape.en}`,
       }),
     });
@@ -3317,7 +3415,7 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       },
       ...composeSpritePrompts({
         concept: spriteConcept, colorDesc, accent: bAccent,
-        favoriteCreature, rebirth: rebirthClause, inspiracao: inspiracaoNome,
+        favoriteCreature, rebirth: rebirthClause, inspiracao: inspiracaoPerfeito,
         levelBlock: `it has transformed into ${perfShape.en}`,
       }),
     });
@@ -3333,7 +3431,7 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       },
       ...composeSpritePrompts({
         concept: spriteConcept, colorDesc, accent: bAccent,
-        favoriteCreature, rebirth: rebirthClause, inspiracao: inspiracaoNome,
+        favoriteCreature, rebirth: rebirthClause, inspiracao: inspiracaoMega,
         levelBlock: `in its final form, it is ${megaShape.en}`,
       }),
     });
@@ -3354,7 +3452,7 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     },
     ...composeSpritePrompts({
       concept: spriteConcept, colorDesc, accent: 'red, cyan and gold',
-      favoriteCreature, rebirth: rebirthClause, inspiracao: inspiracaoNome,
+      favoriteCreature, rebirth: rebirthClause, inspiracao: inspiracaoUltra,
       levelBlock: `${pick(rng, ULTRA_LOOK)}, the ultra fusion of its three mega forms`,
     }),
   });

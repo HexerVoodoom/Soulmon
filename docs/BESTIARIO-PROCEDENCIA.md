@@ -378,4 +378,75 @@ Régua: `curadoria.contract.test.ts` cobre os arquétipos pelos mesmos testes
 exaustivos do resto do pool (descrição não-truncada, corroboração nome↔texto,
 família/biologia consistente, atributos numéricos sãos). Não há teste
 dedicado à distribuição de família por reino — pendência.
+
+## 13. O Oráculo explorava mal o pool — achado e conserto (28/09/2026)
+
+Pedido do dono, depois do corte e da curadoria: *"garanta que o bestiário é
+bem explorado, que todo recurso disponível ali tenha bom uso [...] tanto na
+criação quanto na evolução [...] embasado com os dados que já existem"*.
+
+Levantamento (agente, análise símbolo a símbolo do pipeline real — sem
+suposição): três achados de DADO JÁ CALCULADO e descartado, mais um
+desequilíbrio de peso mensurável. Nenhum conserto abaixo inventa campo novo
+no `pool.json` — todos usam `familia`/`biologia`/a linhagem que `select.ts`
+e `pipeline.ts` já produziam.
+
+1. **`bestiaryInspiration.familia`/`.biologia` eram escritos por `pipeline.ts`
+   e nunca lidos por `oracle.ts`** — a família da criatura-inspiração, já
+   calculada com confiança em `scoreCreature`, era jogada fora na hora de
+   escolher a FAMÍLIA VISUAL do pet (`pickFamilies`, que só olhava menção
+   textual solta na descrição). Conserto: `bestiaryFamilyIds` (nova ponte em
+   `oracle.ts`, entre a taxonomia grossa do bestiário — 12 valores de
+   `familia`, 9 de `biologia` — e as 43 `CREATURE_FAMILIES` finas do
+   Oráculo) reforça o slot 1 de família quando a descrição do usuário não
+   citou bicho nenhum. `biologia` (mais específica) vence quando as duas
+   discordam.
+2. **A LINHAGEM inteira (`selectBestiaryLineage`, um pick por estágio de
+   evolução, testado e funcional) era calculada em TODA geração e descartada
+   nos dois call-sites de produção** (`App.tsx`, `SoulmonOnboarding.tsx`) —
+   as 11 formas (rookie→ultra) sempre citavam a mesma inspiração do estágio
+   0. Conserto: `pipeline.ts` agora extrai a base de nome de CADA pick da
+   linhagem (`bestiaryLineageNomes`) e `oracle.ts` usa a base do ESTÁGIO
+   certo (`champion`/`ultimate`↔perfeito/`mega`/`ultra`) só no `imagePrompt`
+   com referências daquele estágio — nome, família e identidade continuam
+   fixos pelo estágio 0 (o jogador nunca vê o pet "trocar de espécie" no
+   texto; só a inspiração de IMAGEM evolui com ele, do jeito que a linhagem
+   por proximidade de espécie já foi desenhada para fazer).
+3. **`ignea`/`humanoide` em `REALM_TO_FAMILIAS` (`select.ts`) não tinham
+   NENHUMA criatura com essa `familia` no pool** (§12 já registrava isto).
+   `humanoide` ganhou ponte: como `biologia: ['Humanoide']` É real e já
+   curado em várias linhas (os arquétipos de Gigante etc.), `scoreCreature`
+   agora aceita esse campo como evidência equivalente só onde `familia`
+   viria vazia. **`ignea` NÃO ganhou ponte** — o próprio §12 registra que
+   esse nome já foi visto como resíduo do bug de corrupção de família
+   corrigido na curadoria, sem certeza de ser família legítima; sintetizar
+   em cima dessa incerteza seria inventar, não consertar. Fica documentado
+   como pendência do dono (manter/remover/gerar de verdade), sem bônus até
+   lá — não é regressão: já não tinha bônus nenhum hoje.
+4. **Rebalanceio pedido pelo dono**: o termo de elemento em `scoreCreature`
+   é contínuo sobre 17 valores medidos e tipicamente supera o teto fixo dos
+   outros quatro critérios somados (família+bioma+hostilidade+tamanho, que
+   era 7) — então papel/alinhamento/reino do jogador, que só entram por
+   esses quatro, quase nunca conseguiam vencer um elemento bem alinhado,
+   mesmo sendo o sinal mais forte da leitura da pessoa. Os quatro bônus
+   dobraram (família 2→4, bioma 2→4, hostilidade 1,5→3, tamanho 1,5→3 —
+   teto combinado 7→14), aproximando a ordem de grandeza sem zerar a
+   vantagem do elemento (que continua sendo o único termo com nuance
+   contínua; os quatro seguem binários).
+
+O que ficou de fora, registrado e não corrigido — o pedido explícito é para
+constar, não decidir sozinho:
+- `atributos` (força/inteligência/velocidade/magia) do pool só é lido pela
+  Arena (inimigo aleatório), nunca pela ficha do próprio Soulmon do jogador.
+  Não é bug — a Arena sorteia por design, sem pontuar contra os eixos do
+  jogador —, mas registra que os dois consumidores leem o MESMO pool com
+  critérios diferentes.
+- Calibração fina de `FAMILIA_BONUS`/`BIOMA_BONUS`/`HOSTILIDADE_BONUS`/
+  `TAMANHO_BONUS` (hoje 4/4/3/3, dobrados a partir de 2/2/1,5/1,5) é
+  julgamento de design, não fato mensurável — pode precisar de mais uma
+  rodada depois de uso real.
+
+Régua: `src/utils/soulProfile/pipeline.test.ts` (o caso do nome no prompt
+passou a conferir por ESTÁGIO, contra a linhagem, não mais um nome único
+repetido 11 vezes).
 </content>
