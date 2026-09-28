@@ -1863,6 +1863,29 @@ function pickFamiliaCompensada(rng: () => number, pool: CreatureFamily[]): Creat
   return pool[pool.length - 1];
 }
 
+/**
+ * Os 11 elementos que SÓ existem no class-system (os outros 6 têm par direto
+ * nos 8 do Oráculo) ganham voz na APARÊNCIA. ⚠️ 28/09/2026, pergunta do dono:
+ * "por que usa só o elemento ao invés de todos disponíveis em
+ * class-system/bestiário?". Até aqui paleta, textura e família visual liam só
+ * os 8, e tempo/som/gravidade/vida/morte… decidiam a ficha mas nunca eram
+ * VISTOS. O mais forte dos 11 na leitura vira um motivo no sprite e puxa
+ * famílias visuais afins (sem excluir as do elemento de 8).
+ */
+export const MOTIVO_ELEMENTO_CLASSE: Record<string, { en: string; pt: string; familias: string[] }> = {
+  eletricidade: { en: 'crackling spark markings', pt: 'marcas de faísca', familias: ['eel', 'construct', 'raptor'] },
+  arcano: { en: 'glowing rune markings', pt: 'runas brilhantes', familias: ['fae', 'genie', 'owl', 'cephalopod'] },
+  vileza: { en: 'venomous barbs', pt: 'farpas venenosas', familias: ['scorpion', 'spider', 'reptile', 'carniplant'] },
+  morte: { en: 'bone-white skull motifs', pt: 'motivos de osso', familias: ['skeleton', 'ghost', 'zombie', 'corvid'] },
+  vida: { en: 'sprouting leaf buds', pt: 'brotos de folha', familias: ['flower', 'tree', 'deer', 'fungus'] },
+  vigor: { en: 'thick muscular build', pt: 'corpo robusto', familias: ['ursine', 'bovine', 'proboscidean', 'giantkin'] },
+  marcial: { en: 'battle-worn armor plates', pt: 'placas de armadura', familias: ['beetle', 'crab', 'feline', 'mantis'] },
+  tempo: { en: 'hourglass and clockwork motifs', pt: 'motivos de ampulheta', familias: ['cephalopod', 'reptile', 'tree', 'construct'] },
+  som: { en: 'sound-wave ripple markings', pt: 'marcas de onda sonora', familias: ['songbird', 'orthopteran', 'cetacean', 'chiroptera'] },
+  gravidade: { en: 'orbiting pebble satellites', pt: 'pedrinhas em órbita', familias: ['geological', 'golem', 'proboscidean', 'deepsea'] },
+  espaco: { en: 'starfield speckles', pt: 'pintas de céu estrelado', familias: ['extraterrestrial', 'cnidarian', 'celestial', 'seabird'] },
+};
+
 function pickFamilies(
   rng: () => number,
   dominantElement: ElementId,
@@ -1871,6 +1894,7 @@ function pickFamilies(
   descText: string,
   bestiaryFamilyHint?: string[] | null,
   bestiaryText?: string,
+  familiasDoMotivo: string[] = [],
 ): FamilyResult {
   // Descrição do PRÓPRIO jogador: bicho citado pelo nome manda (é dado dele).
   const mentioned = familiasCitadas(descText);
@@ -1878,7 +1902,8 @@ function pickFamilies(
   const affinity = (f: CreatureFamily) =>
     f.elements.includes(dominantElement) ||
     (secondaryElement !== null && f.elements.includes(secondaryElement)) ||
-    f.realms.includes(dominantRealm);
+    f.realms.includes(dominantRealm) ||
+    familiasDoMotivo.includes(f.id);
 
   const pool1 = CREATURE_FAMILIES.filter(affinity);
   // Sugestão do bestiário = taxonomia estruturada (`familia`/`biologia`) +
@@ -3450,10 +3475,18 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
   const bestiaryFamilyHint = input.bestiaryInspiration
     ? bestiaryFamilyIds(input.bestiaryInspiration.familia, input.bestiaryInspiration.biologia)
     : null;
+  // O mais forte dos 11 elementos exclusivos do class-system (ver
+  // `MOTIVO_ELEMENTO_CLASSE`). Só existe no caminho com perfil de alma.
+  const motivoId = soul
+    ? Object.keys(MOTIVO_ELEMENTO_CLASSE)
+      .sort((a, b) => (soul.oracle.classElements[b as keyof typeof soul.oracle.classElements] ?? 0) - (soul.oracle.classElements[a as keyof typeof soul.oracle.classElements] ?? 0))[0]
+    : undefined;
+  const motivo = motivoId ? MOTIVO_ELEMENTO_CLASSE[motivoId] : undefined;
   const family = pickFamilies(
     rng, dominantElement, secondaryElement, dominantRealm,
     descText, bestiaryFamilyHint,
     descText ? '' : familyHintText,
+    motivo?.familias ?? [],
   );
   // fusionA/fusionB = substantivos concretos dos dois slots (compat + conceito)
   const fusionA = family.primary.noun;
@@ -3574,7 +3607,7 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
   // OPCIONAL — só quando o pipeline calculou um arquétipo pleno de verdade
   // (não o fallback genérico "Adept of X"); dá o mesmo detalhe extra que o
   // reveal já tinha antes de virar mais genérico, mas só na imagem.
-  const spriteTraitsEn = [identity.en, dominantClass.en, secondaryFlavor?.en, input.promptClassFlavor]
+  const spriteTraitsEn = [identity.en, dominantClass.en, secondaryFlavor?.en, motivo?.en, input.promptClassFlavor]
     .filter(Boolean).join(', ');
   // A bio é o ÚNICO texto descritivo do reveal — o momento mais importante do
   // ritual. Era um fragmento em EN ("angel-seraph, Sky Cleric": minúscula, sem
