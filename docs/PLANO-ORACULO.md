@@ -78,5 +78,39 @@ Critérios C1–C8 (cobertura, sem vencedor estrutural nos 4 eixos ≤1,5×, esc
 ## 9. Decisões novas — DECIDIDAS pelo dono (28/09/2026, todas pela recomendação)
 1. Rebirth **herda um traço** do ciclo anterior (família visual ou elemento); nunca reset puro. ✅
 2. Companheiro vira **parceiro visível e nomeado** (Home/masmorra). ✅
+
+## 10. Estado final — Fases 0, 1, 2 e 3 fechadas (28/09/2026)
+
+19 PRs mergeados na `main` (#146–#166 + 3 consolidações do orquestrador), 3 modelos usados por tipo de trabalho (Sonnet no mecânico, Opus no que precisava calibrar por medição, Fable no que é desenho/texto pro jogador). Auditoria final em `docs/reviews/oraculo-auditoria/2026-09-28.md` (N=800, seeds de validação):
+
+| Critério | Alvo | Resultado final |
+|---|---|---|
+| Elemento | ≤1,5× | 1,56× (ruído 1,33×) |
+| Caminho | ≤1,5× | 1,27× ✅ |
+| Papel | ≤1,5× | 1,42× ✅ (medido pela 1ª vez) |
+| Reino | ≤1,5× | 1,36× ✅ (medido pela 1ª vez) |
+| Escola | ≤2× | 1,44× ✅ (era 3,14× depois de um efeito colateral do papel — corrigido em B8) |
+| Grupos do bestiário | ≤4× | 1,8× ✅ |
+| Famílias visuais | ≤4× | 6,67× (N=2400: 2,58×, dentro do piso de ruído) |
+| Classes alcançáveis | 79/79 | 78/79 — Jardineiro Eterno não saiu em N=800; ápice raro por design, não buraco |
+| Criaturas sorteadas | 194/194 | 181/194 |
+| Linhagem: continuidade / travessia | 70–90% / 30–65% | 84,7% / 57,3% ✅ |
+| Unicidade / colisão de nome | ≥85% / ≤2% | 94,4% / 1,75% ✅ |
+| **C9 (novo, KR2)** | — | **0%**: nenhum dado de comportamento entra em `OracleInput` hoje. O galho final muda em 14% (via empate de atributo, não por ritmo direto), o caminho de galhos em 41%. A evolução ainda não responde à trajetória como o goal pede — fica registrado como pendência de mecânica para um WP futuro, maior que uma sessão. |
+
+**Fase 2 — bundle:** chunk de entrada caiu de 671.504 B para 649.647 B (−22 KB), com as famílias visuais num chunk próprio carregado só na criação. PR de vocabulário (item 3) foi **adiado**: o ganho seria de ~7 KB e exigiria partir o `oracle.ts` síncrono — registrado, não forçado.
+
+**Fase 3 — jogador:**
+- Classe nunca aparece: era bug ativo (a `PetPage` escrevia o nome do arquétipo), não só risco — corrigido, com régua em CI.
+- Companheiro visível e nomeado na Ficha (PT+EN, 32/32).
+- Talento vira fala do pet (65/65), profissão vira modificador leve na masmorra (11/11).
+- Numerologia: nenhum campo pesado chegava ao jogador; vocabulário traduzido mesmo assim ("desafio" → "travessia").
+- Rebirth herda o elemento dominante do ciclo anterior nas 11 formas.
+
+**Achados fora do escopo desta rodada, registrados:**
+- `RebirthBoost` (×1,5) nunca é aplicado — `fromInput`/`pipeline` não passam `boost`.
+- Caches da ficha não invalidam em upgrade/rebirth.
+- Dois testes de UI (`playArea.render`, `SoulmonOnboarding.portao`) são intermitentes sob carga da suíte cheia, verdes isolados — pré-existentes, não tocados por este trabalho.
+- O mecanismo de C9 (evolução reagir de verdade ao comportamento) é o próximo passo natural do Oráculo — não cabe numa sessão.
 3. Class-system é **balanceador oculto** de masmorra/torneio (dificuldade, drops). ✅
 4. Raridade comunicada só por NPC/forma; **nunca** selo, porcentagem ou "faltam N". ✅
