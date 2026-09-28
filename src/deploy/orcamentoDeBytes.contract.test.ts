@@ -53,7 +53,11 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // `completionUndo.ts`: snapshot de 11 campos) e os 6 emissores de `BondEvent`
   // no `App.tsx`. Crescimento JUSTIFICADO, não perdoado: a dívida continua
   // sendo paga pela correção #2 (auditar o chunk de entrada).
-  'index.js': 652_255,
+  // Re-medido em 28/09/2026: 652_255 → 667_718 (+15,1 KB) pelas famílias
+  // visuais do Oráculo (48 → 72, pedido do dono: subdividir artrópodes,
+  // mortos-vivos, aves, peixes, elementais). Candidato óbvio para pagar:
+  // `CREATURE_FAMILIES` só é usado na criação — mover para chunk preguiçoso.
+  'index.js': 667_718,
   'index.css': 142_696,          // 139 KB — 1,4× o teto
   'evolution-bg.mp4': 3_917_240, // 3,7 MB — fundo de UMA cerimônia; correção #3 (WebM/CSS)
   'intro.mp4': 2_524_939,        // 2,4 MB — vídeo da intro
