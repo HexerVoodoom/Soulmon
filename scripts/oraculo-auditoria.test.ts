@@ -41,6 +41,7 @@ import { generateOracleComplete, type OracleComplete } from '../src/utils/soulPr
 import { computeClassTitle } from '../src/utils/soulProfile/ficha/classTitle';
 import { BESTIARY_POOL, especieDe } from '../src/utils/soulProfile/bestiary/select';
 import { PREMADE_CHARACTERS } from '../src/utils/monetization';
+import { computeCarePattern, resolveBranch } from '../src/utils/carePattern';
 
 const ROOT = path.resolve(__dirname, '..');
 const OUT_DIR = path.join(ROOT, 'docs/reviews/oraculo-auditoria');
@@ -153,6 +154,57 @@ function fatiaEstrutural(grupo: Grupo): Record<'elemento' | 'papel' | 'reino', {
     }
   }
   return { elemento: { ...razao(M.elemento, n), fatia: M.elemento }, papel: { ...razao(M.papel, n), fatia: M.papel }, reino: { ...razao(M.reino, n), fatia: M.reino } };
+}
+
+/**
+ * C9 — divergência comportamental (plano §6 KR2; Fase 1 B5). Pares com a
+ * MESMA leitura (logo, o mesmo Oráculo inteiro: `OracleInput` não tem campo
+ * de comportamento) e trajetórias opostas de RITMO — Constante (1 conclusão
+ * por dia, 14 dias) × Explosivo (tudo em 2 dias) —, com as MESMAS categorias
+ * de tarefa (mesmos atributos). Cada estágio (champion, ultimate, mega) decide
+ * o galho por `resolveBranch`, como a cerimônia. Mede quantos pares terminam
+ * com galho final / caminho diferentes. Referência: o mesmo par com
+ * categorias INDEPENDENTES (atributos diferentes).
+ */
+function c9(seed: number, pares: number) {
+  type B = 'virus' | 'data' | 'vaccine';
+  const rng = mulberry32(seed);
+  const now = new Date('2026-09-28T12:00:00Z');
+  const dia = (d: number) => new Date(now.getTime() - (d + 0.5) * 86400000).toISOString();
+  const T = 14;
+  const constante = computeCarePattern(Array.from({ length: T }, (_, j) => ({ completedAt: dia(j) })), now);
+  const explosivo = computeCarePattern(Array.from({ length: T }, (_, j) => ({ completedAt: dia(j % 2) })), now);
+  const cats = (): Record<B, number> => {
+    const p = { virus: 0, data: 0, vaccine: 0 } as Record<B, number>;
+    for (let j = 0; j < T; j++) p[(['virus', 'data', 'vaccine'] as B[])[Math.floor(rng() * 3)]]++;
+    return p;
+  };
+  let finalMesmasCat = 0; let caminhoMesmasCat = 0; let empates = 0; let finalIndep = 0; let decisoes = 0;
+  for (let i = 0; i < pares; i++) {
+    let a: B = 'data'; let b: B = 'data'; const pathA: B[] = []; const pathB: B[] = [];
+    let ai: B = 'data'; let bi: B = 'data';
+    for (let est = 0; est < 3; est++) {
+      const pts = cats();
+      const vals = Object.values(pts); const mx = Math.max(...vals);
+      if (vals.filter(v => v === mx).length > 1) empates++;
+      decisoes++;
+      a = resolveBranch(pts, constante, a); b = resolveBranch(pts, explosivo, b);
+      pathA.push(a); pathB.push(b);
+      ai = resolveBranch(cats(), constante, ai); bi = resolveBranch(cats(), explosivo, bi);
+    }
+    if (a !== b) finalMesmasCat++;
+    if (pathA.join() !== pathB.join()) caminhoMesmasCat++;
+    if (ai !== bi) finalIndep++;
+  }
+  return {
+    pares,
+    leituraConstante: constante.pattern.id, leituraExplosivo: explosivo.pattern.id,
+    oraculoDiverge: 0,
+    formaFinalDiverge: +(finalMesmasCat / pares).toFixed(3),
+    caminhoDiverge: +(caminhoMesmasCat / pares).toFixed(3),
+    decisoesEmpatadas: +(empates / decisoes).toFixed(3),
+    referenciaAtributosIndependentes: +(finalIndep / pares).toFixed(3),
+  };
 }
 
 it('auditoria do oráculo — C1/C2/C3/C4/C7/C8, N>=800, seeds de validação', async () => {
@@ -295,13 +347,13 @@ it('auditoria do oráculo — C1/C2/C3/C4/C7/C8, N>=800, seeds de validação', 
       soCincoPerguntasSemTesteLongo: { n: porGrupo.curto.n, elemento: razao(porGrupo.curto.elemento, porGrupo.curto.n), papel: razao(porGrupo.curto.papel, porGrupo.curto.n), reino: razao(porGrupo.curto.reino, porGrupo.curto.n), tuplasUnicas: +(Object.keys(porGrupo.curto.tupla).length / (porGrupo.curto.n || 1)).toFixed(3) },
       completo: { n: porGrupo.completo.n, elemento: razao(porGrupo.completo.elemento, porGrupo.completo.n), papel: razao(porGrupo.completo.papel, porGrupo.completo.n), reino: razao(porGrupo.completo.reino, porGrupo.completo.n), tuplasUnicas: +(Object.keys(porGrupo.completo.tupla).length / (porGrupo.completo.n || 1)).toFixed(3) },
     },
+    c9_divergenciaComportamental: c9(SEEDS[0], 4000),
     fatiasEstruturais: {
       timeUnknown: fatiaEstrutural('timeUnknown'),
       curto: fatiaEstrutural('curto'),
       completo: fatiaEstrutural('completo'),
     },
     naoCoberto: [
-      'C9 (divergência comportamental / trajetória) — Fase 1, plano §6.',
       'C5 (fidelidade direcional por eixo) — desenhado em rodada2-regua.md §5, não implementado nesta rodada.',
       'reroll — desenho pendente (rodada2-regua.md §8).',
       'rebirth (orçamento ×1.5) — fora do escopo da régua C1-C8 por decisão registrada em rodada2-regua.md §8.',
@@ -374,6 +426,15 @@ ${linhaEixo('Família visual — estrutural N=' + relatorio.c4_grupos.estrutural
 | timeUnknown (~20%) | ${relatorio.edgeCases.timeUnknown.n} | ${rz(relatorio.edgeCases.timeUnknown.elemento)} | ${rz(relatorio.edgeCases.timeUnknown.papel)} | ${rz(relatorio.edgeCases.timeUnknown.reino)} | ${(relatorio.edgeCases.timeUnknown.tuplasUnicas * 100).toFixed(1)}% |
 | só 6 perguntas, sem teste longo (~30%) | ${relatorio.edgeCases.soCincoPerguntasSemTesteLongo.n} | ${rz(relatorio.edgeCases.soCincoPerguntasSemTesteLongo.elemento)} | ${rz(relatorio.edgeCases.soCincoPerguntasSemTesteLongo.papel)} | ${rz(relatorio.edgeCases.soCincoPerguntasSemTesteLongo.reino)} | ${(relatorio.edgeCases.soCincoPerguntasSemTesteLongo.tuplasUnicas * 100).toFixed(1)}% |
 | completo (mapa + teste longo) | ${relatorio.edgeCases.completo.n} | ${rz(relatorio.edgeCases.completo.elemento)} | ${rz(relatorio.edgeCases.completo.papel)} | ${rz(relatorio.edgeCases.completo.reino)} | ${(relatorio.edgeCases.completo.tuplasUnicas * 100).toFixed(1)}% |
+
+## C9 — divergência comportamental (mesma leitura, ritmo oposto)
+
+- Pares: ${relatorio.c9_divergenciaComportamental.pares} (Constante lido como ${relatorio.c9_divergenciaComportamental.leituraConstante}, Explosivo como ${relatorio.c9_divergenciaComportamental.leituraExplosivo}), mesmas categorias de tarefa
+- Oráculo (família, linhagem do bestiário, nome, companheiro, skills): ${relatorio.c9_divergenciaComportamental.oraculoDiverge * 100}% — nenhum campo de comportamento entra em OracleInput
+- Forma final (galho da mega) diferente: ${(relatorio.c9_divergenciaComportamental.formaFinalDiverge * 100).toFixed(1)}%
+- Caminho de galhos (champion→ultimate→mega) diferente: ${(relatorio.c9_divergenciaComportamental.caminhoDiverge * 100).toFixed(1)}%
+- Decisões com empate de atributo (único lugar onde o ritmo pesa): ${(relatorio.c9_divergenciaComportamental.decisoesEmpatadas * 100).toFixed(1)}%
+- Referência — mesmo ritmo oposto com atributos INDEPENDENTES: ${(relatorio.c9_divergenciaComportamental.referenciaAtributosIndependentes * 100).toFixed(1)}% (quem diverge é a categoria das tarefas, não o ritmo)
 
 ## Fatias estruturais (N=2400 POR fatia, só generateOracle)
 
