@@ -1157,10 +1157,10 @@ const REALM_NAME_STEMS: Record<RealmId, string[]> = {
   akasha: ['Akasha', 'Aetheri', 'Nimbra', 'Mantra', 'Orbe', 'Anima'],
 };
 
-// Codas de nome: sempre alternam com o fim do radical (radical terminando em
-// vogal ganha coda que começa em consoante e vice-versa) — é o que mantém o
-// resultado pronunciável em qualquer combinação.
-const NAME_CODAS_AFTER_VOWEL = ['ris', 'nix', 'del', 'lyn', 'mor', 'gus', 'dal', 'vio', 'zar', 'lis', 'don', 'rex'];
+// Codas de nome: começam em vogal e vêm sempre depois da consoante da sílaba
+// pessoal (radical + consoante + coda) — é o que mantém o resultado
+// pronunciável. Até a B4 havia um banco "após vogal" para radical + coda sem
+// nada do nome, e esse padrão era o que mais colidia (C8).
 const NAME_CODAS_AFTER_CONSONANT = ['is', 'ix', 'ar', 'el', 'yn', 'ia', 'or', 'us', 'eo', 'ax', 'on', 'ura'];
 // Cauda curta do padrão radical+sílaba+cauda (a sílaba pessoal termina em
 // vogal, então a cauda é 1 consoante ou vogal fechando: Flaredin, Flaredis…).
@@ -3629,8 +3629,7 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     : nameLetters
       ? (nameLetters[0] + (nameLetters.slice(1).match(/[AEIOU]/)?.[0] ?? 'a')).toLowerCase()
       : 'mo';
-  const stemEndsInVowel = /[aeiou]$/i.test(stem);
-  const coda = pick(nameRng, stemEndsInVowel ? NAME_CODAS_AFTER_VOWEL : NAME_CODAS_AFTER_CONSONANT);
+  const codaAfterPersonal = pick(nameRng, NAME_CODAS_AFTER_CONSONANT);
   const tail = pick(nameRng, NAME_TAILS);
   const patternRoll = nameRng();
   let rawName: string;
@@ -3640,7 +3639,9 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     // sílaba pessoal na FRENTE, elemento atrás: Diflare
     rawName = nameSyllable[0].toUpperCase() + nameSyllable.slice(1) + stem.toLowerCase();
   } else if (patternRoll < 0.8) {
-    rawName = stem + coda; // radical + coda: Aquaris, Thornix
+    // radical + consoante pessoal + coda: Aquamis, Thornedix. Até a B4 era
+    // só radical + coda, sem nada do nome — o padrão que mais colidia (C8).
+    rawName = stem + nameSyllable[0] + codaAfterPersonal;
   } else {
     rawName = stem + nameSyllable + tail; // Flaredin, Flaredis
   }
