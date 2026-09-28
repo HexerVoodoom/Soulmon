@@ -13,7 +13,8 @@
 // ---------------------------------------------------------------------------
 
 import { describe, expect, it } from 'vitest';
-import { generateOracle, ELEMENT_ORDER, REALM_ORDER, ROLE_ORDER, ALIGNMENT_ORDER } from './oracle';
+import { generateOracle } from '../test/oracleSync';
+import { ELEMENT_ORDER, REALM_ORDER, ROLE_ORDER, ALIGNMENT_ORDER } from './oracle';
 import type { OracleInput } from './oracle';
 import { buildSoulProfile } from './soulProfile';
 import { items } from './soulProfile/personality/questions';

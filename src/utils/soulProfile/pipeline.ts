@@ -67,7 +67,7 @@ function baseDeInspiracao(nome: string): string {
 
 export async function generateOracleComplete(input: OracleInput, seed?: number): Promise<OracleComplete> {
   const soul: SoulProfile | undefined = input.soulProfile;
-  if (!soul) throw new Error('generateOracleComplete exige soulProfile — use generateOracle para o caminho legado');
+  if (!soul) throw new Error('generateOracleComplete exige soulProfile — use generateOracleAsync para o caminho legado');
 
   const idKey = identityKey(input);
   const salt = seed ?? Math.floor(Math.random() * 0xffffffff);

@@ -29,10 +29,6 @@ export type { SoulProfile };
 // Tipos das famílias (só tipo — some na compilação). Os DADOS vêm por
 // parâmetro: ver `generateOracleAsync` / `FamiliasOraculo`.
 import type { CreatureFamily, Subfamily } from './oracle/familias';
-// PR 1 da Fase 2: import ESTÁTICO temporário, só para o alias síncrono
-// `generateOracle`. Sai no PR 2 — enquanto existir, as famílias continuam no
-// chunk de entrada.
-import * as FAMILIAS_ESTATICAS from './oracle/familias';
 
 /** O que `generateOracleWithFamilies` precisa do módulo `./oracle/familias`
  *  (o próprio namespace do `import()` satisfaz este tipo). */
@@ -2714,11 +2710,6 @@ function addScore<K extends string>(
 export async function generateOracleAsync(input: OracleInput, seed?: number, overrides?: OracleOverrides): Promise<OracleResult> {
   const familias = await import('./oracle/familias');
   return generateOracleWithFamilies(input, familias, seed, overrides);
-}
-
-/** Alias SÍNCRONO temporário (Fase 2, PR 1) — some no PR 2. */
-export function generateOracle(input: OracleInput, seed?: number, overrides?: OracleOverrides): OracleResult {
-  return generateOracleWithFamilies(input, FAMILIAS_ESTATICAS, seed, overrides);
 }
 
 /** O corpo puro da geração: as famílias entram por parâmetro. */

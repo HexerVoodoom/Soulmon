@@ -1,10 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import {
   normalizeName, reduceNumber, computeNumerology, westernSunSign,
-  approximateAscendant, computeChinese, computeVedic, generateOracle,
+  approximateAscendant, computeChinese, computeVedic,
   ELEMENT_ORDER, ROLE_ORDER, ALIGNMENT_ORDER, REALM_ORDER, ORACLE_QUESTIONS,
   type OracleInput,
 } from './oracle';
+import { generateOracle } from '../test/oracleSync';
 
 const INPUT: OracleInput = {
   fullName: 'Maria da Silva',
@@ -478,10 +479,9 @@ describe('WP1.11 — o hint diz DE ONDE a resposta entra, nunca como a criatura 
   });
 });
 
-// Fase 2, PR 1 — paridade temporária sync × async (apagar no PR 2, quando o
-// alias síncrono sair).
-describe('generateOracleAsync (paridade com o alias sync)', () => {
-  it('mesma seed e overrides → mesma saída', async () => {
+// Fase 2 — o caminho de produção (async) bate com o sync dos testes.
+describe('generateOracleAsync', () => {
+  it('mesma seed → mesma saída que o sync de teste', async () => {
     const { generateOracleAsync } = await import('./oracle');
     for (const seed of [1, 12345, 987654]) {
       expect(await generateOracleAsync(INPUT, seed)).toEqual(generateOracle(INPUT, seed));
