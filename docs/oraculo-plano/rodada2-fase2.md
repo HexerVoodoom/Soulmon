@@ -382,3 +382,11 @@ Não funde `ElementId` (8, jogo/visual) com o elemento do class-system (17
 base). A ponte (PR 5) fica mais explícita e testada do lado de saída; a
 dualidade continua sendo vocabulário de camadas diferentes por design
 documentado em `ORACULO.md`.
+
+
+---
+
+## Execução (28/09/2026)
+
+- PR 1, 1.5, 2, 4, 5, 6 mergeados na `main` (#155–).
+- **PR 3 (`oracle/vocabulario.ts`) ADIADO, medido**: `ELEMENT_INFO`+`ROLE_INFO`+`REALM_INFO`+`ALIGNMENT_INFO` somam ~6,8 KB (fonte sem espaço/comentário) e estão no `index-*.js`, mas quem os lê é o próprio `generateOracleWithFamilies`, que continua no grafo síncrono de `oracle.ts` (arrastado por `hashString`/`creatureFormId`/`ORACLE_QUESTIONS`). Tirá-los exige partir `oracle.ts` num núcleo enxuto — ganho < 7 KB contra 22,3 KB já pagos pelas famílias. Não compensa agora.

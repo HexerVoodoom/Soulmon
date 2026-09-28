@@ -1,4 +1,46 @@
 import type { ClassElementId } from "./types";
+import type { ElementId } from "../oracle";
+
+// ---------------------------------------------------------------------------
+// PONTE 8 → 17 como CONTRATO DE TIPO (Fase 2 do Oráculo, PR 5).
+//
+// Os 8 elementos do Oráculo (vocabulário do jogo/visual) e os 17 base do
+// class-system são sistemas DIFERENTES por decisão registrada (ORACULO.md) —
+// não se fundem. O que atravessa de um para o outro é esta tabela. A
+// cobertura de SAÍDA (cada um dos 17 chega a dominar a ficha) é medida em
+// `ficha/ponte8para17.test.ts` (Fase 1 B6); aqui só se trava a FORMA.
+// ---------------------------------------------------------------------------
+
+/** Os ids que existem nos DOIS sistemas (hoje: agua, fogo, terra, ar, sombra, luz). */
+export type ElementoCompartilhado = Extract<ElementId, ClassElementId>;
+/** Os ids só do Oráculo, sem base no class-system (hoje: planta, industrial). */
+export type ElementoSoDoOraculo = Exclude<ElementId, ClassElementId>;
+
+/** Um elemento de 8 → pesos nos 17. Compartilhado vai para SI MESMO, peso 1
+ *  (erro de compilação se não for); só-do-Oráculo espalha nos vizinhos. */
+export type ElementBridge =
+  { readonly [E in ElementoCompartilhado]: { readonly [K in E]: 1 } }
+  & { readonly [E in ElementoSoDoOraculo]: Readonly<Partial<Record<ClassElementId, number>>> };
+
+/**
+ * Os 8 elementos do vocabulário do RITUAL → os 17 do class-system.
+ *
+ * `planta` e `industrial` não existem como base do class-system: viram os
+ * vizinhos mais próximos (vida/terra e marcial/terra), o mesmo par que a
+ * leitura já usa para eles. Os pesos somam ~1 por elemento de origem, para
+ * uma resposta não valer mais só por cair num elemento que espalha.
+ * (Morava em `ritualAnswers.ts` como `RITUAL_TO_CLASS`.)
+ */
+export const ELEMENT_BRIDGE: ElementBridge = {
+  agua: { agua: 1 },
+  fogo: { fogo: 1 },
+  terra: { terra: 1 },
+  ar: { ar: 1 },
+  sombra: { sombra: 1 },
+  luz: { luz: 1 },
+  planta: { vida: 0.6, terra: 0.4 },
+  industrial: { marcial: 0.5, terra: 0.3, eletricidade: 0.2 },
+};
 
 /**
  * Vendorized from `class-system/src/registry/elementos.ts`'s `derivado(...)`

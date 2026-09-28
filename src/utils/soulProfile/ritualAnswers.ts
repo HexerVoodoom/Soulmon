@@ -19,26 +19,11 @@
 import { ORACLE_QUESTIONS, RITUAL_ALIGNMENT_SCALE, RITUAL_REALM_SCALE, ROLE_DOMINANCE_COMPENSATION, REALM_DOMINANCE_COMPENSATION } from '../oracle';
 import type { AlignmentId, CaminhoRitual, ElementId, RealmId, RoleId } from '../oracle';
 import { CLASS_ELEMENT_ORDER, type ClassElementId, type OracleAxes } from './types';
-import { computeDominantClassElements } from './derivedElements';
+import { computeDominantClassElements, ELEMENT_BRIDGE } from './derivedElements';
 
-/**
- * Os 8 elementos do vocabulário do RITUAL → os 17 do class-system.
- *
- * `planta` e `industrial` não existem como base do class-system: viram os
- * vizinhos mais próximos (vida/terra e marcial/terra), o mesmo par que a
- * leitura já usa para eles. Os pesos somam ~1 por elemento de origem, para
- * uma resposta não valer mais só por cair num elemento que espalha.
- */
-const RITUAL_TO_CLASS: Record<ElementId, Partial<Record<ClassElementId, number>>> = {
-  agua: { agua: 1 },
-  fogo: { fogo: 1 },
-  terra: { terra: 1 },
-  ar: { ar: 1 },
-  sombra: { sombra: 1 },
-  luz: { luz: 1 },
-  planta: { vida: 0.6, terra: 0.4 },
-  industrial: { marcial: 0.5, terra: 0.3, eletricidade: 0.2 },
-};
+/** Os 8 do ritual → os 17 do class-system: a ponte tipada `ELEMENT_BRIDGE`
+ *  (`derivedElements.ts`). */
+const RITUAL_TO_CLASS: Readonly<Record<ElementId, Readonly<Partial<Record<ClassElementId, number>>>>> = ELEMENT_BRIDGE;
 
 function renormalize<K extends string>(scores: Record<K, number>, keys: readonly K[]): Record<K, number> {
   const total = keys.reduce((soma, k) => soma + Math.max(0, scores[k]), 0);

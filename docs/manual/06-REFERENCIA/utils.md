@@ -1537,6 +1537,7 @@ dominância populacional — por isso ±15%. Régua nova:
 ### `src/utils/soulProfile/derivedElements.ts`
 **Dono de:** Os 136 pares de elemento derivado do class-system e o cálculo do(s) elemento(s) dominante(s) do perfil.
 **Exports:**
+- `ElementBridge` / `ElementoCompartilhado` / `ElementoSoDoOraculo` (types) e `ELEMENT_BRIDGE` — (Oráculo Fase 2) a ponte 8→17 como contrato de tipo: os 6 ids compartilhados vão para si mesmos com peso 1 (erro de compilação se não), `planta`/`industrial` espalham nos vizinhos. Consumida por `ritualAnswers.ts`. Os dois sistemas NÃO se fundem.
 - `BASE_ELEMENT_LABELS` — Vendorized from `class-system/src/registry/elementos.ts`'s `derivado(...)` entries — the 136 base-pair combos (every 2-of-17 pair, `C(17,2)=136`).
 - `DerivedElementDef` (interface) — campos: `id`, `nome`, `componentes`.
 - `DERIVED_ELEMENT_PAIRS` — tabela/dado de configuração (ver código; 41+ linhas).
