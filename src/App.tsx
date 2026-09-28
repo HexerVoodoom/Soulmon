@@ -3630,6 +3630,12 @@ export default function App() {
     setGameState(prev => (prev.soulmonClassTitles ? prev : { ...prev, soulmonClassTitles: titles }));
   }, [setGameState]);
 
+  // Fase 3 do Oráculo (decisão 2): o companheiro visível e nomeado, mesmo
+  // padrão de cache — grava uma vez, nunca sobrescreve o que já está no save.
+  const handleCompanheiroComputed = useCallback((companheiro: NonNullable<GameState['soulmonCompanheiro']>) => {
+    setGameState(prev => (prev.soulmonCompanheiro ? prev : { ...prev, soulmonCompanheiro: companheiro }));
+  }, [setGameState]);
+
   const handleToggleEvolutionLock = useCallback(() => {
     setGameState(prev => ({ ...prev, evolutionLocked: !(prev.evolutionLocked ?? false) }));
   }, []);
@@ -5150,6 +5156,8 @@ export default function App() {
               onSkillsComputed={handleSkillsComputed}
               savedClassTitles={gameState.soulmonClassTitles}
               onClassTitlesComputed={handleClassTitlesComputed}
+              savedCompanheiro={gameState.soulmonCompanheiro}
+              onCompanheiroComputed={handleCompanheiroComputed}
               language={language}
             /></Suspense>
           )}

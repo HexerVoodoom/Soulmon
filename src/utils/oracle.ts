@@ -123,9 +123,10 @@ export interface OracleInput {
    * dono (`HexerVoodoom/Class-System`, sem risco de PI — não é o bestiário de
    * terceiro). Só entra na bio quando NÃO há `petDescription` (a bio deixa de
    * ser texto do próprio jogador para virar a frase gerada — nunca mistura
-   * as duas fontes).
+   * as duas fontes). PT+EN desde a Fase 3 (`ficha/companheiro.ts`) — a frase
+   * EN saía com o nome em PT ("Bonded with a Lobo Cinzento companion").
    */
-  companionName?: string;
+  companionName?: LText;
   /**
    * Achado de 28/09/2026: `pipeline.ts` já calcula uma LINHAGEM de inspiração
    * do bestiário — um pick por estágio, encadeado por proximidade de espécie
@@ -3288,9 +3289,9 @@ export function generateOracleWithFamilies(input: OracleInputSync | OracleInputW
   // Companheiro capturado (achado do LOOP 1, ver `companionName` acima):
   // sentença final opcional, do mesmo jeito que `secondaryFlavor` já soma —
   // nunca substitui nada, só acrescenta se existir.
-  const companionName = input.companionName?.trim() || undefined;
-  const companionClauseEn = companionName ? ` Bonded with a ${companionName} companion.` : '';
-  const companionClausePt = companionName ? ` Vínculo com um companheiro ${companionName}.` : '';
+  const companionName = input.companionName?.pt.trim() ? input.companionName : undefined;
+  const companionClauseEn = companionName ? ` Bonded with a ${companionName.en.trim()} companion.` : '';
+  const companionClausePt = companionName ? ` Vínculo com um companheiro ${companionName.pt.trim()}.` : '';
   const richConceptEn = (secondaryFlavor
     ? `${upperFirst(dominantClass.en)} of the ${identity.en} bloodline, marked by something ${secondaryFlavor.en}.`
     : `${upperFirst(dominantClass.en)} of the ${identity.en} bloodline.`) + companionClauseEn;

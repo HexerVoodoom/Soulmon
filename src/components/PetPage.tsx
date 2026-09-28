@@ -35,6 +35,7 @@ import { readJson } from '../utils/safeStorage';
 import { FICHA_STAGE_ORDER, type FichaStage } from '../utils/soulProfile/ficha/types';
 import type { StageSkills, StageSkill } from '../utils/soulProfile/ficha/skills';
 import type { ClassTitle } from '../utils/soulProfile/ficha/classTitle';
+import type { CompanheiroVisivel } from '../utils/soulProfile/ficha/companheiro';
 import { auraForElement } from '../utils/attackFxArt';
 import { sigilArt } from '../utils/sigilArt';
 import { ACHIEVEMENT_IDS, ACHIEVEMENT_LABELS, type AchievementId } from '../utils/achievements';
@@ -60,6 +61,10 @@ interface PetPageProps {
    *  cache de `savedSkills`/`onSkillsComputed`. */
   savedClassTitles?: Record<FichaStage, ClassTitle>;
   onClassTitlesComputed?: (titles: Record<FichaStage, ClassTitle>) => void;
+  /** O companheiro capturado (`ficha/companheiro.ts`) — visível e nomeado
+   *  (decisão 2 do PLANO-ORACULO.md §9). Mesmo padrão de cache. */
+  savedCompanheiro?: CompanheiroVisivel;
+  onCompanheiroComputed?: (companheiro: CompanheiroVisivel) => void;
   unlockedEvolutions: string[];
   currentStageId: string;
   demoCharacterId?: string;
@@ -199,7 +204,8 @@ function SkillRow({ skill, isPt }: { skill: StageSkill; isPt: boolean }) {
 export function PetPage({
   stages,
   dominantElement, achievements = [], unlockedEvolutions, currentStageId, demoCharacterId, petName,
-  savedSkills, onSkillsComputed, savedClassTitles, onClassTitlesComputed, language = 'pt-BR', headingLevel = 1,
+  savedSkills, onSkillsComputed, savedClassTitles, onClassTitlesComputed,
+  savedCompanheiro, onCompanheiroComputed, language = 'pt-BR', headingLevel = 1,
 }: PetPageProps) {
   const isPt = language === 'pt-BR';
   const H = headingLevel === 2 ? 'h2' : 'h1';
@@ -207,6 +213,7 @@ export function PetPage({
 
   const [skills, setSkills] = useState<Record<FichaStage, StageSkills> | null>(savedSkills ?? null);
   const [classTitles, setClassTitles] = useState<Record<FichaStage, ClassTitle> | null>(savedClassTitles ?? null);
+  const [companheiro, setCompanheiro] = useState<CompanheiroVisivel | null>(savedCompanheiro ?? null);
   useEffect(() => {
     let vivo = true;
     (async () => {
@@ -232,6 +239,24 @@ export function PetPage({
         // sobe para a nuvem, então sem este cache um aparelho novo (ou um save
         // restaurado) mostrava as formas e perdia as habilidades em silêncio.
         onSkillsComputed?.(stageSkills);
+
+        // O companheiro (Fase 3, decisão 2): a MESMA captura do pipeline
+        // (`selectCompanion` sobre a ficha mega, semente = identidade), reduzida
+        // ao nome PT+EN. Síncrono e barato; falhar aqui não tira nada da tela.
+        try {
+          const [{ selectCompanion }, { companheiroVisivel }] = await Promise.all([
+            import('../utils/soulProfile/ficha/capture'),
+            import('../utils/soulProfile/ficha/companheiro'),
+          ]);
+          const visivel = companheiroVisivel(selectCompanion(fichaByStage.mega, identityKey(saved)));
+          if (!vivo) return;
+          if (visivel) {
+            setCompanheiro(visivel);
+            onCompanheiroComputed?.(visivel);
+          }
+        } catch {
+          // sem companheiro é melhor que sem página
+        }
 
         // Poder REAL via `calcularSkill` do motor — puxa o registro completo
         // do class-system, por isso vem DEPOIS e não bloqueia a primeira
@@ -263,7 +288,7 @@ export function PetPage({
       }
     })();
     return () => { vivo = false; };
-  }, [onSkillsComputed, onClassTitlesComputed]);
+  }, [onSkillsComputed, onClassTitlesComputed, onCompanheiroComputed]);
 
   // Só as formas JÁ desbloqueadas, em ordem de estágio — nunca as futuras.
   const formas = useMemo(() => {
@@ -392,6 +417,28 @@ export function PetPage({
             <SkillRow skill={skillsAtuais.basica} isPt={isPt} />
             <SkillRow skill={skillsAtuais.especial} isPt={isPt} />
           </div>
+        </section>
+      )}
+
+      {/* ─────────── O companheiro ─────────── */}
+      {/* Decisão 2 (PLANO-ORACULO.md §9): visível e NOMEADO. Só o nome e uma
+          linha de mundo — nada de poder, afinidade ou família do class-system
+          (ficha invisível, decisão 3). Voz do mundo: descreve a criatura
+          (L1/L2), nunca a pessoa; "companheiro/companion", nunca "parceiro"
+          (vocabulário canônico §12). Na Ficha, e não na Home: é a tela que já
+          recomputa a ficha e já cacheia o que dela se mostra — nenhum campo
+          novo no HUD, nenhuma arte nova. */}
+      {companheiro && (
+        <section style={card} data-companheiro={companheiro.id}>
+          <h2 style={{ ...h2Style, marginBottom: 8 }}>
+            {isPt ? 'Quem anda junto' : 'Who walks alongside'}
+          </h2>
+          <p style={{ ...sm2Text, fontWeight: 500, margin: 0 }}>{L(companheiro.nome)}</p>
+          <p style={{ ...sm2Hint, marginTop: 4 }}>
+            {isPt
+              ? 'Assentou perto do seu Soulmon e ficou. Não foi escolhido — veio por afinidade.'
+              : 'It settled near your Soulmon and stayed. Not chosen — it came by affinity.'}
+          </p>
         </section>
       )}
 

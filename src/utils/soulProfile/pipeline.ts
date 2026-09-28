@@ -21,6 +21,7 @@ import type { OracleInput, OracleInputWithClass, OracleResult } from '../oracle'
 import type { SoulProfile } from './profile';
 import { buildFichaESkills } from './ficha/fromInput';
 import { selectCompanion, type CapturaAvaliacao } from './ficha/capture';
+import { companheiroNome } from './ficha/companheiro';
 import { FICHA_STAGE_ORDER, type Ficha, type FichaStage } from './ficha/types';
 import { selectBestiaryLineage, type BestiaryPick } from './bestiary/select';
 import type { StageSkills } from './ficha/skills';
@@ -167,7 +168,8 @@ export async function generateOracleComplete(input: OracleInput, seed?: number):
     // `selectCompanion` acima e nunca chegava ao jogador — agora vira a
     // última frase da bio (via `companionName`), só quando a captura de
     // verdade da mecânica (Evocação + afinidade elemental) achou alguém.
-    companionName: companion ? companion.criatura.nome : undefined,
+    // PT+EN pelo dono do nome (`ficha/companheiro.ts`, Fase 3).
+    companionName: companion ? companheiroNome(companion.id) : undefined,
     promptClassFlavor,
   };
   const result = await generateOracleAsync(entrada, salt);

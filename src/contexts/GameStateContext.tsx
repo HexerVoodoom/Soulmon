@@ -8,6 +8,7 @@ import { pushProfile } from '../utils/community';
 import type { CreatureStage, ElementId, AlignmentId, RealmId } from '../utils/oracle';
 import type { StageSkills } from '../utils/soulProfile/ficha/skills';
 import type { ClassTitle } from '../utils/soulProfile/ficha/classTitle';
+import type { CompanheiroVisivel } from '../utils/soulProfile/ficha/companheiro';
 import type { FichaStage } from '../utils/soulProfile/ficha/types';
 import type { SlotId } from '../utils/petStage';
 import { ALL_SHOP_ITEMS } from '../utils/shop';
@@ -274,6 +275,12 @@ export interface GameState {
   /** A classe de cada estágio — arquétipo REAL do class-system (emergido da
    *  ficha, nunca escolhido), mesmo motivo de cache que `soulmonSkills`. */
   soulmonClassTitles?: Record<FichaStage, ClassTitle>;
+  /** O companheiro capturado pela ficha (`ficha/capture.ts`, mecânica real do
+   *  class-system), reduzido ao que se MOSTRA — id e nome PT+EN, nunca poder
+   *  nem afinidade (`ficha/companheiro.ts`). Mesmo motivo de cache que
+   *  `soulmonSkills`: determinístico pela identidade, recomputável só de um
+   *  perfil que não vai à nuvem. Decisão 2 do PLANO-ORACULO.md §9. */
+  soulmonCompanheiro?: CompanheiroVisivel;
   /** Metadados do oráculo usados fora da árvore (fallback de sprite genérico,
    *  telas de perfil etc.). */
   soulmonMeta?: {
@@ -1097,6 +1104,12 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
         soulmonClassTitles: (() => {
           const v = loadedState.soulmonClassTitles;
           return v && typeof v === 'object' && !Array.isArray(v) ? v as GameState['soulmonClassTitles'] : undefined;
+        })(),
+        soulmonCompanheiro: (() => {
+          const v = loadedState.soulmonCompanheiro as { id?: unknown; nome?: { pt?: unknown; en?: unknown } } | undefined;
+          if (!v || typeof v !== 'object' || Array.isArray(v)) return undefined;
+          if (typeof v.id !== 'string' || typeof v.nome?.pt !== 'string' || typeof v.nome?.en !== 'string') return undefined;
+          return { id: v.id, nome: { pt: v.nome.pt, en: v.nome.en } };
         })(),
         evolutionLocked: loadedState.evolutionLocked === true,
         incubation: (() => {
