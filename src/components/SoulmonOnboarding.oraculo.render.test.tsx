@@ -273,7 +273,7 @@ describe('Reveal demo — 13.19 / 13.1 (D-Q8, D-Q13, X4)', () => {
     // o grátis entra no ritual das 6, com voltar → a escolha
     expect(document.body.textContent).toContain('Question 1 of 6');
     expect(btn('Back').className).toContain('sm2-ora-back');
-    responderRitualDemo();
+    await responderRitualDemo();
   }
 
   it('o grátis responde as 6 e vê a leitura com a criatura em SILHUETA (mask-image), sem Born, com "You said…"; a barra a 88 %', async () => {

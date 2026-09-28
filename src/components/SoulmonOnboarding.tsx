@@ -17,7 +17,7 @@ import {
   type ConsentRecord,
 } from '../utils/consent';
 import {
-  generateOracle, ORACLE_QUESTIONS,
+  generateOracleAsync, ORACLE_QUESTIONS,
   type OracleInput, type OracleResult, type LText,
 } from '../utils/oracle';
 import { items as SOUL_TEST_ITEMS } from '../utils/soulProfile/personality/questions';
@@ -690,7 +690,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         en: `${essenceLabel(dominant, false)} essence · ${PROFISSAO_EN[profId] ?? profId}`,
       });
     } else {
-      r = generateOracle(input);
+      r = await generateOracleAsync(input);
       setEssence(null);
     }
     setResult(r);
@@ -1847,12 +1847,12 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                         const nextAnswers = { ...answers, [q.id]: opt.id };
                         setAnswers(nextAnswers);
                         // avança sozinho após escolher (fluido)
-                        setTimeout(() => {
+                        setTimeout(async () => {
                           if (flow === 'demo' && step === QUIZ_END - 1) {
                             // 13.19 — a leitura do demo nasce aqui, com as 6
                             // respostas já completas (o estado ainda é o
                             // anterior neste instante, como no 20º item).
-                            setDemoReading(generateOracle({
+                            setDemoReading(await generateOracleAsync({
                               fullName: '', birthDate: '', birthTime: '', birthPlace: '', answers: nextAnswers,
                             }));
                             setStep(REVEAL_DEMO);

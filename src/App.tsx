@@ -3414,8 +3414,8 @@ export default function App() {
         const { generateOracleComplete } = await import('./utils/soulProfile');
         result = (await generateOracleComplete(saved, newSeed)).result;
       } else {
-        const { generateOracle } = await import('./utils/oracle');
-        result = generateOracle(saved, newSeed);
+        const { generateOracleAsync } = await import('./utils/oracle');
+        result = await generateOracleAsync(saved, newSeed);
       }
     } catch {
       return false; // nada foi cobrado
@@ -3497,8 +3497,8 @@ export default function App() {
         const { generateOracleComplete } = await import('./utils/soulProfile');
         result = (await generateOracleComplete(comEscolhas, novaSeed)).result;
       } else {
-        const { generateOracle } = await import('./utils/oracle');
-        result = generateOracle(comEscolhas, novaSeed);
+        const { generateOracleAsync } = await import('./utils/oracle');
+        result = await generateOracleAsync(comEscolhas, novaSeed);
       }
     } catch {
       return false; // a chance única NÃO foi gasta

@@ -26,7 +26,7 @@ import { atravessarRevealDemo } from '../test/ritualDemo';
 /** Caminho demo: portão (aceite + idade) -> objetivo -> dificuldade ->
  *  escolha grátis/completo -> personagem -> cadastro. O mais curto até o
  *  batismo, na ordem de 07/09/2026. */
-function ateOCadastro(pt: boolean) {
+async function ateOCadastro(pt: boolean) {
   // Portão primeiro: aceite + idade vivem nele, e ele abre o app.
   fireEvent.click(screen.getByText(
     pt
@@ -43,7 +43,7 @@ function ateOCadastro(pt: boolean) {
   // não existe e o consentimento cai direto aqui.
   fireEvent.click(screen.getByText(pt ? 'Começar agora — é grátis' : 'Start now — it’s free'));
   // 13.19: o grátis responde as 6 perguntas e vê o reveal demo antes do personagem.
-  atravessarRevealDemo(pt);
+  await atravessarRevealDemo(pt);
   // Escolhe o primeiro personagem pré-pronto — leva direto ao cadastro.
   fireEvent.click(screen.getByText(PREMADE_CHARACTERS[0].name).closest('button')!);
 }
@@ -56,9 +56,9 @@ describe('cadastro: apelido enquadrado e Soulmon batizado', () => {
   });
   afterEach(() => { vi.useRealTimers(); });
 
-  it('EN — o apelido diz que pode ser inventado, e o exemplo não é um nome real', () => {
+  it('EN — o apelido diz que pode ser inventado, e o exemplo não é um nome real', async () => {
     renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
-    ateOCadastro(false);
+    await ateOCadastro(false);
     const nick = screen.getByLabelText('Your nickname') as HTMLInputElement;
     expect(nick).toBeTruthy();
     // A oferta: não precisa ser o nome real. Convite, nunca aviso de perigo.
@@ -66,26 +66,26 @@ describe('cadastro: apelido enquadrado e Soulmon batizado', () => {
     expect(nick.getAttribute('placeholder')).not.toMatch(/Matt/);
   });
 
-  it('PT — mesma oferta, mesma moldura', () => {
+  it('PT — mesma oferta, mesma moldura', async () => {
     localStorage.setItem(STORAGE_KEYS.LANGUAGE, 'pt-BR');
     renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
-    ateOCadastro(true);
+    await ateOCadastro(true);
     expect(screen.getByLabelText('Seu apelido')).toBeTruthy();
     expect(screen.getByText(/não precisa ser seu nome real/i)).toBeTruthy();
   });
 
-  it('EN — o nome sugerido do Soulmon já vem preenchido: manter é não fazer nada', () => {
+  it('EN — o nome sugerido do Soulmon já vem preenchido: manter é não fazer nada', async () => {
     renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
-    ateOCadastro(false);
+    await ateOCadastro(false);
     const campo = screen.getByLabelText(/name your soulmon/i) as HTMLInputElement;
     // Sugerido, não vazio: um formulário em branco obrigaria a inventar.
     expect(campo.value.trim().length).toBeGreaterThan(1);
   });
 
-  it('PT — o campo do batismo existe e vem com a sugestão', () => {
+  it('PT — o campo do batismo existe e vem com a sugestão', async () => {
     localStorage.setItem(STORAGE_KEYS.LANGUAGE, 'pt-BR');
     renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
-    ateOCadastro(true);
+    await ateOCadastro(true);
     const campo = screen.getByLabelText(/batize seu soulmon/i) as HTMLInputElement;
     expect(campo.value.trim().length).toBeGreaterThan(1);
   });
@@ -93,7 +93,7 @@ describe('cadastro: apelido enquadrado e Soulmon batizado', () => {
   it('EN — manter o sugerido não exige toque nenhum no campo', async () => {
     let recebido: OnboardingCompleteData | null = null;
     renderWithCss(<SoulmonOnboarding onComplete={d => { recebido = d; }} />);
-    ateOCadastro(false);
+    await ateOCadastro(false);
     const sugerido = (screen.getByLabelText(/name your soulmon/i) as HTMLInputElement).value;
     fireEvent.change(screen.getByLabelText('Your nickname'), { target: { value: 'BlueRaven' } });
     fireEvent.click(screen.getByRole('button', { name: /hatch/i }));
@@ -106,7 +106,7 @@ describe('cadastro: apelido enquadrado e Soulmon batizado', () => {
     localStorage.setItem(STORAGE_KEYS.LANGUAGE, 'pt-BR');
     let recebido: OnboardingCompleteData | null = null;
     renderWithCss(<SoulmonOnboarding onComplete={d => { recebido = d; }} />);
-    ateOCadastro(true);
+    await ateOCadastro(true);
     fireEvent.change(screen.getByLabelText(/batize seu soulmon/i), { target: { value: 'Farofa' } });
     fireEvent.change(screen.getByLabelText('Seu apelido'), { target: { value: 'CorvoAzul' } });
     fireEvent.click(screen.getByRole('button', { name: /nascer/i }));
@@ -117,7 +117,7 @@ describe('cadastro: apelido enquadrado e Soulmon batizado', () => {
   it('apagar o campo do batismo volta ao sugerido — nunca fica sem nome', async () => {
     let recebido: OnboardingCompleteData | null = null;
     renderWithCss(<SoulmonOnboarding onComplete={d => { recebido = d; }} />);
-    ateOCadastro(false);
+    await ateOCadastro(false);
     const sugerido = (screen.getByLabelText(/name your soulmon/i) as HTMLInputElement).value;
     fireEvent.change(screen.getByLabelText(/name your soulmon/i), { target: { value: '   ' } });
     fireEvent.change(screen.getByLabelText('Your nickname'), { target: { value: 'BlueRaven' } });

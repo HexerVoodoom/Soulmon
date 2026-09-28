@@ -16,7 +16,7 @@
 // aparece em prompt de imagem nem em texto visível — há teste travando.
 // ---------------------------------------------------------------------------
 
-import { generateOracle } from '../oracle';
+import { generateOracleAsync } from '../oracle';
 import type { OracleInput, OracleResult } from '../oracle';
 import type { SoulProfile } from './profile';
 import { buildFichaESkills } from './ficha/fromInput';
@@ -154,7 +154,7 @@ export async function generateOracleComplete(input: OracleInput, seed?: number):
     // sem o traço extra — o prompt de 3 traços já funcionava sozinho
   }
 
-  const result = generateOracle({
+  const result = await generateOracleAsync({
     ...input,
     bestiaryInspiration: {
       texto,

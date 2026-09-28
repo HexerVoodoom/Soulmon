@@ -32,7 +32,7 @@ describe('funil grátis — identidade do canvas', () => {
   });
   afterEach(() => { vi.useRealTimers(); });
 
-  it('Objetivo: justificativa (O2), campo SIS-03, pular é quiet, sem Back', () => {
+  it('Objetivo: justificativa (O2), campo SIS-03, pular é quiet, sem Back', async () => {
     expect(screen.getByText('Your Soulmon brings this back on the days that count.')).toBeTruthy();
     const area = screen.getByLabelText('What do you want to improve in your life?') as HTMLTextAreaElement;
     // `autoFocus`: nasce focado — fronteira + anel `primary-ink`; ao sair, `muted`.
@@ -45,7 +45,7 @@ describe('funil grátis — identidade do canvas', () => {
     expect(screen.queryByRole('button', { name: 'Back' })).toBeNull();
   });
 
-  it('Atrapalha: eco com check_circle em primary-ink só para quem escreveu; Back quiet volta', () => {
+  it('Atrapalha: eco com check_circle em primary-ink só para quem escreveu; Back quiet volta', async () => {
     const area = screen.getByLabelText('What do you want to improve in your life?');
     fireEvent.change(area, { target: { value: 'get back to studying' } });
     fireEvent.click(btn('Continue'));
@@ -58,12 +58,12 @@ describe('funil grátis — identidade do canvas', () => {
     expect(screen.getByText('What do you want to improve in your life?')).toBeTruthy();
   });
 
-  it('Atrapalha sem objetivo escrito: nenhum eco (a frase viraria mentira)', () => {
+  it('Atrapalha sem objetivo escrito: nenhum eco (a frase viraria mentira)', async () => {
     fireEvent.click(btn('I’d rather not say right now'));
     expect(screen.queryByText('Noted. Your Soulmon will remember.')).toBeNull();
   });
 
-  it('Escolha: grátis primário, "Get the full game" outline (não ghost, não quiet, sem dourado), Back quiet', () => {
+  it('Escolha: grátis primário, "Get the full game" outline (não ghost, não quiet, sem dourado), Back quiet', async () => {
     fireEvent.click(btn('I’d rather not say right now'));
     fireEvent.click(btn('I’d rather not say right now'));
     expect(variante(btn('Start now — it’s free'))).toBe('primary');
@@ -73,11 +73,11 @@ describe('funil grátis — identidade do canvas', () => {
     expect(variante(btn('Back'))).toBe('quiet');
   });
 
-  it('EscolherPersonagem: os 6 de PREMADE_CHARACTERS, cada um num vidro 128² com anel, em grade 2 colunas', () => {
+  it('EscolherPersonagem: os 6 de PREMADE_CHARACTERS, cada um num vidro 128² com anel, em grade 2 colunas', async () => {
     fireEvent.click(btn('I’d rather not say right now'));
     fireEvent.click(btn('I’d rather not say right now'));
     fireEvent.click(btn('Start now — it’s free'));
-    atravessarRevealDemo();
+    await atravessarRevealDemo();
     const cards = document.querySelectorAll('button[data-demo-char]');
     expect(cards.length).toBe(PREMADE_CHARACTERS.length);
     expect(cards.length).toBe(6);
@@ -94,11 +94,11 @@ describe('funil grátis — identidade do canvas', () => {
     }
   });
 
-  it('CadastroDemo: heroína 128 num vidro 192² `role=img` na tonalidade; 4 slots 64 com hue-rotate; Back volta aos personagens', () => {
+  it('CadastroDemo: heroína 128 num vidro 192² `role=img` na tonalidade; 4 slots 64 com hue-rotate; Back volta aos personagens', async () => {
     fireEvent.click(btn('I’d rather not say right now'));
     fireEvent.click(btn('I’d rather not say right now'));
     fireEvent.click(btn('Start now — it’s free'));
-    atravessarRevealDemo();
+    await atravessarRevealDemo();
     fireEvent.click(screen.getByText(PREMADE_CHARACTERS[0].name).closest('button')!);
     const nome = PREMADE_CHARACTERS[0].name;
     const hero = screen.getByRole('img', { name: `${nome}, in tint 1` });

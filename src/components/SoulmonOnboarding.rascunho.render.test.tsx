@@ -29,7 +29,7 @@ const rascunho = {
 describe('SoulmonOnboarding — rascunho do ritual (WP1.7)', () => {
   beforeEach(() => { installFakeStorage(); clearOracleDraft(); });
 
-  it('com rascunho no passo do nome, abre direto nele com o nome preenchido', () => {
+  it('com rascunho no passo do nome, abre direto nele com o nome preenchido', async () => {
     writeOracleDraft(rascunho);
     renderWithCss(<SoulmonOnboarding onComplete={async () => {}} />);
     expect(screen.getByText('What is your full name?')).toBeTruthy();
@@ -38,7 +38,7 @@ describe('SoulmonOnboarding — rascunho do ritual (WP1.7)', () => {
     expect(screen.queryByText('Get started')).toBeNull();
   });
 
-  it('digitar mais no ritual regrava o rascunho (a cada mudança, não só ao sair)', () => {
+  it('digitar mais no ritual regrava o rascunho (a cada mudança, não só ao sair)', async () => {
     writeOracleDraft(rascunho);
     renderWithCss(<SoulmonOnboarding onComplete={async () => {}} />);
     fireEvent.change(screen.getByPlaceholderText('E.g.: Jane Doe'), { target: { value: 'Maria da Silva Santos' } });
@@ -48,7 +48,7 @@ describe('SoulmonOnboarding — rascunho do ritual (WP1.7)', () => {
     expect(raw).not.toHaveProperty('email');
   });
 
-  it('o caminho grátis (demo) nunca grava rascunho', () => {
+  it('o caminho grátis (demo) nunca grava rascunho', async () => {
     vi.useFakeTimers();
     renderWithCss(<SoulmonOnboarding onComplete={async () => {}} />);
       fireEvent.click(screen.getByText('I have read and agree to the Terms of Use and the Privacy Policy'));
@@ -58,7 +58,7 @@ describe('SoulmonOnboarding — rascunho do ritual (WP1.7)', () => {
     fireEvent.click(screen.getByText('I’d rather not say right now'));
     fireEvent.click(screen.getByText('Start now — it’s free'));
     // 13.19: as 6 perguntas e o reveal demo também não gravam rascunho.
-    atravessarRevealDemo();
+    await atravessarRevealDemo();
     fireEvent.click(screen.getByText(PREMADE_CHARACTERS[0].name).closest('button')!);
     vi.useRealTimers();
     // O rascunho do RITUAL continua sem existir no caminho grátis. O do
@@ -67,7 +67,7 @@ describe('SoulmonOnboarding — rascunho do ritual (WP1.7)', () => {
     expect(localStorage.getItem(STORAGE_KEYS.ORACLE_DRAFT)).toBeNull();
   });
 
-  it('um rascunho de outro modo é ignorado: o onboarding abre no portão', () => {
+  it('um rascunho de outro modo é ignorado: o onboarding abre no portão', async () => {
     writeOracleDraft({ ...rascunho, mode: 'upgrade' });
     renderWithCss(<SoulmonOnboarding onComplete={async () => {}} />);
     // 07/09/2026 — o primeiro passo passou a ser o portão de identidade; a

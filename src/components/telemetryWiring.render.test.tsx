@@ -35,7 +35,7 @@ describe('fiação da telemetria — onboarding', () => {
     localStorage.clear();
   });
 
-  it('antes da escolha o funil é UNKNOWN; depois dela, DEMO', () => {
+  it('antes da escolha o funil é UNKNOWN; depois dela, DEMO', async () => {
     renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
     // A PRIMEIRA tela é o portão de identidade (07/09/2026), e ela é anterior
     // à bifurcação: não dá para rotular o caminho ainda.
@@ -67,7 +67,7 @@ describe('fiação da telemetria — onboarding', () => {
     expect(depois[depois.length - 1].p?.funnel).toBe(TELEMETRY_FUNNEL.demo);
   });
 
-  it('o ritual do caminho pago sai marcado como funil PAID', () => {
+  it('o ritual do caminho pago sai marcado como funil PAID', async () => {
     renderWithCss(<SoulmonOnboarding onComplete={() => {}} mode="upgrade" onRevealed={() => {}} />);
     const passos = only('onboarding_step');
     expect(passos).toHaveLength(1);
@@ -77,7 +77,7 @@ describe('fiação da telemetria — onboarding', () => {
     expect(passos[0].p?.funnel).not.toBe(TELEMETRY_FUNNEL.demo);
   });
 
-  it('o payload não carrega nada que a pessoa escreveu', () => {
+  it('o payload não carrega nada que a pessoa escreveu', async () => {
     renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
     // O "porquê" vem DEPOIS do portão (07/09/2026): é preciso atravessá-lo
     // para chegar ao campo de texto livre.
@@ -99,7 +99,7 @@ describe('fiação da telemetria — onboarding', () => {
     }
   });
 
-  it('escolher um personagem pronto emite demo_pick uma vez', () => {
+  it('escolher um personagem pronto emite demo_pick uma vez', async () => {
     vi.useFakeTimers();
     renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
       fireEvent.click(screen.getByText(
@@ -112,7 +112,7 @@ describe('fiação da telemetria — onboarding', () => {
     fireEvent.click(screen.getByText('Start now — it’s free'));
     // 13.19: o reveal demo vem antes do personagem, e ele emite `unlock_view`
     // com o motivo `revealDemo` (o denominador da 13.1) — nunca `demo_pick`.
-    atravessarRevealDemo();
+    await atravessarRevealDemo();
     expect(only('demo_pick')).toHaveLength(0);
     expect(only('unlock_view').map(r => r.p?.reason)).toEqual([TELEMETRY_UNLOCK_REASON.revealDemo]);
 
@@ -138,14 +138,14 @@ describe('fiação da telemetria — tela de compra', () => {
    * inflado mente para baixo em todas as taxas de conversão, sem dar erro
    * nenhum. É exatamente o tipo de defeito que só um teste pega.
    */
-  it('o modal NÃO emite unlock_view — quem emite é o App, com o motivo', () => {
+  it('o modal NÃO emite unlock_view — quem emite é o App, com o motivo', async () => {
     renderWithCss(
       <UnlockAccountModal language="en-US" reason="task-limit" onUnlocked={() => {}} onClose={() => {}} />,
     );
     expect(only('unlock_view')).toHaveLength(0);
   });
 
-  it('os dois convites viram contadores distintos, com o tier junto', () => {
+  it('os dois convites viram contadores distintos, com o tier junto', async () => {
     setTelemetryTier('demo');
     // O mapeamento que o efeito de `unlockReason` do App.tsx faz.
     track('unlock_view', { reason: TELEMETRY_UNLOCK_REASON.taskLimit });

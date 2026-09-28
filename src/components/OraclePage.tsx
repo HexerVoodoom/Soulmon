@@ -6,7 +6,7 @@ import { readLocal, writeJson } from '../utils/safeStorage';
 import { PixelizerCard } from './PixelizerCard';
 import { generateAllSprites } from '../utils/spriteGen';
 import {
-  generateOracle, creatureFormId, ELEMENT_INFO, ROLE_INFO, ELEMENT_ORDER, ROLE_ORDER,
+  generateOracleAsync, creatureFormId, ELEMENT_INFO, ROLE_INFO, ELEMENT_ORDER, ROLE_ORDER,
   ALIGNMENT_INFO, REALM_INFO, ALIGNMENT_ORDER, REALM_ORDER,
   type OracleInput, type OracleResult, type OracleOverrides, type OraclePreferences, type LText,
   type ElementId, type RoleId, type AlignmentId, type RealmId,
@@ -60,7 +60,7 @@ function loadSavedForm(): SavedOracleForm | null {
     const form = JSON.parse(raw) as SavedOracleForm;
     if (DIRECT_CONTROLS_ENABLED) return form;
     /* Sanitiza NA CARGA, e não só no JSX. Os inicializadores de `useState`
-       abaixo chamam `generateOracle(s, …)` com este objeto DIRETO — sem esta
+       abaixo (a restauração assíncrona) chamam `generateOracleAsync(s, …)` com este objeto DIRETO — sem esta
        poda, um rascunho gravado antes do desligamento continuaria mandando
        elemento/bioma/descrição para o gerador, invisível na tela e ativo no
        resultado. É o pior tipo de bug: some da UI e segue valendo. */
@@ -98,32 +98,49 @@ export function OraclePage({ language = 'en-US', initialDebugMode = false }: Ora
   const [petDescription, setPetDescription] = useState(saved?.petDescription ?? '');
 
   // Etapa 1: leitura (perfil místico + eixos, tudo ajustável)
-  const [profile, setProfile] = useState<OracleResult | null>(() => {
-    const s = loadSavedForm();
-    if (!formComplete(s)) return null;
-    try { return generateOracle(s, 0); } catch { return null; }
-  });
-  const [overrides, setOverrides] = useState<OracleOverrides>(() => {
-    const s = loadSavedForm();
-    if (s?.overrides) return s.overrides;
-    if (!formComplete(s)) return {};
-    try {
-      const p = generateOracle(s, 0);
-      return {
-        dominantElement: p.dominantElement, secondaryElement: p.secondaryElement,
-        dominantRole: p.dominantRole, dominantAlignment: p.dominantAlignment, dominantRealm: p.dominantRealm,
-      };
-    } catch { return {}; }
-  });
+  const [profile, setProfile] = useState<OracleResult | null>(null);
+  const [overrides, setOverrides] = useState<OracleOverrides>(() => loadSavedForm()?.overrides ?? {});
 
   // Etapa 2: criatura + prompts (só depois de clicar em "Gerar")
-  const [creature, setCreature] = useState<OracleResult | null>(() => {
+  const [creature, setCreature] = useState<OracleResult | null>(null);
+
+  /* Restauração da leitura salva. Era síncrona (`generateOracle` em
+     inicializador de `useState`); desde a Fase 2 do Oráculo a geração é
+     `generateOracleAsync` (famílias visuais fora do chunk de entrada), então
+     ela acontece num efeito de montagem. Enquanto restaura, o rascunho NÃO é
+     regravado — senão o efeito abaixo gravaria `seed`/`overrides` vazios
+     por cima do que está sendo restaurado. */
+  const [restaurando, setRestaurando] = useState(() => formComplete(loadSavedForm()));
+  useEffect(() => {
     const s = loadSavedForm();
-    if (!formComplete(s) || s.seed === undefined) return null;
-    try { return generateOracle(s, s.seed, s.overrides); } catch { return null; }
-  });
+    if (!formComplete(s)) return;
+    let vivo = true;
+    (async () => {
+      try {
+        const p = await generateOracleAsync(s, 0);
+        if (!vivo) return;
+        setProfile(p);
+        if (!s.overrides) {
+          setOverrides({
+            dominantElement: p.dominantElement, secondaryElement: p.secondaryElement,
+            dominantRole: p.dominantRole, dominantAlignment: p.dominantAlignment, dominantRealm: p.dominantRealm,
+          });
+        }
+        if (s.seed !== undefined) {
+          const c = await generateOracleAsync(s, s.seed, s.overrides);
+          if (vivo) setCreature(c);
+        }
+      } catch {
+        // leitura irrecuperável: fica o formulário, como antes
+      } finally {
+        if (vivo) setRestaurando(false);
+      }
+    })();
+    return () => { vivo = false; };
+  }, []);
 
   useEffect(() => {
+    if (restaurando) return;
     const form: SavedOracleForm = {
       fullName, birthDate, birthTime, birthPlace,
       preferences: prefs, petDescription,
@@ -134,7 +151,7 @@ export function OraclePage({ language = 'en-US', initialDebugMode = false }: Ora
     };
     // Rascunho do formulário: conveniência, não progresso.
     writeJson(STORAGE_KEYS.ORACLE_FORM, form, { silent: true });
-  }, [fullName, birthDate, birthTime, birthPlace, answers, birthCity, timeUnknown, soulProfile, prefs, petDescription, creature?.seed, overrides, profile]);
+  }, [restaurando, fullName, birthDate, birthTime, birthPlace, answers, birthCity, timeUnknown, soulProfile, prefs, petDescription, creature?.seed, overrides, profile]);
 
   const canReveal = fullName.trim().length >= 3 && !!birthDate && !!birthCity
     && (timeUnknown || !!birthTime) && testComplete(answers) && !revealing;
@@ -178,7 +195,7 @@ export function OraclePage({ language = 'en-US', initialDebugMode = false }: Ora
     }
     setSoulProfile(soul);
     setRevealing(false);
-    const p = generateOracle(input(soul), 0);
+    const p = await generateOracleAsync(input(soul), 0);
     setProfile(p);
     setOverrides({
       dominantElement: p.dominantElement, secondaryElement: p.secondaryElement,
@@ -199,9 +216,9 @@ export function OraclePage({ language = 'en-US', initialDebugMode = false }: Ora
     setCreature(null); // valores mudaram → precisa gerar de novo
   };
 
-  const handleGenerateCreature = () => {
+  const handleGenerateCreature = async () => {
     // Salt novo a cada clique (variação criativa); eixos vêm dos ajustes
-    setCreature(generateOracle(input(), undefined, overrides));
+    setCreature(await generateOracleAsync(input(), undefined, overrides));
   };
 
   const copyText = async (text: string, okMsg: string) => {
