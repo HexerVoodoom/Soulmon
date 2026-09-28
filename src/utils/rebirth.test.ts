@@ -11,7 +11,7 @@ import { describe, it, expect } from 'vitest';
 import {
   applyRebirth, canRebirth, rebirthRefusal, sanitizeCriatura,
   rebirthEscolaOptions, rebirthElementOptions, isValidRebirthElement,
-  REBIRTH_BUDGET_MULTIPLIER, REBIRTH_CRIATURA_MAX,
+  REBIRTH_BUDGET_MULTIPLIER, REBIRTH_CRIATURA_MAX, herancaDoCiclo,
 } from './rebirth';
 import type { RebirthRecord } from './rebirth';
 import { incubationFor, incubationReady, type Incubation } from './spriteTrigger';
@@ -118,6 +118,27 @@ describe('rebirth — o que se perde é o estágio e os atributos, e SÓ', () =>
   });
 });
 
+describe('rebirth — herda UM traço do ciclo anterior (decisão 1, Fase 3), nunca reset puro', () => {
+  it('o elemento dominante da criatura anterior vai para o registro, lido do save', () => {
+    const { state } = applyRebirth(noTopo({ soulmonMeta: { dominantElement: 'sombra' } }), ESCOLHAS, NOW);
+    expect(state.rebirth?.heranca).toEqual({ tipo: 'elemento', elemento: 'sombra' });
+    expect(herancaDoCiclo({ soulmonMeta: { dominantElement: 'fogo' } })).toEqual({ tipo: 'elemento', elemento: 'fogo' });
+  });
+
+  it('save sem `soulmonMeta` (criatura legada/demo): registro sem herança, e nada quebra', () => {
+    const { state, applied } = applyRebirth(noTopo(), ESCOLHAS, NOW);
+    expect(applied).toBe(true);
+    expect(state.rebirth?.heranca).toBeUndefined();
+    expect(herancaDoCiclo({})).toBeUndefined();
+  });
+
+  it('a herança NÃO reescreve o `soulmonMeta` — quem troca a criatura é o App, com a geração', () => {
+    const meta = { dominantElement: 'terra' };
+    const { state } = applyRebirth(noTopo({ soulmonMeta: meta }), ESCOLHAS, NOW);
+    expect((state as { soulmonMeta?: unknown }).soulmonMeta).toBe(meta);
+  });
+});
+
 describe('rebirth — uma vez só, e o updater pode rodar duas', () => {
   it('a segunda chamada devolve o MESMO estado, sem zerar de novo', () => {
     // StrictMode invoca updater 2× (footgun 6). Sem esta trava, a segunda
@@ -208,6 +229,45 @@ describe('rebirth — as escolhas CHEGAM ao prompt (senão a tela é decorativa)
         expect(p).toContain('Vapor');
       }
     }
+  });
+
+  it('o traço herdado entra nas ONZE formas, nas duas variantes, e preenche só o 2º elemento vazio', async () => {
+    const { generateOracle, ELEMENT_INFO } = await import('./oracle');
+    // sem herança: o dominante e o (eventual) secundário que a leitura dá
+    const sem = generateOracle({ ...BASE, rebirth: { criatura: 'raposa de vidro', escolaNome: 'Evocação', elementoNome: 'Vapor' } }, 42);
+    // herda um elemento que NÃO é o dominante
+    const herdado = sem.dominantElement === 'sombra' ? 'luz' : 'sombra';
+    const com = generateOracle({
+      ...BASE,
+      rebirth: { criatura: 'raposa de vidro', escolaNome: 'Evocação', elementoNome: 'Vapor', herdado: { elemento: herdado } },
+    }, 42);
+    // o dominante é intocável — a herança é traço, não segunda escolha
+    expect(com.dominantElement).toBe(sem.dominantElement);
+    // o 2º slot: preenchido pela herança SÓ quando estava vazio
+    if (sem.secondaryElement === null) expect(com.secondaryElement).toBe(herdado);
+    else expect(com.secondaryElement).toBe(sem.secondaryElement);
+    const marca = `subtle ${ELEMENT_INFO[herdado].name.en.toLowerCase()} tones`;
+    for (const s of com.creature.stages) {
+      for (const p of [s.imagePrompt, s.imagePromptFallback]) expect(p).toContain(marca);
+    }
+    for (const s of sem.creature.stages) expect(s.imagePrompt).not.toContain('previous cycle');
+  });
+
+  it('herdar o próprio dominante não faz nada — e um id inválido também não', async () => {
+    const { generateOracle } = await import('./oracle');
+    const sem = generateOracle({ ...BASE, rebirth: { criatura: 'raposa de vidro', escolaNome: 'Evocação', elementoNome: 'Vapor' } }, 42);
+    const igual = generateOracle({
+      ...BASE,
+      rebirth: { criatura: 'raposa de vidro', escolaNome: 'Evocação', elementoNome: 'Vapor', herdado: { elemento: sem.dominantElement } },
+    }, 42);
+    expect(igual.secondaryElement).toBe(sem.secondaryElement);
+    const invalido = generateOracle({
+      ...BASE,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      rebirth: { criatura: 'raposa de vidro', escolaNome: 'Evocação', elementoNome: 'Vapor', herdado: { elemento: 'plasma' as any } },
+    }, 42);
+    expect(invalido.secondaryElement).toBe(sem.secondaryElement);
+    expect(invalido.creature.stages[0].imagePrompt).not.toContain('previous cycle');
   });
 
   it('sem rebirth o prompt não ganha nenhuma cláusula nova', async () => {
