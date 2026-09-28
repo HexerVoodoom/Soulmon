@@ -10,9 +10,15 @@
  * O que a página mostra (a lógica é a mesma de antes, nada foi inventado):
  * TODAS as formas já desbloqueadas (nunca as futuras), a descrição gerada pelo
  * oráculo e as DUAS habilidades do estágio (básica e especial). A CLASSE do
- * estágio (`classTitle`) já era computada aqui e nunca era renderizada — agora
- * ela aparece, porque é exatamente o tipo de dado que esta tela deveria dar:
- * uma PALAVRA nomeada, não um número.
+ * estágio (`classTitle`) continua sendo computada aqui — pelo SIGILO no canto
+ * do visor e pelo cache do save — mas **o nome dela nunca é renderizado**
+ * (`docs/PLANO-ORACULO.md` §2, decisão 3 do dono, 28/09/2026: "a classe nunca
+ * aparece ao jogador; age por trás"). ⚰️ Até a Fase 3 do Oráculo esta página
+ * escrevia `· <nome do arquétipo>` ao lado do estágio, na forma atual e nas anteriores,
+ * contra a decisão registrada em `docs/ORACULO.md` (rodada 7) e contra a
+ * régua de comportamento (`plano-comportamento.md` §6.7: expor a classe é
+ * rótulo fixo — "você é um Guardião das Sombras"). A régua viva é
+ * `src/components/classeNuncaVisivel.contract.test.tsx`.
  *
  * As skills são recomputadas sob demanda do perfil salvo (SOULMON_PROFILE =
  * OracleInput + seed) pelo pipeline completo — determinístico, mesma
@@ -348,10 +354,10 @@ export function PetPage({
 
           <div style={{ textAlign: 'center', maxWidth: 420 }}>
             <H style={h1Style}>{atual.name}</H>
-            {/* Estágio e CLASSE: duas palavras nomeadas, e nenhum número. */}
+            {/* Só o estágio: uma palavra nomeada, nenhum número — e nunca a
+                classe (decisão 3 do plano do Oráculo; ver o cabeçalho). */}
             <p style={{ ...sm2Hint, marginTop: 4 }}>
               {L(atual.stageName)}
-              {classeAtual ? ` · ${L(classeAtual.nome)}` : ''}
             </p>
             <p style={{ ...sm2Text, marginTop: 12 }}>{L(atual.description)}</p>
           </div>
@@ -398,8 +404,6 @@ export function PetPage({
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {anteriores.map(form => {
               const formId = creatureFormId(form);
-              const stageKey = getStageLevel(formId) as FichaStage;
-              const classe = classTitles?.[stageKey];
               return (
                 <article key={formId} style={{ ...card, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                   {/* A forma anterior num vidro 80² sem anel, sprite 256² a 64
@@ -419,7 +423,7 @@ export function PetPage({
                   <div style={{ minWidth: 0 }}>
                     <p style={{ ...sm2Text, fontWeight: 500, margin: 0 }}>{form.name}</p>
                     <p style={{ ...sm2Hint, marginTop: 2 }}>
-                      {L(form.stageName)}{classe ? ` · ${L(classe.nome)}` : ''}
+                      {L(form.stageName)}
                     </p>
                     <p style={{ ...sm2Hint, marginTop: 6 }}>{L(form.description)}</p>
                   </div>
