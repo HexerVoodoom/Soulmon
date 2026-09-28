@@ -1509,6 +1509,18 @@ const CREATURE_FAMILIES: CreatureFamily[] = [
     sf('morcego frugívoro', 'fruit bat', 'morcego', 'bat'),
     sf('morcego vampiro', 'vampire bat', 'morcego-vampiro', 'vampire bat'),
   ]},
+  { id: 'worm', name: { pt: 'Verme', en: 'Worm' }, elements: ['terra', 'sombra'], realms: ['cavernas', 'pantano', 'deserto'], subs: [
+    sf('minhoca', 'earthworm', 'minhoca', 'earthworm'),
+    sf('sanguessuga', 'leech', 'sanguessuga', 'leech'),
+    sf('verme-tubo', 'tube worm', 'verme-tubo', 'tube worm'),
+    sf('poliqueta', 'bristle worm', 'poliqueta', 'bristle worm'),
+  ]},
+  { id: 'cnidarian', name: { pt: 'Cnidário', en: 'Cnidarian' }, elements: ['agua', 'luz'], realms: ['oceano'], subs: [
+    sf('água-viva', 'jellyfish', 'água-viva', 'jellyfish'),
+    sf('anêmona', 'sea anemone', 'anêmona', 'sea anemone'),
+    sf('coral', 'coral', 'coral', 'coral'),
+    sf('caravela', "man-o'-war", 'caravela', "man-o'-war"),
+  ]},
   // ---- Plantas ----
   { id: 'flower', name: { pt: 'Flor', en: 'Flower' }, elements: ['planta', 'luz'], realms: ['campina', 'floresta', 'akasha'], subs: [
     sf('rosa', 'rose', 'rosa', 'rose'),
@@ -1580,6 +1592,9 @@ const CREATURE_FAMILIES: CreatureFamily[] = [
     sf('diabrete', 'imp', 'diabrete', 'imp'),
     sf('demônio', 'demon', 'demônio', 'demon'),
     sf('íncubo', 'incubus', 'íncubo', 'incubus'),
+    sf('súcubo', 'succubus', 'súcubo', 'succubus'),
+    sf('cão infernal', 'hellhound', 'cão infernal', 'hellhound'),
+    sf('arquidemônio', 'archfiend', 'arquidemônio', 'archfiend'),
   ]},
   { id: 'celestial', name: { pt: 'Celestial', en: 'Celestial' }, elements: ['luz', 'ar'], realms: ['akasha', 'picos'], subs: [
     sf('anjo', 'angel', 'anjo', 'angel'),
@@ -1633,6 +1648,9 @@ const CREATURE_FAMILIES: CreatureFamily[] = [
     sf('tengu', 'tengu', 'tengu', 'tengu'),
     sf('oni', 'oni', 'oni', 'oni'),
     sf('kappa', 'kappa', 'kappa', 'kappa'),
+    sf('tanuki', 'tanuki', 'tanuki', 'tanuki'),
+    sf('nekomata', 'nekomata', 'gato de duas caudas', 'two-tailed cat'),
+    sf('jorogumo', 'jorogumo', 'aranha-tecelã', 'weaver spider'),
   ]},
   { id: 'giantkin', name: { pt: 'Gigante', en: 'Giantkin' }, elements: ['terra', 'fogo'], realms: ['picos', 'cavernas', 'gelo'], subs: [
     sf('troll', 'troll', 'troll', 'troll'),
@@ -1661,18 +1679,6 @@ const CREATURE_FAMILIES: CreatureFamily[] = [
   // Quatro famílias visuais novas (28/09/2026): o dono pediu vermes,
   // cnidários, extraplanetários e geológicos entre os grupos do bestiário, e
   // nenhuma das 44 famílias do Oráculo desenhava algo assim.
-  { id: 'worm', name: { pt: 'Verme', en: 'Worm' }, elements: ['terra', 'sombra'], realms: ['cavernas', 'pantano', 'deserto'], subs: [
-    sf('minhoca', 'earthworm', 'minhoca', 'earthworm'),
-    sf('sanguessuga', 'leech', 'sanguessuga', 'leech'),
-    sf('verme-tubo', 'tube worm', 'verme-tubo', 'tube worm'),
-    sf('poliqueta', 'bristle worm', 'poliqueta', 'bristle worm'),
-  ]},
-  { id: 'cnidarian', name: { pt: 'Cnidário', en: 'Cnidarian' }, elements: ['agua', 'luz'], realms: ['oceano'], subs: [
-    sf('água-viva', 'jellyfish', 'água-viva', 'jellyfish'),
-    sf('anêmona', 'sea anemone', 'anêmona', 'sea anemone'),
-    sf('coral', 'coral', 'coral', 'coral'),
-    sf('caravela', "man-o'-war", 'caravela', "man-o'-war"),
-  ]},
   { id: 'extraterrestrial', name: { pt: 'Extraplanetário', en: 'Otherworldly' }, elements: ['luz', 'ar', 'industrial'], realms: ['akasha'], subs: [
     sf('viajante estelar', 'star wanderer', 'viajante estelar', 'star wanderer'),
     sf('semente de cometa', 'comet seed', 'semente de cometa', 'comet seed'),

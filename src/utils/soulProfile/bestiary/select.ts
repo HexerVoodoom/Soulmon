@@ -277,6 +277,10 @@ function selectFromPool(
 
 /** Grupos mínimos na faixa do sorteio inicial. */
 const MIN_GRUPOS = 6;
+/** Faixa DENTRO do grupo escolhido — mais larga que `BAND_WIDTH` porque o
+ *  grupo já foi decidido pela leitura. Medido (N=800): 4 → 178/194 criaturas
+ *  sorteadas; 6 → 188/194 e tupla visível 97% única; 8 → 183 (pior). */
+const BAND_WIDTH_NO_GRUPO = 6;
 
 /**
  * Sorteio INICIAL em duas etapas: primeiro o GRUPO, depois a criatura.
@@ -300,7 +304,7 @@ function sortearPorGrupo(scored: { creature: BestiaryCreature; score: number }[]
   if (faixa.length < MIN_GRUPOS) faixa = grupos.slice(0, MIN_GRUPOS);
   const rng = mulberry32(hashString(seedString));
   const [, lista] = faixa[Math.floor(rng() * faixa.length)];
-  const dentro = lista.filter(s => s.score >= lista[0].score - BAND_WIDTH);
+  const dentro = lista.filter(s => s.score >= lista[0].score - BAND_WIDTH_NO_GRUPO);
   const chosen = dentro[Math.floor(rng() * dentro.length)];
   const bandSize = faixa.reduce((n, [, l]) => n + l.filter(s => s.score >= l[0].score - BAND_WIDTH).length, 0);
   return { creature: chosen.creature, score: chosen.score, bandSize };
