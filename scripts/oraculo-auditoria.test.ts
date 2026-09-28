@@ -32,7 +32,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { buildSoulProfile } from '../src/utils/soulProfile/profile';
 import { CITIES } from '../src/utils/soulProfile/cities';
-import { ORACLE_QUESTIONS, mulberry32, ELEMENT_ORDER, ALIGNMENT_ORDER, generateOracle } from '../src/utils/oracle';
+import { ORACLE_QUESTIONS, mulberry32, ELEMENT_ORDER, ALIGNMENT_ORDER, generateOracleAsync } from '../src/utils/oracle';
 import type { OracleInput } from '../src/utils/oracle';
 import type { Answers, Answer } from '../src/utils/soulProfile/personality/types';
 import { items as PERSONALITY_ITEMS } from '../src/utils/soulProfile/personality/questions';
@@ -132,7 +132,7 @@ const N_FATIA_POR_SEED = 1200; // N=2400 por fatia
  *  pelo `generateOracle` (os 4 eixos não dependem do resto do pipeline). As
  *  fatias da população mista têm n de 165-410 e o piso de ruído delas passa
  *  de 1,5× sozinho — medir a meta lá é medir a roleta. */
-function fatiaEstrutural(grupo: Grupo): Record<'elemento' | 'papel' | 'reino', { razao: number; piso: number; topo: number; k: number; ruido: number; fatia: Record<string, number> }> {
+async function fatiaEstrutural(grupo: Grupo): Promise<Record<'elemento' | 'papel' | 'reino', { razao: number; piso: number; topo: number; k: number; ruido: number; fatia: Record<string, number> }>> {
   const M = { elemento: {} as Record<string, number>, papel: {} as Record<string, number>, reino: {} as Record<string, number> };
   let n = 0;
   for (const seed of SEEDS) {
@@ -148,7 +148,7 @@ function fatiaEstrutural(grupo: Grupo): Record<'elemento' | 'papel' | 'reino', {
         fullName: nome, ...nasc, timeUnknown: grupo === 'timeUnknown', placeLabel: c.name,
         latitude: c.latitude, longitude: c.longitude, timeZone: c.timeZone,
       }, answers);
-      const r = generateOracle({ fullName: nome, birthDate: nasc.birthDate, birthTime: nasc.birthTime, birthPlace: c.name, answers: quiz, soulProfile } as OracleInput, 1);
+      const r = await generateOracleAsync({ fullName: nome, birthDate: nasc.birthDate, birthTime: nasc.birthTime, birthPlace: c.name, answers: quiz, soulProfile } as OracleInput, 1);
       inc(M.elemento, r.dominantElement); inc(M.papel, r.dominantRole); inc(M.reino, r.dominantRealm);
       n++;
     }
@@ -349,9 +349,9 @@ it('auditoria do oráculo — C1/C2/C3/C4/C7/C8, N>=800, seeds de validação', 
     },
     c9_divergenciaComportamental: c9(SEEDS[0], 4000),
     fatiasEstruturais: {
-      timeUnknown: fatiaEstrutural('timeUnknown'),
-      curto: fatiaEstrutural('curto'),
-      completo: fatiaEstrutural('completo'),
+      timeUnknown: await fatiaEstrutural('timeUnknown'),
+      curto: await fatiaEstrutural('curto'),
+      completo: await fatiaEstrutural('completo'),
     },
     naoCoberto: [
       'C5 (fidelidade direcional por eixo) — desenhado em rodada2-regua.md §5, não implementado nesta rodada.',
