@@ -5584,6 +5584,8 @@ export default function App() {
                   ? (isPtH ? 'Voltar ao mapa' : 'Back to map')
                   : (isPtH ? 'Voltar ao início' : 'Back to home')}
                 onBack={goBack}
+                icon={area ? 'map' : 'arrow_back'}
+                overScene={!!area}
               />
             );
           })()}

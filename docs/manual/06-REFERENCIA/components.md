@@ -139,10 +139,16 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 
 ### `src/components/nav/AreaTopBar.tsx`
 **Dono de:** o topo de uma área do Mapa e das páginas do menu da Home — voltar (seta em círculo, exceção D1 do dono) + título centralizado.
-**Props principais:** `title`, `backLabel` (diz PARA ONDE), `onBack`, `ownsHeading?` (`false` quando a página de baixo já tem `<h1>`: o título vira `<p aria-hidden>`; desde a F5 o `App` não passa mais — nenhuma área tem página dona do `<h1>` —, fica o padrão `true`).
+**Props principais:** `icon?` (`'map'` nas áreas, `'arrow_back'` padrão — 29/09/2026), `overScene?` (topo sobre o fundo full-screen: tinta `#E9F5F2` + scrim), `title`, `backLabel` (diz PARA ONDE), `onBack`, `ownsHeading?` (`false` quando a página de baixo já tem `<h1>`: o título vira `<p aria-hidden>`; desde a F5 o `App` não passa mais — nenhuma área tem página dona do `<h1>` —, fica o padrão `true`).
 **Exports:** `AreaTopBar(props)`.
 **Chamado por:** `src/App.tsx`.
 **Régua:** `src/components/nav/nav.render.test.tsx`.
+
+### `src/components/nav/npcScale.ts`
+**Dono de:** a escala do NPC na folha do lote — `NPC_SCALE = 1.4` (pedido do dono, 29/09/2026), sobre o teto de largura anterior de 46% (`NPC_BASE_MAX_WIDTH_PCT`); a altura segue limitada pela zona de 1/3 da tela.
+**Exports:** `NPC_SCALE`, `NPC_BASE_MAX_WIDTH_PCT`, `NPC_MAX_WIDTH_PCT`.
+**Chamado por:** `src/components/nav/AreaSheet.tsx`.
+**Régua:** `src/components/nav/areaShell.render.test.tsx`.
 
 ### `src/components/arena/DueloSheet.tsx`
 **Dono de:** a folha do lote **Duelo** da Arena (minimal-ui F5, 24/09/2026) — mostra a ficha (elemento e habilidade especial do estágio, de `soulmonSkills`; sem ficha no aparelho, o par padrão) e abre a `ArenaGame` em tela cheia. Não decide nada da luta: rodadas (`ARENA_ROUNDS`), balanceamento e recompensa (Bits) continuam na `ArenaGame`.

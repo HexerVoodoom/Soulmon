@@ -58,6 +58,7 @@
 import { guardAiRequest, VALID_FORM_ID } from './_aiGuard.js';
 import { legacyFormIdOf } from './_branchLegacy.js';
 import { requirePaidTier } from './_entitlements.js';
+import { verifiedAdmin } from './_admin.js';
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { kvOrThrow } from './_kv.js';
 
@@ -371,8 +372,11 @@ export async function onRequestPost({ request, env }) {
     //    de quem paga). É fail-closed: tier indeterminável recusa.
     // 2) VOLUME (`guardAiRequest`): cota por conta + teto global. Mede quantas,
     //    não quem — por isso não substitui o de cima.
+    // ADMIN (`_admin.js`) passa no DIREITO, só com token verificado do PRÓPRIO
+    // save. O VOLUME (`guardAiRequest`) continua valendo, com o teto global intacto.
     const tier = await requirePaidTier(env, id);
-    if (!tier.ok) {
+    const tierOk = tier.ok || (tier.status === 402 && (await verifiedAdmin(env, request, id)).admin);
+    if (!tierOk) {
       return Response.json({ error: tier.reason }, { status: tier.status, headers: CORS });
     }
 

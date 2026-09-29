@@ -5,6 +5,7 @@ import { lotNpcArt } from '../../assets/soulmon/npcs';
 import { lotNpcVoice } from '../../utils/areaNpcVoice';
 import { useBackLayer } from '../../utils/backStack';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
+import { NPC_MAX_WIDTH_PCT } from './npcScale';
 
 /**
  * A FOLHA DE UM LOTE (minimal-ui F4) — bottom-sheet que abre ao tocar um
@@ -69,7 +70,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
             flex: '0 0 33.3333dvh',
             position: 'relative',
             display: 'flex', alignItems: 'flex-end', gap: 8,
-            padding: '14px 12px 10px 16px',
+            padding: '4px 12px 4px 12px',
             boxSizing: 'border-box',
             overflow: 'hidden',
             pointerEvents: 'none',
@@ -81,7 +82,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
             aria-hidden="true"
             data-area-sheet-npc
             style={{
-              height: '100%', width: 'auto', maxWidth: '46%',
+              height: '100%', width: 'auto', maxWidth: `${NPC_MAX_WIDTH_PCT}%`,
               flex: 'none', objectFit: 'contain', objectPosition: 'bottom',
               pointerEvents: 'none',
               filter: 'drop-shadow(0 6px 8px rgba(0,0,0,.6))',
@@ -97,7 +98,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
               background: 'rgba(15,42,41,.96)',
               border: '2px solid var(--sm2-gold-fill)',
               borderRadius: '14px 14px 14px 2px',
-              font: '500 14px/1.4 var(--sm2-font-text)',
+              font: '500 13px/1.35 var(--sm2-font-text)',
               color: '#E9F5F2',
               boxShadow: '0 6px 14px rgba(0,0,0,.45)',
             }}

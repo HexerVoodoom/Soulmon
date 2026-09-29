@@ -37,7 +37,7 @@ export function AreaScene({ areaId, language, lots, background, children }: {
   areaId: AreaId;
   language: Language;
   lots: AreaLot[];
-  /** Fundo pintado da área (9:16, `cover` centrado — minimal-ui F5). Sem ele,
+  /** Fundo pintado da área (9:16, `cover` centrado na TELA inteira — minimal-ui F5). Sem ele,
    *  o degradê de tokens do molde F4. */
   background?: string;
   /** O `AreaSheet` aberto, se houver — filho para ficar no mesmo empilhamento da cena. */
@@ -48,15 +48,16 @@ export function AreaScene({ areaId, language, lots, background, children }: {
     <div
       data-area-scene={areaId}
       style={{
-        position: 'relative',
-        margin: 'calc(var(--sm2-space-4) * -1)',
-        /* QA L1 #31 / L3 B5: a cena TERMINA NO FIM DA TELA. A altura era `100dvh - 96px` (56 da barra do
-           topo + 40 de folga do `<main>`), e a folga deixava uma faixa vazia de 40 px sob a folha, onde
-           o conteúdo já rola. A cena ganha os 40 px e a margem de baixo os devolve ao `<main>` (-16 - 40),
-           então o `scrollHeight` do `<main>` NÃO muda e nada ganha rolagem nova. */
-        marginBottom: 'calc(var(--sm2-space-4) * -1 - 40px)',
-        width: 'calc(100% + var(--sm2-space-4) * 2)',
-        minHeight: 'calc(100dvh - 56px)',
+        /* FUNDO FULL SCREEN (pedido do dono, 29/09/2026): a cena é `fixed` a `inset: 0` — cobre a tela
+           INTEIRA, por trás do topo (safe-area + `AreaTopBar`) e do rodapé, de borda a borda. O `<main>`
+           tem z-index e fica acima do fundo do app, e `fixed` não é cortado pelo `overflow` dele. Como a
+           cena agora É a viewport, os lotes (`left`/`top` em %) e o `cover` centrado do fundo usam a MESMA
+           caixa, então a correspondência lote↔clareira se mantém em qualquer proporção de tela. O topo
+           da área (`AreaTopBar overScene`) sobe para z-2 e fica sobre a arte; a folha (z-20) cobre a cena
+           inteira. Nada rola: o `<main>` só carrega a barra do topo. */
+        position: 'fixed',
+        inset: 0,
+        zIndex: 0,
         overflow: 'hidden',
         // Sem arte de fundo própria ainda (F5/backlog de créditos, ver
         // `docs/design/minimal-ui/BACKLOG-CREDITOS.md`): um degradê dos

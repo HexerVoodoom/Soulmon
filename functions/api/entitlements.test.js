@@ -48,7 +48,7 @@ describe('entitlements.js — leitura', () => {
     const e = env();
     const res = await onRequestGet({ request: new Request(`https://x/api/entitlements?id=${ID}`), env: e });
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ tier: 'demo', credits: 0, adsLeft: AD_DAILY_CAP, adsEnabled: false });
+    expect(await res.json()).toEqual({ admin: false, tier: 'demo', credits: 0, adsLeft: AD_DAILY_CAP, adsEnabled: false });
     expect(e.DIGIAPP_SAVES.store.size).toBe(0);
   });
 

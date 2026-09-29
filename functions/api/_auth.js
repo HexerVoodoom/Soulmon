@@ -89,12 +89,28 @@ export async function verifyIdToken(idToken, projectId) {
     if (!ok) return null;
 
     return {
-      email: String(payload.email).trim().toLowerCase(),
+      email: normalizeEmail(payload.email),
       authTime: typeof payload.auth_time === 'number' && Number.isFinite(payload.auth_time) ? payload.auth_time : 0,
     };
   } catch {
     return null;
   }
+}
+
+/**
+ * A normalização de e-mail, num lugar só: `trim` + minúsculas, e NADA mais
+ * (ponto do Gmail e `+tag` contam — são outra conta para o Firebase). Quem
+ * compara e-mail (o saveId, a lista de admin em `_admin.js`) usa esta, para as
+ * duas réguas nunca divergirem (footgun 9).
+ */
+export function normalizeEmail(email) {
+  return String(email ?? '').trim().toLowerCase();
+}
+
+/** `Authorization: Bearer <x>` → `x`, ou null. */
+export function bearerToken(request) {
+  const auth = request?.headers?.get?.('Authorization') || '';
+  return auth.startsWith('Bearer ') ? auth.slice(7) : null;
 }
 
 /**
@@ -104,7 +120,7 @@ export async function verifyIdToken(idToken, projectId) {
  * autenticado tomaria 403.
  */
 export async function emailToSaveId(email) {
-  const data = new TextEncoder().encode(`soulmon:${email.trim().toLowerCase()}`);
+  const data = new TextEncoder().encode(`soulmon:${normalizeEmail(email)}`);
   const digest = await crypto.subtle.digest('SHA-256', data);
   return [...new Uint8Array(digest)]
     .map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 32);
