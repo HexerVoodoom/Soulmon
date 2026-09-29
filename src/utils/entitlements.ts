@@ -16,6 +16,24 @@ export interface Entitlement {
   /** Anúncio recompensado só existe quando o servidor confirma que a
    *  verificação do AdMob está configurada — ver functions/api/entitlements.js. */
   adsEnabled?: boolean;
+  /** Conta de administrador/GM (29/09/2026). Decidido SÓ pelo servidor
+   *  (`functions/api/_admin.js`); aqui é sempre booleano — `sanitizeEntitlement`
+   *  só aceita `=== true`. Nunca vai para o save nem para o localStorage
+   *  (`utils/adminFlag.ts`). */
+  admin: boolean;
+}
+
+/** Normaliza a resposta do GET: `admin` só é true com o literal `true`. */
+export function sanitizeEntitlement(raw: unknown): Entitlement | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const r = raw as Record<string, unknown>;
+  return {
+    tier: r.tier === 'paid' ? 'paid' : 'demo',
+    credits: typeof r.credits === 'number' && Number.isFinite(r.credits) ? r.credits : 0,
+    adsLeft: typeof r.adsLeft === 'number' && Number.isFinite(r.adsLeft) ? r.adsLeft : 0,
+    ...(typeof r.adsEnabled === 'boolean' ? { adsEnabled: r.adsEnabled } : {}),
+    admin: r.admin === true,
+  };
 }
 
 function currentSaveId(): string | null {
@@ -31,7 +49,7 @@ export async function fetchEntitlement(): Promise<Entitlement | null> {
       headers: await authHeaders(),
     });
     if (!res.ok) return null;
-    return await res.json();
+    return sanitizeEntitlement(await res.json());
   } catch {
     return null;
   }
@@ -74,7 +92,7 @@ export async function spendCredits(
     });
     if (!res.ok) return null;
     const data = await res.json();
-    return data.ok ? { tier: data.tier, credits: data.credits, adsLeft: data.adsLeft } : null;
+    return data.ok ? { tier: data.tier, credits: data.credits, adsLeft: data.adsLeft, admin: data.admin === true } : null;
   } catch {
     return null;
   }
@@ -92,7 +110,7 @@ export async function claimAdReward(): Promise<Entitlement | null> {
     });
     if (!res.ok) return null;
     const data = await res.json();
-    return data.ok ? { tier: data.tier, credits: data.credits, adsLeft: data.adsLeft } : null;
+    return data.ok ? { tier: data.tier, credits: data.credits, adsLeft: data.adsLeft, admin: data.admin === true } : null;
   } catch {
     return null;
   }
@@ -157,7 +175,7 @@ export async function verifyPurchase(productId: string, purchaseToken: string): 
     }
     return {
       ok: true,
-      ent: { tier: data.tier, credits: data.credits, adsLeft: data.adsLeft },
+      ent: { tier: data.tier, credits: data.credits, adsLeft: data.adsLeft, admin: data.admin === true },
       consumeToken: data.consumeToken,
     };
   } catch {
