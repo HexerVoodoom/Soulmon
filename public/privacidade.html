@@ -271,6 +271,12 @@
   <tr><td><code>retained</code></td><td>Que você abriu o app depois de 1, 7 ou 30 dias da instalação (<code>bucket</code>, 0 a 2). <strong>A data em que você instalou fica no seu aparelho e nunca é enviada</strong> — a conta é feita aí e o que sai é só o número do marco, uma vez cada.</td></tr>
   <tr><td><code>sound_state</code></td><td>Uma vez por dia ativo, se o som estava mudo (<code>muted</code>, 0 ou 1) e se a trilha foi iniciada por você naquele dia (<code>music</code>, 0 ou 1). <strong>Nunca o volume, nunca o horário, nunca que som tocou, nunca o seu fone ou alto-falante.</strong> Se não conseguirmos ler a sua preferência com certeza, o evento simplesmente não é enviado.</td></tr>
   <tr><td><code>sound_off</code></td><td>Que você desligou o som, no máximo uma vez por dia, com a <em>faixa</em> de idade da instalação (<code>age</code>: 0 = no dia em que instalou, 1 = entre 1 e 6 dias, 2 = 7 dias ou mais). <strong>A data em que você instalou fica no seu aparelho e nunca é enviada.</strong> Este número existe para detectar que o app está fazendo barulho demais — <strong>ele nunca vira pontuação, nunca volta para você como número e nunca vira notificação pedindo o som de volta</strong>.</td></tr>
+  <tr><td><code>guild_create</code></td><td>Que você abriu uma Guilda. Sem o nome dela, sem código, sem ninguém.</td></tr>
+  <tr><td><code>guild_join</code></td><td>Que você entrou numa roda, com o tamanho dela depois de entrar (<code>size</code>, 2 a 12). Nunca quem está nela.</td></tr>
+  <tr><td><code>guild_leave</code></td><td>Que você seguiu o próprio caminho, com quantos ficaram (<code>size</code>, 0 a 11) e a <em>faixa</em> de tempo em que ficou (<code>weeks</code>, 0 a 3).</td></tr>
+  <tr><td><code>guild_thread</code></td><td>Que você firmou o seu fio do dia (<code>kind</code>), no máximo uma vez por dia. <strong>Nunca o que você fez, nunca quanto.</strong></td></tr>
+  <tr><td><code>guild_raid</code></td><td>Feira: que você deu a sua rodada, ou que viu o fenômeno se desfazer ou recuar (<code>outcome</code>, 0 a 2). Nunca o dano.</td></tr>
+  <tr><td><code>guild_stage</code></td><td>Que o seu aparelho viu um estágio novo do Bosque (<code>level</code>, 1 a 5), uma vez cada.</td></tr>
   <tr><td colspan="2">Além disso, os eventos acima que dizem respeito à sua conta carregam a propriedade <code>tier</code>: se você está no modo grátis ou no completo. Só isso — nada mais da sua conta.</td></tr>
 </table>
 <p>
@@ -692,6 +698,12 @@
   <tr><td><code>retained</code></td><td>That you opened the app 1, 7 or 30 days after installing (<code>bucket</code>, 0 to 2). <strong>The date you installed stays on your device and is never sent</strong> — the math happens there and only the milestone number leaves, once each.</td></tr>
   <tr><td><code>sound_state</code></td><td>Once per active day, whether sound was muted (<code>muted</code>, 0 or 1) and whether you started the soundtrack that day (<code>music</code>, 0 or 1). <strong>Never the volume, never the time of day, never which sound played, never your headphones or speaker.</strong> If we cannot read your preference with certainty, the event is simply not sent.</td></tr>
   <tr><td><code>sound_off</code></td><td>That you turned sound off, at most once a day, with the <em>bucket</em> of your install age (<code>age</code>: 0 = the day you installed, 1 = 1 to 6 days, 2 = 7 days or more). <strong>The date you installed stays on your device and is never sent.</strong> This number exists to detect the app being too noisy — <strong>it never feeds scoring, never comes back to you as a number, and never becomes a notification asking for the sound back</strong>.</td></tr>
+  <tr><td><code>guild_create</code></td><td>That you opened a Guild. Not its name, not its code, not anyone in it.</td></tr>
+  <tr><td><code>guild_join</code></td><td>That you joined a circle, with its size after you joined (<code>size</code>, 2 to 12). Never who is in it.</td></tr>
+  <tr><td><code>guild_leave</code></td><td>That you went your own way, with how many stayed (<code>size</code>, 0 to 11) and the <em>bucket</em> of how long you stayed (<code>weeks</code>, 0 to 3).</td></tr>
+  <tr><td><code>guild_thread</code></td><td>That you firmed your strand for the day (<code>kind</code>), at most once a day. <strong>Never what you did, never how much.</strong></td></tr>
+  <tr><td><code>guild_raid</code></td><td>Fair: that you took your round, or saw the phenomenon come apart or retreat (<code>outcome</code>, 0 to 2). Never the damage.</td></tr>
+  <tr><td><code>guild_stage</code></td><td>That your device saw a new stage of the Grove (<code>level</code>, 1 to 5), once each.</td></tr>
   <tr><td colspan="2">In addition, the events above that concern your account carry the <code>tier</code> property: whether you are on the free or the full mode. That alone — nothing else from your account.</td></tr>
 </table>
 <p>

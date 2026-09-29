@@ -139,7 +139,20 @@ export type TelemetryEvent =
    *  `age` é FAIXA (0 = dia da instalação, 1 = D1–D6, 2 = D7+), fechada no
    *  aparelho como o `retained` já faz. É o único evento que mede o perfil
    *  "usuário em público" sendo punido — e ele mede por REJEIÇÃO explícita. */
-  | 'sound_off';
+  | 'sound_off'
+  // ---- Guilda (WPG-7, `PLANO-GUILDA.md` §10.8) — sem id de guilda nem pid ----
+  /** Criou uma guilda (200 de `guildCreate`). */
+  | 'guild_create'
+  /** Entrou numa roda; `size` 2..12 é o tamanho depois de entrar. */
+  | 'guild_join'
+  /** Seguiu o próprio caminho; `size` 0..11 que ficou, `weeks` FAIXA 0..3 de permanência. */
+  | 'guild_leave'
+  /** Firmou o fio do dia (1ª vez no dia); `kind` 0 = fio. */
+  | 'guild_thread'
+  /** Feira: `outcome` 0 = rodada, 1 = dissipada vista, 2 = recuou vista. */
+  | 'guild_raid'
+  /** 1ª vez que o aparelho vê um estágio do Bosque; `level` 1..5. */
+  | 'guild_stage';
 
 /**
  * Allowlist de props por evento. `null` = evento sem prop nenhuma.
@@ -218,6 +231,14 @@ export const EVENT_SCHEMA: Record<TelemetryEvent, Record<string, { min: number; 
      nenhum. Sem prop de "de onde desligou": o produto não vai remover o botão
      de mudo de nenhum dos dois lugares, então o campo não muda decisão. */
   sound_off: { age: { min: 0, max: 2 } },
+  /* Guilda (WPG-7) — ESPELHO de `functions/api/metrics.js`. Só inteiros em
+     faixa: nunca id de guilda, pid, nome ou contagem por pessoa. */
+  guild_create: null,
+  guild_join: { size: { min: 2, max: 12 } },
+  guild_leave: { size: { min: 0, max: 11 }, weeks: { min: 0, max: 3 } },
+  guild_thread: { kind: { min: 0, max: 1 } },
+  guild_raid: { outcome: { min: 0, max: 2 } },
+  guild_stage: { level: { min: 1, max: 5 } },
 };
 
 export const TELEMETRY_EVENTS = Object.keys(EVENT_SCHEMA) as TelemetryEvent[];

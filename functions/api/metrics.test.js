@@ -96,10 +96,10 @@ describe('allowlist de eventos (nunca denylist)', () => {
     expect(sanitizeRecord({ e: 'install', d: DAY }, DAY)).toEqual({ e: 'install', d: DAY });
   });
 
-  it('todos os sete eventos declarados passam', () => {
+  it('todos os eventos declarados passam (no piso da faixa de cada prop)', () => {
     for (const event of Object.keys(EVENT_SCHEMA)) {
       const schema = EVENT_SCHEMA[event];
-      const p = schema ? Object.fromEntries(Object.keys(schema).map(k => [k, 1])) : undefined;
+      const p = schema ? Object.fromEntries(Object.keys(schema).map(k => [k, schema[k].min])) : undefined;
       const record = p ? { e: event, d: DAY, p } : { e: event, d: DAY };
       expect(sanitizeRecord(record, DAY)).not.toBeNull();
     }
@@ -645,5 +645,21 @@ describe('a retenção fica legível por marco', () => {
     expect(agg['retained.demo.d7']).toBe(1);
     expect(agg['retained.paid.d7']).toBe(1);
     expect(agg['retained.d30']).toBeUndefined();
+  });
+});
+
+describe('Guilda (WPG-7): 6 eventos sem PII', () => {
+  const GUILDA = ['guild_create', 'guild_join', 'guild_leave', 'guild_thread', 'guild_raid', 'guild_stage'];
+  it('os seis estão no allowlist, só com props inteiras em faixa — nenhum id, pid, nome ou contagem por pessoa', () => {
+    for (const ev of GUILDA) {
+      expect(Object.prototype.hasOwnProperty.call(EVENT_SCHEMA, ev), ev).toBe(true);
+      for (const k of Object.keys(EVENT_SCHEMA[ev] ?? {})) expect(k).toMatch(/^(size|weeks|kind|outcome|level)$/);
+    }
+    expect(sanitizeRecord({ e: 'guild_join', d: DAY, p: { size: 13 } }, DAY)).toBeNull();
+    expect(sanitizeRecord({ e: 'guild_join', d: DAY, p: { size: 4, gid: 'abc' } }, DAY)).toBeNull();
+    expect(sanitizeRecord({ e: 'guild_thread', d: DAY, p: { kind: 0, pid: 1 } }, DAY)).toBeNull();
+    expect(sanitizeRecord({ e: 'guild_create', d: DAY, p: { name: 'Roda' } }, DAY)).toBeNull();
+    expect(sanitizeRecord({ e: 'guild_leave', d: DAY, p: { size: 3, weeks: 2 } }, DAY)).not.toBeNull();
+    expect(sanitizeRecord({ e: 'guild_stage', d: DAY, p: { level: 6 } }, DAY)).toBeNull();
   });
 });

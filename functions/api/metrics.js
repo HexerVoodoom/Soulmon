@@ -128,6 +128,17 @@ export const EVENT_SCHEMA = {
   // `sound_off` é a transição por gesto, com `age` em FAIXA e nunca data.
   sound_state: { muted: { min: 0, max: 1 }, music: { min: 0, max: 1 } },
   sound_off: { age: { min: 0, max: 2 } },
+  // Guilda (WPG-7, `PLANO-GUILDA.md` §10.8) — ESPELHO de src/utils/telemetry.ts.
+  // Sem id de guilda, sem pid, sem saveId: só inteiros em faixa. `size` é o
+  // tamanho da roda (nunca quem), `weeks` a FAIXA de permanência (0..3),
+  // `kind` 0 = fio (1 reservado à semente, G3), `outcome` 0 = rodada, 1 =
+  // dissipada vista, 2 = recuou vista, `level` o estágio do Bosque visto.
+  guild_create: null,
+  guild_join: { size: { min: 2, max: 12 } },
+  guild_leave: { size: { min: 0, max: 11 }, weeks: { min: 0, max: 3 } },
+  guild_thread: { kind: { min: 0, max: 1 } },
+  guild_raid: { outcome: { min: 0, max: 2 } },
+  guild_stage: { level: { min: 1, max: 5 } },
 };
 
 /**
@@ -444,6 +455,10 @@ export function applyAggregate(agg, events) {
        730 dias. `level` é o nome que `evolve` e `bond_level` já usam. */
     if (record.e === 'milestone' && p) {
       bump(`milestone.days_${p.level}`);
+    }
+    // Guilda (WPG-7): uma faixa por prop, nunca identidade.
+    if (record.e.startsWith('guild_') && p) {
+      for (const [k, v] of Object.entries(p)) bump(`${record.e}.${k}_${v}`);
     }
 
     /* A compra POR ORIGEM. Sem isto, todas as compras eram um número só —
