@@ -82,6 +82,15 @@ describe('Painel de GM em Configurações', () => {
     expect(actions.onAddPerfectDays).toHaveBeenCalledWith(7);
   });
 
+  it.each([
+    ['pt-BR', 'Adotar o corvinho troca a criatura atual; não há como voltar'],
+    ['en-US', 'replaces the current creature; there is no way back'],
+  ] as const)('C1 (%s): adotar o corvinho avisa que não há volta', (language, frase) => {
+    act(() => setAdminFlag(true));
+    montar(language, gm());
+    expect(screen.getByText(new RegExp(frase))).toBeTruthy();
+  });
+
   it('admin sem ações passadas: nada renderiza (o App só passa `gm` para admin)', () => {
     act(() => setAdminFlag(true));
     montar('pt-BR', null);

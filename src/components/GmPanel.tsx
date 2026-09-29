@@ -3,7 +3,7 @@ import { ActionRow, GroupCard, sm2Button, sm2Hint, sm2Text } from './form/FormKi
 import type { Language } from '../utils/i18n';
 import { useAdmin } from '../utils/adminFlag';
 import { GM_BALANCE, GM_FORMS, GM_PERFECT_DAY_STEPS } from '../utils/gmTools';
-import { corvoFormName } from '../utils/corvoPet';
+import { corvoFormName } from '../utils/corvoAdocao';
 
 /**
  * PAINEL DE GM — Configurações, visível SÓ para `useAdmin() === true`.
@@ -56,8 +56,8 @@ export function GmPanel({ language, gm }: { language: Language; gm: GmActions })
           <ActionRow
             label={isPt ? 'Adotar o Corvinho' : 'Adopt the Little Raven'}
             hint={isPt
-              ? 'Troca só a criatura. Forma, atividades e moedas continuam.'
-              : 'Swaps only the creature. Form, activities and coins stay.'}
+              ? 'Adotar o corvinho troca a criatura atual; não há como voltar. Forma, atividades e moedas continuam.'
+              : 'Adopting the little raven replaces the current creature; there is no way back. Form, activities and coins stay.'}
             onClick={gm.onAdoptCorvo}
           />
         )}

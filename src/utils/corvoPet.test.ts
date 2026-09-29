@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import {
-  CORVO_FORM_IDS, CORVO_SPRITES, CORVO_SPRITES_256, CORVO_STAGES, CORVO_LINE,
-  adoptCorvo, isCorvo, spriteLineOf, corvoFormName,
+  CORVO_FORM_IDS, CORVO_SPRITES, CORVO_SPRITES_256, CORVO_LINE,
+  isCorvo, spriteLineOf,
 } from './corvoPet';
+import { CORVO_STAGES, adoptCorvo, corvoFormName } from './corvoAdocao';
 import { getSpriteForStage, resolveLineForStage } from './sprites';
 import { creatureFormId } from './oracle';
 
@@ -81,5 +82,23 @@ describe('corvoPet — o corvinho do administrador', () => {
     }
     const corvo = adoptCorvo(saveNormal() as never);
     expect(getSpriteForStage('ultra', spriteLineOf(corvo))).toBe(CORVO_SPRITES.ultra);
+  });
+});
+
+describe('C1: o que adoptCorvo preserva e o que substitui', () => {
+  it('substitui soulmonStages/baseName/demoCharacterId; preserva o resto (petName, acervo)', () => {
+    const prev = {
+      demoCharacterId: 'kaelen',
+      soulmonStages: [{ stage: 'rookie', name: 'Antigo' }] as never,
+      soulmonMeta: { petName: 'Bidu', baseName: 'Antigo' },
+      spriteLibrary: { sprites: { a: 1 } },
+      gamePoints: 7,
+    };
+    const out = adoptCorvo(prev as never) as unknown as typeof prev;
+    expect(out.demoCharacterId).toBeUndefined();
+    expect(out.soulmonStages).not.toEqual(prev.soulmonStages);
+    expect(out.soulmonMeta.petName).toBe('Bidu');
+    expect(out.spriteLibrary).toBe(prev.spriteLibrary);
+    expect(out.gamePoints).toBe(7);
   });
 });

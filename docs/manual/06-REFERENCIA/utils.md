@@ -2471,14 +2471,20 @@ dominância populacional — por isso ±15%. Régua nova:
 ### `src/utils/corvoPet.ts`
 **Dono de:** o corvinho de lanterna e cartola, a criatura do administrador — arte das 11 formas, nomes/descrições PT+EN e a adoção.
 **Exports:**
-- `CORVO_LINE`, `CORVO_FORM_IDS`, `CORVO_SPRITES`, `CORVO_SPRITES_256`, `CORVO_STAGES`, `CORVO_BASE_NAME`.
-- `function corvoSpriteFor(stage: string, size?: 256): string`, `function corvoFormName(id, language): string`.
+- `CORVO_LINE`, `CORVO_FORM_IDS`, `CORVO_SPRITES`, `CORVO_SPRITES_256` (`CORVO_STAGES`, `CORVO_BASE_NAME`, `corvoFormName` e `adoptCorvo` moraram aqui até a G1 — hoje em `corvoAdocao.ts`, abaixo).
+- `function corvoSpriteFor(stage: string, size?: 256): string`.
 - `function isCorvo(state): boolean` — true só com `soulmonMeta.creature === 'corvo'`.
 - `function spriteLineOf(state): string | undefined` — a linha de arte do save (corvo, senão `demoCharacterId`), passada como 2º parâmetro de `getSpriteForStage`.
-- `function adoptCorvo(prev)` — PURA e idempotente (mesma referência se já é corvo); troca só a criatura.
-**Chamado por:** `src/utils/sprites.ts`, `src/utils/gmTools.ts`, `src/App.tsx`, `src/components/GmPanel.tsx`, `desktop/renderer/src/cloudSync.ts`
+**Chamado por:** `src/utils/sprites.ts`, `src/utils/gmTools.ts`, `src/utils/corvoAdocao.ts`, `src/App.tsx`, `desktop/renderer/src/cloudSync.ts`
 **Régua:** `src/utils/corvoPet.test.ts`, `src/utils/adminCorvo.contract.test.ts`.
-**Avisos do arquivo:** o widget Android NÃO desenha o corvo (drawables próprios por estágio em `android/`); sem "voltar ao pet anterior" de propósito (o acervo fica intacto no save).
+**Avisos do arquivo:** o widget Android NÃO desenha o corvo (drawables próprios por estágio em `android/`); sem "voltar ao pet anterior" de propósito.
+
+### `src/utils/corvoAdocao.ts`
+**Dono de:** a ADOÇÃO do corvinho, fora do chunk de entrada (import dinâmico no `App.tsx`, G1).
+**Exports:** `CORVO_STAGES`, `CORVO_BASE_NAME`, `function corvoFormName(id, language): string`, `function adoptCorvo(prev)` — PURA e idempotente.
+**Chamado por:** `src/App.tsx`, `src/components/GmPanel.tsx`
+**Régua:** `src/utils/corvoPet.test.ts`.
+**Regra de negócio (dono, 29/09/2026):** automática na 1ª abertura como administrador (`useAdmin()===true`) e SEM VOLTA. Preserva estágio, HP, energia, atributos, atividades, Bits, Emblemas, `perfectDays`, `unlockedEvolutions`, acervo e `petName`; substitui `soulmonStages`, `baseName`, `creature` e zera `demoCharacterId`.
 
 ### `src/utils/gmTools.ts`
 **Dono de:** as ações do painel de GM como updaters PUROS sobre o save local.
