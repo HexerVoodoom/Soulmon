@@ -190,8 +190,8 @@ Outras reconciliações feitas aqui (menores, mas que deixariam duas verdades):
 
 ## 4. Como os jogadores interagem
 
-- **O agregado nunca aparece com valor 0** (parecer do guarda, 29/09/2026): "hoje, 0 fios firmaram" é o placar vazio da manhã e lê como chamada; com 0 a linha simplesmente não é desenhada. Régua: `guild.vista.test.js` (`threadedToday` é `null` quando 0).
-- **Presença binária** até 4 membros (nome + veio/não veio hoje, como o `CoopPanel` faz). **De 5 a 12, só o agregado** ("hoje, 7 fios firmaram"), sem nomes de quem veio ou não. O agregado só aparece com `size ≥ 5` — em 2, o número identifica o outro.
+- **O agregado nunca aparece com valor 0** (parecer do guarda, 29/09/2026): "hoje, 0 fios firmaram" é o placar vazio da manhã e lê como chamada; com 0 a linha simplesmente não é desenhada. Régua: `guild.vista.test.js` (`threadedToday` é `null` quando 0 e **`true` ou `null`, nunca número**).
+- **Presença binária** até 4 membros (nome + veio/não veio hoje, como o `CoopPanel` faz). **De 5 a 12, só o agregado QUALITATIVO** ("hoje o bosque recebeu fios"), sem nomes e **SEM NÚMERO** (parecer do guarda, 29/09/2026: número de fios ao lado da contagem de membros reconstrói "N de M vieram", a Recusa 3). Regra: **agregado nunca junto da contagem de membros em forma numérica**; o número não trafega no payload. Só aparece com `size ≥ 5` e ≥ 1 fio. Presença binária ≤4: leitura de LV-G2 fechada como "nunca mostra um ESTADO de ausência" — a marca é só em quem veio, só no dia corrente, sem histórico nem ordenação.
 - **Três gestos fixos**, anônimos, para a roda inteira e nunca para uma pessoa escolhida; um de cada por dia, recebidos **em lote** ao abrir, sem push:
 
   | Gesto | Ícone | EN (modelo) | PT (modelo) |
@@ -365,7 +365,7 @@ Todas com `denyUnlessOwner(id)` (410 se lápide) e `GUILD_LIGHT`. Ações: `guil
   size, full,
   members: [{ pid, name, line }],             // line = galho, nunca estágio (D-3)
   presence: size <= 4 ? [{ pid, cameToday }] : null,
-  threadedToday: size >= 5 ? number : null,   // agregado, sem nomes
+  threadedToday: size >= 5 && n >= 1 ? true : null,   // agregado QUALITATIVO: booleano, nunca o número (guarda 29/09)
   mine: { threadToday, hitToday },
   grove: { stageIndex, band },                // band 0..4, nunca progresso cru
   tide: { tideKey, size: 'bud'|'branch'|'bloom' },
@@ -428,6 +428,8 @@ Bosque: toda requisição da guilda compara `progressDay` com hoje e fecha os di
 | A raid | a **Feira** ⚠️, contra um **fenômeno** | the **Fair** ⚠️ | guerra, batalha de clãs, raide, conquista, Gathering, liga, coliseu |
 | O ciclo | a **maré** | the **tide** | temporada de ranking, reset, wipe |
 | Quem abriu | **anfitrião/anfitriã** | **host** | líder, chefe, mestre, dono, fundador |
+| Tamanhos da floração | **Pétala** · **Corola** · **Floração cheia** | **Petal** · **Corolla** · **Full bloom** | Broto/Sprout/Seed/Sapling/Tree, Ramo/Bough |
+| Troféu a cada `RAID_TROPHY_EVERY` (decoração, espaço `trophy`) | **Concha da Maré** ⚠️ | **Tide shell** ⚠️ | campeão, vitória, MVP, troféu "de quem lutou" |
 | Entrar / sair | chegar à roda / **seguir o próprio caminho** | join the circle / go your own way | abandonar, desertar, ser expulso |
 
 | Mecânica | Significado | Frase que NUNCA pode ser dita |

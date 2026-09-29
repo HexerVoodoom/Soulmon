@@ -66,15 +66,15 @@
 | `guild.bosque.estagio.mata.linha` | Camadas sobre camadas. | Layer over layer. | idem | L12 |
 | `guild.bosque.estagio.bosqueAntigo.nome` | Bosque antigo | Old grove | idem | §12 |
 | `guild.bosque.estagio.bosqueAntigo.linha` | O cobre tomou o chão. A luz chega filtrada. | Copper took the ground. Light comes through filtered. | idem | L12 |
-| `guild.bosque.perto` | Perto de {estagio}. | Near {estagio}. | faixa de progresso, SEM número, só quando o próximo estágio está perto; no Bosque antigo e longe do próximo: SILÊNCIO | L4 e §17-6 (nada de "faltam N") |
+| `guild.bosque.perto` | Perto de {estagio}. | Near {estagio}. | faixa de progresso, SEM número, só quando o próximo estágio está perto; no Bosque antigo e longe do próximo: SILÊNCIO. Parecer do guarda 29/09: APROVADO COM RESSALVA — nunca com barra de razão exata nem tempo estimado; a "proximidade" é binária (perto/silêncio) | L4 e §17-6 (nada de "faltam N") |
 | `guild.bosque.fio.hoje` | O seu fio firmou hoje. | Your strand settled today. | só para a própria pessoa, sob o visor | L12 (nomeia o ato) |
 | `guild.bosque.fio.ainda` | (sem texto — SILÊNCIO) | (no text — SILENCE) | estado "meta ainda não cumprida": nada é desenhado, nem placeholder, nem ícone vazio | L6, §13 silêncio; 08-critica O2 |
 | `guild.bosque.fio.botao` | Firmar meu fio | Settle my strand | botão de gesto (substitui "Avisar que apareci hoje"); só aparece com a meta cumprida e o fio ainda não afirmado | L12 |
 | `guild.bosque.fio.toast` | Um fio firmou no bosque. | A strand settled in the grove. | toast ao afirmar o fio (toast constata, sem "parabéns") | L12; 03-lore §4 item 3 |
 | `guild.bosque.fio.pet` | Olha, ficou de pé. | Look, it's standing. | fala do pet logo após o fio | L11 |
-| `guild.bosque.agregado.um` | Hoje, 1 fio firmou. | Today, 1 strand settled. | painel (não sobre o pixel art). Só com `size ≥ 5` e N ≥ 1 | LV-G1, LV-G2; PLANO §4 |
-| `guild.bosque.agregado.outros` | Hoje, {n} fios firmaram. | Today, {n} strands settled. | idem. Com N = 0 a linha NÃO É DESENHADA | LV-G1, LV-G2 |
-| `guild.bosque.agregado.zero` | (sem texto — SILÊNCIO) | (no text — SILENCE) | N = 0: nada | LV-G2; parecer do guarda 29/09 |
+| `guild.bosque.agregado.um` | Hoje o bosque recebeu fios. | The grove took in strands today. | painel (não sobre o pixel art). Só com `size ≥ 5` e ≥ 1 fio. **SEM NÚMERO** (parecer do guarda 29/09: número + `guild.roda.contagem` reconstrói "N de M vieram"). Chave mantida, texto único | LV-G1, LV-G2; PLANO §4 |
+| `guild.bosque.agregado.outros` | (chave aposentada — mesma frase de `.um`, sem `{n}`) | (retired key — same line as `.um`, no `{n}`) | não existe variante por quantidade; `{n}` proibido nesta família | LV-G1, LV-G2 |
+| `guild.bosque.agregado.zero` | (sem texto — SILÊNCIO) | (no text — SILENCE) | 0 fios: nada | LV-G2; parecer do guarda 29/09 |
 | `guild.bosque.estagioAtual` | {estagio} | {estagio} | chip do estágio sobre o painel; apenas o nome | §12 |
 
 ## 4. Roda (seção do meio) e gestos
@@ -82,9 +82,9 @@
 | chave | PT-BR | EN | onde usa | lei |
 |---|---|---|---|---|
 | `guild.roda.titulo` | Roda | Circle | GuildSheet, título da seção | §12 |
-| `guild.roda.contagem` | {n} na roda | {n} in the circle | subtítulo; só a quantidade de membros, nunca de presentes | LV-G2 |
-| `guild.roda.presente` | no bosque hoje | in the grove today | ≤4 membros: ao lado do nome de quem veio. Quem não veio: SILÊNCIO (nenhuma marca, nenhum lugar vazio) | LV-G2; L6 |
-| `guild.roda.ausente` | (sem texto — SILÊNCIO) | (no text — SILENCE) | ≤4: quem não veio hoje; 5–12: ninguém tem estado de presença | LV-G2 |
+| `guild.roda.contagem` | {n} na roda | {n} in the circle | subtítulo; só a quantidade de membros, nunca de presentes. Nunca no mesmo painel de um agregado numérico (que não existe mais) | LV-G2 |
+| `guild.roda.presente` | no bosque hoje | in the grove today | ≤4 membros: ao lado do nome de quem veio. Quem não veio: SILÊNCIO (nenhuma marca, nenhum lugar vazio). RESSALVA do guarda 29/09: só o DIA corrente (some na virada, sem histórico de semana/estação), sem ordenar por presença, sem contraste visual de "apagado" nos outros, some ao chegar a 5 | LV-G2; L6; PLANO §4 |
+| `guild.roda.silencio` (renome de `guild.roda.ausente`, o identificador não nomeia ausência) | (sem texto — SILÊNCIO) | (no text — SILENCE) | ≤4: quem não veio hoje; 5–12: ninguém tem estado de presença | LV-G2 |
 | `guild.roda.grande.nota` | (sem texto — só nomes em ordem de chegada) | (no text — names in order of arrival only) | 5–12: lista sem estado, sem ordenação por atividade | LV-G1, LV-G2 |
 | `guild.gesto.titulo` | Gestos | Gestures | cabeçalho da linha de 3 botões | §12 |
 | `guild.gesto.aceno.nome` | Aceno | Wave | botão + chave `wave` | L12 |
@@ -149,7 +149,8 @@
 | `guild.mural.titulo` | Mural | Wall | GuildSheet, título da seção | §12 |
 | `guild.mural.vazio` | (sem texto — SILÊNCIO) | (no text — SILENCE) | Mural sem itens: seção vazia não desenha "nada ainda" | L6; §13 |
 | `guild.mural.marco` | {estagio}, {data} | {estagio}, {data} | linha de marco | L12 |
-| `guild.mural.mare` | Floração colhida, {data} | Bloom gathered, {data} | peça de maré; UM texto para os três tamanhos (nomes de tamanho pendentes, ver Recusas) | L12; 08-critica (nenhum chamado de pior) |
+| `guild.mural.mare.tamanho.*` | Pétala · Corola · Floração cheia | Petal · Corolla · Full bloom | os três tamanhos, pequeno→grande | L12 |
+| `guild.mural.mare` | Floração colhida, {data} | Bloom gathered, {data} | peça de maré; UM texto para os três tamanhos; nomes dos tamanhos em `guild.mural.mare.tamanho.*` (Pétala/Corola/Floração cheia) | L12; 08-critica (nenhum chamado de pior) |
 | `guild.mural.boasvindas` | Mais uma borda encostou na roda, {data}. | One more edge touched the circle, {data}. | boas-vindas anônimas (no Mural nunca há nome de quem chegou) | LV-G1; §6 tabela Entrar |
 
 ## 8. Ajustes
@@ -224,10 +225,10 @@
 6. **"Outros bosques", "o outro lado", "a pilha de ninguém"** na Feira: o fenômeno é tempo da Malha, nunca adversário com gente nem pendência (08-critica B1/B2).
 7. **"Não foi culpa sua" após a Feira recuar**: absolvição explícita também reprova (§17-3). O pet diz só "Ele foi embora sozinho."
 8. **"Oi. O bosque ainda tá aqui" / "senti sua falta" / boas-vindas diferentes por ausência**: "ainda" afirma passagem de tempo; a saudação é a mesma em 2 ou 40 dias e sem gatilho.
-9. **Nomes de tamanho da floração (broto/ramo/floração)**: "Broto" colide com `tournamentTiers` (Semente→Broto→…) e "Ramo" com Boughs. Escrevi um único texto ("Floração colhida"). Se os três tamanhos forem visíveis, pedir palavras ao `soulmon-loremaster`.
+9. ✅ RESOLVIDO (loremaster): tamanhos = Pétala/Petal · Corola/Corolla · Floração cheia/Full bloom. (Antes: "Broto" colide com `tournamentTiers` (Semente→Broto→…) e "Ramo" com Boughs. Escrevi um único texto ("Floração colhida"). Se os três tamanhos forem visíveis, pedir palavras ao `soulmon-loremaster`.)
 10. **"seed/sprout/sapling/tree" e "nível/level/upgrade" para estágios**: pertencem a `HABIT_MILESTONES` / vetados (§12).
 11. **Texto do estado "fio ainda não firmado"** ("ainda não", "hoje falta"): o estado é SILÊNCIO (08-critica O2).
 12. **Frase para "guilda esvaziada" com "morreu/ruínas/seu grupo acabou"**: o chão volta a ser Malha aberta; o postal é só o nome do estágio, sem data nem "há N dias" (regra 8).
 13. **Texto de push da Guilda** (celebração inclusive) e de chat livre: v1 não tem (PLANO §10.9).
 14. **Texto de Créditos/aceleração/slot pago**: nada da Guilda é vendido (LV-G6).
-15. **Loot de decoração `RAID_TROPHY_EVERY`**: sem copy porque o item ainda não tem nome; precisa de termo do loremaster.
+15. ✅ RESOLVIDO (loremaster): item = **Concha da Maré / Tide shell** (decoração, `trophy`). Significado: a maré deixa uma concha no Bosque a cada 4 Feiras dissipadas; nomeia o ATO da roda, nunca uma pessoa; sem "campeão", sem contagem exibida.

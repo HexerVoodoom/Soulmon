@@ -361,3 +361,13 @@ produto passou a fabricar a impaciência que vende.
 | §13/§14/§16 | APROVADO | Réguas por LV; alavanca em falha é baixar `GUILD_MAX_MEMBERS`, nunca identificar contribuição. |
 
 Seis perguntas: (1) o fio nasce da meta, não o contrário; a Feira premia um gesto, não tarefa; (2) sai algo? só via TTL — G17; (3) nenhum perdão novo sobre punição; (4) único número que desce é o HP do fenômeno em faixa (é progresso); (5) cortina: dano oculto é sorteio honesto, declarado; (6) cabe na tese.
+
+## Parecer — `L1-copy-critica.md` obs. 1, 2 e 3 (Guilda, copy), 29/09/2026
+
+| Item | Parecer | Motivo / o que muda |
+|---|---|---|
+| Obs 1 `guild.bosque.agregado.*` + `guild.roda.contagem` | **VETADO na forma numérica** (LV-G2, Recusa 3) | "Hoje, 3 fios" ao lado de "8 na roda" = "3 de 8 vieram", a lista de ausentes em aritmética. Alternativa adotada (a do relatório): "Hoje o bosque recebeu fios." / "The grove took in strands today.", só com `size ≥ 5` e ≥ 1 fio; 0 = silêncio. `{n}` proibido na família. `threadedToday` passa de `number\|null` a `true\|null`; o número deixa de trafegar. |
+| Obs 2 `guild.roda.presente` (≤4) | **APROVADO COM RESSALVA** | PLANO §3.3 e REGISTRO 13.13 autorizam presença binária; com ≤4 é companhia. LV-G2 lido como "nunca mostra ESTADO de ausência". Ressalvas (aceite): só o dia corrente, sem histórico de semana/estação, sem ordenar por presença, sem "apagado" visual nos demais, some ao chegar a 5. Teste `guild.vista.test.js`: `presence === null` com 5+. |
+| Obs 3 `guild.bosque.perto` | **APROVADO COM RESSALVA** | Sem número; ressalva: binário (perto/silêncio), nunca razão exata nem tempo estimado. |
+
+Perdoa demais? Não aplicável: nenhuma das três mexe em perdão.
