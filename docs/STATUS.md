@@ -13,7 +13,7 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > `useAdmin()` (`src/utils/adminFlag.ts`) espelha SÓ o `admin === true` de `GET /api/entitlements`, em memória (nunca save/localStorage; rede falha = não-admin).
 > O admin adota o corvinho uma vez por sessão (`src/utils/corvoPet.ts` › `adoptCorvo`, marca `soulmonMeta.creature`); arte resolvida por `spriteLineOf` → `getSpriteForStage` em Home, Pet, Evolução, cerimônia, masmorra/arena/Dino/pesadelo, torneio e overlay desktop.
 > Painel de GM nas Configurações (`GmPanel.tsx` + `src/utils/gmTools.ts`): saldo 999999 em Bits/Emblemas, desbloquear tudo, ir para forma, encher cuidados, +1/7/30 dias completos. Capturas em `docs/reviews/admin-corvo/shots-cliente/`.
-> **Limitações:** o widget Android não desenha o corvo (drawables por estágio); o nome da forma aparece em PT também no EN (`CreatureStage.name` é monolíngue, como no oráculo). **Depende do dono:** `wrangler secret put ADMIN_EMAILS`.
+> **Limitações:** o widget Android não desenha o corvo (drawables por estágio); o nome da forma aparece em PT também no EN (`CreatureStage.name` é monolíngue, como no oráculo). **Decidido pelo dono em 29/09/2026:** adoção do corvinho **automática** na primeira abertura como administrador e **sem volta**; ultra do corvinho **mantido como está**; GM no PvP **aceito como está** (dívida M-3 conhecida de `docs/reviews/admin-corvo/L1-sustento.md`, o administrador não sai do PvP). Registro em `REGISTRO-DE-DECISOES.md` §5.5. **Depende do dono:** `wrangler secret put ADMIN_EMAILS`.
 
 > ## 29/09/2026 — Caminhos renomeados: Poder / Harmonia / Benevolência
 >
@@ -42,8 +42,9 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > ficam só porque os testes de servidor os usam — nenhum cliente chama),
 > **M-5** (régua LV-G6 `functions/api/guildReward.contract.test.js`), **B-2**
 > (`threadedToday` só com fio). **G1** (fio pela meta de coração) está no código
-> como padrão da sessão e **AGUARDA confirmação do dono** (`REGISTRO` §5.5).
-> **Falta:** widget (WPG-14), arte real (WPG-13/WPG-A, hoje placeholders),
+> e foi **CONFIRMADO pelo dono em 29/09/2026** (`REGISTRO` §5.5).
+> **Decidido pelo dono em 29/09/2026 (modal):** cenários `bg-guild-*` **diurnos**, tom do Hall (creme); fenômeno da Feira com **um sprite por tipo × 3 estados = 12** (`fair-fenomeno-<tipo>-<estado>`, +9 ativos; `FAIR_ART` em `src/utils/fairArt.ts` precisa de mapa por tipo×estado, código ainda não feito); Jogos: repintar só `bg-jogos` (lote PPT, Pipo e zona ficam como estão).
+> **Falta:** widget (WPG-14), arte real (WPG-13/WPG-A, hoje placeholders; fila de prompts em `docs/design/areas/prompts/`, ~187 imagens estimadas),
 > wireframes GUI-01..16 (WPG-W), manual + bíblia (WPG-15, `docsManual` com
 > entradas faltando).
 >

@@ -82,3 +82,5 @@ Folha de contato: `docs/reviews/admin-corvo/folha-de-contato.png`.
 - Quem importa: a fatia de integracao (`utils/sprites.ts`, mapa forma -> PNG; NAO feito aqui). Os PNGs viram WebP no `npm run build`.
 - 512 para pet/ficha; 256 para masmorra/widget.
 - Nada registrado em src/utils nesta fatia.
+
+- ultra mantido por decisão do dono 29/09/2026 (P&B, sem mais textura). Adoção do corvinho: automática na primeira abertura como administrador e sem volta (`REGISTRO-DE-DECISOES.md` §5.5).
