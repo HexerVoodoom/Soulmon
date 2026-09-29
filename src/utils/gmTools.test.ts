@@ -38,8 +38,8 @@ describe('gmTools', () => {
     expect(a.perfectDays).toBe(2);
     expect(a.totalPerfectDays).toBe(5);
     expect(gmUnlockAll(a)).toBe(a);
-    const veterano = { ...a, dungeonKills: 5000 };
-    expect(gmUnlockAll(veterano).dungeonKills).toBe(5000);
+    const veterano = { ...a, dungeonKills: 5000, dungeonRunsCompleted: 40, dinoBest: 8000, missionPerfectDays: 90 };
+    expect(gmUnlockAll(veterano)).toBe(veterano);
   });
 
   it('ir para forma: estágio e galho, HP máximo da forma, id inválido recusado, idempotente', () => {

@@ -43,6 +43,11 @@ describe('arte do pet resolve pela linha do save em todo ponto que desenha', () 
     expect(app).toMatch(/petLine,\n\s*pvpEnabled/);
   });
 
+  it('desktop: os DOIS snapshots (fetch e save em mãos) usam spriteLineOf', () => {
+    const src = ler('desktop/renderer/src/cloudSync.ts');
+    expect(src.match(/demoCharacterId: spriteLineOf\(/g)?.length).toBe(2);
+  });
+
   it.each([
     ['src/components/PetPage.tsx', /getSpriteForStage\([^)]*demoCharacterId\)/],
     ['src/components/EvolutionPath.tsx', /getSpriteForStage\(currentStageId, demoCharacterId\)/],
