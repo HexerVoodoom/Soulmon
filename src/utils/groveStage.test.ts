@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { groveCreatures, spriteForMember, OWN_RENDER, OTHER_RENDER } from './groveStage';
+import { groveCreatures, spriteForMember, spreadX, OWN_RENDER, OTHER_RENDER } from './groveStage';
 import { DUNGEON_LINE_SPRITES } from './sprites';
 import { GUILD_MAX_MEMBERS, GUILD_PRESENCE_NOMINAL_MAX } from './guildRules';
 
@@ -41,10 +41,19 @@ describe('palco do Bosque — quem aparece', () => {
     expect(groveCreatures(r)).toHaveLength(1);
   });
 
+  it('a distribuição conta o TAMANHO: a criatura grande não come a vizinha (caixas não se sobrepõem)', () => {
+    for (let n = 1; n <= 4; n++) {
+      const sizes = [OWN_RENDER, ...Array(n - 1).fill(OTHER_RENDER)];
+      const xs = spreadX(sizes).map(x => (x / 100) * 320);
+      for (let i = 1; i < n; i++) expect(xs[i] - sizes[i] / 2).toBeGreaterThanOrEqual(xs[i - 1] + sizes[i - 1] / 2 - 0.5);
+    }
+    expect(spreadX([128])).toEqual([50]);
+  });
+
   it('posições dentro do vidro (nada colado na borda) e crescentes', () => {
     for (let n = 1; n <= 4; n++) {
       const xs = groveCreatures(roda(n)).map(x => x.x);
-      expect(xs.every(x => x >= 10 && x <= 90)).toBe(true);
+      expect(xs.every(x => x >= 10 && x <= 92)).toBe(true);
       expect(xs).toEqual([...xs].sort((p, q) => p - q));
     }
   });

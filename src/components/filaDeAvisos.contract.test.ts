@@ -149,6 +149,9 @@ describe('o MARCO DO BOSQUE entra nas duas filas, com posição declarada (Guild
   it('o fio da Guilda vale a meta de CORAÇÃO (`heartGoalFor`), e o App a passa por props — a folha não decide meta', () => {
     expect(app).toContain('heartGoalFor(gameState, new Date().getDay(), new Date().toDateString())');
     expect(app).toContain('metaDoDiaCumprida: fioMetaCumprida');
+    // ...e a definição dela é `done ≥ heart`, nunca a meta inteira (`dailyTotal`)
+    expect(app).toContain('const fioMetaCumprida = dailyTotal > 0 && dailyDone >= heartGoalHoje;');
+    expect(app).toContain('const fioGoal = { done: dailyDone, heart: heartGoalHoje, full: dailyTotal };');
     expect(app).toMatch(/guild=\{\{ saveId, metaDoDiaCumprida: fioMetaCumprida, fioGoal, mySprite: minhaCriaturaUrl/);
     const sheet = readFileSync('src/components/guild/GuildSheet.tsx', 'utf8');
     expect(sheet).not.toMatch(/heartGoalFor|dailyGoalFor/);

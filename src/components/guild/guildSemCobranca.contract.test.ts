@@ -242,6 +242,12 @@ describe('fonte da B1 — o palco, o visor e a memória não ordenam nem leem pr
     const v = fonte('components/guild/GroveVisor.tsx') + fonte('utils/groveStage.ts');
     // `guild.bosque.stage` (o estágio da RODA) é legítimo; o de UM MEMBRO, não.
     expect(v).not.toMatch(/\b(m|member|other|o)\.(stage|hp|line|evolutionStage|healthPoints)\b|healthPoints|evolutionStage/);
+    // ...nem por um `as any`, e o palco puro (`groveStage.ts`) nem tem a palavra: só o visor a usa, e só da RODA.
+    expect(v).not.toMatch(/as any\)\.(stage|hp|line)/);
+    expect(fonte('utils/groveStage.ts')).not.toMatch(/\b(stage|hp|healthPoints|evolution\w*)\b/i);
+    const usosDeStage = [...fonte('components/guild/GroveVisor.tsx').matchAll(/(\w+(?:\.\w+)*)\.stage\b/g)].map(m => m[1]);
+    expect(usosDeStage.length).toBeGreaterThan(0);
+    for (const u of usosDeStage) expect(u).toBe('guild.bosque');
   });
 
   it('o Bosque na folha não faz conta com o índice do estágio (só o nomeia), e não cita progresso cru', () => {

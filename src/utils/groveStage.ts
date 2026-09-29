@@ -51,20 +51,38 @@ export function spriteForMember(key: string): string {
   return DUNGEON_LINE_SPRITES[LINES[hash(key) % LINES.length]].rookie;
 }
 
-/** Distribuição horizontal: nada colado nas bordas (o visor é arredondado) e nada no centro exato de quatro. */
-const XS: Record<number, number[]> = { 1: [50], 2: [34, 66], 3: [22, 50, 78], 4: [16, 38, 62, 84] };
+/**
+ * Largura NOMINAL do vidro em px (a folha real mede ~326 em 390 de tela). A
+ * distribuição é feita nela e devolvida em %: criaturas de tamanhos diferentes
+ * (a sua é o dobro) não podem ficar equidistantes pelo CENTRO, senão a grande
+ * come a vizinha. O vão é o que sobra dividido entre n+1 espaços — nada colado
+ * na borda arredondada, e os pés todos na mesma linha do chão.
+ */
+const VIDRO_NOMINAL = 320;
+
+export function spreadX(sizes: number[]): number[] {
+  const vao = Math.max(0, (VIDRO_NOMINAL - sizes.reduce((a, b) => a + b, 0)) / (sizes.length + 1));
+  let cursor = 0;
+  return sizes.map(size => {
+    cursor += vao;
+    const centro = cursor + size / 2;
+    cursor += size;
+    return Math.round((centro / VIDRO_NOMINAL) * 1000) / 10;
+  });
+}
 
 export function groveCreatures(guild: Pick<GuildView, 'size' | 'members'>): GroveCreature[] {
   const nominal = guild.size <= GUILD_PRESENCE_NOMINAL_MAX && guild.members.length > 0 && guild.members.length <= GUILD_PRESENCE_NOMINAL_MAX;
   const sozinho: GroveCreature[] = [{ key: 'eu', own: true, x: 50, size: OWN_RENDER, sprite: null }];
   if (!nominal) return sozinho;
   if (!guild.members.some(m => m.euMesmo)) return sozinho;
-  const xs = XS[guild.members.length];
+  const sizes = guild.members.map(m => (m.euMesmo ? OWN_RENDER : OTHER_RENDER));
+  const xs = spreadX(sizes);
   return guild.members.map((m, i) => ({
     key: m.id ?? `m${i}`,
     own: m.euMesmo,
     x: xs[i],
-    size: m.euMesmo ? OWN_RENDER : OTHER_RENDER,
+    size: sizes[i],
     sprite: m.euMesmo ? null : spriteForMember(m.id ?? `m${i}`),
   }));
 }
