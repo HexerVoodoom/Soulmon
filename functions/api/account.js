@@ -113,7 +113,7 @@ import { requireVerifiedOwner } from './_auth.js';
 import { kv, kvOrThrow } from './_kv.js';
 import { lerIndice, chaveDoIndice, PUSHIDX_MAX } from './_pushIdentity.js';
 import { writeTombstone, clearTombstone, TOMBSTONE_TTL_SECONDS } from './_accountTombstone.js';
-import { coopLeave, grupoDe, coopOfKey, coopCkKey } from './_coop.js';
+import { coopLeave, grupoDe, coopOfKey, coopCkKey, coopFioKey, lerFio, apagarClaims } from './_coop.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -427,11 +427,18 @@ async function collect(env, saveId) {
       const ckRaw = await store.get(coopCkKey(g.id, saveId));
       let ck = null;
       try { ck = ckRaw ? JSON.parse(ckRaw) : null; } catch { ck = null; }
+      // O FIO do titular (WPG-6): só a chave dele — nunca o de outro membro,
+      // nunca o progresso do Bosque (que é da roda, não dado pessoal).
+      const fio = await lerFio(env, g.id, saveId);
       coopExport = {
         [coopOfKey(saveId)]: g.id,
         [coopCkKey(g.id, saveId)]: ck,
+        [coopFioKey(g.id, saveId)]: fio,
         // Nome e papel; NENHUM saveId ou nome de outro membro (dado de terceiro).
-        grupo: { id: g.id, name: g.name, joinedAs: g.hostSave === saveId ? 'host' : 'member' },
+        grupo: {
+          id: g.id, name: g.name, joinedAs: g.hostSave === saveId ? 'host' : 'member',
+          myDistinctDays: fio?.distinctDays ?? 0, myLastThreadDay: fio?.lastDay ?? null,
+        },
       };
     }
   } catch { coopGroupId = null; coopExport = null; }
@@ -525,7 +532,8 @@ function plan(c, saveId) {
       ...c.sprites.blobs,
       'menções a você na lista de amigos de outros jogadores',
       'inscrições de notificação (push:*/fcm:*) ligadas à sua conta',
-      ...(c.coopGroupId ? [`coop:${c.coopGroupId} (sua vaga no grupo)`, coopOfKey(saveId), coopCkKey(c.coopGroupId, saveId)] : []),
+      ...(c.coopGroupId ? [`coop:${c.coopGroupId} (sua vaga no grupo)`, coopOfKey(saveId), coopCkKey(c.coopGroupId, saveId), coopFioKey(c.coopGroupId, saveId)] : []),
+      'resgates da Guilda (coopClaim:*) e rodadas da Feira (coopHit:*) ligados à sua conta — os fios que você já firmou ficam no Bosque, anônimos',
       // #54: o vínculo SteamID ↔ conta. ⚰️ Até 22/09/2026 estas chaves apareciam
       // em `sobrevive` (5 anos, justificativa fiscal que não se aplica a licença).
       ...c.steamLicenseKeys,
@@ -628,7 +636,10 @@ async function handleDeleteConfirm(env, saveId, body) {
   //    primeira destruição, no bloco que só reporta.
   /** @type {{ left: boolean, groupId: string | null, remaining: number }} */
   let coop = { left: false, groupId: null, remaining: 0 };
-  await tentar('coop (grupo cooperativo)', async () => { coop = await coopLeave(env, saveId); });
+  // Guilda (WPG-6): `exclusao` também apaga `coopHit`; os fios ainda não
+  // fechados viram contagem ANÔNIMA do Bosque (a obra nunca regride, LV-G3).
+  await tentar('coop (grupo cooperativo)', async () => { coop = await coopLeave(env, saveId, { exclusao: true }); });
+  await tentar('coopClaim (resgates da Guilda)', () => apagarClaims(env, saveId));
 
   // 4) Inscrições de push ligadas à conta (decisão #23), pelo índice.
   //    Reversível na prática: o aparelho se reinscreve na próxima abertura.
