@@ -162,3 +162,40 @@ describe('o MARCO DO BOSQUE entra nas duas filas, com posição declarada (Guild
     expect(app).toContain('onScenes: useCallback((ids: string[]) => setGameState(prev => grantGroveScenes(prev, ids)), [setGameState])');
   });
 });
+
+// ---------------------------------------------------------------------------
+// O MARCO DO BOSQUE NA FILA DE INTERSTICIAIS (QA L3-codigo A2).
+//
+// `groveMilestone` (a cerimônia z-300 da Guilda) é raro e descritivo: cede a vez ao que a pessoa faz
+// todo dia (relatório, check-in) e vem ANTES do sonho. Em 29/09/2026 uma mutação que o tirava da
+// expressão `interstitial` (`grovePendente ? 'groveMilestone'` → `false ? …`) deixou os 16 testes
+// desta régua verdes: a posição declarada só existia em comentário. Lê a expressão do FONTE.
+// ---------------------------------------------------------------------------
+describe('o marco do Bosque tem POSIÇÃO na fila (L3 A2)', () => {
+  const ini = app.indexOf('const interstitial:');
+  const expr = app.slice(ini, app.indexOf("'welcome';", ini) + "'welcome';".length);
+  /** Os nomes na ordem em que a cadeia ternária os decide (o último é o `: 'welcome'`). */
+  const ordem = [...expr.matchAll(/\?\s*'(\w+)'|:\s*'(welcome)'/g)].map(m => m[1] ?? m[2]);
+
+  it('a expressão existe e a ordem é: triagem → relatório → check-in → MARCO → sonho → pesadelo → catálogo → boas-vindas', () => {
+    expect(ini).toBeGreaterThan(0);
+    expect(ordem).toEqual(['triage', 'dailyReport', 'checkIn', 'groveMilestone', 'dream', 'nightmare', 'catalogOnboarding', 'catalogLevelInvite', 'welcome']);
+  });
+
+  it('o marco vem DEPOIS do relatório e do check-in e ANTES do sonho (posições, não só presença)', () => {
+    const i = (k: string) => ordem.indexOf(k);
+    expect(i('groveMilestone')).toBeGreaterThan(i('dailyReport'));
+    expect(i('groveMilestone')).toBeGreaterThan(i('checkIn'));
+    expect(i('groveMilestone')).toBeLessThan(i('dream'));
+  });
+
+  it('só decide `groveMilestone` quando há marco pendente REAL (`grovePendente`), e a cerimônia monta só por essa fila', () => {
+    expect(expr).toMatch(/grovePendente\s*\?\s*'groveMilestone'/);
+    expect(app.match(/<GroveMilestoneCeremony/g) ?? []).toHaveLength(1);
+    expect(app).toContain("{interstitial === 'groveMilestone' && grovePendente && grove?.pending && (");
+  });
+
+  it('o tipo declarado da fila também lista `groveMilestone` (a expressão e o tipo não divergem)', () => {
+    expect(expr.slice(0, expr.indexOf('=')).includes("'groveMilestone'")).toBe(true);
+  });
+});
