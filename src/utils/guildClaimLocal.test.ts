@@ -5,16 +5,21 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 const mem = new Map<string, string>();
-vi.stubGlobal('localStorage', {
-  getItem: (k: string) => mem.get(k) ?? null, setItem: (k: string, v: string) => { mem.set(k, v); },
+/** O storage da conveniência; com `cheio` o `setItem` estoura como uma quota real (o `safeStorage` engole e devolve `false`). */
+const cheio = (recusa: boolean) => ({
+  getItem: (k: string) => mem.get(k) ?? null,
+  setItem: (k: string, v: string) => { if (recusa) throw new Error('QuotaExceededError'); mem.set(k, v); },
   removeItem: (k: string) => { mem.delete(k); }, clear: () => mem.clear(), key: () => null, length: 0,
 });
+vi.stubGlobal('localStorage', cheio(false));
 
-import { readClaimedReceipts, hasClaimedReceipt, rememberClaimedReceipt, grantGuildTrophy } from './guildClaimLocal';
+import {
+  readClaimedReceipts, hasClaimedReceipt, rememberClaimedReceipt, grantGuildTrophy, markClaimAttempt, hadClaimAttempt, resetClaimMemoryForTests,
+} from './guildClaimLocal';
 import { STORAGE_KEYS } from './storageKeys';
 import { RAID_TROPHY_ID } from './guildRules';
 
-beforeEach(() => mem.clear());
+beforeEach(() => { mem.clear(); resetClaimMemoryForTests(); vi.stubGlobal('localStorage', cheio(false)); });
 
 describe('recibos', () => {
   it('lembrar é idempotente: a segunda vez devolve false (quem chama NÃO credita)', () => {
@@ -25,7 +30,7 @@ describe('recibos', () => {
     expect(hasClaimedReceipt('r1')).toBe(true);
   });
 
-  it('só guarda recibos (opacos): nada de semana, guilda ou quantia', () => {
+  it('só guarda recibos (opacos): nada de guilda ou quantia (a semana só na marca de tentativa)', () => {
     rememberClaimedReceipt('abc123');
     expect(mem.get(STORAGE_KEYS.GUILD_CLAIMED)).toBe('["abc123"]');
   });
@@ -41,9 +46,32 @@ describe('recibos', () => {
     expect(lista.at(-1)).toBe('r39');
   });
 
-  it('storage que falha na escrita NÃO derruba (o servidor ainda recusa a segunda)', () => {
-    vi.stubGlobal('localStorage', { getItem: () => null, setItem: () => { throw new Error('quota'); }, removeItem: () => {} });
+  it('M2: storage CHEIO/indisponível — o recibo cai para a memória da execução e o segundo toque NÃO credita de novo', () => {
+    vi.stubGlobal('localStorage', cheio(true));
     expect(() => rememberClaimedReceipt('r9')).not.toThrow();
+    expect(hasClaimedReceipt('r9')).toBe(true);
+    expect(rememberClaimedReceipt('r9')).toBe(false);   // quem chama não credita a segunda vez
+    expect(readClaimedReceipts()).toEqual(['r9']);
+    expect(mem.get(STORAGE_KEYS.GUILD_CLAIMED)).toBeUndefined(); // nada chegou ao disco
+  });
+
+  it('M2: com storage saudável a memória NÃO é usada (o disco é a fonte); depois de limpo, o app não "lembra" sozinho', () => {
+    rememberClaimedReceipt('r1');
+    mem.clear();
+    expect(hasClaimedReceipt('r1')).toBe(false);
+  });
+
+  it('a TENTATIVA de colher (`~semana`) é do aparelho: só ela autoriza o 409 a creditar, e nunca conta como recibo', () => {
+    expect(hadClaimAttempt('2026-W39')).toBe(false);
+    markClaimAttempt('2026-W39');
+    expect(hadClaimAttempt('2026-W39')).toBe(true);
+    expect(hadClaimAttempt('2026-W38')).toBe(false);
+    expect(readClaimedReceipts()).toEqual([]);
+    expect(hasClaimedReceipt('~2026-W39')).toBe(true); // vive na mesma chave, com prefixo que nenhum recibo tem
+    // também cai para a memória sem storage
+    vi.stubGlobal('localStorage', cheio(true));
+    markClaimAttempt('2026-W40');
+    expect(hadClaimAttempt('2026-W40')).toBe(true);
   });
 });
 

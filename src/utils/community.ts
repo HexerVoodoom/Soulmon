@@ -270,7 +270,14 @@ export type GuildErrorKind =
   | 'server';       // qualquer outro 5xx, 4xx desconhecido ou corpo ilegível
 
 export class GuildError extends Error {
-  constructor(public readonly kind: GuildErrorKind, public readonly status: number, public readonly guild?: GuildView | null) {
+  /** `guild` só no 409 `already in a guild`; `claim` só no 409 `already claimed` (o resgate JÁ feito, para o cliente
+   *  que perdeu a resposta do 200 — L3-codigo A1). */
+  constructor(
+    public readonly kind: GuildErrorKind,
+    public readonly status: number,
+    public readonly guild?: GuildView | null,
+    public readonly claim?: GuildClaim | null,
+  ) {
     super(`guild:${kind}:${status}`);
     this.name = 'GuildError';
   }
@@ -405,14 +412,19 @@ async function guildCall<T>(action: string, opts: { method?: 'GET' | 'POST'; par
     // 200 com corpo ilegível é FALHA (portal cativo, proxy) — ver `call` acima.
     throw new GuildError(res.status >= 500 ? 'unavailable' : 'server', res.status);
   }
-  const obj = (data && typeof data === 'object' ? data : {}) as { error?: unknown; deletedAt?: unknown; guild?: unknown };
+  const obj = (data && typeof data === 'object' ? data : {}) as { error?: unknown; deletedAt?: unknown; guild?: unknown; claimed?: unknown };
   if (res.status === 410) {
     void reagirContaExcluida({ excluidaEm: typeof obj.deletedAt === 'number' ? obj.deletedAt : undefined });
     throw new GuildError('deleted', 410);
   }
   if (!res.ok) {
     const kind = kindOf(res.status, typeof obj.error === 'string' ? obj.error : '');
-    throw new GuildError(kind, res.status, kind === 'alreadyIn' ? sanitizeGuildView(obj.guild) : undefined);
+    throw new GuildError(
+      kind, res.status,
+      kind === 'alreadyIn' ? sanitizeGuildView(obj.guild) : undefined,
+      // 409 `already claimed`: o servidor manda `claimed` (a MESMA forma do 200, lida do registro gravado).
+      kind === 'alreadyClaimed' ? sanitizeClaim(obj.claimed) : undefined,
+    );
   }
   return data as T;
 }
@@ -505,14 +517,31 @@ export function sanitizeRewards(raw: unknown): GuildRewards {
 export const getGuildRewards = (id: string, tz?: PlayerDayAnchor) =>
   guildCall<{ rewards?: unknown }>('guildRewards', { params: { id, dayKey: dia(tz) } }).then(r => sanitizeRewards(r.rewards));
 
-/** Colher UMA semana. 409 `alreadyClaimed` e 404 `nothingToClaim` viram erro tipado: quem chama decide o silêncio. */
+/**
+ * O `claimed` do servidor (200 e 409) vira o tipo estreito, ou `null` se faltar o recibo.
+ * `week` é conferida contra a semana pedida quando o chamador a informa (o 409 pode vir sem ela).
+ */
+export function sanitizeClaim(raw: unknown, week?: string): GuildClaim | null {
+  const c = (raw && typeof raw === 'object' ? raw : null) as Record<string, unknown> | null;
+  if (!c || typeof c.receipt !== 'string' || !c.receipt || typeof c.week !== 'string' || (week !== undefined && c.week !== week)) return null;
+  return {
+    week: c.week.slice(0, 20),
+    outcome: c.outcome === 'dissipada' ? 'dissipada' : 'recuou',
+    emblems: intIn(c.emblems, 0, 20),
+    trophy: c.trophy === true,
+    trophyId: typeof c.trophyId === 'string' ? c.trophyId.slice(0, 40) : null,
+    receipt: c.receipt.slice(0, 80),
+  };
+}
+
+/**
+ * Colher UMA semana. 404 `nothingToClaim` vira erro tipado (SILÊNCIO). 409 `alreadyClaimed` também, MAS
+ * traz `error.claim`: se a resposta do 200 se perdeu na rede, o direito já foi gravado e é o 409 que
+ * devolve o recibo — a folha credita por ele (uma vez por recibo).
+ */
 export const claimGuildReward = (id: string, week: string, tz?: PlayerDayAnchor): Promise<GuildClaim> =>
-  guildCall<{ claimed?: Record<string, unknown> }>('guildClaim', { method: 'POST', body: { id, dayKey: dia(tz), week } }).then(r => {
-    const c = r.claimed ?? {};
-    const outcome = c.outcome === 'dissipada' ? 'dissipada' : 'recuou';
-    if (typeof c.receipt !== 'string' || !c.receipt || c.week !== week) throw new GuildError('server', 200);
-    return {
-      week, outcome, emblems: intIn(c.emblems, 0, 20), trophy: c.trophy === true,
-      trophyId: typeof c.trophyId === 'string' ? c.trophyId.slice(0, 40) : null, receipt: c.receipt.slice(0, 80),
-    };
+  guildCall<{ claimed?: unknown }>('guildClaim', { method: 'POST', body: { id, dayKey: dia(tz), week } }).then(r => {
+    const c = sanitizeClaim(r.claimed, week);
+    if (!c) throw new GuildError('server', 200);
+    return c;
   });

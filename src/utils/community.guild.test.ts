@@ -327,3 +327,52 @@ describe('a rodada, o direito e o resgate (chamadas)', () => {
     expect((await claimGuildReward('save-12345', 'w')).emblems).toBe(0);
   });
 });
+
+describe('rodada L3: o contrato novo do servidor (marcas só existem quando `true`; 409 traz o resgate)', () => {
+  it('409 already claimed devolve o `claimed` HIGIENIZADO em `error.claim` (a resposta do 200 se perdeu — A1)', async () => {
+    fetchMock.mockResolvedValue(resp(409, {
+      error: 'already claimed', receipt: 'rc-9',
+      claimed: { week: '2026-W39', outcome: 'dissipada', emblems: 9_999, trophy: true, trophyId: 'trophy-concha-mare', receipt: 'rc-9' },
+    }));
+    const e = await erroDe(claimGuildReward('save-12345', '2026-W39'));
+    expect(e.kind).toBe('alreadyClaimed');
+    expect(e.claim).toEqual({ week: '2026-W39', outcome: 'dissipada', emblems: 20, trophy: true, trophyId: 'trophy-concha-mare', receipt: 'rc-9' });
+  });
+
+  it('409 com `claimed: null` (o registro sumiu entre as duas leituras) ou sem recibo: `claim` nulo — nada a creditar', async () => {
+    fetchMock.mockResolvedValue(resp(409, { error: 'already claimed', receipt: 'rc-9', claimed: null }));
+    expect((await erroDe(claimGuildReward('save-12345', 'w'))).claim).toBeNull();
+    fetchMock.mockResolvedValue(resp(409, { error: 'already claimed', claimed: { week: 'w', outcome: 'dissipada', emblems: 4 } }));
+    expect((await erroDe(claimGuildReward('save-12345', 'w'))).claim).toBeNull();
+  });
+
+  it('só o 409 de resgate carrega `claim`: outros erros (e o 409 de guilda cheia) não', async () => {
+    fetchMock.mockResolvedValue(resp(409, { error: 'guild full', claimed: { week: 'w', outcome: 'dissipada', emblems: 4, receipt: 'r' } }));
+    const e = await erroDe(joinGuild('save-12345', 'ABCD2345'));
+    expect(e.kind).toBe('full');
+    expect(e.claim).toBeUndefined();
+  });
+
+  it('vista do servidor SEM as marcas falsas: ausente = false, e nada de `progress`/`target` no tipo higienizado', () => {
+    const v = sanitizeGuildView({
+      id: 'g1', name: 'Roda', weekKey: '2026-W40', code: 'ABCD2345', isHost: true, size: 3, full: false,
+      members: [{ id: 'a1', name: 'Ana', euMesmo: true, apareceuHoje: true }, { id: 'a2', name: 'Bia', euMesmo: false }, { id: 'a3', name: 'Caio', euMesmo: false }],
+      presence: [{ memberId: 'a1', cameToday: true }, { memberId: 'a2' }, { memberId: 'a3' }],
+      mine: {}, bosque: { stage: 'copa', stageIndex: 3, perto: false, ornaments: [] }, gestures: [],
+      raid: { weekKey: '2026-W40', phenomenon: 'nevoa', state: 'aberta', ferido: false, lastWeek: null, mine: {} },
+    })!;
+    expect(v.members.map(m => m.apareceuHoje)).toEqual([true, false, false]);
+    expect(v.mine).toEqual({ cameToday: false, threadToday: false, groveScenes: false, gesturesSent: [] });
+    expect(v.raid?.hitToday).toBe(false);
+    expect(Object.keys(v)).not.toContain('progress');
+    expect(Object.keys(v)).not.toContain('target');
+    // `raid.mine` ausente também não derruba
+    expect(sanitizeGuildView({ ...view(), raid: { phenomenon: 'mare', state: 'aberta' } })!.raid?.hitToday).toBe(false);
+  });
+
+  it('`progress`/`target` que um servidor antigo ainda mande são DESCARTADOS (nunca chegam à UI)', () => {
+    const v = sanitizeGuildView(view({ progress: 3, target: 10 })) as unknown as Record<string, unknown>;
+    expect(v.progress).toBeUndefined();
+    expect(v.target).toBeUndefined();
+  });
+});
