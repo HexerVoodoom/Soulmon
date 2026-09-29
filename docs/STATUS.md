@@ -38,6 +38,27 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > de telemetria para o convite da Guilda (hoje reusa `shop`, exige `reason`
 > 5 no `metrics.js`); 6 chaves PENDENTE de revisão do `soulmon-narrative-critic`.
 >
+> **Manual sincronizado com `8e6d0d9a` (29/09/2026, `/manter-docs` desde `38c3ccb5`)** —
+> a Guilda inteira (servidor fatias 1–3, cliente A/B1/B2/L4, correções L2/L3) chegou ao
+> manual: docs `00-MAPA`, `01-VISAO`, `02` (novo §56-A e §56 CORRIGIDO — as 9 afirmações
+> falsas do `L1-conformidade`), `03` (§4.26, fila, avisos), `04` (§7.5), `05`, `07` (11
+> famílias `coop*`), `08` (§2.11-A, 15ª rota, seis eventos `guild_*`), `10`, `11` (9
+> termos) e `06-REFERENCIA` (10 módulos novos, contagem de `utils` 139 → 157). Sem a
+> ferramenta Agent na sessão: redação e verificação (grep símbolo a símbolo) feitas por
+> um agente só. `docsManual`/`docsSemMentira` verdes.
+> **Divergências novas (todas plano/comentário × código; código intocado):** (1)
+> `PLANO-COOP.md` §4.2 "código de uso único" — o código é reutilizável até a guilda morrer;
+> (2) `PLANO-COOP.md` §3.4 "sem check-in 4 semanas é apagado" — não implementado (só o TTL de
+> 120 d, e com Bosque plantado nem ele); (3) `PLANO-GUILDA.md` §3 diz "dia UTC" no fio e "broto
+> / ramo" nas marés — o código usa o dia do jogador (±1 UTC) e `petala`/`corola`/`floracao`;
+> (4) comentários de `guildClaimLocal.ts`/`storageKeys.ts` chamam `GUILD_CLAIMED` de "terceira"
+> chave — o teste trava exatamente duas; (5) a aba "Grupo" da `LibraryPage` é código morto
+> (inalcançável); (6) **G1** segue adotado por padrão e **aguarda o dono**.
+> **Depende do dono:** criar o segredo `GUILD_MEMBER_SECRET` no Cloudflare (sem ele o id
+> opaco do membro usa sal vazio — funciona, mas é previsível); motivo próprio de telemetria
+> para o convite da Guilda (hoje reusa `shop`); arte real do Bosque/Feira (`fairArt.ts`,
+> `bg-guild-*`, `trophy-concha-mare`) e wireframes GUI-01..16 seguem pendentes.
+>
 > ### (registro anterior) Plano da Guilda — PLANO, sem código
 >
 > Pedido do dono: traçar o plano completo da guilda com foco CONSTRUTIVO
