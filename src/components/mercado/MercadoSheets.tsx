@@ -85,6 +85,18 @@ export function MercadoStallSheet(props: MercadoStallProps) {
         </div>
       </div>
 
+
+      {/* O que a roda deu (cenários do Bosque, Concha da Maré): só EQUIPA, sem preço.
+          NO TOPO, antes de ~20 cenários da loja (QA L3 M4): o que se ganhou não se procura no fim.
+          Vazio é silêncio — a seção nem desenha o título. */}
+      {cur !== 'credits' && (stall === 'background' || stall === 'decoracao') && (
+        <GuildOwnedShelf
+          language={language}
+          kind={stall === 'background' ? 'bg' : 'furniture'}
+          ownership={props}
+          actions={props}
+        />
+      )}
       {cur === 'credits' ? (
         <>
           <CreditExchange language={language} credits={credits} onExchangeCredits={onExchangeCredits} say={say} />
@@ -116,16 +128,6 @@ export function MercadoStallSheet(props: MercadoStallProps) {
           actions={props}
           say={say}
           flash={flash}
-        />
-      )}
-      {/* O que a roda deu (cenários do Bosque, Concha da Maré): só EQUIPA, sem preço.
-          Vazio é silêncio — a seção nem desenha o título. */}
-      {cur !== 'credits' && (stall === 'background' || stall === 'decoracao') && (
-        <GuildOwnedShelf
-          language={language}
-          kind={stall === 'background' ? 'bg' : 'furniture'}
-          ownership={props}
-          actions={props}
         />
       )}
     </div>
