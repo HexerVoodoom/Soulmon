@@ -341,7 +341,8 @@ describe('copy da Feira e do glossário (B2)', () => {
     const raiz = path.resolve(__dirname, '../..');
     const ler = (rel: string) => fs.readFileSync(path.join(raiz, rel), 'utf8');
     const help = ler('components/HelpModal.tsx');
-    for (const c of ['GUILD_MAX_MEMBERS', 'GUILD_TIDE_WEEKS', 'RAID_EMBLEMS', 'RAID_EMBLEMS_FLOOR', 'RAID_TROPHY_EVERY']) expect(help).toContain(c);
+    for (const c of ['max: GUILD_MAX_MEMBERS', 'semanas: GUILD_TIDE_WEEKS', 'cheio: RAID_EMBLEMS, piso: RAID_EMBLEMS_FLOOR', 'n: RAID_TROPHY_EVERY']) expect(help).toContain(c);
+    expect(help).not.toMatch(/\b(max|semanas|cheio|piso|n): \d/);
     for (const k of ['guild.help.guilda', 'guild.help.bosque', 'guild.help.fio', 'guild.help.feira', 'guild.help.mare', 'guild.help.concha']) expect(help).toContain(k);
     expect(ler('components/GuideModal.tsx')).toMatch(/guild\.guide\.titulo[\s\S]*guild\.guide\.corpo/);
   });

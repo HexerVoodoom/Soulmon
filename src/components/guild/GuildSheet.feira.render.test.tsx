@@ -224,6 +224,14 @@ describe('o resultado da semana que fechou', () => {
     expect(sala().textContent).not.toMatch(/Ana|Bia|Caio/);
   });
 
+  it('semana corrente já dissipada: o resultado da PASSADA não aparece junto (uma frase de desfecho só)', async () => {
+    vi.mocked(getGuild).mockResolvedValue(vista({ state: 'dissipada', lastWeek: 'recuou' }));
+    await montar();
+    expect(document.querySelector('[data-feira-semana-passada]')).toBeNull();
+    expect(screen.queryByText(PT('guild.feira.recuou.mundo'))).toBeNull();
+    expect(screen.getByText(PT('guild.feira.dissipado.mundo'))).toBeTruthy();
+  });
+
   it('lastWeek nulo (ninguém golpeou): nada sobre a semana passada', async () => {
     vi.mocked(getGuild).mockResolvedValue(vista({ lastWeek: null }));
     await montar();
@@ -263,6 +271,10 @@ describe('o resgate', () => {
     await montar({ onClaimed });
     const b = await waitFor(() => { expect(colhe()).toBeTruthy(); return colhe()!; });
     expect(b.textContent).toContain(PT('guild.feira.colher.botao'));
+    // O cartão só CONSTATA o desfecho: nenhuma frase de cobrança antes ou depois dele.
+    const cartao = document.querySelector('[data-feira-resgate]')!;
+    expect(cartao.querySelector('p')!.textContent).toBe(PT('guild.feira.dissipado.mundo'));
+    expect(cartao.textContent).not.toMatch(/ainda|not yet|volte|come back|amanh|tomorrow|perde|expira|last chance|\bhoje\b|\btoday\b/i);
     fireEvent.click(b);
     await waitFor(() => expect(document.querySelector('[data-feira-colhido]')!.textContent).toBe(fill(PT('guild.feira.colhido'), { n: RAID_EMBLEMS })));
     expect(onClaimed).toHaveBeenCalledTimes(1);

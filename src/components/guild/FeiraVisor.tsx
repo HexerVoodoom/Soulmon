@@ -15,6 +15,7 @@ import { FAIR_ART, fairFxId, fairStateOf, type FairState } from '../../utils/fai
 import type { GuildRaid } from '../../utils/community';
 
 const PETROL = '#123232';
+const SLAB = '#2A5C5A';
 const OUTLINE = '#050E0E';
 const TURQ = '#6EFFFB';
 const COPPER = '#B87333';
@@ -22,7 +23,7 @@ const BONE = '#EFE3C2';
 
 export const FEIRA_VISOR_HEIGHT = 176;
 
-interface Slab { x: number; y: number; w: number; h: number; r: number }
+interface Slab { x: number; y: number; w: number; h: number; r: number; solta?: boolean }
 
 /** ~7 lajes finas empilhadas e deslocadas, como camadas que não assentaram. */
 const OFFS = [0, 4, -3, 5, -4, 3, -2];
@@ -36,13 +37,14 @@ function slabsFor(state: FairState): Slab[] {
     const ys = [66, 70, 64, 70, 66, 56, 54];
     return xs.map((x, i) => ({ x, y: ys[i], w: 16 + (i % 3) * 3, h: 4, r: ROTS[i] }));
   }
-  const gap = state === 'ferido' ? 13 : 9;
+  const gap = state === 'ferido' ? 12 : 9;
   return WIDTHS.map((w, i) => {
     let x = 80 - w / 2 + OFFS[i];
-    let y = 66 - i * gap;
+    let y = 68 - i * gap;
     // Ferido: três lajes soltas, à deriva, e as fendas mais largas.
-    if (state === 'ferido' && (i === 2 || i === 4 || i === 5)) { x += i === 4 ? -26 : 24; y -= 4; }
-    return { x, y, w, h: 8, r: ROTS[i] };
+    const solta = state === 'ferido' && (i === 2 || i === 4 || i === 5);
+    if (solta) { x += i === 4 ? -26 : 24; y -= 4; }
+    return { x, y, w, h: 6, r: ROTS[i], solta };
   });
 }
 
@@ -88,7 +90,7 @@ export function FeiraVisor({ raid, label, reducedMotion }: { raid: GuildRaid; la
   const real = FAIR_ART[`fair-fenomeno-${state}`];
   const fxReal = FAIR_ART[fairFxId(raid.phenomenon)];
   const slabs = slabsFor(state);
-  const seam = state === 'dissipado' ? null : (state === 'ferido' ? { x: 46, y: 12, w: 68, h: 62 } : { x: 56, y: 6, w: 48, h: 62 });
+  const fenda = state === 'ferido' ? 5 : 3; // a luz entre as lajes: mais larga quando a roda já o abalou
   return (
     <span
       className="sm2-viewport-screen sm2-visor sm2-grove-screen"
@@ -98,19 +100,20 @@ export function FeiraVisor({ raid, label, reducedMotion }: { raid: GuildRaid; la
       data-reduced-motion={reducedMotion ? 'true' : undefined}
       role="img"
       aria-label={label}
-      style={{ height: FEIRA_VISOR_HEIGHT, background: `linear-gradient(180deg, #071A1A 0%, ${PETROL} 100%)`, backgroundColor: PETROL }}
+      style={{ height: FEIRA_VISOR_HEIGHT, background: `linear-gradient(180deg, #030B0B 0%, #0A1E1E 100%)`, backgroundColor: PETROL }}
     >
       {real ? (
         <img src={real} alt="" draggable={false} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', imageRendering: 'pixelated' }} />
       ) : (
         <svg viewBox="0 0 160 88" preserveAspectRatio="xMidYMax meet" width="100%" height="100%" shapeRendering="crispEdges" aria-hidden="true" focusable="false" style={{ position: 'absolute', inset: 0 }}>
           {/* O chão do visor: uma linha, nada mais. */}
-          <rect x={0} y={80} width={160} height={8} fill={OUTLINE} />
-          {seam && <rect x={seam.x} y={seam.y} width={seam.w} height={seam.h} fill={TURQ} />}
+          <rect x={0} y={82} width={160} height={6} fill={OUTLINE} />
           {slabs.map((s, i) => (
             <g key={i} transform={`rotate(${s.r} ${s.x + s.w / 2} ${s.y + s.h / 2})`} data-fair-slab>
-              <rect x={s.x} y={s.y} width={s.w} height={s.h} fill={PETROL} stroke={OUTLINE} strokeWidth={1.5} />
-              {i === 3 && state !== 'ferido' && state !== 'dissipado' && <rect x={s.x + s.w - 8} y={s.y + 1} width={5} height={s.h - 2} fill={COPPER} />}
+              {/* a fenda de luz turquesa fica ABAIXO de cada laje (nada no dissipado: tudo assentou) */}
+              {state !== 'dissipado' && !s.solta && i > 0 && <rect x={s.x + 3} y={s.y + s.h} width={s.w - 6} height={fenda} fill={TURQ} />}
+              <rect x={s.x} y={s.y} width={s.w} height={s.h} fill={SLAB} stroke={OUTLINE} strokeWidth={1.5} />
+              {i === 3 && state !== 'dissipado' && <rect x={s.x + s.w - 8} y={s.y + 1} width={5} height={s.h - 2} fill={COPPER} />}
             </g>
           ))}
           {!fxReal && <Fx phenomenon={raid.phenomenon} />}
