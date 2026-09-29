@@ -71,7 +71,8 @@ describe('copy da Guilda — vocabulário vetado', () => {
 
   it('{n} só existe onde é contagem de VAGAS ou de membros, nunca de quem veio', () => {
     const comN = entradas.filter(([, [pt]]) => pt.includes('{n}')).map(([k]) => k).sort();
-    expect(comN).toEqual(['guild.criar.codigo.corpo', 'guild.roda.contagem']);
+    // B2: `{n}` também é a QUANTIA de Emblemas colhidos e o intervalo da Concha — nunca de quem veio.
+    expect(comN).toEqual(['guild.criar.codigo.corpo', 'guild.feira.colhido', 'guild.help.concha.def', 'guild.roda.contagem']);
   });
 
   it('a linha de presença é a marca positiva — não existe chave de "ausente"', () => {
@@ -143,7 +144,7 @@ describe('copy do Bosque, dos gestos, do marco e do Mural', () => {
   it('os placeholders permitidos são só {n} (vagas/membros), {estagio}, {data} e {gesto} — nunca de pessoa ou de quantidade de quem veio', () => {
     for (const [k, [pt, en]] of entradas) {
       for (const txt of [pt, en]) {
-        for (const m of txt.matchAll(/\{(\w+)\}/g)) expect(['n', 'estagio', 'data', 'gesto'], `${k}: {${m[1]}}`).toContain(m[1]);
+        for (const m of txt.matchAll(/\{(\w+)\}/g)) expect(['n', 'estagio', 'data', 'gesto', 'nome', 'max', 'cheio', 'piso', 'semanas'], `${k}: {${m[1]}}`).toContain(m[1]);
       }
     }
     // {estagio} é NOME de estágio; nenhuma chave de estágio/gesto/marco/mural leva {n}
@@ -271,5 +272,84 @@ describe('fonte da B1 — o palco, o visor e a memória não ordenam nem leem pr
     expect(/\.sort\(/.test(semComentarios2('members.sort((a,b)=>a-b)'))).toBe(true);
     expect(/apareceuHoje/.test(semComentarios2('m.apareceuHoje ? 1 : 0'))).toBe(true);
     expect(VETADAS.some(re => re.test('Faltam 2 dias para a Copa'))).toBe(true);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FATIA B2 — a Feira, o resgate, a Concha da Maré e o glossário.
+// ─────────────────────────────────────────────────────────────────────────────
+describe('copy da Feira e do glossário (B2)', () => {
+  const doc = fs.readFileSync(path.resolve(__dirname, '../../../docs/NARRATIVA-COPY-GUILDA.md'), 'utf8');
+  const copySrc = fs.readFileSync(path.resolve(__dirname, '../../utils/guildCopy.ts'), 'utf8');
+  const norm = (t: string) => t.replace(/[’']/g, "'");
+  /** Chaves da B2 que NÃO estão no documento — cada uma tem de estar marcada PENDENTE em `guildCopy.ts`. */
+  const PENDENTES = ['guild.concha.nome', 'guild.concha.chegou', 'guild.concha.desc', 'guild.help.concha.termo', 'guild.help.concha.def', 'guild.cenarios.titulo'];
+  const chavesB2 = entradas.filter(([k]) => /^guild\.(feira\.|help\.|guide\.|aria\.(feira|rodada)|concha\.|cenarios\.)/.test(k));
+
+  it('toda chave da B2 está no documento com o MESMO texto (nada inventado), exceto as PENDENTES declaradas', () => {
+    expect(chavesB2.length).toBeGreaterThan(30);
+    for (const [k, [pt, en]] of chavesB2) {
+      if (PENDENTES.includes(k)) continue;
+      expect(doc.includes(`\`${k}\``), `${k} fora do documento`).toBe(true);
+      expect(norm(doc).includes(norm(pt)), `${k}: PT diferente do documento`).toBe(true);
+      expect(norm(doc).includes(norm(en)), `${k}: EN diferente do documento`).toBe(true);
+    }
+  });
+
+  it('toda chave PENDENTE está marcada `PENDENTE` num comentário acima dela em guildCopy.ts (e nenhuma outra finge ser do documento)', () => {
+    for (const k of PENDENTES) {
+      expect(GUILD_COPY[k as keyof typeof GUILD_COPY], k).toBeTruthy();
+      expect(doc.includes(`\`${k}\``), `${k} entrou no documento: tire de PENDENTES`).toBe(false);
+      const antes = copySrc.slice(0, copySrc.indexOf(`'${k}'`));
+      expect(antes.slice(antes.lastIndexOf('\n  // PENDENTE') === -1 ? 0 : antes.lastIndexOf('\n  // PENDENTE')), k).toMatch(/PENDENTE/);
+    }
+  });
+
+  it('a Concha da Maré nomeia o ATO da roda: nunca "campeão", nunca contagem exibida, nunca uma pessoa', () => {
+    for (const [k, [pt, en]] of entradas.filter(([k]) => /^guild\.(concha|help\.concha)/.test(k))) {
+      expect(pt + ' ' + en, k).not.toMatch(/campe|champion|vencedor|winner|troféu|trophy|\bvoc[êe]\b|\byou\b/i);
+    }
+    expect(GUILD_COPY['guild.concha.nome']).toEqual(['Concha da Maré', 'Tide shell']);
+  });
+
+  it('a Feira não tem número de dano, "volte amanhã", nem cobrança: a rodada feita é fato', () => {
+    for (const [k, [pt, en]] of entradas.filter(([k]) => /^guild\.feira\./.test(k))) {
+      expect(pt + ' ' + en, k).not.toMatch(/dano|damage|\bhp\b|amanh|tomorrow|volte|come back|ainda n|not yet|faltam?|restam|left\b|quem|who\b|\bvoc[êe]s? (perderam|falharam)|you (lost|failed)/i);
+    }
+    // os dois únicos placeholders numéricos da Feira vêm de constantes (Emblemas), nunca de progresso
+    expect(GUILD_COPY['guild.feira.sobria'][0]).toContain('{cheio}');
+    expect(GUILD_COPY['guild.feira.sobria'][0]).toContain('{piso}');
+  });
+
+  it('`recuou` não culpa NEM absolve (§17-3): constata que voltou à névoa e que o bosque segue como estava', () => {
+    const [pt, en] = GUILD_COPY['guild.feira.recuou.mundo'];
+    expect(pt + en).not.toMatch(/culpa|fault|n[ãa]o foi|wasn'?t|falh|fail|perd|lost|todos|ningu[ée]m|nobody|everyone/i);
+    expect(pt).toContain('bosque segue como estava');
+  });
+
+  it('a fala do NPC da Feira é a do documento, e a Feira tem o NPC Fanfa (Marla fica só no Salão)', async () => {
+    const { lotNpcVoice } = await import('../../utils/areaNpcVoice');
+    for (const [lang, i] of [['pt-BR', 0], ['en-US', 1]] as const) {
+      const v = lotNpcVoice('arena', 'feira', lang);
+      expect(v.name).toBe('Fanfa');
+      expect(v.line).toBe(GUILD_COPY['guild.npc.feira'][i]);
+      expect(lotNpcVoice('hall', 'guilda', lang).name).toMatch(/Marla/);
+    }
+  });
+
+  it('o glossário e o guia leem a copy da tabela e as CONSTANTES (nenhum número escrito à mão)', () => {
+    const raiz = path.resolve(__dirname, '../..');
+    const ler = (rel: string) => fs.readFileSync(path.join(raiz, rel), 'utf8');
+    const help = ler('components/HelpModal.tsx');
+    for (const c of ['GUILD_MAX_MEMBERS', 'GUILD_TIDE_WEEKS', 'RAID_EMBLEMS', 'RAID_EMBLEMS_FLOOR', 'RAID_TROPHY_EVERY']) expect(help).toContain(c);
+    for (const k of ['guild.help.guilda', 'guild.help.bosque', 'guild.help.fio', 'guild.help.feira', 'guild.help.mare', 'guild.help.concha']) expect(help).toContain(k);
+    expect(ler('components/GuideModal.tsx')).toMatch(/guild\.guide\.titulo[\s\S]*guild\.guide\.corpo/);
+  });
+
+  it('o resgate lê o direito do SERVIDOR: a folha só credita via `onClaimed` e não conhece a quantia por conta própria', () => {
+    const f = fs.readFileSync(path.resolve(__dirname, 'GuildSheet.tsx'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+    expect(f).not.toMatch(/setGameState\(|localStorage|\.emblems\s*\+|emblems\s*\+=/);
+    expect(f).toMatch(/onClaimedRef\.current\?\.\(\{ emblems: c\.emblems/);
+    expect(f).toMatch(/hasClaimedReceipt\(c\.receipt\)/);
   });
 });

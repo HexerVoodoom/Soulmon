@@ -5703,6 +5703,8 @@ select:focus-visible {
   .sm-milestone-pop { animation: none !important; }
   /* Bosque da Guilda: as criaturas ficam paradas. */
   .sm2-grove-bob { animation: none !important; }
+  /* Feira da Guilda: o FX do fenômeno fica parado. */
+  .sm2-fair-fx { animation: none !important; }
   .sm2-viewport { animation: none !important; }
   .sm2-icon { transition: none !important; }
   /* minimal-ui F1: o link de canto e o voltar não encolhem no toque. */
@@ -7825,3 +7827,10 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
 .sm2-grove-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sm2-space-1); }
 .sm2-grove-list li { font-size: var(--sm2-text-sm); color: var(--sm2-ink); min-width: 0; overflow-wrap: anywhere; }
 .sm2-grove-list li .n { font-weight: 500; }
+
+/* ── FEIRA da Guilda (fatia B2, 29/09/2026) ──────────────────────────────────
+   O fenômeno é PLACEHOLDER em SVG dentro do vidro (`FeiraVisor`); o FX de cada tipo
+   deriva devagar em `steps()` (pixel só no visor, manual 04 §6.3). Movimento reduzido
+   para o FX no bloco canônico acima — não abra outro `prefers-reduced-motion` aqui. */
+@keyframes sm2-fair-drift { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(4px); } }
+.sm2-fair-fx { animation: sm2-fair-drift 3.2s steps(4, jump-none) infinite; }

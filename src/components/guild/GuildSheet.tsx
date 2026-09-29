@@ -26,7 +26,8 @@
  *    formulário morto.
  *
  * SALAS (`PLANO-GUILDA.md` §6): o Salão é UM scroll com seções — Bosque, Roda,
- * Mural. A Feira é lote da Arena (fatia B2, ainda não). O Bosque tem o visor
+ * Mural. A FEIRA é a sala do lote da Arena (`room="feira"`, fatia B2): o fenômeno da
+ * semana (`FeiraVisor`), UM botão de rodada por dia e o resgate. O Bosque tem o visor
  * (`GroveVisor`: cenário do estágio + as criaturas na linha do chão), o nome do
  * estágio, uma faixa `perto` BINÁRIA e o fio; a Roda tem os três gestos fixos e
  * anônimos; o Mural guarda os marcos e as peças de maré. **Vazio é SILÊNCIO**
@@ -38,7 +39,8 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import {
   getGuild, createGuild, joinGuild, guildThread, guildGesture, leaveGuild, renameGuild, newGuildCode,
-  GuildError, type GuildErrorKind, type GuildView, type GuildGoal,
+  hitGuildRaid, getGuildRewards, claimGuildReward,
+  GuildError, type GuildErrorKind, type GuildView, type GuildGoal, type GuildRaid, type GuildRewards,
 } from '../../utils/community';
 import { playerDayKey, type PlayerDayAnchor } from '../../utils/playerDay';
 import {
@@ -47,8 +49,9 @@ import {
 } from '../../utils/guildCopy';
 import {
   GUILD_NAME_MAX, GUILD_CODE_LENGTH, GUILD_PRESENCE_NOMINAL_MAX, GUILD_GESTURES, GROVE_STAGES,
-  normalizeGuildCode, type GuildGesture,
+  RAID_EMBLEMS, RAID_EMBLEMS_FLOOR, normalizeGuildCode, type GuildGesture,
 } from '../../utils/guildRules';
+import { hasClaimedReceipt, rememberClaimedReceipt } from '../../utils/guildClaimLocal';
 import {
   observeGuildView, readGroveLocal, permanenceBand, formatDayLabel,
 } from '../../utils/groveLocal';
@@ -61,6 +64,7 @@ import { Icon } from '../ui/Icon';
 import { Field } from '../form/FormKit';
 import { usePrefersReducedMotion } from '../ui/Viewport';
 import { GroveVisor } from './GroveVisor';
+import { FeiraVisor } from './FeiraVisor';
 import type { Language } from '../../utils/i18n';
 
 interface GuildSheetProps {
@@ -76,7 +80,19 @@ interface GuildSheetProps {
   mySprite?: string | null;
   /** Âncora do DIA DO JOGADOR (`gameState.playerDayTz`); sem ela vale o do aparelho. */
   playerDayTz?: PlayerDayAnchor;
+  /** Qual sala abre: o Salão (Bosque/Roda/Mural, o padrão — porta do Hall) ou a Feira (porta da Arena). */
+  room?: 'salao' | 'feira';
+  /** O resgate da Feira foi confirmado pelo servidor: soma os Emblemas pelo MESMO caminho do Torneio
+   *  e, se veio a Concha da Maré, a põe em `ownedFurniture`. A folha só chama UMA vez por recibo. */
+  onClaimed?: (claim: { emblems: number; trophyId: string | null }) => void;
+  /** Cenários `bg-guild-*` que o servidor já liberou (ficam com quem sai — G12). */
+  onScenes?: (ids: string[]) => void;
 }
+
+/** `guild_raid` 1/2 (viu dissipada / viu recuou): UMA vez por semana e estado, por execução do app. */
+const raidVista = new Set<string>();
+/** Só para teste: a memória acima é do módulo. */
+export const resetRaidTelemetryForTests = () => raidVista.clear();
 
 type Load =
   | { status: 'loading' }
@@ -85,7 +101,7 @@ type Load =
 
 const kindOf = (e: unknown): GuildErrorKind => (e instanceof GuildError ? e.kind : 'server');
 
-export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySprite, playerDayTz }: GuildSheetProps) {
+export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySprite, playerDayTz, room = 'salao', onClaimed, onScenes }: GuildSheetProps) {
   const t = useCallback((k: GuildKey, vars?: Record<string, string | number>) => guildText(language, k, vars), [language]);
   const [load, setLoad] = useState<Load>({ status: 'loading' });
   const [aviso, setAviso] = useState<GuildKey | null>(null);
@@ -99,6 +115,10 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
   const [copiado, setCopiado] = useState(false);
   /** Dia (do jogador) em que ESTE aparelho viu cada estágio — só para o Mural. Memória de UI, não do save. */
   const [marcos, setMarcos] = useState<Record<string, string>>({});
+  /** O que há para colher (Feira). `null` = ainda não perguntado / falhou em silêncio. */
+  const [rewards, setRewards] = useState<GuildRewards | null>(null);
+  const [colhido, setColhido] = useState<{ n: number; trophy: boolean } | null>(null);
+  const [colherErro, setColherErro] = useState(false);
   const reducedMotion = usePrefersReducedMotion();
 
   const rootRef = useRef<HTMLDivElement>(null);
@@ -108,6 +128,11 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
   const tz = useRef(playerDayTz);
   tz.current = playerDayTz;
   const copiadoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const rewardsKey = useRef('');
+  const onClaimedRef = useRef(onClaimed);
+  onClaimedRef.current = onClaimed;
+  const onScenesRef = useRef(onScenes);
+  onScenesRef.current = onScenes;
   const foco = useRef<HTMLElement | null | 'raiz'>(null);
   const ajustesId = useId();
 
@@ -145,6 +170,22 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
     setMarcos(load.guild ? (readGroveLocal()?.marks ?? {}) : {});
     if (obs?.firstSeenStage) track('guild_stage', { level: obs.firstSeenStage });
   }, [load]);
+
+  // O RESGATE: pergunta ao abrir (Salão e Feira) e de novo quando o estado da Feira muda (a rodada
+  // que dissipa o fenômeno abre o direito da semana corrente). Falha é SILÊNCIO: nada a colher é
+  // o estado normal, e uma tela de erro por isso seria ruído.
+  const chaveDaFeira = load.status === 'ready' && load.guild
+    ? `${load.guild.id}|${load.guild.raid?.weekKey ?? ''}|${load.guild.raid?.state ?? ''}|${load.guild.raid?.lastWeek ?? ''}`
+    : '';
+  useEffect(() => {
+    if (!chaveDaFeira || rewardsKey.current === chaveDaFeira) return;
+    rewardsKey.current = chaveDaFeira;
+    getGuildRewards(saveId, tz.current).then(r => {
+      if (!vivo.current) return;
+      setRewards(r);
+      if (r.scenes.length > 0) onScenesRef.current?.(r.scenes);
+    }).catch(() => { if (rewardsKey.current === chaveDaFeira) rewardsKey.current = ''; });
+  }, [chaveDaFeira, saveId]);
 
   // Abrir o campo de código leva o foco a ele (o botão que abriu sumiu).
   useEffect(() => { if (entrando) document.getElementById(`${ajustesId}-codigo`)?.focus(); }, [entrando, ajustesId]);
@@ -203,7 +244,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
       } else if (kind === 'noGuild') {
         aplicar(null);
         setAviso('guild.esvaziada.mundo');
-      } else if (kind === 'dailyLimit' || kind === 'goalNotMet') {
+      } else if (kind === 'dailyLimit' || kind === 'goalNotMet' || kind === 'raidClosed') {
         // O gesto do dia já saiu (talvez de outro aparelho) ou a meta de coração
         // ainda não bateu: NENHUM dos dois é frase de tela. Relê e o botão certo aparece.
         void carregar(true);
@@ -211,6 +252,46 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
         if (kind === 'notHost') void carregar(true);
         setAviso(GUILD_ERROR_KEY[kind]);
       }
+    } finally {
+      busy.current = false;
+      foco.current = abriu ?? 'raiz';
+      if (vivo.current) setOcupado(false);
+    }
+  };
+
+  /**
+   * COLHER: uma semana por vez. O crédito é da FOLHA só até o `onClaimed` (o App soma no save):
+   *  · rede caindo → NADA é creditado, o cartão fica e dá para tentar de novo;
+   *  · 409 `already claimed` / 404 `nothing to claim` → SILÊNCIO (o direito some, sem frase);
+   *  · o recibo já creditado por este aparelho NÃO credita de novo (o KV é eventualmente consistente).
+   * O crédito acontece mesmo se a folha fechar no meio do pedido (`onClaimed` é do App).
+   */
+  const colher = async (week: string) => {
+    if (busy.current) return;
+    busy.current = true;
+    setOcupado(true);
+    setColherErro(false);
+    const abriu = document.activeElement as HTMLElement | null;
+    const tirar = () => setRewards(r => (r ? { ...r, pending: r.pending.filter(p => p.week !== week) } : r));
+    try {
+      const c = await claimGuildReward(saveId, week, tz.current);
+      const novo = !hasClaimedReceipt(c.receipt);
+      if (novo) {
+        onClaimedRef.current?.({ emblems: c.emblems, trophyId: c.trophy ? c.trophyId : null });
+        rememberClaimedReceipt(c.receipt);
+      }
+      if (!vivo.current) return;
+      tirar();
+      if (novo) {
+        setColhido({ n: c.emblems, trophy: c.trophy });
+        setAnuncio(t('guild.feira.colhido', { n: c.emblems }));
+      }
+    } catch (e) {
+      if (!vivo.current) return;
+      const kind = kindOf(e);
+      if (kind === 'alreadyClaimed' || kind === 'nothingToClaim') tirar();
+      else if (kind === 'login') setLoad({ status: 'error', kind });
+      else setColherErro(true);
     } finally {
       busy.current = false;
       foco.current = abriu ?? 'raiz';
@@ -237,6 +318,16 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
   };
 
   const alerta = aviso && <p role="alert" className="sm2-lib-alert">{t(aviso)}</p>;
+  const resgate = (
+    <ResgateFeira
+      t={t}
+      pending={rewards?.pending[0] ?? null}
+      colhido={colhido}
+      erro={colherErro}
+      ocupado={ocupado}
+      onColher={colher}
+    />
+  );
   const btn = 'sm2-kit-btn sm2-kit-btn-md';
 
   let corpo: React.ReactNode;
@@ -337,9 +428,26 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
     // jogador que vale agora) e só o que o servidor mandou.
     const nominal = g.size <= GUILD_PRESENCE_NOMINAL_MAX && load.day === playerDayKey(new Date(), tz.current);
     const semNovoNome = ocupado || !novoNome.trim() || novoNome.trim() === g.name;
-    corpo = (
+    corpo = room === 'feira' ? (
       <>
         {alerta}
+        <SalaFeira
+          guild={g}
+          t={t}
+          language={language}
+          ocupado={ocupado}
+          reducedMotion={reducedMotion}
+          resgate={resgate}
+          onRodada={() => void agir(() => hitGuildRaid(saveId, tz.current), {
+            anunciar: 'guild.feira.rodada.feita',
+            depois: () => track('guild_raid', { outcome: 0 }),
+          })}
+        />
+      </>
+    ) : (
+      <>
+        {alerta}
+        {resgate}
         <div className="sm2-stats-card">
           <div className="sm2-guild-hd">
             {/* O nome quebra em qualquer ponto (QA #4) e é o alvo do foco depois de uma ação. */}
@@ -471,7 +579,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
   }
 
   return (
-    <div ref={rootRef} tabIndex={-1} className="sm2-guild" aria-label={t('guild.aria.salao')} data-guild-sheet>
+    <div ref={rootRef} tabIndex={-1} className="sm2-guild" aria-label={t(room === 'feira' ? 'guild.feira.titulo' : 'guild.aria.salao')} data-guild-sheet data-guild-room-open={room}>
       {/* Região viva SEMPRE montada (QA L1 BAIXO-3): o texto entra depois, e é
           assim que o leitor de tela anuncia — uma região que nasce preenchida não é lida. */}
       <div role="status" aria-live="polite" className="sm2-guild-sr" data-guild-status>{anuncio}</div>
@@ -644,5 +752,117 @@ function SalaMural({ guild, t, language, marcos }: {
         })}
       </ul>
     </section>
+  );
+}
+
+/**
+ * FEIRA: o fenômeno da semana e UM botão. O fenômeno é tempo da Malha (uma camada que não
+ * assentou), nunca adversário com gente — e a tela NUNCA mostra HP, dano, contagem de rodadas
+ * nem quem bateu (LV-G1): o servidor não os manda, e o único sinal do quanto já foi feito é o
+ * BOOLEANO `ferido`, que só muda o desenho.
+ *
+ * "Rodada feita" é SILÊNCIO para quem não a fez: nenhum texto de cobrança ("faltam", "ainda não
+ * fez", "volte amanhã"); depois de mandada, o mesmo botão fica desabilitado dizendo o fato
+ * (`guild.feira.rodada.feita`). Semana dissipada não tem botão. O resultado da semana que fechou
+ * (`lastWeek`) é um fato, nunca um veredito: `recuou` não culpa ninguém.
+ */
+function SalaFeira({ guild, t, language, ocupado, reducedMotion, resgate, onRodada }: {
+  guild: GuildView; t: T; language: Language; ocupado: boolean; reducedMotion: boolean;
+  resgate: React.ReactNode; onRodada: () => void;
+}) {
+  const raid = guild.raid;
+  // Telemetria de leitura (1 = viu dissipada, 2 = viu recuou): uma vez por semana e estado.
+  const semana = raid?.weekKey ?? '';
+  const estado = raid?.state;
+  const passada = raid?.lastWeek ?? null;
+  useEffect(() => {
+    if (!raid) return;
+    const marca = (chave: string, outcome: 1 | 2) => {
+      if (raidVista.has(chave)) return;
+      raidVista.add(chave);
+      track('guild_raid', { outcome });
+    };
+    if (estado === 'dissipada') marca(`${semana}:atual:dissipada`, 1);
+    else if (passada) marca(`${semana}:passada:${passada}`, passada === 'dissipada' ? 1 : 2);
+  }, [raid, semana, estado, passada]);
+
+  if (!raid) {
+    // O servidor não mandou a Feira (versão antiga): nada a desenhar, e nada a explicar.
+    return <section className="sm2-guild-sec" aria-label={t('guild.feira.titulo')} data-guild-room="feira">{resgate}</section>;
+  }
+  const nome = t(`guild.feira.fenomeno.${raid.phenomenon}.nome`);
+  const dissipada = raid.state === 'dissipada';
+  return (
+    <section className="sm2-guild-sec" aria-label={t('guild.feira.titulo')} data-guild-room="feira">
+      {resgate}
+      <p className="sm2-stats-t" style={{ margin: 0 }} data-feira-cabecalho>
+        {t(dissipada ? 'guild.feira.dissipado.mundo' : 'guild.feira.aberta.mundo')}
+      </p>
+      <FeiraVisor raid={raid} reducedMotion={reducedMotion} label={t('guild.aria.feira', { nome })} />
+      <h3 className="sm2-grove-stage" data-feira-fenomeno>{nome}</h3>
+      <p className="sm2-grove-line">{t(`guild.feira.fenomeno.${raid.phenomenon}.linha`)}</p>
+      {!dissipada && raid.lastWeek && (
+        <p className="sm2-lib-s" style={{ margin: 0 }} data-feira-semana-passada={raid.lastWeek}>
+          {t(raid.lastWeek === 'dissipada' ? 'guild.feira.dissipado.mundo' : 'guild.feira.recuou.mundo')}
+        </p>
+      )}
+      {!dissipada && (
+        <button
+          type="button"
+          data-feira-rodada
+          disabled={ocupado || raid.hitToday}
+          aria-disabled={ocupado || raid.hitToday ? true : undefined}
+          aria-busy={ocupado ? true : undefined}
+          aria-label={raid.hitToday ? t('guild.feira.rodada.feita') : t('guild.aria.rodada')}
+          onClick={onRodada}
+          className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary sm2-guild-btn"
+        >
+          <Icon name={ocupado ? 'sync' : raid.hitToday ? 'check_circle' : 'arrow_forward'} size={20} className={ocupado ? 'animate-spin' : undefined} />
+          {raid.hitToday ? t('guild.feira.rodada.feita') : t('guild.feira.rodada.botao')}
+        </button>
+      )}
+      <p className="sm2-lib-s" style={{ margin: 0 }}>{t('guild.feira.sobria', { cheio: RAID_EMBLEMS, piso: RAID_EMBLEMS_FLOOR })}</p>
+    </section>
+  );
+}
+
+/**
+ * O RESGATE: um cartão sóbrio, sem cerimônia que se feche sozinha nem contagem regressiva. Só
+ * aparece com direito pendente (ou logo depois de colher, com o fato). "Colher" é UM gesto; erro de
+ * rede não credita e deixa tentar de novo. O texto da semana é o da própria Feira — nunca "você
+ * ganhou/perdeu": dissipada e recuou pagam, e `recuou` continua sem culpa.
+ */
+function ResgateFeira({ t, pending, colhido, erro, ocupado, onColher }: {
+  t: T; pending: GuildRewards['pending'][number] | null; colhido: { n: number; trophy: boolean } | null;
+  erro: boolean; ocupado: boolean; onColher: (week: string) => void;
+}) {
+  if (!pending && !colhido) return null;
+  return (
+    <div className="sm2-stats-card sm-milestone-pop" data-feira-resgate>
+      {pending && (
+        <>
+          <p className="sm2-stats-t" style={{ margin: 0 }}>{t(pending.outcome === 'dissipada' ? 'guild.feira.dissipado.mundo' : 'guild.feira.recuou.mundo')}</p>
+          {erro && <p role="alert" className="sm2-lib-alert" data-feira-colher-erro>{t('guild.erro.semRede')}</p>}
+          <button
+            type="button"
+            data-feira-colher
+            disabled={ocupado}
+            aria-disabled={ocupado ? true : undefined}
+            aria-busy={ocupado ? true : undefined}
+            onClick={() => onColher(pending.week)}
+            className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary sm2-guild-btn"
+          >
+            <Icon name={ocupado ? 'sync' : 'military_tech'} size={20} fill={ocupado ? 0 : 1} className={ocupado ? 'animate-spin' : undefined} />
+            {t('guild.feira.colher.botao')}
+          </button>
+        </>
+      )}
+      {colhido && (
+        <>
+          <p className="sm2-stats-t" style={{ margin: 0 }} data-feira-colhido>{t('guild.feira.colhido', { n: colhido.n })}</p>
+          {colhido.trophy && <p className="sm2-lib-s" style={{ margin: 0 }} data-feira-concha>{t('guild.concha.chegou')}</p>}
+        </>
+      )}
+    </div>
   );
 }
