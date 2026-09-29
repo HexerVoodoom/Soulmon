@@ -14,6 +14,7 @@
  */
 import type { Language } from './i18n';
 import type { AreaId } from '../navigation';
+import { GUILD_COPY } from './guildCopy';
 
 export interface AreaNpcVoice {
   /** Nome próprio (PT/EN — só muda o rótulo de ofício, o nome não traduz). */
@@ -80,10 +81,12 @@ const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     linePt: 'Um duelo, uma rodada de cada vez. Pode vir — eu aguento o tranco!',
     lineEn: 'One duel, one round at a time. Bring it on — I can take a hit!',
   },
+  // Fala da Feira (`guild.npc.feira`) — a copy mora em `guildCopy.ts`; "grupo
+  // pequeno" ficou falso com a roda de até 12.
   'arena:guilda': {
     namePt: 'Marla, a intendente', nameEn: 'Marla, the steward',
-    linePt: 'A guilda é um grupo pequeno que caminha junto. Entre, sente e veja a meta de vocês.',
-    lineEn: 'A guild is a small group walking together. Come in, sit down and see your shared goal.',
+    linePt: GUILD_COPY['guild.npc.feira'][0],
+    lineEn: GUILD_COPY['guild.npc.feira'][1],
   },
   'hall:amigos': {
     namePt: 'Nino, o carteiro', nameEn: 'Nino, the courier',
@@ -92,8 +95,8 @@ const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
   },
   'hall:guilda': {
     namePt: 'Marla, a intendente', nameEn: 'Marla, the steward',
-    linePt: 'A guilda é um grupo pequeno que caminha junto. Entre, sente e veja a meta de vocês.',
-    lineEn: 'A guild is a small group walking together. Come in, sit down and see your shared goal.',
+    linePt: GUILD_COPY['guild.npc.hall'][0],
+    lineEn: GUILD_COPY['guild.npc.hall'][1],
   },
   'laboratorio:pet': {
     namePt: 'Tico, o cuidador', nameEn: 'Tico, the keeper',

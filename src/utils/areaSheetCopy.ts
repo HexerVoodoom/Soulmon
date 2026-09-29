@@ -9,6 +9,7 @@
  */
 import type { Language } from './i18n';
 import type { AreaId } from '../navigation';
+import { GUILD_COPY } from './guildCopy';
 
 const AREA_DEMO_LOT: Record<AreaId, { labelPt: string; labelEn: string }> = {
   mercado: { labelPt: 'Itens', labelEn: 'Items' },
@@ -53,7 +54,10 @@ const MERCADO_LOTS: AreaLotSpec<MercadoLotId>[] = [
 const ARENA_LOTS: AreaLotSpec<ArenaLotId>[] = [
   { id: 'torneio', labelPt: 'Torneio', labelEn: 'Tournament', ariaPt: 'Entrar no Torneio', ariaEn: 'Enter the Tournament', left: '27%', top: '55%' },
   { id: 'duelo', labelPt: 'Duelo', labelEn: 'Duel', ariaPt: 'Entrar no Duelo', ariaEn: 'Enter the Duel', left: '70%', top: '42%' },
-  { id: 'guilda', labelPt: 'Guilda', labelEn: 'Guild', ariaPt: 'Entrar na Guilda', ariaEn: 'Enter the Guild', left: '32%', top: '82%' },
+  // O lote da Arena é a FEIRA (`guild.lote.feira.*`, D-G4): o rótulo "Guilda" ficou
+  // falso quando a Guilda passou a ter o Salão no Hall. O `id` continua `'guilda'`
+  // até o WPG-10 trocar id, arte do lote e o teste `areaLotsNovos` juntos.
+  { id: 'guilda', labelPt: GUILD_COPY['guild.lote.feira.label'][0], labelEn: GUILD_COPY['guild.lote.feira.label'][1], ariaPt: GUILD_COPY['guild.lote.feira.aria'][0], ariaEn: GUILD_COPY['guild.lote.feira.aria'][1], left: '32%', top: '82%' },
 ];
 
 // Laboratório e Hall (29/09/2026): as antigas abas/filtros viraram construções
@@ -67,7 +71,7 @@ const LABORATORIO_LOTS: AreaLotSpec<LaboratorioLotId>[] = [
 const HALL_LOTS: AreaLotSpec<HallLotId>[] = [
   { id: 'biblioteca', labelPt: 'Biblioteca', labelEn: 'Library', ariaPt: 'Entrar na Biblioteca', ariaEn: 'Enter the Library', left: '27%', top: '42%' },
   { id: 'amigos', labelPt: 'Círculo de Amigos', labelEn: 'Friends Circle', ariaPt: 'Entrar no Círculo de Amigos', ariaEn: 'Enter the Friends Circle', left: '72%', top: '42%' },
-  { id: 'guilda', labelPt: 'Salão da Guilda', labelEn: 'Guild Hall', ariaPt: 'Entrar no Salão da Guilda', ariaEn: 'Enter the Guild Hall', left: '50%', top: '72%' },
+  { id: 'guilda', labelPt: GUILD_COPY['guild.lote.hall.label'][0], labelEn: GUILD_COPY['guild.lote.hall.label'][1], ariaPt: GUILD_COPY['guild.lote.hall.aria'][0], ariaEn: GUILD_COPY['guild.lote.hall.aria'][1], left: '50%', top: '72%' },
 ];
 
 function resolveLots<K extends string>(specs: AreaLotSpec<K>[], language: Language) {
