@@ -25,7 +25,7 @@
  * Perguntado sobre trocar `Vírus/Dado/Vacina`, `Glitchtama`, `Serah`, `Pyraka` e
  * `Zeed`, ele respondeu **"nenhum, aceito todos assim"**. ⚰️ **Em 29/09/2026 ele
  * reverteu a parte dos rótulos**: os caminhos viraram Poder/Harmonia/Benevolência
- * e o termo antigo passou a ser VETADO (§14.6). Então a tabela
+ * e o termo antigo passou a ser VETADO (§14.5). Então a tabela
  * `EXCECOES` abaixo não é mais dívida a quitar: é a lista do que ficou, por
  * decisão registrada (`docs/REGISTRO-DE-DECISOES.md`).
  *
@@ -107,7 +107,7 @@ const TERMOS: { termo: string; re: RegExp; motivo: string }[] = [
     motivo:
       'VETADO desde 29/09/2026: o dono pediu "remova toda menção a virus, data e ' +
       'vacina e substitua por poder, harmonia e benevolência" (REGISTRO-DE-DECISOES ' +
-      '§14.6, que reverte a §14.4 de 21/09/2026). Os caminhos são Poder / Harmonia / ' +
+      '§14.5, que reverte a §14.4 de 21/09/2026). Os caminhos são Poder / Harmonia / ' +
       'Benevolência (EN Power / Harmony / Benevolence); ids `power|harmony|benevolence`. ' +
       'A única exceção é a lápide mínima abaixo — o resto é migração legada, que monta ' +
       'o termo por partes. Ruptura / Trama / Guarda seguem vocabulário de MUNDO (bíblia §6.6).',
@@ -165,7 +165,7 @@ const EXCECOES: Record<string, { arquivos: string[]; proposta: string }> = {
     ],
   },
   'Vírus/Vacina/Virus/Vaccine (rótulo)': {
-    proposta: 'P1 — ACEITO em 21/09/2026 e REVERTIDO pelo dono em 29/09/2026 (§14.6): o rótulo saiu do app',
+    proposta: 'P1 — ACEITO em 21/09/2026 e REVERTIDO pelo dono em 29/09/2026 (§14.5): o rótulo saiu do app',
     arquivos: [
       // Lápide de UMA linha registrando os nomes antigos — não é rótulo de interface.
       'src/utils/oracle.ts',

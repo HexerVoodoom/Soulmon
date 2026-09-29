@@ -91,7 +91,7 @@ const rel = (abs: string) => relative(RAIZ, abs).split('\\').join('/');
  */
 const TERMOS: { termo: string; re: RegExp; motivo: string }[] = [
   { termo: 'Weave', re: /\bWeave\b/, motivo: 'the Weave é D&D; o par EN do galho é Braid (bíblia §6.6).' },
-  { termo: 'Vírus/Vacina/Virus/Vaccine (rótulo)', re: /(Vírus|Vacina|Vaccine|\bVirus\b)/, motivo: 'VETADO desde 29/09/2026 (§14.6, reverte a §14.4): os caminhos são Poder/Harmonia/Benevolência.' },
+  { termo: 'Vírus/Vacina/Virus/Vaccine (rótulo)', re: /(Vírus|Vacina|Vaccine|\bVirus\b)/, motivo: 'VETADO desde 29/09/2026 (§14.5, reverte a §14.4): os caminhos são Poder/Harmonia/Benevolência.' },
   { termo: 'Glitchtama', re: /Glitchtama/, motivo: 'aceito pelo dono onde já está (§14.4); em arquivo novo é escolha nova.' },
   { termo: 'domador/treinador/tamer', re: /\b(domador|domadora|treinador|treinadora|tamer)\b/i, motivo: 'fronteira de PI direta; o jogador é "você" (bíblia §12).' },
   { termo: 'digievolução/digievoluir', re: /\bdigi[ée]volu/i, motivo: 'marca de terceiro; o termo é forma / mudar de forma (§12).' },
@@ -122,7 +122,7 @@ const EXCECOES: Record<string, { arquivos: string[]; decisao: string }> = {
     arquivos: [BOOKLET],
   },
   'Vírus/Vacina/Virus/Vaccine (rótulo)': {
-    decisao: 'P1 fechada (§14.4) e REVERTIDA em 29/09/2026 (§14.6). No livrinho o termo antigo aparece SÓ na nota de manutenção fora da ficção, registrando o renomeio.',
+    decisao: 'P1 fechada (§14.4) e REVERTIDA em 29/09/2026 (§14.5). No livrinho o termo antigo aparece SÓ na nota de manutenção fora da ficção, registrando o renomeio.',
     arquivos: [BOOKLET],
   },
 };
