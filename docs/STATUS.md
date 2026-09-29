@@ -4200,6 +4200,15 @@ o app de todo mundo que já tem o APK instalado.
 
 ## 4. Dívidas conhecidas (aceitas por ora)
 
+- **Admin/GM — três dívidas do L1 (29/09/2026), sem mudança de comportamento**
+  (`docs/reviews/admin-corvo/L1-sustento.md`, notas em `impl-notas-backend.md`).
+  **M-3**: o perfil público de `community.js` (`profile`) confia em `stage`/`unlockedStages`/`attrs`
+  do cliente; o GM leva isso a um toque e o dono aparece como ultra no PvP/ranking. Correção sugerida:
+  não publicar perfil PvP quando `isAdmin` ou limitar `stage` pelo vitalício do servidor.
+  **B-3**: `gmGoToForm` reduz HP/energia ao descer de forma; ajustar o comentário "nunca reduzem".
+  **B-4**: `rebirth-reset` confia em `state.rebirth` escrito pelo cliente (conta paga forja e dobra o
+  vitalício de sprite uma vez); correção sugerida: exigir `aiLifetime.sprite` perto do teto e ultra
+  registrado no servidor. Cenário do admin agora limitado por `ADMIN_SPRITE_MONTHLY_CAP` (40/mês).
 - **Emblemas ficam no save do cliente**, como os Bits — farmáveis por quem editar
   o `localStorage`. Aceitável **enquanto a aba Torneio vender só cosmético**. Há
   teste travando isso: se algum item de torneio virar vantagem de jogo, o teste
