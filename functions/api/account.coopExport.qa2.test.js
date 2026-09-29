@@ -114,3 +114,26 @@ describe('(5) exportação não vaza saveId de terceiros', () => {
     expect(JSON.parse(e.DIGIAPP_SAVES.store.get(`profile:${ID}`)).friends).toEqual([OTHER_SAVE_ID, SEM_PID]);
   });
 });
+
+describe('(6) exportação traz o grupo do titular (D-4, L1-codigo MÉDIO-1)', () => {
+  it('ponteiro, os próprios check-ins e nome+papel — sem saveId nem nome de outro membro', async () => {
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+    const e = env({
+      [ID]: JSON.stringify({ petName: 'A' }),
+      [`profile:${ID}`]: JSON.stringify({ name: 'A', pid: 'z'.repeat(24) }),
+      [`profile:${OTHER_SAVE_ID}`]: JSON.stringify({ name: 'Beatriz', pid: 'p'.repeat(24), stage: 'rookie' }),
+    });
+    const criado = await (await community({ request: post('https://x/api/community?action=coopCreate', { id: OTHER_SAVE_ID, name: 'Dupla' }), env: e })).json();
+    await community({ request: post('https://x/api/community?action=coopJoin', { id: ID, code: criado.group.code }), env: e });
+    await community({ request: post('https://x/api/community?action=coopCheckin', { id: ID }), env: e });
+    const gid = criado.group.id;
+
+    const txt = await (await onRequest({ request: new Request(`https://x/api/account?action=export&id=${ID}`), env: e })).text();
+    const coop = JSON.parse(txt).data.coop;
+    expect(coop[coopOfKey(ID)]).toBe(gid);
+    expect(coop[coopCkKey(gid, ID)].days).toHaveLength(1);
+    expect(coop.grupo).toEqual({ id: gid, name: 'Dupla', joinedAs: 'member' });
+    expect(txt).not.toContain(OTHER_SAVE_ID);
+    expect(txt).not.toContain('Beatriz');
+  });
+});

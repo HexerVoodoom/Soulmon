@@ -418,13 +418,29 @@ async function collect(env, saveId) {
 
   // Grupo cooperativo (se houver). `grupoDe` já limpa `coopOf:` órfão.
   let coopGroupId = null;
-  try { coopGroupId = (await grupoDe(env, saveId))?.id ?? null; } catch { coopGroupId = null; }
+  /** O que é DO titular no grupo (D-4): o nome, o papel e os próprios check-ins. */
+  let coopExport = null;
+  try {
+    const g = await grupoDe(env, saveId);
+    coopGroupId = g?.id ?? null;
+    if (g) {
+      const ckRaw = await store.get(coopCkKey(g.id, saveId));
+      let ck = null;
+      try { ck = ckRaw ? JSON.parse(ckRaw) : null; } catch { ck = null; }
+      coopExport = {
+        [coopOfKey(saveId)]: g.id,
+        [coopCkKey(g.id, saveId)]: ck,
+        // Nome e papel; NENHUM saveId ou nome de outro membro (dado de terceiro).
+        grupo: { id: g.id, name: g.name, joinedAs: g.hostSave === saveId ? 'host' : 'member' },
+      };
+    }
+  } catch { coopGroupId = null; coopExport = null; }
 
   // #54: as chaves de licença Steam saem da exclusão — derivadas, ver
   // `steamLicenseKeysOf`. Lista vazia para quem nunca ativou pela Steam.
   const steamLicenseKeys = steamLicenseKeysOf(entitlement);
 
-  return { pid, state, profile, gifts, entitlement, ranks, rankKeys, pidIndexed, sprites, coopGroupId, steamLicenseKeys };
+  return { pid, state, profile, gifts, entitlement, ranks, rankKeys, pidIndexed, sprites, coopGroupId, coopExport, steamLicenseKeys };
 }
 
 /**
@@ -488,6 +504,8 @@ async function handleExport(env, saveId) {
       // que o save já carrega em `soulmonStages`. Listar aqui é o que deixa a
       // exportação conferível contra o inventário da exclusão.
       sprites: [...c.sprites.imgs, ...c.sprites.locks, ...c.sprites.blobs],
+      // Grupo/Guilda: ponteiro, os próprios check-ins e nome+papel (D-4).
+      coop: c.coopExport,
     },
     naoIncluido: NOT_INCLUDED,
   });
