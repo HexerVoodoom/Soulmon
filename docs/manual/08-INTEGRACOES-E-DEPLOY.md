@@ -395,7 +395,7 @@ o cliente exibe esses, nunca uma constante própria.
 | **Famílias de chave e TTL** | `coop:<gid>`, `coopOf:<save>`, `coopCode:<code>`, `coopFio:<gid>:<save>` — 120 d, **sem TTL com Bosque plantado** · `coopCk` 120 d · `coopMem` 120 d · `coopGest` 3 d · `coopHit` 21 d · `coopRaidOk`, `coopClaim`, `coopPart` 60 d · `coopDias`, `coopShell`, `coopScenes` sem TTL (progresso/conquista do titular). Detalhe: [07 §8.1](07-DADOS-E-SAVE.md). |
 | **Exclusão e exportação** | `account.js`: a exclusão chama `coopLeave(…, { exclusao: true })` + `apagarClaims`; a exportação traz só o que é do titular (o fio próprio, a participação, resgates e cenários) — nunca outro membro, nunca dano. O inventário da exclusão diz o que expira por TTL (`coopHit`, até 21 dias). |
 | **Telemetria** | seis eventos `guild_*` ([§2.12](#212-telemetria--apimetrics)), sem id de guilda nem pid. |
-| **Push / widget** | **Nenhum**: `guild.semPush.contract.test.js` trava que a Guilda nunca notifica; o widget da Guilda (WPG-14) não existe. |
+| **Push / widget** | **Nenhum**: `guild.semPush.contract.test.js` trava que a Guilda nunca notifica; o widget não tem superfície própria da Guilda (WPG-14); desde 29/09/2026 o widget A mostra só o NOME do estágio do Bosque (chave `grove_stage`, da memória local `groveLocal`, sem número nem membros — `widgetSemCobranca.contract.test.ts`). |
 | **Régua** | `functions/api/guild.*.test.js`, `guildReward.contract.test.js`, `account.guildBosque.test.js`, `account.guildFeira.test.js`, `community.coop.test.js` (aliases), `src/utils/guildRules.parity.test.ts`. |
 
 ### 2.12 Telemetria — `/api/metrics`
@@ -587,6 +587,9 @@ por isso o `android-build.yml` decide com um step que grava `outputs.ready`.
 
 O **APK carrega a URL de produção** (`server.url` em `capacitor.config.json`),
 então **mudança web NÃO precisa de APK novo**. Só mudança em `android/` precisa.
+(Ex.: 29/09/2026 — os 11 `drawable-nodpi/sprite_corvo_*.png`, a linha
+`widget_grove` e as chaves `pet_line`/`grove_stage` do `SoulmonWidgetPlugin.kt`
+só chegam ao widget com APK novo, buildado pelo `android-build.yml`.)
 O artefato fica em `github.com/HexerVoodoom/Soulmon/actions/runs/<id>`, com o nome
 `soulmon-debug-<sha>` (desde `4a8b8049`).
 

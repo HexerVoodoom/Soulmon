@@ -9,6 +9,10 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 29/09/2026 — Widget Android: o corvinho e o estágio do Bosque
+> Decisão do dono. Bridge ganhou duas chaves NOVAS (`pet_line` = só `"corvo"`; `grove_stage` = só id de `GROVE_STAGES`; vazias → o plugin REMOVE). `resolveSprite` usa `CORVO_SPRITES` (11 `drawable-nodpi/sprite_corvo_*.png`, cópia dos -256) e o widget A mostra só o nome do estágio (`widget_grove`, strings em `values`/`values-pt`). Régua: `widgetSemCobranca.contract.test.ts` (allowlists, paridade 11 formas ↔ drawables ↔ mapa Kotlin; 14/14 mutações mortas).
+> **APK precisa de build novo** (drawables + Kotlin + layout) — o `android-build.yml` builda no push da `main`; só ele prova que o Kotlin/XML compila (sem Gradle local). A limitação "o widget não desenha o corvo" do bloco abaixo fechou aqui.
+
 > ## 29/09/2026 — Admin/GM no cliente + o corvinho de lanterna e cartola
 > `useAdmin()` (`src/utils/adminFlag.ts`) espelha SÓ o `admin === true` de `GET /api/entitlements`, em memória (nunca save/localStorage; rede falha = não-admin).
 > O admin adota o corvinho uma vez por sessão (`src/utils/corvoPet.ts` › `adoptCorvo`, marca `soulmonMeta.creature`); arte resolvida por `spriteLineOf` → `getSpriteForStage` em Home, Pet, Evolução, cerimônia, masmorra/arena/Dino/pesadelo, torneio e overlay desktop.

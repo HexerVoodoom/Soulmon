@@ -2038,6 +2038,15 @@ do `AndroidManifest.xml` são "Soulmon", "Soulmon Vertical", "Soulmon Pet",
   `"N task(s) left, let's go!"` **não existem mais**; ⚰️ a escada em PT-BR
   ("💛 Tô com saudade de você" … "✨ Dia perfeito!") **também não** — saiu em
   `6affd501` (20/09/2026).
+- **O corvinho e o Bosque (29/09/2026, decisão do dono)**: com `pet_line == "corvo"`
+  no bridge, `resolveSprite` usa a tabela fechada `CORVO_SPRITES` (11 formas →
+  `drawable-nodpi/sprite_corvo_<forma>.png`, forma desconhecida → `sprite_rookie`),
+  nos cinco widgets. Só o **A** (`renderFull`, horizontal) ganha a linha
+  `widget_grove`: o NOME do estágio do Bosque que este aparelho viu por último
+  (`grove_stage`), 11sp em `#AAB6B4`, sem número, sem "faltam", sem membros, sem
+  barra; `View.GONE` sem roda, e a frase cai para 1 linha quando ela aparece. É a
+  única string do widget com idioma: vem de `res/values` (EN) / `res/values-pt`
+  (PT) pelo idioma do aparelho — a escada de frases continua só EN (13.18).
 - **Régua**: `src/plugins/widgetSemCobranca.contract.test.ts` — lê o FONTE
   Kotlin, porque nenhum teste em `node` alcança Kotlin; desde `6affd501` trava
   também `"0/"`, o traço e o veto de presença.
