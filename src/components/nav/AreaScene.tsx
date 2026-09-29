@@ -50,8 +50,13 @@ export function AreaScene({ areaId, language, lots, background, children }: {
       style={{
         position: 'relative',
         margin: 'calc(var(--sm2-space-4) * -1)',
+        /* QA L1 #31 / L3 B5: a cena TERMINA NO FIM DA TELA. A altura era `100dvh - 96px` (56 da barra do
+           topo + 40 de folga do `<main>`), e a folga deixava uma faixa vazia de 40 px sob a folha, onde
+           o conteúdo já rola. A cena ganha os 40 px e a margem de baixo os devolve ao `<main>` (-16 - 40),
+           então o `scrollHeight` do `<main>` NÃO muda e nada ganha rolagem nova. */
+        marginBottom: 'calc(var(--sm2-space-4) * -1 - 40px)',
         width: 'calc(100% + var(--sm2-space-4) * 2)',
-        minHeight: 'calc(100dvh - 96px)',
+        minHeight: 'calc(100dvh - 56px)',
         overflow: 'hidden',
         // Sem arte de fundo própria ainda (F5/backlog de créditos, ver
         // `docs/design/minimal-ui/BACKLOG-CREDITOS.md`): um degradê dos

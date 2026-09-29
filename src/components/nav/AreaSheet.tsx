@@ -151,7 +151,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
             ×
           </button>
         </div>
-        <div style={{ flex: 1, overflowY: 'auto', padding: '8px 16px 16px' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '8px 16px calc(16px + env(safe-area-inset-bottom, 0px))' }}>
           {children}
         </div>
       </div>
