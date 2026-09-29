@@ -24,6 +24,8 @@ const BIA = 'b'.repeat(32);
 const CAU = 'c'.repeat(32);
 const DAN = 'd'.repeat(32);
 const ELI = 'e'.repeat(32);
+/** Membros extras para encher a guilda de 12 (D-G1) — sem perfil, de propósito. */
+const EXTRA = Array.from({ length: 12 }, (_, i) => `x${String(i).padStart(2, '0')}`.padEnd(32, 'z'));
 
 function fakeKV(seed = {}) {
   const store = new Map(Object.entries(seed));
@@ -117,13 +119,13 @@ describe('coop — o grupo', () => {
     expect(await res.text()).not.toContain('Segredo');
   });
 
-  it('teto de 4: o quinto é recusado, e o grupo segue íntegro', async () => {
+  it('teto de 12 (D-G1, era 4): o 13º é recusado, e o grupo segue íntegro', async () => {
     const e = env();
     const g = await criar(e, ANA);
-    for (const quem of [BIA, CAU, DAN]) expect((await entrar(e, quem, g.code)).status).toBe(200);
-    const quinto = await entrar(e, ELI, g.code);
-    expect(quinto.status).toBe(409);
-    expect((await ver(e, ANA)).members).toHaveLength(4);
+    for (const quem of EXTRA.slice(0, 11)) expect((await entrar(e, quem, g.code)).status).toBe(200);
+    const decimoTerceiro = await entrar(e, ELI, g.code);
+    expect(decimoTerceiro.status).toBe(409);
+    expect((await ver(e, ANA)).members).toHaveLength(12);
   });
 
   it('um grupo por pessoa — criar ou entrar de novo é recusado', async () => {
@@ -156,7 +158,8 @@ describe('coop — a comparação individual NÃO existe (a razão do desenho)',
     expect(bia.apareceuHoje).toBe(false);
     // Nada que ordene um contra o outro pode existir no objeto do membro.
     for (const m of vista.members) {
-      expect(Object.keys(m).sort()).toEqual(['apareceuHoje', 'euMesmo', 'id', 'name', 'stage']);
+      // `stage` saiu em WPG-1 (D-3/LV-G10): estágio alheio não trafega.
+      expect(Object.keys(m).sort()).toEqual(['apareceuHoje', 'euMesmo', 'id', 'name', 'pid']);
     }
   });
 
@@ -291,11 +294,10 @@ describe('coop — duas pessoas entrando na ÚLTIMA vaga ao mesmo tempo', () => 
   }
 
   it('ninguém recebe um "você entrou" que era mentira', async () => {
-    // Grupo com 3 de 4. CAU e DAN disparam a entrada ao mesmo tempo.
+    // Guilda com 11 de 12. CAU e DAN disparam a entrada ao mesmo tempo.
     const e = env();
     const g = await criar(e, ANA);
-    await entrar(e, BIA, g.code);
-    await entrar(e, ELI, g.code);
+    for (const quem of [BIA, ELI, ...EXTRA.slice(0, 8)]) await entrar(e, quem, g.code);
     e.DIGIAPP_SAVES = kvComAtraso(Object.fromEntries(e.DIGIAPP_SAVES.store));
 
     const [r1, r2] = await Promise.all([entrar(e, CAU, g.code), entrar(e, DAN, g.code)]);
@@ -303,7 +305,7 @@ describe('coop — duas pessoas entrando na ÚLTIMA vaga ao mesmo tempo', () => 
     // A verdade do servidor: quem está na lista, e só isso.
     const gid = await e.DIGIAPP_SAVES.get(`coop:${g.id}`);
     const membros = JSON.parse(gid).members;
-    expect(membros.length).toBeLessThanOrEqual(4);          // o teto nunca estoura
+    expect(membros.length).toBeLessThanOrEqual(12);         // o teto nunca estoura
 
     // E toda resposta 200 corresponde a alguém que ESTÁ na lista. Antes da
     // confirmação, o perdedor da corrida recebia 200 e sumia do grupo na

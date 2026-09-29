@@ -36,14 +36,11 @@ import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import { bondLevelOf, BOND_PVP_MIN_LEVEL } from './_bond.js';
 import { kv, kvOrThrow } from './_kv.js';
 import {
-  stagePower, PID_PREFIX, legacyPidFor, newPid, ensurePid, pidSoLeitura, indexPublicId,
+  stagePower, PID_PREFIX, legacyPidFor, newPid, ensurePid, indexPublicId,
   getProfile, putProfile,
 } from './_profile.js';
-import {
-  COOP_MAX_MEMBERS, COOP_CHECKINS_POR_MEMBRO, coopOfKey, coopCodeKey, semanaDe, novoCodigo,
-  diaDoJogador, semanaDoDia, coopKey as coopKeyDe, sanitizarNomeDeGuilda,
-  lerGrupo, gravarGrupo, renovarPrazos, lerCheckins, gravarCheckins, rolarSemana, grupoDe, coopLeave,
-} from './_coop.js';
+import { COOP_ALIASES, handleGuild } from './guild.js';
+import { sanitizarNomeDeGuilda } from './_coop.js';
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -262,52 +259,17 @@ export async function onRequest(context) {
 // do grupo não paga Bits nem item (§5.2 do plano é decisão do dono, em
 // aberto), então não há o que farmar.
 
-// As chaves, os prazos, `lerGrupo`/`gravarGrupo`/`grupoDe` e o corpo de `coopLeave`
-// moram em `_coop.js` desde a QA rodada 2 — a exclusão de conta precisa deles
-// sem importar esta rota inteira. Ver o cabeçalho de lá.
-
-/**
- * A ÚNICA montagem de resposta do cooperativo. Ver o comentário do bloco: o
- * que não passa por aqui não sai — nem saveId, nem contagem individual.
- */
-async function vistaDoGrupo(env, g, euSave, hoje = today()) {
-  const semana = semanaDoDia(hoje);
-  // Os dias de cada membro vêm da chave dele (ver `coopCkKey`); `g.checkins` é
-  // só o fallback dos grupos criados antes da mudança.
-  const dias = await Promise.all(g.members.map(async m => {
-    const proprios = await lerCheckins(env, g.id, m, semana);
-    return proprios.length > 0 ? proprios : (g.checkins?.[m] || []);
-  }));
-  const membros = await Promise.all(g.members.map(async (m, i) => {
-    const perfil = await getProfile(env, m);
-    return {
-      // Só o PRÓPRIO chamador tem o perfil migrado aqui (ALTO-3).
-      id: perfil ? (m === euSave ? await ensurePid(env, perfil) : await pidSoLeitura(perfil)) : null,
-      name: perfil?.name ?? null,
-      stage: perfil?.stage ?? null,
-      // Binário, de propósito: presença não ordena ninguém contra ninguém.
-      apareceuHoje: dias[i].includes(hoje),
-      euMesmo: m === euSave,
-    };
-  }));
-  // A meta é DERIVADA do tamanho do grupo, nunca gravada — assim sair encolhe a
-  // meta junto, e sair deixa de ser sabotagem (`PLANO-COOP.md` §3.4).
-  const target = g.members.length * COOP_CHECKINS_POR_MEMBRO;
-  const feitos = dias.reduce((n, d) => n + d.length, 0);
-  return {
-    id: g.id, name: g.name, weekKey: g.weekKey,
-    // O código só é útil para quem já está dentro — e é assim que se convida.
-    code: g.code,
-    members: membros,
-    progress: Math.min(feitos, target), target,
-    full: g.members.length >= COOP_MAX_MEMBERS,
-  };
-}
+// As ações `coop*` são ALIASES da Guilda desde o WPG-1: o estado mora em
+// `_coop.js` e a resposta em `guild.js` › `vistaDaGuilda` (continua havendo UMA
+// só montagem). Aqui só se roteia, com o teto LEVE desta rota já cobrado.
 
 async function handleCommunity({ request, env }) {
   if (!kv(env)) return json({ error: 'Storage not bound' }, 500);
   const url = new URL(request.url);
   const action = url.searchParams.get('action');
+  if (action && Object.prototype.hasOwnProperty.call(COOP_ALIASES, action)) {
+    return handleGuild({ request, env });
+  }
   const method = request.method;
   const body = method === 'POST' ? await request.json().catch(() => ({})) : {};
   const id = body.id || url.searchParams.get('id');
@@ -718,157 +680,6 @@ async function handleCommunity({ request, env }) {
       await kvOrThrow(env).delete(`gifts:${id}`);
     }
     return json({ gifts });
-  }
-
-  // ── Cooperativo (Fase 4.3) ────────────────────────────────────
-  if (action === 'coop' && method === 'GET') {
-    const denied = await denyUnlessOwner(id);
-    if (denied) return denied;
-    const dia = diaDoJogador(url.searchParams.get('dayKey'));
-    if (!dia.ok) return json({ error: 'invalid day' }, 400);
-    const g = await grupoDe(env, id, semanaDoDia(dia.day));
-    return json({ group: g ? await vistaDoGrupo(env, g, id, dia.day) : null });
-  }
-
-  if (action === 'coopCreate' && method === 'POST') {
-    const denied = await denyUnlessOwner(id);
-    if (denied) return denied;
-    // Um grupo por pessoa. Não é limitação técnica: três grupos são três
-    // cobranças, e a auditoria de carga diária (4.5) existe para o app não
-    // virar segundo emprego.
-    if (await grupoDe(env, id)) return json({ error: 'already in a group' }, 409);
-    // Nome é TEXTO DO JOGADOR lido por outras pessoas. Recebe o MESMO
-    // tratamento que o apelido do perfil já recebe neste arquivo (teto de 24) e
-    // nada além disso: duas regras diferentes para o mesmo tipo de campo é o
-    // footgun 9 em miniatura. Se um dia isto pedir filtro, pede nos DOIS lugares.
-    // `sanitizarNomeDeGuilda` é a MESMA função do apelido do perfil (D-1).
-    const nome = sanitizarNomeDeGuilda(body.name);
-    if (!nome) return json({ error: 'invalid name' }, 400);
-    // Código já em uso é resorteado. São 8 caracteres de um alfabeto de 32
-    // (~40 bits), então a colisão é remota — mas a consequência não é: o
-    // `put` cego roubaria o código do grupo anterior, que ficaria inalcançável
-    // por convite, e a saída do último membro do grupo NOVO apagaria a chave do
-    // VELHO junto. Três tentativas bastam: se as três colidirem, o problema não
-    // é sorte.
-    let codigo = null;
-    for (let i = 0; i < 3 && !codigo; i++) {
-      const tentativa = novoCodigo();
-      if (!(await kvOrThrow(env).get(coopCodeKey(tentativa)))) codigo = tentativa;
-    }
-    if (!codigo) return json({ error: 'try again' }, 503);
-    const g = {
-      id: newPid(), name: nome, code: codigo, createdAt: Date.now(),
-      members: [id], weekKey: semanaDe(), checkins: {},
-    };
-    // `gravarGrupo` já grava o blob, o índice do código e o ponteiro de cada
-    // membro — com o MESMO prazo. Não repita as escritas aqui: foi separá-las
-    // que fez os índices envelhecerem sozinhos.
-    await gravarGrupo(env, g);
-    // ── DOIS TOQUES EM "CRIAR" (L1-codigo ALTO-2) ────────────────────────────
-    // As duas requisições passam pelo `grupoDe == null` acima (o KV não tem
-    // CAS) e cada uma criava um grupo; o segundo `coopOf` vencia e o primeiro
-    // ficava órfão por 120 d com o saveId do criador dentro. A releitura do
-    // PONTEIRO decide quem ficou: quem perdeu desfaz o próprio grupo e responde
-    // 409 com a vista do grupo que venceu — o cliente só mostra, sem erro novo.
-    const vencedor = await kvOrThrow(env).get(coopOfKey(id));
-    if (vencedor !== g.id) {
-      await kvOrThrow(env).delete(coopKeyDe(g.id));
-      await kvOrThrow(env).delete(coopCodeKey(g.code));
-      const outro = await grupoDe(env, id);
-      return json({ error: 'already in a group', group: outro ? await vistaDoGrupo(env, outro, id) : null }, 409);
-    }
-    return json({ group: await vistaDoGrupo(env, g, id) });
-  }
-
-  if (action === 'coopJoin' && method === 'POST') {
-    const denied = await denyUnlessOwner(id);
-    if (denied) return denied;
-    if (await grupoDe(env, id)) return json({ error: 'already in a group' }, 409);
-    // Entra-se por CÓDIGO, nunca por busca no diretório: grupo achável é raide
-    // de estranho, e o diretório já respeita o consentimento (N-4 do STATUS).
-    // Uma porta nova não pode furar isso.
-    const code = String(body.code ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-    const groupId = code ? await kvOrThrow(env).get(coopCodeKey(code)) : null;
-    const g = groupId ? await lerGrupo(env, groupId) : null;
-    if (!g) return json({ error: 'invalid code' }, 404);
-    rolarSemana(g);
-    if (g.members.includes(id)) return json({ group: await vistaDoGrupo(env, g, id) });
-    if (g.members.length >= COOP_MAX_MEMBERS) return json({ error: 'group full' }, 409);
-    g.members.push(id);
-    await gravarGrupo(env, g);
-
-    // ── DUAS PESSOAS ENTRANDO AO MESMO TEMPO NA ÚLTIMA VAGA ──────────────────
-    //
-    // O KV não tem transação: as duas leem a mesma lista, as duas se acrescentam
-    // e a última gravação vence. O teto NUNCA é estourado (as duas partiram de
-    // uma lista que cabia), mas quem perde a corrida recebia `200` com a vista
-    // do grupo — ou seja, "você entrou" — e o `coopOf` gravado. Na abertura
-    // seguinte, `grupoDe` não encontrava a pessoa em `members`, limpava o
-    // ponteiro e devolvia `null`: o grupo simplesmente sumia, sem nenhum evento
-    // que explicasse.
-    //
-    // A confirmação abaixo relê e, se a entrada tiver se perdido, tenta UMA vez
-    // mais. Duas tentativas e não um laço: um laço sobre uma escrita sem CAS é
-    // só uma corrida mais longa, e o caso de dois entrando no mesmo milissegundo
-    // não se repete na segunda passada. Perdendo as duas, a resposta é um erro
-    // HONESTO (`409 join collision`) em vez de um sucesso falso — o app pede
-    // para tentar de novo, que é a única coisa verdadeira a dizer aqui.
-    let confirmado = await lerGrupo(env, g.id);
-    if (confirmado && !confirmado.members.includes(id)) {
-      if (confirmado.members.length >= COOP_MAX_MEMBERS) {
-        await kvOrThrow(env).delete(coopOfKey(id));
-        return json({ error: 'group full' }, 409);
-      }
-      confirmado.members.push(id);
-      await gravarGrupo(env, confirmado);
-      confirmado = await lerGrupo(env, g.id);
-    }
-    if (!confirmado || !confirmado.members.includes(id)) {
-      await kvOrThrow(env).delete(coopOfKey(id));
-      return json({ error: 'join collision' }, 409);
-    }
-    return json({ group: await vistaDoGrupo(env, confirmado, id) });
-  }
-
-  if (action === 'coopCheckin' && method === 'POST') {
-    const denied = await denyUnlessOwner(id);
-    if (denied) return denied;
-    // O dia é o DO JOGADOR (override de G6, `PLANO-GUILDA.md` §0.1), validado
-    // a ±1 do dia UTC; a semana sai desse dia, calculada uma vez só.
-    const dia = diaDoJogador(body.dayKey);
-    if (!dia.ok) return json({ error: 'invalid day' }, 400);
-    const hoje = dia.day;
-    const semana = semanaDoDia(hoje);
-    const g = await grupoDe(env, id, semana);
-    if (!g) return json({ error: 'no group' }, 404);
-    // A ESCRITA É SÓ NA CHAVE DESTE MEMBRO. O blob do grupo não é tocado aqui,
-    // e é isso que mata a corrida: dois membros marcando presença na mesma noite
-    // escrevem em chaves diferentes, e nenhuma das duas gravações apaga a outra.
-    const proprios = await lerCheckins(env, g.id, id, semana);
-    const meus = proprios.length > 0 ? proprios : (g.checkins?.[id] || []);
-    // Idempotente: é a única garantia que o servidor consegue dar sozinho sobre
-    // um fato que ele não observa (ver o comentário do bloco).
-    if (!meus.includes(hoje)) {
-      await gravarCheckins(env, g.id, id, [...meus, hoje], semana);
-      // E renova o prazo das três chaves do grupo. Marcar presença é o único
-      // evento DIÁRIO do modo: sem esta linha, um grupo cujos membros só fazem
-      // check-in (ou seja, um grupo que está funcionando) expiraria em 120 dias
-      // com todo mundo ativo. A releitura antes de gravar é de propósito — ver
-      // `renovarPrazos`.
-      await renovarPrazos(env, g.id);
-    }
-    return json({ group: await vistaDoGrupo(env, g, id, hoje) });
-  }
-
-  if (action === 'coopLeave' && method === 'POST') {
-    const denied = await denyUnlessOwner(id);
-    if (denied) return denied;
-    // Sair é UM TOQUE, sem confirmação de ninguém e sem penalidade: nada de XP,
-    // item ou streak se perde. Sem isso o grupo pressiona para ficar, que é o
-    // oposto do que a Fase 4.3 pede. O corpo mora em `_coop.js` (a exclusão de
-    // conta usa o mesmo).
-    await coopLeave(env, id);
-    return json({ ok: true });
   }
 
   return json({ error: 'unknown action' }, 400);

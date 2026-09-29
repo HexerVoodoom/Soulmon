@@ -16,7 +16,12 @@ import { VALID_ID } from './_entitlements.js';
 import { kvOrThrow } from './_kv.js';
 import { minimizeForAi, redactionCount } from './_redact.js';
 
-export const COOP_MAX_MEMBERS = 4;
+/** Teto da Guilda (D-G1: o coop EVOLUI para guilda de até 12). Era 4. */
+export const COOP_MAX_MEMBERS = 12;
+export const GUILD_MAX_MEMBERS = COOP_MAX_MEMBERS;
+/** Até quantos membros a presença sai NOMINAL (G4). Acima disso, só o agregado
+ *  qualitativo `threadedToday` — com 5+ pessoas, "quem veio" vira "quem faltou". */
+export const PRESENCA_NOMINAL_MAX = 4;
 /** Check-ins por membro por semana. 5 e não 7: exigir dia perfeito por pressão
  *  social desfaz o perdão de ausência da Fase 1 (`PLANO-EVOLUCAO.md` §1.2). */
 export const COOP_CHECKINS_POR_MEMBRO = 5;
@@ -123,6 +128,20 @@ export function novoCodigo() {
   const alfabeto = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   return Array.from(crypto.getRandomValues(new Uint8Array(8)))
     .map(x => alfabeto[x % alfabeto.length]).join('');
+}
+
+/**
+ * Um código de convite que ainda não está em uso, ou `null` depois de três
+ * colisões. O `put` cego roubaria o código de outro grupo — que ficaria
+ * inalcançável por convite, e a saída do último membro do grupo NOVO apagaria a
+ * chave do VELHO junto. Com ~40 bits, três colisões seguidas não são sorte.
+ */
+export async function sortearCodigoLivre(env) {
+  for (let i = 0; i < 3; i++) {
+    const tentativa = novoCodigo();
+    if (!(await kvOrThrow(env).get(coopCodeKey(tentativa)))) return tentativa;
+  }
+  return null;
 }
 
 export async function lerGrupo(env, groupId) {
