@@ -221,7 +221,12 @@ export const PRAZO_RENOVA_ANTES_MS = 30 * 86400 * 1000;
  * um foi escrito com 120 d depois da última renovação conjunta): o blob nunca
  * sobrevive aos ponteiros — o "modo evapora" continua fechado.
  */
-export async function gravarGrupo(env, g, { novosMembros = [], codigoNovo = false, agora = Date.now() } = {}) {
+/**
+ * @param {any} env @param {any} g
+ * @param {{ novosMembros?: string[], codigoNovo?: boolean, agora?: number }} [opcoes]
+ */
+export async function gravarGrupo(env, g, opcoes = {}) {
+  const { novosMembros = [], codigoNovo = false, agora = Date.now() } = opcoes;
   // G17(a): guilda com Bosque plantado (`bosqueProgress > 0`) NÃO expira — o
   // que a roda construiu não evapora por inatividade. Sem progresso, 120 d.
   const semPrazo = Number(g.bosqueProgress ?? 0) > 0;
@@ -630,6 +635,7 @@ export async function lerFiosDaRoda(env, g) {
  * dois leitores simultâneos não somarem o mesmo dia duas vezes.
  * @returns {Promise<object>} o grupo atualizado (ou o mesmo)
  */
+/** @param {Record<string, any> | null} [fiosProntos] */
 export async function atualizarBosque(env, g, hoje, agora = new Date(), fiosProntos = null) {
   // A1 (L2-backend): o dia só FECHA quando terminou em TODOS os fusos. O dia do
   // jogador vale a ±1 do UTC, então um dia D ainda recebe fio enquanto o UTC
@@ -784,6 +790,7 @@ export async function lerRaidOk(env, gid, week) {
  * passada). Uso INTERNO: o retorno tem números e nunca vai ao cliente inteiro.
  * @returns {Promise<{ week, cleared: boolean, hp: number, dmg: number, hitters: string[] }>}
  */
+/** @param {Record<string, any> | null} [cartoes] */
 export async function resolverFeira(env, g, week, refDay, cartoes = null) {
   const golpes = await Promise.all(g.members.map(m => (cartoes && golpesDoCartao(cartoes[m], week)) ?? lerGolpes(env, g.id, week, m)));
   const dmg = golpes.reduce((s, h) => s + h.dmg, 0);
@@ -881,6 +888,7 @@ export async function renovarCartao(env, gid, save, now = new Date()) {
 }
 
 /** Os cartões da roda: 1 leitura por membro; sem cartão, as chaves de origem. */
+/** @param {Record<string, any>} [ja] @returns {Promise<Record<string, any>>} */
 export async function lerCartoes(env, g, now = new Date(), ja = {}) {
   const faltam = g.members.filter(m => !ja[m]);
   const raws = await Promise.all(faltam.map(m => kvOrThrow(env).get(coopMemKey(g.id, m))));

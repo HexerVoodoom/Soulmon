@@ -127,6 +127,7 @@ const anfitriaoDe = g => g.hostSave ?? g.members[0] ?? null;
  * `members[].id`/`apareceuHoje`/`progress`/`target` são o contrato do cliente
  * atual (`CoopPanel`); ficam enquanto os aliases existirem.
  */
+/** @param {Record<string, any> | null} [cartoesProntos] */
 export async function vistaDaGuilda(env, g, euSave, hoje = new Date().toISOString().slice(0, 10), cartoesProntos = null) {
   const semana = semanaDoDia(hoje);
   const size = g.members.length;
