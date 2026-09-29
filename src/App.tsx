@@ -118,7 +118,7 @@ import {
   CEREMONY_MIN_INDEX,
 } from './utils/groveLocal';
 import { grantGuildTrophy } from './utils/guildClaimLocal';
-import { guildText, groveStageName, type GroveMarcoStage } from './utils/guildCopy';
+import { guildCoreText, groveStageName, type GroveMarcoStage } from './utils/guildCopyCore';
 import {
   applyRebirth, canRebirth, rebirthRefusal, rebirthEscolaOptions, rebirthElementOptions, herancaDoCiclo,
 } from './utils/rebirth';
@@ -5684,7 +5684,7 @@ export default function App() {
                 onLabTab={setLabTab}
                 labContent={labContent}
                 hallContent={hallContent}
-                guild={{ saveId, metaDoDiaCumprida: fioMetaCumprida, fioGoal, mySprite: minhaCriaturaUrl, playerDayTz: gameState.playerDayTz, onClaimed: handleGuildClaimed, onScenes: handleGuildScenes }}
+                guild={{ saveId, metaDoDiaCumprida: fioMetaCumprida, fioGoal, mySprite: minhaCriaturaUrl, playerDayTz: gameState.playerDayTz, onClaimed: handleGuildClaimed, onScenes: handleGuildScenes, accountTier: gameState.accountTier, onUnlock: () => setUnlockReason('shop'), onLogin: () => goTo('page:settings') }}
               />
             </Suspense>
           )}
@@ -6095,7 +6095,7 @@ export default function App() {
                         <div className="sm2-notice-row">
                           <Icon name="eco" size={20} fill={1} tone="primary" />
                           <p className="sm2-notice-body" style={{ flex: 1, minWidth: 0, marginTop: 0 }}>
-                            {guildText(language, 'guild.marco.aviso', { estagio: groveStageName(language, idAviso) })}
+                            {guildCoreText(language, 'guild.marco.aviso', { estagio: groveStageName(language, idAviso) })}
                           </p>
                         </div>
                       </div>
@@ -6751,7 +6751,6 @@ export default function App() {
           dateLabel={formatDayLabel(grove.pending.day, language)}
           sceneGranted={(grove.scenes ?? 0) >= grove.pending.index}
           language={language}
-          reducedMotion={typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches}
           onDone={acknowledgeGroveMilestone}
         />
       )}

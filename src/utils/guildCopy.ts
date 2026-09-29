@@ -24,8 +24,14 @@
 import type { Language } from './i18n';
 import { GUILD_MAX_MEMBERS, type GroveStageId, type GuildGesture, type TideSize } from './guildRules';
 import type { GuildErrorKind } from './community';
+import { GUILD_COPY_CORE, STAGE_KEY, groveStageName, groveMarcoText, type GroveMarcoStage } from './guildCopyCore';
+
+// A cerimônia e o App importam do núcleo (chunk de ENTRADA); a folha, daqui. Reexportado por compat.
+export { groveStageName, groveMarcoText, type GroveMarcoStage };
 
 export const GUILD_COPY = {
+  // ── O MÍNIMO da entrada (cerimônia, aviso da Home, nome da Concha): vive em `guildCopyCore.ts` ──
+  ...GUILD_COPY_CORE,
   // ── Mapa: NPC e lotes (§1) ─────────────────────────────────────────────
   'guild.npc.hall': ['Algumas criaturas cuidam de um bosque juntas. Ele só cresce.', 'Some creatures keep a grove together. It only grows.'],
   'guild.npc.feira': ['Toda semana algo chega da névoa. A roda chega até ele.', 'Every week something comes in from the mist. The circle reaches it.'],
@@ -39,6 +45,8 @@ export const GUILD_COPY = {
   'guild.criar.botao': ['Criar uma roda', 'Create a circle'],
   'guild.criar.nome.label': ['Nome da roda', 'Circle name'],
   'guild.criar.nome.placeholder': ['Um nome para a roda', 'A name for the circle'],
+  // PENDENTE (L4, 29/09): dica para o leitor de tela quando o botão Criar está inerte (QA L1 #7).
+  'guild.criar.nome.dica': ['Dê um nome à roda.', 'Give the circle a name.'],
   'guild.criar.codigo.corpo': ['Compartilhe este código com até {n} pessoas.', 'Share this code with up to {n} people.'],
   'guild.criar.compartilhar': ['Compartilhar código', 'Share code'],
   'guild.codigo.copiar': ['Copiar código', 'Copy code'],
@@ -46,6 +54,8 @@ export const GUILD_COPY = {
   'guild.codigo.label': ['Código da roda', 'Circle code'],
   'guild.entrar.botao.abrir': ['Entrar com um código', 'Join with a code'],
   'guild.entrar.codigo.label': ['Código', 'Code'],
+  // PENDENTE (L4, 29/09): por que o botão Entrar está inerte com menos caracteres; `{n}` vem de `GUILD_CODE_LENGTH`.
+  'guild.entrar.codigo.dica': ['O código tem {n} caracteres.', 'The code has {n} characters.'],
   'guild.entrar.botao': ['Chegar à roda', 'Join the circle'],
   'guild.erro.nome': ['O nome não pode ter contato nem link.', "Names can't carry contacts or links."],
   'guild.erro.codigo': ['Esse código não abriu nenhuma clareira.', "That code didn't open any clearing."],
@@ -54,10 +64,14 @@ export const GUILD_COPY = {
   'guild.erro.colisao': ['Tente de novo.', 'Try once more.'],
   'guild.erro.semRede': ['Sem conexão. Nada mudou.', 'No connection. Nothing changed.'],
   'guild.erro.semLogin': ['Entre na sua conta para chegar a uma roda.', 'Sign in to reach a circle.'],
+  // Demo sem conta (do documento, §2): acompanha o `UnlockNudge`, que nunca abre sozinho.
+  'guild.erro.demo': ['Crie uma conta para ter uma roda.', 'Create an account to have a circle.'],
   'guild.erro.muitosToques': ['Muitos toques seguidos. Tente daqui a pouco.', 'Too many taps in a row. Try again shortly.'],
   'guild.erro.generico': ['Não deu certo agora. Tente de novo.', "That didn't work. Try again."],
   // FINAL (L3, 29/09): o botão da tela de carga que falhou.
   'guild.erro.tentar': ['Tentar de novo', 'Try again'],
+  // PENDENTE (L4, 29/09): o caminho do 401 até a tela de entrar (Configurações).
+  'guild.erro.entrar': ['Entrar na conta', 'Sign in'],
   // ── Bosque: só o que a fatia A desenha (§3) ────────────────────────────
   'guild.bosque.titulo': ['Bosque', 'Grove'],
   'guild.bosque.fio.hoje': ['O seu fio firmou hoje.', 'Your strand settled today.'],
@@ -69,15 +83,10 @@ export const GUILD_COPY = {
     'Um fio firma quando alguém da roda alcança a própria meta do dia. O bosque só cresce.',
     'A strand settles when someone in the circle reaches their own goal for the day. The grove only grows.',
   ],
-  'guild.bosque.estagio.clareira.nome': ['Clareira', 'Clearing'],
   'guild.bosque.estagio.clareira.linha': ['Chão aberto. Os primeiros fios firmaram.', 'Open ground. The first strands have settled.'],
-  'guild.bosque.estagio.ramagem.nome': ['Ramagem', 'Boughs'],
   'guild.bosque.estagio.ramagem.linha': ['A videira achou onde se apoiar.', 'The vine found something to hold.'],
-  'guild.bosque.estagio.copa.nome': ['Copa', 'Canopy'],
   'guild.bosque.estagio.copa.linha': ['A videira fechou por cima.', 'The vine closed overhead.'],
-  'guild.bosque.estagio.mata.nome': ['Mata', 'Thicket'],
   'guild.bosque.estagio.mata.linha': ['Camadas sobre camadas.', 'Layer over layer.'],
-  'guild.bosque.estagio.bosqueAntigo.nome': ['Bosque antigo', 'Old grove'],
   'guild.bosque.estagio.bosqueAntigo.linha': ['O cobre tomou o chão. A luz chega filtrada.', 'Copper took the ground. Light comes through filtered.'],
   // Faixa BINÁRIA (perto/silêncio): nunca barra de razão exata, nunca tempo estimado (parecer do guarda, 29/09).
   'guild.bosque.perto': ['Perto de {estagio}.', 'Near {estagio}.'],
@@ -103,17 +112,6 @@ export const GUILD_COPY = {
   'guild.roda.voce': ['· você', '· you'],
   'guild.roda.alguem': ['Alguém', 'Someone'],
   // ── Cerimônia e aviso de marco (§5) ────────────────────────────────────
-  'guild.marco.ramagem.mundo': ['O bosque ganhou ramagem.', 'The grove grew boughs.'],
-  'guild.marco.ramagem.pet': ['Olha, achou onde se apoiar.', 'Look, it found something to hold.'],
-  'guild.marco.copa.mundo': ['O bosque fechou copa.', 'The grove has closed its canopy.'],
-  'guild.marco.copa.pet': ['Tá mais alto que eu agora.', "It's taller than me now."],
-  'guild.marco.mata.mundo': ['O bosque virou mata.', 'The grove has become a thicket.'],
-  'guild.marco.mata.pet': ['Tem sombra aqui dentro.', "There's shade in here."],
-  'guild.marco.bosqueAntigo.mundo': ['O bosque é antigo agora.', 'The grove is old now.'],
-  'guild.marco.bosqueAntigo.pet': ['Tem cheiro de cobre.', 'It smells of copper.'],
-  'guild.marco.botao': ['Continuar', 'Continue'],
-  'guild.marco.aviso': ['Novo estágio do bosque: {estagio}.', 'New stage for the grove: {estagio}.'],
-  'guild.marco.cenario': ['Cenário do bosque: {estagio}. Já está em Background.', 'Grove scenery: {estagio}. It is now under Background.'],
   // ── Mural (§7) ─────────────────────────────────────────────────────────
   'guild.mural.titulo': ['Mural', 'Wall'],
   'guild.mural.marco': ['{estagio}, {data}', '{estagio}, {data}'],
@@ -123,6 +121,8 @@ export const GUILD_COPY = {
   'guild.mural.mare.tamanho.floracao': ['Floração cheia', 'Full bloom'],
   // ── Feira (§6) ─────────────────────────────────────────────────────────
   'guild.feira.titulo': ['Feira', 'Fair'],
+  // PENDENTE (L4, 29/09): a Feira sem roda explica o que é antes do formulário (QA L3 B9).
+  'guild.feira.semroda': ['A Feira é da roda: toda semana algo chega da névoa, e a roda o encontra junta.', 'The Fair belongs to the circle: every week something comes in from the mist, and the circle meets it together.'],
   'guild.feira.aberta.mundo': ['A maré abriu a Feira. Algo chegou da névoa.', 'The tide opened the Fair. Something came in from the mist.'],
   'guild.feira.fenomeno.nevoa.nome': ['Névoa', 'Mist'],
   'guild.feira.fenomeno.nevoa.linha': ['Uma camada que não assentou.', "A layer that hasn't settled."],
@@ -141,9 +141,7 @@ export const GUILD_COPY = {
   'guild.feira.colher.botao': ['Colher', 'Collect'],
   'guild.feira.colhido': ['{n} Emblemas colhidos.', '{n} Emblems collected.'],
   // FINAL (L3, 29/09): a peça da maré. `nome`/`desc` espelham `GUILD_ITEMS` (shop.ts).
-  'guild.concha.nome': ['Concha da Maré', 'Tide shell'],
   'guild.concha.chegou': ['A maré deixou uma Concha da Maré. Já está em Decoração.', 'The tide left a Tide shell. It is now under Decor.'],
-  'guild.concha.desc': ['Deixada pela maré no bosque.', 'Left by the tide in the grove.'],
   'guild.help.concha.termo': ['Concha da Maré', 'Tide shell'],
   'guild.help.concha.def': ['Cada {n} Feiras dissipadas rendem uma Concha da Maré, peça de decoração de quem colhe. Ela marca o que a roda fez junta, nunca uma pessoa.', 'Every {n} cleared Fairs bring a Tide shell, a decor piece for whoever collects. It marks what the circle did together, never one person.'],
   // Título da prateleira de posse (cenários do bosque + Concha): "do bosque", não "da sua roda" — a
@@ -171,6 +169,9 @@ export const GUILD_COPY = {
   'guild.aria.gesto.enviado': ['{gesto} já enviado hoje', '{gesto} already sent today'],
   'guild.aria.mural': ['Mural da roda', "The circle’s wall"],
   'guild.aria.feira': ['Fenômeno da semana: {nome}', 'This week’s phenomenon: {nome}'],
+  // PENDENTE (L4, 29/09): o estado do fenômeno no nome acessível do visor, sem HP nem "ferido" (QA L3 M2).
+  'guild.aria.feira.ferido': ['Fenômeno da semana: {nome}, com luz passando entre as camadas.', 'This week’s phenomenon: {nome}, with light showing between its layers.'],
+  'guild.aria.feira.dissipado': ['Fenômeno da semana: {nome}, desfeito.', 'This week’s phenomenon: {nome}, come apart.'],
   'guild.aria.rodada': ['Fazer minha rodada de hoje', 'Take my round for today'],
   // ── HelpModal e GuideModal (§11) ───────────────────────────────────────
   'guild.help.guilda.termo': ['Guilda e roda', 'Guild and circle'],
@@ -236,18 +237,8 @@ export const GUILD_ERROR_KEY = {
 // Os ids do servidor são `bosque-antigo`, `aceno`… e as chaves do documento são
 // camelCase; estes mapas são a ÚNICA ponte, e o tipo impede uma chave inventada.
 
-const STAGE_KEY = { clareira: 'clareira', ramagem: 'ramagem', copa: 'copa', mata: 'mata', 'bosque-antigo': 'bosqueAntigo' } as const satisfies Record<GroveStageId, string>;
-
-export const groveStageName = (language: Language, stage: GroveStageId): string =>
-  guildText(language, `guild.bosque.estagio.${STAGE_KEY[stage]}.nome`);
-
 export const groveStageLine = (language: Language, stage: GroveStageId): string =>
   guildText(language, `guild.bosque.estagio.${STAGE_KEY[stage]}.linha`);
-
-/** Cerimônia: só a Ramagem em diante tem marco (a Clareira é o chão de partida). */
-export type GroveMarcoStage = Exclude<GroveStageId, 'clareira'>;
-export const groveMarcoText = (language: Language, stage: GroveMarcoStage, quem: 'mundo' | 'pet'): string =>
-  guildText(language, `guild.marco.${STAGE_KEY[stage]}.${quem}`);
 
 export const guildGestureName = (language: Language, gesture: GuildGesture): string =>
   guildText(language, `guild.gesto.${gesture}.nome`);

@@ -1,6 +1,7 @@
 // 🛒 Shop catalog — bought with minigame points (gamePoints).
 // Effects are applied in App.tsx (handleShopBuy); see docs/SHOP-PLAN.md.
 import type { SlotId, DecorFit } from './petStage';
+import { GUILD_COPY_CORE } from './guildCopyCore';
 
 export type ShopItemKind = 'chip' | 'heart' | 'bg' | 'furniture' | 'emblem';
 
@@ -432,8 +433,9 @@ export const TOURNAMENT_ITEMS: ShopItem[] = [
 export const GUILD_SHELL_UNLOCK_MISSION = 'guild-tide-shell';
 export const GUILD_ITEMS: ShopItem[] = [
   { id: 'trophy-concha-mare', kind: 'furniture', icon: '🐚', slot: 'trophy', fits: 'any',
-    namePt: 'Concha da Maré', nameEn: 'Tide shell',
-    descPt: 'Deixada pela maré no bosque.', descEn: 'Left by the tide in the grove.',
+    // Nome e descrição vêm da copy da Guilda (dono único, `guildCopyCore.ts`): nenhum literal duplicado (L3-copy).
+    namePt: GUILD_COPY_CORE['guild.concha.nome'][0], nameEn: GUILD_COPY_CORE['guild.concha.nome'][1],
+    descPt: GUILD_COPY_CORE['guild.concha.desc'][0], descEn: GUILD_COPY_CORE['guild.concha.desc'][1],
     price: 0,
     unlock: { kind: 'mission', missionId: GUILD_SHELL_UNLOCK_MISSION } },
 ];
