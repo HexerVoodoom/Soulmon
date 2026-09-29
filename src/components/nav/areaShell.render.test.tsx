@@ -56,18 +56,18 @@ describe('AreaSheet', () => {
     expect(container.querySelector('[data-area-sheet-npc]')).toBeNull();
   });
 
-  it('aberta: diálogo modal nomeado, altura fixa em 2/3 da tela, NPC do LOTE dentro da folha, com fala', () => {
+  it('aberta: diálogo modal nomeado, altura fixa em 2/3 da tela, NPC do LOTE FORA do card (1/3 de cima), com fala', () => {
     const { container } = renderWithCss(<Cenario open />);
     const dlg = container.querySelector('[role="dialog"]') as HTMLElement;
     expect(dlg).not.toBeNull();
     expect(dlg.getAttribute('aria-modal')).toBe('true');
     expect(dlg.getAttribute('aria-label')).toBe('Itens');
     expect(dlg.style.height).toBe('66.6667dvh');
-    // O NPC vive dentro do primeiro 1/3 da tela (metade de cima da folha) — nunca fora dela.
+    // O NPC vive no 1/3 de cima da tela, transparente e FORA do card.
     const npcZone = container.querySelector('[data-area-sheet-npc-zone]') as HTMLElement;
     expect(npcZone).not.toBeNull();
-    expect(dlg.contains(npcZone)).toBe(true);
-    expect(npcZone.style.flex).toBe('0 0 50%');
+    expect(dlg.contains(npcZone)).toBe(false);
+    expect(npcZone.style.flex).toBe('0 0 33.3333dvh');
     const npc = container.querySelector('[data-area-sheet-npc]');
     expect(npc).not.toBeNull();
     expect(npc!.getAttribute('src')).toBeTruthy();
