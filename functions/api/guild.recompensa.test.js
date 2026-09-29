@@ -3,6 +3,7 @@ import { onRequest } from './guild.js';
 import {
   coopHitKey, coopClaimKey, coopKey, coopFioKey, coopScenesKey, semanaDoDia,
   RAID_EMBLEMS, RAID_EMBLEMS_FLOOR, RAID_TROPHY_EVERY, RAID_TROPHY_ID,
+  coopMemKey,
 } from './_coop.js';
 
 /**
@@ -41,8 +42,12 @@ async function roda(n = 3, dia = '2026-09-10T12:00:00Z') {
   for (const m of M.slice(1, n)) await chamar(e, 'guildJoin', { id: m, code: g.code });
   return { e, gid: g.id };
 }
-const golpeSemeado = (e, gid, dia, membro, dmg) =>
+const golpeSemeado = (e, gid, dia, membro, dmg) => {
   e.DIGIAPP_SAVES.store.set(coopHitKey(gid, semanaDoDia(dia), membro), JSON.stringify({ week: semanaDoDia(dia), days: [dia], dmg }));
+  // A chave semeada à mão não passou pela rota: o cartão (resumo derivado, A3)
+  // sai de cena e a vista lê as chaves de origem — o caminho "sem cartão".
+  e.DIGIAPP_SAVES.store.delete(coopMemKey(gid, membro));
+};
 
 describe('guildClaim — Emblemas', () => {
   it('dissipada: 4 Emblemas a quem golpeou; o 2º resgate é 409 already claimed', async () => {
@@ -178,6 +183,7 @@ describe('Concha — defesa contra registro de resgate perdido', () => {
 describe('cenários bg-guild-* (LV-G9, G12)', () => {
   const semear = (e, gid, dias, progresso) => {
     e.DIGIAPP_SAVES.store.set(coopFioKey(gid, M[0]), JSON.stringify({ lastDay: dias.at(-1), distinctDays: dias.length, days: dias }));
+    e.DIGIAPP_SAVES.store.delete(coopMemKey(gid, M[0]));
     const g = JSON.parse(e.DIGIAPP_SAVES.store.get(coopKey(gid)));
     g.bosqueProgress = progresso;
     g.progressDay = '2026-09-09';

@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { coopHitKey, semanaDe, coopKey, coopOfKey, coopCodeKey, lerGrupo, fecharDiasDoBosque, firmarFio, idOpacoDoMembro } from './_coop.js';
+import { atualizarBosque, gravarGrupo, coopHitKey, semanaDe, semanaDoDia, coopMemKey, coopKey, coopOfKey, coopCodeKey, lerGrupo, fecharDiasDoBosque, firmarFio, idOpacoDoMembro } from './_coop.js';
 import { onRequest as community } from './community.js';
 import { onRequest } from './guild.js';
 
@@ -229,5 +229,114 @@ describe('B5 — gesto numa roda de 2 não diz o tipo', () => {
     await chamar(tres.e, 'guildGesture', { body: { id: B, kind: 'luz' } });
     const v3 = (await (await chamar(tres.e, 'guild', { method: 'GET', params: { id: A } })).json()).guild;
     expect(v3.gestures).toEqual(['luz']);
+  });
+});
+
+/**
+ * ORÇAMENTO DE KV POR AÇÃO (A3). Os números são o teto MEDIDO em 29/09/2026
+ * numa guilda de 12, em regime (depois do fechamento do dia). Subir qualquer
+ * um é regressão: 3 guildas cheias chegavam a esgotar as 1.000 escritas/dia do
+ * plano grátis, no mesmo namespace do cloud save e das compras.
+ * As leituras incluem 1 da lápide de exclusão (`authorizeSaveAccess`).
+ */
+export const ORCAMENTO = {
+  criar: { get: 15, put: 5 },
+  entrar: { get: 27, put: 3 },
+  fio: { get: 24, put: 2 },
+  checkin: { get: 25, put: 2 },
+  golpe: { get: 38, put: 2 },
+  gesto: { get: 24, put: 2 },
+  vista12: { get: 17, put: 0 },
+};
+
+describe('A3 — orçamento de leituras/escritas por ação (guilda de 12)', () => {
+  it('nenhuma ação passa do teto medido', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    em('2026-09-02T12:00:00Z');
+    const seed = {};
+    MEMBROS.forEach((m, i) => { seed[`profile:${m}`] = perfil(m, `Nome${i}`); });
+    const kv = fakeKV(seed);
+    const e = { DIGIAPP_SAVES: kv };
+    const medido = {};
+    const med = async (nome, f) => { kv.zerar(); const r = await f(); medido[nome] = { get: kv.conta.get, put: kv.conta.put }; return r; };
+    const g = await med('criar', async () => (await (await chamar(e, 'guildCreate', { body: { id: A, name: 'R' } })).json()).guild);
+    for (const m of MEMBROS.slice(1, 11)) await chamar(e, 'guildJoin', { body: { id: m, code: g.code } });
+    await med('entrar', () => chamar(e, 'guildJoin', { body: { id: MEMBROS[11], code: g.code } }));
+    for (const m of MEMBROS.slice(0, 11)) await chamar(e, 'guildThread', { body: { id: m, kind: 'fio' } });
+    await med('fio', () => chamar(e, 'guildThread', { body: { id: MEMBROS[11], kind: 'fio' } }));
+    await med('checkin', () => chamar(e, 'guildCheckin', { body: { id: MEMBROS[3] } }));
+    await med('golpe', () => chamar(e, 'guildRaidHit', { body: { id: MEMBROS[3] } }));
+    await med('gesto', () => chamar(e, 'guildGesture', { body: { id: MEMBROS[3], kind: 'luz' } }));
+    await med('vista12', () => chamar(e, 'guild', { method: 'GET', params: { id: MEMBROS[5] } }));
+    for (const [acao, teto] of Object.entries(ORCAMENTO)) {
+      expect(medido[acao].get, `${acao} leituras`).toBeLessThanOrEqual(teto.get);
+      expect(medido[acao].put, `${acao} escritas`).toBeLessThanOrEqual(teto.put);
+    }
+    // E o check-in do dia a dia NÃO regrava índice de ninguém.
+    kv.zerar();
+    await chamar(e, 'guildCheckin', { body: { id: MEMBROS[4] } });
+    expect(kv.puts.map(p => p.k).filter(k => k.startsWith('coopOf:') || k.startsWith('coopCode:') || k.startsWith('coopFio:'))).toEqual([]);
+    // O 1º fechamento com progresso > 0 passa a guilda a "sem prazo" (G17a):
+    // a renovação conjunta acontece UMA vez na vida da guilda…
+    em('2026-09-04T12:00:00Z');
+    await chamar(e, 'guild', { method: 'GET', params: { id: A } });
+    expect((await lerGrupo(e, g.id)).semPrazoGravado).toBe(true);
+    // …e daí em diante fechar o dia custa UMA escrita (o blob).
+    em('2026-09-05T12:00:00Z');
+    kv.zerar();
+    await chamar(e, 'guild', { method: 'GET', params: { id: A } });
+    expect(kv.puts.map(p => p.k)).toEqual([`coop:${g.id}`]);
+    kv.zerar();
+    await chamar(e, 'guild', { method: 'GET', params: { id: B } });
+    expect(kv.conta.put).toBe(0);
+  });
+
+  it('dois fechamentos simultâneos do mesmo dia: só um grava, e o dia soma uma vez', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    em('2026-09-02T12:00:00Z');
+    const { e, gid } = await guildaDe(2);
+    await chamar(e, 'guildThread', { body: { id: A, kind: 'fio' } });
+    em('2026-09-04T12:00:00Z');
+    const g = await lerGrupo(e, gid);
+    const c1 = structuredClone(g), c2 = structuredClone(g);
+    e.DIGIAPP_SAVES.zerar();
+    await atualizarBosque(e, c1, '2026-09-04');
+    await atualizarBosque(e, c2, '2026-09-04'); // a cópia velha, lida antes do 1º gravar
+    expect(e.DIGIAPP_SAVES.puts.filter(p => p.k === `coop:${gid}`)).toHaveLength(1);
+    expect((await lerGrupo(e, gid)).bosqueProgress).toBeCloseTo(0.5, 9);
+  });
+
+  it('o prazo: blob e índices expiram juntos; renovação conjunta só a < 30 d', async () => {
+    const { e, gid } = await guildaDe(3);
+    const g = await lerGrupo(e, gid);
+    const agora = Date.now();
+    e.DIGIAPP_SAVES.zerar();
+    await gravarGrupo(e, g, { agora });
+    expect(e.DIGIAPP_SAVES.puts.map(p => p.k)).toEqual([`coop:${gid}`]);
+    e.DIGIAPP_SAVES.zerar();
+    await gravarGrupo(e, g, { agora: g.prazoAte - 29 * 86400000 });
+    const ks = e.DIGIAPP_SAVES.puts.map(p => p.k);
+    for (const m of MEMBROS.slice(0, 3)) expect(ks).toContain(coopOfKey(m));
+    expect(ks).toContain(coopCodeKey(g.code));
+  });
+});
+
+describe('Feira: limiar de `ferido` (mutante sobrevivente)', () => {
+  const semear = (e, gid, m, dmg) => {
+    const w = semanaDoDia(new Date().toISOString().slice(0, 10));
+    e.DIGIAPP_SAVES.store.set(coopHitKey(gid, w, m), JSON.stringify({ week: w, days: [], dmg }));
+    e.DIGIAPP_SAVES.store.delete(coopMemKey(gid, m));
+  };
+  it('ferido exatamente na metade do HP; um ponto abaixo, não', async () => {
+    // 3 membros → HP = 3 × 45 = 135; metade = 67,5.
+    const um = await guildaDe(3);
+    semear(um.e, um.gid, A, 67);
+    expect((await (await chamar(um.e, 'guild', { method: 'GET', params: { id: A } })).json()).guild.raid.ferido).toBe(false);
+    const dois = await guildaDe(3);
+    semear(dois.e, dois.gid, A, 68);
+    expect((await (await chamar(dois.e, 'guild', { method: 'GET', params: { id: A } })).json()).guild.raid.ferido).toBe(true);
+    const tres = await guildaDe(3);
+    semear(tres.e, tres.gid, A, 45); // um terço: ferido com `*3`, não com `*2`
+    expect((await (await chamar(tres.e, 'guild', { method: 'GET', params: { id: A } })).json()).guild.raid.ferido).toBe(false);
   });
 });

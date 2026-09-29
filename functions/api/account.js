@@ -113,7 +113,7 @@ import { requireVerifiedOwner } from './_auth.js';
 import { kv, kvOrThrow } from './_kv.js';
 import { lerIndice, chaveDoIndice, PUSHIDX_MAX } from './_pushIdentity.js';
 import { writeTombstone, clearTombstone, TOMBSTONE_TTL_SECONDS } from './_accountTombstone.js';
-import { coopLeave, grupoDe, coopOfKey, coopCkKey, coopFioKey, lerFio, apagarClaims, lerGolpes, semanaDe, semanasDeClaim, coopClaimKey, lerConjunto, coopScenesKey, coopShellKey } from './_coop.js';
+import { coopLeave, grupoDe, coopOfKey, coopCkKey, coopFioKey, coopMemKey, lerFio, apagarClaims, lerGolpes, semanaDe, semanasDeClaim, coopClaimKey, lerConjunto, coopScenesKey, coopShellKey } from './_coop.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -545,7 +545,7 @@ function plan(c, saveId) {
       ...c.sprites.blobs,
       'menções a você na lista de amigos de outros jogadores',
       'inscrições de notificação (push:*/fcm:*) ligadas à sua conta',
-      ...(c.coopGroupId ? [`coop:${c.coopGroupId} (sua vaga no grupo)`, coopOfKey(saveId), coopCkKey(c.coopGroupId, saveId), coopFioKey(c.coopGroupId, saveId)] : []),
+      ...(c.coopGroupId ? [`coop:${c.coopGroupId} (sua vaga no grupo)`, coopOfKey(saveId), coopCkKey(c.coopGroupId, saveId), coopFioKey(c.coopGroupId, saveId), coopMemKey(c.coopGroupId, saveId)] : []),
       'resgates da Guilda (coopClaim:*) e rodadas da Feira (coopHit:*) da guilda atual — os de guildas de onde você já saiu foram apagados na saída; se sobrou algum sem vínculo, ele expira sozinho em até 21 dias. Os fios que você já firmou ficam no Bosque, anônimos',
       // #54: o vínculo SteamID ↔ conta. ⚰️ Até 22/09/2026 estas chaves apareciam
       // em `sobrevive` (5 anos, justificativa fiscal que não se aplica a licença).

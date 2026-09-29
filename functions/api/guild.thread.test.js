@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import { onRequest } from './guild.js';
 import {
-  coopKey, coopFioKey, lerGrupo, metaDoFioCumprida, META_DO_FIO, STAGE_UNLOCK_DAYS, gravarGrupo,
+  coopKey, coopFioKey, coopMemKey, lerGrupo, metaDoFioCumprida, META_DO_FIO, STAGE_UNLOCK_DAYS, gravarGrupo,
 } from './_coop.js';
 
 /**
@@ -90,7 +90,8 @@ describe('guildThread: um fio por pessoa por dia', () => {
     e.DIGIAPP_SAVES.puts.length = 0;
     await fio(e, B);
     const escritas = e.DIGIAPP_SAVES.puts.map(p => p.k);
-    expect(escritas).toEqual([coopFioKey(gid, B)]);
+    // A3: a chave do fio e o cartão do PRÓPRIO membro (resumo derivado).
+    expect(escritas).toEqual([coopFioKey(gid, B), coopMemKey(gid, B)]);
     expect(escritas).not.toContain(coopKey(gid));
   });
 });

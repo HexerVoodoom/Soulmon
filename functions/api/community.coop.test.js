@@ -231,6 +231,7 @@ describe('coop — check-in', () => {
     const meu = JSON.parse(await kv.get(`coopCk:${gid}:${ANA}`));
     expect(meu.days.length).toBe(1);                 // marcou mesmo
     await kv.put(`coopCk:${gid}:${ANA}`, JSON.stringify({ ...meu, weekKey: '1999-W01' }));
+    await kv.delete(`coopMem:${gid}:${ANA}`); // o cartão (A3) é derivado: sem ele, lê a chave
     expect((await ver(e, ANA)).progress).toBe(0);
   });
 });

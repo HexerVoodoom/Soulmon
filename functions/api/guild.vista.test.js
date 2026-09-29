@@ -132,6 +132,6 @@ describe('vistaDaGuilda por tamanho', () => {
     const r = await (await chamar(e, 'guild', { params: { id: MEMBROS[0] } })).json();
     expect(e.DIGIAPP_SAVES.store.get(`profile:${MEMBROS[1]}`)).toBe(antes);
     // A4: a vista nunca carrega o pid (nem o legado) — só o id opaco da guilda.
-    expect(r.guild.members.find(m => m.name === 'Sem pid')).not.toHaveProperty('pid');
+    expect(r.guild.members.find(m => !m.euMesmo)).not.toHaveProperty('pid');
   });
 });

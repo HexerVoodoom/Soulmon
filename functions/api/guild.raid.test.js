@@ -3,6 +3,7 @@ import { onRequest } from './guild.js';
 import {
   raidHpFor, raidDamageFor, coopHitKey, coopRaidOkKey, coopKey, semanaDoDia, fenomenoDaSemana,
   RAID_PHENOMENA, RAID_HP_PER_MEMBER, GUILD_MIN_RAID_MEMBERS,
+  coopMemKey,
 } from './_coop.js';
 
 /**
@@ -41,8 +42,12 @@ async function roda(n, { dia = '2026-09-10T12:00:00Z', stage = 'rookie' } = {}) 
   for (const m of M.slice(1, n)) await chamar(e, 'guildJoin', { id: m, code: g.code });
   return { e, gid: g.id };
 }
-const semeiaDano = (e, gid, dia, membro, dmg) =>
+const semeiaDano = (e, gid, dia, membro, dmg) => {
   e.DIGIAPP_SAVES.store.set(coopHitKey(gid, semanaDoDia(dia), membro), JSON.stringify({ week: semanaDoDia(dia), days: [dia], dmg }));
+  // A chave semeada à mão não passou pela rota: o cartão (resumo derivado, A3)
+  // sai de cena e a vista lê as chaves de origem — o caminho "sem cartão".
+  e.DIGIAPP_SAVES.store.delete(coopMemKey(gid, membro));
+};
 
 /** Toda folha numérica de um objeto (o guarda: nenhum número na Feira). */
 const numeros = (o, path = '') => (o && typeof o === 'object')
@@ -178,6 +183,7 @@ describe('estado da Feira — fechamento na leitura, sem número', () => {
     semeiaDano(e, gid, '2026-09-09', M[1], 140);
     await ver(e, M[0]);
     e.DIGIAPP_SAVES.store.delete(coopHitKey(gid, '2026-W37', M[1])); // a chave pessoal expirou
+    e.DIGIAPP_SAVES.store.delete(coopMemKey(gid, M[1])); // e o cartão (TTL próprio) também
     vi.setSystemTime(new Date('2026-09-15T12:00:00Z'));
     const v = await ver(e, M[0]);
     expect(v.raid).toMatchObject({ weekKey: '2026-W38', state: 'aberta', lastWeek: 'dissipada' });

@@ -354,6 +354,7 @@ export async function coopLeave(env, saveId, { exclusao = false, now = new Date(
   await kvOrThrow(env).delete(coopCkKey(lido.id, saveId));
   await kvOrThrow(env).delete(coopFioKey(lido.id, saveId));
   await kvOrThrow(env).delete(coopGestKey(lido.id, saveId));
+  await kvOrThrow(env).delete(coopMemKey(lido.id, saveId));
   // Os golpes (`coopHit`, com o saveId NA CHAVE) saem com a pessoa em TODA
   // saída, não só na exclusão (M5, L2-backend): o dano de quem saiu já não
   // conta para a Feira (a soma é dos membros atuais) e resgatar exige estar na
@@ -629,7 +630,7 @@ export async function lerFiosDaRoda(env, g) {
  * dois leitores simultâneos não somarem o mesmo dia duas vezes.
  * @returns {Promise<object>} o grupo atualizado (ou o mesmo)
  */
-export async function atualizarBosque(env, g, hoje, agora = new Date()) {
+export async function atualizarBosque(env, g, hoje, agora = new Date(), fiosProntos = null) {
   // A1 (L2-backend): o dia só FECHA quando terminou em TODOS os fusos. O dia do
   // jogador vale a ±1 do UTC, então um dia D ainda recebe fio enquanto o UTC
   // for D+1 — fechar pelo dia de quem pergunta (um membro em UTC+9 depois da
@@ -638,7 +639,7 @@ export async function atualizarBosque(env, g, hoje, agora = new Date()) {
   // UTC−1: fecha-se até UTC−2, e o `diaDoJogador` já recusa D quando UTC ≥ D+2.
   const utc = numDia(agora.toISOString().slice(0, 10));
   hoje = diaDeNum(Math.min(numDia(hoje), utc - 1));
-  const fios = await lerFiosDaRoda(env, g);
+  const fios = fiosProntos ?? await lerFiosDaRoda(env, g);
   const teste = structuredClone(g);
   if (!fecharDiasDoBosque(teste, fios, hoje)) return g;
   const tags = Object.fromEntries(await Promise.all(g.members.map(async m => [m, await idOpacoDoMembro(env, g.id, m)])));
@@ -783,11 +784,11 @@ export async function lerRaidOk(env, gid, week) {
  * passada). Uso INTERNO: o retorno tem números e nunca vai ao cliente inteiro.
  * @returns {Promise<{ week, cleared: boolean, hp: number, dmg: number, hitters: string[] }>}
  */
-export async function resolverFeira(env, g, week, refDay) {
-  const golpes = await Promise.all(g.members.map(m => lerGolpes(env, g.id, week, m)));
+export async function resolverFeira(env, g, week, refDay, cartoes = null) {
+  const golpes = await Promise.all(g.members.map(m => (cartoes && golpesDoCartao(cartoes[m], week)) ?? lerGolpes(env, g.id, week, m)));
   const dmg = golpes.reduce((s, h) => s + h.dmg, 0);
   const hitters = g.members.filter((_, i) => golpes[i].days.length > 0);
-  const fios = await lerFiosDaRoda(env, g);
+  const fios = cartoes ? fiosDosCartoes(g, cartoes) : await lerFiosDaRoda(env, g);
   const hp = raidHpFor(membrosAtivos(g, fios, refDay).length);
   let cleared = !!(await lerRaidOk(env, g.id, week));
   if (!cleared && dmg >= hp) {
@@ -817,3 +818,97 @@ export async function unirConjunto(env, key, novos) {
   if (uniao.length !== atual.length) await kvOrThrow(env).put(key, JSON.stringify({ ids: uniao }));
   return uniao;
 }
+
+// ===========================================================================
+// O CARTÃO DO MEMBRO (A3, L2-backend) — orçamento de LEITURA da vista.
+//
+// A vista de uma guilda de 12 custava ~114 GETs (check-in, fio, perfil,
+// gesto e golpes de cada membro, lidos de novo em cada `resolverFeira`). Com
+// 100k leituras/dia no plano grátis, ~1.000 vistas esgotavam o namespace.
+//
+// `coopMem:<gid>:<save>` é um RESUMO DERIVADO das chaves do próprio membro
+// (`coopCk`, `coopFio`, `coopGest`, `coopHit` das semanas em volta e o nome do
+// perfil), reconstruído SÓ pelo próprio membro, a cada ação dele. As chaves
+// de origem continuam sendo a verdade (exportação, exclusão, resgate); o
+// cartão é o que a vista lê: 1 GET por membro em vez de ~9.
+//
+// Por que é autoritativo: tudo o que ele resume só muda por ação do DONO, e
+// toda ação do dono reconstrói o cartão depois de escrever. Uma semana de
+// golpes MAIS NOVA que a janela do cartão é vazia por construção (um golpe
+// nela teria reconstruído o cartão); uma MAIS VELHA cai na leitura da chave.
+// Sem cartão (grupo antigo, TTL vencido), lê as chaves — nunca escreve na
+// vista. Corrida conhecida: duas ações do MESMO membro em aparelhos
+// diferentes no mesmo instante podem deixar o cartão sem uma delas até a
+// próxima ação dele; a chave de origem não perde nada.
+// ===========================================================================
+
+export const coopMemKey = (gid, save) => `coopMem:${gid}:${save}`;
+
+/** Semanas cujos golpes entram no cartão construído em `now`. */
+export function semanasDoCartao(now = new Date()) {
+  const t = now.getTime();
+  return [...new Set([-8, -7, -6, -1, 0, 1].map(k => semanaDe(new Date(t + k * DIA_MS))))].sort();
+}
+
+const parse = raw => { try { return raw ? JSON.parse(raw) : null; } catch { return null; } };
+
+/** Monta o cartão a partir das chaves de origem (sem gravar). */
+export async function montarCartao(env, gid, save, now = new Date()) {
+  const semanas = semanasDoCartao(now);
+  const kvs = kvOrThrow(env);
+  const [ck, fio, gest, perfil, ...hits] = await Promise.all([
+    kvs.get(coopCkKey(gid, save)).then(parse),
+    lerFio(env, gid, save),
+    kvs.get(coopGestKey(gid, save)).then(parse),
+    kvs.get(`profile:${save}`).then(parse),
+    ...semanas.map(w => lerGolpes(env, gid, w, save)),
+  ]);
+  return {
+    v: 1,
+    name: typeof perfil?.name === 'string' ? perfil.name : null,
+    ck: ck && typeof ck === 'object' ? { weekKey: ck.weekKey, days: Array.isArray(ck.days) ? ck.days : [] } : null,
+    fio,
+    gest: gest && typeof gest === 'object' ? { day: gest.day, kinds: Array.isArray(gest.kinds) ? gest.kinds : [] } : null,
+    hits: Object.fromEntries(semanas.map((w, i) => [w, { days: hits[i].days, dmg: hits[i].dmg }])),
+  };
+}
+
+/** Reconstrói e grava o cartão do PRÓPRIO membro (1 escrita). */
+export async function renovarCartao(env, gid, save, now = new Date()) {
+  const c = await montarCartao(env, gid, save, now);
+  await kvOrThrow(env).put(coopMemKey(gid, save), JSON.stringify(c), { expirationTtl: COOP_TTL });
+  return c;
+}
+
+/** Os cartões da roda: 1 leitura por membro; sem cartão, as chaves de origem. */
+export async function lerCartoes(env, g, now = new Date(), ja = {}) {
+  const faltam = g.members.filter(m => !ja[m]);
+  const raws = await Promise.all(faltam.map(m => kvOrThrow(env).get(coopMemKey(g.id, m))));
+  const lidos = await Promise.all(faltam.map(async (m, i) => {
+    const c = parse(raws[i]);
+    return [m, c && c.v === 1 ? c : await montarCartao(env, g.id, m, now)];
+  }));
+  return { ...ja, ...Object.fromEntries(lidos) };
+}
+
+/** Check-ins do cartão na `semana` (a chave guarda UM registro, sempre o último). */
+export const checkinsDoCartao = (c, semana) => (c?.ck && c.ck.weekKey === semana ? c.ck.days : []);
+/** Gestos do cartão no dia. */
+export const gestosDoCartao = (c, day) => (c?.gest && c.gest.day === day ? c.gest.kinds.filter(k => GUILD_GESTURES.includes(k)) : []);
+/** Fio do cartão (normalizado) ou `null`. */
+export const fioDoCartao = c => (c?.fio ? normalizarFio(c.fio) : null);
+/**
+ * Golpes do cartão na semana `week`: o registro, VAZIO se a semana é mais nova
+ * que a janela do cartão (por construção não houve golpe), ou `null` se é
+ * mais velha (o chamador lê a chave).
+ */
+export function golpesDoCartao(c, week) {
+  const hits = c?.hits && typeof c.hits === 'object' ? c.hits : null;
+  if (!hits) return null;
+  if (Object.prototype.hasOwnProperty.call(hits, week)) return normalizarGolpes({ week, ...hits[week] }, week);
+  const semanas = Object.keys(hits).sort();
+  if (semanas.length && week > semanas[semanas.length - 1]) return normalizarGolpes(null, week);
+  return null;
+}
+/** `{ [save]: fio }` a partir dos cartões — o formato de `fecharDiasDoBosque`. */
+export const fiosDosCartoes = (g, cartoes) => Object.fromEntries(g.members.map(m => [m, fioDoCartao(cartoes[m])]));

@@ -40,7 +40,8 @@ import {
   metaDoFioCumprida, atualizarBosque, lerGestos, coopGestKey, numDia, diaDeNum,
   resolverFeira, lerGolpes, coopHitKey, COOP_HIT_TTL, raidDamageFor, fenomenoDaSemana, semanaAnterior,
   ultimoDiaDaSemana, RAID_EMBLEMS, RAID_EMBLEMS_FLOOR, RAID_TROPHY_EVERY, RAID_TROPHY_ID,
-  idOpacoDoMembro, coopClaimKey, COOP_CLAIM_TTL, coopShellKey, coopScenesKey, lerConjunto, unirConjunto, cenariosAte,
+  idOpacoDoMembro, lerCartoes, renovarCartao, fiosDosCartoes, checkinsDoCartao, gestosDoCartao, fioDoCartao, golpesDoCartao,
+  coopClaimKey, COOP_CLAIM_TTL, coopShellKey, coopScenesKey, lerConjunto, unirConjunto, cenariosAte,
 } from './_coop.js';
 
 const CORS = {
@@ -126,20 +127,22 @@ const anfitriaoDe = g => g.hostSave ?? g.members[0] ?? null;
  * `members[].id`/`apareceuHoje`/`progress`/`target` são o contrato do cliente
  * atual (`CoopPanel`); ficam enquanto os aliases existirem.
  */
-export async function vistaDaGuilda(env, g, euSave, hoje = new Date().toISOString().slice(0, 10)) {
+export async function vistaDaGuilda(env, g, euSave, hoje = new Date().toISOString().slice(0, 10), cartoesProntos = null) {
   const semana = semanaDoDia(hoje);
   const size = g.members.length;
   const nominal = size <= PRESENCA_NOMINAL_MAX;
-  const dias = await Promise.all(g.members.map(async m => {
-    const proprios = await lerCheckins(env, g.id, m, semana);
-    return proprios.length > 0 ? proprios : (g.checkins?.[m] || []);
-  }));
+  // A3: UMA leitura por membro (o cartão), em vez de ~9. Ver `_coop.js` › cartão.
+  const cartoes = await lerCartoes(env, g, new Date(), cartoesProntos ?? {});
+  const cart = g.members.map(m => cartoes[m]);
+  const dias = cart.map((c, i) => {
+    const proprios = checkinsDoCartao(c, semana);
+    return proprios.length > 0 ? proprios : (g.checkins?.[g.members[i]] || []);
+  });
   // O fio de hoje também é presença (quem firmou, veio). Nunca sai contagem.
-  const fios = await Promise.all(g.members.map(m => lerFio(env, g.id, m)));
+  const fios = cart.map(fioDoCartao);
   const firmou = fios.map(f => !!f?.days?.includes(hoje));
   const veio = dias.map((d, i) => d.includes(hoje) || firmou[i]);
   const membros = await Promise.all(g.members.map(async (m, i) => {
-    const perfil = await getProfile(env, m);
     // A4 (L2-backend): NUNCA o pid público — com ele, `community?action=player`
     // devolvia estágio/rank/amigos de qualquer membro sem token. Sai um id
     // OPACO por guilda, que não abre nada fora dela.
@@ -147,7 +150,7 @@ export async function vistaDaGuilda(env, g, euSave, hoje = new Date().toISOStrin
     return {
       id: memberId,
       memberId,
-      name: perfil?.name ?? null,
+      name: cart[i]?.name ?? null,
       euMesmo: m === euSave,
       ...(nominal ? { apareceuHoje: veio[i] } : {}),
     };
@@ -160,15 +163,15 @@ export async function vistaDaGuilda(env, g, euSave, hoje = new Date().toISOStrin
   const { stage, stageIndex, perto } = bosqueStageFor(g.bosqueProgress);
   const bloom = tamanhoDaFloracao(Number(g.bosqueProgress ?? 0) - Number(g.tideBase ?? 0));
   // Gestos recebidos HOJE, em lote e anônimos: só os TIPOS, sem quem nem quantos.
-  const gestos = await Promise.all(g.members.map(m => lerGestos(env, g.id, m, hoje)));
+  const gestos = cart.map(c => gestosDoCartao(c, hoje));
   const recebidos = new Set(gestos.flatMap((k, i) => (g.members[i] === euSave ? [] : k)));
   const meuFio = eu >= 0 ? fios[eu] : null;
   // A FEIRA (WPG-4): resolvida na leitura. Sai só o ESTADO (e `ferido`, um
   // booleano) — nunca HP, dano, quem golpeou nem quantos golpes (LV-G1).
-  const feira = await resolverFeira(env, g, semana, hoje);
+  const feira = await resolverFeira(env, g, semana, hoje, cartoes);
   const anterior = semanaAnterior(hoje);
-  const passada = await resolverFeira(env, g, anterior, ultimoDiaDaSemana(diaDeNum(numDia(hoje) - 7)));
-  const meusGolpes = eu >= 0 ? await lerGolpes(env, g.id, semana, euSave) : { days: [] };
+  const passada = await resolverFeira(env, g, anterior, ultimoDiaDaSemana(diaDeNum(numDia(hoje) - 7)), cartoes);
+  const meusGolpes = eu >= 0 ? (golpesDoCartao(cart[eu], semana) ?? await lerGolpes(env, g.id, semana, euSave)) : { days: [] };
   return {
     id: g.id,
     name: g.name,
@@ -243,7 +246,14 @@ export async function handleGuild({ request, env }) {
   const erro = (texto, status, extra = {}) => json({ error: texto.replace('{g}', chave), ...extra }, status);
   const vista = (v) => json({ [chave]: v });
   // Toda resposta com vista fecha antes os dias pendentes do Bosque (§10.5).
-  const montar = async (g, eu, dia) => vistaDaGuilda(env, await atualizarBosque(env, g, dia), eu, dia);
+  // A3: os cartões são lidos UMA vez e servem ao fechamento e à vista.
+  const montar = async (g, eu, dia) => {
+    const cartoes = await lerCartoes(env, g);
+    const fechado = await atualizarBosque(env, g, dia, new Date(), fiosDosCartoes(g, cartoes));
+    return vistaDaGuilda(env, fechado, eu, dia, cartoes);
+  };
+  // Toda ação do PRÓPRIO membro reconstrói o cartão dele depois de escrever.
+  const cartao = (g) => renovarCartao(env, g.id, id);
 
   // Ator = dono autenticado do `id`. 410 `account-deleted` se há lápide.
   if (!VALID_ID.test(id || '')) return json({ error: 'invalid id' }, 400);
@@ -288,6 +298,7 @@ export async function handleGuild({ request, env }) {
       const outro = await grupoDe(env, id, semana);
       return erro('already in a {g}', 409, { [chave]: outro ? await montar(outro, id, hoje) : null });
     }
+    await cartao(g);
     return vista(await montar( g, id, hoje));
   }
 
@@ -336,6 +347,7 @@ export async function handleGuild({ request, env }) {
       await kvOrThrow(env).delete(coopOfKey(id));
       return erro('join collision', 409);
     }
+    await cartao(confirmado);
     return vista(await montar( rolarSemana(confirmado, semana), id, hoje));
   }
 
@@ -348,7 +360,8 @@ export async function handleGuild({ request, env }) {
     const meus = proprios.length > 0 ? proprios : (g.checkins?.[id] || []);
     if (!meus.includes(hoje)) {
       await gravarCheckins(env, g.id, id, [...meus, hoje], semana);
-      // Único evento diário: renova o prazo das três chaves (com releitura).
+      await cartao(g);
+      // Renova o prazo das chaves SÓ quando é devido (A3: no dia a dia, nada).
       await renovarPrazos(env, g.id);
     }
     return vista(await montar( g, id, hoje));
@@ -364,7 +377,7 @@ export async function handleGuild({ request, env }) {
     if (body.goal !== undefined && !metaDoFioCumprida(body.goal)) return erro('goal not met', 400);
     const antes = await lerFio(env, g.id, id);
     const depois = firmarFio(antes, hoje);
-    if (!antes || !antes.days.includes(hoje)) await gravarFio(env, g, id, depois);
+    if (!antes || !antes.days.includes(hoje)) { await gravarFio(env, g, id, depois); await cartao(g); }
     return vista(await montar(g, id, hoje));
   }
 
@@ -378,6 +391,7 @@ export async function handleGuild({ request, env }) {
     const ja = await lerGestos(env, g.id, id, hoje);
     if (ja.includes(kind)) return erro('daily limit', 429);
     await kvOrThrow(env).put(coopGestKey(g.id, id), JSON.stringify({ day: hoje, kinds: [...ja, kind] }), { expirationTtl: 86400 * 3 });
+    await cartao(g);
     return vista(await montar(g, id, hoje));
   }
 
@@ -406,7 +420,7 @@ export async function handleGuild({ request, env }) {
     if (semana < semanaDoDia(new Date().toISOString().slice(0, 10)) && !semanaAindaAberta(semana)) return erro('raid closed', 409);
     const antes = await lerGolpes(env, g.id, semana, id);
     if (antes.days.includes(hoje)) return erro('daily limit', 429);
-    const feira = await resolverFeira(env, g, semana, hoje);
+    const feira = await resolverFeira(env, g, semana, hoje, await lerCartoes(env, g));
     if (feira.cleared) return erro('raid closed', 409);
     const perfil = await getProfile(env, id);
     const dano = raidDamageFor(stagePower(perfil?.stage));
@@ -415,6 +429,7 @@ export async function handleGuild({ request, env }) {
       JSON.stringify({ week: semana, days: [...antes.days, hoje], dmg: antes.dmg + dano }),
       { expirationTtl: COOP_HIT_TTL },
     );
+    await cartao(g);
     return json({ landed: true, [chave]: await montar(g, id, hoje) });
   }
 

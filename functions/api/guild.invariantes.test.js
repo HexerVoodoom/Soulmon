@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { onRequest } from './guild.js';
 import { onRequest as community } from './community.js';
 import { resetRateLimits } from './_rateLimit.js';
-import { coopKey, coopOfKey, coopCodeKey, coopCkKey, grupoDe, semanaDe } from './_coop.js';
+import { coopKey, coopOfKey, coopCodeKey, coopCkKey, coopMemKey, grupoDe, semanaDe } from './_coop.js';
 
 /**
  * As cinco invariantes que o QA achou SEM teste (`qa/L1-conformidade.md` §1:
@@ -58,7 +58,8 @@ describe('M2 — o check-in escreve SÓ na chave do próprio membro', () => {
     const minha = coopCkKey(g.id, BIA);
     expect(e.DIGIAPP_SAVES.puts.some(p => p.k === minha)).toBe(true);
     for (const p of e.DIGIAPP_SAVES.puts) {
-      if (p.k === minha) continue;
+      // O cartão do PRÓPRIO membro (A3) também é chave só dele.
+      if (p.k === minha || p.k === coopMemKey(g.id, BIA)) continue;
       expect(p.v, `escrita em ${p.k} mudou o valor`).toBe(antes.get(p.k));
     }
     // O blob do grupo nunca carrega check-in de ninguém.
