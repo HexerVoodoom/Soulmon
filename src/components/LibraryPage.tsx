@@ -51,6 +51,9 @@ interface LibraryPageProps {
    *  Biblioteca no próprio título: a página não repete o `<h1>` (uma tela, um
    *  heading de topo — o `<h1>` é o do `AreaTopBar`), só a linha de apoio. */
   embedded?: boolean;
+  /** Fixa UMA visão (o Hall tem uma construção por visão): esconde as abas e a
+   *  visão `coop` (que agora é a Guilda, outra construção). Sem ela, tudo como antes. */
+  view?: 'directory' | 'friends';
 }
 
 // Entrada unificada da lista — jogador real ou NPC de teste (ver
@@ -118,7 +121,7 @@ function RowAction({
   );
 }
 
-export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, onGiftSent, onVisitPlayer, metaDoDiaCumprida = false, language, embedded = false }: LibraryPageProps) {
+export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, onGiftSent, onVisitPlayer, metaDoDiaCumprida = false, language, embedded = false, view }: LibraryPageProps) {
   const isPt = language === 'pt-BR';
   const [search, setSearch] = useState('');
   const [players, setPlayers] = useState<DirectoryPlayer[] | null>(null);
@@ -128,7 +131,8 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
    *  em cima de um app de bichinho, e sem par PT/EN garantido. */
   const [actionError, setActionError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [tab, setTab] = useState<'directory' | 'friends' | 'coop'>('directory');
+  const [tabState, setTab] = useState<'directory' | 'friends' | 'coop'>('directory');
+  const tab = view ?? tabState;
   const [giftedToday, setGiftedToday] = useState<Set<string>>(new Set());
   const [selectedPlayer, setSelectedPlayer] = useState<LibraryEntry | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -260,6 +264,7 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
 
       {/* Abas SIS-04 (D-S3): a ativa em `primary-ink` + sublinhado 3px + glifo
           FILL 1; "onde estou" nunca é placa cheia. */}
+      {!view && (
       <div role="tablist" aria-label={isPt ? 'Filtro de jogadores' : 'Player filter'} className="sm2-kit-tabs">
         {TABS.map(item => {
           const active = tab === item.key;
@@ -279,6 +284,7 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
           );
         })}
       </div>
+      )}
 
       {/* ── Grupo (Fase 4.3) ── */}
       {tab === 'coop' && (

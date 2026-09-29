@@ -53,6 +53,10 @@ import npcPlaceholderPoring from './npc-placeholder-poring.png';
 export const PLACEHOLDER_NPC_ART = {
   corujaCervo: npcPlaceholderCorujaCervo,
   poring: npcPlaceholderPoring,
+  /** ⚠️ AINDA SEM ARTE DO RINOCERONTE (Rinoco, Duelo da Arena, 29/09/2026):
+   *  reaproveita o poring até a squad-arte gerar o busto dele. Quando chegar,
+   *  é só trocar este import — o mapa `LOT_NPC_ART` já aponta para cá. */
+  rinoceronte: npcPlaceholderPoring,
 } as const;
 
 /**
@@ -69,12 +73,17 @@ const LOT_NPC_ART: Record<string, string> = {
   'mercado:background': npcLojaBackground,
   'mercado:conquistas': npcPlaceholderPoring,
   'arena:torneio': npcArena,
-  'arena:duelo': npcPlaceholderCorujaCervo,
+  'arena:duelo': PLACEHOLDER_NPC_ART.rinoceronte,
+  'arena:guilda': npcPlaceholderCorujaCervo,
   'exploracao:masmorra': npcExploracao,
   'exploracao:dino': npcPlaceholderPoring,
   'jogos:ppt': npcJogos,
   'laboratorio:evolucao': npcLaboratorio,
   'hall:biblioteca': npcHall,
+  'hall:amigos': npcPlaceholderCorujaCervo,
+  'hall:guilda': npcPlaceholderCorujaCervo,
+  'laboratorio:pet': npcPlaceholderCorujaCervo,
+  'laboratorio:stats': npcPlaceholderPoring,
 };
 
 /** Resolve o NPC de UMA folha (área + id do lote). Sem lote aberto, ou lote

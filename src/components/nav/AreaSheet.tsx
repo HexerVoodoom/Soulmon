@@ -2,7 +2,8 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import type { AreaId } from '../../navigation';
 import type { Language } from '../../utils/i18n';
 import { lotNpcArt } from '../../assets/soulmon/npcs';
-import { areaNpcVoice } from '../../utils/areaNpcVoice';
+import { lotNpcVoice } from '../../utils/areaNpcVoice';
+import { useBackLayer } from '../../utils/backStack';
 
 /**
  * A FOLHA DE UM LOTE (minimal-ui F4) — bottom-sheet que abre ao tocar um
@@ -37,6 +38,8 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
   children?: ReactNode;
 }) {
   const closeBtnRef = useRef<HTMLButtonElement>(null);
+  // O voltar do sistema (botão do Android/navegador) fecha a folha antes de mudar de tela.
+  useBackLayer(open, onClose);
 
   useEffect(() => {
     if (!open) return;
@@ -49,7 +52,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
   if (!open) return null;
 
   const npcSrc = npcArt ?? lotNpcArt(areaId, lotId);
-  const npc = areaNpcVoice(areaId, language);
+  const npc = lotNpcVoice(areaId, lotId, language);
 
   return (
     <div

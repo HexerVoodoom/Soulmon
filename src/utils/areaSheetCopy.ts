@@ -32,7 +32,9 @@ export function areaDemoLot(id: AreaId, language: Language): { label: string } {
  * ainda não chegou em F5 não aparece aqui e segue no lote de exemplo acima.
  */
 export type MercadoLotId = 'itens' | 'decoracao' | 'background' | 'conquistas';
-export type ArenaLotId = 'torneio' | 'duelo';
+export type ArenaLotId = 'torneio' | 'duelo' | 'guilda';
+export type LaboratorioLotId = 'evolucao' | 'pet' | 'stats';
+export type HallLotId = 'biblioteca' | 'amigos' | 'guilda';
 
 interface AreaLotSpec<K extends string> {
   id: K;
@@ -51,6 +53,21 @@ const MERCADO_LOTS: AreaLotSpec<MercadoLotId>[] = [
 const ARENA_LOTS: AreaLotSpec<ArenaLotId>[] = [
   { id: 'torneio', labelPt: 'Torneio', labelEn: 'Tournament', ariaPt: 'Entrar no Torneio', ariaEn: 'Enter the Tournament', left: '27%', top: '55%' },
   { id: 'duelo', labelPt: 'Duelo', labelEn: 'Duel', ariaPt: 'Entrar no Duelo', ariaEn: 'Enter the Duel', left: '70%', top: '42%' },
+  { id: 'guilda', labelPt: 'Guilda', labelEn: 'Guild', ariaPt: 'Entrar na Guilda', ariaEn: 'Enter the Guild', left: '32%', top: '82%' },
+];
+
+// Laboratório e Hall (29/09/2026): as antigas abas/filtros viraram construções
+// do mapa aberto, como nas lojas. Nomes pensados como LUGARES, não como abas.
+const LABORATORIO_LOTS: AreaLotSpec<LaboratorioLotId>[] = [
+  { id: 'evolucao', labelPt: 'Árvore da Evolução', labelEn: 'Evolution Tree', ariaPt: 'Entrar na Árvore da Evolução', ariaEn: 'Enter the Evolution Tree', left: '27%', top: '42%' },
+  { id: 'pet', labelPt: 'Meu Soulmon', labelEn: 'My Soulmon', ariaPt: 'Entrar em Meu Soulmon', ariaEn: 'Enter My Soulmon', left: '72%', top: '42%' },
+  { id: 'stats', labelPt: 'Observatório', labelEn: 'Observatory', ariaPt: 'Entrar no Observatório (estatísticas)', ariaEn: 'Enter the Observatory (stats)', left: '50%', top: '72%' },
+];
+
+const HALL_LOTS: AreaLotSpec<HallLotId>[] = [
+  { id: 'biblioteca', labelPt: 'Biblioteca', labelEn: 'Library', ariaPt: 'Entrar na Biblioteca', ariaEn: 'Enter the Library', left: '27%', top: '42%' },
+  { id: 'amigos', labelPt: 'Círculo de Amigos', labelEn: 'Friends Circle', ariaPt: 'Entrar no Círculo de Amigos', ariaEn: 'Enter the Friends Circle', left: '72%', top: '42%' },
+  { id: 'guilda', labelPt: 'Salão da Guilda', labelEn: 'Guild Hall', ariaPt: 'Entrar no Salão da Guilda', ariaEn: 'Enter the Guild Hall', left: '50%', top: '72%' },
 ];
 
 function resolveLots<K extends string>(specs: AreaLotSpec<K>[], language: Language) {
@@ -65,3 +82,5 @@ function resolveLots<K extends string>(specs: AreaLotSpec<K>[], language: Langua
 
 export function mercadoLots(language: Language) { return resolveLots(MERCADO_LOTS, language); }
 export function arenaLots(language: Language) { return resolveLots(ARENA_LOTS, language); }
+export function laboratorioLots(language: Language) { return resolveLots(LABORATORIO_LOTS, language); }
+export function hallLots(language: Language) { return resolveLots(HALL_LOTS, language); }

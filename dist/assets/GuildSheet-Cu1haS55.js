@@ -1,0 +1,1 @@
+import{j as e}from"./index-DZBrz68G.js";import{C as i}from"./CoopPanel-CYGZtmP_.js";import"./vendor-DDxydHEc.js";function s({saveId:o,language:r,metaDoDiaCumprida:t}){return e.jsx(i,{saveId:o,language:r,metaDoDiaCumprida:t})}export{s as GuildSheet};

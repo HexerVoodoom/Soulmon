@@ -43,3 +43,21 @@ export const PLAY_AREA_BG = { exploracao: bgExploracao, jogos: bgJogos } as cons
 export const EXPLORACAO_LOT_ART = { masmorra: loteMasmorra, dino: loteDino } as const;
 
 export const JOGOS_LOT_ART = { ppt: lotePpt } as const;
+
+// ── Guilda, Laboratório e Hall (29/09/2026) ────────────────────────────────
+// ⚠️ PLACEHOLDERS: ainda não existe arte de lote própria para estas
+// construções — reaproveitam as isométricas já instaladas até a squad-arte
+// gerar as definitivas (fila em `docs/ASSETS-A-GERAR.md`). Só trocar os imports.
+export const GUILDA_LOT_ART = loteConquistas;
+
+export const LABORATORIO_LOT_ART = {
+  evolucao: loteBackground,
+  pet: loteItens,
+  stats: loteConquistas,
+} as const;
+
+export const HALL_LOT_ART = {
+  biblioteca: lotePpt,
+  amigos: loteDecoracao,
+  guilda: loteConquistas,
+} as const;

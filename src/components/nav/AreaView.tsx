@@ -3,10 +3,11 @@ import type { AreaId } from '../../navigation';
 import type { Language } from '../../utils/i18n';
 import { AreaScene, type AreaLot } from './AreaScene';
 import { AreaSheet } from './AreaSheet';
-import { areaDemoLot, mercadoLots, arenaLots, type MercadoLotId } from '../../utils/areaSheetCopy';
-import { AREA_BG, MERCADO_LOT_ART, ARENA_LOT_ART, PLAY_AREA_BG, EXPLORACAO_LOT_ART, JOGOS_LOT_ART } from '../../assets/soulmon/areas';
+import { mercadoLots, arenaLots, laboratorioLots, hallLots, type MercadoLotId, type LaboratorioLotId } from '../../utils/areaSheetCopy';
+import { AREA_BG, MERCADO_LOT_ART, ARENA_LOT_ART, PLAY_AREA_BG, EXPLORACAO_LOT_ART, JOGOS_LOT_ART, GUILDA_LOT_ART, LABORATORIO_LOT_ART, HALL_LOT_ART } from '../../assets/soulmon/areas';
 import { exploracaoLots, jogosLots } from '../../utils/playAreaLots';
 import { sm2Hint } from '../form/FormKit';
+import { useBackLayer } from '../../utils/backStack';
 import type { ShopActions, ShopOwnership } from '../mercado/ShopShelf';
 import type { TournamentPage as TournamentPageT } from '../TournamentPage';
 import type { StageSkills } from '../../utils/soulProfile/ficha/skills';
@@ -30,6 +31,7 @@ import type { FichaStage } from '../../utils/soulProfile/ficha/types';
 const MercadoStallSheet = lazy(() => import('../mercado/MercadoSheets').then(m => ({ default: m.MercadoStallSheet })));
 const ConquistasSheet = lazy(() => import('../mercado/MercadoSheets').then(m => ({ default: m.ConquistasSheet })));
 const TournamentPage = lazy(() => import('../TournamentPage').then(m => ({ default: m.TournamentPage })));
+const GuildSheet = lazy(() => import('../guild/GuildSheet').then(m => ({ default: m.GuildSheet })));
 const DueloSheet = lazy(() => import('../arena/DueloSheet').then(m => ({ default: m.DueloSheet })));
 const ArenaGame = lazy(() => import('../ArenaGame').then(m => ({ default: m.ArenaGame })));
 // Exploração + Jogos (F5, ex-PR #118): as folhas-porta e os minijogos de
@@ -91,9 +93,14 @@ export interface AreaViewProps {
    *  dependem de dezenas de handlers do `App` (cerimônia, renascimento…), que
    *  continuam donos dele. */
   labTab: LabTab;
+  /** Cada construção do Laboratório escolhe a sub-aba (o `App` é dono do estado). */
+  onLabTab: (tab: LabTab) => void;
   labContent: ReactNode;
-  /** Hall (F5, ex-PR #117): a `LibraryPage` embutida, montada no `App`. */
-  hallContent: ReactNode;
+  /** Hall (F5, ex-PR #117): a `LibraryPage` embutida, montada no `App` — uma
+   *  visão por construção (Biblioteca = diretório, Círculo de Amigos = amigos). */
+  hallContent: (view: 'directory' | 'friends') => ReactNode;
+  /** A Guilda (Arena e Hall abrem a mesma folha): dados do `CoopPanel`. */
+  guild: { saveId: string; metaDoDiaCumprida: boolean };
 }
 
 /** Espera curta dentro da folha — o conteúdo é `lazy`, e a folha já está
@@ -113,6 +120,9 @@ export function AreaView(props: AreaViewProps) {
   const [game, setGame] = useState<PlayGame | null>(null);
   const closeLabel = language === 'pt-BR' ? 'Fechar' : 'Close';
   const close = () => setSheet(null);
+  // O voltar do sistema sai do jogo/duelo em andamento antes de trocar de tela.
+  useBackLayer(duelOpen, () => setDuelOpen(false));
+  useBackLayer(game !== null, () => setGame(null));
 
   if (area === 'mercado') {
     const lots = mercadoLots(language);
@@ -167,12 +177,15 @@ export function AreaView(props: AreaViewProps) {
         areaId={area}
         language={language}
         background={AREA_BG.arena}
-        lots={lots.map(l => ({ ...l, art: ARENA_LOT_ART[l.id], onOpen: () => setSheet(l.id) } satisfies AreaLot))}
+        lots={lots.map(l => ({ ...l, art: l.id === 'guilda' ? GUILDA_LOT_ART : ARENA_LOT_ART[l.id], onOpen: () => setSheet(l.id) } satisfies AreaLot))}
       >
         <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close}>
           <Suspense fallback={<SheetLoading language={language} />}>
             {open?.id === 'torneio' && (
               <TournamentPage {...props.tournament} shop={{ ownership, actions }} />
+            )}
+            {open?.id === 'guilda' && (
+              <GuildSheet saveId={props.guild.saveId} language={language} metaDoDiaCumprida={props.guild.metaDoDiaCumprida} />
             )}
             {open?.id === 'duelo' && (
               <DueloSheet
@@ -264,23 +277,43 @@ export function AreaView(props: AreaViewProps) {
     );
   }
 
-  // Laboratório e Hall (F5, ex-PR #117): UM lote cada — a folha do
-  // Laboratório traz a árvore de Evolução com as abas Evolução/Soulmon/Stats;
-  // a do Hall, a Biblioteca (decisão D4). Sem arte de lote ainda (bloco neutro
-  // do molde F4) e sem fundo pintado (degradê de tokens).
-  const demo = areaDemoLot(area, language);
-  const lotId = area === 'laboratorio' ? 'evolucao' : 'biblioteca';
-  const title = area === 'laboratorio' && props.labTab !== 'evolution'
-    ? (props.labTab === 'pet' ? 'Soulmon' : (language === 'pt-BR' ? 'Estatísticas' : 'Stats'))
-    : demo.label;
+  // Laboratório e Hall (29/09/2026): como nas lojas, o mapa aberto tem uma
+  // construção por parte — Árvore da Evolução / Meu Soulmon / Observatório no
+  // Laboratório; Biblioteca / Círculo de Amigos / Salão da Guilda no Hall. As
+  // abas e filtros de dentro das folhas saíram; a construção é quem escolhe.
+  if (area === 'laboratorio') {
+    const tabOf: Record<LaboratorioLotId, LabTab> = { evolucao: 'evolution', pet: 'pet', stats: 'stats' };
+    const lots = laboratorioLots(language);
+    const open = lots.find(l => l.id === sheet) ?? null;
+    return (
+      <AreaScene
+        areaId={area}
+        language={language}
+        lots={lots.map(l => ({ ...l, art: LABORATORIO_LOT_ART[l.id], onOpen: () => { props.onLabTab(tabOf[l.id]); setSheet(l.id); } } satisfies AreaLot))}
+      >
+        <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close}>
+          {props.labContent}
+        </AreaSheet>
+      </AreaScene>
+    );
+  }
+
+  const lots = hallLots(language);
+  const open = lots.find(l => l.id === sheet) ?? null;
   return (
     <AreaScene
       areaId={area}
       language={language}
-      lots={[{ id: lotId, label: demo.label, left: '50%', top: '38%', ariaLabel: demo.label, onOpen: () => setSheet(lotId) } satisfies AreaLot]}
+      lots={lots.map(l => ({ ...l, art: HALL_LOT_ART[l.id], onOpen: () => setSheet(l.id) } satisfies AreaLot))}
     >
-      <AreaSheet areaId={area} lotId={lotId} language={language} title={title} closeLabel={closeLabel} open={sheet === lotId} onClose={close}>
-        {area === 'laboratorio' ? props.labContent : props.hallContent}
+      <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close}>
+        <Suspense fallback={<SheetLoading language={language} />}>
+          {open?.id === 'biblioteca' && props.hallContent('directory')}
+          {open?.id === 'amigos' && props.hallContent('friends')}
+          {open?.id === 'guilda' && (
+            <GuildSheet saveId={props.guild.saveId} language={language} metaDoDiaCumprida={props.guild.metaDoDiaCumprida} />
+          )}
+        </Suspense>
       </AreaSheet>
     </AreaScene>
   );

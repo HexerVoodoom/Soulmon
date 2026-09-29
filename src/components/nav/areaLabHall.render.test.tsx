@@ -45,7 +45,9 @@ describe('Laboratório — a árvore de Evolução dentro da folha', () => {
     // pronto; quem escolhe a folha por área é o `AreaView`.
     expect(APP).toContain('labContent={labContent}');
     expect(APP).toContain('hallContent={hallContent}');
-    expect(AREA_VIEW).toMatch(/area === 'laboratorio' \? props\.labContent : props\.hallContent/);
+    expect(AREA_VIEW).toContain('{props.labContent}');
+    expect(AREA_VIEW).toContain("props.hallContent('directory')");
+    expect(AREA_VIEW).toContain("props.hallContent('friends')");
   });
 
   it('labContent monta a EvolutionPath com a cerimônia manual de sempre (sem regra nova)', () => {
@@ -61,13 +63,14 @@ describe('Laboratório — a árvore de Evolução dentro da folha', () => {
     expect(lab).toContain('<UnlockNudge');
   });
 
-  it('o topo novo: abas Evolução / Soulmon / Stats como tablist, e as três montam algo', () => {
+  it('as três partes viraram construções do mapa (sem abas): cada uma escolhe labTab e monta algo', () => {
     const lab = bloco('labContent');
-    expect(lab).toContain('role="tablist"');
-    expect(lab).toContain('aria-selected={labTab === view}');
+    expect(lab).not.toContain('role="tablist"');
     expect(lab).toContain("labTab === 'evolution'");
     expect(lab).toContain("labTab === 'pet' && (");
     expect(lab).toContain("labTab === 'stats' && statsPage");
+    expect(AREA_VIEW).toContain("{ evolucao: 'evolution', pet: 'pet', stats: 'stats' }");
+    expect(AREA_VIEW).toContain('props.onLabTab(tabOf[l.id])');
     // Dentro da folha o `<h1>` é o do AreaTopBar: a ficha desce para h2.
     expect(lab).toMatch(/<PetPage\s+headingLevel=\{2\}/);
   });
