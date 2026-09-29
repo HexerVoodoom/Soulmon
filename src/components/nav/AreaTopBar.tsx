@@ -19,7 +19,7 @@ const SCENE_INK = '#E9F5F2';
  * fica fora da árvore de acessibilidade — o leitor de tela lê o `<h1>` da página,
  * uma vez. Senão, ele é o `<h1>`.
  */
-export function AreaTopBar({ title, backLabel, onBack, ownsHeading = true, icon = 'arrow_back', overScene = false }: {
+export function AreaTopBar({ title, backLabel, onBack, ownsHeading = true, icon = 'arrow_back', overScene = false, covered = false }: {
   title: string;
   /** Rótulo acessível do voltar — diz PARA ONDE ("Voltar ao mapa"). */
   backLabel: string;
@@ -34,6 +34,10 @@ export function AreaTopBar({ title, backLabel, onBack, ownsHeading = true, icon 
    *  tinta clara fixa (a arte é escura nos dois temas — mesmo `#E9F5F2` dos
    *  rótulos dos lotes) + um degradê escuro sob o topo, sem box no ícone. */
   overScene?: boolean;
+  /** Há camada de tela cheia aberta (folha, jogo, duelo): o topo some
+   *  (`visibility:hidden` — sai do foco e da árvore de acessibilidade) para não
+   *  ficar por cima do ✕ da camada. */
+  covered?: boolean;
 }) {
   const titleStyle: React.CSSProperties = {
     margin: 0,
@@ -53,7 +57,9 @@ export function AreaTopBar({ title, backLabel, onBack, ownsHeading = true, icon 
   return (
     <div
       data-area-topbar
+      data-covered={covered ? '' : undefined}
       style={{
+        visibility: covered ? 'hidden' : undefined,
         display: 'flex', alignItems: 'center', gap: 'var(--sm2-space-2)',
         minHeight: 48, margin: overScene ? 'env(safe-area-inset-top, 0px) 0 var(--sm2-space-3)' : '0 0 var(--sm2-space-3)',
         ...(overScene ? { position: 'relative', zIndex: 2 } : null),

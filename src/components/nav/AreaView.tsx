@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, type ComponentProps, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useState, type ComponentProps, type ReactNode } from 'react';
 import type { AreaId } from '../../navigation';
 import type { Language } from '../../utils/i18n';
 import { AreaScene, type AreaLot } from './AreaScene';
@@ -68,6 +68,8 @@ type TournamentProps = Omit<ComponentProps<typeof TournamentPageT>, 'shop'>;
 export interface AreaViewProps {
   area: AreaId;
   language: Language;
+  /** Avisa se há camada de tela cheia aberta (folha/jogo/duelo). Estável (setState). */
+  onLayerChange?: (open: boolean) => void;
   /** Posse + progresso de missão — o mesmo objeto para Mercado e Torneio. */
   ownership: ShopOwnership;
   actions: ShopActions;
@@ -133,6 +135,14 @@ export function AreaView(props: AreaViewProps) {
   const [game, setGame] = useState<PlayGame | null>(null);
   const closeLabel = language === 'pt-BR' ? 'Fechar' : 'Close';
   const close = () => setSheet(null);
+  // R1: qualquer camada de tela cheia (folha, jogo, duelo) avisa o `App`, que
+  // esconde o topo sobre a cena — ele não pode competir com o ✕/voltar da camada.
+  const layerOpen = sheet !== null || duelOpen || game !== null;
+  const { onLayerChange } = props;
+  useEffect(() => {
+    onLayerChange?.(layerOpen);
+    return () => onLayerChange?.(false);
+  }, [layerOpen, onLayerChange]);
   // O voltar do sistema sai do jogo/duelo em andamento antes de trocar de tela.
   useBackLayer(duelOpen, () => setDuelOpen(false));
   useBackLayer(game !== null, () => setGame(null));

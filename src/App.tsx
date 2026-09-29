@@ -137,8 +137,11 @@ import { BITS_EXCHANGE, creditMinigameBits } from './utils/currencies';
 import { snapshotCompletion, undoCompletion, UNDO_WINDOW_MS } from './utils/completionUndo';
 import { UndoToast } from './components/UndoToast';
 import { adminFromEntitlement, setAdminFlag, useAdmin } from './utils/adminFlag';
-import { adoptCorvo, isCorvo, spriteLineOf } from './utils/corvoPet';
-import { gmAddPerfectDays, gmFillCare, gmGiveBalance, gmGoToForm, gmUnlockAll } from './utils/gmTools';
+import { isCorvo, spriteLineOf } from './utils/corvoPet';
+// G1: `corvoAdocao` (nomes, CORVO_STAGES, adoptCorvo) e `gmTools` só são lidos por admin, no clique —
+// import dinâmico, fora do chunk de entrada.
+const gmTools = () => import('./utils/gmTools');
+const corvoAdocao = () => import('./utils/corvoAdocao');
 import { fetchEntitlement, spendCredits, claimAdReward, resetSpriteLifetimeAfterRebirth, type Entitlement } from './utils/entitlements';
 import { purchase } from './utils/playBilling';
 
@@ -1232,6 +1235,8 @@ export default function App() {
   // DEPOIS da compra, para quem entrou pelo caminho grátis e agora tem direito
   // à criatura própria.
   const [unlockReason, setUnlockReason] = useState<UnlockReason | null>(null);
+  // R1: camada de tela cheia aberta numa área (folha/jogo/duelo) — esconde o topo sobre a cena.
+  const [areaLayerOpen, setAreaLayerOpen] = useState(false);
   const [upgradeRitual, setUpgradeRitual] = useState(false);
   // Booleanos, e não os arrays: dependendo de `unlockedEvolutions`/
   // `completedTasks` o efeito re-rodava a cada setGameState (a identidade do
@@ -3000,22 +3005,22 @@ export default function App() {
   useEffect(() => {
     if (!isAdmin || corvoAdoptedRef.current) return;
     corvoAdoptedRef.current = true;
-    if (!isCorvo(gameState)) setGameState(adoptCorvo);
+    if (!isCorvo(gameState)) void corvoAdocao().then(m => setGameState(m.adoptCorvo));
   }, [isAdmin, gameState, setGameState]);
   const gmActions = useMemo(() => ({
     isCorvo: petIsCorvo,
     currentForm: gameState.evolutionStage,
-    onGiveBalance: () => setGameState(gmGiveBalance),
-    onUnlockAll: () => setGameState(gmUnlockAll),
-    onGoToForm: (formId: string) => setGameState(prev => gmGoToForm(prev, formId)),
-    onAdoptCorvo: () => setGameState(adoptCorvo),
+    onGiveBalance: () => { void gmTools().then(m => setGameState(m.gmGiveBalance)); },
+    onUnlockAll: () => { void gmTools().then(m => setGameState(m.gmUnlockAll)); },
+    onGoToForm: (formId: string) => { void gmTools().then(m => setGameState(prev => m.gmGoToForm(prev, formId))); },
+    onAdoptCorvo: () => { void corvoAdocao().then(m => setGameState(m.adoptCorvo)); },
     onFillCare: () => {
       // O cocô NA TELA é um `careEvent`: fecha pelo mesmo caminho do banho,
       // fora do updater (footgun 6), e depois enche o save.
       if (careEvent?.type === 'poop') handleCareEventComplete();
-      setGameState(gmFillCare);
+      void gmTools().then(m => setGameState(m.gmFillCare));
     },
-    onAddPerfectDays: (n: number) => setGameState(prev => gmAddPerfectDays(prev, n)),
+    onAddPerfectDays: (n: number) => { void gmTools().then(m => setGameState(prev => m.gmAddPerfectDays(prev, n))); },
   }), [petIsCorvo, gameState.evolutionStage, setGameState, careEvent, handleCareEventComplete]);
 
   // Uncleaned poop drains 1 heart every 6 hours (paused while sleeping). The
@@ -5632,6 +5637,7 @@ export default function App() {
                 onBack={goBack}
                 icon={area ? 'map' : 'arrow_back'}
                 overScene={!!area}
+                covered={!!area && areaLayerOpen}
               />
             );
           })()}
@@ -5659,6 +5665,7 @@ export default function App() {
               <AreaView
                 key={currentView}
                 area={area}
+                onLayerChange={setAreaLayerOpen}
                 language={language}
                 ownership={{
                   ownedBackgrounds: gameState.ownedBackgrounds ?? [],
