@@ -36,6 +36,41 @@ export function semanaDe(d = new Date()) {
   return `${t.getUTCFullYear()}-W${String(n).padStart(2, '0')}`;
 }
 
+/**
+ * O DIA DO JOGADOR, validado (override de G6 — `PLANO-GUILDA.md` §0.1).
+ *
+ * O servidor não conhece o fuso do save, então quem diz o dia é o cliente
+ * (`playerDayKey`, formato `toDateString` — `Mon Sep 29 2026` — ou `YYYY-MM-DD`).
+ * Aceitar qualquer dia deixaria marcar a semana inteira de uma vez; por isso o
+ * dia só vale a no máximo ±1 do dia UTC de agora, que é a faixa real dos fusos
+ * civis (UTC−12..UTC+14). Sem `dayKey` (cliente antigo), vale o dia UTC.
+ *
+ * @returns {{ ok: true, day: string } | { ok: false }}  `day` em `YYYY-MM-DD`
+ */
+const MESES = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
+export function diaDoJogador(raw, now = new Date()) {
+  const hojeUtc = now.toISOString().slice(0, 10);
+  if (raw === undefined || raw === null || raw === '') return { ok: true, day: hojeUtc };
+  const s = String(raw).trim();
+  let y, m, d;
+  let r = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (r) { y = +r[1]; m = +r[2] - 1; d = +r[3]; }
+  else {
+    r = /^[A-Z][a-z]{2} ([A-Z][a-z]{2}) (\d{2}) (\d{4})$/.exec(s);
+    if (!r || !(r[1] in MESES)) return { ok: false };
+    y = +r[3]; m = MESES[r[1]]; d = +r[2];
+  }
+  const t = Date.UTC(y, m, d);
+  const dt = new Date(t);
+  if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== m || dt.getUTCDate() !== d) return { ok: false };
+  const diff = Math.abs(t - Date.parse(`${hojeUtc}T00:00:00Z`)) / 86400000;
+  if (diff > 1) return { ok: false };
+  return { ok: true, day: dt.toISOString().slice(0, 10) };
+}
+
+/** Semana ISO de um dia `YYYY-MM-DD` (o dia do jogador, já validado). */
+export const semanaDoDia = day => semanaDe(new Date(`${day}T00:00:00Z`));
+
 export const coopKey = gid => `coop:${gid}`;
 export const coopOfKey = save => `coopOf:${save}`;
 export const coopCodeKey = code => `coopCode:${code}`;
@@ -113,19 +148,21 @@ export async function renovarPrazos(env, gid) {
   if (fresco) await gravarGrupo(env, fresco);
 }
 
-export async function lerCheckins(env, gid, save) {
+/** `semana` é calculada UMA vez por requisição e passada adiante (L1 BAIXO-6):
+ *  ler na semana N e gravar na N+1 com os dias da N era uma janela real. */
+export async function lerCheckins(env, gid, save, semana = semanaDe()) {
   const raw = await kvOrThrow(env).get(coopCkKey(gid, save));
   if (!raw) return [];
   try {
     const r = JSON.parse(raw);
-    return r && r.weekKey === semanaDe() && Array.isArray(r.days) ? r.days : [];
+    return r && r.weekKey === semana && Array.isArray(r.days) ? r.days : [];
   } catch { return []; }
 }
 
-export async function gravarCheckins(env, gid, save, days) {
+export async function gravarCheckins(env, gid, save, days, semana = semanaDe()) {
   await kvOrThrow(env).put(
     coopCkKey(gid, save),
-    JSON.stringify({ weekKey: semanaDe(), days }),
+    JSON.stringify({ weekKey: semana, days }),
     { expirationTtl: COOP_TTL },
   );
 }
@@ -134,8 +171,7 @@ export async function gravarCheckins(env, gid, save, days) {
  * Zera o progresso quando a semana virou. Leitura preguiçosa, sem cron: quem
  * abrir primeiro na semana nova paga o custo, e ninguém precisa operar nada.
  */
-export function rolarSemana(g) {
-  const agora = semanaDe();
+export function rolarSemana(g, agora = semanaDe()) {
   // `g.checkins` é resíduo de grupo criado antes de os check-ins ganharem chave
   // própria. Ele é lido como fallback em `vistaDoGrupo` e some na virada da
   // semana, como sempre somiu — nenhum caminho novo volta a escrever nele.
@@ -144,14 +180,14 @@ export function rolarSemana(g) {
 }
 
 /** O grupo de quem pergunta, já rolado para a semana corrente. `null` se não há. */
-export async function grupoDe(env, saveId) {
+export async function grupoDe(env, saveId, semana = semanaDe()) {
   const groupId = await kvOrThrow(env).get(coopOfKey(saveId));
   if (!groupId) return null;
   const g = await lerGrupo(env, groupId);
   // Índice apontando para grupo morto (ou do qual a pessoa já saiu) se limpa
   // aqui: é o mesmo custo de uma leitura e evita fantasma permanente no KV.
   if (!g || !g.members.includes(saveId)) { await kvOrThrow(env).delete(coopOfKey(saveId)); return null; }
-  return rolarSemana(g);
+  return rolarSemana(g, semana);
 }
 
 /**

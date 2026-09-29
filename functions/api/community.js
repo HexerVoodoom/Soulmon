@@ -37,6 +37,7 @@ import { bondLevelOf, BOND_PVP_MIN_LEVEL } from './_bond.js';
 import { kv, kvOrThrow } from './_kv.js';
 import {
   COOP_MAX_MEMBERS, COOP_CHECKINS_POR_MEMBRO, coopOfKey, coopCodeKey, semanaDe, novoCodigo,
+  diaDoJogador, semanaDoDia,
   lerGrupo, gravarGrupo, renovarPrazos, lerCheckins, gravarCheckins, rolarSemana, grupoDe, coopLeave,
 } from './_coop.js';
 const CORS = {
@@ -332,12 +333,12 @@ export async function onRequest(context) {
  * A ÚNICA montagem de resposta do cooperativo. Ver o comentário do bloco: o
  * que não passa por aqui não sai — nem saveId, nem contagem individual.
  */
-async function vistaDoGrupo(env, g, euSave) {
-  const hoje = today();
+async function vistaDoGrupo(env, g, euSave, hoje = today()) {
+  const semana = semanaDoDia(hoje);
   // Os dias de cada membro vêm da chave dele (ver `coopCkKey`); `g.checkins` é
   // só o fallback dos grupos criados antes da mudança.
   const dias = await Promise.all(g.members.map(async m => {
-    const proprios = await lerCheckins(env, g.id, m);
+    const proprios = await lerCheckins(env, g.id, m, semana);
     return proprios.length > 0 ? proprios : (g.checkins?.[m] || []);
   }));
   const membros = await Promise.all(g.members.map(async (m, i) => {
@@ -779,8 +780,10 @@ async function handleCommunity({ request, env }) {
   if (action === 'coop' && method === 'GET') {
     const denied = await denyUnlessOwner(id);
     if (denied) return denied;
-    const g = await grupoDe(env, id);
-    return json({ group: g ? await vistaDoGrupo(env, g, id) : null });
+    const dia = diaDoJogador(url.searchParams.get('dayKey'));
+    if (!dia.ok) return json({ error: 'invalid day' }, 400);
+    const g = await grupoDe(env, id, semanaDoDia(dia.day));
+    return json({ group: g ? await vistaDoGrupo(env, g, id, dia.day) : null });
   }
 
   if (action === 'coopCreate' && method === 'POST') {
@@ -872,17 +875,23 @@ async function handleCommunity({ request, env }) {
   if (action === 'coopCheckin' && method === 'POST') {
     const denied = await denyUnlessOwner(id);
     if (denied) return denied;
-    const g = await grupoDe(env, id);
+    // O dia é o DO JOGADOR (override de G6, `PLANO-GUILDA.md` §0.1), validado
+    // a ±1 do dia UTC; a semana sai desse dia, calculada uma vez só.
+    const dia = diaDoJogador(body.dayKey);
+    if (!dia.ok) return json({ error: 'invalid day' }, 400);
+    const hoje = dia.day;
+    const semana = semanaDoDia(hoje);
+    const g = await grupoDe(env, id, semana);
     if (!g) return json({ error: 'no group' }, 404);
     // A ESCRITA É SÓ NA CHAVE DESTE MEMBRO. O blob do grupo não é tocado aqui,
     // e é isso que mata a corrida: dois membros marcando presença na mesma noite
     // escrevem em chaves diferentes, e nenhuma das duas gravações apaga a outra.
-    const proprios = await lerCheckins(env, g.id, id);
+    const proprios = await lerCheckins(env, g.id, id, semana);
     const meus = proprios.length > 0 ? proprios : (g.checkins?.[id] || []);
     // Idempotente: é a única garantia que o servidor consegue dar sozinho sobre
     // um fato que ele não observa (ver o comentário do bloco).
-    if (!meus.includes(today())) {
-      await gravarCheckins(env, g.id, id, [...meus, today()]);
+    if (!meus.includes(hoje)) {
+      await gravarCheckins(env, g.id, id, [...meus, hoje], semana);
       // E renova o prazo das três chaves do grupo. Marcar presença é o único
       // evento DIÁRIO do modo: sem esta linha, um grupo cujos membros só fazem
       // check-in (ou seja, um grupo que está funcionando) expiraria em 120 dias
@@ -890,7 +899,7 @@ async function handleCommunity({ request, env }) {
       // `renovarPrazos`.
       await renovarPrazos(env, g.id);
     }
-    return json({ group: await vistaDoGrupo(env, g, id) });
+    return json({ group: await vistaDoGrupo(env, g, id, hoje) });
   }
 
   if (action === 'coopLeave' && method === 'POST') {
