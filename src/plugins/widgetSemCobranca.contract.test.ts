@@ -111,3 +111,103 @@ describe('o bridge não grava o que a spec vetou', () => {
     }
   });
 });
+
+// ---------------------------------------------------------------------------
+// O CORVINHO E O BOSQUE NO WIDGET (29/09/2026, decisão do dono).
+// Duas chaves NOVAS no bridge (`pet_line`, `grove_stage`); nenhuma renomeada.
+// O widget ganha o NOME do estágio do Bosque — e nada que conte, compare ou cobre.
+// ---------------------------------------------------------------------------
+import { readdirSync } from 'node:fs';
+import { CORVO_FORM_IDS } from '../utils/corvoPet';
+import { GROVE_STAGES } from '../utils/guildRules';
+import { widgetPetLine, widgetGroveStage } from './SoulmonWidgetPlugin';
+
+const bridgeTs = readFileSync('src/plugins/SoulmonWidgetPlugin.ts', 'utf8');
+const app = readFileSync('src/App.tsx', 'utf8');
+const layoutA = readFileSync('android/app/src/main/res/layout/widget_soulmon.xml', 'utf8');
+const stringsEn = readFileSync('android/app/src/main/res/values/strings.xml', 'utf8');
+const stringsPt = readFileSync('android/app/src/main/res/values-pt/strings.xml', 'utf8');
+const NODPI = 'android/app/src/main/res/drawable-nodpi';
+
+describe('pet_line e grove_stage: chaves novas, allowlist dos dois lados', () => {
+  const plug = semComentarios(plugin);
+  const rend = semComentarios(renderer);
+
+  it('o bridge TS declara as duas e o App as envia a partir dos donos', () => {
+    expect(bridgeTs).toMatch(/petLine\?:/);
+    expect(bridgeTs).toMatch(/groveStage\?:/);
+    expect(app).toMatch(/petLine: widgetPetLine\(gameState\)/);
+    expect(app).toMatch(/groveStage: widgetGroveStage\(grove\)/);
+  });
+
+  it('o plugin grava pet_line SÓ quando é "corvo" e remove caso contrário', () => {
+    expect(plug).toMatch(/if \(petLine == "corvo"\) editor\.putString\("pet_line", petLine\) else editor\.remove\("pet_line"\)/);
+  });
+
+  it('o plugin grava grove_stage SÓ com id da allowlist e remove caso contrário', () => {
+    expect(plug).toMatch(/if \(groveStage in GROVE_STAGE_IDS\) editor\.putString\("grove_stage", groveStage\) else editor\.remove\("grove_stage"\)/);
+    const m = /GROVE_STAGE_IDS = setOf\(([^)]*)\)/.exec(plug);
+    expect(m).not.toBeNull();
+    const ids = [...m![1].matchAll(/"([^"]+)"/g)].map(x => x[1]);
+    expect(ids).toEqual([...GROVE_STAGES]);
+  });
+
+  it('o renderer traduz grove_stage por tabela fechada (mesmos ids) e esconde sem roda', () => {
+    const ids = [...rend.matchAll(/"([a-z-]+)" -> R\.string\.widget_grove_/g)].map(x => x[1]);
+    expect(ids).toEqual([...GROVE_STAGES]);
+    expect(rend).toMatch(/setViewVisibility\(R\.id\.widget_grove, View\.GONE\)/);
+  });
+
+  it('TS: widgetPetLine só devolve "corvo" ou vazio; widgetGroveStage só id de estágio', () => {
+    expect(widgetPetLine({ soulmonMeta: { creature: 'corvo' } })).toBe('corvo');
+    expect(widgetPetLine({ demoCharacterId: 'kaelen' })).toBe('');
+    expect(widgetGroveStage(null)).toBe('');
+    const base = { gid: 'g', base: 0, tracked: 0, joinedDay: '', marks: {}, pending: null, scenes: 0 };
+    expect(widgetGroveStage({ ...base, index: 0 })).toBe('');
+    expect(widgetGroveStage({ ...base, index: 3 })).toBe('copa');
+    expect(widgetGroveStage({ ...base, index: 1, pending: { index: 5, day: 'x' } })).toBe('bosque-antigo');
+  });
+
+  it('as strings do Bosque são SÓ os nomes canônicos (PT e EN), sem número nem cobrança', () => {
+    const nomes = (xml: string) => [...xml.matchAll(/name="widget_grove_[a-z_]+">([^<]*)</g)].map(x => x[1]);
+    expect(nomes(stringsEn)).toEqual(['Clearing', 'Boughs', 'Canopy', 'Thicket', 'Old grove']);
+    expect(nomes(stringsPt)).toEqual(['Clareira', 'Ramagem', 'Copa', 'Mata', 'Bosque antigo']);
+    for (const t of [...nomes(stringsEn), ...nomes(stringsPt)]) expect(t).not.toMatch(/\d|falta|left|membro|member|%/i);
+  });
+
+  it('a linha do Bosque no layout é um TextView discreto, sem cor de alerta', () => {
+    const bloco = /<TextView\s+android:id="@\+id\/widget_grove"[^>]*\/>/.exec(layoutA);
+    expect(bloco).not.toBeNull();
+    expect(bloco![0]).toMatch(/android:visibility="gone"/);
+    expect(bloco![0]).toMatch(/android:textColor="#AAB6B4"/);
+    expect(bloco![0]).not.toMatch(/android:text=/);
+    expect(layoutA).not.toMatch(/<View[\s>]|ProgressBar/);
+    expect(rend).not.toMatch(/setInt\(R\.id\.widget_grove/);
+  });
+
+  it('nenhuma chave vetada voltou por causa do Bosque', () => {
+    expect(plug).not.toMatch(/put\w+\("(constancy_pct|shields|bond_level)"/);
+    expect(rend).not.toMatch(/constancy_pct|"shields"|bond_level/);
+    expect(plug + rend).not.toMatch(/grove_(members|count|progress|pct)/);
+  });
+});
+
+describe('paridade: as 11 formas do corvo (src) ↔ drawables ↔ mapa Kotlin', () => {
+  const rend = semComentarios(renderer);
+  const nome = (forma: string) => `sprite_corvo_${forma.replace(/-/g, '_')}`;
+
+  it('cada forma tem o drawable em drawable-nodpi, e nenhum drawable sobra', () => {
+    const arquivos = readdirSync(NODPI).filter(f => f.startsWith('sprite_corvo_')).map(f => f.replace(/\.png$/, '')).sort();
+    expect(arquivos).toEqual(CORVO_FORM_IDS.map(nome).sort());
+  });
+
+  it('o mapa CORVO_SPRITES do Kotlin tem exatamente as 11 formas, cada uma no seu drawable', () => {
+    const pares = [...rend.matchAll(/"([a-z-]+)" to R\.drawable\.(sprite_corvo_[a-z_]+)/g)].map(x => [x[1], x[2]]);
+    expect(pares).toEqual(CORVO_FORM_IDS.map(f => [f, nome(f)]));
+  });
+
+  it('o corvo cai no sprite_rookie e só é resolvido com pet_line == "corvo"', () => {
+    expect(rend).toMatch(/prefs\.getString\("pet_line", ""\) == "corvo"/);
+    expect(rend).toMatch(/CORVO_SPRITES\[stage\.lowercase\(\)\] \?: R\.drawable\.sprite_rookie/);
+  });
+});

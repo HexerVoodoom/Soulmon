@@ -81,6 +81,18 @@
             android:maxLines="1"
             android:visibility="gone" />
 
+        <!-- Bosque da Guilda: SO o nome do estagio, discreto; GONE sem roda (29/09/2026) -->
+        <TextView
+            android:id="@+id/widget_grove"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="11sp"
+            android:textColor="#AAB6B4"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:visibility="gone" />
+
         <TextView
             android:id="@+id/widget_message"
             android:layout_width="match_parent"

@@ -49,7 +49,7 @@ import { CATEGORY_ATTRIBUTES, type ActivityCategory, XP_THRESHOLDS } from './typ
 import { type CareEvent } from './components/CareSystem';
 import { FORM_REQUIREMENTS, getStageLevel, canSelectWeekdays, getMaxEnergyForStage } from './types/progression';
 import { type Language, useTranslation, resolveLanguage } from './utils/i18n';
-import { SoulmonWidget, widgetPetName } from './plugins/SoulmonWidgetPlugin';
+import { SoulmonWidget, widgetPetName, widgetPetLine, widgetGroveStage } from './plugins/SoulmonWidgetPlugin';
 import { unlockedAchievements } from './utils/achievements';
 import { useGameState, getMaxHPForStage, type GameState, type Activity, type Task, type Step } from './contexts/GameStateContext';
 import { STORAGE_KEYS } from './utils/storageKeys';
@@ -1778,11 +1778,16 @@ export default function App() {
           needsIntervention: Object.values(ritmos).some(r => needsIntervention(r, agora)),
         };
       })(),
+      // 29/09/2026 (decisão do dono): a linha de arte (só o corvinho) e o nome
+      // do estágio do Bosque que ESTE aparelho viu (`groveLocal`, fora do save).
+      // Vazio = o plugin remove a chave. Sem timer: roda quando `grove` muda.
+      petLine: widgetPetLine(gameState),
+      groveStage: widgetGroveStage(grove),
     }).catch(() => {});
   }, [gameState.evolutionStage, gameState.currentBranch, gameState.eggType,
       gameState.healthPoints, gameState.maxHealthPoints, gameState.energyPoints,
       gameState.poopEventsShown, gameState.poopEventsCompleted, dailyDone, dailyTotal,
-      gameState.habitRhythms, gameState.totalXP, gameState.soulmonMeta]);
+      gameState.habitRhythms, gameState.totalXP, gameState.soulmonMeta, grove]);
 
   /**
    * A fatia que `utils/petNeeds.ts` lê. `hasPoop` é DERIVADO (o dono do cocô é

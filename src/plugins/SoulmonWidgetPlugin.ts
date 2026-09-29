@@ -1,5 +1,8 @@
 import { registerPlugin } from '@capacitor/core';
 import { soulmonDisplayName } from '../utils/petName';
+import { spriteLineOf, CORVO_LINE, type CorvoCarrier } from '../utils/corvoPet';
+import { groveStageAt, type GroveLocal } from '../utils/groveLocal';
+import { GROVE_STAGES, type GroveStageId } from '../utils/guildRules';
 
 /**
  * O nome que vai para `pet_name` no widget — e é o MESMO da Home.
@@ -13,6 +16,28 @@ import { soulmonDisplayName } from '../utils/petName';
  */
 export function widgetPetName(meta?: { baseName?: string; petName?: string } | null): string {
   return soulmonDisplayName(meta) || 'Soulmon';
+}
+
+/**
+ * `pet_line` do widget (29/09/2026, decisão do dono): só `'corvo'` ou vazio.
+ * O Kotlin só tem uma linha de arte ALÉM da árvore padrão — o corvinho do
+ * administrador —, então qualquer outra linha (personagem pronto do demo) vai
+ * vazia e o plugin REMOVE a chave. Dono da linha: `spriteLineOf` (corvoPet).
+ */
+export function widgetPetLine(state: CorvoCarrier): '' | typeof CORVO_LINE {
+  return spriteLineOf(state) === CORVO_LINE ? CORVO_LINE : '';
+}
+
+/**
+ * `grove_stage` do widget: o id do ÚLTIMO estágio do Bosque que este aparelho
+ * viu (`groveLocal`), ou vazio. Nunca contagem, nunca presença, nunca membros —
+ * só o nome do lugar. O `pending` conta como visto (a memória já o registrou).
+ */
+export function widgetGroveStage(local: GroveLocal | null): '' | GroveStageId {
+  if (!local) return '';
+  const idx = Math.max(local.index, local.pending?.index ?? 0);
+  const id = groveStageAt(idx);
+  return id && (GROVE_STAGES as readonly string[]).includes(id) ? id : '';
 }
 
 export interface DigiWidgetData {
@@ -57,6 +82,10 @@ export interface DigiWidgetData {
   habitTierMax?: number;
   /** Alguma coisa faltou 2× seguidas — o widget oferece a versão de 5 min. */
   needsIntervention?: boolean;
+  /** `'corvo'` ou `''` (vazio = o plugin remove `pet_line`). Ver `widgetPetLine`. */
+  petLine?: '' | typeof CORVO_LINE;
+  /** Id do estágio do Bosque ou `''` (vazio = o plugin remove `grove_stage`). Ver `widgetGroveStage`. */
+  groveStage?: '' | GroveStageId;
 }
 
 export interface SoulmonWidgetPlugin {

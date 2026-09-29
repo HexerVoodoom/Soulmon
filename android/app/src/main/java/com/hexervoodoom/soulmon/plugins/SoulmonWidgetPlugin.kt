@@ -10,6 +10,10 @@ import com.getcapacitor.annotation.CapacitorPlugin
 @CapacitorPlugin(name = "SoulmonWidget")
 class SoulmonWidgetPlugin : Plugin() {
 
+    private companion object {
+        val GROVE_STAGE_IDS = setOf("clareira", "ramagem", "copa", "mata", "bosque-antigo")
+    }
+
     @PluginMethod
     fun updateWidgetData(call: PluginCall) {
         val ctx = context
@@ -75,6 +79,16 @@ class SoulmonWidgetPlugin : Plugin() {
         editor.remove("constancy_pct")
         editor.remove("shields")
         editor.remove("bond_level")
+        /*
+         * 29/09/2026 (decisão do dono) — duas chaves NOVAS (só se acrescenta):
+         *  · `pet_line`: só "corvo"; qualquer outro valor (ou vazio) REMOVE a chave.
+         *  · `grove_stage`: só um id de estágio do Bosque; qualquer outro REMOVE.
+         * Allowlist aqui porque o SharedPreferences é lido pelo renderer sem mais filtro.
+         */
+        val petLine = call.getString("petLine") ?: ""
+        if (petLine == "corvo") editor.putString("pet_line", petLine) else editor.remove("pet_line")
+        val groveStage = call.getString("groveStage") ?: ""
+        if (groveStage in GROVE_STAGE_IDS) editor.putString("grove_stage", groveStage) else editor.remove("grove_stage")
         editor.putBoolean("needs_intervention", call.data.optBoolean("needsIntervention", false))
 
         editor.apply()

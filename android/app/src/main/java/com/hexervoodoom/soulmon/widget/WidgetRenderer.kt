@@ -50,6 +50,15 @@ object WidgetRenderer {
                 views.setViewVisibility(R.id.widget_tasks, View.GONE)
                 views.setInt(R.id.widget_message, "setMaxLines", 2)
             }
+            // O Bosque: uma linha discreta, só o nome do estágio; GONE sem roda.
+            val grove = groveStageLabel(context, prefs.getString("grove_stage", null))
+            if (grove != null) {
+                views.setViewVisibility(R.id.widget_grove, View.VISIBLE)
+                views.setTextViewText(R.id.widget_grove, grove)
+                views.setInt(R.id.widget_message, "setMaxLines", 1)
+            } else {
+                views.setViewVisibility(R.id.widget_grove, View.GONE)
+            }
             views.setTextViewText(
                 R.id.widget_message,
                 contextualMessage(
@@ -301,11 +310,56 @@ object WidgetRenderer {
      * (`champion-power`) — não há o que resolver a mais.
      */
     private fun resolveSprite(context: Context, stage: String, eggType: String, branchType: String): Int {
+        // O corvinho do administrador (29/09/2026, decisão do dono): `pet_line == "corvo"`
+        // resolve pela tabela FECHADA abaixo; forma desconhecida cai no `sprite_rookie`.
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        if (prefs.getString("pet_line", "") == "corvo") {
+            return CORVO_SPRITES[stage.lowercase()] ?: R.drawable.sprite_rookie
+        }
         val candidateName = "sprite_${stage.replace("-", "_")}"
         val id = context.resources.getIdentifier(candidateName, "drawable", context.packageName)
         // Sem correspondência (save adulterado, estágio de uma versão futura):
         // o rookie, que é onde a árvore nasce. NUNCA arte de terceiro.
         return if (id != 0) id else R.drawable.sprite_rookie
+    }
+
+    /**
+     * As 11 formas do corvinho → drawable em `drawable-nodpi/` (cópia 256² de
+     * `src/assets/soulmon/corvo/corvo-<forma>-256.png`). Tabela FECHADA com
+     * `R.drawable.*` (erro de compilação se um arquivo faltar), e a paridade com
+     * `CORVO_FORM_IDS` (src/utils/corvoPet.ts) é travada por
+     * `widgetSemCobranca.contract.test.ts`, que lê este fonte.
+     */
+    private val CORVO_SPRITES: Map<String, Int> = mapOf(
+        "rookie" to R.drawable.sprite_corvo_rookie,
+        "champion-power" to R.drawable.sprite_corvo_champion_power,
+        "champion-harmony" to R.drawable.sprite_corvo_champion_harmony,
+        "champion-benevolence" to R.drawable.sprite_corvo_champion_benevolence,
+        "ultimate-power" to R.drawable.sprite_corvo_ultimate_power,
+        "ultimate-harmony" to R.drawable.sprite_corvo_ultimate_harmony,
+        "ultimate-benevolence" to R.drawable.sprite_corvo_ultimate_benevolence,
+        "mega-power" to R.drawable.sprite_corvo_mega_power,
+        "mega-harmony" to R.drawable.sprite_corvo_mega_harmony,
+        "mega-benevolence" to R.drawable.sprite_corvo_mega_benevolence,
+        "ultra" to R.drawable.sprite_corvo_ultra,
+    )
+
+    /**
+     * O nome do estágio do Bosque da Guilda (`grove_stage`), ou `null` = a linha SOME.
+     * Só o NOME do lugar: sem número, sem "faltam", sem membros, sem barra. Tabela
+     * FECHADA de ids; o texto vem de `res/values` (EN) e `res/values-pt` (PT), que o
+     * Android escolhe pelo idioma do aparelho.
+     */
+    private fun groveStageLabel(context: Context, stageId: String?): String? {
+        val res = when (stageId) {
+            "clareira" -> R.string.widget_grove_clareira
+            "ramagem" -> R.string.widget_grove_ramagem
+            "copa" -> R.string.widget_grove_copa
+            "mata" -> R.string.widget_grove_mata
+            "bosque-antigo" -> R.string.widget_grove_bosque_antigo
+            else -> return null
+        }
+        return context.getString(res)
     }
 
     /**
