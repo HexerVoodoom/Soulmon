@@ -7,10 +7,12 @@ const gamma = (k) => { let x = 0; for (let i = 0; i < k; i++) x -= Math.log(rnd(
 const beta = (a, b) => { const x = gamma(a), y = gamma(b); return x / (x + y); };
 // Os limiares vêm do DONO ÚNICO (`functions/api/_coop.js`, WPG-3a): a sim
 // importa, nunca repete o literal (footgun 9).
-import { BOSQUE_THRESHOLDS } from '../../../../functions/api/_coop.js';
+import {
+  BOSQUE_THRESHOLDS, RAID_HP_PER_MEMBER, RAID_DMG_BASE, RAID_DMG_PER_POWER, RAID_DMG_JITTER, GUILD_MIN_RAID_MEMBERS,
+} from '../../../../functions/api/_coop.js';
 const BOSQUE = BOSQUE_THRESHOLDS;               // limiares em dias-de-guilda
-const K = 45, DMG = (p) => 10 + 2 * p;         // RAID_HP_PER_MEMBER, dano por stagePower
-const JITTER = 0.2, MIN_HP_MEMBERS = 3, DAYS = Number(process.argv[3] ?? 90), N = 200;
+const K = RAID_HP_PER_MEMBER, DMG = (p) => RAID_DMG_BASE + RAID_DMG_PER_POWER * p;
+const JITTER = RAID_DMG_JITTER, MIN_HP_MEMBERS = GUILD_MIN_RAID_MEMBERS, DAYS = Number(process.argv[3] ?? 90), N = 200;
 const out = { m1: [], m3: [], m5: [], raid: [] , byP: [] };
 for (let g = 0; g < N; g++) {
   const size = 3 + Math.floor(rnd() * 10);
