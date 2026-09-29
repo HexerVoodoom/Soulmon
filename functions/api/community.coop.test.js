@@ -93,7 +93,9 @@ describe('coop — o grupo', () => {
     expect(g.members).toHaveLength(1);
     expect(g.members[0].name).toBe('Ana');
     expect(g.code).toMatch(/^[A-Z2-9]{8}$/);
-    expect(g.progress).toBe(0);
+    // M-3 (29/09): a barra semanal `progress/target` não trafega mais.
+    expect(g).not.toHaveProperty('progress');
+    expect(g).not.toHaveProperty('target');
   });
 
   it('quem não tem grupo recebe `null` — e isso não é erro', async () => {
@@ -155,23 +157,24 @@ describe('coop — a comparação individual NÃO existe (a razão do desenho)',
     const bia = vista.members.find(m => !m.euMesmo);
 
     expect(ana.apareceuHoje).toBe(true);
-    expect(bia.apareceuHoje).toBe(false);
+    // M-1 (29/09, LV-G2): ausência NUNCA é um estado — a chave nem existe.
+    expect(bia).not.toHaveProperty('apareceuHoje');
     // Nada que ordene um contra o outro pode existir no objeto do membro.
-    for (const m of vista.members) {
-      // `stage` saiu em WPG-1 (D-3/LV-G10): estágio alheio não trafega.
-      expect(Object.keys(m).sort()).toEqual(['apareceuHoje', 'euMesmo', 'id', 'memberId', 'name']);
-    }
+    // `stage` saiu em WPG-1 (D-3/LV-G10): estágio alheio não trafega.
+    expect(Object.keys(ana).sort()).toEqual(['apareceuHoje', 'euMesmo', 'id', 'memberId', 'name']);
+    expect(Object.keys(bia).sort()).toEqual(['euMesmo', 'id', 'memberId', 'name']);
   });
 
-  it('o progresso é do GRUPO — um número só', async () => {
+  it('nenhum número semanal do grupo trafega (M-3) — só a presença de quem veio', async () => {
     const e = env();
     const g = await criar(e, ANA);
     await entrar(e, BIA, g.code);
     await checkin(e, ANA);
     await checkin(e, BIA);
     const vista = await ver(e, ANA);
-    expect(vista.progress).toBe(2);
-    expect(vista.target).toBe(10); // 2 membros × 5
+    expect(vista).not.toHaveProperty('progress');
+    expect(vista).not.toHaveProperty('target');
+    expect(vista.members.every(m => m.apareceuHoje === true)).toBe(true);
   });
 
   it('nenhum saveId sai na resposta', async () => {
@@ -193,27 +196,14 @@ describe('coop — check-in', () => {
     await checkin(e, ANA);
     await checkin(e, ANA);
     await checkin(e, ANA);
-    expect((await ver(e, ANA)).progress).toBe(1);
+    const gid = await e.DIGIAPP_SAVES.get(`coopOf:${ANA}`);
+    expect(JSON.parse(await e.DIGIAPP_SAVES.get(`coopCk:${gid}:${ANA}`)).days).toHaveLength(1);
   });
 
   it('só marca sobre si mesmo — sem grupo, não há o que marcar', async () => {
     const e = env();
     const res = await checkin(e, ANA);
     expect(res.status).toBe(404);
-  });
-
-  it('o progresso nunca passa da meta', async () => {
-    const e = env();
-    await criar(e, ANA);
-    const kv = e.DIGIAPP_SAVES;
-    const gid = await kv.get(`coopOf:${ANA}`);
-    const g = JSON.parse(await kv.get(`coop:${gid}`));
-    // Sete dias marcados, meta de 5: a barra não pode estourar o próprio teto.
-    g.checkins[ANA] = ['1', '2', '3', '4', '5', '6', '7'];
-    await kv.put(`coop:${gid}`, JSON.stringify(g));
-    const vista = await ver(e, ANA);
-    expect(vista.progress).toBe(5);
-    expect(vista.target).toBe(5);
   });
 
   it('a semana vira sozinha e zera o progresso, sem job agendado', async () => {
@@ -232,7 +222,7 @@ describe('coop — check-in', () => {
     expect(meu.days.length).toBe(1);                 // marcou mesmo
     await kv.put(`coopCk:${gid}:${ANA}`, JSON.stringify({ ...meu, weekKey: '1999-W01' }));
     await kv.delete(`coopMem:${gid}:${ANA}`); // o cartão (A3) é derivado: sem ele, lê a chave
-    expect((await ver(e, ANA)).progress).toBe(0);
+    expect((await ver(e, ANA)).members[0]).not.toHaveProperty('apareceuHoje');
   });
 });
 
@@ -271,8 +261,8 @@ describe('coop — dois membros marcando presença ao MESMO tempo', () => {
     await Promise.all([checkin(e, ANA), checkin(e, BIA)]);
 
     const vista = await ver(e, ANA);
-    expect(vista.progress).toBe(2);                       // 1 + 1, nenhum perdido
-    expect(vista.members.every(m => m.apareceuHoje)).toBe(true);
+    // 1 + 1, nenhum perdido
+    expect(vista.members.filter(m => m.apareceuHoje === true)).toHaveLength(2);
   });
 });
 
@@ -369,13 +359,13 @@ describe('coop — sair é limpo, e é a exigência escrita da Fase 4.3', () => 
     const g = await criar(e, ANA);
     await entrar(e, BIA, g.code);
     await entrar(e, CAU, g.code);
-    expect((await ver(e, ANA)).target).toBe(15);
+    expect((await ver(e, ANA)).size).toBe(3);
 
     await chamar(e, 'coopLeave', { method: 'POST', body: { id: CAU } });
 
     const depois = await ver(e, ANA);
     expect(depois.members).toHaveLength(2);
-    expect(depois.target).toBe(10);
+    expect(depois.size).toBe(2);
   });
 
   it('quem sai não deixa o próprio progresso pesando no grupo', async () => {
@@ -386,8 +376,8 @@ describe('coop — sair é limpo, e é a exigência escrita da Fase 4.3', () => 
     await checkin(e, BIA);
     await chamar(e, 'coopLeave', { method: 'POST', body: { id: BIA } });
     const depois = await ver(e, ANA);
-    expect(depois.progress).toBe(1);
-    expect(depois.target).toBe(5);
+    expect(depois.members).toHaveLength(1);
+    expect(depois.members[0].apareceuHoje).toBe(true);
   });
 
   it('sair sem grupo responde ok — não existe estado de erro para desistir', async () => {

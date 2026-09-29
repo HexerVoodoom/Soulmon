@@ -17,8 +17,10 @@
 //                                          → { guild }   404 no guild · 400 invalid kind · 429 daily limit
 //   POST guildRaidHit {id, dayKey}         → { landed: true, guild }   404 no guild · 429 daily limit · 409 raid closed
 //   GET  guildRewards ?id=&dayKey=         → { rewards: { pending[], scenes[], trophyOwned } }
-//   POST guildClaim   {id, dayKey, week}   → { claimed: { week, outcome, emblems, trophy } }
-//                                            404 nothing to claim · 409 already claimed · 400 invalid week
+//   POST guildClaim   {id, dayKey, week}   → { claimed: { week, outcome, emblems, trophy, trophyId, receipt } }
+//                                            404 nothing to claim · 400 invalid week
+//                                            409 already claimed + { receipt, claimed:{…o resgate JÁ registrado} }
+//   O direito NÃO exige estar na guilda: quem golpeou e saiu ainda colhe (A-1).
 //   POST guildLeave   {id}                 → { ok: true } (sempre; idempotente)
 //   POST guildRename  {id, name}           → { guild }   403 not host · 400 invalid name · 404 no guild
 //   POST guildNewCode {id}                 → { guild }   403 not host · 503 try again · 404 no guild
@@ -32,7 +34,7 @@ import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import { kv, kvOrThrow } from './_kv.js';
 import { getProfile, newPid, stagePower } from './_profile.js';
 import {
-  COOP_MAX_MEMBERS, COOP_CHECKINS_POR_MEMBRO, PRESENCA_NOMINAL_MAX,
+  COOP_MAX_MEMBERS, PRESENCA_NOMINAL_MAX,
   coopKey, coopOfKey, coopCodeKey, semanaDoDia, diaDoJogador, sortearCodigoLivre,
   lerGrupo, gravarGrupo, renovarPrazos, lerCheckins, gravarCheckins, rolarSemana, grupoDe, coopLeave,
   sanitizarNomeDeGuilda,
@@ -42,6 +44,7 @@ import {
   ultimoDiaDaSemana, RAID_EMBLEMS, RAID_EMBLEMS_FLOOR, RAID_TROPHY_EVERY, RAID_TROPHY_ID,
   idOpacoDoMembro, lerCartoes, renovarCartao, fiosDosCartoes, checkinsDoCartao, gestosDoCartao, fioDoCartao, golpesDoCartao,
   coopClaimKey, COOP_CLAIM_TTL, coopShellKey, coopScenesKey, lerConjunto, unirConjunto, cenariosAte,
+  marcarParticipacao, lerParticipacao, lerRaidOk, lerDiasCarregados, fioInicialHerdado,
 } from './_coop.js';
 
 const CORS = {
@@ -124,8 +127,11 @@ const anfitriaoDe = g => g.hostSave ?? g.members[0] ?? null;
  * `null` e NUNCA um número — "N fios" ao lado do tamanho da roda reconstrói
  * "N de M vieram" (guarda da linha vermelha, 29/09/2026, LV-G2).
  *
- * `members[].id`/`apareceuHoje`/`progress`/`target` são o contrato do cliente
- * atual (`CoopPanel`); ficam enquanto os aliases existirem.
+ * AUSÊNCIA NUNCA É UM ESTADO (M-1, L3-conformidade, LV-G2): com até 4
+ * membros, `members[].apareceuHoje` e `presence[].cameToday` só existem
+ * quando são `true`; a ausência da chave é o silêncio. Nenhum `false` sobre
+ * outra pessoa trafega. `progress`/`target` (a barra semanal do coop antigo,
+ * que zera na virada e tinha estado "não bateu") saíram (M-3).
  */
 /** @param {Record<string, any> | null} [cartoesProntos] */
 export async function vistaDaGuilda(env, g, euSave, hoje = new Date().toISOString().slice(0, 10), cartoesProntos = null) {
@@ -153,11 +159,9 @@ export async function vistaDaGuilda(env, g, euSave, hoje = new Date().toISOStrin
       memberId,
       name: cart[i]?.name ?? null,
       euMesmo: m === euSave,
-      ...(nominal ? { apareceuHoje: veio[i] } : {}),
+      ...(nominal && veio[i] ? { apareceuHoje: true } : {}),
     };
   }));
-  const target = size * COOP_CHECKINS_POR_MEMBRO;
-  const feitos = dias.reduce((n, d) => n + d.length, 0);
   const eu = g.members.indexOf(euSave);
   // O Bosque: estágio DERIVADO na leitura; `perto` é binário. Nunca sai o
   // progresso cru, "faltam N", razão, nem nada por pessoa (§10.3, LV-G1).
@@ -182,13 +186,17 @@ export async function vistaDaGuilda(env, g, euSave, hoje = new Date().toISOStrin
     size,
     full: size >= COOP_MAX_MEMBERS,
     members: membros,
-    presence: nominal ? membros.map(m => ({ memberId: m.memberId, cameToday: m.apareceuHoje })) : null,
-    threadedToday: !nominal && veio.some(Boolean) ? true : null,
+    presence: nominal ? membros.map(m => ({ memberId: m.memberId, ...(m.apareceuHoje ? { cameToday: true } : {}) })) : null,
+    // B-2: "o bosque recebeu fios hoje" — só FIO firmado, nunca check-in.
+    threadedToday: !nominal && firmou.some(Boolean) ? true : null,
+    // M-1: também no `mine` as marcas só existem quando `true` (o cliente lê
+    // `=== true`); "não veio"/"não firmou" é a ausência da chave.
     mine: {
-      cameToday: eu >= 0 ? veio[eu] : false,
-      threadToday: eu >= 0 ? firmou[eu] : false,
+      ...(eu >= 0 && veio[eu] ? { cameToday: true } : {}),
+      ...(eu >= 0 && firmou[eu] ? { threadToday: true } : {}),
       // Cenários de estágio só depois de 7 dias DISTINTOS de fio (LV-G9).
-      groveScenes: (meuFio?.distinctDays ?? 0) >= STAGE_UNLOCK_DAYS,
+      // M-2: o fio já traz os dias herdados de guildas anteriores (sair não zera).
+      ...((meuFio?.distinctDays ?? 0) >= STAGE_UNLOCK_DAYS ? { groveScenes: true } : {}),
       gesturesSent: eu >= 0 ? GUILD_GESTURES.filter(k => gestos[eu].includes(k)) : [],
     },
     bosque: {
@@ -212,16 +220,11 @@ export async function vistaDaGuilda(env, g, euSave, hoje = new Date().toISOStrin
       state: feira.cleared ? 'dissipada' : 'aberta',
       ferido: !feira.cleared && feira.dmg * 2 >= feira.hp,
       lastWeek: passada.cleared ? 'dissipada' : (passada.hitters.length > 0 ? 'recuou' : null),
-      mine: { hitToday: meusGolpes.days.includes(hoje) },
+      mine: meusGolpes.days.includes(hoje) ? { hitToday: true } : {},
     },
-    // M1 (L2-backend, LV-G2): com 5+ membros o número semanal lido de manhã e
-    // à noite dá, pela diferença, "quantos vieram hoje" — exatamente o que
-    // `threadedToday: true|null` existe para esconder. Acima da presença
-    // nominal, `progress` sai `null` (o cliente novo já o descarta em
-    // `sanitizeGuildView`); até 4 a presença já é nominal e o número não
-    // revela nada que a lista não diga.
-    progress: nominal ? Math.min(feitos, target) : null,
-    target,
+    // M-3 (L3-conformidade): `progress`/`target` NÃO trafegam mais, em nenhum
+    // tamanho nem pelos aliases `coop*` — o cliente já os descartava
+    // (`sanitizeGuildView`) e era um número semanal que zera na virada.
   };
 }
 
@@ -377,7 +380,8 @@ export async function handleGuild({ request, env }) {
     if ((body.kind ?? 'fio') !== 'fio') return erro('invalid kind', 400);
     if (body.goal !== undefined && !metaDoFioCumprida(body.goal)) return erro('goal not met', 400);
     const antes = await lerFio(env, g.id, id);
-    const depois = firmarFio(antes, hoje);
+    // M-2: o primeiro fio nesta guilda herda o contador de dias distintos.
+    const depois = (!antes && fioInicialHerdado(await lerDiasCarregados(env, id), hoje)) || firmarFio(antes, hoje);
     if (!antes || !antes.days.includes(hoje)) { await gravarFio(env, g, id, depois); await cartao(g); }
     return vista(await montar(g, id, hoje));
   }
@@ -430,6 +434,8 @@ export async function handleGuild({ request, env }) {
       JSON.stringify({ week: semana, days: [...antes.days, hoje], dmg: antes.dmg + dano }),
       { expirationTtl: COOP_HIT_TTL },
     );
+    // A-1: o direito ao resgate mora com a PESSOA, não com a guilda.
+    await marcarParticipacao(env, g.id, id, semana, hoje);
     await cartao(g);
     return json({ landed: true, [chave]: await montar(g, id, hoje) });
   }
@@ -443,14 +449,24 @@ export async function handleGuild({ request, env }) {
     // Semanas que ainda podem ser resgatadas: a corrente (só se dissipada) e as
     // duas anteriores (o `coopHit` vive 21 d).
     const candidatas = [semana, semanaAnterior(hoje), semanaAnterior(diaDeNum(numDia(hoje) - 7))];
+    // A-1 (L3-conformidade, LV-G5): o direito NÃO exige estar na guilda. Quem
+    // golpeou e saiu ainda colhe: a participação está em `coopPart:<save>:<week>`
+    // (gravada no golpe e, para golpes antigos, na saída) e o desfecho sai de
+    // `coopRaidOk:<gid>:<week>` — que não depende do blob nem do `coopHit`.
     const direito = async (w) => {
-      if (!g) return null;
-      const meus = await lerGolpes(env, g.id, w, id);
-      if (meus.days.length === 0) return null; // só quem deu ≥ 1 golpe
-      const ref = w === semana ? hoje : ultimoDiaDaSemana(meus.days[0]);
-      const f = await resolverFeira(env, g, w, ref);
-      if (w === semana && !f.cleared) return null; // aberta: ainda não há desfecho
-      return { week: w, outcome: f.cleared ? 'dissipada' : 'recuou', emblems: f.cleared ? RAID_EMBLEMS : RAID_EMBLEMS_FLOOR };
+      let part = await lerParticipacao(env, id, w);
+      if (!part && g) {
+        const meus = await lerGolpes(env, g.id, w, id);
+        if (meus.days.length > 0) part = { gid: g.id, day: meus.days[0] };
+      }
+      if (!part) return null; // só quem deu ≥ 1 golpe
+      const ref = w === semana ? hoje : ultimoDiaDaSemana(part.day);
+      let cleared;
+      const grupo = g && g.id === part.gid ? g : await lerGrupo(env, part.gid);
+      if (grupo) cleared = (await resolverFeira(env, grupo, w, ref)).cleared;
+      else cleared = !!(await lerRaidOk(env, part.gid, w)); // guilda que esvaziou
+      if (w === semana && !cleared) return null; // aberta: ainda não há desfecho
+      return { week: w, outcome: cleared ? 'dissipada' : 'recuou', emblems: cleared ? RAID_EMBLEMS : RAID_EMBLEMS_FLOOR };
     };
     const conchas = async () => (await lerConjunto(env, coopShellKey(id))).length;
 
@@ -487,7 +503,20 @@ export async function handleGuild({ request, env }) {
     // UMA vez por recibo, guardado no save. Fechar no servidor exigiria
     // Durable Object (fora desta fatia).
     const recibo = await reciboDoResgate(id, w);
-    if (await kvOrThrow(env).get(coopClaimKey(id, w))) return erro('already claimed', 409, { receipt: recibo });
+    // A1 (L3-codigo): o 409 traz o resgate JÁ registrado, para o cliente que
+    // perdeu a resposta do 200 creditar — uma vez por recibo (o cliente guarda
+    // o recibo e ignora o que já conhece). A quantia vem do REGISTRO, nunca é
+    // recalculada.
+    const jaResgatado = async () => {
+      const r = JSON.parse((await kvOrThrow(env).get(coopClaimKey(id, w))) ?? 'null');
+      if (!r) return null;
+      const outcome = r.kind === 'dissipada' ? 'dissipada' : 'recuou';
+      const emblems = r.emblems === RAID_EMBLEMS || r.emblems === RAID_EMBLEMS_FLOOR ? r.emblems : (outcome === 'dissipada' ? RAID_EMBLEMS : RAID_EMBLEMS_FLOOR);
+      const trophy = r.trophy === true;
+      return { week: w, outcome, emblems, trophy, trophyId: trophy ? RAID_TROPHY_ID : null, receipt: recibo };
+    };
+    const conflito = async () => erro('already claimed', 409, { receipt: recibo, claimed: await jaResgatado() });
+    if (await kvOrThrow(env).get(coopClaimKey(id, w))) return conflito();
     const d = await direito(w);
     if (!d) return erro('nothing to claim', 404);
     // Dois aparelhos ao mesmo tempo (o KV não tem CAS): cada um grava com um
@@ -495,13 +524,15 @@ export async function handleGuild({ request, env }) {
     const selo = newPid();
     await kvOrThrow(env).put(coopClaimKey(id, w), JSON.stringify({ at: Date.now(), kind: d.outcome, emblems: d.emblems, selo, receipt: recibo }), { expirationTtl: COOP_CLAIM_TTL });
     const gravado = JSON.parse((await kvOrThrow(env).get(coopClaimKey(id, w))) ?? '{}');
-    if (gravado.selo !== selo) return erro('already claimed', 409, { receipt: recibo });
+    if (gravado.selo !== selo) return conflito();
     let trophy = false;
     if (d.outcome === 'dissipada') {
       const antes = await conchas();
       const depois = (await unirConjunto(env, coopShellKey(id), [w])).length;
       trophy = depois > antes && depois % RAID_TROPHY_EVERY === 0;
     }
+    // O troféu entra no registro para que um 409 posterior o devolva também.
+    if (trophy) await kvOrThrow(env).put(coopClaimKey(id, w), JSON.stringify({ ...gravado, trophy }), { expirationTtl: COOP_CLAIM_TTL });
     return json({ claimed: { week: w, outcome: d.outcome, emblems: d.emblems, trophy, trophyId: trophy ? RAID_TROPHY_ID : null, receipt: recibo } });
   }
 

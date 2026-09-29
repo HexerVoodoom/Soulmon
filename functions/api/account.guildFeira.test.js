@@ -83,7 +83,7 @@ describe('exportação × Feira e resgate', () => {
     const txt = await (await onRequest({ request: new Request(`https://x/api/account?action=export&id=${ID}`), env: e })).text();
     const coop = JSON.parse(txt).data.coop;
     expect(coop.grupo.myHitsThisWeek).toEqual(['2026-09-10']);
-    expect(coop.recompensas).toEqual({ claimedWeeks: [w], guildScenes: ['bg-guild-clareira'], shellWeeks: [w] });
+    expect(coop.recompensas).toEqual({ claimedWeeks: [w], guildScenes: ['bg-guild-clareira'], shellWeeks: [w], raidWeeks: [w], carriedThreadDays: 0 });
     expect(txt).not.toContain(OUTRO);
     expect(txt).not.toMatch(/"dmg"|"hp"/);
   });

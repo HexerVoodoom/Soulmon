@@ -163,10 +163,10 @@ describe('Bosque: dias-de-guilda proporcionais, fechados na leitura', () => {
     for (let k = 0; k < STAGE_UNLOCK_DAYS; k++) {
       noDia(k * 3); // um dia sim, dois não
       v = (await (await fio(e, A)).json()).guild;
-      expect(v.mine.groveScenes).toBe(k + 1 >= STAGE_UNLOCK_DAYS);
+      expect(v.mine.groveScenes === true).toBe(k + 1 >= STAGE_UNLOCK_DAYS);
     }
     const vb = (await (await chamar(e, 'guild', { method: 'GET', params: { id: B } })).json()).guild;
-    expect(vb.mine.groveScenes).toBe(false);
+    expect(vb.mine).not.toHaveProperty('groveScenes'); // M-1: ausência = sem chave
   });
 });
 

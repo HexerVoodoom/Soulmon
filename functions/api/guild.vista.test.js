@@ -35,7 +35,7 @@ function req(action, { method = 'GET', body, params = {}, ip } = {}) {
 const MEMBROS = Array.from({ length: 12 }, (_, i) => sid(`m${String(i).padStart(2, '0')}`));
 const chamar = (e, action, opts) => onRequest({ request: req(action, opts), env: e });
 
-async function guildaDe(n, { checkins = [] } = {}) {
+async function guildaDe(n, { checkins = [], fios = [] } = {}) {
   const seed = {};
   MEMBROS.forEach((m, i) => { seed[`profile:${m}`] = perfil(m, `Nome${i}`); });
   const e = { DIGIAPP_SAVES: fakeKV(seed) };
@@ -45,6 +45,7 @@ async function guildaDe(n, { checkins = [] } = {}) {
     expect(r.status).toBe(200);
   }
   for (const i of checkins) await chamar(e, 'guildCheckin', { method: 'POST', body: { id: MEMBROS[i] } });
+  for (const i of fios) await chamar(e, 'guildThread', { method: 'POST', body: { id: MEMBROS[i], kind: 'fio' } });
   const r = await chamar(e, 'guild', { params: { id: MEMBROS[0] } });
   const txt = await r.text();
   return { e, txt, g: JSON.parse(txt).guild };
@@ -74,20 +75,24 @@ describe('vistaDaGuilda por tamanho', () => {
     expect(g.isHost).toBe(true);
     expect(g.presence).toEqual([{ memberId: g.members[0].memberId, cameToday: true }]);
     expect(g.threadedToday).toBeNull();
-    expect(g.mine).toEqual({ cameToday: true, threadToday: false, groveScenes: false, gesturesSent: [] });
+    expect(g.mine).toEqual({ cameToday: true, gesturesSent: [] }); // M-1: só as marcas `true`
   });
 
-  it('4 membros: presença nominal binária, threadedToday null', async () => {
+  it('4 membros: presença nominal SÓ de quem veio — ausência não é estado (M-1), threadedToday null', async () => {
     const { txt, g } = await guildaDe(4, { checkins: [1] });
     semVazamento(txt);
     expect(g.presence).toHaveLength(4);
-    expect(g.presence.map(p => p.cameToday)).toEqual([false, true, false, false]);
-    for (const p of g.presence) expect(typeof p.cameToday).toBe('boolean');
+    expect(g.presence.map(p => p.cameToday)).toEqual([undefined, true, undefined, undefined]);
+    expect(g.presence.filter(p => 'cameToday' in p)).toHaveLength(1);
+    expect(g.members.filter(m => 'apareceuHoje' in m).map(m => m.apareceuHoje)).toEqual([true]);
+    // Nenhum `false` sobre OUTRA pessoa trafega (LV-G2).
+    expect(txt).not.toContain('"cameToday":false');
+    expect(txt).not.toContain('"apareceuHoje":false');
     expect(g.threadedToday).toBeNull();
   });
 
   it('5 membros: presence null, nenhum membro carrega presença, threadedToday true (nunca número)', async () => {
-    const { txt, g } = await guildaDe(5, { checkins: [2, 3] });
+    const { txt, g } = await guildaDe(5, { fios: [2, 3] });
     semVazamento(txt);
     expect(g.presence).toBeNull();
     for (const m of g.members) {
@@ -105,9 +110,16 @@ describe('vistaDaGuilda por tamanho', () => {
     expect(g.presence).toBeNull();
   });
 
+  it('B-2: com 5+, check-in sem fio NÃO acende threadedToday — só fio firmado', async () => {
+    const { g } = await guildaDe(5, { checkins: [0, 1, 2, 3, 4] });
+    expect(g.threadedToday).toBeNull();
+    const { g: g2 } = await guildaDe(5, { checkins: [0, 1], fios: [3] });
+    expect(g2.threadedToday).toBe(true);
+  });
+
   it('12 membros: threadedToday é true ou null — com 1, 7 ou 12 fios é SEMPRE true', async () => {
     for (const quantos of [1, 7, 12]) {
-      const { txt, g } = await guildaDe(12, { checkins: Array.from({ length: quantos }, (_, i) => i) });
+      const { txt, g } = await guildaDe(12, { fios: Array.from({ length: quantos }, (_, i) => i) });
       semVazamento(txt);
       expect(g.size).toBe(12);
       expect(g.full).toBe(true);

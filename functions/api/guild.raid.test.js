@@ -156,7 +156,7 @@ describe('estado da Feira — fechamento na leitura, sem número', () => {
   it('aberta → ferida → dissipada; depois de dissipada, golpe é 409 raid closed', async () => {
     const { e, gid } = await roda(3);
     let v = await ver(e, M[0]);
-    expect(v.raid).toMatchObject({ state: 'aberta', ferido: false, lastWeek: null, mine: { hitToday: false } });
+    expect(v.raid).toMatchObject({ state: 'aberta', ferido: false, lastWeek: null, mine: {} });
     semeiaDano(e, gid, '2026-09-09', M[1], 70); // 70 de 135
     v = await ver(e, M[0]);
     expect(v.raid).toMatchObject({ state: 'aberta', ferido: true });
@@ -236,7 +236,7 @@ describe('estado da Feira — fechamento na leitura, sem número', () => {
       for (const m of M) expect(s).not.toContain(m);
     }
     expect(Object.keys(v.raid).sort()).toEqual(['ferido', 'lastWeek', 'mine', 'phenomenon', 'state', 'weekKey']);
-    expect(Object.keys(v.raid.mine)).toEqual(['hitToday']);
+    expect(Object.keys(v.raid.mine).every(k => k === 'hitToday')).toBe(true); // M-1: só `true`, ou nada
     expect(Object.keys(hit).sort()).toEqual(['guild', 'landed']);
   });
 
@@ -244,7 +244,7 @@ describe('estado da Feira — fechamento na leitura, sem número', () => {
     const { e, gid } = await roda(3);
     semeiaDano(e, gid, '2026-09-09', M[1], 140);
     const v = await ver(e, M[2]);
-    expect(v.raid).toMatchObject({ state: 'dissipada', mine: { hitToday: false } });
+    expect(v.raid).toMatchObject({ state: 'dissipada', mine: {} });
     const antesBlob = JSON.parse(e.DIGIAPP_SAVES.store.get(coopKey(gid)));
     expect(antesBlob.members).toContain(M[2]);
     expect(e.DIGIAPP_SAVES.store.has(coopHitKey(gid, '2026-W37', M[2]))).toBe(false);
@@ -254,6 +254,6 @@ describe('estado da Feira — fechamento na leitura, sem número', () => {
     const { e } = await roda(2);
     await golpear(e, M[0]);
     expect((await ver(e, M[0])).raid.mine.hitToday).toBe(true);
-    expect((await ver(e, M[1])).raid.mine.hitToday).toBe(false);
+    expect((await ver(e, M[1])).raid.mine).not.toHaveProperty('hitToday');
   });
 });

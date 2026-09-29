@@ -77,9 +77,9 @@ describe('(4) coop na exclusão', () => {
     expect(e.DIGIAPP_SAVES.store.has(coopOfKey(ID))).toBe(false);
     expect(e.DIGIAPP_SAVES.store.has(coopCkKey(gid, ID))).toBe(false);
     expect(await grupoDe(e, ID)).toBeNull();
-    // Meta derivada do tamanho: 1 membro × 5.
+    // O tamanho encolhe junto (a barra `target` saiu da vista em 29/09, M-3).
     const vista = await (await community({ request: new Request(`https://x/api/community?action=coop&id=${OTHER_SAVE_ID}`), env: e })).json();
-    expect(vista.group.target).toBe(5);
+    expect(vista.group.size).toBe(1);
     expect(vista.group.members).toHaveLength(1);
   });
 

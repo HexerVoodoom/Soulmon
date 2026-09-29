@@ -355,6 +355,15 @@ export async function coopLeave(env, saveId, { exclusao = false, now = new Date(
   // inclusive hoje) vira contagem ANÔNIMA em `fiosAvulsos` antes de a chave
   // pessoal ser apagada. Sair e ser excluído só mudam a taxa futura.
   const fio = await lerFio(env, lido.id, saveId);
+  // SAIR NÃO CUSTA NADA JÁ CONQUISTADO (A-1/M-2, L3-conformidade, LV-G5). Antes
+  // de apagar as chaves da guilda, o que é da PESSOA passa para chaves dela,
+  // fora da guilda: a participação na Feira de cada semana (`coopPart`) e os
+  // dias distintos de fio (`coopDias`). Na exclusão de conta não se guarda
+  // nada — `apagarClaims` apaga as duas logo depois.
+  if (!exclusao) {
+    await guardarParticipacao(env, lido, saveId, now);
+    await guardarDiasDistintos(env, saveId, fio);
+  }
   await kvOrThrow(env).delete(coopOfKey(saveId));
   await kvOrThrow(env).delete(coopCkKey(lido.id, saveId));
   await kvOrThrow(env).delete(coopFioKey(lido.id, saveId));
@@ -362,12 +371,10 @@ export async function coopLeave(env, saveId, { exclusao = false, now = new Date(
   await kvOrThrow(env).delete(coopMemKey(lido.id, saveId));
   // Os golpes (`coopHit`, com o saveId NA CHAVE) saem com a pessoa em TODA
   // saída, não só na exclusão (M5, L2-backend): o dano de quem saiu já não
-  // conta para a Feira (a soma é dos membros atuais) e resgatar exige estar na
-  // guilda, então nada muda no jogo — e a exclusão, que só alcança a guilda
-  // ATUAL (não há lista de guildas antigas e não se usa `list`), deixa de
-  // prometer apagar o que ficou para trás. O `coopHit` vive 21 d: quatro
-  // semanas cobrem tudo o que pode existir. `exclusao` segue no contrato.
-  void exclusao;
+  // conta para a Feira (a soma é dos membros atuais). O DIREITO ao resgate não
+  // depende mais deles: ficou em `coopPart:<save>:<week>` (acima), que a
+  // exclusão de conta apaga em `apagarClaims`. O `coopHit` vive 21 d: quatro
+  // semanas cobrem tudo o que pode existir.
   const semanas = [0, 1, 2, 3].map(k => semanaDe(new Date(now.getTime() - k * 7 * 86400000)));
   await Promise.all(semanas.map(w => kvOrThrow(env).delete(coopHitKey(lido.id, w, saveId))));
   // RELEITURA imediatamente antes de gravar (L1-codigo MÉDIO-2): gravar a
@@ -448,8 +455,10 @@ export const GUILD_GESTURES = Object.freeze(['aceno', 'luz', 'descanso']);
 export const FIO_DIAS_GUARDADOS = 60;
 
 /**
- * A META QUE FIRMA UM FIO (G1, decidido pelo dono: a meta de CORAÇÃO,
- * `heartGoalFor`, e não a do dia completo). O servidor não conhece o save — o
+ * A META QUE FIRMA UM FIO (G1: a meta de CORAÇÃO, `heartGoalFor`, e não a do
+ * dia completo — ADOTADA POR PADRÃO na implementação, 29/09/2026, pela
+ * recomendação de psicologia e servidor; AGUARDA confirmação do dono, ver
+ * `REGISTRO-DE-DECISOES.md` §5 da Guilda). O servidor não conhece o save — o
  * fio é afirmação do cliente (§10.4) —, então esta é a régua que o cliente
  * aplica e que o servidor confere QUANDO o corpo traz os números. Trocar a
  * regra é trocar esta constante.
@@ -479,7 +488,8 @@ export function normalizarFio(r) {
   const days = Array.isArray(r?.days) ? r.days.filter(d => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)) : [];
   const distinct = Number.isFinite(r?.distinctDays) ? Math.max(0, Math.floor(r.distinctDays)) : days.length;
   const lastDay = typeof r?.lastDay === 'string' ? r.lastDay : (days.length ? [...days].sort().at(-1) : null);
-  return { lastDay, distinctDays: distinct, days };
+  // `herdou`: o contador já inclui os dias carregados de guildas anteriores (M-2).
+  return { lastDay, distinctDays: distinct, days, ...(r?.herdou === true ? { herdou: true } : {}) };
 }
 
 /** Registra o fio de `day` (puro, idempotente): a mesma referência se já havia. */
@@ -492,6 +502,7 @@ export function firmarFio(fio, day) {
     lastDay: f.lastDay && f.lastDay > day ? f.lastDay : day,
     distinctDays: f.distinctDays + FIO_PER_MEMBER_DAY,
     days,
+    ...(f.herdou ? { herdou: true } : {}),
   };
 }
 
@@ -676,6 +687,9 @@ export async function lerGestos(env, gid, save, day) {
 /** Apaga os resgates (`coopClaim:<save>:<week>`) vivos — exclusão de conta. Sem `list`. */
 export async function apagarClaims(env, saveId, now = new Date()) {
   await Promise.all(semanasDeClaim(now).map(w => kvOrThrow(env).delete(coopClaimKey(saveId, w))));
+  // A-1/M-2: a participação guardada por semana e os dias distintos de fio.
+  await Promise.all(semanasDeClaim(now).map(w => kvOrThrow(env).delete(coopPartKey(saveId, w))));
+  await kvOrThrow(env).delete(coopDiasKey(saveId));
   // WPG-5: o contador das Conchas e os cenários liberados também são do titular.
   await kvOrThrow(env).delete(`coopShell:${saveId}`);
   await kvOrThrow(env).delete(`coopScenes:${saveId}`);
@@ -920,3 +934,91 @@ export function golpesDoCartao(c, week) {
 }
 /** `{ [save]: fio }` a partir dos cartões — o formato de `fecharDiasDoBosque`. */
 export const fiosDosCartoes = (g, cartoes) => Object.fromEntries(g.members.map(m => [m, fioDoCartao(cartoes[m])]));
+
+// ===========================================================================
+// O QUE É DA PESSOA E SOBREVIVE À SAÍDA (A-1 e M-2, L3-conformidade, LV-G5)
+//
+// Sair é um toque "sem perda". Duas coisas conquistadas moravam em chaves da
+// GUILDA e sumiam com a saída: o direito a Emblemas/Concha de uma Feira ainda
+// não resgatada (`coopHit`) e os dias distintos de fio que liberam os cenários
+// (`coopFio.distinctDays`). Agora cada uma tem uma chave do TITULAR:
+//
+//   coopPart:<save>:<week> = { gid, day }   — golpeou nesta semana, nesta guilda
+//   coopDias:<save>        = { n, days[] }  — dias distintos de fio carregados
+//
+// Nenhuma das duas sai na vista da guilda; a exclusão de conta apaga as duas.
+// ===========================================================================
+
+/** Participação do titular na Feira de uma semana (TTL do resgate). */
+export const coopPartKey = (save, week) => `coopPart:${save}:${week}`;
+/** Dias distintos de fio carregados de guildas anteriores (sem TTL: é progresso). */
+export const coopDiasKey = save => `coopDias:${save}`;
+
+/** Grava a participação de `save` na semana `week` da guilda `gid` (idempotente). */
+export async function marcarParticipacao(env, gid, save, week, day) {
+  // Escrita cega (1 PUT, sem GET): o golpe é 1 por dia e o valor só muda de
+  // guilda. `day` é um dia da semana, só serve para achar o domingo dela.
+  await kvOrThrow(env).put(coopPartKey(save, week), JSON.stringify({ gid, day }), { expirationTtl: COOP_CLAIM_TTL });
+}
+
+/** A participação guardada (`{ gid, day }`) ou `null`. */
+export async function lerParticipacao(env, save, week) {
+  const r = parse(await kvOrThrow(env).get(coopPartKey(save, week)));
+  return r && typeof r.gid === 'string' && typeof r.day === 'string' ? r : null;
+}
+
+/**
+ * Antes de sair: para cada semana em que a pessoa golpeou, (1) resolve a Feira
+ * com o grupo AINDA contendo ela — se o dano dela fechou o fenômeno, a marca
+ * `coopRaidOk` fica gravada e sair não muda o desfecho — e (2) guarda a
+ * participação na chave do titular.
+ */
+export async function guardarParticipacao(env, g, save, now = new Date()) {
+  const semanas = [0, 1, 2, 3].map(k => semanaDe(new Date(now.getTime() - k * 7 * DIA_MS)));
+  const hoje = now.toISOString().slice(0, 10);
+  for (const w of semanas) {
+    const meus = await lerGolpes(env, g.id, w, save);
+    if (meus.days.length === 0) continue;
+    const ref = w === semanaDoDia(hoje) ? hoje : ultimoDiaDaSemana(meus.days[0]);
+    await resolverFeira(env, g, w, ref);
+    await marcarParticipacao(env, g.id, save, w, meus.days[0]);
+  }
+}
+
+/** `{ n, days[] }` dos dias distintos carregados, normalizado. */
+export async function lerDiasCarregados(env, save) {
+  const r = parse(await kvOrThrow(env).get(coopDiasKey(save)));
+  const days = Array.isArray(r?.days) ? r.days.filter(d => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)) : [];
+  const n = Number.isFinite(r?.n) ? Math.max(0, Math.floor(r.n)) : 0;
+  return { n, days };
+}
+
+/**
+ * O PRIMEIRO fio numa guilda (sem registro nela) começa do que a pessoa
+ * carregou de guildas anteriores (M-2): o relógio dos 7 dias distintos (LV-G9)
+ * não recomeça ao voltar. Só o CONTADOR é herdado, nunca os dias — um dia
+ * firmado em outra guilda não pode entrar no fechamento do Bosque desta. Se
+ * o dia de hoje já foi firmado na guilda anterior, não conta duas vezes.
+ */
+export function fioInicialHerdado(carregado, day) {
+  const c = carregado ?? { n: 0, days: [] };
+  if (!(c.n > 0)) return null;
+  const f = firmarFio({ lastDay: null, distinctDays: c.n, days: [], herdou: true }, day);
+  if (c.days.includes(day)) f.distinctDays -= FIO_PER_MEMBER_DAY;
+  return f;
+}
+
+/**
+ * Na saída, guarda os dias distintos do titular. Um fio `herdou` já contém o
+ * carregado; um fio sem a marca (anterior a esta regra) soma a ele. Nunca
+ * diminui o que já estava guardado.
+ */
+export async function guardarDiasDistintos(env, save, fio) {
+  if (!fio || !(fio.distinctDays > 0)) return;
+  const c = await lerDiasCarregados(env, save);
+  const f = normalizarFio(fio);
+  const total = f.herdou ? f.distinctDays : c.n + f.distinctDays;
+  const n = Math.max(c.n, total);
+  const days = [...new Set([...c.days, ...f.days])].sort().slice(-FIO_DIAS_GUARDADOS);
+  await kvOrThrow(env).put(coopDiasKey(save), JSON.stringify({ n, days }));
+}

@@ -113,7 +113,7 @@ import { requireVerifiedOwner } from './_auth.js';
 import { kv, kvOrThrow } from './_kv.js';
 import { lerIndice, chaveDoIndice, PUSHIDX_MAX } from './_pushIdentity.js';
 import { writeTombstone, clearTombstone, TOMBSTONE_TTL_SECONDS } from './_accountTombstone.js';
-import { coopLeave, grupoDe, coopOfKey, coopCkKey, coopFioKey, coopMemKey, lerFio, apagarClaims, lerGolpes, semanaDe, semanasDeClaim, coopClaimKey, lerConjunto, coopScenesKey, coopShellKey } from './_coop.js';
+import { coopLeave, grupoDe, coopOfKey, coopCkKey, coopFioKey, coopMemKey, lerFio, apagarClaims, lerGolpes, semanaDe, semanasDeClaim, coopClaimKey, lerConjunto, coopScenesKey, coopShellKey, coopPartKey, lerDiasCarregados } from './_coop.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -451,8 +451,13 @@ async function collect(env, saveId) {
     for (const w of semanasDeClaim()) if (await store.get(coopClaimKey(saveId, w))) claimedWeeks.push(w);
     const guildScenes = await lerConjunto(env, coopScenesKey(saveId));
     const shellWeeks = await lerConjunto(env, coopShellKey(saveId));
-    if (claimedWeeks.length || guildScenes.length || shellWeeks.length) {
-      coopExport = { ...(coopExport ?? {}), recompensas: { claimedWeeks, guildScenes, shellWeeks } };
+    // A-1/M-2 (29/09): o que fica guardado com a pessoa depois de sair —
+    // semanas da Feira com participação e os dias distintos de fio carregados.
+    const raidWeeks = [];
+    for (const w of semanasDeClaim()) if (await store.get(coopPartKey(saveId, w))) raidWeeks.push(w);
+    const carriedThreadDays = (await lerDiasCarregados(env, saveId)).n;
+    if (claimedWeeks.length || guildScenes.length || shellWeeks.length || raidWeeks.length || carriedThreadDays) {
+      coopExport = { ...(coopExport ?? {}), recompensas: { claimedWeeks, guildScenes, shellWeeks, raidWeeks, carriedThreadDays } };
     }
   } catch { /* exportação segue sem esta seção */ }
 

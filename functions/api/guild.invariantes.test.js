@@ -157,9 +157,9 @@ describe('ALTO-1 — o dia é o DO JOGADOR (dayKey a ±1 do UTC)', () => {
     expect(g.mine.cameToday).toBe(true);
     vi.setSystemTime(new Date('2026-09-30T23:00:00Z')); // 20:00 de quarta (30) em BRT
     g = (await (await chamar(e, 'guild', { params: { id: ANA, dayKey: 'Wed Sep 30 2026' } })).json()).guild;
-    expect(g.mine.cameToday).toBe(false); // o botão NÃO some: é outro dia do jogador
+    expect(g.mine).not.toHaveProperty('cameToday'); // o botão NÃO some: é outro dia do jogador
     g = (await (await post(e, 'guildCheckin', { id: ANA, dayKey: 'Wed Sep 30 2026' })).json()).guild;
-    expect(g.progress).toBe(2);
+    expect(g.mine.cameToday).toBe(true);
     expect(JSON.parse(e.DIGIAPP_SAVES.store.get(coopCkKey(g.id, ANA))).days).toEqual(['2026-09-29', '2026-09-30']);
   });
   it('domingo 22h BRT (segunda UTC) conta na semana do DOMINGO', async () => {
@@ -170,7 +170,7 @@ describe('ALTO-1 — o dia é o DO JOGADOR (dayKey a ±1 do UTC)', () => {
     const g = (await (await post(e, 'guildCheckin', { id: ANA, dayKey: '2026-09-27' })).json()).guild;
     expect(g.weekKey).toBe(semanaDe(new Date('2026-09-27T12:00:00Z')));
     expect(g.weekKey).not.toBe(semanaDe(new Date('2026-09-28T01:00:00Z')));
-    expect(g.progress).toBe(1);
+    expect(JSON.parse(e.DIGIAPP_SAVES.store.get(coopCkKey(g.id, ANA)))).toEqual({ weekKey: g.weekKey, days: ['2026-09-27'] });
   });
   it('dia fora de ±1 do UTC, ou mal formado → 400 invalid day, nada gravado', async () => {
     const e = novoEnv();
@@ -191,7 +191,7 @@ describe('ALTO-1 — o dia é o DO JOGADOR (dayKey a ±1 do UTC)', () => {
     await criar(e);
     await post(e, 'guildCheckin', { id: ANA, dayKey: 'Wed Sep 30 2026' });
     const g = (await (await post(e, 'guildCheckin', { id: ANA, dayKey: '2026-09-30' })).json()).guild;
-    expect(g.progress).toBe(1);
+    expect(JSON.parse(e.DIGIAPP_SAVES.store.get(coopCkKey(g.id, ANA))).days).toEqual(['2026-09-30']);
   });
 });
 

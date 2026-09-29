@@ -134,17 +134,15 @@ describe('A2 — sair e voltar não infla o Bosque (1 fio por pessoa por dia)', 
   });
 });
 
-describe('M1 — progress não reconstrói "N de M vieram hoje"', () => {
-  it('com 5+ membros progress é null em qualquer hora do dia; com ≤4 segue o número', async () => {
-    const cinco = await guildaDe(5);
-    const antes = (await (await chamar(cinco.e, 'guild', { method: 'GET', params: { id: A } })).json()).guild;
-    for (const m of MEMBROS.slice(0, 3)) await chamar(cinco.e, 'guildCheckin', { body: { id: m } });
-    const depois = (await (await chamar(cinco.e, 'guild', { method: 'GET', params: { id: A } })).json()).guild;
-    expect(antes.progress).toBeNull();
-    expect(depois.progress).toBeNull();
-    const quatro = await guildaDe(4);
-    await chamar(quatro.e, 'guildCheckin', { body: { id: A } });
-    expect((await (await chamar(quatro.e, 'guild', { method: 'GET', params: { id: A } })).json()).guild.progress).toBe(1);
+describe('M1/M-3 — nenhum número semanal reconstrói "N de M vieram hoje"', () => {
+  it('progress/target não trafegam em nenhum tamanho (M-3, 29/09/2026)', async () => {
+    for (const n of [4, 5]) {
+      const r = await guildaDe(n);
+      for (const m of MEMBROS.slice(0, 3)) await chamar(r.e, 'guildCheckin', { body: { id: m } });
+      const txt = await (await chamar(r.e, 'guild', { method: 'GET', params: { id: A } })).text();
+      expect(txt).not.toContain('"progress"');
+      expect(txt).not.toContain('"target"');
+    }
   });
 });
 
@@ -242,9 +240,13 @@ describe('B5 — gesto numa roda de 2 não diz o tipo', () => {
 export const ORCAMENTO = {
   criar: { get: 15, put: 5 },
   entrar: { get: 27, put: 3 },
-  fio: { get: 24, put: 2 },
+  // +1 leitura (29/09, M-2): o PRIMEIRO fio numa guilda lê `coopDias` para
+  // herdar os dias distintos; os fios seguintes não leem.
+  fio: { get: 25, put: 2 },
   checkin: { get: 25, put: 2 },
-  golpe: { get: 38, put: 2 },
+  // +1 escrita (29/09, A-1): `coopPart:<save>:<week>`, o direito ao resgate
+  // guardado com a PESSOA para sobreviver à saída.
+  golpe: { get: 38, put: 3 },
   gesto: { get: 24, put: 2 },
   vista12: { get: 17, put: 0 },
 };
