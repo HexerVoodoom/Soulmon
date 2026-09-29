@@ -55,6 +55,8 @@ describe('branchMigration — ids de caminho antigos → novos', () => {
     }
     expect(legacyFormIdToNew('rookie')).toBe('rookie');
     expect(legacyFormIdToNew('ultra')).toBe('ultra');
+    // só as três camadas com galho: um id com outro prefixo NÃO é forma
+    expect(legacyFormIdToNew(`kaelen-${D}`)).toBe(`kaelen-${D}`);
     expect(newFormIdToLegacy('ultra')).toBeNull();
   });
 
