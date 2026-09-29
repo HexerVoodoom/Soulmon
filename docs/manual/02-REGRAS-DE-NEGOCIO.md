@@ -1,7 +1,7 @@
 # Regras de negócio — todas as regras do jogo, por sistema
 
 > **Dono:** doc-redator-regras · **Data:** 28/09/2026 (sincronização do delta `f465d266..cf8a851d`, PR #133: §22 — criação única e proporcional (8 regras recalibradas por medição)); anterior: 28/09/2026 (sincronização do delta `25fd3c41..f465d266`, PR #131: §22 — companheiro na bio do reveal, bio × card de classe do rookie reconciliados pelo elemento); anterior: 28/09/2026 (sincronização do delta `83a9aac6..25fd3c41`, PR #129: §22 Oráculo — o caminho (poder/harmonia/benevolencia) passa a pesar sobre o elemento, `ALIGNMENT_ELEMENT_AFFINITY` em `axes.ts`); anterior: 28/09/2026 (sincronização do delta `8110efc5..83a9aac6`, PR #127: §22 Oráculo — `pickFamilies` passou a usar `familia`/`biologia` da criatura-inspiração (antes só menção textual), cada estágio de evolução ganhou inspiração de imagem própria da linhagem, ponte de família `humanoide`↔`biologia` e o rebalanceio dos 4 bônus fixos de `scoreCreature`, teto 7→14); anterior: 27/09/2026 (sincronização do delta `c510c7e4..2336e4e7`: Oráculo — o nome da inspiração vai no prompt da 1ª tentativa (D-B1, reversão do dono) e o pool do bestiário foi cortado para 617; §17 `notified` ⚰️); anterior: 22/09/2026 (5ª sincronização do dia, delta `89554b5d..c7bca6d` (balanceamento do oráculo): §22 ganhou a lápide do degrau da criatura favorita (`FAVORITE_STEP`, `ORACLE_DRAFT_VERSION` intacta) e a tabela das quatro frentes de rebalanceamento da leitura (`DOMINANT_SCHOOL_LEAD`, `melhorArquetipo`, `ANCHOR_BASE`/`vileza`, `sombra`) mais o aviso do erro de medição de `normalizeName`. **Nenhuma regra que o jogador VIVE mudou**; anterior: 22/09/2026 (4ª sincronização do dia, delta `fadb1167..89554b5d`: **nenhuma regra de jogo mudou** — §20 ganhou a nota da capacidade DORMENTE do motor de ficha (`ElementPlan`/`ALLOC_FRACTION` em `buildSheet.ts`, sem chamador, ⏸️ parqueada para a v2.0) e a única mudança de comportamento interna: a profissão lê sempre a escala rookie automática quando há plano; anterior: 3ª sincronização do dia, delta `cd66940f..cf6315e1` (execução das 32 respostas do dono — **oito regras de jogo mudaram**): §7 a virada julga o último dia aberto + os quatro campos que ela escreve; §8 as três travas novas do dreno (#58b); §18 uma virada completa antes de re-evoluir (#59); §24 `habitCountsForHeartsOn` (#57b); **§24-A novo** — desfazer a conclusão (#57); §46 Bits por dia completo + teto de minijogo (#61/#63) e o ponteiro do modelo (#55); §48/§49 o 🌀 escreve `missionPerfectDays`; §55 os 11 eventos ganharam emissor (#59b) e a comida ficou de fora; §57-A o 🌀 saiu das conquistas (#41/#60); anterior: 2ª sincronização do dia, delta `a6c1cd8a..592e2c14`, QA Rodada 2: §46 cota de chat por tier (provisório #55); §55 `XP_PERFECT_DAY` passou a ser emitido; §7/§18/§46 ganharam só a NOTA "aberto ao dono" dos provisórios #58/#59/#61 — nenhuma regra de jogo mudou)) · **Estado:** verificado em 27/09/2026 por doc-verificador (delta `2336e4e7..8fbf6990` — pool.json medido: 630 criaturas, 13 com `_ponte`, eletricidade/marcial/sombra 5/5/5, 84 `Variado` = 55 "Venenoso" de modificador ambíguo + 29 sem modificador geográfico; símbolos dos dois scripts por grep; âncoras conferidas; `curadoria.contract.test.ts` verde); anterior: verificado em 27/09/2026 por doc-verificador (código em `78ef5367` — §7 `completeDayReached`/`diaCompletoHoje`, §17 incubação (`INCUBATION_MIN_MS`, `incubationFor`, `incubationReady`, `isIncubating`, `birthBatch` só `rookie`, `SpriteOccasion`), §20 `applyRebirth` com `emptyIncubation()`, §47 `mercadoCatalog.ts`, §49 `MissionCategory`/`MISSION_CATEGORIES`, §51 `HEART_DROP_CHANCE`, §54 `playAreaLots.ts`, §59 D3 conferidos símbolo a símbolo; corrigido: `EvoTrail.tsx` inexistente virou lápide); anterior: verificado em 22/09/2026 por doc-verificador (delta `89554b5d..c7bca6d` — `DOMINANT_SCHOOL_LEAD` = 1.15, `melhorArquetipo(lista, ficha.nome)` com `hashString` sobre a lista ordenada por `id`, `ANCHOR_BASE` = 45, `vileza` = `dev('Plutão')*0.55 + dev('Marte')*0.55`, `sombra` com a fatia água+terra ×40 e o deslocamento −20 sob `Math.max(0, …)`, e a ausência de `favoriteCreature` no `OracleInput` montado pelo `SoulmonOnboarding.tsx` — todos conferidos símbolo a símbolo no fonte; os quatro arquivos de régua conferidos por `ls`); anterior: verificado em 22/09/2026 por doc-verificador (delta `fadb1167..89554b5d` — o bloco de capacidade dormente da §20 conferido símbolo a símbolo em `src/utils/soulProfile/ficha/buildSheet.ts` (`ALLOC_FRACTION` = 0.25, `ElementPlan`, `sanitizePlan`, `allocateElementos`, `buildFicha` com `plano` como 6º parâmetro, ramo `stage === 'rookie' && !plano`) e a inércia por `grep` (nenhum chamador); `buildSheet.aloc` + `buildSheet.piso` + `arena.alocacao` + `pipeline` verdes (56 testes, fixture intocada)); anterior: verificado em 22/09/2026 por doc-verificador (delta `cd66940f..cf6315e1` — `dailyReset.ts` (`diaJulgado`, `BITS_PER_COMPLETE_DAY`, `podeEvoluirDepoisDaQueda`, `soParaCoracao`), `poopDrain.ts` (`saveDaysLived`/`returnGraceLeft`/`getPreviousForm`), `habitRhythm.ts` (`habitCountsForHeartsOn`/`isWeekClosingDay`), `currencies.ts` (`MINIGAME_BITS_PER_DAY`/`creditMinigameBits`), `missions.ts`, `specialItemUse.ts`, `completionUndo.ts` e os 11 `kind` de `bond.ts` × os emissores do `App.tsx` conferidos símbolo a símbolo; a AUSÊNCIA de `kind` de comida conferida por `grep`); anterior: verificado em 22/09/2026 por doc-verificador (delta `a6c1cd8a..592e2c14` — `_aiGuard.js` › `AI_LIMITS.chat.perAccountByTier`, `dailyReset.ts` › `awardBondXP(..., { kind: 'perfectDay' })` e os `it.todo` de `regrasDeJogo.qaRodada2.test.ts` conferidos; anterior no mesmo dia: delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §46 cortesia × reembolso (`auditRefunds`/`paidProviderOf`) e §56 versões `2026-09-22` + `qualDocMudou` conferidos símbolo a símbolo contra `_entitlements.js`, `consent.ts`, `termsNotice.ts`; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §46 cortesia, §56 aviso de termos, §57-A `dias-completos-30`/`conquistasHerdadas`, §58-A ⚰️ `SettingsModal` conferidos símbolo a símbolo; anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: §59 D31–D33 reconferidas no delta `15164e4c..7e5d0ba9` — D32 ⚰️ fechada confere com o `CLAUDE.md` no disco (cinco arquivos, S1..S16) e com `ls public/sounds`; D31 segue ABERTA (o `CLAUDE.md` ainda diz `DÍVIDA`); verificação anterior: §58-A e §59 D32–D33, delta `5ac3d351..8d318529`, som/S16 + chaves na `SettingsPage`; verificação anterior do mesmo dia: só as seções do delta `dc72579e..9875477b` — §2, §3, §8, §10, §12, §45, §48, §59 D31; verificação anterior: 21/09/2026, seções do delta `2580b73a..dc72579e` — §22, §28, §41, §43, §46, §57-A, §57-B, §59 D28–D30; doc inteiro: 10/09/2026, em duas metades)
-> **Estado:** verificado em 28/09/2026 por doc-verificador (delta `f465d266..cf8a851d` — passagens tocadas conferidas contra o fonte e contra as medições do PR; anterior: verificado em 28/09/2026 por doc-verificador (delta `25fd3c41..f465d266` — passagens tocadas conferidas símbolo a símbolo contra o fonte; anterior: verificado em 28/09/2026 por doc-verificador (delta `83a9aac6..25fd3c41` — §22 conferido símbolo a símbolo contra `src/utils/soulProfile/axes.ts` (`ALIGNMENT_ELEMENT_AFFINITY`, `FAVORECIDO`/`DIFICULTADO`, `dominantAlignment` movido para antes de `realms`) e `alinhamentoElemento.test.ts`); anterior: verificado em 28/09/2026 por doc-verificador (delta `8110efc5..83a9aac6` — §22 conferido símbolo a símbolo contra `src/utils/oracle.ts` (`bestiaryFamilyIds`, `bestiaryFamilyHint`, `bestiaryLineageNomes`) e `src/utils/soulProfile/bestiary/select.ts` (`FAMILIA_BONUS`/`BIOMA_BONUS`/`HOSTILIDADE_BONUS`/`TAMANHO_BONUS`, ponte `humanoide`↔`biologia`); anterior: verificado em 27/09/2026 por doc-verificador (delta `8fbf6990..1d9e278d`).
+> **Estado:** verificado em 29/09/2026 por doc-mantenedor (sem a ferramenta Agent nesta sessão: verificação própria, símbolo a símbolo por `grep` contra o fonte — exports de `_coop.js`/`guild.js`/`_profile.js`, módulos novos de `src/`, constantes e chaves de KV; delta `38c3ccb5..b657a340`, só as seções tocadas; `docsManual`/`docsSemMentira` verdes); anterior: verificado em 28/09/2026 por doc-verificador (delta `f465d266..cf8a851d` — passagens tocadas conferidas contra o fonte e contra as medições do PR; anterior: verificado em 28/09/2026 por doc-verificador (delta `25fd3c41..f465d266` — passagens tocadas conferidas símbolo a símbolo contra o fonte; anterior: verificado em 28/09/2026 por doc-verificador (delta `83a9aac6..25fd3c41` — §22 conferido símbolo a símbolo contra `src/utils/soulProfile/axes.ts` (`ALIGNMENT_ELEMENT_AFFINITY`, `FAVORECIDO`/`DIFICULTADO`, `dominantAlignment` movido para antes de `realms`) e `alinhamentoElemento.test.ts`); anterior: verificado em 28/09/2026 por doc-verificador (delta `8110efc5..83a9aac6` — §22 conferido símbolo a símbolo contra `src/utils/oracle.ts` (`bestiaryFamilyIds`, `bestiaryFamilyHint`, `bestiaryLineageNomes`) e `src/utils/soulProfile/bestiary/select.ts` (`FAMILIA_BONUS`/`BIOMA_BONUS`/`HOSTILIDADE_BONUS`/`TAMANHO_BONUS`, ponte `humanoide`↔`biologia`); anterior: verificado em 27/09/2026 por doc-verificador (delta `8fbf6990..1d9e278d`).
 > **Verificação:** `npx vitest run src/utils src/types src/hooks` — cada sistema abaixo declara a sua régua própria na linha **Régua**. Números medidos trazem o comando na própria linha.
 > **Não cobre:** o porquê estratégico e as linhas vermelhas (→ [`01-VISAO.md`](01-VISAO.md)), telas e navegação (→ `03-FLUXO-DE-TELAS.md`), função por função (→ `06-REFERENCIA/`), formato do save (→ `07-DADOS-E-SAVE.md`), infraestrutura de push, deploy e API (→ `08-INTEGRACOES-E-DEPLOY.md`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -77,7 +77,7 @@ no primeiro commit, o símbolo se reencontra por `grep`.
 [53. Torneio: rodada, faixas e Arena](#torneio) ·
 [54. Minijogos: PPT e Dino](#minijogos) ·
 [55. Vínculo e o gate de PvP](#vinculo) ·
-[56. Comunidade e cooperativo](#comunidade) ·
+[56. Comunidade e cooperativo](#comunidade) · [56-A. A Guilda](#guilda) ·
 [57. Estações](#estacoes) ·
 [57-A. Conquistas (emblemas de arte)](#conquistas) ·
 [57-B. Mapas de arte que carregam regra](#mapas-de-arte)
@@ -4831,8 +4831,8 @@ vindo do servidor).
 ## 56. 🤝 Comunidade e cooperativo
 
 **Em uma frase.** Um diretório onde a pessoa só entra se escolher entrar, com
-verbos de DAR e nenhum de comparar — e um grupo semanal de até quatro pessoas
-cujo único número é do GRUPO.
+verbos de DAR e nenhum de comparar — e o cooperativo, que desde 29/09/2026 é a
+**Guilda** (roda de até 12, [§56-A](#guilda)): nada nela se ordena entre pessoas.
 
 **A regra.** Duas superfícies, um servidor: o **diretório** (quem aparece, e o
 que dele trafega) e o **cooperativo** (o grupo da semana). As duas obedecem à
@@ -4884,82 +4884,186 @@ de interface (design-critic A1); com as duas versões subindo juntas em
 `2026-09-22`, quem consentiu antes vê o "ambos". Régua:
 `src/utils/termsNotice.test.ts` + `termsNotice.qa.test.ts`.
 
-### O cooperativo
+### O cooperativo (a Fase 4.3, hoje a Guilda)
 
-`functions/api/community.js`, ações `coop`, `coopCreate`, `coopJoin`,
-`coopCheckin`, `coopLeave`. Constantes do servidor:
+> ⚠️ **Esta seção foi CORRIGIDA em 29/09/2026** (`docs/reviews/guilda/qa/L1-conformidade.md`
+> §4 listou nove afirmações falsas; as nove estão consertadas abaixo). O desenho
+> novo — Bosque, fio, marés, Feira — está em [§56-A](#guilda). O que segue é o
+> que ficou de pé do cooperativo original e o que mudou nele.
+
+Ações do servidor: hoje moram em **`functions/api/guild.js`** (`guild`, `guildCreate`,
+`guildJoin`, `guildCheckin`, `guildLeave`, …); as `coop`, `coopCreate`, `coopJoin`,
+`coopCheckin`, `coopLeave` de `community.js` são só **aliases** que chamam
+`handleGuild` (envelope antigo `{ group }`) e que nenhum cliente usa. Constantes
+em **`functions/api/_coop.js`** (dono único):
 
 | Constante | Valor | O que faz |
 |---|---|---|
-| `COOP_MAX_MEMBERS` | 4 | teto do grupo |
-| `COOP_CHECKINS_POR_MEMBRO` | 5 | **5 e não 7**: exigir dia completo por pressão social desfazeria o perdão de ausência da Fase 1 |
-| `COOP_TTL` | 120 dias | e as **três** chaves do grupo renovam JUNTAS |
-| `target` | `members.length × COOP_CHECKINS_POR_MEMBRO` | **derivado**, nunca gravado |
+| `COOP_MAX_MEMBERS` (= `GUILD_MAX_MEMBERS`) | **12** (⚰️ era 4 até a Guilda) | teto da roda |
+| `PRESENCA_NOMINAL_MAX` | 4 | até aqui a presença é nominal; a partir de 5 ninguém tem estado |
+| `COOP_CHECKINS_POR_MEMBRO` | 5 | **5 e não 7** (ainda existe no servidor; o cliente não desenha a barra semanal desde a Guilda) |
+| `COOP_TTL` | 120 dias | as chaves do grupo renovam JUNTAS; **guilda com Bosque plantado (`bosqueProgress > 0`) não expira** (G17a) |
+| `target` | `members.length × COOP_CHECKINS_POR_MEMBRO` | **derivado**, nunca gravado — e **⚰️ não sai mais** para o cliente (M-3) |
 
-**O desenho da tela é a feature.** `vistaDoGrupo` é a ÚNICA montagem de resposta
-do cooperativo, e ela devolve: o progresso do GRUPO (um número só, já limitado ao
-`target`) e, por membro, `apareceuHoje: boolean` e mais nada que se possa
-ordenar. Isso é **invariante de SERVIDOR**, não de tela — nenhuma rota futura
-reintroduz a contagem individual por descuido. O motivo: 31,3% relataram efeito
-psicológico negativo de comparação em ambiente de leaderboard, e um grupo que
-mostrasse a contribuição individual reinventaria o leaderboard **entre amigos**,
-onde a comparação dói mais.
+**O desenho da tela é a feature.** `vistaDaGuilda` (⚰️ era `vistaDoGrupo`, em
+`community.js`) é a ÚNICA montagem de resposta. O que sai por membro: um id
+**opaco** desta guilda (`memberId`, 16 hex — ⚰️ o `pid` público saía e abria
+`community?action=player`, que devolve estágio de criatura alheia), `name`,
+`euMesmo` e, **só com ≤ 4 membros e só quando é `true`**, `apareceuHoje`. Nunca
+`saveId`, `hostSave`, estágio ou HP de outra pessoa, contagem por pessoa ou
+"quem faltou". ⚰️ A afirmação "por membro, `apareceuHoje: boolean` e mais nada"
+era falsa desde o início (a vista já carregava `id`, `name`, `stage` e `euMesmo`).
+Isso é **invariante de SERVIDOR**, não de tela. O motivo: 31,3% relataram efeito
+psicológico negativo de comparação em ambiente de leaderboard.
 
-**Sair é um toque, sem confirmação e sem penalidade — e a meta encolhe junto**,
-porque o `target` é derivado do tamanho do grupo. É isso que impede sair de ser
-sabotagem.
+**Sair é um toque, sem confirmação e sem penalidade — e não custa nada já
+conquistado** (fio, direito ao resgate, cenários: [§56-A](#guilda)).
 
-**Fronteira de confiança, declarada.** O check-in é uma AFIRMAÇÃO do cliente
-("cumpri a minha meta hoje"), não uma verificação do servidor: recalcular a meta
-do dia ali exigiria uma segunda cópia de `dailyGoalFor` no servidor — o footgun 9
-—, e o save inteiro já é escrito pelo cliente, então a cópia não compraria
-confiança nenhuma. O que o servidor garante é o que ele PODE garantir sozinho:
-**um check-in por pessoa por dia, e só sobre si mesma**. Nada de economia depende
-disso — bater a meta do grupo não paga Bits nem item.
+**Fronteira de confiança, declarada.** O check-in e o fio são AFIRMAÇÕES do
+cliente, não verificações do servidor: recalcular a meta do dia ali exigiria uma
+segunda cópia de `dailyGoalFor` — o footgun 9. O que o servidor garante é o que
+ele PODE garantir sozinho: **um por pessoa por dia do jogador, e só sobre si
+mesma** (e, no fio, que a meta enviada `done ≥ heart` bate). Nada de economia
+depende disso além de Emblemas e cosmético (LV-G6).
 
 **Dono.** `src/utils/community.ts` (o cliente e os tipos) ·
-`functions/api/community.js` (todas as regras, e `vistaDoGrupo` como único
-portão de saída) · `src/utils/consent.ts` (idade e prova de consentimento).
+`functions/api/guild.js` (a resposta) · **`functions/api/_coop.js`** (estado,
+prazos, `coopLeave`, constantes — ⚰️ este bloco dizia "`community.js` (todas as
+regras)", falso desde `592e2c14`) · `src/utils/consent.ts` (idade e prova de
+consentimento).
 
-**Régua.** `functions/api/community.coop.test.js`,
+**Régua.** `functions/api/guild.*.test.js`, `functions/api/community.coop.test.js`,
 `functions/api/community.directoryConsent.test.js`,
 `functions/api/community.test.js`, `functions/api/community.playerOracle.test.js`,
 `src/utils/community.respostaIlegivel.test.ts`, `src/utils/consent.test.ts`,
 `src/components/CoopPanel.render.test.tsx`,
 `src/components/PlayerDetailModal.semMetrica.render.test.tsx`,
-`src/components/LibraryPage.amigos.render.test.tsx`.
+`src/components/LibraryPage.amigos.render.test.tsx`. ⚠️ **"Tudo tem teste" era
+falso** (L1-conformidade M2/M7b/M8/M9/M13: escrita só na própria chave, limpeza
+do órfão na leitura, entrada só por código, classe LIGHT e re-sorteio de colisão
+não tinham teste que as travasse) — o backend da Guilda ganhou
+`guild.invariantes.test.js` e `guild.l2.test.js`; reconfira antes de repetir a
+frase.
 
-**Decisão.** [`docs/PLANO-COOP.md`](../PLANO-COOP.md) (Fase 4.3);
+**Decisão.** [`docs/PLANO-COOP.md`](../PLANO-COOP.md) (Fase 4.3, regra viva do
+original) e [`docs/PLANO-GUILDA.md`](../PLANO-GUILDA.md) (o que o superou);
 [`docs/REGISTRO-DE-DECISOES.md`](../REGISTRO-DE-DECISOES.md) §5.5 — inclusive
-"Só verbos de DAR" (o Finch tem `Share Goal`, `Send Good Vibes`, `Send Gift`, e a
-ausência de uma quarta) e "Entrada só por código de convite" (grupo achável é
-raide de estranho).
+"Só verbos de DAR" e "Entrada só por código de convite".
 
 **Casos de borda.**
-- **Dois membros marcando presença na mesma noite** — o caso normal de um grupo de
-  quatro — apagavam um ao outro: `coopCheckin` fazia ler-modificar-gravar sobre o
-  blob do grupo, sem erro. Hoje cada membro escreve **só a própria** chave
-  (`coopCk:<gid>:<saveId>`); a corrida foi **removida, não mitigada**.
-- **Duas pessoas na última vaga**: a última gravação vencia e o perdedor recebia
-  `200` com a vista do grupo, para o grupo sumir depois sem nenhum evento que
-  explicasse. Hoje `coopJoin` confere a própria entrada e devolve
-  `409 join collision`.
-- **TTL por chave**: aos 120 dias um grupo vivo perdia `coopOf:` e `coopCode:` ao
-  mesmo tempo — todo mundo via "você não está em nenhum grupo" e o convite parava
-  de abrir, sem erro. As três chaves renovam juntas em `gravarGrupo`.
-- **Não ter grupo NÃO é erro**: `getCoop` devolve `null`.
-- **`coopCheckin` é idempotente** no servidor, então o cliente pode chamar sem
-  guardar estado.
+- **Dois membros marcando presença na mesma noite** apagavam um ao outro: hoje
+  cada membro escreve **só a própria** chave (`coopCk`/`coopFio`/`coopHit`); a
+  corrida foi **removida, não mitigada**.
+- **Duas pessoas na última vaga** → `409 join collision` (releitura da própria
+  entrada).
+- **TTL por chave**: as chaves do grupo renovam juntas (`gravarGrupo`).
+- **Não ter grupo NÃO é erro** (`guild` devolve `guild: null`).
+- **`guildCheckin` é idempotente** no servidor.
+- **O "hoje" NÃO é mais UTC** (⚰️ L1-conformidade #13, o achado mais caro: no BRT "apareceu
+  hoje" virava às 21h e quem cumpria a meta às 22h perdia um dia de presença).
+  O cliente manda o `dayKey` do JOGADOR (`playerDayKey` + `playerDayTz`) e o servidor
+  aceita a ±1 do dia UTC (`diaDoJogador`; override de G6, `PLANO-GUILDA.md` §0.1).
+- **Código de convite**: ⚰️ `PLANO-COOP.md` §4.2 diz "de uso único" e o código nunca fez
+  isso — é reutilizável até a guilda morrer, e o anfitrião o troca por `guildNewCode`
+  (não existe expulsão, G7). ⚠️ divergência plano × código, registrada no STATUS.
+- **⚰️ "grupo sem check-in por 4 semanas é apagado"** (`PLANO-COOP.md` §3.4) — nunca foi
+  implementado; vale só o `COOP_TTL`, e com Bosque plantado nem ele.
+- **Nome da guilda**: ⚰️ D-1 (só `replace/trim/slice`) — hoje `sanitizarNomeDeGuilda`
+  (NFKC, sem `@`, sem contato/URL/rede social, passa por `minimizeForAi`).
 
-**O que NÃO faz.** Não mostra quanto cada membro fez. Não manda push de cobrança:
-o grupo **nunca** avisa que alguém faltou — isso é o cobrador que a essência
-declarada proíbe, entregue por terceiro. Não paga nada por bater a meta. Não tem
-busca de grupos. Não reusa componente de métrica do próprio perfil na tela do
-amigo (a comparação emerge da simetria de componente, mesmo sem leaderboard).
+**O que NÃO faz.** Não mostra quanto cada membro fez. Não manda push de cobrança
+(`guild.semPush.contract.test.js` trava: a Guilda nunca notifica). Não paga
+nada além de Emblemas e cosmético. Não tem busca de guilda. Não reusa
+componente de métrica do próprio perfil na tela do amigo.
 
-**Onde a UI mostra.** `src/components/LibraryPage.tsx` (abas Todos / Amigos /
-Coop), `src/components/CoopPanel.tsx`, `src/components/PlayerDetailModal.tsx`,
+**Onde a UI mostra.** ⚰️ Este bloco dizia "`LibraryPage.tsx` (abas Todos / Amigos /
+Coop)" — falso duas vezes: o rótulo era "Grupo" e a aba é **inalcançável**
+(`hallContent` passa `view`, que esconde as abas). Hoje: `AreaView` →
+`GuildSheet` (**Salão** no lote `guilda` do Hall, **Feira** no lote `feira` da
+Arena — [03 §4.26](03-FLUXO-DE-TELAS.md)); `CoopPanel.tsx` é só um reexport.
+Além disso `src/components/PlayerDetailModal.tsx` e
 `src/components/TournamentPage.tsx` (o toggle e o aviso do diretório).
+
+---
+
+<a id="guilda"></a>
+## 56-A. 🌳 A Guilda: Bosque, fio, marés, Feira e resgate
+
+**Em uma frase.** Uma roda de até 12 pessoas que **constrói junto e nunca cobra**:
+cada dia de presença é um fio, os fios fecham o dia e o Bosque só cresce; uma vez
+por semana a roda encontra um fenômeno da Malha e o dissipa (ou ele recua) sem
+que ninguém saiba quem bateu quanto.
+
+**A regra.** (Fonte: `docs/PLANO-GUILDA.md` §3; constantes em
+`functions/api/_coop.js`, espelhadas para a copy em `src/utils/guildRules.ts`.)
+
+| Peça | O que é | Regra |
+|---|---|---|
+| **Roda** | a Guilda em si | teto `GUILD_MAX_MEMBERS` = **12**; **um coletivo por pessoa** (D-G1); entrada só por código de 8 caracteres (sem 0/O/1/I); **sem expulsão** (G7) — o anfitrião renomeia e troca o código; se o anfitrião sai, a vez passa ao membro mais antigo, em silêncio. |
+| **Fio** | a presença do dia | `guildThread`: **um por pessoa por dia do jogador**, vale `FIO_PER_MEMBER_DAY` = 1, nunca peso nem contagem de tarefa (LV-G8). Firma com a meta de **CORAÇÃO** (`heartGoalFor`, `META_DO_FIO = 'heart'`, **G1** — adotado por padrão, **aguarda confirmação do dono**, `REGISTRO` §5.5): o dia parcial que protege o coração também firma; o servidor confere `done ≥ heart` quando o corpo traz os números. |
+| **Bosque** | a obra da roda | cada dia FECHADO soma `fios do dia ÷ ativos do dia` (teto 1,0); **só soma** (LV-G3) — nada subtrai. Estágios por `BOSQUE_THRESHOLDS` = **2 / 10 / 25 / 50 / 90** dias-de-guilda: Clareira → Ramagem → Copa → Mata → Bosque antigo. O cliente recebe estágio e um binário `perto` (≥ 80% do intervalo), **nunca** "faltam N" nem razão. |
+| **Viajante** | quem sumiu | sem fio há `TRAVELER_AFTER_WEEKS` = **4** semanas sai do denominador e **continua na roda** — derivado, nunca gravado, invisível para todos. |
+| **Marés** | ciclo de 6 semanas | `GUILD_TIDE_WEEKS` = 6. A floração da maré (meta `TIDE_BLOOM_TARGET` = 12 dias-de-guilda) é **colhida no estado em que estiver** na virada e vira peça permanente do Bosque (`ornaments`), em três tamanhos descritivos — `petala` (< `TIDE_COROLLA_AT` = 4), `corola`, `floracao` (≥ 12) —, nenhum "pior". Maré sem crescimento não gera peça e **nada é dito**; nenhuma maré falha e nada é resetado. Resolvida na LEITURA (sem cron). |
+| **Gestos** | a roda se cumprimenta | `aceno`, `luz`, `descanso`: fixos, **anônimos**, para a roda inteira, sem texto livre, **um de cada por dia**, sem push (LV-G4). O TIPO recebido só chega com 3+ membros (`GESTO_TIPO_MIN_MEMBROS`; numa roda de 2 o "anônimo" seria quem sobrou) — abaixo disso vem só `gestureReceived: true`. |
+| **Feira** | o fenômeno da semana | uma **rodada por pessoa por dia** (`RAID_ROUNDS_PER_DAY` = 1), a qualquer hora da semana ISO; **sem gate de fio, de meta ou de Vínculo** (G15). HP coletivo `max(ativos, 3) × 45`; dano `10 + 2 × poder do estágio`, ±20%, sorteado NO SERVIDOR (`crypto`) e **nunca devolvido**. Fenômeno por semana, determinístico: `nevoa`/`mare`/`estatica`/`enxame` (tempo da Malha, **nunca inimigo**, sem guilda × guilda). O cliente vê `aberta`/`dissipada`, o booleano `ferido` (dano ≥ metade), `hitToday` e o desfecho da semana anterior (`dissipada`/`recuou`, `recuou` nunca aponta ninguém). Golpe na semana já terminada só até segunda 12:00 UTC. |
+| **Resgate** | o prêmio | só quem **golpeou** (o direito mora com a pessoa em `coopPart`, e **sobrevive à saída**, A-1). `dissipada` → `RAID_EMBLEMS` = **4** Emblemas; `recuou` → `RAID_EMBLEMS_FLOOR` = **2** (G9: quem se esforçou nunca sai de mão vazia). A cada `RAID_TROPHY_EVERY` = **4** Feiras dissipadas resgatadas, uma **Concha da Maré** (`trophy-concha-mare`, decoração no espaço `trophy`; NUNCA vendida, `not-for-sale`). Três semanas de janela. **LV-G6: só Emblemas e cosmético** — nada de coração, Créditos, energia, `perfectDays`, Glitchtama ou vantagem de evolução (`guildReward.contract.test.js`). |
+| **Cenários do Bosque** | conquista | `bg-guild-<estágio>` para quem firmou **7 dias DISTINTOS** de fio (`STAGE_UNLOCK_DAYS`, não seguidos — LV-G9), até o estágio atual; **ficam com quem sai** (G12), nunca à venda nem no sorteio da masmorra. |
+| **Saída** | um toque | sem confirmação e sem penalidade (LV-G5): o fio ainda não fechado vira contagem anônima do Bosque (a obra nunca regride), os dias distintos de fio viajam com a pessoa (`coopDias`, o relógio dos 7 dias não recomeça) e o resgate pendente continua colhível. |
+
+**Recibo do resgate (M3).** O KV é eventualmente consistente entre regiões, então
+duas respostas 200 são possíveis. O servidor devolve um **recibo determinístico**
+por (conta, semana) — igual no 200, no 409 e em qualquer aparelho — e o cliente
+credita os Emblemas **uma vez por recibo** (`guildClaimLocal.ts`, fallback em
+memória para storage cheio). O `409 already claimed` **traz** o `claimed` do
+registro: quem perdeu a resposta do 200 ainda credita, mas só quem TENTOU neste
+aparelho (`markClaimAttempt`).
+
+**Nada da Guilda vai para o `GameState`** (`guildNoSave.contract.test.ts`): o
+ponteiro é `coopOf:<saveId>` do servidor; o aparelho guarda só **duas chaves de
+conveniência** (`GUILD_LAST_STAGE` e `GUILD_CLAIMED`, travadas em exatamente duas
+pelo teste; os comentários do código chamam a segunda de "terceira" por contar
+uma chave de aviso anterior — ⚠️ contagem de comentário, não de código) e o que
+foi GANHO (cenários, Concha, Emblemas) vai ao save.
+
+**Onde a regra mora.** `functions/api/_coop.js` (constantes, Bosque, fio, marés,
+Feira, cartão do membro) · `functions/api/guild.js` (a resposta única) ·
+`src/utils/guildRules.ts` (espelho para a copy, travado por
+`guildRules.parity.test.ts`) · `src/utils/guildCopy.ts`/`guildCopyCore.ts` (todo
+texto) · `src/utils/groveLocal.ts` e `hooks/useGroveWatch.ts` (o aparelho olha).
+
+**Régua.** `functions/api/guild.*.test.js` (thread, gesture, mare, raid,
+recompensa, saida, vista, l2, invariantes, simParidade, semPush),
+`functions/api/guildReward.contract.test.js`, `account.guildBosque.test.js`,
+`account.guildFeira.test.js`, `src/utils/guildRules.parity.test.ts`,
+`src/utils/guildNoSave.contract.test.ts`,
+`src/components/guild/guildSemCobranca.contract.test.ts` (vocabulário vetado
+LV-G1..G10), `guildFeiraFiacao.contract.test.ts`,
+`src/components/filaDeAvisos.contract.test.ts` (posição da cerimônia).
+
+**Decisão.** `docs/PLANO-GUILDA.md` (G1..G17, LV-G1..G10),
+`docs/NARRATIVA-COPY-GUILDA.md`, `REGISTRO-DE-DECISOES.md` §5.5 (G1) e §5.6 (a
+exceção ao congelamento da Camada 3). Auditorias:
+`docs/reviews/guilda/qa/` (L1..L5).
+
+**Casos de borda.**
+- **Presença nominal só com ≤ 4**; com 5–12 ninguém tem estado e o agregado é UMA
+  frase qualitativa quando `threadedToday` (`true` ou `null`, nunca número).
+- **Ausência nunca é um estado** (M-1): nenhum `false` sobre outra pessoa trafega.
+- **Sair→voltar→firmar não soma a mesma pessoa duas vezes** (A2): o fio avulso é um
+  CONJUNTO de ids opacos por dia, nunca um contador.
+- **Vista de 12** custa ~16 leituras de KV (cartão derivado `coopMem`, A3) em vez de ~114.
+- **Cliente adulterado** que declara estágio `ultra` bate ~20 em vez de ~12 — só
+  derruba o fenômeno da PRÓPRIA guilda um dia antes; o prêmio é cosmético
+  (aceito, `PLANO-GUILDA.md` §10.4).
+
+**O que NÃO faz.** Sem ranking, sem guilda × guilda, sem número por pessoa, sem
+barra da semana, sem push (nem widget: `WPG-14` ainda não existe), sem meta que
+"não bateu", sem Glitchtama ou Créditos como prêmio, sem expulsão.
+
+**Divergências abertas** (para o STATUS): G1 aguarda o dono; `PLANO-COOP.md` §3.4
+e §4.2 (grupo inativo apagado, código de uso único) descrevem o que o código não
+faz; arte real do Bosque/Feira ainda é placeholder (WPG-13/A); motivo próprio de
+telemetria para o convite da Guilda (hoje reusa `shop`).
 
 ---
 
@@ -5433,6 +5537,12 @@ registraram divergência nenhuma**.
 | D31 | `CLAUDE.md`, bloco `docs/NARRATIVA-E-UNIVERSO.md` (`01 §7`) | a régua `src/narrativa.contract.test.ts` trava o vocabulário vetado "com a tabela `DÍVIDA` do que já está no app por decisão pendente" | a tabela chama-se **`EXCECOES`** desde `f3654076` (21/09/2026): a decisão §14.4 do `REGISTRO-DE-DECISOES.md` ("nenhum, aceito todos assim") mudou o estatuto de pendência a quitar para exceção declarada. O que a régua trava não mudou (termos nunca aceitos + espalhamento para arquivo novo) | `grep -n "EXCECOES\|DÍVIDA" src/narrativa.contract.test.ts` → só `EXCECOES` |
 | D32 ⚰️ fechada em `15164e4c` (21/09/2026, dono autorizou corrigir o `CLAUDE.md`: cinco arquivos, S16, S1..S16) | `CLAUDE.md`, linha "Áudio — três arquivos" e bloco `docs/SOM.md` (§58-A) | `src/utils/sounds.ts` são "os **8 sons**, todos sintetizados, **zero byte de asset**"; as decisões canônicas são "**S1..S13**" | desde `ee79fd44` (21/09/2026, S16) há **cinco** `.webm` em `public/sounds/` e `playEvolve`/`playDegenerate`/`playTaskComplete` preferem o asset (`playComAsset`), com o procedural como fallback; são **cinco** módulos de áudio (`sonsAssets.ts` e `trilha.ts` entraram), e o registro vai até **S16** | `ls public/sounds` → 5 arquivos; `grep -n "playComAsset" src/utils/sounds.ts`; `grep -n "S16" docs/REGISTRO-DE-DECISOES.md` |
 | D33 | ⚰️ hint do switch "Trilha" em `src/components/SettingsModal.tsx` (§58-A) | dizia "Uma camada calma, em loop" / "One calm looping layer" | `CAMADAS_DA_TRILHA` tem **duas** camadas (`base` + `ritmo`) desde `8a930657` (21/09/2026). **Fechada em `980bc84c`** (mesmo dia): o hint diz "Duas camadas calmas, em loop" no `SettingsModal` e na `SettingsPage`, e o cabeçalho de `trilha.ts` abre com "duas camadas em fase" | `grep -c "url: '/sounds/trilha-" src/utils/sonsAssets.ts` → 2; `grep -rn "Uma camada" src/components src/utils/trilha.ts` → vazio (21/09/2026) |
+| D34 | `PLANO-COOP.md` §4.2 | o código de convite é "de uso único" | o código é **reutilizável** até a guilda morrer (`coopCodeKey` renovado) e o anfitrião o troca por `guildNewCode`; não existe expulsão (G7) | `grep -n "coopCodeKey" functions/api/_coop.js` |
+| D35 | `PLANO-COOP.md` §3.4 | "grupo sem check-in por 4 semanas é apagado" | **não é implementado**: só o `COOP_TTL` (120 d) — e guilda com Bosque plantado (`bosqueProgress > 0`) nem isso (G17a) | `grep -n "semPrazo" functions/api/_coop.js` |
+| D36 | `PLANO-GUILDA.md` §3 (linha 🧵 do fio) | o fio usa "dia UTC" | o servidor aceita o `dayKey` do JOGADOR a ±1 do dia UTC (`diaDoJogador`, override de G6 do §0.1); o texto do §3 ficou velho (L3-conformidade) | `grep -n "diaDoJogador" functions/api/_coop.js functions/api/guild.js` |
+| D37 | `PLANO-GUILDA.md` §3 (marés) | tamanhos "broto / ramo / floração" | os ids do código são `petala` / `corola` / `floracao` (`TIDE_SIZES`); a copy os nomeia por `tideSizeName` | `grep -n "TIDE_SIZES" functions/api/_coop.js src/utils/guildRules.ts` |
+| D38 | `REGISTRO-DE-DECISOES.md` §5.5 (G1) | o fio é firmado pela meta de coração — a confirmação do dono está pendente | o código já usa `META_DO_FIO = 'heart'` **por padrão da sessão**; trocar é trocar a constante | `grep -n "META_DO_FIO" functions/api/_coop.js` |
+| D39 | comentário de `src/utils/guildClaimLocal.ts` e de `storageKeys.ts` | chama `GUILD_CLAIMED` de "a TERCEIRA chave de conveniência" | a Guilda tem **duas** (`GUILD_LAST_STAGE`, `GUILD_CLAIMED`) — `guildNoSave.contract.test.ts` trava exatamente duas | `grep -n "soulmon-guild" src/utils/storageKeys.ts` |
 
 **Como usar esta tabela.** Antes de "corrigir" qualquer linha, leia a linha
 correspondente do [`REGISTRO-DE-DECISOES.md`](../REGISTRO-DE-DECISOES.md): D1 e

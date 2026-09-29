@@ -1,6 +1,7 @@
 # Fluxo de telas do Soulmon
 
 > **Dono:** doc-redator-telas · **Data:** 28/09/2026 (sincronização do delta `1d9e278d..8110efc5`: §1.3 — `AreaScene` perdeu o NPC anfitrião fixo do rodapé, que passou a morar dentro da `AreaSheet`, por sub-loja (`lotNpcArt`), com a folha em altura fixa 2/3 da tela); anterior: 27/09/2026 (sincronização do delta `78ef5367..c510c7e4`, correções pós-F3 da minimal-ui: §1.1 o voltar físico do Android sai do `App.tsx` para `utils/androidBack.ts` (minimiza, não fecha), §1.2 `CornerLink icon="mapa"` e o saldo do Mapa no canto inferior direito em pílulas `chip-moeda`, §4.2 ⚰️ o deck de CINCO ações (não existe desde a F2) e no lugar dele OS TRÊS CUIDADOS (`sm3-cuidar`) com a arte em pixel; anterior: 24/09/2026 (fechamento F6 da minimal-ui: §1 reescrito para Home + Mapa + 6 áreas — `navigation.ts`, `goTo`/`goBack`/`viewBack`, `HomeMenuSheet`, `AreaView`; lápides ⚰️ em §4.2b `ItemsWindow`, §4.4 `ActivitiesPage`, §4.6 `ShopModal`; §4.1/§4.9/§4.10/§4.13/§4.14/§4.15/§4.22/§4.23a e a tabela do §6 com o caminho novo; conferido contra o fonte, sem passar pelo doc-verificador); anterior: 22/09/2026 (5ª sincronização do dia, delta `89554b5d..c7bca6d`: a linha `FAVORITE_STEP` da tabela de passos do ritual virou ⚰️ e ganhou o parágrafo do degrau pulado nos dois sentidos (e do rascunho antigo desviado); anterior: 22/09/2026 (3ª sincronização do dia, delta `cd66940f..cf6315e1`: §4.5 marcar feito abre 5 s de "Desfazer" (os dois handlers, inclusive a última etapa) e §4.25 ganhou a linha do `UndoToast` entre as superfícies globais (#57); anterior: 2ª sincronização do dia, delta `a6c1cd8a..592e2c14`, QA Rodada 2: §2.1 gate `; wv)`, §2.3 portão com lápide ANTES do onboarding + região viva + `OfflineSeal`, §2.4 falha de IA com nome e hint que fica, §3.2 banner de termos em posição 1 na primeira vez, §4.2 fallback do sprite e falas do fallback, §4.17 âncora visível, §4.23 Termos na Ajuda e `#en`, §4.25 selo nas telas pré-Home))) · **Estado:** verificado em 28/09/2026 por doc-verificador (delta `1d9e278d..8110efc5` — §1.3 conferido contra `src/components/nav/AreaScene.tsx` (sem bloco `data-area-npc`, sem import de `areaNpcVoice`/`AREA_NPC_ART`) e `src/components/nav/AreaSheet.tsx` (`height: '66.6667dvh'`, `data-area-sheet-npc-zone` com `flex: '0 0 50%'`, props `lotId`/`language`) e `src/assets/soulmon/npcs/index.ts` (`lotNpcArt`, `LOT_NPC_ART`, `PLACEHOLDER_NPC_ART`)); anterior: verificado em 27/09/2026 por doc-verificador (delta `78ef5367..c510c7e4` — §1.1 contra `src/utils/androidBack.ts` (`Capacitor.isNativePlatform`, `App.minimizeApp`/`exitApp`) e `src/App.tsx`; §1.2 contra `CornerLink.tsx` (`icon: 'mapa' | 'home'`) e `MapPage.tsx` (`zIndex: 2`, `bottom`, `border-image`); §4.2 contra `CompanionHUD.tsx` (`sm3-cuidar`, `data-cuidado`, `sm3-cuidado-inerte`, `aria-pressed`) e `grep -c 'sm2-deck"'` → 0; alvo de 44 medido em `.sm3-cuidado` do `index.css`); anterior: verificado em 24/09/2026 por doc-verificador (HEAD `78ef5367` — §3.2 slot `'incubacao'` (`incubandoAgora`, `isIncubating`, `Icon egg`, copy) e §4.10 `evoluiNoToque`/`incubating`/`fraseProgresso`/`rotuloDoVisor` conferidos em `App.tsx` e `EvolutionPath.tsx`; §1 e amostra de §4.1/§4.9/§4.13–§4.15/§4.22/§4.23a/§6 contra `navigation.ts`, `goTo`/`goBack`/`backButton`, `HomeMenuSheet`, `CornerLink`, `AreaView`; corrigidos: fila 2 sem `incubacao` no diagrama §1.4 e §6 #9, contagem "oito"→"nove", §4.9 `pane === 'oracle'` e `OraclePage`/`PixelizerCard` alcançáveis em §4.9 e §6 #7); anterior: verificado em 22/09/2026 por doc-verificador (delta `89554b5d..c7bca6d` — `FAVORITE_STEP = 5` e `QUIZ_START = FAVORITE_STEP + 1` intactos no fonte; os dois desvios (`next()` em `FAVORITE_STEP - 1`, `back()` em `QUIZ_START`) e o inicializador de `step` conferidos em `SoulmonOnboarding.tsx`; nenhum bloco `step === FAVORITE_STEP` renderiza); anterior: verificado em 22/09/2026 por doc-verificador (delta `cd66940f..cf6315e1` — `src/components/UndoToast.tsx` e as duas chamadas de `ofereceDesfazer` no `src/App.tsx` conferidas); anterior: verificado em 22/09/2026 por doc-verificador (delta `a6c1cd8a..592e2c14` — as seções acima conferidas símbolo a símbolo contra `index.html`, `SoulmonOnboarding.tsx`, `GameTutorialFlow.tsx`, `App.tsx`, `CompanionHUD.tsx`, `MorningCheckIn.tsx`, `SettingsPage.tsx`; anterior no mesmo dia: delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §2.1 gate por plataforma (`index.html`), §2.3 aviso de conta excluída no portão (`SoulmonOnboarding.tsx` › `avisoContaExcluida`), §2.4 hint de IA, §3.2 item 7 `changed`/`region`/"Entendi", §4.23 Sobre e Ajuda conferidos símbolo a símbolo contra o fonte; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §2.1 aviso de WebView, §3.2 item 6 `termos`, §4.23 grupo Sobre, §4.23a/§4.23b ⚰️ `SettingsModal`, §4.25 `ErrorBoundary` conferidos símbolo a símbolo; anterior: §4.23/§4.23b, delta `5ac3d351..8d318529`, som/S16 + grupo "Som" na `SettingsPage`; verificação anterior do mesmo dia: delta `dc72579e..9875477b`, 30 commits: copy da bíblia §1–§6-bis, superfície de suporte, rodada 2 da arte; verificação anterior do delta `2580b73a..dc72579e`, Fase 2, identidade "O Visor", 14 fluxos: 21/09/2026)
+> **Estado:** verificado em 29/09/2026 por doc-mantenedor (sem a ferramenta Agent nesta sessão: verificação própria, símbolo a símbolo por `grep` contra o fonte — exports de `_coop.js`/`guild.js`/`_profile.js`, módulos novos de `src/`, constantes e chaves de KV; delta `38c3ccb5..b657a340`, só as seções tocadas; `docsManual`/`docsSemMentira` verdes)
 > **Verificação:** `npx vitest run src/components/filaDeAvisos.contract.test.ts src/components/evolucaoManual.contract.test.ts src/components/ofertaDoisCanais.contract.test.ts src/components/upgradeReveal.contract.test.ts src/components/textoBilingue.contract.test.ts src/plugins/widgetSemCobranca.contract.test.ts src/components/SoulmonOnboarding.oraculo.render.test.tsx src/components/StatsPage.render.test.tsx src/utils/petVoice.test.ts src/narrativa.contract.test.ts` · guard do manual: `npx vitest run src/docsManual.contract.test.ts`
 > **Não cobre:** aparência (cor, tipografia, espaçamento, tokens `--sm2-*`) — é do `04-IDENTIDADE-VISUAL.md`; as REGRAS que as telas aplicam (corações, meta do dia, evolução, moedas) — são do `02-REGRAS-DE-NEGOCIO.md`; a assinatura de cada componente — é de [`06-REFERENCIA/components.md`](06-REFERENCIA/components.md); percurso real com o app rodando — é do procedimento "Inventário de superfícies" de `.claude/skills/squad-design/METODO.md` (⚰️ agente `soulmon-screen-cartographer`, 21/09/2026), cuja medição de 19/08/2026 está em [`../INVENTARIO-TELAS.md`](../INVENTARIO-TELAS.md).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -156,10 +157,10 @@ null` e `language: Language` (agora obrigatória):
 |---|---|---|
 | `mercado` | Mercado / Market | Itens, Decoração, Background (abas por moeda, `MercadoSheets` + `utils/mercadoCatalog.ts`) · Conquistas |
 | `jogos` | Jogos / Games | Pedra, papel e tesoura (`PptSheet` → `RPSGame`) |
-| `arena` | Arena | Torneio (`TournamentPage`, com a loja de Emblemas) · Duelo (`DueloSheet` → `ArenaGame`) |
+| `arena` | Arena | Torneio (`TournamentPage`, com a loja de Emblemas) · Duelo (`DueloSheet` → `ArenaGame`) · **Feira** (`GuildSheet room="feira"`, NPC Fanfa — [§4.26](#guilda-tela); ⚰️ o lote `guilda` da Arena virou a Feira) |
 | `exploracao` | Exploração / Exploration | Masmorra (`MasmorraSheet` → `DungeonGame`) · Corrida do Dino (`DinoSheet` → `DinoGame`) |
 | `laboratorio` | Laboratório / Laboratory | Evolução — abas sublinhadas Evolução / Soulmon / Estatísticas (`labTab`) |
-| `hall` | Hall | Biblioteca (`LibraryPage`, decisão D4) |
+| `hall` | Hall | Biblioteca (`LibraryPage`, decisão D4) · **Salão da Guilda** (`GuildSheet room="salao"`, NPC Marla — [§4.26](#guilda-tela)) |
 
 Rótulos: `areaLabel` (`navigation.ts`); lotes: `utils/areaSheetCopy.ts`
 (Mercado, Arena, lote único de Laboratório/Hall) e `utils/playAreaLots.ts`
@@ -530,17 +531,26 @@ o assunto restante virou a constante exportada `SHOP_AND_CURRENCY_PRIMER`.
 A prioridade é **uma expressão só**, no `src/App.tsx` (`const interstitial`):
 
 ```ts
-const interstitial: 'triage' | 'dailyReport' | 'checkIn' | 'dream' | 'nightmare' | 'welcome' =
+const interstitial: 'triage' | 'dailyReport' | 'checkIn' | 'groveMilestone' | 'dream' | 'nightmare'
+  | 'catalogOnboarding' | 'catalogLevelInvite' | 'welcome' =
   triageTasks ? 'triage'
     : showDailyReport && gameState.lastDayReport ? 'dailyReport'
       : checkInPlanData ? 'checkIn'
-        : morningDream ? 'dream'
-          : nightmareOpen ? 'nightmare'
-            : 'welcome';
+        : grovePendente ? 'groveMilestone'
+          : morningDream ? 'dream'
+            : nightmareOpen ? 'nightmare'
+              : needsCatalogOnboarding(gameState) ? 'catalogOnboarding'
+                : catalogLevelInviteCandidate ? 'catalogLevelInvite'
+                  : 'welcome';
 ```
 
-Ordem: **triagem → relatório diário → check-in → sonho → pesadelo → welcome
-prompt**. Quem está mais abaixo continua **pendente** e monta sozinho quando o de
+Ordem: **triagem → relatório diário → check-in → marco do Bosque (`groveMilestone`,
+Guilda, 29/09/2026) → sonho → pesadelo → onboarding do catálogo → convite de nível
+do catálogo → welcome prompt**. (⚰️ esta lista omitia os dois do catálogo — ver o
+`const interstitial` do `App.tsx`; a régua é `filaDeAvisos.contract.test.ts`, que
+trava a ordem inteira e a posição do `groveMilestone`: depois de relatório e
+check-in, ANTES do sonho — é raro e descritivo, cede a vez ao que se faz todo
+dia, mas não espera o adiável.) Quem está mais abaixo continua **pendente** e monta sozinho quando o de
 cima fecha — nada é descartado. A triagem vem primeiro por ser a única aberta
 por TOQUE do usuário; o welcome prompt vem por último porque é o único que decide
 sozinho se tem algo a dizer.
@@ -571,7 +581,8 @@ ordem literal dos `push`, com a chave de cada um:
 | 5 | `'priming'` | `mostrarPrimingDePush` (`shouldPrimePush`, `utils/pushPriming.ts`) | seção inline com "Pode sim" / "Agora não" |
 | 6 | `'recomeco'` | `freshStartDismissed ? null : freshStartOffer(gameState, agoraA, language)` | bloco `sm2-notice` inline |
 | 7 | `'carga'` | `isOvercommitted(plannedEffort(gameState.tasks, gameState.activities, dayKeyOf(agoraA), gameState.habitRhythms))` (`utils/taskTriage.ts`; `OVERCOMMIT_EFFORT` em `types/taskModel.ts`) — **é AVISO, NUNCA BLOQUEIO** (`CLAUDE.md` › Carga do dia); canvas Atividades D10 | `<p role="status">` inline com `Icon info` dourado: "É bastante pra um dia só — quer deixar uma pra amanhã? (Tudo bem de qualquer jeito.)". ⚰️ esta tabela omitia a linha até 21/09/2026 (QA Rodada 1, `07-growth-comportamento-r1.md` N5) |
-| 8 | `'termos'` | `precisaAvisarTermos(gameState.consent, TERMS_VERSION, PRIVACY_VERSION, termsNoticeSeen)` (`utils/termsNotice.ts`, desde `42b07bec`, decisão #24 — só quem já consentiu a uma versão ANTERIOR; save sem registro nunca vê) | `TermsUpdateBanner changed={qualDocMudou(gameState.consent!, TERMS_VERSION, PRIVACY_VERSION)}` (`.sm2-notice`, **`role="region"` + `aria-labelledby`** desde `a6c1cd8a` — ⚰️ `role="status"`): o título diz **qual documento mudou** ("Os Termos de Uso mudaram" / "A Política de Privacidade mudou" / "Os Termos e a Política de Privacidade mudaram", por `changed`), só o link do que mudou ("Ler os Termos" / "Ler a Política", em aba nova, com "(abre em nova aba)" no nome acessível; EN aponta para `#en`), subtítulo "Você continua jogando normalmente. Se quiser ler o que mudou, está aqui." (⚰️ "Nada muda no seu jogo…") e **"Entendi" / "Got it"** (⚰️ "Ok"), que grava `marcaAvisoTermos` em `STORAGE_KEYS.TERMS_NOTICE_SEEN`. Informativo, **sem re-aceite**, e **o último da fila** — é o único aviso que não fala do dia da pessoa; travado como último em `filaDeAvisos.contract.test.ts` desde `a6c1cd8a`; o comentário do código o chama de "7." porque conta o `hp` como 1. As versões subiram para **2026-09-22** em `a6c1cd8a` (mudança material da política — o que vai ao Groq), então quem consentiu antes vê o banner de "ambos" uma vez |
+| 8 | `'marcoBosque'` | `groveAvisoFor(grove, playerDayKey(new Date(), gameState.playerDayTz))` (`utils/groveLocal.ts`) — só NO DIA em que ESTE aparelho viu o estágio novo; na virada some sozinho (é aviso, não pendência). Atrás de `recomeco` e `carga`: é o mais adiável. Sem "não perca", sem número | bloco `sm2-notice` inline (`data-guild-marco-aviso`, ícone `eco`, texto `guild.marco.aviso`) |
+| 9 | `'termos'` | `precisaAvisarTermos(gameState.consent, TERMS_VERSION, PRIVACY_VERSION, termsNoticeSeen)` (`utils/termsNotice.ts`, desde `42b07bec`, decisão #24 — só quem já consentiu a uma versão ANTERIOR; save sem registro nunca vê) | `TermsUpdateBanner changed={qualDocMudou(gameState.consent!, TERMS_VERSION, PRIVACY_VERSION)}` (`.sm2-notice`, **`role="region"` + `aria-labelledby`** desde `a6c1cd8a` — ⚰️ `role="status"`): o título diz **qual documento mudou** ("Os Termos de Uso mudaram" / "A Política de Privacidade mudou" / "Os Termos e a Política de Privacidade mudaram", por `changed`), só o link do que mudou ("Ler os Termos" / "Ler a Política", em aba nova, com "(abre em nova aba)" no nome acessível; EN aponta para `#en`), subtítulo "Você continua jogando normalmente. Se quiser ler o que mudou, está aqui." (⚰️ "Nada muda no seu jogo…") e **"Entendi" / "Got it"** (⚰️ "Ok"), que grava `marcaAvisoTermos` em `STORAGE_KEYS.TERMS_NOTICE_SEEN`. Informativo, **sem re-aceite**, e **o último da fila** — é o único aviso que não fala do dia da pessoa; travado como último em `filaDeAvisos.contract.test.ts` desde `a6c1cd8a`; o comentário do código o chama de "7." porque conta o `hp` como 1. As versões subiram para **2026-09-22** em `a6c1cd8a` (mudança material da política — o que vai ao Groq), então quem consentiu antes vê o banner de "ambos" uma vez |
 
 - **Régua**: `src/components/filaDeAvisos.contract.test.ts` — exige as chaves
   `'firstDay'` e `'priming'`, exige que `shouldShowFirstDay(` e
@@ -580,7 +591,7 @@ ordem literal dos `push`, com a chave de cada um:
 
 ⚠️ O comentário do slot no `App.tsx` numera "1. HP" duas vezes (a primeira antes
 do item 0). É defeito de comentário, não de comportamento: a ordem executada é a
-dos `push`, que é a da tabela acima — sete itens desde `42b07bec`, nove desde a incubação (contando a `carga`, que a tabela omitia até 21/09/2026; WP4.29, `8be8f9c5`; `'incubacao'` entra logo depois do `hp`), o banner de
+dos `push`, que é a da tabela acima — sete itens desde `42b07bec`, nove desde a incubação, **dez** desde o marco do Bosque (29/09/2026) (contando a `carga`, que a tabela omitia até 21/09/2026; WP4.29, `8be8f9c5`; `'incubacao'` entra logo depois do `hp`), o banner de
 termos por último ("é o único aviso que não fala do dia da pessoa") — **exceto
 na PRIMEIRA aparição de cada versão, que entra em posição 1** (desde
 `592e2c14`, QA Rodada 2 A3: `termsNoticePrimeiraVez` = `STORAGE_KEYS.TERMS_NOTICE_SHOWN`
@@ -1684,10 +1695,11 @@ folha ou voltar ao Mapa.
   rede. ⚰️ A versão anterior tratava falha de rede como "nenhum jogador
   encontrado" (`.catch(() => setPlayers([]))`), a pior mentira possível numa tela
   social.
-- **`CoopPanel`**: montado dentro da página, com `metaDoDiaCumprida` vindo do
-  `App.tsx` (`dailyTotal > 0 && dailyDone >= dailyTotal`) — a meta é do motor, e
-  o painel não pode ter uma segunda cópia dela. O número é do **grupo**, nunca de
-  um membro; por pessoa existe só "apareceu hoje: sim/não".
+- **`CoopPanel`** ⚰️ (corrigido em 29/09/2026 — dizia "montado dentro da página"): o único
+  mount na Biblioteca passa `view`, que esconde as abas, então a aba "Grupo" é
+  **inalcançável**; a Guilda vive nas duas salas do [§4.26](#guilda-tela), e `CoopPanel`
+  é só um reexport de `GuildSheet`. A meta que autoriza o fio vem do `App.tsx`
+  (`fioMetaCumprida`, pela meta de CORAÇÃO) — o painel não tem segunda cópia dela.
 - **Superfícies desde `f757ed26`** (canvas Social, `DECISOES-WIREFRAME.md` §28):
   o `PlayerDetailModal` é um `RitualDialog` com × "Fechar"/"Close"; as abas são
   `role="tab"`; ação sem rede/sem saldo é **inerte por forma** (tracejado +
@@ -1942,6 +1954,50 @@ mudo por `src/utils/audioBus.contract.test.ts`.
 **Régua**: `GuideModal.gateReal.render.test.tsx`,
 `src/components/textoBilingue.contract.test.ts`.
 
+### 4.26 A Guilda — o Salão (Hall) e a Feira (Arena) <a id="guilda-tela"></a>
+
+**Chega por**: área **Hall** → lote **Salão da Guilda** (NPC Marla, `hall:guilda`) abre
+`GuildSheet room="salao"`; área **Arena** → lote **Feira** (NPC **Fanfa**, `arena:feira`)
+abre `GuildSheet room="feira"` — a mesma folha, duas salas (`AreaView`). ⚰️ Até a fatia B2
+a Arena tinha um lote `guilda` que abria a folha inteira. · **Sai para**: fechar a folha
+(o foco volta ao lote que abriu, `useDialogA11y`) ou o voltar do sistema.
+
+- **Salão** — UM scroll com três seções, e **vazio é SILÊNCIO** (seção sem nada a dizer
+  não desenha nem título):
+  - **Bosque**: o visor (`GroveVisor`: cenário `bg-guild-<estágio>` e as criaturas na linha
+    do chão — 5–12 membros → só a SUA; ≤ 4 → todos, em ordem de chegada), o nome do estágio,
+    uma frase `perto` BINÁRIA e o botão do fio (só existe quando a meta de coração do dia
+    foi cumprida; "ainda não" é silêncio, nunca frase). Sem roda: a **Clareira** no vazio e
+    o formulário de criar/entrar.
+  - **Roda**: os três gestos fixos e anônimos (`aceno`, `luz`, `descanso`, um de cada por
+    dia; os gestos recebidos aparecem **no topo**), presença nominal só com ≤ 4 (e só quando
+    é verdade — ausência não desenha nada), e com 5+ UMA frase qualitativa quando há fio.
+  - **Mural**: os marcos com a DATA em que ESTE aparelho os viu e as peças de maré colhidas.
+  - **Rodapé fixo**: "Sair" (um toque, sem diálogo) e, para o anfitrião, renomear e trocar o código.
+- **Feira** — o visor do fenômeno (`FeiraVisor`: três estados `aberto`/`ferido`/`dissipado`,
+  quatro tipos `nevoa`/`mare`/`estatica`/`enxame`; **placeholder em SVG**, sem rosto, número
+  nem barra de HP), UM botão de rodada por dia (`guild.feira.rodada.botao` → `...feita`),
+  a frase sóbria com os Emblemas (`guild.feira.sobria`, números de `RAID_EMBLEMS`/`_FLOOR`)
+  e o **cartão de colher** — visível também para quem já saiu da roda. Sem roda: um convite
+  curto (`guild.feira.semroda`).
+- **Estados de erro**: falha de CARGA nunca vira "sem roda" — é tela de erro com "tentar de
+  novo"; **401** vira "Entrar na conta" (+ `UnlockNudge` para o demo), nunca um formulário morto.
+  409/429/404 do resgate e da rodada são estados, não frases (a folha relê em silêncio).
+- **Fora da folha, no App**: (1) a **cerimônia `groveMilestone`** (`GroveMilestoneCeremony`,
+  z 300, espera o gesto, saídas botão/Escape/voltar, sem "parabéns" nem número) entra na fila de
+  intersticiais ([§3.1](#3-as-duas-filas)) a partir da **Ramagem** (`CEREMONY_MIN_INDEX` = 2; a
+  Clareira é o chão e a primeira vez que o aparelho vê a roda é baseline, sem cerimônia);
+  (2) o **aviso `marcoBosque`** da Home ([§3.2](#3-as-duas-filas)); (3) **"Do bosque"** no
+  topo dos segmentos Background e Decoração do Mercado (`GuildOwnedShelf`: os cenários e a
+  Concha da Maré que a roda deu — só equipa, sem preço, e a seção nem aparece se não há nada).
+- **Dono**: `src/components/guild/GuildSheet.tsx`, `GroveVisor.tsx`, `FeiraVisor.tsx`,
+  `GroveMilestoneCeremony.tsx`; `src/components/mercado/GuildOwnedShelf.tsx`;
+  `src/hooks/useGroveWatch.ts`; `src/utils/groveLocal.ts`, `groveStage.ts`, `guildCopy.ts` ·
+  **Régua**: `guild/GuildSheet.render.test.tsx`, `guild/GuildSheet.feira.render.test.tsx`,
+  `guild/GroveMilestoneCeremony.render.test.tsx`, `guild/guildSemCobranca.contract.test.ts`,
+  `filaDeAvisos.contract.test.ts`. Regra: [02 §56-A](02-REGRAS-DE-NEGOCIO.md#guilda).
+- ⚠️ **Wireframes GUI-01..16 ainda não existem** (WPG-W); o desenho acima é o do código.
+
 ---
 
 ## 5. Superfícies fora do app
@@ -2084,3 +2140,4 @@ export const PUSH_HOURS_UTC = PUSH_HOURS_BRT.map(h => (h + 3) % 24).sort((a, b) 
 | 11 | "o fundo do widget é vetor `pet_grid.xml`" | `CLAUDE.md` (footgun 4) | `android/app/src/main/res/drawable/pet_grid.xml` foi **apagado** no delta (`6affd501`); o fundo é `widget_bg.xml` (`<shape>`, `drawable/` e `drawable-v31/`) — §5.1 |
 | 12 | "uma **run = 5 andares**", "Concluir os 5 andares", "bônus de andar" | `CLAUDE.md` (linha ⚔️ Masmorra) e linha ⭐ ("os 5 andares da masmorra") | desde `84ae4937` (21/09/2026) o jogador lê **descida** e **camada** ("Camada N de 5", "Descer", "Descer de novo", "As 5 camadas ficaram para trás"); `run`/`floor`/`MAX_FLOORS` continuam sendo os nomes de código — vocabulário, não mecânica — §4.14 |
 | 13 | "Recusa = pet fala que está cheio (sem toast)" e a tabela 🫶 sem dizer o que acontece ao usar 💗 com a vida cheia | `CLAUDE.md` (linhas 🍎 e 🫶) | continua sem toast; mas a frase de comida cheia vem de `PET_VOICE_LINES.full` (`petVoice.ts`), não do `CompanionHUD`, e a vida cheia ao usar 💗 fala `steady` ("Tô firme. Guarda essa."), ⚰️ não mais o canal do teto de carinho (`healCapSignal`) — §4.2, §4.2b |
+| 14 | "`CoopPanel`: montado dentro da página [Biblioteca]" e "`LibraryPage` (abas Todos / Amigos / Coop)" | `03 §4.22` (antes de 29/09/2026) e `02 §56` | a aba é inalcançável (`hallContent` passa `view`); a Guilda mora em `GuildSheet` (Salão no Hall, Feira na Arena), e o comentário do `CoopPanel.tsx` é um reexport de uma linha (L1-conformidade #28) |
