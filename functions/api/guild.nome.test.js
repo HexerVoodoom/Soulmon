@@ -43,6 +43,14 @@ const CONTATOS = [
   'www.roda.com',
   'segue @anaclara',
   'ana@roda',
+  // B3 (L2-backend): contato sem esquema nem `www`.
+  't.me/fulano',
+  'x.com/fulano',
+  'insta: fulano_xyz',
+  'ig:fulano',
+  'discord fulano#1234',
+  'joao arroba gmail ponto com',
+  'roda.gg',
 ];
 
 describe('sanitizarNomeDeGuilda', () => {
@@ -54,6 +62,11 @@ describe('sanitizarNomeDeGuilda', () => {
     expect(sanitizarNomeDeGuilda('Ｒｏｄａ')).toBe('Roda');
     expect(sanitizarNomeDeGuilda('x'.repeat(40))).toHaveLength(24);
     expect(sanitizarNomeDeGuilda('   ')).toBeNull();
+    // Nomes legítimos seguem passando.
+    for (const ok of ['Roda do Bosque', 'Os Madrugadores', 'Clube 2026', 'Ponto de Encontro', 'Café & Chá']) expect(sanitizarNomeDeGuilda(ok)).toBe(ok);
+    // Corte por ponto de código: nenhum substituto solto no fim.
+    const cortado = sanitizarNomeDeGuilda('a'.repeat(23) + '🌳🌳');
+    expect(cortado).toBe('a'.repeat(23) + '🌳');
     expect(sanitizarNomeDeGuilda(undefined)).toBeNull();
   });
   it('um contato LONGO não escapa por ser cortado antes da checagem', () => {

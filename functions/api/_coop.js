@@ -91,14 +91,34 @@ export const NOME_MAX = 24;
  * Não passa por `_aiGuard.js`: não há chamada de IA aqui, e o guard é de cota.
  * @returns {string | null}
  */
+/**
+ * Contato que o redator de IA não pega porque não tem esquema nem `www` (B3,
+ * L2-backend): `t.me/fulano`, `x.com/fulano`, `insta: fulano`, `discord
+ * fulano#1234`, `fulano arroba gmail ponto com`. Domínio "nome.tld/" ou
+ * "nome.tld" com TLD comum também cai. O falso positivo aceitável é um nome
+ * que pareça endereço — é exatamente o que a régua existe para recusar.
+ */
+const CONTATO_SEM_ESQUEMA = [
+  /\b[a-z0-9-]+\.(?:com|me|gg|io|net|org|br|tv|ly|app|co|xyz|link|bio)\b/i,
+  /\b(?:insta(?:gram)?|ig|tiktok|tt|twitter|discord|dc|telegram|tg|whats(?:app)?|zap|wpp|snap(?:chat)?|face(?:book)?|fb|kwai|onlyfans)\s*[:=/#]/i,
+  /\bdiscord\b/i,
+  /#\d{4}\b/,
+  /\barroba\b/i,
+  /\bponto\s+(?:com|br|net|org)\b/i,
+  /\bdot\s+(?:com|net|org)\b/i,
+];
+
 export function sanitizarNomeDeGuilda(raw) {
   const limpo = String(raw ?? '').normalize('NFKC')
     .replace(/\p{C}/gu, ' ').replace(/\s+/g, ' ').trim().slice(0, 200);
   if (!limpo) return null;
   if (limpo.includes('@')) return null;
+  if (CONTATO_SEM_ESQUEMA.some(re => re.test(limpo))) return null;
   const { redactions } = minimizeForAi(limpo, 200);
   if (redactionCount(redactions) > 0) return null;
-  const nome = limpo.slice(0, NOME_MAX).trim();
+  // Corta por PONTO DE CÓDIGO, nunca por unidade UTF-16: `slice` podia deixar
+  // metade de um par substituto (emoji) solta no fim do nome.
+  const nome = Array.from(limpo).slice(0, NOME_MAX).join('').trim();
   return nome || null;
 }
 
