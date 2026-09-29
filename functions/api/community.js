@@ -37,7 +37,7 @@ import { bondLevelOf, BOND_PVP_MIN_LEVEL } from './_bond.js';
 import { kv, kvOrThrow } from './_kv.js';
 import {
   COOP_MAX_MEMBERS, COOP_CHECKINS_POR_MEMBRO, coopOfKey, coopCodeKey, semanaDe, novoCodigo,
-  diaDoJogador, semanaDoDia, coopKey as coopKeyDe,
+  diaDoJogador, semanaDoDia, coopKey as coopKeyDe, sanitizarNomeDeGuilda,
   lerGrupo, gravarGrupo, renovarPrazos, lerCheckins, gravarCheckins, rolarSemana, grupoDe, coopLeave,
 } from './_coop.js';
 const CORS = {
@@ -436,9 +436,14 @@ async function handleCommunity({ request, env }) {
       bondLevel = await bondLevelOf(env, id);
       if (bondLevel < BOND_PVP_MIN_LEVEL) { pvpEnabled = false; pvpBlocked = true; }
     }
+    // Apelido: a mesma régua do nome da guilda (D-1). O perfil é gravado junto
+    // do cloud save, então recusar derrubaria a sincronização inteira — o
+    // apelido com contato é DESCARTADO (fica o anterior) e a resposta avisa.
+    const apelidoPedido = body.name ? sanitizarNomeDeGuilda(body.name) : null;
+    const nameRejected = !!body.name && !apelidoPedido;
     const profile = {
       id,
-      name: String(body.name || prev.name || 'Anônimo').slice(0, 24),
+      name: apelidoPedido || sanitizarNomeDeGuilda(prev.name) || 'Anônimo',
       stage: String(body.stage || prev.stage || 'rookie').slice(0, 40),
       petName: String(body.petName || prev.petName || '').slice(0, 32),
       unlockedStages: Array.isArray(body.unlockedStages) ? body.unlockedStages.slice(0, 16) : (prev.unlockedStages || []),
@@ -459,6 +464,7 @@ async function handleCommunity({ request, env }) {
     if (pidLegado) await kvOrThrow(env).delete(`${PID_PREFIX}${pidAntigo}`);
     return json({
       ok: true, id: profile.pid, pvpEnabled: profile.pvpEnabled,
+      ...(nameRejected ? { nameRejected: true } : {}),
       ...(pvpBlocked ? { pvpBlocked: true, bondLevel, minBondLevel: BOND_PVP_MIN_LEVEL } : {}),
     });
   }
@@ -797,7 +803,8 @@ async function handleCommunity({ request, env }) {
     // tratamento que o apelido do perfil já recebe neste arquivo (teto de 24) e
     // nada além disso: duas regras diferentes para o mesmo tipo de campo é o
     // footgun 9 em miniatura. Se um dia isto pedir filtro, pede nos DOIS lugares.
-    const nome = String(body.name ?? '').replace(/\s+/g, ' ').trim().slice(0, 24);
+    // `sanitizarNomeDeGuilda` é a MESMA função do apelido do perfil (D-1).
+    const nome = sanitizarNomeDeGuilda(body.name);
     if (!nome) return json({ error: 'invalid name' }, 400);
     // Código já em uso é resorteado. São 8 caracteres de um alfabeto de 32
     // (~40 bits), então a colisão é remota — mas a consequência não é: o

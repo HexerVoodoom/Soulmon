@@ -14,6 +14,7 @@
 
 import { VALID_ID } from './_entitlements.js';
 import { kvOrThrow } from './_kv.js';
+import { minimizeForAi, redactionCount } from './_redact.js';
 
 export const COOP_MAX_MEMBERS = 4;
 /** Check-ins por membro por semana. 5 e não 7: exigir dia perfeito por pressão
@@ -70,6 +71,31 @@ export function diaDoJogador(raw, now = new Date()) {
 
 /** Semana ISO de um dia `YYYY-MM-DD` (o dia do jogador, já validado). */
 export const semanaDoDia = day => semanaDe(new Date(`${day}T00:00:00Z`));
+
+/** Teto do nome da guilda E do apelido do perfil — a mesma régua nos dois. */
+export const NOME_MAX = 24;
+
+/**
+ * Nome da guilda / apelido do perfil (D-1, `05-servidor.md` §5.1). Texto do
+ * jogador lido por OUTRAS pessoas: normaliza (NFKC, sem caractere de controle,
+ * espaço colapsado), e RECUSA — devolve `null` — o que carrega contato: e-mail,
+ * telefone, URL, documento ou `@`. Recusar e não mascarar: publicar `[email]`
+ * como nome não é nome. A verificação roda sobre o texto INTEIRO antes do
+ * corte, senão um contato longo passaria cortado ao meio.
+ *
+ * Não passa por `_aiGuard.js`: não há chamada de IA aqui, e o guard é de cota.
+ * @returns {string | null}
+ */
+export function sanitizarNomeDeGuilda(raw) {
+  const limpo = String(raw ?? '').normalize('NFKC')
+    .replace(/\p{C}/gu, ' ').replace(/\s+/g, ' ').trim().slice(0, 200);
+  if (!limpo) return null;
+  if (limpo.includes('@')) return null;
+  const { redactions } = minimizeForAi(limpo, 200);
+  if (redactionCount(redactions) > 0) return null;
+  const nome = limpo.slice(0, NOME_MAX).trim();
+  return nome || null;
+}
 
 export const coopKey = gid => `coop:${gid}`;
 export const coopOfKey = save => `coopOf:${save}`;
