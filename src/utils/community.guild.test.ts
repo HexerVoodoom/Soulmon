@@ -8,7 +8,7 @@ vi.mock('./auth', () => ({ authHeaders: vi.fn(async () => ({ Authorization: 'Bea
 vi.mock('./cloudSave', () => ({ reagirContaExcluida: vi.fn(async () => {}) }));
 
 import {
-  getGuild, createGuild, joinGuild, guildCheckin, leaveGuild, renameGuild, newGuildCode,
+  getGuild, createGuild, joinGuild, guildCheckin, guildThread, guildGesture, leaveGuild, renameGuild, newGuildCode,
   sanitizeGuildView, GuildError, type GuildErrorKind,
 } from './community';
 import { reagirContaExcluida } from './cloudSave';
@@ -23,7 +23,8 @@ const view = (over: Record<string, unknown> = {}) => ({
     { id: 'p2', pid: 'p2', name: 'Bia', euMesmo: false, apareceuHoje: false },
   ],
   presence: [{ pid: 'p1', cameToday: true }, { pid: 'p2', cameToday: false }],
-  threadedToday: null, mine: { cameToday: true }, progress: 3, target: 10,
+  threadedToday: null, mine: { cameToday: true, threadToday: true, groveScenes: false, gesturesSent: [] }, progress: 3, target: 10,
+  bosque: { stage: 'ramagem', stageIndex: 2, perto: true, tide: { key: 'T1', size: 'petala' }, ornaments: [] }, gestures: [],
   ...over,
 });
 
@@ -48,6 +49,9 @@ describe('erros tipados', () => {
     [409, { error: 'join collision' }, 'collision'],
     [400, { error: 'invalid name' }, 'invalidName'],
     [400, { error: 'invalid day' }, 'invalidDay'],
+    [400, { error: 'goal not met' }, 'goalNotMet'],
+    [400, { error: 'invalid kind' }, 'invalidKind'],
+    [429, { error: 'daily limit' }, 'dailyLimit'],
     [403, { error: 'not host' }, 'notHost'],
     [429, { error: 'rate limited' }, 'rateLimit'],
     [503, { error: 'try again' }, 'unavailable'],
@@ -65,7 +69,8 @@ describe('erros tipados', () => {
     const chaves = new Set<string>();
     for (const [kind, key] of Object.entries(GUILD_ERROR_KEY)) {
       expect(GUILD_COPY[key]).toBeTruthy();
-      if (!['invalidDay', 'notHost', 'server', 'deleted'].includes(kind)) {
+      // `goalNotMet`/`invalidKind`/`dailyLimit` (fatia B1) nunca viram alerta: a folha recarrega em silêncio.
+      if (!['invalidDay', 'notHost', 'server', 'deleted', 'goalNotMet', 'invalidKind', 'dailyLimit'].includes(kind)) {
         expect(key).not.toBe('guild.erro.generico');
         chaves.add(key);
       }
@@ -126,6 +131,25 @@ describe('o dia do jogador vai para o servidor', () => {
     }
   });
 
+  it('o FIO e os GESTOS levam o dia do jogador, o tipo e (o fio) a meta em peso de esforço', async () => {
+    const tz = { tz: 'America/Sao_Paulo', offsetMs: -3 * 3600_000 } as never;
+    const esperado = playerDayKey(new Date(), tz);
+    fetchMock.mockImplementation(async () => resp(200, { guild: view() }));
+    await guildThread('save-12345', { done: 2, heart: 2, full: 4 }, tz);
+    let [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe('/api/guild?action=guildThread');
+    expect(init.method).toBe('POST');
+    expect(JSON.parse(init.body)).toEqual({ id: 'save-12345', dayKey: esperado, kind: 'fio', goal: { done: 2, heart: 2, full: 4 } });
+    fetchMock.mockClear();
+    await guildThread('save-12345', undefined, tz);
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ id: 'save-12345', dayKey: esperado, kind: 'fio' });
+    fetchMock.mockClear();
+    await guildGesture('save-12345', 'luz', tz);
+    [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe('/api/guild?action=guildGesture');
+    expect(JSON.parse(init.body)).toEqual({ id: 'save-12345', dayKey: esperado, kind: 'luz' });
+  });
+
   it('sair não manda dia (idempotente) e responde ok', async () => {
     fetchMock.mockResolvedValue(resp(200, { ok: true }));
     await expect(leaveGuild('save-12345')).resolves.toEqual({ ok: true });
@@ -166,6 +190,31 @@ describe('sanitizeGuildView — a vista é dado não confiável', () => {
     ] }))!;
     expect(v.members.map(m => m.name)).toEqual(['Bia', 'Ana']);
     expect(JSON.stringify(v)).not.toMatch(/segredo|mega|"hp"/);
+  });
+
+  it('o Bosque chega estreito: estágio pelo ÍNDICE, `perto` binário e só quando há próximo', () => {
+    const v = sanitizeGuildView(view())!;
+    expect(v.bosque).toEqual({ stage: 'ramagem', stageIndex: 2, perto: true, ornaments: [] });
+    expect(sanitizeGuildView(view({ bosque: { stageIndex: 5, stage: 'bosque-antigo', perto: true } }))!.bosque.perto).toBe(false);
+    expect(sanitizeGuildView(view({ bosque: { stageIndex: 0, stage: null, perto: 'sim' } }))!.bosque).toEqual({ stage: null, stageIndex: 0, perto: false, ornaments: [] });
+    expect(sanitizeGuildView(view({ bosque: undefined }))!.bosque.stageIndex).toBe(0);
+  });
+
+  it('o Bosque não tem onde carregar progresso cru, razão nem "faltam N" — o que o servidor mandar a mais é descartado', () => {
+    const v = sanitizeGuildView(view({ bosque: { stageIndex: 2, perto: true, progress: 41.5, faltam: 3, ratio: 0.4, tide: { key: 'T1', size: 'corola', bloom: 7 } } }))!;
+    expect(JSON.stringify(v.bosque)).not.toMatch(/41|faltam|ratio|bloom|tide/);
+    expect(Object.keys(v.bosque).sort()).toEqual(['ornaments', 'perto', 'stage', 'stageIndex']);
+  });
+
+  it('`mine` e `gestures` só carregam os tipos conhecidos; peça de maré exige tamanho e dia válidos', () => {
+    const v = sanitizeGuildView(view({
+      mine: { cameToday: true, threadToday: 'x', groveScenes: 1, gesturesSent: ['luz', 'soco', 'luz'] },
+      gestures: ['descanso', 'grito', 'aceno'],
+      bosque: { stageIndex: 1, ornaments: [{ tide: 'T1', size: 'petala', day: '2026-08-10' }, { tide: 'T2', size: 'gigante', day: '2026-08-17' }, { size: 'corola' }, null] },
+    }))!;
+    expect(v.mine).toEqual({ cameToday: true, threadToday: false, groveScenes: false, gesturesSent: ['luz'] });
+    expect(v.gestures).toEqual(['aceno', 'descanso']); // na ordem da tela, sem duplicar
+    expect(v.bosque.ornaments).toEqual([{ tide: 'T1', size: 'petala', day: '2026-08-10' }]);
   });
 
   it('lixo vira null ou vazio sem lançar', () => {

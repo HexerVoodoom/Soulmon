@@ -477,6 +477,13 @@ export interface TelemetryProps {
   days?: number;
   /** `dungeon_run`: andares limpos na run (1–5). */
   floors?: number;
+  /** `guild_join`: tamanho da roda DEPOIS de entrar (2–12). `guild_leave`: quantos ficaram (0–11).
+   *  Só o tamanho — nunca quem, nunca id de guilda (`PLANO-GUILDA.md` §10.8). */
+  size?: number;
+  /** `guild_leave`: FAIXA de permanência (0 = menos de 1 semana, 1 = 1–3, 2 = 4–11, 3 = 12+) — nunca data. */
+  weeks?: number;
+  /** `guild_raid`: 0 = rodada, 1 = dissipada vista, 2 = recuou vista (a Feira é a fatia B2). */
+  outcome?: number;
 }
 
 /** O que vai no corpo da requisição. Três campos, todos números ou enums. */

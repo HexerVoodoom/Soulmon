@@ -34,6 +34,8 @@ export interface GroveLocal {
   gid: string;
   /** Último estágio RECONHECIDO (0..5). Só sobe. */
   index: number;
+  /** O estágio que a roda JÁ tinha quando este aparelho a viu pela 1ª vez: baseline, nunca "novo" (sem aviso). */
+  base: number;
   /** Maior estágio já enviado à telemetria (`guild_stage`, 1ª vez que o aparelho o vê). */
   tracked: number;
   /** Dia (do jogador) em que este aparelho viu a roda pela 1ª vez — base da faixa `weeks`. */
@@ -74,6 +76,7 @@ export function sanitizeGroveLocal(raw: unknown): GroveLocal | null {
   return {
     gid: r.gid.slice(0, 80),
     index: intIn(r.index, 0, GROVE_STAGES.length),
+    base: intIn(r.base, 0, GROVE_STAGES.length),
     tracked: intIn(r.tracked, 0, GROVE_STAGES.length),
     joinedDay: typeof r.joinedDay === 'string' ? r.joinedDay.slice(0, 40) : '',
     marks,
@@ -109,7 +112,7 @@ export function observeGrove(
   if (!prev || prev.gid !== view.gid) {
     return {
       next: {
-        gid: view.gid, index: idx, tracked: idx, joinedDay: day,
+        gid: view.gid, index: idx, base: idx, tracked: idx, joinedDay: day,
         marks: idx >= 1 ? { [String(idx)]: day } : {}, pending: null, scenes,
       },
       firstSeenStage: idx >= 1 ? idx : null,
@@ -140,8 +143,9 @@ export function acknowledgeGrove(prev: GroveLocal | null): GroveLocal | null {
 }
 
 /**
- * O aviso da Home: só NO DIA do marco (o dia em que este aparelho o viu), e só
- * de estágio com copy de marco. Devolve o estágio (2..5) ou `null`. Depois da
+ * O aviso da Home: só NO DIA do marco (o dia em que este aparelho o viu), só de
+ * estágio com copy de marco e só de estágio NOVO (acima do baseline: quem chega
+ * a uma roda que já era Copa não recebe "novo estágio" por um marco que não viveu). Devolve o estágio (2..5) ou `null`. Depois da
  * meia-noite do jogador some sozinho: é um aviso, não uma pendência.
  */
 export function groveAvisoFor(local: GroveLocal | null, today: string): number | null {
@@ -149,7 +153,7 @@ export function groveAvisoFor(local: GroveLocal | null, today: string): number |
   let melhor: number | null = null;
   for (const [k, day] of Object.entries(local.marks)) {
     const i = Number(k);
-    if (day === today && i >= CEREMONY_MIN_INDEX && (melhor === null || i > melhor)) melhor = i;
+    if (day === today && i >= CEREMONY_MIN_INDEX && i > local.base && (melhor === null || i > melhor)) melhor = i;
   }
   return melhor;
 }
@@ -233,4 +237,24 @@ export function forgetGrove(): GroveLocal | null {
   removeLocal(STORAGE_KEYS.GUILD_LAST_STAGE);
   emitGrove();
   return antes;
+}
+
+// ── Cenários do Bosque (`bg-guild-*`) ───────────────────────────────────────
+
+/** Os ids de cenário liberados até o estágio `upTo` (1..5): a Clareira até o estágio atual. */
+export const groveSceneIds = (upTo: number): string[] =>
+  GROVE_STAGES.slice(0, Math.max(0, Math.min(GROVE_STAGES.length, upTo))).map(id => `bg-guild-${id}`);
+
+/**
+ * Entrega os cenários ao SAVE do jogador (`ownedBackgrounds`). É por estarem no
+ * save que eles ficam com quem sai da roda (G12): o que a pessoa ganhou é dela.
+ * Idempotente por construção — devolve a MESMA referência quando não há nada a
+ * acrescentar, porque o chamador é um `setGameState` (StrictMode roda o updater
+ * 2× — footgun 6) e cada escrita nova é um cloud save.
+ */
+export function grantGroveScenes<T extends { ownedBackgrounds?: string[] }>(prev: T, ids: readonly string[]): T {
+  const owned = Array.isArray(prev.ownedBackgrounds) ? prev.ownedBackgrounds : [];
+  const faltam = ids.filter(id => !owned.includes(id));
+  if (faltam.length === 0) return prev;
+  return { ...prev, ownedBackgrounds: [...owned, ...faltam] };
 }

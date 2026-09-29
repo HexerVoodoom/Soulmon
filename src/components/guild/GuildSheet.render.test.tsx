@@ -22,15 +22,17 @@ vi.mock('../../utils/community', async (orig) => {
   const real = await orig<typeof import('../../utils/community')>();
   return {
     ...real,
-    getGuild: vi.fn(), createGuild: vi.fn(), joinGuild: vi.fn(), guildCheckin: vi.fn(),
+    getGuild: vi.fn(), createGuild: vi.fn(), joinGuild: vi.fn(), guildThread: vi.fn(), guildGesture: vi.fn(),
     leaveGuild: vi.fn(), renameGuild: vi.fn(), newGuildCode: vi.fn(),
   };
 });
+vi.mock('../../utils/telemetry', async (orig) => ({ ...(await orig<typeof import('../../utils/telemetry')>()), track: vi.fn() }));
 
 import {
-  GuildError, sanitizeGuildView, getGuild, createGuild, joinGuild, guildCheckin, leaveGuild,
+  GuildError, sanitizeGuildView, getGuild, createGuild, joinGuild, guildThread, guildGesture, leaveGuild,
   renameGuild, newGuildCode, type GuildView, type GuildErrorKind,
 } from '../../utils/community';
+import { track } from '../../utils/telemetry';
 import { GuildSheet } from './GuildSheet';
 import { AreaView, type AreaViewProps } from '../nav/AreaView';
 import { closeTopBackLayer } from '../../utils/backStack';
@@ -51,7 +53,8 @@ function vista(n: number, over: Record<string, unknown> = {}, veio: number[] = [
     id: 'g1', name: 'Roda da manhã', weekKey: '2026-W40', code: 'ABCD2345', isHost: false, size: n, full: n >= 12,
     members: membros(n, veio),
     presence: n <= 4 ? membros(n, veio).map(m => ({ pid: m.pid, cameToday: m.apareceuHoje })) : null,
-    threadedToday: null, mine: { cameToday: veio.includes(0) }, progress: 3, target: n * 5,
+    threadedToday: null, mine: { cameToday: veio.includes(0), threadToday: veio.includes(0) }, progress: 3, target: n * 5,
+    bosque: { stage: null, stageIndex: 0, perto: false, tide: { key: 'T1', size: null }, ornaments: [] }, gestures: [],
     ...over,
   })!;
 }
@@ -67,7 +70,9 @@ const montar = async (over = {}) => {
 };
 
 beforeEach(() => {
-  for (const f of [getGuild, createGuild, joinGuild, guildCheckin, leaveGuild, renameGuild, newGuildCode]) vi.mocked(f).mockReset();
+  for (const f of [getGuild, createGuild, joinGuild, guildThread, guildGesture, leaveGuild, renameGuild, newGuildCode]) vi.mocked(f).mockReset();
+  vi.mocked(track).mockReset();
+  localStorage.clear();
 });
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers(); });
 
@@ -171,7 +176,7 @@ describe('sem roda', () => {
 
   it('a roda sumiu com a folha aberta (404 no fio): conta o fato e volta ao começo', async () => {
     vi.mocked(getGuild).mockResolvedValue(vista(2, {}, []));
-    vi.mocked(guildCheckin).mockRejectedValue(erro('noGuild'));
+    vi.mocked(guildThread).mockRejectedValue(erro('noGuild'));
     await montar();
     fireEvent.click(screen.getByText(PT('guild.bosque.fio.botao')));
     expect((await screen.findByRole('alert')).textContent).toBe(PT('guild.esvaziada.mundo'));
@@ -310,29 +315,32 @@ describe('o fio (presença de quem pergunta)', () => {
     vi.mocked(getGuild).mockResolvedValue(vista(2, {}, []));
     await montar({ metaDoDiaCumprida: false });
     expect(screen.queryByText(PT('guild.bosque.fio.botao'))).toBeNull();
-    expect(screen.queryByText(/Vale quando|própria meta|your own daily goal/i)).toBeNull();
-    expect(document.querySelector('[data-guild-room="bosque"]')).toBeNull();
+    // a frase de explicação do CoopPanel ('Vale quando você cumprir…') saiu; a regra sóbria do Bosque é linha FIXA, não estado
+    expect(screen.queryByText(/Vale quando|Counts once/i)).toBeNull();
+    // O visor existe (o cenário nasce antes de tudo), mas o fio NÃO fala: nem botão, nem "hoje", nem título de estado.
+    expect(screen.queryByRole('button', { name: PT('guild.aria.fio') })).toBeNull();
+    expect(screen.queryByText(PT('guild.bosque.fio.hoje'))).toBeNull();
   });
 
   it('com a meta cumprida: firma, anuncia na região viva e mostra "seu fio firmou hoje"', async () => {
     vi.mocked(getGuild).mockResolvedValue(vista(2, {}, []));
-    vi.mocked(guildCheckin).mockResolvedValue(vista(2, {}, [0]));
+    vi.mocked(guildThread).mockResolvedValue(vista(2, {}, [0]));
     await montar();
     fireEvent.click(screen.getByText(PT('guild.bosque.fio.botao')));
     await screen.findByText(PT('guild.bosque.fio.hoje'));
     expect(screen.queryByText(PT('guild.bosque.fio.botao'))).toBeNull();
     expect(document.querySelector('[data-guild-status]')!.textContent).toBe(PT('guild.bosque.fio.toast'));
-    expect(guildCheckin).toHaveBeenCalledWith('save-12345678', undefined);
+    expect(guildThread).toHaveBeenCalledWith('save-12345678', undefined, undefined);
   });
 
   it('duplo toque no mesmo frame chama o servidor UMA vez (trava síncrona)', async () => {
     vi.mocked(getGuild).mockResolvedValue(vista(2, {}, []));
-    vi.mocked(guildCheckin).mockImplementation(() => new Promise(() => {}));
+    vi.mocked(guildThread).mockImplementation(() => new Promise(() => {}));
     await montar();
     const b = screen.getByText(PT('guild.bosque.fio.botao')).closest('button')!;
     // Dois toques no MESMO lote do React: o `disabled` ainda não chegou ao DOM.
     act(() => { b.click(); b.click(); });
-    expect(guildCheckin).toHaveBeenCalledTimes(1);
+    expect(guildThread).toHaveBeenCalledTimes(1);
   });
 
   it('já firmado hoje: sem botão de novo', async () => {
@@ -457,7 +465,7 @@ describe('copiar o código, sem setState depois de desmontar', () => {
     const erros = vi.spyOn(console, 'error').mockImplementation(() => {});
     let resolver!: (v: GuildView) => void;
     vi.mocked(getGuild).mockResolvedValue(vista(2, {}, []));
-    vi.mocked(guildCheckin).mockImplementation(() => new Promise(r => { resolver = r; }));
+    vi.mocked(guildThread).mockImplementation(() => new Promise(r => { resolver = r; }));
     const r = renderWithCss(<GuildSheet {...props()} />);
     fireEvent.click(await screen.findByText(PT('guild.bosque.fio.botao')));
     r.unmount();
@@ -598,7 +606,7 @@ describe('a folha aberta de verdade (Hall → Salão da Guilda): foco, fundo ine
 
   it('firmar o fio por teclado: o botão some e o foco NÃO cai em <body>', async () => {
     vi.mocked(getGuild).mockResolvedValue(vista(4, {}, []));
-    vi.mocked(guildCheckin).mockResolvedValue(vista(4, {}, [0]));
+    vi.mocked(guildThread).mockResolvedValue(vista(4, {}, [0]));
     const r = renderWithCss(hall());
     fireEvent.click(r.container.querySelector('[data-area-lot="guilda"]')!);
     const b = await screen.findByText(PT('guild.bosque.fio.botao'));
@@ -626,5 +634,531 @@ describe('a folha aberta de verdade (Hall → Salão da Guilda): foco, fundo ine
     const fala = document.querySelector('[data-area-sheet-npc-line]')!.textContent!;
     expect(fala).toContain(PT('guild.npc.hall'));
     expect(fala).not.toMatch(/grupo pequeno|small group/i);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FATIA B1 — o Bosque (visor, estágio, criaturas), o fio, os gestos, o Mural, a
+// memória do aparelho, a telemetria e o movimento reduzido.
+// ─────────────────────────────────────────────────────────────────────────────
+import fs from 'node:fs';
+import path from 'node:path';
+import { GROVE_STAGES } from '../../utils/guildRules';
+import { readGroveLocal } from '../../utils/groveLocal';
+import { STORAGE_KEYS } from '../../utils/storageKeys';
+
+const NOME_PT = ['Clareira', 'Ramagem', 'Copa', 'Mata', 'Bosque antigo'];
+const NOME_EN = ['Clearing', 'Boughs', 'Canopy', 'Thicket', 'Old grove'];
+
+/** Vista com o Bosque num estágio (1..5; 0 = ainda sem estágio). */
+const noEstagio = (n: number, idx: number, over: Record<string, unknown> = {}, bosque: Record<string, unknown> = {}, mine: Record<string, unknown> = {}, veio: number[] = []) =>
+  vista(n, {
+    bosque: {
+      stage: idx > 0 ? GROVE_STAGES[idx - 1] : null, stageIndex: idx, perto: false,
+      tide: { key: 'T1', size: null }, ornaments: [], ...bosque,
+    },
+    mine: { cameToday: veio.includes(0), threadToday: veio.includes(0), groveScenes: false, gesturesSent: [], ...mine },
+    ...over,
+  }, veio);
+
+const visor = () => document.querySelector('[data-guild-visor]') as HTMLElement;
+const criaturas = () => Array.from(document.querySelectorAll<HTMLImageElement>('[data-grove-creature]'));
+
+describe('o Bosque por estágio', () => {
+  it.each([1, 2, 3, 4, 5])('estágio %i: visor do cenário certo, nome e linha em PT e EN, aria do vidro com o estágio', async (idx) => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(2, idx));
+    for (const [language, nomes] of [['pt-BR', NOME_PT], ['en-US', NOME_EN]] as const) {
+      cleanup();
+      localStorage.clear();
+      await montar({ language });
+      expect(visor().getAttribute('data-stage')).toBe(GROVE_STAGES[idx - 1]);
+      expect(screen.getByRole('heading', { name: nomes[idx - 1] })).toBeTruthy();
+      const chaveLinha = ['clareira', 'ramagem', 'copa', 'mata', 'bosqueAntigo'][idx - 1];
+      const linha = GUILD_COPY[`guild.bosque.estagio.${chaveLinha}.linha` as keyof typeof GUILD_COPY][language === 'pt-BR' ? 0 : 1];
+      expect(screen.getByText(linha)).toBeTruthy();
+      expect(visor().getAttribute('role')).toBe('img');
+      expect(visor().getAttribute('aria-label')).toBe(language === 'pt-BR' ? `Bosque da roda, estágio ${nomes[idx - 1]}` : `The circle’s grove, stage ${nomes[idx - 1]}`);
+    }
+  });
+
+  it('o pixel art fica DENTRO do vidro (`.sm2-viewport-screen`) e o texto do estágio FORA dele', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(2, 3));
+    await montar();
+    expect(visor().classList.contains('sm2-viewport-screen')).toBe(true);
+    expect(visor().contains(screen.getByRole('heading', { name: 'Copa' }))).toBe(false);
+    expect(criaturas().every(c => visor().contains(c))).toBe(true);
+  });
+
+  it('ainda sem estágio (índice 0): o chão da Clareira existe, mas NENHUM nome, nenhuma linha e nenhuma faixa', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(2, 0));
+    await montar();
+    expect(visor()).toBeTruthy();
+    expect(visor().getAttribute('data-stage')).toBe('');
+    expect(visor().getAttribute('role')).toBeNull();
+    expect(document.querySelector('[data-guild-stage]')).toBeNull();
+    expect(document.querySelector('[data-guild-perto]')).toBeNull();
+  });
+
+  it('`perto` é UMA frase binária que aponta para o PRÓXIMO estágio, sem número, sem razão, sem barra', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(3, 2, {}, { perto: true }));
+    await montar();
+    const frase = screen.getByText('Perto de Copa.');
+    expect(frase.textContent).not.toMatch(/\d|%|faltam|falta/i);
+    expect(screen.queryByRole('progressbar')).toBeNull();
+    expect(document.body.textContent).not.toMatch(/\{estagio\}/);
+  });
+
+  it('`perto` em inglês, e sem `perto` nada é escrito (silêncio, não "longe")', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(3, 1, {}, { perto: true }));
+    await montar({ language: 'en-US' });
+    expect(screen.getByText('Near Boughs.')).toBeTruthy();
+    cleanup();
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(3, 1, {}, { perto: false }));
+    await montar({ language: 'en-US' });
+    expect(document.querySelector('[data-guild-perto]')).toBeNull();
+    expect(screen.queryByText(/Near|Far|far/)).toBeNull();
+  });
+
+  it('no Bosque antigo não há próximo: mesmo que o servidor mande `perto`, a UI cala', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(3, 5, {}, { perto: true }));
+    await montar();
+    expect(document.querySelector('[data-guild-perto]')).toBeNull();
+  });
+
+  it('a regra sóbria é linha FIXA do Bosque, nos dois idiomas', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(2, 1));
+    await montar();
+    expect(screen.getByText(PT('guild.bosque.regra'))).toBeTruthy();
+    cleanup();
+    await montar({ language: 'en-US' });
+    expect(screen.getByText(EN('guild.bosque.regra'))).toBeTruthy();
+  });
+
+  it('nenhum número de progresso em lugar nenhum da sala, com qualquer estágio (o servidor nem o manda)', async () => {
+    for (const idx of [0, 1, 2, 3, 4, 5]) {
+      cleanup();
+      vi.mocked(getGuild).mockResolvedValue(noEstagio(6, idx, { progress: 41, target: 90 }, { perto: idx < 5, progressCru: 41.5 }));
+      await montar();
+      const sala = document.querySelector('[data-guild-room="bosque"]')!.textContent!;
+      expect(sala).not.toMatch(/\d/);
+      expect(sala).not.toMatch(/41|90/);
+    }
+  });
+
+  it('um estágio inventado pelo servidor não vira cenário: o índice manda', async () => {
+    const v = sanitizeGuildView({ ...noEstagio(2, 0), bosque: { stage: 'floresta-do-mal', stageIndex: 99, perto: true, ornaments: [] } })!;
+    expect(v.bosque.stageIndex).toBe(5);
+    expect(v.bosque.stage).toBe('bosque-antigo');
+    expect(v.bosque.perto).toBe(false);
+  });
+});
+
+describe('o palco do Bosque: quem aparece no visor', () => {
+  it('1 membro: só a SUA criatura, no centro, em 128 (escala inteira)', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(1, 1, { isHost: true }));
+    await montar();
+    expect(criaturas()).toHaveLength(1);
+    expect(criaturas()[0].getAttribute('data-grove-creature')).toBe('own');
+    expect(criaturas()[0].width).toBe(128);
+  });
+
+  it('até 4: TODOS, na ordem de chegada — a sua em 128, as dos outros em 64 (também escala inteira)', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(4, 2));
+    await montar();
+    const c = criaturas();
+    expect(c).toHaveLength(4);
+    expect(c.map(x => x.getAttribute('data-grove-creature'))).toEqual(['own', 'other', 'other', 'other']);
+    expect(c.map(x => x.width)).toEqual([128, 64, 64, 64]);
+    const xs = c.map(x => parseFloat(x.style.left));
+    expect(xs).toEqual([...xs].sort((a, b) => a - b)); // da esquerda para a direita, na ordem da roda
+    // 256 e 384 dividem por 128 e por 64 sem resto: pixel art sem meio pixel
+    for (const px of [128, 64]) { expect(256 % px).toBe(0); expect(384 % px).toBe(0); }
+  });
+
+  it('a criatura dos outros é a MESMA sempre (hash do id) e nunca uma URL vinda do servidor', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(3, 2));
+    await montar();
+    const antes = criaturas().map(c => c.src);
+    cleanup();
+    await montar();
+    expect(criaturas().map(c => c.src)).toEqual(antes.map((s, i) => (i === 0 ? criaturas()[0].src : s)));
+    for (const c of criaturas().slice(1)) expect(c.src).not.toMatch(/^https?:\/\/(?!localhost)/);
+  });
+
+  it('presença NÃO mexe no palco: quem veio e quem não veio ganham a mesma criatura, sem opacidade, sem reordenar', async () => {
+    const dom = async (veio: number[]) => {
+      cleanup();
+      vi.mocked(getGuild).mockResolvedValue(noEstagio(4, 2, {}, {}, {}, veio));
+      await montar();
+      return criaturas().map(c => [c.src, c.style.left, c.style.opacity, c.style.filter, c.className]);
+    };
+    const nenhum = await dom([]);
+    const alguns = await dom([1, 3]);
+    // só a criatura PRÓPRIA pode variar com o fio próprio (nada: o palco nem lê presença)
+    expect(alguns).toEqual(nenhum);
+    for (const [, , opacity, filter] of nenhum) { expect(opacity).toBe(''); expect(filter).toBe(''); }
+  });
+
+  it.each([5, 8, 12])('%i membros: SÓ a sua criatura (a fileira com lacunas é a sala de aula que LV-G2 veta)', async (n) => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(n, 3, { threadedToday: true }));
+    await montar();
+    expect(criaturas()).toHaveLength(1);
+    expect(criaturas()[0].getAttribute('data-grove-creature')).toBe('own');
+    expect(parseFloat(criaturas()[0].style.left)).toBe(50);
+  });
+
+  it('o vidro não desenha texto nenhum (nomes, contagens e estados ficam fora dele)', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(4, 3, {}, {}, {}, [0, 1]));
+    await montar();
+    expect(visor().textContent).toBe('');
+  });
+
+  it('a criatura própria é a que o App manda (o estágio dela), com a rookie só como reserva', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(2, 1));
+    await montar({ mySprite: '/meu-sprite.png' });
+    expect(criaturas()[0].getAttribute('src')).toBe('/meu-sprite.png');
+  });
+});
+
+describe('o fio (guildThread) — fora de updater, com a meta como o servidor a confere', () => {
+  const meta = { done: 2, heart: 2, full: 3 };
+
+  it('firma com `goal`, o dia do jogador e anuncia; a telemetria conta a 1ª vez do dia (kind 0)', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(2, 1));
+    vi.mocked(guildThread).mockResolvedValue(noEstagio(2, 1, {}, {}, {}, [0]));
+    const tz = { tz: 'America/Sao_Paulo', offsetMs: -10_800_000 } as never;
+    await montar({ fioGoal: meta, playerDayTz: tz });
+    fireEvent.click(screen.getByText(PT('guild.bosque.fio.botao')));
+    await screen.findByText(PT('guild.bosque.fio.hoje'));
+    expect(guildThread).toHaveBeenCalledWith('save-12345678', meta, tz);
+    expect(document.querySelector('[data-guild-status]')!.textContent).toBe(PT('guild.bosque.fio.toast'));
+    expect(vi.mocked(track).mock.calls.filter(([e]) => e === 'guild_thread')).toEqual([['guild_thread', { kind: 0 }]]);
+  });
+
+  it('o servidor recusa a meta de coração (400 goal not met): SILÊNCIO — recarrega, nenhum alerta, nenhuma frase', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(2, 1));
+    vi.mocked(guildThread).mockRejectedValue(erro('goalNotMet'));
+    await montar({ fioGoal: meta });
+    fireEvent.click(screen.getByText(PT('guild.bosque.fio.botao')));
+    await waitFor(() => expect(getGuild).toHaveBeenCalledTimes(2));
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(vi.mocked(track).mock.calls.filter(([e]) => e === 'guild_thread')).toEqual([]);
+  });
+
+  it('o toque NÃO dispara sozinho: sem gesto, nada é enviado (o fio é afirmação, não efeito)', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(2, 1));
+    await montar({ fioGoal: meta });
+    expect(guildThread).not.toHaveBeenCalled();
+  });
+
+  it('meta de CORAÇÃO basta: o App manda `metaDoDiaCumprida` pela régua de coração, e a folha só obedece', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(2, 1));
+    await montar({ metaDoDiaCumprida: true, fioGoal: { done: 2, heart: 2, full: 4 } });
+    expect(screen.getByText(PT('guild.bosque.fio.botao'))).toBeTruthy();
+  });
+});
+
+describe('os gestos: três, fixos, anônimos, sem push', () => {
+  const botoes = () => Array.from(document.querySelectorAll<HTMLButtonElement>('[data-gesto]'));
+
+  it('roda de UM: ninguém para gesticular — a fileira não é desenhada', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(1, 1));
+    await montar();
+    expect(document.querySelector('[data-guild-gestos]')).toBeNull();
+  });
+
+  it('com 2+: exatamente três botões, na ordem Aceno · Luz · Descanso, com nome e aria em PT e EN', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(2, 1));
+    await montar();
+    expect(botoes().map(b => b.dataset.gesto)).toEqual(['aceno', 'luz', 'descanso']);
+    expect(botoes().map(b => b.textContent)).toEqual(['pan_toolAceno', 'light_modeLuz', 'bedtimeDescanso']);
+    expect(botoes().map(b => b.getAttribute('aria-label'))).toEqual(['Enviar Aceno para a roda', 'Enviar Luz para a roda', 'Enviar Descanso para a roda']);
+    cleanup();
+    await montar({ language: 'en-US' });
+    expect(botoes().map(b => b.getAttribute('aria-label'))).toEqual(['Send Wave to the circle', 'Send Light to the circle', 'Send Rest to the circle']);
+    expect(screen.getByRole('group', { name: 'Gestures' })).toBeTruthy();
+  });
+
+  it('os ícones estão NO INVENTÁRIO do subset (senão renderizam um <span> vazio) e sem molde de fundo', async () => {
+    const tokens = fs.readFileSync(path.resolve(__dirname, '../../styles/tokens.md'), 'utf8');
+    const inventario = /Inventário atual[\s\S]*?`([^`]+)`/.exec(tokens)![1].split(/[,\s]+/).filter(Boolean);
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(2, 1));
+    await montar();
+    const nomes = botoes().map(b => b.querySelector('.sm2-icon')!.textContent!);
+    expect(nomes).toHaveLength(3);
+    for (const n of nomes) expect(inventario, n).toContain(n);
+    for (const b of botoes()) {
+      const ic = b.querySelector('.sm2-icon') as HTMLElement;
+      expect(ic.style.background).toBe('');
+      expect(ic.style.border).toBe('');
+      expect(ic.className).not.toMatch(/box|plate|frame/);
+    }
+  });
+
+  it('enviar: chama o servidor com o tipo e o dia do jogador, anuncia e o botão vira "enviado" (desabilitado, sem "amanhã")', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(3, 1));
+    vi.mocked(guildGesture).mockResolvedValue(noEstagio(3, 1, {}, {}, { gesturesSent: ['luz'] }));
+    await montar();
+    fireEvent.click(botoes()[1]);
+    await waitFor(() => expect(botoes()[1].disabled).toBe(true));
+    expect(guildGesture).toHaveBeenCalledWith('save-12345678', 'luz', undefined);
+    expect(botoes()[1].textContent).toContain('Luz enviada.');
+    expect(botoes()[1].getAttribute('aria-label')).toBe('Luz já enviado hoje');
+    expect(document.querySelector('[data-guild-status]')!.textContent).toBe('Luz enviada.');
+    expect(botoes()[0].disabled).toBe(false); // os outros dois seguem à mão
+    expect(document.body.textContent).not.toMatch(/amanh[ãa]|tomorrow/i);
+  });
+
+  it('o que já foi mandado hoje (talvez de outro aparelho) chega desabilitado', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(3, 1, {}, {}, { gesturesSent: ['aceno', 'descanso'] }));
+    await montar();
+    expect(botoes().map(b => b.disabled)).toEqual([true, false, true]);
+  });
+
+  it('429 daily limit: o gesto já saiu — recarrega em SILÊNCIO, sem alerta', async () => {
+    vi.mocked(getGuild).mockResolvedValueOnce(noEstagio(3, 1)).mockResolvedValue(noEstagio(3, 1, {}, {}, { gesturesSent: ['aceno'] }));
+    vi.mocked(guildGesture).mockRejectedValue(erro('dailyLimit'));
+    await montar();
+    fireEvent.click(botoes()[0]);
+    await waitFor(() => expect(botoes()[0].disabled).toBe(true));
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('duplo toque no mesmo frame manda UM gesto', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(3, 1));
+    vi.mocked(guildGesture).mockImplementation(() => new Promise(() => {}));
+    await montar();
+    act(() => { botoes()[0].click(); botoes()[0].click(); });
+    expect(guildGesture).toHaveBeenCalledTimes(1);
+  });
+
+  it('recebidos: chegam EM LOTE, só o tipo — sem quem, sem quantos — e nada quando não veio nenhum', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(4, 1, { gestures: ['luz', 'descanso'] }));
+    await montar();
+    const lote = document.querySelector('[data-guild-recebidos]')!;
+    expect(Array.from(lote.querySelectorAll('li')).map(li => li.textContent)).toEqual(['Alguém deixou uma luz.', 'Alguém desejou bom descanso.']);
+    expect(lote.textContent).not.toMatch(/\d|Ana|Bia|Caio|Dani/);
+    cleanup();
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(4, 1, { gestures: [] }));
+    await montar();
+    expect(document.querySelector('[data-guild-recebidos]')).toBeNull();
+  });
+
+  it('recebidos em inglês, e um tipo desconhecido do servidor é descartado', async () => {
+    const v = sanitizeGuildView({ ...noEstagio(3, 1), gestures: ['aceno', 'soco', 'luz'] })!;
+    expect(v.gestures).toEqual(['aceno', 'luz']);
+    vi.mocked(getGuild).mockResolvedValue(v);
+    await montar({ language: 'en-US' });
+    expect(Array.from(document.querySelectorAll('[data-guild-recebidos] li')).map(li => li.textContent))
+      .toEqual(['Someone waved at the circle.', 'Someone left a little light.']);
+  });
+
+  it('o foco NÃO cai em <body> depois de enviar um gesto (o botão fica desabilitado)', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(3, 1));
+    vi.mocked(guildGesture).mockResolvedValue(noEstagio(3, 1, {}, {}, { gesturesSent: ['aceno'] }));
+    const { container } = await montar();
+    botoes()[0].focus();
+    fireEvent.click(botoes()[0]);
+    await waitFor(() => expect(botoes()[0].disabled).toBe(true));
+    await waitFor(() => expect(document.activeElement).not.toBe(document.body));
+    expect(container.contains(document.activeElement)).toBe(true);
+  });
+
+  it('sem chat: nenhum campo de texto livre na sala', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(4, 2));
+    await montar();
+    expect(screen.queryByRole('textbox')).toBeNull();
+    expect(document.querySelector('textarea')).toBeNull();
+  });
+});
+
+describe('o Mural: marcos e peças de maré', () => {
+  const mural = () => document.querySelector('[data-guild-room="mural"]');
+
+  it('vazio é SILÊNCIO: sem estágio e sem peça, nem o título é desenhado', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(3, 0));
+    await montar();
+    expect(mural()).toBeNull();
+    expect(screen.queryByText(PT('guild.mural.titulo'))).toBeNull();
+    expect(document.body.textContent).not.toMatch(/nada ainda|nothing yet/i);
+  });
+
+  it('marcos em ordem, com a DATA que este aparelho viu; o estágio que já era da roda quando o aparelho chegou vai sem data', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(3, 3));
+    await montar();
+    const itens = Array.from(mural()!.querySelectorAll('li')).map(li => li.textContent!);
+    expect(itens).toHaveLength(3);
+    expect(itens.slice(0, 2)).toEqual(['Clareira', 'Ramagem']);
+    expect(itens[2]).toMatch(/^Copa, \d{1,2} de \w+ de \d{4}$/);
+    expect(screen.getByRole('region', { name: 'Mural da roda' })).toBeTruthy();
+  });
+
+  it('peças de maré: os três tamanhos, com nome próprio e data — UM texto para os três', async () => {
+    const ornaments = [
+      { tide: 'T1', size: 'petala', day: '2026-08-10' },
+      { tide: 'T2', size: 'corola', day: '2026-09-21' },
+      { tide: 'T3', size: 'floracao', day: '2026-10-05' },
+    ];
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(3, 1, {}, { ornaments }));
+    await montar();
+    const pecas = Array.from(mural()!.querySelectorAll('[data-mural-mare]')).map(li => li.textContent!);
+    expect(pecas).toEqual([
+      'Pétala · Floração colhida, 10 de agosto de 2026',
+      'Corola · Floração colhida, 21 de setembro de 2026',
+      'Floração cheia · Floração colhida, 5 de outubro de 2026',
+    ]);
+    cleanup();
+    localStorage.clear();
+    await montar({ language: 'en-US' });
+    expect(Array.from(mural()!.querySelectorAll('[data-mural-mare]')).map(li => li.textContent!.split(' · ')[0])).toEqual(['Petal', 'Corolla', 'Full bloom']);
+  });
+
+  it('só peças, sem estágio: o Mural aparece (a peça é permanente)', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(3, 0, {}, { ornaments: [{ tide: 'T1', size: 'petala', day: '2026-08-10' }] }));
+    await montar();
+    expect(mural()).toBeTruthy();
+  });
+
+  it('nenhum número por pessoa, nenhum nome de membro, ninguém que chegou ou saiu', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(4, 4, {}, { ornaments: [{ tide: 'T1', size: 'floracao', day: '2026-09-01' }] }, {}, [0, 1]));
+    await montar();
+    const txt = mural()!.textContent!;
+    expect(txt).not.toMatch(/Ana|Bia|Caio|Dani/);
+    expect(txt).not.toMatch(/chegou|saiu|entrou|joined|left/i);
+    expect(txt.replace(/\d{1,2} de \w+ de \d{4}/g, '')).not.toMatch(/\d/);
+  });
+
+  it('uma peça com tamanho inventado pelo servidor é descartada', () => {
+    const v = sanitizeGuildView({ ...noEstagio(2, 1), bosque: { stageIndex: 1, ornaments: [{ tide: 'T1', size: 'gigante', day: '2026-08-10' }, { tide: 'T2', size: 'corola', day: '2026-08-17' }] } })!;
+    expect(v.bosque.ornaments).toEqual([{ tide: 'T2', size: 'corola', day: '2026-08-17' }]);
+  });
+
+  it('o Mural não ordena nem reverte (a ordem é a do servidor)', () => {
+    const fonte = fs.readFileSync(path.resolve(__dirname, 'GuildSheet.tsx'), 'utf8');
+    expect(fonte).not.toMatch(/\.sort\(|\.toSorted\(|\.reverse\(/);
+  });
+});
+
+describe('a memória do aparelho e a telemetria do Bosque', () => {
+  it('1ª vez que o aparelho vê a roda é BASELINE: guarda o estágio e NÃO deixa marco pendente', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(2, 3));
+    await montar();
+    const l = readGroveLocal()!;
+    expect(l.index).toBe(3);
+    expect(l.pending).toBeNull();
+    expect(vi.mocked(track).mock.calls.filter(([e]) => e === 'guild_stage')).toEqual([['guild_stage', { level: 3 }]]);
+  });
+
+  it('o estágio SOBE entre duas vistas: vira marco pendente (Ramagem em diante) e a telemetria conta o novo', async () => {
+    vi.mocked(getGuild).mockResolvedValueOnce(noEstagio(2, 1)).mockResolvedValue(noEstagio(2, 2));
+    await montar();
+    expect(readGroveLocal()!.pending).toBeNull();
+    await act(async () => { document.dispatchEvent(new Event('visibilitychange')); });
+    await waitFor(() => expect(readGroveLocal()!.pending?.index).toBe(2));
+    expect(vi.mocked(track).mock.calls.filter(([e]) => e === 'guild_stage').map(c => c[1])).toEqual([{ level: 1 }, { level: 2 }]);
+  });
+
+  it('a Clareira nova NÃO tem cerimônia (não há marco na copy) e uma vista repetida não repete a telemetria', async () => {
+    vi.mocked(getGuild).mockResolvedValueOnce(noEstagio(2, 0)).mockResolvedValue(noEstagio(2, 1));
+    await montar();
+    await act(async () => { document.dispatchEvent(new Event('visibilitychange')); });
+    await waitFor(() => expect(readGroveLocal()!.index).toBe(1));
+    expect(readGroveLocal()!.pending).toBeNull();
+    await act(async () => { document.dispatchEvent(new Event('visibilitychange')); });
+    expect(vi.mocked(track).mock.calls.filter(([e]) => e === 'guild_stage')).toHaveLength(1);
+  });
+
+  it('a memória NUNCA vai para o save nem carrega nome, contagem ou progresso — só o id público, índices e datas', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(3, 2));
+    await montar();
+    const cru = localStorage.getItem(STORAGE_KEYS.GUILD_LAST_STAGE)!;
+    expect(Object.keys(JSON.parse(cru)).sort()).toEqual(['base', 'gid', 'index', 'joinedDay', 'marks', 'pending', 'scenes', 'tracked']);
+    expect(cru).not.toMatch(/Roda da manhã|Ana|ABCD2345/);
+    expect(localStorage.getItem('soulmon_state_v1')).toBeNull();
+  });
+
+  it('`mine.groveScenes` libera os cenários na memória (o App os entrega ao save); sem ele, nada', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(2, 3, {}, {}, { groveScenes: true }));
+    await montar();
+    expect(readGroveLocal()!.scenes).toBe(3);
+    cleanup();
+    localStorage.clear();
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(2, 3, {}, {}, { groveScenes: false }));
+    await montar();
+    expect(readGroveLocal()!.scenes).toBe(0);
+  });
+
+  it('sair apaga a memória do aparelho (o que foi ganho já está no save) e conta a saída em FAIXA, sem id', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(4, 2));
+    vi.mocked(leaveGuild).mockResolvedValue({ ok: true });
+    await montar();
+    expect(readGroveLocal()).not.toBeNull();
+    fireEvent.click(screen.getByText(PT('guild.sair.botao')));
+    await screen.findByText(PT('guild.criar.botao'));
+    expect(readGroveLocal()).toBeNull();
+    expect(vi.mocked(track).mock.calls.filter(([e]) => e === 'guild_leave')).toEqual([['guild_leave', { size: 3, weeks: 0 }]]);
+  });
+
+  it('criar e entrar contam `guild_create` e `guild_join` (só o tamanho, nunca id)', async () => {
+    vi.mocked(getGuild).mockResolvedValue(null);
+    vi.mocked(createGuild).mockResolvedValue(noEstagio(1, 0, { isHost: true }));
+    await montar();
+    fireEvent.change(screen.getByPlaceholderText(PT('guild.criar.nome.placeholder')), { target: { value: 'Roda' } });
+    fireEvent.click(screen.getByText(PT('guild.criar.botao')));
+    await screen.findByRole('heading', { name: 'Roda da manhã' });
+    expect(vi.mocked(track).mock.calls.filter(([e]) => e === 'guild_create')).toEqual([['guild_create']]);
+    cleanup();
+    localStorage.clear();
+    vi.mocked(getGuild).mockResolvedValue(null);
+    vi.mocked(joinGuild).mockResolvedValue(noEstagio(5, 1));
+    await montar();
+    fireEvent.click(screen.getByText(PT('guild.entrar.botao.abrir')));
+    fireEvent.change(await screen.findByPlaceholderText('ABCD2345'), { target: { value: 'ABCD2345' } });
+    fireEvent.click(screen.getByText(PT('guild.entrar.botao')));
+    await screen.findByRole('heading', { name: 'Roda da manhã' });
+    expect(vi.mocked(track).mock.calls.filter(([e]) => e === 'guild_join')).toEqual([['guild_join', { size: 5 }]]);
+  });
+
+  it('nenhuma chamada de telemetria da Guilda leva id, nome ou código', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(4, 3, {}, {}, {}, [0]));
+    vi.mocked(guildGesture).mockResolvedValue(noEstagio(4, 3));
+    await montar();
+    fireEvent.click(document.querySelector<HTMLElement>('[data-gesto="aceno"]')!);
+    await waitFor(() => expect(guildGesture).toHaveBeenCalled());
+    expect(JSON.stringify(vi.mocked(track).mock.calls)).not.toMatch(/g1|Roda da manhã|ABCD2345|pid-|Ana/);
+  });
+});
+
+describe('movimento reduzido reduz o movimento, nunca a informação', () => {
+  const comMediaQuery = (reduce: boolean) => {
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      value: (q: string) => ({ matches: reduce && q.includes('reduce'), media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} }),
+    });
+  };
+  afterEach(() => { delete (window as { matchMedia?: unknown }).matchMedia; });
+
+  it('sem preferência: as criaturas batem (2 quadros); com `reduce`: paradas, e o MESMO cenário, nome e criaturas', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(3, 3));
+    comMediaQuery(false);
+    await montar();
+    const normal = criaturas().map(c => c.className);
+    expect(normal.every(c => c.includes('sm2-grove-bob'))).toBe(true);
+    expect(visor().getAttribute('data-reduced-motion')).toBeNull();
+    cleanup();
+    localStorage.clear();
+    comMediaQuery(true);
+    await montar();
+    await waitFor(() => expect(visor().getAttribute('data-reduced-motion')).toBe('true'));
+    expect(criaturas()).toHaveLength(3);
+    expect(criaturas().every(c => !c.className.includes('sm2-grove-bob'))).toBe(true);
+    expect(screen.getByRole('heading', { name: 'Copa' })).toBeTruthy();
+    expect(visor().getAttribute('data-stage')).toBe('copa');
+  });
+
+  it('o CSS também corta a batida no bloco canônico de movimento reduzido', () => {
+    const css = fs.readFileSync(path.resolve(__dirname, '../../index.css'), 'utf8');
+    const ultimo = css.slice(css.lastIndexOf('@media (prefers-reduced-motion'));
+    expect(ultimo).toMatch(/\.sm2-grove-bob\s*\{\s*animation:\s*none\s*!important/);
   });
 });

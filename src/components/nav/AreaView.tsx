@@ -9,6 +9,7 @@ import { exploracaoLots, jogosLots } from '../../utils/playAreaLots';
 import { sm2Hint } from '../form/FormKit';
 import { useBackLayer } from '../../utils/backStack';
 import type { PlayerDayAnchor } from '../../utils/playerDay';
+import type { GuildGoal } from '../../utils/community';
 import type { ShopActions, ShopOwnership } from '../mercado/ShopShelf';
 import type { TournamentPage as TournamentPageT } from '../TournamentPage';
 import type { StageSkills } from '../../utils/soulProfile/ficha/skills';
@@ -101,7 +102,11 @@ export interface AreaViewProps {
    *  visão por construção (Biblioteca = diretório, Círculo de Amigos = amigos). */
   hallContent: (view: 'directory' | 'friends') => ReactNode;
   /** A Guilda (Arena e Hall abrem a mesma folha): dados do `CoopPanel`. */
-  guild: { saveId: string; metaDoDiaCumprida: boolean; playerDayTz?: PlayerDayAnchor };
+  guild: {
+    saveId: string; metaDoDiaCumprida: boolean; playerDayTz?: PlayerDayAnchor;
+    /** Meta como o servidor a confere (Guilda, o fio) e a criatura de quem olha. */
+    fioGoal?: GuildGoal; mySprite?: string | null;
+  };
 }
 
 /** Espera curta dentro da folha — o conteúdo é `lazy`, e a folha já está
@@ -186,7 +191,7 @@ export function AreaView(props: AreaViewProps) {
               <TournamentPage {...props.tournament} shop={{ ownership, actions }} />
             )}
             {open?.id === 'guilda' && (
-              <GuildSheet saveId={props.guild.saveId} language={language} metaDoDiaCumprida={props.guild.metaDoDiaCumprida} playerDayTz={props.guild.playerDayTz} />
+              <GuildSheet saveId={props.guild.saveId} language={language} metaDoDiaCumprida={props.guild.metaDoDiaCumprida} fioGoal={props.guild.fioGoal} mySprite={props.guild.mySprite} playerDayTz={props.guild.playerDayTz} />
             )}
             {open?.id === 'duelo' && (
               <DueloSheet
@@ -312,7 +317,7 @@ export function AreaView(props: AreaViewProps) {
           {open?.id === 'biblioteca' && props.hallContent('directory')}
           {open?.id === 'amigos' && props.hallContent('friends')}
           {open?.id === 'guilda' && (
-            <GuildSheet saveId={props.guild.saveId} language={language} metaDoDiaCumprida={props.guild.metaDoDiaCumprida} playerDayTz={props.guild.playerDayTz} />
+            <GuildSheet saveId={props.guild.saveId} language={language} metaDoDiaCumprida={props.guild.metaDoDiaCumprida} fioGoal={props.guild.fioGoal} mySprite={props.guild.mySprite} playerDayTz={props.guild.playerDayTz} />
           )}
         </Suspense>
       </AreaSheet>

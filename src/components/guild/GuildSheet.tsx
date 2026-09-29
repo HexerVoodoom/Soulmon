@@ -26,28 +26,41 @@
  *    formulário morto.
  *
  * SALAS (`PLANO-GUILDA.md` §6): o Salão é UM scroll com seções — Bosque, Roda,
- * Mural. A Feira é lote da Arena (fatia B). O visor do Bosque, o palco de
- * criaturas, os gestos e o Mural são da fatia B: `SalaMural` é um placeholder
- * que NÃO desenha nada (seção vazia não escreve "nada ainda" — L6), e o Bosque
- * desenha só o que já tem contrato (o fio e o agregado).
+ * Mural. A Feira é lote da Arena (fatia B2, ainda não). O Bosque tem o visor
+ * (`GroveVisor`: cenário do estágio + as criaturas na linha do chão), o nome do
+ * estágio, uma faixa `perto` BINÁRIA e o fio; a Roda tem os três gestos fixos e
+ * anônimos; o Mural guarda os marcos e as peças de maré. **Vazio é SILÊNCIO**
+ * (seção sem nada a dizer não desenha nem título — L6), e NADA tem número por
+ * pessoa: o tipo `GuildView` nem tem onde carregar um.
  *
  * Nada da guilda vai para o `GameState`: o ponteiro é do servidor.
  */
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import {
-  getGuild, createGuild, joinGuild, guildCheckin, leaveGuild, renameGuild, newGuildCode,
-  GuildError, type GuildErrorKind, type GuildView,
+  getGuild, createGuild, joinGuild, guildThread, guildGesture, leaveGuild, renameGuild, newGuildCode,
+  GuildError, type GuildErrorKind, type GuildView, type GuildGoal,
 } from '../../utils/community';
 import { playerDayKey, type PlayerDayAnchor } from '../../utils/playerDay';
-import { guildText, guildInviteRoom, GUILD_ERROR_KEY, type GuildKey } from '../../utils/guildCopy';
 import {
-  GUILD_NAME_MAX, GUILD_CODE_LENGTH, GUILD_PRESENCE_NOMINAL_MAX, normalizeGuildCode,
+  guildText, guildInviteRoom, GUILD_ERROR_KEY, groveStageName, groveStageLine, guildGestureName,
+  guildGestureSent, guildGestureReceived, tideSizeName, type GuildKey,
+} from '../../utils/guildCopy';
+import {
+  GUILD_NAME_MAX, GUILD_CODE_LENGTH, GUILD_PRESENCE_NOMINAL_MAX, GUILD_GESTURES, GROVE_STAGES,
+  normalizeGuildCode, type GuildGesture,
 } from '../../utils/guildRules';
+import {
+  observeGuildView, readGroveLocal, permanenceBand, formatDayLabel,
+} from '../../utils/groveLocal';
+import { track } from '../../utils/telemetry';
+import { getSpriteForStage } from '../../utils/sprites';
 // ⚠️ Todo `name` de ícone tem de estar no inventário de `icon_names` de
 // `src/styles/tokens.md`: a fonte é SUBSETADA, e um nome fora dele renderiza um
 // <span> VAZIO — sem erro e sem aparecer em teste nenhum.
 import { Icon } from '../ui/Icon';
 import { Field } from '../form/FormKit';
+import { usePrefersReducedMotion } from '../ui/Viewport';
+import { GroveVisor } from './GroveVisor';
 import type { Language } from '../../utils/i18n';
 
 interface GuildSheetProps {
@@ -57,6 +70,10 @@ interface GuildSheetProps {
    *  "firmar meu fio": cada um tem a SUA meta, e é assim que uma roda com um
    *  ultra e um rookie não vira injustiça. */
   metaDoDiaCumprida: boolean;
+  /** A meta como o servidor a confere (`done` × `heart`, em PESO de esforço). Sem ela, o servidor não confere. */
+  fioGoal?: GuildGoal;
+  /** A criatura de quem olha, no estágio dela (o App sabe; a folha não deriva estágio nenhum). */
+  mySprite?: string | null;
   /** Âncora do DIA DO JOGADOR (`gameState.playerDayTz`); sem ela vale o do aparelho. */
   playerDayTz?: PlayerDayAnchor;
 }
@@ -68,7 +85,7 @@ type Load =
 
 const kindOf = (e: unknown): GuildErrorKind => (e instanceof GuildError ? e.kind : 'server');
 
-export function GuildSheet({ saveId, language, metaDoDiaCumprida, playerDayTz }: GuildSheetProps) {
+export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySprite, playerDayTz }: GuildSheetProps) {
   const t = useCallback((k: GuildKey, vars?: Record<string, string | number>) => guildText(language, k, vars), [language]);
   const [load, setLoad] = useState<Load>({ status: 'loading' });
   const [aviso, setAviso] = useState<GuildKey | null>(null);
@@ -80,6 +97,9 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, playerDayTz }:
   const [ajustes, setAjustes] = useState(false);
   const [novoNome, setNovoNome] = useState('');
   const [copiado, setCopiado] = useState(false);
+  /** Dia (do jogador) em que ESTE aparelho viu cada estágio — só para o Mural. Memória de UI, não do save. */
+  const [marcos, setMarcos] = useState<Record<string, string>>({});
+  const reducedMotion = usePrefersReducedMotion();
 
   const rootRef = useRef<HTMLDivElement>(null);
   const vivo = useRef(false);
@@ -115,6 +135,17 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, playerDayTz }:
 
   useEffect(() => { void carregar(false); }, [carregar]);
 
+  // Toda vista que chega passa pela memória do aparelho: é ela que decide se há
+  // marco por celebrar (o App a lê) e que datou o estágio para o Mural. Fora do
+  // `agir` de propósito — inclui a carga inicial e a recarga silenciosa. Sem
+  // roda, a memória acaba (o que foi ganho já está no save).
+  useEffect(() => {
+    if (load.status !== 'ready') return;
+    const obs = observeGuildView(load.guild, load.day);
+    setMarcos(load.guild ? (readGroveLocal()?.marks ?? {}) : {});
+    if (obs?.firstSeenStage) track('guild_stage', { level: obs.firstSeenStage });
+  }, [load]);
+
   // Abrir o campo de código leva o foco a ele (o botão que abriu sumiu).
   useEffect(() => { if (entrando) document.getElementById(`${ajustesId}-codigo`)?.focus(); }, [entrando, ajustesId]);
 
@@ -147,7 +178,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, playerDayTz }:
   };
 
   /** Toda ação passa por aqui: um só lugar trava o duplo toque, traduz o erro e cuida do foco. */
-  const agir = async (fn: () => Promise<GuildView | null>, opts: { anunciar?: GuildKey; depois?: () => void } = {}) => {
+  const agir = async (fn: () => Promise<GuildView | null>, opts: { anunciar?: GuildKey; depois?: (guild: GuildView | null) => void } = {}) => {
     if (busy.current) return;
     busy.current = true;
     const abriu = document.activeElement as HTMLElement | null;
@@ -158,7 +189,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, playerDayTz }:
       const guild = await fn();
       if (!vivo.current) return;
       aplicar(guild, opts.anunciar);
-      opts.depois?.();
+      opts.depois?.(guild);
     } catch (e) {
       if (!vivo.current) return;
       const kind = kindOf(e);
@@ -172,6 +203,10 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, playerDayTz }:
       } else if (kind === 'noGuild') {
         aplicar(null);
         setAviso('guild.esvaziada.mundo');
+      } else if (kind === 'dailyLimit' || kind === 'goalNotMet') {
+        // O gesto do dia já saiu (talvez de outro aparelho) ou a meta de coração
+        // ainda não bateu: NENHUM dos dois é frase de tela. Relê e o botão certo aparece.
+        void carregar(true);
       } else {
         if (kind === 'notHost') void carregar(true);
         setAviso(GUILD_ERROR_KEY[kind]);
@@ -247,7 +282,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, playerDayTz }:
             disabled={semNome}
             aria-disabled={semNome ? true : undefined}
             aria-busy={ocupado ? true : undefined}
-            onClick={() => void agir(() => createGuild(saveId, nome.trim(), tz.current))}
+            onClick={() => void agir(() => createGuild(saveId, nome.trim(), tz.current), { depois: () => track('guild_create') })}
             className={`${btn} sm2-kit-btn-primary sm2-guild-btn`}
           >
             <Icon name={ocupado ? 'sync' : 'add'} size={20} className={ocupado ? 'animate-spin' : undefined} />
@@ -285,7 +320,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, playerDayTz }:
                 disabled={semCodigo}
                 aria-disabled={semCodigo ? true : undefined}
                 aria-busy={ocupado ? true : undefined}
-                onClick={() => void agir(() => joinGuild(saveId, codigo, tz.current))}
+                onClick={() => void agir(() => joinGuild(saveId, codigo, tz.current), { depois: g => { if (g) track('guild_join', { size: Math.min(12, Math.max(2, g.size)) }); } })}
                 className={`${btn} sm2-kit-btn-outline sm2-guild-btn`}
               >
                 <Icon name={ocupado ? 'sync' : 'arrow_forward'} size={20} className={ocupado ? 'animate-spin' : undefined} />
@@ -359,12 +394,27 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, playerDayTz }:
           <SalaBosque
             guild={g}
             t={t}
+            language={language}
             metaDoDiaCumprida={metaDoDiaCumprida}
             ocupado={ocupado}
-            onFio={() => void agir(() => guildCheckin(saveId, tz.current), { anunciar: 'guild.bosque.fio.toast' })}
+            mySprite={mySprite || getSpriteForStage('rookie')}
+            reducedMotion={reducedMotion}
+            onFio={() => void agir(() => guildThread(saveId, fioGoal, tz.current), {
+              anunciar: 'guild.bosque.fio.toast',
+              depois: () => track('guild_thread', { kind: 0 }),
+            })}
           />
 
-          <SalaRoda guild={g} t={t} nominal={nominal} />
+          <SalaRoda
+            guild={g}
+            t={t}
+            language={language}
+            nominal={nominal}
+            ocupado={ocupado}
+            onGesto={(k) => void agir(() => guildGesture(saveId, k, tz.current), {
+              anunciar: `guild.gesto.${k}.enviado`,
+            })}
+          />
 
           <div className="sm2-coop-code">
             <span className="sm2-lib-s">{t('guild.codigo.label')}</span>
@@ -393,7 +443,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, playerDayTz }:
           </div>
           {g.size <= 1 && <p className="sm2-lib-s" style={{ margin: 0 }}>{t('guild.criar.codigo.corpo', { n: guildInviteRoom() })}</p>}
 
-          <SalaMural />
+          <SalaMural guild={g} t={t} language={language} marcos={marcos} />
 
           {/* Saída limpa (LV-G5): um toque, sem diálogo de confirmação e sem
               penalidade. Um "tem certeza?" aqui seria o app negociando com quem
@@ -402,7 +452,14 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, playerDayTz }:
             type="button"
             disabled={ocupado}
             aria-disabled={ocupado ? true : undefined}
-            onClick={() => void agir(async () => { await leaveGuild(saveId); return null; })}
+            onClick={() => {
+              // A faixa de permanência sai da memória do aparelho ANTES de a saída a apagar.
+              const local = readGroveLocal();
+              const weeks = local ? permanenceBand(local.joinedDay, load.day) : 0;
+              void agir(async () => { await leaveGuild(saveId); return null; }, {
+                depois: () => track('guild_leave', { size: Math.max(0, Math.min(11, g.size - 1)), weeks }),
+              });
+            }}
             className={`${btn} sm2-kit-btn-outline sm2-guild-btn`}
           >
             {t('guild.sair.botao')}
@@ -431,20 +488,42 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, playerDayTz }:
 type T = (k: GuildKey, vars?: Record<string, string | number>) => string;
 
 /**
- * BOSQUE. A fatia B põe aqui o visor do estágio e a faixa "perto de {estagio}".
- * Hoje só o que tem contrato: o fio (a presença de quem pergunta) e o agregado.
- * Sem nada a dizer, NÃO desenha nada — nem título (`guild.bosque.fio.ainda`).
+ * BOSQUE (topo): o visor (cenário do estágio + criaturas na linha do chão), o
+ * nome do estágio e a linha dele, a faixa `perto` — UMA frase BINÁRIA, nunca
+ * razão, contagem nem tempo estimado —, a regra sóbria e o fio.
+ *
+ * O fio ainda não firmado é SILÊNCIO (`guild.bosque.fio.ainda`): sem a meta
+ * própria cumprida nem botão nem frase de explicação. O agregado (5+) só existe
+ * com fio hoje e nunca leva número.
  */
-function SalaBosque({ guild, t, metaDoDiaCumprida, ocupado, onFio }: {
-  guild: GuildView; t: T; metaDoDiaCumprida: boolean; ocupado: boolean; onFio: () => void;
+function SalaBosque({ guild, t, language, metaDoDiaCumprida, ocupado, mySprite, reducedMotion, onFio }: {
+  guild: GuildView; t: T; language: Language; metaDoDiaCumprida: boolean; ocupado: boolean;
+  mySprite: string; reducedMotion: boolean; onFio: () => void;
 }) {
-  const fioHoje = guild.mine.cameToday;
+  const { stage, stageIndex, perto } = guild.bosque;
+  const fioHoje = guild.mine.threadToday;
   const podeFirmar = !fioHoje && metaDoDiaCumprida;
   // 5+: UMA frase qualitativa, só com fio; nunca número, nunca `{n}`.
   const agregado = guild.threadedToday === true;
-  if (!fioHoje && !podeFirmar && !agregado) return null;
+  const nomeDoEstagio = stage ? groveStageName(language, stage) : null;
+  // "Perto de …" aponta para o PRÓXIMO estágio (o índice é a ordem; sem próximo, sem faixa).
+  const proximo = perto && stageIndex < GROVE_STAGES.length ? groveStageName(language, GROVE_STAGES[stageIndex]) : null;
   return (
     <section className="sm2-guild-sec" aria-label={t('guild.bosque.titulo')} data-guild-room="bosque">
+      <GroveVisor
+        guild={guild}
+        mySprite={mySprite}
+        reducedMotion={reducedMotion}
+        label={nomeDoEstagio ? t('guild.aria.bosque', { estagio: nomeDoEstagio }) : undefined}
+      />
+      {stage && (
+        <>
+          <h3 className="sm2-grove-stage" data-guild-stage>{nomeDoEstagio}</h3>
+          <p className="sm2-grove-line">{groveStageLine(language, stage)}</p>
+        </>
+      )}
+      {proximo && <p className="sm2-grove-line" data-guild-perto>{t('guild.bosque.perto', { estagio: proximo })}</p>}
+      <p className="sm2-lib-s" style={{ margin: 0 }}>{t('guild.bosque.regra')}</p>
       {fioHoje && <p className="sm2-stats-t" style={{ margin: 0 }}>{t('guild.bosque.fio.hoje')}</p>}
       {podeFirmar && (
         <button
@@ -465,12 +544,23 @@ function SalaBosque({ guild, t, metaDoDiaCumprida, ocupado, onFio }: {
   );
 }
 
+/** Os três gestos e o que cada um pede ao `Icon`. Todos estão no inventário do subset (`tokens.md`). */
+const GESTO_ICONE: Record<GuildGesture, string> = { aceno: 'pan_tool', luz: 'light_mode', descanso: 'bedtime' };
+
 /**
  * RODA: nomes na ORDEM DE CHEGADA (a que o servidor manda — nunca reordenada).
  * ≤4: a marca "no bosque hoje" SÓ em quem veio; quem não veio fica sem marca,
  * sem ícone e sem cor apagada (LV-G2). 5+: só nomes, ninguém tem estado.
+ *
+ * GESTOS: três fixos, anônimos, para a RODA INTEIRA (nunca uma pessoa escolhida);
+ * um de cada por dia — depois de mandado o botão diz "enviado" e não oferece de
+ * novo (sem "amanhã pode"). Os recebidos chegam em LOTE: só o tipo, sem quem e
+ * sem quantos, e sem nada quando não veio nenhum. Roda de uma pessoa só não tem
+ * para quem gesticular: a fileira não é desenhada.
  */
-function SalaRoda({ guild, t, nominal }: { guild: GuildView; t: T; nominal: boolean }) {
+function SalaRoda({ guild, t, language, nominal, ocupado, onGesto }: {
+  guild: GuildView; t: T; language: Language; nominal: boolean; ocupado: boolean; onGesto: (k: GuildGesture) => void;
+}) {
   return (
     <section className="sm2-guild-sec" aria-label={t('guild.aria.roda')} data-guild-room="roda">
       <div className="sm2-guild-secHd">
@@ -486,11 +576,70 @@ function SalaRoda({ guild, t, nominal }: { guild: GuildView; t: T; nominal: bool
           </li>
         ))}
       </ul>
+      {guild.size >= 2 && (
+        <div role="group" aria-label={t('guild.gesto.titulo')} className="sm2-grove-gestures" data-guild-gestos>
+          {GUILD_GESTURES.map(k => {
+            const enviado = guild.mine.gesturesSent.includes(k);
+            const nome = guildGestureName(language, k);
+            return (
+              <button
+                key={k}
+                type="button"
+                className="sm2-grove-gesto"
+                data-gesto={k}
+                disabled={ocupado || enviado}
+                aria-disabled={ocupado || enviado ? true : undefined}
+                aria-label={enviado ? t('guild.aria.gesto.enviado', { gesto: nome }) : t('guild.aria.gesto.enviar', { gesto: nome })}
+                onClick={() => onGesto(k)}
+              >
+                <Icon name={GESTO_ICONE[k]} size={24} fill={enviado ? 1 : 0} tone={enviado ? 'primary' : 'ink'} />
+                <span>{enviado ? guildGestureSent(language, k) : nome}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+      {guild.gestures.length > 0 && (
+        <ul className="sm2-grove-list" data-guild-recebidos>
+          {guild.gestures.map(k => <li key={k}>{guildGestureReceived(language, k)}</li>)}
+        </ul>
+      )}
     </section>
   );
 }
 
-/** MURAL — fatia B (marcos com DATA, peças de maré). Vazio não escreve "nada ainda". */
-function SalaMural(): null {
-  return null;
+/**
+ * MURAL: o que o bosque já virou — os marcos e as peças de maré colhidas. Só
+ * FATOS e DATAS: nenhum número por pessoa, ninguém que chegou ou saiu, nenhum
+ * "próximo marco em …". Vazio é SILÊNCIO — sem marco nem peça, nem o título é
+ * desenhado. A data do marco é a que ESTE aparelho viu; quando o aparelho não a
+ * conhece (a roda já era Copa quando ele chegou), a linha é só o nome.
+ */
+function SalaMural({ guild, t, language, marcos }: {
+  guild: GuildView; t: T; language: Language; marcos: Record<string, string>;
+}) {
+  const { stageIndex, ornaments } = guild.bosque;
+  const estagios = GROVE_STAGES.slice(0, stageIndex);
+  if (estagios.length === 0 && ornaments.length === 0) return null;
+  return (
+    <section className="sm2-guild-sec" aria-label={t('guild.aria.mural')} data-guild-room="mural">
+      <h3 className="sm2-stats-lab">{t('guild.mural.titulo')}</h3>
+      <ul className="sm2-grove-list">
+        {estagios.map((id, i) => {
+          const nome = groveStageName(language, id);
+          const data = marcos[String(i + 1)] ? formatDayLabel(marcos[String(i + 1)], language) : '';
+          return <li key={id} data-mural-marco={id}>{data ? t('guild.mural.marco', { estagio: nome, data }) : nome}</li>;
+        })}
+        {ornaments.map((o, i) => {
+          const data = formatDayLabel(o.day, language);
+          return (
+            <li key={`${o.tide}-${i}`} data-mural-mare={o.size}>
+              <span className="n">{tideSizeName(language, o.size)}</span>
+              {data ? <>{' · '}{t('guild.mural.mare', { data })}</> : null}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
 }
