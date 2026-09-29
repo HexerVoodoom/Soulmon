@@ -92,6 +92,12 @@ export async function onRequest(context) {
   return handleGuild(context);
 }
 
+/** Recibo DETERMINÍSTICO de um resgate: o mesmo em qualquer aparelho/região (M3). */
+export async function reciboDoResgate(save, week) {
+  const h = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`soulmon-guild-claim|${save}|${week}`)));
+  return Array.from(h.slice(0, 8), b => b.toString(16).padStart(2, '0')).join('');
+}
+
 /** A partir de quantos membros o TIPO do gesto recebido sai (B5). */
 export const GESTO_TIPO_MIN_MEMBROS = 3;
 
@@ -457,22 +463,30 @@ export async function handleGuild({ request, env }) {
     // guildClaim
     const w = String(body.week ?? '');
     if (!candidatas.includes(w)) return erro('invalid week', 400);
-    if (await kvOrThrow(env).get(coopClaimKey(id, w))) return erro('already claimed', 409);
+    // M3 (L2-backend): o KV é eventualmente consistente ENTRE regiões (até
+    // 60 s). O selo abaixo resolve dois toques na mesma região; dois aparelhos
+    // em POPs diferentes podem, cada um, reler o próprio selo e receber 200.
+    // O que torna isso inofensivo é o RECIBO: determinístico por (save,
+    // semana), igual nas duas respostas e no 409 — o cliente credita Emblemas
+    // UMA vez por recibo, guardado no save. Fechar no servidor exigiria
+    // Durable Object (fora desta fatia).
+    const recibo = await reciboDoResgate(id, w);
+    if (await kvOrThrow(env).get(coopClaimKey(id, w))) return erro('already claimed', 409, { receipt: recibo });
     const d = await direito(w);
     if (!d) return erro('nothing to claim', 404);
     // Dois aparelhos ao mesmo tempo (o KV não tem CAS): cada um grava com um
     // selo aleatório e relê; só quem encontra o PRÓPRIO selo resgatou.
     const selo = newPid();
-    await kvOrThrow(env).put(coopClaimKey(id, w), JSON.stringify({ at: Date.now(), kind: d.outcome, emblems: d.emblems, selo }), { expirationTtl: COOP_CLAIM_TTL });
+    await kvOrThrow(env).put(coopClaimKey(id, w), JSON.stringify({ at: Date.now(), kind: d.outcome, emblems: d.emblems, selo, receipt: recibo }), { expirationTtl: COOP_CLAIM_TTL });
     const gravado = JSON.parse((await kvOrThrow(env).get(coopClaimKey(id, w))) ?? '{}');
-    if (gravado.selo !== selo) return erro('already claimed', 409);
+    if (gravado.selo !== selo) return erro('already claimed', 409, { receipt: recibo });
     let trophy = false;
     if (d.outcome === 'dissipada') {
       const antes = await conchas();
       const depois = (await unirConjunto(env, coopShellKey(id), [w])).length;
       trophy = depois > antes && depois % RAID_TROPHY_EVERY === 0;
     }
-    return json({ claimed: { week: w, outcome: d.outcome, emblems: d.emblems, trophy, trophyId: trophy ? RAID_TROPHY_ID : null } });
+    return json({ claimed: { week: w, outcome: d.outcome, emblems: d.emblems, trophy, trophyId: trophy ? RAID_TROPHY_ID : null, receipt: recibo } });
   }
 
   if (action === 'guildLeave') {

@@ -68,6 +68,28 @@ describe('guildClaim — Emblemas', () => {
     expect(rs.filter(r => r.status === 409)).toHaveLength(2);
   });
 
+  it('M3: dois POPs (cada um relê o próprio selo) recebem o MESMO recibo determinístico', async () => {
+    const { e, gid } = await roda();
+    golpeSemeado(e, gid, '2026-09-09', M[0], 140);
+    // Duas "regiões": cada requisição enxerga só a própria escrita de coopClaim.
+    const kv = e.DIGIAPP_SAVES;
+    const chave = coopClaimKey(M[0], '2026-W37');
+    const regiao = (base) => ({ ...base, local: null,
+      get: async function (k) { return k === chave ? this.local : base.get(k); },
+      put: async function (k, v, o) { if (k === chave) { this.local = v; return; } return base.put(k, v, o); } });
+    const r1 = await (await onRequest({ request: new Request(`https://x.dev/api/guild?action=guildClaim`, { method: 'POST', body: JSON.stringify({ id: M[0], week: '2026-W37' }) }), env: { DIGIAPP_SAVES: regiao(kv) } })).json();
+    const r2 = await (await onRequest({ request: new Request(`https://x.dev/api/guild?action=guildClaim`, { method: 'POST', body: JSON.stringify({ id: M[0], week: '2026-W37' }) }), env: { DIGIAPP_SAVES: regiao(kv) } })).json();
+    // O servidor não fecha o caso multi-POP (KV sem CAS): os dois pagam —
+    // e o recibo igual é o que deixa o cliente creditar UMA vez.
+    expect(r1.claimed.receipt).toMatch(/^[0-9a-f]{16}$/);
+    expect(r2.claimed.receipt).toBe(r1.claimed.receipt);
+    // Na mesma região, o 409 devolve o mesmo recibo.
+    await resgatar(e, M[0], '2026-W37');
+    const r3 = await resgatar(e, M[0], '2026-W37');
+    expect(r3.status).toBe(409);
+    expect((await r3.json()).receipt).toBe(r1.claimed.receipt);
+  });
+
   it('recuou: piso de 2, só depois que a semana termina', async () => {
     const { e, gid } = await roda();
     golpeSemeado(e, gid, '2026-09-09', M[0], 20);
@@ -98,7 +120,7 @@ describe('guildClaim — Emblemas', () => {
     const { e, gid } = await roda();
     golpeSemeado(e, gid, '2026-09-09', M[0], 140);
     const { claimed } = await (await resgatar(e, M[0], '2026-W37')).json();
-    expect(Object.keys(claimed).sort()).toEqual(['emblems', 'outcome', 'trophy', 'trophyId', 'week']);
+    expect(Object.keys(claimed).sort()).toEqual(['emblems', 'outcome', 'receipt', 'trophy', 'trophyId', 'week']);
     expect(JSON.stringify(claimed)).not.toMatch(/heart|cora|credit|energ|perfect|glitch/i);
     expect(e.DIGIAPP_SAVES.store.has(coopClaimKey(M[0], '2026-W37'))).toBe(true);
   });
