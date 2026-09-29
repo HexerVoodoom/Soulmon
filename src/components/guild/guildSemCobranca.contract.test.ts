@@ -177,12 +177,11 @@ describe('copy do Bosque, dos gestos, do marco e do Mural', () => {
     }
   });
 
-  it('o gesto recebido sem tipo é PENDENTE e nem por isso vale tudo: anônimo, sem número, sem tipo', () => {
+  it('o gesto recebido sem tipo (FINAL, L3) é anônimo, sem número, sem tipo', () => {
     const [pt, en] = GUILD_COPY['guild.gesto.recebido.agregado'];
     expect(pt).toMatch(/^Alguém /);
     expect(en).toMatch(/^Someone /);
     expect(pt + en).not.toMatch(/\{|\d|luz|aceno|descanso|light|wave|rest/i);
-    expect(fs.readFileSync(path.resolve(__dirname, '../../utils/guildCopy.ts'), 'utf8')).toMatch(/PENDENTE[^\n]*\n[^\n]*\n[^\n]*\n\s*'guild\.gesto\.recebido\.agregado'/);
   });
 
   it('não existe chave de chat, de resposta a gesto nem de gesto por destinatário', () => {
@@ -211,7 +210,7 @@ describe('copy do Bosque, dos gestos, do marco e do Mural', () => {
   it('toda chave da B1 está no documento de copy (nenhuma inventada), com o mesmo texto', () => {
     // `guild.gesto.recebido.agregado` é PENDENTE por desenho (B5 do backend: roda de 2 não manda o
     // tipo) e ainda não está no documento — o `soulmon-narrative-critic` a vê; sai desta lista quando entrar.
-    const PENDENTES = ['guild.gesto.recebido.agregado'];
+    const PENDENTES: string[] = []; // L3 (29/09): agregado entrou no documento
     const novas = entradas.filter(([k]) => /^guild\.(bosque\.(regra|perto|estagio\.)|gesto\.|marco\.(?!data)|mural\.|aria\.(bosque|gesto|mural))/.test(k) && !PENDENTES.includes(k));
     expect(novas.length).toBeGreaterThan(40);
     for (const [k, [pt, en]] of novas) {
@@ -283,7 +282,7 @@ describe('copy da Feira e do glossário (B2)', () => {
   const copySrc = fs.readFileSync(path.resolve(__dirname, '../../utils/guildCopy.ts'), 'utf8');
   const norm = (t: string) => t.replace(/[’']/g, "'");
   /** Chaves da B2 que NÃO estão no documento — cada uma tem de estar marcada PENDENTE em `guildCopy.ts`. */
-  const PENDENTES = ['guild.concha.nome', 'guild.concha.chegou', 'guild.concha.desc', 'guild.help.concha.termo', 'guild.help.concha.def', 'guild.cenarios.titulo'];
+  const PENDENTES: string[] = []; // L3 (29/09): concha.* e cenarios.titulo entraram no documento
   const chavesB2 = entradas.filter(([k]) => /^guild\.(feira\.|help\.|guide\.|aria\.(feira|rodada)|concha\.|cenarios\.)/.test(k));
 
   it('toda chave da B2 está no documento com o MESMO texto (nada inventado), exceto as PENDENTES declaradas', () => {

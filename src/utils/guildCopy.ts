@@ -15,12 +15,11 @@
  * (Fatia B1: as chaves do Bosque por estágio, dos gestos, da cerimônia de marco e do
  * Mural vieram TODAS do documento — nenhuma é inventada.)
  *
- * ⚠️ Chaves que NÃO estão nas 149 do documento e estão marcadas `PENDENTE` (B2: `guild.concha.*` e
- * `guild.cenarios.titulo`, ver o relatório da fatia):
- * o botão de tentar de novo, o "Alguém" de quem ainda não tem apelido, o
- * "· você" (o texto já existia no CoopPanel) e o gesto recebido SEM tipo (roda
- * de 2, B5 do backend). O `soulmon-narrative-critic`
- * ainda não as viu — ver `docs/reviews/guilda/qa/impl-notas-front.md`.
+ * ✅ As dez chaves que nasceram FORA das 149 (`guild.concha.*`, `guild.cenarios.titulo`,
+ * `guild.help.concha.*`, `guild.gesto.recebido.agregado`, `guild.roda.voce/alguem`,
+ * `guild.erro.tentar`) foram revisadas pelo `soulmon-narrative-critic` em 29/09/2026
+ * (`docs/reviews/guilda/qa/L3-copy-critica.md`), estão FINAL e entraram no documento.
+ * Chave nova nasce no documento primeiro; a régua reprova a que estiver só aqui.
  */
 import type { Language } from './i18n';
 import { GUILD_MAX_MEMBERS, type GroveStageId, type GuildGesture, type TideSize } from './guildRules';
@@ -57,7 +56,7 @@ export const GUILD_COPY = {
   'guild.erro.semLogin': ['Entre na sua conta para chegar a uma roda.', 'Sign in to reach a circle.'],
   'guild.erro.muitosToques': ['Muitos toques seguidos. Tente daqui a pouco.', 'Too many taps in a row. Try again shortly.'],
   'guild.erro.generico': ['Não deu certo agora. Tente de novo.', "That didn't work. Try again."],
-  // PENDENTE (fora das 149): o botão da tela de carga que falhou.
+  // FINAL (L3, 29/09): o botão da tela de carga que falhou.
   'guild.erro.tentar': ['Tentar de novo', 'Try again'],
   // ── Bosque: só o que a fatia A desenha (§3) ────────────────────────────
   'guild.bosque.titulo': ['Bosque', 'Grove'],
@@ -97,11 +96,10 @@ export const GUILD_COPY = {
   'guild.gesto.aceno.recebido': ['Alguém acenou para a roda.', 'Someone waved at the circle.'],
   'guild.gesto.luz.recebido': ['Alguém deixou uma luz.', 'Someone left a little light.'],
   'guild.gesto.descanso.recebido': ['Alguém desejou bom descanso.', 'Someone wished everyone a good rest.'],
-  // PENDENTE (fora das 149): numa roda de 2 o servidor NÃO manda o TIPO do gesto recebido (B5 —
-  // dizer "luz" contaria o gesto exato de uma pessoa conhecida), só que chegou algum. O
-  // `soulmon-narrative-critic` ainda não viu esta frase.
-  'guild.gesto.recebido.agregado': ['Alguém fez um gesto para a roda.', 'Someone made a gesture for the circle.'],
-  // PENDENTE (fora das 149; já existiam no CoopPanel).
+  // FINAL (L3, 29/09): numa roda de 2 o servidor NÃO manda o TIPO do gesto recebido (B5), só que
+  // chegou algum. "Deixou" (não "fez") segue o verbo de `.luz.recebido` e evita a leitura de "gesto" ofensivo.
+  'guild.gesto.recebido.agregado': ['Alguém deixou um gesto para a roda.', 'Someone left a gesture for the circle.'],
+  // FINAL (L3, 29/09; já existiam no CoopPanel).
   'guild.roda.voce': ['· você', '· you'],
   'guild.roda.alguem': ['Alguém', 'Someone'],
   // ── Cerimônia e aviso de marco (§5) ────────────────────────────────────
@@ -115,7 +113,7 @@ export const GUILD_COPY = {
   'guild.marco.bosqueAntigo.pet': ['Tem cheiro de cobre.', 'It smells of copper.'],
   'guild.marco.botao': ['Continuar', 'Continue'],
   'guild.marco.aviso': ['Novo estágio do bosque: {estagio}.', 'New stage for the grove: {estagio}.'],
-  'guild.marco.cenario': ['Cenário do bosque: {estagio}. Está entre os seus cenários.', 'Grove scenery: {estagio}. It is among your scenery.'],
+  'guild.marco.cenario': ['Cenário do bosque: {estagio}. Já está em Background.', 'Grove scenery: {estagio}. It is now under Background.'],
   // ── Mural (§7) ─────────────────────────────────────────────────────────
   'guild.mural.titulo': ['Mural', 'Wall'],
   'guild.mural.marco': ['{estagio}, {data}', '{estagio}, {data}'],
@@ -135,22 +133,22 @@ export const GUILD_COPY = {
   'guild.feira.fenomeno.enxame.nome': ['Enxame', 'Swarm'],
   'guild.feira.fenomeno.enxame.linha': ['Camadas soltas, todas juntas.', 'Loose layers, all together.'],
   // `{cheio}`/`{piso}` vêm de `RAID_EMBLEMS`/`RAID_EMBLEMS_FLOOR` — nunca literal.
-  'guild.feira.sobria': ['Uma rodada por dia. Semana dissipada: {cheio} Emblemas; senão, {piso}.', 'One round a day. Cleared week: {cheio} Emblems; otherwise, {piso}.'],
+  'guild.feira.sobria': ['Uma rodada por dia. Semana dissipada: {cheio} Emblemas. Se o fenômeno voltar à névoa: {piso}.', 'One round a day. Cleared week: {cheio} Emblems. If the phenomenon goes back to the mist: {piso}.'],
   'guild.feira.rodada.botao': ['Fazer minha rodada', 'Take my round'],
   'guild.feira.rodada.feita': ['A sua rodada chegou até ele.', 'Your round reached it.'],
   'guild.feira.dissipado.mundo': ['O fenômeno se desfez diante da roda.', 'The phenomenon came apart before the circle.'],
   'guild.feira.recuou.mundo': ['O fenômeno voltou para a névoa. O bosque segue como estava.', 'The phenomenon went back into the mist. The grove stays as it was.'],
   'guild.feira.colher.botao': ['Colher', 'Collect'],
   'guild.feira.colhido': ['{n} Emblemas colhidos.', '{n} Emblems collected.'],
-  // PENDENTE (fora das 149): a peça da maré e o título da vitrine dos cenários. O NOME
-  // "Concha da Maré / Tide shell" está RESOLVIDO (§ decisões, item 15); a frase que a acompanha não.
+  // FINAL (L3, 29/09): a peça da maré. `nome`/`desc` espelham `GUILD_ITEMS` (shop.ts).
   'guild.concha.nome': ['Concha da Maré', 'Tide shell'],
-  'guild.concha.chegou': ['A maré deixou uma Concha da Maré no bosque.', 'The tide left a Tide shell in the grove.'],
+  'guild.concha.chegou': ['A maré deixou uma Concha da Maré. Já está em Decoração.', 'The tide left a Tide shell. It is now under Decor.'],
   'guild.concha.desc': ['Deixada pela maré no bosque.', 'Left by the tide in the grove.'],
-  // PENDENTE (fora das 149): o verbete da Concha da Maré no glossário (o doc só resolveu o NOME e o significado, §15).
   'guild.help.concha.termo': ['Concha da Maré', 'Tide shell'],
-  'guild.help.concha.def': ['A maré deixa uma Concha da Maré no bosque a cada {n} Feiras dissipadas. Ela nomeia o feito da roda, nunca uma pessoa.', 'The tide leaves a Tide shell in the grove every {n} cleared Fairs. It names what the circle did, never one person.'],
-  'guild.cenarios.titulo': ['Da sua roda', 'From your circle'],
+  'guild.help.concha.def': ['Cada {n} Feiras dissipadas rendem uma Concha da Maré, peça de decoração de quem colhe. Ela marca o que a roda fez junta, nunca uma pessoa.', 'Every {n} cleared Fairs bring a Tide shell, a decor piece for whoever collects. It marks what the circle did together, never one person.'],
+  // Título da prateleira de posse (cenários do bosque + Concha): "do bosque", não "da sua roda" — a
+  // posse fica com quem segue o próprio caminho (G12), e "sua roda" seria falso para essa pessoa.
+  'guild.cenarios.titulo': ['Do bosque', 'From the grove'],
   // ── Ajustes e saída (§8) ───────────────────────────────────────────────
   'guild.ajustes.aria': ['Ajustes da roda', 'Circle settings'],
   'guild.ajustes.titulo': ['Ajustes', 'Settings'],
@@ -178,11 +176,11 @@ export const GUILD_COPY = {
   'guild.help.guilda.termo': ['Guilda e roda', 'Guild and circle'],
   'guild.help.guilda.def': ['A Guilda é o lugar; a roda é quem está nela. Até {max} pessoas, uma roda por pessoa, entrada só por código. Sem chat e sem aviso no celular.', 'The Guild is the place; the circle is who is in it. Up to {max} people, one circle each, joining by code only. No chat and no phone notifications.'],
   'guild.help.bosque.termo': ['Bosque', 'Grove'],
-  'guild.help.bosque.def': ['O bosque da roda tem cinco estágios: Clareira, Ramagem, Copa, Mata e Bosque antigo. Só cresce, nunca encolhe.', 'The circle’s grove has five stages: Clearing, Boughs, Canopy, Thicket and Old grove. It only grows and never shrinks.'],
+  'guild.help.bosque.def': ['O bosque da roda tem estes estágios: Clareira, Ramagem, Copa, Mata e Bosque antigo. Só cresce, nunca encolhe.', 'The circle’s grove has these stages: Clearing, Boughs, Canopy, Thicket and Old grove. It only grows and never shrinks.'],
   'guild.help.fio.termo': ['Fio', 'Strand'],
   'guild.help.fio.def': ['Um fio firma quando alguém da roda alcança a própria meta do dia. É um por pessoa por dia, sem nome e sem peso.', 'A strand settles when someone in the circle reaches their own goal for the day. One per person per day, unnamed and unweighted.'],
   'guild.help.feira.termo': ['Feira', 'Fair'],
-  'guild.help.feira.def': ['Toda semana chega um fenômeno da névoa. Cada pessoa faz uma rodada por dia. Semana dissipada rende {cheio} Emblemas; senão, {piso}. A Feira não mexe no bosque.', 'Every week a phenomenon comes in from the mist. Each person takes one round a day. A cleared week pays {cheio} Emblems; otherwise, {piso}. The Fair never touches the grove.'],
+  'guild.help.feira.def': ['Toda semana chega um fenômeno da névoa. Cada pessoa faz uma rodada por dia. Semana dissipada rende {cheio} Emblemas; se ele voltar à névoa, {piso}. A Feira não mexe no bosque.', 'Every week a phenomenon comes in from the mist. Each person takes one round a day. A cleared week pays {cheio} Emblems; if it goes back to the mist, {piso}. The Fair never touches the grove.'],
   'guild.help.mare.termo': ['Maré', 'Tide'],
   'guild.help.mare.def': ['Uma maré dura {semanas} semanas. Na virada, o que assentou fica no bosque.', 'A tide lasts {semanas} weeks. When it turns, what settled stays in the grove.'],
   'guild.guide.titulo': ['A Guilda', 'The Guild'],

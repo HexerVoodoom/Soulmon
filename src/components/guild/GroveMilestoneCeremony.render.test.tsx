@@ -37,9 +37,9 @@ describe('o que ela diz', () => {
     const { container, rerender } = renderWithCss(<GroveMilestoneCeremony {...base} onDone={() => {}} />);
     expect(container.textContent).not.toMatch(/Cenário do bosque/);
     rerender(<GroveMilestoneCeremony {...base} sceneGranted onDone={() => {}} />);
-    expect(container.textContent).toContain('Cenário do bosque: Copa. Está entre os seus cenários.');
+    expect(container.textContent).toContain('Cenário do bosque: Copa. Já está em Background.');
     rerender(<GroveMilestoneCeremony {...base} sceneGranted language="en-US" onDone={() => {}} />);
-    expect(container.textContent).toContain('Grove scenery: Canopy. It is among your scenery.');
+    expect(container.textContent).toContain('Grove scenery: Canopy. It is now under Background.');
   });
 
   it('sem número, sem "parabéns" e sem cobrança', () => {

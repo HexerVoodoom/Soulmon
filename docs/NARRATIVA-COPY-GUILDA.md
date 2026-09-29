@@ -1,6 +1,6 @@
 # Copy da Guilda (WPG-0)
 
-> **Fonte única** do texto que o jogador lê na Guilda, para `staff-frontend` importar sem inventar (29/09/2026, `soulmon-copy-redator`). **Não é aprovada** — o `soulmon-narrative-critic` é bloqueante. Ancorada em `docs/PLANO-GUILDA.md` §1/§4/§5/§6/§9/§12 e `docs/reviews/guilda/08-critica-narrativa.md`; precedência: código > teste > este arquivo.
+> **Fonte única** do texto que o jogador lê na Guilda, para `staff-frontend` importar sem inventar (29/09/2026, `soulmon-copy-redator`). **Revisada** pelo `soulmon-narrative-critic` em L1 e L3 (bloqueante; achados em `docs/reviews/guilda/qa/`). Ancorada em `docs/PLANO-GUILDA.md` §1/§4/§5/§6/§9/§12 e `docs/reviews/guilda/08-critica-narrativa.md`; precedência: código > teste > este arquivo.
 
 **Regras de leitura.** Todo texto nasce em EN e vem com o par PT (`language === 'pt-BR' ? … : …`). `{x}` é placeholder: números vêm das constantes (`GUILD_MAX_MEMBERS`, `RAID_EMBLEMS`, `RAID_EMBLEMS_FLOOR`, `GUILD_TIDE_WEEKS`), nunca literais. Linhas "SILÊNCIO" significam **não desenhar nada** (nem placeholder, nem ícone vazio). Fala do pet passa por `speak()` (sem emoji); nenhuma string daqui tem emoji. Nenhuma frase é condicionada ao tempo de ausência. Leis: L1..L12 de `NARRATIVA-E-UNIVERSO.md` §2, LV-G1..G10 de `PLANO-GUILDA.md` §13, "§13/§17" da bíblia.
 
@@ -48,6 +48,7 @@
 | `guild.erro.semLogin` | Entre na sua conta para chegar a uma roda. | Sign in to reach a circle. | 401 sem login | §13 |
 | `guild.erro.demo` | Crie uma conta para ter uma roda. | Create an account to have a circle. | demo: convite para criar conta (`UnlockNudge`, nunca abre sozinho) | PLANO-GUILDA §5 |
 | `guild.erro.muitosToques` | Muitos toques seguidos. Tente daqui a pouco. | Too many taps in a row. Try again shortly. | 429 rate limit `GUILD_LIGHT` | §13 constata, sem culpa |
+| `guild.erro.tentar` | Tentar de novo | Try again | GuildSheet, botão da carga que falhou (não aparece sem login) | §13 (L3, 29/09) |
 | `guild.erro.generico` | Não deu certo agora. Tente de novo. | That didn't work. Try again. | qualquer outro erro (mesmo texto do CoopPanel) | §13 |
 
 ## 3. Bosque (seção do topo)
@@ -96,6 +97,9 @@
 | `guild.gesto.aceno.recebido` | Alguém acenou para a roda. | Someone waved at the circle. | lote ao abrir; sem autor, sem contagem, sem push | LV-G1, LV-G4 |
 | `guild.gesto.luz.recebido` | Alguém deixou uma luz. | Someone left a little light. | idem | idem |
 | `guild.gesto.descanso.recebido` | Alguém desejou bom descanso. | Someone wished everyone a good rest. | idem | L9 é respeitada: deseja, não diagnostica |
+| `guild.gesto.recebido.agregado` | Alguém deixou um gesto para a roda. | Someone left a gesture for the circle. | roda de 2: o servidor não manda o TIPO (contaria o gesto de uma pessoa conhecida); só que chegou algum. Sem número, sem tipo (L3, 29/09) | LV-G1, LV-G4 |
+| `guild.roda.voce` | · você | · you | GuildSheet, ao lado do próprio nome na lista da roda (L3, 29/09) | L1 (marca de lugar, não de mérito) |
+| `guild.roda.alguem` | Alguém | Someone | GuildSheet, quem ainda não tem apelido (L3, 29/09) | LV-G1 |
 | `guild.gesto.nenhum` | (sem texto — SILÊNCIO) | (no text — SILENCE) | nenhum gesto recebido: a seção de recebidos não é desenhada | L6 |
 
 ## 5. Cerimônia e aviso de marco
@@ -113,7 +117,7 @@
 | `guild.marco.data` | {data} | {data} | data do marco na cerimônia e no Mural (a DATA é a saída relacional, como `MilestoneCeremony`) | regra dos Marcos |
 | `guild.marco.botao` | Continuar | Continue | botão da cerimônia (movimento reduzido reduz o movimento, nunca a pausa) | CLAUDE.md, marcos |
 | `guild.marco.aviso` | Novo estágio do bosque: {estagio}. | New stage for the grove: {estagio}. | slot de avisos da Home, último da ordem, só no dia do marco | L4 (sem "não perca") |
-| `guild.marco.cenario` | Cenário do bosque: {estagio}. Está entre os seus cenários. | Grove scenery: {estagio}. It is among your scenery. | depois da cerimônia, quando `bg-guild-*` é concedido (fica com quem chega a seguir o próprio caminho) | L10 (fato sóbrio); LV-G6 |
+| `guild.marco.cenario` | Cenário do bosque: {estagio}. Já está em Background. | Grove scenery: {estagio}. It is now under Background. | depois da cerimônia, quando `bg-guild-*` é concedido (fica com quem chega a seguir o próprio caminho) | L10 (fato sóbrio, e o lugar é o rótulo REAL da lojinha, `MERCADO_LOTS` `background`); LV-G6 |
 
 ## 6. Feira
 
@@ -130,7 +134,7 @@
 | `guild.feira.fenomeno.estatica.linha` | A Malha chiou fora de fase. | The Mesh hissed out of phase. | idem | B2 |
 | `guild.feira.fenomeno.enxame.nome` | Enxame | Swarm | `fx-fair-enxame` | B2 |
 | `guild.feira.fenomeno.enxame.linha` | Camadas soltas, todas juntas. | Loose layers, all together. | idem | B2 |
-| `guild.feira.sobria` | Uma rodada por dia. Semana dissipada: {cheio} Emblemas; senão, {piso}. | One round a day. Cleared week: {cheio} Emblems; otherwise, {piso}. | linha sóbria ao lado de toda tela da Feira (constantes `RAID_EMBLEMS`/`RAID_EMBLEMS_FLOOR`, nunca literal) | L10; 08-critica C2 |
+| `guild.feira.sobria` | Uma rodada por dia. Semana dissipada: {cheio} Emblemas. Se o fenômeno voltar à névoa: {piso}. | One round a day. Cleared week: {cheio} Emblems. If the phenomenon goes back to the mist: {piso}. | linha sóbria ao lado de toda tela da Feira (constantes `RAID_EMBLEMS`/`RAID_EMBLEMS_FLOOR`, nunca literal) | L10; 08-critica C2 |
 | `guild.feira.rodada.botao` | Fazer minha rodada | Take my round | botão único, por gesto | L12 |
 | `guild.feira.rodada.feita` | A sua rodada chegou até ele. | Your round reached it. | depois da rodada; SEM número de dano, sem barra que mostre quanto foi o seu | LV-G1; PLANO §3 |
 | `guild.feira.rodada.jaFeita` | (sem texto extra — o botão fica em `guild.feira.rodada.feita`) | (no extra text — button stays on `guild.feira.rodada.feita`) | resto do dia: nada de "volte amanhã" | L4 |
@@ -140,6 +144,10 @@
 | `guild.feira.recuou.pet` | Ele foi embora sozinho. | It went away on its own. | fala do pet (não absolve nem culpa) | §17-3 |
 | `guild.feira.colher.botao` | Colher | Collect | botão de resgate `coopClaim` | L12 |
 | `guild.feira.colhido` | {n} Emblemas colhidos. | {n} Emblems collected. | depois do resgate (n = 4 ou 2; mesma moeda do Torneio) | L10 |
+| `guild.concha.nome` | Concha da Maré | Tide shell | nome da peça (`GUILD_ITEMS`, shop.ts) | §12; decisão 15 |
+| `guild.concha.chegou` | A maré deixou uma Concha da Maré. Já está em Decoração. | The tide left a Tide shell. It is now under Decor. | depois do resgate, quando a peça veio; o lugar é o rótulo REAL da lojinha (`decoracao`) | L10, L12 |
+| `guild.concha.desc` | Deixada pela maré no bosque. | Left by the tide in the grove. | descrição da peça (`GUILD_ITEMS`) | L12 |
+| `guild.cenarios.titulo` | Do bosque | From the grove | título da prateleira de posse nas lojinhas Background e Decoração; "da sua roda" reprovado: a posse fica com quem segue o próprio caminho | L6, L10 |
 | `guild.feira.barra.aria` | Fenômeno diante da roda | Phenomenon before the circle | aria da barra coletiva (sem valor numérico exposto) | LV-G1 |
 
 ## 7. Mural
@@ -200,19 +208,21 @@
 | `guild.help.guilda.termo` | Guilda e roda | Guild and circle | HelpModal, glossário | §12 |
 | `guild.help.guilda.def` | A Guilda é o lugar; a roda é quem está nela. Até {max} pessoas, uma roda por pessoa, entrada só por código. Sem chat e sem aviso no celular. | The Guild is the place; the circle is who is in it. Up to {max} people, one circle each, joining by code only. No chat and no phone notifications. | HelpModal; {max} = `GUILD_MAX_MEMBERS` | L10; LV-G4 |
 | `guild.help.bosque.termo` | Bosque | Grove | HelpModal | §12 |
-| `guild.help.bosque.def` | O bosque da roda tem cinco estágios: Clareira, Ramagem, Copa, Mata e Bosque antigo. Só cresce, nunca encolhe. | The circle’s grove has five stages: Clearing, Boughs, Canopy, Thicket and Old grove. It only grows and never shrinks. | HelpModal | LV-G3 |
+| `guild.help.bosque.def` | O bosque da roda tem estes estágios: Clareira, Ramagem, Copa, Mata e Bosque antigo. Só cresce, nunca encolhe. | The circle’s grove has these stages: Clearing, Boughs, Canopy, Thicket and Old grove. It only grows and never shrinks. | HelpModal | LV-G3 |
 | `guild.help.fio.termo` | Fio | Strand | HelpModal | §12 |
 | `guild.help.fio.def` | Um fio firma quando alguém da roda alcança a própria meta do dia. É um por pessoa por dia, sem nome e sem peso. | A strand settles when someone in the circle reaches their own goal for the day. One per person per day, unnamed and unweighted. | HelpModal | L10; LV-G8 |
 | `guild.help.feira.termo` | Feira | Fair | HelpModal | §12 |
-| `guild.help.feira.def` | Toda semana chega um fenômeno da névoa. Cada pessoa faz uma rodada por dia. Semana dissipada rende {cheio} Emblemas; senão, {piso}. A Feira não mexe no bosque. | Every week a phenomenon comes in from the mist. Each person takes one round a day. A cleared week pays {cheio} Emblems; otherwise, {piso}. The Fair never touches the grove. | HelpModal; constantes `RAID_EMBLEMS(_FLOOR)` | L10; LV-G7 |
+| `guild.help.feira.def` | Toda semana chega um fenômeno da névoa. Cada pessoa faz uma rodada por dia. Semana dissipada rende {cheio} Emblemas; se ele voltar à névoa, {piso}. A Feira não mexe no bosque. | Every week a phenomenon comes in from the mist. Each person takes one round a day. A cleared week pays {cheio} Emblems; if it goes back to the mist, {piso}. The Fair never touches the grove. | HelpModal; constantes `RAID_EMBLEMS(_FLOOR)` | L10; LV-G7 |
 | `guild.help.mare.termo` | Maré | Tide | HelpModal (não usar "Season"; colide com `season-tide`) | §12; 08-critica O1 |
 | `guild.help.mare.def` | Uma maré dura {semanas} semanas. Na virada, o que assentou fica no bosque. | A tide lasts {semanas} weeks. When it turns, what settled stays in the grove. | HelpModal; `GUILD_TIDE_WEEKS` | L10 |
+| `guild.help.concha.termo` | Concha da Maré | Tide shell | HelpModal | §12; decisão 15 |
+| `guild.help.concha.def` | Cada {n} Feiras dissipadas rendem uma Concha da Maré, peça de decoração de quem colhe. Ela marca o que a roda fez junta, nunca uma pessoa. | Every {n} cleared Fairs bring a Tide shell, a decor piece for whoever collects. It marks what the circle did together, never one person. | HelpModal; {n} = `RAID_TROPHY_EVERY`. Não diz "a maré deixa" (a maré do glossário dura `GUILD_TIDE_WEEKS`, e 4 Feiras não cabem em uma maré de 6 semanas) | L10, L12 |
 | `guild.help.anfitriao.termo` | Anfitrião | Host | HelpModal | §12 |
 | `guild.help.anfitriao.def` | Quem abriu a clareira pode renomear a roda e gerar um código novo. Não vê nada a mais sobre ninguém. | Whoever opened the clearing can rename the circle and generate a new code. They see nothing more about anyone. | HelpModal | LV-G1 |
 | `guild.guide.titulo` | A Guilda | The Guild | GuideModal, seção nova | §12 |
 | `guild.guide.corpo` | Uma roda cuida de um bosque junta. Ninguém vê quanto o outro fez. Seguir o próprio caminho é um toque e o que firmou fica. Nada aqui é vendido. | A circle keeps a grove together. Nobody sees how much anyone else did. Going your own way takes one tap and what settled stays. Nothing here is for sale. | GuideModal (números vêm de constantes, não de texto à mão) | L10; LV-G1, G2, G5, G6 |
 
-**Total: 149 chaves.**
+**Total: 159 chaves** (149 do WPG-0 + 10 revisadas em L3, 29/09/2026, `docs/reviews/guilda/qa/L3-copy-critica.md`).
 
 
 ## Recusas (o que NÃO foi escrito, e por quê)

@@ -946,15 +946,15 @@ describe('os gestos: três, fixos, anônimos, sem push', () => {
     expect(document.querySelector('[data-guild-recebidos]')).toBeNull();
   });
 
-  it('roda de 2: o servidor NÃO manda o tipo (B5) — só o fato; a UI diz "alguém fez um gesto", sem tipo, sem ícone', async () => {
+  it('roda de 2: o servidor NÃO manda o tipo (B5) — só o fato; a UI diz "alguém deixou um gesto", sem tipo, sem ícone', async () => {
     vi.mocked(getGuild).mockResolvedValue(noEstagio(2, 1, { gestures: [], gestureReceived: true }));
     await montar();
     const linha = document.querySelector('[data-guild-recebidos]')!;
-    expect(linha.textContent).toBe('Alguém fez um gesto para a roda.');
+    expect(linha.textContent).toBe('Alguém deixou um gesto para a roda.');
     expect(linha.textContent).not.toMatch(/luz|aceno|descanso|light|wave|rest/i);
     cleanup();
     await montar({ language: 'en-US' });
-    expect(document.querySelector('[data-guild-recebidos]')!.textContent).toBe('Someone made a gesture for the circle.');
+    expect(document.querySelector('[data-guild-recebidos]')!.textContent).toBe('Someone left a gesture for the circle.');
   });
 
   it('nenhum gesto (gestureReceived falso): SILÊNCIO nas duas formas', async () => {

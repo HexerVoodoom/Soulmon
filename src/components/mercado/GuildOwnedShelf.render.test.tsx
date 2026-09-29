@@ -30,7 +30,7 @@ const abrir = (props: Partial<Props> & { stall: Props['stall'] }) => renderWithC
 const secao = (kind: 'bg' | 'furniture') => document.querySelector(`[data-guild-owned="${kind}"]`) as HTMLElement | null;
 
 describe('cenários da roda: aparecem e equipam, sem preço', () => {
-  it('só os possuídos aparecem, com o nome do estágio; a seção tem o título "Da sua roda"', () => {
+  it('só os possuídos aparecem, com o nome do estágio; a seção tem o título "Do bosque"', () => {
     abrir({ stall: 'background', ownedBackgrounds: ['bg-room', 'bg-guild-clareira', 'bg-guild-ramagem'] });
     const s = secao('bg')!;
     expect(within(s).getByRole('heading', { name: guildText('pt-BR', 'guild.cenarios.titulo') })).toBeTruthy();
@@ -42,7 +42,7 @@ describe('cenários da roda: aparecem e equipam, sem preço', () => {
 
   it('`guild.marco.cenario` é VERDADEIRA: o estágio que a cerimônia anuncia está na tela para equipar', () => {
     const frase = guildText('pt-BR', 'guild.marco.cenario', { estagio: 'Ramagem' });
-    expect(frase).toContain('Está entre os seus cenários');
+    expect(frase).toContain('Já está em Background');
     abrir({ stall: 'background', ownedBackgrounds: ['bg-room', 'bg-guild-ramagem'] });
     expect(within(secao('bg')!).getByRole('button', { name: /Ramagem — Equipar/ })).toBeTruthy();
   });
