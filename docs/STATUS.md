@@ -9,6 +9,12 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 29/09/2026 — Admin/GM no cliente + o corvinho de lanterna e cartola
+> `useAdmin()` (`src/utils/adminFlag.ts`) espelha SÓ o `admin === true` de `GET /api/entitlements`, em memória (nunca save/localStorage; rede falha = não-admin).
+> O admin adota o corvinho uma vez por sessão (`src/utils/corvoPet.ts` › `adoptCorvo`, marca `soulmonMeta.creature`); arte resolvida por `spriteLineOf` → `getSpriteForStage` em Home, Pet, Evolução, cerimônia, masmorra/arena/Dino/pesadelo, torneio e overlay desktop.
+> Painel de GM nas Configurações (`GmPanel.tsx` + `src/utils/gmTools.ts`): saldo 999999 em Bits/Emblemas, desbloquear tudo, ir para forma, encher cuidados, +1/7/30 dias completos. Capturas em `docs/reviews/admin-corvo/shots-cliente/`.
+> **Limitações:** o widget Android não desenha o corvo (drawables por estágio); o nome da forma aparece em PT também no EN (`CreatureStage.name` é monolíngue, como no oráculo). **Depende do dono:** `wrangler secret put ADMIN_EMAILS`.
+
 > ## 29/09/2026 — Caminhos renomeados: Poder / Harmonia / Benevolência
 >
 > Pedido do dono ("remova toda menção a virus, data e vacina…"), registrado em
