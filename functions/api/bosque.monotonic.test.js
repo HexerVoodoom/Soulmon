@@ -137,3 +137,24 @@ describe('bosque.monotonic — pela rota', () => {
     expect((await lerGrupo(e, g.id)).bosqueProgress).toBeGreaterThanOrEqual(1);
   });
 });
+
+describe('mutantes que sobreviveram à 1ª rodada', () => {
+  it('o fio avulso de quem saiu entra nos DOIS lados da razão (1 de 3, não 0 de 2)', () => {
+    const g = { members: ['a', 'c'], desde: {}, bosqueProgress: 0, progressDay: '2026-01-01', fiosAvulsos: { '2026-01-02': 1 } };
+    fecharDiasDoBosque(g, {}, '2026-01-03');
+    expect(g.bosqueProgress).toBeCloseTo(1 / 3, 9);
+  });
+
+  it('dois fechamentos CONCORRENTES a partir da mesma cópia velha não somam o dia duas vezes', async () => {
+    const { atualizarBosque, gravarGrupo } = await import('./_coop.js');
+    const e = { DIGIAPP_SAVES: fakeKV() };
+    const velho = { id: 'g'.repeat(20), code: 'ABCDEFGH', members: ['a'.repeat(32)], desde: {}, bosqueProgress: 1, progressDay: '2026-01-01', tideKey: 'x', tideBase: 1 };
+    velho.tideKey = (await import('./_coop.js')).mareDe('2026-01-03');
+    await gravarGrupo(e, velho);
+    e.DIGIAPP_SAVES.store.set(coopFioKey(velho.id, velho.members[0]), JSON.stringify(firmarFio(null, '2026-01-02')));
+    const copia1 = structuredClone(velho), copia2 = structuredClone(velho);
+    await atualizarBosque(e, copia1, '2026-01-03');
+    await atualizarBosque(e, copia2, '2026-01-03');
+    expect((await lerGrupo(e, velho.id)).bosqueProgress).toBeCloseTo(2, 9);
+  });
+});

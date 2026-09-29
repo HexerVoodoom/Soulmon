@@ -184,3 +184,31 @@ describe('G17(a): o fio renova o prazo junto do grupo', () => {
     for (const p of e.DIGIAPP_SAVES.puts) expect(p.opts, p.k).toEqual({});
   });
 });
+
+describe('mutantes que sobreviveram à 1ª rodada', () => {
+  it('o fio de hoje conta como presença: ≤4 marca cameToday, ≥5 acende threadedToday — sem check-in', async () => {
+    const { e } = await roda([A, B]);
+    const v = (await (await fio(e, B)).json()).guild;
+    expect(v.presence.find(p => p.cameToday)).toBeTruthy();
+    const seed = {};
+    const cinco = ['q1', 'q2', 'q3', 'q4', 'q5'].map(sid);
+    for (const m of cinco) seed[`profile:${m}`] = perfil(m, m.slice(0, 2));
+    const e5 = { DIGIAPP_SAVES: fakeKV(seed) };
+    const g = (await (await chamar(e5, 'guildCreate', { body: { id: cinco[0], name: 'Roda' } })).json()).guild;
+    for (const m of cinco.slice(1)) await chamar(e5, 'guildJoin', { body: { id: m, code: g.code } });
+    const antes = (await (await chamar(e5, 'guild', { method: 'GET', params: { id: cinco[0] } })).json()).guild;
+    expect(antes.threadedToday).toBeNull();
+    const depois = (await (await fio(e5, cinco[3])).json()).guild;
+    expect(depois.threadedToday).toBe(true);
+  });
+
+  it('quem CRIOU e nunca firmou vira viajante depois de 4 semanas (a referência é o dia de entrada)', async () => {
+    const { e, gid } = await roda([A, B]);
+    for (let n = 0; n <= 30; n++) { noDia(n); await fio(e, B); }
+    noDia(31);
+    await chamar(e, 'guild', { method: 'GET', params: { id: B } });
+    const p = (await lerGrupo(e, gid)).bosqueProgress;
+    // dias 0..27: 1 de 2 = 0,5 cada (14); dias 28..30: A é viajante, 1 de 1 (3) = 17.
+    expect(p).toBeCloseTo(17, 9);
+  });
+});
