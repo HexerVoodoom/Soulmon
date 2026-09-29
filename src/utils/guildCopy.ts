@@ -45,7 +45,7 @@ export const GUILD_COPY = {
   'guild.criar.botao': ['Criar uma roda', 'Create a circle'],
   'guild.criar.nome.label': ['Nome da roda', 'Circle name'],
   'guild.criar.nome.placeholder': ['Um nome para a roda', 'A name for the circle'],
-  // PENDENTE (L4, 29/09): dica para o leitor de tela quando o botão Criar está inerte (QA L1 #7).
+  // FINAL (L5, 29/09): dica para o leitor de tela quando o botão Criar está inerte (QA L1 #7).
   'guild.criar.nome.dica': ['Dê um nome à roda.', 'Give the circle a name.'],
   'guild.criar.codigo.corpo': ['Compartilhe este código com até {n} pessoas.', 'Share this code with up to {n} people.'],
   'guild.criar.compartilhar': ['Compartilhar código', 'Share code'],
@@ -54,7 +54,7 @@ export const GUILD_COPY = {
   'guild.codigo.label': ['Código da roda', 'Circle code'],
   'guild.entrar.botao.abrir': ['Entrar com um código', 'Join with a code'],
   'guild.entrar.codigo.label': ['Código', 'Code'],
-  // PENDENTE (L4, 29/09): por que o botão Entrar está inerte com menos caracteres; `{n}` vem de `GUILD_CODE_LENGTH`.
+  // FINAL (L5, 29/09): por que o botão Entrar está inerte com menos caracteres; `{n}` vem de `GUILD_CODE_LENGTH`.
   'guild.entrar.codigo.dica': ['O código tem {n} caracteres.', 'The code has {n} characters.'],
   'guild.entrar.botao': ['Chegar à roda', 'Join the circle'],
   'guild.erro.nome': ['O nome não pode ter contato nem link.', "Names can't carry contacts or links."],
@@ -70,7 +70,7 @@ export const GUILD_COPY = {
   'guild.erro.generico': ['Não deu certo agora. Tente de novo.', "That didn't work. Try again."],
   // FINAL (L3, 29/09): o botão da tela de carga que falhou.
   'guild.erro.tentar': ['Tentar de novo', 'Try again'],
-  // PENDENTE (L4, 29/09): o caminho do 401 até a tela de entrar (Configurações).
+  // FINAL (L5, 29/09): o caminho do 401 até a tela de entrar (Configurações).
   'guild.erro.entrar': ['Entrar na conta', 'Sign in'],
   // ── Bosque: só o que a fatia A desenha (§3) ────────────────────────────
   'guild.bosque.titulo': ['Bosque', 'Grove'],
@@ -121,8 +121,8 @@ export const GUILD_COPY = {
   'guild.mural.mare.tamanho.floracao': ['Floração cheia', 'Full bloom'],
   // ── Feira (§6) ─────────────────────────────────────────────────────────
   'guild.feira.titulo': ['Feira', 'Fair'],
-  // PENDENTE (L4, 29/09): a Feira sem roda explica o que é antes do formulário (QA L3 B9).
-  'guild.feira.semroda': ['A Feira é da roda: toda semana algo chega da névoa, e a roda o encontra junta.', 'The Fair belongs to the circle: every week something comes in from the mist, and the circle meets it together.'],
+  // FINAL (L5, 29/09): a Feira sem roda explica o que é antes do formulário (QA L3 B9).
+  'guild.feira.semroda': ['A Feira é da roda: toda semana algo chega da névoa, e a roda o recebe.', 'The Fair belongs to the circle: every week something comes in from the mist, and the circle receives it.'],
   'guild.feira.aberta.mundo': ['A maré abriu a Feira. Algo chegou da névoa.', 'The tide opened the Fair. Something came in from the mist.'],
   'guild.feira.fenomeno.nevoa.nome': ['Névoa', 'Mist'],
   'guild.feira.fenomeno.nevoa.linha': ['Uma camada que não assentou.', "A layer that hasn't settled."],
@@ -169,7 +169,7 @@ export const GUILD_COPY = {
   'guild.aria.gesto.enviado': ['{gesto} já enviado hoje', '{gesto} already sent today'],
   'guild.aria.mural': ['Mural da roda', "The circle’s wall"],
   'guild.aria.feira': ['Fenômeno da semana: {nome}', 'This week’s phenomenon: {nome}'],
-  // PENDENTE (L4, 29/09): o estado do fenômeno no nome acessível do visor, sem HP nem "ferido" (QA L3 M2).
+  // FINAL (L5, 29/09): o estado do fenômeno no nome acessível do visor, sem HP nem "ferido" (QA L3 M2).
   'guild.aria.feira.ferido': ['Fenômeno da semana: {nome}, com luz passando entre as camadas.', 'This week’s phenomenon: {nome}, with light showing between its layers.'],
   'guild.aria.feira.dissipado': ['Fenômeno da semana: {nome}, desfeito.', 'This week’s phenomenon: {nome}, come apart.'],
   'guild.aria.rodada': ['Fazer minha rodada de hoje', 'Take my round for today'],

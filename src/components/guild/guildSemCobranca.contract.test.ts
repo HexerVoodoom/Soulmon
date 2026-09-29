@@ -396,12 +396,12 @@ describe('L4: estados que não podem voltar', () => {
     expect(bosque).toMatch(/data-guild-recebidos/);
   });
 
-  it('as seis chaves novas do L4 estão no documento E marcadas PENDENTE em guildCopy.ts (nenhuma finge ser FINAL)', () => {
+  it('as seis chaves novas do L4 estão no documento E marcadas FINAL (L5) em guildCopy.ts (resolvidas na L5)', () => {
     const novas = ['guild.criar.nome.dica', 'guild.entrar.codigo.dica', 'guild.erro.entrar', 'guild.feira.semroda', 'guild.aria.feira.ferido', 'guild.aria.feira.dissipado'];
     for (const k of novas) {
       expect(doc.includes(`\`${k}\``), `${k} fora do documento`).toBe(true);
       const antes = copySrc.slice(0, copySrc.indexOf(`'${k}'`));
-      expect(antes.slice(antes.lastIndexOf('\n  // ')), k).toMatch(/PENDENTE/);
+      expect(antes.slice(antes.lastIndexOf('\n  // ')), k).toMatch(/FINAL/);
     }
     // e `guild.erro.demo` é do documento original (§2), sem PENDENTE
     expect(doc).toContain('`guild.erro.demo`');

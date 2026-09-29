@@ -28,7 +28,7 @@
 | `guild.criar.botao` | Criar uma roda | Create a circle | GuildSheet, botão `primary` | §12 |
 | `guild.criar.nome.label` | Nome da roda | Circle name | GuildSheet, campo (24 chars) | §12 |
 | `guild.criar.nome.placeholder` | Um nome para a roda | A name for the circle | GuildSheet, campo | §12 |
-| `guild.criar.nome.dica` | Dê um nome à roda. | Give the circle a name. | GuildSheet, `aria-describedby` do botão Criar inerte (só leitor de tela; PENDENTE L4) | QA L1 #7 |
+| `guild.criar.nome.dica` | Dê um nome à roda. | Give the circle a name. | GuildSheet, `aria-describedby` do botão Criar inerte (só leitor de tela; FINAL L5) | QA L1 #7 |
 | `guild.criar.codigo.corpo` | Compartilhe este código com até {n} pessoas. | Share this code with up to {n} people. | GuildSheet, após criar; n = `GUILD_MAX_MEMBERS − 1`, nunca literal | L4; constante única (taskModel-style) |
 | `guild.criar.compartilhar` | Compartilhar código | Share code | GuildSheet, botão `share` (Web Share) | §12 |
 | `guild.codigo.copiar` | Copiar código | Copy code | GuildSheet e Ajustes, fallback `content_copy` | §13 constata |
@@ -36,7 +36,7 @@
 | `guild.codigo.label` | Código da roda | Circle code | Ajustes e tela pós-criação | §12 |
 | `guild.entrar.botao.abrir` | Entrar com um código | Join with a code | GuildSheet, botão `outline` (caminho alternativo) | §12 |
 | `guild.entrar.codigo.label` | Código | Code | GuildSheet, campo (8 chars) | §12 |
-| `guild.entrar.codigo.dica` | O código tem {n} caracteres. | The code has {n} characters. | GuildSheet, dica escrita sob o campo do código (`{n}` = `GUILD_CODE_LENGTH`; PENDENTE L4) | QA L1 #7 |
+| `guild.entrar.codigo.dica` | O código tem {n} caracteres. | The code has {n} characters. | GuildSheet, dica escrita sob o campo do código (`{n}` = `GUILD_CODE_LENGTH`; FINAL L5) | QA L1 #7 |
 | `guild.entrar.botao` | Chegar à roda | Join the circle | GuildSheet, confirmar entrada | §12 "chegar à roda" |
 | `guild.entrar.convite.corpo` | Um código te chama para uma roda. Entrar é um toque, e sair também. | A code is inviting you to a circle. Joining is one tap, and so is leaving. | GuildSheet, link de convite com código preenchido (03-lore §4 item 1, "leve" trocado por fato verificável) | L4, L9; LV-G5 |
 | `guild.entrar.convite.pet` | Tem outras bordas lá. Quer ver? | There are other edges out there. Want to look? | fala do pet ao abrir o link de convite (`speak()`) | L11, L2 |
@@ -51,7 +51,7 @@
 | `guild.erro.demo` | Crie uma conta para ter uma roda. | Create an account to have a circle. | demo: convite para criar conta (`UnlockNudge`, nunca abre sozinho) | PLANO-GUILDA §5 |
 | `guild.erro.muitosToques` | Muitos toques seguidos. Tente daqui a pouco. | Too many taps in a row. Try again shortly. | 429 rate limit `GUILD_LIGHT` | §13 constata, sem culpa |
 | `guild.erro.tentar` | Tentar de novo | Try again | GuildSheet, botão da carga que falhou (não aparece sem login) | §13 (L3, 29/09) |
-| `guild.erro.entrar` | Entrar na conta | Sign in | GuildSheet, botão do 401 que leva às Configurações (PENDENTE L4) | QA L3 A1 |
+| `guild.erro.entrar` | Entrar na conta | Sign in | GuildSheet, botão do 401 que leva às Configurações (FINAL L5) | QA L3 A1 |
 | `guild.erro.generico` | Não deu certo agora. Tente de novo. | That didn't work. Try again. | qualquer outro erro (mesmo texto do CoopPanel) | §13 |
 
 ## 3. Bosque (seção do topo)
@@ -127,7 +127,7 @@
 | chave | PT-BR | EN | onde usa | lei |
 |---|---|---|---|---|
 | `guild.feira.titulo` | Feira | Fair | GuildSheet, sala da Feira (abre direto no fenômeno) | §12 |
-| `guild.feira.semroda` | A Feira é da roda: toda semana algo chega da névoa, e a roda o encontra junta. | The Fair belongs to the circle: every week something comes in from the mist, and the circle meets it together. | GuildSheet, Feira sem roda, acima do formulário (PENDENTE L4) | QA L3 B9 |
+| `guild.feira.semroda` | A Feira é da roda: toda semana algo chega da névoa, e a roda o recebe. | The Fair belongs to the circle: every week something comes in from the mist, and the circle receives it. | GuildSheet, Feira sem roda, acima do formulário (FINAL L5) | QA L3 B9 |
 | `guild.feira.aberta.mundo` | A maré abriu a Feira. Algo chegou da névoa. | The tide opened the Fair. Something came in from the mist. | cabeçalho da Feira e cerimônia de abertura | D-G4; L12 |
 | `guild.feira.aberta.pet` | Tá tudo embaçado ali. Vamos? | It's all fuzzy over there. Shall we go? | fala do pet ao abrir a Feira | L11 |
 | `guild.feira.fenomeno.nevoa.nome` | Névoa | Mist | rotação semanal, `fx-fair-nevoa` | 08-critica B2 (tempo da Malha) |
@@ -201,8 +201,8 @@
 | `guild.aria.codigo.copiar` | Copiar o código da roda | Copy the circle code | botão | §13 |
 | `guild.aria.fio` | Firmar meu fio de hoje | Settle my strand for today | botão de fio | L12 |
 | `guild.aria.feira` | Fenômeno da semana: {nome} | This week’s phenomenon: {nome} | visor da Feira | B2 |
-| `guild.aria.feira.ferido` | Fenômeno da semana: {nome}, com luz passando entre as camadas. | This week’s phenomenon: {nome}, with light showing between its layers. | visor da Feira com a luz entrando (nunca "ferido", "metade" nem HP; PENDENTE L4) | QA L3 M2 |
-| `guild.aria.feira.dissipado` | Fenômeno da semana: {nome}, desfeito. | This week’s phenomenon: {nome}, come apart. | visor da Feira dissipada (PENDENTE L4) | QA L3 M2 |
+| `guild.aria.feira.ferido` | Fenômeno da semana: {nome}, com luz passando entre as camadas. | This week’s phenomenon: {nome}, with light showing between its layers. | visor da Feira com a luz entrando (nunca "ferido", "metade" nem HP; FINAL L5) | QA L3 M2 |
+| `guild.aria.feira.dissipado` | Fenômeno da semana: {nome}, desfeito. | This week’s phenomenon: {nome}, come apart. | visor da Feira dissipada (FINAL L5) | QA L3 M2 |
 | `guild.aria.rodada` | Fazer minha rodada de hoje | Take my round for today | botão | L12 |
 | `guild.aria.mural` | Mural da roda | The circle’s wall | seção | §12 |
 | `guild.aria.fechar` | Fechar | Close | fechar folha e cerimônia | §13 |
@@ -228,7 +228,7 @@
 | `guild.guide.titulo` | A Guilda | The Guild | GuideModal, seção nova | §12 |
 | `guild.guide.corpo` | Uma roda cuida de um bosque junta. Ninguém vê quanto o outro fez. Seguir o próprio caminho é um toque e o que firmou fica. Nada aqui é vendido. | A circle keeps a grove together. Nobody sees how much anyone else did. Going your own way takes one tap and what settled stays. Nothing here is for sale. | GuideModal (números vêm de constantes, não de texto à mão) | L10; LV-G1, G2, G5, G6 |
 
-**Total: 165 chaves** (149 do WPG-0 + 10 revisadas em L3, 29/09/2026, `docs/reviews/guilda/qa/L3-copy-critica.md` + 6 do L4, 29/09/2026, marcadas PENDENTE de revisão do `soulmon-narrative-critic`).
+**Total: 165 chaves** (149 do WPG-0 + 10 revisadas em L3, 29/09/2026, `docs/reviews/guilda/qa/L3-copy-critica.md` + 6 do L4, 29/09/2026, revisadas em L5, 29/09/2026, `docs/reviews/guilda/qa/L5-copy-critica.md`).
 
 
 ## Recusas (o que NÃO foi escrito, e por quê)
