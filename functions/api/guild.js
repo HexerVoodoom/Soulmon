@@ -187,7 +187,13 @@ export async function vistaDaGuilda(env, g, euSave, hoje = new Date().toISOStrin
       lastWeek: passada.cleared ? 'dissipada' : (passada.hitters.length > 0 ? 'recuou' : null),
       mine: { hitToday: meusGolpes.days.includes(hoje) },
     },
-    progress: Math.min(feitos, target),
+    // M1 (L2-backend, LV-G2): com 5+ membros o número semanal lido de manhã e
+    // à noite dá, pela diferença, "quantos vieram hoje" — exatamente o que
+    // `threadedToday: true|null` existe para esconder. Acima da presença
+    // nominal, `progress` sai `null` (o cliente novo já o descarta em
+    // `sanitizeGuildView`); até 4 a presença já é nominal e o número não
+    // revela nada que a lista não diga.
+    progress: nominal ? Math.min(feitos, target) : null,
     target,
   };
 }

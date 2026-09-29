@@ -133,3 +133,17 @@ describe('A2 — sair e voltar não infla o Bosque (1 fio por pessoa por dia)', 
     expect(g.bosqueProgress).toBeCloseTo(1, 9);
   });
 });
+
+describe('M1 — progress não reconstrói "N de M vieram hoje"', () => {
+  it('com 5+ membros progress é null em qualquer hora do dia; com ≤4 segue o número', async () => {
+    const cinco = await guildaDe(5);
+    const antes = (await (await chamar(cinco.e, 'guild', { method: 'GET', params: { id: A } })).json()).guild;
+    for (const m of MEMBROS.slice(0, 3)) await chamar(cinco.e, 'guildCheckin', { body: { id: m } });
+    const depois = (await (await chamar(cinco.e, 'guild', { method: 'GET', params: { id: A } })).json()).guild;
+    expect(antes.progress).toBeNull();
+    expect(depois.progress).toBeNull();
+    const quatro = await guildaDe(4);
+    await chamar(quatro.e, 'guildCheckin', { body: { id: A } });
+    expect((await (await chamar(quatro.e, 'guild', { method: 'GET', params: { id: A } })).json()).guild.progress).toBe(1);
+  });
+});
