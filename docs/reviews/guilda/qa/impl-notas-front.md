@@ -82,3 +82,41 @@ Presença em quem não veio · agregado com `{n}` · "faltam" na copy · `guildI
 teto do cliente ≠ servidor · sem trava síncrona do duplo toque · roda reordenada por presença · código aceitando 0/O/1/I ·
 "· você" dentro do nome truncável · timer do "copiado" sem limpeza · `dayKey` não enviado. (O M11 sobreviveu na 1ª rodada — o teste
 de duplo toque disparava dois cliques que o React já tinha desabilitado; passou a usar os dois no mesmo `act`.)
+
+## Rodada L4 (29/09/2026) — o cliente depois do loop 3
+
+Fecha `L3-codigo.md` (A1, A2, M1–M5, B1–B5), `L3-experiencia.md` (A1, M1–M6, B1–B9, L1 #7/#31) e `L3-copy-critica.md`.
+Capturas em `shots-L4/` (13 PNG, 390×844, `vite preview` + Playwright, `/api/guild` mockado).
+
+- **A1 (código):** `claimGuildReward` devolve `error.claim` no 409 (`sanitizeClaim`); `colher` credita por ele quando o recibo NÃO está
+  em `hasClaimedReceipt` **e** este aparelho tentou antes (`markClaimAttempt`, marca `~semana` na mesma chave `soulmon-guild-claimed`).
+  A exigência da tentativa é o que impede um aparelho B com tela velha de creditar em dobro. O direito é da pessoa: sem guilda, a folha
+  pergunta `guildRewards` (`chaveDaFeira = 'sem-roda'`) e o cartão aparece no Salão e na Feira (e depois de sair).
+- **A2:** `filaDeAvisos.contract.test.ts` lê a expressão `interstitial` do fonte e prova a ordem (3 mutantes: tirar, antes do check-in,
+  depois do sonho — 3 mortos).
+- **M1/M2 (fallback em memória):** só quando `writeJson` devolve `false` (quota/modo privado) — `groveLocal` (`reconhecido`) e
+  `guildClaimLocal` (`memoria`). Com storage saudável nada muda. Resíduo declarado: sem storage, fechar e reabrir o app repete UMA cerimônia
+  e esquece os recibos; dois aparelhos da mesma conta têm listas separadas e cada um credita o SEU save (o cloud save é último-a-gravar-vence).
+- **M3 (Emblemas colhidos antes da adoção do save da nuvem): NÃO é real como descrito.** Evidência: `adoptCloudSave` só roda nos fluxos
+  EXPLÍCITOS de login/restauração (`App.tsx`: link de login, `handleProtectProgress`, `onLoginWithEmail`, `onRestoreFromCloud`), sempre
+  com `window.location.reload()` logo depois; não existe pull da nuvem no boot. Sem login a Guilda responde 401 (nada a colher), e o login
+  re-deriva o `saveId` e adota o save ANTES de a folha poder colher. O que resta é o que já vale para todo progresso local (a adoção troca o
+  save inteiro, por decisão de produto) e a janela de 3 s do debounce do cloud save numa restauração do mesmo id. Testes: crédito por recibo
+  uma vez, 409 de outro aparelho não credita, storage cheio não duplica.
+- **M4:** `guildCopyCore.ts` (novo) leva só o que a entrada usa (nomes dos estágios, `guild.marco.*`, nome/descrição da Concha);
+  `guildCopy.ts` o espalha em `GUILD_COPY` (uma tabela só). `index-*.js`: 722 489 → 711 766 B. Ficam na entrada, e por quê: `groveLocal`
+  (o App lê o marco pendente) e o cliente de `/api/guild` em `community.ts` (`App`/`GameStateContext` já importam o arquivo para
+  presentes/perfil; separá-lo exigiria trocar o alvo de ~10 mocks).
+- **M5:** `setGuildSheetOpen` (a folha se declara aberta) e o hook não consulta enquanto ela está montada.
+- **B1/B2/B5:** cenário só com `mine.groveScenes` da vista que chegou (hook e folha); `grantGroveScenes` filtra `bg-guild-<estágio>` por conta
+  própria; `trackGuildStageOnce`.
+- **B3 (decidido, não mudado):** Escape e o botão fecham a cerimônia — ambos são gestos; o véu não tem `onClick`. **B4:** `usePrefersReducedMotion`
+  dentro da cerimônia (a preferência acompanha a mudança). **B6:** a cerimônia é camada do `backStack`.
+- **L1 #31:** a cena do lote passou a terminar no fim da tela (`AreaScene`: +40 px de altura e -40 px de margem; o `scrollHeight` do
+  `<main>` não muda). **L1 #7:** dica escrita do tamanho do código e `aria-describedby` no Criar inerte.
+- **Convite do 401:** o `UnlockNudge` da Guilda usa o motivo `shop` (o convite passivo). Um motivo próprio precisa de `reason` novo no
+  `EVENT_SCHEMA` de `functions/api/metrics.js` (hoje 0..4) — é do servidor, fica para o dono.
+- **Chaves PENDENTE (6):** `guild.criar.nome.dica`, `guild.entrar.codigo.dica`, `guild.erro.entrar`, `guild.feira.semroda`,
+  `guild.aria.feira.ferido`, `guild.aria.feira.dissipado` (no `NARRATIVA-COPY-GUILDA.md`, total 165). `guild.erro.demo` já era do documento.
+- **Mutação (`/tmp/mut`):** 35 mutantes nos pontos desta rodada, 35 mortos.
+

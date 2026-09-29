@@ -25,8 +25,18 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > como padrão da sessão e **AGUARDA confirmação do dono** (`REGISTRO` §5.5).
 > **Falta:** widget (WPG-14), arte real (WPG-13/WPG-A, hoje placeholders),
 > wireframes GUI-01..16 (WPG-W), manual + bíblia (WPG-15, `docsManual` com
-> entradas faltando), e o lado cliente do A1 (creditar no 409 com recibo
-> desconhecido).
+> entradas faltando).
+>
+> **Cliente, rodada L4 (29/09/2026)** — fecha os achados do loop 3 no cliente
+> (`docs/reviews/guilda/qa/impl-notas-front.md` › "Rodada L4"): o 409 do
+> resgate credita pelo `claimed` (só quem tentou aqui); quem SAIU ainda vê o
+> cartão de colher; 401 nunca é beco (Entrar + `UnlockNudge` do demo + tentar de
+> novo); Clareira no vazio; saída fixa no rodapé; gestos recebidos no topo;
+> "Do bosque" no topo do Mercado; `groveMilestone` com régua de posição na
+> fila; fallback em memória para storage cheio (marco e recibo); JS de entrada
+> −10,7 KB (722 489 → 711 766 B). **Depende do dono/servidor:** motivo próprio
+> de telemetria para o convite da Guilda (hoje reusa `shop`, exige `reason`
+> 5 no `metrics.js`); 6 chaves PENDENTE de revisão do `soulmon-narrative-critic`.
 >
 > ### (registro anterior) Plano da Guilda — PLANO, sem código
 >
