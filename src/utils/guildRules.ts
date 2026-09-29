@@ -42,3 +42,19 @@ export type GuildGesture = (typeof GUILD_GESTURES)[number];
 /** Tamanhos DESCRITIVOS de uma floração colhida (nenhum é "pior"), pequeno → grande. */
 export const TIDE_SIZES = ['petala', 'corola', 'floracao'] as const;
 export type TideSize = (typeof TIDE_SIZES)[number];
+
+/**
+ * A FEIRA (`docs/PLANO-GUILDA.md` §3, WPG-10). Espelhos do servidor
+ * (`functions/api/_coop.js`; o encontro lê o fonte em `guildRules.parity.test.ts`):
+ * existem para a COPY (`{cheio}`/`{piso}`/`{semanas}`) — a copy nunca escreve o
+ * número à mão. O cliente NUNCA conhece HP nem dano: o servidor sorteia e não devolve.
+ */
+export const RAID_EMBLEMS = 4;
+export const RAID_EMBLEMS_FLOOR = 2;
+export const RAID_TROPHY_EVERY = 4;
+export const RAID_TROPHY_ID = 'trophy-concha-mare';
+export const GUILD_TIDE_WEEKS = 6;
+
+/** Os quatro fenômenos, em rotação semanal (`raid.phenomenon`). Tempo da Malha, nunca adversário com gente. */
+export const RAID_PHENOMENA = ['nevoa', 'mare', 'estatica', 'enxame'] as const;
+export type RaidPhenomenon = (typeof RAID_PHENOMENA)[number];

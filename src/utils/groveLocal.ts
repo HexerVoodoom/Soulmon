@@ -258,3 +258,8 @@ export function grantGroveScenes<T extends { ownedBackgrounds?: string[] }>(prev
   if (faltam.length === 0) return prev;
   return { ...prev, ownedBackgrounds: [...owned, ...faltam] };
 }
+
+/** Cenários que o SERVIDOR diz liberados (`guildRewards.scenes`): só ids do Bosque conhecidos entram no save. */
+export function grantGuildScenes<T extends { ownedBackgrounds?: string[] }>(prev: T, ids: readonly string[]): T {
+  return grantGroveScenes(prev, ids.filter(id => GROVE_STAGES.some(st => id === `bg-guild-${st}`)));
+}

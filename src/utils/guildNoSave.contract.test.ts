@@ -19,8 +19,13 @@ const read = (rel: string) => fs.readFileSync(path.join(root, rel), 'utf8');
 const src = (rel: string) => ts.createSourceFile(rel, read(rel), ts.ScriptTarget.Latest, true);
 
 const VETADO = /guild|coop|roda\b|bosque|grove/i;
-/** As ÚNICAS chaves de localStorage da guilda que o plano admite (§10.7). */
-const CHAVES_DE_CONVENIENCIA = new Set(['soulmon-guild-last-stage', 'soulmon-guild-thread-day']);
+/**
+ * As ÚNICAS chaves de localStorage da guilda que o plano admite (§10.7). Decisão do dono (B2): a
+ * SEGUNDA do plano (`thread-day`) nunca foi necessária e SAIU da lista: no lugar entram os RECIBOS
+ * do resgate da Feira (`soulmon-guild-claimed`) — o KV é eventualmente consistente, e é essa lista
+ * que impede o segundo crédito de Emblemas. São exatamente DUAS chaves admitidas, e nenhuma outra.
+ */
+const CHAVES_DE_CONVENIENCIA = new Set(['soulmon-guild-last-stage', 'soulmon-guild-claimed']);
 
 function membrosDe(file: ts.SourceFile, nome: string): string[] {
   const out: string[] = [];
@@ -41,7 +46,7 @@ describe('a guilda não entra no save nem no localStorage', () => {
     expect(campos.filter(c => VETADO.test(c))).toEqual([]);
   });
 
-  it('storageKeys.ts: no máximo as duas chaves de conveniência, com esses nomes', () => {
+  it('storageKeys.ts: exatamente as duas chaves de conveniência (last-stage e claimed), com esses nomes', () => {
     const file = src('src/utils/storageKeys.ts');
     const valores: string[] = [];
     const visit = (n: ts.Node) => {
@@ -52,11 +57,11 @@ describe('a guilda não entra no save nem no localStorage', () => {
     expect(valores.length).toBeGreaterThan(20); // o guard enxerga o alvo
     const daGuilda = valores.filter(v => VETADO.test(v));
     expect(daGuilda.filter(v => !CHAVES_DE_CONVENIENCIA.has(v))).toEqual([]);
-    expect(daGuilda.length).toBeLessThanOrEqual(2);
+    expect(daGuilda.sort()).toEqual(['soulmon-guild-claimed', 'soulmon-guild-last-stage']);
   });
 
   it('o cliente da guilda não grava em localStorage direto (só storageKeys/safeStorage)', () => {
-    for (const rel of ['src/utils/community.ts', 'src/utils/guildCopy.ts', 'src/utils/guildRules.ts', 'src/components/guild/GuildSheet.tsx']) {
+    for (const rel of ['src/utils/community.ts', 'src/utils/guildCopy.ts', 'src/utils/guildRules.ts', 'src/utils/guildClaimLocal.ts', 'src/components/guild/GuildSheet.tsx', 'src/components/guild/FeiraVisor.tsx']) {
       const ids: string[] = [];
       const visit = (n: ts.Node) => {
         if (ts.isIdentifier(n)) ids.push(n.text);

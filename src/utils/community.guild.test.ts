@@ -9,7 +9,7 @@ vi.mock('./cloudSave', () => ({ reagirContaExcluida: vi.fn(async () => {}) }));
 
 import {
   getGuild, createGuild, joinGuild, guildCheckin, guildThread, guildGesture, leaveGuild, renameGuild, newGuildCode,
-  sanitizeGuildView, GuildError, type GuildErrorKind,
+  hitGuildRaid, getGuildRewards, claimGuildReward, sanitizeGuildView, GuildError, type GuildErrorKind,
 } from './community';
 import { reagirContaExcluida } from './cloudSave';
 import { GUILD_ERROR_KEY, GUILD_COPY } from './guildCopy';
@@ -46,6 +46,10 @@ describe('erros tipados', () => {
     [404, { error: 'no guild' }, 'noGuild'],
     [409, { error: 'already in a guild' }, 'alreadyIn'],
     [409, { error: 'guild full' }, 'full'],
+    [409, { error: 'raid closed' }, 'raidClosed'],
+    [409, { error: 'already claimed' }, 'alreadyClaimed'],
+    [404, { error: 'nothing to claim' }, 'nothingToClaim'],
+    [400, { error: 'invalid week' }, 'nothingToClaim'],
     [409, { error: 'join collision' }, 'collision'],
     [400, { error: 'invalid name' }, 'invalidName'],
     [400, { error: 'invalid day' }, 'invalidDay'],
@@ -69,8 +73,8 @@ describe('erros tipados', () => {
     const chaves = new Set<string>();
     for (const [kind, key] of Object.entries(GUILD_ERROR_KEY)) {
       expect(GUILD_COPY[key]).toBeTruthy();
-      // `goalNotMet`/`invalidKind`/`dailyLimit` (fatia B1) nunca viram alerta: a folha recarrega em silêncio.
-      if (!['invalidDay', 'notHost', 'server', 'deleted', 'goalNotMet', 'invalidKind', 'dailyLimit'].includes(kind)) {
+      // `goalNotMet`/`invalidKind`/`dailyLimit` (B1) e `raidClosed`/`alreadyClaimed`/`nothingToClaim` (B2, a Feira) nunca viram alerta: a folha recarrega ou fica em silêncio.
+      if (!['invalidDay', 'notHost', 'server', 'deleted', 'goalNotMet', 'invalidKind', 'dailyLimit', 'raidClosed', 'alreadyClaimed', 'nothingToClaim'].includes(kind)) {
         expect(key).not.toBe('guild.erro.generico');
         chaves.add(key);
       }
@@ -234,5 +238,92 @@ describe('sanitizeGuildView — a vista é dado não confiável', () => {
     expect(sanitizeGuildView(null)).toBeNull();
     expect(sanitizeGuildView('x')).toBeNull();
     expect(sanitizeGuildView({})!.members).toEqual([]);
+  });
+});
+
+// ── A Feira (B2): a vista traz o tipo e os três estados, NUNCA um número ────
+describe('a Feira na vista (sanitizeGuildView)', () => {
+  const raid = (over: Record<string, unknown> = {}) => ({ weekKey: '2026-W40', phenomenon: 'mare', state: 'aberta', ferido: true, lastWeek: 'recuou', mine: { hitToday: true }, ...over });
+
+  it('lê tipo, estado, `ferido`, `lastWeek` e `hitToday` — e mais nada', () => {
+    const r = sanitizeGuildView(view({ raid: raid({ hp: 540, dmg: 300, hitters: 7, hpBand: 4 }) }))!.raid!;
+    expect(r).toEqual({ weekKey: '2026-W40', phenomenon: 'mare', state: 'aberta', ferido: true, lastWeek: 'recuou', hitToday: true });
+    expect(Object.keys(r).sort()).toEqual(['ferido', 'hitToday', 'lastWeek', 'phenomenon', 'state', 'weekKey']);
+  });
+
+  it('dissipada nunca é "ferida"; `ferido` só passa como `true`', () => {
+    expect(sanitizeGuildView(view({ raid: raid({ state: 'dissipada', ferido: true }) }))!.raid!.ferido).toBe(false);
+    expect(sanitizeGuildView(view({ raid: raid({ ferido: 1 }) }))!.raid!.ferido).toBe(false);
+    expect(sanitizeGuildView(view({ raid: raid({ state: 'recuou' }) }))!.raid!.state).toBe('aberta');
+  });
+
+  it('tipo fora da lista fechada, `lastWeek` inventado e ausência de Feira: sem Feira / sem desfecho', () => {
+    expect(sanitizeGuildView(view({ raid: raid({ phenomenon: 'boss' }) }))!.raid).toBeNull();
+    expect(sanitizeGuildView(view({ raid: raid({ lastWeek: 'venceu' }) }))!.raid!.lastWeek).toBeNull();
+    expect(sanitizeGuildView(view())!.raid).toBeNull();
+    expect(sanitizeGuildView(view({ raid: 'x' }))!.raid).toBeNull();
+    expect(sanitizeGuildView(view({ raid: raid({ mine: undefined }) }))!.raid!.hitToday).toBe(false);
+  });
+});
+
+describe('a rodada, o direito e o resgate (chamadas)', () => {
+  const dia = () => playerDayKey(new Date(), undefined);
+
+  it('hitGuildRaid: POST guildRaidHit com id e o dia do jogador; devolve a vista, sem número de dano', async () => {
+    fetchMock.mockResolvedValue(resp(200, { landed: true, guild: view({ raid: { weekKey: '2026-W40', phenomenon: 'nevoa', state: 'aberta', ferido: false, mine: { hitToday: true } } }) }));
+    const v = await hitGuildRaid('save-12345');
+    expect(v!.raid!.hitToday).toBe(true);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toContain('action=guildRaidHit');
+    expect(init.method).toBe('POST');
+    expect(JSON.parse(init.body)).toEqual({ id: 'save-12345', dayKey: dia() });
+  });
+
+  it.each([
+    [429, { error: 'daily limit' }, 'dailyLimit'],
+    [409, { error: 'raid closed' }, 'raidClosed'],
+    [404, { error: 'no guild' }, 'noGuild'],
+    [400, { error: 'invalid day' }, 'invalidDay'],
+  ] as const)('golpe: HTTP %i %j → %s', async (status, body, kind) => {
+    fetchMock.mockResolvedValue(resp(status, body));
+    expect((await erroDe(hitGuildRaid('save-12345'))).kind).toBe(kind);
+  });
+
+  it('getGuildRewards: GET com id e dia; higieniza (semana, desfecho, quantia e cenário só do Bosque)', async () => {
+    fetchMock.mockResolvedValue(resp(200, { rewards: {
+      pending: [{ week: '2026-W39', outcome: 'dissipada', emblems: 4, hp: 999 }, { week: 'x', outcome: 'venceu', emblems: 4 }, { outcome: 'recuou' }],
+      scenes: ['bg-guild-clareira', 'bg-mission-abyss', 42], trophyOwned: true, trophyId: 'trophy-concha-mare',
+    } }));
+    const r = await getGuildRewards('save-12345');
+    expect(r).toEqual({ pending: [{ week: '2026-W39', outcome: 'dissipada', emblems: 4 }], scenes: ['bg-guild-clareira'], trophyOwned: true, trophyId: 'trophy-concha-mare' });
+    expect(fetchMock.mock.calls[0][0]).toContain('action=guildRewards');
+    expect(fetchMock.mock.calls[0][0]).toContain('id=save-12345');
+  });
+
+  it('claimGuildReward: POST com a semana; devolve o recibo; 200 sem recibo ou de outra semana é FALHA (nunca credita)', async () => {
+    fetchMock.mockResolvedValue(resp(200, { claimed: { week: '2026-W39', outcome: 'dissipada', emblems: 4, trophy: true, trophyId: 'trophy-concha-mare', receipt: 'abc123' } }));
+    const c = await claimGuildReward('save-12345', '2026-W39');
+    expect(c).toEqual({ week: '2026-W39', outcome: 'dissipada', emblems: 4, trophy: true, trophyId: 'trophy-concha-mare', receipt: 'abc123' });
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ id: 'save-12345', dayKey: dia(), week: '2026-W39' });
+    fetchMock.mockResolvedValue(resp(200, { claimed: { week: '2026-W39', outcome: 'dissipada', emblems: 4 } }));
+    expect((await erroDe(claimGuildReward('save-12345', '2026-W39'))).kind).toBe('server');
+    fetchMock.mockResolvedValue(resp(200, { claimed: { week: '2026-W38', outcome: 'dissipada', emblems: 4, receipt: 'z' } }));
+    expect((await erroDe(claimGuildReward('save-12345', '2026-W39'))).kind).toBe('server');
+  });
+
+  it.each([
+    [409, { error: 'already claimed', receipt: 'abc' }, 'alreadyClaimed'],
+    [404, { error: 'nothing to claim' }, 'nothingToClaim'],
+    [400, { error: 'invalid week' }, 'nothingToClaim'],
+  ] as const)('resgate: HTTP %i %j → %s', async (status, body, kind) => {
+    fetchMock.mockResolvedValue(resp(status, body));
+    expect((await erroDe(claimGuildReward('save-12345', '2026-W39'))).kind).toBe(kind);
+  });
+
+  it('a quantia nunca passa de um teto sensato (dado não confiável) nem vira negativa', async () => {
+    fetchMock.mockResolvedValue(resp(200, { claimed: { week: 'w', outcome: 'dissipada', emblems: 9_999_999, receipt: 'r' } }));
+    expect((await claimGuildReward('save-12345', 'w')).emblems).toBe(20);
+    fetchMock.mockResolvedValue(resp(200, { claimed: { week: 'w', outcome: 'dissipada', emblems: -5, receipt: 'r' } }));
+    expect((await claimGuildReward('save-12345', 'w')).emblems).toBe(0);
   });
 });

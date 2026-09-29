@@ -123,6 +123,12 @@ export const STORAGE_KEYS = {
    *  ainda por celebrar. Estado de UI, nunca de jogo (nada disto vai ao save;
    *  o ponteiro autoritativo da guilda é do servidor). Dono: `utils/groveLocal.ts`. */
   GUILD_LAST_STAGE: 'soulmon-guild-last-stage',
+  /** GUILDA, a TERCEIRA e última chave de conveniência (decisão do dono, B2): os RECIBOS
+   *  (`claimed.receipt`, opacos) dos resgates da Feira que ESTE aparelho já creditou. O recibo é
+   *  determinístico por (conta, semana) e o KV é eventualmente consistente entre regiões — duas
+   *  respostas 200 são possíveis, e é esta lista que impede o segundo crédito de Emblemas.
+   *  Só recibos (nada de nome, guilda ou quantia). Dono: `utils/guildClaimLocal.ts`. */
+  GUILD_CLAIMED: 'soulmon-guild-claimed',
 } as const;
 
 /**

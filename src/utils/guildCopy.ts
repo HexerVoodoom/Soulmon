@@ -15,7 +15,8 @@
  * (Fatia B1: as chaves do Bosque por estágio, dos gestos, da cerimônia de marco e do
  * Mural vieram TODAS do documento — nenhuma é inventada.)
  *
- * ⚠️ Quatro chaves NÃO estão nas 149 do documento e estão marcadas `PENDENTE`:
+ * ⚠️ Chaves que NÃO estão nas 149 do documento e estão marcadas `PENDENTE` (B2: `guild.concha.*` e
+ * `guild.cenarios.titulo`, ver o relatório da fatia):
  * o botão de tentar de novo, o "Alguém" de quem ainda não tem apelido, o
  * "· você" (o texto já existia no CoopPanel) e o gesto recebido SEM tipo (roda
  * de 2, B5 do backend). O `soulmon-narrative-critic`
@@ -122,6 +123,34 @@ export const GUILD_COPY = {
   'guild.mural.mare.tamanho.petala': ['Pétala', 'Petal'],
   'guild.mural.mare.tamanho.corola': ['Corola', 'Corolla'],
   'guild.mural.mare.tamanho.floracao': ['Floração cheia', 'Full bloom'],
+  // ── Feira (§6) ─────────────────────────────────────────────────────────
+  'guild.feira.titulo': ['Feira', 'Fair'],
+  'guild.feira.aberta.mundo': ['A maré abriu a Feira. Algo chegou da névoa.', 'The tide opened the Fair. Something came in from the mist.'],
+  'guild.feira.fenomeno.nevoa.nome': ['Névoa', 'Mist'],
+  'guild.feira.fenomeno.nevoa.linha': ['Uma camada que não assentou.', "A layer that hasn't settled."],
+  'guild.feira.fenomeno.mare.nome': ['Maré alta', 'High tide'],
+  'guild.feira.fenomeno.mare.linha': ['A maré subiu além do lugar dela.', 'The tide rose past its place.'],
+  'guild.feira.fenomeno.estatica.nome': ['Estática', 'Static'],
+  'guild.feira.fenomeno.estatica.linha': ['A Malha chiou fora de fase.', 'The Mesh hissed out of phase.'],
+  'guild.feira.fenomeno.enxame.nome': ['Enxame', 'Swarm'],
+  'guild.feira.fenomeno.enxame.linha': ['Camadas soltas, todas juntas.', 'Loose layers, all together.'],
+  // `{cheio}`/`{piso}` vêm de `RAID_EMBLEMS`/`RAID_EMBLEMS_FLOOR` — nunca literal.
+  'guild.feira.sobria': ['Uma rodada por dia. Semana dissipada: {cheio} Emblemas; senão, {piso}.', 'One round a day. Cleared week: {cheio} Emblems; otherwise, {piso}.'],
+  'guild.feira.rodada.botao': ['Fazer minha rodada', 'Take my round'],
+  'guild.feira.rodada.feita': ['A sua rodada chegou até ele.', 'Your round reached it.'],
+  'guild.feira.dissipado.mundo': ['O fenômeno se desfez diante da roda.', 'The phenomenon came apart before the circle.'],
+  'guild.feira.recuou.mundo': ['O fenômeno voltou para a névoa. O bosque segue como estava.', 'The phenomenon went back into the mist. The grove stays as it was.'],
+  'guild.feira.colher.botao': ['Colher', 'Collect'],
+  'guild.feira.colhido': ['{n} Emblemas colhidos.', '{n} Emblems collected.'],
+  // PENDENTE (fora das 149): a peça da maré e o título da vitrine dos cenários. O NOME
+  // "Concha da Maré / Tide shell" está RESOLVIDO (§ decisões, item 15); a frase que a acompanha não.
+  'guild.concha.nome': ['Concha da Maré', 'Tide shell'],
+  'guild.concha.chegou': ['A maré deixou uma Concha da Maré no bosque.', 'The tide left a Tide shell in the grove.'],
+  'guild.concha.desc': ['Deixada pela maré no bosque.', 'Left by the tide in the grove.'],
+  // PENDENTE (fora das 149): o verbete da Concha da Maré no glossário (o doc só resolveu o NOME e o significado, §15).
+  'guild.help.concha.termo': ['Concha da Maré', 'Tide shell'],
+  'guild.help.concha.def': ['A maré deixa uma Concha da Maré no bosque a cada {n} Feiras dissipadas. Ela nomeia o feito da roda, nunca uma pessoa.', 'The tide leaves a Tide shell in the grove every {n} cleared Fairs. It names what the circle did, never one person.'],
+  'guild.cenarios.titulo': ['Da sua roda', 'From your circle'],
   // ── Ajustes e saída (§8) ───────────────────────────────────────────────
   'guild.ajustes.aria': ['Ajustes da roda', 'Circle settings'],
   'guild.ajustes.titulo': ['Ajustes', 'Settings'],
@@ -143,6 +172,21 @@ export const GUILD_COPY = {
   'guild.aria.gesto.enviar': ['Enviar {gesto} para a roda', 'Send {gesto} to the circle'],
   'guild.aria.gesto.enviado': ['{gesto} já enviado hoje', '{gesto} already sent today'],
   'guild.aria.mural': ['Mural da roda', "The circle’s wall"],
+  'guild.aria.feira': ['Fenômeno da semana: {nome}', 'This week’s phenomenon: {nome}'],
+  'guild.aria.rodada': ['Fazer minha rodada de hoje', 'Take my round for today'],
+  // ── HelpModal e GuideModal (§11) ───────────────────────────────────────
+  'guild.help.guilda.termo': ['Guilda e roda', 'Guild and circle'],
+  'guild.help.guilda.def': ['A Guilda é o lugar; a roda é quem está nela. Até {max} pessoas, uma roda por pessoa, entrada só por código. Sem chat e sem aviso no celular.', 'The Guild is the place; the circle is who is in it. Up to {max} people, one circle each, joining by code only. No chat and no phone notifications.'],
+  'guild.help.bosque.termo': ['Bosque', 'Grove'],
+  'guild.help.bosque.def': ['O bosque da roda tem cinco estágios: Clareira, Ramagem, Copa, Mata e Bosque antigo. Só cresce, nunca encolhe.', 'The circle’s grove has five stages: Clearing, Boughs, Canopy, Thicket and Old grove. It only grows and never shrinks.'],
+  'guild.help.fio.termo': ['Fio', 'Strand'],
+  'guild.help.fio.def': ['Um fio firma quando alguém da roda alcança a própria meta do dia. É um por pessoa por dia, sem nome e sem peso.', 'A strand settles when someone in the circle reaches their own goal for the day. One per person per day, unnamed and unweighted.'],
+  'guild.help.feira.termo': ['Feira', 'Fair'],
+  'guild.help.feira.def': ['Toda semana chega um fenômeno da névoa. Cada pessoa faz uma rodada por dia. Semana dissipada rende {cheio} Emblemas; senão, {piso}. A Feira não mexe no bosque.', 'Every week a phenomenon comes in from the mist. Each person takes one round a day. A cleared week pays {cheio} Emblems; otherwise, {piso}. The Fair never touches the grove.'],
+  'guild.help.mare.termo': ['Maré', 'Tide'],
+  'guild.help.mare.def': ['Uma maré dura {semanas} semanas. Na virada, o que assentou fica no bosque.', 'A tide lasts {semanas} weeks. When it turns, what settled stays in the grove.'],
+  'guild.guide.titulo': ['A Guilda', 'The Guild'],
+  'guild.guide.corpo': ['Uma roda cuida de um bosque junta. Ninguém vê quanto o outro fez. Seguir o próprio caminho é um toque e o que firmou fica. Nada aqui é vendido.', 'A circle keeps a grove together. Nobody sees how much anyone else did. Going your own way takes one tap and what settled stays. Nothing here is for sale.'],
 } as const satisfies Record<string, readonly [string, string]>;
 
 export type GuildKey = keyof typeof GUILD_COPY;
@@ -182,6 +226,10 @@ export const GUILD_ERROR_KEY = {
   notHost: 'guild.erro.generico',
   rateLimit: 'guild.erro.muitosToques',
   deleted: 'guild.erro.generico',
+  // A Feira: nenhum dos três é frase de tela (a folha relê ou fica em silêncio).
+  raidClosed: 'guild.erro.generico',
+  alreadyClaimed: 'guild.erro.generico',
+  nothingToClaim: 'guild.erro.generico',
   unavailable: 'guild.erro.semRede',
   server: 'guild.erro.generico',
 } as const satisfies Record<GuildErrorKind, GuildKey>;

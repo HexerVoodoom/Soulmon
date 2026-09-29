@@ -4,8 +4,8 @@ import { authHeaders } from './auth';
 import { reagirContaExcluida } from './cloudSave';
 import { playerDayKey, type PlayerDayAnchor } from './playerDay';
 import {
-  GUILD_PRESENCE_NOMINAL_MAX, GROVE_STAGES, GUILD_GESTURES, TIDE_SIZES,
-  type GroveStageId, type GuildGesture, type TideSize,
+  GUILD_PRESENCE_NOMINAL_MAX, GROVE_STAGES, GUILD_GESTURES, TIDE_SIZES, RAID_PHENOMENA,
+  type GroveStageId, type GuildGesture, type TideSize, type RaidPhenomenon,
 } from './guildRules';
 
 const BASE = '/api/community';
@@ -228,6 +228,24 @@ export interface GuildView {
   gestures: GuildGesture[];
   /** Chegou algum gesto hoje (qualquer roda) — `true` ou `false`, nunca um número. */
   gestureReceived: boolean;
+  /** A Feira desta semana. `null` = o servidor não a mandou (não se desenha nada). */
+  raid: GuildRaid | null;
+}
+
+/**
+ * A FEIRA como o cliente a conhece: o TIPO do fenômeno, três estados e o desfecho da
+ * semana que fechou. **Nenhuma folha numérica** — o tipo não tem onde carregar HP,
+ * dano nem quem bateu (LV-G1); `ferido` é um booleano do servidor (dano ≥ metade).
+ */
+export interface GuildRaid {
+  weekKey: string;
+  phenomenon: RaidPhenomenon;
+  state: 'aberta' | 'dissipada';
+  ferido: boolean;
+  /** Desfecho da semana anterior, só se alguém golpeou; `recuou` nunca aponta ninguém. */
+  lastWeek: 'dissipada' | 'recuou' | null;
+  /** Já fiz a minha rodada de hoje (só de quem pergunta). */
+  hitToday: boolean;
 }
 
 export type GuildErrorKind =
@@ -246,6 +264,9 @@ export type GuildErrorKind =
   | 'rateLimit'     // 429
   | 'deleted'       // 410 account-deleted (o cloudSave já cuida do portão)
   | 'unavailable'   // 503 / sem rede / fetch caiu
+  | 'raidClosed'    // 409 raid closed (a semana já está vencida ou terminou: relê e o estado certo aparece)
+  | 'alreadyClaimed' // 409 already claimed (o resgate já foi feito: SILÊNCIO)
+  | 'nothingToClaim' // 404 nothing to claim / 400 invalid week (nada a colher: SILÊNCIO)
   | 'server';       // qualquer outro 5xx, 4xx desconhecido ou corpo ilegível
 
 export class GuildError extends Error {
@@ -316,6 +337,25 @@ export function sanitizeGuildView(raw: unknown): GuildView | null {
     },
     gestures: gestos(r.gestures),
     gestureReceived: r.gestureReceived === true,
+    raid: sanitizeRaid(r.raid),
+  };
+}
+
+/** Dado não confiável: só o que casa com a lista fechada passa; sem tipo válido, sem Feira. */
+function sanitizeRaid(raw: unknown): GuildRaid | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const x = raw as Record<string, unknown>;
+  if (!(RAID_PHENOMENA as readonly unknown[]).includes(x.phenomenon)) return null;
+  const mine = (x.mine && typeof x.mine === 'object' ? x.mine : {}) as Record<string, unknown>;
+  const dissipada = x.state === 'dissipada';
+  return {
+    weekKey: str(x.weekKey, 20),
+    phenomenon: x.phenomenon as RaidPhenomenon,
+    state: dissipada ? 'dissipada' : 'aberta',
+    // Dissipada não é "ferida": é um estado próprio.
+    ferido: !dissipada && x.ferido === true,
+    lastWeek: x.lastWeek === 'dissipada' || x.lastWeek === 'recuou' ? x.lastWeek : null,
+    hitToday: mine.hitToday === true,
   };
 }
 
@@ -324,15 +364,17 @@ function kindOf(status: number, error: string): GuildErrorKind {
   if (status === 410) return 'deleted';
   if (status === 429) return error === 'daily limit' ? 'dailyLimit' : 'rateLimit';
   if (status === 403) return error === 'not host' ? 'notHost' : 'login';
-  if (status === 404) return error === 'invalid code' ? 'invalidCode' : error === 'no guild' ? 'noGuild' : 'server';
+  if (status === 404) return error === 'invalid code' ? 'invalidCode' : error === 'no guild' ? 'noGuild' : error === 'nothing to claim' ? 'nothingToClaim' : 'server';
   if (status === 409) {
+    if (error === 'raid closed') return 'raidClosed';
+    if (error === 'already claimed') return 'alreadyClaimed';
     if (error === 'guild full') return 'full';
     if (error === 'join collision') return 'collision';
     if (error === 'already in a guild') return 'alreadyIn';
     return 'server';
   }
   if (status === 400) {
-    return error === 'invalid name' ? 'invalidName' : error === 'invalid day' ? 'invalidDay'
+    return error === 'invalid name' ? 'invalidName' : error === 'invalid day' ? 'invalidDay' : error === 'invalid week' ? 'nothingToClaim'
       : error === 'goal not met' ? 'goalNotMet' : error === 'invalid kind' ? 'invalidKind' : 'server';
   }
   if (status === 503) return 'unavailable';
@@ -419,3 +461,58 @@ export const renameGuild = (id: string, name: string, tz?: PlayerDayAnchor) =>
 
 export const newGuildCode = (id: string, tz?: PlayerDayAnchor) =>
   guildCall<{ guild: unknown }>('guildNewCode', { method: 'POST', body: { id, dayKey: dia(tz) } }).then(viewOf);
+
+/**
+ * A rodada do dia ("a roda vai até ele"). O servidor sorteia o dano e NUNCA o devolve:
+ * a resposta é só `landed` e a vista nova. Um por dia do jogador; 429 `dailyLimit` (talvez de
+ * outro aparelho) e 409 `raidClosed` são estados, não frases — a folha relê em silêncio.
+ */
+export const hitGuildRaid = (id: string, tz?: PlayerDayAnchor) =>
+  guildCall<{ landed?: boolean; guild: unknown }>('guildRaidHit', { method: 'POST', body: { id, dayKey: dia(tz) } }).then(viewOf);
+
+/** O que há para colher: semanas com direito (`pending`), os cenários já liberados e a peça da maré. */
+export interface GuildRewards {
+  pending: Array<{ week: string; outcome: 'dissipada' | 'recuou'; emblems: number }>;
+  scenes: string[];
+  trophyOwned: boolean;
+  trophyId: string | null;
+}
+
+export interface GuildClaim {
+  week: string;
+  outcome: 'dissipada' | 'recuou';
+  emblems: number;
+  trophy: boolean;
+  trophyId: string | null;
+  /** Determinístico por (conta, semana): o cliente credita UMA vez por recibo. */
+  receipt: string;
+}
+
+const intIn = (v: unknown, min: number, max: number) => (typeof v === 'number' && Number.isInteger(v) ? Math.min(max, Math.max(min, v)) : min);
+
+export function sanitizeRewards(raw: unknown): GuildRewards {
+  const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  const pending = (Array.isArray(r.pending) ? r.pending : []).flatMap(p => {
+    const x = (p && typeof p === 'object' ? p : {}) as Record<string, unknown>;
+    if (typeof x.week !== 'string' || (x.outcome !== 'dissipada' && x.outcome !== 'recuou')) return [];
+    return [{ week: x.week.slice(0, 20), outcome: x.outcome as 'dissipada' | 'recuou', emblems: intIn(x.emblems, 0, 20) }];
+  }).slice(0, 4);
+  const scenes = (Array.isArray(r.scenes) ? r.scenes : []).filter((s): s is string => typeof s === 'string' && /^bg-guild-[a-z-]{1,20}$/.test(s)).slice(0, 8);
+  return { pending, scenes, trophyOwned: r.trophyOwned === true, trophyId: typeof r.trophyId === 'string' ? r.trophyId.slice(0, 40) : null };
+}
+
+/** Resgates pendentes. Sem guilda, ainda devolve os cenários já liberados (ficam com quem sai). */
+export const getGuildRewards = (id: string, tz?: PlayerDayAnchor) =>
+  guildCall<{ rewards?: unknown }>('guildRewards', { params: { id, dayKey: dia(tz) } }).then(r => sanitizeRewards(r.rewards));
+
+/** Colher UMA semana. 409 `alreadyClaimed` e 404 `nothingToClaim` viram erro tipado: quem chama decide o silêncio. */
+export const claimGuildReward = (id: string, week: string, tz?: PlayerDayAnchor): Promise<GuildClaim> =>
+  guildCall<{ claimed?: Record<string, unknown> }>('guildClaim', { method: 'POST', body: { id, dayKey: dia(tz), week } }).then(r => {
+    const c = r.claimed ?? {};
+    const outcome = c.outcome === 'dissipada' ? 'dissipada' : 'recuou';
+    if (typeof c.receipt !== 'string' || !c.receipt || c.week !== week) throw new GuildError('server', 200);
+    return {
+      week, outcome, emblems: intIn(c.emblems, 0, 20), trophy: c.trophy === true,
+      trophyId: typeof c.trophyId === 'string' ? c.trophyId.slice(0, 40) : null, receipt: c.receipt.slice(0, 80),
+    };
+  });
