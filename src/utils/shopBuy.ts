@@ -1,4 +1,4 @@
-import type { ShopItem } from './shop';
+import { isGuildReward, type ShopItem } from './shop';
 import type { SlotId } from './petStage';
 
 /**
@@ -34,7 +34,7 @@ import type { SlotId } from './petStage';
  * fatia de estado que esta função precisa conhecer.
  */
 
-export type ShopBuyRefusal = 'no-funds' | 'already-owned';
+export type ShopBuyRefusal = 'no-funds' | 'already-owned' | 'not-for-sale';
 
 /** Fatia do GameState que uma compra lê e escreve. */
 export interface ShopBuyState {
@@ -58,6 +58,8 @@ export function shopBalanceFor(state: ShopBuyState, item: ShopItem): number {
  * e para devolver `false` ao botão.
  */
 export function shopBuyRefusal(state: ShopBuyState, item: ShopItem): ShopBuyRefusal | undefined {
+  // Conquista da Guilda (`GUILD_ITEMS`, preço 0): só o resgate da Feira a concede — nunca a compra.
+  if (isGuildReward(item)) return 'not-for-sale';
   if (shopBalanceFor(state, item) < item.price) return 'no-funds';
   if (item.kind === 'bg' && (state.ownedBackgrounds ?? []).includes(item.id)) return 'already-owned';
   if (item.kind === 'furniture' && (state.ownedFurniture ?? []).includes(item.id)) return 'already-owned';

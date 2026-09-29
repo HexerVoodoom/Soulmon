@@ -3,7 +3,7 @@ import {
   GROUND_Y, DECOR_SLOTS, SLOT_ORDER, decorFitsSetting, slotBoxStyle, applyDecorEquip, type SlotId,
 } from './petStage';
 import { PET_BACKGROUNDS } from './backgrounds';
-import { ALL_SHOP_ITEMS } from './shop';
+import { ALL_SHOP_ITEMS, isGuildReward } from './shop';
 
 // A composição do palco só funciona enquanto TODAS as peças concordam sobre a
 // mesma geometria. Estes testes travam esse acordo: se um cair, a decoração
@@ -150,9 +150,12 @@ describe('itens de decoração', () => {
   it('a vitrine de troféus é comprada com Emblemas', () => {
     // O espaço da vitrine existe por causa do Torneio; abri-lo pra Bits
     // esvaziaria o sentido de ganhar troféu.
-    const vitrines = decor.filter(i => i.slot === 'trophy');
+    // A única exceção é a CONQUISTA da Guilda (`GUILD_ITEMS`, Concha da Maré): não se compra com
+    // moeda nenhuma — só o resgate da Feira a concede (`shopBuy` a recusa: 'not-for-sale').
+    const vitrines = decor.filter(i => i.slot === 'trophy' && !isGuildReward(i));
     expect(vitrines.length).toBeGreaterThan(0);
     for (const v of vitrines) expect(v.currency, v.id).toBe('emblems');
+    for (const g of decor.filter(i => i.slot === 'trophy' && isGuildReward(i))) expect(g.price, g.id).toBe(0);
   });
 });
 

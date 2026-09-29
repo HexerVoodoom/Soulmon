@@ -8,6 +8,7 @@ import { MISSIONS, MISSION_CATEGORIES, isMissionComplete, type MissionCategory }
 import { SHOP_ITEMS } from '../../utils/shop';
 import type { CurrencyId } from '../../utils/currencies';
 import type { Language } from '../../utils/i18n';
+import { GuildOwnedShelf } from './GuildOwnedShelf';
 import {
   CreditExchange, CurrencyBalance, ShopShelf, ShopStatus, useShopFlash,
   type ShopActions, type ShopOwnership,
@@ -115,6 +116,16 @@ export function MercadoStallSheet(props: MercadoStallProps) {
           actions={props}
           say={say}
           flash={flash}
+        />
+      )}
+      {/* O que a roda deu (cenários do Bosque, Concha da Maré): só EQUIPA, sem preço.
+          Vazio é silêncio — a seção nem desenha o título. */}
+      {cur !== 'credits' && (stall === 'background' || stall === 'decoracao') && (
+        <GuildOwnedShelf
+          language={language}
+          kind={stall === 'background' ? 'bg' : 'furniture'}
+          ownership={props}
+          actions={props}
         />
       )}
     </div>

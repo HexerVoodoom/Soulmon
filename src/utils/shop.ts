@@ -414,4 +414,31 @@ export const TOURNAMENT_ITEMS: ShopItem[] = [
  * sumir na hora de renderizar (aconteceu com a mobília do torneio, que era
  * comprável e equipável mas não aparecia no box do pet).
  */
-export const ALL_SHOP_ITEMS: ShopItem[] = [...SHOP_ITEMS, ...TOURNAMENT_ITEMS];
+/**
+ * ITENS DE CONQUISTA DA GUILDA (`docs/PLANO-GUILDA.md` §3 "Recompensas", WPG-10).
+ * NUNCA à venda: sem preço, fora de `SHOP_ITEMS`/`TOURNAMENT_ITEMS` (logo, fora de
+ * toda vitrine — `mercadoCatalog.stallItems`), e travados por uma `unlock` de
+ * missão que NÃO existe em `MISSIONS` (`isShopItemUnlocked` → `false` para sempre),
+ * então nem uma chamada direta a `handleShopBuy` os compra. O único caminho é o
+ * resgate da Feira (`guildClaim` → `trophyId`), que os põe em `ownedFurniture`.
+ * Entram em `ALL_SHOP_ITEMS` para o palco resolver o id e a folha "da sua roda"
+ * (`components/mercado/GuildOwnedShelf.tsx`) poder equipá-los.
+ *
+ * Concha da Maré (`trophy-concha-mare`): a maré deixa uma concha no Bosque a cada
+ * `RAID_TROPHY_EVERY` Feiras dissipadas — nomeia o ATO da roda, nunca uma pessoa.
+ * Arte: placeholder em SVG (`decorArt.ts`); a leva de arte troca por
+ * `assets/decor/trophy-concha-mare.png` (384², slot `trophy`).
+ */
+export const GUILD_SHELL_UNLOCK_MISSION = 'guild-tide-shell';
+export const GUILD_ITEMS: ShopItem[] = [
+  { id: 'trophy-concha-mare', kind: 'furniture', icon: '🐚', slot: 'trophy', fits: 'any',
+    namePt: 'Concha da Maré', nameEn: 'Tide shell',
+    descPt: 'Deixada pela maré no bosque.', descEn: 'Left by the tide in the grove.',
+    price: 0,
+    unlock: { kind: 'mission', missionId: GUILD_SHELL_UNLOCK_MISSION } },
+];
+
+/** É uma conquista da Guilda? Nunca comprável, venha de onde vier. */
+export const isGuildReward = (item: Pick<ShopItem, 'id'>): boolean => GUILD_ITEMS.some(g => g.id === item.id);
+
+export const ALL_SHOP_ITEMS: ShopItem[] = [...SHOP_ITEMS, ...TOURNAMENT_ITEMS, ...GUILD_ITEMS];
