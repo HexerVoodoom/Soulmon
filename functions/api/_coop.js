@@ -540,7 +540,15 @@ export async function lerFiosDaRoda(env, g) {
  * dois leitores simultâneos não somarem o mesmo dia duas vezes.
  * @returns {Promise<object>} o grupo atualizado (ou o mesmo)
  */
-export async function atualizarBosque(env, g, hoje) {
+export async function atualizarBosque(env, g, hoje, agora = new Date()) {
+  // A1 (L2-backend): o dia só FECHA quando terminou em TODOS os fusos. O dia do
+  // jogador vale a ±1 do UTC, então um dia D ainda recebe fio enquanto o UTC
+  // for D+1 — fechar pelo dia de quem pergunta (um membro em UTC+9 depois da
+  // meia-noite dele) apagava os fios que os de UTC−3 firmariam à tarde. O dia
+  // "aberto" passado a `fecharDiasDoBosque` é o menor entre o do chamador e
+  // UTC−1: fecha-se até UTC−2, e o `diaDoJogador` já recusa D quando UTC ≥ D+2.
+  const utc = numDia(agora.toISOString().slice(0, 10));
+  hoje = diaDeNum(Math.min(numDia(hoje), utc - 1));
   const fios = await lerFiosDaRoda(env, g);
   const teste = structuredClone(g);
   if (!fecharDiasDoBosque(teste, fios, hoje)) return g;

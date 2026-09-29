@@ -125,14 +125,14 @@ describe('bosque.monotonic — pela rota', () => {
     await chamar(e, 'guildThread', { id: B, kind: 'fio' });
     await chamar(e, 'guildLeave', { id: B });
     expect(e.DIGIAPP_SAVES.store.has(coopFioKey(g.id, B))).toBe(false);
-    vi.setSystemTime(new Date('2026-09-02T12:00:00Z'));
+    vi.setSystemTime(new Date('2026-09-03T12:00:00Z'));
     await chamar(e, 'guild', { id: A }, 'GET');
     // A (membro) + B (avulso) firmaram, de 2 → 1,0 e não 0,5 nem 1/1 com B perdido.
     expect((await lerGrupo(e, g.id)).bosqueProgress).toBeCloseTo(1, 9);
     // Outra saída / volta não tira nada.
     await chamar(e, 'guildJoin', { id: B, code: g.code });
     await chamar(e, 'guildLeave', { id: B });
-    vi.setSystemTime(new Date('2026-09-03T12:00:00Z'));
+    vi.setSystemTime(new Date('2026-09-05T12:00:00Z'));
     await chamar(e, 'guild', { id: A }, 'GET');
     expect((await lerGrupo(e, g.id)).bosqueProgress).toBeGreaterThanOrEqual(1);
   });

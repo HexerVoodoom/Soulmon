@@ -121,7 +121,8 @@ describe('Bosque: dias-de-guilda proporcionais, fechados na leitura', () => {
     const { e, gid } = await roda();
     await fio(e, A); await fio(e, B);
     noDia(1); await fio(e, A); await fio(e, B);
-    noDia(2);
+    // A1: o dia só fecha quando terminou em todos os fusos (UTC ≥ D+2).
+    noDia(3);
     const v = (await (await chamar(e, 'guild', { method: 'GET', params: { id: A } })).json()).guild;
     const g = await lerGrupo(e, gid);
     expect(g.bosqueProgress).toBeCloseTo(2, 5);
@@ -133,7 +134,7 @@ describe('Bosque: dias-de-guilda proporcionais, fechados na leitura', () => {
   it('um de dois → +0,5; fechar duas vezes o mesmo dia não soma de novo', async () => {
     const { e, gid } = await roda();
     await fio(e, A);
-    noDia(1);
+    noDia(2);
     await chamar(e, 'guild', { method: 'GET', params: { id: A } });
     await chamar(e, 'guild', { method: 'GET', params: { id: B } });
     expect((await lerGrupo(e, gid)).bosqueProgress).toBeCloseTo(0.5, 5);
@@ -144,7 +145,7 @@ describe('Bosque: dias-de-guilda proporcionais, fechados na leitura', () => {
     // B firma no dia 0 e some. A firma do dia 29 em diante.
     await fio(e, B);
     noDia(29); await fio(e, A);
-    noDia(30);
+    noDia(31);
     const antes = (await lerGrupo(e, gid)).bosqueProgress ?? 0;
     await chamar(e, 'guild', { method: 'GET', params: { id: A } });
     const depois = (await lerGrupo(e, gid)).bosqueProgress;
@@ -205,7 +206,7 @@ describe('mutantes que sobreviveram à 1ª rodada', () => {
   it('quem CRIOU e nunca firmou vira viajante depois de 4 semanas (a referência é o dia de entrada)', async () => {
     const { e, gid } = await roda([A, B]);
     for (let n = 0; n <= 30; n++) { noDia(n); await fio(e, B); }
-    noDia(31);
+    noDia(32);
     await chamar(e, 'guild', { method: 'GET', params: { id: B } });
     const p = (await lerGrupo(e, gid)).bosqueProgress;
     // dias 0..27: 1 de 2 = 0,5 cada (14); dias 28..30: A é viajante, 1 de 1 (3) = 17.
