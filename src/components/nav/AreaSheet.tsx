@@ -1,9 +1,10 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import type { AreaId } from '../../navigation';
 import type { Language } from '../../utils/i18n';
 import { lotNpcArt } from '../../assets/soulmon/npcs';
 import { lotNpcVoice } from '../../utils/areaNpcVoice';
 import { useBackLayer } from '../../utils/backStack';
+import { useDialogA11y } from '../../hooks/useDialogA11y';
 
 /**
  * A FOLHA DE UM LOTE (minimal-ui F4) — bottom-sheet que abre ao tocar um
@@ -37,17 +38,12 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
   onClose: () => void;
   children?: ReactNode;
 }) {
-  const closeBtnRef = useRef<HTMLButtonElement>(null);
   // O voltar do sistema (botão do Android/navegador) fecha a folha antes de mudar de tela.
   useBackLayer(open, onClose);
-
-  useEffect(() => {
-    if (!open) return;
-    closeBtnRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [open, onClose]);
+  // `aria-modal` é uma promessa ao leitor de tela — o hook a cumpre (QA da Guilda
+  // L1 #24): foco inicial no primeiro focável (o fechar), Tab preso, fundo
+  // `inert`, Escape e o foco DEVOLVIDO ao lote que abriu, nunca ao `<body>`.
+  const dialogRef = useDialogA11y<HTMLDivElement>(open, onClose);
 
   if (!open) return null;
 
@@ -114,6 +110,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
         </div>
 
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label={title}
@@ -139,14 +136,13 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
             {title}
           </h2>
           <button
-            ref={closeBtnRef}
             type="button"
             data-area-sheet-close
             onClick={onClose}
             aria-label={closeLabel}
             title={closeLabel}
             style={{
-              width: 36, height: 36, flex: '0 0 36px',
+              width: 44, height: 44, flex: '0 0 44px',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               background: 'transparent', border: 'none', padding: 0, cursor: 'pointer',
               color: 'var(--sm2-ink)', fontSize: 20, lineHeight: 1,
