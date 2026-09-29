@@ -32,6 +32,7 @@ import { Icon } from './ui/Icon';
 import { MiniGlass } from './ui/MiniGlass';
 import { Field, sm2Button } from './form/FormKit';
 import type { Language } from '../utils/i18n';
+import type { PlayerDayAnchor } from '../utils/playerDay';
 
 interface LibraryPageProps {
   saveId: string;
@@ -46,6 +47,8 @@ interface LibraryPageProps {
    *  dia. Fica aqui, e não dentro do painel, porque a meta do dia é do motor
    *  (`useProgressTracking`) e o painel não pode ter uma segunda cópia dela. */
   metaDoDiaCumprida?: boolean;
+  /** Âncora do dia do jogador — o dia que a Guilda envia ao servidor. */
+  playerDayTz?: PlayerDayAnchor;
   language: Language;
   /** minimal-ui F5 — dentro da folha do Hall (`AreaSheet`), que já nomeia a
    *  Biblioteca no próprio título: a página não repete o `<h1>` (uma tela, um
@@ -121,7 +124,7 @@ function RowAction({
   );
 }
 
-export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, onGiftSent, onVisitPlayer, metaDoDiaCumprida = false, language, embedded = false, view }: LibraryPageProps) {
+export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, onGiftSent, onVisitPlayer, metaDoDiaCumprida = false, playerDayTz, language, embedded = false, view }: LibraryPageProps) {
   const isPt = language === 'pt-BR';
   const [search, setSearch] = useState('');
   const [players, setPlayers] = useState<DirectoryPlayer[] | null>(null);
@@ -288,7 +291,7 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
 
       {/* ── Grupo (Fase 4.3) ── */}
       {tab === 'coop' && (
-        <CoopPanel saveId={saveId} language={language} metaDoDiaCumprida={metaDoDiaCumprida} />
+        <CoopPanel saveId={saveId} language={language} metaDoDiaCumprida={metaDoDiaCumprida} playerDayTz={playerDayTz} />
       )}
 
       {/* O alerta é ÂMBAR (D-S6): filete + tinta `gold-ink` — "tente de novo" é

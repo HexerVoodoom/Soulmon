@@ -5253,6 +5253,7 @@ export default function App() {
                 onGiftSent={() => {}}
                 onVisitPlayer={() => contarMissao('friend-visit')}
                 metaDoDiaCumprida={dailyTotal > 0 && dailyDone >= dailyTotal}
+                playerDayTz={gameState.playerDayTz}
                 language={language}
                 embedded
               />
@@ -5314,7 +5315,9 @@ export default function App() {
             as superfícies do app sem redesenhar nenhuma. Ele se acende sozinho
             pelos eventos `online`/`offline` do window (ver OfflineSeal) e some
             quando a rede volta; não bloqueia nada, porque o jogo roda local. */}
-        <OfflineSeal language={language} topOffset={8} />
+        {/* Dentro de uma área o título fica no centro do topo: o selo desce para
+            baixo da barra em vez de cobri-lo (QA da Guilda L1 #22). */}
+        <OfflineSeal language={language} topOffset={area ? 64 : 8} />
         {unlockReason && (
           <UnlockAccountModal
             language={language}
@@ -5627,7 +5630,7 @@ export default function App() {
                 onLabTab={setLabTab}
                 labContent={labContent}
                 hallContent={hallContent}
-                guild={{ saveId, metaDoDiaCumprida: dailyTotal > 0 && dailyDone >= dailyTotal }}
+                guild={{ saveId, metaDoDiaCumprida: dailyTotal > 0 && dailyDone >= dailyTotal, playerDayTz: gameState.playerDayTz }}
               />
             </Suspense>
           )}

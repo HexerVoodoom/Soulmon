@@ -2,6 +2,8 @@
 // Tournament (PvP assíncrono) e Biblioteca (diretório + amigos + presentes).
 import { authHeaders } from './auth';
 import { reagirContaExcluida } from './cloudSave';
+import { playerDayKey, type PlayerDayAnchor } from './playerDay';
+import { GUILD_PRESENCE_NOMINAL_MAX } from './guildRules';
 
 const BASE = '/api/community';
 
@@ -148,57 +150,188 @@ export const getGifts = (id: string, claim = false) =>
 export const getPendingTrophies = (id: string, claim = false) =>
   call<{ trophies: Array<{ season: string; place: 1 | 2 | 3 }> }>('trophies', { params: { id, ...(claim ? { claim: '1' } : {}) } });
 
-// ── Cooperativo (Fase 4.3 — `docs/PLANO-COOP.md`) ────────────────────────────
+// ── Guilda (`docs/PLANO-GUILDA.md`; rota `/api/guild`, `functions/api/guild.js`) ──
 //
-// O tipo abaixo é a razão do modo existir, escrita em TypeScript: um membro do
-// grupo tem `apareceuHoje: boolean` e **nada mais que se possa ordenar**. O
-// servidor também não manda quanto cada um fez (`vistaDoGrupo`, em
-// `functions/api/community.js`) — as duas travas são de propósito. O item 4.2
-// do `docs/PLANO-EVOLUCAO.md` registra que 31,3% relataram efeito psicológico
-// negativo de comparação em ambiente de leaderboard; um grupo que mostrasse a
-// contribuição individual reinventaria o leaderboard entre amigos, onde a
-// comparação dói mais, não menos.
+// A Guilda é o cooperativo da Fase 4.3 com teto de 12. Este bloco é o ÚNICO
+// cliente dela, e existe por três razões escritas em TypeScript:
+//
+//  1. **O tipo `GuildView` não tem nada que se possa ordenar.** Presença é
+//     `apareceuHoje?: boolean` e só existe com ≤ `GUILD_PRESENCE_NOMINAL_MAX`
+//     membros; `progress`/`target` (soma semanal, um número) chegam no corpo e
+//     são DESCARTADOS aqui — a tela não tem barra da semana (LV-G1/LV-G2). A
+//     defesa é dupla de propósito: se o servidor mandar presença com 5+
+//     membros, `sanitizeGuildView` corta antes de a UI ver.
+//  2. **Erro tem tipo, e cada tipo tem uma frase própria** (`GuildErrorKind` →
+//     `GUILD_ERROR_KEY`, em `guildCopy.ts`). Falha de CARGA nunca vira "sem
+//     roda": quem tem roda e perde a rede não pode ver um formulário de criar.
+//  3. **Nada da guilda vai para o GameState nem para o save.** O ponteiro é
+//     `coopOf:<saveId>`, do servidor; `guildNoSave.contract.test.ts` trava.
 
-export interface CoopMember {
-  /** pid público, nunca o saveId. `null` quando a pessoa ainda não tem perfil. */
+/** O que a UI sabe de UMA pessoa da roda. Nenhum saveId, nenhum estágio (LV-G10). */
+export interface GuildMember {
+  /** pid público; `null` quando a pessoa ainda não tem perfil. */
   id: string | null;
   name: string | null;
-  stage: string | null;
-  apareceuHoje: boolean;
   euMesmo: boolean;
+  /** SÓ com até `GUILD_PRESENCE_NOMINAL_MAX` membros, e só do dia de quem pergunta. */
+  apareceuHoje?: boolean;
 }
 
-export interface CoopGroup {
+export interface GuildView {
   id: string;
   name: string;
   weekKey: string;
   /** O código de convite. Só quem já está dentro o recebe. */
   code: string;
-  members: CoopMember[];
-  /** Progresso COLETIVO da semana, já limitado a `target`. */
-  progress: number;
-  /** Derivado do tamanho do grupo — por isso sair encolhe a meta junto. */
-  target: number;
+  /** Só sobre quem pergunta; os ajustes de anfitrião saem daqui. */
+  isHost: boolean;
+  size: number;
   full: boolean;
+  /** Ordem de chegada — a UI NÃO reordena. */
+  members: GuildMember[];
+  /** `null` com ≤4 membros ou sem fio hoje. É `true` ou `null`, nunca um número. */
+  threadedToday: true | null;
+  mine: { cameToday: boolean };
 }
 
-/** O grupo de quem pergunta, ou `null`. Não ter grupo NÃO é erro. */
-export const getCoop = (id: string) =>
-  call<{ group: CoopGroup | null }>('coop', { params: { id } }).then(r => r.group);
+export type GuildErrorKind =
+  | 'login'         // 401 / 403 forbidden / 400 invalid id: sem conta, sem roda
+  | 'invalidCode'   // 404 invalid code
+  | 'noGuild'       // 404 no guild: a roda sumiu com a folha aberta
+  | 'alreadyIn'     // 409 already in a guild (carrega a vista, quando o servidor a manda)
+  | 'full'          // 409 guild full
+  | 'collision'     // 409 join collision
+  | 'invalidName'   // 400 invalid name
+  | 'invalidDay'    // 400 invalid day
+  | 'notHost'       // 403 not host
+  | 'rateLimit'     // 429
+  | 'deleted'       // 410 account-deleted (o cloudSave já cuida do portão)
+  | 'unavailable'   // 503 / sem rede / fetch caiu
+  | 'server';       // qualquer outro 5xx, 4xx desconhecido ou corpo ilegível
 
-export const createCoop = (id: string, name: string) =>
-  call<{ group: CoopGroup }>('coopCreate', { method: 'POST', body: { id, name } }).then(r => r.group);
+export class GuildError extends Error {
+  constructor(public readonly kind: GuildErrorKind, public readonly status: number, public readonly guild?: GuildView | null) {
+    super(`guild:${kind}:${status}`);
+    this.name = 'GuildError';
+  }
+}
 
-export const joinCoop = (id: string, code: string) =>
-  call<{ group: CoopGroup }>('coopJoin', { method: 'POST', body: { id, code } }).then(r => r.group);
+const str = (v: unknown, max = 200): string => (typeof v === 'string' ? v.slice(0, max) : '');
 
 /**
- * "Apareci hoje". Idempotente no servidor — chamar de novo no mesmo dia não
- * conta duas vezes, então o cliente pode chamar sem guardar estado.
+ * A vista do servidor é DADO NÃO CONFIÁVEL para a UI: aqui ela vira o tipo
+ * estreito. Presença some com 5+ membros mesmo que o servidor a mande (LV-G2),
+ * e `threadedToday` só passa como `true`.
  */
-export const coopCheckin = (id: string) =>
-  call<{ group: CoopGroup }>('coopCheckin', { method: 'POST', body: { id } }).then(r => r.group);
+export function sanitizeGuildView(raw: unknown): GuildView | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const r = raw as Record<string, unknown>;
+  const list = Array.isArray(r.members) ? r.members : [];
+  const declared = typeof r.size === 'number' && Number.isFinite(r.size) ? Math.floor(r.size) : 0;
+  const size = Math.max(list.length, declared);
+  const nominal = size <= GUILD_PRESENCE_NOMINAL_MAX && r.presence !== null;
+  const members: GuildMember[] = list.map((m): GuildMember => {
+    const o = (m && typeof m === 'object' ? m : {}) as Record<string, unknown>;
+    return {
+      id: typeof o.id === 'string' ? o.id : null,
+      name: typeof o.name === 'string' && o.name.trim() ? o.name.slice(0, 60) : null,
+      euMesmo: o.euMesmo === true,
+      ...(nominal ? { apareceuHoje: o.apareceuHoje === true } : {}),
+    };
+  });
+  const mine = (r.mine && typeof r.mine === 'object' ? r.mine : {}) as Record<string, unknown>;
+  return {
+    id: str(r.id, 80),
+    name: str(r.name, 60),
+    weekKey: str(r.weekKey, 20),
+    code: str(r.code, 16),
+    isHost: r.isHost === true,
+    size,
+    full: r.full === true,
+    members,
+    threadedToday: size > GUILD_PRESENCE_NOMINAL_MAX && r.threadedToday === true ? true : null,
+    mine: { cameToday: mine.cameToday === true },
+  };
+}
+
+function kindOf(status: number, error: string): GuildErrorKind {
+  if (status === 401 || error === 'invalid id') return 'login';
+  if (status === 410) return 'deleted';
+  if (status === 429) return 'rateLimit';
+  if (status === 403) return error === 'not host' ? 'notHost' : 'login';
+  if (status === 404) return error === 'invalid code' ? 'invalidCode' : error === 'no guild' ? 'noGuild' : 'server';
+  if (status === 409) {
+    if (error === 'guild full') return 'full';
+    if (error === 'join collision') return 'collision';
+    if (error === 'already in a guild') return 'alreadyIn';
+    return 'server';
+  }
+  if (status === 400) return error === 'invalid name' ? 'invalidName' : error === 'invalid day' ? 'invalidDay' : 'server';
+  if (status === 503) return 'unavailable';
+  return 'server';
+}
+
+const GUILD_BASE = '/api/guild';
+
+async function guildCall<T>(action: string, opts: { method?: 'GET' | 'POST'; params?: Record<string, string>; body?: Record<string, unknown> } = {}): Promise<T> {
+  const method = opts.method ?? 'GET';
+  const qs = new URLSearchParams({ action, ...(opts.params ?? {}) });
+  let res: Response;
+  try {
+    const auth = await authHeaders();
+    res = await fetch(`${GUILD_BASE}?${qs.toString()}`, {
+      method,
+      headers: method === 'POST' ? { 'Content-Type': 'application/json', ...auth } : auth,
+      body: method === 'POST' ? JSON.stringify(opts.body ?? {}) : undefined,
+    });
+  } catch {
+    // fetch só rejeita sem resposta: rede caiu, offline, CSP. É "sem conexão".
+    throw new GuildError('unavailable', 0);
+  }
+  let data: unknown;
+  try {
+    data = await res.json();
+  } catch {
+    // 200 com corpo ilegível é FALHA (portal cativo, proxy) — ver `call` acima.
+    throw new GuildError(res.status >= 500 ? 'unavailable' : 'server', res.status);
+  }
+  const obj = (data && typeof data === 'object' ? data : {}) as { error?: unknown; deletedAt?: unknown; guild?: unknown };
+  if (res.status === 410) {
+    void reagirContaExcluida({ excluidaEm: typeof obj.deletedAt === 'number' ? obj.deletedAt : undefined });
+    throw new GuildError('deleted', 410);
+  }
+  if (!res.ok) {
+    const kind = kindOf(res.status, typeof obj.error === 'string' ? obj.error : '');
+    throw new GuildError(kind, res.status, kind === 'alreadyIn' ? sanitizeGuildView(obj.guild) : undefined);
+  }
+  return data as T;
+}
+
+/** O DIA DO JOGADOR que o servidor valida a ±1 do UTC (`diaDoJogador`, G6 revisto). */
+const dia = (tz: PlayerDayAnchor | undefined) => playerDayKey(new Date(), tz);
+
+const viewOf = (r: { guild?: unknown }) => sanitizeGuildView(r.guild);
+
+/** A roda de quem pergunta, ou `null`. Não ter roda NÃO é erro. */
+export const getGuild = (id: string, tz?: PlayerDayAnchor) =>
+  guildCall<{ guild: unknown }>('guild', { params: { id, dayKey: dia(tz) } }).then(viewOf);
+
+export const createGuild = (id: string, name: string, tz?: PlayerDayAnchor) =>
+  guildCall<{ guild: unknown }>('guildCreate', { method: 'POST', body: { id, name, dayKey: dia(tz) } }).then(viewOf);
+
+export const joinGuild = (id: string, code: string, tz?: PlayerDayAnchor) =>
+  guildCall<{ guild: unknown }>('guildJoin', { method: 'POST', body: { id, code, dayKey: dia(tz) } }).then(viewOf);
+
+/** "Firmar meu fio" (no servidor: `guildCheckin`, idempotente por dia). */
+export const guildCheckin = (id: string, tz?: PlayerDayAnchor) =>
+  guildCall<{ guild: unknown }>('guildCheckin', { method: 'POST', body: { id, dayKey: dia(tz) } }).then(viewOf);
 
 /** Sair. Um toque, sem confirmação de ninguém e sem penalidade nenhuma. */
-export const leaveCoop = (id: string) =>
-  call<{ ok: true }>('coopLeave', { method: 'POST', body: { id } });
+export const leaveGuild = (id: string) =>
+  guildCall<{ ok: true }>('guildLeave', { method: 'POST', body: { id } });
+
+export const renameGuild = (id: string, name: string, tz?: PlayerDayAnchor) =>
+  guildCall<{ guild: unknown }>('guildRename', { method: 'POST', body: { id, name, dayKey: dia(tz) } }).then(viewOf);
+
+export const newGuildCode = (id: string, tz?: PlayerDayAnchor) =>
+  guildCall<{ guild: unknown }>('guildNewCode', { method: 'POST', body: { id, dayKey: dia(tz) } }).then(viewOf);

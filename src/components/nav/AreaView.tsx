@@ -8,6 +8,7 @@ import { AREA_BG, MERCADO_LOT_ART, ARENA_LOT_ART, PLAY_AREA_BG, EXPLORACAO_LOT_A
 import { exploracaoLots, jogosLots } from '../../utils/playAreaLots';
 import { sm2Hint } from '../form/FormKit';
 import { useBackLayer } from '../../utils/backStack';
+import type { PlayerDayAnchor } from '../../utils/playerDay';
 import type { ShopActions, ShopOwnership } from '../mercado/ShopShelf';
 import type { TournamentPage as TournamentPageT } from '../TournamentPage';
 import type { StageSkills } from '../../utils/soulProfile/ficha/skills';
@@ -100,7 +101,7 @@ export interface AreaViewProps {
    *  visão por construção (Biblioteca = diretório, Círculo de Amigos = amigos). */
   hallContent: (view: 'directory' | 'friends') => ReactNode;
   /** A Guilda (Arena e Hall abrem a mesma folha): dados do `CoopPanel`. */
-  guild: { saveId: string; metaDoDiaCumprida: boolean };
+  guild: { saveId: string; metaDoDiaCumprida: boolean; playerDayTz?: PlayerDayAnchor };
 }
 
 /** Espera curta dentro da folha — o conteúdo é `lazy`, e a folha já está
@@ -185,7 +186,7 @@ export function AreaView(props: AreaViewProps) {
               <TournamentPage {...props.tournament} shop={{ ownership, actions }} />
             )}
             {open?.id === 'guilda' && (
-              <GuildSheet saveId={props.guild.saveId} language={language} metaDoDiaCumprida={props.guild.metaDoDiaCumprida} />
+              <GuildSheet saveId={props.guild.saveId} language={language} metaDoDiaCumprida={props.guild.metaDoDiaCumprida} playerDayTz={props.guild.playerDayTz} />
             )}
             {open?.id === 'duelo' && (
               <DueloSheet
@@ -311,7 +312,7 @@ export function AreaView(props: AreaViewProps) {
           {open?.id === 'biblioteca' && props.hallContent('directory')}
           {open?.id === 'amigos' && props.hallContent('friends')}
           {open?.id === 'guilda' && (
-            <GuildSheet saveId={props.guild.saveId} language={language} metaDoDiaCumprida={props.guild.metaDoDiaCumprida} />
+            <GuildSheet saveId={props.guild.saveId} language={language} metaDoDiaCumprida={props.guild.metaDoDiaCumprida} playerDayTz={props.guild.playerDayTz} />
           )}
         </Suspense>
       </AreaSheet>
