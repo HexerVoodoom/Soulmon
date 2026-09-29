@@ -30,7 +30,7 @@
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import { kv, kvOrThrow } from './_kv.js';
-import { ensurePid, pidSoLeitura, getProfile, newPid, stagePower } from './_profile.js';
+import { getProfile, newPid, stagePower } from './_profile.js';
 import {
   COOP_MAX_MEMBERS, COOP_CHECKINS_POR_MEMBRO, PRESENCA_NOMINAL_MAX,
   coopKey, coopOfKey, coopCodeKey, semanaDoDia, diaDoJogador, sortearCodigoLivre,
@@ -40,7 +40,7 @@ import {
   metaDoFioCumprida, atualizarBosque, lerGestos, coopGestKey, numDia, diaDeNum,
   resolverFeira, lerGolpes, coopHitKey, COOP_HIT_TTL, raidDamageFor, fenomenoDaSemana, semanaAnterior,
   ultimoDiaDaSemana, RAID_EMBLEMS, RAID_EMBLEMS_FLOOR, RAID_TROPHY_EVERY, RAID_TROPHY_ID,
-  coopClaimKey, COOP_CLAIM_TTL, coopShellKey, coopScenesKey, lerConjunto, unirConjunto, cenariosAte,
+  idOpacoDoMembro, coopClaimKey, COOP_CLAIM_TTL, coopShellKey, coopScenesKey, lerConjunto, unirConjunto, cenariosAte,
 } from './_coop.js';
 
 const CORS = {
@@ -122,12 +122,13 @@ export async function vistaDaGuilda(env, g, euSave, hoje = new Date().toISOStrin
   const veio = dias.map((d, i) => d.includes(hoje) || firmou[i]);
   const membros = await Promise.all(g.members.map(async (m, i) => {
     const perfil = await getProfile(env, m);
-    // Só o PRÓPRIO chamador pode ter o perfil migrado (ensurePid grava); o dos
-    // outros é lido sem escrita (L1-codigo ALTO-3).
-    const pid = perfil ? (m === euSave ? await ensurePid(env, perfil) : await pidSoLeitura(perfil)) : null;
+    // A4 (L2-backend): NUNCA o pid público — com ele, `community?action=player`
+    // devolvia estágio/rank/amigos de qualquer membro sem token. Sai um id
+    // OPACO por guilda, que não abre nada fora dela.
+    const memberId = await idOpacoDoMembro(env, g.id, m);
     return {
-      id: pid,
-      pid,
+      id: memberId,
+      memberId,
       name: perfil?.name ?? null,
       euMesmo: m === euSave,
       ...(nominal ? { apareceuHoje: veio[i] } : {}),
@@ -159,7 +160,7 @@ export async function vistaDaGuilda(env, g, euSave, hoje = new Date().toISOStrin
     size,
     full: size >= COOP_MAX_MEMBERS,
     members: membros,
-    presence: nominal ? membros.map(m => ({ pid: m.pid, cameToday: m.apareceuHoje })) : null,
+    presence: nominal ? membros.map(m => ({ memberId: m.memberId, cameToday: m.apareceuHoje })) : null,
     threadedToday: !nominal && veio.some(Boolean) ? true : null,
     mine: {
       cameToday: eu >= 0 ? veio[eu] : false,

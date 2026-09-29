@@ -72,7 +72,7 @@ describe('vistaDaGuilda por tamanho', () => {
     semVazamento(txt);
     expect(g.size).toBe(1);
     expect(g.isHost).toBe(true);
-    expect(g.presence).toEqual([{ pid: g.members[0].pid, cameToday: true }]);
+    expect(g.presence).toEqual([{ memberId: g.members[0].memberId, cameToday: true }]);
     expect(g.threadedToday).toBeNull();
     expect(g.mine).toEqual({ cameToday: true, threadToday: false, groveScenes: false, gesturesSent: [] });
   });
@@ -92,11 +92,11 @@ describe('vistaDaGuilda por tamanho', () => {
     expect(g.presence).toBeNull();
     for (const m of g.members) {
       expect(m).not.toHaveProperty('apareceuHoje');
-      expect(Object.keys(m).sort()).toEqual(['euMesmo', 'id', 'name', 'pid']);
+      expect(Object.keys(m).sort()).toEqual(['euMesmo', 'id', 'memberId', 'name']);
     }
     expect(g.threadedToday).toBe(true);
     expect(txt).not.toContain('apareceuHoje');
-    expect(txt).not.toContain('cameToday":true,"pid'); // só o `mine` fala de presença
+    expect(txt).not.toContain('"cameToday":true,"memberId'); // só o `mine` fala de presença
   });
 
   it('5 membros sem ninguém hoje: threadedToday null', async () => {
@@ -131,6 +131,7 @@ describe('vistaDaGuilda por tamanho', () => {
     e.DIGIAPP_SAVES.store.set(`profile:${MEMBROS[1]}`, antes);
     const r = await (await chamar(e, 'guild', { params: { id: MEMBROS[0] } })).json();
     expect(e.DIGIAPP_SAVES.store.get(`profile:${MEMBROS[1]}`)).toBe(antes);
-    expect(r.guild.members.find(m => m.name === 'Sem pid').pid).toBeNull();
+    // A4: a vista nunca carrega o pid (nem o legado) — só o id opaco da guilda.
+    expect(r.guild.members.find(m => m.name === 'Sem pid')).not.toHaveProperty('pid');
   });
 });

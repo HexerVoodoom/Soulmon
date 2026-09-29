@@ -122,6 +122,26 @@ export function sanitizarNomeDeGuilda(raw) {
   return nome || null;
 }
 
+/**
+ * O IDENTIFICADOR OPACO de um membro DENTRO de uma guilda (A4, L2-backend).
+ *
+ * A vista entregava o `pid` público de cada membro, e `community?action=player`
+ * devolve estágio, rank e amigos de um pid SEM token — estágio de criatura
+ * alheia é LV-G10/D-3. Este id não abre nada fora da guilda: é
+ * `SHA-256(segredo | gid | save)` cortado em 16 hex. Estável na mesma guilda
+ * (a UI usa como `key` e semente do sprite), diferente em outra guilda, e sem
+ * volta para o save nem para o pid. `GUILD_MEMBER_SECRET` (wrangler secret) é
+ * opcional: sem ele, quem quisesse inverter precisaria do saveId da vítima,
+ * que já é o segredo.
+ * @returns {Promise<string>}
+ */
+export async function idOpacoDoMembro(env, gid, save) {
+  const segredo = typeof env?.GUILD_MEMBER_SECRET === 'string' ? env.GUILD_MEMBER_SECRET : '';
+  const bytes = new TextEncoder().encode(`soulmon-guild-member|${segredo}|${gid}|${save}`);
+  const h = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
+  return Array.from(h.slice(0, 8), b => b.toString(16).padStart(2, '0')).join('');
+}
+
 export const coopKey = gid => `coop:${gid}`;
 export const coopOfKey = save => `coopOf:${save}`;
 export const coopCodeKey = code => `coopCode:${code}`;

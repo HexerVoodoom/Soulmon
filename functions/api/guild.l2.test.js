@@ -1,5 +1,6 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { lerGrupo, fecharDiasDoBosque, firmarFio } from './_coop.js';
+import { lerGrupo, fecharDiasDoBosque, firmarFio, idOpacoDoMembro } from './_coop.js';
+import { onRequest as community } from './community.js';
 import { onRequest } from './guild.js';
 
 /**
@@ -70,5 +71,28 @@ describe('A1 — o dia só fecha quando terminou em todos os fusos', () => {
     await chamar(e, 'guild', { method: 'GET', params: { id: A } });
     // 2 de 3 no dia 1 — não 1 de 3 (0,083 do PoC era 1 de 12).
     expect((await lerGrupo(e, gid)).bosqueProgress).toBeCloseTo(2 / 3, 9);
+  });
+});
+
+describe('A4 — a vista não entrega o pid público de ninguém', () => {
+  it('nenhum pid sai; o id opaco não abre community?action=player', async () => {
+    const { e, gid } = await guildaDe(3);
+    const txt = await (await chamar(e, 'guild', { method: 'GET', params: { id: A } })).text();
+    const v = JSON.parse(txt).guild;
+    for (const m of MEMBROS.slice(0, 3)) {
+      const pid = JSON.parse(e.DIGIAPP_SAVES.store.get(`profile:${m}`)).pid;
+      expect(txt).not.toContain(pid);
+    }
+    expect(txt).not.toContain('"pid"');
+    for (const m of v.members) {
+      expect(m.id).toBe(m.memberId);
+      expect(m.memberId).toMatch(/^[0-9a-f]{16}$/);
+      const r = await (await community({ request: new Request(`https://x.dev/api/community?action=player&id=${m.memberId}`), env: e })).json();
+      expect(JSON.stringify(r)).not.toMatch(/rookie|stage|friends/);
+    }
+    expect(v.presence.map(p => p.memberId)).toEqual(v.members.map(m => m.memberId));
+    // Estável na guilda, diferente entre guildas.
+    expect(v.members.find(m => m.euMesmo).memberId).toBe(await idOpacoDoMembro(e, gid, A));
+    expect(await idOpacoDoMembro(e, 'outraGuilda', A)).not.toBe(await idOpacoDoMembro(e, gid, A));
   });
 });

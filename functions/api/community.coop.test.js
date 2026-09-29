@@ -159,7 +159,7 @@ describe('coop — a comparação individual NÃO existe (a razão do desenho)',
     // Nada que ordene um contra o outro pode existir no objeto do membro.
     for (const m of vista.members) {
       // `stage` saiu em WPG-1 (D-3/LV-G10): estágio alheio não trafega.
-      expect(Object.keys(m).sort()).toEqual(['apareceuHoje', 'euMesmo', 'id', 'name', 'pid']);
+      expect(Object.keys(m).sort()).toEqual(['apareceuHoje', 'euMesmo', 'id', 'memberId', 'name']);
     }
   });
 
