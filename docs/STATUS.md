@@ -31,6 +31,14 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > `backStack.ts` sem entrada em `06-REFERENCIA` (guard (c) vermelho, anterior
 > a esta sessão) → `/manter-docs`.
 >
+> ⚠️ **CI da `main` está vermelho e NÃO é da Guilda** (29/09/2026, PR #169): o
+> check `tsc + vitest` já falhava em `104abe2f` (#168) e `2e410432` (#167), em
+> ~3 s, antes de qualquer teste. Localmente a suíte inteira reprova só em
+> `src/deploy/orcamentoDeBytes.contract.test.ts` (`index-*.js` em **683 KB**
+> contra dívida de 634 KB + 8 KB — o `dist/` cresceu em PRs anteriores; decisão
+> #31: pagar ou re-medir com justificativa) e em `tests/convertToWebp.test.ts`
+> (somente-leitura não vale como root). **Depende do dono:** o orçamento de bytes.
+>
 > **Depende do dono:** os 17 itens da §15 do `PLANO-GUILDA.md`; o mais
 > importante é G1 (fio pela meta INTEIRA, como decidido, ou pela meta de
 > coração, como psicologia e servidor recomendam) e G16 (exceção ao
