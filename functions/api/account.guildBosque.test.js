@@ -78,7 +78,10 @@ describe('exclusão de conta × Bosque', () => {
 
     // O fio de hoje do excluído ficou como contagem anônima…
     const blob = await lerGrupo(e, gid);
-    expect(blob.fiosAvulsos).toEqual({ '2026-09-10': 1 });
+    // A2: um CONJUNTO de ids opacos por dia (nunca contador, nunca o saveId).
+    expect(Object.keys(blob.fiosAvulsos)).toEqual(['2026-09-10']);
+    expect(blob.fiosAvulsos['2026-09-10']).toHaveLength(1);
+    expect(blob.fiosAvulsos['2026-09-10'][0]).toMatch(/^[0-9a-f]{16}$/);
     expect(JSON.stringify(blob)).not.toContain(ID);
     // …e no fechamento (A1: UTC ≥ D+2) o dia vale 2 de 2 = 1,0 (não 1 de 1 nem 0,5).
     vi.setSystemTime(new Date('2026-09-12T12:00:00Z'));

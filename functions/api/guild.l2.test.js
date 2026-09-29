@@ -96,3 +96,40 @@ describe('A4 — a vista não entrega o pid público de ninguém', () => {
     expect(await idOpacoDoMembro(e, 'outraGuilda', A)).not.toBe(await idOpacoDoMembro(e, gid, A));
   });
 });
+
+describe('A2 — sair e voltar não infla o Bosque (1 fio por pessoa por dia)', () => {
+  it('12 membros, só A firma: 100 voltas de sair→entrar→firmar no mesmo dia valem 1/12, não ~0,90', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    em('2026-09-01T12:00:00Z');
+    const { e, gid, code } = await guildaDe(12);
+    // A não é o anfitrião nesta volta (quem sai é A; o código continua valendo).
+    const X = MEMBROS[5];
+    await chamar(e, 'guildThread', { body: { id: X, kind: 'fio' } });
+    for (let k = 0; k < 100; k++) {
+      await chamar(e, 'guildLeave', { body: { id: X } });
+      expect((await chamar(e, 'guildJoin', { body: { id: X, code } })).status).toBe(200);
+      await chamar(e, 'guildThread', { body: { id: X, kind: 'fio' } });
+    }
+    const blob = await lerGrupo(e, gid);
+    expect(blob.fiosAvulsos['2026-09-01']).toHaveLength(1);
+    em('2026-09-03T12:00:00Z');
+    await chamar(e, 'guild', { method: 'GET', params: { id: A } });
+    expect((await lerGrupo(e, gid)).bosqueProgress).toBeCloseTo(1 / 12, 9);
+  }, 30_000);
+
+  it('puro: avulso e membro com o MESMO id contam uma vez; teto de 1,0 por dia', () => {
+    const g = { id: 'g', members: ['a', 'b'], desde: {}, bosqueProgress: 0, progressDay: '2026-01-01', fiosAvulsos: { '2026-01-02': ['ta', 'tz'] } };
+    const fios = { a: firmarFio(null, '2026-01-02'), b: null };
+    fecharDiasDoBosque(g, fios, '2026-01-03', { a: 'ta', b: 'tb' });
+    // roda = {ta, tz, tb} = 3; firmados = {ta, tz} = 2.
+    expect(g.bosqueProgress).toBeCloseTo(2 / 3, 9);
+  });
+
+  it('teto: firmados > roda (formato antigo inconsistente) nunca soma mais de 1,0 no dia', () => {
+    // Avulsos numéricos antigos + os dois membros firmando: 4 de 4 = 1,0, e o
+    // teto segura mesmo se a roda encolher por viajante.
+    const g = { id: 'g', members: ['a'], desde: { a: '2025-01-01' }, bosqueProgress: 0, progressDay: '2026-01-01', fiosAvulsos: { '2026-01-02': 3 } };
+    fecharDiasDoBosque(g, { a: firmarFio(null, '2026-01-02') }, '2026-01-03');
+    expect(g.bosqueProgress).toBeCloseTo(1, 9);
+  });
+});

@@ -331,8 +331,17 @@ export async function coopLeave(env, saveId, { exclusao = false, now = new Date(
   if (fio) {
     const pendentes = fio.days.filter(d => !g.progressDay || d > g.progressDay);
     if (pendentes.length) {
+      // A2 (L2-backend): o avulso é um CONJUNTO de ids opacos por dia, nunca
+      // um contador. Com `+= 1`, sair→voltar→firmar→sair somava a mesma pessoa
+      // de novo a cada volta e o dia tendia a 1,0 com um membro só (0,083 →
+      // 0,90 em 100 voltas). O id é o mesmo da vista (A4): sem saveId cru.
+      const tag = await idOpacoDoMembro(env, g.id, saveId);
       g.fiosAvulsos = { ...(g.fiosAvulsos || {}) };
-      for (const d of pendentes) g.fiosAvulsos[d] = (g.fiosAvulsos[d] ?? 0) + 1;
+      for (const d of pendentes) {
+        const atual = avulsosDoDia(g.fiosAvulsos[d]);
+        if (!atual.includes(tag)) g.fiosAvulsos[d] = [...atual, tag];
+        else g.fiosAvulsos[d] = atual;
+      }
     }
   }
   // Anfitrião que sai passa a vez ao membro mais antigo, em silêncio (G7: não
@@ -521,7 +530,18 @@ export function colherMare(g, day) {
  * da razão. SÓ SOMA: nenhum caminho daqui subtrai (LV-G3).
  * @returns {boolean} se algo mudou
  */
-export function fecharDiasDoBosque(g, fios, hoje) {
+/** Os avulsos de um dia como lista de ids opacos. Número (formato antigo, só
+ *  contagem) vira `k` ids anônimos distintos — nada se perde nem se inventa. */
+export function avulsosDoDia(v) {
+  if (Array.isArray(v)) return [...new Set(v.filter(x => typeof x === 'string'))];
+  const k = Math.max(0, Math.floor(Number(v ?? 0)) || 0);
+  return Array.from({ length: k }, (_, i) => `#${i}`);
+}
+
+export function fecharDiasDoBosque(g, fios, hoje, tags = {}) {
+  // `tags[save]` = id opaco do membro (o mesmo gravado em `fiosAvulsos` quando
+  // ele sai). Sem o mapa (testes puros), o próprio save serve de id.
+  const tagDe = m => tags[m] ?? m;
   const alvo = numDia(hoje) - 1;
   let mudou = false;
   if (!g.progressDay) { g.progressDay = diaDeNum(alvo); mudou = true; }
@@ -532,10 +552,14 @@ export function fecharDiasDoBosque(g, fios, hoje) {
     const dia = diaDeNum(d);
     g.bosqueProgress = p;
     colherMare(g, dia);
-    const avulsos = Math.max(0, Math.floor(Number(g.fiosAvulsos?.[dia] ?? 0)));
-    const ativos = membrosAtivos(g, fios, dia);
-    const n = ativos.length + avulsos;
-    const firmados = g.members.filter(m => fios[m]?.days?.includes(dia)).length + avulsos;
+    // UMA PESSOA, UM FIO POR DIA (LV-G8), somando membro e avulso: quem saiu,
+    // voltou e firmou de novo o mesmo dia aparece com o MESMO id nos dois
+    // lados, e o conjunto conta uma vez só.
+    const avulsos = avulsosDoDia(g.fiosAvulsos?.[dia]);
+    const firmSet = new Set([...avulsos, ...g.members.filter(m => fios[m]?.days?.includes(dia)).map(tagDe)]);
+    const roda = new Set([...firmSet, ...membrosAtivos(g, fios, dia).map(tagDe)]);
+    const n = roda.size;
+    const firmados = firmSet.size;
     if (n > 0 && firmados > 0) p += Math.min(1, firmados / n);
     g.progressDay = dia;
     mudou = true;
@@ -572,11 +596,12 @@ export async function atualizarBosque(env, g, hoje, agora = new Date()) {
   const fios = await lerFiosDaRoda(env, g);
   const teste = structuredClone(g);
   if (!fecharDiasDoBosque(teste, fios, hoje)) return g;
+  const tags = Object.fromEntries(await Promise.all(g.members.map(async m => [m, await idOpacoDoMembro(env, g.id, m)])));
   const fresco = (await lerGrupo(env, g.id)) ?? g;
   if (fresco.progressDay && fresco.progressDay >= teste.progressDay && fresco.tideKey === teste.tideKey) {
     return { ...fresco, weekKey: g.weekKey, checkins: g.checkins };
   }
-  fecharDiasDoBosque(fresco, fios, hoje);
+  fecharDiasDoBosque(fresco, fios, hoje, tags);
   await gravarGrupo(env, fresco);
   return { ...fresco, weekKey: g.weekKey, checkins: g.checkins };
 }
