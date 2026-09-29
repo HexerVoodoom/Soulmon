@@ -78,3 +78,65 @@ Campo novo em `vistaDaGuilda` (toda ação que devolve vista, inclusive `coop*`)
 10. **WPG-9**: `guild.semPush.contract.test.js` varre 10 arquivos de push (workers, `_pushCopy/_pushTargets/_pushIdentity`, `subscribe`, `fcm-subscribe`, `notifications.ts`, `NotificationManager.tsx`), ignorando linhas só de comentário (`subscribe.js` cita "grupo" num comentário).
 11. **Mutação** (`/tmp/mut`, 39 mutantes em `_coop.js`/`guild.js`/`account.js`/`push-scheduler.js`): 39 mortos (o da Concha em dobro morreu com o teste de registro perdido).
 12. **Pendências para `src/` (front)**: decoração `trophy-concha-mare` no catálogo; `hitRaid`/`getGuildRewards`/`claimGuildReward` em `community.ts`; `sim/guilda-sim.mjs` ainda usa literais (não importa `_coop.js`).
+
+---
+
+# Correções da revisão L2 do backend (`L2-backend.md`, 29/09/2026)
+
+Um commit por achado. Testes novos em `functions/api/guild.l2.test.js` (A1, A2, A4, M1, M2, M5, B1, B4, B5, orçamento A3, dois fechamentos simultâneos, limiar de `ferido`), `metrics.prototipo.test.js` (M4), `guild.simParidade.test.js` (B6) e casos novos em `guild.nome.test.js` (B3) e `guild.recompensa.test.js` (M3).
+
+## Fechados
+
+- **A1**: `atualizarBosque` fecha só até **UTC−2** (o dia "aberto" é `min(dia do chamador, UTC−1)`): um dia D só fecha quando terminou em todos os fusos, e `diaDoJogador` já recusa D a partir de UTC = D+2. Consequência visível: o Bosque cresce com **um dia a mais de atraso** (o fio de segunda aparece na quarta).
+- **A2**: `g.fiosAvulsos[dia]` virou **conjunto de ids opacos** (`idOpacoDoMembro`, o mesmo da vista), nunca contador; `fecharDiasDoBosque` une avulsos e membros num `Set`, então a mesma pessoa conta uma vez por dia mesmo saindo e voltando. Formato antigo (número) é lido como `k` ids anônimos (`avulsosDoDia`). O teto `Math.min(1, …)` ficou redundante por construção (firmados ⊆ roda).
+- **A3 (escritas)**: `gravarGrupo` escreve o blob e só o que mudou (`novosMembros`, `codigoNovo`). A renovação conjunta (código + todo `coopOf` + todo `coopFio`) acontece quando falta < 30 d para `g.prazoAte`, ou UMA vez quando o Bosque passa a sem prazo (`g.semPrazoGravado`, G17a). O blob expira exatamente em `prazoAte`; os índices em ≥ `prazoAte` — o blob nunca sobrevive aos ponteiros. `renovarPrazos` só grava se `precisaRenovar`.
+- **A3 (leituras)**: **cartão do membro** `coopMem:<gid>:<save>` (TTL 120 d) — resumo DERIVADO das chaves do próprio membro (check-in, fio, gesto, golpes das semanas em volta, nome do perfil), reconstruído só pelo dono a cada ação dele (`renovarCartao`). A vista lê 1 cartão por membro; sem cartão, lê as chaves de origem (nunca grava na vista). As chaves de origem seguem sendo a verdade (exportação, exclusão, resgate). Corrida aceita: duas ações do MESMO membro em aparelhos diferentes no mesmo instante podem deixar o cartão sem uma delas até a próxima ação dele. Nome mostrado = o do perfil na última ação do membro.
+- **A4**: a vista não carrega `pid` nenhum. `members[].id` e `members[].memberId` = `SHA-256(GUILD_MEMBER_SECRET | gid | save)` em 16 hex; `presence[]` = `{ memberId, cameToday }`. `GUILD_MEMBER_SECRET` é opcional (wrangler secret).
+- **M1**: `progress` sai `null` com 5+ membros (o cliente novo já descartava; o `CoopPanel` antigo só existe com ≤4).
+- **M2**: `guildJoin` relê o blob imediatamente antes de gravar e empurra sobre a releitura.
+- **M3 (parcial, declarado)**: o selo continua resolvendo dois toques na mesma região; entre POPs os dois aparelhos podem receber 200. Todo `claimed` e todo 409 `already claimed` trazem `receipt` **determinístico** por (save, semana). Fechar no servidor exige Durable Object — fora desta fatia. O teste multi-POP prova o recibo, não a exclusão mútua.
+- **M4**: `hasOwnProperty` nas props e o agregado `guild_*` itera o SCHEMA.
+- **M5**: `coopHit` sai em TODA saída (não só na exclusão) — nada muda no jogo (a Feira soma os membros atuais; resgatar exige estar na guilda). O `plan` da exclusão diz a verdade: apaga a guilda atual; o das anteriores saiu na saída; sobra sem vínculo expira em ≤ 21 d.
+- **B1**: golpe na semana anterior ao UTC só até **segunda 12:00 UTC** (fim do domingo em UTC−12); depois, 409 `raid closed`. O "7 dias distintos em ~5 reais" do fio (±1) **não** foi mexido: fechar exigiria tirar o ±1 de quem está em fuso legítimo.
+- **B3**: `t.me/…`, `x.com/…`, `insta:`/`ig:`/`discord`, `#1234`, `arroba`, `ponto com`, domínio com TLD comum → nome recusado; corte por ponto de código.
+- **B4**: `guildJoin` descarta grupo ÓRFÃO (o ponteiro do anfitrião não aponta de volta): apaga blob + código e responde 404 — o órfão some no primeiro uso em vez de reunir gente.
+- **B5**: com < 3 membros `gestures` sai `[]` e o recebido vira `gestureReceived: true|null` (sem tipo). Com 3+, `gestures` como antes e `gestureReceived` junto.
+- **B6**: `sim/guilda-sim.mjs` importa `RAID_HP_PER_MEMBER`, `RAID_DMG_*`, `GUILD_MIN_RAID_MEMBERS` de `_coop.js`; teste de paridade textual.
+- **B7 (documentado)**: rate limit **somado** por IP e por isolate = 60/min (`/api/guild`, bucket `guild`) + 120/min (aliases `coop*`, bucket da comunidade) = **180/min**. É amortecedor, não controle; o controle de custo é o orçamento abaixo.
+
+## Orçamento de KV por ação (guilda de 12, em regime) — travado em `guild.l2.test.js` › `ORCAMENTO`
+
+| Ação | Leituras (antes → agora) | Escritas (antes → agora) |
+|---|---|---|
+| criar | 19 → ≤ 15 | 6 → ≤ 5 |
+| entrar (12º) | 130 → ≤ 27 | 14 → ≤ 3 |
+| fio | 115 → ≤ 24 | 1 → ≤ 2 (fio + cartão) |
+| check-in | 128 → ≤ 25 | 27 → ≤ 2 (check-in + cartão) |
+| golpe | 141 → ≤ 38 | 1 → ≤ 2 |
+| gesto | 115 → ≤ 24 | 1 → ≤ 2 |
+| vista de 12 | 114 → ≤ 17 (16 da Guilda + 1 lápide de exclusão) | 0 → 0 |
+| fechar o dia | — | 1 (o blob), uma vez por dia por guilda; +renovação conjunta uma vez na vida (G17a) ou a cada ~90 d |
+
+Conta diária de uma guilda de 12 em que todos firmam, fazem check-in e golpeiam: ~12×(2+2+2) + 1 ≈ **73 escritas/dia** (era ~340). O custo de uma ação do próprio membro inclui reconstruir o cartão (≈ 9 leituras).
+
+## Migração de `pid` para o front (A4)
+
+1. `members[].pid` **não existe mais**. `members[].id` continua existindo, mas agora é o id OPACO da guilda (16 hex), igual a `members[].memberId`. Quem usava `id` como `key` de lista e semente de sprite (`GuildSheet` › `key={m.id}`, `groveStage.ts` › `spriteForMember(m.id)`) não muda código; o sprite de cada membro muda UMA vez (a semente mudou) e fica estável daí em diante.
+2. `presence[]` passou de `{ pid, cameToday }` para `{ memberId, cameToday }`. `sanitizeGuildView` hoje ignora `presence`; se passar a ler, casar por `memberId`.
+3. Nenhum fluxo pode usar o id da vista para chamar `community?action=player`/amizade/PvP: ele não abre nada fora da guilda (e é por isso que existe).
+4. Novo: `gestureReceived: true | null` (B5). Com < 3 membros `gestures` vem `[]` — a UI deve mostrar "um gesto chegou" pelo agregado.
+5. `progress` pode vir `null` (M1, 5+ membros). `guildClaim` → `claimed.receipt` e 409 → `receipt` (M3): creditar Emblemas UMA vez por recibo, guardado no save.
+6. Fixtures do front (`GuildSheet.render.test.tsx` usa `presence: [{ pid, … }]`) precisam trocar `pid` por `memberId`.
+
+## Achado separado, NÃO corrigido nesta rodada
+
+- **`community?action=player&id=<pid>`** devolve `stage`, `unlockedStages`, `petName`, `daysPlaying`, rank e os pids dos amigos de qualquer pid, **sem token e sem checar `pvpEnabled`/amizade**. A Guilda parou de entregar pids, mas a superfície continua aberta para quem obtiver um pid por outro caminho (amizade, PvP, logs). Correção sugerida: `found:false` para quem não tem `pvpEnabled` e não é amigo do solicitante autenticado.
+
+## Mutantes que continuam equivalentes (explicados)
+
+- `p += Math.min(1, firmados / n)` → `firmados / n`: com o conjunto do A2, `firmados ⊆ roda`, então a razão nunca passa de 1 — o teto é redundante por construção.
+- `g.bosqueProgress = Math.max(…, p)` → `= p`: `p` parte do próprio valor gravado e só soma; a última trava do LV-G3 é defensiva.
+
+## Mutação (cópia em `/tmp/mut`, 28 mutantes nos arquivos tocados)
+
+26 mortos, 2 equivalentes (acima). Os 4 sobreviventes da L2: `ferido` e a guarda de dois fechamentos simultâneos agora morrem; o teto de 1,0 e o `max` final são equivalentes por construção. O mutante "semana futura do cartão → ler a chave" morreu com o teste de cartão velho.

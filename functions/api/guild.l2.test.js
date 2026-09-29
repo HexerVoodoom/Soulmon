@@ -340,3 +340,16 @@ describe('Feira: limiar de `ferido` (mutante sobrevivente)', () => {
     expect((await (await chamar(tres.e, 'guild', { method: 'GET', params: { id: A } })).json()).guild.raid.ferido).toBe(false);
   });
 });
+
+describe('A3 — cartão velho não volta a ler as chaves', () => {
+  it('duas semanas sem ação: a vista de 12 continua em 1 leitura por membro', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    em('2026-09-02T12:00:00Z');
+    const { e } = await guildaDe(12);
+    em('2026-09-17T12:00:00Z');
+    await chamar(e, 'guild', { method: 'GET', params: { id: A } }); // fecha os dias pendentes
+    e.DIGIAPP_SAVES.zerar();
+    await chamar(e, 'guild', { method: 'GET', params: { id: B } });
+    expect(e.DIGIAPP_SAVES.conta.get).toBeLessThanOrEqual(ORCAMENTO.vista12.get);
+  });
+});
