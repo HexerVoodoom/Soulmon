@@ -92,3 +92,70 @@ describe('o slot de avisos não tem cartão solto', () => {
     expect(app).toMatch(/<TermsUpdateBanner[^>]*changed=\{qualDocMudou\(/);
   });
 });
+
+describe('o MARCO DO BOSQUE entra nas duas filas, com posição declarada (Guilda, B1)', () => {
+  const interstitial = app.slice(app.indexOf('const interstitial:'), app.indexOf('const interstitial:') + 1400);
+
+  it("'groveMilestone' é intersticial: DEPOIS de relatório e check-in, ANTES do sonho e do pesadelo", () => {
+    const ordem = ["'triage'", "'dailyReport'", "'checkIn'", "'groveMilestone'", "'dream'", "'nightmare'", "'catalogOnboarding'", "'catalogLevelInvite'", "'welcome'"];
+    // na UNIÃO de tipos (uma vez, na ordem declarada)
+    const uniao = interstitial.slice(0, interstitial.indexOf('=\n'));
+    const posUniao = ordem.map(o => uniao.indexOf(o));
+    expect(posUniao.every(p => p >= 0)).toBe(true);
+    expect([...posUniao].sort((a, b) => a - b)).toEqual(posUniao);
+    // e na cadeia de decisão (a ordem que de fato manda)
+    const cadeia = interstitial.slice(interstitial.indexOf('=\n'));
+    const posCadeia = ordem.map(o => cadeia.indexOf(o));
+    expect(posCadeia.every(p => p >= 0)).toBe(true);
+    expect([...posCadeia].sort((a, b) => a - b)).toEqual(posCadeia);
+    expect((app.match(/\? 'groveMilestone'/g) ?? [])).toHaveLength(1);
+  });
+
+  it('a cerimônia monta UMA vez, só quando é a vez dela, e a saída é o gesto (nada de timer)', () => {
+    expect((app.match(/interstitial === 'groveMilestone'/g) ?? [])).toHaveLength(1);
+    expect((app.match(/<GroveMilestoneCeremony/g) ?? [])).toHaveLength(1);
+    expect(app).toContain('onDone={acknowledgeGroveMilestone}');
+    const cer = readFileSync('src/components/guild/GroveMilestoneCeremony.tsx', 'utf8');
+    expect(cer).toContain('zIndex={300}');
+    expect(cer).not.toMatch(/setTimeout|setInterval/);
+  });
+
+  it('a cerimônia fica ACIMA da fila (z 300 > 200) e nenhum modal do Bosque nasce fora dela', () => {
+    expect(readFileSync('src/components/guild/GroveMilestoneCeremony.tsx', 'utf8')).toMatch(/RitualDialog/);
+    // o único ponto de montagem é o da fila; a folha da Guilda não monta cerimônia por conta própria
+    for (const f of ['GuildSheet.tsx', 'GroveVisor.tsx']) {
+      expect(readFileSync(`src/components/guild/${f}`, 'utf8'), f).not.toMatch(/GroveMilestoneCeremony|RitualDialog/);
+    }
+  });
+
+  it("o aviso 'marcoBosque' entra no slot da Home UMA vez, atrás de recomeço e de carga, antes de 'termos'", () => {
+    const chaves = [...app.matchAll(/key: '([a-zA-Z]+)',/g)].map(m => m[1]);
+    expect(chaves.filter(k => k === 'marcoBosque')).toHaveLength(1);
+    const i = (k: string) => chaves.indexOf(k);
+    expect(i('marcoBosque')).toBeGreaterThan(i('recomeco'));
+    expect(i('marcoBosque')).toBeGreaterThan(i('carga'));
+    expect(i('marcoBosque')).toBeLessThan(i('termos'));
+    // 'termos' segue o último (o teste acima) e o aviso não usa unshift (não fura a ordem)
+    expect((app.match(/avisos\.unshift\(/g) ?? [])).toHaveLength(1);
+  });
+
+  it('o aviso só nasce NO DIA do marco (a régua é `groveAvisoFor`, comparada ao dia do jogador)', () => {
+    expect(app).toContain('groveAvisoFor(grove, playerDayKey(new Date(), gameState.playerDayTz))');
+    const aviso = app.slice(app.indexOf("key: 'marcoBosque'") - 200, app.indexOf("key: 'marcoBosque'") + 900);
+    expect(aviso).toContain("'guild.marco.aviso'");
+    expect(aviso).not.toMatch(/onClick|button/); // informativo: sem cobrança, sem "abrir agora"
+  });
+
+  it('o fio da Guilda vale a meta de CORAÇÃO (`heartGoalFor`), e o App a passa por props — a folha não decide meta', () => {
+    expect(app).toContain('heartGoalFor(gameState, new Date().getDay(), new Date().toDateString())');
+    expect(app).toContain('metaDoDiaCumprida: fioMetaCumprida');
+    expect(app).toMatch(/guild=\{\{ saveId, metaDoDiaCumprida: fioMetaCumprida, fioGoal, mySprite: minhaCriaturaUrl/);
+    const sheet = readFileSync('src/components/guild/GuildSheet.tsx', 'utf8');
+    expect(sheet).not.toMatch(/heartGoalFor|dailyGoalFor/);
+  });
+
+  it('os cenários do Bosque vão ao save FORA de updater: `grantGroveScenes` só dentro do `setGameState` do efeito do hook', () => {
+    expect((app.match(/grantGroveScenes\(/g) ?? [])).toHaveLength(1);
+    expect(app).toContain('onScenes: useCallback((ids: string[]) => setGameState(prev => grantGroveScenes(prev, ids)), [setGameState])');
+  });
+});

@@ -70,7 +70,7 @@ import { applyDecorEquip, type SlotId } from './utils/petStage';
 const ACTIVITY_LOG_CAP = 90;
 const EMPTY_DECOR: Partial<Record<SlotId, string>> = {};
 const EMPTY_TROPHIES: Array<{ season: string; place: 1 | 2 | 3 }> = [];
-import { getNextEvolution, dailyGoalFor, degeneratedPerfectDays, registeredForDay, tasksToAvoidHeartLoss, applyRedemption, podeEvoluirDepoisDaQueda, completeDayReached } from './utils/dailyReset';
+import { getNextEvolution, dailyGoalFor, heartGoalFor, degeneratedPerfectDays, registeredForDay, tasksToAvoidHeartLoss, applyRedemption, podeEvoluirDepoisDaQueda, completeDayReached } from './utils/dailyReset';
 import {
   feedFood, rubHeal, rubRefusal, completeTask,
   FOOD_LIMIT_PER_HOUR,
@@ -112,6 +112,13 @@ import { TermsUpdateBanner } from './components/TermsUpdateBanner';
 import { marcaAvisoTermos, precisaAvisarTermos, qualDocMudou } from './utils/termsNotice';
 import { PRIVACY_VERSION, TERMS_VERSION } from './utils/consent';
 import { MilestoneCeremony } from './components/MilestoneCeremony';
+import { GroveMilestoneCeremony } from './components/guild/GroveMilestoneCeremony';
+import { useGroveWatch } from './hooks/useGroveWatch';
+import {
+  acknowledgeGroveMilestone, grantGroveScenes, groveAvisoFor, groveStageAt, formatDayLabel,
+  CEREMONY_MIN_INDEX,
+} from './utils/groveLocal';
+import { guildText, groveStageName, type GroveMarcoStage } from './utils/guildCopy';
 import {
   applyRebirth, canRebirth, rebirthRefusal, rebirthEscolaOptions, rebirthElementOptions, herancaDoCiclo,
 } from './utils/rebirth';
@@ -1620,10 +1627,24 @@ export default function App() {
   // explícito (triagem), porque é UMA VEZ SÓ. O convite de nível (CAT-7) vem
   // logo depois — também não é ritual diário, e o teto de 1/dia já garante
   // que ele não compete com nada todo santo dia.
-  const interstitial: 'triage' | 'dailyReport' | 'checkIn' | 'dream' | 'nightmare' | 'catalogOnboarding' | 'catalogLevelInvite' | 'welcome' =
+  /* O BOSQUE DA GUILDA (WPG-8, fatia B1). `grove` é a memória DO APARELHO sobre o
+     estágio da roda (`utils/groveLocal.ts`, fora do save); `useGroveWatch` a
+     mantém e entrega os cenários `bg-guild-*` ao save (fora de updater — a
+     entrega é idempotente). O marco pendente só vira intersticial depois de
+     relatório e check-in e ANTES do sonho: é raro e descritivo, então cede a
+     vez ao que a pessoa faz todo dia, mas não espera o adiável. */
+  const grove = useGroveWatch({
+    saveId,
+    playerDayTz: gameState.playerDayTz,
+    onScenes: useCallback((ids: string[]) => setGameState(prev => grantGroveScenes(prev, ids)), [setGameState]),
+  });
+  const grovePendente: GroveMarcoStage | null = grove?.pending && grove.pending.index >= CEREMONY_MIN_INDEX
+    ? (groveStageAt(grove.pending.index) as GroveMarcoStage | null) : null;
+  const interstitial: 'triage' | 'dailyReport' | 'checkIn' | 'groveMilestone' | 'dream' | 'nightmare' | 'catalogOnboarding' | 'catalogLevelInvite' | 'welcome' =
     triageTasks ? 'triage'
       : showDailyReport && gameState.lastDayReport ? 'dailyReport'
         : checkInPlanData ? 'checkIn'
+          : grovePendente ? 'groveMilestone'
           : morningDream ? 'dream'
             : nightmareOpen ? 'nightmare'
               : needsCatalogOnboarding(gameState as any) ? 'catalogOnboarding'
@@ -1634,6 +1655,15 @@ export default function App() {
   // Quantos itens de HOJE evitam a perda de coração na virada — regra única em
   // `utils/dailyReset.ts`, derivada da própria fórmula da perda.
   const hpSafeToday = tasksToAvoidHeartLoss(gameState, new Date().getDay(), new Date().toDateString());
+  /* O FIO da Guilda vale a meta de CORAÇÃO (`heartGoalFor`, G1): a Guilda não pode
+     cobrar mais do que o app cobra para não perder coração — dia parcial firma.
+     `done`/`heart`/`full` são PESO de esforço, a mesma unidade de tudo acima; o
+     servidor confere `done ≥ heart`. Nunca `dailyTotal` cru (que é a meta inteira). */
+  const heartGoalHoje = heartGoalFor(gameState, new Date().getDay(), new Date().toDateString());
+  const fioGoal = { done: dailyDone, heart: heartGoalHoje, full: dailyTotal };
+  const fioMetaCumprida = dailyTotal > 0 && dailyDone >= heartGoalHoje;
+  const minhaCriaturaUrl = displaySprite(spriteAcervo, gameState.evolutionStage)?.url
+    ?? getSpriteForStage(gameState.evolutionStage, gameState.demoCharacterId);
   /* O selo "Dia completo" da lista (minimal-ui F2). A condição é a da VIRADA —
      `completeDayReached`, a mesma função que `computeDailyReset` usa para
      contar o dia — aplicada ao dia de hoje: meta inteira feita, ≥1 cadastrada
@@ -5630,7 +5660,7 @@ export default function App() {
                 onLabTab={setLabTab}
                 labContent={labContent}
                 hallContent={hallContent}
-                guild={{ saveId, metaDoDiaCumprida: dailyTotal > 0 && dailyDone >= dailyTotal, playerDayTz: gameState.playerDayTz }}
+                guild={{ saveId, metaDoDiaCumprida: fioMetaCumprida, fioGoal, mySprite: minhaCriaturaUrl, playerDayTz: gameState.playerDayTz }}
               />
             </Suspense>
           )}
@@ -6024,6 +6054,30 @@ export default function App() {
                     </p>
                   ),
                 });
+
+                /* ── 6-A. MARCO DO BOSQUE (Guilda, `PLANO-GUILDA.md` §4) ─────
+                   Um aviso, ÚLTIMO dos que falam do bosque e só NO DIA em que
+                   este aparelho viu o estágio novo (`groveAvisoFor` compara com
+                   o dia do jogador; na virada some sozinho — é aviso, não
+                   pendência). Fica atrás de recomeço e de carga: é o mais
+                   adiável de todos. Sem "não perca", sem número (L4). */
+                const marcoBosque = groveAvisoFor(grove, playerDayKey(new Date(), gameState.playerDayTz));
+                if (marcoBosque) {
+                  const idAviso = groveStageAt(marcoBosque);
+                  if (idAviso) avisos.push({
+                    key: 'marcoBosque',
+                    node: (
+                      <div className="sm2-notice" data-guild-marco-aviso>
+                        <div className="sm2-notice-row">
+                          <Icon name="eco" size={20} fill={1} tone="primary" />
+                          <p className="sm2-notice-body" style={{ flex: 1, minWidth: 0, marginTop: 0 }}>
+                            {guildText(language, 'guild.marco.aviso', { estagio: groveStageName(language, idAviso) })}
+                          </p>
+                        </div>
+                      </div>
+                    ),
+                  });
+                }
 
                 // ── 7. TERMOS ATUALIZADOS (decisão #24, 21/09/2026) ────────
                 // Informativo, sem re-aceite, o ÚLTIMO da fila: é o único
@@ -6660,6 +6714,21 @@ export default function App() {
           language={language}
           onConfirm={handleCheckInConfirm}
           onSkip={handleCheckInSkip}
+        />
+      )}
+
+      {/* MARCO DO BOSQUE — a irmã da cerimônia de hábito: espera o gesto, z 300,
+          movimento reduzido reduz o movimento e NUNCA a pausa. Posição na fila:
+          depois de relatório e check-in, antes do sonho. Uma vez por estágio novo. */}
+      {interstitial === 'groveMilestone' && grovePendente && grove?.pending && (
+        <GroveMilestoneCeremony
+          stage={grovePendente}
+          spriteUrl={minhaCriaturaUrl}
+          dateLabel={formatDayLabel(grove.pending.day, language)}
+          sceneGranted={(grove.scenes ?? 0) >= grove.pending.index}
+          language={language}
+          reducedMotion={typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches}
+          onDone={acknowledgeGroveMilestone}
         />
       )}
 
