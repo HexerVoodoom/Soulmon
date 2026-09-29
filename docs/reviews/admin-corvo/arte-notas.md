@@ -8,14 +8,18 @@ Script: `scripts/gen-corvo-forms.py` (deterministico, PIL puro, params no topo).
 ## Verificacao do original
 Corpo/cartola = matiz 195-255 (marinho ~210), chama da lanterna = matiz 165-195 turquesa/ciano (confirmado: o dono esta certo), olho/correntes ouro (~30-60), bico off-white, faixa/patas cinza.
 
-## Matizes finais (corpo / chama)
-- PODER (brasa): 8 / 32 · HARMONIA (musgo-limao): 112 / 78 · BENEVOLENCIA (cobalto): 214 / 192
-- champion = sat x0.65, brilho x0.85 · ultimate = sat x1.0, brilho x1.30 · mega = sat x1.2, brilho x1.6, chama mais forte
-- ultra = P&B (corpo quase preto, bico/chama brancos, faixa prata). rookie = original byte a byte.
-- Brilho por caminho: power x0.70, harmonia x0.95, benevolência x1.38 (separa em cinza).
+## Matizes finais (corpo / chama) - ajuste de 29/09 apos a folha
+- PODER (brasa): corpo 6 / chama 32 (champion -14 e ultimate -6 graus: chama ja quente e avermelhada) - sat x1.55, chama sat x1.15 / brilho x1.12
+- HARMONIA (musgo): 112 / 78, sat x1.0 (inalterada) - BENEVOLENCIA (cobalto/ceu): 211 / 192, sat x1.9
+- champion = sat x0.65 · ultimate = x1.0 · mega = x1.2 (chama mais forte com o estagio)
+- Brilho do corpo por FORM_V (uma constante por forma), resolvido por bisseccao ate a luminancia media-alvo; PATH_V = 1 (o caminho nao mexe mais no brilho, so a sat).
+- Alvos de luminancia (0-255), passo >= 3,5: rookie 60,5 · c-power 64 · c-harmony 67,5 · ultra 71 · c-benevolence 74,5 · u-power 78 · u-harmony 81,5 · u-benevolence 85 · m-power 88,5 · m-harmony 92 · m-benevolence 96. Progressao champion < ultimate < mega em cada caminho.
+- Por que benevolencia ficou no alto: azul saturado tem luma baixa, entao o cobalto so fica vivo com brilho alto; o cinza-azulado anterior era pouca saturacao. Poder foi o inverso (vermelho ja e escuro em luma).
+- Mascara do corpo ganhou corte para pixels claros/pouco saturados (patas e faixa): sem isso, com brilho alto, as patas viravam salmao.
+- ultra = P&B: corpo com curva de gama (LO 0,03 / HI 0,661 / G 1,4) - preto quase puro nas sombras e cinza-escuro/prata nas penas claras; contorno quase preto, bico/mascara/chama brancos, faixa prata. Silhueta e alfa identicos. rookie = original byte a byte.
 - 256: LANCZOS (mascote tem bordas suavizadas, nao e grade estrita de pixel).
 
-## Resultado da conferencia (`python3 scripts/check-corvo-forms.py`)
+## Resultado da conferencia (`python3 scripts/check-corvo-forms.py`, limiar de luminancia 3,0)
 ```
 OK   11 arquivos 512 (11)
 OK   11 arquivos 256
@@ -64,8 +68,8 @@ OK   ultra: 512x512 RGBA
 OK   ultra: cantos transparentes
 OK   ultra: alfa identico ao original
 OK   ultra: pixels saturados 270-340 graus = 0
-luminancia media (0-255): {'rookie': 60.5, 'champion-power': 55.2, 'champion-harmony': 68.1, 'champion-benevolence': 72.0, 'ultimate-power': 64.4, 'ultimate-harmony': 81.6, 'ultimate-benevolence': 84.4, 'mega-power': 77.8, 'mega-harmony': 96.0, 'mega-benevolence': 93.0, 'ultra': 51.3}
-OK   luminancia distinta por forma (menor diferenca 2.8 >= 1.5)
+luminancia media (0-255): {'rookie': 60.5, 'champion-power': 64.0, 'champion-harmony': 67.5, 'champion-benevolence': 74.5, 'ultimate-power': 78.0, 'ultimate-harmony': 81.5, 'ultimate-benevolence': 85.0, 'mega-power': 88.5, 'mega-harmony': 92.0, 'mega-benevolence': 96.0, 'ultra': 71.0}
+OK   luminancia distinta por forma (menor diferenca 3.5 >= 3.0)
 folha: /home/user/Soulmon/docs/reviews/admin-corvo/folha-de-contato.png
 ```
 

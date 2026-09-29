@@ -34,7 +34,7 @@ for f in ORDER:
     lums[f] = ls / tot
 print('luminancia media (0-255):', {k: round(v, 1) for k, v in lums.items()})
 mind = min(abs(lums[a]-lums[b]) for a, b in itertools.combinations(ORDER, 2))
-chk(mind >= 1.5, f'luminancia distinta por forma (menor diferenca {mind:.1f} >= 1.5)')
+chk(mind >= 3.0, f'luminancia distinta por forma (menor diferenca {mind:.1f} >= 3.0)')
 # folha de contato
 os.makedirs(REV, exist_ok=True)
 try: font = ImageFont.load_default(size=14)

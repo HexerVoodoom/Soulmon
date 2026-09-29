@@ -15,7 +15,11 @@ OUT = os.path.join(ROOT, 'src/assets/soulmon/corvo')
 ORDER = ['rookie','champion-power','champion-harmony','champion-benevolence','ultimate-power','ultimate-harmony',
          'ultimate-benevolence','mega-power','mega-harmony','mega-benevolence','ultra']
 # Matiz-alvo (graus): corpo, chama
-PATH = {'power': (8, 32), 'harmony': (112, 78), 'benevolence': (214, 192)}
+PATH = {'power': (6, 32), 'harmony': (112, 78), 'benevolence': (211, 192)}
+# saturacao extra do corpo por caminho (brasa e cobalto mais vivos; musgo intacto)
+PATH_S = {'power': 1.55, 'harmony': 1.0, 'benevolence': 1.9}
+# deslocamento de matiz da chama por caminho/estagio (brasa: chama ja quente, avermelhada no champion)
+FLAME_H = {('power', 'champion'): -14, ('power', 'ultimate'): -6}
 # Intensidade por estágio: sk=x saturação, vk/va=brilho corpo, fs/fv/fa=saturação/brilho da chama
 STAGE = {
  'champion': dict(sk=0.65, vk=0.85, va=0.0, fs=1.0, fv=1.0,  fa=0.0),
@@ -23,10 +27,14 @@ STAGE = {
  'mega':     dict(sk=1.20, vk=1.60, va=0.10, fs=1.2, fv=1.25, fa=0.12),
 }
 # ajuste de luminância por caminho (separa em cinza): poder escuro, harmonia médio, benevolência claro
-PATH_V = {'power': 0.70, 'harmony': 0.95, 'benevolence': 1.38}
+PATH_V = {'power': 1.0, 'harmony': 1.0, 'benevolence': 1.0}
 
 # ajuste fino por forma (multiplica o brilho do corpo) para separar luminância entre formas
-FORM_V = {'champion-harmony': 1.10, 'mega-power': 1.22}
+FORM_V = {'champion-power': 1.349, 'ultimate-power': 1.756, 'mega-power': 1.836,
+          'champion-harmony': 1.016, 'ultimate-harmony': 0.987, 'mega-harmony': 0.921,
+          'champion-benevolence': 2.186, 'ultimate-benevolence': 2.178, 'mega-benevolence': 2.295}
+
+ULTRA_LO, ULTRA_HI, ULTRA_G = 0.03, 0.661, 1.40
 
 def ss(x, a, b):
     if b == a: return 1.0 if x >= b else 0.0
@@ -40,7 +48,7 @@ def weights(h, s, v):
     sg = ss(s, 0.10, 0.20)
     wv = ss(v, 0.35, 0.50)
     wf = tealw * wv * sg
-    wb = min(1.0, (body + tealw * (1 - wv)) * sg)
+    wb = min(1.0, (body + tealw * (1 - wv)) * sg) * (1 - ss(v, 0.62, 0.80)) * (1 - ss(v, 0.30, 0.38) * (1 - ss(s, 0.25, 0.40)))   # patas/faixa (claras e pouco saturadas) ficam neutras
     wb = min(wb, 1 - wf) if wf > 0 else wb
     return wb, wf
 
@@ -53,6 +61,9 @@ def recolor(px, form):
     if form == 'ultra':
         L = lum(r, g, b)
         c = clamp(0.5 + (L - 0.45) * 2.2)
+        if wb > 0:   # corpo: curva com gama que abre as penas em cinza-escuro/prata (contorno segue quase preto)
+            cb = clamp(ULTRA_LO + ULTRA_HI * clamp(L / 0.5) ** ULTRA_G)
+            c = c * (1 - wb) + cb * wb
         if wf > 0: c = c * (1 - wf) + (0.86 + 0.14 * L) * wf
         return (c, c, c)
     stage, path = form.split('-')
@@ -60,11 +71,11 @@ def recolor(px, form):
     out = (r, g, b)
     if wb > 0:
         nh = (ht + (h - 215) * 0.25) % 360
-        ns = clamp(s * P['sk']); nv = clamp(v * P['vk'] * pv * FORM_V.get(form, 1.0) + P['va'])
+        ns = clamp(s * P['sk'] * PATH_S[path]); nv = clamp(v * P['vk'] * pv * FORM_V.get(form, 1.0) + P['va'])
         out = tuple(o * (1 - wb) + n * wb for o, n in zip(out, colorsys.hsv_to_rgb(nh / 360, ns, nv)))
     if wf > 0:
-        nh = (hf + (h - 180) * 0.5) % 360
-        ns = clamp(s * P['fs']); nv = clamp(v * P['fv'] + P['fa'])
+        nh = (hf + FLAME_H.get((path, stage), 0) + (h - 180) * 0.5) % 360
+        ns = clamp(s * P['fs'] * (1.15 if path == 'power' else 1.0)); nv = clamp(v * P['fv'] * (1.12 if path == 'power' else 1.0) + P['fa'])
         out = tuple(o * (1 - wf) + n * wf for o, n in zip(out, colorsys.hsv_to_rgb(nh / 360, ns, nv)))
     return out
 
