@@ -37,6 +37,8 @@ import { GuildSheet } from './GuildSheet';
 import { AreaView, type AreaViewProps } from '../nav/AreaView';
 import { closeTopBackLayer } from '../../utils/backStack';
 import { GUILD_COPY } from '../../utils/guildCopy';
+import { resetGroveMemoryForTests } from '../../utils/groveLocal';
+import { resetClaimMemoryForTests } from '../../utils/guildClaimLocal';
 
 const PT = (k: keyof typeof GUILD_COPY) => GUILD_COPY[k][0];
 const EN = (k: keyof typeof GUILD_COPY) => GUILD_COPY[k][1];
@@ -75,6 +77,8 @@ beforeEach(() => {
   for (const f of [getGuild, createGuild, joinGuild, guildThread, guildGesture, leaveGuild, renameGuild, newGuildCode]) vi.mocked(f).mockReset();
   vi.mocked(track).mockReset();
   localStorage.clear();
+  resetGroveMemoryForTests();
+  resetClaimMemoryForTests();
 });
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers(); });
 
@@ -212,12 +216,36 @@ describe('falha de carga NÃO é "sem roda" (#16)', () => {
     expect(screen.getByText(EN('guild.erro.tentar'))).toBeTruthy();
   });
 
-  it('401: convite a entrar na conta, SEM formulário morto e sem tentar de novo', async () => {
+  it('401: NUNCA é beco — texto, caminho até Entrar e "tentar de novo"; SEM formulário morto (L3 A1)', async () => {
     vi.mocked(getGuild).mockRejectedValue(erro('login'));
-    await montar();
+    const onLogin = vi.fn();
+    await montar({ onLogin });
     expect(screen.getByRole('alert').textContent).toBe(PT('guild.erro.semLogin'));
     expect(screen.queryByRole('textbox')).toBeNull();
-    expect(screen.queryByRole('button')).toBeNull();
+    fireEvent.click(screen.getByText(PT('guild.erro.entrar')));
+    expect(onLogin).toHaveBeenCalledTimes(1);
+    // "Tentar de novo" serve a quem acabou de entrar: relê e, com sessão, mostra a roda.
+    vi.mocked(getGuild).mockResolvedValue(null);
+    fireEvent.click(screen.getByText(PT('guild.erro.tentar')));
+    await screen.findByText(PT('guild.criar.botao'));
+    expect(getGuild).toHaveBeenCalledTimes(2);
+  });
+
+  it('401 de conta DEMO: a frase é a do demo e o convite é o `UnlockNudge` (nunca abre sozinho)', async () => {
+    vi.mocked(getGuild).mockRejectedValue(erro('login'));
+    const onUnlock = vi.fn();
+    await montar({ accountTier: 'demo', onUnlock, onLogin: vi.fn() });
+    expect(screen.getByRole('alert').textContent).toBe(PT('guild.erro.demo'));
+    const nudge = document.querySelector('[data-guild-unlock] button') as HTMLButtonElement;
+    expect(nudge).toBeTruthy();
+    expect(onUnlock).not.toHaveBeenCalled();
+    fireEvent.click(nudge);
+    expect(onUnlock).toHaveBeenCalledTimes(1);
+    // conta paga sem sessão: só o texto de entrar (sem convite de compra)
+    cleanup();
+    await montar({ accountTier: 'paid', onUnlock, onLogin: vi.fn() });
+    expect(document.querySelector('[data-guild-unlock]')).toBeNull();
+    expect(screen.getByRole('alert').textContent).toBe(PT('guild.erro.semLogin'));
   });
 
   it('401 no meio de uma ação leva à mesma tela', async () => {
@@ -512,7 +540,9 @@ describe('layout: nome longo e "· você" (#4, #14)', () => {
     const t = document.querySelector('.sm2-coop-mem li .t')!;
     expect(t.textContent).toBe('Ana');
     const voce = t.nextElementSibling as HTMLElement;
-    expect(voce.textContent).toBe(PT('guild.roda.voce'));
+    // O ponto é enfeite (aria-hidden); o leitor de tela lê só "você" (L3-copy).
+    expect(voce.querySelector('[aria-hidden="true"]')!.textContent).toBe(PT('guild.roda.voce'));
+    expect(voce.querySelector('.sm2-guild-sr')!.textContent).toBe('você');
     expect(getComputedStyle(voce).flexShrink).toBe('0');
     expect(getComputedStyle(t).textOverflow).toBe('ellipsis');
   });
@@ -902,19 +932,19 @@ describe('os gestos: três, fixos, anônimos, sem push', () => {
     vi.mocked(guildGesture).mockResolvedValue(noEstagio(3, 1, {}, {}, { gesturesSent: ['luz'] }));
     await montar();
     fireEvent.click(botoes()[1]);
-    await waitFor(() => expect(botoes()[1].disabled).toBe(true));
+    await waitFor(() => expect(botoes()[1].getAttribute('aria-disabled')).toBe('true'));
     expect(guildGesture).toHaveBeenCalledWith('save-12345678', 'luz', undefined);
     expect(botoes()[1].textContent).toContain('Luz enviada.');
     expect(botoes()[1].getAttribute('aria-label')).toBe('Luz já enviado hoje');
     expect(document.querySelector('[data-guild-status]')!.textContent).toBe('Luz enviada.');
-    expect(botoes()[0].disabled).toBe(false); // os outros dois seguem à mão
+    expect(botoes()[0].getAttribute('aria-disabled')).toBeNull(); // os outros dois seguem à mão
     expect(document.body.textContent).not.toMatch(/amanh[ãa]|tomorrow/i);
   });
 
   it('o que já foi mandado hoje (talvez de outro aparelho) chega desabilitado', async () => {
     vi.mocked(getGuild).mockResolvedValue(noEstagio(3, 1, {}, {}, { gesturesSent: ['aceno', 'descanso'] }));
     await montar();
-    expect(botoes().map(b => b.disabled)).toEqual([true, false, true]);
+    expect(botoes().map(b => b.getAttribute('aria-disabled') === 'true')).toEqual([true, false, true]);
   });
 
   it('429 daily limit: o gesto já saiu — recarrega em SILÊNCIO, sem alerta', async () => {
@@ -922,7 +952,7 @@ describe('os gestos: três, fixos, anônimos, sem push', () => {
     vi.mocked(guildGesture).mockRejectedValue(erro('dailyLimit'));
     await montar();
     fireEvent.click(botoes()[0]);
-    await waitFor(() => expect(botoes()[0].disabled).toBe(true));
+    await waitFor(() => expect(botoes()[0].getAttribute('aria-disabled')).toBe('true'));
     expect(screen.queryByRole('alert')).toBeNull();
   });
 
@@ -938,7 +968,11 @@ describe('os gestos: três, fixos, anônimos, sem push', () => {
     vi.mocked(getGuild).mockResolvedValue(noEstagio(4, 1, { gestures: ['luz', 'descanso'] }));
     await montar();
     const lote = document.querySelector('[data-guild-recebidos]')!;
-    expect(Array.from(lote.querySelectorAll('li')).map(li => li.textContent)).toEqual(['Alguém deixou uma luz.', 'Alguém desejou bom descanso.']);
+    expect(Array.from(lote.querySelectorAll('li')).map(li => li.lastElementChild!.textContent)).toEqual(['Alguém deixou uma luz.', 'Alguém desejou bom descanso.']);
+    // NO TOPO, colados ao visor do Bosque (não abaixo da lista de nomes) e com estilo próprio, nunca o de um membro (L3 M3/B7)
+    expect(lote.closest('[data-guild-room="bosque"]')).toBeTruthy();
+    expect(lote.classList.contains('sm2-grove-recv')).toBe(true);
+    expect(lote.closest('.sm2-coop-mem')).toBeNull();
     expect(lote.textContent).not.toMatch(/\d|Ana|Bia|Caio|Dani/);
     cleanup();
     vi.mocked(getGuild).mockResolvedValue(noEstagio(4, 1, { gestures: [] }));
@@ -977,19 +1011,23 @@ describe('os gestos: três, fixos, anônimos, sem push', () => {
     expect(v.gestures).toEqual(['aceno', 'luz']);
     vi.mocked(getGuild).mockResolvedValue(v);
     await montar({ language: 'en-US' });
-    expect(Array.from(document.querySelectorAll('[data-guild-recebidos] li')).map(li => li.textContent))
+    expect(Array.from(document.querySelectorAll('[data-guild-recebidos] li')).map(li => li.lastElementChild!.textContent))
       .toEqual(['Someone waved at the circle.', 'Someone left a little light.']);
   });
 
-  it('o foco NÃO cai em <body> depois de enviar um gesto (o botão fica desabilitado)', async () => {
+  it('o foco FICA no botão que enviou (aria-disabled, nunca `disabled`) — nem <body>, nem a raiz da folha (L3 M6)', async () => {
     vi.mocked(getGuild).mockResolvedValue(noEstagio(3, 1));
     vi.mocked(guildGesture).mockResolvedValue(noEstagio(3, 1, {}, {}, { gesturesSent: ['aceno'] }));
     const { container } = await montar();
     botoes()[0].focus();
     fireEvent.click(botoes()[0]);
-    await waitFor(() => expect(botoes()[0].disabled).toBe(true));
-    await waitFor(() => expect(document.activeElement).not.toBe(document.body));
+    await waitFor(() => expect(botoes()[0].getAttribute('aria-disabled')).toBe('true'));
+    await waitFor(() => expect(document.activeElement).toBe(botoes()[0]));
+    expect(botoes()[0].hasAttribute('disabled')).toBe(false);
     expect(container.contains(document.activeElement)).toBe(true);
+    // tocar de novo no que já foi enviado é inerte (não chama o servidor outra vez)
+    fireEvent.click(botoes()[0]);
+    expect(guildGesture).toHaveBeenCalledTimes(1);
   });
 
   it('sem chat: nenhum campo de texto livre na sala', async () => {
@@ -1011,13 +1049,13 @@ describe('o Mural: marcos e peças de maré', () => {
     expect(document.body.textContent).not.toMatch(/nada ainda|nothing yet/i);
   });
 
-  it('marcos em ordem, com a DATA que este aparelho viu; o estágio que já era da roda quando o aparelho chegou vai sem data', async () => {
+  it('marcos com a DATA que este aparelho viu; estágio que ele NÃO presenciou fica de fora — sem data é silêncio (L3 B3)', async () => {
     vi.mocked(getGuild).mockResolvedValue(noEstagio(3, 3));
     await montar();
     const itens = Array.from(mural()!.querySelectorAll('li')).map(li => li.textContent!);
-    expect(itens).toHaveLength(3);
-    expect(itens.slice(0, 2)).toEqual(['Clareira', 'Ramagem']);
-    expect(itens[2]).toMatch(/^Copa, \d{1,2} de \w+ de \d{4}$/);
+    expect(itens).toHaveLength(1);
+    expect(itens[0]).toMatch(/^Copa, \d{1,2} de \w+ de \d{4}$/);
+    expect(mural()!.textContent).not.toMatch(/Clareira|Ramagem/);
     expect(screen.getByRole('region', { name: 'Mural da roda' })).toBeTruthy();
   });
 
@@ -1188,5 +1226,114 @@ describe('movimento reduzido reduz o movimento, nunca a informação', () => {
     const css = fs.readFileSync(path.resolve(__dirname, '../../index.css'), 'utf8');
     const ultimo = css.slice(css.lastIndexOf('@media (prefers-reduced-motion'));
     expect(ultimo).toMatch(/\.sm2-grove-bob\s*\{\s*animation:\s*none\s*!important/);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RODADA L4 (29/09/2026) — o que o QA de experiência do L3 reabriu.
+// ─────────────────────────────────────────────────────────────────────────────
+describe('L4: sem roda mostra a Clareira e explica por que o botão está inerte', () => {
+  it('M1: o vazio tem o VISOR do Bosque (Clareira, sem membro de outro) acima do formulário', async () => {
+    vi.mocked(getGuild).mockResolvedValue(null);
+    await montar();
+    const v = document.querySelector('[data-guild-visor]') as HTMLElement;
+    expect(v).toBeTruthy();
+    expect(v.getAttribute('aria-hidden')).toBe('true'); // decorativo: o texto abaixo é quem fala
+    expect(document.querySelectorAll('[data-grove-creature]')).toHaveLength(1);
+    expect(document.querySelector('[data-grove-creature="other"]')).toBeNull();
+    // o visor vem ANTES do texto e do formulário
+    const corpo = screen.getByText(PT('guild.salao.vazio.corpo'));
+    expect(v.compareDocumentPosition(corpo) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // sem placa/slot marcado: nada de "+" nem de vaga vazia
+    expect(document.querySelector('.sm2-guild')!.textContent).not.toMatch(/\+|vaga|slot/i);
+  });
+
+  it('#7: o código curto e o nome vazio deixam a RAZÃO escrita (`aria-describedby`), sem número à mão', async () => {
+    vi.mocked(getGuild).mockResolvedValue(null);
+    await montar();
+    const nome = screen.getByPlaceholderText(PT('guild.criar.nome.placeholder'));
+    const dicaNome = document.getElementById(nome.getAttribute('aria-describedby')!)!;
+    expect(dicaNome.textContent).toBe(PT('guild.criar.nome.dica'));
+    fireEvent.change(nome, { target: { value: 'X' } });
+    expect(nome.getAttribute('aria-describedby')).toBeNull(); // com nome, a razão some
+    fireEvent.click(screen.getByText(PT('guild.entrar.botao.abrir')));
+    const codigo = document.querySelector('input[autocapitalize="characters"]') as HTMLInputElement;
+    const dica = document.getElementById(codigo.getAttribute('aria-describedby')!)!;
+    expect(dica.textContent).toBe('O código tem 8 caracteres.');
+    expect(dica.classList.contains('sm2-guild-sr')).toBe(false); // VISÍVEL, não só no leitor de tela
+    cleanup();
+    await montar({ language: 'en-US' });
+    fireEvent.click(screen.getByText(EN('guild.entrar.botao.abrir')));
+    expect(document.body.textContent).toContain('The code has 8 characters.');
+  });
+
+  it('M1 (Feira): a Feira sem roda diz o que é ANTES do formulário (uma linha), e o Salão não a repete', async () => {
+    vi.mocked(getGuild).mockResolvedValue(null);
+    await montar({ room: 'feira' });
+    const linha = screen.getByText(PT('guild.feira.semroda'));
+    expect(linha.compareDocumentPosition(screen.getByText(PT('guild.criar.botao'))) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    cleanup();
+    await montar({ room: 'salao' });
+    expect(screen.queryByText(PT('guild.feira.semroda'))).toBeNull();
+  });
+});
+
+describe('L4 M5: "Seguir o próprio caminho" fica SEMPRE ao alcance (rodapé da folha, não no fim de 3 telas)', () => {
+  it.each([4, 12])('roda de %i: a saída está no rodapé fixo (`sticky`), fora do cartão que rola, com a nota ao lado', async (n) => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(n, 2));
+    const { container } = await montar();
+    const foot = container.querySelector('[data-guild-foot]') as HTMLElement;
+    expect(foot).toBeTruthy();
+    expect(getComputedStyle(foot).position).toBe('sticky');
+    expect(within(foot).getByText(PT('guild.sair.botao'))).toBeTruthy();
+    expect(within(foot).getByText(PT('guild.sair.nota'))).toBeTruthy();
+    expect(foot.closest('.sm2-stats-card')).toBeNull();
+    // é o ÚLTIMO filho da folha: fica colado ao fim do scroll
+    expect(container.querySelector('.sm2-guild')!.lastElementChild).toBe(foot);
+    // continua sendo UM toque, sem diálogo
+    vi.mocked(leaveGuild).mockResolvedValue({ ok: true });
+    fireEvent.click(within(foot).getByText(PT('guild.sair.botao')));
+    await screen.findByText(PT('guild.criar.botao'));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(leaveGuild).toHaveBeenCalledWith('save-12345678');
+  });
+});
+
+describe('L4: cenários só com o servidor, folha registrada, telemetria única', () => {
+  it('B1: `onScenes` só recebe ids quando a vista trouxe `mine.groveScenes` (nunca do que está no disco)', async () => {
+    const onScenes = vi.fn();
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(3, 2, {}, {}, { groveScenes: false }));
+    await montar({ onScenes });
+    expect(onScenes).not.toHaveBeenCalled();
+    cleanup();
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(3, 2, {}, {}, { groveScenes: true }));
+    await montar({ onScenes });
+    await waitFor(() => expect(onScenes).toHaveBeenCalledWith(['bg-guild-clareira', 'bg-guild-ramagem']));
+  });
+
+  it('M5: a folha se declara ABERTA enquanto montada (o hook fica quieto) e fecha a declaração ao desmontar', async () => {
+    const { isGuildSheetOpen } = await import('../../utils/groveLocal');
+    vi.mocked(getGuild).mockResolvedValue(null);
+    const { unmount } = await montar();
+    expect(isGuildSheetOpen()).toBe(true);
+    unmount();
+    expect(isGuildSheetOpen()).toBe(false);
+  });
+
+  it('M5: voltar ao app com a folha aberta faz UMA `getGuild` por volta', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(3, 2));
+    await montar();
+    expect(getGuild).toHaveBeenCalledTimes(1);
+    await act(async () => { document.dispatchEvent(new Event('visibilitychange')); });
+    expect(getGuild).toHaveBeenCalledTimes(2);
+  });
+
+  it('B5: `guild_stage` do mesmo estágio sai UMA vez mesmo que a vista chegue duas vezes', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(3, 2));
+    await montar();
+    await act(async () => { document.dispatchEvent(new Event('visibilitychange')); });
+    await waitFor(() => expect(getGuild).toHaveBeenCalledTimes(2));
+    const niveis = vi.mocked(track).mock.calls.filter(c => c[0] === 'guild_stage').map(c => (c[1] as { level: number }).level);
+    expect(niveis).toEqual([2]);
   });
 });

@@ -7834,3 +7834,21 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
    para o FX no bloco canônico acima — não abra outro `prefers-reduced-motion` aqui. */
 @keyframes sm2-fair-drift { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(4px); } }
 .sm2-fair-fx { animation: sm2-fair-drift 3.2s steps(4, jump-none) infinite; }
+
+/* ── GUILDA, rodada L4 (29/09/2026) ──────────────────────────────────────────
+   · Saída no RODAPÉ da folha (QA L3 M5): `sticky` no fim do scroll da `AreaSheet`, para "Seguir o
+     próprio caminho" nunca ficar a três telas de rolagem numa roda de 12. Botão à esquerda, a nota
+     do lado — meio caminho entre uma barra cheia e uma linha perdida no fim.
+   · Gestos RECEBIDOS colados ao visor (M3/B7): linha com ícone em `primary-ink`, sem cara de membro.
+   · Gesto enviado fica FOCÁVEL (`aria-disabled`, M6): só o cursor muda. */
+.sm2-guild-foot {
+  position: sticky; bottom: calc(-1 * var(--sm2-space-4)); z-index: 2;
+  display: flex; align-items: center; gap: var(--sm2-space-2);
+  margin-top: var(--sm2-space-1); padding: var(--sm2-space-2) 0;
+  background: var(--sm2-surface); border-top: 1px solid var(--sm2-line);
+}
+.sm2-guild-foot .sm2-guild-btn { flex: 0 0 auto; width: auto; max-width: 62%; }
+.sm2-guild-foot .sm2-lib-s { flex: 1 1 0; min-width: 0; }
+.sm2-grove-recv { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sm2-space-1); }
+.sm2-grove-recv li, p.sm2-grove-recv { display: flex; align-items: center; gap: var(--sm2-space-2); font-size: var(--sm2-text-sm); color: var(--sm2-primary-ink); min-width: 0; }
+.sm2-grove-gesto[aria-disabled="true"] { cursor: default; }

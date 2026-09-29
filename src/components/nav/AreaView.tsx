@@ -109,6 +109,10 @@ export interface AreaViewProps {
     /** Resgate da Feira confirmado (soma Emblemas/Concha no save) e cenários liberados. */
     onClaimed?: (claim: { emblems: number; trophyId: string | null }) => void;
     onScenes?: (ids: string[]) => void;
+    /** Sem conta (401): o convite de criar conta (demo) e o caminho até Entrar. */
+    accountTier?: 'demo' | 'paid';
+    onUnlock?: () => void;
+    onLogin?: () => void;
   };
 }
 
@@ -194,7 +198,7 @@ export function AreaView(props: AreaViewProps) {
               <TournamentPage {...props.tournament} shop={{ ownership, actions }} />
             )}
             {open?.id === 'feira' && (
-              <GuildSheet room="feira" saveId={props.guild.saveId} language={language} metaDoDiaCumprida={props.guild.metaDoDiaCumprida} fioGoal={props.guild.fioGoal} mySprite={props.guild.mySprite} playerDayTz={props.guild.playerDayTz} onClaimed={props.guild.onClaimed} onScenes={props.guild.onScenes} />
+              <GuildSheet room="feira" language={language} {...props.guild} />
             )}
             {open?.id === 'duelo' && (
               <DueloSheet
@@ -320,7 +324,7 @@ export function AreaView(props: AreaViewProps) {
           {open?.id === 'biblioteca' && props.hallContent('directory')}
           {open?.id === 'amigos' && props.hallContent('friends')}
           {open?.id === 'guilda' && (
-            <GuildSheet room="salao" saveId={props.guild.saveId} language={language} metaDoDiaCumprida={props.guild.metaDoDiaCumprida} fioGoal={props.guild.fioGoal} mySprite={props.guild.mySprite} playerDayTz={props.guild.playerDayTz} onClaimed={props.guild.onClaimed} onScenes={props.guild.onScenes} />
+            <GuildSheet room="salao" language={language} {...props.guild} />
           )}
         </Suspense>
       </AreaSheet>

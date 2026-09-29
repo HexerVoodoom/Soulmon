@@ -61,7 +61,7 @@ describe('a guilda não entra no save nem no localStorage', () => {
   });
 
   it('o cliente da guilda não grava em localStorage direto (só storageKeys/safeStorage)', () => {
-    for (const rel of ['src/utils/community.ts', 'src/utils/guildCopy.ts', 'src/utils/guildRules.ts', 'src/utils/guildClaimLocal.ts', 'src/components/guild/GuildSheet.tsx', 'src/components/guild/FeiraVisor.tsx']) {
+    for (const rel of ['src/utils/community.ts', 'src/utils/guildCopy.ts', 'src/utils/guildCopyCore.ts', 'src/utils/guildRules.ts', 'src/utils/guildClaimLocal.ts', 'src/utils/groveLocal.ts', 'src/hooks/useGroveWatch.ts', 'src/components/guild/GuildSheet.tsx', 'src/components/guild/FeiraVisor.tsx', 'src/components/guild/GroveMilestoneCeremony.tsx']) {
       const ids: string[] = [];
       const visit = (n: ts.Node) => {
         if (ts.isIdentifier(n)) ids.push(n.text);
@@ -71,5 +71,20 @@ describe('a guilda não entra no save nem no localStorage', () => {
       expect(ids, rel).not.toContain('localStorage');
       expect(ids, rel).not.toContain('setGameState');
     }
+  });
+});
+
+describe('L4: as memórias de FALLBACK (storage cheio) vivem no módulo, nunca no save', () => {
+  it('as duas memórias de execução (`reconhecido`, `memoria`) são `Map`/`Set` de módulo — o GameState continua sem campo de guilda', () => {
+    expect(read('src/utils/groveLocal.ts')).toMatch(/const reconhecido = new Map<string, number>\(\)/);
+    expect(read('src/utils/guildClaimLocal.ts')).toMatch(/const memoria = new Set<string>\(\)/);
+    // e o crédito da Feira continua entrando por UM caminho: `earnEmblems` no App, chamado pela folha via `onClaimed`
+    expect(read('src/App.tsx')).toMatch(/const handleGuildClaimed = useCallback\(\(claim: \{ emblems: number; trophyId: string \| null \}\) => \{\s*earnEmblems\(claim\.emblems\)/);
+  });
+
+  it('a chave `soulmon-guild-claimed` guarda só recibos opacos e a MARCA `~semana` de tentativa — nenhum id de guilda nem quantia', () => {
+    const fonte = read('src/utils/guildClaimLocal.ts');
+    expect(fonte).toMatch(/const ATTEMPT = '~'/);
+    expect(fonte).not.toMatch(/emblems|gid|guildId|\.name\b/);
   });
 });

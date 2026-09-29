@@ -21,13 +21,13 @@ vi.mock('../../utils/community', async (orig) => {
   const real = await orig<typeof import('../../utils/community')>();
   return {
     ...real,
-    getGuild: vi.fn(), hitGuildRaid: vi.fn(), getGuildRewards: vi.fn(), claimGuildReward: vi.fn(),
+    getGuild: vi.fn(), hitGuildRaid: vi.fn(), getGuildRewards: vi.fn(), claimGuildReward: vi.fn(), leaveGuild: vi.fn(),
   };
 });
 vi.mock('../../utils/telemetry', async (orig) => ({ ...(await orig<typeof import('../../utils/telemetry')>()), track: vi.fn() }));
 
 import {
-  GuildError, sanitizeGuildView, getGuild, hitGuildRaid, getGuildRewards, claimGuildReward,
+  GuildError, sanitizeGuildView, getGuild, hitGuildRaid, getGuildRewards, claimGuildReward, leaveGuild,
   type GuildView, type GuildClaim, type GuildRewards,
 } from '../../utils/community';
 import { track } from '../../utils/telemetry';
@@ -37,6 +37,8 @@ import { closeTopBackLayer } from '../../utils/backStack';
 import { GUILD_COPY } from '../../utils/guildCopy';
 import { RAID_EMBLEMS, RAID_EMBLEMS_FLOOR, RAID_PHENOMENA, RAID_TROPHY_ID } from '../../utils/guildRules';
 import { STORAGE_KEYS } from '../../utils/storageKeys';
+import { resetGroveMemoryForTests } from '../../utils/groveLocal';
+import { resetClaimMemoryForTests } from '../../utils/guildClaimLocal';
 
 const PT = (k: keyof typeof GUILD_COPY) => GUILD_COPY[k][0];
 const EN = (k: keyof typeof GUILD_COPY) => GUILD_COPY[k][1];
@@ -76,7 +78,9 @@ const sala = () => document.querySelector('[data-guild-room="feira"]') as HTMLEl
 const botao = () => document.querySelector('[data-feira-rodada]') as HTMLButtonElement | null;
 
 beforeEach(() => {
-  for (const f of [getGuild, hitGuildRaid, getGuildRewards, claimGuildReward]) vi.mocked(f).mockReset();
+  for (const f of [getGuild, hitGuildRaid, getGuildRewards, claimGuildReward, leaveGuild]) vi.mocked(f).mockReset();
+  resetGroveMemoryForTests();
+  resetClaimMemoryForTests();
   vi.mocked(getGuildRewards).mockResolvedValue(semPendencia);
   vi.mocked(track).mockReset();
   resetRaidTelemetryForTests();
@@ -105,12 +109,35 @@ describe('o fenômeno: 3 estados × 4 tipos, sem número nenhum', () => {
     expect(visor().getAttribute('data-state')).toBe('ferido');
     expect(screen.getByText(PT('guild.feira.aberta.mundo'))).toBeTruthy();
     expect(botao()).toBeTruthy();
+    // ...mas o NOME ACESSÍVEL do visor diz o estado (M2), com "luz entre as camadas" e NUNCA HP/ferido/metade.
+    const aria = visor().getAttribute('aria-label')!;
+    expect(aria).toBe(fill(PT('guild.aria.feira.ferido'), { nome: 'Névoa' }));
+    expect(aria).not.toMatch(/ferid|metade|quase|hp|dano|damage|half|hurt|wounded/i);
+  });
+
+  it('ferido em inglês: "with light showing between its layers" (dissipado: "come apart")', async () => {
+    vi.mocked(getGuild).mockResolvedValue(vista({ ferido: true }));
+    await montar({ language: 'en-US' });
+    expect(visor().getAttribute('aria-label')).toBe(fill(EN('guild.aria.feira.ferido'), { nome: 'Mist' }));
+    cleanup();
+    vi.mocked(getGuild).mockResolvedValue(vista({ state: 'dissipada' }));
+    await montar({ language: 'en-US' });
+    expect(visor().getAttribute('aria-label')).toBe(fill(EN('guild.aria.feira.dissipado'), { nome: 'Mist' }));
+  });
+
+  it('a frase do resgate NÃO se repete uma linha acima do visor (L3 B2)', async () => {
+    vi.mocked(getGuild).mockResolvedValue(vista({ state: 'dissipada' }));
+    vi.mocked(getGuildRewards).mockResolvedValue(pendente());
+    await montar();
+    await waitFor(() => expect(document.querySelector('[data-feira-resgate]')).toBeTruthy());
+    expect(screen.getAllByText(PT('guild.feira.dissipado.mundo'))).toHaveLength(1);
   });
 
   it('dissipado: cabeçalho de "se desfez", sem botão e sem "ferido" (estado próprio)', async () => {
     vi.mocked(getGuild).mockResolvedValue(vista({ state: 'dissipada', ferido: true }));
     await montar();
     expect(visor().getAttribute('data-state')).toBe('dissipado');
+    expect(visor().getAttribute('aria-label')).toBe(fill(PT('guild.aria.feira.dissipado'), { nome: 'Névoa' }));
     expect(screen.getByText(PT('guild.feira.dissipado.mundo'))).toBeTruthy();
     expect(botao()).toBeNull();
     expect(screen.queryByText(PT('guild.feira.aberta.mundo'))).toBeNull();
@@ -280,7 +307,7 @@ describe('o resgate', () => {
     expect(onClaimed).toHaveBeenCalledTimes(1);
     expect(onClaimed).toHaveBeenCalledWith({ emblems: RAID_EMBLEMS, trophyId: null });
     expect(vi.mocked(claimGuildReward).mock.calls[0][1]).toBe('2026-W39');
-    expect(JSON.parse(localStorage.getItem(STORAGE_KEYS.GUILD_CLAIMED)!)).toEqual(['rc-1']);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEYS.GUILD_CLAIMED)!).filter((e: string) => !e.startsWith('~'))).toEqual(['rc-1']);
     expect(colhe()).toBeNull();
   });
 
@@ -319,7 +346,8 @@ describe('o resgate', () => {
     fireEvent.click(colhe()!);
     expect((await screen.findByRole('alert')).textContent).toBe(PT('guild.erro.semRede'));
     expect(onClaimed).not.toHaveBeenCalled();
-    expect(localStorage.getItem(STORAGE_KEYS.GUILD_CLAIMED)).toBeNull();
+    // Só a TENTATIVA ficou (é ela que autoriza o 409 a creditar depois); nenhum recibo.
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEYS.GUILD_CLAIMED)!)).toEqual(['~2026-W39']);
     expect(colhe()!.disabled).toBe(false);
     fireEvent.click(colhe()!);
     await waitFor(() => expect(document.querySelector('[data-feira-colhido]')!.textContent).toBe(fill(PT('guild.feira.colhido'), { n: RAID_EMBLEMS })));
@@ -339,7 +367,72 @@ describe('o resgate', () => {
     await waitFor(() => expect(colhe()).toBeNull());
     expect(onClaimed).not.toHaveBeenCalled();
     expect(screen.queryByText(/colhidos|collected/)).toBeNull();
-    expect(JSON.parse(localStorage.getItem(STORAGE_KEYS.GUILD_CLAIMED)!)).toEqual(['rc-1']);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEYS.GUILD_CLAIMED)!).filter((e: string) => !e.startsWith('~'))).toEqual(['rc-1']);
+  });
+
+  // ── L3-codigo A1: a resposta do 200 se perdeu; o 409 devolve o resgate e é ELE que credita ─────────
+  const conflito = (claim: GuildClaim | null) => Object.assign(new GuildError('alreadyClaimed', 409, undefined, claim), {});
+
+  it('A1: 200 perdido na rede → o 409 traz o resgate e credita UMA vez (só quem tentou aqui)', async () => {
+    vi.mocked(getGuild).mockResolvedValue(vista());
+    vi.mocked(getGuildRewards).mockResolvedValue(pendente());
+    vi.mocked(claimGuildReward)
+      .mockRejectedValueOnce(new GuildError('unavailable', 0))
+      .mockRejectedValueOnce(conflito(recibo({ trophy: true, trophyId: RAID_TROPHY_ID, receipt: 'rc-perdido' })));
+    const onClaimed = vi.fn();
+    await montar({ onClaimed });
+    await waitFor(() => expect(colhe()).toBeTruthy());
+    fireEvent.click(colhe()!);
+    expect((await screen.findByRole('alert')).textContent).toBe(PT('guild.erro.semRede'));
+    expect(onClaimed).not.toHaveBeenCalled();
+    fireEvent.click(colhe()!);
+    await waitFor(() => expect(onClaimed).toHaveBeenCalledTimes(1));
+    expect(onClaimed).toHaveBeenCalledWith({ emblems: RAID_EMBLEMS, trophyId: RAID_TROPHY_ID });
+    expect(document.querySelector('[data-feira-colhido]')!.textContent).toBe(fill(PT('guild.feira.colhido'), { n: RAID_EMBLEMS }));
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEYS.GUILD_CLAIMED)!)).toContain('rc-perdido');
+  });
+
+  it('A1: 409 com o recibo JÁ guardado neste aparelho → silêncio, nada creditado', async () => {
+    localStorage.setItem(STORAGE_KEYS.GUILD_CLAIMED, JSON.stringify(['rc-1']));
+    vi.mocked(getGuild).mockResolvedValue(vista());
+    vi.mocked(getGuildRewards).mockResolvedValue(pendente());
+    vi.mocked(claimGuildReward).mockRejectedValue(conflito(recibo()));
+    const onClaimed = vi.fn();
+    await montar({ onClaimed });
+    await waitFor(() => expect(colhe()).toBeTruthy());
+    fireEvent.click(colhe()!);
+    await waitFor(() => expect(colhe()).toBeNull());
+    expect(onClaimed).not.toHaveBeenCalled();
+    expect(screen.queryByText(/colhidos|collected/)).toBeNull();
+  });
+
+  it('A1: 409 sem `claimed` (registro sumiu entre as leituras) → silêncio, nada creditado', async () => {
+    vi.mocked(getGuild).mockResolvedValue(vista());
+    vi.mocked(getGuildRewards).mockResolvedValue(pendente());
+    vi.mocked(claimGuildReward).mockRejectedValueOnce(new GuildError('unavailable', 0)).mockRejectedValueOnce(conflito(null));
+    const onClaimed = vi.fn();
+    await montar({ onClaimed });
+    await waitFor(() => expect(colhe()).toBeTruthy());
+    fireEvent.click(colhe()!);
+    await screen.findByRole('alert');
+    fireEvent.click(colhe()!);
+    await waitFor(() => expect(colhe()).toBeNull());
+    expect(onClaimed).not.toHaveBeenCalled();
+  });
+
+  it('A1: 409 de OUTRO aparelho (esta tela nunca tentou) → silêncio: tela velha não credita em dobro', async () => {
+    vi.mocked(getGuild).mockResolvedValue(vista());
+    vi.mocked(getGuildRewards).mockResolvedValue(pendente());
+    // o primeiro pedido já é o 409: não houve resposta perdida aqui — mas `markClaimAttempt` marca ao pedir.
+    // Simula o aparelho B: a tentativa é apagada logo depois de marcada (nunca chegou a gravar).
+    localStorage.setItem(STORAGE_KEYS.GUILD_CLAIMED, JSON.stringify([]));
+    vi.mocked(claimGuildReward).mockImplementation(async () => { localStorage.removeItem(STORAGE_KEYS.GUILD_CLAIMED); throw conflito(recibo({ receipt: 'rc-outro' })); });
+    const onClaimed = vi.fn();
+    await montar({ onClaimed });
+    await waitFor(() => expect(colhe()).toBeTruthy());
+    fireEvent.click(colhe()!);
+    await waitFor(() => expect(colhe()).toBeNull());
+    expect(onClaimed).not.toHaveBeenCalled();
   });
 
   it('toque duplo: UMA chamada ao servidor', async () => {
@@ -409,14 +502,43 @@ describe('o resgate', () => {
 });
 
 describe('salas: a Feira e o Salão não se misturam', () => {
-  it('sem guilda na Feira: o convite do Salão (criar/entrar), sem fenômeno, sem cobrança e sem perguntar recompensas', async () => {
+  it('sem guilda na Feira: uma linha diz o que a Feira é, depois o convite do Salão (criar/entrar), sem fenômeno e sem cobrança', async () => {
     vi.mocked(getGuild).mockResolvedValue(null);
     await montar();
+    expect(screen.getByText(PT('guild.feira.semroda'))).toBeTruthy();
     expect(screen.getByText(PT('guild.salao.vazio.corpo'))).toBeTruthy();
     expect(screen.getByText(PT('guild.criar.botao'))).toBeTruthy();
     expect(visor()).toBeNull();
     expect(screen.queryByRole('alert')).toBeNull();
-    expect(getGuildRewards).not.toHaveBeenCalled();
+  });
+
+  it('sem guilda, o direito continua: quem SAIU ainda vê o cartão de colher (o direito é da pessoa — L3 A-1)', async () => {
+    vi.mocked(getGuild).mockResolvedValue(null);
+    vi.mocked(getGuildRewards).mockResolvedValue(pendente());
+    vi.mocked(claimGuildReward).mockResolvedValue(recibo());
+    const colhe = () => document.querySelector('[data-feira-colher]') as HTMLButtonElement | null;
+    const onClaimed = vi.fn();
+    await montar({ onClaimed });
+    await waitFor(() => expect(colhe()).toBeTruthy());
+    fireEvent.click(colhe()!);
+    await waitFor(() => expect(onClaimed).toHaveBeenCalledWith({ emblems: RAID_EMBLEMS, trophyId: null }));
+    // ... e o mesmo no Salão sem roda
+    cleanup();
+    vi.mocked(getGuildRewards).mockResolvedValue(pendente('recuou', '2026-W38'));
+    await montar({ room: 'salao', onClaimed: vi.fn() });
+    await waitFor(() => expect(colhe()).toBeTruthy());
+  });
+
+  it('L3 A-1: SAIR da roda com a folha aberta pergunta o resgate de novo — o direito sobrevive à saída', async () => {
+    vi.mocked(getGuild).mockResolvedValue(vista());
+    vi.mocked(getGuildRewards).mockResolvedValueOnce(semPendencia).mockResolvedValue(pendente());
+    vi.mocked(leaveGuild).mockResolvedValue({ ok: true });
+    await montar({ room: 'salao' });
+    await waitFor(() => expect(getGuildRewards).toHaveBeenCalledTimes(1));
+    fireEvent.click(screen.getByText(PT('guild.sair.botao')));
+    await waitFor(() => expect(screen.getByText(PT('guild.criar.botao'))).toBeTruthy());
+    await waitFor(() => expect(document.querySelector('[data-feira-colher]')).toBeTruthy());
+    expect(getGuildRewards).toHaveBeenCalledTimes(2);
   });
 
   it('a Feira não desenha Bosque, Roda, Mural nem sair; o Salão não desenha a Feira', async () => {

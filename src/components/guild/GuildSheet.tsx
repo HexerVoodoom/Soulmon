@@ -40,7 +40,7 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import {
   getGuild, createGuild, joinGuild, guildThread, guildGesture, leaveGuild, renameGuild, newGuildCode,
   hitGuildRaid, getGuildRewards, claimGuildReward,
-  GuildError, type GuildErrorKind, type GuildView, type GuildGoal, type GuildRaid, type GuildRewards,
+  GuildError, type GuildErrorKind, type GuildView, type GuildGoal, type GuildRaid, type GuildRewards, type GuildClaim,
 } from '../../utils/community';
 import { playerDayKey, type PlayerDayAnchor } from '../../utils/playerDay';
 import {
@@ -51,11 +51,12 @@ import {
   GUILD_NAME_MAX, GUILD_CODE_LENGTH, GUILD_PRESENCE_NOMINAL_MAX, GUILD_GESTURES, GROVE_STAGES,
   RAID_EMBLEMS, RAID_EMBLEMS_FLOOR, normalizeGuildCode, type GuildGesture,
 } from '../../utils/guildRules';
-import { hasClaimedReceipt, rememberClaimedReceipt } from '../../utils/guildClaimLocal';
+import { hasClaimedReceipt, rememberClaimedReceipt, markClaimAttempt, hadClaimAttempt } from '../../utils/guildClaimLocal';
 import {
-  observeGuildView, readGroveLocal, permanenceBand, formatDayLabel,
+  observeGuildView, readGroveLocal, permanenceBand, formatDayLabel, groveSceneIds, setGuildSheetOpen, trackGuildStageOnce,
 } from '../../utils/groveLocal';
 import { track } from '../../utils/telemetry';
+import { UnlockNudge } from '../UnlockAccountModal';
 import { getSpriteForStage } from '../../utils/sprites';
 // ⚠️ Todo `name` de ícone tem de estar no inventário de `icon_names` de
 // `src/styles/tokens.md`: a fonte é SUBSETADA, e um nome fora dele renderiza um
@@ -87,7 +88,17 @@ interface GuildSheetProps {
   onClaimed?: (claim: { emblems: number; trophyId: string | null }) => void;
   /** Cenários `bg-guild-*` que o servidor já liberou (ficam com quem sai — G12). */
   onScenes?: (ids: string[]) => void;
+  /** Sem conta (401): o tier decide se o convite é o de criar conta (`demo`) e `onUnlock` o abre. */
+  accountTier?: 'demo' | 'paid';
+  onUnlock?: () => void;
+  /** Leva à tela de entrar na conta (Configurações). Sem ele, o 401 fica só com o texto e "tentar de novo". */
+  onLogin?: () => void;
 }
+
+/** A Clareira SEM roda: o chão de partida, sem membro, sem estágio nem slot marcado (plano §5). */
+const CLAREIRA_VAZIA: Pick<GuildView, 'size' | 'members' | 'bosque'> = {
+  size: 0, members: [], bosque: { stage: null, stageIndex: 0, perto: false, ornaments: [] },
+};
 
 /** `guild_raid` 1/2 (viu dissipada / viu recuou): UMA vez por semana e estado, por execução do app. */
 const raidVista = new Set<string>();
@@ -101,7 +112,7 @@ type Load =
 
 const kindOf = (e: unknown): GuildErrorKind => (e instanceof GuildError ? e.kind : 'server');
 
-export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySprite, playerDayTz, room = 'salao', onClaimed, onScenes }: GuildSheetProps) {
+export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySprite, playerDayTz, room = 'salao', onClaimed, onScenes, accountTier, onUnlock, onLogin }: GuildSheetProps) {
   const t = useCallback((k: GuildKey, vars?: Record<string, string | number>) => guildText(language, k, vars), [language]);
   const [load, setLoad] = useState<Load>({ status: 'loading' });
   const [aviso, setAviso] = useState<GuildKey | null>(null);
@@ -138,8 +149,11 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
 
   useEffect(() => {
     vivo.current = true;
+    // Enquanto a folha está montada, é ELA que consulta ao voltar ao app (o `useGroveWatch` fica quieto).
+    setGuildSheetOpen(true);
     return () => {
       vivo.current = false;
+      setGuildSheetOpen(false);
       if (copiadoTimer.current) clearTimeout(copiadoTimer.current);
     };
   }, []);
@@ -168,15 +182,20 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
     if (load.status !== 'ready') return;
     const obs = observeGuildView(load.guild, load.day);
     setMarcos(load.guild ? (readGroveLocal()?.marks ?? {}) : {});
-    if (obs?.firstSeenStage) track('guild_stage', { level: obs.firstSeenStage });
+    trackGuildStageOnce(obs?.firstSeenStage);
+    // Cenário do Bosque só com a confirmação do servidor (`mine.groveScenes`) — ficam com quem sai (G12).
+    if (load.guild?.mine.groveScenes) onScenesRef.current?.(groveSceneIds(load.guild.bosque.stageIndex));
   }, [load]);
 
   // O RESGATE: pergunta ao abrir (Salão e Feira) e de novo quando o estado da Feira muda (a rodada
   // que dissipa o fenômeno abre o direito da semana corrente). Falha é SILÊNCIO: nada a colher é
   // o estado normal, e uma tela de erro por isso seria ruído.
-  const chaveDaFeira = load.status === 'ready' && load.guild
-    ? `${load.guild.id}|${load.guild.raid?.weekKey ?? ''}|${load.guild.raid?.state ?? ''}|${load.guild.raid?.lastWeek ?? ''}`
-    : '';
+  // O DIREITO É DA PESSOA, não da roda (L3-conformidade A-1): quem saiu ainda colhe, então "sem roda"
+  // também pergunta (`sem-roda`) — a folha, o Salão e a Feira mostram o resgate pendente sem guilda.
+  const chaveDaFeira = load.status !== 'ready' ? ''
+    : load.guild
+      ? `${load.guild.id}|${load.guild.raid?.weekKey ?? ''}|${load.guild.raid?.state ?? ''}|${load.guild.raid?.lastWeek ?? ''}`
+      : 'sem-roda';
   useEffect(() => {
     if (!chaveDaFeira || rewardsKey.current === chaveDaFeira) return;
     rewardsKey.current = chaveDaFeira;
@@ -262,7 +281,10 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
   /**
    * COLHER: uma semana por vez. O crédito é da FOLHA só até o `onClaimed` (o App soma no save):
    *  · rede caindo → NADA é creditado, o cartão fica e dá para tentar de novo;
-   *  · 409 `already claimed` / 404 `nothing to claim` → SILÊNCIO (o direito some, sem frase);
+   *  · 404 `nothing to claim` → SILÊNCIO (o direito some, sem frase);
+   *  · 409 `already claimed` → o servidor JÁ gravou. Se este aparelho TENTOU antes e não guardou o
+   *    recibo (a resposta do 200 se perdeu na rede), o 409 traz o `claimed` e é ele que credita;
+   *    sem tentativa aqui (outro aparelho colheu) ou com recibo já guardado → SILÊNCIO (L3 A1);
    *  · o recibo já creditado por este aparelho NÃO credita de novo (o KV é eventualmente consistente).
    * O crédito acontece mesmo se a folha fechar no meio do pedido (`onClaimed` é do App).
    */
@@ -273,13 +295,17 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
     setColherErro(false);
     const abriu = document.activeElement as HTMLElement | null;
     const tirar = () => setRewards(r => (r ? { ...r, pending: r.pending.filter(p => p.week !== week) } : r));
+    /** Credita UMA vez por recibo; devolve `true` se creditou (quem chama mostra o fato). */
+    const creditar = (c: GuildClaim): boolean => {
+      if (hasClaimedReceipt(c.receipt)) return false;
+      onClaimedRef.current?.({ emblems: c.emblems, trophyId: c.trophy ? c.trophyId : null });
+      rememberClaimedReceipt(c.receipt);
+      return true;
+    };
     try {
+      markClaimAttempt(week);
       const c = await claimGuildReward(saveId, week, tz.current);
-      const novo = !hasClaimedReceipt(c.receipt);
-      if (novo) {
-        onClaimedRef.current?.({ emblems: c.emblems, trophyId: c.trophy ? c.trophyId : null });
-        rememberClaimedReceipt(c.receipt);
-      }
+      const novo = creditar(c);
       if (!vivo.current) return;
       tirar();
       if (novo) {
@@ -287,10 +313,19 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
         setAnuncio(t('guild.feira.colhido', { n: c.emblems }));
       }
     } catch (e) {
-      if (!vivo.current) return;
       const kind = kindOf(e);
-      if (kind === 'alreadyClaimed' || kind === 'nothingToClaim') tirar();
-      else if (kind === 'login') setLoad({ status: 'error', kind });
+      // A resposta do 200 se perdeu: o direito está gravado e o 409 devolve o resgate — credita por ele.
+      const c409 = kind === 'alreadyClaimed' && e instanceof GuildError && e.claim && e.claim.week === week && hadClaimAttempt(week)
+        ? e.claim : null;
+      const novo = c409 ? creditar(c409) : false;
+      if (!vivo.current) return;
+      if (kind === 'alreadyClaimed' || kind === 'nothingToClaim') {
+        tirar();
+        if (novo && c409) {
+          setColhido({ n: c409.emblems, trophy: c409.trophy });
+          setAnuncio(t('guild.feira.colhido', { n: c409.emblems }));
+        }
+      } else if (kind === 'login') setLoad({ status: 'error', kind });
       else setColherErro(true);
     } finally {
       busy.current = false;
@@ -341,15 +376,28 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
   } else if (load.status === 'error') {
     // QA L1 #16: falha de leitura NÃO é "sem roda". Só o aviso e — salvo sem
     // login, onde tentar de novo não muda nada — o botão de tentar de novo.
+    // Sem conta (401) NUNCA é beco (QA L3 A1): o texto, o convite (`UnlockNudge` para o demo, o
+    // caminho até Entrar para quem tem `onLogin`) e "tentar de novo" — que serve a quem acabou de entrar.
+    const semConta = load.kind === 'login';
+    const demo = semConta && accountTier === 'demo';
     corpo = (
       <div className="sm2-guild-sec">
-        <p role="alert" className="sm2-lib-alert">{t(GUILD_ERROR_KEY[load.kind])}</p>
-        {load.kind !== 'login' && (
-          <button type="button" onClick={() => void carregar(false)} className={`${btn} sm2-kit-btn-outline sm2-guild-btn`}>
-            <Icon name="refresh" size={20} />
-            {t('guild.erro.tentar')}
+        <p role="alert" className="sm2-lib-alert">{t(demo ? 'guild.erro.demo' : GUILD_ERROR_KEY[load.kind])}</p>
+        {demo && onUnlock && (
+          <div style={{ maxWidth: 280 }} data-guild-unlock>
+            <UnlockNudge language={language} reason="shop" onOpen={onUnlock} />
+          </div>
+        )}
+        {semConta && onLogin && (
+          <button type="button" onClick={onLogin} data-guild-entrar className={`${btn} sm2-kit-btn-primary sm2-guild-btn`}>
+            <Icon name="settings" size={20} />
+            {t('guild.erro.entrar')}
           </button>
         )}
+        <button type="button" onClick={() => void carregar(false)} className={`${btn} sm2-kit-btn-outline sm2-guild-btn`}>
+          <Icon name="refresh" size={20} />
+          {t('guild.erro.tentar')}
+        </button>
       </div>
     );
   } else if (!load.guild) {
@@ -357,6 +405,11 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
     const semCodigo = ocupado || codigo.length < GUILD_CODE_LENGTH;
     corpo = (
       <>
+        {/* O RESGATE é da pessoa, não da roda: quem saiu ainda colhe (L3-conformidade A-1). */}
+        {resgate}
+        {/* A Clareira vazia no visor (plano §5): mostra o que a roda constrói antes de pedir que se abra uma. */}
+        <GroveVisor guild={CLAREIRA_VAZIA} mySprite={mySprite || getSpriteForStage('rookie')} reducedMotion={reducedMotion} />
+        {room === 'feira' && <p className="sm2-grove-line" data-guild-feira-convite>{t('guild.feira.semroda')}</p>}
         <p className="sm2-stats-t">{t('guild.salao.vazio.corpo')}</p>
         {alerta}
         <div className="sm2-stats-card">
@@ -367,7 +420,9 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
             maxLength={GUILD_NAME_MAX}
             onChange={e => setNome(e.target.value)}
             placeholder={t('guild.criar.nome.placeholder')}
+            aria-describedby={semNome && !ocupado ? `${ajustesId}-nome-dica` : undefined}
           />
+          {semNome && !ocupado && <span id={`${ajustesId}-nome-dica`} className="sm2-guild-sr">{t('guild.criar.nome.dica')}</span>}
           <button
             type="button"
             disabled={semNome}
@@ -405,7 +460,12 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
                 onChange={e => setCodigo(normalizeGuildCode(e.target.value))}
                 placeholder="ABCD2345"
                 style={{ letterSpacing: '0.12em' }}
+                aria-describedby={`${ajustesId}-codigo-dica`}
               />
+              {/* Por que o botão está inerte com menos caracteres (QA L1 #7): a dica fica escrita, não só no leitor. */}
+              <span id={`${ajustesId}-codigo-dica`} className="sm2-lib-s" style={{ margin: 0 }}>
+                {t('guild.entrar.codigo.dica', { n: GUILD_CODE_LENGTH })}
+              </span>
               <button
                 type="button"
                 disabled={semCodigo}
@@ -438,6 +498,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
           ocupado={ocupado}
           reducedMotion={reducedMotion}
           resgate={resgate}
+          resgateAberto={!!(rewards?.pending[0] || colhido)}
           onRodada={() => void agir(() => hitGuildRaid(saveId, tz.current), {
             anunciar: 'guild.feira.rodada.feita',
             depois: () => track('guild_raid', { outcome: 0 }),
@@ -553,9 +614,12 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
 
           <SalaMural guild={g} t={t} language={language} marcos={marcos} />
 
-          {/* Saída limpa (LV-G5): um toque, sem diálogo de confirmação e sem
-              penalidade. Um "tem certeza?" aqui seria o app negociando com quem
-              quer sair. A nota é só o fato. `outline`, nunca `quiet`/`ghost` (D-S10). */}
+        </div>
+        {/* Saída limpa (LV-G5): um toque, sem diálogo de confirmação e sem penalidade — e SEMPRE ao
+            alcance (QA L3 M5): fixa no rodapé da folha, porque uma roda de 12 põe a saída a três telas
+            de rolagem. Um "tem certeza?" aqui seria o app negociando com quem quer sair. A nota é só o
+            fato. `outline`, nunca `quiet`/`ghost` (D-S10). */}
+        <div className="sm2-guild-foot" data-guild-foot>
           <button
             type="button"
             disabled={ocupado}
@@ -624,6 +688,22 @@ function SalaBosque({ guild, t, language, metaDoDiaCumprida, ocupado, mySprite, 
         reducedMotion={reducedMotion}
         label={nomeDoEstagio ? t('guild.aria.bosque', { estagio: nomeDoEstagio }) : undefined}
       />
+      {/* O que CHEGOU vem colado ao visor, no topo da folha (QA L3 M3/B7): antes ficava a 550 px, abaixo
+          da dobra, e com o mesmo estilo de uma linha de membro — lia-se como gente. Só o tipo, em lote,
+          sem quem e sem quantos; sem nada quando não veio nenhum. */}
+      {guild.gestures.length > 0 ? (
+        <ul className="sm2-grove-recv" data-guild-recebidos>
+          {guild.gestures.map(k => (
+            <li key={k}>
+              <Icon name={GESTO_ICONE[k]} size={20} tone="primary" />
+              <span>{guildGestureReceived(language, k)}</span>
+            </li>
+          ))}
+        </ul>
+      ) : guild.gestureReceived && (
+        // Roda de 2: o servidor não manda o TIPO (B5) — só o fato de que chegou algo.
+        <p className="sm2-grove-recv" data-guild-recebidos>{t('guild.gesto.recebido.agregado')}</p>
+      )}
       {stage && (
         <>
           <h3 className="sm2-grove-stage" data-guild-stage>{nomeDoEstagio}</h3>
@@ -679,7 +759,13 @@ function SalaRoda({ guild, t, language, nominal, ocupado, onGesto }: {
         {guild.members.map((m, i) => (
           <li key={m.id ?? `m${i}`}>
             <span className="t">{m.name ?? t('guild.roda.alguem')}</span>
-            {m.euMesmo && <span className="sm2-guild-you">{t('guild.roda.voce')}</span>}
+            {m.euMesmo && (
+              <span className="sm2-guild-you">
+                {/* O ponto é enfeite: o leitor de tela lê só "você", não "ponto você". */}
+                <span aria-hidden="true">{t('guild.roda.voce')}</span>
+                <span className="sm2-guild-sr">{t('guild.roda.voce').replace(/^[·\s]+/, '')}</span>
+              </span>
+            )}
             {nominal && m.apareceuHoje === true && <span className="sm2-guild-pres">{t('guild.roda.presente')}</span>}
           </li>
         ))}
@@ -695,10 +781,11 @@ function SalaRoda({ guild, t, language, nominal, ocupado, onGesto }: {
                 type="button"
                 className="sm2-grove-gesto"
                 data-gesto={k}
-                disabled={ocupado || enviado}
+                // `aria-disabled`, NUNCA `disabled` (QA L3 M6): um botão desabilitado perde o foco e o teclado
+                // cai na raiz da folha. Aqui o botão continua focável, e o toque no que já foi enviado é inerte.
                 aria-disabled={ocupado || enviado ? true : undefined}
                 aria-label={enviado ? t('guild.aria.gesto.enviado', { gesto: nome }) : t('guild.aria.gesto.enviar', { gesto: nome })}
-                onClick={() => onGesto(k)}
+                onClick={() => { if (!ocupado && !enviado) onGesto(k); }}
               >
                 <Icon name={GESTO_ICONE[k]} size={24} fill={enviado ? 1 : 0} tone={enviado ? 'primary' : 'ink'} />
                 <span>{enviado ? guildGestureSent(language, k) : nome}</span>
@@ -706,14 +793,6 @@ function SalaRoda({ guild, t, language, nominal, ocupado, onGesto }: {
             );
           })}
         </div>
-      )}
-      {guild.gestures.length > 0 ? (
-        <ul className="sm2-grove-list" data-guild-recebidos>
-          {guild.gestures.map(k => <li key={k}>{guildGestureReceived(language, k)}</li>)}
-        </ul>
-      ) : guild.gestureReceived && (
-        // Roda de 2: o servidor não manda o TIPO (B5) — só o fato de que chegou algo.
-        <p className="sm2-lib-s" style={{ margin: 0 }} data-guild-recebidos>{t('guild.gesto.recebido.agregado')}</p>
       )}
     </section>
   );
@@ -730,16 +809,19 @@ function SalaMural({ guild, t, language, marcos }: {
   guild: GuildView; t: T; language: Language; marcos: Record<string, string>;
 }) {
   const { stageIndex, ornaments } = guild.bosque;
-  const estagios = GROVE_STAGES.slice(0, stageIndex);
+  // Estágio SEM data (este aparelho não o presenciou) é SILÊNCIO: uma palavra solta ao lado de outras
+  // com data lê-se como lacuna — e "desde antes de você" seria uma frase nova sobre a ausência (QA L3 B3).
+  const estagios = GROVE_STAGES.slice(0, stageIndex).filter((_, i) => !!(marcos[String(i + 1)] && formatDayLabel(marcos[String(i + 1)], language)));
   if (estagios.length === 0 && ornaments.length === 0) return null;
   return (
     <section className="sm2-guild-sec" aria-label={t('guild.aria.mural')} data-guild-room="mural">
       <h3 className="sm2-stats-lab">{t('guild.mural.titulo')}</h3>
       <ul className="sm2-grove-list">
-        {estagios.map((id, i) => {
+        {estagios.map(id => {
+          const i = GROVE_STAGES.indexOf(id);
           const nome = groveStageName(language, id);
-          const data = marcos[String(i + 1)] ? formatDayLabel(marcos[String(i + 1)], language) : '';
-          return <li key={id} data-mural-marco={id}>{data ? t('guild.mural.marco', { estagio: nome, data }) : nome}</li>;
+          const data = formatDayLabel(marcos[String(i + 1)], language);
+          return <li key={id} data-mural-marco={id}>{t('guild.mural.marco', { estagio: nome, data })}</li>;
         })}
         {ornaments.map((o, i) => {
           const data = formatDayLabel(o.day, language);
@@ -766,9 +848,9 @@ function SalaMural({ guild, t, language, marcos }: {
  * (`guild.feira.rodada.feita`). Semana dissipada não tem botão. O resultado da semana que fechou
  * (`lastWeek`) é um fato, nunca um veredito: `recuou` não culpa ninguém.
  */
-function SalaFeira({ guild, t, language, ocupado, reducedMotion, resgate, onRodada }: {
+function SalaFeira({ guild, t, language, ocupado, reducedMotion, resgate, resgateAberto, onRodada }: {
   guild: GuildView; t: T; language: Language; ocupado: boolean; reducedMotion: boolean;
-  resgate: React.ReactNode; onRodada: () => void;
+  resgate: React.ReactNode; resgateAberto: boolean; onRodada: () => void;
 }) {
   const raid = guild.raid;
   // Telemetria de leitura (1 = viu dissipada, 2 = viu recuou): uma vez por semana e estado.
@@ -795,13 +877,16 @@ function SalaFeira({ guild, t, language, ocupado, reducedMotion, resgate, onRoda
   return (
     <section className="sm2-guild-sec" aria-label={t('guild.feira.titulo')} data-guild-room="feira">
       {resgate}
-      <p className="sm2-stats-t" style={{ margin: 0 }} data-feira-cabecalho>
-        {t(dissipada ? 'guild.feira.dissipado.mundo' : 'guild.feira.aberta.mundo')}
-      </p>
-      <FeiraVisor raid={raid} reducedMotion={reducedMotion} label={t('guild.aria.feira', { nome })} />
+      {/* O cartão do resgate já diz "se desfez diante da roda": dizer de novo, uma linha acima, é eco (QA L3 B2). */}
+      {!(dissipada && resgateAberto) && (
+        <p className="sm2-stats-t" style={{ margin: 0 }} data-feira-cabecalho>
+          {t(dissipada ? 'guild.feira.dissipado.mundo' : 'guild.feira.aberta.mundo')}
+        </p>
+      )}
+      <FeiraVisor raid={raid} reducedMotion={reducedMotion} label={t(dissipada ? 'guild.aria.feira.dissipado' : raid.ferido ? 'guild.aria.feira.ferido' : 'guild.aria.feira', { nome })} />
       <h3 className="sm2-grove-stage" data-feira-fenomeno>{nome}</h3>
       <p className="sm2-grove-line">{t(`guild.feira.fenomeno.${raid.phenomenon}.linha`)}</p>
-      {!dissipada && raid.lastWeek && (
+      {!dissipada && raid.lastWeek && !resgateAberto && (
         <p className="sm2-lib-s" style={{ margin: 0 }} data-feira-semana-passada={raid.lastWeek}>
           {t(raid.lastWeek === 'dissipada' ? 'guild.feira.dissipado.mundo' : 'guild.feira.recuou.mundo')}
         </p>

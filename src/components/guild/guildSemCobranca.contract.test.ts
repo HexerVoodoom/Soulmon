@@ -21,6 +21,7 @@ import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { GUILD_COPY } from '../../utils/guildCopy';
+import { GUILD_COPY_CORE } from '../../utils/guildCopyCore';
 
 /** Vocabulário vetado na copy da Guilda (PT + EN). Fronteira de palavra. */
 export const VETADAS: RegExp[] = [
@@ -72,7 +73,8 @@ describe('copy da Guilda — vocabulário vetado', () => {
   it('{n} só existe onde é contagem de VAGAS ou de membros, nunca de quem veio', () => {
     const comN = entradas.filter(([, [pt]]) => pt.includes('{n}')).map(([k]) => k).sort();
     // B2: `{n}` também é a QUANTIA de Emblemas colhidos e o intervalo da Concha — nunca de quem veio.
-    expect(comN).toEqual(['guild.criar.codigo.corpo', 'guild.feira.colhido', 'guild.help.concha.def', 'guild.roda.contagem']);
+    // L4: `guild.entrar.codigo.dica` leva o TAMANHO do código (`GUILD_CODE_LENGTH`), que é regra e não pessoa.
+    expect(comN).toEqual(['guild.criar.codigo.corpo', 'guild.entrar.codigo.dica', 'guild.feira.colhido', 'guild.help.concha.def', 'guild.roda.contagem']);
   });
 
   it('a linha de presença é a marca positiva — não existe chave de "ausente"', () => {
@@ -351,5 +353,73 @@ describe('copy da Feira e do glossário (B2)', () => {
     expect(f).not.toMatch(/setGameState\(|localStorage|\.emblems\s*\+|emblems\s*\+=/);
     expect(f).toMatch(/onClaimedRef\.current\?\.\(\{ emblems: c\.emblems/);
     expect(f).toMatch(/hasClaimedReceipt\(c\.receipt\)/);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RODADA L4 — o que o QA de experiência do L3 reabriu, agora travado.
+// ─────────────────────────────────────────────────────────────────────────────
+describe('L4: estados que não podem voltar', () => {
+  const sheet = fs.readFileSync(path.resolve(__dirname, 'GuildSheet.tsx'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const doc = fs.readFileSync(path.resolve(__dirname, '../../../docs/NARRATIVA-COPY-GUILDA.md'), 'utf8');
+  const copySrc = fs.readFileSync(path.resolve(__dirname, '../../utils/guildCopy.ts'), 'utf8');
+
+  it('o nome acessível da Feira diz o ESTADO sem nunca dizer "ferido", "metade" nem HP (M2)', () => {
+    for (const k of ['guild.aria.feira', 'guild.aria.feira.ferido', 'guild.aria.feira.dissipado'] as const) {
+      const [pt, en] = GUILD_COPY[k];
+      expect(pt + ' ' + en, k).not.toMatch(/ferid|metade|quase|abalad|\bhp\b|dano|damage|half|wounded|hurt|almost|health/i);
+    }
+    expect(GUILD_COPY['guild.aria.feira.ferido'][0]).toBe('Fenômeno da semana: {nome}, com luz passando entre as camadas.');
+    expect(GUILD_COPY['guild.aria.feira.ferido'][1]).toBe('This week’s phenomenon: {nome}, with light showing between its layers.');
+    expect(GUILD_COPY['guild.aria.feira.dissipado'][0]).toBe('Fenômeno da semana: {nome}, desfeito.');
+    expect(GUILD_COPY['guild.aria.feira.dissipado'][1]).toBe('This week’s phenomenon: {nome}, come apart.');
+  });
+
+  it('o 401 nunca é beco: "tentar de novo" NÃO é mais condicionado a `!== login`, e há caminho até Entrar', () => {
+    expect(sheet).not.toMatch(/load\.kind\s*!==\s*'login'/);
+    expect(sheet).toMatch(/onLogin/);
+    expect(sheet).toMatch(/guild\.erro\.demo/);
+    expect(sheet).toMatch(/<UnlockNudge/);
+  });
+
+  it('gesto enviado fica FOCÁVEL: nenhum `disabled` no botão de gesto (só `aria-disabled`) — o teclado não perde o lugar (M6)', () => {
+    const trecho = sheet.slice(sheet.indexOf('data-gesto={k}'), sheet.indexOf('data-gesto={k}') + 700);
+    expect(trecho).toMatch(/aria-disabled/);
+    expect(trecho).not.toMatch(/(?<![-\w])disabled=/);
+  });
+
+  it('a saída mora no RODAPÉ da folha (M5) e os gestos recebidos no Bosque, não na lista de nomes (M3/B7)', () => {
+    expect(sheet).toMatch(/className="sm2-guild-foot"/);
+    const roda = sheet.slice(sheet.indexOf('function SalaRoda'), sheet.indexOf('function SalaMural') > 0 ? sheet.indexOf('/**\n * MURAL') : undefined);
+    expect(roda).not.toMatch(/data-guild-recebidos/);
+    const bosque = sheet.slice(sheet.indexOf('function SalaBosque'), sheet.indexOf('function SalaRoda'));
+    expect(bosque).toMatch(/data-guild-recebidos/);
+  });
+
+  it('as seis chaves novas do L4 estão no documento E marcadas PENDENTE em guildCopy.ts (nenhuma finge ser FINAL)', () => {
+    const novas = ['guild.criar.nome.dica', 'guild.entrar.codigo.dica', 'guild.erro.entrar', 'guild.feira.semroda', 'guild.aria.feira.ferido', 'guild.aria.feira.dissipado'];
+    for (const k of novas) {
+      expect(doc.includes(`\`${k}\``), `${k} fora do documento`).toBe(true);
+      const antes = copySrc.slice(0, copySrc.indexOf(`'${k}'`));
+      expect(antes.slice(antes.lastIndexOf('\n  // ')), k).toMatch(/PENDENTE/);
+    }
+    // e `guild.erro.demo` é do documento original (§2), sem PENDENTE
+    expect(doc).toContain('`guild.erro.demo`');
+  });
+
+  it('a Concha da loja lê nome e descrição da copy da Guilda (nenhum literal duplicado — L3-copy)', () => {
+    const shop = fs.readFileSync(path.resolve(__dirname, '../../utils/shop.ts'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+    expect(shop).toMatch(/GUILD_COPY_CORE\['guild\.concha\.nome'\]/);
+    expect(shop).toMatch(/GUILD_COPY_CORE\['guild\.concha\.desc'\]/);
+    expect(shop).not.toMatch(/Concha da Maré|Tide shell|Deixada pela maré/);
+  });
+
+  it('o mínimo da entrada (`guildCopyCore`) é SUBCONJUNTO de `GUILD_COPY` (uma tabela só) e o App/cerimônia não importam o dicionário inteiro (M4)', () => {
+    for (const [k, v] of Object.entries(GUILD_COPY_CORE)) expect(GUILD_COPY[k as keyof typeof GUILD_COPY], k).toEqual(v);
+    const raiz = path.resolve(__dirname, '../..');
+    const semC = (s: string) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+    for (const rel of ['App.tsx', 'components/guild/GroveMilestoneCeremony.tsx', 'utils/shop.ts', 'hooks/useGroveWatch.ts', 'utils/groveLocal.ts']) {
+      expect(semC(fs.readFileSync(path.join(raiz, rel), 'utf8')), rel).not.toMatch(/from '(\.\.?\/)+(utils\/)?guildCopy'/);
+    }
   });
 });
