@@ -44,7 +44,6 @@ import { DailyReportModal } from './components/DailyReportModal';
 import { adventureOfDay, collectAdventure } from './utils/adventure';
 import { WelcomePromptModal } from './components/WelcomePromptModal';
 import { IntroScreen } from './components/IntroScreen';
-import { HelpModal } from './components/HelpModal';
 import { ProtectProgressModal } from './components/ProtectProgressModal';
 import { CATEGORY_ATTRIBUTES, type ActivityCategory, XP_THRESHOLDS } from './types/attributes';
 import { type CareEvent } from './components/CareSystem';
@@ -511,6 +510,8 @@ function PostponeNudgeSheet({
   );
 }
 
+// O glossário só existe quando alguém o abre — e ganhou os verbetes da Guilda (B2): fora do JS de entrada.
+const HelpModal = lazy(() => import('./components/HelpModal').then(m => ({ default: m.HelpModal })));
 const RestWindowCard = lazy(() => import('./components/RestWindowCard').then(m => ({ default: m.RestWindowCard })));
 const DreamDex = lazy(() => import('./components/DreamDex').then(m => ({ default: m.DreamDex })));
 const AdventureDiary = lazy(() => import('./components/AdventureDiary').then(m => ({ default: m.AdventureDiary })));
@@ -5395,11 +5396,15 @@ export default function App() {
         )}
 
         {/* Help Modal */}
-        <HelpModal
-          isOpen={showHelpModal}
-          onClose={() => setShowHelpModal(false)}
-          language={language}
-        />
+        {showHelpModal && (
+          <Suspense fallback={null}>
+            <HelpModal
+              isOpen
+              onClose={() => setShowHelpModal(false)}
+              language={language}
+            />
+          </Suspense>
+        )}
 
         {/* Créditos (monetização) — modal próprio, aberto pelo menu sanduíche. */}
         {creditsOpen && (
