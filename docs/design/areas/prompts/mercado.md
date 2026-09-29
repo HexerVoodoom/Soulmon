@@ -70,15 +70,28 @@ Single isometric pixel-art building on a PURE SOLID GREEN #00FF00 background, no
 
 | Campo | Valor |
 |---|---|
-| Família | `criatura` (NPC, busto — **prompt escrito à mão porque NPC de lote não vem do oráculo**; seguir o bloco de estilo da área) |
+| Família | `criatura` (NPC, busto — **núcleo do prompt vem do oráculo — `npcs-oraculo-saida.md`, decisão do dono 29/09/2026**; seguir o bloco de estilo da área) |
 | Destino | `src/assets/soulmon/npcs/npc-mercado-conquistas.png`; `LOT_NPC_ART` em `npcs/index.ts`; voz em `LOT_NPC_VOICE` |
 | Dimensão | **768×768**, busto da cintura para cima, 3/4 olhando para a **esquerda** |
 | Alfa | real (gerar sobre `#00FF00`), contorno preto 1 px |
 
-**Prompt**
+**Prompt — 1ª tentativa (`imagePrompt` do oráculo, envolvido pela âncora da área)**
 ```
 [MERCADO-ANCHOR]
-Bust portrait of an old wise tortoise NPC, waist-up, three-quarter view facing LEFT, on a PURE SOLID GREEN #00FF00 background. Calm, memory-keeping expression, half-closed kind eyes, wrinkled skin in muted olive-teal. Its shell is made of brass plates, each plate engraved with a simple medal emblem (no letters, no numbers), moss growing at the shell's rim, a couple of tiny turquoise spark points. Warm amber lantern light from the upper right. Original creature design. Do not copy any existing franchise character. Square 1:1 full-bleed composition.
+NPC BUST FORMAT (overrides the sprite format inside the CREATURE block): waist-up bust, three-quarter view facing LEFT, 768x768, on a PURE SOLID GREEN #00FF00 background, 1px near-black outline, hard pixel edges. Ignore "16x16", "transparent background" and the tiny-size words of the CREATURE block: the creature fills the bust frame. The palette and FORBIDDEN list of the area anchor win over the creature colors where they conflict.
+POSE (bible §4.2): tapping its shell once so the brass plates chime. EXPRESSION: calm, memory-keeping, kind.
+CREATURE (oracle, npcs-oraculo-saida.md › Medra, seed 29092026, imagePrompt):
+Generate an original creature for a monster-raising RPG inspired by Digimon, Pokémon, Monster Rancher, Yu-Gi-Oh, Warhammer, Palworld, Legend of Mana, Final Fantasy, Hello Kitty, Tamagotchi, Ragnarok Online and World of Warcraft. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: old wise tortoise with a domed shell of brass plates, each plate engraved with a simple plain medal emblem, moss along the shell rim, kind half-closed eyes. a chubby palm-sized body. Flat moss-brown and slate colors with gold accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.
+Square 1:1 full-bleed composition.
+```
+**Prompt — 2ª tentativa, se o provedor recusar (`imagePromptFallback`, sem referências de gênero)**
+```
+[MERCADO-ANCHOR]
+NPC BUST FORMAT (overrides the sprite format inside the CREATURE block): waist-up bust, three-quarter view facing LEFT, 768x768, on a PURE SOLID GREEN #00FF00 background, 1px near-black outline, hard pixel edges. Ignore "16x16", "transparent background" and the tiny-size words of the CREATURE block: the creature fills the bust frame. The palette and FORBIDDEN list of the area anchor win over the creature colors where they conflict.
+POSE (bible §4.2): tapping its shell once so the brass plates chime. EXPRESSION: calm, memory-keeping, kind.
+CREATURE (oracle, npcs-oraculo-saida.md › Medra, seed 29092026, imagePromptFallback):
+Generate an original creature for a monster-raising RPG. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: old wise tortoise with a domed shell of brass plates, each plate engraved with a simple plain medal emblem, moss along the shell rim, kind half-closed eyes. a chubby palm-sized body. Flat moss-brown and slate colors with gold accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.
+Square 1:1 full-bleed composition.
 ```
 **Negative**: `green on the character, purple, magenta, pink, text, letters, numbers, human, hands, skull, red, glow, blur, checkerboard, background scenery, logo`
 
@@ -91,10 +104,23 @@ Bust portrait of an old wise tortoise NPC, waist-up, three-quarter view facing L
 
 Refeito em alta (a arte atual `npc-loja-itens` é rascunho). Destino `src/assets/soulmon/npcs/npc-mercado-itens.png`; os imports `LOT_NPC_ART['mercado:itens']` passam a apontar para o novo. 768², alfa real, busto 3/4 esquerda.
 
-**Prompt**
+**Prompt — 1ª tentativa (`imagePrompt` do oráculo, envolvido pela âncora da área)**
 ```
 [MERCADO-ANCHOR]
-Bust portrait of a small precise hermit-crab NPC the size of a dog, waist-up view, three-quarter view facing LEFT, on a PURE SOLID GREEN #00FF00 background. Its shell is a brass chest of six small drawers with tiny knobs (stacked rectangular, one drawer half open, held by its claw). Body in muted teal-grey with cream markings, two antennae with turquoise tips, attentive counting expression. Amber lantern light from the upper right. Original creature design. Do not copy any existing franchise character. Square 1:1 full-bleed composition.
+NPC BUST FORMAT (overrides the sprite format inside the CREATURE block): waist-up bust, three-quarter view facing LEFT, 768x768, on a PURE SOLID GREEN #00FF00 background, 1px near-black outline, hard pixel edges. Ignore "16x16", "transparent background" and the tiny-size words of the CREATURE block: the creature fills the bust frame. The palette and FORBIDDEN list of the area anchor win over the creature colors where they conflict.
+POSE (bible §4.2): opening one drawer of its own shell with a claw. EXPRESSION: small and precise, counting the drawers before opening one; attentive.
+CREATURE (oracle, npcs-oraculo-saida.md › Tamba, seed 29092026, imagePrompt):
+Generate an original creature for a monster-raising RPG inspired by Digimon, Pokémon, Monster Rancher, Yu-Gi-Oh, Warhammer, Palworld, Legend of Mana, Final Fantasy, Hello Kitty, Tamagotchi, Ragnarok Online and World of Warcraft. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: dog-sized hermit crab whose shell is a brass chest of six little drawers with tiny knobs, turquoise-tipped antennae, precise counting eyes. small and simple with a big head. Flat steel gray and gunmetal colors with gold accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.
+Square 1:1 full-bleed composition.
+```
+**Prompt — 2ª tentativa, se o provedor recusar (`imagePromptFallback`, sem referências de gênero)**
+```
+[MERCADO-ANCHOR]
+NPC BUST FORMAT (overrides the sprite format inside the CREATURE block): waist-up bust, three-quarter view facing LEFT, 768x768, on a PURE SOLID GREEN #00FF00 background, 1px near-black outline, hard pixel edges. Ignore "16x16", "transparent background" and the tiny-size words of the CREATURE block: the creature fills the bust frame. The palette and FORBIDDEN list of the area anchor win over the creature colors where they conflict.
+POSE (bible §4.2): opening one drawer of its own shell with a claw. EXPRESSION: small and precise, counting the drawers before opening one; attentive.
+CREATURE (oracle, npcs-oraculo-saida.md › Tamba, seed 29092026, imagePromptFallback):
+Generate an original creature for a monster-raising RPG. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: dog-sized hermit crab whose shell is a brass chest of six little drawers with tiny knobs, turquoise-tipped antennae, precise counting eyes. small and simple with a big head. Flat steel gray and gunmetal colors with gold accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.
+Square 1:1 full-bleed composition.
 ```
 **Negative**: `green on the character, purple, magenta, pink, text, letters, numbers, human, hands, skull, red, glow, blur, checkerboard, scenery`
 **Seeds**: **3**. Escolher a que mostra as **seis** gavetas e a garra abrindo uma.
@@ -104,10 +130,23 @@ Bust portrait of a small precise hermit-crab NPC the size of a dog, waist-up vie
 
 Destino `src/assets/soulmon/npcs/npc-mercado-decoracao.png`. 768², alfa real.
 
-**Prompt**
+**Prompt — 1ª tentativa (`imagePrompt` do oráculo, envolvido pela âncora da área)**
 ```
 [MERCADO-ANCHOR]
-Bust portrait of a big slow moss slug NPC, waist-up view, three-quarter view facing LEFT, on a PURE SOLID GREEN #00FF00 background. On its back it carries a whole tiny room like a snail shell: a plank roof, a small window glowing warm amber, crate-wood walls, a little vine on the roof. Body in soft moss-green and teal, gentle homey expression, half-lidded eyes on short stalks. Original creature design. Do not copy any existing franchise character. Square 1:1 full-bleed composition.
+NPC BUST FORMAT (overrides the sprite format inside the CREATURE block): waist-up bust, three-quarter view facing LEFT, 768x768, on a PURE SOLID GREEN #00FF00 background, 1px near-black outline, hard pixel edges. Ignore "16x16", "transparent background" and the tiny-size words of the CREATURE block: the creature fills the bust frame. The palette and FORBIDDEN list of the area anchor win over the creature colors where they conflict.
+POSE (bible §4.2): the little window on its back lights up as it speaks. EXPRESSION: slow and homey, unhurried, half-lidded eyes.
+CREATURE (oracle, npcs-oraculo-saida.md › Musga, seed 29092027, imagePrompt):
+Generate an original creature for a monster-raising RPG inspired by Digimon, Pokémon, Monster Rancher, Yu-Gi-Oh, Warhammer, Palworld, Legend of Mana, Final Fantasy, Hello Kitty, Tamagotchi, Ragnarok Online and World of Warcraft. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: big slow moss slug carrying a whole tiny room on its back: plank roof, crate-wood walls, one small window glowing warm amber, eyes on short stalks. a squishy little body. Flat leafy green and lime colors with cyan accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.
+Square 1:1 full-bleed composition.
+```
+**Prompt — 2ª tentativa, se o provedor recusar (`imagePromptFallback`, sem referências de gênero)**
+```
+[MERCADO-ANCHOR]
+NPC BUST FORMAT (overrides the sprite format inside the CREATURE block): waist-up bust, three-quarter view facing LEFT, 768x768, on a PURE SOLID GREEN #00FF00 background, 1px near-black outline, hard pixel edges. Ignore "16x16", "transparent background" and the tiny-size words of the CREATURE block: the creature fills the bust frame. The palette and FORBIDDEN list of the area anchor win over the creature colors where they conflict.
+POSE (bible §4.2): the little window on its back lights up as it speaks. EXPRESSION: slow and homey, unhurried, half-lidded eyes.
+CREATURE (oracle, npcs-oraculo-saida.md › Musga, seed 29092027, imagePromptFallback):
+Generate an original creature for a monster-raising RPG. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: big slow moss slug carrying a whole tiny room on its back: plank roof, crate-wood walls, one small window glowing warm amber, eyes on short stalks. a squishy little body. Flat leafy green and lime colors with cyan accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.
+Square 1:1 full-bleed composition.
 ```
 **Negative**: `green on the character, purple, magenta, pink, text, letters, numbers, human, hands, skull, red, glow, blur, checkerboard, scenery, snail shell spiral`
 **Seeds**: **3**. Escolher a com quarto retangular legível (janela acesa) e não concha espiral.
@@ -117,10 +156,23 @@ Bust portrait of a big slow moss slug NPC, waist-up view, three-quarter view fac
 
 Destino `src/assets/soulmon/npcs/npc-mercado-background.png`. 768², alfa real.
 
-**Prompt**
+**Prompt — 1ª tentativa (`imagePrompt` do oráculo, envolvido pela âncora da área)**
 ```
 [MERCADO-ANCHOR]
-Bust portrait of a dreamy land-squid NPC, waist-up view, three-quarter view facing LEFT, on a PURE SOLID GREEN #00FF00 background. Cream-coloured body; its mantle is a stretched canvas screen in a thin copper frame showing a small pixel landscape (hills, a horizon, rain clouds in teal, cream and amber only), soft wistful expression, tentacles curled. A few turquoise spark points. Original creature design. Do not copy any existing franchise character. Square 1:1 full-bleed composition.
+NPC BUST FORMAT (overrides the sprite format inside the CREATURE block): waist-up bust, three-quarter view facing LEFT, 768x768, on a PURE SOLID GREEN #00FF00 background, 1px near-black outline, hard pixel edges. Ignore "16x16", "transparent background" and the tiny-size words of the CREATURE block: the creature fills the bust frame. The palette and FORBIDDEN list of the area anchor win over the creature colors where they conflict.
+POSE (bible §4.2): the landscape on its mantle switching to another view in a blink. EXPRESSION: dreamy and wistful, as if remembering a place it visited.
+CREATURE (oracle, npcs-oraculo-saida.md › Panora, seed 29092026, imagePrompt):
+Generate an original creature for a monster-raising RPG inspired by Digimon, Pokémon, Monster Rancher, Yu-Gi-Oh, Warhammer, Palworld, Legend of Mana, Final Fantasy, Hello Kitty, Tamagotchi, Ragnarok Online and World of Warcraft. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: dreamy cream land-squid whose mantle is a stretched canvas screen in a thin copper frame showing a small pixel landscape of hills and rain clouds. a tiny bouncy body. Flat deep navy and seafoam colors with cyan accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.
+Square 1:1 full-bleed composition.
+```
+**Prompt — 2ª tentativa, se o provedor recusar (`imagePromptFallback`, sem referências de gênero)**
+```
+[MERCADO-ANCHOR]
+NPC BUST FORMAT (overrides the sprite format inside the CREATURE block): waist-up bust, three-quarter view facing LEFT, 768x768, on a PURE SOLID GREEN #00FF00 background, 1px near-black outline, hard pixel edges. Ignore "16x16", "transparent background" and the tiny-size words of the CREATURE block: the creature fills the bust frame. The palette and FORBIDDEN list of the area anchor win over the creature colors where they conflict.
+POSE (bible §4.2): the landscape on its mantle switching to another view in a blink. EXPRESSION: dreamy and wistful, as if remembering a place it visited.
+CREATURE (oracle, npcs-oraculo-saida.md › Panora, seed 29092026, imagePromptFallback):
+Generate an original creature for a monster-raising RPG. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: dreamy cream land-squid whose mantle is a stretched canvas screen in a thin copper frame showing a small pixel landscape of hills and rain clouds. a tiny bouncy body. Flat deep navy and seafoam colors with cyan accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.
+Square 1:1 full-bleed composition.
 ```
 **Negative**: `green on the character, purple, magenta, pink, violet sky, text, letters, numbers, human, hands, skull, red, glow, blur, checkerboard, scenery outside the mantle`
 **Seeds**: **3**. Escolher a com paisagem no manto sem tons roxos/rosados (céu em petróleo/creme/âmbar) e moldura de cobre legível.

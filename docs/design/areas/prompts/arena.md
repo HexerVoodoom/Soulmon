@@ -87,20 +87,46 @@ Negative comum: `magenta, purple, violet, pink, human, human hands, skull, bones
 
 ### `npc-arena-feira` — Fanfa (assume a Feira)
 - **Tipo**: NPC busto · arena:feira · criatura-sanfona.
-- **Prompt**:
+**Prompt — 1ª tentativa (`imagePrompt` do oráculo, envolvido pela âncora da área)**
 ```
 [AREA STYLE ANCHOR — copiar o bloco da §1 aqui, idêntico]
-CHARACTER BUST: Fanfa, an original accordion-creature, waist-up, facing three-quarters to the LEFT. Body is a bellows of striped canvas in petrol and bone stripes with copper corner-clasps, a friendly mouth in the middle of the bellows, two long thin arms that carry small paper lanterns lit with a turquoise pixel each, festive and communal expression, a tiny puff of turquoise sparks at the bellows edge as if it just breathed out. Angular pleats. Do not copy any existing franchise character. PURE SOLID CHROMA GREEN #00FF00 background, nothing else behind. Square 1:1 full-bleed composition.
+NPC BUST FORMAT (overrides the sprite format inside the CREATURE block): waist-up bust, three-quarter view facing LEFT, 768x768, on a PURE SOLID GREEN #00FF00 background, 1px near-black outline, hard pixel edges. Ignore "16x16", "transparent background" and the tiny-size words of the CREATURE block: the creature fills the bust frame. The palette and FORBIDDEN list of the area anchor win over the creature colors where they conflict.
+POSE (bible §4.2): stretching and closing its bellows, puffing out a small breath of turquoise sparks. EXPRESSION: festive and communal.
+CREATURE (oracle, npcs-oraculo-saida.md › Fanfa, seed 29092027, imagePrompt):
+Generate an original creature for a monster-raising RPG inspired by Digimon, Pokémon, Monster Rancher, Yu-Gi-Oh, Warhammer, Palworld, Legend of Mana, Final Fantasy, Hello Kitty, Tamagotchi, Ragnarok Online and World of Warcraft. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: accordion creature whose body is a bellows of petrol and bone striped canvas, a friendly mouth in the middle, long thin arms carrying small paper lanterns. a pint-sized simple shape. Flat pale gray-blue and silver-lining colors with cyan accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.
+Square 1:1 full-bleed composition.
+```
+**Prompt — 2ª tentativa, se o provedor recusar (`imagePromptFallback`, sem referências de gênero)**
+```
+[AREA STYLE ANCHOR — copiar o bloco da §1 aqui, idêntico]
+NPC BUST FORMAT (overrides the sprite format inside the CREATURE block): waist-up bust, three-quarter view facing LEFT, 768x768, on a PURE SOLID GREEN #00FF00 background, 1px near-black outline, hard pixel edges. Ignore "16x16", "transparent background" and the tiny-size words of the CREATURE block: the creature fills the bust frame. The palette and FORBIDDEN list of the area anchor win over the creature colors where they conflict.
+POSE (bible §4.2): stretching and closing its bellows, puffing out a small breath of turquoise sparks. EXPRESSION: festive and communal.
+CREATURE (oracle, npcs-oraculo-saida.md › Fanfa, seed 29092027, imagePromptFallback):
+Generate an original creature for a monster-raising RPG. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: accordion creature whose body is a bellows of petrol and bone striped canvas, a friendly mouth in the middle, long thin arms carrying small paper lanterns. a pint-sized simple shape. Flat pale gray-blue and silver-lining colors with cyan accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.
+Square 1:1 full-bleed composition.
 ```
 - **Seeds**: 4 imagens. Escolher: fole listrado legível, boca no centro do fole, ≥1 lanterna nos braços, cabe nos 3/4 à esquerda; nada de rosto humano.
 - **Aceite**: silhueta preta = fole com pregas + braços com lanterna, distinta de Vultrak e Rinoco; alfa limpo; paleta ligada à tenda (`lote-arena-feira`).
 
 ### `npc-arena-duelo` — Rinoco
 - **Tipo**: NPC busto · arena:duelo · rinoceronte-bípede (arte falta; hoje placeholder).
-- **Prompt**:
+**Prompt — 1ª tentativa (`imagePrompt` do oráculo, envolvido pela âncora da área)**
 ```
 [AREA STYLE ANCHOR — copiar o bloco da §1 aqui, idêntico]
-CHARACTER BUST: Rinoco, an original stocky bipedal rhinoceros creature, waist-up, facing three-quarters to the LEFT. Hide the color of sandstone #C8A878, a horn of chipped stone with a thin turquoise vein, a cloth headband in bone, broad shoulders, a good-natured laughing grin as if it was just hit and liked it, one fist raised in a friendly greeting. Angular blocky shapes, thick copper wrist band. Do not copy any existing franchise character. PURE SOLID CHROMA GREEN #00FF00 background, nothing else behind. Square 1:1 full-bleed composition.
+NPC BUST FORMAT (overrides the sprite format inside the CREATURE block): waist-up bust, three-quarter view facing LEFT, 768x768, on a PURE SOLID GREEN #00FF00 background, 1px near-black outline, hard pixel edges. Ignore "16x16", "transparent background" and the tiny-size words of the CREATURE block: the creature fills the bust frame. The palette and FORBIDDEN list of the area anchor win over the creature colors where they conflict.
+POSE (bible §4.2): knocking its horn against a ring post. EXPRESSION: good-natured, laughing as if it was just hit and liked it.
+CREATURE (oracle, npcs-oraculo-saida.md › Rinoco, seed 29092026, imagePrompt):
+Generate an original creature for a monster-raising RPG inspired by Digimon, Pokémon, Monster Rancher, Yu-Gi-Oh, Warhammer, Palworld, Legend of Mana, Final Fantasy, Hello Kitty, Tamagotchi, Ragnarok Online and World of Warcraft. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: stocky bipedal rhinoceros with sandstone hide, a horn of chipped stone with a thin turquoise vein, a bone cloth headband and a good-natured grin. small and simple with a big head. Flat clay-red and sandstone colors with red accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.
+Square 1:1 full-bleed composition.
+```
+**Prompt — 2ª tentativa, se o provedor recusar (`imagePromptFallback`, sem referências de gênero)**
+```
+[AREA STYLE ANCHOR — copiar o bloco da §1 aqui, idêntico]
+NPC BUST FORMAT (overrides the sprite format inside the CREATURE block): waist-up bust, three-quarter view facing LEFT, 768x768, on a PURE SOLID GREEN #00FF00 background, 1px near-black outline, hard pixel edges. Ignore "16x16", "transparent background" and the tiny-size words of the CREATURE block: the creature fills the bust frame. The palette and FORBIDDEN list of the area anchor win over the creature colors where they conflict.
+POSE (bible §4.2): knocking its horn against a ring post. EXPRESSION: good-natured, laughing as if it was just hit and liked it.
+CREATURE (oracle, npcs-oraculo-saida.md › Rinoco, seed 29092026, imagePromptFallback):
+Generate an original creature for a monster-raising RPG. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: stocky bipedal rhinoceros with sandstone hide, a horn of chipped stone with a thin turquoise vein, a bone cloth headband and a good-natured grin. small and simple with a big head. Flat clay-red and sandstone colors with red accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.
+Square 1:1 full-bleed composition.
 ```
 - **Seeds**: 3 imagens. Escolher: chifre com veio turquesa legível, sorriso, sem armas, sem sangue.
 - **Aceite**: silhueta preta = massa larga + chifre de pedra; destacável de Fanfa (fole) e de Vultrak; 768² alfa.

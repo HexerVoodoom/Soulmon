@@ -126,17 +126,30 @@ A single isometric game building on a PURE SOLID GREEN BACKGROUND #00FF00: a len
 
 | Campo | Valor |
 |---|---|
-| Família | `criatura`/NPC (busto; prompt de personagem próprio, não vem do oráculo) |
+| Família | `criatura`/NPC (busto; núcleo do prompt vem do oráculo — `npcs-oraculo-saida.md`, decisão do dono 29/09/2026) |
 | Destino | `src/assets/soulmon/npcs/npc-laboratorio-pet.png`; `LOT_NPC_ART['laboratorio:pet']` em `npcs/index.ts`; voz em `LOT_NPC_VOICE` (Tico → **Bento**, A4) |
 | Fonte | 768×768 sobre `#00FF00` → **768×768 alfa real**, contorno preto de 1 px |
 | Pose | busto da cintura para cima, 3/4 olhando para a ESQUERDA (fala à direita) |
 
 **Prompt**
 
+**Prompt — 1ª tentativa (`imagePrompt` do oráculo, envolvido pela âncora da área)**
 ```
 [ÂNCORA DE ESTILO DA ÁREA — colar aqui, idêntica]
-
-NPC portrait bust on a PURE SOLID GREEN BACKGROUND #00FF00, waist-up, three-quarter view facing LEFT. "Bento": a small owl-deer creature (owl face and feathered chest, small deer body and ears) with tiny antlers made of clear ice-blue glass, petrol-teal feathers with darker #123232 shading, round copper-framed lenses (glasses) over big calm eyes, fur/feathers touched by ice-blue light on one side. Careful, attentive, gentle expression. One wing tip raised, adjusting the glasses. Small turquoise spark near the antlers. 1px near-black outline all around, hard pixel edges, an original creature of this universe. Do not copy any existing franchise character. Square 1:1 full-bleed composition.
+NPC BUST FORMAT (overrides the sprite format inside the CREATURE block): waist-up bust, three-quarter view facing LEFT, 768x768, on a PURE SOLID GREEN #00FF00 background, 1px near-black outline, hard pixel edges. Ignore "16x16", "transparent background" and the tiny-size words of the CREATURE block: the creature fills the bust frame. The palette and FORBIDDEN list of the area anchor win over the creature colors where they conflict.
+POSE (bible §4.2): adjusting its glasses with a wing tip. EXPRESSION: careful, attentive, gentle.
+CREATURE (oracle, npcs-oraculo-saida.md › Bento, seed 29092026, imagePrompt):
+Generate an original creature for a monster-raising RPG inspired by Digimon, Pokémon, Monster Rancher, Yu-Gi-Oh, Warhammer, Palworld, Legend of Mana, Final Fantasy, Hello Kitty, Tamagotchi, Ragnarok Online and World of Warcraft. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: small owl-deer with tiny antlers of clear ice-blue glass, petrol-teal feathers and round copper-framed glasses over big calm eyes. a small egg-shaped body. Flat amber and ivory colors with gold accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.
+Square 1:1 full-bleed composition.
+```
+**Prompt — 2ª tentativa, se o provedor recusar (`imagePromptFallback`, sem referências de gênero)**
+```
+[ÂNCORA DE ESTILO DA ÁREA — colar aqui, idêntica]
+NPC BUST FORMAT (overrides the sprite format inside the CREATURE block): waist-up bust, three-quarter view facing LEFT, 768x768, on a PURE SOLID GREEN #00FF00 background, 1px near-black outline, hard pixel edges. Ignore "16x16", "transparent background" and the tiny-size words of the CREATURE block: the creature fills the bust frame. The palette and FORBIDDEN list of the area anchor win over the creature colors where they conflict.
+POSE (bible §4.2): adjusting its glasses with a wing tip. EXPRESSION: careful, attentive, gentle.
+CREATURE (oracle, npcs-oraculo-saida.md › Bento, seed 29092026, imagePromptFallback):
+Generate an original creature for a monster-raising RPG. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: small owl-deer with tiny antlers of clear ice-blue glass, petrol-teal feathers and round copper-framed glasses over big calm eyes. a small egg-shaped body. Flat amber and ivory colors with gold accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.
+Square 1:1 full-bleed composition.
 ```
 
 **Negative**: `human, humanoid face, hands, purple, pink, magenta, red, skull, text, name tag with letters, checkerboard, franchise mascot look, owl from any known game or film, soft glow, background scenery`
@@ -158,10 +171,23 @@ NPC portrait bust on a PURE SOLID GREEN BACKGROUND #00FF00, waist-up, three-quar
 
 **Prompt**
 
+**Prompt — 1ª tentativa (`imagePrompt` do oráculo, envolvido pela âncora da área)**
 ```
 [ÂNCORA DE ESTILO DA ÁREA — colar aqui, idêntica]
-
-NPC portrait bust on a PURE SOLID GREEN BACKGROUND #00FF00, waist-up (upper thorax and head), three-quarter view facing LEFT. "Quill": a praying-mantis creature made of greenish translucent glass (pale teal-green #5FB8A0 body with ice-blue #BFEFFF highlight strips), whose two front forelegs end in feather quill pens (cream feathers with copper nibs), a small copper notebook strapped to its back, slim geometric angular head with two calm round eyes. Meticulous and serene expression. One forelimb turning a page of a blank copper-bound notebook (pages blank, NO writing). Small turquoise spark at the nib. 1px near-black outline, hard pixel edges, an original creature of this universe. Do not copy any existing franchise character. Square 1:1 full-bleed composition.
+NPC BUST FORMAT (overrides the sprite format inside the CREATURE block): waist-up bust, three-quarter view facing LEFT, 768x768, on a PURE SOLID GREEN #00FF00 background, 1px near-black outline, hard pixel edges. Ignore "16x16", "transparent background" and the tiny-size words of the CREATURE block: the creature fills the bust frame. The palette and FORBIDDEN list of the area anchor win over the creature colors where they conflict.
+POSE (bible §4.2): turning a blank page of its notebook with a quill foreleg (pages blank, no writing). EXPRESSION: meticulous and serene.
+CREATURE (oracle, npcs-oraculo-saida.md › Quill, seed 29092026, imagePrompt):
+Generate an original creature for a monster-raising RPG inspired by Digimon, Pokémon, Monster Rancher, Yu-Gi-Oh, Warhammer, Palworld, Legend of Mana, Final Fantasy, Hello Kitty, Tamagotchi, Ragnarok Online and World of Warcraft. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: praying mantis of greenish translucent glass whose front forelegs end in feather quill pens with copper nibs, a blank copper notebook strapped to its back. a small button-eyed form. Flat chrome and hazard-yellow colors with cyan accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.
+Square 1:1 full-bleed composition.
+```
+**Prompt — 2ª tentativa, se o provedor recusar (`imagePromptFallback`, sem referências de gênero)**
+```
+[ÂNCORA DE ESTILO DA ÁREA — colar aqui, idêntica]
+NPC BUST FORMAT (overrides the sprite format inside the CREATURE block): waist-up bust, three-quarter view facing LEFT, 768x768, on a PURE SOLID GREEN #00FF00 background, 1px near-black outline, hard pixel edges. Ignore "16x16", "transparent background" and the tiny-size words of the CREATURE block: the creature fills the bust frame. The palette and FORBIDDEN list of the area anchor win over the creature colors where they conflict.
+POSE (bible §4.2): turning a blank page of its notebook with a quill foreleg (pages blank, no writing). EXPRESSION: meticulous and serene.
+CREATURE (oracle, npcs-oraculo-saida.md › Quill, seed 29092026, imagePromptFallback):
+Generate an original creature for a monster-raising RPG. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: praying mantis of greenish translucent glass whose front forelegs end in feather quill pens with copper nibs, a blank copper notebook strapped to its back. a small button-eyed form. Flat chrome and hazard-yellow colors with cyan accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.
+Square 1:1 full-bleed composition.
 ```
 
 **Negative**: `writing on pages, letters, numbers, human, hands, purple, pink, magenta, red, skull, checkerboard, soft glow, scenery, insect from any game or anime franchise`

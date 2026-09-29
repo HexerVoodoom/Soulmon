@@ -127,11 +127,23 @@ skull, bones, magenta, purple, violet, pink, red flag, red, orange fire, torches
 | dimensões | **768×768**, busto da cintura para cima, 3/4 olhando para a **esquerda** (a fala fica à direita) |
 | alfa | **real**, contorno preto de 1 px (verde `#00FF00` + chroma-key) |
 
-**Prompt principal**
+**Prompt — 1ª tentativa (`imagePrompt` do oráculo, envolvido pela âncora da área)**
 ```
 [paste AREA STYLE ANCHOR here, identical]
-
-Character bust portrait, chest-up, three-quarter view facing LEFT, centered, on a PURE SOLID GREEN BACKGROUND (#00FF00). Original creature "Trote": a tall-legged running bird with a short beak, restless and eager. Body feathers in peat brown-green (#2E3B2A) with tips glowing pale will-o-wisp green (#A8F0D0), one single loose feather falling from its crest, bright round curious eyes, a tiny copper ring on one leg, a few turquoise sparks near the feet. Cheerful, springy expression, head slightly forward as if about to start a race. Not a human, no clothing, no hands. 1px near-black outline (#061414) around the whole silhouette, chunky hard pixels, no blur, no glow halo. Waist-up crop (bird chest and upper legs visible). Do not copy any existing franchise character. Square 1:1 full-bleed composition.
+NPC BUST FORMAT (overrides the sprite format inside the CREATURE block): waist-up bust, three-quarter view facing LEFT, 768x768, on a PURE SOLID GREEN #00FF00 background, 1px near-black outline, hard pixel edges. Ignore "16x16", "transparent background" and the tiny-size words of the CREATURE block: the creature fills the bust frame. The palette and FORBIDDEN list of the area anchor win over the creature colors where they conflict.
+POSE (bible §4.2): stamping both feet in place like at a starting line. EXPRESSION: restless and eager to start.
+CREATURE (oracle, npcs-oraculo-saida.md › Trote, seed 29092027, imagePrompt):
+Generate an original creature for a monster-raising RPG inspired by Digimon, Pokémon, Monster Rancher, Yu-Gi-Oh, Warhammer, Palworld, Legend of Mana, Final Fantasy, Hello Kitty, Tamagotchi, Ragnarok Online and World of Warcraft. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: long-legged running bird with a short beak, peat brown-green feathers with pale glowing tips, one loose feather always falling from its crest, eager eyes. a chubby palm-sized body. Flat midnight blue and smoky black colors with cyan accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.
+Square 1:1 full-bleed composition.
+```
+**Prompt — 2ª tentativa, se o provedor recusar (`imagePromptFallback`, sem referências de gênero)**
+```
+[paste AREA STYLE ANCHOR here, identical]
+NPC BUST FORMAT (overrides the sprite format inside the CREATURE block): waist-up bust, three-quarter view facing LEFT, 768x768, on a PURE SOLID GREEN #00FF00 background, 1px near-black outline, hard pixel edges. Ignore "16x16", "transparent background" and the tiny-size words of the CREATURE block: the creature fills the bust frame. The palette and FORBIDDEN list of the area anchor win over the creature colors where they conflict.
+POSE (bible §4.2): stamping both feet in place like at a starting line. EXPRESSION: restless and eager to start.
+CREATURE (oracle, npcs-oraculo-saida.md › Trote, seed 29092027, imagePromptFallback):
+Generate an original creature for a monster-raising RPG. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: long-legged running bird with a short beak, peat brown-green feathers with pale glowing tips, one loose feather always falling from its crest, eager eyes. a chubby palm-sized body. Flat midnight blue and smoky black colors with cyan accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.
+Square 1:1 full-bleed composition.
 ```
 
 **negative**

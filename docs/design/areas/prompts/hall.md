@@ -94,14 +94,27 @@ SUBJECT: a single isometric pixel-art LONGHOUSE, wide and low, walls of smooth p
 
 ## H5 — NPC Nino (Círculo de Amigos)
 
-- **id:** `npc-hall-amigos` · **família:** `criatura` (NPC/busto; prompt escrito à mão porque é NPC de mapa, não linha do oráculo) · **destino:** `src/assets/soulmon/npcs/npc-hall-amigos.png` (`LOT_NPC_ART['hall:amigos']`; voz em `LOT_NPC_VOICE`, dono `areaNpcVoice.ts`)
+- **id:** `npc-hall-amigos` · **família:** `criatura` (NPC/busto; núcleo do prompt vem do oráculo — `npcs-oraculo-saida.md`, decisão do dono 29/09/2026) · **destino:** `src/assets/soulmon/npcs/npc-hall-amigos.png` (`LOT_NPC_ART['hall:amigos']`; voz em `LOT_NPC_VOICE`, dono `areaNpcVoice.ts`)
 - **Formato:** **768×768** (1:1), busto da cintura para cima, olhando 3/4 para a **esquerda** (fala à direita), **alfa real**, contorno preto de 1 px (folha sobre `#00FF00` + chroma-key).
 - Ficha (bíblia §4.2): esquilo-planador creme com membrana de pergaminho entre as patas, bolsa de cobre a tiracolo; sociável, rápido, leva recado; gesto: planar entre colunas.
 
+**Prompt — 1ª tentativa (`imagePrompt` do oráculo, envolvido pela âncora da área)**
 ```
 [AREA STYLE ANCHOR — copiar o bloco acima, idêntico]
-
-SUBJECT: bust portrait (waist up), pixel art, of a friendly gliding-squirrel creature NPC, cream fur (#EFE3C2 with #B98A56 shading), a thin parchment-colored gliding membrane stretched between its front paws and body, a small copper courier bag across its chest, large bright eyes, a bushy tail curling up behind, ears slightly forward, body turned three-quarters to the LEFT with an open, welcoming expression, one tiny turquoise spark near the bag. Creature only, no human features, no hands. 1px near-black outline. Do not copy any existing franchise character. Background is flat pure #00FF00 green, nothing else. Square 1:1 full-bleed composition.
+NPC BUST FORMAT (overrides the sprite format inside the CREATURE block): waist-up bust, three-quarter view facing LEFT, 768x768, on a PURE SOLID GREEN #00FF00 background, 1px near-black outline, hard pixel edges. Ignore "16x16", "transparent background" and the tiny-size words of the CREATURE block: the creature fills the bust frame. The palette and FORBIDDEN list of the area anchor win over the creature colors where they conflict.
+POSE (bible §4.2): mid-glide between two columns, membrane spread. EXPRESSION: sociable and quick, open and welcoming.
+CREATURE (oracle, npcs-oraculo-saida.md › Nino, seed 29092027, imagePrompt):
+Generate an original creature for a monster-raising RPG inspired by Digimon, Pokémon, Monster Rancher, Yu-Gi-Oh, Warhammer, Palworld, Legend of Mana, Final Fantasy, Hello Kitty, Tamagotchi, Ragnarok Online and World of Warcraft. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: cream gliding squirrel with a thin parchment membrane between its paws, a small copper courier bag across its chest and a bushy curled tail. a little blob-like body. Flat pale gray-blue and silver-lining colors with gold accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.
+Square 1:1 full-bleed composition.
+```
+**Prompt — 2ª tentativa, se o provedor recusar (`imagePromptFallback`, sem referências de gênero)**
+```
+[AREA STYLE ANCHOR — copiar o bloco acima, idêntico]
+NPC BUST FORMAT (overrides the sprite format inside the CREATURE block): waist-up bust, three-quarter view facing LEFT, 768x768, on a PURE SOLID GREEN #00FF00 background, 1px near-black outline, hard pixel edges. Ignore "16x16", "transparent background" and the tiny-size words of the CREATURE block: the creature fills the bust frame. The palette and FORBIDDEN list of the area anchor win over the creature colors where they conflict.
+POSE (bible §4.2): mid-glide between two columns, membrane spread. EXPRESSION: sociable and quick, open and welcoming.
+CREATURE (oracle, npcs-oraculo-saida.md › Nino, seed 29092027, imagePromptFallback):
+Generate an original creature for a monster-raising RPG. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: cream gliding squirrel with a thin parchment membrane between its paws, a small copper courier bag across its chest and a bushy curled tail. a little blob-like body. Flat pale gray-blue and silver-lining colors with gold accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.
+Square 1:1 full-bleed composition.
 ```
 
 - **negative:** `human, human hands, pink, purple, magenta, text, letters, numbers, logo, franchise character, Pokemon, Pikachu, mascot, background scenery, frame, checkerboard, blur, gradient, soft shadow, translucent pixels`
@@ -114,10 +127,23 @@ SUBJECT: bust portrait (waist up), pixel art, of a friendly gliding-squirrel cre
 - **Formato:** 768×768 (1:1), busto, 3/4 para a esquerda, alfa real (chroma-key `#00FF00`), contorno de 1 px.
 - Ficha: cervo-árvore grande e lento, galhada que é um pequeno bosque com folhas turquesa; casco de pedra clara; acolhedora; gesto: inclina a galhada e cai uma folha (folha viva, verde-turquesa, nunca seca).
 
+**Prompt — 1ª tentativa (`imagePrompt` do oráculo, envolvido pela âncora da área)**
 ```
 [AREA STYLE ANCHOR — copiar o bloco acima, idêntico]
-
-SUBJECT: bust portrait (waist up), pixel art, of a large, calm tree-stag creature NPC, warm cream-and-pale-stone coat (#EFE3C2 with #B98A56 shading), a wide gentle face, and antlers that are a small living grove: many branching antlers holding healthy round leaves in turquoise #6EFFFB-toned teal and lawn green, with thin copper vines wrapped around the antler bases, one fresh leaf falling; pale stone hooves suggested at the bottom edge; body turned three-quarters to the LEFT, head slightly tilted, kind expression. Every leaf is green and alive, no dry leaves, no bare branches. Creature only, no human features. 1px near-black outline. Do not copy any existing franchise character. Background is flat pure #00FF00 green, nothing else. Square 1:1 full-bleed composition.
+NPC BUST FORMAT (overrides the sprite format inside the CREATURE block): waist-up bust, three-quarter view facing LEFT, 768x768, on a PURE SOLID GREEN #00FF00 background, 1px near-black outline, hard pixel edges. Ignore "16x16", "transparent background" and the tiny-size words of the CREATURE block: the creature fills the bust frame. The palette and FORBIDDEN list of the area anchor win over the creature colors where they conflict.
+POSE (bible §4.2): tilting its antlers so one fresh green leaf falls (no dry leaves). EXPRESSION: welcoming and slow, kind.
+CREATURE (oracle, npcs-oraculo-saida.md › Marla, seed 29092027, imagePrompt):
+Generate an original creature for a monster-raising RPG inspired by Digimon, Pokémon, Monster Rancher, Yu-Gi-Oh, Warhammer, Palworld, Legend of Mana, Final Fantasy, Hello Kitty, Tamagotchi, Ragnarok Online and World of Warcraft. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: large calm tree-stag with a cream and pale-stone coat, antlers that are a small living grove of turquoise and green leaves, pale stone hooves. a baby-sized round form. Flat sage green and sunflower colors with cyan accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.
+Square 1:1 full-bleed composition.
+```
+**Prompt — 2ª tentativa, se o provedor recusar (`imagePromptFallback`, sem referências de gênero)**
+```
+[AREA STYLE ANCHOR — copiar o bloco acima, idêntico]
+NPC BUST FORMAT (overrides the sprite format inside the CREATURE block): waist-up bust, three-quarter view facing LEFT, 768x768, on a PURE SOLID GREEN #00FF00 background, 1px near-black outline, hard pixel edges. Ignore "16x16", "transparent background" and the tiny-size words of the CREATURE block: the creature fills the bust frame. The palette and FORBIDDEN list of the area anchor win over the creature colors where they conflict.
+POSE (bible §4.2): tilting its antlers so one fresh green leaf falls (no dry leaves). EXPRESSION: welcoming and slow, kind.
+CREATURE (oracle, npcs-oraculo-saida.md › Marla, seed 29092027, imagePromptFallback):
+Generate an original creature for a monster-raising RPG. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: large calm tree-stag with a cream and pale-stone coat, antlers that are a small living grove of turquoise and green leaves, pale stone hooves. a baby-sized round form. Flat sage green and sunflower colors with cyan accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.
+Square 1:1 full-bleed composition.
 ```
 
 - **negative:** `human, hands, dead leaves, dry leaves, autumn colors, orange leaves, bare antlers, pink, purple, magenta, text, letters, numbers, logo, franchise character, deer mascot, scenery background, frame, checkerboard, blur, gradient, soft shadow, translucent pixels`

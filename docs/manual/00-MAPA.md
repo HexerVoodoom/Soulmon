@@ -534,6 +534,8 @@ Anexos factuais (**registro**, cada um é a foto do código no dia): [plano-melh
 | [design/minimal-ui/PLANO-IMPLEMENTACAO.md](../design/minimal-ui/PLANO-IMPLEMENTACAO.md) | o levantamento do que falta para a arquitetura Home + Mapa funcionar: decisões do dono D1–D6 e as fatias F1–F6 com os testes que quebram | plano | squad-minimal-ui |
 | [design/minimal-ui/BACKLOG-CREDITOS.md](../design/minimal-ui/BACKLOG-CREDITOS.md) | a fila de imagens a gerar (Higgsfield `gpt_image_2`, alfa real) com custo em créditos | plano | squad-minimal-ui |
 | [design/areas/00-BIBLIA-DAS-AREAS.md](../design/areas/00-BIBLIA-DAS-AREAS.md) | Bíblia das Áreas do Mapa (29/09/2026): tema, lotes e NPCs de cada área; direção de arte, não decide regra | plano | ainda não |
+| [design/areas/npcs-oraculo.md](../design/areas/npcs-oraculo.md) | perfis de oráculo dos 11 NPCs de área (eixos + por quê); prompts de NPC passam pelo oráculo, decisão do dono 29/09/2026 | plano | ainda não |
+| [design/areas/npcs-oraculo-saida.md](../design/areas/npcs-oraculo-saida.md) | saída gerada por `scripts/npc-oraculo-prompts.mjs` (imagePrompt + fallback, semente fixa); não editar à mão | registro | ainda não |
 | [design/areas/prompts/00-INDICE.md](../design/areas/prompts/00-INDICE.md) | índice e estimativa de crédito dos prompts Higgsfield das áreas (nada gerado) | plano | ainda não |
 | [design/areas/prompts/mercado.md](../design/areas/prompts/mercado.md) | prompts de arte: Mercado (Galeria de Caixotes) | plano | ainda não |
 | [design/areas/prompts/laboratorio.md](../design/areas/prompts/laboratorio.md) | prompts de arte: Laboratório (Estufa de Vidro) | plano | ainda não |

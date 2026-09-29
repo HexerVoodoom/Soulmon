@@ -30,9 +30,9 @@ Com retentativas, some ~30% (o teto prático passa de 240 imagens). Total recalc
 - ✅ **Jogos:** repintar **só o fundo** (`bg-jogos`, variante B). Lote do PPT, Pipo ("a do Pipo eu gostei, deixa como está") e zona **não** são repintados.
 - ✅ **Tom dos cenários do Bosque:** **diurno**, tom do Hall (creme). A âncora do Hall já é diurna (luz de manhã, "night sky" no negative), então `hall.md` não precisou regerar nada.
 - ✅ **Fenômeno da Feira:** **um sprite por tipo** (névoa, maré, estática, enxame) × 3 estados = 12 sprites (+9 ativos). `FAIR_ART` precisará de mapa por tipo×estado (código futuro).
+- ✅ **Prompts de NPC passam pelo oráculo** (decidido 29/09/2026; antes eram escritos à mão). A criatura sai do motor real (`generateOracleWithFamilies` → `composeSpritePrompts`, forma `rookie`, semente fixa), nas duas variantes do app: `imagePrompt` (1ª tentativa) e `imagePromptFallback` (se o provedor recusar). A bíblia dá pose/gesto, a área dá a âncora, o formato (busto 768² sobre `#00FF00`), o negative e o aceite. Arquivos: perfis em [`../npcs-oraculo.md`](../npcs-oraculo.md), saída em [`../npcs-oraculo-saida.md`](../npcs-oraculo-saida.md) + [`../npcs-oraculo-saida.json`](../npcs-oraculo-saida.json), gerador `scripts/npc-oraculo-prompts.mjs` (`node scripts/npc-oraculo-prompts.mjs`). Repinturas fiéis (Vultrak, Vesca) e a conferência de Lumi continuam anexando a arte aprovada — não passam pelo oráculo.
 
 **Continuam abertas:**
-- **Prompts de NPC à mão** a partir das fichas da bíblia (a regra da squad diz que prompt de criatura do jogador vem do oráculo; NPC de área não passa por ele). Aceita?
 - **PI:** `npc-placeholder-poring` leva o nome de criatura de franquia de terceiros ao bundle; sai (ou vira `slime`) quando o Rinoco chegar. Tico virou **Bento** (Tico é personagem registrado em PT-BR).
 - **Navegação:** mover o Dino de Exploração para Jogos ficou como decisão de navegação (bíblia §7).
 
