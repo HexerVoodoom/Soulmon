@@ -7852,3 +7852,11 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
 .sm2-grove-recv { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sm2-space-1); }
 .sm2-grove-recv li, p.sm2-grove-recv { display: flex; align-items: center; gap: var(--sm2-space-2); font-size: var(--sm2-text-sm); color: var(--sm2-primary-ink); min-width: 0; }
 .sm2-grove-gesto[aria-disabled="true"] { cursor: default; }
+
+/* R2 (29/09/2026): em viewport BAIXA (360×640) o NPC de 1,4× deixava o balão com ~120px de
+   largura e o texto crescia para cima, saindo da tela. Abaixo de 700px de altura o NPC volta à
+   escala-base (46%, `NPC_BASE_MAX_WIDTH_PCT`); em 390×844 continua 1,4× (`NPC_MAX_WIDTH_PCT`, inline). */
+@media (max-height: 700px) {
+  [data-area-sheet-npc] { max-width: 46% !important; }
+  [data-area-sheet-npc-line] { max-height: calc(100% - 8px); overflow: hidden; }
+}
