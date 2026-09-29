@@ -52,12 +52,13 @@
 
 import {
   VALID_ID, publicView, spendCredits, grantAdReward, auditRefunds,
-  grantCourtesy, COURTESY_PROVIDER, resetSpriteLifetimeOnRebirth,
+  grantCourtesy, COURTESY_PROVIDER, resetSpriteLifetimeOnRebirth, readEntitlement,
 } from './_entitlements.js';
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { isPlayPurchaseVoided, isSteamPurchaseVoided, isSteamOwnershipVoided } from './_billing.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import { kv } from './_kv.js';
+import { verifiedAdmin, adminPublicView, logAdminSession } from './_admin.js';
 
 /**
  * Teto por IP na cortesia. Amortecedor contra sonda de chave (ver
@@ -159,7 +160,11 @@ export async function onRequestGet({ request, env }) {
       : isSteamPurchaseVoided(env, { orderId: order.orderId });
   });
 
-  return json({ ...publicView(ent), adsEnabled: env.ADMOB_SSV_ENABLED === 'true' });
+  // ADMIN (`_admin.js`): derivado na LEITURA, nunca gravado em `ent:`.
+  const { admin } = await verifiedAdmin(env, request, saveId);
+  if (admin) logAdminSession('entitlements');
+  const view = admin ? adminPublicView(publicView(ent)) : { ...publicView(ent), admin: false };
+  return json({ ...view, adsEnabled: env.ADMOB_SSV_ENABLED === 'true' });
 }
 
 export async function onRequestPost({ request, env }) {
@@ -180,14 +185,24 @@ export async function onRequestPost({ request, env }) {
   const auth = await authorizeSaveAccess(request, env, saveId);
   if (!auth.ok) return json({ error: auth.reason }, authStatus(auth));
 
+  // O admin é decidido pelo TOKEN (nunca por `body.admin`) e só sobre o próprio save.
+  const { admin } = await verifiedAdmin(env, request, saveId);
+  const view = (ent) => admin ? adminPublicView(publicView(ent)) : { ...publicView(ent), admin: false };
+
   if (action === 'spend') {
     const amount = Number(body?.amount);
+    if (admin) {
+      // Admin NÃO debita: nada é escrito em `ent:` nem em `spend:`.
+      if (!Number.isInteger(amount) || amount <= 0) return json({ ok: false, reason: 'insufficient' }, 402);
+      logAdminSession('spend');
+      return json({ ok: true, ...view(await readEntitlement(env, saveId)) });
+    }
     // WP5.3 — `opId` é por GESTO. Repetir o mesmo gesto (retry de rede, dois
     // toques, aba duplicada) devolve o mesmo resultado em vez de cobrar de
     // novo dinheiro real.
     const ent = await spendCredits(env, saveId, amount, body?.opId);
     if (!ent) return json({ ok: false, reason: 'insufficient' }, 402);
-    return json({ ok: true, ...publicView(ent) });
+    return json({ ok: true, ...view(ent) });
   }
 
   if (action === 'rebirth-reset') {
@@ -206,7 +221,7 @@ export async function onRequestPost({ request, env }) {
     const { ent, jaFeito } = await resetSpriteLifetimeOnRebirth(env, saveId);
     // `jaFeito` não é erro: retry de rede e duplo toque respondem 200 igual,
     // como o `opId` de `spend`. O que o corpo diz é se ALGO mudou agora.
-    return json({ ok: true, jaFeito, ...publicView(ent) });
+    return json({ ok: true, jaFeito, ...view(ent) });
   }
 
   if (action === 'ad') {

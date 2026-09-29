@@ -67,6 +67,7 @@
 import { VALID_ID, readEntitlement, writeEntitlement } from './_entitlements.js';
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { kv, kvOrThrow } from './_kv.js';
+import { verifiedAdmin, ADMIN_AI_CAP_MULTIPLIER } from './_admin.js';
 
 /**
  * Tetos. Chat é barato (llama-8b) e acontece o tempo todo; geração de imagem é
@@ -246,6 +247,13 @@ export async function guardAiRequest(request, env, bucket, saveId, units = 1, fo
     return { ok: false, status: authStatus(auth), reason: auth.reason };
   }
 
+  // ADMIN (`_admin.js`): tetos POR CONTA de sprite × ADMIN_AI_CAP_MULTIPLIER.
+  // O global (mensal) NÃO muda — é ele que protege a fatura.
+  const adminMul = bucket === 'sprite' && (await verifiedAdmin(env, request, saveId)).admin
+    ? ADMIN_AI_CAP_MULTIPLIER : 1;
+  const capLifetime = (limits.perAccountLifetime ?? 0) * adminMul;
+  const capForm = (limits.perFormLifetime ?? 0) * adminMul;
+
   const now = new Date();
   const today = day(now);
   const thisMonth = month(now);
@@ -269,7 +277,7 @@ export async function guardAiRequest(request, env, bucket, saveId, units = 1, fo
   const hasTierCap = !!limits.perAccountByTier;
 
   let ent = null;
-  let perAccount = limits.perAccount;
+  let perAccount = limits.perAccount * adminMul;
   let usedLifetime = 0;
   let usedForm = 0;
   let usedGlobal = 0;
@@ -282,7 +290,7 @@ export async function guardAiRequest(request, env, bucket, saveId, units = 1, fo
       if (hasFormCap) usedForm = formUsed(ent, formId);
       if (hasTierCap) {
         const porTier = limits.perAccountByTier[ent?.tier];
-        if (typeof porTier === 'number') perAccount = porTier;
+        if (typeof porTier === 'number') perAccount = porTier * adminMul;
       }
     }
     usedGlobal = await readCounter(env, globalKey);
@@ -293,7 +301,7 @@ export async function guardAiRequest(request, env, bucket, saveId, units = 1, fo
     return refuse(503, 'ai-quota-unavailable');
   }
 
-  if (hasLifetime && usedLifetime + units > limits.perAccountLifetime) {
+  if (hasLifetime && usedLifetime + units > capLifetime) {
     return refuse(402, 'sprite-lifetime-cap');
   }
   // Depois do vitalício (que é o irreversível) e ANTES do diário: a forma que
@@ -304,7 +312,7 @@ export async function guardAiRequest(request, env, bucket, saveId, units = 1, fo
   // continua inteira. Reusar o 402 ensinaria o cliente a desligar a árvore toda
   // por causa de um galho — que é exatamente a punição no clímax que este teto
   // existe para evitar.
-  if (hasFormCap && usedForm + units > limits.perFormLifetime) {
+  if (hasFormCap && usedForm + units > capForm) {
     return refuse(409, 'sprite-form-cap');
   }
   if (usedAccount + units > perAccount) {

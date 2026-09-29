@@ -9,6 +9,7 @@
 
 import { VALID_ID, readEntitlement, publicView } from './_entitlements.js';
 import { authorizeSaveAccess, authStatus } from './_auth.js';
+import { verifiedAdmin, ADMIN_CREDITS_DISPLAY } from './_admin.js';
 import { kv, kvOrThrow } from './_kv.js';
 import { gateTombstone } from './_accountTombstone.js';
 
@@ -150,8 +151,10 @@ export async function onRequest({ request, env }) {
     // Sobrepõe com a verdade do servidor — o que estiver gravado no save é
     // apenas um espelho e pode estar desatualizado (ou ter sido forjado).
     const ent = publicView(await readEntitlement(env, saveId));
-    state.accountTier = ent.tier;
-    state.credits = ent.credits;
+    // ADMIN (`_admin.js`): tier efetivo derivado do TOKEN, nunca gravado.
+    const { admin } = await verifiedAdmin(env, request, saveId);
+    state.accountTier = admin ? 'paid' : ent.tier;
+    state.credits = admin ? ADMIN_CREDITS_DISPLAY : ent.credits;
     return Response.json({ found: true, state }, { headers: CORS });
   }
 
