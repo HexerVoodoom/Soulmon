@@ -136,6 +136,9 @@ import { sleepReminderCopy } from '../functions/api/_pushCopy.js';
 import { BITS_EXCHANGE, creditMinigameBits } from './utils/currencies';
 import { snapshotCompletion, undoCompletion, UNDO_WINDOW_MS } from './utils/completionUndo';
 import { UndoToast } from './components/UndoToast';
+import { adminFromEntitlement, setAdminFlag, useAdmin } from './utils/adminFlag';
+import { adoptCorvo, isCorvo, spriteLineOf } from './utils/corvoPet';
+import { gmAddPerfectDays, gmFillCare, gmGiveBalance, gmGoToForm, gmUnlockAll } from './utils/gmTools';
 import { fetchEntitlement, spendCredits, claimAdReward, resetSpriteLifetimeAfterRebirth, type Entitlement } from './utils/entitlements';
 import { purchase } from './utils/playBilling';
 
@@ -875,7 +878,16 @@ export default function App() {
   //    A regra não mora aqui: o gatilho é `utils/spriteTrigger.ts`, o acervo é
   //    `utils/spriteLibrary.ts`, e a forma-destino vem da MESMA
   //    `evolutionTarget()` que a cerimônia commita — nada de quarta cópia.
-  const spriteAcervo = libraryOf(gameState);
+  // O corvinho do administrador (`utils/corvoPet.ts`) tem arte fixa por forma:
+  // enquanto a marca existir, o acervo gerado fica guardado no save mas não é
+  // desenhado — senão `displaySprite` venceria o corvo em todo lugar.
+  const petIsCorvo = isCorvo(gameState);
+  const petLine = spriteLineOf(gameState);
+  const spriteAcervo = useMemo(
+    () => (petIsCorvo ? emptySpriteLibrary() : libraryOf(gameState)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [petIsCorvo, gameState.spriteLibrary],
+  );
   const updateSpriteLibrary = useCallback(
     (fn: (prev: SpriteLibrary) => SpriteLibrary) =>
       setGameState(prev => ({ ...prev, spriteLibrary: fn(prev.spriteLibrary ?? emptySpriteLibrary()) })),
@@ -905,7 +917,7 @@ export default function App() {
     busy: rolloverPending || !!evolutionCeremony || showDailyReport || !!careEvent || !!feedAnim,
     // NÃO é pré-checagem de tier (quem decide é o servidor): é o corte de quem
     // não tem árvore própria e portanto não teria prompt para mandar.
-    enabled: !gameState.demoCharacterId && (gameState.soulmonStages?.length ?? 0) > 0,
+    enabled: !gameState.demoCharacterId && !petIsCorvo && (gameState.soulmonStages?.length ?? 0) > 0,
     // F-1: a ocasiao A (`birthBatch`) nao tinha chamador, e quem paga chegava ao
     // reveal vendo a MESMA arte de reserva do demo gratis -- o primeiro sprite
     // proprio so nascia na vespera da primeira evolucao, dias depois.
@@ -1290,7 +1302,11 @@ export default function App() {
   useEffect(() => {
     let cancelled = false;
     fetchEntitlement().then(ent => {
-      if (cancelled || !ent) return;
+      if (cancelled) return;
+      // Admin/GM: SÓ da resposta do servidor, só em memória (`utils/adminFlag.ts`).
+      // Falha de rede / sem saveId = não-admin.
+      setAdminFlag(adminFromEntitlement(ent));
+      if (!ent) return;
       setGameState(prev => (prev.credits === ent.credits && prev.accountTier === ent.tier)
         ? prev
         : { ...prev, credits: ent.credits, accountTier: ent.tier });
@@ -1665,7 +1681,7 @@ export default function App() {
   const fioGoal = { done: dailyDone, heart: heartGoalHoje, full: dailyTotal };
   const fioMetaCumprida = dailyTotal > 0 && dailyDone >= heartGoalHoje;
   const minhaCriaturaUrl = displaySprite(spriteAcervo, gameState.evolutionStage)?.url
-    ?? getSpriteForStage(gameState.evolutionStage, gameState.demoCharacterId);
+    ?? getSpriteForStage(gameState.evolutionStage, petLine);
   /* O selo "Dia completo" da lista (minimal-ui F2). A condição é a da VIRADA —
      `completeDayReached`, a mesma função que `computeDailyReset` usa para
      contar o dia — aplicada ao dia de hoje: meta inteira feita, ≥1 cadastrada
@@ -2971,6 +2987,36 @@ export default function App() {
     }
     falar('shower');
   }, [careEvent, handleCareEventComplete, falar]);
+
+  // ── ADMIN / GM (29/09/2026) ────────────────────────────────────────────────
+  // `useAdmin()` vem SÓ da resposta do servidor nesta abertura
+  // (`utils/adminFlag.ts`). Nada aqui toca rota de servidor: tudo é o save
+  // LOCAL, com updaters puros de `utils/gmTools.ts` / `utils/corvoPet.ts`.
+  const isAdmin = useAdmin();
+  // Auto-adoção do corvinho: UMA vez por sessão, só para o admin. `adoptCorvo`
+  // é idempotente (mesma referência se já é corvo), então o StrictMode rodar o
+  // updater 2× não muda nada. Sem toast: a troca de pele não é aviso.
+  const corvoAdoptedRef = useRef(false);
+  useEffect(() => {
+    if (!isAdmin || corvoAdoptedRef.current) return;
+    corvoAdoptedRef.current = true;
+    if (!isCorvo(gameState)) setGameState(adoptCorvo);
+  }, [isAdmin, gameState, setGameState]);
+  const gmActions = useMemo(() => ({
+    isCorvo: petIsCorvo,
+    currentForm: gameState.evolutionStage,
+    onGiveBalance: () => setGameState(gmGiveBalance),
+    onUnlockAll: () => setGameState(gmUnlockAll),
+    onGoToForm: (formId: string) => setGameState(prev => gmGoToForm(prev, formId)),
+    onAdoptCorvo: () => setGameState(adoptCorvo),
+    onFillCare: () => {
+      // O cocô NA TELA é um `careEvent`: fecha pelo mesmo caminho do banho,
+      // fora do updater (footgun 6), e depois enche o save.
+      if (careEvent?.type === 'poop') handleCareEventComplete();
+      setGameState(gmFillCare);
+    },
+    onAddPerfectDays: (n: number) => setGameState(prev => gmAddPerfectDays(prev, n)),
+  }), [petIsCorvo, gameState.evolutionStage, setGameState, careEvent, handleCareEventComplete]);
 
   // Uncleaned poop drains 1 heart every 6 hours (paused while sleeping). The
   // clock starts when a poop is on screen and stops the moment it's cleaned.
@@ -4997,7 +5043,7 @@ export default function App() {
           soulStruggle={gameState.soulStruggle}
           /* A criatura que acabou de nascer, no vidro do tutorial (canvas
              Onboarding-funil D-O13): o mesmo sprite/tonalidade da Home. */
-          spriteUrl={displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? getSpriteForStage(gameState.evolutionStage, gameState.demoCharacterId)}
+          spriteUrl={displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? getSpriteForStage(gameState.evolutionStage, petLine)}
           petName={soulmonDisplayName(gameState.soulmonMeta) || undefined}
           demoTint={gameState.demoCharacterId ? gameState.demoTint : undefined}
           onComplete={handleCompleteTutorial}
@@ -5042,8 +5088,8 @@ export default function App() {
                    estava bloqueando justamente o caso em que ela não se
                    aplica — e a faixa grátis é a que menos posse recebe. */
                 spriteUrl: displaySprite(spriteAcervo, 'rookie')?.url
-                  ?? (gameState.demoCharacterId
-                    ? getSpriteForStage('rookie', gameState.demoCharacterId)
+                  ?? (petLine
+                    ? getSpriteForStage('rookie', petLine)
                     : null),
                 name: soulmonDisplayName(gameState.soulmonMeta) || '—',
                 soulGoal: gameState.soulGoal ?? null,
@@ -5054,7 +5100,7 @@ export default function App() {
                  arte que já existe e a data de quando cada uma chegou. */
               album={(gameState.soulmonStages ?? []).map(st => {
                 const id = st.branch ? `${st.stage}-${st.branch}` : st.stage;
-                return { id, name: st.name, spriteUrl: displaySprite(spriteAcervo, id)?.url ?? null };
+                return { id, name: st.name, spriteUrl: displaySprite(spriteAcervo, id)?.url ?? (petIsCorvo ? getSpriteForStage(creatureFormId(st), petLine) : null) };
               })}
               formReachedAt={gameState.formReachedAt}
               completedTasks={gameState.completedTasks}
@@ -5132,7 +5178,7 @@ export default function App() {
               onDegenerate={handleDegenerate}
               stages={gameState.soulmonStages ?? []}
               eggType={gameState.eggType}
-              demoCharacterId={gameState.demoCharacterId}
+              demoCharacterId={petLine}
               unlockedEvolutions={gameState.unlockedEvolutions}
               evolutionLocked={gameState.evolutionLocked ?? false}
               onToggleEvolutionLock={handleToggleEvolutionLock}
@@ -5255,7 +5301,7 @@ export default function App() {
               achievements={unlockedAchievements(gameState)}
               unlockedEvolutions={gameState.unlockedEvolutions}
               currentStageId={gameState.evolutionStage}
-              demoCharacterId={gameState.demoCharacterId}
+              demoCharacterId={petLine}
               petName={soulmonDisplayName(gameState.soulmonMeta) || undefined}
               savedSkills={gameState.soulmonSkills}
               onSkillsComputed={handleSkillsComputed}
@@ -5455,7 +5501,7 @@ export default function App() {
             text={milestoneCeremony.text}
             dateLabel={milestoneCeremony.dateLabel}
             reducedMotion={milestoneCeremony.reducedMotion}
-            spriteUrl={displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? getSpriteForStage(gameState.evolutionStage, gameState.demoCharacterId)}
+            spriteUrl={displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? getSpriteForStage(gameState.evolutionStage, petLine)}
             language={language}
             onDone={() => setMilestoneCeremony(null)}
           />
@@ -5631,6 +5677,7 @@ export default function App() {
                 tournament={{
                   saveId,
                   petStage: gameState.evolutionStage,
+                  petLine,
                   pvpEnabled: !!gameState.pvpEnabled,
                   onTogglePvp: (enabled) => setGameState(prev => ({ ...prev, pvpEnabled: enabled })),
                   trophies: gameState.trophies ?? [],
@@ -5651,7 +5698,7 @@ export default function App() {
                   onClaimWeekly: resgatarMissao,
                 }}
                 evolutionStage={gameState.evolutionStage}
-                demoCharacterId={gameState.demoCharacterId}
+                demoCharacterId={petLine}
                 skills={gameState.soulmonSkills}
                 profissao={manifestacaoAtual?.profissao}
                 profissaoNome={manifestacaoAtual?.profissaoNome}
@@ -5736,7 +5783,7 @@ export default function App() {
                 currentStage={getCurrentStageName()}
                 evolutionStage={gameState.evolutionStage}
                 eggType={gameState.eggType}
-                demoCharacterId={gameState.demoCharacterId}
+                demoCharacterId={petLine}
                 /* Sprite próprio SÓ depois de adotado (§2.3.1) — senão o visor
                    segue na arte de reserva, que nunca é erro. */
                 ownSpriteUrl={displaySprite(spriteAcervo, gameState.evolutionStage)?.url}
@@ -6260,6 +6307,7 @@ export default function App() {
               redeemed={gameState.redeemed}
               showRedeemed={gameState.showRedeemed}
               onToggleShowRedeemed={() => setGameState(prev => ({ ...prev, showRedeemed: !prev.showRedeemed }))}
+              gm={isAdmin ? gmActions : undefined}
               useAI={useAI}
               onToggleAI={() => setUseAI(!useAI)}
               aiSettings={aiSettings}
@@ -6563,7 +6611,7 @@ export default function App() {
         showFirstTaskPopup={showFirstTaskPopup}
         onCloseFirstTaskPopup={() => setShowFirstTaskPopup(false)}
         language={language}
-        spriteUrl={displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? getSpriteForStage(gameState.evolutionStage, gameState.demoCharacterId)}
+        spriteUrl={displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? getSpriteForStage(gameState.evolutionStage, petLine)}
       />
 
       {evolutionCeremony && (
@@ -6572,7 +6620,7 @@ export default function App() {
           toStage={evolutionCeremony.to}
           toName={getStageNameById(evolutionCeremony.to)}
           language={language}
-          demoCharacterId={gameState.demoCharacterId}
+          demoCharacterId={petLine}
           fromSpriteUrl={displaySprite(spriteAcervo, evolutionCeremony.from)?.url}
           toSpriteUrl={displaySprite(spriteAcervo, evolutionCeremony.to)?.url}
           reachedAt={gameState.formReachedAt?.[evolutionCeremony.to]}
@@ -6697,7 +6745,7 @@ export default function App() {
             return {
               mark: marco,
               petName: soulmonDisplayName(gameState.soulmonMeta) || '—',
-              spriteUrl: displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? getSpriteForStage(gameState.evolutionStage, gameState.demoCharacterId),
+              spriteUrl: displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? getSpriteForStage(gameState.evolutionStage, petLine),
               formNames: (gameState.unlockedEvolutions ?? []).map(id => {
                 const st = (gameState.soulmonStages ?? []).find(
                   x => (x.branch ? `${x.stage}-${x.branch}` : x.stage) === id,
@@ -6712,7 +6760,7 @@ export default function App() {
           /* A semana já foi carimbada ao MOSTRAR (13.11) — aqui só abre. */
           onOpenOffer={() => setUnlockReason('report')}
           /* R4 / D-H7 — a criatura na peça do retorno. */
-          spriteUrl={displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? getSpriteForStage(gameState.evolutionStage, gameState.demoCharacterId)}
+          spriteUrl={displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? getSpriteForStage(gameState.evolutionStage, petLine)}
           onDismissOffer={() => setGameState(prev => ({ ...prev, offerDismissed: true }))}
         />
       )}
@@ -6765,7 +6813,7 @@ export default function App() {
           tasks={triageTasks}
           language={language}
           /* A reação do pet no fim: o MESMO sprite do visor. */
-          petSprite={displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? getSpriteForStage(gameState.evolutionStage, gameState.demoCharacterId)}
+          petSprite={displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? getSpriteForStage(gameState.evolutionStage, petLine)}
           onResolve={handleTriageResolve}
           onClose={() => setTriageTasks(null)}
         />
@@ -6791,7 +6839,7 @@ export default function App() {
           wave={nightmareWave}
           rarity={nightmareRarity}
           petStage={gameState.evolutionStage}
-          demoCharacterId={gameState.demoCharacterId}
+          demoCharacterId={petLine}
           language={language}
           onWin={handleNightmareWin}
           onLose={closeNightmare}

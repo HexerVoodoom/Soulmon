@@ -14,6 +14,7 @@ import { isTelemetryEnabled, setTelemetryEnabled, telemetryConsentCopy } from '.
 import { useTheme } from '../contexts/ThemeContext';
 import { desligarTrilha, ligarTrilha, trilhaPreferida } from '../utils/trilha';
 import { APP_VERSION, FeedbackRow } from './FeedbackLink';
+import { GmPanel, type GmActions } from './GmPanel';
 
 /**
  * CONFIGURAÇÕES — revamp minimalista.
@@ -52,6 +53,9 @@ interface SettingsPageProps {
   redeemed?: boolean;
   showRedeemed?: boolean;
   onToggleShowRedeemed?: () => void;
+  /** Ações do painel de GM. O painel só aparece quando `useAdmin()` é true
+   *  (flag vinda do servidor, `utils/adminFlag.ts`) — passar isto não basta. */
+  gm?: GmActions;
 }
 
 /**
@@ -136,6 +140,7 @@ export function SettingsPage({
   onToggleShowRedeemed,
   onRestoreFromCloud,
   onLoginWithEmail,
+  gm,
 }: SettingsPageProps) {
   const [trilha, setTrilha] = useState(() => trilhaPreferida());
   const isPt = language === 'pt-BR';
@@ -298,6 +303,10 @@ export function SettingsPage({
         <AccountDataSection language={language} />
         <TelemetrySection language={language} />
       </Group>
+
+      {/* ── PAINEL DE GM — só existe para `useAdmin()` (o próprio GmPanel
+             confere; ver utils/adminFlag.ts). */}
+      {gm && <GmPanel language={language} gm={gm} />}
 
       {/* ── A MARCA DA VOLTA (WP4.19) ───────────────────────────────────────
              Só aparece para quem TEM a volta. E vem desligada: quem caiu e
