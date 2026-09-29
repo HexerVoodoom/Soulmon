@@ -50,7 +50,7 @@ describe('gmTools', () => {
     expect(a.unlockedEvolutions).toContain('mega-power');
     expect(gmGoToForm(a, 'mega-power')).toBe(a);
     const b = base();
-    expect(gmGoToForm(b, 'champion-data')).toBe(b);
+    expect(gmGoToForm(b, 'champion-nada')).toBe(b);
     expect(gmGoToForm(b, 'ultra').currentBranch).toBe('harmony');
   });
 
