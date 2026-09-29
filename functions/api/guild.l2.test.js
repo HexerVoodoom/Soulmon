@@ -199,3 +199,19 @@ describe('M5 — os golpes saem com a pessoa em toda saída', () => {
     }
   });
 });
+
+describe('B1 — golpe na semana que já terminou', () => {
+  it('segunda 13:00 UTC com dayKey de domingo: 409 raid closed; segunda 02:00 UTC ainda vale', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    em('2026-09-27T12:00:00Z'); // domingo
+    const { e } = await guildaDe(3);
+    em('2026-09-28T02:00:00Z'); // segunda 02:00 UTC = domingo 23:00 em UTC−3
+    expect((await chamar(e, 'guildRaidHit', { body: { id: A, dayKey: '2026-09-27' } })).status).toBe(200);
+    em('2026-09-28T13:00:00Z');
+    const r = await chamar(e, 'guildRaidHit', { body: { id: B, dayKey: '2026-09-27' } });
+    expect(r.status).toBe(409);
+    expect((await r.json()).error).toBe('raid closed');
+    // A semana corrente segue aberta.
+    expect((await chamar(e, 'guildRaidHit', { body: { id: B, dayKey: '2026-09-28' } })).status).toBe(200);
+  });
+});

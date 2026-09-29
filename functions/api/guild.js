@@ -92,6 +92,15 @@ export async function onRequest(context) {
   return handleGuild(context);
 }
 
+/** Uma semana ISO ainda recebe golpe? Até segunda 12:00 UTC da seguinte. */
+export function semanaAindaAberta(week, agora = new Date()) {
+  const hojeUtc = agora.toISOString().slice(0, 10);
+  if (semanaDoDia(hojeUtc) === week) return true;
+  const fim = ultimoDiaDaSemana(diaDeNum(numDia(hojeUtc) - 7));
+  if (semanaDoDia(fim) !== week) return false; // mais de uma semana atrás
+  return agora.getTime() < Date.parse(`${fim}T00:00:00Z`) + 36 * 3600 * 1000;
+}
+
 /** Anfitrião de um grupo. Grupo anterior ao campo: o criador é `members[0]`. */
 const anfitriaoDe = g => g.hostSave ?? g.members[0] ?? null;
 
@@ -376,6 +385,11 @@ export async function handleGuild({ request, env }) {
     // Nunca o blob — por isso o golpe não pode tocar o Bosque (LV-G7).
     const g = await grupoDe(env, id, semana);
     if (!g) return erro('no {g}', 404);
+    // B1 (L2-backend): o ±1 do dia do jogador deixava golpear a semana que já
+    // TERMINOU (dayKey = domingo numa segunda UTC) e mudar um desfecho já
+    // lido. A semana anterior ao UTC só aceita golpe até segunda 12:00 UTC —
+    // é quando o domingo acaba em UTC−12, o último fuso civil.
+    if (semana < semanaDoDia(new Date().toISOString().slice(0, 10)) && !semanaAindaAberta(semana)) return erro('raid closed', 409);
     const antes = await lerGolpes(env, g.id, semana, id);
     if (antes.days.includes(hoje)) return erro('daily limit', 429);
     const feira = await resolverFeira(env, g, semana, hoje);
