@@ -9,12 +9,12 @@
 | Mercado | [mercado.md](mercado.md) | 6 | 20 | `bg-mercado`, `lote-mercado-conquistas` |
 | Laboratório | [laboratorio.md](laboratorio.md) | 8 | ~30 | `bg-laboratorio` (não existe hoje), 3 lotes |
 | Hall (+ Bosque) | [hall.md](hall.md) | 11 | ~40 | `bg-hall`, `bg-guild-clareira`, `lote-hall-guilda`, Marla |
-| Arena (+ Feira) | [arena.md](arena.md) | 14 | ~45 | `bg-arena` refeito, lote da Feira, Fanfa, fenômeno |
+| Arena (+ Feira) | [arena.md](arena.md) | 23 | ~75 | `bg-arena` refeito, lote da Feira, Fanfa, fenômeno |
 | Exploração | [exploracao.md](exploracao.md) | 4 | 18 | `bg-exploracao` sem caveiras |
-| Jogos (repintura) | [jogos.md](jogos.md) | 4 a 8 | 4 (só o fundo) a 20 | `bg-jogos` variante B |
-| **Total** | | **~47 a 51** | **~157 (com Jogos só o fundo) a ~173** | |
+| Jogos (repintura, só o fundo) | [jogos.md](jogos.md) | 1 | 4 | `bg-jogos` variante B |
+| **Total** | | **~53** | **~187** | |
 
-Com retentativas, some ~30% (o teto prático dos arquivos passa de 200 imagens).
+Com retentativas, some ~30% (o teto prático passa de 240 imagens). Total recalculado em 29/09/2026 depois das decisões do dono: Arena +9 ativos e +30 imagens (12 sprites de fenômeno), Jogos cai para só o fundo.
 
 ## Ordem de produção sugerida (uso × distinção)
 
@@ -22,14 +22,17 @@ Com retentativas, some ~30% (o teto prático dos arquivos passa de 200 imagens).
 2. **Lotes da Guilda** (`lote-hall-guilda`, lote da Feira, `bg-guild-*` ×5): destravam a implementação em curso.
 3. **NPCs novos** (Tamba, Musga, Panora, Medra, Fanfa, Trote, Bento): fecham a lacuna de 16 lotes × NPC.
 4. **Demais lotes** e FX (`fx-fair-*` ×4).
-5. **Repinturas opcionais de Jogos** (lote PPT, Pipo, zona): só se você aprovar.
+5. ~~Repinturas opcionais de Jogos~~ (lote PPT, Pipo, zona): **canceladas** pelo dono em 29/09/2026; só o fundo de Jogos entra (passo 1).
 
 ## Decisões suas antes de gerar
 
-- **Jogos:** repintar só o fundo (rosa e roxo fora da paleta do Visor) ou manter tudo como está? A bíblia recomenda repintar o fundo; lote do PPT, Pipo e zona ficam opcionais.
+**Respondidas em 29/09/2026 (modal):**
+- ✅ **Jogos:** repintar **só o fundo** (`bg-jogos`, variante B). Lote do PPT, Pipo ("a do Pipo eu gostei, deixa como está") e zona **não** são repintados.
+- ✅ **Tom dos cenários do Bosque:** **diurno**, tom do Hall (creme). A âncora do Hall já é diurna (luz de manhã, "night sky" no negative), então `hall.md` não precisou regerar nada.
+- ✅ **Fenômeno da Feira:** **um sprite por tipo** (névoa, maré, estática, enxame) × 3 estados = 12 sprites (+9 ativos). `FAIR_ART` precisará de mapa por tipo×estado (código futuro).
+
+**Continuam abertas:**
 - **Prompts de NPC à mão** a partir das fichas da bíblia (a regra da squad diz que prompt de criatura do jogador vem do oráculo; NPC de área não passa por ele). Aceita?
-- **Tom dos cenários do Bosque:** a âncora do Hall é creme diurno e o palco do pet é escuro; os `bg-guild-*` podem destoar. Diurno ou noturno?
-- **Fenômeno da Feira:** um sprite genérico (3 estados) + FX por tipo, ou um sprite por tipo (+9 ativos).
 - **PI:** `npc-placeholder-poring` leva o nome de criatura de franquia de terceiros ao bundle; sai (ou vira `slime`) quando o Rinoco chegar. Tico virou **Bento** (Tico é personagem registrado em PT-BR).
 - **Navegação:** mover o Dino de Exploração para Jogos ficou como decisão de navegação (bíblia §7).
 

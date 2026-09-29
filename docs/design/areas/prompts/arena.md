@@ -117,39 +117,98 @@ Recreate the attached character faithfully, same design, same pose, same proport
 
 ---
 
-## 5. O fenômeno da Feira em 3 estados
+## 5. O fenômeno da Feira: 4 tipos × 3 estados = 12 sprites
 
-Comum: **"tempo da Malha", uma camada que não assentou** — uma massa de lajes finas de pedra-petróleo empilhadas e deslocadas, flutuando, com fendas de luz turquesa entre as lajes (lê como névoa/maré/estática/enxame de forma neutra; o tipo semanal é dado pelos `fx-fair-*` da §6, nunca por este sprite). **Sem rosto, sem olho, sem boca, sem inimigo, sem barra de HP, sem número.** A mesma massa nos 3 estados (mesma silhueta-base, mesma escala): o ferido e o dissipado são gerados **anexando o aberto aprovado** ("same object, now …").
-- **Família**: `criatura`/objeto de cena (sprite), **384² alfa, nearest**, sobre `#00FF00` + chroma-key. Destino `src/assets/soulmon/arena/fair-fenomeno-<estado>.png`; mapa novo `fairArt.ts` (`'aberto' | 'ferido' | 'dissipado'`), consumido pela sala da Feira (`GuildSheet`/`FeiraSheet`) conforme a faixa `hpBand` do servidor (0..10) — a faixa é lógica do cliente, a arte não a desenha.
+> **Decisão do dono, 29/09/2026:** um sprite próprio por tipo (eram 1 genérico de lajes × 3 estados; **+9 ativos**). Ids finais: `fair-fenomeno-<tipo>-<estado>`, tipo em `nevoa|mare|estatica|enxame`, estado em `aberto|ferido|dissipado`. O tipo da semana vem do servidor (`raid.phenomenon`); o estado, da faixa `hpBand` (lógica do cliente, a arte não a desenha). **Código futuro (não feito aqui):** `FAIR_ART` em `src/utils/fairArt.ts` passa de `fair-fenomeno-<estado>` para um mapa por tipo×estado.
+
+Comum: **"tempo da Malha", uma camada que não assentou** (névoa, maré, estática, enxame). **Sem rosto, sem olho, sem boca, sem inimigo, sem barra de HP, sem número; sem magenta, roxo, rosa.** Cada tipo tem **silhueta e material próprios** (ver cada bloco) e a mesma âncora de estilo da Arena (§1). Os estados `ferido` e `dissipado` são gerados **anexando o `aberto` aprovado do MESMO tipo** ("same object, now …"), mesma escala (±5%) e mesma silhueta-base.
+- **Família**: `criatura`/objeto de cena (sprite), **384² alfa, nearest**, sobre `#00FF00` + chroma-key. Destino `src/assets/soulmon/arena/fair-fenomeno-<tipo>-<estado>.png`.
+- **Ordem**: gerar primeiro os 4 `aberto` (escolher 1 de cada), depois `ferido` e `dissipado` de cada tipo anexando o aberto. **Teste entre tipos:** os 4 `aberto` em silhueta preta lado a lado devem ser distintos (massa com fendas · onda em camadas · lajes e faíscas retas · nuvem de pontos), e em cinza a 64 px distintos dos lotes.
 - **Negative comum**: `face, eyes, mouth, creature, monster, enemy, boss, health bar, progress bar, numbers, letters, text, skull, bones, ruin, dead leaves, fallen branch, wilted, faded, magenta, purple, violet, pink, red, fire, blur, soft glow, gradient, semi-transparent, checkerboard, white background, ground`
 - Proporção no fim de cada prompt: `Square 1:1 full-bleed composition.`
+- **Estados (vale para os 4 tipos):** `aberto` = inteiro, cheio, no auge; `ferido` = a roda já o abalou: mais aberto, mais leve, mais luz turquesa entre as partes, **nunca** queimado, sangrado, quebrado em ruína; `dissipado` = assentou e se desfez com calma: poucas peças pequenas em repouso e motas subindo, **cor NÃO desbotada** (mesma saturação do aberto), sem entulho.
 
-### `fair-fenomeno-aberto` — inteiro
-- **Prompt**:
+### 5.1 Névoa — `fair-fenomeno-nevoa-{aberto,ferido,dissipado}`
+Massa de vapor em camadas de degraus chapados (bordas em dente de serra, dithering de pixel nas bordas), **fendas turquesa** entre as camadas; tons petróleo-claro e osso, nunca branco puro.
+
+`aberto`:
 ```
 [AREA STYLE ANCHOR — copiar o bloco da §1 aqui, idêntico]
-OBJECT: an original weather-phenomenon made solid, a floating stack of about seven thin angular slabs of dark petrol-teal stone (#123232) with near-black outline, offset and slightly rotated against each other like unsettled layers, glowing turquoise #6EFFFB seams in the gaps between slabs, a few tiny turquoise motes drifting near it, a copper-bronze clasp on one slab. It is intact, large and full, symmetrical enough to read from far away, NO face, NO eyes, NO mouth, NOT a creature. Do not copy any existing franchise character. PURE SOLID CHROMA GREEN #00FF00 background, nothing else behind. Square 1:1 full-bleed composition.
+OBJECT: an original weather-phenomenon made solid, a large low MASS OF MIST built from about six stacked flat stepped layers of pale teal and bone vapor with jagged sawtooth edges and chunky dithered pixel borders, dark petrol-teal #123232 core between layers, thin glowing turquoise #6EFFFB CRACKS running through the mass, a few tiny turquoise motes drifting off it. Intact, dense and full, readable from far away. NO face, NO eyes, NO mouth, NOT a creature, NOT a cloud with a smile. Do not copy any existing franchise character. PURE SOLID CHROMA GREEN #00FF00 background, nothing else behind. Square 1:1 full-bleed composition.
 ```
-- **Seeds**: 4 imagens. Escolher: ~7 lajes contáveis, fendas turquesa, nenhum traço de rosto (pareidolia conta como reprova).
-- **Aceite**: silhueta preta = pilha irregular de lajes angulares; sem rosto mesmo em silhueta; cinza a 64 px: massa escura com fendas claras (não confunde com nenhum lote); alfa limpo.
-
-### `fair-fenomeno-ferido` — a roda já o abalou
-- **Prompt** (anexar o `aberto` aprovado):
+`ferido` (anexar o `aberto`):
 ```
 [AREA STYLE ANCHOR — copiar o bloco da §1 aqui, idêntico]
-Recreate the attached object faithfully, same slabs, same scale, same style, at full resolution, and change only its state: it is now LOOSENED. The slab stack has come apart, three or four slabs drifted away from the stack and hang slightly apart with wider gaps, the turquoise seams are wider and brighter, thin copper clasps are undone, fewer slabs remain in the core, it looks lighter and calmer, not damaged with blood, not burnt, not broken into ruins. No face, no eyes, no mouth, not a creature. Do not copy any existing franchise character. PURE SOLID CHROMA GREEN #00FF00 background, nothing else behind. Square 1:1 full-bleed composition.
+Recreate the attached mist mass faithfully, same layers, same scale, same style, at full resolution, and change only its state: it is now LOOSENED. The layers have parted, two or three vapor bands drift away from the core and hang apart, the turquoise cracks are wider and brighter, the mass looks lighter and thinner, calm, not burnt, not damaged, not ruined. No face, no eyes, no mouth, not a creature. Do not copy any existing franchise character. PURE SOLID CHROMA GREEN #00FF00 background, nothing else behind. Square 1:1 full-bleed composition.
 ```
-- **Seeds**: 3 imagens. Escolher a que mantém a silhueta-base reconhecível do `aberto` mas claramente mais aberta/leve (sobrepor os dois a 50% para conferir escala).
-- **Aceite**: mesma escala do `aberto` (±5%); diferença legível em silhueta preta (lajes soltas) e em cinza; sem fogo, sem vermelho, sem cinza-cinza desbotado, sem ruína.
-
-### `fair-fenomeno-dissipado` — desfeito, assentou
-- **Prompt** (anexar o `aberto` aprovado):
+`dissipado` (anexar o `aberto`):
 ```
 [AREA STYLE ANCHOR — copiar o bloco da §1 aqui, idêntico]
-Recreate the attached object's slabs and style faithfully, and change only its state: it has SETTLED and come undone. Instead of a floating stack there are now only about six small thin slabs lying calmly flat and neatly aligned in a low row on the ground, dark petrol-teal, with a handful of tiny turquoise motes rising gently above them and one small clean copper clasp. Peaceful and resolved, not destroyed, no debris cloud, no ruins, no faded colors, nothing lying broken. No face, no eyes, no mouth, not a creature. Do not copy any existing franchise character. PURE SOLID CHROMA GREEN #00FF00 background, nothing else behind. Square 1:1 full-bleed composition.
+Recreate the attached mist mass's style faithfully, and change only its state: it has SETTLED and come undone. Only three thin flat bands of pale teal and bone vapor lie low and calm along the ground, with a handful of tiny turquoise motes rising gently above them. Peaceful and resolved, colors as saturated as the original, no debris, no ruins. No face, no eyes, no mouth, not a creature. Do not copy any existing franchise character. PURE SOLID CHROMA GREEN #00FF00 background, nothing else behind. Square 1:1 full-bleed composition.
 ```
-- **Seeds**: 3 imagens. Escolher a mais tranquila (lajes alinhadas, poucas motas), clara como "desfeito" sem parecer entulho.
-- **Aceite**: silhueta preta baixa e horizontal, distinta das outras duas; cor NÃO desbotada (mesma saturação do aberto); sem "ruína"; alfa limpo.
+Aceite (3): silhueta = massa de camadas horizontais com fendas; sem rosto nem "nuvem fofa"; `ferido` mais aberto e `dissipado` baixo e horizontal; mesma escala; 0 pixels em 270°-340°; alfa limpo.
+
+### 5.2 Maré — `fair-fenomeno-mare-{aberto,ferido,dissipado}`
+Onda e arrasto de água **em camadas**: cristas angulares em dente de serra empilhadas, linha de espuma osso em pixels quadrados, corpo petróleo com crista turquesa. Sem barco, peixe, gente.
+
+`aberto`:
+```
+[AREA STYLE ANCHOR — copiar o bloco da §1 aqui, idêntico]
+OBJECT: an original weather-phenomenon made solid, a tall TIDE built from three layered angular wave bodies of deep petrol-teal water stacked behind each other, each with a sawtooth crest edged in turquoise #6EFFFB and a bone #EFE3C2 foam line of chunky square pixels, a long dragging undertow band at the base, a few turquoise droplets in the air. Intact, towering and full. NO face, NO eyes, NO mouth, NOT a creature, no boat, no fish. Do not copy any existing franchise character. PURE SOLID CHROMA GREEN #00FF00 background, nothing else behind. Square 1:1 full-bleed composition.
+```
+`ferido` (anexar o `aberto`):
+```
+[AREA STYLE ANCHOR — copiar o bloco da §1 aqui, idêntico]
+Recreate the attached tide faithfully, same layered waves, same scale, same style, at full resolution, and change only its state: it is now LOOSENED. The wave layers are lower and drawn apart, the front crest has broken into a few separate angular water pieces drifting off, gaps between layers show turquoise light, calmer and lighter, not destroyed, not foamy chaos. No face, no eyes, no mouth, not a creature, no boat, no fish. Do not copy any existing franchise character. PURE SOLID CHROMA GREEN #00FF00 background, nothing else behind. Square 1:1 full-bleed composition.
+```
+`dissipado` (anexar o `aberto`):
+```
+[AREA STYLE ANCHOR — copiar o bloco da §1 aqui, idêntico]
+Recreate the attached tide's style faithfully, and change only its state: it has SETTLED. Only one low flat sheet of calm petrol-teal water lies along the ground with a thin bone foam line and a few turquoise droplets rising gently. Peaceful and resolved, colors as saturated as the original, no wreckage. No face, no eyes, no mouth, not a creature, no boat, no fish. Do not copy any existing franchise character. PURE SOLID CHROMA GREEN #00FF00 background, nothing else behind. Square 1:1 full-bleed composition.
+```
+Aceite (3): silhueta = ondas em camadas com dente de serra, distinta da névoa; sem barco/peixe; estados legíveis em silhueta; escala igual; alfa limpo.
+
+### 5.3 Estática — `fair-fenomeno-estatica-{aberto,ferido,dissipado}`
+**Lajes e faíscas geométricas, sem rosto**: blocos retangulares de pixel em petróleo escuro, osso e turquesa, rasgos de linha de varredura deslocados, blocos de cobre. Reprova automática se sair magenta (o glitch tende a isso).
+
+`aberto`:
+```
+[AREA STYLE ANCHOR — copiar o bloco da §1 aqui, idêntico]
+OBJECT: an original weather-phenomenon made solid, a dense STATIC-NOISE mass built from hard rectangular slabs and chunky square pixel blocks in near-black teal #123232, bone #EFE3C2 and turquoise #6EFFFB, a few copper #C98B4B blocks, thin horizontal scanline tears displaced sideways through it, small angular turquoise sparks flicking off the edges. Geometric, angular, intact and full. Only teal, bone, turquoise and copper: no magenta, no red, no purple. NO face, NO eyes, NO mouth, NOT a screen with a face, NOT a creature. Do not copy any existing franchise character. PURE SOLID CHROMA GREEN #00FF00 background, nothing else behind. Square 1:1 full-bleed composition.
+```
+`ferido` (anexar o `aberto`):
+```
+[AREA STYLE ANCHOR — copiar o bloco da §1 aqui, idêntico]
+Recreate the attached static mass faithfully, same slabs, same scale, same style, at full resolution, and change only its state: it is now LOOSENED. Several slabs and pixel blocks have drifted apart from the core with wider gaps, the scanline tears are wider, more turquoise light shows through, fewer blocks remain in the core, lighter and calmer, not burnt, not broken into ruins. Only teal, bone, turquoise, copper. No face, no eyes, no mouth, not a creature. Do not copy any existing franchise character. PURE SOLID CHROMA GREEN #00FF00 background, nothing else behind. Square 1:1 full-bleed composition.
+```
+`dissipado` (anexar o `aberto`):
+```
+[AREA STYLE ANCHOR — copiar o bloco da §1 aqui, idêntico]
+Recreate the attached static mass's style faithfully, and change only its state: it has SETTLED. Only about six small rectangular slabs lie flat and neatly aligned in a low row on the ground, with a few tiny turquoise sparks rising gently. Peaceful and resolved, colors as saturated as the original, no debris, no ruins. Only teal, bone, turquoise, copper. No face, no eyes, no mouth, not a creature. Do not copy any existing franchise character. PURE SOLID CHROMA GREEN #00FF00 background, nothing else behind. Square 1:1 full-bleed composition.
+```
+Aceite (3): silhueta = blocos retos e rasgos horizontais, distinta de névoa e maré; **0 pixels em 270°-340°**; sem rosto de TV/tela; estados legíveis; alfa limpo.
+
+### 5.4 Enxame — `fair-fenomeno-enxame-{aberto,ferido,dissipado}`
+**Massa de pontos em movimento, e NÃO inseto**: dezenas de motas abstratas de 3 a 5 px numa espiral densa. ⚠️ **Risco do aceite ("enxame que vire inseto"):** sem asa, antena, olho, corpo segmentado, perna, nem pares simétricos; se algum ponto ler como abelha/mosca/pássaro, reprova. Nenhum ponto maior que os outros (um ponto grande vira "cabeça").
+
+`aberto`:
+```
+[AREA STYLE ANCHOR — copiar o bloco da §1 aqui, idêntico]
+OBJECT: an original weather-phenomenon made solid, a dense SWARM OF MOTES: about sixty tiny abstract angular motes, each 3 to 5 pixels in turquoise #6EFFFB, bone #EFE3C2 or copper #C98B4B with a 1px dark outline, all nearly the same size, drifting together in a thick spiral cloud, densest at the center and thinning at the arms, a few dark petrol #123232 motes mixed in for depth. They are only motes of light and dust: NOT insects, NOT bees, NOT birds, NOT animals, no wings, no legs, no antennae, no eyes, no faces, no larger body inside. Intact, dense, full. Do not copy any existing franchise character. PURE SOLID CHROMA GREEN #00FF00 background, nothing else behind. Square 1:1 full-bleed composition.
+```
+`ferido` (anexar o `aberto`):
+```
+[AREA STYLE ANCHOR — copiar o bloco da §1 aqui, idêntico]
+Recreate the attached swarm of motes faithfully, same mote size, same style, same scale, at full resolution, and change only its state: it is now LOOSENED. The spiral has thinned and opened, fewer motes in the center, some motes drifted away in loose strands with wide gaps, calmer and lighter, not scattered into chaos. Still only abstract motes: no wings, no legs, no antennae, no eyes, no faces, not insects, not animals. Do not copy any existing franchise character. PURE SOLID CHROMA GREEN #00FF00 background, nothing else behind. Square 1:1 full-bleed composition.
+```
+`dissipado` (anexar o `aberto`):
+```
+[AREA STYLE ANCHOR — copiar o bloco da §1 aqui, idêntico]
+Recreate the attached swarm's mote style faithfully, and change only its state: it has SETTLED. Only about a dozen motes rest calmly in a small low loose ring, a few more rising gently above. Peaceful and resolved, colors as saturated as the original. Still only abstract motes: no wings, no legs, no antennae, no eyes, no faces, not insects, not animals. Do not copy any existing franchise character. PURE SOLID CHROMA GREEN #00FF00 background, nothing else behind. Square 1:1 full-bleed composition.
+```
+Aceite (3): silhueta = nuvem de pontos em espiral, distinta dos outros três; **nenhum ponto lê como inseto, ave ou olho** (pareidolia reprova); densidades `aberto` > `ferido` > `dissipado` legíveis; alfa limpo; distinto de `fx-sparkle`.
+
+**Seeds (os 12):** `aberto` 4 imagens por tipo, `ferido` e `dissipado` 3 por tipo = **40 imagens** para os 12 sprites. Escolher o `aberto` que passa no teste entre tipos e sem traço de rosto/inseto; sobrepor `aberto`/`ferido`/`dissipado` de cada tipo a 50% para conferir escala.
 
 ---
 
@@ -159,7 +218,7 @@ Família `fx`, **128² alfa**, **rotação semanal** (o servidor sorteia `phenom
 
 Negative comum: `creature, monster, enemy, face, eyes, boot, foot, hand, character, health bar, numbers, letters, text, skull, bones, dead leaves, ruin, fire, red, magenta, purple, violet, pink, blur, soft glow, gradient, semi-transparent, checkerboard, white background, ground, frame`
 
-**Momento no jogo (para o `INSTALAR.md`)**: sala da Feira, camada do fenômeno da semana, atrás/ao redor da massa `fair-fenomeno-*`; sem chamada hoje até `FeiraSheet` existir (WPG-10): "instalar junto com a sala".
+**Momento no jogo (para o `INSTALAR.md`)**: sala da Feira, camada do fenômeno da semana, atrás/ao redor do sprite `fair-fenomeno-<tipo>-<estado>` do mesmo tipo (o FX continua; decisão do dono 29/09/2026 só multiplicou os sprites); sem chamada hoje até `FeiraSheet` existir (WPG-10): "instalar junto com a sala".
 
 ### `fx-fair-nevoa` — névoa
 ```
@@ -204,19 +263,28 @@ Aceite: sem asa/olho/inseto legível (motas abstratas); silhueta = nuvem em espi
 | `npc-arena-feira` (Fanfa) | NPC busto | 4 | P1 |
 | `npc-arena-duelo` (Rinoco) | NPC busto | 3 | P2 |
 | `npc-arena` (Vultrak, repintura) | NPC busto | 2 | P3 |
-| `fair-fenomeno-aberto` | sprite do fenômeno | 4 | P1 |
-| `fair-fenomeno-ferido` | sprite do fenômeno | 3 | P1 |
-| `fair-fenomeno-dissipado` | sprite do fenômeno | 3 | P1 |
+| `fair-fenomeno-nevoa-aberto` | sprite do fenômeno (névoa) | 4 | P1 |
+| `fair-fenomeno-nevoa-ferido` | sprite do fenômeno (névoa) | 3 | P1 |
+| `fair-fenomeno-nevoa-dissipado` | sprite do fenômeno (névoa) | 3 | P1 |
+| `fair-fenomeno-mare-aberto` | sprite do fenômeno (maré) | 4 | P1 |
+| `fair-fenomeno-mare-ferido` | sprite do fenômeno (maré) | 3 | P1 |
+| `fair-fenomeno-mare-dissipado` | sprite do fenômeno (maré) | 3 | P1 |
+| `fair-fenomeno-estatica-aberto` | sprite do fenômeno (estática) | 4 | P1 |
+| `fair-fenomeno-estatica-ferido` | sprite do fenômeno (estática) | 3 | P1 |
+| `fair-fenomeno-estatica-dissipado` | sprite do fenômeno (estática) | 3 | P1 |
+| `fair-fenomeno-enxame-aberto` | sprite do fenômeno (enxame) | 4 | P1 |
+| `fair-fenomeno-enxame-ferido` | sprite do fenômeno (enxame) | 3 | P1 |
+| `fair-fenomeno-enxame-dissipado` | sprite do fenômeno (enxame) | 3 | P1 |
 | `fx-fair-nevoa` | fx | 3 | P2 |
 | `fx-fair-mare` | fx | 3 | P2 |
 | `fx-fair-estatica` | fx | 3 | P2 |
 | `fx-fair-enxame` | fx | 3 | P2 |
 
-**Total: 14 ativos, ~45 imagens** (mais retentativas: teto de 60). Ordem sugerida: `bg-arena` → Fanfa + `lote-arena-feira` + 3 fenômenos (a Feira é a porta da Guilda, WPG-10) → Torneio/Duelo/Rinoco → FX → Vultrak.
+**Total: 23 ativos, ~75 imagens** (eram 14 ativos e ~45 antes da decisão do dono de 29/09/2026: 12 sprites de fenômeno em vez de 3, +9 ativos, +30 imagens; mais retentativas: teto de ~100). Ordem sugerida: `bg-arena` → Fanfa + `lote-arena-feira` + 4 `aberto` de fenômeno, depois `ferido`/`dissipado` (a Feira é a porta da Guilda, WPG-10) → Torneio/Duelo/Rinoco → FX → Vultrak.
 
 ## 8. Decisões que ficam com o dono / observações
 
 - **Posição do lote Feira**: os prompts assumem o `left/top` atual do `guilda` da Arena (32%/82%). Se `ArenaLotId` `'feira'` mudar a posição, refazer só a clareira de `bg-arena`.
-- **Fenômeno como sprite único genérico**: escolhido para não ter 4 × 3 estados; o tipo da semana vem do `fx-fair-*`. Se o dono quiser um sprite por tipo, são +9 ativos.
+- **Fenômeno: um sprite por tipo (decidido pelo dono em 29/09/2026)**: 4 tipos × 3 estados = 12 sprites (eram 3 genéricos, +9 ativos). Pendência de código, fora deste arquivo: `FAIR_ART` (`src/utils/fairArt.ts`) precisa de mapa por tipo×estado.
 - `PLACEHOLDER_NPC_ART.poring` / `npc-placeholder-poring.png` sai do bundle quando Rinoco chegar (A3 da bíblia): ninguém aponta mais para ele; renomear enquanto isso é do instalador.
 - Falas de Fanfa e strings da Feira: `soulmon-copy-redator`; nenhuma cita contribuição individual.
