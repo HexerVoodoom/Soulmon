@@ -4,7 +4,7 @@ import type { Language } from '../../utils/i18n';
 import { AreaScene, type AreaLot } from './AreaScene';
 import { AreaSheet } from './AreaSheet';
 import { mercadoLots, arenaLots, laboratorioLots, hallLots, type MercadoLotId, type LaboratorioLotId } from '../../utils/areaSheetCopy';
-import { AREA_BG, MERCADO_LOT_ART, ARENA_LOT_ART, PLAY_AREA_BG, EXPLORACAO_LOT_ART, JOGOS_LOT_ART, GUILDA_LOT_ART, LABORATORIO_LOT_ART, HALL_LOT_ART } from '../../assets/soulmon/areas';
+import { AREA_BG, MERCADO_LOT_ART, ARENA_LOT_ART, PLAY_AREA_BG, EXPLORACAO_LOT_ART, JOGOS_LOT_ART, LABORATORIO_LOT_ART, HALL_LOT_ART } from '../../assets/soulmon/areas';
 import { exploracaoLots, jogosLots } from '../../utils/playAreaLots';
 import { sm2Hint } from '../form/FormKit';
 import { useBackLayer } from '../../utils/backStack';
@@ -101,11 +101,14 @@ export interface AreaViewProps {
   /** Hall (F5, ex-PR #117): a `LibraryPage` embutida, montada no `App` — uma
    *  visão por construção (Biblioteca = diretório, Círculo de Amigos = amigos). */
   hallContent: (view: 'directory' | 'friends') => ReactNode;
-  /** A Guilda (Arena e Hall abrem a mesma folha): dados do `CoopPanel`. */
+  /** A Guilda (o Hall abre o Salão; a Arena abre a Feira — a mesma folha, salas diferentes). */
   guild: {
     saveId: string; metaDoDiaCumprida: boolean; playerDayTz?: PlayerDayAnchor;
     /** Meta como o servidor a confere (Guilda, o fio) e a criatura de quem olha. */
     fioGoal?: GuildGoal; mySprite?: string | null;
+    /** Resgate da Feira confirmado (soma Emblemas/Concha no save) e cenários liberados. */
+    onClaimed?: (claim: { emblems: number; trophyId: string | null }) => void;
+    onScenes?: (ids: string[]) => void;
   };
 }
 
@@ -183,15 +186,15 @@ export function AreaView(props: AreaViewProps) {
         areaId={area}
         language={language}
         background={AREA_BG.arena}
-        lots={lots.map(l => ({ ...l, art: l.id === 'guilda' ? GUILDA_LOT_ART : ARENA_LOT_ART[l.id], onOpen: () => setSheet(l.id) } satisfies AreaLot))}
+        lots={lots.map(l => ({ ...l, art: ARENA_LOT_ART[l.id], onOpen: () => setSheet(l.id) } satisfies AreaLot))}
       >
         <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close}>
           <Suspense fallback={<SheetLoading language={language} />}>
             {open?.id === 'torneio' && (
               <TournamentPage {...props.tournament} shop={{ ownership, actions }} />
             )}
-            {open?.id === 'guilda' && (
-              <GuildSheet saveId={props.guild.saveId} language={language} metaDoDiaCumprida={props.guild.metaDoDiaCumprida} fioGoal={props.guild.fioGoal} mySprite={props.guild.mySprite} playerDayTz={props.guild.playerDayTz} />
+            {open?.id === 'feira' && (
+              <GuildSheet room="feira" saveId={props.guild.saveId} language={language} metaDoDiaCumprida={props.guild.metaDoDiaCumprida} fioGoal={props.guild.fioGoal} mySprite={props.guild.mySprite} playerDayTz={props.guild.playerDayTz} onClaimed={props.guild.onClaimed} onScenes={props.guild.onScenes} />
             )}
             {open?.id === 'duelo' && (
               <DueloSheet
@@ -317,7 +320,7 @@ export function AreaView(props: AreaViewProps) {
           {open?.id === 'biblioteca' && props.hallContent('directory')}
           {open?.id === 'amigos' && props.hallContent('friends')}
           {open?.id === 'guilda' && (
-            <GuildSheet saveId={props.guild.saveId} language={language} metaDoDiaCumprida={props.guild.metaDoDiaCumprida} fioGoal={props.guild.fioGoal} mySprite={props.guild.mySprite} playerDayTz={props.guild.playerDayTz} />
+            <GuildSheet room="salao" saveId={props.guild.saveId} language={language} metaDoDiaCumprida={props.guild.metaDoDiaCumprida} fioGoal={props.guild.fioGoal} mySprite={props.guild.mySprite} playerDayTz={props.guild.playerDayTz} onClaimed={props.guild.onClaimed} onScenes={props.guild.onScenes} />
           )}
         </Suspense>
       </AreaSheet>

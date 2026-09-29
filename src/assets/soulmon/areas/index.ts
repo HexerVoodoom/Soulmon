@@ -27,7 +27,9 @@ export const MERCADO_LOT_ART = {
   conquistas: loteConquistas,
 } as const;
 
-export const ARENA_LOT_ART = { torneio: loteTorneio, duelo: loteDuelo } as const;
+// ⚠️ `feira`: PLACEHOLDER (a arte `lote-arena-feira` — tenda-cúpula listrada — vem da leva de
+// arte, `utils/fairArt.ts`). Só trocar o import.
+export const ARENA_LOT_ART = { torneio: loteTorneio, duelo: loteDuelo, feira: loteConquistas } as const;
 
 // ── Exploração e Jogos (F5, PR #118) ───────────────────────────────────────
 // Fundos reduzidos para 760×1344 (a mesma medida do Mercado/Arena) para caber
@@ -48,8 +50,6 @@ export const JOGOS_LOT_ART = { ppt: lotePpt } as const;
 // ⚠️ PLACEHOLDERS: ainda não existe arte de lote própria para estas
 // construções — reaproveitam as isométricas já instaladas até a squad-arte
 // gerar as definitivas (fila em `docs/ASSETS-A-GERAR.md`). Só trocar os imports.
-export const GUILDA_LOT_ART = loteConquistas;
-
 export const LABORATORIO_LOT_ART = {
   evolucao: loteBackground,
   pet: loteItens,

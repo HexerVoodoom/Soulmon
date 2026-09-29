@@ -74,7 +74,8 @@ const LOT_NPC_ART: Record<string, string> = {
   'mercado:conquistas': npcPlaceholderPoring,
   'arena:torneio': npcArena,
   'arena:duelo': PLACEHOLDER_NPC_ART.rinoceronte,
-  'arena:guilda': npcPlaceholderCorujaCervo,
+  // Fanfa (`npc-arena-feira`): PLACEHOLDER até a leva de arte (ids em `utils/fairArt.ts`). Só trocar aqui.
+  'arena:feira': npcPlaceholderCorujaCervo,
   'exploracao:masmorra': npcExploracao,
   'exploracao:dino': npcPlaceholderPoring,
   'jogos:ppt': npcJogos,

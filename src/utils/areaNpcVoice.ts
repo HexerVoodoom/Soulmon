@@ -82,9 +82,10 @@ const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     lineEn: 'One duel, one round at a time. Bring it on — I can take a hit!',
   },
   // Fala da Feira (`guild.npc.feira`) — a copy mora em `guildCopy.ts`; "grupo
-  // pequeno" ficou falso com a roda de até 12.
-  'arena:guilda': {
-    namePt: 'Marla, a intendente', nameEn: 'Marla, the steward',
+  // pequeno" ficou falso com a roda de até 12. NPC da Feira: Fanfa (criatura-sanfona,
+  // `00-BIBLIA-DAS-AREAS.md`); Marla fica só no Salão.
+  'arena:feira': {
+    namePt: 'Fanfa', nameEn: 'Fanfa',
     linePt: GUILD_COPY['guild.npc.feira'][0],
     lineEn: GUILD_COPY['guild.npc.feira'][1],
   },

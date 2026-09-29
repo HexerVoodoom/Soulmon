@@ -33,7 +33,7 @@ export function areaDemoLot(id: AreaId, language: Language): { label: string } {
  * ainda não chegou em F5 não aparece aqui e segue no lote de exemplo acima.
  */
 export type MercadoLotId = 'itens' | 'decoracao' | 'background' | 'conquistas';
-export type ArenaLotId = 'torneio' | 'duelo' | 'guilda';
+export type ArenaLotId = 'torneio' | 'duelo' | 'feira';
 export type LaboratorioLotId = 'evolucao' | 'pet' | 'stats';
 export type HallLotId = 'biblioteca' | 'amigos' | 'guilda';
 
@@ -54,10 +54,9 @@ const MERCADO_LOTS: AreaLotSpec<MercadoLotId>[] = [
 const ARENA_LOTS: AreaLotSpec<ArenaLotId>[] = [
   { id: 'torneio', labelPt: 'Torneio', labelEn: 'Tournament', ariaPt: 'Entrar no Torneio', ariaEn: 'Enter the Tournament', left: '27%', top: '55%' },
   { id: 'duelo', labelPt: 'Duelo', labelEn: 'Duel', ariaPt: 'Entrar no Duelo', ariaEn: 'Enter the Duel', left: '70%', top: '42%' },
-  // O lote da Arena é a FEIRA (`guild.lote.feira.*`, D-G4): o rótulo "Guilda" ficou
-  // falso quando a Guilda passou a ter o Salão no Hall. O `id` continua `'guilda'`
-  // até o WPG-10 trocar id, arte do lote e o teste `areaLotsNovos` juntos.
-  { id: 'guilda', labelPt: GUILD_COPY['guild.lote.feira.label'][0], labelEn: GUILD_COPY['guild.lote.feira.label'][1], ariaPt: GUILD_COPY['guild.lote.feira.aria'][0], ariaEn: GUILD_COPY['guild.lote.feira.aria'][1], left: '32%', top: '82%' },
+  // O lote da Arena é a FEIRA (`guild.lote.feira.*`, D-G4, WPG-10): abre a sala Feira do
+  // `GuildSheet`. O Salão (Bosque/Roda/Mural) continua sendo o lote `guilda` do Hall.
+  { id: 'feira', labelPt: GUILD_COPY['guild.lote.feira.label'][0], labelEn: GUILD_COPY['guild.lote.feira.label'][1], ariaPt: GUILD_COPY['guild.lote.feira.aria'][0], ariaEn: GUILD_COPY['guild.lote.feira.aria'][1], left: '32%', top: '82%' },
 ];
 
 // Laboratório e Hall (29/09/2026): as antigas abas/filtros viraram construções

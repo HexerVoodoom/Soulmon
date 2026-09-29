@@ -115,9 +115,10 @@ import { MilestoneCeremony } from './components/MilestoneCeremony';
 import { GroveMilestoneCeremony } from './components/guild/GroveMilestoneCeremony';
 import { useGroveWatch } from './hooks/useGroveWatch';
 import {
-  acknowledgeGroveMilestone, grantGroveScenes, groveAvisoFor, groveStageAt, formatDayLabel,
+  acknowledgeGroveMilestone, grantGroveScenes, grantGuildScenes, groveAvisoFor, groveStageAt, formatDayLabel,
   CEREMONY_MIN_INDEX,
 } from './utils/groveLocal';
+import { grantGuildTrophy } from './utils/guildClaimLocal';
 import { guildText, groveStageName, type GroveMarcoStage } from './utils/guildCopy';
 import {
   applyRebirth, canRebirth, rebirthRefusal, rebirthEscolaOptions, rebirthElementOptions, herancaDoCiclo,
@@ -3392,6 +3393,24 @@ export default function App() {
     // a compra em Emblemas decidia sobre um saldo velho.
   }, [gameState, missionProgress]);
 
+  /** Emblemas ganhos: UM caminho só, o do Torneio E o do resgate da Feira (a mesma moeda). */
+  const earnEmblems = useCallback((amount: number) => {
+    setGameState(prev => ({ ...prev, emblems: (prev.emblems ?? 0) + amount }));
+  }, [setGameState]);
+
+  /** Resgate da Feira confirmado pelo servidor (a folha já filtrou o recibo repetido): Emblemas +
+   *  a Concha da Maré, quando veio. Idempotente para a peça (`grantGuildTrophy`). */
+  const handleGuildClaimed = useCallback((claim: { emblems: number; trophyId: string | null }) => {
+    earnEmblems(claim.emblems);
+    const trophyId = claim.trophyId;
+    if (trophyId) setGameState(prev => grantGuildTrophy(prev, trophyId));
+  }, [earnEmblems, setGameState]);
+
+  /** Cenários que a Feira/Salão diz já liberados (chegam pela folha; os do `useGroveWatch` seguem o outro caminho). */
+  const handleGuildScenes = useCallback((ids: string[]) => {
+    setGameState(prev => grantGuildScenes(prev, ids));
+  }, [setGameState]);
+
   const handleEquipBackground = useCallback((id: string | null) => {
     setGameState(prev => ({ ...prev, equippedBackground: id }));
   }, []);
@@ -5611,7 +5630,7 @@ export default function App() {
                   language,
                   emblems: gameState.emblems ?? 0,
                   onEarnEmblems: amount => {
-                    setGameState(prev => ({ ...prev, emblems: (prev.emblems ?? 0) + amount }));
+                    earnEmblems(amount);
                     // A missão conta a PARTIDA, não a vitória: pagar só por
                     // vitória faria a missão semanal recompensar resultado, e o
                     // Torneio já mede o jogador contra ele mesmo pela faixa.
@@ -5660,7 +5679,7 @@ export default function App() {
                 onLabTab={setLabTab}
                 labContent={labContent}
                 hallContent={hallContent}
-                guild={{ saveId, metaDoDiaCumprida: fioMetaCumprida, fioGoal, mySprite: minhaCriaturaUrl, playerDayTz: gameState.playerDayTz }}
+                guild={{ saveId, metaDoDiaCumprida: fioMetaCumprida, fioGoal, mySprite: minhaCriaturaUrl, playerDayTz: gameState.playerDayTz, onClaimed: handleGuildClaimed, onScenes: handleGuildScenes }}
               />
             </Suspense>
           )}
