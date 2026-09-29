@@ -12,7 +12,7 @@ vi.mock('../utils/telemetry', async (orig) => ({ ...(await orig<typeof import('.
 import { getGuild, sanitizeGuildView } from '../utils/community';
 import { track } from '../utils/telemetry';
 import { useGroveWatch } from './useGroveWatch';
-import { observeGrove, readGroveLocal, acknowledgeGroveMilestone } from '../utils/groveLocal';
+import { observeGrove, readGroveLocal, acknowledgeGroveMilestone, setGuildSheetOpen, trackGuildStageOnce, resetGroveMemoryForTests } from '../utils/groveLocal';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { GROVE_STAGES } from '../utils/guildRules';
 
@@ -27,7 +27,7 @@ const semear = (idx: number, scenes = false) =>
   localStorage.setItem(STORAGE_KEYS.GUILD_LAST_STAGE, JSON.stringify(observeGrove(null, { gid: 'g1', stageIndex: idx, groveScenes: scenes }, D).next));
 
 afterEach(() => cleanup());
-beforeEach(() => { localStorage.clear(); vi.mocked(getGuild).mockReset(); vi.mocked(track).mockReset(); });
+beforeEach(() => { localStorage.clear(); resetGroveMemoryForTests(); vi.mocked(getGuild).mockReset(); vi.mocked(track).mockReset(); });
 
 describe('useGroveWatch', () => {
   it('SEM memória de roda neste aparelho: nenhuma requisição (quem nunca abriu a Guilda não paga a rede)', async () => {
@@ -101,5 +101,48 @@ describe('useGroveWatch', () => {
     renderHook(() => useGroveWatch({ saveId: 's', onScenes: () => {} }));
     expect(spy).not.toHaveBeenCalled();
     spy.mockRestore();
+  });
+});
+
+describe('L3: cenário só com confirmação do servidor, uma consulta por volta, telemetria uma vez', () => {
+  it('B1: `scenes` EDITADO no disco (5) não entrega nada se o servidor não confirma `mine.groveScenes`', async () => {
+    const editado = { ...observeGrove(null, { gid: 'g1', stageIndex: 2, groveScenes: false }, D).next, scenes: 5 };
+    localStorage.setItem(STORAGE_KEYS.GUILD_LAST_STAGE, JSON.stringify(editado));
+    vi.mocked(getGuild).mockResolvedValue(vista(2, false));
+    const onScenes = vi.fn();
+    renderHook(() => useGroveWatch({ saveId: 's', onScenes }));
+    await waitFor(() => expect(getGuild).toHaveBeenCalled());
+    await new Promise(r => setTimeout(r, 20));
+    expect(onScenes).not.toHaveBeenCalled();
+  });
+
+  it('B1: sem rede (nenhuma vista chegou) também não entrega, mesmo com `scenes` no disco', async () => {
+    semear(3, true);
+    vi.mocked(getGuild).mockRejectedValue(new Error('rede'));
+    const onScenes = vi.fn();
+    renderHook(() => useGroveWatch({ saveId: 's', onScenes }));
+    await new Promise(r => setTimeout(r, 20));
+    expect(onScenes).not.toHaveBeenCalled();
+  });
+
+  it('M5: com a folha da Guilda montada, o hook NÃO consulta ao voltar ao app (a folha o faz) — e volta a consultar ao fechá-la', async () => {
+    semear(1);
+    vi.mocked(getGuild).mockResolvedValue(vista(1));
+    renderHook(() => useGroveWatch({ saveId: 's', onScenes: () => {} }));
+    await waitFor(() => expect(getGuild).toHaveBeenCalledTimes(1));
+    setGuildSheetOpen(true);
+    await act(async () => { document.dispatchEvent(new Event('visibilitychange')); });
+    expect(getGuild).toHaveBeenCalledTimes(1);
+    setGuildSheetOpen(false);
+    await act(async () => { document.dispatchEvent(new Event('visibilitychange')); });
+    expect(getGuild).toHaveBeenCalledTimes(2);
+  });
+
+  it('B5: `guild_stage` sai UMA vez por estágio, venha da folha ou do hook', () => {
+    trackGuildStageOnce(3);
+    trackGuildStageOnce(3);
+    trackGuildStageOnce(null);
+    trackGuildStageOnce(4);
+    expect(vi.mocked(track).mock.calls).toEqual([['guild_stage', { level: 3 }], ['guild_stage', { level: 4 }]]);
   });
 });

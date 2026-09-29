@@ -1,8 +1,10 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   observeGrove, acknowledgeGrove, groveAvisoFor, sanitizeGroveLocal, permanenceBand, parseDayLabel,
-  formatDayLabel, groveSceneIds, grantGroveScenes, groveStageAt, type GroveLocal,
+  formatDayLabel, groveSceneIds, grantGroveScenes, grantGuildScenes, groveStageAt, isGroveSceneId, type GroveLocal,
+  acknowledgeGroveMilestone, readGroveLocal, observeGuildView, resetGroveMemoryForTests,
 } from './groveLocal';
+import { STORAGE_KEYS } from './storageKeys';
 
 const D1 = 'Mon Sep 28 2026';
 const D2 = 'Tue Sep 29 2026';
@@ -155,5 +157,62 @@ describe('o tipo não carrega nada por pessoa', () => {
   it('as chaves da memória são só id público, índices, datas e cenários', () => {
     const l: GroveLocal = observeGrove(null, v(2), D1).next;
     expect(Object.keys(l).sort()).toEqual(['base', 'gid', 'index', 'joinedDay', 'marks', 'pending', 'scenes', 'tracked']);
+  });
+});
+
+describe('L3 M1: reconhecer o marco com o armazenamento cheio NÃO deixa a cerimônia voltar', () => {
+  const mem = new Map<string, string>();
+  const storage = (recusa: boolean) => ({
+    getItem: (k: string) => mem.get(k) ?? null,
+    setItem: (k: string, v: string) => { if (recusa) throw new Error('QuotaExceededError'); mem.set(k, v); },
+    removeItem: (k: string) => { mem.delete(k); }, clear: () => mem.clear(), key: () => null, length: 0,
+  });
+  beforeEach(() => { mem.clear(); resetGroveMemoryForTests(); vi.stubGlobal('localStorage', storage(false)); });
+  const semear = (idx: number) => mem.set(STORAGE_KEYS.GUILD_LAST_STAGE, JSON.stringify(observeGrove(null, { gid: 'g1', stageIndex: idx, groveScenes: false }, D1).next));
+  const view = (idx: number) => ({ id: 'g1', bosque: { stageIndex: idx }, mine: { groveScenes: false } }) as never;
+
+  it('storage saudável: o reconhecimento vai ao disco (comportamento de sempre)', () => {
+    semear(1);
+    observeGuildView(view(3), D2);
+    expect(readGroveLocal()?.pending?.index).toBe(3);
+    acknowledgeGroveMilestone();
+    expect(readGroveLocal()).toMatchObject({ pending: null, index: 3 });
+  });
+
+  it('storage CHEIO: `pending` fica no disco, mas a leitura devolve `null` — a cerimônia não reaparece nem prende a fila', () => {
+    semear(1);
+    observeGuildView(view(3), D2);
+    expect(readGroveLocal()?.pending?.index).toBe(3);
+    vi.stubGlobal('localStorage', storage(true)); // a quota estoura a partir daqui
+    acknowledgeGroveMilestone();
+    expect(JSON.parse(mem.get(STORAGE_KEYS.GUILD_LAST_STAGE)!).pending).not.toBeNull(); // o disco NÃO mudou
+    const depois = readGroveLocal();
+    expect(depois?.pending).toBeNull();
+    expect(depois?.index).toBe(3);
+    // outra vista do MESMO estágio (a folha relê a cada volta) não a ressuscita
+    observeGuildView(view(3), D2);
+    expect(readGroveLocal()?.pending).toBeNull();
+  });
+
+  it('...mas um estágio MAIS ALTO depois do reconhecimento volta a ser marco (a memória é por estágio, não um mudo)', () => {
+    semear(1);
+    observeGuildView(view(3), D2);
+    vi.stubGlobal('localStorage', storage(true));
+    acknowledgeGroveMilestone();
+    vi.stubGlobal('localStorage', storage(false));
+    observeGuildView(view(4), D2);
+    expect(readGroveLocal()?.pending?.index).toBe(4);
+  });
+});
+
+describe('L3 B2: `grantGroveScenes` filtra por conta própria', () => {
+  it('só ids `bg-guild-<estágio>` conhecidos entram no save; desconhecido, de outra loja e não-string são descartados', () => {
+    const r = grantGroveScenes({ ownedBackgrounds: ['bg-x'] }, ['bg-guild-copa', 'bg-guild-inventado', 'bg-mission-abyss', 'bg-guild-', 42 as never, 'bg-guild-copa']);
+    expect(r.ownedBackgrounds).toEqual(['bg-x', 'bg-guild-copa']);
+    const semNada = { ownedBackgrounds: ['bg-guild-copa'] };
+    expect(grantGroveScenes(semNada, ['bg-guild-inventado'])).toBe(semNada); // mesma referência: nada a gravar
+    expect(grantGuildScenes({} as { ownedBackgrounds?: string[] }, ['bg-guild-mata']).ownedBackgrounds).toEqual(['bg-guild-mata']);
+    expect(isGroveSceneId('bg-guild-bosque-antigo')).toBe(true);
+    expect(isGroveSceneId('bg-guild-x')).toBe(false);
   });
 });

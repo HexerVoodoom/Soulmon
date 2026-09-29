@@ -5,7 +5,8 @@
  * fica acima da fila (z 300) e movimento reduzido reduz o movimento, NUNCA a pausa.
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { screen, fireEvent } from '@testing-library/react';
+import { screen, fireEvent, act } from '@testing-library/react';
+import { closeTopBackLayer, hasBackLayer } from '../../utils/backStack';
 import { renderWithCss } from '../../test/renderEnv';
 import { GroveMilestoneCeremony } from './GroveMilestoneCeremony';
 import { GUILD_COPY } from '../../utils/guildCopy';
@@ -107,5 +108,43 @@ describe('movimento reduzido reduz o MOVIMENTO, nunca a pausa', () => {
     expect(vibrate).toHaveBeenCalledTimes(1);
     vi.stubGlobal('navigator', {});
     expect(() => renderWithCss(<GroveMilestoneCeremony {...base} onDone={() => {}} />)).not.toThrow();
+  });
+});
+
+describe('L3: o voltar do sistema, o véu e a preferência AO VIVO', () => {
+  it('B6: a cerimônia é camada do `backStack` — o voltar do Android a fecha, e sai da pilha ao desmontar', () => {
+    const onDone = vi.fn();
+    const { unmount } = renderWithCss(<GroveMilestoneCeremony {...base} onDone={onDone} />);
+    expect(hasBackLayer()).toBe(true);
+    expect(closeTopBackLayer()).toBe(true);
+    expect(onDone).toHaveBeenCalledTimes(1);
+    unmount();
+    expect(hasBackLayer()).toBe(false);
+  });
+
+  it('B3 (decidido): Escape e o botão fecham — gestos da pessoa; o toque no VÉU não fecha (quem encosta fora não perde o marco)', () => {
+    const onDone = vi.fn();
+    const { container } = renderWithCss(<GroveMilestoneCeremony {...base} onDone={onDone} />);
+    fireEvent.click(container.querySelector('[role="status"]') as HTMLElement);
+    fireEvent.mouseDown(container.querySelector('[role="status"]') as HTMLElement);
+    expect(onDone).not.toHaveBeenCalled();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onDone).toHaveBeenCalledTimes(1);
+  });
+
+  it('B4: a preferência de movimento é lida AO VIVO — mudar durante a cerimônia tira a animação, sem tirar a pausa', () => {
+    let reduzido = false;
+    const ouvintes = new Set<(e: { matches: boolean }) => void>();
+    vi.stubGlobal('matchMedia', (q: string) => ({
+      matches: q.includes('reduce') ? reduzido : false, media: q,
+      addEventListener: (_: string, f: (e: { matches: boolean }) => void) => ouvintes.add(f),
+      removeEventListener: (_: string, f: (e: { matches: boolean }) => void) => ouvintes.delete(f),
+    }));
+    Object.defineProperty(window, 'matchMedia', { value: (globalThis as { matchMedia: unknown }).matchMedia, configurable: true });
+    const { container } = renderWithCss(<GroveMilestoneCeremony {...base} onDone={() => {}} />);
+    expect(container.querySelectorAll('.sm-milestone-pop')).toHaveLength(1);
+    act(() => { reduzido = true; ouvintes.forEach(f => f({ matches: true })); });
+    expect(container.querySelectorAll('.sm-milestone-pop')).toHaveLength(0);
+    expect(container.querySelectorAll('button')).toHaveLength(1);
   });
 });

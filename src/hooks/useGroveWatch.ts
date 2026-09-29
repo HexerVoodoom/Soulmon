@@ -11,15 +11,18 @@
  *  · **Sem timer.** Consulta ao montar e ao voltar ao app (`visibilitychange`),
  *    nunca em intervalo (footgun de re-render/cloud save documentado).
  *  · **Cenários vão para o SAVE** (`onScenes`, chamado fora de updater): é o que
- *    faz o que se ganhou ficar com quem sai (G12).
+ *    faz o que se ganhou ficar com quem sai (G12). **Só com a confirmação do servidor**
+ *    (`mine.groveScenes` da vista que ACABOU de chegar) — nunca do `scenes` guardado no
+ *    aparelho, que é um número editável (L3-codigo B1).
+ *  · **Uma consulta por volta** (L3-codigo M5): com a folha da Guilda aberta ela mesma
+ *    consulta ao voltar ao app, e este hook fica quieto (`isGuildSheetOpen`).
  */
 import { useEffect, useRef, useState } from 'react';
 import { getGuild } from '../utils/community';
 import { playerDayKey, type PlayerDayAnchor } from '../utils/playerDay';
 import {
-  GROVE_EVENT, groveSceneIds, observeGuildView, readGroveLocal, type GroveLocal,
+  GROVE_EVENT, groveSceneIds, isGuildSheetOpen, observeGuildView, readGroveLocal, trackGuildStageOnce, type GroveLocal,
 } from '../utils/groveLocal';
-import { track } from '../utils/telemetry';
 
 export function useGroveWatch({ saveId, playerDayTz, onScenes }: {
   saveId: string;
@@ -47,12 +50,14 @@ export function useGroveWatch({ saveId, playerDayTz, onScenes }: {
   useEffect(() => {
     let vivo = true;
     const olhar = async () => {
-      if (document.hidden || !readGroveLocal()) return;
+      if (document.hidden || isGuildSheetOpen() || !readGroveLocal()) return;
       try {
         const view = await getGuild(saveId, tz.current);
         if (!vivo) return;
         const obs = observeGuildView(view, playerDayKey(new Date(), tz.current));
-        if (obs?.firstSeenStage) track('guild_stage', { level: obs.firstSeenStage });
+        trackGuildStageOnce(obs?.firstSeenStage);
+        // Cenário liberado → save, mas SÓ o que o servidor confirmou agora (`mine.groveScenes`).
+        if (view?.mine.groveScenes) entregar.current(groveSceneIds(view.bosque.stageIndex));
       } catch { /* sem rede / sem login: fica a memória que já existe */ }
     };
     void olhar();
@@ -62,12 +67,6 @@ export function useGroveWatch({ saveId, playerDayTz, onScenes }: {
       document.removeEventListener('visibilitychange', olhar);
     };
   }, [saveId]);
-
-  // Cenário liberado → save. Idempotente no updater; efeito, nunca dentro dele.
-  const scenes = local?.scenes ?? 0;
-  useEffect(() => {
-    if (scenes > 0) entregar.current(groveSceneIds(scenes));
-  }, [scenes]);
 
   return local;
 }

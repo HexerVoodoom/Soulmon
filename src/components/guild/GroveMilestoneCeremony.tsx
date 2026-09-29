@@ -11,14 +11,21 @@
  * do pet vem embaixo, em voz mais baixa. Nada de "parabéns", nada de número, nada
  * de "você fez o bosque crescer" — o bosque cresceu, e a frase constata (L12).
  * O vidro mostra o cenário do estágio novo com a criatura de quem olha.
+ *
+ * SAÍDAS (L3-codigo B3, decidido): o botão, o **Escape** e o **voltar do sistema**. Todas são gestos da
+ * pessoa — "espera o gesto" veta o auto-fechar, não o Escape, que é o contrato de qualquer diálogo modal
+ * (`useDialogA11y`) e a única saída de quem navega por teclado sem chegar ao botão. O véu NÃO fecha ao
+ * toque (não há `onClick` nele): quem encosta fora sem querer não perde o marco.
  */
 import { useEffect } from 'react';
+import { useBackLayer } from '../../utils/backStack';
+import { usePrefersReducedMotion } from '../ui/Viewport';
 import { Icon } from '../ui/Icon';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { RitualDialog, RitualGlass, ritualTitle } from '../ritual/RitualKit';
 import { PET_BACKGROUNDS } from '../../utils/backgrounds';
 import { GROUND_Y } from '../../utils/petStage';
-import { groveStageName, groveMarcoText, guildText, type GroveMarcoStage } from '../../utils/guildCopy';
+import { groveStageName, groveMarcoText, guildCoreText, type GroveMarcoStage } from '../../utils/guildCopyCore';
 import type { GroveStageId } from '../../utils/guildRules';
 import type { Language } from '../../utils/i18n';
 
@@ -32,13 +39,18 @@ interface GroveMilestoneCeremonyProps {
   /** O cenário já entrou entre os cenários da pessoa (`guild.marco.cenario`). */
   sceneGranted: boolean;
   language: Language;
+  /** Override (teste); sem ele, o hook acompanha a preferência do sistema AO VIVO (`matchMedia` change — L3 B4). */
   reducedMotion?: boolean;
   onDone: () => void;
 }
 
 export function GroveMilestoneCeremony({
-  stage, spriteUrl, dateLabel, sceneGranted, language, reducedMotion = false, onDone,
+  stage, spriteUrl, dateLabel, sceneGranted, language, reducedMotion: reducedOverride, onDone,
 }: GroveMilestoneCeremonyProps) {
+  const reducedSistema = usePrefersReducedMotion();
+  const reducedMotion = reducedOverride ?? reducedSistema;
+  // O voltar do sistema (botão do Android, `popstate`) fecha a cerimônia como fecha as outras camadas (QA L3 B6).
+  useBackLayer(true, onDone);
   const bg = PET_BACKGROUNDS[`bg-guild-${stage satisfies GroveStageId}`];
   const nome = groveStageName(language, stage);
 
@@ -65,9 +77,9 @@ export function GroveMilestoneCeremony({
       <p id="gmc-title" style={ritualTitle}>{groveMarcoText(language, stage, 'mundo')}</p>
       <p style={{ ...sm2Text, margin: 0 }}>{groveMarcoText(language, stage, 'pet')}</p>
       {dateLabel && <p style={sm2Hint}>{dateLabel}</p>}
-      {sceneGranted && <p style={sm2Hint}>{guildText(language, 'guild.marco.cenario', { estagio: nome })}</p>}
+      {sceneGranted && <p style={sm2Hint}>{guildCoreText(language, 'guild.marco.cenario', { estagio: nome })}</p>}
       <button type="button" onClick={onDone} style={{ ...sm2Button('primary'), marginTop: 4, minWidth: 200 }}>
-        {guildText(language, 'guild.marco.botao')}
+        {guildCoreText(language, 'guild.marco.botao')}
       </button>
     </RitualDialog>
   );

@@ -27,6 +27,7 @@
 import { STORAGE_KEYS } from './storageKeys';
 import { readJson, writeJson, removeLocal } from './safeStorage';
 import { GROVE_STAGES, type GroveStageId } from './guildRules';
+import { track } from './telemetry';
 import type { GuildView } from './community';
 
 export interface GroveLocal {
@@ -85,8 +86,40 @@ export function sanitizeGroveLocal(raw: unknown): GroveLocal | null {
   };
 }
 
-export const readGroveLocal = (): GroveLocal | null =>
-  sanitizeGroveLocal(readJson<unknown>(STORAGE_KEYS.GUILD_LAST_STAGE, null));
+/**
+ * O que a pessoa JÁ reconheceu nesta execução (roda → maior estágio). É a rede de segurança de
+ * `acknowledgeGroveMilestone` quando o storage está cheio ou indisponível (L3-codigo M1): sem
+ * ela, o `pending` continuaria no disco, a cerimônia z-300 voltaria a cada gesto e prenderia a
+ * fila inteira. Só vale enquanto o app está aberto — reabrir sem storage repete UMA cerimônia,
+ * que é o pior caso aceitável (e a pessoa a fecha de novo).
+ */
+const reconhecido = new Map<string, number>();
+/** Só para teste: a memória acima é do módulo. */
+export const resetGroveMemoryForTests = () => { reconhecido.clear(); trackedStages.clear(); guildSheetOpen = false; };
+
+export const readGroveLocal = (): GroveLocal | null => {
+  const l = sanitizeGroveLocal(readJson<unknown>(STORAGE_KEYS.GUILD_LAST_STAGE, null));
+  if (l?.pending && (reconhecido.get(l.gid) ?? 0) >= l.pending.index) return acknowledgeGrove(l);
+  return l;
+};
+
+// ── Telemetria e consulta: uma vez só ───────────────────────────────────────
+
+/** `guild_stage` uma vez por estágio e por execução, venha da folha ou do watcher (L3-codigo B5). */
+const trackedStages = new Set<number>();
+export function trackGuildStageOnce(level: number | null | undefined): void {
+  if (!level || trackedStages.has(level)) return;
+  trackedStages.add(level);
+  track('guild_stage', { level });
+}
+
+/**
+ * A folha da Guilda está montada? Enquanto estiver, ELA consulta a roda ao voltar ao app e o
+ * `useGroveWatch` fica quieto: era uma `getGuild` em dobro por volta (L3-codigo M5).
+ */
+let guildSheetOpen = false;
+export const setGuildSheetOpen = (open: boolean): void => { guildSheetOpen = open; };
+export const isGuildSheetOpen = (): boolean => guildSheetOpen;
 
 // ── Lógica pura ─────────────────────────────────────────────────────────────
 
@@ -225,8 +258,12 @@ export function observeGuildView(view: GuildView | null, day: string): GroveObse
 /** Fechou a cerimônia. */
 export function acknowledgeGroveMilestone(): void {
   try {
-    const next = acknowledgeGrove(readGroveLocal());
-    if (next) writeJson(STORAGE_KEYS.GUILD_LAST_STAGE, next, { silent: true });
+    const atual = readGroveLocal();
+    const next = acknowledgeGrove(atual);
+    // Storage cheio/indisponível (`writeJson` → `false`): a memória da execução segura o reconhecimento.
+    if (next && !writeJson(STORAGE_KEYS.GUILD_LAST_STAGE, next, { silent: true }) && atual?.pending) {
+      reconhecido.set(atual.gid, Math.max(reconhecido.get(atual.gid) ?? 0, atual.pending.index));
+    }
     emitGrove();
   } catch { /* conveniência: falhar em silêncio */ }
 }
@@ -234,6 +271,7 @@ export function acknowledgeGroveMilestone(): void {
 /** Saiu da roda (ou a roda sumiu): a memória do aparelho acaba, o que foi ganho já está no save. */
 export function forgetGrove(): GroveLocal | null {
   const antes = readGroveLocal();
+  reconhecido.clear();
   removeLocal(STORAGE_KEYS.GUILD_LAST_STAGE);
   emitGrove();
   return antes;
@@ -254,12 +292,15 @@ export const groveSceneIds = (upTo: number): string[] =>
  */
 export function grantGroveScenes<T extends { ownedBackgrounds?: string[] }>(prev: T, ids: readonly string[]): T {
   const owned = Array.isArray(prev.ownedBackgrounds) ? prev.ownedBackgrounds : [];
-  const faltam = ids.filter(id => !owned.includes(id));
+  // O filtro é DAQUI, não do chamador (L3-codigo B2): só id de cenário do Bosque conhecido entra no save.
+  const faltam = [...new Set(ids)].filter(id => isGroveSceneId(id) && !owned.includes(id));
   if (faltam.length === 0) return prev;
   return { ...prev, ownedBackgrounds: [...owned, ...faltam] };
 }
 
-/** Cenários que o SERVIDOR diz liberados (`guildRewards.scenes`): só ids do Bosque conhecidos entram no save. */
-export function grantGuildScenes<T extends { ownedBackgrounds?: string[] }>(prev: T, ids: readonly string[]): T {
-  return grantGroveScenes(prev, ids.filter(id => GROVE_STAGES.some(st => id === `bg-guild-${st}`)));
-}
+/** É um id `bg-guild-<estágio>` conhecido? Dado de fora (servidor, disco) nunca inventa cenário no save. */
+export const isGroveSceneId = (id: unknown): id is string =>
+  typeof id === 'string' && GROVE_STAGES.some(st => id === `bg-guild-${st}`);
+
+/** Cenários que o SERVIDOR diz liberados (`guildRewards.scenes`). Mesmo filtro de `grantGroveScenes`. */
+export const grantGuildScenes = grantGroveScenes;
