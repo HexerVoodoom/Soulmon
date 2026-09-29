@@ -216,8 +216,14 @@ export interface GuildView {
     /** Peças de maré já colhidas (permanentes). Sem número por pessoa. */
     ornaments: Array<{ tide: string; size: TideSize; day: string }>;
   };
-  /** Os TIPOS de gesto recebidos hoje de outros membros, em lote: sem quem e sem quantos. */
+  /**
+   * Os TIPOS de gesto recebidos hoje de outros membros, em lote: sem quem e sem quantos.
+   * ⚠️ Só com 3+ membros: numa roda de 2 o "anônimo" é quem sobrou, então o servidor
+   * NÃO manda o tipo (B5, `GESTO_TIPO_MIN_MEMBROS`) — vem vazio e o aviso é `gestureReceived`.
+   */
   gestures: GuildGesture[];
+  /** Chegou algum gesto hoje (qualquer roda) — `true` ou `false`, nunca um número. */
+  gestureReceived: boolean;
 }
 
 export type GuildErrorKind =
@@ -305,6 +311,7 @@ export function sanitizeGuildView(raw: unknown): GuildView | null {
       ornaments,
     },
     gestures: gestos(r.gestures),
+    gestureReceived: r.gestureReceived === true,
   };
 }
 

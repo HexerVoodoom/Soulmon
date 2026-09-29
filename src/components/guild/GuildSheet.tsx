@@ -599,10 +599,13 @@ function SalaRoda({ guild, t, language, nominal, ocupado, onGesto }: {
           })}
         </div>
       )}
-      {guild.gestures.length > 0 && (
+      {guild.gestures.length > 0 ? (
         <ul className="sm2-grove-list" data-guild-recebidos>
           {guild.gestures.map(k => <li key={k}>{guildGestureReceived(language, k)}</li>)}
         </ul>
+      ) : guild.gestureReceived && (
+        // Roda de 2: o servidor não manda o TIPO (B5) — só o fato de que chegou algo.
+        <p className="sm2-lib-s" style={{ margin: 0 }} data-guild-recebidos>{t('guild.gesto.recebido.agregado')}</p>
       )}
     </section>
   );

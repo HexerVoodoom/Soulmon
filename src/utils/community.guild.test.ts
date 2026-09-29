@@ -217,6 +217,13 @@ describe('sanitizeGuildView — a vista é dado não confiável', () => {
     expect(v.bosque.ornaments).toEqual([{ tide: 'T1', size: 'petala', day: '2026-08-10' }]);
   });
 
+  it('`gestureReceived` é booleano: só `true` passa (roda de 2 manda o fato, não o tipo — B5)', () => {
+    expect(sanitizeGuildView(view({ gestures: [], gestureReceived: true }))!.gestureReceived).toBe(true);
+    expect(sanitizeGuildView(view({ gestureReceived: 3 }))!.gestureReceived).toBe(false);
+    expect(sanitizeGuildView(view({ gestureReceived: null }))!.gestureReceived).toBe(false);
+    expect(sanitizeGuildView(view())!.gestureReceived).toBe(false);
+  });
+
   it('lixo vira null ou vazio sem lançar', () => {
     expect(sanitizeGuildView(null)).toBeNull();
     expect(sanitizeGuildView('x')).toBeNull();

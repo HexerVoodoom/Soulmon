@@ -944,6 +944,32 @@ describe('os gestos: três, fixos, anônimos, sem push', () => {
     expect(document.querySelector('[data-guild-recebidos]')).toBeNull();
   });
 
+  it('roda de 2: o servidor NÃO manda o tipo (B5) — só o fato; a UI diz "alguém fez um gesto", sem tipo, sem ícone', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(2, 1, { gestures: [], gestureReceived: true }));
+    await montar();
+    const linha = document.querySelector('[data-guild-recebidos]')!;
+    expect(linha.textContent).toBe('Alguém fez um gesto para a roda.');
+    expect(linha.textContent).not.toMatch(/luz|aceno|descanso|light|wave|rest/i);
+    cleanup();
+    await montar({ language: 'en-US' });
+    expect(document.querySelector('[data-guild-recebidos]')!.textContent).toBe('Someone made a gesture for the circle.');
+  });
+
+  it('nenhum gesto (gestureReceived falso): SILÊNCIO nas duas formas', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(2, 1, { gestures: [], gestureReceived: false }));
+    await montar();
+    expect(document.querySelector('[data-guild-recebidos]')).toBeNull();
+    expect(document.body.textContent).not.toMatch(/gesto para a roda/);
+  });
+
+  it('com 3+ a lista de TIPOS vence o agregado (nunca as duas coisas juntas)', async () => {
+    vi.mocked(getGuild).mockResolvedValue(noEstagio(3, 1, { gestures: ['luz'], gestureReceived: true }));
+    await montar();
+    expect(document.querySelectorAll('[data-guild-recebidos]')).toHaveLength(1);
+    expect(document.body.textContent).toContain('Alguém deixou uma luz.');
+    expect(document.body.textContent).not.toContain('Alguém fez um gesto');
+  });
+
   it('recebidos em inglês, e um tipo desconhecido do servidor é descartado', async () => {
     const v = sanitizeGuildView({ ...noEstagio(3, 1), gestures: ['aceno', 'soco', 'luz'] })!;
     expect(v.gestures).toEqual(['aceno', 'luz']);

@@ -15,9 +15,10 @@
  * (Fatia B1: as chaves do Bosque por estágio, dos gestos, da cerimônia de marco e do
  * Mural vieram TODAS do documento — nenhuma é inventada.)
  *
- * ⚠️ Três chaves NÃO estão nas 149 do documento e estão marcadas `PENDENTE`:
- * o botão de tentar de novo, o "Alguém" de quem ainda não tem apelido e o
- * "· você" (o texto já existia no CoopPanel). O `soulmon-narrative-critic`
+ * ⚠️ Quatro chaves NÃO estão nas 149 do documento e estão marcadas `PENDENTE`:
+ * o botão de tentar de novo, o "Alguém" de quem ainda não tem apelido, o
+ * "· você" (o texto já existia no CoopPanel) e o gesto recebido SEM tipo (roda
+ * de 2, B5 do backend). O `soulmon-narrative-critic`
  * ainda não as viu — ver `docs/reviews/guilda/qa/impl-notas-front.md`.
  */
 import type { Language } from './i18n';
@@ -95,6 +96,10 @@ export const GUILD_COPY = {
   'guild.gesto.aceno.recebido': ['Alguém acenou para a roda.', 'Someone waved at the circle.'],
   'guild.gesto.luz.recebido': ['Alguém deixou uma luz.', 'Someone left a little light.'],
   'guild.gesto.descanso.recebido': ['Alguém desejou bom descanso.', 'Someone wished everyone a good rest.'],
+  // PENDENTE (fora das 149): numa roda de 2 o servidor NÃO manda o TIPO do gesto recebido (B5 —
+  // dizer "luz" contaria o gesto exato de uma pessoa conhecida), só que chegou algum. O
+  // `soulmon-narrative-critic` ainda não viu esta frase.
+  'guild.gesto.recebido.agregado': ['Alguém fez um gesto para a roda.', 'Someone made a gesture for the circle.'],
   // PENDENTE (fora das 149; já existiam no CoopPanel).
   'guild.roda.voce': ['· você', '· you'],
   'guild.roda.alguem': ['Alguém', 'Someone'],
