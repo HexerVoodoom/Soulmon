@@ -118,10 +118,16 @@ export async function lerGrupo(env, groupId) {
  * evapora para todo mundo ao mesmo tempo, sem nenhum evento que explique.
  */
 export async function gravarGrupo(env, g) {
-  await kvOrThrow(env).put(coopKey(g.id), JSON.stringify(g), { expirationTtl: COOP_TTL });
+  // G17(a): guilda com Bosque plantado (`bosqueProgress > 0`) NÃO expira — o
+  // que a roda construiu não evapora por inatividade. Sem progresso, 120 d.
+  const semPrazo = Number(g.bosqueProgress ?? 0) > 0;
+  await kvOrThrow(env).put(coopKey(g.id), JSON.stringify(g), semPrazo ? {} : { expirationTtl: COOP_TTL });
+  // Os índices seguem o blob: blob sem prazo com ponteiro que expira seria o
+  // mesmo "modo evapora" descrito acima, pelo lado oposto.
+  const prazo = semPrazo ? {} : { expirationTtl: COOP_TTL };
   await Promise.all([
-    kvOrThrow(env).put(coopCodeKey(g.code), g.id, { expirationTtl: COOP_TTL }),
-    ...g.members.map(m => kvOrThrow(env).put(coopOfKey(m), g.id, { expirationTtl: COOP_TTL })),
+    kvOrThrow(env).put(coopCodeKey(g.code), g.id, prazo),
+    ...g.members.map(m => kvOrThrow(env).put(coopOfKey(m), g.id, prazo)),
   ]);
 }
 
@@ -202,13 +208,32 @@ export async function grupoDe(env, saveId, semana = semanaDe()) {
  * @returns {Promise<{ left: boolean, groupId: string | null, remaining: number }>}
  */
 export async function coopLeave(env, saveId) {
-  const g = await grupoDe(env, saveId);
-  if (!g) return { left: false, groupId: null, remaining: 0 };
-  g.members = g.members.filter(m => m !== saveId);
-  if (g.checkins) delete g.checkins[saveId];
+  const lido = await grupoDe(env, saveId);
+  if (!lido) return { left: false, groupId: null, remaining: 0 };
   await kvOrThrow(env).delete(coopOfKey(saveId));
-  await kvOrThrow(env).delete(coopCkKey(g.id, saveId));
+  await kvOrThrow(env).delete(coopCkKey(lido.id, saveId));
+  // RELEITURA imediatamente antes de gravar (L1-codigo MÉDIO-2): gravar a
+  // cópia lida no começo apagava quem tivesse ENTRADO no meio — e, com um
+  // membro só, apagava o grupo inteiro por cima da entrada de outra pessoa,
+  // que já tinha recebido 200. Não fecha a janela (o KV não tem CAS), encolhe
+  // para o intervalo entre este `get` e o `put`/`delete`.
+  const g = (await lerGrupo(env, lido.id)) ?? lido;
+  g.members = (g.members || []).filter(m => m !== saveId);
+  if (g.checkins) delete g.checkins[saveId];
+  // Anfitrião que sai passa a vez ao membro mais antigo, em silêncio (G7: não
+  // há expulsão; a guilda nunca fica sem quem renomeia ou troca o código).
+  if (g.hostSave === saveId || (g.hostSave && !g.members.includes(g.hostSave))) {
+    g.hostSave = g.members[0] ?? null;
+  }
   if (g.members.length === 0) {
+    // Só apaga se a releitura AINDA estiver vazia de outros.
+    const ultima = await lerGrupo(env, g.id);
+    const outros = (ultima?.members || []).filter(m => m !== saveId);
+    if (outros.length > 0) {
+      const vivo = { ...ultima, members: outros, hostSave: ultima.hostSave && outros.includes(ultima.hostSave) ? ultima.hostSave : outros[0] };
+      await gravarGrupo(env, vivo);
+      return { left: true, groupId: g.id, remaining: outros.length };
+    }
     await kvOrThrow(env).delete(coopKey(g.id));
     await kvOrThrow(env).delete(coopCodeKey(g.code));
   } else {
