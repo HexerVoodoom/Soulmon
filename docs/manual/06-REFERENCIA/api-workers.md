@@ -10,7 +10,7 @@
 - [Rotas HTTP (functions/api/*.js exportando onRequest*)](#rotas-http)
   - [`account.js`](#functionsapiaccountjs) · [`billing.js`](#functionsapibillingjs) · [`chat.js`](#functionsapichatjs) · [`community.js`](#functionsapicommunityjs) · [`config.js`](#functionsapiconfigjs) · [`entitlements.js`](#functionsapientitlementsjs) · [`fcm-subscribe.js`](#functionsapifcm-subscribejs) · [`generate-sprite.js`](#functionsapigenerate-spritejs) · [`metrics.js`](#functionsapimetricsjs) · [`save.js`](#functionsapisavejs) · [`sprite-image.js`](#functionsapisprite-imagejs) · [`subscribe.js`](#functionsapisubscribejs) · [`suggest-tasks.js`](#functionsapisuggest-tasksjs) · [`transcribe.js`](#functionsapitranscribejs)
 - [Módulos internos (`_*.js`)](#módulos-internos)
-  - [`_accountTombstone.js`](#functionsapi_accounttombstonejs) · [`_aiGuard.js`](#functionsapi_aiguardjs) · [`_auth.js`](#functionsapi_authjs) · [`_billing.js`](#functionsapi_billingjs) · [`_bond.js`](#functionsapi_bondjs) · [`_coop.js`](#functionsapi_coopjs) · [`_entitlements.js`](#functionsapi_entitlementsjs) · [`_kv.js`](#functionsapi_kvjs) · [`_pushCopy.js`](#functionsapi_pushcopyjs) · [`_pushIdentity.js`](#functionsapi_pushidentityjs) · [`_pushTargets.js`](#functionsapi_pushtargetsjs) · [`_rateLimit.js`](#functionsapi_ratelimitjs) · [`_redact.js`](#functionsapi_redactjs)
+  - [`_admin.js`](#functionsapi_adminjs) · [`_accountTombstone.js`](#functionsapi_accounttombstonejs) · [`_aiGuard.js`](#functionsapi_aiguardjs) · [`_auth.js`](#functionsapi_authjs) · [`_billing.js`](#functionsapi_billingjs) · [`_bond.js`](#functionsapi_bondjs) · [`_coop.js`](#functionsapi_coopjs) · [`_entitlements.js`](#functionsapi_entitlementsjs) · [`_kv.js`](#functionsapi_kvjs) · [`_pushCopy.js`](#functionsapi_pushcopyjs) · [`_pushIdentity.js`](#functionsapi_pushidentityjs) · [`_pushTargets.js`](#functionsapi_pushtargetsjs) · [`_rateLimit.js`](#functionsapi_ratelimitjs) · [`_redact.js`](#functionsapi_redactjs)
 - [workers](#workers) — [`fcm.js`](#workersfcmjs) · [`push-scheduler.js`](#workerspush-schedulerjs) · [`webpush.js`](#workerswebpushjs)
 
 ## Convenções desta página
@@ -172,6 +172,11 @@
 ---
 
 ## Módulos internos
+
+### `functions/api/_admin.js`
+**Dono de:** o **papel de admin/GM do dono** (29/09/2026). Admin = ID token Firebase verificado por `verifyIdToken` (reusado de `_auth.js`, nunca copiado) cujo e-mail está em `ADMIN_EMAILS` e, quando a rota passa `saveId`, é o dono daquele save. Fail-closed sem `ADMIN_EMAILS` e sem `FIREBASE_PROJECT_ID`. Efeitos derivados na LEITURA, nunca gravados em `ent:`. Contrato: [`../../reviews/admin-corvo/impl-notas-backend.md`](../../reviews/admin-corvo/impl-notas-backend.md).
+**Exports:** `ADMIN_AI_CAP_MULTIPLIER` (10) · `ADMIN_CREDITS_DISPLAY` (exibição, não saldo) · `parseAdminEmails(raw)` · `isAdminEmail(env, email)` · `verifiedAdmin(env, request, saveId?)` → `{ admin }` · `adminPublicView(view)` · `logAdminSession(route)` (log `admin_session` sem PII).
+**Consumidores:** `entitlements.js` (GET/spend/rebirth-reset/ad), `save.js` (GET), `generate-sprite.js` (`requirePaidTier`), `_aiGuard.js` (tetos por conta de sprite). **Não** consumido por `community.js`/`guild.js`. Kit de teste: `functions/api/admin.testkit.js` (tokens RSA assinados + JWK falsa); régua `functions/api/admin*.test.js`. `_auth.js` passou a exportar `normalizeEmail` e `bearerToken`.
 
 ### `functions/api/_accountTombstone.js`
 **Dono de:** a **lápide de conta apagada** `del:done:<saveId>` — o registro que impede outro aparelho do titular, ainda logado, de recriar o save 3 s depois da exclusão (QA Rodada 1, `03-arquitetura-r1.md` §2.5; nasceu na `qa/rodada-a`, 21/09/2026). Mora em módulo próprio porque tem dois leitores e `save.js` não pode importar `account.js`.
