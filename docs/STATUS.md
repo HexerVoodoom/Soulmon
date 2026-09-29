@@ -7,6 +7,35 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 29/09/2026 — Plano da Guilda (o Bosque e a Feira) — PLANO, sem código
+>
+> Pedido do dono: traçar o plano completo da guilda com foco CONSTRUTIVO
+> (horta/cidade) e arena secundária. Decisões do dono no modal de 29/09:
+> o Grupo cooperativo EVOLUI para Guilda de até 12 (um coletivo por pessoa);
+> a construção é o **Bosque** (Clareira → Ramagem → Copa → Mata → Bosque
+> antigo, 1 fio por membro que cumpre a própria meta do dia, agregado, anônimo,
+> **nunca regride**); a arena é a **Feira** = raid cooperativa contra um
+> fenômeno (sem confronto guilda × guilda); esta sessão entrega **só o plano +
+> fila de WPs** — a Camada 3 segue congelada (REGISTRO §5.6). Entregue
+> `docs/PLANO-GUILDA.md` (§0–§16: regras, constantes, salas, mapa, estética,
+> servidor, balanceamento com simulação `docs/reviews/guilda/sim/`, LV-G1..G10,
+> fila WPG-0..15, 17 itens G1..G17 que dependem do dono) sobre 8 docs de
+> pesquisa em `docs/reviews/guilda/00..08`. Pareceres: linha vermelha
+> **aprovado com ressalva** (`ledger/vetos.md`; achado LV-G3: o TTL de 120 dias
+> de `coop:<gid>` apaga o Bosque — virou G17); crítica narrativa 3 bloqueantes
+> corrigidos no plano (Feira "entre bosques" contradizia D-G4; o fenômeno não
+> pode ser "a pilha de pendências"; promessa × mecânica do fio). Achados de
+> carona sobre o coop no ar (D-1..D-5 em `05-servidor.md`): nome do grupo sem
+> `_redact`, presença nominal viola LV-G2 acima de 4, exportação sem o
+> progresso próprio, zero telemetria de coop. Também: `GuildSheet.tsx` e
+> `backStack.ts` sem entrada em `06-REFERENCIA` (guard (c) vermelho, anterior
+> a esta sessão) → `/manter-docs`.
+>
+> **Depende do dono:** os 17 itens da §15 do `PLANO-GUILDA.md`; o mais
+> importante é G1 (fio pela meta INTEIRA, como decidido, ou pela meta de
+> coração, como psicologia e servidor recomendam) e G16 (exceção ao
+> congelamento para começar WPG-0/1).
+
 > ## 28/09/2026 — Fase 0 do Oráculo: régua única (auditoria N=800 + papel/reino no bloqueante)
 >
 > `docs/PLANO-ORACULO.md` §8 Fase 0. Novo `scripts/oraculo-auditoria.test.ts`

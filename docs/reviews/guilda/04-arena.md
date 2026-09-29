@@ -24,7 +24,7 @@ Comum às três: recompensa só cosmético/Emblemas (nunca coração, nunca Cré
 
 ### (a) Raid da guilda — recomendada
 
-- **O quê**: um fenômeno ("Nevoeiro de Pendências", "Praga de Ervas") com HP coletivo. É temático: a ameaça é a mesma pilha de culpa que o app transforma em jogo (Assombrada).
+- **O quê**: um fenômeno com HP coletivo. ⚠️ Esta linha nomeava o fenômeno como "Nevoeiro de Pendências" e o ligava à "pilha de culpa" — **cortado pela crítica narrativa (`08-critica-narrativa.md`, B2)**: a roda nunca bate na pendência de ninguém; o fenômeno é tempo da Malha (ver `PLANO-GUILDA.md` §9).
 - **Motor**: cada membro dispara UMA rodada da arena (`simulateArenaRun`/`buildArenaRound`) por dia, local, com sua criatura. O cliente afirma apenas "rodei"; o servidor NÃO confia no dano.
 - **Servidor decide**: dano ao chefe = função fixa do estágio + escola/elemento do membro (vindos do perfil que o servidor já guarda, como `stagePower`), com o mesmo teto por pessoa por dia (`MATCHES_PER_DAY`), mais o sorteio no servidor. Cliente afirma só "participei hoje". Resultado igual ao princípio de `coopCk:<gid>:<saveId>`: cada membro escreve só a própria chave, sem read-modify-write do blob (bug já corrigido no coop, REGISTRO 5.5).
 - **Tela**: barra do chefe caindo; presença binária ("a criatura de Ana veio hoje"); nenhum "causou X". Cada golpe aparece como golpe da guilda, animação do palco sem rótulo de autoria.
