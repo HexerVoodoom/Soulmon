@@ -631,7 +631,8 @@ Cobertura: **157/157** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 ### `src/utils/entitlements.ts`
 **Dono de:** Cliente do saldo real de Créditos/tier no servidor — gasto, recompensa de anúncio e verificação de compra.
 **Exports:**
-- `Entitlement` (interface) — campos: `tier`, `credits`, `adsLeft`, `adsEnabled`.
+- `Entitlement` (interface) — campos: `tier`, `credits`, `adsLeft`, `adsEnabled`, `admin` (29/09/2026 — sempre booleano; só `=== true` conta).
+- `function sanitizeEntitlement(raw: unknown): Entitlement | null` — normaliza a resposta do `GET`; `admin` só é true com o literal `true`.
 - `function fetchEntitlement(): Promise<Entitlement | null>` — Lê o saldo real do servidor. Retorna null se não der (offline, sem saveId).
 - `function spendCredits( amount: number, reason: string, opId: string = newOpId()): Promise<Entitlement | null>` — Gasta créditos NO SERVIDOR. Só aplique o efeito no jogo se isto devolver o novo saldo — null significa recusado (sem saldo, offline) e o efeito não pode acontecer.
 - `function claimAdReward(): Promise<Entitlement | null>` — Credita a recompensa do anúncio (o teto diário é aplicado no servidor).
@@ -2456,3 +2457,34 @@ dominância populacional — por isso ±15%. Régua nova:
 **Régua:** `welcomeBack.test.ts`
 **Avisos do arquivo:** desde `1480b632` (21/09/2026) as frases das faixas 2 e 3 não mencionam mais TEMPO nem ESPERA ("Quanto tempo!", "Senti saudade esses dias", "Eu estava aqui, esperando" saíram — a cena da espera fiel cobra sem contar nada; a criatura não lê tempo decorrido, §5.10 da bíblia). A estrutura de FAIXAS fica por **decisão do dono em 21/09/2026** (`f3654076`, decisão 3 — `docs/STATUS.md`: "O reencontro continua por FAIXAS (WP2.7 mantido)"; `REGISTRO-DE-DECISOES.md` §14.3); colapsá-las numa frase única (critério (e) do parecer clínico) foi a alternativa que perdeu. ⚠️ divergência: o cabeçalho de `src/utils/welcomeBack.ts` ainda chama isso de "pendência" (comentário velho; o código faz faixas por `absenceBucket`).
 **Regra de negócio:** A fala de retorno nunca cobra ausência — é reencontro, não fatura. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+
+### `src/utils/adminFlag.ts`
+**Dono de:** a flag de administrador/GM no cliente — em MEMÓRIA, espelho da última resposta de `GET /api/entitlements` (29/09/2026).
+**Exports:**
+- `function adminFromEntitlement(ent: unknown): boolean` — só `admin === true` literal conta.
+- `function setAdminFlag(next: boolean): void` / `function isAdminNow(): boolean`.
+- `function useAdmin(): boolean` — hook (`useSyncExternalStore`).
+**Chamado por:** `src/App.tsx` (efeito do entitlement), `src/components/GmPanel.tsx`
+**Régua:** `src/utils/adminCorvo.contract.test.ts` (nunca persiste), `src/components/GmPanel.render.test.tsx`.
+**Regra de negócio:** quem decide é o servidor (`functions/api/_admin.js`); falha de rede = não-admin; nunca vai para o save nem para o localStorage.
+
+### `src/utils/corvoPet.ts`
+**Dono de:** o corvinho de lanterna e cartola, a criatura do administrador — arte das 11 formas, nomes/descrições PT+EN e a adoção.
+**Exports:**
+- `CORVO_LINE`, `CORVO_FORM_IDS`, `CORVO_SPRITES`, `CORVO_SPRITES_256`, `CORVO_STAGES`, `CORVO_BASE_NAME`.
+- `function corvoSpriteFor(stage: string, size?: 256): string`, `function corvoFormName(id, language): string`.
+- `function isCorvo(state): boolean` — true só com `soulmonMeta.creature === 'corvo'`.
+- `function spriteLineOf(state): string | undefined` — a linha de arte do save (corvo, senão `demoCharacterId`), passada como 2º parâmetro de `getSpriteForStage`.
+- `function adoptCorvo(prev)` — PURA e idempotente (mesma referência se já é corvo); troca só a criatura.
+**Chamado por:** `src/utils/sprites.ts`, `src/utils/gmTools.ts`, `src/App.tsx`, `src/components/GmPanel.tsx`, `desktop/renderer/src/cloudSync.ts`
+**Régua:** `src/utils/corvoPet.test.ts`, `src/utils/adminCorvo.contract.test.ts`.
+**Avisos do arquivo:** o widget Android NÃO desenha o corvo (drawables próprios por estágio em `android/`); sem "voltar ao pet anterior" de propósito (o acervo fica intacto no save).
+
+### `src/utils/gmTools.ts`
+**Dono de:** as ações do painel de GM como updaters PUROS sobre o save local.
+**Exports:**
+- `GM_BALANCE` (999999), `GM_FORMS`, `GM_PERFECT_DAY_STEPS`, `allBackgroundIds()`, `allFurnitureIds()`.
+- `gmGiveBalance`, `gmUnlockAll`, `gmGoToForm(prev, formId)`, `gmFillCare`, `gmAddPerfectDays(prev, n)`.
+**Chamado por:** `src/App.tsx`, `src/components/GmPanel.tsx`
+**Régua:** `src/utils/gmTools.test.ts`.
+**Regra de negócio:** nunca reduz saldo/contador maior; Créditos ficam no servidor; missões permanentes cumpridas por contadores vitalícios MÍNIMOS (`Math.max`), sem tocar `perfectDays`/`totalPerfectDays`.

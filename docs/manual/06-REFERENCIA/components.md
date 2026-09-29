@@ -1064,3 +1064,9 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 **Régua:** nenhuma direta (`find src -maxdepth 1 -name 'main.test.ts*'` vazio, 09/09/2026); a migração em si é coberta por `src/utils/storageKeys.reconcile.test.ts` e `src/utils/storageKeys.migration.test.ts` (não existe `src/utils/storageKeys.test.ts` — corrigido por doc-verificador em 10/09/2026, `find src -iname 'storageKeys*'`).
 **Avisos do arquivo:** ⚠️ até 27/08/2026 a rede de segurança da splash vivia DENTRO do duplo `requestAnimationFrame`, que nunca dispara em aba/WebView em segundo plano — a splash ficava para sempre por cima do app carregado ("não consigo passar da tela de loading"); o `setTimeout` foi movido para fora do rAF, agendado na hora; só os subsets `latin` 400/700 do Silkscreen são importados (não `latin-ext`, que não tem acento de PT-BR e custaria 6,8kB à toa).
 
+### `src/components/GmPanel.tsx`
+**Dono de:** o grupo "Painel de GM"/"GM panel" das Configurações — visível só com `useAdmin() === true`.
+**Exports:** `GmActions` (interface), `function GmPanel({ language, gm })`.
+**Chamado por:** `src/components/SettingsPage.tsx` (prop `gm`, que o `App.tsx` só passa para o admin).
+**Régua:** `src/components/GmPanel.render.test.tsx`.
+
