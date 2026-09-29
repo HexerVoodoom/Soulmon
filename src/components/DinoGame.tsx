@@ -101,7 +101,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
     const pet = new Image();
     // O ícone-ficha 64² da linha (rodada 2, D-J13: bbox cheia, pés no chão) ou
     // o sprite 256² a 0,25× quando o estágio não é de linha.
-    pet.src = lineIconForStage(evolutionStage, 64, demoCharacterId) ?? getSpriteForStage(evolutionStage, demoCharacterId);
+    pet.src = lineIconForStage(evolutionStage, 64, demoCharacterId) ?? getSpriteForStage(evolutionStage, demoCharacterId, 256);
     petImgRef.current = pet;
     tierImgsRef.current = OBSTACLE_TIERS.map(t => {
       const img = new Image();

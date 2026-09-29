@@ -195,7 +195,7 @@ export function NightmareBattle({
   if (!open) return null;
 
   const enemy = wave[idx];
-  const petSprite = getSpriteForStage(petStage, demoCharacterId);
+  const petSprite = getSpriteForStage(petStage, demoCharacterId, 256);
   const title = nightmareName(rarity, language);
   const flavor = nightmareFlavor(rarity, language);
   const preview = nightmareRewards(rarity, true);

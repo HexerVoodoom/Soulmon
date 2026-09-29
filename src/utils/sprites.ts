@@ -142,6 +142,7 @@ const SOULMON_SPRITES: Record<string, string> = {
   'ultra': soulmonUltra,
 };
 import { getStageLevel, getStageBranch } from '../types/progression';
+import { CORVO_LINE, corvoSpriteFor } from './corvoPet';
 
 /**
  * Legacy stage ids (saves made before the Soulmon tree existed) still carry
@@ -186,6 +187,7 @@ export function resolveLineForStage(stage: string, demoCharacterId?: string): { 
   const key = stage.toLowerCase();
   const level = getStageLevel(key);
   const tier = (level === 'ultra' ? 'mega' : level) as LineTier;
+  if (demoCharacterId === CORVO_LINE) return null; // arte própria por forma (`corvoPet.ts`)
   if (demoCharacterId && DUNGEON_LINE_SPRITES[demoCharacterId]) return { line: demoCharacterId, tier };
   if (SOULMON_SPRITES[key]) return null;
   const branch = getStageBranch(key);
@@ -193,8 +195,11 @@ export function resolveLineForStage(stage: string, demoCharacterId?: string): { 
   return { line: LEGACY_LINES[hashId(key) % LEGACY_LINES.length], tier };
 }
 
-export function getSpriteForStage(stage: string, demoCharacterId?: string): string {
+export function getSpriteForStage(stage: string, demoCharacterId?: string, size?: 256): string {
   const key = stage.toLowerCase();
+  // O corvinho do administrador (`utils/corvoPet.ts`, dono único): uma arte
+  // por forma. O 2º parâmetro é a LINHA de arte do save — `spriteLineOf`.
+  if (demoCharacterId === CORVO_LINE) return corvoSpriteFor(key, size);
   // Modo demo (utils/monetization.ts): personagem pré-pronto, sem branch —
   // um sprite só por nível (rookie/champion/ultimate/mega; ultra reusa mega).
   if (demoCharacterId && DUNGEON_LINE_SPRITES[demoCharacterId]) {

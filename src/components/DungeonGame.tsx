@@ -132,7 +132,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
   const runScoreRef = useRef(0);
 
   const enemy = enemies[enemyIdx];
-  const petSprite = getSpriteForStage(evolutionStage, demoCharacterId);
+  const petSprite = getSpriteForStage(evolutionStage, demoCharacterId, 256);
   const ladderLen = LADDER_TIERS.length;
   const scene = runScenes[floor - 1] ?? DUNGEON_SCENES[0];
 

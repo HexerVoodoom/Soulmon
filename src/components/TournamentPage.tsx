@@ -80,6 +80,8 @@ import tournamentFinal from '../assets/soulmon/bg/tournament-final.png';
 interface TournamentPageProps {
   saveId: string;
   petStage: string;
+  /** Linha de arte do pet (`spriteLineOf` — personagem pronto ou o corvinho). */
+  petLine?: string;
   pvpEnabled: boolean;
   onTogglePvp: (enabled: boolean) => void;
   trophies: Array<{ season: string; place: 1 | 2 | 3 }>;
@@ -175,7 +177,7 @@ function Switch({ checked, onToggle, label, disabled = false }: {
   );
 }
 
-export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trophies, language, emblems, onEarnEmblems, totalXP, onMatchPlayed, weeklyMissions, onClaimWeekly, shop }: TournamentPageProps) {
+export function TournamentPage({ saveId, petStage, petLine, pvpEnabled, onTogglePvp, trophies, language, emblems, onEarnEmblems, totalXP, onMatchPlayed, weeklyMissions, onClaimWeekly, shop }: TournamentPageProps) {
   const isPt = language === 'pt-BR';
   const lang: Language = isPt ? 'pt-BR' : 'en-US';
   const [opponents, setOpponents] = useState<Opponent[] | null>(null);
@@ -669,6 +671,7 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
           result={result}
           isPt={isPt}
           petStage={petStage}
+          petLine={petLine}
           onClose={() => { setResult(null); loadOpponents(); }}
         />
       )}
@@ -684,7 +687,7 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
  * "Emblems +N" com o número em serifa dourada 20; "Continue" primário nos
  * dois — a saída não muda de cor com o resultado (D-J8).
  */
-function ResultDialog({ result, isPt, petStage, onClose }: { result: MatchResult; isPt: boolean; petStage: string; onClose: () => void }) {
+function ResultDialog({ result, isPt, petStage, petLine, onClose }: { result: MatchResult; isPt: boolean; petStage: string; petLine?: string; onClose: () => void }) {
   const title = result.won ? (isPt ? 'Vitória' : 'Victory') : (isPt ? 'Derrota' : 'Defeat');
   return (
     <RitualDialog label={title} onClose={onClose} zIndex={400} maxWidth={340} style={{ alignItems: 'center', textAlign: 'center', gap: 10 }}>
@@ -693,7 +696,7 @@ function ResultDialog({ result, isPt, petStage, onClose }: { result: MatchResult
       </h2>
       {result.won && (
         <GameVisor width={DIALOG_VISOR_W} height={56} scene={`url(${tournamentFinal}) center/cover`}>
-          <VisorSprite src={getSpriteForStage(petStage)} alt="" size={64} idle={false} style={{ left: 56, bottom: 8 }} data-visor-pet />
+          <VisorSprite src={getSpriteForStage(petStage, petLine, 256)} alt="" size={64} idle={false} style={{ left: 56, bottom: 8 }} data-visor-pet />
           <VisorSprite src={getSpriteForStage(result.opponent.stage)} alt="" size={64} idle={false} flip style={{ right: 56, bottom: 8 }} data-visor-enemy />
         </GameVisor>
       )}

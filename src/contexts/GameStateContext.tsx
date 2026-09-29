@@ -318,6 +318,10 @@ export interface GameState {
     dominantElement?: ElementId;
     dominantAlignment?: AlignmentId;
     dominantRealm?: RealmId;
+    /** Criatura de arte fixa adotada no lugar da gerada. Hoje só existe o
+     *  corvinho do administrador (`utils/corvoPet.ts` › `adoptCorvo`);
+     *  qualquer outro valor é descartado no load. */
+    creature?: 'corvo';
   };
   /**
    * O DIA em que esta criatura nasceu — dia do JOGADOR (`utils/playerDay.ts`),
@@ -1117,6 +1121,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
             ...e,
             baseName: str(e.baseName) ?? '',
             petName: str(e.petName),
+            creature: e.creature === 'corvo' ? 'corvo' : undefined,
           } as GameState['soulmonMeta'];
         })(),
         // 04-dados R2 §2: os quatro campos que passavam pelo spread cru.

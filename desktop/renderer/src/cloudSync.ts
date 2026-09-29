@@ -8,6 +8,7 @@
 // Leitura (fetchRemoteSnapshot) e ESCRITA de volta (pushCareAction) das ações
 // de cuidado. As regras aplicadas são as de src/utils/careRules.ts — as mesmas
 // do app do celular, não uma cópia. Tarefas continuam locais (ver menu.ts).
+import { spriteLineOf, type CorvoCarrier } from '../../../src/utils/corvoPet';
 import { APP_URL } from './config';
 import { migrateBranchIds } from '../../../src/utils/branchMigration';
 import type { GenericLine } from './sprites';
@@ -140,7 +141,9 @@ export async function fetchRemoteSnapshot(email: string): Promise<SyncResult> {
       stage,
       stageName: stageDisplayName(state, stage),
       genericLine,
-      demoCharacterId: typeof state.demoCharacterId === 'string' ? state.demoCharacterId : undefined,
+      // Linha de ARTE do pet: o personagem pronto do demo ou o corvinho do
+      // administrador — `spriteLineOf` é o dono (src/utils/corvoPet.ts), não cópia.
+      demoCharacterId: spriteLineOf(state as CorvoCarrier),
       hearts: typeof state.healthPoints === 'number' ? state.healthPoints : 1,
       maxHearts: MAX_HP_BY_FORM[getStageLevel(stage)],
       energy: typeof state.energyPoints === 'number' ? state.energyPoints : 0,
@@ -313,7 +316,9 @@ function snapshotOf(state: Record<string, unknown>): RemoteSnapshot {
     stage,
     stageName: stageDisplayName(state, stage),
     genericLine: rawLine === 'veemon' || rawLine === 'salamon' || rawLine === 'tapirmon' ? rawLine : 'tapirmon',
-    demoCharacterId: typeof state.demoCharacterId === 'string' ? state.demoCharacterId : undefined,
+    // Linha de ARTE do pet: o personagem pronto do demo ou o corvinho do
+      // administrador — `spriteLineOf` é o dono (src/utils/corvoPet.ts), não cópia.
+      demoCharacterId: spriteLineOf(state as CorvoCarrier),
     hearts: typeof state.healthPoints === 'number' ? state.healthPoints : 1,
     maxHearts: MAX_HP_BY_FORM[getStageLevel(stage)],
     energy: typeof state.energyPoints === 'number' ? state.energyPoints : 0,

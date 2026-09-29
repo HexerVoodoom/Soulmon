@@ -350,7 +350,7 @@ export function ArenaGame({
   const nomeDe = (e: ArenaEnemy) => (isPt ? e.namePt : e.nameEn);
   const sair = isPt ? 'Sair' : 'Leave';
   const especialPronto = carga >= SPECIAL_CHARGE_TURNS;
-  const petSprite = getSpriteForStage(evolutionStage, demoCharacterId);
+  const petSprite = getSpriteForStage(evolutionStage, demoCharacterId, 256);
 
   /* A luta no VIDRO (D-J3/D-J4): o pet a 128 embaixo à esquerda; os inimigos
      da rodada (1–3) a 64 (0,25×) empilhados à direita, espelhados de frente
