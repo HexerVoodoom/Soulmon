@@ -37,7 +37,7 @@ import { bondLevelOf, BOND_PVP_MIN_LEVEL } from './_bond.js';
 import { kv, kvOrThrow } from './_kv.js';
 import {
   COOP_MAX_MEMBERS, COOP_CHECKINS_POR_MEMBRO, coopOfKey, coopCodeKey, semanaDe, novoCodigo,
-  diaDoJogador, semanaDoDia,
+  diaDoJogador, semanaDoDia, coopKey as coopKeyDe,
   lerGrupo, gravarGrupo, renovarPrazos, lerCheckins, gravarCheckins, rolarSemana, grupoDe, coopLeave,
 } from './_coop.js';
 const CORS = {
@@ -819,6 +819,19 @@ async function handleCommunity({ request, env }) {
     // membro — com o MESMO prazo. Não repita as escritas aqui: foi separá-las
     // que fez os índices envelhecerem sozinhos.
     await gravarGrupo(env, g);
+    // ── DOIS TOQUES EM "CRIAR" (L1-codigo ALTO-2) ────────────────────────────
+    // As duas requisições passam pelo `grupoDe == null` acima (o KV não tem
+    // CAS) e cada uma criava um grupo; o segundo `coopOf` vencia e o primeiro
+    // ficava órfão por 120 d com o saveId do criador dentro. A releitura do
+    // PONTEIRO decide quem ficou: quem perdeu desfaz o próprio grupo e responde
+    // 409 com a vista do grupo que venceu — o cliente só mostra, sem erro novo.
+    const vencedor = await kvOrThrow(env).get(coopOfKey(id));
+    if (vencedor !== g.id) {
+      await kvOrThrow(env).delete(coopKeyDe(g.id));
+      await kvOrThrow(env).delete(coopCodeKey(g.code));
+      const outro = await grupoDe(env, id);
+      return json({ error: 'already in a group', group: outro ? await vistaDoGrupo(env, outro, id) : null }, 409);
+    }
     return json({ group: await vistaDoGrupo(env, g, id) });
   }
 
