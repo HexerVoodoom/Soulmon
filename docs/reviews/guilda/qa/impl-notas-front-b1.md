@@ -46,6 +46,16 @@ entrega de cenários) · `hooks/useGroveWatch.ts` (o App olha o Bosque) · `comp
    em que ESTE aparelho viu a roda (subestima quem entrou por outro aparelho). `TelemetryProps` ganhou `size`/`weeks`/`outcome`.
 10. **Erros novos** sem alerta: `goalNotMet` (400) e `dailyLimit` (429 daily limit) recarregam em silêncio; o botão certo aparece.
 
+## Contrato do backend (loop 2) absorvido
+
+`members[].pid` saiu; `members[].id` = `memberId` opaco (16 hex por guilda) e `presence[]` = `{memberId, cameToday}` — fixtures
+trocadas, o sprite dos OUTROS muda uma vez (a semente mudou) e nada usa esse id em `community?action=player` (régua de fonte).
+`progress` vem `null` com 5+ (já descartado por `sanitizeGuildView`, agora com teste). `gestureReceived` lido (item 5).
+**Para a B2:** `guildClaim` devolve `claimed.receipt` (e o 409, também) — o cliente credita Emblemas UMA vez por recibo. Onde guardar
+os recibos creditados é decisão pendente: `guildNoSave.contract.test.ts` admite só duas chaves de conveniência (`last-stage`, já
+usada, e `thread-day`, que a B1 não precisou) — a B2 pode usar a segunda com o nome que o plano já reserva, ou pedir ao dono a
+terceira (o teste terá de mudar junto).
+
 ## Não feito nesta fatia (fora do escopo ou dependente)
 
 - Feira (lote, sala, golpe, resgate) e o troféu Concha da Maré: fatia B2.
