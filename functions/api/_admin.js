@@ -21,7 +21,15 @@
 import { verifyIdToken, emailToSaveId, normalizeEmail, bearerToken } from './_auth.js';
 
 /** Multiplicador ÚNICO dos tetos POR CONTA de IA para o admin. O global não muda. */
-export const ADMIN_AI_CAP_MULTIPLIER = 10;
+export const ADMIN_AI_CAP_MULTIPLIER = 3;
+
+/**
+ * Sub-teto MENSAL próprio do admin para sprite (contador `ai:sprite:@admin:<mês UTC>`,
+ * TTL de mês, sem PII). O admin nunca consome mais que isto do teto global
+ * (`globalMonth`): pior caso 40 x R$ 0,101 = ~R$ 4/mês. Estourar devolve o MESMO
+ * erro do teto global mensal (503 `ai-monthly-budget-reached`), sem revelar o papel.
+ */
+export const ADMIN_SPRITE_MONTHLY_CAP = 40;
 
 /**
  * Saldo de Créditos EXIBIDO ao admin — não existe em `ent:`, não é dinheiro.

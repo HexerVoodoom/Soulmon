@@ -68,7 +68,7 @@ import { legacyFormIdOf } from './_branchLegacy.js';
 import { VALID_ID, readEntitlement, writeEntitlement } from './_entitlements.js';
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { kv, kvOrThrow } from './_kv.js';
-import { verifiedAdmin, ADMIN_AI_CAP_MULTIPLIER } from './_admin.js';
+import { verifiedAdmin, ADMIN_AI_CAP_MULTIPLIER, ADMIN_SPRITE_MONTHLY_CAP } from './_admin.js';
 
 /**
  * Tetos. Chat é barato (llama-8b) e acontece o tempo todo; geração de imagem é
@@ -263,8 +263,13 @@ export async function guardAiRequest(request, env, bucket, saveId, units = 1, fo
 
   // ADMIN (`_admin.js`): tetos POR CONTA de sprite × ADMIN_AI_CAP_MULTIPLIER.
   // O global (mensal) NÃO muda — é ele que protege a fatura.
-  const adminMul = bucket === 'sprite' && (await verifiedAdmin(env, request, saveId)).admin
-    ? ADMIN_AI_CAP_MULTIPLIER : 1;
+  // Também o CHAT do admin usa a cota paga (`perAccountByTier.paid`, B-2 do L1).
+  const isAdmin = (bucket === 'sprite' || !!limits.perAccountByTier)
+    && (await verifiedAdmin(env, request, saveId)).admin;
+  const adminMul = bucket === 'sprite' && isAdmin ? ADMIN_AI_CAP_MULTIPLIER : 1;
+  // Sub-teto mensal do admin em sprite (M-1 do L1): chave própria, sem saveId.
+  const adminSub = bucket === 'sprite' && isAdmin;
+  const adminKey = adminSub ? `ai:sprite:@admin:${month(new Date())}` : null;
   const capLifetime = (limits.perAccountLifetime ?? 0) * adminMul;
   const capForm = (limits.perFormLifetime ?? 0) * adminMul;
 
@@ -296,6 +301,7 @@ export async function guardAiRequest(request, env, bucket, saveId, units = 1, fo
   let usedForm = 0;
   let usedGlobal = 0;
   let usedAccount = 0;
+  let usedAdminMonth = 0;
   try {
     if (hasLifetime || hasFormCap || hasTierCap) {
       // Uma leitura só do entitlement, reaproveitada pelos três tetos.
@@ -304,11 +310,15 @@ export async function guardAiRequest(request, env, bucket, saveId, units = 1, fo
       if (hasFormCap) usedForm = formUsed(ent, formId);
       if (hasTierCap) {
         const porTier = limits.perAccountByTier[ent?.tier];
-        if (typeof porTier === 'number') perAccount = porTier * adminMul;
+        const tierDoLimite = isAdmin ? 'paid' : ent?.tier;
+        const cota = limits.perAccountByTier[tierDoLimite];
+        if (typeof cota === 'number') perAccount = cota * adminMul;
+        else if (typeof porTier === 'number') perAccount = porTier * adminMul;
       }
     }
     usedGlobal = await readCounter(env, globalKey);
     usedAccount = await readCounter(env, accountKey);
+    if (adminKey) usedAdminMonth = await readCounter(env, adminKey);
   } catch (err) {
     // Não deu para saber quanto já foi gasto → não gasta mais. FAIL-CLOSED.
     console.error('aiGuard: contador ilegível, recusando', err?.message);
@@ -332,6 +342,10 @@ export async function guardAiRequest(request, env, bucket, saveId, units = 1, fo
   if (usedAccount + units > perAccount) {
     return refuse(429, 'ai-daily-limit');
   }
+  // Sub-teto do admin: mesma família/mensagem do teto global mensal.
+  if (adminKey && usedAdminMonth + units > ADMIN_SPRITE_MONTHLY_CAP) {
+    return refuse(503, 'ai-monthly-budget-reached');
+  }
   if (usedGlobal + units > globalLimit) {
     return refuse(503, usesMonth ? 'ai-monthly-budget-reached' : 'ai-daily-budget-reached');
   }
@@ -347,13 +361,14 @@ export async function guardAiRequest(request, env, bucket, saveId, units = 1, fo
     }
     await kvOrThrow(env).put(globalKey, String(usedGlobal + units), { expirationTtl: globalTtl });
     await kvOrThrow(env).put(accountKey, String(usedAccount + units), { expirationTtl: TTL_SECONDS });
+    if (adminKey) await kvOrThrow(env).put(adminKey, String(usedAdminMonth + units), { expirationTtl: MONTH_TTL_SECONDS });
   } catch (err) {
     // Débito que não gravou é chamada sem teto. Recusa.
     console.error('aiGuard: falha ao debitar cota, recusando', err?.message);
     return refuse(503, 'ai-quota-unavailable');
   }
 
-  return { ok: true, release: makeRelease(env, { saveId, bucket, units, formId, hasLifetime, hasFormCap, globalKey, globalTtl, accountKey }) };
+  return { ok: true, release: makeRelease(env, { saveId, bucket, units, formId, hasLifetime, hasFormCap, globalKey, globalTtl, accountKey, adminKey }) };
 }
 
 /**
@@ -388,7 +403,7 @@ function makeRelease(env, ctx) {
   return async function release(motivo) {
     if (devolvida) return;
     devolvida = true;
-    const { saveId, bucket, units, formId, hasLifetime, hasFormCap, globalKey, globalTtl, accountKey } = ctx;
+    const { saveId, bucket, units, formId, hasLifetime, hasFormCap, globalKey, globalTtl, accountKey, adminKey } = ctx;
     const menos = (n) => Math.max(0, n - units);
     try {
       if (hasLifetime || hasFormCap) {
@@ -402,6 +417,7 @@ function makeRelease(env, ctx) {
       const [g, a] = [await readCounter(env, globalKey), await readCounter(env, accountKey)];
       await kvOrThrow(env).put(globalKey, String(menos(g)), { expirationTtl: globalTtl });
       await kvOrThrow(env).put(accountKey, String(menos(a)), { expirationTtl: TTL_SECONDS });
+      if (adminKey) await kvOrThrow(env).put(adminKey, String(menos(await readCounter(env, adminKey))), { expirationTtl: MONTH_TTL_SECONDS });
       console.warn(`aiGuard: ${units} unidade(s) devolvida(s) em ${bucket}/${formId ?? '-'} — ${motivo}`);
     } catch (err) {
       console.error('aiGuard: falha ao devolver cota reservada', err?.message);
