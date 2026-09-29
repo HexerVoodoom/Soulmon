@@ -342,3 +342,22 @@ produto passou a fabricar a impaciência que vende.
    você" é dizível em voz alta. Falha no instante em que existir o botão de
    pular (R-J). 6. *Cabe na tese?* Cabe — incubar é evoluir COM, em tempo de
    criatura viva, não em tempo de jogo de espera.
+
+## Parecer — `docs/PLANO-GUILDA.md` (a Guilda: Bosque e Feira), 29/09/2026
+
+**Veredito geral: APROVADO COM RESSALVA.** É plano congelado (Camada 3); nenhuma ressalva abaixo libera código antes do gatilho da §0.1.
+
+| Seção | Parecer | Motivo / ressalva (vira aceite do WP) |
+|---|---|---|
+| §0/§3 regras | APROVADO COM RESSALVA | Fio = 1 por pessoa por META cumprida (`dailyGoalFor`), idempotente, nunca peso/contagem: não cruza "recompensa por contagem de tarefas" nem LV-G8. `STAGE_UNLOCK_DAYS` = dias distintos, sem streak (LV-G9). Ressalva: o TTL de 120 d do `coop:<gid>` apaga o Bosque de guilda parada — regressão por ausência (LV-G3). Levado ao dono como **G17** (recomendação: sem TTL com `bosqueProgress > 0`). |
+| §4 interação | APROVADO COM RESSALVA | Presença binária só ≤4 (autorizada por `02` §2.2); agregado ≥5, sem nomes; sem push. Ressalva (corrigida no texto): agregado **não desenhado quando 0** — placar vazio de manhã lê como chamada. |
+| §5 entrar/sair | APROVADO COM RESSALVA | Sair = um toque, sem perda, cenário fica (LV-G5). Texto do viajante corrigido para "enquanto a guilda existir" até G17. |
+| §6 salas / §9 estética | APROVADO | Sem número, sem "faltam X", sem ausentes; proibido desenhar decadência. |
+| §7 benefícios | APROVADO | Só cosmético + Emblemas; nunca coração, Créditos, energia, `perfectDays`, Glitchtama. Emblemas seguem comprando só `TOURNAMENT_ITEMS` cosméticos. |
+| 🎪 Feira | APROVADO | Roda × fenômeno, sem confronto entre guildas nem ranking (D-G4); golpe não toca Bosque, coração nem Créditos; dano sorteado no servidor e nunca exibido (sem número por pessoa, REGISTRO 13.13). |
+| §8 balanceamento | APROVADO | **Isto perdoa demais, no limite**: piso de 2 Emblemas por UM toque semanal, mesmo em recuo, é forma de bônus de login. Aceito porque é gesto dentro da Feira, sem push e < 1 vitória do Torneio; se algum dia virar aviso/nudge ("pegue seus Emblemas"), cai. Não acrescenta perdão de punição — D4 segue em oito. |
+| §10 servidor | APROVADO COM RESSALVA | Vista sem contagem por pessoa, sem estado de criatura (LV-G1/G10); nada no save; exportação só do titular. Ressalva = G17. |
+| §11 widget | APROVADO | Só nome do estágio, chave nova, sob `widgetSemCobranca`. |
+| §13/§14/§16 | APROVADO | Réguas por LV; alavanca em falha é baixar `GUILD_MAX_MEMBERS`, nunca identificar contribuição. |
+
+Seis perguntas: (1) o fio nasce da meta, não o contrário; a Feira premia um gesto, não tarefa; (2) sai algo? só via TTL — G17; (3) nenhum perdão novo sobre punição; (4) único número que desce é o HP do fenômeno em faixa (é progresso); (5) cortina: dano oculto é sorteio honesto, declarado; (6) cabe na tese.

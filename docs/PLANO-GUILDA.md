@@ -70,7 +70,7 @@ squad-narrativa (item G14 da §15).
 
 | EN (base) | PT-BR |
 |---|---|
-| A grove that grows whenever someone in the circle takes care of themselves, and never shrinks. | Um bosque que cresce quando alguém da roda cuida de si, e nunca encolhe. |
+| A grove that gains a strand each time someone in the circle reaches their own goal for the day, and never shrinks. | Um bosque que ganha um fio cada vez que alguém da roda alcança a própria meta do dia, e nunca encolhe. |
 
 Como ajuda: dá **pertencimento** (relatedness, Deci & Ryan 2000) a quem cuida de
 si, sem frustrar **autonomia** (não há obrigação) nem **competência** (não há
@@ -190,6 +190,7 @@ Outras reconciliações feitas aqui (menores, mas que deixariam duas verdades):
 
 ## 4. Como os jogadores interagem
 
+- **O agregado nunca aparece com valor 0** (parecer do guarda, 29/09/2026): "hoje, 0 fios firmaram" é o placar vazio da manhã e lê como chamada; com 0 a linha simplesmente não é desenhada. Régua: `guild.vista.test.js` (`threadedToday` é `null` quando 0).
 - **Presença binária** até 4 membros (nome + veio/não veio hoje, como o `CoopPanel` faz). **De 5 a 12, só o agregado** ("hoje, 7 fios firmaram"), sem nomes de quem veio ou não. O agregado só aparece com `size ≥ 5` — em 2, o número identifica o outro.
 - **Três gestos fixos**, anônimos, para a roda inteira e nunca para uma pessoa escolhida; um de cada por dia, recebidos **em lote** ao abrir, sem push:
 
@@ -223,11 +224,11 @@ Outras reconciliações feitas aqui (menores, mas que deixariam duas verdades):
 | Cheia (409 `guild full`) | Alerta âmbar | This circle is full. / Esta roda está cheia. |
 | Já em outra (409 `already in a guild`) | Alerta âmbar + botão de sair ali | You're already in a circle. / Você já está numa roda. |
 | Colisão (409 `join collision`) | Tentar de novo | Try once more. / Tente de novo. |
-| Sem rede / 503 | Alerta âmbar, nada muda | No connection. Nothing was lost. / Sem conexão. Nada se perdeu. |
+| Sem rede / 503 | Alerta âmbar, nada muda | No connection. Nothing changed. / Sem conexão. Nada mudou. |
 | Sozinho | O Bosque cresce com 1 | — |
 | Sair | **Um toque**, sem confirmação, sem aviso, sem perda | Go your own way / Seguir o próprio caminho |
 | Anfitrião sai | Papel passa em silêncio ao mais antigo | — |
-| Viajante volta | Tudo como estava | Hi. The grove's still here. / Oi. O bosque tá aqui. |
+| Viajante volta | Tudo como estava — **enquanto a guilda existir** (as chaves têm TTL de 120 d renovado por qualquer movimento; ver G17) | Hi. The grove's still here. / Oi. O bosque tá aqui. |
 | Esvaziou | Apagada sem tombstone; a pessoa guarda **localmente** o último estágio visto como postal | nunca "seu grupo morreu" |
 
 ---
@@ -330,7 +331,7 @@ Vê o Bosque inteiro no estágio atual (é dele também) e, desde o 1º dia, o p
   | `bg-guild-bosque-antigo` | Bosque antigo: cobre tomado, luz filtrada |
 
   Mais uma arte de lote para `'feira'` (família `hud`/lote, a squad-arte decide).
-- **4 FX da Feira** (família `fx`, sobre o visor, **sem sprite de inimigo**), em rotação semanal: `fx-fair-nevoa`, `fx-fair-mare`, `fx-fair-estatica`, `fx-fair-enxame`. A névoa casa com o tema do fenômeno ("a pilha que pesa"), sem nomear pendência como culpa.
+- **4 FX da Feira** (família `fx`, sobre o visor, **sem sprite de inimigo**), em rotação semanal: `fx-fair-nevoa`, `fx-fair-mare`, `fx-fair-estatica`, `fx-fair-enxame`. O fenômeno é **tempo da Malha** (névoa, maré alta, estática, enxame: camada que não assentou), **nunca** a pilha de pendências de ninguém — ver `reviews/guilda/08-critica-narrativa.md` B2.
 - **Movimento reduzido**: fio sem animação de crescimento, FX estático, cerimônia com pausa inteira.
 - **Contraste (footgun 10)**: texto com cor própria `--sm2-*`, nunca herdada de `--foreground`; o agregado vai num painel, nunca direto sobre o pixel art; medido **por pixel** no Playwright.
 
@@ -342,7 +343,7 @@ Vê o Bosque inteiro no estágio atual (é dele também) e, desde o 1º dia, o p
 
 | Chave | Valor | Quem escreve | TTL |
 |---|---|---|---|
-| `coop:<gid>` | `{id, name, code, createdAt, members[], hostSave, weekKey, bosqueProgress, progressDay, tideKey, ornaments[]}` — campos novos opcionais, lidos com `?? padrão` | servidor (criar/entrar/sair/renomear/código; fechamento do dia; 1º resgate da semana) | 120 d, renovado |
+| `coop:<gid>` | `{id, name, code, createdAt, members[], hostSave, weekKey, bosqueProgress, progressDay, tideKey, ornaments[]}` — campos novos opcionais, lidos com `?? padrão` | servidor (criar/entrar/sair/renomear/código; fechamento do dia; 1º resgate da semana) | 120 d, renovado — ⚠️ uma guilda sem nenhum movimento por 120 d **some com o Bosque**: é regressão por ausência (LV-G3), decisão em G17 |
 | `coopOf:<save>` · `coopCode:<code>` | `<gid>` | servidor | 120 d, renovados juntos (I5) |
 | `coopCk:<gid>:<save>` | `{weekKey, days[]}` (inalterado) | só o próprio membro | 120 d |
 | `coopFio:<gid>:<save>` (novo) | `{lastDay, distinctDays}` | só o próprio membro | 120 d, renovado por `gravarGrupo` |
@@ -423,7 +424,7 @@ Bosque: toda requisição da guilda compara `progressDay` com hoje e fecha os di
 | O coletivo | Guilda (lugar, UI) · a **roda** (quem está nela) ⚠️ | Guild · the **circle** ⚠️ | clã, tribo, facção, time, equipe |
 | O lugar | o **Bosque** ⚠️ | the **Grove** ⚠️ | horta, fazenda, cidade, base, território |
 | A unidade | **fio** | **strand** | semente/broto (colidem com `tournamentTiers.ts`), folha, tijolo, ponto, XP, contribuição |
-| Estágios | Clareira · Ramagem · Copa · Mata · Bosque antigo | Clearing · Tangle · Canopy · Thicket · Old grove | nível, level, upgrade; `seed`/`sprout`/`sapling`/`tree` (são `HABIT_MILESTONES`) |
+| Estágios | Clareira · Ramagem · Copa · Mata · Bosque antigo | Clearing · Boughs · Canopy · Thicket · Old grove | nível, level, upgrade; `seed`/`sprout`/`sapling`/`tree` (são `HABIT_MILESTONES`) |
 | A raid | a **Feira** ⚠️, contra um **fenômeno** | the **Fair** ⚠️ | guerra, batalha de clãs, raide, conquista, Gathering, liga, coliseu |
 | O ciclo | a **maré** | the **tide** | temporada de ranking, reset, wipe |
 | Quem abriu | **anfitrião/anfitriã** | **host** | líder, chefe, mestre, dono, fundador |
@@ -440,6 +441,20 @@ Bosque: toda requisição da guilda compara `progressDay` com hoje e fecha os di
 | Feira dissipada | O fenômeno se desfez diante da roda | "Vocês são campeões", "MVP" |
 | Feira recuou | O fenômeno voltou para a névoa; o Bosque segue como estava | "Vocês perderam", "por culpa de quem não lutou" |
 | Maré vira | O que assentou, ficou | "Reset", "tudo zerou", "última chance" |
+
+**Strings-modelo da Feira** (substituem as falas 6/6b/7/7b de `03-lore.md` §4, que falavam de "outros bosques" contra D-G4; a final é do `soulmon-copy-redator`):
+
+| Momento | Voz | EN (base) | PT-BR |
+|---|---|---|---|
+| Feira aberta | mundo | The tide opened the Fair. Something came in from the mist. | A maré abriu a Feira. Algo chegou da névoa. |
+| | pet | It's all fuzzy over there. Shall we go? | Tá tudo embaçado ali. Vamos? |
+| Rodada feita (hoje) | mundo | Your round reached it. | A sua rodada chegou até ele. |
+| Dissipado | mundo | The phenomenon came apart before the circle. | O fenômeno se desfez diante da roda. |
+| | pet | Look, the air's clear. | Olha, o ar limpou. |
+| Recuou | mundo | The phenomenon went back into the mist. The grove stays as it was. | O fenômeno voltou para a névoa. O bosque segue como estava. |
+| | pet | It went away on its own. | Ele foi embora sozinho. |
+
+Nenhuma fala da Feira cita outro bosque, outra roda, "o outro lado" ou adversário com gente dentro.
 
 **Nota da régua narrativa** (`src/narrativa.contract.test.ts`): nenhum termo
 acima casa com `TERMOS`. O risco é o **espalhamento para arquivo NOVO**: se a
@@ -525,6 +540,7 @@ Total de código ≈ 22 dias; caminho crítico WPG-1 → 3a → 4 → 5 → 8.
 | G13 | Até 4 criaturas no palco do Bosque, só em guilda ≤4 | Sim | Até 20 rotacionados (`04` §3): fileira com lacunas em guilda grande |
 | G14 | A Feira é da **roda contra um fenômeno**; reescrever as falas 6/6b/7 da lore que falam de "outros bosques" | Sim | Manter "outros bosques" contradiz D-G4 |
 | G15 | Sem gate de Vínculo na Feira, só teto diário | Sim | Gate `BOND_PVP_MIN_LEVEL` barra o novato convidado |
+| G17 | **TTL do Bosque** (parecer do guarda, 29/09/2026): hoje o blob `coop:<gid>` expira em 120 d sem movimento, e com ele o Bosque — o que contradiz "nunca regride" e "viajante volta, tudo como estava". Opções: (a) sem TTL no blob enquanto `bosqueProgress > 0` (custo KV permanente, pequeno); (b) manter o TTL e, ao expirar, cada ex-membro guarda o postal local do último estágio (como na guilda esvaziada) — o chão volta, mas nada é dito como perda | **(a)** — é o único jeito de a promessa "só cresce" ser verdade para quem volta depois de 4 meses | (b): a copy nunca pode prometer "o bosque tá aqui" a quem volta; o texto do viajante passa a ser condicional |
 | G16 | Exceção ao congelamento para os WPs 📝 (copy, wireframe, fila de arte — sem código, sem asset) ou esperar o gatilho para tudo | Esperar, salvo se o dono quiser o wireframe pronto no dia do gatilho | Registrar a exceção na linha da Camada 3, como a do booklet |
 
 ---
