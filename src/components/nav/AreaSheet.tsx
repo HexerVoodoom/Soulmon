@@ -9,10 +9,10 @@ import { areaNpcVoice } from '../../utils/areaNpcVoice';
  * `.lote` da `AreaScene`. Espelha `.modal-backdrop`/`.modal-sheet` dos mocks
  * aprovados, com a proporção redecidida pelo dono em 28/09/2026: a folha
  * ocupa **2/3 da tela** (`height`, fixo — não é mais um range de
- * min/max-height), e o **1/3 de cima da tela** (= a metade de cima da
- * própria folha) é do NPC da sub-loja + balão de fala; o resto é o conteúdo
- * rolável. O NPC não é mais um ÚNICO anfitrião da área espiando por cima —
- * é o de CADA lote (`lotNpcArt`), embutido dentro da folha.
+ * min/max-height), e o **1/3 de cima da tela** fica FORA do card, transparente,
+ * com o NPC da sub-loja + balão de fala; o card é só título + conteúdo
+ * rolável. O NPC não é um ÚNICO anfitrião da área — é o de CADA lote
+ * (`lotNpcArt`).
  *
  * **Só o molde.** O conteúdo de cada folha (abas por moeda, listas, etc.)
  * vem de quem chama (F5: Mercado e Arena em `App.tsx`); o molde só garante
@@ -58,41 +58,22 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
       style={{
         position: 'absolute', inset: 0, zIndex: 20,
         background: 'rgba(4,10,10,.6)',
-        display: 'flex', alignItems: 'flex-end',
+        display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
       }}
     >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        data-area-sheet
-        // Toque dentro da folha não deve fechar (só o backdrop fecha).
-        onClick={e => e.stopPropagation()}
-        style={{
-          position: 'relative',
-          width: '100%',
-          // 2/3 da tela, fixo (decisão do dono 28/09/2026) — não é mais um
-          // range min/max: o 1/3 de cima da folha é sempre do NPC.
-          height: '66.6667dvh',
-          background: 'var(--sm2-surface)',
-          borderRadius: '20px 20px 0 0',
-          display: 'flex', flexDirection: 'column',
-          boxSizing: 'border-box',
-          boxShadow: '0 -8px 24px rgba(0,0,0,.4)',
-          overflow: 'hidden',
-        }}
-      >
-        {/* O 1/3 de cima da TELA (= metade de cima da folha): o NPC da
+        {/* O 1/3 de cima da TELA, FORA do card e transparente: o NPC da
             sub-loja + o balão de fala dele. Nunca a área inteira — cada lote
-            tem o seu (`lotNpcArt`). */}
+            tem o seu (`lotNpcArt`). Toque aqui cai no backdrop e fecha. */}
         <div
           data-area-sheet-npc-zone
           style={{
-            flex: '0 0 50%',
+            flex: '0 0 33.3333dvh',
             position: 'relative',
             display: 'flex', alignItems: 'flex-end', gap: 8,
             padding: '14px 12px 10px 16px',
+            boxSizing: 'border-box',
             overflow: 'hidden',
+            pointerEvents: 'none',
           }}
         >
           <img
@@ -129,6 +110,27 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
           </p>
         </div>
 
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        data-area-sheet
+        // Toque dentro da folha não deve fechar (só o backdrop fecha).
+        onClick={e => e.stopPropagation()}
+        style={{
+          position: 'relative',
+          width: '100%',
+          // 2/3 da tela, fixo (decisão do dono 28/09/2026) — não é mais um
+          // range min/max: o 1/3 de cima da TELA, acima da folha, é do NPC.
+          height: '66.6667dvh',
+          background: 'var(--sm2-surface)',
+          borderRadius: '20px 20px 0 0',
+          display: 'flex', flexDirection: 'column',
+          boxSizing: 'border-box',
+          boxShadow: '0 -8px 24px rgba(0,0,0,.4)',
+          overflow: 'hidden',
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 16px' }}>
           <h2 style={{ flex: 1, margin: 0, fontFamily: 'var(--sm2-font-display)', fontSize: 'var(--sm2-text-lg)', fontWeight: 700, color: 'var(--sm2-ink)' }}>
             {title}
