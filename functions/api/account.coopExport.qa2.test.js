@@ -132,7 +132,7 @@ describe('(6) exportação traz o grupo do titular (D-4, L1-codigo MÉDIO-1)', (
     const coop = JSON.parse(txt).data.coop;
     expect(coop[coopOfKey(ID)]).toBe(gid);
     expect(coop[coopCkKey(gid, ID)].days).toHaveLength(1);
-    expect(coop.grupo).toEqual({ id: gid, name: 'Dupla', joinedAs: 'member', myDistinctDays: 0, myLastThreadDay: null });
+    expect(coop.grupo).toEqual({ id: gid, name: 'Dupla', joinedAs: 'member', myDistinctDays: 0, myLastThreadDay: null, myHitsThisWeek: [] });
     expect(txt).not.toContain(OTHER_SAVE_ID);
     expect(txt).not.toContain('Beatriz');
   });

@@ -113,7 +113,7 @@ import { requireVerifiedOwner } from './_auth.js';
 import { kv, kvOrThrow } from './_kv.js';
 import { lerIndice, chaveDoIndice, PUSHIDX_MAX } from './_pushIdentity.js';
 import { writeTombstone, clearTombstone, TOMBSTONE_TTL_SECONDS } from './_accountTombstone.js';
-import { coopLeave, grupoDe, coopOfKey, coopCkKey, coopFioKey, lerFio, apagarClaims } from './_coop.js';
+import { coopLeave, grupoDe, coopOfKey, coopCkKey, coopFioKey, lerFio, apagarClaims, lerGolpes, semanaDe, semanasDeClaim, coopClaimKey, lerConjunto, coopScenesKey, coopShellKey } from './_coop.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -438,10 +438,23 @@ async function collect(env, saveId) {
         grupo: {
           id: g.id, name: g.name, joinedAs: g.hostSave === saveId ? 'host' : 'member',
           myDistinctDays: fio?.distinctDays ?? 0, myLastThreadDay: fio?.lastDay ?? null,
+          // A Feira (WPG-4): só os PRÓPRIOS dias de golpe desta semana — nunca
+          // o dano (número que nem o titular vê no app) nem o de outro membro.
+          myHitsThisWeek: (await lerGolpes(env, g.id, semanaDe(), saveId)).days,
         },
       };
     }
   } catch { coopGroupId = null; coopExport = null; }
+  // Resgates e conquistas da Guilda (WPG-5) existem mesmo sem guilda (G12).
+  try {
+    const claimedWeeks = [];
+    for (const w of semanasDeClaim()) if (await store.get(coopClaimKey(saveId, w))) claimedWeeks.push(w);
+    const guildScenes = await lerConjunto(env, coopScenesKey(saveId));
+    const shellWeeks = await lerConjunto(env, coopShellKey(saveId));
+    if (claimedWeeks.length || guildScenes.length || shellWeeks.length) {
+      coopExport = { ...(coopExport ?? {}), recompensas: { claimedWeeks, guildScenes, shellWeeks } };
+    }
+  } catch { /* exportação segue sem esta seção */ }
 
   // #54: as chaves de licença Steam saem da exclusão — derivadas, ver
   // `steamLicenseKeysOf`. Lista vazia para quem nunca ativou pela Steam.
