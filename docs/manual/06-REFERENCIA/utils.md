@@ -692,6 +692,18 @@ Cobertura: **139/139** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 - ⚠️ ESTA CAMADA NÃO TEM REDE — decisão D8: do texto das duas perguntas do onboarding, só o ENUM da categoria sai do aparelho, nunca o texto livre.
 **Regra de negócio:** O 'porquê' do usuário nunca sai do aparelho como texto — só a categoria (enum) viaja. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
+### `src/utils/guildCopy.ts`
+**Dono de:** a copy da Guilda, dono único (`docs/NARRATIVA-COPY-GUILDA.md`): todo texto de guilda que o jogador lê nasce aqui, com chave `guild.*` e par [PT-BR, EN]. Linhas SILÊNCIO do documento não têm chave (ausência do elemento). Três chaves estão marcadas `PENDENTE` (tentar de novo, "Alguém", "· você") — o critic ainda não as viu (`docs/reviews/guilda/qa/impl-notas-front.md`).
+**Exports:** `GUILD_COPY` (tabela chave → [pt, en]) · `GuildKey` (tipo das chaves) · `guildText(language, key, vars?)` (escolhe o idioma e substitui `{x}` por `vars`; placeholder sem valor fica intacto) · `guildInviteRoom()` (teto − 1: quem criou já está na roda) · `GUILD_ERROR_KEY` (cada `GuildErrorKind` de `community.ts` → sua chave; `satisfies Record<GuildErrorKind, GuildKey>` obriga cobrir todos).
+**Chamado por:** `components/guild/GuildSheet.tsx`, `utils/areaSheetCopy.ts`, `utils/areaNpcVoice.ts`; testes `community.guild.test.ts` e `GuildSheet.render.test.tsx`.
+**Régua:** `src/components/guild/guildSemCobranca.contract.test.ts` (varre a tabela contra o vocabulário vetado LV-G1..G10, sem dígito literal e sem `{n}` no agregado).
+
+### `src/utils/guildRules.ts`
+**Dono de:** as constantes da Guilda que o cliente precisa saber, ESPELHADAS do servidor (`functions/api/_coop.js`) — o cliente não decide teto, só desenha; existem para a copy (`{n}`) e a defesa da vista.
+**Exports:** `GUILD_MAX_MEMBERS` (12) · `GUILD_PRESENCE_NOMINAL_MAX` (4; acima disso ninguém tem estado de presença) · `GUILD_NAME_MAX` (24) · `GUILD_CODE_LENGTH` (8) · `GUILD_CODE_FORBIDDEN` (regex do que está fora do alfabeto do código, sem 0/O/1/I) · `normalizeGuildCode(raw)` (maiúscula, tira o proibido, corta no comprimento).
+**Chamado por:** `utils/guildCopy.ts` (`guildInviteRoom`), `components/guild/GuildSheet.tsx`, `utils/community.ts`.
+**Régua:** `src/utils/guildRules.parity.test.ts` (lê o fonte do servidor e reprova se divergir) e `src/utils/guildNoSave.contract.test.ts` (estado da guilda não vai para o save).
+
 ### `src/utils/habitCreate.ts`
 **Dono de:** O teto de hábitos ativos aplicado à CRIAÇÃO em lote, reconferido sobre o `prev` (achado X-6).
 **Exports:**
