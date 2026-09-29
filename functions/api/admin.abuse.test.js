@@ -100,3 +100,23 @@ describe('nenhuma rota devolve dados de outro saveId ao admin', () => {
     expect(src).not.toMatch(/request\.json|searchParams/);
   });
 });
+
+describe('auditoria sem PII (M11)', () => {
+  it('logAdminSession não emite e-mail nem saveId', async () => {
+    const logs = [];
+    const spy = vi.spyOn(console, 'log').mockImplementation((...a) => { logs.push(a.join(' ')); });
+    try {
+      const env = envWith();
+      await onRequestGet({ request: reqWith(await token(ADMIN), `https://x/api/entitlements?id=${ADMIN_ID}`), env });
+      await post(ADMIN, 'spend', { id: ADMIN_ID, amount: 1, opId: 'op-12345678' }, env);
+    } finally { spy.mockRestore(); }
+    const audit = logs.filter((l) => l.includes('admin_session'));
+    expect(audit.length).toBeGreaterThanOrEqual(2);
+    for (const l of audit) {
+      expect(l).not.toMatch(/@/);
+      expect(l).not.toMatch(/[0-9a-f]{32}/);
+      expect(l).not.toContain(ADMIN_ID);
+      expect(Object.keys(JSON.parse(l)).sort()).toEqual(['event', 'route']);
+    }
+  });
+});
