@@ -236,6 +236,14 @@
 **Régua:** `functions/api/bond.parity.test.js` — varre milhares de valores de `totalXP` e exige que este arquivo e `src/utils/bond.ts` respondam o MESMO nível (footgun 9: cópia deliberada, travada por paridade comportamental porque Pages Functions não importam de `src/`).
 **Avisos do arquivo:** o que NÃO foi copiado, de propósito: tabela de XP por evento, tetos diários, escada de recompensas e títulos. Limite honesto: `bondLevelOf` barra quem forja só o `pvpEnabled`, não quem forja o `totalXP` do save inteiro.
 
+### `functions/api/guild.js` (novo em 29/09/2026, WPG-1/WPG-2 — `PLANO-GUILDA.md`)
+
+**O que faz:** rota `/api/guild?action=…` da Guilda (coop com teto 12). Dona da RESPOSTA: `vistaDaGuilda` é a única montagem do que sai (nunca saveId, `hostSave`, estágio, contagem por pessoa; presença nominal só com ≤ `PRESENCA_NOMINAL_MAX` (4); com 5+ só `threadedToday: true | null`). Ações `guild` (GET), `guildCreate`, `guildJoin`, `guildCheckin`, `guildLeave`, `guildRename`, `guildNewCode` (POST), todas com dono autenticado; `handleGuild` também serve os aliases `coop*` de `community.js` (`COOP_ALIASES`, envelope `{ group }`). Rate limit `GUILD_LIGHT` (60/min/IP, bucket `guild`). `dayKey` = dia do jogador validado a ±1 do UTC (`_coop.js` › `diaDoJogador`). Sem expulsão (G7). **Testes:** `guild.vista.test.js`, `guild.nome.test.js`, `guild.anfitriao.test.js`, `guild.invariantes.test.js`.
+
+### `functions/api/_profile.js` (novo em 29/09/2026, WPG-1)
+
+**O que faz:** perfil público e pid, extraídos de `community.js` sem mudança de comportamento: `getProfile`/`putProfile`, `ensurePid` (migra pid legado — grava), `pidSoLeitura` (sem escrita, para perfis de TERCEIROS), `legacyPidFor`, `newPid`, `indexPublicId`, `stagePower`, `PID_PREFIX`. Usado por `community.js` e `guild.js`.
+
 ### `functions/api/_coop.js` (182 linhas — `wc -l`, 22/09/2026; novo em `592e2c14`)
 **Dono de:** o ESTADO do grupo cooperativo e a operação de SAIR. Extraído de `community.js` na QA Rodada 2 (`04-dados-r2` §1.3): a exclusão de conta precisava tirar o titular do grupo sem importar a rota inteira (que arrastaria rate limit, torneio e diretório para dentro de `account.js`) — o membro apagado virava fantasma em `coop:<gid>.members` por 120 d e a meta (`members.length × 5`) nunca mais fechava, sem nenhum evento que explicasse.
 **Exports:**

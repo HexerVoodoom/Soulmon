@@ -149,6 +149,8 @@ async function publicProfile(env, p, extra = {}) {
     ...extra,
   };
 }
+// (`async function getProfile` e `putProfile` moram em `_profile.js` desde o WPG-1;
+// esta linha também delimita o fim de `publicProfile` para `PlayerDetailModal.semMetrica`.)
 
 async function getRank(env, season, id) {
   const raw = await kvOrThrow(env).get(`rank:${season}:${id}`);
