@@ -46,3 +46,35 @@ Campos novos em `vistaDaGuilda` (em TODA ação que devolve vista, inclusive os 
 7. **Gestos** em `coopGest:<gid>:<save>` (`{day, kinds}`, TTL 3 d), escrito só pelo dono.
 8. **Telemetria**: `guild_create/join/leave/thread/raid/stage` nos dois `EVENT_SCHEMA` e na `privacidade.html` (PT+EN). A emissão é do cliente (WPG-8).
 9. **Mutação** (cópia em `/tmp/mut`, 34 mutantes): 32 mortos; 2 equivalentes explicados nos itens 1 e 2.
+
+---
+
+# Fatia 3 — WPG-4 (Feira), WPG-5 (recompensas), WPG-9 (sem push), WPG-6 complemento (29/09/2026)
+
+## Contrato novo da API (`/api/guild?action=…`, todas com `Authorization` do dono do `id`)
+
+| Ação | Método | Corpo / query | Resposta | Erros |
+|---|---|---|---|---|
+| `guildRaidHit` | POST | `{id, dayKey}` | `{ landed: true, guild }` (NUNCA dano) | 404 `no guild` · 429 `daily limit` (2º golpe no dia do jogador) · 409 `raid closed` (semana já dissipada) · 400 `invalid day` |
+| `guildRewards` | GET | `?id=&dayKey=` | `{ rewards: { pending: [{week, outcome:'dissipada'\|'recuou', emblems}], scenes: string[] ('bg-guild-*'), trophyOwned: boolean, trophyId: 'trophy-concha-mare' } }` | 400 `invalid day` (funciona sem guilda: devolve os cenários já liberados) |
+| `guildClaim` | POST | `{id, dayKey, week}` (`week` = uma de `pending[].week`) | `{ claimed: { week, outcome, emblems, trophy: boolean, trophyId: string\|null } }` | 400 `invalid week` · 404 `nothing to claim` (semana aberta, sem golpe, sem guilda) · 409 `already claimed` |
+
+Campo novo em `vistaDaGuilda` (toda ação que devolve vista, inclusive `coop*`):
+`raid: { weekKey, phenomenon: 'nevoa'|'mare'|'estatica'|'enxame', state: 'aberta'|'dissipada', ferido: boolean, lastWeek: 'dissipada'|'recuou'|null, mine: { hitToday: boolean } }` — nenhuma folha numérica (há teste). Três estados visuais: `aberta && !ferido` / `aberta && ferido` (dano ≥ metade) / `dissipada`.
+
+**Para o cliente (fatia B):** ao `claimed`, somar `emblems` pelo MESMO caminho do Torneio (`onEarnEmblems`); se `trophy`, conceder a decoração `trophyId` (slot `trophy`; o id precisa entrar no catálogo de decoração — mudança de `src/`, fica com o front); `scenes` são ids para `PET_BACKGROUNDS` (WPG-13). Telemetria: `guild_raid{outcome}` 0 = golpe (200 de `guildRaidHit`), 1 = viu `dissipada`, 2 = viu `recuou` — já declarado nos dois `EVENT_SCHEMA`; nenhum evento novo.
+
+## Escolhas registradas
+
+1. **`state` da semana corrente nunca é `recuou`**: recuar é o desfecho de semana TERMINADA e sai em `raid.lastWeek`. `lastWeek` é `null` quando ninguém golpeou (não há o que dizer).
+2. **`ferido`** = dano ≥ metade do HP (booleano). `hpBand` (0..10) do §10.3/`05` §4 NÃO foi implementado: a ordem da fatia (vetos do guarda) é "nunca HP numérico; no máximo `ferido`".
+3. **Dano = soma das chaves `coopHit` dos membros ATUAIS.** Quem sai antes do fechamento leva o dano dele; depois de `coopRaidOk` gravado, a semana é vencida para sempre. HP usa `membrosAtivos` no dia de referência (hoje; o domingo, para semana passada).
+4. **Cliente adulterado**: `profile.stage` é declarado pelo cliente; um `ultra` falso bate 16–24 em vez de 10–14 e a Feira da PRÓPRIA guilda cai antes. O prêmio é cosmético e Emblemas (que já vivem no save editável) — sem Créditos, coração, energia, perfectDays, Glitchtama. Aceito (§10.4). O corpo não escolhe dano nem semana (teste).
+5. **Resgate idempotente sem CAS**: grava `coopClaim` com selo aleatório e relê; só quem acha o próprio selo resgatou (3 resgates concorrentes → 1×200 + 2×409). Resposta perdida na rede = Emblemas perdidos daquela semana (o registro já existe); preferido a pagar em dobro.
+6. **Janela de resgate**: semana corrente (só se dissipada) + as duas anteriores (o `coopHit` vive 21 d). Resgatar exige estar na guilda (as chaves `coopHit` são por `gid`); os CENÁRIOS não exigem (G12).
+7. **Concha da Maré** a cada 4 Feiras dissipadas COM participação e resgatadas: `coopShell:<save>` = conjunto de semanas (união idempotente, sem TTL); `trophy` só quando o conjunto CRESCE e fecha múltiplo de 4. A 8ª, 12ª… dão `trophy:true` de novo — o cliente decide se vira segunda peça ou é no-op.
+8. **Cenários**: `coopScenes:<save>` (sem TTL, só cresce), preenchido por `guildRewards` quando `distinctDays ≥ 7` — até o estágio atual. O critério "estava na virada do marco" (§7) NÃO foi implementado (fora da ordem desta fatia).
+9. **Exclusão**: `coopHit` de 4 semanas (era 2; o TTL é 21 d), `coopClaim` (9 semanas), `coopShell`, `coopScenes`. `coopRaidOk` fica (é da roda, sem dado pessoal). **Exportação**: `grupo.myHitsThisWeek` (só os dias, nunca `dmg`) e `recompensas: {claimedWeeks, guildScenes, shellWeeks}`.
+10. **WPG-9**: `guild.semPush.contract.test.js` varre 10 arquivos de push (workers, `_pushCopy/_pushTargets/_pushIdentity`, `subscribe`, `fcm-subscribe`, `notifications.ts`, `NotificationManager.tsx`), ignorando linhas só de comentário (`subscribe.js` cita "grupo" num comentário).
+11. **Mutação** (`/tmp/mut`, 39 mutantes em `_coop.js`/`guild.js`/`account.js`/`push-scheduler.js`): 39 mortos (o da Concha em dobro morreu com o teste de registro perdido).
+12. **Pendências para `src/` (front)**: decoração `trophy-concha-mare` no catálogo; `hitRaid`/`getGuildRewards`/`claimGuildReward` em `community.ts`; `sim/guilda-sim.mjs` ainda usa literais (não importa `_coop.js`).
