@@ -118,6 +118,11 @@ export const STORAGE_KEYS = {
    *  (QA rodada 2, design A3): na primeira vez o banner entra em posição 1
    *  da fila de avisos; depois volta a ser o último. Aparelho, não save. */
   TERMS_NOTICE_SHOWN: 'soulmon-terms-notice-shown',
+  /** GUILDA (`PLANO-GUILDA.md` §10.7) — o que ESTE aparelho já viu do Bosque: o
+   *  último estágio reconhecido, as datas em que cada marco apareceu e o marco
+   *  ainda por celebrar. Estado de UI, nunca de jogo (nada disto vai ao save;
+   *  o ponteiro autoritativo da guilda é do servidor). Dono: `utils/groveLocal.ts`. */
+  GUILD_LAST_STAGE: 'soulmon-guild-last-stage',
 } as const;
 
 /**

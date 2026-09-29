@@ -12,13 +12,16 @@
  * ausência do elemento, e uma chave com string vazia convidaria alguém a
  * renderizá-la.
  *
+ * (Fatia B1: as chaves do Bosque por estágio, dos gestos, da cerimônia de marco e do
+ * Mural vieram TODAS do documento — nenhuma é inventada.)
+ *
  * ⚠️ Três chaves NÃO estão nas 149 do documento e estão marcadas `PENDENTE`:
  * o botão de tentar de novo, o "Alguém" de quem ainda não tem apelido e o
  * "· você" (o texto já existia no CoopPanel). O `soulmon-narrative-critic`
  * ainda não as viu — ver `docs/reviews/guilda/qa/impl-notas-front.md`.
  */
 import type { Language } from './i18n';
-import { GUILD_MAX_MEMBERS } from './guildRules';
+import { GUILD_MAX_MEMBERS, type GroveStageId, type GuildGesture, type TideSize } from './guildRules';
 import type { GuildErrorKind } from './community';
 
 export const GUILD_COPY = {
@@ -61,13 +64,59 @@ export const GUILD_COPY = {
   'guild.bosque.fio.toast': ['Um fio firmou no bosque.', 'A strand settled in the grove.'],
   // Chave ÚNICA do agregado: sem número, sem variante por quantidade (`{n}` proibido).
   'guild.bosque.agregado.um': ['Hoje o bosque recebeu fios.', 'The grove took in strands today.'],
+  'guild.bosque.regra': [
+    'Um fio firma quando alguém da roda alcança a própria meta do dia. O bosque só cresce.',
+    'A strand settles when someone in the circle reaches their own goal for the day. The grove only grows.',
+  ],
+  'guild.bosque.estagio.clareira.nome': ['Clareira', 'Clearing'],
+  'guild.bosque.estagio.clareira.linha': ['Chão aberto. Os primeiros fios firmaram.', 'Open ground. The first strands have settled.'],
+  'guild.bosque.estagio.ramagem.nome': ['Ramagem', 'Boughs'],
+  'guild.bosque.estagio.ramagem.linha': ['A videira achou onde se apoiar.', 'The vine found something to hold.'],
+  'guild.bosque.estagio.copa.nome': ['Copa', 'Canopy'],
+  'guild.bosque.estagio.copa.linha': ['A videira fechou por cima.', 'The vine closed overhead.'],
+  'guild.bosque.estagio.mata.nome': ['Mata', 'Thicket'],
+  'guild.bosque.estagio.mata.linha': ['Camadas sobre camadas.', 'Layer over layer.'],
+  'guild.bosque.estagio.bosqueAntigo.nome': ['Bosque antigo', 'Old grove'],
+  'guild.bosque.estagio.bosqueAntigo.linha': ['O cobre tomou o chão. A luz chega filtrada.', 'Copper took the ground. Light comes through filtered.'],
+  // Faixa BINÁRIA (perto/silêncio): nunca barra de razão exata, nunca tempo estimado (parecer do guarda, 29/09).
+  'guild.bosque.perto': ['Perto de {estagio}.', 'Near {estagio}.'],
   // ── Roda (§4) ──────────────────────────────────────────────────────────
   'guild.roda.titulo': ['Roda', 'Circle'],
   'guild.roda.contagem': ['{n} na roda', '{n} in the circle'],
   'guild.roda.presente': ['no bosque hoje', 'in the grove today'],
+  // Gestos: três fixos, anônimos, para a roda inteira. Sem texto livre, sem push.
+  'guild.gesto.titulo': ['Gestos', 'Gestures'],
+  'guild.gesto.aceno.nome': ['Aceno', 'Wave'],
+  'guild.gesto.luz.nome': ['Luz', 'Light'],
+  'guild.gesto.descanso.nome': ['Descanso', 'Rest'],
+  'guild.gesto.aceno.enviado': ['Aceno enviado.', 'Wave sent.'],
+  'guild.gesto.luz.enviado': ['Luz enviada.', 'Light sent.'],
+  'guild.gesto.descanso.enviado': ['Descanso enviado.', 'Rest sent.'],
+  'guild.gesto.aceno.recebido': ['Alguém acenou para a roda.', 'Someone waved at the circle.'],
+  'guild.gesto.luz.recebido': ['Alguém deixou uma luz.', 'Someone left a little light.'],
+  'guild.gesto.descanso.recebido': ['Alguém desejou bom descanso.', 'Someone wished everyone a good rest.'],
   // PENDENTE (fora das 149; já existiam no CoopPanel).
   'guild.roda.voce': ['· você', '· you'],
   'guild.roda.alguem': ['Alguém', 'Someone'],
+  // ── Cerimônia e aviso de marco (§5) ────────────────────────────────────
+  'guild.marco.ramagem.mundo': ['O bosque ganhou ramagem.', 'The grove grew boughs.'],
+  'guild.marco.ramagem.pet': ['Olha, achou onde se apoiar.', 'Look, it found something to hold.'],
+  'guild.marco.copa.mundo': ['O bosque fechou copa.', 'The grove has closed its canopy.'],
+  'guild.marco.copa.pet': ['Tá mais alto que eu agora.', "It's taller than me now."],
+  'guild.marco.mata.mundo': ['O bosque virou mata.', 'The grove has become a thicket.'],
+  'guild.marco.mata.pet': ['Tem sombra aqui dentro.', "There's shade in here."],
+  'guild.marco.bosqueAntigo.mundo': ['O bosque é antigo agora.', 'The grove is old now.'],
+  'guild.marco.bosqueAntigo.pet': ['Tem cheiro de cobre.', 'It smells of copper.'],
+  'guild.marco.botao': ['Continuar', 'Continue'],
+  'guild.marco.aviso': ['Novo estágio do bosque: {estagio}.', 'New stage for the grove: {estagio}.'],
+  'guild.marco.cenario': ['Cenário do bosque: {estagio}. Está entre os seus cenários.', 'Grove scenery: {estagio}. It is among your scenery.'],
+  // ── Mural (§7) ─────────────────────────────────────────────────────────
+  'guild.mural.titulo': ['Mural', 'Wall'],
+  'guild.mural.marco': ['{estagio}, {data}', '{estagio}, {data}'],
+  'guild.mural.mare': ['Floração colhida, {data}', 'Bloom gathered, {data}'],
+  'guild.mural.mare.tamanho.petala': ['Pétala', 'Petal'],
+  'guild.mural.mare.tamanho.corola': ['Corola', 'Corolla'],
+  'guild.mural.mare.tamanho.floracao': ['Floração cheia', 'Full bloom'],
   // ── Ajustes e saída (§8) ───────────────────────────────────────────────
   'guild.ajustes.aria': ['Ajustes da roda', 'Circle settings'],
   'guild.ajustes.titulo': ['Ajustes', 'Settings'],
@@ -85,6 +134,10 @@ export const GUILD_COPY = {
   'guild.aria.roda': ['Roda', 'Circle'],
   'guild.aria.codigo.copiar': ['Copiar o código da roda', 'Copy the circle code'],
   'guild.aria.fio': ['Firmar meu fio de hoje', 'Settle my strand for today'],
+  'guild.aria.bosque': ['Bosque da roda, estágio {estagio}', "The circle’s grove, stage {estagio}"],
+  'guild.aria.gesto.enviar': ['Enviar {gesto} para a roda', 'Send {gesto} to the circle'],
+  'guild.aria.gesto.enviado': ['{gesto} já enviado hoje', '{gesto} already sent today'],
+  'guild.aria.mural': ['Mural da roda', "The circle’s wall"],
 } as const satisfies Record<string, readonly [string, string]>;
 
 export type GuildKey = keyof typeof GUILD_COPY;
@@ -115,9 +168,42 @@ export const GUILD_ERROR_KEY = {
   collision: 'guild.erro.colisao',
   invalidName: 'guild.erro.nome',
   invalidDay: 'guild.erro.generico',
+  // Três que a TELA nunca mostra como alerta (a folha recarrega em silêncio): a
+  // meta de coração não bateu (silêncio, nunca frase), o gesto do dia já saiu
+  // (o botão passa a "enviado") e um `kind` que o cliente nunca manda.
+  goalNotMet: 'guild.erro.generico',
+  invalidKind: 'guild.erro.generico',
+  dailyLimit: 'guild.erro.generico',
   notHost: 'guild.erro.generico',
   rateLimit: 'guild.erro.muitosToques',
   deleted: 'guild.erro.generico',
   unavailable: 'guild.erro.semRede',
   server: 'guild.erro.generico',
 } as const satisfies Record<GuildErrorKind, GuildKey>;
+
+// ── Nomes por id (estágio, gesto, tamanho de maré) ─────────────────────────
+// Os ids do servidor são `bosque-antigo`, `aceno`… e as chaves do documento são
+// camelCase; estes mapas são a ÚNICA ponte, e o tipo impede uma chave inventada.
+
+const STAGE_KEY = { clareira: 'clareira', ramagem: 'ramagem', copa: 'copa', mata: 'mata', 'bosque-antigo': 'bosqueAntigo' } as const satisfies Record<GroveStageId, string>;
+
+export const groveStageName = (language: Language, stage: GroveStageId): string =>
+  guildText(language, `guild.bosque.estagio.${STAGE_KEY[stage]}.nome`);
+
+export const groveStageLine = (language: Language, stage: GroveStageId): string =>
+  guildText(language, `guild.bosque.estagio.${STAGE_KEY[stage]}.linha`);
+
+/** Cerimônia: só a Ramagem em diante tem marco (a Clareira é o chão de partida). */
+export type GroveMarcoStage = Exclude<GroveStageId, 'clareira'>;
+export const groveMarcoText = (language: Language, stage: GroveMarcoStage, quem: 'mundo' | 'pet'): string =>
+  guildText(language, `guild.marco.${STAGE_KEY[stage]}.${quem}`);
+
+export const guildGestureName = (language: Language, gesture: GuildGesture): string =>
+  guildText(language, `guild.gesto.${gesture}.nome`);
+export const guildGestureSent = (language: Language, gesture: GuildGesture): string =>
+  guildText(language, `guild.gesto.${gesture}.enviado`);
+export const guildGestureReceived = (language: Language, gesture: GuildGesture): string =>
+  guildText(language, `guild.gesto.${gesture}.recebido`);
+
+export const tideSizeName = (language: Language, size: TideSize): string =>
+  guildText(language, `guild.mural.mare.tamanho.${size}`);

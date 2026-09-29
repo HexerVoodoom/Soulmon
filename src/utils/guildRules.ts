@@ -26,3 +26,19 @@ export const GUILD_CODE_FORBIDDEN = /[^A-HJ-NP-Z2-9]/g;
 export function normalizeGuildCode(raw: string): string {
   return raw.toUpperCase().replace(GUILD_CODE_FORBIDDEN, '').slice(0, GUILD_CODE_LENGTH);
 }
+
+/**
+ * Os cinco estágios do Bosque, na ordem (`BOSQUE_STAGES` no servidor). O
+ * servidor manda o id e o índice (1..5; 0 = ainda sem estágio); o cliente só
+ * NOMEIA e desenha — nunca deriva o estágio de progresso nenhum (não recebe).
+ */
+export const GROVE_STAGES = ['clareira', 'ramagem', 'copa', 'mata', 'bosque-antigo'] as const;
+export type GroveStageId = (typeof GROVE_STAGES)[number];
+
+/** Os três gestos fixos, anônimos (`GUILD_GESTURES` no servidor). A ordem é a da tela. */
+export const GUILD_GESTURES = ['aceno', 'luz', 'descanso'] as const;
+export type GuildGesture = (typeof GUILD_GESTURES)[number];
+
+/** Tamanhos DESCRITIVOS de uma floração colhida (nenhum é "pior"), pequeno → grande. */
+export const TIDE_SIZES = ['petala', 'corola', 'floracao'] as const;
+export type TideSize = (typeof TIDE_SIZES)[number];

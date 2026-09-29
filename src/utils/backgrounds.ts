@@ -76,6 +76,49 @@ export interface PetBackground {
   horizonY?: number;
 }
 
+/* ── Camadas dos placeholders do Bosque (`bg-guild-*`) ───────────────────────
+   Cada peça é UMA camada de `background` (posição/tamanho por camada), então
+   um estágio é o anterior + camadas — "mais camadas a cada estágio". */
+/** Vaga-lumes: três pontos de ciano do Visor. */
+const GROVE_MOTES = [
+  'radial-gradient(circle, rgba(95,243,224,.55) 0 2px, transparent 3px) 18% 24% / 6px 6px no-repeat',
+  'radial-gradient(circle, rgba(95,243,224,.4) 0 2px, transparent 3px) 71% 16% / 6px 6px no-repeat',
+  'radial-gradient(circle, rgba(95,243,224,.45) 0 2px, transparent 3px) 88% 38% / 6px 6px no-repeat',
+].join(', ');
+/** Videiras: três fios verdes que descem do topo. */
+const GROVE_VINES = [
+  'linear-gradient(180deg, #3d9b62 0 100%) 14% 0 / 3px 34% no-repeat',
+  'linear-gradient(180deg, #2f7d4f 0 100%) 47% 0 / 3px 26% no-repeat',
+  'linear-gradient(180deg, #3d9b62 0 100%) 81% 0 / 3px 40% no-repeat',
+].join(', ');
+/** Copa: o verde fecha por cima. */
+const GROVE_CANOPY = [
+  'radial-gradient(ellipse 46% 30% at 22% 0%, rgba(47,125,79,.95) 0 60%, transparent 100%)',
+  'radial-gradient(ellipse 50% 34% at 60% 0%, rgba(38,104,66,.95) 0 60%, transparent 100%)',
+  'radial-gradient(ellipse 40% 28% at 100% 0%, rgba(47,125,79,.95) 0 60%, transparent 100%)',
+].join(', ');
+/** Mata: uma segunda camada de folhagem, mais baixa e mais escura. */
+const GROVE_CANOPY_LOW = [
+  'radial-gradient(ellipse 34% 22% at 8% 30%, rgba(20,70,46,.9) 0 55%, transparent 100%)',
+  'radial-gradient(ellipse 34% 22% at 94% 34%, rgba(20,70,46,.9) 0 55%, transparent 100%)',
+].join(', ');
+/** Troncos escuros nas bordas. */
+const GROVE_TRUNKS = [
+  'linear-gradient(180deg, #0f2a1f 0 100%) 4% 0 / 12px 100% no-repeat',
+  'linear-gradient(180deg, #0f2a1f 0 100%) 92% 0 / 14px 100% no-repeat',
+].join(', ');
+/** Bosque antigo: os troncos viram cobre. */
+const GROVE_TRUNKS_COPPER = [
+  'linear-gradient(180deg, #7a4a24 0 100%) 4% 0 / 12px 100% no-repeat',
+  'linear-gradient(180deg, #8f5a2b 0 100%) 92% 0 / 14px 100% no-repeat',
+  'linear-gradient(180deg, #5b3818 0 100%) 66% 0 / 8px 66% no-repeat',
+].join(', ');
+/** A luz filtrada do Bosque antigo: duas faixas de cobre claro. */
+const GROVE_SHAFTS = [
+  'linear-gradient(105deg, transparent 38%, rgba(217,154,91,.26) 44%, transparent 52%)',
+  'linear-gradient(105deg, transparent 58%, rgba(217,154,91,.18) 63%, transparent 70%)',
+].join(', ');
+
 export const PET_BACKGROUNDS: Record<string, PetBackground> = {
   // Cenário comprado com Emblemas (aba Torneio da loja).
   'bg-arena-champion': {
@@ -263,6 +306,45 @@ export const PET_BACKGROUNDS: Record<string, PetBackground> = {
     nameEn: 'Digital Aurora',
     css: `url(${bgMissionAuroraImg})`, baseColor: '#041a18',
     setting: 'outdoor', slots: GROUND_SLOTS, horizonY: 74,   // céu aberto: nada onde pendurar
+  },
+  // ── Cenários do BOSQUE da Guilda (`docs/PLANO-GUILDA.md` §7 e §9) ──────────
+  // Ganhos por CONQUISTA (7 dias distintos de fio — `mine.groveScenes`, G12: ficam
+  // com quem sai), nunca vendidos: ficam FORA de `SHOP_BG_ACCENTS`, e por isso
+  // fora da loja e do sorteio da masmorra — o mesmo desenho dos `bg-mission-*`.
+  // ⚠️ PLACEHOLDERS em gradiente na paleta do Visor (teal, videira, cobre; sem
+  // magenta/roxo/rosa — proibido: folha seca, galho caído, cor desbotada, ruína).
+  // A arte pintada do Higgsfield (família `cenario` de `docs/ASSETS-A-GERAR.md`)
+  // troca só o `css` por `url(...)`; ids, `setting`, `slots` e `horizonY` ficam.
+  // Mesma composição, mais camadas a cada estágio; o chão começa em 66% (≤ GROUND_Y).
+  'bg-guild-clareira': {
+    namePt: 'Clareira', nameEn: 'Clearing',
+    css: `${GROVE_MOTES}, linear-gradient(180deg, #0c2a28 0%, #123c37 66%, #1f5a3d 66%, #143f2b 100%)`,
+    baseColor: '#0c2a28',
+    setting: 'outdoor', slots: GROUND_SLOTS, horizonY: 66,
+  },
+  'bg-guild-ramagem': {
+    namePt: 'Ramagem', nameEn: 'Boughs',
+    css: `${GROVE_VINES}, ${GROVE_MOTES}, linear-gradient(180deg, #0b2927 0%, #103a35 66%, #23623f 66%, #163f2b 100%)`,
+    baseColor: '#0b2927',
+    setting: 'outdoor', slots: FULL_SLOTS, horizonY: 66,
+  },
+  'bg-guild-copa': {
+    namePt: 'Copa', nameEn: 'Canopy',
+    css: `${GROVE_CANOPY}, ${GROVE_VINES}, linear-gradient(180deg, #092321 0%, #0e3430 66%, #25663f 66%, #16402b 100%)`,
+    baseColor: '#092321',
+    setting: 'outdoor', slots: FULL_SLOTS, horizonY: 66,
+  },
+  'bg-guild-mata': {
+    namePt: 'Mata', nameEn: 'Thicket',
+    css: `${GROVE_TRUNKS}, ${GROVE_CANOPY}, ${GROVE_CANOPY_LOW}, ${GROVE_VINES}, linear-gradient(180deg, #071c1b 0%, #0b2c29 66%, #1f5636 66%, #123723 100%)`,
+    baseColor: '#071c1b',
+    setting: 'outdoor', slots: FULL_SLOTS, horizonY: 66,
+  },
+  'bg-guild-bosque-antigo': {
+    namePt: 'Bosque antigo', nameEn: 'Old grove',
+    css: `${GROVE_SHAFTS}, ${GROVE_TRUNKS_COPPER}, ${GROVE_CANOPY}, ${GROVE_CANOPY_LOW}, ${GROVE_VINES}, linear-gradient(180deg, #071b19 0%, #0b2a26 66%, #6b4524 66%, #43290f 100%)`,
+    baseColor: '#071b19',
+    setting: 'outdoor', slots: FULL_SLOTS, horizonY: 66,
   },
 };
 

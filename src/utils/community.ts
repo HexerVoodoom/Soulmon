@@ -3,7 +3,10 @@
 import { authHeaders } from './auth';
 import { reagirContaExcluida } from './cloudSave';
 import { playerDayKey, type PlayerDayAnchor } from './playerDay';
-import { GUILD_PRESENCE_NOMINAL_MAX } from './guildRules';
+import {
+  GUILD_PRESENCE_NOMINAL_MAX, GROVE_STAGES, GUILD_GESTURES, TIDE_SIZES,
+  type GroveStageId, type GuildGesture, type TideSize,
+} from './guildRules';
 
 const BASE = '/api/community';
 
@@ -191,7 +194,30 @@ export interface GuildView {
   members: GuildMember[];
   /** `null` com ≤4 membros ou sem fio hoje. É `true` ou `null`, nunca um número. */
   threadedToday: true | null;
-  mine: { cameToday: boolean };
+  mine: {
+    cameToday: boolean;
+    /** O PRÓPRIO fio de hoje (só de quem pergunta). */
+    threadToday: boolean;
+    /** Já firmou fio em dias distintos o bastante para liberar os cenários do Bosque (G12). */
+    groveScenes: boolean;
+    /** Os gestos que EU mandei hoje. */
+    gesturesSent: GuildGesture[];
+  };
+  /**
+   * O Bosque: estágio e um binário `perto`. NADA de progresso cru, razão, "faltam N"
+   * nem coisa por pessoa — o tipo não tem onde carregar isso (LV-G1/LV-G3).
+   */
+  bosque: {
+    stage: GroveStageId | null;
+    /** 0 = ainda sem estágio; 1..5 = a ordem de `GROVE_STAGES`. */
+    stageIndex: number;
+    /** "perto do próximo estágio": binário, sem razão e sem contagem. */
+    perto: boolean;
+    /** Peças de maré já colhidas (permanentes). Sem número por pessoa. */
+    ornaments: Array<{ tide: string; size: TideSize; day: string }>;
+  };
+  /** Os TIPOS de gesto recebidos hoje de outros membros, em lote: sem quem e sem quantos. */
+  gestures: GuildGesture[];
 }
 
 export type GuildErrorKind =
@@ -203,6 +229,9 @@ export type GuildErrorKind =
   | 'collision'     // 409 join collision
   | 'invalidName'   // 400 invalid name
   | 'invalidDay'    // 400 invalid day
+  | 'goalNotMet'    // 400 goal not met (o fio: a meta de coração ainda não bateu; NÃO é frase de tela)
+  | 'invalidKind'   // 400 invalid kind
+  | 'dailyLimit'    // 429 daily limit (o gesto do dia já foi mandado, talvez de outro aparelho)
   | 'notHost'       // 403 not host
   | 'rateLimit'     // 429
   | 'deleted'       // 410 account-deleted (o cloudSave já cuida do portão)
@@ -240,6 +269,17 @@ export function sanitizeGuildView(raw: unknown): GuildView | null {
     };
   });
   const mine = (r.mine && typeof r.mine === 'object' ? r.mine : {}) as Record<string, unknown>;
+  const b = (r.bosque && typeof r.bosque === 'object' ? r.bosque : {}) as Record<string, unknown>;
+  const stageIndex = typeof b.stageIndex === 'number' && Number.isInteger(b.stageIndex)
+    ? Math.min(GROVE_STAGES.length, Math.max(0, b.stageIndex)) : 0;
+  const gestos = (v: unknown): GuildGesture[] =>
+    GUILD_GESTURES.filter(k => Array.isArray(v) && v.includes(k));
+  const ornaments = (Array.isArray(b.ornaments) ? b.ornaments : []).flatMap(o => {
+    const x = (o && typeof o === 'object' ? o : {}) as Record<string, unknown>;
+    return (TIDE_SIZES as readonly unknown[]).includes(x.size) && typeof x.day === 'string'
+      ? [{ tide: str(x.tide, 20), size: x.size as TideSize, day: str(x.day, 20) }]
+      : [];
+  }).slice(0, 60);
   return {
     id: str(r.id, 80),
     name: str(r.name, 60),
@@ -250,14 +290,28 @@ export function sanitizeGuildView(raw: unknown): GuildView | null {
     full: r.full === true,
     members,
     threadedToday: size > GUILD_PRESENCE_NOMINAL_MAX && r.threadedToday === true ? true : null,
-    mine: { cameToday: mine.cameToday === true },
+    mine: {
+      cameToday: mine.cameToday === true,
+      threadToday: mine.threadToday === true,
+      groveScenes: mine.groveScenes === true,
+      gesturesSent: gestos(mine.gesturesSent),
+    },
+    bosque: {
+      // O índice é a fonte; o id só passa se casar com ele (dado não confiável).
+      stage: stageIndex > 0 ? GROVE_STAGES[stageIndex - 1] : null,
+      stageIndex,
+      // "Perto" do próximo estágio só faz sentido se existir próximo.
+      perto: b.perto === true && stageIndex < GROVE_STAGES.length,
+      ornaments,
+    },
+    gestures: gestos(r.gestures),
   };
 }
 
 function kindOf(status: number, error: string): GuildErrorKind {
   if (status === 401 || error === 'invalid id') return 'login';
   if (status === 410) return 'deleted';
-  if (status === 429) return 'rateLimit';
+  if (status === 429) return error === 'daily limit' ? 'dailyLimit' : 'rateLimit';
   if (status === 403) return error === 'not host' ? 'notHost' : 'login';
   if (status === 404) return error === 'invalid code' ? 'invalidCode' : error === 'no guild' ? 'noGuild' : 'server';
   if (status === 409) {
@@ -266,7 +320,10 @@ function kindOf(status: number, error: string): GuildErrorKind {
     if (error === 'already in a guild') return 'alreadyIn';
     return 'server';
   }
-  if (status === 400) return error === 'invalid name' ? 'invalidName' : error === 'invalid day' ? 'invalidDay' : 'server';
+  if (status === 400) {
+    return error === 'invalid name' ? 'invalidName' : error === 'invalid day' ? 'invalidDay'
+      : error === 'goal not met' ? 'goalNotMet' : error === 'invalid kind' ? 'invalidKind' : 'server';
+  }
   if (status === 503) return 'unavailable';
   return 'server';
 }
@@ -325,6 +382,22 @@ export const joinGuild = (id: string, code: string, tz?: PlayerDayAnchor) =>
 /** "Firmar meu fio" (no servidor: `guildCheckin`, idempotente por dia). */
 export const guildCheckin = (id: string, tz?: PlayerDayAnchor) =>
   guildCall<{ guild: unknown }>('guildCheckin', { method: 'POST', body: { id, dayKey: dia(tz) } }).then(viewOf);
+
+/**
+ * A meta do dia, como o servidor a confere (`metaDoFioCumprida`): `done` e as duas
+ * réguas (`heart` = a que protege o coração, `full` = o dia completo) — todas em
+ * PESO DE ESFORÇO, nunca em contagem de itens. O cliente as calcula no App
+ * (`heartGoalFor`/`dailyGoalFor`); aqui só trafegam. O fio vale a de CORAÇÃO (G1).
+ */
+export interface GuildGoal { done: number; heart: number; full: number }
+
+/** "Firmar meu fio" (`guildThread kind:'fio'`): idempotente por dia e por pessoa, e o texto nunca leva nome. */
+export const guildThread = (id: string, goal?: GuildGoal, tz?: PlayerDayAnchor) =>
+  guildCall<{ guild: unknown }>('guildThread', { method: 'POST', body: { id, dayKey: dia(tz), kind: 'fio', ...(goal ? { goal } : {}) } }).then(viewOf);
+
+/** Um dos três gestos fixos, anônimos, para a roda inteira. Um de cada por dia; sem texto, sem destinatário, sem push. */
+export const guildGesture = (id: string, kind: GuildGesture, tz?: PlayerDayAnchor) =>
+  guildCall<{ guild: unknown }>('guildGesture', { method: 'POST', body: { id, dayKey: dia(tz), kind } }).then(viewOf);
 
 /** Sair. Um toque, sem confirmação de ninguém e sem penalidade nenhuma. */
 export const leaveGuild = (id: string) =>

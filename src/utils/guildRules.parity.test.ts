@@ -8,7 +8,7 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
-import { GUILD_MAX_MEMBERS, GUILD_PRESENCE_NOMINAL_MAX, GUILD_NAME_MAX, GUILD_CODE_LENGTH, normalizeGuildCode } from './guildRules';
+import { GROVE_STAGES, GUILD_GESTURES, GUILD_MAX_MEMBERS, GUILD_PRESENCE_NOMINAL_MAX, GUILD_NAME_MAX, GUILD_CODE_LENGTH, normalizeGuildCode } from './guildRules';
 
 const coop = fs.readFileSync(path.resolve(__dirname, '../../functions/api/_coop.js'), 'utf8');
 const num = (nome: string) => Number(new RegExp(`export const ${nome} = (\\d+);`).exec(coop)?.[1]);
@@ -26,5 +26,11 @@ describe('guildRules × functions/api/_coop.js', () => {
     expect(GUILD_CODE_LENGTH).toBe(Number(/new Uint8Array\((\d+)\)/.exec(coop)?.[1]));
     expect(normalizeGuildCode(alfabeto + alfabeto)).toBe(alfabeto.slice(0, GUILD_CODE_LENGTH));
     expect(normalizeGuildCode('o0i1-abc d2345 xyz')).toBe('ABCD2345');
+  });
+
+  it('estágios do Bosque e gestos: mesmos ids, mesma ordem que o servidor', () => {
+    const lista = (nome: string) => [...(new RegExp(`export const ${nome} = Object\\.freeze\\(\\[([^\\]]+)\\]\\)`).exec(coop)?.[1] ?? '').matchAll(/'([^']+)'/g)].map(m => m[1]);
+    expect([...GROVE_STAGES]).toEqual(lista('BOSQUE_STAGES'));
+    expect([...GUILD_GESTURES]).toEqual(lista('GUILD_GESTURES'));
   });
 });
