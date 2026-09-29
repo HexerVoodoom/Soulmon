@@ -42,3 +42,4 @@ state/
 
 # temporario do gerador do PDF do livrinho (scripts/booklet-pdf.mjs)
 .booklet-pdf-tmp/
+scripts/__pycache__/
