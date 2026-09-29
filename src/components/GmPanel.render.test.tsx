@@ -68,8 +68,8 @@ describe('Painel de GM em Configurações', () => {
   });
 
   it.each([
-    ['pt-BR', 'Painel de GM', 'Dar saldo', 'Só você vê isto'],
-    ['en-US', 'GM panel', 'Give balance', 'Only you see this'],
+    ['pt-BR', 'Painel de GM', 'Dar saldo', 'todos os seus aparelhos'],
+    ['en-US', 'GM panel', 'Give balance', 'all your devices'],
   ] as const)('admin (%s): painel visível e as ações disparam', (language, title, saldo, aviso) => {
     act(() => setAdminFlag(true));
     const actions = gm();

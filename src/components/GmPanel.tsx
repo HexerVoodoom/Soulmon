@@ -11,7 +11,7 @@ import { corvoFormName } from '../utils/corvoPet';
  * A flag vem apenas da resposta do servidor nesta abertura (`utils/adminFlag.ts`);
  * nada no save ou no localStorage abre este painel. Cada ação é um updater puro
  * de `utils/gmTools.ts` / `utils/corvoPet.ts`, disparado pelo `App.tsx` (que
- * memoiza os callbacks — footgun 5). Tudo mexe só no save deste aparelho.
+ * memoiza os callbacks — footgun 5). Tudo mexe no save da conta (nuvem e todos os aparelhos).
  */
 export interface GmActions {
   isCorvo: boolean;
@@ -35,8 +35,8 @@ export function GmPanel({ language, gm }: { language: Language; gm: GmActions })
       <div data-gm-panel>
         <p style={{ ...sm2Hint, margin: '0 0 8px' }}>
           {isPt
-            ? 'Só você vê isto. Tudo aqui muda apenas o save deste aparelho.'
-            : 'Only you see this. Everything here changes only this device’s save.'}
+            ? 'Só você vê isto. As mudanças vão para o seu save e para todos os seus aparelhos, e não são desfeitas ao sair do papel de GM.'
+            : 'Only you see this. Changes go to your save and to all your devices, and are not undone when you leave the GM role.'}
         </p>
         <ActionRow
           label={isPt ? 'Dar saldo' : 'Give balance'}
