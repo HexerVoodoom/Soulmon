@@ -1,0 +1,226 @@
+{
+  "geradoPor": "scripts/npc-oraculo-prompts.mjs",
+  "seedBase": 29092026,
+  "npcs": [
+    {
+      "id": "npc-mercado-itens",
+      "nome": "Tamba",
+      "area": "mercado",
+      "seed": 29092026,
+      "sementesRejeitadas": 0,
+      "forma": "rookie",
+      "ramo": null,
+      "eixos": {
+        "elemento": "industrial",
+        "papel": "suporte",
+        "alinhamento": "benevolencia",
+        "reino": "cavernas"
+      },
+      "entrada": {
+        "petDescription": "dog-sized hermit crab whose shell is a brass chest of six little drawers with tiny knobs, turquoise-tipped antennae, precise counting eyes"
+      },
+      "imagePrompt": "Generate an original creature for a monster-raising RPG inspired by Digimon, Pokémon, Monster Rancher, Yu-Gi-Oh, Warhammer, Palworld, Legend of Mana, Final Fantasy, Hello Kitty, Tamagotchi, Ragnarok Online and World of Warcraft. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: dog-sized hermit crab whose shell is a brass chest of six little drawers with tiny knobs, turquoise-tipped antennae, precise counting eyes. small and simple with a big head. Flat steel gray and gunmetal colors with gold accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.",
+      "imagePromptFallback": "Generate an original creature for a monster-raising RPG. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: dog-sized hermit crab whose shell is a brass chest of six little drawers with tiny knobs, turquoise-tipped antennae, precise counting eyes. small and simple with a big head. Flat steel gray and gunmetal colors with gold accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable."
+    },
+    {
+      "id": "npc-mercado-decoracao",
+      "nome": "Musga",
+      "area": "mercado",
+      "seed": 29092027,
+      "sementesRejeitadas": 1,
+      "forma": "rookie",
+      "ramo": null,
+      "eixos": {
+        "elemento": "planta",
+        "papel": "tanque",
+        "alinhamento": "harmonia",
+        "reino": "pantano"
+      },
+      "entrada": {
+        "petDescription": "big slow moss slug carrying a whole tiny room on its back: plank roof, crate-wood walls, one small window glowing warm amber, eyes on short stalks"
+      },
+      "imagePrompt": "Generate an original creature for a monster-raising RPG inspired by Digimon, Pokémon, Monster Rancher, Yu-Gi-Oh, Warhammer, Palworld, Legend of Mana, Final Fantasy, Hello Kitty, Tamagotchi, Ragnarok Online and World of Warcraft. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: big slow moss slug carrying a whole tiny room on its back: plank roof, crate-wood walls, one small window glowing warm amber, eyes on short stalks. a squishy little body. Flat leafy green and lime colors with cyan accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.",
+      "imagePromptFallback": "Generate an original creature for a monster-raising RPG. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: big slow moss slug carrying a whole tiny room on its back: plank roof, crate-wood walls, one small window glowing warm amber, eyes on short stalks. a squishy little body. Flat leafy green and lime colors with cyan accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable."
+    },
+    {
+      "id": "npc-mercado-background",
+      "nome": "Panora",
+      "area": "mercado",
+      "seed": 29092026,
+      "sementesRejeitadas": 0,
+      "forma": "rookie",
+      "ramo": null,
+      "eixos": {
+        "elemento": "agua",
+        "papel": "magico",
+        "alinhamento": "harmonia",
+        "reino": "oceano"
+      },
+      "entrada": {
+        "petDescription": "dreamy cream land-squid whose mantle is a stretched canvas screen in a thin copper frame showing a small pixel landscape of hills and rain clouds"
+      },
+      "imagePrompt": "Generate an original creature for a monster-raising RPG inspired by Digimon, Pokémon, Monster Rancher, Yu-Gi-Oh, Warhammer, Palworld, Legend of Mana, Final Fantasy, Hello Kitty, Tamagotchi, Ragnarok Online and World of Warcraft. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: dreamy cream land-squid whose mantle is a stretched canvas screen in a thin copper frame showing a small pixel landscape of hills and rain clouds. a tiny bouncy body. Flat deep navy and seafoam colors with cyan accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.",
+      "imagePromptFallback": "Generate an original creature for a monster-raising RPG. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: dreamy cream land-squid whose mantle is a stretched canvas screen in a thin copper frame showing a small pixel landscape of hills and rain clouds. a tiny bouncy body. Flat deep navy and seafoam colors with cyan accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable."
+    },
+    {
+      "id": "npc-mercado-conquistas",
+      "nome": "Medra",
+      "area": "mercado",
+      "seed": 29092026,
+      "sementesRejeitadas": 0,
+      "forma": "rookie",
+      "ramo": null,
+      "eixos": {
+        "elemento": "terra",
+        "papel": "tanque",
+        "alinhamento": "benevolencia",
+        "reino": "deserto"
+      },
+      "entrada": {
+        "petDescription": "old wise tortoise with a domed shell of brass plates, each plate engraved with a simple plain medal emblem, moss along the shell rim, kind half-closed eyes"
+      },
+      "imagePrompt": "Generate an original creature for a monster-raising RPG inspired by Digimon, Pokémon, Monster Rancher, Yu-Gi-Oh, Warhammer, Palworld, Legend of Mana, Final Fantasy, Hello Kitty, Tamagotchi, Ragnarok Online and World of Warcraft. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: old wise tortoise with a domed shell of brass plates, each plate engraved with a simple plain medal emblem, moss along the shell rim, kind half-closed eyes. a chubby palm-sized body. Flat moss-brown and slate colors with gold accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.",
+      "imagePromptFallback": "Generate an original creature for a monster-raising RPG. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: old wise tortoise with a domed shell of brass plates, each plate engraved with a simple plain medal emblem, moss along the shell rim, kind half-closed eyes. a chubby palm-sized body. Flat moss-brown and slate colors with gold accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable."
+    },
+    {
+      "id": "npc-arena-duelo",
+      "nome": "Rinoco",
+      "area": "arena",
+      "seed": 29092026,
+      "sementesRejeitadas": 0,
+      "forma": "rookie",
+      "ramo": null,
+      "eixos": {
+        "elemento": "terra",
+        "papel": "fisico",
+        "alinhamento": "poder",
+        "reino": "picos"
+      },
+      "entrada": {
+        "petDescription": "stocky bipedal rhinoceros with sandstone hide, a horn of chipped stone with a thin turquoise vein, a bone cloth headband and a good-natured grin"
+      },
+      "imagePrompt": "Generate an original creature for a monster-raising RPG inspired by Digimon, Pokémon, Monster Rancher, Yu-Gi-Oh, Warhammer, Palworld, Legend of Mana, Final Fantasy, Hello Kitty, Tamagotchi, Ragnarok Online and World of Warcraft. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: stocky bipedal rhinoceros with sandstone hide, a horn of chipped stone with a thin turquoise vein, a bone cloth headband and a good-natured grin. small and simple with a big head. Flat clay-red and sandstone colors with red accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.",
+      "imagePromptFallback": "Generate an original creature for a monster-raising RPG. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: stocky bipedal rhinoceros with sandstone hide, a horn of chipped stone with a thin turquoise vein, a bone cloth headband and a good-natured grin. small and simple with a big head. Flat clay-red and sandstone colors with red accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable."
+    },
+    {
+      "id": "npc-arena-feira",
+      "nome": "Fanfa",
+      "area": "arena",
+      "seed": 29092027,
+      "sementesRejeitadas": 1,
+      "forma": "rookie",
+      "ramo": null,
+      "eixos": {
+        "elemento": "ar",
+        "papel": "suporte",
+        "alinhamento": "harmonia",
+        "reino": "campina"
+      },
+      "entrada": {
+        "petDescription": "accordion creature whose body is a bellows of petrol and bone striped canvas, a friendly mouth in the middle, long thin arms carrying small paper lanterns"
+      },
+      "imagePrompt": "Generate an original creature for a monster-raising RPG inspired by Digimon, Pokémon, Monster Rancher, Yu-Gi-Oh, Warhammer, Palworld, Legend of Mana, Final Fantasy, Hello Kitty, Tamagotchi, Ragnarok Online and World of Warcraft. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: accordion creature whose body is a bellows of petrol and bone striped canvas, a friendly mouth in the middle, long thin arms carrying small paper lanterns. a pint-sized simple shape. Flat pale gray-blue and silver-lining colors with cyan accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.",
+      "imagePromptFallback": "Generate an original creature for a monster-raising RPG. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: accordion creature whose body is a bellows of petrol and bone striped canvas, a friendly mouth in the middle, long thin arms carrying small paper lanterns. a pint-sized simple shape. Flat pale gray-blue and silver-lining colors with cyan accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable."
+    },
+    {
+      "id": "npc-exploracao-dino",
+      "nome": "Trote",
+      "area": "exploracao",
+      "seed": 29092027,
+      "sementesRejeitadas": 1,
+      "forma": "rookie",
+      "ramo": null,
+      "eixos": {
+        "elemento": "sombra",
+        "papel": "fisico",
+        "alinhamento": "harmonia",
+        "reino": "pantano"
+      },
+      "entrada": {
+        "petDescription": "long-legged running bird with a short beak, peat brown-green feathers with pale glowing tips, one loose feather always falling from its crest, eager eyes"
+      },
+      "imagePrompt": "Generate an original creature for a monster-raising RPG inspired by Digimon, Pokémon, Monster Rancher, Yu-Gi-Oh, Warhammer, Palworld, Legend of Mana, Final Fantasy, Hello Kitty, Tamagotchi, Ragnarok Online and World of Warcraft. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: long-legged running bird with a short beak, peat brown-green feathers with pale glowing tips, one loose feather always falling from its crest, eager eyes. a chubby palm-sized body. Flat midnight blue and smoky black colors with cyan accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.",
+      "imagePromptFallback": "Generate an original creature for a monster-raising RPG. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: long-legged running bird with a short beak, peat brown-green feathers with pale glowing tips, one loose feather always falling from its crest, eager eyes. a chubby palm-sized body. Flat midnight blue and smoky black colors with cyan accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable."
+    },
+    {
+      "id": "npc-laboratorio-pet",
+      "nome": "Bento",
+      "area": "laboratorio",
+      "seed": 29092026,
+      "sementesRejeitadas": 0,
+      "forma": "rookie",
+      "ramo": null,
+      "eixos": {
+        "elemento": "luz",
+        "papel": "suporte",
+        "alinhamento": "benevolencia",
+        "reino": "akasha"
+      },
+      "entrada": {
+        "petDescription": "small owl-deer with tiny antlers of clear ice-blue glass, petrol-teal feathers and round copper-framed glasses over big calm eyes"
+      },
+      "imagePrompt": "Generate an original creature for a monster-raising RPG inspired by Digimon, Pokémon, Monster Rancher, Yu-Gi-Oh, Warhammer, Palworld, Legend of Mana, Final Fantasy, Hello Kitty, Tamagotchi, Ragnarok Online and World of Warcraft. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: small owl-deer with tiny antlers of clear ice-blue glass, petrol-teal feathers and round copper-framed glasses over big calm eyes. a small egg-shaped body. Flat amber and ivory colors with gold accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.",
+      "imagePromptFallback": "Generate an original creature for a monster-raising RPG. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: small owl-deer with tiny antlers of clear ice-blue glass, petrol-teal feathers and round copper-framed glasses over big calm eyes. a small egg-shaped body. Flat amber and ivory colors with gold accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable."
+    },
+    {
+      "id": "npc-laboratorio-stats",
+      "nome": "Quill",
+      "area": "laboratorio",
+      "seed": 29092026,
+      "sementesRejeitadas": 0,
+      "forma": "rookie",
+      "ramo": null,
+      "eixos": {
+        "elemento": "industrial",
+        "papel": "magico",
+        "alinhamento": "harmonia",
+        "reino": "gelo"
+      },
+      "entrada": {
+        "petDescription": "praying mantis of greenish translucent glass whose front forelegs end in feather quill pens with copper nibs, a blank copper notebook strapped to its back"
+      },
+      "imagePrompt": "Generate an original creature for a monster-raising RPG inspired by Digimon, Pokémon, Monster Rancher, Yu-Gi-Oh, Warhammer, Palworld, Legend of Mana, Final Fantasy, Hello Kitty, Tamagotchi, Ragnarok Online and World of Warcraft. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: praying mantis of greenish translucent glass whose front forelegs end in feather quill pens with copper nibs, a blank copper notebook strapped to its back. a small button-eyed form. Flat chrome and hazard-yellow colors with cyan accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.",
+      "imagePromptFallback": "Generate an original creature for a monster-raising RPG. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: praying mantis of greenish translucent glass whose front forelegs end in feather quill pens with copper nibs, a blank copper notebook strapped to its back. a small button-eyed form. Flat chrome and hazard-yellow colors with cyan accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable."
+    },
+    {
+      "id": "npc-hall-amigos",
+      "nome": "Nino",
+      "area": "hall",
+      "seed": 29092027,
+      "sementesRejeitadas": 1,
+      "forma": "rookie",
+      "ramo": null,
+      "eixos": {
+        "elemento": "ar",
+        "papel": "alcance",
+        "alinhamento": "benevolencia",
+        "reino": "campina"
+      },
+      "entrada": {
+        "petDescription": "cream gliding squirrel with a thin parchment membrane between its paws, a small copper courier bag across its chest and a bushy curled tail"
+      },
+      "imagePrompt": "Generate an original creature for a monster-raising RPG inspired by Digimon, Pokémon, Monster Rancher, Yu-Gi-Oh, Warhammer, Palworld, Legend of Mana, Final Fantasy, Hello Kitty, Tamagotchi, Ragnarok Online and World of Warcraft. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: cream gliding squirrel with a thin parchment membrane between its paws, a small copper courier bag across its chest and a bushy curled tail. a little blob-like body. Flat pale gray-blue and silver-lining colors with gold accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.",
+      "imagePromptFallback": "Generate an original creature for a monster-raising RPG. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: cream gliding squirrel with a thin parchment membrane between its paws, a small copper courier bag across its chest and a bushy curled tail. a little blob-like body. Flat pale gray-blue and silver-lining colors with gold accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable."
+    },
+    {
+      "id": "npc-hall-guilda",
+      "nome": "Marla",
+      "area": "hall",
+      "seed": 29092027,
+      "sementesRejeitadas": 1,
+      "forma": "rookie",
+      "ramo": null,
+      "eixos": {
+        "elemento": "planta",
+        "papel": "tanque",
+        "alinhamento": "harmonia",
+        "reino": "floresta"
+      },
+      "entrada": {
+        "petDescription": "large calm tree-stag with a cream and pale-stone coat, antlers that are a small living grove of turquoise and green leaves, pale stone hooves"
+      },
+      "imagePrompt": "Generate an original creature for a monster-raising RPG inspired by Digimon, Pokémon, Monster Rancher, Yu-Gi-Oh, Warhammer, Palworld, Legend of Mana, Final Fantasy, Hello Kitty, Tamagotchi, Ragnarok Online and World of Warcraft. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: large calm tree-stag with a cream and pale-stone coat, antlers that are a small living grove of turquoise and green leaves, pale stone hooves. a baby-sized round form. Flat sage green and sunflower colors with cyan accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.",
+      "imagePromptFallback": "Generate an original creature for a monster-raising RPG. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: large calm tree-stag with a cream and pale-stone coat, antlers that are a small living grove of turquoise and green leaves, pale stone hooves. a baby-sized round form. Flat sage green and sunflower colors with cyan accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable."
+    }
+  ]
+}
