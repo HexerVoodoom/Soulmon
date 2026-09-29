@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { lerGrupo, fecharDiasDoBosque, firmarFio, idOpacoDoMembro } from './_coop.js';
+import { coopKey, coopOfKey, coopCodeKey, lerGrupo, fecharDiasDoBosque, firmarFio, idOpacoDoMembro } from './_coop.js';
 import { onRequest as community } from './community.js';
 import { onRequest } from './guild.js';
 
@@ -145,5 +145,40 @@ describe('M1 — progress não reconstrói "N de M vieram hoje"', () => {
     const quatro = await guildaDe(4);
     await chamar(quatro.e, 'guildCheckin', { body: { id: A } });
     expect((await (await chamar(quatro.e, 'guild', { method: 'GET', params: { id: A } })).json()).guild.progress).toBe(1);
+  });
+});
+
+describe('M2 — guildJoin relê antes de gravar e não ressuscita quem saiu', () => {
+  it('a cópia velha do blob (com B, que já saiu) não volta a ser gravada', async () => {
+    const { e, gid, code } = await guildaDe(3);
+    const velho = e.DIGIAPP_SAVES.store.get(coopKey(gid));
+    await chamar(e, 'guildLeave', { body: { id: B } });
+    // A PRIMEIRA leitura do blob devolve a versão de antes da saída (KV
+    // eventualmente consistente); as seguintes, a verdadeira.
+    const kv = e.DIGIAPP_SAVES;
+    const get = kv.get;
+    let servido = false;
+    kv.get = async k => { if (k === coopKey(gid) && !servido) { servido = true; return velho; } return get(k); };
+    const D = MEMBROS[3];
+    expect((await chamar(e, 'guildJoin', { body: { id: D, code } })).status).toBe(200);
+    kv.get = get;
+    const g = await lerGrupo(e, gid);
+    expect(g.members).toContain(D);
+    expect(g.members).not.toContain(B);
+    expect(kv.store.has(coopOfKey(B))).toBe(false);
+  });
+});
+
+describe('B4 — grupo órfão de criação dupla não recebe ninguém', () => {
+  it('código de um blob sem ponteiro de volta: 404 e o órfão some', async () => {
+    const { e, gid, code } = await guildaDe(1);
+    // Simula a intercalação A-grava/A-relê/B-grava/B-relê: o ponteiro do
+    // anfitrião aponta para OUTRO grupo.
+    e.DIGIAPP_SAVES.store.set(coopOfKey(A), 'outroGrupoQualquer0');
+    const r = await chamar(e, 'guildJoin', { body: { id: B, code } });
+    expect(r.status).toBe(404);
+    expect(e.DIGIAPP_SAVES.store.has(coopKey(gid))).toBe(false);
+    expect(e.DIGIAPP_SAVES.store.has(coopCodeKey(code))).toBe(false);
+    expect(e.DIGIAPP_SAVES.store.has(coopOfKey(B))).toBe(false);
   });
 });

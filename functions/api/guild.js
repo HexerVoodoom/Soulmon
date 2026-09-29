@@ -275,8 +275,21 @@ export async function handleGuild({ request, env }) {
     // consentimento (N-4).
     const code = String(body.code ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '');
     const groupId = code ? await kvOrThrow(env).get(coopCodeKey(code)) : null;
-    const g = groupId ? await lerGrupo(env, groupId) : null;
-    if (!g) return erro('invalid code', 404);
+    const lido = groupId ? await lerGrupo(env, groupId) : null;
+    if (!lido) return erro('invalid code', 404);
+    // B4 (L2-backend): grupo ÓRFÃO de uma criação dupla (blob + código sem
+    // nenhum ponteiro de volta, nem o do anfitrião) não recebe ninguém: some
+    // aqui, no primeiro uso, em vez de reunir gente em volta de um fantasma.
+    const host = anfitriaoDe(lido);
+    if (host && host !== id && (await kvOrThrow(env).get(coopOfKey(host))) !== lido.id) {
+      await kvOrThrow(env).delete(coopKey(lido.id));
+      await kvOrThrow(env).delete(coopCodeKey(code));
+      return erro('invalid code', 404);
+    }
+    // M2 (L2-backend): RELÊ imediatamente antes de gravar. A cópia lida pelo
+    // código podia ser velha — gravá-la ressuscitava quem acabou de sair (ou
+    // foi excluído) e recuava o Bosque por um instante.
+    const g = (await lerGrupo(env, lido.id)) ?? lido;
     rolarSemana(g, semana);
     if (g.members.includes(id)) return vista(await montar( g, id, hoje));
     if (g.members.length >= COOP_MAX_MEMBERS) return erro('{g} full', 409);
