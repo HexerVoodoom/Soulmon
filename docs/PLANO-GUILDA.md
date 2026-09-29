@@ -14,6 +14,10 @@
 
 ### 0.1 Status
 
+> ⚠️ **29/09/2026 — EM EXECUÇÃO.** O dono ordenou implementar a Guilda (Bosque + Feira); a exceção está registrada na linha "Camada 3 CONGELADA" do `REGISTRO-DE-DECISOES.md` (§5.6). O texto abaixo é o status ANTERIOR e fica como registro.
+>
+> ⚠️ **Override de G6 / `05-servidor.md` §2.2 ("`day` = dia UTC do servidor"), revisto pelo QA (`qa/L1-codigo.md` ALTO-1):** o dia do check-in é o **DIA DO JOGADOR** — o cliente envia `dayKey` (`playerDayKey`, ou `YYYY-MM-DD`) e o servidor só o aceita a no máximo ±1 dia do dia UTC (senão 400 `invalid day`); a semana (`semanaDe`) é calculada sobre esse dia. Trocar de fuso não rende dois check-ins no mesmo dia-chave (idempotência por `dayKey`), e o ±1 limita o ganho a um dia de borda.
+
 **PLANO, CONGELADO.** A Guilda é Camada 3 pura, e a Camada 3 está congelada
 desde 21/09/2026 até **10 usuários conhecidos × 14 dias de dado**
 (`REGISTRO-DE-DECISOES.md`, linha "Camada 3 CONGELADA", sob §5.6). O coop
@@ -491,6 +495,8 @@ você"/"faltou"/"saiu").
 ---
 
 ## 14. Fila de WPs
+
+> ⚠️ **29/09/2026 — status: EM EXECUÇÃO** (exceção do dono, ver §0.1). O ⛔ abaixo é o texto anterior. WPG-1 e WPG-2 (servidor) são a primeira fatia.
 
 > ⛔ **Gatilho de execução**: fim do congelamento da Camada 3 (10 usuários × 14 dias) **ou** exceção registrada pelo dono no `REGISTRO-DE-DECISOES.md`. Os itens marcados 📝 (copy, wireframe, fila de arte) são **documento, sem código e sem asset**, e podem correr antes **só se** o dono os aceitar como exceção do mesmo tipo do booklet (G16). Portões de todo WP de código: os cinco comandos do `CLAUDE.md`.
 
