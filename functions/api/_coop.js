@@ -174,6 +174,14 @@ export async function gravarGrupo(env, g) {
     kvOrThrow(env).put(coopCodeKey(g.code), g.id, prazo),
     ...g.members.map(m => kvOrThrow(env).put(coopOfKey(m), g.id, prazo)),
   ]);
+  // O FIO renova junto (G17a): índice e blob sem prazo com o fio pessoal
+  // expirando apagaria os dias distintos (cenários) e o `lastDay` (viajante) de
+  // quem só voltou depois de 120 d. Relê cada chave imediatamente antes de
+  // regravar o MESMO valor — não é read-modify-write, é renovação de prazo.
+  await Promise.all(g.members.map(async m => {
+    const raw = await kvOrThrow(env).get(coopFioKey(g.id, m));
+    if (raw) await kvOrThrow(env).put(coopFioKey(g.id, m), raw, prazo);
+  }));
 }
 
 /**
@@ -252,11 +260,24 @@ export async function grupoDe(env, saveId, semana = semanaDe()) {
  *
  * @returns {Promise<{ left: boolean, groupId: string | null, remaining: number }>}
  */
-export async function coopLeave(env, saveId) {
+export async function coopLeave(env, saveId, { exclusao = false, now = new Date() } = {}) {
   const lido = await grupoDe(env, saveId);
   if (!lido) return { left: false, groupId: null, remaining: 0 };
+  // O FIO DE QUEM SAI NÃO SOME DO BOSQUE (LV-G3): o que já foi fechado está em
+  // `bosqueProgress`; o que ainda não foi (dias depois de `progressDay`,
+  // inclusive hoje) vira contagem ANÔNIMA em `fiosAvulsos` antes de a chave
+  // pessoal ser apagada. Sair e ser excluído só mudam a taxa futura.
+  const fio = await lerFio(env, lido.id, saveId);
   await kvOrThrow(env).delete(coopOfKey(saveId));
   await kvOrThrow(env).delete(coopCkKey(lido.id, saveId));
+  await kvOrThrow(env).delete(coopFioKey(lido.id, saveId));
+  await kvOrThrow(env).delete(coopGestKey(lido.id, saveId));
+  if (exclusao) {
+    // Exclusão de conta (§10.6): também os golpes (semana corrente e anterior).
+    // `coopClaim` não depende do grupo e é apagado por `apagarClaims`.
+    const semanas = [semanaDe(now), semanaDe(new Date(now.getTime() - 7 * 86400000))];
+    await Promise.all(semanas.map(w => kvOrThrow(env).delete(coopHitKey(lido.id, w, saveId))));
+  }
   // RELEITURA imediatamente antes de gravar (L1-codigo MÉDIO-2): gravar a
   // cópia lida no começo apagava quem tivesse ENTRADO no meio — e, com um
   // membro só, apagava o grupo inteiro por cima da entrada de outra pessoa,
@@ -265,6 +286,14 @@ export async function coopLeave(env, saveId) {
   const g = (await lerGrupo(env, lido.id)) ?? lido;
   g.members = (g.members || []).filter(m => m !== saveId);
   if (g.checkins) delete g.checkins[saveId];
+  if (g.desde) delete g.desde[saveId];
+  if (fio) {
+    const pendentes = fio.days.filter(d => !g.progressDay || d > g.progressDay);
+    if (pendentes.length) {
+      g.fiosAvulsos = { ...(g.fiosAvulsos || {}) };
+      for (const d of pendentes) g.fiosAvulsos[d] = (g.fiosAvulsos[d] ?? 0) + 1;
+    }
+  }
   // Anfitrião que sai passa a vez ao membro mais antigo, em silêncio (G7: não
   // há expulsão; a guilda nunca fica sem quem renomeia ou troca o código).
   if (g.hostSave === saveId || (g.hostSave && !g.members.includes(g.hostSave))) {
@@ -275,7 +304,7 @@ export async function coopLeave(env, saveId) {
     const ultima = await lerGrupo(env, g.id);
     const outros = (ultima?.members || []).filter(m => m !== saveId);
     if (outros.length > 0) {
-      const vivo = { ...ultima, members: outros, hostSave: ultima.hostSave && outros.includes(ultima.hostSave) ? ultima.hostSave : outros[0] };
+      const vivo = { ...ultima, fiosAvulsos: g.fiosAvulsos ?? ultima.fiosAvulsos, members: outros, hostSave: ultima.hostSave && outros.includes(ultima.hostSave) ? ultima.hostSave : outros[0] };
       await gravarGrupo(env, vivo);
       return { left: true, groupId: g.id, remaining: outros.length };
     }
@@ -285,4 +314,240 @@ export async function coopLeave(env, saveId) {
     await gravarGrupo(env, g);
   }
   return { left: true, groupId: g.id, remaining: g.members.length };
+}
+
+// ===========================================================================
+// O BOSQUE, O FIO, AS MARÉS E OS GESTOS (WPG-3a / WPG-3c, `PLANO-GUILDA.md` §3)
+//
+// DONO ÚNICO DAS CONSTANTES da Guilda (§3.1): nenhum outro arquivo inventa
+// número — a simulação (`docs/reviews/guilda/sim/guilda-sim.mjs`) IMPORTA daqui.
+// ===========================================================================
+
+/** Um fio por membro por dia, nunca peso nem contagem de tarefa (LV-G8). */
+export const FIO_PER_MEMBER_DAY = 1;
+/** Limiares do Bosque em DIAS-DE-GUILDA (a cada dia fechado soma fios/ativos). */
+export const BOSQUE_THRESHOLDS = Object.freeze([2, 10, 25, 50, 90]);
+/** Ids estáveis dos cinco estágios (a copy é do cliente). */
+export const BOSQUE_STAGES = Object.freeze(['clareira', 'ramagem', 'copa', 'mata', 'bosque-antigo']);
+/** Fração do intervalo até o próximo marco abaixo da qual o Bosque está "perto".
+ *  Sai como booleano — nunca "faltam N" (§6). */
+export const BOSQUE_PERTO_FRACAO = 0.2;
+/** Dias DISTINTOS (não seguidos, LV-G9) de fio para liberar os cenários de estágio. */
+export const STAGE_UNLOCK_DAYS = 7;
+/** Sem fio há 4 semanas = viajante: sai do denominador, continua na roda. */
+export const TRAVELER_AFTER_WEEKS = 4;
+export const GUILD_TIDE_WEEKS = 6;
+/** Floração cheia a partir de 12 dias-de-guilda na maré; Corola a partir de 4. */
+export const TIDE_BLOOM_TARGET = 12;
+export const TIDE_COROLLA_AT = 4;
+export const TIDE_SIZES = Object.freeze(['petala', 'corola', 'floracao']);
+/** Os três gestos fixos (§4): anônimos, para a roda inteira, sem texto livre. */
+export const GUILD_GESTURES = Object.freeze(['aceno', 'luz', 'descanso']);
+/** Quantos dias de fio a chave pessoal guarda (o fechamento lê daqui). */
+export const FIO_DIAS_GUARDADOS = 60;
+
+/**
+ * A META QUE FIRMA UM FIO (G1, decidido pelo dono: a meta de CORAÇÃO,
+ * `heartGoalFor`, e não a do dia completo). O servidor não conhece o save — o
+ * fio é afirmação do cliente (§10.4) —, então esta é a régua que o cliente
+ * aplica e que o servidor confere QUANDO o corpo traz os números. Trocar a
+ * regra é trocar esta constante.
+ */
+export const META_DO_FIO = 'heart';
+/** `true` se o dia cumpriu a meta que firma fio. `goal = { done, heart, full }`. */
+export function metaDoFioCumprida(goal) {
+  const done = Number(goal?.done);
+  const meta = Number(META_DO_FIO === 'heart' ? goal?.heart : goal?.full);
+  if (!Number.isFinite(done) || !Number.isFinite(meta)) return false;
+  return meta <= 0 ? done > 0 : done >= meta;
+}
+
+const DIA_MS = 86400000;
+export const numDia = day => Math.round(Date.parse(`${day}T00:00:00Z`) / DIA_MS);
+export const diaDeNum = n => new Date(n * DIA_MS).toISOString().slice(0, 10);
+
+export const coopFioKey = (gid, save) => `coopFio:${gid}:${save}`;
+export const coopGestKey = (gid, save) => `coopGest:${gid}:${save}`;
+export const coopHitKey = (gid, week, save) => `coopHit:${gid}:${week}:${save}`;
+export const coopClaimKey = (save, week) => `coopClaim:${save}:${week}`;
+/** Semanas de `coopClaim` que ainda podem existir (TTL 60 d ≈ 9 semanas). */
+export const CLAIM_WEEKS_VIVAS = 9;
+
+/** Normaliza o registro de fio de UM membro: `{ lastDay, distinctDays, days[] }`. */
+export function normalizarFio(r) {
+  const days = Array.isArray(r?.days) ? r.days.filter(d => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)) : [];
+  const distinct = Number.isFinite(r?.distinctDays) ? Math.max(0, Math.floor(r.distinctDays)) : days.length;
+  const lastDay = typeof r?.lastDay === 'string' ? r.lastDay : (days.length ? [...days].sort().at(-1) : null);
+  return { lastDay, distinctDays: distinct, days };
+}
+
+/** Registra o fio de `day` (puro, idempotente): a mesma referência se já havia. */
+export function firmarFio(fio, day) {
+  const f = normalizarFio(fio);
+  if (f.days.includes(day)) return f;
+  const corte = numDia(day) - FIO_DIAS_GUARDADOS;
+  const days = [...f.days, day].filter(d => numDia(d) > corte).sort();
+  return {
+    lastDay: f.lastDay && f.lastDay > day ? f.lastDay : day,
+    distinctDays: f.distinctDays + FIO_PER_MEMBER_DAY,
+    days,
+  };
+}
+
+export async function lerFio(env, gid, save) {
+  const raw = await kvOrThrow(env).get(coopFioKey(gid, save));
+  if (!raw) return null;
+  try { return normalizarFio(JSON.parse(raw)); } catch { return null; }
+}
+
+const prazoDoGrupo = g => (Number(g?.bosqueProgress ?? 0) > 0 ? {} : { expirationTtl: COOP_TTL });
+
+/** A escrita do fio: SÓ a chave do próprio membro (I3), nunca o blob. */
+export async function gravarFio(env, g, save, fio) {
+  await kvOrThrow(env).put(coopFioKey(g.id, save), JSON.stringify(fio), prazoDoGrupo(g));
+}
+
+/** Estágio do Bosque, DERIVADO na leitura (nunca gravado) — `bondLevelFor`. */
+export function bosqueStageFor(progress) {
+  const p = Number(progress) || 0;
+  const stageIndex = BOSQUE_THRESHOLDS.filter(t => p >= t).length;
+  const stage = stageIndex > 0 ? BOSQUE_STAGES[stageIndex - 1] : null;
+  let perto = false;
+  if (stageIndex < BOSQUE_THRESHOLDS.length) {
+    const prev = stageIndex > 0 ? BOSQUE_THRESHOLDS[stageIndex - 1] : 0;
+    const next = BOSQUE_THRESHOLDS[stageIndex];
+    perto = p > prev && (next - p) <= BOSQUE_PERTO_FRACAO * (next - prev);
+  }
+  return { stage, stageIndex, perto };
+}
+
+/**
+ * Viajante: sem fio há `TRAVELER_AFTER_WEEKS` semanas no dia `day`. A
+ * referência é o último fio; sem fio, o dia em que entrou (`g.desde`); sem
+ * nenhum dos dois (grupo antigo), conta como ativo. Derivado, nunca gravado,
+ * visível a ninguém.
+ */
+export function ehViajante(g, save, fio, day) {
+  const ref = fio?.lastDay ?? g.desde?.[save] ?? null;
+  if (!ref) return false;
+  return numDia(day) - numDia(ref) >= TRAVELER_AFTER_WEEKS * 7;
+}
+
+/** Membros ativos no dia (denominador do Bosque). */
+export function membrosAtivos(g, fios, day) {
+  return g.members.filter(m => !ehViajante(g, m, fios[m], day));
+}
+
+/** Maré (6 semanas, virando na segunda) de um dia `YYYY-MM-DD`. */
+const SEGUNDA_ZERO = numDia('1970-01-05');
+export function mareDe(day) {
+  return `T${Math.floor((numDia(day) - SEGUNDA_ZERO) / (7 * GUILD_TIDE_WEEKS))}`;
+}
+
+/** Tamanho DESCRITIVO de uma floração (nenhum é "pior"); `null` se nada cresceu. */
+export function tamanhoDaFloracao(bloom) {
+  const b = Number(bloom) || 0;
+  if (b <= 0) return null;
+  if (b >= TIDE_BLOOM_TARGET) return 'floracao';
+  if (b >= TIDE_COROLLA_AT) return 'corola';
+  return 'petala';
+}
+
+/**
+ * Colhe a maré anterior quando a de `day` é outra (puro; muta `g`). A floração
+ * é colhida NO ESTADO EM QUE ESTIVER e vira peça permanente em `g.ornaments`.
+ * Maré sem crescimento não gera peça nenhuma — e nada é dito: nenhuma maré
+ * "falha", nada é resetado (o Bosque segue somando). `true` se mudou.
+ */
+export function colherMare(g, day) {
+  const atual = mareDe(day);
+  const p = Number(g.bosqueProgress ?? 0);
+  if (!g.tideKey) { g.tideKey = atual; g.tideBase = p; return true; }
+  if (g.tideKey === atual) return false;
+  const size = tamanhoDaFloracao(p - Number(g.tideBase ?? 0));
+  if (size) g.ornaments = [...(Array.isArray(g.ornaments) ? g.ornaments : []), { tide: g.tideKey, size, day }];
+  g.tideKey = atual;
+  g.tideBase = p;
+  return true;
+}
+
+/**
+ * Fecha os dias pendentes do Bosque (puro; muta `g`): para cada dia entre
+ * `progressDay` (exclusivo) e `hoje` (exclusivo — hoje ainda está aberto), soma
+ * `fios_do_dia / ativos_do_dia` (teto 1,0). `fios` = `{ [save]: fio }` dos
+ * membros atuais; os fios de quem SAIU ou foi EXCLUÍDO antes do fechamento
+ * estão em `g.fiosAvulsos[day]` (anônimos, só contagem) e entram nos dois lados
+ * da razão. SÓ SOMA: nenhum caminho daqui subtrai (LV-G3).
+ * @returns {boolean} se algo mudou
+ */
+export function fecharDiasDoBosque(g, fios, hoje) {
+  const alvo = numDia(hoje) - 1;
+  let mudou = false;
+  if (!g.progressDay) { g.progressDay = diaDeNum(alvo); mudou = true; }
+  let d = Math.max(numDia(g.progressDay) + 1, alvo - FIO_DIAS_GUARDADOS + 1);
+  let p = Number(g.bosqueProgress ?? 0);
+  if (!Number.isFinite(p) || p < 0) p = 0;
+  for (; d <= alvo; d++) {
+    const dia = diaDeNum(d);
+    g.bosqueProgress = p;
+    colherMare(g, dia);
+    const avulsos = Math.max(0, Math.floor(Number(g.fiosAvulsos?.[dia] ?? 0)));
+    const ativos = membrosAtivos(g, fios, dia);
+    const n = ativos.length + avulsos;
+    const firmados = g.members.filter(m => fios[m]?.days?.includes(dia)).length + avulsos;
+    if (n > 0 && firmados > 0) p += Math.min(1, firmados / n);
+    g.progressDay = dia;
+    mudou = true;
+  }
+  if (numDia(g.progressDay) < alvo) { g.progressDay = diaDeNum(alvo); mudou = true; }
+  g.bosqueProgress = Math.max(Number(g.bosqueProgress ?? 0), p);
+  if (colherMare(g, hoje)) mudou = true;
+  if (g.fiosAvulsos) {
+    for (const k of Object.keys(g.fiosAvulsos)) if (k <= g.progressDay) delete g.fiosAvulsos[k];
+  }
+  return mudou;
+}
+
+export async function lerFiosDaRoda(env, g) {
+  const lidos = await Promise.all(g.members.map(m => lerFio(env, g.id, m)));
+  return Object.fromEntries(g.members.map((m, i) => [m, lidos[i]]));
+}
+
+/**
+ * Fecha o Bosque na LEITURA, sem cron (§10.5). Relê o blob imediatamente antes
+ * de gravar e não refaz o que outra requisição já fechou (`progressDay`), para
+ * dois leitores simultâneos não somarem o mesmo dia duas vezes.
+ * @returns {Promise<object>} o grupo atualizado (ou o mesmo)
+ */
+export async function atualizarBosque(env, g, hoje) {
+  const fios = await lerFiosDaRoda(env, g);
+  const teste = structuredClone(g);
+  if (!fecharDiasDoBosque(teste, fios, hoje)) return g;
+  const fresco = (await lerGrupo(env, g.id)) ?? g;
+  if (fresco.progressDay && fresco.progressDay >= teste.progressDay && fresco.tideKey === teste.tideKey) {
+    return { ...fresco, weekKey: g.weekKey, checkins: g.checkins };
+  }
+  fecharDiasDoBosque(fresco, fios, hoje);
+  await gravarGrupo(env, fresco);
+  return { ...fresco, weekKey: g.weekKey, checkins: g.checkins };
+}
+
+/** Semanas ISO de `coopClaim` que ainda podem existir para um save. */
+export function semanasDeClaim(now = new Date()) {
+  return Array.from({ length: CLAIM_WEEKS_VIVAS }, (_, k) => semanaDe(new Date(now.getTime() - k * 7 * DIA_MS)));
+}
+
+/** Gestos que UM membro mandou hoje (`day`). */
+export async function lerGestos(env, gid, save, day) {
+  const raw = await kvOrThrow(env).get(coopGestKey(gid, save));
+  if (!raw) return [];
+  try {
+    const r = JSON.parse(raw);
+    return r && r.day === day && Array.isArray(r.kinds) ? r.kinds.filter(k => GUILD_GESTURES.includes(k)) : [];
+  } catch { return []; }
+}
+
+/** Apaga os resgates (`coopClaim:<save>:<week>`) vivos — exclusão de conta. Sem `list`. */
+export async function apagarClaims(env, saveId, now = new Date()) {
+  await Promise.all(semanasDeClaim(now).map(w => kvOrThrow(env).delete(coopClaimKey(saveId, w))));
 }

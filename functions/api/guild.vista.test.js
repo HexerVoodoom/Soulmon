@@ -52,8 +52,17 @@ async function guildaDe(n, { checkins = [] } = {}) {
 
 function semVazamento(txt) {
   for (const m of MEMBROS) expect(txt).not.toContain(m);
-  for (const proibido of ['hostSave', 'stage', 'mega-virus', 'dmg', 'attrs', 'virus', 'checkins', 'days', 'bosqueProgress']) {
+  for (const proibido of ['hostSave', 'mega-virus', 'dmg', 'attrs', 'virus', 'checkins', 'days', 'bosqueProgress',
+    'progressDay', 'fiosAvulsos', 'tideBase', 'desde', 'distinctDays', 'lastDay']) {
     expect(txt, proibido).not.toContain(proibido);
+  }
+  // `stage` só existe DENTRO de `bosque` (o estágio do Bosque, que é da roda);
+  // nenhum membro carrega estágio/HP de criatura (LV-G10, D-3).
+  const v = JSON.parse(txt).guild ?? JSON.parse(txt).group;
+  if (v) {
+    for (const m of v.members) for (const k of ['stage', 'hp', 'line', 'healthPoints']) expect(m, k).not.toHaveProperty(k);
+    expect(Object.keys(v.bosque).sort()).toEqual(['ornaments', 'perto', 'stage', 'stageIndex', 'tide']);
+    expect(txt.replace(/"bosque":\{.*?"ornaments"/, '')).not.toContain('"stage"');
   }
 }
 
@@ -65,7 +74,7 @@ describe('vistaDaGuilda por tamanho', () => {
     expect(g.isHost).toBe(true);
     expect(g.presence).toEqual([{ pid: g.members[0].pid, cameToday: true }]);
     expect(g.threadedToday).toBeNull();
-    expect(g.mine).toEqual({ cameToday: true });
+    expect(g.mine).toEqual({ cameToday: true, threadToday: false, groveScenes: false, gesturesSent: [] });
   });
 
   it('4 membros: presença nominal binária, threadedToday null', async () => {
