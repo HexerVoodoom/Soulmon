@@ -124,6 +124,10 @@ function walk(v: Json, parentKey: string | null, seen: WeakSet<object>): Json {
       if (y !== x) changed = true;
       return y;
     });
+    // B1: save meio migrado com o id antigo E o novo — a lista de evoluções não repete.
+    if (changed && parentKey === 'unlockedEvolutions' && out.every((x) => typeof x === 'string')) {
+      return Array.from(new Set(out as string[]));
+    }
     return changed ? out : v;
   }
   if (!isPlain(v)) return v;

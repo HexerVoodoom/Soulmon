@@ -104,6 +104,13 @@ describe('branchMigration — ids de caminho antigos → novos', () => {
     expect(out.foodInventory).toEqual({ [NEW_EMOJI[0]]: 3 });
   });
 
+  it('B1: save meio migrado (id antigo E novo) não repete em unlockedEvolutions', () => {
+    const meio = { unlockedEvolutions: ['rookie', `champion-${V}`, 'champion-power', 'rookie'] };
+    const out = migrateBranchIds(meio) as { unlockedEvolutions: string[] };
+    expect(out.unlockedEvolutions).toEqual(['rookie', 'champion-power']);
+    expect(migrateBranchIds(out)).toBe(out);
+  });
+
   it('não-objeto e ciclo não derrubam', () => {
     expect(migrateBranchIds(null)).toBeNull();
     expect(migrateBranchIds(3 as unknown)).toBe(3);
