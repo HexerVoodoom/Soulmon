@@ -276,7 +276,7 @@ export async function handleGuild({ request, env }) {
       members: [id], hostSave: id, weekKey: semana, checkins: {},
       desde: { [id]: hoje }, bosqueProgress: 0, progressDay: diaDeNum(numDia(hoje) - 1),
     };
-    await gravarGrupo(env, g);
+    await gravarGrupo(env, g, { novosMembros: [id], codigoNovo: true });
     // DOIS TOQUES EM "CRIAR" (L1-codigo ALTO-2): as duas requisições passam pelo
     // `grupoDe == null` (o KV não tem CAS). A releitura do PONTEIRO decide quem
     // ficou; quem perdeu desfaz o próprio grupo e responde 409 com a vista do
@@ -318,7 +318,7 @@ export async function handleGuild({ request, env }) {
     if (g.members.length >= COOP_MAX_MEMBERS) return erro('{g} full', 409);
     g.members.push(id);
     g.desde = { ...(g.desde || {}), [id]: hoje };
-    await gravarGrupo(env, g);
+    await gravarGrupo(env, g, { novosMembros: [id] });
     // Duas pessoas na última vaga ao mesmo tempo: relê e tenta UMA vez mais;
     // perdendo as duas, erro honesto em vez de "você entrou" falso.
     let confirmado = await lerGrupo(env, g.id);
@@ -329,7 +329,7 @@ export async function handleGuild({ request, env }) {
       }
       confirmado.members.push(id);
       confirmado.desde = { ...(confirmado.desde || {}), [id]: hoje };
-      await gravarGrupo(env, confirmado);
+      await gravarGrupo(env, confirmado, { novosMembros: [id] });
       confirmado = await lerGrupo(env, g.id);
     }
     if (!confirmado || !confirmado.members.includes(id)) {
@@ -513,7 +513,7 @@ export async function handleGuild({ request, env }) {
       if (!novo) return erro('try again', 503);
       const velho = fresco.code;
       fresco.code = novo;
-      await gravarGrupo(env, fresco);
+      await gravarGrupo(env, fresco, { codigoNovo: true });
       // O código velho deixa de abrir a guilda — é o "fechar a porta" no lugar
       // da expulsão (G7).
       if (velho && velho !== novo) await kvOrThrow(env).delete(coopCodeKey(velho));

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { onRequest } from './community.js';
 
 /**
@@ -332,7 +332,9 @@ describe('coop — o grupo ativo não expira por partes', () => {
     };
   }
 
-  it('marcar presença renova o ponteiro do membro E o código de convite', async () => {
+  it('marcar presença renova o ponteiro do membro E o código de convite (quando o prazo está a < 30 d — A3)', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-09-01T12:00:00Z'));
     const e = env();
     e.DIGIAPP_SAVES = kvComTtl(Object.fromEntries(e.DIGIAPP_SAVES.store));
     const g = await criar(e, ANA);
@@ -343,7 +345,13 @@ describe('coop — o grupo ativo não expira por partes', () => {
     // Apaga o TTL registrado para provar que a próxima escrita o repõe.
     kv.ttls.set(`coopOf:${ANA}`, null);
     kv.ttls.set(`coopCode:${g.code}`, null);
+    // A3: no dia a dia o check-in NÃO regrava índice nenhum…
     await checkin(e, BIA);
+    expect(kv.ttls.get(`coopOf:${ANA}`)).toBeNull();
+    // …só quando faltam menos de 30 dias para o prazo do grupo.
+    vi.setSystemTime(new Date('2026-12-05T12:00:00Z'));
+    await checkin(e, BIA);
+    vi.useRealTimers();
 
     expect(kv.ttls.get(`coop:${gid}`)).toBeGreaterThan(0);
     expect(kv.ttls.get(`coopOf:${ANA}`)).toBeGreaterThan(0);   // o do OUTRO membro também

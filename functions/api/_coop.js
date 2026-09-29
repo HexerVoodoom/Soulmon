@@ -202,14 +202,49 @@ export async function lerGrupo(env, groupId) {
  * convite deixava de abrir o grupo. Nada disso dá erro — o modo simplesmente
  * evapora para todo mundo ao mesmo tempo, sem nenhum evento que explique.
  */
-export async function gravarGrupo(env, g) {
+/** Renovação conjunta de prazo (A3): só quando faltar menos que isto. */
+export const PRAZO_RENOVA_ANTES_MS = 30 * 86400 * 1000;
+
+/**
+ * ORÇAMENTO (A3, L2-backend): o caminho quente escreve O(1). Era ~26 PUTs por
+ * check-in numa guilda de 12 (blob + código + 12 `coopOf` + 12 `coopFio`), e
+ * três guildas cheias esgotavam as 1.000 escritas/dia do plano grátis — o
+ * mesmo namespace do cloud save e das compras.
+ *
+ * Agora a renovação CONJUNTA (código + todo `coopOf` + todo `coopFio`) só
+ * acontece quando (a) o grupo nunca foi renovado neste esquema, (b) faltam
+ * menos de `PRAZO_RENOVA_ANTES_MS` para `g.prazoAte`, ou (c) o Bosque acabou
+ * de passar a "sem prazo" (G17a) — uma vez só (`g.semPrazoGravado`). Fora
+ * disso grava o blob e, se pedidos, o ponteiro de quem ENTROU e o código NOVO.
+ *
+ * O blob expira EXATAMENTE em `prazoAte` e os índices em ≥ `prazoAte` (cada
+ * um foi escrito com 120 d depois da última renovação conjunta): o blob nunca
+ * sobrevive aos ponteiros — o "modo evapora" continua fechado.
+ */
+export async function gravarGrupo(env, g, { novosMembros = [], codigoNovo = false, agora = Date.now() } = {}) {
   // G17(a): guilda com Bosque plantado (`bosqueProgress > 0`) NÃO expira — o
   // que a roda construiu não evapora por inatividade. Sem progresso, 120 d.
   const semPrazo = Number(g.bosqueProgress ?? 0) > 0;
-  await kvOrThrow(env).put(coopKey(g.id), JSON.stringify(g), semPrazo ? {} : { expirationTtl: COOP_TTL });
+  let conjunta = false;
+  if (semPrazo) {
+    if (!g.semPrazoGravado) { g.semPrazoGravado = true; delete g.prazoAte; conjunta = true; }
+  } else if (!Number.isFinite(g.prazoAte) || g.prazoAte - agora < PRAZO_RENOVA_ANTES_MS) {
+    g.prazoAte = agora + COOP_TTL * 1000;
+    delete g.semPrazoGravado;
+    conjunta = true;
+  }
+  const blobPrazo = semPrazo ? {} : { expirationTtl: Math.max(60, Math.floor((g.prazoAte - agora) / 1000)) };
+  await kvOrThrow(env).put(coopKey(g.id), JSON.stringify(g), blobPrazo);
+  const prazo = semPrazo ? {} : { expirationTtl: COOP_TTL };
+  if (!conjunta) {
+    await Promise.all([
+      ...(codigoNovo ? [kvOrThrow(env).put(coopCodeKey(g.code), g.id, prazo)] : []),
+      ...novosMembros.filter(m => g.members.includes(m)).map(m => kvOrThrow(env).put(coopOfKey(m), g.id, prazo)),
+    ]);
+    return;
+  }
   // Os índices seguem o blob: blob sem prazo com ponteiro que expira seria o
   // mesmo "modo evapora" descrito acima, pelo lado oposto.
-  const prazo = semPrazo ? {} : { expirationTtl: COOP_TTL };
   await Promise.all([
     kvOrThrow(env).put(coopCodeKey(g.code), g.id, prazo),
     ...g.members.map(m => kvOrThrow(env).put(coopOfKey(m), g.id, prazo)),
@@ -222,6 +257,12 @@ export async function gravarGrupo(env, g) {
     const raw = await kvOrThrow(env).get(coopFioKey(g.id, m));
     if (raw) await kvOrThrow(env).put(coopFioKey(g.id, m), raw, prazo);
   }));
+}
+
+/** `true` se a próxima gravação do grupo faria a renovação conjunta. */
+export function precisaRenovar(g, agora = Date.now()) {
+  if (Number(g?.bosqueProgress ?? 0) > 0) return !g.semPrazoGravado;
+  return !Number.isFinite(g?.prazoAte) || g.prazoAte - agora < PRAZO_RENOVA_ANTES_MS;
 }
 
 /**
@@ -244,7 +285,8 @@ export async function gravarGrupo(env, g) {
  */
 export async function renovarPrazos(env, gid) {
   const fresco = await lerGrupo(env, gid);
-  if (fresco) await gravarGrupo(env, fresco);
+  // A3: só grava quando a renovação é devida — no dia a dia, zero escrita.
+  if (fresco && precisaRenovar(fresco)) await gravarGrupo(env, fresco);
 }
 
 /** `semana` é calculada UMA vez por requisição e passada adiante (L1 BAIXO-6):

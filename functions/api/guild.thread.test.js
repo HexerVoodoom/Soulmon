@@ -175,11 +175,11 @@ describe('G17(a): o fio renova o prazo junto do grupo', () => {
     await fio(e, A);
     const g = await lerGrupo(e, gid);
     e.DIGIAPP_SAVES.puts.length = 0;
-    await gravarGrupo(e, { ...g, bosqueProgress: 0 });
+    await gravarGrupo(e, { ...g, bosqueProgress: 0, prazoAte: undefined }); // A3: renovação conjunta devida
     const comPrazo = e.DIGIAPP_SAVES.puts.find(p => p.k === coopFioKey(gid, A));
     expect(comPrazo.opts).toEqual({ expirationTtl: 86400 * 120 });
     e.DIGIAPP_SAVES.puts.length = 0;
-    await gravarGrupo(e, { ...g, bosqueProgress: 0.5 });
+    await gravarGrupo(e, { ...g, bosqueProgress: 0.5, semPrazoGravado: undefined });
     const semPrazo = e.DIGIAPP_SAVES.puts.find(p => p.k === coopFioKey(gid, A));
     expect(semPrazo.opts).toEqual({});
     for (const p of e.DIGIAPP_SAVES.puts) expect(p.opts, p.k).toEqual({});
