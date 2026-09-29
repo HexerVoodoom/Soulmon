@@ -1,5 +1,7 @@
 # Linha vermelha × dossiê Mobbin — parecer do guarda
 
+> Termos renomeados em 29/09/2026: vírus→poder, dado→harmonia, vacina→benevolência.
+
 - **Guarda:** `soulmon-guarda-linha-vermelha` (sem WP próprio, de propósito)
 - **Data:** 02/09/2026
 - **Fonte lida inteira:** `docs/guia-experiencia/09-mobbin-dossie.md` (2.460 linhas, §1–§17)

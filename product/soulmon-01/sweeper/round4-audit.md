@@ -1,5 +1,7 @@
 # Rodada 4 — auditoria do código que as rodadas 1–3 produziram
 
+> Termos renomeados em 29/09/2026: vírus→poder, dado→harmonia, vacina→benevolência.
+
 > Papel: `qa-sweeper`. Alvo: a superfície NOVA (safeStorage/GameStateContext,
 > `_rateLimit`, `_redact`, a UI pixel + Evolução reescrita, CSP + aviso de WebView)
 > e os 4 pontos cegos que o `skeptic-review` deixou intocados.

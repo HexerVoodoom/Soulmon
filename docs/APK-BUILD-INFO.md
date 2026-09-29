@@ -405,12 +405,12 @@ npx cap open android
 --teal-light: #5eead4;
 
 /* Attributes */
---virus-pink: #ff2b95;
---virus-coral: #ff6b6b;
+--power-pink: #ff2b95;
+--power-coral: #ff6b6b;
 --data-cyan: #2bfff9;
 --data-blue: #4d9aff;
---vaccine-mint: #2bff95;
---vaccine-teal: #5eead4;
+--benevolence-mint: #2bff95;
+--benevolence-teal: #5eead4;
 
 /* Background */
 --black-deep: #0a0a0a;
@@ -428,13 +428,13 @@ npx cap open android
 /* Primary Gradient */
 background: linear-gradient(135deg, #2bff95, #14b8a6);
 
-/* Virus Gradient */
+/* Power Gradient */
 background: linear-gradient(90deg, #ff2b95, #ff6b6b);
 
 /* Data Gradient */
 background: linear-gradient(90deg, #2bfff9, #4d9aff);
 
-/* Vaccine Gradient */
+/* Benevolence Gradient */
 background: linear-gradient(90deg, #2bff95, #5eead4);
 ```
 
@@ -471,7 +471,7 @@ export const publicAnonKey = "<JWT-ANONIMO-REDIGIDO-em-09/09/2026>"
 
 ### Funcionalidades Implementadas
 
-✅ Sistema de evolução de Digimon (3 ramos: Virus, Data, Vaccine)  
+✅ Sistema de evolução de Digimon (3 ramos: Power, Harmony, Benevolence)  
 ✅ Gestão de tarefas e atividades gamificadas  
 ✅ Sistema de atributos (XP, HP, Energy)  
 ✅ Chat com IA (Groq) para criar atividades  

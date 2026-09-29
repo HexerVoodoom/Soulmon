@@ -215,9 +215,9 @@ contra `--sm-bg` e `--sm-surface` do PRÓPRIO tema.
 | `--sm-ok-ink` | `#177a00` (5,16:1) | `#22A900` (5,69:1) | o verde "feito"/"hoje" | **nenhum** — ver §2.7 |
 | `--sm-haunt-ink` | `#6242ad` (6,79:1) | `#b39bff` (7,63:1) | o roxo do assombro, **nunca vermelho** | **nenhum** desde 16/09/2026 — a tarefa assombrada passou a `--sm2-haunted` (§2.8, `c1c1b743`); o `TaskMeta.tsx` não o cita mais |
 | `--sm-haunt-veil` | `color-mix(in srgb, #6242ad 8%, var(--sm-surface))` | `color-mix(in srgb, #b39bff 12%, var(--sm-surface))` | véu da tarefa assombrada | **nenhum** desde 16/09/2026 — o véu por opacidade foi a F1 da crítica do canvas Home (2,31:1 no claro); a tinta nova é SÓLIDA |
-| `--sm-attr-virus-ink` | `#1a7d00` (5,28:1) | `#5fdc3a` (6,95:1) | Poder como TEXTO | `src/types/attributes.ts` → `ATTR_INK` |
+| `--sm-attr-power-ink` | `#1a7d00` (5,28:1) | `#5fdc3a` (6,95:1) | Poder como TEXTO | `src/types/attributes.ts` → `ATTR_INK` |
 | `--sm-attr-data-ink` | `#00699a` (6,02:1) | `#5ac8f5` (6,49:1) | Harmonia como TEXTO | idem |
-| `--sm-attr-vaccine-ink` | `#8a5a00` (5,93:1) | `#f0b64d` (6,78:1) | Benevolência como TEXTO | idem |
+| `--sm-attr-benevolence-ink` | `#8a5a00` (5,93:1) | `#f0b64d` (6,78:1) | Benevolência como TEXTO | idem |
 | `--sm-help-accent` | `#0f766e` | `#5df0e0` | acento do glossário | **nenhum** — ver §2.7 |
 | `--sm-help-item-bg` | `#f3f9f8` | `rgba(255,255,255,0.03)` | fundo do item do glossário | **nenhum** desde 16/09/2026 (`.sm-px-help-item` saiu ⚰️) — ver §2.7 |
 
@@ -1069,7 +1069,7 @@ ficam FORA dele, no painel. Regra e tela: [02 §56-A](02-REGRAS-DE-NEGOCIO.md#gu
 1. **Modo demo** — se há `demoCharacterId` e ele é uma das linhas, devolve o
    sprite daquela linha no nível pedido (`ultra` reusa `mega`).
 2. **Árvore em vigor desde 07/09/2026** — `SOULMON_SPRITES` tem as **11** formas (`rookie`,
-   `{champion|ultimate|mega}-{virus|data|vaccine}`, `ultra`).
+   `{champion|ultimate|mega}-{power|data|benevolence}`, `ultra`).
 3. **Save legado** — `legacySpriteForStage` escolhe uma das nossas **9** linhas
    (eram 6 até 15/09/2026) por **hash do id** (`hashId`, base 31):
    determinístico, então o mesmo save renderiza sempre a mesma criatura em vez
@@ -1138,7 +1138,7 @@ Desde 21/09/2026 (`66e32d43`, rodada 2) o mesmo arquivo exporta
 (`'rookie' | 'champion' | 'ultimate' | 'mega'`): é a resolução de
 `getSpriteForStage` **sem o sprite** — devolve `{ line, tier }` para demo e para
 id legado (mesmo hash), e `null` para estágio da árvore do jogador
-(`champion-virus` etc.), porque aí a arte é a do próprio Soulmon, não de linha.
+(`champion-power` etc.), porque aí a arte é a do próprio Soulmon, não de linha.
 Único consumidor: `src/utils/lineIcons.ts` (`lineIcon(lineId, tier, 32 | 64)`),
 que serve os ícones-ficha de `lines/icons/` (§5.6) e devolve `undefined` quando
 a arte não existe — o consumidor cai no sprite 256² reduzido, que é o que era

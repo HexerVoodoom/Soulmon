@@ -1,5 +1,7 @@
 # 🎨 DigiApp - Guia Visual de Mudanças
 
+> Termos renomeados em 29/09/2026: vírus→poder, dado→harmonia, vacina→benevolência.
+
 ## 📍 Localização dos Elementos Principais
 
 ### CompanionHUD Layout

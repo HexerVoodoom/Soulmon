@@ -1,5 +1,7 @@
 # Rodada 2 do sweeper — atacando a causa estrutural
 
+> Termos renomeados em 29/09/2026: vírus→poder, dado→harmonia, vacina→benevolência.
+
 > `qa-sweeper`, run `soulmon-01`. Alvo: o diagnóstico do `investor-skeptic` —
 > **"a suíte mede intenção, não efeito"** — e não mais os sintomas.
 > Nada foi commitado nem enviado. Nenhum teste existente foi afrouxado.

@@ -1,4 +1,6 @@
 # Simulação 90 dias — dia × perfil (HP/maxHP · estágio · perfectDays · marcas)
+
+> Termos renomeados em 29/09/2026: vírus→poder, dado→harmonia, vacina→benevolência.
 Início: 22/09/2026 (ter), d1 = 23/09 (qua). Marcas: * dia completo · -N corações perdidos · perdoa=carência · folga · volta=welcomeBack · +0.5 alívio de segunda · Gn=glitchtama usados · EVO/DEG.
 
 | d | data | A | A6 | B | Bg | Bs | Bt | Bx | Bsx | C | C2 | D | Dp | Dm | G | Dmp |

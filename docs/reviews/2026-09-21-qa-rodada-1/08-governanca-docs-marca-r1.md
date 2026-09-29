@@ -1,5 +1,7 @@
 # 08 — Governança · doc-verificador · marca — QA Rodada 1 (21/09/2026, noite)
 
+> Termos renomeados em 29/09/2026: vírus→poder, dado→harmonia, vacina→benevolência.
+
 Repo `D:\Soulmon\repo`, branch `qa/rodada-a`, HEAD `5228145e`. Só leitura. Papéis inline:
 `alpha-governanca` + `doc-verificador` + `alpha-marca-critico`. Regra da rodada respeitada:
 achado do consolidado da manhã só volta se "ainda aberto".

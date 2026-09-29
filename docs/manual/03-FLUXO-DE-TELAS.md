@@ -793,7 +793,7 @@ updater). `FOOD_LIMIT_PER_HOUR` é `MAX_STAGE_REQUIREMENT` (derivado do maior
 1 h sobre `careCaps.feedTimes`, que mora no SAVE.
 
 **Item especial não entra aqui**: `isSpecialItem` (dono: `src/utils/shop.ts`)
-tira 🌀 / 💗 / 🦠 / 💾 / 💉 do `foodStock` — eles se usam na pastinha (§4.2b).
+tira 🌀 / 💗 / 👊 / 🎶 / 🤲 do `foodStock` — eles se usam na pastinha (§4.2b).
 Misturá-los faria "Alimentar" gastar um consumível caro por engano.
 
 **Dono**: `src/components/CompanionHUD.tsx` (`feedOpen`, `foodStock`,

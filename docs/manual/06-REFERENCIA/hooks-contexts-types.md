@@ -66,7 +66,7 @@
 **Dono de:** o "hoje" recalculado quando o dia vira (sem ticker) e a barra/humor do pet — quanto do dia já foi feito contra a meta ponderada do dia, na MESMA unidade dos dois lados (peso de esforço).
 **Exports:**
 - `doneWeightFor(state, weekDay, dayKey)` — soma o peso de esforço concluído no dia: hábitos do dia fechados (`HABIT_WEIGHT` cada, via a mesma lista que `dailyGoalFor` usa — `activitiesForWeekDay`) + tarefas marcadas ainda na lista (`normalizeEffort(t.effort)`) + tarefas já em `completedTasks` (`tasksCompletedOn`). Exportada porque o `App.tsx` também precisa do número (toast "uma ação, várias barras") e recontar ali já causou três divergências em silêncio — é o dono único do lado "feito" na UI.
-- `useProgressTracking(gameState)` — usa o hook interno `useTodayKey` (recalcula `today` em `resetSignal` mudando, `visibilitychange` e `focus`, nunca por ticker) para derivar `todayWeekDay`, `dailyTotal` (= `dailyGoalFor`, NUNCA o cadastro cru), `dailyDone` (`doneWeightFor` com teto em `dailyTotal` — não existe "mais que 100%"), `progress` (0–100, considerando passo como concluído só quando TODOS os passos da atividade fecham) e `todayAttributes` (soma virus/data/vaccine das atividades completas hoje, via `CATEGORY_ATTRIBUTES`).
+- `useProgressTracking(gameState)` — usa o hook interno `useTodayKey` (recalcula `today` em `resetSignal` mudando, `visibilitychange` e `focus`, nunca por ticker) para derivar `todayWeekDay`, `dailyTotal` (= `dailyGoalFor`, NUNCA o cadastro cru), `dailyDone` (`doneWeightFor` com teto em `dailyTotal` — não existe "mais que 100%"), `progress` (0–100, considerando passo como concluído só quando TODOS os passos da atividade fecham) e `todayAttributes` (soma power/harmony/benevolence das atividades completas hoje, via `CATEGORY_ATTRIBUTES`).
 **Chamado por:** `src/App.tsx`.
 **Régua:** `src/hooks/useProgressTracking.test.ts`.
 **Avisos do arquivo:** o denominador NÃO É o cadastro cru — antes ele contava `activities.length + tasks.length + completedTasks.length`, o que fazia o widget Android mostrar "6/9" mesmo quando 6 já cumpria a meta do dia. Também NÃO existe uma segunda definição de "dia perfeito" aqui (havia uma, morta, comentário no corpo diz para não recriá-la — a real vive em `computeDailyReset`/`lastDayReport.wasPerfect`). Passo de atividade não move mais a barra sozinho — só quando todos os passos fecham (antes punia visualmente quem quebra tarefa grande em passos pequenos).
@@ -137,21 +137,21 @@ Os dois são **acréscimo**, nunca renomeação (linha vermelha #20 — save só
 ## src/types
 
 ### `src/types/attributes.ts`
-**Dono de:** os três atributos do jogo (Poder/Harmonia/Benevolência — internamente `virus`/`data`/`vaccine`), a cor e o rótulo canônicos de cada um, e o mapeamento categoria de atividade → atributo/galho de evolução.
+**Dono de:** os três atributos do jogo (Poder/Harmonia/Benevolência — internamente `power`/`harmony`/`benevolence`), a cor e o rótulo canônicos de cada um, e o mapeamento categoria de atividade → atributo/galho de evolução.
 **Exports:**
 - `AttributePoints`, `ActivityCategory` — tipos base.
 - `ALIGN_TO_ATTR` — alinhamento do oráculo → galho de evolução; era um mapa local de `EvolutionPath`, virou compartilhado quando `EvoTrail` da Home passou a precisar dele.
 - `CATEGORY_ATTRIBUTES` — quanto cada categoria de atividade rende em cada atributo.
 - `XP_THRESHOLDS` — limiares de XP.
-- `BranchType` — o galho (`virus`/`data`/`vaccine`).
+- `BranchType` — o galho (`power`/`harmony`/`benevolence`).
 - `ATTR_COLOR` — FONTE ÚNICA DA VERDADE da cor de cada atributo; nenhuma tela deve redeclarar.
-- `ATTR_LABEL` — FONTE ÚNICA DA VERDADE do nome que o jogador vê (os ids internos `virus`/`data`/`vaccine` são herdados do fork e nunca aparecem na UI).
+- `ATTR_LABEL` — FONTE ÚNICA DA VERDADE do nome que o jogador vê (os ids internos `power`/`harmony`/`benevolence` são herdados do fork e nunca aparecem na UI).
 - `ATTR_INK` — a mesma cor de `ATTR_COLOR`, na luminosidade que passa 4,5:1 como texto, por tema (resolvida via variável CSS).
 - `ATTR_ON_FILL_INK` — tinta escura para texto por cima de um preenchimento de atributo (mede 5,4–7,0:1 contra os 2,4–3,1:1 do branco).
 - `EvolutionBranch`, `EVOLUTION_BRANCHES` — os três galhos como dado estruturado.
 **Chamado por:** 24 arquivos (`grep -rl "from '.*/attributes'" src | wc -l`, 10/09/2026 — corrigido de "23" por doc-verificador) — entre eles `TaskEditModal.tsx`, `ItemsWindow.tsx`, `PlayerDetailModal.tsx`, `StatsPage.tsx`, `EvoTrail.tsx`, `CreateModal.tsx`.
 **Régua:** cobertura indireta via testes de render dos componentes que o usam; nenhum `attributes.test.ts` próprio.
-**Avisos do arquivo:** `ATTR_LABEL` — "este comentário..." (nota sobre não expor `virus`/`data`/`vaccine` na UI).
+**Avisos do arquivo:** `ATTR_LABEL` — "este comentário..." (nota sobre não expor `power`/`harmony`/`benevolence` na UI).
 
 ### `src/types/category-icons.ts`
 **Dono de:** o ícone (Material Symbol) e o rótulo PT de cada categoria de atividade, tolerantes a categoria vinda de save antigo/seed que não bate com `ActivityCategory`.
@@ -175,8 +175,8 @@ Os dois são **acréscimo**, nunca renomeação (linha vermelha #20 — save só
 - `MAX_HP_BY_FORM` — HP máximo por NÍVEL de estágio (rookie/champion/ultimate=3 · mega=4 · ultra=5).
 - `EvolutionStage` — tipo do id de forma.
 - `MAX_STAGE_REQUIREMENT` — o maior requisito diário da escada (hoje 6, mega/ultra); todo outro teto do jogo deriva deste, nunca de um literal.
-- `getStageLevel(stageId)` — nível do estágio a partir do prefixo do id (`'champion-virus'` → `'champion'`); id fora do esquema cai em `'rookie'`.
-- `getStageBranch(stageId)` — atributo (`virus`/`data`/`vaccine`) embutido no id, se houver.
+- `getStageLevel(stageId)` — nível do estágio a partir do prefixo do id (`'champion-power'` → `'champion'`); id fora do esquema cai em `'rookie'`.
+- `getStageBranch(stageId)` — atributo (`power`/`harmony`/`benevolence`) embutido no id, se houver.
 - `getMaxEnergyForStage(stageId)` — energia máxima = `FORM_REQUIREMENTS.required` do estágio.
 - `canSelectWeekdays(...)`, `AVAILABLE_BRANCHES`, `AvailableBranch`, `clampBranch(...)` — auxiliares de seleção de galho.
 - `MANUAL_EVOLUTION = true` — a evolução nunca dispara sozinha na virada; quem dispara é o jogador, tocando na criatura com a barra cheia.

@@ -1,5 +1,7 @@
 # 🎮 DigiApp - Gamified Productivity Companion
 
+> Termos renomeados em 29/09/2026: vírus→poder, dado→harmonia, vacina→benevolência.
+
 Um aplicativo gamificado de produtividade e motivação com estética pixel-art retrô onde os usuários completam tarefas da vida real para evoluir e cuidar de um companheiro digital que cresce através de estágios evolutivos (similar a Digimon/Tamagotchi).
 
 ---

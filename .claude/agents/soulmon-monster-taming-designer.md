@@ -55,7 +55,7 @@ Leia `src/utils/oracle.ts`, `oracle.test.ts`, `src/components/SoulmonOnboarding.
 Leia `src/types/progression.ts`, `src/utils/dailyReset.ts`, `EvolutionPath.tsx`,
 `EvolutionGrid.tsx`, `BranchForecast.tsx`, `DigivolutionGauge.tsx`, `EvolutionCeremony.tsx`.
 
-- A escada de estágios e o ramo por atributo (vírus/dado/vacina) — legibilidade,
+- A escada de estágios e o ramo por atributo (poder/harmonia/benevolência) — legibilidade,
   antecipação, agência. O usuário consegue *querer* uma forma específica e trabalhar
   para ela? Antecipação é o motor do gênero; sem ela a evolução vira notificação.
 - **A degeneração** é o mecanismo mais arriscado e mais interessante do produto.
@@ -88,7 +88,7 @@ Lembre a hierarquia do briefing — combate é camada 3 e precisa devolver valor
 Entregue, em conjunto com o guardião de PI:
 - Proposta de **escada de estágios** original (nomes e conceito).
 - Proposta de **sistema de afinidades/atributos** original que substitua
-  vírus/dado/vacina — idealmente derivado da tese da alma, não de um triângulo genérico.
+  poder/harmonia/benevolência — idealmente derivado da tese da alma, não de um triângulo genérico.
 - **Convenção de nomenclatura** de criaturas com identidade própria (não terminar tudo
   em "-mon" por inércia).
 - Um **bíblia curta de design de criatura**: silhueta, coerência entre estágios, paleta

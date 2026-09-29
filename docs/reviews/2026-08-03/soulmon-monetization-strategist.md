@@ -1,5 +1,7 @@
 # soulmon-monetization-strategist — Revisão Soulmon
 
+> Termos renomeados em 29/09/2026: vírus→poder, dado→harmonia, vacina→benevolência.
+
 **Data:** 2026-08-03 · **Escopo:** modelo de receita, preço, custo marginal por usuário, e compatibilidade da monetização com a tese emocional do produto
 **Evidência analisada:** `docs/squad/00-BRIEFING.md`, `docs/squad/01-RUBRICA.md`,
 `docs/reviews/2026-08-03/00-CONSOLIDADO.md`, `functions/api/generate-sprite.js`,

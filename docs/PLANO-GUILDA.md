@@ -466,7 +466,7 @@ Nenhuma fala da Feira cita outro bosque, outra roda, "o outro lado" ou adversár
 acima casa com `TERMOS`. O risco é o **espalhamento para arquivo NOVO**: se a
 Feira ou a roda citar galho, em arquivo novo (`guild.js`, `GuildSheet` novo,
 `FeiraSheet`) escreve-se **Ruptura / Trama / Guarda** (*Rupture / Braid / Ward*,
-nunca `Weave`), não `Vírus`/`Vacina` — o rótulo aceito só vive nos arquivos de
+nunca `Weave`), não `Poder`/`Benevolência` — o rótulo aceito só vive nos arquivos de
 `EXCECOES`. O mesmo vale para `Glitchtama` (a Feira não o premia; se um dia
 premiar, importe o rótulo de onde ele mora). A bíblia (§7.1, §12) e
 `NARRATIVA-PROPOSTAS.md` só ganham a Guilda no mesmo passe que o código.

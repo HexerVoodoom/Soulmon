@@ -1,5 +1,7 @@
 # 04 — DADOS (QA Rodada 2, 22/09/2026) — `alpha-architect`
 
+> Termos renomeados em 29/09/2026: vírus→poder, dado→harmonia, vacina→benevolência.
+
 Repo `D:\Soulmon\repo`, branch `qa/rodada-2-2026-09-22`, HEAD `a6c1cd8a`. Só leitura.
 Regra: caminho + SÍMBOLO; número com comando. Achado de R1/QA-geral só reaparece como "ainda aberto".
 

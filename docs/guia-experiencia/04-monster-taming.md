@@ -1,5 +1,7 @@
 # 04 — Lições do monster taming para o Soulmon
 
+> Termos renomeados em 29/09/2026: vírus→poder, dado→harmonia, vacina→benevolência.
+
 Pesquisa: setembro/2026. Base: benchmark do gênero (Pokémon, Digimon V-Pet 97,
 Monster Rancher, Temtem, Cassette Beasts, Palworld, Pokémon Sleep/GO, Vital
 Bracelet) + leitura de `CLAUDE.md` e `docs/PLANO-EVOLUCAO.md`.

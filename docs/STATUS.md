@@ -1,11 +1,25 @@
 # Status do Soulmon — registro vivo
 
+> Termos renomeados em 29/09/2026: vírus→poder, dado→harmonia, vacina→benevolência.
+
 Documento único de acompanhamento. **Se algo importante for decidido, descoberto
 ou concluído, registre aqui**, senão se perde entre sessões.
 
 - Estado do código e do que está no ar → seções 1 e 2
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
+
+> ## 29/09/2026 — Caminhos renomeados: Poder / Harmonia / Benevolência
+>
+> Pedido do dono ("remova toda menção a virus, data e vacina…"), registrado em
+> `REGISTRO-DE-DECISOES.md` §14.5 (reverte o rótulo da §14.4). Ids `power`/
+> `harmony`/`benevolence`, formas `champion-power` etc., campos `*Points`
+> novos, chips 👊/🎶/🤲, arte e drawables renomeados, `CACHE_VERSION` +1.
+> Save antigo migrado por `src/utils/branchMigration.ts` (local, nuvem,
+> overlay); servidor lê só por compat as chaves KV antigas de sprite/teto por
+> forma (`functions/api/_branchLegacy.js`). Régua: `branchRename.contract.test.ts`.
+> **Nada depende do dono** — o APK precisa de build novo só para os drawables
+> renomeados (o CI builda no push).
 
 > ## 29/09/2026 — Guilda (o Bosque e a Feira) — IMPLEMENTADA (núcleo), falta o entorno
 >

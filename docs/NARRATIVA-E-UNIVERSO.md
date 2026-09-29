@@ -611,15 +611,18 @@ matricula.
 
 ### 6.6 Os três galhos (proposta de nome — ver §14 P1)
 
-Os ids no save são `virus` / `data` / `vaccine` e **não mudam** (linha vermelha
-#20: chave só se acrescenta). O que o jogador lê passa a ser vocabulário próprio,
-derivado de **como** o caminho foi feito:
+Os ids no save são `power` / `harmony` / `benevolence` desde 29/09/2026 (antes
+eram os ids herdados; o save antigo é migrado por `src/utils/branchMigration.ts`).
+O **rótulo da interface** é **Poder / Harmonia / Benevolência** (EN Power /
+Harmony / Benevolence). O vocabulário de MUNDO abaixo continua valendo para lore,
+e o mapeamento é declarado: **Ruptura = Poder, Trama = Harmonia, Guarda =
+Benevolência**.
 
-| id no código | Nome PT | Nome EN | O que é no mundo |
-|---|---|---|---|
-| `virus` | **Ruptura** ⚠️ | **Rupture** | O padrão cresceu forçando passagem: abriu o que estava fechado. Corpo agudo, contorno quebrado, fagulha concentrada. |
-| `data` | **Trama** | **Braid** ⚠️ | O padrão cresceu tecendo: ligou o que estava solto. Corpo articulado, simetria, fagulha distribuída em linha. |
-| `vaccine` | **Guarda** ⚠️ | **Ward** | O padrão cresceu segurando: manteve de pé o que ia cair. Corpo fechado, massa, fagulha interna vista por frestas. |
+| id no código | Rótulo (UI) | Nome de mundo PT | Nome de mundo EN | O que é no mundo |
+|---|---|---|---|---|
+| `power` | Poder | **Ruptura** ⚠️ | **Rupture** | O padrão cresceu forçando passagem: abriu o que estava fechado. Corpo agudo, contorno quebrado, fagulha concentrada. |
+| `harmony` | Harmonia | **Trama** | **Braid** ⚠️ | O padrão cresceu tecendo: ligou o que estava solto. Corpo articulado, simetria, fagulha distribuída em linha. |
+| `benevolence` | Benevolência | **Guarda** ⚠️ | **Ward** | O padrão cresceu segurando: manteve de pé o que ia cair. Corpo fechado, massa, fagulha interna vista por frestas. |
 
 **Nenhum dos três é melhor, mais nobre ou mais raro.** Proibido escrever Ruptura
 como dano/doença (é a leitura que o id herdado sugere, e é exatamente a que
@@ -631,13 +634,13 @@ recompensa: é o formato do que ficou. No empate, o que decide é o **ritmo** do
 caminho (`src/utils/carePattern.ts`), e os três ritmos puxam galhos distintos
 sem que nenhum seja melhor (L7).
 
-⚠️ **DECISÃO DO DONO, 21/09/2026: os rótulos atuais FICAM.** Perguntado se eu
-devia trocar `Vírus/Dado/Vacina` pelos nomes acima, ele respondeu *"nenhum,
-aceito todos assim"*. Então **Ruptura / Trama / Guarda são vocabulário de
-MUNDO** — servem para escrever lore e descrever o que cada galho é — e **não
-são o rótulo da interface**, que continua o que sempre foi. A proposta P1 está
-fechada, e a régua `src/narrativa.contract.test.ts` registra os nove arquivos
-como exceção declarada, não como dívida.
+⚰️ **DECISÃO DO DONO, 21/09/2026: os rótulos herdados FICAVAM** (*"nenhum,
+aceito todos assim"*). **REVERTIDA pelo dono em 29/09/2026** (`REGISTRO-DE-DECISOES.md`
+§14.5): *"remova toda menção a virus, data e vacina e substitua por poder,
+harmonia e benevolência"*. O rótulo da interface é Poder / Harmonia /
+Benevolência; **Ruptura / Trama / Guarda seguem vocabulário de MUNDO** (lore),
+não rótulo de interface. A régua `src/narrativa.contract.test.ts` passou a
+VETAR o rótulo antigo, e `src/utils/branchRename.contract.test.ts` veta os ids.
 
 ### 6.7 As 9 linhas próprias
 
@@ -807,7 +810,7 @@ texto está errado, não a pessoa.
 | Constância (`habitRhythm.ts`) | Ritmo do caminho, lido em janela | Percentual cru; "sua constância caiu" |
 | Escudos de descanso (`REST_SHIELD_MAX`) | Folga que a maré absorve sozinha | Anunciar o escudo como salvação de última hora |
 | Ritmo de cuidado (`carePattern.ts`) | O **como** do caminho; decide galho no empate | "Seu ritmo é pior/melhor" |
-| Galhos `virus`/`data`/`vaccine` | Ruptura / Trama / Guarda (§6.6) — o formato do que assentou fundo | Doença, contágio, cura, imunidade |
+| Galhos `power`/`harmony`/`benevolence` | Ruptura / Trama / Guarda (§6.6) — o formato do que assentou fundo | Doença, contágio, cura, imunidade |
 | Escada de formas (`types/progression.ts`) | Decisões do corpo sobre ocupar espaço (§5.8) | "Nível", "power up", "ficou mais forte que antes" |
 | Cerimônia manual + cadeado (`evolutionLocked`) | "Pode ir" / "ainda não" | "Você travou a evolução dele" (não é perda) |
 | Queda de forma por sustentação zero | O padrão recolhe para se sustentar com menos; não fica marca (§5.8) | "Ele regrediu por sua culpa"; "você perdeu progresso" |
@@ -880,7 +883,7 @@ renascimento como recomeço do zero, castigo, purificação ou apagamento.
 | **término** ⚠️ | ending | o fim da insistência local de um padrão (§5.12) | "morte", "abate", "KO" — sempre, sem exceção |
 | **forma** | form | cada estágio | "digievolução" ⚠️; "nível", "upgrade" |
 | **mudar de forma** | to take a new form | o ato | "digievoluir" ⚠️; "evoluir" é tolerável na UI já no ar; nunca "subir de nível" |
-| **Ruptura / Trama / Guarda** *(vocabulário de MUNDO, para lore — a UI diz Vírus/Dado/Vacina, e o dono decidiu manter assim em 21/09/2026)* | Rupture / Braid / Ward | os três galhos, em texto de mundo | em EN prefira **Braid** a "Weave" em lore NOVO (*the Weave* é de D&D); o rótulo da UI não muda |
+| **Ruptura / Trama / Guarda** *(vocabulário de MUNDO, para lore — a UI diz Poder/Harmonia/Benevolência desde 29/09/2026; Ruptura=Poder, Trama=Harmonia, Guarda=Benevolência)* | Rupture / Braid / Ward | os três galhos, em texto de mundo | em EN prefira **Braid** a "Weave" em lore NOVO (*the Weave* é de D&D); o rótulo da UI não muda |
 | **o abrigo** | the den | o palco | "casa", "quarto", "base" |
 | **as fendas** ⚠️ | the rifts | a masmorra | "masmorra"/"dungeon" é tolerável na UI já no ar; evitar em lore novo |
 | **as arenas** | the arenas | o Torneio | "coliseu", "liga", "ginásio" ⚠️ |

@@ -1,5 +1,7 @@
 # Guilda — significado no universo e vocabulário (lore)
 
+> Termos renomeados em 29/09/2026: vírus→poder, dado→harmonia, vacina→benevolência.
+
 > **Dono:** `soulmon-loremaster` · **Data:** 29/09/2026 · **Estado:** proposta — **nada aqui decide mecânica**
 > **Precedência:** código > teste > `CLAUDE.md` > manual > bíblia > este parecer.
 > **Fontes lidas:** `docs/NARRATIVA-E-UNIVERSO.md` (§2 L1..L12, §3, §7, §8, §10, §12, §16, §17),

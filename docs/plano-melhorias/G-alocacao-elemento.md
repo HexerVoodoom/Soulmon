@@ -1,3 +1,5 @@
+> Termos renomeados em 29/09/2026: vírus→poder, dado→harmonia, vacina→benevolência.
+
 > # ⏸️ PARQUEADO PARA A v2.0 — decisão do dono, 22/09/2026
 >
 > **Esta spec não é trabalho em andamento** — com DUAS exceções declaradas

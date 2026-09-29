@@ -235,7 +235,7 @@ Cobertura: **157/157** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 - `function legacyFormIdToNew(id)` / `function legacyBranchToNew(b)` / `function newFormIdToLegacy(id)` / `function hasLegacyBranchIds(state)` / `LEGACY_CHIP_EMOJI`.
 **Chamado por:** `src/contexts/GameStateContext.tsx` (`hydrateSave` — localStorage e nuvem), `src/utils/cloudSave.ts` (`adoptCloudSave`), `desktop/renderer/src/cloudSync.ts` (`fetchRemoteSnapshot`, `normalizeForRules`) — importado, nunca copiado (footgun 9).
 **Régua:** `branchMigration.test.ts` (fixtures de save antigo nas 9 formas), `branchRename.contract.test.ts` (nenhum id antigo fora daqui), `functions/api/branchLegacy.parity.test.js`.
-**Regra de negócio:** decisão do dono de 29/09/2026, `REGISTRO-DE-DECISOES.md` §14.6.
+**Regra de negócio:** decisão do dono de 29/09/2026, `REGISTRO-DE-DECISOES.md` §14.5.
 
 ### `src/utils/careCaps.ts`
 **Dono de:** Onde os tetos de cuidado (carinho, comida) moram no save — migração e higienização, nunca a regra.
@@ -262,10 +262,10 @@ Cobertura: **157/157** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 - `CARE_WINDOW_DAYS` — Janela de leitura, em dias. Duas semanas pega ritmo sem virar arqueologia.
 - `function computeCarePattern( completed: CompletedLike[] | undefined, now: Date = new Date(), windowDays: number = CARE_WINDOW_DAYS): CareReading` — Lê o histórico de conclusões dentro da janela (`windowDays`) e devolve a `CareReading` (contagem por dia, classificação de padrão).
 - `function careHistory(state: { completedTasks?: Array<{ completedAt: string }>; activityLog?: string[]; }): Array<` — Histórico COMPLETO de cuidado de um save: tarefas avulsas (`completedTasks`) **mais** atividades recorrentes (`activityLog`).
-- `function patternBranch(id: CarePatternId): 'virus' | 'data' | 'vaccine'` — O galho que cada padrão puxa. Nenhum é mais forte — são rumos diferentes.
-- `AttrPoints` (interface) — campos: `virus`, `data`, `vaccine`.
-- `function branchLeaders(points: AttrPoints): Array<'virus' | 'data' | 'vaccine'>` — Os galhos EMPATADOS no topo dos atributos — a lista que `resolveBranch` já calculava internamente e descartava ao devolver um só.
-- `function resolveBranch( points: AttrPoints, reading: CareReading, fallback: 'virus' | 'data' | 'vaccine' = 'data'): 'virus' | 'data' | 'vaccine'` — O galho de evolução (virus/data/vaccine) que os atributos e o ritmo de cuidado apontam; ponto não-finito (NaN/undefined) é saneado para 0 antes de decidir.
+- `function patternBranch(id: CarePatternId): 'power' | 'harmony' | 'benevolence'` — O galho que cada padrão puxa. Nenhum é mais forte — são rumos diferentes.
+- `AttrPoints` (interface) — campos: `power`, `harmony`, `benevolence`.
+- `function branchLeaders(points: AttrPoints): Array<'power' | 'harmony' | 'benevolence'>` — Os galhos EMPATADOS no topo dos atributos — a lista que `resolveBranch` já calculava internamente e descartava ao devolver um só.
+- `function resolveBranch( points: AttrPoints, reading: CareReading, fallback: 'power' | 'harmony' | 'benevolence' = 'harmony'): 'power' | 'harmony' | 'benevolence'` — O galho de evolução (power/harmony/benevolence) que os atributos e o ritmo de cuidado apontam; ponto não-finito (NaN/undefined) é saneado para 0 antes de decidir.
 **Chamado por:** `src/App.tsx`, `src/components/StatsPage.tsx`, `src/utils/evolutionTarget.ts`, `src/utils/spriteTrigger.ts`
 **Régua:** `carePattern.test.ts`, `carePattern.threshold.test.ts`
 **Regra de negócio:** O ritmo de cuidado decide o desempate de galho de evolução — nenhum padrão é melhor que outro. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
@@ -475,7 +475,7 @@ Cobertura: **157/157** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 ### `src/utils/dailyReset.ts`
 **Dono de:** A VIRADA DO DIA: cálculo de HP perdido, meta do dia, degeneração e redenção — a função pura que o hook de reset chama.
 **Exports:**
-- `GameState` (interface) — campos: `activities`, `tasks`, `healthPoints`, `maxHealthPoints`, `perfectDays`, `totalXP`, `virusPoints`, `dataPoints`, `vaccinePoints`, `evolutionStage`, `unlockedEvolutions`, `degeneratedByHP`, `currentBranch`, `lastDayWasPerfect`.
+- `GameState` (interface) — campos: `activities`, `tasks`, `healthPoints`, `maxHealthPoints`, `perfectDays`, `totalXP`, `powerPoints`, `harmonyPoints`, `benevolencePoints`, `evolutionStage`, `unlockedEvolutions`, `degeneratedByHP`, `currentBranch`, `lastDayWasPerfect`.
 - `function getNextEvolution( currentStage: string, branch: Attr, unlockedEvolutions: string[], perfectDays = 0): string` — A forma-destino da evolução manual: nível seguinte no `branch` dado, considerando `unlockedEvolutions` e os `perfectDays` acumulados (abre o caminho de permanência ao Ultra).
 - `function getPreviousForm(currentStage: string, branch: Attr = 'data'): string` — A forma anterior na escada, pelo nível atual e pelo branch.
 - `MAX_HEARTS_LOST_PER_DAY` — Teto de corações perdidos por virada de dia. A perda continua PROPORCIONAL ao que não foi cumprido; isto só impede que um único dia zerado leve o pet de cheio a degenerado de uma vez. Um dia ruim é um sinal, não uma sentença.
@@ -644,7 +644,7 @@ Cobertura: **157/157** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 ### `src/utils/evolutionTarget.ts`
 **Dono de:** Fonte ÚNICA da forma-destino da evolução manual — antes existiam três derivações divergentes no `App.tsx`.
 **Exports:**
-- `Branch` (type) — `'virus' | 'data' | 'vaccine'`
+- `Branch` (type) — `'power' | 'harmony' | 'benevolence'`
 - `EvolutionTargetInput` (interface) — campos: `points`, `reading`, `currentBranch`, `evolutionStage`, `unlockedEvolutions`, `perfectDays`.
 - `EvolutionTarget` (interface) — campos: `branch`, `stage`.
 - `function evolutionTarget(input: EvolutionTargetInput): EvolutionTarget` — Combina `resolveBranch` + `getNextEvolution` — a fonte única do galho e da forma-destino da evolução.
@@ -1082,7 +1082,7 @@ Cobertura: **157/157** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 - `ScoreEntry` (interface) — campos: `source`, `points`.
 - `ArchetypeResult` (interface) — campos: `noun`, `nounEn`, `adjectives`, `phrase`.
 - `CreatureStage` (interface) — campos: `stage`, `branch`, `stageName`, `name`, `description`, `imagePrompt`, `imagePromptFallback`.
-- `function creatureFormId(form: Pick<CreatureStage, 'stage' | 'branch'>): string` — Id da forma no MOTOR DO JOGO ('rookie' | '{champion|ultimate|mega}-{virus| data|vaccine}' | 'ultra' — ver types/progression.ts).
+- `function creatureFormId(form: Pick<CreatureStage, 'stage' | 'branch'>): string` — Id da forma no MOTOR DO JOGO ('rookie' | '{champion|ultimate|mega}-{power| data|benevolence}' | 'ultra' — ver types/progression.ts).
 - `OracleResult` (interface) — campos: `input`, `seed`, `numerology`, `western`, `chinese`, `vedic`, `elementScores`, `elementBreakdown`, `dominantElement`, `secondaryElement`, `roleScores`, `roleBreakdown`, `dominantRole`, `alignmentScores`, `alignmentBreakdown`, `dominantAlignment`, `realmScores`, `dominantRealm`, `personalitySummary`, `archetype`.
 - `FamilySlot` (interface) — campos: `family`, `subfamily`, `noun`, `isObject`.
 - `FamilyResult` (interface) — campos: `primary`, `secondary`, `mono`.
@@ -1175,7 +1175,7 @@ Cobertura: **157/157** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 **Exports:**
 - `OVERCOMMIT_EFFORT` (re-export) — reexportado por conveniência; a descrição mora no módulo de origem.
 - `PlayBuff` (interface) — O buff que brincar concede. Modesto de propósito (`PLAY_BUFF_MULTIPLIER`): brincar é OFERTA, não obrigação, e um bônus grande transformaria a oferta em dever diário — a pessoa passaria a "ter que" brincar antes de todo minijogo, que é a definição de mais uma cobrança.
-- `PlayAttribute` (type) — `'virus' | 'data' | 'vaccine'`
+- `PlayAttribute` (type) — `'power' | 'harmony' | 'benevolence'`
 - `PlayLog` (interface) — O registro de persistência (opcional no GameState).
 - `PetNeedsState` (interface) — A fatia do GameState que este módulo lê. TODOS os campos além dos dois primeiros são opcionais: nenhum save existente tem `playLog`, e save antigo que quebra ao abrir é pior do que qualquer coisa que este arquivo entregue.
 - `PLAY_ENERGY_COST` — Custo em energia de uma brincadeira. Um, e não mais: energia vem de comida, comida vem de concluir tarefa. Cobrar caro faria brincar competir com o dia perfeito (que exige energia ≥ meta do dia) — o jogo estaria punindo quem aceitou a oferta.
@@ -1509,12 +1509,12 @@ Cobertura: **157/157** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 **Exports:**
 - `ShopItemKind` (type) — `'chip' | 'heart' | 'bg' | 'furniture' | 'emblem'`
 - `ShopCurrency` (type) — Moeda que compra o item. Ausente = Bits (o padrão da loja).
-- `Attr` (type) — `'virus' | 'data' | 'vaccine'`
+- `Attr` (type) — `'power' | 'harmony' | 'benevolence'`
 - `UnlockReq` (type) — Purchase gate. Locked items still show in the shop — darkened, with a padlock; tapping them reveals HOW to unlock: - 'mission': buyable after the mission (utils/missions.ts) is complete.
 - `ShopItem` (interface) — campos: `id`, `kind`, `icon`, `namePt`, `nameEn`, `descPt`, `descEn`, `price`, `attr`, `unlock`, `currency`, `slot`, `fits`.
 - `CHIP_BOOST` — tabela/dado de configuração (ver código; 5+ linhas).
 - `HEART_HEAL` — tabela/dado de configuração (ver código; 4+ linhas).
-- `CHIP_EMOJI` — `{ virus: '🦠', data: '💾', vaccine: '💉' }`
+- `CHIP_EMOJI` — `{ power: '👊', data: '🎶', benevolence: '🤲' }`
 - `HEART_ITEM_EMOJI` — `'💗'`
 - `SpecialItem` (interface) — campos: `emoji`, `kind`, `attr`, `namePt`, `nameEn`, `descPt`, `descEn`.
 - `GLITCHTAMA_EMOJI` — `'🌀'`

@@ -1,5 +1,7 @@
 # 🚀 DigiApp - BUILD READY
 
+> Termos renomeados em 29/09/2026: vírus→poder, dado→harmonia, vacina→benevolência.
+
 ## ✅ Status: PRONTO PARA BUILD
 
 Data: 28 de Dezembro de 2024  

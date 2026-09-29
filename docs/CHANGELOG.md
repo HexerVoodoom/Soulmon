@@ -1,5 +1,7 @@
 # Changelog
 
+> Termos renomeados em 29/09/2026: vírus→poder, dado→harmonia, vacina→benevolência.
+
 Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 <!-- doc-historico -->

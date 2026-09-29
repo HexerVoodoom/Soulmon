@@ -1,5 +1,7 @@
 # CRÍTICA — canvas "Estatísticas" (identidade, Fase 2, décimo canvas) · `design-critic`
 
+> Termos renomeados em 29/09/2026: vírus→poder, dado→harmonia, vacina→benevolência.
+
 > Revisão BLOQUEANTE · 20/09/2026 · alvo: os 7 `.dc.html` + `MainClaro` + `canvas.json` + `README.md` desta pasta,
 > servidos em `localhost:8776`.
 > Método: (1) diff estrutural artboard a artboard contra `../<mesmo nome>.dc.html` — sequência de `role`, de `aria-label`,

@@ -1,4 +1,6 @@
 # C — Presença e voz do pet (fatos)
+
+> Termos renomeados em 29/09/2026: vírus→poder, dado→harmonia, vacina→benevolência.
 ## Push
 workers/push-scheduler.js: só transporte; brtHour=(UTC-3); copy via pushCopy(brtHour, petName, language) de functions/api/_pushCopy.js. PUSH_HOURS_BRT=[10,16,22].
 | 10h pet-nudge-10 | "${name} passou pra dizer oi" / "Tem algo do seu dia que você já fez?" |

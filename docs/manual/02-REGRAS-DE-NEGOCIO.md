@@ -249,7 +249,7 @@ DESLIZANTE de 1 h sobre timestamps (`recentFeeds`), não contador diário.
 
 Uma comida comum (`FOOD_BY_CATEGORY`, `src/constants/labels.ts`):
 - `energyPoints = min(getMaxEnergyForStage(stage), energy + 1)`;
-- soma `CATEGORY_ATTRIBUTES[categoria]` em `virusPoints`/`dataPoints`/`vaccinePoints`
+- soma `CATEGORY_ATTRIBUTES[categoria]` em `powerPoints`/`harmonyPoints`/`benevolencePoints`
   **e** em `attributesSinceLastEvolution`;
 - `totalXP += (soma dos atributos) × 10`;
 - com o traço **Guloso**, `+GULOSO_BONUS_ATTR` (1) no atributo que a comida já
@@ -889,7 +889,7 @@ energia e devolve:
 - `playLog = { date: todayKey, buff }`.
 
 O atributo do dia é **determinístico**: `attributeForDay(todayKey)` é um hash
-estável da chave do dia sobre `['virus','data','vaccine']` — o mesmo dia rende
+estável da chave do dia sobre `['power','harmony','benevolence']` — o mesmo dia rende
 sempre o mesmo. `PLAY_TIMES_PER_DAY` é 1, e a segunda chamada devolve o estado
 intacto com `refused: 'already-played'`; sem energia, `refused: 'no-energy'`.
 
@@ -978,7 +978,7 @@ que consertou `FOOD_LIMIT_PER_HOUR` ([§3](#comida)).
 exigência diária crescia sem parar junto com a vida do jogador — o que fez a
 maioria dos donos de Vital Bracelet parar nos estágios médios.
 
-**Esquema de id.** `'rookie'` · `'{champion|ultimate|mega}-{virus|data|vaccine}'`
+**Esquema de id.** `'rookie'` · `'{champion|ultimate|mega}-{power|data|benevolence}'`
 · `'ultra'`. `getStageLevel` lê o nível do prefixo; `getStageBranch` extrai o
 galho. Não existe tabela por espécie.
 
@@ -1039,7 +1039,7 @@ barras de energia), `src/components/EvoTrail.tsx` (a trilha na Home).
 ---
 
 <a id="atributos"></a>
-## 15. 🦠💾💉 Atributos e galhos
+## 15. 👊🎶🤲 Atributos e galhos
 
 **Em uma frase.** A categoria da tarefa vira comida, a comida vira ponto de
 atributo, e o atributo escolhe o galho da próxima evolução.
@@ -1051,10 +1051,10 @@ atributo, e o atributo escolhe o galho da próxima evolução.
    (`src/constants/labels.ts`): Fitness 🥩 · Health 🥗 · Study 🍎 · Work ☕ ·
    Wellness 🧃 · Discipline 🍚 · Social 🍕 · Creativity 🍭.
 2. **Comer** (`feedFood`) soma `CATEGORY_ATTRIBUTES[categoria]`
-   (`src/types/attributes.ts`) em `virusPoints`/`dataPoints`/`vaccinePoints`,
+   (`src/types/attributes.ts`) em `powerPoints`/`harmonyPoints`/`benevolencePoints`,
    soma o mesmo em `attributesSinceLastEvolution`, dá +1 de energia (limitada
    por `getMaxEnergyForStage`) e `totalXP += (soma dos três) × 10`.
-   Ex.: Study `{virus 0, data 3, vaccine 1}`; Creativity `{3,1,0}`;
+   Ex.: Study `{power 0, data 3, benevolence 1}`; Creativity `{3,1,0}`;
    Discipline `{0,1,3}`.
 3. **O traço Guloso** soma `GULOSO_BONUS_ATTR` (1) **no atributo que a comida já
    favorece**; empate vai para `data`, o meio-termo da árvore ([§19](#tracos)).
@@ -1064,8 +1064,8 @@ atributo, e o atributo escolhe o galho da próxima evolução.
    ([§16](#ritmo)); sem líder nenhum (`max <= 0`) responde o ritmo ou o galho
    atual.
 
-**Os nomes que o jogador vê.** `ATTR_LABEL` é fonte única: `virus` = **Poder /
-Power**, `data` = **Harmonia / Harmony**, `vaccine` = **Benevolência /
+**Os nomes que o jogador vê.** `ATTR_LABEL` é fonte única: `power` = **Poder /
+Power**, `harmony` = **Harmonia / Harmony**, `benevolence` = **Benevolência /
 Benevolence**. Os ids internos são herdados do fork e o jogador **nunca os vê**.
 Cor: `ATTR_COLOR` (preenchimento, ícone, linha) · `ATTR_INK` (TEXTO, por tema,
 razão ≥ 4,5:1) · `ATTR_ON_FILL_INK` (texto sobre preenchimento; branco ali mede
@@ -1097,7 +1097,7 @@ forma-destino: quem ANUNCIA e quem COMMITA chamam a mesma função).
   Achado por fuzzing.
 - **Empate com leitura fraca** cai no galho ATUAL (`fallback`), nunca em `data`
   fixo — a cópia antiga do `App.tsx` mandava todo empate para `data`, e a página
-  previa `virus` enquanto a cerimônia gravava outra coisa.
+  previa `power` enquanto a cerimônia gravava outra coisa.
 - **Comida especial não passa por aqui**: chip, coraçãozinho e Glitchtama são de
   `src/utils/specialItemUse.ts` ([§48](#itens-especiais)) e não contam no limite
   por hora.
@@ -1109,7 +1109,7 @@ forma-destino: quem ANUNCIA e quem COMMITA chamam a mesma função).
 - ⚰️ **`attributesSinceLastEvolution` é escrito e zerado em cinco lugares e não
   tem leitor vivo**: o único consumidor é o ramo `!MANUAL_EVOLUTION` de
   `computeDailyReset`, que está morto ([§17](#evolucao)). O galho vivo vem dos
-  totais (`virusPoints`/`dataPoints`/`vaccinePoints`).
+  totais (`powerPoints`/`harmonyPoints`/`benevolencePoints`).
 
 **O que NÃO faz.** Comida **não** cura HP. Chip de atributo **não** dá energia.
 Atributo não muda força, HP nem velocidade — muda o RUMO. Não existe atributo
@@ -1151,8 +1151,8 @@ lugares e eles divergiram: a página de Evolução previa o galho com o log de
 atividades e a cerimônia decidia sem ele, então o app prometia um galho e
 entregava outro justamente a quem cumpre hábito por atividade recorrente.
 
-**O que cada ritmo puxa** (`patternBranch`): constante → `vaccine`, explosivo →
-`virus`, equilibrado → `data`. **Nenhum é melhor que outro**, e nenhum muda
+**O que cada ritmo puxa** (`patternBranch`): constante → `benevolence`, explosivo →
+`power`, equilibrado → `harmony`. **Nenhum é melhor que outro**, e nenhum muda
 força, HP ou velocidade — só o rumo, e só quando os atributos empatam
 ([§15](#atributos)).
 
@@ -1516,7 +1516,7 @@ derivados; **para no 2º nível** porque o motor de ficha só sabe alocar aridad
 e 2 — oferecer tripla seria prometer no menu o que a cozinha não faz).
 
 **`applyRebirth(prev, choices, now)`** reescreve **seis campos e mais nada**:
-`evolutionStage: 'rookie'`, `virusPoints`/`dataPoints`/`vaccinePoints` = 0,
+`evolutionStage: 'rookie'`, `powerPoints`/`harmonyPoints`/`benevolencePoints` = 0,
 `incubation: emptyIncubation()` (desde WP4.29) e grava `rebirth: { criatura,
 escola, elemento, at, fromStage }`. ⚰️ Até 22/09/2026 eram cinco. A incubação
 zera porque o `perfectDays` preservado deixa o renascido apto na hora e o
@@ -2180,7 +2180,7 @@ botão que some antes de expirar (promessa quebrada) ou que expira antes de sumi
 
 **É SNAPSHOT, não "aplicar o inverso".** A conclusão toca **11** campos em três
 arquivos (`CAMPOS_DA_CONCLUSAO`: `activities`, `activityStats`, `activityLog`,
-`foodInventory`, `habitRhythms`, `virusPoints`, `dataPoints`, `vaccinePoints`,
+`foodInventory`, `habitRhythms`, `powerPoints`, `harmonyPoints`, `benevolencePoints`,
 `attributesSinceLastEvolution`, `totalXP`, `bondDaily`). Escrever o inverso de
 cada um seria uma SEGUNDA regra de conclusão, e regra copiada diverge em
 silêncio (footgun 9): quem acrescentasse um campo amanhã deixaria o desfazer
@@ -4106,7 +4106,7 @@ no Torneio da área Arena. ⚰️ Antes: `ShopModal` com dois segmentos
 ---
 
 <a id="itens-especiais"></a>
-## 48. 🌀💗🦠 Itens especiais (o uso da pastinha)
+## 48. 🌀💗👊 Itens especiais (o uso da pastinha)
 
 **Em uma frase.** Cinco itens que moram na mesma pastinha da comida e se
 comportam de forma completamente diferente dela: chip dá atributo, coraçãozinho
@@ -4119,7 +4119,7 @@ cura, Glitchtama dá um dia completo — e nenhum conta no teto de comida.
 |---|---|---|
 | 🌀 `GLITCHTAMA_EMOJI` | `glitchtama` | `perfectDays +1` **e** `missionPerfectDays +1`. ⚰️ Até 22/09/2026 o segundo era `totalPerfectDays` — o 🌀 saiu das conquistas por decisão do dono **#41/#60** ([§57-A](#conquistas)) |
 | 💗 `HEART_ITEM_EMOJI` | `heart` | `+HEART_HEAL` de coração, clampado em `maxHealthPoints` |
-| 🦠 / 💾 / 💉 `CHIP_EMOJI` | `chip` | `+CHIP_BOOST` no atributo, `+CHIP_BOOST × 10` de `totalXP`, e o mesmo no `attributesSinceLastEvolution` |
+| 👊 / 🎶 / 🤲 `CHIP_EMOJI` | `chip` | `+CHIP_BOOST` no atributo, `+CHIP_BOOST × 10` de `totalXP`, e o mesmo no `attributesSinceLastEvolution` |
 
 `CHIP_BOOST` = 3 e `HEART_HEAL` = 1 (`src/utils/shop.ts`, junto do catálogo) ·
 `GLITCHTAMA_PER_DAY` = 1 (`src/utils/specialItemUse.ts`, junto do teto que ela
@@ -4556,7 +4556,7 @@ sendo oponente).
 
 ```
 power(p) = stagePower(p.stage) × 10
-         + min(20, (virus + data + vaccine) / 5)
+         + min(20, (power + data + benevolence) / 5)
          + random() × 18
 won      = myScore >= oppScore
 ```
@@ -5508,7 +5508,7 @@ registraram divergência nenhuma**.
 | D2 | tabela 💎 | Créditos gastam em "reroll (50), **cura instantânea (10)** e troca por Bits" | ⚰️ a **cura instantânea não existe** — `utils/instantHeal.ts` foi apagado junto. Restam reroll (`REROLL_COST_CREDITS`) e `BITS_EXCHANGE` | `ls src/utils/instantHeal.ts` falha; a lápide D7+D15 está em `src/App.tsx`, logo ABAIXO de `handleBuyCreditPack`. [`REGISTRO-DE-DECISOES.md`](../REGISTRO-DE-DECISOES.md) §5.4 já registra "REMOVIDA ✅ resolvido" |
 | D3 | tabela 🛒 | "Loja em ABAS (Itens/Cenários/Mobílias/**Torneio**/Missões)" — cinco | ⚰️ a `ShopModal` (e o `ShopSegment`) saiu na minimal-ui. A loja são **quatro lojinhas** na área Mercado — Itens, Decoração, Background (abas por moeda, `STALL_CURRENCIES`) e Conquistas (abas por `MISSION_CATEGORIES`) — e a loja de Emblemas mora no Torneio da área Arena (`tournamentShopItems`). O `CLAUDE.md` ainda diz "Na página Atividades (`ShopModal`)" e "Missões (…, aba na loja)" | `ls src/components/ShopModal.tsx` falha; `src/utils/mercadoCatalog.ts` (`MERCADO_STALLS`, `STALL_CURRENCIES`) |
 | D4 | footgun 9, item do Vínculo | o gate de PvP usa "cliente (**`canPvp`**)" | o símbolo **não existe**. O cliente tem `meetsPvpBond` e `xpToPvpBond` (`src/utils/bond.ts`); o servidor decide em `functions/api/community.js` ação `profile`, com `bondLevelOf` de `functions/api/_bond.js` | `grep -rn canPvp src desktop functions` não devolve nada |
-| D5 | tabela ⚔️ | "`getDungeonEnemySprite(tier, petStage)` tira do sorteio a linha que o jogador está usando, pra ninguém encarar um espelho de si mesmo" | a assinatura é `getDungeonEnemySprite(tier, excludeLine)` e `excludeLine` é comparado com **ids de LINHA** (`ignar`…`thalindra`). `buildDungeonWave(level, petStage)` repassa o **estágio de evolução** (`rookie`, `champion-virus`…), que nunca casa — **a exclusão não dispara em jogo**. O `demoCharacterId`, que É um id de linha, chega ao `DungeonGame` e é usado só para o sprite do próprio jogador | `grep -n "buildDungeonWave(" src/components/DungeonGame.tsx` e `grep -n "getDungeonEnemySprite" src/utils/dungeon.ts`; a função em si está correta e tem teste (`src/utils/sprites.dungeonRoster.test.ts`, "excludeLine tira a linha do jogador do sorteio") — o defeito é do CHAMADOR |
+| D5 | tabela ⚔️ | "`getDungeonEnemySprite(tier, petStage)` tira do sorteio a linha que o jogador está usando, pra ninguém encarar um espelho de si mesmo" | a assinatura é `getDungeonEnemySprite(tier, excludeLine)` e `excludeLine` é comparado com **ids de LINHA** (`ignar`…`thalindra`). `buildDungeonWave(level, petStage)` repassa o **estágio de evolução** (`rookie`, `champion-power`…), que nunca casa — **a exclusão não dispara em jogo**. O `demoCharacterId`, que É um id de linha, chega ao `DungeonGame` e é usado só para o sprite do próprio jogador | `grep -n "buildDungeonWave(" src/components/DungeonGame.tsx` e `grep -n "getDungeonEnemySprite" src/utils/dungeon.ts`; a função em si está correta e tem teste (`src/utils/sprites.dungeonRoster.test.ts`, "excludeLine tira a linha do jogador do sorteio") — o defeito é do CHAMADOR |
 | D6 | tabela ⚔️ | "**Sem limite diário e SEM gate de entrada**… Se farmar Bits virar problema, a alavanca é custo de ENTRADA em Bits" — escrito como hipótese futura | a alavanca **já existe** (WP4.5): `DEEP_START_BASE_COST` = 40, `deepStartCost(n) = 40 × n`, `DEEP_START_MAX_LEVEL` = 5, `canBuyDeepStart`. Não contradiz o "sem gate" (a compra é opcional e sobe a base), mas a tabela não a menciona | `grep -n "DEEP_START" src/utils/dungeon.ts`; `src/utils/dungeon.deepStart.test.ts` |
 | D7 | tabela 🎪 / 🎖️ | nada sobre teto de partidas | há **teto diário de partidas de Torneio no servidor**: `MATCHES_PER_DAY` = 5; estourar devolve `429 daily limit` | `grep -n "MATCHES_PER_DAY" functions/api/community.js` |
 | D8 | tabela 🎪 | fala só da "Rodada do Torneio" (semanal) | existem **três** calendários com nomes parecidos: a **rodada** semanal (`src/utils/tournamentSeason.ts`), a **season** do ranking, que é **MENSAL** (`currentSeason()` em `functions/api/community.js`, `YYYY-MM`, e é ela que fecha e dá troféu), e as **estações** trimestrais (`src/utils/seasons.ts`) | `grep -n "const currentSeason" functions/api/community.js` |

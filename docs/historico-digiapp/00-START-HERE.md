@@ -1,5 +1,7 @@
 # 🚀 DigiApp - START HERE
 
+> Termos renomeados em 29/09/2026: vírus→poder, dado→harmonia, vacina→benevolência.
+
 ## 👋 Bem-vindo à Documentação do DigiApp
 
 Este arquivo é seu ponto de partida para entender e fazer build do projeto.

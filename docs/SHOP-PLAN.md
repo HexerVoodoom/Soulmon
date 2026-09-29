@@ -15,7 +15,7 @@ A moeda dos minijogos são os **Bits** (`gamePoints` no GameState, cloud-synced;
 ## Catálogo atual (`ShopItemKind = 'chip' | 'heart' | 'bg' | 'evo'`, preços em 🪙 Bits)
 
 1. **Chips de atributo** (120) — **NÃO** aplicam na hora. Vão pra pastinha de
-   itens (`foodInventory`, emoji 🦠/💾/💉). Ao **usar** (como comida), dão +3 no
+   itens (`foodInventory`, emoji 👊/🎶/🤲). Ao **usar** (como comida), dão +3 no
    atributo (`CHIP_BOOST`) e **nada mais** — sem energia. Distinguidos de comida
    por `SPECIAL_ITEMS` no `handleFeed`.
 2. **Coraçãozinho** (`💗`, 150) — vai pra pastinha; usar cura +1 HP (`HEART_HEAL`).

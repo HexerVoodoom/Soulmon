@@ -1,5 +1,7 @@
 # Rodada 8 — O conteúdo do save carregado
 
+> Termos renomeados em 29/09/2026: vírus→poder, dado→harmonia, vacina→benevolência.
+
 **Pergunta da rodada:** os dois arquivos que leem o save do jogador
 (`GameStateContext` hidratação + `cloudSync`) são vistos por alguém?
 **Resposta curta:** não eram. Agora são. **22,6% → 83,3%** e **27,4% → 91,1%**, e

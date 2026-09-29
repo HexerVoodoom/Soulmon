@@ -1,5 +1,7 @@
 # L1 - Parecer de PI/marca: nomes do universo da Guilda
 
+> Termos renomeados em 29/09/2026: vírus→poder, dado→harmonia, vacina→benevolência.
+
 Data: 2026-09-29. Autor: guardião de PI (não sou advogado; isto não é parecer jurídico. Itens COM RESSALVA e VETADO merecem revisão jurídica).
 Limite da busca: WebSearch genérico. USPTO/EUIPO/INPI/Steam/Play NÃO foram consultados em base oficial (sem acesso). Ausência de achado ≠ ausência de registro. Antes de usar como marca de produto ou de loja, rodar busca de anterioridade oficial (classes 9/41/42).
 

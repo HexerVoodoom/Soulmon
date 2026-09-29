@@ -1,5 +1,7 @@
 # Soulmon — Kit pixel, rodada 3 (árvore como grafo · telas nunca vistas · contraste medido)
 
+> Termos renomeados em 29/09/2026: vírus→poder, dado→harmonia, vacina→benevolência.
+
 > Nada das rodadas 1 e 2 foi desfeito. **Não commitei, não dei push.**
 > Não toquei em `functions/`, `workers/`, `.github/` nem em
 > `src/contexts/GameStateContext.tsx`. Nenhum teste foi afrouxado.

@@ -26,7 +26,7 @@ ordem segura de separar.
 | **Arte e nomes de franquia** | bundle, APK, bestiário | ✅ Removidos — ver `docs/Attributions.md` |
 | Namespace KV (os DADOS) | Cloudflare → KV | ⚠️ **Ainda o mesmo namespace físico.** Só o dono separa (passo 2) |
 | Projeto Firebase | `google-services.json` | ✅ **Separado em 07/09/2026** — projeto próprio `soulmon-app` (passo 4 feito) |
-| `virus`/`data`/`vaccine` | `types/attributes.ts` | ⚪ Mantidos DE PROPÓSITO — palavras genéricas, em dezenas de arquivos, e o jogador nunca as vê (ele lê Poder/Harmonia/Benevolência) |
+| `power`/`harmony`/`benevolence` | `types/attributes.ts` | ⚪ Mantidos DE PROPÓSITO — palavras genéricas, em dezenas de arquivos, e o jogador nunca as vê (ele lê Poder/Harmonia/Benevolência) |
 
 **O que sobra depende do painel do Cloudflare e do Firebase — não do código.**
 

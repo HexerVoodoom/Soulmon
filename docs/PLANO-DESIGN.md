@@ -237,9 +237,9 @@ A onda que conserta os **bugs de identidade** (§4) e a que resolve os spinners.
    já são SVG, já são nossos, e o conflito PNG×SVG na mesma tela de Evolução é o
    bug mais visível do inventário. `types/attributes.ts` passa a apontar para
    `AlignmentIcons`.
-3. **Chips de atributo** (`chip-virus/data/vaccine`): são **item de inventário**
+3. **Chips de atributo** (`chip-power/harmony/benevolence`): são **item de inventário**
    = conteúdo do visor. Ficam pixel, mas re-desenhados no mesmo grid de 4px que
-   os sprites, e os emojis 🦠/💾/💉 do `foodInventory` saem em favor deles.
+   os sprites, e os emojis 👊/🎶/🤲 do `foodInventory` saem em favor deles.
 4. **Um único componente de carregamento**: `SmLoading.tsx`, animação de
    varredura do visor em `steps()`. Os 4 spinners lucide (`Loader`, `Loader2`,
    `LoaderCircle`×3) morrem.
@@ -248,7 +248,7 @@ A onda que conserta os **bugs de identidade** (§4) e a que resolve os spinners.
    mostra a varredura. **Fim da tela branca na navegação** — hoje é o momento em
    que o app parece quebrado.
 
-**Pronto quando**: `grep -r "💎\|🦠\|💾\|💉" src --include=*.tsx` = 0 fora de
+**Pronto quando**: `grep -r "💎\|👊\|🎶\|🤲" src --include=*.tsx` = 0 fora de
 teste; `grep -c "fallback={null}" src/App.tsx` = 0; `lucide-react` some de
 `package.json`… ou quase (ver Onda 5).
 
@@ -434,7 +434,7 @@ sobreviventes, reescritos no kit). Não há terceira linguagem no fim deste plan
 - 🍴 e os demais ícones de **traço de nascimento** em `StatsPage` → conjunto
   Material fixo, um por traço (`restaurant`, `favorite`, `shield`, `casino`,
   `wb_twilight`)
-- 🦠/💾/💉 dos chips de atributo → sprites pixel do inventário (§3, Onda 3)
+- 👊/🎶/🤲 dos chips de atributo → sprites pixel do inventário (§3, Onda 3)
 - 🔒 dos itens travados da loja → `lock`
 - Os emojis de rótulo de `constants/labels.ts`, `GuideModal` (24) e `HelpModal`
   (35) quando estiverem marcando **seção** — viram `SmIcon`

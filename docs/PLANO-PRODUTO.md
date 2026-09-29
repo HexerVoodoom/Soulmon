@@ -243,7 +243,7 @@ Ordenado por relação impacto/custo, para depois da instrumentação. Os itens 
 3. **Slot do dia único.** (M) Numa segunda que também seja dia de relatório e de pilha, o usuário vê 4 cards de meta-gestão antes da primeira tarefa. Prioridade fixa (HP > triagem > semanal > recomeço), renderizar só o primeiro, resto em "+2 avisos".
 4. **Quick-add como caminho primário da criação.** (P) O campo já existe, mas convive com o formulário completo aberto. Reduz atrito da ação que gera o north star.
 5. **Alimentar em 1 toque.** (P) Hoje são 2–3 toques via `ItemsWindow`; é a ação de cuidado mais frequente do gênero.
-6. **Esconder atributos vírus/dado/vacina na criação** até `unlockedEvolutions.length > 1`. (P) Quem nunca viu uma evolução não sabe o que significam.
+6. **Esconder atributos poder/harmonia/benevolência na criação** até `unlockedEvolutions.length > 1`. (P) Quem nunca viu uma evolução não sabe o que significam.
 7. **Tokens de cor hardcoded** (`#22A900`, `#d9a441` em `TriagePile`) e convivência de `sm-card` com `sm-px-card`. (P) Mesma classe do footgun 10.
 8. **Piso tipográfico da pixel font.** (P) Rótulos a 8–11px em Silkscreen; texto funcional deveria ficar ≥12px, com contraste verificado por pixel.
 9. **Haptics + `prefers-reduced-motion`** na celebração de conclusão. (M)

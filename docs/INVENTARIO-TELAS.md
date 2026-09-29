@@ -63,7 +63,7 @@ src/assets/soulmon/icons/games/*.png       5
 Fora dessa pasta, mas usados como ícone na UI:
 
 ```
-src/assets/icons/                          8  (confetti-burst, icon-chip-{virus,data,vaccine},
+src/assets/icons/                          8  (confetti-burst, icon-chip-{power,data,benevolence},
                                                icon-heart-item, icon-trophy-{bronze,silver,gold})
 src/assets/soulmon/evolution/              4  (node-current, node-forecast, node-locked, …)
 src/assets/soulmon/buttons/               13
@@ -88,7 +88,7 @@ Total de PNG em src/assets/soulmon/       158
 | `DailyReportModal.tsx` | close, activities, heart-item, wake, star, cloud-rain, heart-handshake, confetti-burst |
 | `ActivitiesPage.tsx` | game-activities, game-dungeon, game-dino, game-rps, game-tournament, chevron-right |
 | `CompanionHUD.tsx` | items, bath, sleep, wake |
-| `ItemsWindow.tsx` | close, heart-item, chip-virus, chip-data, chip-vaccine |
+| `ItemsWindow.tsx` | close, heart-item, chip-power, chip-harmony, chip-benevolence |
 | `CreditsModal.tsx` | gem, heart-item, reset, close |
 | `RPSGame.tsx` | game-rps, game-tournament, skull, close |
 | `AccountSection.tsx` | shield, reset, exit, gem |

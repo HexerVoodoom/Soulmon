@@ -1,4 +1,6 @@
 # F — Conteúdo de longo prazo D30–D90 (fatos + contas)
+
+> Termos renomeados em 29/09/2026: vírus→poder, dado→harmonia, vacina→benevolência.
 ## Bits — fontes
 Funil único App.tsx handleEarnGamePoints (~2477) com minigameMultiplier (petNeeds.ts). Dino: DinoGame.tsx:187 floor(score/100), sem cap. PPT: RPSGame.tsx:33 MATCH_POINTS=5, sem cap. Masmorra: dungeon.ts TIER_BASE baby-i 2/baby-ii 3/rookie 4/champion 6/ultimate 9/mega 13 = 37/andar nível 1; ptsMult=1+0.12*(level-1) (buildDungeonWave); clearBonus DungeonGame.tsx:49 = 10+5*(f-1) → 100/run; sem cap de runs (dungeon.ts:439). Pesadelos nightmares.ts:124 REWARD_TABLE 4/7/11, NIGHTMARES_PER_NIGHT=1 (:101), App.tsx:3104. Presentes community.js:636 20 Bits 1×/dia/amigo, teto 5 amigos (:608) → 100/dia. Câmbio CREDIT_TO_BITS=10 (currencies.ts:138), BITS_EXCHANGE, App.tsx:2545.
 ## Bits — sumidouros (shop.ts)

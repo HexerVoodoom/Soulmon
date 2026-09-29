@@ -1,5 +1,7 @@
 # DigiApp - Backlog e Documentação de Build
 
+> Termos renomeados em 29/09/2026: vírus→poder, dado→harmonia, vacina→benevolência.
+
 ## 📋 Status Atual da Implementação
 
 ### ✅ Completamente Implementado

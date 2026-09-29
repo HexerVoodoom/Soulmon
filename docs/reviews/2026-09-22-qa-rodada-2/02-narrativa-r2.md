@@ -1,5 +1,7 @@
 # QA Rodada 2 — Narrativa (squad-narrativa inline) — 22/09/2026
 
+> Termos renomeados em 29/09/2026: vírus→poder, dado→harmonia, vacina→benevolência.
+
 Repo `D:\Soulmon\repo`, branch `qa/rodada-2-2026-09-22`, HEAD `a6c1cd8a`. Papéis exercidos inline: loremaster · narrative-critic (bloqueante, 8 lentes) · copy-redator · ip-brand-guardian · behavioral-psychologist · guarda-linha-vermelha. Fontes: bíblia §1, §2 (L1..L12), §5.4, §5.10, §12, §13, §14, §17; `REGISTRO-DE-DECISOES.md` §14.1–14.4; código citado por SÍMBOLO.
 
 **Verificação adversarial da Rodada 1 nesta disciplina:** o fecho novo da ficha (`PLAY-FICHA.md` §1.3/§2.3) passa nas 12 leis; o banner com `changed` passa; `"I missed you!"`/`"I miss you..."` saíram do widget de verdade (`grep -c "miss" WidgetRenderer.kt` → só em comentário-lápide). **Uma aprovação da R1 está errada** (achado A2 abaixo): `06-guardas-squads-r1.md` deu "ok — L3 permite" para *"Se você se afasta, ela recua…"* sem abrir `ABSENCE_FORGIVENESS_DAYS`. O guard `narrativa.contract.test.ts` não é tautológico (regexes reais, exceções por arquivo, 3º teste reprova exceção que sobrou), mas **não alcança nenhuma das 4 superfícies deste relatório** — fechado em (5).

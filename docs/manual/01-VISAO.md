@@ -501,14 +501,14 @@ O que está aberto e **depende do dono** está na seção 3 de
   widgets, overlay e push. Nenhuma regra de jogo mudou com ela — o que mudou de
   regra está em [`02`](02-REGRAS-DE-NEGOCIO.md) (§22, §28, §57-A, §57-B).
 - **A marca `Soulmon` é o nome canônico de uma criatura da Bandai** (Champion,
-  Fantasma, Virus), verificado na enciclopédia oficial em 21/09/2026 — achado do
+  Fantasma, Power), verificado na enciclopédia oficial em 21/09/2026 — achado do
   parecer de PI sobre a bíblia (`NARRATIVA-E-UNIVERSO.md` §14, **P8**). Nome
-  exato, no gênero em que a confusão é máxima, num app que usa vírus/dado/vacina
+  exato, no gênero em que a confusão é máxima, num app que usa poder/harmonia/benevolência
   e a escada rookie→champion→ultimate→mega. Junto: `Serah` e `Pyraka` nas 9
-  linhas, `Zeed` nos prefixos de mega, e vírus/dado/vacina visíveis em 7 famílias
+  linhas, `Zeed` nos prefixos de mega, e poder/harmonia/benevolência visíveis em 7 famílias
   de superfície. ⚰️ **Deixou de depender do dono em 21/09/2026**: ele decidiu
   que *"Soulmon é o nome do nosso app e personagens próprios"* — o nome **fica**,
-  P8 fechada, e os nomes de PI ficam **todos** (`Vírus/Dado/Vacina`, `Glitchtama`,
+  P8 fechada, e os nomes de PI ficam **todos** (`Poder/Harmonia/Benevolência`, `Glitchtama`,
   `Serah`, `Pyraka`, `Zeed`; P1, P5, P9, P10 fechadas). A medição acima continua
   verdadeira e fica registrada **para ninguém reabrir como novidade**; o gatilho
   de revisão é comunicação formal de titular ou de loja. Registro canônico, com a

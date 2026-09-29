@@ -286,8 +286,8 @@ errou o tamanho: a árvore inteira acaba em 14 dias perfeitos, não em ~100.
 - **Aceite:** um único símbolo decide o gate; teste que lê `FORM_REQUIREMENTS` e o gate e exige que concordem.
 
 ### WP4.2 · Ultra sem degeneração forçada — M · **decisão do dono** (é bug de desenho)
-- **Evidência:** anexo F §4: `getNextEvolution` (`dailyReset.ts:86-89`) exige `mega-virus`, `mega-data` **e** `mega-vaccine` em `unlockedEvolutions`; mega→mega não existe; o único caminho é `getPreviousForm` em HP=0 (`:96`, `:664`) — ~8 dias perdendo coração de propósito, com o teto de 1/dia. Contradiz a tese e não é explicado em lugar nenhum.
-- **Proposta:** ultra = estar em **qualquer** mega + `perfectDays` ≥ gate de WP4.1 + **os três atributos** (vírus/dado/vacina) acima de um piso — os atributos vêm da **categoria** das tarefas (`CLAUDE.md` 🌿), então o caminho para ultra é **diversificar o que se cuida**, não perder HP. É a fusão dos 3 Megas do conceito original (`CLAUDE.md`, seção de nomes) contada pelo cuidado, não pela queda.
+- **Evidência:** anexo F §4: `getNextEvolution` (`dailyReset.ts:86-89`) exige `mega-power`, `mega-harmony` **e** `mega-benevolence` em `unlockedEvolutions`; mega→mega não existe; o único caminho é `getPreviousForm` em HP=0 (`:96`, `:664`) — ~8 dias perdendo coração de propósito, com o teto de 1/dia. Contradiz a tese e não é explicado em lugar nenhum.
+- **Proposta:** ultra = estar em **qualquer** mega + `perfectDays` ≥ gate de WP4.1 + **os três atributos** (poder/harmonia/benevolência) acima de um piso — os atributos vêm da **categoria** das tarefas (`CLAUDE.md` 🌿), então o caminho para ultra é **diversificar o que se cuida**, não perder HP. É a fusão dos 3 Megas do conceito original (`CLAUDE.md`, seção de nomes) contada pelo cuidado, não pela queda.
 - **Aceite:** teste que prova que ultra é alcançável **sem** `getPreviousForm` ser chamado; `EvolutionPage` mostra os 3 pisos como o horizonte (guia #50).
 
 ### WP4.3 · Vínculo depois do nível 13 — M

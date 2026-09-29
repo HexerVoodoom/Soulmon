@@ -63,7 +63,7 @@ swords, task_alt` — contando a nav; nenhum fora do subset; os outros traços/r
 **Escala inteira em toda arte:** sprite 256² a **128** (0,5×) no vidro 192² do nascimento (o quadrado 192 contém 128 — corte 0 %);
 256² a **64** (0,25×) nos mini-visores 64² do bestiário e nos slots 64² do álbum — **corte 0,00 % nas 36 artes de
 `DUNGEON_LINE_SPRITES`** — 33 de quadro único; **3 são tiras** (`serah-rookie/-champion/-ultimate`, X1: cabem inteiras, a métrica de corte não vê tira; fora da amostra, pedidas à `squad-arte`) — (reamostragem `any(4×4)` do alfa contra a máscara do quadrado 64 com raio 4: nenhuma arte toca os
-cantos; a mais larga, `kaelen-champion-virus` x 8–245 / y 12–241, vira x 2–61 / y 3–60 a 64, ainda dentro do raio) e nas 4
+cantos; a mais larga, `kaelen-champion-power` x 8–245 / y 12–241, vira x 2–61 / y 3–60 a 64, ainda dentro do raio) e nas 4
 `igni-*` do álbum (x 0–255, y 20–235 → y 5–59: a largura inteira cabe, os cantos ficam livres).
 **Fidelidade (`cmp.py`, 7 pares):** a sequência dos marcadores de foco (`.fo`) é **idêntica nos 7**; os `aria-label` diferem só em "Serah — rookie" → "Nautilu — rookie" (X1, a troca de amostra) e no nome no vidro do nascimento; a sequência de `role` é
 idêntica em 4 e difere em 3 por UMA adição declarada — `role=img` + `aria-label` = nome no vidro do cartão de nascimento

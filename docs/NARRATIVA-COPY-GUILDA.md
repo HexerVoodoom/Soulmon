@@ -4,7 +4,7 @@
 
 **Regras de leitura.** Todo texto nasce em EN e vem com o par PT (`language === 'pt-BR' ? … : …`). `{x}` é placeholder: números vêm das constantes (`GUILD_MAX_MEMBERS`, `RAID_EMBLEMS`, `RAID_EMBLEMS_FLOOR`, `GUILD_TIDE_WEEKS`), nunca literais. Linhas "SILÊNCIO" significam **não desenhar nada** (nem placeholder, nem ícone vazio). Fala do pet passa por `speak()` (sem emoji); nenhuma string daqui tem emoji. Nenhuma frase é condicionada ao tempo de ausência. Leis: L1..L12 de `NARRATIVA-E-UNIVERSO.md` §2, LV-G1..G10 de `PLANO-GUILDA.md` §13, "§13/§17" da bíblia.
 
-**Nunca escrever na Guilda** (a régua `guildSemCobranca.contract.test.ts` deve travar): "clã/tribo/facção/time/equipe", "líder/chefe/dono", "faltou", "saiu", "abandonou", "precisa de você", "faltam N", percentual, número por pessoa, número de dano, `Weave`, `Vírus/Vacina`, `Glitchtama`, "outro bosque", "adversário".
+**Nunca escrever na Guilda** (a régua `guildSemCobranca.contract.test.ts` deve travar): "clã/tribo/facção/time/equipe", "líder/chefe/dono", "faltou", "saiu", "abandonou", "precisa de você", "faltam N", percentual, número por pessoa, número de dano, `Weave`, `Poder/Benevolência`, `Glitchtama`, "outro bosque", "adversário".
 
 
 ## 1. Lotes e NPC (mapa)

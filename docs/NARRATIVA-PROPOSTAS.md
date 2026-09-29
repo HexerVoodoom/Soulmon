@@ -1,5 +1,7 @@
 # Propostas de narrativa — **depende do dono**
 
+> Termos renomeados em 29/09/2026: vírus→poder, dado→harmonia, vacina→benevolência.
+
 > **Dono:** `soulmon-loremaster` · **Data:** 21/09/2026 · **Estado:** vivo
 > **Não cobre:** regra de jogo. **Nada aqui está implementado.**
 > **Precedência:** código > teste > `CLAUDE.md` > manual > a bíblia > este doc.

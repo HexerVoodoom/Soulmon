@@ -1,5 +1,7 @@
 # Guilda 05 — Desenho de servidor (Bosque + raid cooperativa)
 
+> Termos renomeados em 29/09/2026: vírus→poder, dado→harmonia, vacina→benevolência.
+
 Autor: arquiteto de servidor. Data: 29/09/2026. **Etiqueta: PLANO.** A Camada 3
 está congelada (`REGISTRO-DE-DECISOES.md` §5.6, gatilho 10 usuários × 14 dias);
 nada aqui autoriza código. O objetivo é que, no dia em que descongelar, o WPG-1

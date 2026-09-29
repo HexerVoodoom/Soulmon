@@ -449,7 +449,7 @@ entrada** no dia em que 48 virar degrau oficial.
 
 ### 6.2 EMOJI E ARTE NÃO SÃO TEXTO — nem ícone
 
-O emoji dos consumíveis da Loja (🦠 💾 💉 💗) é **conteúdo** — é o item que
+O emoji dos consumíveis da Loja (👊 🎶 🤲 💗) é **conteúdo** — é o item que
 está na pastinha, não um símbolo de sistema — então não vira Material Symbols.
 Mas ele também não pode ser dimensionado pela escala de TEXTO: o motor de
 layout trata emoji como glifo, e um `font-size: var(--sm2-text-2xl)` põe 32px

@@ -1,5 +1,7 @@
 # QA-10 — As quatro squads temáticas: entregue × backlog × cego
 
+> Termos renomeados em 29/09/2026: vírus→poder, dado→harmonia, vacina→benevolência.
+
 > Somente leitura, 21/09/2026, sobre `D:\Soulmon\repo`. Regra: `caminho` + SÍMBOLO, sem número
 > de linha; todo número traz o comando que o produziu. Precedência: código > teste > `CLAUDE.md`
 > > manual > doc da squad.

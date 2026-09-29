@@ -1,5 +1,7 @@
 # Gap Analysis — app atual × referências v1.2
 
+> Termos renomeados em 29/09/2026: vírus→poder, dado→harmonia, vacina→benevolência.
+
 > `design-critic`, feita **vendo** as imagens (`docs/ui-refs/REF-*.png`) contra os
 > screenshots reais em `E:\pw\shots\`. Corrige a SPEC onde a descrição textual
 > escondeu o que a imagem mostra.

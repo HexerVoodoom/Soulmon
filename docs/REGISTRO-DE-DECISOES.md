@@ -1,5 +1,7 @@
 # Registro de decisões — o que a pesquisa disse, o que fizemos com isso, e como saberemos se erramos
 
+> Termos renomeados em 29/09/2026: vírus→poder, dado→harmonia, vacina→benevolência (§14.5). O texto histórico abaixo mantém os nomes da época.
+
 > **Para que serve.** Consolidar, num lugar só, cada escolha de produto do Soulmon
 > ao lado da evidência que a sustentou, da alternativa que perdeu e — a parte que
 > mais importa — **do que provaria que a escolha está errada**.
@@ -983,6 +985,10 @@ encenar espera, a decisão volta à mesa.
 
 ### 14.4 Os nomes de propriedade intelectual ficam todos como estão
 
+> ⚰️ **Lápide (29/09/2026):** a parte "rótulo `Vírus/Dado/Vacina`" desta
+> decisão foi REVERTIDA pelo dono — ver §14.5. O resto (Glitchtama, Serah,
+> Pyraka, Zeed) continua valendo.
+
 **A decisão:** *"nenhum, aceito todos assim."* Ficam `Vírus/Dado/Vacina` como
 rótulo, `Glitchtama`, `Serah`, `Pyraka` e `Zeed`. As propostas **P1, P5, P9 e
 P10 estão fechadas**.
@@ -1002,6 +1008,40 @@ novo é escolha nova, e ela passa a ser visível em vez de silenciosa.
 
 **Gatilho de revisão:** o mesmo de 14.1 — comunicação formal de titular ou de
 loja, ou reprovação de ficha.
+
+### 14.5 Os caminhos viram Poder / Harmonia / Benevolência (29/09/2026) — reverte parte da 14.4
+
+**O pedido, literal:** *"remova toda menção a virus, data e vacina e substitua
+por poder, harmonia e benevolência"*.
+
+**A decisão:** a correspondência é pela ORDEM dita (premissa registrada):
+vírus → **Poder**, dado → **Harmonia**, vacina → **Benevolência** (EN Power /
+Harmony / Benevolence). Em código: ids `power` / `harmony` / `benevolence`,
+formas `champion|ultimate|mega-power|harmony|benevolence` (`rookie` e `ultra`
+não mudam), campos `powerPoints` / `harmonyPoints` / `benevolencePoints`,
+chips 👊 / 🎶 / 🤲 (eram 🦠 / 💾 / 💉), arquivos de arte e drawables
+renomeados. `Ruptura / Trama / Guarda` seguem vocabulário de MUNDO, com o
+mapeamento declarado: Ruptura = Poder, Trama = Harmonia, Guarda = Benevolência.
+
+**O que mudou desde que a alternativa perdeu (14.4, 21/09/2026):** o dono
+decidiu. Não há evidência nova de telemetria (não há usuários); a mudança é de
+escolha, e o que pesava contra ela em 21/09 (a tríade é assinatura de outra
+franquia) só reforça a direção nova.
+
+**Como o save antigo sobrevive:** `src/utils/branchMigration.ts`
+(`migrateBranchIds`, pura e idempotente) roda em toda porta de entrada — load
+do localStorage e da nuvem (`hydrateSave`), `adoptCloudSave` e o overlay
+(`desktop/renderer/src/cloudSync.ts`, importando). No servidor, `VALID_FORM_ID`
+aceita só ids novos; as chaves KV já gravadas com id antigo (cache de sprite e
+o contador vitalício por forma `ent.aiForms`) são LIDAS por compatibilidade em
+`functions/api/_branchLegacy.js`, para não cobrar de novo um sprite pago nem
+zerar o teto por forma.
+
+**Réguas:** `src/utils/branchRename.contract.test.ts` (nenhum id/rótulo/emoji
+antigo fora da migração), `src/narrativa.contract.test.ts` (o rótulo antigo
+passa de exceção aceita a VETADO), `src/utils/branchMigration.test.ts`.
+
+**Gatilho de revisão:** nova decisão do dono.
 
 ## 15. Bestiário — nome de personagem de franquia no prompt: VETADO (27/09/2026)
 

@@ -62,7 +62,7 @@ Web Push VAPID + FCM nativo · i18n pt-BR/en-US · Vitest (~6 arquivos de teste)
 3. **Dia perfeito** = cumprir o requisito + energia cheia → +1 ponto de evolução.
 4. Na virada do dia: não cumprir → perde **corações (HP)** proporcional ao não feito.
 5. HP 0 → **degeneração** (a criatura regride de forma).
-6. Cuidado paralelo: alimentar (atributos vírus/dado/vacina → galho evolutivo),
+6. Cuidado paralelo: alimentar (atributos poder/harmonia/benevolência → galho evolutivo),
    fazer carinho (cura HP, máx 1 coração/dia), limpar cocô, banho, dormir.
 7. Evolução ramificada por atributo + itens de evolução + trava de evolução manual.
 

@@ -58,7 +58,7 @@ Distinga com rigor três níveis, porque o custo de remediação é muito difere
 ### 3. Auditoria de mecânica vs. expressão
 Mecânica de jogo geralmente não é protegível; **expressão** (nome, arte, texto,
 personagem, som, escada de nomes) é. Separe explicitamente: o que o Soulmon pode manter
-como mecânica (cuidar, evoluir por atributo, degenerar, ramos vírus/dado/vacina) do que
+como mecânica (cuidar, evoluir por atributo, degenerar, ramos poder/harmonia/benevolência) do que
 precisa de expressão nova. Isso evita que o produto se mutile achando que precisa jogar
 fora o design inteiro.
 
@@ -82,7 +82,7 @@ fora o design inteiro.
 Não entregue só a lista do que apagar. Proponha:
 - **Escada de estágios original** (substituindo digiegg→baby→rookie→…→ultra) com nomes
   coerentes com a tese "alma que cresce".
-- **Sistema de atributos original** (substituindo vírus/dado/vacina) — coordene com
+- **Sistema de atributos original** (substituindo poder/harmonia/benevolência) — coordene com
   `soulmon-monster-taming-designer`, que desenha as criaturas.
 - **Convenção de nomenclatura de criaturas** que soe própria e não termine em "-mon"
   por reflexo. Avalie inclusive se "Soulmon" em si carrega risco de confusão de marca —

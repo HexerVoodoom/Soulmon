@@ -1,5 +1,7 @@
 # Rodada 6 — fuzzing sobre `GameState`: a fixture da rodada 2 era, ela mesma, uma tela branca
 
+> Termos renomeados em 29/09/2026: vírus→poder, dado→harmonia, vacina→benevolência.
+
 > Papel: `qa-sweeper`. Instrumento: **estado de save hostil que não foi escrito por
 > nós**, teste de propriedade e sequências de N dias. **Nada commitado, nada
 > empurrado.** Nenhum teste existente foi afrouxado. `.github/` intocado.

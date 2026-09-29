@@ -1,5 +1,7 @@
 # Corvinho + conta de administrador — fatos medidos (29/09/2026)
 
+> Termos renomeados em 29/09/2026: vírus→poder, dado→harmonia, vacina→benevolência.
+
 > Registro de levantamento (só-leitura). Símbolos por `arquivo` + SÍMBOLO. Nada aqui é decisão de regra.
 
 ## O corvinho
@@ -10,7 +12,7 @@
 - O jogo já recolore por CSS (`demoTintFilter`, `DEMO_TINTS`); aqui a recoloração é programática (PIL 12, sem numpy, sem ImageMagick).
 
 ## Árvore de 11 formas
-- `src/types/progression.ts` › `FORM_REQUIREMENTS`: `rookie`, `{champion|ultimate|mega}-{virus|data|vaccine}`, `ultra`.
+- `src/types/progression.ts` › `FORM_REQUIREMENTS`: `rookie`, `{champion|ultimate|mega}-{power|data|benevolence}`, `ultra`.
 - `getSpriteForStage(stage, demoCharacterId?)` (`src/utils/sprites.ts`): linha pronta → `SOULMON_SPRITES[key]` (11 PNGs genéricos) → `legacySpriteForStage`. Save: `soulmonStages` (nome/descrição/prompt por forma, não pixels), `spriteLibrary` (URL por forma), `demoCharacterId`, `accountTier`, `currentBranch`.
 - `handleUpgradeRevealed` (`App.tsx`) força `accountTier:'paid'` e troca só a criatura.
 

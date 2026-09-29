@@ -1,5 +1,7 @@
 # Rodada 9 — O portão do dinheiro
 
+> Termos renomeados em 29/09/2026: vírus→poder, dado→harmonia, vacina→benevolência.
+
 **Pergunta da rodada:** o caminho que decide se alguém pagou é visto por alguém?
 **Resposta curta:** o lado **Google Play — que é o do app Android, isto é, o de
 todo mundo que paga hoje — não era visto por teste nenhum.** `48,5% → 90,8%`, e

@@ -250,7 +250,7 @@ a frase correspondente sai da ficha **antes** do próximo envio.
 | Escudos consumidos sozinhos | `applyMissedDay`; `REST_SHIELD_*` | `CLAUDE.md` › 🛡️ |
 | "perdoa um dia sem marcar por semana, sozinho; depois de dois seguidos, pergunta" / versão de 5 minutos | `REST_DAYS_PER_WEEK` = 1 (a 1ª perda da semana é absorvida na virada); `MAX_HEARTS_LOST_PER_DAY`; `MISS_INTERVENTION_AT` = 2; `needsIntervention`; `applyMissedDay` | `CLAUDE.md` › 🚫 Never miss twice. A ficha NÃO diz mais "não conta os dias que você faltou": o app conta (`CONSTANCY_WINDOW_DAYS`), o que ele não faz é cobrar (L6) |
 | Fecho "nasce das suas respostas — e cresce com o que você faz" | `ORACLE_QUESTIONS`; `perfectDays` / `handleEvolve` | sem L2 (espelho) nem L11 (espera/saudade); "cresce" descreve `perfectDays` acumulando |
-| Comida inclina o galho | `careRules.ts`; atributos vírus/dado/vacina | `CLAUDE.md` › 🍎 |
+| Comida inclina o galho | `careRules.ts`; atributos poder/harmonia/benevolência | `CLAUDE.md` › 🍎 |
 | Carinho, banho, sono, recolher | `careRules.ts`, `poopDrain.ts` | `CLAUDE.md` › 🫶 🚿 💤 💩 |
 | Chat: fala do que sente, não do que você fez | `functions/api/chat.js` (cláusula SAFETY); `src/utils/chatSafety.ts`; bíblia §5.10/§13 | IA sem revisão humana — declarado em §5 abaixo |
 | "Num dia sem o bastante" recua para uma forma que se sustenta com menos; nada se apaga | degeneração por HP 0 (`CLAUDE.md` › ❤️); `applyFreshStart` nunca toca `perfectDays`/marcos | frase-modelo da bíblia §13 ✅. ⚠️ Dizia "Se você se afasta" até 22/09/2026 (QA R2 A2): afastar-se é o que NÃO custa (`ABSENCE_FORGIVENESS_DAYS` = 2), e L4 proíbe atribuir causa — a causa real é o dia sem o bastante |

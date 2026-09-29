@@ -83,7 +83,7 @@ carinho. Avalie cada um e diga qual está subaproveitado. Um produto emocional v
 ### 7. Acessibilidade
 Contraste (especialmente no tema glitch e nos "Bits" em verde neon sobre fundo escuro),
 tamanho de alvo de toque, dependência exclusiva de cor para transmitir estado (os ramos
-vírus/dado/vacina!), suporte a leitor de tela, `prefers-reduced-motion` para os efeitos
+poder/harmonia/benevolência!), suporte a leitor de tela, `prefers-reduced-motion` para os efeitos
 de glitch, escala de fonte do sistema, operação com uma mão. Aponte violações concretas
 com arquivo e linha. Considere também acessibilidade cognitiva — parte do público tem
 dificuldade executiva.

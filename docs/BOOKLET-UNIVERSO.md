@@ -332,9 +332,9 @@ E uma noite não registrada simplesmente não existe: a Malha não anota ausênc
 
 <p align="center">
   <img src="../src/assets/soulmon/lines/full/orrin-rookie.png" alt="Primeira forma" width="112">
-  <img src="../src/assets/soulmon/lines/full/orrin-champion-data.png" alt="Segunda forma" width="122">
-  <img src="../src/assets/soulmon/lines/full/orrin-ultimate-data.png" alt="Terceira forma" width="112">
-  <img src="../src/assets/soulmon/lines/full/orrin-mega-data.png" alt="Quarta forma" width="158">
+  <img src="../src/assets/soulmon/lines/full/orrin-champion-harmony.png" alt="Segunda forma" width="122">
+  <img src="../src/assets/soulmon/lines/full/orrin-ultimate-harmony.png" alt="Terceira forma" width="112">
+  <img src="../src/assets/soulmon/lines/full/orrin-mega-harmony.png" alt="Quarta forma" width="158">
   <img src="../src/assets/soulmon/lines/full/orrin-ultra.png" alt="Quinta forma" width="126">
 </p>
 <p align="center"><sub><i>Os cinco degraus de uma linha. Nenhum é melhor que o anterior: são feitios diferentes de ocupar espaço.</i></sub></p>
@@ -426,9 +426,9 @@ E os três **galhos** — o formato do que assentou fundo:
   fechado, massa, fagulha interna vista por frestas.
 
 <p align="center">
-  <img src="../src/assets/soulmon/items/item-chip-virus.png" alt="Ruptura" width="72">
-  <img src="../src/assets/soulmon/items/item-chip-data.png" alt="Trama" width="72">
-  <img src="../src/assets/soulmon/items/item-chip-vaccine.png" alt="Guarda" width="72">
+  <img src="../src/assets/soulmon/items/item-chip-power.png" alt="Ruptura" width="72">
+  <img src="../src/assets/soulmon/items/item-chip-harmony.png" alt="Trama" width="72">
+  <img src="../src/assets/soulmon/items/item-chip-benevolence.png" alt="Guarda" width="72">
 </p>
 <p align="center"><sub><i>Ruptura · Trama · Guarda.</i></sub></p>
 
@@ -991,9 +991,9 @@ absence.
 
 <p align="center">
   <img src="../src/assets/soulmon/lines/full/orrin-rookie.png" alt="First form" width="112">
-  <img src="../src/assets/soulmon/lines/full/orrin-champion-data.png" alt="Second form" width="122">
-  <img src="../src/assets/soulmon/lines/full/orrin-ultimate-data.png" alt="Third form" width="112">
-  <img src="../src/assets/soulmon/lines/full/orrin-mega-data.png" alt="Fourth form" width="158">
+  <img src="../src/assets/soulmon/lines/full/orrin-champion-harmony.png" alt="Second form" width="122">
+  <img src="../src/assets/soulmon/lines/full/orrin-ultimate-harmony.png" alt="Third form" width="112">
+  <img src="../src/assets/soulmon/lines/full/orrin-mega-harmony.png" alt="Fourth form" width="158">
   <img src="../src/assets/soulmon/lines/full/orrin-ultra.png" alt="Fifth form" width="126">
 </p>
 <p align="center"><sub><i>The five steps of one line. None is better than the last: they are different ways of occupying space.</i></sub></p>
@@ -1084,9 +1084,9 @@ And the three **branches** — the shape of what settled deep:
   Closed body, mass, inner ember seen through gaps.
 
 <p align="center">
-  <img src="../src/assets/soulmon/items/item-chip-virus.png" alt="Rupture" width="72">
-  <img src="../src/assets/soulmon/items/item-chip-data.png" alt="Braid" width="72">
-  <img src="../src/assets/soulmon/items/item-chip-vaccine.png" alt="Ward" width="72">
+  <img src="../src/assets/soulmon/items/item-chip-power.png" alt="Rupture" width="72">
+  <img src="../src/assets/soulmon/items/item-chip-harmony.png" alt="Braid" width="72">
+  <img src="../src/assets/soulmon/items/item-chip-benevolence.png" alt="Ward" width="72">
 </p>
 <p align="center"><sub><i>Rupture · Braid · Ward.</i></sub></p>
 
@@ -1373,10 +1373,10 @@ mentira que o `CLAUDE.md` persegue nos números.
 - **Os elementos `planta` e `industrial`** não têm sigilo em
   `src/assets/soulmon/sigilos/` (os outros seis dos oito têm). A legenda da
   figura diz isso em vez de a tabela ficar com duas células vazias.
-- **A escada de formas** usa a linha `orrin` (**Akashaoi**), no galho `data`
+- **A escada de formas** usa a linha `orrin` (**Akashaoi**), no galho `harmony` (Harmonia)
   (**Trama**), por dois motivos medidos: é uma das três linhas com os cinco
   degraus completos em `src/assets/soulmon/lines/full/`, e é o galho cuja arte é
-  **turquesa** — o galho `virus` da mesma linha é vermelho, e vermelho abaixo de
+  **turquesa** — o galho `power` (Poder) da mesma linha é vermelho, e vermelho abaixo de
   um parágrafo que acabou de dizer que vermelho não é energia viva na Malha
   contradiz o texto na imagem. Os `rookie.png`/`ultra.png` da raiz de
   `src/assets/soulmon/` **são o mesmo arquivo** (arte de demonstração), então não
@@ -1399,9 +1399,10 @@ Três coisas foram deixadas de fora de propósito:
    decididos pelo dono, e usá-los aqui os transformaria em canônicos pela porta
    dos fundos.
 2. **Ruptura / Trama / Guarda aparecem como vocabulário de MUNDO**, que é o que
-   o dono decidiu em 21/09/2026. Os rótulos da interface continuam sendo
-   Vírus/Dado/Vacina — este livrinho não os contradiz, porque não fala de
-   interface.
+   o dono decidiu em 21/09/2026. Os rótulos da interface são Poder / Harmonia /
+   Benevolência desde 29/09/2026 (eram Vírus/Dado/Vacina; §14.5 do registro) —
+   Ruptura = Poder, Trama = Harmonia, Guarda = Benevolência. Este livrinho não
+   os contradiz, porque não fala de interface.
 3. **A fundamentação junguiana** por baixo da Contraparte (proposta P6) não é
    vocabulário de jogador e não entra num texto que o jogador lê.
 

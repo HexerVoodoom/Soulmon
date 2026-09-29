@@ -245,7 +245,7 @@ coberta em `cloudSync.snapshot.test.ts`), e a releitura antes de gravar existe.
 >   `Math.min(maxEnergy, energy + 1)` **depois** de `feedFood` já ter aplicado o
 >   teto. Davam o mesmo número por sorte de origem — e por baixo havia um
 >   `as unknown as` rodando sobre `undefined` (`DesktopState` não tem
->   `evolutionStage`, `energyPoints`, `virusPoints` nem `totalXP`). A regra
+>   `evolutionStage`, `energyPoints`, `powerPoints` nem `totalXP`). A regra
 >   devolvia energia errada e atributos `NaN`, e **só não aparecia porque o
 >   `menu.ts` jogava tudo fora e recalculava à mão**. A cópia não era redundância
 >   inofensiva: era o curativo que mantinha o cast quebrado invisível. `localFeed`

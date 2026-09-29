@@ -1,5 +1,7 @@
 # Ledger — guarda-permanência (WP4.1–4.8)
 
+> Termos renomeados em 29/09/2026: vírus→poder, dado→harmonia, vacina→benevolência.
+
 Dono: `soulmon-guarda-permanencia`. Anexo: `../F-conteudo.md`.
 É o domínio com os números mais duros do plano — e o eixo mais fraco do produto.
 

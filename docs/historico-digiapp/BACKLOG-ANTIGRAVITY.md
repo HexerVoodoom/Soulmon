@@ -1,5 +1,7 @@
 # 🚀 DigiApp - Backlog de Atualizações para Antigravity
 
+> Termos renomeados em 29/09/2026: vírus→poder, dado→harmonia, vacina→benevolência.
+
 **Data de Última Atualização**: 12 de Janeiro de 2025  
 **Versão Base**: v1.0.5 - Header Redesign com Figma
 

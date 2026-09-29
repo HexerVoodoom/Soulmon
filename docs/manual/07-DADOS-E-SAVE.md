@@ -60,10 +60,10 @@ diz "—", o campo é opcional e o padrão É a ausência.
 | `conquistasHerdadas?` | `AchievementId[]` | Conquistas abertas por gatilho que NÃO existe mais, gravadas UMA vez no load (decisão #30, 21/09/2026). Hoje só `'dias-completos-30'` (ex-`tasks-100`). A única conquista persistida — todas as outras são derivadas. | `src/utils/achievements.ts` (leitura), `hydrateSave` (escrita) | save com o campo mantém (filtrado por `ACHIEVEMENT_IDS`); sem o campo: `['dias-completos-30']` se `gatilhoAntigoTasks100` (≥ 100 em `completedTasks + activityLog`), senão `[]` | sim |
 | `lastDayWasPerfect` | `boolean` | O dia anterior fechou completo. ⚠️ **Escrito e nunca lido** (`grep -rnw lastDayWasPerfect src --include=*.ts --include=*.tsx \| grep -v test` → só tipo, hidrate e a escrita; `lastDayReport.wasPerfect` carrega a mesma informação — QA Rodada 2 `04` §2.1; candidato a morrer). | `src/utils/dailyReset.ts` | `false` | sim |
 | `totalXP` | `number` | XP do Vínculo. O NÍVEL nunca é salvo — é `bondLevelFor(totalXP)`. | `src/utils/bond.ts` | `0` | sim |
-| `virusPoints` · `dataPoints` · `vaccinePoints` | `number` | Os três atributos, que escolhem o galho. | `src/types/attributes.ts` | `0` cada | sim |
-| `attributesSinceLastEvolution` | `{ virus: number; data: number; vaccine: number }` | Atributos ganhos desde a última evolução — é este que decide o galho. | `src/utils/dailyReset.ts` | `{0,0,0}` campo a campo | sim |
-| `evolutionStage` | `string` | Id da forma: `'rookie'`, `'{champion\|ultimate\|mega}-{virus\|data\|vaccine}'`, `'ultra'`. | `src/types/progression.ts` | `'rookie'` se não for string | sim |
-| `currentBranch` | `'virus' \| 'data' \| 'vaccine'` | Galho corrente. | `src/types/progression.ts` | `'data'` para qualquer valor fora do enum | sim |
+| `powerPoints` · `harmonyPoints` · `benevolencePoints` | `number` | Os três atributos, que escolhem o galho. | `src/types/attributes.ts` | `0` cada | sim |
+| `attributesSinceLastEvolution` | `{ power: number; data: number; benevolence: number }` | Atributos ganhos desde a última evolução — é este que decide o galho. | `src/utils/dailyReset.ts` | `{0,0,0}` campo a campo | sim |
+| `evolutionStage` | `string` | Id da forma: `'rookie'`, `'{champion\|ultimate\|mega}-{power\|data\|benevolence}'`, `'ultra'`. | `src/types/progression.ts` | `'rookie'` se não for string | sim |
+| `currentBranch` | `'power' \| 'harmony' \| 'benevolence'` | Galho corrente. | `src/types/progression.ts` | `'harmony'` para qualquer valor fora do enum | sim |
 | `unlockedEvolutions` | `string[]` | Formas já alcançadas (álbum + missões). | `src/utils/missions.ts` | `['rookie']` quando vazio | sim |
 | `formReachedAt?` | `Record<string, string>` | Quando cada forma foi alcançada (dia do jogador). Save antigo não tem, e a data **nunca é inventada**. | `src/utils/collectionDates.ts` | `{}` | sim |
 | `evolutionLocked?` | `boolean` | O cadeado da página de Evolução. | `src/App.tsx` (`handleEvolve`) | — | sim |

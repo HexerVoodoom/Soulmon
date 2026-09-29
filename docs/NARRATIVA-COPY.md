@@ -475,7 +475,7 @@ igual encontre a resposta já escrita, em vez de a frase.
    surpresa e vira mais uma barra para encher. Todo marco desta entrega é de
    **corte fixo** (7/21/66, cinco camadas), nunca de sequência corrente.
 
-6. **Qualquer uso de "Vírus", "Vacina", "Vaccine" (como rótulo), "Glitchtama"
+6. **Qualquer uso de "Poder", "Benevolência", "Benevolence" (como rótulo), "Glitchtama"
    ou "Weave"** — os quatro estão na tabela `DÍVIDA` de
    `src/narrativa.contract.test.ts`, e estar lá significa *decisão do dono
    pendente*, não permissão. Onde a frase precisava do termo, usei o canônico e
