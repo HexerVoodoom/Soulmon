@@ -15,12 +15,24 @@ import { useState } from 'react';
 import { renderWithCss } from '../../test/renderEnv';
 import { AreaScene, type AreaLot } from './AreaScene';
 import { AreaSheet } from './AreaSheet';
+import { NPC_SCALE, NPC_MAX_WIDTH_PCT, NPC_BASE_MAX_WIDTH_PCT } from './npcScale';
 
 const lot = (onOpen: () => void): AreaLot[] => [{
   id: 'exemplo', label: 'Itens', left: '50%', top: '38%', ariaLabel: 'Itens', onOpen,
 }];
 
 describe('AreaScene', () => {
+  it('fundo full screen: a cena é fixed inset:0 e cobre o viewport', () => {
+    const { container } = renderWithCss(<AreaScene areaId="mercado" language="pt-BR" lots={lot(() => {})} />);
+    const sc = container.querySelector('[data-area-scene]') as HTMLElement;
+    expect(sc.style.position).toBe('fixed');
+    expect(sc.style.inset).toMatch(/^0(px)?( 0(px)?){0,3}$/);
+    expect(sc.style.overflow).toBe('hidden');
+    expect(sc.style.zIndex).toBe('0');
+    expect(sc.style.margin).toBe('');
+    expect(sc.style.minHeight).toBe('');
+  });
+
   it('não desenha NPC nenhum fora de uma folha aberta (o anfitrião fixo saiu)', () => {
     const { container } = renderWithCss(
       <AreaScene areaId="mercado" language="pt-BR" lots={lot(() => {})} />,
@@ -147,5 +159,19 @@ describe('AreaSheet', () => {
     expect(container.querySelector('[role="dialog"]')).not.toBeNull();
     fireEvent.click(container.querySelector('[data-area-sheet-backdrop]')!);
     expect(container.querySelector('[role="dialog"]')).toBeNull();
+  });
+});
+
+describe('NPC 1,4x (pedido do dono, 29/09/2026)', () => {
+  it('a constante vale 1.4 e o teto de largura é o de antes vezes ela', () => {
+    expect(NPC_SCALE).toBe(1.4);
+    expect(NPC_BASE_MAX_WIDTH_PCT).toBe(46);
+    expect(NPC_MAX_WIDTH_PCT).toBeCloseTo(64.4, 5);
+  });
+  it('a folha aplica NPC_MAX_WIDTH_PCT no <img> do NPC', () => {
+    const { container } = renderWithCss(<Cenario open />);
+    const img = container.querySelector('[data-area-sheet-npc]') as HTMLElement;
+    expect(img.style.maxWidth).toBe(`${NPC_MAX_WIDTH_PCT}%`);
+    expect(img.style.height).toBe('100%');
   });
 });

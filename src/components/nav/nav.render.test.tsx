@@ -22,6 +22,8 @@ import { CornerLink } from './CornerLink';
 import { AreaTopBar } from './AreaTopBar';
 import { HomeMenuSheet } from './HomeMenuSheet';
 import { AREAS } from '../../navigation';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 const mapProps = { bits: 260, emblems: 12, credits: 3 };
 
@@ -145,6 +147,39 @@ describe('AreaTopBar', () => {
     expect(back.style.background).toBe('transparent');
     fireEvent.click(back);
     expect(onBack).toHaveBeenCalledOnce();
+  });
+
+  it('glifo do voltar: mapa nas ÁREAS, seta por padrão (Pet/Biblioteca/menu da Home)', () => {
+    const glyph = (props: Record<string, unknown>) => {
+      const r = renderWithCss(<AreaTopBar title="T" backLabel="Voltar ao mapa" onBack={() => {}} {...props} />);
+      const svg = r.container.querySelector('[data-area-back]')!.innerHTML;
+      r.unmount();
+      return svg;
+    };
+    const seta = glyph({});
+    const mapa = glyph({ icon: 'map' });
+    expect(seta).not.toBe(mapa);
+    // o glifo `map` da NavGlyphs (dobras do mapa), e a seta não o contém
+    expect(mapa).toContain('M9 4.2v13.2M15 6.6v13.2');
+    expect(seta).not.toContain('M9 4.2v13.2M15 6.6v13.2');
+    // fiação: só a área troca o glifo e fica sobre a cena
+    const app = readFileSync(resolve(__dirname, '../../App.tsx'), 'utf8');
+    expect(app).toContain("icon={area ? 'map' : 'arrow_back'}");
+    expect(app).toContain('overScene={!!area}');
+  });
+
+  it('sobre a cena: tinta clara, scrim, alvo 44px e aria-label do destino', () => {
+    const { container } = renderWithCss(
+      <AreaTopBar title="Mercado" backLabel="Voltar ao mapa" onBack={() => {}} icon="map" overScene />,
+    );
+    const back = container.querySelector('[data-area-back]') as HTMLButtonElement;
+    expect(back.getAttribute('aria-label')).toBe('Voltar ao mapa');
+    expect(back.style.width).toBe('44px');
+    expect(back.style.color).toBe('rgb(233, 245, 242)');
+    expect(container.querySelector('[data-area-topbar-scrim]')).not.toBeNull();
+    expect((container.querySelector('h1') as HTMLElement).style.color).toBe('rgb(233, 245, 242)');
+    const sem = renderWithCss(<AreaTopBar title="Pet" backLabel="Voltar ao início" onBack={() => {}} />);
+    expect(sem.container.querySelector('[data-area-topbar-scrim]')).toBeNull();
   });
 
   it('um <h1> por tela: vira heading só quando a página não tem o seu', () => {
