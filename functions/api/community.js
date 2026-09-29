@@ -24,7 +24,8 @@
 //   POST friends   {id, friendId, remove?} → até 5 amigos
 //   POST gift      {id, friendId}      → 20 bits (1x/dia por amigo; grátis)
 //   GET  gifts     ?id=&claim=1        → lê (e zera) presentes pendentes
-// COOPERATIVO (Fase 4.3 — `docs/PLANO-COOP.md`):
+// COOPERATIVO (Fase 4.3 — `docs/PLANO-COOP.md`) — desde o WPG-1 são ALIASES de
+// `guild.js` (`COOP_ALIASES`), respondendo no envelope antigo `{ group }`:
 //   POST coopCreate  {id, name}        → cria o grupo e devolve o código de convite
 //   POST coopJoin    {id, code}        → entra num grupo com vaga
 //   GET  coop        ?id=              → o grupo de quem pergunta (ou null)
