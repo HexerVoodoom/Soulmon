@@ -275,8 +275,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
         <>
           <p style={para}>
             {L(
-              'Galhos: Vírus, Dado e Vacina — os requisitos são iguais nos três. No empate decide o seu ritmo de cuidado, e nenhum ritmo é melhor.',
-              'Branches: Virus, Data and Vaccine — requirements are identical across all three. Ties are decided by your care rhythm, and no rhythm is better.',
+              'Galhos: Poder, Harmonia e Benevolência — os requisitos são iguais nos três. No empate decide o seu ritmo de cuidado, e nenhum ritmo é melhor.',
+              'Branches: Power, Harmony and Benevolence — requirements are identical across all three. Ties are decided by your care rhythm, and no rhythm is better.',
             )}
           </p>
           <p style={para}>

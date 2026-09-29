@@ -138,7 +138,7 @@ function emptyEntitlement() {
      */
     aiLifetime: {},
     /**
-     * Consumo VITALÍCIO por FORMA da árvore (`{ 'mega-virus': 3 }`). Mesma casa
+     * Consumo VITALÍCIO por FORMA da árvore (`{ 'mega-power': 3 }`). Mesma casa
      * e mesmo motivo do `aiLifetime`: teto por forma que se perde no reset do
      * dia é teto nenhum. Dicionário fechado nas 11 formas que existem — o
      * `_aiGuard` valida o id antes de escrever (`VALID_FORM_ID`), senão o
@@ -202,7 +202,7 @@ export const REBIRTH_SPRITE_RESET_FIELD = 'rebirthSpriteResetAt';
  * coleção recomeçou.
  *
  * O que NUNCA é zerado aqui:
- *  · `aiForms` — é teto por FORMA (`{ 'mega-virus': 3 }`), e as formas de
+ *  · `aiForms` — é teto por FORMA (`{ 'mega-power': 3 }`), e as formas de
  *    depois do renascimento são outras; zerá-lo daria 3 gerações extras em
  *    cada forma JÁ gerada, que é exatamente o abuso que o teto por forma
  *    existe para fechar;

@@ -10,7 +10,7 @@
 - [Rotas HTTP (functions/api/*.js exportando onRequest*)](#rotas-http)
   - [`account.js`](#functionsapiaccountjs) · [`billing.js`](#functionsapibillingjs) · [`chat.js`](#functionsapichatjs) · [`community.js`](#functionsapicommunityjs) · [`config.js`](#functionsapiconfigjs) · [`entitlements.js`](#functionsapientitlementsjs) · [`fcm-subscribe.js`](#functionsapifcm-subscribejs) · [`generate-sprite.js`](#functionsapigenerate-spritejs) · [`metrics.js`](#functionsapimetricsjs) · [`save.js`](#functionsapisavejs) · [`sprite-image.js`](#functionsapisprite-imagejs) · [`subscribe.js`](#functionsapisubscribejs) · [`suggest-tasks.js`](#functionsapisuggest-tasksjs) · [`transcribe.js`](#functionsapitranscribejs)
 - [Módulos internos (`_*.js`)](#módulos-internos)
-  - [`_accountTombstone.js`](#functionsapi_accounttombstonejs) · [`_aiGuard.js`](#functionsapi_aiguardjs) · [`_auth.js`](#functionsapi_authjs) · [`_billing.js`](#functionsapi_billingjs) · [`_bond.js`](#functionsapi_bondjs) · [`_coop.js`](#functionsapi_coopjs) · [`_entitlements.js`](#functionsapi_entitlementsjs) · [`_kv.js`](#functionsapi_kvjs) · [`_pushCopy.js`](#functionsapi_pushcopyjs) · [`_pushIdentity.js`](#functionsapi_pushidentityjs) · [`_pushTargets.js`](#functionsapi_pushtargetsjs) · [`_rateLimit.js`](#functionsapi_ratelimitjs) · [`_redact.js`](#functionsapi_redactjs)
+  - [`_accountTombstone.js`](#functionsapi_accounttombstonejs) · [`_aiGuard.js`](#functionsapi_aiguardjs) · [`_auth.js`](#functionsapi_authjs) · [`_billing.js`](#functionsapi_billingjs) · [`_branchLegacy.js`](#functionsapi_branchlegacyjs) · [`_bond.js`](#functionsapi_bondjs) · [`_coop.js`](#functionsapi_coopjs) · [`_entitlements.js`](#functionsapi_entitlementsjs) · [`_kv.js`](#functionsapi_kvjs) · [`_pushCopy.js`](#functionsapi_pushcopyjs) · [`_pushIdentity.js`](#functionsapi_pushidentityjs) · [`_pushTargets.js`](#functionsapi_pushtargetsjs) · [`_rateLimit.js`](#functionsapi_ratelimitjs) · [`_redact.js`](#functionsapi_redactjs)
 - [workers](#workers) — [`fcm.js`](#workersfcmjs) · [`push-scheduler.js`](#workerspush-schedulerjs) · [`webpush.js`](#workerswebpushjs)
 
 ## Convenções desta página
@@ -287,6 +287,13 @@
 **Chamado por:** `billing.js`, `entitlements.js`, `save.js`, `account.js`, `_aiGuard.js`, `generate-sprite.js`; `VALID_ID` também por `subscribe.js` e `fcm-subscribe.js` (desde `42b07bec`).
 **Régua:** `functions/api/_entitlements.test.js`, `.ttl.test.js`, `.d1Retencao.test.js`, `_entitlements.qa2.test.js` (6, desde `592e2c14` — poda nunca derruba o pago vivo; erro que não é violação de chave sobe; `ehViolacaoDeChave`); a cortesia é testada por `entitlements.test.js` (8 casos); o reset do renascimento, por `functions/api/entitlements.rebirthReset.qa2.test.js` (7, desde `cf6315e1`).
 **Avisos do arquivo:** limitação conhecida — KV não tem transação; um read-modify-write concorrente pode perder escrita (aceitável na escala do app; D1 é a saída se virar problema).
+
+### `functions/api/_branchLegacy.js`
+**Dono de:** a compatibilidade de LEITURA das chaves KV gravadas com os ids de forma antigos (renomeio de 29/09/2026). O servidor só ACEITA e só ESCREVE ids novos (`VALID_FORM_ID`).
+**Exports:**
+- `legacyFormIdOf(formId)` — id novo → id antigo equivalente, ou `null`.
+**Chamado por:** `generate-sprite.js` (cache `sprite:img:<saveId>:<formId>`: miss no novo tenta o antigo, para o sprite já pago não ser cobrado de novo) e `_aiGuard.js` (`formUsed` soma o contador vitalício `ent.aiForms` antigo; `foldLegacyForm` apaga a chave antiga ao gravar, para não contar duas vezes).
+**Régua:** `branchLegacy.parity.test.js` (paridade com `src/utils/branchMigration.ts`), `_aiGuard.spriteCap.test.js`, `generate-sprite.dedupe.test.js`.
 
 ### `functions/api/_kv.js`
 **Dono de:** o namespace KV dos saves, resolvido num lugar só — aceita `SOULMON_SAVES` (preferido) e `DIGIAPP_SAVES` (herdado), sem exigir sincronia entre "mergear código" e "clicar no painel do Cloudflare".

@@ -128,7 +128,7 @@ export interface RequestSpriteOptions {
   promptFallback?: string;
   /**
    * A forma da árvore que está sendo desenhada (`rookie`,
-   * `champion-virus`, …, `ultra`).
+   * `champion-power`, …, `ultra`).
    *
    * ⚠️ **Sem isto o teto POR FORMA não tem o que separar.** O servidor já lê e
    * repassa `formId` (`generate-sprite.js:181,205`) e já implementa

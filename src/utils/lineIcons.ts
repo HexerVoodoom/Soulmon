@@ -18,9 +18,9 @@ const modules = import.meta.glob('../assets/soulmon/lines/icons/*.png', {
 
 const ICONS: Record<string, string> = {};
 for (const [path, url] of Object.entries(modules)) {
-  // `kaelen-champion-virus-64.png` → linha `kaelen`, tier `champion`; o `-virus`
+  // `kaelen-champion-power-64.png` → linha `kaelen`, tier `champion`; o `-power`
   // do nome de arquivo é histórico, a linha só tem um sprite por tier.
-  const m = /\/([a-z]+)-(rookie|champion|ultimate|mega)(?:-virus)?-(32|64)\.png$/.exec(path);
+  const m = /\/([a-z]+)-(rookie|champion|ultimate|mega)(?:-power)?-(32|64)\.png$/.exec(path);
   if (!m) continue;
   ICONS[`${m[1]}:${m[2]}:${m[3]}`] = url;
 }

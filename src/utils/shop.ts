@@ -7,7 +7,7 @@ export type ShopItemKind = 'chip' | 'heart' | 'bg' | 'furniture' | 'emblem';
 
 /** Moeda que compra o item. Ausente = Bits (o padrão da loja). */
 export type ShopCurrency = 'bits' | 'emblems';
-export type Attr = 'virus' | 'data' | 'vaccine';
+export type Attr = 'power' | 'harmony' | 'benevolence';
 
 /**
  * Purchase gate. Locked items still show in the shop — darkened, with a
@@ -50,7 +50,7 @@ export const CHIP_BOOST = 3;   // attribute points granted when a chip is USED
 export const HEART_HEAL = 1;   // hearts restored when a heart item is USED
 
 // Inventory emojis for the consumable items that live in the Items folder.
-export const CHIP_EMOJI: Record<Attr, string> = { virus: '🦠', data: '💾', vaccine: '💉' };
+export const CHIP_EMOJI: Record<Attr, string> = { power: '👊', harmony: '🎶', benevolence: '🤲' };
 export const HEART_ITEM_EMOJI = '💗';
 
 // Consumables that live in the Items folder alongside food, but behave
@@ -77,18 +77,18 @@ export const SPECIAL_ITEMS: Record<string, SpecialItem> = {
     namePt: 'Glitchtama', nameEn: 'Glitchtama',
     descPt: 'Usar concede 1 dia completo (+1 ponto de evolução)', descEn: 'Use to gain 1 complete day (+1 evolution point)',
   },
-  [CHIP_EMOJI.virus]: {
-    emoji: CHIP_EMOJI.virus, kind: 'chip', attr: 'virus',
+  [CHIP_EMOJI.power]: {
+    emoji: CHIP_EMOJI.power, kind: 'chip', attr: 'power',
     namePt: 'Chip de Poder', nameEn: 'Power Chip',
     descPt: `Usar dá +${CHIP_BOOST} de Poder (não enche energia)`, descEn: `Use for +${CHIP_BOOST} Power (no energy)`,
   },
-  [CHIP_EMOJI.data]: {
-    emoji: CHIP_EMOJI.data, kind: 'chip', attr: 'data',
+  [CHIP_EMOJI.harmony]: {
+    emoji: CHIP_EMOJI.harmony, kind: 'chip', attr: 'harmony',
     namePt: 'Chip de Harmonia', nameEn: 'Harmony Chip',
     descPt: `Usar dá +${CHIP_BOOST} de Harmonia (não enche energia)`, descEn: `Use for +${CHIP_BOOST} Harmony (no energy)`,
   },
-  [CHIP_EMOJI.vaccine]: {
-    emoji: CHIP_EMOJI.vaccine, kind: 'chip', attr: 'vaccine',
+  [CHIP_EMOJI.benevolence]: {
+    emoji: CHIP_EMOJI.benevolence, kind: 'chip', attr: 'benevolence',
     namePt: 'Chip de Benevolência', nameEn: 'Benevolence Chip',
     descPt: `Usar dá +${CHIP_BOOST} de Benevolência (não enche energia)`, descEn: `Use for +${CHIP_BOOST} Benevolence (no energy)`,
   },
@@ -107,14 +107,14 @@ export const SHOP_ITEMS: ShopItem[] = [
   // Attribute chips — bought here, then USED from the Items folder (they only
   // raise the attribute, no energy). They steer the evolution branch. Nomes
   // e ícones seguem os 3 atributos do oráculo (ver EvolutionPath.tsx /
-  // AlignmentIcons.tsx) — Poder/Harmonia/Benevolência, não mais Vírus/Dado/Vacina.
-  { id: 'chip-virus',   kind: 'chip', icon: CHIP_EMOJI.virus, attr: 'virus',
+  // AlignmentIcons.tsx) — Poder/Harmonia/Benevolência, nomes únicos desde 29/09/2026.
+  { id: 'chip-power',   kind: 'chip', icon: CHIP_EMOJI.power, attr: 'power',
     namePt: 'Chip de Poder',  nameEn: 'Power Chip',
     descPt: `Vai pra mochila; usar dá +${CHIP_BOOST} de Poder`, descEn: `Goes to your Backpack; use for +${CHIP_BOOST} Power`, price: 120 },
-  { id: 'chip-data',    kind: 'chip', icon: CHIP_EMOJI.data, attr: 'data',
+  { id: 'chip-harmony',    kind: 'chip', icon: CHIP_EMOJI.harmony, attr: 'harmony',
     namePt: 'Chip de Harmonia',   nameEn: 'Harmony Chip',
     descPt: `Vai pra mochila; usar dá +${CHIP_BOOST} de Harmonia`, descEn: `Goes to your Backpack; use for +${CHIP_BOOST} Harmony`, price: 120 },
-  { id: 'chip-vaccine', kind: 'chip', icon: CHIP_EMOJI.vaccine, attr: 'vaccine',
+  { id: 'chip-benevolence', kind: 'chip', icon: CHIP_EMOJI.benevolence, attr: 'benevolence',
     namePt: 'Chip de Benevolência', nameEn: 'Benevolence Chip',
     descPt: `Vai pra mochila; usar dá +${CHIP_BOOST} de Benevolência`, descEn: `Goes to your Backpack; use for +${CHIP_BOOST} Benevolence`, price: 120 },
   // ⚰️ O CORAÇÃOZINHO NÃO É MAIS VENDIDO (06/09/2026, D7+D15). Ele custava 150

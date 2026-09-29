@@ -352,8 +352,8 @@ async function handleCommunity({ request, env }) {
       unlockedStages: Array.isArray(body.unlockedStages) ? body.unlockedStages.slice(0, 16) : (prev.unlockedStages || []),
       pvpEnabled,
       attrs: body.attrs && typeof body.attrs === 'object'
-        ? { virus: +body.attrs.virus || 0, data: +body.attrs.data || 0, vaccine: +body.attrs.vaccine || 0 }
-        : (prev.attrs || { virus: 0, data: 0, vaccine: 0 }),
+        ? { power: +body.attrs.power || 0, harmony: +body.attrs.harmony || 0, benevolence: +body.attrs.benevolence || 0 }
+        : (prev.attrs || { power: 0, harmony: 0, benevolence: 0 }),
       tasksDone: Number.isFinite(+body.tasksDone) ? Math.max(0, +body.tasksDone) : (prev.tasksDone || 0),
       friends: prev.friends || [],
       createdAt: prev.createdAt || Date.now(),
@@ -501,7 +501,7 @@ async function handleCommunity({ request, env }) {
     // Poder = nível da forma + atributos totais (leve) + sorte
     const power = p =>
       stagePower(p.stage) * 10 +
-      Math.min(20, ((p.attrs?.virus || 0) + (p.attrs?.data || 0) + (p.attrs?.vaccine || 0)) / 5) +
+      Math.min(20, ((p.attrs?.power || 0) + (p.attrs?.harmony || 0) + (p.attrs?.benevolence || 0)) / 5) +
       Math.random() * 18;
     const myScore = power(me);
     const oppScore = power(opp);

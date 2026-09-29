@@ -77,10 +77,10 @@ describe('check-in de humor', () => {
     const base = {
       activities: [], tasks: Array.from({ length: 4 }, (_, i) => ({ id: `t${i}`, completed: true })),
       healthPoints: 3, maxHealthPoints: 3, energyPoints: 10, perfectDays: 0, totalXP: 0,
-      virusPoints: 0, dataPoints: 0, vaccinePoints: 0, evolutionStage: 'rookie',
-      unlockedEvolutions: ['rookie'], degeneratedByHP: false, currentBranch: 'data' as const,
+      powerPoints: 0, harmonyPoints: 0, benevolencePoints: 0, evolutionStage: 'rookie',
+      unlockedEvolutions: ['rookie'], degeneratedByHP: false, currentBranch: 'harmony' as const,
       lastDayWasPerfect: false, maxActivityCap: 6,
-      attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
+      attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
       lastResetDate: new Date('2026-08-04T12:00:00').toDateString(),
     };
     const now = new Date('2026-08-05T12:00:00');

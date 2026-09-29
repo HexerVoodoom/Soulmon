@@ -238,8 +238,8 @@ export interface ArchetypeResult {
 
 export interface CreatureStage {
   stage: StageId;
-  /** champion/perfeito/mega existem em 3 LINHAS, uma por tipo (Vírus/Data/
-   *  Vacina). rookie e ultra não têm branch. */
+  /** champion/perfeito/mega existem em 3 LINHAS, uma por tipo (Poder/Harmonia/
+   *  Benevolência). rookie e ultra não têm branch. */
   branch?: AlignmentId;
   stageName: LText;
   name: string;                // nome da forma (ex.: "FangPyramon")
@@ -253,19 +253,19 @@ export interface CreatureStage {
 }
 
 /**
- * Id da forma no MOTOR DO JOGO ('rookie' | '{champion|ultimate|mega}-{virus|
- * data|vaccine}' | 'ultra' — ver types/progression.ts). Único ponto que
+ * Id da forma no MOTOR DO JOGO ('rookie' | '{champion|ultimate|mega}-{power|
+ * harmony|benevolence}' | 'ultra' — ver types/progression.ts). Único ponto que
  * traduz o vocabulário do oráculo (stage 'perfeito' + branch poder/harmonia/
  * benevolencia) pro vocabulário do jogo (nível 'ultimate' + atributo
- * virus/data/vaccine, já usado em todo o resto do app).
+ * power/harmony/benevolence, já usado em todo o resto do app).
  */
 export function creatureFormId(form: Pick<CreatureStage, 'stage' | 'branch'>): string {
   if (form.stage === 'rookie' || form.stage === 'ultra') return form.stage;
   const level = form.stage === 'perfeito' ? 'ultimate' : form.stage; // champion/mega: 1:1
-  const attrByAlignment: Record<AlignmentId, 'virus' | 'data' | 'vaccine'> = {
-    poder: 'virus', harmonia: 'data', benevolencia: 'vaccine',
+  const attrByAlignment: Record<AlignmentId, 'power' | 'harmony' | 'benevolence'> = {
+    poder: 'power', harmonia: 'harmony', benevolencia: 'benevolence',
   };
-  const attr = form.branch ? attrByAlignment[form.branch] : 'data';
+  const attr = form.branch ? attrByAlignment[form.branch] : 'harmony';
   return `${level}-${attr}`;
 }
 
@@ -683,23 +683,23 @@ export const ROLE_INFO: Record<RoleId, { name: LText; emoji: string; profile: LT
 };
 
 // Alinhamento = o "atributo" da criatura, equivalente direto ao Soulmon:
-// Poder ≈ Vírus · Harmonia ≈ Data · Benevolência ≈ Vacina. Tem MUITO peso
+// Poder · Harmonia · Benevolência (eram Vírus/Dado/Vacina até 29/09/2026). Tem MUITO peso
 // visual: define silhueta, olhos e viés de paleta em todos os estágios.
 export const ALIGNMENT_INFO: Record<AlignmentId, { name: LText; emoji: string; profile: LText; attribute: LText }> = {
   poder: {
     name: { pt: 'Poder', en: 'Power' }, emoji: '👑',
     profile: { pt: 'Busca conquistar, dominar desafios e deixar marca no mundo.', en: 'Seeks to conquer, master challenges and leave a mark on the world.' },
-    attribute: { pt: 'Vírus', en: 'Virus' },
+    attribute: { pt: 'Poder', en: 'Power' },
   },
   harmonia: {
     name: { pt: 'Harmonia', en: 'Harmony' }, emoji: '☯️',
     profile: { pt: 'Busca equilíbrio, conhecimento e o fluxo natural das coisas.', en: 'Seeks balance, knowledge and the natural flow of things.' },
-    attribute: { pt: 'Data', en: 'Data' },
+    attribute: { pt: 'Harmonia', en: 'Harmony' },
   },
   benevolencia: {
     name: { pt: 'Benevolência', en: 'Benevolence' }, emoji: '🕊️',
     profile: { pt: 'Busca cuidar, proteger e elevar quem está ao redor.', en: 'Seeks to care for, protect and uplift those around.' },
-    attribute: { pt: 'Vacina', en: 'Vaccine' },
+    attribute: { pt: 'Benevolência', en: 'Benevolence' },
   },
 };
 
@@ -720,7 +720,7 @@ export const REALM_INFO: Record<RealmId, { name: LText; emoji: string; descripti
     scenery: 'deep sea trenches with bioluminescence', accent: 'abyssal-blue and bioluminescent-cyan accents',
   },
   pantano: {
-    name: { pt: 'Pântanos Mortais', en: 'Deadly Swamps' }, emoji: '🦠',
+    name: { pt: 'Pântanos Mortais', en: 'Deadly Swamps' }, emoji: '🐊',
     description: { pt: 'Brejos enevoados onde a vida e o perigo se confundem.', en: 'Misty bogs where life and danger blur together.' },
     scenery: 'foggy marshes and twisted roots', accent: 'murky-green and toxic-purple accents',
   },
@@ -1190,8 +1190,8 @@ const NAME_CODAS_AFTER_CONSONANT = ['is', 'ix', 'ar', 'el', 'yn', 'ia', 'or', 'u
 const NAME_TAILS = ['n', 'r', 's', 'l', 'x', 'a', 'o', 'u'];
 
 // Prefixos de nome por LINHA de evolução (uma linha por tipo) — o nome conta
-// a história: Fang→War→Zeed (Vírus), Sage→Meta→Aeon (Data), Holy→Arch→Seraph
-// (Vacina), e o Ultra é sempre Triune_. NENHUM nome de estágio leva sufixo
+// a história: Fang→War→Zeed (Poder), Sage→Meta→Aeon (Harmonia), Holy→Arch→Seraph
+// (Benevolência), e o Ultra é sempre Triune_. NENHUM nome de estágio leva sufixo
 // fixo (ver `rookieName`/`ultraName`) — combinar prefixo + sufixo mecânico
 // é o que soletrava nomes de outra franquia.
 const CHAMPION_PREFIXES: Record<AlignmentId, string[]> = {
@@ -1820,7 +1820,7 @@ function countKeywordHits<K extends string>(text: string, dict: Record<K, string
 //
 // Parametrizamos as cores sem travar demais: a paleta base vem do POOL variado
 // do elemento (muda por seed) e o ACENTO marca o tipo p/ reconhecibilidade
-// (Vírus=red, Data=cyan, Vacina=gold).
+// (Poder=red, Harmonia=cyan, Benevolência=gold).
 // ---------------------------------------------------------------------------
 
 // ===========================================================================
@@ -2184,8 +2184,8 @@ const ELEMENT_POWERS: Record<ElementId, LText[]> = {
 };
 
 /** Efeito final ("para ___"), marcado por afinidade de ALINHAMENTO — a mesma
- *  função tem sabores diferentes conforme o tipo (ex.: suporte Vírus cura E
- *  pune; suporte Vacina cura com compaixão pura). */
+ *  função tem sabores diferentes conforme o tipo (ex.: suporte Poder cura E
+ *  pune; suporte Benevolência cura com compaixão pura). */
 interface AlignedEffect extends LText { alignments: AlignmentId[] }
 
 const ROLE_EFFECTS: Record<RoleId, AlignedEffect[]> = {
@@ -2240,7 +2240,7 @@ function pickAligned<T extends { alignments: AlignmentId[] }>(
 }
 
 // ----- Bloco TIPO (visual): nem todo Poder é demoníaco, mas sempre feroz;
-//       Data sempre equilibrado; Vacina sempre nobre. ~24 opções cada.
+//       Harmonia sempre equilibrado; Benevolência sempre nobre. ~24 opções cada.
 const TYPE_LOOK: Record<AlignmentId, string[]> = {
   poder: [
     'a fierce fanged grin', 'bristling sharp spikes', 'jagged claws', 'battle scars',
@@ -2534,33 +2534,33 @@ const ELEMENT_MANIFESTS: Record<ElementId, Array<{ en: string; pt: string }>> = 
 };
 
 // Linguagem de design por alinhamento — entra CEDO no prompt e em TODOS os
-// estágios, como o atributo dos Soulmon (Vírus/Data/Vacina). POOL grande por
-// tipo: nem todo Vírus é demoníaco, mas é sempre mais feroz, voraz e
-// perspicaz; nem todo Vacina é angelical, mas é sempre nobre e protetor.
+// estágios, como o atributo dos Soulmon (Poder/Harmonia/Benevolência). POOL grande por
+// tipo: nem todo Poder é demoníaco, mas é sempre mais feroz, voraz e
+// perspicaz; nem todo Benevolência é angelical, mas é sempre nobre e protetor.
 const ALIGNMENT_DESIGNS: Record<AlignmentId, string[]> = {
   poder: [
-    'VIRUS-attribute design language: jagged asymmetric silhouette, sharp angular spikes, small fangs and pointed claws, mischievous fierce eyes with narrow pupils, one aggressive blood-red accent, villainous but charming look',
-    'VIRUS-attribute design language: apex-predator build, lean muscular stance ready to pounce, slit predatory eyes, scratch-mark motifs, one deep crimson accent, wild untamed look',
-    'VIRUS-attribute design language: gladiator bearing, battle-scarred details, cracked horn or chipped ear, confident smirk with one visible fang, burnt-orange war accent, veteran brawler look',
-    'VIRUS-attribute design language: cunning trickster energy, sly grin, sharp angular ears or fins, mismatched asymmetric details, one toxic-purple accent, streetwise rogue look',
-    'VIRUS-attribute design language: stormy berserker energy, bristling fur or plating standing on end, wild wide fierce eyes, jagged lightning-shaped marks, one hot magenta accent, untamable look',
-    'VIRUS-attribute design language: silent hunter poise, low crouched stance, cold calculating narrow eyes, arrow-sharp silhouette edges, one dark scarlet accent, ruthless precision look',
+    'POWER-attribute design language: jagged asymmetric silhouette, sharp angular spikes, small fangs and pointed claws, mischievous fierce eyes with narrow pupils, one aggressive blood-red accent, villainous but charming look',
+    'POWER-attribute design language: apex-predator build, lean muscular stance ready to pounce, slit predatory eyes, scratch-mark motifs, one deep crimson accent, wild untamed look',
+    'POWER-attribute design language: gladiator bearing, battle-scarred details, cracked horn or chipped ear, confident smirk with one visible fang, burnt-orange war accent, veteran brawler look',
+    'POWER-attribute design language: cunning trickster energy, sly grin, sharp angular ears or fins, mismatched asymmetric details, one toxic-purple accent, streetwise rogue look',
+    'POWER-attribute design language: stormy berserker energy, bristling fur or plating standing on end, wild wide fierce eyes, jagged lightning-shaped marks, one hot magenta accent, untamable look',
+    'POWER-attribute design language: silent hunter poise, low crouched stance, cold calculating narrow eyes, arrow-sharp silhouette edges, one dark scarlet accent, ruthless precision look',
   ],
   harmonia: [
-    'DATA-attribute design language: clean symmetric silhouette, balanced geometric shapes with smooth rounded edges, calm focused intelligent eyes, one cool cyan accent, composed scholarly look',
-    'DATA-attribute design language: wandering-monk simplicity, minimal serene lines, half-closed meditative eyes, circular zen motifs, one soft jade accent, tranquil sage look',
-    'DATA-attribute design language: inventor-tinkerer energy, tidy modular body segments, bright curious round eyes, subtle blueprint-line marks, one teal accent, clever craftsman look',
-    'DATA-attribute design language: stargazer poise, upright contemplative posture, deep thoughtful eyes, tiny constellation dot patterns, one indigo accent, quiet oracle look',
-    'DATA-attribute design language: tactician bearing, neat symmetric armor lines, sharp attentive eyes scanning ahead, chessboard-like subtle patterning, one emerald accent, strategist look',
-    'DATA-attribute design language: flowing dancer grace, smooth continuous curves, gentle balanced expression, ripple and wave motifs, one aquamarine accent, effortless equilibrium look',
+    'HARMONY-attribute design language: clean symmetric silhouette, balanced geometric shapes with smooth rounded edges, calm focused intelligent eyes, one cool cyan accent, composed scholarly look',
+    'HARMONY-attribute design language: wandering-monk simplicity, minimal serene lines, half-closed meditative eyes, circular zen motifs, one soft jade accent, tranquil sage look',
+    'HARMONY-attribute design language: inventor-tinkerer energy, tidy modular body segments, bright curious round eyes, subtle blueprint-line marks, one teal accent, clever craftsman look',
+    'HARMONY-attribute design language: stargazer poise, upright contemplative posture, deep thoughtful eyes, tiny constellation dot patterns, one indigo accent, quiet oracle look',
+    'HARMONY-attribute design language: tactician bearing, neat symmetric armor lines, sharp attentive eyes scanning ahead, chessboard-like subtle patterning, one emerald accent, strategist look',
+    'HARMONY-attribute design language: flowing dancer grace, smooth continuous curves, gentle balanced expression, ripple and wave motifs, one aquamarine accent, effortless equilibrium look',
   ],
   benevolencia: [
-    'VACCINE-attribute design language: noble heroic silhouette, soft rounded shapes with upright proud posture, big kind sparkling eyes, white and gold highlights, knightly guardian look',
-    'VACCINE-attribute design language: gentle-healer warmth, plump huggable proportions, warm smiling eyes, ribbon or bandage motifs, cream and rose-gold highlights, caretaker look',
-    'VACCINE-attribute design language: loyal-shepherd bearing, sturdy dependable frame, soft attentive eyes always watching over others, bell or lantern charm, ivory and amber highlights, protector look',
-    'VACCINE-attribute design language: cheerful-champion energy, bouncy confident posture, bright optimistic eyes, star and medal motifs, sunny yellow and white highlights, inspiring hero look',
-    'VACCINE-attribute design language: serene-priestess aura, flowing graceful lines, calm compassionate eyes, subtle halo or petal ornaments, pearl and pale-gold highlights, blessed look',
-    'VACCINE-attribute design language: big-brother bulk, broad gentle frame that shields smaller creatures, soft brave eyes, shield and heart motifs, silver and warm-white highlights, dependable look',
+    'BENEVOLENCE-attribute design language: noble heroic silhouette, soft rounded shapes with upright proud posture, big kind sparkling eyes, white and gold highlights, knightly guardian look',
+    'BENEVOLENCE-attribute design language: gentle-healer warmth, plump huggable proportions, warm smiling eyes, ribbon or bandage motifs, cream and rose-gold highlights, caretaker look',
+    'BENEVOLENCE-attribute design language: loyal-shepherd bearing, sturdy dependable frame, soft attentive eyes always watching over others, bell or lantern charm, ivory and amber highlights, protector look',
+    'BENEVOLENCE-attribute design language: cheerful-champion energy, bouncy confident posture, bright optimistic eyes, star and medal motifs, sunny yellow and white highlights, inspiring hero look',
+    'BENEVOLENCE-attribute design language: serene-priestess aura, flowing graceful lines, calm compassionate eyes, subtle halo or petal ornaments, pearl and pale-gold highlights, blessed look',
+    'BENEVOLENCE-attribute design language: big-brother bulk, broad gentle frame that shields smaller creatures, soft brave eyes, shield and heart motifs, silver and warm-white highlights, dependable look',
   ],
 };
 
@@ -3273,8 +3273,8 @@ export function generateOracleWithFamilies(input: OracleInputSync | OracleInputW
     en: el2Name ? `${elName.en} element with ${el2Name.en} traits` : `pure ${elName.en} element`,
   };
   const concept: LText = {
-    pt: `Família ${family.primary.family.pt} (${family.primary.subfamily.pt})${family.mono ? '' : family.secondary.isObject ? ` + objeto ${family.secondary.subfamily.pt}` : ` + ${family.secondary.family.pt} (${family.secondary.subfamily.pt})`}, nascida no reino ${realmInfo.name.pt} ${realmInfo.emoji}. ${elementPhrase.pt}, alinhamento ${alignName.pt} (atributo ${attribute.pt}), função ${roleName.pt} — encarnação do arquétipo "${archetype.phrase.pt}". Do rookie partem 3 linhas de evolução (Vírus, Data e Vacina), e os três Megas se fundem no Ultra.`,
-    en: `${family.primary.family.en} family (${family.primary.subfamily.en})${family.mono ? '' : family.secondary.isObject ? ` + ${family.secondary.subfamily.en} object` : ` + ${family.secondary.family.en} (${family.secondary.subfamily.en})`}, born in the ${realmInfo.name.en} realm ${realmInfo.emoji}. ${elementPhrase.en}, ${alignName.en} alignment (${attribute.en} attribute), ${roleName.en} role — incarnation of the archetype "${archetype.phrase.en}". From the rookie, 3 evolution lines branch out (Virus, Data and Vaccine), and the three Megas fuse into the Ultra.`,
+    pt: `Família ${family.primary.family.pt} (${family.primary.subfamily.pt})${family.mono ? '' : family.secondary.isObject ? ` + objeto ${family.secondary.subfamily.pt}` : ` + ${family.secondary.family.pt} (${family.secondary.subfamily.pt})`}, nascida no reino ${realmInfo.name.pt} ${realmInfo.emoji}. ${elementPhrase.pt}, alinhamento ${alignName.pt} (atributo ${attribute.pt}), função ${roleName.pt} — encarnação do arquétipo "${archetype.phrase.pt}". Do rookie partem 3 linhas de evolução (Poder, Harmonia e Benevolência), e os três Megas se fundem no Ultra.`,
+    en: `${family.primary.family.en} family (${family.primary.subfamily.en})${family.mono ? '' : family.secondary.isObject ? ` + ${family.secondary.subfamily.en} object` : ` + ${family.secondary.family.en} (${family.secondary.subfamily.en})`}, born in the ${realmInfo.name.en} realm ${realmInfo.emoji}. ${elementPhrase.en}, ${alignName.en} alignment (${attribute.en} attribute), ${roleName.en} role — incarnation of the archetype "${archetype.phrase.en}". From the rookie, 3 evolution lines branch out (Power, Harmony and Benevolence), and the three Megas fuse into the Ultra.`,
   };
 
   // ----- BLOCOS DO PROMPT -----
@@ -3455,8 +3455,8 @@ export function generateOracleWithFamilies(input: OracleInputSync | OracleInputW
     stageName: STAGE_NAMES.ultra,
     name: ultraName,
     description: {
-      pt: `${ultraName} é o Ultra: a fusão dos três Megas — ${megaShapeByBranch.poder.pt}, ${megaShapeByBranch.harmonia.pt} e ${megaShapeByBranch.benevolencia.pt} — em um único ser transcendente que une a ferocidade do Vírus, o equilíbrio do Data e a nobreza da Vacina. O ápice absoluto do arquétipo "${archetype.phrase.pt}". ${behaviorSentence.pt}`,
-      en: `${ultraName} is the Ultra: the fusion of the three Megas — ${megaShapeByBranch.poder.en}, ${megaShapeByBranch.harmonia.en} and ${megaShapeByBranch.benevolencia.en} — into a single transcendent being uniting Virus ferocity, Data balance and Vaccine nobility. The absolute apex of the archetype "${archetype.phrase.en}". ${behaviorSentence.en}`,
+      pt: `${ultraName} é o Ultra: a fusão dos três Megas — ${megaShapeByBranch.poder.pt}, ${megaShapeByBranch.harmonia.pt} e ${megaShapeByBranch.benevolencia.pt} — em um único ser transcendente que une a ferocidade do Poder, o equilíbrio da Harmonia e a nobreza da Benevolência. O ápice absoluto do arquétipo "${archetype.phrase.pt}". ${behaviorSentence.pt}`,
+      en: `${ultraName} is the Ultra: the fusion of the three Megas — ${megaShapeByBranch.poder.en}, ${megaShapeByBranch.harmonia.en} and ${megaShapeByBranch.benevolencia.en} — into a single transcendent being uniting the ferocity of Power, the balance of Harmony and the nobility of Benevolence. The absolute apex of the archetype "${archetype.phrase.en}". ${behaviorSentence.en}`,
     },
     ...composeSpritePrompts({
       concept: spriteConcept, colorDesc, accent: 'red, cyan and gold',

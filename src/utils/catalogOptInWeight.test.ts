@@ -28,8 +28,8 @@ function optInHabito(feito: boolean) {
 
 const estado = (over: Record<string, unknown> = {}) => ({
   activities: [] as unknown[], tasks: [], healthPoints: 3, maxHealthPoints: 3, energyPoints: 10,
-  perfectDays: 0, totalXP: 0, virusPoints: 0, dataPoints: 0, vaccinePoints: 0,
-  evolutionStage: 'rookie', unlockedEvolutions: ['rookie'], currentBranch: 'data' as const,
+  perfectDays: 0, totalXP: 0, powerPoints: 0, harmonyPoints: 0, benevolencePoints: 0,
+  evolutionStage: 'rookie', unlockedEvolutions: ['rookie'], currentBranch: 'harmony' as const,
   maxActivityCap: 6,
   lastResetDate: ONTEM.toDateString(),
   lastDayReport: { date: new Date('2026-08-03T12:00:00').toDateString(), saveDay: 90 },

@@ -43,7 +43,7 @@ const PID_ATOR = 'a1b2c3d4e5f60718293a4b5c';
 
 const perfil = (id, extra = {}) => JSON.stringify({
   id, name: `n-${id.slice(0, 4)}`, petName: 'pet', stage: 'rookie',
-  pvpEnabled: true, attrs: { virus: 1, data: 1, vaccine: 1 },
+  pvpEnabled: true, attrs: { power: 1, harmony: 1, benevolence: 1 },
   friends: [], createdAt: Date.now(), ...extra,
 });
 

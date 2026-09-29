@@ -9,6 +9,7 @@
 // de cuidado. As regras aplicadas são as de src/utils/careRules.ts — as mesmas
 // do app do celular, não uma cópia. Tarefas continuam locais (ver menu.ts).
 import { APP_URL } from './config';
+import { migrateBranchIds } from '../../../src/utils/branchMigration';
 import type { GenericLine } from './sprites';
 
 // ⚠️ AQUI MORAVAM TRÊS CÓPIAS: `MAX_HP_BY_LEVEL`, `ENERGY_BY_LEVEL` e uma
@@ -128,7 +129,7 @@ export async function fetchRemoteSnapshot(email: string): Promise<SyncResult> {
   const data = await res.json().catch(() => null);
   if (!data?.found || !data.state) return { ok: false, reason: 'not-found' };
 
-  const state = data.state as Record<string, unknown>;
+  const state = migrateBranchIds(data.state as Record<string, unknown>);
   const stage = typeof state.evolutionStage === 'string' ? state.evolutionStage : 'rookie';
   const rawLine = state.eggType;
   const genericLine: GenericLine =
@@ -275,7 +276,10 @@ export async function pushCareAction(
  * anterior, pode não ter o campo; sem isto `Math.min(undefined, …)` viraria NaN
  * e apagaria o HP do jogador.
  */
-export function normalizeForRules(state: Record<string, unknown>): Record<string, unknown> {
+export function normalizeForRules(raw: Record<string, unknown>): Record<string, unknown> {
+  // Save antigo (ids de caminho de antes de 29/09/2026) → ids novos. Importado
+  // do app, nunca copiado (footgun 9).
+  const state = migrateBranchIds(raw);
   const stage = typeof state.evolutionStage === 'string' ? state.evolutionStage : 'rookie';
   return {
     ...state,
@@ -283,18 +287,18 @@ export function normalizeForRules(state: Record<string, unknown>): Record<string
     maxHealthPoints: MAX_HP_BY_FORM[getStageLevel(stage)],
     energyPoints: Number.isFinite(state.energyPoints as number) ? state.energyPoints : 0,
     foodInventory: (state.foodInventory ?? {}) as Record<string, number>,
-    virusPoints: Number(state.virusPoints) || 0,
-    dataPoints: Number(state.dataPoints) || 0,
-    vaccinePoints: Number(state.vaccinePoints) || 0,
+    powerPoints: Number(state.powerPoints) || 0,
+    harmonyPoints: Number(state.harmonyPoints) || 0,
+    benevolencePoints: Number(state.benevolencePoints) || 0,
     totalXP: Number(state.totalXP) || 0,
     attributesSinceLastEvolution: (state.attributesSinceLastEvolution
-      ?? { virus: 0, data: 0, vaccine: 0 }) as Record<string, number>,
+      ?? { power: 0, harmony: 0, benevolence: 0 }) as Record<string, number>,
   };
 }
 
 /** Os números que acabamos de mexer continuam sendo números? */
 export function isSaneCareState(state: Record<string, unknown>): boolean {
-  const nums = ['healthPoints', 'maxHealthPoints', 'energyPoints', 'virusPoints', 'dataPoints', 'vaccinePoints', 'totalXP'];
+  const nums = ['healthPoints', 'maxHealthPoints', 'energyPoints', 'powerPoints', 'harmonyPoints', 'benevolencePoints', 'totalXP'];
   if (!nums.every(k => Number.isFinite(state[k] as number))) return false;
   const inv = state.foodInventory as Record<string, number> | undefined;
   if (inv && Object.values(inv).some(n => !Number.isFinite(n) || n < 0)) return false;

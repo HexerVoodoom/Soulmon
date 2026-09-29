@@ -5,8 +5,8 @@
  * chamava `resolveBranch`, enquanto `handleEvolveRequest` (a que ANUNCIA na
  * cerimônia) e o `canEvolve` (que libera o botão) reimplementavam a decisão à
  * mão e mandavam TODO empate para `data`, sem consultar o ritmo de cuidado.
- * Empate vírus/vacina com leitura confiável: a página previa `virus`, a
- * cerimônia anunciava `ultimate-data` e o save recebia `ultimate-virus` — o jogo
+ * Empate poder/benevolência com leitura confiável: a página previa `power`, a
+ * cerimônia anunciava `ultimate-harmony` e o save recebia `ultimate-power` — o jogo
  * anunciava um destino que não cumpria. É o footgun 9 do `CLAUDE.md`: regra
  * copiada é regra que diverge em silêncio.
  *
@@ -17,7 +17,7 @@
 import { resolveBranch, type AttrPoints, type CareReading } from './carePattern';
 import { getNextEvolution } from './dailyReset';
 
-export type Branch = 'virus' | 'data' | 'vaccine';
+export type Branch = 'power' | 'harmony' | 'benevolence';
 
 export interface EvolutionTargetInput {
   /** Pontos de atributo do save (vêm da categoria das tarefas, via comida). */

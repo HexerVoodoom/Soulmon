@@ -56,6 +56,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { guardAiRequest, VALID_FORM_ID } from './_aiGuard.js';
+import { legacyFormIdOf } from './_branchLegacy.js';
 import { requirePaidTier } from './_entitlements.js';
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { kvOrThrow } from './_kv.js';
@@ -408,6 +409,9 @@ export async function onRequestPost({ request, env }) {
       let ocupada = null;
       try {
         pronta = await kvOrThrow(env).get(cacheKey(id, formId));
+        // Cache gravado com o id de forma ANTIGO (antes de 29/09/2026): só leitura.
+        const antigo = legacyFormIdOf(formId);
+        if (!pronta && antigo) pronta = await kvOrThrow(env).get(cacheKey(id, antigo));
         ocupada = pronta ? null : await kvOrThrow(env).get(lockKey(id, formId));
       } catch (err) {
         // Não deu para ler o dedupe → seguir gerando duplicaria a cobrança.

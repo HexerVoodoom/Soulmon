@@ -23,7 +23,9 @@
  *
  * ⚠️ **O dono decidiu em 21/09/2026, e a decisão muda o estatuto desta tabela.**
  * Perguntado sobre trocar `Vírus/Dado/Vacina`, `Glitchtama`, `Serah`, `Pyraka` e
- * `Zeed`, ele respondeu **"nenhum, aceito todos assim"**. Então a tabela
+ * `Zeed`, ele respondeu **"nenhum, aceito todos assim"**. ⚰️ **Em 29/09/2026 ele
+ * reverteu a parte dos rótulos**: os caminhos viraram Poder/Harmonia/Benevolência
+ * e o termo antigo passou a ser VETADO (§14.6). Então a tabela
  * `EXCECOES` abaixo não é mais dívida a quitar: é a lista do que ficou, por
  * decisão registrada (`docs/REGISTRO-DE-DECISOES.md`).
  *
@@ -95,7 +97,7 @@ const TERMOS: { termo: string; re: RegExp; motivo: string }[] = [
     termo: 'Weave',
     re: /\bWeave\b/,
     motivo:
-      'o par EN de `data` NÃO é "Weave" — *the Weave* é a trama de magia de ' +
+      'o par EN do galho Harmonia (ex-`data`) NÃO é "Weave" — *the Weave* é a trama de magia de ' +
       'Forgotten Realms / D&D, franquia banida. A bíblia §6.6 fixa **Braid** ' +
       'para lore NOVO; o ponto que já existe é exceção declarada abaixo.',
   },
@@ -103,12 +105,12 @@ const TERMOS: { termo: string; re: RegExp; motivo: string }[] = [
     termo: 'Vírus/Vacina/Virus/Vaccine (rótulo)',
     re: /(Vírus|Vacina|Vaccine|\bVirus\b)/,
     motivo:
-      'a tríade Virus/Data/Vaccine é o sistema de atributos assinatura de outra ' +
-      'franquia, não vocabulário genérico do gênero. ⚠️ O DONO DECIDIU MANTER o ' +
-      'rótulo em 21/09/2026 (REGISTRO-DE-DECISOES §14.4), e os arquivos onde ele ' +
-      'já está são exceção declarada abaixo — o que este termo trava é a volta ' +
-      'dele num arquivo NOVO. Ruptura / Trama / Guarda são vocabulário de MUNDO ' +
-      '(bíblia §6.6), para lore, não rótulo de interface.',
+      'VETADO desde 29/09/2026: o dono pediu "remova toda menção a virus, data e ' +
+      'vacina e substitua por poder, harmonia e benevolência" (REGISTRO-DE-DECISOES ' +
+      '§14.6, que reverte a §14.4 de 21/09/2026). Os caminhos são Poder / Harmonia / ' +
+      'Benevolência (EN Power / Harmony / Benevolence); ids `power|harmony|benevolence`. ' +
+      'A única exceção é a lápide mínima abaixo — o resto é migração legada, que monta ' +
+      'o termo por partes. Ruptura / Trama / Guarda seguem vocabulário de MUNDO (bíblia §6.6).',
   },
   {
     termo: 'Glitchtama',
@@ -153,7 +155,7 @@ const TERMOS: { termo: string; re: RegExp; motivo: string }[] = [
  */
 const EXCECOES: Record<string, { arquivos: string[]; proposta: string }> = {
   'Weave': {
-    proposta: 'P1 — par EN do galho `data`. ACEITO PELO DONO em 21/09/2026',
+    proposta: 'P1 — par EN do galho Harmonia (ex-`data`). ACEITO PELO DONO em 21/09/2026',
     arquivos: [
       // O único ponto no app: o léxico de nome de skill, que compõe
       // "Weave of <algo>" e vai para a Página do Pet. O verbo comum em
@@ -163,17 +165,13 @@ const EXCECOES: Record<string, { arquivos: string[]; proposta: string }> = {
     ],
   },
   'Vírus/Vacina/Virus/Vaccine (rótulo)': {
-    proposta: 'P1 — rótulo dos três galhos. ACEITO PELO DONO em 21/09/2026',
+    proposta: 'P1 — ACEITO em 21/09/2026 e REVERTIDO pelo dono em 29/09/2026 (§14.6): o rótulo saiu do app',
     arquivos: [
-      'src/components/GuideModal.tsx',
-      'src/components/HelpModal.tsx',
-      'src/components/PlayCard.tsx',
-      'src/types/attributes.ts',
-      'src/utils/i18n.ts',
-      'src/utils/itemArt.ts',
+      // Lápide de UMA linha registrando os nomes antigos — não é rótulo de interface.
       'src/utils/oracle.ts',
-      'src/utils/shop.ts',
-      'src/utils/sprites.ts',
+      // Réguas que VETAM o termo em outras superfícies (precisam soletrá-lo).
+      'src/components/guild/guildSemCobranca.contract.test.ts',
+      'src/utils/branchRename.contract.test.ts',
     ],
   },
   'Glitchtama': {

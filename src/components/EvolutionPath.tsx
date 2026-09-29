@@ -57,18 +57,18 @@ import { Icon } from './ui/Icon';
 import { playVisorTune } from '../utils/sounds';
 import { sm2Button, sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 
-type Attr = 'virus' | 'data' | 'vaccine';
+type Attr = 'power' | 'harmony' | 'benevolence';
 // ALIGN_TO_ATTR mudou para types/attributes.ts quando o EvoTrail da Home
 // passou a precisar do mesmo mapa (footgun 9: cópia diverge em silêncio).
-const ATTR_ORDER: Attr[] = ['virus', 'data', 'vaccine'];
+const ATTR_ORDER: Attr[] = ['power', 'harmony', 'benevolence'];
 
 interface EvolutionPathProps {
-  /** Id da forma atual ('rookie' | 'champion-virus' | ... | 'ultra'). */
+  /** Id da forma atual ('rookie' | 'champion-power' | ... | 'ultra'). */
   currentStageId: string;
   currentBranch: Attr;
-  virusPoints: number;
-  dataPoints: number;
-  vaccinePoints: number;
+  powerPoints: number;
+  harmonyPoints: number;
+  benevolencePoints: number;
   perfectDays: number;
   /** WP4.29 — a forma seguinte está incubando (D-G8c). Com a barra cheia e a
    *  incubação correndo, o toque NÃO evolui: a página tem de dizer por quê,
@@ -168,9 +168,9 @@ const sectionLabel: CSSProperties = {
 export function EvolutionPath({
   currentStageId,
   currentBranch,
-  virusPoints,
-  dataPoints,
-  vaccinePoints,
+  powerPoints,
+  harmonyPoints,
+  benevolencePoints,
   perfectDays,
   incubating = false,
   gateDays,
@@ -194,9 +194,9 @@ export function EvolutionPath({
 }: EvolutionPathProps) {
   const isPt = language === 'pt-BR';
   // Empate = mais de um atributo no topo. É quando o ritmo de cuidado decide.
-  const topAttr = Math.max(virusPoints, dataPoints, vaccinePoints);
+  const topAttr = Math.max(powerPoints, harmonyPoints, benevolencePoints);
   const isTie = topAttr > 0
-    && [virusPoints, dataPoints, vaccinePoints].filter(v => v === topAttr).length > 1;
+    && [powerPoints, harmonyPoints, benevolencePoints].filter(v => v === topAttr).length > 1;
   const L = (t: LText) => (isPt ? t.pt : t.en);
   const unlockedSet = useMemo(() => new Set(unlockedEvolutions), [unlockedEvolutions]);
   const [selectedBranch, setSelectedBranch] = useState<Attr>(clampBranch(currentBranch));
@@ -469,7 +469,7 @@ export function EvolutionPath({
     ? (isPt ? 'Encostar' : 'Touch it')
     : evolutionLocked ? (isPt ? 'Soltar' : 'Release') : (isPt ? 'Segurar' : 'Hold');
   /* A régua dos três atributos: o líder, com piso em 10 segmentos. */
-  const reguaDosAtributos = Math.max(10, virusPoints, dataPoints, vaccinePoints);
+  const reguaDosAtributos = Math.max(10, powerPoints, harmonyPoints, benevolencePoints);
 
   /* ── O ESTADO DA ARTE, forma por forma (§2.2) ──────────────────────────────
      Até aqui a página dizia o estado do sprite só da forma ATUAL. A spec põe o
@@ -1209,7 +1209,7 @@ export function EvolutionPath({
             (piso 10), então a leitura é "quem está na frente, e por quanto". */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 4 }}>
           {ATTR_ORDER.map(a => {
-            const valor = a === 'virus' ? virusPoints : a === 'data' ? dataPoints : vaccinePoints;
+            const valor = a === 'power' ? powerPoints : a === 'harmony' ? harmonyPoints : benevolencePoints;
             return (
               <div key={a} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ ...sm2Hint, width: 90, flex: 'none' }}>{L(ATTR_LABEL[a])}</span>

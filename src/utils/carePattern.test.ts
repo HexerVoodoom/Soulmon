@@ -52,33 +52,33 @@ describe('padrão de cuidado — escolha do galho', () => {
   const fraco = computeCarePattern([daysAgo(1)], NOW);
 
   it('os atributos continuam mandando quando há um vencedor claro', () => {
-    const pts = { virus: 10, data: 2, vaccine: 1 };
-    // Mesmo com padrão Constante (que puxa vacina), vírus ganha por ser maior.
-    expect(resolveBranch(pts, constante)).toBe('virus');
+    const pts = { power: 10, harmony: 2, benevolence: 1 };
+    // Mesmo com padrão Constante (que puxa benevolência), poder ganha por ser maior.
+    expect(resolveBranch(pts, constante)).toBe('power');
   });
 
   it('o padrão só desempata', () => {
-    const empate = { virus: 5, data: 5, vaccine: 5 };
-    expect(resolveBranch(empate, constante)).toBe('vaccine');
-    expect(resolveBranch(empate, explosivo)).toBe('virus');
+    const empate = { power: 5, harmony: 5, benevolence: 5 };
+    expect(resolveBranch(empate, constante)).toBe('benevolence');
+    expect(resolveBranch(empate, explosivo)).toBe('power');
   });
 
   it('desempata apenas entre os que empataram', () => {
-    // Explosivo puxa vírus, mas vírus não está no empate — não pode inventar.
-    const empate = { virus: 1, data: 7, vaccine: 7 };
-    expect(['data', 'vaccine']).toContain(resolveBranch(empate, explosivo));
+    // Explosivo puxa poder, mas poder não está no empate — não pode inventar.
+    const empate = { power: 1, harmony: 7, benevolence: 7 };
+    expect(['harmony', 'benevolence']).toContain(resolveBranch(empate, explosivo));
   });
 
   it('leitura fraca não decide nada — cai no galho atual', () => {
-    const empate = { virus: 5, data: 5, vaccine: 5 };
-    expect(resolveBranch(empate, fraco, 'data')).toBe('data');
-    expect(resolveBranch(empate, fraco, 'vaccine')).toBe('vaccine');
+    const empate = { power: 5, harmony: 5, benevolence: 5 };
+    expect(resolveBranch(empate, fraco, 'harmony')).toBe('harmony');
+    expect(resolveBranch(empate, fraco, 'benevolence')).toBe('benevolence');
   });
 
   it('sem atributo nenhum usa o padrão, ou o galho atual', () => {
-    const zero = { virus: 0, data: 0, vaccine: 0 };
-    expect(resolveBranch(zero, explosivo)).toBe('virus');
-    expect(resolveBranch(zero, fraco, 'vaccine')).toBe('vaccine');
+    const zero = { power: 0, harmony: 0, benevolence: 0 };
+    expect(resolveBranch(zero, explosivo)).toBe('power');
+    expect(resolveBranch(zero, fraco, 'benevolence')).toBe('benevolence');
   });
 
   it('nenhum padrão é melhor: cada um puxa um galho diferente', () => {

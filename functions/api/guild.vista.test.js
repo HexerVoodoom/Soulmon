@@ -23,7 +23,7 @@ function fakeKV(seed = {}) {
 }
 /** Um id de save válido (32 chars) a partir de um rótulo curto. */
 const sid = r => r.padEnd(32, '0');
-const perfil = (id, nome, extra = {}) => JSON.stringify({ id, name: nome, pid: `P${id.slice(0, 4)}${'q'.repeat(19)}`, petName: 'pet', stage: 'mega-virus', attrs: { virus: 9, data: 9, vaccine: 9 }, friends: [], createdAt: Date.now(), ...extra });
+const perfil = (id, nome, extra = {}) => JSON.stringify({ id, name: nome, pid: `P${id.slice(0, 4)}${'q'.repeat(19)}`, petName: 'pet', stage: 'mega-power', attrs: { power: 9, harmony: 9, benevolence: 9 }, friends: [], createdAt: Date.now(), ...extra });
 function req(action, { method = 'GET', body, params = {}, ip } = {}) {
   const qs = new URLSearchParams({ action, ...params });
   return new Request(`https://x.dev/api/guild?${qs}`, {
@@ -53,7 +53,7 @@ async function guildaDe(n, { checkins = [], fios = [] } = {}) {
 
 function semVazamento(txt) {
   for (const m of MEMBROS) expect(txt).not.toContain(m);
-  for (const proibido of ['hostSave', 'mega-virus', 'dmg', 'attrs', 'virus', 'checkins', 'days', 'bosqueProgress',
+  for (const proibido of ['hostSave', 'mega-power', 'dmg', 'attrs', 'power', 'checkins', 'days', 'bosqueProgress',
     'progressDay', 'fiosAvulsos', 'tideBase', 'desde', 'distinctDays', 'lastDay']) {
     expect(txt, proibido).not.toContain(proibido);
   }

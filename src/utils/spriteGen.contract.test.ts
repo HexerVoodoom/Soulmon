@@ -42,8 +42,8 @@ afterEach(() => vi.unstubAllGlobals());
 describe('`formId` vai no corpo do POST', () => {
   it('quando informado, chega ao servidor', async () => {
     const fetchMock = mockFetch(jsonResponse(200, { image: 'https://cdn/x.png', provider: 'higgsfield' }));
-    const out = await requestSprite('desenhe', { formId: 'champion-virus' });
-    expect(sentBody(fetchMock).formId).toBe('champion-virus');
+    const out = await requestSprite('desenhe', { formId: 'champion-power' });
+    expect(sentBody(fetchMock).formId).toBe('champion-power');
     expect(out.image).toBe('https://cdn/x.png');
   });
 
@@ -71,7 +71,7 @@ describe('409 e 402 são contratos diferentes', () => {
       error: 'sprite-form-cap',
       message: { 'pt-BR': 'Esta forma resistiu…', en: 'This form resisted…' },
     }));
-    const err = await requestSprite('p', { formId: 'mega-data' }).catch(e => e);
+    const err = await requestSprite('p', { formId: 'mega-harmony' }).catch(e => e);
     expect(err.reason).toBe('form-cap');
     expect(err.reason).not.toBe('lifetime-cap');
     expect(err.status).toBe(409);

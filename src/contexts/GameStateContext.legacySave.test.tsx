@@ -36,7 +36,7 @@ const SAVE_LEGADO = {
   energyPoints: 3,
   perfectDays: 37,
   totalXP: 900,
-  virusPoints: 14, dataPoints: 31, vaccinePoints: 8,
+  powerPoints: 14, harmonyPoints: 31, benevolencePoints: 8,
   lastResetDate: 'Mon Aug 04 2026',
   evolutionStage: 'mega',
   unlockedEvolutions: ['rookie', 'champion', 'ultimate', 'mega'],
@@ -46,7 +46,7 @@ const SAVE_LEGADO = {
   equippedBackground: 'bg-matrix',
   ownedFurniture: ['furn-sofa'],
   equippedFurniture: 'furn-sofa',
-  foodInventory: { '💗': 2, '🦠': 1 },
+  foodInventory: { '💗': 2, '👊': 1 },
   trophies: [{ season: '2026-W30', place: 1 }],
   eggType: 'lumel',
 };
@@ -91,7 +91,7 @@ describe('save legado do DigiApp — nada de valor pode sumir na primeira carga'
 
   it('inventário e loja sobrevivem (o que foi comprado com Bits)', () => {
     const s = montar();
-    expect(s.foodInventory).toEqual({ '💗': 2, '🦠': 1 });
+    expect(s.foodInventory).toEqual({ '💗': 2, '👊': 1 });
     expect(s.ownedFurniture).toEqual(['furn-sofa']);
     expect(s.equippedBackground).toBe('bg-matrix');
     // 'bg-room' é grátis e entra mesmo em save anterior à sua existência

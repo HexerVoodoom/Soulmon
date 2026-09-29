@@ -555,11 +555,11 @@ function withHabitCompletion(
   if (after === before) return prev; // já marcado hoje — nada a fazer
 
   const extra = attributeMultiplier(after.totalDone) - 1;
-  const base = CATEGORY_ATTRIBUTES[category] ?? { virus: 0, data: 0, vaccine: 0 };
+  const base = CATEGORY_ATTRIBUTES[category] ?? { power: 0, harmony: 0, benevolence: 0 };
   const bonus = {
-    virus: Math.round(base.virus * extra),
-    data: Math.round(base.data * extra),
-    vaccine: Math.round(base.vaccine * extra),
+    power: Math.round(base.power * extra),
+    harmony: Math.round(base.harmony * extra),
+    benevolence: Math.round(base.benevolence * extra),
   };
 
   // 🔗 Vínculo: a conclusão do hábito é UM dos eventos que a trilha relê. O
@@ -585,13 +585,13 @@ function withHabitCompletion(
   return {
     ...comMarco,
     habitRhythms: { ...(prev.habitRhythms ?? {}), [activityId]: after },
-    virusPoints: prev.virusPoints + bonus.virus,
-    dataPoints: prev.dataPoints + bonus.data,
-    vaccinePoints: prev.vaccinePoints + bonus.vaccine,
+    powerPoints: prev.powerPoints + bonus.power,
+    harmonyPoints: prev.harmonyPoints + bonus.harmony,
+    benevolencePoints: prev.benevolencePoints + bonus.benevolence,
     attributesSinceLastEvolution: {
-      virus: (prev.attributesSinceLastEvolution?.virus ?? 0) + bonus.virus,
-      data: (prev.attributesSinceLastEvolution?.data ?? 0) + bonus.data,
-      vaccine: (prev.attributesSinceLastEvolution?.vaccine ?? 0) + bonus.vaccine,
+      power: (prev.attributesSinceLastEvolution?.power ?? 0) + bonus.power,
+      harmony: (prev.attributesSinceLastEvolution?.harmony ?? 0) + bonus.harmony,
+      benevolence: (prev.attributesSinceLastEvolution?.benevolence ?? 0) + bonus.benevolence,
     },
   };
 }
@@ -760,7 +760,7 @@ export default function App() {
    *  donos do mesmo número é o footgun 9 na forma mais cara). */
   const incubandoAgora = useMemo(() => {
     const { stage: proxima } = evolutionTarget({
-      points: { virus: gameState.virusPoints, data: gameState.dataPoints, vaccine: gameState.vaccinePoints },
+      points: { power: gameState.powerPoints, harmony: gameState.harmonyPoints, benevolence: gameState.benevolencePoints },
       reading: carePatternReading,
       currentBranch: gameState.currentBranch,
       evolutionStage: gameState.evolutionStage,
@@ -769,7 +769,7 @@ export default function App() {
     });
     if (proxima === gameState.evolutionStage) return false;
     return isIncubating(gameState.incubation, proxima, agoraParaIncubacao);
-  }, [gameState.incubation, gameState.virusPoints, gameState.dataPoints, gameState.vaccinePoints,
+  }, [gameState.incubation, gameState.powerPoints, gameState.harmonyPoints, gameState.benevolencePoints,
       gameState.currentBranch, gameState.evolutionStage, gameState.unlockedEvolutions,
       gameState.perfectDays, carePatternReading, agoraParaIncubacao]);
 
@@ -785,7 +785,7 @@ export default function App() {
         {
           evolutionStage: prev.evolutionStage,
           perfectDays: prev.perfectDays,
-          points: { virus: prev.virusPoints, data: prev.dataPoints, vaccine: prev.vaccinePoints },
+          points: { power: prev.powerPoints, harmony: prev.harmonyPoints, benevolence: prev.benevolencePoints },
           reading: carePatternReading,
           currentBranch: prev.currentBranch,
           unlockedEvolutions: prev.unlockedEvolutions,
@@ -797,8 +797,8 @@ export default function App() {
       // muda — é isso que impede este efeito de virar spam de cloud save.
       return novo === prev.incubation ? prev : { ...prev, incubation: novo };
     });
-  }, [gameState.evolutionStage, gameState.perfectDays, gameState.virusPoints,
-      gameState.dataPoints, gameState.vaccinePoints, gameState.currentBranch,
+  }, [gameState.evolutionStage, gameState.perfectDays, gameState.powerPoints,
+      gameState.harmonyPoints, gameState.benevolencePoints, gameState.currentBranch,
       carePatternReading, setGameState]);
 
   const [guideModalOpen, setGuideModalOpen] = useState(false);
@@ -887,7 +887,7 @@ export default function App() {
       currentBranch: gameState.currentBranch,
       unlockedEvolutions: gameState.unlockedEvolutions,
       perfectDays: gameState.perfectDays,
-      points: { virus: gameState.virusPoints, data: gameState.dataPoints, vaccine: gameState.vaccinePoints },
+      points: { power: gameState.powerPoints, harmony: gameState.harmonyPoints, benevolence: gameState.benevolencePoints },
       reading: carePatternReading,
     },
     library: spriteAcervo,
@@ -1865,16 +1865,16 @@ export default function App() {
 
   const getCurrentStageName = (): string => getStageNameById(gameState.evolutionStage);
 
-  const getDominantBranch = (): 'virus' | 'data' | 'vaccine' | 'balanced' => {
-    const { virusPoints, dataPoints, vaccinePoints } = gameState;
-    const total = virusPoints + dataPoints + vaccinePoints;
+  const getDominantBranch = (): 'power' | 'harmony' | 'benevolence' | 'balanced' => {
+    const { powerPoints, harmonyPoints, benevolencePoints } = gameState;
+    const total = powerPoints + harmonyPoints + benevolencePoints;
 
     if (total === 0) return 'balanced';
 
-    const max = Math.max(virusPoints, dataPoints, vaccinePoints);
-    if (virusPoints === max && virusPoints > dataPoints && virusPoints > vaccinePoints) return 'virus';
-    if (dataPoints === max && dataPoints > virusPoints && dataPoints > vaccinePoints) return 'data';
-    if (vaccinePoints === max && vaccinePoints > virusPoints && vaccinePoints > dataPoints) return 'vaccine';
+    const max = Math.max(powerPoints, harmonyPoints, benevolencePoints);
+    if (powerPoints === max && powerPoints > harmonyPoints && powerPoints > benevolencePoints) return 'power';
+    if (harmonyPoints === max && harmonyPoints > powerPoints && harmonyPoints > benevolencePoints) return 'harmony';
+    if (benevolencePoints === max && benevolencePoints > powerPoints && benevolencePoints > harmonyPoints) return 'benevolence';
     return 'balanced';
   };
 
@@ -2250,7 +2250,7 @@ export default function App() {
   const handleAICreateActivity = useCallback((activity: {
     name: string;
     category: string;
-    points: { virus: number; data: number; vaccine: number };
+    points: { power: number; harmony: number; benevolence: number };
   }) => {
     if (import.meta.env.DEV) console.log('AI creating activity:', activity);
 
@@ -2766,13 +2766,13 @@ export default function App() {
    * A decisão em si NÃO mora aqui: quem anuncia o destino chama a MESMA
    * `evolutionTarget` que o `handleEvolve` commita. Este handler reimplementava
    * a regra à mão e mandava todo empate para `data`, sem consultar o ritmo —
-   * empate vírus/vacina com leitura confiável anunciava `ultimate-data` e
-   * gravava `ultimate-virus`. Ver `utils/evolutionTarget.ts` (footgun 9).
+   * empate poder/benevolência com leitura confiável anunciava `ultimate-harmony` e
+   * gravava `ultimate-power`. Ver `utils/evolutionTarget.ts` (footgun 9).
    */
-  const { virusPoints, dataPoints, vaccinePoints, evolutionStage, unlockedEvolutions, currentBranch, perfectDays, degeneratedByHP } = gameState;
+  const { powerPoints, harmonyPoints, benevolencePoints, evolutionStage, unlockedEvolutions, currentBranch, perfectDays, degeneratedByHP } = gameState;
   const handleEvolveRequest = useCallback(() => {
     const { stage: next } = evolutionTarget({
-      points: { virus: virusPoints, data: dataPoints, vaccine: vaccinePoints },
+      points: { power: powerPoints, harmony: harmonyPoints, benevolence: benevolencePoints },
       reading: carePatternReading,
       currentBranch,
       evolutionStage,
@@ -2784,7 +2784,7 @@ export default function App() {
     // qualquer jeito, deixando o jogador diante de um ritual que não commita.
     if (degeneratedByHP) return;
     if (next !== evolutionStage) setEvolutionCeremony({ from: evolutionStage, to: next });
-  }, [virusPoints, dataPoints, vaccinePoints, evolutionStage, unlockedEvolutions, currentBranch, perfectDays, carePatternReading, degeneratedByHP]);
+  }, [powerPoints, harmonyPoints, benevolencePoints, evolutionStage, unlockedEvolutions, currentBranch, perfectDays, carePatternReading, degeneratedByHP]);
 
   const handleEvolve = useCallback(() => {
     setGameState(prev => {
@@ -2805,12 +2805,12 @@ export default function App() {
 
       // O galho vem dos atributos (que vêm da comida, e portanto da CATEGORIA
       // das tarefas). No EMPATE, quem decide é o padrão de cuidado do jogador —
-      // antes isso era resolvido por uma ordem fixa no código (vírus, vacina,
+      // antes isso era resolvido por uma ordem fixa no código (poder, benevolência,
       // dado), sem significado nenhum. É a ideia dos care mistakes do v-pet de
       // 97: o jeito como você cuidou define quem seu bicho vira, e nenhum jeito
       // é melhor que o outro. Ver utils/carePattern.ts.
       const alvo = evolutionTarget({
-        points: { virus: prev.virusPoints, data: prev.dataPoints, vaccine: prev.vaccinePoints },
+        points: { power: prev.powerPoints, harmony: prev.harmonyPoints, benevolence: prev.benevolencePoints },
         // `careHistory(prev)`, não `prev.completedTasks`: a página de Evolução
         // prevê o galho com tarefas + activityLog, e ler só as tarefas aqui
         // fazia a cerimônia entregar um galho diferente do prometido.
@@ -2840,7 +2840,7 @@ export default function App() {
         healthPoints: newHP,
         maxHealthPoints: getMaxHPForStage(newEvolutionStage),
         perfectDays: 0,
-        attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
+        attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
         unlockedEvolutions: prev.unlockedEvolutions.includes(newEvolutionStage)
           ? prev.unlockedEvolutions
           : [...prev.unlockedEvolutions, newEvolutionStage],
@@ -3532,11 +3532,11 @@ export default function App() {
       maxHealthPoints: getMaxHPForStage('rookie'),
       maxActivityCap: FORM_REQUIREMENTS.rookie.cap,
       perfectDays: 0,
-      virusPoints: 0,
-      dataPoints: 0,
-      vaccinePoints: 0,
-      attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
-      currentBranch: 'data',
+      powerPoints: 0,
+      harmonyPoints: 0,
+      benevolencePoints: 0,
+      attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
+      currentBranch: 'harmony',
       degeneratedByHP: false,
       soulmonStages: result.creature.stages,
       soulmonMeta: {
@@ -3619,8 +3619,8 @@ export default function App() {
         healthPoints: getMaxHPForStage('rookie'),
         maxHealthPoints: getMaxHPForStage('rookie'),
         maxActivityCap: FORM_REQUIREMENTS.rookie.cap,
-        attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
-        currentBranch: 'data',
+        attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
+        currentBranch: 'harmony',
         degeneratedByHP: false,
         soulmonStages: result.creature.stages,
         soulmonMeta: {
@@ -4576,7 +4576,7 @@ export default function App() {
     setGameState(prev => applyRub(prev, today).state);
   }, [gameState.healthPoints, gameState.maxHealthPoints, gameState.careCaps, gameState.petPassive, gameState.playerDayTz]);
 
-  // targetStage é sempre um ID da árvore ('rookie' | 'champion-virus' | ...),
+  // targetStage é sempre um ID da árvore ('rookie' | 'champion-power' | ...),
   // não mais um nome de exibição — a árvore é única por jogador, então não dá
   // pra inverter nome→id globalmente como antes (DEGENERATION_STAGE_MAP).
   const handleDegenerate = useCallback((targetStage: string) => {
@@ -4600,7 +4600,7 @@ export default function App() {
         perfectDays: newPerfectDays,
         degeneratedByHP: false,
         // Reset recent branch window — next evolution reflects habits going forward
-        attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
+        attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
       };
     });
     playDegenerate();
@@ -5063,9 +5063,9 @@ export default function App() {
               gamePoints={gameState.gamePoints}
               totalXP={gameState.totalXP}
               streakDays={gameState.totalPerfectDays ?? 0}
-              virusPoints={gameState.virusPoints}
-              dataPoints={gameState.dataPoints}
-              vaccinePoints={gameState.vaccinePoints}
+              powerPoints={gameState.powerPoints}
+              harmonyPoints={gameState.harmonyPoints}
+              benevolencePoints={gameState.benevolencePoints}
               petPassive={gameState.petPassive}
               carePattern={carePatternReading.confident ? carePatternReading.pattern : null}
               /* Janela de Descanso: esconde os números da tela, preserva as
@@ -5122,10 +5122,10 @@ export default function App() {
           {labTab === 'evolution' && (
             <Suspense fallback={<ScreenSkeleton language={language} />}><EvolutionPath
               currentStageId={gameState.evolutionStage}
-              currentBranch={getDominantBranch() === 'balanced' ? 'data' : getDominantBranch() as 'virus' | 'data' | 'vaccine'}
-              virusPoints={gameState.virusPoints}
-              dataPoints={gameState.dataPoints}
-              vaccinePoints={gameState.vaccinePoints}
+              currentBranch={getDominantBranch() === 'balanced' ? 'harmony' : getDominantBranch() as 'power' | 'harmony' | 'benevolence'}
+              powerPoints={gameState.powerPoints}
+              harmonyPoints={gameState.harmonyPoints}
+              benevolencePoints={gameState.benevolencePoints}
               perfectDays={gameState.perfectDays}
               incubating={incubandoAgora}
               gateDays={FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required}
@@ -5151,7 +5151,7 @@ export default function App() {
               // copy e em `cardState` e nunca aparecia em runtime.
               generatingSprites={spriteGen.generating}
               forecastBranch={resolveBranch(
-                { virus: gameState.virusPoints, data: gameState.dataPoints, vaccine: gameState.vaccinePoints },
+                { power: gameState.powerPoints, harmony: gameState.harmonyPoints, benevolence: gameState.benevolencePoints },
                 carePatternReading,
                 gameState.currentBranch,
               )}
@@ -5762,7 +5762,7 @@ export default function App() {
                   // `getDominantBranch` mandava todo empate para `data` e podia
                   // liberar/travar o botão contra um destino que não era o real.
                   const { stage: next } = evolutionTarget({
-                    points: { virus: gameState.virusPoints, data: gameState.dataPoints, vaccine: gameState.vaccinePoints },
+                    points: { power: gameState.powerPoints, harmony: gameState.harmonyPoints, benevolence: gameState.benevolencePoints },
                     reading: carePatternReading,
                     currentBranch: gameState.currentBranch,
                     evolutionStage: gameState.evolutionStage,

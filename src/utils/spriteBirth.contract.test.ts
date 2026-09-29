@@ -28,10 +28,10 @@ const comSprite = (lib: ReturnType<typeof emptySpriteLibrary>, formId: string) =
 
 const entrada = (library: ReturnType<typeof emptySpriteLibrary>): SpriteTriggerInput => ({
   evolutionStage: 'rookie',
-  currentBranch: 'data',
+  currentBranch: 'harmony',
   unlockedEvolutions: [],
   perfectDays: 0,
-  points: { virus: 5, data: 1, vaccine: 1 },
+  points: { power: 5, harmony: 1, benevolence: 1 },
   reading: leituraSemConfianca,
   library,
 });

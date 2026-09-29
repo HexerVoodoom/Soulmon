@@ -68,7 +68,7 @@ export interface PlayBuff {
   attribute: PlayAttribute;
 }
 
-export type PlayAttribute = 'virus' | 'data' | 'vaccine';
+export type PlayAttribute = 'power' | 'harmony' | 'benevolence';
 
 /** O registro de persistência (opcional no GameState). */
 export interface PlayLog {
@@ -120,9 +120,9 @@ export interface PetNeedsState {
   playerDayTz?: PlayerDayAnchor;
   /** Há cocô na tela agora (quem decide isso é o sistema de cuidado). */
   hasPoop?: boolean;
-  virusPoints?: number;
-  dataPoints?: number;
-  vaccinePoints?: number;
+  powerPoints?: number;
+  harmonyPoints?: number;
+  benevolencePoints?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -152,7 +152,7 @@ export const PLAY_TIMES_PER_DAY = 1;
 
 const MINUTE_MS = 60 * 1000;
 
-const PLAY_ATTRIBUTES: readonly PlayAttribute[] = ['virus', 'data', 'vaccine'];
+const PLAY_ATTRIBUTES: readonly PlayAttribute[] = ['power', 'harmony', 'benevolence'];
 
 /** Hash estável do dia → atributo. Determinístico: o mesmo dia rende o mesmo. */
 function attributeForDay(todayKey: string): PlayAttribute {
@@ -214,7 +214,7 @@ export function play<T extends PetNeedsState>(
     attribute,
   };
 
-  const attrKey = `${attribute}Points` as 'virusPoints' | 'dataPoints' | 'vaccinePoints';
+  const attrKey = `${attribute}Points` as 'powerPoints' | 'harmonyPoints' | 'benevolencePoints';
 
   return {
     buff,

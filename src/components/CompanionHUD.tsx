@@ -163,7 +163,7 @@ interface CompanionHUDProps {
   ownSpriteUrl?: string;
   healthPoints: number;
   maxHealthPoints: number;
-  dominantBranch: 'virus' | 'data' | 'vaccine' | 'balanced';
+  dominantBranch: 'power' | 'harmony' | 'benevolence' | 'balanced';
   currentXP: number;
   nextLevelXP: number;
   triggerMessage?: number; // Prop to trigger message from outside
@@ -229,7 +229,7 @@ interface CompanionHUDProps {
   onCreateActivity?: (activity: {
     name: string;
     category: string;
-    points: { virus: number; data: number; vaccine: number };
+    points: { power: number; harmony: number; benevolence: number };
   }) => void;
   language: Language;
   foodInventory?: Record<string, number>;
@@ -887,11 +887,11 @@ export const CompanionHUD = memo(function CompanionHUD({
   // Get branch aura color
   const getBranchAuraColor = () => {
     switch (dominantBranch) {
-      case 'virus':
+      case 'power':
         return 'rgba(233, 79, 79, 0.6)'; // Red
-      case 'data':
+      case 'harmony':
         return 'rgba(79, 128, 233, 0.6)'; // Blue
-      case 'vaccine':
+      case 'benevolence':
         return 'rgba(102, 233, 79, 0.6)'; // Green
       default:
         return 'rgba(156, 163, 175, 0.6)'; // Gray

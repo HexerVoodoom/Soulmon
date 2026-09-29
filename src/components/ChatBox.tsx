@@ -33,7 +33,7 @@ interface ChatBoxProps {
   onCreateActivity?: (activity: {
     name: string;
     category: string;
-    points: { virus: number; data: number; vaccine: number };
+    points: { power: number; harmony: number; benevolence: number };
   }) => void;
 }
 

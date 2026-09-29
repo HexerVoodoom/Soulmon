@@ -51,10 +51,10 @@ function montar(over: { library?: SpriteLibrary; stages?: unknown } = {}) {
   const hook = renderHook(() => useSpriteGeneration({
     trigger: {
       evolutionStage: FORMA,
-      currentBranch: 'data',
+      currentBranch: 'harmony',
       unlockedEvolutions: [FORMA],
       perfectDays: 0,
-      points: { virus: 0, data: 0, vaccine: 0 },
+      points: { power: 0, harmony: 0, benevolence: 0 },
       reading: { confident: false, pattern: { id: 'constante' } },
     } as never,
     library: lib,

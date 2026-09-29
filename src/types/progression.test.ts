@@ -12,11 +12,11 @@ describe('getStageLevel', () => {
   });
 
   it('maps champion/ultimate/mega ids by prefix, regardless of branch', () => {
-    expect(getStageLevel('champion-virus')).toBe('champion');
-    expect(getStageLevel('champion-data')).toBe('champion');
-    expect(getStageLevel('champion-vaccine')).toBe('champion');
-    expect(getStageLevel('ultimate-virus')).toBe('ultimate');
-    expect(getStageLevel('mega-data')).toBe('mega');
+    expect(getStageLevel('champion-power')).toBe('champion');
+    expect(getStageLevel('champion-harmony')).toBe('champion');
+    expect(getStageLevel('champion-benevolence')).toBe('champion');
+    expect(getStageLevel('ultimate-power')).toBe('ultimate');
+    expect(getStageLevel('mega-harmony')).toBe('mega');
   });
 
   it('maps ultra', () => {
@@ -41,8 +41,8 @@ describe('getStageLevel', () => {
 
 describe('getStageBranch', () => {
   it('extracts the attribute embedded in the id', () => {
-    expect(getStageBranch('champion-virus')).toBe('virus');
-    expect(getStageBranch('mega-vaccine')).toBe('vaccine');
+    expect(getStageBranch('champion-power')).toBe('power');
+    expect(getStageBranch('mega-benevolence')).toBe('benevolence');
   });
 
   it('returns null when there is no branch (rookie/ultra/legacy names)', () => {
@@ -55,7 +55,7 @@ describe('getStageBranch', () => {
 describe('canSelectWeekdays', () => {
   it('is always true — the Soulmon tree starts at rookie, no pre-rookie stages', () => {
     expect(canSelectWeekdays('rookie')).toBe(true);
-    expect(canSelectWeekdays('champion-virus')).toBe(true);
+    expect(canSelectWeekdays('champion-power')).toBe(true);
     expect(canSelectWeekdays('ultra')).toBe(true);
   });
 });
@@ -165,7 +165,7 @@ describe('clampBranch', () => {
     // O save vem do localStorage/nuvem: `currentBranch` é dado não confiável e
     // o tipo do TS não vale nada em runtime.
     expect(clampBranch('inexistente' as never)).toBe(AVAILABLE_BRANCHES[0]);
-    expect(clampBranch('inexistente' as never)).toBe('virus');
+    expect(clampBranch('inexistente' as never)).toBe('power');
   });
 });
 

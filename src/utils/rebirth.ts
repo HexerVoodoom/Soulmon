@@ -189,9 +189,9 @@ export function canRebirth(input: RebirthEligibilityInput): boolean {
  *  campo — o mesmo contrato de `taskTriage`. */
 export interface RebirthTarget {
   evolutionStage?: string;
-  virusPoints?: number;
-  dataPoints?: number;
-  vaccinePoints?: number;
+  powerPoints?: number;
+  harmonyPoints?: number;
+  benevolencePoints?: number;
   accountTier?: 'demo' | 'paid';
   rebirth?: RebirthRecord | null;
   /** WP4.29 — o relógio da incubação. Zerado aqui, ver abaixo. */
@@ -247,9 +247,9 @@ export function applyRebirth<T extends RebirthTarget>(
     state: {
       ...prev,
       evolutionStage: 'rookie',
-      virusPoints: 0,
-      dataPoints: 0,
-      vaccinePoints: 0,
+      powerPoints: 0,
+      harmonyPoints: 0,
+      benevolencePoints: 0,
       rebirth: record,
       // ⚠️ **A incubação zera, e é a ÚNICA coisa além de estágio e atributos
       // que o Renascimento apaga** — por isso está aqui e não na lista do que

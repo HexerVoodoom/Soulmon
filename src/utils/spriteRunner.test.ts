@@ -33,9 +33,9 @@ describe('serial, uma forma por vez', () => {
       vivos -= 1;
       return ok(formId);
     });
-    await runSpriteBatch(['rookie', 'champion-virus', 'champion-data'], h.deps);
+    await runSpriteBatch(['rookie', 'champion-power', 'champion-harmony'], h.deps);
     expect(pico).toBe(1);
-    expect(h.results).toEqual(['rookie', 'champion-virus', 'champion-data']);
+    expect(h.results).toEqual(['rookie', 'champion-power', 'champion-harmony']);
   });
 });
 
@@ -63,22 +63,22 @@ describe('retentativa automática: 2, com recuo de 60 s e 10 min', () => {
 describe('as duas paradas, que não são a mesma', () => {
   it('409 `form-cap` para SÓ a forma: o resto do lote continua', async () => {
     const h = harness(async formId => {
-      if (formId === 'champion-virus') throw new SpriteGenError('form-cap', 409, 'sprite-form-cap');
+      if (formId === 'champion-power') throw new SpriteGenError('form-cap', 409, 'sprite-form-cap');
       return ok(formId);
     });
-    const out = await runSpriteBatch(['champion-virus', 'champion-data'], h.deps);
-    expect(h.results).toEqual(['champion-data']);
-    expect(h.failures).toEqual([{ formId: 'champion-virus', kind: 'form-cap' }]);
+    const out = await runSpriteBatch(['champion-power', 'champion-harmony'], h.deps);
+    expect(h.results).toEqual(['champion-harmony']);
+    expect(h.failures).toEqual([{ formId: 'champion-power', kind: 'form-cap' }]);
     expect(out.aborted).toBe(false);
   });
 
   it('402 `lifetime-cap` aborta o lote inteiro: a conta parou', async () => {
     const generate = vi.fn(async (formId: string) => {
-      if (formId === 'champion-virus') throw new SpriteGenError('lifetime-cap', 402, 'sprite-lifetime-cap');
+      if (formId === 'champion-power') throw new SpriteGenError('lifetime-cap', 402, 'sprite-lifetime-cap');
       return ok(formId);
     });
     const h = harness(generate);
-    const out = await runSpriteBatch(['champion-virus', 'champion-data'], h.deps);
+    const out = await runSpriteBatch(['champion-power', 'champion-harmony'], h.deps);
     expect(generate).toHaveBeenCalledTimes(1);
     expect(out.aborted).toBe(true);
     expect(h.results).toEqual([]);
@@ -151,13 +151,13 @@ describe('401 e 403: a classificacao do spriteGen manda, e o default nao', () =>
   it('nem 401 nem 403 abortam o lote: nao sao teto de conta', async () => {
     for (const [reason, status] of [['auth', 401], ['identity', 403]] as const) {
       const h = harness(async formId => {
-        if (formId === 'champion-virus') throw new SpriteGenError(reason, status, reason);
+        if (formId === 'champion-power') throw new SpriteGenError(reason, status, reason);
         return ok(formId);
       });
-      const out = await runSpriteBatch(['champion-virus', 'champion-data'], h.deps);
+      const out = await runSpriteBatch(['champion-power', 'champion-harmony'], h.deps);
       expect(out.aborted).toBe(false);
-      expect(h.results).toEqual(['champion-data']);
-      expect(out.failed).toEqual([{ formId: 'champion-virus', kind: reason }]);
+      expect(h.results).toEqual(['champion-harmony']);
+      expect(out.failed).toEqual([{ formId: 'champion-power', kind: reason }]);
     }
   });
 });
@@ -181,7 +181,7 @@ describe('o que NAO pode mudar com essa passada', () => {
 
   it('os terminais continuam terminais: 409 so a forma, 402 o lote inteiro', async () => {
     const hForm = harness(async () => { throw new SpriteGenError('form-cap', 409, 'form-cap'); });
-    const outForm = await runSpriteBatch(['rookie', 'champion-data'], {
+    const outForm = await runSpriteBatch(['rookie', 'champion-harmony'], {
       ...hForm.deps,
       generate: async (formId: string) => {
         if (formId === 'rookie') throw new SpriteGenError('form-cap', 409, 'form-cap');
@@ -192,7 +192,7 @@ describe('o que NAO pode mudar com essa passada', () => {
     expect(outForm.failed).toEqual([{ formId: 'rookie', kind: 'form-cap' }]);
 
     const hAcc = harness(async () => { throw new SpriteGenError('lifetime-cap', 402, 'lifetime-cap'); });
-    const outAcc = await runSpriteBatch(['rookie', 'champion-data'], hAcc.deps);
+    const outAcc = await runSpriteBatch(['rookie', 'champion-harmony'], hAcc.deps);
     expect(outAcc.aborted).toBe(true);
     expect(outAcc.done).toEqual([]);
   });

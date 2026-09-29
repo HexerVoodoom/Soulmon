@@ -27,11 +27,11 @@ export interface CareState {
   energyPoints: number;
   evolutionStage: string;
   foodInventory: Record<string, number>;
-  virusPoints: number;
-  dataPoints: number;
-  vaccinePoints: number;
+  powerPoints: number;
+  harmonyPoints: number;
+  benevolencePoints: number;
   totalXP: number;
-  attributesSinceLastEvolution: { virus: number; data: number; vaccine: number };
+  attributesSinceLastEvolution: { power: number; harmony: number; benevolence: number };
   /** Traço de nascimento (utils/passives.ts). Fica no ESTADO, e não num
    *  parâmetro novo, para o app de desktop herdar o efeito sem uma segunda
    *  implementação — é o mesmo motivo pelo qual este arquivo existe. */
@@ -101,16 +101,16 @@ export function feedFood<T extends CareState>(
   const foodDef = Object.values(FOOD_BY_CATEGORY).find(f => f.emoji === foodEmoji);
   const base = foodDef
     ? CATEGORY_ATTRIBUTES[foodDef.category]
-    : { virus: 0, data: 0, vaccine: 0 };
+    : { power: 0, harmony: 0, benevolence: 0 };
 
   // Guloso: cada refeição rende um ponto a mais, no atributo que a comida já
   // favorece (empate vai pro dado, que é o meio-termo da árvore).
   const attrs = { ...base };
   if (hasPassive(state.petPassive, 'guloso') && foodDef) {
-    const top = Math.max(base.virus, base.data, base.vaccine);
-    if (base.virus === top) attrs.virus += GULOSO_BONUS_ATTR;
-    else if (base.data === top) attrs.data += GULOSO_BONUS_ATTR;
-    else attrs.vaccine += GULOSO_BONUS_ATTR;
+    const top = Math.max(base.power, base.harmony, base.benevolence);
+    if (base.power === top) attrs.power += GULOSO_BONUS_ATTR;
+    else if (base.harmony === top) attrs.harmony += GULOSO_BONUS_ATTR;
+    else attrs.benevolence += GULOSO_BONUS_ATTR;
   }
 
   return {
@@ -120,14 +120,14 @@ export function feedFood<T extends CareState>(
       // A energia só enche comendo, limitada pelas barras do estágio.
       energyPoints: Math.min(getMaxEnergyForStage(state.evolutionStage), (state.energyPoints ?? 0) + 1),
       foodInventory,
-      virusPoints: state.virusPoints + attrs.virus,
-      dataPoints: state.dataPoints + attrs.data,
-      vaccinePoints: state.vaccinePoints + attrs.vaccine,
-      totalXP: state.totalXP + (attrs.virus + attrs.data + attrs.vaccine) * 10,
+      powerPoints: state.powerPoints + attrs.power,
+      harmonyPoints: state.harmonyPoints + attrs.harmony,
+      benevolencePoints: state.benevolencePoints + attrs.benevolence,
+      totalXP: state.totalXP + (attrs.power + attrs.harmony + attrs.benevolence) * 10,
       attributesSinceLastEvolution: {
-        virus: (state.attributesSinceLastEvolution?.virus ?? 0) + attrs.virus,
-        data: (state.attributesSinceLastEvolution?.data ?? 0) + attrs.data,
-        vaccine: (state.attributesSinceLastEvolution?.vaccine ?? 0) + attrs.vaccine,
+        power: (state.attributesSinceLastEvolution?.power ?? 0) + attrs.power,
+        harmony: (state.attributesSinceLastEvolution?.harmony ?? 0) + attrs.harmony,
+        benevolence: (state.attributesSinceLastEvolution?.benevolence ?? 0) + attrs.benevolence,
       },
     },
   };

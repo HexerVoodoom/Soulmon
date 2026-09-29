@@ -25,12 +25,12 @@ describe('missions — progress', () => {
        `types/progression.ts`. Os ids do ESQUEMA DA ÁRVORE testam a mesma
        regra e são os únicos que um save real carrega. */
     // Current form at champion (item form counts too)
-    const champ = getMissionProgress({ ...base, evolutionStage: 'champion-virus' });
+    const champ = getMissionProgress({ ...base, evolutionStage: 'champion-power' });
     expect(champ['mission-champion']).toBe(1);
     expect(champ['mission-mega']).toBe(0);
 
     // Ever-unlocked mega counts even after degeneration back to rookie
-    const mega = getMissionProgress({ ...base, evolutionStage: 'rookie', unlockedEvolutions: ['champion-virus', 'mega-data'] });
+    const mega = getMissionProgress({ ...base, evolutionStage: 'rookie', unlockedEvolutions: ['champion-power', 'mega-harmony'] });
     expect(mega['mission-champion']).toBe(1);
     expect(mega['mission-mega']).toBe(1);
   });
@@ -67,7 +67,7 @@ describe('missions — shop unlock gating', () => {
 
   it('plain (unlock-less) items are always unlocked; Glitchtama is never sold', () => {
     const progress = getMissionProgress(base);
-    const chip = SHOP_ITEMS.find(i => i.id === 'chip-virus')!;
+    const chip = SHOP_ITEMS.find(i => i.id === 'chip-power')!;
     expect(isShopItemUnlocked(chip, progress)).toBe(true);
     expect(SHOP_ITEMS.some(i => i.id === 'glitchtama')).toBe(false);
   });

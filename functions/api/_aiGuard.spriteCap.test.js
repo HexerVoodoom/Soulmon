@@ -226,29 +226,29 @@ describe('sprite: teto por forma', () => {
 
   it('a forma A esgota em 3 e a forma B continua gerando — o galho que falhou não leva a árvore', async () => {
     const env = fakeEnv();
-    for (let i = 0; i < 3; i++) expect((await gerarForma(env, 'mega-virus')).ok).toBe(true);
+    for (let i = 0; i < 3; i++) expect((await gerarForma(env, 'mega-power')).ok).toBe(true);
 
-    const bloqueada = await gerarForma(env, 'mega-virus');
+    const bloqueada = await gerarForma(env, 'mega-power');
     expect(bloqueada).toMatchObject({ ok: false, status: 409, reason: 'sprite-form-cap' });
 
-    // A 4ª de `mega-virus` recusa, mas `mega-data` e `ultra` seguem inteiras.
-    expect((await gerarForma(env, 'mega-data')).ok).toBe(true);
+    // A 4ª de `mega-power` recusa, mas `mega-harmony` e `ultra` seguem inteiras.
+    expect((await gerarForma(env, 'mega-harmony')).ok).toBe(true);
     expect((await gerarForma(env, 'ultra')).ok).toBe(true);
-    expect(entDe(env).aiForms).toEqual({ 'mega-virus': 3, 'mega-data': 1, ultra: 1 });
+    expect(entDe(env).aiForms).toEqual({ 'mega-power': 3, 'mega-harmony': 1, ultra: 1 });
   });
 
   it('o teto por forma PERSISTE entre dias — teto que o reset devolve é teto nenhum', async () => {
     const env = fakeEnv();
-    for (let i = 0; i < 3; i++) await gerarForma(env, 'champion-vaccine');
+    for (let i = 0; i < 3; i++) await gerarForma(env, 'champion-benevolence');
 
     // Dia novo (a cota diária volta) e MÊS novo (a global volta). A forma, não.
     vi.setSystemTime(new Date('2026-09-14T09:00:00Z'));
-    expect(await gerarForma(env, 'champion-vaccine'))
+    expect(await gerarForma(env, 'champion-benevolence'))
       .toMatchObject({ ok: false, status: 409, reason: 'sprite-form-cap' });
     // E o contador continua no `ent:`, que não tem TTL.
     for (const k of [...env._store.keys()]) if (k.startsWith('ai:')) env._store.delete(k);
-    expect(entDe(env).aiForms['champion-vaccine']).toBe(3);
-    expect(await gerarForma(env, 'champion-vaccine')).toMatchObject({ status: 409 });
+    expect(entDe(env).aiForms['champion-benevolence']).toBe(3);
+    expect(await gerarForma(env, 'champion-benevolence')).toMatchObject({ status: 409 });
   });
 
   it('o teto por forma de uma conta não vaza para outra', async () => {
@@ -260,12 +260,12 @@ describe('sprite: teto por forma', () => {
 
   it('recusa por forma NÃO consome cota diária, mensal nem vitalícia', async () => {
     const env = fakeEnv();
-    for (let i = 0; i < 3; i++) await gerarForma(env, 'ultimate-data');
+    for (let i = 0; i < 3; i++) await gerarForma(env, 'ultimate-harmony');
     const diaria = env._store.get(`ai:sprite:${SAVE}:2026-08-10`);
     const mensal = env._store.get('ai:sprite:@all:2026-08');
     const vital = entDe(env).aiLifetime.sprite;
 
-    for (let i = 0; i < 10; i++) expect((await gerarForma(env, 'ultimate-data')).status).toBe(409);
+    for (let i = 0; i < 10; i++) expect((await gerarForma(env, 'ultimate-harmony')).status).toBe(409);
 
     expect(env._store.get(`ai:sprite:${SAVE}:2026-08-10`)).toBe(diaria);
     expect(env._store.get('ai:sprite:@all:2026-08')).toBe(mensal);
@@ -302,10 +302,20 @@ describe('sprite: teto por forma', () => {
     expect(forma.en).toMatch(/other form/i);
 
     const env = fakeEnv();
-    for (let i = 0; i < 3; i++) await gerarForma(env, 'mega-vaccine');
-    const r = await gerarForma(env, 'mega-vaccine');
+    for (let i = 0; i < 3; i++) await gerarForma(env, 'mega-benevolence');
+    const r = await gerarForma(env, 'mega-benevolence');
     expect(r.message['pt-BR']).toBe(forma['pt-BR']);
     expect(r.message.en).toBe(forma.en);
+  });
+
+  it('renomeio de 29/09/2026: o contador gravado com o id ANTIGO continua valendo e é dobrado na chave nova', async () => {
+    const env = fakeEnv();
+    const antigo = 'mega-' + 'vir' + 'us';
+    env._store.set(ENT_PREFIX + SAVE, JSON.stringify({ tier: 'paid', aiForms: { [antigo]: 2 } }));
+    expect((await gerarForma(env, 'mega-power')).ok).toBe(true);
+    // 2 (antigo) + 1 = 3, tudo na chave nova; a antiga sai para não contar duas vezes
+    expect(entDe(env).aiForms).toEqual({ 'mega-power': 3 });
+    expect(await gerarForma(env, 'mega-power')).toMatchObject({ ok: false, status: 409, reason: 'sprite-form-cap' });
   });
 
   it('contador por forma ILEGÍVEL recusa (fail-closed), não vale zero', async () => {

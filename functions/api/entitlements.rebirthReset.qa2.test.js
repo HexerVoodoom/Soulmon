@@ -40,7 +40,7 @@ function fakeKV(seed = {}) {
 
 const ENT_BASE = {
   tier: 'paid', credits: 7, consumedOrders: ['GPA.1'], orderDetails: [],
-  aiLifetime: { sprite: 20 }, aiForms: { 'mega-virus': 3 },
+  aiLifetime: { sprite: 20 }, aiForms: { 'mega-power': 3 },
 };
 
 const env = ({ ent = ENT_BASE, save = { petName: 'Bolha', rebirth: REBIRTH } } = {}) => ({
@@ -76,7 +76,7 @@ describe('#62 — renascer zera o teto vitalício de sprite', () => {
     const e = env();
     await chamar(e);
     const ent = lerEnt(e);
-    expect(ent.aiForms, 'teto por FORMA: as formas já geradas continuam gastas').toEqual({ 'mega-virus': 3 });
+    expect(ent.aiForms, 'teto por FORMA: as formas já geradas continuam gastas').toEqual({ 'mega-power': 3 });
     expect(ent.tier).toBe('paid');
     expect(ent.credits).toBe(7);
     expect(ent.consumedOrders).toEqual(['GPA.1']);

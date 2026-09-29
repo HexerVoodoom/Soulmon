@@ -31,7 +31,7 @@ const stage = (over: Partial<CreatureStage>): CreatureStage => ({
   ...over,
 } as CreatureStage);
 
-/** rookie (atual) → champion-data → ultimate-data, o galho `data`. */
+/** rookie (atual) → champion-harmony → ultimate-harmony, o galho `data`. */
 const stages = [
   stage({}),
   stage({ stage: 'champion', branch: 'harmonia', name: 'Champ', stageName: { pt: 'Champion', en: 'Champion' } }),
@@ -40,8 +40,8 @@ const stages = [
 
 const base = {
   currentStageId: 'rookie',
-  currentBranch: 'data' as const,
-  virusPoints: 1, dataPoints: 3, vaccinePoints: 0,
+  currentBranch: 'harmony' as const,
+  powerPoints: 1, harmonyPoints: 3, benevolencePoints: 0,
   perfectDays: 2,
   gateDays: 10,
   stages,
@@ -121,7 +121,7 @@ describe('§2.2 — cada forma diz em que estado a arte dela está', () => {
     // Nenhum nó da árvore oferece "Tentar de novo": a UI não pode reverter a
     // decisão do dono (geração incremental) oferecendo a árvore num toque.
     expect(screen.queryByRole('button', { name: 'Tentar de novo' })).toBeNull();
-    expect(screen.queryByTestId('sm-estado-champion-data')).toBeNull();
+    expect(screen.queryByTestId('sm-estado-champion-harmony')).toBeNull();
   });
 
   it('OFFLINE: sem rede, a forma sem sprite diz que volta quando você voltar', () => {
@@ -140,12 +140,12 @@ describe('§2.2 — cada forma diz em que estado a arte dela está', () => {
 
   it('empate nos atributos: a página diz que o ritmo ainda pode decidir', () => {
     const { unmount } = renderWithCss(
-      <EvolutionPath {...base} virusPoints={3} dataPoints={3} vaccinePoints={0} />,
+      <EvolutionPath {...base} powerPoints={3} harmonyPoints={3} benevolencePoints={0} />,
     );
     expect(screen.getByTestId('sm-sprite-empate').textContent).toBe('Seu ritmo ainda pode decidir.');
     unmount();
     renderWithCss(
-      <EvolutionPath {...base} language="en-US" virusPoints={3} dataPoints={3} vaccinePoints={0} />,
+      <EvolutionPath {...base} language="en-US" powerPoints={3} harmonyPoints={3} benevolencePoints={0} />,
     );
     expect(screen.getByTestId('sm-sprite-empate').textContent).toBe('Your rhythm can still decide.');
   });

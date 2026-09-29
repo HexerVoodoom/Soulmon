@@ -148,11 +148,11 @@ describe('generate-sprite: o teto POR FORMA para antes de gastar', () => {
     // `perFormLifetime` é o que falha e cobra: a recusa de conteúdo.
     for (let i = 0; i < 3; i++) {
       fetch.mockImplementationOnce(async url => { chamadasDeIA.push(String(url)); return geminiRecusa(); });
-      expect((await onRequestPost({ request: reqForma('mega-virus'), env })).status).toBe(500);
+      expect((await onRequestPost({ request: reqForma('mega-power'), env })).status).toBe(500);
     }
     expect(chamadasDeIA).toHaveLength(3);
 
-    const res = await onRequestPost({ request: reqForma('mega-virus'), env });
+    const res = await onRequestPost({ request: reqForma('mega-power'), env });
     expect(res.status).toBe(409);
     const body = await res.json();
     expect(body.error).toBe('sprite-form-cap');
@@ -184,15 +184,15 @@ describe('generate-sprite: o teto POR FORMA para antes de gastar', () => {
     // o que se quer medir é o teto POR FORMA, não o dedupe. Forma virgem, com
     // as 2 tentativas já gastas no registro.
     const env = fakeEnv();
-    env._store.set(ENT_PREFIX + SAVE, JSON.stringify({ tier: 'paid', aiForms: { 'champion-data': 2 } }));
+    env._store.set(ENT_PREFIX + SAVE, JSON.stringify({ tier: 'paid', aiForms: { 'champion-harmony': 2 } }));
     fetch.mockImplementationOnce(async url => { chamadasDeIA.push(String(url)); return geminiRecusa(); });
     const res = await onRequestPost({
-      request: req({ prompt: 'com referências', promptFallback: 'sem referências', id: SAVE, formId: 'champion-data' }),
+      request: req({ prompt: 'com referências', promptFallback: 'sem referências', id: SAVE, formId: 'champion-harmony' }),
       env,
     });
     expect(res.status).toBe(409);
     expect(chamadasDeIA).toHaveLength(1); // a 1ª aconteceu; a refeitura NÃO
-    expect(JSON.parse(env._store.get(ENT_PREFIX + SAVE)).aiForms['champion-data']).toBe(3);
+    expect(JSON.parse(env._store.get(ENT_PREFIX + SAVE)).aiForms['champion-harmony']).toBe(3);
   });
 
   it('`formId` inventado é 400 e ZERO chamada de IA', async () => {

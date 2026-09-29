@@ -38,7 +38,7 @@ describe('applyRedemption — o arco fecha', () => {
   it('não toca em mais nada do save', () => {
     const antes = {
       degeneratedByHP: true, perfectDays: 9, gamePoints: 700,
-      unlockedEvolutions: ['rookie', 'champion-data'],
+      unlockedEvolutions: ['rookie', 'champion-harmony'],
     };
     const depois = applyRedemption(antes, true);
     expect(depois.perfectDays).toBe(9);

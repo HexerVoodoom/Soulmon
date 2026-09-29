@@ -12,8 +12,8 @@ import { FormAlbum } from './FormAlbum';
 
 const forms = [
   { id: 'rookie', name: 'Velhuma', spriteUrl: 'https://cdn/a.png' },
-  { id: 'champion-data', name: 'Velhara', spriteUrl: 'https://cdn/b.png' },
-  { id: 'mega-data', name: 'Velhamon', spriteUrl: 'https://cdn/c.png' },
+  { id: 'champion-harmony', name: 'Velhara', spriteUrl: 'https://cdn/b.png' },
+  { id: 'mega-harmony', name: 'Velhamon', spriteUrl: 'https://cdn/c.png' },
 ];
 
 describe('FormAlbum — o que foi vivido', () => {
@@ -32,7 +32,7 @@ describe('FormAlbum — o que foi vivido', () => {
 
   it('a contagem é de COLEÇÃO — cresce e nunca é de desempenho', () => {
     const { container } = renderWithCss(
-      <FormAlbum forms={forms} reached={['rookie', 'champion-data']} language="pt-BR" />,
+      <FormAlbum forms={forms} reached={['rookie', 'champion-harmony']} language="pt-BR" />,
     );
     expect(container.textContent).toContain('2/3');
   });

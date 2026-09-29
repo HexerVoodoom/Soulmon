@@ -22,7 +22,7 @@ import { describe, it, expect } from 'vitest';
 import { canReachUltra, ULTRA_PATIENCE_DAYS, FORM_REQUIREMENTS } from './progression';
 import { getNextEvolution } from '../utils/dailyReset';
 
-const TRES_MEGAS = ['mega-virus', 'mega-data', 'mega-vaccine'];
+const TRES_MEGAS = ['mega-power', 'mega-harmony', 'mega-benevolence'];
 
 describe('os dois caminhos para o Ultra (WP4.2 / D6)', () => {
   it('coleção: as três megas continuam abrindo o topo', () => {
@@ -30,16 +30,16 @@ describe('os dois caminhos para o Ultra (WP4.2 / D6)', () => {
   });
 
   it('permanência: dias perfeitos como mega abrem o topo SEM nenhuma mega extra', () => {
-    expect(canReachUltra({ unlockedEvolutions: ['mega-virus'], perfectDays: ULTRA_PATIENCE_DAYS }))
+    expect(canReachUltra({ unlockedEvolutions: ['mega-power'], perfectDays: ULTRA_PATIENCE_DAYS }))
       .toBe(true);
     // E sem NENHUMA forma registrada — o caminho não depende da coleção.
     expect(canReachUltra({ perfectDays: ULTRA_PATIENCE_DAYS })).toBe(true);
   });
 
   it('abaixo do corte, nenhum caminho — a porta abre no número, não perto dele', () => {
-    expect(canReachUltra({ unlockedEvolutions: ['mega-virus'], perfectDays: ULTRA_PATIENCE_DAYS - 1 }))
+    expect(canReachUltra({ unlockedEvolutions: ['mega-power'], perfectDays: ULTRA_PATIENCE_DAYS - 1 }))
       .toBe(false);
-    expect(canReachUltra({ unlockedEvolutions: ['mega-virus', 'mega-data'], perfectDays: 0 }))
+    expect(canReachUltra({ unlockedEvolutions: ['mega-power', 'mega-harmony'], perfectDays: 0 }))
       .toBe(false);
   });
 
@@ -48,14 +48,14 @@ describe('os dois caminhos para o Ultra (WP4.2 / D6)', () => {
   });
 
   it('a árvore respeita os dois: mega + permanência devolve `ultra`', () => {
-    expect(getNextEvolution('mega-virus', 'virus', ['mega-virus'], ULTRA_PATIENCE_DAYS)).toBe('ultra');
-    expect(getNextEvolution('mega-virus', 'virus', TRES_MEGAS, 0)).toBe('ultra');
+    expect(getNextEvolution('mega-power', 'power', ['mega-power'], ULTRA_PATIENCE_DAYS)).toBe('ultra');
+    expect(getNextEvolution('mega-power', 'power', TRES_MEGAS, 0)).toBe('ultra');
     // Sem nenhum dos dois, o mega continua sendo o próprio destino ("distante").
-    expect(getNextEvolution('mega-virus', 'virus', ['mega-virus'], 3)).toBe('mega-virus');
+    expect(getNextEvolution('mega-power', 'power', ['mega-power'], 3)).toBe('mega-power');
   });
 
   it('o Ultra continua sendo o topo — dele não sai mais nada', () => {
-    expect(getNextEvolution('ultra', 'data', TRES_MEGAS, 999)).toBe('ultra');
+    expect(getNextEvolution('ultra', 'harmony', TRES_MEGAS, 999)).toBe('ultra');
   });
 
   it('a permanência é mais longa que o gate normal de evolução, e por muito', () => {
@@ -67,7 +67,7 @@ describe('os dois caminhos para o Ultra (WP4.2 / D6)', () => {
   it('nenhum caminho para o Ultra passa por degenerar', () => {
     // A trava conceitual do pacote: existe pelo menos um caminho alcançável a
     // partir de UMA linha só de evolução, sem nunca ter descido.
-    const soUmGalho = ['rookie', 'champion-virus', 'ultimate-virus', 'mega-virus'];
+    const soUmGalho = ['rookie', 'champion-power', 'ultimate-power', 'mega-power'];
     expect(canReachUltra({ unlockedEvolutions: soUmGalho, perfectDays: ULTRA_PATIENCE_DAYS }))
       .toBe(true);
   });

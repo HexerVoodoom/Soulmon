@@ -23,9 +23,9 @@ function apto(over: Partial<Parameters<typeof incubationFor>[0]> = {}) {
   return {
     evolutionStage: 'rookie',
     perfectDays: 4,            // rookie exige 4 → apto
-    points: { virus: 9, data: 0, vaccine: 0 },
+    points: { power: 9, harmony: 0, benevolence: 0 },
     reading,
-    currentBranch: 'virus' as const,
+    currentBranch: 'power' as const,
     unlockedEvolutions: [] as string[],
     ...over,
   };
@@ -42,25 +42,25 @@ describe('a incubação abre na ELEGIBILIDADE, não na véspera', () => {
 
   it('ficar apto registra o instante da forma-destino', () => {
     const inc = incubationFor(apto(), undefined, T0);
-    expect(inc.since['champion-virus']).toBe(T0.toISOString());
+    expect(inc.since['champion-power']).toBe(T0.toISOString());
   });
 
   it('o empate de galho incuba TODOS os líderes — o toque decide depois', () => {
-    const inc = incubationFor(apto({ points: { virus: 4, data: 0, vaccine: 4 } }), undefined, T0);
-    expect(Object.keys(inc.since).sort()).toEqual(['champion-vaccine', 'champion-virus']);
+    const inc = incubationFor(apto({ points: { power: 4, harmony: 0, benevolence: 4 } }), undefined, T0);
+    expect(Object.keys(inc.since).sort()).toEqual(['champion-benevolence', 'champion-power']);
   });
 });
 
 describe('30 min é PISO, nunca prazo (D-G8b)', () => {
   it('antes dos 30 min não libera; a partir deles, libera', () => {
     const inc = incubationFor(apto(), undefined, T0);
-    expect(incubationReady(inc, 'champion-virus', maisTarde(INCUBATION_MIN_MS - 1))).toBe(false);
-    expect(incubationReady(inc, 'champion-virus', maisTarde(INCUBATION_MIN_MS))).toBe(true);
+    expect(incubationReady(inc, 'champion-power', maisTarde(INCUBATION_MIN_MS - 1))).toBe(false);
+    expect(incubationReady(inc, 'champion-power', maisTarde(INCUBATION_MIN_MS))).toBe(true);
   });
 
   it('**o caso que separa piso de prazo**: 30 dias depois continua liberado', () => {
     const inc = incubationFor(apto(), undefined, T0);
-    expect(incubationReady(inc, 'champion-virus', maisTarde(30 * 24 * 60 * 60 * 1000))).toBe(true);
+    expect(incubationReady(inc, 'champion-power', maisTarde(30 * 24 * 60 * 60 * 1000))).toBe(true);
   });
 
   it('R-K(b): o ESTADO é idêntico com 30 min e com 30 dias de espera', () => {
@@ -80,15 +80,15 @@ describe('R-L: degenerar dentro da janela NÃO cobra um segundo relógio', () =>
     const caiu = incubationFor(apto({ perfectDays: 0 }), inc, maisTarde(10 * 60_000));
     // Volta a ficar apto 5 min depois disso.
     const voltou = incubationFor(apto(), caiu, maisTarde(15 * 60_000));
-    expect(voltou.since['champion-virus']).toBe(T0.toISOString());
+    expect(voltou.since['champion-power']).toBe(T0.toISOString());
     // …e por isso libera aos 30 min do relógio ORIGINAL, não 30 min depois da volta.
-    expect(incubationReady(voltou, 'champion-virus', maisTarde(INCUBATION_MIN_MS))).toBe(true);
+    expect(incubationReady(voltou, 'champion-power', maisTarde(INCUBATION_MIN_MS))).toBe(true);
   });
 
   it('o HP não cobra tempo sobre progresso: a queda não apaga registro nenhum', () => {
     const inc = incubationFor(apto(), undefined, T0);
     const caiu = incubationFor(apto({ perfectDays: 0 }), inc, maisTarde(60_000));
-    expect(caiu.since['champion-virus']).toBe(T0.toISOString());
+    expect(caiu.since['champion-power']).toBe(T0.toISOString());
   });
 });
 
@@ -98,19 +98,19 @@ describe('R-M/D-G8d: o portão é o RELÓGIO, nunca o sprite ficar pronto', () =
     // jogador em `sprite-lifetime-cap` volta a poder ficar travado fora da
     // própria evolução. O teste falha por tipo antes de falhar por asserção.
     const inc = incubationFor(apto(), undefined, T0);
-    expect(incubationReady(inc, 'champion-virus', maisTarde(INCUBATION_MIN_MS))).toBe(true);
+    expect(incubationReady(inc, 'champion-power', maisTarde(INCUBATION_MIN_MS))).toBe(true);
   });
 });
 
 describe('o save antigo e o relógio quebrado nunca prendem ninguém', () => {
   it('forma sem registro está liberada — quem já era apto não ganha relógio novo', () => {
-    expect(incubationReady(undefined, 'champion-virus', T0)).toBe(true);
-    expect(incubationReady(emptyIncubation(), 'champion-virus', T0)).toBe(true);
+    expect(incubationReady(undefined, 'champion-power', T0)).toBe(true);
+    expect(incubationReady(emptyIncubation(), 'champion-power', T0)).toBe(true);
   });
 
   it('`since` corrompido libera, nunca tranca', () => {
-    const inc = { v: 1 as const, since: { 'champion-virus': 'não é data' } };
-    expect(incubationReady(inc, 'champion-virus', T0)).toBe(true);
+    const inc = { v: 1 as const, since: { 'champion-power': 'não é data' } };
+    expect(incubationReady(inc, 'champion-power', T0)).toBe(true);
   });
 });
 
@@ -130,7 +130,7 @@ describe('idempotência (footgun 6) e `isIncubating`', () => {
     const inc = incubationFor(apto(), undefined, T0);
     expect(isIncubating(inc, null, T0)).toBe(false);
     expect(isIncubating(inc, 'ultra', T0)).toBe(false);
-    expect(isIncubating(inc, 'champion-virus', T0)).toBe(true);
-    expect(isIncubating(inc, 'champion-virus', maisTarde(INCUBATION_MIN_MS))).toBe(false);
+    expect(isIncubating(inc, 'champion-power', T0)).toBe(true);
+    expect(isIncubating(inc, 'champion-power', maisTarde(INCUBATION_MIN_MS))).toBe(false);
   });
 });

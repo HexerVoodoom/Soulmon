@@ -24,11 +24,11 @@ function estado(over: Partial<CareCapsState> = {}): CareCapsState {
     energyPoints: 0,
     evolutionStage: 'rookie',
     foodInventory: { '🍎': 5 },
-    virusPoints: 0,
-    dataPoints: 0,
-    vaccinePoints: 0,
+    powerPoints: 0,
+    harmonyPoints: 0,
+    benevolencePoints: 0,
     totalXP: 0,
-    attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
+    attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
     ...over,
   };
 }

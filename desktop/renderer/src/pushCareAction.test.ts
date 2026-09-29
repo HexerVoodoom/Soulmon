@@ -57,8 +57,8 @@ beforeEach(async () => {
   await kv.put(id, JSON.stringify({
     evolutionStage: 'rookie', healthPoints: 2, maxHealthPoints: 3, energyPoints: 1,
     perfectDays: 7, foodInventory: { '🍎': 2 }, tasks: [],
-    virusPoints: 0, dataPoints: 0, vaccinePoints: 0, totalXP: 0,
-    attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
+    powerPoints: 0, harmonyPoints: 0, benevolencePoints: 0, totalXP: 0,
+    attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
   }));
 });
 

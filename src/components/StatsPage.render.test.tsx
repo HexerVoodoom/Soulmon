@@ -29,7 +29,7 @@ const base = {
   bestiary: ['ignar-rookie', 'ignar-champion', 'lumel-rookie'],
   album: [
     { id: 'rookie', name: 'Sprout', spriteUrl: 'https://cdn/a.png' },
-    { id: 'champion-data', name: 'Ember', spriteUrl: 'https://cdn/b.png' },
+    { id: 'champion-harmony', name: 'Ember', spriteUrl: 'https://cdn/b.png' },
   ],
   journey: { unlockedEvolutions: ['rookie'], dungeonRunsCompleted: 2 },
 };

@@ -63,7 +63,7 @@ export interface PublicProfileInput {
   petName?: string;
   unlockedStages?: string[];
   pvpEnabled: boolean;
-  attrs?: { virus: number; data: number; vaccine: number };
+  attrs?: { power: number; harmony: number; benevolence: number };
   tasksDone?: number;
 }
 

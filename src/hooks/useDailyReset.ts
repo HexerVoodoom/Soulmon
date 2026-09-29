@@ -20,15 +20,15 @@ interface ResetGameState {
   energyPoints: number;
   perfectDays: number;
   totalXP: number;
-  virusPoints: number;
-  dataPoints: number;
-  vaccinePoints: number;
+  powerPoints: number;
+  harmonyPoints: number;
+  benevolencePoints: number;
   evolutionStage: string;
   unlockedEvolutions: string[];
-  currentBranch: 'virus' | 'data' | 'vaccine';
+  currentBranch: 'power' | 'harmony' | 'benevolence';
   maxActivityCap: number;
   lastResetDate: string;
-  attributesSinceLastEvolution: { virus: number; data: number; vaccine: number };
+  attributesSinceLastEvolution: { power: number; harmony: number; benevolence: number };
   poopEventsShown: number[];
   poopEventsCompleted: number[];
 }

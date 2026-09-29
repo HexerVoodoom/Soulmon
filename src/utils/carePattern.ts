@@ -9,8 +9,8 @@
 //
 // Aqui a mesma ideia entra sem inventar formas novas na árvore: o padrão de
 // cuidado é o CRITÉRIO DE DESEMPATE do galho de evolução. Antes o empate entre
-// atributos era resolvido por uma ordem arbitrária no código (vírus, depois
-// vacina, depois dado); agora ele é resolvido por algo que diz respeito ao
+// atributos era resolvido por uma ordem arbitrária no código (poder, depois
+// benevolência, depois harmonia); agora ele é resolvido por algo que diz respeito ao
 // jogador.
 //
 // Nenhum padrão é melhor que outro, e nenhum deles muda força, HP ou
@@ -134,13 +134,13 @@ export function careHistory(state: {
 }
 
 /** O galho que cada padrão puxa. Nenhum é mais forte — são rumos diferentes. */
-export function patternBranch(id: CarePatternId): 'virus' | 'data' | 'vaccine' {
-  if (id === 'constante') return 'vaccine';
-  if (id === 'explosivo') return 'virus';
-  return 'data';
+export function patternBranch(id: CarePatternId): 'power' | 'harmony' | 'benevolence' {
+  if (id === 'constante') return 'benevolence';
+  if (id === 'explosivo') return 'power';
+  return 'harmony';
 }
 
-export interface AttrPoints { virus: number; data: number; vaccine: number }
+export interface AttrPoints { power: number; harmony: number; benevolence: number }
 
 /**
  * Escolhe o galho da próxima evolução.
@@ -164,29 +164,29 @@ export interface AttrPoints { virus: number; data: number; vaccine: number }
  * disputa de atributo nenhuma, e quem responde é o ritmo/fallback de
  * `resolveBranch`.
  */
-export function branchLeaders(points: AttrPoints): Array<'virus' | 'data' | 'vaccine'> {
+export function branchLeaders(points: AttrPoints): Array<'power' | 'harmony' | 'benevolence'> {
   const safe = safeAttrPoints(points);
-  const max = Math.max(safe.virus, safe.data, safe.vaccine);
+  const max = Math.max(safe.power, safe.harmony, safe.benevolence);
   if (max <= 0) return [];
-  return (['virus', 'data', 'vaccine'] as const).filter(k => safe[k] === max);
+  return (['power', 'harmony', 'benevolence'] as const).filter(k => safe[k] === max);
 }
 
 /** Ponto não-finito vira 0 — ver o comentário dentro de `resolveBranch`. */
 function safeAttrPoints(points: AttrPoints): AttrPoints {
   return {
-    virus: Number.isFinite(points?.virus) ? points.virus : 0,
-    data: Number.isFinite(points?.data) ? points.data : 0,
-    vaccine: Number.isFinite(points?.vaccine) ? points.vaccine : 0,
+    power: Number.isFinite(points?.power) ? points.power : 0,
+    harmony: Number.isFinite(points?.harmony) ? points.harmony : 0,
+    benevolence: Number.isFinite(points?.benevolence) ? points.benevolence : 0,
   };
 }
 
 export function resolveBranch(
   points: AttrPoints,
   reading: CareReading,
-  fallback: 'virus' | 'data' | 'vaccine' = 'data',
-): 'virus' | 'data' | 'vaccine' {
+  fallback: 'power' | 'harmony' | 'benevolence' = 'harmony',
+): 'power' | 'harmony' | 'benevolence' {
   // Ponto NÃO-FINITO vira 0 (saneado dentro de `branchLeaders`). Sem isto, um
-  // `virusPoints` ausente/NaN no save
+  // `powerPoints` ausente/NaN no save
   // fazia `Math.max` dar NaN, `NaN <= 0` ser false, a lista de líderes ficar
   // VAZIA (nada é === NaN) e a função devolver `leaders[0]` — ou seja,
   // **`undefined`**, um valor fora do próprio tipo de retorno. O galho previsto

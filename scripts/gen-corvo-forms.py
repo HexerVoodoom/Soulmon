@@ -12,21 +12,21 @@ from PIL import Image
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, 'src/assets/soulmon/mascot-raven.png')
 OUT = os.path.join(ROOT, 'src/assets/soulmon/corvo')
-ORDER = ['rookie','champion-virus','champion-data','champion-vaccine','ultimate-virus','ultimate-data',
-         'ultimate-vaccine','mega-virus','mega-data','mega-vaccine','ultra']
+ORDER = ['rookie','champion-power','champion-harmony','champion-benevolence','ultimate-power','ultimate-harmony',
+         'ultimate-benevolence','mega-power','mega-harmony','mega-benevolence','ultra']
 # Matiz-alvo (graus): corpo, chama
-PATH = {'virus': (8, 32), 'data': (112, 78), 'vaccine': (214, 192)}
+PATH = {'power': (8, 32), 'harmony': (112, 78), 'benevolence': (214, 192)}
 # Intensidade por estágio: sk=x saturação, vk/va=brilho corpo, fs/fv/fa=saturação/brilho da chama
 STAGE = {
  'champion': dict(sk=0.65, vk=0.85, va=0.0, fs=1.0, fv=1.0,  fa=0.0),
  'ultimate': dict(sk=1.00, vk=1.30, va=0.04, fs=1.1, fv=1.1,  fa=0.05),
  'mega':     dict(sk=1.20, vk=1.60, va=0.10, fs=1.2, fv=1.25, fa=0.12),
 }
-# ajuste de luminância por caminho (separa em cinza): virus escuro, dado médio, vacina claro
-PATH_V = {'virus': 0.70, 'data': 0.95, 'vaccine': 1.38}
+# ajuste de luminância por caminho (separa em cinza): poder escuro, harmonia médio, benevolência claro
+PATH_V = {'power': 0.70, 'harmony': 0.95, 'benevolence': 1.38}
 
 # ajuste fino por forma (multiplica o brilho do corpo) para separar luminância entre formas
-FORM_V = {'champion-data': 1.10, 'mega-virus': 1.22}
+FORM_V = {'champion-harmony': 1.10, 'mega-power': 1.22}
 
 def ss(x, a, b):
     if b == a: return 1.0 if x >= b else 0.0

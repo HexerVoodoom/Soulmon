@@ -17,8 +17,8 @@ describe('conquistas (emblemas de arte)', () => {
     expect(unlockedAchievements({ ...vazio, habitRhythms: r(7) as never })).toEqual(['habit-7']);
     expect(unlockedAchievements({ ...vazio, habitRhythms: r(21) as never })).toEqual(['habit-7', 'habit-21']);
     expect(unlockedAchievements({ ...vazio, habitRhythms: r(66) as never })).toEqual(['habit-7', 'habit-21', 'habit-66']);
-    expect(unlockedAchievements({ ...vazio, unlockedEvolutions: ['rookie', 'champion-data'] })).toEqual(['first-evolution']);
-    expect(unlockedAchievements({ ...vazio, evolutionStage: 'mega-virus' })).toEqual(['mega-form']);
+    expect(unlockedAchievements({ ...vazio, unlockedEvolutions: ['rookie', 'champion-harmony'] })).toEqual(['first-evolution']);
+    expect(unlockedAchievements({ ...vazio, evolutionStage: 'mega-power' })).toEqual(['mega-form']);
     expect(unlockedAchievements({ ...vazio, dungeonRunsCompleted: 10 })).toEqual(['dungeon-10']);
     expect(unlockedAchievements({ ...vazio, trophies: [{ season: '2026-W37', place: 1 }] })).toEqual(['tournament-champion']);
     expect(unlockedAchievements({ ...vazio, trophies: [{ season: '2026-W37', place: 2 }] })).toEqual([]);

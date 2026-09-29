@@ -49,8 +49,8 @@ function montar(extra: Partial<Parameters<typeof PetPage>[0]> = {}) {
   return renderWithCss(
     <PetPage
       stages={[rookie, champion]}
-      unlockedEvolutions={['rookie', 'champion-virus']}
-      currentStageId="champion-virus"
+      unlockedEvolutions={['rookie', 'champion-power']}
+      currentStageId="champion-power"
       dominantElement="fogo"
       petName="Pixel"
       language="en-US"

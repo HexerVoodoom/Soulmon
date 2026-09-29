@@ -296,7 +296,7 @@ export function CategoryChips({
  */
 export function StrengthensLine({ category, isPt }: { category: ActivityCategory; isPt: boolean }) {
   const attributes = CATEGORY_ATTRIBUTES[category];
-  const keys: BranchType[] = ['virus', 'data', 'vaccine'];
+  const keys: BranchType[] = ['power', 'harmony', 'benevolence'];
   const top = Math.max(...keys.map(k => attributes[k]));
   const winners = keys.filter(k => attributes[k] === top);
   return (

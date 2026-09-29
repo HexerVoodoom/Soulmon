@@ -102,7 +102,7 @@ describe('a meta que a UI anuncia é a que a virada do dia cobra', () => {
     perfectDays: 0,
     energyPoints: 4,
     unlockedEvolutions: [] as string[],
-    currentBranch: 'data',
+    currentBranch: 'harmony',
     maxActivityCap: 6,
     lastResetDate: sabadoStr,
     activities: [
@@ -157,7 +157,7 @@ describe('"você já tem tarefas suficientes" é sobre HOJE, não sobre o cadast
   const SABADO = 6;
   const QUARTA = 3;
   const save = {
-    evolutionStage: 'mega-data',
+    evolutionStage: 'mega-harmony',
     activities: Array.from({ length: 6 }, (_, i) => ativ(`a${i}`, SEG_A_SEX)),
     tasks: [] as unknown[],
   };

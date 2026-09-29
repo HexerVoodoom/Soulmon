@@ -37,7 +37,7 @@ function fakeKV(seed = {}) {
 /** `pvpEnabled` fica FORA do objeto base de propósito: cada caso declara o seu. */
 const perfil = (id, extra = {}) => JSON.stringify({
   id, name: `n-${id.slice(0, 4)}`, petName: 'pet', stage: 'rookie',
-  attrs: { virus: 1, data: 1, vaccine: 1 },
+  attrs: { power: 1, harmony: 1, benevolence: 1 },
   friends: [], createdAt: Date.now(), tasksDone: 7, ...extra,
 });
 

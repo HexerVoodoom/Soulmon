@@ -38,7 +38,7 @@ function virada(over: Record<string, unknown> = {}, agora = new Date('2026-09-09
     totalPerfectDays: 0,
     energyPoints: 0,
     unlockedEvolutions: [] as string[],
-    currentBranch: 'data',
+    currentBranch: 'harmony',
     maxActivityCap: 6,
     evolutionLocked: true,
     lastResetDate: ontem.toDateString(),

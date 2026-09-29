@@ -34,9 +34,9 @@ function save(evolutionStage: string, maxHP: number, over: Record<string, unknow
   return {
     evolutionStage, healthPoints: maxHP, maxHealthPoints: maxHP,
     energyPoints: 0, perfectDays: 0, totalXP: 0,
-    virusPoints: 0, dataPoints: 0, vaccinePoints: 0,
-    attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
-    unlockedEvolutions: [evolutionStage], currentBranch: 'data', lastDayWasPerfect: false,
+    powerPoints: 0, harmonyPoints: 0, benevolencePoints: 0,
+    attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
+    unlockedEvolutions: [evolutionStage], currentBranch: 'harmony', lastDayWasPerfect: false,
     degeneratedByHP: false, maxActivityCap: 7, foodInventory: {}, tasks: [],
     activities: Array.from({ length: 6 }, (_, i) => ({
       id: `h${i}`, name: `h${i}`, category: 'estudo', kind: 'habit', effort: 1, steps: [],
@@ -96,7 +96,7 @@ describe('duas semanas de negligência real — a criatura CAI', () => {
     expect(fim.evolutionStage).not.toBe('mega');
     // mega desce para ultimate, depois champion: a folga e o alívio de segunda
     // atrasam a queda, nunca a impedem.
-    expect(['champion-data', 'rookie']).toContain(fim.evolutionStage);
+    expect(['champion-harmony', 'rookie']).toContain(fim.evolutionStage);
   });
 
   it('a PRIMEIRA queda leva menos de uma semana, mesmo com a folga', () => {

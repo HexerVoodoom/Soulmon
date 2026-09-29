@@ -34,12 +34,12 @@ const baseState = () => ({
   energyPoints: 10, // full by default (≥ any stage requirement) so task-focused tests aren't affected
   perfectDays: 0,
   totalXP: 0,
-  virusPoints: 0,
-  dataPoints: 0,
-  vaccinePoints: 0,
+  powerPoints: 0,
+  harmonyPoints: 0,
+  benevolencePoints: 0,
   evolutionStage: 'rookie',
   unlockedEvolutions: ['rookie'],
-  currentBranch: 'data' as const,
+  currentBranch: 'harmony' as const,
   maxActivityCap: 6,
   // Terça — véspera do WEDNESDAY usado nos testes: virada normal de 1 dia.
   lastResetDate: new Date('2026-08-04T12:00:00').toDateString(),
@@ -296,7 +296,7 @@ describe('computeDailyReset — totalPerfectDays (contador vitalício das missõ
 describe('getMaxEnergyForStage — energy bars = task requirement', () => {
   it('matches the stage requirement for each form', () => {
     expect(getMaxEnergyForStage('rookie')).toBe(FORM_REQUIREMENTS.rookie.required);           // 4
-    expect(getMaxEnergyForStage('champion-virus')).toBe(FORM_REQUIREMENTS.champion.required);  // 5
+    expect(getMaxEnergyForStage('champion-power')).toBe(FORM_REQUIREMENTS.champion.required);  // 5
     expect(getMaxEnergyForStage('ultra')).toBe(FORM_REQUIREMENTS.ultra.required);               // 8
   });
 
@@ -327,13 +327,13 @@ describe('computeDailyReset — evolução é MANUAL', () => {
 describe('performDailyReset — degeneration', () => {
   it('degenerates a champion form back to rookie when HP drops to 0', () => {
     const tasks = Array.from({ length: 5 }, (_, i) => ({ id: `t${i}`, completed: false }));
-    const result = runReset({ ...baseState(), tasks, healthPoints: 1, evolutionStage: 'champion-virus', currentBranch: 'virus' });
+    const result = runReset({ ...baseState(), tasks, healthPoints: 1, evolutionStage: 'champion-power', currentBranch: 'power' });
     expect(result.degeneratedByHP).toBe(true);
     expect(result.evolutionStage).toBe('rookie');
   });
 
   it('grants a half-requirement head start when degenerating by HP (recovery discount)', () => {
-    // champion-virus with 1 HP, tasks all undone → loses the heart →
+    // champion-power with 1 HP, tasks all undone → loses the heart →
     // degenerates back to rookie. The discount gives floor(required/2) perfect
     // days for free. Non-cumulative — always floor(required/2) of the new
     // (lower) stage, so a second degeneration gets the same discount again.
@@ -342,8 +342,8 @@ describe('performDailyReset — degeneration', () => {
       ...baseState(),
       tasks,
       healthPoints: 1,
-      evolutionStage: 'champion-virus',
-      currentBranch: 'virus',
+      evolutionStage: 'champion-power',
+      currentBranch: 'power',
     });
     expect(result.degeneratedByHP).toBe(true);
     expect(result.evolutionStage).toBe('rookie');
@@ -357,7 +357,7 @@ describe('computeDailyReset — teto de perda diária', () => {
     const tasks = Array.from({ length: 7 }, (_, i) => ({ id: `t${i}`, completed: false }));
     const result = runReset({
       ...baseState(), tasks,
-      evolutionStage: 'mega-data', healthPoints: 4, maxHealthPoints: 4,
+      evolutionStage: 'mega-harmony', healthPoints: 4, maxHealthPoints: 4,
     });
     expect(result.healthPoints).toBe(4 - MAX_HEARTS_LOST_PER_DAY);
     expect(result.degeneratedByHP).toBe(false);
@@ -367,10 +367,10 @@ describe('computeDailyReset — teto de perda diária', () => {
     const tasks = Array.from({ length: 5 }, (_, i) => ({ id: `t${i}`, completed: false }));
     const result = runReset({
       ...baseState(), tasks,
-      evolutionStage: 'champion-virus', healthPoints: 3, maxHealthPoints: 3,
+      evolutionStage: 'champion-power', healthPoints: 3, maxHealthPoints: 3,
     });
     expect(result.degeneratedByHP).toBe(false);
-    expect(result.evolutionStage).toBe('champion-virus');
+    expect(result.evolutionStage).toBe('champion-power');
   });
 });
 
@@ -431,8 +431,8 @@ describe('computeDailyReset — carência de começo de vida', () => {
     // Cada sinal de vida pregressa, sozinho, basta.
     expect(semContador({ totalPerfectDays: 4 }).lastDayReport.heartsLost).toBe(1);
     expect(semContador({ perfectDays: 2 }).lastDayReport.heartsLost).toBe(1);
-    expect(semContador({ evolutionStage: 'champion-data' }).lastDayReport.heartsLost).toBe(1);
-    expect(semContador({ unlockedEvolutions: ['rookie', 'champion-data'] }).lastDayReport.heartsLost).toBe(1);
+    expect(semContador({ evolutionStage: 'champion-harmony' }).lastDayReport.heartsLost).toBe(1);
+    expect(semContador({ unlockedEvolutions: ['rookie', 'champion-harmony'] }).lastDayReport.heartsLost).toBe(1);
     expect(semContador({ completedTasks: [{ id: 'c', completedAt: '2026-01-01T10:00:00' }] }).lastDayReport.heartsLost).toBe(1);
     expect(semContador({ activityLog: ['2026-01-01T10:00:00'] }).lastDayReport.heartsLost).toBe(1);
     expect(semContador({ habitRhythms: { h1: { done: ['x'], missed: [], shields: 0, totalDone: 1 } } }).lastDayReport.heartsLost).toBe(1);
@@ -554,10 +554,10 @@ describe('computeDailyReset — perdão de ausência', () => {
     const longAgo = new Date('2026-07-20T12:00:00').toDateString();
     const result = runReset({
       ...baseState(), tasks, lastResetDate: longAgo,
-      healthPoints: 1, evolutionStage: 'champion-virus',
+      healthPoints: 1, evolutionStage: 'champion-power',
     });
     expect(result.degeneratedByHP).toBe(false);
-    expect(result.evolutionStage).toBe('champion-virus');
+    expect(result.evolutionStage).toBe('champion-power');
   });
 });
 
@@ -612,7 +612,7 @@ describe('computeDailyReset — alívio semanal de segunda', () => {
     const sunday = new Date('2026-08-02T12:00:00').toDateString();
     const result = runReset({
       ...baseState(), tasks, lastResetDate: sunday,
-      healthPoints: 1, evolutionStage: 'champion-virus', currentBranch: 'virus',
+      healthPoints: 1, evolutionStage: 'champion-power', currentBranch: 'power',
       // A folga da SEMANA DO DOMINGO já foi gasta — senão ela absorve a perda,
       // o HP não zera e não há degeneração para este teste observar.
       restWeekKey: restWeekKeyFor(new Date(sunday)),
@@ -701,7 +701,7 @@ describe('degeneração — piso, custo e a raiz da árvore', () => {
     const tasks = Array.from({ length: 6 }, (_, i) => ({ id: `t${i}`, completed: false }));
     const r = runReset({
       ...baseState(), tasks, healthPoints: 1,
-      evolutionStage: 'mega-virus', currentBranch: 'virus', perfectDays: 39,
+      evolutionStage: 'mega-power', currentBranch: 'power', perfectDays: 39,
     });
     expect(r.degeneratedByHP).toBe(true);
     // 39 − 5 = 34. Antes desta regra o jogador reaparecia com 2 (perdia 37).
@@ -712,7 +712,7 @@ describe('degeneração — piso, custo e a raiz da árvore', () => {
     const tasks = Array.from({ length: 5 }, (_, i) => ({ id: `t${i}`, completed: false }));
     const r = runReset({
       ...baseState(), tasks, healthPoints: 1,
-      evolutionStage: 'champion-virus', currentBranch: 'virus', perfectDays: 0,
+      evolutionStage: 'champion-power', currentBranch: 'power', perfectDays: 0,
     });
     // 0 − 5 seria negativo; o piso é floor(required do rookie / 2) = 2.
     expect(r.perfectDays).toBe(Math.floor(FORM_REQUIREMENTS.rookie.required / 2));
@@ -743,12 +743,12 @@ describe('degeneração — paridade entre o caminho manual e o automático', ()
     degeneratedPerfectDays(prevPerfectDays, getStageLevel(targetStage));
 
   const casos: Array<{ de: string; branch: string; para: string; dias: number }> = [
-    { de: 'mega-virus', branch: 'virus', para: 'ultimate-virus', dias: 39 },
-    { de: 'mega-virus', branch: 'virus', para: 'ultimate-virus', dias: 6 },
-    { de: 'mega-virus', branch: 'virus', para: 'ultimate-virus', dias: 0 },
-    { de: 'champion-data', branch: 'data', para: 'rookie', dias: 12 },
-    { de: 'champion-data', branch: 'data', para: 'rookie', dias: 1 },
-    { de: 'ultimate-vaccine', branch: 'vaccine', para: 'champion-vaccine', dias: 25 },
+    { de: 'mega-power', branch: 'power', para: 'ultimate-power', dias: 39 },
+    { de: 'mega-power', branch: 'power', para: 'ultimate-power', dias: 6 },
+    { de: 'mega-power', branch: 'power', para: 'ultimate-power', dias: 0 },
+    { de: 'champion-harmony', branch: 'harmony', para: 'rookie', dias: 12 },
+    { de: 'champion-harmony', branch: 'harmony', para: 'rookie', dias: 1 },
+    { de: 'ultimate-benevolence', branch: 'benevolence', para: 'champion-benevolence', dias: 25 },
   ];
 
   it.each(casos)('$de com $dias dias perfeitos: manual == automático', ({ de, branch, para, dias }) => {
@@ -769,7 +769,7 @@ describe('degeneração — paridade entre o caminho manual e o automático', ()
       const tasks = Array.from({ length: 8 }, (_, i) => ({ id: `t${i}`, completed: false }));
       const auto = runReset({
         ...baseState(), tasks, healthPoints: 1,
-        evolutionStage: 'mega-virus', currentBranch: 'virus', perfectDays: dias,
+        evolutionStage: 'mega-power', currentBranch: 'power', perfectDays: dias,
       });
       expect(manual(dias, auto.evolutionStage)).toBeGreaterThanOrEqual(auto.perfectDays);
     }
@@ -806,7 +806,7 @@ describe('dia perfeito: a energia é cobrada contra a meta do dia', () => {
   /** Mega (requisito 6) com a rotina toda em dias úteis e 2 tarefas no sábado. */
   const megaNoSabado = (feitas: number, energia: number) => ({
     ...baseState(),
-    evolutionStage: 'mega-data',
+    evolutionStage: 'mega-harmony',
     maxHealthPoints: 4,
     healthPoints: 4,
     lastResetDate: SABADO_STR,
@@ -846,7 +846,7 @@ describe('dia perfeito: a energia é cobrada contra a meta do dia', () => {
   it('num dia cheio nada afrouxou: mega com 6 itens ainda precisa de 6 de energia', () => {
     const seisItens = (energia: number) => ({
       ...baseState(),
-      evolutionStage: 'mega-data',
+      evolutionStage: 'mega-harmony',
       maxHealthPoints: 4,
       healthPoints: 4,
       tasks: Array.from({ length: 6 }, (_, i) => ({ id: `t${i}`, completed: true })),
@@ -859,7 +859,7 @@ describe('dia perfeito: a energia é cobrada contra a meta do dia', () => {
   it('a energia exigida NUNCA passa das barras que o estágio tem', () => {
     // Invariante estrutural: a barra cheia é `getMaxEnergyForStage`, e a meta do
     // dia é `min(cadastradas, required)` — logo a exigência é sempre alcançável.
-    for (const stage of ['rookie', 'champion-data', 'ultimate-data', 'mega-data', 'ultra']) {
+    for (const stage of ['rookie', 'champion-harmony', 'ultimate-harmony', 'mega-harmony', 'ultra']) {
       const nItens = 20; // cadastro grande de propósito: meta = requisito cheio
       const st = {
         ...baseState(),

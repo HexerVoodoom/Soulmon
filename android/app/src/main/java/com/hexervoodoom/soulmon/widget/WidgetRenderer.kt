@@ -287,7 +287,7 @@ object WidgetRenderer {
      * Bandai —, e ele não era um caso de borda: os drawables existentes eram
      * os 40 nomes da franquia (`sprite_agumon`, `sprite_veemon`…) e nenhum
      * casava com os estágios REAIS da árvore de hoje (`rookie`,
-     * `champion-virus`, `ultra`…). Ou seja, `getIdentifier` falhava sempre e
+     * `champion-power`, `ultra`…). Ou seja, `getIdentifier` falhava sempre e
      * **o widget mostrava um personagem registrado para todo usuário, o
      * tempo todo** — no APK que vai para a Play Store.
      *
@@ -298,7 +298,7 @@ object WidgetRenderer {
      *
      * `eggType` e `branchType` continuam na assinatura porque os dois
      * chamadores os passam, mas o id do estágio já carrega o galho
-     * (`champion-virus`) — não há o que resolver a mais.
+     * (`champion-power`) — não há o que resolver a mais.
      */
     private fun resolveSprite(context: Context, stage: String, eggType: String, branchType: String): Int {
         val candidateName = "sprite_${stage.replace("-", "_")}"
@@ -314,7 +314,7 @@ object WidgetRenderer {
      * ⚠️ Isto era uma tabela com ~30 nomes de personagem da Bandai mapeando
      * espécie → nível, apagada em 07/09/2026 pelo mesmo motivo dos drawables.
      * Ela nem funcionava: a árvore de hoje nasce em `rookie` e usa
-     * `champion-virus` / `mega-data` / `ultra`, então TODO estágio real caía
+     * `champion-power` / `mega-harmony` / `ultra`, então TODO estágio real caía
      * no `else`. Trinta nomes de terceiro no APK para descrever criaturas que
      * o app não tem mais.
      */

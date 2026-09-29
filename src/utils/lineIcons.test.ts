@@ -11,7 +11,7 @@ describe('lineIcons', () => {
     expect(LINE_ICON_COUNT).toBe(72);
   });
 
-  it('toda linha × tier é encontrável nos dois tamanhos (inclusive kaelen, cujo arquivo tem `-virus`)', () => {
+  it('toda linha × tier é encontrável nos dois tamanhos (inclusive kaelen, cujo arquivo tem `-power`)', () => {
     for (const line of Object.keys(DUNGEON_LINE_SPRITES)) {
       for (const tier of ['rookie', 'champion', 'ultimate', 'mega'] as const) {
         expect(lineIcon(line, tier, 64), `${line}:${tier}:64`).toMatch(/lines\/icons\/.*-64\.png$/);
@@ -21,11 +21,11 @@ describe('lineIcons', () => {
   });
 
   it('lineIconForStage: demo → a linha escolhida; legado → linha por hash; árvore do jogador → undefined', () => {
-    expect(lineIconForStage('champion-virus', 64, 'ignar')).toMatch(/ignar-champion-64\.png$/);
+    expect(lineIconForStage('champion-power', 64, 'ignar')).toMatch(/ignar-champion-64\.png$/);
     expect(lineIconForStage('ultra', 32, 'serah')).toMatch(/serah-mega-32\.png$/);
     expect(lineIconForStage('agumon', 32)).toMatch(/-rookie-32\.png$/);
     expect(lineIconForStage('agumon', 32)).toBe(lineIconForStage('agumon', 32)); // determinístico
-    expect(lineIconForStage('champion-virus', 64)).toBeUndefined();
+    expect(lineIconForStage('champion-power', 64)).toBeUndefined();
     expect(lineIconForStage('rookie', 64)).toBeUndefined();
   });
 });

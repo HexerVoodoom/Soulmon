@@ -37,7 +37,7 @@ function fakeKV(seed = {}) {
 
 const perfil = id => JSON.stringify({
   id, name: `n-${id.slice(0, 4)}`, petName: 'pet', stage: 'rookie',
-  pvpEnabled: true, attrs: { virus: 1, data: 1, vaccine: 1 },
+  pvpEnabled: true, attrs: { power: 1, harmony: 1, benevolence: 1 },
   friends: [], createdAt: Date.now(),
 });
 

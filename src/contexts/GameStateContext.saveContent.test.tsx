@@ -113,11 +113,11 @@ describe('save da nuvem sem os campos novos → os valores que o jogador vê', (
     expect(s.lastDayWasPerfect).toBe(false);
 
     // Atributos: nenhum galho ganha vantagem de graça.
-    expect(s.virusPoints).toBe(0);
-    expect(s.dataPoints).toBe(0);
-    expect(s.vaccinePoints).toBe(0);
-    expect(s.currentBranch).toBe('data');
-    expect(s.attributesSinceLastEvolution).toEqual({ virus: 0, data: 0, vaccine: 0 });
+    expect(s.powerPoints).toBe(0);
+    expect(s.harmonyPoints).toBe(0);
+    expect(s.benevolencePoints).toBe(0);
+    expect(s.currentBranch).toBe('harmony');
+    expect(s.attributesSinceLastEvolution).toEqual({ power: 0, harmony: 0, benevolence: 0 });
 
     // Moedas: dinheiro nenhum aparece do nada.
     expect(s.gamePoints).toBe(0);
@@ -145,21 +145,21 @@ describe('save da nuvem sem os campos novos → os valores que o jogador vê', (
 
   it('save legítimo NÃO é sobrescrito pelos padrões (controle negativo)', () => {
     const s = abrirComSave({
-      activities: [], tasks: [], evolutionStage: 'mega-virus',
+      activities: [], tasks: [], evolutionStage: 'mega-power',
       healthPoints: 2.5, energyPoints: 4, perfectDays: 33, totalXP: 1200,
       // Campos aposentados: um save VELHO ainda os traz, e o load tem de
       // simplesmente ignorá-los sem quebrar (é o caso interessante deste teste).
       digivolutionSegments: 2, digivolutionSegmentsNeeded: 40,
-      virusPoints: 9, dataPoints: 4, vaccinePoints: 1, currentBranch: 'virus',
+      powerPoints: 9, harmonyPoints: 4, benevolencePoints: 1, currentBranch: 'power',
       gamePoints: 777, emblems: 42, credits: 60, poopPenaltyClockAt: 1700000000000,
       degeneratedByHP: true, lastDayWasPerfect: true, pvpEnabled: true,
       accountTier: 'demo', soulGoal: 'dormir melhor', soulStruggle: 'ansiedade',
       // teto MENOR que o do estágio (mega = 9): quem manda é o save, não a tabela
       petPassive: 'guloso', equippedBackground: 'bg-neon', maxActivityCap: 5,
-      attributesSinceLastEvolution: { virus: 5, data: 2, vaccine: 1 },
-      unlockedEvolutions: ['rookie', 'champion-virus', 'ultimate-virus', 'mega-virus'],
+      attributesSinceLastEvolution: { power: 5, harmony: 2, benevolence: 1 },
+      unlockedEvolutions: ['rookie', 'champion-power', 'ultimate-power', 'mega-power'],
     });
-    expect(s.evolutionStage).toBe('mega-virus');
+    expect(s.evolutionStage).toBe('mega-power');
     expect(s.maxHealthPoints).toBe(4);        // derivado do ESTÁGIO, sempre
     expect(s.healthPoints).toBe(2.5);         // meio coração sobrevive à carga
     expect(s.energyPoints).toBe(4);
@@ -170,9 +170,9 @@ describe('save da nuvem sem os campos novos → os valores que o jogador vê', (
     // Isso é inofensivo e deliberado — apagá-la exigiria uma migração para
     // limpar bytes que ninguém lê. O que importa é que ninguém a LEIA, e disso
     // cuida o guard de fonte abaixo. Aqui só se registra que ela não quebra nada.
-    expect(s.evolutionStage).toBe('mega-virus');
-    expect(s.virusPoints).toBe(9);
-    expect(s.currentBranch).toBe('virus');
+    expect(s.evolutionStage).toBe('mega-power');
+    expect(s.powerPoints).toBe(9);
+    expect(s.currentBranch).toBe('power');
     expect(s.gamePoints).toBe(777);
     expect(s.emblems).toBe(42);
     expect(s.credits).toBe(60);
@@ -189,7 +189,7 @@ describe('save da nuvem sem os campos novos → os valores que o jogador vê', (
     expect(s.petPassive).toBe('guloso');
     expect(s.equippedBackground).toBe('bg-neon');
     expect(s.maxActivityCap).toBe(5);
-    expect(s.attributesSinceLastEvolution).toEqual({ virus: 5, data: 2, vaccine: 1 });
+    expect(s.attributesSinceLastEvolution).toEqual({ power: 5, harmony: 2, benevolence: 1 });
     expect(s.unlockedEvolutions).toHaveLength(4);
   });
 });
@@ -200,9 +200,9 @@ describe('o estágio decide o teto de corações e de atividades', () => {
   const casos: Array<[string, number, number]> = [
     // estágio,            maxHP, teto de atividades — números CRUS
     ['rookie', 3, 6],
-    ['champion-virus', 3, 7],
-    ['ultimate-data', 3, 8],
-    ['mega-vaccine', 4, 9],
+    ['champion-power', 3, 7],
+    ['ultimate-harmony', 3, 8],
+    ['mega-benevolence', 4, 9],
     ['ultra', 5, 10],
   ];
 
@@ -250,17 +250,17 @@ describe('atributos de galho carregados campo a campo', () => {
   it('bloco parcial completa só o que falta, sem apagar o que existe', () => {
     const s = abrirComSave({
       activities: [], tasks: [],
-      attributesSinceLastEvolution: { virus: 4 },
+      attributesSinceLastEvolution: { power: 4 },
     });
-    expect(s.attributesSinceLastEvolution).toEqual({ virus: 4, data: 0, vaccine: 0 });
+    expect(s.attributesSinceLastEvolution).toEqual({ power: 4, harmony: 0, benevolence: 0 });
   });
 
   it('valor com tipo hostil dentro do bloco vira 0, não NaN', () => {
     const s = abrirComSave({
       activities: [], tasks: [],
-      attributesSinceLastEvolution: { virus: 'x', data: 3, vaccine: null },
+      attributesSinceLastEvolution: { power: 'x', harmony: 3, benevolence: null },
     });
-    expect(s.attributesSinceLastEvolution).toEqual({ virus: 0, data: 3, vaccine: 0 });
+    expect(s.attributesSinceLastEvolution).toEqual({ power: 0, harmony: 3, benevolence: 0 });
   });
 });
 
@@ -375,10 +375,10 @@ describe('save ilegível/hostil cai para instalação nova, e nada é adotado de
     expect(s.totalXP).toBe(0);
     expect(s).not.toHaveProperty('digivolutionSegments');
     expect(s.maxActivityCap).toBe(6);
-    expect(s.virusPoints).toBe(0);
-    expect(s.dataPoints).toBe(0);
-    expect(s.vaccinePoints).toBe(0);
-    expect(s.attributesSinceLastEvolution).toEqual({ virus: 0, data: 0, vaccine: 0 });
+    expect(s.powerPoints).toBe(0);
+    expect(s.harmonyPoints).toBe(0);
+    expect(s.benevolencePoints).toBe(0);
+    expect(s.attributesSinceLastEvolution).toEqual({ power: 0, harmony: 0, benevolence: 0 });
     expect(s.foodInventory).toEqual({});
     expect(s.activityStats).toEqual({});
     expect(s.equippedDecor).toEqual({});
@@ -390,7 +390,7 @@ describe('save ilegível/hostil cai para instalação nova, e nada é adotado de
     expect(s.unlockedEvolutions).toEqual(['rookie']);
     expect(s.ownedBackgrounds).toEqual(['bg-room']);
     expect(s.equippedBackground).toBeNull();
-    expect(s.currentBranch).toBe('data');
+    expect(s.currentBranch).toBe('harmony');
     expect(s.accountTier).toBe('demo');
     expect(s.degeneratedByHP).toBe(false);
     expect(s.lastDayWasPerfect).toBe(false);
@@ -477,9 +477,9 @@ describe('backup na nuvem: só depois de uma mudança REAL, e com o conteúdo ce
     try {
       localStorage.setItem(STORAGE_KEYS.LANGUAGE, 'pt-BR');
       abrirComSave({
-        activities: [], tasks: [], evolutionStage: 'champion-virus',
-        unlockedEvolutions: ['rookie', 'champion-virus'],
-        virusPoints: 9, dataPoints: 4, vaccinePoints: 1, pvpEnabled: true,
+        activities: [], tasks: [], evolutionStage: 'champion-power',
+        unlockedEvolutions: ['rookie', 'champion-power'],
+        powerPoints: 9, harmonyPoints: 4, benevolencePoints: 1, pvpEnabled: true,
         soulmonMeta: { baseName: 'Fagulha' },
         completedTasks: [{ id: 'a' }, { id: 'b' }, { id: 'c' }],
       });
@@ -490,10 +490,10 @@ describe('backup na nuvem: só depois de uma mudança REAL, e com o conteúdo ce
       expect(perfis).toHaveLength(1);
       expect(perfis[0].name).toBe('Anônimo');
       expect(perfis[0].petName).toBe('Fagulha');
-      expect(perfis[0].stage).toBe('champion-virus');
-      expect(perfis[0].unlockedStages).toEqual(['rookie', 'champion-virus']);
+      expect(perfis[0].stage).toBe('champion-power');
+      expect(perfis[0].unlockedStages).toEqual(['rookie', 'champion-power']);
       expect(perfis[0].pvpEnabled).toBe(true);
-      expect(perfis[0].attrs).toEqual({ virus: 9, data: 4, vaccine: 1 });
+      expect(perfis[0].attrs).toEqual({ power: 9, harmony: 4, benevolence: 1 });
       expect(perfis[0].tasksDone).toBe(3);
       expect(perfis[0].id).toBe(cloudSaves[0].id);
     } finally { vi.useRealTimers(); }

@@ -64,8 +64,8 @@ function seed() {
     [`rank:2026-08:${ID}`]: JSON.stringify({ score: 10 }),
     // sprites do titular: um via nossa rota (com blob), um via provedor (sem blob), um lock
     [`sprite:img:${ID}:rookie`]: JSON.stringify({ image: `https://x/api/sprite-image?k=${TOKEN_A}`, provider: 'gemini', at: 1 }),
-    [`sprite:img:${ID}:champion-virus`]: JSON.stringify({ image: 'https://cdn.higgsfield.ai/abc.png', provider: 'higgsfield', at: 2 }),
-    [`sprite:lock:${ID}:mega-virus`]: '1',
+    [`sprite:img:${ID}:champion-power`]: JSON.stringify({ image: 'https://cdn.higgsfield.ai/abc.png', provider: 'higgsfield', at: 2 }),
+    [`sprite:lock:${ID}:mega-power`]: '1',
     [`sprite:blob:${TOKEN_A}`]: 'PNGBYTES-A',
     // sprite de OUTRA conta e blob órfão: intocáveis
     [`sprite:img:${OTHER}:rookie`]: JSON.stringify({ image: `https://x/api/sprite-image?k=${TOKEN_B}`, provider: 'gemini', at: 3 }),
@@ -92,7 +92,7 @@ describe('(a) sprites gerados por IA saem com a conta', () => {
     const body = await res.json();
     const s = e.DIGIAPP_SAVES.store;
 
-    for (const k of [`sprite:img:${ID}:rookie`, `sprite:img:${ID}:champion-virus`, `sprite:lock:${ID}:mega-virus`, `sprite:blob:${TOKEN_A}`]) {
+    for (const k of [`sprite:img:${ID}:rookie`, `sprite:img:${ID}:champion-power`, `sprite:lock:${ID}:mega-power`, `sprite:blob:${TOKEN_A}`]) {
       expect(s.has(k), `${k} deveria ter sido apagada`).toBe(false);
     }
     expect(s.has(`sprite:img:${OTHER}:rookie`)).toBe(true);
@@ -101,7 +101,7 @@ describe('(a) sprites gerados por IA saem com a conta', () => {
 
     expect(body.executado.spritesApagados).toBe(4);
     expect(body.executado.apaga).toEqual(expect.arrayContaining([
-      `sprite:img:${ID}:rookie`, `sprite:lock:${ID}:mega-virus`, `sprite:blob:${TOKEN_A}`,
+      `sprite:img:${ID}:rookie`, `sprite:lock:${ID}:mega-power`, `sprite:blob:${TOKEN_A}`,
     ]));
     expect(body.executado.falhou).toEqual([]);
     expect(body.naoIncluido.map(n => n.what)).toEqual(expect.arrayContaining([expect.stringContaining('sprite:blob')]));

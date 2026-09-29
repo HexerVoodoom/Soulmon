@@ -21,14 +21,14 @@ const base = (over: Partial<ShopBuyState> = {}): ShopBuyState => ({
 });
 
 const item = (over: Partial<ShopItem> & Pick<ShopItem, 'id' | 'kind' | 'price'>): ShopItem => ({
-  icon: '💾',
+  icon: '🎶',
   namePt: '', nameEn: '', descPt: '', descEn: '',
   ...over,
 });
 
 describe('applyShopBuy — a recusa é reconferida sobre o prev', () => {
   it('saldo EXATAMENTE igual ao preço: dois toques no mesmo lote não deixam o saldo negativo', () => {
-    const chip = item({ id: 'chip-data', kind: 'chip', price: 30, icon: '💾' });
+    const chip = item({ id: 'chip-harmony', kind: 'chip', price: 30, icon: '🎶' });
     const a = applyShopBuy(base({ gamePoints: 30 }), chip);
     const b = applyShopBuy(a.state, chip);
 
@@ -37,11 +37,11 @@ describe('applyShopBuy — a recusa é reconferida sobre o prev', () => {
     expect(b.refused).toBe('no-funds');
     expect(b.state.gamePoints).toBe(0);
     // O segundo toque não pode ter entregue o item de graça.
-    expect(b.state.foodInventory['💾']).toBe(1);
+    expect(b.state.foodInventory['🎶']).toBe(1);
   });
 
   it('emblemas: mesma trava, na moeda do torneio', () => {
-    const troféu = item({ id: 'emb-1', kind: 'chip', price: 5, currency: 'emblems', icon: '🦠' });
+    const troféu = item({ id: 'emb-1', kind: 'chip', price: 5, currency: 'emblems', icon: '👊' });
     const a = applyShopBuy(base({ emblems: 5 }), troféu);
     const b = applyShopBuy(a.state, troféu);
     expect(a.state.emblems).toBe(0);
@@ -74,16 +74,16 @@ describe('applyShopBuy — a recusa é reconferida sobre o prev', () => {
   });
 
   it('caminho feliz: nada de economia mudou — dois consumíveis com saldo sobrando somam', () => {
-    const chip = item({ id: 'chip-data', kind: 'chip', price: 30, icon: '💾' });
+    const chip = item({ id: 'chip-harmony', kind: 'chip', price: 30, icon: '🎶' });
     const a = applyShopBuy(base({ gamePoints: 100 }), chip);
     const b = applyShopBuy(a.state, chip);
     expect(b.refused).toBeUndefined();
     expect(b.state.gamePoints).toBe(40);
-    expect(b.state.foodInventory['💾']).toBe(2);
+    expect(b.state.foodInventory['🎶']).toBe(2);
   });
 
   it('shopBuyRefusal é a MESMA pergunta que a de fora — sem saldo, sem compra', () => {
-    const chip = item({ id: 'chip-data', kind: 'chip', price: 30 });
+    const chip = item({ id: 'chip-harmony', kind: 'chip', price: 30 });
     expect(shopBuyRefusal(base({ gamePoints: 29 }), chip)).toBe('no-funds');
     expect(shopBuyRefusal(base({ gamePoints: 30 }), chip)).toBeUndefined();
   });

@@ -88,9 +88,9 @@ export interface StatsPageProps {
   totalXP?: number;
   streakDays?: number;
   /** Insumo do galho de evolução: a casa deles é a página de Evolução. */
-  virusPoints?: number;
-  dataPoints?: number;
-  vaccinePoints?: number;
+  powerPoints?: number;
+  harmonyPoints?: number;
+  benevolencePoints?: number;
   /** Traço de nascimento do pet (utils/passives.ts). */
   petPassive?: string;
   /** Ritmo de cuidado lido do histórico (utils/carePattern.ts). */

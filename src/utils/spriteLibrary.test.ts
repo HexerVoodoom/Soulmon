@@ -37,47 +37,47 @@ describe('adoção do sprite da forma ATUAL (§2.3.1)', () => {
   });
 
   it('pós-cerimônia o sprite chega mas NÃO troca o rosto sozinho', () => {
-    const lib = recordSprite(emptySpriteLibrary(), entry('champion-virus'), { adopt: 'ask', dayKey: '2026-08-25' });
-    expect(hasSprite(lib, 'champion-virus')).toBe(true);
-    expect(displaySprite(lib, 'champion-virus')).toBeNull();
-    expect(cardState(lib, 'champion-virus', ctx())).toBe('A_SINTONIZAR');
+    const lib = recordSprite(emptySpriteLibrary(), entry('champion-power'), { adopt: 'ask', dayKey: '2026-08-25' });
+    expect(hasSprite(lib, 'champion-power')).toBe(true);
+    expect(displaySprite(lib, 'champion-power')).toBeNull();
+    expect(cardState(lib, 'champion-power', ctx())).toBe('A_SINTONIZAR');
   });
 
   it('"Sintonizar o Visor" adota, e o card volta a PRÓPRIO', () => {
-    let lib = recordSprite(emptySpriteLibrary(), entry('champion-virus'), { adopt: 'ask', dayKey: '2026-08-25' });
-    lib = tuneVisor(lib, 'champion-virus');
-    expect(displaySprite(lib, 'champion-virus')).not.toBeNull();
-    expect(cardState(lib, 'champion-virus', ctx())).toBe('PROPRIO');
+    let lib = recordSprite(emptySpriteLibrary(), entry('champion-power'), { adopt: 'ask', dayKey: '2026-08-25' });
+    lib = tuneVisor(lib, 'champion-power');
+    expect(displaySprite(lib, 'champion-power')).not.toBeNull();
+    expect(cardState(lib, 'champion-power', ctx())).toBe('PROPRIO');
   });
 
   it('"Voltar ao traço antigo" devolve a reserva sem apagar o sprite pago', () => {
-    let lib = recordSprite(emptySpriteLibrary(), entry('champion-virus'), { adopt: 'now' });
-    lib = revertVisor(lib, 'champion-virus');
-    expect(displaySprite(lib, 'champion-virus')).toBeNull();
-    expect(hasSprite(lib, 'champion-virus')).toBe(true);   // continua no save
-    lib = tuneVisor(lib, 'champion-virus');
-    expect(displaySprite(lib, 'champion-virus')).not.toBeNull();
+    let lib = recordSprite(emptySpriteLibrary(), entry('champion-power'), { adopt: 'now' });
+    lib = revertVisor(lib, 'champion-power');
+    expect(displaySprite(lib, 'champion-power')).toBeNull();
+    expect(hasSprite(lib, 'champion-power')).toBe(true);   // continua no save
+    lib = tuneVisor(lib, 'champion-power');
+    expect(displaySprite(lib, 'champion-power')).not.toBeNull();
   });
 
   it('a oferta expira numa virada de dia; o sprite, nunca', () => {
-    const lib = recordSprite(emptySpriteLibrary(), entry('champion-virus'), { adopt: 'ask', dayKey: '2026-08-25' });
+    const lib = recordSprite(emptySpriteLibrary(), entry('champion-power'), { adopt: 'ask', dayKey: '2026-08-25' });
     expect(autoTuneDue(lib, '2026-08-25')).toBeNull();      // mesmo dia: espera o jogador
-    expect(autoTuneDue(lib, '2026-08-26')).toBe('champion-virus');
-    expect(autoTuneDue(tuneVisor(lib, 'champion-virus'), '2026-08-26')).toBeNull();
+    expect(autoTuneDue(lib, '2026-08-26')).toBe('champion-power');
+    expect(autoTuneDue(tuneVisor(lib, 'champion-power'), '2026-08-26')).toBeNull();
   });
 });
 
 describe('reverter e re-sintonizar NUNCA consomem teto', () => {
   it('nenhuma das três operações de adoção toca `failures`', () => {
-    let lib = recordSprite(emptySpriteLibrary(), entry('mega-data'), { adopt: 'ask', dayKey: 'd1' });
+    let lib = recordSprite(emptySpriteLibrary(), entry('mega-harmony'), { adopt: 'ask', dayKey: 'd1' });
     const before = JSON.stringify(lib.failures);
-    lib = tuneVisor(lib, 'mega-data');
-    lib = revertVisor(lib, 'mega-data');
-    lib = tuneVisor(lib, 'mega-data');
-    lib = revertVisor(lib, 'mega-data');
+    lib = tuneVisor(lib, 'mega-harmony');
+    lib = revertVisor(lib, 'mega-harmony');
+    lib = tuneVisor(lib, 'mega-harmony');
+    lib = revertVisor(lib, 'mega-harmony');
     expect(JSON.stringify(lib.failures)).toBe(before);
     expect(lib.failures).toEqual({});
-    expect(hasSprite(lib, 'mega-data')).toBe(true);
+    expect(hasSprite(lib, 'mega-harmony')).toBe(true);
   });
 
   it('reverter uma forma sem sprite próprio é no-op (não há o que devolver)', () => {
@@ -88,16 +88,16 @@ describe('reverter e re-sintonizar NUNCA consomem teto', () => {
 
 describe('409 ≠ 402 no acervo', () => {
   it('form-cap fecha UMA forma; a conta segue inteira', () => {
-    const lib = recordFailure(emptySpriteLibrary(), 'mega-data', 'form-cap');
-    expect(isFormCapped(lib, 'mega-data')).toBe(true);
-    expect(isFormCapped(lib, 'mega-virus')).toBe(false);
+    const lib = recordFailure(emptySpriteLibrary(), 'mega-harmony', 'form-cap');
+    expect(isFormCapped(lib, 'mega-harmony')).toBe(true);
+    expect(isFormCapped(lib, 'mega-power')).toBe(false);
     expect(isAccountCapped(lib)).toBe(false);
-    expect(cardState(lib, 'mega-data', ctx())).toBe('RESERVA_FINAL');
-    expect(cardState(lib, 'mega-virus', ctx({ reachable: false }))).toBe('DISTANTE');
+    expect(cardState(lib, 'mega-harmony', ctx())).toBe('RESERVA_FINAL');
+    expect(cardState(lib, 'mega-power', ctx({ reachable: false }))).toBe('DISTANTE');
   });
 
   it('lifetime-cap fecha a conta: TODA forma sem sprite vira RESERVA_FINAL', () => {
-    const lib = recordFailure(emptySpriteLibrary(), 'mega-data', 'lifetime-cap');
+    const lib = recordFailure(emptySpriteLibrary(), 'mega-harmony', 'lifetime-cap');
     expect(isAccountCapped(lib)).toBe(true);
     expect(cardState(lib, 'ultra', ctx())).toBe('RESERVA_FINAL');
   });
@@ -143,9 +143,9 @@ describe('estados de card (§2.2)', () => {
   });
 
   it('RESERVA vira RESERVA_VÉSPERA quando a evolução está iminente', () => {
-    const lib = recordFailure(emptySpriteLibrary(), 'champion-data', 'error');
-    expect(cardState(lib, 'champion-data', ctx())).toBe('RESERVA');
-    expect(cardState(lib, 'champion-data', ctx({ imminent: true }))).toBe('RESERVA_VESPERA');
+    const lib = recordFailure(emptySpriteLibrary(), 'champion-harmony', 'error');
+    expect(cardState(lib, 'champion-harmony', ctx())).toBe('RESERVA');
+    expect(cardState(lib, 'champion-harmony', ctx({ imminent: true }))).toBe('RESERVA_VESPERA');
   });
 
   it('o selo NOVO some ao ver, mas o card A-SINTONIZAR manda', () => {

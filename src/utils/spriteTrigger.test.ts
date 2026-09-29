@@ -21,10 +21,10 @@ const reading = (confident: boolean, id: 'constante' | 'explosivo' | 'equilibrad
 function input(over: Partial<SpriteTriggerInput> = {}): SpriteTriggerInput {
   return {
     evolutionStage: 'rookie',
-    currentBranch: 'data',
+    currentBranch: 'harmony',
     unlockedEvolutions: [],
     perfectDays: 0,
-    points: { virus: 5, data: 1, vaccine: 1 },
+    points: { power: 5, harmony: 1, benevolence: 1 },
     reading: reading(false),
     library: emptySpriteLibrary(),
     ...over,
@@ -65,13 +65,13 @@ describe('o lote é contra `required`, e dispara na ELEGIBILIDADE (`faltam <= 0`
   });
 
   it('champion/ultimate/mega usam o `required` de cada nível (5/5/6)', () => {
-    expect(spriteBatch(input({ evolutionStage: 'champion-virus', perfectDays: 4 }))).toBeNull();
-    expect(spriteBatch(input({ evolutionStage: 'champion-virus', perfectDays: 5 }))?.occasion).toBe('C');
-    expect(spriteBatch(input({ evolutionStage: 'ultimate-virus', perfectDays: 5 }))?.occasion).toBe('C');
+    expect(spriteBatch(input({ evolutionStage: 'champion-power', perfectDays: 4 }))).toBeNull();
+    expect(spriteBatch(input({ evolutionStage: 'champion-power', perfectDays: 5 }))?.occasion).toBe('C');
+    expect(spriteBatch(input({ evolutionStage: 'ultimate-power', perfectDays: 5 }))?.occasion).toBe('C');
     const megaReady = input({
-      evolutionStage: 'mega-virus',
+      evolutionStage: 'mega-power',
       perfectDays: 6,
-      unlockedEvolutions: ['mega-virus', 'mega-data', 'mega-vaccine'],
+      unlockedEvolutions: ['mega-power', 'mega-harmony', 'mega-benevolence'],
     });
     expect(spriteBatch(megaReady)).toEqual({ occasion: 'C', formIds: ['ultra'] });
   });
@@ -79,17 +79,17 @@ describe('o lote é contra `required`, e dispara na ELEGIBILIDADE (`faltam <= 0`
 
 describe('a forma-destino vem SÓ de `evolutionTarget()`', () => {
   it('segue o atributo líder, e não um literal', () => {
-    expect(targetFormId(input({ points: { virus: 9, data: 1, vaccine: 0 } }))).toBe('champion-virus');
-    expect(targetFormId(input({ points: { virus: 0, data: 0, vaccine: 4 } }))).toBe('champion-vaccine');
+    expect(targetFormId(input({ points: { power: 9, harmony: 1, benevolence: 0 } }))).toBe('champion-power');
+    expect(targetFormId(input({ points: { power: 0, harmony: 0, benevolence: 4 } }))).toBe('champion-benevolence');
   });
 
-  it('empate sem leitura confiável cai no `currentBranch`, nunca no literal `data`', () => {
+  it('empate sem leitura confiável cai no `currentBranch`, nunca no literal `harmony`', () => {
     const t = targetFormId(input({
-      points: { virus: 3, data: 0, vaccine: 3 },
-      currentBranch: 'vaccine',
+      points: { power: 3, harmony: 0, benevolence: 3 },
+      currentBranch: 'benevolence',
       reading: reading(false),
     }));
-    expect(t).toBe('champion-vaccine');
+    expect(t).toBe('champion-benevolence');
   });
 
   /**
@@ -104,7 +104,7 @@ describe('a forma-destino vem SÓ de `evolutionTarget()`', () => {
    * não valia nada — hoje ela vale, e a forma passa a ser gerável.
    */
   it('mega sem as 3 megas E sem permanência não tem destino (estado DISTANTE)', () => {
-    const i = input({ evolutionStage: 'mega-virus', perfectDays: 5, unlockedEvolutions: ['mega-virus'] });
+    const i = input({ evolutionStage: 'mega-power', perfectDays: 5, unlockedEvolutions: ['mega-power'] });
     expect(targetFormId(i)).toBeNull();
     expect(spriteBatch(i)).toBeNull();
     // Logo abaixo do corte também não: o caminho abre no número, não perto dele.
@@ -113,9 +113,9 @@ describe('a forma-destino vem SÓ de `evolutionTarget()`', () => {
 
   it('mega com PERMANÊNCIA alcança o ultra sem nunca ter degenerado', () => {
     const i = input({
-      evolutionStage: 'mega-virus',
+      evolutionStage: 'mega-power',
       perfectDays: ULTRA_PATIENCE_DAYS,
-      unlockedEvolutions: ['mega-virus'],
+      unlockedEvolutions: ['mega-power'],
     });
     expect(targetFormId(i), 'o segundo caminho para o Ultra sumiu').toBe('ultra');
   });
@@ -127,23 +127,23 @@ describe('a forma-destino vem SÓ de `evolutionTarget()`', () => {
 
 describe('o gatilho chaveia por `sprites[formId]` AUSENTE', () => {
   it('forma já desenhada não é regerada por gatilho automático', () => {
-    const lib = sprite(emptySpriteLibrary(), 'champion-virus');
+    const lib = sprite(emptySpriteLibrary(), 'champion-power');
     expect(spriteBatch(input({ perfectDays: 3, library: lib }))).toBeNull();
     expect(spriteBatch(input({ perfectDays: 4, library: lib }))).toBeNull();
   });
 
   it('re-subir para OUTRO galho gera de novo — "já passei por essa forma" seria falso', () => {
-    // Caminho do `ultra`: caiu de mega-virus, re-subiu apontando mega-data.
-    let lib = sprite(emptySpriteLibrary(), 'mega-virus');
-    lib = sprite(lib, 'ultimate-data');
+    // Caminho do `ultra`: caiu de mega-power, re-subiu apontando mega-harmony.
+    let lib = sprite(emptySpriteLibrary(), 'mega-power');
+    lib = sprite(lib, 'ultimate-harmony');
     const i = input({
-      evolutionStage: 'ultimate-data',
+      evolutionStage: 'ultimate-harmony',
       perfectDays: 5,
-      points: { virus: 0, data: 7, vaccine: 0 },
-      unlockedEvolutions: ['mega-virus', 'ultimate-data'],
+      points: { power: 0, harmony: 7, benevolence: 0 },
+      unlockedEvolutions: ['mega-power', 'ultimate-harmony'],
       library: lib,
     });
-    expect(spriteBatch(i)).toEqual({ occasion: 'C', formIds: ['mega-data'] });
+    expect(spriteBatch(i)).toEqual({ occasion: 'C', formIds: ['mega-harmony'] });
   });
 });
 
@@ -153,32 +153,32 @@ describe('o gatilho chaveia por `sprites[formId]` AUSENTE', () => {
 // preferido reintroduz o risco que a geração antecipada existe para eliminar.
 describe('o lote cobre TODOS os líderes empatados (§4)', () => {
   it('empate duplo gera as duas formas', () => {
-    const b = spriteBatch(input({ perfectDays: 4, points: { virus: 4, data: 0, vaccine: 4 } }));
+    const b = spriteBatch(input({ perfectDays: 4, points: { power: 4, harmony: 0, benevolence: 4 } }));
     expect(b?.occasion).toBe('C');
-    expect(b?.formIds.sort()).toEqual(['champion-vaccine', 'champion-virus']);
+    expect(b?.formIds.sort()).toEqual(['champion-benevolence', 'champion-power']);
   });
 
   it('empate triplo gera as três', () => {
-    const b = spriteBatch(input({ perfectDays: 4, points: { virus: 2, data: 2, vaccine: 2 } }));
+    const b = spriteBatch(input({ perfectDays: 4, points: { power: 2, harmony: 2, benevolence: 2 } }));
     expect(b?.formIds).toHaveLength(3);
   });
 
   it('líder único gera UMA forma — não há dúvida a cobrir', () => {
-    const b = spriteBatch(input({ perfectDays: 4, points: { virus: 9, data: 1, vaccine: 0 } }));
-    expect(b?.formIds).toEqual(['champion-virus']);
+    const b = spriteBatch(input({ perfectDays: 4, points: { power: 9, harmony: 1, benevolence: 0 } }));
+    expect(b?.formIds).toEqual(['champion-power']);
   });
 
   it('sem pontos nenhum, gera só o que `resolveBranch` responde', () => {
-    const b = spriteBatch(input({ perfectDays: 4, points: { virus: 0, data: 0, vaccine: 0 } }));
+    const b = spriteBatch(input({ perfectDays: 4, points: { power: 0, harmony: 0, benevolence: 0 } }));
     expect(b?.formIds).toHaveLength(1);
   });
 
   it('empate triplo a caminho do ultra vira UM pedido, não três iguais', () => {
     const b = spriteBatch(input({
-      evolutionStage: 'mega-virus',
+      evolutionStage: 'mega-power',
       perfectDays: 6,
-      points: { virus: 3, data: 3, vaccine: 3 },
-      unlockedEvolutions: ['mega-virus', 'mega-data', 'mega-vaccine'],
+      points: { power: 3, harmony: 3, benevolence: 3 },
+      unlockedEvolutions: ['mega-power', 'mega-harmony', 'mega-benevolence'],
     }));
     expect(b?.formIds).toEqual(['ultra']);
   });
@@ -186,24 +186,24 @@ describe('o lote cobre TODOS os líderes empatados (§4)', () => {
 
 describe('os dois estados terminais, que NÃO são o mesmo', () => {
   it('409 `sprite-form-cap` fecha a forma e deixa as outras abertas', () => {
-    const lib = recordFailure(emptySpriteLibrary(), 'champion-virus', 'form-cap');
+    const lib = recordFailure(emptySpriteLibrary(), 'champion-power', 'form-cap');
     // Aquela forma sai do lote…
-    const tie = spriteBatch(input({ perfectDays: 4, points: { virus: 4, data: 0, vaccine: 4 }, library: lib }));
-    expect(tie?.formIds).toEqual(['champion-vaccine']);
+    const tie = spriteBatch(input({ perfectDays: 4, points: { power: 4, harmony: 0, benevolence: 4 }, library: lib }));
+    expect(tie?.formIds).toEqual(['champion-benevolence']);
     // …e um lote só dela não parte.
-    expect(spriteBatch(input({ perfectDays: 4, points: { virus: 9, data: 0, vaccine: 0 }, library: lib }))).toBeNull();
+    expect(spriteBatch(input({ perfectDays: 4, points: { power: 9, harmony: 0, benevolence: 0 }, library: lib }))).toBeNull();
   });
 
   it('402 `sprite-lifetime-cap` para a conta inteira, em qualquer forma', () => {
-    const lib = recordFailure(emptySpriteLibrary(), 'champion-virus', 'lifetime-cap');
-    expect(spriteBatch(input({ perfectDays: 4, points: { virus: 0, data: 0, vaccine: 9 }, library: lib }))).toBeNull();
+    const lib = recordFailure(emptySpriteLibrary(), 'champion-power', 'lifetime-cap');
+    expect(spriteBatch(input({ perfectDays: 4, points: { power: 0, harmony: 0, benevolence: 9 }, library: lib }))).toBeNull();
     expect(birthBatch(input({ library: lib }))).toBeNull();
   });
 
   it('falha comum (não terminal) NÃO tira a forma do lote', () => {
-    const lib = recordFailure(emptySpriteLibrary(), 'champion-virus', 'error');
-    expect(spriteBatch(input({ perfectDays: 4, points: { virus: 9, data: 0, vaccine: 0 }, library: lib }))?.formIds)
-      .toEqual(['champion-virus']);
+    const lib = recordFailure(emptySpriteLibrary(), 'champion-power', 'error');
+    expect(spriteBatch(input({ perfectDays: 4, points: { power: 9, harmony: 0, benevolence: 0 }, library: lib }))?.formIds)
+      .toEqual(['champion-power']);
   });
 });
 
@@ -213,15 +213,15 @@ describe('degeneração NÃO gera', () => {
   // a ocasião C, quando e se ele abrir a cerimônia.
   it('a queda que deixa `perfectDays >= required` produz o lote da incubação, não um lote antecipado', () => {
     // mega com 10 dias cai para ultimate com max(2, 5) = 5; `required` = 5.
-    const caiu = input({ evolutionStage: 'ultimate-data', perfectDays: 5, points: { virus: 0, data: 6, vaccine: 0 } });
+    const caiu = input({ evolutionStage: 'ultimate-harmony', perfectDays: 5, points: { power: 0, harmony: 6, benevolence: 0 } });
     const b = spriteBatch(caiu);
     expect(b?.occasion).toBe('C');   // a incubação, não uma véspera
-    expect(b?.formIds).toEqual(['mega-data']);
+    expect(b?.formIds).toEqual(['mega-harmony']);
   });
 });
 
 describe('o lote de nascimento (ocasião A)', () => {
-  // ⚠️ Este caso afirmava `['rookie', 'champion-virus']` até 22/09/2026. O
+  // ⚠️ Este caso afirmava `['rookie', 'champion-power']` até 22/09/2026. O
   // D-G5b encolheu o nascimento a UMA forma — *"Só nasce o rookie e o restante
   // é sob demanda, na incubação"* (dono). O champion não caiu por descuido.
   it('é SÓ o rookie — o champion previsto nasce na incubação', () => {

@@ -167,7 +167,7 @@ async function fatiaEstrutural(grupo: Grupo): Promise<Record<'elemento' | 'papel
  * categorias INDEPENDENTES (atributos diferentes).
  */
 function c9(seed: number, pares: number) {
-  type B = 'virus' | 'data' | 'vaccine';
+  type B = 'power' | 'harmony' | 'benevolence';
   const rng = mulberry32(seed);
   const now = new Date('2026-09-28T12:00:00Z');
   const dia = (d: number) => new Date(now.getTime() - (d + 0.5) * 86400000).toISOString();
@@ -175,8 +175,8 @@ function c9(seed: number, pares: number) {
   const constante = computeCarePattern(Array.from({ length: T }, (_, j) => ({ completedAt: dia(j) })), now);
   const explosivo = computeCarePattern(Array.from({ length: T }, (_, j) => ({ completedAt: dia(j % 2) })), now);
   const cats = (): Record<B, number> => {
-    const p = { virus: 0, data: 0, vaccine: 0 } as Record<B, number>;
-    for (let j = 0; j < T; j++) p[(['virus', 'data', 'vaccine'] as B[])[Math.floor(rng() * 3)]]++;
+    const p = { power: 0, harmony: 0, benevolence: 0 } as Record<B, number>;
+    for (let j = 0; j < T; j++) p[(['power', 'harmony', 'benevolence'] as B[])[Math.floor(rng() * 3)]]++;
     return p;
   };
   let finalMesmasCat = 0; let caminhoMesmasCat = 0; let empates = 0; let finalIndep = 0; let decisoes = 0;

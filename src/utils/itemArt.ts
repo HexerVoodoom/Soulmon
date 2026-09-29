@@ -17,9 +17,9 @@ import foodJuice from '../assets/soulmon/items/food-juice.png';
 import foodRice from '../assets/soulmon/items/food-rice.png';
 import foodPizza from '../assets/soulmon/items/food-pizza.png';
 import foodCandy from '../assets/soulmon/items/food-candy.png';
-import itemChipVirus from '../assets/soulmon/items/item-chip-virus.png';
-import itemChipData from '../assets/soulmon/items/item-chip-data.png';
-import itemChipVaccine from '../assets/soulmon/items/item-chip-vaccine.png';
+import itemChipPower from '../assets/soulmon/items/item-chip-power.png';
+import itemChipHarmony from '../assets/soulmon/items/item-chip-harmony.png';
+import itemChipBenevolence from '../assets/soulmon/items/item-chip-benevolence.png';
 import itemHeart from '../assets/soulmon/items/item-heart.png';
 import itemGlitchtama from '../assets/soulmon/items/item-glitchtama.png';
 
@@ -35,9 +35,9 @@ export const ITEM_ART: Record<string, string> = {
   '🍕': foodPizza,
   '🍭': foodCandy,
   // Especiais (utils/shop.ts — CHIP_EMOJI / HEART_ITEM_EMOJI / GLITCHTAMA_EMOJI)
-  '🦠': itemChipVirus,
-  '💾': itemChipData,
-  '💉': itemChipVaccine,
+  '👊': itemChipPower,
+  '🎶': itemChipHarmony,
+  '🤲': itemChipBenevolence,
   '💗': itemHeart,
   '🌀': itemGlitchtama,
 };

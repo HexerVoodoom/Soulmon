@@ -10,12 +10,12 @@ import { stampCollected, stampAllCollected, collectedAt } from './collectionDate
 
 describe('collectionDates — a data é a PRIMEIRA, e nunca é reescrita', () => {
   it('grava quando ainda não havia', () => {
-    expect(stampCollected(undefined, 'mega-data', '2026-09-06')).toEqual({ 'mega-data': '2026-09-06' });
+    expect(stampCollected(undefined, 'mega-harmony', '2026-09-06')).toEqual({ 'mega-harmony': '2026-09-06' });
   });
 
   it('NÃO sobrescreve — data que se atualiza registra a última vez', () => {
-    const antes = { 'mega-data': '2026-01-01' };
-    expect(stampCollected(antes, 'mega-data', '2026-09-06')).toBe(antes);
+    const antes = { 'mega-harmony': '2026-01-01' };
+    expect(stampCollected(antes, 'mega-harmony', '2026-09-06')).toBe(antes);
   });
 
   it('é idempotente: chamar duas vezes devolve a MESMA referência', () => {
@@ -40,7 +40,7 @@ describe('collectionDates — ausência NÃO vira data inventada', () => {
     // O carimbo em lote existe para uma migração deliberada; o que não pode
     // acontecer é a leitura inventar data sozinha, e é isso que o caso acima
     // garante.
-    const d = stampAllCollected({}, ['rookie', 'champion-data'], '2026-09-06');
+    const d = stampAllCollected({}, ['rookie', 'champion-harmony'], '2026-09-06');
     expect(Object.keys(d)).toHaveLength(2);
     expect(stampAllCollected(d, ['rookie'], '2026-12-25').rookie).toBe('2026-09-06');
   });

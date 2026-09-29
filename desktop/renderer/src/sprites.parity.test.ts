@@ -5,7 +5,7 @@ import { describe, it, expect } from 'vitest';
 import { petSprite, facesLeft } from './sprites';
 import { DUNGEON_LINE_SPRITES } from '../../../src/utils/sprites';
 
-const STAGES = ['rookie', 'champion-virus', 'ultimate-data', 'mega-vaccine', 'ultra'];
+const STAGES = ['rookie', 'champion-power', 'ultimate-harmony', 'mega-benevolence', 'ultra'];
 
 describe('fronteira de sprite do desktop', () => {
   it('petSprite devolve uma string não vazia para todos os níveis', () => {
@@ -19,7 +19,7 @@ describe('fronteira de sprite do desktop', () => {
   it('petSprite HONRA demoCharacterId (era descartado pelo 3º argumento morto)', () => {
     const demo = Object.keys(DUNGEON_LINE_SPRITES)[0];
     expect(demo).toBeTruthy();
-    expect(petSprite('champion-virus', demo)).toBe(DUNGEON_LINE_SPRITES[demo].champion);
+    expect(petSprite('champion-power', demo)).toBe(DUNGEON_LINE_SPRITES[demo].champion);
     expect(petSprite('rookie', demo)).toBe(DUNGEON_LINE_SPRITES[demo].rookie);
     // 'ultra' reusa o sprite de mega no modo demo.
     expect(petSprite('ultra', demo)).toBe(DUNGEON_LINE_SPRITES[demo].mega);

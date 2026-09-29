@@ -39,8 +39,8 @@ describe('#41/#60 — o 🌀 saiu do vitalício das conquistas', () => {
     healthPoints: 3, maxHealthPoints: 3,
     foodInventory: { [GLITCHTAMA_EMOJI]: 2 } as Record<string, number>,
     perfectDays: 3, totalPerfectDays: 7, missionPerfectDays: 7,
-    virusPoints: 0, dataPoints: 0, vaccinePoints: 0, totalXP: 0,
-    attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
+    powerPoints: 0, harmonyPoints: 0, benevolencePoints: 0, totalXP: 0,
+    attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
   });
 
   it('dá +1 perfectDay e NÃO toca totalPerfectDays (a conquista dias-completos-30 deixa de ser farmável)', () => {
@@ -86,8 +86,8 @@ describe('#57 — a janela de 5 s reverte a conclusão INTEIRA', () => {
       activityStats: {}, activityLog: [] as string[],
       foodInventory: { '🍎': 1 },
       habitRhythms: { h1: emptyRhythm() },
-      virusPoints: 5, dataPoints: 5, vaccinePoints: 5,
-      attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
+      powerPoints: 5, harmonyPoints: 5, benevolencePoints: 5,
+      attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
       totalXP: 100, bondDaily: { day: 'x', spent: {} },
       perfectDays: 3, healthPoints: 3,      // NÃO são da conclusão
     };
@@ -98,13 +98,13 @@ describe('#57 — a janela de 5 s reverte a conclusão INTEIRA', () => {
       activityLog: ['2026-09-23T10:00:00.000Z'],
       foodInventory: { '🍎': 2 },
       habitRhythms: { h1: completeHabit(emptyRhythm(), dayKeyOf(day('2026-09-23T10:00'))) },
-      dataPoints: 8,
+      harmonyPoints: 8,
       totalXP: 140,
       perfectDays: 4,                        // uma mudança de FORA da conclusão
     };
     const revertido = undoCompletion(depois, snap);
     expect(revertido.foodInventory).toEqual({ '🍎': 1 });
-    expect(revertido.dataPoints).toBe(5);
+    expect(revertido.harmonyPoints).toBe(5);
     expect(revertido.totalXP).toBe(100);
     expect(revertido.habitRhythms.h1.totalDone).toBe(0);
     expect(revertido.activities[0].completedToday).toBe(false);
@@ -124,7 +124,7 @@ describe('#57 — a janela de 5 s reverte a conclusão INTEIRA', () => {
 
   it('a lista de campos cobre tudo o que `withHabitCompletion` escreve', () => {
     for (const campo of ['habitRhythms', 'foodInventory', 'totalXP', 'bondDaily',
-      'virusPoints', 'dataPoints', 'vaccinePoints', 'attributesSinceLastEvolution',
+      'powerPoints', 'harmonyPoints', 'benevolencePoints', 'attributesSinceLastEvolution',
       'activities', 'activityStats', 'activityLog']) {
       expect(CAMPOS_DA_CONCLUSAO as readonly string[]).toContain(campo);
     }
@@ -202,8 +202,8 @@ describe('#58 — a virada julga o último dia aberto, não "ontem"', () => {
     activities: [0, 1, 2, 3].map(i => habito('h' + i, feito)),
     tasks: [] as unknown[],
     healthPoints: 3, maxHealthPoints: 3, energyPoints: 10, perfectDays: 0, totalXP: 0,
-    virusPoints: 0, dataPoints: 0, vaccinePoints: 0, gamePoints: 0,
-    evolutionStage: 'rookie', unlockedEvolutions: ['rookie'], currentBranch: 'data' as const,
+    powerPoints: 0, harmonyPoints: 0, benevolencePoints: 0, gamePoints: 0,
+    evolutionStage: 'rookie', unlockedEvolutions: ['rookie'], currentBranch: 'harmony' as const,
     maxActivityCap: 6,
     lastResetDate: seg.toDateString(),
     lastDayReport: { date: day('2026-09-20T12:00').toDateString(), saveDay: 90 },
@@ -250,8 +250,8 @@ describe('#58b — o dreno respeita as travas da virada', () => {
     poopEventsCompleted: [] as number[],
     poopPenaltyClockAt: t0,
     lastResetDate: day('2026-09-23T07:00').toDateString(),
-    evolutionStage: 'champion-data',
-    currentBranch: 'data',
+    evolutionStage: 'champion-harmony',
+    currentBranch: 'harmony',
   };
   const tick = <T extends typeof base>(s: T) =>
     applyPoopDrain(s, { now: t0 + POOP_DRAIN_PERIOD_MS, isSleeping: false });
@@ -307,9 +307,9 @@ describe('#59 — cair e re-evoluir na mesma abertura é impossível', () => {
     const caido = {
       activities: [] as unknown[], tasks: [] as unknown[],
       healthPoints: 3, maxHealthPoints: 3, energyPoints: 0,
-      perfectDays: 21, totalXP: 0, virusPoints: 0, dataPoints: 0, vaccinePoints: 0,
-      evolutionStage: 'ultimate-data', unlockedEvolutions: ['rookie', 'champion-data', 'ultimate-data'],
-      currentBranch: 'data' as const, maxActivityCap: 6, degeneratedByHP: true,
+      perfectDays: 21, totalXP: 0, powerPoints: 0, harmonyPoints: 0, benevolencePoints: 0,
+      evolutionStage: 'ultimate-harmony', unlockedEvolutions: ['rookie', 'champion-harmony', 'ultimate-harmony'],
+      currentBranch: 'harmony' as const, maxActivityCap: 6, degeneratedByHP: true,
       lastResetDate: day('2026-09-22T12:00').toDateString(),
       lastDayReport: { date: day('2026-09-21T12:00').toDateString(), saveDay: 90 },
       restDaysLeft: 0, restWeekKey: restWeekKeyFor(day('2026-09-22T12:00')),
@@ -332,8 +332,8 @@ describe('#61/#63 — a economia de Bits', () => {
   const estado = (feito: boolean) => ({
     activities: [habito(feito)], tasks: [] as unknown[],
     healthPoints: 3, maxHealthPoints: 3, energyPoints: 10, perfectDays: 0, totalXP: 0,
-    virusPoints: 0, dataPoints: 0, vaccinePoints: 0, gamePoints: 500,
-    evolutionStage: 'rookie', unlockedEvolutions: ['rookie'], currentBranch: 'data' as const,
+    powerPoints: 0, harmonyPoints: 0, benevolencePoints: 0, gamePoints: 500,
+    evolutionStage: 'rookie', unlockedEvolutions: ['rookie'], currentBranch: 'harmony' as const,
     maxActivityCap: 6,
     lastResetDate: ontem.toDateString(),
     lastDayReport: { date: day('2026-09-21T12:00').toDateString(), saveDay: 90 },

@@ -26,8 +26,8 @@ const ENTRE = new Date('2026-02-28T12:00:00');         // entre-estações
 
 const estado = (over: Record<string, unknown> = {}) => ({
   activities: [], tasks: [], healthPoints: 3, maxHealthPoints: 3, energyPoints: 10,
-  perfectDays: 0, totalXP: 0, virusPoints: 0, dataPoints: 0, vaccinePoints: 0,
-  evolutionStage: 'rookie', unlockedEvolutions: ['rookie'], currentBranch: 'data' as const,
+  perfectDays: 0, totalXP: 0, powerPoints: 0, harmonyPoints: 0, benevolencePoints: 0,
+  evolutionStage: 'rookie', unlockedEvolutions: ['rookie'], currentBranch: 'harmony' as const,
   maxActivityCap: 6, totalPerfectDays: 0, dungeonRunsCompleted: 0,
   lastResetDate: new Date('2026-04-09T12:00:00').toDateString(),
   lastDayReport: { date: new Date('2026-04-08T12:00:00').toDateString(), saveDay: 90 },

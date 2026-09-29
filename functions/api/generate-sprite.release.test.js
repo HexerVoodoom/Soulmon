@@ -17,7 +17,7 @@ import { ENT_PREFIX } from './_entitlements.js';
  */
 
 const SAVE = 'abcdefgh12345678';
-const FORM = 'champion-virus';
+const FORM = 'champion-power';
 
 function fakeEnv() {
   const store = new Map();
@@ -103,7 +103,7 @@ describe('X-1: a unidade reservada volta quando o provedor falha', () => {
     // 200 `cached` sem nem chamar o provedor — o que este caso mede é a
     // devolução, não o cache.
     responderCom(gemini500);
-    const outra = req({ prompt: 'um bicho fofo', id: SAVE, formId: 'ultimate-vaccine' });
+    const outra = req({ prompt: 'um bicho fofo', id: SAVE, formId: 'ultimate-benevolence' });
     expect((await onRequestPost({ request: outra, env })).status).toBe(500);
 
     expect(vitalicio(env), 'a geração que DEU certo continua cobrada').toBe(1);

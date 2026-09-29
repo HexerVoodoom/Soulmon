@@ -75,7 +75,7 @@ export function canReachUltra(input: {
   perfectDays?: number;
 }): boolean {
   const desbloqueadas = input.unlockedEvolutions ?? [];
-  const colecao = (['virus', 'data', 'vaccine'] as const)
+  const colecao = (['power', 'harmony', 'benevolence'] as const)
     .every(a => desbloqueadas.includes(`mega-${a}`));
   const permanencia = (input.perfectDays ?? 0) >= ULTRA_PATIENCE_DAYS;
   return colecao || permanencia;
@@ -111,7 +111,7 @@ export const MAX_STAGE_REQUIREMENT: number = Math.max(
 
 // ---------------------------------------------------------------------------
 // Esquema de IDs da árvore do Soulmon (ver utils/oracle.ts + App.tsx):
-//   'rookie' | '{champion|ultimate|mega}-{virus|data|vaccine}' | 'ultra'
+//   'rookie' | '{champion|ultimate|mega}-{power|harmony|benevolence}' | 'ultra'
 // getStageLevel lê o NÍVEL direto do prefixo do id — não precisa de nenhuma
 // tabela por espécie, porque cada jogador tem nomes únicos.
 // ---------------------------------------------------------------------------
@@ -136,7 +136,7 @@ export const MAX_STAGE_REQUIREMENT: number = Math.max(
    mesma criatura. É tudo que a robustez exige; nomes de terceiro não são.
    ───────────────────────────────────────────────────────────────────────── */
 
-/** Nível do estágio: lê o prefixo do id ('champion-virus' → 'champion').
+/** Nível do estágio: lê o prefixo do id ('champion-power' → 'champion').
  *  Id que não casa com o esquema cai em `'rookie'` — ver o bloco acima. */
 export function getStageLevel(stage: string): EvolutionStage {
   // O save vem do localStorage E da nuvem — os dois são dado NÃO confiável, e
@@ -152,11 +152,11 @@ export function getStageLevel(stage: string): EvolutionStage {
   return 'rookie';
 }
 
-/** Atributo (virus/data/vaccine) embutido no id, se houver. */
-export function getStageBranch(stage: string): 'virus' | 'data' | 'vaccine' | null {
+/** Atributo (power/harmony/benevolence) embutido no id, se houver. */
+export function getStageBranch(stage: string): 'power' | 'harmony' | 'benevolence' | null {
   if (typeof stage !== 'string') return null; // mesma razão de getStageLevel
   const [, branch] = stage.split('-');
-  return branch === 'virus' || branch === 'data' || branch === 'vaccine' ? branch : null;
+  return branch === 'power' || branch === 'harmony' || branch === 'benevolence' ? branch : null;
 }
 
 // Energy bars for a stage = the number of daily tasks required to earn an
@@ -172,9 +172,9 @@ export function canSelectWeekdays(_stage: string): boolean {
 }
 
 // Branches de evolução disponíveis (reduza a lista para restringir).
-export const AVAILABLE_BRANCHES = ['virus', 'data', 'vaccine'] as const;
+export const AVAILABLE_BRANCHES = ['power', 'harmony', 'benevolence'] as const;
 export type AvailableBranch = (typeof AVAILABLE_BRANCHES)[number];
-export function clampBranch(b: 'virus' | 'data' | 'vaccine'): 'virus' | 'data' | 'vaccine' {
+export function clampBranch(b: 'power' | 'harmony' | 'benevolence'): 'power' | 'harmony' | 'benevolence' {
   return (AVAILABLE_BRANCHES as readonly string[]).includes(b) ? b : AVAILABLE_BRANCHES[0];
 }
 

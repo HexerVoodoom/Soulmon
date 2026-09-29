@@ -64,6 +64,7 @@
 // que a auditoria achou: variável desligada virou porta aberta. Numa rota que
 // queima dinheiro real, a dúvida nega.
 
+import { legacyFormIdOf } from './_branchLegacy.js';
 import { VALID_ID, readEntitlement, writeEntitlement } from './_entitlements.js';
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { kv, kvOrThrow } from './_kv.js';
@@ -184,13 +185,26 @@ function lifetimeUsed(ent, bucket) {
  * registro que só o servidor escreve, uma chave por requisição. Conjunto
  * fechado: o pior caso do dicionário são 11 entradas, para sempre.
  */
-export const VALID_FORM_ID = /^(?:rookie|ultra|(?:champion|ultimate|mega)-(?:virus|data|vaccine))$/;
+export const VALID_FORM_ID = /^(?:rookie|ultra|(?:champion|ultimate|mega)-(?:power|harmony|benevolence))$/;
+
+/** Tira a chave ANTIGA da forma: `formUsed` já somou o valor dela na nova. */
+function foldLegacyForm(aiForms, formId) {
+  const out = { ...(aiForms || {}) };
+  const antigo = legacyFormIdOf(formId);
+  if (antigo) delete out[antigo];
+  return out;
+}
 
 /** Quantas unidades esta FORMA já gastou vitaliciamente nesta conta. */
 function formUsed(ent, formId) {
   const n = Number(ent?.aiForms?.[formId] ?? 0);
   if (!Number.isFinite(n) || n < 0) throw new Error('contador por forma ilegível');
-  return n;
+  // O contador gravado com o id ANTIGO (antes de 29/09/2026) continua valendo:
+  // renomear a forma não pode zerar o teto vitalício. Ver `_branchLegacy.js`.
+  const antigo = legacyFormIdOf(formId);
+  const m = antigo ? Number(ent?.aiForms?.[antigo] ?? 0) : 0;
+  if (!Number.isFinite(m) || m < 0) throw new Error('contador por forma ilegível');
+  return n + m;
 }
 
 /**
@@ -320,7 +334,7 @@ export async function guardAiRequest(request, env, bucket, saveId, units = 1, fo
       // escrita só: dois `put` aqui abririam uma janela em que a conta debitou
       // e a forma não (ou o contrário).
       if (hasLifetime) ent.aiLifetime = { ...(ent.aiLifetime || {}), [bucket]: usedLifetime + units };
-      if (hasFormCap) ent.aiForms = { ...(ent.aiForms || {}), [formId]: usedForm + units };
+      if (hasFormCap) ent.aiForms = { ...foldLegacyForm(ent.aiForms, formId), [formId]: usedForm + units };
       await writeEntitlement(env, saveId, ent);
     }
     await kvOrThrow(env).put(globalKey, String(usedGlobal + units), { expirationTtl: globalTtl });
@@ -374,7 +388,7 @@ function makeRelease(env, ctx) {
         // a janela em que a conta devolveu e a forma não.
         const ent = await readEntitlement(env, saveId);
         if (hasLifetime) ent.aiLifetime = { ...(ent.aiLifetime || {}), [bucket]: menos(lifetimeUsed(ent, bucket)) };
-        if (hasFormCap) ent.aiForms = { ...(ent.aiForms || {}), [formId]: menos(formUsed(ent, formId)) };
+        if (hasFormCap) ent.aiForms = { ...foldLegacyForm(ent.aiForms, formId), [formId]: menos(formUsed(ent, formId)) };
         await writeEntitlement(env, saveId, ent);
       }
       const [g, a] = [await readCounter(env, globalKey), await readCounter(env, accountKey)];

@@ -305,7 +305,7 @@ export interface LocalFeedState {
  * ganho de atributo, que o overlay sem conta descarta — não há save onde
  * gravá-lo. Zerar o que não existe e ignorar o que sai é honesto; o que era
  * desonesto era o `state as unknown as CareState` do `menu.ts`, que entregava
- * um objeto SEM `evolutionStage` e SEM `virusPoints` e fazia a regra devolver
+ * um objeto SEM `evolutionStage` e SEM `powerPoints` e fazia a regra devolver
  * `energyPoints` calculado sobre `undefined` e atributos `NaN` — lixo que só
  * não aparecia porque o `menu.ts` jogava fora e recalculava a energia à mão.
  *
@@ -325,8 +325,8 @@ export function localFeed(
     // devolve. Sem conta não há save para receber esses pontos; eles morrem
     // aqui, como já morriam (só que como `NaN`).
     healthPoints: 0, maxHealthPoints: 0,
-    virusPoints: 0, dataPoints: 0, vaccinePoints: 0, totalXP: 0,
-    attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
+    powerPoints: 0, harmonyPoints: 0, benevolencePoints: 0, totalXP: 0,
+    attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
   }, foodEmoji, local.feedTimes, now);
 
   if (f.refused) {

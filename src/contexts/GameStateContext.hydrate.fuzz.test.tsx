@@ -65,20 +65,20 @@ function montar(Comp: React.ComponentType) {
 const SAVES_HOSTIS: Array<[string, unknown]> = [
   ['objeto vazio (KV truncado / adoção de save vazio)', {}],
   ['a fixture da rodada 2, que passava', { perfectDays: 10 }],
-  ['save legado sem `activities`', { tasks: [], evolutionStage: 'champion-virus', perfectDays: 3 }],
+  ['save legado sem `activities`', { tasks: [], evolutionStage: 'champion-power', perfectDays: 3 }],
   ['activities: null', { activities: null, tasks: [] }],
   ['activities não-array', { activities: 3, tasks: [] }],
   ['tasks não-array', { activities: [], tasks: {} }],
   ['completedTasks não-array', { activities: [], tasks: [], completedTasks: 'x' }],
   ['unlockedEvolutions não-array', { activities: [], tasks: [], unlockedEvolutions: 'mega' }],
   ['ownedBackgrounds não-array (o spread lançava e apagava o save)', { activities: [], tasks: [], ownedBackgrounds: 7, perfectDays: 9 }],
-  ['healthPoints ausente', { activities: [], tasks: [], evolutionStage: 'mega-data' }],
+  ['healthPoints ausente', { activities: [], tasks: [], evolutionStage: 'mega-harmony' }],
   ['healthPoints NaN (via null no JSON)', { activities: [], tasks: [], healthPoints: null }],
   ['healthPoints negativo', { activities: [], tasks: [], healthPoints: -5 }],
   ['healthPoints acima do máximo do estágio', { activities: [], tasks: [], healthPoints: 99, evolutionStage: 'rookie' }],
   ['healthPoints string', { activities: [], tasks: [], healthPoints: '3' }],
   ['atributos ausentes (save anterior à árvore de galhos)', { activities: [], tasks: [], evolutionStage: 'rookie' }],
-  ['attributesSinceLastEvolution parcial', { activities: [], tasks: [], attributesSinceLastEvolution: { virus: 'x' } }],
+  ['attributesSinceLastEvolution parcial', { activities: [], tasks: [], attributesSinceLastEvolution: { power: 'x' } }],
   ['foodInventory array', { activities: [], tasks: [], foodInventory: [] }],
   ['activityStats array', { activities: [], tasks: [], activityStats: [] }],
   ['lastResetDate numérico', { activities: [], tasks: [], lastResetDate: 0 }],
@@ -172,7 +172,7 @@ describe('hydrateSave garante o TIPO, não só a presença', () => {
       }
       // Números que viram NaN e contaminam todo cálculo a jusante.
       for (const campo of ['healthPoints', 'maxHealthPoints', 'energyPoints', 'perfectDays',
-        'totalXP', 'virusPoints', 'dataPoints', 'vaccinePoints', 'gamePoints', 'emblems',
+        'totalXP', 'powerPoints', 'harmonyPoints', 'benevolencePoints', 'gamePoints', 'emblems',
         'poopPenaltyClockAt', 'maxActivityCap']) {
         expect(Number.isFinite(s[campo]), `${campo} deveria ser número finito, veio ${JSON.stringify(s[campo])}`).toBe(true);
       }
@@ -365,8 +365,8 @@ describe('hydrateSave garante o TIPO, não só a presença', () => {
       tasks: [{ id: 't1', name: 'Ler', category: 'estudo', emoji: '📚', completed: false }],
       completedTasks: [], activityStats: {},
       healthPoints: 2, energyPoints: 3, perfectDays: 7, totalXP: 420,
-      virusPoints: 11, dataPoints: 5, vaccinePoints: 2,
-      evolutionStage: 'champion-virus', unlockedEvolutions: ['rookie', 'champion-virus'],
+      powerPoints: 11, harmonyPoints: 5, benevolencePoints: 2,
+      evolutionStage: 'champion-power', unlockedEvolutions: ['rookie', 'champion-power'],
       gamePoints: 999, emblems: 42, ownedBackgrounds: ['bg-room', 'bg-neon'],
       lastResetDate: new Date().toDateString(),
     };
@@ -378,10 +378,10 @@ describe('hydrateSave garante o TIPO, não só a presença', () => {
     expect(s.healthPoints).toBe(2);
     expect(s.perfectDays).toBe(7);
     expect(s.totalXP).toBe(420);
-    expect(s.virusPoints).toBe(11);
+    expect(s.powerPoints).toBe(11);
     expect(s.gamePoints).toBe(999);
     expect(s.emblems).toBe(42);
-    expect(s.evolutionStage).toBe('champion-virus');
+    expect(s.evolutionStage).toBe('champion-power');
     expect(s.ownedBackgrounds).toEqual(expect.arrayContaining(['bg-room', 'bg-neon']));
   });
 });

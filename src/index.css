@@ -4439,14 +4439,14 @@ select:focus-visible {
    Estes pares são a MESMA matiz, só com a luminosidade ajustada até passar
    4,5:1 — não é cor nova na paleta, é a mesma cor legível. */
 :root, [data-theme="light"] {
-  --sm-attr-virus-ink: #1a7d00;    /* Poder — 5,28:1 sobre branco */
-  --sm-attr-data-ink: #00699a;     /* Harmonia — 6,02:1 */
-  --sm-attr-vaccine-ink: #8a5a00;  /* Benevolência — 5,93:1 */
+  --sm-attr-power-ink: #1a7d00;    /* Poder — 5,28:1 sobre branco */
+  --sm-attr-harmony-ink: #00699a;     /* Harmonia — 6,02:1 */
+  --sm-attr-benevolence-ink: #8a5a00;  /* Benevolência — 5,93:1 */
 }
 [data-theme="dark"] {
-  --sm-attr-virus-ink: #5fdc3a;    /* 6,95:1 sobre --sm-surface */
-  --sm-attr-data-ink: #5ac8f5;     /* 6,49:1 */
-  --sm-attr-vaccine-ink: #f0b64d;  /* 6,78:1 */
+  --sm-attr-power-ink: #5fdc3a;    /* 6,95:1 sobre --sm-surface */
+  --sm-attr-harmony-ink: #5ac8f5;     /* 6,49:1 */
+  --sm-attr-benevolence-ink: #f0b64d;  /* 6,78:1 */
 }
 
 /* ── Botão desabilitado ───────────────────────────────────────────────────

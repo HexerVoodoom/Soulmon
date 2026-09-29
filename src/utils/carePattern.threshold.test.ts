@@ -219,15 +219,15 @@ describe('atributo não-finito conta como 0, não como 1', () => {
   const fraco = computeCarePattern([], NOW); // leitura não confiável
 
   it('NaN/ausente não pode virar um ponto de brinde', () => {
-    // Se o fallback fosse 1, um `virusPoints` ausente no save daria a vitória
-    // ao vírus e mudaria o GALHO DE EVOLUÇÃO do jogador por causa de um campo
+    // Se o fallback fosse 1, um `powerPoints` ausente no save daria a vitória
+    // ao poder e mudaria o GALHO DE EVOLUÇÃO do jogador por causa de um campo
     // que nunca existiu. Achado irmão do fuzzing da rodada 6.
-    expect(resolveBranch({ virus: NaN, data: 0, vaccine: 0 }, fraco, 'data')).toBe('data');
-    expect(resolveBranch({ data: 0, vaccine: 0 } as never, fraco, 'data')).toBe('data');
-    expect(resolveBranch({ virus: Infinity, data: 0, vaccine: 0 } as never, fraco, 'vaccine'))
-      .toBe('vaccine');
-    expect(resolveBranch({ virus: 0, data: NaN, vaccine: 0 }, fraco, 'virus')).toBe('virus');
-    expect(resolveBranch({ virus: 0, data: 0, vaccine: NaN }, fraco, 'virus')).toBe('virus');
+    expect(resolveBranch({ power: NaN, harmony: 0, benevolence: 0 }, fraco, 'harmony')).toBe('harmony');
+    expect(resolveBranch({ harmony: 0, benevolence: 0 } as never, fraco, 'harmony')).toBe('harmony');
+    expect(resolveBranch({ power: Infinity, harmony: 0, benevolence: 0 } as never, fraco, 'benevolence'))
+      .toBe('benevolence');
+    expect(resolveBranch({ power: 0, harmony: NaN, benevolence: 0 }, fraco, 'power')).toBe('power');
+    expect(resolveBranch({ power: 0, harmony: 0, benevolence: NaN }, fraco, 'power')).toBe('power');
   });
 
   it('atributo ZERO com os outros NEGATIVOS ainda é "sem progresso"', () => {
@@ -235,15 +235,15 @@ describe('atributo não-finito conta como 0, não como 1', () => {
     // existir, mas a função é defensiva — tem max 0 e nenhum progresso real.
     // Com `< 0`, o zero viraria "líder" e escolheria o galho sozinho, passando
     // por cima do ritmo e do galho atual.
-    expect(resolveBranch({ virus: 0, data: -1, vaccine: -1 }, fraco, 'data')).toBe('data');
-    expect(resolveBranch({ virus: -3, data: 0, vaccine: -2 }, fraco, 'vaccine')).toBe('vaccine');
+    expect(resolveBranch({ power: 0, harmony: -1, benevolence: -1 }, fraco, 'harmony')).toBe('harmony');
+    expect(resolveBranch({ power: -3, harmony: 0, benevolence: -2 }, fraco, 'benevolence')).toBe('benevolence');
   });
 
   it('UM ponto já é suficiente para o atributo mandar', () => {
     // `max <= 0` tem que ser 0 mesmo: com `<= 1`, um único ponto seria ignorado
     // e o desempate por ritmo decidiria uma disputa que não estava empatada.
-    expect(resolveBranch({ virus: 1, data: 0, vaccine: 0 }, fraco, 'data')).toBe('virus');
-    expect(resolveBranch({ virus: 0, data: 0, vaccine: 1 }, fraco, 'data')).toBe('vaccine');
+    expect(resolveBranch({ power: 1, harmony: 0, benevolence: 0 }, fraco, 'harmony')).toBe('power');
+    expect(resolveBranch({ power: 0, harmony: 0, benevolence: 1 }, fraco, 'harmony')).toBe('benevolence');
   });
 });
 

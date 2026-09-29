@@ -39,7 +39,7 @@ interface SavedOracleForm extends OracleInput {
   timeUnknown?: boolean;
 }
 
-const ATTRIBUTE_EMOJI: Record<AlignmentId, string> = { poder: '🦠', harmonia: '💾', benevolencia: '💉' };
+const ATTRIBUTE_EMOJI: Record<AlignmentId, string> = { poder: '👊', harmonia: '🎶', benevolencia: '🤲' };
 
 /**
  * Controles diretos DESLIGADOS por decisão do dono (ago/2026): elemento

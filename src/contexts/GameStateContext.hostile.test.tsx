@@ -65,10 +65,10 @@ describe('save hostil: campo com tipo errado não pode dar tela branca', () => {
   }
 
   it('as funções puras que levaram o fix continuam corretas para entrada boa', () => {
-    expect(getStageLevel('champion-virus')).toBe('champion');
-    expect(getStageLevel('mega-virus')).toBe('mega');  // id do esquema da árvore
+    expect(getStageLevel('champion-power')).toBe('champion');
+    expect(getStageLevel('mega-power')).toBe('mega');  // id do esquema da árvore
     expect(getStageLevel('rookie')).toBe('rookie');
-    expect(getStageBranch('champion-virus')).toBe('virus');
+    expect(getStageBranch('champion-power')).toBe('power');
     // e o fix não inventa resposta para lixo
     expect(getStageLevel(42 as unknown as string)).toBe('rookie');
     expect(getStageBranch(42 as unknown as string)).toBeNull();

@@ -89,11 +89,11 @@ export interface SpecialItemState {
   totalPerfectDays?: number;
   /** Dias completos vitalícios PARA AS MISSÕES — real + 🌀 (decisão #41/#60). */
   missionPerfectDays?: number;
-  virusPoints: number;
-  dataPoints: number;
-  vaccinePoints: number;
+  powerPoints: number;
+  harmonyPoints: number;
+  benevolencePoints: number;
   totalXP: number;
-  attributesSinceLastEvolution: { virus: number; data: number; vaccine: number };
+  attributesSinceLastEvolution: { power: number; harmony: number; benevolence: number };
   glitchtamaUse?: GlitchtamaUse;
   playerDayTz?: PlayerDayAnchor;
 }
@@ -230,14 +230,14 @@ export function applySpecialItem<T extends SpecialItemState>(
     state: {
       ...prev,
       foodInventory,
-      virusPoints: prev.virusPoints + boost('virus'),
-      dataPoints: prev.dataPoints + boost('data'),
-      vaccinePoints: prev.vaccinePoints + boost('vaccine'),
+      powerPoints: prev.powerPoints + boost('power'),
+      harmonyPoints: prev.harmonyPoints + boost('harmony'),
+      benevolencePoints: prev.benevolencePoints + boost('benevolence'),
       totalXP: prev.totalXP + CHIP_BOOST * 10,
       attributesSinceLastEvolution: {
-        virus: (since?.virus ?? 0) + boost('virus'),
-        data: (since?.data ?? 0) + boost('data'),
-        vaccine: (since?.vaccine ?? 0) + boost('vaccine'),
+        power: (since?.power ?? 0) + boost('power'),
+        harmony: (since?.harmony ?? 0) + boost('harmony'),
+        benevolence: (since?.benevolence ?? 0) + boost('benevolence'),
       },
     },
   };

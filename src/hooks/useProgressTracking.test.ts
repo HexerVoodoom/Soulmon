@@ -42,7 +42,7 @@ function ativ(
 
 function estado(over: Partial<Parameters<typeof useProgressTracking>[0]> = {}) {
   return {
-    evolutionStage: 'mega-data',
+    evolutionStage: 'mega-harmony',
     activities: [],
     tasks: [],
     completedTasks: [],
@@ -178,7 +178,7 @@ describe('o hook não responde "o dia foi perfeito?"', () => {
 // ---------------------------------------------------------------------------
 describe('useProgressTracking — todayAttributes', () => {
   it('sem atividades, nenhum atributo', () => {
-    expect(ver(estado()).todayAttributes).toEqual({ virus: 0, data: 0, vaccine: 0 });
+    expect(ver(estado()).todayAttributes).toEqual({ power: 0, harmony: 0, benevolence: 0 });
   });
 
   it('acumula os atributos das atividades concluídas', () => {
@@ -188,7 +188,7 @@ describe('useProgressTracking — todayAttributes', () => {
 
   it('atividade incompleta não rende atributo', () => {
     const r = ver(estado({ activities: [ativ('a', { passos: [false], categoria: 'Study' })] }));
-    expect(r.todayAttributes).toEqual({ virus: 0, data: 0, vaccine: 0 });
+    expect(r.todayAttributes).toEqual({ power: 0, harmony: 0, benevolence: 0 });
   });
 
   it('soma atributos de categorias diferentes', () => {
@@ -200,8 +200,8 @@ describe('useProgressTracking — todayAttributes', () => {
         ],
       }),
     );
-    expect(r.todayAttributes.virus).toBe(CATEGORY_ATTRIBUTES.Health.virus + CATEGORY_ATTRIBUTES.Study.virus);
-    expect(r.todayAttributes.data).toBe(CATEGORY_ATTRIBUTES.Health.data + CATEGORY_ATTRIBUTES.Study.data);
-    expect(r.todayAttributes.vaccine).toBe(CATEGORY_ATTRIBUTES.Health.vaccine + CATEGORY_ATTRIBUTES.Study.vaccine);
+    expect(r.todayAttributes.power).toBe(CATEGORY_ATTRIBUTES.Health.power + CATEGORY_ATTRIBUTES.Study.power);
+    expect(r.todayAttributes.harmony).toBe(CATEGORY_ATTRIBUTES.Health.harmony + CATEGORY_ATTRIBUTES.Study.harmony);
+    expect(r.todayAttributes.benevolence).toBe(CATEGORY_ATTRIBUTES.Health.benevolence + CATEGORY_ATTRIBUTES.Study.benevolence);
   });
 });

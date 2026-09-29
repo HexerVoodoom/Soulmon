@@ -29,7 +29,7 @@ const ESCOLHAS = { criatura: 'uma raposa de vidro', escola: 'evocacao' as const,
 const noTopo = (extra: Record<string, unknown> = {}) => ({
   evolutionStage: 'ultra' as string,
   accountTier: 'paid' as 'demo' | 'paid' | undefined,
-  virusPoints: 40, dataPoints: 31, vaccinePoints: 12,
+  powerPoints: 40, harmonyPoints: 31, benevolencePoints: 12,
   rebirth: undefined as RebirthRecord | null | undefined,
   incubation: undefined as Incubation | undefined,
   ...extra,
@@ -57,7 +57,7 @@ describe('rebirth — o que se perde é o estágio e os atributos, e SÓ', () =>
     const { state, applied } = applyRebirth(noTopo(), ESCOLHAS, NOW);
     expect(applied).toBe(true);
     expect(state.evolutionStage).toBe('rookie');
-    expect([state.virusPoints, state.dataPoints, state.vaccinePoints]).toEqual([0, 0, 0]);
+    expect([state.powerPoints, state.harmonyPoints, state.benevolencePoints]).toEqual([0, 0, 0]);
   });
 
   it('NÃO toca em nada que o jogador colecionou, comprou ou construiu', () => {
@@ -65,7 +65,7 @@ describe('rebirth — o que se perde é o estágio e os atributos, e SÓ', () =>
     const colecao = {
       gamePoints: 1200, emblems: 40, credits: 3,
       perfectDays: 61, totalPerfectDays: 140,
-      unlockedEvolutions: ['mega-virus', 'mega-data', 'mega-vaccine'],
+      unlockedEvolutions: ['mega-power', 'mega-harmony', 'mega-benevolence'],
       equippedDecor: { trophy: 'trophy-shelf' },
       ownedBackgrounds: ['bg-mission-1'],
       rest: { dreams: ['d1', 'd2'] },
@@ -92,21 +92,21 @@ describe('rebirth — o que se perde é o estágio e os atributos, e SÓ', () =>
     const velho = {
       incubation: {
         v: 1 as const,
-        since: { 'champion-virus': '2026-08-01T00:00:00.000Z' },
+        since: { 'champion-power': '2026-08-01T00:00:00.000Z' },
       },
     };
     const { state } = applyRebirth(noTopo(velho), ESCOLHAS, NOW);
     expect(state.incubation).toEqual({ v: 1, since: {} });
     // E o efeito que importa: a forma-alvo da vida nova NÃO está liberada de graça.
-    expect(incubationReady(state.incubation, 'champion-virus', NOW)).toBe(true);
+    expect(incubationReady(state.incubation, 'champion-power', NOW)).toBe(true);
     const comRelogio = incubationFor(
       { evolutionStage: 'rookie', perfectDays: 4,
-        points: { virus: 9, data: 0, vaccine: 0 }, reading: LEITURA,
-        currentBranch: 'virus', unlockedEvolutions: [] },
+        points: { power: 9, harmony: 0, benevolence: 0 }, reading: LEITURA,
+        currentBranch: 'power', unlockedEvolutions: [] },
       state.incubation, NOW,
     );
-    expect(comRelogio.since['champion-virus']).toBe(NOW.toISOString());
-    expect(incubationReady(comRelogio, 'champion-virus', NOW)).toBe(false);
+    expect(comRelogio.since['champion-power']).toBe(NOW.toISOString());
+    expect(incubationReady(comRelogio, 'champion-power', NOW)).toBe(false);
   });
 
   it('grava o registro com a origem — a prova de que a escada foi subida', () => {
@@ -144,12 +144,12 @@ describe('rebirth — uma vez só, e o updater pode rodar duas', () => {
     // StrictMode invoca updater 2× (footgun 6). Sem esta trava, a segunda
     // passada zeraria atributos que o jogador já tivesse reconquistado.
     const primeiro = applyRebirth(noTopo(), ESCOLHAS, NOW);
-    const comAtributosNovos = { ...primeiro.state, virusPoints: 7 };
+    const comAtributosNovos = { ...primeiro.state, powerPoints: 7 };
     const segundo = applyRebirth(comAtributosNovos, ESCOLHAS, new Date('2026-10-01T00:00:00Z'));
     expect(segundo.applied).toBe(false);
     expect(segundo.refusal).toBe('already-used');
     expect(segundo.state).toBe(comAtributosNovos);
-    expect(segundo.state.virusPoints).toBe(7);
+    expect(segundo.state.powerPoints).toBe(7);
   });
 });
 

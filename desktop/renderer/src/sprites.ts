@@ -17,7 +17,7 @@ import { getSpriteForStage } from '../../../src/utils/sprites';
 export type GenericLine = 'tapirmon' | 'veemon' | 'salamon';
 
 /**
- * @param stage       id da forma ('rookie' | 'champion-virus' | 'ultra' …)
+ * @param stage       id da forma ('rookie' | 'champion-power' | 'ultra' …)
  * @param demoCharId  `demoCharacterId` do save (conta demo usa personagem pronto)
  */
 export function petSprite(stage: string, demoCharId?: string): string {

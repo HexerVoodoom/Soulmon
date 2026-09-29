@@ -62,13 +62,13 @@ afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 describe('save da nuvem → o que o overlay mostra', () => {
   it('mega com 2,5 corações e 3 de energia aparece como 2,5/4 e 3/6', async () => {
     servidorResponde(saveNaNuvem({
-      evolutionStage: 'mega-virus', healthPoints: 2.5, energyPoints: 3,
+      evolutionStage: 'mega-power', healthPoints: 2.5, energyPoints: 3,
     }));
     const r = await fetchRemoteSnapshot(EMAIL);
 
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.snapshot.stage).toBe('mega-virus');
+    expect(r.snapshot.stage).toBe('mega-power');
     expect(r.snapshot.hearts).toBe(2.5);
     expect(r.snapshot.maxHearts).toBe(4);   // número CRU: mega tem 4 corações
     expect(r.snapshot.energy).toBe(3);
@@ -86,7 +86,7 @@ describe('save da nuvem → o que o overlay mostra', () => {
   });
 
   it('champion e ultimate mostram 3 corações e 5 barras', async () => {
-    for (const stage of ['champion-data', 'ultimate-vaccine']) {
+    for (const stage of ['champion-harmony', 'ultimate-benevolence']) {
       servidorResponde(saveNaNuvem({ evolutionStage: stage, healthPoints: 1, energyPoints: 5 }));
       const r = await fetchRemoteSnapshot(EMAIL);
       if (!r.ok) throw new Error('esperava snapshot');
@@ -184,19 +184,19 @@ describe('linha de sprite: o overlay nunca desenha um bicho de terceiro', () => 
 describe('nome da forma vem da árvore ÚNICA do jogador', () => {
   const arvore = [
     { stage: 'rookie', name: 'Fagulhito' },
-    { stage: 'champion', branch: 'virus', name: 'Fagulharco' },
-    { stage: 'champion', branch: 'data', name: 'Fagulhadus' },
+    { stage: 'champion', branch: 'power', name: 'Fagulharco' },
+    { stage: 'champion', branch: 'harmony', name: 'Fagulhadus' },
   ];
 
-  it('casa nível + galho: champion-data mostra o nome do galho data', async () => {
-    servidorResponde(saveNaNuvem({ evolutionStage: 'champion-data', soulmonStages: arvore }));
+  it('casa nível + galho: champion-harmony mostra o nome do galho data', async () => {
+    servidorResponde(saveNaNuvem({ evolutionStage: 'champion-harmony', soulmonStages: arvore }));
     const r = await fetchRemoteSnapshot(EMAIL);
     if (!r.ok) throw new Error('esperava snapshot');
     expect(r.snapshot.stageName).toBe('Fagulhadus');
   });
 
-  it('casa nível + galho: champion-virus mostra o OUTRO nome', async () => {
-    servidorResponde(saveNaNuvem({ evolutionStage: 'champion-virus', soulmonStages: arvore }));
+  it('casa nível + galho: champion-power mostra o OUTRO nome', async () => {
+    servidorResponde(saveNaNuvem({ evolutionStage: 'champion-power', soulmonStages: arvore }));
     const r = await fetchRemoteSnapshot(EMAIL);
     if (!r.ok) throw new Error('esperava snapshot');
     expect(r.snapshot.stageName).toBe('Fagulharco');
@@ -211,7 +211,7 @@ describe('nome da forma vem da árvore ÚNICA do jogador', () => {
 
   it('nível que a árvore não tem cai no nome-base do oráculo', async () => {
     servidorResponde(saveNaNuvem({
-      evolutionStage: 'mega-virus', soulmonStages: arvore, soulmonMeta: { baseName: 'Fagulha' },
+      evolutionStage: 'mega-power', soulmonStages: arvore, soulmonMeta: { baseName: 'Fagulha' },
     }));
     const r = await fetchRemoteSnapshot(EMAIL);
     if (!r.ok) throw new Error('esperava snapshot');
@@ -227,9 +227,9 @@ describe('nome da forma vem da árvore ÚNICA do jogador', () => {
 
   it('árvore que guarda o NÍVEL sem galho casa com qualquer galho daquele nível', async () => {
     // O oráculo nem sempre grava `branch`. Sem esta tolerância, quem evoluiu
-    // para mega-virus perde o nome da própria forma e vira o nome-base.
+    // para mega-power perde o nome da própria forma e vira o nome-base.
     servidorResponde(saveNaNuvem({
-      evolutionStage: 'mega-virus',
+      evolutionStage: 'mega-power',
       soulmonStages: [{ stage: 'mega', name: 'Fagulhomega' }],
       soulmonMeta: { baseName: 'Fagulha' },
     }));
@@ -440,11 +440,11 @@ describe('normalizeForRules devolve os números que as regras leem', () => {
     expect(n.maxHealthPoints).toBe(3);
     expect(n.energyPoints).toBe(0);
     expect(n.foodInventory).toEqual({});
-    expect(n.virusPoints).toBe(0);
-    expect(n.dataPoints).toBe(0);
-    expect(n.vaccinePoints).toBe(0);
+    expect(n.powerPoints).toBe(0);
+    expect(n.harmonyPoints).toBe(0);
+    expect(n.benevolencePoints).toBe(0);
     expect(n.totalXP).toBe(0);
-    expect(n.attributesSinceLastEvolution).toEqual({ virus: 0, data: 0, vaccine: 0 });
+    expect(n.attributesSinceLastEvolution).toEqual({ power: 0, harmony: 0, benevolence: 0 });
   });
 
   it('HP 0 é preservado (pet degenerando não pode virar 1 coração de graça)', () => {
@@ -456,17 +456,17 @@ describe('normalizeForRules devolve os números que as regras leem', () => {
     expect(normalizeForRules({ healthPoints: '2' }).healthPoints).toBe(1);
     expect(normalizeForRules({ healthPoints: null }).healthPoints).toBe(1);
     expect(normalizeForRules({ evolutionStage: 'ultra' }).maxHealthPoints).toBe(5);
-    expect(normalizeForRules({ evolutionStage: 'champion-data' }).maxHealthPoints).toBe(3);
+    expect(normalizeForRules({ evolutionStage: 'champion-harmony' }).maxHealthPoints).toBe(3);
     expect(normalizeForRules({ evolutionStage: 42 }).maxHealthPoints).toBe(3);
   });
 
   it('atributos em string viram número; o resto do save fica intacto', () => {
     const n = normalizeForRules({
-      virusPoints: '7', dataPoints: 'x', totalXP: '420',
+      powerPoints: '7', harmonyPoints: 'x', totalXP: '420',
       perfectDays: 9, soulGoal: 'dormir melhor', tasks: [{ id: 't1' }],
     });
-    expect(n.virusPoints).toBe(7);
-    expect(n.dataPoints).toBe(0);
+    expect(n.powerPoints).toBe(7);
+    expect(n.harmonyPoints).toBe(0);
     expect(n.totalXP).toBe(420);
     expect(n.perfectDays).toBe(9);
     expect(n.soulGoal).toBe('dormir melhor');
@@ -477,7 +477,7 @@ describe('normalizeForRules devolve os números que as regras leem', () => {
 describe('isSaneCareState nas FRONTEIRAS (é o que decide gravar ou não)', () => {
   const base = {
     healthPoints: 1, maxHealthPoints: 3, energyPoints: 0,
-    virusPoints: 0, dataPoints: 0, vaccinePoints: 0, totalXP: 0,
+    powerPoints: 0, harmonyPoints: 0, benevolencePoints: 0, totalXP: 0,
   };
 
   it('HP exatamente 0 é ACEITO — degeneração é estado legítimo do jogo', () => {
@@ -596,7 +596,7 @@ describe('pushCareAction: quando NÃO grava, e por quê', () => {
 
 describe('pushCareAction: o que a regra recebe e o que volta para a tela', () => {
   it('a regra recebe o save JÁ normalizado (sem isso, Math.min(undefined) vira NaN)', async () => {
-    servidorResponde(saveNaNuvem({ evolutionStage: 'mega-data', perfectDays: 5 }), () => resposta(200, { ok: true }));
+    servidorResponde(saveNaNuvem({ evolutionStage: 'mega-harmony', perfectDays: 5 }), () => resposta(200, { ok: true }));
     const vistos: Array<Record<string, unknown>> = [];
     await pushCareAction(EMAIL, (s) => { vistos.push(s); return s; });
 
@@ -609,7 +609,7 @@ describe('pushCareAction: o que a regra recebe e o que volta para a tela', () =>
 
   it('o snapshot devolvido é o estado DEPOIS da ação, não o de antes', async () => {
     servidorResponde(
-      saveNaNuvem({ evolutionStage: 'mega-virus', healthPoints: 1, energyPoints: 0, foodInventory: { '🍎': 2 } }),
+      saveNaNuvem({ evolutionStage: 'mega-power', healthPoints: 1, energyPoints: 0, foodInventory: { '🍎': 2 } }),
       () => resposta(200, { ok: true }),
     );
     const r = await pushCareAction(EMAIL, (s) => ({
@@ -666,8 +666,8 @@ describe('pushCareAction: o que a regra recebe e o que volta para a tela', () =>
   it('personagem de demo e nome da forma aparecem no snapshot da escrita', async () => {
     servidorResponde(
       saveNaNuvem({
-        evolutionStage: 'champion-data', healthPoints: 2, demoCharacterId: 'orrin',
-        soulmonStages: [{ stage: 'champion', branch: 'data', name: 'Fagulhadus' }],
+        evolutionStage: 'champion-harmony', healthPoints: 2, demoCharacterId: 'orrin',
+        soulmonStages: [{ stage: 'champion', branch: 'harmony', name: 'Fagulhadus' }],
       }),
       () => resposta(200, { ok: true }),
     );
@@ -675,7 +675,7 @@ describe('pushCareAction: o que a regra recebe e o que volta para a tela', () =>
     if (!r.ok) throw new Error('esperava sucesso');
     expect(r.snapshot.demoCharacterId).toBe('orrin');
     expect(r.snapshot.stageName).toBe('Fagulhadus');
-    expect(r.snapshot.stage).toBe('champion-data');
+    expect(r.snapshot.stage).toBe('champion-harmony');
     expect(r.snapshot.energy).toBe(2);
   });
 

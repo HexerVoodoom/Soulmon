@@ -6,8 +6,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 D = os.path.join(ROOT, 'src/assets/soulmon/corvo')
 SRC = os.path.join(ROOT, 'src/assets/soulmon/mascot-raven.png')
 REV = os.path.join(ROOT, 'docs/reviews/admin-corvo')
-ORDER = ['rookie','champion-virus','champion-data','champion-vaccine','ultimate-virus','ultimate-data',
-         'ultimate-vaccine','mega-virus','mega-data','mega-vaccine','ultra']
+ORDER = ['rookie','champion-power','champion-harmony','champion-benevolence','ultimate-power','ultimate-harmony',
+         'ultimate-benevolence','mega-power','mega-harmony','mega-benevolence','ultra']
 fail = []
 def chk(ok, msg):
     print(('OK   ' if ok else 'FALHA ') + msg)

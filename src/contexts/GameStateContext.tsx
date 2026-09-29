@@ -15,6 +15,7 @@ import type { SlotId } from '../utils/petStage';
 import { ALL_SHOP_ITEMS } from '../utils/shop';
 import { rollPetPassive } from '../utils/passives';
 import { normalizeConsent, type ConsentRecord } from '../utils/consent';
+import { migrateBranchIds } from '../utils/branchMigration';
 import { normalizeSpriteLibrary, type SpriteLibrary } from '../utils/spriteLibrary';
 import { mergeCareCaps, type CareCaps } from '../utils/careCaps';
 import type { BondDailyLedger, BondDailyXP } from '../utils/bond';
@@ -195,11 +196,11 @@ export interface GameState {
    *  Zera na virada como a energia — e o que zera é o TETO, nunca o `totalXP`.
    *  `day` é o dia do JOGADOR (`utils/playerDay.ts`), não o do aparelho. */
   bondDaily?: BondDailyLedger;
-  virusPoints: number;
-  dataPoints: number;
-  vaccinePoints: number;
+  powerPoints: number;
+  harmonyPoints: number;
+  benevolencePoints: number;
   lastResetDate: string;
-  /** Id da forma atual na árvore do Soulmon: 'rookie' | '{champion|ultimate|mega}-{virus|data|vaccine}' | 'ultra'
+  /** Id da forma atual na árvore do Soulmon: 'rookie' | '{champion|ultimate|mega}-{power|harmony|benevolence}' | 'ultra'
    *  (ver types/progression.ts). Único por jogador — o NOME de exibição vem de soulmonStages. */
   evolutionStage: string;
   /* ⚰️ `digivolutionSegments` e `digivolutionSegmentsNeeded` saíram em
@@ -267,7 +268,7 @@ export interface GameState {
   /** WP4.19 — exibir a marca da volta é escolha do jogador (padrão: não).
    *  O app não decide contar isso por ninguém. */
   showRedeemed?: boolean;
-  currentBranch: 'virus' | 'data' | 'vaccine';
+  currentBranch: 'power' | 'harmony' | 'benevolence';
   lastDayWasPerfect: boolean;
   maxActivityCap: number;
   /** Não é mais escolha do jogador (era o "tipo de ovo") — hoje é a linha de
@@ -335,7 +336,7 @@ export interface GameState {
    */
   bornAt?: string;
   /** Attribute points accumulated since the last evolution — drives branch selection */
-  attributesSinceLastEvolution: { virus: number; data: number; vaccine: number };
+  attributesSinceLastEvolution: { power: number; harmony: number; benevolence: number };
   /** Version B: food stockpile keyed by food emoji */
   foodInventory: Record<string, number>;
   /** Indices of scheduled poop events that actually appeared on screen (so sleep-skipped ones don't penalize). */
@@ -618,7 +619,7 @@ function hydratePlayLog(v: unknown): PlayLog | undefined {
   const okBuff = b.kind === 'minigame'
     && typeof b.expiresAt === 'string'
     && typeof b.multiplier === 'number' && Number.isFinite(b.multiplier)
-    && (b.attribute === 'virus' || b.attribute === 'data' || b.attribute === 'vaccine');
+    && (b.attribute === 'power' || b.attribute === 'harmony' || b.attribute === 'benevolence');
   return okBuff
     ? { date: raw.date, buff: b as unknown as NonNullable<PlayLog['buff']> }
     : { date: raw.date };
@@ -883,7 +884,10 @@ function hydrateSteps(v: unknown): StepsRecord | undefined {
  * `{}` adotado da nuvem (`adoptCloudSave` grava qualquer objeto simples).
  * Há guard travando isso em `GameStateContext.hydrate.fuzz.test.tsx`.
  */
-function hydrateSave(loadedState: Partial<GameState>): GameState {
+function hydrateSave(rawState: Partial<GameState>): GameState {
+  // Ids de caminho antigos (29/09/2026) → novos. Porta única do load: o
+  // localStorage e a nuvem passam os dois por aqui.
+  const loadedState = migrateBranchIds(rawState);
   const savedEggType = readLocal(STORAGE_KEYS.EGG_TYPE) as GameState['eggType'] | null;
   const maxHP = getMaxHPForStage(loadedState.evolutionStage ?? 'rookie');
   // A âncora é resolvida UMA vez e distribuída — ver a nota longa em
@@ -942,9 +946,9 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
         bondRewardsClaimed: strArr(loadedState.bondRewardsClaimed),
         bondDaily: hydrateBondDaily(loadedState.bondDaily),
         bondLevel: undefined,
-        virusPoints: num(loadedState.virusPoints, 0),
-        dataPoints: num(loadedState.dataPoints, 0),
-        vaccinePoints: num(loadedState.vaccinePoints, 0),
+        powerPoints: num(loadedState.powerPoints, 0),
+        harmonyPoints: num(loadedState.harmonyPoints, 0),
+        benevolencePoints: num(loadedState.benevolencePoints, 0),
         lastResetDate: typeof loadedState.lastResetDate === 'string'
           ? loadedState.lastResetDate : new Date().toDateString(),
         evolutionStage: typeof loadedState.evolutionStage === 'string'
@@ -976,8 +980,8 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
         showRedeemed: loadedState.showRedeemed === true,
         // Enum de 3 valores: qualquer outra coisa cairia em `getStageLevel`/
         // sprites como galho inexistente.
-        currentBranch: (loadedState.currentBranch === 'virus' || loadedState.currentBranch === 'data'
-          || loadedState.currentBranch === 'vaccine') ? loadedState.currentBranch : 'data',
+        currentBranch: (loadedState.currentBranch === 'power' || loadedState.currentBranch === 'harmony'
+          || loadedState.currentBranch === 'benevolence') ? loadedState.currentBranch : 'harmony',
         maxActivityCap: num(
           loadedState.maxActivityCap,
           FORM_REQUIREMENTS[getStageLevel(typeof loadedState.evolutionStage === 'string' ? loadedState.evolutionStage : 'rookie')].cap,
@@ -992,9 +996,9 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
            NOSSA por hash do id. */
         eggType: loadedState.eggType ?? savedEggType ?? 'ignar',
         attributesSinceLastEvolution: {
-          virus: num(loadedState.attributesSinceLastEvolution?.virus, 0),
-          data: num(loadedState.attributesSinceLastEvolution?.data, 0),
-          vaccine: num(loadedState.attributesSinceLastEvolution?.vaccine, 0),
+          power: num(loadedState.attributesSinceLastEvolution?.power, 0),
+          harmony: num(loadedState.attributesSinceLastEvolution?.harmony, 0),
+          benevolence: num(loadedState.attributesSinceLastEvolution?.benevolence, 0),
         },
         // Contagem por emoji: valor não-numérico vira `NaN` no primeiro `-1` e
         // a pastinha exibe item fantasma que nunca acaba.
@@ -1299,20 +1303,20 @@ function freshGameState(): GameState {
       totalXP: 0,
       bondRewardsClaimed: [],
       bondDaily: { day: '', spent: {} },
-      virusPoints: 0,
-      dataPoints: 0,
-      vaccinePoints: 0,
+      powerPoints: 0,
+      harmonyPoints: 0,
+      benevolencePoints: 0,
       lastResetDate: new Date().toDateString(),
       evolutionStage: 'rookie',
       poopEventsScheduled: [],
       poopEventsCompleted: [],
       unlockedEvolutions: ['rookie'],
       degeneratedByHP: false,
-      currentBranch: 'data',
+      currentBranch: 'harmony',
       lastDayWasPerfect: false,
       maxActivityCap: FORM_REQUIREMENTS.rookie.cap,
       eggType: savedEggType ?? 'ignar',
-      attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
+      attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
       foodInventory: {},
       poopEventsShown: [],
       poopPenaltyClockAt: 0,
@@ -1546,7 +1550,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         stage: gameState.evolutionStage,
         unlockedStages: gameState.unlockedEvolutions,
         pvpEnabled: !!gameState.pvpEnabled,
-        attrs: { virus: gameState.virusPoints, data: gameState.dataPoints, vaccine: gameState.vaccinePoints },
+        attrs: { power: gameState.powerPoints, harmony: gameState.harmonyPoints, benevolence: gameState.benevolencePoints },
         tasksDone: gameState.completedTasks?.length ?? 0,
       }).then(resposta => {
         // ── A RECUSA DE PvP PRECISA CHEGAR AO JOGADOR ────────────────────────

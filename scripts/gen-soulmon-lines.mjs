@@ -11,11 +11,11 @@ mkdirSync(join(OUT, 'lines'), { recursive: true });
 mkdirSync(join(OUT, 'bg'), { recursive: true });
 
 const LINES = {
-  // Poder (virus) — "Ignar", criatura raposa/chama
+  // Poder (power) — "Ignar", criatura raposa/chama
   ignar: { c: { main: '#3fae5a', dark: '#2c7d41', glow: '#8fe3a5' }, shape: 'kit' },
   // Harmonia (data) — "Lumel", orbe geométrico
   lumel: { c: { main: '#4f8fd9', dark: '#37639b', glow: '#a6ccf5' }, shape: 'orb' },
-  // Benevolência (vaccine) — "Serah", espírito-água-viva
+  // Benevolência (benevolence) — "Serah", espírito-água-viva
   serah: { c: { main: '#d9a441', dark: '#a1762a', glow: '#f2d79b' }, shape: 'wisp' },
 };
 const STAGES = ['rookie', 'champion', 'ultimate', 'mega'];

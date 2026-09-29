@@ -12,6 +12,7 @@
 // `functions/api/saveId.parity.test.js` — three implementations, three deploy
 // cycles, one rule.
 import { authHeaders } from './auth';
+import { migrateBranchIds } from './branchMigration';
 import { STORAGE_KEYS, RECONCILE_KEYS } from './storageKeys';
 import { writeLocal, readLocal, removeLocal } from './safeStorage';
 import { resolveLanguage } from './i18n';
@@ -432,9 +433,10 @@ export type AdoptResult = 'ok' | 'invalid' | 'storage';
  */
 export function adoptCloudSave(
   saveId: string,
-  state: unknown,
+  rawState: unknown,
   email?: string,
 ): AdoptResult {
+  const state = migrateBranchIds(rawState);
   if (!isPlainState(state)) {
     console.warn('[cloudSave] adoção recusada: state da nuvem não é objeto', {
       type: Array.isArray(state) ? 'array' : typeof state,

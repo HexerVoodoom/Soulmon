@@ -22,15 +22,15 @@ export function demoTintFilter(tint: number | undefined): string | undefined {
 // Árvore jogável do Soulmon: sprites placeholder gerados
 // (scripts/gen-soulmon-placeholders.mjs) até a integração com o Higgsfield.
 import soulmonRookie from '../assets/soulmon/rookie.png';
-import soulmonChampionVirus from '../assets/soulmon/champion-virus.png';
-import soulmonChampionData from '../assets/soulmon/champion-data.png';
-import soulmonChampionVaccine from '../assets/soulmon/champion-vaccine.png';
-import soulmonUltimateVirus from '../assets/soulmon/ultimate-virus.png';
-import soulmonUltimateData from '../assets/soulmon/ultimate-data.png';
-import soulmonUltimateVaccine from '../assets/soulmon/ultimate-vaccine.png';
-import soulmonMegaVirus from '../assets/soulmon/mega-virus.png';
-import soulmonMegaData from '../assets/soulmon/mega-data.png';
-import soulmonMegaVaccine from '../assets/soulmon/mega-vaccine.png';
+import soulmonChampionPower from '../assets/soulmon/champion-power.png';
+import soulmonChampionHarmony from '../assets/soulmon/champion-harmony.png';
+import soulmonChampionBenevolence from '../assets/soulmon/champion-benevolence.png';
+import soulmonUltimatePower from '../assets/soulmon/ultimate-power.png';
+import soulmonUltimateHarmony from '../assets/soulmon/ultimate-harmony.png';
+import soulmonUltimateBenevolence from '../assets/soulmon/ultimate-benevolence.png';
+import soulmonMegaPower from '../assets/soulmon/mega-power.png';
+import soulmonMegaHarmony from '../assets/soulmon/mega-harmony.png';
+import soulmonMegaBenevolence from '../assets/soulmon/mega-benevolence.png';
 import soulmonUltra from '../assets/soulmon/ultra.png';
 export { default as DUNGEON_SPIRIT_SPRITE } from '../assets/soulmon/dungeon-spirit.png';
 
@@ -49,9 +49,9 @@ import serahChampion from '../assets/soulmon/lines/serah-champion.png';
 import serahUltimate from '../assets/soulmon/lines/serah-ultimate.png';
 import serahMega from '../assets/soulmon/lines/serah-mega.png';
 import kaelenRookie from '../assets/soulmon/lines/kaelen-rookie.png';
-import kaelenChampion from '../assets/soulmon/lines/kaelen-champion-virus.png';
-import kaelenUltimate from '../assets/soulmon/lines/kaelen-ultimate-virus.png';
-import kaelenMega from '../assets/soulmon/lines/kaelen-mega-virus.png';
+import kaelenChampion from '../assets/soulmon/lines/kaelen-champion-power.png';
+import kaelenUltimate from '../assets/soulmon/lines/kaelen-ultimate-power.png';
+import kaelenMega from '../assets/soulmon/lines/kaelen-mega-power.png';
 import orrinRookie from '../assets/soulmon/lines/orrin-rookie.png';
 import orrinChampion from '../assets/soulmon/lines/orrin-champion.png';
 import orrinUltimate from '../assets/soulmon/lines/orrin-ultimate.png';
@@ -130,15 +130,15 @@ export function getDungeonEnemySprite(tier: string, excludeLine?: string): { spr
 
 const SOULMON_SPRITES: Record<string, string> = {
   'rookie': soulmonRookie,
-  'champion-virus': soulmonChampionVirus,
-  'champion-data': soulmonChampionData,
-  'champion-vaccine': soulmonChampionVaccine,
-  'ultimate-virus': soulmonUltimateVirus,
-  'ultimate-data': soulmonUltimateData,
-  'ultimate-vaccine': soulmonUltimateVaccine,
-  'mega-virus': soulmonMegaVirus,
-  'mega-data': soulmonMegaData,
-  'mega-vaccine': soulmonMegaVaccine,
+  'champion-power': soulmonChampionPower,
+  'champion-harmony': soulmonChampionHarmony,
+  'champion-benevolence': soulmonChampionBenevolence,
+  'ultimate-power': soulmonUltimatePower,
+  'ultimate-harmony': soulmonUltimateHarmony,
+  'ultimate-benevolence': soulmonUltimateBenevolence,
+  'mega-power': soulmonMegaPower,
+  'mega-harmony': soulmonMegaHarmony,
+  'mega-benevolence': soulmonMegaBenevolence,
   'ultra': soulmonUltra,
 };
 import { getStageLevel, getStageBranch } from '../types/progression';
@@ -161,7 +161,7 @@ function hashId(id: string): number {
 function legacySpriteForStage(stageId: string): string {
   const level = getStageLevel(stageId);
   const branch = getStageBranch(stageId);
-  // Branch-shaped ids ('champion-virus') are the current tree — answer with the
+  // Branch-shaped ids ('champion-power') are the current tree — answer with the
   // matching Soulmon form. Anything else is a legacy species name.
   if (branch) {
     const own = SOULMON_SPRITES[`${level}-${branch}`];
@@ -178,7 +178,7 @@ export type LineTier = 'rookie' | 'champion' | 'ultimate' | 'mega';
 /**
  * A LINHA e o TIER por trás de um estágio — a mesma resolução de
  * `getSpriteForStage`, sem o sprite: demo → a linha escolhida; id legado →
- * a linha sorteada por hash; estágio com ramo (`champion-virus`, a árvore
+ * a linha sorteada por hash; estágio com ramo (`champion-power`, a árvore
  * do jogador) → `null`, porque aí a arte é a do próprio Soulmon, não de
  * linha. Consumido por `lineIcons.ts` (rodada 2: ícones-ficha 64²/32²).
  */

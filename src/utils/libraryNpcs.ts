@@ -17,19 +17,19 @@ export const LIBRARY_NPCS: LibraryNpc[] = [
     // como 'Pyraka' porque o pet se chamava 'Pyrakamon', e a renomeação de
     // 08/09/2026 fez os dois campos colidirem na mesma linha da Biblioteca.
     id: 'npc-pyraka', name: 'Kaelen', petName: DUNGEON_LINE_NAMES.kaelen,
-    stage: 'champion-virus', unlockedStages: ['rookie', 'champion-virus'],
+    stage: 'champion-power', unlockedStages: ['rookie', 'champion-power'],
     pvpEnabled: false, daysPlaying: 47,
     isNpc: true, spriteUrl: DUNGEON_LINE_SPRITES.kaelen.champion,
   },
   {
     id: 'npc-orrin', name: 'Orrin', petName: DUNGEON_LINE_NAMES.orrin,
-    stage: 'ultimate-data', unlockedStages: ['rookie', 'champion-data', 'ultimate-data'],
+    stage: 'ultimate-harmony', unlockedStages: ['rookie', 'champion-harmony', 'ultimate-harmony'],
     pvpEnabled: false, daysPlaying: 88,
     isNpc: true, spriteUrl: DUNGEON_LINE_SPRITES.orrin.ultimate,
   },
   {
     id: 'npc-thalindra', name: 'Thalindra', petName: DUNGEON_LINE_NAMES.thalindra,
-    stage: 'mega-vaccine', unlockedStages: ['rookie', 'champion-vaccine', 'ultimate-vaccine', 'mega-vaccine'],
+    stage: 'mega-benevolence', unlockedStages: ['rookie', 'champion-benevolence', 'ultimate-benevolence', 'mega-benevolence'],
     pvpEnabled: false, daysPlaying: 133,
     isNpc: true, spriteUrl: DUNGEON_LINE_SPRITES.thalindra.mega,
   },

@@ -18,25 +18,25 @@ function estado(over: Partial<CareState> = {}): CareState {
     energyPoints: 0,
     evolutionStage: 'rookie', // 4 barras de energia
     foodInventory: { '🍎': 2 },
-    virusPoints: 0,
-    dataPoints: 0,
-    vaccinePoints: 0,
+    powerPoints: 0,
+    harmonyPoints: 0,
+    benevolencePoints: 0,
     totalXP: 0,
-    attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
+    attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
     ...over,
   };
 }
 
 describe('alimentar', () => {
   it('consome a comida, dá +1 energia e os atributos da categoria', () => {
-    // 🍎 = Study → { virus: 0, data: 3, vaccine: 1 }
+    // 🍎 = Study → { power: 0, harmony: 3, benevolence: 1 }
     const r = feedFood(estado(), '🍎', [], 0);
     expect(r.refused).toBeUndefined();
     expect(r.state.foodInventory['🍎']).toBe(1);
     expect(r.state.energyPoints).toBe(1);
-    expect(r.state.dataPoints).toBe(3);
-    expect(r.state.vaccinePoints).toBe(1);
-    expect(r.state.attributesSinceLastEvolution).toEqual({ virus: 0, data: 3, vaccine: 1 });
+    expect(r.state.harmonyPoints).toBe(3);
+    expect(r.state.benevolencePoints).toBe(1);
+    expect(r.state.attributesSinceLastEvolution).toEqual({ power: 0, harmony: 3, benevolence: 1 });
   });
 
   it('remove a chave do inventário quando acaba', () => {
@@ -91,40 +91,40 @@ describe('alimentar', () => {
 
   // -------------------------------------------------------------------------
   // O que a rodada 7 (mutation testing) achou aqui: os testes acima usam SÓ a
-  // 🍎 (Study = { virus: 0, data: 3, vaccine: 1 }). Como o virus dela é ZERO,
-  // trocar `state.virusPoints + attrs.virus` por `-` não mudava nada — a coluna
-  // virus inteira estava sem guard. E `totalXP` não era afirmado em lugar
+  // 🍎 (Study = { power: 0, harmony: 3, benevolence: 1 }). Como o power dela é ZERO,
+  // trocar `state.powerPoints + attrs.power` por `-` não mudava nada — a coluna
+  // power inteira estava sem guard. E `totalXP` não era afirmado em lugar
   // nenhum: dava para trocar o `+` por `-` e o `* 10` por `* 0` sem um único
   // teste vermelho, num campo que é o progresso visível do jogador.
   // -------------------------------------------------------------------------
-  it('soma nas TRÊS colunas de atributo, inclusive virus', () => {
-    // 🍭 = Creativity → { virus: 3, data: 1, vaccine: 0 }
+  it('soma nas TRÊS colunas de atributo, inclusive power', () => {
+    // 🍭 = Creativity → { power: 3, harmony: 1, benevolence: 0 }
     const r = feedFood(estado({ foodInventory: { '🍭': 1 } }), '🍭', [], 0);
     expect(r.refused).toBeUndefined();
-    expect(r.state.virusPoints).toBe(3);
-    expect(r.state.dataPoints).toBe(1);
-    expect(r.state.vaccinePoints).toBe(0);
+    expect(r.state.powerPoints).toBe(3);
+    expect(r.state.harmonyPoints).toBe(1);
+    expect(r.state.benevolencePoints).toBe(0);
   });
 
   it('soma sobre o saldo que já existia (não sobrescreve, não subtrai)', () => {
     const r = feedFood(
-      estado({ foodInventory: { '🍭': 1 }, virusPoints: 10, dataPoints: 20, vaccinePoints: 30 }),
+      estado({ foodInventory: { '🍭': 1 }, powerPoints: 10, harmonyPoints: 20, benevolencePoints: 30 }),
       '🍭', [], 0,
     );
-    expect(r.state.virusPoints).toBe(13);
-    expect(r.state.dataPoints).toBe(21);
-    expect(r.state.vaccinePoints).toBe(30);
+    expect(r.state.powerPoints).toBe(13);
+    expect(r.state.harmonyPoints).toBe(21);
+    expect(r.state.benevolencePoints).toBe(30);
   });
 
   it('totalXP cresce 10 por ponto de atributo ganho', () => {
-    // 🥩 = Fitness → { virus: 2, data: 1, vaccine: 1 }: as TRÊS colunas são
-    // diferentes de zero de propósito. Com uma comida de vaccine 0 (como a 🍭),
-    // trocar o `+` por `-` dentro da soma `virus + data + vaccine` dá o mesmo
+    // 🥩 = Fitness → { power: 2, harmony: 1, benevolence: 1 }: as TRÊS colunas são
+    // diferentes de zero de propósito. Com uma comida de benevolence 0 (como a 🍭),
+    // trocar o `+` por `-` dentro da soma `power + harmony + benevolence` dá o mesmo
     // resultado, e o teste passa sem enxergar nada.
     const r = feedFood(estado({ foodInventory: { '🥩': 1 }, totalXP: 100 }), '🥩', [], 0);
-    expect(r.state.virusPoints).toBe(2);
-    expect(r.state.dataPoints).toBe(1);
-    expect(r.state.vaccinePoints).toBe(1);
+    expect(r.state.powerPoints).toBe(2);
+    expect(r.state.harmonyPoints).toBe(1);
+    expect(r.state.benevolencePoints).toBe(1);
     expect(r.state.totalXP).toBe(140); // 100 + (2+1+1) × 10
   });
 
@@ -134,45 +134,45 @@ describe('alimentar', () => {
     const antigo: any = estado({ foodInventory: { '🍭': 1 } });
     delete antigo.attributesSinceLastEvolution;
     const r = feedFood(antigo, '🍭', [], 0);
-    expect(r.state.attributesSinceLastEvolution).toEqual({ virus: 3, data: 1, vaccine: 0 });
+    expect(r.state.attributesSinceLastEvolution).toEqual({ power: 3, harmony: 1, benevolence: 0 });
   });
 
   it('acumula em attributesSinceLastEvolution sobre o que já havia', () => {
     const r = feedFood(
-      estado({ foodInventory: { '🍭': 1 }, attributesSinceLastEvolution: { virus: 2, data: 5, vaccine: 7 } }),
+      estado({ foodInventory: { '🍭': 1 }, attributesSinceLastEvolution: { power: 2, harmony: 5, benevolence: 7 } }),
       '🍭', [], 0,
     );
-    expect(r.state.attributesSinceLastEvolution).toEqual({ virus: 5, data: 6, vaccine: 7 });
+    expect(r.state.attributesSinceLastEvolution).toEqual({ power: 5, harmony: 6, benevolence: 7 });
   });
 
   it('Guloso põe o ponto extra no atributo que a comida JÁ favorece', () => {
-    // O bloco escolhe o topo com Math.max e desempata na ordem virus→data→
-    // vaccine. Trocar `Math.max` por `Math.min`, ou os `===` por `!==`, passava
+    // O bloco escolhe o topo com Math.max e desempata na ordem power→harmony→
+    // benevolence. Trocar `Math.max` por `Math.min`, ou os `===` por `!==`, passava
     // batido porque nenhum teste olhava para QUAL coluna recebeu o bônus.
     const guloso = { petPassive: 'guloso' };
 
-    // 🍭 Creativity { 3,1,0 } → topo é virus
+    // 🍭 Creativity { 3,1,0 } → topo é power
     const doce = feedFood(estado({ ...guloso, foodInventory: { '🍭': 1 } }), '🍭', [], 0);
-    expect(doce.state.virusPoints).toBe(4);
-    expect(doce.state.dataPoints).toBe(1);
-    expect(doce.state.vaccinePoints).toBe(0);
+    expect(doce.state.powerPoints).toBe(4);
+    expect(doce.state.harmonyPoints).toBe(1);
+    expect(doce.state.benevolencePoints).toBe(0);
 
-    // 🍎 Study { 0,3,1 } → topo é data
+    // 🍎 Study { 0,3,1 } → topo é harmony
     const maca = feedFood(estado({ ...guloso, foodInventory: { '🍎': 1 } }), '🍎', [], 0);
-    expect(maca.state.virusPoints).toBe(0);
-    expect(maca.state.dataPoints).toBe(4);
-    expect(maca.state.vaccinePoints).toBe(1);
+    expect(maca.state.powerPoints).toBe(0);
+    expect(maca.state.harmonyPoints).toBe(4);
+    expect(maca.state.benevolencePoints).toBe(1);
 
-    // 🍚 Discipline { 0,1,3 } → topo é vaccine (o ramo `else` final)
+    // 🍚 Discipline { 0,1,3 } → topo é benevolence (o ramo `else` final)
     const arroz = feedFood(estado({ ...guloso, foodInventory: { '🍚': 1 } }), '🍚', [], 0);
-    expect(arroz.state.virusPoints).toBe(0);
-    expect(arroz.state.dataPoints).toBe(1);
-    expect(arroz.state.vaccinePoints).toBe(4);
+    expect(arroz.state.powerPoints).toBe(0);
+    expect(arroz.state.harmonyPoints).toBe(1);
+    expect(arroz.state.benevolencePoints).toBe(4);
   });
 
   it('sem o traço Guloso não existe ponto extra', () => {
     const r = feedFood(estado({ foodInventory: { '🍭': 1 } }), '🍭', [], 0);
-    expect(r.state.virusPoints).toBe(3);
+    expect(r.state.powerPoints).toBe(3);
   });
 
   it('não mexe em campos fora da fatia de cuidado', () => {
@@ -230,7 +230,7 @@ describe('tarefa concluída vira comida', () => {
     const antes = estado();
     const depois = foodForCompletedTask(antes.foodInventory, 'Study');
     expect(depois).not.toBe(antes.foodInventory);
-    expect(antes.dataPoints).toBe(0);
+    expect(antes.harmonyPoints).toBe(0);
   });
 });
 
@@ -262,7 +262,7 @@ describe('concluir tarefa', () => {
 
   it('não dá atributo nem energia — isso vem de alimentar', () => {
     const r = completeTask(base(), 't1')!;
-    expect(r.dataPoints).toBe(0);
+    expect(r.harmonyPoints).toBe(0);
     expect(r.energyPoints).toBe(0);
     expect(r.totalXP).toBe(0);
   });
@@ -300,8 +300,8 @@ describe('completeTask — a tarefa já marcada é o fluxo NORMAL', () => {
   // ficava sem efeito nenhum.
   const marcada = (): TaskState => ({
     healthPoints: 3, maxHealthPoints: 3, energyPoints: 0, evolutionStage: 'rookie',
-    foodInventory: {}, virusPoints: 0, dataPoints: 0, vaccinePoints: 0, totalXP: 0,
-    attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
+    foodInventory: {}, powerPoints: 0, harmonyPoints: 0, benevolencePoints: 0, totalXP: 0,
+    attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
     tasks: [{ id: 't1', name: 'Estudar', category: 'Study', emoji: '📚', completed: true }],
     completedTasks: [], activityStats: {},
   });
@@ -353,7 +353,7 @@ describe('teto de comida × requisito do estágio', () => {
   it('mega que fecha as 6 tarefas numa sessão só consegue encher a energia', () => {
     const agora = Date.now();
     let st = estado({
-      evolutionStage: 'mega-data',           // 6 barras de energia
+      evolutionStage: 'mega-harmony',           // 6 barras de energia
       energyPoints: 0,
       foodInventory: { '🍎': FORM_REQUIREMENTS.mega.required },
     });
@@ -365,7 +365,7 @@ describe('teto de comida × requisito do estágio', () => {
       st = r.state;
       times = r.feedTimes;
     }
-    expect(st.energyPoints).toBe(getMaxEnergyForStage('mega-data'));
+    expect(st.energyPoints).toBe(getMaxEnergyForStage('mega-harmony'));
   });
 
   it('AUTOVERIFICAÇÃO: o teto continua existindo — a comida seguinte é recusada', () => {

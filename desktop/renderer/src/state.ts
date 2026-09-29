@@ -27,7 +27,7 @@ export interface RemoteTask {
 
 export interface DesktopState {
   // --- espelho do save real (preenchido pela sincronização) ---
-  /** Id da forma na árvore do jogador ('rookie' | 'champion-virus' | 'ultra' …). */
+  /** Id da forma na árvore do jogador ('rookie' | 'champion-power' | 'ultra' …). */
   stage: string;
   /** Nome de exibição da forma atual, vindo do oráculo. */
   stageName: string;

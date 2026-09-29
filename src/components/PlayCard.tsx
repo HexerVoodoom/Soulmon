@@ -51,9 +51,9 @@ export interface PlayCardProps {
 }
 
 const ATTRIBUTE_LABEL: Record<PlayAttribute, { en: string; pt: string }> = {
-  virus: { en: 'Virus', pt: 'Vírus' },
-  data: { en: 'Data', pt: 'Dado' },
-  vaccine: { en: 'Vaccine', pt: 'Vacina' },
+  power: { en: 'Power', pt: 'Poder' },
+  harmony: { en: 'Harmony', pt: 'Harmonia' },
+  benevolence: { en: 'Benevolence', pt: 'Benevolência' },
 };
 
 /**

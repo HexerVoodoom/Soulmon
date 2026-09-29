@@ -36,7 +36,7 @@ import type { Language } from '../utils/i18n';
 
 
 /** O mesmo jogo de ícone de atributo da Evolução — vetor, e um só no app. */
-const ATTR_GLYPH = { virus: PowerIcon, data: HarmonyIcon, vaccine: BenevolenceIcon } as const;
+const ATTR_GLYPH = { power: PowerIcon, harmony: HarmonyIcon, benevolence: BenevolenceIcon } as const;
 
 interface PlayerDetailModalProps {
   player: DirectoryPlayer & { isNpc?: boolean; spriteUrl?: string };

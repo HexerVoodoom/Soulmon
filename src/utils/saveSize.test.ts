@@ -20,9 +20,9 @@ function synthetic90Days() {
     };
   }
   return {
-    petName: 'Nimbra', soulmonDisplayName: 'Nimbra', evolutionStage: 'mega-data',
+    petName: 'Nimbra', soulmonDisplayName: 'Nimbra', evolutionStage: 'mega-harmony',
     healthPoints: 3, maxHealthPoints: 4, energyPoints: 5, perfectDays: 40, totalPerfectDays: 40,
-    virusPoints: 120, dataPoints: 300, vaccinePoints: 90, totalXP: 9800, gamePoints: 4200, emblems: 180,
+    powerPoints: 120, harmonyPoints: 300, benevolencePoints: 90, totalXP: 9800, gamePoints: 4200, emblems: 180,
     soulGoal: 'x'.repeat(280), soulStruggle: 'y'.repeat(280),
     activities: Array.from({ length: 8 }, (_, i) => ({ id: `habit-${i}`, name: `Hábito ${i} com nome razoavelmente longo`, category: 'Health', effort: 1, schedule: { kind: 'weekdays', days: [0,1,2,3,4,5,6] }, weekDays: [0,1,2,3,4,5,6], createdAt: day(0), lastTouchedAt: day(89) })),
     tasks: Array.from({ length: 20 }, (_, i) => ({ id: `task-${i}`, name: `Tarefa ${i} — descrição de tamanho médio para simular uso real`, category: 'Work', effort: 2, status: 'open', dueDate: day(90 + i), createdAt: day(i), postponedCount: 1 })),
@@ -33,10 +33,10 @@ function synthetic90Days() {
     rest: { window: { start: '23:00', end: '07:00' }, nights: days(90).map(d => ({ date: d, within: true })), dreams: Array.from({ length: 30 }, (_, i) => `dream-${i}`) },
     nightmares: { fought: days(60) },
     playLog: days(90),
-    unlockedEvolutions: ['rookie', 'champion-data', 'ultimate-data', 'mega-data'],
+    unlockedEvolutions: ['rookie', 'champion-harmony', 'ultimate-harmony', 'mega-harmony'],
     equippedDecor: { rug: 'furn-rug', 'floor-left': 'furn-plant', trophy: 'furn-trophy', 'floor-right': 'furn-picture', wall: 'furn-poster' },
     ownedItems: Array.from({ length: 53 }, (_, i) => `item-${i}`),
-    foodInventory: { chip_virus: 2, chip_data: 1, heart: 3 },
+    foodInventory: { chip_power: 2, chip_harmony: 1, heart: 3 },
     careCaps: { feedTimes: Array.from({ length: 6 }, (_, i) => 1_780_000_000_000 + i * 600_000), rubHeal: { day: day(89), healed: 1 } },
     spriteLibrary: Object.fromEntries(Array.from({ length: 11 }, (_, i) => [`form-${i}`, { url: `https://cdn.example.com/sprites/${'a'.repeat(32)}-${i}.png`, attempts: 1, at: day(i) }])),
     lastDayReport: { day: day(89), wasPerfect: true, heartsLost: 0, welcomeBack: false, daysAway: 0 },

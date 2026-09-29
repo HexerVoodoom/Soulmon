@@ -72,13 +72,13 @@ export interface GameState {
   maxHealthPoints: number;
   perfectDays: number;
   totalXP: number;
-  virusPoints: number;
-  dataPoints: number;
-  vaccinePoints: number;
+  powerPoints: number;
+  harmonyPoints: number;
+  benevolencePoints: number;
   evolutionStage: string;
   unlockedEvolutions: string[];
   degeneratedByHP: boolean;
-  currentBranch: 'virus' | 'data' | 'vaccine';
+  currentBranch: 'power' | 'harmony' | 'benevolence';
   lastDayWasPerfect: boolean;
   [key: string]: any;
 }
@@ -92,10 +92,10 @@ export interface GameState {
 // silêncio, exatamente o footgun 9 do CLAUDE.md. Se precisar da resposta
 // "o dia foi perfeito?", leia `lastDayReport.wasPerfect` do estado.
 
-type Attr = 'virus' | 'data' | 'vaccine';
-const ALL_ATTRS: Attr[] = ['virus', 'data', 'vaccine'];
+type Attr = 'power' | 'harmony' | 'benevolence';
+const ALL_ATTRS: Attr[] = ['power', 'harmony', 'benevolence'];
 
-// Árvore do Soulmon: id embute nível+branch ('champion-virus', 'rookie',
+// Árvore do Soulmon: id embute nível+branch ('champion-power', 'rookie',
 // 'ultra' — ver types/progression.ts). Cada jogador tem nomes ÚNICOS
 // (utils/oracle.ts) então a evolução é pura manipulação de id, sem tabela
 // por espécie. O branch usado é sempre o ATRIBUTO DOMINANTE recente (pode
@@ -127,7 +127,7 @@ export function getNextEvolution(
 // Forma anterior determinística (degeneração): desce pelo MESMO branch da
 // forma atual (embutido no id); só o passo ultra→mega não tem branch
 // embutido, então usa o branch atual do jogo como critério.
-export function getPreviousForm(currentStage: string, branch: Attr = 'data'): string {
+export function getPreviousForm(currentStage: string, branch: Attr = 'harmony'): string {
   const level = getStageLevel(currentStage);
   const [, ownBranch] = currentStage.split('-');
   const stepBranch: Attr = (ownBranch as Attr) ?? branch;
@@ -918,9 +918,9 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
   let newMaxActivityCap = prev.maxActivityCap;
   let newCurrentBranch = prev.currentBranch as Attr;
   let newRecentAttrs = {
-    virus: prev.attributesSinceLastEvolution?.virus ?? 0,
-    data: prev.attributesSinceLastEvolution?.data ?? 0,
-    vaccine: prev.attributesSinceLastEvolution?.vaccine ?? 0,
+    power: prev.attributesSinceLastEvolution?.power ?? 0,
+    harmony: prev.attributesSinceLastEvolution?.harmony ?? 0,
+    benevolence: prev.attributesSinceLastEvolution?.benevolence ?? 0,
   };
 
   // Perda de HP: proporcional ao que NÃO foi feito, medido contra a mesma meta,
@@ -1012,18 +1012,18 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
 
     // Branch = atributo dominante RECENTE (não o total histórico), pra que o
     // hábito atual do jogador ainda mande no rumo da evolução.
-    const recentV = newRecentAttrs.virus;
-    const recentD = newRecentAttrs.data;
-    const recentVac = newRecentAttrs.vaccine;
+    const recentV = newRecentAttrs.power;
+    const recentD = newRecentAttrs.harmony;
+    const recentVac = newRecentAttrs.benevolence;
     const dominantAttr = Math.max(recentV, recentD, recentVac);
     let branch = prev.currentBranch as Attr;
     if (dominantAttr > 0) {
-      if (recentV === dominantAttr) branch = 'virus';
-      else if (recentD === dominantAttr) branch = 'data';
-      else branch = 'vaccine';
+      if (recentV === dominantAttr) branch = 'power';
+      else if (recentD === dominantAttr) branch = 'harmony';
+      else branch = 'benevolence';
     }
     newCurrentBranch = branch;
-    newRecentAttrs = { virus: 0, data: 0, vaccine: 0 };
+    newRecentAttrs = { power: 0, harmony: 0, benevolence: 0 };
 
     newEvolutionStage = getNextEvolution(prev.evolutionStage, branch, prev.unlockedEvolutions, prev.perfectDays ?? 0);
     const naturalNext = newEvolutionStage;
@@ -1066,7 +1066,7 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
       // MANUAL (`handleDegenerate`, App.tsx) precisa da mesma — e enquanto ela
       // estava duplicada os dois divergiram.
       newPerfectDays = degeneratedPerfectDays(prev.perfectDays, degeneratedLevel);
-      newRecentAttrs = { virus: 0, data: 0, vaccine: 0 };
+      newRecentAttrs = { power: 0, harmony: 0, benevolence: 0 };
     } else {
       // RAIZ da árvore (rookie): não existe forma abaixo, então `getPreviousForm`
       // devolve o próprio estágio e nada degenera de fato.

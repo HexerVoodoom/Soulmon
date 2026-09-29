@@ -46,10 +46,10 @@ describe('saveId do desktop bate com o do app', () => {
 // que a cópia errava: o save legado.
 describe('HP e energia do overlay saem da regra do jogo', () => {
   for (const [stage, nivel] of [
-    ['rookie', 'rookie'], ['champion-virus', 'champion'], ['ultimate-data', 'ultimate'],
-    ['mega-vaccine', 'mega'], ['ultra', 'ultra'],
+    ['rookie', 'rookie'], ['champion-power', 'champion'], ['ultimate-harmony', 'ultimate'],
+    ['mega-benevolence', 'mega'], ['ultra', 'ultra'],
     // O caso que a cópia errava: id legado, sem prefixo de nível.
-    ['mega-virus', 'mega'], ['rookie', 'rookie'], ['ultra', 'ultra'],
+    ['mega-power', 'mega'], ['rookie', 'rookie'], ['ultra', 'ultra'],
   ] as const) {
     it(`${stage} -> ${nivel}: maxHealthPoints é o do jogo`, () => {
       expect(getStageLevel(stage)).toBe(nivel);
@@ -78,7 +78,7 @@ describe('proteção da escrita de volta', () => {
     // O app recalcula esse campo ao carregar o save, então ele pode faltar num
     // save antigo. Sem completar, Math.min(undefined, x) vira NaN e
     // JSON.stringify(NaN) grava `null` — o HP do jogador some.
-    const n = normalizeForRules({ evolutionStage: 'mega-virus', healthPoints: 2 });
+    const n = normalizeForRules({ evolutionStage: 'mega-power', healthPoints: 2 });
     expect(n.maxHealthPoints).toBe(4);
   });
 
@@ -86,13 +86,13 @@ describe('proteção da escrita de volta', () => {
     // O bug: o desktop tinha a PRÓPRIA `stageLevel`, que lia só o prefixo do id
     // e devolvia 'rookie' para qualquer coisa que não casasse. O app tem
     // `LEGACY_FORM_TIERS` (`types/progression.ts`) exatamente para o save antigo
-    // em `mega-virus` continuar MEGA — é compatibilidade de save, não roster.
+    // em `mega-power` continuar MEGA — é compatibilidade de save, não roster.
     // Divergindo, o mesmo jogador via 4 corações no celular e 3 no overlay, e o
     // `maxHealthPoints` ERRADO voltava para o save na escrita de volta: o
     // `applyRub` corta a cura em `maxHealthPoints`, então o teto do carinho do
     // mega passava a ser o de um rookie. Nenhum erro, nenhum log.
-    expect(getStageLevel('mega-virus')).toBe('mega'); // a régua é o app
-    const n = normalizeForRules({ evolutionStage: 'mega-virus', healthPoints: 4 });
+    expect(getStageLevel('mega-power')).toBe('mega'); // a régua é o app
+    const n = normalizeForRules({ evolutionStage: 'mega-power', healthPoints: 4 });
     expect(n.maxHealthPoints).toBe(4);
   });
 
@@ -105,14 +105,14 @@ describe('proteção da escrita de volta', () => {
   it('recusa estado com número inválido', () => {
     expect(isSaneCareState({
       healthPoints: NaN, maxHealthPoints: 3, energyPoints: 0,
-      virusPoints: 0, dataPoints: 0, vaccinePoints: 0, totalXP: 0,
+      powerPoints: 0, harmonyPoints: 0, benevolencePoints: 0, totalXP: 0,
     })).toBe(false);
   });
 
   it('recusa inventário com quantidade negativa', () => {
     expect(isSaneCareState({
       healthPoints: 1, maxHealthPoints: 3, energyPoints: 0,
-      virusPoints: 0, dataPoints: 0, vaccinePoints: 0, totalXP: 0,
+      powerPoints: 0, harmonyPoints: 0, benevolencePoints: 0, totalXP: 0,
       foodInventory: { '🍎': -1 },
     })).toBe(false);
   });
@@ -120,7 +120,7 @@ describe('proteção da escrita de volta', () => {
   it('aceita um estado íntegro', () => {
     expect(isSaneCareState({
       healthPoints: 1.5, maxHealthPoints: 3, energyPoints: 1,
-      virusPoints: 0, dataPoints: 3, vaccinePoints: 1, totalXP: 40,
+      powerPoints: 0, harmonyPoints: 3, benevolencePoints: 1, totalXP: 40,
       foodInventory: { '🍎': 1 },
     })).toBe(true);
   });

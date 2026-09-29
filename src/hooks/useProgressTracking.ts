@@ -190,9 +190,9 @@ export function useProgressTracking(gameState: ProgressState) {
   );
 
   const todayAttributes = useMemo(() => {
-    let virus = 0;
-    let data = 0;
-    let vaccine = 0;
+    let power = 0;
+    let harmony = 0;
+    let benevolence = 0;
 
     gameState.activities.forEach(activity => {
       const isComplete =
@@ -202,13 +202,13 @@ export function useProgressTracking(gameState: ProgressState) {
 
       if (isComplete) {
         const attrs = CATEGORY_ATTRIBUTES[activity.category];
-        virus += attrs.virus;
-        data += attrs.data;
-        vaccine += attrs.vaccine;
+        power += attrs.power;
+        harmony += attrs.harmony;
+        benevolence += attrs.benevolence;
       }
     });
 
-    return { virus, data, vaccine };
+    return { power, harmony, benevolence };
   }, [gameState.activities, today]);
 
   return { dailyTotal, dailyDone, progress, todayAttributes };

@@ -1,7 +1,7 @@
 // Simula 3 usuários passando pelo oráculo (utils/oracle.ts) — o MESMO sistema
 // real do onboarding — para gerar os prompts de imagem oficiais do jogo
 // (CreatureStage.imagePrompt) usados nas linhas placeholder da masmorra
-// (Ignar=poder/virus, Lumel=harmonia/data, Serah=benevolência/vaccine).
+// (Ignar=poder/power, Lumel=harmonia/harmony, Serah=benevolência/benevolence).
 // Roda com: npx tsx scripts/simulate-oracle-lines.ts
 import { generateOracle, ORACLE_QUESTIONS, creatureFormId, type OracleInput } from '../src/utils/oracle';
 
@@ -49,8 +49,8 @@ const PROFILES: { line: string; align: Align; input: OracleInput }[] = [
   },
 ];
 
-const attrByAlign: Record<Align, 'virus' | 'data' | 'vaccine'> = {
-  poder: 'virus', harmonia: 'data', benevolencia: 'vaccine',
+const attrByAlign: Record<Align, 'power' | 'harmony' | 'benevolence'> = {
+  poder: 'power', harmonia: 'harmony', benevolencia: 'benevolence',
 };
 
 const out: Record<string, { stage: string; name: string; imagePrompt: string }[]> = {};

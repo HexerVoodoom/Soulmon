@@ -25,7 +25,7 @@ import {
  */
 
 const SRC = path.resolve(__dirname, '..');
-const FORM = 'champion-data';
+const FORM = 'champion-harmony';
 
 const comSprite = (formId: string) =>
   recordSprite(emptySpriteLibrary(), { url: `https://cdn/${formId}.png`, formId, at: 1_000 }, { adopt: 'ask' });

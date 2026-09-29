@@ -34,7 +34,7 @@ function legado(
   };
 }
 
-const ESTAGIOS = ['rookie', 'champion-virus', 'ultimate-data', 'mega-vaccine', 'ultra'];
+const ESTAGIOS = ['rookie', 'champion-power', 'ultimate-harmony', 'mega-benevolence', 'ultra'];
 
 describe('a comida sem conta continua exatamente a mesma para o jogador', () => {
   it('paridade com o caminho antigo em todo estagio, energia, estoque e janela', () => {
@@ -93,16 +93,16 @@ describe('o teto de energia do overlay passa a ser o do JOGO, nao um cache', () 
   // regra escrita uma vez so, esse caminho deixa de existir: nao ha onde
   // escrever o teto errado.
   it('a linha antiga divergia com o cache atrasado; a nova nao tem cache', () => {
-    const atrasado = { stage: 'mega-data', energy: 4, maxEnergy: 4, foodInventory: { '🍎': 1 }, feedTimes: [] };
+    const atrasado = { stage: 'mega-harmony', energy: 4, maxEnergy: 4, foodInventory: { '🍎': 1 }, feedTimes: [] };
     expect(legado({ ...atrasado }, '🍎', AGORA).energy).toBe(4);            // preso no teto de rookie
     expect(localFeed(atrasado, '🍎', AGORA).energy).toBe(5);                // o teto do estagio real
-    expect(getMaxEnergyForStage('mega-data')).toBe(6);
+    expect(getMaxEnergyForStage('mega-harmony')).toBe(6);
   });
 
   it('nao ha campo de teto para o chamador passar errado', () => {
     // O tipo `LocalFeedState` nao tem `maxEnergy` — o teto entra pelo `stage`.
-    const r = localFeed({ stage: 'mega-data', energy: 5, foodInventory: { '🍎': 1 }, feedTimes: [] }, '🍎', AGORA);
-    expect(r.energy).toBe(getMaxEnergyForStage('mega-data'));
+    const r = localFeed({ stage: 'mega-harmony', energy: 5, foodInventory: { '🍎': 1 }, feedTimes: [] }, '🍎', AGORA);
+    expect(r.energy).toBe(getMaxEnergyForStage('mega-harmony'));
     expect(r.energy).toBe(6);
   });
 });

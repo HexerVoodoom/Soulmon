@@ -13,7 +13,7 @@ import type { ReactNode } from 'react';
  *     Home. Saldo permanente de moeda paga na tela principal é vitrine de
  *     loja, e o produto não é isso. Ela continua acionável no menu e na Loja
  *     (`CreditsModal`), que é onde a pessoa está decidindo gastar.
- *  2. **Os 3 atributos** (vírus/dado/vacina) — insumo de GALHO DE EVOLUÇÃO,
+ *  2. **Os 3 atributos** (poder/harmonia/benevolência) — insumo de GALHO DE EVOLUÇÃO,
  *     não leitura diária. Casa própria em "CURRENT ALIGNMENT", na página de
  *     Evolução (`EvolutionPath`), onde a decisão acontece.
  *  3. **HP e Energia em DOM** (16/09/2026, canvas Home, achado 1 / DECISÕES

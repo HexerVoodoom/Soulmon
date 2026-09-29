@@ -80,7 +80,7 @@ const TERMS: Term[] = [
     descPt: 'Meta do dia cumprida mais energia cheia. É a moeda da evolução, e só acumula.',
   },
   {
-    icon: '🦠', en: 'Virus / 💾 Data / 💉 Vaccine', pt: 'Vírus / 💾 Dado / 💉 Vacina',
+    icon: '👊', en: 'Power / 🎶 Harmony / 🤲 Benevolence', pt: 'Poder / 🎶 Harmonia / 🤲 Benevolência',
     descEn: 'Attribute points from feeding. The dominant one picks which branch it evolves into.',
     descPt: 'Pontos de atributo ganhos alimentando. O dominante define o galho da evolução.',
   },

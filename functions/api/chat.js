@@ -282,9 +282,9 @@ function buildSystemPrompt({ petName, mood, evolutionStage, dominantBranch, lang
   const ispt = language === 'pt-BR';
 
   const branch = {
-    virus:   { trait: 'Creative, instinctive, full of chaotic energy. Loves challenges.', style: 'Energetic and exclamatory. Spontaneous and rebellious.', emojis: '🔥⚡😈💥' },
-    data:    { trait: 'Intellectual, balanced, analytical. Appreciates knowledge.', style: 'Calm and thoughtful. Logical and efficient.', emojis: '💡🤔📊🧠' },
-    vaccine: { trait: 'Disciplined, empathetic, protective. Values order and care.', style: 'Welcoming and encouraging. Ethical and trustworthy.', emojis: '💚😊🛡️✨' },
+    power:   { trait: 'Creative, instinctive, full of chaotic energy. Loves challenges.', style: 'Energetic and exclamatory. Spontaneous and rebellious.', emojis: '🔥⚡😈💥' },
+    harmony:    { trait: 'Intellectual, balanced, analytical. Appreciates knowledge.', style: 'Calm and thoughtful. Logical and efficient.', emojis: '💡🤔📊🧠' },
+    benevolence: { trait: 'Disciplined, empathetic, protective. Values order and care.', style: 'Welcoming and encouraging. Ethical and trustworthy.', emojis: '💚😊🛡️✨' },
     balanced:{ trait: 'Balanced and versatile.', style: 'Friendly and adaptable.', emojis: '😊👍✨🌟' },
   }[dominantBranch] || { trait: '', style: '', emojis: '' };
 
@@ -488,7 +488,7 @@ export async function onRequestPost({ request, env }) {
       else if (safeMessage.match(/friend|family|social/i)) category = 'Social';
       else if (safeMessage.match(/clean|organi|plan/i)) category = 'Discipline';
       else if (safeMessage.match(/health|doctor|medic/i)) category = 'Health';
-      return Response.json({ response, action: { type: 'create_activity', activity: { name: activityName, category, points: { virus: 0, data: 0, vaccine: 0 } } } }, { headers: CORS });
+      return Response.json({ response, action: { type: 'create_activity', activity: { name: activityName, category, points: { power: 0, harmony: 0, benevolence: 0 } } } }, { headers: CORS });
     }
 
     return Response.json({ response }, { headers: CORS });

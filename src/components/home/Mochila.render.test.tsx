@@ -55,7 +55,7 @@ function montar(over: Partial<Parameters<typeof Mochila>[0]> = {}) {
     <Mochila
       open
       onClose={() => {}}
-      foodInventory={{ '🍎': 3, '🦠': 1, '💗': 1 }}
+      foodInventory={{ '🍎': 3, '👊': 1, '💗': 1 }}
       language="pt-BR"
       onUse={onUse}
       petTargetRef={petTargetRef}
@@ -141,7 +141,7 @@ describe('Mochila — a alternativa acessível', () => {
     const { onUse } = montar();
     act(() => { screen.getByRole('button', { name: 'Chip de Poder × 1' }).focus(); });
     fireEvent.click(screen.getByRole('button', { name: 'Usar Chip de Poder' }));
-    expect(onUse).toHaveBeenCalledWith('🦠');
+    expect(onUse).toHaveBeenCalledWith('👊');
   });
 
   it('par EN: "Use <item>" e a dica de arrastar com o nome do pet', () => {
@@ -166,8 +166,8 @@ describe('Mochila — a alternativa acessível', () => {
 
 describe('Mochila — dados e estados', () => {
   it('mochilaTabs: comida + chips numa aba, coraçãozinho/Glitchtama na outra, e só com estoque', () => {
-    const t = mochilaTabs({ '🍎': 2, '💾': 1, '💗': 1, '🌀': 0, '🍕': 5 });
-    expect(t.comida.map(([e]) => e)).toEqual(['🍕', '🍎', '💾']);
+    const t = mochilaTabs({ '🍎': 2, '🎶': 1, '💗': 1, '🌀': 0, '🍕': 5 });
+    expect(t.comida.map(([e]) => e)).toEqual(['🍕', '🍎', '🎶']);
     expect(t.especiais.map(([e]) => e)).toEqual(['💗']);
   });
 

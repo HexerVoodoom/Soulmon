@@ -42,7 +42,7 @@ function mulberry32(a: number) {
 }
 const pick = <T,>(r: () => number, a: readonly T[]): T => a[Math.floor(r() * a.length)];
 
-const STAGES = ['rookie', 'champion-virus', 'champion-data', 'ultimate-data', 'mega-vaccine', 'ultra'] as const;
+const STAGES = ['rookie', 'champion-power', 'champion-harmony', 'ultimate-harmony', 'mega-benevolence', 'ultra'] as const;
 const CATS = ['saude', 'trabalho', 'estudo'] as const;
 
 /** Estado plausível de um jogador REAL, com as bordas do domínio incluídas. */
@@ -81,15 +81,15 @@ function genState(r: () => number, now: Date): Record<string, any> {
     energyPoints: Math.floor(r() * 9),
     perfectDays: Math.floor(r() * 15),
     totalPerfectDays: Math.floor(r() * 60),
-    totalXP: 0, virusPoints: 0, dataPoints: 0, vaccinePoints: 0,
+    totalXP: 0, powerPoints: 0, harmonyPoints: 0, benevolencePoints: 0,
     lastResetDate: new Date(now.getTime() - 86400000 * (1 + Math.floor(r() * 5))).toDateString(),
     evolutionStage,
     unlockedEvolutions: ['rookie'],
     degeneratedByHP: false,
-    currentBranch: pick(r, ['virus', 'data', 'vaccine'] as const),
+    currentBranch: pick(r, ['power', 'harmony', 'benevolence'] as const),
     lastDayWasPerfect: false,
     maxActivityCap: 6,
-    attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
+    attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
     foodInventory: {},
     petPassive: pick(r, [undefined, 'guloso', 'teimoso', 'carinhoso', 'sortudo', 'madrugador']),
     // P2 — a folga da semana. Sorteada, e com peso em ZERO: com a folga sempre
@@ -240,10 +240,10 @@ describe('computeDailyReset — invariantes sobre estado gerado', () => {
       activities: [], tasks: Array.from({ length: 5 }, (_, i) => ({ id: `t${i}`, completed: false })),
       completedTasks: [], healthPoints: 1, maxHealthPoints: 3, energyPoints: 0,
       perfectDays: 0, totalPerfectDays: 0, totalXP: 0,
-      virusPoints: 0, dataPoints: 0, vaccinePoints: 0,
-      evolutionStage: 'champion-virus', unlockedEvolutions: ['rookie'],
-      degeneratedByHP: false, currentBranch: 'virus', lastDayWasPerfect: false,
-      maxActivityCap: 7, attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
+      powerPoints: 0, harmonyPoints: 0, benevolencePoints: 0,
+      evolutionStage: 'champion-power', unlockedEvolutions: ['rookie'],
+      degeneratedByHP: false, currentBranch: 'power', lastDayWasPerfect: false,
+      maxActivityCap: 7, attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
       lastResetDate: new Date(2026, 7, 4).toDateString(),
       // A folga da semana (P2) JÁ foi gasta — senão ela absorve a perda, o HP
       // não zera e a degeneração que este caso existe para declarar não
@@ -261,7 +261,7 @@ describe('computeDailyReset — invariantes sobre estado gerado', () => {
     expect(nadaFeito.evolutionStage).toBe('rookie');
     expect(nadaFeito.healthPoints).toBe(3);        // HP CHEIO após cair de estágio
     expect(tudoFeito.degeneratedByHP).toBe(false);
-    expect(tudoFeito.evolutionStage).toBe('champion-virus');
+    expect(tudoFeito.evolutionStage).toBe('champion-power');
     expect(tudoFeito.healthPoints).toBe(1);        // menos HP, e MELHOR situação
     // O que de fato é monotônico: coração perdido.
     expect(tudoFeito.lastDayReport.heartsLost).toBeLessThanOrEqual(nadaFeito.lastDayReport.heartsLost);
@@ -349,8 +349,8 @@ describe('careRules — invariantes de domínio', () => {
         energyPoints: pick(r, [0, 1, maxE - 1, maxE, maxE + 5]),
         evolutionStage,
         foodInventory: { '🍎': 1 + Math.floor(r() * 5) },
-        virusPoints: 0, dataPoints: 0, vaccinePoints: 0, totalXP: 0,
-        attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
+        powerPoints: 0, harmonyPoints: 0, benevolencePoints: 0, totalXP: 0,
+        attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
         petPassive: pick(r, [undefined, 'guloso']),
       };
       const out = feedFood(st, '🍎', [], Date.now());
@@ -372,8 +372,8 @@ describe('careRules — invariantes de domínio', () => {
       const st: any = {
         healthPoints: pick(r, [0, 0.5, 1, 2, maxHealthPoints]),
         maxHealthPoints, energyPoints: 0, evolutionStage: 'rookie', foodInventory: {},
-        virusPoints: 0, dataPoints: 0, vaccinePoints: 0, totalXP: 0,
-        attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
+        powerPoints: 0, harmonyPoints: 0, benevolencePoints: 0, totalXP: 0,
+        attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
         petPassive: pick(r, [undefined, 'carinhoso']),
       };
       // Esfrega 10× seguidas: o teto diário tem que segurar.
@@ -476,7 +476,7 @@ describe('carePattern / tournamentTiers — leitura nunca lança nem sai do dom�
   });
 
   it('`resolveBranch` SEMPRE devolve um galho válido — nunca `undefined`', () => {
-    // ACHADO da rodada 6: com `virusPoints` ausente (save sem os campos de
+    // ACHADO da rodada 6: com `powerPoints` ausente (save sem os campos de
     // atributo), `Math.max` dava NaN, a lista de líderes ficava VAZIA e a função
     // devolvia `leaders[0]` — `undefined`, fora do próprio tipo de retorno. O
     // galho previsto na página de Evolução ficava indefinido e o save gravava
@@ -487,19 +487,19 @@ describe('carePattern / tournamentTiers — leitura nunca lança nem sai do dom�
       new Date());
     const pontosHostis: any[] = [
       {}, undefined,
-      { virus: undefined, data: undefined, vaccine: undefined },
-      { virus: NaN, data: 0, vaccine: 0 },
-      { virus: null, data: null, vaccine: null },
-      { virus: '5', data: 0, vaccine: 0 },
-      { virus: -1, data: -1, vaccine: -1 },
-      { virus: 0, data: 0, vaccine: 0 },
-      { virus: Infinity, data: 1, vaccine: 1 },
-      { virus: 3, data: 3, vaccine: 1 },
+      { power: undefined, harmony: undefined, benevolence: undefined },
+      { power: NaN, harmony: 0, benevolence: 0 },
+      { power: null, harmony: null, benevolence: null },
+      { power: '5', harmony: 0, benevolence: 0 },
+      { power: -1, harmony: -1, benevolence: -1 },
+      { power: 0, harmony: 0, benevolence: 0 },
+      { power: Infinity, harmony: 1, benevolence: 1 },
+      { power: 3, harmony: 3, benevolence: 1 },
     ];
     for (const p of pontosHostis) {
       for (const leitura of [rd, rdConf]) {
         const b = resolveBranch(p, leitura);
-        expect(['virus', 'data', 'vaccine'], `pontos ${JSON.stringify(p)} → ${String(b)}`).toContain(b);
+        expect(['power', 'harmony', 'benevolence'], `pontos ${JSON.stringify(p)} → ${String(b)}`).toContain(b);
       }
     }
   });

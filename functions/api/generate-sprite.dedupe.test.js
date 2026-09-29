@@ -23,7 +23,7 @@ import { AI_LIMITS } from './_aiGuard.js';
 
 const SAVE = 'abcdefgh12345678';
 const OUTRA_CONTA = '11112222333344ff';
-const FORM = 'champion-virus';
+const FORM = 'champion-power';
 
 function fakeEnv() {
   const store = new Map();
@@ -75,6 +75,22 @@ beforeEach(() => {
 afterEach(() => { vi.unstubAllGlobals(); });
 
 describe('dedupe: a MESMA forma nunca é gerada duas vezes', () => {
+  it('renomeio de 29/09/2026: cache gravado com o id ANTIGO da forma ainda é acerto — zero IA', async () => {
+    const env = fakeEnv();
+    const antigo = 'champion-' + 'vir' + 'us';
+    env._store.set(`sprite:img:${SAVE}:${antigo}`, JSON.stringify({ image: 'https://x/antiga.png', provider: 'gemini', at: 1 }));
+    const r = await onRequestPost({ request: req(), env });
+    const body = await r.json();
+    expect(body).toMatchObject({ image: 'https://x/antiga.png', cached: true });
+    expect(chamadasDeIA).toHaveLength(0);
+  });
+
+  it('id ANTIGO como formId de entrada é recusado (o servidor só aceita os novos)', async () => {
+    const env = fakeEnv();
+    const r = await onRequestPost({ request: req({ formId: 'champion-' + 'vir' + 'us' }), env });
+    expect(r.status).toBe(400);
+  });
+
   it('o segundo pedido para a forma já gerada é acerto de cache — zero IA, zero cota', async () => {
     const env = fakeEnv();
     const primeiro = await onRequestPost({ request: req(), env });

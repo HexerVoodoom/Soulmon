@@ -25,8 +25,8 @@ function save(extra: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     evolutionStage: 'rookie', healthPoints: 3, maxHealthPoints: 3, energyPoints: 0,
     foodInventory: { '🍎': 20 }, tasks: [],
-    virusPoints: 0, dataPoints: 0, vaccinePoints: 0, totalXP: 0,
-    attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
+    powerPoints: 0, harmonyPoints: 0, benevolencePoints: 0, totalXP: 0,
+    attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
     poopEventsShown: [], poopEventsCompleted: [], poopPenaltyClockAt: 0,
     ...extra,
   };

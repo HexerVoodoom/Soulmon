@@ -24,8 +24,8 @@ import { renderWithCss } from '../test/renderEnv';
 import { PlayerDetailModal } from './PlayerDetailModal';
 
 const amigo = {
-  id: 'abc', name: 'Rita', petName: 'Lumo', stage: 'champion-virus',
-  unlockedStages: ['rookie', 'champion-virus'], pvpEnabled: true, daysPlaying: 47,
+  id: 'abc', name: 'Rita', petName: 'Lumo', stage: 'champion-power',
+  unlockedStages: ['rookie', 'champion-power'], pvpEnabled: true, daysPlaying: 47,
 };
 
 const abrir = (pt = true) => {
@@ -57,7 +57,7 @@ describe('PlayerDetailModal — nenhuma métrica de desempenho alheio (WP4.11)',
   });
 
   it('mostra o GALHO como palavra, que é identidade e não altura', () => {
-    // `champion-virus` → o caminho do Poder (`ATTR_LABEL`, que fala em
+    // `champion-power` → o caminho do Poder (`ATTR_LABEL`, que fala em
     // qualidade e não em atributo cru). Diz que criatura é aquela, não quão
     // longe a pessoa chegou.
     expect(abrir(true)).toContain('Poder');

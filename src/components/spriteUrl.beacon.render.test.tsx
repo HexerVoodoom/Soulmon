@@ -173,7 +173,7 @@ describe('PlayerDetailModal — o mesmo dado, na tela de perfil', () => {
     const asset = DUNGEON_LINE_SPRITES.orrin.ultimate;
     renderWithCss(
       <PlayerDetailModal
-        player={{ ...jogadorHostil(), stage: 'ultimate-data', spriteUrl: asset } as DirectoryPlayer & { spriteUrl?: string }}
+        player={{ ...jogadorHostil(), stage: 'ultimate-harmony', spriteUrl: asset } as DirectoryPlayer & { spriteUrl?: string }}
         language="pt-BR"
         onClose={() => {}}
       />,

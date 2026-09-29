@@ -9,9 +9,9 @@ const OUT = join(process.cwd(), 'src', 'assets', 'soulmon');
 mkdirSync(OUT, { recursive: true });
 
 const BRANCH_COLORS = {
-  virus:   { main: '#3fae5a', dark: '#2c7d41', glow: '#8fe3a5' },
+  power:   { main: '#3fae5a', dark: '#2c7d41', glow: '#8fe3a5' },
   data:    { main: '#4f8fd9', dark: '#37639b', glow: '#a6ccf5' },
-  vaccine: { main: '#d9a441', dark: '#a1762a', glow: '#f2d79b' },
+  benevolence: { main: '#d9a441', dark: '#a1762a', glow: '#f2d79b' },
   neutral: { main: '#8f7fe8', dark: '#6d5bd0', glow: '#cfc6f7' },
   ultra:   { main: '#e8c96a', dark: '#b0812c', glow: '#fff3cf' },
   enemy:   { main: '#5a4a7a', dark: '#3a2f52', glow: '#9a86c9' },
@@ -67,15 +67,15 @@ function creature({ c, level, spiky = false }) {
 
 const FORMS = [
   { file: 'rookie', c: BRANCH_COLORS.neutral, level: 1 },
-  { file: 'champion-virus', c: BRANCH_COLORS.virus, level: 2 },
-  { file: 'champion-data', c: BRANCH_COLORS.data, level: 2 },
-  { file: 'champion-vaccine', c: BRANCH_COLORS.vaccine, level: 2 },
-  { file: 'ultimate-virus', c: BRANCH_COLORS.virus, level: 3 },
-  { file: 'ultimate-data', c: BRANCH_COLORS.data, level: 3 },
-  { file: 'ultimate-vaccine', c: BRANCH_COLORS.vaccine, level: 3 },
-  { file: 'mega-virus', c: BRANCH_COLORS.virus, level: 4 },
-  { file: 'mega-data', c: BRANCH_COLORS.data, level: 4 },
-  { file: 'mega-vaccine', c: BRANCH_COLORS.vaccine, level: 4 },
+  { file: 'champion-power', c: BRANCH_COLORS.power, level: 2 },
+  { file: 'champion-harmony', c: BRANCH_COLORS.data, level: 2 },
+  { file: 'champion-benevolence', c: BRANCH_COLORS.benevolence, level: 2 },
+  { file: 'ultimate-power', c: BRANCH_COLORS.power, level: 3 },
+  { file: 'ultimate-harmony', c: BRANCH_COLORS.data, level: 3 },
+  { file: 'ultimate-benevolence', c: BRANCH_COLORS.benevolence, level: 3 },
+  { file: 'mega-power', c: BRANCH_COLORS.power, level: 4 },
+  { file: 'mega-harmony', c: BRANCH_COLORS.data, level: 4 },
+  { file: 'mega-benevolence', c: BRANCH_COLORS.benevolence, level: 4 },
   { file: 'ultra', c: BRANCH_COLORS.ultra, level: 4 },
   { file: 'dungeon-spirit', c: BRANCH_COLORS.enemy, level: 2, spiky: true },
 ];

@@ -38,13 +38,13 @@ describe('careHistory — previsão e cerimônia leem o MESMO histórico', () =>
   });
 
   it('no EMPATE de atributos os dois históricos entregavam galhos DIFERENTES', () => {
-    // virus == vaccine no topo; data (o fallback do save) não lidera.
-    const pontos = { virus: 6, data: 2, vaccine: 6 };
-    const previsto = resolveBranch(pontos, computeCarePattern(careHistory(save), now), 'data');
-    const antigo = resolveBranch(pontos, computeCarePattern(save.completedTasks, now), 'data');
+    // power == benevolence no topo; harmony (o fallback do save) não lidera.
+    const pontos = { power: 6, harmony: 2, benevolence: 6 };
+    const previsto = resolveBranch(pontos, computeCarePattern(careHistory(save), now), 'harmony');
+    const antigo = resolveBranch(pontos, computeCarePattern(save.completedTasks, now), 'harmony');
 
-    expect(previsto).toBe('vaccine'); // ritmo constante → vacina
-    expect(antigo).toBe('virus');     // sem leitura confiável → primeiro líder
+    expect(previsto).toBe('benevolence'); // ritmo constante → benevolência
+    expect(antigo).toBe('power');     // sem leitura confiável → primeiro líder
     expect(previsto).not.toBe(antigo); // ← este é o dano: promessa ≠ entrega
   });
 

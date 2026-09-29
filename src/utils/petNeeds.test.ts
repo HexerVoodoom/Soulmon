@@ -59,11 +59,11 @@ describe('brincar', () => {
   });
 
   it('dá um ponto de atributo da categoria do buff', () => {
-    const s = baseState({ virusPoints: 0, dataPoints: 0, vaccinePoints: 0 });
+    const s = baseState({ powerPoints: 0, harmonyPoints: 0, benevolencePoints: 0 });
     const { state, buff } = play(s, TODAY, NOW);
-    const key = `${buff!.attribute}Points` as 'virusPoints' | 'dataPoints' | 'vaccinePoints';
+    const key = `${buff!.attribute}Points` as 'powerPoints' | 'harmonyPoints' | 'benevolencePoints';
     expect(state[key]).toBe(PLAY_ATTRIBUTE_POINT);
-    const total = (state.virusPoints ?? 0) + (state.dataPoints ?? 0) + (state.vaccinePoints ?? 0);
+    const total = (state.powerPoints ?? 0) + (state.harmonyPoints ?? 0) + (state.benevolencePoints ?? 0);
     expect(total).toBe(PLAY_ATTRIBUTE_POINT);
   });
 
@@ -196,7 +196,7 @@ describe('nenhuma função devolve penalidade', () => {
       baseState({ energyPoints: 0 }),
       play(baseState(), TODAY, NOW).state,
       { ...baseState(), playLog: { date: TODAY } },
-      { ...baseState(), playLog: { date: TODAY, buff: { kind: 'minigame', multiplier: PLAY_BUFF_MULTIPLIER, expiresAt: 'lixo', attribute: 'data' } } },
+      { ...baseState(), playLog: { date: TODAY, buff: { kind: 'minigame', multiplier: PLAY_BUFF_MULTIPLIER, expiresAt: 'lixo', attribute: 'harmony' } } },
     ];
     for (const s of states) {
       expect(minigameMultiplier(s, NOW)).toBeGreaterThanOrEqual(1);

@@ -26,12 +26,12 @@ const baseState = () => ({
   energyPoints: 10,
   perfectDays: 0,
   totalXP: 0,
-  virusPoints: 0,
-  dataPoints: 0,
-  vaccinePoints: 0,
+  powerPoints: 0,
+  harmonyPoints: 0,
+  benevolencePoints: 0,
   evolutionStage: 'rookie',
   unlockedEvolutions: ['rookie'],
-  currentBranch: 'data' as const,
+  currentBranch: 'harmony' as const,
   maxActivityCap: 6,
   lastResetDate: new Date('2026-08-04T12:00:00').toDateString(),
   lastDayReport: { date: new Date('2026-08-03T12:00:00').toDateString(), saveDay: 90 },
@@ -64,7 +64,7 @@ describe('dia completo → XP_PERFECT_DAY no Vínculo (fiação em computeDailyR
 
   it('a virada NUNCA desce o totalXP — nem no dia de degeneração', () => {
     const tasks = Array.from({ length: 4 }, (_, i) => ({ id: `t${i}`, completed: false }));
-    const r = virada({ ...baseState(), tasks, healthPoints: 0.5, totalXP: 900, evolutionStage: 'champion-data', unlockedEvolutions: ['rookie', 'champion-data'] });
+    const r = virada({ ...baseState(), tasks, healthPoints: 0.5, totalXP: 900, evolutionStage: 'champion-harmony', unlockedEvolutions: ['rookie', 'champion-harmony'] });
     expect(r.totalXP).toBeGreaterThanOrEqual(900);
   });
 

@@ -35,18 +35,18 @@ const stage = (over: Partial<CreatureStage>): CreatureStage => ({
 
 const base = {
   currentStageId: 'rookie',
-  currentBranch: 'data' as const,
-  virusPoints: 0, dataPoints: 3, vaccinePoints: 0,
+  currentBranch: 'harmony' as const,
+  powerPoints: 0, harmonyPoints: 3, benevolencePoints: 0,
   perfectDays: 2,
   gateDays: 10,
   stages: [stage({}), stage({ stage: 'champion', branch: 'harmonia', name: 'Prevista' })],
   unlockedEvolutions: ['rookie'],
   language: 'pt-BR' as const,
-  forecastBranch: 'data' as const,
+  forecastBranch: 'harmony' as const,
 };
 
 /** O sprite PRÓPRIO da forma prevista, já adotado. */
-const spritePrevisto = { url: 'https://cdn/champion-data.png', formId: 'champion-data', at: 1 };
+const spritePrevisto = { url: 'https://cdn/champion-harmony.png', formId: 'champion-harmony', at: 1 };
 
 function silhuetas() {
   return [...document.querySelectorAll('[data-node-silhouette]')] as HTMLElement[];

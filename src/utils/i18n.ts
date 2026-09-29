@@ -152,9 +152,9 @@ export interface Translations {
     confirmDegeneration: string;
     finalWarning: string;
     branches: string;
-    virus: string;
-    data: string;
-    vaccine: string;
+    power: string;
+    harmony: string;
+    benevolence: string;
     evolutionTree: string;
     viewTree: string;
     stats_history: string;
@@ -220,9 +220,9 @@ export interface Translations {
     title: string;
     overview: string;
     attributes: string;
-    virus: string;
-    data: string;
-    vaccine: string;
+    power: string;
+    harmony: string;
+    benevolence: string;
     total: string;
     level: string;
     stage: string;
@@ -451,9 +451,9 @@ export const translations: Record<Language, Translations> = {
       confirmDegeneration: '⚠️ Confirm Degeneration',
       finalWarning: '⚠️ FINAL WARNING!',
       branches: 'Evolution Branches',
-      virus: 'Virus',
-      data: 'Data',
-      vaccine: 'Vaccine',
+      power: 'Power',
+      harmony: 'Harmony',
+      benevolence: 'Benevolence',
       evolutionTree: 'Evolution Tree',
       viewTree: 'View Tree',
       stats_history: 'Stats & History',
@@ -516,9 +516,9 @@ export const translations: Record<Language, Translations> = {
       title: 'Statistics',
       overview: 'Overview',
       attributes: 'Attributes',
-      virus: 'Virus',
-      data: 'Data',
-      vaccine: 'Vaccine',
+      power: 'Power',
+      harmony: 'Harmony',
+      benevolence: 'Benevolence',
       total: 'Total',
       level: 'Level',
       stage: 'Stage',
@@ -562,7 +562,7 @@ export const translations: Record<Language, Translations> = {
       welcome: 'Welcome!',
       welcomeText: 'Soulmon is a gamified productivity app where you complete real-life tasks to evolve your digital companion.',
       howItWorks: 'How It Works',
-      howItWorksText: 'Complete daily activities to earn attribute points (Virus, Data, Vaccine). Each activity category contributes to a specific type of attribute.',
+      howItWorksText: 'Complete daily activities to earn attribute points (Power, Harmony, Benevolence). Each activity category contributes to a specific type of attribute.',
       evolutionSystem: 'Evolution System',
       evolutionSystemText: 'Your Soulmon evolves through stages (Egg → Baby → In-Training → Rookie → Champion → Ultimate → Mega). Evolution depends on completing a specific number of "complete days" where you reach your daily goal.',
       perfectDays: 'Perfect Days',
@@ -570,7 +570,7 @@ export const translations: Record<Language, Translations> = {
       healthSystem: 'Health System (HP)',
       healthSystemText: 'Your Soulmon starts with 1 heart and gains more with each evolution (maximum 5). Losing all hearts results in degeneration to the previous stage.',
       attributes: 'Attributes',
-      attributesText: 'Virus (green): Physical activities\nData (blue): Mental activities\nVaccine (yellow): Social and creative activities\n\nThe attributes you develop most determine your Soulmon\'s evolutionary path.',
+      attributesText: 'Power (green): Physical activities\nData (blue): Mental activities\nBenevolence (yellow): Social and creative activities\n\nThe attributes you develop most determine your Soulmon\'s evolutionary path.',
       tips: 'Tips',
       tipsText: '• Complete tasks daily to keep your Soulmon healthy\n• Balance different types of activities for unique evolutions\n• Use AI chat for motivation and new task ideas\n• Track your statistics to see your progress',
     },
@@ -739,9 +739,9 @@ export const translations: Record<Language, Translations> = {
       confirmDegeneration: '⚠️ Confirmar Degeneração',
       finalWarning: '⚠️ AVISO FINAL!',
       branches: 'Ramos de Evolução',
-      virus: 'Vírus',
-      data: 'Dados',
-      vaccine: 'Vacina',
+      power: 'Poder',
+      harmony: 'Harmonia',
+      benevolence: 'Benevolência',
       evolutionTree: 'Árvore de Evolução',
       viewTree: 'Ver Árvore',
       stats_history: 'Stats e Histórico',
@@ -804,9 +804,9 @@ export const translations: Record<Language, Translations> = {
       title: 'Estatísticas',
       overview: 'Visão Geral',
       attributes: 'Atributos',
-      virus: 'Vírus',
-      data: 'Dados',
-      vaccine: 'Vacina',
+      power: 'Poder',
+      harmony: 'Harmonia',
+      benevolence: 'Benevolência',
       total: 'Total',
       level: 'Nível',
       stage: 'Estágio',
@@ -850,7 +850,7 @@ export const translations: Record<Language, Translations> = {
       welcome: 'Bem-vindo!',
       welcomeText: 'O Soulmon é um app de produtividade gamificado onde você conclui tarefas da vida real para evoluir seu companheiro digital.',
       howItWorks: 'Como Funciona',
-      howItWorksText: 'Complete atividades diárias para ganhar pontos de atributo (Vírus, Dados, Vacina). Cada categoria de atividade contribui para um tipo específico de atributo.',
+      howItWorksText: 'Complete atividades diárias para ganhar pontos de atributo (Poder, Harmonia, Benevolência). Cada categoria de atividade contribui para um tipo específico de atributo.',
       evolutionSystem: 'Sistema de Evolução',
       evolutionSystemText: 'Seu Soulmon evolui por estágios (Ovo → Baby → Em Treinamento → Rookie → Champion → Ultimate → Mega). A evolução depende de completar um número específico de "dias completos" onde você atinge sua meta diária.',
       perfectDays: 'Dias Perfeitos',
@@ -858,7 +858,7 @@ export const translations: Record<Language, Translations> = {
       healthSystem: 'Sistema de Saúde (HP)',
       healthSystemText: 'Seu Soulmon começa com 1 coração e ganha mais a cada evolução (máximo 5). Perder todos os corações resulta em degeneração para o estágio anterior.',
       attributes: 'Atributos',
-      attributesText: 'Vírus (verde): Atividades físicas\nDados (azul): Atividades mentais\nVacina (amarelo): Atividades sociais e criativas\n\nOs atributos que você mais desenvolve determinam o caminho evolutivo do seu Soulmon.',
+      attributesText: 'Poder (verde): Atividades físicas\nHarmonia (azul): Atividades mentais\nBenevolência (amarelo): Atividades sociais e criativas\n\nOs atributos que você mais desenvolve determinam o caminho evolutivo do seu Soulmon.',
       tips: 'Dicas',
       tipsText: '• Complete tarefas diariamente para manter seu Soulmon saudável\n• Equilibre diferentes tipos de atividades para evoluções únicas\n• Use o chat com IA para motivação e novas ideias de tarefas\n• Acompanhe suas estatísticas para ver seu progresso',
     },

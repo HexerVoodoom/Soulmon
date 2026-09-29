@@ -23,7 +23,7 @@ const base = {
   perfectDays: 0,
   energyPoints: 4, // cheia para rookie (requisito 4)
   unlockedEvolutions: [] as string[],
-  currentBranch: 'data',
+  currentBranch: 'harmony',
   maxActivityCap: 6,
   lastResetDate: ontemStr,
   activities: [] as any[],

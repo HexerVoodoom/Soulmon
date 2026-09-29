@@ -73,8 +73,8 @@ const stage = (over: Partial<CreatureStage>): CreatureStage => ({
 
 const baseEvo = {
   currentStageId: 'rookie',
-  currentBranch: 'data' as const,
-  virusPoints: 1, dataPoints: 3, vaccinePoints: 0,
+  currentBranch: 'harmony' as const,
+  powerPoints: 1, harmonyPoints: 3, benevolencePoints: 0,
   perfectDays: 2,
   gateDays: 10,
   stages: [stage({})],

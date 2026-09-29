@@ -310,8 +310,8 @@ describe('generateOracle', () => {
     }
     const ultra = r.creature.stages.find(s => s.stage === 'ultra')!;
     expect(ultra.imagePrompt).toContain('with red, cyan and gold accents');
-    // Conceito exibe a equivalência (Vírus/Data/Vacina)
-    expect(r.creature.concept.pt).toMatch(/atributo (Vírus|Data|Vacina)/);
+    // Conceito exibe a equivalência (Poder/Harmonia/Benevolência)
+    expect(r.creature.concept.pt).toMatch(/atributo (Poder|Harmonia|Benevolência)/);
   });
 
   it('cada nível carrega seu bloco de nível no prompt', () => {

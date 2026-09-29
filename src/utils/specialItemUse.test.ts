@@ -15,11 +15,11 @@ function estado(over: Partial<SpecialItemState> = {}): SpecialItemState {
     foodInventory: {},
     perfectDays: 0,
     totalPerfectDays: 0,
-    virusPoints: 0,
-    dataPoints: 0,
-    vaccinePoints: 0,
+    powerPoints: 0,
+    harmonyPoints: 0,
+    benevolencePoints: 0,
     totalXP: 0,
-    attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
+    attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
     ...over,
   };
 }
@@ -56,7 +56,7 @@ describe('glitchtama', () => {
     const { state } = applySpecialItem(prev, GLITCHTAMA_EMOJI, AGORA);
     expect(state.healthPoints).toBe(2);
     expect(state.totalXP).toBe(500);
-    expect(state.attributesSinceLastEvolution).toEqual({ virus: 0, data: 0, vaccine: 0 });
+    expect(state.attributesSinceLastEvolution).toEqual({ power: 0, harmony: 0, benevolence: 0 });
   });
 
   it('vitalicio ausente no save antigo comeca do zero, nao vira NaN', () => {
@@ -133,15 +133,15 @@ describe('coracaozinho', () => {
 });
 
 describe('chips', () => {
-  const casos: Array<[string, 'virus' | 'data' | 'vaccine', 'virusPoints' | 'dataPoints' | 'vaccinePoints']> = [
-    [CHIP_EMOJI.virus, 'virus', 'virusPoints'],
-    [CHIP_EMOJI.data, 'data', 'dataPoints'],
-    [CHIP_EMOJI.vaccine, 'vaccine', 'vaccinePoints'],
+  const casos: Array<[string, 'power' | 'harmony' | 'benevolence', 'powerPoints' | 'harmonyPoints' | 'benevolencePoints']> = [
+    [CHIP_EMOJI.power, 'power', 'powerPoints'],
+    [CHIP_EMOJI.harmony, 'harmony', 'harmonyPoints'],
+    [CHIP_EMOJI.benevolence, 'benevolence', 'benevolencePoints'],
   ];
 
   for (const [emoji, attr, pontos] of casos) {
     it(`${attr}: +CHIP_BOOST no atributo, no acumulado da evolucao e 10x no XP`, () => {
-      const prev = estado({ foodInventory: { [emoji]: 1 }, virusPoints: 4, dataPoints: 5, vaccinePoints: 6, totalXP: 70 });
+      const prev = estado({ foodInventory: { [emoji]: 1 }, powerPoints: 4, harmonyPoints: 5, benevolencePoints: 6, totalXP: 70 });
       const { state } = applySpecialItem(prev, emoji, AGORA);
       expect(state[pontos]).toBe(prev[pontos] + CHIP_BOOST);
       expect(state.attributesSinceLastEvolution[attr]).toBe(CHIP_BOOST);
@@ -157,36 +157,36 @@ describe('chips', () => {
   }
 
   it('nao enche energia nem cura: chip nao e comida', () => {
-    const prev = estado({ foodInventory: { [CHIP_EMOJI.data]: 1 }, healthPoints: 2 });
-    const { state } = applySpecialItem(prev, CHIP_EMOJI.data, AGORA);
+    const prev = estado({ foodInventory: { [CHIP_EMOJI.harmony]: 1 }, healthPoints: 2 });
+    const { state } = applySpecialItem(prev, CHIP_EMOJI.harmony, AGORA);
     expect(state.healthPoints).toBe(2);
     expect('energyPoints' in state).toBe(false);
   });
 
   it('nao concede dia perfeito', () => {
-    const prev = estado({ foodInventory: { [CHIP_EMOJI.virus]: 1 }, perfectDays: 2, totalPerfectDays: 9 });
-    const { state } = applySpecialItem(prev, CHIP_EMOJI.virus, AGORA);
+    const prev = estado({ foodInventory: { [CHIP_EMOJI.power]: 1 }, perfectDays: 2, totalPerfectDays: 9 });
+    const { state } = applySpecialItem(prev, CHIP_EMOJI.power, AGORA);
     expect(state.perfectDays).toBe(2);
     expect(state.totalPerfectDays).toBe(9);
   });
 
   it('dois toques no mesmo lote com UM chip so dao CHIP_BOOST uma vez', () => {
-    const prev = estado({ foodInventory: { [CHIP_EMOJI.vaccine]: 1 } });
-    const um = applySpecialItem(prev, CHIP_EMOJI.vaccine, AGORA);
-    const dois = applySpecialItem(um.state, CHIP_EMOJI.vaccine, AGORA);
+    const prev = estado({ foodInventory: { [CHIP_EMOJI.benevolence]: 1 } });
+    const um = applySpecialItem(prev, CHIP_EMOJI.benevolence, AGORA);
+    const dois = applySpecialItem(um.state, CHIP_EMOJI.benevolence, AGORA);
     expect(dois.refused).toBe('no-stock');
-    expect(dois.state.vaccinePoints).toBe(CHIP_BOOST);
+    expect(dois.state.benevolencePoints).toBe(CHIP_BOOST);
     expect(dois.state.totalXP).toBe(CHIP_BOOST * 10);
   });
 
   it('acumula sobre o que ja havia, sem zerar o acumulado da evolucao', () => {
     const prev = estado({
-      foodInventory: { [CHIP_EMOJI.data]: 2 },
-      attributesSinceLastEvolution: { virus: 1, data: 2, vaccine: 3 },
+      foodInventory: { [CHIP_EMOJI.harmony]: 2 },
+      attributesSinceLastEvolution: { power: 1, harmony: 2, benevolence: 3 },
     });
-    const um = applySpecialItem(prev, CHIP_EMOJI.data, AGORA);
-    const dois = applySpecialItem(um.state, CHIP_EMOJI.data, AGORA);
-    expect(dois.state.attributesSinceLastEvolution).toEqual({ virus: 1, data: 2 + CHIP_BOOST * 2, vaccine: 3 });
+    const um = applySpecialItem(prev, CHIP_EMOJI.harmony, AGORA);
+    const dois = applySpecialItem(um.state, CHIP_EMOJI.harmony, AGORA);
+    expect(dois.state.attributesSinceLastEvolution).toEqual({ power: 1, harmony: 2 + CHIP_BOOST * 2, benevolence: 3 });
   });
 });
 
@@ -203,10 +203,10 @@ describe('specialRefusal', () => {
   it('so o coracaozinho recusa por vida cheia — chip e glitchtama valem sempre', () => {
     const cheio = estado({
       healthPoints: 5, maxHealthPoints: 5,
-      foodInventory: { [HEART_ITEM_EMOJI]: 1, [CHIP_EMOJI.virus]: 1, [GLITCHTAMA_EMOJI]: 1 },
+      foodInventory: { [HEART_ITEM_EMOJI]: 1, [CHIP_EMOJI.power]: 1, [GLITCHTAMA_EMOJI]: 1 },
     });
     expect(specialRefusal(cheio, HEART_ITEM_EMOJI, AGORA)).toBe('already-full');
-    expect(specialRefusal(cheio, CHIP_EMOJI.virus, AGORA)).toBeUndefined();
+    expect(specialRefusal(cheio, CHIP_EMOJI.power, AGORA)).toBeUndefined();
     expect(specialRefusal(cheio, GLITCHTAMA_EMOJI, AGORA)).toBeUndefined();
   });
 });
@@ -267,11 +267,11 @@ describe('teto diário do glitchtama', () => {
 
   it('o teto vale SÓ para o glitchtama — coraçãozinho e chip seguem livres', () => {
     const st = estado({
-      foodInventory: { [HEART_ITEM_EMOJI]: 2, [CHIP_EMOJI.virus]: 2 },
+      foodInventory: { [HEART_ITEM_EMOJI]: 2, [CHIP_EMOJI.power]: 2 },
       healthPoints: 1,
       glitchtamaUse: { day: playerDayKey(AGORA, undefined), used: GLITCHTAMA_PER_DAY },
     });
     expect(applySpecialItem(st, HEART_ITEM_EMOJI, AGORA).refused).toBeUndefined();
-    expect(applySpecialItem(st, CHIP_EMOJI.virus, AGORA).refused).toBeUndefined();
+    expect(applySpecialItem(st, CHIP_EMOJI.power, AGORA).refused).toBeUndefined();
   });
 });

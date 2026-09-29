@@ -62,7 +62,7 @@ describe('heartGoalFromDailyGoal', () => {
   });
 });
 
-const estado = (atividades: number, stage = 'mega-vaccine') => ({
+const estado = (atividades: number, stage = 'mega-benevolence') => ({
   evolutionStage: stage,
   activities: Array.from({ length: atividades }, (_, i) => ({
     id: `a${i}`, name: `h${i}`, weekDays: [0, 1, 2, 3, 4, 5, 6],
@@ -101,14 +101,14 @@ function viradaCom(feitas: number) {
   const ontem = new Date('2026-09-08T12:00:00').toDateString();
   const TODO_DIA = [0, 1, 2, 3, 4, 5, 6];
   const prev = {
-    evolutionStage: 'mega-vaccine',
+    evolutionStage: 'mega-benevolence',
     maxHealthPoints: 5,
     healthPoints: 5,
     perfectDays: 0,
     totalPerfectDays: 0,
     energyPoints: 6,
     unlockedEvolutions: [] as string[],
-    currentBranch: 'data',
+    currentBranch: 'harmony',
     maxActivityCap: 8,
     evolutionLocked: true,
     lastResetDate: ontem,
