@@ -92,6 +92,9 @@ export async function onRequest(context) {
   return handleGuild(context);
 }
 
+/** A partir de quantos membros o TIPO do gesto recebido sai (B5). */
+export const GESTO_TIPO_MIN_MEMBROS = 3;
+
 /** Uma semana ISO ainda recebe golpe? Até segunda 12:00 UTC da seguinte. */
 export function semanaAindaAberta(week, agora = new Date()) {
   const hojeUtc = agora.toISOString().slice(0, 10);
@@ -185,7 +188,12 @@ export async function vistaDaGuilda(env, g, euSave, hoje = new Date().toISOStrin
       tide: { key: g.tideKey ?? null, size: bloom },
       ornaments: (Array.isArray(g.ornaments) ? g.ornaments : []).map(o => ({ tide: o.tide, size: o.size, day: o.day })),
     },
-    gestures: GUILD_GESTURES.filter(k => recebidos.has(k)),
+    // B5 (L2-backend): com ≤2 membros o "anônimo" é quem sobrou. O TIPO não
+    // sai (dizer "luz" contaria o gesto exato de uma pessoa conhecida); sai só
+    // o agregado `gestureReceived`, que é `true` ou `null`. Com 3+ sai a lista
+    // de tipos, em lote, sem quem nem quantos.
+    gestures: size < GESTO_TIPO_MIN_MEMBROS ? [] : GUILD_GESTURES.filter(k => recebidos.has(k)),
+    gestureReceived: recebidos.size > 0 ? true : null,
     raid: {
       weekKey: semana,
       phenomenon: fenomenoDaSemana(semana),

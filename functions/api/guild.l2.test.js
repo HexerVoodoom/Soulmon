@@ -215,3 +215,19 @@ describe('B1 — golpe na semana que já terminou', () => {
     expect((await chamar(e, 'guildRaidHit', { body: { id: B, dayKey: '2026-09-28' } })).status).toBe(200);
   });
 });
+
+describe('B5 — gesto numa roda de 2 não diz o tipo', () => {
+  it('2 membros: gestures [] e gestureReceived true; 3 membros: o tipo sai', async () => {
+    const dois = await guildaDe(2);
+    await chamar(dois.e, 'guildGesture', { body: { id: B, kind: 'luz' } });
+    const v2 = (await (await chamar(dois.e, 'guild', { method: 'GET', params: { id: A } })).json()).guild;
+    expect(v2.gestures).toEqual([]);
+    expect(v2.gestureReceived).toBe(true);
+    const tres = await guildaDe(3);
+    const v0 = (await (await chamar(tres.e, 'guild', { method: 'GET', params: { id: A } })).json()).guild;
+    expect(v0.gestureReceived).toBeNull();
+    await chamar(tres.e, 'guildGesture', { body: { id: B, kind: 'luz' } });
+    const v3 = (await (await chamar(tres.e, 'guild', { method: 'GET', params: { id: A } })).json()).guild;
+    expect(v3.gestures).toEqual(['luz']);
+  });
+});
