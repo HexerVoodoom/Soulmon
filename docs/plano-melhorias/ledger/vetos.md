@@ -371,3 +371,21 @@ Seis perguntas: (1) o fio nasce da meta, não o contrário; a Feira premia um ge
 | Obs 3 `guild.bosque.perto` | **APROVADO COM RESSALVA** | Sem número; ressalva: binário (perto/silêncio), nunca razão exata nem tempo estimado. |
 
 Perdoa demais? Não aplicável: nenhuma das três mexe em perdão.
+
+## Parecer — Guilda IMPLEMENTADA, conformidade L3 (`docs/reviews/guilda/qa/L3-conformidade.md`), 29/09/2026
+
+**Veredito geral: APROVADO COM RESSALVA — sem veto.** Nenhuma linha vermelha cruzada por desenho; respostas reais (1/4/5/12 membros) sem saveId, estágio, dano, contagem por pessoa; Bosque só soma; G17(a) cumprido; sem push.
+
+| Seção | Parecer | Ressalva (vira aceite) |
+|---|---|---|
+| §3 | COM RESSALVA | **A-2**: `META_DO_FIO='heart'` implementado como "decidido pelo dono" sem linha no `REGISTRO`; plano e `STATUS.md` ainda dizem pendente. Registrar ou reverter. |
+| §4 | COM RESSALVA | M-1: payload ≤4 carrega `cameToday:false` (estado de ausência); B-2: `threadedToday` conta check-in como fio. |
+| §5 | COM RESSALVA (bloqueia release) | **A-1**: sair descarta Emblemas não resgatados (`direito` exige guilda atual; `coopLeave` apaga `coopHit`) — contra LV-G5 "sem perda". M-2: sair zera os dias distintos rumo ao cenário. |
+| §6, §8, §11 | APROVADO | — |
+| §7 | COM RESSALVA | M-5: `guildReward.contract.test.ts` (LV-G6) não existe; B-3: cenário "virada do marco" ausente. |
+| §10 | COM RESSALVA | M-3: `progress/target` semanal (número que zera) e aliases `coop*` sobrevivem; B-1: `hpBand` virou `ferido` sem registro. |
+| §13 | COM RESSALVA | LV-G5 (A-1), LV-G2 (M-1), LV-G6 sem régua. |
+| §14 | COM RESSALVA | WPG-W, WPG-A, WPG-13, WPG-14, WPG-15 não feitos; `docsManual` vermelho. |
+
+Seis perguntas: (1) fio nasce da meta, não de contagem; (2) tira algo? **sim, ao sair (A-1/M-2)** — é o defeito a corrigir; (3) nenhum perdão novo; (4) nenhum número que desce chega à tela (o `progress` semanal é descartado pelo cliente, mas trafega); (5) cortina: o dano oculto é declarado; (6) cabe na tese depois de A-1.
+Perdoa demais? O piso de 2 Emblemas segue no limite, já registrado; nada novo.
