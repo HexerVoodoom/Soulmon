@@ -142,6 +142,17 @@ describe('Concha da Maré — uma a cada 4 Feiras dissipadas com participação'
   });
 });
 
+describe('Concha — defesa contra registro de resgate perdido', () => {
+  it('reapresentar uma semana que já está no conjunto não dá uma Concha a mais', async () => {
+    const { e, gid } = await roda();
+    golpeSemeado(e, gid, '2026-09-09', M[0], 140);
+    // Quatro semanas já contadas, a corrente entre elas (ex.: o coopClaim sumiu).
+    e.DIGIAPP_SAVES.store.set(`coopShell:${M[0]}`, JSON.stringify({ ids: ['2026-W34', '2026-W35', '2026-W36', '2026-W37'] }));
+    const { claimed } = await (await resgatar(e, M[0], '2026-W37')).json();
+    expect(claimed.trophy).toBe(false);
+  });
+});
+
 describe('cenários bg-guild-* (LV-G9, G12)', () => {
   const semear = (e, gid, dias, progresso) => {
     e.DIGIAPP_SAVES.store.set(coopFioKey(gid, M[0]), JSON.stringify({ lastDay: dias.at(-1), distinctDays: dias.length, days: dias }));
