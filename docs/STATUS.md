@@ -36,6 +36,18 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > coração, como psicologia e servidor recomendam) e G16 (exceção ao
 > congelamento para começar WPG-0/1).
 
+> ## 29/09/2026 — Manual sincronizado com `38c3ccb5`
+>
+> `/manter-docs auto` sobre `cf8a851d..38c3ccb5` (54 commits). Tocados:
+> `06-REFERENCIA/utils.md` (entrada NOVA `backStack.ts`; exports reconferidos
+> em `areaNpcVoice`, `areaSheetCopy`, `chatSafety`, `androidBack`, `oracle`,
+> `rebirth`, `bestiary/select`) e `06-REFERENCIA/components.md` (entrada NOVA
+> `guild/GuildSheet.tsx`; `AreaSheet`). Guard item (c) volta ao verde.
+> ⚠️ **Parcial**: os demais docs do delta (02, 03, 05, 07, 10, 00-MAPA, 12,
+> hooks-contexts-types) não foram reescritos nesta rodada — o delta deles é
+> sobretudo docs de plano/review e módulos já com entrada; fica para a
+> próxima passada. Divergências novas: nenhuma.
+
 > ## 28/09/2026 — Fase 0 do Oráculo: régua única (auditoria N=800 + papel/reino no bloqueante)
 >
 > `docs/PLANO-ORACULO.md` §8 Fase 0. Novo `scripts/oraculo-auditoria.test.ts`
