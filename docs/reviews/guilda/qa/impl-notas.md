@@ -140,3 +140,19 @@ Conta diária de uma guilda de 12 em que todos firmam, fazem check-in e golpeiam
 ## Mutação (cópia em `/tmp/mut`, 28 mutantes nos arquivos tocados)
 
 26 mortos, 2 equivalentes (acima). Os 4 sobreviventes da L2: `ferido` e a guarda de dois fechamentos simultâneos agora morrem; o teto de 1,0 e o `max` final são equivalentes por construção. O mutante "semana futura do cartão → ler a chave" morreu com o teste de cartão velho.
+
+## Rodada L3 — mudanças de contrato para o front (29/09/2026)
+
+Correções de servidor dos achados de `L3-conformidade.md` (A-1, M-1, M-2, M-3, M-5, B-2) e `L3-codigo.md` (A1, lado servidor).
+
+1. **Ausência não é mais chave (M-1, LV-G2).** Em `members[]`, `presence[]`, `mine` e `raid.mine`, as marcas só EXISTEM quando são `true`: `members[].apareceuHoje`, `presence[].cameToday`, `mine.cameToday`, `mine.threadToday`, `mine.groveScenes`, `raid.mine.hitToday`. "Não veio"/"não firmou"/"não golpeou" = a chave ausente (`presence[]` vira `{ memberId }`; `raid.mine` pode vir `{}`). O cliente já lia com `=== true` (`sanitizeGuildView`), então nada quebra; fixtures que usam `false` explícito continuam válidas no cliente, mas não refletem mais o servidor.
+2. **`progress` e `target` não trafegam mais (M-3)** — nem na vista de guilda, nem pelos aliases `coop*`. Os aliases `coop`/`coopCreate`/`coopJoin`/`coopCheckin`/`coopLeave` ficam: nenhum cliente os chama (`grep` em `src/` e `desktop/`: `CoopPanel` é reexport do `GuildSheet`, que usa `guild*`), mas ~5 arquivos de teste de servidor os usam como harness; removê-los é limpeza sem efeito de produto.
+3. **`threadedToday` (5+) só acende com FIO firmado (B-2)**, nunca com check-in.
+4. **409 `already claimed` agora traz o resgate (A1):** `{ error: 'already claimed', receipt, claimed: { week, outcome, emblems, trophy, trophyId, receipt } }` — a MESMA forma do `claimed` do 200, lida do registro gravado (`coopClaim`), nunca recalculada; `trophy` passou a ser gravado no registro. **Cliente:** no 409, se `claimed.receipt` não estiver em `hasClaimedReceipt`, creditar `claimed.emblems` (e a Concha se `trophy`) e guardar o recibo — exatamente como no 200. `claimed` pode vir `null` só se o registro sumiu entre as duas leituras.
+5. **O direito não exige guilda (A-1, LV-G5):** `guildRewards`/`guildClaim` funcionam sem guilda atual para quem golpeou. Chave nova do titular `coopPart:<save>:<week>` = `{ gid, day }` (TTL 60 d), gravada a cada golpe e, para golpes anteriores, na saída; a saída também resolve a Feira com a pessoa ainda dentro (se o dano dela fechou o fenômeno, `coopRaidOk` fica gravado). Guilda que esvaziou paga pelo `coopRaidOk`. A folha pode (deve) oferecer "colher" também para quem saiu.
+6. **Dias distintos de fio sobrevivem à saída (M-2):** na saída, `coopDias:<save>` = `{ n, days[] }` (sem TTL); o primeiro fio na guilda seguinte herda só o CONTADOR (`fioInicialHerdado`), nunca os dias — um dia de outra guilda não entra no fechamento do Bosque desta — e o dia já firmado não conta duas vezes. `mine.groveScenes` reflete isso depois do primeiro fio na guilda nova.
+7. **Exclusão/exportação:** `apagarClaims` apaga `coopPart:*` (9 semanas) e `coopDias`; a saída da exclusão (`coopLeave({exclusao:true})`) não grava nenhuma das duas. A exportação ganhou `recompensas.raidWeeks` e `recompensas.carriedThreadDays`.
+8. **Orçamento KV:** golpe +1 escrita (`coopPart`), primeiro fio numa guilda +1 leitura (`coopDias`); `ORCAMENTO` em `guild.l2.test.js` atualizado.
+9. **Régua LV-G6 (M-5):** `functions/api/guildReward.contract.test.js` (comportamento + fonte + catálogo).
+
+Mutação (`/tmp/mut`): 21 mutantes nos pontos desta rodada, 21 mortos.

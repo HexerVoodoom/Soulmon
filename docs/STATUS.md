@@ -7,7 +7,28 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
-> ## 29/09/2026 — Plano da Guilda (o Bosque e a Feira) — PLANO, sem código
+> ## 29/09/2026 — Guilda (o Bosque e a Feira) — IMPLEMENTADA (núcleo), falta o entorno
+>
+> Estado real: a exceção ao congelamento foi registrada pelo dono (linha
+> "Camada 3 CONGELADA", `REGISTRO` §5.6 — G16 resolvido) e o núcleo WPG-0..12
+> está no código: servidor `functions/api/guild.js` + `_coop.js` (Bosque,
+> fio, marés, gestos, Feira, resgate), cliente `GuildSheet.tsx`, palco
+> `groveStage.ts`, cerimônia de marco. QA L3 (`docs/reviews/guilda/qa/L3-*.md`):
+> correções de servidor feitas em 29/09 — **A-1** (sair não descarta
+> Emblemas/Concha não colhidos: direito em `coopPart:<save>:<week>`), **A1 do
+> código** (409 `already claimed` traz `claimed:{…}` do registro), **M-1**
+> (ausência nunca é chave `false`), **M-2** (dias distintos de fio sobrevivem à
+> saída, `coopDias:<save>`), **M-3** (`progress/target` saíram; aliases `coop*`
+> ficam só porque os testes de servidor os usam — nenhum cliente chama),
+> **M-5** (régua LV-G6 `functions/api/guildReward.contract.test.js`), **B-2**
+> (`threadedToday` só com fio). **G1** (fio pela meta de coração) está no código
+> como padrão da sessão e **AGUARDA confirmação do dono** (`REGISTRO` §5.5).
+> **Falta:** widget (WPG-14), arte real (WPG-13/WPG-A, hoje placeholders),
+> wireframes GUI-01..16 (WPG-W), manual + bíblia (WPG-15, `docsManual` com
+> entradas faltando), e o lado cliente do A1 (creditar no 409 com recibo
+> desconhecido).
+>
+> ### (registro anterior) Plano da Guilda — PLANO, sem código
 >
 > Pedido do dono: traçar o plano completo da guilda com foco CONSTRUTIVO
 > (horta/cidade) e arena secundária. Decisões do dono no modal de 29/09:
