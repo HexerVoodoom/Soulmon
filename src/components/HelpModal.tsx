@@ -14,6 +14,8 @@ import {
 } from '../types/taskModel';
 import { GOOD_CONSTANCY_RATIO } from '../utils/habitRhythm';
 import { DREAM_CATALOG } from '../utils/restWindow';
+import { guildText } from '../utils/guildCopy';
+import { GUILD_MAX_MEMBERS, GUILD_TIDE_WEEKS, RAID_EMBLEMS, RAID_EMBLEMS_FLOOR, RAID_TROPHY_EVERY } from '../utils/guildRules';
 
 /**
  * GLOSSÁRIO — o que a palavra na tela quer dizer
@@ -160,7 +162,25 @@ const TERMS: Term[] = [
     descEn: 'Bits come from minigames and buy the shop. Emblems come from the Tournament and buy cosmetics only. Credits are bought with real money.',
     descPt: 'Bits vêm dos minijogos e compram a loja. Emblemas vêm do Torneio e compram só cosméticos. Créditos são comprados com dinheiro real.',
   },
+  // A GUILDA (`docs/NARRATIVA-COPY-GUILDA.md` §11): a copy mora em `guildCopy.ts` (dono único) e os
+  // números vêm das CONSTANTES de `guildRules.ts`. O `icon` é dado, nunca desenhado aqui.
+  ...guildTerms(),
 ];
+
+function guildTerms(): Term[] {
+  const par = (icon: string, termo: Parameters<typeof guildText>[1], def: Parameters<typeof guildText>[1], vars?: Record<string, number>): Term => ({
+    icon, en: guildText('en-US', termo), pt: guildText('pt-BR', termo),
+    descEn: guildText('en-US', def, vars), descPt: guildText('pt-BR', def, vars),
+  });
+  return [
+    par('🌳', 'guild.help.guilda.termo', 'guild.help.guilda.def', { max: GUILD_MAX_MEMBERS }),
+    par('🌳', 'guild.help.bosque.termo', 'guild.help.bosque.def'),
+    par('🌳', 'guild.help.fio.termo', 'guild.help.fio.def'),
+    par('🌳', 'guild.help.feira.termo', 'guild.help.feira.def', { cheio: RAID_EMBLEMS, piso: RAID_EMBLEMS_FLOOR }),
+    par('🌳', 'guild.help.mare.termo', 'guild.help.mare.def', { semanas: GUILD_TIDE_WEEKS }),
+    par('🌳', 'guild.help.concha.termo', 'guild.help.concha.def', { n: RAID_TROPHY_EVERY }),
+  ];
+}
 
 export function HelpModal({ isOpen, onClose, language }: HelpModalProps) {
   const isPt = language === 'pt-BR';

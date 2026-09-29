@@ -21,6 +21,7 @@ import {
 } from '../types/taskModel';
 import { GOOD_CONSTANCY_RATIO } from '../utils/habitRhythm';
 import { DREAM_CATALOG } from '../utils/restWindow';
+import { guildText } from '../utils/guildCopy';
 
 interface GuideModalProps {
   isOpen: boolean;
@@ -260,6 +261,12 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
         </>
       ),
+    },
+    {
+      // A Guilda (`guild.guide.*`): a copy é do `guildCopy.ts`; nenhum número escrito à mão aqui.
+      id: 'guild',
+      title: guildText(language, 'guild.guide.titulo'),
+      body: <p style={para}>{guildText(language, 'guild.guide.corpo')}</p>,
     },
     {
       id: 'more',
