@@ -216,8 +216,11 @@ export function sanitizeRecord(record, today) {
 
   const out = {};
   for (const key of Object.keys(props)) {
+    // M4 (L2-backend): `hasOwnProperty`, como no nome do evento — sem isso,
+    // `constructor`/`toString` acham uma função no protótipo e passam.
+    if (!Object.prototype.hasOwnProperty.call(schema, key)) return null;
     const rule = schema[key];
-    if (!rule) return null;
+    if (!rule || typeof rule !== 'object') return null;
     const raw = props[key];
     if (typeof raw !== 'number' || !Number.isFinite(raw)) return null;
     const n = Math.round(raw);
@@ -458,7 +461,9 @@ export function applyAggregate(agg, events) {
     }
     // Guilda (WPG-7): uma faixa por prop, nunca identidade.
     if (record.e.startsWith('guild_') && p) {
-      for (const [k, v] of Object.entries(p)) bump(`${record.e}.${k}_${v}`);
+      // Itera o SCHEMA, nunca as props: chave fora da allowlist não vira contador.
+      const regra = EVENT_SCHEMA[record.e] || {};
+      for (const k of Object.keys(regra)) if (Object.prototype.hasOwnProperty.call(p, k)) bump(`${record.e}.${k}_${p[k]}`);
     }
 
     /* A compra POR ORIGEM. Sem isto, todas as compras eram um número só —
