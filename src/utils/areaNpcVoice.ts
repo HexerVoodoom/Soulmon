@@ -67,3 +67,50 @@ export function areaNpcVoice(id: AreaId, language: Language): { name: string; li
   const isPt = language === 'pt-BR';
   return { name: isPt ? v.namePt : v.nameEn, line: isPt ? v.linePt : v.lineEn };
 }
+
+/**
+ * FALA POR LOTE (29/09/2026) — cada sub-loja/sala tem o seu NPC, então a fala
+ * também é dele. A chave é `área:lote`; lote sem entrada cai na voz da área
+ * (`areaNpcVoice`). Nomes e falas novos são PLACEHOLDER de nomeação: o dono
+ * pode trocá-los aqui, num lugar só. Tom: convite, nunca cobrança.
+ */
+const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
+  'arena:duelo': {
+    namePt: 'Rinoco, o campeão', nameEn: 'Rhinoco, the champion',
+    linePt: 'Um duelo, uma rodada de cada vez. Pode vir — eu aguento o tranco!',
+    lineEn: 'One duel, one round at a time. Bring it on — I can take a hit!',
+  },
+  'arena:guilda': {
+    namePt: 'Marla, a intendente', nameEn: 'Marla, the steward',
+    linePt: 'A guilda é um grupo pequeno que caminha junto. Entre, sente e veja a meta de vocês.',
+    lineEn: 'A guild is a small group walking together. Come in, sit down and see your shared goal.',
+  },
+  'hall:amigos': {
+    namePt: 'Nino, o carteiro', nameEn: 'Nino, the courier',
+    linePt: 'Quem você quer visitar hoje? Seus amigos estão logo ali.',
+    lineEn: 'Who do you want to visit today? Your friends are right over there.',
+  },
+  'hall:guilda': {
+    namePt: 'Marla, a intendente', nameEn: 'Marla, the steward',
+    linePt: 'A guilda é um grupo pequeno que caminha junto. Entre, sente e veja a meta de vocês.',
+    lineEn: 'A guild is a small group walking together. Come in, sit down and see your shared goal.',
+  },
+  'laboratorio:pet': {
+    namePt: 'Tico, o cuidador', nameEn: 'Tico, the keeper',
+    linePt: 'Aqui está a ficha completa do seu Soulmon: quem ele é e o que ele sabe fazer.',
+    lineEn: 'Here is your Soulmon’s full sheet: who it is and what it can do.',
+  },
+  'laboratorio:stats': {
+    namePt: 'Quill, a escriba', nameEn: 'Quill, the scribe',
+    linePt: 'Cada dia fica anotado aqui. É só para você olhar — sem julgamento.',
+    lineEn: 'Every day is written down here. It is just for you to look at — no judgment.',
+  },
+};
+
+/** A fala do NPC de UM lote (`área:lote`); sem entrada própria, a voz da área. */
+export function lotNpcVoice(id: AreaId, lotId: string | null | undefined, language: Language): { name: string; line: string } {
+  const v = lotId ? LOT_NPC_VOICE[`${id}:${lotId}`] : undefined;
+  if (!v) return areaNpcVoice(id, language);
+  const isPt = language === 'pt-BR';
+  return { name: isPt ? v.namePt : v.nameEn, line: isPt ? v.linePt : v.lineEn };
+}

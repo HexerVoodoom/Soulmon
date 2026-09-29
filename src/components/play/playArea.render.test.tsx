@@ -77,7 +77,8 @@ function PlayAreaView(p: PlayProps) {
     actions: {} as AreaViewProps['actions'],
     onExchangeCredits: async () => false,
     tournament: {} as AreaViewProps['tournament'],
-    labTab: 'evolution', labContent: null, hallContent: null,
+    labTab: 'evolution', onLabTab: () => {}, labContent: null, hallContent: () => null,
+    guild: { saveId: 's', metaDoDiaCumprida: false },
   } satisfies AreaViewProps;
   return <AreaView {...areaProps} />;
 }

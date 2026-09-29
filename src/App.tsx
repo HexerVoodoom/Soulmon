@@ -23,6 +23,7 @@ import {
   type ViewType, type AreaId, areaOf, menuPageOf, viewBack, areaView, areaLabel, menuPageLabel,
 } from './navigation';
 import { registerAndroidBack } from './utils/androidBack';
+import { closeTopBackLayer } from './utils/backStack';
 import { CompanionHUD } from './components/CompanionHUD';
 import { HomeHud } from './components/pixel/HomeHud';
 import { DailyRituals } from './components/DailyRituals';
@@ -3132,6 +3133,13 @@ export default function App() {
   useEffect(() => {
     try { window.history.replaceState({ smView: 'home' }, ''); } catch { /* idem */ }
     const onPop = () => {
+      /* Camada aberta por cima da tela (folha de lote, minijogo): o voltar a
+         fecha e a tela continua — a entrada de history já foi consumida pelo
+         navegador, então repõe a mesma para o próximo voltar. */
+      if (closeTopBackLayer()) {
+        try { window.history.pushState({ smView: currentViewRef.current }, ''); } catch { /* idem */ }
+        return;
+      }
       const alvo = viewBack(currentViewRef.current);
       if (alvo) setCurrentView(alvo);
     };
@@ -5040,38 +5048,9 @@ export default function App() {
             /></Suspense>);
   const labContent = (
     <>
-          {/* O TOPO NOVO DO LABORATÓRIO (minimal-ui F5, mock `evolucao`):
-              Evolução / Soulmon / Stats como abas SUBLINHADAS (`.tabs` do
-              mock) — seleção é sublinhado ciano, nunca placa cheia (regra do
-              dono; e a sub-aba é seleção, não ação — canvas Pet §22, D-P1).
-              `minWidth: 0` + `nowrap`: "Estatísticas" é uma palavra só e
-              `flex:1` com `min-width:auto` não encolhe (medido em 390px). */}
-          <div role="tablist" aria-label={language === 'pt-BR' ? 'Seções do Laboratório' : 'Laboratory sections'} data-lab-tabs
-            style={{ display: 'flex', gap: 4, borderBottom: '1px solid var(--sm2-line)', marginBottom: 'var(--sm2-space-3)' }}>
-            {([
-              { view: 'evolution' as const, label: language === 'pt-BR' ? 'Evolução' : 'Evolution' },
-              { view: 'pet' as const, label: 'Soulmon' },
-              { view: 'stats' as const, label: language === 'pt-BR' ? 'Estatísticas' : 'Stats' },
-            ]).map(({ view, label }) => (
-              <button
-                key={view}
-                type="button"
-                role="tab"
-                aria-selected={labTab === view}
-                data-lab-tab={view}
-                onClick={() => setLabTab(view)}
-                style={{
-                  flex: 1, minWidth: 0, minHeight: 44, whiteSpace: 'nowrap',
-                  position: 'relative', background: 'none', border: 0, cursor: 'pointer',
-                  fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm)', fontWeight: 500,
-                  color: labTab === view ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)',
-                  boxShadow: labTab === view ? 'inset 0 -3px 0 var(--sm2-primary-ink)' : 'none',
-                }}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+          {/* As antigas abas Evolução/Soulmon/Stats saíram (29/09/2026): cada
+              uma virou uma construção do mapa do Laboratório (`AreaView`), que
+              escolhe `labTab` ao abrir a folha. */}
           {/* Ponto de conversão natural: quem está de frente para a árvore de
               um personagem de demonstração (as 3 linhas iguais) é exatamente
               quem entende o que a própria árvore significa. Só aqui e no
@@ -5264,8 +5243,9 @@ export default function App() {
           {labTab === 'stats' && statsPage}
     </>
   );
-  const hallContent = (<Suspense fallback={<ScreenSkeleton language={language} />}>
+  const hallContent = (view: 'directory' | 'friends') => (<Suspense fallback={<ScreenSkeleton language={language} />}>
               <LibraryPage
+                view={view}
                 saveId={saveId}
                 friends={gameState.friends ?? []}
                 canGiftToday={gameState.energyPoints >= getMaxEnergyForStage(gameState.evolutionStage)}
@@ -5644,8 +5624,10 @@ export default function App() {
                 /* Laboratório e Hall: o conteúdo real (`labContent`,
                    `hallContent`, montados antes do `return`). */
                 labTab={labTab}
+                onLabTab={setLabTab}
                 labContent={labContent}
                 hallContent={hallContent}
+                guild={{ saveId, metaDoDiaCumprida: dailyTotal > 0 && dailyDone >= dailyTotal }}
               />
             </Suspense>
           )}

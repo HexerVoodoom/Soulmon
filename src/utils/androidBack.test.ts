@@ -22,6 +22,7 @@ vi.mock('@capacitor/app', () => ({
 }));
 
 import { registerAndroidBack } from './androidBack';
+import { pushBackLayer } from './backStack';
 
 beforeEach(() => {
   h.native = true;
@@ -65,20 +66,37 @@ describe('registerAndroidBack', () => {
     expect(goBack).toHaveBeenCalledTimes(1);
   });
 
-  it('na Home devolve ao sistema (minimiza) em vez de travar', async () => {
+  it('na Home NÃO faz nada: não minimiza, não sai, não navega', async () => {
     const goBack = vi.fn();
     registerAndroidBack(() => 'home', goBack);
     h.cb!();
+    await Promise.resolve();
     expect(goBack).not.toHaveBeenCalled();
-    expect(h.minimizeApp).toHaveBeenCalledTimes(1);
+    expect(h.minimizeApp).not.toHaveBeenCalled();
+    expect(h.exitApp).not.toHaveBeenCalled();
   });
 
-  it('se minimizar falhar, sai do app', async () => {
-    h.minimizeApp.mockRejectedValue(new Error('x'));
-    registerAndroidBack(() => 'home', vi.fn());
+  it('com uma camada aberta (folha/jogo) fecha só ela; a tela não muda', () => {
+    const goBack = vi.fn();
+    const fecha = vi.fn();
+    const off = pushBackLayer(fecha);
+    registerAndroidBack(() => 'area:arena', goBack);
     h.cb!();
-    await Promise.resolve(); await Promise.resolve();
-    expect(h.exitApp).toHaveBeenCalledTimes(1);
+    expect(fecha).toHaveBeenCalledTimes(1);
+    expect(goBack).not.toHaveBeenCalled();
+    off();
+    h.cb!();
+    expect(goBack).toHaveBeenCalledTimes(1);
+  });
+
+  it('a camada mais recente fecha primeiro', () => {
+    const ordem: string[] = [];
+    const off1 = pushBackLayer(() => ordem.push('folha'));
+    const off2 = pushBackLayer(() => ordem.push('jogo'));
+    registerAndroidBack(() => 'area:arena', vi.fn());
+    h.cb!();
+    expect(ordem).toEqual(['jogo']);
+    off2(); off1();
   });
 
   it('a limpeza remove o listener (inclusive se chegar depois)', async () => {
