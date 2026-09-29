@@ -42,7 +42,7 @@
 | `guild.erro.nome` | O nome não pode ter contato nem link. | Names can't carry contacts or links. | 400 `invalid name`; alerta âmbar `gold-ink`, nunca `danger` | §13; footgun 10 |
 | `guild.erro.codigo` | Esse código não abriu nenhuma clareira. | That code didn't open any clearing. | 404 no join; âmbar | L9 (não acusa a pessoa) |
 | `guild.erro.cheia` | Esta roda está cheia. | This circle is full. | 409 `guild full`; âmbar | L3 |
-| `guild.erro.jaEmOutra` | Você já está numa roda. | You're already in a circle. | 409 `already in a guild`; âmbar + botão `guild.sair.botao` ali | L1 (estado, não ser: "estar" descreve situação, sem julgar) |
+| `guild.erro.jaEmOutra` | Esta conta já tem uma roda. | This account already has a circle. | 409 `already in a guild`; âmbar + botão `guild.sair.botao` ali | L1 (sujeito é a conta, não a pessoa) |
 | `guild.erro.colisao` | Tente de novo. | Try once more. | 409 `join collision` | §13 |
 | `guild.erro.semRede` | Sem conexão. Nada mudou. | No connection. Nothing changed. | sem rede / 503; âmbar | L4; 08-critica C1 (não promete "nada se perdeu") |
 | `guild.erro.semLogin` | Entre na sua conta para chegar a uma roda. | Sign in to reach a circle. | 401 sem login | §13 |
@@ -207,9 +207,9 @@
 | `guild.help.mare.termo` | Maré | Tide | HelpModal (não usar "Season"; colide com `season-tide`) | §12; 08-critica O1 |
 | `guild.help.mare.def` | Uma maré dura {semanas} semanas. Na virada, o que assentou fica no bosque. | A tide lasts {semanas} weeks. When it turns, what settled stays in the grove. | HelpModal; `GUILD_TIDE_WEEKS` | L10 |
 | `guild.help.anfitriao.termo` | Anfitrião | Host | HelpModal | §12 |
-| `guild.help.anfitriao.def` | Quem abriu a clareira pode renomear a roda e gerar um código novo. Não vê nada que os outros não vejam. | Whoever opened the clearing can rename the circle and generate a new code. They see nothing the others don’t. | HelpModal | LV-G1 |
+| `guild.help.anfitriao.def` | Quem abriu a clareira pode renomear a roda e gerar um código novo. Não vê nada a mais sobre ninguém. | Whoever opened the clearing can rename the circle and generate a new code. They see nothing more about anyone. | HelpModal | LV-G1 |
 | `guild.guide.titulo` | A Guilda | The Guild | GuideModal, seção nova | §12 |
-| `guild.guide.corpo` | Uma roda cuida de um bosque junta. Ninguém vê quanto o outro fez, e ninguém é apontado por não ter vindo. Seguir o próprio caminho é um toque e o que firmou fica. Nada aqui é vendido. | A circle keeps a grove together. Nobody sees how much anyone else did, and nobody is singled out for not showing up. Going your own way takes one tap and what settled stays. Nothing here is for sale. | GuideModal (números vêm de constantes, não de texto à mão) | L10; LV-G1, G2, G5, G6 |
+| `guild.guide.corpo` | Uma roda cuida de um bosque junta. Ninguém vê quanto o outro fez. Seguir o próprio caminho é um toque e o que firmou fica. Nada aqui é vendido. | A circle keeps a grove together. Nobody sees how much anyone else did. Going your own way takes one tap and what settled stays. Nothing here is for sale. | GuideModal (números vêm de constantes, não de texto à mão) | L10; LV-G1, G2, G5, G6 |
 
 **Total: 149 chaves.**
 
