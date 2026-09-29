@@ -275,3 +275,7 @@ O que continua **sem linha**, de propósito: dependências npm
 21/09/2026 que o escopo deste arquivo é arte, som e fontes; a licença das deps
 vive no `package.json` de cada uma.
 
+
+## Corvinho - 11 formas (adicionado 29/09/2026)
+
+`src/assets/soulmon/corvo/*`: derivadas do mascote proprio `mascot-raven.png` por recolor programatico (`scripts/gen-corvo-forms.py`, parametros fixos no script). Nenhuma IA de terceiros, nenhuma arte de terceiros.

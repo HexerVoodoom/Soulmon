@@ -296,3 +296,7 @@ Fila com uso/formato/prompt: `docs/ASSETS-A-GERAR.md`. Squad: `/squad-arte` (8 a
 2. Instalar o que já existe e tem ponto de chamada: **Dino** (entrega4), **berço largo** (entrega2), `bg-circuit-tile` (se D3/E3).
 3. Gerar C1–C5.
 4. Só então `/squad-design identidade sistema` — o canvas Sistema nasce sabendo que não há bitmap fora do visor e o canvas de cada fluxo referencia esta tabela (§6) como lista fechada de arte.
+
+## Corvinho (11 formas) - derivado do mascote
+
+`soulmon/corvo/corvo-<id>.png` (512, RGBA) e `corvo-<id>-256.png`, 11 ids da arvore (rookie = mascote original). Recolor programatico de `mascot-raven.png` por `scripts/gen-corvo-forms.py`; conferencia `scripts/check-corvo-forms.py`. Ainda sem consumidor (integracao e de outra fatia). Notas: `docs/reviews/admin-corvo/arte-notas.md`.
