@@ -19,10 +19,10 @@ const resp = (status: number, body: unknown) => new Response(typeof body === 'st
 const view = (over: Record<string, unknown> = {}) => ({
   id: 'g1', name: 'Roda', weekKey: '2026-W40', code: 'ABCD2345', isHost: false, size: 2, full: false,
   members: [
-    { id: 'p1', pid: 'p1', name: 'Ana', euMesmo: true, apareceuHoje: true },
-    { id: 'p2', pid: 'p2', name: 'Bia', euMesmo: false, apareceuHoje: false },
+    { id: 'a1b2c3d4e5f6a701', memberId: 'a1b2c3d4e5f6a701', name: 'Ana', euMesmo: true, apareceuHoje: true },
+    { id: 'a1b2c3d4e5f6a702', memberId: 'a1b2c3d4e5f6a702', name: 'Bia', euMesmo: false, apareceuHoje: false },
   ],
-  presence: [{ pid: 'p1', cameToday: true }, { pid: 'p2', cameToday: false }],
+  presence: [{ memberId: 'a1b2c3d4e5f6a701', cameToday: true }, { memberId: 'a1b2c3d4e5f6a702', cameToday: false }],
   threadedToday: null, mine: { cameToday: true, threadToday: true, groveScenes: false, gesturesSent: [] }, progress: 3, target: 10,
   bosque: { stage: 'ramagem', stageIndex: 2, perto: true, tide: { key: 'T1', size: 'petala' }, ornaments: [] }, gestures: [],
   ...over,
@@ -166,7 +166,7 @@ describe('sanitizeGuildView — a vista é dado não confiável', () => {
 
   it('com 5+ membros corta a presença por pessoa mesmo que o servidor a mande', () => {
     const membros = Array.from({ length: 5 }, (_, i) => ({ id: `p${i}`, name: `N${i}`, euMesmo: i === 0, apareceuHoje: i < 2 }));
-    const v = sanitizeGuildView(view({ size: 5, members: membros, presence: [{ pid: 'p0', cameToday: true }], threadedToday: true }))!;
+    const v = sanitizeGuildView(view({ size: 5, members: membros, presence: [{ memberId: 'a1b2c3d4e5f6a700', cameToday: true }], threadedToday: true }))!;
     expect(v.members.every(m => !('apareceuHoje' in m))).toBe(true);
     expect(v.threadedToday).toBe(true);
   });
@@ -215,6 +215,12 @@ describe('sanitizeGuildView — a vista é dado não confiável', () => {
     expect(v.mine).toEqual({ cameToday: true, threadToday: false, groveScenes: false, gesturesSent: ['luz'] });
     expect(v.gestures).toEqual(['aceno', 'descanso']); // na ordem da tela, sem duplicar
     expect(v.bosque.ornaments).toEqual([{ tide: 'T1', size: 'petala', day: '2026-08-10' }]);
+  });
+
+  it('contrato do loop 2: `progress` null (5+), `presence` por memberId e nenhum `pid` — nada disso chega à UI', () => {
+    const v = sanitizeGuildView(view({ progress: null, target: null, members: [{ id: 'a1b2c3d4e5f6a701', memberId: 'a1b2c3d4e5f6a701', name: 'Ana', euMesmo: true }] }))!;
+    expect(v.members).toEqual([{ id: 'a1b2c3d4e5f6a701', name: 'Ana', euMesmo: true, apareceuHoje: false }]);
+    expect(JSON.stringify(v)).not.toMatch(/pid|memberId|progress|target|presence/);
   });
 
   it('`gestureReceived` é booleano: só `true` passa (roda de 2 manda o fato, não o tipo — B5)', () => {

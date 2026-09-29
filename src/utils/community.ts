@@ -172,7 +172,11 @@ export const getPendingTrophies = (id: string, claim = false) =>
 
 /** O que a UI sabe de UMA pessoa da roda. Nenhum saveId, nenhum estágio (LV-G10). */
 export interface GuildMember {
-  /** pid público; `null` quando a pessoa ainda não tem perfil. */
+  /**
+   * Id OPACO do membro NESTA guilda (`memberId`, 16 hex — o servidor o deriva de guilda+save; a vista
+   * não tem mais `pid`). Serve de chave de lista e de semente do sprite. ⚠️ NUNCA vai para
+   * `community?action=player` nem sai do aparelho; `null` quando o servidor não o mandou.
+   */
   id: string | null;
   name: string | null;
   euMesmo: boolean;

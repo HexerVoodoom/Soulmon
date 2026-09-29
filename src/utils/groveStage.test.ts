@@ -3,9 +3,11 @@ import { groveCreatures, spriteForMember, spreadX, OWN_RENDER, OTHER_RENDER } fr
 import { DUNGEON_LINE_SPRITES } from './sprites';
 import { GUILD_MAX_MEMBERS, GUILD_PRESENCE_NOMINAL_MAX } from './guildRules';
 
+/** O id OPACO por guilda que o servidor manda (16 hex): é ele a chave da lista e a semente do sprite. */
+const mid = (i: number) => `a1b2c3d4e5f6a7${i.toString(16).padStart(2, '0')}`;
 const roda = (n: number, eu = 0) => ({
   size: n,
-  members: Array.from({ length: n }, (_, i) => ({ id: `pid-${i}`, name: `M${i}`, euMesmo: i === eu, ...(n <= 4 ? { apareceuHoje: i % 2 === 0 } : {}) })),
+  members: Array.from({ length: n }, (_, i) => ({ id: mid(i), name: `M${i}`, euMesmo: i === eu, ...(n <= 4 ? { apareceuHoje: i % 2 === 0 } : {}) })),
 });
 
 describe('palco do Bosque — quem aparece', () => {
@@ -13,7 +15,7 @@ describe('palco do Bosque — quem aparece', () => {
     for (let n = 1; n <= GUILD_PRESENCE_NOMINAL_MAX; n++) {
       const c = groveCreatures(roda(n, n - 1));
       expect(c).toHaveLength(n);
-      expect(c.map(x => x.key)).toEqual(Array.from({ length: n }, (_, i) => `pid-${i}`));
+      expect(c.map(x => x.key)).toEqual(Array.from({ length: n }, (_, i) => mid(i)));
       expect(c.filter(x => x.own)).toHaveLength(1);
       expect(c.filter(x => x.own)[0].size).toBe(OWN_RENDER);
       expect(c.filter(x => !x.own).every(x => x.size === OTHER_RENDER)).toBe(true);
@@ -60,11 +62,11 @@ describe('palco do Bosque — quem aparece', () => {
 
   it('a criatura de outro membro é uma das NOSSAS linhas, determinística por id — nunca estágio, nunca URL alheia', () => {
     const nossas = new Set(Object.values(DUNGEON_LINE_SPRITES).map(l => l.rookie));
-    for (const id of ['pid-1', 'pid-2', 'zzz', '']) {
+    for (const id of [mid(1), mid(2), 'zzz', '']) {
       expect(nossas.has(spriteForMember(id))).toBe(true);
       expect(spriteForMember(id)).toBe(spriteForMember(id));
     }
-    expect(new Set(Array.from({ length: 40 }, (_, i) => spriteForMember(`pid-${i}`))).size).toBeGreaterThan(3);
+    expect(new Set(Array.from({ length: 40 }, (_, i) => spriteForMember(mid(i)))).size).toBeGreaterThan(3);
   });
 
   it('escalas inteiras do sprite de 256² e 384²', () => {

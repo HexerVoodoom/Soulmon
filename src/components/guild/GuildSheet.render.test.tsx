@@ -42,9 +42,11 @@ const PT = (k: keyof typeof GUILD_COPY) => GUILD_COPY[k][0];
 const EN = (k: keyof typeof GUILD_COPY) => GUILD_COPY[k][1];
 
 /** Uma vista como o SERVIDOR a monta (`vistaDaGuilda`), passada pelo higienizador do cliente. */
+/** O id OPACO do membro que o servidor manda (`memberId`, 16 hex por guilda) — a vista não tem mais `pid`. */
+const mid = (i: number) => `a1b2c3d4e5f6a7${i.toString(16).padStart(2, '0')}`;
 const membros = (n: number, veio: number[] = [], eu = 0) =>
   Array.from({ length: n }, (_, i) => ({
-    id: `pid-${i}`, pid: `pid-${i}`, name: ['Ana', 'Bia', 'Caio', 'Dani', 'Edu', 'Fabi', 'Gil', 'Hana', 'Ivo', 'Jade', 'Kai', 'Lia'][i],
+    id: mid(i), memberId: mid(i), name: ['Ana', 'Bia', 'Caio', 'Dani', 'Edu', 'Fabi', 'Gil', 'Hana', 'Ivo', 'Jade', 'Kai', 'Lia'][i],
     euMesmo: i === eu, ...(n <= 4 ? { apareceuHoje: veio.includes(i) } : {}),
   }));
 
@@ -52,7 +54,7 @@ function vista(n: number, over: Record<string, unknown> = {}, veio: number[] = [
   return sanitizeGuildView({
     id: 'g1', name: 'Roda da manhã', weekKey: '2026-W40', code: 'ABCD2345', isHost: false, size: n, full: n >= 12,
     members: membros(n, veio),
-    presence: n <= 4 ? membros(n, veio).map(m => ({ pid: m.pid, cameToday: m.apareceuHoje })) : null,
+    presence: n <= 4 ? membros(n, veio).map(m => ({ memberId: m.memberId, cameToday: m.apareceuHoje })) : null,
     threadedToday: null, mine: { cameToday: veio.includes(0), threadToday: veio.includes(0) }, progress: 3, target: n * 5,
     bosque: { stage: null, stageIndex: 0, perto: false, tide: { key: 'T1', size: null }, ornaments: [] }, gestures: [],
     ...over,
@@ -1151,7 +1153,7 @@ describe('a memória do aparelho e a telemetria do Bosque', () => {
     await montar();
     fireEvent.click(document.querySelector<HTMLElement>('[data-gesto="aceno"]')!);
     await waitFor(() => expect(guildGesture).toHaveBeenCalled());
-    expect(JSON.stringify(vi.mocked(track).mock.calls)).not.toMatch(/g1|Roda da manhã|ABCD2345|pid-|Ana/);
+    expect(JSON.stringify(vi.mocked(track).mock.calls)).not.toMatch(/g1|Roda da manhã|ABCD2345|a1b2c3d4e5f6a7|Ana/);
   });
 });
 

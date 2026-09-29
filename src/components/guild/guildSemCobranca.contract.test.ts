@@ -261,6 +261,12 @@ describe('fonte da B1 — o palco, o visor e a memória não ordenam nem leem pr
     expect(l).not.toMatch(/\.(name|code|members|size)\b/);
   });
 
+  it('o id opaco do membro (`memberId`) nunca é usado para buscar perfil: a folha e o palco não chamam `player`/perfil', () => {
+    for (const rel of ['components/guild/GuildSheet.tsx', 'utils/groveStage.ts', 'components/guild/GroveVisor.tsx', 'utils/groveLocal.ts']) {
+      expect(fonte(rel), rel).not.toMatch(/action=player|getPlayer|getProfile|getPublicProfile|visitPlayer|community\?action/);
+    }
+  });
+
   it('autoverificação: a régua enxerga um "faltam N" e um sort no palco', () => {
     expect(/\.sort\(/.test(semComentarios2('members.sort((a,b)=>a-b)'))).toBe(true);
     expect(/apareceuHoje/.test(semComentarios2('m.apareceuHoje ? 1 : 0'))).toBe(true);
