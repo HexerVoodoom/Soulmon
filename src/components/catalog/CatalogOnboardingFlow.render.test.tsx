@@ -42,7 +42,7 @@ describe('activitiesFromCatalogChoice', () => {
 
   it('gera uma Activity por item, sempre nível 1, catalogId válido', () => {
     const escolhidos = ACTIVITY_CATALOG.filter((i) => !i.optInOnly).slice(0, 3);
-    const activities = activitiesFromCatalogChoice(escolhidos);
+    const activities = activitiesFromCatalogChoice(escolhidos, true);
     expect(activities).toHaveLength(3);
     for (const a of activities) {
       expect(a.level).toBe(1);
@@ -53,8 +53,19 @@ describe('activitiesFromCatalogChoice', () => {
 
   it('ids gerados são únicos', () => {
     const escolhidos = ACTIVITY_CATALOG.filter((i) => !i.optInOnly).slice(0, 5);
-    const activities = activitiesFromCatalogChoice(escolhidos);
+    const activities = activitiesFromCatalogChoice(escolhidos, true);
     const ids = new Set(activities.map((a) => a.id));
     expect(ids.size).toBe(activities.length);
+  });
+
+  it('nome no idioma do jogador e nível datado desde a criação', () => {
+    const [item] = ACTIVITY_CATALOG.filter((i) => !i.optInOnly);
+    const now = '2026-09-28T12:00:00.000Z';
+    const [pt] = activitiesFromCatalogChoice([item], true, now);
+    const [en] = activitiesFromCatalogChoice([item], false, now);
+    expect(pt.name).toBe(item.name.pt);
+    expect(en.name).toBe(item.name.en);
+    // sem esta data o convite de subir nível nunca aparece (daysAtLevel = 0)
+    expect(pt.catalogLevelSetAt).toBe(now);
   });
 });

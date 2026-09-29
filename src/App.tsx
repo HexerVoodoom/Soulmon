@@ -6412,7 +6412,7 @@ export default function App() {
         onClose={() => setCatalogBrowserOpen(false)}
         language={language}
         onAdd={(item) => {
-          commitHabitCreate(activitiesFromCatalogChoice([item]), TELEMETRY_CREATE_PATH.create_modal);
+          commitHabitCreate(activitiesFromCatalogChoice([item], language === 'pt-BR'), TELEMETRY_CREATE_PATH.create_modal);
           setCatalogBrowserOpen(false);
         }}
         onCreateFromScratch={() => { setCatalogBrowserOpen(false); setCreateModalOpen(true); }}
@@ -6738,7 +6738,7 @@ export default function App() {
               ...withFlag,
               // ACRESCENTA, nunca substitui — nenhuma atividade existente é
               // tocada (decisão do dono, 28/09/2026).
-              activities: [...(prev.activities ?? []), ...activitiesFromCatalogChoice(chosen)],
+              activities: [...(prev.activities ?? []), ...activitiesFromCatalogChoice(chosen, language === 'pt-BR')],
             };
           })}
         />

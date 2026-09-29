@@ -177,14 +177,22 @@ export function CatalogOnboardingFlow({ language = 'en-US', onSkip, onComplete }
 
 /** Constrói as `Activity` a partir dos itens escolhidos — id novo, nível 1,
  *  agenda padrão do nível 1 do item. Não decide nada sobre o resto do save. */
-export function activitiesFromCatalogChoice(items: CatalogItem[]): Array<{
+export function activitiesFromCatalogChoice(
+  items: CatalogItem[],
+  isPt: boolean,
+  nowIso: string = new Date().toISOString(),
+): Array<{
   id: string; name: string; category: CatalogItem['category']; emoji: string;
   steps: never[]; weekDays: number[]; catalogId: string; level: 1;
+  catalogLevelSetAt: string;
   schedule: CatalogItem['levels'][number]['defaultSchedule'];
 }> {
+  // `catalogLevelSetAt` desde a criação: sem ele `catalogLevelSignal` trata o
+  // tempo no nível como 0 e o convite de subir nunca aparece.
   return items.map((item) => ({
     id: genId(),
-    name: item.name.en,
+    name: isPt ? item.name.pt : item.name.en,
+    catalogLevelSetAt: nowIso,
     category: item.category,
     emoji: item.emoji,
     steps: [],
