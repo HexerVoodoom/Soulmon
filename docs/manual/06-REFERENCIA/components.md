@@ -64,7 +64,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 ### `src/components/catalog/CatalogLevelInviteModal.tsx`
 **Dono de:** o convite de subir/descer nível de um item do catálogo (F4, `utils/catalogLevel.ts`). A6 da revisão de psicologia: o convite de descer nunca mostra "descer" nem "Nível 1" (`catalogLevelDownCopy`), botões com peso visual igual.
 **Props principais:** `CatalogLevelInviteModalProps` — `isOpen`, `direction: 'up'|'down'`, `itemName`, `language?`, `onAccept()`, `onDecline()`.
-**Chamado por:** (ainda sem gatilho automático na virada — pendência registrada em `docs/PERGUNTAS-DO-DONO.md`); hoje só `src/components/catalog/CatalogLevelInviteModal.render.test.tsx`.
+**Chamado por:** `src/App.tsx` (intersticial `catalogLevelInvite`, gatilho real via `utils/catalogLevelSignal.ts` → `pickCatalogLevelInviteCandidate` — CAT-7 fechado).
 **Régua:** `src/components/catalog/CatalogLevelInviteModal.render.test.tsx`.
 
 ### `src/components/AccountSection.tsx`

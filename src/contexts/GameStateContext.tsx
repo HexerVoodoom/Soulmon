@@ -105,6 +105,15 @@ export interface Activity {
   catalogId?: string;
   /** Nível 1–3 do item do catálogo. Só tem sentido junto de `catalogId`. */
   level?: 1 | 2 | 3;
+  /** ISO de quando `level` foi definido (onboarding ou aceite de convite).
+   *  Ausente = "não observado" — `catalogLevelSignal` nunca assume tempo que
+   *  não foi visto, então sem isto o item nunca sugere SUBIR (CAT-7,
+   *  docs/PERGUNTAS-DO-DONO.md). Descer não depende deste campo. */
+  catalogLevelSetAt?: string;
+  /** ISO da última vez que a pessoa RECUSOU o convite de "deixar mais leve"
+   *  para este item — cooldown de `LEVEL_DOWN_COOLDOWN_DAYS` antes de
+   *  oferecer de novo (`utils/catalogLevel.ts`). */
+  catalogLevelDeclinedAt?: string;
 }
 
 /**

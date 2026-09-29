@@ -1122,3 +1122,29 @@ mecanismo mais arriscado de editar.
 mas não está ligado a um gatilho automático de constância na virada — hoje é
 só convite manual; o pool tem 28 dos ~60 itens do plano original (ver Fase 6
 do `docs/PLANO-TAREFAS.md`).
+
+### 16.2 Fechamento de CAT-4/7/8 (28/09/2026, rodada 3, mesma sessão)
+
+Três decisões do dono, todas fechadas sem reabertura:
+
+1. **CAT-7 (ligar o gatilho automático): SIM, ligar agora.** Implementado em
+   `src/utils/catalogLevelSignal.ts` — `catalogLevelSignal` calcula a
+   constância real em DUAS janelas (21 dias para subir via
+   `LEVEL_UP_WINDOW_DAYS`, 7 dias para descer), `lowConstancyStreak` conta
+   dias CONSECUTIVOS de baixa constância sem contar dias perdoados (escudo ou
+   ausência sem registro nenhum — a mesma régua de `restConstancy`: o app não
+   inventa dado ruim sobre um dia que só não foi registrado), cooldown de 14
+   dias após uma recusa de "deixar mais leve", e nunca sugere SUBIR em item
+   `optInOnly`. `pickCatalogLevelInviteCandidate` varre `Activity[]` na ORDEM
+   do array (determinístico) e entra na fila única de intersticiais do
+   `App.tsx` como `catalogLevelInvite`, respeitando um teto de **1 convite por
+   dia, app inteiro** (`lastCatalogLevelInviteDayKey`). `Activity` ganhou dois
+   campos opcionais: `catalogLevelSetAt` (quando o nível atual foi fixado —
+   ausente = "não observado", nunca dispara SUBIR por suposição) e
+   `catalogLevelDeclinedAt` (cooldown do convite de descer).
+2. **CAT-4 (expandir o pool): NÃO — fica com 28 itens.** Decisão fechada;
+   não é mais pendência.
+3. **CAT-8 (fundir os dois onboardings): NÃO — mantém separados.** O ritual
+   do Oráculo continua com `soulGoal`/`soulStruggle` em texto livre; o convite
+   do catálogo continua com os seletores de área/dificuldade/força. Decisão
+   fechada; não é mais pendência.

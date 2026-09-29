@@ -301,15 +301,20 @@ pendência antiga:
 | CAT-1 | Onboarding com seletores + starter set + retroativo | **Feito**, sem tocar em `SoulmonOnboarding.tsx`: `CatalogOnboardingFlow.tsx` roda como intersticial de "uma vez só" (`utils/catalogOnboarding.ts`), mesmo mecanismo para novo e antigo. `soulGoal`/`soulStruggle` continuam intocados. |
 | CAT-2 | `CreateModal` → navegador; `EvolveTaskModal` → convite de nível | **Parcial.** `CatalogBrowserModal.tsx` substitui a abertura direta do `CreateModal` pelo "+" (busca, abas, "por que funciona", "Algo que não está aqui?"). O convite de nível é um componente NOVO (`CatalogLevelInviteModal.tsx`, testado) em vez de reaproveitar `EvolveTaskModal` — mas **ainda não tem gatilho automático** ligado à constância real na virada. Ver CAT-7. |
 | CAT-3 | UI dos itens de TCC (aviso + CVV + copy sem promessa) | **Feito**: `CatalogMindNotice.tsx` (A1), copy reescrita (A2, com teste que reprova trata/cura/terapia), itens `optInOnly` com peso 0 na meta (V2) e nunca no starter set automático (V1). |
-| CAT-4 | Pool com 28 de ~60 itens | **Ainda 28.** Não expandido nesta rodada — manteve-se o foco em fechar a revisão de segurança antes de crescer o pool. |
+| CAT-4 | Pool com 28 de ~60 itens | **Decidido pelo dono (28/09/2026, rodada 3): fica com 28.** Não expandir — encerrado, não é mais pendência. |
 | CAT-5 | Simulação de economia + verificação visual | **Feito**: `utils/catalogEconomy.simulation.test.ts` (200 perfis sintéticos) + verificação no navegador (localStorage limpo e save legado, sem erro de console). |
-| CAT-6 | Docs (`PLANO-TAREFAS.md`, `CHANGELOG.md`) | **Feito**: `CHANGELOG.md` criado, `PLANO-TAREFAS.md` Fase 6 e `REGISTRO-DE-DECISOES.md` §16.1 atualizados. |
+| CAT-6 | Docs (`PLANO-TAREFAS.md`, `CHANGELOG.md`) | **Feito**: `docs/CHANGELOG.md` criado (movido da raiz em `7fb869f0`), `PLANO-TAREFAS.md` Fase 6 e `REGISTRO-DE-DECISOES.md` §16.1 atualizados. |
+| CAT-7 | `CatalogLevelInviteModal` não tinha gatilho automático | **Feito (rodada 3, 28/09/2026 — decisão do dono: "ligar agora")**: `utils/catalogLevelSignal.ts` calcula `ratio` real em duas janelas (21 dias para subir via `LEVEL_UP_WINDOW_DAYS`, 7 dias para descer), `lowConstancyStreak` conta dias consecutivos SEM contar dias perdoados (escudo/ausência), cooldown de 14 dias após recusa, nunca sobe em `optInOnly`. `pickCatalogLevelInviteCandidate` varre as atividades de catálogo e entra na fila única de intersticiais do `App.tsx` (`catalogLevelInvite`), no máximo 1 convite por dia (app inteiro, campo `lastCatalogLevelInviteDayKey`). |
+| CAT-8 | Dois mecanismos de onboarding (ritual do Oráculo + convite do catálogo) coexistindo | **Decidido pelo dono (28/09/2026, rodada 3): manter separados.** Não fundir — encerrado, não é mais pendência. |
 
-### O que fica de fato pendente agora
+### Pendências novas desta rodada (nenhuma bloqueante)
 
-| # | Pendência | Por que não decidir sozinho |
-|---|---|---|
-| CAT-7 | `CatalogLevelInviteModal` não tem gatilho automático: hoje é preciso chamar `suggestLevelChange` manualmente com `ratio`/`daysAtLevel`/`lowConstancyDays` calculados por quem invocar — nenhum lugar do `App.tsx` faz esse cálculo por hábito de catálogo ainda. | Calcular `ratio` sobre a janela de 21 dias (`LEVEL_UP_WINDOW_DAYS`) e excluir dias perdoados de `lowConstancyDays` exige tocar `habitRhythm.ts`/a virada — trabalho de regra de jogo, não só de tela; melhor com o dono vendo o cálculo antes de ligá-lo. |
-| CAT-4 | Pool com 28 de ~60 itens do plano original. | Expandir é trabalho do `catalogo-curador` + `catalogo-evidencia` revisando cada item novo com a mesma régua desta sessão (evidência verificada por busca, revisão de psicologia reforçada em itens sensíveis). |
-| CAT-8 | O ritual do Oráculo (`SoulmonOnboarding.tsx`, `soulGoal`/`soulStruggle`) e o convite do catálogo (`CatalogOnboardingFlow`) são dois mecanismos de onboarding que não se sobrepõem, por decisão de risco (ver §16.1). Se o dono preferir um único ritual fundido, é redesenho, não continuação. | Decisão de produto sobre risco vs. elegância de UX — o dono decide se a duplicação de rituais vale a pena. |
+Nenhuma. `pickCatalogLevelInviteCandidate` é determinístico e testado (17
+casos em `catalogLevelSignal.test.ts`); a única simplificação consciente é
+que `daysAtLevel` conta a partir de `catalogLevelSetAt` — hábitos criados
+ANTES desta sessão (via onboarding/navegador das rodadas 1–2) não têm esse
+campo, então nunca vão sugerir SUBIR até o dono aceitar o primeiro convite de
+DESCER ou até o item ser recriado. Isso é intencional (nunca assumir tempo
+não observado) e autolimitante: não há dado incorreto, só uma janela de
+"ainda não elegível" para os poucos hábitos de catálogo já existentes.
 

@@ -89,6 +89,12 @@ const SAVES_HOSTIS: Array<[string, unknown]> = [
   // ninguém no motor lê estes campos ainda (F1/F2), então nenhuma normalização
   // é exigida hoje, só a garantia de que `hydrateSave` não lança.
   ['atividade com catalogId/level de save novo', { activities: [{ id: 'a', weekDays: [0, 1, 2, 3, 4, 5, 6], steps: [], catalogId: 'sono-horario-fixo', level: 2 }], tasks: [] }],
+  // CAT-7: catalogLevelSetAt/catalogLevelDeclinedAt são OPCIONAIS — save sem
+  // eles (todo save antes desta sessão) não pode quebrar, e um valor lixo
+  // também não (o consumidor, `catalogLevelSignal.daysSince`, já trata data
+  // inválida devolvendo 0, mas a hidratação em si nunca deve lançar).
+  ['atividade com catalogLevelSetAt/catalogLevelDeclinedAt lixo', { activities: [{ id: 'a', weekDays: [0, 1, 2, 3, 4, 5, 6], steps: [], catalogId: 'sono-horario-fixo', level: 2, catalogLevelSetAt: 'não é data', catalogLevelDeclinedAt: 12345 }], tasks: [] }],
+  ['lastCatalogLevelInviteDayKey lixo no topo do save', { activities: [], tasks: [], lastCatalogLevelInviteDayKey: 999 }],
   ['atividade com level lixo e catalogId não-string', { activities: [{ id: 'a', weekDays: [0, 1, 2, 3, 4, 5, 6], steps: [], catalogId: 7, level: 'alto' }], tasks: [] }],
   ['tudo negativo/NaN', { activities: [], tasks: [], perfectDays: -3, energyPoints: -1, gamePoints: null, emblems: 'x', totalXP: null }],
 

@@ -187,6 +187,8 @@ import { equilibrarSemana, valeEquilibrar } from './utils/weekBalance';
 import { needsCatalogOnboarding, markCatalogOnboardingSeen } from './utils/catalogOnboarding';
 import { CatalogOnboardingFlow, activitiesFromCatalogChoice } from './components/catalog/CatalogOnboardingFlow';
 import { CatalogBrowserModal } from './components/catalog/CatalogBrowserModal';
+import { CatalogLevelInviteModal } from './components/catalog/CatalogLevelInviteModal';
+import { pickCatalogLevelInviteCandidate, applyLevelChange } from './utils/catalogLevelSignal';
 
 import type { Schedule, HabitAnchor, Effort } from './types/taskModel';
 import {
@@ -1594,20 +1596,38 @@ export default function App() {
   // declare a CONDIÇÃO DE ENTRADA. Nenhum intersticial pede permissão de
   // sistema antes de o app ter entregado alguma coisa.
   // ═══════════════════════════════════════════════════════════════════════════
+  // CAT-7 (docs/PERGUNTAS-DO-DONO.md) — o gatilho REAL do convite de nível de
+  // um item do catálogo. Varre as atividades com `catalogId`, na ORDEM do
+  // array (determinístico — não sorteia qual hábito "vence" quando dois
+  // qualificam no mesmo dia), e para na primeira que `catalogLevelSignal`
+  // sugerir algo. `lastCatalogLevelInviteDayKey` é o teto de **1 convite por
+  // dia** (app inteiro, não por hábito) — checado ANTES de varrer, para não
+  // fazer o trabalho à toa nem oferecer duas vezes no mesmo dia.
+  const catalogLevelInviteCandidate = useMemo(
+    () => pickCatalogLevelInviteCandidate(
+      (gameState.activities ?? []) as any,
+      gameState.habitRhythms,
+      new Date(),
+      (gameState as any).lastCatalogLevelInviteDayKey,
+    ),
+    [gameState.activities, gameState.habitRhythms, (gameState as any).lastCatalogLevelInviteDayKey],
+  );
+
   // F3 do catálogo de atividades (docs/PLANO-CATALOGO-ATIVIDADES.md): o
-  // convite roda no MENOR grau de prioridade da fila — depois de tudo que é
-  // ritual diário (relatório/check-in/sonho/pesadelo) ou pedido explícito
-  // (triagem), porque é um convite de UMA VEZ SÓ (`needsCatalogOnboarding`),
-  // não um ritual recorrente. Mesmo mecanismo serve o jogador NOVO e o
-  // ANTIGO — ver `src/utils/catalogOnboarding.ts`.
-  const interstitial: 'triage' | 'dailyReport' | 'checkIn' | 'dream' | 'nightmare' | 'catalogOnboarding' | 'welcome' =
+  // convite de onboarding roda no MENOR grau de prioridade da fila — depois
+  // de tudo que é ritual diário (relatório/check-in/sonho/pesadelo) ou pedido
+  // explícito (triagem), porque é UMA VEZ SÓ. O convite de nível (CAT-7) vem
+  // logo depois — também não é ritual diário, e o teto de 1/dia já garante
+  // que ele não compete com nada todo santo dia.
+  const interstitial: 'triage' | 'dailyReport' | 'checkIn' | 'dream' | 'nightmare' | 'catalogOnboarding' | 'catalogLevelInvite' | 'welcome' =
     triageTasks ? 'triage'
       : showDailyReport && gameState.lastDayReport ? 'dailyReport'
         : checkInPlanData ? 'checkIn'
           : morningDream ? 'dream'
             : nightmareOpen ? 'nightmare'
               : needsCatalogOnboarding(gameState as any) ? 'catalogOnboarding'
-                : 'welcome';
+                : catalogLevelInviteCandidate ? 'catalogLevelInvite'
+                  : 'welcome';
 
   const { dailyTotal, dailyDone, progress } = useProgressTracking(gameState);
   // Quantos itens de HOJE evitam a perda de coração na virada — regra única em
@@ -6720,6 +6740,44 @@ export default function App() {
               // tocada (decisão do dono, 28/09/2026).
               activities: [...(prev.activities ?? []), ...activitiesFromCatalogChoice(chosen)],
             };
+          })}
+        />
+      )}
+      {interstitial === 'catalogLevelInvite' && catalogLevelInviteCandidate && (
+        <CatalogLevelInviteModal
+          isOpen
+          direction={catalogLevelInviteCandidate.suggestion === 'up' ? 'up' : 'down'}
+          itemName={language === 'pt-BR' ? catalogLevelInviteCandidate.item.name.pt : catalogLevelInviteCandidate.item.name.en}
+          language={language}
+          onAccept={() => setGameState(prev => {
+            const hoje = dayKeyOf(new Date());
+            const nowIso = new Date().toISOString();
+            const alvo = catalogLevelInviteCandidate.activity;
+            const novoNivel = applyLevelChange((alvo as any).level ?? 1, catalogLevelInviteCandidate.suggestion === 'up' ? 'up' : 'down');
+            return {
+              ...prev,
+              lastCatalogLevelInviteDayKey: hoje,
+              activities: (prev.activities ?? []).map((a: any) => a.id === alvo.id
+                ? { ...a, level: novoNivel, catalogLevelSetAt: nowIso, catalogLevelDeclinedAt: undefined }
+                : a),
+            } as any;
+          })}
+          onDecline={() => setGameState(prev => {
+            const hoje = dayKeyOf(new Date());
+            const nowIso = new Date().toISOString();
+            const alvo = catalogLevelInviteCandidate.activity;
+            const isDown = catalogLevelInviteCandidate.suggestion === 'down';
+            return {
+              ...prev,
+              lastCatalogLevelInviteDayKey: hoje,
+              // Recusar "subir" não inicia cooldown (nada de errado em oferecer
+              // de novo assim que a constância seguir alta); recusar "descer"
+              // inicia o cooldown de LEVEL_DOWN_COOLDOWN_DAYS — é o que impede
+              // o convite de "você piorou" reaparecer todo dia.
+              activities: isDown
+                ? (prev.activities ?? []).map((a: any) => a.id === alvo.id ? { ...a, catalogLevelDeclinedAt: nowIso } : a)
+                : prev.activities,
+            } as any;
           })}
         />
       )}

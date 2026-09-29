@@ -756,6 +756,16 @@ Cobertura: **139/139** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 **Chamado por:** `src/App.tsx` (condição de entrada do intersticial `catalogOnboarding`).
 **Régua:** `src/utils/catalogOnboarding.test.ts`.
 
+### `src/utils/catalogLevelSignal.ts`
+**Dono de:** o gatilho REAL do convite de nível (CAT-7, docs/PERGUNTAS-DO-DONO.md) — produz `ratio`/`daysAtLevel`/`lowConstancyDays` a partir do `HabitRhythm` verdadeiro de um hábito de catálogo, para `utils/catalogLevel.ts` decidir o que oferecer.
+**Exports:**
+- `lowConstancyStreak(rhythm, now, limiar, windowDays?)` — dias CONSECUTIVOS com a constância de 7 dias abaixo do limiar, SEM contar dias perdoados (escudo ou ausência sem registro); um dia `done` interrompe a sequência.
+- `catalogLevelSignal(input)` — chama `suggestLevelChange` duas vezes (uma por janela: 21 dias para subir, 7 para descer) e devolve a sugestão real. `daysAtLevel` é 0 quando `levelSetAt` está ausente — nunca assume tempo não observado.
+- `pickCatalogLevelInviteCandidate(activities, habitRhythms, now, lastInviteDayKey)` — a varredura completa: primeira atividade de catálogo (na ORDEM do array) com sugestão pendente, respeitando o teto de 1 convite/dia. `null` se o teto já foi atingido.
+- `applyLevelChange`, `LEVEL_DOWN_COOLDOWN_DAYS` — reexportados de `catalogLevel.ts` para quem só precisa deste módulo.
+**Chamado por:** `src/App.tsx` (intersticial `catalogLevelInvite`).
+**Régua:** `src/utils/catalogLevelSignal.test.ts`.
+
 ### `src/utils/i18n.ts`
 **Dono de:** As traduções PT-BR/EN de toda a UI e o resolvedor de idioma inicial.
 **Exports:**
