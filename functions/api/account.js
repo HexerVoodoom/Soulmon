@@ -546,7 +546,7 @@ function plan(c, saveId) {
       'menções a você na lista de amigos de outros jogadores',
       'inscrições de notificação (push:*/fcm:*) ligadas à sua conta',
       ...(c.coopGroupId ? [`coop:${c.coopGroupId} (sua vaga no grupo)`, coopOfKey(saveId), coopCkKey(c.coopGroupId, saveId), coopFioKey(c.coopGroupId, saveId)] : []),
-      'resgates da Guilda (coopClaim:*) e rodadas da Feira (coopHit:*) ligados à sua conta — os fios que você já firmou ficam no Bosque, anônimos',
+      'resgates da Guilda (coopClaim:*) e rodadas da Feira (coopHit:*) da guilda atual — os de guildas de onde você já saiu foram apagados na saída; se sobrou algum sem vínculo, ele expira sozinho em até 21 dias. Os fios que você já firmou ficam no Bosque, anônimos',
       // #54: o vínculo SteamID ↔ conta. ⚰️ Até 22/09/2026 estas chaves apareciam
       // em `sobrevive` (5 anos, justificativa fiscal que não se aplica a licença).
       ...c.steamLicenseKeys,

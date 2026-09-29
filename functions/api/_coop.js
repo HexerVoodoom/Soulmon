@@ -312,13 +312,16 @@ export async function coopLeave(env, saveId, { exclusao = false, now = new Date(
   await kvOrThrow(env).delete(coopCkKey(lido.id, saveId));
   await kvOrThrow(env).delete(coopFioKey(lido.id, saveId));
   await kvOrThrow(env).delete(coopGestKey(lido.id, saveId));
-  if (exclusao) {
-    // Exclusão de conta (§10.6): também os golpes (semana corrente e anterior).
-    // `coopClaim` não depende do grupo e é apagado por `apagarClaims`.
-    // O `coopHit` vive 21 d: três semanas cobrem tudo o que pode existir.
-    const semanas = [0, 1, 2, 3].map(k => semanaDe(new Date(now.getTime() - k * 7 * 86400000)));
-    await Promise.all(semanas.map(w => kvOrThrow(env).delete(coopHitKey(lido.id, w, saveId))));
-  }
+  // Os golpes (`coopHit`, com o saveId NA CHAVE) saem com a pessoa em TODA
+  // saída, não só na exclusão (M5, L2-backend): o dano de quem saiu já não
+  // conta para a Feira (a soma é dos membros atuais) e resgatar exige estar na
+  // guilda, então nada muda no jogo — e a exclusão, que só alcança a guilda
+  // ATUAL (não há lista de guildas antigas e não se usa `list`), deixa de
+  // prometer apagar o que ficou para trás. O `coopHit` vive 21 d: quatro
+  // semanas cobrem tudo o que pode existir. `exclusao` segue no contrato.
+  void exclusao;
+  const semanas = [0, 1, 2, 3].map(k => semanaDe(new Date(now.getTime() - k * 7 * 86400000)));
+  await Promise.all(semanas.map(w => kvOrThrow(env).delete(coopHitKey(lido.id, w, saveId))));
   // RELEITURA imediatamente antes de gravar (L1-codigo MÉDIO-2): gravar a
   // cópia lida no começo apagava quem tivesse ENTRADO no meio — e, com um
   // membro só, apagava o grupo inteiro por cima da entrada de outra pessoa,

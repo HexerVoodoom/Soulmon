@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { coopKey, coopOfKey, coopCodeKey, lerGrupo, fecharDiasDoBosque, firmarFio, idOpacoDoMembro } from './_coop.js';
+import { coopHitKey, semanaDe, coopKey, coopOfKey, coopCodeKey, lerGrupo, fecharDiasDoBosque, firmarFio, idOpacoDoMembro } from './_coop.js';
 import { onRequest as community } from './community.js';
 import { onRequest } from './guild.js';
 
@@ -180,5 +180,22 @@ describe('B4 — grupo órfão de criação dupla não recebe ninguém', () => {
     expect(e.DIGIAPP_SAVES.store.has(coopKey(gid))).toBe(false);
     expect(e.DIGIAPP_SAVES.store.has(coopCodeKey(code))).toBe(false);
     expect(e.DIGIAPP_SAVES.store.has(coopOfKey(B))).toBe(false);
+  });
+});
+
+describe('M5 — os golpes saem com a pessoa em toda saída', () => {
+  it('saída comum apaga coopHit do titular (4 semanas) e não toca o de outro membro', async () => {
+    const { e, gid } = await guildaDe(2);
+    const agora = new Date();
+    const semanas = [0, 1, 2, 3].map(k => semanaDe(new Date(agora.getTime() - k * 7 * 86400000)));
+    for (const w of semanas) {
+      e.DIGIAPP_SAVES.store.set(coopHitKey(gid, w, B), JSON.stringify({ week: w, days: [], dmg: 5 }));
+      e.DIGIAPP_SAVES.store.set(coopHitKey(gid, w, A), JSON.stringify({ week: w, days: [], dmg: 5 }));
+    }
+    await chamar(e, 'guildLeave', { body: { id: B } });
+    for (const w of semanas) {
+      expect(e.DIGIAPP_SAVES.store.has(coopHitKey(gid, w, B))).toBe(false);
+      expect(e.DIGIAPP_SAVES.store.has(coopHitKey(gid, w, A))).toBe(true);
+    }
   });
 });
