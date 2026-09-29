@@ -15,6 +15,10 @@
 //                                          → { guild }   404 no guild · 400 invalid day · 400 invalid kind · 400 goal not met
 //   POST guildGesture {id, dayKey, kind:'aceno'|'luz'|'descanso'}
 //                                          → { guild }   404 no guild · 400 invalid kind · 429 daily limit
+//   POST guildRaidHit {id, dayKey}         → { landed: true, guild }   404 no guild · 429 daily limit · 409 raid closed
+//   GET  guildRewards ?id=&dayKey=         → { rewards: { pending[], scenes[], trophyOwned } }
+//   POST guildClaim   {id, dayKey, week}   → { claimed: { week, outcome, emblems, trophy } }
+//                                            404 nothing to claim · 409 already claimed · 400 invalid week
 //   POST guildLeave   {id}                 → { ok: true } (sempre; idempotente)
 //   POST guildRename  {id, name}           → { guild }   403 not host · 400 invalid name · 404 no guild
 //   POST guildNewCode {id}                 → { guild }   403 not host · 503 try again · 404 no guild
@@ -26,7 +30,7 @@
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import { kv, kvOrThrow } from './_kv.js';
-import { ensurePid, pidSoLeitura, getProfile, newPid } from './_profile.js';
+import { ensurePid, pidSoLeitura, getProfile, newPid, stagePower } from './_profile.js';
 import {
   COOP_MAX_MEMBERS, COOP_CHECKINS_POR_MEMBRO, PRESENCA_NOMINAL_MAX,
   coopKey, coopOfKey, coopCodeKey, semanaDoDia, diaDoJogador, sortearCodigoLivre,
@@ -34,6 +38,9 @@ import {
   sanitizarNomeDeGuilda,
   STAGE_UNLOCK_DAYS, GUILD_GESTURES, bosqueStageFor, tamanhoDaFloracao, lerFio, gravarFio, firmarFio,
   metaDoFioCumprida, atualizarBosque, lerGestos, coopGestKey, numDia, diaDeNum,
+  resolverFeira, lerGolpes, coopHitKey, COOP_HIT_TTL, raidDamageFor, fenomenoDaSemana, semanaAnterior,
+  ultimoDiaDaSemana, RAID_EMBLEMS, RAID_EMBLEMS_FLOOR, RAID_TROPHY_EVERY, RAID_TROPHY_ID,
+  coopClaimKey, COOP_CLAIM_TTL, coopShellKey, coopScenesKey, lerConjunto, unirConjunto, cenariosAte,
 } from './_coop.js';
 
 const CORS = {
@@ -64,6 +71,9 @@ export const GUILD_ACTIONS = Object.freeze({
   guildCheckin: 'POST',
   guildThread: 'POST',
   guildGesture: 'POST',
+  guildRaidHit: 'POST',
+  guildRewards: 'GET',
+  guildClaim: 'POST',
   guildLeave: 'POST',
   guildRename: 'POST',
   guildNewCode: 'POST',
@@ -134,6 +144,12 @@ export async function vistaDaGuilda(env, g, euSave, hoje = new Date().toISOStrin
   const gestos = await Promise.all(g.members.map(m => lerGestos(env, g.id, m, hoje)));
   const recebidos = new Set(gestos.flatMap((k, i) => (g.members[i] === euSave ? [] : k)));
   const meuFio = eu >= 0 ? fios[eu] : null;
+  // A FEIRA (WPG-4): resolvida na leitura. Sai só o ESTADO (e `ferido`, um
+  // booleano) — nunca HP, dano, quem golpeou nem quantos golpes (LV-G1).
+  const feira = await resolverFeira(env, g, semana, hoje);
+  const anterior = semanaAnterior(hoje);
+  const passada = await resolverFeira(env, g, anterior, ultimoDiaDaSemana(diaDeNum(numDia(hoje) - 7)));
+  const meusGolpes = eu >= 0 ? await lerGolpes(env, g.id, semana, euSave) : { days: [] };
   return {
     id: g.id,
     name: g.name,
@@ -160,6 +176,16 @@ export async function vistaDaGuilda(env, g, euSave, hoje = new Date().toISOStrin
       ornaments: (Array.isArray(g.ornaments) ? g.ornaments : []).map(o => ({ tide: o.tide, size: o.size, day: o.day })),
     },
     gestures: GUILD_GESTURES.filter(k => recebidos.has(k)),
+    raid: {
+      weekKey: semana,
+      phenomenon: fenomenoDaSemana(semana),
+      // A semana corrente só pode estar 'aberta' ou 'dissipada': "recuou" é o
+      // desfecho de uma semana que TERMINOU, e sai em `lastWeek`.
+      state: feira.cleared ? 'dissipada' : 'aberta',
+      ferido: !feira.cleared && feira.dmg * 2 >= feira.hp,
+      lastWeek: passada.cleared ? 'dissipada' : (passada.hitters.length > 0 ? 'recuou' : null),
+      mine: { hitToday: meusGolpes.days.includes(hoje) },
+    },
     progress: Math.min(feitos, target),
     target,
   };
@@ -310,6 +336,101 @@ export async function handleGuild({ request, env }) {
     if (ja.includes(kind)) return erro('daily limit', 429);
     await kvOrThrow(env).put(coopGestKey(g.id, id), JSON.stringify({ day: hoje, kinds: [...ja, kind] }), { expirationTtl: 86400 * 3 });
     return vista(await montar(g, id, hoje));
+  }
+
+  if (action === 'guildRaidHit') {
+    // A FEIRA (WPG-4). Um golpe por pessoa por dia do jogador, a qualquer hora
+    // da semana ISO inteira (G11). NÃO exige fio nem meta (a rodada é gesto),
+    // e NÃO há gate de Vínculo (G15) — só o teto diário.
+    //
+    // O DANO é sorteado AQUI (`crypto`) sobre o ESTÁGIO DECLARADO no perfil
+    // (`profile.stage`, que o próprio cliente grava). Um cliente adulterado que
+    // se declara `ultra` bate ~20 em vez de ~12: o fenômeno da PRÓPRIA guilda
+    // cai um dia antes. Não compra nada que o cliente já não pudesse farmar —
+    // o prêmio é cosmético e Emblemas (que vivem no save do cliente) —, não
+    // entra em ranking e não toca Bosque, coração, Créditos nem evolução.
+    // Aceito (§10.4).
+    //
+    // Escreve SÓ `coopHit:<gid>:<week>:<save>` (a chave do próprio membro):
+    // doze pessoas golpeando ao mesmo tempo escrevem doze chaves e somam doze.
+    // Nunca o blob — por isso o golpe não pode tocar o Bosque (LV-G7).
+    const g = await grupoDe(env, id, semana);
+    if (!g) return erro('no {g}', 404);
+    const antes = await lerGolpes(env, g.id, semana, id);
+    if (antes.days.includes(hoje)) return erro('daily limit', 429);
+    const feira = await resolverFeira(env, g, semana, hoje);
+    if (feira.cleared) return erro('raid closed', 409);
+    const perfil = await getProfile(env, id);
+    const dano = raidDamageFor(stagePower(perfil?.stage));
+    await kvOrThrow(env).put(
+      coopHitKey(g.id, semana, id),
+      JSON.stringify({ week: semana, days: [...antes.days, hoje], dmg: antes.dmg + dano }),
+      { expirationTtl: COOP_HIT_TTL },
+    );
+    return json({ landed: true, [chave]: await montar(g, id, hoje) });
+  }
+
+  if (action === 'guildRewards' || action === 'guildClaim') {
+    // RECOMPENSAS (WPG-5). O servidor registra o DIREITO e o RESGATE; o saldo
+    // de Emblemas é do save (o cliente soma pelo mesmo caminho do Torneio,
+    // `onEarnEmblems`). Só cosmético e Emblemas: nada de coração, Créditos,
+    // energia, perfectDays, Glitchtama nem vantagem de evolução (LV-G6).
+    const g = await grupoDe(env, id, semana);
+    // Semanas que ainda podem ser resgatadas: a corrente (só se dissipada) e as
+    // duas anteriores (o `coopHit` vive 21 d).
+    const candidatas = [semana, semanaAnterior(hoje), semanaAnterior(diaDeNum(numDia(hoje) - 7))];
+    const direito = async (w) => {
+      if (!g) return null;
+      const meus = await lerGolpes(env, g.id, w, id);
+      if (meus.days.length === 0) return null; // só quem deu ≥ 1 golpe
+      const ref = w === semana ? hoje : ultimoDiaDaSemana(meus.days[0]);
+      const f = await resolverFeira(env, g, w, ref);
+      if (w === semana && !f.cleared) return null; // aberta: ainda não há desfecho
+      return { week: w, outcome: f.cleared ? 'dissipada' : 'recuou', emblems: f.cleared ? RAID_EMBLEMS : RAID_EMBLEMS_FLOOR };
+    };
+    const conchas = async () => (await lerConjunto(env, coopShellKey(id))).length;
+
+    if (action === 'guildRewards') {
+      const pending = [];
+      for (const w of candidatas) {
+        if (await kvOrThrow(env).get(coopClaimKey(id, w))) continue;
+        const d = await direito(w);
+        if (d) pending.push(d);
+      }
+      // Cenários de estágio: 7 dias DISTINTOS de fio (LV-G9) libera até o
+      // estágio atual do Bosque. Gravados em `coopScenes:<save>` e FICAM com
+      // quem sai (G12) — sem guilda, devolve o que já foi liberado.
+      let scenes = await lerConjunto(env, coopScenesKey(id));
+      if (g) {
+        const atual = await atualizarBosque(env, g, hoje);
+        const fio = await lerFio(env, g.id, id);
+        if ((fio?.distinctDays ?? 0) >= STAGE_UNLOCK_DAYS) {
+          const liberados = cenariosAte(bosqueStageFor(atual.bosqueProgress).stageIndex);
+          if (liberados.some(s => !scenes.includes(s))) scenes = await unirConjunto(env, coopScenesKey(id), liberados);
+        }
+      }
+      return json({ rewards: { pending, scenes, trophyOwned: (await conchas()) >= RAID_TROPHY_EVERY, trophyId: RAID_TROPHY_ID } });
+    }
+
+    // guildClaim
+    const w = String(body.week ?? '');
+    if (!candidatas.includes(w)) return erro('invalid week', 400);
+    if (await kvOrThrow(env).get(coopClaimKey(id, w))) return erro('already claimed', 409);
+    const d = await direito(w);
+    if (!d) return erro('nothing to claim', 404);
+    // Dois aparelhos ao mesmo tempo (o KV não tem CAS): cada um grava com um
+    // selo aleatório e relê; só quem encontra o PRÓPRIO selo resgatou.
+    const selo = newPid();
+    await kvOrThrow(env).put(coopClaimKey(id, w), JSON.stringify({ at: Date.now(), kind: d.outcome, emblems: d.emblems, selo }), { expirationTtl: COOP_CLAIM_TTL });
+    const gravado = JSON.parse((await kvOrThrow(env).get(coopClaimKey(id, w))) ?? '{}');
+    if (gravado.selo !== selo) return erro('already claimed', 409);
+    let trophy = false;
+    if (d.outcome === 'dissipada') {
+      const antes = await conchas();
+      const depois = (await unirConjunto(env, coopShellKey(id), [w])).length;
+      trophy = depois > antes && depois % RAID_TROPHY_EVERY === 0;
+    }
+    return json({ claimed: { week: w, outcome: d.outcome, emblems: d.emblems, trophy, trophyId: trophy ? RAID_TROPHY_ID : null } });
   }
 
   if (action === 'guildLeave') {

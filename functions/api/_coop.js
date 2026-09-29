@@ -275,7 +275,8 @@ export async function coopLeave(env, saveId, { exclusao = false, now = new Date(
   if (exclusao) {
     // Exclusão de conta (§10.6): também os golpes (semana corrente e anterior).
     // `coopClaim` não depende do grupo e é apagado por `apagarClaims`.
-    const semanas = [semanaDe(now), semanaDe(new Date(now.getTime() - 7 * 86400000))];
+    // O `coopHit` vive 21 d: três semanas cobrem tudo o que pode existir.
+    const semanas = [0, 1, 2, 3].map(k => semanaDe(new Date(now.getTime() - k * 7 * 86400000)));
     await Promise.all(semanas.map(w => kvOrThrow(env).delete(coopHitKey(lido.id, w, saveId))));
   }
   // RELEITURA imediatamente antes de gravar (L1-codigo MÉDIO-2): gravar a
@@ -550,4 +551,151 @@ export async function lerGestos(env, gid, save, day) {
 /** Apaga os resgates (`coopClaim:<save>:<week>`) vivos — exclusão de conta. Sem `list`. */
 export async function apagarClaims(env, saveId, now = new Date()) {
   await Promise.all(semanasDeClaim(now).map(w => kvOrThrow(env).delete(coopClaimKey(saveId, w))));
+  // WPG-5: o contador das Conchas e os cenários liberados também são do titular.
+  await kvOrThrow(env).delete(`coopShell:${saveId}`);
+  await kvOrThrow(env).delete(`coopScenes:${saveId}`);
+}
+
+// ===========================================================================
+// A FEIRA (WPG-4) e as RECOMPENSAS (WPG-5) — `PLANO-GUILDA.md` §3/§7/§10
+//
+// A roda contra um FENÔMENO (D-G4): sem guilda × guilda, sem ranking. O estado
+// da semana está na CHAVE (`coopHit:<gid>:<week>:<save>`, uma por pessoa); o
+// fechamento é resolvido na LEITURA (`coopRaidOk:<gid>:<week>`), sem cron.
+// NADA daqui sai numérico para o cliente: nem HP, nem dano, nem quem golpeou,
+// nem quantos golpes (LV-G1; vetos do guarda). No máximo `ferido: boolean`.
+// ===========================================================================
+
+/** Piso do HP: guilda de 1–2 não fica trivial. */
+export const GUILD_MIN_RAID_MEMBERS = 3;
+/** HP por membro ativo — 60% de presença derruba na sexta (`07` §3). */
+export const RAID_HP_PER_MEMBER = 45;
+export const RAID_DMG_BASE = 10;
+export const RAID_DMG_PER_POWER = 2;
+/** ±20%, sorteado NO SERVIDOR (`crypto`). */
+export const RAID_DMG_JITTER = 0.2;
+/** Um golpe por pessoa por dia do jogador (não reusa `MATCHES_PER_DAY`). */
+export const RAID_ROUNDS_PER_DAY = 1;
+/** Emblemas quando o fenômeno se dissipou; piso quando recuou (G9). */
+export const RAID_EMBLEMS = 4;
+export const RAID_EMBLEMS_FLOOR = 2;
+/** Uma Concha da Maré (decoração, slot `trophy`) a cada 4 Feiras dissipadas com participação. */
+export const RAID_TROPHY_EVERY = 4;
+export const RAID_TROPHY_ID = 'trophy-concha-mare';
+/** Rotação semanal dos quatro fenômenos (`fx-fair-*`). Tempo da Malha, nunca inimigo. */
+export const RAID_PHENOMENA = Object.freeze(['nevoa', 'mare', 'estatica', 'enxame']);
+/** Prefixo dos cenários de estágio do Bosque (`bg-guild-<estágio>`). */
+export const GUILD_SCENE_PREFIX = 'bg-guild-';
+export const COOP_HIT_TTL = 86400 * 21;
+export const COOP_RAIDOK_TTL = 86400 * 60;
+export const COOP_CLAIM_TTL = 86400 * 60;
+
+export const coopRaidOkKey = (gid, week) => `coopRaidOk:${gid}:${week}`;
+/** Contador vitalício das Feiras dissipadas RESGATADAS (conjunto de semanas). */
+export const coopShellKey = save => `coopShell:${save}`;
+/** Cenários `bg-guild-*` já liberados — ficam com quem sai (G12). */
+export const coopScenesKey = save => `coopScenes:${save}`;
+
+/** HP coletivo do fenômeno: `max(ativos, 3) × 45`. */
+export function raidHpFor(ativos) {
+  const n = Math.max(0, Math.floor(Number(ativos) || 0));
+  return Math.max(n, GUILD_MIN_RAID_MEMBERS) * RAID_HP_PER_MEMBER;
+}
+
+/**
+ * Dano de UM golpe: `10 + 2 × stagePower`, ±20%, com `u ∈ [0,1)` vindo de
+ * `crypto.getRandomValues` (o chamador passa `u` só em teste). Inteiro ≥ 1.
+ * O `stagePower` vem do ESTÁGIO DECLARADO no perfil — ver `guild.js` sobre o
+ * que um cliente adulterado consegue com isso.
+ */
+export function raidDamageFor(power, u = sorteio()) {
+  const p = Math.min(5, Math.max(1, Math.floor(Number(power) || 1)));
+  const base = RAID_DMG_BASE + RAID_DMG_PER_POWER * p;
+  const f = 1 - RAID_DMG_JITTER + 2 * RAID_DMG_JITTER * Math.min(Math.max(Number(u) || 0, 0), 0.999999);
+  return Math.max(1, Math.round(base * f));
+}
+
+/** Um uniforme em [0,1) de `crypto` — nunca `Math.random` (o dano não é do cliente). */
+export function sorteio() {
+  return crypto.getRandomValues(new Uint32Array(1))[0] / 2 ** 32;
+}
+
+/** Fenômeno da semana ISO (`YYYY-Www`), determinístico. */
+export function fenomenoDaSemana(week) {
+  const m = /^(\d{4})-W(\d{2})$/.exec(String(week));
+  const n = m ? Number(m[1]) * 53 + Number(m[2]) : 0;
+  return RAID_PHENOMENA[n % RAID_PHENOMENA.length];
+}
+
+/** Os dias ISO (`YYYY-MM-DD`) de segunda a domingo de uma semana, a partir de um dia dela. */
+export function ultimoDiaDaSemana(day) {
+  const n = numDia(day);
+  const dow = (n - SEGUNDA_ZERO) % 7; // 0 = segunda
+  return diaDeNum(n - dow + 6);
+}
+
+/** Normaliza `coopHit`: `{ week, days[], dmg }`. */
+export function normalizarGolpes(r, week) {
+  if (!r || (r.week && r.week !== week)) return { week, days: [], dmg: 0 };
+  const days = Array.isArray(r.days) ? r.days.filter(d => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)) : [];
+  const dmg = Number.isFinite(r.dmg) && r.dmg > 0 ? Math.floor(r.dmg) : 0;
+  return { week, days, dmg };
+}
+
+export async function lerGolpes(env, gid, week, save) {
+  const raw = await kvOrThrow(env).get(coopHitKey(gid, week, save));
+  if (!raw) return normalizarGolpes(null, week);
+  try { return normalizarGolpes(JSON.parse(raw), week); } catch { return normalizarGolpes(null, week); }
+}
+
+/** A marca de semana vencida (`{at, hp, members}`) ou `null`. */
+export async function lerRaidOk(env, gid, week) {
+  const raw = await kvOrThrow(env).get(coopRaidOkKey(gid, week));
+  if (!raw) return null;
+  try { return JSON.parse(raw) ?? { at: 0 }; } catch { return { at: 0 }; }
+}
+
+/**
+ * O estado da Feira de `week`, RESOLVIDO NA LEITURA (§10.5): soma o dano das
+ * chaves pessoais dos membros atuais; se `dano ≥ hp`, grava `coopRaidOk` (valor
+ * constante e idempotente — duas leituras gravam o mesmo). Uma vez gravada, a
+ * semana fica vencida PARA SEMPRE, mesmo que alguém saia e a soma encolha.
+ *
+ * `hp` usa os membros ativos no dia `refDay` (hoje, ou o domingo de uma semana
+ * passada). Uso INTERNO: o retorno tem números e nunca vai ao cliente inteiro.
+ * @returns {Promise<{ week, cleared: boolean, hp: number, dmg: number, hitters: string[] }>}
+ */
+export async function resolverFeira(env, g, week, refDay) {
+  const golpes = await Promise.all(g.members.map(m => lerGolpes(env, g.id, week, m)));
+  const dmg = golpes.reduce((s, h) => s + h.dmg, 0);
+  const hitters = g.members.filter((_, i) => golpes[i].days.length > 0);
+  const fios = await lerFiosDaRoda(env, g);
+  const hp = raidHpFor(membrosAtivos(g, fios, refDay).length);
+  let cleared = !!(await lerRaidOk(env, g.id, week));
+  if (!cleared && dmg >= hp) {
+    await kvOrThrow(env).put(coopRaidOkKey(g.id, week), JSON.stringify({ at: week, hp, members: g.members.length }), { expirationTtl: COOP_RAIDOK_TTL });
+    cleared = true;
+  }
+  return { week, cleared, hp, dmg, hitters };
+}
+
+/** Semana ISO anterior a `day`. */
+export const semanaAnterior = day => semanaDoDia(diaDeNum(numDia(day) - 7));
+
+/** Cenários `bg-guild-*` até o estágio `stageIndex` (1..5). */
+export function cenariosAte(stageIndex) {
+  return BOSQUE_STAGES.slice(0, Math.max(0, Math.min(BOSQUE_STAGES.length, stageIndex))).map(s => GUILD_SCENE_PREFIX + s);
+}
+
+export async function lerConjunto(env, key) {
+  const raw = await kvOrThrow(env).get(key);
+  try { const r = raw ? JSON.parse(raw) : null; return Array.isArray(r?.ids) ? r.ids.filter(x => typeof x === 'string') : []; } catch { return []; }
+}
+
+/** União idempotente (relê antes de gravar); nunca remove. Sem TTL: é conquista. */
+export async function unirConjunto(env, key, novos) {
+  const atual = await lerConjunto(env, key);
+  const uniao = [...new Set([...atual, ...novos])].sort();
+  if (uniao.length !== atual.length) await kvOrThrow(env).put(key, JSON.stringify({ ids: uniao }));
+  return uniao;
 }
