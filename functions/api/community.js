@@ -16,7 +16,9 @@
 //   GET  players   ?search=&limit=      → diretório público
 //   GET  player    ?id=                 → perfil detalhado
 //   GET  opponents ?id=                 → 3 oponentes com pvp habilitado
-//   POST match     {id, opponentId}     → resolve a partida no servidor
+//   POST duelStart {id, opponentId}     → abre o duelo: gasta a partida e sorteia a semente
+//   POST match     {id, opponentId, cheers?, forfeit?} → resolve a partida no servidor
+//                                          (forfeit = desistir do duelo aberto = derrota)
 //   GET  rank      ?season=             → top 50 da season
 //   GET  seasonResult ?season=          → top 3 (para troféus)
 //   POST closeSeason {season, adminKey} → fecha a season: dá troféu (top 3)
@@ -41,7 +43,7 @@ import {
   getProfile, putProfile,
 } from './_profile.js';
 import { COOP_ALIASES, handleGuild } from './guild.js';
-import { duelStats, duelSeed, simulateDuel } from './_duel.js';
+import { duelStats, simulateDuel, DUEL_PENDING_MS } from './_duel.js';
 import { sanitizarNomeDeGuilda } from './_coop.js';
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -301,6 +303,39 @@ async function handleCommunity({ request, env }) {
     return json(auth.reason === 'account-deleted' ? { error: auth.reason, deletedAt: auth.deletedAt } : { error: auth.reason }, authStatus(auth));
   };
 
+  /* Fecha uma partida do Torneio: pontos dos DOIS lados e o contador
+     monotônico da faixa (`lifetimePoints`, WP4.13 — só soma, só em ganho, e
+     mora no PERFIL para sobreviver à virada da season). Dono único da
+     contabilidade: vitória, derrota e desistência passam por aqui, senão a
+     desistência viraria um caminho barato que não paga o mesmo que perder. */
+  const settleMatch = async ({ id, oppSave, me, opp, myRank, won }) => {
+    const season = currentSeason();
+    myRank.points = Math.max(0, myRank.points + (won ? 20 : -8));
+    if (won) myRank.wins += 1; else myRank.losses += 1;
+    await putRank(env, season, id, myRank);
+    if (!oppSave || !opp) return;
+    const oppRank = await getRank(env, season, oppSave);
+    oppRank.points = Math.max(0, oppRank.points + (won ? -4 : 10));
+    if (won) oppRank.losses += 1; else oppRank.wins += 1;
+    await putRank(env, season, oppSave, oppRank);
+    if (won) { me.lifetimePoints = (me.lifetimePoints || 0) + 20; await putProfile(env, id, me); }
+    else { opp.lifetimePoints = (opp.lifetimePoints || 0) + 10; await putProfile(env, oppSave, opp); }
+  };
+
+  /* DESISTÊNCIA = DERROTA. Um duelo aberto (`myRank.pending`) que não chegou ao
+     fim — a pessoa saiu da tela, fechou o app ou deixou passar de
+     `DUEL_PENDING_MS` — é fechado como derrota na PRÓXIMA chamada autorizada.
+     A cota do dia já foi gasta na abertura, então não há como "sair sem
+     custo" de um duelo que se prevê perder. */
+  const forfeitPending = async ({ id, me, myRank }) => {
+    const pend = myRank.pending;
+    if (!pend) return false;
+    myRank.pending = null;
+    const opp = pend.oppSave ? await getProfile(env, pend.oppSave) : null;
+    await settleMatch({ id, oppSave: pend.oppSave, me, opp, myRank, won: false });
+    return true;
+  };
+
   // ── Perfil público (upsert; chamado junto do cloud save) ──────────────────
   if (action === 'profile' && method === 'POST') {
     // Sem isto, qualquer um escreve o perfil público de qualquer conta —
@@ -470,89 +505,119 @@ async function handleCommunity({ request, env }) {
     const matchesLeft = myRank
       ? MATCHES_PER_DAY - (myRank.day === today() ? myRank.matchesToday : 0)
       : MATCHES_PER_DAY;
-    /* Duelo fantasma (`_duel.js`): cada oponente leva a ficha de luta dele e
-       a SEMENTE da partida, para o cliente animar a mesma luta que o `match`
-       vai decidir. A semente depende da partida do dia (`matchesToday`), então
-       o `match` a recalcula e ignora qualquer uma que venha do cliente. */
-    const matchesToday = myRank && myRank.day === today() ? myRank.matchesToday : 0;
+    /* Duelo fantasma (`_duel.js`): cada oponente leva só a ficha de luta dele.
+       A SEMENTE não vai aqui — ela nasce em `duelStart`, depois de a partida
+       ser gasta, para o cliente não simular os três e escolher. */
     const meProfile = id ? await getProfile(env, id) : null;
-    const opponents = pool.slice(0, 3).map(({ profile: p, pub }) => ({
-      ...pub,
-      duel: duelStats(p),
-      duelSeed: id ? duelSeed(id, pub.id, today(), matchesToday) : 0,
-    }));
+    const opponents = pool.slice(0, 3).map(({ profile: p, pub }) => ({ ...pub, duel: duelStats(p) }));
     return json({ opponents, me: { duel: duelStats(meProfile) }, matchesLeft: Math.max(0, matchesLeft) });
   }
 
-  if (action === 'match' && method === 'POST') {
+  /* Valida ator e oponente e devolve o contexto da partida. Compartilhado por
+     `duelStart` e `match` — as duas exigem a mesma autorização e o mesmo
+     oponente; duas cópias divergiriam em silêncio. */
+  const matchContext = async () => {
     const { opponentId } = body;
-    if (!VALID_ID.test(id || '') || !VALID_ID.test(opponentId || '')) return json({ error: 'invalid id' }, 400);
+    if (!VALID_ID.test(id || '') || !VALID_ID.test(opponentId || '')) return { res: json({ error: 'invalid id' }, 400) };
     // A partida credita OS DOIS lados e consome a cota diária de `id`. Sem
     // autorizar o ator, dava para nomear a vítima como `id` e a si mesmo como
     // oponente: +10 pontos e +1 vitória por chamada, queimando a partida da
     // vítima. Repetido, garante o 1º lugar da season sem jogar.
     const denied = await denyUnlessOwner(id);
-    if (denied) return denied;
+    if (denied) return { res: denied };
     // O oponente chega como pid público — o saveId dele nunca sai daqui.
     const oppSave = await saveIdForPublicId(env, opponentId);
-    if (!oppSave) return json({ error: 'opponent unavailable' }, 404);
-    if (id === oppSave) return json({ error: 'cannot fight yourself' }, 400);
+    if (!oppSave) return { res: json({ error: 'opponent unavailable' }, 404) };
+    if (id === oppSave) return { res: json({ error: 'cannot fight yourself' }, 400) };
     const me = await getProfile(env, id);
     const opp = await getProfile(env, oppSave);
-    if (!me?.pvpEnabled) return json({ error: 'pvp disabled' }, 403);
-    if (!opp?.pvpEnabled) return json({ error: 'opponent unavailable' }, 404);
-
-    const season = currentSeason();
-    const myRank = await getRank(env, season, id);
+    if (!me?.pvpEnabled) return { res: json({ error: 'pvp disabled' }, 403) };
+    if (!opp?.pvpEnabled) return { res: json({ error: 'opponent unavailable' }, 404) };
+    const myRank = await getRank(env, currentSeason(), id);
     if (myRank.day !== today()) { myRank.day = today(); myRank.matchesToday = 0; }
+    return { opponentId, oppSave, me, opp, myRank };
+  };
+
+  /* Abre o duelo fantasma (`_duel.js`): consome a cota do dia, guarda o
+     oponente e sorteia a SEMENTE — aqui, DEPOIS do compromisso. Se a semente
+     viesse na lista de oponentes, um cliente editado simularia os três e
+     escolheria o que vence; assim ela só existe depois que a partida já foi
+     gasta. Duelo anterior que ficou aberto vira derrota antes de abrir o novo. */
+  if (action === 'duelStart' && method === 'POST') {
+    const ctx = await matchContext();
+    if (ctx.res) return ctx.res;
+    const { opponentId, oppSave, me, opp, myRank } = ctx;
+    await forfeitPending({ id, me, myRank });
     if (myRank.matchesToday >= MATCHES_PER_DAY) {
-      // Futuro: liberar partidas extras via anúncio (ads). Hoje: bloqueia.
+      await putRank(env, currentSeason(), id, myRank);
       return json({ error: 'daily limit', matchesLeft: 0 }, 429);
+    }
+    const seed = crypto.getRandomValues(new Uint32Array(1))[0];
+    myRank.matchesToday += 1;
+    myRank.pending = { opp: opponentId, oppSave, seed, at: Date.now() };
+    await putRank(env, currentSeason(), id, myRank);
+    return json({
+      seed,
+      me: duelStats(me), opp: duelStats(opp),
+      matchesLeft: MATCHES_PER_DAY - myRank.matchesToday,
+    });
+  }
+
+  if (action === 'match' && method === 'POST') {
+    const ctx = await matchContext();
+    if (ctx.res) return ctx.res;
+    const { opponentId, oppSave, me, opp, myRank } = ctx;
+    const meStats = duelStats(me);
+    const oppStats = duelStats(opp);
+    const opponent = { name: opp.name, petName: opp.petName, stage: opp.stage };
+
+    // Um duelo aberto contra OUTRO oponente fica para trás: é desistência.
+    const pend = myRank.pending;
+    if (pend && pend.opp !== opponentId) await forfeitPending({ id, me, myRank });
+    const open = myRank.pending && myRank.pending.opp === opponentId ? myRank.pending : null;
+
+    // Desistir (o cliente avisa) ou estourar o prazo do duelo = derrota, sem luta.
+    if (open && (body.forfeit === true || Date.now() - (open.at || 0) > DUEL_PENDING_MS)) {
+      myRank.pending = null;
+      await settleMatch({ id, oppSave, me, opp, myRank, won: false });
+      return json({
+        won: false, forfeit: true, myScore: 0, oppScore: 100,
+        points: myRank.points,
+        matchesLeft: MATCHES_PER_DAY - myRank.matchesToday,
+        opponent,
+      });
+    }
+
+    let seed;
+    if (open) {
+      seed = open.seed;           // a semente é a do SERVIDOR; a do cliente nunca existiu
+      myRank.pending = null;
+    } else {
+      // Sem duelo aberto (cliente antigo, que não chama `duelStart`): a partida
+      // abre e fecha numa chamada só, com semente sorteada agora. `forfeit` sem
+      // duelo aberto não custa nada — não há o que desistir.
+      if (body.forfeit === true) return json({ error: 'no open duel' }, 409);
+      if (myRank.matchesToday >= MATCHES_PER_DAY) {
+        // Futuro: liberar partidas extras via anúncio (ads). Hoje: bloqueia.
+        return json({ error: 'daily limit', matchesLeft: 0 }, 429);
+      }
+      seed = crypto.getRandomValues(new Uint32Array(1))[0];
+      myRank.matchesToday += 1;
     }
 
     /* Duelo fantasma: os pets lutam sozinhos, a torcida do dono só SOMA
-       (`_duel.js`). A semente é recalculada aqui — a do cliente é ignorada. */
-    const meStats = duelStats(me);
-    const oppStats = duelStats(opp);
-    const duel = simulateDuel({
-      me: meStats, opp: oppStats,
-      seed: duelSeed(id, opponentId, today(), myRank.matchesToday),
-      cheers: body.cheers,
-    });
+       (`_duel.js`). */
+    const duel = simulateDuel({ me: meStats, opp: oppStats, seed, cheers: body.cheers });
     const won = duel.won;
-    const myScore = Math.round((100 * duel.hpMe) / meStats.hp);
-    const oppScore = Math.round((100 * duel.hpOpp) / oppStats.hp);
-
-    myRank.matchesToday += 1;
-    myRank.points = Math.max(0, myRank.points + (won ? 20 : -8));
-    if (won) myRank.wins += 1; else myRank.losses += 1;
-    await putRank(env, season, id, myRank);
-
-    const oppRank = await getRank(env, season, oppSave);
-    oppRank.points = Math.max(0, oppRank.points + (won ? -4 : 10));
-    if (won) oppRank.losses += 1; else oppRank.wins += 1;
-    await putRank(env, season, oppSave, oppRank);
-
-    /* WP4.13 (achado E5) — a FAIXA passa a ler um contador MONOTÔNICO.
-       Ela lia `rank.points` da season, que desce por TRÊS caminhos: derrota
-       própria (−8), ser sorteado como oponente e perder (−4, sem sequer
-       jogar) e a virada de mês, que zera tudo. Ou seja, a faixa que existe
-       para medir o jogador contra ele mesmo — e cuja regra escrita é
-       "acumular pontos nunca rebaixa" — rebaixava por três motivos, um deles
-       sem participação nenhuma dele.
-       `lifetimePoints` só SOMA, e só em ganho. Fica no PERFIL (não na linha
-       da season) porque é justamente o que precisa sobreviver ao reset. */
-    const ganhoMeu = won ? 20 : 0;
-    const ganhoDele = won ? 0 : 10;
-    if (ganhoMeu) { me.lifetimePoints = (me.lifetimePoints || 0) + ganhoMeu; await putProfile(env, id, me); }
-    if (ganhoDele) { opp.lifetimePoints = (opp.lifetimePoints || 0) + ganhoDele; await putProfile(env, oppSave, opp); }
+    await settleMatch({ id, oppSave, me, opp, myRank, won });
 
     return json({
       won,
-      myScore: Math.round(myScore), oppScore: Math.round(oppScore),
+      myScore: Math.round((100 * duel.hpMe) / meStats.hp),
+      oppScore: Math.round((100 * duel.hpOpp) / oppStats.hp),
       points: myRank.points,
       matchesLeft: MATCHES_PER_DAY - myRank.matchesToday,
-      opponent: { name: opp.name, petName: opp.petName, stage: opp.stage },
+      opponent,
       duel: { events: duel.events, me: meStats, opp: oppStats },
     });
   }

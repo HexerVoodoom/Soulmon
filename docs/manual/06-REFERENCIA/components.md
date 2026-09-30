@@ -366,7 +366,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 ### `src/components/DuelScreen.tsx`
 **Dono de:** a TELA do duelo fantasma do Torneio (30/09/2026) — os pets lutam sozinhos e o dono torce em 3 golpes. Só anima: a regra é de `functions/api/_duel.js`, e quem decide é o servidor (`match`).
 **Exports:** `DuelScreen` (props `me`/`opp`/`seed`/sprites/nomes, `onDone(cheers)`); `cheerQuality(deltaMs)` (1 no alvo, 0 a 400 ms); `CHEER_MS`/`CHEER_TARGET` (o anel).
-**Quem chama:** `TournamentPage` (`fight` abre o duelo quando o servidor manda `duel`/`duelSeed`).
+**Quem chama:** `TournamentPage` (`fight` chama `startDuel` quando o servidor manda `duel`; o × antes do fim chama `leaveDuel` = derrota).
 **Régua:** `src/components/DuelScreen.render.test.tsx`. Nasce muda (R-NOVA).
 
 ### `src/components/DreamDex.tsx`

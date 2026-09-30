@@ -133,7 +133,7 @@ export function DuelScreen({ me, opp, seed, petSprite, oppSprite, petName, oppNa
         title={isPt ? 'Duelo' : 'Duel'}
         sub={`${petName} × ${oppName}`}
         closeLabel={isPt ? 'Sair do duelo' : 'Leave the duel'}
-        onClose={onClose}
+        onClose={() => { if (phase !== 'done') onClose(); }}
         run
       />
       <GameVisor height={80} scene={ARENA_SCENE.bg} label={isPt ? 'Duelo em andamento' : 'Duel in progress'}>
