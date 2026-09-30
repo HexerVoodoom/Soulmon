@@ -9,15 +9,21 @@
 
 ---
 
-## 1. O que aconteceu
+## 1. O que aconteceu (causa JÁ conhecida — não é hipótese)
 
-- O workflow **`CI (typecheck + testes)`** termina em **~4 segundos com falha em TODO commit** —
-  pelo menos desde a execução 634 (`78146c6c`, 30/09/2026), passando por `7a4bf5b`, `16fa385` e
-  `6d44c0f`. Em 4 s nem o `npm ci` roda, e o log do job devolve **HTTP 404**: o runner não chega a
-  executar nada. **Não é defeito de código.**
-- Causa **provável, não verificada**: limite de minutos / cobrança do GitHub Actions na conta, ou
-  Actions desativado no repositório. Onde o dono confere: GitHub → *Settings* → *Billing and plans*
-  (uso de Actions) e o repositório → *Settings* → *Actions* → *General*.
+- **GitHub Actions parado por COBRANÇA desde 16/09/2026.** Anotação do GitHub nos runs:
+  *"recent account payments have failed…"*. Toda execução de todo workflow morre em 3–5 s sem rodar
+  um passo (o log do job devolve **HTTP 404**, porque não há log). Medido em 30/09/2026: **641 runs**
+  do `ci.yml`, **0 `success`**; o último `success` do repositório foi o `docs-sync` de 15/09. Está
+  registrado desde 22/09 em `docs/PERGUNTAS-DO-DONO.md` **#48** (repetida em **#68**), em
+  `docs/PLAY-LANCAMENTO.md` §A.0 e no `STATUS.md`.
+- **Só o dono resolve:** `github.com/settings/billing` (regularizar o meio de pagamento) → depois
+  `workflow_dispatch` de `ci.yml` e `android-build.yml` e ler os logs. Não há correção em código:
+  workflow, testes e artefatos estão íntegros (o `portoes` local passa nos mesmos passos).
+- **Consequência para ARTEFATOS:** o APK debug/`.aab` e o instalador do desktop só existiam como
+  artefato de execução do Actions (`github.com/.../actions/runs/<id>`). Sem runner, **não há artefato
+  novo desde 16/09** — o `.aab` para a Play e o APK com WP0.6/WP5.8/WP2.6 têm de ser gerados na
+  máquina do dono (§2). O `dist/` é commitado e a Cloudflare builda sozinha, então o **web não parou**.
 - Na nuvem os portões locais passaram: `tsc` limpo, 6278 testes verdes e 1 vermelho
   (`tests/convertToWebp.test.ts`, caso "arquivo somente-leitura"). Esse vermelho é do **contêiner**:
   ele roda como root, e root ignora `chmod`. Numa conta comum do Windows deve passar; num
@@ -48,7 +54,7 @@ sozinha no push (`CLAUDE.md` › Deploy). O worker de push continua manual (`wra
    com o remoto (`refusing to merge unrelated histories`); empurrar `HEAD:main` depois da checagem
    evita esse problema.
 4. Se o GitHub recusar o push por **proteção de branch exigindo o check `tsc + vitest`**: isso é
-   do dono (desligar a exigência enquanto o Actions estiver parado, ou consertar o Actions). **Não
+   do dono (desligar a exigência enquanto o Actions estiver parado). Até aqui os pushes na `main` passaram sem essa trava. **Não
    contorne** com push forçado.
 5. O `CLAUDE.md` manda "esperar UMA vez o CI": sem CI, o `portoes` verde É essa espera. Não crie
    loop de checagem.
@@ -56,7 +62,8 @@ sozinha no push (`CLAUDE.md` › Deploy). O worker de push continua manual (`wra
 ## 4. O que está aberto
 
 - **Manual defasado** (24 commits desde `ae366480`): primeira coisa da sessão, `/manter-docs`.
-- **Actions parado**: o dono decide entre consertar (cobrança/limite) ou seguir só local.
+- **Actions parado por cobrança** (#48/#68): só o dono regulariza; até lá, `portoes` é o portão (decisão #77: construir validando local).
+- **Artefatos Android/desktop** não são gerados desde 16/09 — gerar localmente (§2) antes de publicar na Play.
 - **Benchmark**: o hub [`BENCHMARK-E-REFERENCIAS.md`](BENCHMARK-E-REFERENCIAS.md) e a `squad-benchmark`
   nasceram hoje; a lacuna mais urgente é `/squad-benchmark conferir BENCHMARK-COMBATE.md`
   (inteiro de memória).

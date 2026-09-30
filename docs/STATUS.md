@@ -9,12 +9,15 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
-> ## 30/09/2026 — GitHub Actions parado → portões locais
+> ## 30/09/2026 — GitHub Actions: portões locais (`npm run portoes`) e correção do diagnóstico
 >
-> O `CI (typecheck + testes)` aborta em ~4 s em todo commit desde pelo menos `78146c6c` (log 404: o runner
-> nem executa). Não é código. **Depende do dono:** conferir cobrança/limite de Actions ou se Actions está
-> desativado. Enquanto isso, o portão é **`npm run portoes`** (`scripts/portoes.mjs`, os passos do `ci.yml`
-> + guard do manual) e o fluxo está em `docs/HANDOFF-LOCAL-SEM-ACTIONS.md`, com o prompt para a sessão local.
+> Nenhum job do Actions executa passo desde **16/09/2026 (cobrança — #48/#68)**; medido hoje: 641 runs do
+> `ci.yml`, 0 sucesso, todos em 3–5 s, log 404. Não há defeito de workflow, teste ou artefato — **só o dono
+> regulariza** (`github.com/settings/billing`). Uma leitura anterior desta sessão tratou a causa como "provável"
+> e a data como 28/09; ambas estavam erradas, e este bloco as substitui. Entregue: `scripts/portoes.mjs`
+> (`npm run portoes` = os passos do `ci.yml` + guard do manual) e `docs/HANDOFF-LOCAL-SEM-ACTIONS.md` (substituto
+> local de cada workflow, fluxo de merge sem CI, prompt da sessão local). **Sem artefato novo de APK/desktop
+> desde 16/09** — gerar localmente.
 >
 > ## 30/09/2026 — Hub de benchmarking e referências + SQUAD-BENCHMARK
 >
