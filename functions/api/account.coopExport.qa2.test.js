@@ -64,7 +64,7 @@ describe('(4) coop na exclusão', () => {
 
     // O inventário lista a vaga.
     const pedido = await (await onRequest({ request: post(`https://x/api/account?action=delete-request&id=${ID}`), env: e })).json();
-    expect(pedido.plano.apaga).toEqual(expect.arrayContaining([`coop:${gid} (sua vaga no grupo)`, coopOfKey(ID), coopCkKey(gid, ID)]));
+    expect(pedido.plano.apaga).toEqual(expect.arrayContaining([`coop:${gid} (your spot in the group)`, coopOfKey(ID), coopCkKey(gid, ID)]));
 
     const r = await onRequest({ request: post(`https://x/api/account?action=delete-confirm&id=${ID}`, { confirmToken: pedido.confirmToken }), env: e });
     const body = await r.json();

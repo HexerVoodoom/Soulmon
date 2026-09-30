@@ -80,3 +80,11 @@ test("cityLabel includes the state only for Brazilian entries", () => {
   const paris = CITIES.find((c) => c.name === "Paris")!;
   assert.equal(cityLabel(paris), "Paris, FR");
 });
+
+test("world cities display in English by default and in Portuguese on request", () => {
+  const londres = CITIES.find((c) => c.name === "Londres")!;
+  assert.equal(cityLabel(londres), "London, GB");
+  assert.equal(cityLabel(londres, true), "Londres, GB");
+  assert.equal(searchCities("london")[0].name, "Londres");
+  assert.equal(searchCities("londres")[0].name, "Londres");
+});

@@ -4,7 +4,7 @@
     <string name="title_activity_main">Soulmon</string>
     <string name="package_name">com.hexervoodoom.soulmon</string>
     <string name="custom_url_scheme">com.hexervoodoom.soulmon</string>
-    <string name="widget_description">Atalhos rápidos para o Soulmon</string>
+    <string name="widget_description">Quick shortcuts for Soulmon</string>
     <!-- Bosque da Guilda no widget A (docs/NARRATIVA-COPY-GUILDA.md) -->
     <string name="widget_grove_clareira">Clearing</string>
     <string name="widget_grove_ramagem">Boughs</string>

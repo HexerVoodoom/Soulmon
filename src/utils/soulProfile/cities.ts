@@ -153,12 +153,57 @@ export const CITIES: City[] = [
   { name: "Melbourne", region: "", country: "AU", latitude: -37.8136, longitude: 144.9631, timeZone: "Australia/Melbourne" },
   { name: "Auckland", region: "", country: "NZ", latitude: -36.8485, longitude: 174.7633, timeZone: "Pacific/Auckland" },
   { name: "Moscou", region: "", country: "RU", latitude: 55.7558, longitude: 37.6173, timeZone: "Europe/Moscow" },
+  { name: "Hong Kong", region: "", country: "HK", latitude: 22.3193, longitude: 114.1694, timeZone: "Asia/Hong_Kong" },
+  { name: "Jacarta", region: "", country: "ID", latitude: -6.2088, longitude: 106.8456, timeZone: "Asia/Jakarta" },
+  { name: "Manila", region: "", country: "PH", latitude: 14.5995, longitude: 120.9842, timeZone: "Asia/Manila" },
+  { name: "Delhi", region: "", country: "IN", latitude: 28.7041, longitude: 77.1025, timeZone: "Asia/Kolkata" },
+  { name: "Karachi", region: "", country: "PK", latitude: 24.8607, longitude: 67.0011, timeZone: "Asia/Karachi" },
+  { name: "Dhaka", region: "", country: "BD", latitude: 23.8103, longitude: 90.4125, timeZone: "Asia/Dhaka" },
+  { name: "Osaka", region: "", country: "JP", latitude: 34.6937, longitude: 135.5023, timeZone: "Asia/Tokyo" },
+  { name: "Ho Chi Minh", region: "", country: "VN", latitude: 10.8231, longitude: 106.6297, timeZone: "Asia/Ho_Chi_Minh" },
+  { name: "Riade", region: "", country: "SA", latitude: 24.7136, longitude: 46.6753, timeZone: "Asia/Riyadh" },
+  { name: "Viena", region: "", country: "AT", latitude: 48.2082, longitude: 16.3738, timeZone: "Europe/Vienna" },
+  { name: "Estocolmo", region: "", country: "SE", latitude: 59.3293, longitude: 18.0686, timeZone: "Europe/Stockholm" },
+  { name: "Varsóvia", region: "", country: "PL", latitude: 52.2297, longitude: 21.0122, timeZone: "Europe/Warsaw" },
+  { name: "Atenas", region: "", country: "GR", latitude: 37.9838, longitude: 23.7275, timeZone: "Europe/Athens" },
+  { name: "Milão", region: "", country: "IT", latitude: 45.4642, longitude: 9.19, timeZone: "Europe/Rome" },
+  { name: "Manchester", region: "", country: "GB", latitude: 53.4808, longitude: -2.2426, timeZone: "Europe/London" },
+  { name: "Houston", region: "TX", country: "US", latitude: 29.7604, longitude: -95.3698, timeZone: "America/Chicago" },
+  { name: "Seattle", region: "WA", country: "US", latitude: 47.6062, longitude: -122.3321, timeZone: "America/Los_Angeles" },
+  { name: "Montreal", region: "QC", country: "CA", latitude: 45.5017, longitude: -73.5673, timeZone: "America/Toronto" },
+  { name: "Havana", region: "", country: "CU", latitude: 23.1136, longitude: -82.3666, timeZone: "America/Havana" },
+  { name: "Quito", region: "", country: "EC", latitude: -0.1807, longitude: -78.4678, timeZone: "America/Guayaquil" },
+  { name: "Acra", region: "", country: "GH", latitude: 5.6037, longitude: -0.187, timeZone: "Africa/Accra" },
+  { name: "Adis Abeba", region: "", country: "ET", latitude: 9.03, longitude: 38.74, timeZone: "Africa/Addis_Ababa" },
+  { name: "Casablanca", region: "", country: "MA", latitude: 33.5731, longitude: -7.5898, timeZone: "Africa/Casablanca" },
+  { name: "Brisbane", region: "", country: "AU", latitude: -27.4698, longitude: 153.0251, timeZone: "Australia/Brisbane" },
+  { name: "Perth", region: "", country: "AU", latitude: -31.9505, longitude: 115.8605, timeZone: "Australia/Perth" },
 ];
 
-export function cityLabel(city: City): string {
+/** English names for the entries whose Portuguese spelling differs. `name`
+ *  stays the stable (Portuguese) key; English is the base for display. */
+const NAME_EN: Record<string, string> = {
+  "Lisboa": "Lisbon", "Londres": "London", "Berlim": "Berlin", "Roma": "Rome",
+  "Amsterdã": "Amsterdam", "Zurique": "Zurich", "Nova York": "New York",
+  "Cidade do México": "Mexico City", "Montevidéu": "Montevideo", "Assunção": "Asunción",
+  "Bogotá": "Bogotá", "Tóquio": "Tokyo", "Pequim": "Beijing", "Xangai": "Shanghai",
+  "Seul": "Seoul", "Singapura": "Singapore", "Nova Délhi": "New Delhi", "Istambul": "Istanbul",
+  "Nairóbi": "Nairobi", "Joanesburgo": "Johannesburg", "Cidade do Cabo": "Cape Town",
+  "Moscou": "Moscow", "Jacarta": "Jakarta", "Riade": "Riyadh", "Viena": "Vienna",
+  "Estocolmo": "Stockholm", "Varsóvia": "Warsaw", "Atenas": "Athens", "Milão": "Milan",
+  "Acra": "Accra", "Adis Abeba": "Addis Ababa",
+};
+
+/** Display name: English by default, Portuguese when `isPt`. */
+export function cityName(city: City, isPt = false): string {
+  return isPt ? city.name : (NAME_EN[city.name] ?? city.name);
+}
+
+export function cityLabel(city: City, isPt = false): string {
+  const name = cityName(city, isPt);
   return city.region
-    ? `${city.name} - ${city.region}, ${city.country}`
-    : `${city.name}, ${city.country}`;
+    ? `${name} - ${city.region}, ${city.country}`
+    : `${name}, ${city.country}`;
 }
 
 function fold(value: string): string {
@@ -178,10 +223,11 @@ export function searchCities(query: string, limit = 8): City[] {
   if (!needle) return [];
   return CITIES.map((city) => {
     const name = fold(city.name);
-    const label = fold(cityLabel(city));
+    const nameEn = fold(cityName(city));
+    const label = fold(cityLabel(city, true)) + " " + fold(cityLabel(city));
     let rank = -1;
-    if (name === needle) rank = 0;
-    else if (name.startsWith(needle)) rank = 1;
+    if (name === needle || nameEn === needle) rank = 0;
+    else if (name.startsWith(needle) || nameEn.startsWith(needle)) rank = 1;
     else if (label.includes(needle)) rank = 2;
     return { city, rank };
   })

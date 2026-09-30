@@ -1,7 +1,7 @@
 {
   "short_name": "Soulmon",
   "name": "Soulmon",
-  "description": "Ela cresce com o seu dia. Hábitos e tarefas viram cuidado, evolução e história — nunca cobrança.",
+  "description": "Grows with your day. Habits and tasks become care, evolution and story — never nagging.",
   "icons": [
     {
       "src": "/favicon-192x192.png",
@@ -26,7 +26,7 @@
     "lifestyle",
     "games"
   ],
-  "lang": "pt-BR",
+  "lang": "en",
   "dir": "ltr",
   "scope": "/",
   "prefer_related_applications": false

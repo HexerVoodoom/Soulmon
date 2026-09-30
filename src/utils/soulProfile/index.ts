@@ -52,7 +52,7 @@ export { SIGNS, SIGN_ELEMENT, SIGN_MODALITY, SIGN_POLARITY } from './astrology/t
 export { computeNumerology, reduce, normalizeName } from './numerology';
 export type { NumerologyMap, NumberResult } from './numerology';
 
-export { CITIES, cityLabel, searchCities } from './cities';
+export { CITIES, cityLabel, cityName, searchCities } from './cities';
 export type { City } from './cities';
 
 export { computeDominantClassElements } from './derivedElements';

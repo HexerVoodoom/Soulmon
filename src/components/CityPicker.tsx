@@ -39,11 +39,11 @@ interface CityPickerProps {
 }
 
 export function CityPicker({ value, onChange, isPt, inputStyle, optionStyle = choiceStyle, inputClass, optionClass }: CityPickerProps) {
-  const [query, setQuery] = useState(value ? cityLabel(value) : '');
+  const [query, setQuery] = useState(value ? cityLabel(value, isPt) : '');
   const [touched, setTouched] = useState(false);
 
   const matches = useMemo(() => (touched ? searchCities(query, 6) : []), [query, touched]);
-  const showList = touched && !!query.trim() && !(value && cityLabel(value) === query);
+  const showList = touched && !!query.trim() && !(value && cityLabel(value, isPt) === query);
 
   return (
     <div>
@@ -80,10 +80,10 @@ export function CityPicker({ value, onChange, isPt, inputStyle, optionStyle = ch
                 style={optionStyle(false)}
                 onClick={() => {
                   onChange(city);
-                  setQuery(cityLabel(city));
+                  setQuery(cityLabel(city, isPt));
                 }}
               >
-                {cityLabel(city)}
+                {cityLabel(city, isPt)}
               </button>
             ))
           )}

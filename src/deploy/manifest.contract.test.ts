@@ -24,7 +24,7 @@ describe('manifest.json', () => {
     expect(m.short_name).toBe('Soulmon');
   });
 
-  it('description == <meta name="description"> do index.html (PT)', () => {
+  it('description == <meta name="description"> do index.html (EN)', () => {
     const meta = /<meta name="description" content="([^"]+)"/.exec(html)?.[1];
     expect(meta).toBeDefined();
     expect(m.description).toBe(meta);
@@ -38,7 +38,7 @@ describe('manifest.json', () => {
    * superfície (limite de caracteres da loja); a **tagline** não.
    * Canonizada também em `docs/PLAY-FICHA.md` §0b.
    */
-  const TAGLINE_PT = 'Ela cresce com o seu dia.';
+  const TAGLINE_PT = 'Grows with your day.';
 
   it('#70 — `meta description`, `og:description` e o manifesto abrem com a tagline ÚNICA', () => {
     const meta = /<meta name="description" content="([^"]+)"/.exec(html)?.[1];
@@ -63,7 +63,7 @@ describe('manifest.json', () => {
     expect(metaLight?.toLowerCase()).toBe(token!.toLowerCase());
   });
 
-  it('lang do manifesto é pt-BR, como a description', () => {
-    expect(m.lang).toBe('pt-BR');
+  it('lang do manifesto é en, como a description', () => {
+    expect(m.lang).toBe('en');
   });
 });

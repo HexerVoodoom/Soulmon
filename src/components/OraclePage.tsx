@@ -17,6 +17,7 @@ import { traitLabels, traitLevelLabels, jungAxisLabels } from '../utils/soulProf
 import { TRAIT_DIMENSIONS, JUNG_AXES } from '../utils/soulProfile/personality/types';
 import type { Answers as SoulAnswers } from '../utils/soulProfile/personality/types';
 import { cityLabel, type City } from '../utils/soulProfile/cities';
+import { signLabel } from '../utils/soulProfile/astrology/labels';
 import type { SoulProfile } from '../utils/soulProfile/profile';
 import { CityPicker } from './CityPicker';
 import { SoulTestItem, itemPrompt } from './SoulTestItem';
@@ -93,7 +94,7 @@ export function OraclePage({ language = 'en-US', initialDebugMode = false }: Ora
   const [answers, setAnswers] = useState<SoulAnswers>(saved?.testAnswers ?? {});
   const [soulProfile, setSoulProfile] = useState<SoulProfile | undefined>(saved?.soulProfile);
   const [revealing, setRevealing] = useState(false);
-  const birthPlace = birthCity ? cityLabel(birthCity) : (saved?.birthPlace ?? '');
+  const birthPlace = birthCity ? cityLabel(birthCity, isPt) : (saved?.birthPlace ?? '');
   const [prefs, setPrefs] = useState<OraclePreferences>(saved?.preferences ?? {});
   const [petDescription, setPetDescription] = useState(saved?.petDescription ?? '');
 
@@ -635,7 +636,7 @@ export function OraclePage({ language = 'en-US', initialDebugMode = false }: Ora
                   {/* A Lua é o terceiro do "big three" e só o mapa real tem —
                       Sol e Ascendente já aparecem acima. */}
                   <div className={titleCls}>
-                    🌙 {isPt ? 'Lua em' : 'Moon in'} <strong>{soulProfile.astrology.bigThree.moon}</strong>
+                    🌙 {isPt ? 'Lua em' : 'Moon in'} <strong>{signLabel(soulProfile.astrology.bigThree.moon, isPt)}</strong>
                   </div>
                   <div className={mutedCls}>
                     {isPt ? 'Casas' : 'Houses'}: {soulProfile.astrology.houseSystem === 'placidus' ? 'Placidus' : (isPt ? 'Signos Inteiros' : 'Whole Sign')}

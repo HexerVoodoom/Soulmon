@@ -444,7 +444,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   // `OracleInput` sempre teve (e o que os perfis já salvos guardam) — passa a
   // ser o rótulo legível da cidade escolhida.
   const [birthCity, setBirthCity] = useState<City | null>(draft?.birthCity ?? null);
-  const birthPlace = birthCity ? cityLabel(birthCity) : '';
+  const birthPlace = birthCity ? cityLabel(birthCity, isPt) : '';
   const [timeUnknown, setTimeUnknown] = useState(draft?.timeUnknown ?? false);
   /** As 6 perguntas do ritual — todo mundo responde. */
   const [answers, setAnswers] = useState<Record<string, string>>(draft?.answers ?? {});

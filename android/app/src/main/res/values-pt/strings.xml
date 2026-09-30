@@ -1,5 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
+    <string name="widget_description">Atalhos rápidos para o Soulmon</string>
     <!-- Bosque da Guilda no widget A (docs/NARRATIVA-COPY-GUILDA.md) -->
     <string name="widget_grove_clareira">Clareira</string>
     <string name="widget_grove_ramagem">Ramagem</string>
