@@ -56,6 +56,7 @@ Fase 1 (`design/INVENTARIO-WIREFRAMES.md`).
 | Pasta | Qtd · formato | Mapa | Fluxo |
 |---|---|---|---|
 | `soulmon/bg/dungeon-6..10`, `tournament-night`, `tournament-final`, `minigame-dino`, `minigame-rps` | 9 · **1080×1920** (formato certo) | `dungeonScenes.ts`, `RPSGame.tsx` | Jogos |
+| `soulmon/bg/dungeon-classic-{retro,vhs,sol,crt,glitch}` | 5 · **1080×1920** RGB (rodada 3 extras v3, instaladas 30/09/2026) | `DUNGEON_SCENES` (`dungeonScenes.ts`) | Jogos (Masmorra) — substituem os 5 clássicos em gradiente CSS; fonte `E:/Soulmon-assets/out/rodada3/extras/final/` (`MANIFEST.md` com sha256) |
 | `soulmon/bg/dungeon-1..5`, `tournament.png` | 6 · **960×540** (formato antigo, deitado) | `dungeonScenes.ts` | Jogos — ⚠️ **inconsistência**: 5 andares deitados + 5 em pé; `background-size: cover` corta ~70% dos deitados (achado §11 do `04`) |
 | `backgrounds/bg-attic … bg-swamp` | 8 · **1200×648** (pet-box da loja, formato certo) | `PET_BACKGROUNDS` (`utils/backgrounds.ts`) | Loja (`CenariosMobilias`), Home (palco do pet) |
 | `backgrounds/bg-gameboy`, `bg-matrix`, `bg-ocean` | 3 · **800×800** (formato antigo, `setting:'void'`) | idem | Loja — ⚠️ cortam nas laterais |

@@ -56,6 +56,7 @@ recortar por chroma-key (`chroma-key.mjs`) — nunca pedir "transparent PNG".
 
 ### Tem
 - 9 cenas 1080×1920: `dungeon-6..10`, `tournament-night`, `tournament-final`, `minigame-dino`, `minigame-rps` (`src/assets/soulmon/bg/`, `dungeonScenes.ts`).
+- 5 cenas 1080×1920 `dungeon-classic-{retro,vhs,sol,crt,glitch}` — os andares clássicos de `DUNGEON_SCENES`, que eram gradiente CSS (rodada 3 extras v3, instaladas 30/09/2026, §8 I9).
 - 8 pet-box 1200×648: attic, arcade, library, shrine, rooftop, cloudsea, observatory, swamp (`src/assets/backgrounds/`, `PET_BACKGROUNDS`).
 - 1 fundo da Home: `home-scene-1547.png`.
 - Guardados (não instalar): `evolution-ritual`, `evolution-ultra` (cerimônia é vídeo); `entrega3/` (dia — descartado, D4).
@@ -247,6 +248,7 @@ Uso: `Fora do app › OverlayPrincipal` — rótulo do botão Carinho (hoje 🫶
 | I6 | `progress/` reescalado | `soulmon/progress/` (1×) | HUD | ⏳ com o canvas Sistema (A5/A6 já entregues em `hudArt.ts`) |
 | I7 | `branches/` recortado (12) | `soulmon/lines/` | `DUNGEON_LINE_SPRITES` (9 linhas) | ✅ 15/09 (`c11dc49d`) |
 | I8 | `E:/scenery/bg-circuit-tile.png` | `soulmon/` | textura do visor (`A14`) | ⏳ opcional |
+| I9 | `E:/Soulmon-assets/out/rodada3/extras/final/dungeon-classic-{retro,vhs,sol,crt,glitch}.png` (5 · 1080×1920 RGB, v3; sha256 conferido contra `extras/MANIFEST.md`) | `soulmon/bg/` | `DUNGEON_SCENES` (`dungeonScenes.ts`) — substitui os 5 clássicos em gradiente CSS (dois magenta). Nomes EN/PT: Floating Garden/Jardim Flutuante, Terrace of Two Suns/Terraço dos Dois Sóis, Broken Observatory/Observatório Partido, Mirror Lake/Lago-Espelho, Fractured Archipelago/Arquipélago Fraturado; `accent` teal/cobre; `bg` = `url(...) center/cover <cor média>` | ✅ 30/09 (branch `feat/arte-masmorras-classicas`) — cenas não são persistidas (sem id no save); WebP 77–96 KB no `dist/` |
 
 Regras do instalador: fonte = arquivo canônico atual (nunca backup); `CACHE_VERSION` em `public/sw.js`; `npx vitest run` (conferir `Test Files`, não só `Tests`); commit por caminho; `docs/Attributions.md` intocado (arte própria).
 
