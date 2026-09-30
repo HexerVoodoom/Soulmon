@@ -1,6 +1,6 @@
 {
-  "sha": "ae3664809baa5e687b437b15a3978f0ba4a09ab8",
+  "sha": "5edfcfbabaa58daa062ff30211cf590b387beda1",
   "data": "30/09/2026",
-  "por": "doc-mantenedor (/manter-docs desde 8e6d0d9a: admin/GM, corvinho, mapas internos, renomeio dos caminhos, widget)",
+  "por": "doc-mantenedor (/manter-docs auto, à mão na sessão: delta ae366480..5edfcfba — inglês primeiro, três prédios de Jogos, duelo fantasma, portões locais, squad-benchmark)",
   "nota": "Escrito pelo doc-mantenedor ao fechar cada sincronização. Lido por scripts/docs-delta.mjs e pelo hook de sessão. Nunca edite à mão."
 }

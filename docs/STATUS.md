@@ -9,6 +9,24 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 30/09/2026 — manual sincronizado com `5edfcfba` (`/manter-docs`, à mão: agentes `doc-*` não registrados na sessão)
+>
+> Delta `ae366480..5edfcfba` (26 commits). Docs tocados e carimbados `verificado em 30/09/2026`: 01, 02, 03, 04, 05, 07, 08, 09, 10, 11, 12,
+> 00-MAPA e `06-REFERENCIA/{api-workers,components,hooks-contexts-types,utils}`. Redatores e verificadores foram subagentes gerais com a
+> definição `doc-*` como papel; o MAPA, o GLOSSARIO e o COMO-MANTER foram verificados pelo mantenedor (sem verificador independente).
+> `docs/manual/.sincronizado.json` = `5edfcfba`. Divergências novas registradas:
+>
+> - ⚠️ **Anfitrião do Refúgio: Boio × Bobbi** — `REGISTRO-DE-DECISOES.md` §5.6 e os blocos de 30/09 deste STATUS dizem *Boio*; o código
+>   (`LOT_NPC_VOICE['jogos:refugio']` em `src/utils/areaNpcVoice.ts`) e o §14.6 dizem *Bobbi*. O código vence; REGISTRO §5.6 e STATUS ficam a corrigir (dono do texto).
+> - ⚠️ **"641 runs, 0 sucesso" (bloco do Actions, abaixo, e `HANDOFF-LOCAL-SEM-ACTIONS.md` §1) está impreciso**: `gh run list --workflow ci.yml --limit 1000`
+>   → 642 runs, 158 `success` antes de 16/09 e **294 runs, 0 `success` desde 16/09**. A conclusão (parado desde 16/09) não muda; o manual já traz o número certo.
+> - ⚠️ `CLAUDE.md` ainda diz que o `ci.yml` e o `android-build.yml` rodam no push (CI, artefato do APK no Actions) e não cita `npm run portoes`; com o Actions parado o portão é o local (05 §9, 08 §3.3–§3.4).
+> - ⚠️ `CLAUDE.md` (linha da Masmorra) ainda cita o cenário `Tamagotchi`; hoje é `Retro Pet` (`DUNGEON_SCENES` em `src/utils/dungeonScenes.ts`).
+> - ⚠️ Este STATUS (bloco do duelo fantasma) cita "ideia C" de `BENCHMARK-COMBATE.md`; esse doc numera as ideias 1–7 e o equivalente é a ideia 3 ("Torcer em vez de comandar", §6).
+> - Em aberto, sem edição (código/teste): títulos de `SettingsPage.sobre.render.test.tsx` e `TermsUpdateBanner.render.test.tsx` ainda falam em "âncora #en" (as asserções já usam `#pt`);
+>   o comentário de topo do `TournamentPage.tsx` ("não há um único frame de combate") está defasado pelo duelo fantasma; `duelStats` usa literais (70, 6, 10, 1,2, 50) sem constante nomeada (R3);
+>   `docs/som/PROPOSTA-SOM-MINIJOGOS-2026-09-30.md` diz "nenhum evento ganha som" e também "2 candidatos" no §2.
+
 > ## 30/09/2026 — GitHub Actions: portões locais (`npm run portoes`) e correção do diagnóstico
 >
 > Nenhum job do Actions executa passo desde **16/09/2026 (cobrança — #48/#68)**; medido hoje: 641 runs do

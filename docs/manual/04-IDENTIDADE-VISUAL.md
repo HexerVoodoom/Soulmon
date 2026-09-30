@@ -1,7 +1,7 @@
 # Identidade visual e sonora do Soulmon
 
 > **Dono:** doc-redator-identidade · **Data:** 30/09/2026 (sincronização `8e6d0d9a..ae366480`: §8.2-A NOVO corvinho e as 11 formas; tokens `--sm-attr-*` renomeados); anterior: 29/09/2026 (sincronização da Guilda, delta `38c3ccb5..b657a340`: §7.5 NOVO — placeholders do Bosque e da Feira, ids de arte pendentes, dois keyframes novos); anterior: 27/09/2026 (sincronização do delta `c510c7e4..2336e4e7`: §8.3 o corte do bestiário e o dono do critério; §8.4 o nome da inspiração no `imagePrompt`); anterior: 27/09/2026 (sincronização do delta `78ef5367..c510c7e4`, correções pós-F3 da minimal-ui: §5.1 ganha o TERCEIRO caminho de ícone — `PixelIcon` + o pacote `assets/soulmon/icones-ui/` (nove nomes, sem `fill`/`weight`/`tone`), a escala compartilhada e a moldura de texto `chip-moeda`; anterior: 22/09/2026 (3ª sincronização do dia, delta `cd66940f..cf6315e1`: §10.0 a tagline ÚNICA travada por contrato (#70) e §10.1 a `description` do manifesto; §3 (réguas) ganhou a nota do `UndoToast` sem `className` — desenho inline por token, decisão e não descuido; anterior: 2ª sincronização do dia, delta `a6c1cd8a..592e2c14`, QA Rodada 2: §10.2 o ramo Android do gate exige `; wv)` e a CSP por igualdade; o flash de evolução do `CompanionHUD` passou a usar `--sm2-viewport-bg`/`--sm2-viewport-ink` — ⚰️ `#2dd4bf` sobre branco/70, ~1,6:1 — sem seção própria aqui, registrado no `06-REFERENCIA/components.md`)) · **Estado:** verificado em 27/09/2026 por doc-verificador (delta `78ef5367..c510c7e4` — §5.1 conferida contra `src/components/ui/PixelIcon.tsx`, `src/assets/soulmon/icones-ui/index.ts` (`UI_ICON_ART` com 9 chaves, `CHIP_MOEDA_SLICE` 18/48/18/48), `iconScale.contract.test.ts` (tag `PixelIcon` no regex) e `iconInventory.contract.test.ts` (`mapa` no `NAO_SAO_ICONES`)); anterior: verificado em 24/09/2026 por doc-verificador (HEAD `78ef5367` — §1 `.sm-bottom-nav-label` ⚰️ e `navRotulo.contract.test.ts` medindo `areaLabel`; §2 `--sm-corner-h: 68px` (`CornerLink` 56px a `--sm2-space-3` = 12px), `.sm-nav-btn` com `--sm-muted`, `--sm-px-cyan` em `.sm-px-chat-btn`/`-send`, `--sm-px-copper` em `.sm-px-field`; §5.4 `.sm3-cuidado` (55%/22%/`--sm2-radius-md`, `.sm3-cuidado-inerte` tracejado) e o CSS de `.sm2-corner-link`/`.sm2-area-back`/`[data-map-area]`; §6 `@keyframes sm3-blink`/`sm3-sobe` e o movimento reduzido de `.sm3-term-cur`/`.sm3-mais`/`.sm3-mochila` — tudo em `src/index.css`, sem correção); anterior: verificado em 22/09/2026 por doc-verificador (delta `cd66940f..cf6315e1` — `index.html`, `public/manifest.json`, os dois casos `#70` de `src/deploy/manifest.contract.test.ts` e `src/components/UndoToast.tsx` conferidos); anterior: verificado em 22/09/2026 por doc-verificador (delta `a6c1cd8a..592e2c14` — `index.html`, `public/_headers` e `CompanionHUD.tsx` conferidos; anterior no mesmo dia: delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §10.1 `name`/`description` do `manifest.json` e §10.2 gate por plataforma conferidos contra `public/manifest.json`, `index.html`, `src/deploy/manifest.contract.test.ts`; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §9 linha da trilha (⚰️ `SettingsModal`) e §10.2 gate de WebView conferidos por grep; `.sm2-notice` do banner de termos não é classe nova (`grep -n "^.sm2-notice" src/index.css`); anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: delta `dc72579e..9875477b`, conferido em `5ac3d351`: rodada 2 da SQUAD-ARTE, SQUAD-SOM retomada, superfície de suporte do chat) · §9 verificado em 21/09/2026 por doc-verificador (delta `5ac3d351..8d318529`: S16, trilha em duas camadas, escolha do dono nos 3 eventos longos, chaves na `SettingsPage`)
-> **Estado:** verificado em 30/09/2026 por doc-mantenedor (sem verificador independente nesta sessão: verificação própria, símbolo a símbolo por `grep` contra o fonte — `_admin.js`, `gmTools.ts`, `corvoAdocao.ts`, `AreaTopBar.tsx`, `npcScale.ts`, `attributes.ts`; só as seções tocadas; delta `8e6d0d9a..ae366480`); anterior: verificado em 29/09/2026 por doc-mantenedor (sem a ferramenta Agent nesta sessão: verificação própria, símbolo a símbolo por `grep` contra o fonte — exports de `_coop.js`/`guild.js`/`_profile.js`, módulos novos de `src/`, constantes e chaves de KV; delta `38c3ccb5..b657a340`, só as seções tocadas; `docsManual`/`docsSemMentira` verdes)
+> **Estado:** verificado em 30/09/2026 por doc-verificador (delta `ae366480..5edfcfba` — conferido: nomes de `DUNGEON_SCENES` em `dungeonScenes.ts`, `og:locale`/`alternate` e `description` do `index.html`, `description`/`lang` de `public/manifest.json`, `TAGLINE_PT` de `manifest.contract.test.ts`, `grep -c '@keyframes' src/index.css` = 40, `sm-duel-dmg` 850ms `ease-out` + reduced-motion; nomes de fauna/linhas de `DUNGEON_LINE_NAMES` sem divergência); anterior: verificado em 30/09/2026 por doc-mantenedor (sem verificador independente nesta sessão: verificação própria, símbolo a símbolo por `grep` contra o fonte — `_admin.js`, `gmTools.ts`, `corvoAdocao.ts`, `AreaTopBar.tsx`, `npcScale.ts`, `attributes.ts`; só as seções tocadas; delta `8e6d0d9a..ae366480`); anterior: verificado em 29/09/2026 por doc-mantenedor (sem a ferramenta Agent nesta sessão: verificação própria, símbolo a símbolo por `grep` contra o fonte — exports de `_coop.js`/`guild.js`/`_profile.js`, módulos novos de `src/`, constantes e chaves de KV; delta `38c3ccb5..b657a340`, só as seções tocadas; `docsManual`/`docsSemMentira` verdes)
 > **Verificação:** `npx vitest run src/styles/ src/index.css.contract.test.ts src/utils/sprites.dungeonRoster.test.ts src/utils/loudness.contract.test.ts src/utils/cortes.contract.test.ts src/utils/sonsAssets.contract.test.ts src/components/ui/Viewport.contract.test.tsx src/components/ui/foundation.render.test.tsx src/brand/brandFlame.parity.test.ts src/assets/assets.contract.test.ts` — os 11 arquivos de 09/09/2026 (216 testes, verde) mais os dois que nasceram com a marca vetorizada e a leva de arte de 15/09/2026, mais `sonsAssets.contract.test.ts` (21/09/2026, S16).
 > **Não cobre:** o fluxo entre telas e o que cada superfície mostra (doc `03-FLUXO-DE-TELAS.md`); as regras de jogo por trás dos números que a UI pinta (doc `02-REGRAS-DE-NEGOCIO.md`); a assinatura de cada componente (`06-REFERENCIA/components.md`); o pipeline de build/deploy dos assets (doc `08-INTEGRACOES-E-DEPLOY.md`). Este doc descreve o som — **não** decide nada sobre ele: quem decide é o `REGISTRO-DE-DECISOES.md` (§6.1, S1..S16 — não existe S14).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -777,7 +777,7 @@ do DOM.
 
 ### 6.2 Os keyframes
 
-`grep -c '@keyframes' src/index.css` → **35** em 20/09/2026 (⚠️ **39** em 29/09/2026, 38 declarações, contando `sm2-grove-bob` e `sm2-fair-drift` da Guilda, §7.5), das quais **34**
+`grep -c '@keyframes' src/index.css` → **35** em 20/09/2026 (⚠️ **39** em 29/09/2026 e **40** em 30/09/2026 — `sm-duel-dmg`, o número do golpe do `DuelScreen`, 850ms `ease-out`, parado em `prefers-reduced-motion` (aparece sem voar); 38 declarações em 29/09, contando `sm2-grove-bob` e `sm2-fair-drift` da Guilda, §7.5), das quais **34**
 são declarações (`grep -o '@keyframes [a-zA-Z0-9_-]*' | sort -u`): a 35ª é uma
 menção dentro de comentário. (Eram 33/32 em 09/09/2026.) As 34, por família:
 
@@ -999,7 +999,7 @@ por espaço), migrado do antigo `equippedFurniture` no load.
 
 | conjunto | n | o que é |
 |---|---|---|
-| `DUNGEON_SCENES` | **5** | os clássicos em CSS puro (Tamagotchi/VHS/Sol Neon/CRT/Glitch). ⚰️ O overlay `dungeon-vhs` que o `DungeonGame` punha por cima **saiu** (canvas Jogos, `DECISOES-WIREFRAME.md` §25): a cena é o `cover` de um visor (`games/GameKit.tsx`) |
+| `DUNGEON_SCENES` | **5** | os clássicos em CSS puro (Retro Pet/VHS/Sol Neon/CRT/Glitch; ⚰️ a primeira se chamava `Tamagotchi` — `namePt`/`nameEn` = `Retro Pet` desde o delta 30/09/2026, `ae366480..5edfcfba`). ⚰️ O overlay `dungeon-vhs` que o `DungeonGame` punha por cima **saiu** (canvas Jogos, `DECISOES-WIREFRAME.md` §25): a cena é o `cover` de um visor (`games/GameKit.tsx`) |
 | `SPIRIT_BG_SCENES` | **13** | arte PINTADA: as 5 grutas originais (regeradas **em pé** em 15/09/2026, C1 de `ASSETS-A-GERAR.md` §11 — eram 960×540 deitadas ⚰️), 6 da segunda leva (retrato 9:16, porque o campo de batalha é uma caixa ALTA), o "Corredor em Ruínas" (nasceu como fundo do Dino e migrou) e as **2 arenas do Torneio** |
 | `SHOP_BG_ACCENTS` | **16** | os cenários da loja, reaproveitados como cena de andar (`SHOP_BG_SCENES` filtra os que existem em `PET_BACKGROUNDS`) |
 
@@ -1492,7 +1492,7 @@ para o git** — por isso `docs/SOM.md` existe: é a parte que precisa sobrevive
 ### 10.0 `index.html` — `description` e Open Graph (desde `f9faf7a7`, 21/09/2026)
 
 O `<head>` declara `meta name="description"`, `og:type/site_name/title/description/image/locale`
-(+ `og:locale:alternate` `en_US`) e `twitter:card` — antes disso `grep og: index.html` dava 0 e
+(+ `og:locale:alternate`; ⚠️ delta 30/09/2026: `og:locale` = `en_US` e `alternate` = `pt_BR`, ⚰️ o inverso — inglês é a base) e `twitter:card` — antes disso `grep og: index.html` dava 0 e
 o link chegava "pelado" em qualquer chat (QA geral, relatório `12-growth-distribuicao.md`). A
 `og:image` é **absoluta** (crawler não resolve caminho relativo) e aponta para o ícone 512 no
 worker; por isso ela é a quarta fonte que `src/deploy/appUrl.contract.test.ts` obriga a
@@ -1500,12 +1500,12 @@ concordar com `capacitor.config.json`, `desktop/renderer/src/config.ts` e
 `desktop/electron/main.js`. Trocar por um key visual 1200×630 quando a squad-arte gerar.
 
 **A TAGLINE é ÚNICA e está travada por contrato** (decisão do dono **#70**,
-22/09/2026): **"Ela cresce com o seu dia." / "It grows with your day."** ⚰️ Havia
+22/09/2026): **"It grows with your day." / "Ela cresce com o seu dia."** (delta 30/09/2026: a meta `description`, o `og:description` e o `manifest.description` agora abrem em INGLÊS — `TAGLINE_PT` de `manifest.contract.test.ts` vale `'It grows with your day.'`; a versão PT segue em `docs/PLAY-FICHA.md` §0b) ⚰️ Havia
 **três** frases de abertura diferentes — `meta name="description"`,
 `og:description` e `manifest.description` —, então quem colava o link, quem
 instalava a PWA e quem abria a loja lia três produtos. Hoje as três **começam**
-com a tagline e seguem com a mesma frase de apoio ("Hábitos e tarefas viram
-cuidado, evolução e história — nunca cobrança."). A frase de apoio **pode** variar
+com a tagline e seguem com a mesma frase de apoio ("Habits and tasks become
+care, evolution and story — never nagging."; ⚰️ "Hábitos e tarefas viram cuidado, evolução e história — nunca cobrança." era a apoio até 30/09/2026). A frase de apoio **pode** variar
 por superfície (limite de caracteres da loja); a tagline, não. Régua:
 `src/deploy/manifest.contract.test.ts` — dois casos `#70`, um exigindo o prefixo
 nas três superfícies e outro exigindo as duas versões da tagline em
@@ -1523,7 +1523,7 @@ cresce…") saíram em `cf6315e1`.
 |---|---|
 | `short_name` | `Soulmon` |
 | `name` | `Soulmon` (desde `a6c1cd8a` — a marca, sem slogan; ⚰️ `Soulmon - Gamified Productivity`, copy do fork) |
-| `description` | `Ela cresce com o seu dia. Hábitos e tarefas viram cuidado, evolução e história — nunca cobrança.` — a **tagline única** #70 (§10.0), **igual ao `<meta name="description">` e ao `og:description` do `index.html`**, a fonte que o dono revisou (desde `a6c1cd8a`, perf-a11y R1 + design; ⚰️ a descrição EN "Complete real-life tasks to evolve and care for your digital companion…" de outra era). Régua: `src/deploy/manifest.contract.test.ts` — `name`/`short_name` = `Soulmon`, `description` = a meta, `theme_color` = `--sm-primary` = `<meta theme-color>` claro. |
+| `description` | `It grows with your day. Habits and tasks become care, evolution and story — never nagging.` (⚰️ a versão PT `Ela cresce com o seu dia. Hábitos e tarefas viram cuidado, evolução e história — nunca cobrança.` até 30/09/2026) — a **tagline única** #70 (§10.0), **igual ao `<meta name="description">` e ao `og:description` do `index.html`**, a fonte que o dono revisou (desde `a6c1cd8a`, perf-a11y R1 + design; ⚰️ a descrição EN "Complete real-life tasks to evolve and care for your digital companion…" de outra era). Régua: `src/deploy/manifest.contract.test.ts` — `name`/`short_name` = `Soulmon`, `description` = a meta, `theme_color` = `--sm-primary` = `<meta theme-color>` claro. |
 | `icons` | `/favicon-192x192.png` e `/favicon-512x512.png`, ambos `purpose: "any maskable"` |
 | `start_url` / `scope` | `/` |
 | `display` | `standalone` |
@@ -1531,7 +1531,7 @@ cresce…") saíram em `cf6315e1`.
 | `theme_color` | `#0f766e` (desde `005a2941`, 15/09/2026; era `#0d9488` ⚰️) |
 | `background_color` | `#071413` (= `--sm2-viewport-bg` escuro; era `#f3f9f8` ⚰️) |
 | `categories` | `productivity`, `lifestyle`, `games` |
-| `lang` / `dir` | `pt-BR` / `ltr` |
+| `lang` / `dir` | `en` / `ltr` (⚰️ `pt-BR` até 30/09/2026, ver observação 2) |
 
 Duas observações medidas em 09/09/2026 — uma fechou, uma fica:
 

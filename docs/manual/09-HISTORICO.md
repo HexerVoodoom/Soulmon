@@ -1,6 +1,6 @@
 # Histórico — como chegamos aqui
 
-> **Dono:** doc-historiador · **Data:** 27/09/2026 (sincronização do delta `78ef5367..c510c7e4`, correções pós-F3 da minimal-ui: §1.5 ganha a linha das duas correções pós-F3 de 24/09 (`7b4819e6`, `c510c7e4`); anterior: 24/09/2026 (delta `c7bca6d0..78ef5367`: §1.5 ganha dois itens — a incubação WP4.29 de 22/09 e as fatias F1–F6 da minimal-ui de 23–24/09; anterior: 22/09/2026, 3ª sincronização do dia, delta `cd66940f..cf6315e1`: §1.5 ganha **#102–#107** — merge da QA Rodada 2, o livrinho ilustrado + PDF + gerador, o one shot de prólogo e a execução das 32 respostas do dono; anterior no mesmo dia: SHA de `a6c1cd8a`/#100–#101 e a linha da QA Rodada 2; anterior: 21/09/2026, QA Rodada 1; 09/09/2026)) · **Estado:** verificado em 27/09/2026 por doc-verificador (delta `78ef5367..c510c7e4` — os dois hashes, as mensagens e os arquivos conferidos com `git show --stat`); anterior: verificado em 24/09/2026 por doc-verificador (delta `c7bca6d0..78ef5367` — os 18 SHAs dos dois itens novos da §1.5 conferidos por `git log -1`, `git log --merges c7bca6d0..78ef5367` → vazio, `git log --oneline 78ef5367 | wc -l` → **1.117**; título da §1.5 passa a 10–24/09, âncora sem link em `docs/`; anterior: 22/09/2026, §1.5 conferido contra `gh pr list --state merged --json number,title,mergedAt` e `git log --oneline` → **1.080** commits; anterior: 10/09/2026, doc inteiro)
+> **Dono:** doc-historiador · **Data:** 30/09/2026 (sincronização do delta `ae366480..5edfcfba`: §1.5 ganha o item de 30/09 — inglês como língua principal, três prédios em Jogos, duelo fantasma, hub de benchmarking e o Actions parado; título da §1.5 passa a 10–30/09); anterior: 27/09/2026 (sincronização do delta `78ef5367..c510c7e4`, correções pós-F3 da minimal-ui: §1.5 ganha a linha das duas correções pós-F3 de 24/09 (`7b4819e6`, `c510c7e4`); anterior: 24/09/2026 (delta `c7bca6d0..78ef5367`: §1.5 ganha dois itens — a incubação WP4.29 de 22/09 e as fatias F1–F6 da minimal-ui de 23–24/09; anterior: 22/09/2026, 3ª sincronização do dia, delta `cd66940f..cf6315e1`: §1.5 ganha **#102–#107** — merge da QA Rodada 2, o livrinho ilustrado + PDF + gerador, o one shot de prólogo e a execução das 32 respostas do dono; anterior no mesmo dia: SHA de `a6c1cd8a`/#100–#101 e a linha da QA Rodada 2; anterior: 21/09/2026, QA Rodada 1; 09/09/2026)) · **Estado:** verificado em 30/09/2026 por doc-verificador (delta `ae366480..5edfcfba` — os 10 SHAs do item novo da §1.5 conferidos por `git log -1` (data 30/09/2026 e assunto batem), a causa do Actions contra HANDOFF-LOCAL-SEM-ACTIONS §1, os rótulos de [10 §5, §6, §10 e §13] contra os `##` do doc 10; corrigidos o título da §1.5 (10–24/09 → 10–30/09) e a lista de temas citados); anterior: verificado em 27/09/2026 por doc-verificador (delta `78ef5367..c510c7e4` — os dois hashes, as mensagens e os arquivos conferidos com `git show --stat`); anterior: verificado em 24/09/2026 por doc-verificador (delta `c7bca6d0..78ef5367` — os 18 SHAs dos dois itens novos da §1.5 conferidos por `git log -1`, `git log --merges c7bca6d0..78ef5367` → vazio, `git log --oneline 78ef5367 | wc -l` → **1.117**; título da §1.5 passa a 10–24/09, âncora sem link em `docs/`; anterior: 22/09/2026, §1.5 conferido contra `gh pr list --state merged --json number,title,mergedAt` e `git log --oneline` → **1.080** commits; anterior: 10/09/2026, doc inteiro)
 > **Verificação:** os comandos `git log` colados ao lado de cada afirmação nesta página — rode-os de novo para reconferir
 > **Não cobre:** o CONTEÚDO de cada decisão (isso é `10-DISCUSSOES-E-DECISOES.md`); o changelog linha a linha (`../CHANGELOG.md`, que não se reescreve); regras de jogo em vigor hoje (`02-REGRAS-DE-NEGOCIO.md`)
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -165,7 +165,7 @@ em detalhe na seção 2 (viradas de premissa); resumo cronológico:
   declarada em vez de removida (`06ef9ea0`), a Arena ganha tela
   (`b55ffa5a`), 38 assets de arte "arcano-tech" entram (`271e2185`).
 
-### 1.5 10–24/09/2026 — wireframes, identidade, narrativa, som S16, QA geral, QA Rodadas 1 e 2, incubação, minimal-ui
+### 1.5 10–30/09/2026 — wireframes, identidade, narrativa, som S16, QA geral, QA Rodadas 1 e 2, incubação, minimal-ui
 
 Só o que existe no `git log` e no `gh pr list` em 21/09/2026 (`git log --oneline | wc -l` →
 **1.080** em 22/09/2026, 1.070 em 21/09; `gh pr list --state merged --json number | jq length` →
@@ -252,6 +252,13 @@ detalhe de cada PR está na mensagem do próprio merge; este bloco é o índice.
   arte** (`src/assets/soulmon/icones-ui/`, componente `PixelIcon`) nos nove ícones de UI e põe a
   moldura `chip-moeda` em 9-slice no saldo do Mapa. As fatias F1–F3 tinham usado os glifos por
   engano.
+- **30/09 — inglês como língua principal, três prédios em Jogos e o Actions parado**: a decisão do
+  dono de que o inglês é a língua principal entra em `7d638dcc` (docs) e `3a56de2f` (nomes, manual
+  e testes); a área Jogos ganha Salão, Ateliê da Mente e Refúgio em `6d0d1e17`, com o balanço em
+  `b596b4e2` e as decisões do dono em `78146c6c` e `7a4bf5b3`; o duelo fantasma do Torneio é
+  `2e4cc8ca`; o hub de benchmarking é `6d44c0f5` e os portões locais sem Actions são `d13131da`
+  (causa corrigida em `5edfcfba`: cobrança desde 16/09/2026). Discussão:
+  [10 §5, §6, §10 e §13](10-DISCUSSOES-E-DECISOES.md).
 
 ---
 
