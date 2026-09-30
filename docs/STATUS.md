@@ -9,6 +9,10 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 30/09/2026 — manual sincronizado com `cfe27cc7` (`/manter-docs`, delta `4a894f90..cfe27cc7`, 4 commits de docs)
+>
+> Só commits de docs (Exploração/Travessias). Carimbados `verificado em 30/09/2026`: `00-MAPA` (§6.2 conferida — as 8 linhas novas já tinham entrado à mão), `10-DISCUSSOES-E-DECISOES` (linha nova no tema 6 + 2 fichas no §17), `01-VISAO` (§10: terceira exceção da Camada 3, decidida e não implementada) e `02-REGRAS-DE-NEGOCIO` (§54: "a Exploração fica só com a Masmorra" marcado como revertido em parte só na decisão; `EXPLORACAO_LOTS` segue só com a Masmorra). Verificação própria (subagentes `doc-*` não registrados). `.sincronizado.json` = `cfe27cc7`. Divergências novas: nenhuma. Nota: `docs-delta.mjs` lista ~400 módulos como `novos` sem entrada — o delta não tem nenhum arquivo de código, então é artefato do detector, não módulo novo.
+>
 > ## 30/09/2026 — Travessias: missões de vida real na Exploração (proposta decidida, nada implementado)
 >
 > Pedido do dono: missões que "levantam a barra" com desafios da vida real, acessadas pela Exploração. Escrita a

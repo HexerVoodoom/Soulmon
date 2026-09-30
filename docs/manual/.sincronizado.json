@@ -1,6 +1,6 @@
 {
-  "sha": "4a894f906916689291d9638e1c8fc6341cd6e380",
+  "sha": "cfe27cc750c5a4c69307ac3913a8ef7dda59bbca",
   "data": "30/09/2026",
-  "por": "doc-mantenedor (/manter-docs auto, sessão: delta 5edfcfba..4a894f90 — conferência do BENCHMARK-COMBATE, hub de benchmark, Actions parado)",
+  "por": "doc-mantenedor (/manter-docs auto, sessão: delta 4a894f90..cfe27cc7 — Exploração/Travessias, só docs)",
   "nota": "Escrito pelo doc-mantenedor ao fechar cada sincronização. Lido por scripts/docs-delta.mjs e pelo hook de sessão. Nunca edite à mão."
 }
