@@ -63,7 +63,7 @@ Fase 1 (`design/INVENTARIO-WIREFRAMES.md`).
 | `backgrounds/bg-campina`, `bg-cavernas` | 2 · **1200×648** RGB noturnos, chão 74% (fundos-v2, 30/09/2026) | `PET_BACKGROUNDS` + `REGIONS[].bgId` (`data/travessiasCatalog.ts`) | Exploração › Passeio (postal da região) — **não vendidos** (fora de `shop.ts`/`SHOP_BG_ACCENTS`) |
 | `soulmon/areas/bg-hall`, `bg-laboratorio` | 2 · **760×1344** RGB (fundos-v2, 30/09/2026) | `HALL_BG`/`LABORATORIO_BG` (`areas/index.ts` → `AreaView.tsx`) | Mapa › Hall e › Laboratório — antes caíam no degradê do `AreaScene` |
 | `backgrounds/bg-gameboy`, `bg-matrix`, `bg-ocean` | 3 · **800×800** (formato antigo, `setting:'void'`) | idem | Loja — ⚠️ cortam nas laterais |
-| `backgrounds/thumbs/` | 35 · **96×52** — miniatura de cada cenário 1200×648, DERIVADA (lanczos3 + sharpen leve; rodada 2 R2-1, 21/09/2026); as 7 de fundos-v2 vieram prontas da leva. ⚠️ As 27 dos cenários retonados em 30/09 (tom da Home v2) ainda estão no tom antigo | `BG_THUMBS` (glob em `ShopModal.tsx`) | Loja (`CenariosMobilias`, mini-visor do card) |
+| `backgrounds/thumbs/` | 35 · **96×52** — miniatura de cada cenário 1200×648, DERIVADA (lanczos3 + sharpen leve; rodada 2 R2-1, 21/09/2026); as 7 de fundos-v2 vieram prontas da leva. as 27 dos cenários retonados em 30/09 (tom da Home v2) foram rederivadas pelo mesmo método | `BG_THUMBS` (glob em `ShopModal.tsx`) | Loja (`CenariosMobilias`, mini-visor do card) |
 | `backgrounds/home-scene-1547.png` | 1 · 1376×3058 | `CompanionHUD.tsx` | Home (fundo do palco) — é a "image 1547" da pasta do Desktop |
 | `video/evolution-bg.mp4` + thumb | 1 | `EvolutionCeremony.tsx` | Evolução (`Cerimonia`) |
 | `brand/intro.mp4` | 1 · 720×1280 | `IntroScreen.tsx` | Onboarding-funil (`IntroEstados`) |
