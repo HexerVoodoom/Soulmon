@@ -7,7 +7,7 @@
  * vem SEMPRE por parâmetro (quem chama decide o dia; ver `utils/playerDay.ts`).
  *
  * Linha vermelha: NÃO existe contador de dias seguidos aqui, nem vai existir
- * (streak que zera desfaz a tese do produto — risco "virar Duolingo" do §6.1).
+ * (contador de sequência que zera desfaz a tese do produto — risco "virar Duolingo" do §6.1).
  * Os Bits são por SESSÃO, uma vez por dia — nunca "N cartões = N pontos".
  */
 

@@ -15,7 +15,7 @@ import {
  * respira junto.
  *
  * NÃO mede nada, NÃO pontua, NÃO paga — por isso recebe `MiniGameBaseProps`,
- * sem `onEarnPoints`. Funciona sem toque nenhum; o botão de segurar é só um
+ * sem o callback de Bits. Funciona sem toque nenhum; o botão de segurar é só um
  * apoio para quem quer acompanhar com o dedo. Nasce MUDO (R-NOVA).
  * Movimento reduzido troca a escala por uma barra de preenchimento — reduz o
  * MOVIMENTO, nunca a pausa.
