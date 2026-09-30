@@ -9,6 +9,16 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 30/09/2026 — conferência do BENCHMARK-COMBATE feita (`benchmark-pesquisador` + `benchmark-curador`)
+>
+> `docs/BENCHMARK-COMBATE.md` foi conferido na web (seção "Conferido em 30/09/2026", corpo intacto): **7 ✔ · 92 ◐ · 19 (≈) · 13 ✖** em 131 linhas; das 13 ✖, 10 são contraditas pela fonte
+> (Colosseum tem história, GBL não é automático, Pokéwalker tem 3 opções, DW1 não gasta recurso ao ralhar, Cyber Sleuth tem 9 elementos, MH Stories 3 é de 03/2026, química do Cassette Beasts, combo do
+> Monster Sanctuary, Hold do Temtem, e o vocabulário Vírus/Dado/Vacina revertido em 29/09) e 3 sem fonte. Hub (`BENCHMARK-E-REFERENCIAS.md` §1/§2/§7) e MAPA §6.2 atualizados.
+>
+> - **Guarda-linha-vermelha** passou as 8 opções propostas: **1 limpa, 7 com ressalva, nenhuma vetada** (tabela "Parecer do guarda-linha-vermelha" no fim do BENCHMARK-COMBATE). A vetada (e) foi
+>   reescrita: "dinheiro nunca compra vantagem de combate". Nenhuma opção virou regra: **tudo depende do dono** (`PERGUNTAS-DO-DONO.md`).
+> - **Actions voltou?** a verificar no fechamento (pendente de teste no push).
+
 > ## 30/09/2026 — manual sincronizado com `5edfcfba` (`/manter-docs`, à mão: agentes `doc-*` não registrados na sessão)
 >
 > Delta `ae366480..5edfcfba` (26 commits). Docs tocados e carimbados `verificado em 30/09/2026`: 01, 02, 03, 04, 05, 07, 08, 09, 10, 11, 12,

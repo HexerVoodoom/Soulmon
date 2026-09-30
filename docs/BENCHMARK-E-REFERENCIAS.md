@@ -45,7 +45,7 @@ Este arquivo fecha (a)–(d); o `benchmark-pesquisador`, o `benchmark-curador` e
 | Evidência científica do catálogo | [`CATALOGO-EVIDENCIAS.md`](CATALOGO-EVIDENCIAS.md) | set/2026 | busca verificada | **níveis A/B/C** | sim — item sem fonte não entra |
 | Motor de tarefas (Todoist, Things 3, TickTick, Sunsama, Motion, Structured) | [`PLANO-TAREFAS.md`](PLANO-TAREFAS.md) | ago–set/2026 | produtos + literatura | com fontes | sim — Fases 1–3 |
 | Guildas e grupos (Habitica party, Forest, Flora, Stack…) | [`reviews/guilda/01-benchmark.md`](reviews/guilda/01-benchmark.md) | 29/09/2026 | WebSearch | "relato/comunidade" · "não verificado" | sim — [`PLANO-GUILDA.md`](PLANO-GUILDA.md) |
-| Combate (monster taming, v-pets, Monster Rancher, Medabots, SMT, FF mobile, indies) | [`BENCHMARK-COMBATE.md`](BENCHMARK-COMBATE.md) | 29/09/2026 | **memória de catálogo, sem web** | *(≈)* a conferir | não |
+| Combate (monster taming, v-pets, Monster Rancher, Medabots, SMT, FF mobile, indies) | [`BENCHMARK-COMBATE.md`](BENCHMARK-COMBATE.md) | 29/09/2026 (corpo) · conferido 30/09/2026 | corpo de memória; **conferido na web em 30/09/2026** (seção "Conferido em 30/09/2026") | mista: 7 ✔ · 92 ◐ · 19 (≈) · 13 ✖ | não |
 | Minijogos + ciência cognitiva (Lumosity, Brain Age, Tetris, Wordle…) | [`BENCHMARK-MINIJOGOS.md`](BENCHMARK-MINIJOGOS.md) | 30/09/2026 | busca + catálogo | ✔ conferido · *(≈)* memória | não — Camada 3 congelada |
 | Revisão de produto de agosto (pesquisa de usuário, monetização, ASO) | [`reviews/2026-08-03/`](reviews/2026-08-03/) | 03/08/2026 | squad de revisão | pareceres | parcial |
 | Ficha da Play (posicionamento contra concorrentes) | [`PLAY-FICHA.md`](PLAY-FICHA.md) | set/2026 | ASO | — | vivo |
@@ -81,6 +81,12 @@ do repo já estuda — referência nova entra quando um benchmark a cobrir (§5,
 | **Tamagotchi** / **V-Pet Digimon (1997) → Vital Bracelet** | *care mistakes*, evolução pelo cuidado | `PLANO-EVOLUCAO.md`, `plano-melhorias/estudo/permanencia.md`, `BENCHMARK-COMBATE.md` |
 | **Pokémon Sleep** | Sleep Style Dex (→ Sonhos), o exploit de forjar sono | `PLANO-TAREFAS.md`, `guia-experiencia/04` |
 | **Pokémon GO**, **Palworld**, **Monster Rancher**, **Temtem**, **Cassette Beasts**, **Yu-Gi-Oh**, **Ragnarok**, **Shin Megami Tensei**, **Medabots** | coleção, vínculo, combate, fantasia central | `guia-experiencia/04`, `BENCHMARK-COMBATE.md`, `design/areas/prompts/` |
+| **Aethermancer** | roguelite de monstros (éter por elemento como recurso) | `BENCHMARK-COMBATE.md` §3 (conferido) |
+| **Sensor Tower** (Monster Strike) | fonte de medição de receita do Monster Strike | `BENCHMARK-COMBATE.md` §4 (conferido) |
+| **Digimon Story Time Stranger — página oficial Bandai Namco** | personalidade e atributos de combate (fonte primária) | `BENCHMARK-COMBATE.md` §2.5 (conferido) |
+| **Monster Hunter Stories 3** | terceiro da série (13/03/2026); triângulo e tells | `BENCHMARK-COMBATE.md` §2.12 (conferido) |
+| **legendcup** (Monster Rancher 2) | pesquisa de mecânica do MR2 (Guts, alcance, vida útil) | `BENCHMARK-COMBATE.md` §2.6 (conferido) |
+| **wikimon** (aparelhos Digimon) | Digital Monster, Pendulum, Digivice, D-Ark, Color | `BENCHMARK-COMBATE.md` §2.4 (conferido) |
 | **Lumosity**, **Brain Age**, **Elevate**, **Tetris**, **Wordle** | o que um minijogo pode prometer (transferência próxima sim, distante não) | `BENCHMARK-MINIJOGOS.md` |
 | **Replika** | companheiro de IA — o risco de dependência | `design/PRINCIPIOS-DE-WIREFRAME.md` |
 
@@ -201,7 +207,7 @@ Ordem: **curador (B2) → pesquisador (B3–B8) → (psicologia ‖ PI ‖ gêne
 
 ## 7. Lacunas conhecidas (30/09/2026)
 
-- **`BENCHMARK-COMBATE.md` inteiro é (≈)** — nenhuma afirmação foi conferida na web. Antes de virar argumento, rodar `/squad-benchmark conferir BENCHMARK-COMBATE.md`.
+- **`BENCHMARK-COMBATE.md`: ~19 afirmações seguem (≈) de memória** (e 13 ✖, 10 delas contraditas pela fonte — o corpo não foi editado) — listadas na seção "Conferido em 30/09/2026" (marca (≈) e "Fora de escopo"). Só as ✔/◐ sustentam argumento; as (≈) precisam de nova conferência antes de virar decisão.
 - **Sem dado de mercado** (downloads, receita, retenção de concorrentes): não há acesso a painel (§3).
 - **Sem benchmark de widget/tela inicial e de push** além do dossiê 9 do Mobbin.
 - **Sem benchmark de preço** atualizado dos concorrentes diretos (o de agosto é do `reviews/2026-08-03/`).
