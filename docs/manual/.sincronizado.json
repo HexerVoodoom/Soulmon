@@ -1,6 +1,6 @@
 {
-  "sha": "5edfcfbabaa58daa062ff30211cf590b387beda1",
+  "sha": "4a894f906916689291d9638e1c8fc6341cd6e380",
   "data": "30/09/2026",
-  "por": "doc-mantenedor (/manter-docs auto, à mão na sessão: delta ae366480..5edfcfba — inglês primeiro, três prédios de Jogos, duelo fantasma, portões locais, squad-benchmark)",
+  "por": "doc-mantenedor (/manter-docs auto, sessão: delta 5edfcfba..4a894f90 — conferência do BENCHMARK-COMBATE, hub de benchmark, Actions parado)",
   "nota": "Escrito pelo doc-mantenedor ao fechar cada sincronização. Lido por scripts/docs-delta.mjs e pelo hook de sessão. Nunca edite à mão."
 }
