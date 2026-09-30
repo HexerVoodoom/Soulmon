@@ -93,15 +93,17 @@ const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
   // Os prédios de Jogos (30/09/2026). Nomes e falas PLACEHOLDER de nomeação.
   // Tom: convite; o Ateliê DESCREVE o que os jogos pedem (nunca promete
   // efeito — benchmark §1.2) e o Refúgio não cobra nada de ninguém.
+  // Nomes decididos pelo dono em 30/09/2026 (propostas da loremaster): o
+  // ofício não promete efeito (Ateliê) nem insinua tratamento (Refúgio).
   'jogos:mente': {
-    namePt: 'Sábia, a coruja', nameEn: 'Sábia, the owl',
-    linePt: 'Aqui cada jogo pede uma coisa: lembrar, esperar, mudar de ideia, deduzir. Escolha um.',
-    lineEn: 'Here each game asks for one thing: remember, wait, change your mind, deduce. Pick one.',
+    namePt: 'Tessela, a enigmista', nameEn: 'Tessela, the puzzler',
+    linePt: 'Cada mesa daqui pede uma coisa: lembrar a ordem, esperar a vez, trocar de regra, deduzir. Sente onde quiser.',
+    lineEn: 'Each table here asks for one thing: remember the order, wait your turn, switch the rule, deduce. Sit wherever you like.',
   },
   'jogos:refugio': {
-    namePt: 'Musgo, o guardião', nameEn: 'Musgo, the keeper',
-    linePt: 'Aqui tudo vai devagar. Respire comigo um pouco, ou só estoure umas bolhas.',
-    lineEn: 'Things go slowly here. Breathe with me a little, or just pop some bubbles.',
+    namePt: 'Boio, o soprador de bolhas', nameEn: 'Boio, the bubble-blower',
+    linePt: 'Eu faço bolhas bem devagar. Quer estourar algumas, ou respirar no ritmo delas?',
+    lineEn: 'I make bubbles, nice and slow. Want to pop a few, or breathe along with them?',
   },
   'hall:amigos': {
     namePt: 'Nino, o carteiro', nameEn: 'Nino, the courier',

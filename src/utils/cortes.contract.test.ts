@@ -152,6 +152,30 @@ const CORTES: Corte[] = [
     proibidos: Object.keys(CATEGORIA_DO_SOM),
   },
   {
+    id: 'C-10',
+    resumo: 'o Refúgio nunca soa (silêncio protegido — decisão do dono, 30/09/2026)',
+    alvos: [
+      { arquivo: 'components/refugio/RespiracaoGame.tsx' },
+      { arquivo: 'components/refugio/RefugeInviteCard.tsx' },
+      { arquivo: 'components/refugio/SupportNote.tsx' },
+      { arquivo: 'components/mente/BolhasGame.tsx' },
+    ],
+    proibidos: Object.keys(CATEGORIA_DO_SOM),
+  },
+  {
+    id: 'C-11',
+    resumo: 'vencer minijogo não usa o som de CONCLUSÃO de tarefa (R-CAT; decisão do dono, 30/09/2026)',
+    alvos: [
+      { arquivo: 'components/DinoGame.tsx' },
+      { arquivo: 'components/RPSGame.tsx' },
+      { arquivo: 'components/mente/EcoGame.tsx' },
+      { arquivo: 'components/mente/TrocaGame.tsx' },
+      { arquivo: 'components/mente/PicrossGame.tsx' },
+      { arquivo: 'components/mente/RevisaoGame.tsx' },
+    ],
+    proibidos: ['playTaskComplete'],
+  },
+  {
     id: 'C-9',
     resumo: 'os símbolos apagados na Fase 0 não voltam a existir',
     alvos: fontesDeProducao().map(p => ({ arquivo: relative('src', p) })),
@@ -217,7 +241,8 @@ describe('a régua dos cortes — nenhum `play*` cortado volta ao contexto corta
   it('A-3 — nenhuma superfície toca `play*` sem estar declarada no inventário', () => {
     const DECLARADOS: Record<string, string[]> = {
       playPresence: ['components/CompanionHUD.tsx'],
-      playTaskComplete: ['App.tsx', 'components/DinoGame.tsx', 'components/RPSGame.tsx'],
+      // C-11 (30/09/2026): Dino e PPT saíram — vencer minijogo não é concluir tarefa.
+      playTaskComplete: ['App.tsx'],
       playFeed: ['App.tsx', 'components/DungeonGame.tsx', 'components/NightmareBattle.tsx'],
       playShower: ['components/CompanionHUD.tsx'],
       playSleep: ['App.tsx'],

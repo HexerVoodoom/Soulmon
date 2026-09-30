@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { getSpriteForStage } from '../utils/sprites';
 import { lineIconForStage } from '../utils/lineIcons';
-import { playTaskComplete } from '../utils/sounds';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readNumber, writeLocal } from '../utils/safeStorage';
 import type { Language } from '../utils/i18n';
@@ -238,7 +237,10 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       // a primeira partida de quem esta aprendendo o minijogo recebia o som de
       // perder a forma. Fim de partida sem ponto e silencioso; o placar final
       // na tela e o canal.
-      if (pts > 0) { onEarnPoints(pts); playTaskComplete(); }
+      // C-11 (decisão do dono, 30/09/2026): vencer um minijogo NÃO é concluir
+      // uma tarefa — pela R-CAT a categoria vem do EVENTO, e `playTaskComplete`
+      // é a categoria de conclusão. Fica mudo até existir a categoria arcade.
+      if (pts > 0) onEarnPoints(pts);
       onScore(score);
       setBest(prev => {
         const nb = Math.max(prev, score);

@@ -15,8 +15,9 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > 16/nível); Arena medida (50/run, fica); "Bits de minijogo hoje: X de 150" nas folhas; Exploração só
 > com a Masmorra (na clareira do fundo); convite ao Refúgio com humor 1–2 (regras do psicólogo, `convite.ts`,
 > antes do HP na fila); números de apoio num dono só (`supportLine.ts`) + findahelpline.com + `tel:188`.
-> **Em aberto (dono):** nomes dos NPCs do Ateliê/Refúgio (propostas da loremaster: Tessela / Boio);
-> as 7 decisões de som em `docs/som/PROPOSTA-SOM-MINIJOGOS-2026-09-30.md` §6; "Tico" (lab) é nome
+> **Fechado depois, no mesmo dia:** NPCs **Tessela** (Ateliê) e **Boio** (Refúgio); jogos novos mudos; Refúgio
+> travado mudo (C-10); Dino e PPT sem `playTaskComplete` (C-11). **Seguem em aberto:** categoria `arcade`, fronteira
+> da D11 no Eco, trilha no Refúgio e guia sonoro na respiração (`docs/som/PROPOSTA-SOM-MINIJOGOS-2026-09-30.md` §6); "Tico" (lab) é nome
 > registrado em PT-BR e o placeholder "poring" leva nome de franquia no bundle (achados da loremaster,
 > já registrados em `docs/design/areas/prompts/00-INDICE.md`).
 >
@@ -39,7 +40,7 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > intactos. Os cartões da Revisão moram no save (`GameState.review`, higienizado por
 > `sanitizeReview`); o dia é `playerDayIso` (nova, mesma âncora de `playerDayKey`). Exceção ao
 > congelamento da Camada 3 registrada no `REGISTRO-DE-DECISOES.md` §5.6. **Pendências:** arte
-> própria dos lotes `mente`/`refugio` e dos NPCs Sábia/Musgo (placeholders, `ASSETS-A-GERAR.md` §15);
+> própria dos lotes `mente`/`refugio` e dos NPCs Tessela/Boio (arte placeholder; nomes decididos, `ASSETS-A-GERAR.md` §15);
 > nomes dos NPCs são placeholder de nomeação; os jogos nascem mudos (a squad-som decide se soam).
 > Decisão pequena tomada na implementação: o Picross do dia paga 10 Bits só na 1ª solução da tela;
 > refazer pelo seletor paga 3.

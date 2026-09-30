@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import type { CSSProperties } from 'react';
 import rpsScene from '../assets/soulmon/bg/minigame-rps.png';
-import { playTaskComplete } from '../utils/sounds';
 import type { Language } from '../utils/i18n';
 import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import { GameRoot, GameHeader, GameVisor, phaseTitle } from './games/GameKit';
@@ -83,7 +82,7 @@ export function RPSGame({ language, onEarnPoints, onExit }: {
         setPlayerWins(w);
         setRoundMsg(isPt ? 'Você venceu a rodada!' : 'You won the round!');
         if (w >= WINS_NEEDED) {
-          playTaskComplete();
+          // C-11 (30/09/2026): vencer a partida não é concluir tarefa (R-CAT) — mudo.
           onEarnPoints(MATCH_POINTS);
           setMatchOver('won');
         }
