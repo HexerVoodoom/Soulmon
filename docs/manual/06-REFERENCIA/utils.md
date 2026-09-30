@@ -6,7 +6,7 @@
 > **Não cobre:** o CONTEÚDO das regras de jogo em profundidade (→ [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md)); componentes, hooks, contexts, types, plugins, constants, `functions/api`, `workers/` e `desktop/` (→ os outros docs de `06-REFERENCIA/`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
 
-Cobertura: **157/157** módulos de `src/utils` (inclui `src/utils/soulProfile/`), medidos por `node scripts/docs-inventario.mjs` em 29/09/2026 (eram 139 em 24/09/2026; a Guilda e a `backStack` entraram no meio) — os últimos a entrar foram `fairArt.ts`, `groveLocal.ts`, `groveStage.ts`, `guildClaimLocal.ts` e `guildCopyCore.ts`. (Dizia "120/120, medidos em 09/09/2026", que era a medição certa de uma árvore que cresceu 19 módulos desde então; o número **só** vale com a data ao lado, e quem quiser o de hoje roda o script.) `src/navigation.ts` é documentado aqui também, por vizinhança de assunto, e não entra nessa contagem. Ordem do corpo: alfabética por caminho. Índice abaixo: agrupado por família.
+Cobertura: **164/164** módulos de `src/utils` (+7 em 30/09/2026: `mente/*` e `refugio/respiracao.ts`, os prédios de Jogos); antes, **157/157** (inclui `src/utils/soulProfile/`), medidos por `node scripts/docs-inventario.mjs` em 29/09/2026 (eram 139 em 24/09/2026; a Guilda e a `backStack` entraram no meio) — os últimos a entrar foram `fairArt.ts`, `groveLocal.ts`, `groveStage.ts`, `guildClaimLocal.ts` e `guildCopyCore.ts`. (Dizia "120/120, medidos em 09/09/2026", que era a medição certa de uma árvore que cresceu 19 módulos desde então; o número **só** vale com a data ao lado, e quem quiser o de hoje roda o script.) `src/navigation.ts` é documentado aqui também, por vizinhança de assunto, e não entra nessa contagem. Ordem do corpo: alfabética por caminho. Índice abaixo: agrupado por família.
 
 ## Índice por família
 
@@ -406,6 +406,48 @@ Cobertura: **157/157** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 - ⚠️ 200 com corpo que não é JSON é FALHA, não sucesso vazio — até 09/09/2026 `res.json().catch(() => ({}))` devolvia `{}` como se fosse resposta válida.
 **Régua (Guilda):** `src/utils/community.guild.test.ts`, `src/utils/guildNoSave.contract.test.ts`.
 **Regra de negócio:** Diretório de jogadores, oponentes, ranking, amigos, presentes e a Guilda. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md) §56 e §56-A.
+
+### `src/utils/mente/bolhas.ts`
+**Dono de:** Bolhas do Sonho (Ateliê da Mente / Refúgio, 30/09/2026): o go/no-go do modo `foco` (60 s, ~22% de fiapos escuros que se deixa passar) e o modo `calma` (sem fiapo, sem tempo, sem Bits); a escada de ritmo perto de 75–90% de acerto e o pagamento.
+**Exports:** tipos `BolhasMode`, `BubbleKind`, `Bubble`, `Staircase`; `BOLHAS_FOCO_DURATION_MS`, `BOLHAS_WISP_RATIO`, `BOLHAS_MAX_BITS` (10), `BOLHAS_POINTS_PER_BIT` (10), `BOLHAS_START_INTERVAL_MS`/`_MIN_`/`_MAX_`, `BOLHAS_CALMA_INTERVAL_MS`, `BOLHAS_CALMA_RISE_MS`, `STAIRCASE_WINDOW`/`_MIN_SAMPLES`/`_FAST_ABOVE`/`_SLOW_BELOW`; `initialStaircase`, `recordOutcome`, `riseMsFor`, `spawnBubble` (calma nunca gera fiapo), `bubbleProgress`, `hasEscaped`, `timeLeftMs`, `bolhasBits(score)`.
+**Chamado por:** `src/components/mente/BolhasGame.tsx`, `src/components/play/PlaySheets.tsx`.
+**Régua:** `src/utils/mente/bolhas.test.ts`, `src/components/mente/ecoBolhas.render.test.tsx`.
+
+### `src/utils/mente/eco.ts`
+**Dono de:** Eco do Pet (Ateliê da Mente, 30/09/2026): a sequência de 4 pedras que cresce 1 por acerto (e o modo reverso), a checagem do toque, a velocidade de reprodução e o pagamento pelo maior eco.
+**Exports:** `ECO_STONES` (4), `ECO_START_LENGTH` (3), `ECO_MAX_BITS` (10), `ECO_BASE_INTERVAL_MS`/`ECO_MIN_INTERVAL_MS`; tipos `Stone`, `Rng`, `TapResult`; `seededRng`, `nextStone`, `startSequence`, `growSequence`, `expectedAt`, `checkTap`, `playbackIntervalMs`, `ecoBits(longest)` = `min(10, max(0, longest − 3))`.
+**Chamado por:** `src/components/mente/EcoGame.tsx`, `src/components/play/PlaySheets.tsx`.
+**Régua:** `src/utils/mente/eco.test.ts`, `src/components/mente/ecoBolhas.render.test.tsx`.
+
+### `src/utils/mente/picross.ts`
+**Dono de:** Picross da Malha (Ateliê da Mente, 30/09/2026): pistas de linha/coluna, a checagem por PISTAS (qualquer grade que bate conta), o resolvedor por lógica de linha que prova a solução única de cada desenho e o desenho do dia (hash de `todayKey`).
+**Exports:** `PICROSS_DAILY_BITS` (10), `PICROSS_EXTRA_BITS` (3); `CellMark`, `EMPTY`/`FILLED`/`CROSSED`, `Clues`; `parsePattern`, `lineClue`, `cluesOf`, `matchesClues`, `solveByLines`, `isLineSolvable`, `hashKey`, `dailyPattern(todayKey)`, `picrossBits(isDaily)`, `emptyBoard`.
+**Chamado por:** `src/components/mente/PicrossGame.tsx`, `src/components/play/PlaySheets.tsx`.
+**Régua:** `src/utils/mente/picross.test.ts` (um caso por desenho: solução única por lógica de linha), `src/components/mente/trocaPicross.render.test.tsx`.
+
+### `src/utils/mente/picrossPatterns.ts`
+**Dono de:** a biblioteca de desenhos do Picross da Malha — 22 figuras genéricas (5×5, 7×7, 10×10) com nome PT/EN, nenhuma de franquia.
+**Exports:** `PicrossPattern`, `PICROSS_PATTERNS`.
+**Chamado por:** `src/utils/mente/picross.ts`, `src/components/mente/PicrossGame.tsx`.
+**Régua:** `src/utils/mente/picross.test.ts`.
+
+### `src/utils/mente/revisao.ts`
+**Dono de:** Revisão da Malha (Ateliê da Mente, 30/09/2026): cartões que o jogador escreve em caixas de Leitner, o que vence hoje, a resposta (lembrei → sobe de caixa; ainda não → caixa 1, amanhã), os Bits da 1ª sessão do dia e a higienização do que vem do save (`GameState.review`). Sem contador de dias seguidos, de propósito.
+**Exports:** tipos `ReviewCard`, `ReviewState`; `REVIEW_BOXES` (5), `REVIEW_INTERVAL_DAYS` ([1,2,4,8,16]), `REVIEW_SESSION_SIZE` (5), `REVIEW_MAX_CARDS` (200), `REVIEW_TEXT_MAX` (140), `REVIEW_SESSION_BITS` (5), `REVIEW_EMPTY`; `isDayKey`, `addDays`, `sanitizeReview`, `addCard`, `editCard`, `removeCard`, `dueCards`, `answerCard`, `completeSession`.
+**Chamado por:** `src/contexts/GameStateContext.tsx` (`sanitizeReview` no load), `src/components/mente/RevisaoGame.tsx`, `src/components/nav/AreaView.tsx`, `src/components/play/PlaySheets.tsx`.
+**Régua:** `src/utils/mente/revisao.test.ts`, `src/components/mente/revisaoRespiracao.render.test.tsx`, `src/contexts/GameStateContext.hydrate.fuzz2.qa.test.tsx`.
+
+### `src/utils/mente/troca.ts`
+**Dono de:** Troca de Regra (Ateliê da Mente, 30/09/2026): o baralho de criaturas com duas dimensões binárias (forma jovem/crescida × lugar céu/gruta), a regra da vez que troca a cada 5–8 acertos, a correção e o pagamento.
+**Exports:** tipos `Forma`, `Lugar`, `TrocaRule`, `TrocaSide`, `ArtTier`, `TrocaCard`, `TrocaState`, `SortResult`, `Rng`; `TROCA_SESSION_MS`, `TROCA_DECK_SIZE` (30), `TROCA_SWITCH_MIN`/`_MAX` (5/8), `TROCA_MAX_BITS` (10), `TROCA_CORRECT_PER_BIT` (5), `TROCA_CONFLICT_RATIO`; `trocaBits`, `sideFor`, `isCorrect`, `isConflict`, `buildDeck`, `nextSwitchAfter`, `initialTrocaState`, `applySort`, `trocaOver`, `seededRng`.
+**Chamado por:** `src/components/mente/TrocaGame.tsx`, `src/components/play/PlaySheets.tsx`.
+**Régua:** `src/utils/mente/troca.test.ts`, `src/components/mente/trocaPicross.render.test.tsx`.
+
+### `src/utils/refugio/respiracao.ts`
+**Dono de:** Respirar com o Soulmon (Refúgio, 30/09/2026): os ritmos (calma 4-0-6, quadrada 4-4-4-4), as durações de 1 a 3 min arredondadas para ciclos inteiros e a fase de um instante. Não mede nada e não tem pagamento.
+**Exports:** tipos `BreathPhase`, `BreathPattern`; `BREATH_PATTERNS`, `BREATH_DURATIONS_MIN`; `cycleMs`, `phaseAt`, `fillLevel`, `sessionMs`.
+**Chamado por:** `src/components/refugio/RespiracaoGame.tsx`.
+**Régua:** `src/utils/refugio/respiracao.test.ts`, `src/components/mente/revisaoRespiracao.render.test.tsx`.
 
 ### `src/utils/termsNotice.ts` (novo em 21/09/2026, decisão #24)
 **Dono de:** a regra do aviso de termos atualizados — função PURA que decide se o save merece o BANNER (nunca modal, nunca re-aceite).
@@ -881,7 +923,7 @@ Cobertura: **157/157** módulos de `src/utils` (inclui `src/utils/soulProfile/`)
 
 ### `src/utils/playAreaLots.ts`
 **Dono de:** a copy e a posição dos lotes das áreas de jogar (minimal-ui F5) — Exploração (`masmorra`, `dino`) e Jogos (`ppt`): rótulo PT/EN, rótulo acessível e o centro da base em % da cena, tirados dos mocks aprovados. O lote de Jogos se chama "Pedra, papel e tesoura" (não "Duelo", que já é o lote da Arena).
-**Exports:** `ExploracaoLotId`, `JogosLotId` (types), `exploracaoLots(language)`, `jogosLots(language)`.
+**Exports:** `ExploracaoLotId`, `JogosLotId` (types), `exploracaoLots(language)`, `jogosLots(language)`. ⚠️ Desde 30/09/2026 a Exploração tem só `masmorra` e Jogos tem os três prédios `salao` / `mente` / `refugio` (a Corrida mudou para o Salão).
 **Chamado por:** `src/components/nav/AreaView.tsx`.
 **Régua:** `src/components/play/playArea.render.test.tsx` (indireta).
 

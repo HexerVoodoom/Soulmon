@@ -9,6 +9,21 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 30/09/2026 — Jogos ganhou três prédios e seis jogos novos (decisão do dono)
+>
+> A área **Jogos** tem agora três construções (`src/utils/playAreaLots.ts`): **Salão de Jogos**
+> (Corrida do Dino + PPT — o Dino saiu da Exploração, que ficou só com a Masmorra), **Ateliê da
+> Mente** (Eco do Pet, Bolhas do Sonho, Troca de Regra, Picross da Malha, Revisão da Malha — pagam
+> Bits pelo funil único com o teto diário) e **Refúgio** (Respirar com o Soulmon + Bolhas calmas —
+> não pagam, não pontuam, não medem; aviso CVV 188 / 988 / 116 123). Pesadelo, Masmorra, PPT e Dino
+> intactos. Os cartões da Revisão moram no save (`GameState.review`, higienizado por
+> `sanitizeReview`); o dia é `playerDayIso` (nova, mesma âncora de `playerDayKey`). Exceção ao
+> congelamento da Camada 3 registrada no `REGISTRO-DE-DECISOES.md` §5.6. **Pendências:** arte
+> própria dos lotes `mente`/`refugio` e dos NPCs Sábia/Musgo (placeholders, `ASSETS-A-GERAR.md` §15);
+> nomes dos NPCs são placeholder de nomeação; os jogos nascem mudos (a squad-som decide se soam).
+> Decisão pequena tomada na implementação: o Picross do dia paga 10 Bits só na 1ª solução da tela;
+> refazer pelo seletor paga 3.
+>
 > ## 30/09/2026 — Benchmark de minijogos com foco cognitivo (pesquisa, nada implementado)
 >
 > `docs/BENCHMARK-MINIJOGOS.md`: clássicos (Atari/arcade/casual), v-pets, Pokémon, Monster

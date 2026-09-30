@@ -100,8 +100,8 @@ const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
   },
   'jogos:refugio': {
     namePt: 'Musgo, o guardião', nameEn: 'Musgo, the keeper',
-    linePt: 'Aqui ninguém tem pressa. Respire comigo um pouco, ou só estoure umas bolhas.',
-    lineEn: 'No one is in a hurry here. Breathe with me a little, or just pop some bubbles.',
+    linePt: 'Aqui tudo vai devagar. Respire comigo um pouco, ou só estoure umas bolhas.',
+    lineEn: 'Things go slowly here. Breathe with me a little, or just pop some bubbles.',
   },
   'hall:amigos': {
     namePt: 'Nino, o carteiro', nameEn: 'Nino, the courier',

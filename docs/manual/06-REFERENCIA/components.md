@@ -137,6 +137,48 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 ### `src/components/BottomNav.tsx` — ⚰️ apagado em `292533a6`
 ⚰️ **Apagado na fatia F1 do minimal-ui (23/09/2026, branch `feat/nav-home-mapa`).** A barra inferior de 5 abas saiu (decisão 1 do dono); a navegação virou Home ↔ Mapa → áreas — ver `src/components/nav/*` abaixo e `src/navigation.ts`. A régua `BottomNav.render.test.tsx` foi reescrita como `src/components/nav/nav.render.test.tsx`, e `navRotulo.contract.test.ts` passou a medir os rótulos das áreas.
 
+### `src/components/mente/BolhasGame.tsx`
+**Dono de:** Bolhas do Sonho — `mode='foco'` no Ateliê da Mente (paga pelo funil) e `mode='calma'` no Refúgio (nunca chama `onEarnPoints`). Bolhas são botões movidos por intervalo (não animação CSS, que o movimento reduzido zeraria).
+**Exports:** `BolhasGame(props: MiniGameBaseProps & { mode; onEarnPoints? })`.
+**Depende de:** `src/utils/mente/bolhas.ts`.
+**Chamado por:** `src/components/nav/AreaView.tsx` (lazy).
+**Régua:** `src/components/mente/ecoBolhas.render.test.tsx`; a fiação em `src/components/play/playArea.render.test.tsx`.
+
+### `src/components/mente/EcoGame.tsx`
+**Dono de:** Eco do Pet — o pet acende as 4 pedras (forma + nome, nunca só cor), o jogador repete; o erro encerra a rodada com "Maior eco: N".
+**Exports:** `EcoGame(props: EarningGameProps)`.
+**Depende de:** `src/utils/mente/eco.ts`.
+**Chamado por:** `src/components/nav/AreaView.tsx` (lazy).
+**Régua:** `src/components/mente/ecoBolhas.render.test.tsx`; a fiação em `src/components/play/playArea.render.test.tsx`.
+
+### `src/components/mente/PicrossGame.tsx`
+**Dono de:** Picross da Malha — desenho do dia + "Outros"; pintar/marcar X por botão ou toque longo, desfazer ilimitado, revela o desenho no visor. O do dia paga `PICROSS_DAILY_BITS` só na 1ª solução da tela; os outros, `PICROSS_EXTRA_BITS`.
+**Exports:** `PicrossGame(props: EarningGameProps & { todayKey })`.
+**Depende de:** `src/utils/mente/picross.ts`, `picrossPatterns.ts`.
+**Chamado por:** `src/components/nav/AreaView.tsx` (lazy).
+**Régua:** `src/components/mente/trocaPicross.render.test.tsx`; a fiação em `src/components/play/playArea.render.test.tsx`.
+
+### `src/components/mente/RevisaoGame.tsx`
+**Dono de:** Revisão da Malha — início (cartões para hoje), lista (criar/editar/apagar com confirmação), sessão (pet pergunta → mostrar resposta → Lembrei / Ainda não). Grava a cada resposta via `onReviewChange`.
+**Exports:** `RevisaoGame(props: EarningGameProps & { review; onReviewChange; todayKey })`.
+**Depende de:** `src/utils/mente/revisao.ts`.
+**Chamado por:** `src/components/nav/AreaView.tsx` (lazy).
+**Régua:** `src/components/mente/revisaoRespiracao.render.test.tsx`; a fiação em `src/components/play/playArea.render.test.tsx`.
+
+### `src/components/mente/TrocaGame.tsx`
+**Dono de:** Troca de Regra — a carta é o visor (criatura 64 = jovem / 128 = crescida; céu claro / gruta escura); a regra da vez no topo pulsa ao trocar; separar por botão, arrastar ou setas. 30 cartas ou 60 s.
+**Exports:** `TrocaGame(props: EarningGameProps)`.
+**Depende de:** `src/utils/mente/troca.ts`.
+**Chamado por:** `src/components/nav/AreaView.tsx` (lazy).
+**Régua:** `src/components/mente/trocaPicross.render.test.tsx`; a fiação em `src/components/play/playArea.render.test.tsx`.
+
+### `src/components/mente/types.ts`
+**Dono de:** o contrato comum dos jogos dos prédios de Jogos (30/09/2026) e as regras que todos cumprem (nascem mudos, não prometem efeito cognitivo, sem vermelho).
+**Exports:** `MiniGameBaseProps`, `EarningGameProps`.
+**Depende de:** —.
+**Chamado por:** os sete jogos de `src/components/mente/` e `src/components/refugio/`.
+**Régua:** indireta (tsc); a fiação em `src/components/play/playArea.render.test.tsx`.
+
 ### `src/components/nav/AreaTopBar.tsx`
 **Dono de:** o topo de uma área do Mapa e das páginas do menu da Home — voltar (seta em círculo, exceção D1 do dono) + título centralizado.
 **Props principais:** `icon?` (`'map'` nas áreas, `'arrow_back'` padrão — 29/09/2026), `overScene?` (topo sobre o fundo full-screen: tinta `#E9F5F2` + scrim), `covered?` (há folha/jogo/duelo aberto: o topo some por `visibility:hidden`, sai do foco e da árvore de acessibilidade), `title`, `backLabel` (diz PARA ONDE), `onBack`, `ownsHeading?` (`false` quando a página de baixo já tem `<h1>`: o título vira `<p aria-hidden>`; desde a F5 o `App` não passa mais — nenhuma área tem página dona do `<h1>` —, fica o padrão `true`).
@@ -967,6 +1009,13 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 **Chamado por:** `src/components/ArenaGame.tsx`, `src/components/DungeonGame.tsx`, `src/components/NightmareBattle.tsx` (`grep -rl "from '.*/TimingBar'" src`, 09/09/2026).
 **Régua:** nenhuma (`find src/components/pixel -maxdepth 1 -name 'TimingBar.*test.ts*'` vazio, 09/09/2026).
 **Avisos do arquivo:** era código local em `DungeonGame.tsx`, COPIADO para `NightmareBattle.tsx` (footgun 9 documentado no próprio cabeçalho antigo) — esta é a extração feita antes da Arena existir, para não abrir uma terceira cópia; ⚠️ não acrescentar regra de jogo aqui (dano/elemento/crítico/carga de especial são de quem chama) — a barra só mede.
+
+### `src/components/refugio/RespiracaoGame.tsx`
+**Dono de:** Respirar com o Soulmon — escolher ritmo e 1–3 min; a bolha enche e esvazia sozinha e o pet respira junto (movimento reduzido: opacidade + barra, sem escala). Aviso de ajuda profissional nas três telas. Sem pontuação, sem Bits.
+**Exports:** `RespiracaoGame(props: MiniGameBaseProps)`, `CrisisNote({ isPt })`.
+**Depende de:** `src/utils/refugio/respiracao.ts`.
+**Chamado por:** `src/components/nav/AreaView.tsx` (lazy).
+**Régua:** `src/components/mente/revisaoRespiracao.render.test.tsx`; a fiação em `src/components/play/playArea.render.test.tsx`.
 
 ### `src/components/ritual/RitualKit.tsx`
 **Dono de:** as três peças partilhadas pelos oito rituais (canvas Rituais, DECISÕES §21, D-R1…D-R3): o **diálogo centrado** `.dlg` SIS-06 sobre o scrim literal do `ModalSheet` (`RITUAL_SCRIM` = `rgba(4,18,20,.55)`), o **vidro sem anel** onde o pixel entra (sprite 64/128, cena 96, aventura 48, emblema 64 — sempre múltiplo de 0,5× do nativo) e a **linha rótulo/valor** do relatório (12 `muted` · 14/500 tabular; destaque em tinta `primary-ink`, perda em peso 400 sem sinal).

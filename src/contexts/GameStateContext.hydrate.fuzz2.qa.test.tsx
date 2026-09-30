@@ -3,7 +3,7 @@
  * QA Rodada 2 (22/09/2026) — extensão do fuzz de `hydrateSave`.
  *
  * O arquivo irmão (`GameStateContext.hydrate.fuzz.test.tsx`) cobre formas
- * hostis ESCOLHIDAS À MÃO. Este varre os 94 campos declarados em `GameState`
+ * hostis ESCOLHIDAS À MÃO. Este varre os 95 campos declarados em `GameState`
  * com o MESMO conjunto de valores hostis, sem escolher — para pegar o campo
  * que ninguém lembrou (a regra do arquivo é "todo campo tem linha em
  * `hydrateSave`"; o `...loadedState` no topo deixa passar o que não tem).
@@ -37,7 +37,7 @@ function montar() {
   return JSON.parse(screen.getByTestId('estado').textContent!);
 }
 
-/** Os 94 campos, lidos do PRÓPRIO tipo — a lista não é copiada à mão. */
+/** Os 95 campos, lidos do PRÓPRIO tipo — a lista não é copiada à mão. */
 function camposDeGameState(): string[] {
   const src = readFileSync(resolve(__dirname, 'GameStateContext.tsx'), 'utf8');
   const bloco = /export interface GameState \{([\s\S]*?)\n\}/.exec(src)?.[1] ?? '';
@@ -75,15 +75,15 @@ beforeEach(() => {
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 describe('AUTOVERIFICAÇÃO', () => {
-  it('a lista de campos veio do tipo e tem os 94', () => {
+  it('a lista de campos veio do tipo e tem os 95', () => {
     const campos = camposDeGameState();
-    expect(campos.length).toBe(94);
+    expect(campos.length).toBe(95);
     expect(campos).toContain('conquistasHerdadas');
     expect(campos).toContain('consent');
   });
 });
 
-describe('cada um dos 94 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam', () => {
+describe('cada um dos 95 campos × valores hostis: o app monta, a virada roda, os consumidores de todo render não lançam', () => {
   for (const campo of camposDeGameState()) {
     it(campo, () => {
       for (const [nome, valor] of HOSTIS) {
