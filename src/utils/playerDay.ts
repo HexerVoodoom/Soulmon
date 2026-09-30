@@ -153,6 +153,20 @@ export function playerDayKey(now: Date, anchor: PlayerDayAnchor | undefined): st
 }
 
 /**
+ * O MESMO dia do jogador de `playerDayKey`, em ISO (`YYYY-MM-DD`) — para quem
+ * faz CONTA de dias (a Revisão da Malha soma intervalos, `utils/mente/revisao`).
+ * Mesma âncora, mesmo fallback (sem âncora = dia local do aparelho): as duas
+ * formas nunca discordam de QUE dia é, só de como ele se escreve.
+ */
+export function playerDayIso(now: Date, anchor: PlayerDayAnchor | undefined): string {
+  const offset = anchorOffsetMs(anchor, now);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  if (offset === null) return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  const d = new Date(now.getTime() + offset);
+  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
+}
+
+/**
  * Higieniza o que veio do save. Save é dado NÃO CONFIÁVEL: veio da nuvem, pode
  * ter sido editado à mão, pode ser de uma versão futura.
  *

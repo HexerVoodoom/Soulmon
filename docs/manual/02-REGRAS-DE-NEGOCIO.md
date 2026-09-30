@@ -4680,9 +4680,21 @@ evolução. Nenhum dos dois tem limite diário. Nenhum dos dois dropa item.
 
 **Onde a UI mostra.** os lotes das áreas Exploração e Jogos (`src/components/play/PlaySheets.tsx`,
 minimal-ui F5; ⚰️ antes, os cards da `ActivitiesPage`) e as telas próprias de cada jogo.
-Os lotes vêm de `src/utils/playAreaLots.ts`: Exploração tem **Masmorra** e
-**Corrida do Dino**; Jogos tem **Pedra, papel e tesoura** (e não "Duelo", como no
-mock, porque a Arena já tem um lote Duelo que abre outro jogo).
+Os lotes vêm de `src/utils/playAreaLots.ts`. ⚰️ Até 30/09/2026 a Exploração tinha
+Masmorra + Corrida do Dino e Jogos tinha só o PPT. **Desde 30/09/2026 (decisão do
+dono, `REGISTRO-DE-DECISOES.md` §5.6)** a Exploração tem só a **Masmorra** e Jogos tem
+**três prédios**:
+
+| Prédio (lote) | Jogos | Paga |
+|---|---|---|
+| **Salão de Jogos** (`salao`) | Corrida do Dino + PPT — as regras acima, intactas | como acima |
+| **Ateliê da Mente** (`mente`) | Eco do Pet (`utils/mente/eco.ts`), Bolhas do Sonho no modo foco (`utils/mente/bolhas.ts`), Troca de Regra (`utils/mente/troca.ts`), Picross da Malha (`utils/mente/picross.ts`, um desenho do dia por `todayKey`) e Revisão da Malha (`utils/mente/revisao.ts`, cartões do jogador em Leitner, no save como `GameState.review`) | Bits pelo MESMO funil `handleEarnGamePoints` (teto `MINIGAME_BITS_PER_DAY`); os tetos por rodada são constantes dos donos (`ECO_MAX_BITS`, `BOLHAS_MAX_BITS`, `TROCA_MAX_BITS`, `PICROSS_DAILY_BITS`, `REVIEW_SESSION_BITS`) |
+| **Refúgio** (`refugio`) | Respirar com o Soulmon (`utils/refugio/respiracao.ts`) e Bolhas calmas (Bolhas no modo `calma`) | **nada** — não paga, não pontua, não mede; mostra o aviso de ajuda profissional |
+
+O dia da Revisão e do Picross é o dia do JOGADOR em ISO (`playerDayIso`,
+`utils/playerDay.ts`), a mesma âncora de `playerDayKey`. Nenhuma copy dos prédios
+promete efeito cognitivo (`docs/BENCHMARK-MINIJOGOS.md` §1.2); a régua é
+`src/components/play/playArea.render.test.tsx`.
 
 ---
 

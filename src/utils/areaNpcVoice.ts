@@ -40,8 +40,9 @@ const AREA_NPC_VOICE: Record<AreaId, AreaNpcVoice> = {
   exploracao: {
     namePt: 'Brisa, a guia',
     nameEn: 'Brisa, the guide',
-    linePt: 'A névoa esconde caminhos. Escolha por onde começar: a Masmorra ou a Corrida.',
-    lineEn: 'The mist hides paths. Choose where to start: the Dungeon or the Dash.',
+    // A Corrida mudou para o Salão de Jogos (30/09/2026); aqui ficou a Masmorra.
+    linePt: 'A névoa esconde caminhos. A Masmorra está logo ali, quando quiser descer.',
+    lineEn: 'The mist hides paths. The Dungeon is right there, whenever you want to go down.',
   },
   jogos: {
     namePt: 'Pipo, o anfitrião',
@@ -88,6 +89,19 @@ const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     namePt: 'Fanfa', nameEn: 'Fanfa',
     linePt: GUILD_COPY['guild.npc.feira'][0],
     lineEn: GUILD_COPY['guild.npc.feira'][1],
+  },
+  // Os prédios de Jogos (30/09/2026). Nomes e falas PLACEHOLDER de nomeação.
+  // Tom: convite; o Ateliê DESCREVE o que os jogos pedem (nunca promete
+  // efeito — benchmark §1.2) e o Refúgio não cobra nada de ninguém.
+  'jogos:mente': {
+    namePt: 'Sábia, a coruja', nameEn: 'Sábia, the owl',
+    linePt: 'Aqui cada jogo pede uma coisa: lembrar, esperar, mudar de ideia, deduzir. Escolha um.',
+    lineEn: 'Here each game asks for one thing: remember, wait, change your mind, deduce. Pick one.',
+  },
+  'jogos:refugio': {
+    namePt: 'Musgo, o guardião', nameEn: 'Musgo, the keeper',
+    linePt: 'Aqui ninguém tem pressa. Respire comigo um pouco, ou só estoure umas bolhas.',
+    lineEn: 'No one is in a hurry here. Breathe with me a little, or just pop some bubbles.',
   },
   'hall:amigos': {
     namePt: 'Nino, o carteiro', nameEn: 'Nino, the courier',

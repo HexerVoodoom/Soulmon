@@ -7,6 +7,11 @@ import { STORAGE_KEYS } from '../../utils/storageKeys';
 import { readNumber } from '../../utils/safeStorage';
 import { bitsStyle } from '../../utils/currencies';
 import type { Language } from '../../utils/i18n';
+import { ECO_MAX_BITS } from '../../utils/mente/eco';
+import { BOLHAS_MAX_BITS } from '../../utils/mente/bolhas';
+import { TROCA_MAX_BITS } from '../../utils/mente/troca';
+import { PICROSS_DAILY_BITS } from '../../utils/mente/picross';
+import { REVIEW_SESSION_BITS } from '../../utils/mente/revisao';
 
 /**
  * AS FOLHAS DAS ÁREAS DE JOGAR (minimal-ui F5 — Exploração e Jogos).
@@ -178,6 +183,170 @@ export function PptSheet({ language, onStart }: { language: Language; onStart: (
       <button type="button" data-ppt-start onClick={onStart} style={cta}>
         {isPt ? 'Jogar' : 'Play'}
       </button>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// 🏛️ OS TRÊS PRÉDIOS DE JOGOS (30/09/2026, pedido do dono)
+//
+// Cada prédio é uma folha com VÁRIOS jogos — a porta de cada um é uma linha
+// com o que o jogo pede e o CTA. Nenhuma regra nasce aqui: os Bits vêm das
+// constantes dos donos (`utils/mente/*`), e o que o jogo exercita é DESCRIÇÃO,
+// nunca promessa de efeito (`docs/BENCHMARK-MINIJOGOS.md` §1.2, caso FTC ×
+// Lumosity). O Refúgio não paga, não pontua e não mede nada, por desenho.
+// ════════════════════════════════════════════════════════════════════════════
+
+export type SalaoGame = 'dino' | 'ppt';
+export type MenteGame = 'eco' | 'bolhas' | 'troca' | 'picross' | 'revisao';
+export type RefugioGame = 'respiracao' | 'bolhas-calmas';
+
+const divider: CSSProperties = { border: 0, borderTop: '1px solid var(--sm2-line)', margin: '4px 0', width: '100%' };
+
+/** Salão de Jogos — jogos livres: a Corrida do Dino e o PPT, as mesmas folhas de sempre. */
+export function SalaoSheet({ language, onStart }: { language: Language; onStart: (g: SalaoGame) => void }) {
+  const isPt = language === 'pt-BR';
+  return (
+    <div data-salao style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <p style={sectionHead}>{isPt ? 'Corrida do Dino' : 'Dino Runner'}</p>
+      <DinoSheet language={language} onStart={() => onStart('dino')} />
+      <hr style={divider} />
+      <p style={sectionHead}>{isPt ? 'Pedra, papel e tesoura' : 'Rock, paper, scissors'}</p>
+      <PptSheet language={language} onStart={() => onStart('ppt')} />
+    </div>
+  );
+}
+
+function GameRow({ id, title, asks, detail, meta, cta, onStart, dataKey }: {
+  id: string; title: string; asks: string; detail: string; meta?: ReactNode; cta: string;
+  onStart: () => void; dataKey: 'mente' | 'refugio';
+}) {
+  return (
+    <li
+      style={{
+        display: 'flex', flexDirection: 'column', gap: 6, padding: '12px 0',
+        borderBottom: '1px solid var(--sm2-line)',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+        <span style={{ ...sm2Text, fontFamily: 'var(--sm2-font-display)', fontWeight: 600, flex: 1, minWidth: 0 }}>{title}</span>
+        {meta !== undefined && <span className="sm2-num" style={{ ...sm2Hint, flexShrink: 0 }}>{meta}</span>}
+      </div>
+      <p style={{ ...sm2Hint, margin: 0, color: 'var(--sm2-gold-ink)' }}>{asks}</p>
+      <p style={{ ...sm2Text, margin: 0 }}>{detail}</p>
+      <button
+        type="button"
+        {...{ [`data-${dataKey}-start`]: id }}
+        onClick={onStart}
+        style={{ ...sm2Button('outline'), width: '100%' }}
+      >
+        {cta}
+      </button>
+    </li>
+  );
+}
+
+/** Ateliê da Mente — os cinco jogos que exercitam uma função. */
+export function MenteSheet({ language, reviewDue, onStart }: {
+  language: Language;
+  /** Quantos cartões da Revisão estão para hoje (`dueCards`, dono `utils/mente/revisao`). */
+  reviewDue: number;
+  onStart: (g: MenteGame) => void;
+}) {
+  const isPt = language === 'pt-BR';
+  const upTo = (n: number) => (isPt ? `até ${n} Bits` : `up to ${n} Bits`);
+  const cta = isPt ? 'Jogar' : 'Play';
+  const rows: { id: MenteGame; title: string; asks: string; detail: string; meta: ReactNode; cta?: string }[] = [
+    {
+      id: 'eco',
+      title: isPt ? 'Eco do Pet' : "Pet's Echo",
+      asks: isPt ? 'Pede: lembrar uma sequência' : 'Asks: remember a sequence',
+      detail: isPt ? 'Repita a sequência que o seu Soulmon mostra. Ela cresce a cada acerto.' : 'Repeat the sequence your Soulmon shows. It grows with every match.',
+      meta: <span style={bitsStyle}>{upTo(ECO_MAX_BITS)}</span>,
+    },
+    {
+      id: 'bolhas',
+      title: isPt ? 'Bolhas do Sonho' : 'Dream Bubbles',
+      asks: isPt ? 'Pede: segurar o impulso' : 'Asks: hold back the impulse',
+      detail: isPt ? 'Estoure os sonhos claros e deixe passar os fiapos escuros.' : 'Pop the bright dreams and let the dark wisps drift by.',
+      meta: <span style={bitsStyle}>{upTo(BOLHAS_MAX_BITS)}</span>,
+    },
+    {
+      id: 'troca',
+      title: isPt ? 'Troca de Regra' : 'Rule Switch',
+      asks: isPt ? 'Pede: mudar de ideia' : 'Asks: change your mind',
+      detail: isPt ? 'Separe as criaturas pela regra da vez — e perceba quando ela muda.' : 'Sort the creatures by the current rule — and notice when it changes.',
+      meta: <span style={bitsStyle}>{upTo(TROCA_MAX_BITS)}</span>,
+    },
+    {
+      id: 'picross',
+      title: isPt ? 'Picross da Malha' : 'Mesh Picross',
+      asks: isPt ? 'Pede: deduzir' : 'Asks: deduce',
+      detail: isPt ? 'Pinte a grade pelas pistas e revele um desenho. Um novo a cada dia.' : 'Fill the grid from the clues and reveal a picture. A new one every day.',
+      meta: <span style={bitsStyle}>{upTo(PICROSS_DAILY_BITS)}</span>,
+    },
+    {
+      id: 'revisao',
+      title: isPt ? 'Revisão da Malha' : 'Mesh Review',
+      asks: isPt ? 'Pede: lembrar o que você quer aprender' : 'Asks: recall what you want to learn',
+      detail: isPt
+        ? 'Cartões que VOCÊ escreve, revistos no intervalo certo: o que você lembra volta mais tarde, o que não lembra volta amanhã.'
+        : 'Cards YOU write, reviewed at the right interval: what you remember comes back later, what you don’t comes back tomorrow.',
+      meta: reviewDue > 0
+        ? (isPt ? `${reviewDue} para hoje` : `${reviewDue} for today`)
+        : <span style={bitsStyle}>{`${REVIEW_SESSION_BITS} Bits`}</span>,
+      cta: isPt ? 'Abrir' : 'Open',
+    },
+  ];
+  return (
+    <div data-mente style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <p style={note}>
+        {isPt
+          ? 'Cada jogo pede uma coisa diferente. Perder só encerra a rodada.'
+          : 'Each game asks for something different. Losing only ends the round.'}
+      </p>
+      <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+        {rows.map(r => (
+          <GameRow key={r.id} dataKey="mente" id={r.id} title={r.title} asks={r.asks} detail={r.detail} meta={r.meta} cta={r.cta ?? cta} onStart={() => onStart(r.id)} />
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** Refúgio — para momentos difíceis. Nada aqui pontua, paga ou mede. */
+export function RefugioSheet({ language, onStart }: { language: Language; onStart: (g: RefugioGame) => void }) {
+  const isPt = language === 'pt-BR';
+  return (
+    <div data-refugio style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <p style={note}>
+        {isPt
+          ? 'Um canto para quando o dia pesar. Aqui nada pontua, nada paga e nada é medido.'
+          : 'A corner for when the day feels heavy. Nothing here scores, pays or measures anything.'}
+      </p>
+      <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+        <GameRow
+          dataKey="refugio" id="respiracao"
+          title={isPt ? 'Respirar com o Soulmon' : 'Breathe with your Soulmon'}
+          asks={isPt ? '1 a 3 minutos' : '1 to 3 minutes'}
+          detail={isPt ? 'Siga uma bolha que enche e esvazia devagar. Seu Soulmon respira junto.' : 'Follow a bubble that slowly fills and empties. Your Soulmon breathes along.'}
+          cta={isPt ? 'Começar' : 'Start'}
+          onStart={() => onStart('respiracao')}
+        />
+        <GameRow
+          dataKey="refugio" id="bolhas-calmas"
+          title={isPt ? 'Bolhas calmas' : 'Calm bubbles'}
+          asks={isPt ? 'Sem tempo, sem placar' : 'No timer, no score'}
+          detail={isPt ? 'Só estourar bolhas, no seu ritmo.' : 'Just pop bubbles, at your own pace.'}
+          cta={isPt ? 'Começar' : 'Start'}
+          onStart={() => onStart('bolhas-calmas')}
+        />
+      </ul>
+      <p data-refugio-ajuda style={{ ...note, marginTop: 4 }}>
+        {isPt
+          ? 'Isto não substitui ajuda profissional. Em crise, no Brasil: CVV, 188 (24h, gratuito).'
+          : 'This does not replace professional help. In a crisis — US/Canada: 988. UK/IE: 116 123.'}
+      </p>
     </div>
   );
 }

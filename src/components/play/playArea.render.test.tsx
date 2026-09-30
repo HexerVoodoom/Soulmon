@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
 /**
- * AS ÁREAS DE JOGAR (minimal-ui F5) — Exploração (Masmorra + Corrida do Dino)
- * e Jogos (Pedra, papel e tesoura), dentro do molde `AreaScene`/`AreaSheet`.
+ * AS ÁREAS DE JOGAR (minimal-ui F5) — Exploração (Masmorra) e Jogos, dentro
+ * do molde `AreaScene`/`AreaSheet`. Desde 30/09/2026 (pedido do dono) Jogos tem
+ * TRÊS prédios: Salão de Jogos (Corrida do Dino + PPT), Ateliê da Mente (cinco
+ * jogos que pagam Bits) e Refúgio (respiração e bolhas calmas, sem Bits).
  *
  * Substitui a cobertura que a antiga `ActivitiesPage` (hub de cartões) dava
  * de graça: cada minijogo tem porta, a porta abre o jogo de sempre e os
@@ -34,6 +36,16 @@ vi.mock('../RPSGame', async (orig) => {
     RPSGame: (p: Record<string, unknown>) => { recebidas.rps = p; return <div data-jogo="rps" />; },
   };
 });
+
+// Os jogos dos prédios novos: dublês que só registram as props (a
+// jogabilidade tem teste próprio em `components/mente/*.render.test.tsx`).
+const dubleDe = (nome: string) => (p: Record<string, unknown>) => { recebidas[nome] = p; return <div data-jogo={nome} />; };
+vi.mock('../mente/EcoGame', () => ({ EcoGame: dubleDe('eco') }));
+vi.mock('../mente/BolhasGame', () => ({ BolhasGame: (p: Record<string, unknown>) => dubleDe(`bolhas-${p.mode as string}`)(p) }));
+vi.mock('../mente/TrocaGame', () => ({ TrocaGame: dubleDe('troca') }));
+vi.mock('../mente/PicrossGame', () => ({ PicrossGame: dubleDe('picross') }));
+vi.mock('../mente/RevisaoGame', () => ({ RevisaoGame: dubleDe('revisao') }));
+vi.mock('../refugio/RespiracaoGame', () => ({ RespiracaoGame: dubleDe('respiracao') }));
 
 import { AreaView, type AreaViewProps, type PlayHandlers } from '../nav/AreaView';
 
@@ -96,13 +108,13 @@ async function achar(container: HTMLElement, sel: string): Promise<HTMLElement> 
   return el!;
 }
 
-describe('Exploração — Brisa, Masmorra e Corrida do Dino', () => {
-  it('a cena tem os dois lotes com arte; a Brisa fala dentro da folha da Masmorra (NPC por sub-loja)', () => {
+describe('Exploração — Brisa e a Masmorra', () => {
+  it('a cena tem só o lote da Masmorra (a Corrida mudou para o Salão de Jogos); a Brisa fala dentro da folha', () => {
     const { container } = renderWithCss(<PlayAreaView {...props()} />);
     expect(container.querySelector('[data-area-npc]')).toBeNull();
+    expect(container.querySelectorAll('[data-area-lot]')).toHaveLength(1);
     expect(container.querySelector('[data-area-lot="masmorra"] [data-area-lot-art]')).toBeTruthy();
-    expect(container.querySelector('[data-area-lot="dino"] [data-area-lot-art]')).toBeTruthy();
-    expect(container.querySelector('[data-area-lot="ppt"]')).toBeNull();
+    expect(container.querySelector('[data-area-lot="dino"]')).toBeNull();
     fireEvent.click(container.querySelector('[data-area-lot="masmorra"]')!);
     expect(container.querySelector('[data-area-sheet-npc-line]')!.textContent).toContain('Brisa');
   });
@@ -158,13 +170,13 @@ describe('Exploração — Brisa, Masmorra e Corrida do Dino', () => {
     expect(container.querySelector('[data-area-scene="exploracao"]')).toBeTruthy();
   });
 
-  it('Corrida do Dino: recorde da chave DINO_BEST, 1 Bit a cada 100, e o CTA abre a DinoGame', async () => {
+  it('Salão de Jogos → Corrida do Dino: recorde da chave DINO_BEST, 1 Bit a cada 100, e o CTA abre a DinoGame', async () => {
     localStorage.setItem(STORAGE_KEYS.DINO_BEST, '1240');
-    const p = props();
+    const p = props({ area: 'jogos' });
     const { container, getByRole } = renderWithCss(<PlayAreaView {...p} />);
-    fireEvent.click(container.querySelector('[data-area-lot="dino"]')!);
+    fireEvent.click(container.querySelector('[data-area-lot="salao"]')!);
     const start = await achar(container, '[data-dino-start]');
-    const folha = getByRole('dialog', { name: 'Corrida do Dino' });
+    const folha = getByRole('dialog', { name: 'Salão de Jogos' });
     expect(folha.textContent).toContain('1240');
     expect(folha.textContent).toContain('12 Bits');
     fireEvent.click(start);
@@ -182,24 +194,67 @@ describe('Exploração — Brisa, Masmorra e Corrida do Dino', () => {
   });
 });
 
-describe('Jogos — Pipo e Pedra, papel e tesoura', () => {
-  it('a cena tem só o lote do PPT; o Pipo fala dentro da folha dele', () => {
+describe('Jogos — os três prédios', () => {
+  it('a cena tem Salão de Jogos, Ateliê da Mente e Refúgio, todos com arte; o Pipo fala no Salão', () => {
     const { container } = renderWithCss(<PlayAreaView {...props({ area: 'jogos' })} />);
-    expect(container.querySelectorAll('[data-area-lot]')).toHaveLength(1);
-    expect(container.querySelector('[data-area-lot="ppt"] [data-area-lot-art]')).toBeTruthy();
-    fireEvent.click(container.querySelector('[data-area-lot="ppt"]')!);
+    expect([...container.querySelectorAll('[data-area-lot]')].map(e => e.getAttribute('data-area-lot')))
+      .toEqual(['salao', 'mente', 'refugio']);
+    for (const id of ['salao', 'mente', 'refugio']) {
+      expect(container.querySelector(`[data-area-lot="${id}"] [data-area-lot-art]`), id).toBeTruthy();
+    }
+    fireEvent.click(container.querySelector('[data-area-lot="salao"]')!);
     expect(container.querySelector('[data-area-sheet-npc-line]')!.textContent).toContain('Pipo');
   });
 
-  it('a folha mostra 5 Bits por vitória e o CTA abre o RPSGame com o onEarnPoints do App', async () => {
+  it('Salão: o PPT mostra 5 Bits por vitória e o CTA abre o RPSGame com o onEarnPoints do App', async () => {
     const p = props({ area: 'jogos' });
     const { container, getByRole } = renderWithCss(<PlayAreaView {...p} />);
-    fireEvent.click(container.querySelector('[data-area-lot="ppt"]')!);
+    fireEvent.click(container.querySelector('[data-area-lot="salao"]')!);
     const start = await achar(container, '[data-ppt-start]');
-    expect(getByRole('dialog', { name: 'Pedra, papel e tesoura' }).textContent).toContain('5 Bits');
+    expect(getByRole('dialog', { name: 'Salão de Jogos' }).textContent).toContain('5 Bits');
     fireEvent.click(start);
     await achar(container, '[data-jogo="rps"]');
     expect(recebidas.rps.onEarnPoints).toBe(p.onEarnPoints);
+  });
+
+  it('Ateliê da Mente: os cinco jogos, e cada um recebe o onEarnPoints do App (o funil do teto diário)', async () => {
+    const p = props({ area: 'jogos' });
+    for (const id of ['eco', 'bolhas', 'troca', 'picross', 'revisao']) {
+      const { container, unmount } = renderWithCss(<PlayAreaView {...p} />);
+      fireEvent.click(container.querySelector('[data-area-lot="mente"]')!);
+      fireEvent.click(await achar(container, `[data-mente-start="${id}"]`));
+      const nome = id === 'bolhas' ? 'bolhas-foco' : id;
+      await achar(container, `[data-jogo="${nome}"]`);
+      expect(recebidas[nome].onEarnPoints, id).toBe(p.onEarnPoints);
+      unmount();
+    }
+  });
+
+  it('Ateliê da Mente: nenhuma linha promete efeito cognitivo (benchmark §1.2 — caso FTC × Lumosity)', async () => {
+    for (const language of ['pt-BR', 'en-US'] as const) {
+      const { container, unmount } = renderWithCss(<PlayAreaView {...props({ area: 'jogos', language })} />);
+      fireEvent.click(container.querySelector('[data-area-lot="mente"]')!);
+      const folha = await achar(container, '[data-mente]');
+      expect(folha.textContent).not.toMatch(/c[ée]rebro|brain|treina|train|melhora|improve|QI|IQ/i);
+      unmount();
+    }
+  });
+
+  it('Refúgio: respiração e bolhas calmas NÃO recebem onEarnPoints, e o aviso de ajuda está na folha nos dois idiomas', async () => {
+    const p = props({ area: 'jogos' });
+    for (const id of ['respiracao', 'bolhas-calmas']) {
+      const { container, unmount } = renderWithCss(<PlayAreaView {...p} />);
+      fireEvent.click(container.querySelector('[data-area-lot="refugio"]')!);
+      expect((await achar(container, '[data-refugio-ajuda]')).textContent).toContain('188');
+      fireEvent.click(await achar(container, `[data-refugio-start="${id}"]`));
+      const nome = id === 'bolhas-calmas' ? 'bolhas-calma' : id;
+      await achar(container, `[data-jogo="${nome}"]`);
+      expect(recebidas[nome].onEarnPoints, id).toBeUndefined();
+      unmount();
+    }
+    const { container } = renderWithCss(<PlayAreaView {...props({ area: 'jogos', language: 'en-US' })} />);
+    fireEvent.click(container.querySelector('[data-area-lot="refugio"]')!);
+    expect((await achar(container, '[data-refugio-ajuda]')).textContent).toMatch(/988/);
   });
 });
 

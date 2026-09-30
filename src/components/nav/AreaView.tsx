@@ -14,6 +14,8 @@ import type { ShopActions, ShopOwnership } from '../mercado/ShopShelf';
 import type { TournamentPage as TournamentPageT } from '../TournamentPage';
 import type { StageSkills } from '../../utils/soulProfile/ficha/skills';
 import type { FichaStage } from '../../utils/soulProfile/ficha/types';
+import type { SalaoGame, MenteGame, RefugioGame } from '../play/PlaySheets';
+import { REVIEW_EMPTY, dueCards, type ReviewState } from '../../utils/mente/revisao';
 
 /**
  * UMA ÁREA DO MAPA, INTEIRA (minimal-ui F4 molde + F5 conteúdo) — a cena
@@ -39,11 +41,19 @@ const ArenaGame = lazy(() => import('../ArenaGame').then(m => ({ default: m.Aren
 // Exploração + Jogos (F5, ex-PR #118): as folhas-porta e os minijogos de
 // sempre (os mesmos que a antiga `ActivitiesPage` abria).
 const MasmorraSheet = lazy(() => import('../play/PlaySheets').then(m => ({ default: m.MasmorraSheet })));
-const DinoSheet = lazy(() => import('../play/PlaySheets').then(m => ({ default: m.DinoSheet })));
-const PptSheet = lazy(() => import('../play/PlaySheets').then(m => ({ default: m.PptSheet })));
+// Os três prédios de Jogos (30/09/2026): Salão (livres), Ateliê da Mente e Refúgio.
+const SalaoSheet = lazy(() => import('../play/PlaySheets').then(m => ({ default: m.SalaoSheet })));
+const MenteSheet = lazy(() => import('../play/PlaySheets').then(m => ({ default: m.MenteSheet })));
+const RefugioSheet = lazy(() => import('../play/PlaySheets').then(m => ({ default: m.RefugioSheet })));
 const DungeonGame = lazy(() => import('../DungeonGame').then(m => ({ default: m.DungeonGame })));
 const DinoGame = lazy(() => import('../DinoGame').then(m => ({ default: m.DinoGame })));
 const RPSGame = lazy(() => import('../RPSGame').then(m => ({ default: m.RPSGame })));
+const EcoGame = lazy(() => import('../mente/EcoGame').then(m => ({ default: m.EcoGame })));
+const BolhasGame = lazy(() => import('../mente/BolhasGame').then(m => ({ default: m.BolhasGame })));
+const TrocaGame = lazy(() => import('../mente/TrocaGame').then(m => ({ default: m.TrocaGame })));
+const PicrossGame = lazy(() => import('../mente/PicrossGame').then(m => ({ default: m.PicrossGame })));
+const RevisaoGame = lazy(() => import('../mente/RevisaoGame').then(m => ({ default: m.RevisaoGame })));
+const RespiracaoGame = lazy(() => import('../refugio/RespiracaoGame').then(m => ({ default: m.RespiracaoGame })));
 
 /** Os handlers dos minijogos da Exploração e de Jogos — prontos no `App`, os
  *  MESMOS que a antiga `ActivitiesPage` repassava. Nenhuma regra nasce aqui:
@@ -58,9 +68,15 @@ export interface PlayHandlers {
   onDungeonEnemyDefeated: (enemyKey?: string) => void;
   onDinoScore: (score: number) => void;
   onSpendBits?: (pts: number) => boolean;
+  /** Dia do JOGADOR (`playerDayKey`) — o Picross do dia e a Revisão leem daqui.
+   *  Sem ele (testes antigos), cai no dia UTC do aparelho. */
+  todayKey?: string;
+  /** Os cartões da Revisão da Malha, que moram no SAVE (`GameState.review`). */
+  review?: ReviewState;
+  onReviewChange?: (next: ReviewState) => void;
 }
 
-type PlayGame = 'masmorra' | 'dino' | 'ppt';
+type PlayGame = 'masmorra' | SalaoGame | MenteGame | RefugioGame;
 export type LabTab = 'evolution' | 'pet' | 'stats';
 
 type TournamentProps = Omit<ComponentProps<typeof TournamentPageT>, 'shop'>;
@@ -244,13 +260,22 @@ export function AreaView(props: AreaViewProps) {
       : jogosLots(language).map(l => ({ ...l, art: JOGOS_LOT_ART[l.id], onOpen: () => setSheet(l.id) }));
     const open = lots.find(l => l.id === sheet) ?? null;
     const { play } = props;
+    const todayKey = play.todayKey ?? new Date().toISOString().slice(0, 10);
+    const review = play.review ?? REVIEW_EMPTY;
+    const base = {
+      evolutionStage: props.evolutionStage,
+      demoCharacterId: props.demoCharacterId,
+      language,
+      onExit: exitGame,
+    };
     return (
       <AreaScene areaId={area} language={language} background={PLAY_AREA_BG[area]} lots={lots}>
         <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close}>
           <Suspense fallback={<SheetLoading language={language} />}>
             {open?.id === 'masmorra' && <MasmorraSheet language={language} onStart={() => start('masmorra')} />}
-            {open?.id === 'dino' && <DinoSheet language={language} onStart={() => start('dino')} />}
-            {open?.id === 'ppt' && <PptSheet language={language} onStart={() => start('ppt')} />}
+            {open?.id === 'salao' && <SalaoSheet language={language} onStart={start} />}
+            {open?.id === 'mente' && <MenteSheet language={language} reviewDue={dueCards(review, todayKey).length} onStart={start} />}
+            {open?.id === 'refugio' && <RefugioSheet language={language} onStart={start} />}
           </Suspense>
         </AreaSheet>
         {game && (
@@ -294,6 +319,23 @@ export function AreaView(props: AreaViewProps) {
                 onExit={exitGame}
               />
             )}
+            {/* Ateliê da Mente — pagam Bits pelo MESMO funil (teto diário). */}
+            {game === 'eco' && <EcoGame {...base} onEarnPoints={props.onEarnPoints} />}
+            {game === 'bolhas' && <BolhasGame {...base} mode="foco" onEarnPoints={props.onEarnPoints} />}
+            {game === 'troca' && <TrocaGame {...base} onEarnPoints={props.onEarnPoints} />}
+            {game === 'picross' && <PicrossGame {...base} todayKey={todayKey} onEarnPoints={props.onEarnPoints} />}
+            {game === 'revisao' && (
+              <RevisaoGame
+                {...base}
+                todayKey={todayKey}
+                review={review}
+                onReviewChange={next => play.onReviewChange?.(next)}
+                onEarnPoints={props.onEarnPoints}
+              />
+            )}
+            {/* Refúgio — NÃO recebem `onEarnPoints`: não pagam, não pontuam. */}
+            {game === 'respiracao' && <RespiracaoGame {...base} />}
+            {game === 'bolhas-calmas' && <BolhasGame {...base} mode="calma" />}
           </Suspense>
         )}
       </AreaScene>

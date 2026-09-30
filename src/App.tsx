@@ -77,7 +77,7 @@ import {
 import { feedTimesFor, rubHealFor } from './utils/careCaps';
 import { applyRub, applyFeed, rubDecision } from './utils/careUpdaters';
 import { applySpecialItem, specialRefusal } from './utils/specialItemUse';
-import { playerDayKey } from './utils/playerDay';
+import { playerDayKey, playerDayIso } from './utils/playerDay';
 import { awardBondXP, bondLevelFor, unclaimedBondRewards, applyBondRewards, bondTitle } from './utils/bond';
 import { applyPoopDrain, cleanPoop, POOP_DRAIN_PERIOD_MS, remainingDrainToday } from './utils/poopDrain';
 import { isMuted, setMuted, playTaskComplete, playFeed, playEvolve, playDegenerate, playSleep } from './utils/sounds';
@@ -5750,6 +5750,13 @@ export default function App() {
                   onFloorCleared: handleDungeonFloorCleared,
                   onDungeonEnemyDefeated: handleDungeonEnemyDefeated,
                   onDinoScore: handleDinoScore,
+                  /* 🏛️ Prédios de Jogos (30/09/2026): o dia do JOGADOR em ISO
+                     (Picross do dia, Revisão) e os cartões da Revisão da
+                     Malha, que moram no save. A regra é de `utils/mente/revisao`;
+                     aqui só se grava o estado que o jogo devolveu. */
+                  todayKey: playerDayIso(new Date(), gameState.playerDayTz),
+                  review: gameState.review,
+                  onReviewChange: (next) => setGameState(prev => ({ ...prev, review: next })),
                   /* WP4.5 — o sumidouro. A cobrança é conferida sobre o `prev`
                      (dois toques no mesmo lote do React leriam o mesmo saldo e
                      comprariam duas vezes com o dinheiro de uma). */

@@ -77,8 +77,11 @@ const LOT_NPC_ART: Record<string, string> = {
   // Fanfa (`npc-arena-feira`): PLACEHOLDER até a leva de arte (ids em `utils/fairArt.ts`). Só trocar aqui.
   'arena:feira': npcPlaceholderCorujaCervo,
   'exploracao:masmorra': npcExploracao,
-  'exploracao:dino': npcPlaceholderPoring,
-  'jogos:ppt': npcJogos,
+  // Os três prédios de Jogos (30/09/2026): o Pipo segue no Salão (jogos livres);
+  // Ateliê da Mente e Refúgio usam placeholders até a squad-arte gerar os NPCs.
+  'jogos:salao': npcJogos,
+  'jogos:mente': npcPlaceholderCorujaCervo,
+  'jogos:refugio': npcPlaceholderPoring,
   'laboratorio:evolucao': npcLaboratorio,
   'hall:biblioteca': npcHall,
   'hall:amigos': npcPlaceholderCorujaCervo,

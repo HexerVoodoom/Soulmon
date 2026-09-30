@@ -35,6 +35,7 @@ import type { StepsRecord } from '../utils/steps';
 import { resolveLanguage } from '../utils/i18n';
 import { soulmonDisplayName } from '../utils/petName';
 import { normalizeFirstDay } from '../utils/firstDay';
+import { sanitizeReview, type ReviewState } from '../utils/mente/revisao';
 import type { WeeklyMissionProgress } from '../utils/weeklyMissions';
 import {
   readLocal,
@@ -420,6 +421,12 @@ export interface GameState {
   dungeonKills?: number;
   dungeonRunsCompleted?: number;
   dinoBest?: number;
+  /** 🧠 Revisão da Malha (Ateliê da Mente, 30/09/2026): os cartões que o
+   *  jogador escreve e a caixa de Leitner de cada um. Dono único da regra e da
+   *  higienização: `utils/mente/revisao.ts`. Mora no save (e não no aparelho)
+   *  porque é conteúdo da pessoa — perder ao trocar de celular seria perder
+   *  o que ela escreveu. */
+  review?: ReviewState;
   /** Dias completos REAIS (virada). ⚠️ Desde a decisão #41/#60 (22/09/2026) o
    *  🌀 Glitchtama NÃO entra aqui — é ele que `utils/achievements.ts` lê. */
   totalPerfectDays?: number;
@@ -1196,6 +1203,9 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         dungeonKills: num(loadedState.dungeonKills, 0),
         dungeonRunsCompleted: num(loadedState.dungeonRunsCompleted, 0),
         dinoBest: num(loadedState.dinoBest, 0),
+        // Cartão malformado é DESCARTADO pelo dono (`sanitizeReview`), nunca
+        // derruba o load; save sem o campo entra vazio.
+        review: sanitizeReview(loadedState.review),
         totalPerfectDays: num(loadedState.totalPerfectDays, 0),
         // #41/#60: save anterior à decisão não tem o campo, e o vitalício antigo
         // JÁ somava os 🌀 — herdar `totalPerfectDays` é o que impede a missão de

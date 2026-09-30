@@ -42,9 +42,14 @@ import lotePpt from './lote-jogos-ppt.png';
 
 export const PLAY_AREA_BG = { exploracao: bgExploracao, jogos: bgJogos } as const;
 
-export const EXPLORACAO_LOT_ART = { masmorra: loteMasmorra, dino: loteDino } as const;
+export const EXPLORACAO_LOT_ART = { masmorra: loteMasmorra } as const;
 
-export const JOGOS_LOT_ART = { ppt: lotePpt } as const;
+// 🏛️ Os três prédios de Jogos (30/09/2026). O Salão herda as duas artes que já
+// eram dele por conteúdo (o PPT; o Dino mudou da Exploração para cá).
+// ⚠️ `mente` e `refugio`: PLACEHOLDERS — reaproveitam isométricas instaladas
+// até a squad-arte gerar as próprias (fila em `docs/ASSETS-A-GERAR.md`). Só
+// trocar os imports.
+export const JOGOS_LOT_ART = { salao: lotePpt, mente: loteDino, refugio: loteDecoracao } as const;
 
 // ── Guilda, Laboratório e Hall (29/09/2026) ────────────────────────────────
 // ⚠️ PLACEHOLDERS: ainda não existe arte de lote própria para estas

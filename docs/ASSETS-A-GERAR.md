@@ -387,3 +387,16 @@ aceite: og:image resolve 200 com `curl -sI`; Facebook Sharing Debugger / opengra
 
 Comando: `/squad-arte gerar loja L2 L3` → `arte-conferente` → `arte-instalador` (L3 toca `public/` e
 `index.html`, então `CACHE_VERSION` sobe).
+
+## 15. Prédios de Jogos — pedido do dono em 30/09/2026
+
+A área Jogos passou a ter três construções (`src/utils/playAreaLots.ts`). Duas
+ainda usam arte emprestada (`src/assets/soulmon/areas/index.ts` › `JOGOS_LOT_ART`):
+
+| id | construção | hoje (placeholder) | pedido |
+|---|---|---|---|
+| `lote-jogos-mente` | **Ateliê da Mente** — jogos de memória, lógica e revisão | `lote-exploracao-dino.png` | isométrica 300² com alfa real, no estilo dos lotes F5: uma oficina/biblioteca pequena com pedras elementais e um quadro de pixels na fachada |
+| `lote-jogos-refugio` | **Refúgio** — respiração e bolhas calmas | `lote-loja-decoracao.png` | isométrica 300² com alfa real: um abrigo pequeno e quieto (copa de árvore, lanterna, bolhas subindo), paleta fria e sem vermelho |
+
+O Salão de Jogos usa `lote-jogos-ppt.png`, que já era dele. NPCs de lote seguem os
+placeholders de `src/assets/soulmon/npcs/index.ts` (`jogos:mente`, `jogos:refugio`).
