@@ -2214,10 +2214,21 @@ async function verifiedAdmin(env, request, saveId) {
   try {
     const projectId = env?.FIREBASE_PROJECT_ID;
     if (!projectId) return { admin: false };
-    if (parseAdminEmails(env?.ADMIN_EMAILS).size === 0) return { admin: false };
+    const noList = parseAdminEmails(env?.ADMIN_EMAILS).size === 0;
     const claims = await verifyIdToken(bearerToken(request), projectId);
-    if (!claims || !isAdminEmail(env, claims.email)) return { admin: false };
-    if (saveId !== void 0 && await emailToSaveId(claims.email) !== saveId) return { admin: false };
+    if (!claims) return { admin: false };
+    if (noList) {
+      logAdminDenied("no-allowlist");
+      return { admin: false };
+    }
+    if (!isAdminEmail(env, claims.email)) {
+      logAdminDenied("not-listed");
+      return { admin: false };
+    }
+    if (saveId !== void 0 && await emailToSaveId(claims.email) !== saveId) {
+      logAdminDenied("saveid-mismatch");
+      return { admin: false };
+    }
     return { admin: true };
   } catch {
     return { admin: false };
@@ -2232,6 +2243,10 @@ function logAdminSession(route) {
   console.log(JSON.stringify({ event: "admin_session", route }));
 }
 __name(logAdminSession, "logAdminSession");
+function logAdminDenied(reason) {
+  console.log(JSON.stringify({ event: "admin_denied", reason }));
+}
+__name(logAdminDenied, "logAdminDenied");
 
 // api/_aiGuard.js
 var AI_LIMITS = {
@@ -5204,7 +5219,7 @@ async function onRequest6({ env }) {
 }
 __name(onRequest6, "onRequest");
 
-// ../.wrangler/tmp/pages-iRxJx3/functionsRoutes-0.34222225431725684.mjs
+// ../.wrangler/tmp/pages-axWURV/functionsRoutes-0.6749234424480248.mjs
 var routes = [
   {
     routePath: "/api/account",

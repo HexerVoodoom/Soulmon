@@ -9,6 +9,20 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 30/09/2026 — Voltar com o ícone ilustrado de mapa; administrador refeito após o login
+>
+> O voltar das seis áreas usa agora o mesmo `PixelIcon name="mapa"` da Home (era o glifo
+> de contorno). O corvinho não aparecia após o login por duas causas de código, ambas
+> corrigidas em `src/utils/entitlementSync.ts`: a consulta do entitlement rodava UMA vez por
+> `saveId` (se a 1ª resposta saísse sem token do Firebase, a sessão ficava não-admin) e a
+> auto-adoção era "uma vez por sessão" (um save remoto sem corvo a desfazia). Agora a consulta
+> refaz ao mudar o usuário do Firebase, ao voltar o foco (no máximo 1 a cada 30 s) e com um
+> retry único de 2,5 s. **Se ainda não aparecer em produção, procure `admin_denied` no log do
+> Cloudflare**: `no-allowlist` = falta o secret `ADMIN_EMAILS`; `not-listed` = o e-mail do
+> login não está na lista; `saveid-mismatch` = consulta antes do login. O commit do duelo
+> fantasma (outra sessão) reintroduziu `champion-virus` num teste; corrigido para
+> `champion-power` — quem mexer no combate deve usar os ids `power|harmony|benevolence`.
+>
 > ## 30/09/2026 — Torneio: duelo fantasma (PvP com torcida)
 >
 > O "Desafiar" do Torneio deixou de ser um placar sorteado: abre o **duelo fantasma**
