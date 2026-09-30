@@ -9,6 +9,15 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 30/09/2026 — Travessias: missões de vida real na Exploração (proposta decidida, nada implementado)
+>
+> Pedido do dono: missões que "levantam a barra" com desafios da vida real, acessadas pela Exploração. Escrita a
+> `docs/PROPOSTA-MISSOES-EXPLORACAO.md`, pareceres de linha vermelha, psicologia e monster taming em
+> `docs/reviews/2026-09-30-missoes/` (três **APROVADO COM RESSALVA**; vetados só a leitura "cumprir para evoluir"
+> e o exemplo "só olhar o próximo nível"). O dono decidiu por modal: exceção à Camada 3, nome **Travessias**,
+> barra por **amplitude**, postal e lore exclusivos por região. Registro §5.6, ledger, MIS-5..MIS-12 pendentes com
+> padrão. Próximo passo: o Passeio fundido à Aventura (pré-requisito, R-47), depois as Travessias.
+>
 > ## 30/09/2026 — Benchmark de Exploração + 3 pareceres (proposta ao dono, nada implementado)
 >
 > Criados `docs/BENCHMARK-EXPLORACAO.md` (pesquisa, formato do de minijogos, fontes ✔/◐/(≈)/✖) e os

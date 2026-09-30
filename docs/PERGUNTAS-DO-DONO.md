@@ -353,3 +353,24 @@ determinística, uma por dia; decoração rara só com 1/dia e semente do dia, o
 - **EXP-3 / EXP-5 (respostas dadas, valem se a Escavação entrar):** decoração rara só na Escavação, 1/dia, determinística (semente `dayKey`), cosmética, nunca à venda; Escavação **só lore** no v1, sem Bits.
 - **EXP-4 (`weeklyReport`) e EXP-7 (biomas):** **não respondidas**; seguem a recomendação (Diário fora do `weeklyReport`; só as cenas que casam com os reinos, o resto é arte nova).
 - **Continua VETADO:** Passeio com Bits pelo achado, push de retorno, achados acumulados por ausência.
+
+## Travessias (missões de vida real na Exploração) — 30/09/2026
+
+Fonte: [`PROPOSTA-MISSOES-EXPLORACAO.md`](PROPOSTA-MISSOES-EXPLORACAO.md) e os três pareceres em
+`docs/reviews/2026-09-30-missoes/` (todos **APROVADO COM RESSALVA**). **Nada implementado.**
+
+**Decididas pelo dono (modal de 30/09/2026):** MIS-1 exceção à Camada 3 **sim, com as condições dos pareceres** ·
+MIS-2 nome **Travessias / Crossings** · MIS-3 barra por **amplitude**, não por dificuldade · MIS-4 **postal e lore
+exclusivos por região** (exceção à regra 4 da Aventura; catálogo comum segue alcançável). Registradas no
+`REGISTRO-DE-DECISOES.md` §5.6.
+
+| # | Pergunta aberta | Recomendação (aplicada como padrão até resposta) | Gatilho de revisão |
+|---|---|---|---|
+| MIS-5 | A Travessia pode entrar na meta do dia? | **Nunca**, nem como bônus (linha vermelha R-37: viraria perdão de coração sem prova; psicologia: fora nas duas direções) | Só com dado ≥ 10 × 14 e novo parecer |
+| MIS-6 | Texto livre do usuário (reflexão depois do "Fiz")? | **Não no v1.** Se entrar: uma linha opcional, fora de IA e telemetria (#18, D8) | Quando D8 for respondida |
+| MIS-7 | O mapa é finito? O que vem depois de tudo aberto? | 8 reinos (sem akasha): 1 de casa + 7 a abrir, ordem livre; regiões abertas continuam convidando, **sem estado "completo"** | Quando o 1º jogador abrir todas |
+| MIS-8 | Quem cura o pool de desafios? | `squad-narrativa` escreve, **psicologia com veto**; toda região com opção solitária, em casa, sem gasto, ≤ 10 min | A cada leva nova de desafios |
+| MIS-9 | Região de casa? | O reino do pet se estiver no save; senão `campina` (hoje o reino mora só no `localStorage`) | Quando o reino for para o save |
+| MIS-10 | Abrir a região dá o cenário do reino na loja? | **Não** (gênero: abrir região não é item) | Se o dono quiser cosmético pela Travessia |
+| MIS-11 | Interruptor para esconder a camada inteira de Travessias? | **Sim** (psicologia: período ruim) | — |
+| MIS-12 | Menores de idade | Pedir parecer do `soulmon-ip-brand-guardian` antes de implementar | Antes do v1 |
