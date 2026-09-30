@@ -4667,3 +4667,9 @@ registra com precisão que foi um PEDIDO DO DONO RECUSADO pela sessão),
 desde a rodada anterior). `doc-verificador` conferiu os 4 docs símbolo por
 símbolo, sem devoluções, e carimbou todos. Guard `docsManual.contract.test.ts`
 e `docsSemMentira.contract.test.ts`: 10/10 verdes.
+
+## 30/09/2026 — Inglês como língua principal (decisão do dono)
+
+- Shell (`index.html`, manifesto `lang=en`, termos/privacidade EN primeiro com PT em `#pt`, strings padrão do Android em EN), servidor (plano de exclusão de conta), cidades/signos em EN, nomes renomeados (Akashai, Nautil, Astria, Zeph, Fanfare, Bobbi, Frostlands… — `REGISTRO-DE-DECISOES.md` §14.6) e guard novo `src/i18nAstJsx.contract.test.ts`.
+- Não feito de propósito: reordenar as ~1.340 ternárias `isPt ? … : …`; renomear ids PT persistidos no save (elementos/reinos/alinhamentos) — precisa de migração, ver `docs/reviews/2026-09-30-ingles-primeiro-nomes.md` §8 (depende do dono).
+- `tests/convertToWebp.test.ts` (arquivo somente-leitura) falha por rodar como root no sandbox; independe desta mudança.

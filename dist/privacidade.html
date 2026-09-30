@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Política de Privacidade — Soulmon</title>
+<title>Privacy Policy — Soulmon</title>
 <style>
   :root { color-scheme: light dark; }
   body {
@@ -29,457 +29,14 @@
 </head>
 <body>
 
-<h1>Política de Privacidade — Soulmon</h1>
-<p class="sub">Última atualização: 22 de setembro de 2026</p>
-
-<p class="lang">
-  <a href="#en">English version below ↓</a> ·
-  <a href="/termos.html">Termos de Uso</a>
-</p>
-
-<p>
-  O Soulmon é um app de produtividade gamificado. Esta política descreve, de
-  forma direta, quais dados o app coleta, para que servem e com quem são
-  compartilhados.
-</p>
-
-<h2>1. Dados que ficam só no seu aparelho</h2>
-<p>
-  Os dados que você informa para gerar seu personagem — <strong>nome completo,
-  data, hora e local de nascimento</strong> — ficam armazenados <strong>somente
-  no armazenamento local do seu aparelho</strong>. Esses campos, como você os
-  digitou, não são enviados para nossos servidores nem para terceiros.
-</p>
-<p>
-  <strong>Atenção:</strong> o <em>resultado</em> do cálculo é outra coisa. O
-  personagem gerado — nome da criatura e os traços resumidos dela
-  (elemento, alinhamento e reino) — faz parte do seu save e <strong>vai para
-  nossos servidores</strong> junto com o resto do progresso, para você não
-  perder o personagem ao trocar de aparelho. Ver a tabela do item 2.
-</p>
-
-<h2>2. Dados que enviamos para nossos servidores</h2>
-<table>
-  <tr><th>Dado</th><th>Para quê</th></tr>
-  <tr>
-    <td>E-mail</td>
-    <td>Identificar sua conta e sincronizar o progresso entre aparelhos. Fica
-        guardado como um código derivado (hash) do endereço. Você entra
-        <strong>com a sua conta Google</strong> ou <strong>com e-mail e
-        senha</strong> — em qualquer um dos dois, quem verifica quem você é é o
-        Google (Firebase Authentication). <strong>Nós nunca vemos nem
-        guardamos a sua senha.</strong></td>
-  </tr>
-  <tr>
-    <td>Apelido (nickname)</td>
-    <td>Identificar você para outros jogadores na Biblioteca e no Torneio.</td>
-  </tr>
-  <tr>
-    <td>Progresso do jogo (atividades, tarefas, evolução, itens, moedas)</td>
-    <td>Salvar seu jogo na nuvem para você não perder o progresso.</td>
-  </tr>
-  <tr>
-    <td>Traços resumidos do personagem (elemento, alinhamento, reino) e o nome
-        dele</td>
-    <td>Fazem parte do save: são o que descreve a criatura que você gerou, e é
-        assim que ela é restaurada em outro aparelho. São <strong>derivados</strong>
-        das respostas e dos dados de nascimento — os campos originais não sobem.</td>
-  </tr>
-  <tr>
-    <td>Inscrição de notificações (só se você ligar as notificações)</td>
-    <td>O endereço técnico que o seu aparelho nos dá para receber push (token do
-        FCM no Android, endpoint do Web Push no navegador), o idioma, o fuso e a
-        hora do lembrete. A inscrição fica <strong>ligada ao identificador da
-        sua conta</strong> (o código derivado do e-mail, não o e-mail em si)
-        <strong>para poder ser apagada na exclusão da conta</strong> — sem esse
-        vínculo o servidor não saberia qual inscrição é sua. Desligar as
-        notificações também a apaga.
-        <!-- 2026-09-21 (QA rodada 1, compliance #7): subscribe.js/fcm-subscribe.js
-             passaram a gravar saveId no registro; account.js › deletePushSubscriptions
-             varre por ele. Registros anteriores a essa data não têm o campo e só
-             são apagados pelo próprio aparelho (DELETE /api/subscribe). --></td>
-  </tr>
-  <tr>
-    <td>Data de nascimento da sua criatura (só se você ligar as notificações)</td>
-    <td>Guardada junto da inscrição de notificação, no formato dia/mês/ano, para
-        as mensagens dos dois primeiros dias falarem dela em vez de falarem de
-        tarefas. <strong>Morre junto com a inscrição</strong>: desligar as
-        notificações apaga esse dado. Não é a sua data de nascimento — é a do
-        bichinho.</td>
-  </tr>
-  <tr>
-    <td>Compras realizadas</td>
-    <td>Registrar o que você comprou, para que o benefício continue valendo e
-        possa ser restaurado se você reinstalar o app.</td>
-  </tr>
-  <tr>
-    <td>O que você quer melhorar e o que atrapalha (o texto que você escreve no
-        começo)</td>
-    <td>Fazem parte do save e voltam para você em momentos-chave do jogo. É
-        <strong>texto livre escrito por você</strong>, então pode conter o que
-        você quiser — inclusive algo sobre a sua saúde. Fica guardado com o
-        resto do save e <strong>não entra nas estatísticas de uso</strong>. Ele
-        <strong>não vai para a IA por conta própria</strong>; a única exceção é
-        se você mesmo pedir sugestões de tarefas no tutorial com esse texto
-        ainda preenchido no campo — aí ele sai como o objetivo da sugestão
-        (ver seção 2b).</td>
-  </tr>
-  <tr>
-    <td>Check-in de humor (uma nota de 1 a 5 por dia, se você responder)</td>
-    <td>Faz parte do save, para você ver o próprio histórico. <strong>Nunca
-        entra em pontuação, nem no cálculo do jogo, nem nas estatísticas de
-        uso.</strong></td>
-  </tr>
-  <tr>
-    <td>Contagem de passos do dia — só se você autorizar o sensor</td>
-    <td>Sobe junto do save <strong>apenas o agregado do dia</strong> (o total e
-        a âncora de contagem), nunca uma linha do tempo dos seus movimentos. O
-        app usa o contador de passos do próprio aparelho
-        (<code>ACTIVITY_RECOGNITION</code>), <strong>não</strong> o Health
-        Connect, e <strong>não</strong> lê nenhum outro dado de saúde ou
-        atividade física. Recusar a permissão não trava nada: o app inteiro
-        funciona sem ela.</td>
-  </tr>
-  <tr>
-    <td>Grupo cooperativo — só se você criar ou entrar em um</td>
-    <td>O <strong>nome do grupo</strong> (escrito por quem o criou), quem está
-        nele e, por pessoa, <strong>em quais dias da semana ela apareceu</strong>
-        — apenas o fato, nunca o que ela fez. Serve para o grupo enxergar a
-        própria meta da semana. Some quando você sai, e o grupo inteiro é
-        apagado quando a última pessoa sai.</td>
-  </tr>
-</table>
-<p>
-  O armazenamento é feito na infraestrutura da <strong>Cloudflare</strong>.
-</p>
-
-<h2 id="chat-contexto">2b. O que a IA recebe</h2>
-<!-- Decisão provisória do coordenador (QA rodada 1, 21/09/2026): os dados que
-     hoje saem para o Groq são DECLARADOS aqui, não cortados do código. Fonte de
-     cada item: functions/api/chat.js › buildSystemPrompt + CONTEXT_SCHEMA +
-     CHAT_MEMORY_TURNS; functions/api/suggest-tasks.js; App.tsx › runDecompose;
-     GameTutorialFlow.tsx › useState(soulGoal). Se algum desses campos deixar de
-     sair, esta seção e a linha Groq da §6 encolhem juntas. -->
-<p>
-  Quando você conversa com sua criatura, o texto da sua mensagem vai para o
-  provedor de IA (Groq) para gerar a resposta. Junto com ele vai, exatamente,
-  isto:
-</p>
-<ul>
-  <li>as <strong>últimas três trocas dessa conversa</strong> (sua mensagem e a
-      resposta, três vezes), para a resposta fazer sentido — a conversa some
-      quando você fecha o app, ela não fica no save;</li>
-  <li>o <strong>nome, o estágio e o galho da sua criatura</strong>, e o humor
-      dela no momento (feliz, cansada e afins);</li>
-  <li>um pequeno bloco de <strong>números</strong> sobre o momento: quanta vida
-      e energia o bichinho tem, o nível de vínculo e há quantos dias você estava
-      fora (em faixa);</li>
-  <li>o <strong>seu humor do dia</strong>, em faixa — só se você marcou o
-      check-in naquele dia;</li>
-  <li>as <strong>palavras-chave de personalidade</strong> que você mesmo
-      escreveu em Configurações → Conversa com IA — isso é <strong>texto
-      seu</strong>, e vai como instrução de estilo (higienizado para não virar
-      comando); e os <strong>ajustes de tom</strong> dessa mesma tela (tom,
-      emojis, estilo de motivação).</li>
-</ul>
-<p>
-  Fora do chat, a mesma IA recebe texto seu em dois lugares, e só quando você
-  aperta o botão: o <strong>campo de sugestões de tarefas</strong> — o objetivo
-  que você digita ali (no tutorial ele vem <strong>pré-preenchido com o que
-  você escreveu no onboarding</strong>; apague ou troque antes de pedir, se não
-  quiser que ele saia) — e o <strong>nome da tarefa</strong> que você pede para
-  quebrar em passos menores em <strong>"Decompor"</strong>. O que você escreveu
-  no onboarding como <strong>dificuldade</strong> e o nome das suas outras
-  tarefas <strong>não saem</strong> para a IA. Antes de enviar, o app remove
-  e-mails, telefones, documentos, cartões, endereços de site e @perfis do
-  texto.
-</p>
-
-<h2 id="microfone">2c. O recado falado (microfone)</h2>
-<p>
-  No chat da criatura existe um botão de <strong>gravar</strong>. Ele só aparece
-  quando o recurso está ligado no servidor; se não estiver, o botão não existe.
-</p>
-<ul>
-  <li><strong>O que é coletado:</strong> o áudio que você grava, e só enquanto
-      você está com a gravação aberta. Nada é capturado em segundo plano, com o
-      app fechado ou com a tela desligada.</li>
-  <li><strong>Para onde vai:</strong> o áudio é enviado ao nosso servidor
-      (Cloudflare) e repassado, via Supabase, ao Groq (modelo Whisper), que devolve
-      o texto.
-      O texto aparece no campo de escrita para você <strong>revisar antes de
-      enviar</strong> — ele não é mandado para a criatura sozinho.</li>
-  <li><strong>Por quanto tempo fica:</strong> <strong>não guardamos o áudio.</strong>
-      Ele é repassado e descartado; não é gravado no seu aparelho, nem no nosso
-      servidor, nem em backup. O que sobra é o texto, e só se você enviar a
-      mensagem — aí ele vira uma mensagem de chat comum (seção 2b).</li>
-  <li><strong>É obrigatório?</strong> Não. Negar o microfone não bloqueia nada:
-      o campo de texto continua inteiro. Você pode revogar a permissão a
-      qualquer momento nas configurações do seu aparelho.</li>
-</ul>
-<p>
-  Como não guardamos o áudio, não há o que exportar nem apagar dele em
-  <a href="#exclusao">Seus direitos</a> — não existe gravação sua do nosso lado.
-</p>
-
-<h2>3. Base para leitura dos seus dados de uso</h2>
-<p>
-  Além de guardar seu progresso, o app <strong>lê</strong> suas tarefas e
-  hábitos concluídos (<code>completedTasks</code> e o histórico de atividades
-  recorrentes) para calcular sua evolução, seu ritmo de cuidado e os relatórios
-  diário e semanal que devolvemos a você. Essa leitura roda dentro do seu
-  próprio save, serve só para fazer o jogo funcionar, e o
-  <strong>conteúdo</strong> das suas tarefas nunca é usado para nenhuma outra
-  finalidade nem compartilhado com terceiros — a única saída é a que você mesmo
-  aciona ao tocar em "Decompor" (seção 2b). Os
-  <a href="/termos.html">Termos de Uso</a> descrevem a mesma regra na seção 9.
-</p>
-
-<h2 id="estatisticas">4. Estatísticas de uso (dá para desligar)</h2>
-<p>
-  O app envia para o <strong>nosso próprio servidor</strong> (Cloudflare)
-  <strong>contadores agregados</strong> de uso — sem nenhuma empresa de análise
-  no meio (não há Google Analytics, Firebase Analytics, Amplitude nem similar).
-  São exatamente estes eventos, e nada além deles (a lista abaixo é conferida por teste contra o código a cada mudança):
-</p>
-<table>
-  <tr><th>Evento</th><th>O que registra</th></tr>
-  <tr><td><code>install</code></td><td>Primeira abertura do app neste aparelho.</td></tr>
-  <tr><td><code>onboarding_step</code></td><td>Qual passo do onboarding você alcançou (<code>step</code>, um número) e, junto, a propriedade <code>funnel</code>: por qual caminho — grátis, completo, ou ainda indefinido antes da escolha.</td></tr>
-  <tr><td><code>demo_pick</code></td><td>Que você escolheu um personagem pronto.</td></tr>
-  <tr><td><code>first_task_done</code></td><td>Sua primeira conclusão de verdade.</td></tr>
-  <tr><td><code>day_active</code></td><td>Uma vez por dia: que houve atividade, com a propriedade <code>effort</code> — o peso de esforço concluído (um número, como 4).</td></tr>
-  <tr><td><code>unlock_view</code></td><td>Que a tela de compra foi aberta, com a propriedade <code>reason</code>: por qual convite — o limite de criação do modo grátis, a árvore de evolução, o relatório do dia, ou a Loja.</td></tr>
-  <tr><td><code>purchase</code></td><td>Que houve uma compra.</td></tr>
-  <tr><td><code>demo_cap_hit</code></td><td>Que você encontrou o limite diário de criação do modo grátis, com a propriedade <code>path</code>: por qual tela.</td></tr>
-  <tr><td><code>activity_create</code></td><td>Que uma atividade foi criada, com <code>kind</code> (tarefa ou hábito) e <code>path</code> (por qual tela). <strong>Nunca</strong> o nome nem o conteúdo dela.</td></tr>
-  <tr><td><code>week_active</code></td><td>Uma vez por semana, dois números de 0 a 7: <code>active_days</code>, em quantos dias você concluiu alguma coisa, e <code>goal_days</code>, em quantos você alcançou a sua própria meta do dia. <strong>A contagem é feita no seu aparelho</strong> — o que sai são só esses dois números, já fechados. Nenhuma linha do tempo sua é enviada nem guardada.</td></tr>
-  <tr><td><code>reveal_seen</code></td><td>Que você chegou à tela de revelação da criatura, e se ela mostrou a imagem ou só o texto (<code>has_sprite</code>, 0 ou 1) e quanto tempo ela ficou aberta em FAIXA (<code>duration</code>, 0 a 3 — nunca segundos).</td></tr>
-  <tr><td><code>checkin_commit</code></td><td>Que você fechou o check-in assumindo a meta do dia, com quantos focos escolheu (<code>focus_count</code>, 0 a 3).</td></tr>
-  <tr><td><code>unlock_dismiss</code></td><td>Que você fechou a tela de compra tocando em "Agora não", com a mesma propriedade <code>reason</code> de <code>unlock_view</code>.</td></tr>
-  <tr><td><code>haunted_done</code></td><td>Que uma tarefa que estava parada há dias foi concluída. Nunca o nome nem o conteúdo dela.</td></tr>
-  <tr><td><code>checkin_shown</code></td><td>Que o ritual do dia foi oferecido a você (no máximo uma vez por dia). Nada sobre o que ele mostrou.</td></tr>
-  <tr><td><code>milestone</code></td><td>Que um hábito cruzou um marco (7, 21 ou 66 dias — <code>level</code>, 1 a 3). <strong>Nunca</strong> qual hábito.</td></tr>
-  <tr><td><code>shield_used</code></td><td>Que um escudo de descanso foi gasto automaticamente. Só a contagem.</td></tr>
-  <tr><td><code>welcome_back</code></td><td>Que você voltou depois de alguns dias, com a faixa de ausência (<code>days</code>, 0 a 3 — uma faixa, nunca o número de dias).</td></tr>
-  <tr><td><code>evolve</code></td><td>Que a criatura evoluiu (<code>level</code>, 1 a 4).</td></tr>
-  <tr><td><code>dungeon_run</code></td><td>Que você terminou uma partida da masmorra, com quantos andares limpou (<code>floors</code>, 1 a 5).</td></tr>
-  <tr><td><code>bond_level</code></td><td>Que o nível de vínculo subiu (<code>level</code>, um número).</td></tr>
-  <tr><td><code>after_bad_day</code></td><td>Que você voltou depois de um dia ruim, com a distância em FAIXA (<code>gap</code>, 0 a 3 — nunca a data) e se o app foi aberto (<code>kind</code>). Serve para saber se o convite de carinho funciona; a marca do dia ruim fica no seu aparelho e nunca é enviada.</td></tr>
-  <tr><td><code>app_open</code></td><td>De onde o app foi aberto (<code>source</code>: direto, notificação, widget ou atalho). Existe para uma decisão só: cortar notificação que traz gente e não serve para nada.</td></tr>
-  <tr><td><code>push_optout</code></td><td>Que você desligou as notificações. Sem detalhe nenhum — é o fato, não o motivo.</td></tr>
-  <tr><td><code>retained</code></td><td>Que você abriu o app depois de 1, 7 ou 30 dias da instalação (<code>bucket</code>, 0 a 2). <strong>A data em que você instalou fica no seu aparelho e nunca é enviada</strong> — a conta é feita aí e o que sai é só o número do marco, uma vez cada.</td></tr>
-  <tr><td><code>sound_state</code></td><td>Uma vez por dia ativo, se o som estava mudo (<code>muted</code>, 0 ou 1) e se a trilha foi iniciada por você naquele dia (<code>music</code>, 0 ou 1). <strong>Nunca o volume, nunca o horário, nunca que som tocou, nunca o seu fone ou alto-falante.</strong> Se não conseguirmos ler a sua preferência com certeza, o evento simplesmente não é enviado.</td></tr>
-  <tr><td><code>sound_off</code></td><td>Que você desligou o som, no máximo uma vez por dia, com a <em>faixa</em> de idade da instalação (<code>age</code>: 0 = no dia em que instalou, 1 = entre 1 e 6 dias, 2 = 7 dias ou mais). <strong>A data em que você instalou fica no seu aparelho e nunca é enviada.</strong> Este número existe para detectar que o app está fazendo barulho demais — <strong>ele nunca vira pontuação, nunca volta para você como número e nunca vira notificação pedindo o som de volta</strong>.</td></tr>
-  <tr><td><code>guild_create</code></td><td>Que você abriu uma Guilda. Sem o nome dela, sem código, sem ninguém.</td></tr>
-  <tr><td><code>guild_join</code></td><td>Que você entrou numa roda, com o tamanho dela depois de entrar (<code>size</code>, 2 a 12). Nunca quem está nela.</td></tr>
-  <tr><td><code>guild_leave</code></td><td>Que você seguiu o próprio caminho, com quantos ficaram (<code>size</code>, 0 a 11) e a <em>faixa</em> de tempo em que ficou (<code>weeks</code>, 0 a 3).</td></tr>
-  <tr><td><code>guild_thread</code></td><td>Que você firmou o seu fio do dia (<code>kind</code>), no máximo uma vez por dia. <strong>Nunca o que você fez, nunca quanto.</strong></td></tr>
-  <tr><td><code>guild_raid</code></td><td>Feira: que você deu a sua rodada, ou que viu o fenômeno se desfazer ou recuar (<code>outcome</code>, 0 a 2). Nunca o dano.</td></tr>
-  <tr><td><code>guild_stage</code></td><td>Que o seu aparelho viu um estágio novo do Bosque (<code>level</code>, 1 a 5), uma vez cada.</td></tr>
-  <tr><td colspan="2">Além disso, os eventos acima que dizem respeito à sua conta carregam a propriedade <code>tier</code>: se você está no modo grátis ou no completo. Só isso — nada mais da sua conta.</td></tr>
-</table>
-<p>
-  Junto vai <strong>a data — só o dia, nunca a hora</strong> — e um
-  <strong>identificador pseudonimizado</strong>: uma sequência aleatória criada
-  neste aparelho, sem nenhuma relação com seu e-mail nem com o código do seu
-  save. Ele serve só para não contar o mesmo evento duas vezes, e o servidor o
-  <strong>descarta antes de gravar qualquer coisa</strong>: o que fica guardado
-  é um total por dia, somado a todo mundo. Não existe uma linha do tempo sua.
-</p>
-<p>
-  <strong>Nenhum conteúdo vai junto.</strong> Nunca são enviados: o que você
-  quer melhorar e o que atrapalha (<code>soulGoal</code> e
-  <code>soulStruggle</code>), seu nome, sua data/hora/local de nascimento, seu
-  e-mail, o nome do seu personagem, nome de tarefa ou de hábito, seu humor do
-  check-in e qualquer resposta do Oráculo. Os eventos acima não têm nenhum campo
-  de texto — só números.
-</p>
-<p>
-  O envio vem <strong>ligado</strong>. Para desligar:
-  <strong>Configurações → Seus dados → “Enviar estatísticas de uso”</strong>.
-  Desligado, o envio para de verdade e o que estiver na fila do aparelho é
-  apagado.
-</p>
-
-<h2>5. O que outros jogadores conseguem ver</h2>
-<p>
-  Se você ativar os recursos sociais, ficam visíveis para outros jogadores:
-  seu <strong>apelido</strong>, o <strong>nome e estágio do seu personagem</strong>
-  e seus <strong>atributos</strong>. O <strong>conteúdo</strong> das suas
-  tarefas, a <strong>quantidade</strong> delas e o seu e-mail
-  <strong>nunca</strong> são exibidos para outros jogadores.
-</p>
-<p>
-  Se você entrar em um <strong>grupo cooperativo</strong>, as outras pessoas do
-  grupo veem o seu apelido e <strong>se você apareceu hoje (sim ou não)</strong>.
-  Elas <strong>não</strong> veem quanto você fez, nem a sua meta, nem qualquer
-  ranking entre vocês — o número que o grupo enxerga é do grupo inteiro, nunca
-  de uma pessoa. Entra-se em um grupo <strong>só por código de convite</strong>:
-  grupos não aparecem em busca nem no diretório público.
-</p>
-
-<h2>6. Terceiros que recebem dados</h2>
-<table>
-  <tr><th>Serviço</th><th>O que recebe</th><th>Quando</th></tr>
-  <tr>
-    <td>Groq (IA)</td>
-    <td>As mensagens que você escreve no chat do pet, com as três últimas trocas
-        da mesma conversa; o nome, estágio, galho e humor da criatura; vida,
-        energia, vínculo e dias fora (números); seu humor do dia, se marcado; as
-        palavras-chave de personalidade e os ajustes de tom que você configurou.
-        Fora do chat: o texto do objetivo que você digita ao pedir sugestões de
-        tarefas (no tutorial, pré-preenchido com o seu objetivo do onboarding)
-        e o nome da tarefa que você pede para decompor. Ver a
-        <a href="#chat-contexto">seção 2b</a>.</td>
-    <td>Só quando você usa esses recursos.</td>
-  </tr>
-  <tr>
-    <td>Higgsfield e Google Gemini (geração de imagem por IA)</td>
-    <td>A descrição em texto da sua criatura, montada a partir das suas
-        respostas ao Oráculo, para desenhar a imagem dela. Se você preencher o
-        campo opcional de <strong>criatura favorita</strong>, ou escolher uma
-        criatura no Renascimento, esse texto vai junto. Nunca vai seu nome,
-        e-mail, data de nascimento ou o conteúdo das suas tarefas.</td>
-    <td>Só quando o app gera ou regenera a imagem da criatura.</td>
-  </tr>
-  <tr>
-    <td>Google Firebase</td>
-    <td>Verificação de quem você é no login (com a conta Google ou com e-mail e
-        senha) e entrega de notificações push. Ao entrar com o Google, o
-        Firebase nos informa apenas o <strong>seu e-mail</strong> — nada mais da
-        sua conta Google.</td>
-    <td>Se você fizer login e/ou ativar notificações.</td>
-  </tr>
-  <tr>
-    <td>Supabase (repasse) e Groq (transcrição de áudio)</td>
-    <td>O <strong>áudio</strong> que você grava no chat, para virar texto: passa
-        pela Supabase e é transcrito pelo Groq (Whisper). Não guardamos o áudio
-        nem enviamos junto qualquer coisa que identifique você. Ver a
-        <a href="#microfone">seção 2c</a>.</td>
-    <td>Só quando você usa o botão de gravar.</td>
-  </tr>
-  <tr>
-    <td>Google Play</td>
-    <td>Processamento das compras dentro do app.</td>
-    <td>Só quando você faz uma compra.</td>
-  </tr>
-  <tr>
-    <td>Steam (quando disponível)</td>
-    <td>Processamento das compras na versão para computador, se e quando ela
-        for publicada na Steam. Hoje não há versão na Steam.</td>
-    <td>Só quando você faz uma compra por lá.</td>
-  </tr>
-</table>
-<p>
-  Não vendemos seus dados e não os usamos para publicidade direcionada.
-</p>
-
-<h2>7. Idade mínima</h2>
-<p>
-  O Soulmon é destinado a <strong>maiores de 18 anos</strong>. Não é direcionado
-  a menores de idade e não coletamos intencionalmente dados de quem tem menos
-  de 18 anos.
-</p>
-
-<h2 id="exclusao">8. Seus direitos</h2>
-<p>
-  <strong>Dentro do app, sem precisar pedir a ninguém:</strong>
-  <strong>Configurações → Seus dados</strong> tem os dois botões —
-  <strong>baixar uma cópia</strong> de tudo que está guardado sobre você e
-  <strong>excluir a sua conta</strong> junto com os dados associados. A exclusão
-  é imediata e não tem volta.
-</p>
-<p>
-  <strong>O que a exclusão apaga:</strong> o seu save inteiro (criatura,
-  atividades, itens, moedas), <strong>a imagem gerada da sua criatura</strong>,
-  o seu perfil público, o seu apelido, as posições nos rankings, os presentes do
-  grupo, <strong>a sua vaga no grupo cooperativo</strong> (você sai do grupo
-  automaticamente; um grupo que fica vazio some junto com o código), o registro
-  de uso da sua conta paga (contadores de IA e afins) e as
-  inscrições de notificação que o servidor consegue ligar à sua conta. O app
-  também desfaz a inscrição de notificações <strong>deste aparelho</strong> na
-  mesma hora; se você usa o Soulmon em mais de um aparelho, desligue as
-  notificações em cada um deles.
-  <!-- 2026-09-22: grupo cooperativo — `account.js` › delete-confirm passo 3b
-       (`_coop.js` › `coopLeave`). QA rodada 2, 04-dados §1.3. -->
-</p>
-<p>
-  <strong>A marca de exclusão (30 dias):</strong> depois de apagar, o servidor
-  guarda por <strong>30 dias</strong> só o identificador da sua conta (o código
-  derivado do seu e-mail, que não permite reconstruí-lo) com a marca
-  "excluída". Ela existe para <strong>recusar gravação de um aparelho antigo</strong>
-  que ainda estivesse logado — sem ela, o save voltava sozinho segundos depois
-  da exclusão. Se você <strong>entrar de novo com o mesmo e-mail</strong>, a
-  marca é retirada e a conta recomeça do zero. Passados os 30 dias, a marca
-  some sozinha.
-  <!-- functions/api/_accountTombstone.js › TOMBSTONE_TTL_SECONDS = 30 d;
-       reabertura por `auth_time` posterior à exclusão. QA rodada 2,
-       01-seguranca §1.4. -->
-  <!-- 2026-09-21: "imagem gerada" e "inscrições ligadas à conta" são decisão
-       provisória do coordenador (QA rodada 1 — 06-guardas #2 e compliance #7).
-       O apagamento de sprite:img:/sprite:blob: no delete-confirm é tarefa do
-       staff-backend; enquanto não entrar, esta frase está adiantada. -->
-</p>
-<p>
-  <strong>Save sem uso:</strong> um save que fica <strong>12 meses</strong> sem
-  ser aberto em nenhum aparelho é apagado sozinho do servidor. Abrir o app
-  renova o prazo.
-  <!-- functions/api/save.js › SAVE_TTL_SECONDS = 86400 * 365, renovado na
-       leitura (RENEW_AFTER_SECONDS). Compliance #11. -->
-</p>
-<p>
-  <strong>O que fica, e por quanto tempo:</strong> o registro das suas compras
-  (qual comprovante foi resgatado e o que ele liberou) fica guardado por
-  <strong>5 anos a partir da exclusão da conta</strong>, por obrigação fiscal e
-  contábil, e depois é apagado sozinho. Esse registro é guardado por um identificador de conta (um código
-  derivado do seu e-mail, que não permite reconstruí-lo) — <strong>não contém
-  o seu e-mail nem nenhum outro dado sobre você</strong>. Ele também é o que
-  impede um mesmo comprovante de virar várias contas pagas.
-</p>
-<p>
-  <strong>Se você ativou pela Steam:</strong> o vínculo entre o seu SteamID e a
-  conta que ele ativou é <strong>apagado junto com a conta</strong> — o seu
-  SteamID não fica guardado aqui depois da exclusão. Em troca, a licença Steam
-  volta a ficar livre: ela pode ativar uma conta nova.
-  <!-- `ord:steam:own:<appid>:<steamid>` (functions/api/_billing.js ›
-       verifySteamOwnership → claimOrder). ⚰️ Até 22/09/2026 este parágrafo
-       declarava retenção de 5 anos "provisória" — decisão do dono #54
-       (docs/PERGUNTAS-DO-DONO.md, QA rodada 2 `04-dados` #4): o SteamID64 é
-       identificador de terceiro e a justificativa fiscal do parágrafo acima
-       não cobre licença de posse (não há transação nossa). Apagado em
-       functions/api/account.js › `steamLicenseKeysOf` + passo 5b; o SteamID
-       também sai de `consumedOrders`/`orderDetails` no passo 6. Guard:
-       functions/api/account.steamLicense.qa2.test.js. -->
-</p>
-<p>
-  Apagar o app do aparelho remove os dados locais, mas <strong>não</strong>
-  apaga o save na nuvem — para isso use o botão acima, ou escreva para o contato
-  abaixo, que faz o mesmo por você.
-</p>
-
-<h2>9. Contato e encarregado</h2>
-<p>
-  Dúvidas ou pedidos sobre privacidade: <strong>mateus.sprnd@gmail.com</strong>
-</p>
-<p>
-  <strong>Encarregado pelo tratamento de dados pessoais</strong> (LGPD, Lei
-  13.709/2018, art. 41) e <strong>controlador</strong>: <strong>Mateus
-  Sperandio</strong> — <strong>mateus.sprnd@gmail.com</strong>. É este o canal
-  para exercer qualquer um dos direitos do §8 e para falar com a Autoridade
-  Nacional de Proteção de Dados por nosso intermédio.
-  <!-- Decisão do dono #44 (22/09/2026), docs/PERGUNTAS-DO-DONO.md. O Soulmon é
-       operado por uma pessoa física: controlador e encarregado são a mesma
-       pessoa, e a lei não exige que sejam distintos. Espelhado em
-       docs/PLAY-DATA-SAFETY.md §1 e docs/E0-CONSENTIMENTO.md §6. -->
-</p>
-
-<hr>
-
+<div id="en-doc" lang="en">
 <h1 id="en">Privacy Policy — Soulmon</h1>
 <p class="sub">Last updated: September 22, 2026</p>
 
-<p class="lang"><a href="/termos.html#en">Terms of Use</a></p>
+<p class="lang">
+  <a href="#pt">Versão em português abaixo ↓</a> ·
+  <a href="/termos.html#en">Terms of Use</a>
+</p>
 
 <p>
   Soulmon is a gamified productivity app. This policy plainly describes what
@@ -867,6 +424,456 @@
   any of the rights in §8 and for reaching the Brazilian data protection
   authority (ANPD) through us.
 </p>
+</div>
+
+<hr>
+
+<div id="pt" lang="pt-BR">
+<h1>Política de Privacidade — Soulmon</h1>
+<p class="sub">Última atualização: 22 de setembro de 2026</p>
+
+<p class="lang">
+  <a href="#en">English version ↑</a> ·
+  <a href="/termos.html#pt">Termos de Uso</a>
+</p>
+
+<p>
+  O Soulmon é um app de produtividade gamificado. Esta política descreve, de
+  forma direta, quais dados o app coleta, para que servem e com quem são
+  compartilhados.
+</p>
+
+<h2>1. Dados que ficam só no seu aparelho</h2>
+<p>
+  Os dados que você informa para gerar seu personagem — <strong>nome completo,
+  data, hora e local de nascimento</strong> — ficam armazenados <strong>somente
+  no armazenamento local do seu aparelho</strong>. Esses campos, como você os
+  digitou, não são enviados para nossos servidores nem para terceiros.
+</p>
+<p>
+  <strong>Atenção:</strong> o <em>resultado</em> do cálculo é outra coisa. O
+  personagem gerado — nome da criatura e os traços resumidos dela
+  (elemento, alinhamento e reino) — faz parte do seu save e <strong>vai para
+  nossos servidores</strong> junto com o resto do progresso, para você não
+  perder o personagem ao trocar de aparelho. Ver a tabela do item 2.
+</p>
+
+<h2>2. Dados que enviamos para nossos servidores</h2>
+<table>
+  <tr><th>Dado</th><th>Para quê</th></tr>
+  <tr>
+    <td>E-mail</td>
+    <td>Identificar sua conta e sincronizar o progresso entre aparelhos. Fica
+        guardado como um código derivado (hash) do endereço. Você entra
+        <strong>com a sua conta Google</strong> ou <strong>com e-mail e
+        senha</strong> — em qualquer um dos dois, quem verifica quem você é é o
+        Google (Firebase Authentication). <strong>Nós nunca vemos nem
+        guardamos a sua senha.</strong></td>
+  </tr>
+  <tr>
+    <td>Apelido (nickname)</td>
+    <td>Identificar você para outros jogadores na Biblioteca e no Torneio.</td>
+  </tr>
+  <tr>
+    <td>Progresso do jogo (atividades, tarefas, evolução, itens, moedas)</td>
+    <td>Salvar seu jogo na nuvem para você não perder o progresso.</td>
+  </tr>
+  <tr>
+    <td>Traços resumidos do personagem (elemento, alinhamento, reino) e o nome
+        dele</td>
+    <td>Fazem parte do save: são o que descreve a criatura que você gerou, e é
+        assim que ela é restaurada em outro aparelho. São <strong>derivados</strong>
+        das respostas e dos dados de nascimento — os campos originais não sobem.</td>
+  </tr>
+  <tr>
+    <td>Inscrição de notificações (só se você ligar as notificações)</td>
+    <td>O endereço técnico que o seu aparelho nos dá para receber push (token do
+        FCM no Android, endpoint do Web Push no navegador), o idioma, o fuso e a
+        hora do lembrete. A inscrição fica <strong>ligada ao identificador da
+        sua conta</strong> (o código derivado do e-mail, não o e-mail em si)
+        <strong>para poder ser apagada na exclusão da conta</strong> — sem esse
+        vínculo o servidor não saberia qual inscrição é sua. Desligar as
+        notificações também a apaga.
+        <!-- 2026-09-21 (QA rodada 1, compliance #7): subscribe.js/fcm-subscribe.js
+             passaram a gravar saveId no registro; account.js › deletePushSubscriptions
+             varre por ele. Registros anteriores a essa data não têm o campo e só
+             são apagados pelo próprio aparelho (DELETE /api/subscribe). --></td>
+  </tr>
+  <tr>
+    <td>Data de nascimento da sua criatura (só se você ligar as notificações)</td>
+    <td>Guardada junto da inscrição de notificação, no formato dia/mês/ano, para
+        as mensagens dos dois primeiros dias falarem dela em vez de falarem de
+        tarefas. <strong>Morre junto com a inscrição</strong>: desligar as
+        notificações apaga esse dado. Não é a sua data de nascimento — é a do
+        bichinho.</td>
+  </tr>
+  <tr>
+    <td>Compras realizadas</td>
+    <td>Registrar o que você comprou, para que o benefício continue valendo e
+        possa ser restaurado se você reinstalar o app.</td>
+  </tr>
+  <tr>
+    <td>O que você quer melhorar e o que atrapalha (o texto que você escreve no
+        começo)</td>
+    <td>Fazem parte do save e voltam para você em momentos-chave do jogo. É
+        <strong>texto livre escrito por você</strong>, então pode conter o que
+        você quiser — inclusive algo sobre a sua saúde. Fica guardado com o
+        resto do save e <strong>não entra nas estatísticas de uso</strong>. Ele
+        <strong>não vai para a IA por conta própria</strong>; a única exceção é
+        se você mesmo pedir sugestões de tarefas no tutorial com esse texto
+        ainda preenchido no campo — aí ele sai como o objetivo da sugestão
+        (ver seção 2b).</td>
+  </tr>
+  <tr>
+    <td>Check-in de humor (uma nota de 1 a 5 por dia, se você responder)</td>
+    <td>Faz parte do save, para você ver o próprio histórico. <strong>Nunca
+        entra em pontuação, nem no cálculo do jogo, nem nas estatísticas de
+        uso.</strong></td>
+  </tr>
+  <tr>
+    <td>Contagem de passos do dia — só se você autorizar o sensor</td>
+    <td>Sobe junto do save <strong>apenas o agregado do dia</strong> (o total e
+        a âncora de contagem), nunca uma linha do tempo dos seus movimentos. O
+        app usa o contador de passos do próprio aparelho
+        (<code>ACTIVITY_RECOGNITION</code>), <strong>não</strong> o Health
+        Connect, e <strong>não</strong> lê nenhum outro dado de saúde ou
+        atividade física. Recusar a permissão não trava nada: o app inteiro
+        funciona sem ela.</td>
+  </tr>
+  <tr>
+    <td>Grupo cooperativo — só se você criar ou entrar em um</td>
+    <td>O <strong>nome do grupo</strong> (escrito por quem o criou), quem está
+        nele e, por pessoa, <strong>em quais dias da semana ela apareceu</strong>
+        — apenas o fato, nunca o que ela fez. Serve para o grupo enxergar a
+        própria meta da semana. Some quando você sai, e o grupo inteiro é
+        apagado quando a última pessoa sai.</td>
+  </tr>
+</table>
+<p>
+  O armazenamento é feito na infraestrutura da <strong>Cloudflare</strong>.
+</p>
+
+<h2 id="chat-contexto">2b. O que a IA recebe</h2>
+<!-- Decisão provisória do coordenador (QA rodada 1, 21/09/2026): os dados que
+     hoje saem para o Groq são DECLARADOS aqui, não cortados do código. Fonte de
+     cada item: functions/api/chat.js › buildSystemPrompt + CONTEXT_SCHEMA +
+     CHAT_MEMORY_TURNS; functions/api/suggest-tasks.js; App.tsx › runDecompose;
+     GameTutorialFlow.tsx › useState(soulGoal). Se algum desses campos deixar de
+     sair, esta seção e a linha Groq da §6 encolhem juntas. -->
+<p>
+  Quando você conversa com sua criatura, o texto da sua mensagem vai para o
+  provedor de IA (Groq) para gerar a resposta. Junto com ele vai, exatamente,
+  isto:
+</p>
+<ul>
+  <li>as <strong>últimas três trocas dessa conversa</strong> (sua mensagem e a
+      resposta, três vezes), para a resposta fazer sentido — a conversa some
+      quando você fecha o app, ela não fica no save;</li>
+  <li>o <strong>nome, o estágio e o galho da sua criatura</strong>, e o humor
+      dela no momento (feliz, cansada e afins);</li>
+  <li>um pequeno bloco de <strong>números</strong> sobre o momento: quanta vida
+      e energia o bichinho tem, o nível de vínculo e há quantos dias você estava
+      fora (em faixa);</li>
+  <li>o <strong>seu humor do dia</strong>, em faixa — só se você marcou o
+      check-in naquele dia;</li>
+  <li>as <strong>palavras-chave de personalidade</strong> que você mesmo
+      escreveu em Configurações → Conversa com IA — isso é <strong>texto
+      seu</strong>, e vai como instrução de estilo (higienizado para não virar
+      comando); e os <strong>ajustes de tom</strong> dessa mesma tela (tom,
+      emojis, estilo de motivação).</li>
+</ul>
+<p>
+  Fora do chat, a mesma IA recebe texto seu em dois lugares, e só quando você
+  aperta o botão: o <strong>campo de sugestões de tarefas</strong> — o objetivo
+  que você digita ali (no tutorial ele vem <strong>pré-preenchido com o que
+  você escreveu no onboarding</strong>; apague ou troque antes de pedir, se não
+  quiser que ele saia) — e o <strong>nome da tarefa</strong> que você pede para
+  quebrar em passos menores em <strong>"Decompor"</strong>. O que você escreveu
+  no onboarding como <strong>dificuldade</strong> e o nome das suas outras
+  tarefas <strong>não saem</strong> para a IA. Antes de enviar, o app remove
+  e-mails, telefones, documentos, cartões, endereços de site e @perfis do
+  texto.
+</p>
+
+<h2 id="microfone">2c. O recado falado (microfone)</h2>
+<p>
+  No chat da criatura existe um botão de <strong>gravar</strong>. Ele só aparece
+  quando o recurso está ligado no servidor; se não estiver, o botão não existe.
+</p>
+<ul>
+  <li><strong>O que é coletado:</strong> o áudio que você grava, e só enquanto
+      você está com a gravação aberta. Nada é capturado em segundo plano, com o
+      app fechado ou com a tela desligada.</li>
+  <li><strong>Para onde vai:</strong> o áudio é enviado ao nosso servidor
+      (Cloudflare) e repassado, via Supabase, ao Groq (modelo Whisper), que devolve
+      o texto.
+      O texto aparece no campo de escrita para você <strong>revisar antes de
+      enviar</strong> — ele não é mandado para a criatura sozinho.</li>
+  <li><strong>Por quanto tempo fica:</strong> <strong>não guardamos o áudio.</strong>
+      Ele é repassado e descartado; não é gravado no seu aparelho, nem no nosso
+      servidor, nem em backup. O que sobra é o texto, e só se você enviar a
+      mensagem — aí ele vira uma mensagem de chat comum (seção 2b).</li>
+  <li><strong>É obrigatório?</strong> Não. Negar o microfone não bloqueia nada:
+      o campo de texto continua inteiro. Você pode revogar a permissão a
+      qualquer momento nas configurações do seu aparelho.</li>
+</ul>
+<p>
+  Como não guardamos o áudio, não há o que exportar nem apagar dele em
+  <a href="#exclusao">Seus direitos</a> — não existe gravação sua do nosso lado.
+</p>
+
+<h2>3. Base para leitura dos seus dados de uso</h2>
+<p>
+  Além de guardar seu progresso, o app <strong>lê</strong> suas tarefas e
+  hábitos concluídos (<code>completedTasks</code> e o histórico de atividades
+  recorrentes) para calcular sua evolução, seu ritmo de cuidado e os relatórios
+  diário e semanal que devolvemos a você. Essa leitura roda dentro do seu
+  próprio save, serve só para fazer o jogo funcionar, e o
+  <strong>conteúdo</strong> das suas tarefas nunca é usado para nenhuma outra
+  finalidade nem compartilhado com terceiros — a única saída é a que você mesmo
+  aciona ao tocar em "Decompor" (seção 2b). Os
+  <a href="/termos.html#pt">Termos de Uso</a> descrevem a mesma regra na seção 9.
+</p>
+
+<h2 id="estatisticas">4. Estatísticas de uso (dá para desligar)</h2>
+<p>
+  O app envia para o <strong>nosso próprio servidor</strong> (Cloudflare)
+  <strong>contadores agregados</strong> de uso — sem nenhuma empresa de análise
+  no meio (não há Google Analytics, Firebase Analytics, Amplitude nem similar).
+  São exatamente estes eventos, e nada além deles (a lista abaixo é conferida por teste contra o código a cada mudança):
+</p>
+<table>
+  <tr><th>Evento</th><th>O que registra</th></tr>
+  <tr><td><code>install</code></td><td>Primeira abertura do app neste aparelho.</td></tr>
+  <tr><td><code>onboarding_step</code></td><td>Qual passo do onboarding você alcançou (<code>step</code>, um número) e, junto, a propriedade <code>funnel</code>: por qual caminho — grátis, completo, ou ainda indefinido antes da escolha.</td></tr>
+  <tr><td><code>demo_pick</code></td><td>Que você escolheu um personagem pronto.</td></tr>
+  <tr><td><code>first_task_done</code></td><td>Sua primeira conclusão de verdade.</td></tr>
+  <tr><td><code>day_active</code></td><td>Uma vez por dia: que houve atividade, com a propriedade <code>effort</code> — o peso de esforço concluído (um número, como 4).</td></tr>
+  <tr><td><code>unlock_view</code></td><td>Que a tela de compra foi aberta, com a propriedade <code>reason</code>: por qual convite — o limite de criação do modo grátis, a árvore de evolução, o relatório do dia, ou a Loja.</td></tr>
+  <tr><td><code>purchase</code></td><td>Que houve uma compra.</td></tr>
+  <tr><td><code>demo_cap_hit</code></td><td>Que você encontrou o limite diário de criação do modo grátis, com a propriedade <code>path</code>: por qual tela.</td></tr>
+  <tr><td><code>activity_create</code></td><td>Que uma atividade foi criada, com <code>kind</code> (tarefa ou hábito) e <code>path</code> (por qual tela). <strong>Nunca</strong> o nome nem o conteúdo dela.</td></tr>
+  <tr><td><code>week_active</code></td><td>Uma vez por semana, dois números de 0 a 7: <code>active_days</code>, em quantos dias você concluiu alguma coisa, e <code>goal_days</code>, em quantos você alcançou a sua própria meta do dia. <strong>A contagem é feita no seu aparelho</strong> — o que sai são só esses dois números, já fechados. Nenhuma linha do tempo sua é enviada nem guardada.</td></tr>
+  <tr><td><code>reveal_seen</code></td><td>Que você chegou à tela de revelação da criatura, e se ela mostrou a imagem ou só o texto (<code>has_sprite</code>, 0 ou 1) e quanto tempo ela ficou aberta em FAIXA (<code>duration</code>, 0 a 3 — nunca segundos).</td></tr>
+  <tr><td><code>checkin_commit</code></td><td>Que você fechou o check-in assumindo a meta do dia, com quantos focos escolheu (<code>focus_count</code>, 0 a 3).</td></tr>
+  <tr><td><code>unlock_dismiss</code></td><td>Que você fechou a tela de compra tocando em "Agora não", com a mesma propriedade <code>reason</code> de <code>unlock_view</code>.</td></tr>
+  <tr><td><code>haunted_done</code></td><td>Que uma tarefa que estava parada há dias foi concluída. Nunca o nome nem o conteúdo dela.</td></tr>
+  <tr><td><code>checkin_shown</code></td><td>Que o ritual do dia foi oferecido a você (no máximo uma vez por dia). Nada sobre o que ele mostrou.</td></tr>
+  <tr><td><code>milestone</code></td><td>Que um hábito cruzou um marco (7, 21 ou 66 dias — <code>level</code>, 1 a 3). <strong>Nunca</strong> qual hábito.</td></tr>
+  <tr><td><code>shield_used</code></td><td>Que um escudo de descanso foi gasto automaticamente. Só a contagem.</td></tr>
+  <tr><td><code>welcome_back</code></td><td>Que você voltou depois de alguns dias, com a faixa de ausência (<code>days</code>, 0 a 3 — uma faixa, nunca o número de dias).</td></tr>
+  <tr><td><code>evolve</code></td><td>Que a criatura evoluiu (<code>level</code>, 1 a 4).</td></tr>
+  <tr><td><code>dungeon_run</code></td><td>Que você terminou uma partida da masmorra, com quantos andares limpou (<code>floors</code>, 1 a 5).</td></tr>
+  <tr><td><code>bond_level</code></td><td>Que o nível de vínculo subiu (<code>level</code>, um número).</td></tr>
+  <tr><td><code>after_bad_day</code></td><td>Que você voltou depois de um dia ruim, com a distância em FAIXA (<code>gap</code>, 0 a 3 — nunca a data) e se o app foi aberto (<code>kind</code>). Serve para saber se o convite de carinho funciona; a marca do dia ruim fica no seu aparelho e nunca é enviada.</td></tr>
+  <tr><td><code>app_open</code></td><td>De onde o app foi aberto (<code>source</code>: direto, notificação, widget ou atalho). Existe para uma decisão só: cortar notificação que traz gente e não serve para nada.</td></tr>
+  <tr><td><code>push_optout</code></td><td>Que você desligou as notificações. Sem detalhe nenhum — é o fato, não o motivo.</td></tr>
+  <tr><td><code>retained</code></td><td>Que você abriu o app depois de 1, 7 ou 30 dias da instalação (<code>bucket</code>, 0 a 2). <strong>A data em que você instalou fica no seu aparelho e nunca é enviada</strong> — a conta é feita aí e o que sai é só o número do marco, uma vez cada.</td></tr>
+  <tr><td><code>sound_state</code></td><td>Uma vez por dia ativo, se o som estava mudo (<code>muted</code>, 0 ou 1) e se a trilha foi iniciada por você naquele dia (<code>music</code>, 0 ou 1). <strong>Nunca o volume, nunca o horário, nunca que som tocou, nunca o seu fone ou alto-falante.</strong> Se não conseguirmos ler a sua preferência com certeza, o evento simplesmente não é enviado.</td></tr>
+  <tr><td><code>sound_off</code></td><td>Que você desligou o som, no máximo uma vez por dia, com a <em>faixa</em> de idade da instalação (<code>age</code>: 0 = no dia em que instalou, 1 = entre 1 e 6 dias, 2 = 7 dias ou mais). <strong>A data em que você instalou fica no seu aparelho e nunca é enviada.</strong> Este número existe para detectar que o app está fazendo barulho demais — <strong>ele nunca vira pontuação, nunca volta para você como número e nunca vira notificação pedindo o som de volta</strong>.</td></tr>
+  <tr><td><code>guild_create</code></td><td>Que você abriu uma Guilda. Sem o nome dela, sem código, sem ninguém.</td></tr>
+  <tr><td><code>guild_join</code></td><td>Que você entrou numa roda, com o tamanho dela depois de entrar (<code>size</code>, 2 a 12). Nunca quem está nela.</td></tr>
+  <tr><td><code>guild_leave</code></td><td>Que você seguiu o próprio caminho, com quantos ficaram (<code>size</code>, 0 a 11) e a <em>faixa</em> de tempo em que ficou (<code>weeks</code>, 0 a 3).</td></tr>
+  <tr><td><code>guild_thread</code></td><td>Que você firmou o seu fio do dia (<code>kind</code>), no máximo uma vez por dia. <strong>Nunca o que você fez, nunca quanto.</strong></td></tr>
+  <tr><td><code>guild_raid</code></td><td>Feira: que você deu a sua rodada, ou que viu o fenômeno se desfazer ou recuar (<code>outcome</code>, 0 a 2). Nunca o dano.</td></tr>
+  <tr><td><code>guild_stage</code></td><td>Que o seu aparelho viu um estágio novo do Bosque (<code>level</code>, 1 a 5), uma vez cada.</td></tr>
+  <tr><td colspan="2">Além disso, os eventos acima que dizem respeito à sua conta carregam a propriedade <code>tier</code>: se você está no modo grátis ou no completo. Só isso — nada mais da sua conta.</td></tr>
+</table>
+<p>
+  Junto vai <strong>a data — só o dia, nunca a hora</strong> — e um
+  <strong>identificador pseudonimizado</strong>: uma sequência aleatória criada
+  neste aparelho, sem nenhuma relação com seu e-mail nem com o código do seu
+  save. Ele serve só para não contar o mesmo evento duas vezes, e o servidor o
+  <strong>descarta antes de gravar qualquer coisa</strong>: o que fica guardado
+  é um total por dia, somado a todo mundo. Não existe uma linha do tempo sua.
+</p>
+<p>
+  <strong>Nenhum conteúdo vai junto.</strong> Nunca são enviados: o que você
+  quer melhorar e o que atrapalha (<code>soulGoal</code> e
+  <code>soulStruggle</code>), seu nome, sua data/hora/local de nascimento, seu
+  e-mail, o nome do seu personagem, nome de tarefa ou de hábito, seu humor do
+  check-in e qualquer resposta do Oráculo. Os eventos acima não têm nenhum campo
+  de texto — só números.
+</p>
+<p>
+  O envio vem <strong>ligado</strong>. Para desligar:
+  <strong>Configurações → Seus dados → “Enviar estatísticas de uso”</strong>.
+  Desligado, o envio para de verdade e o que estiver na fila do aparelho é
+  apagado.
+</p>
+
+<h2>5. O que outros jogadores conseguem ver</h2>
+<p>
+  Se você ativar os recursos sociais, ficam visíveis para outros jogadores:
+  seu <strong>apelido</strong>, o <strong>nome e estágio do seu personagem</strong>
+  e seus <strong>atributos</strong>. O <strong>conteúdo</strong> das suas
+  tarefas, a <strong>quantidade</strong> delas e o seu e-mail
+  <strong>nunca</strong> são exibidos para outros jogadores.
+</p>
+<p>
+  Se você entrar em um <strong>grupo cooperativo</strong>, as outras pessoas do
+  grupo veem o seu apelido e <strong>se você apareceu hoje (sim ou não)</strong>.
+  Elas <strong>não</strong> veem quanto você fez, nem a sua meta, nem qualquer
+  ranking entre vocês — o número que o grupo enxerga é do grupo inteiro, nunca
+  de uma pessoa. Entra-se em um grupo <strong>só por código de convite</strong>:
+  grupos não aparecem em busca nem no diretório público.
+</p>
+
+<h2>6. Terceiros que recebem dados</h2>
+<table>
+  <tr><th>Serviço</th><th>O que recebe</th><th>Quando</th></tr>
+  <tr>
+    <td>Groq (IA)</td>
+    <td>As mensagens que você escreve no chat do pet, com as três últimas trocas
+        da mesma conversa; o nome, estágio, galho e humor da criatura; vida,
+        energia, vínculo e dias fora (números); seu humor do dia, se marcado; as
+        palavras-chave de personalidade e os ajustes de tom que você configurou.
+        Fora do chat: o texto do objetivo que você digita ao pedir sugestões de
+        tarefas (no tutorial, pré-preenchido com o seu objetivo do onboarding)
+        e o nome da tarefa que você pede para decompor. Ver a
+        <a href="#chat-contexto">seção 2b</a>.</td>
+    <td>Só quando você usa esses recursos.</td>
+  </tr>
+  <tr>
+    <td>Higgsfield e Google Gemini (geração de imagem por IA)</td>
+    <td>A descrição em texto da sua criatura, montada a partir das suas
+        respostas ao Oráculo, para desenhar a imagem dela. Se você preencher o
+        campo opcional de <strong>criatura favorita</strong>, ou escolher uma
+        criatura no Renascimento, esse texto vai junto. Nunca vai seu nome,
+        e-mail, data de nascimento ou o conteúdo das suas tarefas.</td>
+    <td>Só quando o app gera ou regenera a imagem da criatura.</td>
+  </tr>
+  <tr>
+    <td>Google Firebase</td>
+    <td>Verificação de quem você é no login (com a conta Google ou com e-mail e
+        senha) e entrega de notificações push. Ao entrar com o Google, o
+        Firebase nos informa apenas o <strong>seu e-mail</strong> — nada mais da
+        sua conta Google.</td>
+    <td>Se você fizer login e/ou ativar notificações.</td>
+  </tr>
+  <tr>
+    <td>Supabase (repasse) e Groq (transcrição de áudio)</td>
+    <td>O <strong>áudio</strong> que você grava no chat, para virar texto: passa
+        pela Supabase e é transcrito pelo Groq (Whisper). Não guardamos o áudio
+        nem enviamos junto qualquer coisa que identifique você. Ver a
+        <a href="#microfone">seção 2c</a>.</td>
+    <td>Só quando você usa o botão de gravar.</td>
+  </tr>
+  <tr>
+    <td>Google Play</td>
+    <td>Processamento das compras dentro do app.</td>
+    <td>Só quando você faz uma compra.</td>
+  </tr>
+  <tr>
+    <td>Steam (quando disponível)</td>
+    <td>Processamento das compras na versão para computador, se e quando ela
+        for publicada na Steam. Hoje não há versão na Steam.</td>
+    <td>Só quando você faz uma compra por lá.</td>
+  </tr>
+</table>
+<p>
+  Não vendemos seus dados e não os usamos para publicidade direcionada.
+</p>
+
+<h2>7. Idade mínima</h2>
+<p>
+  O Soulmon é destinado a <strong>maiores de 18 anos</strong>. Não é direcionado
+  a menores de idade e não coletamos intencionalmente dados de quem tem menos
+  de 18 anos.
+</p>
+
+<h2 id="exclusao">8. Seus direitos</h2>
+<p>
+  <strong>Dentro do app, sem precisar pedir a ninguém:</strong>
+  <strong>Configurações → Seus dados</strong> tem os dois botões —
+  <strong>baixar uma cópia</strong> de tudo que está guardado sobre você e
+  <strong>excluir a sua conta</strong> junto com os dados associados. A exclusão
+  é imediata e não tem volta.
+</p>
+<p>
+  <strong>O que a exclusão apaga:</strong> o seu save inteiro (criatura,
+  atividades, itens, moedas), <strong>a imagem gerada da sua criatura</strong>,
+  o seu perfil público, o seu apelido, as posições nos rankings, os presentes do
+  grupo, <strong>a sua vaga no grupo cooperativo</strong> (você sai do grupo
+  automaticamente; um grupo que fica vazio some junto com o código), o registro
+  de uso da sua conta paga (contadores de IA e afins) e as
+  inscrições de notificação que o servidor consegue ligar à sua conta. O app
+  também desfaz a inscrição de notificações <strong>deste aparelho</strong> na
+  mesma hora; se você usa o Soulmon em mais de um aparelho, desligue as
+  notificações em cada um deles.
+  <!-- 2026-09-22: grupo cooperativo — `account.js` › delete-confirm passo 3b
+       (`_coop.js` › `coopLeave`). QA rodada 2, 04-dados §1.3. -->
+</p>
+<p>
+  <strong>A marca de exclusão (30 dias):</strong> depois de apagar, o servidor
+  guarda por <strong>30 dias</strong> só o identificador da sua conta (o código
+  derivado do seu e-mail, que não permite reconstruí-lo) com a marca
+  "excluída". Ela existe para <strong>recusar gravação de um aparelho antigo</strong>
+  que ainda estivesse logado — sem ela, o save voltava sozinho segundos depois
+  da exclusão. Se você <strong>entrar de novo com o mesmo e-mail</strong>, a
+  marca é retirada e a conta recomeça do zero. Passados os 30 dias, a marca
+  some sozinha.
+  <!-- functions/api/_accountTombstone.js › TOMBSTONE_TTL_SECONDS = 30 d;
+       reabertura por `auth_time` posterior à exclusão. QA rodada 2,
+       01-seguranca §1.4. -->
+  <!-- 2026-09-21: "imagem gerada" e "inscrições ligadas à conta" são decisão
+       provisória do coordenador (QA rodada 1 — 06-guardas #2 e compliance #7).
+       O apagamento de sprite:img:/sprite:blob: no delete-confirm é tarefa do
+       staff-backend; enquanto não entrar, esta frase está adiantada. -->
+</p>
+<p>
+  <strong>Save sem uso:</strong> um save que fica <strong>12 meses</strong> sem
+  ser aberto em nenhum aparelho é apagado sozinho do servidor. Abrir o app
+  renova o prazo.
+  <!-- functions/api/save.js › SAVE_TTL_SECONDS = 86400 * 365, renovado na
+       leitura (RENEW_AFTER_SECONDS). Compliance #11. -->
+</p>
+<p>
+  <strong>O que fica, e por quanto tempo:</strong> o registro das suas compras
+  (qual comprovante foi resgatado e o que ele liberou) fica guardado por
+  <strong>5 anos a partir da exclusão da conta</strong>, por obrigação fiscal e
+  contábil, e depois é apagado sozinho. Esse registro é guardado por um identificador de conta (um código
+  derivado do seu e-mail, que não permite reconstruí-lo) — <strong>não contém
+  o seu e-mail nem nenhum outro dado sobre você</strong>. Ele também é o que
+  impede um mesmo comprovante de virar várias contas pagas.
+</p>
+<p>
+  <strong>Se você ativou pela Steam:</strong> o vínculo entre o seu SteamID e a
+  conta que ele ativou é <strong>apagado junto com a conta</strong> — o seu
+  SteamID não fica guardado aqui depois da exclusão. Em troca, a licença Steam
+  volta a ficar livre: ela pode ativar uma conta nova.
+  <!-- `ord:steam:own:<appid>:<steamid>` (functions/api/_billing.js ›
+       verifySteamOwnership → claimOrder). ⚰️ Até 22/09/2026 este parágrafo
+       declarava retenção de 5 anos "provisória" — decisão do dono #54
+       (docs/PERGUNTAS-DO-DONO.md, QA rodada 2 `04-dados` #4): o SteamID64 é
+       identificador de terceiro e a justificativa fiscal do parágrafo acima
+       não cobre licença de posse (não há transação nossa). Apagado em
+       functions/api/account.js › `steamLicenseKeysOf` + passo 5b; o SteamID
+       também sai de `consumedOrders`/`orderDetails` no passo 6. Guard:
+       functions/api/account.steamLicense.qa2.test.js. -->
+</p>
+<p>
+  Apagar o app do aparelho remove os dados locais, mas <strong>não</strong>
+  apaga o save na nuvem — para isso use o botão acima, ou escreva para o contato
+  abaixo, que faz o mesmo por você.
+</p>
+
+<h2>9. Contato e encarregado</h2>
+<p>
+  Dúvidas ou pedidos sobre privacidade: <strong>mateus.sprnd@gmail.com</strong>
+</p>
+<p>
+  <strong>Encarregado pelo tratamento de dados pessoais</strong> (LGPD, Lei
+  13.709/2018, art. 41) e <strong>controlador</strong>: <strong>Mateus
+  Sperandio</strong> — <strong>mateus.sprnd@gmail.com</strong>. É este o canal
+  para exercer qualquer um dos direitos do §8 e para falar com a Autoridade
+  Nacional de Proteção de Dados por nosso intermédio.
+  <!-- Decisão do dono #44 (22/09/2026), docs/PERGUNTAS-DO-DONO.md. O Soulmon é
+       operado por uma pessoa física: controlador e encarregado são a mesma
+       pessoa, e a lei não exige que sejam distintos. Espelhado em
+       docs/PLAY-DATA-SAFETY.md §1 e docs/E0-CONSENTIMENTO.md §6. -->
+</p>
+</div>
 
 </body>
 </html>

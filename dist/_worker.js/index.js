@@ -1473,7 +1473,7 @@ var NOT_INCLUDED = [
     en: "Your notification subscriptions are stored by device address, not by your account. The server erases the ones it could link to your account; the ones without that link (subscriptions made by older app versions) can only be undone by the device. The app unsubscribes this device along with the deletion; if you use Soulmon on more than one device, turn notifications off on each."
   },
   {
-    what: "sprite:blob:* \xF3rf\xE3o / imagem no provedor",
+    what: "sprite:blob:* orphan / image at the provider",
     "pt-BR": "As imagens da sua criatura geradas por IA s\xE3o apagadas junto com a conta (cache, lock e o arquivo que o cache aponta). Duas coisas ficam fora do alcance: um arquivo cujo registro de cache falhou na hora de gerar (ele tem um nome aleat\xF3rio, sem liga\xE7\xE3o com a sua conta, e n\xE3o h\xE1 como ach\xE1-lo \u2014 ele n\xE3o tem nada seu al\xE9m da imagem), e a c\xF3pia que o provedor de IA guardou quando a imagem veio pela URL dele. A imagem tamb\xE9m pode continuar no cache do seu aparelho at\xE9 voc\xEA limpar os dados do app.",
     en: "The AI-generated images of your creature are erased together with the account (cache, lock and the file the cache points to). Two things are out of reach: a file whose cache record failed to be written at generation time (it has a random name with no link to your account, and there is no way to find it \u2014 it holds nothing of yours but the image), and the copy the AI provider kept when the image came from its URL. The image may also remain in your device cache until you clear the app data."
   },
@@ -1483,7 +1483,7 @@ var NOT_INCLUDED = [
     en: "The link between a purchase receipt and the account that redeemed it is NOT deleted. It is what stops one receipt from becoming several paid accounts \u2014 and it is what lets you restore your purchase if you come back with the same email."
   },
   {
-    what: "del:done:<saveId> (marca de exclus\xE3o / deletion marker)",
+    what: "del:done:<saveId> (deletion marker)",
     "pt-BR": 'Por 30 dias depois da exclus\xE3o, o servidor guarda s\xF3 o identificador da sua conta (o c\xF3digo derivado do e-mail, sem o e-mail) com a marca "exclu\xEDda". Ele existe para recusar grava\xE7\xE3o de um aparelho antigo que ainda estivesse logado \u2014 sem isso o save voltava sozinho segundos depois. Entrar de novo com o mesmo e-mail reabre: a conta recome\xE7a do zero. Depois de 30 dias a marca some sozinha.',
     en: 'For 30 days after deletion, the server keeps only your account identifier (the code derived from your email, without the email) marked as "deleted". It exists to refuse writes from an old device that was still signed in \u2014 without it the save came back on its own seconds later. Signing in again with the same email reopens: the account starts over from scratch. After 30 days the marker expires on its own.'
   },
@@ -1493,7 +1493,7 @@ var NOT_INCLUDED = [
     en: "If you activated Soulmon through Steam, the link between your SteamID and this account is DELETED together with it \u2014 nothing about your SteamID is kept here. In exchange, the Steam licence becomes free again: it can activate a new account."
   },
   {
-    what: "terceiros / third parties",
+    what: "third parties",
     "pt-BR": "Mensagens que voc\xEA mandou para o assistente foram processadas por provedores de IA fora daqui. O Soulmon n\xE3o guarda essas conversas, ent\xE3o elas n\xE3o est\xE3o nesta exporta\xE7\xE3o e esta exclus\xE3o n\xE3o alcan\xE7a o que estiver do lado deles.",
     en: "Messages you sent to the assistant were processed by AI providers outside of here. Soulmon does not store those conversations, so they are not in this export and this deletion does not reach whatever is on their side."
   }
@@ -1656,15 +1656,15 @@ function plan(c, saveId) {
       ...c.sprites.imgs,
       ...c.sprites.locks,
       ...c.sprites.blobs,
-      "men\xE7\xF5es a voc\xEA na lista de amigos de outros jogadores",
-      "inscri\xE7\xF5es de notifica\xE7\xE3o (push:*/fcm:*) ligadas \xE0 sua conta",
-      ...c.coopGroupId ? [`coop:${c.coopGroupId} (sua vaga no grupo)`, coopOfKey(saveId), coopCkKey(c.coopGroupId, saveId), coopFioKey(c.coopGroupId, saveId), coopMemKey(c.coopGroupId, saveId)] : [],
-      "resgates da Guilda (coopClaim:*) e rodadas da Feira (coopHit:*) da guilda atual \u2014 os de guildas de onde voc\xEA j\xE1 saiu foram apagados na sa\xEDda; se sobrou algum sem v\xEDnculo, ele expira sozinho em at\xE9 21 dias. Os fios que voc\xEA j\xE1 firmou ficam no Bosque, an\xF4nimos",
+      "mentions of you in other players' friend lists",
+      "notification subscriptions (push:*/fcm:*) linked to your account",
+      ...c.coopGroupId ? [`coop:${c.coopGroupId} (your spot in the group)`, coopOfKey(saveId), coopCkKey(c.coopGroupId, saveId), coopFioKey(c.coopGroupId, saveId), coopMemKey(c.coopGroupId, saveId)] : [],
+      "Guild claims (coopClaim:*) and Fair rounds (coopHit:*) of your current guild \u2014 those from guilds you already left were erased when you left; any leftover without a link expires on its own within 21 days. Threads you already tied stay in the Grove, anonymous",
       // #54: o vínculo SteamID ↔ conta. ⚰️ Até 22/09/2026 estas chaves apareciam
       // em `sobrevive` (5 anos, justificativa fiscal que não se aplica a licença).
       ...c.steamLicenseKeys
     ].filter(Boolean),
-    minimiza: c.entitlement ? [`${ENT_PREFIX}${saveId} \u2014 sai o uso (IA, an\xFAncios), ficam os campos de compra`] : [],
+    minimiza: c.entitlement ? [`${ENT_PREFIX}${saveId} \u2014 usage (AI, ads) is removed; purchase fields stay`] : [],
     // Sobrevive o comprovante de COMPRA (Play/cortesia). A licença Steam saiu
     // desta lista em 22/09/2026 e passou para `apaga` (#54).
     sobrevive: Array.isArray(c.entitlement?.consumedOrders) ? c.entitlement.consumedOrders.filter((o) => !(typeof o === "string" && o.startsWith("steam:own:"))).map((o) => `${ORDER_PREFIX}${o}`) : []
@@ -5258,7 +5258,7 @@ async function onRequest6({ env }) {
 }
 __name(onRequest6, "onRequest");
 
-// ../.wrangler/tmp/pages-SGIt5S/functionsRoutes-0.9111347492170572.mjs
+// ../.wrangler/tmp/pages-j0gPJS/functionsRoutes-0.16142338562671443.mjs
 var routes = [
   {
     routePath: "/api/account",
