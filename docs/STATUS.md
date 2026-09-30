@@ -41,6 +41,16 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > Decisão do dono. Bridge ganhou duas chaves NOVAS (`pet_line` = só `"corvo"`; `grove_stage` = só id de `GROVE_STAGES`; vazias → o plugin REMOVE). `resolveSprite` usa `CORVO_SPRITES` (11 `drawable-nodpi/sprite_corvo_*.png`, cópia dos -256) e o widget A mostra só o nome do estágio (`widget_grove`, strings em `values`/`values-pt`). Régua: `widgetSemCobranca.contract.test.ts` (allowlists, paridade 11 formas ↔ drawables ↔ mapa Kotlin; 14/14 mutações mortas).
 > **APK precisa de build novo** (drawables + Kotlin + layout) — o `android-build.yml` builda no push da `main`; só ele prova que o Kotlin/XML compila (sem Gradle local). A limitação "o widget não desenha o corvo" do bloco abaixo fechou aqui.
 
+> ## 30/09/2026 — Manual sincronizado com `ae366480` (doc-mantenedor, `8e6d0d9a..ae366480`)
+>
+> Docs tocados: 00-MAPA, 02 (§15 lápide do renomeio; **§60 novo** administrador/GM e corvinho),
+> 03 (§1.3 mapa interno; §4.23 painel de GM), 04 (§8.2-A corvinho), 06 (components, utils,
+> api-workers), 07 (§5.5, `ai:sprite:@admin`, `soulmonMeta.creature`), 10 (3 linhas), 11 (verbetes).
+> Correções de fato: `ADMIN_AI_CAP_MULTIPLIER` era 10 no manual, é **3** + sub-teto de 40;
+> aviso "o widget não desenha o corvo" era falso; ids `data` → `harmony` em 02/04/06/07.
+> Divergências novas: nenhuma de código; verificação SEM verificador independente (só `grep`).
+> Não re-sincronizado: `dist/`/teto de bytes, prompts em `docs/design/areas/` (só indexados).
+
 > ## 29/09/2026 — Admin/GM no cliente + o corvinho de lanterna e cartola
 > `useAdmin()` (`src/utils/adminFlag.ts`) espelha SÓ o `admin === true` de `GET /api/entitlements`, em memória (nunca save/localStorage; rede falha = não-admin).
 > O admin adota o corvinho uma vez por sessão (`src/utils/corvoPet.ts` › `adoptCorvo`, marca `soulmonMeta.creature`); arte resolvida por `spriteLineOf` → `getSpriteForStage` em Home, Pet, Evolução, cerimônia, masmorra/arena/Dino/pesadelo, torneio e overlay desktop.
