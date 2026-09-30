@@ -3237,6 +3237,90 @@ async function handleGuild({ request, env }) {
 }
 __name(handleGuild, "handleGuild");
 
+// api/_duel.js
+var DUEL_MAX_TURNS = 12;
+var DUEL_CHEER_STRIKES = [1, 3, 5];
+var DUEL_PERFECT_CHEER = 0.92;
+var DUEL_CHEER_GAIN = 0.25;
+var DUEL_PERFECT_MULT = 1.35;
+var STAGE_POWER = { rookie: 1, champion: 2, ultimate: 3, mega: 4, ultra: 5 };
+function stagePowerOf(stage) {
+  return STAGE_POWER[String(stage || "").split("-")[0]] ?? 1;
+}
+__name(stagePowerOf, "stagePowerOf");
+function duelStats(profile) {
+  const sp = stagePowerOf(profile?.stage);
+  const a = profile?.attrs || {};
+  const attrSum = (+a.power || 0) + (+a.harmony || 0) + (+a.benevolence || 0);
+  return {
+    hp: 70 + sp * 6,
+    atk: Math.round((10 + sp * 1.2 + Math.min(2, attrSum / 50)) * 10) / 10
+  };
+}
+__name(duelStats, "duelStats");
+function duelSeed(...parts) {
+  let h = 2166136261;
+  const s = parts.join("|");
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619) >>> 0;
+  }
+  return h >>> 0;
+}
+__name(duelSeed, "duelSeed");
+function mulberry32(seed) {
+  let t = seed >>> 0;
+  return () => {
+    t = t + 1831565813 >>> 0;
+    let r = Math.imul(t ^ t >>> 15, 1 | t);
+    r = r + Math.imul(r ^ r >>> 7, 61 | r) ^ r;
+    return ((r ^ r >>> 14) >>> 0) / 4294967296;
+  };
+}
+__name(mulberry32, "mulberry32");
+function sanitizeCheers(raw) {
+  const arr = Array.isArray(raw) ? raw : [];
+  return DUEL_CHEER_STRIKES.map((_, i) => {
+    const q = Number(arr[i]);
+    return Number.isFinite(q) ? Math.min(1, Math.max(0, q)) : 0;
+  });
+}
+__name(sanitizeCheers, "sanitizeCheers");
+function cheerMultiplier(q) {
+  if (q >= DUEL_PERFECT_CHEER) return DUEL_PERFECT_MULT;
+  return 1 + DUEL_CHEER_GAIN * Math.min(1, Math.max(0, q));
+}
+__name(cheerMultiplier, "cheerMultiplier");
+function simulateDuel({ me, opp, seed, cheers }) {
+  const rng = mulberry32(seed);
+  const q = sanitizeCheers(cheers);
+  let hpMe = me.hp, hpOpp = opp.hp;
+  let turn = me.atk > opp.atk ? "me" : me.atk < opp.atk ? "opp" : rng() < 0.5 ? "me" : "opp";
+  let myStrike = 0;
+  const events = [];
+  for (let t = 0; t < DUEL_MAX_TURNS && hpMe > 0 && hpOpp > 0; t++) {
+    const atk = turn === "me" ? me.atk : opp.atk;
+    let mult = 0.5 + rng();
+    let cheer = null;
+    if (turn === "me") {
+      const slot = DUEL_CHEER_STRIKES.indexOf(myStrike);
+      if (slot >= 0) {
+        cheer = q[slot];
+        mult *= cheerMultiplier(cheer);
+      }
+      myStrike++;
+    }
+    const dmg = Math.max(1, Math.round(atk * mult));
+    if (turn === "me") hpOpp = Math.max(0, hpOpp - dmg);
+    else hpMe = Math.max(0, hpMe - dmg);
+    events.push({ actor: turn, dmg, cheer, hpMe, hpOpp });
+    turn = turn === "me" ? "opp" : "me";
+  }
+  const won = hpOpp <= 0 ? true : hpMe <= 0 ? false : hpMe / me.hp >= hpOpp / opp.hp;
+  return { events, won, hpMe, hpOpp };
+}
+__name(simulateDuel, "simulateDuel");
+
 // api/community.js
 var CORS5 = {
   "Access-Control-Allow-Origin": "*",
@@ -3453,7 +3537,7 @@ async function handleCommunity({ request, env }) {
       if (!raw) continue;
       const p = JSON.parse(raw);
       if (!p.pvpEnabled || p.id === me) continue;
-      pool.push(await publicProfile(env, p));
+      pool.push({ profile: p, pub: await publicProfile(env, p) });
     }
     for (let i = pool.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -3462,7 +3546,14 @@ async function handleCommunity({ request, env }) {
     const season = currentSeason();
     const myRank = id ? await getRank(env, season, id) : null;
     const matchesLeft = myRank ? MATCHES_PER_DAY - (myRank.day === today2() ? myRank.matchesToday : 0) : MATCHES_PER_DAY;
-    return json3({ opponents: pool.slice(0, 3), matchesLeft: Math.max(0, matchesLeft) });
+    const matchesToday = myRank && myRank.day === today2() ? myRank.matchesToday : 0;
+    const meProfile = id ? await getProfile(env, id) : null;
+    const opponents = pool.slice(0, 3).map(({ profile: p, pub }) => ({
+      ...pub,
+      duel: duelStats(p),
+      duelSeed: id ? duelSeed(id, pub.id, today2(), matchesToday) : 0
+    }));
+    return json3({ opponents, me: { duel: duelStats(meProfile) }, matchesLeft: Math.max(0, matchesLeft) });
   }
   if (action === "match" && method === "POST") {
     const { opponentId } = body;
@@ -3485,10 +3576,17 @@ async function handleCommunity({ request, env }) {
     if (myRank.matchesToday >= MATCHES_PER_DAY) {
       return json3({ error: "daily limit", matchesLeft: 0 }, 429);
     }
-    const power = /* @__PURE__ */ __name((p) => stagePower(p.stage) * 10 + Math.min(20, ((p.attrs?.power || 0) + (p.attrs?.harmony || 0) + (p.attrs?.benevolence || 0)) / 5) + Math.random() * 18, "power");
-    const myScore = power(me);
-    const oppScore = power(opp);
-    const won = myScore >= oppScore;
+    const meStats = duelStats(me);
+    const oppStats = duelStats(opp);
+    const duel = simulateDuel({
+      me: meStats,
+      opp: oppStats,
+      seed: duelSeed(id, opponentId, today2(), myRank.matchesToday),
+      cheers: body.cheers
+    });
+    const won = duel.won;
+    const myScore = Math.round(100 * duel.hpMe / meStats.hp);
+    const oppScore = Math.round(100 * duel.hpOpp / oppStats.hp);
     myRank.matchesToday += 1;
     myRank.points = Math.max(0, myRank.points + (won ? 20 : -8));
     if (won) myRank.wins += 1;
@@ -3515,7 +3613,8 @@ async function handleCommunity({ request, env }) {
       oppScore: Math.round(oppScore),
       points: myRank.points,
       matchesLeft: MATCHES_PER_DAY - myRank.matchesToday,
-      opponent: { name: opp.name, petName: opp.petName, stage: opp.stage }
+      opponent: { name: opp.name, petName: opp.petName, stage: opp.stage },
+      duel: { events: duel.events, me: meStats, opp: oppStats }
     });
   }
   if ((action === "rank" || action === "seasonResult") && method === "GET") {
@@ -5105,7 +5204,7 @@ async function onRequest6({ env }) {
 }
 __name(onRequest6, "onRequest");
 
-// ../.wrangler/tmp/pages-8z2J1I/functionsRoutes-0.36248243479490716.mjs
+// ../.wrangler/tmp/pages-iRxJx3/functionsRoutes-0.34222225431725684.mjs
 var routes = [
   {
     routePath: "/api/account",

@@ -5705,6 +5705,8 @@ select:focus-visible {
   .sm2-grove-bob { animation: none !important; }
   /* Feira da Guilda: o FX do fenômeno fica parado. */
   .sm2-fair-fx { animation: none !important; }
+  /* Duelo fantasma: o número do golpe aparece sem voar. */
+  .sm-duel-dmg { animation: none !important; }
   .sm2-viewport { animation: none !important; }
   .sm2-icon { transition: none !important; }
   /* minimal-ui F1: o link de canto e o voltar não encolhem no toque. */
@@ -7860,3 +7862,8 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
   [data-area-sheet-npc] { max-width: 46% !important; }
   [data-area-sheet-npc-line] { max-height: calc(100% - 8px); overflow: hidden; }
 }
+
+/* Duelo fantasma (DuelScreen): o número do golpe sobe e some. Com movimento
+   reduzido ele só aparece (regra no bloco canônico) — o número é a leitura. */
+@keyframes sm-duel-dmg { from { opacity: 0; transform: translateY(6px); } 20% { opacity: 1; } to { opacity: 0; transform: translateY(-14px); } }
+.sm-duel-dmg { animation: sm-duel-dmg 850ms ease-out forwards; }

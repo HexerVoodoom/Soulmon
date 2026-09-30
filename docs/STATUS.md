@@ -9,6 +9,19 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 30/09/2026 — Torneio: duelo fantasma (PvP com torcida)
+>
+> O "Desafiar" do Torneio deixou de ser um placar sorteado: abre o **duelo fantasma**
+> (`src/components/DuelScreen.tsx`) — os dois pets lutam sozinhos e o dono **torce** em
+> 3 golpes (anel que fecha sobre o alvo; torcida só soma, ×1 a ×1,35). Regra única em
+> `functions/api/_duel.js` (servidor decide, cliente anima com a mesma semente; semente
+> recalculada no `match`). Calibração: mesmo estágio 50% → ~80% com torcida perfeita;
+> um estágio abaixo com torcida perfeita ~39%. Origem: `docs/BENCHMARK-COMBATE.md`, ideia C.
+> **Limite conhecido:** cliente editado pode simular os 3 oponentes antes e escolher, ou
+> sair do duelo antes do fim sem gastar a partida. Aceitável enquanto Emblemas forem só
+> cosmético; se o ranking passar a valer algo, o servidor sorteia o oponente.
+> Sem verificação visual por Playwright (a tela depende da API do Torneio, fora do sandbox).
+
 > ## 30/09/2026 — Lote de 29–30/09 fechado: Guilda, administrador/corvinho, mapas, renomeio de caminhos, widget
 >
 > Verificação final independente (`docs/reviews/admin-corvo/L3-verificacao-final.md`):

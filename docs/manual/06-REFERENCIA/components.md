@@ -363,6 +363,12 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** nenhuma (`find src/components -maxdepth 1 -name 'DinoGame.*test.ts*'` vazio, 09/09/2026).
 **Avisos do arquivo:** fronteira retrô interna ao arquivo — DENTRO do `<canvas>` é território diegético/retrô e não migra para o kit `--sm2-*`; FORA é chrome em Material Symbols; `expand_less` (não `arrow_upward`) no botão de pular porque `arrow_upward` não está no subset da fonte (`src/styles/tokens.md`) e renderizaria vazio.
 
+### `src/components/DuelScreen.tsx`
+**Dono de:** a TELA do duelo fantasma do Torneio (30/09/2026) — os pets lutam sozinhos e o dono torce em 3 golpes. Só anima: a regra é de `functions/api/_duel.js`, e quem decide é o servidor (`match`).
+**Exports:** `DuelScreen` (props `me`/`opp`/`seed`/sprites/nomes, `onDone(cheers)`); `cheerQuality(deltaMs)` (1 no alvo, 0 a 400 ms); `CHEER_MS`/`CHEER_TARGET` (o anel).
+**Quem chama:** `TournamentPage` (`fight` abre o duelo quando o servidor manda `duel`/`duelSeed`).
+**Régua:** `src/components/DuelScreen.render.test.tsx`. Nasce muda (R-NOVA).
+
 ### `src/components/DreamDex.tsx`
 **Dono de:** a Dex de Sonhos — coleção de cenas noturnas colecionáveis, apresentação pura de `DREAM_CATALOG`.
 **Props principais:** `DreamDexProps` (exportado) — recebe `RestState` e devolve a grade com `dexProgress`.

@@ -63,6 +63,8 @@ import {
 import { getSpriteForStage } from '../utils/sprites';
 import { lineIconForStage } from '../utils/lineIcons';
 import { getStageLevel } from '../types/progression';
+import { DuelScreen } from './DuelScreen';
+import type { DuelStats } from '../../functions/api/_duel.js';
 import { getOpponents, playMatch, getRank, type Opponent, type MatchResult, type RankRow } from '../utils/community';
 import { EMBLEMS_PER_WIN, EMBLEMS_PER_LOSS, emblemStyle } from '../utils/currencies';
 import { getTierStanding } from '../utils/tournamentTiers';
@@ -188,6 +190,9 @@ export function TournamentPage({ saveId, petStage, petLine, pvpEnabled, onToggle
   const [rankFailed, setRankFailed] = useState(false);
   const [fighting, setFighting] = useState<string | null>(null);
   const [result, setResult] = useState<MatchResult | null>(null);
+  /** Duelo fantasma em andamento (a luta animada antes do servidor decidir). */
+  const [duelOpp, setDuelOpp] = useState<Opponent | null>(null);
+  const [myDuel, setMyDuel] = useState<DuelStats | null>(null);
   /** Erro de AÇÃO (a partida não foi). Era `alert()` — diálogo do sistema por
    *  cima de um app de bichinho, e sem par PT/EN garantido. */
   const [fightError, setFightError] = useState<string | null>(null);
@@ -226,6 +231,7 @@ export function TournamentPage({ saveId, petStage, petLine, pvpEnabled, onToggle
     getOpponents(saveId)
       .then(r => {
         setOpponents(r.opponents ?? []);
+        setMyDuel(r.me?.duel ?? null);
         // A API já devolveu resposta SEM `matchesLeft`, e a tela imprimia
         // "undefined partida(s) restante(s) hoje" — literalmente a palavra
         // `undefined` para o usuário. Número desconhecido vira `null` e a UI
@@ -249,11 +255,19 @@ export function TournamentPage({ saveId, petStage, petLine, pvpEnabled, onToggle
     }
   }, [tab, rank]);
 
-  const fight = async (opp: Opponent) => {
+  /* Com servidor que manda a ficha de luta, o "Desafiar" abre o DUELO: os
+     pets lutam sozinhos e o dono torce. Sem ela (servidor antigo), a partida
+     segue direto como antes. */
+  const fight = (opp: Opponent) => {
+    if (opp.duel && myDuel && typeof opp.duelSeed === 'number') { setFightError(null); setDuelOpp(opp); return; }
+    void resolveMatch(opp, []);
+  };
+
+  const resolveMatch = async (opp: Opponent, cheers: number[]) => {
     setFighting(opp.id);
     setFightError(null);
     try {
-      const r = await playMatch(saveId, opp.id);
+      const r = await playMatch(saveId, opp.id, cheers);
       setResult(r);
       // `?? matchesLeft`: resposta sem o campo não pode zerar o contador nem
       // virar `undefined` na tela (ver a nota do estado de carregamento).
@@ -272,6 +286,9 @@ export function TournamentPage({ saveId, petStage, petLine, pvpEnabled, onToggle
         : (isPt ? 'A partida não aconteceu. Tente de novo.' : "The match didn't happen. Try again."));
     } finally {
       setFighting(null);
+      setDuelOpp(null);
+      // A semente depende da partida do dia: a lista velha já não vale.
+      loadOpponents();
     }
   };
 
@@ -281,6 +298,24 @@ export function TournamentPage({ saveId, petStage, petLine, pvpEnabled, onToggle
     { key: 'missions' as const, label: isPt ? 'Missões' : 'Missions' },
     ...(shop ? [{ key: 'shop' as const, label: isPt ? 'Loja' : 'Shop' }] : []),
   ];
+
+
+  if (duelOpp && myDuel && duelOpp.duel && typeof duelOpp.duelSeed === 'number') {
+    return (
+      <DuelScreen
+        me={myDuel}
+        opp={duelOpp.duel}
+        seed={duelOpp.duelSeed}
+        petSprite={getSpriteForStage(petStage, petLine, 256)}
+        oppSprite={getSpriteForStage(duelOpp.stage)}
+        petName={isPt ? 'Você' : 'You'}
+        oppName={duelOpp.petName || duelOpp.name}
+        isPt={isPt}
+        onDone={cheers => { void resolveMatch(duelOpp, cheers); }}
+        onClose={() => setDuelOpp(null)}
+      />
+    );
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 24 }}>

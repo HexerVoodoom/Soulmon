@@ -293,6 +293,12 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
+              'No duelo do Torneio os pets lutam sozinhos. Você torce três vezes: toque quando o anel encostar no círculo. Torcer só ajuda; não torcer não atrapalha.',
+              'In a Tournament duel the pets fight on their own. You cheer three times: tap when the ring meets the circle. Cheering only helps; skipping never hurts.',
+            )}
+          </p>
+          <p style={para}>
+            {L(
               'O check-in e o relatório do dia levam vinte segundos; o de domingo descreve a semana. Nada disso vira nota.',
               'Check-in and the daily report take twenty seconds; Sunday describes the week. None of it becomes a score.',
             )}
