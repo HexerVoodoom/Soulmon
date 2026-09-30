@@ -44,7 +44,7 @@ export const REGIONS: readonly Region[] = [
     nameEn: 'Meadow', namePt: 'Campina',
     glimpseEn: 'Low grass, a lot of open space, and company everywhere.',
     glimpsePt: 'Grama baixa, muito espaço aberto e companhia por toda parte.',
-    bgId: null,
+    bgId: 'bg-campina',   // postal próprio (fundos-v2, 30/09/2026) — não vendido
     challenges: [],
     arrival: {
       id: 'trv-campina-chegada', emoji: '🌻',
@@ -442,7 +442,7 @@ export const REGIONS: readonly Region[] = [
     nameEn: 'Caves', namePt: 'Cavernas',
     glimpseEn: 'No light from outside; whatever glows in there glows on its own.',
     glimpsePt: 'Nenhuma luz de fora; o que brilha ali brilha por conta própria.',
-    bgId: null,
+    bgId: 'bg-cavernas',   // postal próprio (fundos-v2, 30/09/2026) — não vendido
     challenges: [
       {
         id: 'trv-c-cavernas-1', area: 'mente', minAge: 13,

@@ -59,8 +59,11 @@ Fase 1 (`design/INVENTARIO-WIREFRAMES.md`).
 | `soulmon/bg/dungeon-classic-{retro,vhs,sol,crt,glitch}` | 5 · **1080×1920** RGB (rodada 3 extras v3, instaladas 30/09/2026) | `DUNGEON_SCENES` (`dungeonScenes.ts`) | Jogos (Masmorra) — substituem os 5 clássicos em gradiente CSS; fonte `E:/Soulmon-assets/out/rodada3/extras/final/` (`MANIFEST.md` com sha256) |
 | `soulmon/bg/dungeon-1..5`, `tournament.png` | 6 · **960×540** (formato antigo, deitado) | `dungeonScenes.ts` | Jogos — ⚠️ **inconsistência**: 5 andares deitados + 5 em pé; `background-size: cover` corta ~70% dos deitados (achado §11 do `04`) |
 | `backgrounds/bg-attic … bg-swamp` | 8 · **1200×648** (pet-box da loja, formato certo) | `PET_BACKGROUNDS` (`utils/backgrounds.ts`) | Loja (`CenariosMobilias`), Home (palco do pet) |
+| `backgrounds/bg-guild-{clareira,ramagem,copa,mata,bosque-antigo}` | 5 · **1200×648** RGB noturnos, chão 66% (rodada 3 fundos-v2, instalados 30/09/2026; antes gradiente CSS) | `PET_BACKGROUNDS` | Guilda (`GroveVisor`, cerimônia de marco, prateleira da Guilda) e palco da Home quando equipado — ganhos por conquista, nunca vendidos; fonte `E:/Soulmon-assets/out/rodada3/fundos-v2/final/` (`MANIFEST.md` com sha256) |
+| `backgrounds/bg-campina`, `bg-cavernas` | 2 · **1200×648** RGB noturnos, chão 74% (fundos-v2, 30/09/2026) | `PET_BACKGROUNDS` + `REGIONS[].bgId` (`data/travessiasCatalog.ts`) | Exploração › Passeio (postal da região) — **não vendidos** (fora de `shop.ts`/`SHOP_BG_ACCENTS`) |
+| `soulmon/areas/bg-hall`, `bg-laboratorio` | 2 · **760×1344** RGB (fundos-v2, 30/09/2026) | `HALL_BG`/`LABORATORIO_BG` (`areas/index.ts` → `AreaView.tsx`) | Mapa › Hall e › Laboratório — antes caíam no degradê do `AreaScene` |
 | `backgrounds/bg-gameboy`, `bg-matrix`, `bg-ocean` | 3 · **800×800** (formato antigo, `setting:'void'`) | idem | Loja — ⚠️ cortam nas laterais |
-| `backgrounds/thumbs/` | 28 · **96×52** — miniatura de cada cenário 1200×648, DERIVADA (lanczos3 + sharpen leve; rodada 2 R2-1, 21/09/2026) | `BG_THUMBS` (glob em `ShopModal.tsx`) | Loja (`CenariosMobilias`, mini-visor do card) |
+| `backgrounds/thumbs/` | 35 · **96×52** — miniatura de cada cenário 1200×648, DERIVADA (lanczos3 + sharpen leve; rodada 2 R2-1, 21/09/2026); as 7 de fundos-v2 vieram prontas da leva. ⚠️ As 27 dos cenários retonados em 30/09 (tom da Home v2) ainda estão no tom antigo | `BG_THUMBS` (glob em `ShopModal.tsx`) | Loja (`CenariosMobilias`, mini-visor do card) |
 | `backgrounds/home-scene-1547.png` | 1 · 1376×3058 | `CompanionHUD.tsx` | Home (fundo do palco) — é a "image 1547" da pasta do Desktop |
 | `video/evolution-bg.mp4` + thumb | 1 | `EvolutionCeremony.tsx` | Evolução (`Cerimonia`) |
 | `brand/intro.mp4` | 1 · 720×1280 | `IntroScreen.tsx` | Onboarding-funil (`IntroEstados`) |
@@ -160,6 +163,8 @@ consumidor** — `src/assets/artMaps.contract.test.ts` (novo, 14/14) cobre `embl
 | `icones/tilesF/`, `aventura2/tilesD/` | 16 + 15 · 128²/96² | folhas fatiadas cruas (`F-00…`, `D-00…`) | — | — | intermediários de fatiamento; os finais já estão no repo (`elementos/`, `adventures/`). Ignorar |
 | `branches/` | 12 · 2048² + refs 512² | Igni/Nautil/Astria (3 runs do oráculo, 4 formas cada) | dentro | nenhum — nunca viraram sprite (xadrez falso, precisam `dechecker`) | **Decisão**: são 3 linhas a mais (9 no total) ou foram substituídas por kaelen/orrin/thalindra? Se entram: recortar + 256² |
 | `processed/` (30) e raiz (30 × 1024²) | kaelen/orrin/thalindra 11 formas | já instalados em `lines/full/` | — | — | fonte; ignorar |
+
+**Rodada 3 (30/09/2026) — instaladas**: `fundos-v2/final/` (9 fundos + 7 miniaturas, `ASSETS-A-GERAR.md` §8 I10) e `_tom-home-v2/` (53 telas retonadas só em matiz + highlight, substituídas no mesmo caminho — `bg-gameboy` fora; §8 I11).
 
 Levas já instaladas (conferido por nome): `backgrounds` (17/19), `decor` (21), `decor-v2` (14), `icons` (58/59 — falta só `poop.png`, que virou outro nome), `arcano` (14), `aventura` + `aventura2` (24), `entrega7/icones` (137), `berco` (1).
 

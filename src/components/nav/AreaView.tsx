@@ -4,7 +4,7 @@ import type { Language } from '../../utils/i18n';
 import { AreaScene, type AreaLot } from './AreaScene';
 import { AreaSheet } from './AreaSheet';
 import { mercadoLots, arenaLots, laboratorioLots, hallLots, type MercadoLotId, type LaboratorioLotId } from '../../utils/areaSheetCopy';
-import { AREA_BG, MERCADO_LOT_ART, ARENA_LOT_ART, PLAY_AREA_BG, EXPLORACAO_LOT_ART, JOGOS_LOT_ART, LABORATORIO_LOT_ART, HALL_LOT_ART } from '../../assets/soulmon/areas';
+import { AREA_BG, MERCADO_LOT_ART, ARENA_LOT_ART, PLAY_AREA_BG, EXPLORACAO_LOT_ART, JOGOS_LOT_ART, LABORATORIO_LOT_ART, HALL_LOT_ART, HALL_BG, LABORATORIO_BG } from '../../assets/soulmon/areas';
 import { exploracaoLots, jogosLots } from '../../utils/playAreaLots';
 import { sm2Hint } from '../form/FormKit';
 import { useBackLayer } from '../../utils/backStack';
@@ -379,6 +379,7 @@ export function AreaView(props: AreaViewProps) {
       <AreaScene
         areaId={area}
         language={language}
+        background={LABORATORIO_BG}
         lots={lots.map(l => ({ ...l, art: LABORATORIO_LOT_ART[l.id], onOpen: () => { props.onLabTab(tabOf[l.id]); setSheet(l.id); } } satisfies AreaLot))}
       >
         <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close}>
@@ -394,6 +395,7 @@ export function AreaView(props: AreaViewProps) {
     <AreaScene
       areaId={area}
       language={language}
+      background={HALL_BG}
       lots={lots.map(l => ({ ...l, art: HALL_LOT_ART[l.id], onOpen: () => setSheet(l.id) } satisfies AreaLot))}
     >
       <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close}>
