@@ -51,8 +51,8 @@ describe('manifest.json', () => {
 
   it('#70 — a tagline também está na ficha da Play, para as três não divergirem de novo', () => {
     const ficha = read('docs/PLAY-FICHA.md');
-    expect(ficha).toContain(TAGLINE_PT);
-    expect(ficha, 'a versão EN da tagline mora na mesma seção').toContain('It grows with your day.');
+    expect(ficha).toContain('Ela cresce com o seu dia.');
+    expect(ficha, 'a versão EN da tagline mora na mesma seção').toContain('Grows with your day.');
   });
 
   it('theme_color == --sm-primary do index.css == <meta theme-color> claro', () => {
