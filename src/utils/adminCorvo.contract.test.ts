@@ -40,7 +40,7 @@ describe('arte do pet resolve pela linha do save em todo ponto que desenha', () 
     expect(app).not.toMatch(/demoCharacterId=\{gameState\.demoCharacterId\}/);
     expect(app).toMatch(/const petLine = spriteLineOf\(gameState\)/);
     expect(app).toMatch(/petIsCorvo \? emptySpriteLibrary\(\)/);
-    expect(app).toMatch(/petLine,\n\s*pvpEnabled/);
+    expect(app).toMatch(/petLine,\r?\n\s*pvpEnabled/);
   });
 
   it('desktop: os DOIS snapshots (fetch e save em mãos) usam spriteLineOf', () => {

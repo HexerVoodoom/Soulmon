@@ -106,12 +106,12 @@ describe('o MARCO DO BOSQUE entra nas duas filas, com posição declarada (Guild
   it("'groveMilestone' é intersticial: DEPOIS de relatório e check-in, ANTES do sonho e do pesadelo", () => {
     const ordem = ["'triage'", "'dailyReport'", "'checkIn'", "'groveMilestone'", "'dream'", "'nightmare'", "'catalogOnboarding'", "'catalogLevelInvite'", "'welcome'"];
     // na UNIÃO de tipos (uma vez, na ordem declarada)
-    const uniao = interstitial.slice(0, interstitial.indexOf('=\n'));
+    const uniao = interstitial.slice(0, interstitial.search(/=\r?\n/));
     const posUniao = ordem.map(o => uniao.indexOf(o));
     expect(posUniao.every(p => p >= 0)).toBe(true);
     expect([...posUniao].sort((a, b) => a - b)).toEqual(posUniao);
     // e na cadeia de decisão (a ordem que de fato manda)
-    const cadeia = interstitial.slice(interstitial.indexOf('=\n'));
+    const cadeia = interstitial.slice(interstitial.search(/=\r?\n/));
     const posCadeia = ordem.map(o => cadeia.indexOf(o));
     expect(posCadeia.every(p => p >= 0)).toBe(true);
     expect([...posCadeia].sort((a, b) => a - b)).toEqual(posCadeia);
