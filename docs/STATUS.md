@@ -9,6 +9,17 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 30/09/2026 — Hub de benchmarking e referências + SQUAD-BENCHMARK
+>
+> Verificado antes: benchmarks existiam (combate, minijogos, guilda, `PLANO-EVOLUCAO.md`, `guia-experiencia/`,
+> Mobbin, estudos dos guardas, `CATALOGO-EVIDENCIAS.md`), mas espalhados, com três convenções de confiança e
+> sem agente geral (só o `catalogo-benchmark`, restrito a hábitos). Criados: **`docs/BENCHMARK-E-REFERENCIAS.md`**
+> (mapa de todos os benchmarks, lista-mestra "onde já estudamos X", acessos, critérios ✔/◐/(≈)/✖, método B1–B9,
+> lacunas), os agentes **`benchmark-curador`** e **`benchmark-pesquisador`**, a skill **`squad-benchmark`** e o
+> comando `/squad-benchmark`; roteamento no `soulmon-coordenador` e entradas no MAPA. **Lacuna mais urgente:**
+> `BENCHMARK-COMBATE.md` é inteiro de memória (≈) — rodar `/squad-benchmark conferir BENCHMARK-COMBATE.md` antes
+> de usá-lo em decisão.
+>
 > ## 30/09/2026 — Decisões do dono sobre o balanço, executadas
 >
 > Masmorra × 0,4 (`DUNGEON_BITS_FACTOR`: run completa ~130–170, bônus 4/6/8/10/12, começar mais fundo
