@@ -86,14 +86,14 @@ describe('troca — troca de regra', () => {
 });
 
 describe('troca — Bits', () => {
-  it('1 a cada 5 acertos, teto 10', () => {
+  it('1 a cada 5 acertos, teto = o que 30 cartas alcançam (6)', () => {
     expect(trocaBits(0)).toBe(0);
     expect(trocaBits(4)).toBe(0);
     expect(trocaBits(5)).toBe(1);
     expect(trocaBits(29)).toBe(5);
     expect(trocaBits(30)).toBe(6);
     expect(trocaBits(1000)).toBe(TROCA_MAX_BITS);
-    expect(TROCA_MAX_BITS).toBe(10);
+    expect(TROCA_MAX_BITS).toBe(6);
     expect(trocaBits(-3)).toBe(0);
   });
 });

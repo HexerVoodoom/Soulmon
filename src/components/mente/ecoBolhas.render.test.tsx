@@ -116,7 +116,7 @@ describe('BolhasGame', () => {
     expect(container.querySelector('[data-bolhas-exit]')).toBeTruthy();
   });
 
-  it('foco: estourar 12 sonhos e deixar o tempo acabar paga onEarnPoints(1) uma vez', () => {
+  it('foco: estourar 12 sonhos e deixar o tempo acabar paga onEarnPoints(2) uma vez (1 Bit a cada 6)', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.5); // sempre sonho
     const onEarn = vi.fn();
     const { container } = renderWithCss(<BolhasGame {...base} language="en-US" mode="foco" onEarnPoints={onEarn} />);
@@ -132,7 +132,7 @@ describe('BolhasGame', () => {
     avança(BOLHAS_FOCO_DURATION_MS);
     expect(container.querySelector('[data-bolhas-done]')!.textContent).toBe(`You popped ${popped} dreams`);
     expect(onEarn).toHaveBeenCalledTimes(1);
-    expect(onEarn).toHaveBeenCalledWith(1);
+    expect(onEarn).toHaveBeenCalledWith(2);
     avança(5000);
     expect(onEarn).toHaveBeenCalledTimes(1);
   });

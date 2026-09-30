@@ -19,9 +19,9 @@ export const BOLHAS_FOCO_DURATION_MS = 60_000;
 /** Fração de fiapos no foco (o benchmark pede 20–25%). */
 export const BOLHAS_WISP_RATIO = 0.22;
 /** Teto de Bits por rodada. */
-export const BOLHAS_MAX_BITS = 10;
+export const BOLHAS_MAX_BITS = 8;
 /** 1 Bit a cada N sonhos. */
-export const BOLHAS_POINTS_PER_BIT = 10;
+export const BOLHAS_POINTS_PER_BIT = 6;
 
 /** Ritmo de nascimento (ms entre bolhas) do foco: início, piso e teto. */
 export const BOLHAS_START_INTERVAL_MS = 950;
@@ -103,7 +103,7 @@ export function timeLeftMs(startedAt: number, now: number): number {
   return Math.max(0, BOLHAS_FOCO_DURATION_MS - (now - startedAt));
 }
 
-/** Bits da rodada: floor(sonhos/10), teto `BOLHAS_MAX_BITS`. */
+/** Bits da rodada: floor(sonhos/`BOLHAS_POINTS_PER_BIT`), teto `BOLHAS_MAX_BITS`. Era /10 com teto 10 até o balanço de 30/09/2026: a mediana do jogador típico (85% de acerto) é ~39 sonhos em 60 s, então ele ganhava 3 — metade do Dino. Com /6 e teto 8, o típico ganha ~6 (a faixa dos outros jogos leves) e o experiente (~84 sonhos) para no teto. Régua: `balanco.test.ts`. */
 export function bolhasBits(score: number): number {
   if (!Number.isFinite(score) || score <= 0) return 0;
   return Math.min(BOLHAS_MAX_BITS, Math.floor(score / BOLHAS_POINTS_PER_BIT));

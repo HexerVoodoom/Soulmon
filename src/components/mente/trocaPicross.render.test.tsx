@@ -4,7 +4,7 @@
  * pela interface e paga UMA vez pelo funil `onEarnPoints`. E as regras de copy
  * do contrato (`mente/types.ts`): mudo, sem "errou", sem promessa cognitiva.
  */
-import { describe, it, expect, vi } from 'vitest';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -12,7 +12,7 @@ import { renderWithCss } from '../../test/renderEnv';
 import { TrocaGame } from './TrocaGame';
 import { PicrossGame } from './PicrossGame';
 import { TROCA_DECK_SIZE, sideFor, trocaBits, type TrocaRule } from '../../utils/mente/troca';
-import { dailyPattern, PICROSS_DAILY_BITS, PICROSS_EXTRA_BITS } from '../../utils/mente/picross';
+import { dailyPattern, picrossBits } from '../../utils/mente/picross';
 import { PICROSS_PATTERNS } from '../../utils/mente/picrossPatterns';
 
 const base = { evolutionStage: 'rookie', onExit: () => {} };
@@ -75,13 +75,15 @@ function solve(rows: readonly string[]) {
 describe('PicrossGame', () => {
   const todayKey = '2026-09-30';
 
-  it('resolver o desenho do dia revela o nome e paga 10 uma vez', () => {
+  beforeEach(() => localStorage.clear());
+
+  it('resolver o desenho do dia revela o nome e paga tamanho + bônus uma vez', () => {
     const onEarn = vi.fn();
     renderWithCss(<PicrossGame {...base} language="en-US" onEarnPoints={onEarn} todayKey={todayKey} />);
     const p = dailyPattern(todayKey);
     solve(p.rows);
     expect(onEarn).toHaveBeenCalledTimes(1);
-    expect(onEarn).toHaveBeenCalledWith(PICROSS_DAILY_BITS);
+    expect(onEarn).toHaveBeenCalledWith(picrossBits(p.rows.length, true));
     expect(screen.getByRole('status').textContent).toBe(`You revealed: ${p.nameEn}`);
   });
 
@@ -96,7 +98,20 @@ describe('PicrossGame', () => {
     expect(cell().getAttribute('aria-label')).toMatch(/vazia/);
   });
 
-  it('um desenho de "Outros" paga 3', () => {
+  it('o bônus do dia NÃO é pago de novo ao sair e reabrir o jogo no mesmo dia', () => {
+    const p = dailyPattern(todayKey);
+    const first = vi.fn();
+    const { unmount } = renderWithCss(<PicrossGame {...base} language="en-US" onEarnPoints={first} todayKey={todayKey} />);
+    solve(p.rows);
+    expect(first).toHaveBeenCalledWith(picrossBits(p.rows.length, true));
+    unmount();
+    const again = vi.fn();
+    renderWithCss(<PicrossGame {...base} language="en-US" onEarnPoints={again} todayKey={todayKey} />);
+    solve(p.rows);
+    expect(again).toHaveBeenCalledWith(picrossBits(p.rows.length, false));
+  });
+
+  it('um desenho 5×5 de "Outros" paga o valor do tamanho', () => {
     const onEarn = vi.fn();
     renderWithCss(<PicrossGame {...base} language="en-US" onEarnPoints={onEarn} todayKey={todayKey} />);
     const other = PICROSS_PATTERNS.find(p => p.id !== dailyPattern(todayKey).id && p.rows.length === 5)!;
@@ -104,7 +119,7 @@ describe('PicrossGame', () => {
     fireEvent.click(document.querySelector(`[data-picross-pick="${other.id}"]`)!);
     solve(other.rows);
     expect(onEarn).toHaveBeenCalledTimes(1);
-    expect(onEarn).toHaveBeenCalledWith(PICROSS_EXTRA_BITS);
+    expect(onEarn).toHaveBeenCalledWith(picrossBits(5, false));
   });
 
   it('casas: 44 em 5×5/7×7, ≥30 em 10×10', () => {
@@ -132,7 +147,8 @@ describe('copy e som', () => {
 
   it.each(files)('%s nasce mudo e sem vocabulário vetado', (_f, src) => {
     expect(src).not.toMatch(/utils\/sounds/);
-    expect(src).not.toMatch(/\b(tamer|domador|treinador|digievolu|mundo digital|Weave|V[íi]rus|Vacina|Glitchtama)/i);
+    // O vocabulário vetado do universo é travado para TODO o fonte por
+    // `src/narrativa.contract.test.ts` (e o dos caminhos por `branchRename`).
     expect(src).not.toMatch(/treina o c[ée]rebro|brain|melhora a mem[óo]ria/i);
     expect(src).not.toMatch(/faltam\s/i);
   });

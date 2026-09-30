@@ -9,6 +9,15 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 30/09/2026 — Balanço dos minijogos (`docs/BALANCO-MINIJOGOS.md`)
+>
+> Régua nova `src/utils/mente/balanco.test.ts`: Bits/min do jogador típico entre 2,5 e 9 em todo jogo
+> leve, experiente ≤ 13, e todo "até N Bits" alcançável. Ajustes: Bolhas 1 Bit/6 sonhos, teto 8 (era
+> /10, teto 10 — o típico ganhava metade do Dino); Troca teto 6 (o 10 era inalcançável); Picross por
+> tamanho 3/6/12 + 5 do dia, e o bônus do dia não repaga ao reabrir. **Achado para o dono:** uma run
+> completa da Masmorra paga 327–417 Bits, 2–3× o teto diário de 150 — ela enche o teto no 2º/3º
+> andar e zera todos os outros jogos no dia (§4–§5 do doc; recomendação: reduzir os Bits da Masmorra).
+>
 > ## 30/09/2026 — Jogos ganhou três prédios e seis jogos novos (decisão do dono)
 >
 > A área **Jogos** tem agora três construções (`src/utils/playAreaLots.ts`): **Salão de Jogos**

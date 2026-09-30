@@ -10,7 +10,7 @@ import type { Language } from '../../utils/i18n';
 import { ECO_MAX_BITS } from '../../utils/mente/eco';
 import { BOLHAS_MAX_BITS } from '../../utils/mente/bolhas';
 import { TROCA_MAX_BITS } from '../../utils/mente/troca';
-import { PICROSS_DAILY_BITS } from '../../utils/mente/picross';
+import { PICROSS_MAX_BITS } from '../../utils/mente/picross';
 import { REVIEW_SESSION_BITS } from '../../utils/mente/revisao';
 
 /**
@@ -283,7 +283,7 @@ export function MenteSheet({ language, reviewDue, onStart }: {
       title: isPt ? 'Picross da Malha' : 'Mesh Picross',
       asks: isPt ? 'Pede: deduzir' : 'Asks: deduce',
       detail: isPt ? 'Pinte a grade pelas pistas e revele um desenho. Um novo a cada dia.' : 'Fill the grid from the clues and reveal a picture. A new one every day.',
-      meta: <span style={bitsStyle}>{upTo(PICROSS_DAILY_BITS)}</span>,
+      meta: <span style={bitsStyle}>{upTo(PICROSS_MAX_BITS)}</span>,
     },
     {
       id: 'revisao',

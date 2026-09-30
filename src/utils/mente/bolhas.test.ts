@@ -65,11 +65,11 @@ describe('Bolhas — tempo e Bits', () => {
     expect(timeLeftMs(0, 0)).toBe(BOLHAS_FOCO_DURATION_MS);
     expect(timeLeftMs(0, 70_000)).toBe(0);
   });
-  it('bolhasBits = floor(score/10), teto 10', () => {
+  it('bolhasBits = floor(score/6), teto 8 (balanço de 30/09/2026)', () => {
     expect(bolhasBits(0)).toBe(0);
-    expect(bolhasBits(9)).toBe(0);
-    expect(bolhasBits(10)).toBe(1);
-    expect(bolhasBits(57)).toBe(5);
+    expect(bolhasBits(5)).toBe(0);
+    expect(bolhasBits(6)).toBe(1);
+    expect(bolhasBits(39)).toBe(6);
     expect(bolhasBits(500)).toBe(BOLHAS_MAX_BITS);
     expect(bolhasBits(-3)).toBe(0);
   });

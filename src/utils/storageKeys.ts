@@ -64,6 +64,8 @@ export const STORAGE_KEYS = {
   DUNGEON_BEST: 'soulmon-dungeon-best',
   DUNGEON_HEART_DROPS: 'soulmon-dungeon-heart-drops',
   DINO_BEST: 'soulmon-dino-best',
+  /** Dia (ISO do jogador) em que o bônus do Picross do dia já foi pago neste aparelho. */
+  PICROSS_DAILY_PAID: 'soulmon-picross-daily-paid',
   SOUND_MUTED: 'soulmon-sound-muted',
   /** Volume por categoria (`utils/loudness.ts`), 0..1, JSON. Chave NOVA — a
    *  proibição #20 vale: `SOUND_MUTED` não é renomeada, só se ACRESCENTA. */

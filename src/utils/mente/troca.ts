@@ -37,9 +37,11 @@ export const TROCA_DECK_SIZE = 30;
 export const TROCA_SWITCH_MIN = 5;
 export const TROCA_SWITCH_MAX = 8;
 /** Teto de Bits de uma sessão. */
-export const TROCA_MAX_BITS = 10;
 /** Acertos por Bit. */
 export const TROCA_CORRECT_PER_BIT = 5;
+/** O teto É o que uma rodada alcança (30 cartas ÷ 5) — balanço de 30/09/2026:
+ *  era 10, inalcançável, e a folha anunciava "até 10 Bits" que ninguém via. */
+export const TROCA_MAX_BITS = Math.floor(TROCA_DECK_SIZE / TROCA_CORRECT_PER_BIT);
 /** Fração de cartas "em conflito" (as duas dimensões apontam lados opostos). */
 export const TROCA_CONFLICT_RATIO = 0.7;
 

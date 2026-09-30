@@ -409,7 +409,7 @@ Cobertura: **164/164** módulos de `src/utils` (+7 em 30/09/2026: `mente/*` e `r
 
 ### `src/utils/mente/bolhas.ts`
 **Dono de:** Bolhas do Sonho (Ateliê da Mente / Refúgio, 30/09/2026): o go/no-go do modo `foco` (60 s, ~22% de fiapos escuros que se deixa passar) e o modo `calma` (sem fiapo, sem tempo, sem Bits); a escada de ritmo perto de 75–90% de acerto e o pagamento.
-**Exports:** tipos `BolhasMode`, `BubbleKind`, `Bubble`, `Staircase`; `BOLHAS_FOCO_DURATION_MS`, `BOLHAS_WISP_RATIO`, `BOLHAS_MAX_BITS` (10), `BOLHAS_POINTS_PER_BIT` (10), `BOLHAS_START_INTERVAL_MS`/`_MIN_`/`_MAX_`, `BOLHAS_CALMA_INTERVAL_MS`, `BOLHAS_CALMA_RISE_MS`, `STAIRCASE_WINDOW`/`_MIN_SAMPLES`/`_FAST_ABOVE`/`_SLOW_BELOW`; `initialStaircase`, `recordOutcome`, `riseMsFor`, `spawnBubble` (calma nunca gera fiapo), `bubbleProgress`, `hasEscaped`, `timeLeftMs`, `bolhasBits(score)`.
+**Exports:** tipos `BolhasMode`, `BubbleKind`, `Bubble`, `Staircase`; `BOLHAS_FOCO_DURATION_MS`, `BOLHAS_WISP_RATIO`, `BOLHAS_MAX_BITS` (8), `BOLHAS_POINTS_PER_BIT` (6), `BOLHAS_START_INTERVAL_MS`/`_MIN_`/`_MAX_`, `BOLHAS_CALMA_INTERVAL_MS`, `BOLHAS_CALMA_RISE_MS`, `STAIRCASE_WINDOW`/`_MIN_SAMPLES`/`_FAST_ABOVE`/`_SLOW_BELOW`; `initialStaircase`, `recordOutcome`, `riseMsFor`, `spawnBubble` (calma nunca gera fiapo), `bubbleProgress`, `hasEscaped`, `timeLeftMs`, `bolhasBits(score)`.
 **Chamado por:** `src/components/mente/BolhasGame.tsx`, `src/components/play/PlaySheets.tsx`.
 **Régua:** `src/utils/mente/bolhas.test.ts`, `src/components/mente/ecoBolhas.render.test.tsx`.
 
@@ -421,7 +421,7 @@ Cobertura: **164/164** módulos de `src/utils` (+7 em 30/09/2026: `mente/*` e `r
 
 ### `src/utils/mente/picross.ts`
 **Dono de:** Picross da Malha (Ateliê da Mente, 30/09/2026): pistas de linha/coluna, a checagem por PISTAS (qualquer grade que bate conta), o resolvedor por lógica de linha que prova a solução única de cada desenho e o desenho do dia (hash de `todayKey`).
-**Exports:** `PICROSS_DAILY_BITS` (10), `PICROSS_EXTRA_BITS` (3); `CellMark`, `EMPTY`/`FILLED`/`CROSSED`, `Clues`; `parsePattern`, `lineClue`, `cluesOf`, `matchesClues`, `solveByLines`, `isLineSolvable`, `hashKey`, `dailyPattern(todayKey)`, `picrossBits(isDaily)`, `emptyBoard`.
+**Exports:** `PICROSS_BITS_BY_SIZE` (5→3, 7→6, 10→12), `PICROSS_DAILY_BONUS` (5), `PICROSS_MAX_BITS`; `CellMark`, `EMPTY`/`FILLED`/`CROSSED`, `Clues`; `parsePattern`, `lineClue`, `cluesOf`, `matchesClues`, `solveByLines`, `isLineSolvable`, `hashKey`, `dailyPattern(todayKey)`, `picrossBits(size, isDailyUnpaid)`, `emptyBoard`.
 **Chamado por:** `src/components/mente/PicrossGame.tsx`, `src/components/play/PlaySheets.tsx`.
 **Régua:** `src/utils/mente/picross.test.ts` (um caso por desenho: solução única por lógica de linha), `src/components/mente/trocaPicross.render.test.tsx`.
 
@@ -439,7 +439,7 @@ Cobertura: **164/164** módulos de `src/utils` (+7 em 30/09/2026: `mente/*` e `r
 
 ### `src/utils/mente/troca.ts`
 **Dono de:** Troca de Regra (Ateliê da Mente, 30/09/2026): o baralho de criaturas com duas dimensões binárias (forma jovem/crescida × lugar céu/gruta), a regra da vez que troca a cada 5–8 acertos, a correção e o pagamento.
-**Exports:** tipos `Forma`, `Lugar`, `TrocaRule`, `TrocaSide`, `ArtTier`, `TrocaCard`, `TrocaState`, `SortResult`, `Rng`; `TROCA_SESSION_MS`, `TROCA_DECK_SIZE` (30), `TROCA_SWITCH_MIN`/`_MAX` (5/8), `TROCA_MAX_BITS` (10), `TROCA_CORRECT_PER_BIT` (5), `TROCA_CONFLICT_RATIO`; `trocaBits`, `sideFor`, `isCorrect`, `isConflict`, `buildDeck`, `nextSwitchAfter`, `initialTrocaState`, `applySort`, `trocaOver`, `seededRng`.
+**Exports:** tipos `Forma`, `Lugar`, `TrocaRule`, `TrocaSide`, `ArtTier`, `TrocaCard`, `TrocaState`, `SortResult`, `Rng`; `TROCA_SESSION_MS`, `TROCA_DECK_SIZE` (30), `TROCA_SWITCH_MIN`/`_MAX` (5/8), `TROCA_MAX_BITS` (6, derivado de `TROCA_DECK_SIZE`/`TROCA_CORRECT_PER_BIT`), `TROCA_CORRECT_PER_BIT` (5), `TROCA_CONFLICT_RATIO`; `trocaBits`, `sideFor`, `isCorrect`, `isConflict`, `buildDeck`, `nextSwitchAfter`, `initialTrocaState`, `applySort`, `trocaOver`, `seededRng`.
 **Chamado por:** `src/components/mente/TrocaGame.tsx`, `src/components/play/PlaySheets.tsx`.
 **Régua:** `src/utils/mente/troca.test.ts`, `src/components/mente/trocaPicross.render.test.tsx`.
 

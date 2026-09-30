@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { PICROSS_PATTERNS } from './picrossPatterns';
 import {
-  CROSSED, EMPTY, FILLED, PICROSS_DAILY_BITS, PICROSS_EXTRA_BITS, cluesOf, dailyPattern,
+  CROSSED, EMPTY, FILLED, PICROSS_BITS_BY_SIZE, PICROSS_DAILY_BONUS, PICROSS_MAX_BITS, cluesOf, dailyPattern,
   isLineSolvable, lineClue, matchesClues, parsePattern, picrossBits, solveByLines, type CellMark,
 } from './picross';
 
@@ -72,10 +72,16 @@ describe('picross — o puzzle do dia', () => {
     expect(ids.size).toBeGreaterThan(5);
   });
 
-  it('paga 10 no do dia e 3 nos outros', () => {
-    expect(PICROSS_DAILY_BITS).toBe(10);
-    expect(PICROSS_EXTRA_BITS).toBe(3);
-    expect(picrossBits(true)).toBe(10);
-    expect(picrossBits(false)).toBe(3);
+  it('paga pelo TAMANHO da grade, e o do dia soma o bônus (balanço de 30/09/2026)', () => {
+    expect(picrossBits(5, false)).toBe(PICROSS_BITS_BY_SIZE[5]);
+    expect(picrossBits(7, false)).toBe(PICROSS_BITS_BY_SIZE[7]);
+    expect(picrossBits(10, false)).toBe(PICROSS_BITS_BY_SIZE[10]);
+    expect(picrossBits(10, true)).toBe(PICROSS_BITS_BY_SIZE[10] + PICROSS_DAILY_BONUS);
+    // Grade maior nunca paga menos (senão o certo seria fugir dela).
+    expect(PICROSS_BITS_BY_SIZE[5]).toBeLessThan(PICROSS_BITS_BY_SIZE[7]);
+    expect(PICROSS_BITS_BY_SIZE[7]).toBeLessThan(PICROSS_BITS_BY_SIZE[10]);
+    // O que a folha anuncia é alcançável: todo tamanho de desenho tem valor, e o máximo existe.
+    for (const p of PICROSS_PATTERNS) expect(PICROSS_BITS_BY_SIZE[p.rows.length], p.id).toBeGreaterThan(0);
+    expect(PICROSS_MAX_BITS).toBe(PICROSS_BITS_BY_SIZE[10] + PICROSS_DAILY_BONUS);
   });
 });

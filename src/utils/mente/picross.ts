@@ -13,12 +13,19 @@
  */
 import { PICROSS_PATTERNS, type PicrossPattern } from './picrossPatterns';
 
-/** Bits por resolver o puzzle do dia. */
-export const PICROSS_DAILY_BITS = 10;
-/** Bits por resolver qualquer outro desenho (rejogar). */
-export const PICROSS_EXTRA_BITS = 3;
+/**
+ * BITS POR SOLUÇÃO — por TAMANHO da grade (balanço de 30/09/2026,
+ * `docs/BALANCO-MINIJOGOS.md`). Com um valor fixo, um 10×10 (4–5 min típicos)
+ * pagava o mesmo que um 5×5 (~1 min): o jogador certo era o que evitava a
+ * grade grande. O alvo é o mesmo dos outros jogos leves (~3–6 Bits por minuto
+ * de jogo típico); o do dia soma um bônus fixo, pago UMA vez por dia do
+ * jogador no aparelho (`STORAGE_KEYS.PICROSS_DAILY_PAID`).
+ */
+export const PICROSS_BITS_BY_SIZE: Readonly<Record<number, number>> = Object.freeze({ 5: 3, 7: 6, 10: 12 });
+export const PICROSS_DAILY_BONUS = 5;
+/** O máximo de UMA solução (o maior tamanho + bônus do dia) — é o que a folha anuncia. */
+export const PICROSS_MAX_BITS = Math.max(...Object.values(PICROSS_BITS_BY_SIZE)) + PICROSS_DAILY_BONUS;
 
-/** Estado de uma casa na grade do jogador: vazia, pintada ou marcada com X. */
 export type CellMark = 0 | 1 | 2;
 export const EMPTY: CellMark = 0;
 export const FILLED: CellMark = 1;
@@ -168,9 +175,10 @@ export function dailyPattern(todayKey: string, pool: readonly PicrossPattern[] =
   return pool[hashKey(`picross:${todayKey}`) % pool.length];
 }
 
-/** Bits de uma solução: o do dia paga mais, rejogar paga um pouco. */
-export function picrossBits(isDaily: boolean): number {
-  return isDaily ? PICROSS_DAILY_BITS : PICROSS_EXTRA_BITS;
+/** Bits de uma solução: pelo tamanho (lado da grade), mais o bônus se for o do dia ainda não pago. */
+export function picrossBits(size: number, isDailyUnpaid: boolean): number {
+  const base = PICROSS_BITS_BY_SIZE[size] ?? PICROSS_BITS_BY_SIZE[5];
+  return base + (isDailyUnpaid ? PICROSS_DAILY_BONUS : 0);
 }
 
 /** Grade vazia do tamanho do desenho. */

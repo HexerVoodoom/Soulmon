@@ -4,6 +4,8 @@ import type { EarningGameProps } from './types';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { GameRoot, GameHeader, GameVisor, phaseTitle, phaseLine } from '../games/GameKit';
 import { Icon } from '../ui/Icon';
+import { readLocal, writeLocal } from '../../utils/safeStorage';
+import { STORAGE_KEYS } from '../../utils/storageKeys';
 import { PICROSS_PATTERNS, type PicrossPattern } from '../../utils/mente/picrossPatterns';
 import {
   CROSSED, EMPTY, FILLED, cluesOf, dailyPattern, emptyBoard, lineClue, matchesClues,
@@ -83,9 +85,12 @@ export function PicrossGame({ language, onEarnPoints, onExit, todayKey }: Earnin
     setBoard(next);
     if (matchesClues(next, clues)) {
       solvedRef.current = true;
-      const payDaily = isDaily && !dailyPaid.current;
-      if (payDaily) dailyPaid.current = true;
-      const bits = picrossBits(payDaily);
+      // O bônus do dia vale UMA vez por dia do jogador: o ref cobre a tela
+      // aberta e a chave local cobre sair e voltar (sem ela, reabrir o jogo
+      // repagava o bônus). O teto diário de Bits segue sendo do funil do App.
+      const payDaily = isDaily && !dailyPaid.current && readLocal(STORAGE_KEYS.PICROSS_DAILY_PAID) !== todayKey;
+      if (payDaily) { dailyPaid.current = true; writeLocal(STORAGE_KEYS.PICROSS_DAILY_PAID, todayKey); }
+      const bits = picrossBits(n, payDaily);
       setSolved(true);
       setEarned(bits);
       setDone(s => new Set(s).add(pattern.id));

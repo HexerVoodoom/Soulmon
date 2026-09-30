@@ -152,7 +152,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** `src/components/mente/ecoBolhas.render.test.tsx`; a fiação em `src/components/play/playArea.render.test.tsx`.
 
 ### `src/components/mente/PicrossGame.tsx`
-**Dono de:** Picross da Malha — desenho do dia + "Outros"; pintar/marcar X por botão ou toque longo, desfazer ilimitado, revela o desenho no visor. O do dia paga `PICROSS_DAILY_BITS` só na 1ª solução da tela; os outros, `PICROSS_EXTRA_BITS`.
+**Dono de:** Picross da Malha — desenho do dia + "Outros"; pintar/marcar X por botão ou toque longo, desfazer ilimitado, revela o desenho no visor. Paga por tamanho (`picrossBits`); o bônus do dia é pago uma vez por dia do jogador no aparelho (`STORAGE_KEYS.PICROSS_DAILY_PAID`).
 **Exports:** `PicrossGame(props: EarningGameProps & { todayKey })`.
 **Depende de:** `src/utils/mente/picross.ts`, `picrossPatterns.ts`.
 **Chamado por:** `src/components/nav/AreaView.tsx` (lazy).
