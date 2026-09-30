@@ -1,4 +1,5 @@
 import { NavGlyph } from '../ui/NavGlyphs';
+import { PixelIcon } from '../ui/PixelIcon';
 
 /** Tinta clara para o que fica sobre a arte escura da área (igual aos rótulos dos lotes). */
 const SCENE_INK = '#E9F5F2';
@@ -25,10 +26,10 @@ export function AreaTopBar({ title, backLabel, onBack, ownsHeading = true, icon 
   backLabel: string;
   onBack: () => void;
   ownsHeading?: boolean;
-  /** Glifo do voltar. `'map'` nas ÁREAS (o ícone diz o DESTINO: o Mapa — pedido
+  /** Ícone do voltar. `'map'` nas ÁREAS (o ícone diz o DESTINO: o Mapa — pedido
    *  do dono, 29/09/2026); `'arrow_back'` (padrão) em Pet/Biblioteca/menu da
-   *  Home, que voltam para a Home. É o MESMO glifo `map` da `NavGlyphs` que o
-   *  link de canto da Home usa — nenhum ícone novo. */
+   *  Home, que voltam para a Home. É o MESMO ícone ILUSTRADO (`PixelIcon`
+   *  `mapa`) que o link de canto da Home usa — nenhum ícone novo. */
   icon?: 'arrow_back' | 'map';
   /** O topo fica SOBRE o fundo pintado full-screen da área: texto e anel em
    *  tinta clara fixa (a arte é escura nos dois temas — mesmo `#E9F5F2` dos
@@ -95,7 +96,12 @@ export function AreaTopBar({ title, backLabel, onBack, ownsHeading = true, icon 
           color: overScene ? SCENE_INK : 'var(--sm2-ink)',
         }}
       >
-        <NavGlyph name={icon} size={24} tone={overScene ? 'inherit' : 'ink'} />
+        {icon === 'map'
+          // O MESMO ícone ilustrado do link de canto da Home (`CornerLink` →
+          // `PixelIcon name="mapa"`, 32px): pedido do dono, 30/09/2026. Cabe nos
+          // 40px internos do anel de 44 (borda 2px) e a arte é clara sobre a cena.
+          ? <PixelIcon name="mapa" size={32} />
+          : <NavGlyph name={icon} size={24} tone={overScene ? 'inherit' : 'ink'} />}
       </button>
       {ownsHeading
         ? <h1 style={titleStyle}>{title}</h1>

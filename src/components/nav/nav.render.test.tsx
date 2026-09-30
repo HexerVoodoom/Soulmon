@@ -159,9 +159,12 @@ describe('AreaTopBar', () => {
     const seta = glyph({});
     const mapa = glyph({ icon: 'map' });
     expect(seta).not.toBe(mapa);
-    // o glifo `map` da NavGlyphs (dobras do mapa), e a seta não o contém
-    expect(mapa).toContain('M9 4.2v13.2M15 6.6v13.2');
-    expect(seta).not.toContain('M9 4.2v13.2M15 6.6v13.2');
+    // o ícone ILUSTRADO `mapa` (o mesmo do CornerLink da Home, 32px), e a seta não o contém
+    expect(mapa).toContain('data-pixel-icon="mapa"');
+    expect(mapa).toContain('width="32"');
+    expect(mapa).not.toContain('<svg');
+    expect(seta).not.toContain('data-pixel-icon');
+    expect(seta).toContain('<svg');
     // fiação: só a área troca o glifo e fica sobre a cena
     const app = readFileSync(resolve(__dirname, '../../App.tsx'), 'utf8');
     expect(app).toContain("icon={area ? 'map' : 'arrow_back'}");
