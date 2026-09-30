@@ -64,12 +64,13 @@ const ARENA_LOTS: AreaLotSpec<ArenaLotId>[] = [
 // 🌙 30/09/2026 — os fundos pintados (`HALL_BG`/`LABORATORIO_BG`) chegaram, e as
 // posições seguem as clareiras medidas pelo gerador (fundos-v2/MANIFEST.md):
 // no Laboratório os hexágonos de cima vão de 43% a 62% (centro ~52%), então os
-// 2 lotes de cima descem de 42% para 50%; no Hall o quadrado de baixo começa em
+// 2 lotes de cima descem de 42% para 54% (50% deixava o prédio na metade
+// de cima do hexágono; 54% centraliza — conferido no preview em 30/09); no Hall o quadrado de baixo começa em
 // ~73% (centro ~79%), então o Salão da Guilda desce de 72% para 78%. O `top` é o
 // pé do lote (`translate(-50%, -80%)` no `AreaScene`).
 const LABORATORIO_LOTS: AreaLotSpec<LaboratorioLotId>[] = [
-  { id: 'evolucao', labelPt: 'Árvore da Evolução', labelEn: 'Evolution Tree', ariaPt: 'Entrar na Árvore da Evolução', ariaEn: 'Enter the Evolution Tree', left: '27%', top: '50%' },
-  { id: 'pet', labelPt: 'Meu Soulmon', labelEn: 'My Soulmon', ariaPt: 'Entrar em Meu Soulmon', ariaEn: 'Enter My Soulmon', left: '72%', top: '50%' },
+  { id: 'evolucao', labelPt: 'Árvore da Evolução', labelEn: 'Evolution Tree', ariaPt: 'Entrar na Árvore da Evolução', ariaEn: 'Enter the Evolution Tree', left: '27%', top: '54%' },
+  { id: 'pet', labelPt: 'Meu Soulmon', labelEn: 'My Soulmon', ariaPt: 'Entrar em Meu Soulmon', ariaEn: 'Enter My Soulmon', left: '72%', top: '54%' },
   { id: 'stats', labelPt: 'Observatório', labelEn: 'Observatory', ariaPt: 'Entrar no Observatório (estatísticas)', ariaEn: 'Enter the Observatory (stats)', left: '50%', top: '72%' },
 ];
 
