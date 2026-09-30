@@ -9,6 +9,16 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 30/09/2026 — Benchmark de minijogos com foco cognitivo (pesquisa, nada implementado)
+>
+> `docs/BENCHMARK-MINIJOGOS.md`: clássicos (Atari/arcade/casual), v-pets, Pokémon, Monster
+> Rancher, puzzles e brain training, com a evidência conferida (Simons 2016, Melby-Lervåg 2016,
+> Sala & Gobet 2019: **transferência distante ≈ nula**; FTC × Lumosity 2016) e 13 opções filtradas
+> pelas linhas vermelhas. Recomendação: **Revisão da Malha** (recuperação espaçada do conteúdo do
+> próprio jogador — única com evidência A, Dunlosky 2013) ou o pacote Eco + Bolhas do Sonho +
+> Troca de Regra (as três funções executivas). **Depende do dono**: minijogo novo é Camada 3,
+> congelada (§5.6) — implementar exige exceção registrada. Nenhuma copy pode prometer efeito cognitivo.
+>
 > ## 30/09/2026 — Voltar com o ícone ilustrado de mapa; administrador refeito após o login
 >
 > O voltar das seis áreas usa agora o mesmo `PixelIcon name="mapa"` da Home (era o glifo
