@@ -17,6 +17,10 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > ⚠️ Instável sob carga (passa isolado): `classeOcorrencia.test.ts` "a classe é ESTÁVEL" e, numa rodada,
 > três casos da Masmorra em `playArea.render.test.tsx` — timeout da suíte cheia, não regressão. Vale subir o timeout desses casos.
 >
+> ## 30/09/2026 — manual sincronizado com `bcfe7ca6` (`/manter-docs`, delta `3532ccf5..bcfe7ca6`, Termos §8 + MIS-13..16)
+>
+> Tocados e carimbados `verificado em 30/09/2026` (verificação própria; subagentes `doc-*` não registrados): `02` §56 e `06/utils` (`TERMS_VERSION` = `2026-09-30`, `PRIVACY_VERSION` segue `2026-09-22`; banner mostra `changed = 'terms'`), `08` §5 (Termos §8: Travessias opcionais), `10` tema 6 e `01` §10 (MIS-13..MIS-16 respondidas). `00-MAPA` sem mudança de conteúdo. `.sincronizado.json` = `bcfe7ca6`. Divergências novas: nenhuma. `novos` do `docs-delta.mjs` segue artefato do detector no Windows.
+>
 > ## 30/09/2026 — manual sincronizado com `3532ccf5` (`/manter-docs`, delta `cfe27cc7..3532ccf5`, Passeio + Travessias)
 >
 > Carimbados `verificado em 30/09/2026` (doc-mantenedor, símbolo a símbolo contra o fonte; sem verificador independente — subagentes `doc-*` não registrados):
