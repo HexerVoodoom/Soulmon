@@ -30,7 +30,9 @@
  * silhueta ou "0 of 24".
  */
 import type { CSSProperties } from 'react';
-import { findById } from '../utils/adventure';
+// `findAnyById` resolve também os postais das regiões do Passeio (`trv-*`,
+// 30/09/2026) — o MESMO diário, sem silhueta, contagem nem raridade (R-12/R-13).
+import { findAnyById } from '../utils/travessias';
 import { ADVENTURE_ART } from '../utils/adventureArt';
 import { sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 import { MiniGlass } from './ui/MiniGlass';
@@ -55,10 +57,10 @@ export function AdventureDiary({ entries, language }: AdventureDiaryProps) {
   const isPt = language === 'pt-BR';
   // Do mais recente para o mais antigo, sem mutar a lista do save.
   const linhas = [...entries].reverse()
-    .map(e => ({ e, achado: findById(e.id) }))
+    .map(e => ({ e, achado: findAnyById(e.id) }))
     // Id órfão (achado removido numa versão futura) some da lista em vez de
     // derrubar a tela de quem já o tinha.
-    .filter((l): l is { e: { id: string; day: string }; achado: NonNullable<ReturnType<typeof findById>> } => !!l.achado);
+    .filter((l): l is { e: { id: string; day: string }; achado: NonNullable<ReturnType<typeof findAnyById>> } => !!l.achado);
 
   return (
     <section style={card} aria-labelledby="sm2-diario-title">

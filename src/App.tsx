@@ -41,7 +41,9 @@ import { getSpriteForStage } from './utils/sprites';
 import { ContentModals } from './components/ContentModals';
 import { NotificationManager } from './components/NotificationManager';
 import { DailyReportModal } from './components/DailyReportModal';
-import { adventureOfDay, collectAdventure } from './utils/adventure';
+import { adventureOfNight, collectAdventure } from './utils/adventure';
+import { crossingsTouchMap } from './utils/travessiasSave';
+import { CROSSINGS_EMPTY, HOME_REGION, type CrossingsState } from './types/travessias';
 import { WelcomePromptModal } from './components/WelcomePromptModal';
 import { IntroScreen } from './components/IntroScreen';
 import { ProtectProgressModal } from './components/ProtectProgressModal';
@@ -4068,41 +4070,100 @@ export default function App() {
    * `done` e `required` vêm do relatório, que é quem já sabe o que o dia foi.
    * Recalcular a meta aqui seria uma segunda cópia da regra (footgun 9).
    */
+  /*
+   * 🧭 O PASSEIO (30/09/2026, `utils/travessias.ts`) funde-se aqui: o achado
+   * da noite passa a depender do destino e das regiões que a noite abriu.
+   * O catálogo das regiões NÃO mora no chunk de entrada (orçamento de bytes):
+   * `utils/travessias` só é carregado quando o save já mexeu no mapa
+   * (`crossingsTouchMap`) — sem isso o achado é EXATAMENTE a Aventura comum,
+   * e `adventureOfNight` responde sem o catálogo.
+   */
+  const crossings = gameState.crossings ?? CROSSINGS_EMPTY;
+  const usaMapa = crossingsTouchMap(crossings);
+  const [trv, setTrv] = useState<typeof import('./utils/travessias') | null>(null);
+  useEffect(() => {
+    if (!usaMapa || trv) return;
+    let vivo = true;
+    import('./utils/travessias').then(m => { if (vivo) setTrv(m); }).catch(() => { /* offline: tenta de novo no próximo render que precisar */ });
+    return () => { vivo = false; };
+  }, [usaMapa, trv]);
+
   const aventuraDaNoite = useMemo(() => {
     const r = gameState.lastDayReport;
     if (!r) return null;
-    return adventureOfDay(
-      (gameState.adventures ?? []).map(e => e.id),
-      r.done,
-      r.required,
-      r.date,
-    );
-  }, [gameState.lastDayReport, gameState.adventures]);
+    const entries = gameState.adventures ?? [];
+    const c = gameState.crossings ?? CROSSINGS_EMPTY;
+    if (trv) {
+      // A noite se assenta ao ABRIR o relatório (efeito abaixo); a tela já
+      // mostra o estado assentado para não piscar o achado comum antes.
+      const settled = showDailyReport ? trv.settleNight(c, r.date).state : c;
+      return trv.passeioFindOfDay({ crossings: settled, entries, feito: r.done, meta: r.required, dayKey: r.date });
+    }
+    // Mapa tocado e catálogo ainda chegando: espera um instante em vez de
+    // mostrar um achado que vai trocar.
+    if (crossingsTouchMap(c)) return null;
+    return adventureOfNight(entries, r.done, r.required, r.date);
+  }, [gameState.lastDayReport, gameState.adventures, gameState.crossings, trv, showDailyReport]);
 
-  /** Inédito = ainda não está no diário. Só muda o rótulo na tela. */
+  /** Inédito = não estava no diário ANTES desta noite. Só muda o rótulo na tela. */
   const aventuraInedita = useMemo(
-    () => !!aventuraDaNoite && !(gameState.adventures ?? []).some(e => e.id === aventuraDaNoite.id),
-    [aventuraDaNoite, gameState.adventures],
+    () => !!aventuraDaNoite && !(gameState.adventures ?? []).some(e =>
+      e.id === aventuraDaNoite.id && e.day !== gameState.lastDayReport?.date),
+    [aventuraDaNoite, gameState.adventures, gameState.lastDayReport],
   );
 
   /**
-   * Guarda no diário assim que o relatório aparece.
+   * Guarda no diário assim que o relatório aparece — e, no MESMO passo, assenta
+   * a noite do Passeio (`settleNight`: abre no máximo uma região guardada).
    *
    * Ao ABRIR e não ao fechar, ao contrário da memória de marco logo abaixo: a
    * memória é um evento raro que seria desperdiçado se contasse sem ser vista, e
    * o achado é o oposto — ele é o conteúdo da tela, e perdê-lo por fechar rápido
    * seria tirar da pessoa a única coisa que ela ganhou naquele dia.
-   * `collectAdventure` é idempotente, então rodar de novo não duplica.
+   *
+   * Footgun 6: o updater é PURO e reconfere tudo sobre `prev` (`settleNight` e
+   * `collectAdventure` são idempotentes; StrictMode rodando 2× não abre duas
+   * regiões nem duplica o diário). Nada mudou → devolve `prev`.
    */
   useEffect(() => {
-    if (!showDailyReport || !aventuraDaNoite || !gameState.lastDayReport) return;
-    const id = aventuraDaNoite.id;
-    const dia = gameState.lastDayReport.date;
-    setGameState(prev => ({
-      ...prev,
-      adventures: collectAdventure(prev.adventures ?? [], id, dia),
-    }));
-  }, [showDailyReport, aventuraDaNoite, gameState.lastDayReport, setGameState]);
+    const r = gameState.lastDayReport;
+    if (!showDailyReport || !r || !aventuraDaNoite) return;
+    const dia = r.date;
+    setGameState(prev => {
+      const c0 = prev.crossings ?? CROSSINGS_EMPTY;
+      if (!trv && crossingsTouchMap(c0)) return prev;
+      const c1 = trv ? trv.settleNight(c0, dia).state : c0;
+      const diario = prev.adventures ?? [];
+      const achado = trv
+        ? trv.passeioFindOfDay({ crossings: c1, entries: diario, feito: r.done, meta: r.required, dayKey: dia })
+        : adventureOfNight(diario, r.done, r.required, dia);
+      const novoDiario = collectAdventure(diario, achado.id, dia);
+      const diarioMudou = novoDiario.length !== diario.length;
+      if (c1 === c0 && !diarioMudou) return prev;
+      return {
+        ...prev,
+        ...(c1 !== c0 ? { crossings: c1 } : {}),
+        ...(diarioMudou ? { adventures: novoDiario } : {}),
+      };
+    });
+  }, [showDailyReport, aventuraDaNoite, gameState.lastDayReport, trv, setGameState]);
+
+  /** A folha do Passeio muda o estado por uma função PURA sobre `prev` (footgun 6). */
+  const handleCrossings = useCallback((f: (c: CrossingsState) => CrossingsState) => {
+    setGameState(prev => {
+      const c0 = prev.crossings ?? CROSSINGS_EMPTY;
+      const c1 = f(c0);
+      return c1 === c0 ? prev : { ...prev, crossings: c1 };
+    });
+  }, [setGameState]);
+
+  /** O palco "passeando": o nome da região de destino (≠ casa), ou null. */
+  const passeandoEm = useMemo(() => {
+    const dest = crossings.destination;
+    if (!trv || !dest || dest === HOME_REGION) return null;
+    const r = trv.regionById(dest);
+    return r ? (language === 'pt-BR' ? r.namePt : r.nameEn) : null;
+  }, [trv, crossings.destination, language]);
 
   const handleCloseDailyReport = useCallback(() => {
     if (gameState.lastDayReport) {
@@ -5794,6 +5855,9 @@ export default function App() {
                 }}
                 /* Laboratório e Hall: o conteúdo real (`labContent`,
                    `hallContent`, montados antes do `return`). */
+                /* 🧭 Passeio + Travessias (30/09/2026): o estado do save e o
+                   ÚNICO caminho de escrita (função pura sobre `prev`). */
+                passeio={{ crossings, onChange: handleCrossings }}
                 labTab={labTab}
                 onLabTab={setLabTab}
                 labContent={labContent}
@@ -5917,6 +5981,10 @@ export default function App() {
                 bondTitleText={bondTitle(bondLevelFor(gameState.totalXP ?? 0), language)}
                 redeemedMark={!!gameState.redeemed && !!gameState.showRedeemed}
                 hauntedWatching={hauntedWatching}
+                /* 🧭 O palco "passeando" (30/09/2026): só o nome da região de
+                   destino — um marcador sem texto perto do pet, que não bloqueia
+                   gesto nenhum. Nunca vai ao widget, ao desktop nem ao push. */
+                walkingTo={passeandoEm}
                 /* WP2.7 — o reencontro é por DIAS. `welcomeBack` do relatório
                    já sabia quantos; a VOZ é que não sabia. */
                 daysAway={gameState.lastDayReport?.welcomeBack ? (gameState.lastDayReport.daysAway ?? 0) : 0}

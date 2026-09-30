@@ -71,7 +71,13 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // `gmTools`, `GmPanel` e os nomes do corvo (`corvoAdocao-*.js`), e o dicionário
   // da Feira/Salão. Candidatos a pagar: a copy da Guilda para o chunk da folha
   // e `groveLocal`, hoje lidos pelo `App.tsx` (marco pendente).
-  'index.js': 718_798,
+  // Re-medido em 30/09/2026 (tarde): 718_798 → 728_687 (+9,7 KB). A `main` já
+  // estava em 726_005 (outros merges do dia comeram a folga); o resto é o Passeio
+  // + Travessias (decisão do dono, REGISTRO §5.6): normalização do save
+  // (`travessiasSave.ts`), o assentamento da noite no `App.tsx`, o marcador do
+  // palco e `adventureOfNight`. O CATÁLOGO das regiões (35 KB) e a folha ficam
+  // FORA do chunk de entrada (`import()` só quando o save tocou no mapa).
+  'index.js': 728_687,
   'index.css': 153_795,          // 150 KB — 1,5× o teto
   'evolution-bg.mp4': 3_917_240, // 3,7 MB — fundo de UMA cerimônia; correção #3 (WebM/CSS)
   'intro.mp4': 2_524_939,        // 2,4 MB — vídeo da intro

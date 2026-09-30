@@ -20,8 +20,12 @@ interface DailyReportModalProps {
    * dia, e um `useState` aqui daria um achado novo a cada reabertura — a tela
    * viraria caça-níquel e ensinaria a pessoa a reabrir o relatório em vez de
    * viver o dia.
+   *
+   * Desde o Passeio (30/09/2026) pode ser também um postal de região
+   * (`utils/travessias.ts` › `passeioFindOfDay`), que não tem raridade — por
+   * isso o tipo é só o que esta tela desenha.
    */
-  adventure?: AdventureFind | null;
+  adventure?: Pick<AdventureFind, 'id' | 'emoji' | 'titlePt' | 'titleEn' | 'textPt' | 'textEn'> | null;
   /** Ainda não estava no diário. Muda só o rótulo. */
   adventureIsNew?: boolean;
   onClose: () => void;

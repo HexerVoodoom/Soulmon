@@ -109,11 +109,13 @@ async function achar(container: HTMLElement, sel: string): Promise<HTMLElement> 
 }
 
 describe('Exploração — Zeph e a Masmorra', () => {
-  it('a cena tem só o lote da Masmorra (a Corrida mudou para o Salão de Jogos); Zeph fala dentro da folha', () => {
+  it('a cena tem a Masmorra e o Passeio (30/09/2026; a Corrida mudou para o Salão de Jogos); Zeph fala dentro da folha', () => {
     const { container } = renderWithCss(<PlayAreaView {...props()} />);
     expect(container.querySelector('[data-area-npc]')).toBeNull();
-    expect(container.querySelectorAll('[data-area-lot]')).toHaveLength(1);
+    expect([...container.querySelectorAll('[data-area-lot]')].map(e => e.getAttribute('data-area-lot')))
+      .toEqual(['masmorra', 'passeio']);
     expect(container.querySelector('[data-area-lot="masmorra"] [data-area-lot-art]')).toBeTruthy();
+    expect(container.querySelector('[data-area-lot="passeio"] [data-area-lot-art]')).toBeTruthy();
     expect(container.querySelector('[data-area-lot="dino"]')).toBeNull();
     fireEvent.click(container.querySelector('[data-area-lot="masmorra"]')!);
     expect(container.querySelector('[data-area-sheet-npc-line]')!.textContent).toContain('Zeph');
@@ -191,6 +193,38 @@ describe('Exploração — Zeph e a Masmorra', () => {
     fireEvent.click(container.querySelector('[data-area-lot="masmorra"]')!);
     await achar(container, '[data-masmorra]');
     expect(getByRole('dialog', { name: 'Dungeon' }).textContent).toMatch(/never your hearts/);
+  });
+});
+
+describe('Exploração — o Passeio (30/09/2026)', () => {
+  it('o lote abre a folha do Passeio (lazy) com o destino em casa, e a escolha passa pela função pura do App', async () => {
+    const onChange = vi.fn();
+    function ComPasseio() {
+      const { area, language, evolutionStage, demoCharacterId, totalPoints, onEarnPoints, ...play } = props({ language: 'en-US' });
+      const areaProps = {
+        area, language, evolutionStage, demoCharacterId, onEarnPoints, play,
+        passeio: { crossings: { opened: [], active: null, pending: [], destination: null, hidden: false }, onChange },
+        points: totalPoints, emblems: 0, credits: 0,
+        ownership: {} as AreaViewProps['ownership'], actions: {} as AreaViewProps['actions'],
+        onExchangeCredits: async () => false, tournament: {} as AreaViewProps['tournament'],
+        labTab: 'evolution', onLabTab: () => {}, labContent: null, hallContent: () => null,
+        guild: { saveId: 's', metaDoDiaCumprida: false },
+      } satisfies AreaViewProps;
+      return <AreaView {...areaProps} />;
+    }
+    const { container, getByRole } = renderWithCss(<ComPasseio />);
+    expect(container.querySelector('[data-area-lot="passeio"]')!.textContent).toContain('Stroll');
+    fireEvent.click(container.querySelector('[data-area-lot="passeio"]')!);
+    await achar(container, '[data-passeio]');
+    const folha = getByRole('dialog', { name: 'Stroll' });
+    expect(folha.querySelector('[data-passeio-destino="campina"]')!.getAttribute('aria-pressed')).toBe('true');
+    expect(container.querySelector('[data-area-sheet-npc-line]')!.textContent).toContain('Zeph');
+    // Tocar numa região em névoa e escolher uma proposta: o App recebe uma FUNÇÃO (pura, sobre `prev`).
+    fireEvent.click(folha.querySelector('[data-nevoa] button')!);
+    fireEvent.click(folha.querySelector('[data-travessia-escolher]')!);
+    expect(onChange).toHaveBeenCalledTimes(1);
+    const f = onChange.mock.calls[0][0] as (c: unknown) => { active: unknown };
+    expect(f({ opened: [], active: null, pending: [], destination: null, hidden: false }).active).not.toBeNull();
   });
 });
 

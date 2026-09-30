@@ -103,6 +103,12 @@ const TERMS: Term[] = [
     descPt: 'Item raro de concluir os 5 andares da masmorra. Usar concede um dia completo — um por dia, para a escada continuar sendo medida em dias.',
   },
   {
+    // 🧭 Passeio e Travessias (30/09/2026). Sem número, sem prazo, sem prêmio.
+    icon: '🧭', en: 'Stroll & Crossings', pt: 'Passeio e Travessias',
+    descEn: 'In Exploration: pick where your Soulmon strolls each day. Crossings are optional things you do in your own life that clear the mist over a new region — no deadline, and they never touch your pet or the daily goal.',
+    descPt: 'Na Exploração: escolha para onde seu Soulmon passeia cada dia. Travessias são coisas opcionais que você faz na sua vida e abrem a névoa de uma região nova — sem prazo, e nunca mexem no seu Soulmon nem na meta do dia.',
+  },
+  {
     icon: '💗', en: 'Little Heart', pt: 'Coraçãozinho',
     descEn: 'Shop item and rare dungeon drop. Using it from the Backpack heals 1 HP.',
     descPt: 'Item da loja e drop raro da masmorra. Usar pela mochila cura 1 HP.',

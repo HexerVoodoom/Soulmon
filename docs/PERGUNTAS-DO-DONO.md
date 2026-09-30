@@ -374,3 +374,15 @@ exclusivos por região** (exceção à regra 4 da Aventura; catálogo comum segu
 | MIS-10 | Abrir a região dá o cenário do reino na loja? | **Não** (gênero: abrir região não é item) | Se o dono quiser cosmético pela Travessia |
 | MIS-11 | Interruptor para esconder a camada inteira de Travessias? | **Sim** (psicologia: período ruim) | — |
 | MIS-12 | Menores de idade | Pedir parecer do `soulmon-ip-brand-guardian` antes de implementar | Antes do v1 |
+
+**Implementado em 30/09/2026** (Passeio + Travessias, `feat/passeio-travessias`). Parecer de menores e marca
+(`reviews/2026-09-30-missoes/04-menores-e-marca.md`, APROVADO COM RESSALVA) respondeu a MIS-12 com piso 13+ no pool
+(`minAge: 13`), sem contato com desconhecido, lugar novo só público/perto/de dia, sem postar/filmar, sem a palavra
+"challenge" na UI — tudo travado em `travessias.contract.test.ts`.
+
+| # | Pergunta aberta | Recomendação (aplicada como padrão) | Gatilho de revisão |
+|---|---|---|---|
+| MIS-13 | O portão de idade continua sendo só a caixa "Tenho 18 anos ou mais"? As Travessias são o primeiro recurso que manda agir fora do app | Manter a caixa (verificação dura coleta dado de todos) e as travas R-1..R-11 do parecer 04 como compensação | Primeira telemetria; parecer jurídico sobre a ECA Digital (Lei 15.211/2025, não lida) |
+| MIS-14 | Travessias aparecem na ficha da loja/screenshots? | **Não na v1.** Depois: sem "challenge", sem pessoa real, sem cena de rua | Próxima revisão da ficha |
+| MIS-15 | Frase de segurança no `termos.html` §8 (parecer 04 R-9)? | Acrescentar uma frase PT+EN ("as Travessias são opcionais; escolha só o que for seguro para você") — mexe em página legal, por isso não entrou sem o dono | Antes de publicar na loja |
+| MIS-16 | Busca de marca de "Crossings" (INPI/USPTO)? | Não usar "Crossing" sozinho em marketing (Animal Crossing); busca antes de qualquer uso fora do app | Antes do marketing |

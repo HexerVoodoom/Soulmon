@@ -204,6 +204,10 @@ interface CompanionHUDProps {
   /** WP3.2 — há tarefa assombrada na lista? O sprite VIRA O OLHAR enquanto
    *  houver. É o "o pet olha" que o `CLAUDE.md` prometia e não existia. */
   hauntedWatching?: boolean;
+  /** 🧭 O palco "passeando" (30/09/2026, Passeio): nome da região de destino
+   *  (≠ casa), já no idioma. Vira um marcador pequeno e SEM TEXTO perto do pet —
+   *  diegético, sem bloquear gesto nenhum de cuidado. `null` = em casa. */
+  walkingTo?: string | null;
   equippedBackground?: string | null; // shop backdrop id for the pet box
   /** Decoração equipada por espaço do palco (utils/petStage.ts). */
   equippedDecor?: Partial<Record<SlotId, string>>;
@@ -279,6 +283,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   healCapSignal = 0,
   speakSignal,
   hauntedWatching = false,
+  walkingTo = null,
   daysAway = 0,
   petPassive,
   talento = null,
@@ -1459,6 +1464,29 @@ export const CompanionHUD = memo(function CompanionHUD({
                   pointerEvents: 'none',
                 }}
               />
+              {/* 🧭 PASSEANDO (30/09/2026). A mochila ao pé do pet diz, sem
+                  palavra, que hoje ele sai para a região escolhida no Passeio.
+                  `pointerEvents: none`: nunca rouba o toque de comer, banho,
+                  dormir ou carinho. Sem animação, sem som (R-NOVA). O nome vai
+                  só para o leitor de tela. */}
+              {walkingTo && (
+                <span
+                  role="img"
+                  data-pet-passeando
+                  aria-label={language === 'pt-BR' ? `Saiu para passear: ${walkingTo}` : `Out on a stroll to ${walkingTo}`}
+                  style={{
+                    position: 'absolute',
+                    left: `calc(50% + ${Math.round(PET_RENDER * 0.22)}px)`,
+                    bottom: PET_GROUND_KEEP + Math.round(PET_RENDER * 0.28), // nas COSTAS do pet: anda e vira com ele, e nunca cai sobre os botões de ação, que moram no chão
+                    fontSize: 20,
+                    lineHeight: 1,
+                    pointerEvents: 'none',
+                    zIndex: 1,
+                  }}
+                >
+                  🎒
+                </span>
+              )}
               {sprite ? (
                 <img
                   src={sprite}

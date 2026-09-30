@@ -16,6 +16,7 @@ import type { StageSkills } from '../../utils/soulProfile/ficha/skills';
 import type { FichaStage } from '../../utils/soulProfile/ficha/types';
 import type { SalaoGame, MenteGame, RefugioGame } from '../play/PlaySheets';
 import { REVIEW_EMPTY, dueCards, type ReviewState } from '../../utils/mente/revisao';
+import { CROSSINGS_EMPTY, type CrossingsState } from '../../types/travessias';
 
 /**
  * UMA ÁREA DO MAPA, INTEIRA (minimal-ui F4 molde + F5 conteúdo) — a cena
@@ -45,6 +46,8 @@ const MasmorraSheet = lazy(() => import('../play/PlaySheets').then(m => ({ defau
 const SalaoSheet = lazy(() => import('../play/PlaySheets').then(m => ({ default: m.SalaoSheet })));
 const MenteSheet = lazy(() => import('../play/PlaySheets').then(m => ({ default: m.MenteSheet })));
 const RefugioSheet = lazy(() => import('../play/PlaySheets').then(m => ({ default: m.RefugioSheet })));
+// 🧭 O Passeio (30/09/2026): a folha carrega o catálogo das regiões — por isso lazy.
+const PasseioSheet = lazy(() => import('../play/PasseioSheet').then(m => ({ default: m.PasseioSheet })));
 const DungeonGame = lazy(() => import('../DungeonGame').then(m => ({ default: m.DungeonGame })));
 const DinoGame = lazy(() => import('../DinoGame').then(m => ({ default: m.DinoGame })));
 const RPSGame = lazy(() => import('../RPSGame').then(m => ({ default: m.RPSGame })));
@@ -115,6 +118,12 @@ export interface AreaViewProps {
   onEarnPoints: (points: number) => void;
   /** Exploração + Jogos (F5). */
   play: PlayHandlers;
+  /** 🧭 Passeio + Travessias (30/09/2026): o estado do save e o único caminho de
+   *  escrita — uma função PURA de `utils/travessias` aplicada sobre `prev` no `App`. */
+  passeio?: {
+    crossings: CrossingsState;
+    onChange: (f: (c: CrossingsState) => CrossingsState) => void;
+  };
   /** Laboratório (F5, ex-PR #117): a aba ativa (estado do `App`, porque ela
    *  também decide o `pane`) e o conteúdo já montado — Evolução/Soulmon/Stats
    *  dependem de dezenas de handlers do `App` (cerimônia, renascimento…), que
@@ -281,6 +290,13 @@ export function AreaView(props: AreaViewProps) {
       <AreaScene areaId={area} language={language} background={PLAY_AREA_BG[area]} lots={lots}>
         <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close}>
           <Suspense fallback={<SheetLoading language={language} />}>
+            {open?.id === 'passeio' && (
+              <PasseioSheet
+                language={language}
+                crossings={props.passeio?.crossings ?? CROSSINGS_EMPTY}
+                onChange={props.passeio?.onChange ?? (() => {})}
+              />
+            )}
             {open?.id === 'masmorra' && <MasmorraSheet language={language} bitsToday={play.minigameBitsToday} onStart={() => start('masmorra')} />}
             {open?.id === 'salao' && <SalaoSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} />}
             {open?.id === 'mente' && <MenteSheet language={language} bitsToday={play.minigameBitsToday} reviewDue={dueCards(review, todayKey).length} onStart={start} />}
