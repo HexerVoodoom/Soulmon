@@ -1,6 +1,6 @@
 {
-  "sha": "cfe27cc750c5a4c69307ac3913a8ef7dda59bbca",
+  "sha": "3532ccf5cfbc75b36f8b97fb8879045ccce4248b",
   "data": "30/09/2026",
-  "por": "doc-mantenedor (/manter-docs auto, sessão: delta 4a894f90..cfe27cc7 — Exploração/Travessias, só docs)",
+  "por": "doc-mantenedor (/manter-docs auto, sessão: delta cfe27cc7..3532ccf5 — Passeio + Travessias implementados)",
   "nota": "Escrito pelo doc-mantenedor ao fechar cada sincronização. Lido por scripts/docs-delta.mjs e pelo hook de sessão. Nunca edite à mão."
 }
