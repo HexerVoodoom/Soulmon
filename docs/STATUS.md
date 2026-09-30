@@ -9,7 +9,6 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
-> ## 30/09/2026 — manual sincronizado com `4a894f90` (`/manter-docs`, delta `5edfcfba..4a894f90`, 4 commits)
 > ## 30/09/2026 — Benchmark de Exploração + 3 pareceres (proposta ao dono, nada implementado)
 >
 > Criados `docs/BENCHMARK-EXPLORACAO.md` (pesquisa, formato do de minijogos, fontes ✔/◐/(≈)/✖) e os
@@ -20,7 +19,7 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > **Achado:** a Aventura da noite (`adventure.ts` + `AdventureDiary`, decisão de 08/09) já é "o pet saiu e voltou
 > com um achado" — EXP-6 pergunta se funde. Camada 3 segue congelada (§5.6); zero código.
 >
-> ## 30/09/2026 — GitHub Actions parado → portões locais
+> ## 30/09/2026 — manual sincronizado com `4a894f90` (`/manter-docs`, delta `5edfcfba..4a894f90`, 4 commits)
 >
 > Só commits de docs: docs tocados e carimbados `verificado em 30/09/2026` — `00-MAPA` (§6.2: hub e BENCHMARK-COMBATE), `10-DISCUSSOES-E-DECISOES` (linha nova no tema 6 + ficha do hub) e `01-VISAO` (§10: Actions segue parado por cobrança, portões locais). Sem verificador independente (subagentes `doc-*` não registrados): verificação própria contra STATUS, hub e `package.json`. `docs/manual/.sincronizado.json` = `4a894f90`. Divergências novas: nenhuma.
 
