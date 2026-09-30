@@ -59,10 +59,17 @@ export async function verifiedAdmin(env, request, saveId) {
   try {
     const projectId = env?.FIREBASE_PROJECT_ID;
     if (!projectId) return { admin: false };
-    if (parseAdminEmails(env?.ADMIN_EMAILS).size === 0) return { admin: false };
+    const noList = parseAdminEmails(env?.ADMIN_EMAILS).size === 0;
     const claims = await verifyIdToken(bearerToken(request), projectId);
-    if (!claims || !isAdminEmail(env, claims.email)) return { admin: false };
-    if (saveId !== undefined && (await emailToSaveId(claims.email)) !== saveId) return { admin: false };
+    // Diagnóstico SEM PII: só com token VERIFICADO (sem token/lixo, silêncio — é o
+    // tráfego comum). Diz ao dono, no log do Cloudflare, se falta `ADMIN_EMAILS`.
+    if (!claims) return { admin: false };
+    if (noList) { logAdminDenied('no-allowlist'); return { admin: false }; }
+    if (!isAdminEmail(env, claims.email)) { logAdminDenied('not-listed'); return { admin: false }; }
+    if (saveId !== undefined && (await emailToSaveId(claims.email)) !== saveId) {
+      logAdminDenied('saveid-mismatch');
+      return { admin: false };
+    }
     return { admin: true };
   } catch {
     return { admin: false };
@@ -77,4 +84,9 @@ export function adminPublicView(view) {
 /** Auditoria sem PII: nem e-mail, nem saveId. */
 export function logAdminSession(route) {
   console.log(JSON.stringify({ event: 'admin_session', route }));
+}
+
+/** Motivo curto da negação a um token verificado. Nunca e-mail nem saveId. */
+export function logAdminDenied(reason) {
+  console.log(JSON.stringify({ event: 'admin_denied', reason }));
 }
