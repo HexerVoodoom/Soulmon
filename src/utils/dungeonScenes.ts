@@ -1,44 +1,39 @@
-// 🎞️ Dungeon floor backgrounds — one retro scene per floor (1..5). Pure CSS so
-// they stay tiny and theme-safe. Kept dark enough that the pixel sprites stay
-// readable. (The VHS scanline overlay that DungeonGame used to layer on top is
+// 🎞️ Dungeon floor backgrounds — the five "classic" floors (1..5). They were
+// pure CSS gradients until 30/09/2026 (Retro Pet/VHS/Neon Sunset/CRT/Glitch —
+// two of them magenta, outside the kit); the owner approved five painted
+// 1080×1920 scenes (SQUAD-ARTE rodada 3, `extras/MANIFEST.md`) in the same
+// petrol/turquoise/copper palette as the Home, and they replaced the gradients
+// one for one. The scenes are not persisted anywhere (the run draws them into
+// `useState` in `DungeonGame`), so there is no id to keep: only the names
+// changed. (The VHS scanline overlay that DungeonGame used to layer on top is
 // gone since the canvas Jogos, DECISÕES §25: the scene is the `cover` of a
 // visor now — `games/GameKit.tsx` — and continuous motion without purpose was
 // the thing `prefers-reduced-motion` never reached.)
+import classicRetro from '../assets/soulmon/bg/dungeon-classic-retro.png';
+import classicVhs from '../assets/soulmon/bg/dungeon-classic-vhs.png';
+import classicSol from '../assets/soulmon/bg/dungeon-classic-sol.png';
+import classicCrt from '../assets/soulmon/bg/dungeon-classic-crt.png';
+import classicGlitch from '../assets/soulmon/bg/dungeon-classic-glitch.png';
+
 export interface DungeonScene {
   namePt: string;
   nameEn: string;
-  /** CSS `background` value for the battlefield. */
+  /** CSS `background` SHORTHAND for the battlefield (goes in `background`,
+   *  never `backgroundColor` — see `GameVisor`). */
   bg: string;
   /** Accent color for the floor label / borders. */
   accent: string;
 }
 
+// `url(...) center/cover <cor>`: the trailing color is the fallback painted
+// while the image loads (or if it never does) — the scene's own mean color,
+// measured on the PNG, so the visor doesn't flash the default glass.
 export const DUNGEON_SCENES: DungeonScene[] = [
-  {
-    namePt: 'Retro Pet', nameEn: 'Retro Pet',
-    accent: '#9bbc0f',
-    bg: 'repeating-linear-gradient(0deg, rgba(15,56,15,0.55) 0 3px, transparent 3px 6px), repeating-linear-gradient(90deg, rgba(15,56,15,0.55) 0 3px, transparent 3px 6px), linear-gradient(160deg, #24401a, #0f2410)',
-  },
-  {
-    namePt: 'Fita VHS', nameEn: 'VHS Tape',
-    accent: '#38e1ff',
-    bg: 'repeating-linear-gradient(0deg, rgba(0,0,0,0.35) 0 2px, transparent 2px 4px), radial-gradient(120% 90% at 50% 0%, rgba(56,225,255,0.15), transparent 55%), linear-gradient(180deg, #06122b, #0b0620)',
-  },
-  {
-    namePt: 'Sol Neon', nameEn: 'Neon Sunset',
-    accent: '#ff2bd6',
-    bg: 'radial-gradient(120% 80% at 50% 100%, rgba(255,43,214,0.35), transparent 60%), repeating-linear-gradient(0deg, rgba(255,43,214,0.10) 0 1px, transparent 1px 34px), linear-gradient(180deg, #180a30, #2a0a3e)',
-  },
-  {
-    namePt: 'Terminal CRT', nameEn: 'CRT Terminal',
-    accent: '#ffb000',
-    bg: 'repeating-linear-gradient(0deg, rgba(255,176,0,0.06) 0 2px, transparent 2px 4px), radial-gradient(120% 100% at 50% 0%, rgba(255,140,0,0.2), transparent 55%), linear-gradient(180deg, #1a1206, #0a0800)',
-  },
-  {
-    namePt: 'Vazio Glitch', nameEn: 'Glitch Void',
-    accent: '#ff2b4d',
-    bg: 'repeating-linear-gradient(0deg, rgba(255,0,51,0.10) 0 2px, transparent 2px 5px), radial-gradient(100% 80% at 50% 50%, rgba(120,0,20,0.4), #0a0203)',
-  },
+  { nameEn: 'Floating Garden', namePt: 'Jardim Flutuante', accent: '#5fd6a8', bg: `url(${classicRetro}) center/cover #204442` },
+  { nameEn: 'Terrace of Two Suns', namePt: 'Terraço dos Dois Sóis', accent: '#d9a45c', bg: `url(${classicVhs}) center/cover #264a4c` },
+  { nameEn: 'Broken Observatory', namePt: 'Observatório Partido', accent: '#6fd3e8', bg: `url(${classicSol}) center/cover #284d51` },
+  { nameEn: 'Mirror Lake', namePt: 'Lago-Espelho', accent: '#7fd6e0', bg: `url(${classicCrt}) center/cover #24494b` },
+  { nameEn: 'Fractured Archipelago', namePt: 'Arquipélago Fraturado', accent: '#3fd2d9', bg: `url(${classicGlitch}) center/cover #244749` },
 ];
 
 // Shop pet-box backgrounds doubling as dungeon floors (accent picked per bg).
@@ -126,8 +121,8 @@ const SHOP_BG_SCENES: DungeonScene[] = Object.entries(SHOP_BG_ACCENTS)
   }));
 
 /**
- * Scenes for one run: 5 picks without repeats, drawn at random from the classic
- * retro scenes + the shop backgrounds. Every run looks different.
+ * Scenes for one run: 5 picks without repeats, drawn at random from the painted
+ * scenes (spirit + classic) + the shop backgrounds. Every run looks different.
  */
 export function buildRunScenes(count = 5): DungeonScene[] {
   const pool = [...SPIRIT_BG_SCENES, ...DUNGEON_SCENES, ...SHOP_BG_SCENES];
