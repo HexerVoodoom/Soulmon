@@ -44,6 +44,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "orcamento": "node scripts/orcamento-de-tempo.mjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "portoes": "node scripts/portoes.mjs"
   }
 }

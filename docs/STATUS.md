@@ -9,6 +9,13 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 30/09/2026 — GitHub Actions parado → portões locais
+>
+> O `CI (typecheck + testes)` aborta em ~4 s em todo commit desde pelo menos `78146c6c` (log 404: o runner
+> nem executa). Não é código. **Depende do dono:** conferir cobrança/limite de Actions ou se Actions está
+> desativado. Enquanto isso, o portão é **`npm run portoes`** (`scripts/portoes.mjs`, os passos do `ci.yml`
+> + guard do manual) e o fluxo está em `docs/HANDOFF-LOCAL-SEM-ACTIONS.md`, com o prompt para a sessão local.
+>
 > ## 30/09/2026 — Hub de benchmarking e referências + SQUAD-BENCHMARK
 >
 > Verificado antes: benchmarks existiam (combate, minijogos, guilda, `PLANO-EVOLUCAO.md`, `guia-experiencia/`,
