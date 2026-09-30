@@ -8,8 +8,8 @@
  * decidido por `utils/groveStage.ts` (puro e testado): 5–12 membros → só a sua
  * criatura; ≤4 → todos, em ordem de chegada, sem estado de presença.
  *
- * O cenário é `bg-guild-<estágio>` de `PET_BACKGROUNDS` — hoje placeholder em
- * gradiente; a arte pintada troca só o `css`. Movimento reduzido: as criaturas
+ * O cenário é `bg-guild-<estágio>` de `PET_BACKGROUNDS` — arte pintada 1200×648
+ * desde 30/09/2026 (fundos-v2; antes, gradiente). Movimento reduzido: as criaturas
  * ficam paradas (a informação é a mesma — o vidro é o mesmo).
  */
 import { PET_BACKGROUNDS } from '../../utils/backgrounds';
@@ -41,7 +41,7 @@ export function GroveVisor({ guild, mySprite, reducedMotion, label }: GroveVisor
       role={label ? 'img' : undefined}
       aria-label={label}
       aria-hidden={label ? undefined : true}
-      style={{ height: GROVE_VISOR_HEIGHT, background: bg?.css, backgroundColor: bg?.baseColor }}
+      style={{ height: GROVE_VISOR_HEIGHT, background: bg && `${bg.css} center bottom / auto 100% no-repeat`, backgroundColor: bg?.baseColor, imageRendering: 'pixelated' }}
     >
       {criaturas.map((c, i) => (
         <img

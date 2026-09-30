@@ -61,16 +61,22 @@ const ARENA_LOTS: AreaLotSpec<ArenaLotId>[] = [
 
 // Laboratório e Hall (29/09/2026): as antigas abas/filtros viraram construções
 // do mapa aberto, como nas lojas. Nomes pensados como LUGARES, não como abas.
+// 🌙 30/09/2026 — os fundos pintados (`HALL_BG`/`LABORATORIO_BG`) chegaram, e as
+// posições seguem as clareiras medidas pelo gerador (fundos-v2/MANIFEST.md):
+// no Laboratório os hexágonos de cima vão de 43% a 62% (centro ~52%), então os
+// 2 lotes de cima descem de 42% para 50%; no Hall o quadrado de baixo começa em
+// ~73% (centro ~79%), então o Salão da Guilda desce de 72% para 78%. O `top` é o
+// pé do lote (`translate(-50%, -80%)` no `AreaScene`).
 const LABORATORIO_LOTS: AreaLotSpec<LaboratorioLotId>[] = [
-  { id: 'evolucao', labelPt: 'Árvore da Evolução', labelEn: 'Evolution Tree', ariaPt: 'Entrar na Árvore da Evolução', ariaEn: 'Enter the Evolution Tree', left: '27%', top: '42%' },
-  { id: 'pet', labelPt: 'Meu Soulmon', labelEn: 'My Soulmon', ariaPt: 'Entrar em Meu Soulmon', ariaEn: 'Enter My Soulmon', left: '72%', top: '42%' },
+  { id: 'evolucao', labelPt: 'Árvore da Evolução', labelEn: 'Evolution Tree', ariaPt: 'Entrar na Árvore da Evolução', ariaEn: 'Enter the Evolution Tree', left: '27%', top: '50%' },
+  { id: 'pet', labelPt: 'Meu Soulmon', labelEn: 'My Soulmon', ariaPt: 'Entrar em Meu Soulmon', ariaEn: 'Enter My Soulmon', left: '72%', top: '50%' },
   { id: 'stats', labelPt: 'Observatório', labelEn: 'Observatory', ariaPt: 'Entrar no Observatório (estatísticas)', ariaEn: 'Enter the Observatory (stats)', left: '50%', top: '72%' },
 ];
 
 const HALL_LOTS: AreaLotSpec<HallLotId>[] = [
   { id: 'biblioteca', labelPt: 'Biblioteca', labelEn: 'Library', ariaPt: 'Entrar na Biblioteca', ariaEn: 'Enter the Library', left: '27%', top: '42%' },
   { id: 'amigos', labelPt: 'Círculo de Amigos', labelEn: 'Friends Circle', ariaPt: 'Entrar no Círculo de Amigos', ariaEn: 'Enter the Friends Circle', left: '72%', top: '42%' },
-  { id: 'guilda', labelPt: GUILD_COPY['guild.lote.hall.label'][0], labelEn: GUILD_COPY['guild.lote.hall.label'][1], ariaPt: GUILD_COPY['guild.lote.hall.aria'][0], ariaEn: GUILD_COPY['guild.lote.hall.aria'][1], left: '50%', top: '72%' },
+  { id: 'guilda', labelPt: GUILD_COPY['guild.lote.hall.label'][0], labelEn: GUILD_COPY['guild.lote.hall.label'][1], ariaPt: GUILD_COPY['guild.lote.hall.aria'][0], ariaEn: GUILD_COPY['guild.lote.hall.aria'][1], left: '50%', top: '78%' },
 ];
 
 function resolveLots<K extends string>(specs: AreaLotSpec<K>[], language: Language) {

@@ -77,7 +77,7 @@ export function GuildOwnedShelf({ language, kind, ownership, actions }: {
           >
             {kind === 'bg' ? (
               <MiniGlass size={GLASS_ITEM} style={{ width: GLASS_BG_W, height: GLASS_BG_H, ...(equipped ? { boxShadow: '0 0 0 2px var(--sm2-primary-ink)' } : {}) }}>
-                <span aria-hidden="true" style={{ position: 'absolute', inset: 0, background: bg?.css, backgroundColor: bg?.baseColor }} />
+                <span aria-hidden="true" style={{ position: 'absolute', inset: 0, background: bg && `${bg.css} center bottom / cover no-repeat`, backgroundColor: bg?.baseColor, imageRendering: 'pixelated' }} />
               </MiniGlass>
             ) : (
               <MiniGlass size={GLASS_ITEM} style={equipped ? { boxShadow: '0 0 0 2px var(--sm2-primary-ink)' } : undefined}>
