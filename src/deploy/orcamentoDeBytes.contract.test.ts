@@ -60,8 +60,19 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // PAGO na Fase 2 do Oráculo (28/09/2026): famílias em `oracle/familias.ts`
   // atrás de `generateOracleAsync` (chunk `familias-*.js`, 22_292 B).
   // Medido (`ls -l`, build limpo): 671_803 → 649_474 (−22,3 KB).
-  'index.js': 649_474,
-  'index.css': 142_696,          // 139 KB — 1,4× o teto
+  // Re-medido em 30/09/2026 (decisão do dono: 're-medir e registrar o novo
+  // teto'; corte real fica como tarefa própria): 649_474 → 718_798 (+67,7 KB)
+  // JS e 142_696 → 153_795 (+10,8 KB) CSS. Crescimento JUSTIFICADO pelo lote de
+  // 29/09/2026: a Guilda inteira (Bosque, Feira, resgate, gestos, cerimônia de
+  // marco, `guildCopyCore`, `groveLocal`/`groveStage`), o cliente de administrador
+  // (`adminFlag`, `useAdmin`), a resolução do corvinho (`spriteLineOf`, mapa de
+  // sprites), a migração de ids de caminho (`branchMigration`) e o fundo/topo
+  // das áreas em tela cheia. Já cortado do chunk de entrada: HelpModal (lazy),
+  // `gmTools`, `GmPanel` e os nomes do corvo (`corvoAdocao-*.js`), e o dicionário
+  // da Feira/Salão. Candidatos a pagar: a copy da Guilda para o chunk da folha
+  // e `groveLocal`, hoje lidos pelo `App.tsx` (marco pendente).
+  'index.js': 718_798,
+  'index.css': 153_795,          // 150 KB — 1,5× o teto
   'evolution-bg.mp4': 3_917_240, // 3,7 MB — fundo de UMA cerimônia; correção #3 (WebM/CSS)
   'intro.mp4': 2_524_939,        // 2,4 MB — vídeo da intro
 };

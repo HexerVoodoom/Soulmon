@@ -62,7 +62,7 @@ function emptyEntitlement() {
      */
     aiLifetime: {},
     /**
-     * Consumo VITALÍCIO por FORMA da árvore (`{ 'mega-virus': 3 }`). Mesma casa
+     * Consumo VITALÍCIO por FORMA da árvore (`{ 'mega-power': 3 }`). Mesma casa
      * e mesmo motivo do `aiLifetime`: teto por forma que se perde no reset do
      * dia é teto nenhum. Dicionário fechado nas 11 formas que existem — o
      * `_aiGuard` valida o id antes de escrever (`VALID_FORM_ID`), senão o
@@ -423,7 +423,7 @@ async function verifyIdToken(idToken, projectId) {
     );
     if (!ok) return null;
     return {
-      email: String(payload.email).trim().toLowerCase(),
+      email: normalizeEmail(payload.email),
       authTime: typeof payload.auth_time === "number" && Number.isFinite(payload.auth_time) ? payload.auth_time : 0
     };
   } catch {
@@ -431,8 +431,17 @@ async function verifyIdToken(idToken, projectId) {
   }
 }
 __name(verifyIdToken, "verifyIdToken");
+function normalizeEmail(email) {
+  return String(email ?? "").trim().toLowerCase();
+}
+__name(normalizeEmail, "normalizeEmail");
+function bearerToken(request) {
+  const auth = request?.headers?.get?.("Authorization") || "";
+  return auth.startsWith("Bearer ") ? auth.slice(7) : null;
+}
+__name(bearerToken, "bearerToken");
 async function emailToSaveId(email) {
-  const data = new TextEncoder().encode(`soulmon:${email.trim().toLowerCase()}`);
+  const data = new TextEncoder().encode(`soulmon:${normalizeEmail(email)}`);
   const digest = await crypto.subtle.digest("SHA-256", data);
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 32);
 }
@@ -607,9 +616,66 @@ async function desindexarInscricao(kv2, chave) {
 }
 __name(desindexarInscricao, "desindexarInscricao");
 
+// api/_redact.js
+var DATE_RECENT_YEARS = 5;
+var YEAR_OR_HOUR = /^(?:[01]\d\d\d|2[0-3]\d\d)$/;
+var RULES = [
+  { kind: "email", re: /[\w.+-]+@[\w-]+\.[\w.-]+/g, tag: "[email]" },
+  { kind: "url", re: /\b(?:https?:\/\/|www\.)\S+/gi, tag: "[link]" },
+  { kind: "cpf", re: /\b\d{3}\.\d{3}\.\d{3}-\d{2}\b/g, tag: "[documento]" },
+  { kind: "cnpj", re: /\b\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}\b/g, tag: "[documento]" },
+  { kind: "phone", re: /(?:\+?\d{1,3}[\s.-]?)?(?:\(\d{2,3}\)[\s.-]?|\b\d{2,3}[\s.-])\d{4,5}[\s.-]?\d{4}\b/g, tag: "[telefone]" },
+  // QA rodada 1 (achado 06 §6.1, baixo): três quase-identificadores que
+  // passavam inteiros. CEP e data ANTES do celular curto — `12345-678` e
+  // `21/09/1990` não podem ser mastigados pela metade por outra regra.
+  //  · CEP `12345-678`: sozinho localiza um quarteirão; junto com o resto da
+  //    frase, uma pessoa.
+  //  · data `dd/mm/aaaa`: no texto livre de um app deste tipo é, quase sempre,
+  //    a data de nascimento — o mesmo dado que `soulmon-profile` guarda só no
+  //    aparelho de propósito.
+  //  · celular SEM DDD (8 ou 9 dígitos, `98765-4321`/`987654321`/`3456-7890`):
+  //    a regra de telefone exigia DDD e a de "sequência longa" exigia ≥ 11
+  //    dígitos, então o número mais comum de se digitar caía no vão. O 9 no
+  //    início é opcional para não deixar fixo passar; 8 dígitos contíguos
+  //    (`20260921`) também caem aqui — quase-identificador de qualquer jeito.
+  { kind: "cep", re: /\b\d{5}-\d{3}\b/g, tag: "[cep]" },
+  // QA rodada 2 (`01-seguranca-r2` §7): as duas regras de baixo marcavam
+  // faixa de ano (`2020-2024`), horário (`1000-1200`), qualquer data recente
+  // e `20260921` como identificador — e o texto útil da meta chegava ao
+  // modelo mastigado. Data só é quase-identificador quando é ANTIGA (nascimento,
+  // não "até 31/12/2026"); telefone curto exige SEPARADOR e não pode ser um
+  // par de anos/horas. O preço declarado: 9 dígitos contíguos sem separador
+  // (`987654321`) passam a passar — a regra de DDD e a de "sequência longa"
+  // continuam pegando o formato completo.
+  { kind: "date", re: /\b(\d{2})\/(\d{2})\/(\d{4})\b/g, tag: "[data]", keep: /* @__PURE__ */ __name((_m, _d, _mo, y) => Number(y) >= (/* @__PURE__ */ new Date()).getUTCFullYear() - DATE_RECENT_YEARS, "keep") },
+  { kind: "phone", re: /\b(9?\d{4})[\s.-](\d{4})\b/g, tag: "[telefone]", keep: /* @__PURE__ */ __name((_m, a, b) => YEAR_OR_HOUR.test(a) && YEAR_OR_HOUR.test(b), "keep") },
+  { kind: "digits", re: /\b\d[\d\s.-]{9,}\d\b/g, tag: "[n\xFAmero]" },
+  { kind: "handle", re: /(^|\s)@[A-Za-z0-9_.]{2,}/g, tag: "$1[perfil]" }
+];
+function minimizeForAi(input, maxLength = 500) {
+  const original = (input ?? "").toString();
+  let text = original;
+  const redactions = {};
+  for (const { kind, re, tag, keep } of RULES) {
+    text = text.replace(re, (match2, ...rest) => {
+      if (keep && keep(match2, ...rest)) return match2;
+      redactions[kind] = (redactions[kind] || 0) + 1;
+      return tag.includes("$1") ? `${rest[0] ?? ""}${tag.replace("$1", "")}` : tag;
+    });
+  }
+  const truncated = text.length > maxLength;
+  if (truncated) text = text.slice(0, maxLength);
+  return { text, redactions, truncated };
+}
+__name(minimizeForAi, "minimizeForAi");
+function redactionCount(redactions) {
+  return Object.values(redactions).reduce((a, b) => a + b, 0);
+}
+__name(redactionCount, "redactionCount");
+
 // api/_coop.js
-var COOP_MAX_MEMBERS = 4;
-var COOP_CHECKINS_POR_MEMBRO = 5;
+var COOP_MAX_MEMBERS = 12;
+var PRESENCA_NOMINAL_MAX = 4;
 var COOP_TTL = 86400 * 120;
 function semanaDe(d = /* @__PURE__ */ new Date()) {
   const t = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
@@ -619,6 +685,61 @@ function semanaDe(d = /* @__PURE__ */ new Date()) {
   return `${t.getUTCFullYear()}-W${String(n).padStart(2, "0")}`;
 }
 __name(semanaDe, "semanaDe");
+var MESES = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
+function diaDoJogador(raw, now = /* @__PURE__ */ new Date()) {
+  const hojeUtc = now.toISOString().slice(0, 10);
+  if (raw === void 0 || raw === null || raw === "") return { ok: true, day: hojeUtc };
+  const s = String(raw).trim();
+  let y, m, d;
+  let r = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (r) {
+    y = +r[1];
+    m = +r[2] - 1;
+    d = +r[3];
+  } else {
+    r = /^[A-Z][a-z]{2} ([A-Z][a-z]{2}) (\d{2}) (\d{4})$/.exec(s);
+    if (!r || !(r[1] in MESES)) return { ok: false };
+    y = +r[3];
+    m = MESES[r[1]];
+    d = +r[2];
+  }
+  const t = Date.UTC(y, m, d);
+  const dt = new Date(t);
+  if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== m || dt.getUTCDate() !== d) return { ok: false };
+  const diff = Math.abs(t - Date.parse(`${hojeUtc}T00:00:00Z`)) / 864e5;
+  if (diff > 1) return { ok: false };
+  return { ok: true, day: dt.toISOString().slice(0, 10) };
+}
+__name(diaDoJogador, "diaDoJogador");
+var semanaDoDia = /* @__PURE__ */ __name((day2) => semanaDe(/* @__PURE__ */ new Date(`${day2}T00:00:00Z`)), "semanaDoDia");
+var NOME_MAX = 24;
+var CONTATO_SEM_ESQUEMA = [
+  /\b[a-z0-9-]+\.(?:com|me|gg|io|net|org|br|tv|ly|app|co|xyz|link|bio)\b/i,
+  /\b(?:insta(?:gram)?|ig|tiktok|tt|twitter|discord|dc|telegram|tg|whats(?:app)?|zap|wpp|snap(?:chat)?|face(?:book)?|fb|kwai|onlyfans)\s*[:=/#]/i,
+  /\bdiscord\b/i,
+  /#\d{4}\b/,
+  /\barroba\b/i,
+  /\bponto\s+(?:com|br|net|org)\b/i,
+  /\bdot\s+(?:com|net|org)\b/i
+];
+function sanitizarNomeDeGuilda(raw) {
+  const limpo = String(raw ?? "").normalize("NFKC").replace(/\p{C}/gu, " ").replace(/\s+/g, " ").trim().slice(0, 200);
+  if (!limpo) return null;
+  if (limpo.includes("@")) return null;
+  if (CONTATO_SEM_ESQUEMA.some((re) => re.test(limpo))) return null;
+  const { redactions } = minimizeForAi(limpo, 200);
+  if (redactionCount(redactions) > 0) return null;
+  const nome = Array.from(limpo).slice(0, NOME_MAX).join("").trim();
+  return nome || null;
+}
+__name(sanitizarNomeDeGuilda, "sanitizarNomeDeGuilda");
+async function idOpacoDoMembro(env, gid, save) {
+  const segredo = typeof env?.GUILD_MEMBER_SECRET === "string" ? env.GUILD_MEMBER_SECRET : "";
+  const bytes = new TextEncoder().encode(`soulmon-guild-member|${segredo}|${gid}|${save}`);
+  const h = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+  return Array.from(h.slice(0, 8), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+__name(idOpacoDoMembro, "idOpacoDoMembro");
 var coopKey = /* @__PURE__ */ __name((gid) => `coop:${gid}`, "coopKey");
 var coopOfKey = /* @__PURE__ */ __name((save) => `coopOf:${save}`, "coopOfKey");
 var coopCodeKey = /* @__PURE__ */ __name((code) => `coopCode:${code}`, "coopCodeKey");
@@ -628,46 +749,86 @@ function novoCodigo() {
   return Array.from(crypto.getRandomValues(new Uint8Array(8))).map((x) => alfabeto[x % alfabeto.length]).join("");
 }
 __name(novoCodigo, "novoCodigo");
+async function sortearCodigoLivre(env) {
+  for (let i = 0; i < 3; i++) {
+    const tentativa = novoCodigo();
+    if (!await kvOrThrow(env).get(coopCodeKey(tentativa))) return tentativa;
+  }
+  return null;
+}
+__name(sortearCodigoLivre, "sortearCodigoLivre");
 async function lerGrupo(env, groupId) {
   if (!VALID_ID.test(groupId || "")) return null;
   const raw = await kvOrThrow(env).get(coopKey(groupId));
   return raw ? JSON.parse(raw) : null;
 }
 __name(lerGrupo, "lerGrupo");
-async function gravarGrupo(env, g) {
-  await kvOrThrow(env).put(coopKey(g.id), JSON.stringify(g), { expirationTtl: COOP_TTL });
+var PRAZO_RENOVA_ANTES_MS = 30 * 86400 * 1e3;
+async function gravarGrupo(env, g, opcoes = {}) {
+  const { novosMembros = [], codigoNovo = false, agora = Date.now() } = opcoes;
+  const semPrazo = Number(g.bosqueProgress ?? 0) > 0;
+  let conjunta = false;
+  if (semPrazo) {
+    if (!g.semPrazoGravado) {
+      g.semPrazoGravado = true;
+      delete g.prazoAte;
+      conjunta = true;
+    }
+  } else if (!Number.isFinite(g.prazoAte) || g.prazoAte - agora < PRAZO_RENOVA_ANTES_MS) {
+    g.prazoAte = agora + COOP_TTL * 1e3;
+    delete g.semPrazoGravado;
+    conjunta = true;
+  }
+  const blobPrazo = semPrazo ? {} : { expirationTtl: Math.max(60, Math.floor((g.prazoAte - agora) / 1e3)) };
+  await kvOrThrow(env).put(coopKey(g.id), JSON.stringify(g), blobPrazo);
+  const prazo = semPrazo ? {} : { expirationTtl: COOP_TTL };
+  if (!conjunta) {
+    await Promise.all([
+      ...codigoNovo ? [kvOrThrow(env).put(coopCodeKey(g.code), g.id, prazo)] : [],
+      ...novosMembros.filter((m) => g.members.includes(m)).map((m) => kvOrThrow(env).put(coopOfKey(m), g.id, prazo))
+    ]);
+    return;
+  }
   await Promise.all([
-    kvOrThrow(env).put(coopCodeKey(g.code), g.id, { expirationTtl: COOP_TTL }),
-    ...g.members.map((m) => kvOrThrow(env).put(coopOfKey(m), g.id, { expirationTtl: COOP_TTL }))
+    kvOrThrow(env).put(coopCodeKey(g.code), g.id, prazo),
+    ...g.members.map((m) => kvOrThrow(env).put(coopOfKey(m), g.id, prazo))
   ]);
+  await Promise.all(g.members.map(async (m) => {
+    const raw = await kvOrThrow(env).get(coopFioKey(g.id, m));
+    if (raw) await kvOrThrow(env).put(coopFioKey(g.id, m), raw, prazo);
+  }));
 }
 __name(gravarGrupo, "gravarGrupo");
+function precisaRenovar(g, agora = Date.now()) {
+  if (Number(g?.bosqueProgress ?? 0) > 0) return !g.semPrazoGravado;
+  return !Number.isFinite(g?.prazoAte) || g.prazoAte - agora < PRAZO_RENOVA_ANTES_MS;
+}
+__name(precisaRenovar, "precisaRenovar");
 async function renovarPrazos(env, gid) {
   const fresco = await lerGrupo(env, gid);
-  if (fresco) await gravarGrupo(env, fresco);
+  if (fresco && precisaRenovar(fresco)) await gravarGrupo(env, fresco);
 }
 __name(renovarPrazos, "renovarPrazos");
-async function lerCheckins(env, gid, save) {
+async function lerCheckins(env, gid, save, semana = semanaDe()) {
   const raw = await kvOrThrow(env).get(coopCkKey(gid, save));
   if (!raw) return [];
   try {
     const r = JSON.parse(raw);
-    return r && r.weekKey === semanaDe() && Array.isArray(r.days) ? r.days : [];
+    return r && r.weekKey === semana && Array.isArray(r.days) ? r.days : [];
   } catch {
     return [];
   }
 }
 __name(lerCheckins, "lerCheckins");
-async function gravarCheckins(env, gid, save, days) {
+async function gravarCheckins(env, gid, save, days, semana = semanaDe()) {
   await kvOrThrow(env).put(
     coopCkKey(gid, save),
-    JSON.stringify({ weekKey: semanaDe(), days }),
+    JSON.stringify({ weekKey: semana, days }),
     { expirationTtl: COOP_TTL }
   );
 }
 __name(gravarCheckins, "gravarCheckins");
-function rolarSemana(g) {
-  const agora = semanaDe();
+function rolarSemana(g, agora = semanaDe()) {
   if (g.weekKey !== agora) {
     g.weekKey = agora;
     g.checkins = {};
@@ -675,7 +836,7 @@ function rolarSemana(g) {
   return g;
 }
 __name(rolarSemana, "rolarSemana");
-async function grupoDe(env, saveId) {
+async function grupoDe(env, saveId, semana = semanaDe()) {
   const groupId = await kvOrThrow(env).get(coopOfKey(saveId));
   if (!groupId) return null;
   const g = await lerGrupo(env, groupId);
@@ -683,17 +844,51 @@ async function grupoDe(env, saveId) {
     await kvOrThrow(env).delete(coopOfKey(saveId));
     return null;
   }
-  return rolarSemana(g);
+  return rolarSemana(g, semana);
 }
 __name(grupoDe, "grupoDe");
-async function coopLeave(env, saveId) {
-  const g = await grupoDe(env, saveId);
-  if (!g) return { left: false, groupId: null, remaining: 0 };
-  g.members = g.members.filter((m) => m !== saveId);
-  if (g.checkins) delete g.checkins[saveId];
+async function coopLeave(env, saveId, { exclusao = false, now = /* @__PURE__ */ new Date() } = {}) {
+  const lido = await grupoDe(env, saveId);
+  if (!lido) return { left: false, groupId: null, remaining: 0 };
+  const fio = await lerFio(env, lido.id, saveId);
+  if (!exclusao) {
+    await guardarParticipacao(env, lido, saveId, now);
+    await guardarDiasDistintos(env, saveId, fio);
+  }
   await kvOrThrow(env).delete(coopOfKey(saveId));
-  await kvOrThrow(env).delete(coopCkKey(g.id, saveId));
+  await kvOrThrow(env).delete(coopCkKey(lido.id, saveId));
+  await kvOrThrow(env).delete(coopFioKey(lido.id, saveId));
+  await kvOrThrow(env).delete(coopGestKey(lido.id, saveId));
+  await kvOrThrow(env).delete(coopMemKey(lido.id, saveId));
+  const semanas = [0, 1, 2, 3].map((k) => semanaDe(new Date(now.getTime() - k * 7 * 864e5)));
+  await Promise.all(semanas.map((w) => kvOrThrow(env).delete(coopHitKey(lido.id, w, saveId))));
+  const g = await lerGrupo(env, lido.id) ?? lido;
+  g.members = (g.members || []).filter((m) => m !== saveId);
+  if (g.checkins) delete g.checkins[saveId];
+  if (g.desde) delete g.desde[saveId];
+  if (fio) {
+    const pendentes = fio.days.filter((d) => !g.progressDay || d > g.progressDay);
+    if (pendentes.length) {
+      const tag = await idOpacoDoMembro(env, g.id, saveId);
+      g.fiosAvulsos = { ...g.fiosAvulsos || {} };
+      for (const d of pendentes) {
+        const atual = avulsosDoDia(g.fiosAvulsos[d]);
+        if (!atual.includes(tag)) g.fiosAvulsos[d] = [...atual, tag];
+        else g.fiosAvulsos[d] = atual;
+      }
+    }
+  }
+  if (g.hostSave === saveId || g.hostSave && !g.members.includes(g.hostSave)) {
+    g.hostSave = g.members[0] ?? null;
+  }
   if (g.members.length === 0) {
+    const ultima = await lerGrupo(env, g.id);
+    const outros = (ultima?.members || []).filter((m) => m !== saveId);
+    if (outros.length > 0) {
+      const vivo = { ...ultima, fiosAvulsos: g.fiosAvulsos ?? ultima.fiosAvulsos, members: outros, hostSave: ultima.hostSave && outros.includes(ultima.hostSave) ? ultima.hostSave : outros[0] };
+      await gravarGrupo(env, vivo);
+      return { left: true, groupId: g.id, remaining: outros.length };
+    }
     await kvOrThrow(env).delete(coopKey(g.id));
     await kvOrThrow(env).delete(coopCodeKey(g.code));
   } else {
@@ -702,6 +897,425 @@ async function coopLeave(env, saveId) {
   return { left: true, groupId: g.id, remaining: g.members.length };
 }
 __name(coopLeave, "coopLeave");
+var FIO_PER_MEMBER_DAY = 1;
+var BOSQUE_THRESHOLDS = Object.freeze([2, 10, 25, 50, 90]);
+var BOSQUE_STAGES = Object.freeze(["clareira", "ramagem", "copa", "mata", "bosque-antigo"]);
+var BOSQUE_PERTO_FRACAO = 0.2;
+var STAGE_UNLOCK_DAYS = 7;
+var TRAVELER_AFTER_WEEKS = 4;
+var GUILD_TIDE_WEEKS = 6;
+var TIDE_BLOOM_TARGET = 12;
+var TIDE_COROLLA_AT = 4;
+var TIDE_SIZES = Object.freeze(["petala", "corola", "floracao"]);
+var GUILD_GESTURES = Object.freeze(["aceno", "luz", "descanso"]);
+var FIO_DIAS_GUARDADOS = 60;
+var META_DO_FIO = "heart";
+function metaDoFioCumprida(goal) {
+  const done = Number(goal?.done);
+  const meta = Number(META_DO_FIO === "heart" ? goal?.heart : goal?.full);
+  if (!Number.isFinite(done) || !Number.isFinite(meta)) return false;
+  return meta <= 0 ? done > 0 : done >= meta;
+}
+__name(metaDoFioCumprida, "metaDoFioCumprida");
+var DIA_MS = 864e5;
+var numDia = /* @__PURE__ */ __name((day2) => Math.round(Date.parse(`${day2}T00:00:00Z`) / DIA_MS), "numDia");
+var diaDeNum = /* @__PURE__ */ __name((n) => new Date(n * DIA_MS).toISOString().slice(0, 10), "diaDeNum");
+var coopFioKey = /* @__PURE__ */ __name((gid, save) => `coopFio:${gid}:${save}`, "coopFioKey");
+var coopGestKey = /* @__PURE__ */ __name((gid, save) => `coopGest:${gid}:${save}`, "coopGestKey");
+var coopHitKey = /* @__PURE__ */ __name((gid, week, save) => `coopHit:${gid}:${week}:${save}`, "coopHitKey");
+var coopClaimKey = /* @__PURE__ */ __name((save, week) => `coopClaim:${save}:${week}`, "coopClaimKey");
+var CLAIM_WEEKS_VIVAS = 9;
+function normalizarFio(r) {
+  const days = Array.isArray(r?.days) ? r.days.filter((d) => typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d)) : [];
+  const distinct = Number.isFinite(r?.distinctDays) ? Math.max(0, Math.floor(r.distinctDays)) : days.length;
+  const lastDay = typeof r?.lastDay === "string" ? r.lastDay : days.length ? [...days].sort().at(-1) : null;
+  return { lastDay, distinctDays: distinct, days, ...r?.herdou === true ? { herdou: true } : {} };
+}
+__name(normalizarFio, "normalizarFio");
+function firmarFio(fio, day2) {
+  const f = normalizarFio(fio);
+  if (f.days.includes(day2)) return f;
+  const corte = numDia(day2) - FIO_DIAS_GUARDADOS;
+  const days = [...f.days, day2].filter((d) => numDia(d) > corte).sort();
+  return {
+    lastDay: f.lastDay && f.lastDay > day2 ? f.lastDay : day2,
+    distinctDays: f.distinctDays + FIO_PER_MEMBER_DAY,
+    days,
+    ...f.herdou ? { herdou: true } : {}
+  };
+}
+__name(firmarFio, "firmarFio");
+async function lerFio(env, gid, save) {
+  const raw = await kvOrThrow(env).get(coopFioKey(gid, save));
+  if (!raw) return null;
+  try {
+    return normalizarFio(JSON.parse(raw));
+  } catch {
+    return null;
+  }
+}
+__name(lerFio, "lerFio");
+var prazoDoGrupo = /* @__PURE__ */ __name((g) => Number(g?.bosqueProgress ?? 0) > 0 ? {} : { expirationTtl: COOP_TTL }, "prazoDoGrupo");
+async function gravarFio(env, g, save, fio) {
+  await kvOrThrow(env).put(coopFioKey(g.id, save), JSON.stringify(fio), prazoDoGrupo(g));
+}
+__name(gravarFio, "gravarFio");
+function bosqueStageFor(progress) {
+  const p = Number(progress) || 0;
+  const stageIndex = BOSQUE_THRESHOLDS.filter((t) => p >= t).length;
+  const stage = stageIndex > 0 ? BOSQUE_STAGES[stageIndex - 1] : null;
+  let perto = false;
+  if (stageIndex < BOSQUE_THRESHOLDS.length) {
+    const prev = stageIndex > 0 ? BOSQUE_THRESHOLDS[stageIndex - 1] : 0;
+    const next = BOSQUE_THRESHOLDS[stageIndex];
+    perto = p > prev && next - p <= BOSQUE_PERTO_FRACAO * (next - prev);
+  }
+  return { stage, stageIndex, perto };
+}
+__name(bosqueStageFor, "bosqueStageFor");
+function ehViajante(g, save, fio, day2) {
+  const ref = fio?.lastDay ?? g.desde?.[save] ?? null;
+  if (!ref) return false;
+  return numDia(day2) - numDia(ref) >= TRAVELER_AFTER_WEEKS * 7;
+}
+__name(ehViajante, "ehViajante");
+function membrosAtivos(g, fios, day2) {
+  return g.members.filter((m) => !ehViajante(g, m, fios[m], day2));
+}
+__name(membrosAtivos, "membrosAtivos");
+var SEGUNDA_ZERO = numDia("1970-01-05");
+function mareDe(day2) {
+  return `T${Math.floor((numDia(day2) - SEGUNDA_ZERO) / (7 * GUILD_TIDE_WEEKS))}`;
+}
+__name(mareDe, "mareDe");
+function tamanhoDaFloracao(bloom) {
+  const b = Number(bloom) || 0;
+  if (b <= 0) return null;
+  if (b >= TIDE_BLOOM_TARGET) return "floracao";
+  if (b >= TIDE_COROLLA_AT) return "corola";
+  return "petala";
+}
+__name(tamanhoDaFloracao, "tamanhoDaFloracao");
+function colherMare(g, day2) {
+  const atual = mareDe(day2);
+  const p = Number(g.bosqueProgress ?? 0);
+  if (!g.tideKey) {
+    g.tideKey = atual;
+    g.tideBase = p;
+    return true;
+  }
+  if (g.tideKey === atual) return false;
+  const size = tamanhoDaFloracao(p - Number(g.tideBase ?? 0));
+  if (size) g.ornaments = [...Array.isArray(g.ornaments) ? g.ornaments : [], { tide: g.tideKey, size, day: day2 }];
+  g.tideKey = atual;
+  g.tideBase = p;
+  return true;
+}
+__name(colherMare, "colherMare");
+function avulsosDoDia(v) {
+  if (Array.isArray(v)) return [...new Set(v.filter((x) => typeof x === "string"))];
+  const k = Math.max(0, Math.floor(Number(v ?? 0)) || 0);
+  return Array.from({ length: k }, (_, i) => `#${i}`);
+}
+__name(avulsosDoDia, "avulsosDoDia");
+function fecharDiasDoBosque(g, fios, hoje, tags = {}) {
+  const tagDe = /* @__PURE__ */ __name((m) => tags[m] ?? m, "tagDe");
+  const alvo = numDia(hoje) - 1;
+  let mudou = false;
+  if (!g.progressDay) {
+    g.progressDay = diaDeNum(alvo);
+    mudou = true;
+  }
+  let d = Math.max(numDia(g.progressDay) + 1, alvo - FIO_DIAS_GUARDADOS + 1);
+  let p = Number(g.bosqueProgress ?? 0);
+  if (!Number.isFinite(p) || p < 0) p = 0;
+  for (; d <= alvo; d++) {
+    const dia = diaDeNum(d);
+    g.bosqueProgress = p;
+    colherMare(g, dia);
+    const avulsos = avulsosDoDia(g.fiosAvulsos?.[dia]);
+    const firmSet = /* @__PURE__ */ new Set([...avulsos, ...g.members.filter((m) => fios[m]?.days?.includes(dia)).map(tagDe)]);
+    const roda = /* @__PURE__ */ new Set([...firmSet, ...membrosAtivos(g, fios, dia).map(tagDe)]);
+    const n = roda.size;
+    const firmados = firmSet.size;
+    if (n > 0 && firmados > 0) p += Math.min(1, firmados / n);
+    g.progressDay = dia;
+    mudou = true;
+  }
+  if (numDia(g.progressDay) < alvo) {
+    g.progressDay = diaDeNum(alvo);
+    mudou = true;
+  }
+  g.bosqueProgress = Math.max(Number(g.bosqueProgress ?? 0), p);
+  if (colherMare(g, hoje)) mudou = true;
+  if (g.fiosAvulsos) {
+    for (const k of Object.keys(g.fiosAvulsos)) if (k <= g.progressDay) delete g.fiosAvulsos[k];
+  }
+  return mudou;
+}
+__name(fecharDiasDoBosque, "fecharDiasDoBosque");
+async function lerFiosDaRoda(env, g) {
+  const lidos = await Promise.all(g.members.map((m) => lerFio(env, g.id, m)));
+  return Object.fromEntries(g.members.map((m, i) => [m, lidos[i]]));
+}
+__name(lerFiosDaRoda, "lerFiosDaRoda");
+async function atualizarBosque(env, g, hoje, agora = /* @__PURE__ */ new Date(), fiosProntos = null) {
+  const utc = numDia(agora.toISOString().slice(0, 10));
+  hoje = diaDeNum(Math.min(numDia(hoje), utc - 1));
+  const fios = fiosProntos ?? await lerFiosDaRoda(env, g);
+  const teste = structuredClone(g);
+  if (!fecharDiasDoBosque(teste, fios, hoje)) return g;
+  const tags = Object.fromEntries(await Promise.all(g.members.map(async (m) => [m, await idOpacoDoMembro(env, g.id, m)])));
+  const fresco = await lerGrupo(env, g.id) ?? g;
+  if (fresco.progressDay && fresco.progressDay >= teste.progressDay && fresco.tideKey === teste.tideKey) {
+    return { ...fresco, weekKey: g.weekKey, checkins: g.checkins };
+  }
+  fecharDiasDoBosque(fresco, fios, hoje, tags);
+  await gravarGrupo(env, fresco);
+  return { ...fresco, weekKey: g.weekKey, checkins: g.checkins };
+}
+__name(atualizarBosque, "atualizarBosque");
+function semanasDeClaim(now = /* @__PURE__ */ new Date()) {
+  return Array.from({ length: CLAIM_WEEKS_VIVAS }, (_, k) => semanaDe(new Date(now.getTime() - k * 7 * DIA_MS)));
+}
+__name(semanasDeClaim, "semanasDeClaim");
+async function lerGestos(env, gid, save, day2) {
+  const raw = await kvOrThrow(env).get(coopGestKey(gid, save));
+  if (!raw) return [];
+  try {
+    const r = JSON.parse(raw);
+    return r && r.day === day2 && Array.isArray(r.kinds) ? r.kinds.filter((k) => GUILD_GESTURES.includes(k)) : [];
+  } catch {
+    return [];
+  }
+}
+__name(lerGestos, "lerGestos");
+async function apagarClaims(env, saveId, now = /* @__PURE__ */ new Date()) {
+  await Promise.all(semanasDeClaim(now).map((w) => kvOrThrow(env).delete(coopClaimKey(saveId, w))));
+  await Promise.all(semanasDeClaim(now).map((w) => kvOrThrow(env).delete(coopPartKey(saveId, w))));
+  await kvOrThrow(env).delete(coopDiasKey(saveId));
+  await kvOrThrow(env).delete(`coopShell:${saveId}`);
+  await kvOrThrow(env).delete(`coopScenes:${saveId}`);
+}
+__name(apagarClaims, "apagarClaims");
+var GUILD_MIN_RAID_MEMBERS = 3;
+var RAID_HP_PER_MEMBER = 45;
+var RAID_DMG_BASE = 10;
+var RAID_DMG_PER_POWER = 2;
+var RAID_DMG_JITTER = 0.2;
+var RAID_EMBLEMS = 4;
+var RAID_EMBLEMS_FLOOR = 2;
+var RAID_TROPHY_EVERY = 4;
+var RAID_TROPHY_ID = "trophy-concha-mare";
+var RAID_PHENOMENA = Object.freeze(["nevoa", "mare", "estatica", "enxame"]);
+var GUILD_SCENE_PREFIX = "bg-guild-";
+var COOP_HIT_TTL = 86400 * 21;
+var COOP_RAIDOK_TTL = 86400 * 60;
+var COOP_CLAIM_TTL = 86400 * 60;
+var coopRaidOkKey = /* @__PURE__ */ __name((gid, week) => `coopRaidOk:${gid}:${week}`, "coopRaidOkKey");
+var coopShellKey = /* @__PURE__ */ __name((save) => `coopShell:${save}`, "coopShellKey");
+var coopScenesKey = /* @__PURE__ */ __name((save) => `coopScenes:${save}`, "coopScenesKey");
+function raidHpFor(ativos) {
+  const n = Math.max(0, Math.floor(Number(ativos) || 0));
+  return Math.max(n, GUILD_MIN_RAID_MEMBERS) * RAID_HP_PER_MEMBER;
+}
+__name(raidHpFor, "raidHpFor");
+function raidDamageFor(power, u = sorteio()) {
+  const p = Math.min(5, Math.max(1, Math.floor(Number(power) || 1)));
+  const base = RAID_DMG_BASE + RAID_DMG_PER_POWER * p;
+  const f = 1 - RAID_DMG_JITTER + 2 * RAID_DMG_JITTER * Math.min(Math.max(Number(u) || 0, 0), 0.999999);
+  return Math.max(1, Math.round(base * f));
+}
+__name(raidDamageFor, "raidDamageFor");
+function sorteio() {
+  return crypto.getRandomValues(new Uint32Array(1))[0] / 2 ** 32;
+}
+__name(sorteio, "sorteio");
+function fenomenoDaSemana(week) {
+  const m = /^(\d{4})-W(\d{2})$/.exec(String(week));
+  const n = m ? Number(m[1]) * 53 + Number(m[2]) : 0;
+  return RAID_PHENOMENA[n % RAID_PHENOMENA.length];
+}
+__name(fenomenoDaSemana, "fenomenoDaSemana");
+function ultimoDiaDaSemana(day2) {
+  const n = numDia(day2);
+  const dow = (n - SEGUNDA_ZERO) % 7;
+  return diaDeNum(n - dow + 6);
+}
+__name(ultimoDiaDaSemana, "ultimoDiaDaSemana");
+function normalizarGolpes(r, week) {
+  if (!r || r.week && r.week !== week) return { week, days: [], dmg: 0 };
+  const days = Array.isArray(r.days) ? r.days.filter((d) => typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d)) : [];
+  const dmg = Number.isFinite(r.dmg) && r.dmg > 0 ? Math.floor(r.dmg) : 0;
+  return { week, days, dmg };
+}
+__name(normalizarGolpes, "normalizarGolpes");
+async function lerGolpes(env, gid, week, save) {
+  const raw = await kvOrThrow(env).get(coopHitKey(gid, week, save));
+  if (!raw) return normalizarGolpes(null, week);
+  try {
+    return normalizarGolpes(JSON.parse(raw), week);
+  } catch {
+    return normalizarGolpes(null, week);
+  }
+}
+__name(lerGolpes, "lerGolpes");
+async function lerRaidOk(env, gid, week) {
+  const raw = await kvOrThrow(env).get(coopRaidOkKey(gid, week));
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) ?? { at: 0 };
+  } catch {
+    return { at: 0 };
+  }
+}
+__name(lerRaidOk, "lerRaidOk");
+async function resolverFeira(env, g, week, refDay, cartoes = null) {
+  const golpes = await Promise.all(g.members.map((m) => (cartoes && golpesDoCartao(cartoes[m], week)) ?? lerGolpes(env, g.id, week, m)));
+  const dmg = golpes.reduce((s, h) => s + h.dmg, 0);
+  const hitters = g.members.filter((_, i) => golpes[i].days.length > 0);
+  const fios = cartoes ? fiosDosCartoes(g, cartoes) : await lerFiosDaRoda(env, g);
+  const hp = raidHpFor(membrosAtivos(g, fios, refDay).length);
+  let cleared = !!await lerRaidOk(env, g.id, week);
+  if (!cleared && dmg >= hp) {
+    await kvOrThrow(env).put(coopRaidOkKey(g.id, week), JSON.stringify({ at: week, hp, members: g.members.length }), { expirationTtl: COOP_RAIDOK_TTL });
+    cleared = true;
+  }
+  return { week, cleared, hp, dmg, hitters };
+}
+__name(resolverFeira, "resolverFeira");
+var semanaAnterior = /* @__PURE__ */ __name((day2) => semanaDoDia(diaDeNum(numDia(day2) - 7)), "semanaAnterior");
+function cenariosAte(stageIndex) {
+  return BOSQUE_STAGES.slice(0, Math.max(0, Math.min(BOSQUE_STAGES.length, stageIndex))).map((s) => GUILD_SCENE_PREFIX + s);
+}
+__name(cenariosAte, "cenariosAte");
+async function lerConjunto(env, key) {
+  const raw = await kvOrThrow(env).get(key);
+  try {
+    const r = raw ? JSON.parse(raw) : null;
+    return Array.isArray(r?.ids) ? r.ids.filter((x) => typeof x === "string") : [];
+  } catch {
+    return [];
+  }
+}
+__name(lerConjunto, "lerConjunto");
+async function unirConjunto(env, key, novos) {
+  const atual = await lerConjunto(env, key);
+  const uniao = [.../* @__PURE__ */ new Set([...atual, ...novos])].sort();
+  if (uniao.length !== atual.length) await kvOrThrow(env).put(key, JSON.stringify({ ids: uniao }));
+  return uniao;
+}
+__name(unirConjunto, "unirConjunto");
+var coopMemKey = /* @__PURE__ */ __name((gid, save) => `coopMem:${gid}:${save}`, "coopMemKey");
+function semanasDoCartao(now = /* @__PURE__ */ new Date()) {
+  const t = now.getTime();
+  return [...new Set([-8, -7, -6, -1, 0, 1].map((k) => semanaDe(new Date(t + k * DIA_MS))))].sort();
+}
+__name(semanasDoCartao, "semanasDoCartao");
+var parse = /* @__PURE__ */ __name((raw) => {
+  try {
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}, "parse");
+async function montarCartao(env, gid, save, now = /* @__PURE__ */ new Date()) {
+  const semanas = semanasDoCartao(now);
+  const kvs = kvOrThrow(env);
+  const [ck, fio, gest, perfil, ...hits] = await Promise.all([
+    kvs.get(coopCkKey(gid, save)).then(parse),
+    lerFio(env, gid, save),
+    kvs.get(coopGestKey(gid, save)).then(parse),
+    kvs.get(`profile:${save}`).then(parse),
+    ...semanas.map((w) => lerGolpes(env, gid, w, save))
+  ]);
+  return {
+    v: 1,
+    name: typeof perfil?.name === "string" ? perfil.name : null,
+    ck: ck && typeof ck === "object" ? { weekKey: ck.weekKey, days: Array.isArray(ck.days) ? ck.days : [] } : null,
+    fio,
+    gest: gest && typeof gest === "object" ? { day: gest.day, kinds: Array.isArray(gest.kinds) ? gest.kinds : [] } : null,
+    hits: Object.fromEntries(semanas.map((w, i) => [w, { days: hits[i].days, dmg: hits[i].dmg }]))
+  };
+}
+__name(montarCartao, "montarCartao");
+async function renovarCartao(env, gid, save, now = /* @__PURE__ */ new Date()) {
+  const c = await montarCartao(env, gid, save, now);
+  await kvOrThrow(env).put(coopMemKey(gid, save), JSON.stringify(c), { expirationTtl: COOP_TTL });
+  return c;
+}
+__name(renovarCartao, "renovarCartao");
+async function lerCartoes(env, g, now = /* @__PURE__ */ new Date(), ja = {}) {
+  const faltam = g.members.filter((m) => !ja[m]);
+  const raws = await Promise.all(faltam.map((m) => kvOrThrow(env).get(coopMemKey(g.id, m))));
+  const lidos = await Promise.all(faltam.map(async (m, i) => {
+    const c = parse(raws[i]);
+    return [m, c && c.v === 1 ? c : await montarCartao(env, g.id, m, now)];
+  }));
+  return { ...ja, ...Object.fromEntries(lidos) };
+}
+__name(lerCartoes, "lerCartoes");
+var checkinsDoCartao = /* @__PURE__ */ __name((c, semana) => c?.ck && c.ck.weekKey === semana ? c.ck.days : [], "checkinsDoCartao");
+var gestosDoCartao = /* @__PURE__ */ __name((c, day2) => c?.gest && c.gest.day === day2 ? c.gest.kinds.filter((k) => GUILD_GESTURES.includes(k)) : [], "gestosDoCartao");
+var fioDoCartao = /* @__PURE__ */ __name((c) => c?.fio ? normalizarFio(c.fio) : null, "fioDoCartao");
+function golpesDoCartao(c, week) {
+  const hits = c?.hits && typeof c.hits === "object" ? c.hits : null;
+  if (!hits) return null;
+  if (Object.prototype.hasOwnProperty.call(hits, week)) return normalizarGolpes({ week, ...hits[week] }, week);
+  const semanas = Object.keys(hits).sort();
+  if (semanas.length && week > semanas[semanas.length - 1]) return normalizarGolpes(null, week);
+  return null;
+}
+__name(golpesDoCartao, "golpesDoCartao");
+var fiosDosCartoes = /* @__PURE__ */ __name((g, cartoes) => Object.fromEntries(g.members.map((m) => [m, fioDoCartao(cartoes[m])])), "fiosDosCartoes");
+var coopPartKey = /* @__PURE__ */ __name((save, week) => `coopPart:${save}:${week}`, "coopPartKey");
+var coopDiasKey = /* @__PURE__ */ __name((save) => `coopDias:${save}`, "coopDiasKey");
+async function marcarParticipacao(env, gid, save, week, day2) {
+  await kvOrThrow(env).put(coopPartKey(save, week), JSON.stringify({ gid, day: day2 }), { expirationTtl: COOP_CLAIM_TTL });
+}
+__name(marcarParticipacao, "marcarParticipacao");
+async function lerParticipacao(env, save, week) {
+  const r = parse(await kvOrThrow(env).get(coopPartKey(save, week)));
+  return r && typeof r.gid === "string" && typeof r.day === "string" ? r : null;
+}
+__name(lerParticipacao, "lerParticipacao");
+async function guardarParticipacao(env, g, save, now = /* @__PURE__ */ new Date()) {
+  const semanas = [0, 1, 2, 3].map((k) => semanaDe(new Date(now.getTime() - k * 7 * DIA_MS)));
+  const hoje = now.toISOString().slice(0, 10);
+  for (const w of semanas) {
+    const meus = await lerGolpes(env, g.id, w, save);
+    if (meus.days.length === 0) continue;
+    const ref = w === semanaDoDia(hoje) ? hoje : ultimoDiaDaSemana(meus.days[0]);
+    await resolverFeira(env, g, w, ref);
+    await marcarParticipacao(env, g.id, save, w, meus.days[0]);
+  }
+}
+__name(guardarParticipacao, "guardarParticipacao");
+async function lerDiasCarregados(env, save) {
+  const r = parse(await kvOrThrow(env).get(coopDiasKey(save)));
+  const days = Array.isArray(r?.days) ? r.days.filter((d) => typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d)) : [];
+  const n = Number.isFinite(r?.n) ? Math.max(0, Math.floor(r.n)) : 0;
+  return { n, days };
+}
+__name(lerDiasCarregados, "lerDiasCarregados");
+function fioInicialHerdado(carregado, day2) {
+  const c = carregado ?? { n: 0, days: [] };
+  if (!(c.n > 0)) return null;
+  const f = firmarFio({ lastDay: null, distinctDays: c.n, days: [], herdou: true }, day2);
+  if (c.days.includes(day2)) f.distinctDays -= FIO_PER_MEMBER_DAY;
+  return f;
+}
+__name(fioInicialHerdado, "fioInicialHerdado");
+async function guardarDiasDistintos(env, save, fio) {
+  if (!fio || !(fio.distinctDays > 0)) return;
+  const c = await lerDiasCarregados(env, save);
+  const f = normalizarFio(fio);
+  const total = f.herdou ? f.distinctDays : c.n + f.distinctDays;
+  const n = Math.max(c.n, total);
+  const days = [.../* @__PURE__ */ new Set([...c.days, ...f.days])].sort().slice(-FIO_DIAS_GUARDADOS);
+  await kvOrThrow(env).put(coopDiasKey(save), JSON.stringify({ n, days }));
+}
+__name(guardarDiasDistintos, "guardarDiasDistintos");
 
 // api/account.js
 var CORS = {
@@ -926,13 +1540,55 @@ async function collect(env, saveId) {
   const pidIndexed = await store.get(`pid:${pid}`) === saveId;
   const sprites = await collectSprites(env, saveId);
   let coopGroupId = null;
+  let coopExport = null;
   try {
-    coopGroupId = (await grupoDe(env, saveId))?.id ?? null;
+    const g = await grupoDe(env, saveId);
+    coopGroupId = g?.id ?? null;
+    if (g) {
+      const ckRaw = await store.get(coopCkKey(g.id, saveId));
+      let ck = null;
+      try {
+        ck = ckRaw ? JSON.parse(ckRaw) : null;
+      } catch {
+        ck = null;
+      }
+      const fio = await lerFio(env, g.id, saveId);
+      coopExport = {
+        [coopOfKey(saveId)]: g.id,
+        [coopCkKey(g.id, saveId)]: ck,
+        [coopFioKey(g.id, saveId)]: fio,
+        // Nome e papel; NENHUM saveId ou nome de outro membro (dado de terceiro).
+        grupo: {
+          id: g.id,
+          name: g.name,
+          joinedAs: g.hostSave === saveId ? "host" : "member",
+          myDistinctDays: fio?.distinctDays ?? 0,
+          myLastThreadDay: fio?.lastDay ?? null,
+          // A Feira (WPG-4): só os PRÓPRIOS dias de golpe desta semana — nunca
+          // o dano (número que nem o titular vê no app) nem o de outro membro.
+          myHitsThisWeek: (await lerGolpes(env, g.id, semanaDe(), saveId)).days
+        }
+      };
+    }
   } catch {
     coopGroupId = null;
+    coopExport = null;
+  }
+  try {
+    const claimedWeeks = [];
+    for (const w of semanasDeClaim()) if (await store.get(coopClaimKey(saveId, w))) claimedWeeks.push(w);
+    const guildScenes = await lerConjunto(env, coopScenesKey(saveId));
+    const shellWeeks = await lerConjunto(env, coopShellKey(saveId));
+    const raidWeeks = [];
+    for (const w of semanasDeClaim()) if (await store.get(coopPartKey(saveId, w))) raidWeeks.push(w);
+    const carriedThreadDays = (await lerDiasCarregados(env, saveId)).n;
+    if (claimedWeeks.length || guildScenes.length || shellWeeks.length || raidWeeks.length || carriedThreadDays) {
+      coopExport = { ...coopExport ?? {}, recompensas: { claimedWeeks, guildScenes, shellWeeks, raidWeeks, carriedThreadDays } };
+    }
+  } catch {
   }
   const steamLicenseKeys = steamLicenseKeysOf(entitlement);
-  return { pid, state, profile, gifts, entitlement, ranks, rankKeys, pidIndexed, sprites, coopGroupId, steamLicenseKeys };
+  return { pid, state, profile, gifts, entitlement, ranks, rankKeys, pidIndexed, sprites, coopGroupId, coopExport, steamLicenseKeys };
 }
 __name(collect, "collect");
 async function pidDeAmigo(env, friendSaveId) {
@@ -981,7 +1637,9 @@ async function handleExport(env, saveId) {
       // Só as CHAVES: o binário sai pela própria URL (`/api/sprite-image?k=`),
       // que o save já carrega em `soulmonStages`. Listar aqui é o que deixa a
       // exportação conferível contra o inventário da exclusão.
-      sprites: [...c.sprites.imgs, ...c.sprites.locks, ...c.sprites.blobs]
+      sprites: [...c.sprites.imgs, ...c.sprites.locks, ...c.sprites.blobs],
+      // Grupo/Guilda: ponteiro, os próprios check-ins e nome+papel (D-4).
+      coop: c.coopExport
     },
     naoIncluido: NOT_INCLUDED
   });
@@ -1000,7 +1658,8 @@ function plan(c, saveId) {
       ...c.sprites.blobs,
       "men\xE7\xF5es a voc\xEA na lista de amigos de outros jogadores",
       "inscri\xE7\xF5es de notifica\xE7\xE3o (push:*/fcm:*) ligadas \xE0 sua conta",
-      ...c.coopGroupId ? [`coop:${c.coopGroupId} (sua vaga no grupo)`, coopOfKey(saveId), coopCkKey(c.coopGroupId, saveId)] : [],
+      ...c.coopGroupId ? [`coop:${c.coopGroupId} (sua vaga no grupo)`, coopOfKey(saveId), coopCkKey(c.coopGroupId, saveId), coopFioKey(c.coopGroupId, saveId), coopMemKey(c.coopGroupId, saveId)] : [],
+      "resgates da Guilda (coopClaim:*) e rodadas da Feira (coopHit:*) da guilda atual \u2014 os de guildas de onde voc\xEA j\xE1 saiu foram apagados na sa\xEDda; se sobrou algum sem v\xEDnculo, ele expira sozinho em at\xE9 21 dias. Os fios que voc\xEA j\xE1 firmou ficam no Bosque, an\xF4nimos",
       // #54: o vínculo SteamID ↔ conta. ⚰️ Até 22/09/2026 estas chaves apareciam
       // em `sobrevive` (5 anos, justificativa fiscal que não se aplica a licença).
       ...c.steamLicenseKeys
@@ -1087,8 +1746,9 @@ async function handleDeleteConfirm(env, saveId, body) {
   }, "tentar");
   let coop = { left: false, groupId: null, remaining: 0 };
   await tentar("coop (grupo cooperativo)", async () => {
-    coop = await coopLeave(env, saveId);
+    coop = await coopLeave(env, saveId, { exclusao: true });
   });
+  await tentar("coopClaim (resgates da Guilda)", () => apagarClaims(env, saveId));
   const push = await deletePushSubscriptions(env, saveId);
   for (const k of c.sprites.blobs) await tentar(k, () => store.delete(k));
   for (const k of c.sprites.imgs) await tentar(k, () => store.delete(k));
@@ -1527,6 +2187,52 @@ async function onRequestPost({ request, env }) {
 }
 __name(onRequestPost, "onRequestPost");
 
+// api/_branchLegacy.js
+var NEW_TO_OLD = { power: "virus", harmony: "data", benevolence: "vaccine" };
+function legacyFormIdOf(formId) {
+  if (typeof formId !== "string") return null;
+  const m = /^(champion|ultimate|mega)-(power|harmony|benevolence)$/.exec(formId);
+  return m ? `${m[1]}-${NEW_TO_OLD[m[2]]}` : null;
+}
+__name(legacyFormIdOf, "legacyFormIdOf");
+
+// api/_admin.js
+var ADMIN_AI_CAP_MULTIPLIER = 3;
+var ADMIN_SPRITE_MONTHLY_CAP = 40;
+var ADMIN_CREDITS_DISPLAY = 999999;
+function parseAdminEmails(raw) {
+  if (typeof raw !== "string") return /* @__PURE__ */ new Set();
+  return new Set(raw.split(/[\s,;]+/).map(normalizeEmail).filter((e) => e.includes("@")));
+}
+__name(parseAdminEmails, "parseAdminEmails");
+function isAdminEmail(env, email) {
+  if (typeof email !== "string" || !email) return false;
+  return parseAdminEmails(env?.ADMIN_EMAILS).has(normalizeEmail(email));
+}
+__name(isAdminEmail, "isAdminEmail");
+async function verifiedAdmin(env, request, saveId) {
+  try {
+    const projectId = env?.FIREBASE_PROJECT_ID;
+    if (!projectId) return { admin: false };
+    if (parseAdminEmails(env?.ADMIN_EMAILS).size === 0) return { admin: false };
+    const claims = await verifyIdToken(bearerToken(request), projectId);
+    if (!claims || !isAdminEmail(env, claims.email)) return { admin: false };
+    if (saveId !== void 0 && await emailToSaveId(claims.email) !== saveId) return { admin: false };
+    return { admin: true };
+  } catch {
+    return { admin: false };
+  }
+}
+__name(verifiedAdmin, "verifiedAdmin");
+function adminPublicView(view) {
+  return { ...view, tier: "paid", credits: ADMIN_CREDITS_DISPLAY, admin: true };
+}
+__name(adminPublicView, "adminPublicView");
+function logAdminSession(route) {
+  console.log(JSON.stringify({ event: "admin_session", route }));
+}
+__name(logAdminSession, "logAdminSession");
+
 // api/_aiGuard.js
 var AI_LIMITS = {
   // `perAccountByTier` sobrepõe `perAccount` quando o tier da conta está na
@@ -1602,11 +2308,21 @@ function lifetimeUsed(ent, bucket) {
   return n;
 }
 __name(lifetimeUsed, "lifetimeUsed");
-var VALID_FORM_ID = /^(?:rookie|ultra|(?:champion|ultimate|mega)-(?:virus|data|vaccine))$/;
+var VALID_FORM_ID = /^(?:rookie|ultra|(?:champion|ultimate|mega)-(?:power|harmony|benevolence))$/;
+function foldLegacyForm(aiForms, formId) {
+  const out = { ...aiForms || {} };
+  const antigo = legacyFormIdOf(formId);
+  if (antigo) delete out[antigo];
+  return out;
+}
+__name(foldLegacyForm, "foldLegacyForm");
 function formUsed(ent, formId) {
   const n = Number(ent?.aiForms?.[formId] ?? 0);
   if (!Number.isFinite(n) || n < 0) throw new Error("contador por forma ileg\xEDvel");
-  return n;
+  const antigo = legacyFormIdOf(formId);
+  const m = antigo ? Number(ent?.aiForms?.[antigo] ?? 0) : 0;
+  if (!Number.isFinite(m) || m < 0) throw new Error("contador por forma ileg\xEDvel");
+  return n + m;
 }
 __name(formUsed, "formUsed");
 async function guardAiRequest(request, env, bucket, saveId, units = 1, formId = null) {
@@ -1620,6 +2336,12 @@ async function guardAiRequest(request, env, bucket, saveId, units = 1, formId = 
   if (!auth.ok) {
     return { ok: false, status: authStatus(auth), reason: auth.reason };
   }
+  const isAdmin = (bucket === "sprite" || !!limits.perAccountByTier) && (await verifiedAdmin(env, request, saveId)).admin;
+  const adminMul = bucket === "sprite" && isAdmin ? ADMIN_AI_CAP_MULTIPLIER : 1;
+  const adminSub = bucket === "sprite" && isAdmin;
+  const adminKey = adminSub ? `ai:sprite:@admin:${month(/* @__PURE__ */ new Date())}` : null;
+  const capLifetime = (limits.perAccountLifetime ?? 0) * adminMul;
+  const capForm = (limits.perFormLifetime ?? 0) * adminMul;
   const now = /* @__PURE__ */ new Date();
   const today3 = day(now);
   const thisMonth = month(now);
@@ -1637,11 +2359,12 @@ async function guardAiRequest(request, env, bucket, saveId, units = 1, formId = 
   const hasFormCap = typeof limits.perFormLifetime === "number" && typeof formId === "string" && formId.length > 0;
   const hasTierCap = !!limits.perAccountByTier;
   let ent = null;
-  let perAccount = limits.perAccount;
+  let perAccount = limits.perAccount * adminMul;
   let usedLifetime = 0;
   let usedForm = 0;
   let usedGlobal = 0;
   let usedAccount = 0;
+  let usedAdminMonth = 0;
   try {
     if (hasLifetime || hasFormCap || hasTierCap) {
       ent = await readEntitlement(env, saveId);
@@ -1649,23 +2372,30 @@ async function guardAiRequest(request, env, bucket, saveId, units = 1, formId = 
       if (hasFormCap) usedForm = formUsed(ent, formId);
       if (hasTierCap) {
         const porTier = limits.perAccountByTier[ent?.tier];
-        if (typeof porTier === "number") perAccount = porTier;
+        const tierDoLimite = isAdmin ? "paid" : ent?.tier;
+        const cota = limits.perAccountByTier[tierDoLimite];
+        if (typeof cota === "number") perAccount = cota * adminMul;
+        else if (typeof porTier === "number") perAccount = porTier * adminMul;
       }
     }
     usedGlobal = await readCounter(env, globalKey);
     usedAccount = await readCounter(env, accountKey);
+    if (adminKey) usedAdminMonth = await readCounter(env, adminKey);
   } catch (err) {
     console.error("aiGuard: contador ileg\xEDvel, recusando", err?.message);
     return refuse(503, "ai-quota-unavailable");
   }
-  if (hasLifetime && usedLifetime + units > limits.perAccountLifetime) {
+  if (hasLifetime && usedLifetime + units > capLifetime) {
     return refuse(402, "sprite-lifetime-cap");
   }
-  if (hasFormCap && usedForm + units > limits.perFormLifetime) {
+  if (hasFormCap && usedForm + units > capForm) {
     return refuse(409, "sprite-form-cap");
   }
   if (usedAccount + units > perAccount) {
     return refuse(429, "ai-daily-limit");
+  }
+  if (adminKey && usedAdminMonth + units > ADMIN_SPRITE_MONTHLY_CAP) {
+    return refuse(503, "ai-monthly-budget-reached");
   }
   if (usedGlobal + units > globalLimit) {
     return refuse(503, usesMonth ? "ai-monthly-budget-reached" : "ai-daily-budget-reached");
@@ -1673,16 +2403,17 @@ async function guardAiRequest(request, env, bucket, saveId, units = 1, formId = 
   try {
     if (hasLifetime || hasFormCap) {
       if (hasLifetime) ent.aiLifetime = { ...ent.aiLifetime || {}, [bucket]: usedLifetime + units };
-      if (hasFormCap) ent.aiForms = { ...ent.aiForms || {}, [formId]: usedForm + units };
+      if (hasFormCap) ent.aiForms = { ...foldLegacyForm(ent.aiForms, formId), [formId]: usedForm + units };
       await writeEntitlement(env, saveId, ent);
     }
     await kvOrThrow(env).put(globalKey, String(usedGlobal + units), { expirationTtl: globalTtl });
     await kvOrThrow(env).put(accountKey, String(usedAccount + units), { expirationTtl: TTL_SECONDS });
+    if (adminKey) await kvOrThrow(env).put(adminKey, String(usedAdminMonth + units), { expirationTtl: MONTH_TTL_SECONDS });
   } catch (err) {
     console.error("aiGuard: falha ao debitar cota, recusando", err?.message);
     return refuse(503, "ai-quota-unavailable");
   }
-  return { ok: true, release: makeRelease(env, { saveId, bucket, units, formId, hasLifetime, hasFormCap, globalKey, globalTtl, accountKey }) };
+  return { ok: true, release: makeRelease(env, { saveId, bucket, units, formId, hasLifetime, hasFormCap, globalKey, globalTtl, accountKey, adminKey }) };
 }
 __name(guardAiRequest, "guardAiRequest");
 function makeRelease(env, ctx) {
@@ -1690,18 +2421,19 @@ function makeRelease(env, ctx) {
   return /* @__PURE__ */ __name(async function release(motivo) {
     if (devolvida) return;
     devolvida = true;
-    const { saveId, bucket, units, formId, hasLifetime, hasFormCap, globalKey, globalTtl, accountKey } = ctx;
+    const { saveId, bucket, units, formId, hasLifetime, hasFormCap, globalKey, globalTtl, accountKey, adminKey } = ctx;
     const menos = /* @__PURE__ */ __name((n) => Math.max(0, n - units), "menos");
     try {
       if (hasLifetime || hasFormCap) {
         const ent = await readEntitlement(env, saveId);
         if (hasLifetime) ent.aiLifetime = { ...ent.aiLifetime || {}, [bucket]: menos(lifetimeUsed(ent, bucket)) };
-        if (hasFormCap) ent.aiForms = { ...ent.aiForms || {}, [formId]: menos(formUsed(ent, formId)) };
+        if (hasFormCap) ent.aiForms = { ...foldLegacyForm(ent.aiForms, formId), [formId]: menos(formUsed(ent, formId)) };
         await writeEntitlement(env, saveId, ent);
       }
       const [g, a] = [await readCounter(env, globalKey), await readCounter(env, accountKey)];
       await kvOrThrow(env).put(globalKey, String(menos(g)), { expirationTtl: globalTtl });
       await kvOrThrow(env).put(accountKey, String(menos(a)), { expirationTtl: TTL_SECONDS });
+      if (adminKey) await kvOrThrow(env).put(adminKey, String(menos(await readCounter(env, adminKey))), { expirationTtl: MONTH_TTL_SECONDS });
       console.warn(`aiGuard: ${units} unidade(s) devolvida(s) em ${bucket}/${formId ?? "-"} \u2014 ${motivo}`);
     } catch (err) {
       console.error("aiGuard: falha ao devolver cota reservada", err?.message);
@@ -1709,63 +2441,6 @@ function makeRelease(env, ctx) {
   }, "release");
 }
 __name(makeRelease, "makeRelease");
-
-// api/_redact.js
-var DATE_RECENT_YEARS = 5;
-var YEAR_OR_HOUR = /^(?:[01]\d\d\d|2[0-3]\d\d)$/;
-var RULES = [
-  { kind: "email", re: /[\w.+-]+@[\w-]+\.[\w.-]+/g, tag: "[email]" },
-  { kind: "url", re: /\b(?:https?:\/\/|www\.)\S+/gi, tag: "[link]" },
-  { kind: "cpf", re: /\b\d{3}\.\d{3}\.\d{3}-\d{2}\b/g, tag: "[documento]" },
-  { kind: "cnpj", re: /\b\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}\b/g, tag: "[documento]" },
-  { kind: "phone", re: /(?:\+?\d{1,3}[\s.-]?)?(?:\(\d{2,3}\)[\s.-]?|\b\d{2,3}[\s.-])\d{4,5}[\s.-]?\d{4}\b/g, tag: "[telefone]" },
-  // QA rodada 1 (achado 06 §6.1, baixo): três quase-identificadores que
-  // passavam inteiros. CEP e data ANTES do celular curto — `12345-678` e
-  // `21/09/1990` não podem ser mastigados pela metade por outra regra.
-  //  · CEP `12345-678`: sozinho localiza um quarteirão; junto com o resto da
-  //    frase, uma pessoa.
-  //  · data `dd/mm/aaaa`: no texto livre de um app deste tipo é, quase sempre,
-  //    a data de nascimento — o mesmo dado que `soulmon-profile` guarda só no
-  //    aparelho de propósito.
-  //  · celular SEM DDD (8 ou 9 dígitos, `98765-4321`/`987654321`/`3456-7890`):
-  //    a regra de telefone exigia DDD e a de "sequência longa" exigia ≥ 11
-  //    dígitos, então o número mais comum de se digitar caía no vão. O 9 no
-  //    início é opcional para não deixar fixo passar; 8 dígitos contíguos
-  //    (`20260921`) também caem aqui — quase-identificador de qualquer jeito.
-  { kind: "cep", re: /\b\d{5}-\d{3}\b/g, tag: "[cep]" },
-  // QA rodada 2 (`01-seguranca-r2` §7): as duas regras de baixo marcavam
-  // faixa de ano (`2020-2024`), horário (`1000-1200`), qualquer data recente
-  // e `20260921` como identificador — e o texto útil da meta chegava ao
-  // modelo mastigado. Data só é quase-identificador quando é ANTIGA (nascimento,
-  // não "até 31/12/2026"); telefone curto exige SEPARADOR e não pode ser um
-  // par de anos/horas. O preço declarado: 9 dígitos contíguos sem separador
-  // (`987654321`) passam a passar — a regra de DDD e a de "sequência longa"
-  // continuam pegando o formato completo.
-  { kind: "date", re: /\b(\d{2})\/(\d{2})\/(\d{4})\b/g, tag: "[data]", keep: /* @__PURE__ */ __name((_m, _d, _mo, y) => Number(y) >= (/* @__PURE__ */ new Date()).getUTCFullYear() - DATE_RECENT_YEARS, "keep") },
-  { kind: "phone", re: /\b(9?\d{4})[\s.-](\d{4})\b/g, tag: "[telefone]", keep: /* @__PURE__ */ __name((_m, a, b) => YEAR_OR_HOUR.test(a) && YEAR_OR_HOUR.test(b), "keep") },
-  { kind: "digits", re: /\b\d[\d\s.-]{9,}\d\b/g, tag: "[n\xFAmero]" },
-  { kind: "handle", re: /(^|\s)@[A-Za-z0-9_.]{2,}/g, tag: "$1[perfil]" }
-];
-function minimizeForAi(input, maxLength = 500) {
-  const original = (input ?? "").toString();
-  let text = original;
-  const redactions = {};
-  for (const { kind, re, tag, keep } of RULES) {
-    text = text.replace(re, (match2, ...rest) => {
-      if (keep && keep(match2, ...rest)) return match2;
-      redactions[kind] = (redactions[kind] || 0) + 1;
-      return tag.includes("$1") ? `${rest[0] ?? ""}${tag.replace("$1", "")}` : tag;
-    });
-  }
-  const truncated = text.length > maxLength;
-  if (truncated) text = text.slice(0, maxLength);
-  return { text, redactions, truncated };
-}
-__name(minimizeForAi, "minimizeForAi");
-function redactionCount(redactions) {
-  return Object.values(redactions).reduce((a, b) => a + b, 0);
-}
-__name(redactionCount, "redactionCount");
 
 // api/chat.js
 var ABRE_ESTILO = "<<<USER_STYLE>>>";
@@ -1878,9 +2553,9 @@ function buildSystemPrompt({ petName, mood, evolutionStage, dominantBranch, lang
   const s = aiSettings || { tone: "casual", emojiIntensity: "medium", motivationStyle: "balanced", customKeywords: "", temperature: 0.85 };
   const ispt = language === "pt-BR";
   const branch = {
-    virus: { trait: "Creative, instinctive, full of chaotic energy. Loves challenges.", style: "Energetic and exclamatory. Spontaneous and rebellious.", emojis: "\u{1F525}\u26A1\u{1F608}\u{1F4A5}" },
-    data: { trait: "Intellectual, balanced, analytical. Appreciates knowledge.", style: "Calm and thoughtful. Logical and efficient.", emojis: "\u{1F4A1}\u{1F914}\u{1F4CA}\u{1F9E0}" },
-    vaccine: { trait: "Disciplined, empathetic, protective. Values order and care.", style: "Welcoming and encouraging. Ethical and trustworthy.", emojis: "\u{1F49A}\u{1F60A}\u{1F6E1}\uFE0F\u2728" },
+    power: { trait: "Creative, instinctive, full of chaotic energy. Loves challenges.", style: "Energetic and exclamatory. Spontaneous and rebellious.", emojis: "\u{1F525}\u26A1\u{1F608}\u{1F4A5}" },
+    harmony: { trait: "Intellectual, balanced, analytical. Appreciates knowledge.", style: "Calm and thoughtful. Logical and efficient.", emojis: "\u{1F4A1}\u{1F914}\u{1F4CA}\u{1F9E0}" },
+    benevolence: { trait: "Disciplined, empathetic, protective. Values order and care.", style: "Welcoming and encouraging. Ethical and trustworthy.", emojis: "\u{1F49A}\u{1F60A}\u{1F6E1}\uFE0F\u2728" },
     balanced: { trait: "Balanced and versatile.", style: "Friendly and adaptable.", emojis: "\u{1F60A}\u{1F44D}\u2728\u{1F31F}" }
   }[dominantBranch] || { trait: "", style: "", emojis: "" };
   const moodCtx = {
@@ -2037,7 +2712,7 @@ async function onRequestPost2({ request, env }) {
       else if (safeMessage.match(/friend|family|social/i)) category = "Social";
       else if (safeMessage.match(/clean|organi|plan/i)) category = "Discipline";
       else if (safeMessage.match(/health|doctor|medic/i)) category = "Health";
-      return Response.json({ response, action: { type: "create_activity", activity: { name: activityName, category, points: { virus: 0, data: 0, vaccine: 0 } } } }, { headers: CORS3 });
+      return Response.json({ response, action: { type: "create_activity", activity: { name: activityName, category, points: { power: 0, harmony: 0, benevolence: 0 } } } }, { headers: CORS3 });
     }
     return Response.json({ response }, { headers: CORS3 });
   } catch (err) {
@@ -2131,25 +2806,7 @@ async function bondLevelOf(env, saveId) {
 }
 __name(bondLevelOf, "bondLevelOf");
 
-// api/community.js
-var CORS4 = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  // `Authorization` é obrigatório nas 6 ações que passam por denyUnlessOwner.
-  // Ver comentário igual em save.js: sem isto o preflight cross-origin morre.
-  "Access-Control-Allow-Headers": "Content-Type, Authorization"
-};
-var VALID_ID2 = /^[a-zA-Z0-9_-]{8,64}$/;
-var MATCHES_PER_DAY = 5;
-var CLOSED_SEASON_TTL = 86400 * 400;
-var json3 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS4 }), "json");
-var HEAVY_ACTIONS = /* @__PURE__ */ new Set(["players", "opponents", "rank", "seasonResult"]);
-var HEAVY_LIMIT = { limit: 20, windowMs: 6e4 };
-var LIGHT_LIMIT = { limit: 120, windowMs: 6e4 };
-var CACHEABLE_ACTIONS = /* @__PURE__ */ new Set(["players", "rank", "seasonResult"]);
-var EDGE_TTL_SECONDS = 60;
-var today2 = /* @__PURE__ */ __name(() => (/* @__PURE__ */ new Date()).toISOString().slice(0, 10), "today");
-var currentSeason = /* @__PURE__ */ __name(() => (/* @__PURE__ */ new Date()).toISOString().slice(0, 7), "currentSeason");
+// api/_profile.js
 function stagePower(stage) {
   if (!stage) return 1;
   const p = String(stage).split("-")[0];
@@ -2181,9 +2838,427 @@ async function indexPublicId(env, saveId, pid) {
   await kvOrThrow(env).put(`${PID_PREFIX}${pid}`, saveId, { expirationTtl: 86400 * 400 });
 }
 __name(indexPublicId, "indexPublicId");
+async function getProfile(env, id) {
+  const raw = await kvOrThrow(env).get(`profile:${id}`);
+  return raw ? JSON.parse(raw) : null;
+}
+__name(getProfile, "getProfile");
+async function putProfile(env, id, profile) {
+  await kvOrThrow(env).put(`profile:${id}`, JSON.stringify(profile), { expirationTtl: 86400 * 365 });
+}
+__name(putProfile, "putProfile");
+
+// api/guild.js
+var CORS4 = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization"
+};
+var VALID_ID2 = /^[a-zA-Z0-9_-]{8,64}$/;
+var GUILD_LIGHT = { limit: 60, windowMs: 6e4 };
+var COOP_ALIASES = Object.freeze({
+  coop: "guild",
+  coopCreate: "guildCreate",
+  coopJoin: "guildJoin",
+  coopCheckin: "guildCheckin",
+  coopLeave: "guildLeave"
+});
+var GUILD_ACTIONS = Object.freeze({
+  guild: "GET",
+  guildCreate: "POST",
+  guildJoin: "POST",
+  guildCheckin: "POST",
+  guildThread: "POST",
+  guildGesture: "POST",
+  guildRaidHit: "POST",
+  guildRewards: "GET",
+  guildClaim: "POST",
+  guildLeave: "POST",
+  guildRename: "POST",
+  guildNewCode: "POST"
+});
+var limiteDaGuilda = /* @__PURE__ */ __name(() => GUILD_LIGHT, "limiteDaGuilda");
+async function onRequestOptions4() {
+  return new Response(null, { headers: CORS4 });
+}
+__name(onRequestOptions4, "onRequestOptions");
+async function onRequest2(context) {
+  const gate = takeToken("guild", clientKey(context.request), limiteDaGuilda());
+  if (!gate.ok) return tooManyRequests(gate.retryAfter, CORS4);
+  return handleGuild(context);
+}
+__name(onRequest2, "onRequest");
+async function reciboDoResgate(save, week) {
+  const h = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`soulmon-guild-claim|${save}|${week}`)));
+  return Array.from(h.slice(0, 8), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+__name(reciboDoResgate, "reciboDoResgate");
+var GESTO_TIPO_MIN_MEMBROS = 3;
+function semanaAindaAberta(week, agora = /* @__PURE__ */ new Date()) {
+  const hojeUtc = agora.toISOString().slice(0, 10);
+  if (semanaDoDia(hojeUtc) === week) return true;
+  const fim = ultimoDiaDaSemana(diaDeNum(numDia(hojeUtc) - 7));
+  if (semanaDoDia(fim) !== week) return false;
+  return agora.getTime() < Date.parse(`${fim}T00:00:00Z`) + 36 * 3600 * 1e3;
+}
+__name(semanaAindaAberta, "semanaAindaAberta");
+var anfitriaoDe = /* @__PURE__ */ __name((g) => g.hostSave ?? g.members[0] ?? null, "anfitriaoDe");
+async function vistaDaGuilda(env, g, euSave, hoje = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10), cartoesProntos = null) {
+  const semana = semanaDoDia(hoje);
+  const size = g.members.length;
+  const nominal = size <= PRESENCA_NOMINAL_MAX;
+  const cartoes = await lerCartoes(env, g, /* @__PURE__ */ new Date(), cartoesProntos ?? {});
+  const cart = g.members.map((m) => cartoes[m]);
+  const dias = cart.map((c, i) => {
+    const proprios = checkinsDoCartao(c, semana);
+    return proprios.length > 0 ? proprios : g.checkins?.[g.members[i]] || [];
+  });
+  const fios = cart.map(fioDoCartao);
+  const firmou = fios.map((f) => !!f?.days?.includes(hoje));
+  const veio = dias.map((d, i) => d.includes(hoje) || firmou[i]);
+  const membros = await Promise.all(g.members.map(async (m, i) => {
+    const memberId = await idOpacoDoMembro(env, g.id, m);
+    return {
+      id: memberId,
+      memberId,
+      name: cart[i]?.name ?? null,
+      euMesmo: m === euSave,
+      ...nominal && veio[i] ? { apareceuHoje: true } : {}
+    };
+  }));
+  const eu = g.members.indexOf(euSave);
+  const { stage, stageIndex, perto } = bosqueStageFor(g.bosqueProgress);
+  const bloom = tamanhoDaFloracao(Number(g.bosqueProgress ?? 0) - Number(g.tideBase ?? 0));
+  const gestos = cart.map((c) => gestosDoCartao(c, hoje));
+  const recebidos = new Set(gestos.flatMap((k, i) => g.members[i] === euSave ? [] : k));
+  const meuFio = eu >= 0 ? fios[eu] : null;
+  const feira = await resolverFeira(env, g, semana, hoje, cartoes);
+  const anterior = semanaAnterior(hoje);
+  const passada = await resolverFeira(env, g, anterior, ultimoDiaDaSemana(diaDeNum(numDia(hoje) - 7)), cartoes);
+  const meusGolpes = eu >= 0 ? golpesDoCartao(cart[eu], semana) ?? await lerGolpes(env, g.id, semana, euSave) : { days: [] };
+  return {
+    id: g.id,
+    name: g.name,
+    weekKey: semana,
+    code: g.code,
+    isHost: anfitriaoDe(g) === euSave,
+    size,
+    full: size >= COOP_MAX_MEMBERS,
+    members: membros,
+    presence: nominal ? membros.map((m) => ({ memberId: m.memberId, ...m.apareceuHoje ? { cameToday: true } : {} })) : null,
+    // B-2: "o bosque recebeu fios hoje" — só FIO firmado, nunca check-in.
+    threadedToday: !nominal && firmou.some(Boolean) ? true : null,
+    // M-1: também no `mine` as marcas só existem quando `true` (o cliente lê
+    // `=== true`); "não veio"/"não firmou" é a ausência da chave.
+    mine: {
+      ...eu >= 0 && veio[eu] ? { cameToday: true } : {},
+      ...eu >= 0 && firmou[eu] ? { threadToday: true } : {},
+      // Cenários de estágio só depois de 7 dias DISTINTOS de fio (LV-G9).
+      // M-2: o fio já traz os dias herdados de guildas anteriores (sair não zera).
+      ...(meuFio?.distinctDays ?? 0) >= STAGE_UNLOCK_DAYS ? { groveScenes: true } : {},
+      gesturesSent: eu >= 0 ? GUILD_GESTURES.filter((k) => gestos[eu].includes(k)) : []
+    },
+    bosque: {
+      stage,
+      stageIndex,
+      perto,
+      tide: { key: g.tideKey ?? null, size: bloom },
+      ornaments: (Array.isArray(g.ornaments) ? g.ornaments : []).map((o) => ({ tide: o.tide, size: o.size, day: o.day }))
+    },
+    // B5 (L2-backend): com ≤2 membros o "anônimo" é quem sobrou. O TIPO não
+    // sai (dizer "luz" contaria o gesto exato de uma pessoa conhecida); sai só
+    // o agregado `gestureReceived`, que é `true` ou `null`. Com 3+ sai a lista
+    // de tipos, em lote, sem quem nem quantos.
+    gestures: size < GESTO_TIPO_MIN_MEMBROS ? [] : GUILD_GESTURES.filter((k) => recebidos.has(k)),
+    gestureReceived: recebidos.size > 0 ? true : null,
+    raid: {
+      weekKey: semana,
+      phenomenon: fenomenoDaSemana(semana),
+      // A semana corrente só pode estar 'aberta' ou 'dissipada': "recuou" é o
+      // desfecho de uma semana que TERMINOU, e sai em `lastWeek`.
+      state: feira.cleared ? "dissipada" : "aberta",
+      ferido: !feira.cleared && feira.dmg * 2 >= feira.hp,
+      lastWeek: passada.cleared ? "dissipada" : passada.hitters.length > 0 ? "recuou" : null,
+      mine: meusGolpes.days.includes(hoje) ? { hitToday: true } : {}
+    }
+    // M-3 (L3-conformidade): `progress`/`target` NÃO trafegam mais, em nenhum
+    // tamanho nem pelos aliases `coop*` — o cliente já os descartava
+    // (`sanitizeGuildView`) e era um número semanal que zera na virada.
+  };
+}
+__name(vistaDaGuilda, "vistaDaGuilda");
+async function handleGuild({ request, env }) {
+  const json7 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS4 }), "json");
+  if (!kv(env)) return json7({ error: "Storage not bound" }, 500);
+  const url = new URL(request.url);
+  const pedida = url.searchParams.get("action") ?? "";
+  const alias = Object.prototype.hasOwnProperty.call(COOP_ALIASES, pedida);
+  const action = alias ? COOP_ALIASES[pedida] : pedida;
+  const method = request.method;
+  if (!(action in GUILD_ACTIONS) || GUILD_ACTIONS[action] !== method) return json7({ error: "unknown action" }, 400);
+  const body = method === "POST" ? await request.json().catch(() => ({})) : {};
+  const id = body.id || url.searchParams.get("id");
+  const chave = alias ? "group" : "guild";
+  const erro = /* @__PURE__ */ __name((texto, status, extra = {}) => json7({ error: texto.replace("{g}", chave), ...extra }, status), "erro");
+  const vista = /* @__PURE__ */ __name((v) => json7({ [chave]: v }), "vista");
+  const montar = /* @__PURE__ */ __name(async (g, eu, dia2) => {
+    const cartoes = await lerCartoes(env, g);
+    const fechado = await atualizarBosque(env, g, dia2, /* @__PURE__ */ new Date(), fiosDosCartoes(g, cartoes));
+    return vistaDaGuilda(env, fechado, eu, dia2, cartoes);
+  }, "montar");
+  const cartao = /* @__PURE__ */ __name((g) => renovarCartao(env, g.id, id), "cartao");
+  if (!VALID_ID2.test(id || "")) return json7({ error: "invalid id" }, 400);
+  const auth = await authorizeSaveAccess(request, env, id);
+  if (!auth.ok) {
+    return json7(auth.reason === "account-deleted" ? { error: auth.reason, deletedAt: auth.deletedAt } : { error: auth.reason }, authStatus(auth));
+  }
+  const dia = diaDoJogador(method === "GET" ? url.searchParams.get("dayKey") : body.dayKey);
+  if (!dia.ok) return erro("invalid day", 400);
+  const hoje = dia.day;
+  const semana = semanaDoDia(hoje);
+  if (action === "guild") {
+    const g = await grupoDe(env, id, semana);
+    return vista(g ? await montar(g, id, hoje) : null);
+  }
+  if (action === "guildCreate") {
+    const ja = await grupoDe(env, id, semana);
+    if (ja) return erro("already in a {g}", 409, { [chave]: await montar(ja, id, hoje) });
+    const nome = sanitizarNomeDeGuilda(body.name);
+    if (!nome) return erro("invalid name", 400);
+    const codigo = await sortearCodigoLivre(env);
+    if (!codigo) return erro("try again", 503);
+    const g = {
+      id: newPid(),
+      name: nome,
+      code: codigo,
+      createdAt: Date.now(),
+      members: [id],
+      hostSave: id,
+      weekKey: semana,
+      checkins: {},
+      desde: { [id]: hoje },
+      bosqueProgress: 0,
+      progressDay: diaDeNum(numDia(hoje) - 1)
+    };
+    await gravarGrupo(env, g, { novosMembros: [id], codigoNovo: true });
+    const vencedor = await kvOrThrow(env).get(coopOfKey(id));
+    if (vencedor !== g.id) {
+      await kvOrThrow(env).delete(coopKey(g.id));
+      await kvOrThrow(env).delete(coopCodeKey(g.code));
+      const outro = await grupoDe(env, id, semana);
+      return erro("already in a {g}", 409, { [chave]: outro ? await montar(outro, id, hoje) : null });
+    }
+    await cartao(g);
+    return vista(await montar(g, id, hoje));
+  }
+  if (action === "guildJoin") {
+    if (await grupoDe(env, id, semana)) return erro("already in a {g}", 409);
+    const code = String(body.code ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    const groupId = code ? await kvOrThrow(env).get(coopCodeKey(code)) : null;
+    const lido = groupId ? await lerGrupo(env, groupId) : null;
+    if (!lido) return erro("invalid code", 404);
+    const host = anfitriaoDe(lido);
+    if (host && host !== id && await kvOrThrow(env).get(coopOfKey(host)) !== lido.id) {
+      await kvOrThrow(env).delete(coopKey(lido.id));
+      await kvOrThrow(env).delete(coopCodeKey(code));
+      return erro("invalid code", 404);
+    }
+    const g = await lerGrupo(env, lido.id) ?? lido;
+    rolarSemana(g, semana);
+    if (g.members.includes(id)) return vista(await montar(g, id, hoje));
+    if (g.members.length >= COOP_MAX_MEMBERS) return erro("{g} full", 409);
+    g.members.push(id);
+    g.desde = { ...g.desde || {}, [id]: hoje };
+    await gravarGrupo(env, g, { novosMembros: [id] });
+    let confirmado = await lerGrupo(env, g.id);
+    if (confirmado && !confirmado.members.includes(id)) {
+      if (confirmado.members.length >= COOP_MAX_MEMBERS) {
+        await kvOrThrow(env).delete(coopOfKey(id));
+        return erro("{g} full", 409);
+      }
+      confirmado.members.push(id);
+      confirmado.desde = { ...confirmado.desde || {}, [id]: hoje };
+      await gravarGrupo(env, confirmado, { novosMembros: [id] });
+      confirmado = await lerGrupo(env, g.id);
+    }
+    if (!confirmado || !confirmado.members.includes(id)) {
+      await kvOrThrow(env).delete(coopOfKey(id));
+      return erro("join collision", 409);
+    }
+    await cartao(confirmado);
+    return vista(await montar(rolarSemana(confirmado, semana), id, hoje));
+  }
+  if (action === "guildCheckin") {
+    const g = await grupoDe(env, id, semana);
+    if (!g) return erro("no {g}", 404);
+    const proprios = await lerCheckins(env, g.id, id, semana);
+    const meus = proprios.length > 0 ? proprios : g.checkins?.[id] || [];
+    if (!meus.includes(hoje)) {
+      await gravarCheckins(env, g.id, id, [...meus, hoje], semana);
+      await cartao(g);
+      await renovarPrazos(env, g.id);
+    }
+    return vista(await montar(g, id, hoje));
+  }
+  if (action === "guildThread") {
+    const g = await grupoDe(env, id, semana);
+    if (!g) return erro("no {g}", 404);
+    if ((body.kind ?? "fio") !== "fio") return erro("invalid kind", 400);
+    if (body.goal !== void 0 && !metaDoFioCumprida(body.goal)) return erro("goal not met", 400);
+    const antes = await lerFio(env, g.id, id);
+    const depois = !antes && fioInicialHerdado(await lerDiasCarregados(env, id), hoje) || firmarFio(antes, hoje);
+    if (!antes || !antes.days.includes(hoje)) {
+      await gravarFio(env, g, id, depois);
+      await cartao(g);
+    }
+    return vista(await montar(g, id, hoje));
+  }
+  if (action === "guildGesture") {
+    const g = await grupoDe(env, id, semana);
+    if (!g) return erro("no {g}", 404);
+    const kind = String(body.kind ?? "");
+    if (!GUILD_GESTURES.includes(kind)) return erro("invalid kind", 400);
+    const ja = await lerGestos(env, g.id, id, hoje);
+    if (ja.includes(kind)) return erro("daily limit", 429);
+    await kvOrThrow(env).put(coopGestKey(g.id, id), JSON.stringify({ day: hoje, kinds: [...ja, kind] }), { expirationTtl: 86400 * 3 });
+    await cartao(g);
+    return vista(await montar(g, id, hoje));
+  }
+  if (action === "guildRaidHit") {
+    const g = await grupoDe(env, id, semana);
+    if (!g) return erro("no {g}", 404);
+    if (semana < semanaDoDia((/* @__PURE__ */ new Date()).toISOString().slice(0, 10)) && !semanaAindaAberta(semana)) return erro("raid closed", 409);
+    const antes = await lerGolpes(env, g.id, semana, id);
+    if (antes.days.includes(hoje)) return erro("daily limit", 429);
+    const feira = await resolverFeira(env, g, semana, hoje, await lerCartoes(env, g));
+    if (feira.cleared) return erro("raid closed", 409);
+    const perfil = await getProfile(env, id);
+    const dano = raidDamageFor(stagePower(perfil?.stage));
+    await kvOrThrow(env).put(
+      coopHitKey(g.id, semana, id),
+      JSON.stringify({ week: semana, days: [...antes.days, hoje], dmg: antes.dmg + dano }),
+      { expirationTtl: COOP_HIT_TTL }
+    );
+    await marcarParticipacao(env, g.id, id, semana, hoje);
+    await cartao(g);
+    return json7({ landed: true, [chave]: await montar(g, id, hoje) });
+  }
+  if (action === "guildRewards" || action === "guildClaim") {
+    const g = await grupoDe(env, id, semana);
+    const candidatas = [semana, semanaAnterior(hoje), semanaAnterior(diaDeNum(numDia(hoje) - 7))];
+    const direito = /* @__PURE__ */ __name(async (w2) => {
+      let part = await lerParticipacao(env, id, w2);
+      if (!part && g) {
+        const meus = await lerGolpes(env, g.id, w2, id);
+        if (meus.days.length > 0) part = { gid: g.id, day: meus.days[0] };
+      }
+      if (!part) return null;
+      const ref = w2 === semana ? hoje : ultimoDiaDaSemana(part.day);
+      let cleared;
+      const grupo = g && g.id === part.gid ? g : await lerGrupo(env, part.gid);
+      if (grupo) cleared = (await resolverFeira(env, grupo, w2, ref)).cleared;
+      else cleared = !!await lerRaidOk(env, part.gid, w2);
+      if (w2 === semana && !cleared) return null;
+      return { week: w2, outcome: cleared ? "dissipada" : "recuou", emblems: cleared ? RAID_EMBLEMS : RAID_EMBLEMS_FLOOR };
+    }, "direito");
+    const conchas = /* @__PURE__ */ __name(async () => (await lerConjunto(env, coopShellKey(id))).length, "conchas");
+    if (action === "guildRewards") {
+      const pending = [];
+      for (const w2 of candidatas) {
+        if (await kvOrThrow(env).get(coopClaimKey(id, w2))) continue;
+        const d2 = await direito(w2);
+        if (d2) pending.push(d2);
+      }
+      let scenes = await lerConjunto(env, coopScenesKey(id));
+      if (g) {
+        const atual = await atualizarBosque(env, g, hoje);
+        const fio = await lerFio(env, g.id, id);
+        if ((fio?.distinctDays ?? 0) >= STAGE_UNLOCK_DAYS) {
+          const liberados = cenariosAte(bosqueStageFor(atual.bosqueProgress).stageIndex);
+          if (liberados.some((s) => !scenes.includes(s))) scenes = await unirConjunto(env, coopScenesKey(id), liberados);
+        }
+      }
+      return json7({ rewards: { pending, scenes, trophyOwned: await conchas() >= RAID_TROPHY_EVERY, trophyId: RAID_TROPHY_ID } });
+    }
+    const w = String(body.week ?? "");
+    if (!candidatas.includes(w)) return erro("invalid week", 400);
+    const recibo = await reciboDoResgate(id, w);
+    const jaResgatado = /* @__PURE__ */ __name(async () => {
+      const r = JSON.parse(await kvOrThrow(env).get(coopClaimKey(id, w)) ?? "null");
+      if (!r) return null;
+      const outcome = r.kind === "dissipada" ? "dissipada" : "recuou";
+      const emblems = r.emblems === RAID_EMBLEMS || r.emblems === RAID_EMBLEMS_FLOOR ? r.emblems : outcome === "dissipada" ? RAID_EMBLEMS : RAID_EMBLEMS_FLOOR;
+      const trophy2 = r.trophy === true;
+      return { week: w, outcome, emblems, trophy: trophy2, trophyId: trophy2 ? RAID_TROPHY_ID : null, receipt: recibo };
+    }, "jaResgatado");
+    const conflito = /* @__PURE__ */ __name(async () => erro("already claimed", 409, { receipt: recibo, claimed: await jaResgatado() }), "conflito");
+    if (await kvOrThrow(env).get(coopClaimKey(id, w))) return conflito();
+    const d = await direito(w);
+    if (!d) return erro("nothing to claim", 404);
+    const selo = newPid();
+    await kvOrThrow(env).put(coopClaimKey(id, w), JSON.stringify({ at: Date.now(), kind: d.outcome, emblems: d.emblems, selo, receipt: recibo }), { expirationTtl: COOP_CLAIM_TTL });
+    const gravado = JSON.parse(await kvOrThrow(env).get(coopClaimKey(id, w)) ?? "{}");
+    if (gravado.selo !== selo) return conflito();
+    let trophy = false;
+    if (d.outcome === "dissipada") {
+      const antes = await conchas();
+      const depois = (await unirConjunto(env, coopShellKey(id), [w])).length;
+      trophy = depois > antes && depois % RAID_TROPHY_EVERY === 0;
+    }
+    if (trophy) await kvOrThrow(env).put(coopClaimKey(id, w), JSON.stringify({ ...gravado, trophy }), { expirationTtl: COOP_CLAIM_TTL });
+    return json7({ claimed: { week: w, outcome: d.outcome, emblems: d.emblems, trophy, trophyId: trophy ? RAID_TROPHY_ID : null, receipt: recibo } });
+  }
+  if (action === "guildLeave") {
+    await coopLeave(env, id);
+    return json7({ ok: true });
+  }
+  if (action === "guildRename" || action === "guildNewCode") {
+    const g = await grupoDe(env, id, semana);
+    if (!g) return erro("no {g}", 404);
+    if (anfitriaoDe(g) !== id) return erro("not host", 403);
+    const fresco = await lerGrupo(env, g.id) ?? g;
+    if (!fresco.hostSave) fresco.hostSave = anfitriaoDe(fresco);
+    if (action === "guildRename") {
+      const nome = sanitizarNomeDeGuilda(body.name);
+      if (!nome) return erro("invalid name", 400);
+      fresco.name = nome;
+      await gravarGrupo(env, fresco);
+    } else {
+      const novo = await sortearCodigoLivre(env);
+      if (!novo) return erro("try again", 503);
+      const velho = fresco.code;
+      fresco.code = novo;
+      await gravarGrupo(env, fresco, { codigoNovo: true });
+      if (velho && velho !== novo) await kvOrThrow(env).delete(coopCodeKey(velho));
+    }
+    return vista(await montar(rolarSemana(fresco, semana), id, hoje));
+  }
+  return json7({ error: "unknown action" }, 400);
+}
+__name(handleGuild, "handleGuild");
+
+// api/community.js
+var CORS5 = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  // `Authorization` é obrigatório nas 6 ações que passam por denyUnlessOwner.
+  // Ver comentário igual em save.js: sem isto o preflight cross-origin morre.
+  "Access-Control-Allow-Headers": "Content-Type, Authorization"
+};
+var VALID_ID3 = /^[a-zA-Z0-9_-]{8,64}$/;
+var MATCHES_PER_DAY = 5;
+var CLOSED_SEASON_TTL = 86400 * 400;
+var json3 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS5 }), "json");
+var HEAVY_ACTIONS = /* @__PURE__ */ new Set(["players", "opponents", "rank", "seasonResult"]);
+var HEAVY_LIMIT = { limit: 20, windowMs: 6e4 };
+var LIGHT_LIMIT = { limit: 120, windowMs: 6e4 };
+var CACHEABLE_ACTIONS = /* @__PURE__ */ new Set(["players", "rank", "seasonResult"]);
+var EDGE_TTL_SECONDS = 60;
+var today2 = /* @__PURE__ */ __name(() => (/* @__PURE__ */ new Date()).toISOString().slice(0, 10), "today");
+var currentSeason = /* @__PURE__ */ __name(() => (/* @__PURE__ */ new Date()).toISOString().slice(0, 7), "currentSeason");
 var PID_PLACEHOLDER = "0".repeat(32);
 async function saveIdForPublicId(env, pid) {
-  if (!VALID_ID2.test(pid || "")) return null;
+  if (!VALID_ID3.test(pid || "")) return null;
   const saveId = await kvOrThrow(env).get(`${PID_PREFIX}${pid}`);
   const legado = await legacyPidFor(saveId || PID_PLACEHOLDER);
   if (!saveId || pid === legado) return null;
@@ -2215,15 +3290,6 @@ async function publicProfile(env, p, extra = {}) {
   };
 }
 __name(publicProfile, "publicProfile");
-async function getProfile(env, id) {
-  const raw = await kvOrThrow(env).get(`profile:${id}`);
-  return raw ? JSON.parse(raw) : null;
-}
-__name(getProfile, "getProfile");
-async function putProfile(env, id, profile) {
-  await kvOrThrow(env).put(`profile:${id}`, JSON.stringify(profile), { expirationTtl: 86400 * 365 });
-}
-__name(putProfile, "putProfile");
 async function getRank(env, season, id) {
   const raw = await kvOrThrow(env).get(`rank:${season}:${id}`);
   return raw ? JSON.parse(raw) : { points: 0, wins: 0, losses: 0, day: today2(), matchesToday: 0 };
@@ -2247,11 +3313,11 @@ async function listPrefix2(env, prefix, limit = 100) {
   return out;
 }
 __name(listPrefix2, "listPrefix");
-async function onRequestOptions4() {
-  return new Response(null, { headers: CORS4 });
+async function onRequestOptions5() {
+  return new Response(null, { headers: CORS5 });
 }
-__name(onRequestOptions4, "onRequestOptions");
-async function onRequest2(context) {
+__name(onRequestOptions5, "onRequestOptions");
+async function onRequest3(context) {
   const { request, env } = context;
   const url = new URL(request.url);
   const action = url.searchParams.get("action") ?? "";
@@ -2266,7 +3332,7 @@ async function onRequest2(context) {
   );
   if (!gate.ok) {
     console.warn("[community] rate limited", { action, cached: !!hit, retryAfter: gate.retryAfter });
-    return tooManyRequests(gate.retryAfter, CORS4);
+    return tooManyRequests(gate.retryAfter, CORS5);
   }
   if (hit) return hit;
   const res = await handleCommunity(context);
@@ -2281,48 +3347,19 @@ async function onRequest2(context) {
   }
   return res;
 }
-__name(onRequest2, "onRequest");
-async function vistaDoGrupo(env, g, euSave) {
-  const hoje = today2();
-  const dias = await Promise.all(g.members.map(async (m) => {
-    const proprios = await lerCheckins(env, g.id, m);
-    return proprios.length > 0 ? proprios : g.checkins?.[m] || [];
-  }));
-  const membros = await Promise.all(g.members.map(async (m, i) => {
-    const perfil = await getProfile(env, m);
-    return {
-      id: perfil ? await ensurePid(env, perfil) : null,
-      name: perfil?.name ?? null,
-      stage: perfil?.stage ?? null,
-      // Binário, de propósito: presença não ordena ninguém contra ninguém.
-      apareceuHoje: dias[i].includes(hoje),
-      euMesmo: m === euSave
-    };
-  }));
-  const target = g.members.length * COOP_CHECKINS_POR_MEMBRO;
-  const feitos = dias.reduce((n, d) => n + d.length, 0);
-  return {
-    id: g.id,
-    name: g.name,
-    weekKey: g.weekKey,
-    // O código só é útil para quem já está dentro — e é assim que se convida.
-    code: g.code,
-    members: membros,
-    progress: Math.min(feitos, target),
-    target,
-    full: g.members.length >= COOP_MAX_MEMBERS
-  };
-}
-__name(vistaDoGrupo, "vistaDoGrupo");
+__name(onRequest3, "onRequest");
 async function handleCommunity({ request, env }) {
   if (!kv(env)) return json3({ error: "Storage not bound" }, 500);
   const url = new URL(request.url);
   const action = url.searchParams.get("action");
+  if (action && Object.prototype.hasOwnProperty.call(COOP_ALIASES, action)) {
+    return handleGuild({ request, env });
+  }
   const method = request.method;
   const body = method === "POST" ? await request.json().catch(() => ({})) : {};
   const id = body.id || url.searchParams.get("id");
   const denyUnlessOwner = /* @__PURE__ */ __name(async (actorId) => {
-    if (!VALID_ID2.test(actorId || "")) return json3({ error: "invalid id" }, 400);
+    if (!VALID_ID3.test(actorId || "")) return json3({ error: "invalid id" }, 400);
     const auth = await authorizeSaveAccess(request, env, actorId);
     if (auth.ok) return null;
     return json3(auth.reason === "account-deleted" ? { error: auth.reason, deletedAt: auth.deletedAt } : { error: auth.reason }, authStatus(auth));
@@ -2345,14 +3382,16 @@ async function handleCommunity({ request, env }) {
         pvpBlocked = true;
       }
     }
+    const apelidoPedido = body.name ? sanitizarNomeDeGuilda(body.name) : null;
+    const nameRejected = !!body.name && !apelidoPedido;
     const profile = {
       id,
-      name: String(body.name || prev.name || "An\xF4nimo").slice(0, 24),
+      name: apelidoPedido || sanitizarNomeDeGuilda(prev.name) || "An\xF4nimo",
       stage: String(body.stage || prev.stage || "rookie").slice(0, 40),
       petName: String(body.petName || prev.petName || "").slice(0, 32),
       unlockedStages: Array.isArray(body.unlockedStages) ? body.unlockedStages.slice(0, 16) : prev.unlockedStages || [],
       pvpEnabled,
-      attrs: body.attrs && typeof body.attrs === "object" ? { virus: +body.attrs.virus || 0, data: +body.attrs.data || 0, vaccine: +body.attrs.vaccine || 0 } : prev.attrs || { virus: 0, data: 0, vaccine: 0 },
+      attrs: body.attrs && typeof body.attrs === "object" ? { power: +body.attrs.power || 0, harmony: +body.attrs.harmony || 0, benevolence: +body.attrs.benevolence || 0 } : prev.attrs || { power: 0, harmony: 0, benevolence: 0 },
       tasksDone: Number.isFinite(+body.tasksDone) ? Math.max(0, +body.tasksDone) : prev.tasksDone || 0,
       friends: prev.friends || [],
       createdAt: prev.createdAt || Date.now(),
@@ -2368,6 +3407,7 @@ async function handleCommunity({ request, env }) {
       ok: true,
       id: profile.pid,
       pvpEnabled: profile.pvpEnabled,
+      ...nameRejected ? { nameRejected: true } : {},
       ...pvpBlocked ? { pvpBlocked: true, bondLevel, minBondLevel: BOND_PVP_MIN_LEVEL } : {}
     });
   }
@@ -2426,7 +3466,7 @@ async function handleCommunity({ request, env }) {
   }
   if (action === "match" && method === "POST") {
     const { opponentId } = body;
-    if (!VALID_ID2.test(id || "") || !VALID_ID2.test(opponentId || "")) return json3({ error: "invalid id" }, 400);
+    if (!VALID_ID3.test(id || "") || !VALID_ID3.test(opponentId || "")) return json3({ error: "invalid id" }, 400);
     const denied = await denyUnlessOwner(id);
     if (denied) return denied;
     const oppSave = await saveIdForPublicId(env, opponentId);
@@ -2445,7 +3485,7 @@ async function handleCommunity({ request, env }) {
     if (myRank.matchesToday >= MATCHES_PER_DAY) {
       return json3({ error: "daily limit", matchesLeft: 0 }, 429);
     }
-    const power = /* @__PURE__ */ __name((p) => stagePower(p.stage) * 10 + Math.min(20, ((p.attrs?.virus || 0) + (p.attrs?.data || 0) + (p.attrs?.vaccine || 0)) / 5) + Math.random() * 18, "power");
+    const power = /* @__PURE__ */ __name((p) => stagePower(p.stage) * 10 + Math.min(20, ((p.attrs?.power || 0) + (p.attrs?.harmony || 0) + (p.attrs?.benevolence || 0)) / 5) + Math.random() * 18, "power");
     const myScore = power(me);
     const oppScore = power(opp);
     const won = myScore >= oppScore;
@@ -2547,7 +3587,7 @@ async function handleCommunity({ request, env }) {
   }
   if (action === "friends" && method === "POST") {
     const { friendId, remove } = body;
-    if (!VALID_ID2.test(id || "") || !VALID_ID2.test(friendId || "")) return json3({ error: "invalid id" }, 400);
+    if (!VALID_ID3.test(id || "") || !VALID_ID3.test(friendId || "")) return json3({ error: "invalid id" }, 400);
     const denied = await denyUnlessOwner(id);
     if (denied) return denied;
     const friendSave = await saveIdForPublicId(env, friendId);
@@ -2567,7 +3607,7 @@ async function handleCommunity({ request, env }) {
   }
   if (action === "gift" && method === "POST") {
     const { friendId } = body;
-    if (!VALID_ID2.test(id || "") || !VALID_ID2.test(friendId || "")) return json3({ error: "invalid id" }, 400);
+    if (!VALID_ID3.test(id || "") || !VALID_ID3.test(friendId || "")) return json3({ error: "invalid id" }, 400);
     const denied = await denyUnlessOwner(id);
     if (denied) return denied;
     const friendSave = await saveIdForPublicId(env, friendId);
@@ -2595,98 +3635,20 @@ async function handleCommunity({ request, env }) {
     }
     return json3({ gifts });
   }
-  if (action === "coop" && method === "GET") {
-    const denied = await denyUnlessOwner(id);
-    if (denied) return denied;
-    const g = await grupoDe(env, id);
-    return json3({ group: g ? await vistaDoGrupo(env, g, id) : null });
-  }
-  if (action === "coopCreate" && method === "POST") {
-    const denied = await denyUnlessOwner(id);
-    if (denied) return denied;
-    if (await grupoDe(env, id)) return json3({ error: "already in a group" }, 409);
-    const nome = String(body.name ?? "").replace(/\s+/g, " ").trim().slice(0, 24);
-    if (!nome) return json3({ error: "invalid name" }, 400);
-    let codigo = null;
-    for (let i = 0; i < 3 && !codigo; i++) {
-      const tentativa = novoCodigo();
-      if (!await kvOrThrow(env).get(coopCodeKey(tentativa))) codigo = tentativa;
-    }
-    if (!codigo) return json3({ error: "try again" }, 503);
-    const g = {
-      id: newPid(),
-      name: nome,
-      code: codigo,
-      createdAt: Date.now(),
-      members: [id],
-      weekKey: semanaDe(),
-      checkins: {}
-    };
-    await gravarGrupo(env, g);
-    return json3({ group: await vistaDoGrupo(env, g, id) });
-  }
-  if (action === "coopJoin" && method === "POST") {
-    const denied = await denyUnlessOwner(id);
-    if (denied) return denied;
-    if (await grupoDe(env, id)) return json3({ error: "already in a group" }, 409);
-    const code = String(body.code ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
-    const groupId = code ? await kvOrThrow(env).get(coopCodeKey(code)) : null;
-    const g = groupId ? await lerGrupo(env, groupId) : null;
-    if (!g) return json3({ error: "invalid code" }, 404);
-    rolarSemana(g);
-    if (g.members.includes(id)) return json3({ group: await vistaDoGrupo(env, g, id) });
-    if (g.members.length >= COOP_MAX_MEMBERS) return json3({ error: "group full" }, 409);
-    g.members.push(id);
-    await gravarGrupo(env, g);
-    let confirmado = await lerGrupo(env, g.id);
-    if (confirmado && !confirmado.members.includes(id)) {
-      if (confirmado.members.length >= COOP_MAX_MEMBERS) {
-        await kvOrThrow(env).delete(coopOfKey(id));
-        return json3({ error: "group full" }, 409);
-      }
-      confirmado.members.push(id);
-      await gravarGrupo(env, confirmado);
-      confirmado = await lerGrupo(env, g.id);
-    }
-    if (!confirmado || !confirmado.members.includes(id)) {
-      await kvOrThrow(env).delete(coopOfKey(id));
-      return json3({ error: "join collision" }, 409);
-    }
-    return json3({ group: await vistaDoGrupo(env, confirmado, id) });
-  }
-  if (action === "coopCheckin" && method === "POST") {
-    const denied = await denyUnlessOwner(id);
-    if (denied) return denied;
-    const g = await grupoDe(env, id);
-    if (!g) return json3({ error: "no group" }, 404);
-    const proprios = await lerCheckins(env, g.id, id);
-    const meus = proprios.length > 0 ? proprios : g.checkins?.[id] || [];
-    if (!meus.includes(today2())) {
-      await gravarCheckins(env, g.id, id, [...meus, today2()]);
-      await renovarPrazos(env, g.id);
-    }
-    return json3({ group: await vistaDoGrupo(env, g, id) });
-  }
-  if (action === "coopLeave" && method === "POST") {
-    const denied = await denyUnlessOwner(id);
-    if (denied) return denied;
-    await coopLeave(env, id);
-    return json3({ ok: true });
-  }
   return json3({ error: "unknown action" }, 400);
 }
 __name(handleCommunity, "handleCommunity");
 
 // api/config.js
-var CORS5 = {
+var CORS6 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type"
 };
-async function onRequestOptions5() {
-  return new Response(null, { headers: CORS5 });
+async function onRequestOptions6() {
+  return new Response(null, { headers: CORS6 });
 }
-__name(onRequestOptions5, "onRequestOptions");
+__name(onRequestOptions6, "onRequestOptions");
 async function onRequestGet({ env }) {
   return Response.json({
     // true = todas as rotas de save/dinheiro exigem ID token do Firebase.
@@ -2697,7 +3659,7 @@ async function onRequestGet({ env }) {
     // As duas variáveis são conferidas juntas porque a rota exige as duas.
     transcribeAvailable: !!(env.SUPABASE_PROJECT_ID && env.SUPABASE_ANON_KEY)
   }, {
-    headers: { ...CORS5, "Cache-Control": "public, max-age=300" }
+    headers: { ...CORS6, "Cache-Control": "public, max-age=300" }
   });
 }
 __name(onRequestGet, "onRequestGet");
@@ -2718,7 +3680,7 @@ __name(log2, "log");
 async function handleGrant(request, env) {
   if (!env?.ENTITLEMENTS_ADMIN_KEY) return json4({ error: "Not found" }, 404);
   const gate = takeToken("entitlements-grant", clientKey(request), GRANT_RATE);
-  if (!gate.ok) return tooManyRequests(gate.retryAfter, CORS6);
+  if (!gate.ok) return tooManyRequests(gate.retryAfter, CORS7);
   const header = request.headers.get("Authorization") ?? "";
   const given = header.startsWith("Bearer ") ? header.slice("Bearer ".length).trim() : "";
   if (!secretEquals(given, env.ENTITLEMENTS_ADMIN_KEY)) return json4({ error: "Unauthorized" }, 401);
@@ -2735,7 +3697,7 @@ async function handleGrant(request, env) {
   return json4({ ok: true, duplicate: r.duplicate, count: r.count, max: r.max, ...publicView(r.ent) });
 }
 __name(handleGrant, "handleGrant");
-var CORS6 = {
+var CORS7 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   // `Authorization` é obrigatório aqui (authorizeSaveAccess). Sem anunciá-lo, o
@@ -2743,11 +3705,11 @@ var CORS6 = {
   // é bloqueado pelo navegador e a falha aparece como erro de rede.
   "Access-Control-Allow-Headers": "Content-Type, Authorization"
 };
-var json4 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS6 }), "json");
-async function onRequestOptions6() {
-  return new Response(null, { headers: CORS6 });
+var json4 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS7 }), "json");
+async function onRequestOptions7() {
+  return new Response(null, { headers: CORS7 });
 }
-__name(onRequestOptions6, "onRequestOptions");
+__name(onRequestOptions7, "onRequestOptions");
 async function onRequestGet2({ request, env }) {
   const url = new URL(request.url);
   const saveId = url.searchParams.get("id");
@@ -2762,7 +3724,10 @@ async function onRequestGet2({ request, env }) {
     }
     return String(order.orderId).startsWith("steam:own:") ? isSteamOwnershipVoided(env, { orderId: order.orderId }) : isSteamPurchaseVoided(env, { orderId: order.orderId });
   });
-  return json4({ ...publicView(ent), adsEnabled: env.ADMOB_SSV_ENABLED === "true" });
+  const { admin } = await verifiedAdmin(env, request, saveId);
+  if (admin) logAdminSession("entitlements");
+  const view = admin ? adminPublicView(publicView(ent)) : { ...publicView(ent), admin: false };
+  return json4({ ...view, adsEnabled: env.ADMOB_SSV_ENABLED === "true" });
 }
 __name(onRequestGet2, "onRequestGet");
 async function onRequestPost3({ request, env }) {
@@ -2775,11 +3740,18 @@ async function onRequestPost3({ request, env }) {
   if (!saveId || !VALID_ID.test(saveId)) return json4({ error: "Invalid save ID" }, 400);
   const auth = await authorizeSaveAccess(request, env, saveId);
   if (!auth.ok) return json4({ error: auth.reason }, authStatus(auth));
+  const { admin } = await verifiedAdmin(env, request, saveId);
+  const view = /* @__PURE__ */ __name((ent) => admin ? adminPublicView(publicView(ent)) : { ...publicView(ent), admin: false }, "view");
   if (action === "spend") {
     const amount = Number(body?.amount);
+    if (admin) {
+      if (!Number.isInteger(amount) || amount <= 0) return json4({ ok: false, reason: "insufficient" }, 402);
+      logAdminSession("spend");
+      return json4({ ok: true, ...view(await readEntitlement(env, saveId)) });
+    }
     const ent = await spendCredits(env, saveId, amount, body?.opId);
     if (!ent) return json4({ ok: false, reason: "insufficient" }, 402);
-    return json4({ ok: true, ...publicView(ent) });
+    return json4({ ok: true, ...view(ent) });
   }
   if (action === "rebirth-reset") {
     const store = kv(env);
@@ -2793,7 +3765,7 @@ async function onRequestPost3({ request, env }) {
     const renasceu = !!r && typeof r === "object" && typeof r.at === "string" && r.at.length > 0 && typeof r.fromStage === "string" && r.fromStage.length > 0;
     if (!renasceu) return json4({ ok: false, reason: "rebirth-not-found" }, 409);
     const { ent, jaFeito } = await resetSpriteLifetimeOnRebirth(env, saveId);
-    return json4({ ok: true, jaFeito, ...publicView(ent) });
+    return json4({ ok: true, jaFeito, ...view(ent) });
   }
   if (action === "ad") {
     if (env.ADMOB_SSV_ENABLED !== "true") {
@@ -2808,7 +3780,7 @@ async function onRequestPost3({ request, env }) {
 __name(onRequestPost3, "onRequestPost");
 
 // api/fcm-subscribe.js
-var CORS7 = {
+var CORS8 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, DELETE, OPTIONS",
   // `Authorization` anunciado — mesma regra e mesmo motivo de `subscribe.js`.
@@ -2816,19 +3788,19 @@ var CORS7 = {
 };
 var json5 = /* @__PURE__ */ __name((corpo, status) => new Response(JSON.stringify(corpo), {
   status,
-  headers: { "Content-Type": "application/json", ...CORS7 }
+  headers: { "Content-Type": "application/json", ...CORS8 }
 }), "json");
 function costGate(request) {
   const gate = takeToken("fcm-subscribe", clientKey(request), LIMITE_INSCRICAO);
   if (gate.ok) return null;
   console.warn("[fcm-subscribe] rate limited", { retryAfter: gate.retryAfter });
-  return tooManyRequests(gate.retryAfter, CORS7);
+  return tooManyRequests(gate.retryAfter, CORS8);
 }
 __name(costGate, "costGate");
-async function onRequestOptions7() {
-  return new Response(null, { status: 204, headers: CORS7 });
+async function onRequestOptions8() {
+  return new Response(null, { status: 204, headers: CORS8 });
 }
-__name(onRequestOptions7, "onRequestOptions");
+__name(onRequestOptions8, "onRequestOptions");
 async function corpoDe(request) {
   try {
     return await request.json();
@@ -2892,7 +3864,7 @@ async function hashToken(token) {
 __name(hashToken, "hashToken");
 
 // api/generate-sprite.js
-var CORS8 = {
+var CORS9 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type"
@@ -2974,10 +3946,10 @@ async function republicar(env, request, image) {
   return null;
 }
 __name(republicar, "republicar");
-async function onRequestOptions8() {
-  return new Response(null, { headers: CORS8 });
+async function onRequestOptions9() {
+  return new Response(null, { headers: CORS9 });
 }
-__name(onRequestOptions8, "onRequestOptions");
+__name(onRequestOptions9, "onRequestOptions");
 var REFUSAL_WORDS = /nsfw|safety|policy|polic[ií]|moderation|blocked|prohibited|content[_ -]filter|copyright|trademark|intellectual property|recitation/i;
 function isRefusal(err) {
   return Boolean(err?.refusal) || REFUSAL_WORDS.test(err?.message || "");
@@ -3108,22 +4080,23 @@ async function onRequestPost5({ request, env }) {
   try {
     const { prompt, promptFallback, referenceImageUrls, id, formId } = await request.json();
     if (!prompt || typeof prompt !== "string") {
-      return Response.json({ error: "prompt required" }, { status: 400, headers: CORS8 });
+      return Response.json({ error: "prompt required" }, { status: 400, headers: CORS9 });
     }
     const tier = await requirePaidTier(env, id);
-    if (!tier.ok) {
-      return Response.json({ error: tier.reason }, { status: tier.status, headers: CORS8 });
+    const tierOk = tier.ok || tier.status === 402 && (await verifiedAdmin(env, request, id)).admin;
+    if (!tierOk) {
+      return Response.json({ error: tier.reason }, { status: tier.status, headers: CORS9 });
     }
     if (formId !== null && formId !== void 0) {
       if (typeof formId !== "string" || !VALID_FORM_ID.test(formId)) {
-        return Response.json({ error: "invalid-form-id" }, { status: 400, headers: CORS8 });
+        return Response.json({ error: "invalid-form-id" }, { status: 400, headers: CORS9 });
       }
     }
     const auth = await authorizeSaveAccess(request, env, id);
     if (!auth.ok) {
       return Response.json(
         { error: auth.reason },
-        { status: authStatus(auth), headers: CORS8 }
+        { status: authStatus(auth), headers: CORS9 }
       );
     }
     if (typeof formId === "string" && formId.length > 0) {
@@ -3131,10 +4104,12 @@ async function onRequestPost5({ request, env }) {
       let ocupada = null;
       try {
         pronta = await kvOrThrow(env).get(cacheKey(id, formId));
+        const antigo = legacyFormIdOf(formId);
+        if (!pronta && antigo) pronta = await kvOrThrow(env).get(cacheKey(id, antigo));
         ocupada = pronta ? null : await kvOrThrow(env).get(lockKey(id, formId));
       } catch (err) {
         console.error("generate-sprite: dedupe ileg\xEDvel, recusando", err?.message);
-        return Response.json({ error: "ai-quota-unavailable" }, { status: 503, headers: CORS8 });
+        return Response.json({ error: "ai-quota-unavailable" }, { status: 503, headers: CORS9 });
       }
       if (pronta) {
         let guardada = null;
@@ -3146,14 +4121,14 @@ async function onRequestPost5({ request, env }) {
         if (guardada?.image) {
           return Response.json(
             { image: guardada.image, provider: guardada.provider, cached: true },
-            { headers: CORS8 }
+            { headers: CORS9 }
           );
         }
       }
       if (ocupada) {
         return Response.json(
           { pending: true, retryAfter: LOCK_RETRY_AFTER },
-          { status: 202, headers: CORS8 }
+          { status: 202, headers: CORS9 }
         );
       }
       lock = lockKey(id, formId);
@@ -3162,14 +4137,14 @@ async function onRequestPost5({ request, env }) {
       } catch (err) {
         console.error("generate-sprite: falha ao gravar o lock, recusando", err?.message);
         lock = null;
-        return Response.json({ error: "ai-quota-unavailable" }, { status: 503, headers: CORS8 });
+        return Response.json({ error: "ai-quota-unavailable" }, { status: 503, headers: CORS9 });
       }
     }
     const gate = await guardAiRequest(request, env, "sprite", id, 1, formId);
     if (!gate.ok) {
       return Response.json(
         { error: gate.reason, ...gate.message ? { message: gate.message } : {} },
-        { status: gate.status, headers: CORS8 }
+        { status: gate.status, headers: CORS9 }
       );
     }
     const responder = /* @__PURE__ */ __name(async (out) => {
@@ -3177,7 +4152,7 @@ async function onRequestPost5({ request, env }) {
       if (typeof image === "string") {
         const republicada = await republicar(env, request, image);
         if (!republicada) {
-          return Response.json({ error: "image republish failed" }, { status: 502, headers: CORS8 });
+          return Response.json({ error: "image republish failed" }, { status: 502, headers: CORS9 });
         }
         image = republicada;
       }
@@ -3191,7 +4166,7 @@ async function onRequestPost5({ request, env }) {
           console.error("generate-sprite: falha ao cachear o resultado", err?.message);
         }
       }
-      return Response.json({ ...out, image }, { headers: CORS8 });
+      return Response.json({ ...out, image }, { headers: CORS9 });
     }, "responder");
     try {
       const out = await generateWithProviders(env, prompt, referenceImageUrls);
@@ -3201,7 +4176,7 @@ async function onRequestPost5({ request, env }) {
       if (!canRetry || !isRefusal(err)) {
         if (!isRefusal(err)) await gate.release(err.notConfigured ? "provedor n\xE3o configurado" : `falha do provedor: ${err.message}`);
         if (err.notConfigured) {
-          return Response.json({ error: err.message }, { status: 503, headers: CORS8 });
+          return Response.json({ error: err.message }, { status: 503, headers: CORS9 });
         }
         throw err;
       }
@@ -3209,7 +4184,7 @@ async function onRequestPost5({ request, env }) {
       if (!extra.ok) {
         return Response.json(
           { error: extra.reason, ...extra.message ? { message: extra.message } : {} },
-          { status: extra.status, headers: CORS8 }
+          { status: extra.status, headers: CORS9 }
         );
       }
       console.warn("Prompt com refer\xEAncias recusado, refazendo sem elas:", err.message);
@@ -3223,7 +4198,7 @@ async function onRequestPost5({ request, env }) {
     }
   } catch (err) {
     console.error("generate-sprite error:", err);
-    return Response.json({ error: "internal error" }, { status: 500, headers: CORS8 });
+    return Response.json({ error: "internal error" }, { status: 500, headers: CORS9 });
   } finally {
     await destravar(env, lock);
   }
@@ -3231,7 +4206,7 @@ async function onRequestPost5({ request, env }) {
 __name(onRequestPost5, "onRequestPost");
 
 // api/metrics.js
-var CORS9 = {
+var CORS10 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, X-Metrics-Key"
@@ -3277,7 +4252,18 @@ var EVENT_SCHEMA = {
   // ler a preferência: evento faltando é honesto, evento no balde errado não);
   // `sound_off` é a transição por gesto, com `age` em FAIXA e nunca data.
   sound_state: { muted: { min: 0, max: 1 }, music: { min: 0, max: 1 } },
-  sound_off: { age: { min: 0, max: 2 } }
+  sound_off: { age: { min: 0, max: 2 } },
+  // Guilda (WPG-7, `PLANO-GUILDA.md` §10.8) — ESPELHO de src/utils/telemetry.ts.
+  // Sem id de guilda, sem pid, sem saveId: só inteiros em faixa. `size` é o
+  // tamanho da roda (nunca quem), `weeks` a FAIXA de permanência (0..3),
+  // `kind` 0 = fio (1 reservado à semente, G3), `outcome` 0 = rodada, 1 =
+  // dissipada vista, 2 = recuou vista, `level` o estágio do Bosque visto.
+  guild_create: null,
+  guild_join: { size: { min: 2, max: 12 } },
+  guild_leave: { size: { min: 0, max: 11 }, weeks: { min: 0, max: 3 } },
+  guild_thread: { kind: { min: 0, max: 1 } },
+  guild_raid: { outcome: { min: 0, max: 2 } },
+  guild_stage: { level: { min: 1, max: 5 } }
 };
 var MAX_BODY_BYTES = 16 * 1024;
 var MAX_EVENTS = 100;
@@ -3317,8 +4303,9 @@ function sanitizeRecord(record, today3) {
   if (!props || typeof props !== "object" || Array.isArray(props)) return null;
   const out = {};
   for (const key of Object.keys(props)) {
+    if (!Object.prototype.hasOwnProperty.call(schema, key)) return null;
     const rule = schema[key];
-    if (!rule) return null;
+    if (!rule || typeof rule !== "object") return null;
     const raw = props[key];
     if (typeof raw !== "number" || !Number.isFinite(raw)) return null;
     const n = Math.round(raw);
@@ -3432,6 +4419,10 @@ function applyAggregate(agg, events) {
     if (record.e === "milestone" && p) {
       bump(`milestone.days_${p.level}`);
     }
+    if (record.e.startsWith("guild_") && p) {
+      const regra = EVENT_SCHEMA[record.e] || {};
+      for (const k of Object.keys(regra)) if (Object.prototype.hasOwnProperty.call(p, k)) bump(`${record.e}.${k}_${p[k]}`);
+    }
     if (record.e === "purchase" && p) {
       bump(`purchase.${PURCHASE_REASON_LABEL[p.reason] ?? "unknown"}`);
     }
@@ -3484,10 +4475,10 @@ function groupByDay(events) {
   return byDay;
 }
 __name(groupByDay, "groupByDay");
-async function onRequestOptions9() {
-  return new Response(null, { headers: CORS9 });
+async function onRequestOptions10() {
+  return new Response(null, { headers: CORS10 });
 }
-__name(onRequestOptions9, "onRequestOptions");
+__name(onRequestOptions10, "onRequestOptions");
 var MAX_READ_DAYS = 92;
 var METRICS_KEY_HEADER = "X-Metrics-Key";
 function secretEquals2(a, b) {
@@ -3523,13 +4514,13 @@ function mergeTotals(byDay) {
 __name(mergeTotals, "mergeTotals");
 async function onRequestGet3({ request, env }) {
   if (!env?.METRICS_ADMIN_KEY) {
-    return Response.json({ error: "Not found" }, { status: 404, headers: CORS9 });
+    return Response.json({ error: "Not found" }, { status: 404, headers: CORS10 });
   }
   const gate = takeToken("metrics-read", clientKey(request), RATE);
-  if (!gate.ok) return tooManyRequests(gate.retryAfter, CORS9);
+  if (!gate.ok) return tooManyRequests(gate.retryAfter, CORS10);
   const given = request.headers.get(METRICS_KEY_HEADER);
   if (!secretEquals2(given ?? "", env.METRICS_ADMIN_KEY)) {
-    return Response.json({ error: "Unauthorized" }, { status: 401, headers: CORS9 });
+    return Response.json({ error: "Unauthorized" }, { status: 401, headers: CORS10 });
   }
   const url = new URL(request.url);
   const from = url.searchParams.get("from");
@@ -3538,11 +4529,11 @@ async function onRequestGet3({ request, env }) {
   if (!days) {
     return Response.json(
       { error: "Invalid range", max_days: MAX_READ_DAYS },
-      { status: 400, headers: CORS9 }
+      { status: 400, headers: CORS10 }
     );
   }
   if (!kv(env)) {
-    return Response.json({ error: "Unavailable" }, { status: 503, headers: CORS9 });
+    return Response.json({ error: "Unavailable" }, { status: 503, headers: CORS10 });
   }
   const byDay = {};
   for (const day2 of days) {
@@ -3572,36 +4563,36 @@ async function onRequestGet3({ request, env }) {
       retained: "retained.d1/d7/d30 = maior marco cruzado por pessoa, emitido 1x na vida (d7 = voltou em algum dia de D7-D29); nao e retencao por coorte",
       unreadable: ["retencao por coorte de instalacao", "conversao em N dias", "qualquer serie por usuario"]
     }
-  }, { headers: CORS9 });
+  }, { headers: CORS10 });
 }
 __name(onRequestGet3, "onRequestGet");
-async function onRequest3({ request, env }) {
+async function onRequest4({ request, env }) {
   if (request.method === "GET") return onRequestGet3({ request, env });
   if (request.method !== "POST") {
-    return Response.json({ error: "Method not allowed" }, { status: 405, headers: CORS9 });
+    return Response.json({ error: "Method not allowed" }, { status: 405, headers: CORS10 });
   }
   const gate = takeToken("metrics", clientKey(request), RATE);
-  if (!gate.ok) return tooManyRequests(gate.retryAfter, CORS9);
+  if (!gate.ok) return tooManyRequests(gate.retryAfter, CORS10);
   const raw = await request.text().catch(() => null);
   if (raw === null || raw.length > MAX_BODY_BYTES) {
-    return Response.json({ error: "Invalid body" }, { status: 400, headers: CORS9 });
+    return Response.json({ error: "Invalid body" }, { status: 400, headers: CORS10 });
   }
   let body = null;
   try {
     body = JSON.parse(raw);
   } catch {
-    return Response.json({ error: "Invalid body" }, { status: 400, headers: CORS9 });
+    return Response.json({ error: "Invalid body" }, { status: 400, headers: CORS10 });
   }
   const result = sanitizeBatch(body);
   if (!result.ok) {
-    return Response.json({ error: "Invalid batch" }, { status: 400, headers: CORS9 });
+    return Response.json({ error: "Invalid batch" }, { status: 400, headers: CORS10 });
   }
   if (result.events.length === 0) {
-    return Response.json({ ok: true, accepted: 0 }, { status: 202, headers: CORS9 });
+    return Response.json({ ok: true, accepted: 0 }, { status: 202, headers: CORS10 });
   }
   if (!kv(env)) {
     console.warn("metrics: KV de saves n\xE3o vinculada \u2014 agregado descartado");
-    return Response.json({ ok: true, accepted: 0 }, { status: 202, headers: CORS9 });
+    return Response.json({ ok: true, accepted: 0 }, { status: 202, headers: CORS10 });
   }
   let accepted = 0;
   for (const [day2, records] of groupByDay(result.events)) {
@@ -3615,12 +4606,12 @@ async function onRequest3({ request, env }) {
       console.warn("metrics: falha ao gravar agregado", { day: day2, error: String(err?.name ?? err) });
     }
   }
-  return Response.json({ ok: true, accepted }, { headers: CORS9 });
+  return Response.json({ ok: true, accepted }, { headers: CORS10 });
 }
-__name(onRequest3, "onRequest");
+__name(onRequest4, "onRequest");
 
 // api/save.js
-var CORS10 = {
+var CORS11 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   // `Authorization` PRECISA estar aqui: o cliente manda `Bearer <idToken>` e o
@@ -3633,40 +4624,40 @@ var SERVER_OWNED_FIELDS = ["accountTier", "credits"];
 var MAX_STATE_BYTES = 5 * 1024 * 1024;
 var SAVE_TTL_SECONDS = 86400 * 365;
 var RENEW_AFTER_SECONDS = 86400 * 30;
-async function onRequestOptions10() {
-  return new Response(null, { headers: CORS10 });
+async function onRequestOptions11() {
+  return new Response(null, { headers: CORS11 });
 }
-__name(onRequestOptions10, "onRequestOptions");
-async function onRequest4({ request, env }) {
+__name(onRequestOptions11, "onRequestOptions");
+async function onRequest5({ request, env }) {
   const url = new URL(request.url);
   const body = request.method === "POST" ? await request.json().catch(() => null) : null;
   const queryId = url.searchParams.get("id");
   const bodyId = typeof body?.id === "string" ? body.id : null;
   if (queryId && bodyId && queryId !== bodyId) {
-    return Response.json({ error: "Conflicting save ID" }, { status: 400, headers: CORS10 });
+    return Response.json({ error: "Conflicting save ID" }, { status: 400, headers: CORS11 });
   }
   const saveId = queryId || bodyId;
   if (!saveId || !VALID_ID.test(saveId)) {
-    return Response.json({ error: "Invalid save ID" }, { status: 400, headers: CORS10 });
+    return Response.json({ error: "Invalid save ID" }, { status: 400, headers: CORS11 });
   }
   if (!kv(env)) {
-    return Response.json({ error: "Storage not bound \u2014 add a KV binding named SOULMON_SAVES (or DIGIAPP_SAVES) in the Cloudflare dashboard" }, { status: 500, headers: CORS10 });
+    return Response.json({ error: "Storage not bound \u2014 add a KV binding named SOULMON_SAVES (or DIGIAPP_SAVES) in the Cloudflare dashboard" }, { status: 500, headers: CORS11 });
   }
   const auth = await authorizeSaveAccess(request, env, saveId);
   if (!auth.ok) {
     if (auth.reason === "account-deleted") {
       console.warn("save: recusado, conta apagada (l\xE1pide)", { saveIdPrefix: saveId.slice(0, 8), method: request.method });
     }
-    return Response.json(auth.reason === "account-deleted" ? { error: auth.reason, deletedAt: auth.deletedAt } : { error: auth.reason }, { status: authStatus(auth), headers: CORS10 });
+    return Response.json(auth.reason === "account-deleted" ? { error: auth.reason, deletedAt: auth.deletedAt } : { error: auth.reason }, { status: authStatus(auth), headers: CORS11 });
   }
   const tombstone = auth.tombstone ?? await gateTombstone(env, saveId, auth.authTime);
   if (tombstone.deleted) {
     console.warn("save: recusado, conta apagada (l\xE1pide)", { saveIdPrefix: saveId.slice(0, 8), method: request.method });
-    return Response.json({ error: "account-deleted", deletedAt: tombstone.at }, { status: 410, headers: CORS10 });
+    return Response.json({ error: "account-deleted", deletedAt: tombstone.at }, { status: 410, headers: CORS11 });
   }
   if (request.method === "GET") {
     const { value: raw, metadata } = await kvOrThrow(env).getWithMetadata(saveId);
-    if (!raw) return Response.json({ found: false }, { headers: CORS10 });
+    if (!raw) return Response.json({ found: false }, { headers: CORS11 });
     const gravadoEm = Number(metadata?.t) || 0;
     if ((Date.now() - gravadoEm) / 1e3 > RENEW_AFTER_SECONDS) {
       try {
@@ -3685,32 +4676,33 @@ async function onRequest4({ request, env }) {
     }
     const state = JSON.parse(raw);
     const ent = publicView(await readEntitlement(env, saveId));
-    state.accountTier = ent.tier;
-    state.credits = ent.credits;
-    return Response.json({ found: true, state }, { headers: CORS10 });
+    const { admin } = await verifiedAdmin(env, request, saveId);
+    state.accountTier = admin ? "paid" : ent.tier;
+    state.credits = admin ? ADMIN_CREDITS_DISPLAY : ent.credits;
+    return Response.json({ found: true, state }, { headers: CORS11 });
   }
   if (request.method === "POST") {
     const incoming = body?.state;
     if (typeof incoming !== "object" || incoming === null || Array.isArray(incoming)) {
       console.warn("save: POST recusado, state n\xE3o \xE9 objeto", { saveId, tipo: Array.isArray(incoming) ? "array" : typeof incoming });
-      return Response.json({ error: "Missing or invalid state" }, { status: 400, headers: CORS10 });
+      return Response.json({ error: "Missing or invalid state" }, { status: 400, headers: CORS11 });
     }
     const state = { ...incoming };
     for (const field of SERVER_OWNED_FIELDS) delete state[field];
     const serialized = JSON.stringify(state);
     if (serialized.length > MAX_STATE_BYTES) {
       console.warn("save: POST recusado, state acima do teto", { saveId, bytes: serialized.length });
-      return Response.json({ error: "State too large" }, { status: 413, headers: CORS10 });
+      return Response.json({ error: "State too large" }, { status: 413, headers: CORS11 });
     }
     await kvOrThrow(env).put(saveId, serialized, {
       expirationTtl: SAVE_TTL_SECONDS,
       metadata: { t: Date.now() }
     });
-    return Response.json({ ok: true }, { headers: CORS10 });
+    return Response.json({ ok: true }, { headers: CORS11 });
   }
-  return Response.json({ error: "Method not allowed" }, { status: 405, headers: CORS10 });
+  return Response.json({ error: "Method not allowed" }, { status: 405, headers: CORS11 });
 }
-__name(onRequest4, "onRequest");
+__name(onRequest5, "onRequest");
 
 // api/sprite-image.js
 var IMMUTABLE = "public, max-age=31536000, immutable";
@@ -3785,20 +4777,20 @@ function costGate2(request) {
   const gate = takeToken("subscribe", clientKey(request), SUB_LIMIT);
   if (gate.ok) return null;
   console.warn("[subscribe] rate limited", { retryAfter: gate.retryAfter });
-  return tooManyRequests(gate.retryAfter, CORS11);
+  return tooManyRequests(gate.retryAfter, CORS12);
 }
 __name(costGate2, "costGate");
-var CORS11 = {
+var CORS12 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, DELETE, OPTIONS",
   // `Authorization` anunciado: o cliente manda `Bearer <idToken>` junto do
   // `saveId` para a inscrição ser ligada à conta (ver `saveIdAutorizado`).
   "Access-Control-Allow-Headers": "Content-Type, Authorization"
 };
-async function onRequestOptions11() {
-  return new Response(null, { status: 204, headers: CORS11 });
+async function onRequestOptions12() {
+  return new Response(null, { status: 204, headers: CORS12 });
 }
-__name(onRequestOptions11, "onRequestOptions");
+__name(onRequestOptions12, "onRequestOptions");
 async function onRequestPost6({ request, env }) {
   const limited = costGate2(request);
   if (limited) return limited;
@@ -3808,33 +4800,33 @@ async function onRequestPost6({ request, env }) {
   } catch {
     return new Response(JSON.stringify({ error: "Invalid JSON" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS11 }
+      headers: { "Content-Type": "application/json", ...CORS12 }
     });
   }
   const { endpoint, keys, petName, language, bornAt, saveId } = body;
   if (!endpoint || !keys?.p256dh || !keys?.auth) {
     return new Response(JSON.stringify({ error: "Missing required fields" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS11 }
+      headers: { "Content-Type": "application/json", ...CORS12 }
     });
   }
   if (!isAllowedPushEndpoint(endpoint)) {
     return new Response(JSON.stringify({ error: "Unsupported push endpoint" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS11 }
+      headers: { "Content-Type": "application/json", ...CORS12 }
     });
   }
   if (!ehChaveWebPush(keys.p256dh) || !ehChaveWebPush(keys.auth)) {
     return new Response(JSON.stringify({ error: "Malformed keys" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS11 }
+      headers: { "Content-Type": "application/json", ...CORS12 }
     });
   }
   const dono = await saveIdAutorizado2(request, env, saveId);
   if (dono.status) {
     return new Response(JSON.stringify({ error: dono.reason }), {
       status: dono.status,
-      headers: { "Content-Type": "application/json", ...CORS11 }
+      headers: { "Content-Type": "application/json", ...CORS12 }
     });
   }
   const kvKey = `push:${await hashEndpoint(endpoint)}`;
@@ -3875,7 +4867,7 @@ async function onRequestPost6({ request, env }) {
   await gravarSeMudou(env.PUSH_SUBSCRIPTIONS, kvKey, record);
   return new Response(JSON.stringify({ ok: true }), {
     status: 201,
-    headers: { "Content-Type": "application/json", ...CORS11 }
+    headers: { "Content-Type": "application/json", ...CORS12 }
   });
 }
 __name(onRequestPost6, "onRequestPost");
@@ -3888,14 +4880,14 @@ async function onRequestDelete2({ request, env }) {
   } catch {
     return new Response(JSON.stringify({ error: "Invalid JSON" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS11 }
+      headers: { "Content-Type": "application/json", ...CORS12 }
     });
   }
   const { endpoint } = body;
   if (!endpoint) {
     return new Response(JSON.stringify({ error: "Missing endpoint" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS11 }
+      headers: { "Content-Type": "application/json", ...CORS12 }
     });
   }
   const kvKey = `push:${await hashEndpoint(endpoint)}`;
@@ -3903,7 +4895,7 @@ async function onRequestDelete2({ request, env }) {
   await env.PUSH_SUBSCRIPTIONS.delete(kvKey);
   return new Response(JSON.stringify({ ok: true }), {
     status: 200,
-    headers: { "Content-Type": "application/json", ...CORS11 }
+    headers: { "Content-Type": "application/json", ...CORS12 }
   });
 }
 __name(onRequestDelete2, "onRequestDelete");
@@ -3927,16 +4919,16 @@ async function hashEndpoint(endpoint) {
 __name(hashEndpoint, "hashEndpoint");
 
 // api/suggest-tasks.js
-var CORS12 = {
+var CORS13 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type"
 };
 var VALID_CATEGORIES = ["Health", "Creativity", "Discipline", "Study", "Work", "Social", "Wellness", "Fitness"];
-async function onRequestOptions12() {
-  return new Response(null, { headers: CORS12 });
+async function onRequestOptions13() {
+  return new Response(null, { headers: CORS13 });
 }
-__name(onRequestOptions12, "onRequestOptions");
+__name(onRequestOptions13, "onRequestOptions");
 async function onRequestPost7({ request, env }) {
   try {
     const body = await request.json();
@@ -3951,12 +4943,12 @@ async function onRequestPost7({ request, env }) {
     const categories = Array.isArray(body.categories) ? body.categories.filter((c) => VALID_CATEGORIES.includes(c)) : [];
     const isPt = body.language === "pt-BR";
     if (!goalText && categories.length === 0) {
-      return Response.json({ error: "goalText or categories required" }, { status: 400, headers: CORS12 });
+      return Response.json({ error: "goalText or categories required" }, { status: 400, headers: CORS13 });
     }
     const groqKey = env.GROQ_API_KEY;
-    if (!groqKey) return Response.json({ error: "AI not configured" }, { status: 500, headers: CORS12 });
+    if (!groqKey) return Response.json({ error: "AI not configured" }, { status: 500, headers: CORS13 });
     const gate = await guardAiRequest(request, env, "suggest", body.id);
-    if (!gate.ok) return Response.json({ error: gate.reason }, { status: gate.status, headers: CORS12 });
+    if (!gate.ok) return Response.json({ error: gate.reason }, { status: gate.status, headers: CORS13 });
     const systemPrompt = `You are a productivity coach inside a gamified habit-tracking app (Soulmon).
 Given a user's goal and optional life-area tags, suggest 5 concrete, actionable RECURRING tasks/habits
 that would help achieve that goal. Each task name must be short (max 40 chars), action-oriented, and
@@ -3989,7 +4981,7 @@ Reply with ONLY a raw JSON array (no markdown fences, no prose, no explanation).
     if (!groqRes.ok) {
       console.error("Groq error:", await groqRes.text());
       await gate.release(`Groq respondeu ${groqRes.status}`);
-      return Response.json({ error: "AI service error" }, { status: 500, headers: CORS12 });
+      return Response.json({ error: "AI service error" }, { status: 500, headers: CORS13 });
     }
     const data = await groqRes.json();
     const raw = data.choices?.[0]?.message?.content ?? "[]";
@@ -3998,40 +4990,40 @@ Reply with ONLY a raw JSON array (no markdown fences, no prose, no explanation).
       const match2 = raw.match(/\[[\s\S]*\]/);
       parsed = JSON.parse(match2 ? match2[0] : raw);
     } catch {
-      return Response.json({ error: "Could not parse suggestions" }, { status: 502, headers: CORS12 });
+      return Response.json({ error: "Could not parse suggestions" }, { status: 502, headers: CORS13 });
     }
     const suggestions = (Array.isArray(parsed) ? parsed : []).map((item) => ({
       name: (item?.name || "").toString().trim().slice(0, 60),
       category: VALID_CATEGORIES.includes(item?.category) ? item.category : "Wellness"
     })).filter((item) => item.name.length > 0).slice(0, 6);
-    return Response.json({ suggestions }, { headers: CORS12 });
+    return Response.json({ suggestions }, { headers: CORS13 });
   } catch (err) {
     console.error("suggest-tasks error:", err);
-    return Response.json({ error: "Internal error" }, { status: 500, headers: CORS12 });
+    return Response.json({ error: "Internal error" }, { status: 500, headers: CORS13 });
   }
 }
 __name(onRequestPost7, "onRequestPost");
 
 // api/transcribe.js
-var CORS13 = {
+var CORS14 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type"
 };
-var json6 = /* @__PURE__ */ __name((corpo, status = 200) => Response.json(corpo, { status, headers: CORS13 }), "json");
+var json6 = /* @__PURE__ */ __name((corpo, status = 200) => Response.json(corpo, { status, headers: CORS14 }), "json");
 var LIMITE = { limit: 6, windowMs: 6e4 };
 var MAX_BYTES = 4 * 1024 * 1024;
 var TIPOS = /^audio\/(webm|ogg|mp4|mpeg|wav|x-m4a)(;.*)?$/i;
 var IDIOMAS = /* @__PURE__ */ new Set(["pt", "en"]);
-async function onRequestOptions13() {
-  return new Response(null, { headers: CORS13 });
+async function onRequestOptions14() {
+  return new Response(null, { headers: CORS14 });
 }
-__name(onRequestOptions13, "onRequestOptions");
+__name(onRequestOptions14, "onRequestOptions");
 async function onRequestPost8({ request, env }) {
   const gate = takeToken("transcribe", clientKey(request), LIMITE);
   if (!gate.ok) {
     console.warn("[transcribe] rate limited", { retryAfter: gate.retryAfter });
-    return tooManyRequests(gate.retryAfter, CORS13);
+    return tooManyRequests(gate.retryAfter, CORS14);
   }
   const projectId = env.SUPABASE_PROJECT_ID;
   const anonKey = env.SUPABASE_ANON_KEY;
@@ -4093,7 +5085,7 @@ __name(onRequestPost8, "onRequestPost");
 
 // .well-known/assetlinks.json.js
 var DEFAULT_PACKAGE = "com.hexervoodoom.soulmon";
-async function onRequest5({ env }) {
+async function onRequest6({ env }) {
   const packageName = env?.ASSETLINKS_PACKAGE_NAME || DEFAULT_PACKAGE;
   const fingerprint = env?.ASSETLINKS_SHA256;
   const alvos = fingerprint ? [{
@@ -4111,9 +5103,9 @@ async function onRequest5({ env }) {
     }
   });
 }
-__name(onRequest5, "onRequest");
+__name(onRequest6, "onRequest");
 
-// ../.wrangler/tmp/pages-mowDOo/functionsRoutes-0.4200005102621678.mjs
+// ../.wrangler/tmp/pages-8z2J1I/functionsRoutes-0.36248243479490716.mjs
 var routes = [
   {
     routePath: "/api/account",
@@ -4155,7 +5147,7 @@ var routes = [
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions4]
+    modules: [onRequestOptions5]
   },
   {
     routePath: "/api/config",
@@ -4169,7 +5161,7 @@ var routes = [
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions5]
+    modules: [onRequestOptions6]
   },
   {
     routePath: "/api/entitlements",
@@ -4183,7 +5175,7 @@ var routes = [
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions6]
+    modules: [onRequestOptions7]
   },
   {
     routePath: "/api/entitlements",
@@ -4204,7 +5196,7 @@ var routes = [
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions7]
+    modules: [onRequestOptions8]
   },
   {
     routePath: "/api/fcm-subscribe",
@@ -4218,7 +5210,7 @@ var routes = [
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions8]
+    modules: [onRequestOptions9]
   },
   {
     routePath: "/api/generate-sprite",
@@ -4226,6 +5218,13 @@ var routes = [
     method: "POST",
     middlewares: [],
     modules: [onRequestPost5]
+  },
+  {
+    routePath: "/api/guild",
+    mountPath: "/api",
+    method: "OPTIONS",
+    middlewares: [],
+    modules: [onRequestOptions4]
   },
   {
     routePath: "/api/metrics",
@@ -4239,14 +5238,14 @@ var routes = [
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions9]
+    modules: [onRequestOptions10]
   },
   {
     routePath: "/api/save",
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions10]
+    modules: [onRequestOptions11]
   },
   {
     routePath: "/api/sprite-image",
@@ -4267,7 +5266,7 @@ var routes = [
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions11]
+    modules: [onRequestOptions12]
   },
   {
     routePath: "/api/subscribe",
@@ -4281,7 +5280,7 @@ var routes = [
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions12]
+    modules: [onRequestOptions13]
   },
   {
     routePath: "/api/suggest-tasks",
@@ -4295,7 +5294,7 @@ var routes = [
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions13]
+    modules: [onRequestOptions14]
   },
   {
     routePath: "/api/transcribe",
@@ -4309,7 +5308,7 @@ var routes = [
     mountPath: "/.well-known",
     method: "",
     middlewares: [],
-    modules: [onRequest5]
+    modules: [onRequest6]
   },
   {
     routePath: "/api/account",
@@ -4323,6 +5322,13 @@ var routes = [
     mountPath: "/api",
     method: "",
     middlewares: [],
+    modules: [onRequest3]
+  },
+  {
+    routePath: "/api/guild",
+    mountPath: "/api",
+    method: "",
+    middlewares: [],
     modules: [onRequest2]
   },
   {
@@ -4330,14 +5336,14 @@ var routes = [
     mountPath: "/api",
     method: "",
     middlewares: [],
-    modules: [onRequest3]
+    modules: [onRequest4]
   },
   {
     routePath: "/api/save",
     mountPath: "/api",
     method: "",
     middlewares: [],
-    modules: [onRequest4]
+    modules: [onRequest5]
   }
 ];
 
@@ -4426,7 +5432,7 @@ function lexer(str) {
   return tokens;
 }
 __name(lexer, "lexer");
-function parse(str, options) {
+function parse2(str, options) {
   if (options === void 0) {
     options = {};
   }
@@ -4525,7 +5531,7 @@ function parse(str, options) {
   }
   return result;
 }
-__name(parse, "parse");
+__name(parse2, "parse");
 function match(str, options) {
   var keys = [];
   var re = pathToRegexp(str, keys, options);
@@ -4600,7 +5606,7 @@ function arrayToRegexp(paths, keys, options) {
 }
 __name(arrayToRegexp, "arrayToRegexp");
 function stringToRegexp(path, keys, options) {
-  return tokensToRegexp(parse(path, options), keys, options);
+  return tokensToRegexp(parse2(path, options), keys, options);
 }
 __name(stringToRegexp, "stringToRegexp");
 function tokensToRegexp(tokens, keys, options) {

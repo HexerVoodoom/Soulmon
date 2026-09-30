@@ -9,6 +9,34 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 30/09/2026 — Lote de 29–30/09 fechado: Guilda, administrador/corvinho, mapas, renomeio de caminhos, widget
+>
+> Verificação final independente (`docs/reviews/admin-corvo/L3-verificacao-final.md`):
+> **pronto para merge, ressalvas menores**. Entrou: a Guilda implementada (Bosque, Feira,
+> resgate, gestos, cerimônia de marco); o papel de administrador (servidor: só token
+> Firebase verificado + `ADMIN_EMAILS`; cliente: painel de GM, dar saldo, desbloquear tudo,
+> corvinho adotado sozinho e sem volta); o corvinho em 11 formas por recolor de matiz; os
+> mapas internos com ícone de mapa, fundo em tela cheia e NPCs 1,4×; o renomeio
+> vírus/dado/vacina → **poder/harmonia/benevolência** (migração de save em
+> `branchMigration.ts`, guard `branchRename.contract.test.ts`); o widget Android com o
+> corvinho e o nome do estágio do Bosque; bíblia visual das 6 áreas e prompts do Higgsfield
+> (~187 imagens, NPCs pelo oráculo). `dist/` reconstruído e **teto de bytes re-medido**
+> (JS 718.798 B, CSS 153.795 B; decisão do dono #31 reafirmada: corte real é tarefa própria).
+>
+> **Depende do dono (o que só você faz):**
+> 1. `npx wrangler secret put ADMIN_EMAILS` (seu e-mail de login) — sem isso ninguém é admin.
+> 2. `GUILD_MEMBER_SECRET` no Cloudflare — sem ele o id opaco dos membros usa sal vazio.
+> 3. Regularizar a cobrança do GitHub (#48): o `android-build.yml` só compila o widget/Kotlin
+>    depois disso e é a única prova de que o widget compila.
+> 4. Crédito no Higgsfield para gerar a arte (`docs/design/areas/prompts/00-INDICE.md`).
+> 5. Confirmar as ressalvas menores: no GM, "Ir para forma → ultra" abre o modal de
+>    evolução por cima das Configurações; o voltar sai do jogo para a cena da área (não
+>    reabre a folha); "Do bosque" no Mercado só foi conferido no código.
+> 6. Dívidas conhecidas do administrador (M-3/B-3/B-4, STATUS §4) e o resgate de Emblemas em
+>    2 aparelhos de regiões diferentes do KV (só Durable Object fecha de verdade).
+> 7. O CI da `main` só fica verde quando o teste de arquivo somente-leitura
+>    (`tests/convertToWebp.test.ts`) deixar de rodar como root.
+>
 > ## 29/09/2026 — Widget Android: o corvinho e o estágio do Bosque
 > Decisão do dono. Bridge ganhou duas chaves NOVAS (`pet_line` = só `"corvo"`; `grove_stage` = só id de `GROVE_STAGES`; vazias → o plugin REMOVE). `resolveSprite` usa `CORVO_SPRITES` (11 `drawable-nodpi/sprite_corvo_*.png`, cópia dos -256) e o widget A mostra só o nome do estágio (`widget_grove`, strings em `values`/`values-pt`). Régua: `widgetSemCobranca.contract.test.ts` (allowlists, paridade 11 formas ↔ drawables ↔ mapa Kotlin; 14/14 mutações mortas).
 > **APK precisa de build novo** (drawables + Kotlin + layout) — o `android-build.yml` builda no push da `main`; só ele prova que o Kotlin/XML compila (sem Gradle local). A limitação "o widget não desenha o corvo" do bloco abaixo fechou aqui.
