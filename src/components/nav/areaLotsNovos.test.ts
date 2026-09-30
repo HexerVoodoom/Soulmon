@@ -12,7 +12,7 @@ describe('lotes novos (29/09/2026)', () => {
 
   it('o rinoceronte é o NPC do Duelo, com voz própria nos dois idiomas', () => {
     expect(lotNpcArt('arena', 'duelo')).toBe(PLACEHOLDER_NPC_ART.rinoceronte);
-    expect(lotNpcVoice('arena', 'duelo', 'pt-BR').name).toContain('Rinoco');
+    expect(lotNpcVoice('arena', 'duelo', 'pt-BR').name).toContain('Rhinoco');
     expect(lotNpcVoice('arena', 'duelo', 'en-US').name).toContain('Rhinoco');
   });
 

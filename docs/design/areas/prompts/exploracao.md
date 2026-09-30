@@ -10,7 +10,7 @@
 | `lote-exploracao-masmorra` | a bíblia dá silhueta nova (boca de caverna em rochedo flutuante). Arte própria existe hoje; refazer para casar com o fundo novo |
 | `lote-exploracao-dino` | idem: pista-ponte em arco |
 | `npc-exploracao-dino` (Trote) | NPC novo; hoje usa o placeholder poring |
-| Brisa (`npc-exploracao`) | **não regerar.** Só conferência: sem caveira. Se tiver, abrir pedido à parte |
+| Zeph (`npc-exploracao`) | **não regerar.** Só conferência: sem caveira. Se tiver, abrir pedido à parte |
 
 Posições dos lotes (`src/utils/playAreaLots.ts`, centro da BASE, em % da cena): masmorra `left 27% / top 36%`, dino `left 72% / top 46%`. O fundo deixa clareira vazia nesses dois pontos.
 
@@ -154,7 +154,7 @@ human, humanoid, hands, fingers, clothing, skull, bones, magenta, purple, violet
 **Variação de seed:** 4 imagens. Escolher a com silhueta de ave-corredora legível (pescoço + pernas longas, bico curto), pena solta visível, olhar 3/4 à esquerda, contorno de 1 px contínuo, e **nenhuma semelhança com personagem existente** (revisão manual). Se as penas saírem muito claras: trocar o sujeito (mais turfa escura), não a cor do acento.
 
 **Critério de aceite**
-- Silhueta preta: ave alta e magra com crista/pena solta, distinta de Brisa (o anfitrião da Masmorra) e de Pipo.
+- Silhueta preta: ave alta e magra com crista/pena solta, distinta de Zeph (o anfitrião da Masmorra) e de Pipo.
 - Cinza: mais escuro que os NPCs do Mercado e da Arena; acento só nas pontas das penas.
 - Alfa real, contorno preto 1 px, 768²; sem humano/mão; sem matiz 270°–340°; sem caveira; sem texto; cláusula "Do not copy any existing franchise character" presente no prompt usado (registrar seed no `INSTALAR.md`).
 - Nome **Trote** conferido: sem sufixo "-mon".
@@ -169,6 +169,6 @@ human, humanoid, hands, fingers, clothing, skull, bones, magenta, purple, violet
 | `lote-exploracao-masmorra` | lote (300², alfa) | 4 | 2 |
 | `lote-exploracao-dino` | lote (300², alfa) | 4 | 3 |
 | `npc-exploracao-dino` (Trote) | NPC busto (768², alfa) | 4 | 4 (hoje o Dino usa placeholder que sai do bundle) |
-| **Total** | **4 ativos** | **18 imagens** | Brisa: só conferência, 0 imagens |
+| **Total** | **4 ativos** | **18 imagens** | Zeph: só conferência, 0 imagens |
 
 Ordem de instalação sugerida: fundo primeiro (lotes e NPC precisam casar com ele), depois os dois lotes, por fim Trote. Depois de instalar o fundo, `arte-conferente` roda o teste de 64 px cinza contra os outros cinco fundos.

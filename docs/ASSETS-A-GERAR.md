@@ -113,7 +113,7 @@ Uso: `Loja › CenariosMobilias` (catálogo) e o palco da Home (`CompanionHUD`).
 - 6 linhas × 4 estágios (`lines/`, 256²) + as 11 formas completas de kaelen/orrin/thalindra (`lines/full/`).
 - Árvore genérica de 11 formas (`rookie.png`…`ultra.png`, 384²).
 - `dungeon-spirit`, `mascot-raven`.
-- `branches/` (Igni/Nautilu/Astrase, 4 formas cada, 2048² com xadrez falso) — **entra na pré-seleção do free (D1)**.
+- `branches/` (Igni/Nautil/Astria, 4 formas cada, 2048² com xadrez falso) — **entra na pré-seleção do free (D1)**.
 
 ### Falta — B1: recortar `branches/` (12) para sprite
 Uso: pré-seleção do free (`Onboarding-funil › EscolherPersonagem`) — passa de 6 para 9 linhas. Formato 256² alfa. Pipeline: `scripts/dechecker.mjs` → recorte da bounding box → `finalize-oracle-sprites.sh` (sharp, nearest). Destino `src/assets/soulmon/lines/{igni,nautilu,astrase}-{rookie,champion,ultimate,mega}.png`; mapa `DUNGEON_LINE_SPRITES` + `DUNGEON_LINE_NAMES` (nomes sem `-mon`; o guard `sprites.dungeonRoster.test.ts` exige 6 linhas — **precisa subir para 9 no teste**). Sem geração nova.

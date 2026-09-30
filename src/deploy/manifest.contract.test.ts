@@ -38,7 +38,7 @@ describe('manifest.json', () => {
    * superfície (limite de caracteres da loja); a **tagline** não.
    * Canonizada também em `docs/PLAY-FICHA.md` §0b.
    */
-  const TAGLINE_PT = 'Grows with your day.';
+  const TAGLINE_PT = 'It grows with your day.';
 
   it('#70 — `meta description`, `og:description` e o manifesto abrem com a tagline ÚNICA', () => {
     const meta = /<meta name="description" content="([^"]+)"/.exec(html)?.[1];
@@ -52,7 +52,7 @@ describe('manifest.json', () => {
   it('#70 — a tagline também está na ficha da Play, para as três não divergirem de novo', () => {
     const ficha = read('docs/PLAY-FICHA.md');
     expect(ficha).toContain('Ela cresce com o seu dia.');
-    expect(ficha, 'a versão EN da tagline mora na mesma seção').toContain('Grows with your day.');
+    expect(ficha, 'a versão EN da tagline mora na mesma seção').toContain(TAGLINE_PT);
   });
 
   it('theme_color == --sm-primary do index.css == <meta theme-color> claro', () => {

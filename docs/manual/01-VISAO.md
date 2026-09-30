@@ -354,7 +354,7 @@ o tier** — quem concede é o servidor, em `functions/api/_entitlements.js`
 | Regras de jogo | **idênticas** | **idênticas** |
 
 ⚠️ **divergência:** o `CLAUDE.md` ("Arte e nomes") ainda fala em "os três
-personagens prontos" (Pyraka, Akashaoi, Nimbrata). São seis desde 15/09/2026;
+personagens prontos" (Pyraka, Akashai, Nimbrata). São seis desde 15/09/2026;
 o código vence. Registrado em [`02 §59`](02-REGRAS-DE-NEGOCIO.md#divergencias), D28.
 
 Preço de entrada: `FULL_UNLOCK_PRICE_LABEL` (`src/utils/monetization.ts`) —

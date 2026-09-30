@@ -21,8 +21,8 @@ import type { DocMudado } from '../utils/termsNotice';
  * Em EN o link aponta para a âncora `#en` dos documentos (A5).
  */
 const HREF = {
-  terms: { 'pt-BR': '/termos.html', 'en-US': '/termos.html#en' },
-  privacy: { 'pt-BR': '/privacidade.html', 'en-US': '/privacidade.html#en' },
+  terms: { 'pt-BR': '/termos.html#pt', 'en-US': '/termos.html' },
+  privacy: { 'pt-BR': '/privacidade.html#pt', 'en-US': '/privacidade.html' },
 } as const;
 
 const TITULO: Record<DocMudado, { pt: string; en: string }> = {

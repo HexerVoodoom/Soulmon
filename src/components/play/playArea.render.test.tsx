@@ -108,15 +108,15 @@ async function achar(container: HTMLElement, sel: string): Promise<HTMLElement> 
   return el!;
 }
 
-describe('Exploração — Brisa e a Masmorra', () => {
-  it('a cena tem só o lote da Masmorra (a Corrida mudou para o Salão de Jogos); a Brisa fala dentro da folha', () => {
+describe('Exploração — Zeph e a Masmorra', () => {
+  it('a cena tem só o lote da Masmorra (a Corrida mudou para o Salão de Jogos); Zeph fala dentro da folha', () => {
     const { container } = renderWithCss(<PlayAreaView {...props()} />);
     expect(container.querySelector('[data-area-npc]')).toBeNull();
     expect(container.querySelectorAll('[data-area-lot]')).toHaveLength(1);
     expect(container.querySelector('[data-area-lot="masmorra"] [data-area-lot-art]')).toBeTruthy();
     expect(container.querySelector('[data-area-lot="dino"]')).toBeNull();
     fireEvent.click(container.querySelector('[data-area-lot="masmorra"]')!);
-    expect(container.querySelector('[data-area-sheet-npc-line]')!.textContent).toContain('Brisa');
+    expect(container.querySelector('[data-area-sheet-npc-line]')!.textContent).toContain('Zeph');
   });
 
   it('Masmorra: folha mostra dificuldade e placar lidos das chaves do jogo, e diz que perder não custa coração', async () => {

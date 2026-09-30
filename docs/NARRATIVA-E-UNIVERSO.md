@@ -655,11 +655,11 @@ para quem escrever copy não improvisar:
 | **Lumel** | Luz curta e honesta; enxerga perto, ilumina quem está ao lado. |
 | **Serah** | Corpo de corrente; atravessa sem deixar marca. *(O parecer de PI apontou proximidade com um personagem de outra franquia; o dono decidiu manter em 21/09/2026 — P9 fechada.)* |
 | **Pyraka** | Fagulha em excesso, contida a duras penas; nobre e impaciente. *(Idem — decisão do dono de manter, 21/09/2026.)* |
-| **Akashaoi** | Vem da camada sem superfície; está sempre meio ausente. |
+| **Akashai** | Vem da camada sem superfície; está sempre meio ausente. |
 | **Nimbrata** | Criatura de céu baixo — névoa, peso de chuva antes da chuva. |
 | **Igni** | Brasa pequena e obstinada; a mais comum e a que nunca cede. *(Latim comum; mantido.)* |
-| **Nautilu** | Espiral de fundo de água; guarda dentro de si o que recolhe. |
-| **Astrase** | Alinhada a corpos distantes; mede tempo que não é o nosso. |
+| **Nautil** | Espiral de fundo de água; guarda dentro de si o que recolhe. |
+| **Astria** | Alinhada a corpos distantes; mede tempo que não é o nosso. |
 
 Regra: essas nove **não** são manifestações de ninguém. São fauna. E elas não
 descendem de nada — continuam por reassentamento (§5.11), o que é a razão de

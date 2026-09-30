@@ -2,7 +2,7 @@
 
 > Etiqueta: **plano** (só-prompts, 29/09/2026). Nada aqui foi gerado. O dono gera depois, com crédito no Higgsfield (`nano_banana_2_lite` sai com alfa real; peça única com alfa ruim → fundo `#00FF00` + `chroma-key.mjs`). Fontes: `00-BIBLIA-DAS-AREAS.md` §2.3, §3, §4.2, §5; `ASSETS-A-GERAR.md` §1; `PLANO-GUILDA.md` §9; `manual/04-IDENTIDADE-VISUAL.md`.
 > Quem instala é `arte-instalador`, depois do `arte-conferente`. Este arquivo não toca `src/`.
-> Fala do Fanfa e strings da Feira são da `/squad-narrativa`; aqui só a arte.
+> Fala do Fanfare e strings da Feira são da `/squad-narrativa`; aqui só a arte.
 
 ## 0. Regras que valem para todos os ativos
 
@@ -85,14 +85,14 @@ Comum: **768²**, alfa real, contorno preto de 1 px, busto da cintura para cima,
 
 Negative comum: `magenta, purple, violet, pink, human, human hands, skull, bones, text, letters, numbers, logo, weapon dripping blood, blur, soft glow, gradient, drop shadow, checkerboard, white background, background scenery, frame`
 
-### `npc-arena-feira` — Fanfa (assume a Feira)
+### `npc-arena-feira` — Fanfare (assume a Feira)
 - **Tipo**: NPC busto · arena:feira · criatura-sanfona.
 **Prompt — 1ª tentativa (`imagePrompt` do oráculo, envolvido pela âncora da área)**
 ```
 [AREA STYLE ANCHOR — copiar o bloco da §1 aqui, idêntico]
 NPC BUST FORMAT (overrides the sprite format inside the CREATURE block): waist-up bust, three-quarter view facing LEFT, 768x768, on a PURE SOLID GREEN #00FF00 background, 1px near-black outline, hard pixel edges. Ignore "16x16", "transparent background" and the tiny-size words of the CREATURE block: the creature fills the bust frame. The palette and FORBIDDEN list of the area anchor win over the creature colors where they conflict.
 POSE (bible §4.2): stretching and closing its bellows, puffing out a small breath of turquoise sparks. EXPRESSION: festive and communal.
-CREATURE (oracle, npcs-oraculo-saida.md › Fanfa, seed 29092027, imagePrompt):
+CREATURE (oracle, npcs-oraculo-saida.md › Fanfare, seed 29092027, imagePrompt):
 Generate an original creature for a monster-raising RPG inspired by Digimon, Pokémon, Monster Rancher, Yu-Gi-Oh, Warhammer, Palworld, Legend of Mana, Final Fantasy, Hello Kitty, Tamagotchi, Ragnarok Online and World of Warcraft. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: accordion creature whose body is a bellows of petrol and bone striped canvas, a friendly mouth in the middle, long thin arms carrying small paper lanterns. a pint-sized simple shape. Flat pale gray-blue and silver-lining colors with cyan accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.
 Square 1:1 full-bleed composition.
 ```
@@ -101,21 +101,21 @@ Square 1:1 full-bleed composition.
 [AREA STYLE ANCHOR — copiar o bloco da §1 aqui, idêntico]
 NPC BUST FORMAT (overrides the sprite format inside the CREATURE block): waist-up bust, three-quarter view facing LEFT, 768x768, on a PURE SOLID GREEN #00FF00 background, 1px near-black outline, hard pixel edges. Ignore "16x16", "transparent background" and the tiny-size words of the CREATURE block: the creature fills the bust frame. The palette and FORBIDDEN list of the area anchor win over the creature colors where they conflict.
 POSE (bible §4.2): stretching and closing its bellows, puffing out a small breath of turquoise sparks. EXPRESSION: festive and communal.
-CREATURE (oracle, npcs-oraculo-saida.md › Fanfa, seed 29092027, imagePromptFallback):
+CREATURE (oracle, npcs-oraculo-saida.md › Fanfare, seed 29092027, imagePromptFallback):
 Generate an original creature for a monster-raising RPG. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: accordion creature whose body is a bellows of petrol and bone striped canvas, a friendly mouth in the middle, long thin arms carrying small paper lanterns. a pint-sized simple shape. Flat pale gray-blue and silver-lining colors with cyan accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.
 Square 1:1 full-bleed composition.
 ```
 - **Seeds**: 4 imagens. Escolher: fole listrado legível, boca no centro do fole, ≥1 lanterna nos braços, cabe nos 3/4 à esquerda; nada de rosto humano.
-- **Aceite**: silhueta preta = fole com pregas + braços com lanterna, distinta de Vultrak e Rinoco; alfa limpo; paleta ligada à tenda (`lote-arena-feira`).
+- **Aceite**: silhueta preta = fole com pregas + braços com lanterna, distinta de Vultrak e Rhinoco; alfa limpo; paleta ligada à tenda (`lote-arena-feira`).
 
-### `npc-arena-duelo` — Rinoco
+### `npc-arena-duelo` — Rhinoco
 - **Tipo**: NPC busto · arena:duelo · rinoceronte-bípede (arte falta; hoje placeholder).
 **Prompt — 1ª tentativa (`imagePrompt` do oráculo, envolvido pela âncora da área)**
 ```
 [AREA STYLE ANCHOR — copiar o bloco da §1 aqui, idêntico]
 NPC BUST FORMAT (overrides the sprite format inside the CREATURE block): waist-up bust, three-quarter view facing LEFT, 768x768, on a PURE SOLID GREEN #00FF00 background, 1px near-black outline, hard pixel edges. Ignore "16x16", "transparent background" and the tiny-size words of the CREATURE block: the creature fills the bust frame. The palette and FORBIDDEN list of the area anchor win over the creature colors where they conflict.
 POSE (bible §4.2): knocking its horn against a ring post. EXPRESSION: good-natured, laughing as if it was just hit and liked it.
-CREATURE (oracle, npcs-oraculo-saida.md › Rinoco, seed 29092026, imagePrompt):
+CREATURE (oracle, npcs-oraculo-saida.md › Rhinoco, seed 29092026, imagePrompt):
 Generate an original creature for a monster-raising RPG inspired by Digimon, Pokémon, Monster Rancher, Yu-Gi-Oh, Warhammer, Palworld, Legend of Mana, Final Fantasy, Hello Kitty, Tamagotchi, Ragnarok Online and World of Warcraft. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: stocky bipedal rhinoceros with sandstone hide, a horn of chipped stone with a thin turquoise vein, a bone cloth headband and a good-natured grin. small and simple with a big head. Flat clay-red and sandstone colors with red accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.
 Square 1:1 full-bleed composition.
 ```
@@ -124,12 +124,12 @@ Square 1:1 full-bleed composition.
 [AREA STYLE ANCHOR — copiar o bloco da §1 aqui, idêntico]
 NPC BUST FORMAT (overrides the sprite format inside the CREATURE block): waist-up bust, three-quarter view facing LEFT, 768x768, on a PURE SOLID GREEN #00FF00 background, 1px near-black outline, hard pixel edges. Ignore "16x16", "transparent background" and the tiny-size words of the CREATURE block: the creature fills the bust frame. The palette and FORBIDDEN list of the area anchor win over the creature colors where they conflict.
 POSE (bible §4.2): knocking its horn against a ring post. EXPRESSION: good-natured, laughing as if it was just hit and liked it.
-CREATURE (oracle, npcs-oraculo-saida.md › Rinoco, seed 29092026, imagePromptFallback):
+CREATURE (oracle, npcs-oraculo-saida.md › Rhinoco, seed 29092026, imagePromptFallback):
 Generate an original creature for a monster-raising RPG. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: stocky bipedal rhinoceros with sandstone hide, a horn of chipped stone with a thin turquoise vein, a bone cloth headband and a good-natured grin. small and simple with a big head. Flat clay-red and sandstone colors with red accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.
 Square 1:1 full-bleed composition.
 ```
 - **Seeds**: 3 imagens. Escolher: chifre com veio turquesa legível, sorriso, sem armas, sem sangue.
-- **Aceite**: silhueta preta = massa larga + chifre de pedra; destacável de Fanfa (fole) e de Vultrak; 768² alfa.
+- **Aceite**: silhueta preta = massa larga + chifre de pedra; destacável de Fanfare (fole) e de Vultrak; 768² alfa.
 
 ### `npc-arena` — Vultrak (repintura de acento; nome e fala não mudam)
 - **Tipo**: NPC busto · arena:torneio · **anexar o `npc-arena.png` atual** e pedir reprodução fiel com acento arenito. Mantém o nome de arquivo `npc-arena.png` (anfitrião).
@@ -286,8 +286,8 @@ Aceite: sem asa/olho/inseto legível (motas abstratas); silhueta = nuvem em espi
 | `lote-arena-torneio` | lote | 3 | P2 |
 | `lote-arena-duelo` | lote | 3 | P2 |
 | `lote-arena-feira` | lote | 4 | P1 |
-| `npc-arena-feira` (Fanfa) | NPC busto | 4 | P1 |
-| `npc-arena-duelo` (Rinoco) | NPC busto | 3 | P2 |
+| `npc-arena-feira` (Fanfare) | NPC busto | 4 | P1 |
+| `npc-arena-duelo` (Rhinoco) | NPC busto | 3 | P2 |
 | `npc-arena` (Vultrak, repintura) | NPC busto | 2 | P3 |
 | `fair-fenomeno-nevoa-aberto` | sprite do fenômeno (névoa) | 4 | P1 |
 | `fair-fenomeno-nevoa-ferido` | sprite do fenômeno (névoa) | 3 | P1 |
@@ -306,11 +306,11 @@ Aceite: sem asa/olho/inseto legível (motas abstratas); silhueta = nuvem em espi
 | `fx-fair-estatica` | fx | 3 | P2 |
 | `fx-fair-enxame` | fx | 3 | P2 |
 
-**Total: 23 ativos, ~75 imagens** (eram 14 ativos e ~45 antes da decisão do dono de 29/09/2026: 12 sprites de fenômeno em vez de 3, +9 ativos, +30 imagens; mais retentativas: teto de ~100). Ordem sugerida: `bg-arena` → Fanfa + `lote-arena-feira` + 4 `aberto` de fenômeno, depois `ferido`/`dissipado` (a Feira é a porta da Guilda, WPG-10) → Torneio/Duelo/Rinoco → FX → Vultrak.
+**Total: 23 ativos, ~75 imagens** (eram 14 ativos e ~45 antes da decisão do dono de 29/09/2026: 12 sprites de fenômeno em vez de 3, +9 ativos, +30 imagens; mais retentativas: teto de ~100). Ordem sugerida: `bg-arena` → Fanfare + `lote-arena-feira` + 4 `aberto` de fenômeno, depois `ferido`/`dissipado` (a Feira é a porta da Guilda, WPG-10) → Torneio/Duelo/Rhinoco → FX → Vultrak.
 
 ## 8. Decisões que ficam com o dono / observações
 
 - **Posição do lote Feira**: os prompts assumem o `left/top` atual do `guilda` da Arena (32%/82%). Se `ArenaLotId` `'feira'` mudar a posição, refazer só a clareira de `bg-arena`.
 - **Fenômeno: um sprite por tipo (decidido pelo dono em 29/09/2026)**: 4 tipos × 3 estados = 12 sprites (eram 3 genéricos, +9 ativos). Pendência de código, fora deste arquivo: `FAIR_ART` (`src/utils/fairArt.ts`) precisa de mapa por tipo×estado.
-- `PLACEHOLDER_NPC_ART.poring` / `npc-placeholder-poring.png` sai do bundle quando Rinoco chegar (A3 da bíblia): ninguém aponta mais para ele; renomear enquanto isso é do instalador.
-- Falas de Fanfa e strings da Feira: `soulmon-copy-redator`; nenhuma cita contribuição individual.
+- `PLACEHOLDER_NPC_ART.poring` / `npc-placeholder-poring.png` sai do bundle quando Rhinoco chegar (A3 da bíblia): ninguém aponta mais para ele; renomear enquanto isso é do instalador.
+- Falas de Fanfare e strings da Feira: `soulmon-copy-redator`; nenhuma cita contribuição individual.

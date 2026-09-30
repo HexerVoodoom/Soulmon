@@ -581,7 +581,7 @@ describe('o lote Feira da Arena abre a sala Feira, e o voltar fecha a folha cert
     await waitFor(() => expect(visor()).toBeTruthy());
     expect(document.querySelector('[data-guild-room-open="feira"]')).toBeTruthy();
     expect(document.querySelector('[data-area-sheet-npc-line]')!.textContent).toContain(PT('guild.npc.feira'));
-    expect(document.querySelector('[data-area-sheet-npc-line]')!.textContent).toContain('Fanfa');
+    expect(document.querySelector('[data-area-sheet-npc-line]')!.textContent).toContain('Fanfare');
   });
 
   it('o voltar do Android fecha a Feira e devolve o foco ao lote', async () => {

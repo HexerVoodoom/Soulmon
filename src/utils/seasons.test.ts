@@ -184,7 +184,7 @@ describe('NADA EXPIRA — sonho sazonal continua obtenível fora da estação', 
 
   it('um sonho de OUTRA estação é sorteável hoje (e em entre-estações)', () => {
     // Sorteia com muitas seeds fora da estação do sonho e exige que ele saia.
-    const target = 'dream-firefly-jar'; // legendary, estação da Fogueira
+    const target = 'dream-firefly-jar'; // legendary, estação da Brasa
     for (const when of [IN_SPROUT, IN_TIDE, BETWEEN]) {
       const saiu = Array.from({ length: 200 }, (_, i) =>
         rollDream(base, 'legendary', i, when),

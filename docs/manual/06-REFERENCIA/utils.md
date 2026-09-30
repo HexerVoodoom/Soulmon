@@ -420,13 +420,13 @@ Cobertura: **166/166** módulos de `src/utils` (+9 em 30/09/2026: `mente/*`, `re
 **Régua:** `src/utils/mente/eco.test.ts`, `src/components/mente/ecoBolhas.render.test.tsx`.
 
 ### `src/utils/mente/picross.ts`
-**Dono de:** Picross da Malha (Ateliê da Mente, 30/09/2026): pistas de linha/coluna, a checagem por PISTAS (qualquer grade que bate conta), o resolvedor por lógica de linha que prova a solução única de cada desenho e o desenho do dia (hash de `todayKey`).
+**Dono de:** Nonograma da Malha (Ateliê da Mente, 30/09/2026): pistas de linha/coluna, a checagem por PISTAS (qualquer grade que bate conta), o resolvedor por lógica de linha que prova a solução única de cada desenho e o desenho do dia (hash de `todayKey`).
 **Exports:** `PICROSS_BITS_BY_SIZE` (5→3, 7→6, 10→12), `PICROSS_DAILY_BONUS` (5), `PICROSS_MAX_BITS`; `CellMark`, `EMPTY`/`FILLED`/`CROSSED`, `Clues`; `parsePattern`, `lineClue`, `cluesOf`, `matchesClues`, `solveByLines`, `isLineSolvable`, `hashKey`, `dailyPattern(todayKey)`, `picrossBits(size, isDailyUnpaid)`, `emptyBoard`.
 **Chamado por:** `src/components/mente/PicrossGame.tsx`, `src/components/play/PlaySheets.tsx`.
 **Régua:** `src/utils/mente/picross.test.ts` (um caso por desenho: solução única por lógica de linha), `src/components/mente/trocaPicross.render.test.tsx`.
 
 ### `src/utils/mente/picrossPatterns.ts`
-**Dono de:** a biblioteca de desenhos do Picross da Malha — 22 figuras genéricas (5×5, 7×7, 10×10) com nome PT/EN, nenhuma de franquia.
+**Dono de:** a biblioteca de desenhos do Nonograma da Malha — 22 figuras genéricas (5×5, 7×7, 10×10) com nome PT/EN, nenhuma de franquia.
 **Exports:** `PicrossPattern`, `PICROSS_PATTERNS`.
 **Chamado por:** `src/utils/mente/picross.ts`, `src/components/mente/PicrossGame.tsx`.
 **Régua:** `src/utils/mente/picross.test.ts`.
@@ -905,8 +905,8 @@ Cobertura: **166/166** módulos de `src/utils` (+9 em 30/09/2026: `mente/*`, `re
 **Régua:** nenhuma (`ls src/utils/libraryNpcs*.test.ts` vazio).
 
 ### `src/utils/areaNpcVoice.ts`
-**Dono de:** a fala dos 6 NPCs anfitriões de área (minimal-ui F4) — nome (PT/EN) e a linha de diálogo do balão. Dono único da copy: nenhum componente escreve fala de NPC solta em JSX (regra do `narrativa.contract` e do redator de UX). Nomes (Grom, Vultrak, Brisa, Pipo, Lumi) são a decisão D5 do dono; o NPC do Laboratório é **Vesca, a alquimista** (nomeado em 24/09/2026, `78ef5367`, no mesmo estilo dos outros cinco — ⚰️ até então recebia só descrição de ofício). Falas PT dos mocks aprovados (`.npc-fala`), EN tradução fiel.
-**Exports:** `AreaNpcVoice` (interface — `namePt`/`nameEn`/`linePt`/`lineEn`), `areaNpcVoice(id, language)` — devolve `{ name, line }` no idioma, lidos da tabela interna `AREA_NPC_VOICE: Record<AreaId, …>`; `lotNpcVoice(id, lotId, language)` (desde 29/09/2026) — a fala do NPC de UM lote (`área:lote`), caindo na voz da área quando o lote não tem entrada própria. Desde a Guilda completa: `arena:feira` é **Fanfa** (criatura-sanfona; Marla fica só no Salão, `hall:guilda`) e as falas dos dois lotes vêm de `guildCopy.ts` (`guild.npc.feira`/`guild.npc.hall`) — a fala antiga "grupo pequeno" ficou falsa com a roda de até 12.
+**Dono de:** a fala dos 6 NPCs anfitriões de área (minimal-ui F4) — nome (PT/EN) e a linha de diálogo do balão. Dono único da copy: nenhum componente escreve fala de NPC solta em JSX (regra do `narrativa.contract` e do redator de UX). Nomes (Grom, Vultrak, Zeph, Pipo, Lumi) são a decisão D5 do dono; o NPC do Laboratório é **Vesca, a alquimista** (nomeado em 24/09/2026, `78ef5367`, no mesmo estilo dos outros cinco — ⚰️ até então recebia só descrição de ofício). Falas PT dos mocks aprovados (`.npc-fala`), EN tradução fiel.
+**Exports:** `AreaNpcVoice` (interface — `namePt`/`nameEn`/`linePt`/`lineEn`), `areaNpcVoice(id, language)` — devolve `{ name, line }` no idioma, lidos da tabela interna `AREA_NPC_VOICE: Record<AreaId, …>`; `lotNpcVoice(id, lotId, language)` (desde 29/09/2026) — a fala do NPC de UM lote (`área:lote`), caindo na voz da área quando o lote não tem entrada própria. Desde a Guilda completa: `arena:feira` é **Fanfare** (criatura-sanfona; Marla fica só no Salão, `hall:guilda`) e as falas dos dois lotes vêm de `guildCopy.ts` (`guild.npc.feira`/`guild.npc.hall`) — a fala antiga "grupo pequeno" ficou falsa com a roda de até 12.
 **Chamado por:** `src/components/nav/AreaScene.tsx`, `src/components/nav/AreaSheet.tsx` (`lotNpcVoice`).
 **Régua:** `src/components/nav/areaShell.render.test.tsx` (indireta, via `AreaScene`).
 

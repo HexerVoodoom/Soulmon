@@ -4,7 +4,7 @@
  * Dono único da copy dos 6 anfitriões do Mapa — nenhum componente escreve a
  * fala deles à mão (regra do `narrativa.contract` e do redator de UX: texto
  * que o jogador lê não nasce solto dentro de JSX). Os nomes (Grom, Vultrak,
- * Brisa, Pipo, Lumi) são a decisão D5 do dono (23/09/2026,
+ * Zeph, Pipo, Lumi) são a decisão D5 do dono (23/09/2026,
  * `docs/design/minimal-ui/PLANO-IMPLEMENTACAO.md`); o NPC do Laboratório
  * (Vesca) foi nomeado em 24/09/2026, no mesmo estilo dos outros cinco.
  *
@@ -38,8 +38,8 @@ const AREA_NPC_VOICE: Record<AreaId, AreaNpcVoice> = {
     lineEn: "No one stands idle here. Pick: this week's Tournament or a duel right now.",
   },
   exploracao: {
-    namePt: 'Brisa, a guia',
-    nameEn: 'Brisa, the guide',
+    namePt: 'Zeph, a guia',
+    nameEn: 'Zeph, the guide',
     // A Corrida mudou para o Salão de Jogos (30/09/2026); aqui ficou a Masmorra.
     linePt: 'A névoa esconde caminhos. A Masmorra está logo ali, quando quiser descer.',
     lineEn: 'The mist hides paths. The Dungeon is right there, whenever you want to go down.',
@@ -78,15 +78,15 @@ export function areaNpcVoice(id: AreaId, language: Language): { name: string; li
  */
 const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
   'arena:duelo': {
-    namePt: 'Rinoco, o campeão', nameEn: 'Rhinoco, the champion',
+    namePt: 'Rhinoco, o campeão', nameEn: 'Rhinoco, the champion',
     linePt: 'Um duelo, uma rodada de cada vez. Pode vir — eu aguento o tranco!',
     lineEn: 'One duel, one round at a time. Bring it on — I can take a hit!',
   },
   // Fala da Feira (`guild.npc.feira`) — a copy mora em `guildCopy.ts`; "grupo
-  // pequeno" ficou falso com a roda de até 12. NPC da Feira: Fanfa (criatura-sanfona,
+  // pequeno" ficou falso com a roda de até 12. NPC da Feira: Fanfare (criatura-sanfona,
   // `00-BIBLIA-DAS-AREAS.md`); Marla fica só no Salão.
   'arena:feira': {
-    namePt: 'Fanfa', nameEn: 'Fanfa',
+    namePt: 'Fanfare', nameEn: 'Fanfare',
     linePt: GUILD_COPY['guild.npc.feira'][0],
     lineEn: GUILD_COPY['guild.npc.feira'][1],
   },
@@ -101,7 +101,7 @@ const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     lineEn: 'Each table here asks for one thing: remember the order, wait your turn, switch the rule, deduce. Sit wherever you like.',
   },
   'jogos:refugio': {
-    namePt: 'Boio, o soprador de bolhas', nameEn: 'Boio, the bubble-blower',
+    namePt: 'Bobbi, o soprador de bolhas', nameEn: 'Bobbi, the bubble-blower',
     linePt: 'Eu faço bolhas bem devagar. Quer estourar algumas, ou respirar no ritmo delas?',
     lineEn: 'I make bubbles, nice and slow. Want to pop a few, or breathe along with them?',
   },

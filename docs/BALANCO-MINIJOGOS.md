@@ -55,7 +55,7 @@ desenho do dia soma **+5** uma vez por dia.
 |---|---|---|---|
 | **Bolhas do Sonho** | 1 Bit a cada 10 sonhos, teto 10 | **1 a cada 6, teto 8** | a mediana do jogador típico é ~39 sonhos em 60 s: ele ganhava **3** (metade do Dino), e o teto 10 era quase inalcançável. Agora o típico ganha ~6 e o experiente para em 8 |
 | **Troca de Regra** | teto 10 | **teto 6** (derivado: 30 cartas ÷ 5) | 30 cartas nunca rendiam mais que 6; a folha anunciava "até 10" |
-| **Picross da Malha** | 10 no do dia, 3 nos outros, qualquer tamanho | **por tamanho: 5×5 = 3, 7×7 = 6, 10×10 = 12; o do dia +5** | com valor fixo, o 10×10 (4 min) pagava o mesmo que o 5×5 (1 min): o certo era fugir da grade grande |
+| **Nonograma da Malha** | 10 no do dia, 3 nos outros, qualquer tamanho | **por tamanho: 5×5 = 3, 7×7 = 6, 10×10 = 12; o do dia +5** | com valor fixo, o 10×10 (4 min) pagava o mesmo que o 5×5 (1 min): o certo era fugir da grade grande |
 | **Picross — bônus do dia** | pago de novo a cada vez que se reabria o jogo | **uma vez por dia do jogador**, no aparelho (`STORAGE_KEYS.PICROSS_DAILY_PAID`) | reabrir a tela repagava o bônus |
 | Eco, Revisão, Dino, PPT | — | sem mudança | já estavam na faixa |
 

@@ -21,7 +21,7 @@ import { computeDailyReset } from './dailyReset';
 import { currentSeason, seasonLabel, seasonProgress } from './seasons';
 
 const NA_ESTACAO = new Date('2026-04-10T12:00:00');   // Estação do Broto
-const OUTRA_ESTACAO = new Date('2026-07-10T12:00:00'); // Estação da Fogueira
+const OUTRA_ESTACAO = new Date('2026-07-10T12:00:00'); // Estação da Brasa
 const ENTRE = new Date('2026-02-28T12:00:00');         // entre-estações
 
 const estado = (over: Record<string, unknown> = {}) => ({

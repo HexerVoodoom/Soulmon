@@ -411,12 +411,12 @@ export function SettingsPage({
             âncora `#en` (mesma tabela do `TermsUpdateBanner`). */}
         <ActionRow
           label={isPt ? 'Termos de Uso' : 'Terms of Use'}
-          href={isPt ? '/termos.html' : '/termos.html#en'}
+          href={isPt ? '/termos.html#pt' : '/termos.html'}
           language={language}
         />
         <ActionRow
           label={isPt ? 'Política de privacidade' : 'Privacy policy'}
-          href={isPt ? '/privacidade.html' : '/privacidade.html#en'}
+          href={isPt ? '/privacidade.html#pt' : '/privacidade.html'}
           language={language}
         />
         {/* O canal de feedback fica em Ajuda, logo acima da versão que vai no

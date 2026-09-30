@@ -587,8 +587,8 @@ ficam valendo:
   na prática**: os três personagens prontos se chamavam Pyrakamon, Akashaoimon
   e Nimbratamon, e este arquivo os proibia sem nunca ter sido aplicado a eles.
   A sessão de QA achou a contradição e o dono decidiu pela regra — hoje são
-  **Pyraka, Akashaoi e Nimbrata** — e desde 15/09/2026 (`c11dc49d`, D1 da
-  squad-arte) são **seis** prontos, com **Igni, Nautilu e Astrase** (`igni`,
+  **Pyraka, Akashai e Nimbrata** — e desde 15/09/2026 (`c11dc49d`, D1 da
+  squad-arte) são **seis** prontos, com **Igni, Nautil e Astria** (`igni`,
   `nautilu`, `astrase`); `PREMADE_CHARACTERS` em `utils/monetization.ts` é a
   medida. O `id` da linha (`kaelen`, `orrin`,
   `thalindra`) NÃO mudou: é ele que resolve o sprite, vai para o save

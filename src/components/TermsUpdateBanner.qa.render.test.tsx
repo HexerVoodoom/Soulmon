@@ -20,7 +20,7 @@ describe('TermsUpdateBanner — QA', () => {
       expect(a.getAttribute('rel'), a.href).toContain('noreferrer');
       expect(a.getAttribute('aria-label'), a.href).toMatch(/abre em nova aba|opens in a new tab/);
     }
-    const sufixo = lang === 'en-US' ? '#en' : '';
+    const sufixo = lang === 'en-US' ? '' : '#pt';
     expect(links.map(a => a.getAttribute('href')).sort()).toEqual([`/privacidade.html${sufixo}`, `/termos.html${sufixo}`]);
   });
 

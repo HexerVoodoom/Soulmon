@@ -8,7 +8,7 @@
  *  · `fair-fenomeno-aberto` / `-ferido` / `-dissipado` — sprite 384² alfa, MESMA massa nos
  *    três estados (lajes de pedra-petróleo com fendas turquesa; sem rosto, sem olho, sem HP);
  *  · `fx-fair-nevoa` / `-mare` / `-estatica` / `-enxame` — FX sobre o visor, um por tipo;
- *  · `npc-arena-feira` — o busto do Fanfa (`assets/soulmon/npcs`, `LOT_NPC_ART['arena:feira']`);
+ *  · `npc-arena-feira` — o busto do Fanfare (`assets/soulmon/npcs`, `LOT_NPC_ART['arena:feira']`);
  *  · `lote-arena-feira` — a construção do lote (`assets/soulmon/areas`, `ARENA_LOT_ART.feira`).
  * O estado `ferido` é um BOOLEANO do servidor (dano ≥ metade); o cliente nunca conhece HP.
  */

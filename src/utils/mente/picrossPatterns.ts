@@ -1,5 +1,5 @@
 /**
- * A BIBLIOTECA DE DESENHOS do Picross da Malha — feita à mão, formas
+ * A BIBLIOTECA DE DESENHOS do Nonograma da Malha — feita à mão, formas
  * genéricas do universo aconchegante do pet (nenhum personagem de franquia).
  *
  * `'#'` = casa pintada, `'.'` = vazia. Toda grade é quadrada (5, 7 ou 10).

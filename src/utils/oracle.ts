@@ -1159,24 +1159,24 @@ const ELEMENT_FLAVOR_WORDS: Record<ElementId, LText[]> = {
 // eram perceptivelmente o mesmo nome).
 const ELEMENT_NAME_STEMS: Record<ElementId, string[]> = {
   agua: ['Aqua', 'Hydro', 'Maris', 'Nixa', 'Undi', 'Coral', 'Naia', 'Torren'],
-  fogo: ['Pyra', 'Igni', 'Flare', 'Vulko', 'Faiska', 'Chama', 'Ardo', 'Forna'],
+  fogo: ['Pyra', 'Igni', 'Flare', 'Vulko', 'Faiska', 'Emba', 'Ardo', 'Forna'],
   terra: ['Terra', 'Gaio', 'Rocko', 'Petra', 'Grani', 'Argil', 'Basal', 'Monti'],
-  ar: ['Aero', 'Zephy', 'Venti', 'Skye', 'Brisa', 'Nimbo', 'Alize', 'Zonda'],
+  ar: ['Aero', 'Zephy', 'Venti', 'Skye', 'Aira', 'Nimbo', 'Alize', 'Zonda'],
   sombra: ['Umbra', 'Nykta', 'Noxi', 'Krow', 'Duska', 'Vespra', 'Morvo', 'Onyra'],
   luz: ['Lumi', 'Solari', 'Astra', 'Helio', 'Luxa', 'Fulgo', 'Alba', 'Prisma'],
-  planta: ['Flora', 'Verdi', 'Sylva', 'Thorn', 'Bromia', 'Cipo', 'Musgo', 'Germi'],
-  industrial: ['Mecha', 'Gear', 'Volta', 'Ferro', 'Servo', 'Dyna', 'Cobre', 'Zinco'],
+  planta: ['Flora', 'Verdi', 'Sylva', 'Thorn', 'Bromia', 'Vinea', 'Mossa', 'Germi'],
+  industrial: ['Mecha', 'Gear', 'Volta', 'Ferro', 'Servo', 'Dyna', 'Cupra', 'Zinka'],
 };
 
 const REALM_NAME_STEMS: Record<RealmId, string[]> = {
-  deserto: ['Duna', 'Sahar', 'Mira', 'Oasi', 'Cacta', 'Siro'],
-  picos: ['Zeka', 'Tromu', 'Raiku', 'Cume', 'Alpi', 'Cerro'],
+  deserto: ['Duna', 'Sahar', 'Mira', 'Oasi', 'Cactu', 'Siro'],
+  picos: ['Zeka', 'Tromu', 'Raiku', 'Cumo', 'Alpi', 'Cerra'],
   oceano: ['Abyssa', 'Nauti', 'Mareo', 'Ondra', 'Salso', 'Batia'],
-  pantano: ['Boggu', 'Mirena', 'Sludge', 'Brejo', 'Lodra', 'Charko'],
-  floresta: ['Bosco', 'Bruma', 'Kodama', 'Cerne', 'Rama', 'Fronda'],
+  pantano: ['Boggu', 'Mirena', 'Sludge', 'Brego', 'Lodru', 'Charko'],
+  floresta: ['Bosco', 'Brume', 'Kodama', 'Cerni', 'Ramu', 'Fronde'],
   cavernas: ['Grotta', 'Stalag', 'Ekko', 'Kripta', 'Geoda', 'Cavra'],
-  gelo: ['Kriona', 'Frosta', 'Boreal', 'Neva', 'Iglu', 'Polara'],
-  campina: ['Prado', 'Leana', 'Solis', 'Trigo', 'Relva', 'Savan'],
+  gelo: ['Kriona', 'Frosta', 'Boreal', 'Nevia', 'Glacu', 'Polara'],
+  campina: ['Prati', 'Leana', 'Solis', 'Tryga', 'Relva', 'Savna'],
   akasha: ['Akasha', 'Aetheri', 'Nimbra', 'Mantra', 'Orbe', 'Anima'],
 };
 

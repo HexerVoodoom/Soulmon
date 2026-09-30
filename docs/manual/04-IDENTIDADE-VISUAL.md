@@ -1045,7 +1045,7 @@ nunca inimigo).
 |---|---|---|---|
 | **Cenários do Bosque** | 5 gradientes em camadas (`GROVE_MOTES`, `GROVE_VINES`, `GROVE_CANOPY`, …): `bg-guild-clareira` → `-ramagem` → `-copa` → `-mata` → `-bosque-antigo`, cada estágio = o anterior + camadas; `outdoor`, chão em 66% (`horizonY: 66`, ≤ `GROUND_Y`) | só o `css` de `PET_BACKGROUNDS` (`utils/backgrounds.ts`) vira `url(...)`; `setting`, `slots`, `horizonY` ficam | família `cenario` de `docs/ASSETS-A-GERAR.md`, 1200×648 |
 | **Fenômeno da Feira** | SVG de ~7 lajes finas empilhadas e deslocadas (`FeiraVisor`), três estados, quatro FX | preencher `FAIR_ART` (`utils/fairArt.ts`); a sala já prefere a imagem | `fair-fenomeno-aberto` / `-ferido` / `-dissipado` (sprite 384² alfa, MESMA massa nos três), `fx-fair-nevoa` / `-mare` / `-estatica` / `-enxame` |
-| **NPC e lote da Feira** | placeholders do molde (`lotNpcArt`, `ARENA_LOT_ART`) | `LOT_NPC_ART['arena:feira']`, `ARENA_LOT_ART.feira` | `npc-arena-feira` (Fanfa, criatura-sanfona), `lote-arena-feira` (tenda-cúpula) |
+| **NPC e lote da Feira** | placeholders do molde (`lotNpcArt`, `ARENA_LOT_ART`) | `LOT_NPC_ART['arena:feira']`, `ARENA_LOT_ART.feira` | `npc-arena-feira` (Fanfare, criatura-sanfona), `lote-arena-feira` (tenda-cúpula) |
 | **Concha da Maré** | SVG em `DECOR_ART['trophy-concha-mare']`, espaço `trophy` | trocar por `assets/decor/trophy-concha-mare.png` (384²) | `trophy-concha-mare` |
 | **Criaturas do Bosque** | nossas linhas (`DUNGEON_LINE_SPRITES`, por hash do id opaco), 128 px a sua e 64 px as dos outros (`OWN_RENDER`/`OTHER_RENDER`) | — (não há arte nova a gerar) | — |
 
@@ -1092,11 +1092,11 @@ só ele** (`src/utils/sprites.ts`).
 | `lumel` | Lumel | idem |
 | `serah` | Serah | idem |
 | `kaelen` | **Pyraka** | idem |
-| `orrin` | **Akashaoi** | idem |
+| `orrin` | **Akashai** | idem |
 | `thalindra` | **Nimbrata** | idem |
 | `igni` | Igni | idem — desde 15/09/2026 (`c11dc49d`) |
-| `nautilu` | Nautilu | idem — desde 15/09/2026 |
-| `astrase` | Astrase | idem — desde 15/09/2026 |
+| `nautilu` | Nautil | idem — desde 15/09/2026 |
+| `astrase` | Astria | idem — desde 15/09/2026 |
 
 As três últimas são **as linhas do oráculo com seed fixo** (runs 1–3 de
 18/08/2026, `branches/`), recortadas em 15/09/2026 e postas na **pré-seleção do

@@ -267,7 +267,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     namePt: 'Matriz Verde', nameEn: 'Green Matrix',
     descPt: 'Grade digital verde estilo matrix', descEn: 'Matrix-style green digital grid', price: 150 },
   { id: 'bg-forest', kind: 'bg', icon: '🌲',
-    namePt: 'Floresta Nativa', nameEn: 'Native Forest',
+    namePt: 'Floresta Nativa', nameEn: 'Old-Growth Forest',
     descPt: 'A floresta onde toda jornada começa', descEn: 'The forest where every journey begins', price: 150 },
   { id: 'bg-ocean', kind: 'bg', icon: '🐠',
     namePt: 'Fundo do Mar', nameEn: 'Deep Sea',
@@ -276,7 +276,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     namePt: 'LCD Retrô', nameEn: 'Retro LCD',
     descPt: 'Tela verde monocromática de 1989', descEn: 'Monochrome green screen, 1989 style', price: 150 },
   { id: 'bg-snow', kind: 'bg', icon: '❄️',
-    namePt: 'Terra Gelada', nameEn: 'Freezeland',
+    namePt: 'Terra Gelada', nameEn: 'Frostlands',
     descPt: 'Planície congelada sob a neve', descEn: 'Frozen plains under falling snow', price: 180 },
   { id: 'bg-lava', kind: 'bg', icon: '🌋',
     namePt: 'Montanha de Lava', nameEn: 'Lava Mountain',
@@ -320,7 +320,7 @@ export const SHOP_ITEMS: ShopItem[] = [
   // Mission-gated backdrops — visible from day one, locked behind achievements
   // (utils/missions.ts). Completing the mission unlocks the PURCHASE.
   { id: 'bg-mission-filecity', kind: 'bg', icon: '🏘️',
-    namePt: 'Cidade do Arquivo', nameEn: 'File City',
+    namePt: 'Cidade do Arquivo', nameEn: 'Archive City',
     descPt: 'A vila onde tudo começa', descEn: 'The village where it all begins', price: 300,
     unlock: { kind: 'mission', missionId: 'mission-champion' } },
   { id: 'bg-mission-infinity', kind: 'bg', icon: '🗻',

@@ -255,7 +255,7 @@ export function PicrossGame({ language, onEarnPoints, onExit, todayKey }: Earnin
   return (
     <GameRoot>
       <GameHeader
-        title={isPt ? 'Picross da Malha' : 'Mesh Picross'}
+        title={isPt ? 'Nonograma da Malha' : 'Mesh Nonogram'}
         sub={isDaily
           ? (isPt ? `Desenho do dia · ${n}×${n}` : `Today's picture · ${n}×${n}`)
           : (isPt ? `Outro desenho · ${n}×${n}` : `Another picture · ${n}×${n}`)}

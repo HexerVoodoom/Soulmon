@@ -131,17 +131,17 @@ describe('QA rodada 2 — Ajuda: Termos, #en e "(abre em nova aba)" (A4/A5/A6)',
   it('PT: "Termos de Uso" existe, abre /termos.html em nova aba e o nome acessível DIZ isso', () => {
     renderSettings('pt-BR');
     const a = screen.getByRole('link', { name: /Termos de Uso \(abre em nova aba\)/ }) as HTMLAnchorElement;
-    expect(a.getAttribute('href')).toBe('/termos.html');
+    expect(a.getAttribute('href')).toBe('/termos.html#pt');
     expect(a.getAttribute('target')).toBe('_blank');
     expect(a.getAttribute('rel')).toContain('noopener');
     const p = screen.getByRole('link', { name: /Política de privacidade \(abre em nova aba\)/ }) as HTMLAnchorElement;
-    expect(p.getAttribute('href')).toBe('/privacidade.html');
+    expect(p.getAttribute('href')).toBe('/privacidade.html#pt');
   });
 
   it('EN: os dois links apontam para a âncora #en e avisam "(opens in a new tab)"', () => {
     renderSettings('en-US');
-    expect((screen.getByRole('link', { name: /Terms of Use \(opens in a new tab\)/ }) as HTMLAnchorElement).getAttribute('href')).toBe('/termos.html#en');
-    expect((screen.getByRole('link', { name: /Privacy policy \(opens in a new tab\)/ }) as HTMLAnchorElement).getAttribute('href')).toBe('/privacidade.html#en');
+    expect((screen.getByRole('link', { name: /Terms of Use \(opens in a new tab\)/ }) as HTMLAnchorElement).getAttribute('href')).toBe('/termos.html');
+    expect((screen.getByRole('link', { name: /Privacy policy \(opens in a new tab\)/ }) as HTMLAnchorElement).getAttribute('href')).toBe('/privacidade.html');
     // O sufixo é só para leitor de tela: não aparece como texto visível solto.
     expect(screen.getByRole('link', { name: /Terms of Use/ }).querySelector('.sm2-conta-t')!.textContent).toContain('(opens in a new tab)');
   });

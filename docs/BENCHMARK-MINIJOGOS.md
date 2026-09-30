@@ -262,7 +262,7 @@ encaixe no universo · custo · risco**. As de ⭐ são as recomendadas.
 - **Risco:** a pessoa não entender que a regra mudou → pista visual clara,
   sem texto de cobrança.
 
-### 6.5 ⭐ Picross da Malha — lógica que revela uma criatura
+### 6.5 ⭐ Nonograma da Malha — lógica que revela uma criatura
 
 - **Mecânica:** nonograma 5×5 → 10×10; a solução é o **sprite em pixel** de uma
   criatura do bestiário ou de um sonho. Um puzzle do dia igual para todos
@@ -378,7 +378,7 @@ evidência A de benefício real, conecta com o motor de tarefas e não exige art
 6.4 Troca de Regra (flexibilidade). Cobrem as **três funções executivas**
 clássicas, cada um é uma mecânica só, e usam sprites/FX que já existem.
 
-**Se quiser o que mais segura D30–D90:** 6.5 Picross da Malha (coleção +
+**Se quiser o que mais segura D30–D90:** 6.5 Nonograma da Malha (coleção +
 puzzle do dia).
 
 **Passos sugeridos (todos dependem do dono, por causa do congelamento da Camada 3):**

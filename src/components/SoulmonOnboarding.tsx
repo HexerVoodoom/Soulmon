@@ -998,14 +998,14 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
           Empilhados, sem separador (X6) — os dois já são lista. */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 0, marginBottom: 4 }}>
         <a
-          href={isPt ? '/termos.html' : '/termos.html#en'}
+          href={isPt ? '/termos.html#pt' : '/termos.html'}
           target="_blank" rel="noopener noreferrer"
           style={{ ...sm2Button('ghost', false, 'sm'), padding: '0 8px', textDecoration: 'none' }}
         >
           {isPt ? 'Ler os Termos de Uso' : 'Read the Terms of Use'}
         </a>
         <a
-          href={isPt ? '/privacidade.html' : '/privacidade.html#en'}
+          href={isPt ? '/privacidade.html#pt' : '/privacidade.html'}
           target="_blank" rel="noopener noreferrer"
           style={{ ...sm2Button('ghost', false, 'sm'), padding: '0 8px', textDecoration: 'none' }}
         >

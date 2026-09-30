@@ -328,11 +328,11 @@ describe('copy da Feira e do glossário (B2)', () => {
     expect(pt).toContain('bosque segue como estava');
   });
 
-  it('a fala do NPC da Feira é a do documento, e a Feira tem o NPC Fanfa (Marla fica só no Salão)', async () => {
+  it('a fala do NPC da Feira é a do documento, e a Feira tem o NPC Fanfare (Marla fica só no Salão)', async () => {
     const { lotNpcVoice } = await import('../../utils/areaNpcVoice');
     for (const [lang, i] of [['pt-BR', 0], ['en-US', 1]] as const) {
       const v = lotNpcVoice('arena', 'feira', lang);
-      expect(v.name).toBe('Fanfa');
+      expect(v.name).toBe('Fanfare');
       expect(v.line).toBe(GUILD_COPY['guild.npc.feira'][i]);
       expect(lotNpcVoice('hall', 'guilda', lang).name).toMatch(/Marla/);
     }

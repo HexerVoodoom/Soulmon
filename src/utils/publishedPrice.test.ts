@@ -41,9 +41,10 @@ function valor(rotulo: string): number {
 }
 
 function metades(html: string): { pt: string; en: string } {
-  const corte = html.indexOf('<h1 id="en">');
-  if (corte < 0) throw new Error('termos.html sem a âncora <h1 id="en"> que separa PT de EN');
-  return { pt: html.slice(0, corte), en: html.slice(corte) };
+  // EN é o documento principal (vem primeiro); o PT é a localização em <div id="pt">.
+  const corte = html.indexOf('<div id="pt"');
+  if (corte < 0) throw new Error('termos.html sem o <div id="pt"> que separa EN de PT');
+  return { en: html.slice(0, corte), pt: html.slice(corte) };
 }
 
 function marcados(html: string): string[] {

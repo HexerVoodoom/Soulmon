@@ -408,7 +408,7 @@ export const BOND_LAST_TITLED_LEVEL = 31;
 const BOND_REWARDS: readonly BondReward[] = [
   { id: 'bond-2-title', level: 2, kind: 'title', namePt: 'Título: Companheiro', nameEn: 'Title: Companion' },
   { id: 'bond-3-plant', level: 3, kind: 'decor', refId: 'furn-plant', namePt: 'Vaso de Planta', nameEn: 'Potted Plant' },
-  { id: 'bond-4-forest', level: 4, kind: 'bg', refId: 'bg-forest', namePt: 'Floresta Nativa', nameEn: 'Native Forest' },
+  { id: 'bond-4-forest', level: 4, kind: 'bg', refId: 'bg-forest', namePt: 'Floresta Nativa', nameEn: 'Old-Growth Forest' },
   { id: 'bond-5-boat', level: 5, kind: 'dream', refId: 'dream-little-boat', namePt: 'Sonho: À deriva num barquinho', nameEn: 'Dream: Adrift on a little boat' },
   { id: 'bond-6-title', level: 6, kind: 'title', namePt: 'Título: Confidente', nameEn: 'Title: Confidant' },
   { id: 'bond-7-picture', level: 7, kind: 'decor', refId: 'furn-picture', namePt: 'Quadro do Soulmon', nameEn: 'Soulmon Portrait' },

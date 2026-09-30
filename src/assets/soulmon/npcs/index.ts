@@ -53,7 +53,7 @@ import npcPlaceholderPoring from './npc-placeholder-poring.png';
 export const PLACEHOLDER_NPC_ART = {
   corujaCervo: npcPlaceholderCorujaCervo,
   poring: npcPlaceholderPoring,
-  /** ⚠️ AINDA SEM ARTE DO RINOCERONTE (Rinoco, Duelo da Arena, 29/09/2026):
+  /** ⚠️ AINDA SEM ARTE DO RINOCERONTE (Rhinoco, Duelo da Arena, 29/09/2026):
    *  reaproveita o poring até a squad-arte gerar o busto dele. Quando chegar,
    *  é só trocar este import — o mapa `LOT_NPC_ART` já aponta para cá. */
   rinoceronte: npcPlaceholderPoring,
@@ -74,7 +74,7 @@ const LOT_NPC_ART: Record<string, string> = {
   'mercado:conquistas': npcPlaceholderPoring,
   'arena:torneio': npcArena,
   'arena:duelo': PLACEHOLDER_NPC_ART.rinoceronte,
-  // Fanfa (`npc-arena-feira`): PLACEHOLDER até a leva de arte (ids em `utils/fairArt.ts`). Só trocar aqui.
+  // Fanfare (`npc-arena-feira`): PLACEHOLDER até a leva de arte (ids em `utils/fairArt.ts`). Só trocar aqui.
   'arena:feira': npcPlaceholderCorujaCervo,
   'exploracao:masmorra': npcExploracao,
   // Os três prédios de Jogos (30/09/2026): o Pipo segue no Salão (jogos livres);

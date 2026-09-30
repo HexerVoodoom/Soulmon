@@ -19,8 +19,8 @@ describe('TermsUpdateBanner', () => {
     expect(screen.getByText(/Você continua jogando normalmente/)).toBeTruthy();
     const termos = screen.getByRole('link', { name: /Ler os Termos \(abre em nova aba\)/ }) as HTMLAnchorElement;
     const politica = screen.getByRole('link', { name: /Ler a Política \(abre em nova aba\)/ }) as HTMLAnchorElement;
-    expect(termos.getAttribute('href')).toBe('/termos.html');
-    expect(politica.getAttribute('href')).toBe('/privacidade.html');
+    expect(termos.getAttribute('href')).toBe('/termos.html#pt');
+    expect(politica.getAttribute('href')).toBe('/privacidade.html#pt');
     expect(termos.getAttribute('target')).toBe('_blank');
     fireEvent.click(screen.getByRole('button', { name: 'Entendi' }));
     expect(onOk).toHaveBeenCalledTimes(1);
@@ -52,8 +52,8 @@ describe('TermsUpdateBanner', () => {
     expect(screen.getByText(/You keep playing as usual/)).toBeTruthy();
     const termos = screen.getByRole('link', { name: /Read the Terms \(opens in a new tab\)/ });
     const politica = screen.getByRole('link', { name: /Read the Policy \(opens in a new tab\)/ });
-    expect(termos.getAttribute('href')).toBe('/termos.html#en');
-    expect(politica.getAttribute('href')).toBe('/privacidade.html#en');
+    expect(termos.getAttribute('href')).toBe('/termos.html');
+    expect(politica.getAttribute('href')).toBe('/privacidade.html');
     expect(screen.getByRole('button', { name: 'Got it' })).toBeTruthy();
     expect(screen.queryByText(/mudaram/)).toBeNull();
   });

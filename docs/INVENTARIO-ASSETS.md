@@ -157,7 +157,7 @@ consumidor** — `src/assets/artMaps.contract.test.ts` (novo, 14/14) cobre `embl
 | `entrega6/` (raiz) | **102** · 128² — 17 elementos BASE × 6 estados | FX de ataque por elemento | dentro | nenhum (combate não tem elemento) | instalar junto com os 816 derivados quando o combate ganhar elemento; caminho barato: `fx-<el>-aura` na Evolução (galho já é elemental) |
 | `backgrounds/evolution-ritual`, `evolution-ultra` | 2 · 1080×1920 | fundos estáticos da cerimônia | dentro | a cerimônia usa vídeo | guardados; entram só se a cerimônia ganhar variação por galho |
 | `icones/tilesF/`, `aventura2/tilesD/` | 16 + 15 · 128²/96² | folhas fatiadas cruas (`F-00…`, `D-00…`) | — | — | intermediários de fatiamento; os finais já estão no repo (`elementos/`, `adventures/`). Ignorar |
-| `branches/` | 12 · 2048² + refs 512² | Igni/Nautilu/Astrase (3 runs do oráculo, 4 formas cada) | dentro | nenhum — nunca viraram sprite (xadrez falso, precisam `dechecker`) | **Decisão**: são 3 linhas a mais (9 no total) ou foram substituídas por kaelen/orrin/thalindra? Se entram: recortar + 256² |
+| `branches/` | 12 · 2048² + refs 512² | Igni/Nautil/Astria (3 runs do oráculo, 4 formas cada) | dentro | nenhum — nunca viraram sprite (xadrez falso, precisam `dechecker`) | **Decisão**: são 3 linhas a mais (9 no total) ou foram substituídas por kaelen/orrin/thalindra? Se entram: recortar + 256² |
 | `processed/` (30) e raiz (30 × 1024²) | kaelen/orrin/thalindra 11 formas | já instalados em `lines/full/` | — | — | fonte; ignorar |
 
 Levas já instaladas (conferido por nome): `backgrounds` (17/19), `decor` (21), `decor-v2` (14), `icons` (58/59 — falta só `poop.png`, que virou outro nome), `arcano` (14), `aventura` + `aventura2` (24), `entrega7/icones` (137), `berco` (1).
@@ -230,7 +230,7 @@ Ordenada por valor. Formato e regra de geração já resolvidos onde possível (
 
 | # | Decisão | Consequência para os assets |
 |---|---|---|
-| D1 | **Free escolhe de uma pré-seleção; pago recebe o rookie gerado e as formas seguintes são geradas conforme avança** | pré-seleção = as 6 linhas (+ `lines/full/` para as 3 do oráculo). Decidir se `branches/` (Igni/Nautilu/Astrase) entra na pré-seleção → recortar. **C2 (placeholder de forma ainda não gerada) vira obrigatório** para o pago. Seguir os wireframes (`EscolherPersonagem`, `Reveal`, `RevealSemSprite`) |
+| D1 | **Free escolhe de uma pré-seleção; pago recebe o rookie gerado e as formas seguintes são geradas conforme avança** | pré-seleção = as 6 linhas (+ `lines/full/` para as 3 do oráculo). Decidir se `branches/` (Igni/Nautil/Astria) entra na pré-seleção → recortar. **C2 (placeholder de forma ainda não gerada) vira obrigatório** para o pago. Seguir os wireframes (`EscolherPersonagem`, `Reveal`, `RevealSemSprite`) |
 | D2 | **Fazer os 3 para escolher** | montar folha de contato da `EvoArvore` em 3 versões: SVG por token · `soulmon/evolution/` (4) · `E:/nodes/` (8). Checkpoint do dono antes do canvas de Evolução |
 | D3 | **Pixel dentro do visor** | reescalar `progress/` (4) para 1×; `A5` (segmentada fina) e `A6` (moldura 9-slice) voltam ao backlog como P2 |
 | D4 | **Descartar versão dia** | `entrega3/` arquivada; nenhuma cena dia será gerada |

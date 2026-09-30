@@ -84,7 +84,7 @@
     },
     {
       "id": "npc-arena-duelo",
-      "nome": "Rinoco",
+      "nome": "Rhinoco",
       "area": "arena",
       "seed": 29092026,
       "sementesRejeitadas": 0,
@@ -104,7 +104,7 @@
     },
     {
       "id": "npc-arena-feira",
-      "nome": "Fanfa",
+      "nome": "Fanfare",
       "area": "arena",
       "seed": 29092027,
       "sementesRejeitadas": 1,

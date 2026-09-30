@@ -309,7 +309,7 @@ export function MenteSheet({ language, reviewDue, onStart, bitsToday }: {
     },
     {
       id: 'picross',
-      title: isPt ? 'Picross da Malha' : 'Mesh Picross',
+      title: isPt ? 'Nonograma da Malha' : 'Mesh Nonogram',
       asks: isPt ? 'Pede: deduzir' : 'Asks: deduce',
       detail: isPt ? 'Pinte a grade pelas pistas e revele um desenho. Um novo a cada dia.' : 'Fill the grid from the clues and reveal a picture. A new one every day.',
       meta: <span style={bitsStyle}>{upTo(PICROSS_MAX_BITS)}</span>,

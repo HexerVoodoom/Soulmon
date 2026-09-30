@@ -34,7 +34,7 @@ configuração `propostas-mui` em `.claude/launch.json` da raiz `D:\Soulmon`) e 
    por moeda (Conquistas filtra por categoria). Arena: Torneio (faixas + missões) e Duelo. Exploração: Masmorra
    e Corrida do Dino. Jogos: Pedra-Papel-Tesoura.
 6. **Um NPC por área e por loja interna**, busto em pixel art com contorno preto, profissão explícita, criatura e
-   elemento ligados ao prédio. Nomes provisórios (Grom, Vultrak, Brisa, Pipo, Lumi) — decisão do dono.
+   elemento ligados ao prédio. Nomes provisórios (Grom, Vultrak, Zeph, Pipo, Lumi) — decisão do dono.
 7. **Estética**: arcano-tech de sempre (teal escuro, cobre, cristais de alma, chamas turquesa), construções da
    linha "v4" (cada uma de um material: máquina, planta, mineral, etéreo). Toda arte com transparência sai com
    alfa real (`gpt_image_2 --background transparent`) — regra máxima do dono.

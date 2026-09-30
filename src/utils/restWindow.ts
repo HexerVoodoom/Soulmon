@@ -412,7 +412,7 @@ export const DREAM_CATALOG: readonly Dream[] = [
   { id: 'dream-paper-kite', emoji: '🪁', labelEn: 'Tangled in a kite string', labelPt: 'Enroscado na linha da pipa', rarity: 'rare', season: 'season-sprout' },
   { id: 'dream-mossy-stone', emoji: '🍃', labelEn: 'Asleep on a mossy stone', labelPt: 'Dormindo numa pedra de musgo', rarity: 'legendary', season: 'season-sprout' },
 
-  // 🔥 Estação da Fogueira (jun–ago)
+  // 🔥 Estação da Brasa (jun–ago)
   { id: 'dream-quilt-fort', emoji: '🧶', labelEn: 'Inside a blanket fort', labelPt: 'Dentro de um forte de cobertor', rarity: 'common', season: 'season-ember' },
   { id: 'dream-ember-circle', emoji: '🪵', labelEn: 'Warm in the ember circle', labelPt: 'Quentinho na roda de brasa', rarity: 'rare', season: 'season-ember' },
   { id: 'dream-firefly-jar', emoji: '🪔', labelEn: 'Lit by a jar of fireflies', labelPt: 'À luz de um pote de vaga-lumes', rarity: 'legendary', season: 'season-ember' },
@@ -422,7 +422,7 @@ export const DREAM_CATALOG: readonly Dream[] = [
   { id: 'dream-sea-glass', emoji: '🫧', labelEn: 'Counting sea glass', labelPt: 'Contando vidrinhos do mar', rarity: 'rare', season: 'season-tide' },
   { id: 'dream-storm-lantern', emoji: '🌊', labelEn: 'Lulled by the storm lantern', labelPt: 'Embalado pela lanterna da tempestade', rarity: 'legendary', season: 'season-tide' },
 
-  // ✨ Estação da Constelação (dez–fev)
+  // ✨ Estação Estrelada (dez–fev)
   { id: 'dream-comet-tail', emoji: '☄️', labelEn: 'Curled in a comet tail', labelPt: 'Enroscado na cauda de um cometa', rarity: 'common', season: 'season-starlit' },
   { id: 'dream-planetarium', emoji: '🔭', labelEn: 'Dozing in a planetarium', labelPt: 'Cochilando num planetário', rarity: 'rare', season: 'season-starlit' },
   { id: 'dream-snowglobe', emoji: '🔮', labelEn: 'Dreaming inside a snow globe', labelPt: 'Sonhando dentro de um globo de neve', rarity: 'legendary', season: 'season-starlit' },

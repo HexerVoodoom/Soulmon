@@ -111,7 +111,7 @@ export const MISSIONS: Mission[] = [
   },
   {
     id: 'mission-perfect-30', category: 'constancy', icon: '⭐', iconName: 'star', target: 30, bgReward: 'bg-mission-aurora',
-    namePt: 'Constância Perfeita', nameEn: 'Perfect Consistency',
+    namePt: 'Trinta Dias Completos', nameEn: 'Thirty Full Days',
     descPt: 'Acumule 30 dias completos (total)', descEn: 'Earn 30 complete days (lifetime)',
     // #41/#60: a MISSÃO segue contando o 🌀 (decisão literal do dono); quem
     // deixou de contá-lo é `utils/achievements.ts`, que lê `totalPerfectDays`.

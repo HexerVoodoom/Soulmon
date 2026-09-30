@@ -107,8 +107,8 @@ export const DUNGEON_LINE_SPRITES: Record<string, Record<'rookie' | 'champion' |
  */
 export const DUNGEON_LINE_NAMES: Record<string, string> = {
   ignar: 'Ignar', lumel: 'Lumel', serah: 'Serah',
-  kaelen: 'Pyraka', orrin: 'Akashaoi', thalindra: 'Nimbrata',
-  igni: 'Igni', nautilu: 'Nautilu', astrase: 'Astrase',
+  kaelen: 'Pyraka', orrin: 'Akashai', thalindra: 'Nimbrata',
+  igni: 'Igni', nautilu: 'Nautil', astrase: 'Astria',
 };
 
 /** Sprite de inimigo de masmorra: sorteia uma das nossas linhas pelo tier

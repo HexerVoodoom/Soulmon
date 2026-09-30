@@ -506,11 +506,11 @@ que o registro cataloga.
 | <img src="../src/assets/soulmon/lines/icons/lumel-rookie-64.png" alt="Lumel" width="44"> | **Lumel** | luz curta e honesta: enxerga perto, ilumina quem está ao lado |
 | <img src="../src/assets/soulmon/lines/icons/serah-rookie-64.png" alt="Serah" width="44"> | **Serah** | corpo de corrente: atravessa sem deixar marca |
 | <img src="../src/assets/soulmon/lines/icons/kaelen-rookie-64.png" alt="Pyraka" width="44"> | **Pyraka** | fagulha em excesso, contida a duras penas: nobre e impaciente |
-| <img src="../src/assets/soulmon/lines/icons/orrin-rookie-64.png" alt="Akashaoi" width="44"> | **Akashaoi** | vem da camada sem superfície: está sempre meio ausente |
+| <img src="../src/assets/soulmon/lines/icons/orrin-rookie-64.png" alt="Akashai" width="44"> | **Akashai** | vem da camada sem superfície: está sempre meio ausente |
 | <img src="../src/assets/soulmon/lines/icons/thalindra-rookie-64.png" alt="Nimbrata" width="44"> | **Nimbrata** | criatura de céu baixo: névoa, peso de chuva antes da chuva |
 | <img src="../src/assets/soulmon/lines/icons/igni-rookie-64.png" alt="Igni" width="44"> | **Igni** | brasa pequena e obstinada: a mais comum e a que nunca cede |
-| <img src="../src/assets/soulmon/lines/icons/nautilu-rookie-64.png" alt="Nautilu" width="44"> | **Nautilu** | espiral de fundo de água: guarda dentro de si o que recolhe |
-| <img src="../src/assets/soulmon/lines/icons/astrase-rookie-64.png" alt="Astrase" width="44"> | **Astrase** | alinhada a corpos distantes: mede tempo que não é o nosso |
+| <img src="../src/assets/soulmon/lines/icons/nautilu-rookie-64.png" alt="Nautil" width="44"> | **Nautil** | espiral de fundo de água: guarda dentro de si o que recolhe |
+| <img src="../src/assets/soulmon/lines/icons/astrase-rookie-64.png" alt="Astria" width="44"> | **Astria** | alinhada a corpos distantes: mede tempo que não é o nosso |
 
 Essas nove não são manifestações de ninguém. São fauna — e não descendem de
 nada.
@@ -1164,11 +1164,11 @@ them the record catalogs.
 | <img src="../src/assets/soulmon/lines/icons/lumel-rookie-64.png" alt="Lumel" width="44"> | **Lumel** | short, honest light: sees close, lights whoever is beside it |
 | <img src="../src/assets/soulmon/lines/icons/serah-rookie-64.png" alt="Serah" width="44"> | **Serah** | body of current: crosses without leaving a mark |
 | <img src="../src/assets/soulmon/lines/icons/kaelen-rookie-64.png" alt="Pyraka" width="44"> | **Pyraka** | ember in excess, barely contained: noble and impatient |
-| <img src="../src/assets/soulmon/lines/icons/orrin-rookie-64.png" alt="Akashaoi" width="44"> | **Akashaoi** | comes from the layer without a surface: always half-absent |
+| <img src="../src/assets/soulmon/lines/icons/orrin-rookie-64.png" alt="Akashai" width="44"> | **Akashai** | comes from the layer without a surface: always half-absent |
 | <img src="../src/assets/soulmon/lines/icons/thalindra-rookie-64.png" alt="Nimbrata" width="44"> | **Nimbrata** | creature of low sky: mist, the weight of rain before rain |
 | <img src="../src/assets/soulmon/lines/icons/igni-rookie-64.png" alt="Igni" width="44"> | **Igni** | small, stubborn coal: the most common and the one that never yields |
-| <img src="../src/assets/soulmon/lines/icons/nautilu-rookie-64.png" alt="Nautilu" width="44"> | **Nautilu** | spiral from the bottom of the water: keeps inside what it gathers |
-| <img src="../src/assets/soulmon/lines/icons/astrase-rookie-64.png" alt="Astrase" width="44"> | **Astrase** | aligned to distant bodies: measures a time that is not ours |
+| <img src="../src/assets/soulmon/lines/icons/nautilu-rookie-64.png" alt="Nautil" width="44"> | **Nautil** | spiral from the bottom of the water: keeps inside what it gathers |
+| <img src="../src/assets/soulmon/lines/icons/astrase-rookie-64.png" alt="Astria" width="44"> | **Astria** | aligned to distant bodies: measures a time that is not ours |
 
 These nine are nobody's manifestation. They are fauna — and they descend from
 nothing.
@@ -1373,7 +1373,7 @@ mentira que o `CLAUDE.md` persegue nos números.
 - **Os elementos `planta` e `industrial`** não têm sigilo em
   `src/assets/soulmon/sigilos/` (os outros seis dos oito têm). A legenda da
   figura diz isso em vez de a tabela ficar com duas células vazias.
-- **A escada de formas** usa a linha `orrin` (**Akashaoi**), no galho `harmony` (Harmonia)
+- **A escada de formas** usa a linha `orrin` (**Akashai**), no galho `harmony` (Harmonia)
   (**Trama**), por dois motivos medidos: é uma das três linhas com os cinco
   degraus completos em `src/assets/soulmon/lines/full/`, e é o galho cuja arte é
   **turquesa** — o galho `power` (Poder) da mesma linha é vermelho, e vermelho abaixo de

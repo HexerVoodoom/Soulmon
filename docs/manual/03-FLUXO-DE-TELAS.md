@@ -159,7 +159,7 @@ null` e `language: Language` (agora obrigatória):
 |---|---|---|
 | `mercado` | Mercado / Market | Itens, Decoração, Background (abas por moeda, `MercadoSheets` + `utils/mercadoCatalog.ts`) · Conquistas |
 | `jogos` | Jogos / Games | Pedra, papel e tesoura (`PptSheet` → `RPSGame`) |
-| `arena` | Arena | Torneio (`TournamentPage`, com a loja de Emblemas) · Duelo (`DueloSheet` → `ArenaGame`) · **Feira** (`GuildSheet room="feira"`, NPC Fanfa — [§4.26](#guilda-tela); ⚰️ o lote `guilda` da Arena virou a Feira) |
+| `arena` | Arena | Torneio (`TournamentPage`, com a loja de Emblemas) · Duelo (`DueloSheet` → `ArenaGame`) · **Feira** (`GuildSheet room="feira"`, NPC Fanfare — [§4.26](#guilda-tela); ⚰️ o lote `guilda` da Arena virou a Feira) |
 | `exploracao` | Exploração / Exploration | Masmorra (`MasmorraSheet` → `DungeonGame`) · Corrida do Dino (`DinoSheet` → `DinoGame`) |
 | `laboratorio` | Laboratório / Laboratory | Evolução — abas sublinhadas Evolução / Soulmon / Estatísticas (`labTab`) |
 | `hall` | Hall | Biblioteca (`LibraryPage`, decisão D4) · **Salão da Guilda** (`GuildSheet room="salao"`, NPC Marla — [§4.26](#guilda-tela)) |
@@ -1960,7 +1960,7 @@ mudo por `src/utils/audioBus.contract.test.ts`.
 ### 4.26 A Guilda — o Salão (Hall) e a Feira (Arena) <a id="guilda-tela"></a>
 
 **Chega por**: área **Hall** → lote **Salão da Guilda** (NPC Marla, `hall:guilda`) abre
-`GuildSheet room="salao"`; área **Arena** → lote **Feira** (NPC **Fanfa**, `arena:feira`)
+`GuildSheet room="salao"`; área **Arena** → lote **Feira** (NPC **Fanfare**, `arena:feira`)
 abre `GuildSheet room="feira"` — a mesma folha, duas salas (`AreaView`). ⚰️ Até a fatia B2
 a Arena tinha um lote `guilda` que abria a folha inteira. · **Sai para**: fechar a folha
 (o foco volta ao lote que abriu, `useDialogA11y`) ou o voltar do sistema.

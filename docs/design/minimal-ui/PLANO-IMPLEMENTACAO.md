@@ -22,7 +22,7 @@ Ordem pensada para cada fatia ir para a `main` sozinha, com `tsc`/`vitest`/`buil
 - **D2** pixel art liberada no Mapa e nas áreas; a UI de sistema continua vetorial.
 - **D3** fica **Emblemas**.
 - **D4** o Hall recebe a Biblioteca/comunidade.
-- **D5** os nomes Grom, Vultrak, Brisa, Pipo e Lumi ficam; a gata e o caranguejo ficam de reserva para o futuro.
+- **D5** os nomes Grom, Vultrak, Zeph, Pipo e Lumi ficam; a gata e o caranguejo ficam de reserva para o futuro.
 - **D6** tudo vai para o menu ícone da Home.
 - Próximo passo: F1 no código.
 

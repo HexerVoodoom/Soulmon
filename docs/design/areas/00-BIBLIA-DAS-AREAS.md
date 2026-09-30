@@ -43,10 +43,10 @@ Fonte: `src/utils/areaSheetCopy.ts` (Mercado, Arena, Laboratório, Hall), `src/u
 | mercado | `background` | Background / Background | loja, Cenários | própria | `npc-loja-background` / Grom |
 | mercado | `conquistas` | Conquistas / Achievements | Missões | própria | **placeholder poring** / Grom |
 | arena | `torneio` | Torneio / Tournament | Torneio | própria | `npc-arena` (Vultrak) |
-| arena | `duelo` | Duelo / Duel | `ArenaGame` (`DueloSheet`) | própria | **placeholder poring** / Rinoco |
+| arena | `duelo` | Duelo / Duel | `ArenaGame` (`DueloSheet`) | própria | **placeholder poring** / Rhinoco |
 | arena | `guilda` → **`feira`** | Guilda → **Feira / Fair** | `GuildSheet` (sala Feira) | **placeholder** (= conquistas) | **placeholder coruja-cervo** / Marla |
-| exploracao | `masmorra` | Masmorra / Dungeon | `DungeonGame` | própria | `npc-exploracao` (Brisa) |
-| exploracao | `dino` | Corrida do Dino / Dino Runner | Dino | própria | **placeholder poring** / Brisa |
+| exploracao | `masmorra` | Masmorra / Dungeon | `DungeonGame` | própria | `npc-exploracao` (Zeph) |
+| exploracao | `dino` | Corrida do Dino / Dino Runner | Dino | própria | **placeholder poring** / Zeph |
 | jogos | `ppt` | Pedra, papel e tesoura / Rock, paper, scissors | PPT | própria | `npc-jogos` (Pipo) |
 | laboratorio | `evolucao` | Árvore da Evolução / Evolution Tree | Evolução | **placeholder** (= background) | `npc-laboratorio` (Vesca) |
 | laboratorio | `pet` | Meu Soulmon / My Soulmon | página do Pet | **placeholder** (= itens) | **coruja-cervo** / Tico |
@@ -70,7 +70,7 @@ Fonte: `src/utils/areaSheetCopy.ts` (Mercado, Arena, Laboratório, Hall), `src/u
 | A3 | `npcs/npc-placeholder-poring.png` + símbolo `PLACEHOLDER_NPC_ART.poring` | nome de criatura de franquia de terceiro no bundle (a arte não é cópia, o NOME é) | sai; ninguém aponta mais para ele quando os NPCs de §4 chegarem. Até lá, renomear arquivo e símbolo para `npc-placeholder-slime` |
 | A4 | `LOT_NPC_VOICE['laboratorio:pet']` | "Tico" | vira **Bento** |
 | A5 | `bg-mercado`, `bg-arena`, `bg-exploracao` | mesmo kit, indistinguíveis em cinza | refazer sob §2 |
-| A6 | `hall:guilda` e `arena:guilda` com a MESMA fala e o MESMO NPC | "grupo pequeno" fica falso com 12 membros (PLANO-GUILDA §6) | Marla só no Salão, fala nova; Feira ganha Fanfa |
+| A6 | `hall:guilda` e `arena:guilda` com a MESMA fala e o MESMO NPC | "grupo pequeno" fica falso com 12 membros (PLANO-GUILDA §6) | Marla só no Salão, fala nova; Feira ganha Fanfare |
 
 ---
 
@@ -207,9 +207,9 @@ Critérios: criatura própria do universo (nunca humano genérico), paleta da á
 | mercado:background | **Panora** | arte existe, **nome criado agora** |
 | mercado:conquistas | **Medra** | **criado agora** (nome + arte) |
 | arena:torneio | Vultrak | existe |
-| arena:duelo | Rinoco | nome existe, **arte falta** (espécie fixada abaixo) |
-| arena:feira | **Fanfa** | **criado agora** |
-| exploracao:masmorra | Brisa | existe |
+| arena:duelo | Rhinoco | nome existe, **arte falta** (espécie fixada abaixo) |
+| arena:feira | **Fanfare** | **criado agora** |
+| exploracao:masmorra | Zeph | existe |
 | exploracao:dino | **Trote** | **criado agora** |
 | jogos:ppt | Pipo | existe |
 | laboratorio:evolucao | Vesca | existe (arte a repintar sem roxo) |
@@ -219,7 +219,7 @@ Critérios: criatura própria do universo (nunca humano genérico), paleta da á
 | hall:amigos | Nino | nome existe, arte falta |
 | hall:guilda | Marla | nome existe, arte falta, fala nova |
 
-Contagem: **16 lotes**. NPCs nomeados que já existiam: **11** (Grom, Vultrak, Brisa, Pipo, Vesca, Lumi, Rinoco, Marla, Nino, Quill, Tico) — com arte própria só **6** (os anfitriões). NPCs **criados agora**: **6** (Tamba, Musga, Panora, Medra, Fanfa, Trote) + **1 renomeado** (Bento). Arte a gerar: **11 bustos** — 8 novos (Medra, Fanfa, Trote, Rinoco, Bento, Quill, Nino, Marla) + 3 refeitos em alta (Tamba, Musga, Panora; fila de crédito #5–#7) — e **2 repinturas** (Vesca, zona do Laboratório).
+Contagem: **16 lotes**. NPCs nomeados que já existiam: **11** (Grom, Vultrak, Zeph, Pipo, Vesca, Lumi, Rhinoco, Marla, Nino, Quill, Tico) — com arte própria só **6** (os anfitriões). NPCs **criados agora**: **6** (Tamba, Musga, Panora, Medra, Fanfare, Trote) + **1 renomeado** (Bento). Arte a gerar: **11 bustos** — 8 novos (Medra, Fanfare, Trote, Rhinoco, Bento, Quill, Nino, Marla) + 3 refeitos em alta (Tamba, Musga, Panora; fila de crédito #5–#7) — e **2 repinturas** (Vesca, zona do Laboratório).
 
 ### 4.2 Fichas dos NPCs sem ficha (os criados e os que só tinham nome)
 
@@ -255,14 +255,14 @@ Contagem: **16 lotes**. NPCs nomeados que já existiam: **11** (Grom, Vultrak, B
 - Gesto: bate o casco uma vez, as placas tilintam.
 - Combina: latão/âmbar do Mercado; lento como o guindaste que ergue o baú.
 
-**Rinoco — Duelo (Arena)** (nome existia)
+**Rhinoco — Duelo (Arena)** (nome existia)
 - Espécie: rinoceronte-bípede atarracado, couro cor de arenito, chifre de pedra lascada com veio turquesa, faixa de pano na testa.
 - Temperamento: bonachão, ri quando apanha. Gosta do encontro, não do resultado.
 - Falas: PT "Um duelo, uma rodada de cada vez. Pode vir." / EN "One duel, one round at a time. Come on." · PT "Essa doeu no chifre. Boa!" / EN "That one rang my horn. Nice!" · PT "Ganhar ou perder, a gente volta pro círculo." / EN "Win or lose, we step back into the circle."
 - Gesto: bate o chifre no poste do ringue.
 - Combina: angular, arenito, contato direto.
 
-**Fanfa — Feira (Arena)** (novo; substitui Marla na Arena)
+**Fanfare — Feira (Arena)** (novo; substitui Marla na Arena)
 - Espécie: criatura-sanfona, corpo em fole de lona listrada petróleo/osso, braços longos que carregam lanternas; boca no centro do fole.
 - Papel: anuncia o fenômeno da semana da Feira, cooperativo.
 - Temperamento: festivo, fala no plural, conta o que aconteceu na roda, nunca quem faltou.
@@ -307,7 +307,7 @@ Contagem: **16 lotes**. NPCs nomeados que já existiam: **11** (Grom, Vultrak, B
 - Combina: a árvore dentro do arco é a galhada dela.
 
 ### 4.3 Anfitriões existentes (só ajuste de arte)
-Grom, Vultrak, Brisa, Pipo, Vesca, Lumi mantêm nome e fala. Ajustes: **Vesca** perde o roxo (poções turquesa/âmbar). **Vultrak** ganha acento arenito para casar com a nova Arena. **Brisa** confere que não carrega caveira. **Pipo** é o benchmark de tom.
+Grom, Vultrak, Zeph, Pipo, Vesca, Lumi mantêm nome e fala. Ajustes: **Vesca** perde o roxo (poções turquesa/âmbar). **Vultrak** ganha acento arenito para casar com a nova Arena. **Zeph** confere que não carrega caveira. **Pipo** é o benchmark de tom.
 
 ---
 
@@ -333,7 +333,7 @@ Estilo: pixel art isométrica, pixel limpo sem anti-aliasing borrado, contorno e
 1. **Mercado** (fundo + lote Conquistas + Medra; refazer Tamba/Musga/Panora) — loja é a área mais visitada do mapa.
 2. **Laboratório** (fundo novo + 3 lotes + Bento/Quill + repintar Vesca e zona) — Evolução e Estatísticas são vistas toda semana; hoje é 100% placeholder.
 3. **Hall** (fundo + 3 lotes + Nino/Marla) — junto da Guilda.
-4. **Arena** (fundo definitivo + Feira + Fanfa + Rinoco).
+4. **Arena** (fundo definitivo + Feira + Fanfare + Rhinoco).
 5. **Exploração** (repintar fundo sem caveiras + Trote).
 6. **Jogos** (só repintura A1).
 

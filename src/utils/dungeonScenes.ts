@@ -15,7 +15,7 @@ export interface DungeonScene {
 
 export const DUNGEON_SCENES: DungeonScene[] = [
   {
-    namePt: 'Tamagotchi', nameEn: 'Tamagotchi',
+    namePt: 'Retro Pet', nameEn: 'Retro Pet',
     accent: '#9bbc0f',
     bg: 'repeating-linear-gradient(0deg, rgba(15,56,15,0.55) 0 3px, transparent 3px 6px), repeating-linear-gradient(90deg, rgba(15,56,15,0.55) 0 3px, transparent 3px 6px), linear-gradient(160deg, #24401a, #0f2410)',
   },

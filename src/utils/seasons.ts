@@ -110,7 +110,7 @@ export const SEASONS: readonly Season[] = [
     id: 'season-ember',
     startISO: '2026-06-01',
     endISO: '2026-08-31',
-    namePt: 'Estação da Fogueira',
+    namePt: 'Estação da Brasa',
     nameEn: 'Ember Season',
     dreamIds: ['dream-quilt-fort', 'dream-ember-circle', 'dream-firefly-jar'],
     medalId: 'medal-season-ember',
@@ -133,7 +133,7 @@ export const SEASONS: readonly Season[] = [
     startISO: '2026-12-01',
     // Cruza a virada do ano: dezembro a fevereiro é UMA estação só.
     endISO: '2027-02-27',
-    namePt: 'Estação da Constelação',
+    namePt: 'Estação Estrelada',
     nameEn: 'Starlit Season',
     dreamIds: ['dream-comet-tail', 'dream-planetarium', 'dream-snowglobe'],
     medalId: 'medal-season-starlit',

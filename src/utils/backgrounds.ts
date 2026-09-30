@@ -160,7 +160,7 @@ export const PET_BACKGROUNDS: Record<string, PetBackground> = {
   },
   'bg-forest': {
     namePt: 'Floresta Nativa',
-    nameEn: 'Native Forest',
+    nameEn: 'Old-Growth Forest',
     css: `url(${bgForestImg})`, baseColor: '#061414',
     setting: 'outdoor', slots: FULL_SLOTS, horizonY: 74,
   },
@@ -180,7 +180,7 @@ export const PET_BACKGROUNDS: Record<string, PetBackground> = {
   },
   'bg-snow': {
     namePt: 'Terra Gelada',
-    nameEn: 'Freezeland',
+    nameEn: 'Frostlands',
     css: `url(${bgSnowImg})`, baseColor: '#12747b',
     setting: 'outdoor', slots: GROUND_SLOTS, horizonY: 74,   // céu aberto: nada onde pendurar
   },
@@ -273,7 +273,7 @@ export const PET_BACKGROUNDS: Record<string, PetBackground> = {
   // ── Mission-exclusive backgrounds (utils/missions.ts) — never sold ─────────
   'bg-mission-filecity': {
     namePt: 'Cidade do Arquivo',
-    nameEn: 'File City',
+    nameEn: 'Archive City',
     css: `url(${bgMissionFilecityImg})`, baseColor: '#163a30',
     setting: 'outdoor', slots: FULL_SLOTS, horizonY: 74,
   },

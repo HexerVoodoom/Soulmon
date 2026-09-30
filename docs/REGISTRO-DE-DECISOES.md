@@ -1053,6 +1053,31 @@ passa de exceção aceita a VETADO), `src/utils/branchMigration.test.ts`.
 
 **Gatilho de revisão:** nova decisão do dono.
 
+### 14.6 Nomes em inglês primeiro (30/09/2026) — ajusta a 14.1/14.4 no que é NOME DE EXIBIÇÃO
+
+**A decisão do dono:** o inglês é a língua principal, o público é global, e
+isso vale **inclusive para nomes de personagem**. Base: a auditoria
+`docs/reviews/2026-09-30-ingles-primeiro-nomes.md`.
+
+**Aplicado:** linhas `Akashaoi -> Akashai`, `Nautilu -> Nautil`,
+`Astrase -> Astria` (`DUNGEON_LINE_NAMES`); NPCs `Brisa -> Zeph`,
+`Fanfa -> Fanfare`, `Boio -> Bobbi`, PT `Rinoco -> Rhinoco`; cenários
+`Freezeland -> Frostlands`, `Native Forest -> Old-Growth Forest`,
+`File City -> Archive City`, cena da masmorra `Tamagotchi -> Retro Pet`;
+missão `Perfect Consistency / Constância Perfeita -> Thirty Full Days /
+Trinta Dias Completos`; estações PT alinhadas ao EN (`Estação da Brasa`,
+`Estação Estrelada`); `Mesh Picross -> Mesh Nonogram` (PT `Nonograma da
+Malha`); radicais do gerador de nomes em `oracle.ts` que eram palavras PT
+(só afeta geração futura).
+
+**Não mudou (e não pode):** ids de linha (`kaelen`/`orrin`/...), nomes de
+arquivo de arte, `demoCharacterId`, ids de save; ids PT de elemento, reino e
+alinhamento do oráculo (renomear exigiria migração em todas as portas de
+entrada; a auditoria §7 recomenda não fazer). `Serah`, `Pyraka`, `Zeed`,
+`Ignar`, `Lumel`, `Igni`, `Nimbrata` e `Glitchtama` ficam (14.1/14.4).
+
+**Gatilho de revisão:** nova decisão do dono.
+
 ## 15. Bestiário — nome de personagem de franquia no prompt: VETADO (27/09/2026)
 
 **O pedido:** o dono pediu para usar as ~4.000 linhas de franquia do corpus
