@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { simulateDuel, duelStats, duelSeed, sanitizeCheers, cheerMultiplier, DUEL_CHEER_STRIKES } from './_duel.js';
 
 const R = duelStats({ stage: 'rookie' });
-const C = duelStats({ stage: 'champion-virus' });
+const C = duelStats({ stage: 'champion-power' });
 const rate = (me, opp, cheers, n = 2000) => {
   let w = 0;
   for (let i = 0; i < n; i++) w += simulateDuel({ me, opp, seed: duelSeed('s', i), cheers }).won ? 1 : 0;
