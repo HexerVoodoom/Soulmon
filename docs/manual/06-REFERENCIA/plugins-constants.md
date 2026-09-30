@@ -76,6 +76,9 @@ Testes descritos como réguas de política do repositório, não como testes de 
 ### `src/i18nSemPtSozinho.contract.test.ts`
 Reprova STRING VISÍVEL nascida só em português — checa BIFURCAÇÃO (`language === 'pt-BR' ? … : …` / `isPt ? … : …`), não tradução: uma frase PT dentro do ramo certo passa, a mesma solta não. Nasceu de três vazamentos reais achados por leitura (aria-labels de checkbox/editar, título do push das 22h).
 
+### `src/i18nAstJsx.contract.test.ts` (desde 30/09/2026)
+Complemento por AST do anterior: reprova texto JSX e atributos de acessibilidade (`aria-*`) só em português, sem bifurcação PT/EN. Entrou com a decisão de inglês como língua principal (`REGISTRO-DE-DECISOES.md` §14.6).
+
 ### `src/docsSemMentira.contract.test.ts`
 Reprova `docs/` (fora de `docs/historico-digiapp/` e das subpastas de pesquisa) ensinando regra MORTA como se fosse fato atual — estágio que não existe (`DigiEgg`, `Baby I`), tabela de HP obsoleta, evolução automática, degeneração, nome de chave de save antiga. Nasceu de onze arquivos herdados do DigiApp que afirmavam essas coisas nos três primeiros documentos que um leitor novo abria.
 

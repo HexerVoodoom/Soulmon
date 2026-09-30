@@ -1748,8 +1748,9 @@ Três blocos, com condições literais:
   (no grupo **Ajuda** desde `a6c1cd8a` — que desde `592e2c14`, QA Rodada 2 A4/A5/A6,
   também tem o `ActionRow` **"Termos de Uso" / "Terms of Use"** → `/termos.html`
   (⚰️ os Termos não tinham link dentro do app) e a **Política** abrindo por idioma:
-  em EN os dois vão para a âncora **`#en`** (`/termos.html#en`, `/privacidade.html#en`;
-  ⚰️ abria sempre a versão PT), com o sufixo só-para-leitor-de-tela "(abre em nova
+  desde 30/09/2026 os dois documentos são **inglês primeiro**: EN abre a página
+  sem âncora e PT vai para **`#pt`** (`/termos.html#pt`, `/privacidade.html#pt`;
+  ⚰️ antes era PT no topo e EN em `#en`; ⚰️ antes disso abria sempre a versão PT), com o sufixo só-para-leitor-de-tela "(abre em nova
   aba)" / "(opens in a new tab)" em todo `ActionRow` externo — o `mailto:` não
   ganha o sufixo; régua `SettingsPage.sobre.render.test.tsx`)
   ("Falar com quem faz o Soulmon" / "Talk to the people who make Soulmon", hint

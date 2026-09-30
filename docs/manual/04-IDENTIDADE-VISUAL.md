@@ -1542,8 +1542,10 @@ Duas observações medidas em 09/09/2026 — uma fechou, uma fica:
    O `index.html` acompanha: `<meta name="theme-color">` = `#0f766e` no esquema
    claro e `#071413` no escuro (era `#0d9488` / `#0c1c1a`, este último token
    nenhum).
-2. **`lang: "pt-BR"`** enquanto a regra de idioma do projeto é "inglês é a base,
-   PT-BR é localização" (`CLAUDE.md`). Continua.
+2. ⚰️ **`lang: "pt-BR"`** contra a regra "inglês é a base, PT-BR é localização"
+   (`CLAUDE.md`) — **fechou em 30/09/2026**: `public/manifest.json` hoje tem
+   `lang: "en"` (inglês é a língua principal; nomes em inglês primeiro,
+   `REGISTRO-DE-DECISOES.md` §14.6).
 
 **A marca é o kit `E:/logo/` (chama + cristal), decisão D8 do dono em
 15/09/2026** (`docs/INVENTARIO-ASSETS.md`, P2), **vetorizada** porque os PNGs do
@@ -1744,7 +1746,7 @@ Lista fechada, para o `STATUS.md`. Medidas em 09/09/2026, revistas em
 | 2 | `CLAUDE.md` › arte e `src/types/progression.ts` × `src/utils/sprites.ts` | o símbolo é `legacySpriteForStage`; `fallbackSpriteForStage` só existe em comentário e em teste |
 | 3 | `docs/INVENTARIO-TELAS.md` §1.1 (19/08/2026) × repositório | 60 PNGs de ícone → **57**; 158 PNGs em `src/assets/soulmon/` → **1198** |
 | 4 | `src/index.css` × `src/` inteiro | **catorze** tokens `--sm-*` declarados **sem nenhum consumidor** em 20/09/2026 (eram seis): os seis de sempre (`--sm-gold-soft`, `--sm-danger-soft`, `--sm-energy`, `--sm-energy-track`, `--sm-ok-ink`, `--sm-help-accent`) mais oito que a Fase 2 deixou órfãos — `--sm-danger`, `--sm-haunt-ink`, `--sm-haunt-veil`, `--sm-help-item-bg`, `--sm-px-ink`, `--sm-px-panel-bg`, `--sm-px-panel-ink`, `--sm-px-red` (§2.7) |
-| 5 | `public/manifest.json` × `src/index.css` | ⚰️ a metade do `theme_color` **fechou em 15/09/2026** (`#0f766e`, `background_color` `#071413`, `005a2941`). Fica só `lang: "pt-BR"` contra a regra "inglês é a base" |
+| 5 | `public/manifest.json` × `src/index.css` | ⚰️ a metade do `theme_color` **fechou em 15/09/2026** (`#0f766e`, `background_color` `#071413`, `005a2941`). ⚰️ o `lang: "pt-BR"` também fechou em 30/09/2026 (`lang: "en"`, §14.6) |
 | 6 | `docs/PLANO-DESIGN.md` §0 item 1 × código | ⚰️ **fechada na Fase 2**: o kit pixel caiu de 28 para 14 `.tsx` e o que sobrou não é 9-slice/Silkscreen; o `PixelKit` é vetor sobre `--sm2-*` (`a482dfd5`). Os 14 residuais estão listados como candidatos à saída em §2.2 |
 | 7 | `docs/PLANO-DESIGN.md` §0 item 4 × `src/index.css` | ⚰️ **fechada em 16/09/2026**: a `.sm-bottom-nav-label` é Rubik 12/500 (canvas Home, `NavEstados`), não Silkscreen |
 | 8 | `docs/PLANO-DESIGN.md` Onda 0 × código | `ArenaGame.tsx` e `OraclePage.tsx` continuam no bundle; `lucide-react` em **7** arquivos (eram 8) |

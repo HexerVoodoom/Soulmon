@@ -144,10 +144,10 @@ describe('Configurações → Seus dados: o interruptor de estatísticas existe 
 describe('política ↔ EVENT_SCHEMA: a doc não pode ficar para trás do código', () => {
   const html = fs.readFileSync(path.resolve(process.cwd(), 'public/privacidade.html'), 'utf8');
 
-  /** As duas metades do documento: PT em cima, EN depois da âncora `id="en"`. */
-  const cut = html.indexOf('id="en"');
-  const pt = html.slice(0, cut);
-  const en = html.slice(cut);
+  /** As duas metades do documento: EN em cima (língua principal), PT depois da âncora `id="pt"`. */
+  const cut = html.indexOf('id="pt"');
+  const en = html.slice(0, cut);
+  const pt = html.slice(cut);
 
   it('o arquivo tem mesmo as duas línguas', () => {
     expect(cut).toBeGreaterThan(0);

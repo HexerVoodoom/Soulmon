@@ -736,7 +736,7 @@ por último, aposentar o Pages antigo. Fazer na ordem inversa (mexer no
 
 | Peça | Onde | Observação |
 |---|---|---|
-| Política de privacidade | `public/privacidade.html` | Publicada em `https://soulmon.mateus-sprnd.workers.dev/privacidade`; a âncora `#exclusao` é a URL de exclusão de conta que a Play exige desde 2024. É a **fonte viva** — quando a transcrição ou a telemetria mudarem, ela muda junto. |
+| Política de privacidade | `public/privacidade.html` | Publicada em `https://soulmon.mateus-sprnd.workers.dev/privacidade`; a âncora `#exclusao` é a URL de exclusão de conta que a Play exige desde 2024. É a **fonte viva** — quando a transcrição ou a telemetria mudarem, ela muda junto. Desde 30/09/2026 é **inglês primeiro** (EN no topo, PT-BR em `#pt`), como os Termos — inglês é a língua principal (`REGISTRO-DE-DECISOES.md` §14.6). |
 | Termos | `public/termos.html` | §5 foi reescrita nos dois idiomas quando o reroll deixou de ser sorteio e virou a Nova Leitura determinística (`src/utils/newReading.ts`), o que o tira do enquadramento de loot box da Lei 15.211/2025. |
 | Formulário de Segurança de Dados | [../PLAY-DATA-SAFETY.md](../PLAY-DATA-SAFETY.md) | Atualizado em 08/09/2026. Traz cada resposta já mapeada para as categorias do Google, com o ponteiro para o código que a sustenta. **Regra de ouro**: declarar MENOS do que o app coleta é motivo de rejeição e, se passar, de remoção depois. |
 | Atribuições de arte | [../Attributions.md](../Attributions.md) | O que saiu do repositório e por quê. |
