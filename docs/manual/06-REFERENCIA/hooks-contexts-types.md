@@ -137,6 +137,11 @@ Os dois são **acréscimo**, nunca renomeação (linha vermelha #20 — save só
 
 ## src/types
 
+### `src/types/travessias.ts`
+**Dono de:** os TIPOS e as CONSTANTES do Passeio e das Travessias (30/09/2026): `RegionId` (os 8 reinos com superfície), `HOME_REGION` (`campina`), `CrossingArea`, `CrossingChallenge` (id, área, texto pleno e pequeno EN/PT, `minAge: 13` — sem campo que diferencie a versão pequena nem campo de prêmio, há contrato), `RegionFind`, `Region`, `REGIONS_OPENED_PER_DAY` (1), `PASSEIO_REGION_FIND_CHANCE` (0,5), `CrossingsState` (só ids, enum e `dayKey` — parecer 04 R-4) e `CROSSINGS_EMPTY`.
+**Chamado por:** `src/utils/travessias.ts`, `src/utils/travessiasSave.ts`, `src/data/travessiasCatalog.ts`, `src/contexts/GameStateContext.tsx` (`crossings?`), `src/App.tsx`, `src/components/nav/AreaView.tsx`, `src/components/play/PasseioSheet.tsx`.
+**Régua:** `src/utils/travessias.contract.test.ts` (d).
+
 ### `src/types/attributes.ts`
 **Dono de:** os três atributos do jogo (Poder/Harmonia/Benevolência — internamente `power`/`harmony`/`benevolence`), a cor e o rótulo canônicos de cada um, e o mapeamento categoria de atividade → atributo/galho de evolução.
 **Exports:**

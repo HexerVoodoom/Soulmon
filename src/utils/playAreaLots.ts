@@ -22,10 +22,14 @@
  *  · **Refúgio** — para momentos difíceis: respiração e bolhas calmas. Não
  *    paga nada, não pontua, e mostra o aviso de ajuda profissional.
  * As posições repetem o arranjo de três construções do Laboratório e do Hall.
+ *
+ * 🧭 **O Passeio (30/09/2026, pedido do dono).** A Exploração volta a ter dois
+ * lotes: a Masmorra e o Passeio — para onde o Soulmon sai à noite e as
+ * Travessias que abrem regiões novas (`components/play/PasseioSheet.tsx`).
  */
 import type { Language } from './i18n';
 
-export type ExploracaoLotId = 'masmorra';
+export type ExploracaoLotId = 'masmorra' | 'passeio';
 export type JogosLotId = 'salao' | 'mente' | 'refugio';
 
 interface PlayLotSpec<K extends string> {
@@ -36,7 +40,13 @@ interface PlayLotSpec<K extends string> {
 }
 
 const EXPLORACAO_LOTS: PlayLotSpec<ExploracaoLotId>[] = [
-  { id: 'masmorra', labelPt: 'Masmorra', labelEn: 'Dungeon', ariaPt: 'Entrar na Masmorra', ariaEn: 'Enter the Dungeon', left: '27%', top: '36%' }, // único prédio da Exploração desde 30/09/2026; fica na clareira do fundo (centralizado caía no caminho)
+  { id: 'masmorra', labelPt: 'Masmorra', labelEn: 'Dungeon', ariaPt: 'Entrar na Masmorra', ariaEn: 'Enter the Dungeon', left: '27%', top: '36%' }, // fica na clareira do fundo (centralizado caía no caminho)
+  // 🧭 O Passeio (30/09/2026, decisão do dono — `REGISTRO-DE-DECISOES.md` §5.6):
+  // a clareira da DIREITA, do outro lado do caminho. Os lotes têm 38% de largura
+  // centrados no `left`, então 27% ocupa 8–46% e 70% ocupa 51–89%: não se tocam.
+  // EN "Stroll" e não "Trail": trilha é justamente o lugar que o parecer de
+  // menores veta para as Travessias (04 R-3).
+  { id: 'passeio', labelPt: 'Passeio', labelEn: 'Stroll', ariaPt: 'Abrir o Passeio', ariaEn: 'Open the Stroll', left: '70%', top: '58%' },
 ];
 
 const JOGOS_LOTS: PlayLotSpec<JogosLotId>[] = [

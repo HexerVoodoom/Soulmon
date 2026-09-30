@@ -42,7 +42,10 @@ import lotePpt from './lote-jogos-ppt.png';
 
 export const PLAY_AREA_BG = { exploracao: bgExploracao, jogos: bgJogos } as const;
 
-export const EXPLORACAO_LOT_ART = { masmorra: loteMasmorra } as const;
+// ⚠️ `passeio` (30/09/2026): PLACEHOLDER — a galeria de quadros de paisagem da
+// loja de cenários lê como "postais das regiões" até a squad-arte gerar a arte
+// própria do Passeio. Só trocar o import.
+export const EXPLORACAO_LOT_ART = { masmorra: loteMasmorra, passeio: loteBackground } as const;
 
 // 🏛️ Os três prédios de Jogos (30/09/2026). O Salão herda as duas artes que já
 // eram dele por conteúdo (o PPT; o Dino mudou da Exploração para cá).

@@ -31,6 +31,15 @@
  * 4. **O DIA MEXE NA CHANCE, NUNCA NO ACESSO.** Cumprir a meta aumenta a chance
  *    de um achado raro. Não cumprir reduz a chance — e nunca zera nem bloqueia
  *    nada. Não existe achado que só quem teve um dia bom possa ver.
+ *
+ *    ⚖️ **EXCEÇÃO REGISTRADA (decisão do dono, 30/09/2026 — MIS-4,
+ *    `docs/REGISTRO-DE-DECISOES.md` §5.6):** cada região do Passeio aberta por
+ *    uma Travessia tem postal e lore EXCLUSIVOS dela (`data/travessiasCatalog.ts`,
+ *    ids `trv-*`, sorteados por `utils/travessias.ts` › `passeioFindOfDay`). A
+ *    exceção é estreita e só vale para eles: o catálogo COMUM deste arquivo
+ *    continua inteiro alcançável por quem nunca fez uma Travessia (R-33 — há
+ *    teste), e nada aqui dentro lê Travessia. Os achados de região também não
+ *    pagam nada (regra 2) e também são determinísticos por dia (regra 3).
  * ─────────────────────────────────────────────────────────────────────────────
  *
  * Mesma arquitetura do Dex de Sonhos (`utils/restWindow.ts`), de propósito: ela
@@ -313,6 +322,28 @@ export function adventureOfDay(
   // O catálogo é a fonte da verdade; um id órfão (achado removido numa versão
   // futura) devolve o primeiro em vez de quebrar a tela de quem já o tinha.
   return findById(id) ?? ADVENTURE_CATALOG[0];
+}
+
+/**
+ * O achado DA NOITE `dayKey`, estável depois de guardado.
+ *
+ * `adventureOfDay` prefere o que ainda não foi coletado — então, chamada de
+ * novo DEPOIS de o achado do dia entrar no diário, ela devolveria OUTRO (o
+ * próximo não coletado), e o efeito que guarda no diário guardaria mais um, e
+ * mais um. Duas travas, as duas sobre o próprio diário: (1) se já há entrada
+ * com a data desta noite, o achado é ELA; (2) senão, o sorteio ignora o que
+ * entrou nesta mesma data — a coleção "de antes da noite" é a seed.
+ */
+export function adventureOfNight(
+  diario: readonly AdventureEntry[],
+  feito: number,
+  meta: number,
+  dayKey: string,
+): AdventureFind {
+  const daNoite = diario.find(e => e.day === dayKey);
+  const ja = daNoite ? findById(daNoite.id) : undefined;
+  if (ja) return ja;
+  return adventureOfDay(diario.filter(e => e.day !== dayKey).map(e => e.id), feito, meta, dayKey);
 }
 
 /**

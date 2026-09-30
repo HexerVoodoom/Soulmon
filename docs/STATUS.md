@@ -9,6 +9,18 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 30/09/2026 — Passeio + Travessias IMPLEMENTADOS (Exploração)
+>
+> Novo lote **Passeio / Stroll** na Exploração (`PasseioSheet`): o pet sai todo dia para a região escolhida e o
+> achado da noite vem de lá (`passeioFindOfDay`, fundido à Aventura; casa = Aventura comum idêntica). **Travessias**:
+> 7 regiões × 3 desafios da vida real com versão pequena (`src/data/travessiasCatalog.ts`, revisado por PI/menores
+> e psicologia), opt-in, sem prazo, "Fiz" guarda e abre no máximo 1 região por noite, névoa sem número, esconder
+> na folha. Palco: mochila 🎒 nas costas do pet quando o destino não é casa (não bloqueia cuidado). Nada no núcleo
+> lê Travessia; sem push/widget/desktop (contratos em `travessias.contract.test.ts`). **Conserto de brinde:** o
+> efeito da Aventura guardava achado em cascata (recalculava e colecionava o próximo não coletado até esgotar a
+> faixa) — agora o achado da noite é o já guardado naquela data (`adventureOfNight`). Chunk de entrada re-medido
+> 718_798 → 728_687 (catálogo fora dele). Pendentes do dono: MIS-13..MIS-16 (a frase no `termos.html` é a MIS-15).
+>
 > ## 30/09/2026 — manual sincronizado com `cfe27cc7` (`/manter-docs`, delta `4a894f90..cfe27cc7`, 4 commits de docs)
 >
 > Só commits de docs (Exploração/Travessias). Carimbados `verificado em 30/09/2026`: `00-MAPA` (§6.2 conferida — as 8 linhas novas já tinham entrado à mão), `10-DISCUSSOES-E-DECISOES` (linha nova no tema 6 + 2 fichas no §17), `01-VISAO` (§10: terceira exceção da Camada 3, decidida e não implementada) e `02-REGRAS-DE-NEGOCIO` (§54: "a Exploração fica só com a Masmorra" marcado como revertido em parte só na decisão; `EXPLORACAO_LOTS` segue só com a Masmorra). Verificação própria (subagentes `doc-*` não registrados). `.sincronizado.json` = `cfe27cc7`. Divergências novas: nenhuma. Nota: `docs-delta.mjs` lista ~400 módulos como `novos` sem entrada — o delta não tem nenhum arquivo de código, então é artefato do detector, não módulo novo.

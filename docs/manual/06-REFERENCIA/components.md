@@ -263,6 +263,12 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Chamado por:** `src/components/nav/AreaView.tsx` (lazy).
 **Régua:** `src/components/play/playArea.render.test.tsx`.
 
+### `src/components/play/PasseioSheet.tsx`
+**Dono de:** a folha do Passeio na Exploração (30/09/2026): para onde o Soulmon vai hoje (postais das regiões abertas, casa inclusa) e, se não escondida, as Travessias — a ativa (texto pleno + versão pequena, "Fiz" / "Trocar" entre os mesmos 3 / "Deixar pra lá"), os "Fiz" guardados ("abre no passeio da próxima noite", sem contagem) e, sem ativa, as regiões em névoa (tocar mostra as 3 propostas). Linha de segurança discreta (parecer 04 R-9) e o link "Esconder/Mostrar Travessias". Nunca mostra número de regiões, total, percentual, prazo, prêmio nem a palavra "desafio"/"challenge". Muda, sem push nem badge (R-NOVA). Nenhuma regra nasce aqui: cada toque entrega ao `App` uma função pura de `utils/travessias`.
+**Exports:** `PasseioSheet({ language, crossings, onChange(f) })`.
+**Chamado por:** `src/components/nav/AreaView.tsx` (lazy, lote `passeio` da Exploração).
+**Régua:** `src/utils/travessias.contract.test.ts` (e), `src/components/play/playArea.render.test.tsx`.
+
 ### `src/components/nav/CornerLink.tsx`
 **Dono de:** o link de canto entre as duas telas de topo — Mapa no canto inferior direito da Home, Home no canto inferior esquerdo do Mapa. Ícone pelado de 32 (papel `nav`), alvo 56 no botão. Desde a correção pós-F3 (24/09/2026) o ícone é a ARTE em pixel do squad (`PixelIcon`, `mapa.png`/`home.png`) — ⚰️ era um glifo vetorial de linha fina (`NavGlyph`), posto ali por engano nas fatias F1–F3.
 **Props principais:** `icon: 'mapa' | 'home'` (⚰️ era `NavGlyphName`), `label`, `side: 'left' | 'right'`, `onClick`, `glow?` (o halo do link da Home sobre a cena do Mapa).

@@ -37,6 +37,8 @@ import { soulmonDisplayName } from '../utils/petName';
 import { normalizeFirstDay } from '../utils/firstDay';
 import { sanitizeReview, type ReviewState } from '../utils/mente/revisao';
 import { sanitizeRefugeInvite, type RefugeInviteState } from '../utils/refugio/convite';
+import { normalizeCrossings } from '../utils/travessiasSave';
+import type { CrossingsState } from '../types/travessias';
 import type { WeeklyMissionProgress } from '../utils/weeklyMissions';
 import {
   readLocal,
@@ -431,6 +433,13 @@ export interface GameState {
   /** 🫧 Convite ao Refúgio (30/09/2026): só DATAS e a contagem de dispensas —
    *  nunca o humor que o disparou (dado sensível). Dono: `utils/refugio/convite.ts`. */
   refugeInvite?: RefugeInviteState;
+  /** 🧭 Passeio e Travessias (30/09/2026, `docs/REGISTRO-DE-DECISOES.md` §5.6):
+   *  regiões abertas, a Travessia escolhida, os "Fiz" guardados, o destino do
+   *  Passeio e o interruptor. Só ids, enum e `dayKey` — nada de texto livre,
+   *  lugar ou foto (parecer 04 R-4). Dono: `utils/travessias.ts`. **Nenhum
+   *  sistema do núcleo lê este campo** (meta, HP, `perfectDays`, evolução,
+   *  Vínculo, missões, Bits, Emblemas) — há contrato. Leitura: `?? CROSSINGS_EMPTY`. */
+  crossings?: CrossingsState;
   /** Dias completos REAIS (virada). ⚠️ Desde a decisão #41/#60 (22/09/2026) o
    *  🌀 Glitchtama NÃO entra aqui — é ele que `utils/achievements.ts` lê. */
   totalPerfectDays?: number;
@@ -1211,6 +1220,8 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // derruba o load; save sem o campo entra vazio.
         review: sanitizeReview(loadedState.review),
         refugeInvite: sanitizeRefugeInvite(loadedState.refugeInvite),
+        // Travessias: lixo é descartado pelo dono (`normalizeCrossings`), nunca derruba o load.
+        crossings: normalizeCrossings(loadedState.crossings),
         totalPerfectDays: num(loadedState.totalPerfectDays, 0),
         // #41/#60: save anterior à decisão não tem o campo, e o vitalício antigo
         // JÁ somava os 🌀 — herdar `totalPerfectDays` é o que impede a missão de

@@ -105,6 +105,13 @@ const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     linePt: 'Eu faço bolhas bem devagar. Quer estourar algumas, ou respirar no ritmo delas?',
     lineEn: 'I make bubbles, nice and slow. Want to pop a few, or breathe along with them?',
   },
+  // 🧭 O Passeio (30/09/2026): a mesma guia da Exploração. Convite, nunca
+  // cobrança — e nenhuma palavra sobre o que as Travessias "rendem".
+  'exploracao:passeio': {
+    namePt: 'Zeph, a guia', nameEn: 'Zeph, the guide',
+    linePt: 'Seu Soulmon sai para passear todo dia. Escolha para onde ele vai — ou deixe ele perto de casa.',
+    lineEn: 'Your Soulmon heads out every day. Pick where it wanders — or let it stay close to home.',
+  },
   'hall:amigos': {
     namePt: 'Nino, o carteiro', nameEn: 'Nino, the courier',
     linePt: 'Quem você quer visitar hoje? Seus amigos estão logo ali.',

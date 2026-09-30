@@ -263,6 +263,34 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
       ),
     },
     {
+      // 🧭 Passeio e Travessias (30/09/2026, `utils/travessias.ts`). Sem número:
+      // não há contagem de regiões a mostrar, e prazo não existe.
+      id: 'passeio',
+      title: L('Passeio e Travessias', 'Stroll and Crossings'),
+      body: (
+        <>
+          <p style={para}>
+            {L(
+              'Na Exploração fica o Passeio: seu Soulmon sai todo dia e conta o que viu no relatório do fim do dia. Você escolhe para onde — casa ou uma região já aberta.',
+              'The Stroll lives in Exploration: your Soulmon heads out every day and tells you what it saw in the end-of-day report. You pick where — home, or a region that is already open.',
+            )}
+          </p>
+          <p style={para}>
+            {L(
+              'Travessias são opcionais: algo que você faz na sua vida, fora do app, sempre com uma versão pequena para fazer em casa. Ficam esperando o tempo que for, e trocar ou deixar pra lá não custa nada. Quando você conta que fez, a névoa de uma região se abre no passeio da noite seguinte.',
+              'Crossings are optional: something you do in your own life, outside the app, always with a small version you can do at home. They wait as long as you like, and swapping or letting one go costs nothing. Once you say you did it, the mist over a region clears on the next night\'s stroll.',
+            )}
+          </p>
+          <p style={para}>
+            {L(
+              'Nada disso mexe no seu Soulmon, na meta do dia, nos corações ou na evolução. E dá para esconder as Travessias na própria folha do Passeio.',
+              'None of it touches your Soulmon, the daily goal, hearts or evolution. You can also hide Crossings from the Stroll sheet itself.',
+            )}
+          </p>
+        </>
+      ),
+    },
+    {
       // A Guilda (`guild.guide.*`): a copy é do `guildCopy.ts`; nenhum número escrito à mão aqui.
       id: 'guild',
       title: guildText(language, 'guild.guide.titulo'),
