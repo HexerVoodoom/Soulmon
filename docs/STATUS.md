@@ -17,7 +17,7 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 >
 > - **Guarda-linha-vermelha** passou as 8 opções propostas: **1 limpa, 7 com ressalva, nenhuma vetada** (tabela "Parecer do guarda-linha-vermelha" no fim do BENCHMARK-COMBATE). A vetada (e) foi
 >   reescrita: "dinheiro nunca compra vantagem de combate". Nenhuma opção virou regra: **tudo depende do dono** (`PERGUNTAS-DO-DONO.md`).
-> - **Actions voltou?** a verificar no fechamento (pendente de teste no push).
+> - **Actions voltou?** NÃO (30/09/2026): push 2fe828d8 disparou CI, Android APK Build e docs-sync; os 3 jobs falharam em ~4 s (cobrança, parado desde 16/09). Portões seguem locais (`npm run portoes`).
 
 > ## 30/09/2026 — manual sincronizado com `5edfcfba` (`/manter-docs`, à mão: agentes `doc-*` não registrados na sessão)
 >
