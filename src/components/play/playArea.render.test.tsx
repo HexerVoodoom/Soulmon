@@ -128,7 +128,7 @@ describe('Exploração — Brisa e a Masmorra', () => {
     expect(folha.textContent).toContain('321');
     expect(folha.textContent).toContain('Nível 1');
     expect(folha.textContent).toMatch(/nunca os seus corações/);
-    expect(folha.textContent).toContain('10→30');
+    expect(folha.textContent).toContain('4→12');
     expect(folha.querySelectorAll('ol li')).toHaveLength(5);
   });
 
@@ -255,6 +255,29 @@ describe('Jogos — os três prédios', () => {
     const { container } = renderWithCss(<PlayAreaView {...props({ area: 'jogos', language: 'en-US' })} />);
     fireEvent.click(container.querySelector('[data-area-lot="refugio"]')!);
     expect((await achar(container, '[data-refugio-ajuda]')).textContent).toMatch(/988/);
+  });
+});
+
+describe('convite ao Refúgio → a respiração abre direto', () => {
+  it('initialGame="respiracao" monta a RespiracaoGame e avisa o App (one-shot)', async () => {
+    const consumed = vi.fn();
+    function ComInicial() {
+      const { area, language, evolutionStage, demoCharacterId, totalPoints, onEarnPoints, ...play } = props({ area: 'jogos' });
+      const areaProps = {
+        area, language, evolutionStage, demoCharacterId, onEarnPoints, play,
+        initialGame: 'respiracao' as const, onInitialGameConsumed: consumed,
+        points: totalPoints, emblems: 0, credits: 0,
+        ownership: {} as AreaViewProps['ownership'], actions: {} as AreaViewProps['actions'],
+        onExchangeCredits: async () => false, tournament: {} as AreaViewProps['tournament'],
+        labTab: 'evolution', onLabTab: () => {}, labContent: null, hallContent: () => null,
+        guild: { saveId: 's', metaDoDiaCumprida: false },
+      } satisfies AreaViewProps;
+      return <AreaView {...areaProps} />;
+    }
+    const { container } = renderWithCss(<ComInicial />);
+    await achar(container, '[data-jogo="respiracao"]');
+    expect(consumed).toHaveBeenCalledTimes(1);
+    expect(recebidas.respiracao.onEarnPoints).toBeUndefined();
   });
 });
 

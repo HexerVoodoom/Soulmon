@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { SupportNote } from './SupportNote';
 import type { CSSProperties } from 'react';
 import type { MiniGameBaseProps } from '../mente/types';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
@@ -36,14 +37,9 @@ function phaseWord(phase: BreathPhase, isPt: boolean): string {
   return isPt ? 'Segure' : 'Hold';
 }
 
+/** O aviso de ajuda — mesma peça do Refúgio (`SupportNote`, dono dos números: `utils/supportLine.ts`). */
 export function CrisisNote({ isPt }: { isPt: boolean }) {
-  return (
-    <p data-respiracao-crisis style={{ ...sm2Hint, textAlign: 'center' }}>
-      {isPt
-        ? 'Isto não substitui ajuda profissional. Em crise, no Brasil: CVV, 188 (24h, gratuito).'
-        : 'This does not replace professional help. In a crisis — US/Canada: 988. UK/IE: 116 123.'}
-    </p>
-  );
+  return <SupportNote isPt={isPt} data-respiracao-crisis />;
 }
 
 export function RespiracaoGame({ language, evolutionStage, demoCharacterId, onExit }: MiniGameBaseProps) {

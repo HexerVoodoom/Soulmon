@@ -74,15 +74,22 @@ export interface PlayHandlers {
   /** Os cartões da Revisão da Malha, que moram no SAVE (`GameState.review`). */
   review?: ReviewState;
   onReviewChange?: (next: ReviewState) => void;
+  /** Bits de minijogo já creditados HOJE (`minigameBitsToday`) — as folhas
+   *  mostram "X de 150" porque o teto é um só para todos os jogos. */
+  minigameBitsToday?: number;
 }
 
-type PlayGame = 'masmorra' | SalaoGame | MenteGame | RefugioGame;
+export type PlayGame = 'masmorra' | SalaoGame | MenteGame | RefugioGame;
 export type LabTab = 'evolution' | 'pet' | 'stats';
 
 type TournamentProps = Omit<ComponentProps<typeof TournamentPageT>, 'shop'>;
 
 export interface AreaViewProps {
   area: AreaId;
+  /** Abre um jogo direto ao montar (o convite ao Refúgio abre a respiração).
+   *  One-shot: o `App` limpa pelo `onInitialGameConsumed`. */
+  initialGame?: PlayGame;
+  onInitialGameConsumed?: () => void;
   language: Language;
   /** Avisa se há camada de tela cheia aberta (folha/jogo/duelo). Estável (setState). */
   onLayerChange?: (open: boolean) => void;
@@ -148,7 +155,9 @@ export function AreaView(props: AreaViewProps) {
   const { area, language, ownership, actions } = props;
   const [sheet, setSheet] = useState<string | null>(null);
   const [duelOpen, setDuelOpen] = useState(false);
-  const [game, setGame] = useState<PlayGame | null>(null);
+  const [game, setGame] = useState<PlayGame | null>(props.initialGame ?? null);
+  const { onInitialGameConsumed } = props;
+  useEffect(() => { if (props.initialGame) onInitialGameConsumed?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const closeLabel = language === 'pt-BR' ? 'Fechar' : 'Close';
   const close = () => setSheet(null);
   // R1: qualquer camada de tela cheia (folha, jogo, duelo) avisa o `App`, que
@@ -272,9 +281,9 @@ export function AreaView(props: AreaViewProps) {
       <AreaScene areaId={area} language={language} background={PLAY_AREA_BG[area]} lots={lots}>
         <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close}>
           <Suspense fallback={<SheetLoading language={language} />}>
-            {open?.id === 'masmorra' && <MasmorraSheet language={language} onStart={() => start('masmorra')} />}
-            {open?.id === 'salao' && <SalaoSheet language={language} onStart={start} />}
-            {open?.id === 'mente' && <MenteSheet language={language} reviewDue={dueCards(review, todayKey).length} onStart={start} />}
+            {open?.id === 'masmorra' && <MasmorraSheet language={language} bitsToday={play.minigameBitsToday} onStart={() => start('masmorra')} />}
+            {open?.id === 'salao' && <SalaoSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} />}
+            {open?.id === 'mente' && <MenteSheet language={language} bitsToday={play.minigameBitsToday} reviewDue={dueCards(review, todayKey).length} onStart={start} />}
             {open?.id === 'refugio' && <RefugioSheet language={language} onStart={start} />}
           </Suspense>
         </AreaSheet>

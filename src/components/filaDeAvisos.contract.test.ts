@@ -43,6 +43,13 @@ describe('o slot de avisos não tem cartão solto', () => {
     expect((app.match(/if \(mostrarPrimingDePush\) avisos\.push/g) ?? []).length).toBe(1);
   });
 
+  it('o CONVITE AO REFÚGIO entra na fila, uma vez, depois do primeiro dia e ANTES do HP (parecer do psicólogo, 30/09/2026)', () => {
+    // Num dia difícil o primeiro cartão não pode ser coração perdido.
+    expect(app.indexOf("key: 'firstDay',")).toBeLessThan(app.indexOf("key: 'refugio',"));
+    expect(app.indexOf("key: 'refugio',")).toBeLessThan(app.indexOf("key: 'hp',"));
+    expect(app.match(/if \(shouldInviteRefuge\(/g) ?? []).toHaveLength(1);
+  });
+
   it('a INCUBAÇÃO entra na fila, uma vez, logo depois do HP (D-G8c, parecer R-O)', () => {
     // Posição declarada: HP é a única coisa que cobra e mantém precedência; a
     // incubação é rara (uma vez por evolução) e descritiva, então vence tudo o

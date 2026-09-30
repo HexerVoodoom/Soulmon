@@ -153,3 +153,38 @@ describe('balanço dos minijogos leves (Bits por minuto)', () => {
     for (const m of LEVES) expect(m.bits, m.jogo).toBeLessThan(MINIGAME_BITS_PER_DAY / 5);
   });
 });
+
+// ── Os jogos LONGOS contra o teto diário (decisão do dono, 30/09/2026) ─────
+import { buildDungeonWave, DUNGEON_BITS_FACTOR } from '../dungeon';
+import { clearBonus, MAX_FLOORS } from '../../components/DungeonGame';
+import { ARENA_ROUNDS, buildArenaRound } from '../arena';
+
+function masmorraRunCompleta(nivel: number, estagio: string): number {
+  let total = 0;
+  for (let f = 1; f <= MAX_FLOORS; f++) {
+    total += buildDungeonWave(nivel + f - 1, estagio).reduce((s, e) => s + e.points, 0) + clearBonus(f);
+  }
+  return total;
+}
+
+describe('jogos longos × teto diário de minijogo', () => {
+  it('uma run COMPLETA da Masmorra fica perto do teto (60%–120%), nunca 2–3× ele como antes do fator', () => {
+    expect(DUNGEON_BITS_FACTOR).toBe(0.4);
+    for (const [nivel, estagio] of [[1, 'rookie'], [3, 'champion-power'], [5, 'mega-power']] as const) {
+      const run = masmorraRunCompleta(nivel, estagio);
+      expect(run, `nível ${nivel}`).toBeGreaterThanOrEqual(MINIGAME_BITS_PER_DAY * 0.6);
+      expect(run, `nível ${nivel}`).toBeLessThanOrEqual(MINIGAME_BITS_PER_DAY * 1.2);
+    }
+  });
+
+  it('o bônus de andar da Masmorra é 4/6/8/10/12', () => {
+    expect(Array.from({ length: MAX_FLOORS }, (_, i) => clearBonus(i + 1))).toEqual([4, 6, 8, 10, 12]);
+  });
+
+  it('uma run completa da Arena (dificuldade 1, a do jogo) paga no máximo metade do teto', () => {
+    let total = 0;
+    for (let r = 1; r <= ARENA_ROUNDS; r++) total += buildArenaRound(r, 1, () => 0.5, []).reduce((s, e) => s + e.points, 0);
+    expect(total).toBe(50);
+    expect(total).toBeLessThanOrEqual(MINIGAME_BITS_PER_DAY / 2);
+  });
+});

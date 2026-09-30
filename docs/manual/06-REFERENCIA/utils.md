@@ -6,7 +6,7 @@
 > **Não cobre:** o CONTEÚDO das regras de jogo em profundidade (→ [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md)); componentes, hooks, contexts, types, plugins, constants, `functions/api`, `workers/` e `desktop/` (→ os outros docs de `06-REFERENCIA/`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
 
-Cobertura: **164/164** módulos de `src/utils` (+7 em 30/09/2026: `mente/*` e `refugio/respiracao.ts`, os prédios de Jogos); antes, **157/157** (inclui `src/utils/soulProfile/`), medidos por `node scripts/docs-inventario.mjs` em 29/09/2026 (eram 139 em 24/09/2026; a Guilda e a `backStack` entraram no meio) — os últimos a entrar foram `fairArt.ts`, `groveLocal.ts`, `groveStage.ts`, `guildClaimLocal.ts` e `guildCopyCore.ts`. (Dizia "120/120, medidos em 09/09/2026", que era a medição certa de uma árvore que cresceu 19 módulos desde então; o número **só** vale com a data ao lado, e quem quiser o de hoje roda o script.) `src/navigation.ts` é documentado aqui também, por vizinhança de assunto, e não entra nessa contagem. Ordem do corpo: alfabética por caminho. Índice abaixo: agrupado por família.
+Cobertura: **166/166** módulos de `src/utils` (+9 em 30/09/2026: `mente/*`, `refugio/respiracao.ts`, `refugio/convite.ts` e `supportLine.ts`); antes, **157/157** (inclui `src/utils/soulProfile/`), medidos por `node scripts/docs-inventario.mjs` em 29/09/2026 (eram 139 em 24/09/2026; a Guilda e a `backStack` entraram no meio) — os últimos a entrar foram `fairArt.ts`, `groveLocal.ts`, `groveStage.ts`, `guildClaimLocal.ts` e `guildCopyCore.ts`. (Dizia "120/120, medidos em 09/09/2026", que era a medição certa de uma árvore que cresceu 19 módulos desde então; o número **só** vale com a data ao lado, e quem quiser o de hoje roda o script.) `src/navigation.ts` é documentado aqui também, por vizinhança de assunto, e não entra nessa contagem. Ordem do corpo: alfabética por caminho. Índice abaixo: agrupado por família.
 
 ## Índice por família
 
@@ -443,11 +443,23 @@ Cobertura: **164/164** módulos de `src/utils` (+7 em 30/09/2026: `mente/*` e `r
 **Chamado por:** `src/components/mente/TrocaGame.tsx`, `src/components/play/PlaySheets.tsx`.
 **Régua:** `src/utils/mente/troca.test.ts`, `src/components/mente/trocaPicross.render.test.tsx`.
 
+### `src/utils/refugio/convite.ts`
+**Dono de:** o convite ao Refúgio (30/09/2026): quando aparece (humor do dia 1–2, 1×/dia do jogador, 3 dias de intervalo depois de exibido, 7 de silêncio após 2 dispensas seguidas) e o estado no save (só datas e contagem de dispensas, nunca o humor).
+**Exports:** `RefugeInviteState`; `REFUGE_INVITE_EMPTY`, `REFUGE_INVITE_MOODS`, `REFUGE_INVITE_GAP_DAYS` (3), `REFUGE_INVITE_SILENCE_DAYS` (7), `REFUGE_INVITE_DISMISSALS_TO_SILENCE` (2); `shouldInviteRefuge`, `markRefugeShown`, `dismissRefugeInvite`, `acceptRefugeInvite`, `sanitizeRefugeInvite`.
+**Chamado por:** `src/App.tsx` (fila de avisos da Home, `key: 'refugio'`), `src/contexts/GameStateContext.tsx` (load).
+**Régua:** `src/utils/refugio/convite.test.ts`, `src/components/filaDeAvisos.contract.test.ts`.
+
 ### `src/utils/refugio/respiracao.ts`
 **Dono de:** Respirar com o Soulmon (Refúgio, 30/09/2026): os ritmos (calma 4-0-6, quadrada 4-4-4-4), as durações de 1 a 3 min arredondadas para ciclos inteiros e a fase de um instante. Não mede nada e não tem pagamento.
 **Exports:** tipos `BreathPhase`, `BreathPattern`; `BREATH_PATTERNS`, `BREATH_DURATIONS_MIN`; `cycleMs`, `phaseAt`, `fillLevel`, `sessionMs`.
 **Chamado por:** `src/components/refugio/RespiracaoGame.tsx`.
 **Régua:** `src/utils/refugio/respiracao.test.ts`, `src/components/mente/revisaoRespiracao.render.test.tsx`.
+
+### `src/utils/supportLine.ts`
+**Dono de:** os números e o link de apoio que o app mostra (CVV 188; 988; 116 123; findahelpline.com; `tel:188`) — um dono só desde 30/09/2026, porque duas cópias divergem e número errado em tela de crise pune quem pediu ajuda.
+**Exports:** `HELPLINE_DIRECTORY_URL`, `HELPLINE_TEL_BR`, `helplineDirectoryLabel(isPt)`, `helplineNumbers(isPt)`, `notProfessionalHelp(isPt)`.
+**Chamado por:** `src/components/ChatBox.tsx`, `src/components/refugio/SupportNote.tsx`.
+**Régua:** `src/utils/supportLine.test.ts`.
 
 ### `src/utils/termsNotice.ts` (novo em 21/09/2026, decisão #24)
 **Dono de:** a regra do aviso de termos atualizados — função PURA que decide se o save merece o BANNER (nunca modal, nunca re-aceite).
@@ -623,6 +635,7 @@ Cobertura: **164/164** módulos de `src/utils` (+7 em 30/09/2026: `mente/*` e `r
 **Régua:** nenhuma (`ls src/utils/dreamArt*.test.ts` vazio).
 
 ### `src/utils/dungeon.ts`
+> ⚠️ 30/09/2026: `DUNGEON_BITS_FACTOR` (0,4) — Bits por inimigo e o custo de começar mais fundo (`DEEP_START_BASE_COST` = 16) passam por ele (decisão do dono, `BALANCO-MINIJOGOS.md` §4).
 **Dono de:** Stats do jogador, montagem de onda e progressão de dificuldade da Masmorra — sem gate de HP nem limite diário.
 **Exports:**
 - `PLAYER_STATS` — HP e dano do JOGADOR por estagio de evolucao — a tabela de combate do lado de ca, espelho de `buildDungeonWave` do lado de la.

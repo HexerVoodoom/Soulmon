@@ -9,6 +9,17 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 30/09/2026 — Decisões do dono sobre o balanço, executadas
+>
+> Masmorra × 0,4 (`DUNGEON_BITS_FACTOR`: run completa ~130–170, bônus 4/6/8/10/12, começar mais fundo
+> 16/nível); Arena medida (50/run, fica); "Bits de minijogo hoje: X de 150" nas folhas; Exploração só
+> com a Masmorra (na clareira do fundo); convite ao Refúgio com humor 1–2 (regras do psicólogo, `convite.ts`,
+> antes do HP na fila); números de apoio num dono só (`supportLine.ts`) + findahelpline.com + `tel:188`.
+> **Em aberto (dono):** nomes dos NPCs do Ateliê/Refúgio (propostas da loremaster: Tessela / Boio);
+> as 7 decisões de som em `docs/som/PROPOSTA-SOM-MINIJOGOS-2026-09-30.md` §6; "Tico" (lab) é nome
+> registrado em PT-BR e o placeholder "poring" leva nome de franquia no bundle (achados da loremaster,
+> já registrados em `docs/design/areas/prompts/00-INDICE.md`).
+>
 > ## 30/09/2026 — Balanço dos minijogos (`docs/BALANCO-MINIJOGOS.md`)
 >
 > Régua nova `src/utils/mente/balanco.test.ts`: Bits/min do jogador típico entre 2,5 e 9 em todo jogo

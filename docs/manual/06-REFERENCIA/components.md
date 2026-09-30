@@ -1010,12 +1010,24 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 **Régua:** nenhuma (`find src/components/pixel -maxdepth 1 -name 'TimingBar.*test.ts*'` vazio, 09/09/2026).
 **Avisos do arquivo:** era código local em `DungeonGame.tsx`, COPIADO para `NightmareBattle.tsx` (footgun 9 documentado no próprio cabeçalho antigo) — esta é a extração feita antes da Arena existir, para não abrir uma terceira cópia; ⚠️ não acrescentar regra de jogo aqui (dano/elemento/crítico/carga de especial são de quem chama) — a barra só mede.
 
+### `src/components/refugio/RefugeInviteCard.tsx`
+**Dono de:** o cartão do convite ao Refúgio no slot de avisos da Home — copy do parecer do psicólogo ("Um respiro?"; voz do pet falando de si; sem humor, sem crise, sem promessa). Marca "exibido" ao montar.
+**Exports:** `RefugeInviteCard({ language, onShown, onAccept, onDismiss })`.
+**Chamado por:** `src/App.tsx`.
+**Régua:** `src/components/refugio/refugeInvite.render.test.tsx`, `src/components/filaDeAvisos.contract.test.ts`.
+
 ### `src/components/refugio/RespiracaoGame.tsx`
 **Dono de:** Respirar com o Soulmon — escolher ritmo e 1–3 min; a bolha enche e esvazia sozinha e o pet respira junto (movimento reduzido: opacidade + barra, sem escala). Aviso de ajuda profissional nas três telas. Sem pontuação, sem Bits.
 **Exports:** `RespiracaoGame(props: MiniGameBaseProps)`, `CrisisNote({ isPt })`.
 **Depende de:** `src/utils/refugio/respiracao.ts`.
 **Chamado por:** `src/components/nav/AreaView.tsx` (lazy).
 **Régua:** `src/components/mente/revisaoRespiracao.render.test.tsx`; a fiação em `src/components/play/playArea.render.test.tsx`.
+
+### `src/components/refugio/SupportNote.tsx`
+**Dono de:** o rodapé de ajuda do Refúgio (folha e respiração): "não substitui ajuda profissional", os números, o atalho `tel:188` (PT) e o diretório internacional. Textos de `utils/supportLine.ts`.
+**Exports:** `SupportNote({ isPt, ...data })`.
+**Chamado por:** `src/components/play/PlaySheets.tsx`, `src/components/refugio/RespiracaoGame.tsx`.
+**Régua:** `src/components/refugio/refugeInvite.render.test.tsx`.
 
 ### `src/components/ritual/RitualKit.tsx`
 **Dono de:** as três peças partilhadas pelos oito rituais (canvas Rituais, DECISÕES §21, D-R1…D-R3): o **diálogo centrado** `.dlg` SIS-06 sobre o scrim literal do `ModalSheet` (`RITUAL_SCRIM` = `rgba(4,18,20,.55)`), o **vidro sem anel** onde o pixel entra (sprite 64/128, cena 96, aventura 48, emblema 64 — sempre múltiplo de 0,5× do nativo) e a **linha rótulo/valor** do relatório (12 `muted` · 14/500 tabular; destaque em tinta `primary-ink`, perda em peso 400 sem sinal).

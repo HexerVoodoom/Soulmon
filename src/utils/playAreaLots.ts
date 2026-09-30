@@ -36,7 +36,7 @@ interface PlayLotSpec<K extends string> {
 }
 
 const EXPLORACAO_LOTS: PlayLotSpec<ExploracaoLotId>[] = [
-  { id: 'masmorra', labelPt: 'Masmorra', labelEn: 'Dungeon', ariaPt: 'Entrar na Masmorra', ariaEn: 'Enter the Dungeon', left: '27%', top: '36%' },
+  { id: 'masmorra', labelPt: 'Masmorra', labelEn: 'Dungeon', ariaPt: 'Entrar na Masmorra', ariaEn: 'Enter the Dungeon', left: '27%', top: '36%' }, // único prédio da Exploração desde 30/09/2026; fica na clareira do fundo (centralizado caía no caminho)
 ];
 
 const JOGOS_LOTS: PlayLotSpec<JogosLotId>[] = [

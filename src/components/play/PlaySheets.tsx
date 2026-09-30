@@ -5,12 +5,13 @@ import { MATCH_POINTS, WINS_NEEDED } from '../RPSGame';
 import { getDungeonBest, getDungeonDifficulty, HEART_DROP_CHANCE } from '../../utils/dungeon';
 import { STORAGE_KEYS } from '../../utils/storageKeys';
 import { readNumber } from '../../utils/safeStorage';
-import { bitsStyle } from '../../utils/currencies';
+import { bitsStyle, MINIGAME_BITS_PER_DAY } from '../../utils/currencies';
 import type { Language } from '../../utils/i18n';
 import { ECO_MAX_BITS } from '../../utils/mente/eco';
 import { BOLHAS_MAX_BITS } from '../../utils/mente/bolhas';
 import { TROCA_MAX_BITS } from '../../utils/mente/troca';
 import { PICROSS_MAX_BITS } from '../../utils/mente/picross';
+import { SupportNote } from '../refugio/SupportNote';
 import { REVIEW_SESSION_BITS } from '../../utils/mente/revisao';
 
 /**
@@ -59,6 +60,30 @@ const sectionHead: CSSProperties = {
 const note: CSSProperties = { ...sm2Hint, margin: 0, textAlign: 'center' };
 const cta: CSSProperties = { ...sm2Button('primary'), width: '100%' };
 
+/**
+ * "Bits de minijogo hoje: X de 150" (decisão do dono, 30/09/2026 —
+ * `docs/BALANCO-MINIJOGOS.md` §5). O teto é compartilhado por todos os jogos
+ * que pagam; sem esta linha, depois de bater o teto o "até N Bits" de cada
+ * jogo vira promessa falsa. Texto neutro: sem barra, sem cor de alerta — o
+ * teto não tira nada nem fecha jogo nenhum, só para de somar.
+ */
+export function BitsHoje({ language, earned }: { language: Language; earned?: number }) {
+  if (earned === undefined) return null;
+  const isPt = language === 'pt-BR';
+  const n = Math.min(MINIGAME_BITS_PER_DAY, Math.max(0, Math.floor(earned)));
+  const cheio = n >= MINIGAME_BITS_PER_DAY;
+  return (
+    <p data-bits-hoje style={{ ...note, margin: 0 }}>
+      <span className="sm2-num">
+        {isPt ? `Bits de minijogo hoje: ${n} de ${MINIGAME_BITS_PER_DAY}` : `Minigame Bits today: ${n} of ${MINIGAME_BITS_PER_DAY}`}
+      </span>
+      {cheio && (isPt
+        ? ' · os jogos seguem abertos; os Bits voltam amanhã.'
+        : ' · the games stay open; Bits come back tomorrow.')}
+    </p>
+  );
+}
+
 function StatBox({ value, label, valueStyle }: { value: ReactNode; label: string; valueStyle?: CSSProperties }) {
   return (
     <div style={box}>
@@ -78,7 +103,7 @@ function DropRow({ label, value }: { label: string; value: string }) {
 }
 
 // ── Masmorra ────────────────────────────────────────────────────────────────
-export function MasmorraSheet({ language, onStart }: { language: Language; onStart: () => void }) {
+export function MasmorraSheet({ language, onStart, bitsToday }: { language: Language; onStart: () => void; bitsToday?: number }) {
   const isPt = language === 'pt-BR';
   // Lidos UMA vez ao abrir a folha, pelos mesmos donos que a `DungeonGame`
   // usa (a dificuldade vira a semana sozinha dentro de `getDungeonDifficulty`).
@@ -130,6 +155,7 @@ export function MasmorraSheet({ language, onStart }: { language: Language; onSta
       <p style={note}>
         {isPt ? 'Perder custa só a run — nunca os seus corações.' : 'Losing only costs the run — never your hearts.'}
       </p>
+      <BitsHoje language={language} earned={bitsToday} />
       <button type="button" data-masmorra-start onClick={onStart} style={cta}>
         {isPt ? 'Entrar na masmorra' : 'Enter the dungeon'}
       </button>
@@ -204,10 +230,11 @@ export type RefugioGame = 'respiracao' | 'bolhas-calmas';
 const divider: CSSProperties = { border: 0, borderTop: '1px solid var(--sm2-line)', margin: '4px 0', width: '100%' };
 
 /** Salão de Jogos — jogos livres: a Corrida do Dino e o PPT, as mesmas folhas de sempre. */
-export function SalaoSheet({ language, onStart }: { language: Language; onStart: (g: SalaoGame) => void }) {
+export function SalaoSheet({ language, onStart, bitsToday }: { language: Language; onStart: (g: SalaoGame) => void; bitsToday?: number }) {
   const isPt = language === 'pt-BR';
   return (
     <div data-salao style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <BitsHoje language={language} earned={bitsToday} />
       <p style={sectionHead}>{isPt ? 'Corrida do Dino' : 'Dino Runner'}</p>
       <DinoSheet language={language} onStart={() => onStart('dino')} />
       <hr style={divider} />
@@ -247,8 +274,10 @@ function GameRow({ id, title, asks, detail, meta, cta, onStart, dataKey }: {
 }
 
 /** Ateliê da Mente — os cinco jogos que exercitam uma função. */
-export function MenteSheet({ language, reviewDue, onStart }: {
+export function MenteSheet({ language, reviewDue, onStart, bitsToday }: {
   language: Language;
+  /** Bits de minijogo já creditados hoje (o teto é compartilhado). */
+  bitsToday?: number;
   /** Quantos cartões da Revisão estão para hoje (`dueCards`, dono `utils/mente/revisao`). */
   reviewDue: number;
   onStart: (g: MenteGame) => void;
@@ -305,6 +334,7 @@ export function MenteSheet({ language, reviewDue, onStart }: {
           ? 'Cada jogo pede uma coisa diferente. Perder só encerra a rodada.'
           : 'Each game asks for something different. Losing only ends the round.'}
       </p>
+      <BitsHoje language={language} earned={bitsToday} />
       <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
         {rows.map(r => (
           <GameRow key={r.id} dataKey="mente" id={r.id} title={r.title} asks={r.asks} detail={r.detail} meta={r.meta} cta={r.cta ?? cta} onStart={() => onStart(r.id)} />
@@ -342,11 +372,7 @@ export function RefugioSheet({ language, onStart }: { language: Language; onStar
           onStart={() => onStart('bolhas-calmas')}
         />
       </ul>
-      <p data-refugio-ajuda style={{ ...note, marginTop: 4 }}>
-        {isPt
-          ? 'Isto não substitui ajuda profissional. Em crise, no Brasil: CVV, 188 (24h, gratuito).'
-          : 'This does not replace professional help. In a crisis — US/Canada: 988. UK/IE: 116 123.'}
-      </p>
+      <SupportNote isPt={isPt} data-refugio-ajuda />
     </div>
   );
 }

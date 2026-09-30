@@ -78,6 +78,8 @@ import { feedTimesFor, rubHealFor } from './utils/careCaps';
 import { applyRub, applyFeed, rubDecision } from './utils/careUpdaters';
 import { applySpecialItem, specialRefusal } from './utils/specialItemUse';
 import { playerDayKey, playerDayIso } from './utils/playerDay';
+import { shouldInviteRefuge, markRefugeShown, dismissRefugeInvite, acceptRefugeInvite } from './utils/refugio/convite';
+import { RefugeInviteCard } from './components/refugio/RefugeInviteCard';
 import { awardBondXP, bondLevelFor, unclaimedBondRewards, applyBondRewards, bondTitle } from './utils/bond';
 import { applyPoopDrain, cleanPoop, POOP_DRAIN_PERIOD_MS, remainingDrainToday } from './utils/poopDrain';
 import { isMuted, setMuted, playTaskComplete, playFeed, playEvolve, playDegenerate, playSleep } from './utils/sounds';
@@ -133,7 +135,7 @@ import {
   type WeeklyMissionId,
 } from './utils/weeklyMissions';
 import { sleepReminderCopy } from '../functions/api/_pushCopy.js';
-import { BITS_EXCHANGE, creditMinigameBits } from './utils/currencies';
+import { BITS_EXCHANGE, creditMinigameBits, minigameBitsToday } from './utils/currencies';
 import { snapshotCompletion, undoCompletion, UNDO_WINDOW_MS } from './utils/completionUndo';
 import { UndoToast } from './components/UndoToast';
 import { adminFromEntitlement, setAdminFlag, useAdmin } from './utils/adminFlag';
@@ -824,6 +826,8 @@ export default function App() {
   const [editingTask, setEditingTask] = useState<string | null>(null);
   const [resetOnboardingOpen, setResetOnboardingOpen] = useState(false);
   const [hpBannerDismissed, setHpBannerDismissed] = useState(false);
+  /** O convite ao Refúgio foi aceito: a área Jogos monta já com a respiração aberta (one-shot). */
+  const [refugeLaunch, setRefugeLaunch] = useState(false);
   /* SLOT DO DIA — a linha "+N avisos" nasce RECOLHIDA. Estado de VISTA, fora
      do GameState de propósito (não vira cloud save a cada toque). */
   const [avisosAbertos, setAvisosAbertos] = useState(false);
@@ -3314,6 +3318,23 @@ export default function App() {
     }));
   }, []);
 
+  /* 🫧 CONVITE AO REFÚGIO — a regra inteira é de `utils/refugio/convite.ts`;
+     aqui só se grava o estado e se navega. Nada paga, nada conta. */
+  const handleRefugeShown = useCallback(() => {
+    setGameState(prev => {
+      const next = markRefugeShown(prev.refugeInvite, playerDayIso(new Date(), prev.playerDayTz));
+      return next === prev.refugeInvite ? prev : { ...prev, refugeInvite: next };
+    });
+  }, [setGameState]);
+  const handleRefugeDismiss = useCallback(() => {
+    setGameState(prev => ({ ...prev, refugeInvite: dismissRefugeInvite(prev.refugeInvite, playerDayIso(new Date(), prev.playerDayTz)) }));
+  }, [setGameState]);
+  const handleRefugeAccept = useCallback(() => {
+    setGameState(prev => ({ ...prev, refugeInvite: acceptRefugeInvite(prev.refugeInvite, playerDayIso(new Date(), prev.playerDayTz)) }));
+    setRefugeLaunch(true);
+  }, [setGameState]);
+  const handleRefugeLaunchConsumed = useCallback(() => setRefugeLaunch(false), []);
+
   const handleDinoScore = useCallback((score: number) => {
     setGameState(prev => (score > (prev.dinoBest ?? 0) ? { ...prev, dinoBest: score } : prev));
   }, []);
@@ -5692,6 +5713,8 @@ export default function App() {
               <AreaView
                 key={currentView}
                 area={area}
+                initialGame={area === 'jogos' && refugeLaunch ? 'respiracao' : undefined}
+                onInitialGameConsumed={handleRefugeLaunchConsumed}
                 onLayerChange={setAreaLayerOpen}
                 language={language}
                 ownership={{
@@ -5756,6 +5779,7 @@ export default function App() {
                      aqui só se grava o estado que o jogo devolveu. */
                   todayKey: playerDayIso(new Date(), gameState.playerDayTz),
                   review: gameState.review,
+                  minigameBitsToday: minigameBitsToday(gameState, playerDayKey(new Date(), gameState.playerDayTz)),
                   onReviewChange: (next) => setGameState(prev => ({ ...prev, review: next })),
                   /* WP4.5 — o sumidouro. A cobrança é conferida sobre o `prev`
                      (dois toques no mesmo lote do React leriam o mesmo saldo e
@@ -5975,6 +5999,25 @@ export default function App() {
                     ),
                   });
                 }
+
+                /* ── 0b. CONVITE AO REFÚGIO ───────────────────────────────
+                   Logo depois do primeiro dia e ANTES do HP: num dia difícil,
+                   o primeiro cartão não pode ser coração perdido (parecer do
+                   psicólogo, 30/09/2026). A regra (humor 1–2, 1×/dia, 3 dias
+                   de intervalo, silêncio após 2 recusas) é de
+                   `utils/refugio/convite.ts`; o cartão marca "exibido" ao
+                   montar, então escondido no "+N" não gasta a vez. */
+                if (shouldInviteRefuge(gameState.refugeInvite, moodFor(gameState.moodLog, playerDayKey(agoraA, gameState.playerDayTz)), playerDayIso(agoraA, gameState.playerDayTz))) avisos.push({
+                  key: 'refugio',
+                  node: (
+                    <RefugeInviteCard
+                      language={language}
+                      onShown={handleRefugeShown}
+                      onDismiss={handleRefugeDismiss}
+                      onAccept={() => { handleRefugeAccept(); goTo(areaView('jogos')); }}
+                    />
+                  ),
+                });
 
                 // ── 1. HP ────────────────────────────────────────────────
                 // O número vem de `tasksToAvoidHeartLoss`, dono da regra.

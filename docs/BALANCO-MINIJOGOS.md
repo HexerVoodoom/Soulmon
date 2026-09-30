@@ -78,7 +78,10 @@ primeira run** (em ~5 minutos) — e, a partir daí, **nenhum outro jogo paga
 nada naquele dia**, inclusive os do Ateliê da Mente. A folha do Ateliê anuncia
 "até N Bits" sem saber que o teto já foi batido. É a pendência nº 1 do §5.
 
-## 5. Decisões em aberto (dono)
+## 5. Decisões (fechadas pelo dono em 30/09/2026)
+
+✅ 1 → **(b)**: `DUNGEON_BITS_FACTOR` = 0,4 (run completa ~130–170; bônus de andar 4/6/8/10/12; custo de começar mais fundo 16/nível). ✅ 2 → sim (`BitsHoje`). ✅ 3 → não. ✅ 4 → manter no aparelho. A Arena foi medida: 50 Bits por run completa, fica como está. O texto original das perguntas segue abaixo como registro.
+
 
 1. **A Masmorra enche o teto sozinha.** Opções: (a) manter; (b) **reduzir os
    Bits da Masmorra para que uma run completa fique perto do teto** (~÷2,5 nos

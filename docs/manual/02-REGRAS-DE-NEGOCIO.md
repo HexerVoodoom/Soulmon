@@ -4382,7 +4382,7 @@ Stats do jogador: `PLAYER_STATS` (`src/utils/dungeon.ts`), por estágio, de
 Pesadelo e pela Arena — mexer nela muda os três de uma vez, e nenhum avisa.
 
 **Recompensas.** Bits por inimigo (`enemy.points`) + bônus de andar
-`clearBonus(floor) = 10 + 5 × (floor − 1)` = 10/15/20/25/30. Limpar um andar cura
+`clearBonus(floor) = round((10 + 5 × (floor − 1)) × DUNGEON_BITS_FACTOR)` = 4/6/8/10/12 (⚰️ era 10/15/20/25/30 até 30/09/2026, quando o dono trouxe a run completa para perto do teto diário — `BALANCO-MINIJOGOS.md` §4). Limpar um andar cura
 `ceil(playerStats.hp × 0.25)`; o HP do jogador **carrega** entre andares. Limpar
 os 5 dá **🌀 Glitchtama** (`onGlitchtama`) e sobe a base
 (`setDungeonDifficultyAtLeast(base + 1)`).

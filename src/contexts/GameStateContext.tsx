@@ -36,6 +36,7 @@ import { resolveLanguage } from '../utils/i18n';
 import { soulmonDisplayName } from '../utils/petName';
 import { normalizeFirstDay } from '../utils/firstDay';
 import { sanitizeReview, type ReviewState } from '../utils/mente/revisao';
+import { sanitizeRefugeInvite, type RefugeInviteState } from '../utils/refugio/convite';
 import type { WeeklyMissionProgress } from '../utils/weeklyMissions';
 import {
   readLocal,
@@ -427,6 +428,9 @@ export interface GameState {
    *  porque é conteúdo da pessoa — perder ao trocar de celular seria perder
    *  o que ela escreveu. */
   review?: ReviewState;
+  /** 🫧 Convite ao Refúgio (30/09/2026): só DATAS e a contagem de dispensas —
+   *  nunca o humor que o disparou (dado sensível). Dono: `utils/refugio/convite.ts`. */
+  refugeInvite?: RefugeInviteState;
   /** Dias completos REAIS (virada). ⚠️ Desde a decisão #41/#60 (22/09/2026) o
    *  🌀 Glitchtama NÃO entra aqui — é ele que `utils/achievements.ts` lê. */
   totalPerfectDays?: number;
@@ -1206,6 +1210,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // Cartão malformado é DESCARTADO pelo dono (`sanitizeReview`), nunca
         // derruba o load; save sem o campo entra vazio.
         review: sanitizeReview(loadedState.review),
+        refugeInvite: sanitizeRefugeInvite(loadedState.refugeInvite),
         totalPerfectDays: num(loadedState.totalPerfectDays, 0),
         // #41/#60: save anterior à decisão não tem o campo, e o vitalício antigo
         // JÁ somava os 🌀 — herdar `totalPerfectDays` é o que impede a missão de

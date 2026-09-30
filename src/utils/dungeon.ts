@@ -103,6 +103,18 @@ function enemyKey(tier: EnemyTier, line: string): string {
  * with stats scaled by the dungeon `level`. Higher level = more enemy damage
  * dealt and less damage taken (dmgReduction). Random each call.
  */
+/**
+ * 💠 O FATOR DE BITS DA MASMORRA (decisão do dono, 30/09/2026 —
+ * `docs/BALANCO-MINIJOGOS.md` §4). Uma run completa pagava 327–417 Bits, 2–3×
+ * o teto diário de minijogo (`MINIGAME_BITS_PER_DAY` = 150): a Masmorra enchia
+ * o teto no 2º/3º andar e zerava todos os outros jogos no dia. Com 0,4, uma
+ * run completa fica perto do teto (~130–170). É UM número, aplicado nos DOIS
+ * lugares que pagam (Bits por inimigo aqui, bônus de andar em `clearBonus` da
+ * `DungeonGame`) e no custo de começar mais fundo (o sumidouro), para a proporção
+ * entre ganhar e gastar não mudar. Régua: `utils/mente/balanco.test.ts`.
+ */
+export const DUNGEON_BITS_FACTOR = 0.4;
+
 export function buildDungeonWave(level: number, petStage: string): DungeonEnemy[] {
   // A "level" is roughly one player-tier of difficulty: level 1 suits a rookie,
   // level 2 a champion, level 3 an ultimate… so a floor a couple levels above
@@ -126,7 +138,7 @@ export function buildDungeonWave(level: number, petStage: string): DungeonEnemy[
       hp: Math.max(5, Math.round(base.hp * hpMult * variance)),
       atk: Math.max(2, Math.round(base.atk * atkMult)),
       speed: +(base.speed + speedBump).toFixed(2),
-      points: Math.max(2, Math.round(base.points * ptsMult)),
+      points: Math.max(1, Math.round(base.points * ptsMult * DUNGEON_BITS_FACTOR)),
       dmgReduction: +dmgReduction.toFixed(2),
     };
   });
@@ -168,7 +180,8 @@ export function getDungeonDifficulty(): number {
  * O preço sobe com o nível para o sumidouro acompanhar quem farma mais — e
  * porque o valor do que se compra também sobe (o bônus de andar é escalado).
  */
-export const DEEP_START_BASE_COST = 40;
+/** Era 40; acompanha o `DUNGEON_BITS_FACTOR` (30/09/2026) para o sumidouro manter o peso relativo. */
+export const DEEP_START_BASE_COST = Math.round(40 * DUNGEON_BITS_FACTOR);
 
 export function deepStartCost(currentLevel: number): number {
   const n = Math.max(1, Math.floor(currentLevel));

@@ -4,7 +4,7 @@ import { sm2Button } from './form/FormKit';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, VisorFx, HpBars, FxPopup, StatTag, phaseTitle, phaseLine } from './games/GameKit';
 import { getSpriteForStage } from '../utils/sprites';
 import { playFeed } from '../utils/sounds';
-import { playerStatsFor } from '../utils/dungeon';
+import { playerStatsFor, DUNGEON_BITS_FACTOR } from '../utils/dungeon';
 import { TimingBar } from './pixel/TimingBar';
 import {
   buildDungeonWave, getDungeonDifficulty, getDungeonBest,
@@ -53,8 +53,10 @@ export const MAX_FLOORS = 5;
    profissão, a masmorra é exatamente a de antes. */
 const DEFEND_TIME = 3.0;   // seconds to react on defense (base; the craft may add)
 const POPUP_MS = 1400;     // how long result popups stay before the next phase
-// Bits for clearing a floor — scales with how deep you are (10/15/20/25/30).
-export const clearBonus = (floor: number) => 10 + 5 * (floor - 1);
+// Bits for clearing a floor — scales with how deep you are. Era 10/15/20/25/30;
+// desde 30/09/2026 passa pelo `DUNGEON_BITS_FACTOR` (0,4 → 4/6/8/10/12), a
+// decisão do dono que trouxe a run completa para perto do teto diário.
+export const clearBonus = (floor: number) => Math.round((10 + 5 * (floor - 1)) * DUNGEON_BITS_FACTOR);
 
 type Phase = 'intro' | 'attack' | 'defend' | 'result' | 'enemy-down' | 'floor-clear' | 'run-complete' | 'lost';
 interface Popup { icon: string; title: string; detail: string }

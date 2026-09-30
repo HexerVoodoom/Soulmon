@@ -1,4 +1,5 @@
 import { aiFetch } from '../utils/aiClient';
+import { HELPLINE_DIRECTORY_URL, helplineDirectoryLabel, helplineNumbers } from '../utils/supportLine';
 import { chatSafetyDecision } from '../utils/chatSafety';
 import { useCallback, useRef, useState } from 'react';
 import { fetchServerConfig } from '../utils/serverConfig';
@@ -573,14 +574,14 @@ export function ChatBox({
             precisam estar; manter só os dois deixaria todo o resto do mundo
             sem caminho nenhum. */}
         <a
-          href="https://findahelpline.com"
+          href={HELPLINE_DIRECTORY_URL}
           target="_blank"
           rel="noopener noreferrer"
           className="sm2-chat-support-link"
         >
-          {isPt ? 'Encontrar uma linha de apoio' : 'Find a helpline'}
+          {helplineDirectoryLabel(isPt)}
         </a>
-        {isPt ? ' · No Brasil: CVV, 188 (24h, gratuito).' : ' · US/Canada: 988. UK/IE: 116 123.'}
+        {` · ${helplineNumbers(isPt)}`}
       </p>
       )}
     </div>
