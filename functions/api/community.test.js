@@ -70,6 +70,7 @@ function req(action, { method = 'GET', body, params = {}, token } = {}) {
 const ACOES_COM_ATOR = [
   { action: 'profile', method: 'POST', body: { id: VITIMA, name: 'hackeado' } },
   { action: 'match', method: 'POST', body: { id: VITIMA, opponentId: ATOR } },
+  { action: 'duelStart', method: 'POST', body: { id: VITIMA, opponentId: ATOR } },
   { action: 'friends', method: 'POST', body: { id: VITIMA, friendId: ATOR } },
   { action: 'gift', method: 'POST', body: { id: VITIMA, friendId: ATOR } },
   { action: 'trophies', method: 'GET', params: { id: VITIMA, claim: '1' } },

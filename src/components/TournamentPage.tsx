@@ -65,7 +65,7 @@ import { lineIconForStage } from '../utils/lineIcons';
 import { getStageLevel } from '../types/progression';
 import { DuelScreen } from './DuelScreen';
 import type { DuelStats } from '../../functions/api/_duel.js';
-import { getOpponents, playMatch, getRank, type Opponent, type MatchResult, type RankRow } from '../utils/community';
+import { getOpponents, playMatch, startDuel, getRank, type Opponent, type MatchResult, type RankRow } from '../utils/community';
 import { EMBLEMS_PER_WIN, EMBLEMS_PER_LOSS, emblemStyle } from '../utils/currencies';
 import { getTierStanding } from '../utils/tournamentTiers';
 import { getTournamentWindow, tournamentWindowLabel } from '../utils/tournamentSeason';
@@ -191,7 +191,7 @@ export function TournamentPage({ saveId, petStage, petLine, pvpEnabled, onToggle
   const [fighting, setFighting] = useState<string | null>(null);
   const [result, setResult] = useState<MatchResult | null>(null);
   /** Duelo fantasma em andamento (a luta animada antes do servidor decidir). */
-  const [duelOpp, setDuelOpp] = useState<Opponent | null>(null);
+  const [duel, setDuel] = useState<{ opp: Opponent; seed: number; me: DuelStats; oppStats: DuelStats } | null>(null);
   const [myDuel, setMyDuel] = useState<DuelStats | null>(null);
   /** Erro de AÇÃO (a partida não foi). Era `alert()` — diálogo do sistema por
    *  cima de um app de bichinho, e sem par PT/EN garantido. */
@@ -255,19 +255,37 @@ export function TournamentPage({ saveId, petStage, petLine, pvpEnabled, onToggle
     }
   }, [tab, rank]);
 
-  /* Com servidor que manda a ficha de luta, o "Desafiar" abre o DUELO: os
-     pets lutam sozinhos e o dono torce. Sem ela (servidor antigo), a partida
-     segue direto como antes. */
-  const fight = (opp: Opponent) => {
-    if (opp.duel && myDuel && typeof opp.duelSeed === 'number') { setFightError(null); setDuelOpp(opp); return; }
-    void resolveMatch(opp, []);
-  };
-
-  const resolveMatch = async (opp: Opponent, cheers: number[]) => {
+  /* Com servidor que manda a ficha de luta, o "Desafiar" abre o DUELO: o
+     servidor gasta a partida e sorteia a semente (`startDuel`); os pets lutam
+     sozinhos e o dono torce. Sair antes do fim é DERROTA (`leaveDuel`).
+     Sem a ficha (servidor antigo), a partida segue direto como antes. */
+  const fight = async (opp: Opponent) => {
+    if (!(opp.duel && myDuel)) { void resolveMatch(opp, []); return; }
     setFighting(opp.id);
     setFightError(null);
     try {
-      const r = await playMatch(saveId, opp.id, cheers);
+      const r = await startDuel(saveId, opp.id);
+      setMatchesLeft(typeof r.matchesLeft === 'number' ? r.matchesLeft : matchesLeft);
+      setDuel({ opp, seed: r.seed, me: r.me, oppStats: r.opp });
+    } catch (err) {
+      setFightError(err instanceof Error && err.message
+        ? err.message
+        : (isPt ? 'A partida não aconteceu. Tente de novo.' : "The match didn't happen. Try again."));
+    } finally {
+      setFighting(null);
+    }
+  };
+
+  /* Sair do duelo antes do fim = derrota, sem luta: o servidor já gastou a
+     partida na abertura, e aqui ele só a fecha. Fechar o app tem o mesmo
+     efeito (o duelo aberto vira derrota na próxima chamada). */
+  const leaveDuel = (opp: Opponent) => { void resolveMatch(opp, [], true); };
+
+  const resolveMatch = async (opp: Opponent, cheers: number[], forfeit = false) => {
+    setFighting(opp.id);
+    setFightError(null);
+    try {
+      const r = await playMatch(saveId, opp.id, cheers, forfeit);
       setResult(r);
       // `?? matchesLeft`: resposta sem o campo não pode zerar o contador nem
       // virar `undefined` na tela (ver a nota do estado de carregamento).
@@ -286,7 +304,7 @@ export function TournamentPage({ saveId, petStage, petLine, pvpEnabled, onToggle
         : (isPt ? 'A partida não aconteceu. Tente de novo.' : "The match didn't happen. Try again."));
     } finally {
       setFighting(null);
-      setDuelOpp(null);
+      setDuel(null);
       // A semente depende da partida do dia: a lista velha já não vale.
       loadOpponents();
     }
@@ -300,19 +318,19 @@ export function TournamentPage({ saveId, petStage, petLine, pvpEnabled, onToggle
   ];
 
 
-  if (duelOpp && myDuel && duelOpp.duel && typeof duelOpp.duelSeed === 'number') {
+  if (duel) {
     return (
       <DuelScreen
-        me={myDuel}
-        opp={duelOpp.duel}
-        seed={duelOpp.duelSeed}
+        me={duel.me}
+        opp={duel.oppStats}
+        seed={duel.seed}
         petSprite={getSpriteForStage(petStage, petLine, 256)}
-        oppSprite={getSpriteForStage(duelOpp.stage)}
+        oppSprite={getSpriteForStage(duel.opp.stage)}
         petName={isPt ? 'Você' : 'You'}
-        oppName={duelOpp.petName || duelOpp.name}
+        oppName={duel.opp.petName || duel.opp.name}
         isPt={isPt}
-        onDone={cheers => { void resolveMatch(duelOpp, cheers); }}
-        onClose={() => setDuelOpp(null)}
+        onDone={cheers => { void resolveMatch(duel.opp, cheers); }}
+        onClose={() => leaveDuel(duel.opp)}
       />
     );
   }

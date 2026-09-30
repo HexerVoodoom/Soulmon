@@ -120,7 +120,7 @@ export const getPlayer = (id: string) =>
 export interface Opponent {
   id: string; name: string; petName: string; stage: string;
   /** Duelo fantasma (`functions/api/_duel.js`) — servidor antigo pode não mandar. */
-  duel?: DuelStats; duelSeed?: number;
+  duel?: DuelStats;
 }
 export const getOpponents = (id: string) =>
   call<{ opponents: Opponent[]; me?: { duel: DuelStats }; matchesLeft: number }>('opponents', { params: { id } });
@@ -129,9 +129,16 @@ export interface MatchResult {
   won: boolean; myScore: number; oppScore: number; points: number; matchesLeft: number;
   opponent: { name: string; petName: string; stage: string };
   duel?: { events: DuelEvent[]; me: DuelStats; opp: DuelStats };
+  /** Saiu do duelo antes do fim: o servidor fechou como derrota, sem luta. */
+  forfeit?: boolean;
 }
-export const playMatch = (id: string, opponentId: string, cheers: number[] = []) =>
-  call<MatchResult>('match', { method: 'POST', body: { id, opponentId, cheers } });
+/** Abre o duelo: gasta a partida do dia e devolve a SEMENTE, sorteada no
+ *  servidor só depois disso (o cliente nunca a vê antes de se comprometer). */
+export const startDuel = (id: string, opponentId: string) =>
+  call<{ seed: number; me: DuelStats; opp: DuelStats; matchesLeft: number }>('duelStart', { method: 'POST', body: { id, opponentId } });
+/** `forfeit: true` = desistir do duelo aberto (conta como derrota). */
+export const playMatch = (id: string, opponentId: string, cheers: number[] = [], forfeit = false) =>
+  call<MatchResult>('match', { method: 'POST', body: { id, opponentId, cheers, ...(forfeit ? { forfeit: true } : {}) } });
 
 export interface RankRow {
   id: string; name: string; petName: string; stage: string;

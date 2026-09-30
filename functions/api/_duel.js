@@ -8,21 +8,23 @@
  * um arquivo — duas cópias divergiriam em silêncio (footgun 9).
  *
  * Como a luta é justa sem o cliente decidir nada:
- *  - a semente NÃO é escolhida pelo cliente: `duelSeed(saveId, oppPid, dia,
- *    partidasHoje)` sai do servidor na lista de oponentes e é RECALCULADA no
- *    `match`, que ignora qualquer semente enviada;
+ *  - a semente NÃO é escolhida pelo cliente NEM conhecida de antemão: ela é
+ *    sorteada no servidor em `duelStart`, DEPOIS de a partida ser gasta, e o
+ *    `match` usa a guardada — nunca uma enviada. Sem isso um cliente editado
+ *    simulava os 3 oponentes e escolhia o que vence;
+ *  - DESISTÊNCIA = DERROTA: a cota é gasta na abertura; sair antes do fim,
+ *    fechar o app ou passar de `DUEL_PENDING_MS` fecha o duelo como derrota
+ *    (`forfeitPending`, `community.js`). Não existe como perder de graça;
  *  - a torcida só SOMA: sem torcer, o pet ataca normal (q = 0 → ×1). Mandar
  *    torcidas perfeitas forjadas rende exatamente o que um jogador com timing
- *    perfeito já rende — é esse o teto do que um cliente editado ganha.
- *  - ⚠️ Limite conhecido: como a semente vem antes da luta, um cliente
- *    editado pode simular os 3 oponentes e escolher o que vence. Emblemas só
- *    compram cosmético e perder também rende; se o ranking passar a valer
- *    algo, a saída é o servidor sortear o oponente.
+ *    perfeito já rende — esse é o teto do que um cliente editado ganha.
  *
  * Perder não custa coração nem nada do pet (mesma regra da Masmorra/Arena).
  */
 
 export const DUEL_MAX_TURNS = 12;
+/** Quanto tempo um duelo aberto vale: passou disso, o `match` conta como desistência. */
+export const DUEL_PENDING_MS = 5 * 60 * 1000;
 /** Os turnos do DONO DA TELA em que ele pode torcer (índice do golpe dele: 0, 1, 2…). */
 export const DUEL_CHEER_STRIKES = [1, 3, 5];
 export const DUEL_PERFECT_CHEER = 0.92;

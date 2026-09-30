@@ -273,9 +273,9 @@
 
 ### `functions/api/_duel.js`
 **Dono de:** a REGRA do duelo fantasma do Torneio (30/09/2026, benchmark `docs/BENCHMARK-COMBATE.md` ideia C). `.js` com `.d.ts` porque roda no servidor (decide) e no cliente (anima), como `_pushCopy.js`.
-**Exports:** `duelStats(profile)` (ficha pública `{hp, atk}`, nunca atributo cru) · `duelSeed(...parts)` (FNV-1a; o `community.js` usa `saveId|pid|dia|partidasHoje`) · `simulateDuel({me, opp, seed, cheers})` (PURA, eventos + vencedor; sem nocaute em `DUEL_MAX_TURNS`, vence a maior fração de vida) · `sanitizeCheers` · `cheerMultiplier` (a torcida só SOMA: ×1 a ×1,25, perfeita ×1,35) · `DUEL_*`.
-**Quem chama:** `community.js` (`opponents` manda ficha+semente; `match` recalcula a semente e decide) e `src/components/DuelScreen.tsx`.
-**Régua:** `functions/api/_duel.test.js` (determinismo, torcida só soma, prefixo estável, balanceamento). ⚠️ Limite: um cliente editado pode simular os 3 oponentes e escolher — Emblemas só compram cosmético.
+**Exports:** `duelStats(profile)` (ficha pública `{hp, atk}`, nunca atributo cru) · `duelSeed(...parts)` (FNV-1a; só para testes — a semente real é sorteada no servidor em `duelStart`) · `simulateDuel({me, opp, seed, cheers})` (PURA, eventos + vencedor; sem nocaute em `DUEL_MAX_TURNS`, vence a maior fração de vida) · `sanitizeCheers` · `cheerMultiplier` (a torcida só SOMA: ×1 a ×1,25, perfeita ×1,35) · `DUEL_*`.
+**Quem chama:** `community.js` (`opponents` manda só a ficha; `duelStart` gasta a partida e sorteia a semente; `match` usa a semente guardada, e `forfeit`/prazo `DUEL_PENDING_MS`/duelo abandonado fecham como derrota) e `src/components/DuelScreen.tsx`.
+**Régua:** `functions/api/_duel.test.js` (determinismo, torcida só soma, prefixo estável, balanceamento). Brechas de desistência de graça e de escolher oponente por simulação fechadas em 30/09/2026 (`community.duelo.test.js`).
 
 ### `functions/api/_entitlements.js` (704 linhas — `wc -l`, 22/09/2026 após `cf6315e1`; 620 em `592e2c14`, 598 em 21/09, 489 antes da cortesia)
 **Dono de:** FONTE DA VERDADE de tudo que envolve dinheiro real — tier, créditos, uso de IA vitalício, resgate de comprovante de compra, auditoria de reembolso. O cliente NUNCA dita tier nem saldo.

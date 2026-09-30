@@ -3,6 +3,7 @@ export interface DuelStats { hp: number; atk: number }
 export interface DuelEvent { actor: 'me' | 'opp'; dmg: number; cheer: number | null; hpMe: number; hpOpp: number }
 export interface DuelResult { events: DuelEvent[]; won: boolean; hpMe: number; hpOpp: number }
 export declare const DUEL_MAX_TURNS: number;
+export declare const DUEL_PENDING_MS: number;
 export declare const DUEL_CHEER_STRIKES: number[];
 export declare const DUEL_PERFECT_CHEER: number;
 export declare const DUEL_CHEER_GAIN: number;

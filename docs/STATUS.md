@@ -31,9 +31,14 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > `functions/api/_duel.js` (servidor decide, cliente anima com a mesma semente; semente
 > recalculada no `match`). Calibração: mesmo estágio 50% → ~80% com torcida perfeita;
 > um estágio abaixo com torcida perfeita ~39%. Origem: `docs/BENCHMARK-COMBATE.md`, ideia C.
-> **Limite conhecido:** cliente editado pode simular os 3 oponentes antes e escolher, ou
-> sair do duelo antes do fim sem gastar a partida. Aceitável enquanto Emblemas forem só
-> cosmético; se o ranking passar a valer algo, o servidor sorteia o oponente.
+> **Brechas fechadas (30/09/2026):** (1) **sair do duelo antes do fim é DERROTA** — a
+> partida é gasta na abertura (`duelStart`) e um duelo que não chegou ao fim (× na tela,
+> app fechado, mais de 5 min) é fechado como derrota pelo servidor (`forfeitPending`,
+> `community.js`); (2) a **semente nasce no servidor depois do compromisso** e nunca vai na
+> lista de oponentes, então o cliente não simula os 3 oponentes para escolher o que vence.
+> Régua: `functions/api/community.duelo.test.js`. O que resta: torcida forjada rende o
+> mesmo que timing perfeito (teto ×1,35 por golpe) — aceitável enquanto Emblemas forem
+> só cosmético.
 > Sem verificação visual por Playwright (a tela depende da API do Torneio, fora do sandbox).
 
 > ## 30/09/2026 — Lote de 29–30/09 fechado: Guilda, administrador/corvinho, mapas, renomeio de caminhos, widget
