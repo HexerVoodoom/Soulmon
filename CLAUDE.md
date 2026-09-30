@@ -646,6 +646,16 @@ ficam valendo:
 
 ## Idioma: inglês é a base, PT-BR é localização
 
+⚠️ **Decisão do dono (30/09/2026): inglês é a língua PRINCIPAL do produto inteiro
+— UI, nomes (inclusive de personagens), push, servidor, páginas legais, manifesto,
+Android — e o produto é pensado para público GLOBAL. PT-BR é localização,
+segunda.** Tudo novo nasce primeiro em inglês, natural para quem lê inglês (não
+calco do português), e o par PT-BR vem depois. Onde se escreve um par, o inglês
+vai primeiro; o padrão/fallback é sempre `en-US`. Nome próprio (criatura, NPC,
+item) tem que funcionar para quem fala inglês; o par PT só existe quando há razão.
+O texto do produto é o das duas línguas; **este guia e os docs internos seguem em
+PT-BR** por serem do time.
+
 Todo texto de UI nasce **em inglês**; o par PT-BR vem junto pelo padrão
 `language === 'pt-BR' ? … : …`. O que **não** pode acontecer é string só em
 português — já aconteceu em `aria-label`s de checkbox/editar e no título do push
