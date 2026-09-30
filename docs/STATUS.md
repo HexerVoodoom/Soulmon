@@ -10,6 +10,17 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
 > ## 30/09/2026 — manual sincronizado com `4a894f90` (`/manter-docs`, delta `5edfcfba..4a894f90`, 4 commits)
+> ## 30/09/2026 — Benchmark de Exploração + 3 pareceres (proposta ao dono, nada implementado)
+>
+> Criados `docs/BENCHMARK-EXPLORACAO.md` (pesquisa, formato do de minijogos, fontes ✔/◐/(≈)/✖) e os
+> pareceres de linha vermelha, psicologia e monster taming em `docs/reviews/2026-09-30-exploracao/`; vetos
+> registrados em `ledger/vetos.md`; perguntas **EXP-1..EXP-7** em `PERGUNTAS-DO-DONO.md`. Vereditos: **Passeio**
+> VETADO na forma proposta (Bits pelo achado, push de retorno, acúmulo por ausência) e aprovado com ressalva só
+> fundido com a Aventura da noite · **Diário de Campo** e **Escavação** APROVADO COM RESSALVA nos três.
+> **Achado:** a Aventura da noite (`adventure.ts` + `AdventureDiary`, decisão de 08/09) já é "o pet saiu e voltou
+> com um achado" — EXP-6 pergunta se funde. Camada 3 segue congelada (§5.6); zero código.
+>
+> ## 30/09/2026 — GitHub Actions parado → portões locais
 >
 > Só commits de docs: docs tocados e carimbados `verificado em 30/09/2026` — `00-MAPA` (§6.2: hub e BENCHMARK-COMBATE), `10-DISCUSSOES-E-DECISOES` (linha nova no tema 6 + ficha do hub) e `01-VISAO` (§10: Actions segue parado por cobrança, portões locais). Sem verificador independente (subagentes `doc-*` não registrados): verificação própria contra STATUS, hub e `package.json`. `docs/manual/.sincronizado.json` = `4a894f90`. Divergências novas: nenhuma.
 
