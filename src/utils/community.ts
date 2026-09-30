@@ -1,3 +1,4 @@
+import type { DuelStats, DuelEvent } from '../../functions/api/_duel.js';
 // Cliente da API de comunidade (functions/api/community.js): perfil público,
 // Tournament (PvP assíncrono) e Biblioteca (diretório + amigos + presentes).
 import { authHeaders } from './auth';
@@ -116,16 +117,21 @@ export interface PlayerDetail extends DirectoryPlayer {
 export const getPlayer = (id: string) =>
   call<{ found: boolean; player?: PlayerDetail }>('player', { params: { id } });
 
-export interface Opponent { id: string; name: string; petName: string; stage: string }
+export interface Opponent {
+  id: string; name: string; petName: string; stage: string;
+  /** Duelo fantasma (`functions/api/_duel.js`) — servidor antigo pode não mandar. */
+  duel?: DuelStats; duelSeed?: number;
+}
 export const getOpponents = (id: string) =>
-  call<{ opponents: Opponent[]; matchesLeft: number }>('opponents', { params: { id } });
+  call<{ opponents: Opponent[]; me?: { duel: DuelStats }; matchesLeft: number }>('opponents', { params: { id } });
 
 export interface MatchResult {
   won: boolean; myScore: number; oppScore: number; points: number; matchesLeft: number;
   opponent: { name: string; petName: string; stage: string };
+  duel?: { events: DuelEvent[]; me: DuelStats; opp: DuelStats };
 }
-export const playMatch = (id: string, opponentId: string) =>
-  call<MatchResult>('match', { method: 'POST', body: { id, opponentId } });
+export const playMatch = (id: string, opponentId: string, cheers: number[] = []) =>
+  call<MatchResult>('match', { method: 'POST', body: { id, opponentId, cheers } });
 
 export interface RankRow {
   id: string; name: string; petName: string; stage: string;

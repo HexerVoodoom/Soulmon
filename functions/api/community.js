@@ -37,10 +37,11 @@ import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import { bondLevelOf, BOND_PVP_MIN_LEVEL } from './_bond.js';
 import { kv, kvOrThrow } from './_kv.js';
 import {
-  stagePower, PID_PREFIX, legacyPidFor, newPid, ensurePid, indexPublicId,
+  PID_PREFIX, legacyPidFor, newPid, ensurePid, indexPublicId,
   getProfile, putProfile,
 } from './_profile.js';
 import { COOP_ALIASES, handleGuild } from './guild.js';
+import { duelStats, duelSeed, simulateDuel } from './_duel.js';
 import { sanitizarNomeDeGuilda } from './_coop.js';
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -457,7 +458,7 @@ async function handleCommunity({ request, env }) {
       if (!raw) continue;
       const p = JSON.parse(raw);
       if (!p.pvpEnabled || p.id === me) continue;
-      pool.push(await publicProfile(env, p));
+      pool.push({ profile: p, pub: await publicProfile(env, p) });
     }
     // embaralha e devolve até 3
     for (let i = pool.length - 1; i > 0; i--) {
@@ -469,7 +470,18 @@ async function handleCommunity({ request, env }) {
     const matchesLeft = myRank
       ? MATCHES_PER_DAY - (myRank.day === today() ? myRank.matchesToday : 0)
       : MATCHES_PER_DAY;
-    return json({ opponents: pool.slice(0, 3), matchesLeft: Math.max(0, matchesLeft) });
+    /* Duelo fantasma (`_duel.js`): cada oponente leva a ficha de luta dele e
+       a SEMENTE da partida, para o cliente animar a mesma luta que o `match`
+       vai decidir. A semente depende da partida do dia (`matchesToday`), então
+       o `match` a recalcula e ignora qualquer uma que venha do cliente. */
+    const matchesToday = myRank && myRank.day === today() ? myRank.matchesToday : 0;
+    const meProfile = id ? await getProfile(env, id) : null;
+    const opponents = pool.slice(0, 3).map(({ profile: p, pub }) => ({
+      ...pub,
+      duel: duelStats(p),
+      duelSeed: id ? duelSeed(id, pub.id, today(), matchesToday) : 0,
+    }));
+    return json({ opponents, me: { duel: duelStats(meProfile) }, matchesLeft: Math.max(0, matchesLeft) });
   }
 
   if (action === 'match' && method === 'POST') {
@@ -498,14 +510,18 @@ async function handleCommunity({ request, env }) {
       return json({ error: 'daily limit', matchesLeft: 0 }, 429);
     }
 
-    // Poder = nível da forma + atributos totais (leve) + sorte
-    const power = p =>
-      stagePower(p.stage) * 10 +
-      Math.min(20, ((p.attrs?.power || 0) + (p.attrs?.harmony || 0) + (p.attrs?.benevolence || 0)) / 5) +
-      Math.random() * 18;
-    const myScore = power(me);
-    const oppScore = power(opp);
-    const won = myScore >= oppScore;
+    /* Duelo fantasma: os pets lutam sozinhos, a torcida do dono só SOMA
+       (`_duel.js`). A semente é recalculada aqui — a do cliente é ignorada. */
+    const meStats = duelStats(me);
+    const oppStats = duelStats(opp);
+    const duel = simulateDuel({
+      me: meStats, opp: oppStats,
+      seed: duelSeed(id, opponentId, today(), myRank.matchesToday),
+      cheers: body.cheers,
+    });
+    const won = duel.won;
+    const myScore = Math.round((100 * duel.hpMe) / meStats.hp);
+    const oppScore = Math.round((100 * duel.hpOpp) / oppStats.hp);
 
     myRank.matchesToday += 1;
     myRank.points = Math.max(0, myRank.points + (won ? 20 : -8));
@@ -537,6 +553,7 @@ async function handleCommunity({ request, env }) {
       points: myRank.points,
       matchesLeft: MATCHES_PER_DAY - myRank.matchesToday,
       opponent: { name: opp.name, petName: opp.petName, stage: opp.stage },
+      duel: { events: duel.events, me: meStats, opp: oppStats },
     });
   }
 

@@ -10,7 +10,7 @@
 - [Rotas HTTP (functions/api/*.js exportando onRequest*)](#rotas-http)
   - [`account.js`](#functionsapiaccountjs) · [`billing.js`](#functionsapibillingjs) · [`chat.js`](#functionsapichatjs) · [`community.js`](#functionsapicommunityjs) · [`config.js`](#functionsapiconfigjs) · [`entitlements.js`](#functionsapientitlementsjs) · [`fcm-subscribe.js`](#functionsapifcm-subscribejs) · [`generate-sprite.js`](#functionsapigenerate-spritejs) · [`metrics.js`](#functionsapimetricsjs) · [`save.js`](#functionsapisavejs) · [`sprite-image.js`](#functionsapisprite-imagejs) · [`subscribe.js`](#functionsapisubscribejs) · [`suggest-tasks.js`](#functionsapisuggest-tasksjs) · [`transcribe.js`](#functionsapitranscribejs)
 - [Módulos internos (`_*.js`)](#módulos-internos)
-  - [`_admin.js`](#functionsapi_adminjs) · [`_accountTombstone.js`](#functionsapi_accounttombstonejs) · [`_aiGuard.js`](#functionsapi_aiguardjs) · [`_auth.js`](#functionsapi_authjs) · [`_billing.js`](#functionsapi_billingjs) · [`_branchLegacy.js`](#functionsapi_branchlegacyjs) · [`_bond.js`](#functionsapi_bondjs) · [`_coop.js`](#functionsapi_coopjs) · [`_entitlements.js`](#functionsapi_entitlementsjs) · [`_kv.js`](#functionsapi_kvjs) · [`_pushCopy.js`](#functionsapi_pushcopyjs) · [`_pushIdentity.js`](#functionsapi_pushidentityjs) · [`_pushTargets.js`](#functionsapi_pushtargetsjs) · [`_rateLimit.js`](#functionsapi_ratelimitjs) · [`_redact.js`](#functionsapi_redactjs)
+  - [`_admin.js`](#functionsapi_adminjs) · [`_accountTombstone.js`](#functionsapi_accounttombstonejs) · [`_aiGuard.js`](#functionsapi_aiguardjs) · [`_auth.js`](#functionsapi_authjs) · [`_billing.js`](#functionsapi_billingjs) · [`_branchLegacy.js`](#functionsapi_branchlegacyjs) · [`_bond.js`](#functionsapi_bondjs) · [`_coop.js`](#functionsapi_coopjs) · [`_duel.js`](#functionsapi_dueljs) · [`_entitlements.js`](#functionsapi_entitlementsjs) · [`_kv.js`](#functionsapi_kvjs) · [`_pushCopy.js`](#functionsapi_pushcopyjs) · [`_pushIdentity.js`](#functionsapi_pushidentityjs) · [`_pushTargets.js`](#functionsapi_pushtargetsjs) · [`_rateLimit.js`](#functionsapi_ratelimitjs) · [`_redact.js`](#functionsapi_redactjs)
 - [workers](#workers) — [`fcm.js`](#workersfcmjs) · [`push-scheduler.js`](#workerspush-schedulerjs) · [`webpush.js`](#workerswebpushjs)
 
 ## Convenções desta página
@@ -270,6 +270,12 @@
 **Não faz:** montar resposta — é `vistaDaGuilda` (`guild.js`), única montagem do que sai.
 **Chamado por:** `guild.js`, `community.js` (nome e aliases), `account.js` (`collect`, `handleDeleteConfirm`).
 **Régua:** `guild.*.test.js` (ver `guild.js`), `community.coop.test.js`, `account.coopExport.qa2.test.js`, `account.guildBosque.test.js`, `account.guildFeira.test.js`.
+
+### `functions/api/_duel.js`
+**Dono de:** a REGRA do duelo fantasma do Torneio (30/09/2026, benchmark `docs/BENCHMARK-COMBATE.md` ideia C). `.js` com `.d.ts` porque roda no servidor (decide) e no cliente (anima), como `_pushCopy.js`.
+**Exports:** `duelStats(profile)` (ficha pública `{hp, atk}`, nunca atributo cru) · `duelSeed(...parts)` (FNV-1a; o `community.js` usa `saveId|pid|dia|partidasHoje`) · `simulateDuel({me, opp, seed, cheers})` (PURA, eventos + vencedor; sem nocaute em `DUEL_MAX_TURNS`, vence a maior fração de vida) · `sanitizeCheers` · `cheerMultiplier` (a torcida só SOMA: ×1 a ×1,25, perfeita ×1,35) · `DUEL_*`.
+**Quem chama:** `community.js` (`opponents` manda ficha+semente; `match` recalcula a semente e decide) e `src/components/DuelScreen.tsx`.
+**Régua:** `functions/api/_duel.test.js` (determinismo, torcida só soma, prefixo estável, balanceamento). ⚠️ Limite: um cliente editado pode simular os 3 oponentes e escolher — Emblemas só compram cosmético.
 
 ### `functions/api/_entitlements.js` (704 linhas — `wc -l`, 22/09/2026 após `cf6315e1`; 620 em `592e2c14`, 598 em 21/09, 489 antes da cortesia)
 **Dono de:** FONTE DA VERDADE de tudo que envolve dinheiro real — tier, créditos, uso de IA vitalício, resgate de comprovante de compra, auditoria de reembolso. O cliente NUNCA dita tier nem saldo.
