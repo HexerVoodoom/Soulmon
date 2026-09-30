@@ -142,6 +142,8 @@ import { isCorvo, spriteLineOf } from './utils/corvoPet';
 // import dinâmico, fora do chunk de entrada.
 const gmTools = () => import('./utils/gmTools');
 const corvoAdocao = () => import('./utils/corvoAdocao');
+import { createEntitlementSync } from './utils/entitlementSync';
+import { subscribeAuthState } from './utils/auth';
 import { fetchEntitlement, spendCredits, claimAdReward, resetSpriteLifetimeAfterRebirth, type Entitlement } from './utils/entitlements';
 import { purchase } from './utils/playBilling';
 
@@ -1304,19 +1306,33 @@ export default function App() {
   // que estiver no localStorage é só espelho — se alguém editou à mão, isto
   // sobrescreve com a verdade. Offline mantém o espelho (o servidor recusa
   // qualquer gasto mesmo assim, então não dá pra gastar o que não existe).
+  //
+  // Refaz a consulta quando (a) o usuário do Firebase muda (login sem troca de
+  // `saveId`, token que só existe depois), (b) o app volta ao primeiro plano
+  // (no máx. 1 por 30 s) e (c) uma vez, 2,5 s depois, se a 1ª vier `null`.
+  // Ver `utils/entitlementSync.ts` — sem timer recorrente.
   useEffect(() => {
-    let cancelled = false;
-    fetchEntitlement().then(ent => {
-      if (cancelled) return;
-      // Admin/GM: SÓ da resposta do servidor, só em memória (`utils/adminFlag.ts`).
-      // Falha de rede / sem saveId = não-admin.
-      setAdminFlag(adminFromEntitlement(ent));
-      if (!ent) return;
-      setGameState(prev => (prev.credits === ent.credits && prev.accountTier === ent.tier)
-        ? prev
-        : { ...prev, credits: ent.credits, accountTier: ent.tier });
+    const sync = createEntitlementSync<Entitlement>({
+      fetch: fetchEntitlement,
+      apply: ent => {
+        // Admin/GM: SÓ da resposta do servidor, só em memória (`utils/adminFlag.ts`).
+        // Falha de rede / sem saveId = não-admin.
+        setAdminFlag(adminFromEntitlement(ent));
+        if (!ent) return;
+        setGameState(prev => (prev.credits === ent.credits && prev.accountTier === ent.tier)
+          ? prev
+          : { ...prev, credits: ent.credits, accountTier: ent.tier });
+      },
     });
-    return () => { cancelled = true; };
+    sync.run('mount');
+    const offAuth = subscribeAuthState(() => sync.run('auth'));
+    const onVisible = () => { if (document.visibilityState === 'visible') sync.run('visible'); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      sync.dispose();
+      offAuth();
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, [saveId, setGameState]);
 
   // Detect when food items are added to inventory
@@ -3006,12 +3022,18 @@ export default function App() {
   // Auto-adoção do corvinho: UMA vez por sessão, só para o admin. `adoptCorvo`
   // é idempotente (mesma referência se já é corvo), então o StrictMode rodar o
   // updater 2× não muda nada. Sem toast: a troca de pele não é aviso.
-  const corvoAdoptedRef = useRef(false);
+  // Não é "uma vez por sessão": se um save remoto SEM corvo entrar depois da
+  // adoção (cloud save de outro aparelho), o efeito vê `!isCorvo` de novo e
+  // adota outra vez — a marca do admin vence. O ref só evita import duplo em voo.
+  const corvoAdoptingRef = useRef(false);
+  const stateIsCorvo = isCorvo(gameState);
   useEffect(() => {
-    if (!isAdmin || corvoAdoptedRef.current) return;
-    corvoAdoptedRef.current = true;
-    if (!isCorvo(gameState)) void corvoAdocao().then(m => setGameState(m.adoptCorvo));
-  }, [isAdmin, gameState, setGameState]);
+    if (!isAdmin || stateIsCorvo || corvoAdoptingRef.current) return;
+    corvoAdoptingRef.current = true;
+    void corvoAdocao()
+      .then(m => setGameState(m.adoptCorvo))
+      .finally(() => { corvoAdoptingRef.current = false; });
+  }, [isAdmin, stateIsCorvo, setGameState]);
   const gmActions = useMemo(() => ({
     isCorvo: petIsCorvo,
     currentForm: gameState.evolutionStage,

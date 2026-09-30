@@ -300,6 +300,34 @@ export async function getIdToken(): Promise<string | null> {
   }
 }
 
+/**
+ * Avisa quando o USUÁRIO do Firebase muda (login, logout, outro uid). O primeiro
+ * disparo do SDK é o estado inicial restaurado e é ignorado: quem abre o app já
+ * consulta depois de `authStateReady()`. Devolve o cancelamento (síncrono, mesmo
+ * que o SDK ainda esteja carregando). Sem Firebase configurado: no-op.
+ */
+export function subscribeAuthState(cb: () => void): () => void {
+  if (!isAuthConfigured()) return () => {};
+  let off: (() => void) | null = null;
+  let cancelled = false;
+  void (async () => {
+    try {
+      const { auth, authMod } = await getAuth();
+      if (cancelled) return;
+      let first = true;
+      let lastUid: string | null | undefined;
+      off = authMod.onAuthStateChanged(auth, user => {
+        const uid = user?.uid ?? null;
+        if (first) { first = false; lastUid = uid; return; }
+        if (uid === lastUid) return;
+        lastUid = uid;
+        cb();
+      });
+    } catch { /* sem SDK: a consulta de abertura e a de foco continuam valendo */ }
+  })();
+  return () => { cancelled = true; off?.(); };
+}
+
 /** Cabeçalho Authorization pronto — vazio quando não há login. */
 export async function authHeaders(): Promise<Record<string, string>> {
   const token = await getIdToken();

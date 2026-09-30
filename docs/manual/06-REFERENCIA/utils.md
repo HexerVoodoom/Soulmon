@@ -2468,6 +2468,14 @@ dominância populacional — por isso ±15%. Régua nova:
 **Régua:** `src/utils/adminCorvo.contract.test.ts` (nunca persiste), `src/components/GmPanel.render.test.tsx`.
 **Regra de negócio:** quem decide é o servidor (`functions/api/_admin.js`); falha de rede = não-admin; nunca vai para o save nem para o localStorage.
 
+### `src/utils/entitlementSync.ts`
+**Dono de:** QUANDO a consulta do entitlement (e do papel de admin) roda de novo — sem timer recorrente (30/09/2026).
+**Exports:**
+- `function createEntitlementSync<T>(deps): { run(reason: 'mount' | 'auth' | 'visible'): void; dispose(): void }` — `mount`/`auth` sempre consultam; `visible` no máx. 1 por `ENTITLEMENT_VISIBLE_MIN_GAP_MS` (30 s); resposta `null` de `mount`/`auth` agenda UM retry em `ENTITLEMENT_RETRY_MS` (2,5 s); resposta de consulta mais velha é descartada.
+**Chamado por:** `src/App.tsx` (efeito do entitlement, com `subscribeAuthState` de `auth.ts` e `visibilitychange`).
+**Régua:** `src/utils/entitlementSync.test.ts`, `src/utils/corvoAposLogin.contract.test.ts`.
+**Regra de negócio:** só repassa a resposta do servidor; nada é persistido. Existe porque o token do Firebase pode aparecer depois da 1ª consulta e a adoção do corvinho dependia dela.
+
 ### `src/utils/corvoPet.ts`
 **Dono de:** o corvinho de lanterna e cartola, a criatura do administrador — arte das 11 formas, nomes/descrições PT+EN e a adoção.
 **Exports:**
