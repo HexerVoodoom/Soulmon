@@ -9,6 +9,15 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 30/09/2026 — manual sincronizado com `3532ccf5` (`/manter-docs`, delta `cfe27cc7..3532ccf5`, Passeio + Travessias)
+>
+> Carimbados `verificado em 30/09/2026` (doc-mantenedor, símbolo a símbolo contra o fonte; sem verificador independente — subagentes `doc-*` não registrados):
+> `02` §43 (Passeio + Travessias, `adventureOfNight`, exceção à regra 4) e §54 (Exploração = Masmorra + Passeio; saiu o ⚠️ "nada implementado"),
+> `03` §1.3 (lote Passeio, 🎒), `07` §2 (`crossings`, 97 campos), `01` §10, `10` tema 6/§17, `00-MAPA` §4.1/§5/§6.2, `05` (App 7076),
+> `06-REFERENCIA` (entradas do PR para `travessias.ts`/`travessiasSave.ts`/`types/travessias.ts`/`PasseioSheet` conferidas e mantidas; atualizadas
+> `adventure.ts`, `playAreaLots`, `areaNpcVoice`, `AreaView`, `CompanionHUD`, `DailyReportModal`, `AdventureDiary`, `Guide`/`Help`, `App`, `GameStateContext`).
+> `src/data/travessiasCatalog.ts` sem entrada própria em `06` (como `activityCatalog.ts`). `.sincronizado.json` = `3532ccf5`.
+>
 > ## 30/09/2026 — Passeio + Travessias IMPLEMENTADOS (Exploração)
 >
 > Novo lote **Passeio / Stroll** na Exploração (`PasseioSheet`): o pet sai todo dia para a região escolhida e o
