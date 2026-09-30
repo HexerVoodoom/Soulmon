@@ -386,3 +386,8 @@ exclusivos por região** (exceção à regra 4 da Aventura; catálogo comum segu
 | MIS-14 | Travessias aparecem na ficha da loja/screenshots? | **Não na v1.** Depois: sem "challenge", sem pessoa real, sem cena de rua | Próxima revisão da ficha |
 | MIS-15 | Frase de segurança no `termos.html` §8 (parecer 04 R-9)? | Acrescentar uma frase PT+EN ("as Travessias são opcionais; escolha só o que for seguro para você") — mexe em página legal, por isso não entrou sem o dono | Antes de publicar na loja |
 | MIS-16 | Busca de marca de "Crossings" (INPI/USPTO)? | Não usar "Crossing" sozinho em marketing (Animal Crossing); busca antes de qualquer uso fora do app | Antes do marketing |
+
+**Respostas do dono (modal, 30/09/2026):** MIS-13 **manter a caixa de 18+** (as travas do pool compensam) · MIS-14
+**Travessias fora da ficha da loja na v1** · MIS-15 **frase de segurança no `termos.html` §8** — feita, PT+EN,
+`TERMS_VERSION` 2026-09-30 (quem já aceitou vê o aviso de atualização, sem bloqueio) · MIS-16 **"Crossings" fica no
+app**; em marketing nunca "Crossing" sozinho, e busca de marca (INPI/USPTO) antes de qualquer uso fora do app.

@@ -31,7 +31,7 @@ export const MIN_AGE_YEARS = 18;
  * seja, toda prova de consentimento apontava para um texto que não era o
  * publicado.
  */
-export const TERMS_VERSION = '2026-09-22';
+export const TERMS_VERSION = '2026-09-30'; // §8: as Travessias são opcionais (parecer de menores R-9, MIS-15)
 export const PRIVACY_VERSION = '2026-09-22';
 
 export interface ConsentRecord {
