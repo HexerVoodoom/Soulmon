@@ -9,6 +9,12 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 01/10/2026 — Instalação final da rodada 3, PR 3: recriados do Gemini e 3 NPCs extras (SQUAD-ARTE, `feat/arte-rodada3-instalacao-3`)
+>
+> - `gemini-recriados`: 67 PNG substituem o arquivo de mesmo nome (16 auras de ataque dos 8 elementos, `food-rice`, `fx-defeat`, `furn-crystal`, 48 `el-*` — lista em §8 I27). Os 67 originais foram medidos antes (furos/fragmentos) e batiam com o "antes" do MANIFEST; nenhum pulado. Os outros 89 `el-*` não existem (sem créditos).
+> - NPCs extras (+3, total 15): **Selene** (`lua`, rainha arlequina da lua), **Mallo** (`ferreiro`), **Kova** (`ferreira`) em `EXTRA_NPC_ART`/`EXTRA_NPC_VOICE`, sem chamada (NPC-1).
+> - `CACHE_VERSION` v183. sha256 conferido antes/depois.
+
 > ## 01/10/2026 — Instalação final da rodada 3, PR 2: árvore Noctyl, criaturas, duelo e Arauto (SQUAD-ARTE, `feat/arte-rodada3-instalacao-2`)
 >
 > - `arvore-generica`: as 11 formas genéricas (`soulmon/*.png`, 384²) e os 11 sprites do widget (`drawable-nodpi/sprite_*`, 256²) deixam de ser o corvo repetido e passam a ser o **Noctyl**. O corvo e seu mapa não mudaram. Conferido no preview (Biblioteca, rookie/harmony/power) e pelo guard de franquia/`-mon`.
