@@ -9,6 +9,13 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 01/10/2026 — Instalação final da rodada 3, PR 1: Hall/Laboratório, Feira e mini-visores (SQUAD-ARTE, `feat/arte-rodada3-instalacao-1`)
+>
+> - `hall-lab-v2`: 2 fundos + 6 lotes substituem os atuais (mesmo caminho); clareiras já batiam com o MANIFEST (Hall 27/42·72/42·50/78, Lab 27/54·72/54·50/72), conferido em 390×844. Bônus do sorvete fica no banco.
+> - `lote-arena-feira` troca o empréstimo (`ARENA_LOT_ART.feira`); `lote-loja-conquistas.png` ficou **sem consumidor** (arquivo em disco, sem import).
+> - `visores`: cenas e sprites ligados (Troca, Eco, Revisão, Bolhas, Respiração, FeiraVisor, ovo do Renascimento) — receita única em `utils/visorScenes.ts`. A faixa 696×160 mostra o miolo (348) em tamanho nativo; regerar a 348×160 por faixa é a melhoria possível. O FeiraVisor com o fundo novo só aparece com um raid vivo do servidor — conferido por teste de render, não no preview.
+> - `CACHE_VERSION` v181. sha256 conferido antes/depois contra os MANIFEST.
+
 > ## 01/10/2026 — Chefes (24) e NPCs extras (12) instalados, sem chamada (SQUAD-ARTE, `feat/arte-chefes-npcs-f`)
 >
 > - `poderosos`: 24 PNG 512² em `src/assets/soulmon/bosses/` + `src/data/bossRoster.ts` (roster, elementos, lore PT/EN, `BOSS_ART`). Nomes EN de essência novos em `essenceLabels.ts` › `COMBO_EN`. Não ligado em masmorra/arena: `PERGUNTAS-DO-DONO.md` BOSS-1. Fora do `dist/` até ter consumidor.

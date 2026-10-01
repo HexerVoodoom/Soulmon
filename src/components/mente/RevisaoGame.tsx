@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 import type { EarningGameProps } from './types';
 import { sm2Button, sm2Hint, sm2Label, sm2Text, SM2_SHADOW_CARD } from '../form/FormKit';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, phaseTitle, phaseLine } from '../games/GameKit';
+import { ATELIE_SCENE } from '../../utils/visorScenes';
 import { getSpriteForStage } from '../../utils/sprites';
 import {
   REVIEW_MAX_CARDS, REVIEW_TEXT_MAX, addCard, editCard, removeCard, dueCards, answerCard,
@@ -120,7 +121,7 @@ export function RevisaoGame({
   const closeLabel = isPt ? 'Sair' : 'Exit';
 
   const petVisor = (
-    <GameVisor height={72}>
+    <GameVisor height={72} scene={ATELIE_SCENE}>
       <VisorSprite src={sprite} data-visor-pet style={{ left: 'calc(50% - 64px)', top: 8 }} />
     </GameVisor>
   );

@@ -14,6 +14,7 @@
  */
 import { FAIR_ART, fairFenomenoId, fairFxId, fairStateOf, type FairState } from '../../utils/fairArt';
 import type { GuildRaid } from '../../utils/community';
+import { VISOR_ART } from '../../utils/visorScenes';
 
 const PETROL = '#123232';
 const SLAB = '#2A5C5A';
@@ -101,7 +102,9 @@ export function FeiraVisor({ raid, label, reducedMotion }: { raid: GuildRaid; la
       data-reduced-motion={reducedMotion ? 'true' : undefined}
       role="img"
       aria-label={label}
-      style={{ height: FEIRA_VISOR_HEIGHT, background: `linear-gradient(180deg, #030B0B 0%, #0A1E1E 100%)`, backgroundColor: PETROL }}
+      // Fundo pintado `visor-feira` (leva `visores`, 01/10/2026; 696×352 = 2× o visor, então desce a 0,5× exato);
+      // o degradê antigo é a reserva do que a imagem não cobrir.
+      style={{ height: FEIRA_VISOR_HEIGHT, background: `url(${VISOR_ART.visorFeira}) center bottom/auto 100% no-repeat, linear-gradient(180deg, #030B0B 0%, #0A1E1E 100%)`, backgroundColor: PETROL, imageRendering: 'pixelated' }}
     >
       {real ? (
         <img src={real} alt="" draggable={false} data-fair-fenomeno={`${raid.phenomenon}-${state}`} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', imageRendering: 'pixelated' }} />

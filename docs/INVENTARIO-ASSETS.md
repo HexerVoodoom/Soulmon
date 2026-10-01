@@ -172,6 +172,8 @@ consumidor** — `src/assets/artMaps.contract.test.ts` (novo, 14/14) cobre `embl
 
 **Rodada 3 (30/09/2026) — instaladas**: `fundos-v2/final/` (9 fundos + 7 miniaturas, `ASSETS-A-GERAR.md` §8 I10) e `_tom-home-v2/` (53 telas retonadas só em matiz + highlight, substituídas no mesmo caminho — `bg-gameboy` fora; §8 I11); `npcs-flare/final/` (16 bustos de NPC — 10 de lote em `LOT_NPC_ART`, 6 de função em `FUNCTION_NPC_ART` **sem chamada**; §8 I12; saíram `npc-placeholder-poring`/`-coruja-cervo`) e `lotes-v2/final/` (10 prédios de lote; §8 I13; `lote-exploracao-dino.png` ficou sem consumidor). `npc-arauto-do-fim` da mesma pasta não é NPC (criatura de chefe) e não foi instalado. **01/10/2026 — instaladas**: `poderosos/final/` (24 chefes 512² em `soulmon/bosses/`, `data/bossRoster.ts`, **sem chamada**; §8 I18 — inclui o `boss-arauto-do-fim`) e `npcs-femininas/final/` (12 bustos `npc-f-*` em `EXTRA_NPC_ART`, **sem chamada**; §8 I19).
 
+**Rodada 3 — instalação final (01/10/2026), PR 1**: `hall-lab-v2/final/` (2 fundos + 6 lotes do Hall/Laboratório, substituem os de mesmo nome; §8 I20), `lotes-v2/final/lote-arena-feira.png` (§8 I21; `lote-loja-conquistas.png` sem consumidor) e `visores/final/` (5 cenas de mini-visor, ovo e 9 sprites 48², ligados a Troca/Eco/Revisão/Bolhas/Respiração/FeiraVisor/RebirthModal por `utils/visorScenes.ts`; §8 I22). Ficam no banco: `hall-lab-v2/final/lote-bonus-amigos-sorvete.png` (alternativa) e os `.webp` dos dois fundos.
+
 Levas já instaladas (conferido por nome): `backgrounds` (17/19), `decor` (21), `decor-v2` (14), `icons` (58/59 — falta só `poop.png`, que virou outro nome), `arcano` (14), `aventura` + `aventura2` (24), `entrega7/icones` (137), `berco` (1).
 
 ---

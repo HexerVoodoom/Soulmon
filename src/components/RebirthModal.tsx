@@ -26,6 +26,7 @@
 import { useMemo, useState } from 'react';
 import { ModalSheet, sm2Button, sm2Hint, sm2Label, sm2Text, Field } from './form/FormKit';
 import { Icon } from './ui/Icon';
+import { OVO_RENASCIMENTO } from '../utils/visorScenes';
 import {
   rebirthEscolaOptions, rebirthElementOptions, sanitizeCriatura,
   REBIRTH_CRIATURA_MAX,
@@ -152,6 +153,17 @@ export function RebirthModal({ language, onConfirm, onClose }: RebirthModalProps
         </div>
       }
     >
+      {/* O ovo da cerimônia (leva `visores`, 01/10/2026): casulo de cristal com raízes, 256² a 0,5×. */}
+      <img
+        src={OVO_RENASCIMENTO}
+        alt=""
+        aria-hidden="true"
+        draggable={false}
+        data-rebirth-egg
+        width={128}
+        height={128}
+        style={{ display: 'block', alignSelf: 'center', margin: '0 auto', imageRendering: 'pixelated' }}
+      />
       <p style={{ ...sm2Text, margin: 0 }}>
         {isPt
           ? 'Sua criatura chegou ao topo. O Renascimento devolve ela a um ovo: ela volta a Rookie e os pontos de atributo zeram — em troca, ela nasce de novo mais funda, com mais pontos em todos os estágios, e desta vez quem escolhe o que ela é são vocês dois.'
