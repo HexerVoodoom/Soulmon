@@ -4,7 +4,7 @@ Fonte: navegação do dono pelo app (login → onboarding → home → settings 
 Legenda: `[ ]` aberto · `[x]` feito e verificado · `[?]` depende de pergunta (ver fim).
 
 ## A. Login
-- [x] A1 Logo no login e no header da Home — wordmark oficial do dono em `src/assets/brand/final/logo-wordmark.png` (+ `mascote.png` instalado), **PROVISÓRIO**: recorte local autorizado pelo dono (`00092bfd`); a versão com alfa real gerada pelo dono substitui com o mesmo nome (prompts em `E:\Soulmon-assets\outjustes-20261001\PROMPTS-PARA-O-DONO.md`)
+- [x] A1 Logo no login e no header da Home — wordmark oficial do dono em `src/assets/brand/final/logo-wordmark.png` (+ `mascote.png` instalado), **PROVISÓRIO**: recorte local autorizado pelo dono (`00092bfd`); a versão com alfa real gerada pelo dono substitui com o mesmo nome (prompts em `E:\Soulmon-assets\out\ajustes-20261001\PROMPTS-PARA-O-DONO.md`)
 - [x] A2 Trocar a fonte de título (Fredoka, redonda) — prancha de opções para o dono escolher — **Cinzel** (decisão do dono 01/10), self-host OFL em `public/fonts/` (`c2086a88`)
 - [x] A3 Login Google ligado à conta da Play Store; vínculo Steam ↔ Play via conta Google
 
