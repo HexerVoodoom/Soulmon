@@ -38,8 +38,8 @@ Fonte: `src/utils/areaSheetCopy.ts` (Mercado, Arena, Laboratório, Hall), `src/u
 
 | Área | Lote (id) | Nome PT / EN | Abre | Arte do lote | NPC hoje (arte / voz) |
 |---|---|---|---|---|---|
-| mercado | `itens` | Itens / Items | loja, segmento Itens | própria `lote-loja-itens` | `npc-loja-itens` / voz cai em Grom |
-| mercado | `decoracao` | Decoração / Decor | loja, Mobílias | própria | `npc-loja-decoracao` / Grom |
+| mercado | `itens` | Itens / Items | loja, segmento Itens | própria `lote-loja-itens` | `npc-loja-itens` / **Lamela** (voz própria desde 01/10/2026) |
+| mercado | `decoracao` | Decoração / Decor | loja, Mobílias | própria | `npc-loja-decoracao` / **Lasca** (voz própria desde 01/10/2026) |
 | mercado | `background` | Background / Background | loja, Cenários | própria | `npc-loja-background` / Grom |
 | mercado | `conquistas` | Conquistas / Achievements | Missões | própria | **placeholder poring** / Grom |
 | arena | `torneio` | Torneio / Tournament | Torneio | própria | `npc-arena` (Vultrak) |
@@ -202,8 +202,8 @@ Critérios: criatura própria do universo (nunca humano genérico), paleta da á
 | Lote | NPC | Situação |
 |---|---|---|
 | (anfitrião do Mercado, cabeçalho da área) | Grom | existe (nome + arte) |
-| mercado:itens | **Tamba** | arte existe (`npc-loja-itens`), **nome criado agora** |
-| mercado:decoracao | **Musga** | arte existe, **nome criado agora** |
+| mercado:itens | **Lamela** (⚰️ Tamba) | arte existe (`npc-loja-itens`, criatura-cogumelo); nome e voz em `LOT_NPC_VOICE` desde 01/10/2026 |
+| mercado:decoracao | **Lasca** (⚰️ Musga) | arte existe (`npc-loja-decoracao`, panda-vermelha); nome e voz em `LOT_NPC_VOICE` desde 01/10/2026 |
 | mercado:background | **Panora** | arte existe, **nome criado agora** |
 | mercado:conquistas | **Medra** | **criado agora** (nome + arte) |
 | arena:torneio | Vultrak | existe |
@@ -222,6 +222,20 @@ Critérios: criatura própria do universo (nunca humano genérico), paleta da á
 Contagem: **16 lotes**. NPCs nomeados que já existiam: **11** (Grom, Vultrak, Zeph, Pipo, Vesca, Lumi, Rhinoco, Marla, Nino, Quill, Tico) — com arte própria só **6** (os anfitriões). NPCs **criados agora**: **6** (Tamba, Musga, Panora, Medra, Fanfare, Trote) + **1 renomeado** (Bento). Arte a gerar: **11 bustos** — 8 novos (Medra, Fanfare, Trote, Rhinoco, Bento, Quill, Nino, Marla) + 3 refeitos em alta (Tamba, Musga, Panora; fila de crédito #5–#7) — e **2 repinturas** (Vesca, zona do Laboratório).
 
 ### 4.2 Fichas dos NPCs sem ficha (os criados e os que só tinham nome)
+
+**Lamela — Itens (Mercado)** (01/10/2026, pedido do dono: a banca mostrava "Grom")
+- Espécie: criatura-cogumelo de pelo cinza-claro, chapéu turquesa com veios de luz, óculos-visor âmbar, braço mecânico de latão; carrega bolsas cheias de chips e miudezas. É o busto `npc-loja-itens` que já está no app.
+- Nome: as **lamelas** são as lâminas sob o chapéu do cogumelo. PT e EN iguais (o nome não traduz; só o ofício: "a mascate" / "the peddler").
+- Fala de boas-vindas: PT "Tudo o que cabe nos meus bolsos tem serventia. Fique à vontade para olhar." / EN "Everything that fits in my pockets has a use. Feel free to look." — fala do objeto, sem preço, sem pressa (L1, L12).
+- Colisão: `grep -riw lamela src docs` sem outro uso (01/10/2026); nenhum termo vetado.
+
+**Lasca — Decoração (Mercado)** (01/10/2026, idem)
+- Espécie: panda-vermelha marceneira, avental verde com retalhos, martelo de madeira, vaso de muda na pata; espinhos de casca e musgo nas costas. É o busto `npc-loja-decoracao`.
+- Nome: a **lasca** de madeira que sobra da plaina. PT e EN iguais (ofício: "a marceneira" / "the carpenter").
+- Fala de boas-vindas: PT "Cada peça daqui foi lixada à mão. Escolha um canto para ela, se quiser." / EN "Every piece here was sanded by hand. Pick a corner for it, if you like." — convite opcional, sem cobrança.
+- Colisão: `grep -riw lasca` só acha a palavra comum em comentários de código; nenhum personagem.
+
+⚰️ As duas fichas abaixo (Tamba, Musga) descreviam criaturas que a arte instalada NÃO é (caranguejo-eremita e lesma de musgo). Ficam como registro; os nomes estão livres para outro NPC.
 
 **Tamba — Itens (Mercado)**
 - Espécie: caranguejo-eremita do tamanho de um cachorro, cuja concha é um gaveteiro de latão com seis gavetinhas; antenas com pontas turquesa.

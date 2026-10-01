@@ -79,3 +79,17 @@ describe('lotes novos (29/09/2026)', () => {
     }
   });
 });
+
+describe('as bancas do Mercado têm nome próprio (01/10/2026)', () => {
+  it('Itens é a Lamela e Decoração é a Lasca — não herdam mais o Grom', () => {
+    for (const lang of ['pt-BR', 'en-US'] as const) {
+      expect(lotNpcVoice('mercado', 'itens', lang).name).toMatch(/^Lamela/);
+      expect(lotNpcVoice('mercado', 'decoracao', lang).name).toMatch(/^Lasca/);
+      for (const l of ['itens', 'decoracao']) {
+        const v = lotNpcVoice('mercado', l, lang);
+        expect(v.name).not.toContain('Grom');
+        expect(v.line).not.toMatch(/\d|Bits|!/);
+      }
+    }
+  });
+});

@@ -89,6 +89,21 @@ export function areaNpcVoice(id: AreaId, language: Language): { name: string; li
  * mesma do ROSTER).
  */
 const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
+  // 01/10/2026 (pedido do dono): as bancas de Itens e de Decoração mostravam
+  // "Grom", mas os bustos são outras criaturas. Nomes próprios (loremaster):
+  // a criatura-cogumelo das miudezas é Lamela (as lâminas sob o chapéu do
+  // cogumelo); a panda-vermelha marceneira é Lasca (a lasca de madeira).
+  // Falas: descrevem o ofício e o objeto, sem cobrança, sem preço, sem pressa.
+  'mercado:itens': {
+    namePt: 'Lamela, a mascate', nameEn: 'Lamela, the peddler',
+    linePt: 'Tudo o que cabe nos meus bolsos tem serventia. Fique à vontade para olhar.',
+    lineEn: 'Everything that fits in my pockets has a use. Feel free to look.',
+  },
+  'mercado:decoracao': {
+    namePt: 'Lasca, a marceneira', nameEn: 'Lasca, the carpenter',
+    linePt: 'Cada peça daqui foi lixada à mão. Escolha um canto para ela, se quiser.',
+    lineEn: 'Every piece here was sanded by hand. Pick a corner for it, if you like.',
+  },
   'mercado:conquistas': {
     namePt: 'Medra, o guardião dos marcos', nameEn: 'Medra, keeper of milestones',
     linePt: 'Cada placa do meu casco lembra um trecho atravessado.',
