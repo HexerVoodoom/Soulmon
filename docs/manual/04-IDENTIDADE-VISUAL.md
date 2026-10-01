@@ -1,7 +1,7 @@
 # Identidade visual e sonora do Soulmon
 
-> **Dono:** doc-redator-identidade · **Data:** 30/09/2026 (sincronização `8e6d0d9a..ae366480`: §8.2-A NOVO corvinho e as 11 formas; tokens `--sm-attr-*` renomeados); anterior: 29/09/2026 (sincronização da Guilda, delta `38c3ccb5..b657a340`: §7.5 NOVO — placeholders do Bosque e da Feira, ids de arte pendentes, dois keyframes novos); anterior: 27/09/2026 (sincronização do delta `c510c7e4..2336e4e7`: §8.3 o corte do bestiário e o dono do critério; §8.4 o nome da inspiração no `imagePrompt`); anterior: 27/09/2026 (sincronização do delta `78ef5367..c510c7e4`, correções pós-F3 da minimal-ui: §5.1 ganha o TERCEIRO caminho de ícone — `PixelIcon` + o pacote `assets/soulmon/icones-ui/` (nove nomes, sem `fill`/`weight`/`tone`), a escala compartilhada e a moldura de texto `chip-moeda`; anterior: 22/09/2026 (3ª sincronização do dia, delta `cd66940f..cf6315e1`: §10.0 a tagline ÚNICA travada por contrato (#70) e §10.1 a `description` do manifesto; §3 (réguas) ganhou a nota do `UndoToast` sem `className` — desenho inline por token, decisão e não descuido; anterior: 2ª sincronização do dia, delta `a6c1cd8a..592e2c14`, QA Rodada 2: §10.2 o ramo Android do gate exige `; wv)` e a CSP por igualdade; o flash de evolução do `CompanionHUD` passou a usar `--sm2-viewport-bg`/`--sm2-viewport-ink` — ⚰️ `#2dd4bf` sobre branco/70, ~1,6:1 — sem seção própria aqui, registrado no `06-REFERENCIA/components.md`)) · **Estado:** verificado em 27/09/2026 por doc-verificador (delta `78ef5367..c510c7e4` — §5.1 conferida contra `src/components/ui/PixelIcon.tsx`, `src/assets/soulmon/icones-ui/index.ts` (`UI_ICON_ART` com 9 chaves, `CHIP_MOEDA_SLICE` 18/48/18/48), `iconScale.contract.test.ts` (tag `PixelIcon` no regex) e `iconInventory.contract.test.ts` (`mapa` no `NAO_SAO_ICONES`)); anterior: verificado em 24/09/2026 por doc-verificador (HEAD `78ef5367` — §1 `.sm-bottom-nav-label` ⚰️ e `navRotulo.contract.test.ts` medindo `areaLabel`; §2 `--sm-corner-h: 68px` (`CornerLink` 56px a `--sm2-space-3` = 12px), `.sm-nav-btn` com `--sm-muted`, `--sm-px-cyan` em `.sm-px-chat-btn`/`-send`, `--sm-px-copper` em `.sm-px-field`; §5.4 `.sm3-cuidado` (55%/22%/`--sm2-radius-md`, `.sm3-cuidado-inerte` tracejado) e o CSS de `.sm2-corner-link`/`.sm2-area-back`/`[data-map-area]`; §6 `@keyframes sm3-blink`/`sm3-sobe` e o movimento reduzido de `.sm3-term-cur`/`.sm3-mais`/`.sm3-mochila` — tudo em `src/index.css`, sem correção); anterior: verificado em 22/09/2026 por doc-verificador (delta `cd66940f..cf6315e1` — `index.html`, `public/manifest.json`, os dois casos `#70` de `src/deploy/manifest.contract.test.ts` e `src/components/UndoToast.tsx` conferidos); anterior: verificado em 22/09/2026 por doc-verificador (delta `a6c1cd8a..592e2c14` — `index.html`, `public/_headers` e `CompanionHUD.tsx` conferidos; anterior no mesmo dia: delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §10.1 `name`/`description` do `manifest.json` e §10.2 gate por plataforma conferidos contra `public/manifest.json`, `index.html`, `src/deploy/manifest.contract.test.ts`; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §9 linha da trilha (⚰️ `SettingsModal`) e §10.2 gate de WebView conferidos por grep; `.sm2-notice` do banner de termos não é classe nova (`grep -n "^.sm2-notice" src/index.css`); anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: delta `dc72579e..9875477b`, conferido em `5ac3d351`: rodada 2 da SQUAD-ARTE, SQUAD-SOM retomada, superfície de suporte do chat) · §9 verificado em 21/09/2026 por doc-verificador (delta `5ac3d351..8d318529`: S16, trilha em duas camadas, escolha do dono nos 3 eventos longos, chaves na `SettingsPage`)
-> **Estado:** verificado em 30/09/2026 por doc-verificador (delta `ae366480..5edfcfba` — conferido: nomes de `DUNGEON_SCENES` em `dungeonScenes.ts`, `og:locale`/`alternate` e `description` do `index.html`, `description`/`lang` de `public/manifest.json`, `TAGLINE_PT` de `manifest.contract.test.ts`, `grep -c '@keyframes' src/index.css` = 40, `sm-duel-dmg` 850ms `ease-out` + reduced-motion; nomes de fauna/linhas de `DUNGEON_LINE_NAMES` sem divergência); anterior: verificado em 30/09/2026 por doc-mantenedor (sem verificador independente nesta sessão: verificação própria, símbolo a símbolo por `grep` contra o fonte — `_admin.js`, `gmTools.ts`, `corvoAdocao.ts`, `AreaTopBar.tsx`, `npcScale.ts`, `attributes.ts`; só as seções tocadas; delta `8e6d0d9a..ae366480`); anterior: verificado em 29/09/2026 por doc-mantenedor (sem a ferramenta Agent nesta sessão: verificação própria, símbolo a símbolo por `grep` contra o fonte — exports de `_coop.js`/`guild.js`/`_profile.js`, módulos novos de `src/`, constantes e chaves de KV; delta `38c3ccb5..b657a340`, só as seções tocadas; `docsManual`/`docsSemMentira` verdes)
+> **Dono:** doc-redator-identidade · **Data:** 01/10/2026 (delta `bcfe7ca6..e3d55bb8`, PRs #189–#197, arte rodada 3: §5.6 recontado, §5.6-A NOVO, §7.2/§7.3/§7.5 atualizados); anterior: 30/09/2026 (sincronização `8e6d0d9a..ae366480`: §8.2-A NOVO corvinho e as 11 formas; tokens `--sm-attr-*` renomeados); anterior: 29/09/2026 (sincronização da Guilda, delta `38c3ccb5..b657a340`: §7.5 NOVO — placeholders do Bosque e da Feira, ids de arte pendentes, dois keyframes novos); anterior: 27/09/2026 (sincronização do delta `c510c7e4..2336e4e7`: §8.3 o corte do bestiário e o dono do critério; §8.4 o nome da inspiração no `imagePrompt`); anterior: 27/09/2026 (sincronização do delta `78ef5367..c510c7e4`, correções pós-F3 da minimal-ui: §5.1 ganha o TERCEIRO caminho de ícone — `PixelIcon` + o pacote `assets/soulmon/icones-ui/` (nove nomes, sem `fill`/`weight`/`tone`), a escala compartilhada e a moldura de texto `chip-moeda`; anterior: 22/09/2026 (3ª sincronização do dia, delta `cd66940f..cf6315e1`: §10.0 a tagline ÚNICA travada por contrato (#70) e §10.1 a `description` do manifesto; §3 (réguas) ganhou a nota do `UndoToast` sem `className` — desenho inline por token, decisão e não descuido; anterior: 2ª sincronização do dia, delta `a6c1cd8a..592e2c14`, QA Rodada 2: §10.2 o ramo Android do gate exige `; wv)` e a CSP por igualdade; o flash de evolução do `CompanionHUD` passou a usar `--sm2-viewport-bg`/`--sm2-viewport-ink` — ⚰️ `#2dd4bf` sobre branco/70, ~1,6:1 — sem seção própria aqui, registrado no `06-REFERENCIA/components.md`)) · **Estado:** verificado em 27/09/2026 por doc-verificador (delta `78ef5367..c510c7e4` — §5.1 conferida contra `src/components/ui/PixelIcon.tsx`, `src/assets/soulmon/icones-ui/index.ts` (`UI_ICON_ART` com 9 chaves, `CHIP_MOEDA_SLICE` 18/48/18/48), `iconScale.contract.test.ts` (tag `PixelIcon` no regex) e `iconInventory.contract.test.ts` (`mapa` no `NAO_SAO_ICONES`)); anterior: verificado em 24/09/2026 por doc-verificador (HEAD `78ef5367` — §1 `.sm-bottom-nav-label` ⚰️ e `navRotulo.contract.test.ts` medindo `areaLabel`; §2 `--sm-corner-h: 68px` (`CornerLink` 56px a `--sm2-space-3` = 12px), `.sm-nav-btn` com `--sm-muted`, `--sm-px-cyan` em `.sm-px-chat-btn`/`-send`, `--sm-px-copper` em `.sm-px-field`; §5.4 `.sm3-cuidado` (55%/22%/`--sm2-radius-md`, `.sm3-cuidado-inerte` tracejado) e o CSS de `.sm2-corner-link`/`.sm2-area-back`/`[data-map-area]`; §6 `@keyframes sm3-blink`/`sm3-sobe` e o movimento reduzido de `.sm3-term-cur`/`.sm3-mais`/`.sm3-mochila` — tudo em `src/index.css`, sem correção); anterior: verificado em 22/09/2026 por doc-verificador (delta `cd66940f..cf6315e1` — `index.html`, `public/manifest.json`, os dois casos `#70` de `src/deploy/manifest.contract.test.ts` e `src/components/UndoToast.tsx` conferidos); anterior: verificado em 22/09/2026 por doc-verificador (delta `a6c1cd8a..592e2c14` — `index.html`, `public/_headers` e `CompanionHUD.tsx` conferidos; anterior no mesmo dia: delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §10.1 `name`/`description` do `manifest.json` e §10.2 gate por plataforma conferidos contra `public/manifest.json`, `index.html`, `src/deploy/manifest.contract.test.ts`; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §9 linha da trilha (⚰️ `SettingsModal`) e §10.2 gate de WebView conferidos por grep; `.sm2-notice` do banner de termos não é classe nova (`grep -n "^.sm2-notice" src/index.css`); anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: delta `dc72579e..9875477b`, conferido em `5ac3d351`: rodada 2 da SQUAD-ARTE, SQUAD-SOM retomada, superfície de suporte do chat) · §9 verificado em 21/09/2026 por doc-verificador (delta `5ac3d351..8d318529`: S16, trilha em duas camadas, escolha do dono nos 3 eventos longos, chaves na `SettingsPage`)
+> **Estado:** verificado em 01/10/2026 por doc-redator-identidade (delta `bcfe7ca6..e3d55bb8`; sem verificador independente — contagens por `find`/`ls`/`grep -c`, símbolos por `grep` contra o fonte); anterior: verificado em 30/09/2026 por doc-verificador (delta `ae366480..5edfcfba` — conferido: nomes de `DUNGEON_SCENES` em `dungeonScenes.ts`, `og:locale`/`alternate` e `description` do `index.html`, `description`/`lang` de `public/manifest.json`, `TAGLINE_PT` de `manifest.contract.test.ts`, `grep -c '@keyframes' src/index.css` = 40, `sm-duel-dmg` 850ms `ease-out` + reduced-motion; nomes de fauna/linhas de `DUNGEON_LINE_NAMES` sem divergência); anterior: verificado em 30/09/2026 por doc-mantenedor (sem verificador independente nesta sessão: verificação própria, símbolo a símbolo por `grep` contra o fonte — `_admin.js`, `gmTools.ts`, `corvoAdocao.ts`, `AreaTopBar.tsx`, `npcScale.ts`, `attributes.ts`; só as seções tocadas; delta `8e6d0d9a..ae366480`); anterior: verificado em 29/09/2026 por doc-mantenedor (sem a ferramenta Agent nesta sessão: verificação própria, símbolo a símbolo por `grep` contra o fonte — exports de `_coop.js`/`guild.js`/`_profile.js`, módulos novos de `src/`, constantes e chaves de KV; delta `38c3ccb5..b657a340`, só as seções tocadas; `docsManual`/`docsSemMentira` verdes)
 > **Verificação:** `npx vitest run src/styles/ src/index.css.contract.test.ts src/utils/sprites.dungeonRoster.test.ts src/utils/loudness.contract.test.ts src/utils/cortes.contract.test.ts src/utils/sonsAssets.contract.test.ts src/components/ui/Viewport.contract.test.tsx src/components/ui/foundation.render.test.tsx src/brand/brandFlame.parity.test.ts src/assets/assets.contract.test.ts` — os 11 arquivos de 09/09/2026 (216 testes, verde) mais os dois que nasceram com a marca vetorizada e a leva de arte de 15/09/2026, mais `sonsAssets.contract.test.ts` (21/09/2026, S16).
 > **Não cobre:** o fluxo entre telas e o que cada superfície mostra (doc `03-FLUXO-DE-TELAS.md`); as regras de jogo por trás dos números que a UI pinta (doc `02-REGRAS-DE-NEGOCIO.md`); a assinatura de cada componente (`06-REFERENCIA/components.md`); o pipeline de build/deploy dos assets (doc `08-INTEGRACOES-E-DEPLOY.md`). Este doc descreve o som — **não** decide nada sobre ele: quem decide é o `REGISTRO-DE-DECISOES.md` (§6.1, S1..S16 — não existe S14).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -698,41 +698,73 @@ crescer.
 
 ### 5.6 Os ícones em PNG (arte própria)
 
-Contagem medida em 21/09/2026 com `find src/assets/soulmon/<pasta> -name '*.png' | wc -l`
-(a coluna "20/09" é a medição anterior, depois da rodada 1 da SQUAD-ARTE,
-15–16/09/2026; o que mudou em 21/09 é a **rodada 2** — `118131f4`, 255
-derivados, `docs/ASSETS-A-GERAR.md` §13 R2-1…R2-4 — que **não gerou pose
+Contagem medida em **01/10/2026** com `find src/assets/soulmon/<pasta> -name '*.png' | wc -l`
+(a coluna "21/09" é a medição anterior deste doc, depois da **rodada 2** — `118131f4`, 255
+derivados, `docs/ASSETS-A-GERAR.md` §13 R2-1…R2-4 —, que **não gerou pose
 nova**: tudo é REDUÇÃO do que já existia, via `scripts-arte/derivar-rodada2.mjs` (fora do repo, em `D:\Soulmon\scripts-arte\`),
-então a D5 de §8.2 continua valendo):
+então a D5 de §8.2 continua valendo; o que mudou depois de 21/09 é a **rodada 3**, §5.6-A):
 
-| pasta | PNGs | 20/09 |
+| pasta | PNGs | 21/09 |
 |---|---|---|
 | `src/assets/soulmon/icons/` (recursivo, inclui `categories/` e `games/`) | **57** | 57 |
 | `src/assets/soulmon/elementos/` | **137** | 137 |
-| `src/assets/soulmon/fx-ataque/` | **1078** (+154 `fx-<el>-aura-96.png`, R2-3: auras 96² derivadas das 128², consumidas por `auraForElement(el, 96)` de `src/utils/attackFxArt.ts` na Ficha; `ATTACK_FX_COUNT` continua 924 porque o glob separa as 96² em `AURA_96_COUNT`) | 924 |
-| `src/assets/soulmon/lines/` (recursivo) | **137** (+72 em `lines/icons/`, R2-2: ícones-ficha 64² e 32² das 9 linhas × 4 tiers, `src/utils/lineIcons.ts` → Dino, Torneio e mini-visor do ranking; os 36 sprites + 29 de `lines/full/` não mudaram) | 65 |
-| `src/assets/soulmon/sigilos/` (nova, D6 — os 45 sigilos do class-system na Ficha) | **45** | 45 |
-| `src/assets/soulmon/fx/` | **35** (+1 `anim-sleep-z-light.png`, R2-4: a folha clara do Z para cenário escuro — quem escolhe é `isDarkBackground`, §7.2) | 34 |
+| `src/assets/soulmon/fx-ataque/` | **1078** (+154 `fx-<el>-aura-96.png`, R2-3: auras 96² derivadas das 128², consumidas por `auraForElement(el, 96)` de `src/utils/attackFxArt.ts` na Ficha; `ATTACK_FX_COUNT` continua 924 porque o glob separa as 96² em `AURA_96_COUNT`; em 01/10/2026 as 16 auras base foram RECRIADAS pelo mesmo nome, §5.6-A) | 1078 |
+| `src/assets/soulmon/lines/` (recursivo) | **177** = 36 sprites na raiz da pasta + **72** em `lines/icons/` (R2-2: ícones-ficha 64² e 32² das 9 linhas × 4 tiers, `src/utils/lineIcons.ts`) + **69** em `lines/full/` (eram 29; +40 da rodada 3, `src/utils/lineFullArt.ts`) | 137 |
+| `src/assets/soulmon/sigilos/` (D6 — os 45 sigilos do class-system na Ficha) | **45** | 45 |
+| `src/assets/soulmon/fx/` | **59** (+24 da rodada 3: FX da Feira, FX 48² dos minijogos da Mente/Refúgio, estilhaço/faísca da Corrida, ovo do Renascimento, cristal-moeda) | 35 |
 | `src/assets/soulmon/dreams/` | **30** | 30 |
-| `src/assets/soulmon/adventures/` | **24** | 24 |
-| `src/assets/soulmon/bg/` | **15** | 15 |
+| `src/assets/soulmon/adventures/` | **72** (+48 postais das Travessias, `adv-trv-*`) | 24 |
+| `src/assets/soulmon/bg/` | **25** (+10: 5 `dungeon-classic-*`, `mente-troca-ceu/-gruta`, `visor-atelie/-refugio/-feira`) | 15 |
 | `src/assets/soulmon/items/` | **13** | 13 |
 | `src/assets/soulmon/emblems/` (os 8 emblemas + `habit-7/21/66`, `663b9de5`) | **9** | 9 |
-| `src/assets/soulmon/dino/` (conjunto do Dino, `dd214688`) | **6** | 6 |
+| `src/assets/soulmon/dino/` (a **Corrida com obstáculos**; a pasta e os ids `dino` ficam — §5.6-A) | **15** (3 variantes `b`/`c` por obstáculo, `icone-corrida`) | 6 |
 | `src/assets/soulmon/hud/` (barra/moldura pixel do visor, D3) | **5** | 5 |
 | `src/assets/soulmon/progress/` | **4** | 4 |
 | `src/assets/soulmon/placeholder/` (`dormant`/`forming`/`glitch`, §8.6) | **3** | 3 |
 | `src/assets/soulmon/windows/` | **1** | 1 |
+| `src/assets/soulmon/icones-ui/` (`UI_ICON_ART`, §5.1) | **34** | — (não medida aqui em 21/09) |
+| `src/assets/soulmon/corvo/` (as 11 formas do corvinho × 512 e 256, §8.2-A) | **22** | — |
+| `src/assets/soulmon/areas/` (6 fundos `bg-*` e 20 lotes `lote-*`, + `index.ts`) | **26** | — |
+| `src/assets/soulmon/mapa/` (`bg-mapa` + 6 `zona-*`) | **7** | — |
+| `src/assets/soulmon/npcs/` (bustos 768²; + `index.ts`) | **40** | — |
+| `src/assets/soulmon/arena/` (12 sprites de fenômeno da Feira, tipo × estado) | **12** | — |
+| `src/assets/soulmon/bosses/` (24 chefes 512² + `boss-arauto-do-fim-full`) | **25** | — |
+| `src/assets/soulmon/duelo/` (6 retratos de oponente 128²) | **6** | — |
 | `src/assets/soulmon/buttons/` · `evolution/` · `ui/` | ⚰️ **saíram em 16/09/2026** (o kit vetor dispensou os 13 PNGs de botão; a árvore de evolução é SVG por token — H1, decisão do dono) | — |
-| raiz de `src/assets/soulmon/` | **17** (+`nest-cradle-wide.png` em 15/09/2026, o berço largo, §7.1) | 17 |
-| **total** (`find src/assets/soulmon -name '*.png' \| wc -l`) | **1616** | 1389 |
+| raiz de `src/assets/soulmon/` | **17** (`nest-cradle-wide.png`, o berço largo, §7.1; e as 11 formas genéricas — Noctyl desde 01/10/2026, §5.6-A) | 17 |
+| **total** (`find src/assets/soulmon -name '*.png' \| wc -l`) | **1919** | 1616 |
 
 Fora de `src/assets/soulmon/`, e da mesma rodada 2: **`src/assets/backgrounds/thumbs/`**
-(R2-1, **28** PNGs em 21/09/2026 — `ls src/assets/backgrounds/thumbs | wc -l`),
+(R2-1, **35** PNGs em 01/10/2026 — `ls src/assets/backgrounds/thumbs | wc -l`; eram 28 em 21/09/2026, as 7 novas são os 5 `bg-guild-*` e os postais `bg-campina`/`bg-cavernas`),
 uma miniatura 96×52 por cenário, derivada da ilustração 1200×648, lida por glob
 eager no `ShopModal` para a vitrine de cenários. E `src/assets/backgrounds/bg-gameboy.png`
 foi **regerado** (R2-6, `b52fa074`, 21/09/2026 — uma das duas gerações novas da rodada, com os
 glifos R2-5 do overlay do desktop, `02d483af`, doc `05-ARQUITETURA.md` §4; não derivação).
+
+### 5.6-A A rodada 3 da SQUAD-ARTE (30/09 e 01/10/2026)
+
+Instalada em nove PRs (#189–#197, `bcfe7ca6..e3d55bb8`), tudo aprovado pelo dono; as
+contagens por pasta estão na tabela acima. O que cada leva trouxe, e o que **não tem
+chamada** (arte pronta no bundle ou fora dele, à espera de decisão de design em
+`docs/PERGUNTAS-DO-DONO.md`):
+
+- **Fundos noturnos (`fundos-v2`) e o tom da Home v2** (#190, `1c834193`): 9 fundos novos — `bg-hall` e
+  `bg-laboratorio` (760×1344, `HALL_BG`/`LABORATORIO_BG` em `assets/soulmon/areas/index.ts`),
+  os 5 `bg-guild-*` do Bosque e os postais `bg-campina`/`bg-cavernas` (1200×648) — e **53 telas
+  retonadas só em matiz + highlight** no mesmo nome e caminho (`areas` 4, `backgrounds` 27, `bg` 15, `mapa` 7; `bg-gameboy` ficou de fora).
+  As 27 miniaturas dos cenários retonados foram rederivadas (`1dff39b6`). Os lotes do Laboratório (`evolucao`/`pet`) ficaram em `top` 54%, o do Hall (`guilda`) em 78% (`areaSheetCopy.ts`).
+- **Bustos de NPC e prédios de lote** (#192): 10 NPCs de lote (`LOT_NPC_ART`) e 6 NPCs de FUNÇÃO
+  (`FUNCTION_NPC_ART`: onboarding, oráculo, conta, sono, cuidados, config — **sem chamada**), mais os lotes v2 de
+  Jogos (mente/refúgio), Passeio, Laboratório ×3, Hall ×3 e Mercado (conquistas). Falas e nomes em
+  `utils/areaNpcVoice.ts`. `lote-exploracao-dino` ficou sem consumidor.
+- **Lote da Feira e mini-visores** (#195, `f3c7b11b`): `lote-arena-feira` real; cenas de mini-visor 696×160 (e a da Feira, 696×352), 9 sprites 48² e o ovo do Renascimento, ligados a Troca/Eco/Revisão/Bolhas/Respiração/FeiraVisor/RebirthModal por `utils/visorScenes.ts`.
+- **Cenas de masmorra** (#189): os 5 andares clássicos deixam de ser gradiente CSS e viram 5 cenas pintadas 1080×1920 (§7.3).
+- **Feira, Concha e extras** (#193): fenômeno por tipo × estado (12 sprites) + 4 FX em `fx/`; Concha da Maré real em `assets/decor/`; insígnias das 5 faixas do Torneio; mochila do Passeio e sol de "Acordar" no `CompanionHUD`; 48 postais das Travessias.
+  **Corrida com obstáculos**: o nome exibido da antiga "Corrida do Dino" (decisão do dono, `REGISTRO-DE-DECISOES.md` §17) — ids de save, pasta `assets/soulmon/dino/` e `DINO_SCENE` **ficam**; 3 variantes por tier de obstáculo. Sem chamada: FX da corrida, ícone, céu, moedas, atributos, `cristal-moeda`.
+  A moeda do Torneio é exibida como **Honra/Honor** (campo `emblems` intacto — `utils/currencies.ts`).
+- **Chefes e NPCs extras** (#194): 24 chefes 512² (`data/bossRoster.ts` › `BOSS_ROSTER`/`BOSS_ART`, **sem chamada**; nomes EN de 5 combinações em `essenceLabels.ts` › `COMBO_EN`) e os NPCs extras femininos (`EXTRA_NPC_ART`/`EXTRA_NPC_VOICE`, sem chamada; 15 ids em 01/10/2026, com `lua`/`ferreiro`/`ferreira`; `ls src/assets/soulmon/npcs/npc-f-*.png | wc -l` = 15).
+- **Árvore genérica Noctyl, linhas e duelo** (#196, `f693fd05`): as 11 formas genéricas (`soulmon/*.png` 384²) e os 11 sprites do widget (`drawable-nodpi/sprite_*`, 256²) deixam de ser o corvo repetido e passam a ser o **Noctyl** — o corvinho do administrador (§8.2-A) e seu mapa não mudaram. `lines/full/` ganha 40 formas (ignar/lumel/serah/igni; `utils/lineFullArt.ts`, sem consumidor); 6 retratos de oponente do Duelo (`utils/dueloArt.ts`, sem chamada — o oponente real mostra o sprite do estágio dele); Arauto do Fim em corpo inteiro (`boss-arauto-do-fim-full`).
+- **67 recriados do Gemini** (#197): 16 auras de ataque, `food-rice`, `fx-defeat`, `furn-crystal` e 48 ícones `el-*` substituem os de mesmo nome (contagens por pasta inalteradas), e três NPCs extras entram (`npc-f-lua`, `npc-f-ferreiro`, `npc-f-ferreira` — Selene, Mallo, Kova).
 
 Régua nova para tudo isso: `src/assets/assets.contract.test.ts` (15/09/2026) —
 nenhum asset de 0 byte, todo asset decodificável, nenhum xadrez de
@@ -949,9 +981,9 @@ decoração nenhuma.
 
 Cada cenário (`PET_BACKGROUNDS`, `src/utils/backgrounds.ts`) declara:
 
-- `setting` — medido em 20/09/2026: **22** `outdoor`, **6** `indoor`, **0**
+- `setting` — medido em 01/10/2026: **29** `outdoor`, **6** `indoor`, **0**
   `void` (`grep -o "setting: '[a-z]*'" src/utils/backgrounds.ts | sort | uniq -c`;
-  eram 20/5/3 em 09/09/2026). ⚰️ **Não há mais cenário `void`**: `bg-matrix`,
+  eram 22/6/0 em 20/09/2026 e 20/5/3 em 09/09/2026). ⚰️ **Não há mais cenário `void`**: `bg-matrix`,
   `bg-ocean` (→ `outdoor`) e `bg-gameboy` (→ `indoor`) ganharam arte nova com
   chão em 74% em 15/09/2026 e passaram a oferecer `GROUND_SLOTS`. O tipo
   `'void'` continua em `StageSetting` — sem consumidor;
@@ -963,13 +995,13 @@ Cada cenário (`PET_BACKGROUNDS`, `src/utils/backgrounds.ts`) declara:
   propósito: o CSS de um cenário é uma pilha de gradientes onde "74%" tanto pode
   ser a linha do piso quanto a coordenada horizontal de uma estrela — foi
   exatamente assim que a primeira versão do teste passou sem verificar nada.
-  Presente em **28** dos 28 cenários em 20/09/2026 (`grep -c "horizonY:"
-  src/utils/backgrounds.ts`; eram 25 — os 3 ausentes eram os `void`);
+  Presente em **35** dos 35 cenários em 01/10/2026 (`grep -c "horizonY:"
+  src/utils/backgrounds.ts`; eram 28 em 20/09/2026 e 25 antes — os 3 ausentes eram os `void`);
 - `baseColor` — cor de base atrás da arte, para cenário PINTADO. O visor
   desenha a arte com `auto 100%` para não deformar o pixel nem perder a linha
   do chão; numa caixa mais larga que a proporção da arte sobra área, e é esta
-  cor que preenche. Era opcional; em 20/09/2026 **os 28 declaram**
-  (`grep -c "baseColor:"` → 28). Desde 21/09/2026 ela tem um segundo
+  cor que preenche. Era opcional; em 01/10/2026 **os 35 declaram**
+  (`grep -c "baseColor:"` → 35). Desde 21/09/2026 ela tem um segundo
   consumidor: **`isDarkBackground(id)`** (mesmo arquivo, R2-4) devolve `true`
   quando a luminância relativa da `baseColor` é `< 0,5` — e também sem cenário
   ou sem `baseColor`, porque aí o que se vê é o `--sm2-viewport-bg`, escuro nos
@@ -978,8 +1010,8 @@ Cada cenário (`PET_BACKGROUNDS`, `src/utils/backgrounds.ts`) declara:
   escuro, `ANIM_ART.sleepZ` (teal) sobre claro. **Régua: nenhuma** além do
   guard geral de assets (§5.6).
 
-`PET_BACKGROUNDS` tem **28** entradas: 22 comuns/comprados + os 6 `bg-mission-*`
-liberados por missão. ⚰️ **Nenhum é mais gradiente CSS**: em 15/09/2026
+`PET_BACKGROUNDS` tem **35** entradas em 01/10/2026 (`grep -c "^  '[a-z-]*': {" src/utils/backgrounds.ts`): 22 comuns/comprados + os 6 `bg-mission-*`
+liberados por missão + os 5 `bg-guild-*` do Bosque (29/09/2026) + os postais `bg-campina` e `bg-cavernas` (30/09/2026, só do Passeio: fora de `shop.ts`/`SHOP_BG_ACCENTS`). ⚰️ **Nenhum é mais gradiente CSS**: em 15/09/2026
 (`559222ed`, leva `cenarios-20260915` da SQUAD-ARTE — C3 em
 `docs/ASSETS-A-GERAR.md` §11) os **19** cenários que eram pilhas de
 `linear-gradient`/`radial-gradient` (ou arte 800² antiga) viraram **arte
@@ -999,8 +1031,8 @@ por espaço), migrado do antigo `equippedFurniture` no load.
 
 | conjunto | n | o que é |
 |---|---|---|
-| `DUNGEON_SCENES` | **5** | os clássicos em CSS puro (Retro Pet/VHS/Sol Neon/CRT/Glitch; ⚰️ a primeira se chamava `Tamagotchi` — `namePt`/`nameEn` = `Retro Pet` desde o delta 30/09/2026, `ae366480..5edfcfba`). ⚰️ O overlay `dungeon-vhs` que o `DungeonGame` punha por cima **saiu** (canvas Jogos, `DECISOES-WIREFRAME.md` §25): a cena é o `cover` de um visor (`games/GameKit.tsx`) |
-| `SPIRIT_BG_SCENES` | **13** | arte PINTADA: as 5 grutas originais (regeradas **em pé** em 15/09/2026, C1 de `ASSETS-A-GERAR.md` §11 — eram 960×540 deitadas ⚰️), 6 da segunda leva (retrato 9:16, porque o campo de batalha é uma caixa ALTA), o "Corredor em Ruínas" (nasceu como fundo do Dino e migrou) e as **2 arenas do Torneio** |
+| `DUNGEON_SCENES` | **5** | os clássicos, hoje **5 cenas pintadas** 1080×1920 (`assets/soulmon/bg/dungeon-classic-{retro,vhs,sol,crt,glitch}.png`; `bg` = `url(...) center/cover <cor média>`) — Jardim Flutuante, Terraço dos Dois Sóis, Observatório Partido, Lago-Espelho, Arquipélago Fraturado, na mesma paleta petróleo/turquesa/cobre da Home. ⚰️ Eram CSS puro (Retro Pet/VHS/Sol Neon/CRT/Glitch — dois magenta, fora do kit; a primeira se chamou `Tamagotchi`) e foram trocados um a um em 30/09/2026 (#189); os nomes de arquivo `classic-*` guardam os nomes velhos. ⚰️ O overlay `dungeon-vhs` que o `DungeonGame` punha por cima **saiu** (canvas Jogos, `DECISOES-WIREFRAME.md` §25): a cena é o `cover` de um visor (`games/GameKit.tsx`) |
+| `SPIRIT_BG_SCENES` | **13** | arte PINTADA: as 5 grutas originais (regeradas **em pé** em 15/09/2026, C1 de `ASSETS-A-GERAR.md` §11 — eram 960×540 deitadas ⚰️), 6 da segunda leva (retrato 9:16, porque o campo de batalha é uma caixa ALTA), o "Corredor em Ruínas" (nasceu como fundo da Corrida com obstáculos e migrou) e as **2 arenas do Torneio** |
 | `SHOP_BG_ACCENTS` | **16** | os cenários da loja, reaproveitados como cena de andar (`SHOP_BG_SCENES` filtra os que existem em `PET_BACKGROUNDS`) |
 
 Comandos usados: `sed -n '<faixa>' src/utils/dungeonScenes.ts | grep -c "^  {"`
@@ -1018,7 +1050,7 @@ clampado.
 Forja das Almas, `dungeon-7` — o pesadelo é uma luta só, de manhã, e o vidro do
 diálogo é o mesmo todas as noites; canvas Jogos, `PesadeloIntro`/`PesadeloFim`),
 `ARENA_SCENE` (o Abismo Violeta, `dungeon-4`, canvas Arena) e `DINO_SCENE` (o
-corredor em ruínas atrás do parallax do Dino).
+corredor em ruínas atrás do parallax da Corrida com obstáculos; o identificador `DINO_SCENE` é mantido).
 
 ### 7.4 Decoração
 
@@ -1031,23 +1063,23 @@ Cada PNG foi desenhado EXATAMENTE para a caixa do espaço que ocupa
 (`DECOR_SLOTS`); nada ali redimensiona de forma não-uniforme, só encaixa. O
 briefing de arte está em `docs/BRIEF-ARTE-DECORACAO.md`.
 
-### 7.5 A Guilda: Bosque e Feira — hoje PLACEHOLDERS (29/09/2026)
+### 7.5 A Guilda: Bosque e Feira — arte real desde 30/09/2026 (era PLACEHOLDER em 29/09/2026)
 
-⚠️ **Nenhuma arte real da Guilda existe ainda** (WPG-13/WPG-A; a leva é o
-`docs/design/areas/prompts/arena.md` e a bíblia `docs/design/areas/00-BIBLIA-DAS-AREAS.md`).
-Tudo o que aparece hoje é código na paleta do Visor (petróleo, turquesa, cobre,
-osso, verde de videira), e a regra da arte vale já: **sem magenta, roxo nem rosa**,
+⚰️ Até 29/09/2026 tudo o que a Guilda mostrava era código (gradientes e SVG); a rodada 3
+(§5.6-A, aprovada pelo dono em 30/09/2026) trouxe a arte pintada, e o que sobra de
+código é fallback. A regra da arte continua valendo para qualquer peça nova: paleta do
+Visor (petróleo, turquesa, cobre, osso, verde de videira), **sem magenta, roxo nem rosa**,
 sem folha seca, galho caído, cor desbotada ou ruína (o Bosque nunca envelhece), e
 sem rosto, olho, boca, barra de HP, número ou letra no fenômeno (é tempo da Malha,
 nunca inimigo).
 
-| Peça | Hoje | Onde troca | Ids pendentes |
-|---|---|---|---|
-| **Cenários do Bosque** | 5 gradientes em camadas (`GROVE_MOTES`, `GROVE_VINES`, `GROVE_CANOPY`, …): `bg-guild-clareira` → `-ramagem` → `-copa` → `-mata` → `-bosque-antigo`, cada estágio = o anterior + camadas; `outdoor`, chão em 66% (`horizonY: 66`, ≤ `GROUND_Y`) | só o `css` de `PET_BACKGROUNDS` (`utils/backgrounds.ts`) vira `url(...)`; `setting`, `slots`, `horizonY` ficam | família `cenario` de `docs/ASSETS-A-GERAR.md`, 1200×648 |
-| **Fenômeno da Feira** | SVG de ~7 lajes finas empilhadas e deslocadas (`FeiraVisor`), três estados, quatro FX | preencher `FAIR_ART` (`utils/fairArt.ts`); a sala já prefere a imagem | `fair-fenomeno-aberto` / `-ferido` / `-dissipado` (sprite 384² alfa, MESMA massa nos três), `fx-fair-nevoa` / `-mare` / `-estatica` / `-enxame` |
-| **NPC e lote da Feira** | placeholders do molde (`lotNpcArt`, `ARENA_LOT_ART`) | `LOT_NPC_ART['arena:feira']`, `ARENA_LOT_ART.feira` | `npc-arena-feira` (Fanfare, criatura-sanfona), `lote-arena-feira` (tenda-cúpula) |
-| **Concha da Maré** | SVG em `DECOR_ART['trophy-concha-mare']`, espaço `trophy` | trocar por `assets/decor/trophy-concha-mare.png` (384²) | `trophy-concha-mare` |
-| **Criaturas do Bosque** | nossas linhas (`DUNGEON_LINE_SPRITES`, por hash do id opaco), 128 px a sua e 64 px as dos outros (`OWN_RENDER`/`OTHER_RENDER`) | — (não há arte nova a gerar) | — |
+| Peça | Hoje (01/10/2026) | Onde vive |
+|---|---|---|
+| **Cenários do Bosque** | 5 PNGs 1200×648 (`bg-guild-clareira` → `-ramagem` → `-copa` → `-mata` → `-bosque-antigo`, mesma câmera, mais elementos a cada estágio); `outdoor`, chão em 66% (`horizonY: 66`, ≤ `GROUND_Y`); `baseColor` amostrada da faixa de baixo. ⚰️ Os gradientes em camadas (`GROVE_MOTES`, `GROVE_VINES`, `GROVE_CANOPY`, …) saíram | `css: url(...)` de `PET_BACKGROUNDS` (`utils/backgrounds.ts`); `GroveVisor`, `GroveMilestoneCeremony` e `GuildOwnedShelf` dimensionam a arte (`center bottom / auto 100%` ou `cover`) |
+| **Fenômeno da Feira** | 12 sprites 384² alfa (`arena/fair-fenomeno-<tipo>-<estado>.png`, tipo `nevoa`/`mare`/`estatica`/`enxame` × `aberto`/`ferido`/`dissipado`) e 4 FX (`fx/fx-fair-*.png`), em motivo 0,5× nos cantos; o SVG de lajes de `FeiraVisor` segue como fallback | `FAIR_ART` e `fairFenomenoId` (`utils/fairArt.ts`) |
+| **NPC e lote da Feira** | `npc-arena-feira` (Fanfare, criatura-sanfona) e `lote-arena-feira` (tenda-cúpula, 300²) reais | `LOT_NPC_ART['arena:feira']` (`npcs/index.ts`) e `ARENA_LOT_ART.feira` (`areas/index.ts`) |
+| **Concha da Maré** | `assets/decor/trophy-concha-mare.png` (92×100); ⚰️ o SVG placeholder saiu | `DECOR_ART['trophy-concha-mare']`, espaço `trophy` |
+| **Criaturas do Bosque** | nossas linhas (`DUNGEON_LINE_SPRITES`, por hash do id opaco), 128 px a sua e 64 px as dos outros (`OWN_RENDER`/`OTHER_RENDER`) | — (não há arte nova a gerar) |
 
 **CSS**: classes `sm2-guild*`, `sm2-grove*` e `sm2-fair*` no fim do `src/index.css`
 (única folha empacotada, footgun 1). Dois keyframes novos — `sm2-grove-bob` (a
