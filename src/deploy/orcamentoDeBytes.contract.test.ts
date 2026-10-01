@@ -77,7 +77,14 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // (`travessiasSave.ts`), o assentamento da noite no `App.tsx`, o marcador do
   // palco e `adventureOfNight`. O CATÁLOGO das regiões (35 KB) e a folha ficam
   // FORA do chunk de entrada (`import()` só quando o save tocou no mapa).
-  'index.js': 728_687,
+  // Re-medido em 01/10/2026: 728_687 → 748_092 (+19,0 KB). Ajustes da
+  // navegação do dono (`docs/AJUSTES-NAVEGACAO-2026-10-01.md`, 5 frentes):
+  // onboarding com as 26 perguntas obrigatórias e retomada, personalidade
+  // derivada (`personality.ts`), convite do descanso (`restSetup.ts`), dicas de
+  // coração/energia, sonho que dá a decoração, `soulTestAnswers` no save.
+  // Crescimento JUSTIFICADO, não perdoado — candidatos a pagar: `RestSetupModal`
+  // e o passo do teste longo do onboarding como `import()`.
+  'index.js': 748_092,
   'index.css': 153_795,          // 150 KB — 1,5× o teto
   'evolution-bg.mp4': 3_917_240, // 3,7 MB — fundo de UMA cerimônia; correção #3 (WebM/CSS)
   'intro.mp4': 2_524_939,        // 2,4 MB — vídeo da intro
