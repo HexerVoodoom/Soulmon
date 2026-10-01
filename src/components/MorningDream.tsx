@@ -23,7 +23,7 @@ import type { Language } from '../utils/i18n';
 import { Icon } from './ui/Icon';
 import { sm2Button, sm2Hint } from './form/FormKit';
 import { DREAM_ART } from '../utils/dreamArt';
-import { RitualDialog, RitualGlass, ritualLabel } from './ritual/RitualKit';
+import { RitualDialog, ritualLabel } from './ritual/RitualKit';
 
 export interface MorningDreamProps {
   open: boolean;
@@ -33,6 +33,10 @@ export interface MorningDreamProps {
   isNew: boolean;
   language: Language;
   onClose: () => void;
+  /** F2 (01/10/2026): "Equipar" ao lado do "Bom dia!". Só existe quando a
+   *  cena tem uma decoração gêmea que o jogador JÁ possui
+   *  (`utils/dreamDecorTwin.ts`) — equipa e fecha. Ausente = sem botão. */
+  onEquip?: () => void;
 }
 
 function rarityLabel(rarity: DreamRarity, isPt: boolean): string {
@@ -41,14 +45,19 @@ function rarityLabel(rarity: DreamRarity, isPt: boolean): string {
   return isPt ? 'Comum' : 'Common';
 }
 
-export function MorningDream({ open, dream, isNew, language, onClose }: MorningDreamProps) {
+export function MorningDream({ open, dream, isNew, language, onClose, onEquip }: MorningDreamProps) {
   if (!open) return null;
 
   const isPt = language === 'pt-BR';
   const label = dream ? (isPt ? dream.labelPt : dream.labelEn) : null;
 
+  /* F2 (navegação do dono, 01/10/2026): a manchete diz o que a pessoa GANHOU.
+     "Seu Soulmon sonhou..." lia como enfeite; a cena entra na coleção e isso
+     tem de estar escrito, não subentendido. */
   const headline = dream
-    ? (isPt ? 'Bom dia! Seu Soulmon sonhou...' : 'Good morning! Your Soulmon dreamed...')
+    ? (isNew
+      ? (isPt ? 'Bom dia! Você ganhou uma cena de sonho' : 'Good morning! You got a new dream scene')
+      : (isPt ? 'Bom dia! Seu Soulmon sonhou de novo com' : 'Good morning! Your Soulmon dreamed again of'))
     : (isPt ? 'Bom dia!' : 'Good morning!');
 
   // A linha do que o pet sonhou. Descritiva e curta — nunca avaliativa.
@@ -67,19 +76,18 @@ export function MorningDream({ open, dream, isNew, language, onClose }: MorningD
     /* Trap + Escape + devolução de foco vêm do `RitualDialog` (`useDialogA11y`).
        O Escape daqui funcionava POR ACIDENTE: o handler estava na div do véu,
        que não é focável, e só recebia a tecla pelo `autoFocus` do botão. */
-    <RitualDialog label={headline} onClose={onClose} maxWidth={320} closeLabel={isPt ? 'Fechar' : 'Close'}>
-      <p style={{ ...centered, margin: '0 36px' }}>{headline}</p>
+    /* F2: cartão CLARO mesmo com o app no escuro (`theme="light"` redefine os
+       tokens no próprio cartão) — prêmio de manhã não é tela de visor. */
+    <RitualDialog label={headline} onClose={onClose} maxWidth={320} closeLabel={isPt ? 'Fechar' : 'Close'} theme="light">
+      <p style={{ ...centered, margin: '0 36px', color: 'var(--sm2-ink)', fontWeight: 500 }}>{headline}</p>
 
-      {/* A cena do sonho (utils/dreamArt.ts) a 1× num vidro 128². O emoji fica
-          como saída só para um sonho novo entrar no catálogo antes de a arte
-          dele existir — conteúdo, não pixel: fora do vidro. Sem sonho, o sol. */}
+      {/* A cena do sonho (utils/dreamArt.ts), DIRETO no cartão — o vidro com
+          gradiente que a emoldurava saiu (F2). O emoji fica como saída só para
+          um sonho novo entrar no catálogo antes de a arte dele existir. Sem
+          sonho, o sol. */}
       <div style={{ display: 'flex', justifyContent: 'center' }}>
         {dream && art
-          ? (
-            <RitualGlass width={128}>
-              <img src={art} alt="" width={96} height={96} style={{ width: 96, height: 96, display: 'block' }} />
-            </RitualGlass>
-          )
+          ? <img src={art} alt="" width={128} height={128} data-dream-art style={{ width: 128, height: 128, display: 'block', imageRendering: 'pixelated' }} />
           : dream
             ? <span aria-hidden="true" style={{ fontSize: 56, lineHeight: 1.1 }}>{dream.emoji}</span>
             : <Icon name="wb_sunny" size={48} tone="gold" />}
@@ -105,12 +113,18 @@ export function MorningDream({ open, dream, isNew, language, onClose }: MorningD
 
       {dream && isNew && (
         <p style={centered}>
-          {isPt ? 'Cena nova na coleção de sonhos.' : 'New scene in the dream collection.'}
+          {isPt ? 'Ela já está guardada na sua coleção de sonhos.' : 'It is already saved in your dream collection.'}
         </p>
       )}
 
-      <div style={{ paddingTop: 4 }}>
-        <button type="button" onClick={onClose} style={{ ...sm2Button('primary'), width: '100%' }}>
+      {/* "Equipar" AO LADO do "Bom dia!" (F2), só quando há o que equipar. */}
+      <div style={{ paddingTop: 4, display: 'flex', gap: 8 }}>
+        {onEquip && (
+          <button type="button" onClick={onEquip} data-dream-equip style={{ ...sm2Button('outline'), flex: 1, minWidth: 0 }}>
+            {isPt ? 'Equipar' : 'Equip'}
+          </button>
+        )}
+        <button type="button" onClick={onClose} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0 }}>
           {isPt ? 'Bom dia!' : 'Good morning!'}
         </button>
       </div>

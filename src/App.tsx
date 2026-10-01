@@ -186,6 +186,7 @@ import { UnlockAccountModal, UnlockNudge, type UnlockReason } from './components
 import { MorningCheckIn } from './components/MorningCheckIn';
 import { TriagePile, type TriageAction } from './components/TriagePile';
 import { MorningDream } from './components/MorningDream';
+import { equippableTwin } from './utils/dreamDecorTwin';
 import { WeeklyReportCard } from './components/WeeklyReportCard';
 import {
   needsCheckIn, checkInPlan, completeCheckIn,
@@ -6979,6 +6980,12 @@ export default function App() {
           isNew={morningDream.isNew}
           language={language}
           onClose={() => setMorningDream(null)}
+          /* F2: "Equipar" só quando a cena tem gêmeo na decoração que o
+             jogador JÁ possui (`utils/dreamDecorTwin.ts`) — nada é dado. */
+          onEquip={(() => {
+            const twin = equippableTwin(morningDream.dream?.id, gameState.ownedFurniture);
+            return twin ? () => { handleEquipFurniture(twin.decorId, twin.slot); setMorningDream(null); } : undefined;
+          })()}
         />
       )}
 
