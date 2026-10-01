@@ -2,7 +2,7 @@
 /**
  * AS ÁREAS DE JOGAR (minimal-ui F5) — Exploração (Masmorra) e Jogos, dentro
  * do molde `AreaScene`/`AreaSheet`. Desde 30/09/2026 (pedido do dono) Jogos tem
- * TRÊS prédios: Salão de Jogos (Corrida do Dino + PPT), Ateliê da Mente (cinco
+ * TRÊS prédios: Salão de Jogos (Corrida com obstáculos + PPT), Ateliê da Mente (cinco
  * jogos que pagam Bits) e Refúgio (respiração e bolhas calmas, sem Bits).
  *
  * Substitui a cobertura que a antiga `ActivitiesPage` (hub de cartões) dava
@@ -172,7 +172,7 @@ describe('Exploração — Zeph e a Masmorra', () => {
     expect(container.querySelector('[data-area-scene="exploracao"]')).toBeTruthy();
   });
 
-  it('Salão de Jogos → Corrida do Dino: recorde da chave DINO_BEST, 1 Bit a cada 100, e o CTA abre a DinoGame', async () => {
+  it('Salão de Jogos → Corrida com obstáculos: recorde da chave DINO_BEST, 1 Bit a cada 100, e o CTA abre a DinoGame', async () => {
     localStorage.setItem(STORAGE_KEYS.DINO_BEST, '1240');
     const p = props({ area: 'jogos' });
     const { container, getByRole } = renderWithCss(<PlayAreaView {...p} />);

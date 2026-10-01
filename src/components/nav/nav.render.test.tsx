@@ -78,7 +78,7 @@ describe('MapPage', () => {
     expect(menu.textContent).toContain('260');
     expect(menu.textContent).toContain('Bits');
     expect(menu.textContent).toContain('12');
-    expect(menu.textContent).toContain('Emblems');
+    expect(menu.textContent).toContain('Honor');
     expect(menu.textContent).toContain('3');
     expect(menu.textContent).toContain('Credits');
   });

@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { lotNpcArt } from '../../assets/soulmon/npcs';
 import npcArenaFeira from '../../assets/soulmon/npcs/npc-arena-feira.png';
-import { FAIR_ART_IDS, fairStateOf } from '../../utils/fairArt';
+import { FAIR_ART, FAIR_ART_IDS, fairStateOf } from '../../utils/fairArt';
 import { arenaLots, hallLots } from '../../utils/areaSheetCopy';
 
 const ler = (rel: string) => fs.readFileSync(path.resolve(__dirname, '../..', rel), 'utf8');
@@ -55,7 +55,10 @@ describe('o lote e o NPC da Feira', () => {
     expect(ler('utils/areaNpcVoice.ts')).not.toContain("'arena:guilda'");
     expect(FAIR_ART_IDS.npc).toBe('npc-arena-feira');
     expect(FAIR_ART_IDS.lote).toBe('lote-arena-feira');
-    expect(FAIR_ART_IDS.fenomeno).toEqual(['fair-fenomeno-aberto', 'fair-fenomeno-ferido', 'fair-fenomeno-dissipado']);
+    // Rodada 3 (30/09/2026): a arte saiu por TIPO × ESTADO (12), e toda id declarada tem PNG.
+    expect(FAIR_ART_IDS.fenomeno).toHaveLength(12);
+    expect(FAIR_ART_IDS.fenomeno).toContain('fair-fenomeno-mare-ferido');
+    for (const id of [...FAIR_ART_IDS.fenomeno, ...FAIR_ART_IDS.fx]) expect(FAIR_ART[id], id).toBeTruthy();
     expect(FAIR_ART_IDS.fx).toEqual(['fx-fair-nevoa', 'fx-fair-mare', 'fx-fair-estatica', 'fx-fair-enxame']);
   });
 

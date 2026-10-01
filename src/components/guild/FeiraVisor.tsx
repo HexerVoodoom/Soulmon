@@ -2,8 +2,9 @@
  * O VISOR DA FEIRA (`docs/PLANO-GUILDA.md` §9, WPG-10): o fenômeno da semana, em três
  * estados (aberto, ferido, dissipado) e quatro tipos (`fx-fair-*`).
  *
- * PLACEHOLDER em SVG na paleta do Visor (petróleo, turquesa, cobre, osso) — a arte real
- * (`utils/fairArt.ts`) ainda não existe e entra trocando `FAIR_ART`. Regras que a arte
+ * A arte real (`utils/fairArt.ts`, rodada 3) é lida por TIPO × ESTADO
+ * (`fair-fenomeno-<tipo>-<estado>`); o SVG na paleta do Visor (petróleo, turquesa, cobre,
+ * osso) ficou como FALLBACK para id sem arte. Regras que a arte
  * herda e este desenho já cumpre: **sem rosto, sem olho, sem boca, sem barra de HP, sem
  * número, sem letra** — o fenômeno é tempo da Malha (uma camada que não assentou), nunca
  * um inimigo com gente por trás; e nenhum estado se lê como "quanto EU bati" (o servidor
@@ -11,7 +12,7 @@
  *
  * Movimento reduzido: o FX fica parado (a informação é a mesma).
  */
-import { FAIR_ART, fairFxId, fairStateOf, type FairState } from '../../utils/fairArt';
+import { FAIR_ART, fairFenomenoId, fairFxId, fairStateOf, type FairState } from '../../utils/fairArt';
 import type { GuildRaid } from '../../utils/community';
 
 const PETROL = '#123232';
@@ -87,7 +88,7 @@ function Fx({ phenomenon }: { phenomenon: GuildRaid['phenomenon'] }) {
 
 export function FeiraVisor({ raid, label, reducedMotion }: { raid: GuildRaid; label: string; reducedMotion: boolean }) {
   const state = fairStateOf(raid);
-  const real = FAIR_ART[`fair-fenomeno-${state}`];
+  const real = FAIR_ART[fairFenomenoId(raid.phenomenon, state)];
   const fxReal = FAIR_ART[fairFxId(raid.phenomenon)];
   const slabs = slabsFor(state);
   const fenda = state === 'ferido' ? 5 : 3; // a luz entre as lajes: mais larga quando a roda já o abalou
@@ -103,7 +104,7 @@ export function FeiraVisor({ raid, label, reducedMotion }: { raid: GuildRaid; la
       style={{ height: FEIRA_VISOR_HEIGHT, background: `linear-gradient(180deg, #030B0B 0%, #0A1E1E 100%)`, backgroundColor: PETROL }}
     >
       {real ? (
-        <img src={real} alt="" draggable={false} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', imageRendering: 'pixelated' }} />
+        <img src={real} alt="" draggable={false} data-fair-fenomeno={`${raid.phenomenon}-${state}`} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', imageRendering: 'pixelated' }} />
       ) : (
         <svg viewBox="0 0 160 88" preserveAspectRatio="xMidYMax meet" width="100%" height="100%" shapeRendering="crispEdges" aria-hidden="true" focusable="false" style={{ position: 'absolute', inset: 0 }}>
           {/* O chão do visor: uma linha, nada mais. */}
@@ -119,7 +120,15 @@ export function FeiraVisor({ raid, label, reducedMotion }: { raid: GuildRaid; la
           {!fxReal && <Fx phenomenon={raid.phenomenon} />}
         </svg>
       )}
-      {fxReal && <img src={fxReal} alt="" draggable={false} className="sm2-fair-fx" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', imageRendering: 'pixelated' }} />}
+      {/* O FX real é um MOTIVO 128² (crista, faixa de névoa, faísca, espiral), não um véu:
+          desenhado a 0,5× nos dois cantos de cima (o da direita espelhado), para nunca
+          cobrir o fenômeno. Em `cover` ele virava blocos de 3–4 px por cima de tudo. */}
+      {fxReal && (
+        <span className="sm2-fair-fx" data-fair-fx={raid.phenomenon} aria-hidden="true" style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+          <img src={fxReal} alt="" draggable={false} width={64} height={64} style={{ position: 'absolute', left: 10, top: 8, imageRendering: 'pixelated' }} />
+          <img src={fxReal} alt="" draggable={false} width={64} height={64} style={{ position: 'absolute', right: 10, top: 8, transform: 'scaleX(-1)', imageRendering: 'pixelated' }} />
+        </span>
+      )}
       <span className="sm2-viewport-glass" />
     </span>
   );

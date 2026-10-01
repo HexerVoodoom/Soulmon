@@ -68,6 +68,7 @@ import type { DuelStats } from '../../functions/api/_duel.js';
 import { getOpponents, playMatch, startDuel, getRank, type Opponent, type MatchResult, type RankRow } from '../utils/community';
 import { EMBLEMS_PER_WIN, EMBLEMS_PER_LOSS, emblemStyle } from '../utils/currencies';
 import { getTierStanding } from '../utils/tournamentTiers';
+import { TIER_INSIGNIA_ART } from '../assets/soulmon/icones-ui';
 import { getTournamentWindow, tournamentWindowLabel } from '../utils/tournamentSeason';
 import { Icon } from './ui/Icon';
 import { MiniGlass } from './ui/MiniGlass';
@@ -133,6 +134,35 @@ const TIER_ICON: Record<string, string> = {
   anciao: 'auto_awesome',
   lendario: 'emoji_events',
 };
+
+/**
+ * A marca da faixa: a INSÍGNIA em pixel da rodada 3 (30/09/2026, `TIER_INSIGNIA_ART`),
+ * no molde dos emblemas de conquista; sem arte, o glifo Material de antes. A faixa ainda
+ * não alcançada sai apagada por FILTRO (dessaturada e escura), nunca por `opacity`.
+ */
+function TierMark({ id, size, state }: { id: string; size: 24 | 32; state: 'current' | 'passed' | 'next' }) {
+  const art = TIER_INSIGNIA_ART[id];
+  if (!art) {
+    const name = TIER_ICON[id] ?? 'military_tech';
+    const fill = state === 'next' ? 0 : 1;
+    const tone = state === 'current' ? 'primary' : state === 'passed' ? 'gold' : 'muted';
+    return size === 32
+      ? <Icon name={name} size={32} fill={fill} tone={tone} />
+      : <Icon name={name} size={24} fill={fill} tone={tone} />;
+  }
+  return (
+    <img
+      src={art}
+      alt=""
+      aria-hidden="true"
+      draggable={false}
+      data-tier-insignia={id}
+      width={size}
+      height={size}
+      style={{ width: size, height: size, display: 'block', imageRendering: 'pixelated', filter: state === 'next' ? 'grayscale(1) brightness(0.55)' : undefined }}
+    />
+  );
+}
 
 /** Alternador do PvP. `role="switch"` de verdade, alvo de 44px. */
 function Switch({ checked, onToggle, label, disabled = false }: {
@@ -344,8 +374,8 @@ export function TournamentPage({ saveId, petStage, petLine, pvpEnabled, onToggle
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <p style={{ ...sm2Hint, flex: 1, minWidth: 0, margin: 0 }}>{tournamentWindowLabel(round, isPt ? 'pt-BR' : 'en-US')}</p>
         <span
-          title={isPt ? 'Emblemas — só compram os prêmios do Torneio' : 'Emblems — only buy Tournament rewards'}
-          aria-label={`${isPt ? 'Emblemas' : 'Emblems'}: ${emblems}`}
+          title={isPt ? 'Honra — só compra os prêmios do Torneio' : 'Honor — only buys Tournament rewards'}
+          aria-label={`${isPt ? 'Honra' : 'Honor'}: ${emblems}`}
           style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, minHeight: 28 }}
         >
           <Icon name="military_tech" size={20} tone="gold" fill={1} />
@@ -580,7 +610,7 @@ export function TournamentPage({ saveId, petStage, petLine, pvpEnabled, onToggle
             <div style={{ ...cardStyle, padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
               <p style={sm2Hint}>{isPt ? 'Sua faixa' : 'Your tier'}</p>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Icon name={TIER_ICON[standing.tier.id] ?? 'military_tech'} size={32} tone="gold" fill={1} />
+                <TierMark id={standing.tier.id} size={32} state="current" />
                 {/* O nome da faixa em Fredoka 16 (canvas): a Silkscreen é a voz
                     do APARELHO e só vive dentro do vidro (HANDOFF §1). */}
                 <p style={{ margin: 0, fontFamily: 'var(--sm2-font-display)', fontWeight: 600, fontSize: 'var(--sm2-text-md)', lineHeight: 'var(--sm2-leading-title)', color: 'var(--sm2-ink)' }}>
@@ -603,7 +633,7 @@ export function TournamentPage({ saveId, petStage, petLine, pvpEnabled, onToggle
                       aria-current={on ? 'step' : undefined}
                       style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}
                     >
-                      <Icon name={TIER_ICON[t.id] ?? 'military_tech'} size={24} fill={on || passed ? 1 : 0} tone={on ? 'primary' : passed ? 'gold' : 'muted'} />
+                      <TierMark id={t.id} size={24} state={on ? 'current' : passed ? 'passed' : 'next'} />
                       <span style={{ ...sm2Hint, fontSize: 'var(--sm2-text-xs)', fontWeight: on ? 600 : 400, color: on ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>
                         {isPt ? t.namePt : t.nameEn}
                       </span>
@@ -702,7 +732,7 @@ export function TournamentPage({ saveId, petStage, petLine, pvpEnabled, onToggle
         <div data-tournament-shop style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <ShopStatus flash={flash} idle={isPt ? 'Emblemas só vêm do Torneio — e só compram cosmético.' : 'Emblems only come from the Tournament — and only buy cosmetics.'} />
+              <ShopStatus flash={flash} idle={isPt ? 'Honra só vem do Torneio — e só compra cosmético.' : 'Honor only comes from the Tournament — and only buys cosmetics.'} />
             </div>
             <CurrencyBalance currency="emblems" value={emblems} language={lang} />
           </div>
@@ -759,7 +789,7 @@ function ResultDialog({ result, isPt, petStage, petLine, onClose }: { result: Ma
       </p>
       {/* Perder também rende Emblemas, e a tela diz. */}
       <p style={{ display: 'inline-flex', alignItems: 'baseline', gap: 8, margin: 0 }}>
-        <span style={sm2Hint}>{isPt ? 'Emblemas' : 'Emblems'}</span>
+        <span style={sm2Hint}>{isPt ? 'Honra' : 'Honor'}</span>
         <span className="sm2-num" style={{ ...emblemNum, fontSize: 'var(--sm2-text-lg)' }}>
           +{result.won ? EMBLEMS_PER_WIN : EMBLEMS_PER_LOSS}
         </span>

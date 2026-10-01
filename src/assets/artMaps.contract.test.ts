@@ -33,6 +33,7 @@ import { DREAM_CATALOG } from '../utils/restWindow';
 import { DREAM_ART } from '../utils/dreamArt';
 import { ADVENTURE_CATALOG } from '../utils/adventure';
 import { ADVENTURE_ART } from '../utils/adventureArt';
+import { REGIONS } from '../data/travessiasCatalog';
 import { DECOR_ART } from '../utils/decorArt';
 import { elementIcon } from '../utils/elementIconArt';
 
@@ -122,11 +123,14 @@ describe('sonhos — DREAM_CATALOG ↔ DREAM_ART', () => {
   });
 });
 
-describe('achados da aventura — ADVENTURE_CATALOG ↔ ADVENTURE_ART', () => {
+describe('achados da aventura — ADVENTURE_CATALOG (+ postais das Travessias) ↔ ADVENTURE_ART', () => {
   it('(a)+(b) 1:1', () => {
-    const ids = ADVENTURE_CATALOG.map(a => a.id).sort();
+    // Rodada 3 (30/09/2026): os 48 postais `trv-*` (chegada + achados de cada região,
+    // `data/travessiasCatalog.ts`) entraram no MESMO mapa, arquivo `adv-trv-*.png`.
+    const trv = REGIONS.flatMap(r => [r.arrival.id, ...r.finds.map(f => f.id)]);
+    const ids = [...ADVENTURE_CATALOG.map(a => a.id), ...trv].sort();
     expect(Object.keys(ADVENTURE_ART).sort()).toEqual(ids);
-    expect(ls('soulmon/adventures').sort()).toEqual(ids);
+    expect(ls('soulmon/adventures').sort()).toEqual([...ADVENTURE_CATALOG.map(a => a.id), ...trv.map(t => `adv-${t}`)].sort());
   });
 });
 

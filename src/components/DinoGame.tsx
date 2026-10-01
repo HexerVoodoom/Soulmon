@@ -11,17 +11,25 @@ import obstacle1 from '../assets/soulmon/dino/dino-obstacle-1.png';
 import obstacle2 from '../assets/soulmon/dino/dino-obstacle-2.png';
 import obstacle3 from '../assets/soulmon/dino/dino-obstacle-3.png';
 import obstacle4 from '../assets/soulmon/dino/dino-obstacle-4.png';
+import obstacle1b from '../assets/soulmon/dino/dino-obstacle-1b.png';
+import obstacle1c from '../assets/soulmon/dino/dino-obstacle-1c.png';
+import obstacle2b from '../assets/soulmon/dino/dino-obstacle-2b.png';
+import obstacle2c from '../assets/soulmon/dino/dino-obstacle-2c.png';
+import obstacle3b from '../assets/soulmon/dino/dino-obstacle-3b.png';
+import obstacle3c from '../assets/soulmon/dino/dino-obstacle-3c.png';
+import obstacle4b from '../assets/soulmon/dino/dino-obstacle-4b.png';
+import obstacle4c from '../assets/soulmon/dino/dino-obstacle-4c.png';
 import groundStrip from '../assets/soulmon/dino/dino-ground-strip.png';
 import parallaxFar from '../assets/soulmon/dino/dino-parallax-far.png';
 
 /**
- * Dino Runner — endless runner starring the pet.
- * Obstacles are dungeon ruins and get bigger as difficulty ramps:
- * broken pillar → crystal rock → vine column → copper barricade (tier by
- * elapsed time; speed and spawn rate also scale continuously). Arte própria
- * (`assets/soulmon/dino/`, entrega 4) — até 15/09/2026 os obstáculos eram os
- * sprites do roster desenhados como silhueta espelhada e o chão era uma linha
- * de 1px. Jump via the big button BELOW the game
+ * Corrida com obstáculos (EN Obstacle Run; até 30/09/2026 "Corrida do Dino" / "Dino
+ * Runner" — o id `dino`, a pasta `dino/` e as chaves de save NÃO mudaram) — endless
+ * runner starring the pet. Obstacles are bones and cold-fire crystals (tema da rodada 3,
+ * decisão do dono de 30/09/2026) and get bigger as difficulty ramps; each tier has three
+ * VARIANTS (a/b/c) drawn at random, each with its own measured hit box. Tier by elapsed
+ * time; speed and spawn rate also scale continuously. Arte própria
+ * (`assets/soulmon/dino/`). Jump via the big button BELOW the game
  * box (thumb never covers the action), the box itself, or SPACE.
  * Scoring: 🪙 Bits earned = floor(distance score / 100) per run.
  *
@@ -42,14 +50,33 @@ import parallaxFar from '../assets/soulmon/dino/dino-parallax-far.png';
  */
 
 // Obstacle tiers: unlocked as the run progresses (start time in seconds).
-// `hit` é a fração horizontal OPACA da arte (medida da bounding box, 128px):
-// a coluna do tier 3 ocupa só o meio da caixa quadrada, e uma colisão na
-// caixa inteira mataria o jogador "no ar".
-const OBSTACLE_TIERS = [
-  { src: obstacle1, from: 0,  size: 38, hit: [6 / 128, 122 / 128] },
-  { src: obstacle2, from: 20, size: 44, hit: [14 / 128, 114 / 128] },
-  { src: obstacle3, from: 45, size: 50, hit: [38 / 128, 90 / 128] },
-  { src: obstacle4, from: 75, size: 56, hit: [3 / 128, 125 / 128] },
+// Cada tier tem 3 variantes (rodada 3, 30/09/2026), sorteadas no spawn. `hit` é a
+// fração horizontal OPACA da arte e `top` a fração vazia acima dela (bounding box do
+// alfa, medida sobre os PNGs de 128px — MANIFEST da leva `corrida`): a coluna do tier 3
+// ocupa só o meio da caixa, e as variantes baixas (1b, 4b) só a metade de baixo — uma
+// colisão na caixa inteira mataria o jogador "no ar". `size` é balanceamento e não mudou.
+type ObstacleArt = { src: string; hit: readonly [number, number]; top: number };
+const OBSTACLE_TIERS: { from: number; size: number; variants: ObstacleArt[] }[] = [
+  { from: 0, size: 38, variants: [
+    { src: obstacle1, hit: [4 / 128, 124 / 128], top: 1 / 128 },
+    { src: obstacle1b, hit: [1 / 128, 127 / 128], top: 65 / 128 },
+    { src: obstacle1c, hit: [6 / 128, 122 / 128], top: 1 / 128 },
+  ] },
+  { from: 20, size: 44, variants: [
+    { src: obstacle2, hit: [6 / 128, 121 / 128], top: 1 / 128 },
+    { src: obstacle2b, hit: [1 / 128, 127 / 128], top: 15 / 128 },
+    { src: obstacle2c, hit: [1 / 128, 127 / 128], top: 4 / 128 },
+  ] },
+  { from: 45, size: 50, variants: [
+    { src: obstacle3, hit: [40 / 128, 88 / 128], top: 1 / 128 },
+    { src: obstacle3b, hit: [38 / 128, 89 / 128], top: 1 / 128 },
+    { src: obstacle3c, hit: [41 / 128, 86 / 128], top: 1 / 128 },
+  ] },
+  { from: 75, size: 56, variants: [
+    { src: obstacle4, hit: [1 / 128, 127 / 128], top: 38 / 128 },
+    { src: obstacle4b, hit: [1 / 128, 127 / 128], top: 66 / 128 },
+    { src: obstacle4c, hit: [1 / 128, 127 / 128], top: 45 / 128 },
+  ] },
 ];
 // Chão e silhueta de fundo, repetíveis em X (medidos: costura < 20/765),
 // desenhados a 1× (D-J4): a faixa do chão 384×48 e o parallax 512×128.
@@ -79,7 +106,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const scoreElRef = useRef<HTMLSpanElement>(null);
   const petImgRef = useRef<HTMLImageElement | null>(null);
-  const tierImgsRef = useRef<HTMLImageElement[]>([]);
+  const tierImgsRef = useRef<HTMLImageElement[][]>([]);
   const groundImgRef = useRef<HTMLImageElement | null>(null);
   const parallaxImgRef = useRef<HTMLImageElement | null>(null);
   const [phase, setPhase] = useState<'ready' | 'playing' | 'over'>('ready');
@@ -94,7 +121,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
   const petNeedsFlip = false;
 
   // Physics/game state lives in a ref — the loop never re-renders React.
-  const g = useRef({ h: 0, vy: 0, obstacles: [] as { x: number; size: number; tier: number }[], speed: 0, t: 0, spawnIn: 0, score: 0, gx: 0, px: 0 });
+  const g = useRef({ h: 0, vy: 0, obstacles: [] as { x: number; size: number; tier: number; v: number }[], speed: 0, t: 0, spawnIn: 0, score: 0, gx: 0, px: 0 });
 
   useEffect(() => {
     const pet = new Image();
@@ -102,11 +129,11 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
     // o sprite 256² a 0,25× quando o estágio não é de linha.
     pet.src = lineIconForStage(evolutionStage, 64, demoCharacterId) ?? getSpriteForStage(evolutionStage, demoCharacterId, 256);
     petImgRef.current = pet;
-    tierImgsRef.current = OBSTACLE_TIERS.map(t => {
+    tierImgsRef.current = OBSTACLE_TIERS.map(t => t.variants.map(v => {
       const img = new Image();
-      img.src = t.src;
+      img.src = v.src;
       return img;
-    });
+    }));
     const ground = new Image(); ground.src = groundStrip; groundImgRef.current = ground;
     const far = new Image(); far.src = parallaxFar; parallaxImgRef.current = far;
     // O quadro parado do vidro antes de começar: chão, parallax e o pet na
@@ -185,7 +212,8 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       if (s.spawnIn <= 0) {
         const maxTier = currentTier();
         const tier = maxTier > 0 && Math.random() < 0.35 ? maxTier - 1 : maxTier;
-        s.obstacles.push({ x: canvas.width + 20, size: OBSTACLE_TIERS[tier].size, tier });
+        const v = Math.floor(Math.random() * OBSTACLE_TIERS[tier].variants.length);
+        s.obstacles.push({ x: canvas.width + 20, size: OBSTACLE_TIERS[tier].size, tier, v });
         s.spawnIn = (0.95 + Math.random() * 0.85) * (340 / s.speed) + 0.34;
       }
       for (const o of s.obstacles) o.x -= s.speed * dt;
@@ -198,8 +226,8 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       const dBot = GROUND - s.h - 2;
       const dL = DINO_X + 8, dR = DINO_X + DINO_S - 10;
       for (const o of s.obstacles) {
-        const [hl, hr] = OBSTACLE_TIERS[o.tier].hit;
-        const oL = o.x + o.size * hl + 2, oR = o.x + o.size * hr - 2, oT = GROUND - o.size + 6;
+        const { hit: [hl, hr], top } = OBSTACLE_TIERS[o.tier].variants[o.v];
+        const oL = o.x + o.size * hl + 2, oR = o.x + o.size * hr - 2, oT = GROUND - o.size * (1 - top) + 6;
         if (dR > oL && dL < oR && dBot > oT && dTop < GROUND) { dead = true; break; }
       }
 
@@ -208,7 +236,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       const far = parallaxImgRef.current;
       if (far?.complete) drawStrip(far, s.px, GROUND - PARALLAX_H, PARALLAX_W, PARALLAX_H);
       for (const o of s.obstacles) {
-        const img = tierImgsRef.current[o.tier];
+        const img = tierImgsRef.current[o.tier]?.[o.v];
         if (img?.complete) ctx.drawImage(img, o.x, GROUND - o.size, o.size, o.size);
       }
       const ground = groundImgRef.current;
@@ -263,7 +291,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
   return (
     <GameRoot>
       <GameHeader
-        title={isPt ? 'Corrida do Dino' : 'Dino Runner'}
+        title={isPt ? 'Corrida com obstáculos' : 'Obstacle Run'}
         sub={<span className="sm2-num">{isPt ? 'Recorde' : 'Best'} {best}</span>}
         closeLabel={isPt ? 'Sair' : 'Exit'}
         onClose={onExit}

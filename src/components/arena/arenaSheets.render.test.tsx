@@ -62,7 +62,7 @@ describe('Torneio', () => {
       />,
     );
     fireEvent.click(screen.getByRole('tab', { name: 'Missions' }));
-    fireEvent.click(screen.getByRole('button', { name: `Claim ${m.emblems} Emblems` }));
+    fireEvent.click(screen.getByRole('button', { name: `Claim ${m.emblems} Honor` }));
     expect(onClaim).toHaveBeenCalledWith(m.id);
   });
 
@@ -75,7 +75,7 @@ describe('Torneio', () => {
     expect(loja.textContent).not.toContain('Bits');
     expect(loja.querySelector('[data-balance="emblems"]')).not.toBeNull();
     const cheap = TOURNAMENT_ITEMS[0];
-    fireEvent.click(screen.getByRole('button', { name: `${cheap.nameEn} — ${cheap.price} Emblems` }));
+    fireEvent.click(screen.getByRole('button', { name: `${cheap.nameEn} — ${cheap.price} Honor` }));
     expect(shop.actions.onBuy).toHaveBeenCalledWith(cheap.id);
   });
 

@@ -9,6 +9,17 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 30/09/2026 — Rodada 3: fx-itens, extras, corrida e postais instalados (SQUAD-ARTE, `feat/arte-rodada3-levas`)
+>
+> 115 PNGs com sha256 conferido contra os MANIFEST antes e depois da cópia. Ligados: Concha da Maré
+> (sai o SVG), mochila do passeio e sol de "Acordar" no `CompanionHUD`, `dias-completos-30` refeito,
+> Feira com arte por **tipo × estado** (`fairFenomenoId`, SVG como fallback), insígnias das faixas no
+> `TournamentPage`, obstáculos da Corrida com **3 variantes por tier** e `hit`/`top` medidos, 48 postais
+> das Travessias em `ADVENTURE_ART`. **Sem chamada**: céu (sol + 5 luas), masmorra (porta/baús/escada),
+> moedas, atributos, FX da corrida (estilhaço/faísca/cristal-moeda) e `icone-corrida`. Rótulos: moeda do
+> Torneio = **Honra/Honor**; jogo = **Corrida com obstáculos/Obstacle Run** (ids de save intactos;
+> REGISTRO §17). `CACHE_VERSION` v179. Registro: `ASSETS-A-GERAR.md` §8 I14–I17.
+
 > ## 30/09/2026 — Bustos de NPC (16) e prédios de lote (10) instalados (SQUAD-ARTE, `feat/arte-npcs-bustos`)
 >
 > Leva `npcs-flare` (aprovada pelo dono): 10 NPCs de lote trocaram os placeholders em `LOT_NPC_ART`

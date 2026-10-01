@@ -18,7 +18,7 @@ export interface MissionState {
   dungeonKills: number;
   /** Full 5-floor dungeon runs completed (lifetime). */
   dungeonRunsCompleted: number;
-  /** Best Dino Runner score. */
+  /** Best Obstacle Run score (id `dino` kept). */
   dinoBest: number;
   /** Perfect days earned in total (lifetime — does not reset on evolution).
    *  ⚠️ Só dias completos REAIS desde a decisão #41/#60 (22/09/2026). */
@@ -106,7 +106,7 @@ export const MISSIONS: Mission[] = [
   {
     id: 'mission-dino-1000', category: 'games', icon: '🦖', iconName: 'pets', target: 1000, bgReward: 'bg-mission-dinoland',
     namePt: 'Maratonista Jurássico', nameEn: 'Jurassic Marathoner',
-    descPt: 'Faça 1000 de score na Corrida do Dino', descEn: 'Score 1000 in Dino Runner',
+    descPt: 'Faça 1000 de score na Corrida com obstáculos', descEn: 'Score 1000 in the Obstacle Run',
     progress: s => s.dinoBest,
   },
   {

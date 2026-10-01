@@ -5766,7 +5766,7 @@ export default function App() {
               lote aberto. As SEIS áreas têm o conteúdo real (F5), todas num
               `AreaView` só: Mercado (lojinhas com abas por moeda,
               Conquistas), Arena (Torneio, Duelo), Exploração (Masmorra,
-              Corrida do Dino), Jogos (Pedra, papel e tesoura), Laboratório
+              Corrida com obstáculos), Jogos (Pedra, papel e tesoura), Laboratório
               (Evolução/Soulmon/Stats) e Hall (Biblioteca). */}
           {area && (
             <Suspense fallback={<ScreenSkeleton language={language} />}>

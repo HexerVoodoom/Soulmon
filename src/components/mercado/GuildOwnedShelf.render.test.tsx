@@ -131,7 +131,7 @@ describe('Concha da Maré: conquista, nunca compra', () => {
     expect(item.currency).toBeUndefined();
     expect(item.unlock?.kind).toBe('mission');
     expect(item.nameEn).toBe('Tide shell');
-    expect(DECOR_ART[RAID_TROPHY_ID]).toMatch(/^data:image\/svg\+xml/);
+    expect(DECOR_ART[RAID_TROPHY_ID]).toMatch(/trophy-concha-mare/); // arte real da rodada 3 (era o placeholder em SVG)
     // paleta do Visor: nada de magenta/roxo/rosa no placeholder
     expect(decodeURIComponent(DECOR_ART[RAID_TROPHY_ID])).not.toMatch(/#(?:f0f|ff00ff|8b5cf6|a855f7|ec4899|d946ef)/i);
   });

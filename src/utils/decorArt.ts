@@ -37,19 +37,9 @@ import furnGarland from '../assets/decor/furn-garland.png';
 import furnWindChime from '../assets/decor/furn-wind-chime.png';
 import furnClock from '../assets/decor/furn-clock.png';
 
-/**
- * PLACEHOLDER da Concha da Maré (`trophy-concha-mare`, conquista da Guilda): um leque de
- * lajes (concha) em petróleo, veio turquesa e presilha de cobre, na paleta do Visor — sem
- * rosto, sem magenta/roxo/rosa. A leva de arte troca esta linha por
- * `assets/decor/trophy-concha-mare.png` (mesma convenção das demais peças).
- */
-const CONCHA_PLACEHOLDER = 'data:image/svg+xml,' + encodeURIComponent(
-  '<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 64 64" shape-rendering="crispEdges">'
-  + '<path d="M8 46 L14 24 L24 14 L40 14 L50 24 L56 46 Z" fill="#1E5A5A" stroke="#061414" stroke-width="2"/>'
-  + '<path d="M32 46 L32 16 M32 46 L20 20 M32 46 L44 20 M32 46 L13 30 M32 46 L51 30" stroke="#6EFFFB" stroke-width="2" fill="none"/>'
-  + '<rect x="26" y="46" width="12" height="6" fill="#B87333" stroke="#061414" stroke-width="2"/>'
-  + '</svg>',
-);
+// Concha da Maré (`trophy-concha-mare`, conquista da Guilda) — arte real da rodada 3
+// (30/09/2026, 92×100), no lugar do placeholder em SVG que vivia aqui.
+import trophyConchaMare from '../assets/decor/trophy-concha-mare.png';
 
 /** Chave = id do item em utils/shop.ts (kind: 'furniture'). */
 export const DECOR_ART: Record<string, string> = {
@@ -67,7 +57,7 @@ export const DECOR_ART: Record<string, string> = {
   'furniture-medal-wall': furnitureMedalWall,
   'furniture-trophy-shelf': furnitureTrophyShelf,
   'furniture-podium': furniturePodium,
-  'trophy-concha-mare': CONCHA_PLACEHOLDER,
+  'trophy-concha-mare': trophyConchaMare,
   'furn-grass': furnGrass,
   'furn-sand': furnSand,
   'furn-stone-tiles': furnStoneTiles,

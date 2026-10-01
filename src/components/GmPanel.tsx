@@ -41,8 +41,8 @@ export function GmPanel({ language, gm }: { language: Language; gm: GmActions })
         <ActionRow
           label={isPt ? 'Dar saldo' : 'Give balance'}
           hint={isPt
-            ? `Bits e Emblemas em ${GM_BALANCE.toLocaleString('pt-BR')}. Créditos vêm do servidor e já são ilimitados.`
-            : `Bits and Emblems at ${GM_BALANCE.toLocaleString('en-US')}. Credits come from the server and are already unlimited.`}
+            ? `Bits e Honra em ${GM_BALANCE.toLocaleString('pt-BR')}. Créditos vêm do servidor e já são ilimitados.`
+            : `Bits and Honor at ${GM_BALANCE.toLocaleString('en-US')}. Credits come from the server and are already unlimited.`}
           onClick={gm.onGiveBalance}
         />
         <ActionRow

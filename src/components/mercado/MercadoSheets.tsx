@@ -33,14 +33,14 @@ const stickyHead: CSSProperties = {
 };
 
 function currencyLabel(c: CurrencyId, isPt: boolean): string {
-  if (c === 'emblems') return isPt ? 'Emblemas' : 'Emblems';
+  if (c === 'emblems') return isPt ? 'Honra' : 'Honor';
   if (c === 'credits') return isPt ? 'Créditos' : 'Credits';
   return 'Bits';
 }
 
 /** Linha de apoio da região viva quando nada aconteceu ainda. */
 function idleLine(c: CurrencyId, isPt: boolean): string {
-  if (c === 'emblems') return isPt ? 'Emblemas só vêm do Torneio — e só compram cosmético.' : 'Emblems only come from the Tournament — and only buy cosmetics.';
+  if (c === 'emblems') return isPt ? 'Honra só vem do Torneio — e só compra cosmético.' : 'Honor only comes from the Tournament — and only buys cosmetics.';
   if (c === 'credits') return isPt ? 'Créditos viram Bits aqui. O contrário não existe.' : "Credits turn into Bits here. There's no way back.";
   return isPt ? 'Ganhe Bits nos minijogos.' : 'Earn Bits in the minigames.';
 }

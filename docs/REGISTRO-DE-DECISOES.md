@@ -1227,3 +1227,26 @@ Três decisões do dono, todas fechadas sem reabertura:
    do Oráculo continua com `soulGoal`/`soulStruggle` em texto livre; o convite
    do catálogo continua com os seletores de área/dificuldade/força. Decisão
    fechada; não é mais pendência.
+
+## 17. Rodada 3 de arte — dois rótulos trocados (30/09/2026)
+
+Decisões do dono passadas ao `arte-instalador` junto com a aprovação das levas
+`fx-itens`/`extras`/`corrida`/`postais` (`E:/Soulmon-assets/out/rodada3/*/MANIFEST.md`):
+
+1. **A moeda do Torneio se chama "Honra" / "Honor" na UI.** ⚠️ Reverte a **D3** de
+   23/09/2026 (`design/minimal-ui/PLANO-IMPLEMENTACAO.md` §0, "fica Emblemas"), que
+   era a alternativa que tinha vencido; a perdedora (renomear para Honra, como nos
+   mocks) passou. Só o RÓTULO exibido mudou (`CURRENCIES.emblems.name`, loja,
+   Torneio, Mapa, Feira em `guildCopy.ts` + `NARRATIVA-COPY-GUILDA.md`, Glossário,
+   Renascimento, GM): o campo `emblems` do save, o id `'emblems'`, `EMBLEMS_PER_WIN`,
+   `RAID_EMBLEMS` e todo identificador continuam. Os **emblemas de conquista**
+   (`emblemArt.ts`, Ficha do Pet) são outra coisa e NÃO mudaram de nome.
+   Gatilho para rever: o par EN "Honor" colidir com nome de outro sistema ou o
+   PT "de Honra" ler mal em contagem pequena.
+2. **"Corrida do Dino" / "Dino Runner" vira "Corrida com obstáculos" / "Obstacle
+   Run"**, com o tema da arte trocado para ossos e cristais de fogo frio (sem dino,
+   sem caveira). Ids de save e de código mantidos: `game === 'dino'`, `dinoBest`,
+   `STORAGE_KEYS.DINO_BEST`, `assets/soulmon/dino/`, `mission-dino-1000`,
+   `bg-mission-dinoland`. Ficaram **fora** (decisão separada do dono): o nome da
+   missão "Maratonista Jurássico" e o fundo "Vale dos Dinos".
+

@@ -44,7 +44,17 @@ import advCometa from '../assets/soulmon/adventures/adv-cometa.png';
 import advGuardiao from '../assets/soulmon/adventures/adv-guardiao.png';
 import advPonte from '../assets/soulmon/adventures/adv-ponte.png';
 
-/** Id do achado em `ADVENTURE_CATALOG` → URL do PNG. */
+// Postais das Travessias (rodada 3, 30/09/2026 — 48 peças 96², 8 regiões × 6): arquivo
+// `adv-trv-<regiao>-<nome>.png` ↔ id `trv-<regiao>-<nome>` em `data/travessiasCatalog.ts`.
+// Glob eager: o nome do arquivo É a chave, e o `?? emoji` de quem desenha cobre a falta.
+const TRV_PNG = import.meta.glob<string>('../assets/soulmon/adventures/adv-trv-*.png', { eager: true, import: 'default' });
+const TRV_ART: Record<string, string> = {};
+for (const [path, url] of Object.entries(TRV_PNG)) {
+  const m = /\/adv-(trv-[a-z]+-[a-z]+)\.png$/.exec(path);
+  if (m) TRV_ART[m[1]] = url;
+}
+
+/** Id do achado em `ADVENTURE_CATALOG` (ou postal `trv-*` das Travessias) → URL do PNG. */
 export const ADVENTURE_ART: Record<string, string> = {
   // comuns
   'adv-orvalho': advOrvalho,
@@ -73,4 +83,6 @@ export const ADVENTURE_ART: Record<string, string> = {
   'adv-guardiao': advGuardiao,
   'adv-ponte': advPonte,
   'adv-aurora': advAurora,
+  // postais das Travessias (48)
+  ...TRV_ART,
 };

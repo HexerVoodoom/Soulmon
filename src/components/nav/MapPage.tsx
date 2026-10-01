@@ -133,8 +133,8 @@ export function MapPage({ language, onOpenArea, bits, emblems, credits }: {
         <span data-map-chip aria-label={isPt ? `${bits} Bits` : `${bits} Bits`} style={{ ...CHIP, ...bitsStyle, fontSize: 'var(--sm2-text-sm)' }}>
           {bits} Bits
         </span>
-        <span data-map-chip aria-label={isPt ? `${emblems} Emblemas` : `${emblems} Emblems`} style={{ ...CHIP, ...emblemStyle, fontSize: 'var(--sm2-text-sm)' }}>
-          {emblems} {isPt ? 'Emblemas' : 'Emblems'}
+        <span data-map-chip aria-label={isPt ? `${emblems} de Honra` : `${emblems} Honor`} style={{ ...CHIP, ...emblemStyle, fontSize: 'var(--sm2-text-sm)' }}>
+          {emblems} {isPt ? 'Honra' : 'Honor'}
         </span>
         <span
           data-map-chip

@@ -92,7 +92,7 @@ function picross(p: Perfil, lado: 5 | 7 | 10): Medida {
 const DINO_CORRIDA_S = { típico: 60, experiente: 180 } as const;
 function dino(p: Perfil): Medida {
   const s = DINO_CORRIDA_S[p.nome];
-  return medir('Corrida do Dino', p, Math.floor((s * 10) / 100), s * 1000 + 3000);
+  return medir('Corrida com obstáculos', p, Math.floor((s * 10) / 100), s * 1000 + 3000);
 }
 // PPT: sorte pura (50%); ~2,5 s por rodada, ~1/3 de empates.
 function ppt(p: Perfil): Medida {
