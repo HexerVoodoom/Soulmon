@@ -14,11 +14,13 @@ import bgArena from './bg-arena.png';
 import loteItens from './lote-loja-itens.png';
 import loteDecoracao from './lote-loja-decoracao.png';
 import loteBackground from './lote-loja-background.png';
-import loteConquistas from './lote-loja-conquistas.png';
+import loteFeira from './lote-arena-feira.png';
 import loteMercadoConquistas from './lote-mercado-conquistas.png';
 import loteTorneio from './lote-arena-torneio.png';
 import loteDuelo from './lote-arena-duelo.png';
 
+// ⚠️ SEM CONSUMIDOR desde 01/10/2026: `lote-loja-conquistas.png` só emprestava a arte à Feira, que ganhou a tenda-cúpula própria.
+// O arquivo fica em disco (fora do bundle, sem import).
 export const AREA_BG = { mercado: bgMercado, arena: bgArena } as const;
 
 export const MERCADO_LOT_ART = {
@@ -26,13 +28,11 @@ export const MERCADO_LOT_ART = {
   decoracao: loteDecoracao,
   background: loteBackground,
   // 30/09/2026 (leva lotes-v2, aprovada pelo dono): a torre-treliça própria.
-  // `lote-loja-conquistas` segue no bundle só como placeholder da Feira, abaixo.
   conquistas: loteMercadoConquistas,
 } as const;
 
-// ⚠️ `feira`: PLACEHOLDER (a arte `lote-arena-feira` — tenda-cúpula listrada — vem da leva de
-// arte, `utils/fairArt.ts`). Só trocar o import.
-export const ARENA_LOT_ART = { torneio: loteTorneio, duelo: loteDuelo, feira: loteConquistas } as const;
+// `feira` (01/10/2026, leva lotes-v2 `lote-arena-feira`, versão limpa): a tenda-cúpula listrada própria.
+export const ARENA_LOT_ART = { torneio: loteTorneio, duelo: loteDuelo, feira: loteFeira } as const;
 
 // ── Exploração e Jogos (F5, PR #118) ───────────────────────────────────────
 // Fundos reduzidos para 760×1344 (a mesma medida do Mercado/Arena) para caber

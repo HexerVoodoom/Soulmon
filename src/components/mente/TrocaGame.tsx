@@ -6,6 +6,7 @@ import { GameRoot, GameHeader, GameVisor, VisorSprite, StatTag, phaseTitle, phas
 import { Icon } from '../ui/Icon';
 import { usePrefersReducedMotion } from '../ui/Viewport';
 import { DUNGEON_LINE_SPRITES } from '../../utils/sprites';
+import { trocaCeuScene, trocaGrutaScene } from '../../utils/visorScenes';
 import {
   TROCA_DECK_SIZE, TROCA_SESSION_MS, applySort, buildDeck, initialTrocaState, trocaBits,
   type TrocaCard, type TrocaRule, type TrocaSide, type TrocaState,
@@ -29,8 +30,9 @@ const PULSE_MS = 700;
 const SWIPE_PX = 48;
 
 // Fundo claro de CÉU e escuro de GRUTA — só tokens, nada de vermelho.
-const SKY_BG = 'linear-gradient(180deg, color-mix(in srgb, var(--sm2-primary-fill) 22%, var(--sm2-viewport-ink)) 0%, var(--sm2-viewport-ink) 100%)';
-const CAVE_BG = 'radial-gradient(120% 90% at 50% 100%, color-mix(in srgb, var(--sm2-primary-deep) 35%, transparent), transparent 60%), linear-gradient(180deg, color-mix(in srgb, var(--sm2-viewport-bg) 55%, black) 0%, var(--sm2-viewport-bg) 100%)';
+// Faixas pintadas (leva `visores`, 01/10/2026); o degradê antigo ficou de cor de reserva.
+const SKY_BG = trocaCeuScene('linear-gradient(180deg, color-mix(in srgb, var(--sm2-primary-fill) 22%, var(--sm2-viewport-ink)) 0%, var(--sm2-viewport-ink) 100%)');
+const CAVE_BG = trocaGrutaScene('radial-gradient(120% 90% at 50% 100%, color-mix(in srgb, var(--sm2-primary-deep) 35%, transparent), transparent 60%), linear-gradient(180deg, color-mix(in srgb, var(--sm2-viewport-bg) 55%, black) 0%, var(--sm2-viewport-bg) 100%)');
 
 export function TrocaGame({ language, onEarnPoints, onExit }: EarningGameProps) {
   const isPt = language === 'pt-BR';

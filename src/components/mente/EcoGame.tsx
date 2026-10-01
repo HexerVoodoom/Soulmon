@@ -5,6 +5,7 @@ import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, phaseTitle, phaseLine } from '../games/GameKit';
 import { usePrefersReducedMotion } from '../ui/Viewport';
 import { getSpriteForStage } from '../../utils/sprites';
+import { ATELIE_SCENE, MINI_FX } from '../../utils/visorScenes';
 import {
   checkTap, ecoBits, growSequence, playbackIntervalMs, startSequence,
   ECO_MAX_BITS, ECO_START_LENGTH, type Stone,
@@ -29,16 +30,23 @@ const STONES: ReadonlyArray<{ pt: string; en: string; color: string; visor: stri
 
 type Phase = 'intro' | 'show' | 'input' | 'done';
 
-function StoneShape({ stone, size, color }: { stone: Stone; size: number; color: string }) {
-  const s = STONES[stone];
+/**
+ * A pedra é o sprite 48² da leva `visores` (01/10/2026): a FORMA (anel, losango, quadrado,
+ * triângulo, todos com engaste de cobre) é o que distingue uma da outra — a cor deixou de
+ * ser a pista, e a regra "forma e nome, não só cor" fica cumprida pela própria arte. A
+ * cor do kit (`color`) segue só no brilho e no sublinhado do nome.
+ */
+function StoneShape({ stone, size }: { stone: Stone; size: number }) {
   return (
-    <span
+    <img
+      src={MINI_FX.pedras[stone]}
+      alt=""
       aria-hidden="true"
+      draggable={false}
       data-eco-shape={stone}
-      style={{
-        display: 'block', width: size, height: size, flex: 'none',
-        backgroundColor: color, borderRadius: s.radius, clipPath: s.clip,
-      }}
+      width={size}
+      height={size}
+      style={{ display: 'block', width: size, height: size, flex: 'none', imageRendering: 'pixelated' }}
     />
   );
 }
@@ -148,7 +156,7 @@ export function EcoGame({ language, evolutionStage, demoCharacterId, onEarnPoint
       <GameHeader title={title} sub={sub} closeLabel={isPt ? 'Sair' : 'Exit'} onClose={onExit} />
 
       {/* O VISOR: o pet no meio e a pedra que ele está cantando ao lado. */}
-      <GameVisor height={80} label={isPt ? 'O pet canta as pedras' : 'Your pet sings the stones'}>
+      <GameVisor height={80} scene={ATELIE_SCENE} label={isPt ? 'O pet canta as pedras' : 'Your pet sings the stones'}>
         <VisorSprite
           src={pet}
           data-visor-pet
@@ -160,7 +168,7 @@ export function EcoGame({ language, evolutionStage, demoCharacterId, onEarnPoint
         />
         {lit !== null && (
           <span data-eco-note={lit} style={{ position: 'absolute', left: 258, top: 56 }}>
-            <StoneShape stone={lit} size={48} color={STONES[lit].visor} />
+            <StoneShape stone={lit} size={48} />
           </span>
         )}
       </GameVisor>
@@ -206,7 +214,7 @@ export function EcoGame({ language, evolutionStage, demoCharacterId, onEarnPoint
                     transition: 'transform 120ms var(--sm2-ease), filter 120ms var(--sm2-ease)',
                   }}
                 >
-                  <StoneShape stone={i as Stone} size={48} color={s.color} />
+                  <StoneShape stone={i as Stone} size={48} />
                 </span>
                 <span
                   style={{

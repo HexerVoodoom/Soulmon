@@ -4,6 +4,7 @@ import type { MiniGameBaseProps } from './types';
 import { sm2Button } from '../form/FormKit';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, phaseTitle, phaseLine } from '../games/GameKit';
 import { usePrefersReducedMotion } from '../ui/Viewport';
+import { MINI_FX, REFUGIO_SCENE } from '../../utils/visorScenes';
 import { getSpriteForStage } from '../../utils/sprites';
 import {
   bolhasBits, bubbleProgress, hasEscaped, initialStaircase, recordOutcome, spawnBubble, timeLeftMs,
@@ -176,7 +177,7 @@ export function BolhasGame({ language, evolutionStage, demoCharacterId, onExit, 
         </div>
       )}
 
-      <GameVisor height={120} label={isPt ? 'Bolhas subindo' : 'Rising bubbles'}>
+      <GameVisor height={120} scene={REFUGIO_SCENE} label={isPt ? 'Bolhas subindo' : 'Rising bubbles'}>
         <VisorSprite src={pet} size={64} data-visor-pet idle={!blowing && !reduced} style={petStyle} />
         {phase === 'play' && bubbles.current.map(b => {
           const p = posOf(b, now);
@@ -191,12 +192,12 @@ export function BolhasGame({ language, evolutionStage, demoCharacterId, onExit, 
               onClick={() => pop(b.id)}
               style={{
                 position: 'absolute', left: p.x + sway, top: p.y, width: BUBBLE, height: BUBBLE,
-                padding: 0, borderRadius: '50%', cursor: 'pointer', boxSizing: 'border-box',
-                // Sonho: vidro claro com brilho. Fiapo: escuro, borda tracejada — forma, não só cor.
-                border: dream ? '2px solid var(--sm2-viewport-ink)' : '2px dashed var(--sm2-haunted)',
-                background: dream
-                  ? 'radial-gradient(circle at 32% 30%, var(--sm2-viewport-ink) 0 14%, color-mix(in srgb, var(--sm2-primary-fill) 35%, transparent) 15% 100%)'
-                  : 'color-mix(in srgb, var(--sm2-viewport-bg) 70%, var(--sm2-haunted))',
+                padding: 0, cursor: 'pointer', boxSizing: 'border-box',
+                // Sonho: bolha de vidro com estrela. Fiapo: fio ondulado escuro — forma, não só cor
+                // (sprites 48² da leva `visores`, 01/10/2026; sem caixa nem borda em volta).
+                border: 'none',
+                background: `url(${dream ? MINI_FX.bolhaSonho : MINI_FX.fiapo}) center/100% 100% no-repeat`,
+                imageRendering: 'pixelated',
               }}
             />
           );
@@ -208,10 +209,8 @@ export function BolhasGame({ language, evolutionStage, demoCharacterId, onExit, 
             data-bolha-fx={f.kind}
             style={{
               position: 'absolute', left: f.x, top: f.y, width: BUBBLE, height: BUBBLE, pointerEvents: 'none',
-              borderRadius: '50%',
-              ...(f.kind === 'pop'
-                ? { border: '2px dotted var(--sm2-viewport-ink)', opacity: 0.8 }
-                : { background: 'radial-gradient(circle, color-mix(in srgb, var(--sm2-viewport-ink) 35%, transparent), transparent 70%)', opacity: 0.7 }),
+              background: `url(${f.kind === 'pop' ? MINI_FX.pop : MINI_FX.fumaca}) center/100% 100% no-repeat`,
+              imageRendering: 'pixelated',
             }}
           />
         ))}
