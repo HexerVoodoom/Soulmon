@@ -14,6 +14,21 @@ describe('lotes novos (29/09/2026)', () => {
     expect(laboratorioLots('en-US').map(l => l.id)).toEqual(['evolucao', 'pet', 'stats']);
   });
 
+  it('H15/H16/H17 (01/10/2026): Torneio e Duelo no mesmo tablado e a Feira no outro; Observatório bem maior; Hall maior', () => {
+    const pct = (s?: string) => Number(String(s ?? '38%').replace('%', ''));
+    const arena = Object.fromEntries(arenaLots('pt-BR').map(l => [l.id, l]));
+    expect(pct(arena.torneio.left)).toBeLessThan(50);
+    expect(pct(arena.duelo.left)).toBeLessThan(50);
+    expect(pct(arena.feira.left)).toBeGreaterThan(60);
+    const lab = Object.fromEntries(laboratorioLots('pt-BR').map(l => [l.id, l as { width?: string; top: string }]));
+    expect(pct(lab.stats.width)).toBeGreaterThanOrEqual(pct(lab.evolucao.width) * 1.4);
+    for (const id of ['evolucao', 'pet']) {
+      expect(pct(lab[id].width)).toBeGreaterThan(38);
+      expect(pct(lab[id].top)).toBeGreaterThan(54);
+    }
+    for (const l of hallLots('pt-BR')) expect(pct((l as { width?: string }).width)).toBeGreaterThan(38);
+  });
+
   it('o rinoceronte é o NPC do Duelo, com voz própria nos dois idiomas', () => {
     expect(lotNpcArt('arena', 'duelo')).toBe(npcArenaDuelo);
     expect(lotNpcArt('arena', 'duelo')).not.toBe(AREA_NPC_ART.arena);

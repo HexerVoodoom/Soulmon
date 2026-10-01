@@ -53,14 +53,16 @@ const AREA_ART: Record<AreaId, string> = {
   hall: zonaHall,
 };
 
-/** Posição do CENTRO da base de cada construção, em % do fundo (do mock aprovado). */
+/** Posição do CENTRO da base de cada construção, em % do fundo (do mock aprovado).
+ *  01/10/2026 (H1, navegação do dono): ajuste fino — Exploração, Hall, Jogos e
+ *  Laboratório descem ~3%, a Arena vai ~3% para a direita; o Mercado fica. */
 const AREA_POS: Record<AreaId, { left: string; top: string }> = {
   mercado: { left: '30%', top: '17%' },
-  jogos: { left: '74%', top: '16.8%' },
-  exploracao: { left: '23%', top: '44%' },
-  arena: { left: '79%', top: '41.5%' },
-  laboratorio: { left: '49%', top: '74.9%' },
-  hall: { left: '81.5%', top: '66%' },
+  jogos: { left: '74%', top: '19.8%' },
+  exploracao: { left: '23%', top: '47%' },
+  arena: { left: '82%', top: '41.5%' },
+  laboratorio: { left: '49%', top: '77.9%' },
+  hall: { left: '81.5%', top: '69%' },
 };
 
 export function MapPage({ language, onOpenArea, bits, emblems, credits }: {

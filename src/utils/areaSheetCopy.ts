@@ -42,6 +42,8 @@ interface AreaLotSpec<K extends string> {
   labelPt: string; labelEn: string;
   ariaPt: string; ariaEn: string;
   left: string; top: string;
+  /** Largura em % da cena; sem ela, a do molde (`LOT_WIDTH_DEFAULT`, 38%). */
+  width?: string;
 }
 
 const MERCADO_LOTS: AreaLotSpec<MercadoLotId>[] = [
@@ -51,12 +53,16 @@ const MERCADO_LOTS: AreaLotSpec<MercadoLotId>[] = [
   { id: 'conquistas', labelPt: 'Conquistas', labelEn: 'Achievements', ariaPt: 'Entrar em Conquistas', ariaEn: 'Enter Achievements', left: '72%', top: '55%' },
 ];
 
+// ⚔️ 01/10/2026 (H15, navegação do dono): o fundo da Arena tem DOIS tablados.
+// Torneio e Duelo — os dois de luta — dividem o tablado da esquerda (cabem dois
+// por espaço, um em cada metade da diagonal), e a Feira fica sozinha no da
+// direita. Antes a Feira caía fora dos tablados, na escadaria de baixo.
 const ARENA_LOTS: AreaLotSpec<ArenaLotId>[] = [
-  { id: 'torneio', labelPt: 'Torneio', labelEn: 'Tournament', ariaPt: 'Entrar no Torneio', ariaEn: 'Enter the Tournament', left: '27%', top: '55%' },
-  { id: 'duelo', labelPt: 'Duelo', labelEn: 'Duel', ariaPt: 'Entrar no Duelo', ariaEn: 'Enter the Duel', left: '70%', top: '42%' },
+  { id: 'torneio', labelPt: 'Torneio', labelEn: 'Tournament', ariaPt: 'Entrar no Torneio', ariaEn: 'Enter the Tournament', left: '21%', top: '48%', width: '30%' },
+  { id: 'duelo', labelPt: 'Duelo', labelEn: 'Duel', ariaPt: 'Entrar no Duelo', ariaEn: 'Enter the Duel', left: '46%', top: '54%', width: '30%' },
   // O lote da Arena é a FEIRA (`guild.lote.feira.*`, D-G4, WPG-10): abre a sala Feira do
   // `GuildSheet`. O Salão (Bosque/Roda/Mural) continua sendo o lote `guilda` do Hall.
-  { id: 'feira', labelPt: GUILD_COPY['guild.lote.feira.label'][0], labelEn: GUILD_COPY['guild.lote.feira.label'][1], ariaPt: GUILD_COPY['guild.lote.feira.aria'][0], ariaEn: GUILD_COPY['guild.lote.feira.aria'][1], left: '32%', top: '82%' },
+  { id: 'feira', labelPt: GUILD_COPY['guild.lote.feira.label'][0], labelEn: GUILD_COPY['guild.lote.feira.label'][1], ariaPt: GUILD_COPY['guild.lote.feira.aria'][0], ariaEn: GUILD_COPY['guild.lote.feira.aria'][1], left: '72%', top: '40%', width: '36%' },
 ];
 
 // Laboratório e Hall (29/09/2026): as antigas abas/filtros viraram construções
@@ -68,16 +74,21 @@ const ARENA_LOTS: AreaLotSpec<ArenaLotId>[] = [
 // de cima do hexágono; 54% centraliza — conferido no preview em 30/09); no Hall o quadrado de baixo começa em
 // ~73% (centro ~79%), então o Salão da Guilda desce de 72% para 78%. O `top` é o
 // pé do lote (`translate(-50%, -80%)` no `AreaScene`).
+// 🔭 01/10/2026 (H16/H17, navegação do dono): prédios MAIORES. No Laboratório o
+// Observatório fica significativamente maior que os vizinhos, e os dois de cima
+// crescem um pouco e descem para assentar no hexágono. No Hall os três crescem.
+// ⚠️ Os fundos do Hall e do Laboratório estão sendo refeitos (H18, frente de
+// arte): se a clareira mudar, só `left`/`top`/`width` destas linhas mudam.
 const LABORATORIO_LOTS: AreaLotSpec<LaboratorioLotId>[] = [
-  { id: 'evolucao', labelPt: 'Árvore da Evolução', labelEn: 'Evolution Tree', ariaPt: 'Entrar na Árvore da Evolução', ariaEn: 'Enter the Evolution Tree', left: '27%', top: '54%' },
-  { id: 'pet', labelPt: 'Meu Soulmon', labelEn: 'My Soulmon', ariaPt: 'Entrar em Meu Soulmon', ariaEn: 'Enter My Soulmon', left: '72%', top: '54%' },
-  { id: 'stats', labelPt: 'Observatório', labelEn: 'Observatory', ariaPt: 'Entrar no Observatório (estatísticas)', ariaEn: 'Enter the Observatory (stats)', left: '50%', top: '72%' },
+  { id: 'evolucao', labelPt: 'Árvore da Evolução', labelEn: 'Evolution Tree', ariaPt: 'Entrar na Árvore da Evolução', ariaEn: 'Enter the Evolution Tree', left: '27%', top: '57%', width: '44%' },
+  { id: 'pet', labelPt: 'Meu Soulmon', labelEn: 'My Soulmon', ariaPt: 'Entrar em Meu Soulmon', ariaEn: 'Enter My Soulmon', left: '72%', top: '57%', width: '44%' },
+  { id: 'stats', labelPt: 'Observatório', labelEn: 'Observatory', ariaPt: 'Entrar no Observatório (estatísticas)', ariaEn: 'Enter the Observatory (stats)', left: '50%', top: '82%', width: '68%' },
 ];
 
 const HALL_LOTS: AreaLotSpec<HallLotId>[] = [
-  { id: 'biblioteca', labelPt: 'Biblioteca', labelEn: 'Library', ariaPt: 'Entrar na Biblioteca', ariaEn: 'Enter the Library', left: '27%', top: '42%' },
-  { id: 'amigos', labelPt: 'Círculo de Amigos', labelEn: 'Friends Circle', ariaPt: 'Entrar no Círculo de Amigos', ariaEn: 'Enter the Friends Circle', left: '72%', top: '42%' },
-  { id: 'guilda', labelPt: GUILD_COPY['guild.lote.hall.label'][0], labelEn: GUILD_COPY['guild.lote.hall.label'][1], ariaPt: GUILD_COPY['guild.lote.hall.aria'][0], ariaEn: GUILD_COPY['guild.lote.hall.aria'][1], left: '50%', top: '78%' },
+  { id: 'biblioteca', labelPt: 'Biblioteca', labelEn: 'Library', ariaPt: 'Entrar na Biblioteca', ariaEn: 'Enter the Library', left: '27%', top: '44%', width: '46%' },
+  { id: 'amigos', labelPt: 'Círculo de Amigos', labelEn: 'Friends Circle', ariaPt: 'Entrar no Círculo de Amigos', ariaEn: 'Enter the Friends Circle', left: '72%', top: '44%', width: '46%' },
+  { id: 'guilda', labelPt: GUILD_COPY['guild.lote.hall.label'][0], labelEn: GUILD_COPY['guild.lote.hall.label'][1], ariaPt: GUILD_COPY['guild.lote.hall.aria'][0], ariaEn: GUILD_COPY['guild.lote.hall.aria'][1], left: '50%', top: '80%', width: '48%' },
 ];
 
 function resolveLots<K extends string>(specs: AreaLotSpec<K>[], language: Language) {
@@ -87,6 +98,7 @@ function resolveLots<K extends string>(specs: AreaLotSpec<K>[], language: Langua
     label: isPt ? s.labelPt : s.labelEn,
     ariaLabel: isPt ? s.ariaPt : s.ariaEn,
     left: s.left, top: s.top,
+    ...(s.width ? { width: s.width } : {}),
   }));
 }
 

@@ -6597,6 +6597,7 @@ export default function App() {
           label={language === 'pt-BR' ? 'Início' : 'Home'}
           onClick={goBack}
           glow
+          ring
         />
       )}
       <HomeMenuSheet
