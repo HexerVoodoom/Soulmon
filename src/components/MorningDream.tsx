@@ -33,9 +33,11 @@ export interface MorningDreamProps {
   isNew: boolean;
   language: Language;
   onClose: () => void;
-  /** F2 (01/10/2026): "Equipar" ao lado do "Bom dia!". Só existe quando a
-   *  cena tem uma decoração gêmea que o jogador JÁ possui
-   *  (`utils/dreamDecorTwin.ts`) — equipa e fecha. Ausente = sem botão. */
+  /** F2 (dono, 01/10/2026): a decoração gêmea da cena, que o sonho DEU
+   *  (`utils/dreamDecorTwin.ts`). Ausente = a cena não tem gêmeo. */
+  decor?: { namePt: string; nameEn: string };
+  /** "Equipar" ao lado do "Bom dia!" — existe SEMPRE que há `decor`; equipa
+   *  na hora e fecha. Ausente = sem botão. */
   onEquip?: () => void;
 }
 
@@ -45,7 +47,7 @@ function rarityLabel(rarity: DreamRarity, isPt: boolean): string {
   return isPt ? 'Comum' : 'Common';
 }
 
-export function MorningDream({ open, dream, isNew, language, onClose, onEquip }: MorningDreamProps) {
+export function MorningDream({ open, dream, isNew, language, onClose, decor, onEquip }: MorningDreamProps) {
   if (!open) return null;
 
   const isPt = language === 'pt-BR';
@@ -117,7 +119,18 @@ export function MorningDream({ open, dream, isNew, language, onClose, onEquip }:
         </p>
       )}
 
-      {/* "Equipar" AO LADO do "Bom dia!" (F2), só quando há o que equipar. */}
+      {/* A decoração que veio com a cena (F2). "já está com você" vale para
+          quem acabou de ganhar e para quem já tinha — o texto não depende de
+          ler a posse de antes do sonho. */}
+      {dream && decor && (
+        <p style={centered} data-dream-decor>
+          {isPt
+            ? `Com ela veio a decoração ${decor.namePt} — já está com você.`
+            : `The ${decor.nameEn} decoration came with it — it is already yours.`}
+        </p>
+      )}
+
+      {/* "Equipar" AO LADO do "Bom dia!" (F2), sempre que a cena deu decoração. */}
       <div style={{ paddingTop: 4, display: 'flex', gap: 8 }}>
         {onEquip && (
           <button type="button" onClick={onEquip} data-dream-equip style={{ ...sm2Button('outline'), flex: 1, minWidth: 0 }}>
