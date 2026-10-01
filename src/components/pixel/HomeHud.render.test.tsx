@@ -57,15 +57,19 @@ describe('HomeHud — o orçamento de leituras da Home', () => {
     expect(container.textContent).not.toMatch(/\d/);
   });
 
-  it('nenhum PNG no HUD — o único ícone (o selo) é glifo da Material Symbols', () => {
+  it('o único desenho além do selo é o LOGO (C1, 01/10/2026) — decorativo, o nome está no <h1>', () => {
     const { container } = renderWithCss(<HomeHud language="pt-BR" focusSealed />);
-    expect(container.querySelectorAll('img').length).toBe(0);
+    const imgs = container.querySelectorAll('img');
+    expect(imgs.length).toBe(1);
+    expect(imgs[0].getAttribute('data-home-logo')).not.toBeNull();
+    expect(imgs[0].getAttribute('alt')).toBe('');
     expect(container.querySelectorAll('.sm2-icon').length).toBe(1);
   });
 
-  it('sem o selo, o HUD é só a palavra — nem ícone, nem imagem', () => {
+  it('sem o selo, o HUD é só o logo — e o nome acessível continua "Soulmon"', () => {
     const { container } = renderWithCss(<HomeHud language="pt-BR" />);
-    expect(container.querySelectorAll('.sm2-icon, img').length).toBe(0);
+    expect(container.querySelectorAll('.sm2-icon').length).toBe(0);
+    expect(container.querySelectorAll('img').length).toBe(1);
     expect(container.textContent?.trim()).toBe('Soulmon');
   });
 

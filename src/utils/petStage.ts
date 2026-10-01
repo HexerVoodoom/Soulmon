@@ -168,7 +168,11 @@ export const BASE_SLOTS: Record<BaseSlotId, DecorSlot & { yPx: number }> = {
     // exato — a caixa antiga de 148×83 esmagava a arte anisotropicamente, ver
     // o guard de escala em `assets.contract.test.ts`). `yPx` reencontrado para
     // manter os pés do sprite no MESMO y de antes (17 + ⅔·83 = 3 + ⅔·104).
-    id: 'nest', x: 50, w: 220, h: 104, yPx: 3, anchor: 'ground',
+    // C4 (navegação do dono, 01/10/2026): "cradle bem menor". 110×52 = a
+    // mesma arte em 6× EXATO (660×312 ÷ 6), então a grade de pixel continua
+    // inteira. `yPx` medido no navegador (375×812): com 66 os pés VISÍVEIS do
+    // sprite (a arte tem margem transparente embaixo) caem a ~⅔ do berço.
+    id: 'nest', x: 50, w: 110, h: 52, yPx: 66, anchor: 'ground',
     namePt: 'Berço', nameEn: 'Nest',
   },
 };
