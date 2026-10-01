@@ -24,4 +24,8 @@ ext {
     cordovaAndroidVersion = '13.0.0'
     // @capacitor/push-notifications (FCM)
     firebaseMessagingVersion = '24.1.0'
+    // @capacitor-firebase/authentication — login Google NATIVO (01/10/2026).
+    // Sem esta flag o plugin compila as libs do Google como `compileOnly` e o
+    // `signInWithGoogle` quebra em runtime (ClassNotFound). Ver src/utils/auth.ts.
+    rgcfaIncludeGoogle = true
 }

@@ -9,6 +9,13 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 01/10/2026 — Login Google NATIVO no APK (tela branca após escolher a conta, `fix/login-google-nativo`)
+>
+> - Causa: no APK (WebView com `server.url` remoto) `signInWithPopup`/`signInWithRedirect` saem para `accounts.google.com` fora do app e o retorno cai em `soulmon-app.firebaseapp.com/__/auth/handler`, que não volta à WebView → tela branca.
+> - Correção: `src/utils/auth.ts` › `entrarComGoogle` → no nativo, `@capacitor-firebase/authentication` 8.5.2 (Capawesome, Cap 8, `skipNativeAuth: true`, Credential Manager) devolve o `idToken` → `signInWithCredential` no SDK web (a sessão do servidor continua a mesma). Falha nativa volta ao portão com mensagem e código cru no console; o nativo **nunca** cai no popup/redirect. Plugin em import dinâmico (entrada +~1 KB). Teste: `src/utils/auth.googleNativo.test.ts`.
+> - Android: `rgcfaIncludeGoogle = true` (`variables.gradle`); **Kotlin 1.8.22 → 2.1.21** (`android/build.gradle`) — o `billing-ktx:8.3.0` tem metadado Kotlin 2.2 e NENHUM APK compilava (`:app:compileDebugKotlin`). `assembleDebug` local verde (JDK 17 do Android Studio).
+> - 🔴 **Depende do dono — sem isto o botão no APK só mostra erro** (não fica branco): registrar o app Android `com.hexervoodoom.soulmon` no projeto Firebase `soulmon-app` com as SHAs (debug: SHA-1 `BC:AE:E2:D8:C0:36:0B:FF:AB:F6:50:3B:C5:BD:2D:5C:F3:84:FE:B1`, SHA-256 `2A:DC:74:74:F9:40:62:DF:EB:E1:80:A9:9B:A3:E9:4C:F2:12:BB:A0:8D:B8:52:59:A0:D6:2E:12:81:F6:17:C9`; + upload e App Signing da Play quando existirem) e trocar `android/app/google-services.json` (hoje é do `digiapp-88296`, sem o nosso pacote → o plugin não carrega `FirebaseApp` nem `default_web_client_id`). Mesmo passo de `docs/PLAY-LANCAMENTO.md` §C. Depois: rebuild do APK.
+
 > ## 01/10/2026 — Sincronização do manual pós-merge e3d55bb8 (PRs #189–#197, `docs/sync-e3d55bb8`)
 >
 > - Delta `bcfe7ca6..e3d55bb8` (rodada 3 de arte): 02, 01, 03, 05, 04, 06/components, 06/utils, 08, api-workers, 00-MAPA e 10 atualizados; 05, 08 e api-workers só ganharam carimbo (só `sw.js` e um comentário de JSX mudaram).

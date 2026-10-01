@@ -1,3 +1,4 @@
+import { Capacitor } from '@capacitor/core';
 import { STORAGE_KEYS } from './storageKeys';
 import { writeLocal, readLocal, removeLocal } from './safeStorage';
 
@@ -143,9 +144,22 @@ export async function criarContaComSenha(email: string, senha: string): Promise<
  * projeto cai no spam do Gmail (remetente `firebaseapp.com` sem domínio
  * próprio, verificado em 07/09/2026). Um caminho de entrada que não passa por
  * caixa de entrada é o que garante que dá para entrar no app.
+ *
+ * NO APK O CAMINHO É OUTRO, e não pode cair no do navegador. Bug do dono
+ * (01/10/2026): no APK (Capacitor com `server.url` remoto) o popup/redirect do
+ * Firebase web manda a pessoa para `accounts.google.com` FORA do app; depois
+ * de escolher a conta o retorno cai em
+ * `soulmon-app.firebaseapp.com/__/auth/handler`, que não tem como voltar à
+ * WebView — tela BRANCA, sem login. Popup e redirect são fluxos de NAVEGADOR.
+ * No aparelho o login é o nativo (`entrarComGoogleNativo`), que devolve só o
+ * `idToken` do Google; a sessão continua sendo a do SDK web
+ * (`signInWithCredential`), a mesma que o servidor confere.
  */
 export async function entrarComGoogle(): Promise<ResultadoAuth> {
   if (!isAuthConfigured()) return { ok: false, erro: 'desconhecido' };
+  // No APK o caminho é outro (ver o comentário acima) — e a persistência é
+  // garantida lá também, por `garantirPersistencia`, antes do `signInWithCredential`.
+  if (Capacitor.isNativePlatform()) return entrarComGoogleNativo();
   // Fora do `try` de proposito: o `catch` precisa deles para poder cair no
   // redirecionamento quando o popup e bloqueado.
   const { auth, authMod } = await getAuth();
@@ -183,6 +197,46 @@ export async function entrarComGoogle(): Promise<ResultadoAuth> {
       }
     }
     return { ok: false, erro };
+  }
+}
+
+/**
+ * Login com Google no APK — conta escolhida no seletor NATIVO do Android.
+ *
+ * O plugin é importado DINAMICAMENTE e só aqui: na web este código nunca roda,
+ * e o chunk de entrada não carrega um byte do plugin (o orçamento de bytes lê
+ * o `dist/`).
+ *
+ * Qualquer falha — plugin ausente num APK antigo, `google-services.json` sem o
+ * app, SHA do certificado não cadastrada, pessoa cancelou — volta como
+ * `{ ok: false }` para o portão mostrar a mensagem. NUNCA cai no popup/redirect
+ * do navegador: foi exatamente esse caminho que deixava a tela branca.
+ */
+async function entrarComGoogleNativo(): Promise<ResultadoAuth> {
+  try {
+    const { FirebaseAuthentication } = await import('@capacitor-firebase/authentication');
+    const nativo = await FirebaseAuthentication.signInWithGoogle({ skipNativeAuth: true });
+    const idToken = nativo.credential?.idToken;
+    if (!idToken) throw Object.assign(new Error('sem idToken'), { code: 'nativo/sem-id-token' });
+    const { auth, authMod } = await getAuth();
+    await garantirPersistencia(auth, authMod);
+    const cred = await authMod.signInWithCredential(
+      auth,
+      authMod.GoogleAuthProvider.credential(idToken),
+    );
+    return { ok: true, email: cred.user.email ?? undefined };
+  } catch (err) {
+    const e = err as { code?: string; message?: string };
+    const code = String(e?.code ?? '');
+    const message = String(e?.message ?? '');
+    // Mesmo padrão do caminho web: o código CRU vai para o console, sempre.
+    // No nativo o plugin rejeita muitas vezes SEM `code` (só a mensagem do
+    // Credential Manager), então a mensagem vai junto.
+    console.warn('[auth] entrarComGoogle (nativo) falhou', { code, message });
+    // O Credential Manager não tem código para "a pessoa fechou o seletor": a
+    // exceção é `GetCredentialCancellationException` e chega só como texto.
+    if (!code && /cancel/i.test(message)) return { ok: false, erro: 'popup-fechado' };
+    return { ok: false, erro: traduzErroAuth(code) };
   }
 }
 
@@ -340,6 +394,14 @@ export async function signOut(): Promise<void> {
     const { auth, authMod } = await getAuth();
     await authMod.signOut(auth);
   } catch { /* noop */ }
+  // No APK, limpa também o estado do Credential Manager: sem isto a próxima
+  // entrada pode reaproveitar a conta anterior sem a pessoa escolher.
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const { FirebaseAuthentication } = await import('@capacitor-firebase/authentication');
+      await FirebaseAuthentication.signOut();
+    } catch { /* APK sem o plugin: a sessão web já saiu, que é a que vale */ }
+  }
 }
 
 // ---------------------------------------------------------------- desktop

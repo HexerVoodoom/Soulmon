@@ -5,5 +5,13 @@
   "server": {
     "url": "https://soulmon.mateus-sprnd.workers.dev",
     "cleartext": false
+  },
+  "plugins": {
+    "FirebaseAuthentication": {
+      "skipNativeAuth": true,
+      "providers": [
+        "google.com"
+      ]
+    }
   }
 }
