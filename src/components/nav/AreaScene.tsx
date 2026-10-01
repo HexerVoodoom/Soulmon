@@ -31,7 +31,13 @@ export interface AreaLot {
   onOpen: () => void;
   /** Arte isométrica do lote (alfa real). Sem ela, o bloco neutro do molde F4. */
   art?: string;
+  /** Largura do lote em % da cena (01/10/2026, H16 — o Observatório é maior que
+   *  os vizinhos). Sem ela, o padrão do molde, `LOT_WIDTH_DEFAULT`. */
+  width?: string;
 }
+
+/** Largura padrão de um lote, em % da cena (o molde F4). */
+export const LOT_WIDTH_DEFAULT = '38%';
 
 export function AreaScene({ areaId, language, lots, background, children }: {
   areaId: AreaId;
@@ -81,7 +87,7 @@ export function AreaScene({ areaId, language, lots, background, children }: {
             position: 'absolute',
             left: lot.left, top: lot.top,
             transform: 'translate(-50%, -80%)',
-            width: '38%',
+            width: lot.width ?? LOT_WIDTH_DEFAULT,
             minWidth: 120,
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
             background: 'transparent', border: 'none', padding: 0, cursor: 'pointer',

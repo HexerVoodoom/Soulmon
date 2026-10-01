@@ -141,7 +141,12 @@ describe('Exploração — Zeph e a Masmorra', () => {
     expect(folha.textContent).toContain('Nível 1');
     expect(folha.textContent).toMatch(/nunca os seus corações/);
     expect(folha.textContent).toContain('4→12');
-    expect(folha.querySelectorAll('ol li')).toHaveLength(5);
+    // H11 (01/10/2026): a fileira 1-2-3-4-5 saiu, e as duas notas ("perder
+    // custa só a run" e os Bits de hoje) vêm DEPOIS do botão de entrar.
+    expect(folha.querySelectorAll('ol li')).toHaveLength(0);
+    const cta = folha.querySelector('[data-masmorra-start]')!;
+    const nota = Array.from(folha.querySelectorAll('p')).find(p => /nunca os seus corações/.test(p.textContent ?? ''))!;
+    expect(cta.compareDocumentPosition(nota) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('Masmorra: SEM gate de entrada — o CTA nunca fica desabilitado, nem com 0 Bits', async () => {
@@ -232,6 +237,14 @@ describe('Exploração — o Passeio (30/09/2026)', () => {
     expect(container.querySelector('[data-area-sheet-npc-line]')!.textContent).toContain('Brume');
     // Tocar numa região em névoa e escolher uma proposta: o App recebe uma FUNÇÃO (pura, sobre `prev`).
     fireEvent.click(folha.querySelector('[data-nevoa] button')!);
+    // H12 (01/10/2026): as propostas são cards FECHADOS, com título — abrir um mostra o "Escolher esta".
+    const cards = folha.querySelectorAll('[data-travessia-card]');
+    expect(cards.length).toBe(3);
+    expect(folha.querySelector('[data-travessia-escolher]')).toBeNull();
+    const abrir = cards[0].querySelector('[data-travessia-abrir]') as HTMLElement;
+    expect(abrir.getAttribute('aria-expanded')).toBe('false');
+    expect(abrir.textContent!.trim().length).toBeGreaterThan(0);
+    fireEvent.click(abrir);
     fireEvent.click(folha.querySelector('[data-travessia-escolher]')!);
     expect(onChange).toHaveBeenCalledTimes(1);
     const f = onChange.mock.calls[0][0] as (c: unknown) => { active: unknown };

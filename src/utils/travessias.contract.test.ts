@@ -194,6 +194,11 @@ describe('(e) a folha do Passeio', () => {
         const nevoa = container.querySelector<HTMLButtonElement>('[data-nevoa] button');
         if (nevoa) fireEvent.click(nevoa);
         let texto = container.textContent ?? '';
+        // H12 (01/10/2026): as propostas são cards FECHADOS — abre um por um para varrer o texto de dentro.
+        for (const abrir of Array.from(container.querySelectorAll<HTMLButtonElement>('[data-travessia-abrir]'))) {
+          fireEvent.click(abrir);
+          texto += container.textContent ?? '';
+        }
         const trocar = container.querySelector<HTMLButtonElement>('[data-travessia-trocar]');
         if (trocar) { fireEvent.click(trocar); texto += container.textContent ?? ''; }
         for (const [regra, re] of PROIBIDO_NA_TELA) expect(texto, regra).not.toMatch(re);

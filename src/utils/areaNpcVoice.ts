@@ -28,14 +28,18 @@ const AREA_NPC_VOICE: Record<AreaId, AreaNpcVoice> = {
   mercado: {
     namePt: 'Grom, o mercador',
     nameEn: 'Grom, the merchant',
-    linePt: 'Bem-vindo à caverna! Escolha uma lojinha — tenho de tudo, se tiver os Bits.',
-    lineEn: 'Welcome to the cave! Pick a stall — I have everything, if you have the Bits.',
+    // H5 (01/10/2026): "Escolha uma lojinha" era dito DENTRO da lojinha, e "se tiver
+    // os Bits" condicionava a acolhida ao saldo. Agora só constata e convida (L1, L12).
+    linePt: 'Pode entrar e olhar com calma. As prateleiras ficam aqui.',
+    lineEn: 'Come in and look around. The shelves stay right here.',
   },
   arena: {
     namePt: 'Vultrak, mestre da arena',
     nameEn: 'Vultrak, master of the arena',
-    linePt: 'Aqui ninguém entra de braços cruzados. Escolha: o Torneio da semana ou um duelo agora.',
-    lineEn: "No one stands idle here. Pick: this week's Tournament or a duel right now.",
+    // H5 (01/10/2026): o imperativo ("Escolha:") e o julgamento de quem chega
+    // ("de braços cruzados") saíram. As arenas são chão antigo, mantido por costume (bíblia §7.1).
+    linePt: 'Chão antigo, mantido por costume. Sempre tem alguém por aqui para encontrar.',
+    lineEn: 'Old ground, kept by habit. There is always someone here to meet.',
   },
   exploracao: {
     namePt: 'Zeph, a guia',
@@ -53,14 +57,18 @@ const AREA_NPC_VOICE: Record<AreaId, AreaNpcVoice> = {
   laboratorio: {
     namePt: 'Vesca, a alquimista',
     nameEn: 'Vesca, the alchemist',
-    linePt: 'Toda evolução começa aqui, numa mistura certa. Vamos ver como seu Soulmon está crescendo.',
-    lineEn: 'Every evolution starts here, in the right mix. Let’s see how your Soulmon is growing.',
+    // H5 (01/10/2026): "começa numa mistura certa" dava à alquimia uma regra que o
+    // jogo não tem — a forma muda pelos dias completos e pelo toque da pessoa (L10).
+    linePt: 'Toda forma que ele já teve cresce nesta árvore. Venha ver para onde os galhos vão.',
+    lineEn: 'Every form it has taken grows on this tree. Come see where the branches go.',
   },
   hall: {
     namePt: 'Lumi, a anfitriã',
     nameEn: 'Lumi, the host',
-    linePt: 'Seja bem-vindo ao Hall! Na Biblioteca você encontra amigos e outros Soulmons.',
-    lineEn: 'Welcome to the Hall! In the Library you can meet friends and other Soulmons.',
+    // H5 (01/10/2026): os amigos moram no Círculo de Amigos desde 29/09, e a
+    // Biblioteca agora guarda só quem já cruzou o caminho (H17) — a fala diz isso.
+    linePt: 'Todo Soulmon que já cruzou o seu caminho tem uma página aqui.',
+    lineEn: 'Every Soulmon that has crossed your path has a page here.',
   },
 };
 
@@ -124,8 +132,9 @@ const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
   },
   'hall:amigos': {
     namePt: 'Nino, o carteiro', nameEn: 'Nino, the courier',
-    linePt: 'Chegou um aceno. Guardei na bolsa pra você.',
-    lineEn: 'A wave arrived. I kept it in my bag for you.',
+    // H5 (01/10/2026): afirmava que um aceno TINHA chegado, com ou sem aceno (L10).
+    linePt: 'Quando chega um aceno, eu guardo na bolsa pra você.',
+    lineEn: 'When a wave arrives, I keep it in my bag for you.',
   },
   'hall:guilda': {
     namePt: 'Marla, a intendente', nameEn: 'Marla, the steward',
@@ -135,8 +144,9 @@ const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
   'laboratorio:pet': {
     // O nome antigo era de personagem de terceiro — a bíblia das áreas §1.3 A4 decidiu Bento.
     namePt: 'Bento, o cuidador', nameEn: 'Bento, the keeper',
-    linePt: 'Olha como a pelagem pegou luz hoje.',
-    lineEn: 'Look how its coat caught the light today.',
+    // H5 (01/10/2026): "pelagem" não vale para toda criatura (padrão, cobre — bíblia §5.1).
+    linePt: 'Olha como a luz assenta nele hoje.',
+    lineEn: 'Look how the light settles on it today.',
   },
   'laboratorio:stats': {
     namePt: 'Quill, a escriba', nameEn: 'Quill, the scribe',

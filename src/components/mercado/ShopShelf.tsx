@@ -1,8 +1,8 @@
 import { useState, type CSSProperties, type ReactNode } from 'react';
-import { bitsStyle, emblemStyle, BITS_EXCHANGE, CREDIT_COLOR, type CurrencyId } from '../../utils/currencies';
+import { bitsStyle, emblemStyle, BITS_EXCHANGE, CREDIT_COLOR, CREDIT_TO_BITS, EMBLEMS_PER_LOSS, EMBLEMS_PER_WIN, MINIGAME_BITS_PER_DAY, type CurrencyId } from '../../utils/currencies';
 import { Icon } from '../ui/Icon';
 import { MiniGlass } from '../ui/MiniGlass';
-import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
+import { ModalSheet, sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import type { ShopItem } from '../../utils/shop';
 import { PET_BACKGROUNDS } from '../../utils/backgrounds';
 import { DECOR_ART } from '../../utils/decorArt';
@@ -31,9 +31,10 @@ import type { Language } from '../../utils/i18n';
  *                  `aria-disabled`, fora do Tab;
  *   · equipado   → anel 2px `primary-ink` por FORA do vidro + tag
  *                  `check_circle` na coluna de texto;
- *   · comprado   → "Equip" outline dentro do card;
- *   · sem saldo  → preço em tinta `muted`; no toque, SÓ o filete `gold-ink`
- *                  + a região `status` em `gold-ink`. Nunca `danger`.
+ *   · comprado   → "Equip" outline dentro do card, na seção "Já são seus" do
+ *                  topo — nunca mais misturado ao que está à venda (H7);
+ *   · sem saldo  → preço em tinta `muted`; no toque abre o "como conseguir"
+ *                  (`HowToEarnSheet`, H8 de 01/10/2026). Nunca `danger`.
  *
  * ─── AS TRÊS MOEDAS (regra de produto, D-L4, D-L10, D-L11) ─────────────────
  *   Bits      → "N Bits" em mono `primary-ink` (`bitsStyle`), SEM ícone.
@@ -119,6 +120,13 @@ function bgImage(css: string | undefined): string | null {
   return m ? m[2] : null;
 }
 
+/** Miniatura de um cenário (a mesma da prateleira): o thumb de
+ *  `backgrounds/thumbs/`, ou a arte pintada; `null` para gradiente puro.
+ *  As Conquistas (H9) mostram com ela o cenário que a missão libera. */
+export function bgThumb(id: string): string | null {
+  return BG_THUMBS[id] ?? bgImage(PET_BACKGROUNDS[id]?.css);
+}
+
 /** Última compra/troca: alimenta a região `aria-live` e o filete do card. */
 export interface ShopFlash { id: string; ok: boolean; msg: ReactNode }
 
@@ -192,9 +200,23 @@ export function ShopShelf({
   // Defesa das três moedas: item cobrado em outra moeda não entra nesta
   // prateleira, mesmo que alguém o passe por engano.
   const shelf = items.filter(i => itemCurrency(i) === currency);
+  /** Item que a pessoa tocou sem saldo — abre o "como conseguir" (H8). */
+  const [need, setNeed] = useState<ShopItem | null>(null);
+
+  const isOwned = (item: ShopItem) =>
+    (item.kind === 'bg' && ownedBackgrounds.includes(item.id))
+    || (item.kind === 'furniture' && ownedFurniture.includes(item.id));
+  // H7 (01/10/2026, navegação do dono): o que a pessoa JÁ TEM (comprado, ou
+  // ganho — o sofá da escada do Vínculo, a Concha da Feira) não aparece mais
+  // À VENDA. Continua alcançável para equipar, numa seção própria no topo.
+  const owned = shelf.filter(isOwned);
+  const forSale = shelf.filter(i => !isOwned(i));
 
   const buy = (item: ShopItem) => {
     const name = isPt ? item.namePt : item.nameEn;
+    // H8: sem saldo, a compra nem é tentada — abre o modalzinho que diz de
+    // onde vem a moeda (as regras reais, lidas das constantes dos donos).
+    if (balance < item.price) { setNeed(item); return; }
     const ok = actions.onBuy(item.id);
     say(item.id, ok, ok
       ? (isPt ? `${name} comprado.` : `${name} purchased.`)
@@ -325,12 +347,104 @@ export function ShopShelf({
     );
   };
 
+  const groupHead: CSSProperties = { ...sm2Hint, margin: '4px 0 0', letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 600 };
+
   return (
-    <div data-shop-shelf={currency} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+    <div data-shop-shelf={currency} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sm2-space-2, 8px)' }}>
       {shelf.length === 0
         ? <p style={{ ...sm2Hint, textAlign: 'center', padding: '16px 0', margin: 0 }}>{emptyHint ?? (isPt ? 'Nada por aqui ainda.' : 'Nothing here yet.')}</p>
-        : shelf.map(renderItem)}
+        : (
+          <>
+            {owned.length > 0 && (
+              <section data-shop-owned aria-label={isPt ? 'Já são seus' : 'Already yours'} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sm2-space-2, 8px)' }}>
+                <h3 style={groupHead}>{isPt ? 'Já são seus' : 'Already yours'}</h3>
+                {owned.map(renderItem)}
+              </section>
+            )}
+            <section data-shop-for-sale aria-label={isPt ? 'À venda' : 'For sale'} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sm2-space-2, 8px)' }}>
+              {owned.length > 0 && <h3 style={groupHead}>{isPt ? 'À venda' : 'For sale'}</h3>}
+              {forSale.length === 0
+                ? <p style={{ ...sm2Hint, textAlign: 'center', padding: '16px 0', margin: 0 }}>{isPt ? 'Tudo daqui já é seu.' : 'Everything here is already yours.'}</p>
+                : forSale.map(renderItem)}
+            </section>
+          </>
+        )}
+      <HowToEarnSheet item={need} currency={currency} language={language} onClose={() => setNeed(null)} />
     </div>
+  );
+}
+
+/**
+ * H8 (01/10/2026, navegação do dono) — "COMO CONSEGUIR": tocar num item sem
+ * saldo abre esta folhinha em vez de só avisar "saldo insuficiente". Ela diz,
+ * em texto sóbrio (L10 da bíblia: a informação nunca é só ficção), DE ONDE
+ * vem a moeda — e os números saem das constantes dos donos, nunca de texto à
+ * mão: o teto diário dos minijogos (`MINIGAME_BITS_PER_DAY`), a troca de
+ * Créditos (`CREDIT_TO_BITS`) e a Honra por partida (`EMBLEMS_PER_WIN`/`_LOSS`).
+ * Sem "faltam N", sem contagem regressiva, sem urgência: é mapa, não cobrança.
+ */
+export function HowToEarnSheet({ item, currency, language, onClose }: {
+  item: ShopItem | null;
+  currency: 'bits' | 'emblems';
+  language: Language;
+  onClose: () => void;
+}) {
+  const isPt = language === 'pt-BR';
+  const name = item ? (isPt ? item.namePt : item.nameEn) : '';
+  const isEmblem = currency === 'emblems';
+  const title = isEmblem
+    ? (isPt ? 'Como conseguir Honra' : 'How to get Honor')
+    : (isPt ? 'Como conseguir Bits' : 'How to get Bits');
+  const ways: { key: string; icon: string; text: string }[] = isEmblem
+    ? [
+        {
+          key: 'torneio', icon: 'military_tech',
+          text: isPt
+            ? `No Torneio, na Arena: ${EMBLEMS_PER_WIN} de Honra por vitória e ${EMBLEMS_PER_LOSS} por partida que não vence.`
+            : `In the Tournament, in the Arena: ${EMBLEMS_PER_WIN} Honor per win and ${EMBLEMS_PER_LOSS} per match you don't win.`,
+        },
+        {
+          key: 'semana', icon: 'flag',
+          text: isPt
+            ? 'As missões da semana, também no Torneio, pagam Honra.'
+            : "The week's missions, also in the Tournament, pay Honor.",
+        },
+      ]
+    : [
+        {
+          key: 'jogos', icon: 'casino',
+          text: isPt
+            ? `Nos minijogos: a Masmorra (Exploração), o Salão de Jogos e o Ateliê da Mente (Jogos) pagam Bits — até ${MINIGAME_BITS_PER_DAY} por dia, somando todos.`
+            : `In the minigames: the Dungeon (Exploration), the Game Hall and the Mind Workshop (Games) pay Bits — up to ${MINIGAME_BITS_PER_DAY} a day, all together.`,
+        },
+        {
+          key: 'creditos', icon: 'diamond',
+          text: isPt
+            ? `Créditos viram Bits na lojinha de Itens, na aba Créditos: ${CREDIT_TO_BITS} Bits por Crédito.`
+            : `Credits turn into Bits in the Items stall, on the Credits tab: ${CREDIT_TO_BITS} Bits per Credit.`,
+        },
+      ];
+  return (
+    <ModalSheet open={!!item} title={title} onClose={onClose} language={language} maxWidth={480}>
+      <div data-how-to-earn={currency} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <p style={{ ...sm2Text, margin: 0 }}>
+          {isEmblem
+            ? (isPt ? `${name} custa ${item?.price ?? 0} de Honra.` : `${name} costs ${item?.price ?? 0} Honor.`)
+            : (isPt ? `${name} custa ${item?.price ?? 0} Bits.` : `${name} costs ${item?.price ?? 0} Bits.`)}
+        </p>
+        <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {ways.map(w => (
+            <li key={w.key} data-how-to-earn-way={w.key} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+              <Icon name={w.icon} size={24} tone={isEmblem ? 'gold' : 'primary'} fill={1} />
+              <span style={{ ...sm2Text, flex: 1, minWidth: 0 }}>{w.text}</span>
+            </li>
+          ))}
+        </ul>
+        <button type="button" data-how-to-earn-ok onClick={onClose} style={{ ...sm2Button('primary'), width: '100%' }}>
+          {isPt ? 'Entendi' : 'Got it'}
+        </button>
+      </div>
+    </ModalSheet>
   );
 }
 

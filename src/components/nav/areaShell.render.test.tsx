@@ -74,12 +74,26 @@ describe('AreaSheet', () => {
     expect(dlg).not.toBeNull();
     expect(dlg.getAttribute('aria-modal')).toBe('true');
     expect(dlg.getAttribute('aria-label')).toBe('Itens');
-    expect(dlg.style.height).toBe('66.6667dvh');
-    // O NPC vive no 1/3 de cima da tela, transparente e FORA do card.
+    // O CARD (a folha em si) tem 2/3 da tela; o diálogo é a moldura que também
+    // segura o ✕ e o NPC (H4, 01/10/2026).
+    const card = container.querySelector('[data-area-sheet]') as HTMLElement;
+    expect(dlg.contains(card)).toBe(true);
+    expect(card.style.height).toBe('66.6667dvh');
+    // O NPC vive no 1/3 de cima da tela, transparente e FORA do card — e
+    // ENCOLHE antes de invadir o card (H3), num plano abaixo dele.
     const npcZone = container.querySelector('[data-area-sheet-npc-zone]') as HTMLElement;
     expect(npcZone).not.toBeNull();
-    expect(dlg.contains(npcZone)).toBe(false);
-    expect(npcZone.style.flex).toBe('0 0 33.3333dvh');
+    expect(card.contains(npcZone)).toBe(false);
+    expect(npcZone.style.flex).toBe('0 1 33.3333dvh');
+    expect(Number(npcZone.style.zIndex)).toBeLessThan(Number(card.style.zIndex));
+    // H4: o ✕ fica no canto superior ESQUERDO, acima do NPC, fora do card e
+    // dentro do diálogo (o foco preso o alcança).
+    const close = container.querySelector('[data-area-sheet-close]') as HTMLElement;
+    expect(dlg.contains(close)).toBe(true);
+    expect(card.contains(close)).toBe(false);
+    expect(close.style.position).toBe('absolute');
+    expect(close.style.left).toBe('16px');
+    expect(close.compareDocumentPosition(npcZone) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     const npc = container.querySelector('[data-area-sheet-npc]');
     expect(npc).not.toBeNull();
     expect(npc!.getAttribute('src')).toBeTruthy();

@@ -6,11 +6,13 @@ import { UnlockNudge } from '../UnlockAccountModal';
 import { STALL_CURRENCIES, stallItems, type MercadoStall } from '../../utils/mercadoCatalog';
 import { MISSIONS, MISSION_CATEGORIES, isMissionComplete, type MissionCategory } from '../../utils/missions';
 import { SHOP_ITEMS } from '../../utils/shop';
+import { PET_BACKGROUNDS } from '../../utils/backgrounds';
+import { MiniGlass } from '../ui/MiniGlass';
 import type { CurrencyId } from '../../utils/currencies';
 import type { Language } from '../../utils/i18n';
 import { GuildOwnedShelf } from './GuildOwnedShelf';
 import {
-  CreditExchange, CurrencyBalance, ShopShelf, ShopStatus, useShopFlash,
+  CreditExchange, CurrencyBalance, ShopShelf, ShopStatus, bgThumb, useShopFlash,
   type ShopActions, type ShopOwnership,
 } from './ShopShelf';
 
@@ -170,44 +172,67 @@ export function ConquistasSheet({ language, missionProgress }: {
           ariaLabel={isPt ? 'Categoria das conquistas' : 'Achievement category'}
         />
       </div>
-      <ul style={{ display: 'flex', flexDirection: 'column', gap: 6, listStyle: 'none', margin: 0, padding: 0 }}>
+      {/* H9 (01/10/2026, navegação do dono): cada conquista é um card que diz
+          as DUAS coisas que a pessoa quer saber — COMO se ganha (a condição em
+          palavras) e O QUE se ganha (a miniatura do cenário que ela libera). */}
+      <ul style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sm2-space-3, 12px)', listStyle: 'none', margin: 0, padding: 0 }}>
         {list.map(m => {
           const done = isMissionComplete(m.id, missionProgress);
           const cur = Math.min(missionProgress[m.id] ?? 0, m.target);
           const reward = SHOP_ITEMS.find(i => i.id === m.bgReward);
           const rewardName = reward ? (isPt ? reward.namePt : reward.nameEn) : null;
+          const thumb = reward ? bgThumb(reward.id) : null;
           return (
             <li
               key={m.id}
               data-mission={m.id}
               data-done={done || undefined}
               style={{
-                display: 'flex', alignItems: 'center', gap: 12, minHeight: 64, padding: '8px 12px',
-                boxSizing: 'border-box', borderRadius: 'var(--sm2-radius-lg)',
+                display: 'flex', flexDirection: 'column', gap: 10, padding: '12px',
+                boxSizing: 'border-box', borderRadius: 'var(--sm2-radius-md)',
                 // Concluída = anel `primary-ink`; em aberto = tracejado `muted`
-                // (estado por FORMA, nunca por opacidade — D-L8).
+                // (estado por FORMA, nunca por opacidade — D-L8). O fundo é o
+                // do card do sistema (`surface-2`) nos dois estados — I2.
                 border: done ? '1px solid var(--sm2-primary-ink)' : '1px dashed var(--sm2-muted)',
-                backgroundColor: done ? 'var(--sm2-surface)' : 'transparent',
+                backgroundColor: 'var(--sm2-surface-2)',
               }}
             >
-              {/* Ícone PELADO (regra do dono), 24 da escala viva. */}
-              <Icon name={m.iconName} size={24} fill={done ? 1 : 0} tone={done ? 'primary' : 'muted'} />
-              <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <span style={{ ...sm2Text, fontWeight: 500, color: done ? 'var(--sm2-ink)' : 'var(--sm2-muted)' }}>{isPt ? m.namePt : m.nameEn}</span>
-                <span style={sm2Hint}>{isPt ? m.descPt : m.descEn}</span>
-                {rewardName && (
-                  <span style={sm2Hint}>
-                    {done
-                      ? (isPt ? `Liberou ${rewardName} — na lojinha de Background.` : `Unlocked ${rewardName} — in the Background stall.`)
-                      : (isPt ? `Libera ${rewardName}.` : `Unlocks ${rewardName}.`)}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                {/* Ícone PELADO (regra do dono), 24 da escala viva. */}
+                <Icon name={m.iconName} size={24} fill={done ? 1 : 0} tone={done ? 'primary' : 'muted'} />
+                <span style={{ ...sm2Text, flex: 1, minWidth: 0, fontWeight: 600, fontFamily: 'var(--sm2-font-display)', color: 'var(--sm2-ink)' }}>{isPt ? m.namePt : m.nameEn}</span>
+                {done ? (
+                  <Icon name="check_circle" size={24} fill={1} tone="primary" label={isPt ? 'concluída' : 'done'} />
+                ) : m.target > 1 && cur > 0 ? (
+                  <span className="sm2-num" style={{ ...sm2Hint, flex: 'none', whiteSpace: 'nowrap' }}>{cur}/{m.target}</span>
+                ) : null}
+              </div>
+              <p data-mission-how style={{ ...sm2Text, margin: 0 }}>
+                <span style={{ ...sm2Hint, display: 'block', letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 600 }}>
+                  {isPt ? 'Como ganhar' : 'How to earn'}
+                </span>
+                {isPt ? m.descPt : m.descEn}
+              </p>
+              {rewardName && (
+                <div data-mission-reward style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <MiniGlass size={52} style={{ width: 96, height: 52, flex: 'none' }}>
+                    {thumb
+                      ? <img src={thumb} alt="" width={96} height={52} className="sm2-shop-bg" />
+                      : <span aria-hidden="true" style={{ position: 'absolute', inset: 0, background: PET_BACKGROUNDS[reward!.id]?.css }} />}
+                  </MiniGlass>
+                  <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <span style={{ ...sm2Hint, letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 600 }}>
+                      {isPt ? 'O que ganha' : 'What you get'}
+                    </span>
+                    <span style={{ ...sm2Text, fontWeight: 500 }}>{rewardName}</span>
+                    <span style={sm2Hint}>
+                      {done
+                        ? (isPt ? 'Liberado — está na lojinha de Background.' : 'Unlocked — it is in the Background stall.')
+                        : (isPt ? 'Cenário exclusivo: a lojinha de Background libera quando esta conquista fecha.' : 'Exclusive scene: the Background stall unlocks it when this achievement is done.')}
+                    </span>
                   </span>
-                )}
-              </span>
-              {done ? (
-                <Icon name="check_circle" size={24} fill={1} tone="primary" label={isPt ? 'concluída' : 'done'} />
-              ) : m.target > 1 && cur > 0 ? (
-                <span className="sm2-num" style={{ ...sm2Hint, flex: 'none', whiteSpace: 'nowrap' }}>{cur}/{m.target}</span>
-              ) : null}
+                </div>
+              )}
             </li>
           );
         })}

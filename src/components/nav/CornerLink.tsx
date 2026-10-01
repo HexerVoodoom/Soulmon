@@ -25,7 +25,8 @@ export function CornerLink({ icon, label, side, onClick, glow = false, ring = fa
   glow?: boolean;
   /** C14 (navegação do dono, 01/10/2026): o MESMO anel do voltar-ao-mapa das
    *  áreas (`AreaTopBar` sobre a cena: círculo de 44, borda 2px clara). Só o
-   *  desenho em volta muda — o alvo continua o botão de 56. */
+   *  desenho em volta muda — o alvo continua o botão de 56. Vale também para a
+   *  casinha do Mapa (H2). */
   ring?: boolean;
 }) {
   return (

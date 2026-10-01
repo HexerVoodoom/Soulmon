@@ -24,6 +24,7 @@
  */
 import type { CSSProperties, ReactNode } from 'react';
 import { Icon } from '../ui/Icon';
+import { NavGlyph } from '../ui/NavGlyphs';
 import { Viewport } from '../ui/Viewport';
 import { MiniGlass } from '../ui/MiniGlass';
 import { PixelMeter } from '../pixel/PixelKit';
@@ -67,12 +68,18 @@ export function GameRoot({ children, style }: { children: ReactNode; style?: CSS
  * (Rubik 14/500 sobre `line`, o canvas `.ghdr.run`); sem `run` o título é
  * Fredoka 20 (lobby, Dino, PPT).
  */
-export function GameHeader({ title, sub, closeLabel, onClose, run = false }: {
+export function GameHeader({ title, sub, closeLabel, onClose, run = false, onBack, backLabel }: {
   title: string;
   sub?: ReactNode;
   closeLabel: string;
   onClose: () => void;
   run?: boolean;
+  /** Voltar a uma tela de DENTRO do jogo (lista de desenhos, cartões…).
+   *  01/10/2026 (B6/I3, navegação do dono): o voltar é sempre a seta no canto
+   *  superior ESQUERDO, ACIMA do título — nunca mais um botão "Voltar" embaixo.
+   *  O mesmo anel do `AreaTopBar` (exceção D1). */
+  onBack?: () => void;
+  backLabel?: string;
 }) {
   return (
     <div
@@ -84,6 +91,25 @@ export function GameHeader({ title, sub, closeLabel, onClose, run = false }: {
       }}
     >
       <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            aria-label={backLabel}
+            title={backLabel}
+            data-game-back
+            className="sm2-area-back"
+            style={{
+              width: 44, height: 44, flex: 'none', marginBottom: 6, boxSizing: 'border-box',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: 0, cursor: 'pointer', background: 'transparent',
+              border: '2px solid var(--sm2-line)', borderRadius: '50%',
+              color: 'var(--sm2-ink)',
+            }}
+          >
+            <NavGlyph name="arrow_back" size={24} tone="ink" />
+          </button>
+        )}
         {run ? (
           <p style={{ ...sm2Text, margin: 0, fontWeight: 500 }}>{title}</p>
         ) : (

@@ -33,6 +33,14 @@ import { MiniGlass } from './ui/MiniGlass';
 import { Field, sm2Button } from './form/FormKit';
 import type { Language } from '../utils/i18n';
 import type { PlayerDayAnchor } from '../utils/playerDay';
+import { readJson, writeJson } from '../utils/safeStorage';
+import { STORAGE_KEYS } from '../utils/storageKeys';
+
+/** H17 — os ids já abertos na Biblioteca, lidos com defesa (lixo vira lista vazia). */
+function readSeen(): string[] {
+  const v = readJson<unknown>(STORAGE_KEYS.LIBRARY_SEEN, []);
+  return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
+}
 
 interface LibraryPageProps {
   saveId: string;
@@ -141,6 +149,22 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
   const [reloadKey, setReloadKey] = useState(0);
   /** Amigos resolvidos por pid. `null` = ainda carregando (nao "sem amigos"). */
   const [friendPlayers, setFriendPlayers] = useState<LibraryEntry[] | null>(null);
+  /**
+   * H17 (01/10/2026, navegação do dono): a BIBLIOTECA DO HALL mostra só os
+   * Soulmons que a pessoa já viu — os que ela já abriu aqui e os amigos. A busca
+   * por nome continua alcançando qualquer um (sem ela, ninguém novo seria
+   * encontrável). Vale só na visão fixa do Hall (`view === 'directory'`).
+   */
+  const seenOnly = view === 'directory';
+  const [seen, setSeen] = useState<string[]>(readSeen);
+  const markSeen = (id: string) => {
+    setSeen(prev => {
+      if (prev.includes(id)) return prev;
+      const next = [...prev, id];
+      writeJson(STORAGE_KEYS.LIBRARY_SEEN, next);
+      return next;
+    });
+  };
 
   useEffect(() => {
     let vivo = true;
@@ -221,7 +245,11 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
 
   const searchLower = search.toLowerCase();
   const npcMatches: LibraryEntry[] = LIBRARY_NPCS.filter(p => !searchLower || p.name.toLowerCase().includes(searchLower) || p.petName.toLowerCase().includes(searchLower));
-  const directoryList: LibraryEntry[] | null = players === null ? null : [...(players ?? []), ...npcMatches];
+  const directoryAll: LibraryEntry[] | null = players === null ? null : [...(players ?? []), ...npcMatches];
+  const onlySeen = seenOnly && !searchLower;
+  const directoryList: LibraryEntry[] | null = directoryAll && onlySeen
+    ? directoryAll.filter(p => seen.includes(p.id) || friends.includes(p.id))
+    : directoryAll;
   // A aba do grupo não é uma lista de jogadores — tem fonte, estados e vazio
   // próprios. Por isso ela não entra em `list`: entrar faria o esqueleto e o
   // "nenhum jogador com esse nome" do diretório aparecerem por cima dela.
@@ -246,7 +274,9 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
           </h1>
         )}
         <p className="sm2-lib-s" style={{ margin: 0 }}>
-          {isPt ? 'Veja outros jogadores e seus Soulmon.' : 'See other players and their Soulmon.'}
+          {seenOnly
+            ? (isPt ? 'Os Soulmons que já cruzaram o seu caminho.' : 'The Soulmons that have crossed your path.')
+            : (isPt ? 'Veja outros jogadores e seus Soulmon.' : 'See other players and their Soulmon.')}
         </p>
       </div>
 
@@ -332,7 +362,9 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
         <p className="sm2-lib-s" style={{ textAlign: 'center', padding: '24px 0', margin: 0 }}>
           {tab === 'friends'
             ? (isPt ? 'Você ainda não tem amigos. Toque em alguém na aba Todos.' : 'You have no friends yet. Tap someone in the All tab.')
-            : (isPt ? 'Nenhum jogador com esse nome.' : 'No player by that name.')}
+            : onlySeen
+              ? (isPt ? 'Os Soulmons que você abrir aqui ficam guardados nesta lista. Busque um nome para encontrar alguém.' : 'The Soulmons you open here stay on this list. Search a name to find someone.')
+              : (isPt ? 'Nenhum jogador com esse nome.' : 'No player by that name.')}
         </p>
       )}
 
@@ -348,7 +380,7 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
                   e um `<div onClick>` não é alcançável pelo teclado. */}
               <button
                 type="button"
-                onClick={() => { setSelectedPlayer(p); onVisitPlayer?.(); }}
+                onClick={() => { setSelectedPlayer(p); markSeen(p.id); onVisitPlayer?.(); }}
                 aria-label={isPt ? `Ver o perfil de ${p.name}` : `View ${p.name}'s profile`}
                 className="sm2-lib-who"
               >

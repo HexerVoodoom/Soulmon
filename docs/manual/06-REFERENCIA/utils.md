@@ -2174,6 +2174,12 @@ dominância populacional — por isso ±15%. Régua nova:
 **Chamado por:** `src/App.tsx` (import dinâmico, só quando o save já mexeu no mapa), `src/components/play/PasseioSheet.tsx`, `src/components/AdventureDiary.tsx` (`findAnyById`).
 **Régua:** `src/utils/travessias.test.ts`, `src/utils/travessias.contract.test.ts`.
 
+### `src/utils/travessiaTitles.ts`
+**Dono de:** os TÍTULOS das propostas de Travessia (01/10/2026, H12 da navegação do dono) — ao abrir uma região na névoa, as três propostas viram cards fechados com título; o título nomeia o ATO (nunca prêmio, prazo, número ou "desafio"). EN primeiro, par PT-BR junto. Proposta sem título cai no texto do ato.
+**Exports:** `TRAVESSIA_TITLES`, `travessiaTitle`.
+**Chamado por:** `src/components/play/PasseioSheet.tsx`.
+**Régua:** `src/utils/travessiaTitles.test.ts` (toda proposta do catálogo tem título nos dois idiomas; nenhum título com número/prêmio/prazo/"desafio").
+
 ### `src/utils/travessiasSave.ts`
 **Dono de:** a parte das Travessias que o chunk de entrada precisa SEM o catálogo das regiões (orçamento de bytes): a higienização do save (`normalizeCrossings` — tolera ausência/lixo, filtra `RegionId` inválido, casa, dia malformado, texto livre no id do desafio, repetição) e a pergunta "o save já mexeu no mapa?" (`crossingsTouchMap`).
 **Exports:** `REGION_IDS`, `isRegionId`, `normalizeCrossings`, `crossingsTouchMap`.

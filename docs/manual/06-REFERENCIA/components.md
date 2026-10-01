@@ -192,6 +192,12 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Chamado por:** `src/components/nav/AreaSheet.tsx`.
 **Régua:** `src/components/nav/areaShell.render.test.tsx`.
 
+### `src/components/nav/sheetKit.ts`
+**Dono de:** o CARD de dentro de uma folha de lote (01/10/2026, I1/I2 da navegação do dono) — toda opção escolhível dentro de uma folha (jogo do Salão/Ateliê/Refúgio, proposta e região de Travessia) é um bloco com fundo `surface-2`, traço `line`, raio `radius-md` e respiro `space-3` entre vizinhos, nunca uma linha com filete. Só tokens existentes (`04-IDENTIDADE-VISUAL.md` §4).
+**Exports:** `sheetCard`, `sheetCardList`, `sheetCardTitle`.
+**Chamado por:** `src/components/play/PlaySheets.tsx`, `src/components/play/PasseioSheet.tsx`.
+**Régua:** `src/components/play/playArea.render.test.tsx`.
+
 ### `src/components/arena/DueloSheet.tsx`
 **Dono de:** a folha do lote **Duelo** da Arena (minimal-ui F5, 24/09/2026) — mostra a ficha (elemento e habilidade especial do estágio, de `soulmonSkills`; sem ficha no aparelho, o par padrão) e abre a `ArenaGame` em tela cheia. Não decide nada da luta: rodadas (`ARENA_ROUNDS`), balanceamento e recompensa (Bits) continuam na `ArenaGame`.
 **Props principais:** `language`, `evolutionStage`, `skills?`, `onStart`.
