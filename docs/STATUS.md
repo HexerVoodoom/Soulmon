@@ -9,6 +9,13 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 01/10/2026 — Instalação final da rodada 3, PR 2: árvore Noctyl, criaturas, duelo e Arauto (SQUAD-ARTE, `feat/arte-rodada3-instalacao-2`)
+>
+> - `arvore-generica`: as 11 formas genéricas (`soulmon/*.png`, 384²) e os 11 sprites do widget (`drawable-nodpi/sprite_*`, 256²) deixam de ser o corvo repetido e passam a ser o **Noctyl**. O corvo e seu mapa não mudaram. Conferido no preview (Biblioteca, rookie/harmony/power) e pelo guard de franquia/`-mon`.
+> - `criaturas`: 40 PNG em `lines/full/` + `utils/lineFullArt.ts` — **sem consumidor** (nautilu e astrase não estão prontas, não instaladas).
+> - `duelo-oponente-1..6` → `soulmon/duelo/` + `utils/dueloArt.ts`, **sem chamada** (DUELO-1); `boss-arauto-do-fim-full` → `bossRoster.ts` (`formas`), **sem chamada** (BOSS-1).
+> - `CACHE_VERSION` v182. sha256 conferido antes/depois.
+
 > ## 01/10/2026 — Instalação final da rodada 3, PR 1: Hall/Laboratório, Feira e mini-visores (SQUAD-ARTE, `feat/arte-rodada3-instalacao-1`)
 >
 > - `hall-lab-v2`: 2 fundos + 6 lotes substituem os atuais (mesmo caminho); clareiras já batiam com o MANIFEST (Hall 27/42·72/42·50/78, Lab 27/54·72/54·50/72), conferido em 390×844. Bônus do sorvete fica no banco.

@@ -25,6 +25,8 @@ import { ACHIEVEMENT_IDS } from '../utils/achievements';
 import { emblemArt, EMBLEM_COUNT } from '../utils/emblemArt';
 import { DUNGEON_LINE_NAMES } from '../utils/sprites';
 import { lineIcon, LINE_ICON_COUNT } from '../utils/lineIcons';
+import { LINE_FULL_ART, lineFullSprite } from '../utils/lineFullArt';
+import { DUELO_OPONENTE_ART, dueloOponenteArt } from '../utils/dueloArt';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
 import { FOOD_BY_CATEGORY } from '../constants/labels';
 import { CHIP_EMOJI, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI, ALL_SHOP_ITEMS } from '../utils/shop';
@@ -145,6 +147,38 @@ describe('mobílias — SHOP_ITEMS kind=furniture ↔ DECOR_ART ↔ assets/decor
     expect(orfaos, `DECOR_ART sem item: ${orfaos.join(', ')}`).toEqual([]);
     const naPasta = ls('decor').filter(f => !Object.keys(DECOR_ART).includes(f));
     expect(naPasta, `PNG em assets/decor fora do mapa: ${naPasta.join(', ')}`).toEqual([]);
+  });
+});
+
+describe('árvore completa das linhas — assets/soulmon/lines/full ↔ lineFullArt', () => {
+  it('(b) todo PNG da pasta é alcançado por uma chave do mapa', () => {
+    const orfaos = ls('soulmon/lines/full').filter(f => !LINE_FULL_ART[f]);
+    expect(orfaos, `PNG em lines/full fora do mapa: ${orfaos.join(', ')}`).toEqual([]);
+    expect(Object.keys(LINE_FULL_ART).length).toBe(ls('soulmon/lines/full').length);
+  });
+  it('(a) ignar, lumel, serah e igni têm os 3 estágios × 3 galhos + o ultra', () => {
+    for (const line of ['ignar', 'lumel', 'serah', 'igni']) {
+      for (const stage of ['champion', 'ultimate', 'mega'] as const) {
+        for (const branch of ['power', 'harmony', 'benevolence'] as const) {
+          expect(lineFullSprite(line, stage, branch), `${line}-${stage}-${branch}`).toBeTruthy();
+        }
+      }
+      expect(lineFullSprite(line, 'ultra'), `${line}-ultra`).toBeTruthy();
+    }
+  });
+  it('nautilu e astrase ainda não têm arte (pendentes) e id inventado devolve undefined', () => {
+    expect(lineFullSprite('nautilu', 'ultra')).toBeUndefined();
+    expect(lineFullSprite('astrase', 'mega', 'power')).toBeUndefined();
+    expect(lineFullSprite('zzz', 'champion', 'power')).toBeUndefined();
+  });
+});
+
+describe('retratos de oponente do duelo — assets/soulmon/duelo ↔ dueloArt', () => {
+  it('os 6 PNG da pasta são os 6 do mapa, e a escolha por chave é estável', () => {
+    expect(ls('soulmon/duelo').length).toBe(DUELO_OPONENTE_ART.length);
+    expect(new Set(DUELO_OPONENTE_ART).size).toBe(6);
+    expect(dueloOponenteArt('amigo-1')).toBe(dueloOponenteArt('amigo-1'));
+    expect(DUELO_OPONENTE_ART).toContain(dueloOponenteArt(123456));
   });
 });
 
