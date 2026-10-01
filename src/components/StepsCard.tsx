@@ -34,7 +34,7 @@ import { GroupCard, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 
 /*
  * CANVAS "CONTA" (20/09/2026, `Passos.dc.html`, CONTA-11/12): o consentimento
- * é o card SIS-03 "Count your steps?" (Fredoka 20, caixa de frase — era
+ * é o card SIS-03 "Count your steps?" (Cinzel 20, caixa de frase — era
  * `PixelPanel` Silkscreen), "Count them" `primary` + "Not now" `outline` do
  * MESMO tamanho; com permissão, o número do dia em mono 24 `tabular-nums`
  * (valor = mono; leitura, não placar) e o `.meter` SIS-07 em `primary-fill`.

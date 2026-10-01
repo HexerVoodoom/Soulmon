@@ -158,7 +158,7 @@ composta sobre o fundo antes de medir; medir alfa direto dá número inventado.
 
 | papel | fonte | token |
 |---|---|---|
-| títulos | **Fredoka** (variável 300–700) | `--sm2-font-display` |
+| títulos, display e wordmark de texto | **Cinzel** (variável 400–900; só caixa alta + versalete — nunca corpo) — trocou a Fredoka em 01/10/2026, decisão do dono no A2 | `--sm2-font-display` |
 | texto e dado | **Rubik** (400–500) | `--sm2-font-text` |
 | voz do aparelho | **Silkscreen** | `--sm2-font-pixel` |
 | ícones | **Material Symbols Rounded** (variável) | `--sm2-font-icon` |
@@ -236,8 +236,8 @@ os `.woff2` são assets, não pacotes.
 
 | arquivo | tamanho | subset |
 |---|---|---|
-| `fredoka-latin.woff2` | 29 KB | latin |
-| `fredoka-latin-ext.woff2` | 4,5 KB | latin-ext |
+| `cinzel-latin.woff2` | 25 KB | latin |
+| `cinzel-latin-ext.woff2` | 14 KB | latin-ext |
 | `rubik-latin.woff2` | 35 KB | latin |
 | `rubik-latin-ext.woff2` | 19 KB | latin-ext |
 | `material-symbols-rounded.woff2` | **152 KB** | 102 ícones |

@@ -31,7 +31,7 @@ export class ErrorBoundary extends Component<Props, State> {
       // trecho no e-mail (`FeedbackLink.tsx`).
       const saveId = readLocal(STORAGE_KEYS.SAVE_ID);
       /* Canvas Home, `HomeErro` (HOME-47) / D-H7 / D-H9 / X7: mascote em
-         pixel DENTRO de um vidro 96², título Fredoka 20, corpo Rubik 14
+         pixel DENTRO de um vidro 96², título Cinzel 20, corpo Rubik 14
          `muted`, e UM `primary` "Reload" — a única ação. Sem `danger`, sem
          hex cru: tudo por token, e os tokens respondem ao tema que o `<html>`
          já carrega (o `:root` cobre o caso de a tela cair antes do script). */

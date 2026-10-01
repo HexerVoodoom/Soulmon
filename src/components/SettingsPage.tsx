@@ -62,7 +62,7 @@ interface SettingsPageProps {
 
 /**
  * O grupo por intenção é o `GroupCard` do `FormKit` (canvas Conta D-K1: card
- * SIS-03 com o título Fredoka 20). A `RestWindowCard` e o `StepsCard`, que o
+ * SIS-03 com o título Cinzel 20). A `RestWindowCard` e o `StepsCard`, que o
  * App monta logo abaixo desta página, desenham o MESMO card — por isso ele
  * saiu daqui.
  */

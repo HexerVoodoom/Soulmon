@@ -189,7 +189,7 @@ regra interna de procedência, como no áudio.
 | Arquivo | Família · autor | Licença | Fonte / texto da licença | Uso no app |
 |---|---|---|---|---|
 | `material-symbols-rounded.woff2` (155 440 B) | **Material Symbols Rounded** — Google | **Apache License 2.0** | <https://github.com/google/material-design-icons> (`LICENSE`); especimen <https://fonts.google.com/icons> | Ícones de sistema FORA do visor (`Icon.tsx`), `font-display: block` |
-| `fredoka-latin.woff2` (29 732 B) · `fredoka-latin-ext.woff2` (4 576 B) | **Fredoka** — Milena Brandão, Hafontia (variável) | **SIL Open Font License 1.1** | <https://fonts.google.com/specimen/Fredoka> · <https://github.com/hellogreg/fredoka> (`OFL.txt`) | Títulos e rótulos |
+| `cinzel-latin.woff2` (25 904 B) · `cinzel-latin-ext.woff2` (14 540 B) | **Cinzel** — Natanael Gama, The Cinzel Project Authors (variável 400–900) | **SIL Open Font License 1.1** | <https://fonts.google.com/specimen/Cinzel> · <https://github.com/google/fonts/tree/main/ofl/cinzel> (`OFL.txt`) · <https://github.com/NDISCOVER/Cinzel> | Títulos, display e wordmark de texto (desde 01/10/2026; substituiu a Fredoka, que saiu do bundle) |
 | `rubik-latin.woff2` (35 348 B) · `rubik-latin-ext.woff2` (19 400 B) | **Rubik** — Hubert & Fischer, Meir Sadan, Cyreal (variável) | **SIL Open Font License 1.1** | <https://fonts.google.com/specimen/Rubik> · <https://github.com/googlefonts/rubik> (`OFL.txt`) | Texto corrido e interface |
 
 O que cada licença exige, no que toca a nós: as duas permitem embarcar num app

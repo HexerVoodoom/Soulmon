@@ -969,7 +969,7 @@ export function EvolutionPath({
           </p>
         )}
 
-        {/* O nome da forma, Fredoka 20, fora do vidro (aparelho). */}
+        {/* O nome da forma, Cinzel 20, fora do vidro (aparelho). */}
         <h2
           style={{
             fontFamily: 'var(--sm2-font-display)',

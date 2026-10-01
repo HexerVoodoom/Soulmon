@@ -17,7 +17,7 @@
  *  1. o rótulo mais longo tem teto de caracteres medido contra a caixa real;
  *  2. o rótulo nunca é cortado EM SILÊNCIO — no cartão ele quebra linha, e a
  *     fonte do `MapPage` não pode ganhar `nowrap`/`clip` no rótulo;
- *  3. o rótulo é Fredoka/Rubik, nunca Silkscreen (a voz do aparelho só mora
+ *  3. o rótulo é Cinzel/Rubik, nunca Silkscreen (a voz do aparelho só mora
  *     dentro do visor);
  *  4. a AUTOVERIFICAÇÃO prova que os rótulos foram lidos da fonte de verdade.
  *
@@ -35,8 +35,11 @@ const ler = (p: string) => readFileSync(join(RAIZ, p), 'utf8');
 /**
  * Teto de caracteres do nome da área. O cartão do Mapa em **320px**: 320 − 48
  * de gutter (px-6) − 12 de vão = 260 → 130px por cartão, − 24 de padding =
- * **106px de caixa**. Fredoka 600 a 16px mede ~8,5px por caractere em média:
- * 12 caracteres ≈ 102px, no limite. O teto é 12.
+ * **106px de caixa**. A conta original era da Fredoka (~8,5px/caractere a
+ * 16px). Desde 01/10/2026 a display é a Cinzel, mais larga: medido pelo
+ * `hmtx` do woff2, "Laboratório" a 16px dá ~111px. Hoje o rótulo do Mapa é a
+ * pílula de 12px (`MapPage`), onde a mesma palavra fica em ~83px — por isso o
+ * teto de 12 continua valendo; se o rótulo voltar a 16px, ele cai para 10.
  */
 const MAX_CARACTERES = 12;
 
@@ -65,7 +68,7 @@ describe('🔴 o nome da área cabe no cartão do Mapa', () => {
     expect(src).not.toMatch(/whiteSpace:\s*'nowrap'/);
   });
 
-  it('🔴 Silkscreen nunca sai do vidro: o rótulo é Fredoka/Rubik', () => {
+  it('🔴 Silkscreen nunca sai do vidro: o rótulo é Cinzel/Rubik', () => {
     const src = ler('src/components/nav/MapPage.tsx');
     expect(src).toMatch(/var\(--sm2-font-display\)/);
     expect(src).not.toMatch(/font-pixel|Silkscreen/);

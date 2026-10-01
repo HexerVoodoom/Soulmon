@@ -1,7 +1,7 @@
 /* Janela de menu do Soulmon Desktop — o menu é o APARELHO (canvas Fora do app,
    FORA-07..11): um card SIS-03 de 340 em vetor, barra de título fixa com a
    chama + wordmark e três alvos 44, ícones Material pelados, texto Rubik,
-   títulos Fredoka. Tokens em `tokens.css` (cópia declarada do `--sm2-*`); a
+   títulos Cinzel. Tokens em `tokens.css` (cópia declarada do `--sm2-*`); a
    paleta própria (`--bg/--card/--accent`) SAIU em 20/09/2026. */
 @import './tokens.css';
 
@@ -71,7 +71,7 @@ body {
   flex-direction: column;
 }
 
-/* Cabeçalho de painel: `chevron_left` 44 + título Fredoka 16 */
+/* Cabeçalho de painel: `chevron_left` 44 + título Cinzel 16 */
 .panel-header {
   display: flex;
   align-items: center;

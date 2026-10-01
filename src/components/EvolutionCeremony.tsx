@@ -22,7 +22,7 @@ import evolutionBgThumb from '../assets/video/evolution-bg-thumb.webp';
  * forma evoluída a **128** (0,5× — a mesma escala da Home e da Ficha) e a
  * faísca `anim-sparkle-pop` quadro 4 (64² a 2×) no canto superior direito,
  * fora da criatura (X2). Fora do vidro, a faixa `surface` com filete de
- * cobre 3px carrega "EVOLVED INTO" (`.lab` Rubik 12/500), o nome Fredoka 24,
+ * cobre 3px carrega "EVOLVED INTO" (`.lab` Rubik 12/500), o nome Cinzel 24,
  * a data (`formReachedAt`, 02 §45) e o primário "Let's keep going together"
  * (a saída relacional do marco, RIT-20). Texto e botão NUNCA ficam sobre o
  * vídeo: contraste sobre imagem não é medível por token.

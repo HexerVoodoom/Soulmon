@@ -7,7 +7,7 @@ import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
  *
  * Canvas Evolução (`EvolveTaskModal.dc.html`, EVO-15): `.dlg` SIS-06 centrado
  * sobre o scrim literal (`RitualDialog`), `auto_awesome` 48 FILL 1 pelado em
- * `primary-ink`, Fredoka 20, corpo 14, o número em 12 `muted` — e **plural
+ * `primary-ink`, Cinzel 20, corpo 14, o número em 12 `muted` — e **plural
  * real** ("complete 3 tasks per day", X7/S4: "task(s)" era o resíduo). Saiu
  * do kit antigo (Consolas, `sm-card`, botões só em inglês).
  *

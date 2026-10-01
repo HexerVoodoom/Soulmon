@@ -22,7 +22,7 @@
  * (0,5×, escala inteira) centrado no vidro 192² com anel de cobre, o MESMO
  * `Viewport` do reveal e da Home. O `<img 112>` solto (0,44×) saiu. O vidro
  * leva `role=img` com o nome (o `alt` de antes, dito uma vez); embaixo é
- * aparelho: "BORN · <data>" em rótulo 12/500 caixa alta, o nome Fredoka 24,
+ * aparelho: "BORN · <data>" em rótulo 12/500 caixa alta, o nome Cinzel 24,
  * "You said…" 12 `muted`. O epíteto, quando vem, entra em `gold-ink` entre o
  * nome e a frase.
  *

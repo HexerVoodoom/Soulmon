@@ -77,7 +77,7 @@ export const sm2Label: CSSProperties = {
   fontWeight: 500,
 };
 
-/** Título em Fredoka. `sm2-title` já traz família, cor e entrelinha. */
+/** Título em Cinzel. `sm2-title` já traz família, cor e entrelinha. */
 export const sm2TitleStyle: CSSProperties = {
   fontSize: 'var(--sm2-text-lg)',
   fontWeight: 600,
@@ -483,7 +483,7 @@ export function ModalSheet({
 
 /**
  * O grupo por intenção = card SIS-03 (surface, fronteira `line` 1px, raio 12,
- * padding 12) com o título Fredoka 20 — o `h2` do código. Sem ícone ao lado.
+ * padding 12) com o título Cinzel 20 — o `h2` do código. Sem ícone ao lado.
  *
  * G2 (navegação do dono, 01/10/2026): nas Configurações cada grupo vira
  * ACORDEÃO FECHADO por padrão — só o título + `expand_more`. `collapsible`

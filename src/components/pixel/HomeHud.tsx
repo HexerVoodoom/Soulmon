@@ -111,7 +111,7 @@ export function HomeHud({ language = 'en-US', focusSealed = false, trailing }: H
           é o `<h2>` do `RitualPanel`). O wordmark já era o primeiro elemento
           da tela e o nome do lugar onde a pessoa está: ele é o heading certo,
           e virar `<h1>` não muda um pixel (`.sm2-hud-wordmark` traz família,
-          tamanho e cor — Fredoka 20, caixa alta; a margem do `h1` é zerada
+          tamanho e cor — Cinzel 20, caixa alta; a margem do `h1` é zerada
           aqui). */}
       <div className="sm2-hud-brand" style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 44 }}>
         {/* C1 (navegação do dono, 01/10/2026): a marca deixa de ser a PALAVRA

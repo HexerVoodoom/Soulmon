@@ -227,7 +227,7 @@ export const ritualLabel: CSSProperties = {
   margin: 0,
 };
 
-/** Manchete Fredoka 20/600 (o `.h2` do canvas), em `ink`. */
+/** Manchete Cinzel 20/600 (o `.h2` do canvas), em `ink`. */
 export const ritualTitle: CSSProperties = {
   fontFamily: 'var(--sm2-font-display)',
   fontSize: 'var(--sm2-text-lg)',

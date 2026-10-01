@@ -47,7 +47,7 @@
  * 3px, tinta `ink` (nunca vermelho); o ranking com mini-visor 32 (ícone-ficha
  * 32² a 1× — D-J13 cumprida em 21/09/2026; sprite a 0,125× com filtro só
  * quando o estágio não é de linha); o switch travado inerte por FORMA (tracejado,
- * `aria-disabled`, fora do Tab — nunca opacidade, D-J14); a faixa em Fredoka
+ * `aria-disabled`, fora do Tab — nunca opacidade, D-J14); a faixa em Cinzel
  * 16 (Silkscreen só dentro do vidro); o resultado num `RitualDialog` com o
  * visor 288×112 da arena e as duas criaturas a 64 na vitória.
  */
@@ -611,7 +611,7 @@ export function TournamentPage({ saveId, petStage, petLine, pvpEnabled, onToggle
               <p style={sm2Hint}>{isPt ? 'Sua faixa' : 'Your tier'}</p>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <TierMark id={standing.tier.id} size={32} state="current" />
-                {/* O nome da faixa em Fredoka 16 (canvas): a Silkscreen é a voz
+                {/* O nome da faixa em Cinzel 16 (canvas): a Silkscreen é a voz
                     do APARELHO e só vive dentro do vidro (HANDOFF §1). */}
                 <p style={{ margin: 0, fontFamily: 'var(--sm2-font-display)', fontWeight: 600, fontSize: 'var(--sm2-text-md)', lineHeight: 'var(--sm2-leading-title)', color: 'var(--sm2-ink)' }}>
                   {isPt ? standing.tier.namePt : standing.tier.nameEn}
@@ -764,7 +764,7 @@ export function TournamentPage({ saveId, petStage, petLine, pvpEnabled, onToggle
 
 /**
  * Resultado da partida — um `RitualDialog` (trap, Escape, devolução do foco).
- * "Victory"/"Defeat" em Fredoka 20 na MESMA tinta; na vitória o visor 288×112
+ * "Victory"/"Defeat" em Cinzel 20 na MESMA tinta; na vitória o visor 288×112
  * com a arena `tournament-final` e as duas criaturas a 64 frente a frente;
  * "Against ‹oponente› · N pts" 12 `muted` (N pts = poder da partida, 13.13);
  * "Emblems +N" com o número em serifa dourada 20; "Continue" primário nos

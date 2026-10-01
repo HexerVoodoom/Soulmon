@@ -65,7 +65,7 @@ const OraclePage = lazy(() => import('./OraclePage').then(m => ({ default: m.Ora
 // `sm-btn`, três blocos de `@keyframes` inline iguais, ícones `lucide-react` e
 // texto a 11,5px. Passou pela mesma régua das outras telas:
 //
-//   · tokens `--sm2-*`, tipografia Fredoka (título) / Rubik (texto), PISO DE
+//   · tokens `--sm2-*`, tipografia Cinzel (título) / Rubik (texto), PISO DE
 //     12px — não existe mais `fontSize: 11.5`;
 //   · UMA ação dominante por passo. O que foi cortado é o que não decidia nada:
 //     os dois parágrafos de propaganda embaixo dos botões da intro (o preço já
@@ -2377,7 +2377,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   );
 }
 
-/** O casco de um passo: título em Fredoka, legenda em Rubik no piso de 12px. */
+/** O casco de um passo: título em Cinzel, legenda em Rubik no piso de 12px. */
 function StepShell({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
     <div style={{ paddingTop: 20 }}>

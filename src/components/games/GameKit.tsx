@@ -3,7 +3,7 @@
  * identidade/` (DECISÕES §25, D-J3…D-J8).
  *
  * **O minijogo é o conteúdo de um VISOR; o chrome é aparelho.** Cada tela de
- * jogo = `GameRoot` (a página, `--sm2-bg`) › `GameHeader` (título Fredoka 20
+ * jogo = `GameRoot` (a página, `--sm2-bg`) › `GameHeader` (título Cinzel 20
  * ou Rubik 14/500 na run, linha 12 `muted`, × 44 pelado — o PRIMEIRO
  * interativo, J5) › `GameVisor` (anel de cobre + vidro 348×N com a cena em
  * `cover` e os sprites/FX pixel DENTRO) › HUD e botões vetor embaixo
@@ -66,7 +66,7 @@ export function GameRoot({ children, style }: { children: ReactNode; style?: CSS
 /**
  * O chrome: título + linha `muted` + × 44 pelado. `run` = a variante da run
  * (Rubik 14/500 sobre `line`, o canvas `.ghdr.run`); sem `run` o título é
- * Fredoka 20 (lobby, Dino, PPT).
+ * Cinzel 20 (lobby, Dino, PPT).
  */
 export function GameHeader({ title, sub, closeLabel, onClose, run = false, onBack, backLabel }: {
   title: string;

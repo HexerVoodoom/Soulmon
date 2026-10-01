@@ -136,7 +136,7 @@ export function CreditsModal({
     </button>
   );
 
-  /* "Earn" / "Spend" em Fredoka 16 (o `.h3` do canvas). */
+  /* "Earn" / "Spend" em Cinzel 16 (o `.h3` do canvas). */
   const sectionTitle = (text: string) => (
     <h2 className="sm2-title" style={{ ...sm2TitleStyle, fontSize: 'var(--sm2-text-md)', fontWeight: 500, marginTop: 2 }}>{text}</h2>
   );
