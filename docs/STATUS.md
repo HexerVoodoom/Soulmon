@@ -9,6 +9,18 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 30/09/2026 — Bustos de NPC (16) e prédios de lote (10) instalados (SQUAD-ARTE, `feat/arte-npcs-bustos`)
+>
+> Leva `npcs-flare` (aprovada pelo dono): 10 NPCs de lote trocaram os placeholders em `LOT_NPC_ART`
+> (`src/assets/soulmon/npcs/index.ts`) com falas do ROSTER em `LOT_NPC_VOICE`; **Bento** substitui o
+> nome de terceiro no Meu Soulmon, **Medra** ganha voz própria (Conquistas herdava o Grom), **Brume**
+> assume o Passeio (antes Zeph). `npc-placeholder-poring`/`-coruja-cervo` e `PLACEHOLDER_NPC_ART` saíram
+> do bundle (bíblia das áreas §1.3 A3/A4). Os 6 NPCs de função (`FUNCTION_NPC_ART`/`FUNCTION_NPC_VOICE`)
+> estão **sem chamada** — onde entram é `PERGUNTAS-DO-DONO.md` NPC-1. Leva `lotes-v2/final/`: 10 prédios
+> próprios (Jogos mente/refúgio, Passeio, Laboratório ×3, Hall ×3, Mercado conquistas);
+> `lote-exploracao-dino.png` ficou **sem consumidor** (arquivo em disco, sem import). Registro:
+> `ASSETS-A-GERAR.md` §8 I12/I13.
+
 > ## 30/09/2026 — Respostas MIS-13..MIS-16 (Travessias)
 >
 > Dono, por modal: caixa 18+ mantida; Travessias fora da ficha da loja na v1; frase "as Travessias são opcionais"

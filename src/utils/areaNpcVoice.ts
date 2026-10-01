@@ -73,14 +73,23 @@ export function areaNpcVoice(id: AreaId, language: Language): { name: string; li
 /**
  * FALA POR LOTE (29/09/2026) — cada sub-loja/sala tem o seu NPC, então a fala
  * também é dele. A chave é `área:lote`; lote sem entrada cai na voz da área
- * (`areaNpcVoice`). Nomes e falas novos são PLACEHOLDER de nomeação: o dono
- * pode trocá-los aqui, num lugar só. Tom: convite, nunca cobrança.
+ * (`areaNpcVoice`). Tom: convite, nunca cobrança.
+ * Desde 30/09/2026 as falas vêm do ROSTER da leva de bustos aprovada pelo dono
+ * (`E:/Soulmon-assets/out/rodada3/npcs-flare/ROSTER.md`; fichas na
+ * `docs/design/areas/00-BIBLIA-DAS-AREAS.md` §4). Exceção: a Feira e o Salão
+ * seguem lendo `guildCopy.ts` (a copy revisada da Guilda — a do Salão é a
+ * mesma do ROSTER).
  */
 const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
+  'mercado:conquistas': {
+    namePt: 'Medra, o guardião dos marcos', nameEn: 'Medra, keeper of milestones',
+    linePt: 'Cada placa do meu casco lembra um trecho atravessado.',
+    lineEn: 'Each plate on my shell remembers a stretch crossed.',
+  },
   'arena:duelo': {
     namePt: 'Rhinoco, o campeão', nameEn: 'Rhinoco, the champion',
-    linePt: 'Um duelo, uma rodada de cada vez. Pode vir — eu aguento o tranco!',
-    lineEn: 'One duel, one round at a time. Bring it on — I can take a hit!',
+    linePt: 'Um duelo, uma rodada de cada vez. Pode vir.',
+    lineEn: 'One duel, one round at a time. Come on.',
   },
   // Fala da Feira (`guild.npc.feira`) — a copy mora em `guildCopy.ts`; "grupo
   // pequeno" ficou falso com a roda de até 12. NPC da Feira: Fanfare (criatura-sanfona,
@@ -97,25 +106,26 @@ const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
   // ofício não promete efeito (Ateliê) nem insinua tratamento (Refúgio).
   'jogos:mente': {
     namePt: 'Tessela, a enigmista', nameEn: 'Tessela, the puzzler',
-    linePt: 'Cada mesa daqui pede uma coisa: lembrar a ordem, esperar a vez, trocar de regra, deduzir. Sente onde quiser.',
-    lineEn: 'Each table here asks for one thing: remember the order, wait your turn, switch the rule, deduce. Sit wherever you like.',
+    linePt: 'Este quebra-cabeça espera. As peças não vão a lugar nenhum.',
+    lineEn: "This puzzle waits. Its pieces aren't going anywhere.",
   },
   'jogos:refugio': {
     namePt: 'Bobbi, o soprador de bolhas', nameEn: 'Bobbi, the bubble-blower',
-    linePt: 'Eu faço bolhas bem devagar. Quer estourar algumas, ou respirar no ritmo delas?',
-    lineEn: 'I make bubbles, nice and slow. Want to pop a few, or breathe along with them?',
+    linePt: 'Aqui não se conta nada. Só bolhas subindo.',
+    lineEn: 'Nothing to count here. Just bubbles going up.',
   },
-  // 🧭 O Passeio (30/09/2026): a mesma guia da Exploração. Convite, nunca
-  // cobrança — e nenhuma palavra sobre o que as Travessias "rendem".
+  // 🧭 O Passeio: Brume (nome novo aprovado pelo dono em 30/09/2026, espírito
+  // do charco). Convite, nunca cobrança — e nenhuma palavra sobre o que as
+  // Travessias "rendem".
   'exploracao:passeio': {
-    namePt: 'Zeph, a guia', nameEn: 'Zeph, the guide',
-    linePt: 'Seu Soulmon sai para passear todo dia. Escolha para onde ele vai — ou deixe ele perto de casa.',
-    lineEn: 'Your Soulmon heads out every day. Pick where it wanders — or let it stay close to home.',
+    namePt: 'Brume, o espírito do charco', nameEn: 'Brume, the marsh spirit',
+    linePt: 'A névoa abre um pouco mais a cada passo. Ande devagar o quanto quiser.',
+    lineEn: 'The mist opens a little further each step. Walk as slow as you like.',
   },
   'hall:amigos': {
     namePt: 'Nino, o carteiro', nameEn: 'Nino, the courier',
-    linePt: 'Quem você quer visitar hoje? Seus amigos estão logo ali.',
-    lineEn: 'Who do you want to visit today? Your friends are right over there.',
+    linePt: 'Chegou um aceno. Guardei na bolsa pra você.',
+    lineEn: 'A wave arrived. I kept it in my bag for you.',
   },
   'hall:guilda': {
     namePt: 'Marla, a intendente', nameEn: 'Marla, the steward',
@@ -123,14 +133,15 @@ const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     lineEn: GUILD_COPY['guild.npc.hall'][1],
   },
   'laboratorio:pet': {
-    namePt: 'Tico, o cuidador', nameEn: 'Tico, the keeper',
-    linePt: 'Aqui está a ficha completa do seu Soulmon: quem ele é e o que ele sabe fazer.',
-    lineEn: 'Here is your Soulmon’s full sheet: who it is and what it can do.',
+    // O nome antigo era de personagem de terceiro — a bíblia das áreas §1.3 A4 decidiu Bento.
+    namePt: 'Bento, o cuidador', nameEn: 'Bento, the keeper',
+    linePt: 'Olha como a pelagem pegou luz hoje.',
+    lineEn: 'Look how its coat caught the light today.',
   },
   'laboratorio:stats': {
     namePt: 'Quill, a escriba', nameEn: 'Quill, the scribe',
-    linePt: 'Cada dia fica anotado aqui. É só para você olhar — sem julgamento.',
-    lineEn: 'Every day is written down here. It is just for you to look at — no judgment.',
+    linePt: 'Cada dia fica anotado aqui. É só para olhar.',
+    lineEn: "Every day is written here. It's just to look at.",
   },
 };
 
@@ -138,6 +149,55 @@ const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
 export function lotNpcVoice(id: AreaId, lotId: string | null | undefined, language: Language): { name: string; line: string } {
   const v = lotId ? LOT_NPC_VOICE[`${id}:${lotId}`] : undefined;
   if (!v) return areaNpcVoice(id, language);
+  const isPt = language === 'pt-BR';
+  return { name: isPt ? v.namePt : v.nameEn, line: isPt ? v.linePt : v.lineEn };
+}
+
+/**
+ * NPCs de FUNÇÃO (30/09/2026, leva `npcs-flare`): nome e fala dos bustos que
+ * moram numa função do app, não num lote (`assets/soulmon/npcs` ›
+ * `FUNCTION_NPC_ART`). ⚠️ SEM CHAMADA HOJE — nenhuma tela lê este mapa ainda;
+ * onde cada um aparece é decisão de design (`docs/PERGUNTAS-DO-DONO.md`).
+ * Falas do ROSTER, sem cobrança, sem emoji, sem número.
+ */
+export type FunctionNpcId = 'onboarding' | 'oraculo' | 'conta' | 'sono' | 'cuidados' | 'config';
+
+const FUNCTION_NPC_VOICE: Record<FunctionNpcId, AreaNpcVoice> = {
+  onboarding: {
+    namePt: 'Ambra', nameEn: 'Ambra',
+    linePt: 'Sem pressa. Tudo aqui já está arrumado pra você.',
+    lineEn: 'Take your time. Everything here is already set up for you.',
+  },
+  oraculo: {
+    namePt: 'Iris', nameEn: 'Iris',
+    linePt: 'A luz se dobra com gentileza hoje. Olhe o quanto quiser.',
+    lineEn: 'The light bends kindly today. Look as long as you like.',
+  },
+  conta: {
+    namePt: 'Faro', nameEn: 'Faro',
+    linePt: 'Seu progresso fica guardado aqui, quando você quiser.',
+    lineEn: 'Your progress is kept safe here, whenever you want it.',
+  },
+  sono: {
+    namePt: 'Sona', nameEn: 'Sona',
+    linePt: 'Um sonho novo se abriu enquanto você descansava. Guardei pra você.',
+    lineEn: 'A new dream opened while you rested. I kept it for you.',
+  },
+  cuidados: {
+    namePt: 'Nuri', nameEn: 'Nuri',
+    linePt: 'Água fresca, cantinho limpo, tigela cheia. Simples assim.',
+    lineEn: 'Fresh water, a clean corner, a full bowl. Nice and easy.',
+  },
+  config: {
+    namePt: 'Tobi', nameEn: 'Tobi',
+    linePt: 'Mexa no que quiser. Cada ajuste volta ao lugar de antes.',
+    lineEn: 'Turn anything you like. Every setting goes back where it was.',
+  },
+};
+
+/** Nome e fala de um NPC de função, no idioma. */
+export function functionNpcVoice(id: FunctionNpcId, language: Language): { name: string; line: string } {
+  const v = FUNCTION_NPC_VOICE[id];
   const isPt = language === 'pt-BR';
   return { name: isPt ? v.namePt : v.nameEn, line: isPt ? v.linePt : v.lineEn };
 }

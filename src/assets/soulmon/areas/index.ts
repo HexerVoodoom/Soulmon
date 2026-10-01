@@ -15,6 +15,7 @@ import loteItens from './lote-loja-itens.png';
 import loteDecoracao from './lote-loja-decoracao.png';
 import loteBackground from './lote-loja-background.png';
 import loteConquistas from './lote-loja-conquistas.png';
+import loteMercadoConquistas from './lote-mercado-conquistas.png';
 import loteTorneio from './lote-arena-torneio.png';
 import loteDuelo from './lote-arena-duelo.png';
 
@@ -24,7 +25,9 @@ export const MERCADO_LOT_ART = {
   itens: loteItens,
   decoracao: loteDecoracao,
   background: loteBackground,
-  conquistas: loteConquistas,
+  // 30/09/2026 (leva lotes-v2, aprovada pelo dono): a torre-treliça própria.
+  // `lote-loja-conquistas` segue no bundle só como placeholder da Feira, abaixo.
+  conquistas: loteMercadoConquistas,
 } as const;
 
 // ⚠️ `feira`: PLACEHOLDER (a arte `lote-arena-feira` — tenda-cúpula listrada — vem da leva de
@@ -37,22 +40,23 @@ export const ARENA_LOT_ART = { torneio: loteTorneio, duelo: loteDuelo, feira: lo
 import bgExploracao from './bg-exploracao.png';
 import bgJogos from './bg-jogos.png';
 import loteMasmorra from './lote-exploracao-masmorra.png';
-import loteDino from './lote-exploracao-dino.png';
 import lotePpt from './lote-jogos-ppt.png';
+// ⚠️ SEM CONSUMIDOR desde 30/09/2026: `lote-exploracao-dino.png` só emprestava a
+// arte ao Ateliê da Mente, que ganhou prédio próprio. O arquivo fica em disco
+// (fora do bundle, sem import) para quando a Corrida ganhar lote de novo.
+import lotePasseio from './lote-exploracao-passeio.png';
+import loteMente from './lote-jogos-mente.png';
+import loteRefugio from './lote-jogos-refugio.png';
 
 export const PLAY_AREA_BG = { exploracao: bgExploracao, jogos: bgJogos } as const;
 
-// ⚠️ `passeio` (30/09/2026): PLACEHOLDER — a galeria de quadros de paisagem da
-// loja de cenários lê como "postais das regiões" até a squad-arte gerar a arte
-// própria do Passeio. Só trocar o import.
-export const EXPLORACAO_LOT_ART = { masmorra: loteMasmorra, passeio: loteBackground } as const;
+// `passeio` (30/09/2026, leva lotes-v2): a ilha flutuante com arco de raízes.
+export const EXPLORACAO_LOT_ART = { masmorra: loteMasmorra, passeio: lotePasseio } as const;
 
 // 🏛️ Os três prédios de Jogos (30/09/2026). O Salão herda as duas artes que já
 // eram dele por conteúdo (o PPT; o Dino mudou da Exploração para cá).
-// ⚠️ `mente` e `refugio`: PLACEHOLDERS — reaproveitam isométricas instaladas
-// até a squad-arte gerar as próprias (fila em `docs/ASSETS-A-GERAR.md`). Só
-// trocar os imports.
-export const JOGOS_LOT_ART = { salao: lotePpt, mente: loteDino, refugio: loteDecoracao } as const;
+// `mente` e `refugio`: prédios próprios desde 30/09/2026 (leva lotes-v2).
+export const JOGOS_LOT_ART = { salao: lotePpt, mente: loteMente, refugio: loteRefugio } as const;
 
 // ── Guilda, Laboratório e Hall (29/09/2026) ────────────────────────────────
 // 🌙 Fundos 760×1344 do Hall e do Laboratório (30/09/2026, rodada 3 fundos-v2,
@@ -65,17 +69,25 @@ import bgLaboratorio from './bg-laboratorio.png';
 export const HALL_BG = bgHall;
 export const LABORATORIO_BG = bgLaboratorio;
 
-// ⚠️ PLACEHOLDERS: ainda não existe arte de lote própria para estas
-// construções — reaproveitam as isométricas já instaladas até a squad-arte
-// gerar as definitivas (fila em `docs/ASSETS-A-GERAR.md`). Só trocar os imports.
+// 🏗️ Prédios próprios do Laboratório e do Hall (30/09/2026, leva lotes-v2
+// aprovada pelo dono — `E:/Soulmon-assets/out/rodada3/lotes-v2/MANIFEST.md`,
+// versão limpa `final/`, 300² alfa binário). Até aqui eram empréstimos das
+// isométricas do Mercado e de Jogos.
+import loteEvolucao from './lote-laboratorio-evolucao.png';
+import lotePet from './lote-laboratorio-pet.png';
+import loteStats from './lote-laboratorio-stats.png';
+import loteBiblioteca from './lote-hall-biblioteca.png';
+import loteAmigos from './lote-hall-amigos.png';
+import loteGuilda from './lote-hall-guilda.png';
+
 export const LABORATORIO_LOT_ART = {
-  evolucao: loteBackground,
-  pet: loteItens,
-  stats: loteConquistas,
+  evolucao: loteEvolucao,
+  pet: lotePet,
+  stats: loteStats,
 } as const;
 
 export const HALL_LOT_ART = {
-  biblioteca: lotePpt,
-  amigos: loteDecoracao,
-  guilda: loteConquistas,
+  biblioteca: loteBiblioteca,
+  amigos: loteAmigos,
+  guilda: loteGuilda,
 } as const;

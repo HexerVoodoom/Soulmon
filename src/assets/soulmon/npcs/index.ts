@@ -7,6 +7,7 @@
  * (ainda não tiveram revisão pedida).
  */
 import type { AreaId } from '../../../navigation';
+import type { FunctionNpcId } from '../../../utils/areaNpcVoice';
 
 import npcMercado from './npc-mercado.png';
 import npcArena from './npc-arena.png';
@@ -40,54 +41,74 @@ export const STALL_NPC_ART = {
   background: npcLojaBackground,
 } as const;
 
-import npcPlaceholderCorujaCervo from './npc-placeholder-coruja-cervo.png';
-import npcPlaceholderPoring from './npc-placeholder-poring.png';
-
-/**
- * Sobras de geração do Higgsfield (23/09/2026, run de bestiário/NPCs — nunca
- * instaladas antes) reaproveitadas como placeholder de sub-lojas que ainda
- * não têm vendedor próprio desenhado: a coruja-cervo (owl-stag, cientista de
- * evolução) e o poring (slime alquimista). Trocar pela arte definitiva quando
- * a squad-arte gerar o NPC dedicado — não é arte final, é placeholder.
- */
-export const PLACEHOLDER_NPC_ART = {
-  corujaCervo: npcPlaceholderCorujaCervo,
-  poring: npcPlaceholderPoring,
-  /** ⚠️ AINDA SEM ARTE DO RINOCERONTE (Rhinoco, Duelo da Arena, 29/09/2026):
-   *  reaproveita o poring até a squad-arte gerar o busto dele. Quando chegar,
-   *  é só trocar este import — o mapa `LOT_NPC_ART` já aponta para cá. */
-  rinoceronte: npcPlaceholderPoring,
-} as const;
+import npcArenaDuelo from './npc-arena-duelo.png';
+import npcArenaFeira from './npc-arena-feira.png';
+import npcJogosMente from './npc-jogos-mente.png';
+import npcJogosRefugio from './npc-jogos-refugio.png';
+import npcMercadoConquistas from './npc-mercado-conquistas.png';
+import npcHallAmigos from './npc-hall-amigos.png';
+import npcHallGuilda from './npc-hall-guilda.png';
+import npcLaboratorioPet from './npc-laboratorio-pet.png';
+import npcLaboratorioStats from './npc-laboratorio-stats.png';
+import npcExploracaoPasseio from './npc-exploracao-passeio.png';
 
 /**
  * NPC por SUB-LOJA (minimal-ui F4/F5, decisão do dono 28/09/2026): cada lote
  * dentro de uma área tem o seu próprio vendedor/anfitrião — não existe mais
  * um único NPC "da área inteira" espiando toda folha. Onde a área só tem UM
  * lote (Laboratório, Hall, Jogos), o antigo anfitrião da área vira o NPC
- * daquele lote (a folha é a única porta de entrada dele mesmo assim). Onde
- * não há arte própria ainda, cai num `PLACEHOLDER_NPC_ART`.
+ * daquele lote (a folha é a única porta de entrada dele mesmo assim).
+ *
+ * Os bustos de lote (30/09/2026, leva `npcs-flare` aprovada pelo dono —
+ * `E:/Soulmon-assets/out/rodada3/npcs-flare/ROSTER.md`, 768², alfa binário)
+ * substituíram os placeholders: o antigo mapa de placeholders (coruja-cervo e o
+ * slime com nome de franquia de terceiro, achado A3 da bíblia das áreas §1.3)
+ * saiu do bundle. Nome e fala de cada um: `utils/areaNpcVoice.ts`.
  */
 const LOT_NPC_ART: Record<string, string> = {
   'mercado:itens': npcLojaItens,
   'mercado:decoracao': npcLojaDecoracao,
   'mercado:background': npcLojaBackground,
-  'mercado:conquistas': npcPlaceholderPoring,
+  'mercado:conquistas': npcMercadoConquistas, // Medra
   'arena:torneio': npcArena,
-  'arena:duelo': PLACEHOLDER_NPC_ART.rinoceronte,
-  // Fanfare (`npc-arena-feira`): PLACEHOLDER até a leva de arte (ids em `utils/fairArt.ts`). Só trocar aqui.
-  'arena:feira': npcPlaceholderCorujaCervo,
+  'arena:duelo': npcArenaDuelo, // Rhinoco
+  'arena:feira': npcArenaFeira, // Fanfare (`utils/fairArt.ts` › FAIR_ART_IDS.npc)
   'exploracao:masmorra': npcExploracao,
-  // Os três prédios de Jogos (30/09/2026): o Pipo segue no Salão (jogos livres);
-  // Ateliê da Mente e Refúgio usam placeholders até a squad-arte gerar os NPCs.
+  'exploracao:passeio': npcExploracaoPasseio, // Brume
+  // Os três prédios de Jogos (30/09/2026): o Pipo segue no Salão (jogos livres).
   'jogos:salao': npcJogos,
-  'jogos:mente': npcPlaceholderCorujaCervo,
-  'jogos:refugio': npcPlaceholderPoring,
+  'jogos:mente': npcJogosMente, // Tessela
+  'jogos:refugio': npcJogosRefugio, // Bobbi
   'laboratorio:evolucao': npcLaboratorio,
+  'laboratorio:pet': npcLaboratorioPet, // Bento
+  'laboratorio:stats': npcLaboratorioStats, // Quill
   'hall:biblioteca': npcHall,
-  'hall:amigos': npcPlaceholderCorujaCervo,
-  'hall:guilda': npcPlaceholderCorujaCervo,
-  'laboratorio:pet': npcPlaceholderCorujaCervo,
-  'laboratorio:stats': npcPlaceholderPoring,
+  'hall:amigos': npcHallAmigos, // Nino
+  'hall:guilda': npcHallGuilda, // Marla
+};
+
+import npcOnboarding from './npc-onboarding.png';
+import npcOraculo from './npc-oraculo.png';
+import npcConta from './npc-conta.png';
+import npcSono from './npc-sono.png';
+import npcCuidados from './npc-cuidados.png';
+import npcConfig from './npc-config.png';
+
+/**
+ * NPCs de FUNÇÃO (30/09/2026, mesma leva `npcs-flare`): os bustos que não
+ * moram num lote do Mapa, e sim numa função do app. ⚠️ **SEM CHAMADA HOJE**:
+ * a arte está instalada e registrada, mas NENHUMA tela desenha estes bustos —
+ * onde cada um entra é decisão de design (`docs/PERGUNTAS-DO-DONO.md`, "onde
+ * cada NPC de função aparece", com a recomendação do ROSTER). Nome e fala:
+ * `utils/areaNpcVoice.ts` › `FUNCTION_NPC_VOICE`.
+ */
+export const FUNCTION_NPC_ART: Record<FunctionNpcId, string> = {
+  onboarding: npcOnboarding, // Ambra
+  oraculo: npcOraculo, // Iris
+  conta: npcConta, // Faro
+  sono: npcSono, // Sona
+  cuidados: npcCuidados, // Nuri
+  config: npcConfig, // Tobi
 };
 
 /** Resolve o NPC de UMA folha (área + id do lote). Sem lote aberto, ou lote

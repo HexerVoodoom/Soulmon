@@ -5,7 +5,8 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
-import { lotNpcArt, PLACEHOLDER_NPC_ART } from '../../assets/soulmon/npcs';
+import { lotNpcArt } from '../../assets/soulmon/npcs';
+import npcArenaFeira from '../../assets/soulmon/npcs/npc-arena-feira.png';
 import { FAIR_ART_IDS, fairStateOf } from '../../utils/fairArt';
 import { arenaLots, hallLots } from '../../utils/areaSheetCopy';
 
@@ -46,8 +47,10 @@ describe('o lote e o NPC da Feira', () => {
     expect(av).toMatch(/open\?\.id === 'guilda'[\s\S]{0,80}room="salao"/);
   });
 
-  it('a Feira tem NPC placeholder registrado em `arena:feira` (Marla saiu da Arena) e os ids da leva de arte estão declarados', () => {
-    expect(lotNpcArt('arena', 'feira')).toBe(PLACEHOLDER_NPC_ART.corujaCervo ?? lotNpcArt('hall', 'guilda'));
+  it('a Feira tem o busto do Fanfare registrado em `arena:feira` (Marla saiu da Arena) e os ids da leva de arte estão declarados', () => {
+    expect(lotNpcArt('arena', 'feira')).toBe(npcArenaFeira);
+    expect(lotNpcArt('arena', 'feira')).not.toBe(lotNpcArt('hall', 'guilda'));
+    expect(npcArenaFeira).toContain(FAIR_ART_IDS.npc);
     expect(ler('assets/soulmon/npcs/index.ts')).not.toContain("'arena:guilda'");
     expect(ler('utils/areaNpcVoice.ts')).not.toContain("'arena:guilda'");
     expect(FAIR_ART_IDS.npc).toBe('npc-arena-feira');

@@ -391,3 +391,14 @@ exclusivos por região** (exceção à regra 4 da Aventura; catálogo comum segu
 **Travessias fora da ficha da loja na v1** · MIS-15 **frase de segurança no `termos.html` §8** — feita, PT+EN,
 `TERMS_VERSION` 2026-09-30 (quem já aceitou vê o aviso de atualização, sem bloqueio) · MIS-16 **"Crossings" fica no
 app**; em marketing nunca "Crossing" sozinho, e busca de marca (INPI/USPTO) antes de qualquer uso fora do app.
+
+## NPCs de função — onde cada um aparece (30/09/2026, `arte-instalador`)
+
+Os 6 bustos de função da leva `npcs-flare` estão instalados (`src/assets/soulmon/npcs` › `FUNCTION_NPC_ART`,
+nome e fala em `src/utils/areaNpcVoice.ts` › `FUNCTION_NPC_VOICE`), mas **nenhuma tela os desenha ainda** — onde
+entram é decisão de design.
+
+| # | Pergunta aberta | Recomendação (do ROSTER; nada aplicado até resposta) | Gatilho de revisão |
+|---|---|---|---|
+| NPC-1 | Onde cada NPC de função aparece? | **Ambra** → IntroScreen, SoulmonOnboarding, FirstDayCard · **Iris** → OraclePage · **Faro** → UnlockAccountModal, CreditsModal, AccountSection, ProtectProgressModal · **Sona** → DreamDex, RestWindowCard, MorningDream · **Nuri** → CareSystem, DailyRituals · **Tobi** → SettingsPage | Próximo canvas de design que tocar uma dessas telas |
+

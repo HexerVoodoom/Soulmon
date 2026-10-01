@@ -218,7 +218,8 @@ describe('Exploração — o Passeio (30/09/2026)', () => {
     await achar(container, '[data-passeio]');
     const folha = getByRole('dialog', { name: 'Stroll' });
     expect(folha.querySelector('[data-passeio-destino="campina"]')!.getAttribute('aria-pressed')).toBe('true');
-    expect(container.querySelector('[data-area-sheet-npc-line]')!.textContent).toContain('Zeph');
+    // O Passeio tem NPC próprio desde 30/09/2026 (Brume, leva npcs-flare); a Masmorra segue com o Zeph.
+    expect(container.querySelector('[data-area-sheet-npc-line]')!.textContent).toContain('Brume');
     // Tocar numa região em névoa e escolher uma proposta: o App recebe uma FUNÇÃO (pura, sobre `prev`).
     fireEvent.click(folha.querySelector('[data-nevoa] button')!);
     fireEvent.click(folha.querySelector('[data-travessia-escolher]')!);
