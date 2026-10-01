@@ -501,9 +501,16 @@ export function ChatBox({
           className="sm2-chat-btn"
           /* Paridade exata com o `&:disabled { opacity: .5 }` do
              `.sm2-chat-btn` (index.css), que o `aria-disabled` não dispara. */
-          style={isLoading || (!hasText && micDisponivel === false)
+          /* E3 (navegação do dono, 01/10/2026): campo VAZIO = microfone;
+             com texto = enviar. Sem transcrição configurada não existe
+             microfone (regra do `serverConfig`): com o campo vazio o botão
+             fica INVISÍVEL e fora do toque (`visibility`, para a barra não
+             mudar de largura) e volta como "enviar" na primeira letra. */
+          style={isLoading
             ? { opacity: 0.5, cursor: 'default' }
-            : undefined}
+            : (!hasText && micDisponivel === false)
+              ? { visibility: 'hidden' }
+              : undefined}
           title={actionLabel}
           aria-label={actionLabel}
         >
@@ -545,11 +552,31 @@ export function ChatBox({
           SEM telefone e SEM nome de serviço, de propósito: caducam por país, e
           uma linha errada numa tela de crise pune quem teve a coragem de pedir
           ajuda. Se entra um diretório externo (e qual), é decisão do dono. */}
+      {/* E2 (navegação do dono, 01/10/2026): a frase de apoio ("If you're
+          going through a hard time…") SAIU da barra do chat — ela aparecia
+          ao tocar no campo e mudava o layout (E1). ⚠️ REALOCAR DEPOIS: o dono
+          vai decidir o lugar novo. O texto e o caminho continuam INTEIROS em
+          `ChatSupportNote` (logo abaixo, exportado e sem consumidor por ora).
+          O que continua valendo, e é a parte de SEGURANÇA: a ponte
+          (`chatSafetyDecision`, antes de qualquer rede) responde com o CVV
+          188 / findahelpline.com quando a mensagem pede ajuda, e o Refúgio
+          (`refugio/SupportNote.tsx`) mantém a nota de apoio. */}
+    </div>
+  );
+}
+
+/**
+ * E2 — REALOCAR DEPOIS (decisão pendente do dono). A superfície de suporte do
+ * parecer clínico de 21/09/2026, intacta, fora da barra do chat. Nenhum
+ * consumidor hoje: quem for realocá-la importa daqui, sem reescrever o texto.
+ */
+export function ChatSupportNote({ isPt }: { isPt: boolean }) {
+  return (
+    <>
       {/* minimal-ui F2: com o terminal SEMPRE aberto no rodapé, a frase fica
           visível enquanto a pessoa ESCREVE (campo focado ou com texto) — é o
           momento em que o parecer quer o caminho na tela. Decisão de desenho
           registrada para o dono (PERGUNTAS-DO-DONO). */}
-      {(focado || inputValue) && (
       <p className="sm2-chat-support">
         {isPt
           ? 'Se você está num momento difícil, procure ajuda de verdade: um serviço de saúde, uma linha de apoio da sua região, ou alguém de confiança. O Soulmon é um app de hábitos e não substitui isso.'
@@ -583,7 +610,7 @@ export function ChatBox({
         </a>
         {` · ${helplineNumbers(isPt)}`}
       </p>
-      )}
-    </div>
+    </>
   );
 }
+

@@ -381,6 +381,38 @@ fed up — "I'm dying of sleep", "I want to disappear from this meeting", "this 
 killing me", "I'm so dead". Those are normal talk: stay in character.`;
 }
 
+/**
+ * C8 (navegação do dono, 01/10/2026) — "Leitura diária / Daily reading", um
+ * hábito que o dono NÃO definiu, apareceu na lista. A regra antiga daqui era
+ * `/create|add|new|make.*(activity|task|habit)/i`: pela precedência do `|`
+ * ela casava QUALQUER mensagem com "create", "add" ou "new" em qualquer ponto
+ * ("what's new?", "I renewed it", "address"), e a negação `/don't|not|no/i`
+ * também casava dentro de palavras ("know", "now"). Conversa casual virava
+ * hábito novo na lista, em silêncio.
+ *
+ * Agora só cria com PEDIDO EXPLÍCITO: verbo de criar como palavra inteira,
+ * seguido (na mesma frase) de "activity/task/habit" como palavra inteira, e
+ * sem negação como palavra inteira. Devolve `null` quando não é pedido.
+ */
+export function detectCreateIntent(message) {
+  const msg = String(message ?? '');
+  const pedido = /\b(create|add|make|new)\b[^.!?]*\b(activity|task|habit)\b/i.test(msg);
+  const negado = /\b(don'?t|do not|not|no|never)\b/i.test(msg);
+  if (!pedido || negado) return null;
+  const nameMatch = msg.match(/\b(?:create|add|make|new)\s+(?:an?\s+|new\s+)*(?:activity|task|habit)\s*(?:to\s+|called\s+|named\s+|:\s*)?(.+)/i);
+  const name = (nameMatch?.[1] ?? '').trim().replace(/[.!?]+$/, '').slice(0, 60);
+  if (!name) return null;
+  let category = 'Wellness';
+  if (msg.match(/exercise|workout|run|gym/i)) category = 'Fitness';
+  else if (msg.match(/study|read|learn|course/i)) category = 'Study';
+  else if (msg.match(/work|project|meeting/i)) category = 'Work';
+  else if (msg.match(/draw|paint|write|creat/i)) category = 'Creativity';
+  else if (msg.match(/friend|family|social/i)) category = 'Social';
+  else if (msg.match(/clean|organi|plan/i)) category = 'Discipline';
+  else if (msg.match(/health|doctor|medic/i)) category = 'Health';
+  return { name, category };
+}
+
 export async function onRequestOptions() {
   return new Response(null, { headers: CORS });
 }
@@ -473,21 +505,10 @@ export async function onRequestPost({ request, env }) {
     const data = await groqRes.json();
     const response = data.choices?.[0]?.message?.content ?? '...';
 
-    // Activity creation detection (same logic as Supabase version)
-    const shouldCreate = safeMessage.toLowerCase().match(/create|add|new|make.*(activity|task|habit)/i)
-      && !safeMessage.toLowerCase().match(/don't|not|no/i);
-
-    if (shouldCreate) {
-      const nameMatch = safeMessage.match(/(?:create|add|new|make)\s+(?:an?\s+)?(?:activity|task|habit)?\s*(?:to\s+)?(.+)/i);
-      const activityName = nameMatch?.[1]?.trim() || 'New Activity';
-      let category = 'Wellness';
-      if (safeMessage.match(/exercise|workout|run|gym/i)) category = 'Fitness';
-      else if (safeMessage.match(/study|read|learn|course/i)) category = 'Study';
-      else if (safeMessage.match(/work|project|meeting/i)) category = 'Work';
-      else if (safeMessage.match(/draw|paint|write|creat/i)) category = 'Creativity';
-      else if (safeMessage.match(/friend|family|social/i)) category = 'Social';
-      else if (safeMessage.match(/clean|organi|plan/i)) category = 'Discipline';
-      else if (safeMessage.match(/health|doctor|medic/i)) category = 'Health';
+    // Criação de atividade pelo chat — ver `detectCreateIntent` (C8).
+    const intent = detectCreateIntent(safeMessage);
+    if (intent) {
+      const { name: activityName, category } = intent;
       return Response.json({ response, action: { type: 'create_activity', activity: { name: activityName, category, points: { power: 0, harmony: 0, benevolence: 0 } } } }, { headers: CORS });
     }
 
