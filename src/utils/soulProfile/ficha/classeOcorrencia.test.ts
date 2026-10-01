@@ -26,7 +26,7 @@
 //      recomputação. Ela é cache determinístico no save (`soulmonClassTitles`),
 //      e uma classe que muda sozinha entre aparelhos é a QA rodada 1 de novo.
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { buildSoulProfile } from '../profile';
 import { CITIES } from '../cities';
 import { buildFicha } from './buildSheet';
@@ -37,6 +37,12 @@ import { ORACLE_QUESTIONS, mulberry32 } from '../../oracle';
 import { CLASS_TITLE_EN } from './classTitle';
 import type { Answers } from '../personality/types';
 import { nomeSintetico, nascimentoSintetico } from '../perfisSinteticos';
+
+// ⚠️ Estabilidade sob carga (01/10/2026): cada caso roda `amostrar()` (200 perfis,
+// ~5 s ocioso) e o ESTÁVEL roda DUAS vezes (~7,7 s = 51% do teto global de 15 s);
+// com a suíte inteira concorrendo estourava o teto do runner. A amostra e as
+// asserções ficam intactas — só o teto do runner, deste arquivo, sobe.
+vi.setConfig({ testTimeout: 90_000 });
 
 const N = 200;
 const SEED = 20260922;
