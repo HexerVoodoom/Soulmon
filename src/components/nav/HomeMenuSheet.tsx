@@ -7,6 +7,14 @@ import type { MenuPageId } from '../../navigation';
 const ICON_ACTION = 24;
 
 /**
+ * G1 (navegação do dono, 01/10/2026): "Oráculo" e "Refazer o ritual" saem do
+ * menu — OCULTOS, não apagados. A `OraclePage` e o reset do onboarding seguem
+ * existindo e os callbacks seguem aceitos; só a porta no menu fecha. Para
+ * reabrir, vire a flag (o teste `nav.render.test.tsx` trava o estado atual).
+ */
+export const MENU_SHOWS_RITUAL_TOOLS = false;
+
+/**
  * O MENU DA HOME (D6, 23/09/2026): tudo o que morava no sanduíche da barra
  * inferior — e o que não tinha casa nenhuma — vem para cá.
  *
@@ -66,11 +74,13 @@ export function HomeMenuSheet({
           label={isPt ? 'Configurações' : 'Settings'}
           onClick={go(() => onOpenPage('settings'))}
         />
-        <MenuRow
-          icon="psychology"
-          label={isPt ? 'Oráculo' : 'Oracle'}
-          onClick={go(() => onOpenPage('oracle'))}
-        />
+        {MENU_SHOWS_RITUAL_TOOLS && (
+          <MenuRow
+            icon="psychology"
+            label={isPt ? 'Oráculo' : 'Oracle'}
+            onClick={go(() => onOpenPage('oracle'))}
+          />
+        )}
         <MenuRow
           icon="leaderboard"
           label={isPt ? 'Estatísticas' : 'Stats'}
@@ -88,7 +98,7 @@ export function HomeMenuSheet({
             onClick={go(onOpenCredits)}
           />
         )}
-        {onResetOnboarding && (
+        {MENU_SHOWS_RITUAL_TOOLS && onResetOnboarding && (
           <MenuRow
             icon="replay"
             label={isPt ? 'Refazer o ritual' : 'Redo the ritual'}

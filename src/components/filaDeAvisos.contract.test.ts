@@ -104,7 +104,7 @@ describe('o MARCO DO BOSQUE entra nas duas filas, com posição declarada (Guild
   const interstitial = app.slice(app.indexOf('const interstitial:'), app.indexOf('const interstitial:') + 1400);
 
   it("'groveMilestone' é intersticial: DEPOIS de relatório e check-in, ANTES do sonho e do pesadelo", () => {
-    const ordem = ["'triage'", "'dailyReport'", "'checkIn'", "'groveMilestone'", "'dream'", "'nightmare'", "'catalogOnboarding'", "'catalogLevelInvite'", "'welcome'"];
+    const ordem = ["'triage'", "'dailyReport'", "'checkIn'", "'groveMilestone'", "'dream'", "'nightmare'", "'catalogOnboarding'", "'catalogLevelInvite'", "'restSetup'", "'welcome'"];
     // na UNIÃO de tipos (uma vez, na ordem declarada)
     const uniao = interstitial.slice(0, interstitial.search(/=\r?\n/));
     const posUniao = ordem.map(o => uniao.indexOf(o));
@@ -186,7 +186,7 @@ describe('o marco do Bosque tem POSIÇÃO na fila (L3 A2)', () => {
 
   it('a expressão existe e a ordem é: triagem → relatório → check-in → MARCO → sonho → pesadelo → catálogo → boas-vindas', () => {
     expect(ini).toBeGreaterThan(0);
-    expect(ordem).toEqual(['triage', 'dailyReport', 'checkIn', 'groveMilestone', 'dream', 'nightmare', 'catalogOnboarding', 'catalogLevelInvite', 'welcome']);
+    expect(ordem).toEqual(['triage', 'dailyReport', 'checkIn', 'groveMilestone', 'dream', 'nightmare', 'catalogOnboarding', 'catalogLevelInvite', 'restSetup', 'welcome']);
   });
 
   it('o marco vem DEPOIS do relatório e do check-in e ANTES do sonho (posições, não só presença)', () => {

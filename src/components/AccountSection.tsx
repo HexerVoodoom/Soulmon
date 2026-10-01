@@ -5,7 +5,7 @@ import { CREDIT_COLOR } from '../utils/currencies';
 import type { Language } from '../utils/i18n';
 import { fetchEntitlement, type Entitlement } from '../utils/entitlements';
 import { isBillingAvailable, restorePurchases } from '../utils/playBilling';
-import { isAuthConfigured, getCurrentEmail, signOut } from '../utils/auth';
+import { isAuthConfigured, getCurrentEmail, signOut, entrarComGoogle } from '../utils/auth';
 
 /**
  * Conta & compras. Vive DENTRO do grupo "Sua conta" da `SettingsPage`, então
@@ -23,13 +23,25 @@ interface AccountSectionProps {
   language: Language;
   /** Chamado quando a restauração muda tier/saldo, para a UI principal atualizar. */
   onEntitlementChange?: (ent: Entitlement) => void;
+  /**
+   * G4 (01/10/2026): o campo de e-mail das Configurações saiu — o login é o
+   * Google do portão. Para quem chegou SEM conta (build sem Firebase no
+   * portão, ou sessão que caiu), o único caminho de entrar daqui é o botão
+   * "Entrar com Google", e ele devolve o e-mail verificado para o dono do
+   * save (`onLoginWithEmail` do App) amarrar o progresso. Ausente = sem botão.
+   */
+  onSignedIn?: (email: string) => Promise<unknown>;
 }
 
-export function AccountSection({ language, onEntitlementChange }: AccountSectionProps) {
+export function AccountSection({ language, onEntitlementChange, onSignedIn }: AccountSectionProps) {
   const isPt = language === 'pt-BR';
 
   const [ent, setEnt] = useState<Entitlement | null>(null);
   const [authEmail, setAuthEmail] = useState<string | null>(null);
+  /** Só depois de perguntar ao Firebase se há sessão o botão de entrar pode
+   *  aparecer — senão ele piscaria para quem já está logado. */
+  const [authChecked, setAuthChecked] = useState(false);
+  const [signingIn, setSigningIn] = useState(false);
   const [restoring, setRestoring] = useState(false);
   /* A resposta da região viva: a boa em `ink` 500, as outras em `muted` 12 —
      nenhuma em vermelho (canvas Conta D-K7). */
@@ -38,7 +50,7 @@ export function AccountSection({ language, onEntitlementChange }: AccountSection
   useEffect(() => {
     let cancelled = false;
     fetchEntitlement().then(e => { if (!cancelled) setEnt(e); });
-    getCurrentEmail().then(e => { if (!cancelled) setAuthEmail(e); });
+    getCurrentEmail().then(e => { if (!cancelled) { setAuthEmail(e); setAuthChecked(true); } });
     return () => { cancelled = true; };
   }, []);
 
@@ -79,20 +91,40 @@ export function AccountSection({ language, onEntitlementChange }: AccountSection
     flash(isPt ? 'Você saiu da conta.' : 'Signed out.');
   };
 
-  // Rótulo NOMEADO, não número nem sigla (régua nº 2).
-  const tierLabel = ent === null
-    ? '—'
-    : ent.tier === 'paid' ? (isPt ? 'Completa' : 'Full') : (isPt ? 'Demo' : 'Demo');
+  const handleGoogle = async () => {
+    if (signingIn || !onSignedIn) return;
+    setSigningIn(true);
+    const r = await entrarComGoogle();
+    if (r.ok && r.email) {
+      setAuthEmail(r.email);
+      try { await onSignedIn(r.email); } catch {
+        flash(isPt ? 'Entrou, mas não deu para sincronizar agora.' : 'Signed in, but syncing failed for now.');
+      }
+    } else if (!r.ok) {
+      flash(isPt ? 'Não deu para entrar agora.' : 'Could not sign in right now.');
+    }
+    setSigningIn(false);
+  };
+
+  /* G3 (01/10/2026): "Your plan: Full" virou SELO de conta. O desbloqueio é
+     COMPRA ÚNICA (`FULL_UNLOCK_SKU` = `soulmon.unlock.full`, `utils/monetization.ts`), não plano nem
+     assinatura — a assinatura de IA está decidida e não construída
+     (`utils/monetization.ts`), e chamar isto de "plano" prometia uma coisa
+     que não existe. Quem não comprou não ganha selo nenhum (Demo não é
+     conquista); o convite de compra mora nos seis pontos do `UnlockNudge`. */
+  const isFull = ent?.tier === 'paid';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {/* Chave: valor (D-K3/D-K4) — a palavra ("Full"/"Demo") em Rubik 500; os
           Créditos = `diamond` 20 FILL em `credit-ink` + o número em `ink` mono
           `tabular-nums`: a única moeda com ícone, porque é dinheiro real. */}
-      <div className="sm2-conta-kv" aria-busy={ent === null}>
-        <span>{isPt ? 'Seu plano' : 'Your plan'}</span>
-        <span className="sm2-conta-kv-v">{tierLabel}</span>
-      </div>
+      {isFull && (
+        <span className="sm2-kit-tag sm2-kit-tag-on" data-full-badge style={{ alignSelf: 'flex-start' }}>
+          <Icon name="check_circle" size={20} fill={1} tone="inherit" />
+          {isPt ? 'Conta Full' : 'Full account'}
+        </span>
+      )}
       <div className="sm2-conta-kv">
         <span>{isPt ? 'Créditos' : 'Credits'}</span>
         <span className="sm2-conta-kv-v sm2-conta-mono">
@@ -105,6 +137,21 @@ export function AccountSection({ language, onEntitlementChange }: AccountSection
           {isPt ? `Autenticado como ${authEmail}` : `Signed in as ${authEmail}`}
         </p>
       )}
+      {/* G4: sem sessão (e com login configurado), a única porta de entrada
+          daqui é o Google — o mesmo do portão do onboarding. */}
+      {onSignedIn && isAuthConfigured() && authChecked && !authEmail && (
+        <button
+          type="button"
+          onClick={handleGoogle}
+          disabled={signingIn}
+          data-google-signin
+          style={{ ...sm2Button('primary', signingIn), width: '100%' }}
+        >
+          {signingIn
+            ? (isPt ? 'Entrando…' : 'Signing in…')
+            : (isPt ? 'Entrar com Google' : 'Sign in with Google')}
+        </button>
+      )}
 
       {/* "Restore purchases" `outline` 48 de largura inteira; "Sign out" é
           `quiet` — sair é quieto, nunca vermelho. */}
@@ -113,6 +160,13 @@ export function AccountSection({ language, onEntitlementChange }: AccountSection
           ? (isPt ? 'Restaurando…' : 'Restoring…')
           : (isPt ? 'Restaurar compras' : 'Restore purchases')}
       </button>
+      {/* G9: o que o botão faz, numa linha — devolve o que já foi pago na
+          conta da loja (aparelho novo, reinstalação). Não cobra nada. */}
+      <p style={{ ...sm2Hint, marginTop: -4 }}>
+        {isPt
+          ? 'Traz de volta o que você já comprou nesta conta Google. Não cobra nada.'
+          : 'Brings back what you already bought on this Google account. Nothing is charged.'}
+      </p>
       {isAuthConfigured() && authEmail && (
         <button type="button" onClick={handleSignOut} style={{ ...sm2Button('quiet'), width: '100%' }}>
           {isPt ? 'Sair da conta' : 'Sign out'}

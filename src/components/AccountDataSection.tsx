@@ -40,6 +40,14 @@ interface AccountDataSectionProps {
   saveId?: string | null;
   /** Injeção para teste: força o estado indisponível sem depender do env. */
   authAvailable?: boolean;
+  /**
+   * G5 (navegação do dono, 01/10/2026): as duas frases que ficavam SEMPRE na
+   * tela ("You can download everything…", "you can leave whenever you want")
+   * saíram. Quem quer saber o que os botões fazem toca no "?" da linha do
+   * título (`SettingsPage`), e só então as duas explicações aparecem — uma
+   * acima de cada botão. Ausente/false = só os botões.
+   */
+  showHelp?: boolean;
 }
 
 type ExportPhase = 'idle' | 'loading' | 'done';
@@ -122,7 +130,7 @@ function Inventory({ plan, isPt }: { plan: DeletePlan; isPt: boolean }) {
   );
 }
 
-export function AccountDataSection({ language, saveId: saveIdProp, authAvailable }: AccountDataSectionProps) {
+export function AccountDataSection({ language, saveId: saveIdProp, authAvailable, showHelp = false }: AccountDataSectionProps) {
   const isPt = language === 'pt-BR';
   const saveId = saveIdProp !== undefined ? saveIdProp : readLocal(STORAGE_KEYS.SAVE_ID);
   const available = authAvailable !== undefined ? authAvailable : isAuthConfigured();
@@ -264,11 +272,13 @@ export function AccountDataSection({ language, saveId: saveIdProp, authAvailable
       )}
 
       {/* ── LEVAR EMBORA ────────────────────────────────────────────────── */}
-      <p style={sm2Hint}>
-        {isPt
-          ? 'Você pode baixar tudo que o Soulmon guarda de você nos servidores dele, quando quiser.'
-          : 'You can download everything Soulmon keeps about you on its servers, whenever you want.'}
-      </p>
+      {showHelp && (
+        <p style={sm2Hint} data-data-help-text="export">
+          {isPt
+            ? 'Baixar meus dados: um arquivo com tudo o que o Soulmon guarda sobre você nos servidores dele.'
+            : 'Download my data: a file with everything Soulmon keeps about you on its servers.'}
+        </p>
+      )}
       <button
         type="button"
         onClick={handleExport}
@@ -285,11 +295,13 @@ export function AccountDataSection({ language, saveId: saveIdProp, authAvailable
       </button>
 
       {/* ── APAGAR ──────────────────────────────────────────────────────── */}
-      <p style={{ ...sm2Hint, marginTop: 8 }}>
-        {isPt
-          ? 'E pode ir embora quando quiser. Primeiro a gente mostra exatamente o que some; você confirma depois.'
-          : 'And you can leave whenever you want. First we show exactly what goes; you confirm after that.'}
-      </p>
+      {showHelp && (
+        <p style={{ ...sm2Hint, marginTop: 8 }} data-data-help-text="delete">
+          {isPt
+            ? 'Apagar minha conta: primeiro a gente mostra exatamente o que some; você confirma depois.'
+            : 'Delete my account: first we show exactly what goes; you confirm after that.'}
+        </p>
+      )}
       {deletePhase !== 'plan' && deletePhase !== 'done' && (
         <button
           type="button"

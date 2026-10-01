@@ -61,11 +61,15 @@ export interface RitualDialogProps {
   children: ReactNode;
   style?: CSSProperties;
   className?: string;
+  /** Força o tema do CARTÃO (os tokens `--sm2-*` são redefinidos por
+   *  `[data-theme]`, então o atributo no cartão basta). F2 (01/10/2026): o
+   *  prêmio da manhã é claro mesmo com o app no escuro. Ausente = segue o app. */
+  theme?: 'light' | 'dark';
 }
 
 export function RitualDialog({
   label, labelledBy, onClose, zIndex = 200, maxWidth = 340, closeLabel, closeLast = false,
-  focusContainer = false, veilRole, children, style, className,
+  focusContainer = false, veilRole, children, style, className, theme,
 }: RitualDialogProps) {
   const dialogRef = useDialogA11y<HTMLDivElement>(true, onClose);
   const closeButton = closeLabel ? <CloseX onClose={onClose} label={closeLabel} /> : null;
@@ -96,6 +100,7 @@ export function RitualDialog({
         aria-labelledby={labelledBy}
         tabIndex={-1}
         className={className}
+        data-theme={theme}
         /* Sem anel no cartão: ele recebe o foco por MONTAGEM, não por
            navegação; os controles continuam com o foco visível de sempre. */
         style={{

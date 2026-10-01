@@ -17,7 +17,11 @@ import careHeartPair from '../assets/soulmon/fx/care-heart-pair.png';
 import careHeartShine from '../assets/soulmon/fx/care-heart-shine.png';
 import careHug from '../assets/soulmon/fx/care-hug.png';
 import careDrop from '../assets/soulmon/fx/care-drop.png';
-import careShower from '../assets/soulmon/fx/care-shower.png';
+// F4 (01/10/2026): o 🚿 do banho era `fx/care-shower.png` (uma "mãozinha
+// jogando água", reprovada pelo dono). Agora é o chuveirinho APROVADO, o mesmo
+// do botão de banho (`assets/soulmon/icones-ui/banho.png`). O PNG antigo fica
+// no repo sem consumidor até o dono decidir apagá-lo.
+import careShower from '../assets/soulmon/icones-ui/banho.png';
 
 /** Chave = o `icon` (emoji) que os popups de batalha usam hoje. */
 export const FX_ART: Record<string, string> = {

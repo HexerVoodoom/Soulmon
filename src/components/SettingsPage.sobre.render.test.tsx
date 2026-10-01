@@ -8,17 +8,12 @@
  * PT-BR e EN, e os dois conjuntos diferem de fato (regra "Idioma").
  */
 import { describe, it, expect, beforeEach } from 'vitest';
-import { screen } from '@testing-library/react';
+import { screen, fireEvent } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
 import { SettingsPage } from './SettingsPage';
-import type { AISettings } from './AISettingsModal';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { APP_VERSION, FEEDBACK_EMAIL } from './FeedbackLink';
-
-const AI_SETTINGS: AISettings = {
-  tone: 'casual', emojiIntensity: 'medium', motivationStyle: 'balanced', customKeywords: '', temperature: 0.85,
-};
 
 function installMatchMedia() {
   Object.defineProperty(window, 'matchMedia', {
@@ -31,17 +26,27 @@ function installMatchMedia() {
   });
 }
 
+
+/** G2 (01/10/2026): os grupos das Configurações nascem FECHADOS; os testes
+ *  que leem o conteúdo abrem todos antes (o fechado continua montado, mas
+ *  `hidden` some da árvore de acessibilidade). */
+function abrirGrupos() {
+  document.querySelectorAll<HTMLButtonElement>('[data-group-toggle][aria-expanded="false"]').forEach(b => fireEvent.click(b));
+}
+
 function renderSettings(language: 'pt-BR' | 'en-US') {
-  return renderWithCss(
+  const r = renderWithCss(
     <ThemeProvider>
       <SettingsPage
-        useAI={false} onToggleAI={() => {}} aiSettings={AI_SETTINGS} onSaveAISettings={() => {}}
+        useAI={false} onToggleAI={() => {}}
         language={language} onChangeLanguage={() => {}} onOpenGuide={() => {}} onOpenGlossary={() => {}}
         notificationsEnabled={false} onToggleNotifications={() => {}}
         onRestoreFromCloud={async () => true} onLoginWithEmail={async () => 'loaded' as const}
       />
     </ThemeProvider>,
   );
+  abrirGrupos();
+  return r;
 }
 
 beforeEach(() => {

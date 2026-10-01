@@ -7230,6 +7230,32 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
   margin: 0 0 var(--sm2-space-3);
 }
 .sm2-conta-h2 { margin: 0; font-size: var(--sm2-text-lg); font-weight: 600; }
+/* G2 (01/10/2026): o grupo das Configurações vira acordeão FECHADO por padrão.
+   Mais ar entre os grupos e um contorno mais visível (mistura de `line` com
+   `muted` — nenhum token novo, nenhum literal) para um card fechado não se
+   fundir ao vizinho. O título inteiro é o alvo (44 de piso). */
+.sm2-conta-fold {
+  margin: 0 0 var(--sm2-space-4);
+  border-color: color-mix(in srgb, var(--sm2-muted) 40%, var(--sm2-line));
+}
+.sm2-conta-head { display: flex; align-items: center; gap: var(--sm2-space-1); }
+.sm2-conta-head-btn {
+  box-sizing: border-box; display: flex; align-items: center; gap: var(--sm2-space-2);
+  width: 100%; min-height: 44px; padding: 0; margin: 0;
+  background: none; border: 0; text-align: left; cursor: pointer;
+  font: inherit; color: inherit;
+  border-radius: var(--sm2-radius-sm);
+  &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
+}
+.sm2-conta-body { display: flex; flex-direction: column; gap: var(--sm2-space-2); }
+.sm2-conta-body[hidden] { display: none; }
+.sm2-conta-help {
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+  min-width: 44px; min-height: 44px; padding: 0; margin: 0;
+  background: none; border: 0; border-radius: var(--sm2-radius-md); cursor: pointer; color: var(--sm2-muted);
+  &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
+  &[aria-expanded="true"] { color: var(--sm2-primary-ink); }
+}
 /* rótulo 14/500 em `ink` + linha 12 `muted` (os `.t`/`.s` do canvas) */
 .sm2-conta-t { display: block; font-family: var(--sm2-font-text); font-size: var(--sm2-text-sm); font-weight: 500; line-height: var(--sm2-leading-body); color: var(--sm2-ink); }
 .sm2-conta-s { display: block; font-family: var(--sm2-font-text); font-size: var(--sm2-text-xs); font-weight: 400; line-height: var(--sm2-leading-body); color: var(--sm2-muted); }

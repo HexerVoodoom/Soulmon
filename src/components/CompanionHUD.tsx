@@ -408,6 +408,9 @@ export const CompanionHUD = memo(function CompanionHUD({
   onPetRef.current = onPet;
   const [showerCooldown, setShowerCooldown] = useState(false);
   const [hugBalloon, setHugBalloon] = useState(false);
+  /* F4 (01/10/2026): no banho o balão mostra o CHUVEIRINHO aprovado (o mesmo do
+     botão de banho), não as mãozinhas do abraço — que ficam para a comida. */
+  const [balloonKind, setBalloonKind] = useState<'hug' | 'bath'>('hug');
   /* Quantas linhas o balão ocupa decide quanto a composição desce (X2). Medido
      no DOM depois do texto entrar — jsdom devolve 0 e cai no caso de 1 linha. */
   const bubbleRef = useRef<HTMLDivElement | null>(null);
@@ -490,7 +493,8 @@ export const CompanionHUD = memo(function CompanionHUD({
     }, durationMs);
   }, []);
 
-  const showHug = () => {
+  const showHug = (kind: 'hug' | 'bath' = 'hug') => {
+    setBalloonKind(kind);
     setHugBalloon(true);
     setTimeout(() => setHugBalloon(false), 2000);
   };
@@ -943,7 +947,7 @@ export const CompanionHUD = memo(function CompanionHUD({
     setShowerCooldown(true);
     onShower?.();
     playShower();
-    showHug();
+    showHug('bath');
     setTimeout(() => setIsShowering(false), 1600);
     setTimeout(() => setShowerCooldown(false), 5000);
   };
@@ -1331,7 +1335,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                 style={{ left: `${position}%`, top: canEvolve && !isSleeping ? 'calc(50% - 46px)' : 'calc(50% - 78px)', transform: 'translateX(-50%)' }}
               >
                 <div className="relative bg-white rounded-full px-2 py-0.5 shadow text-lg leading-none">
-                  <img src={FX_ART['🤗']} alt="" width={22} height={22} style={{ objectFit: 'contain', imageRendering: 'pixelated', display: 'inline-block', verticalAlign: 'middle' }} />
+                  <img src={balloonKind === 'bath' ? UI_ICON_ART.banho : FX_ART['🤗']} alt="" width={22} height={22} style={{ objectFit: 'contain', imageRendering: 'pixelated', display: 'inline-block', verticalAlign: 'middle' }} />
                   {/* Rabinho do balão: geometria de peça única (triângulo por
                       borda), toda inline — nenhuma dessas classes existe no
                       index.css pré-compilado e não vale virar utilitário. */}
@@ -1891,7 +1895,8 @@ export const CompanionHUD = memo(function CompanionHUD({
               : (hasNewItems ? 'Backpack — new item' : 'Backpack')}
           >
             {hasNewItems && <span className="sm2-deck-dot" aria-hidden="true" />}
-            <PixelIcon name="itens" size={24} />
+            {/* F1 (01/10/2026): a MOCHILA aprovada na rodada 3, não o saquinho. */}
+            <PixelIcon name="mochila" size={24} />
           </button>
           <button
             type="button"

@@ -2620,3 +2620,30 @@ dominância populacional — por isso ±15%. Régua nova:
 **Chamado por:** `src/App.tsx`, `src/components/GmPanel.tsx`
 **Régua:** `src/utils/gmTools.test.ts`.
 **Regra de negócio:** nunca reduz saldo/contador maior; Créditos ficam no servidor; missões permanentes cumpridas por contadores vitalícios MÍNIMOS (`Math.max`), sem tocar `perfectDays`/`totalPerfectDays`.
+
+### `src/utils/personality.ts`
+**Dono de:** a personalidade do chat DERIVADA das forças/dificuldades do onboarding (G7, 01/10/2026).
+**Exports:** `derivePersonality(profile)`, `personalityProfileFromSave(state)`, `chatSettingsFor(profile, stored)`, `FALLBACK_PERSONALITY`, `VULNERABLE_STRUGGLES`, `CHALLENGE_ANCHORS`, `STRUGGLE_WEIGHT`.
+**Chamado por:** `src/App.tsx`
+**Régua:** `src/utils/personality.test.ts`.
+**Regra de negócio:** ansiedade/perfeccionismo/cansaço nunca recebem `challenging`; desafio só com disciplina/persistência; perfil vazio = `casual` + `supportive`. Lê `gameState.onboardingProfile`. Racional em `docs/PERSONALIDADE-DERIVADA.md`.
+
+### `src/utils/notificationDefault.ts`
+**Dono de:** o padrão LIGADO da preferência de notificações (G6, 01/10/2026), condicionado à permissão do sistema.
+**Exports:** `initialNotificationsEnabled(stored, permission)`, `readSystemNotificationPermission()`, `SystemNotificationPermission`.
+**Chamado por:** `src/App.tsx`
+**Régua:** `src/utils/notificationDefault.test.ts`.
+**Regra de negócio:** escolha gravada manda; sem escolha, ligado só com permissão já concedida — nunca pede permissão na abertura.
+
+### `src/utils/restSetup.ts`
+**Dono de:** quando aparece o convite do sono (G8): primeira abertura a partir do 2º dia de uso, uma vez só.
+**Exports:** `shouldShowRestSetup({ shown, bornAt, todayKey })`, `isMorning(now)`, `REST_SETUP_DAY`, `REST_SETUP_MORNING_END_HOUR`.
+**Chamado por:** `src/App.tsx`, `src/components/RestSetupModal.tsx`
+**Régua:** `src/utils/restSetup.test.ts`.
+
+### `src/utils/dreamDecorTwin.ts`
+**Dono de:** o "Equipar" do prêmio da manhã (F2): sonho → decoração gêmea que o jogador JÁ possui.
+**Exports:** `DREAM_DECOR_TWIN`, `equippableTwin(dreamId, ownedFurniture)`, `EquipTwin`.
+**Chamado por:** `src/App.tsx`
+**Régua:** `src/utils/dreamDecorTwin.test.ts`.
+**Regra de negócio:** nada é dado — sem possuir o gêmeo, não há botão.

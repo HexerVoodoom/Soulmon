@@ -56,8 +56,9 @@ import { unlockedAchievements } from './utils/achievements';
 import { useGameState, getMaxHPForStage, type GameState, type Activity, type Task, type Step } from './contexts/GameStateContext';
 import { STORAGE_KEYS } from './utils/storageKeys';
 import {
-  readFlag, readJson, readLocal, readNumber, removeLocal, writeFlag, writeJson, writeLocal,
+  readFlag, readFlagState, readJson, readLocal, readNumber, removeLocal, writeFlag, writeJson, writeLocal,
 } from './utils/safeStorage';
+import { initialNotificationsEnabled, readSystemNotificationPermission } from './utils/notificationDefault';
 import { hashString, creatureFormId, ELEMENT_INFO } from './utils/oracle';
 import type { OracleInput, OracleResult, ElementId } from './utils/oracle';
 import type { Manifestacao } from './utils/soulProfile/ficha/manifestacaoSave';
@@ -186,6 +187,10 @@ import { UnlockAccountModal, UnlockNudge, type UnlockReason } from './components
 import { MorningCheckIn } from './components/MorningCheckIn';
 import { TriagePile, type TriageAction } from './components/TriagePile';
 import { MorningDream } from './components/MorningDream';
+import { equippableTwin } from './utils/dreamDecorTwin';
+import { RestSetupModal } from './components/RestSetupModal';
+import { shouldShowRestSetup } from './utils/restSetup';
+import { chatSettingsFor, personalityProfileFromSave } from './utils/personality';
 import { WeeklyReportCard } from './components/WeeklyReportCard';
 import {
   needsCheckIn, checkInPlan, completeCheckIn,
@@ -1011,6 +1016,16 @@ export default function App() {
       temperature: 0.85,
     });
   });
+  /* G7 (01/10/2026): a personalidade do chat é DERIVADA das forças e
+     dificuldades do onboarding (`utils/personality.ts`; racional em
+     `docs/PERSONALIDADE-DERIVADA.md`) e saiu das Configurações. Do que estava
+     guardado sobra só o que não é personalidade (instruções livres,
+     criatividade). Perfil ausente = fallback seguro. */
+  const onboardingProfileRaw = (gameState as { onboardingProfile?: unknown }).onboardingProfile;
+  const chatPersonality = useMemo(
+    () => chatSettingsFor(personalityProfileFromSave({ onboardingProfile: onboardingProfileRaw }), aiSettings),
+    [onboardingProfileRaw, aiSettings],
+  );
   // Idioma inicial resolvido em utils/i18n.ts (mesma função usada no
   // onboarding, para as duas telas nunca discordarem).
   const [language, setLanguage] = useState<Language>(
@@ -1096,9 +1111,19 @@ export default function App() {
     return false;
   });
   const [showHelpModal, setShowHelpModal] = useState(false);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
-    return readFlag(STORAGE_KEYS.NOTIFICATIONS_ENABLED);
-  });
+  /* G6 (01/10/2026): o padrão da preferência é LIGADO, condicionado à
+     permissão que o sistema já deu (`utils/notificationDefault.ts`). Quem já
+     escolheu manda; quem nunca escolheu e ainda não tem permissão continua
+     esperando o convite certo (priming), nunca um pedido na abertura. */
+  const [notificationsEnabled, setNotificationsEnabled] = useState(() => initialNotificationsEnabled(
+    readFlagState(STORAGE_KEYS.NOTIFICATIONS_ENABLED),
+    readSystemNotificationPermission(),
+  ));
+  /** O usuário (ou o convite) mexeu na chave nesta sessão. Sem isso, o
+   *  "desligado por falta de permissão" do primeiro render seria GRAVADO e o
+   *  "nunca decidiu" viraria "decidiu desligar" — o padrão ligado morreria na
+   *  segunda abertura. */
+  const notifTouchedRef = useRef(false);
 
   // Presentes de amigos (Biblioteca): reivindica bits pendentes ao abrir o app.
   useEffect(() => {
@@ -1131,6 +1156,9 @@ export default function App() {
   }, [aiSettings]);
 
   useEffect(() => {
+    // G6: um "desligado" que só veio do PADRÃO não é escolha — não grava.
+    if (!notificationsEnabled && !notifTouchedRef.current
+      && readFlagState(STORAGE_KEYS.NOTIFICATIONS_ENABLED) === 'absent') return;
     writeFlag(STORAGE_KEYS.NOTIFICATIONS_ENABLED, notificationsEnabled, { silent: true });
   }, [notificationsEnabled]);
 
@@ -1685,7 +1713,21 @@ export default function App() {
   });
   const grovePendente: GroveMarcoStage | null = grove?.pending && grove.pending.index >= CEREMONY_MIN_INDEX
     ? (groveStageAt(grove.pending.index) as GroveMarcoStage | null) : null;
-  const interstitial: 'triage' | 'dailyReport' | 'checkIn' | 'groveMilestone' | 'dream' | 'nightmare' | 'catalogOnboarding' | 'catalogLevelInvite' | 'welcome' =
+  /* G8 (01/10/2026) — O CONVITE DO SONO. Condição de entrada: primeira
+     abertura a partir do 2º dia de uso, uma vez só (`utils/restSetup.ts`).
+     Posição: o ÚLTIMO antes de 'welcome' — é uma vez só como o catálogo, e
+     cede a vez a tudo que é ritual diário. Não pede permissão de sistema. */
+  const [restSetupShown, setRestSetupShown] = useState(() => readFlag(STORAGE_KEYS.REST_SETUP_SHOWN));
+  const needsRestSetup = shouldShowRestSetup({
+    shown: restSetupShown,
+    bornAt: gameState.bornAt,
+    todayKey: playerDayKey(new Date(), gameState.playerDayTz),
+  });
+  const closeRestSetup = useCallback(() => {
+    writeFlag(STORAGE_KEYS.REST_SETUP_SHOWN, true, { silent: true });
+    setRestSetupShown(true);
+  }, []);
+  const interstitial: 'triage' | 'dailyReport' | 'checkIn' | 'groveMilestone' | 'dream' | 'nightmare' | 'catalogOnboarding' | 'catalogLevelInvite' | 'restSetup' | 'welcome' =
     triageTasks ? 'triage'
       : showDailyReport && gameState.lastDayReport ? 'dailyReport'
         : checkInPlanData ? 'checkIn'
@@ -1694,7 +1736,8 @@ export default function App() {
             : nightmareOpen ? 'nightmare'
               : needsCatalogOnboarding(gameState as any) ? 'catalogOnboarding'
                 : catalogLevelInviteCandidate ? 'catalogLevelInvite'
-                  : 'welcome';
+                  : needsRestSetup ? 'restSetup'
+                    : 'welcome';
 
   const { dailyTotal, dailyDone, progress } = useProgressTracking(gameState);
   // Quantos itens de HOJE evitam a perda de coração na virada — regra única em
@@ -5088,6 +5131,7 @@ export default function App() {
 
   // Handle toggle notifications
   const handleToggleNotifications = async () => {
+    notifTouchedRef.current = true;
     if (!notificationsEnabled) {
       // Request permission when enabling.
       // NOTE: requestNotificationPermission is imported statically (not via dynamic
@@ -5994,7 +6038,7 @@ export default function App() {
                 moodToday={moodFor(gameState.moodLog, playerDayKey(new Date(), gameState.playerDayTz))}
                 equippedBackground={gameState.equippedBackground ?? null}
                 useAI={useAI}
-                aiSettings={aiSettings}
+                aiSettings={chatPersonality}
                 onCreateActivity={handleAICreateActivity}
                 language={language}
                 evolutionFlash={evolutionFlash}
@@ -6462,10 +6506,6 @@ export default function App() {
               gm={isAdmin ? gmActions : undefined}
               useAI={useAI}
               onToggleAI={() => setUseAI(!useAI)}
-              aiSettings={aiSettings}
-              onSaveAISettings={(settings) => {
-                setAiSettings(settings);
-              }}
               language={language}
               onChangeLanguage={(lang) => {
                 setLanguage(lang);
@@ -6971,6 +7011,17 @@ export default function App() {
         />
       )}
 
+      {/* G8 — o convite do sono (sono automático + janela), uma vez só. */}
+      {interstitial === 'restSetup' && (
+        <RestSetupModal
+          language={language}
+          now={new Date()}
+          window={(gameState.rest ?? createRestState()).window}
+          onChangeWindow={handleChangeRestWindow}
+          onClose={closeRestSetup}
+        />
+      )}
+
       {/* O SONHO DA MANHÃ — recompensa, nunca veredito. Só de manhã. */}
       {interstitial === 'dream' && morningDream && (
         <MorningDream
@@ -6979,6 +7030,12 @@ export default function App() {
           isNew={morningDream.isNew}
           language={language}
           onClose={() => setMorningDream(null)}
+          /* F2: "Equipar" só quando a cena tem gêmeo na decoração que o
+             jogador JÁ possui (`utils/dreamDecorTwin.ts`) — nada é dado. */
+          onEquip={(() => {
+            const twin = equippableTwin(morningDream.dream?.id, gameState.ownedFurniture);
+            return twin ? () => { handleEquipFurniture(twin.decorId, twin.slot); setMorningDream(null); } : undefined;
+          })()}
         />
       )}
 

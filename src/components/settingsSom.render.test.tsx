@@ -15,17 +15,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { screen, fireEvent } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
 import { SettingsPage } from './SettingsPage';
-import type { AISettings } from './AISettingsModal';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import { esquecerTrilha, trilhaPreferida } from '../utils/trilha';
-
-const AI_SETTINGS: AISettings = {
-  tone: 'casual',
-  emojiIntensity: 'medium',
-  motivationStyle: 'balanced',
-  customKeywords: '',
-  temperature: 0.85,
-};
 
 /** `matchMedia` não existe no jsdom (InstallPrompt/ThemeProvider chamam no 1º efeito). */
 function installMatchMedia() {
@@ -40,16 +31,22 @@ function installMatchMedia() {
   });
 }
 
+
+/** G2 (01/10/2026): os grupos das Configurações nascem FECHADOS; os testes
+ *  que leem o conteúdo abrem todos antes (o fechado continua montado, mas
+ *  `hidden` some da árvore de acessibilidade). */
+function abrirGrupos() {
+  document.querySelectorAll<HTMLButtonElement>('[data-group-toggle][aria-expanded="false"]').forEach(b => fireEvent.click(b));
+}
+
 function montar(language: 'pt-BR' | 'en-US', onToggleSound = () => {}, soundMuted = false) {
-  return renderWithCss(
+  const r = renderWithCss(
     <ThemeProvider>
       <SettingsPage
         soundMuted={soundMuted}
         onToggleSound={onToggleSound}
         useAI={false}
         onToggleAI={() => {}}
-        aiSettings={AI_SETTINGS}
-        onSaveAISettings={() => {}}
         language={language}
         onChangeLanguage={() => {}}
         onOpenGuide={() => {}}
@@ -61,6 +58,8 @@ function montar(language: 'pt-BR' | 'en-US', onToggleSound = () => {}, soundMute
       />
     </ThemeProvider>,
   );
+  abrirGrupos();
+  return r;
 }
 
 /** O nome acessível do `SwitchRow` é rótulo + hint; acho a linha pelo texto do rótulo. */
@@ -109,8 +108,6 @@ describe('Configurações → Som: o jogador alcança o mudo e a trilha', () => 
         <SettingsPage
           useAI={false}
           onToggleAI={() => {}}
-          aiSettings={AI_SETTINGS}
-          onSaveAISettings={() => {}}
           language="pt-BR"
           onChangeLanguage={() => {}}
           onOpenGuide={() => {}}
@@ -122,6 +119,7 @@ describe('Configurações → Som: o jogador alcança o mudo e a trilha', () => 
         />
       </ThemeProvider>,
     );
+    abrirGrupos();
     expect(screen.getAllByRole('switch').find(e => /^Sons/.test(e.textContent || ''))).toBeUndefined();
   });
 });
