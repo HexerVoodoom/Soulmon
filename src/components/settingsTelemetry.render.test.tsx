@@ -21,7 +21,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { renderWithCss } from '../test/renderEnv';
 import { SettingsPage } from './SettingsPage';
-import type { AISettings } from './AISettingsModal';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import {
   isTelemetryEnabled,
@@ -34,14 +33,6 @@ import {
 } from '../utils/telemetry';
 
 /** Os ajustes de IA não são o assunto aqui — só precisam ser válidos. */
-const AI_SETTINGS: AISettings = {
-  tone: 'casual',
-  emojiIntensity: 'medium',
-  motivationStyle: 'balanced',
-  customKeywords: '',
-  temperature: 0.85,
-};
-
 /**
  * `matchMedia` não existe no jsdom, e `InstallPrompt`/`ThemeProvider` chamam no
  * primeiro efeito. Stub mínimo: nada aqui depende do resultado da consulta.
@@ -60,14 +51,20 @@ function installMatchMedia() {
   });
 }
 
+
+/** G2 (01/10/2026): os grupos das Configurações nascem FECHADOS; os testes
+ *  que leem o conteúdo abrem todos antes (o fechado continua montado, mas
+ *  `hidden` some da árvore de acessibilidade). */
+function abrirGrupos() {
+  document.querySelectorAll<HTMLButtonElement>('[data-group-toggle][aria-expanded="false"]').forEach(b => fireEvent.click(b));
+}
+
 function renderSettings(language: 'pt-BR' | 'en-US' = 'pt-BR') {
-  return renderWithCss(
+  const r = renderWithCss(
     <ThemeProvider>
       <SettingsPage
         useAI={false}
         onToggleAI={() => {}}
-        aiSettings={AI_SETTINGS}
-        onSaveAISettings={() => {}}
         language={language}
         onChangeLanguage={() => {}}
         onOpenGuide={() => {}}
@@ -79,6 +76,8 @@ function renderSettings(language: 'pt-BR' | 'en-US' = 'pt-BR') {
       />
     </ThemeProvider>,
   );
+  abrirGrupos();
+  return r;
 }
 
 const toggleOf = (language: 'pt-BR' | 'en-US') =>

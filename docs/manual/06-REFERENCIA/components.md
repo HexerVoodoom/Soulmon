@@ -1152,3 +1152,9 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 **Chamado por:** `src/components/SettingsPage.tsx` (prop `gm`, que o `App.tsx` só passa para o admin).
 **Régua:** `src/components/GmPanel.render.test.tsx`.
 
+
+### `src/components/RestSetupModal.tsx`
+**Dono de:** o convite do sono (G8, 01/10/2026): explica e configura Janela de Descanso + sono automático, intersticial `restSetup` (antes de `welcome`).
+**Exports:** `RestSetupModal`, `RestSetupModalProps`.
+**Chamado por:** `src/App.tsx`
+**Régua:** `src/components/RestSetupModal.render.test.tsx`.

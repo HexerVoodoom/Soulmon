@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { AISettingsModal, type AISettings } from './AISettingsModal';
+import { useState, type ReactNode } from 'react';
 import {
   ActionRow, Disclosure, Field, GroupCard, Segment, SwitchRow, TimeField, sm2Button, sm2Hint, sm2Text,
 } from './form/FormKit';
@@ -37,8 +36,9 @@ interface SettingsPageProps {
   onToggleSound?: () => void;
   useAI: boolean;
   onToggleAI: () => void;
-  aiSettings: AISettings;
-  onSaveAISettings: (settings: AISettings) => void;
+  /* ⚰️ `aiSettings`/`onSaveAISettings` saíram (G7, 01/10/2026): a
+     personalidade do Soulmon deixou de ser escolha — é DERIVADA do
+     onboarding (`utils/personality.ts`) e não tem mais linha aqui. */
   language: Language;
   onChangeLanguage: (lang: Language) => void;
   onOpenGuide: () => void;
@@ -47,6 +47,8 @@ interface SettingsPageProps {
   notificationsEnabled: boolean;
   onToggleNotifications: () => void;
   onRestoreFromCloud: (saveId: string) => Promise<boolean>;
+  /** Amarra o save ao e-mail VERIFICADO pelo Google (G4: o campo de e-mail
+   *  livre saiu; quem chama é o botão "Entrar com Google" da `AccountSection`). */
   onLoginWithEmail: (email: string) => Promise<'loaded' | 'created'>;
   /** WP4.19 — o pet já caiu e voltou? A linha da marca só existe para quem
    *  tem a volta; para os outros ela seria um ajuste sobre nada. */
@@ -64,7 +66,24 @@ interface SettingsPageProps {
  * App monta logo abaixo desta página, desenham o MESMO card — por isso ele
  * saiu daqui.
  */
-const Group = GroupCard;
+/**
+ * G2 (navegação do dono, 01/10/2026): todo grupo das Configurações é um
+ * ACORDEÃO FECHADO — só o título e o indicador de abrir. Uma tela de onze
+ * assuntos abertos era uma parede; fechada, ela vira um índice.
+ */
+function Group({ title, children, titleAside, open, onOpenChange }: {
+  title: string;
+  children: ReactNode;
+  titleAside?: ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}) {
+  return (
+    <GroupCard collapsible title={title} titleAside={titleAside} open={open} onOpenChange={onOpenChange}>
+      {children}
+    </GroupCard>
+  );
+}
 
 /**
  * ESTATÍSTICAS DE USO — o opt-out real, na tela.
@@ -127,8 +146,6 @@ export function SettingsPage({
   onToggleSound,
   useAI,
   onToggleAI,
-  aiSettings,
-  onSaveAISettings,
   onChangeLanguage,
   language,
   onOpenGuide,
@@ -146,12 +163,13 @@ export function SettingsPage({
   const isPt = language === 'pt-BR';
   const t = useTranslation(language);
 
-  const [showAISettings, setShowAISettings] = useState(false);
   const [copied, setCopied] = useState(false);
   const [restoreInput, setRestoreInput] = useState('');
   const [restoreStatus, setRestoreStatus] = useState<'idle' | 'loading' | 'ok' | 'err'>('idle');
-  const [emailInput, setEmailInput] = useState('');
-  const [loginStatus, setLoginStatus] = useState<'idle' | 'loading' | 'loaded' | 'created' | 'err'>('idle');
+  /* G5: o "?" de Seus dados revela as explicações dos dois botões — e abre o
+     grupo junto, senão o toque no "?" de um card fechado não mostraria nada. */
+  const [dataOpen, setDataOpen] = useState(false);
+  const [dataHelp, setDataHelp] = useState(false);
 
   // Janela de sono automático: lida e gravada direto no localStorage; o efeito
   // do App pega a mudança no tique de minuto seguinte.
@@ -160,26 +178,11 @@ export function SettingsPage({
   const [autoSleepEnd, setAutoSleepEnd] = useState(() => readLocal(STORAGE_KEYS.AUTO_SLEEP_END) || '07:00');
 
   const { mode: themeMode, setMode: setThemeMode } = useTheme();
-  const savedEmail = readLocal(STORAGE_KEYS.USER_EMAIL);
   const saveId = readLocal(STORAGE_KEYS.SAVE_ID);
   const lastSyncRaw = readLocal(STORAGE_KEYS.LAST_CLOUD_SYNC);
   const lastSyncLabel = lastSyncRaw
     ? new Date(lastSyncRaw).toLocaleString(isPt ? 'pt-BR' : 'en-US', { dateStyle: 'short', timeStyle: 'short' })
     : null;
-
-  const isValidEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
-
-  const handleLogin = async () => {
-    const email = emailInput.trim();
-    if (!isValidEmail(email)) { setLoginStatus('err'); return; }
-    setLoginStatus('loading');
-    try {
-      const result = await onLoginWithEmail(email);
-      setLoginStatus(result); // a página recarrega logo em seguida
-    } catch {
-      setLoginStatus('err');
-    }
-  };
 
   const handleCopy = () => {
     if (!saveId) return;
@@ -198,53 +201,16 @@ export function SettingsPage({
     if (!ok) setTimeout(() => setRestoreStatus('idle'), 3000);
   };
 
-  const loginMessage =
-    loginStatus === 'err' ? (isPt ? 'E-mail inválido ou falha ao sincronizar.' : 'Invalid email or sync failed.')
-      : loginStatus === 'created' ? (isPt ? 'Conta criada — seu progresso está salvo.' : 'Account created — your progress is saved.')
-        : loginStatus === 'loaded' ? (isPt ? 'Progresso carregado!' : 'Progress loaded!')
-          : null;
-
   return (
     <>
       <InstallPrompt language={language} />
 
       {/* ── SUA CONTA — a única ação dominante da página mora aqui ────────── */}
       <Group title={isPt ? 'Sua conta' : 'Your account'}>
-        <p style={sm2Hint}>
-          {isPt
-            ? 'O mesmo e-mail traz o mesmo progresso em qualquer aparelho.'
-            : 'The same email brings the same progress to any device.'}
-        </p>
-        {savedEmail && (
-          <p style={{ ...sm2Text, fontWeight: 500 }}>{savedEmail}</p>
-        )}
-        <Field
-          type="email"
-          inputMode="email"
-          autoComplete="email"
-          value={emailInput}
-          onChange={e => { setEmailInput(e.target.value); if (loginStatus === 'err') setLoginStatus('idle'); }}
-          placeholder={savedEmail ?? (isPt ? 'seu@email.com' : 'your@email.com')}
-          aria-label={isPt ? 'Seu e-mail' : 'Your email'}
-        />
-        <button
-          type="button"
-          onClick={handleLogin}
-          disabled={!emailInput.trim() || loginStatus === 'loading'}
-          style={{ ...sm2Button('primary', !emailInput.trim() || loginStatus === 'loading'), width: '100%' }}
-        >
-          {loginStatus === 'loading'
-            ? (isPt ? 'Sincronizando…' : 'Syncing…')
-            : (isPt ? 'Entrar' : 'Sign in')}
-        </button>
-        {/* Região viva sempre montada (18px de piso) — ver AccountSection.
-            A resposta boa em `ink` 500; a falha em `muted` 12, nunca vermelho
-            (D-K7: a falha do sync não é erro da pessoa). */}
-        <p aria-live="polite" className={loginMessage && loginStatus !== 'err' ? 'sm2-conta-live is-ok' : 'sm2-conta-live'}>
-          {loginMessage}
-        </p>
-
-        <AccountSection language={language} />
+        {/* G4 (01/10/2026): o campo de e-mail + "Entrar" saiu — o login é o
+            Google do portão. Quem está sem sessão ganha o botão do Google
+            DENTRO da `AccountSection`, que é quem sabe se há sessão. */}
+        <AccountSection language={language} onSignedIn={onLoginWithEmail} />
 
         {/* AGRUPAR E ESCONDER (régua nº 3): o código de recuperação é a saída
             de emergência de quem não usa e-mail. Antes ocupava um terço da
@@ -299,8 +265,24 @@ export function SettingsPage({
       {/* ── SEUS DADOS — levar embora e apagar. Grupo PRÓPRIO, e não uma
              revelação dentro de "Sua conta": exportar e apagar não são
              ajustes avançados, são o direito de entrar e sair. ─────────── */}
-      <Group title={isPt ? 'Seus dados' : 'Your data'}>
-        <AccountDataSection language={language} />
+      <Group
+        title={isPt ? 'Seus dados' : 'Your data'}
+        open={dataOpen}
+        onOpenChange={setDataOpen}
+        titleAside={(
+          <button
+            type="button"
+            className="sm2-conta-help"
+            data-data-help
+            aria-expanded={dataHelp}
+            aria-label={isPt ? 'O que estes botões fazem' : 'What these buttons do'}
+            onClick={() => { const next = !dataHelp; setDataHelp(next); if (next) setDataOpen(true); }}
+          >
+            <Icon name="help" size={24} tone="inherit" />
+          </button>
+        )}
+      >
+        <AccountDataSection language={language} showHelp={dataHelp} />
         <TelemetrySection language={language} />
       </Group>
 
@@ -368,10 +350,6 @@ export function SettingsPage({
           hint={isPt
             ? 'Desligado, seu Soulmon responde por palavras-chave.'
             : 'Off, it answers from keywords.'}
-        />
-        <ActionRow
-          label={isPt ? 'Personalidade' : 'Personality'}
-          onClick={() => setShowAISettings(true)}
         />
       </Group>
 
@@ -508,13 +486,6 @@ export function SettingsPage({
         )}
       </Group>
 
-      <AISettingsModal
-        isOpen={showAISettings}
-        onClose={() => setShowAISettings(false)}
-        currentSettings={aiSettings}
-        onSave={(settings) => { onSaveAISettings(settings); setShowAISettings(false); }}
-        language={language}
-      />
     </>
   );
 }

@@ -34,8 +34,7 @@ function montar(language: 'pt-BR' | 'en-US', actions: GmActions | null = gm()) {
     <ThemeProvider>
       <SettingsPage
         useAI={false} onToggleAI={() => {}}
-        aiSettings={{ tone: 'casual', emojiIntensity: 'medium', motivationStyle: 'balanced', customKeywords: '', temperature: 0.85 }}
-        onSaveAISettings={() => {}} language={language} onChangeLanguage={() => {}}
+        language={language} onChangeLanguage={() => {}}
         onOpenGuide={() => {}} onOpenGlossary={() => {}}
         notificationsEnabled={false} onToggleNotifications={() => {}}
         onRestoreFromCloud={async () => true} onLoginWithEmail={async () => 'loaded' as const}

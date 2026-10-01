@@ -484,18 +484,69 @@ export function ModalSheet({
 /**
  * O grupo por intenção = card SIS-03 (surface, fronteira `line` 1px, raio 12,
  * padding 12) com o título Fredoka 20 — o `h2` do código. Sem ícone ao lado.
+ *
+ * G2 (navegação do dono, 01/10/2026): nas Configurações cada grupo vira
+ * ACORDEÃO FECHADO por padrão — só o título + `expand_more`. `collapsible`
+ * liga o modo; sem ele o card é o de sempre (o GM e quem mais usar o card
+ * continuam iguais). O corpo fechado fica MONTADO com `hidden` (não
+ * desmontado): o estado interno das seções (busca do plano, região viva,
+ * o pedido de exclusão em andamento) sobrevive a fechar e abrir.
+ * `open`/`onOpenChange` deixam o dono controlar (o "?" de Seus dados abre o
+ * card); `titleAside` é o canto direito da linha do título, FORA do botão
+ * (botão dentro de botão é HTML inválido).
  */
-export function GroupCard({ title, children, style, titleAs = 'h2' }: {
+export function GroupCard({
+  title, children, style, titleAs = 'h2', collapsible = false, defaultOpen = false,
+  open: openProp, onOpenChange, titleAside,
+}: {
   title: string;
   children: ReactNode;
   style?: CSSProperties;
   titleAs?: 'h2' | 'h3';
+  collapsible?: boolean;
+  defaultOpen?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  titleAside?: ReactNode;
 }) {
   const Title = titleAs;
+  const [openState, setOpenState] = useState(defaultOpen);
+  const bodyId = useId();
+  if (!collapsible) {
+    return (
+      <section className="sm2-conta-card" style={style}>
+        <Title className="sm2-title sm2-conta-h2">{title}</Title>
+        {children}
+      </section>
+    );
+  }
+  const open = openProp ?? openState;
+  const toggle = () => {
+    const next = !open;
+    if (openProp === undefined) setOpenState(next);
+    onOpenChange?.(next);
+  };
   return (
-    <section className="sm2-conta-card" style={style}>
-      <Title className="sm2-title sm2-conta-h2">{title}</Title>
-      {children}
+    <section className="sm2-conta-card sm2-conta-fold" data-group-open={open ? 'true' : 'false'} style={style}>
+      <div className="sm2-conta-head">
+        <Title className="sm2-title sm2-conta-h2" style={{ flex: 1, minWidth: 0 }}>
+          <button
+            type="button"
+            className="sm2-conta-head-btn"
+            aria-expanded={open}
+            aria-controls={bodyId}
+            data-group-toggle
+            onClick={toggle}
+          >
+            <span style={{ flex: 1, minWidth: 0 }}>{title}</span>
+            <Icon name={open ? 'expand_less' : 'expand_more'} size={24} tone="muted" />
+          </button>
+        </Title>
+        {titleAside}
+      </div>
+      <div id={bodyId} hidden={!open} className="sm2-conta-body">
+        {children}
+      </div>
     </section>
   );
 }
