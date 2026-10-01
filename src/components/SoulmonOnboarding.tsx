@@ -4,7 +4,9 @@ import { Viewport } from './ui/Viewport';
 import { BackArrow } from './ui/BackArrow';
 import { BirthCard } from './BirthCard';
 import { getSpriteForStage } from '../utils/sprites';
-import logoUrl from '../assets/brand/final/logo.svg';
+// PROVISÓRIO (01/10/2026): wordmark recortado localmente do original do
+// Gemini, com autorização explícita do dono, até chegar a versão com alfa real.
+import logoUrl from '../assets/brand/final/logo-wordmark.png';
 import { recommendStarterSet } from '../utils/recommend';
 import { ACTIVITY_CATALOG } from '../data/activityCatalog';
 import {
@@ -1489,19 +1491,20 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         {step === IDENTITY_STEP && (
           <>
           {/* A1 (checklist do dono, 01/10/2026): A MARCA é o LOGO do app
-              (`src/assets/brand/final/logo.svg`), solto — sem o slot-visor de
-              gradiente e sem o wordmark em texto que vinham antes. O SVG é
-              pixel `crispEdges` com contorno escuro próprio (37×60), então
-              escala sem borrar e se lê sobre o fundo claro; 3× = 111×180.
+              (`src/assets/brand/final/logo-wordmark.png`, o wordmark SOUL/MON
+              — PROVISÓRIO, recorte local autorizado pelo dono em 01/10/2026),
+              solto — sem o slot-visor de gradiente e sem o wordmark em texto
+              que vinham antes. Pixel art com contorno escuro próprio
+              (1175×840), `pixelated`; 160 de largura = 160×114.
               `role=img` + nome acessível: o logo é a única marca da tela. */}
           <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 24 }}>
             <img
               src={logoUrl}
               alt="Soulmon"
-              width={111}
-              height={180}
+              width={160}
+              height={114}
               data-brand-logo
-              style={{ width: 111, height: 180, display: 'block', imageRendering: 'pixelated' }}
+              style={{ width: 160, height: 114, display: 'block', imageRendering: 'pixelated' }}
             />
           </div>
           {/* A1: a região viva está SEMPRE no DOM (vazia) e o texto entra

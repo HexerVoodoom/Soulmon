@@ -36,12 +36,16 @@ import type { ReactNode } from 'react';
  * // de mais nada: o teto de 5 é o limite.
  */
 import { Icon } from '../ui/Icon';
-import logoUrl from '../../assets/brand/final/logo.svg';
+// PROVISÓRIO (01/10/2026): wordmark recortado localmente do original do
+// Gemini, com autorização explícita do dono, até chegar a versão com alfa real
+// (prompts em E:/Soulmon-assets/out/ajustes-20261001/PROMPTS-PARA-O-DONO.md).
+// Quando chegar, troque SÓ o arquivo `logo-wordmark.png` (e a proporção abaixo).
+import logoUrl from '../../assets/brand/final/logo-wordmark.png';
 
-/** O logo é pixel art 37×60: a 2/3 (24×40) cada pixel de origem fica perto
- *  de 0,66 px — usamos o múltiplo de altura 40 que cabe na linha de 44. */
-const LOGO_H = 40;
-const LOGO_W = Math.round(LOGO_H * 37 / 60);
+/** O wordmark (SOUL/MON) é 1175×840 (pixel art 235×168 ampliada 5× nearest).
+ *  No header da Home ele ocupa 32 px de altura, dentro da linha de 44. */
+const LOGO_H = 32;
+const LOGO_W = Math.round(LOGO_H * 1175 / 840);
 
 /**
  * C1 — o MENU da Home é um hambúrguer simples: três tracinhos, pelado (regra
@@ -115,8 +119,8 @@ export function HomeHud({ language = 'en-US', focusSealed = false, trailing }: H
           aqui). */}
       <div className="sm2-hud-brand" style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 44 }}>
         {/* C1 (navegação do dono, 01/10/2026): a marca deixa de ser a PALAVRA
-            e vira o LOGO do app (`assets/brand/final/logo.svg`, a chama de
-            pixel no braseiro de cobre). Continua sendo o `<h1>` da Home: o
+            e vira o LOGO do app (`assets/brand/final/logo-wordmark.png`, o
+            wordmark SOUL/MON — PROVISÓRIO, recorte local). Continua sendo o `<h1>` da Home: o
             nome acessível "Soulmon" é texto visualmente oculto ao lado da
             imagem decorativa, então o leitor de tela ouve o mesmo que ouvia. */}
         <h1 className="sm2-hud-wordmark" style={{ margin: 0, display: 'flex', alignItems: 'center' }}>
