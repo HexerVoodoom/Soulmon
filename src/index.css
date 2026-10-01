@@ -7893,3 +7893,81 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
    reduzido ele só aparece (regra no bloco canônico) — o número é a leitura. */
 @keyframes sm-duel-dmg { from { opacity: 0; transform: translateY(6px); } 20% { opacity: 1; } to { opacity: 0; transform: translateY(-14px); } }
 .sm-duel-dmg { animation: sm-duel-dmg 850ms ease-out forwards; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   AJUSTES DA NAVEGAÇÃO DO DONO (01/10/2026) — frente HOME (C/D/E do
+   `docs/AJUSTES-NAVEGACAO-2026-10-01.md`). Tokens sempre `--sm2-*`.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Texto só para leitor de tela (o `<h1>` da Home é o logo — C1). */
+.sm2-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* C2 + C5 — a área do pet com ALTURA FIXA e sem o "ar" de cima. Eram 330px
+   (280 em tela baixa) e o pet só começava ~127px abaixo do topo da faixa: o
+   vão entre o topo e o pet que o dono pediu para tirar. A composição continua
+   ancorada no FUNDO (o chão não se mexe); o que encolhe é o céu. O balão de
+   fala é overlay e nunca muda esta altura. O `CompanionHUD` mede o token. */
+:root { --sm3-cena-h: 244px; }
+@media (max-height: 800px) { :root { --sm3-cena-h: 232px; } }
+.sm3-home-sticky .sm3-cena { height: var(--sm3-cena-h); overflow: hidden; }
+
+/* C13 — coração e energia viraram BOTÕES (abrem a dica de como sobe/desce).
+   Visual idêntico ao da leitura (`.sm3-stat`), alvo de toque de 44 de altura
+   sem mudar o desenho: o padding vertical cresce e a margem negativa devolve. */
+button.sm3-stat {
+  background: none;
+  border: none;
+  padding: 12px 2px;
+  margin: -12px -2px;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outline-offset: 0; border-radius: var(--sm2-radius-sm); }
+.sm3-stat-tip {
+  position: absolute;
+  left: var(--sm2-space-3);
+  bottom: 52px;
+  z-index: 50;
+  max-width: min(280px, calc(100% - 24px));
+  padding: 8px 12px;
+  border-radius: var(--sm2-radius-md);
+  background-color: var(--sm2-surface);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .35);
+  font-family: var(--sm2-font-text);
+  font-size: var(--sm2-text-xs);
+  line-height: 1.4;
+  color: var(--sm2-ink);
+}
+.sm3-stat-tip p { margin: 0; }
+.sm3-stat-tip p + p { margin-top: 4px; }
+.sm3-stat-tip b { color: var(--sm2-primary-ink); font-weight: 600; }
+.sm3-stat-tip .sm3-stat-tip-title { font-weight: 700; margin-bottom: 2px; }
+
+/* D1 — a linha concluída desliza por CIMA das vizinhas (o `zIndex` do
+   keyframe só vale com posição) e o brilho tem cantos. */
+.sm2-ritual { position: relative; border-radius: var(--sm2-radius-md); }
+/* D2 — o ícone da esquerda é o botão de EDITAR (alvo 44, ícone pelado). */
+.sm2-ritual-edit { -webkit-tap-highlight-color: transparent; }
+.sm2-ritual-edit:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: -2px; border-radius: var(--sm2-radius-md); }
+
+/* D4 — faixa horizontal que rola SEM barra visível (filtros do catálogo). */
+.sm2-scroll-x-quiet { scrollbar-width: none; -ms-overflow-style: none; }
+.sm2-scroll-x-quiet::-webkit-scrollbar { display: none; }
+
+/* E1 — escrever ao Soulmon é digitar DIRETO no terminal: o campo interno não
+   ganha anel próprio (era a "caixa dentro da caixa"); o foco é a borda da
+   barra inteira (`.sm3-term:focus-within`), que já existe. */
+.sm3-term .sm3-term-input:focus,
+.sm3-term .sm3-term-input:focus-visible { outline: 0; box-shadow: none; }

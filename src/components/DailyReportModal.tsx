@@ -4,6 +4,7 @@ import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import { UnlockNudge } from './UnlockAccountModal';
 import { MemoriesCard } from './MemoriesCard';
 import { MOOD_OPTIONS, type MoodValue } from '../utils/mood';
+import { moodArtFor, MOOD_ART_ID } from '../utils/moodArt';
 import type { AdventureFind } from '../utils/adventure';
 import { ADVENTURE_ART } from '../utils/adventureArt';
 import { welcomeBackLine } from '../utils/welcomeBack';
@@ -365,7 +366,10 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, on
                     boxShadow: active ? 'inset 0 0 0 2px var(--sm2-primary-ink)' : 'inset 0 0 0 1px var(--sm2-muted)',
                   }}
                 >
-                  <span aria-hidden="true">{m.emoji}</span>
+                  {/* C6: arte própria quando existir (`utils/moodArt.ts`); emoji é o fallback. */}
+                  {moodArtFor(m.value)
+                    ? <img src={moodArtFor(m.value)} alt="" aria-hidden="true" data-mood-art={MOOD_ART_ID[m.value]} width={24} height={24} style={{ display: 'block', imageRendering: 'pixelated' }} />
+                    : <span aria-hidden="true">{m.emoji}</span>}
                 </button>
               );
             })}

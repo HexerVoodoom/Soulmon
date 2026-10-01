@@ -300,6 +300,12 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Chamado por:** `src/components/CompanionHUD.tsx`.
 **Régua:** `src/components/home/Mochila.render.test.tsx`.
 
+### `src/components/home/statTips.ts`
+**Dono de:** o TEXTO da dica que abre ao tocar no coração ou na energia da Home (C13 da navegação do dono, 01/10/2026): como sobe e como desce, em PT/EN, com os números lidos das constantes (`MAX_HEARTS_LOST_PER_DAY`, `WEEKLY_RELIEF_HEARTS`, `RUB_HEAL_DAILY_CAP`). Não decide regra nenhuma — só descreve.
+**Exports:** `statTip(kind, isPt)`, `StatTip`, `StatTipKind`.
+**Chamado por:** `src/components/CompanionHUD.tsx`.
+**Régua:** `src/components/home/statTips.test.ts`, `src/components/CompanionHUD.cta.test.tsx`.
+
 ### `src/components/nav/HomeMenuSheet.tsx`
 **Dono de:** o menu só ícone da Home (D6) — folha (`ModalSheet`) com Configurações, Oráculo, Estatísticas, Guia, Créditos e Refazer o ritual. A Biblioteca mora no Hall (D4), não aqui.
 **Props principais:** `open`, `onClose`, `language`, `onOpenPage(MenuPageId)`, `onOpenGuide`, `onOpenCredits?`, `onResetOnboarding?`.

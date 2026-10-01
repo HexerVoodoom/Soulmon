@@ -18,14 +18,13 @@ import { CornerLink } from './components/nav/CornerLink';
 import { AreaTopBar } from './components/nav/AreaTopBar';
 import { MapPage } from './components/nav/MapPage';
 import { HomeMenuSheet } from './components/nav/HomeMenuSheet';
-import { PixelIcon } from './components/ui/PixelIcon';
 import {
   type ViewType, type AreaId, areaOf, menuPageOf, viewBack, areaView, areaLabel, menuPageLabel,
 } from './navigation';
 import { registerAndroidBack } from './utils/androidBack';
 import { closeTopBackLayer } from './utils/backStack';
 import { CompanionHUD } from './components/CompanionHUD';
-import { HomeHud } from './components/pixel/HomeHud';
+import { HomeHud, MenuBars } from './components/pixel/HomeHud';
 import { DailyRituals } from './components/DailyRituals';
 import { CATEGORY_ICONS } from './types/category-icons';
 import { ConfirmDialog } from './components/ConfirmDialog';
@@ -5943,7 +5942,8 @@ export default function App() {
                       background: 'transparent', border: 'none', padding: 0, cursor: 'pointer',
                     }}
                   >
-                    <PixelIcon name="acoes" size={32} />
+                    {/* C1 (01/10/2026): hambúrguer simples — três tracinhos. */}
+                    <MenuBars size={28} />
                   </button>
                 )}
               />
@@ -6628,6 +6628,7 @@ export default function App() {
           side="right"
           label={language === 'pt-BR' ? 'Mapa' : 'Map'}
           onClick={() => goTo('map')}
+          ring
         />
       )}
       {currentView === 'map' && (
@@ -7067,7 +7068,6 @@ export default function App() {
       {interstitial === 'catalogOnboarding' && (
         <CatalogOnboardingFlow
           language={language}
-          onSkip={() => setGameState(prev => markCatalogOnboardingSeen(prev as any, new Date()) as any)}
           onComplete={(chosen) => setGameState(prev => {
             const withFlag = markCatalogOnboardingSeen(prev as any, new Date()) as any;
             return {

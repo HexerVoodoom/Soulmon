@@ -16,6 +16,11 @@ import { HUD_ART } from '../utils/hudArt';
 import { type SlotId, BASE_SLOTS, PET_TOP_OFFSET, PET_BOX, PET_RENDER, STAGE_HEIGHT } from '../utils/petStage';
 import { PetStageDecor } from './PetStageDecor';
 import { PET_BACKGROUNDS, isDarkBackground } from '../utils/backgrounds';
+import { statTip, type StatTipKind } from './home/statTips';
+
+/** C3 — o cenário pintado quando nenhum está equipado: o Quarto grátis,
+ *  pré-possuído por todo save (`utils/shop.ts`, preço 0). */
+export const DEFAULT_PET_BACKGROUND = 'bg-room';
 import { CareSystem, CareEvent } from './CareSystem';
 import { ChatBox } from './ChatBox';
 import { Language } from '../utils/i18n';
@@ -110,17 +115,8 @@ const PET_BOTTOM_IN_STAGE =
    transparentes ao lado, que cobrem o palco inteiro) aceita o clique. */
 const EVOLVE_BTN_BOTTOM = 8;
 const BUBBLE_GAP = 6;
-/* ── O BALÃO NÃO COBRE A CRIATURA (canvas Home, D-H5 / X2) ────────────────
-   Com o balão ancorado no topo do vidro, o sprite (que começa ~37px abaixo
-   do topo numa janela de 200) ficava com a crista debaixo da fala. O canvas
-   mede: balão de UMA linha = 36px → a composição inteira (sprite, berço,
-   sombra, decoração) desce 22px; DUAS linhas = 54px → desce 40px. A frente
-   do berço passa a cortar no vidro na variante de 2 linhas — registrado no
-   canvas como aceito. O deslocamento é `transform` (não `top`): nada de
-   layout, e sai com `--sm2-dur-tap` para não pular. */
-const BUBBLE_ONE_LINE_MAX_PX = 40;
-const STAGE_DROP_ONE_LINE = 22;
-const STAGE_DROP_TWO_LINES = 40;
+/* ⚰️ O BALÃO NÃO COBRE A CRIATURA (X2) — revogado em 01/10/2026 (C5 do
+   dono): a composição não desce mais sob a fala; o balão é overlay. */
 /* FX do `animArt` DENTRO do vidro a 2× (célula 64 → 128 CSS, D-H4): mesma
    grade lógica 64 × `VIEW_SCALE` do `Viewport`. Ancorados ACIMA da cabeça
    (X8), nunca sobre o rosto. */
@@ -411,15 +407,28 @@ export const CompanionHUD = memo(function CompanionHUD({
   /* F4 (01/10/2026): no banho o balão mostra o CHUVEIRINHO aprovado (o mesmo do
      botão de banho), não as mãozinhas do abraço — que ficam para a comida. */
   const [balloonKind, setBalloonKind] = useState<'hug' | 'bath'>('hug');
-  /* Quantas linhas o balão ocupa decide quanto a composição desce (X2). Medido
-     no DOM depois do texto entrar — jsdom devolve 0 e cai no caso de 1 linha. */
+  /* C5 (navegação do dono, 01/10/2026): o balão é OVERLAY e não empurra
+     nada. Até aqui a composição DESCIA 22/40px quando a fala aparecia (X2 do
+     canvas Home) — o dono leu isso como "a área do pet muda ao tocar no
+     Soulmon". A altura da faixa é fixa (`--sm3-cena-h`) e o balão flutua por
+     cima; o `ref` continua para quem mede a caixa de fala. */
   const bubbleRef = useRef<HTMLDivElement | null>(null);
-  const [stageDrop, setStageDrop] = useState(0);
-  useLayoutEffect(() => {
-    if (!showBubble) { setStageDrop(0); return; }
-    const h = bubbleRef.current?.offsetHeight ?? 0;
-    setStageDrop(h > BUBBLE_ONE_LINE_MAX_PX ? STAGE_DROP_TWO_LINES : STAGE_DROP_ONE_LINE);
-  }, [showBubble, bubbleText]);
+  const stageDrop = 0;
+  /* C13 — qual dica de leitura está aberta (coração ou energia). Fecha com
+     novo toque no mesmo ícone, toque na própria dica, toque fora ou Esc. */
+  const [statAberto, setStatAberto] = useState<StatTipKind | null>(null);
+  useEffect(() => {
+    if (!statAberto) return;
+    const fora = (e: PointerEvent) => {
+      const alvo = e.target as Element | null;
+      if (alvo?.closest?.('[data-cena-stats], #sm3-stat-tip')) return;
+      setStatAberto(null);
+    };
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setStatAberto(null); };
+    document.addEventListener('pointerdown', fora);
+    document.addEventListener('keydown', esc);
+    return () => { document.removeEventListener('pointerdown', fora); document.removeEventListener('keydown', esc); };
+  }, [statAberto]);
   /* ── ALIMENTAR É CONTROLE DE PRIMEIRA CLASSE ─────────────────────────────
      O deck tinha Itens / Banho / Dormir e a ação que DEFINE o gênero v-pet
      estava enterrada dentro do `ItemsWindow`, atrás de "Itens" — um rótulo
@@ -1118,13 +1127,18 @@ export const CompanionHUD = memo(function CompanionHUD({
      `background-attachment: fixed`, que ancora no viewport — assim ela é
      opaca (a lista não aparece por trás) e casa pixel a pixel com o cenário
      de baixo, em vez de virar uma tarja de cor chapada por cima dele. */
-  const cenario = equippedBackground && PET_BACKGROUNDS[equippedBackground]
-    ? PET_BACKGROUNDS[equippedBackground].css
-    : undefined;
+  /* C3 (navegação do dono, 01/10/2026): o pet não fica mais numa "caixa de
+     gradiente" (o céu do ciclo diurno). Sem cenário equipado, a área do pet
+     pinta o cenário PADRÃO — `bg-room`, o Quarto grátis que todo save já
+     possui (`utils/shop.ts`). Só a PINTURA muda: a decoração continua lendo o
+     `equippedBackground` real (`PetStageDecor`), então nenhuma regra de
+     mobília × cenário muda por baixo. */
+  const cenarioId = equippedBackground && PET_BACKGROUNDS[equippedBackground]
+    ? equippedBackground
+    : DEFAULT_PET_BACKGROUND;
+  const cenario = PET_BACKGROUNDS[cenarioId]?.css;
   /** Cor atrás da arte no visor — só cenário pintado declara (ver backgrounds.ts). */
-  const cenarioBase = equippedBackground
-    ? PET_BACKGROUNDS[equippedBackground]?.baseColor
-    : undefined;
+  const cenarioBase = PET_BACKGROUNDS[cenarioId]?.baseColor;
 
   /* WP3.1 — o contexto do chat, montado AQUI porque é aqui que os números já
      existem. Duas cautelas, e as duas vêm do contrato do servidor
@@ -1603,7 +1617,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                 escuro (`isDarkBackground`) entra a folha clara `sleepZLight`. */}
             {isSleeping && (
                 <SpriteAnim
-                  sheet={isDarkBackground(equippedBackground) ? ANIM_ART.sleepZLight : ANIM_ART.sleepZ}
+                  sheet={isDarkBackground(cenarioId) ? ANIM_ART.sleepZLight : ANIM_ART.sleepZ}
                   size={FX_PX / 2}
                   durationMs={1800}
                   loop
@@ -1842,30 +1856,59 @@ export const CompanionHUD = memo(function CompanionHUD({
           const hpBaixo = healthPoints <= 1;
           const enBaixo = energyPoints <= 0;
           return (
+            <>
             <div className="sm3-stats" data-cena-stats>
-              <span
+              {/* C13 (01/10/2026): coração e energia são BOTÕES — o toque abre
+                  uma dica curta de como sobe e como desce (`home/statTips.ts`,
+                  números lidos das constantes das regras). */}
+              <button
+                type="button"
                 className="sm3-stat"
+                data-stat="hp"
                 data-low={hpBaixo || undefined}
-                role="img"
+                aria-expanded={statAberto === 'hp'}
+                aria-controls="sm3-stat-tip"
+                onClick={() => setStatAberto(v => (v === 'hp' ? null : 'hp'))}
                 aria-label={isPt
                   ? `Corações: ${fmt(healthPoints)} de ${maxHealthPoints}${hpBaixo ? ' (baixo)' : ''}`
                   : `Hearts: ${fmt(healthPoints)} of ${maxHealthPoints}${hpBaixo ? ' (low)' : ''}`}
               >
                 <PixelIcon name="hp" size={20} />
                 <span className="sm2-num" aria-hidden="true">{fmt(healthPoints)}/{maxHealthPoints}</span>
-              </span>
-              <span
+              </button>
+              <button
+                type="button"
                 className="sm3-stat"
+                data-stat="energy"
                 data-low={enBaixo || undefined}
-                role="img"
+                aria-expanded={statAberto === 'energy'}
+                aria-controls="sm3-stat-tip"
+                onClick={() => setStatAberto(v => (v === 'energy' ? null : 'energy'))}
                 aria-label={isPt
                   ? `Energia: ${energyPoints} de ${maxEnergy}${enBaixo ? ' (vazia)' : ''}`
                   : `Energy: ${energyPoints} of ${maxEnergy}${enBaixo ? ' (empty)' : ''}`}
               >
                 <PixelIcon name="energia" size={20} />
                 <span className="sm2-num" aria-hidden="true">{energyPoints}/{maxEnergy}</span>
-              </span>
+              </button>
             </div>
+            {statAberto && (() => {
+              const tip = statTip(statAberto, isPt);
+              return (
+                <div
+                  id="sm3-stat-tip"
+                  role="tooltip"
+                  className="sm3-stat-tip"
+                  data-stat-tip={statAberto}
+                  onClick={() => setStatAberto(null)}
+                >
+                  <p className="sm3-stat-tip-title">{tip.title}</p>
+                  <p><b>{tip.upLabel}</b> {tip.up}</p>
+                  <p><b>{tip.downLabel}</b> {tip.down}</p>
+                </div>
+              );
+            })()}
+            </>
           );
         })()}
 

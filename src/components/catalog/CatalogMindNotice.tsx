@@ -34,6 +34,23 @@ export function CatalogMindNotice({ item, language = 'en-US', onCancel, onConfir
   return (
     <div role="dialog" aria-modal="true" aria-label={isPt ? 'Aviso importante' : 'Important notice'}
       style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 4 }}>
+      {/* Back padronizado (navegação do dono, 01/10/2026): a volta ao
+          catálogo é a seta no canto superior ESQUERDO, acima do título — o
+          "Cancelar" embaixo saiu. */}
+      <button
+        type="button"
+        onClick={onCancel}
+        aria-label={isPt ? 'Voltar ao catálogo' : 'Back to the catalog'}
+        title={isPt ? 'Voltar' : 'Back'}
+        data-flow-back
+        style={{
+          alignSelf: 'flex-start', width: 44, height: 44, margin: '-8px 0 -8px -10px',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--sm2-ink)',
+        }}
+      >
+        <Icon name="arrow_back" size={24} />
+      </button>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <Icon name="health_and_safety" size={24} fill={1} tone="primary" />
         <h3 style={{ ...sm2Text, fontWeight: 600, margin: 0 }}>
@@ -77,9 +94,6 @@ export function CatalogMindNotice({ item, language = 'en-US', onCancel, onConfir
           style={{ ...sm2Button('primary', !understood), width: '100%' }}
         >
           {isPt ? 'Adicionar' : 'Add'}
-        </button>
-        <button type="button" onClick={onCancel} style={{ ...sm2Button('outline'), width: '100%' }}>
-          {isPt ? 'Cancelar' : 'Cancel'}
         </button>
       </div>
     </div>

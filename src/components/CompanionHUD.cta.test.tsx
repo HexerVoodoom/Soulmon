@@ -217,7 +217,23 @@ describe('CompanionHUD — a MOCHILA é controle de primeira classe', () => {
 
   it('HP/EN moram no canto da faixa, com nome acessível e a marca de BAIXO do estado real', () => {
     renderWithCss(<CompanionHUD {...base} healthPoints={1} energyPoints={0} />);
-    expect(screen.getByRole('img', { name: 'Corações: 1 de 3 (baixo)' })).toBeTruthy();
-    expect(screen.getByRole('img', { name: 'Energia: 0 de 4 (vazia)' })).toBeTruthy();
+    // C13 (01/10/2026): viraram BOTÕES (abrem a dica de como sobe/desce).
+    expect(screen.getByRole('button', { name: 'Corações: 1 de 3 (baixo)' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Energia: 0 de 4 (vazia)' })).toBeTruthy();
+  });
+
+  it('C13: tocar no coração/energia abre a dica de como sobe e como desce; tocar de novo fecha', () => {
+    renderWithCss(<CompanionHUD {...base} healthPoints={2} energyPoints={1} />);
+    const hp = screen.getByRole('button', { name: /Corações/ });
+    fireEvent.click(hp);
+    const tip = screen.getByRole('tooltip');
+    expect(tip.textContent).toMatch(/Sobe/);
+    expect(tip.textContent).toMatch(/Desce/);
+    expect(tip.textContent).toMatch(/carinho/);
+    expect(hp.getAttribute('aria-expanded')).toBe('true');
+    fireEvent.click(hp);
+    expect(screen.queryByRole('tooltip')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /Energia/ }));
+    expect(screen.getByRole('tooltip').textContent).toMatch(/comendo/);
   });
 });

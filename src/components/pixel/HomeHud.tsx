@@ -36,6 +36,37 @@ import type { ReactNode } from 'react';
  * // de mais nada: o teto de 5 é o limite.
  */
 import { Icon } from '../ui/Icon';
+import logoUrl from '../../assets/brand/final/logo.svg';
+
+/** O logo é pixel art 37×60: a 2/3 (24×40) cada pixel de origem fica perto
+ *  de 0,66 px — usamos o múltiplo de altura 40 que cabe na linha de 44. */
+const LOGO_H = 40;
+const LOGO_W = Math.round(LOGO_H * 37 / 60);
+
+/**
+ * C1 — o MENU da Home é um hambúrguer simples: três tracinhos, pelado (regra
+ * do dono: ícone nunca em caixa). Desenho em SVG com `currentColor`, para o
+ * tom vir do botão que o envolve; decorativo (o botão carrega o nome).
+ */
+export function MenuBars({ size = 28 }: { size?: number }) {
+  return (
+    <svg
+      data-menu-bars
+      aria-hidden="true"
+      focusable="false"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2.4}
+      strokeLinecap="round"
+      style={{ display: 'block', color: 'var(--sm2-ink)' }}
+    >
+      <path d="M4 6.5h16M4 12h16M4 17.5h16" />
+    </svg>
+  );
+}
 import type { Language } from '../../utils/i18n';
 
 interface HomeHudProps {
@@ -83,7 +114,24 @@ export function HomeHud({ language = 'en-US', focusSealed = false, trailing }: H
           tamanho e cor — Fredoka 20, caixa alta; a margem do `h1` é zerada
           aqui). */}
       <div className="sm2-hud-brand" style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 44 }}>
-        <h1 className="sm2-hud-wordmark" style={{ margin: 0 }}>Soulmon</h1>
+        {/* C1 (navegação do dono, 01/10/2026): a marca deixa de ser a PALAVRA
+            e vira o LOGO do app (`assets/brand/final/logo.svg`, a chama de
+            pixel no braseiro de cobre). Continua sendo o `<h1>` da Home: o
+            nome acessível "Soulmon" é texto visualmente oculto ao lado da
+            imagem decorativa, então o leitor de tela ouve o mesmo que ouvia. */}
+        <h1 className="sm2-hud-wordmark" style={{ margin: 0, display: 'flex', alignItems: 'center' }}>
+          <img
+            src={logoUrl}
+            alt=""
+            aria-hidden="true"
+            data-home-logo
+            width={LOGO_W}
+            height={LOGO_H}
+            draggable={false}
+            style={{ display: 'block', width: LOGO_W, height: LOGO_H, imageRendering: 'pixelated' }}
+          />
+          <span className="sm2-sr-only">Soulmon</span>
+        </h1>
         {/* O selo = chip de etiqueta 24 em `primary-soft` (canvas Home,
             HOME-07): `check_circle` FILL 1 + "focus done" Rubik 12/500. Ícone
             pelado dentro de um CHIP de texto — a regra do dono é sobre ícone

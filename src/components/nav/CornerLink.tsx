@@ -15,7 +15,7 @@ import { PixelIcon } from '../ui/PixelIcon';
  * `home.png`, `assets/soulmon/icones-ui`) — até a correção pós-F3 era um glifo
  * vetorial de linha fina no lugar dela, por engano.
  */
-export function CornerLink({ icon, label, side, onClick, glow = false }: {
+export function CornerLink({ icon, label, side, onClick, glow = false, ring = false }: {
   icon: 'mapa' | 'home';
   label: string;
   side: 'left' | 'right';
@@ -23,6 +23,10 @@ export function CornerLink({ icon, label, side, onClick, glow = false }: {
   /** Brilho sutil (F3, mock do Mapa): a casa recebe um halo leve para não
    *  sumir no canto vinhetado sobre a arte isométrica. */
   glow?: boolean;
+  /** C14 (navegação do dono, 01/10/2026): o MESMO anel do voltar-ao-mapa das
+   *  áreas (`AreaTopBar` sobre a cena: círculo de 44, borda 2px clara). Só o
+   *  desenho em volta muda — o alvo continua o botão de 56. */
+  ring?: boolean;
 }) {
   return (
     <button
@@ -45,7 +49,20 @@ export function CornerLink({ icon, label, side, onClick, glow = false }: {
         filter: glow ? 'drop-shadow(0 0 6px rgba(95, 243, 224, 0.45))' : undefined,
       }}
     >
-      <PixelIcon name={icon} size={32} />
+      {ring ? (
+        <span
+          aria-hidden="true"
+          data-corner-ring
+          style={{
+            width: 44, height: 44, boxSizing: 'border-box',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            border: '2px solid rgba(233,245,242,.6)',
+            borderRadius: '50%',
+          }}
+        >
+          <PixelIcon name={icon} size={32} />
+        </span>
+      ) : <PixelIcon name={icon} size={32} />}
     </button>
   );
 }
