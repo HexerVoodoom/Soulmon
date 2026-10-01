@@ -59,12 +59,17 @@ describe('RitualRow — a ação central continua acessível na composição den
     expect(toggle).toHaveBeenCalledTimes(1);
   });
 
-  it('a coluna de texto é o botão de EDITAR, com rótulo que diz o nome', () => {
+  // D2 (01/10/2026): editar = tocar no ÍCONE DA ESQUERDA (o selo do tipo).
+  it('o ícone da esquerda é o botão de EDITAR, com rótulo que diz o nome', () => {
     const edit = vi.fn();
-    renderWithCss(<ul>{linha({ onEdit: edit })}</ul>);
+    const { container } = renderWithCss(<ul>{linha({ onEdit: edit })}</ul>);
     const botao = screen.getByRole('button', { name: 'Editar: Beber 2 litros de água' });
+    expect(botao.getAttribute('data-ritual-edit')).not.toBeNull();
+    expect(botao.querySelector('.sm2-icon')).not.toBeNull();
     fireEvent.click(botao);
     expect(edit).toHaveBeenCalledTimes(1);
+    // um só controle de editar por linha (sem lápis/folha extra)
+    expect(container.querySelectorAll('[data-ritual-edit]')).toHaveLength(1);
   });
 
   it('par PT/EN do rótulo de editar', () => {

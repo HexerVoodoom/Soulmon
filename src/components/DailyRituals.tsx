@@ -27,17 +27,13 @@ import type { ActivityCategory } from '../types/attributes';
 import { normalizeSchedule } from '../types/taskModel';
 import { categoryLabel } from '../types/category-icons';
 import { isActive, isHaunted } from '../utils/taskTriage';
-import { emptyRhythm, type HabitRhythm } from '../utils/habitRhythm';
+import type { HabitRhythm } from '../utils/habitRhythm';
 import { Icon } from './ui/Icon';
 import { sm2Button } from './form/FormKit';
 import { RitualPanel, RitualRow } from './pixel/RitualPanel';
 import { TaskMeta } from './TaskMeta';
-import { HabitConstancy } from './HabitConstancy';
 import { StepRow } from './StepRow';
 
-/** Ritmo vazio ESTÁVEL para hábito sem histórico — um `emptyRhythm()` inline
- *  na prop cria objeto novo a cada render e anula memoização mundo afora. */
-const EMPTY_RHYTHM = emptyRhythm();
 
 /**
  * O rótulo de frequência de um hábito na lista.
@@ -82,6 +78,8 @@ export interface DailyRitualsProps {
   tasks: Task[];
   activities: Activity[];
   completedTasks: CompletedTask[];
+  /** ⚰️ D3 (01/10/2026): a linha não desenha mais a constância. Ficam
+   *  opcionais para não quebrar quem ainda passa. */
   habitRhythms?: Record<string, HabitRhythm>;
   hideMetrics?: boolean;
   language: Language;
@@ -105,7 +103,7 @@ export interface DailyRitualsProps {
 }
 
 export function DailyRituals({
-  tasks, activities, completedTasks, habitRhythms, hideMetrics = false, language, now,
+  tasks, activities, completedTasks, language, now,
   expanded, onExpand, onToggleTask, onEditTask, onPostponeNudge,
   onEditActivity, onToggleActivity, onUpdateStep, onRestoreTask, onCreate, ctaLabel, emptyMessage,
   variant = 'panel', dayComplete = false,
@@ -167,6 +165,7 @@ export function DailyRituals({
         {tarefas.map(task => (
           <RitualRow
             key={task.id}
+            flipKey={`t:${task.id}`}
             kind="task"
             name={task.name}
             subtitle={task.category
@@ -196,6 +195,7 @@ export function DailyRituals({
         {feitasHoje.map(c => (
           <RitualRow
             key={`done-${c.id}-${c.completedAt}`}
+            flipKey={`t:${c.id}`}
             kind="task"
             name={c.name}
             subtitle={`${c.category ? categoryLabel(c.category, isPt) : (isPt ? 'Tarefa avulsa' : 'One-off task')} · ${isPt ? 'feita hoje' : 'done today'}`}
@@ -264,6 +264,7 @@ export function DailyRituals({
     return (
       <RitualRow
         key={activity.id}
+        flipKey={`h:${activity.id}`}
         kind="habit"
         name={activity.name}
         subtitle={subtitulo}
@@ -279,18 +280,12 @@ export function DailyRituals({
         language={language}
         toggleLabelPt={`${activity.isComplete ? 'Atividade concluída' : 'Marcar atividade como concluída'}: ${activity.name}`}
         toggleLabelEn={`${activity.isComplete ? 'Activity completed' : 'Mark activity as completed'}: ${activity.name}`}
-        meta={(
-          /* Janela de 7 + maturidade — média móvel, nunca streak que zera. O
-             ritmo vem do save (`habitRhythms`); sem histórico, o vazio ESTÁVEL. */
-          <HabitConstancy
-            compact
-            rhythm={habitRhythms?.[activity.id] ?? EMPTY_RHYTHM}
-            schedule={normalizeSchedule(activity)}
-            now={now}
-            language={language}
-            hideMetrics={hideMetrics}
-          />
-        )}
+        /* D2+D3 (navegação do dono, 01/10/2026): a janela de 7 tracejada +
+           a bolinha/folha de maturidade (`HabitConstancy compact`) SAIU da
+           linha — o dono leu a folha como "botão de editar" e o tracejado
+           como ruído que não comunica. A constância continua viva no motor
+           (`habitRhythm.ts`), no check-in (glifo `eco` dos hábitos de hoje),
+           no relatório semanal e na edição do hábito; só não ocupa a lista. */
       >
         {etapas.map(step => (
           <StepRow

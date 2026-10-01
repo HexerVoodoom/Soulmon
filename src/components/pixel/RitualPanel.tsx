@@ -31,7 +31,7 @@
  *
  * Texto nasce em EN com par PT-BR, como todo texto de UI do app.
  */
-import type { CSSProperties, ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, type CSSProperties, type ReactNode, type RefObject } from 'react';
 import type { Language } from '../../utils/i18n';
 import { Icon } from '../ui/Icon';
 import { PixelSegmentedBar } from './PixelKit';
@@ -116,6 +116,63 @@ function RitualCheck({
   );
 }
 
+
+// ─────────────────────────────────────────────── D1: concluir não "teleporta"
+
+/** `prefers-reduced-motion`: lido na hora (sem estado), seguro fora do browser. */
+function prefersReducedMotion(): boolean {
+  try {
+    return typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  } catch {
+    return false;
+  }
+}
+
+/** Duração do deslize da linha concluída até a posição nova (D1). */
+export const RITUAL_FLIP_MS = 420;
+/** Duração do brilho na linha recém-concluída (D1). */
+export const RITUAL_GLOW_MS = 1100;
+
+/**
+ * D1 (navegação do dono, 01/10/2026) — ao concluir, a linha DESCE até a
+ * posição nova em vez de sumir de um lugar e aparecer no outro.
+ *
+ * Técnica FLIP: a cada render, mede o topo de cada `li[data-flip-key]`
+ * relativo à lista; se a mesma chave estava em outro lugar no render
+ * anterior, anima de lá até aqui com `transform` (sem reflow). A chave é
+ * `data-flip-key` e não a `key` do React de propósito: a tarefa concluída sai
+ * de `tasks` 3s depois e reaparece no histórico de hoje com OUTRA `key` — o
+ * nó é outro, a linha é a mesma, e ela desliza em vez de teleportar.
+ *
+ * `prefers-reduced-motion`: nada desliza (a linha só troca de lugar). Sem
+ * `Element.animate` (jsdom, WebView antigo): não faz nada.
+ */
+function useFlipList(listRef: RefObject<HTMLUListElement | null>) {
+  const anterior = useRef<Map<string, number>>(new Map());
+  useLayoutEffect(() => {
+    const ul = listRef.current;
+    if (!ul) return;
+    const base = ul.getBoundingClientRect().top;
+    const agora = new Map<string, number>();
+    const reduzir = prefersReducedMotion();
+    ul.querySelectorAll<HTMLElement>(':scope > li[data-flip-key]').forEach((li) => {
+      const chave = li.dataset.flipKey!;
+      const topo = li.getBoundingClientRect().top - base;
+      agora.set(chave, topo);
+      const antes = anterior.current.get(chave);
+      if (reduzir || antes === undefined || Math.abs(antes - topo) < 1 || typeof li.animate !== 'function') return;
+      li.animate(
+        [
+          { transform: `translateY(${antes - topo}px)`, zIndex: 1 },
+          { transform: 'translateY(0)', zIndex: 1 },
+        ],
+        { duration: RITUAL_FLIP_MS, easing: 'cubic-bezier(.2,.8,.2,1)' },
+      );
+    });
+    anterior.current = agora;
+  });
+}
+
 // ───────────────────────────────────────────────────────────────────── a linha
 
 export type RitualKind = 'task' | 'habit';
@@ -166,13 +223,35 @@ export interface RitualRowProps {
   language: Language;
   toggleLabelPt?: string;
   toggleLabelEn?: string;
+  /** D1: chave ESTÁVEL da linha entre renders (mesma tarefa antes e depois de
+   *  ir para o histórico de hoje) — é por ela que a lista anima o deslize. */
+  flipKey?: string;
 }
 
 export function RitualRow({
   kind, name, subtitle, value, max, done = false, dimmed = false, haunted = false, inert = false,
   onToggle, onEdit, expandable = false, expanded = false, onExpand,
-  children, meta, below, language, toggleLabelPt, toggleLabelEn,
+  children, meta, below, language, toggleLabelPt, toggleLabelEn, flipKey,
 }: RitualRowProps) {
+  /* D1 — o BRILHO de quem acabou de ser concluída: só na transição
+     aberta → concluída (nunca ao montar já concluída). É cor, não movimento,
+     então também acontece com movimento reduzido. */
+  const liRef = useRef<HTMLLIElement | null>(null);
+  const eraFeita = useRef(done);
+  useEffect(() => {
+    const li = liRef.current;
+    if (done && !eraFeita.current && li && typeof li.animate === 'function') {
+      li.animate(
+        [
+          { boxShadow: '0 0 0 0 transparent', backgroundColor: 'transparent' },
+          { boxShadow: '0 0 16px 1px var(--sm2-primary-fill)', backgroundColor: 'var(--sm2-primary-soft)', offset: 0.25 },
+          { boxShadow: '0 0 0 0 transparent', backgroundColor: 'transparent' },
+        ],
+        { duration: RITUAL_GLOW_MS, easing: 'ease-out' },
+      );
+    }
+    eraFeita.current = done;
+  }, [done]);
   const isPt = language === 'pt-BR';
   const isHaunted = haunted && !done;
   /* A tinta do título e do selo: uma só regra, por estado (D-A3). */
@@ -182,28 +261,47 @@ export function RitualRow({
   const seloTinta = done ? 'var(--sm2-primary-ink)' : isHaunted ? 'var(--sm2-haunted)' : 'var(--sm2-muted)';
   return (
     <li
+      ref={liRef}
+      data-flip-key={flipKey}
       className={`sm2-ritual${done ? ' sm2-ritual-done' : ''}${dimmed ? ' sm2-ritual-dim' : ''}${isHaunted ? ' sm2-ritual-haunted' : ''}`}
       data-haunted={isHaunted ? 'true' : undefined}
       /* Lido pela medição de densidade (T4) do roteiro de verificação. */
       data-action-unit
     >
       <div className="sm2-ritual-row" style={{ gap: GAP }}>
-        {/* O selo do TIPO — 24, pelado, `aria-hidden` (o tipo já está no
-            rótulo do checkbox: "Mark task/activity as completed"). */}
-        <Icon
-          name={RITUAL_KIND_ICON[kind]}
-          size={SELO}
-          fill={done ? 1 : 0}
-          style={{ color: seloTinta, flexShrink: 0 }}
-        />
-
-        {/* Coluna de texto = botão de editar (decisão 3 do cabeçalho). */}
+        {/* D2 (navegação do dono, 01/10/2026): EDITAR = tocar no ÍCONE DA
+            ESQUERDA. O selo do tipo (24, pelado — ícone nunca em caixa) mora
+            num botão de alvo 44 com o rótulo "Editar: <nome>"; o lápis/folha
+            que o dono lia como "botão de editar" (o glifo de maturidade) saiu
+            da linha (D3). A coluna de texto continua respondendo ao toque
+            (atalho de ponteiro), mas o controle acessível é o selo — um só
+            ponto de parada no Tab. */}
         <button
           type="button"
-          className="sm2-ritual-main"
+          className="sm2-ritual-edit"
           onClick={inert ? undefined : onEdit}
           aria-disabled={inert || undefined}
           aria-label={`${isPt ? 'Editar' : 'Edit'}: ${name}`}
+          data-ritual-edit
+          style={{
+            flex: '0 0 44px', width: 44, height: 44, margin: '0 -10px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'none', border: 0, padding: 0,
+            cursor: inert ? 'default' : 'pointer',
+          }}
+        >
+          <Icon
+            name={RITUAL_KIND_ICON[kind]}
+            size={SELO}
+            fill={done ? 1 : 0}
+            style={{ color: seloTinta, flexShrink: 0 }}
+          />
+        </button>
+
+        {/* Coluna de texto: toque também edita (ponteiro), sem papel de botão. */}
+        <div
+          className="sm2-ritual-main"
+          onClick={inert ? undefined : onEdit}
           style={{ cursor: inert ? 'default' : 'pointer' }}
         >
           {/* `title` porque o nome TRUNCA: sem ele, um nome longo em PT-BR
@@ -241,7 +339,7 @@ export function RitualRow({
               {meta}
             </span>
           )}
-        </button>
+        </div>
 
         {expandable ? (
           <button
@@ -315,6 +413,8 @@ export function RitualPanel({
   variant = 'panel', dayComplete = false,
 }: RitualPanelProps) {
   const isPt = language === 'pt-BR';
+  const listaRef = useRef<HTMLUListElement | null>(null);
+  useFlipList(listaRef);
   /* Vazio do SIS-06: `task_alt` 48 ciano + Rubik 14 `muted` — um vazio que
      CONVIDA. Um bloco só para as duas variantes (a Home B acrescenta o CTA
      largo, que ali é o único primário da tela). */
@@ -366,7 +466,7 @@ export function RitualPanel({
             </button>,
           )
         ) : (
-          <ul className="sm2-ritual-list">{children}</ul>
+          <ul ref={listaRef} className="sm2-ritual-list">{children}</ul>
         )}
       </section>
     );
@@ -394,7 +494,7 @@ export function RitualPanel({
         /* O CTA logo abaixo é a saída (o único primário). */
         vazio()
       ) : (
-        <ul className="sm2-ritual-list">{children}</ul>
+        <ul ref={listaRef} className="sm2-ritual-list">{children}</ul>
       )}
       <div style={{ padding: '8px 12px 8px' }}>
         <button
