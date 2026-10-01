@@ -201,3 +201,92 @@ export function functionNpcVoice(id: FunctionNpcId, language: Language): { name:
   const isPt = language === 'pt-BR';
   return { name: isPt ? v.namePt : v.nameEn, line: isPt ? v.linePt : v.lineEn };
 }
+
+/**
+ * NPCs EXTRAS (01/10/2026, leva `npcs-femininas` aprovada pelo dono —
+ * `E:/Soulmon-assets/out/rodada3/npcs-femininas/ROSTER.md`): 12 bustos de
+ * ofício (`assets/soulmon/npcs` › `EXTRA_NPC_ART`). ⚠️ SEM CHAMADA HOJE —
+ * nenhuma tela lê este mapa; onde cada uma aparece é decisão de design
+ * (`docs/PERGUNTAS-DO-DONO.md`, NPC-1). Falas do ROSTER, sem cobrança, sem
+ * emoji, sem número. Na Datura, o "darling/querido" do ROSTER saiu na
+ * instalação (pedido do dono: neutro, sem flerte).
+ * `ofício` é o papel sugerido pelo ROSTER, não uma fiação.
+ */
+export type ExtraNpcId =
+  | 'forja' | 'treino' | 'cacadora' | 'guarda' | 'feras' | 'cura'
+  | 'mercenaria' | 'navegadora' | 'barda' | 'venenos' | 'arqueira' | 'sacerdotisa';
+
+export interface ExtraNpcVoice extends AreaNpcVoice {
+  officePt: string;
+  officeEn: string;
+}
+
+export const EXTRA_NPC_VOICE: Record<ExtraNpcId, ExtraNpcVoice> = {
+  forja: {
+    namePt: 'Scoria', nameEn: 'Scoria', officePt: 'Forjadora de equipamentos', officeEn: 'Gear smith',
+    linePt: 'A bigorna está quente. Traga qualquer coisa que valha guardar.',
+    lineEn: "The anvil's warm. Bring me anything worth keeping.",
+  },
+  treino: {
+    namePt: 'Kama', nameEn: 'Kama', officePt: 'Mestra de combate do dojo', officeEn: 'Dojo combat mentor',
+    linePt: 'Primeiro a postura. O golpe vem sozinho.',
+    lineEn: 'Stance first. The strike will come on its own.',
+  },
+  cacadora: {
+    namePt: 'Sable', nameEn: 'Sable', officePt: 'Caçadora de recompensas da Masmorra', officeEn: 'Dungeon bounty hunter',
+    linePt: 'Algo escapou das profundezas. Eu sei onde ele dorme.',
+    lineEn: 'Something slipped out of the deep. I know where it sleeps.',
+  },
+  guarda: {
+    namePt: 'Bastia', nameEn: 'Bastia', officePt: 'Capitã da guarda', officeEn: 'Captain of the guard',
+    linePt: 'O portão aguenta. Descanse tranquilo aqui dentro.',
+    lineEn: "The gate holds. Rest easy while you're inside.",
+  },
+  feras: {
+    namePt: 'Zahra', nameEn: 'Zahra', officePt: 'Guardiã das feras da Arena', officeEn: 'Arena beastkeeper',
+    linePt: 'Toda fera aqui escolheu ficar. Venha conhecer.',
+    lineEn: 'Every beast here chose to stay. Come meet them.',
+  },
+  cura: {
+    namePt: 'Salvia', nameEn: 'Salvia', officePt: 'Curandeira', officeEn: 'Healer',
+    linePt: 'Sente um pouco. A nascente faz o resto.',
+    lineEn: 'Sit a moment. The spring does the rest.',
+  },
+  mercenaria: {
+    namePt: 'Gila', nameEn: 'Gila', officePt: 'Mercenária de expedição', officeEn: 'Expedition mercenary',
+    linePt: 'Qualquer estrada, qualquer fundura. Minha lâmina já está pronta.',
+    lineEn: "Any road, any depth. My blade's already packed.",
+  },
+  navegadora: {
+    namePt: 'Vela', nameEn: 'Vela', officePt: 'Navegadora estelar do Passeio', officeEn: 'Star navigator of the Stroll',
+    linePt: 'As estrelas mudaram esta noite. Desenhei um caminho novo pra você.',
+    lineEn: 'The stars shifted tonight. I drew you a new path.',
+  },
+  barda: {
+    namePt: 'Trill', nameEn: 'Trill', officePt: 'Barda da Feira', officeEn: 'Fair bard',
+    linePt: 'Mais uma canção antes das lanternas apagarem.',
+    lineEn: 'One more song before the lanterns dim.',
+  },
+  venenos: {
+    namePt: 'Datura', nameEn: 'Datura', officePt: 'Alquimista de venenos', officeEn: 'Poison alchemist',
+    linePt: 'Veneno ou cura. Tudo depende da dose.',
+    lineEn: 'Poison or cure. It all comes down to the dose.',
+  },
+  arqueira: {
+    namePt: 'Rime', nameEn: 'Rime', officePt: 'Arqueira', officeEn: 'Archer',
+    linePt: 'Daqui vejo o vale inteiro. Nada passa.',
+    lineEn: 'I see the whole valley from here. Nothing gets past.',
+  },
+  sacerdotisa: {
+    namePt: 'Oriel', nameEn: 'Oriel', officePt: 'Sacerdotisa do Oráculo', officeEn: 'Priestess of the Oracle',
+    linePt: 'A maré trouxe um presságio. Só olhe se quiser.',
+    lineEn: 'The tide brought an omen. Only look if you want to.',
+  },
+};
+
+/** Nome e fala de um NPC extra, no idioma. */
+export function extraNpcVoice(id: ExtraNpcId, language: Language): { name: string; line: string } {
+  const v = EXTRA_NPC_VOICE[id];
+  const isPt = language === 'pt-BR';
+  return { name: isPt ? v.namePt : v.nameEn, line: isPt ? v.linePt : v.lineEn };
+}

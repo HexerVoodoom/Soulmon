@@ -7,7 +7,7 @@
  * (ainda não tiveram revisão pedida).
  */
 import type { AreaId } from '../../../navigation';
-import type { FunctionNpcId } from '../../../utils/areaNpcVoice';
+import type { FunctionNpcId, ExtraNpcId } from '../../../utils/areaNpcVoice';
 
 import npcMercado from './npc-mercado.png';
 import npcArena from './npc-arena.png';
@@ -109,6 +109,44 @@ export const FUNCTION_NPC_ART: Record<FunctionNpcId, string> = {
   sono: npcSono, // Sona
   cuidados: npcCuidados, // Nuri
   config: npcConfig, // Tobi
+};
+
+import npcFForja from './npc-f-forja.png';
+import npcFTreino from './npc-f-treino.png';
+import npcFCacadora from './npc-f-cacadora.png';
+import npcFGuarda from './npc-f-guarda.png';
+import npcFFeras from './npc-f-feras.png';
+import npcFCura from './npc-f-cura.png';
+import npcFMercenaria from './npc-f-mercenaria.png';
+import npcFNavegadora from './npc-f-navegadora.png';
+import npcFBarda from './npc-f-barda.png';
+import npcFVenenos from './npc-f-venenos.png';
+import npcFArqueira from './npc-f-arqueira.png';
+import npcFSacerdotisa from './npc-f-sacerdotisa.png';
+
+/**
+ * NPCs EXTRAS (01/10/2026, leva `npcs-femininas` aprovada pelo dono —
+ * `E:/Soulmon-assets/out/rodada3/npcs-femininas/ROSTER.md`, 768², alfa
+ * binário): 12 bustos de ofício que ainda não têm lote nem função no app.
+ * ⚠️ **SEM CHAMADA HOJE** — onde cada uma entra é decisão de design
+ * (`docs/PERGUNTAS-DO-DONO.md`, item NPC-1). Nome e fala:
+ * `utils/areaNpcVoice.ts` › `EXTRA_NPC_VOICE`. O arquivo da Zahra chama
+ * `npc-f-feras.png` (no lote de origem tinha outro nome, com termo vetado
+ * pela `narrativa.contract`).
+ */
+export const EXTRA_NPC_ART: Record<ExtraNpcId, string> = {
+  forja: npcFForja, // Scoria
+  treino: npcFTreino, // Kama
+  cacadora: npcFCacadora, // Sable
+  guarda: npcFGuarda, // Bastia
+  feras: npcFFeras, // Zahra
+  cura: npcFCura, // Salvia
+  mercenaria: npcFMercenaria, // Gila
+  navegadora: npcFNavegadora, // Vela
+  barda: npcFBarda, // Trill
+  venenos: npcFVenenos, // Datura
+  arqueira: npcFArqueira, // Rime
+  sacerdotisa: npcFSacerdotisa, // Oriel
 };
 
 /** Resolve o NPC de UMA folha (área + id do lote). Sem lote aberto, ou lote
