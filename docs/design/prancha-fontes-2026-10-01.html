@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prancha de fontes do título — Soulmon (A2, 01/10/2026)</title>
+<!-- A2 (docs/AJUSTES-NAVEGACAO-2026-10-01.md): o dono acha a Fredoka redonda demais para o
+     título/logo de texto. Duas direções pedidas por ele: SERIFA ARCANA e DISPLAY COM
+     PERSONALIDADE. Esta prancha NÃO troca nada no app — o dono escolhe. Corpo em Rubik
+     (a fonte de texto do app); cores = tokens escuros `--sm2-*` de src/index.css. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Cinzel+Decorative:wght@700&family=Cormorant+SC:wght@600;700&family=Marcellus+SC&family=Unbounded:wght@500;700&family=Syne:wght@600;800&family=Righteous&family=Bungee&family=Fredoka:wght@600&family=Rubik:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sm2-bg: #08191A; --sm2-surface: #0F2A29; --sm2-line: #1E3F3C; --sm2-ink: #E9F5F2;
+    --sm2-muted: #9DBCB4; --sm2-primary: #5FF3E0; --sm2-primary-deep: #29C9B8; --cobre: #C98A4B;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--sm2-bg); color: var(--sm2-ink); font-family: Rubik, system-ui, sans-serif; padding: 32px 24px 48px; }
+  h1 { font: 500 22px Rubik; margin: 0 0 4px; }
+  .sub { color: var(--sm2-muted); font-size: 14px; margin: 0 0 28px; max-width: 980px; line-height: 1.45; }
+  .direcao { margin: 0 0 12px; font: 500 13px Rubik; letter-spacing: .12em; text-transform: uppercase; color: var(--cobre); }
+  .grade { display: grid; grid-template-columns: repeat(4, 300px); gap: 20px; margin-bottom: 40px; }
+  .cand { display: flex; flex-direction: column; gap: 10px; }
+  .rotulo { font: 500 13px Rubik; color: var(--sm2-muted); }
+  .rotulo b { color: var(--sm2-ink); font-weight: 500; }
+  /* mock do celular: tela de login */
+  .tela { width: 300px; height: 420px; border-radius: 28px; border: 1px solid var(--sm2-line);
+          background: radial-gradient(120% 70% at 50% 18%, #12403d 0%, var(--sm2-bg) 62%);
+          display: flex; flex-direction: column; align-items: center; padding: 44px 22px 22px; position: relative; overflow: hidden; }
+  .tela img { width: 88px; height: 88px; image-rendering: pixelated; }
+  .marca { margin-top: 14px; font-size: 40px; line-height: 1; color: var(--sm2-ink); text-shadow: 0 0 18px rgba(95,243,224,.25); }
+  .tag { margin-top: 10px; font-size: 13px; color: var(--sm2-muted); text-align: center; line-height: 1.4; }
+  .btn { margin-top: auto; width: 100%; height: 44px; border-radius: 12px; border: 0; background: var(--sm2-primary);
+         color: #04201d; font: 500 15px Rubik; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .btn2 { margin-top: 8px; width: 100%; height: 40px; border-radius: 12px; border: 1px solid var(--sm2-line); background: transparent; color: var(--sm2-ink); font: 500 14px Rubik; }
+  .idioma { position: absolute; top: 14px; right: 16px; font: 500 11px Rubik; color: var(--sm2-muted); letter-spacing: .08em; }
+  /* card / título de tela do app */
+  .card { width: 300px; border-radius: 16px; border: 1px solid var(--sm2-line); background: var(--sm2-surface); padding: 14px 16px; }
+  .card .t { font-size: 22px; line-height: 1.15; }
+  .card .c { font-size: 15px; margin-top: 10px; color: var(--cobre); }
+  .card p { margin: 6px 0 0; font-size: 13px; color: var(--sm2-muted); line-height: 1.4; }
+  .ref { opacity: .85; }
+  footer { color: var(--sm2-muted); font-size: 12px; max-width: 980px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<h1>Prancha de fontes — título e logo de texto do Soulmon</h1>
+<p class="sub">A2 · 01/10/2026 · Hoje: <span style="font-family:Fredoka;font-weight:600;color:var(--sm2-ink)">Fredoka</span> (redonda demais, segundo o dono).
+Cada coluna aplica UMA candidata ao logo da tela de login (EN em cima, PT embaixo) e a um título de tela + card do app. Corpo continua em Rubik.
+Nada foi trocado no app — o dono escolhe aqui.</p>
+
+<div id="app"></div>
+
+<footer>
+<p><b>Por que estas oito.</b> Serifa arcana: Cinzel (romana gravada em pedra, a mais legível das quatro), Cinzel Decorative (a mesma com terminais ornamentais — melhor só no logo), Cormorant SC (versalete de livro antigo, mais fina) e Marcellus SC (romana alargada, mais suave).
+Display com personalidade: Unbounded (geométrica larga, moderna), Syne (larga e excêntrica, com ar de grimório gráfico), Righteous (retrô arredondada — a mais próxima da Fredoka) e Bungee (letreiro de arcade, casa com o pixel do visor).
+<b>Fora pelo filtro de vibe:</b> Orbitron (ficção científica — puxa o "tech" para tema, contra a CORREÇÃO DE VIBE) e IM Fell English SC (bonita, mas a textura de tinta borra abaixo de 20 px).</p>
+<p>Fonte: Google Fonts (todas OFL). Render PNG: <code>E:\Soulmon-assets\out\ajustes-20261001\prancha-fontes.png</code>.</p>
+</footer>
+
+<script>
+  const LOGO = '../../src/assets/brand/final/logo.svg';
+  const DIRECOES = [
+    { nome: 'Direção 1 — Serifa arcana', fontes: [
+      { f: 'Cinzel', w: 700, ls: '.04em', up: false },
+      { f: 'Cinzel Decorative', w: 700, ls: '.02em', up: false },
+      { f: 'Cormorant SC', w: 700, ls: '.04em', up: false },
+      { f: 'Marcellus SC', w: 400, ls: '.04em', up: false },
+    ]},
+    { nome: 'Direção 2 — Display com personalidade', fontes: [
+      { f: 'Unbounded', w: 700, ls: '0', up: false },
+      { f: 'Syne', w: 800, ls: '0', up: false },
+      { f: 'Righteous', w: 400, ls: '.01em', up: false },
+      { f: 'Bungee', w: 400, ls: '0', up: false },
+    ]},
+  ];
+  const T = {
+    en: { tag: 'A creature that grows with you.', g: 'Continue with Google', guest: 'Try it first', tela: 'Your Soul Creature', card: 'Evolution', p: 'Three complete days and Pyraka is ready for its next form.' },
+    pt: { tag: 'Uma criatura que cresce com você.', g: 'Continuar com Google', guest: 'Experimentar antes', tela: 'Sua Criatura da Alma', card: 'Evolução', p: 'Três dias completos e Pyraka fica pronto para a próxima forma.' },
+  };
+  const app = document.getElementById('app');
+  for (const d of DIRECOES) {
+    const h = document.createElement('p'); h.className = 'direcao'; h.textContent = d.nome; app.appendChild(h);
+    for (const lang of ['en', 'pt']) {
+      const g = document.createElement('div'); g.className = 'grade';
+      for (const c of d.fontes) {
+        const fam = `font-family:'${c.f}';font-weight:${c.w};letter-spacing:${c.ls}`;
+        const t = T[lang];
+        g.insertAdjacentHTML('beforeend', `
+          <div class="cand">
+            <div class="rotulo"><b>${c.f}</b> · ${lang.toUpperCase()}</div>
+            <div class="tela"><span class="idioma">${lang.toUpperCase()}</span>
+              <img src="${LOGO}" alt="">
+              <div class="marca" style="${fam}">Soulmon</div>
+              <div class="tag">${t.tag}</div>
+              <button class="btn">${t.g}</button><button class="btn2">${t.guest}</button>
+            </div>
+            <div class="card"><div class="t" style="${fam}">${t.tela}</div>
+              <div class="c" style="${fam}">${t.card}</div><p>${t.p}</p></div>
+          </div>`);
+      }
+      app.appendChild(g);
+    }
+  }
+</script>
+</body>
+</html>
