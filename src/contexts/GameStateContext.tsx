@@ -49,6 +49,7 @@ import {
   storageDegradedMessage,
 } from '../utils/safeStorage';
 import { toast } from 'sonner';
+import { onboardingProfileFrom } from '../utils/catalogOnboarding';
 
 /**
  * Save antigo guardava UMA decoração (`equippedFurniture`) que aparecia como
@@ -491,6 +492,14 @@ export interface GameState {
    */
   soulGoal?: string;
   soulStruggle?: string;
+  /**
+   * 01/10/2026 — as FORÇAS e o que ATRAPALHA escolhidos no onboarding, como
+   * ids do catálogo (`types/activityCatalog.ts`). Lido por `derivePersonality`
+   * (a personalidade do Soulmon). Opcional: save de antes do onboarding novo
+   * não tem, e o upgrade não pergunta. Dono do formato:
+   * `onboardingProfileFrom` (`utils/catalogOnboarding.ts`).
+   */
+  onboardingProfile?: { strengths: string[]; struggles: string[] };
   /**
    * Prova do consentimento aceito no onboarding: quando (ISO) e QUAL versão de
    * cada documento. Um booleano não diz a que texto a pessoa disse sim.
@@ -1185,6 +1194,11 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         })(),
         soulGoal: str(loadedState.soulGoal) ?? '',
         soulStruggle: str(loadedState.soulStruggle) ?? '',
+        // Vem da nuvem também: só listas de texto passam, e sem o campo ele
+        // continua AUSENTE (nunca um perfil vazio inventado).
+        onboardingProfile: loadedState.onboardingProfile
+          ? onboardingProfileFrom(obj<unknown[]>(loadedState.onboardingProfile))
+          : undefined,
         moodLog: arr<unknown>(loadedState.moodLog).filter(
           (m): m is { date: string; mood: 1 | 2 | 3 | 4 | 5 } => {
             const e = obj<unknown>(m);

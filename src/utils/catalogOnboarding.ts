@@ -33,3 +33,30 @@ export function markCatalogOnboardingSeen<T extends CatalogOnboardingState>(stat
   if (state.catalogOnboardingSeenAt) return state;
   return { ...state, catalogOnboardingSeenAt: now.toISOString() };
 }
+
+/**
+ * O PERFIL DO ONBOARDING que vai para o save (`gameState.onboardingProfile`,
+ * 01/10/2026): as FORÇAS e o que ATRAPALHA, com os MESMOS ids do catálogo
+ * (`types/activityCatalog.ts`) das perguntas do onboarding. Quem lê é a
+ * personalidade do Soulmon (`derivePersonality`, frente de Configurações) —
+ * ids, nunca rótulos: o rótulo muda com o idioma, o id não.
+ *
+ * Pura e defensiva: só strings, sem duplicata, no máximo 3 de cada (o teto
+ * da pergunta). Sem escolha nenhuma devolve `undefined` — save sem o campo é
+ * o jeito honesto de dizer "não foi respondido" (onboarding antigo, upgrade).
+ */
+export interface OnboardingProfile {
+  strengths: string[];
+  struggles: string[];
+}
+export function onboardingProfileFrom(
+  choice: { strengths?: readonly unknown[]; struggles?: readonly unknown[] } | undefined | null,
+): OnboardingProfile | undefined {
+  // `Array.isArray` e não `?? []`: do save da nuvem pode vir qualquer coisa.
+  const limpa = (v: unknown) =>
+    [...new Set((Array.isArray(v) ? v : []).filter((x): x is string => typeof x === 'string'))].slice(0, 3);
+  const strengths = limpa(choice?.strengths);
+  const struggles = limpa(choice?.struggles);
+  if (strengths.length === 0 && struggles.length === 0) return undefined;
+  return { strengths, struggles };
+}

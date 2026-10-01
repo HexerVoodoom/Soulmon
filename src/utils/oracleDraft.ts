@@ -19,9 +19,13 @@
  * o resultado gerado (a geração custa; quem chegou ao reveal tem o perfil com
  * `seed` para regenerar) e nada do cadastro.
  *
- * A BIFURCAÇÃO SEM VOLTA continua sem volta: `refine` é guardado como está —
- * quem aceitou o teste longo retoma DENTRO dele; quem recusou já foi para a
- * geração e não tem rascunho a retomar. Não existe caminho novo aqui.
+ * ⚰️ A BIFURCAÇÃO do teste longo SAIU em 01/10/2026 (decisão do dono: as 26
+ * perguntas são obrigatórias, no onboarding de todos). `refine` continua no
+ * formato só para LER rascunho antigo e é gravado sempre `true`; quem decide
+ * o que falta responder é o onboarding (`perguntaPendente`), não este campo.
+ * No onboarding as 26 respostas vêm ANTES da escolha e moram no rascunho do
+ * portão (`gateDraft.ts`); este cobre o ritual pago (dados de nascimento) e o
+ * upgrade.
  *
  * Funções PURAS sobre o storage: `now` e o passo máximo entram por parâmetro.
  */

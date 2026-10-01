@@ -235,11 +235,14 @@ export function UnlockAccountModal({ language, reason, onUnlocked, onClose }: Un
  * `variant='reveal'` é o caso de quem JÁ pagou e saiu do ritual pela metade:
  * não há mais nada a vender, só um ritual a terminar.
  */
-export function UnlockNudge({ language, reason, variant = 'buy', onOpen }: {
+export function UnlockNudge({ language, reason, variant = 'buy', onOpen, trailingSpace = 0 }: {
   language: Language;
   reason: UnlockReason;
   variant?: 'buy' | 'reveal';
   onOpen: () => void;
+  /** Espaço reservado à DIREITA, em px, para um controle irmão sobreposto
+   *  (o × do reveal demo, B8 de 01/10/2026). 0 = o desenho de sempre. */
+  trailingSpace?: number;
 }) {
   // WP5.8 — o preço que o Play vai cobrar NESTE aparelho; fora do Android
   // nativo cai na constante publicada (`utils/priceLabel.ts`).
@@ -257,6 +260,7 @@ export function UnlockNudge({ language, reason, variant = 'buy', onOpen }: {
     ...sm2Button('outline'),
     width: '100%', maxWidth: 280, minHeight: reason === 'evolution' || reason === 'reveal-demo' ? 56 : 64, justifyContent: 'flex-start', gap: 12,
     padding: reason === 'evolution' || reason === 'reveal-demo' ? '10px 12px' : '8px 16px', textAlign: 'left',
+    ...(trailingSpace > 0 ? { paddingRight: 12 + trailingSpace } : {}),
   };
   const isCap = variant !== 'reveal' && reason === 'task-limit';
   /* Canvas Evolução D-E7 (`ConviteDemo`/`ConvitePago`, EVO-11/12): na página

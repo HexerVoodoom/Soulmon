@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 /**
- * WP1.9 (eco do "porquê") e WP1.10 (a bifurcação diz o que custa).
+ * WP1.9 (eco do "porquê") e WP1.10 (a bifurcação diz o que custa) — os dois
+ * já ⚰️ (ver abaixo); o arquivo guarda a régua do que os substituiu.
  *
  * **WP1.9.** A primeira pergunta do app não é sobre o jogo: é "o que você quer
  * melhorar na sua vida?". A pessoa escrevia isso e a tela seguinte abria como
@@ -23,7 +24,7 @@
  * visual PT/EN da tela continua sendo item de screenshot, e está registrada
  * como pendente no ledger do guarda do nascimento.
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { screen, fireEvent } from '@testing-library/react';
@@ -31,9 +32,7 @@ import { renderWithCss, installFakeStorage } from '../test/renderEnv';
 import { SoulmonOnboarding } from './SoulmonOnboarding';
 import { clearOracleDraft } from '../utils/oracleDraft';
 import { items as SOUL_TEST_ITEMS } from '../utils/soulProfile/personality/questions';
-
-const ECO_EN = 'Noted. Your Soulmon will remember.';
-const ECO_PT = 'Anotado. Seu Soulmon vai lembrar disso.';
+import { ateAsMetas } from '../test/metasOnboarding';
 
 /** Portão (aceite + 18+) → GOAL_STEP.
  *  07/09/2026 — o portão de identidade passou a ser o PRIMEIRO passo e leva os
@@ -50,70 +49,53 @@ function ateOPorque(pt: boolean) {
   fireEvent.click(screen.getByRole('button', { name: pt ? 'Continuar' : 'Continue' }));
 }
 
-describe('SoulmonOnboarding — o eco do "porquê" (WP1.9)', () => {
-  beforeEach(() => { installFakeStorage(); clearOracleDraft(); });
+// ⚰️ WP1.9 (o eco "Noted. Your Soulmon will remember.") SAIU em 01/10/2026:
+// o "porquê" deixou de ser texto livre (checklist do dono, B2) — o eco existia
+// para devolver uma frase ESCRITA, e escolher opções não escreve frase
+// nenhuma. A régua passa a ser: nenhum campo aberto, nenhum "pular", e o eco
+// não volta a aparecer.
+describe('SoulmonOnboarding — o "porquê" é objetivo (B2/B3, 01/10/2026)', () => {
+  beforeEach(() => { vi.useFakeTimers(); installFakeStorage(); clearOracleDraft(); });
+  afterEach(() => { vi.useRealTimers(); });
 
-  it('quem ESCREVEU o objetivo recebe o eco no passo seguinte', () => {
+  it('EN — sem campo aberto, sem "pular", sem eco', async () => {
     ateOPorque(false);
-    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'voltar a estudar' } });
-    expect(screen.queryByText(ECO_EN), 'o eco não pode aparecer no próprio passo').toBeNull();
+    await ateAsMetas();
+    expect(screen.getByText('What do you want to improve?')).toBeTruthy();
+    expect(screen.queryByRole('textbox')).toBeNull();
+    expect(screen.queryByText(/rather not say/)).toBeNull();
+    fireEvent.click(screen.getByRole('group').querySelector('button')!);
     fireEvent.click(screen.getByText('Continue').closest('button')!);
-    expect(screen.getByText(ECO_EN)).toBeTruthy();
-    // E o passo é mesmo o da dificuldade — o eco fica ACIMA do título dele.
-    expect(screen.getByText('And what gets in your way the most?')).toBeTruthy();
+    expect(screen.getByText('What gets in your way the most?')).toBeTruthy();
+    expect(screen.queryByText(/Your Soulmon will remember/)).toBeNull();
   });
 
-  it('quem PULOU não recebe eco nenhum', () => {
-    ateOPorque(false);
-    fireEvent.click(screen.getByText('I’d rather not say right now'));
-    expect(screen.getByText('And what gets in your way the most?')).toBeTruthy();
-    expect(screen.queryByText(ECO_EN), 'eco para quem não escreveu é mentira').toBeNull();
-  });
-
-  it('escrever só espaço não conta como ter escrito', () => {
-    ateOPorque(false);
-    fireEvent.change(screen.getByRole('textbox'), { target: { value: '   ' } });
-    fireEvent.click(screen.getByText('Continue').closest('button')!);
-    expect(screen.queryByText(ECO_EN)).toBeNull();
-  });
-
-  it('o eco existe em português também', () => {
+  it('PT — a mesma pergunta, objetiva', async () => {
     localStorage.setItem('soulmon-language', 'pt-BR');
     ateOPorque(true);
-    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'dormir melhor' } });
-    fireEvent.click(screen.getByText('Continuar').closest('button')!);
-    expect(screen.getByText(ECO_PT)).toBeTruthy();
+    await ateAsMetas(true, 'Corvo');
+    expect(screen.getByText('O que você quer melhorar?')).toBeTruthy();
+    expect(screen.queryByText(/Prefiro não responder/)).toBeNull();
   });
 });
 
-describe('SoulmonOnboarding — a bifurcação diz o que custa (WP1.10)', () => {
-  const bloco = (() => {
-    const fonte = readFileSync(resolve(process.cwd(), 'src/components/SoulmonOnboarding.tsx'), 'utf-8');
-    const ini = fonte.indexOf('{step === REFINE_OFFER && (');
-    const fim = fonte.indexOf('chooseRefine(false)', ini);
-    expect(ini).toBeGreaterThan(0);
-    expect(fim).toBeGreaterThan(ini);
-    return fonte.slice(ini, fim);
-  })();
+/* ⚰️ WP1.10 (a bifurcação diz o que custa) SAIU em 01/10/2026 junto com a
+   própria bifurcação: o dono decidiu que o teste longo é parte OBRIGATÓRIA do
+   onboarding, para todos ("todas as perguntas que a gente tem, todas
+   obrigatórias"). Não há mais escolha a explicar — nem custo a declarar, nem
+   irreversibilidade a avisar. A régua passa a ser a AUSÊNCIA dela. */
+describe('SoulmonOnboarding — não existe mais bifurcação do teste longo (01/10/2026)', () => {
+  const fonte = readFileSync(resolve(process.cwd(), 'src/components/SoulmonOnboarding.tsx'), 'utf-8');
 
-  it('não promete criatura melhor — os dois caminhos são legítimos', () => {
-    expect(bloco.toLowerCase()).not.toMatch(/melhor|better/);
+  it('nenhuma porta de "pular o teste" sobrou na fonte', () => {
+    expect(fonte).not.toContain('chooseRefine');
+    expect(fonte).not.toContain('Want to sharpen the reading?');
+    expect(fonte).not.toContain('Reveal my Soulmon now');
+    expect(fonte).not.toMatch(/setRefine\(/);
   });
 
-  it('o número de perguntas vem da CONSTANTE, nunca escrito à mão', () => {
-    expect(bloco).toContain('${SOUL_TEST_ITEMS.length}');
-    // O literal correspondente não pode estar cravado na frase.
-    expect(bloco).not.toMatch(new RegExp(`\\b${SOUL_TEST_ITEMS.length} (perguntas|more questions)`));
-  });
-
-  it('diz o que muda, e nos dois idiomas', () => {
-    expect(bloco).toContain('traços de personalidade');
-    expect(bloco).toContain('personality traits');
-    expect(bloco).toMatch(/~2 min/);
-  });
-
-  it('a declaração de irreversibilidade continua na tela', () => {
-    expect(bloco).toMatch(/não tem volta/);
-    expect(bloco).toMatch(/choice is final/);
+  it('o número de itens do teste continua vindo da CONSTANTE', () => {
+    expect(SOUL_TEST_ITEMS.length).toBeGreaterThan(0);
+    expect(fonte).toContain('SOUL_TEST_ITEMS.map(');
   });
 });

@@ -141,6 +141,15 @@ somam 6. Antes o oceano somava 4 e picos/floresta/gelo/campina somavam 5 contra
 
 ## O fluxo: 6 perguntas para todo mundo, 20 para quem quiser
 
+> ⚰️ **Esta seção descreve o fluxo ATÉ 01/10/2026.** Naquele dia o dono
+> decidiu o contrário ("vamos fazer todas as perguntas que a gente tem… todas
+> elas obrigatórias, vai fazer parte do onboarding"): **a bifurcação saiu**, e
+> as 6 do ritual + os 20 itens são respondidos por **todo** jogador, grátis ou
+> pago, logo depois do nome e antes das metas. A criatura continua nascendo
+> uma vez só, depois de todas as respostas; a classe continua invisível. O
+> fluxo vivo, passo a passo, está em `docs/INVENTARIO-PERGUNTAS-ONBOARDING.md`.
+> O texto abaixo fica como registro da regra que perdeu.
+
 O ritual de nascimento continua sendo **6 perguntas**. Vinte itens
 psicométricos como porta de entrada obrigatória seriam um formulário, não um
 ritual — e o ritual é a primeira coisa que a pessoa faz no app.

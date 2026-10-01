@@ -75,9 +75,10 @@ beforeEach(() => {
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 describe('AUTOVERIFICAÇÃO', () => {
-  it('a lista de campos veio do tipo e tem os 97 (+ `crossings`, 30/09/2026)', () => {
+  it('a lista de campos veio do tipo e tem os 98 (+ `crossings`, 30/09/2026; + `onboardingProfile`, 01/10/2026)', () => {
     const campos = camposDeGameState();
-    expect(campos.length).toBe(97);
+    expect(campos.length).toBe(98);
+    expect(campos).toContain('onboardingProfile');
     expect(campos).toContain('conquistasHerdadas');
     expect(campos).toContain('consent');
   });

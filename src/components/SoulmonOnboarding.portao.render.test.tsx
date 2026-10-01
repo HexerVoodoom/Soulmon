@@ -119,7 +119,7 @@ describe('portão de identidade', () => {
     expect(screen.queryByLabelText('Email')).toBeNull();
     expect(screen.queryByLabelText('Password')).toBeNull();
     // E a compra não é alcançável daqui.
-    expect(screen.queryByText(/Get the full game/)).toBeNull();
+    expect(screen.queryByText(/Get your own Soulmon/)).toBeNull();
     expect(screen.queryByText('Start now — it’s free')).toBeNull();
   });
 
@@ -244,7 +244,7 @@ describe('portão de identidade', () => {
     // Normalizado: o saveId é derivado do e-mail, então caixa e espaço não
     // podem gerar duas contas para a mesma pessoa.
     expect(chamadas).toEqual(['entrar:alguem@exemplo.com:segredo123']);
-    expect(screen.getByText('What do you want to improve in your life?')).toBeTruthy();
+    expect(screen.getByText('What should we call you?')).toBeTruthy();
   });
 
   it('"Criar conta" é uma ação DIFERENTE de entrar', async () => {
@@ -271,7 +271,7 @@ describe('portão de identidade', () => {
     abrirGoogle();
     await act(async () => { botao('Continue with Google'); });
     expect(chamadas).toEqual(['google']);
-    expect(screen.getByText('What do you want to improve in your life?')).toBeTruthy();
+    expect(screen.getByText('What should we call you?')).toBeTruthy();
   });
 
   it('falha de credencial mostra recado acionável e NÃO avança', async () => {
@@ -283,7 +283,7 @@ describe('portão de identidade', () => {
     fireEvent.change(campoSenha(), { target: { value: 'errada' } });
     await act(async () => { botao('Sign in'); });
     expect(screen.getByRole('alert').textContent).toContain("Email or password don't match");
-    expect(screen.queryByText('What do you want to improve in your life?')).toBeNull();
+    expect(screen.queryByText('What should we call you?')).toBeNull();
     // O campo continua editável: nunca um beco sem saída.
     expect(campoSenha()).toBeTruthy();
   });
@@ -322,7 +322,7 @@ describe('portão de identidade', () => {
     aceitarERevelarIdade();
     expect(btn('Continue').disabled).toBe(false);
     await act(async () => { botao('Continue'); });
-    expect(screen.getByText('What do you want to improve in your life?')).toBeTruthy();
+    expect(screen.getByText('What should we call you?')).toBeTruthy();
   });
 
   it('quem já está autenticado não vê formulário de conta nenhum', async () => {
@@ -336,7 +336,7 @@ describe('portão de identidade', () => {
     expect(btn('Continue').disabled).toBe(true);
     aceitarERevelarIdade();
     await act(async () => { botao('Continue'); });
-    expect(screen.getByText('What do you want to improve in your life?')).toBeTruthy();
+    expect(screen.getByText('What should we call you?')).toBeTruthy();
   });
 
   it('a guarda da compra olha o E-MAIL, não a presença do saveId', () => {
@@ -396,18 +396,15 @@ describe('portão — identidade do canvas Onboarding-funil', () => {
     googlePendura = false;
   });
 
-  it('a marca é a chama do kit num slot-visor `role=img` "Soulmon", sem corvo', async () => {
+  it('A1 (01/10/2026): a marca é o LOGO do app, solto — sem slot-visor de gradiente, sem wordmark em texto', async () => {
     await montar();
-    const marca = screen.getByRole('img', { name: 'Soulmon' });
-    const vidro = marca.querySelector('.sm2-viewport-screen') as HTMLElement;
-    expect(vidro).toBeTruthy();
-    expect(vidro.classList.contains('sm2-visor')).toBe(true);
-    expect(vidro.style.width).toBe('64px');
-    expect(vidro.style.height).toBe('80px');
-    const svg = vidro.querySelector('svg')!;
-    expect(svg.getAttribute('width')).toBe('38');
-    expect(svg.getAttribute('height')).toBe('60');
+    const marca = screen.getByRole('img', { name: 'Soulmon' }) as HTMLImageElement;
+    expect(marca.tagName).toBe('IMG');
+    expect(marca.hasAttribute('data-brand-logo')).toBe(true);
+    expect(marca.closest('.sm2-viewport-screen')).toBeNull();
+    expect(marca.width).toBeGreaterThanOrEqual(100);
     expect(document.querySelector('img[src*="mascot-raven"]')).toBeNull();
+    expect(screen.queryByText('Soulmon', { selector: 'span' })).toBeNull();
   });
 
   it('"New User" é a segunda PORTA: `outline`, não ghost/quiet', async () => {

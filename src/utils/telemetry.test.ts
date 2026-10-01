@@ -608,7 +608,7 @@ describe('funil: demo e pago nunca caem no mesmo contador', () => {
     // a asserção: é subir `NEGATIVE_STEP_BASE` (e o `max` de `onboarding_step`
     // em `EVENT_SCHEMA`, que hoje vale exatamente a base) para longe do topo
     // dos positivos.
-    const MAIS_FUNDO = -9;                  // GOOGLE_STEP, SoulmonOnboarding.tsx
+    const MAIS_FUNDO = -12;                 // STARTER_STEP, SoulmonOnboarding.tsx (01/10/2026; era GOOGLE_STEP -9)
     const MAIOR_POSITIVO = 35;              // REGISTER, derivado dos dois catálogos
     const codigoDoFundo = onboardingStepCode(MAIS_FUNDO);
     expect(codigoDoFundo).not.toBeNull();
