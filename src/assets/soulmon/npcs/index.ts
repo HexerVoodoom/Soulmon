@@ -123,11 +123,17 @@ import npcFBarda from './npc-f-barda.png';
 import npcFVenenos from './npc-f-venenos.png';
 import npcFArqueira from './npc-f-arqueira.png';
 import npcFSacerdotisa from './npc-f-sacerdotisa.png';
+import npcFLua from './npc-f-lua.png';
+import npcFFerreiro from './npc-f-ferreiro.png';
+import npcFFerreira from './npc-f-ferreira.png';
 
 /**
  * NPCs EXTRAS (01/10/2026, leva `npcs-femininas` aprovada pelo dono —
  * `E:/Soulmon-assets/out/rodada3/npcs-femininas/ROSTER.md`, 768², alfa
- * binário): 12 bustos de ofício que ainda não têm lote nem função no app.
+ * binário): 12 bustos de ofício que ainda não têm lote nem função no app. Em 01/10/2026
+ * (instalação final da rodada 3) entraram mais 3 do banco: a rainha da lua (`lua`, Selene) e
+ * o casal de ferreiros (`ferreiro`, Mallo; `ferreira`, Kova) — `npc-lua` e `npc-martelo`, mesmo
+ * pós (768², alfa binário, 0 px de matiz 270–340).
  * ⚠️ **SEM CHAMADA HOJE** — onde cada uma entra é decisão de design
  * (`docs/PERGUNTAS-DO-DONO.md`, item NPC-1). Nome e fala:
  * `utils/areaNpcVoice.ts` › `EXTRA_NPC_VOICE`. O arquivo da Zahra chama
@@ -147,6 +153,9 @@ export const EXTRA_NPC_ART: Record<ExtraNpcId, string> = {
   venenos: npcFVenenos, // Datura
   arqueira: npcFArqueira, // Rime
   sacerdotisa: npcFSacerdotisa, // Oriel
+  lua: npcFLua, // Selene
+  ferreiro: npcFFerreiro, // Mallo
+  ferreira: npcFFerreira, // Kova
 };
 
 /** Resolve o NPC de UMA folha (área + id do lote). Sem lote aberto, ou lote

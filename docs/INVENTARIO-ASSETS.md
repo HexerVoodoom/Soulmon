@@ -176,6 +176,8 @@ consumidor** — `src/assets/artMaps.contract.test.ts` (novo, 14/14) cobre `embl
 
 **Rodada 3 — instalação final, PR 2 (01/10/2026)**: `arvore-generica/` (11 sprites 384² Noctyl em `soulmon/` + 11 de 256² em `drawable-nodpi/` — saiu o corvo repetido; §8 I23), `criaturas/final/` (40 PNG de ignar/lumel/serah/igni em `lines/full/`, mapa `lineFullArt.ts`, sem consumidor; nautilu/astrase pendentes; §8 I24), `extras/final/duelo-oponente-1..6` (`soulmon/duelo/` + `dueloArt.ts`, sem chamada; §8 I25) e `poderosos/final/boss-arauto-do-fim-full.png` (corpo inteiro do Arauto, `bossRoster.ts`; §8 I26).
 
+**Rodada 3 — instalação final, PR 3 (01/10/2026)**: `gemini-recriados/` (67 PNG que substituem o de mesmo nome — 16 auras de ataque, `food-rice`, `fx-defeat`, `furn-crystal` e 48 `el-*`; §8 I27) e 3 NPCs extras do banco (`npc-f-lua` Selene, `npc-f-ferreiro` Mallo, `npc-f-ferreira` Kova; §8 I28, sem chamada). Com isto, **tudo o que a rodada 3 gerou e estava aprovado está no repo**; o que ainda não existe é arte pendente de geração (nautilu/astrase, 89 `el-*`) ou alternativa deixada de propósito no banco (`lote-bonus-amigos-sorvete`).
+
 Levas já instaladas (conferido por nome): `backgrounds` (17/19), `decor` (21), `decor-v2` (14), `icons` (58/59 — falta só `poop.png`, que virou outro nome), `arcano` (14), `aventura` + `aventura2` (24), `entrega7/icones` (137), `berco` (1).
 
 ---

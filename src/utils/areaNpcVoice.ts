@@ -205,7 +205,7 @@ export function functionNpcVoice(id: FunctionNpcId, language: Language): { name:
 /**
  * NPCs EXTRAS (01/10/2026, leva `npcs-femininas` aprovada pelo dono —
  * `E:/Soulmon-assets/out/rodada3/npcs-femininas/ROSTER.md`): 12 bustos de
- * ofício (`assets/soulmon/npcs` › `EXTRA_NPC_ART`). ⚠️ SEM CHAMADA HOJE —
+ * ofício (+3 do banco em 01/10/2026: `lua`, `ferreiro`, `ferreira`) (`assets/soulmon/npcs` › `EXTRA_NPC_ART`). ⚠️ SEM CHAMADA HOJE —
  * nenhuma tela lê este mapa; onde cada uma aparece é decisão de design
  * (`docs/PERGUNTAS-DO-DONO.md`, NPC-1). Falas do ROSTER, sem cobrança, sem
  * emoji, sem número. Na Datura, o "darling/querido" do ROSTER saiu na
@@ -214,7 +214,8 @@ export function functionNpcVoice(id: FunctionNpcId, language: Language): { name:
  */
 export type ExtraNpcId =
   | 'forja' | 'treino' | 'cacadora' | 'guarda' | 'feras' | 'cura'
-  | 'mercenaria' | 'navegadora' | 'barda' | 'venenos' | 'arqueira' | 'sacerdotisa';
+  | 'mercenaria' | 'navegadora' | 'barda' | 'venenos' | 'arqueira' | 'sacerdotisa'
+  | 'lua' | 'ferreiro' | 'ferreira';
 
 export interface ExtraNpcVoice extends AreaNpcVoice {
   officePt: string;
@@ -281,6 +282,23 @@ export const EXTRA_NPC_VOICE: Record<ExtraNpcId, ExtraNpcVoice> = {
     namePt: 'Oriel', nameEn: 'Oriel', officePt: 'Sacerdotisa do Oráculo', officeEn: 'Priestess of the Oracle',
     linePt: 'A maré trouxe um presságio. Só olhe se quiser.',
     lineEn: 'The tide brought an omen. Only look if you want to.',
+  },
+  // 01/10/2026 (instalação final da rodada 3): três do banco, finalizados como as outras. Nomes
+  // originais curtos (sem "-mon"); falas sem cobrança, sem flerte, sem número.
+  lua: {
+    namePt: 'Selene', nameEn: 'Selene', officePt: 'Deusa da lua, das sombras e do pântano', officeEn: 'Goddess of the moon, shadows and the swamp',
+    linePt: 'A lua guarda tudo o que a noite esconde. Sente aqui, se quiser ouvir.',
+    lineEn: 'The moon keeps whatever the night hides. Sit with me, if you would like to listen.',
+  },
+  ferreiro: {
+    namePt: 'Mallo', nameEn: 'Mallo', officePt: 'Ferreiro e forjador de martelos', officeEn: 'Blacksmith and hammer forger',
+    linePt: 'O martelo já aqueceu a minha mão. Traga o que precisa de forma.',
+    lineEn: "The hammer's already warmed my hand. Bring me whatever needs shaping.",
+  },
+  ferreira: {
+    namePt: 'Kova', nameEn: 'Kova', officePt: 'Ferreira', officeEn: 'Blacksmith',
+    linePt: 'Cada peça tem o seu tempo. Eu espero junto com você.',
+    lineEn: "Every piece takes its own time. I'll wait it out with you.",
   },
 };
 
