@@ -1,33 +1,33 @@
 /**
- * REGISTRO 13.19 (canvas Onboarding-oráculo §31): o caminho GRÁTIS passou a
- * responder as 6 perguntas do ritual e a ver o REVEAL DEMO antes de escolher
- * o personagem. Todo teste que antes clicava em "Start now" e caía direto em
- * "Choose your Soulmon" atravessa isto — num lugar só, para o dia em que o
- * número de perguntas mudar não virar seis testes quebrados.
+ * REGISTRO 13.19 (canvas Onboarding-oráculo §31): o caminho GRÁTIS vê o
+ * REVEAL DEMO — a leitura de quem a pessoa seria, feita das 6 respostas do
+ * ritual — antes de escolher o personagem.
  *
- * Exige `vi.useFakeTimers()` no chamador: cada opção avança em 180 ms.
- * Assíncrono desde a Fase 2 do Oráculo: a leitura demo nasce de
- * `generateOracleAsync` (famílias por `import()` dinâmico), então a última
- * resposta espera o import assentar antes de o reveal aparecer.
+ * ⚠️ 01/10/2026: as 6 perguntas (e os 20 itens) passaram a vir ANTES da
+ * escolha grátis/próprio, para todo mundo (`metasOnboarding.ts`). Aqui sobrou
+ * só a espera: o toque em "Start now" gera a leitura por
+ * `generateOracleAsync` (famílias por `import()` dinâmico), e o reveal demo
+ * aparece quando o import assenta.
  */
 import { act, fireEvent, screen } from '@testing-library/react';
 import { vi } from 'vitest';
-import { ORACLE_QUESTIONS } from '../utils/oracle';
 
-/** Responde as 6 perguntas (sempre a 1ª opção) e para no reveal demo. */
-export async function responderRitualDemo(): Promise<void> {
-  for (let i = 0; i < ORACLE_QUESTIONS.length; i++) {
-    const opcao = document.querySelector('button[aria-pressed]');
-    if (!opcao) throw new Error(`ritual demo: pergunta ${i + 1} sem opções na tela`);
-    fireEvent.click(opcao);
-    await act(async () => { await vi.advanceTimersByTimeAsync(200); });
+/** Depois do toque em "Start now": espera a leitura demo e para no reveal. */
+export async function esperarRevealDemo(): Promise<void> {
+  for (let i = 0; i < 50; i++) {
+    await act(async () => {
+      await vi.dynamicImportSettled();
+      if (vi.isFakeTimers()) await vi.advanceTimersByTimeAsync(10);
+      else await new Promise(r => setTimeout(r, 10));
+    });
+    if (document.querySelector('[data-nudge]')) return;
   }
-  await act(async () => { await vi.dynamicImportSettled(); });
+  throw new Error('reveal demo: a leitura não apareceu');
 }
 
 /** Do reveal demo à escolha do personagem pela saída que não custa (13.1). */
 export async function atravessarRevealDemo(pt = false): Promise<void> {
-  await responderRitualDemo();
+  await esperarRevealDemo();
   fireEvent.click(screen.getByRole('button', {
     name: pt ? 'Continuar com um personagem demo' : 'Continue with a demo character',
   }));

@@ -22,7 +22,7 @@ import {
   track, setTelemetryTier, TELEMETRY_TIER, TELEMETRY_UNLOCK_REASON,
 } from '../utils/telemetry';
 import { atravessarPerguntasIniciais } from '../test/metasOnboarding';
-import { atravessarRevealDemo } from '../test/ritualDemo';
+import { atravessarRevealDemo, esperarRevealDemo } from '../test/ritualDemo';
 
 const only = (event: string) => pendingTelemetry().filter(r => r.e === event);
 
@@ -37,6 +37,11 @@ describe('fiação da telemetria — onboarding', () => {
   });
 
   it('antes da escolha o funil é UNKNOWN; depois dela, DEMO', async () => {
+    vi.useFakeTimers();
+    // As 26 perguntas andam com o relógio falso, e o flush preguiçoso
+    // (`FLUSH_DEBOUNCE_MS`) dispararia no meio e esvaziaria a fila que o teste
+    // lê. Sem transporte, a fila fica onde está (`flush` devolve tudo).
+    vi.stubGlobal('fetch', undefined);
     renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
     // A PRIMEIRA tela é o portão de identidade (07/09/2026), e ela é anterior
     // à bifurcação: não dá para rotular o caminho ainda.
@@ -49,7 +54,9 @@ describe('fiação da telemetria — onboarding', () => {
     ));
     fireEvent.click(screen.getByText('I am 18 or older'));
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    atravessarPerguntasIniciais(); // NOME + metas (B1/B4, 01/10/2026)
+    // NOME + as 6 do ritual + os 20 itens + metas (B1/B4 e o pedido de
+    // 01/10/2026: todas as perguntas obrigatórias, antes da escolha)
+    await atravessarPerguntasIniciais();
 
     const antesDaEscolha = only('onboarding_step');
     // A BIFURCAÇÃO acontece DEPOIS do portão e do "porquê", e a telemetria
@@ -57,15 +64,24 @@ describe('fiação da telemetria — onboarding', () => {
     // Marcá-los como `demo` seria inventar uma intenção não declarada.
     for (const r of antesDaEscolha) expect(r.p?.funnel).toBe(TELEMETRY_FUNNEL.unknown);
     // Um evento por tela alcançada — sem repetição na mesma tela.
+    // A NUMERAÇÃO dos passos não mudou com a ordem nova: as perguntas do
+    // ritual seguem 6..11 e o teste 13..32 — só passaram a vir antes da
+    // escolha (e por isso com funil `unknown`).
+    const ritual = Array.from({ length: 6 }, (_, i) => onboardingStepCode(6 + i));
+    const teste = Array.from({ length: 20 }, (_, i) => onboardingStepCode(13 + i));
     expect(antesDaEscolha.map(r => r.p?.step)).toEqual([
-      onboardingStepCode(-6), onboardingStepCode(-10), onboardingStepCode(-2), onboardingStepCode(-3),
+      onboardingStepCode(-6), onboardingStepCode(-10), ...ritual, ...teste,
+      onboardingStepCode(-2), onboardingStepCode(-3),
       onboardingStepCode(-11), onboardingStepCode(-12), onboardingStepCode(-7),
     ]);
 
     // E, escolhido o grátis, o funil passa a ser DEMO de fato.
     fireEvent.click(screen.getByText('Start now — it’s free'));
+    await esperarRevealDemo();
     const depois = only('onboarding_step');
     expect(depois[depois.length - 1].p?.funnel).toBe(TELEMETRY_FUNNEL.demo);
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
   });
 
   it('o ritual do caminho pago sai marcado como funil PAID', async () => {
@@ -110,7 +126,7 @@ describe('fiação da telemetria — onboarding', () => {
     ));
     fireEvent.click(screen.getByText('I am 18 or older'));
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    atravessarPerguntasIniciais();
+    await atravessarPerguntasIniciais();
     fireEvent.click(screen.getByText('Start now — it’s free'));
     // 13.19: o reveal demo vem antes do personagem, e ele emite `unlock_view`
     // com o motivo `revealDemo` (o denominador da 13.1) — nunca `demo_pick`.

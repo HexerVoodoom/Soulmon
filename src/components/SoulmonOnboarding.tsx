@@ -282,19 +282,25 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     }
   };
 
-  // Passos: 0 intro · 1 nome · 2 data · 3 hora · 4 local · 5 criatura favorita ·
-  //         6..11 as 6 perguntas do ritual · 12 a bifurcação do refinamento ·
-  //         13..32 os 20 itens (SÓ para quem aceitar) · gerando · reveal ·
-  //         register (nick+email, obrigatório)
-  // DEMO_PICK é um passo à parte (fora dessa sequência numérica) — o caminho
-  // demo pula direto da intro pra lá, sem passar pelo oráculo.
+  // Passos (números, que o rascunho e a telemetria guardam — NÃO renumerar):
+  //   1 nome completo · 2 data · 3 hora · 4 local · 5 criatura favorita (⚰️) ·
+  //   6..11 as 6 perguntas do ritual · 12 (era a bifurcação; hoje é a tela de
+  //   "tentar de novo" da geração) · 13..32 os 20 itens · gerando · reveal ·
+  //   register (demo). Os ids negativos (portão, nome, metas, escolha, demo)
+  //   ficam fora da sequência numérica.
   //
-  // O ritual continua sendo as 6 perguntas: é o que praticamente todo mundo vai
-  // responder, e 20 itens psicométricos como porta de entrada obrigatória são
-  // um formulário, não um ritual. O teste longo vira uma ESCOLHA oferecida
-  // depois delas — e ANTES do reveal, de propósito: assim a criatura nasce uma
-  // vez só, já com a leitura que a pessoa escolheu. Oferecer depois do reveal
-  // significaria trocar por outra a criatura que ela acabou de conhecer.
+  // ⚠️ ORDEM NOVA (01/10/2026, pedido do dono: "vamos fazer todas as perguntas
+  // que a gente tem, todas obrigatórias, vai fazer parte do onboarding"):
+  //   conta → NOME → as 6 do ritual → os 20 itens → metas (melhorar /
+  //   atrapalha / forças) → ponto de partida → escolha grátis/próprio →
+  //   criatura (grátis: leitura demo → personagem pronto → batismo; pago:
+  //   nome completo, data, hora, cidade → geração → reveal).
+  // O teste longo DEIXOU DE SER BIFURCAÇÃO: todo jogador responde os 26 itens,
+  // nos dois caminhos, sem "pular" e sem "prefiro não dizer". A regra antiga
+  // ("20 itens como porta de entrada obrigatória são um formulário, não um
+  // ritual" — decisão D3 do inventário) foi revertida pelo dono; o registro
+  // está em `docs/INVENTARIO-PERGUNTAS-ONBOARDING.md`. A criatura continua
+  // nascendo UMA vez só, depois de todas as respostas.
   // ⚰️ FAVORITE_STEP — "Qual sua criatura favorita?" SAIU DO RITUAL em
   // 22/09/2026 (decisão do dono).
   //
@@ -366,6 +372,16 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   // a telemetria ganhou folga para eles (`NEGATIVE_STEP_BASE`).
   const STRENGTH_STEP = -11;
   const STARTER_STEP = -12;
+  /** A ordem do onboarding ANTES da escolha grátis/próprio — é o trecho que o
+   *  rascunho do portão (`gateDraft.ts`) sabe retomar. */
+  const QUIZ_STEPS = ORACLE_QUESTIONS.map((_, i) => QUIZ_START + i);
+  const DEEP_STEPS = SOUL_TEST_ITEMS.map((_, i) => DEEP_START + i);
+  const PRE_ESCOLHA = [
+    NAME_STEP, ...QUIZ_STEPS, ...DEEP_STEPS,
+    GOAL_STEP, STRUGGLE_STEP, STRENGTH_STEP, STARTER_STEP, CHOICE_STEP,
+  ];
+  /** Os dados de nascimento do caminho pago (mapa astral). */
+  const RITUAL_PAGO = [1, 2, 3, 4];
 
   // No upgrade o ritual começa direto na primeira pergunta: a intro só existe
   // para escolher entre grátis e completo, e essa escolha já foi feita (paga).
@@ -481,7 +497,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const [struggles, setStruggles] = useState<StruggleId[]>(gate?.struggles ?? []);
   const [strengths, setStrengths] = useState<StrengthId[]>(gate?.strengths ?? []);
   /** Itens do ponto de partida que a pessoa DESMARCOU (o resto entra). */
-  const [starterOff, setStarterOff] = useState<string[]>([]);
+  const [starterOff, setStarterOff] = useState<string[]>(gate?.starterOff ?? []);
   const starterSet = useMemo(
     () => recommendStarterSet({ areas, struggles, strengths }, ACTIVITY_CATALOG),
     [areas, struggles, strengths],
@@ -507,14 +523,12 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const [birthCity, setBirthCity] = useState<City | null>(draft?.birthCity ?? null);
   const birthPlace = birthCity ? cityLabel(birthCity, isPt) : '';
   const [timeUnknown, setTimeUnknown] = useState(draft?.timeUnknown ?? false);
-  /** As 6 perguntas do ritual — todo mundo responde. */
-  const [answers, setAnswers] = useState<Record<string, string>>(draft?.answers ?? {});
-  /** Os 20 itens psicométricos — só de quem aceitou refinar. */
-  const [testAnswers, setTestAnswers] = useState<SoulAnswers>(draft?.testAnswers ?? {});
-  /** null = ainda não decidiu. É uma decisão SEM VOLTA, por escolha de
-   *  produto: não existe caminho para responder o teste depois. O rascunho
-   *  guarda a decisão como está — retomar não reabre a bifurcação. */
-  const [refine, setRefine] = useState<boolean | null>(draft?.refine ?? null);
+  /** As 6 perguntas do ritual — todo mundo responde. O rascunho do ritual
+   *  pago vence o do portão (é o mais recente quando existe). */
+  const [answers, setAnswers] = useState<Record<string, string>>(draft?.answers ?? gate?.answers ?? {});
+  /** Os 20 itens psicométricos — desde 01/10/2026, TODO mundo responde
+   *  (a bifurcação "quer afinar a leitura?" saiu). */
+  const [testAnswers, setTestAnswers] = useState<SoulAnswers>(draft?.testAnswers ?? gate?.testAnswers ?? {});
   const [result, setResult] = useState<OracleResult | null>(null);
   /** A leitura do REVEAL DEMO: só as 6 respostas (sem nome, data, hora,
    *  cidade — o demo não deu nenhum), pelo caminho legado do oráculo. É uma
@@ -535,7 +549,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const [revealEsperando, setRevealEsperando] = useState(false);
   /** Quando o reveal apareceu — vira FAIXA em `reveal_seen.duration` (WP0.12). */
   const revealAbertoEmRef = useRef(0);
-  const [nickname, setNickname] = useState('');
+  const [nickname, setNickname] = useState(gate?.nickname ?? '');
   /** Batismo do Soulmon. `null` = a pessoa não encostou no campo, e o que
    *  aparece na tela é a sugestão (`registerDisplayName`). Guardar assim, em
    *  vez de semear o estado por efeito, é o que faz MANTER o sugerido custar
@@ -566,48 +580,68 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
    *  o pet nunca fica sem nome por causa de um campo em branco. */
   const petNameFinal = petNameValue.trim() || registerDisplayName;
 
-  // O denominador inclui o tutorial que vem DEPOIS do onboarding: antes a
-  // barra chegava a 100% aqui e ainda apareciam várias telas, dando a
-  // impressão de que o fluxo tinha acabado. No upgrade não há tutorial nem
-  // cadastro depois — o reveal É o fim, e a barra pode chegar a 100%.
-  const lastStep = isUpgrade ? REVEAL : REGISTER;
-  // Quem recusa o teste longo pula 20 passos de uma vez. Sem descontar esse
-  // bloco, a barra daria um salto de ~60% e depois diria que falta muito — a
-  // barra tem que medir o caminho QUE A PESSOA escolheu, não o mais longo
-  // possível.
-  const deepBlock = SOUL_TEST_ITEMS.length;
-  // O demo nunca faz o teste longo: o bloco sai da conta dele também. O
-  // reveal demo mede como o `REVEAL` (14/16 = 88 % — X4 da crítica: o número
-  // que a fórmula R2 dá para o caminho curto; o denominador do demo é decisão
-  // registrada no canvas, não um valor copiado do reveal pago).
-  const skipDeep = refine === false || flow === 'demo';
-  const shrink = (n: number) => (skipDeep && n > REFINE_OFFER ? n - deepBlock : n);
-  const progressStep = step === REVEAL_DEMO ? REVEAL : step;
-  const progress = Math.min(shrink(progressStep), shrink(lastStep)) / shrink(isUpgrade ? lastStep : REGISTER + 1);
+  // A BARRA mede o caminho na ORDEM em que a pessoa anda — e a ordem não é
+  // mais a numérica: no onboarding as 26 perguntas (6..32) vêm ANTES da
+  // escolha, e os dados de nascimento (1..4) só depois dela, no caminho pago.
+  // Antes da escolha conta-se a cauda do caminho pago (a mais longa): quem
+  // escolhe o grátis vê a barra pular para a frente, nunca para trás.
+  // ⚰️ O denominador incluía o tutorial que vinha depois do onboarding; com o
+  // ponto de partida entregando atividades, ele não abre mais (ver `App.tsx`).
+  const sequencia = isUpgrade
+    ? [...RITUAL_PAGO, ...QUIZ_STEPS, ...DEEP_STEPS, GENERATING, REVEAL]
+    : [...PRE_ESCOLHA, ...(flow === 'demo'
+      ? [REVEAL_DEMO, DEMO_PICK, REGISTER]
+      : [...RITUAL_PAGO, GENERATING, REVEAL])];
+  // A tela de "tentar de novo" da geração mede como a própria geração.
+  const posicao = sequencia.indexOf(step === REFINE_OFFER ? GENERATING : step);
+  const progress = posicao < 0 ? 0 : (posicao + 1) / sequencia.length;
 
-  const canAdvance = (): boolean => {
-    // B1/B4/B5 — tudo obrigatório, sem "pular".
-    if (step === NAME_STEP) return nickname.trim().length >= 2;
-    if (step === GOAL_STEP) return areas.length > 0;
-    if (step === STRUGGLE_STEP) return struggles.length > 0;
-    if (step === STRENGTH_STEP) return strengths.length > 0;
+  /** Um passo está respondido? B1/B4/B5 + 01/10/2026 — tudo obrigatório,
+   *  sem "pular" e sem "prefiro não dizer". Serve ao "Continuar" E à
+   *  retomada do rascunho (que não pode pular uma pergunta sem resposta). */
+  const passoCompleto = (s: number): boolean => {
+    if (s === NAME_STEP) return nickname.trim().length >= 2;
+    if (s === GOAL_STEP) return areas.length > 0;
+    if (s === STRUGGLE_STEP) return struggles.length > 0;
+    if (s === STRENGTH_STEP) return strengths.length > 0;
     // Ponto de partida: ≥1 item mantido (catálogo sem sugestão nenhuma não
     // tranca ninguém — o tutorial do app cobre esse caso).
-    if (step === STARTER_STEP) return starterSet.length === 0 || starterKept.length > 0;
-    if (step === 1) return fullName.trim().length >= 3;
-    if (step === 2) return !!birthDate;
-    if (step === 3) return timeUnknown || !!birthTime;
-    if (step === 4) return !!birthCity;
-    // Criatura favorita é opcional — sempre dá pra avançar.
-    if (step >= QUIZ_START && step < QUIZ_END) {
-      return !!answers[ORACLE_QUESTIONS[step - QUIZ_START].id];
+    if (s === STARTER_STEP) return starterSet.length === 0 || starterKept.length > 0;
+    if (s === 1) return fullName.trim().length >= 3;
+    if (s === 2) return !!birthDate;
+    if (s === 3) return timeUnknown || !!birthTime;
+    if (s === 4) return !!birthCity;
+    if (s >= QUIZ_START && s < QUIZ_END) {
+      return !!answers[ORACLE_QUESTIONS[s - QUIZ_START].id];
     }
-    // A bifurcação não tem "Continuar": as duas saídas são os próprios botões.
-    if (step === REFINE_OFFER) return false;
-    if (step >= DEEP_START && step < DEEP_END) {
-      return !!testAnswers[SOUL_TEST_ITEMS[step - DEEP_START].id];
+    // A tela de "tentar de novo" não tem "Continuar": a saída é o botão dela.
+    if (s === REFINE_OFFER) return false;
+    if (s >= DEEP_START && s < DEEP_END) {
+      return !!testAnswers[SOUL_TEST_ITEMS[s - DEEP_START].id];
     }
     return true;
+  };
+  const canAdvance = (): boolean => passoCompleto(step);
+
+  /** A primeira das 26 perguntas (6 do ritual + 20 do teste) ainda sem
+   *  resposta, ou `null` quando todas foram respondidas. */
+  const perguntaPendente = (a: Record<string, string> = answers, t: SoulAnswers = testAnswers): number | null => {
+    const q = ORACLE_QUESTIONS.findIndex(x => !a[x.id]);
+    if (q >= 0) return QUIZ_START + q;
+    const d = SOUL_TEST_ITEMS.findIndex(x => !t[x.id]);
+    if (d >= 0) return DEEP_START + d;
+    return null;
+  };
+
+  /** Onde o onboarding retoma, a partir do rascunho do portão: o passo
+   *  gravado — mas nunca DEPOIS de uma pergunta sem resposta (storage não é
+   *  confiável, e retomar à frente de um buraco geraria a criatura sem ela). */
+  const passoDeRetomada = (): number => {
+    const alvo = gate?.step;
+    for (const s of PRE_ESCOLHA) {
+      if (s === alvo || !passoCompleto(s)) return s;
+    }
+    return CHOICE_STEP;
   };
 
   // -------------------------------------------------------------------------
@@ -659,24 +693,40 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       if (cancelado) return;
       setAuthUsavel(usavel);
       setAuthEmail(atual ?? '');
-      // Retomada da viagem ao e-mail: autenticado + aceite já provado = a
-      // pessoa já passou pelo consentimento e pelo 18+ nesta instalação.
       // Retomada: autenticado e com aceite já provado nesta instalação, o
-      // portão não tem mais o que perguntar — segue para o "porquê".
-      if (atual && (gate?.consent ?? null) && step === IDENTITY_STEP) setStep(NAME_STEP);
+      // portão não tem mais o que perguntar. Desde 01/10/2026 a retomada vai
+      // ao PASSO em que a pessoa parou (nome, ritual, teste, metas, ponto de
+      // partida ou escolha) com as respostas de volta — fechar o app no meio
+      // de 26 perguntas não pode cobrá-las de novo. Sem auth configurada, o
+      // aceite guardado é a prova de que o portão já foi atravessado, mas só
+      // conta quando há passo gravado (rascunho antigo pergunta de novo).
+      const podeRetomar = !!gate?.consent && (!!atual || (!usavel && gate.step !== undefined));
+      if (podeRetomar && step === IDENTITY_STEP) setStep(passoDeRetomada());
     })();
     return () => { cancelado = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Rascunho do portão: gravado enquanto a pessoa está no trecho anterior à
-  // escolha. Some assim que o onboarding termina (ver `finish`).
-  const noPortao = !isUpgrade
-    && [IDENTITY_STEP, GOOGLE_STEP, EMAIL_STEP, NAME_STEP, GOAL_STEP, STRUGGLE_STEP, STRENGTH_STEP, STARTER_STEP, CHOICE_STEP].includes(step);
+  // Rascunho do portão: gravado em todo o trecho do onboarding que não é o
+  // ritual PAGO (este tem o rascunho dele, `oracleDraft`). Some assim que o
+  // onboarding termina (ver `finish`). Guarda TUDO que já foi respondido —
+  // nome, as 26 perguntas, metas e ponto de partida — e o passo: quem fecha o
+  // app no meio volta de onde parou. No grátis, depois da escolha, o passo
+  // gravado é a própria escolha (a leitura demo é refeita num toque). Nas
+  // telas de conta o passo gravado é o que já estava: remontar no portão não
+  // pode apagar a posição que a retomada vai procurar.
+  const noPortao = !isUpgrade && flow !== 'oracle' && step !== AGE_BLOCK;
+  const passoGravado = PRE_ESCOLHA.includes(step)
+    ? step
+    : flow === 'demo' ? CHOICE_STEP : gate?.step;
   useEffect(() => {
     if (!noPortao) return;
-    writeGateDraft({ soulGoal, soulStruggle, consent, areas, struggles, strengths });
-  }, [noPortao, soulGoal, soulStruggle, consent, areas, struggles, strengths]);
+    writeGateDraft({
+      soulGoal, soulStruggle, consent, areas, struggles, strengths,
+      step: passoGravado, nickname, answers, testAnswers, starterOff,
+    });
+  }, [noPortao, passoGravado, soulGoal, soulStruggle, consent, areas, struggles, strengths,
+    nickname, answers, testAnswers, starterOff]);
 
   // WP1.7 — grava o rascunho a cada mudança, só DENTRO do ritual pago (do nome
   // ao último item do teste) e só enquanto não existe resultado. Fora disso o
@@ -687,10 +737,12 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     if (!inRitual) return;
     writeOracleDraft({
       mode, step, soulGoal, soulStruggle, fullName, birthDate, birthDateText, birthTime,
-      birthCity, timeUnknown, answers, testAnswers, refine, consent,
+      // `refine` fica no formato do rascunho (leitura de rascunho antigo),
+      // mas não decide mais nada: o teste é obrigatório.
+      birthCity, timeUnknown, answers, testAnswers, refine: true, consent,
     });
   }, [inRitual, mode, step, soulGoal, soulStruggle, fullName, birthDate, birthDateText, birthTime,
-    birthCity, timeUnknown, answers, testAnswers, refine, consent]);
+    birthCity, timeUnknown, answers, testAnswers, consent]);
 
   /** Dispara a geração e, se ela falhar, devolve o usuário à última pergunta
    *  com um aviso — travar na animação de "revelando" para sempre é o pior
@@ -699,10 +751,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     setGenerateError(false);
     void doGenerate(finalTest).catch(() => {
       setGenerateError(true);
-      // Volta para a bifurcação, que é onde os dois caminhos se encontram —
-      // mandar de volta para "a última pergunta" só funcionaria para quem fez
-      // o teste longo, e deixaria quem recusou preso na animação.
-      setRefine(null);
+      // Vai para a tela de "tentar de novo" (o número 12, que era a
+      // bifurcação): as respostas ficam todas, e um toque gera outra vez.
       setStep(REFINE_OFFER);
     });
   };
@@ -719,7 +769,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     // O perfil de alma é montado NOS DOIS caminhos: mesmo sem o teste longo,
     // ele traz o mapa astral REAL e a numerologia completa, que já são melhores
     // que o ascendente estimado do motor antigo. O que muda é a camada
-    // psicométrica: com as 20 respostas ela existe; sem elas, os traços ficam
+    // psicométrica: com as 20 respostas ela existe; sem elas (rascunho antigo
+    // de quem recusou o teste quando ele era opcional), os traços ficam
     // neutros e quem decide são o céu de nascimento, o nome e as 6 respostas.
     const soulProfile = birthCity
       ? buildSoulProfile({
@@ -731,13 +782,13 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         latitude: birthCity.latitude,
         longitude: birthCity.longitude,
         timeZone: birthCity.timeZone,
-      }, refine ? finalTest : {})
+      }, finalTest)
       : undefined;
 
     const input: OracleInput = {
       fullName: fullName.trim(), birthDate, birthTime, birthPlace,
-      // As 6 do ritual entram na leitura sempre — são o único sinal de
-      // personalidade de quem não faz o teste longo.
+      // As 6 do ritual entram na leitura sempre (com os 20 itens, que desde
+      // 01/10/2026 todo mundo responde, por cima).
       answers,
       // ⚰️ `favoriteCreature` não é mais coletado no ritual (ver FAVORITE_STEP).
       // Texto do jogador no prompt só depois do Renascimento.
@@ -813,12 +864,32 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     })();
   };
 
+  /** Depois da ÚLTIMA pergunta. Se ficou alguma sem resposta (rascunho
+   *  antigo, storage mexido), volta a ela. Senão: no onboarding vêm as metas;
+   *  no ritual pago (upgrade, ou rascunho do ritual pago), a geração. */
+  const aposPerguntas = (a: Record<string, string> = answers, t: SoulAnswers = testAnswers) => {
+    const falta = perguntaPendente(a, t);
+    if (falta !== null) { setStep(falta); return; }
+    if (isUpgrade || flow === 'oracle') {
+      // ⚠️ Havia 1,4s de `setTimeout` antes de gerar "para a animação
+      // respirar", e a auditoria de 06/09/2026 mostrou o custo: o pedido do
+      // SPRITE só sai depois de `doGenerate` terminar, e ele corre contra
+      // `REVEAL_WAIT_MS` (12s). A leitura do soulProfile e o import DINÂMICO
+      // do motor de efemérides já produzem tempo de tela para a animação.
+      setStep(GENERATING);
+      runGenerate(t);
+      return;
+    }
+    setStep(GOAL_STEP);
+  };
+
   const next = () => {
     // O portão não avança por `next()`: quem o atravessa é uma autenticação
     // bem-sucedida (ver `aposAutenticar`).
     if (step === IDENTITY_STEP || step === EMAIL_STEP || step === GOOGLE_STEP) return;
     if (!canAdvance()) return;
-    if (step === NAME_STEP) { setStep(GOAL_STEP); return; }
+    // B1 + 01/10/2026: do nome vai-se direto às perguntas do ritual.
+    if (step === NAME_STEP) { setStep(QUIZ_START); return; }
     if (step === GOAL_STEP) { setStep(STRUGGLE_STEP); return; }
     if (step === STRUGGLE_STEP) { setStep(STRENGTH_STEP); return; }
     if (step === STRENGTH_STEP) { setStarterOff([]); setStep(STARTER_STEP); return; }
@@ -827,63 +898,55 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     // `isAgeBlocked` só bloqueia data legível de menor — data vazia ou
     // ilegível segue o fluxo, que é o que impede barrar alguém por engano.
     if (step === 2 && isAgeBlocked(birthDate)) { setStep(AGE_BLOCK); return; }
-    // ⚰️ O degrau da criatura favorita foi pulado (ver FAVORITE_STEP): do
-    // local de nascimento vai-se direto à 1ª pergunta do ritual. Nada
-    // renderiza em FAVORITE_STEP, e cair nele mostraria o casco vazio.
-    if (step === FAVORITE_STEP - 1) { setStep(QUIZ_START); return; }
-    if (step === DEEP_END - 1) {
-      // último item do teste longo respondido → tela de geração e gera
-      setStep(GENERATING);
-      runGenerate();
-      return;
-    }
+    // ⚰️ O degrau da criatura favorita foi pulado (ver FAVORITE_STEP). Do
+    // local de nascimento: no onboarding as 26 perguntas já foram feitas antes
+    // da escolha, então vai-se à geração; no upgrade, às perguntas.
+    if (step === FAVORITE_STEP - 1) { aposPerguntas(); return; }
     setStep(s => s + 1);
   };
 
-  /** Saídas da bifurcação. Escolher aqui é definitivo — ver `refine`. */
-  const chooseRefine = (yes: boolean) => {
-    setRefine(yes);
-    if (yes) { setStep(DEEP_START); return; }
-    setStep(GENERATING);
-    /* ⚠️ Havia 1,4s de `setTimeout` aqui "para a animação respirar", e a
-       auditoria de 06/09/2026 mostrou o custo: o pedido do SPRITE só sai
-       depois de `doGenerate` terminar, e ele corre contra `REVEAL_WAIT_MS`
-       (12s). A encenação comprava ~12% do orçamento da corrida que o WP1.1
-       existe para vencer — decoração cobrando do `has_sprite`.
-       A espera real não sumiu: a leitura do soulProfile e o import DINÂMICO do
-       motor de efemérides (astronomy-engine, pesado de propósito) já produzem
-       tempo de tela suficiente para a animação. */
-    runGenerate();
+  /** A escolha GRÁTIS. A leitura demo nasce aqui, das 6 respostas que já
+   *  foram dadas antes da escolha (13.19), e abre o reveal demo. */
+  const escolherGratis = async () => {
+    setFlow('demo');
+    setDemoReading(await generateOracleAsync({
+      fullName: '', birthDate: '', birthTime: '', birthPlace: '', answers,
+    }));
+    setStep(REVEAL_DEMO);
   };
+
   // No upgrade não existe passo 0 (intro): voltar da primeira pergunta é
   // desistir do ritual e voltar ao jogo.
   const back = () => {
     if (isUpgrade && step === 1) { onCancel?.(); return; }
     // Das duas telas de conta volta-se para a primeira do portão.
     if (step === EMAIL_STEP || step === GOOGLE_STEP) { setStep(IDENTITY_STEP); return; }
-    // Do "porquê" não se volta para o portão: a conta já existe, e desfazê-la
+    // Do nome não se volta para o portão: a conta já existe, e desfazê-la
     // não é o que um botão de voltar deve sugerir.
     if (step === NAME_STEP) return;
-    if (step === GOAL_STEP) { setStep(NAME_STEP); return; }
+    // 01/10/2026 — a ordem nova: nome → ritual → teste → metas → escolha.
+    // Da 1ª pergunta do ritual volta-se ao nome (no onboarding) ou ao local
+    // de nascimento (no ritual pago, onde as perguntas vêm depois dos dados).
+    if (step === QUIZ_START) {
+      setStep(isUpgrade || flow === 'oracle' ? FAVORITE_STEP - 1 : NAME_STEP);
+      return;
+    }
+    // Do 1º item do teste, à última pergunta do ritual (o número 12, entre
+    // os dois, não é pergunta).
+    if (step === DEEP_START) { setStep(QUIZ_END - 1); return; }
+    if (step === GOAL_STEP) { setStep(DEEP_END - 1); return; }
     if (step === STRUGGLE_STEP) { setStep(GOAL_STEP); return; }
     if (step === STRENGTH_STEP) { setStep(STRUGGLE_STEP); return; }
     if (step === STARTER_STEP) { setStep(STRENGTH_STEP); return; }
     if (step === CHOICE_STEP) { setStep(STARTER_STEP); return; }
     // 13.19: da escolha do personagem volta-se ao reveal demo (a leitura
-    // continua lá); da 1ª pergunta do ritual grátis, à escolha grátis/completo.
+    // continua lá).
     if (step === DEMO_PICK) { setStep(demoReading ? REVEAL_DEMO : CHOICE_STEP); return; }
-    if (step === QUIZ_START && flow === 'demo') { setFlow(null); setStep(CHOICE_STEP); return; }
-    // ⚰️ E na volta também se pula o degrau da criatura favorita: da 1ª
-    // pergunta do ritual volta-se ao local de nascimento.
-    if (step === QUIZ_START) { setStep(FAVORITE_STEP - 1); return; }
     // O "Back" do cadastro demo (canvas ONB-34, B1): volta à escolha do
     // personagem — o passo anterior na numeração é o REVEAL, que só existe
     // no caminho do oráculo e renderizaria vazio.
     if (step === REGISTER && flow === 'demo') { setStep(DEMO_PICK); return; }
     if (step === 1 && !isUpgrade) { setStep(CHOICE_STEP); return; }
-    // Voltar de dentro do teste longo devolve a escolha: quem entrou sem
-    // querer não fica preso em 20 perguntas.
-    if (step === DEEP_START) { setRefine(null); setStep(REFINE_OFFER); return; }
     // O PISO É 1 NOS DOIS MODOS. Era `0` fora do upgrade, e o passo 0 era a
     // intro de marca — que foi APAGADA quando o portão virou a primeira tela.
     // Hoje nada renderiza no 0: quem caísse ali veria o casco do onboarding
@@ -904,7 +967,11 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     setBirthCity(null);
     setAnswers({});
     setTestAnswers({});
-    setRefine(null);
+    setNickname('');
+    setAreas([]);
+    setStruggles([]);
+    setStrengths([]);
+    setStarterOff([]);
     setConsentChecked(false);
     setConsent(null);
     setMaiorIdadeChecked(false);
@@ -1012,8 +1079,9 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     // O carimbo do aceite é feito NO MOMENTO em que a conta nasce, não no fim
     // do onboarding: é esse instante que a prova precisa registrar.
     if (!consent) setConsent(buildConsentRecord());
-    // Autenticado: o NOME vem primeiro (B1), depois o "porquê".
-    setStep(NAME_STEP);
+    // Autenticado: o NOME vem primeiro (B1) — ou, se esta instalação já tem
+    // rascunho do onboarding, o passo em que a pessoa parou.
+    setStep(passoDeRetomada());
   };
 
   /** SEM AUTH CONFIGURADA o portão não pode trancar o app.
@@ -1027,7 +1095,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const aoContinuarSemConta = () => {
     if (!podeAutenticar) return;
     if (!consent) setConsent(buildConsentRecord());
-    setStep(NAME_STEP);
+    setStep(passoDeRetomada());
   };
 
   /* O portão não tem mais muro de idade próprio: com uma CAIXA, quem não tem
@@ -1383,19 +1451,17 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             SUPERIOR ESQUERDO, acima do título — um só ponto de montagem para o
             onboarding inteiro (`BackArrow`, o padrão do app). Os botões
             "Back" de texto no pé de cada tela saíram. Onde não há volta (a
-            primeira tela, o nome logo depois da conta, a bifurcação, a
-            geração, os reveals), a seta não aparece. */}
+            primeira tela, o nome logo depois da conta, a tela de tentar de
+            novo, a geração, os reveals), a seta não aparece. */}
         {temVolta && <BackArrow onClick={back} language={isPt ? 'pt-BR' : 'en-US'} />}
 
-        {/* Barra de progresso. O DENOMINADOR não mudou nesta rodada: ele já
-            inclui o tutorial que vem depois do onboarding (antes a barra
-            chegava a 100% e ainda apareciam telas) e já desconta o bloco de 20
-            itens de quem recusa o teste longo. */}
+        {/* Barra de progresso: mede a POSIÇÃO na ordem do caminho
+            (`sequencia`), do nome à criatura — 01/10/2026. */}
         {/* Canvas Onboarding-oráculo D-Q1: a barra é o `.meter` SIS-07 a 8px —
             trilho `surface-2` + anel `muted` 1px + água `primary-fill` (o
             trilho sobre `bg` sozinho lia 1,2:1; o anel é o que faz a barra
             existir). Era um `div` 6px com fronteira `line`. */}
-        {((step > 0 && step <= lastStep) || step === REVEAL_DEMO) && (
+        {posicao >= 0 && (
           <div
             role="progressbar"
             aria-valuemin={0}
@@ -1657,7 +1723,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             <button
               type="button"
               style={{ ...sm2Button('primary'), width: '100%' }}
-              onClick={() => { setFlow('demo'); setDemoReading(null); setStep(QUIZ_START); }}
+              onClick={() => { void escolherGratis(); }}
             >
               {isPt ? 'Começar agora — é grátis' : 'Start now — it’s free'}
             </button>
@@ -1930,19 +1996,12 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                       onClick={() => {
                         const nextAnswers = { ...answers, [q.id]: opt.id };
                         setAnswers(nextAnswers);
-                        // avança sozinho após escolher (fluido)
-                        setTimeout(async () => {
-                          if (flow === 'demo' && step === QUIZ_END - 1) {
-                            // 13.19 — a leitura do demo nasce aqui, com as 6
-                            // respostas já completas (o estado ainda é o
-                            // anterior neste instante, como no 20º item).
-                            setDemoReading(await generateOracleAsync({
-                              fullName: '', birthDate: '', birthTime: '', birthPlace: '', answers: nextAnswers,
-                            }));
-                            setStep(REVEAL_DEMO);
-                            return;
-                          }
-                          setStep(s => s + 1);
+                        // avança sozinho após escolher (fluido). Da última
+                        // do ritual vai-se ao 1º item do teste (o número 12,
+                        // entre os dois, não é pergunta).
+                        setTimeout(() => {
+                          if (step === QUIZ_END - 1) setStep(DEEP_START);
+                          else setStep(s => s + 1);
                         }, 180);
                       }}>
                       {L(opt.text)}
@@ -1961,54 +2020,33 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
           );
         })()}
 
-        {/* 12 — A bifurcação. Decisão SEM VOLTA, e a tela diz isso. */}
+        {/* 12 — Era a bifurcação "Quer afinar a leitura?". ⚰️ SAIU em
+            01/10/2026: o teste longo passou a ser obrigatório para todos
+            (pedido do dono). O número ficou para a tela de TENTAR DE NOVO
+            quando a geração falha — as respostas continuam todas, e um toque
+            gera outra vez. Também é onde cai um rascunho antigo parado na
+            bifurcação. */}
         {step === REFINE_OFFER && (
           <StepShell
-            title={isPt ? 'Quer afinar a leitura?' : 'Want to sharpen the reading?'}
-            hint={isPt
-              ? 'Esta escolha não tem volta — não dá para responder o teste depois.'
-              : "This choice is final — there's no answering the test later."}>
-            <p style={{ ...sm2Text, color: 'var(--sm2-muted)', margin: '0 0 18px' }}>
-              {/* WP1.10 — o que muda e quanto custa. A copy anterior prometia
-                  que o teste longo "afinava" a criatura: uma palavra que não
-                  diz nada e não deixa ninguém decidir. (Ela não é reproduzida
-                  aqui de propósito — o aceite do WP1.10 procura a frase antiga
-                  neste arquivo, e um comentário que a repete reprova o próprio
-                  pacote. É a terceira vez que essa armadilha aparece.) Os
-                  DOIS caminhos são legítimos (as 6 respostas do ritual entram
-                  na leitura nos dois), então a copy não promete criatura
-                  vantagem nenhuma — promete uma leitura com MAIS FONTES. O nº sai
-                  da constante; o tempo é a única estimativa, e é conservadora. */}
-              {isPt
-                ? `Seu Soulmon já pode nascer agora. Com mais ${SOUL_TEST_ITEMS.length} perguntas (~2 min), a leitura usa seus traços de personalidade além das respostas de agora.`
-                : `Your Soulmon can be born right now. With ${SOUL_TEST_ITEMS.length} more questions (~2 min), the reading uses your personality traits on top of the answers you just gave.`}
-            </p>
-            {/* ONB-29 (D-Q12): o erro de geração vem ANTES das portas, em
-                âmbar — a falha não é da pessoa; escolher de novo tenta outra vez. */}
+            title={isPt ? 'Tudo pronto' : 'All set'}
+            hint={isPt ? 'Suas respostas estão guardadas.' : 'Your answers are saved.'}>
+            {/* ONB-29 (D-Q12): o erro de geração é âmbar — a falha não é da
+                pessoa; o botão tenta outra vez. */}
             {generateError && (
               <p role="alert" style={{ ...alertStyle, margin: '0 0 18px' }}>
                 {isPt
-                  ? 'Não foi possível revelar sua criatura agora. Escolha de novo para tentar outra vez.'
-                  : "We couldn't reveal your creature just now. Choose again to retry."}
+                  ? 'Não foi possível revelar sua criatura agora. Toque para tentar outra vez.'
+                  : "We couldn't reveal your creature just now. Tap to try again."}
               </p>
             )}
-            {/* D-Q5 (X5 da crítica, a resposta da §17 V3): as DUAS portas em
-                `outline`, o teste primeiro. Numa decisão declarada final sem
-                porta "certa", o primário seria recomendação implícita — "sem
-                empurrão" vale para a forma. A ordem já diz qual é o caminho
-                longo. */}
-            <button type="button" style={{ ...sm2Button('outline'), width: '100%', marginBottom: 8 }}
-              onClick={() => chooseRefine(true)}>
-              {isPt ? `Responder mais ${SOUL_TEST_ITEMS.length} perguntas` : `Answer ${SOUL_TEST_ITEMS.length} more questions`}
-            </button>
-            <button type="button" style={{ ...sm2Button('outline'), width: '100%' }}
-              onClick={() => chooseRefine(false)}>
-              {isPt ? 'Revelar meu Soulmon agora' : 'Reveal my Soulmon now'}
+            <button type="button" style={{ ...sm2Button('primary'), width: '100%' }}
+              onClick={() => aposPerguntas()}>
+              {isPt ? 'Revelar meu Soulmon' : 'Reveal my Soulmon'}
             </button>
           </StepShell>
         )}
 
-        {/* 13..32 — O teste longo, só para quem aceitou (um item por página) */}
+        {/* 13..32 — O teste longo, para TODOS desde 01/10/2026 (um item por página) */}
         {step >= DEEP_START && step < DEEP_END && (() => {
           const item = SOUL_TEST_ITEMS[step - DEEP_START];
           const index = step - DEEP_START;
@@ -2023,7 +2061,9 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                   const nextTest = { ...testAnswers, [item.id]: answer };
                   setTestAnswers(nextTest);
                   setTimeout(() => {
-                    if (step === DEEP_END - 1) { setStep(GENERATING); setTimeout(() => runGenerate(nextTest), 1400); }
+                    // O 20º item: o estado ainda é o anterior neste instante,
+                    // por isso as respostas vão por parâmetro.
+                    if (step === DEEP_END - 1) aposPerguntas(answers, nextTest);
                     else setStep(s => s + 1);
                   }, 180);
                 }}

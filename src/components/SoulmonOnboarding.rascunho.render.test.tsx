@@ -55,9 +55,10 @@ describe('SoulmonOnboarding — rascunho do ritual (WP1.7)', () => {
       fireEvent.click(screen.getByText('I have read and agree to the Terms of Use and the Privacy Policy'));
     fireEvent.click(screen.getByText('I am 18 or older'));
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    atravessarPerguntasIniciais();
+    await atravessarPerguntasIniciais();
     fireEvent.click(screen.getByText('Start now — it’s free'));
-    // 13.19: as 6 perguntas e o reveal demo também não gravam rascunho.
+    // 13.19: as 6 perguntas e o reveal demo também não gravam rascunho DO
+    // RITUAL (01/10/2026: as perguntas vivem no rascunho do PORTÃO).
     await atravessarRevealDemo();
     fireEvent.click(screen.getByText(PREMADE_CHARACTERS[0].name).closest('button')!);
     vi.useRealTimers();

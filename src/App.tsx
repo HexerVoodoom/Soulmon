@@ -204,7 +204,7 @@ import {
 } from './utils/habitRhythm';
 import { normalizeSchedule, weekDaysForSchedule, HABIT_WEIGHT, MAX_DAILY_FOCUS, cheerReached } from './types/taskModel';
 import { equilibrarSemana, valeEquilibrar } from './utils/weekBalance';
-import { needsCatalogOnboarding, markCatalogOnboardingSeen } from './utils/catalogOnboarding';
+import { needsCatalogOnboarding, markCatalogOnboardingSeen, onboardingProfileFrom } from './utils/catalogOnboarding';
 import { CatalogOnboardingFlow, activitiesFromCatalogChoice } from './components/catalog/CatalogOnboardingFlow';
 import { ACTIVITY_CATALOG } from './data/activityCatalog';
 import { CatalogBrowserModal } from './components/catalog/CatalogBrowserModal';
@@ -4803,6 +4803,20 @@ export default function App() {
   }, [soundMuted]);
 
   const handleCompleteOnboarding = async (data: OnboardingCompleteData) => {
+    /* O ponto de partida (B4) é resolvido ANTES de qualquer `await`, e o
+       tutorial é dado como feito NO MESMO lote em que o onboarding é dado
+       como completo. Até 01/10/2026 a marca do tutorial vinha DEPOIS das
+       idas à nuvem (`emailToSaveId`/`cloudLoad`): nesse intervalo o app já
+       renderizava "onboarding completo + tutorial pendente" e o tutorial
+       antigo ("crie sua 1ª tarefa") piscava — e ficava, se a pessoa fechasse
+       o app ali ou se a adoção de um save da nuvem recarregasse a página. */
+    const catalogItems = (data.catalogChoice?.itemIds ?? [])
+      .map(id => ACTIVITY_CATALOG.find(c => c.id === id))
+      .filter((c): c is NonNullable<typeof c> => !!c);
+    if (catalogItems.length > 0) {
+      writeFlag(STORAGE_KEYS.TUTORIAL_COMPLETE, true, { silent: true });
+      setHasCompletedTutorial(true);
+    }
     // Fim do onboarding: perder isto refaz o ritual do zero. AVISA.
     writeLocal(STORAGE_KEYS.USER_NAME, data.userName);
     writeFlag(STORAGE_KEYS.ONBOARDING_COMPLETE, true);
@@ -4855,18 +4869,14 @@ export default function App() {
        mesma pergunta duas vezes. Com ≥1 atividade a home já não nasce vazia,
        então o tutorial de "crie sua 1ª tarefa" também não abre (a pergunta
        aberta de objetivo dele seria a terceira cópia da mesma pergunta). */
-    const catalogItems = (data.catalogChoice?.itemIds ?? [])
-      .map(id => ACTIVITY_CATALOG.find(c => c.id === id))
-      .filter((c): c is NonNullable<typeof c> => !!c);
     const catalogActivities = activitiesFromCatalogChoice(catalogItems, language === 'pt-BR') as unknown as Activity[];
     const newActivities: Activity[] = [...newActivitiesBase, ...catalogActivities];
+    // 01/10/2026 — o perfil do onboarding (forças + o que atrapalha) entra no
+    // save nos DOIS caminhos; quem lê é a personalidade do Soulmon.
+    const onboardingProfile = onboardingProfileFrom(data.catalogChoice);
     const catalogSeen = catalogActivities.length > 0
       ? (markCatalogOnboardingSeen({}, new Date()) as Record<string, unknown>)
       : {};
-    if (catalogActivities.length > 0) {
-      writeFlag(STORAGE_KEYS.TUTORIAL_COMPLETE, true, { silent: true });
-      setHasCompletedTutorial(true);
-    }
 
     // Modo demo (utils/monetization.ts): personagem pré-pronto, sem árvore do
     // oráculo — evolui num caminho ÚNICO (getSpriteForStage resolve o sprite
@@ -4896,6 +4906,8 @@ export default function App() {
         demoTint: data.demoTint ?? 0,
         soulGoal: data.soulGoal,
         soulStruggle: data.soulStruggle,
+        // Forças + o que atrapalha, em ids do catálogo → `derivePersonality`.
+        onboardingProfile: onboardingProfile ?? prev.onboardingProfile,
         ...catalogSeen,
         // Prova do consentimento (timestamp + versão dos documentos). Vem do
         // onboarding e entra no save — é o que sobrevive ao cloud save.
@@ -4960,6 +4972,7 @@ export default function App() {
       demoCharacterId: undefined,
       soulGoal: data.soulGoal,
       soulStruggle: data.soulStruggle,
+      onboardingProfile: onboardingProfile ?? prev.onboardingProfile,
       ...catalogSeen,
       consent: data.consent ?? prev.consent,
       petPassive: rollPetPassive(),

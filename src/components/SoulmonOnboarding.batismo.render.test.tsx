@@ -30,10 +30,10 @@ function passarPortao(pt: boolean) {
   fireEvent.click(screen.getByRole('button', { name: pt ? 'Continuar' : 'Continue' }));
 }
 
-/** Caminho demo: portão -> nome -> metas -> grátis -> ritual -> personagem -> batismo. */
+/** Caminho demo: portão -> nome -> ritual + teste -> metas -> grátis -> leitura -> personagem -> batismo. */
 async function ateOCadastro(pt: boolean, nome = 'BlueRaven') {
   passarPortao(pt);
-  atravessarPerguntasIniciais(pt, nome);
+  await atravessarPerguntasIniciais(pt, nome);
   fireEvent.click(screen.getByText(pt ? 'Começar agora — é grátis' : 'Start now — it’s free'));
   await atravessarRevealDemo(pt);
   fireEvent.click(screen.getByText(PREMADE_CHARACTERS[0].name).closest('button')!);

@@ -105,6 +105,67 @@ describe('B4/B5 (01/10/2026) — as escolhas objetivas de metas atravessam o ras
   });
 });
 
+describe('01/10/2026 — o onboarding inteiro atravessa o rascunho (retomada)', () => {
+  beforeEach(() => localStorage.clear());
+
+  it('passo, nome, as 6 do ritual, os 20 itens e o ponto de partida voltam como foram', () => {
+    writeGateDraft({
+      soulGoal: '', soulStruggle: '', consent: CONSENT,
+      step: 15, nickname: 'Ana Lua',
+      answers: { grupo: 'g1', objetivo: 'o2' },
+      testAnswers: {
+        e1: { kind: 'likert', value: 4 },
+        f1: { kind: 'forced-choice', choice: 'b' },
+        s1: { kind: 'scenario', optionId: 'x' },
+      },
+      starterOff: ['agua'],
+    });
+    const d = readGateDraft();
+    expect(d?.step).toBe(15);
+    expect(d?.nickname).toBe('Ana Lua');
+    expect(d?.answers).toEqual({ grupo: 'g1', objetivo: 'o2' });
+    expect(d?.testAnswers).toEqual({
+      e1: { kind: 'likert', value: 4 },
+      f1: { kind: 'forced-choice', choice: 'b' },
+      s1: { kind: 'scenario', optionId: 'x' },
+    });
+    expect(d?.starterOff).toEqual(['agua']);
+  });
+
+  it('rascunho ANTIGO (sem os campos novos) lê sem passo e com tudo vazio — não inventa posição', () => {
+    localStorage.setItem(STORAGE_KEYS.GATE_DRAFT, JSON.stringify({
+      v: GATE_DRAFT_VERSION, soulGoal: 'a', soulStruggle: 'b', consent: CONSENT,
+    }));
+    const d = readGateDraft();
+    expect(d?.step).toBeUndefined();
+    expect(d?.nickname).toBe('');
+    expect(d?.answers).toEqual({});
+    expect(d?.testAnswers).toEqual({});
+    expect(d?.starterOff).toEqual([]);
+  });
+
+  it('lixo nos campos novos é descartado, peça por peça', () => {
+    localStorage.setItem(STORAGE_KEYS.GATE_DRAFT, JSON.stringify({
+      v: GATE_DRAFT_VERSION, soulGoal: '', soulStruggle: '', consent: null,
+      step: 'quinze', nickname: 'x'.repeat(80),
+      answers: { grupo: 'g1', ruim: 42 },
+      testAnswers: { ok: { kind: 'likert', value: 2 }, fora: { kind: 'likert', value: 9 }, torto: 'sim', outro: { kind: 'hack' } },
+      starterOff: ['a', 3, null],
+    }));
+    const d = readGateDraft();
+    expect(d?.step).toBeUndefined();
+    expect(d?.nickname?.length).toBe(24);
+    expect(d?.answers).toEqual({ grupo: 'g1' });
+    expect(d?.testAnswers).toEqual({ ok: { kind: 'likert', value: 2 } });
+    expect(d?.starterOff).toEqual(['a']);
+  });
+
+  it('o e-mail continua fora mesmo com o nome do jogador dentro', () => {
+    writeGateDraft({ soulGoal: '', soulStruggle: '', consent: CONSENT, nickname: 'Ana', step: -10 });
+    expect(cru() ?? '').not.toContain('@');
+  });
+});
+
 describe('🔴 o storage é dado NÃO confiável', () => {
   beforeEach(() => localStorage.clear());
 

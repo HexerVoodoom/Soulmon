@@ -6,6 +6,8 @@
  * 24 pelado num alvo 44, as opções = cards 44 TONAIS (nunca placa cheia —
  * escolher avança), o campo inerte por FORMA (nunca opacidade), a bifurcação
  * com as duas portas em `outline`, o muro de idade sem alerta e sem vermelho.
+ * ⚰️ A bifurcação SAIU em 01/10/2026 (o teste longo é obrigatório para
+ * todos); o número 12 virou a tela de "tentar de novo" da geração.
  * Cada `it` é uma decisão do canvas; a régua é o DOM, não o desenho.
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -23,6 +25,15 @@ const CONSENT = { acceptedAt: '2026-09-20T10:00:00.000Z', termsVersion: '1', pri
 const QUIZ_START = 6;
 const REFINE_OFFER = QUIZ_START + ORACLE_QUESTIONS.length;
 const DEEP_START = REFINE_OFFER + 1;
+
+/** As 26 respostas (6 do ritual + 20 do teste), sempre a 1ª opção. */
+const TODAS = {
+  answers: Object.fromEntries(ORACLE_QUESTIONS.map(q => [q.id, q.options[0].id])),
+  testAnswers: Object.fromEntries(SOUL_TEST_ITEMS.map(it => [it.id,
+    it.kind === 'scenario' ? { kind: 'scenario', optionId: it.options[0].id }
+      : it.kind === 'forced-choice' ? { kind: 'forced-choice', choice: 'a' }
+        : { kind: 'likert', value: 3 }])),
+};
 
 function rascunho(step: number, extra: Record<string, unknown> = {}) {
   return {
@@ -141,22 +152,17 @@ describe('as 6 perguntas, a bifurcação e os 20 itens (D-Q4, D-Q5, D-Q12)', () 
     expect(screen.getByText('Where were you born?')).toBeTruthy();
   });
 
-  it('D-Q5: a bifurcação tem as DUAS portas em `outline`, o teste primeiro; o erro de geração é âmbar', () => {
+  it('01/10/2026: da 6ª do ritual vai-se DIRETO ao 1º item do teste — não existe mais "quer afinar a leitura?"', () => {
     writeOracleDraft(rascunho(REFINE_OFFER - 1));
     renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
     fireEvent.click(document.querySelector('button[aria-pressed]')!);
     act(() => { vi.advanceTimersByTime(200); });
-    expect(screen.getByText('Want to sharpen the reading?')).toBeTruthy();
-    const teste = btn(`Answer ${SOUL_TEST_ITEMS.length} more questions`);
-    const agora = btn('Reveal my Soulmon now');
-    expect(variante(teste)).toBe('outline');
-    expect(variante(agora)).toBe('outline');
-    expect(teste.compareDocumentPosition(agora) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(document.body.innerHTML).not.toContain('danger');
+    expect(screen.queryByText('Want to sharpen the reading?')).toBeNull();
+    expect(document.body.textContent).toContain(`Question 1 of ${SOUL_TEST_ITEMS.length}`);
   });
 
-  it('o teste de 20 itens usa o MESMO aparelho tonal, com voltar pelado do 1º item', () => {
-    writeOracleDraft(rascunho(DEEP_START, { refine: true }));
+  it('o teste de 20 itens usa o MESMO aparelho tonal, com voltar pelado do 1º item (→ 6ª do ritual)', () => {
+    writeOracleDraft(rascunho(DEEP_START));
     renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
     expect(document.body.textContent).toContain(`Question 1 of ${SOUL_TEST_ITEMS.length}`);
     const opts = [...document.querySelectorAll('button[aria-pressed]')] as HTMLButtonElement[];
@@ -164,7 +170,20 @@ describe('as 6 perguntas, a bifurcação e os 20 itens (D-Q4, D-Q5, D-Q12)', () 
     for (const o of opts) expect(o.style.border).toBe('1px solid var(--sm2-muted)');
     expect(btn('Back').className).toContain('sm2-ora-back');
     fireEvent.click(btn('Back'));
-    expect(screen.getByText('Want to sharpen the reading?')).toBeTruthy();
+    expect(document.body.textContent).toContain(`Question ${ORACLE_QUESTIONS.length} of ${ORACLE_QUESTIONS.length}`);
+  });
+
+  it('a tela 12 (rascunho antigo parado na bifurcação, ou erro de geração) tem UM primário e nunca gera com pergunta faltando', () => {
+    writeOracleDraft(rascunho(REFINE_OFFER));
+    renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
+    expect(screen.getByText('All set')).toBeTruthy();
+    expect(screen.queryByText(/choice is final/)).toBeNull();
+    const revelar = btn('Reveal my Soulmon');
+    expect(variante(revelar)).toBe('primary');
+    expect(document.body.innerHTML).not.toContain('danger');
+    // o rascunho não tem as 26 respostas: o toque leva à primeira pendente
+    fireEvent.click(revelar);
+    expect(document.body.textContent).toContain(`Question 1 of ${ORACLE_QUESTIONS.length}`);
   });
 });
 
@@ -177,9 +196,11 @@ describe('Gerando — a espera é ritual (D-Q6, D-Q11, R1, R3)', () => {
   afterEach(() => { vi.useRealTimers(); });
 
   it('o `role=status` é o casulo `forming` 128 num vidro 192² pulsando por POSIÇÃO; `sync` 24 girando; sem corvo, sem spinner de sistema', () => {
-    writeOracleDraft(rascunho(REFINE_OFFER));
+    // 01/10/2026: com as 26 já respondidas, do local de nascimento vai-se
+    // direto à geração.
+    writeOracleDraft(rascunho(4, TODAS));
     renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
-    fireEvent.click(btn('Reveal my Soulmon now'));
+    fireEvent.click(btn('Continue'));
     const status = screen.getByRole('status');
     expect(status.textContent).toContain("Revealing your soul's creature…");
     const vidro = status.querySelector('.sm2-viewport-screen') as HTMLElement;
@@ -261,21 +282,19 @@ describe('Reveal demo — 13.19 / 13.1 (D-Q8, D-Q13, X4)', () => {
   afterEach(() => { vi.useRealTimers(); });
 
   async function ateOReveal() {
-    const { responderRitualDemo } = await import('../test/ritualDemo');
+    const { esperarRevealDemo } = await import('../test/ritualDemo');
     renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
     fireEvent.click(screen.getByText('I have read and agree to the Terms of Use and the Privacy Policy'));
     fireEvent.click(screen.getByText('I am 18 or older'));
     fireEvent.click(btn('Continue'));
     const { atravessarPerguntasIniciais } = await import('../test/metasOnboarding');
-    atravessarPerguntasIniciais();
+    // 01/10/2026: as 6 do ritual (e os 20 itens) vêm ANTES da escolha
+    await atravessarPerguntasIniciais();
     fireEvent.click(btn('Start now — it’s free'));
-    // o grátis entra no ritual das 6, com voltar → a escolha
-    expect(document.body.textContent).toContain('Question 1 of 6');
-    expect(btn('Back').className).toContain('sm2-ora-back');
-    await responderRitualDemo();
+    await esperarRevealDemo();
   }
 
-  it('o grátis responde as 6 e vê a leitura com a criatura em SILHUETA (mask-image), sem Born, com "You said…"; a barra a 88 %', async () => {
+  it('o grátis vê a leitura das 6 com a criatura em SILHUETA (mask-image), sem Born, com "You said…"; a barra a 94 %', async () => {
     await ateOReveal();
     const card = screen.getByRole('region', { name: 'Birth card' });
     const sil = card.querySelector('[data-silhouette]') as HTMLElement;
@@ -285,7 +304,10 @@ describe('Reveal demo — 13.19 / 13.1 (D-Q8, D-Q13, X4)', () => {
     expect(card.querySelector('[role="img"]')?.getAttribute('aria-label')).toMatch(/, silhouette$/);
     expect(card.textContent).not.toContain('Born');
     expect(card.textContent).toContain('You said');
-    expect(screen.getByRole('progressbar', { name: 'Ritual progress' }).getAttribute('aria-valuenow')).toBe('88');
+    // A barra mede a ORDEM do caminho grátis (01/10/2026): nome + 6 + 20 +
+    // 4 metas/ponto de partida + escolha = 32 telas antes; o reveal demo é a
+    // 33ª de 35 (depois dele, personagem e batismo) → 94 %.
+    expect(screen.getByRole('progressbar', { name: 'Ritual progress' }).getAttribute('aria-valuenow')).toBe('94');
     expect(localStorage.getItem('soulmon-oracle-draft')).toBeNull();
   });
 

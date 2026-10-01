@@ -7,14 +7,18 @@
  *    sem "prefiro não responder", e ganhou forças + ponto de partida;
  *  · B6 o voltar é a seta no canto superior esquerdo (`BackArrow`);
  *  · B7 "Get your own Soulmon"; B10 sem tonalidade; B11 "Name your Soulmon".
+ * E pelo pedido seguinte do dono, no mesmo dia: as 6 do ritual e os 20 itens
+ * do teste viraram parte OBRIGATÓRIA do onboarding, entre o nome e as metas.
  */
 import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
-import { screen, fireEvent } from '@testing-library/react';
+import { screen, fireEvent, act } from '@testing-library/react';
 import { renderWithCss, installFakeStorage } from '../test/renderEnv';
 import { SoulmonOnboarding } from './SoulmonOnboarding';
 import { PREMADE_CHARACTERS } from '../utils/monetization';
 import { atravessarRevealDemo } from '../test/ritualDemo';
-import { responderNome, atravessarPerguntasIniciais } from '../test/metasOnboarding';
+import { responderNome, ateAsMetas, atravessarPerguntasIniciais, responderPerguntas } from '../test/metasOnboarding';
+import { ORACLE_QUESTIONS } from '../utils/oracle';
+import { items as SOUL_TEST_ITEMS } from '../utils/soulProfile/personality/questions';
 
 const btn = (nome: string | RegExp) => screen.getByRole('button', { name: nome }) as HTMLButtonElement;
 const variante = (b: HTMLElement) => b.style.getPropertyValue('--sm2-btn');
@@ -54,8 +58,31 @@ describe('funil grátis — identidade do canvas', () => {
     expect(screen.getByText('What should we call you?').nextElementSibling?.tagName).not.toBe('P');
   });
 
-  it('B2/B3/B5: metas objetivas, ≥1 obrigatório, sem "prefiro não responder"; seta de voltar no topo', () => {
+  it('01/10/2026: depois do nome vêm as 6 do ritual e os 20 itens, TODOS obrigatórios, sem bifurcação, com seta de voltar', async () => {
     responderNome();
+    expect(document.body.textContent).toContain(`Question 1 of ${ORACLE_QUESTIONS.length}`);
+    expect(document.querySelector('[data-back-arrow]')).toBeTruthy();
+    // voltar da 1ª pergunta devolve o nome, preenchido
+    fireEvent.click(btn('Back'));
+    expect((screen.getByLabelText('Your name') as HTMLInputElement).value).toBe('Corvo Azul');
+    fireEvent.click(btn('Continue'));
+    await responderPerguntas(ORACLE_QUESTIONS.length);
+    // sem "Quer afinar a leitura?": da 6ª do ritual vai-se direto ao 1º item
+    expect(screen.queryByText('Want to sharpen the reading?')).toBeNull();
+    expect(screen.queryByText(/Reveal my Soulmon now/)).toBeNull();
+    expect(document.body.textContent).toContain(`Question 1 of ${SOUL_TEST_ITEMS.length}`);
+    expect(document.querySelector('[data-back-arrow]')).toBeTruthy();
+    fireEvent.click(btn('Back'));
+    expect(document.body.textContent).toContain(`Question ${ORACLE_QUESTIONS.length} of ${ORACLE_QUESTIONS.length}`);
+    await responderPerguntas(1 + SOUL_TEST_ITEMS.length);
+    expect(screen.getByText('What do you want to improve?')).toBeTruthy();
+    // e das metas volta-se ao último item do teste
+    fireEvent.click(btn('Back'));
+    expect(document.body.textContent).toContain(`Question ${SOUL_TEST_ITEMS.length} of ${SOUL_TEST_ITEMS.length}`);
+  });
+
+  it('B2/B3/B5: metas objetivas, ≥1 obrigatório, sem "prefiro não responder"; seta de voltar no topo', async () => {
+    await ateAsMetas();
     expect(screen.getByText('What do you want to improve?')).toBeTruthy();
     expect(screen.queryByText(/rather not say/)).toBeNull();
     expect(document.querySelector('textarea')).toBeNull();
@@ -82,8 +109,8 @@ describe('funil grátis — identidade do canvas', () => {
     expect(screen.getByText("What's already a strength?")).toBeTruthy();
   });
 
-  it('ponto de partida: tudo vem marcado; desmarcar tudo trava o avanço', () => {
-    responderNome();
+  it('ponto de partida: tudo vem marcado; desmarcar tudo trava o avanço', async () => {
+    await ateAsMetas();
     for (let i = 0; i < 3; i++) {
       fireEvent.click(screen.getByRole('group').querySelector('button')!);
       fireEvent.click(btn('Continue'));
@@ -97,8 +124,8 @@ describe('funil grátis — identidade do canvas', () => {
     expect(screen.getByText('Your starting point')).toBeTruthy();
   });
 
-  it('B7 Escolha: grátis primário, "Get your own Soulmon" outline (sem dourado), voltar pela seta', () => {
-    atravessarPerguntasIniciais();
+  it('B7 Escolha: grátis primário, "Get your own Soulmon" outline (sem dourado), voltar pela seta', async () => {
+    await atravessarPerguntasIniciais();
     expect(variante(btn('Start now — it’s free'))).toBe('primary');
     const pago = btn(/Get your own Soulmon/);
     expect(variante(pago)).toBe('outline');
@@ -109,7 +136,7 @@ describe('funil grátis — identidade do canvas', () => {
   });
 
   it('EscolherPersonagem: os 6 de PREMADE_CHARACTERS, cada um num vidro 128² com anel, em grade 2 colunas', async () => {
-    atravessarPerguntasIniciais();
+    await atravessarPerguntasIniciais();
     fireEvent.click(btn('Start now — it’s free'));
     await atravessarRevealDemo();
     const cards = document.querySelectorAll('button[data-demo-char]');
@@ -129,7 +156,7 @@ describe('funil grátis — identidade do canvas', () => {
   });
 
   it('CadastroDemo: heroína 128 num vidro 192²; SEM tonalidade (B10); "Name your Soulmon" solto (B11); voltar aos personagens', async () => {
-    atravessarPerguntasIniciais();
+    await atravessarPerguntasIniciais();
     fireEvent.click(btn('Start now — it’s free'));
     await atravessarRevealDemo();
     fireEvent.click(screen.getByText(PREMADE_CHARACTERS[0].name).closest('button')!);
@@ -151,7 +178,7 @@ describe('funil grátis — identidade do canvas', () => {
   });
 
   it('o nome do começo vira o userName e as metas viajam em catalogChoice', async () => {
-    atravessarPerguntasIniciais(false, 'Ana Lua');
+    await atravessarPerguntasIniciais(false, 'Ana Lua');
     fireEvent.click(btn('Start now — it’s free'));
     await atravessarRevealDemo();
     fireEvent.click(screen.getByText(PREMADE_CHARACTERS[0].name).closest('button')!);
@@ -166,5 +193,62 @@ describe('funil grátis — identidade do canvas', () => {
     expect(data.catalogChoice.itemIds.length).toBeGreaterThan(0);
     expect(data.soulGoal.length).toBeGreaterThan(0);
     expect(data.soulStruggle.length).toBeGreaterThan(0);
+  });
+});
+
+describe('01/10/2026 — fechar no meio e voltar de onde parou', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-20T12:00:00Z'));
+    installFakeStorage();
+  });
+  afterEach(() => { vi.useRealTimers(); });
+
+  it('reabrir o app no meio do teste retoma na MESMA pergunta, com o nome e as respostas de volta', async () => {
+    const primeira = renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
+    passarPortao();
+    responderNome('Ana Lua');
+    await responderPerguntas(ORACLE_QUESTIONS.length + 5);
+    expect(document.body.textContent).toContain(`Question 6 of ${SOUL_TEST_ITEMS.length}`);
+    primeira.unmount();
+
+    // remonta do zero (o app foi fechado); sem auth configurada, o aceite
+    // guardado + o passo gravado bastam para retomar
+    renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    expect(document.body.textContent).toContain(`Question 6 of ${SOUL_TEST_ITEMS.length}`);
+    expect(screen.queryByText('Before we start')).toBeNull();
+    // voltar mostra a resposta anterior marcada
+    fireEvent.click(btn('Back'));
+    expect(document.querySelector('button[aria-pressed="true"]')).toBeTruthy();
+  });
+
+  it('as METAS também ficam no rascunho: reabrir nas metas traz as escolhas e o nome chega ao fim', async () => {
+    const onComplete = vi.fn();
+    const primeira = renderWithCss(<SoulmonOnboarding onComplete={onComplete} />);
+    passarPortao();
+    await ateAsMetas(false, 'Ana Lua');
+    fireEvent.click(screen.getByRole('group').querySelector('button')!);
+    fireEvent.click(btn('Continue'));
+    fireEvent.click(screen.getByRole('group').querySelector('button')!);
+    expect(screen.getByText('What gets in your way the most?')).toBeTruthy();
+    primeira.unmount();
+
+    renderWithCss(<SoulmonOnboarding onComplete={onComplete} />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    expect(screen.getByText('What gets in your way the most?')).toBeTruthy();
+    expect(document.querySelector('[role="group"] button[aria-pressed="true"]')).toBeTruthy();
+    fireEvent.click(btn('Continue'));
+    fireEvent.click(screen.getByRole('group').querySelector('button')!);
+    fireEvent.click(btn('Continue'));
+    fireEvent.click(btn('Continue'));
+    fireEvent.click(btn('Start now — it’s free'));
+    await atravessarRevealDemo();
+    fireEvent.click(screen.getByText(PREMADE_CHARACTERS[0].name).closest('button')!);
+    fireEvent.click(btn(`Hatch ${PREMADE_CHARACTERS[0].name}`));
+    const data = onComplete.mock.calls[0][0];
+    expect(data.userName).toBe('Ana Lua');
+    expect(data.catalogChoice.areas.length).toBe(1);
+    expect(data.catalogChoice.struggles.length).toBe(1);
   });
 });
