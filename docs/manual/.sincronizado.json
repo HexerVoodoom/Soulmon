@@ -1,6 +1,6 @@
 {
-  "sha": "bcfe7ca63bce204f08ba1a26d303846690536467",
-  "data": "30/09/2026",
-  "por": "doc-mantenedor (/manter-docs auto, sessão: delta 3532ccf5..bcfe7ca6 — Termos §8 + MIS-13..16)",
+  "sha": "e3d55bb82483890366c1f85ea6fe8ab1dfc694ae",
+  "data": "01/10/2026",
+  "por": "doc-mantenedor (/manter-docs auto, sessão: delta bcfe7ca6..e3d55bb8 — PRs #189–#197, rodada 3 de arte)",
   "nota": "Escrito pelo doc-mantenedor ao fechar cada sincronização. Lido por scripts/docs-delta.mjs e pelo hook de sessão. Nunca edite à mão."
 }

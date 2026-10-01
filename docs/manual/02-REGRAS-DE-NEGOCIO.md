@@ -1,7 +1,7 @@
 # Regras de negócio — todas as regras do jogo, por sistema
 
 > **Dono:** doc-redator-regras · **Data:** 30/09/2026 (delta `3532ccf5..bcfe7ca6`: §56 `TERMS_VERSION` sobe para `2026-09-30` (Termos §8, Travessias opcionais), `PRIVACY_VERSION` fica em `2026-09-22`); anterior: 30/09/2026 (delta `cfe27cc7..3532ccf5`: §43 ganha o Passeio + Travessias (implementados), `adventureOfNight` e a exceção à regra 4; §54: a Exploração volta a ter dois lotes (Masmorra + Passeio), sai o ⚠️ "nada implementado"); anterior: 30/09/2026 (delta `4a894f90..cfe27cc7`: §54 marca que "a Exploração fica só com a Masmorra" foi revertido em parte só na decisão (Passeio + Travessias), sem lote novo no código); anterior: 30/09/2026 (delta `ae366480..5edfcfba`: §5 `playerDayIso`; §12 convite ao Refúgio; §46 Bits do Ateliê; §51 `DUNGEON_BITS_FACTOR`; §53 duelo fantasma e desistência = derrota; §54 três prédios, balanço, Refúgio, apoio, anfitriões; §57 estações renomeadas; §60 consulta do entitlement; §59 D40; missões: renome de `mission-perfect-30`); anterior: 30/09/2026 (sincronização `8e6d0d9a..ae366480`: §15 lápide do renomeio, ids `harmony`; §60 NOVO Administrador/GM e o corvinho); anterior: 28/09/2026 (sincronização do delta `f465d266..cf8a851d`, PR #133: §22 — criação única e proporcional (8 regras recalibradas por medição)); anterior: 28/09/2026 (sincronização do delta `25fd3c41..f465d266`, PR #131: §22 — companheiro na bio do reveal, bio × card de classe do rookie reconciliados pelo elemento); anterior: 28/09/2026 (sincronização do delta `83a9aac6..25fd3c41`, PR #129: §22 Oráculo — o caminho (poder/harmonia/benevolencia) passa a pesar sobre o elemento, `ALIGNMENT_ELEMENT_AFFINITY` em `axes.ts`); anterior: 28/09/2026 (sincronização do delta `8110efc5..83a9aac6`, PR #127: §22 Oráculo — `pickFamilies` passou a usar `familia`/`biologia` da criatura-inspiração (antes só menção textual), cada estágio de evolução ganhou inspiração de imagem própria da linhagem, ponte de família `humanoide`↔`biologia` e o rebalanceio dos 4 bônus fixos de `scoreCreature`, teto 7→14); anterior: 27/09/2026 (sincronização do delta `c510c7e4..2336e4e7`: Oráculo — o nome da inspiração vai no prompt da 1ª tentativa (D-B1, reversão do dono) e o pool do bestiário foi cortado para 617; §17 `notified` ⚰️); anterior: 22/09/2026 (5ª sincronização do dia, delta `89554b5d..c7bca6d` (balanceamento do oráculo): §22 ganhou a lápide do degrau da criatura favorita (`FAVORITE_STEP`, `ORACLE_DRAFT_VERSION` intacta) e a tabela das quatro frentes de rebalanceamento da leitura (`DOMINANT_SCHOOL_LEAD`, `melhorArquetipo`, `ANCHOR_BASE`/`vileza`, `sombra`) mais o aviso do erro de medição de `normalizeName`. **Nenhuma regra que o jogador VIVE mudou**; anterior: 22/09/2026 (4ª sincronização do dia, delta `fadb1167..89554b5d`: **nenhuma regra de jogo mudou** — §20 ganhou a nota da capacidade DORMENTE do motor de ficha (`ElementPlan`/`ALLOC_FRACTION` em `buildSheet.ts`, sem chamador, ⏸️ parqueada para a v2.0) e a única mudança de comportamento interna: a profissão lê sempre a escala rookie automática quando há plano; anterior: 3ª sincronização do dia, delta `cd66940f..cf6315e1` (execução das 32 respostas do dono — **oito regras de jogo mudaram**): §7 a virada julga o último dia aberto + os quatro campos que ela escreve; §8 as três travas novas do dreno (#58b); §18 uma virada completa antes de re-evoluir (#59); §24 `habitCountsForHeartsOn` (#57b); **§24-A novo** — desfazer a conclusão (#57); §46 Bits por dia completo + teto de minijogo (#61/#63) e o ponteiro do modelo (#55); §48/§49 o 🌀 escreve `missionPerfectDays`; §55 os 11 eventos ganharam emissor (#59b) e a comida ficou de fora; §57-A o 🌀 saiu das conquistas (#41/#60); anterior: 2ª sincronização do dia, delta `a6c1cd8a..592e2c14`, QA Rodada 2: §46 cota de chat por tier (provisório #55); §55 `XP_PERFECT_DAY` passou a ser emitido; §7/§18/§46 ganharam só a NOTA "aberto ao dono" dos provisórios #58/#59/#61 — nenhuma regra de jogo mudou)) · **Estado:** verificado em 27/09/2026 por doc-verificador (delta `2336e4e7..8fbf6990` — pool.json medido: 630 criaturas, 13 com `_ponte`, eletricidade/marcial/sombra 5/5/5, 84 `Variado` = 55 "Venenoso" de modificador ambíguo + 29 sem modificador geográfico; símbolos dos dois scripts por grep; âncoras conferidas; `curadoria.contract.test.ts` verde); anterior: verificado em 27/09/2026 por doc-verificador (código em `78ef5367` — §7 `completeDayReached`/`diaCompletoHoje`, §17 incubação (`INCUBATION_MIN_MS`, `incubationFor`, `incubationReady`, `isIncubating`, `birthBatch` só `rookie`, `SpriteOccasion`), §20 `applyRebirth` com `emptyIncubation()`, §47 `mercadoCatalog.ts`, §49 `MissionCategory`/`MISSION_CATEGORIES`, §51 `HEART_DROP_CHANCE`, §54 `playAreaLots.ts`, §59 D3 conferidos símbolo a símbolo; corrigido: `EvoTrail.tsx` inexistente virou lápide); anterior: verificado em 22/09/2026 por doc-verificador (delta `89554b5d..c7bca6d` — `DOMINANT_SCHOOL_LEAD` = 1.15, `melhorArquetipo(lista, ficha.nome)` com `hashString` sobre a lista ordenada por `id`, `ANCHOR_BASE` = 45, `vileza` = `dev('Plutão')*0.55 + dev('Marte')*0.55`, `sombra` com a fatia água+terra ×40 e o deslocamento −20 sob `Math.max(0, …)`, e a ausência de `favoriteCreature` no `OracleInput` montado pelo `SoulmonOnboarding.tsx` — todos conferidos símbolo a símbolo no fonte; os quatro arquivos de régua conferidos por `ls`); anterior: verificado em 22/09/2026 por doc-verificador (delta `fadb1167..89554b5d` — o bloco de capacidade dormente da §20 conferido símbolo a símbolo em `src/utils/soulProfile/ficha/buildSheet.ts` (`ALLOC_FRACTION` = 0.25, `ElementPlan`, `sanitizePlan`, `allocateElementos`, `buildFicha` com `plano` como 6º parâmetro, ramo `stage === 'rookie' && !plano`) e a inércia por `grep` (nenhum chamador); `buildSheet.aloc` + `buildSheet.piso` + `arena.alocacao` + `pipeline` verdes (56 testes, fixture intocada)); anterior: verificado em 22/09/2026 por doc-verificador (delta `cd66940f..cf6315e1` — `dailyReset.ts` (`diaJulgado`, `BITS_PER_COMPLETE_DAY`, `podeEvoluirDepoisDaQueda`, `soParaCoracao`), `poopDrain.ts` (`saveDaysLived`/`returnGraceLeft`/`getPreviousForm`), `habitRhythm.ts` (`habitCountsForHeartsOn`/`isWeekClosingDay`), `currencies.ts` (`MINIGAME_BITS_PER_DAY`/`creditMinigameBits`), `missions.ts`, `specialItemUse.ts`, `completionUndo.ts` e os 11 `kind` de `bond.ts` × os emissores do `App.tsx` conferidos símbolo a símbolo; a AUSÊNCIA de `kind` de comida conferida por `grep`); anterior: verificado em 22/09/2026 por doc-verificador (delta `a6c1cd8a..592e2c14` — `_aiGuard.js` › `AI_LIMITS.chat.perAccountByTier`, `dailyReset.ts` › `awardBondXP(..., { kind: 'perfectDay' })` e os `it.todo` de `regrasDeJogo.qaRodada2.test.ts` conferidos; anterior no mesmo dia: delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §46 cortesia × reembolso (`auditRefunds`/`paidProviderOf`) e §56 versões `2026-09-22` + `qualDocMudou` conferidos símbolo a símbolo contra `_entitlements.js`, `consent.ts`, `termsNotice.ts`; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §46 cortesia, §56 aviso de termos, §57-A `dias-completos-30`/`conquistasHerdadas`, §58-A ⚰️ `SettingsModal` conferidos símbolo a símbolo; anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: §59 D31–D33 reconferidas no delta `15164e4c..7e5d0ba9` — D32 ⚰️ fechada confere com o `CLAUDE.md` no disco (cinco arquivos, S1..S16) e com `ls public/sounds`; D31 segue ABERTA (o `CLAUDE.md` ainda diz `DÍVIDA`); verificação anterior: §58-A e §59 D32–D33, delta `5ac3d351..8d318529`, som/S16 + chaves na `SettingsPage`; verificação anterior do mesmo dia: só as seções do delta `dc72579e..9875477b` — §2, §3, §8, §10, §12, §45, §48, §59 D31; verificação anterior: 21/09/2026, seções do delta `2580b73a..dc72579e` — §22, §28, §41, §43, §46, §57-A, §57-B, §59 D28–D30; doc inteiro: 10/09/2026, em duas metades)
-> **Estado:** verificado em 30/09/2026 por doc-mantenedor (delta `3532ccf5..bcfe7ca6`, só as passagens tocadas, conferidas contra o fonte em `bcfe7ca6` — `consent.ts` › `TERMS_VERSION`/`PRIVACY_VERSION`, `public/termos.html` §8 e "Last updated"/"Última atualização", `PERGUNTAS-DO-DONO.md` MIS-13..MIS-16, `REGISTRO-DE-DECISOES.md` §5.6; sem verificador independente — subagentes `doc-*` não registrados); anterior: verificado em 30/09/2026 por doc-mantenedor (delta `cfe27cc7..3532ccf5`, só as passagens tocadas, conferidas símbolo a símbolo contra o fonte em `3532ccf5` — `utils/travessias.ts`, `utils/travessiasSave.ts`, `types/travessias.ts`, `PasseioSheet.tsx`, `adventure.ts` › `adventureOfNight`, `playAreaLots.ts`, `CompanionHUD` › `walkingTo`, `GameStateContext` › `crossings`; sem verificador independente — subagentes `doc-*` não registrados); anterior: verificado em 30/09/2026 por doc-mantenedor (delta `4a894f90..cfe27cc7`, só as passagens tocadas, conferidas contra `REGISTRO-DE-DECISOES.md` §5.6, `PERGUNTAS-DO-DONO.md` EXP/MIS, `ledger/vetos.md`, bloco de 30/09 do STATUS e `EXPLORACAO_LOTS` em `src/utils/playAreaLots.ts`; sem verificador independente — subagentes `doc-*` não registrados); anterior: verificado em 30/09/2026 por doc-verificador (delta `ae366480..5edfcfba` — seções tocadas conferidas símbolo a símbolo e constante por constante contra o fonte: `playerDayIso`, `src/utils/refugio/convite.ts` (`REFUGE_INVITE_*`), `DUNGEON_BITS_FACTOR`/`DEEP_START_BASE_COST` (16), `functions/api/_duel.js` (`DUEL_*`, `duelStats`, `cheerMultiplier`), `community.js` (`duelStart`/`match`/`settleMatch`/`forfeitPending`/409), `BOLHAS_*`/`TROCA_*`/`PICROSS_*`, `supportLine.ts`, `respiracao.ts`, `areaNpcVoice.ts`, `seasons.ts`, `missions.ts`, `entitlementSync.ts`, `App.tsx` (fila do convite, auto-adoção do corvo); 2 correções R3 feitas na §51 e na §54)); anterior: verificado em 30/09/2026 por doc-mantenedor (sem verificador independente nesta sessão: verificação própria, símbolo a símbolo por `grep` contra o fonte — `_admin.js`, `gmTools.ts`, `corvoAdocao.ts`, `AreaTopBar.tsx`, `npcScale.ts`, `attributes.ts`; só as seções tocadas; delta `8e6d0d9a..ae366480`); anterior: verificado em 29/09/2026 por doc-mantenedor (sem a ferramenta Agent nesta sessão: verificação própria, símbolo a símbolo por `grep` contra o fonte — exports de `_coop.js`/`guild.js`/`_profile.js`, módulos novos de `src/`, constantes e chaves de KV; delta `38c3ccb5..b657a340`, só as seções tocadas; `docsManual`/`docsSemMentira` verdes); anterior: verificado em 28/09/2026 por doc-verificador (delta `f465d266..cf8a851d` — passagens tocadas conferidas contra o fonte e contra as medições do PR; anterior: verificado em 28/09/2026 por doc-verificador (delta `25fd3c41..f465d266` — passagens tocadas conferidas símbolo a símbolo contra o fonte; anterior: verificado em 28/09/2026 por doc-verificador (delta `83a9aac6..25fd3c41` — §22 conferido símbolo a símbolo contra `src/utils/soulProfile/axes.ts` (`ALIGNMENT_ELEMENT_AFFINITY`, `FAVORECIDO`/`DIFICULTADO`, `dominantAlignment` movido para antes de `realms`) e `alinhamentoElemento.test.ts`); anterior: verificado em 28/09/2026 por doc-verificador (delta `8110efc5..83a9aac6` — §22 conferido símbolo a símbolo contra `src/utils/oracle.ts` (`bestiaryFamilyIds`, `bestiaryFamilyHint`, `bestiaryLineageNomes`) e `src/utils/soulProfile/bestiary/select.ts` (`FAMILIA_BONUS`/`BIOMA_BONUS`/`HOSTILIDADE_BONUS`/`TAMANHO_BONUS`, ponte `humanoide`↔`biologia`); anterior: verificado em 27/09/2026 por doc-verificador (delta `8fbf6990..1d9e278d`).
+> **Estado:** verificado em 01/10/2026 por doc-verificador (delta `bcfe7ca6..e3d55bb8`, só as passagens tocadas, conferidas símbolo a símbolo contra o fonte em `e3d55bb8` — `currencies.ts` › `CURRENCIES.emblems.name`, `DinoGame.tsx` › `OBSTACLE_TIERS`, `missions.ts`, `dungeonScenes.ts` › `DUNGEON_SCENES`, `adventureArt.ts`, `REGISTRO-DE-DECISOES.md` §17); anterior: verificado em 30/09/2026 por doc-mantenedor (delta `3532ccf5..bcfe7ca6`, só as passagens tocadas, conferidas contra o fonte em `bcfe7ca6` — `consent.ts` › `TERMS_VERSION`/`PRIVACY_VERSION`, `public/termos.html` §8 e "Last updated"/"Última atualização", `PERGUNTAS-DO-DONO.md` MIS-13..MIS-16, `REGISTRO-DE-DECISOES.md` §5.6; sem verificador independente — subagentes `doc-*` não registrados); anterior: verificado em 30/09/2026 por doc-mantenedor (delta `cfe27cc7..3532ccf5`, só as passagens tocadas, conferidas símbolo a símbolo contra o fonte em `3532ccf5` — `utils/travessias.ts`, `utils/travessiasSave.ts`, `types/travessias.ts`, `PasseioSheet.tsx`, `adventure.ts` › `adventureOfNight`, `playAreaLots.ts`, `CompanionHUD` › `walkingTo`, `GameStateContext` › `crossings`; sem verificador independente — subagentes `doc-*` não registrados); anterior: verificado em 30/09/2026 por doc-mantenedor (delta `4a894f90..cfe27cc7`, só as passagens tocadas, conferidas contra `REGISTRO-DE-DECISOES.md` §5.6, `PERGUNTAS-DO-DONO.md` EXP/MIS, `ledger/vetos.md`, bloco de 30/09 do STATUS e `EXPLORACAO_LOTS` em `src/utils/playAreaLots.ts`; sem verificador independente — subagentes `doc-*` não registrados); anterior: verificado em 30/09/2026 por doc-verificador (delta `ae366480..5edfcfba` — seções tocadas conferidas símbolo a símbolo e constante por constante contra o fonte: `playerDayIso`, `src/utils/refugio/convite.ts` (`REFUGE_INVITE_*`), `DUNGEON_BITS_FACTOR`/`DEEP_START_BASE_COST` (16), `functions/api/_duel.js` (`DUEL_*`, `duelStats`, `cheerMultiplier`), `community.js` (`duelStart`/`match`/`settleMatch`/`forfeitPending`/409), `BOLHAS_*`/`TROCA_*`/`PICROSS_*`, `supportLine.ts`, `respiracao.ts`, `areaNpcVoice.ts`, `seasons.ts`, `missions.ts`, `entitlementSync.ts`, `App.tsx` (fila do convite, auto-adoção do corvo); 2 correções R3 feitas na §51 e na §54)); anterior: verificado em 30/09/2026 por doc-mantenedor (sem verificador independente nesta sessão: verificação própria, símbolo a símbolo por `grep` contra o fonte — `_admin.js`, `gmTools.ts`, `corvoAdocao.ts`, `AreaTopBar.tsx`, `npcScale.ts`, `attributes.ts`; só as seções tocadas; delta `8e6d0d9a..ae366480`); anterior: verificado em 29/09/2026 por doc-mantenedor (sem a ferramenta Agent nesta sessão: verificação própria, símbolo a símbolo por `grep` contra o fonte — exports de `_coop.js`/`guild.js`/`_profile.js`, módulos novos de `src/`, constantes e chaves de KV; delta `38c3ccb5..b657a340`, só as seções tocadas; `docsManual`/`docsSemMentira` verdes); anterior: verificado em 28/09/2026 por doc-verificador (delta `f465d266..cf8a851d` — passagens tocadas conferidas contra o fonte e contra as medições do PR; anterior: verificado em 28/09/2026 por doc-verificador (delta `25fd3c41..f465d266` — passagens tocadas conferidas símbolo a símbolo contra o fonte; anterior: verificado em 28/09/2026 por doc-verificador (delta `83a9aac6..25fd3c41` — §22 conferido símbolo a símbolo contra `src/utils/soulProfile/axes.ts` (`ALIGNMENT_ELEMENT_AFFINITY`, `FAVORECIDO`/`DIFICULTADO`, `dominantAlignment` movido para antes de `realms`) e `alinhamentoElemento.test.ts`); anterior: verificado em 28/09/2026 por doc-verificador (delta `8110efc5..83a9aac6` — §22 conferido símbolo a símbolo contra `src/utils/oracle.ts` (`bestiaryFamilyIds`, `bestiaryFamilyHint`, `bestiaryLineageNomes`) e `src/utils/soulProfile/bestiary/select.ts` (`FAMILIA_BONUS`/`BIOMA_BONUS`/`HOSTILIDADE_BONUS`/`TAMANHO_BONUS`, ponte `humanoide`↔`biologia`); anterior: verificado em 27/09/2026 por doc-verificador (delta `8fbf6990..1d9e278d`).
 > **Verificação:** `npx vitest run src/utils src/types src/hooks` — cada sistema abaixo declara a sua régua própria na linha **Régua**. Números medidos trazem o comando na própria linha.
 > **Não cobre:** o porquê estratégico e as linhas vermelhas (→ [`01-VISAO.md`](01-VISAO.md)), telas e navegação (→ `03-FLUXO-DE-TELAS.md`), função por função (→ `06-REFERENCIA/`), formato do save (→ `07-DADOS-E-SAVE.md`), infraestrutura de push, deploy e API (→ `08-INTEGRACOES-E-DEPLOY.md`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -75,7 +75,7 @@ no primeiro commit, o símbolo se reencontra por `grep`.
 [51. Masmorra](#masmorra) ·
 [52. Bestiário](#bestiario) ·
 [53. Torneio: rodada, faixas e Arena](#torneio) ·
-[54. Minijogos: PPT e Dino](#minijogos) ·
+[54. Minijogos: PPT e Corrida com obstáculos](#minijogos) ·
 [55. Vínculo e o gate de PvP](#vinculo) ·
 [56. Comunidade e cooperativo](#comunidade) · [56-A. A Guilda](#guilda) ·
 [57. Estações](#estacoes) ·
@@ -844,7 +844,7 @@ DEVOLVE algo) continua valendo.
 contexto do `/api/chat` — como INTEIRO de 0 a 4 (`ctx.moodToday`), nunca texto; e a
 **condição do convite ao Refúgio** (abaixo), que só LÊ o humor do dia e nunca o cita.
 É a decisão "humor nunca vira pontuação, mas pode alimentar a FALA". O check-in
-também conta para a missão semanal `mood-checkins` (alvo 3, 2 Emblemas,
+também conta para a missão semanal `mood-checkins` (alvo 3, 2 de Honra,
 `src/utils/weeklyMissions.ts`) — moeda que só compra cosmético ([§50](#missoes-semanais)).
 
 **O convite ao Refúgio (30/09/2026).** Com o humor registrado HOJE em 1 ou 2
@@ -1542,7 +1542,7 @@ escola, elemento, at, fromStage }`. ⚰️ Até 22/09/2026 eram cinco. A incuba�
 zera porque o `perfectDays` preservado deixa o renascido apto na hora e o
 `since` do champion da vida anterior liberaria a primeira evolução sem espera
 ([§17](#evolucao)). Passam intactos
-pelo spread: Bits, Emblemas, Créditos, decoração, cenários, sonhos,
+pelo spread: Bits, Honra, Créditos, decoração, cenários, sonhos,
 `habitRhythms`, `perfectDays`, `totalPerfectDays`, `unlockedEvolutions`,
 tarefas, hábitos, `bornAt`.
 
@@ -3633,7 +3633,7 @@ raridade".
 `ls src/assets/soulmon/adventures | wc -l` → 24; (b) o comentário do
 `src/components/DailyReportModal.tsx` afirma que a cobertura de `ADVENTURE_ART`
 é parcial ("as 12 cenas comuns"), quando o mapa cobre as 24. O `? :` de fallback
-para o emoji continua correto e deve ficar — bundle antigo pode não ter a arte.
+para o emoji continua correto e deve ficar — bundle antigo pode não ter a arte. Desde 30/09/2026 (rodada 3) `ADVENTURE_ART` também carrega os **48** postais das Travessias (`trv-<região>-<nome>`, glob `adv-trv-*.png`): `ls src/assets/soulmon/adventures | grep -c '^adv-trv'` → 48 (medido em 01/10/2026), e dois postais ganharam `bgId` próprio (`bg-campina`, `bg-cavernas`) em `src/data/travessiasCatalog.ts`.
 
 **O que NÃO faz.** Não paga Bits, item, atributo nem XP. Não usa `Math.random`.
 O diário não mostra silhueta do que falta (isso é o Dex de Sonhos, onde a coleção
@@ -3677,7 +3677,7 @@ settleNight(s, dayKey): se nenhuma região abriu nesta noite e há "Fiz" guardad
   (R-33, há teste), e `adventure.ts` não lê Travessia. Os achados de região também
   não pagam nada e também são determinísticos por dia.
 - **O que NÃO faz**: nenhum sistema do núcleo (meta, HP, `perfectDays`, evolução,
-  Vínculo, missões, Bits, Emblemas) importa `utils/travessias.ts`; nada fora do app
+  Vínculo, missões, Bits, Honra) importa `utils/travessias.ts`; nada fora do app
   (push, widget, overlay, desktop) fala de Travessia/Passeio; a folha nunca mostra
   contagem de regiões, total, percentual, prazo, prêmio nem a palavra "desafio".
 - **Save**: `GameState.crossings` (só ids, enum, `dayKey` e o booleano `hidden`),
@@ -3897,15 +3897,15 @@ tem um campo próprio, e são três campos distintos (há teste contando o conju
 
 | Moeda | `field` | Origem | Onde gasta | Onde mora |
 |---|---|---|---|---|
-| 💠 Bits | `gamePoints` | **dia completo (100/dia)** + minijogos (Dino, PPT, Masmorra, Arena e os cinco do Ateliê da Mente — [§54](#minijogos)), estes com teto de **150/dia** (um teto só, compartilhado; a Masmorra paga ×`DUNGEON_BITS_FACTOR`, [§51](#masmorra)) | loja comum, `deepStartCost` da masmorra | save do cliente |
-| 🎖️ Emblemas | `emblems` | Torneio (`EMBLEMS_PER_WIN` / `EMBLEMS_PER_LOSS`) e missões semanais | só `TOURNAMENT_ITEMS` | save do cliente |
+| 💠 Bits | `gamePoints` | **dia completo (100/dia)** + minijogos (Corrida com obstáculos, PPT, Masmorra, Arena e os cinco do Ateliê da Mente — [§54](#minijogos)), estes com teto de **150/dia** (um teto só, compartilhado; a Masmorra paga ×`DUNGEON_BITS_FACTOR`, [§51](#masmorra)) | loja comum, `deepStartCost` da masmorra | save do cliente |
+| 🎖️ Honra (EN *Honor*; ⚰️ o rótulo era "Emblemas" / "Emblems" até 30/09/2026 — `REGISTRO-DE-DECISOES.md` §17) | `emblems` | Torneio (`EMBLEMS_PER_WIN` / `EMBLEMS_PER_LOSS`) e missões semanais | só `TOURNAMENT_ITEMS` | save do cliente |
 | 💎 Créditos | `credits` | **dinheiro real** (ou anúncio, ver abaixo) | reroll, câmbio por Bits, `accountTier:'paid'` | servidor, `ENT_PREFIX` + saveId |
 
 Constantes, todas em `src/utils/currencies.ts` salvo indicação:
 
 | Constante | Valor | O que faz |
 |---|---|---|
-| `EMBLEMS_PER_WIN` | 3 | Emblemas por vitória de partida do Torneio |
+| `EMBLEMS_PER_WIN` | 3 | de Honra por vitória de partida do Torneio |
 | `EMBLEMS_PER_LOSS` | 1 | consolo — jogar sempre rende alguma coisa |
 | `BITS_PER_COMPLETE_DAY` (`src/utils/dailyReset.ts`) | 100 | 💠 creditados pela virada a cada **dia completo** (#61/#63, 22/09/2026). Sem teto próprio: o teto é o calendário |
 | `MINIGAME_BITS_PER_DAY` | 150 | teto de 💠 que **os minijogos** podem render num dia do jogador (#61/#63). Ledger `minigameBits {day, earned}` no save |
@@ -4015,7 +4015,7 @@ vez de cobrar de novo.
 
 **A distinção visual é regra de produto, não estilo.** Bits em família de
 calculadora (`bitsStyle`, `--sm2-font-mono` + `slashed-zero` + `tabular-nums`) e
-**sem ícone nenhum** — a ausência de ícone É a distinção. Emblemas em serifa de
+**sem ícone nenhum** — a ausência de ícone É a distinção. Honra (`emblems`) em serifa de
 medalha (`emblemStyle`, `--sm2-font-serif`, `EMBLEM_COLOR`). Créditos com o
 ícone `diamond` e `CREDIT_COLOR`. A tinta dos Bits é `--sm2-primary-ink`, e
 isso é **decisão do canvas Loja** (`DECISOES-WIREFRAME.md` §26, D-L11, checkpoint
@@ -4054,10 +4054,10 @@ continua sendo a cota por tier de `_aiGuard.js` (logo acima). Este § descreve
 moedas; a receita não é moeda.
 
 **Casos de borda.**
-- **Emblemas são farmáveis por quem editar o `localStorage`**, e isso é aceito
+- **A Honra é farmável por quem editar o `localStorage`**, e isso é aceito
   *enquanto* a aba de Torneio vender só `bg`/`furniture`. Há teste travando o
   `kind` de todo `TOURNAMENT_ITEMS`; se ele cair, a resposta certa não é
-  afrouxá-lo — é mover os Emblemas para o servidor, junto dos Créditos.
+  afrouxá-lo — é mover a Honra para o servidor, junto dos Créditos.
 - **Dois toques no mesmo lote do React** não cobram duas vezes: a recusa é
   reconferida sobre o `prev` (ver [§47](#loja)).
 - **Anúncio**: o teto é do servidor (`grantAdReward` zera `adCount` por
@@ -4066,14 +4066,14 @@ moedas; a receita não é moeda.
 - **`bitsStyle` e `bitsStyleLight` são idênticos de propósito** — o par existe
   porque a cor era escolhida à mão por tema, e os dois exports têm call-site.
 
-**O que NÃO faz.** Não converte Bits em Créditos. Não deixa Emblema comprar na
+**O que NÃO faz.** Não converte Bits em Créditos. Não deixa a Honra comprar na
 loja comum nem Bits comprar na aba de Torneio (`shopBalanceFor` lê a moeda do
 item). Não guarda o saldo de Créditos no save como verdade — o `credits` do
 `GameState` é espelho do servidor. Não usa o mesmo ícone para duas moedas.
 
 **Onde a UI mostra.** `src/components/mercado/MercadoSheets.tsx` (saldo da moeda do segmento
 + os três botões de câmbio), `src/components/nav/MapPage.tsx` (o saldo das
-3 moedas no topo do Mapa; ⚰️ a `ActivitiesPage` mostrava Bits até a minimal-ui F5), `src/components/TournamentPage.tsx` (Emblemas e o `+3`/`+1` do fim da
+3 moedas no topo do Mapa; ⚰️ a `ActivitiesPage` mostrava Bits até a minimal-ui F5), `src/components/TournamentPage.tsx` (Honra e o `+3`/`+1` do fim da
 partida), `src/components/CreditsModal.tsx` (pacotes, anúncio, custo do reroll).
 
 ---
@@ -4094,7 +4094,7 @@ jogo além dos três chips de atributo.
 | chips de atributo (`kind:'chip'`) | 3 | 120 |
 | decoração (`kind:'furniture'`) | 27 | 100–140 |
 | cenários (`kind:'bg'`) | 26 | 1 grátis (`bg-room`, `price: 0`) · 19 entre 150 e 250 · 6 travados por missão a 300 |
-| `TOURNAMENT_ITEMS` (aba Torneio) | 8 | 8/12/15/20/25/40/55/70 **Emblemas** |
+| `TOURNAMENT_ITEMS` (aba Torneio) | 8 | 8/12/15/20/25/40/55/70 de **Honra** |
 | `ALL_SHOP_ITEMS` | 64 | catálogo inteiro |
 
 `ALL_SHOP_ITEMS` é o que se usa para **resolver** um item por id. Procurar só em
@@ -4165,11 +4165,11 @@ abas por moeda, e **Conquistas**. A vitrine é repartida por
 `src/utils/mercadoCatalog.ts` (não é catálogo novo — itens e preços seguem em
 `shop.ts`): `STALL_CURRENCIES` dá as abas de cada lojinha (Itens: Bits +
 Créditos, onde Créditos é só a troca `BITS_EXCHANGE` e `stallItems` devolve
-lista vazia; Decoração e Background: Bits + Emblemas); `stallItems` lista só
-itens do `kind` da lojinha **cobrados na moeda da aba**; na aba de Emblemas só
+lista vazia; Decoração e Background: Bits + Honra); `stallItems` lista só
+itens do `kind` da lojinha **cobrados na moeda da aba**; na aba de Honra só
 cosmético (`isCosmetic` = `bg`/`furniture`); e `isNeverForSale` tira da vitrine
 o coraçãozinho e o 🌀 mesmo que voltem ao catálogo. `tournamentShopItems` é a
-loja de Emblemas do Torneio, com o mesmo filtro. A loja de Emblemas (`TOURNAMENT_ITEMS`) mora
+loja de Honra do Torneio, com o mesmo filtro. A loja de Honra (`TOURNAMENT_ITEMS`) mora
 no Torneio da área Arena. ⚰️ Antes: `ShopModal` com dois segmentos
 (`ShopSegment`) aberto pela barra inferior.
 
@@ -4287,7 +4287,7 @@ mochila, e é dela que se usa — ⚰️ antes a pastinha `ItemsWindow`), `src/c
 
 Cada missão tem `category: MissionCategory` (`'evolution' | 'dungeon' | 'games' |
 'constancy'`, em `MISSION_CATEGORIES`): as duas de estágio são `evolution`, kills
-e runs são `dungeon`, o Dino é `games`, `mission-perfect-30` é `constancy` (⚰️ o nome era "Constância Perfeita" / "Perfect Consistency"; desde 30/09/2026 é `Trinta Dias Completos` / `Thirty Full Days` — o `id` não mudou). É
+e runs são `dungeon`, a Corrida com obstáculos (`mission-dino-1000`) é `games`, `mission-perfect-30` é `constancy` (⚰️ o nome era "Constância Perfeita" / "Perfect Consistency"; desde 30/09/2026 é `Trinta Dias Completos` / `Thirty Full Days` — o `id` não mudou). É
 dado da missão, não da tela — missão sem categoria não compila — e é o filtro da
 folha de Conquistas do Mercado (minimal-ui F5).
 
@@ -4331,7 +4331,7 @@ inglês, como o resto daquele arquivo).
 - **Item sem `unlock` está sempre liberado** (`isShopItemUnlocked` devolve `true`
   no primeiro `if`).
 
-**O que NÃO faz.** Não paga Bits, Emblemas nem Créditos. Não repete: cumprida,
+**O que NÃO faz.** Não paga Bits, Honra nem Créditos. Não repete: cumprida,
 acabou — é justamente essa finitude que motivou as missões semanais
 ([§50](#missoes-semanais)). Não some da loja quando travada. ⚰️ **Não tem aba
 própria**: a aba Missões da loja não existe mais (a explicação passou a ficar na
@@ -4348,7 +4348,7 @@ moeda).
 ## 50. 🗓️ Missões semanais
 
 **Em uma frase.** Três objetivos por semana, sorteados de um pool de doze de
-forma determinística, pagos em Emblemas — e **nenhum deles premia quantidade de
+forma determinística, pagos em Honra — e **nenhum deles premia quantidade de
 tarefa**.
 
 **A regra.** `src/utils/weeklyMissions.ts`. O pool tem **12** entradas
@@ -4359,7 +4359,7 @@ Determinismo não é elegância: **é a diferença entre uma missão e um sortei
 a lista mudasse a cada abertura, a pessoa aprenderia a reabrir o app até cair uma
 fácil.
 
-O pool inteiro, com alvo e pagamento em Emblemas: `rest-nights` 3/3 ·
+O pool inteiro, com alvo e pagamento em Honra: `rest-nights` 3/3 ·
 `checkins` 4/3 · `haunted-done` 1/4 · `dungeon-runs` 2/3 · `rub-days` 4/2 ·
 `shower` 3/2 · `play-days` 3/2 · `mood-checkins` 3/2 · `dream-new` 1/4 ·
 `evolve-view` 1/2 · `tournament-match` 2/3 · `friend-visit` 1/2.
@@ -4386,7 +4386,7 @@ quando o retorno é zero. Pagar duas vezes é bug de economia.
 `src/App.tsx` → `contarMissao` / `resgatarMissao` / `missoesDaSemana` (a fiação).
 
 **Régua.** `src/utils/weeklyMissions.test.ts` (determinismo, o pool sem contagem
-de tarefas, recompensa só em Emblemas, pagamento único) e
+de tarefas, recompensa só em Honra, pagamento único) e
 **`src/utils/weeklyMissions.fiacao.test.ts`** — guard de FIAÇÃO: exige um
 `contarMissao('<id>')` no `App.tsx` para **toda** missão do pool, exige que
 `bumpWeekly` apareça uma vez só, e exige que a lista chegue ao segmento Torneio
@@ -4394,7 +4394,7 @@ das lojinhas do Mercado (⚰️ `ShopModal`).
 
 **Decisão.** WP4.7. Até 06/09/2026 o módulo tinha **zero consumidores** — a
 terceira repetição do padrão do `bestiary` e das estações. O custo era de
-economia: os oito `TOURNAMENT_ITEMS` somam **245** Emblemas e
+economia: os oito `TOURNAMENT_ITEMS` somam **245** de Honra e
 `EMBLEMS_PER_WIN` = 3, o que dá **82** partidas ganhas — depois disso a moeda do
 Torneio nunca mais compra nada. As missões semanais são a torneira e o ralo ao mesmo
 tempo.
@@ -4411,7 +4411,7 @@ tempo.
   `prev` — nunca grava progresso num balde sem nome.
 
 **O que NÃO faz.** Não paga Bits (a economia já tem sumidouro) nem Créditos
-(dinheiro real não se ganha jogando). Não expira o Emblema já pago. Não muda a
+(dinheiro real não se ganha jogando). Não expira a Honra já paga. Não muda a
 lista quando o app reabre.
 
 **Onde a UI mostra.** `src/components/TournamentPage.tsx`, aba **Missões** da folha
@@ -4476,7 +4476,7 @@ que a masmorra toca a barra de corações, e sempre para cima.
 
 **Cenários.** `buildRunScenes(5)` (`src/utils/dungeonScenes.ts`) embaralha um
 pool de **34** cenas e tira 5 sem repetir, uma por run: **13** pintadas
-(`SPIRIT_BG_SCENES`) + **5** clássicas em CSS (`DUNGEON_SCENES`) + **16** cenários
+(`SPIRIT_BG_SCENES`) + **5** clássicas pintadas (`DUNGEON_SCENES`; ⚰️ até 30/09/2026 eram gradientes em CSS — Retro Pet, Fita VHS, Sol Neon, Terminal CRT e Vazio Glitch, hoje Jardim Flutuante, Terraço dos Dois Sóis, Observatório Partido, Lago-Espelho e Arquipélago Fraturado) + **16** cenários
 da loja (`SHOP_BG_ACCENTS`, filtrados por existirem em `PET_BACKGROUNDS`).
 Contagens medidas em 09/09/2026 com
 `sed -n '/^const SPIRIT_BG_SCENES/,/^];/p' src/utils/dungeonScenes.ts | grep -c 'namePt:'`
@@ -4660,7 +4660,7 @@ sempre com piso em 0. O ranking é o top **50** da season; `season` é
 protegido por `SEASON_ADMIN_KEY` e **idempotente** por `closed:<season>`, porque
 quem chama é um cron e cron repete.
 
-Os Emblemas do jogador vêm do CLIENTE (`onEarnEmblems` com `EMBLEMS_PER_WIN` /
+A Honra do jogador vem do CLIENTE (`onEarnEmblems` com `EMBLEMS_PER_WIN` /
 `EMBLEMS_PER_LOSS`), não do servidor — ver [§46](#moedas).
 
 ### A Arena
@@ -4705,7 +4705,7 @@ do Torneio em DIAS, nunca horas", pelo Community Day do Pokémon GO).
   ação, inclusive as GET destrutivas (`trophies?claim=1`, `gifts?claim=1`).
 - **`id === oppSave`** devolve `400 cannot fight yourself`.
 - **Cliente antigo** (sem `duelStart`): `match` abre e fecha numa chamada só, com semente sorteada no servidor; `forfeit` sem duelo aberto devolve `409 no open duel`.
-- **Torcida forjada** rende o mesmo que timing perfeito (teto `DUEL_PERFECT_MULT` por golpe) — aceitável enquanto Emblemas forem só cosméticos (STATUS 30/09/2026).
+- **Torcida forjada** rende o mesmo que timing perfeito (teto `DUEL_PERFECT_MULT` por golpe) — aceitável enquanto a Honra for só cosmética (STATUS 30/09/2026).
 - **Oponente com PvP desligado** devolve `404 opponent unavailable` — o saveId
   dele nunca sai do servidor (o cliente conhece só o pid público).
 - **200 com corpo que não é JSON** é FALHA, não sucesso vazio. Era
@@ -4732,19 +4732,19 @@ pelo lote Duelo da área Arena — `DueloSheet`; ⚰️ antes, da `ActivitiesPag
 ---
 
 <a id="minijogos"></a>
-## 54. 🎮 Minijogos: PPT, Dino e os três prédios de Jogos
+## 54. 🎮 Minijogos: PPT, Corrida com obstáculos e os três prédios de Jogos
 
 **Em uma frase.** Dois jogos curtos que pagam Bits e não tocam em mais nada do
-jogo — exceto o recorde do Dino, que alimenta uma missão permanente.
+jogo — exceto o recorde da Corrida com obstáculos (`dinoBest`), que alimenta uma missão permanente.
 
 **A regra.**
 
 | Jogo | Regra | Pagamento |
 |---|---|---|
 | ✊ PPT (`src/components/RPSGame.tsx`) | pedra-papel-tesoura contra o pet; primeiro a 3 rodadas leva a partida | `MATCH_POINTS` = **5 Bits por vitória de partida** — plano e modesto, porque o jogo é de sorte |
-| 🦖 Dino (`src/components/DinoGame.tsx`) | corrida lateral; o score cresce `dt × 10` e os obstáculos endurecem com o tempo | `floor(score / 100)` Bits por run |
+| 🏃 Corrida com obstáculos (EN *Obstacle Run*; ⚰️ até 30/09/2026 "Corrida do Dino" / "Dino Runner"; `src/components/DinoGame.tsx`) | corrida lateral; o score cresce `dt × 10` e os obstáculos endurecem com o tempo — ossos e cristais de fogo frio, 4 faixas de tamanho (`OBSTACLE_TIERS`, entram aos 0/20/45/75 s) com 3 variantes cada, sorteadas no spawn, cada uma com a própria caixa de colisão medida | `floor(score / 100)` Bits por run |
 
-O Dino também chama `onScore(score)` → `handleDinoScore` no `src/App.tsx`, que
+A Corrida com obstáculos também chama `onScore(score)` → `handleDinoScore` no `src/App.tsx`, que
 grava `dinoBest` no `GameState` **só quando o score supera o anterior**. É esse
 campo que alimenta `mission-dino-1000` ([§49](#missoes)).
 
@@ -4752,10 +4752,10 @@ campo que alimenta `mission-dino-1000` ([§49](#missoes)).
 `src/components/DinoGame.tsx` (o laço e a conversão score→Bits) · `src/App.tsx`
 → `handleDinoScore` (o recorde).
 
-**Régua.** `régua: nenhuma` para a fórmula do PPT e do Dino — não há teste próprio de `RPSGame` nem de
+**Régua.** `régua: nenhuma` para a fórmula do PPT e da Corrida com obstáculos — não há teste próprio de `RPSGame` nem de
 `DinoGame`. O que é coberto é a ponta de fora: `src/utils/missions.test.ts`
 (o alvo de `dinoBest`), `src/utils/currencies.test.ts` (a moeda) e, desde 30/09/2026,
-`src/utils/mente/balanco.test.ts` (Bits/min do Dino e do PPT dentro da faixa, ver abaixo). ⚠️ O laço de
+`src/utils/mente/balanco.test.ts` (Bits/min da Corrida com obstáculos e do PPT dentro da faixa, ver abaixo). ⚠️ O laço de
 jogo e a fórmula de pagamento **não têm régua executável** — item para o
 [`STATUS.md`](../STATUS.md).
 
@@ -4763,10 +4763,10 @@ jogo e a fórmula de pagamento **não têm régua executável** — item para o
 os minijogos são fonte de Bits e nada mais; a moeda nunca compra progresso.
 
 **Casos de borda.**
-- **Score abaixo de 100 no Dino** rende `pts === 0`, e nesse caso o som de
+- **Score abaixo de 100 na Corrida com obstáculos** rende `pts === 0`, e nesse caso o som de
   conclusão **não toca** (corte C-6 do run `som-01`): celebrar um resultado que
   não pagou nada é celebrar nada.
-- **Vencer não soa como tarefa concluída** (corte **C-11**, decisão do dono, 30/09/2026): Dino e PPT perderam o `playTaskComplete` — pela R-CAT a categoria vem do EVENTO, e vencer minijogo não é concluir tarefa. Ficam mudos até existir a categoria `arcade` (em aberto). Régua: `src/utils/cortes.contract.test.ts`.
+- **Vencer não soa como tarefa concluída** (corte **C-11**, decisão do dono, 30/09/2026): a Corrida com obstáculos e o PPT perderam o `playTaskComplete` — pela R-CAT a categoria vem do EVENTO, e vencer minijogo não é concluir tarefa. Ficam mudos até existir a categoria `arcade` (em aberto). Régua: `src/utils/cortes.contract.test.ts`.
 - **`dinoBest` reconciliado com o `localStorage`** (`STORAGE_KEYS.DINO_BEST`) na
   leitura, com `Math.max` — save de nuvem e recorde local não se anulam.
 
@@ -4776,14 +4776,14 @@ evolução. Nenhum dos dois tem limite diário. Nenhum dos dois dropa item.
 **Onde a UI mostra.** os lotes das áreas Exploração e Jogos (`src/components/play/PlaySheets.tsx`,
 minimal-ui F5; ⚰️ antes, os cards da `ActivitiesPage`) e as telas próprias de cada jogo.
 Os lotes vêm de `src/utils/playAreaLots.ts`. ⚰️ Até 30/09/2026 a Exploração tinha
-Masmorra + Corrida do Dino e Jogos tinha só o PPT. **Desde 30/09/2026 (decisão do
+Masmorra + Corrida (então "do Dino") e Jogos tinha só o PPT. **Desde 30/09/2026 (decisão do
 dono, `REGISTRO-DE-DECISOES.md` §5.6)** Jogos tem **três prédios** e a Exploração tem
 **dois lotes**: a **Masmorra** e, desde `3532ccf5`, o **Passeio** (`passeio`, EN "Stroll" —
 [§43](#aventura); ⚰️ entre os dois merges do mesmo dia a Masmorra foi o lote único):
 
 | Prédio (lote) | Jogos | Paga |
 |---|---|---|
-| **Salão de Jogos** (`salao`) | Corrida do Dino + PPT — as regras acima, intactas | como acima |
+| **Salão de Jogos** (`salao`) | Corrida com obstáculos + PPT — as regras acima, intactas | como acima |
 | **Ateliê da Mente** (`mente`) | Eco do Pet (`utils/mente/eco.ts`), Bolhas do Sonho no modo foco (`utils/mente/bolhas.ts`), Troca de Regra (`utils/mente/troca.ts`), Nonograma da Malha (`utils/mente/picross.ts`, um desenho do dia por `todayKey`) e Revisão da Malha (`utils/mente/revisao.ts`, cartões do jogador em Leitner, no save como `GameState.review`) | Bits pelo MESMO funil `handleEarnGamePoints` (teto `MINIGAME_BITS_PER_DAY`); os tetos por rodada são constantes dos donos (`ECO_MAX_BITS` 10, `BOLHAS_MAX_BITS` 8, `TROCA_MAX_BITS` 6, Picross por tamanho `PICROSS_BITS_BY_SIZE` 3/6/12 + `PICROSS_DAILY_BONUS` 5 uma vez por dia, `REVIEW_SESSION_BITS` 5); a faixa de Bits/minuto é travada por `src/utils/mente/balanco.test.ts` ([`BALANCO-MINIJOGOS.md`](../BALANCO-MINIJOGOS.md)) |
 | **Refúgio** (`refugio`) | Respirar com o Soulmon (`utils/refugio/respiracao.ts`) e Bolhas calmas (Bolhas no modo `calma`) | **nada** — não paga, não pontua, não mede; mostra o aviso de ajuda profissional |
 
@@ -5073,7 +5073,7 @@ cliente, não verificações do servidor: recalcular a meta do dia ali exigiria 
 segunda cópia de `dailyGoalFor` — o footgun 9. O que o servidor garante é o que
 ele PODE garantir sozinho: **um por pessoa por dia do jogador, e só sobre si
 mesma** (e, no fio, que a meta enviada `done ≥ heart` bate). Nada de economia
-depende disso além de Emblemas e cosmético (LV-G6).
+depende disso além de Honra e cosmético (LV-G6).
 
 **Dono.** `src/utils/community.ts` (o cliente e os tipos) ·
 `functions/api/guild.js` (a resposta) · **`functions/api/_coop.js`** (estado,
@@ -5122,7 +5122,7 @@ original) e [`docs/PLANO-GUILDA.md`](../PLANO-GUILDA.md) (o que o superou);
 
 **O que NÃO faz.** Não mostra quanto cada membro fez. Não manda push de cobrança
 (`guild.semPush.contract.test.js` trava: a Guilda nunca notifica). Não paga
-nada além de Emblemas e cosmético. Não tem busca de guilda. Não reusa
+nada além de Honra e cosmético. Não tem busca de guilda. Não reusa
 componente de métrica do próprio perfil na tela do amigo.
 
 **Onde a UI mostra.** ⚰️ Este bloco dizia "`LibraryPage.tsx` (abas Todos / Amigos /
@@ -5155,14 +5155,14 @@ que ninguém saiba quem bateu quanto.
 | **Marés** | ciclo de 6 semanas | `GUILD_TIDE_WEEKS` = 6. A floração da maré (meta `TIDE_BLOOM_TARGET` = 12 dias-de-guilda) é **colhida no estado em que estiver** na virada e vira peça permanente do Bosque (`ornaments`), em três tamanhos descritivos — `petala` (< `TIDE_COROLLA_AT` = 4), `corola`, `floracao` (≥ 12) —, nenhum "pior". Maré sem crescimento não gera peça e **nada é dito**; nenhuma maré falha e nada é resetado. Resolvida na LEITURA (sem cron). |
 | **Gestos** | a roda se cumprimenta | `aceno`, `luz`, `descanso`: fixos, **anônimos**, para a roda inteira, sem texto livre, **um de cada por dia**, sem push (LV-G4). O TIPO recebido só chega com 3+ membros (`GESTO_TIPO_MIN_MEMBROS`; numa roda de 2 o "anônimo" seria quem sobrou) — abaixo disso vem só `gestureReceived: true`. |
 | **Feira** | o fenômeno da semana | uma **rodada por pessoa por dia** (`RAID_ROUNDS_PER_DAY` = 1), a qualquer hora da semana ISO; **sem gate de fio, de meta ou de Vínculo** (G15). HP coletivo `max(ativos, 3) × 45`; dano `10 + 2 × poder do estágio`, ±20%, sorteado NO SERVIDOR (`crypto`) e **nunca devolvido**. Fenômeno por semana, determinístico: `nevoa`/`mare`/`estatica`/`enxame` (tempo da Malha, **nunca inimigo**, sem guilda × guilda). O cliente vê `aberta`/`dissipada`, o booleano `ferido` (dano ≥ metade), `hitToday` e o desfecho da semana anterior (`dissipada`/`recuou`, `recuou` nunca aponta ninguém). Golpe na semana já terminada só até segunda 12:00 UTC. |
-| **Resgate** | o prêmio | só quem **golpeou** (o direito mora com a pessoa em `coopPart`, e **sobrevive à saída**, A-1). `dissipada` → `RAID_EMBLEMS` = **4** Emblemas; `recuou` → `RAID_EMBLEMS_FLOOR` = **2** (G9: quem se esforçou nunca sai de mão vazia). A cada `RAID_TROPHY_EVERY` = **4** Feiras dissipadas resgatadas, uma **Concha da Maré** (`trophy-concha-mare`, decoração no espaço `trophy`; NUNCA vendida, `not-for-sale`). Três semanas de janela. **LV-G6: só Emblemas e cosmético** — nada de coração, Créditos, energia, `perfectDays`, Glitchtama ou vantagem de evolução (`guildReward.contract.test.js`). |
+| **Resgate** | o prêmio | só quem **golpeou** (o direito mora com a pessoa em `coopPart`, e **sobrevive à saída**, A-1). `dissipada` → `RAID_EMBLEMS` = **4** de Honra; `recuou` → `RAID_EMBLEMS_FLOOR` = **2** (G9: quem se esforçou nunca sai de mão vazia). A cada `RAID_TROPHY_EVERY` = **4** Feiras dissipadas resgatadas, uma **Concha da Maré** (`trophy-concha-mare`, decoração no espaço `trophy`; NUNCA vendida, `not-for-sale`). Três semanas de janela. **LV-G6: só Emblemas e cosmético** — nada de coração, Créditos, energia, `perfectDays`, Glitchtama ou vantagem de evolução (`guildReward.contract.test.js`). |
 | **Cenários do Bosque** | conquista | `bg-guild-<estágio>` para quem firmou **7 dias DISTINTOS** de fio (`STAGE_UNLOCK_DAYS`, não seguidos — LV-G9), até o estágio atual; **ficam com quem sai** (G12), nunca à venda nem no sorteio da masmorra. |
 | **Saída** | um toque | sem confirmação e sem penalidade (LV-G5): o fio ainda não fechado vira contagem anônima do Bosque (a obra nunca regride), os dias distintos de fio viajam com a pessoa (`coopDias`, o relógio dos 7 dias não recomeça) e o resgate pendente continua colhível. |
 
 **Recibo do resgate (M3).** O KV é eventualmente consistente entre regiões, então
 duas respostas 200 são possíveis. O servidor devolve um **recibo determinístico**
 por (conta, semana) — igual no 200, no 409 e em qualquer aparelho — e o cliente
-credita os Emblemas **uma vez por recibo** (`guildClaimLocal.ts`, fallback em
+credita a Honra **uma vez por recibo** (`guildClaimLocal.ts`, fallback em
 memória para storage cheio). O `409 already claimed` **traz** o `claimed` do
 registro: quem perdeu a resposta do 200 ainda credita, mas só quem TENTOU neste
 aparelho (`markClaimAttempt`).
@@ -5172,7 +5172,7 @@ ponteiro é `coopOf:<saveId>` do servidor; o aparelho guarda só **duas chaves d
 conveniência** (`GUILD_LAST_STAGE` e `GUILD_CLAIMED`, travadas em exatamente duas
 pelo teste; os comentários do código chamam a segunda de "terceira" por contar
 uma chave de aviso anterior — ⚠️ contagem de comentário, não de código) e o que
-foi GANHO (cenários, Concha, Emblemas) vai ao save.
+foi GANHO (cenários, Concha, Honra) vai ao save.
 
 **Onde a regra mora.** `functions/api/_coop.js` (constantes, Bosque, fio, marés,
 Feira, cartão do membro) · `functions/api/guild.js` (a resposta única) ·
@@ -5369,7 +5369,7 @@ loja. A colocação na Ficha é do canvas Pet (`DECISOES-WIREFRAME.md` §22).
   o de 66 continua alcançável.
 - **Save antigo sem os campos**: todo acesso tem `?? 0` / `?? []`; nenhuma
   conquista abre por `undefined`.
-- **Emblema-MOEDA ≠ emblema-CONQUISTA**: `emblems` no save ([§46](#moedas)) é
+- **Honra (moeda) ≠ emblema-CONQUISTA**: `emblems` no save (rótulo "Honra" desde 30/09/2026; o id e o campo não mudaram) ([§46](#moedas)) é
   número e compra `TOURNAMENT_ITEMS`; este mapa é de conquistas e **conquista
   nunca se compra**.
 
@@ -5655,7 +5655,7 @@ registraram divergência nenhuma**.
 |---|---|---|---|---|
 | D1 | tabela 🫶 e 🛒 | o **coraçãozinho** é "comprado na loja ou dropado na masmorra", a 150 Bits | ⚰️ **não é mais vendido** desde 06/09/2026 (D7+D15). Continua existindo e curando por `SPECIAL_ITEMS`; a única fonte é o drop da masmorra | `SHOP_ITEMS.filter(i => i.kind === 'heart').length === 0`; a lápide está no lugar do item em `src/utils/shop.ts` |
 | D2 | tabela 💎 | Créditos gastam em "reroll (50), **cura instantânea (10)** e troca por Bits" | ⚰️ a **cura instantânea não existe** — `utils/instantHeal.ts` foi apagado junto. Restam reroll (`REROLL_COST_CREDITS`) e `BITS_EXCHANGE` | `ls src/utils/instantHeal.ts` falha; a lápide D7+D15 está em `src/App.tsx`, logo ABAIXO de `handleBuyCreditPack`. [`REGISTRO-DE-DECISOES.md`](../REGISTRO-DE-DECISOES.md) §5.4 já registra "REMOVIDA ✅ resolvido" |
-| D3 | tabela 🛒 | "Loja em ABAS (Itens/Cenários/Mobílias/**Torneio**/Missões)" — cinco | ⚰️ a `ShopModal` (e o `ShopSegment`) saiu na minimal-ui. A loja são **quatro lojinhas** na área Mercado — Itens, Decoração, Background (abas por moeda, `STALL_CURRENCIES`) e Conquistas (abas por `MISSION_CATEGORIES`) — e a loja de Emblemas mora no Torneio da área Arena (`tournamentShopItems`). O `CLAUDE.md` ainda diz "Na página Atividades (`ShopModal`)" e "Missões (…, aba na loja)" | `ls src/components/ShopModal.tsx` falha; `src/utils/mercadoCatalog.ts` (`MERCADO_STALLS`, `STALL_CURRENCIES`) |
+| D3 | tabela 🛒 | "Loja em ABAS (Itens/Cenários/Mobílias/**Torneio**/Missões)" — cinco | ⚰️ a `ShopModal` (e o `ShopSegment`) saiu na minimal-ui. A loja são **quatro lojinhas** na área Mercado — Itens, Decoração, Background (abas por moeda, `STALL_CURRENCIES`) e Conquistas (abas por `MISSION_CATEGORIES`) — e a loja de Honra mora no Torneio da área Arena (`tournamentShopItems`). O `CLAUDE.md` ainda diz "Na página Atividades (`ShopModal`)" e "Missões (…, aba na loja)" | `ls src/components/ShopModal.tsx` falha; `src/utils/mercadoCatalog.ts` (`MERCADO_STALLS`, `STALL_CURRENCIES`) |
 | D4 | footgun 9, item do Vínculo | o gate de PvP usa "cliente (**`canPvp`**)" | o símbolo **não existe**. O cliente tem `meetsPvpBond` e `xpToPvpBond` (`src/utils/bond.ts`); o servidor decide em `functions/api/community.js` ação `profile`, com `bondLevelOf` de `functions/api/_bond.js` | `grep -rn canPvp src desktop functions` não devolve nada |
 | D5 | tabela ⚔️ | "`getDungeonEnemySprite(tier, petStage)` tira do sorteio a linha que o jogador está usando, pra ninguém encarar um espelho de si mesmo" | a assinatura é `getDungeonEnemySprite(tier, excludeLine)` e `excludeLine` é comparado com **ids de LINHA** (`ignar`…`thalindra`). `buildDungeonWave(level, petStage)` repassa o **estágio de evolução** (`rookie`, `champion-power`…), que nunca casa — **a exclusão não dispara em jogo**. O `demoCharacterId`, que É um id de linha, chega ao `DungeonGame` e é usado só para o sprite do próprio jogador | `grep -n "buildDungeonWave(" src/components/DungeonGame.tsx` e `grep -n "getDungeonEnemySprite" src/utils/dungeon.ts`; a função em si está correta e tem teste (`src/utils/sprites.dungeonRoster.test.ts`, "excludeLine tira a linha do jogador do sorteio") — o defeito é do CHAMADOR |
 | D6 | tabela ⚔️ | "**Sem limite diário e SEM gate de entrada**… Se farmar Bits virar problema, a alavanca é custo de ENTRADA em Bits" — escrito como hipótese futura | a alavanca **já existe** (WP4.5): `DEEP_START_BASE_COST` = 40, `deepStartCost(n) = 40 × n`, `DEEP_START_MAX_LEVEL` = 5, `canBuyDeepStart`. Não contradiz o "sem gate" (a compra é opcional e sobe a base), mas a tabela não a menciona | `grep -n "DEEP_START" src/utils/dungeon.ts`; `src/utils/dungeon.deepStart.test.ts` |
@@ -5714,7 +5714,7 @@ de conserto silencioso.
 1. **Quem é admin.** O e-mail de um ID token Firebase VERIFICADO (assinatura, `aud`, `iss`, `exp`, `email_verified === true`) que esteja em `ADMIN_EMAILS` (secret do Worker; só o NOME aqui, 08 §Entitlements) **e** que seja o dono do `saveId` pedido. Fail-closed: sem `ADMIN_EMAILS`, ou sem `FIREBASE_PROJECT_ID`, ninguém é admin — o `saveId` é calculável a partir do e-mail, então nunca é prova. Dono: `functions/api/_admin.js` (`verifiedAdmin`).
 2. **O que o papel dá** (tudo derivado NA LEITURA, nunca gravado em `ent:<saveId>`): tier efetivo `paid` e Créditos de exibição (`ADMIN_CREDITS_DISPLAY`, não é saldo; `spend` não debita); passa do `requirePaidTier` do gerador; chat na cota paga; tetos POR CONTA de IA de sprite × **3** (`ADMIN_AI_CAP_MULTIPLIER`) **e** um sub-teto mensal próprio de **40** sprites (`ADMIN_SPRITE_MONTHLY_CAP`, contador `ai:sprite:@admin:<mês UTC>`) — o teto global mensal segue intacto e o pior caso do admin é ~R$ 4/mês. Estourar devolve o mesmo 503 do teto global, sem revelar o papel. Nenhuma rota lê ou escreve outro `saveId`; comunidade e guilda tratam o admin como jogador comum.
 3. **No cliente** a flag é só um espelho em memória do `GET /api/entitlements` (`admin === true` literal, `src/utils/adminFlag.ts`): **nunca vai ao save nem ao localStorage**, e rede falha = não-admin. **Quando a consulta roda de novo** (30/09/2026, `src/utils/entitlementSync.ts` › `createEntitlementSync`): ⚰️ antes rodava UMA vez por `saveId`, e uma 1ª resposta sem token do Firebase deixava a sessão não-admin para sempre. Agora `mount`/`auth` (o usuário do Firebase mudou) sempre consultam; `visible` (voltou ao primeiro plano) no máximo a cada `ENTITLEMENT_VISIBLE_MIN_GAP_MS` (30 s); resposta `null` de `mount`/`auth` agenda UM retry após `ENTITLEMENT_RETRY_MS` (2,5 s); resposta de consulta mais velha é descartada. Sem timer recorrente. A segurança não mudou: quem decide é o servidor. Se o corvinho não aparece em produção, procure `admin_denied` no log do Cloudflare (`no-allowlist` = falta `ADMIN_EMAILS`; `not-listed` = e-mail fora da lista; `saveid-mismatch` = consulta antes do login).
-4. **O painel de GM** (`GmPanel`, Configurações — só para admin) chama `src/utils/gmTools.ts`: updaters PUROS e IDEMPOTENTES sobre o save LOCAL — dar saldo (Bits e Emblemas = `GM_BALANCE` 999999, nunca reduz um saldo maior), desbloquear tudo (cenários, mobílias, evoluções, contadores mínimos das missões permanentes por `Math.max`; NÃO toca `perfectDays`/`totalPerfectDays`), ir para uma das 11 formas, encher cuidados, somar 1/7/30 dias completos. Créditos NÃO (vivem no servidor). O aviso do painel diz que a mudança sobe para a conta inteira (M-2).
+4. **O painel de GM** (`GmPanel`, Configurações — só para admin) chama `src/utils/gmTools.ts`: updaters PUROS e IDEMPOTENTES sobre o save LOCAL — dar saldo (Bits e Honra = `GM_BALANCE` 999999, nunca reduz um saldo maior), desbloquear tudo (cenários, mobílias, evoluções, contadores mínimos das missões permanentes por `Math.max`; NÃO toca `perfectDays`/`totalPerfectDays`), ir para uma das 11 formas, encher cuidados, somar 1/7/30 dias completos. Créditos NÃO (vivem no servidor). O aviso do painel diz que a mudança sobe para a conta inteira (M-2).
 5. **O corvinho.** Na 1ª abertura como admin (e de novo se um save remoto vier sem o corvo, pois a auto-adoção deixou de ser "uma vez por sessão") o app adota o corvinho automaticamente e SEM VOLTA (`adoptCorvo`, `src/utils/corvoAdocao.ts`, import dinâmico): preserva estágio, HP, energia, atributos, atividades, Bits, Emblemas, `perfectDays`, `unlockedEvolutions`, acervo e `petName`; troca `soulmonStages`, `baseName`, `creature` e zera `demoCharacterId`. São 11 formas (a mesma escada do jogo, ids em `CORVO_FORM_IDS`), arte em `src/assets/soulmon/corvo/`. A linha de arte vem de `spriteLineOf` (`corvoPet.ts`). O widget Android também o desenha (`pet_line`, 03 §widget).
 
 **Não faz.** Não é backdoor: nada disso vale para quem não está em `ADMIN_EMAILS`; não muda regra de jogo para os demais; não concede `accountTier:'paid'` gravado.

@@ -9,6 +9,13 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 01/10/2026 — Sincronização do manual pós-merge e3d55bb8 (PRs #189–#197, `docs/sync-e3d55bb8`)
+>
+> - Delta `bcfe7ca6..e3d55bb8` (rodada 3 de arte): 02, 01, 03, 05, 04, 06/components, 06/utils, 08, api-workers, 00-MAPA e 10 atualizados; 05, 08 e api-workers só ganharam carimbo (só `sw.js` e um comentário de JSX mudaram).
+> - Corrida do Dino → **Corrida com obstáculos** nas prosas (ids `DinoGame`/`dinoBest`/`DINO_BEST`/`mission-dino-1000` intactos); moeda do Torneio **Honra** (REGISTRO §17, reverte D3 de 23/09; id `emblems` intacto); masmorra com 5 cenas pintadas; Hall/Laboratório v2, lote da Feira, mini-visores; `visorScenes.ts`, `dueloArt.ts`, `lineFullArt.ts` entram no 06/utils.
+> - Verificação: cada redator conferiu símbolo a símbolo contra o código; sem verificador independente nesta rodada (agentes `doc-*` não registrados). Guard `docsManual` + `docsSemMentira` verdes.
+> - Aberto (sem dono de doc): contagem de módulos de `src/utils` no 00-MAPA (120) × `git ls-files` (178 não-teste) — conferir com `scripts/docs-inventario.mjs`.
+
 > ## 01/10/2026 — Instalação final da rodada 3, PR 3: recriados do Gemini e 3 NPCs extras (SQUAD-ARTE, `feat/arte-rodada3-instalacao-3`)
 >
 > - `gemini-recriados`: 67 PNG substituem o arquivo de mesmo nome (16 auras de ataque dos 8 elementos, `food-rice`, `fx-defeat`, `furn-crystal`, 48 `el-*` — lista em §8 I27). Os 67 originais foram medidos antes (furos/fragmentos) e batiam com o "antes" do MANIFEST; nenhum pulado. Os outros 89 `el-*` não existem (sem créditos).
