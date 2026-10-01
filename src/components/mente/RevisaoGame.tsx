@@ -163,15 +163,13 @@ export function RevisaoGame({
           sub={isPt ? `${review.cards.length} de até ${REVIEW_MAX_CARDS}` : `${review.cards.length} of up to ${REVIEW_MAX_CARDS}`}
           closeLabel={closeLabel}
           onClose={onExit}
+          onBack={() => setScreen('home')}
+          backLabel={isPt ? 'Voltar à Revisão' : 'Back to Review'}
         />
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button type="button" onClick={() => setScreen('home')} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0 }}>
-            {isPt ? 'Voltar' : 'Back'}
-          </button>
-          <button type="button" data-revisao-new disabled={full} onClick={() => openForm()} style={{ ...sm2Button('primary', full), flex: 1, minWidth: 0 }}>
-            {isPt ? 'Novo cartão' : 'New card'}
-          </button>
-        </div>
+        {/* I3 (01/10/2026): o "Voltar" saiu daqui — é a seta acima do título. */}
+        <button type="button" data-revisao-new disabled={full} onClick={() => openForm()} style={{ ...sm2Button('primary', full), width: '100%' }}>
+          {isPt ? 'Novo cartão' : 'New card'}
+        </button>
         {full && <p style={sm2Hint}>{isPt ? 'A pasta está cheia. Apague um cartão para abrir espaço.' : 'Your deck is full. Delete a card to make room.'}</p>}
         {review.cards.length === 0 ? (
           <p style={phaseLine}>
@@ -300,7 +298,13 @@ export function RevisaoGame({
   // ---- fim ----
   return (
     <GameRoot>
-      <GameHeader title={title} closeLabel={closeLabel} onClose={onExit} />
+      <GameHeader
+        title={title}
+        closeLabel={closeLabel}
+        onClose={onExit}
+        onBack={() => setScreen('home')}
+        backLabel={isPt ? 'Voltar à Revisão' : 'Back to Review'}
+      />
       {petVisor}
       <div role="status" data-revisao-done style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
         <p style={phaseTitle}>{isPt ? 'Revisão feita.' : 'Review done.'}</p>
@@ -309,14 +313,10 @@ export function RevisaoGame({
         </p>
         {earned > 0 && <p className="sm2-num" style={phaseLine}>+{earned} Bits</p>}
       </div>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <button type="button" onClick={() => setScreen('home')} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0 }}>
-          {isPt ? 'Voltar' : 'Back'}
-        </button>
-        <button type="button" onClick={onExit} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0 }}>
-          {isPt ? 'Sair' : 'Exit'}
-        </button>
-      </div>
+      {/* I3 (01/10/2026): o "Voltar" de baixo virou a seta acima do título. */}
+      <button type="button" onClick={onExit} style={{ ...sm2Button('primary'), width: '100%' }}>
+        {isPt ? 'Sair' : 'Exit'}
+      </button>
     </GameRoot>
   );
 }

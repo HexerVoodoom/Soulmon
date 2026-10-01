@@ -7,6 +7,9 @@ import {
   activeChallenge, dropCrossing, markDone, mistRegions, offerFor, openRegions, pickCrossing,
   regionById, setDestination, setHidden,
 } from '../../utils/travessias';
+import { travessiaTitle } from '../../utils/travessiaTitles';
+import { sheetCard, sheetCardList, sheetCardTitle } from '../nav/sheetKit';
+import { Icon } from '../ui/Icon';
 
 /**
  * 🧭 A FOLHA DO PASSEIO (30/09/2026, decisão do dono — `REGISTRO-DE-DECISOES.md`
@@ -91,25 +94,56 @@ function Proposta({ c, isPt }: { c: CrossingChallenge; isPt: boolean }) {
   );
 }
 
+/**
+ * As propostas de uma região (H12, 01/10/2026): cada uma é um CARD FECHADO,
+ * separado do vizinho, com um título próprio (`utils/travessiaTitles.ts`).
+ * Tocar no título abre o card — o ato, a versão pequena e o "Escolher esta"
+ * (primário, H14). Um aberto por vez: abrir outro fecha o anterior.
+ */
 function Oferta({ region, isPt, currentId, onPick }: {
   region: Region; isPt: boolean; currentId?: string; onPick: (challengeId: string) => void;
 }) {
+  const [aberto, setAberto] = useState<string | null>(null);
   return (
-    <ul style={list} data-travessia-oferta={region.id}>
-      {offerFor(region).map(c => (
-        <li key={c.id} style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '12px 0', borderBottom: '1px solid var(--sm2-line)' }}>
-          <Proposta c={c} isPt={isPt} />
-          <button
-            type="button"
-            data-travessia-escolher={c.id}
-            disabled={c.id === currentId}
-            onClick={() => onPick(c.id)}
-            style={{ ...sm2Button('outline', c.id === currentId), width: '100%' }}
-          >
-            {c.id === currentId ? (isPt ? 'É a sua agora' : 'Your current one') : (isPt ? 'Escolher esta' : 'Choose this one')}
-          </button>
-        </li>
-      ))}
+    <ul style={sheetCardList} data-travessia-oferta={region.id}>
+      {offerFor(region).map(c => {
+        const open = aberto === c.id;
+        const title = travessiaTitle(c.id, isPt) ?? (isPt ? c.textPt : c.textEn);
+        const bodyId = `sm2-travessia-${c.id}`;
+        return (
+          <li key={c.id} data-travessia-card={c.id} style={{ ...sheetCard, padding: 0, gap: 0 }}>
+            <button
+              type="button"
+              aria-expanded={open}
+              aria-controls={bodyId}
+              data-travessia-abrir={c.id}
+              onClick={() => setAberto(open ? null : c.id)}
+              style={{
+                width: '100%', minHeight: 52, display: 'flex', alignItems: 'center', gap: 8,
+                padding: '12px', boxSizing: 'border-box', textAlign: 'left',
+                background: 'transparent', border: 'none', cursor: 'pointer',
+              }}
+            >
+              <span style={{ ...sheetCardTitle, flex: 1, minWidth: 0 }}>{title}</span>
+              <Icon name={open ? 'expand_less' : 'expand_more'} size={24} tone="muted" />
+            </button>
+            {open && (
+              <div id={bodyId} style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '0 12px 12px' }}>
+                <Proposta c={c} isPt={isPt} />
+                <button
+                  type="button"
+                  data-travessia-escolher={c.id}
+                  disabled={c.id === currentId}
+                  onClick={() => onPick(c.id)}
+                  style={{ ...sm2Button('primary', c.id === currentId), width: '100%' }}
+                >
+                  {c.id === currentId ? (isPt ? 'É a sua agora' : 'Your current one') : (isPt ? 'Escolher esta' : 'Choose this one')}
+                </button>
+              </div>
+            )}
+          </li>
+        );
+      })}
     </ul>
   );
 }
@@ -181,6 +215,9 @@ export function PasseioSheet({ language, crossings, onChange }: {
               <p style={{ ...sm2Hint, margin: 0 }}>
                 {isPt ? `Sua Travessia · ${nomeDe(ativa.region)}` : `Your Crossing · ${nomeDe(ativa.region)}`}
               </p>
+              {travessiaTitle(ativa.challenge.id, isPt) && (
+                <p data-travessia-titulo style={sheetCardTitle}>{travessiaTitle(ativa.challenge.id, isPt)}</p>
+              )}
               <Proposta c={ativa.challenge} isPt={isPt} />
               <p style={note}>{isPt ? 'Qualquer uma das duas vale.' : 'Either one is enough.'}</p>
               <button
@@ -244,26 +281,27 @@ export function PasseioSheet({ language, crossings, onChange }: {
           )}
 
           {!ativa && nevoa.length > 0 && (
-            <ul style={list} aria-label={isPt ? 'Regiões na névoa' : 'Regions in the mist'}>
+            <ul style={sheetCardList} aria-label={isPt ? 'Regiões na névoa' : 'Regions in the mist'}>
               {nevoa.map(r => {
                 const expandida = aberta === r.id;
                 return (
-                  <li key={r.id} data-nevoa={r.id} style={{ borderBottom: '1px solid var(--sm2-line)' }}>
+                  <li key={r.id} data-nevoa={r.id} style={{ ...sheetCard, padding: 0, gap: 0 }}>
                     <button
                       type="button"
                       aria-expanded={expandida}
                       onClick={() => setAberta(expandida ? null : r.id)}
                       style={{
                         width: '100%', display: 'flex', gap: 12, alignItems: 'center', textAlign: 'left',
-                        minHeight: 44, padding: '10px 0', background: 'transparent', border: 'none', cursor: 'pointer',
+                        minHeight: 52, padding: '10px 12px', boxSizing: 'border-box', background: 'transparent', border: 'none', cursor: 'pointer',
                         ...sm2Text,
                       }}
                     >
                       <span aria-hidden="true" style={{ ...icon, opacity: 0.7 }}>🌫️</span>
                       <span style={{ flex: 1, minWidth: 0, color: 'var(--sm2-muted)' }}>{nomeDe(r)}</span>
+                      <Icon name={expandida ? 'expand_less' : 'expand_more'} size={24} tone="muted" />
                     </button>
                     {expandida && (
-                      <div style={{ paddingBottom: 8 }}>
+                      <div style={{ padding: '0 12px 12px' }}>
                         <Oferta region={r} isPt={isPt} onPick={id => escolher(r.id, id)} />
                       </div>
                     )}

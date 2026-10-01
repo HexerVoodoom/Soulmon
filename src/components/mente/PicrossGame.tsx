@@ -246,9 +246,7 @@ export function PicrossGame({ language, onEarnPoints, onExit, todayKey }: Earnin
           </div>
         );
       })}
-      <button type="button" onClick={() => setPicking(false)} style={{ ...sm2Button('outline'), width: '100%' }}>
-        {isPt ? 'Voltar' : 'Back'}
-      </button>
+      {/* I3 (01/10/2026): o "Voltar" de baixo saiu — é a seta do `GameHeader`. */}
     </div>
   );
 
@@ -261,6 +259,8 @@ export function PicrossGame({ language, onEarnPoints, onExit, todayKey }: Earnin
           : (isPt ? `Outro desenho · ${n}×${n}` : `Another picture · ${n}×${n}`)}
         closeLabel={isPt ? 'Sair' : 'Exit'}
         onClose={onExit}
+        onBack={picking ? () => setPicking(false) : undefined}
+        backLabel={isPt ? 'Voltar ao desenho' : 'Back to the picture'}
       />
 
       {picking ? picker : solved ? (

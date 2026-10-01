@@ -13,6 +13,7 @@ import { TROCA_MAX_BITS } from '../../utils/mente/troca';
 import { PICROSS_MAX_BITS } from '../../utils/mente/picross';
 import { SupportNote } from '../refugio/SupportNote';
 import { REVIEW_SESSION_BITS } from '../../utils/mente/revisao';
+import { sheetCard, sheetCardList, sheetCardTitle } from '../nav/sheetKit';
 
 /**
  * AS FOLHAS DAS ÁREAS DE JOGAR (minimal-ui F5 — Exploração e Jogos).
@@ -109,30 +110,12 @@ export function MasmorraSheet({ language, onStart, bitsToday }: { language: Lang
   // usa (a dificuldade vira a semana sozinha dentro de `getDungeonDifficulty`).
   const [level] = useState(() => getDungeonDifficulty());
   const [best] = useState(() => getDungeonBest());
-  const floors = Array.from({ length: MAX_FLOORS }, (_, i) => i + 1);
 
   return (
     <div data-masmorra style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {/* H11 (01/10/2026): a fileira de andares numerados saiu — repetia o
+          número da linha de cima e não dizia nada que ela não dissesse. */}
       <p style={sectionHead}>{isPt ? `${MAX_FLOORS} andares por run` : `${MAX_FLOORS} floors per run`}</p>
-      <ol
-        aria-label={isPt ? 'Andares da run' : 'Run floors'}
-        style={{ display: 'flex', gap: 6, listStyle: 'none', margin: 0, padding: 0 }}
-      >
-        {floors.map(f => (
-          <li
-            key={f}
-            className="sm2-num"
-            style={{
-              flex: 1, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              border: '1px solid var(--sm2-line)', borderRadius: 'var(--sm2-radius-sm)',
-              backgroundColor: 'var(--sm2-surface-2)',
-              ...sm2Text, fontWeight: 600,
-            }}
-          >
-            {f}
-          </li>
-        ))}
-      </ol>
       <div style={{ display: 'flex', gap: 8 }}>
         <StatBox value={isPt ? `Nível ${level}` : `Level ${level}`} label={isPt ? 'dificuldade da semana' : "this week's difficulty"} />
         <StatBox value={best} label={isPt ? 'seu melhor placar' : 'your best score'} />
@@ -152,13 +135,14 @@ export function MasmorraSheet({ language, onStart, bitsToday }: { language: Lang
           value="1"
         />
       </ul>
+      {/* H11: o botão vem ANTES das duas notas — a ação primeiro, o miúdo depois. */}
+      <button type="button" data-masmorra-start onClick={onStart} style={cta}>
+        {isPt ? 'Entrar na masmorra' : 'Enter the dungeon'}
+      </button>
       <p style={note}>
         {isPt ? 'Perder custa só a run — nunca os seus corações.' : 'Losing only costs the run — never your hearts.'}
       </p>
       <BitsHoje language={language} earned={bitsToday} />
-      <button type="button" data-masmorra-start onClick={onStart} style={cta}>
-        {isPt ? 'Entrar na masmorra' : 'Enter the dungeon'}
-      </button>
     </div>
   );
 }
@@ -185,8 +169,10 @@ export function DinoSheet({ language, onStart }: { language: Language; onStart: 
           ? `Pule os obstáculos · cada ${DINO_POINTS_PER_BIT} pontos vira 1 Bit`
           : `Jump the obstacles · every ${DINO_POINTS_PER_BIT} points becomes 1 Bit`}
       </p>
+      {/* H13 (01/10/2026): "Jogar"/"Play" nos dois jogos do Salão — "Correr"
+          lia como descrição do jogo, não como a ação de abri-lo. */}
       <button type="button" data-dino-start onClick={onStart} style={cta}>
-        {isPt ? 'Correr' : 'Run'}
+        {isPt ? 'Jogar' : 'Play'}
       </button>
     </div>
   );
@@ -227,36 +213,38 @@ export type SalaoGame = 'dino' | 'ppt';
 export type MenteGame = 'eco' | 'bolhas' | 'troca' | 'picross' | 'revisao';
 export type RefugioGame = 'respiracao' | 'bolhas-calmas';
 
-const divider: CSSProperties = { border: 0, borderTop: '1px solid var(--sm2-line)', margin: '4px 0', width: '100%' };
-
-/** Salão de Jogos — jogos livres: a Corrida com obstáculos e o PPT, as mesmas folhas de sempre. */
+/** Salão de Jogos — jogos livres: a Corrida com obstáculos e o PPT, as mesmas folhas de sempre.
+ *  I2 (01/10/2026): cada jogo é um CARD próprio (`sheetCard`), não mais dois
+ *  blocos separados por um filete. */
 export function SalaoSheet({ language, onStart, bitsToday }: { language: Language; onStart: (g: SalaoGame) => void; bitsToday?: number }) {
   const isPt = language === 'pt-BR';
   return (
     <div data-salao style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <BitsHoje language={language} earned={bitsToday} />
-      <p style={sectionHead}>{isPt ? 'Corrida com obstáculos' : 'Obstacle Run'}</p>
-      <DinoSheet language={language} onStart={() => onStart('dino')} />
-      <hr style={divider} />
-      <p style={sectionHead}>{isPt ? 'Pedra, papel e tesoura' : 'Rock, paper, scissors'}</p>
-      <PptSheet language={language} onStart={() => onStart('ppt')} />
+      <ul style={sheetCardList}>
+        <li style={sheetCard}>
+          <p style={sheetCardTitle}>{isPt ? 'Corrida com obstáculos' : 'Obstacle Run'}</p>
+          <DinoSheet language={language} onStart={() => onStart('dino')} />
+        </li>
+        <li style={sheetCard}>
+          <p style={sheetCardTitle}>{isPt ? 'Pedra, papel e tesoura' : 'Rock, paper, scissors'}</p>
+          <PptSheet language={language} onStart={() => onStart('ppt')} />
+        </li>
+      </ul>
     </div>
   );
 }
 
+/** Um jogo do Ateliê/Refúgio: CARD próprio (I2) com o CTA PRIMÁRIO (H14 — a
+ *  ação principal de toda folha é o mesmo botão, padronizado). */
 function GameRow({ id, title, asks, detail, meta, cta, onStart, dataKey }: {
   id: string; title: string; asks: string; detail: string; meta?: ReactNode; cta: string;
   onStart: () => void; dataKey: 'mente' | 'refugio';
 }) {
   return (
-    <li
-      style={{
-        display: 'flex', flexDirection: 'column', gap: 6, padding: '12px 0',
-        borderBottom: '1px solid var(--sm2-line)',
-      }}
-    >
+    <li style={sheetCard}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-        <span style={{ ...sm2Text, fontFamily: 'var(--sm2-font-display)', fontWeight: 600, flex: 1, minWidth: 0 }}>{title}</span>
+        <span style={{ ...sheetCardTitle, flex: 1, minWidth: 0 }}>{title}</span>
         {meta !== undefined && <span className="sm2-num" style={{ ...sm2Hint, flexShrink: 0 }}>{meta}</span>}
       </div>
       <p style={{ ...sm2Hint, margin: 0, color: 'var(--sm2-gold-ink)' }}>{asks}</p>
@@ -265,7 +253,7 @@ function GameRow({ id, title, asks, detail, meta, cta, onStart, dataKey }: {
         type="button"
         {...{ [`data-${dataKey}-start`]: id }}
         onClick={onStart}
-        style={{ ...sm2Button('outline'), width: '100%' }}
+        style={{ ...sm2Button('primary'), width: '100%' }}
       >
         {cta}
       </button>
@@ -335,7 +323,7 @@ export function MenteSheet({ language, reviewDue, onStart, bitsToday }: {
           : 'Each game asks for something different. Losing only ends the round.'}
       </p>
       <BitsHoje language={language} earned={bitsToday} />
-      <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+      <ul style={sheetCardList}>
         {rows.map(r => (
           <GameRow key={r.id} dataKey="mente" id={r.id} title={r.title} asks={r.asks} detail={r.detail} meta={r.meta} cta={r.cta ?? cta} onStart={() => onStart(r.id)} />
         ))}
@@ -354,7 +342,7 @@ export function RefugioSheet({ language, onStart }: { language: Language; onStar
           ? 'Um canto para quando o dia pesar. Aqui nada pontua, nada paga e nada é medido.'
           : 'A corner for when the day feels heavy. Nothing here scores, pays or measures anything.'}
       </p>
-      <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+      <ul style={sheetCardList}>
         <GameRow
           dataKey="refugio" id="respiracao"
           title={isPt ? 'Respirar com o Soulmon' : 'Breathe with your Soulmon'}
