@@ -22,6 +22,9 @@ import { essenceEn } from '../utils/soulProfile/essenceLabels';
 
 export type BossTier = 'guardiao' | 'chefe';
 
+/** Enquadramento da arte: `busto` (formato NPC, o padrão dos 24) ou `corpo-inteiro` (sprite para a arena). */
+export type BossForm = 'busto' | 'corpo-inteiro';
+
 export type BossFunction =
   | 'torneio' | 'corrida' | 'masmorra' | 'duelo' | 'feira' | 'atelie'
   | 'refugio' | 'passeio' | 'laboratorio' | 'sonhos' | 'mercado';
@@ -46,6 +49,9 @@ export interface BossEntry {
   elements: BossElement[];
   lorePt: string;
   loreEn: string;
+  /** Enquadramentos que existem em arte. Ausente = só `busto`. O Arauto do Fim também tem `corpo-inteiro`
+   *  (`boss-arauto-do-fim-full.png`, 01/10/2026, "pendente do dono" no MANIFEST — o busto aprovado segue intacto). */
+  formas?: readonly BossForm[];
 }
 
 const el = (id: string, pt: string): BossElement => ({ id, pt });
@@ -55,6 +61,7 @@ export const BOSS_ROSTER: readonly BossEntry[] = [
     id: 'arauto-do-fim', namePt: 'Arauto do Fim', nameEn: 'Herald of the End', tier: 'chefe', funcao: 'torneio',
     papelPt: 'Chefe da Arena (final do Torneio)', papelEn: 'Arena boss (Tournament final)',
     elements: [el('juizo_final', 'Juízo Final'), el('julgamento', 'Julgamento'), el('requiem', 'Réquiem'), el('ocaso', 'Ocaso')],
+    formas: ['busto', 'corpo-inteiro'],
     lorePt: 'Não ruge nem ataca primeiro: toca a trombeta uma vez, e a arena inteira sabe que a última rodada começou.',
     loreEn: 'It never roars or strikes first: it sounds its horn once, and the whole arena knows the last round has begun.',
   },
@@ -228,12 +235,20 @@ const modules = import.meta.glob('../assets/soulmon/bosses/boss-*.png', {
   import: 'default',
 }) as Record<string, string>;
 
+const isFull = (path: string) => /-full\.png$/.test(path);
+
+/** Busto (o enquadramento dos 24): `boss-<id>.png`. */
 export const BOSS_ART: Readonly<Record<string, string>> = Object.fromEntries(
-  Object.entries(modules).map(([path, url]) => [/\/boss-([a-z-]+)\.png$/.exec(path)![1], url]),
+  Object.entries(modules).filter(([path]) => !isFull(path)).map(([path, url]) => [/\/boss-([a-z-]+)\.png$/.exec(path)![1], url]),
 );
 
-export function bossArt(id: string): string | undefined {
-  return BOSS_ART[id];
+/** Corpo inteiro (`boss-<id>-full.png`): hoje só o Arauto do Fim. */
+export const BOSS_FULL_ART: Readonly<Record<string, string>> = Object.fromEntries(
+  Object.entries(modules).filter(([path]) => isFull(path)).map(([path, url]) => [/\/boss-([a-z-]+)-full\.png$/.exec(path)![1], url]),
+);
+
+export function bossArt(id: string, forma: BossForm = 'busto'): string | undefined {
+  return forma === 'corpo-inteiro' ? BOSS_FULL_ART[id] : BOSS_ART[id];
 }
 
 /** Nome, papel, elementos e lore de um chefe no idioma pedido. */

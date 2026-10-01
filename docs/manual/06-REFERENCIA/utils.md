@@ -632,6 +632,15 @@ Cobertura: **166/166** módulos de `src/utils` (+9 em 30/09/2026: `mente/*`, `re
 **Chamado por:** `components/PetPage.tsx`.
 **Régua:** nenhuma direta (`src/utils/soulProfile/ficha/classTitle.test.ts` exercita o mesmo mapa de sigilos indiretamente).
 
+### `src/utils/dueloArt.ts`
+**Dono de:** os 6 retratos de oponente do Duelo (`assets/soulmon/duelo/`, rodada 3, 01/10/2026).
+**Exports:**
+- `DUELO_OPONENTE_ART` — os 6 URLs, na ordem da folha.
+- `dueloOponenteArt(key)` — escolha estável por chave (hash simples).
+**Chamado por:** nenhum consumidor (sem chamada — `PERGUNTAS-DO-DONO.md`, DUELO-1).
+**Régua:** `src/assets/artMaps.contract.test.ts`.
+**Regra de negócio:** nenhuma — só arte.
+
 ### `src/utils/dreamArt.ts`
 **Dono de:** Mapa id de sonho (`DREAM_CATALOG`) → URL da arte.
 **Exports:**
@@ -956,6 +965,16 @@ Cobertura: **166/166** módulos de `src/utils` (+9 em 30/09/2026: `mente/*`, `re
 **Chamado por:** `components/TournamentPage.tsx` (ranking 32, oponente 64), `components/DinoGame.tsx` (pet 64) — `grep -rl "from '.*/lineIcons'" src`, 21/09/2026 (dizia `components/pixel/PixelKit.tsx` também; esse arquivo não importa o módulo).
 **Régua:** `src/utils/lineIcons.test.ts`.
 **Estado:** verificado em 21/09/2026 por doc-mantenedor (entrada nasceu no mesmo commit da rodada 2).
+
+### `src/utils/lineFullArt.ts`
+**Dono de:** mapa `<linha>-<estágio>[-<galho>]` → URL da árvore completa das linhas curadas (`assets/soulmon/lines/full/`, 69 PNG: kaelen/orrin/thalindra + ignar/lumel/serah/igni da rodada 3).
+**Exports:**
+- `LineFullStage`, `LineFullBranch` (types).
+- `LINE_FULL_ART` — o mapa por glob eager.
+- `lineFullSprite(lineId, stage, branch?)` — URL ou `undefined` (nautilu/astrase ainda sem arte).
+**Chamado por:** nenhum consumidor (de propósito: o mapa existe para a pré-seleção/Bestiário por galho; fora do bundle até alguém importá-lo).
+**Régua:** `src/assets/artMaps.contract.test.ts`.
+**Regra de negócio:** nenhuma — só arte.
 
 ### `src/utils/loudness.ts`
 **Dono de:** A política de loudness — dono único, sem I/O (run `som-01`, Fase 2), promovida do gate de prototipagem.

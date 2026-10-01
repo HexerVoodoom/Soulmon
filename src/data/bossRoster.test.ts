@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
-import { BOSS_ROSTER, BOSS_ART, bossArt, bossText } from './bossRoster';
+import { BOSS_ROSTER, BOSS_ART, BOSS_FULL_ART, bossArt, bossText } from './bossRoster';
 import { essenceHasEn } from '../utils/soulProfile/essenceLabels';
 import { EXTRA_NPC_ART } from '../assets/soulmon/npcs';
 import { EXTRA_NPC_VOICE, extraNpcVoice, type ExtraNpcId } from '../utils/areaNpcVoice';
@@ -36,10 +36,21 @@ describe('roster dos chefes (leva poderosos, 01/10/2026)', () => {
 
   it('todo chefe tem arte, e toda arte da pasta tem chefe (sem órfão)', () => {
     for (const b of BOSS_ROSTER) expect(bossArt(b.id), b.id).toMatch(new RegExp(`boss-${b.id}`));
-    const pasta = fs.readdirSync(DIR_BOSSES).filter(f => f.endsWith('.png')).map(f => f.replace(/^boss-|\.png$/g, ''));
+    const pasta = fs.readdirSync(DIR_BOSSES).filter(f => f.endsWith('.png') && !f.endsWith('-full.png')).map(f => f.replace(/^boss-|\.png$/g, ''));
     expect(pasta.sort()).toEqual(BOSS_ROSTER.map(b => b.id).sort());
     expect(Object.keys(BOSS_ART)).toHaveLength(24);
     expect(bossArt('inventado')).toBeUndefined();
+  });
+
+  it('corpo inteiro: só o Arauto do Fim, declarado em `formas` e com arquivo', () => {
+    const comFull = BOSS_ROSTER.filter(b => b.formas?.includes('corpo-inteiro')).map(b => b.id);
+    expect(comFull).toEqual(['arauto-do-fim']);
+    expect(Object.keys(BOSS_FULL_ART)).toEqual(comFull);
+    expect(bossArt('arauto-do-fim', 'corpo-inteiro')).toMatch(/boss-arauto-do-fim-full/);
+    expect(bossArt('arauto-do-fim')).not.toBe(bossArt('arauto-do-fim', 'corpo-inteiro'));
+    expect(bossArt('cuprex', 'corpo-inteiro')).toBeUndefined();
+    const pasta = fs.readdirSync(DIR_BOSSES).filter(f => f.endsWith('-full.png'));
+    expect(pasta).toEqual(['boss-arauto-do-fim-full.png']);
   });
 
   it('nenhum nome termina em "-mon"', () => {
