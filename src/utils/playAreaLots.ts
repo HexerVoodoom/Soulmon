@@ -15,7 +15,7 @@
  * 🏛️ **Os três prédios de Jogos (30/09/2026, pedido do dono).** A área Jogos
  * deixou de ter um lote só e passou a ter TRÊS construções, cada uma com um
  * propósito (`docs/BENCHMARK-MINIJOGOS.md` §6):
- *  · **Salão de Jogos** — jogos livres, sem outra pretensão: Corrida do Dino
+ *  · **Salão de Jogos** — jogos livres, sem outra pretensão: Corrida com obstáculos
  *    (que saiu da Exploração, que ficou só com a Masmorra) e PPT;
  *  · **Ateliê da Mente** — jogos que exercitam uma função (memória de
  *    sequência, inibição, troca de regra, lógica, revisão espaçada);

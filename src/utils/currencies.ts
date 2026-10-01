@@ -34,7 +34,9 @@ export const CURRENCIES: Record<CurrencyId, CurrencyMeta> = {
   },
   emblems: {
     id: 'emblems', field: 'emblems',
-    name: { pt: 'Emblemas', en: 'Emblems' },
+    // Rótulo exibido: "Honra"/"Honor" (decisão do dono, 30/09/2026). O id, o campo
+    // `emblems` do save e todo identificador continuam "emblems".
+    name: { pt: 'Honra', en: 'Honor' },
     origin: { pt: 'Ganhe vencendo no Torneio', en: 'Earn them by winning in the Tournament' },
   },
   credits: {

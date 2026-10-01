@@ -4,8 +4,8 @@ import { aiFetch } from '../utils/aiClient';
 import { getSpriteForStage, demoTintFilter } from '../utils/sprites';
 import { petVoiceLine, type PetVoiceKind } from '../utils/petVoice';
 import { welcomeBackLine } from '../utils/welcomeBack';
-import { Icon } from './ui/Icon';
 import { PixelIcon } from './ui/PixelIcon';
+import { UI_ICON_ART } from '../assets/soulmon/icones-ui';
 import { Viewport, usePrefersReducedMotion, useVarreduraDeSintonia } from './ui/Viewport';
 import { NEST_ART, DEFAULT_NEST } from './nestArt';
 import { ITEM_ART } from '../utils/itemArt';
@@ -1478,13 +1478,14 @@ export const CompanionHUD = memo(function CompanionHUD({
                     position: 'absolute',
                     left: `calc(50% + ${Math.round(PET_RENDER * 0.22)}px)`,
                     bottom: PET_GROUND_KEEP + Math.round(PET_RENDER * 0.28), // nas COSTAS do pet: anda e vira com ele, e nunca cai sobre os botões de ação, que moram no chão
-                    fontSize: 20,
-                    lineHeight: 1,
+                    lineHeight: 0,
                     pointerEvents: 'none',
                     zIndex: 1,
                   }}
                 >
-                  🎒
+                  {/* Arte da rodada 3 (32², 30/09/2026) no lugar do emoji 🎒 —
+                      desenhada a 1× (20 px é o tamanho que o emoji ocupava). */}
+                  <img src={UI_ICON_ART.mochila} alt="" aria-hidden="true" draggable={false} width={20} height={20} style={{ display: 'block', imageRendering: 'pixelated' }} />
                 </span>
               )}
               {sprite ? (
@@ -1903,10 +1904,10 @@ export const CompanionHUD = memo(function CompanionHUD({
               ? (isSleeping ? 'Acordar' : 'Dormir')
               : (isSleeping ? 'Wake' : 'Sleep')}
           >
-            {/* Dormindo, o botão vira "Acordar": o set de arte não tem sol, então
-                esse estado continua no glifo `wb_sunny` até existir a arte. */}
+            {/* Dormindo, o botão vira "Acordar": o sol da rodada 3 (30/09/2026)
+                substituiu o glifo `wb_sunny` que esperava a arte. */}
             {isSleeping
-              ? <Icon name="wb_sunny" size={24} fill={1} tone="viewport" />
+              ? <PixelIcon name="acordar" size={24} />
               : <PixelIcon name="dormir" size={24} />}
           </button>
           <button

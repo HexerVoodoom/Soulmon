@@ -122,18 +122,18 @@ describe('moeda certa por aba', () => {
     expect(n.style.color).toBe('var(--sm2-primary-ink)');
     expect(p.querySelector('svg, .sm2-icon')).toBeNull();
     expect(container.querySelector(`[data-shop-item="${emblemFurn.id}"]`)).toBeNull();
-    expect(container.querySelector('[data-shop-shelf]')!.textContent).not.toContain('Emblems');
+    expect(container.querySelector('[data-shop-shelf]')!.textContent).not.toContain('Honor');
   });
 
   it('a aba de Emblemas troca saldo E preços: serifa gold-ink, e nenhum preço em Bits', () => {
     const { container } = abrir({ stall: 'decoracao' });
-    fireEvent.click(screen.getByRole('tab', { name: 'Emblems' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Honor' }));
     const bal = container.querySelector('[data-balance="emblems"] .sm2-num') as HTMLElement;
     expect(bal.textContent).toBe('12');
     expect(bal.style.fontFamily).toBe('var(--sm2-font-serif)');
     expect(bal.style.color).toBe('var(--sm2-gold-ink)');
     expect(container.querySelector('[data-balance="bits"]')).toBeNull();
-    const card = screen.getByRole('button', { name: `${emblemFurn.nameEn} — ${emblemFurn.price} Emblems` });
+    const card = screen.getByRole('button', { name: `${emblemFurn.nameEn} — ${emblemFurn.price} Honor` });
     expect(card).toBeTruthy();
     expect(container.querySelector('[data-shop-shelf]')!.textContent).not.toContain('Bits');
   });
@@ -141,14 +141,14 @@ describe('moeda certa por aba', () => {
   it('comprar na aba de Emblemas manda o id do prêmio (a moeda é decidida pelo item, no App)', () => {
     const onBuy = vi.fn(() => true);
     abrir({ stall: 'decoracao', onBuy });
-    fireEvent.click(screen.getByRole('tab', { name: 'Emblems' }));
-    fireEvent.click(screen.getByRole('button', { name: `${emblemFurn.nameEn} — ${emblemFurn.price} Emblems` }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Honor' }));
+    fireEvent.click(screen.getByRole('button', { name: `${emblemFurn.nameEn} — ${emblemFurn.price} Honor` }));
     expect(onBuy).toHaveBeenCalledWith(emblemFurn.id);
   });
 
   it('Itens tem Bits e Créditos, nunca Emblemas; Créditos = diamond credit-ink + a troca', () => {
     const { container } = abrir({ stall: 'itens' });
-    expect(screen.queryByRole('tab', { name: 'Emblems' })).toBeNull();
+    expect(screen.queryByRole('tab', { name: 'Honor' })).toBeNull();
     fireEvent.click(screen.getByRole('tab', { name: 'Credits' }));
     expect(container.querySelector('[style*="--sm2-credit-ink"]')).not.toBeNull();
     const swap = screen.getByRole('button', { name: 'Swap 10 Credits for 100 Bits' });
@@ -172,7 +172,7 @@ describe('convite passivo (WP5.1)', () => {
 
   it('nunca na aba de Emblemas', () => {
     abrir({ stall: 'decoracao', accountTier: 'demo', onUnlock: () => {} });
-    fireEvent.click(screen.getByRole('tab', { name: 'Emblems' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Honor' }));
     expect(screen.queryByText(convite)).toBeNull();
   });
 
@@ -205,7 +205,7 @@ describe('Conquistas — filtro por categoria, sem coluna de zeros (WP4.12)', ()
       expect(cats.size).toBe(1);
     }
     // Nenhuma moeda nesta folha: Conquistas não vende.
-    expect(container.textContent).not.toMatch(/Bits|Emblemas|Créditos/);
+    expect(container.textContent).not.toMatch(/Bits|Honra|Créditos/);
   });
 
   it('sem progresso nenhum, nenhum "0/" aparece — e a condição em palavras sim', () => {

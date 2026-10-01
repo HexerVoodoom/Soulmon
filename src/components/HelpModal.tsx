@@ -164,9 +164,9 @@ const TERMS: Term[] = [
     descPt: `Uma cena colecionável do seu Soulmon, uma por noite dentro da janela. São ${DREAM_COUNT} para descobrir.`,
   },
   {
-    icon: '💠', en: 'Bits vs. 🎖️ Emblems vs. 💎 Credits', pt: 'Bits vs. 🎖️ Emblemas vs. 💎 Créditos',
-    descEn: 'Bits come from minigames and buy the shop. Emblems come from the Tournament and buy cosmetics only. Credits are bought with real money.',
-    descPt: 'Bits vêm dos minijogos e compram a loja. Emblemas vêm do Torneio e compram só cosméticos. Créditos são comprados com dinheiro real.',
+    icon: '💠', en: 'Bits vs. 🎖️ Honor vs. 💎 Credits', pt: 'Bits vs. 🎖️ Honra vs. 💎 Créditos',
+    descEn: 'Bits come from minigames and buy the shop. Honor comes from the Tournament and buys cosmetics only. Credits are bought with real money.',
+    descPt: 'Bits vêm dos minijogos e compram a loja. Honra vem do Torneio e compra só cosméticos. Créditos são comprados com dinheiro real.',
   },
   // A GUILDA (`docs/NARRATIVA-COPY-GUILDA.md` §11): a copy mora em `guildCopy.ts` (dono único) e os
   // números vêm das CONSTANTES de `guildRules.ts`. O `icon` é dado, nunca desenhado aqui.

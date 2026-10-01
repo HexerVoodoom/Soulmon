@@ -245,7 +245,7 @@ export function StatsPage({
   }
   if ((journey?.dinoBest ?? 0) > 0) {
     const n = journey!.dinoBest!;
-    feitos.push(isPt ? `e marcaram ${n} no Dino` : `and scored ${n} on the Dino`);
+    feitos.push(isPt ? `e marcaram ${n} na Corrida` : `and scored ${n} on the Obstacle Run`);
   }
 
   const formNames = (journey?.unlockedEvolutions ?? []).map(id => {

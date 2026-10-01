@@ -97,7 +97,7 @@ export function CurrencyBalance({ currency, value, language }: { currency: Curre
       <p data-balance="emblems" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
         <Icon name="military_tech" size={ICON_INLINE} fill={1} tone="gold" />
         <span className="sm2-num" style={emblemNum}>{value}</span>
-        <span style={{ ...unitStyle, marginLeft: 2 }}>{isPt ? 'Emblemas' : 'Emblems'}</span>
+        <span style={{ ...unitStyle, marginLeft: 2 }}>{isPt ? 'Honra' : 'Honor'}</span>
       </p>
     );
   }
@@ -279,7 +279,7 @@ export function ShopShelf({
         aria-disabled={unlocked ? undefined : true}
         tabIndex={unlocked ? undefined : -1}
         aria-label={unlocked
-          ? `${name} — ${owned ? status : `${item.price} ${isEmblem ? (isPt ? 'Emblemas' : 'Emblems') : 'Bits'}`}`
+          ? `${name} — ${owned ? status : `${item.price} ${isEmblem ? (isPt ? 'Honra' : 'Honor') : 'Bits'}`}`
           : `${name} — ${isPt ? 'bloqueado' : 'locked'}: ${lockLine(item)}`}
         style={{
           display: 'flex', alignItems: 'center', gap: 10, width: '100%',
@@ -316,7 +316,7 @@ export function ShopShelf({
           )
         ) : isEmblem ? (
           <span className="sm2-num" style={{ ...emblemNum, display: 'inline-flex', alignItems: 'baseline', gap: 4, whiteSpace: 'nowrap', flex: 'none', color: affordable ? emblemNum.color : 'var(--sm2-muted)' }}>
-            {item.price}<span style={unitStyle}>{isPt ? 'Emblemas' : 'Emblems'}</span>
+            {item.price}<span style={unitStyle}>{isPt ? 'Honra' : 'Honor'}</span>
           </span>
         ) : (
           <Bits value={item.price} dim={!affordable} />
@@ -433,14 +433,14 @@ export function WeeklyMissionList({ language, weeklyMissions, onClaimWeekly }: {
             <button
               type="button"
               onClick={() => onClaimWeekly?.(mission.id)}
-              aria-label={isPt ? `Receber ${mission.emblems} Emblemas` : `Claim ${mission.emblems} Emblems`}
+              aria-label={isPt ? `Receber ${mission.emblems} de Honra` : `Claim ${mission.emblems} Honor`}
               style={{ ...sm2Button('primary', false, 'sm'), whiteSpace: 'nowrap', flex: 'none', gap: 4 }}
             >
               <Icon name="military_tech" size={ICON_TAG} fill={1} tone="inherit" />
               <span className="sm2-num" style={{ ...emblemStyle, color: 'inherit', fontSize: 'var(--sm2-text-md)' }}>+{mission.emblems}</span>
             </button>
           ) : (
-            <span aria-label={isPt ? `${mission.emblems} Emblemas` : `${mission.emblems} Emblems`} role="img" style={{ ...shopTagStyle, color: 'var(--sm2-gold-ink)' }}>
+            <span aria-label={isPt ? `${mission.emblems} de Honra` : `${mission.emblems} Honor`} role="img" style={{ ...shopTagStyle, color: 'var(--sm2-gold-ink)' }}>
               <Icon name="military_tech" size={ICON_TAG} fill={1} tone="gold" />
               <span className="sm2-num" style={{ ...emblemStyle, fontSize: 'var(--sm2-text-md)' }}>+{mission.emblems}</span>
             </span>

@@ -157,11 +157,13 @@ describe('o fenômeno: 3 estados × 4 tipos, sem número nenhum', () => {
     expect(screen.getByText(EN(`guild.feira.fenomeno.${p}.linha` as keyof typeof GUILD_COPY))).toBeTruthy();
   });
 
-  it('o visor não tem rosto, olho, barra nem texto: só SVG de lajes (sem <img> de criatura, sem <text>)', async () => {
+  it('o visor não tem rosto, olho, barra nem texto: só as lajes (arte da rodada 3 por tipo × estado; sem <text>)', async () => {
     vi.mocked(getGuild).mockResolvedValue(vista());
     await montar();
     expect(visor().querySelectorAll('image, text, progress, [role="progressbar"], [role="meter"]')).toHaveLength(0);
-    expect(visor().querySelectorAll('[data-fair-slab]').length).toBeGreaterThanOrEqual(6);
+    // Rodada 3 (30/09/2026): a arte real substituiu o SVG de lajes (que segue como fallback).
+    const ph = visor().getAttribute('data-phenomenon');
+    expect(visor().querySelector(`img[data-fair-fenomeno="${ph}-aberto"]`)).toBeTruthy();
     expect(visor().textContent).toBe('');
     // nenhuma cor magenta/roxa/rosa no placeholder
     expect(visor().innerHTML).not.toMatch(/#(?:f0f|ff00ff|8b5cf6|a855f7|ec4899|d946ef)/i);

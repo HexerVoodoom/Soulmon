@@ -163,7 +163,7 @@ export function MasmorraSheet({ language, onStart, bitsToday }: { language: Lang
   );
 }
 
-// ── Corrida do Dino ─────────────────────────────────────────────────────────
+// ── Corrida com obstáculos ────────────────────────────────────────────────────
 /** Bits que um placar rende na Corrida — a mesma conta da `DinoGame` (1 a cada 100). */
 const DINO_POINTS_PER_BIT = 100;
 
@@ -229,13 +229,13 @@ export type RefugioGame = 'respiracao' | 'bolhas-calmas';
 
 const divider: CSSProperties = { border: 0, borderTop: '1px solid var(--sm2-line)', margin: '4px 0', width: '100%' };
 
-/** Salão de Jogos — jogos livres: a Corrida do Dino e o PPT, as mesmas folhas de sempre. */
+/** Salão de Jogos — jogos livres: a Corrida com obstáculos e o PPT, as mesmas folhas de sempre. */
 export function SalaoSheet({ language, onStart, bitsToday }: { language: Language; onStart: (g: SalaoGame) => void; bitsToday?: number }) {
   const isPt = language === 'pt-BR';
   return (
     <div data-salao style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <BitsHoje language={language} earned={bitsToday} />
-      <p style={sectionHead}>{isPt ? 'Corrida do Dino' : 'Dino Runner'}</p>
+      <p style={sectionHead}>{isPt ? 'Corrida com obstáculos' : 'Obstacle Run'}</p>
       <DinoSheet language={language} onStart={() => onStart('dino')} />
       <hr style={divider} />
       <p style={sectionHead}>{isPt ? 'Pedra, papel e tesoura' : 'Rock, paper, scissors'}</p>
