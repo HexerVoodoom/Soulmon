@@ -57,6 +57,22 @@ const DERIVED_EN: Record<string, string> = {
   silencio_cosmico: 'Cosmic Silence', dobra: 'Warp',
 };
 
+/**
+ * Derivados de 3 elementos (`Class-System/src/registry/elementos.ts`) e
+ * combinações de 4 (`combinacoes.ts`) que o app passou a citar — hoje só no
+ * roster dos chefes (`data/bossRoster.ts`). Nomes EN aprovados pelo dono em
+ * 01/10/2026 (leva `poderosos`, rodada 3). Acrescente aqui, não num mapa novo.
+ */
+const COMBO_EN: Record<string, string> = {
+  sinfonia: 'Symphony', furacao: 'Hurricane', selva: 'Jungle', nucleo: 'Core',
+  juizo_final: 'Last Judgment',
+};
+
+/** Nome EN de uma essência por id (base, derivada ou combo); `undefined` se não houver. */
+export function essenceEn(id: string): string | undefined {
+  return DERIVED_EN[id] ?? COMBO_EN[id] ?? BASE_EN[id];
+}
+
 export const PROFISSAO_EN: Record<string, string> = {
   ferreiro: 'Blacksmith', tecelao: 'Weaver', artesao: 'Artisan', joalheiro: 'Jeweler',
   alquimista: 'Alchemist', curtidor: 'Tanner', encantador: 'Enchanter', escriba: 'Scribe',
@@ -66,13 +82,13 @@ export const PROFISSAO_EN: Record<string, string> = {
 /** O id tem par EN? (para o teste de idioma — cognatos como "Lava" são
  *  idênticos nos dois, então comparar strings daria falso positivo). */
 export function essenceHasEn(id: string): boolean {
-  return id in DERIVED_EN || id in BASE_EN;
+  return essenceEn(id) !== undefined;
 }
 
 /** Nome de exibição da essência dominante (base ou combo), no idioma pedido. */
 export function essenceLabel(candidate: DominantElementCandidate, isPt: boolean): string {
   if (isPt) return candidate.nome;
-  return DERIVED_EN[candidate.id] ?? BASE_EN[candidate.id] ?? candidate.nome;
+  return essenceEn(candidate.id) ?? candidate.nome;
 }
 
 /** Par PT/EN do nome de um elemento base do class-system. */

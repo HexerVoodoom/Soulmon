@@ -9,6 +9,12 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 01/10/2026 — Chefes (24) e NPCs extras (12) instalados, sem chamada (SQUAD-ARTE, `feat/arte-chefes-npcs-f`)
+>
+> - `poderosos`: 24 PNG 512² em `src/assets/soulmon/bosses/` + `src/data/bossRoster.ts` (roster, elementos, lore PT/EN, `BOSS_ART`). Nomes EN de essência novos em `essenceLabels.ts` › `COMBO_EN`. Não ligado em masmorra/arena: `PERGUNTAS-DO-DONO.md` BOSS-1. Fora do `dist/` até ter consumidor.
+> - `npcs-femininas`: 12 bustos `npc-f-*` em `EXTRA_NPC_ART` + `EXTRA_NPC_VOICE` (Datura sem flerte; `domadora` → `feras` pelo veto da bíblia). Onde entram: NPC-1.
+> - `CACHE_VERSION` v180. sha256 conferido antes/depois contra MANIFEST/ROSTER.
+
 > ## 30/09/2026 — Rodada 3: fx-itens, extras, corrida e postais instalados (SQUAD-ARTE, `feat/arte-rodada3-levas`)
 >
 > 115 PNGs com sha256 conferido contra os MANIFEST antes e depois da cópia. Ligados: Concha da Maré
