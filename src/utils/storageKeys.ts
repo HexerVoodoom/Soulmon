@@ -64,6 +64,10 @@ export const STORAGE_KEYS = {
   DUNGEON_BEST: 'soulmon-dungeon-best',
   DUNGEON_HEART_DROPS: 'soulmon-dungeon-heart-drops',
   DINO_BEST: 'soulmon-dino-best',
+  /** H17 (01/10/2026) — ids de jogador/criatura que a pessoa já abriu na
+   *  Biblioteca do Hall (JSON `string[]`). Só decide o que a lista mostra sem
+   *  busca; não é progresso, não pontua e não vai para a nuvem. */
+  LIBRARY_SEEN: 'soulmon-library-seen',
   /** Dia (ISO do jogador) em que o bônus do Picross do dia já foi pago neste aparelho. */
   PICROSS_DAILY_PAID: 'soulmon-picross-daily-paid',
   SOUND_MUTED: 'soulmon-sound-muted',

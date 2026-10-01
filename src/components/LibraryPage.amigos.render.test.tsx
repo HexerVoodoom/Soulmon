@@ -159,3 +159,34 @@ describe('LibraryPage — a aba Amigos nao deriva do diretorio publico', () => {
     expect(screen.queryByText('Reservado')).toBeNull();
   });
 });
+
+describe('H17 (01/10/2026) — a Biblioteca do Hall mostra só os Soulmons já vistos', () => {
+  beforeEach(() => {
+    vi.mocked(listPlayers).mockReset();
+    vi.mocked(getPlayer).mockReset();
+    localStorage.clear();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+  });
+
+  it('sem busca, ninguém que ainda não foi aberto; abrir um guarda na lista; a busca alcança qualquer um', async () => {
+    vi.mocked(listPlayers).mockResolvedValue({
+      players: [perfil({ id: 'pid-novo', name: 'Novato' }) as DirectoryPlayer],
+    });
+    vi.mocked(getPlayer).mockResolvedValue({ found: true, player: perfil({ id: 'pid-novo', name: 'Novato' }) });
+    const r = renderWithCss(<LibraryPage {...props([])} embedded view="directory" />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(400); });
+    await waitFor(() => expect(screen.getByText(/ficam guardados nesta lista/)).toBeTruthy());
+    expect(screen.queryByText('Novato')).toBeNull();
+
+    // A busca por nome encontra quem ainda não foi visto…
+    fireEvent.change(screen.getByRole('textbox', { name: /Buscar jogador/ }), { target: { value: 'Nov' } });
+    await act(async () => { await vi.advanceTimersByTimeAsync(400); });
+    await waitFor(() => expect(screen.getByText('Novato')).toBeTruthy());
+    // …e abrir o perfil o guarda: numa montagem nova, sem busca, ele está lá.
+    fireEvent.click(screen.getByRole('button', { name: 'Ver o perfil de Novato' }));
+    r.unmount();
+    renderWithCss(<LibraryPage {...props([])} embedded view="directory" />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(400); });
+    await waitFor(() => expect(screen.getByText('Novato')).toBeTruthy());
+  });
+});
