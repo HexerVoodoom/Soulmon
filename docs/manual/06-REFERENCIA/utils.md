@@ -1061,6 +1061,11 @@ Cobertura: **178/178** módulos de `src/utils` em 01/10/2026 (`node scripts/docs
 **Régua:** `monetization.fronteira.test.ts`
 **Regra de negócio:** O portão único (`canCreateActivity`) decide se uma atividade nova pode existir, por tier e teto do estágio. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
+### `src/utils/moodArt.ts`
+**Dono de:** a fronteira de troca da ARTE do humor (C6 da navegação do dono, 01/10/2026): id estável por valor (`rough`/`low`/`okay`/`good`/`great`) → URL da arte. Vazio até a frente de arte entregar; id sem arte cai no emoji de `mood.ts`.
+**Exports:** `MoodArtId`, `MOOD_ART_ID`, `MOOD_ART`, `moodArtFor(value)`.
+**Chamado por:** `src/components/DailyReportModal.tsx`.
+
 ### `src/utils/mood.ts`
 **Dono de:** Registro de humor do check-in diário — nunca alimenta pontuação.
 **Exports:**
