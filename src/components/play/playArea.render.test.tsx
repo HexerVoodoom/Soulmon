@@ -100,11 +100,21 @@ beforeEach(() => {
   localStorage.clear();
 });
 
+// ⚠️ Estabilidade sob carga (01/10/2026). O PRIMEIRO `lazy()` do arquivo paga o
+// import frio do grafo (medido ~3,1 s ocioso, 3× isso com a suíte inteira
+// rodando) e o `waitFor` herdava o `asyncUtilTimeout` global de 3 s: o teste
+// passava isolado e estourava sob contenção. A espera continua sendo por
+// SELETOR (nada de sleep fixo) — só ganha teto à altura do import frio, e o
+// teste ganha um teto de runner maior que o da espera (a espera estoura antes
+// e diz o que não achou).
+const ESPERA_LAZY_MS = 30_000;
+vi.setConfig({ testTimeout: 60_000 });
+
 /** O conteúdo da folha e os jogos entram por `lazy()` no `AreaView`
  *  (orçamento de bytes): espera o seletor aparecer. */
 async function achar(container: HTMLElement, sel: string): Promise<HTMLElement> {
   let el: HTMLElement | null = null;
-  await waitFor(() => { el = container.querySelector<HTMLElement>(sel); expect(el, sel).toBeTruthy(); });
+  await waitFor(() => { el = container.querySelector<HTMLElement>(sel); expect(el, sel).toBeTruthy(); }, { timeout: ESPERA_LAZY_MS });
   return el!;
 }
 
