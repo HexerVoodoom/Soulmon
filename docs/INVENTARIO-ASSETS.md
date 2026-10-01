@@ -76,7 +76,13 @@ Fase 1 (`design/INVENTARIO-WIREFRAMES.md`).
 | `soulmon/nest-base.png` (+cushion, basket) | 3 · 444×249 | `nestArt` / `PetStageDecor` | Home (palco) |
 | `soulmon/items/` | 13 · 96² — 8 comidas + 3 chips + coração + glitchtama | `itemArt.ts` (**emoji**) | Home (`ItensPastinha`, `AlimentarFolha`, `ItensUsar`) |
 | `soulmon/dreams/` | 30 · 96² | `dreamArt.ts` (`Dream.id`) | Rituais (`SonhoComCena`), Pet (`DexCompleto/Parcial`) |
-| `soulmon/adventures/` | 24 · 96² | `adventureArt.ts` | Rituais (`RelatorioNormal`, aventura da noite) |
+| `soulmon/adventures/` | 72 · 96² — 24 achados da aventura + **48 postais das Travessias** (`adv-trv-*`, rodada 3, 30/09/2026) | `adventureArt.ts` (glob para os `trv-*`) | Rituais (`RelatorioNormal`, aventura da noite), Exploração (diário do Passeio) |
+| `soulmon/arena/fair-fenomeno-<tipo>-<estado>` + `soulmon/fx/fx-fair-<tipo>` | 12 · 384² + 4 · 128² (rodada 3, 30/09/2026) | `fairArt.ts` (glob) | Arena (`FeiraVisor`) |
+| `soulmon/icones-ui/{mochila,sol-acordar}` | 32² · 128² (rodada 3) | `UI_ICON_ART` | Home (`CompanionHUD`: mochila do passeio, botão Acordar) |
+| `soulmon/icones-ui/insignia-faixa-*` | 5 · 64² (rodada 3) | `TIER_INSIGNIA_ART` | Arena (`TournamentPage`, card "Sua faixa") |
+| `soulmon/icones-ui/{ceu-*,masmorra-*,moeda-*,atributo-*}` | 17 · 64²/96² (rodada 3) | `SKY_ART`, `DUNGEON_PROP_ART`, `CURRENCY_ART`, `ATTRIBUTE_ART` | ⚠️ **sem chamada** (o mapa é importado pelo `PixelIcon`, então entram no `dist/` — ~30 KB em WebP) |
+| `soulmon/dino/dino-obstacle-{1..4}{,b,c}` + chão + parallax + `icone-corrida` | 12 · 128² + 384×48 + 512×128 + 128² (rodada 3; tema ossos/cristal) | `OBSTACLE_TIERS` (`DinoGame.tsx`) | Jogos (Corrida com obstáculos). `icone-corrida` ⚠️ **sem chamada** |
+| `soulmon/fx/{fx-corrida-estilhaco-*,fx-corrida-faisca-*,cristal-moeda}` | 9 + 2 sheets (rodada 3) | — | ⚠️ **sem chamada** (a Corrida não tem FX de impacto nem moeda coletável hoje) |
 | `soulmon/fx/` | 12 · 64²/128² — 6 partículas de cuidado + 6 FX de batalha | `fxArt.ts` (**emoji** do `Popup.icon`) | Home (`PetCarinho`, banho), Jogos (`MasmorraTurno`, `PesadeloFim`) |
 | `soulmon/fx/anim-sleep-z-light.png` | 1 · 192×64 (3 quadros) — a folha `anim-sleep-z` recolorida em claro (`#E9F5F2`/`#5FF3E0`, alfa intacto; rodada 2 R2-4) | `ANIM_ART.sleepZLight` (`animArt.ts`) | Home (`CompanionHUD` dormindo sobre cenário escuro — `isDarkBackground`) |
 | `soulmon/fx-ataque/fx-<el>-aura-96.png` | 154 · **96²** — aura por elemento derivada da 128² (lanczos3, alfa < 64 → 0; rodada 2 R2-3) | `auraForElement(el, 96)` (`attackFxArt.ts`) | Pet (`FichaEstados` — aura a 2× = o vidro 192 inteiro) |

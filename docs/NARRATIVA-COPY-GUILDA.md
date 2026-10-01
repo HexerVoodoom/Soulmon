@@ -138,7 +138,7 @@
 | `guild.feira.fenomeno.estatica.linha` | A Malha chiou fora de fase. | The Mesh hissed out of phase. | idem | B2 |
 | `guild.feira.fenomeno.enxame.nome` | Enxame | Swarm | `fx-fair-enxame` | B2 |
 | `guild.feira.fenomeno.enxame.linha` | Camadas soltas, todas juntas. | Loose layers, all together. | idem | B2 |
-| `guild.feira.sobria` | Uma rodada por dia. Semana dissipada: {cheio} Emblemas. Se o fenômeno voltar à névoa: {piso}. | One round a day. Cleared week: {cheio} Emblems. If the phenomenon goes back to the mist: {piso}. | linha sóbria ao lado de toda tela da Feira (constantes `RAID_EMBLEMS`/`RAID_EMBLEMS_FLOOR`, nunca literal) | L10; 08-critica C2 |
+| `guild.feira.sobria` | Uma rodada por dia. Semana dissipada: {cheio} de Honra. Se o fenômeno voltar à névoa: {piso}. | One round a day. Cleared week: {cheio} Honor. If the phenomenon goes back to the mist: {piso}. | linha sóbria ao lado de toda tela da Feira (constantes `RAID_EMBLEMS`/`RAID_EMBLEMS_FLOOR`, nunca literal) | L10; 08-critica C2 |
 | `guild.feira.rodada.botao` | Fazer minha rodada | Take my round | botão único, por gesto | L12 |
 | `guild.feira.rodada.feita` | A sua rodada chegou até ele. | Your round reached it. | depois da rodada; SEM número de dano, sem barra que mostre quanto foi o seu | LV-G1; PLANO §3 |
 | `guild.feira.rodada.jaFeita` | (sem texto extra — o botão fica em `guild.feira.rodada.feita`) | (no extra text — button stays on `guild.feira.rodada.feita`) | resto do dia: nada de "volte amanhã" | L4 |
@@ -147,7 +147,7 @@
 | `guild.feira.recuou.mundo` | O fenômeno voltou para a névoa. O bosque segue como estava. | The phenomenon went back into the mist. The grove stays as it was. | cabeçalho quando a semana vira sem `cleared` | L3; LV-G7 |
 | `guild.feira.recuou.pet` | Ele foi embora sozinho. | It went away on its own. | fala do pet (não absolve nem culpa) | §17-3 |
 | `guild.feira.colher.botao` | Colher | Collect | botão de resgate `coopClaim` | L12 |
-| `guild.feira.colhido` | {n} Emblemas colhidos. | {n} Emblems collected. | depois do resgate (n = 4 ou 2; mesma moeda do Torneio) | L10 |
+| `guild.feira.colhido` | {n} de Honra colhida. | {n} Honor collected. | depois do resgate (n = 4 ou 2; mesma moeda do Torneio) | L10 |
 | `guild.concha.nome` | Concha da Maré | Tide shell | nome da peça (`GUILD_ITEMS`, shop.ts) | §12; decisão 15 |
 | `guild.concha.chegou` | A maré deixou uma Concha da Maré. Já está em Decoração. | The tide left a Tide shell. It is now under Decor. | depois do resgate, quando a peça veio; o lugar é o rótulo REAL da lojinha (`decoracao`) | L10, L12 |
 | `guild.concha.desc` | Deixada pela maré no bosque. | Left by the tide in the grove. | descrição da peça (`GUILD_ITEMS`) | L12 |
@@ -218,7 +218,7 @@
 | `guild.help.fio.termo` | Fio | Strand | HelpModal | §12 |
 | `guild.help.fio.def` | Um fio firma quando alguém da roda alcança a própria meta do dia. É um por pessoa por dia, sem nome e sem peso. | A strand settles when someone in the circle reaches their own goal for the day. One per person per day, unnamed and unweighted. | HelpModal | L10; LV-G8 |
 | `guild.help.feira.termo` | Feira | Fair | HelpModal | §12 |
-| `guild.help.feira.def` | Toda semana chega um fenômeno da névoa. Cada pessoa faz uma rodada por dia. Semana dissipada rende {cheio} Emblemas; se ele voltar à névoa, {piso}. A Feira não mexe no bosque. | Every week a phenomenon comes in from the mist. Each person takes one round a day. A cleared week pays {cheio} Emblems; if it goes back to the mist, {piso}. The Fair never touches the grove. | HelpModal; constantes `RAID_EMBLEMS(_FLOOR)` | L10; LV-G7 |
+| `guild.help.feira.def` | Toda semana chega um fenômeno da névoa. Cada pessoa faz uma rodada por dia. Semana dissipada rende {cheio} de Honra; se ele voltar à névoa, {piso}. A Feira não mexe no bosque. | Every week a phenomenon comes in from the mist. Each person takes one round a day. A cleared week pays {cheio} Honor; if it goes back to the mist, {piso}. The Fair never touches the grove. | HelpModal; constantes `RAID_EMBLEMS(_FLOOR)` | L10; LV-G7 |
 | `guild.help.mare.termo` | Maré | Tide | HelpModal (não usar "Season"; colide com `season-tide`) | §12; 08-critica O1 |
 | `guild.help.mare.def` | Uma maré dura {semanas} semanas. Na virada, o que assentou fica no bosque. | A tide lasts {semanas} weeks. When it turns, what settled stays in the grove. | HelpModal; `GUILD_TIDE_WEEKS` | L10 |
 | `guild.help.concha.termo` | Concha da Maré | Tide shell | HelpModal | §12; decisão 15 |
