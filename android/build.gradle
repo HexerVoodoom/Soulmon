@@ -12,7 +12,11 @@ buildscript {
         
         classpath 'com.android.tools.build:gradle:8.2.1'
         classpath 'com.google.gms:google-services:4.4.1'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.22"
+        // 01/10/2026: 1.8.22 → 2.1.21. `billing-ktx:8.3.0` (Billing 8, exigido
+        // pela Play) traz metadado Kotlin 2.2 e o compilador 1.8 recusa:
+        // "Module was compiled with an incompatible version of Kotlin" no
+        // `:app:compileDebugKotlin` — nenhum APK compilava desde o bump do Billing.
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.21"
     }
     
     // Safety net: Keep resolution strategy
@@ -41,10 +45,10 @@ allprojects {
             force 'org.bouncycastle:bcpkix-jdk18on:1.78.1'
             force 'org.bouncycastle:bcutil-jdk18on:1.78.1'
 
-            // Fix 2: Kotlin Duplicate Classes (1.8.22 vs 1.6.21)
-            force 'org.jetbrains.kotlin:kotlin-stdlib:1.8.22'
-            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.22'
-            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22'
+            // Fix 2: Kotlin Duplicate Classes (alinha a stdlib com o plugin Kotlin acima)
+            force 'org.jetbrains.kotlin:kotlin-stdlib:2.1.21'
+            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.1.21'
+            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.21'
         }
     }
 
