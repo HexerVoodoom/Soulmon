@@ -35,7 +35,7 @@ const base = {
 };
 
 describe('StatsPage — canvas §27', () => {
-  it('o vínculo é a PALAVRA (Fredoka 24) com "Level N" e o medidor SIS-07', () => {
+  it('o vínculo é a PALAVRA (Cinzel 24) com "Level N" e o medidor SIS-07', () => {
     const { container } = renderWithCss(<StatsPage {...base} />);
     const word = container.querySelector('#sm2-bond-title') as HTMLElement;
     expect(word.className).toContain('sm2-stats-word');

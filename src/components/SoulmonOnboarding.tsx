@@ -67,7 +67,7 @@ const OraclePage = lazy(() => import('./OraclePage').then(m => ({ default: m.Ora
 // `sm-btn`, três blocos de `@keyframes` inline iguais, ícones `lucide-react` e
 // texto a 11,5px. Passou pela mesma régua das outras telas:
 //
-//   · tokens `--sm2-*`, tipografia Fredoka (título) / Rubik (texto), PISO DE
+//   · tokens `--sm2-*`, tipografia Cinzel (título) / Rubik (texto), PISO DE
 //     12px — não existe mais `fontSize: 11.5`;
 //   · UMA ação dominante por passo. O que foi cortado é o que não decidia nada:
 //     os dois parágrafos de propaganda embaixo dos botões da intro (o preço já
@@ -172,6 +172,12 @@ export type OnboardingCompleteData = {
     strengths: StrengthId[];
     itemIds: string[];
   };
+  /**
+   * 01/10/2026 (decisão do dono): as 20 respostas do teste longo, nos DOIS
+   * caminhos — no grátis eram respondidas e descartadas. Vão para o save
+   * (`GameState.soulTestAnswers`) para o upgrade não perguntar de novo.
+   */
+  soulTestAnswers?: SoulAnswers;
 } & (
   | {
       mode: 'oracle';
@@ -207,6 +213,12 @@ interface SoulmonOnboardingProps {
   onRevealed?: (result: OracleResult, revealSprite?: { url: string; formId: string; at: number }) => void;
   /** Só em 'upgrade': desistir e voltar ao jogo. */
   onCancel?: () => void;
+  /**
+   * Só em 'upgrade' (01/10/2026): as 20 respostas do teste que o caminho
+   * grátis gravou no save. Com as 20, o ritual pula o teste — da última
+   * pergunta do ritual vai direto à geração.
+   */
+  savedTestAnswers?: SoulAnswers;
 }
 
 /**
@@ -259,7 +271,7 @@ export const GOOGLE_SEM_RESPOSTA_MS = 120_000;
 
 interface SavedProfile extends OracleInput { seed: number }
 
-export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed, onCancel }: SoulmonOnboardingProps) {
+export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed, onCancel, savedTestAnswers }: SoulmonOnboardingProps) {
   // WP5.8 — o preço que o Play vai cobrar NESTE aparelho; fora do Android
   // nativo cai na constante publicada (`utils/priceLabel.ts`).
   const isUpgrade = mode === 'upgrade';
@@ -530,7 +542,9 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const [answers, setAnswers] = useState<Record<string, string>>(draft?.answers ?? gate?.answers ?? {});
   /** Os 20 itens psicométricos — desde 01/10/2026, TODO mundo responde
    *  (a bifurcação "quer afinar a leitura?" saiu). */
-  const [testAnswers, setTestAnswers] = useState<SoulAnswers>(draft?.testAnswers ?? gate?.testAnswers ?? {});
+  const [testAnswers, setTestAnswers] = useState<SoulAnswers>(
+    () => ({ ...(savedTestAnswers ?? {}), ...(draft?.testAnswers ?? gate?.testAnswers ?? {}) }),
+  );
   const [result, setResult] = useState<OracleResult | null>(null);
   /** A leitura do REVEAL DEMO: só as 6 respostas (sem nome, data, hora,
    *  cidade — o demo não deu nenhum), pelo caminho legado do oráculo. É uma
@@ -1276,6 +1290,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         soulGoal: soulGoal.trim(),
         soulStruggle: soulStruggle.trim(),
         consent: consent ?? undefined,
+        // 01/10/2026: as 20 do teste deixam de ser descartadas no grátis.
+        soulTestAnswers: testAnswers,
       });
     } else if (result) {
       await onComplete({
@@ -1292,6 +1308,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         soulGoal: soulGoal.trim(),
         soulStruggle: soulStruggle.trim(),
         consent: consent ?? undefined,
+        soulTestAnswers: testAnswers,
       });
     }
     // Nota: o caminho feliz normalmente recarrega a página (troca de saveId
@@ -2003,8 +2020,12 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                         // do ritual vai-se ao 1º item do teste (o número 12,
                         // entre os dois, não é pergunta).
                         setTimeout(() => {
-                          if (step === QUIZ_END - 1) setStep(DEEP_START);
-                          else setStep(s => s + 1);
+                          // 01/10/2026: com as 20 do teste já no save (quem
+                          // jogou no grátis e comprou), o teste é pulado.
+                          if (step === QUIZ_END - 1) {
+                            if (SOUL_TEST_ITEMS.every(x => !!testAnswers[x.id])) aposPerguntas(nextAnswers, testAnswers);
+                            else setStep(DEEP_START);
+                          } else setStep(s => s + 1);
                         }, 180);
                       }}>
                       {L(opt.text)}
@@ -2380,7 +2401,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   );
 }
 
-/** O casco de um passo: título em Fredoka, legenda em Rubik no piso de 12px. */
+/** O casco de um passo: título em Cinzel, legenda em Rubik no piso de 12px. */
 function StepShell({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
     <div style={{ paddingTop: 20 }}>

@@ -49,7 +49,7 @@ import { GroupCard, SwitchRow, TimeField, sm2Button, sm2Hint } from './form/Form
 
 /*
  * CANVAS "CONTA" (20/09/2026, `Descanso.dc.html`, D-K1/D-K3): o cartão é o
- * mesmo card SIS-03 da `SettingsPage` (`GroupCard`, Fredoka 20 em caixa de
+ * mesmo card SIS-03 da `SettingsPage` (`GroupCard`, Cinzel 20 em caixa de
  * frase — era `PixelPanel` Silkscreen 12 "REST WINDOW"); as horas em `.inp`
  * 44 com `schedule` + mono `tabular-nums`; "5 of 7" em Rubik 500 tabular
  * (`.sm2-conta-count`) + o `.meter` SIS-07 (`.sm2-kit-meter`); a tag de sonho

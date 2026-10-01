@@ -33,13 +33,13 @@ describe('HomeHud — a leitura de HP/energia mora no vidro, não aqui', () => {
     expect(container.textContent).not.toMatch(/Health|Vida|Energy|Energia/);
   });
 
-  it('a marca é o <h1> da Home, em Fredoka (display), e é o único heading', () => {
+  it('a marca é o <h1> da Home, em Cinzel (display), e é o único heading', () => {
     const { container } = renderWithCss(<HomeHud language="en-US" />);
     const h1 = container.querySelector('h1');
     expect(h1?.textContent).toBe('Soulmon');
     expect(container.querySelectorAll('h1, h2, h3')).toHaveLength(1);
     const fam = getComputedStyle(h1!).fontFamily;
-    expect(fam, 'a marca é Fredoka, nunca Silkscreen fora do vidro').toMatch(/sm2-font-display|Fredoka/);
+    expect(fam, 'a marca é a fonte display (Cinzel), nunca Silkscreen fora do vidro').toMatch(/sm2-font-display|Cinzel/);
     expect(fam).not.toMatch(/Silkscreen|font-pixel/);
   });
 });

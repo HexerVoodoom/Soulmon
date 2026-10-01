@@ -32,8 +32,8 @@
  *    tabelas com o mesmo desenho, uma embaixo da outra.
  *
  * Canvas Estatísticas (§27, identidade): cards SIS-03 (`.sm2-stats-card`) com
- * cabeçalho ícone 24 `muted` + Fredoka 16 (D-S3); o vínculo é a PALAVRA em
- * Fredoka 24 com "Level N" 12 `muted` e o `.meter` SIS-07 (D-S1); o cartão de
+ * cabeçalho ícone 24 `muted` + Cinzel 16 (D-S3); o vínculo é a PALAVRA em
+ * Cinzel 24 com "Level N" 12 `muted` e o `.meter` SIS-07 (D-S1); o cartão de
  * nascimento é o visor do reveal (D-S4); encontros e álbum em mini-visores 64²
  * com silhueta por `mask-image` (D-S5/6/7); a estação é calendário, com as
  * medalhas em `gold-ink` (D-S8); o emoji das listas é conteúdo, 20px pelado
@@ -158,7 +158,7 @@ const PATTERN_ICON: Record<string, string> = {
   equilibrado: 'spa',
 };
 
-/** Cabeçalho de card (D-S3): ícone 24 `muted` pelado + Fredoka 16 — a mesma
+/** Cabeçalho de card (D-S3): ícone 24 `muted` pelado + Cinzel 16 — a mesma
  *  peça do painel de rituais da Home. */
 function CardHead({ icon, children }: { icon: string; children: ReactNode }) {
   return (
@@ -273,7 +273,7 @@ export function StatsPage({
       {/* ─────────────── A leitura dominante: o Vínculo ─────────────── */}
       <section className="sm2-stats-card" style={{ gap: 4 }} aria-labelledby="sm2-bond-title">
         <p className="sm2-stats-lab">{isPt ? 'Nível de vínculo' : 'Bond level'}</p>
-        {/* A PALAVRA vem primeiro (Fredoka 24); o número é a legenda dela. */}
+        {/* A PALAVRA vem primeiro (Cinzel 24); o número é a legenda dela. */}
         <h2 id="sm2-bond-title" className="sm2-stats-word">
           {title ?? (isPt ? 'Recém-chegados' : 'Just met')}
         </h2>

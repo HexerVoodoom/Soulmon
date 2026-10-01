@@ -85,7 +85,7 @@ describe('paridade dos tokens do overlay com o index.css', () => {
   });
 
   it('as três fontes entram no build do desktop (X8)', () => {
-    for (const fonte of ['fredoka-latin.woff2', 'rubik-latin.woff2', 'material-symbols-rounded.woff2']) {
+    for (const fonte of ['cinzel-latin.woff2', 'rubik-latin.woff2', 'material-symbols-rounded.woff2']) {
       expect(overlay).toContain(`public/fonts/${fonte}`);
     }
   });

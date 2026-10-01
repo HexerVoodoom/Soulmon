@@ -97,9 +97,10 @@ describe('AreaSheet', () => {
     const npc = container.querySelector('[data-area-sheet-npc]');
     expect(npc).not.toBeNull();
     expect(npc!.getAttribute('src')).toBeTruthy();
-    // Espaço de balão de fala reservado, com a fala da área (Grom no Mercado).
+    // Espaço de balão de fala reservado, com a fala do LOTE: a banca de Itens
+    // é da Lamela desde 01/10/2026 (antes herdava o Grom da área).
     const line = container.querySelector('[data-area-sheet-npc-line]')!;
-    expect(line.textContent).toContain('Grom');
+    expect(line.textContent).toContain('Lamela');
   });
 
   it('o NPC muda por SUB-LOJA dentro da mesma área (não é mais um único anfitrião)', () => {

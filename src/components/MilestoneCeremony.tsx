@@ -40,7 +40,7 @@
  *    `emblemFor(tier)` (`habit-7` broto · `habit-21` arvoreta · `habit-66`
  *    árvore), nunca 0,75×;
  *  · fora do vidro, aparelho: `eco` 48 FILL .34/.67/1 (o tier, o mesmo glifo
- *    da lista), Fredoka 20, a frase SEM emoji, a data 12 `muted`, um único
+ *    da lista), Cinzel 20, a frase SEM emoji, a data 12 `muted`, um único
  *    `primary` relacional. Sem ×: a saída é o botão (V1).
  */
 import { useEffect } from 'react';

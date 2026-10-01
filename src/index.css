@@ -5015,19 +5015,19 @@ select:focus-visible {
    mostraria a PALAVRA "settings" por uns 100 ms antes do glifo chegar.     */
 
 @font-face {
-  font-family: 'Fredoka';
+  font-family: 'Cinzel';
   font-style: normal;
-  font-weight: 300 700;
+  font-weight: 400 900;
   font-display: swap;
-  src: url('/fonts/fredoka-latin.woff2') format('woff2');
+  src: url('/fonts/cinzel-latin.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 @font-face {
-  font-family: 'Fredoka';
+  font-family: 'Cinzel';
   font-style: normal;
-  font-weight: 300 700;
+  font-weight: 400 900;
   font-display: swap;
-  src: url('/fonts/fredoka-latin-ext.woff2') format('woff2');
+  src: url('/fonts/cinzel-latin-ext.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 @font-face {
@@ -5152,7 +5152,10 @@ select:focus-visible {
 
 /* ── TIPOGRAFIA E MOVIMENTO — invariantes de tema ────────────────────────── */
 :root {
-  --sm2-font-display: 'Fredoka', 'Segoe UI', system-ui, sans-serif;      /* títulos */
+  /* Cinzel (01/10/2026, decisão do dono no A2 — serifa arcana): só caixa alta
+     + versalete, por isso vale para título/display/wordmark de texto e NUNCA
+     para corpo (Rubik). Fallback serifado para não cair numa sans redonda. */
+  --sm2-font-display: 'Cinzel', Georgia, 'Times New Roman', serif;      /* títulos */
   --sm2-font-text: 'Rubik', 'Segoe UI', system-ui, sans-serif;           /* texto e dado */
   --sm2-font-pixel: 'Silkscreen', ui-monospace, 'Courier New', monospace;/* voz do aparelho */
   --sm2-font-icon: 'Material Symbols Rounded';
@@ -5756,7 +5759,7 @@ select:focus-visible {
    2. `.sm2-meter-*` / `.sm2-seg-*` — HP e energia SEGMENTADAS, com trilho
       escuro. É a leitura instantânea do v-pet: você CONTA os blocos, não
       estima a fração de uma barra lisa.
-   3. `.sm2-panel-head-*` — o cabeçalho do painel de rituais em Fredoka
+   3. `.sm2-panel-head-*` — o cabeçalho do painel de rituais em Cinzel
       (título) + `.sm2-num` (contador), no piso de 12px.
 
    Variantes SEMPRE aninhadas (`&:hover`), nunca planas — guard de
@@ -5834,12 +5837,12 @@ select:focus-visible {
 /* ── HUD: medidores segmentados ─────────────────────────────────────────── */
 .sm2-hud { display: flex; flex-direction: column; gap: 8px; }
 .sm2-hud-brand { display: flex; align-items: center; gap: 8px; min-width: 0; }
-/* Fredoka, não Silkscreen: a marca vivia em 11px bitmap, abaixo do piso de
+/* Cinzel, não Silkscreen: a marca vivia em 11px bitmap, abaixo do piso de
    14px da voz do aparelho (e do piso de 12px do app). */
 .sm2-hud-wordmark {
   font-family: var(--sm2-font-display);
   font-weight: 600;
-  /* Fredoka 20, caixa alta, `--sm2-ink` (canvas Home, `.wordmark`): era 16 em
+  /* Cinzel 20, caixa alta, `--sm2-ink` (canvas Home, `.wordmark`): era 16 em
      `primary-ink`. O ciano é para o que AGE (ícone ativo, sublinhado, foco,
      `add`); a marca é tinta. */
   font-size: var(--sm2-text-lg);
@@ -5872,7 +5875,7 @@ select:focus-visible {
 
 /* ── CABEÇALHO DO PAINEL DE RITUAIS ─────────────────────────────────────── */
 /* Cabeçalho de painel = 44 (SIS-03, `box-sizing: border-box`, X5), linha
-   embaixo; título Fredoka 20 em `--sm2-ink`, caixa mista (canvas Home:
+   embaixo; título Cinzel 20 em `--sm2-ink`, caixa mista (canvas Home:
    "Daily rituals"). */
 .sm2-panel-head {
   display: flex;
@@ -6344,7 +6347,7 @@ body {
   border-radius: var(--sm2-radius-md);
 }
 .sm2-kit-panel-body { padding: var(--sm2-space-3); }
-/* Rótulo de seção: Rubik 12/500 caixa alta (rótulo, não título — Fredoka
+/* Rótulo de seção: Rubik 12/500 caixa alta (rótulo, não título — Cinzel
    fica para 20/24/32). */
 .sm2-kit-panel-title {
   display: flex;
@@ -6729,7 +6732,7 @@ button[style*="--sm2-btn: ghost"]:active {
   gap: 2px;
   align-items: center;
 }
-/* Nome do pet: Fredoka 20 (display), como o wordmark e o título do painel. */
+/* Nome do pet: Cinzel 20 (display), como o wordmark e o título do painel. */
 .sm2-home-petname {
   margin: 0;
   font-family: var(--sm2-font-display);
@@ -7095,7 +7098,7 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
 /* STATS+SOCIAL (canvas §27/§28) — Estatísticas e Biblioteca sobre o kit `--sm2-*`.
    Nenhum token novo, nenhum literal de cor. O `.sm2-kit-meter`, as `.sm2-kit-tab*`
    e o `.sm2-viewport-screen` (MiniGlass/Viewport) já existem acima; aqui só a
-   COMPOSIÇÃO: card SIS-03 com cabeçalho `.ch` (ícone 24 `muted` + Fredoka 16),
+   COMPOSIÇÃO: card SIS-03 com cabeçalho `.ch` (ícone 24 `muted` + Cinzel 16),
    o vínculo como palavra, os traços, o nascimento em vidro, os mini-visores do
    bestiário/álbum, a estação, as listas; a linha do jogador, o inerte por FORMA
    (tracejado + `muted`, nunca opacidade), o alerta âmbar, o chip do código. */
@@ -7214,7 +7217,7 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
    kit `--sm2-*`. Nenhum token novo, nenhum literal de cor. O `.sm2-kit-meter`,
    o trilho `.sm2-kit-switch-track/-knob`, a `.sm2-kit-tag` e o `.sm2-kit-spin`
    já existem acima; aqui só a COMPOSIÇÃO (D-K1…D-K10): o card por intenção
-   (SIS-03, Fredoka 20), a `SwitchRow`/`ActionRow`/`Disclosure` 44, o radiogroup
+   (SIS-03, Cinzel 20), a `SwitchRow`/`ActionRow`/`Disclosure` 44, o radiogroup
    tonal com rótulo, chave:valor, o campo de hora com `schedule` + mono, o código
    de recuperação, o painel do 503 (estado, não erro), o alerta âmbar, as
    linhas-botão dos Créditos (inerte por FORMA), o saldo, os perks, os capítulos

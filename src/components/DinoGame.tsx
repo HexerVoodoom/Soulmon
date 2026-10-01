@@ -40,7 +40,7 @@ import parallaxFar from '../assets/soulmon/dino/dino-parallax-far.png';
  * `minigame-dino` em `cover` atrás, o `<canvas>` transparente na frente com o
  * parallax (512×128) e o chão (384×48) a 1×, o pet 256² a 64 (0,25× — a
  * criatura pequena correndo) e os obstáculos; o placar em Silkscreen 14
- * DENTRO do vidro. FORA dele tudo é aparelho em vetor: o chrome (Fredoka 20 +
+ * DENTRO do vidro. FORA dele tudo é aparelho em vetor: o chrome (Cinzel 20 +
  * "Best N" 12 + × 44), as regras, "Start"/"Play again" e o **"Jump" primário
  * de 64 de altura e largura inteira**, sem ícone.
  *

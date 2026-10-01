@@ -186,7 +186,8 @@ import { UnlockAccountModal, UnlockNudge, type UnlockReason } from './components
 import { MorningCheckIn } from './components/MorningCheckIn';
 import { TriagePile, type TriageAction } from './components/TriagePile';
 import { MorningDream } from './components/MorningDream';
-import { equippableTwin } from './utils/dreamDecorTwin';
+import { dreamTwin, grantDreamTwin } from './utils/dreamDecorTwin';
+import { sanitizeSoulTestAnswers } from './utils/soulTestAnswers';
 import { RestSetupModal } from './components/RestSetupModal';
 import { shouldShowRestSetup } from './utils/restSetup';
 import { chatSettingsFor, personalityProfileFromSave } from './utils/personality';
@@ -4457,6 +4458,10 @@ export default function App() {
           dreamId,
           playerDayKey(new Date(), prev.playerDayTz),
         ),
+        /* F2 (dono, 01/10/2026): o sonho DÁ a decoração gêmea da cena (o
+           sofá do "Esparramado no sofá"). Idempotente — quem já tem não ganha
+           outro. `utils/dreamDecorTwin.ts`. */
+        ownedFurniture: grantDreamTwin(prev.ownedFurniture, dreamId),
       };
       return isNew
         ? awardBondXP(comSonho, { kind: 'dreamNew' }, playerDayKey(new Date(), prev.playerDayTz))
@@ -4950,6 +4955,9 @@ export default function App() {
         soulStruggle: data.soulStruggle,
         // Forças + o que atrapalha, em ids do catálogo → `derivePersonality`.
         onboardingProfile: onboardingProfile ?? prev.onboardingProfile,
+        // 01/10/2026 (dono): as 20 do teste longo entram no save também no
+        // grátis — o upgrade não pergunta de novo (`utils/soulTestAnswers.ts`).
+        soulTestAnswers: sanitizeSoulTestAnswers(data.soulTestAnswers) ?? prev.soulTestAnswers,
         ...catalogSeen,
         // Prova do consentimento (timestamp + versão dos documentos). Vem do
         // onboarding e entra no save — é o que sobrevive ao cloud save.
@@ -5015,6 +5023,7 @@ export default function App() {
       soulGoal: data.soulGoal,
       soulStruggle: data.soulStruggle,
       onboardingProfile: onboardingProfile ?? prev.onboardingProfile,
+      soulTestAnswers: sanitizeSoulTestAnswers(data.soulTestAnswers) ?? prev.soulTestAnswers,
       ...catalogSeen,
       consent: data.consent ?? prev.consent,
       petPassive: rollPetPassive(),
@@ -5253,6 +5262,8 @@ export default function App() {
         {selo}
         <SoulmonOnboarding
           mode="upgrade"
+          // 01/10/2026: com as 20 do teste já no save (grátis), o ritual pula o teste.
+          savedTestAnswers={gameState.soulTestAnswers}
           onComplete={handleCompleteOnboarding}
           onRevealed={handleUpgradeRevealed}
           onCancel={() => setUpgradeRitual(false)}
@@ -7068,11 +7079,17 @@ export default function App() {
           isNew={morningDream.isNew}
           language={language}
           onClose={() => setMorningDream(null)}
-          /* F2: "Equipar" só quando a cena tem gêmeo na decoração que o
-             jogador JÁ possui (`utils/dreamDecorTwin.ts`) — nada é dado. */
-          onEquip={(() => {
-            const twin = equippableTwin(morningDream.dream?.id, gameState.ownedFurniture);
-            return twin ? () => { handleEquipFurniture(twin.decorId, twin.slot); setMorningDream(null); } : undefined;
+          /* F2 (dono, 01/10/2026): cena com gêmeo na decoração → o jogador
+             já GANHOU a peça no updater do sonho, e o "Equipar" aparece
+             sempre, equipando na hora (`utils/dreamDecorTwin.ts`). */
+          {...(() => {
+            const twin = dreamTwin(morningDream.dream?.id);
+            return twin
+              ? {
+                decor: { namePt: twin.item.namePt, nameEn: twin.item.nameEn },
+                onEquip: () => { handleEquipFurniture(twin.decorId, twin.slot); setMorningDream(null); },
+              }
+              : {};
           })()}
         />
       )}

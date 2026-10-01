@@ -320,7 +320,7 @@ export function GameTutorialFlow({
           <>
             {dots}
             {/* A promessa: a criatura que acabou de nascer, no vidro (D-O13),
-                título Fredoka 20, texto Rubik 14, um primário no pé. */}
+                título Cinzel 20, texto Rubik 14, um primário no pé. */}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: 12 }}>
               <Viewport width={96} height={96} scale={2} label={heroLabel} screenStyle={{ position: 'relative' }}>
                 {spriteUrl && (

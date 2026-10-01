@@ -50,6 +50,8 @@ import {
 } from '../utils/safeStorage';
 import { toast } from 'sonner';
 import { onboardingProfileFrom } from '../utils/catalogOnboarding';
+import { sanitizeSoulTestAnswers } from '../utils/soulTestAnswers';
+import type { Answers } from '../utils/soulProfile/personality/types';
 
 /**
  * Save antigo guardava UMA decoração (`equippedFurniture`) que aparecia como
@@ -500,6 +502,15 @@ export interface GameState {
    * `onboardingProfileFrom` (`utils/catalogOnboarding.ts`).
    */
   onboardingProfile?: { strengths: string[]; struggles: string[] };
+  /**
+   * 01/10/2026 (decisão do dono) — as 20 respostas do teste longo, gravadas
+   * nos DOIS caminhos (no grátis eram descartadas). Formato `Answers`, o mesmo
+   * que o ritual pago entrega a `buildSoulProfile`. Lido pelo ritual de
+   * upgrade, que pula o teste quando as 20 existem. Opcional: save anterior
+   * não tem. Dono do formato: `utils/soulTestAnswers.ts`. Declarado em
+   * `public/privacidade.html`.
+   */
+  soulTestAnswers?: Answers;
   /**
    * Prova do consentimento aceito no onboarding: quando (ISO) e QUAL versão de
    * cada documento. Um booleano não diz a que texto a pessoa disse sim.
@@ -1199,6 +1210,9 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         onboardingProfile: loadedState.onboardingProfile
           ? onboardingProfileFrom(obj<unknown[]>(loadedState.onboardingProfile))
           : undefined,
+        // As 20 do teste (01/10/2026): só resposta bem formada passa; sem o
+        // campo, continua ausente.
+        soulTestAnswers: sanitizeSoulTestAnswers(loadedState.soulTestAnswers),
         moodLog: arr<unknown>(loadedState.moodLog).filter(
           (m): m is { date: string; mood: 1 | 2 | 3 | 4 | 5 } => {
             const e = obj<unknown>(m);

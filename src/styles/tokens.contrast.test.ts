@@ -452,8 +452,8 @@ describe('regras da fundação travadas no CSS', () => {
     const faces = cssRaw.slice(cssRaw.indexOf('ONDA 1'));
     expect(faces.length).toBeGreaterThan(1000);
     for (const f of [
-      'fredoka-latin.woff2',
-      'fredoka-latin-ext.woff2',
+      'cinzel-latin.woff2',
+      'cinzel-latin-ext.woff2',
       'rubik-latin.woff2',
       'rubik-latin-ext.woff2',
       'material-symbols-rounded.woff2',
