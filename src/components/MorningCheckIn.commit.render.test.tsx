@@ -30,18 +30,19 @@ const plan = (plannedEffort: number): CheckInPlanShape => ({
 });
 
 describe('MorningCheckIn — botão de compromisso (WP2.3)', () => {
-  it('com meta cadastrada, o primário assume a meta (PT e EN)', () => {
+  // C9 (01/10/2026): o dono trocou "Commit to today's goal" por "Set" / "Definir".
+  it('com meta cadastrada, o primário é "Definir" / "Set" (PT e EN)', () => {
     const r = renderWithCss(<MorningCheckIn open plan={plan(2)} language="pt-BR" onConfirm={() => {}} onSkip={() => {}} />);
-    expect(screen.getByText('Assumir minha meta de hoje')).toBeTruthy();
+    expect(screen.getByText('Definir')).toBeTruthy();
     r.unmount();
     renderWithCss(<MorningCheckIn open plan={plan(2)} language="en-US" onConfirm={() => {}} onSkip={() => {}} />);
-    expect(screen.getByText('Commit to today’s goal')).toBeTruthy();
+    expect(screen.getByText('Set')).toBeTruthy();
   });
 
   it('sem meta (plannedEffort 0), o texto volta ao neutro — não há o que assumir', () => {
     const r = renderWithCss(<MorningCheckIn open plan={plan(0)} language="pt-BR" onConfirm={() => {}} onSkip={() => {}} />);
     expect(screen.getByText('Começar o dia')).toBeTruthy();
-    expect(screen.queryByText('Assumir minha meta de hoje')).toBeNull();
+    expect(screen.queryByText('Definir')).toBeNull();
     r.unmount();
     renderWithCss(<MorningCheckIn open plan={plan(0)} language="en-US" onConfirm={() => {}} onSkip={() => {}} />);
     expect(screen.getByText('Start the day')).toBeTruthy();
@@ -56,7 +57,7 @@ describe('MorningCheckIn — botão de compromisso (WP2.3)', () => {
     );
     fireEvent.click(screen.getByText('Hoje não, obrigado'));
     expect(skipped).toBe(1);
-    fireEvent.click(screen.getByText('Assumir minha meta de hoje'));
+    fireEvent.click(screen.getByText('Definir'));
     expect(confirmed).toEqual(['t1']); // o foco sugerido já vem marcado
     // Quem emite é o App — aqui a fila fica vazia nos dois cliques.
     expect(pendingTelemetry().filter(r => r.e === 'checkin_commit')).toHaveLength(0);

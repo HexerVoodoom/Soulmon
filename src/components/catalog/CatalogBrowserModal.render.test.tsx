@@ -49,7 +49,19 @@ describe('CatalogBrowserModal', () => {
       <CatalogBrowserModal isOpen language="pt-BR" onClose={vi.fn()} onAdd={vi.fn()} onCreateFromScratch={vi.fn()} />,
     );
     const target = ACTIVITY_CATALOG.find((i) => !i.optInOnly)!;
-    fireEvent.change(screen.getByLabelText(/buscar no catálogo/i), { target: { value: target.name.pt } });
+    // D4 (01/10/2026): a busca é uma lupa que expande no campo ao toque.
+    fireEvent.click(screen.getByRole('button', { name: /buscar no catálogo/i }));
+    fireEvent.change(screen.getByRole('textbox', { name: /buscar no catálogo/i }), { target: { value: target.name.pt } });
     expect(screen.getByText(new RegExp(target.name.pt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))).toBeTruthy();
+  });
+
+  it('sem emoji como ícone nos cartões (D5)', () => {
+    const { container } = renderWithCss(
+      <CatalogBrowserModal isOpen language="pt-BR" onClose={vi.fn()} onAdd={vi.fn()} onCreateFromScratch={vi.fn()} />,
+    );
+    const EMOJI = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u;
+    const cards = Array.from(container.querySelectorAll('.sm2-conta-card'));
+    expect(cards.length).toBeGreaterThan(0);
+    for (const c of cards) expect(EMOJI.test(c.textContent ?? '')).toBe(false);
   });
 });

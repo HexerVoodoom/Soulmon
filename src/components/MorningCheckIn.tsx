@@ -192,7 +192,16 @@ export function MorningCheckIn({ open, plan, language, onConfirm, onSkip, onTiny
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
         <p style={ritualTitle}>{isPt ? 'Bom dia!' : 'Good morning!'}</p>
-        <p style={hint}>{isPt ? 'Vinte segundos e a gente começa.' : 'Twenty seconds and we’re off.'}</p>
+        {/* C7 (navegação do dono, 01/10/2026): saiu a descrição pequena
+            ("Twenty seconds and we're off"). C9: no lugar, UMA linha dizendo o
+            benefício de engajar — voz de produto, sem veredito sobre a pessoa.
+            Planejar poucos itens antes é o que alivia a largada (intenções de
+            implementação, Gollwitzer; Masicampo & Baumeister). */}
+        <p style={hint} data-checkin-why>
+          {isPt
+            ? 'Escolher o foco antes deixa mais fácil começar.'
+            : 'Picking your focus ahead makes it easier to start.'}
+        </p>
       </div>
 
       {/* (a) PENDÊNCIAS DE ONTEM — primeiro, sempre que houver. Texto plano:
@@ -441,7 +450,8 @@ export function MorningCheckIn({ open, plan, language, onConfirm, onSkip, onTiny
             então o texto volta a ser neutro. */}
         <button type="button" onClick={() => onConfirm(selected)} style={{ ...sm2Button('primary'), width: '100%' }}>
           {plan.plannedEffort > 0
-            ? (isPt ? 'Assumir minha meta de hoje' : 'Commit to today’s goal')
+            /* C9 (01/10/2026): "Commit" → "Definir"/"Set", a palavra do dono. */
+            ? (isPt ? 'Definir' : 'Set')
             : (isPt ? 'Começar o dia' : 'Start the day')}
         </button>
         <button type="button" onClick={onSkip} style={{ ...sm2Button('outline'), width: '100%' }}>
