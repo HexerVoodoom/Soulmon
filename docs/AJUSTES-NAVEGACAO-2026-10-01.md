@@ -98,3 +98,4 @@ Legenda: `[ ]` aberto · `[x]` feito e verificado · `[?]` depende de pergunta (
 - B4 perguntas: **Oráculo + perfil + metas** (força/dificuldade, meta inicial), todas objetivas e obrigatórias.
 - G7 personalidade: **automática, sem troca** — some das Settings.
 - G9 "Restore Purchases": restaura compras já feitas na conta da loja (Play) em aparelho novo/reinstalação; não cobra nada. Com login Google amarrado, pode ficar automático e o botão vira só fallback.
+- A1 logo + mascote oficiais entregues pelo dono (01/10): wordmark pixel "SOUL" turquesa com chama / "MON" cobre, e o corvo de máscara de bico com cartola e lanterna turquesa. Originais em `E:\Soulmon-assets\out\ajustes-20261001\logo-mascote\`; recorte com alfa real → `src/assets/brand/final/logo-wordmark.png` e `mascote.png`. Usar o wordmark no login (A1) e no header da Home (C1). A tipografia do wordmark (serifa pixel) orienta a escolha de fonte do A2.
