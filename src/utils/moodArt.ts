@@ -12,6 +12,7 @@
  * art com ALFA REAL, quadrado, desenhado para 24 px (48/72 px = 2×/3×).
  */
 import type { MoodValue } from './mood';
+import { MOOD_ICON_BY_NAME } from '../assets/icons/mood';
 
 export type MoodArtId = 'rough' | 'low' | 'okay' | 'good' | 'great';
 
@@ -23,8 +24,9 @@ export const MOOD_ART_ID: Record<MoodValue, MoodArtId> = {
   5: 'great',
 };
 
-/** id → URL da arte. Vazio até a frente de arte entregar. */
-export const MOOD_ART: Partial<Record<MoodArtId, string>> = {};
+/** id → URL da arte (interina, desenhada à mão em 01/10/2026; a folha
+ *  gpt_image_2 troca os PNGs com o mesmo nome). */
+export const MOOD_ART: Partial<Record<MoodArtId, string>> = { ...MOOD_ICON_BY_NAME };
 
 export function moodArtFor(value: MoodValue): string | undefined {
   return MOOD_ART[MOOD_ART_ID[value]];
