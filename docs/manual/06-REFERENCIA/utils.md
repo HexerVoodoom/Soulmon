@@ -2653,8 +2653,15 @@ dominância populacional — por isso ±15%. Régua nova:
 **Régua:** `src/utils/restSetup.test.ts`.
 
 ### `src/utils/dreamDecorTwin.ts`
-**Dono de:** o "Equipar" do prêmio da manhã (F2): sonho → decoração gêmea que o jogador JÁ possui.
-**Exports:** `DREAM_DECOR_TWIN`, `equippableTwin(dreamId, ownedFurniture)`, `EquipTwin`.
+**Dono de:** o sonho que DÁ o item (F2, decisão do dono 01/10/2026): sonho → decoração gêmea, que entra em `ownedFurniture` e ganha o "Equipar".
+**Exports:** `DREAM_DECOR_TWIN`, `dreamTwin(dreamId)`, `grantDreamTwin(ownedFurniture, dreamId)`, `DreamTwin`.
 **Chamado por:** `src/App.tsx`
-**Régua:** `src/utils/dreamDecorTwin.test.ts`.
-**Regra de negócio:** nada é dado — sem possuir o gêmeo, não há botão.
+**Régua:** `src/utils/dreamDecorTwin.test.ts`, `src/components/MorningDream.render.test.tsx`.
+**Regra de negócio:** cena com gêmeo dá a decoração no mesmo updater que guarda o sonho; idempotente (quem já tem não ganha outro). A alternativa que perdeu ("só equipar se já tiver") está no `REGISTRO-DE-DECISOES.md` §5.6.
+
+### `src/utils/soulTestAnswers.ts`
+**Dono de:** o formato no save das 20 respostas do teste longo (`GameState.soulTestAnswers`, decisão do dono 01/10/2026) — gravadas nos dois caminhos, lidas pelo ritual de upgrade para pular o teste.
+**Exports:** `sanitizeSoulTestAnswers(v)`.
+**Chamado por:** `src/App.tsx`, `src/contexts/GameStateContext.tsx`
+**Régua:** `src/utils/soulTestAnswers.test.ts`, `src/components/SoulmonOnboarding.testoSalvo.render.test.tsx`.
+**Regra de negócio:** sanitização estrutural (likert 1–5, escolha a/b, cenário por id) sem importar o banco de itens; nada válido → campo ausente. Declarado em `public/privacidade.html` §2.

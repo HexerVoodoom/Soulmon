@@ -187,6 +187,7 @@ import { MorningCheckIn } from './components/MorningCheckIn';
 import { TriagePile, type TriageAction } from './components/TriagePile';
 import { MorningDream } from './components/MorningDream';
 import { dreamTwin, grantDreamTwin } from './utils/dreamDecorTwin';
+import { sanitizeSoulTestAnswers } from './utils/soulTestAnswers';
 import { RestSetupModal } from './components/RestSetupModal';
 import { shouldShowRestSetup } from './utils/restSetup';
 import { chatSettingsFor, personalityProfileFromSave } from './utils/personality';
@@ -4954,6 +4955,9 @@ export default function App() {
         soulStruggle: data.soulStruggle,
         // Forças + o que atrapalha, em ids do catálogo → `derivePersonality`.
         onboardingProfile: onboardingProfile ?? prev.onboardingProfile,
+        // 01/10/2026 (dono): as 20 do teste longo entram no save também no
+        // grátis — o upgrade não pergunta de novo (`utils/soulTestAnswers.ts`).
+        soulTestAnswers: sanitizeSoulTestAnswers(data.soulTestAnswers) ?? prev.soulTestAnswers,
         ...catalogSeen,
         // Prova do consentimento (timestamp + versão dos documentos). Vem do
         // onboarding e entra no save — é o que sobrevive ao cloud save.
@@ -5019,6 +5023,7 @@ export default function App() {
       soulGoal: data.soulGoal,
       soulStruggle: data.soulStruggle,
       onboardingProfile: onboardingProfile ?? prev.onboardingProfile,
+      soulTestAnswers: sanitizeSoulTestAnswers(data.soulTestAnswers) ?? prev.soulTestAnswers,
       ...catalogSeen,
       consent: data.consent ?? prev.consent,
       petPassive: rollPetPassive(),
@@ -5257,6 +5262,8 @@ export default function App() {
         {selo}
         <SoulmonOnboarding
           mode="upgrade"
+          // 01/10/2026: com as 20 do teste já no save (grátis), o ritual pula o teste.
+          savedTestAnswers={gameState.soulTestAnswers}
           onComplete={handleCompleteOnboarding}
           onRevealed={handleUpgradeRevealed}
           onCancel={() => setUpgradeRitual(false)}
