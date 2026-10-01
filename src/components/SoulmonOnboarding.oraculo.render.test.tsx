@@ -266,9 +266,8 @@ describe('Reveal demo — 13.19 / 13.1 (D-Q8, D-Q13, X4)', () => {
     fireEvent.click(screen.getByText('I have read and agree to the Terms of Use and the Privacy Policy'));
     fireEvent.click(screen.getByText('I am 18 or older'));
     fireEvent.click(btn('Continue'));
-    fireEvent.change(screen.getByLabelText('What do you want to improve in your life?'), { target: { value: 'sleep earlier' } });
-    fireEvent.click(btn('Continue'));
-    fireEvent.click(btn('I’d rather not say right now'));
+    const { atravessarPerguntasIniciais } = await import('../test/metasOnboarding');
+    atravessarPerguntasIniciais();
     fireEvent.click(btn('Start now — it’s free'));
     // o grátis entra no ritual das 6, com voltar → a escolha
     expect(document.body.textContent).toContain('Question 1 of 6');
@@ -298,9 +297,17 @@ describe('Reveal demo — 13.19 / 13.1 (D-Q8, D-Q13, X4)', () => {
     expect(nudge.style.maxWidth).toBe('280px');
     expect(nudge.querySelector('.sm2-icon')?.textContent).toBe('auto_awesome');
     expect(nudge.textContent).not.toContain('chevron_right');
+    // B8 (01/10/2026): o × mora DENTRO do card (mesmo invólucro de 280),
+    // e o botão de criar a própria criatura entra acima do "Continue".
     const x = btn('Not now');
     expect(x.className).toContain('sm2-ora-back');
     expect(x.textContent?.trim()).toBe('close');
+    const invólucro = x.closest('[data-nudge]') as HTMLElement;
+    expect(invólucro).toBeTruthy();
+    expect(invólucro.contains(nudge)).toBe(true);
+    const criar = btn('Create my own creature');
+    expect(variante(criar)).toBe('outline');
+    expect(criar.compareDocumentPosition(cont) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(document.body.innerHTML).not.toContain('danger');
     fireEvent.click(x);
     expect(screen.getByText('Choose your Soulmon')).toBeTruthy();

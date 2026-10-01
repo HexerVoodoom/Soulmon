@@ -75,7 +75,7 @@ describe('lápide no login', () => {
 
     await entrar('alguem@exemplo.com');
     expect(estado.chamadas).toEqual(['entrar:alguem@exemplo.com', 'checar:alguem@exemplo.com']);
-    expect(screen.queryByText('What do you want to improve in your life?')).toBeNull();
+    expect(screen.queryByText('What should we call you?')).toBeNull();
     expect(screen.getByRole('heading', { name: 'Account deleted' })).toBeTruthy();
     // A região é remontada com a troca de passo (ida ao formulário e volta).
     expect(document.querySelector('[data-account-deleted-live]')!.textContent).toContain('deleted on 03/09');
@@ -88,7 +88,7 @@ describe('lápide no login', () => {
   it('conta normal → segue para o "porquê" e o aviso não aparece', async () => {
     await montar();
     await entrar('ok@exemplo.com');
-    expect(screen.getByText('What do you want to improve in your life?')).toBeTruthy();
+    expect(screen.getByText('What should we call you?')).toBeTruthy();
     expect(screen.queryByRole('heading', { name: 'Account deleted' })).toBeNull();
   });
 

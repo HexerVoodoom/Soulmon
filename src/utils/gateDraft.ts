@@ -33,6 +33,10 @@
 import { readJson, writeJson, removeLocal } from './safeStorage';
 import { STORAGE_KEYS } from './storageKeys';
 import { normalizeConsent, type ConsentRecord } from './consent';
+import {
+  LIFE_AREAS, STRUGGLE_LABEL, STRENGTH_LABEL,
+  type LifeArea, type StruggleId, type StrengthId,
+} from '../types/activityCatalog';
 
 export const GATE_DRAFT_VERSION = 1;
 
@@ -45,6 +49,13 @@ export interface GateDraft {
    *  comentário citava foi APAGADO em 07/09/2026, quando o aceite desceu para
    *  a própria tela de conta — a referência sobreviveu ao passo. */
   consent: ConsentRecord | null;
+  /** B4/B5 (01/10/2026): as escolhas OBJETIVAS de metas (ids do catálogo).
+   *  Opcionais na leitura — rascunho gravado antes delas lê como `[]`, sem
+   *  trocar a versão. Ids desconhecidos são descartados (storage não é
+   *  confiável). */
+  areas?: LifeArea[];
+  struggles?: StruggleId[];
+  strengths?: StrengthId[];
   /** ISO de quando foi gravado — só para o leitor humano do storage. */
   savedAt: string;
 }
@@ -74,12 +85,20 @@ export function readGateDraft(): GateDraft | null {
     // seja: a checagem MAIS FROUXA das três era a do portão de conta, que é
     // exatamente onde o aceite nasce. Achado na sessão de QA de 08/09/2026.
     consent: normalizeConsent(d.consent) ?? null,
+    areas: idsValidos(d.areas, LIFE_AREAS),
+    struggles: idsValidos(d.struggles, Object.keys(STRUGGLE_LABEL) as StruggleId[]),
+    strengths: idsValidos(d.strengths, Object.keys(STRENGTH_LABEL) as StrengthId[]),
     savedAt: typeof d.savedAt === 'string' ? d.savedAt : '',
   };
 }
 
+function idsValidos<T extends string>(v: unknown, permitidos: readonly T[]): T[] {
+  if (!Array.isArray(v)) return [];
+  return v.filter((x): x is T => typeof x === 'string' && (permitidos as readonly string[]).includes(x)).slice(0, 3);
+}
+
 export function writeGateDraft(
-  dados: Pick<GateDraft, 'soulGoal' | 'soulStruggle' | 'consent'>,
+  dados: Pick<GateDraft, 'soulGoal' | 'soulStruggle' | 'consent' | 'areas' | 'struggles' | 'strengths'>,
   now: Date = new Date(),
 ): boolean {
   return writeJson(
@@ -89,6 +108,9 @@ export function writeGateDraft(
       soulGoal: dados.soulGoal,
       soulStruggle: dados.soulStruggle,
       consent: dados.consent,
+      areas: dados.areas ?? [],
+      struggles: dados.struggles ?? [],
+      strengths: dados.strengths ?? [],
       savedAt: now.toISOString(),
     } satisfies GateDraft,
     { silent: true },

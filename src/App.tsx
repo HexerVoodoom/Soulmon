@@ -206,6 +206,7 @@ import { normalizeSchedule, weekDaysForSchedule, HABIT_WEIGHT, MAX_DAILY_FOCUS, 
 import { equilibrarSemana, valeEquilibrar } from './utils/weekBalance';
 import { needsCatalogOnboarding, markCatalogOnboardingSeen } from './utils/catalogOnboarding';
 import { CatalogOnboardingFlow, activitiesFromCatalogChoice } from './components/catalog/CatalogOnboardingFlow';
+import { ACTIVITY_CATALOG } from './data/activityCatalog';
 import { CatalogBrowserModal } from './components/catalog/CatalogBrowserModal';
 import { CatalogLevelInviteModal } from './components/catalog/CatalogLevelInviteModal';
 import { pickCatalogLevelInviteCandidate, applyLevelChange } from './utils/catalogLevelSignal';
@@ -4838,7 +4839,7 @@ export default function App() {
       setSaveId(newSaveId);
     }
 
-    const newActivities: Activity[] = data.initialActivities.map((item, i) => ({
+    const newActivitiesBase: Activity[] = data.initialActivities.map((item, i) => ({
       id: `${Date.now() + i}`,
       name: item.name,
       category: item.category,
@@ -4846,6 +4847,26 @@ export default function App() {
       steps: [],
       weekDays: [0, 1, 2, 3, 4, 5, 6],
     }));
+    /* B4 (checklist do dono, 01/10/2026): as metas do catálogo (áreas,
+       dificuldades, forças e o ponto de partida) agora são respondidas DENTRO
+       do onboarding. O que a pessoa manteve vira atividade aqui, com o mesmo
+       construtor do intersticial (`activitiesFromCatalogChoice`), e o
+       intersticial do catálogo é dado como visto — perguntar de novo seria a
+       mesma pergunta duas vezes. Com ≥1 atividade a home já não nasce vazia,
+       então o tutorial de "crie sua 1ª tarefa" também não abre (a pergunta
+       aberta de objetivo dele seria a terceira cópia da mesma pergunta). */
+    const catalogItems = (data.catalogChoice?.itemIds ?? [])
+      .map(id => ACTIVITY_CATALOG.find(c => c.id === id))
+      .filter((c): c is NonNullable<typeof c> => !!c);
+    const catalogActivities = activitiesFromCatalogChoice(catalogItems, language === 'pt-BR') as unknown as Activity[];
+    const newActivities: Activity[] = [...newActivitiesBase, ...catalogActivities];
+    const catalogSeen = catalogActivities.length > 0
+      ? (markCatalogOnboardingSeen({}, new Date()) as Record<string, unknown>)
+      : {};
+    if (catalogActivities.length > 0) {
+      writeFlag(STORAGE_KEYS.TUTORIAL_COMPLETE, true, { silent: true });
+      setHasCompletedTutorial(true);
+    }
 
     // Modo demo (utils/monetization.ts): personagem pré-pronto, sem árvore do
     // oráculo — evolui num caminho ÚNICO (getSpriteForStage resolve o sprite
@@ -4875,6 +4896,7 @@ export default function App() {
         demoTint: data.demoTint ?? 0,
         soulGoal: data.soulGoal,
         soulStruggle: data.soulStruggle,
+        ...catalogSeen,
         // Prova do consentimento (timestamp + versão dos documentos). Vem do
         // onboarding e entra no save — é o que sobrevive ao cloud save.
         consent: data.consent ?? prev.consent,
@@ -4938,6 +4960,7 @@ export default function App() {
       demoCharacterId: undefined,
       soulGoal: data.soulGoal,
       soulStruggle: data.soulStruggle,
+      ...catalogSeen,
       consent: data.consent ?? prev.consent,
       petPassive: rollPetPassive(),
       bornAt: playerDayKey(new Date(), prev.playerDayTz),

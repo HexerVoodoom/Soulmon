@@ -21,6 +21,7 @@ import {
   pendingTelemetry, resetTelemetryForTest, TELEMETRY_FUNNEL, onboardingStepCode,
   track, setTelemetryTier, TELEMETRY_TIER, TELEMETRY_UNLOCK_REASON,
 } from '../utils/telemetry';
+import { atravessarPerguntasIniciais } from '../test/metasOnboarding';
 import { atravessarRevealDemo } from '../test/ritualDemo';
 
 const only = (event: string) => pendingTelemetry().filter(r => r.e === event);
@@ -48,8 +49,7 @@ describe('fiação da telemetria — onboarding', () => {
     ));
     fireEvent.click(screen.getByText('I am 18 or older'));
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    fireEvent.click(screen.getByText('I’d rather not say right now')); // GOAL
-    fireEvent.click(screen.getByText('I’d rather not say right now')); // STRUGGLE
+    atravessarPerguntasIniciais(); // NOME + metas (B1/B4, 01/10/2026)
 
     const antesDaEscolha = only('onboarding_step');
     // A BIFURCAÇÃO acontece DEPOIS do portão e do "porquê", e a telemetria
@@ -58,7 +58,8 @@ describe('fiação da telemetria — onboarding', () => {
     for (const r of antesDaEscolha) expect(r.p?.funnel).toBe(TELEMETRY_FUNNEL.unknown);
     // Um evento por tela alcançada — sem repetição na mesma tela.
     expect(antesDaEscolha.map(r => r.p?.step)).toEqual([
-      onboardingStepCode(-6), onboardingStepCode(-2), onboardingStepCode(-3), onboardingStepCode(-7),
+      onboardingStepCode(-6), onboardingStepCode(-10), onboardingStepCode(-2), onboardingStepCode(-3),
+      onboardingStepCode(-11), onboardingStepCode(-12), onboardingStepCode(-7),
     ]);
 
     // E, escolhido o grátis, o funil passa a ser DEMO de fato.
@@ -86,7 +87,9 @@ describe('fiação da telemetria — onboarding', () => {
       'I have read and agree to the Terms of Use and the Privacy Policy',
     ));
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    const campo = screen.getByRole('textbox') as HTMLTextAreaElement;
+    // 01/10/2026: o "porquê" virou objetivo; o campo livre que sobrou antes
+    // da escolha é o NOME (B1) — é ele que não pode vazar.
+    const campo = screen.getByRole('textbox') as HTMLInputElement;
     fireEvent.change(campo, { target: { value: 'quero parar de beber' } });
     fireEvent.click(screen.getByRole('button', { name: /Continue/ }));
 
@@ -107,8 +110,7 @@ describe('fiação da telemetria — onboarding', () => {
     ));
     fireEvent.click(screen.getByText('I am 18 or older'));
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    fireEvent.click(screen.getByText('I’d rather not say right now'));
-    fireEvent.click(screen.getByText('I’d rather not say right now'));
+    atravessarPerguntasIniciais();
     fireEvent.click(screen.getByText('Start now — it’s free'));
     // 13.19: o reveal demo vem antes do personagem, e ele emite `unlock_view`
     // com o motivo `revealDemo` (o denominador da 13.1) — nunca `demo_pick`.

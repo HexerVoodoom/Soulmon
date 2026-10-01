@@ -90,7 +90,7 @@ export const METRICS_PREFIX = 'm:';
  */
 export const EVENT_SCHEMA = {
   install: null,
-  onboarding_step: { step: { min: 0, max: 45 }, funnel: { min: 0, max: 2 } },
+  onboarding_step: { step: { min: 0, max: 50 }, funnel: { min: 0, max: 2 } },
   demo_pick: null,
   first_task_done: { tier: { min: 0, max: 2 } },
   day_active: { effort: { min: 0, max: 500 }, tier: { min: 0, max: 2 } },

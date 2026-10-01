@@ -78,7 +78,30 @@ describe('🔴 o e-mail NUNCA entra no rascunho', () => {
     expect(texto).not.toContain('@');
     expect(texto).not.toContain('saveId');
     expect(Object.keys(JSON.parse(texto)).sort())
-      .toEqual(['consent', 'savedAt', 'soulGoal', 'soulStruggle', 'v']);
+      .toEqual(['areas', 'consent', 'savedAt', 'soulGoal', 'soulStruggle', 'strengths', 'struggles', 'v']);
+  });
+});
+
+describe('B4/B5 (01/10/2026) — as escolhas objetivas de metas atravessam o rascunho', () => {
+  beforeEach(() => localStorage.clear());
+
+  it('grava e lê os ids; descarta id desconhecido e corta em 3', () => {
+    writeGateDraft({
+      soulGoal: 'Sono', soulStruggle: 'Começar', consent: null,
+      areas: ['sono', 'foco'], struggles: ['comecar'], strengths: ['calma'],
+    });
+    const d = readGateDraft();
+    expect(d?.areas).toEqual(['sono', 'foco']);
+    expect(d?.struggles).toEqual(['comecar']);
+    expect(d?.strengths).toEqual(['calma']);
+    localStorage.setItem(STORAGE_KEYS.GATE_DRAFT, JSON.stringify({
+      v: 1, soulGoal: '', soulStruggle: '', consent: null,
+      areas: ['sono', 'xxx', 'foco', 'mente', 'casa'], struggles: 'nao-e-lista',
+    }));
+    const r = readGateDraft();
+    expect(r?.areas).toEqual(['sono', 'foco', 'mente']);
+    expect(r?.struggles).toEqual([]);
+    expect(r?.strengths).toEqual([]);
   });
 });
 

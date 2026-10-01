@@ -164,7 +164,7 @@ export type TelemetryEvent =
  */
 export const EVENT_SCHEMA: Record<TelemetryEvent, Record<string, { min: number; max: number }> | null> = {
   install: null,
-  onboarding_step: { step: { min: 0, max: 45 }, funnel: { min: 0, max: 2 } },
+  onboarding_step: { step: { min: 0, max: 50 }, funnel: { min: 0, max: 2 } },
   demo_pick: null,
   first_task_done: { tier: { min: 0, max: 2 } },
   day_active: { effort: { min: 0, max: 500 }, tier: { min: 0, max: 2 } },
@@ -419,7 +419,11 @@ export const TELEMETRY_CREATE_PATH = {
  * maior passo positivo que existe (REGISTER = 35). Mapear em cada call site
  * seria regra copiada (footgun 9).
  */
-export const NEGATIVE_STEP_BASE = 45;
+// 01/10/2026: era 45. O nome do jogador, as forças e o ponto de partida
+// entraram no onboarding (NAME_STEP -10, STRENGTH_STEP -11, STARTER_STEP -12)
+// e, com a base 45, -10 cairia em 35 = REGISTER. Subiu para 50 — o alarme de
+// `telemetry.test.ts` prescreve exatamente isto. O `max` do schema acompanha.
+export const NEGATIVE_STEP_BASE = 50;
 export function onboardingStepCode(step: number): number | null {
   if (!Number.isFinite(step)) return null;
   const code = step < 0 ? NEGATIVE_STEP_BASE + step : step;

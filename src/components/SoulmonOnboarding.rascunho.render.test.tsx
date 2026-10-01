@@ -14,6 +14,7 @@ import { SoulmonOnboarding } from './SoulmonOnboarding';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { writeOracleDraft, clearOracleDraft } from '../utils/oracleDraft';
 import { PREMADE_CHARACTERS } from '../utils/monetization';
+import { atravessarPerguntasIniciais } from '../test/metasOnboarding';
 import { atravessarRevealDemo } from '../test/ritualDemo';
 
 const rascunho = {
@@ -54,8 +55,7 @@ describe('SoulmonOnboarding — rascunho do ritual (WP1.7)', () => {
       fireEvent.click(screen.getByText('I have read and agree to the Terms of Use and the Privacy Policy'));
     fireEvent.click(screen.getByText('I am 18 or older'));
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    fireEvent.click(screen.getByText('I’d rather not say right now'));
-    fireEvent.click(screen.getByText('I’d rather not say right now'));
+    atravessarPerguntasIniciais();
     fireEvent.click(screen.getByText('Start now — it’s free'));
     // 13.19: as 6 perguntas e o reveal demo também não gravam rascunho.
     await atravessarRevealDemo();

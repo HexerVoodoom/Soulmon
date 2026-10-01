@@ -1,13 +1,19 @@
-import { useState, useRef, useEffect, lazy, Suspense, type CSSProperties } from 'react';
+import { useState, useRef, useEffect, useMemo, lazy, Suspense, type CSSProperties } from 'react';
 import { Icon } from './ui/Icon';
-import { MiniGlass } from './ui/MiniGlass';
 import { Viewport } from './ui/Viewport';
-import { BrandFlame } from '../brand/BrandFlame';
+import { BackArrow } from './ui/BackArrow';
 import { BirthCard } from './BirthCard';
-import { DEMO_TINTS, demoTintFilter, getSpriteForStage } from '../utils/sprites';
+import { getSpriteForStage } from '../utils/sprites';
+import logoUrl from '../assets/brand/final/logo.svg';
+import { recommendStarterSet } from '../utils/recommend';
+import { ACTIVITY_CATALOG } from '../data/activityCatalog';
+import {
+  LIFE_AREAS, LIFE_AREA_LABEL, STRUGGLE_LABEL, STRENGTH_LABEL,
+  type LifeArea, type StruggleId, type StrengthId,
+} from '../types/activityCatalog';
 import { PLACEHOLDER_ART } from '../utils/placeholderArt';
 import { ScreenSkeleton } from './ui/ScreenSkeleton';
-import { sm2Button, sm2Hint, sm2Label, sm2Text, sm2TitleStyle, Field, CheckRow } from './form/FormKit';
+import { sm2Button, sm2Hint, sm2Label, sm2Text, sm2TitleStyle, Field, CheckRow, Chip } from './form/FormKit';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readLocal, writeJson, removeLocal } from '../utils/safeStorage';
 import { readOracleDraft, writeOracleDraft, clearOracleDraft } from '../utils/oracleDraft';
@@ -121,6 +127,15 @@ const alertStyle: CSSProperties = {
 };
 const statusStyle: CSSProperties = { ...alertStyle, borderLeftColor: 'var(--sm2-primary-ink)' };
 
+/** As listas de opção do catálogo, na ordem do intersticial antigo. */
+const STRUGGLE_IDS: StruggleId[] = ['comecar', 'constancia', 'esquecer', 'energia', 'ansiedade', 'distracao', 'tempo', 'perfeccionismo'];
+const STRENGTH_IDS: StrengthId[] = ['disciplina', 'curiosidade', 'criatividade', 'sociabilidade', 'organizacao', 'energiaFisica', 'calma', 'persistencia'];
+function toggleUpTo<T>(list: T[], value: T, max: number): T[] {
+  if (list.includes(value)) return list.filter(v => v !== value);
+  if (list.length >= max) return list;
+  return [...list, value];
+}
+
 export type OnboardingCompleteData = {
   userName: string;
   /**
@@ -141,6 +156,20 @@ export type OnboardingCompleteData = {
    * saves antigos não têm — ausência NUNCA vira bloqueio.
    */
   consent?: ConsentRecord;
+  /**
+   * B4/B5 (checklist do dono, 01/10/2026): as perguntas de METAS saíram do
+   * intersticial do catálogo e entraram no onboarding — áreas (o que melhorar),
+   * dificuldades e forças (≥1 de cada, obrigatório) e o ponto de partida (os
+   * itens do catálogo que a pessoa manteve, ≥1). Opcional no tipo porque o
+   * modo 'upgrade' e o rascunho do ritual pago antigo não carregam isto; quem
+   * consome (`App.tsx`) só acrescenta atividades quando `itemIds` não é vazio.
+   */
+  catalogChoice?: {
+    areas: LifeArea[];
+    struggles: StruggleId[];
+    strengths: StrengthId[];
+    itemIds: string[];
+  };
 } & (
   | {
       mode: 'oracle';
@@ -154,7 +183,9 @@ export type OnboardingCompleteData = {
   | {
       mode: 'demo';
       demoCharacterId: 'kaelen' | 'orrin' | 'thalindra' | 'igni' | 'nautilu' | 'astrase';
-      /** WP1.12 — tonalidade escolhida. Cosmética; 0 = arte original. */
+      /** WP1.12 — tonalidade escolhida. Cosmética; 0 = arte original.
+       *  ⚰️ B10 (01/10/2026): a escolha de tonalidade SAIU do onboarding; o
+       *  campo fica no tipo só para save/consumidor antigo — ninguém o envia. */
       demoTint?: number;
     }
 );
@@ -325,6 +356,16 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   // sem aceite e sem checagem de idade, que é exatamente o que as duas travas
   // existem para impedir.
   const GOOGLE_STEP = -9;
+  // B1 (checklist do dono, 01/10/2026): o NOME DO JOGADOR é a PRIMEIRA
+  // pergunta depois da conta — antes de metas, escolha e ritual. Era o
+  // "apelido" do cadastro final; o valor é o mesmo (`userName`).
+  const NAME_STEP = -10;
+  // B4/B5: as metas do catálogo (áreas em GOAL_STEP, dificuldades em
+  // STRUGGLE_STEP) ganharam as FORÇAS e o PONTO DE PARTIDA aqui dentro.
+  // Ids negativos novos pelo mesmo motivo dos outros (não renumerar o ritual);
+  // a telemetria ganhou folga para eles (`NEGATIVE_STEP_BASE`).
+  const STRENGTH_STEP = -11;
+  const STARTER_STEP = -12;
 
   // No upgrade o ritual começa direto na primeira pergunta: a intro só existe
   // para escolher entre grátis e completo, e essa escolha já foi feita (paga).
@@ -387,9 +428,6 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   }, []);
   const [resetEnviado, setResetEnviado] = useState(false);
   const [demoCharacterId, setDemoCharacterId] = useState<'kaelen' | 'orrin' | 'thalindra' | 'igni' | 'nautilu' | 'astrase' | null>(null);
-  /** WP1.12 — tonalidade escolhida no demo. 0 = a arte original. */
-  const [demoTint, setDemoTint] = useState(0);
-  const [areaFoco, setAreaFoco] = useState(false);
   const [unlockLoading, setUnlockLoading] = useState(false);
   const [unlockMessage, setUnlockMessage] = useState<string | null>(null);
   /** A caixa de consentimento vive FORA do texto legal: é elemento de UI
@@ -432,8 +470,31 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
    *  que fazer com um formulário de login. Nos dois casos a tela vira só o
    *  aceite dos Termos e a idade, com um "Continuar". */
   const mostrarAuth = authUsavel && !authEmail;
-  const [soulGoal, setSoulGoal] = useState(draft?.soulGoal ?? gate?.soulGoal ?? '');
-  const [soulStruggle, setSoulStruggle] = useState(draft?.soulStruggle ?? gate?.soulStruggle ?? '');
+  /* B2/B4 — as perguntas abertas ("o que quer melhorar", "o que atrapalha")
+     viraram OBJETIVAS, com as opções do catálogo (`types/activityCatalog.ts`,
+     o dono único dos rótulos). `soulGoal`/`soulStruggle` continuam existindo
+     e indo para o save: são DERIVADOS dos rótulos escolhidos, no idioma da
+     pessoa — os consumidores (`BirthCard`, `DailyReportModal`, `MemoriesCard`,
+     `goalToCategory`, `tinyOffer`) seguem lendo uma frase. Sem escolha (rascunho
+     antigo), vale o texto que o rascunho trouxe. */
+  const [areas, setAreas] = useState<LifeArea[]>(gate?.areas ?? []);
+  const [struggles, setStruggles] = useState<StruggleId[]>(gate?.struggles ?? []);
+  const [strengths, setStrengths] = useState<StrengthId[]>(gate?.strengths ?? []);
+  /** Itens do ponto de partida que a pessoa DESMARCOU (o resto entra). */
+  const [starterOff, setStarterOff] = useState<string[]>([]);
+  const starterSet = useMemo(
+    () => recommendStarterSet({ areas, struggles, strengths }, ACTIVITY_CATALOG),
+    [areas, struggles, strengths],
+  );
+  const starterKept = starterSet.filter(i => !starterOff.includes(i.id));
+  const labelsOf = <K extends string>(ids: K[], table: Record<K, { pt: string; en: string }>) =>
+    ids.map(id => (isPt ? table[id].pt : table[id].en)).join(', ');
+  const soulGoal = areas.length > 0
+    ? labelsOf(areas, LIFE_AREA_LABEL)
+    : (draft?.soulGoal ?? gate?.soulGoal ?? '');
+  const soulStruggle = struggles.length > 0
+    ? labelsOf(struggles, STRUGGLE_LABEL)
+    : (draft?.soulStruggle ?? gate?.soulStruggle ?? '');
   const [fullName, setFullName] = useState(draft?.fullName ?? '');
   const [birthDate, setBirthDate] = useState(draft?.birthDate ?? '');
   const [birthDateText, setBirthDateText] = useState(draft?.birthDateText ?? '');
@@ -525,6 +586,14 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const progress = Math.min(shrink(progressStep), shrink(lastStep)) / shrink(isUpgrade ? lastStep : REGISTER + 1);
 
   const canAdvance = (): boolean => {
+    // B1/B4/B5 — tudo obrigatório, sem "pular".
+    if (step === NAME_STEP) return nickname.trim().length >= 2;
+    if (step === GOAL_STEP) return areas.length > 0;
+    if (step === STRUGGLE_STEP) return struggles.length > 0;
+    if (step === STRENGTH_STEP) return strengths.length > 0;
+    // Ponto de partida: ≥1 item mantido (catálogo sem sugestão nenhuma não
+    // tranca ninguém — o tutorial do app cobre esse caso).
+    if (step === STARTER_STEP) return starterSet.length === 0 || starterKept.length > 0;
     if (step === 1) return fullName.trim().length >= 3;
     if (step === 2) return !!birthDate;
     if (step === 3) return timeUnknown || !!birthTime;
@@ -594,7 +663,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       // pessoa já passou pelo consentimento e pelo 18+ nesta instalação.
       // Retomada: autenticado e com aceite já provado nesta instalação, o
       // portão não tem mais o que perguntar — segue para o "porquê".
-      if (atual && (gate?.consent ?? null) && step === IDENTITY_STEP) setStep(GOAL_STEP);
+      if (atual && (gate?.consent ?? null) && step === IDENTITY_STEP) setStep(NAME_STEP);
     })();
     return () => { cancelado = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -603,11 +672,11 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   // Rascunho do portão: gravado enquanto a pessoa está no trecho anterior à
   // escolha. Some assim que o onboarding termina (ver `finish`).
   const noPortao = !isUpgrade
-    && [IDENTITY_STEP, GOOGLE_STEP, EMAIL_STEP, GOAL_STEP, STRUGGLE_STEP, CHOICE_STEP].includes(step);
+    && [IDENTITY_STEP, GOOGLE_STEP, EMAIL_STEP, NAME_STEP, GOAL_STEP, STRUGGLE_STEP, STRENGTH_STEP, STARTER_STEP, CHOICE_STEP].includes(step);
   useEffect(() => {
     if (!noPortao) return;
-    writeGateDraft({ soulGoal, soulStruggle, consent });
-  }, [noPortao, soulGoal, soulStruggle, consent]);
+    writeGateDraft({ soulGoal, soulStruggle, consent, areas, struggles, strengths });
+  }, [noPortao, soulGoal, soulStruggle, consent, areas, struggles, strengths]);
 
   // WP1.7 — grava o rascunho a cada mudança, só DENTRO do ritual pago (do nome
   // ao último item do teste) e só enquanto não existe resultado. Fora disso o
@@ -748,9 +817,12 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     // O portão não avança por `next()`: quem o atravessa é uma autenticação
     // bem-sucedida (ver `aposAutenticar`).
     if (step === IDENTITY_STEP || step === EMAIL_STEP || step === GOOGLE_STEP) return;
-    if (step === GOAL_STEP) { setStep(STRUGGLE_STEP); return; }
-    if (step === STRUGGLE_STEP) { setStep(CHOICE_STEP); return; }
     if (!canAdvance()) return;
+    if (step === NAME_STEP) { setStep(GOAL_STEP); return; }
+    if (step === GOAL_STEP) { setStep(STRUGGLE_STEP); return; }
+    if (step === STRUGGLE_STEP) { setStep(STRENGTH_STEP); return; }
+    if (step === STRENGTH_STEP) { setStarterOff([]); setStep(STARTER_STEP); return; }
+    if (step === STARTER_STEP) { setStep(CHOICE_STEP); return; }
     // Gate 18+ (D-06): a MESMA data do mapa astral confirma a idade mínima.
     // `isAgeBlocked` só bloqueia data legível de menor — data vazia ou
     // ilegível segue o fluxo, que é o que impede barrar alguém por engano.
@@ -791,9 +863,12 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     if (step === EMAIL_STEP || step === GOOGLE_STEP) { setStep(IDENTITY_STEP); return; }
     // Do "porquê" não se volta para o portão: a conta já existe, e desfazê-la
     // não é o que um botão de voltar deve sugerir.
-    if (step === GOAL_STEP) return;
+    if (step === NAME_STEP) return;
+    if (step === GOAL_STEP) { setStep(NAME_STEP); return; }
     if (step === STRUGGLE_STEP) { setStep(GOAL_STEP); return; }
-    if (step === CHOICE_STEP) { setStep(STRUGGLE_STEP); return; }
+    if (step === STRENGTH_STEP) { setStep(STRUGGLE_STEP); return; }
+    if (step === STARTER_STEP) { setStep(STRENGTH_STEP); return; }
+    if (step === CHOICE_STEP) { setStep(STARTER_STEP); return; }
     // 13.19: da escolha do personagem volta-se ao reveal demo (a leitura
     // continua lá); da 1ª pergunta do ritual grátis, à escolha grátis/completo.
     if (step === DEMO_PICK) { setStep(demoReading ? REVEAL_DEMO : CHOICE_STEP); return; }
@@ -937,8 +1012,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     // O carimbo do aceite é feito NO MOMENTO em que a conta nasce, não no fim
     // do onboarding: é esse instante que a prova precisa registrar.
     if (!consent) setConsent(buildConsentRecord());
-    // Autenticado, o "porquê" vem antes de qualquer mecânica de jogo.
-    setStep(GOAL_STEP);
+    // Autenticado: o NOME vem primeiro (B1), depois o "porquê".
+    setStep(NAME_STEP);
   };
 
   /** SEM AUTH CONFIGURADA o portão não pode trancar o app.
@@ -952,7 +1027,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const aoContinuarSemConta = () => {
     if (!podeAutenticar) return;
     if (!consent) setConsent(buildConsentRecord());
-    setStep(GOAL_STEP);
+    setStep(NAME_STEP);
   };
 
   /* O portão não tem mais muro de idade próprio: com uma CAIXA, quem não tem
@@ -1118,6 +1193,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     // O trecho do portao acabou. Rascunho velho aqui faria uma instalacao
     // seguinte retomar um portao que esta pessoa ja atravessou.
     clearGateDraft();
+    const catalogChoice = { areas, struggles, strengths, itemIds: starterKept.map(i => i.id) };
     if (flow === 'demo' && demoCharacterId) {
       await onComplete({
         mode: 'demo',
@@ -1126,6 +1202,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         email: authEmail ?? '',
         demoCharacterId,
         initialActivities: [],
+        catalogChoice,
         soulGoal: soulGoal.trim(),
         soulStruggle: soulStruggle.trim(),
         consent: consent ?? undefined,
@@ -1141,6 +1218,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         // geraria de novo e entregaria outra criatura no primeiro minuto.
         revealSprite: revealSprite ?? undefined,
         initialActivities: [],
+        catalogChoice,
         soulGoal: soulGoal.trim(),
         soulStruggle: soulStruggle.trim(),
         consent: consent ?? undefined,
@@ -1254,6 +1332,15 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     transition: 'background-color var(--sm2-dur-tap) var(--sm2-ease)',
   });
 
+  /** Onde a seta de voltar existe (B6). Espelha os ramos de `back()`. */
+  const temVolta = !oracleDebugOpen && (
+    [GOOGLE_STEP, EMAIL_STEP, GOAL_STEP, STRUGGLE_STEP, STRENGTH_STEP, STARTER_STEP, CHOICE_STEP, DEMO_PICK].includes(step)
+    || (step >= 1 && step < FAVORITE_STEP)
+    || (step >= QUIZ_START && step < QUIZ_END)
+    || (step >= DEEP_START && step < DEEP_END)
+    || (step === REGISTER && !!demoChar)
+  );
+
   return (
     <div style={{
       position: 'fixed', inset: 0, overflowY: 'auto',
@@ -1292,6 +1379,14 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         width: '100%', maxWidth: 440, padding: '24px 20px 40px', boxSizing: 'border-box',
         minHeight: '100%', display: 'flex', flexDirection: 'column',
       }}>
+        {/* B6 (checklist do dono, 01/10/2026): o VOLTAR é a seta no canto
+            SUPERIOR ESQUERDO, acima do título — um só ponto de montagem para o
+            onboarding inteiro (`BackArrow`, o padrão do app). Os botões
+            "Back" de texto no pé de cada tela saíram. Onde não há volta (a
+            primeira tela, o nome logo depois da conta, a bifurcação, a
+            geração, os reveals), a seta não aparece. */}
+        {temVolta && <BackArrow onClick={back} language={isPt ? 'pt-BR' : 'en-US'} />}
+
         {/* Barra de progresso. O DENOMINADOR não mudou nesta rodada: ele já
             inclui o tutorial que vem depois do onboarding (antes a barra
             chegava a 100% e ainda apareciam telas) e já desconta o bloco de 20
@@ -1327,22 +1422,21 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             sem checagem de idade por um lado da bifurcação. */}
         {step === IDENTITY_STEP && (
           <>
-          {/* A MARCA = a chama do kit num slot-visor (D-O4 / X3): a chama é
-              pixel (um `<rect>` por pixel, `crispEdges`) e pixel vive DENTRO
-              do vidro — solta sobre a página clara os pixels claros somem a
-              1,10:1. Slot 64×80 `viewport-bg` sem anel (SIS-07), a chama a
-              2× (38×60), o wordmark Fredoka 16 FORA; o mesmo fundo nos dois
-              temas. O corvo-mascote só aparece no vidro da intro. */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, paddingTop: 24 }}>
-            <span role="img" aria-label="Soulmon" style={{ display: 'inline-flex' }}>
-              <MiniGlass size={64} style={{ height: 80 }}>
-                <BrandFlame scale={2} />
-              </MiniGlass>
-            </span>
-            <span style={{
-              fontFamily: 'var(--sm2-font-display)', fontSize: 'var(--sm2-text-md)',
-              fontWeight: 600, letterSpacing: '.01em', color: 'var(--sm2-ink)', lineHeight: 'var(--sm2-leading-title)',
-            }}>Soulmon</span>
+          {/* A1 (checklist do dono, 01/10/2026): A MARCA é o LOGO do app
+              (`src/assets/brand/final/logo.svg`), solto — sem o slot-visor de
+              gradiente e sem o wordmark em texto que vinham antes. O SVG é
+              pixel `crispEdges` com contorno escuro próprio (37×60), então
+              escala sem borrar e se lê sobre o fundo claro; 3× = 111×180.
+              `role=img` + nome acessível: o logo é a única marca da tela. */}
+          <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 24 }}>
+            <img
+              src={logoUrl}
+              alt="Soulmon"
+              width={111}
+              height={180}
+              data-brand-logo
+              style={{ width: 111, height: 180, display: 'block', imageRendering: 'pixelated' }}
+            />
           </div>
           {/* A1: a região viva está SEMPRE no DOM (vazia) e o texto entra
               pós-montagem via `avisoAnunciado`; o cabeçalho só aparece com
@@ -1449,10 +1543,6 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               {authOcupado ? <Spinner size={24} /> : (isPt ? 'Entrar com Google' : 'Continue with Google')}
             </button>
             {!podeAutenticar && <p style={{ ...sm2Hint, marginTop: 12, textAlign: 'center' }}>{faltaParaAutenticar}</p>}
-            <button type="button" style={{ ...sm2Button('quiet'), width: '100%', marginTop: 8 }} onClick={back}>
-              <Icon name="arrow_back" size={20} />
-              {isPt ? 'Voltar' : 'Back'}
-            </button>
           </StepShell>
         )}
 
@@ -1551,10 +1641,6 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               </button>
             )}
 
-            <button type="button" style={{ ...sm2Button('quiet'), width: '100%', marginTop: 4 }} onClick={back}>
-              <Icon name="arrow_back" size={20} />
-              {isPt ? 'Voltar' : 'Back'}
-            </button>
           </StepShell>
         )}
 
@@ -1583,13 +1669,13 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               className="sm2-num"
               style={{ ...sm2Button('outline', unlockLoading), width: '100%', marginTop: 12 }}
               onClick={handleUnlockFull}
-              aria-label={isPt ? `Quero o completo — ${precoLabel}` : `Get the full game — ${precoLabel}`}
+              aria-label={isPt ? `Tenha seu próprio Soulmon — ${precoLabel}` : `Get your own Soulmon — ${precoLabel}`}
               aria-busy={unlockLoading}
               disabled={unlockLoading}
             >
               {unlockLoading
                 ? <Spinner size={24} />
-                : (isPt ? `Quero o completo — ${precoLabel}` : `Get the full game — ${precoLabel}`)}
+                : (isPt ? `Tenha seu próprio Soulmon — ${precoLabel}` : `Get your own Soulmon — ${precoLabel}`)}
             </button>
             {/* ONB-17/18/19: compra cancelada / loja indisponível / falha — âmbar,
                 filete, sob os botões; nada de modal, nada de vermelho (D-O7). */}
@@ -1598,90 +1684,93 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 {unlockMessage}
               </p>
             )}
-            {/* "Back" `[novo]` (B1): `back()` já suportava CHOICE → STRUGGLE. */}
-            <button type="button" style={{ ...sm2Button('quiet'), width: '100%', marginTop: 12 }} onClick={back}>
-              <Icon name="arrow_back" size={20} />
-              {isPt ? 'Voltar' : 'Back'}
-            </button>
           </StepShell>
         )}
 
 
-        {/* GOAL_STEP / STRUGGLE_STEP — o "porquê", antes de qualquer mecânica */}
-        {(step === GOAL_STEP || step === STRUGGLE_STEP) && (
-          <div style={{ paddingTop: 28 }}>
-            {/* WP1.9 — o eco. A pessoa acabou de escrever por que quer mudar de
-                vida e o texto sumia sem uma palavra: o passo seguinte abria
-                como se nada tivesse sido dito. Uma linha só, e só para quem
-                escreveu — quem pulou não recebe eco de coisa nenhuma, porque
-                aí a frase viraria mentira. Nada disso vira estado no save: o
-                gatilho é o `soulGoal` que já está em memória. */}
-            <h2 className="sm2-title" style={{ ...sm2TitleStyle, marginBottom: 8 }}>
-              {step === GOAL_STEP
-                ? (isPt ? 'O que você quer melhorar na sua vida?' : 'What do you want to improve in your life?')
-                : (isPt ? 'E o que mais te atrapalha hoje?' : 'And what gets in your way the most?')}
-            </h2>
-            {/* A justificativa do campo (O2, canvas Objetivo): por que perguntar. */}
-            {step === GOAL_STEP && (
-              <p style={{ ...sm2Hint, marginBottom: 16 }}>
-                {isPt
-                  ? 'Seu Soulmon traz isso de volta nos dias que importam.'
-                  : 'Your Soulmon brings this back on the days that count.'}
-              </p>
-            )}
-            {/* O eco (canvas Atrapalha): `check_circle` 20 FILL 1 + 12 em
-                `primary-ink` — a única luz forte da tela além do primário. Era
-                `var(--sm2-accent-ink)`, token que não existe. */}
-            {step === STRUGGLE_STEP && soulGoal.trim().length > 0 && (
-              <p style={{ ...sm2Hint, display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0 12px', color: 'var(--sm2-primary-ink)' }}>
-                <Icon name="check_circle" size={20} fill={1} tone="inherit" />
-                {isPt ? 'Anotado. Seu Soulmon vai lembrar disso.' : 'Noted. Your Soulmon will remember.'}
-              </p>
-            )}
-            <textarea
-              rows={4}
-              autoFocus
-              className="sm2-form-field"
-              aria-label={step === GOAL_STEP
-                ? (isPt ? 'O que você quer melhorar na sua vida?' : 'What do you want to improve in your life?')
-                : (isPt ? 'E o que mais te atrapalha hoje?' : 'And what gets in your way the most?')}
-              onFocus={() => setAreaFoco(true)}
-              onBlur={() => setAreaFoco(false)}
-              style={{
-                ...fieldStyle, minHeight: 96, padding: 12, resize: 'none', fontFamily: 'var(--sm2-font-text)',
-                /* Foco = fronteira + anel 2px `primary-ink` (o mesmo mecanismo do `Field`). */
-                border: `1px solid ${areaFoco ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)'}`,
-                boxShadow: areaFoco ? '0 0 0 2px var(--sm2-primary-ink)' : 'none',
-              }}
-              value={step === GOAL_STEP ? soulGoal : soulStruggle}
-              onChange={e => (step === GOAL_STEP ? setSoulGoal : setSoulStruggle)(e.target.value.slice(0, 280))}
-              placeholder={step === GOAL_STEP
-                ? (isPt ? 'Ex.: quero voltar a estudar sem me cobrar tanto' : 'e.g. get back to studying without beating myself up')
-                : (isPt ? 'Ex.: começo animado e largo na segunda semana' : 'e.g. I start strong and quit in week two')}
-            />
-            <button type="button" style={{ ...sm2Button('primary'), width: '100%', marginTop: 16 }} onClick={next}>
+        {/* NAME_STEP — B1: o nome do jogador, PRIMEIRA pergunta depois da
+            conta. Sem copy explicativa embaixo (pedido do dono): o título
+            pergunta, o campo responde. */}
+        {step === NAME_STEP && (
+          <StepShell title={isPt ? 'Como podemos te chamar?' : 'What should we call you?'}>
+            <Field id="onb-nick" type="text" value={nickname} autoFocus maxLength={24}
+              aria-label={isPt ? 'Seu nome' : 'Your name'}
+              /* A legenda de privacidade ("pode ser inventado") saiu por B1; o
+                 exemplo INVENTADO fica no placeholder — é a única pista que
+                 sobra de que o nome aparece para outros jogadores e não
+                 precisa ser o real (achado da auditoria do diretório). */
+              placeholder={isPt ? 'Ex.: CorvoAzul' : 'E.g.: BlueRaven'}
+              onChange={e => setNickname(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && next()} />
+            <button type="button" style={{ ...sm2Button('primary', !canAdvance()), width: '100%', marginTop: 20 }}
+              onClick={next} aria-disabled={!canAdvance() || undefined}>
               {isPt ? 'Continuar' : 'Continue'}
-              <Icon name="arrow_forward" size={20} />
             </button>
-            {/* Pular é de propósito: obrigar a escrever antes de ver o app é o
-                jeito mais rápido de perder alguém logo na primeira tela. */}
-            <button
-              type="button"
-              style={{ ...sm2Button('quiet'), width: '100%', marginTop: 4 }}
-              onClick={() => { (step === GOAL_STEP ? setSoulGoal : setSoulStruggle)(''); next(); }}
-            >
-              {isPt ? 'Prefiro não responder agora' : 'I’d rather not say right now'}
-            </button>
-            {/* "Back" no Atrapalha (O4/B1 — `back()` já sabia voltar, nada o
-                chamava). Não existe no Objetivo: a conta está atrás, o ritual
-                à frente. */}
-            {step === STRUGGLE_STEP && (
-              <button type="button" style={{ ...sm2Button('quiet'), width: '100%', marginTop: 4 }} onClick={back}>
-                <Icon name="arrow_back" size={20} />
-                {isPt ? 'Voltar' : 'Back'}
+          </StepShell>
+        )}
+
+        {/* GOAL / STRUGGLE / STRENGTH — B2/B4/B5: as perguntas abertas viraram
+            OBJETIVAS (opções do catálogo, até 3) e TODAS são obrigatórias: o
+            "prefiro não responder" saiu (B3). As opções e os rótulos são os
+            mesmos do catálogo — um vocabulário só, um dono só
+            (`types/activityCatalog.ts`). */}
+        {(step === GOAL_STEP || step === STRUGGLE_STEP || step === STRENGTH_STEP) && (() => {
+          const titulo = step === GOAL_STEP
+            ? (isPt ? 'O que você quer melhorar?' : 'What do you want to improve?')
+            : step === STRUGGLE_STEP
+              ? (isPt ? 'O que mais te atrapalha hoje?' : 'What gets in your way the most?')
+              : (isPt ? 'O que já é forte em você?' : "What's already a strength?");
+          const opcoes: Array<{ id: string; label: string; on: boolean; toggle: () => void }> =
+            step === GOAL_STEP
+              ? LIFE_AREAS.map(a => ({ id: a, label: isPt ? LIFE_AREA_LABEL[a].pt : LIFE_AREA_LABEL[a].en, on: areas.includes(a), toggle: () => setAreas(v => toggleUpTo(v, a, 3)) }))
+              : step === STRUGGLE_STEP
+                ? STRUGGLE_IDS.map(id => ({ id, label: isPt ? STRUGGLE_LABEL[id].pt : STRUGGLE_LABEL[id].en, on: struggles.includes(id), toggle: () => setStruggles(v => toggleUpTo(v, id, 3)) }))
+                : STRENGTH_IDS.map(id => ({ id, label: isPt ? STRENGTH_LABEL[id].pt : STRENGTH_LABEL[id].en, on: strengths.includes(id), toggle: () => setStrengths(v => toggleUpTo(v, id, 3)) }));
+          return (
+            <StepShell title={titulo} hint={isPt ? 'Escolha de 1 a 3.' : 'Pick 1 to 3.'}>
+              <div role="group" aria-label={titulo} style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {opcoes.map(o => (
+                  <Chip key={o.id} selected={o.on} onToggle={o.toggle}>{o.label}</Chip>
+                ))}
+              </div>
+              <button type="button" style={{ ...sm2Button('primary', !canAdvance()), width: '100%', marginTop: 24 }}
+                onClick={next} aria-disabled={!canAdvance() || undefined}>
+                {isPt ? 'Continuar' : 'Continue'}
               </button>
+            </StepShell>
+          );
+        })()}
+
+        {/* STARTER_STEP — B4: o ponto de partida (o starter set do catálogo,
+            `recommendStarterSet`) agora mora no onboarding. Tudo vem marcado;
+            desmarcar tira. ≥1 mantido para seguir — sem "pular" (C11 pede o
+            mesmo na Home). O recomendador PROPÕE, a pessoa decide. */}
+        {step === STARTER_STEP && (
+          <StepShell title={isPt ? 'Seu ponto de partida' : 'Your starting point'}
+            hint={isPt ? 'Fique com o que quiser começar.' : 'Keep what you want to start with.'}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {starterSet.map(item => (
+                <div key={item.id} data-starter-item={item.id}>
+                  <CheckRow
+                    checked={!starterOff.includes(item.id)}
+                    onChange={on => setStarterOff(v => (on ? v.filter(x => x !== item.id) : [...v, item.id]))}
+                  >
+                    {isPt ? item.name.pt : item.name.en}
+                  </CheckRow>
+                  <p style={{ ...sm2Hint, margin: '0 0 8px 34px' }}>{isPt ? item.why.pt : item.why.en}</p>
+                </div>
+              ))}
+            </div>
+            <button type="button" style={{ ...sm2Button('primary', !canAdvance()), width: '100%', marginTop: 20 }}
+              onClick={next} aria-disabled={!canAdvance() || undefined}>
+              {isPt ? 'Continuar' : 'Continue'}
+            </button>
+            {!canAdvance() && (
+              <p style={{ ...sm2Hint, marginTop: 8, textAlign: 'center' }}>
+                {isPt ? 'Fique com pelo menos uma.' : 'Keep at least one.'}
+              </p>
             )}
-          </div>
+          </StepShell>
         )}
 
         {/* AGE_BLOCK — muro de idade. Convite adiado, NÃO expulsão: sem "erro",
@@ -1745,17 +1834,12 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 );
               })}
             </div>
-            <button type="button" style={{ ...sm2Button('quiet'), width: '100%', marginTop: 12 }} onClick={back}>
-              <Icon name="arrow_back" size={20} />
-              {isPt ? 'Voltar' : 'Back'}
-            </button>
           </div>
         )}
 
         {/* 1 — Nome */}
         {step === 1 && (
-          <StepShell title={isPt ? 'Qual é o seu nome completo?' : 'What is your full name?'}
-            hint={isPt ? 'Seu nome molda a numerologia da sua criatura.' : 'Your name shapes your creature\'s numerology.'}>
+          <StepShell title={isPt ? 'Qual é o seu nome completo?' : 'What is your full name?'}>
             <Field type="text" value={fullName} autoFocus
               onChange={e => setFullName(e.target.value)}
               placeholder={isPt ? 'Ex.: Maria da Silva' : 'E.g.: Jane Doe'}
@@ -2039,10 +2123,13 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 e-mail, ele lia como mais um campo de formulário. O campo vem
                 PREENCHIDO com o nome sugerido: manter é seguir em frente,
                 trocar é digitar por cima. */}
+            {/* B11: "Name your Soulmon" SOLTO, como título da seção, sem
+                caixa e sem a explicação embaixo. O campo vem preenchido com o
+                nome sugerido — manter é seguir em frente. */}
             {!isUpgrade && (
               <div style={{ textAlign: 'left', marginBottom: 20 }}>
-                <label style={sm2Label} htmlFor="onb-petname">
-                  {isPt ? 'Batize seu Soulmon' : 'Name your Soulmon'}
+                <label className="sm2-title" style={{ ...sm2TitleStyle, display: 'block', marginBottom: 10 }} htmlFor="onb-petname">
+                  {isPt ? 'Dê nome ao seu Soulmon' : 'Name your Soulmon'}
                 </label>
                 <Field
                   id="onb-petname"
@@ -2051,11 +2138,6 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                   maxLength={24}
                   onChange={e => setPetNameEdit(e.target.value)}
                 />
-                <p style={{ ...sm2Hint, margin: '6px 0 0' }}>
-                  {isPt
-                    ? `${registerDisplayName} é o nome que veio com ele. Se quiser dar outro, é só escrever por cima.`
-                    : `${registerDisplayName} is the name it came with. Want to give it another? Just type over it.`}
-                </p>
               </div>
             )}
 
@@ -2081,12 +2163,16 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 // `birthBatch` pedia a forma inicial do zero. É o MESMO dano
                 // que o WP1.1 consertou no nascimento, sobrevivendo na única
                 // rota de quem acabou de pagar pela criatura própria.
-                if (isUpgrade) onRevealed?.(result, revealSprite ?? undefined); else setStep(REGISTER);
+                // B1: o nome do jogador já veio no começo, então o cadastro
+                // final ficou vazio no caminho pago — o reveal CONCLUI.
+                if (isUpgrade) onRevealed?.(result, revealSprite ?? undefined); else void finish();
               }}
+              disabled={submitting}
+              aria-busy={submitting || undefined}
             >
               {/* Sem seta: o verbo já é o botão (canvas Reveal — "Hatch ‹nome›"
                   primário, 2 paradas de foco no reveal pago: o nome e este). */}
-              {isPt ? `Nascer ${registerDisplayName}` : `Hatch ${registerDisplayName}`}
+              {submitting ? <Spinner /> : (isPt ? `Nascer ${petNameFinal}` : `Hatch ${petNameFinal}`)}
             </button>
           </div>
         )}
@@ -2129,18 +2215,25 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 o × é o "Not now" com o próprio alvo 44, pelado (ícone nunca em
                 box). A compra sai por `handleUnlockFull`, o mesmo caminho do
                 `CHOICE_STEP` (reason `onboarding`). */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 12 }}>
-              <div data-nudge style={{ flex: '0 1 280px', minWidth: 0, textAlign: 'left' }}>
-                <UnlockNudge
-                  language={isPt ? 'pt-BR' : 'en-US'}
-                  reason="reveal-demo"
-                  onOpen={() => { void handleUnlockFull(); }}
-                />
-              </div>
+            {/* B8 (checklist do dono, 01/10/2026): o × DENTRO do card, como
+                botão de verdade (alvo 44, nome acessível "Not now"), no canto
+                superior direito — antes ficava solto ao lado. O card é o
+                convite; o × é irmão dele dentro do mesmo invólucro (botão
+                dentro de botão não é HTML válido), e o convite reserva o
+                espaço do × (`trailingSpace`) para o texto não passar por baixo. */}
+            <div data-nudge style={{ position: 'relative', maxWidth: 280, marginBottom: 12, textAlign: 'left' }}>
+              <UnlockNudge
+                language={isPt ? 'pt-BR' : 'en-US'}
+                reason="reveal-demo"
+                trailingSpace={40}
+                onOpen={() => { void handleUnlockFull(); }}
+              />
               <button
                 type="button"
                 className="sm2-ora-back"
+                data-nudge-close
                 aria-label={isPt ? 'Agora não' : 'Not now'}
+                style={{ position: 'absolute', top: 6, right: 4 }}
                 onClick={() => {
                   track('unlock_dismiss', { reason: unlockReasonCode('reveal-demo') });
                   setStep(DEMO_PICK);
@@ -2152,6 +2245,19 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             {unlockMessage && (
               <p role="alert" style={{ ...alertStyle, marginBottom: 12, textAlign: 'left' }}>{unlockMessage}</p>
             )}
+            {/* B8: o botão de criar a PRÓPRIA criatura, logo acima de seguir
+                com o personagem demo. `outline` (D-O5: outra porta, sem
+                empurrão) — o primário continua sendo o caminho grátis (D-Q13). */}
+            <button
+              type="button"
+              className="sm2-num"
+              style={{ ...sm2Button('outline', unlockLoading), width: '100%', marginBottom: 12 }}
+              onClick={() => { void handleUnlockFull(); }}
+              aria-busy={unlockLoading || undefined}
+              disabled={unlockLoading}
+            >
+              {isPt ? 'Criar minha própria criatura' : 'Create my own creature'}
+            </button>
             <button
               type="button"
               style={{ ...sm2Button('primary'), width: '100%' }}
@@ -2162,121 +2268,36 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
           </div>
         )}
 
-        {/* Register — nickname (identidade pública) + e-mail (sync) */}
-        {step === REGISTER && (result || demoChar) && (
+        {/* REGISTER — só o caminho DEMO chega aqui (o pago conclui no reveal).
+            B1: o apelido subiu para o começo; B10: a tonalidade saiu; B11: o
+            antigo "Last details" virou "Name your Soulmon", SOLTO, como título
+            da tela — sem caixa e sem explicação embaixo. */}
+        {step === REGISTER && demoChar && (
           <div style={{ paddingTop: 20 }}>
-            <h2 className="sm2-title" style={{ ...sm2TitleStyle, marginBottom: 18 }}>
-              {isPt ? 'Últimos detalhes' : 'Last details'}
-            </h2>
-
-            {/* WP1.15 — o BATISMO saiu daqui e foi para o REVEAL. Batizar é
-                o gesto de posse do momento em que a criatura aparece; entre
-                apelido e e-mail ele lia como mais um campo de formulário.
-                Quem chega do caminho DEMO não passa pelo reveal, então para
-                ele o campo continua aqui. */}
-            {/* WP1.12 — MICRO-POSSE NO DEMO.
-                Os três personagens pré-prontos são iguais para todo mundo, e
-                "meu bichinho" começa sendo o bichinho de todo mundo. O tint é
-                a menor coisa possível que transforma um personagem emprestado
-                em algo escolhido — e é o oposto de uma mecânica: nenhuma
-                regra, atributo ou preço olha para ele. */}
-            {/* O NASCIMENTO COM A CRIATURA (O1, D-O11): vidro 192² com anel
-                (sprite 256² a 128 — a mesma peça da Ficha, Pet D-P2), na
-                tonalidade escolhida. `role=img` porque a criatura é conteúdo,
-                não decoração (R6). */}
-            {demoChar && (
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 18 }}>
-                <Viewport
-                  width={96}
-                  height={96}
-                  scale={2}
-                  label={isPt ? `${registerDisplayName}, na tonalidade ${demoTint + 1}` : `${registerDisplayName}, in tint ${demoTint + 1}`}
-                  screenStyle={{ position: 'relative' }}
-                >
-                  <img
-                    src={getSpriteForStage('rookie', demoChar.id)}
-                    alt=""
-                    data-hero
-                    width={128}
-                    height={128}
-                    style={{ position: 'absolute', left: 32, top: 32, width: 128, height: 128, imageRendering: 'pixelated', filter: demoTintFilter(demoTint) }}
-                  />
-                </Viewport>
-              </div>
-            )}
-            {/* As 4 tonalidades como SLOTS 64² (D-O12: SIS-07 `viewport-bg`,
-                sprite a 64 = 0,25×, `hue-rotate` — o único filtro aceito no
-                vidro, muda matiz e não alfa); seleção = anel INTERNO 2px
-                `primary-ink` (forma, não só cor). Eram 48 com o sprite a 36. */}
-            {demoChar && (
-              <div style={{ marginBottom: 18 }}>
-                <span style={sm2Label}>{isPt ? 'Tonalidade' : 'Tint'}</span>
-                <div role="group" aria-label={isPt ? 'Tonalidade' : 'Tint'} style={{ display: 'flex', gap: 8, marginTop: 6 }}>
-                  {DEMO_TINTS.map((_, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      aria-pressed={demoTint === i}
-                      aria-label={isPt ? `Tonalidade ${i + 1}` : `Tint ${i + 1}`}
-                      onClick={() => setDemoTint(i)}
-                      style={{
-                        width: 64, height: 64, padding: 0, border: 'none', background: 'none',
-                        borderRadius: 'var(--sm2-radius-md)', cursor: 'pointer', display: 'inline-flex',
-                      }}
-                    >
-                      <MiniGlass
-                        size={64}
-                        style={{
-                          borderRadius: 'var(--sm2-radius-md)',
-                          boxShadow: demoTint === i ? 'inset 0 0 0 2px var(--sm2-primary-ink)' : undefined,
-                        }}
-                      >
-                        <img
-                          src={getSpriteForStage('rookie', demoChar.id)}
-                          alt=""
-                          width={64}
-                          height={64}
-                          style={{ width: 64, height: 64, display: 'block', imageRendering: 'pixelated', filter: demoTintFilter(i) }}
-                        />
-                      </MiniGlass>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {demoChar && (
-              <>
-                <label style={sm2Label} htmlFor="onb-petname">
-                  {isPt ? 'Batize seu Soulmon' : 'Name your Soulmon'}
-                </label>
-                <Field id="onb-petname" type="text" value={petNameValue} maxLength={24}
-                  onChange={e => setPetNameEdit(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && canFinish && finish()} />
-                <p style={{ ...sm2Hint, margin: '6px 0 18px' }}>
-                  {isPt
-                    ? `${registerDisplayName} é o nome que veio com seu Soulmon. Se quiser dar outro, é só escrever por cima.`
-                    : `${registerDisplayName} is the name it came with. Want to give it another? Just type over it.`}
-                </p>
-              </>
-            )}
-
-            <label style={sm2Label} htmlFor="onb-nick">
-              {isPt ? 'Seu apelido' : 'Your nickname'}
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 18 }}>
+              <Viewport
+                width={96}
+                height={96}
+                scale={2}
+                label={registerDisplayName}
+                screenStyle={{ position: 'relative' }}
+              >
+                <img
+                  src={getSpriteForStage('rookie', demoChar.id)}
+                  alt=""
+                  data-hero
+                  width={128}
+                  height={128}
+                  style={{ position: 'absolute', left: 32, top: 32, width: 128, height: 128, imageRendering: 'pixelated' }}
+                />
+              </Viewport>
+            </div>
+            <label className="sm2-title" style={{ ...sm2TitleStyle, display: 'block', marginBottom: 10 }} htmlFor="onb-petname">
+              {isPt ? 'Dê nome ao seu Soulmon' : 'Name your Soulmon'}
             </label>
-            <Field id="onb-nick" type="text" value={nickname} autoFocus maxLength={24}
-              onChange={e => setNickname(e.target.value)}
-              placeholder={isPt ? 'Ex.: CorvoAzul' : 'E.g.: BlueRaven'}
+            <Field id="onb-petname" type="text" value={petNameValue} maxLength={24} autoFocus
+              onChange={e => setPetNameEdit(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && canFinish && finish()} />
-            {/* Enquadramento, não aviso: este apelido aparece para outros
-                jogadores, e a pessoa escolhe o que mostrar. Dizer que pode ser
-                inventado é o que faz o nome real deixar de vazar por engano —
-                sem transformar a tela num alerta de perigo. */}
-            <p style={{ ...sm2Hint, margin: '6px 0 18px' }}>
-              {isPt
-                ? 'Aparece para outros jogadores na Biblioteca e no Torneio. Pode ser um apelido inventado — não precisa ser seu nome real.'
-                : "Shown to other players in the Library and Tournament. It can be a made-up name — it doesn't have to be your real name."}
-            </p>
             <button type="button" style={{ ...sm2Button('primary', !canFinish), width: '100%', marginTop: 24 }}
               onClick={finish} disabled={!canFinish}
               aria-label={isPt ? `Nascer ${petNameFinal}` : `Hatch ${petNameFinal}`}
@@ -2285,24 +2306,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 ? <Spinner />
                 : (isPt ? `Nascer ${petNameFinal}` : `Hatch ${petNameFinal}`)}
             </button>
-            {/* Sem isto o botao so ficava apagado e o toque nao fazia nada —
-                o usuario nao tinha como saber o que faltava. O e-mail saiu da
-                lista de pendencias: ele ja foi comprovado no portao. */}
-            {!canFinish && !submitting && (
-              <p style={{ ...sm2Hint, marginTop: 8, textAlign: 'center' }}>
-                {isPt ? 'Escolha um apelido com pelo menos 2 letras.' : 'Pick a nickname with at least 2 letters.'}
-              </p>
-            )}
             {unlockMessage && (
               <p role="alert" style={{ ...alertStyle, marginTop: 12 }}>{unlockMessage}</p>
-            )}
-            {/* "Back" `[novo]` (B1): o bloco global de "Voltar" cobre só
-                `1..FAVORITE_STEP`; no demo volta à escolha do personagem. */}
-            {demoChar && (
-              <button type="button" style={{ ...sm2Button('quiet'), width: '100%', marginTop: 12 }} onClick={back}>
-                <Icon name="arrow_back" size={20} />
-                {isPt ? 'Voltar' : 'Back'}
-              </button>
             )}
           </div>
         )}
@@ -2315,9 +2320,6 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             "Continue": o verbo já é o botão. */}
         {step >= 1 && step <= FAVORITE_STEP && (
           <div className="sm2-ora-nav" style={{ marginTop: 'auto', paddingTop: 24 }}>
-            <button type="button" className="sm2-ora-back" onClick={back} aria-label={isPt ? 'Voltar' : 'Back'}>
-              <Icon name="arrow_back" size={24} tone="inherit" />
-            </button>
             <button
               type="button"
               style={{ ...sm2Button('primary', !canAdvance()), flex: 1, minWidth: 0 }}
@@ -2326,19 +2328,6 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               tabIndex={canAdvance() ? undefined : -1}
             >
               {isPt ? 'Continuar' : 'Continue'}
-            </button>
-          </div>
-        )}
-        {/* Passos que avançam sozinhos ao escolher: só precisam de "voltar",
-            sozinho na linha. Cobre as 6 do ritual — DA PRIMEIRA (§17 V2,
-            decisão do dono 15/09: a 1ª volta à criatura favorita; era o único
-            passo do ritual pago sem saída de correção) — E os 20 itens do
-            teste, do primeiro em diante, porque voltar de lá devolve a
-            bifurcação para quem entrou no teste longo sem querer. */}
-        {((step >= QUIZ_START && step < QUIZ_END) || (step >= DEEP_START && step < DEEP_END)) && (
-          <div className="sm2-ora-nav" style={{ marginTop: 4 }}>
-            <button type="button" className="sm2-ora-back" onClick={back} aria-label={isPt ? 'Voltar' : 'Back'}>
-              <Icon name="arrow_back" size={24} tone="inherit" />
             </button>
           </div>
         )}
