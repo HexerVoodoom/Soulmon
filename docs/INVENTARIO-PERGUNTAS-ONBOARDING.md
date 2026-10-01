@@ -9,15 +9,76 @@ ela vem, o que alimenta e o que foi decidido.
 Referências `arquivo:linha` valem para o commit deste trabalho e **apodrecem**
 — para reencontrar, use o símbolo citado ao lado (regra do `CLAUDE.md`).
 
-## Ordem nova do onboarding (caminho não-upgrade)
+## Ordem do onboarding (caminho não-upgrade) — revista em 01/10/2026
+
+⚠️ **Segunda rodada do mesmo dia.** O dono pediu: *"vamos fazer todas as
+perguntas que a gente tem, acho que são 20, todas elas obrigatórias, vai fazer
+parte do onboarding"*. Isso **reverte a D3** abaixo: o teste longo deixou de
+ser bifurcação opcional do caminho pago e virou parte obrigatória do
+onboarding de TODO jogador. Ordem viva:
 
 `IDENTITY_STEP` (conta: Google ou e-mail/senha + Termos + 18+) →
-**`NAME_STEP`** (nome do jogador) → **`GOAL_STEP`** (áreas) →
-**`STRUGGLE_STEP`** (dificuldades) → **`STRENGTH_STEP`** (forças) →
-**`STARTER_STEP`** (ponto de partida) → `CHOICE_STEP` (grátis / próprio Soulmon) →
-ritual (pago: nome completo, data, hora, cidade; os dois: as 6 do Oráculo; pago:
-bifurcação + 20 itens) → reveal (batismo) → fim. No grátis: as 6 → reveal demo →
-escolha do personagem → batismo (`REGISTER`) → fim.
+**`NAME_STEP`** (nome do jogador) → **as 6 do ritual** (`ORACLE_QUESTIONS`,
+passos 6..11) → **os 20 itens do teste** (`SOUL_TEST_ITEMS`, passos 13..32) →
+**`GOAL_STEP`** (áreas) → **`STRUGGLE_STEP`** (dificuldades) →
+**`STRENGTH_STEP`** (forças) → **`STARTER_STEP`** (ponto de partida) →
+`CHOICE_STEP` (grátis / próprio Soulmon) → criatura:
+- **grátis:** reveal demo (leitura das 6, criatura em silhueta) → escolha do
+  personagem (`DEMO_PICK`) → batismo (`REGISTER`) → fim;
+- **pago:** nome completo, data, hora, cidade (passos 1..4) → geração → reveal
+  (batismo) → fim.
+
+Tudo objetivo e obrigatório, sem "pular" e sem "prefiro não dizer" (nome e
+dados de nascimento continuam texto/data — D2). Cada pergunta tem a seta de
+voltar (`BackArrow`) no topo esquerdo, **menos o nome** (atrás dele só há a
+conta, que um "voltar" não deve sugerir desfazer). Voltar da 1ª do ritual leva
+ao nome; do 1º item do teste, à 6ª do ritual; da 1ª meta, ao 20º item.
+
+**Upgrade** (`mode='upgrade'`, compra no meio do jogo): continua nome completo
+→ data → hora → cidade → as 6 → os 20 → geração → reveal, agora sem a
+bifurcação (o teste é obrigatório ali também).
+
+**Números dos passos NÃO mudaram** (o rascunho e a telemetria os guardam): só
+a ordem de navegação. Por isso `onboardingStepCode`/`NEGATIVE_STEP_BASE`
+(`utils/telemetry.ts` e `functions/api/metrics.js`) seguem iguais; o que muda
+na leitura do funil é que os passos 6..11 e 13..32 passam a chegar com funil
+`unknown` (vêm antes da escolha), e não mais `paid`/`demo`. O passo **12**
+(`REFINE_OFFER`), que era a bifurcação, virou a tela de **tentar de novo**
+quando a geração falha (e é onde cai um rascunho antigo parado na bifurcação).
+A barra de progresso passou a medir a ORDEM do caminho (`sequencia` no
+componente), não o número do passo.
+
+### Retomada (fechar no meio)
+
+Tudo o que já foi respondido fica no rascunho do portão (`utils/gateDraft.ts`,
+mesma versão — campos novos opcionais): **o passo**, o nome, as 6 respostas,
+os 20 itens, as metas (áreas/dificuldades/forças, que antes já iam) e os itens
+desmarcados do ponto de partida. Ao reabrir, com o aceite já provado (conta
+autenticada, ou build sem auth com passo gravado), o onboarding volta ao passo
+gravado — nunca à frente de uma pergunta sem resposta (`passoDeRetomada`).
+No grátis, depois da escolha, o passo gravado é a própria escolha. O ritual
+pago (passos 1..4 e a tela 12) segue no rascunho dele (`oracleDraft.ts`), que
+também carrega as 26 respostas.
+
+**O tutorial antigo não reaparece**: `App.tsx` (`handleCompleteOnboarding`)
+grava `TUTORIAL_COMPLETE` (quando o ponto de partida trouxe atividades) ANTES
+de qualquer ida à nuvem e no mesmo lote em que o onboarding vira completo —
+antes vinha depois do `cloudLoad`, e o tutorial piscava/ficava se a pessoa
+fechasse ali ou se a adoção de save recarregasse a página. Régua:
+`src/onboardingCompletion.contract.test.ts`.
+
+**Perfil para a personalidade**: o fim do onboarding grava também
+`gameState.onboardingProfile = { strengths, struggles }` (ids do catálogo, os
+mesmos das perguntas), lido por `derivePersonality`. Dono do formato:
+`onboardingProfileFrom` (`utils/catalogOnboarding.ts`).
+
+### Ordem da primeira rodada (01/10/2026, manhã) — registro
+
+`IDENTITY_STEP` → `NAME_STEP` → `GOAL_STEP` → `STRUGGLE_STEP` →
+`STRENGTH_STEP` → `STARTER_STEP` → `CHOICE_STEP` → ritual (pago: nome completo,
+data, hora, cidade; os dois: as 6 do Oráculo; pago: bifurcação + 20 itens) →
+reveal (batismo) → fim. No grátis: as 6 → reveal demo → escolha do personagem →
+batismo (`REGISTER`) → fim.
 
 ## Inventário
 
@@ -35,9 +96,9 @@ escolha do personagem → batismo (`REGISTER`) → fim.
 | 10 | When were you born? | passo `2` · `:1851` | data (só pago) | mapa astral + 18+ (`isAgeBlocked`) | Mantida; é dado, não cabe opção fechada. Legenda fica: declara o uso duplo da data (D-06 — coleta silenciosa é proibida). |
 | 11 | At what time? | passo `3` · `:1869` | hora + "não sei" (só pago) | Ascendente/casas | Mantida. |
 | 12 | Where were you born? | passo `4` · `:1903` (`CityPicker`) | busca em tabela (só pago) | lat/lon/fuso | Mantida (já é escolha fechada de tabela). |
-| 13–18 | As 6 do Oráculo (`grupo`, `objetivo`, `pressao`, `energia`, `lugar`, `conflito`) | `ORACLE_QUESTIONS` · `utils/oracle.ts:829`; render `:1918` | objetivas, obrigatórias (já eram) | eixos papel/alinhamento/elemento/reino → criatura (e a **classe**, que nunca aparece ao jogador) | Mantidas como estão, nos dois caminhos. |
-| 19 | Want to sharpen the reading? | `REFINE_OFFER` · `:1965` | bifurcação (só pago) | `refine` | **Mantida opcional** — ver decisão D3. |
-| 20–39 | Os 20 itens psicométricos | `items` · `utils/soulProfile/personality/questions.ts:337`; render `:2012` | objetivos (só quem aceita refinar) | Big Five/HH/junguianos → `soulProfile` | Mantidos atrás da bifurcação (D3). |
+| 13–18 | As 6 do Oráculo (`grupo`, `objetivo`, `pressao`, `energia`, `lugar`, `conflito`) | `ORACLE_QUESTIONS` · `utils/oracle.ts`; render no bloco `step >= QUIZ_START` | objetivas, obrigatórias (já eram) | eixos papel/alinhamento/elemento/reino → criatura (e a **classe**, que nunca aparece ao jogador) | **01/10 (2ª rodada): sobem para logo depois do nome, ANTES da escolha** — todo jogador responde. |
+| 19 | ~~Want to sharpen the reading?~~ | `REFINE_OFFER` (passo 12) | bifurcação (só pago) | `refine` | **⚰️ Removida (01/10, 2ª rodada).** O número 12 virou a tela de "tentar de novo" da geração. `refine` segue no formato do `oracleDraft` só para ler rascunho antigo; é gravado sempre `true`. |
+| 20–39 | Os 20 itens psicométricos | `items` · `utils/soulProfile/personality/questions.ts`; render no bloco `step >= DEEP_START` | objetivos (só quem aceitava refinar) | Big Five/HH/junguianos → `soulProfile` (no pago; no grátis ver pendências) | **01/10 (2ª rodada): obrigatórios para TODOS**, logo depois das 6, antes das metas. |
 | 40 | Name your Soulmon | reveal `:2131` (pago) · `REGISTER` `:2295` (grátis) | campo pré-preenchido | `petName` | Mantida. **B11:** título solto "Name your Soulmon"/"Dê nome ao seu Soulmon", sem caixa e sem explicação. |
 | — | Tonalidade (tint) | cadastro demo (removido) | 4 slots | `demoTint` (cosmético) | **B10: removida.** O campo segue no tipo/save antigo; ninguém envia. |
 
@@ -59,10 +120,13 @@ escolha do personagem → batismo (`REGISTER`) → fim.
   save como FRASE derivada dos rótulos escolhidos, para nenhum consumidor quebrar.
 - **D2 — Nome do jogador é texto.** "Objetiva" não se aplica a nome; o mesmo
   vale para nome completo, data e hora do ritual pago (dados do mapa astral).
-- **D3 — O teste longo (20 itens) continua OPCIONAL.** O `CLAUDE.md` (Oráculo)
-  registra a bifurcação como decisão de produto declarada na tela como sem
-  volta, e só existe no caminho pago. Torná-lo obrigatório é mudança de regra
-  de produto — pergunta aberta para o dono.
+- **D3 — ⚰️ REVERTIDA pelo dono em 01/10/2026 (2ª rodada).** Dizia: "o teste
+  longo (20 itens) continua OPCIONAL" (bifurcação sem volta, só no pago). O
+  dono respondeu à pergunta aberta: todas as perguntas, obrigatórias, no
+  onboarding de todos. ⚠️ O parágrafo do Oráculo no `CLAUDE.md` e a linha
+  "🧭 O porquê do usuário" (que ainda dizem "bifurcação" e "puláveis") ficaram
+  desatualizados — este trabalho não edita o `CLAUDE.md`; quem atualiza é o
+  dono/lead. `docs/ORACULO.md` ganhou a lápide.
 - **D4 — Ponto de partida mínimo 1.** O recomendador propõe 3–5; a pessoa pode
   desmarcar, mas não sai com zero (casa com C11). Catálogo sem sugestão não tranca.
 - **D5 — Tutorial pulado quando já há atividade.** Ver tabela acima.
@@ -74,6 +138,22 @@ escolha do personagem → batismo (`REGISTER`) → fim.
 
 `userName`, `petName`, `soulGoal`, `soulStruggle`, `consent`, as 6 respostas
 (`answers`) e os 20 itens (`testAnswers`) → mesma rota de antes até o oráculo e
-o save. A classe do Oráculo continua só interna (`classeNuncaVisivel.contract.test.tsx`).
+o save. Novo (01/10, 2ª rodada): `onboardingProfile` (forças + o que atrapalha,
+ids do catálogo) no save, para `derivePersonality`. A classe do Oráculo continua só interna (`classeNuncaVisivel.contract.test.tsx`).
 Novo: `catalogChoice` (`areas`, `struggles`, `strengths`, `itemIds`) → atividades
 do catálogo + `catalogOnboardingSeenAt`.
+
+## Pendências (01/10/2026, 2ª rodada)
+
+- **O grátis responde os 20 itens, mas a leitura demo usa só as 6** (o reveal
+  demo é a leitura LEGADA, sem mapa astral). As respostas não vão para o save
+  do demo; quem compra depois (`mode='upgrade'`) responde as 26 de novo.
+  Reaproveitar exigiria guardar `answers`/`testAnswers` no save do demo —
+  decisão de dado pessoal (a pessoa respondeu um teste de personalidade) que
+  fica para o dono.
+- **`CLAUDE.md`** (Oráculo e "🧭 O porquê") desatualizado — ver D3.
+- **Manual** (`docs/manual/02`, `03`, `06-REFERENCIA/components.md`) e os docs
+  de design/guia ainda descrevem a bifurcação; é trabalho do `/manter-docs`.
+- **Duração**: o onboarding passou de ~10 para ~36 telas antes da criatura.
+  Sem telemetria de produção não há como medir o abandono; os passos 6..32
+  chegam agora com funil `unknown` e dão a curva quando houver usuários.
