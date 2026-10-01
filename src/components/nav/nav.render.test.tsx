@@ -215,9 +215,9 @@ describe('HomeMenuSheet (D6)', () => {
     return out;
   };
 
-  it('tudo que morava no sanduíche, nos dois idiomas', () => {
-    expect(rows('en-US')).toEqual(['Settings', 'Oracle', 'Stats', 'Guide', 'Credits', 'Redo the ritual']);
-    expect(rows('pt-BR')).toEqual(['Configurações', 'Oráculo', 'Estatísticas', 'Guia', 'Créditos', 'Refazer o ritual']);
+  it('tudo que morava no sanduíche, nos dois idiomas — sem Oráculo e ritual (G1)', () => {
+    expect(rows('en-US')).toEqual(['Settings', 'Stats', 'Guide', 'Credits']);
+    expect(rows('pt-BR')).toEqual(['Configurações', 'Estatísticas', 'Guia', 'Créditos']);
   });
 
   it('cada linha fecha a folha e leva ao destino certo', () => {
@@ -228,13 +228,13 @@ describe('HomeMenuSheet (D6)', () => {
       <HomeMenuSheet open onClose={onClose} language="en-US" onOpenPage={onOpenPage} onOpenGuide={onOpenGuide} />,
     );
     const btn = (t: string) => Array.from(document.querySelectorAll('[data-menu-row]')).find(b => b.textContent?.includes(t))!;
-    fireEvent.click(btn('Oracle'));
-    expect(onOpenPage).toHaveBeenLastCalledWith('oracle');
+    // G1: Oráculo oculto do menu (a página continua existindo).
+    expect(btn('Oracle')).toBeUndefined();
     fireEvent.click(btn('Stats'));
     expect(onOpenPage).toHaveBeenLastCalledWith('stats');
     fireEvent.click(btn('Guide'));
     expect(onOpenGuide).toHaveBeenCalledOnce();
-    expect(onClose).toHaveBeenCalledTimes(3);
+    expect(onClose).toHaveBeenCalledTimes(2);
     // Sem os callbacks opcionais, as linhas deles não aparecem.
     expect(btn('Credits')).toBeUndefined();
   });
