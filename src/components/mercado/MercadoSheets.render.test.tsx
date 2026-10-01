@@ -51,22 +51,31 @@ describe('compra', () => {
     expect(container.querySelector('[role="status"]')!.textContent).toBe(`${chip.nameEn} purchased.`);
   });
 
-  it('saldo insuficiente: preço em tinta muted, recusa âmbar (filete + região), nunca danger', () => {
-    vi.useFakeTimers();
-    const { container } = abrir({ stall: 'background', points: 10, onBuy: () => false });
+  it('saldo insuficiente: preço em tinta muted; o toque abre o "como conseguir" (H8) e não tenta comprar; nunca danger', () => {
+    const onBuy = vi.fn(() => false);
+    const { container } = abrir({ stall: 'background', points: 10, onBuy });
     const card = screen.getByRole('button', { name: `${bitsBg.nameEn} — ${bitsBg.price} Bits` });
     const price = card.querySelector('.sm2-num') as HTMLElement;
     expect(price.style.color).toBe('var(--sm2-muted)');
     expect(price.style.opacity).toBe('');
     act(() => { fireEvent.click(card); });
-    expect(card.style.boxShadow).toContain('var(--sm2-gold-ink)');
-    const status = container.querySelector('[role="status"]') as HTMLElement;
-    expect(status.textContent).toBe(`Not enough to buy ${bitsBg.nameEn}.`);
-    expect(status.style.color).toBe('var(--sm2-gold-ink)');
+    expect(onBuy).not.toHaveBeenCalled();
+    const modal = screen.getByRole('dialog', { name: 'How to get Bits' });
+    // As regras REAIS, lidas das constantes: os minijogos (com o teto diário) e a troca de Créditos.
+    expect(modal.querySelector('[data-how-to-earn-way="jogos"]')!.textContent).toContain('150');
+    expect(modal.querySelector('[data-how-to-earn-way="creditos"]')!.textContent).toContain('10 Bits per Credit');
+    expect(modal.textContent).toContain(`${bitsBg.nameEn} costs ${bitsBg.price} Bits.`);
     expect(container.innerHTML).not.toContain('danger');
-    act(() => { vi.advanceTimersByTime(2700); });
-    expect(card.style.boxShadow).toBe('none');
-    vi.useRealTimers();
+    act(() => { fireEvent.click(screen.getByRole('button', { name: 'Got it' })); });
+    expect(screen.queryByRole('dialog', { name: 'How to get Bits' })).toBeNull();
+  });
+
+  it('sem Honra suficiente, o "como conseguir" fala do Torneio (vitória e derrota rendem)', () => {
+    abrir({ stall: 'decoracao', emblems: 0 });
+    fireEvent.click(screen.getByRole('tab', { name: 'Honor' }));
+    act(() => { fireEvent.click(screen.getByRole('button', { name: `${emblemFurn.nameEn} — ${emblemFurn.price} Honor` })); });
+    const modal = screen.getByRole('dialog', { name: 'How to get Honor' });
+    expect(modal.querySelector('[data-how-to-earn-way="torneio"]')!.textContent).toMatch(/3 Honor per win and 1 per match/);
   });
 
   it('item já possuído não compra de novo: vira Equipar e chama onEquip', () => {
@@ -76,6 +85,18 @@ describe('compra', () => {
     fireEvent.click(screen.getByRole('button', { name: `${bitsBg.nameEn} — Equip` }));
     expect(onBuy).not.toHaveBeenCalled();
     expect(onEquip).toHaveBeenCalledWith(bitsBg.id);
+  });
+
+  it('H7: item que a pessoa JÁ TEM (ex.: o sofá ganho) não aparece à venda — mora em "Já são seus", no topo', () => {
+    const { container } = abrir({ stall: 'decoracao', ownedFurniture: ['furn-sofa'] });
+    const owned = container.querySelector('[data-shop-owned]') as HTMLElement;
+    const forSale = container.querySelector('[data-shop-for-sale]') as HTMLElement;
+    expect(owned.querySelector('[data-shop-item="furn-sofa"]')).not.toBeNull();
+    expect(forSale.querySelector('[data-shop-item="furn-sofa"]')).toBeNull();
+    expect(owned.compareDocumentPosition(forSale) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // Sem nada na posse, não há seção nem título de "Já são seus".
+    const vazio = abrir({ stall: 'itens' });
+    expect(vazio.container.querySelector('[data-shop-owned]')).toBeNull();
   });
 
   it('equipado = anel por fora do vidro + tag na coluna de texto; nome não quebra; nenhuma opacidade', () => {
