@@ -59,3 +59,21 @@ describe('Pesadelo — torcida', () => {
     expect(container.querySelector('[data-torcida-gauge]')!.getAttribute('data-torcida-full')).toBe('0');
   });
 });
+
+describe('Pesadelo — defesa automática (TORC-3, 02/10/2026)', () => {
+  it('sem barra de esquiva: o Soulmon se defende sozinho e a luta segue sem nenhum toque', () => {
+    vi.useFakeTimers();
+    const { container } = montar([inimigo(60)]);
+    fireEvent.click(screen.getByRole('button', { name: 'Ficar na frente dele' }));
+    act(() => { vi.advanceTimersByTime(1400); }); // o golpe sai sozinho
+    act(() => { vi.advanceTimersByTime(1300); }); // o popup passa e abre a defesa
+    expect(container.querySelector('[data-timing-bar]')).toBeNull();
+    expect(container.querySelector('[data-auto-defense]')).not.toBeNull();
+    expect(screen.queryByText('Desviar!')).toBeNull();
+    act(() => { vi.advanceTimersByTime(1000); }); // a defesa automática resolve
+    expect(screen.getByText(/Defendeu|Levou o golpe/)).toBeTruthy();
+    act(() => { vi.advanceTimersByTime(1300); }); // e a vez volta para o golpe do Soulmon
+    expect(container.querySelector('[data-auto-defense]')).toBeNull();
+    expect(screen.getByText(/torça por ele/i)).toBeTruthy();
+  });
+});

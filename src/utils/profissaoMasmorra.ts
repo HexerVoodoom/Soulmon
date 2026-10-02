@@ -24,11 +24,11 @@ export interface JeitoNaMasmorra {
   dmg: number;
   /** Precisão a partir da qual o golpe é PERFEITO (crítico). */
   perfeito: number;
-  /** Segundos a mais para reagir na defesa. */
+  /** Segundos a mais para reagir na defesa (desde TORC-3 vira bônus na defesa automática: `jeitoDefesaBonus`). */
   tempoDefesaExtra: number;
   /** Multiplicador da velocidade da barra de ATAQUE (<1 = mais lenta). */
   velocidadeAtaque: number;
-  /** Multiplicador da velocidade da barra de DEFESA (<1 = mais lenta). */
+  /** Multiplicador da velocidade da barra de DEFESA (<1 = mais lenta; desde TORC-3 vira bônus na defesa automática). */
   velocidadeDefesa: number;
   /** Fração do HP recuperada ao limpar uma camada. */
   curaAndar: number;
@@ -56,13 +56,13 @@ export const PROFISSAO_MASMORRA: Record<string, ProfissaoNaMasmorra> = {
   tecelao: { jeito: { tempoDefesaExtra: 0.5 }, frase: { pt: 'Lê o golpe um instante antes.', en: 'Reads the blow a moment early.' } },
   artesao: { jeito: { dmg: 1.1 }, frase: { pt: 'Bate um pouco mais forte.', en: 'Hits a little harder.' } },
   joalheiro: { jeito: { perfeito: 0.89 }, frase: { pt: 'Acha o ponto exato com mais facilidade.', en: 'Finds the exact spot more easily.' } },
-  alquimista: { jeito: { contraAtaque: 2 }, frase: { pt: 'Devolve o golpe em dobro no desvio perfeito.', en: 'Returns the blow twofold on a perfect dodge.' } },
+  alquimista: { jeito: { contraAtaque: 2 }, frase: { pt: 'Devolve o golpe em dobro numa defesa perfeita.', en: 'Returns the blow twofold on a perfect defense.' } },
   curtidor: { jeito: { reducaoDano: 1 }, frase: { pt: 'Couro grosso: cada golpe dói um pouco menos.', en: 'Thick hide: every hit stings a little less.' } },
   encantador: { jeito: { atravessaGuarda: 0.5 }, frase: { pt: 'Atravessa metade da guarda do outro.', en: 'Cuts through half of the other’s guard.' } },
   escriba: { jeito: { velocidadeAtaque: 0.9 }, frase: { pt: 'Lê o próprio ritmo: a barra de ataque anda mais devagar.', en: 'Reads its own rhythm: the attack bar moves slower.' } },
   cozinheiro: { jeito: { curaAndar: 0.35 }, frase: { pt: 'Recupera mais ao limpar uma camada.', en: 'Recovers more when a layer is cleared.' } },
-  luthier: { jeito: { velocidadeDefesa: 0.9 }, frase: { pt: 'Ouve o golpe vindo: a barra de desvio anda mais devagar.', en: 'Hears the blow coming: the dodge bar moves slower.' } },
-  cartografo: { jeito: { velocidadeAtaque: 0.95, velocidadeDefesa: 0.95 }, frase: { pt: 'Conhece as camadas: tudo anda um pouco mais devagar.', en: 'Knows the layers: everything moves a little slower.' } },
+  luthier: { jeito: { velocidadeDefesa: 0.9 }, frase: { pt: 'Ouve o golpe vindo: defende com mais firmeza.', en: 'Hears the blow coming: defends more firmly.' } },
+  cartografo: { jeito: { velocidadeAtaque: 0.95, velocidadeDefesa: 0.95 }, frase: { pt: 'Conhece as camadas: defende com um pouco mais de firmeza.', en: 'Knows the layers: defends a little more firmly.' } },
 };
 
 /** O jeito completo, com o padrão preenchendo o que a profissão não muda. */

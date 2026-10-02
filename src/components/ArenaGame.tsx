@@ -21,7 +21,9 @@
  * antes do eco, deixar só o inimigo da vez revidar, cobrar a carga do especial
  * de outro jeito — invalida o balanceamento inteiro sem nada ficar vermelho.
  * A ÚNICA diferença permitida é a origem da precisão. DEFESA: lá vem de
- * `sampleAcc()`, aqui da `TimingBar` (a esquiva segue sendo ação do dono).
+ * `sampleAcc()`, aqui da defesa AUTOMÁTICA (`utils/autoDefesa.ts`, TORC-3,
+ * 02/10/2026: o dono tirou a esquiva — mesma lei 0,70 ± 0,25 da simulação; a
+ * `TimingBar` de defesa fica atrás de `TIMING_DODGE_ENABLED`, sem apagar).
  * ATAQUE (desde 02/10/2026, H14): o pet golpeia SOZINHO com `ARENA_AUTO_ACC`
  * (`simulateArenaRun({ autoAttack: true })`) e o dono TORCE tocando na tela —
  * gauge de 8 toques, golpe de torcida ×`ARENA_TORCIDA_MULT` gasto pelo pet
@@ -55,6 +57,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { TimingBar } from './pixel/TimingBar';
 import { TorcidaLayer, TorcidaGauge } from './games/TorcidaKit';
 import { torcidaTap } from '../utils/torcida';
+import { autoDefense, defenseRoll, newDefenseSeed, TIMING_DODGE_ENABLED } from '../utils/autoDefesa';
 import { Icon } from './ui/Icon';
 import { sm2Button, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, VisorFx, HpBars, FxPopup, StatTag, phaseTitle, phaseLine } from './games/GameKit';
@@ -103,6 +106,8 @@ interface Popup { icon: string; title: string; detail: string }
 
 /** Quanto o pet espera antes de golpear sozinho — o tempo de a torcida encher o gauge. */
 const ARENA_STRIKE_MS = 1500;
+/** Do começo do revide até o Soulmon se defender sozinho (TORC-3, 02/10/2026). */
+const ARENA_DEFEND_MS = 800;
 
 export interface ArenaGameProps {
   evolutionStage: string;
@@ -141,6 +146,10 @@ export function ArenaGame({
   /** O gauge da torcida (0..8). O ref é o que o golpe lê; o state só desenha. */
   const [taps, setTaps] = useState(0);
   const tapsRef = useRef(0);
+  /** Defesa automática: sorteio determinístico por (semente da run, nº do revide). */
+  const defSeedRef = useRef(newDefenseSeed());
+  const defCountRef = useRef(0);
+  const [guardFx, setGuardFx] = useState(false);
   /** Toque de torcida: sobe o gauge e para no cheio (toque a mais não rende). */
   const torcer = useCallback(() => {
     tapsRef.current = torcidaTap(tapsRef.current);
@@ -196,6 +205,8 @@ export function ArenaGame({
     setEnfraquecidos(0);
     setPontos(0);
     tapsRef.current = 0;
+    defSeedRef.current = newDefenseSeed();
+    defCountRef.current = 0;
     setTaps(0);
     setRodada(1);
     montarRodada(1, pool);
@@ -344,20 +355,26 @@ export function ArenaGame({
   }, [alvo, inimigos, eco, carga, efeito, stats, especial, basica, isPt,
       mostrarPopup, limparRodada, abrirDefesa]);
 
-  /** PASSO 3: um inimigo revida. Defesa perfeita esquiva limpo. */
+  /** PASSO 3: um inimigo revida. Defesa perfeita bloqueia limpo. */
   const defender = useCallback((defAcc: number) => {
     const e = inimigos[defensor];
     if (!e) return;
     let hpDepois = hp;
     if (defAcc >= PERFECT_ACC) {
       mostrarPopup({
-        icon: '🛡️', title: isPt ? 'Esquiva!' : 'Dodge!',
+        icon: '🛡️', title: isPt ? 'Defendeu!' : 'Defended!',
         detail: isPt ? 'Sem dano nenhum' : 'No damage at all',
       }, 800);
+      setGuardFx(true);
+      setTimeout(() => setGuardFx(false), 450);
     } else {
       const dano = enemyHitDamage(e.atk, defAcc, e.elements[0], atributos, enfraquecidos > 0);
       hpDepois = hp - dano;
       setHp(hpDepois);
+      if (defAcc >= 0.6) {
+        setGuardFx(true);
+        setTimeout(() => setGuardFx(false), 450);
+      }
     }
 
     if (hpDepois <= 0) { setFase('perdeu'); return; }
@@ -381,6 +398,18 @@ export function ArenaGame({
     const t = setTimeout(() => atacarRef.current(ARENA_AUTO_ACC), ARENA_STRIKE_MS);
     return () => clearTimeout(t);
   }, [fase, rodada, vivos.length, hp, carga]);
+
+  /** O Soulmon se defende SOZINHO: a regra pura decide (determinística pela semente). */
+  const defenderRef = useRef(defender);
+  defenderRef.current = defender;
+  useEffect(() => {
+    if (TIMING_DODGE_ENABLED || fase !== 'defender' || defensor < 0) return;
+    const t = setTimeout(() => {
+      const roll = defenseRoll(defSeedRef.current, defCountRef.current++);
+      defenderRef.current(autoDefense(roll, { perfect: PERFECT_ACC }).acc);
+    }, ARENA_DEFEND_MS);
+    return () => clearTimeout(t);
+  }, [fase, defensor, rodada, hp]);
 
   const proximaRodada = useCallback(() => {
     if (!pool) return;
@@ -499,8 +528,8 @@ export function ArenaGame({
           {!ARENA_TIMING_ATTACK_ENABLED && (
             <p style={phaseLine} data-arena-torcida-legenda>
               {isPt
-                ? 'Seu Soulmon luta sozinho. Você torce tocando na tela: o gauge cheio vira um golpe da torcida. A esquiva continua com você.'
-                : 'Your Soulmon fights on its own. You cheer by tapping the screen: a full gauge becomes a cheer strike. Dodging is still up to you.'}
+                ? 'Seu Soulmon luta sozinho. Você torce tocando na tela: o gauge cheio vira um golpe da torcida. Ele também se defende sozinho.'
+                : 'Your Soulmon fights on its own. You cheer by tapping the screen: a full gauge becomes a cheer strike. It also defends itself.'}
             </p>
           )}
           <p style={phaseLine}>
@@ -529,6 +558,7 @@ export function ArenaGame({
             {popup?.icon === '💥' && alvo && (
               <VisorFx icon="💥" size={64} style={caixaInimigo(inimigos.indexOf(alvo), inimigos.length)} data-visor-fx="hit" />
             )}
+            {guardFx && <VisorFx icon="🛡️" style={{ left: 16, bottom: 8 }} data-visor-fx="guard" />}
           </GameVisor>
 
           {/* As barras FORA do vidro (D-J5): "You" ciano; o alvo da vez em
@@ -599,7 +629,14 @@ export function ArenaGame({
                 />
               </>
             )}
-            {fase === 'defender' && inimigos[defensor] && (
+            {fase === 'defender' && inimigos[defensor] && !TIMING_DODGE_ENABLED && (
+              <p style={phaseTitle} data-auto-defense>
+                {isPt
+                  ? `${nomeDe(inimigos[defensor])} ataca — seu Soulmon se defende!`
+                  : `${nomeDe(inimigos[defensor])} attacks — your Soulmon defends!`}
+              </p>
+            )}
+            {fase === 'defender' && inimigos[defensor] && TIMING_DODGE_ENABLED && (
               <>
                 <p style={phaseTitle}>
                   {isPt

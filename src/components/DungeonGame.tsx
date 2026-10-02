@@ -6,6 +6,7 @@ import { getSpriteForStage } from '../utils/sprites';
 import { playFeed } from '../utils/sounds';
 import { playerStatsFor, DUNGEON_BITS_FACTOR } from '../utils/dungeon';
 import { TimingBar } from './pixel/TimingBar';
+import { autoDefense, defenseRoll, jeitoDefesaBonus, newDefenseSeed, TIMING_DODGE_ENABLED } from '../utils/autoDefesa';
 import {
   buildDungeonWave, getDungeonDifficulty, getDungeonBest,
   setDungeonDifficultyAtLeast, recordDungeonScore, LADDER_TIERS,
@@ -42,7 +43,8 @@ import type { Language } from '../utils/i18n';
  * contínuo sem propósito; `prefers-reduced-motion` já não o lia).
  *
  * Attack: stop the sweeping marker near CENTER for more damage (≥92% = crit).
- * Defense: same bar, timed — center dodges, a perfect stop dodges + counters.
+ * Defense (02/10/2026, TORC-3): the pet defends ON ITS OWN (`utils/autoDefesa.ts`).
+ * The timed dodge bar is kept behind `TIMING_DODGE_ENABLED` (= false) to reuse elsewhere.
  * Sem limite diário e SEM gate de entrada: a masmorra não cobra da barra de
  * cuidado do pet (perder custa a run — bônus de andar, Glitchtama e placar —
  * nunca corações). Coraçõezinhos (raramente) dropam; o placar alimenta o ranking.
@@ -58,6 +60,8 @@ const DEFEND_TIME = 3.0;   // seconds to react on defense (base; the craft may a
 const POPUP_MS = 1400;     // how long result popups stay before the next phase
 /** Do começo da vez do Soulmon até o golpe sair sozinho (tempo de o dono torcer). */
 const ATTACK_AUTO_MS = 1300;
+/** Do começo da defesa até o Soulmon se defender sozinho (dá tempo de ler o golpe vindo). */
+const DEFEND_AUTO_MS = 900;
 // Bits for clearing a floor — scales with how deep you are. Era 10/15/20/25/30;
 // desde 30/09/2026 passa pelo `DUNGEON_BITS_FACTOR` (0,4 → 4/6/8/10/12), a
 // decisão do dono que trouxe a run completa para perto do teto diário.
@@ -141,6 +145,10 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const defendResolvedRef = useRef(false);
   const runScoreRef = useRef(0);
+  /** Defesa automática: sorteio determinístico por (semente da run, nº do golpe sofrido). */
+  const defSeedRef = useRef(newDefenseSeed());
+  const defCountRef = useRef(0);
+  const [guardFx, setGuardFx] = useState(false);
 
   const enemy = enemies[enemyIdx];
   const petSprite = getSpriteForStage(evolutionStage, demoCharacterId, 256);
@@ -169,6 +177,11 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
     setTimeout(() => setHitFx(null), 450);
   };
 
+  const guard = () => {
+    setGuardFx(true);
+    setTimeout(() => setGuardFx(false), 450);
+  };
+
   const addPoints = (pts: number) => {
     onEarnPoints(pts);
     runScoreRef.current += pts;
@@ -193,6 +206,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
     setEnemyHp(list[0].hp);
     setPlayerHp(playerStats.hp);
     runScoreRef.current = 0;
+    defSeedRef.current = newDefenseSeed();
+    defCountRef.current = 0;
     setTaps(0);
     setRunScore(0);
     setRewardMsg('');
@@ -218,7 +233,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
 
   // Torcida (02/10/2026, `utils/torcida.ts`): o Soulmon golpeia sozinho; o dono
   // TORCE tocando na tela e o gauge cheio vira o golpe ESPECIAL. A torcida só
-  // soma — sem torcer o golpe é o base. A esquiva segue sendo a ação do dono.
+  // soma — sem torcer o golpe é o base. O Soulmon se defende sozinho (TORC-3).
   const handleAttack = () => {
     const guarda = enemy.dmgReduction * (1 - jeito.atravessaGuarda);
     const strike = torcidaStrike(playerStats.dmg, taps, guarda);
@@ -246,7 +261,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
     });
   };
 
-  // Defense: graded — closer to center avoids more; perfect = dodge + counter.
+  // Defense: graded — a perfect one blocks everything + counters. `acc` vem da
+  // defesa automática (`autoDefense`); com `TIMING_DODGE_ENABLED` vem da barra.
   const handleDefend = (acc: number, timedOut = false) => {
     if (defendResolvedRef.current) return;
     defendResolvedRef.current = true;
@@ -257,8 +273,9 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
       setEnemyHp(newEnemyHp);
       flash('enemy');
       try { navigator.vibrate?.(40); } catch { /* noop */ }
+      guard();
       const dodgePopup: Popup = {
-        icon: '🛡️', title: isPt ? 'DESVIO PERFEITO!' : 'PERFECT DODGE!',
+        icon: '🛡️', title: isPt ? 'Defendeu!' : 'Defended!',
         detail: isPt ? `Contra-ataque: ${counter} de dano!` : `Counter-attack: ${counter} damage!`,
       };
       if (newEnemyHp <= 0) { defeatEnemy(dodgePopup); return; }
@@ -275,9 +292,10 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
     flash('player');
     try { navigator.vibrate?.(30); } catch { /* noop */ }
 
+    if (effAcc >= 0.6) guard();
     const title = timedOut ? (isPt ? 'Muito lento!' : 'Too slow!')
-      : effAcc >= 0.6 ? (isPt ? 'Desvio parcial!' : 'Partial dodge!')
-      : (isPt ? 'Ataque em cheio!' : 'Direct hit!');
+      : effAcc >= 0.6 ? (isPt ? 'Defendeu em parte!' : 'Partly defended!')
+      : (isPt ? 'Levou o golpe!' : 'Took the hit!');
     setPopup({ icon: '💥', title, detail: isPt ? `Você sofreu ${taken} de dano` : `You took ${taken} damage` });
     setPhase('result');
 
@@ -303,9 +321,21 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
   attackRef.current = handleAttack;
   const cheer = () => { if (phase === 'attack' || phase === 'defend' || phase === 'result') setTaps(t => torcidaTap(t)); };
 
-  // Defense countdown — shown to the player; expiring = full hit.
+  // O Soulmon se defende sozinho: um instante depois de o golpe vir, a regra
+  // pura decide (determinística pela semente da run) e a conta de dano segue.
   useEffect(() => {
-    if (phase !== 'defend') return;
+    if (TIMING_DODGE_ENABLED || phase !== 'defend' || !enemy) return;
+    const id = setTimeout(() => {
+      const roll = defenseRoll(defSeedRef.current, defCountRef.current++);
+      handleDefendRef.current(
+        autoDefense(roll, { bonus: jeitoDefesaBonus(jeito), perfect: PERFECT }).acc);
+    }, DEFEND_AUTO_MS);
+    return () => clearTimeout(id);
+  }, [phase, enemyIdx, floor]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Defense countdown — shown to the player; expiring = full hit. (Só com a barra.)
+  useEffect(() => {
+    if (!TIMING_DODGE_ENABLED || phase !== 'defend') return;
     const id = setInterval(() => {
       setDefendTimeLeft(t => {
         const nt = Math.max(0, +(t - 0.1).toFixed(1));
@@ -415,6 +445,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
             nunca `filter: brightness(3)`. */}
         {hitFx === 'enemy' && <VisorFx icon={specialFx ? '✨' : '💥'} style={enemyBox} data-visor-fx={specialFx ? 'special' : 'hit'} />}
         {hitFx === 'player' && <VisorFx icon="💥" style={{ left: 16, bottom: 8 }} data-visor-fx="hit" />}
+        {guardFx && <VisorFx icon="🛡️" style={{ left: 16, bottom: 8 }} data-visor-fx="guard" />}
       </GameVisor>
 
       {/* As barras FORA do vidro, em vetor (D-J5): "You" ciano, o outro dourado. */}
@@ -531,15 +562,21 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
             </p>
           )}
           {phase === 'defend' && (
-            <>
-              {/* O relógio é leitura, não alarme: `ink` sempre, `tabular-nums`
-                  (D-J8 — era `#facc15` → `#f87171` no último segundo). */}
-              <p style={phaseTitle}>
-                {isPt ? `${enemy.name} atacando — desvie!` : `${enemy.name} attacking — dodge!`}{' '}
-                <span className="sm2-num">{defendTimeLeft.toFixed(1)}s</span>
+            TIMING_DODGE_ENABLED ? (
+              <>
+                {/* O relógio é leitura, não alarme: `ink` sempre, `tabular-nums`
+                    (D-J8 — era `#facc15` → `#f87171` no último segundo). */}
+                <p style={phaseTitle}>
+                  {isPt ? `${enemy.name} atacando — desvie!` : `${enemy.name} attacking — dodge!`}{' '}
+                  <span className="sm2-num">{defendTimeLeft.toFixed(1)}s</span>
+                </p>
+                <TimingBar key={`def-${floor}-${enemyIdx}-${enemyHp}-${playerHp}`} speed={enemy.speed * 1.2 * jeito.velocidadeDefesa} label={isPt ? 'Desviar!' : 'Dodge!'} onStop={a => handleDefend(a)} />
+              </>
+            ) : (
+              <p style={phaseTitle} data-auto-defense>
+                {isPt ? `${enemy.name} ataca — seu Soulmon se defende!` : `${enemy.name} attacks — your Soulmon defends!`}
               </p>
-              <TimingBar key={`def-${floor}-${enemyIdx}-${enemyHp}-${playerHp}`} speed={enemy.speed * 1.2 * jeito.velocidadeDefesa} label={isPt ? 'Desviar!' : 'Dodge!'} onStop={a => handleDefend(a)} />
-            </>
+            )
           )}
           {phase === 'result' && popup && (
             <FxPopup icon={popup.icon} title={popup.title} detail={popup.detail} />

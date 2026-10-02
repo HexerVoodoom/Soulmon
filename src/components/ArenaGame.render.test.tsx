@@ -52,6 +52,14 @@ vi.mock('../utils/arena', async importOriginal => {
   };
 });
 
+// Este arquivo também trava o caminho ANTIGO da esquiva (barra de timing na
+// defesa): a flag volta a ligar só aqui. O caminho novo (o pet se defende
+// sozinho — TORC-3, 02/10/2026) é de `ArenaGame.torcida.render.test.tsx`.
+vi.mock('../utils/autoDefesa', async importOriginal => {
+  const real = await importOriginal<typeof import('../utils/autoDefesa')>();
+  return { ...real, TIMING_DODGE_ENABLED: true };
+});
+
 /**
  * ⚠️ A `TimingBar` é SUBSTITUÍDA, e isso é o ponto do arquivo.
  *

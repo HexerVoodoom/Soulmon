@@ -64,6 +64,7 @@ import { torcidaStrike, torcidaTap } from '../utils/torcida';
 import { TorcidaLayer, TorcidaGauge } from './games/TorcidaKit';
 import { playerStatsFor } from '../utils/dungeon';
 import { TimingBar } from './pixel/TimingBar';
+import { autoDefense, defenseRoll, newDefenseSeed, TIMING_DODGE_ENABLED } from '../utils/autoDefesa';
 import { playFeed } from '../utils/sounds';
 import {
   nightmareFlavor,
@@ -97,6 +98,8 @@ export interface NightmareBattleProps {
 const PERFECT = 0.92;
 /** Do começo da vez do Soulmon até o golpe sair sozinho. */
 const ATTACK_AUTO_MS = 1300;
+/** Do começo da defesa até o Soulmon se defender sozinho (TORC-3, 02/10/2026). */
+const DEFEND_AUTO_MS = 900;
 /* C1 (02/10/2026): o convite do pesadelo mostrava `dungeon-spirit.png` (bolha
    roxa com brilhos, uma bolinha roxa solta e franja clara). Agora é uma
    criatura que já existe no repo, com alfa limpo (binário, sem borda clara). */
@@ -177,6 +180,11 @@ export function NightmareBattle({
   const [taps, setTaps] = useState(0);
   const [specialFx, setSpecialFx] = useState(false);
   const attackRef = useRef<() => void>(() => {});
+  /* Defesa automática (`utils/autoDefesa.ts`): sorteio determinístico por
+     (semente da luta, nº do golpe sofrido). */
+  const defSeedRef = useRef(newDefenseSeed());
+  const defCountRef = useRef(0);
+  const [guardFx, setGuardFx] = useState(false);
 
   const after = useCallback((ms: number, fn: () => void) => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -214,8 +222,23 @@ export function NightmareBattle({
     return () => clearTimeout(id);
   }, [open, phase, idx]);
 
-  // Nova noite / reabertura: o gauge começa vazio.
-  useEffect(() => { if (open) setTaps(0); }, [open, wave]);
+  // O Soulmon se defende sozinho: a regra pura decide (determinística pela semente).
+  useEffect(() => {
+    if (TIMING_DODGE_ENABLED || !open || phase !== 'defend') return;
+    const id = setTimeout(() => {
+      const roll = defenseRoll(defSeedRef.current, defCountRef.current++);
+      defendRef.current(autoDefense(roll, { perfect: PERFECT }).acc);
+    }, DEFEND_AUTO_MS);
+    return () => clearTimeout(id);
+  }, [open, phase, idx]);
+
+  // Nova noite / reabertura: o gauge começa vazio e a defesa ganha semente nova.
+  useEffect(() => {
+    if (!open) return;
+    setTaps(0);
+    defSeedRef.current = newDefenseSeed();
+    defCountRef.current = 0;
+  }, [open, wave]);
 
   if (!open) return null;
 
@@ -258,8 +281,8 @@ export function NightmareBattle({
 
   /* Torcida (02/10/2026, `utils/torcida.ts`): o Soulmon golpeia sozinho; o dono
      TORCE tocando na tela e o gauge cheio vira o golpe ESPECIAL. A torcida só
-     soma — sem torcer o golpe é o base, nunca menos. A esquiva segue sendo a
-     ação do dono (TimingBar). A torcida por timing está desligada. */
+     soma — sem torcer o golpe é o base, nunca menos. O Soulmon se defende
+     sozinho (TORC-3). A torcida e a esquiva por timing estão desligadas. */
   const handleAttack = () => {
     if (!enemy) return;
     const strike = torcidaStrike(stats.dmg, taps, enemy.dmgReduction);
@@ -297,6 +320,11 @@ export function NightmareBattle({
     });
   };
 
+  const guard = () => {
+    setGuardFx(true);
+    setTimeout(() => setGuardFx(false), 450);
+  };
+
   const handleDefend = (acc: number, timedOut = false) => {
     if (defendResolved.current || !enemy) return;
     defendResolved.current = true;
@@ -306,8 +334,9 @@ export function NightmareBattle({
       const next = Math.max(0, enemyHp - counter);
       setEnemyHp(next);
       flash('enemy');
+      guard();
       setPopup({
-        icon: '🛡️', title: isPt ? 'DESVIO PERFEITO!' : 'PERFECT DODGE!',
+        icon: '🛡️', title: isPt ? 'Defendeu!' : 'Defended!',
         detail: isPt ? `Contra-ataque: ${counter} de dano!` : `Counter-attack: ${counter} damage!`,
       });
       setPhase('result');
@@ -325,12 +354,13 @@ export function NightmareBattle({
     const next = Math.max(0, playerHp - taken);
     setPlayerHp(next);
     flash('player');
+    if (eff >= 0.6) guard();
 
     setPopup({
       icon: '💫',
       title: timedOut ? (isPt ? 'Muito lento!' : 'Too slow!')
-        : eff >= 0.6 ? (isPt ? 'Desvio parcial!' : 'Partial dodge!')
-        : (isPt ? 'Levou de cheio!' : 'Direct hit!'),
+        : eff >= 0.6 ? (isPt ? 'Defendeu em parte!' : 'Partly defended!')
+        : (isPt ? 'Levou o golpe!' : 'Took the hit!'),
       detail: isPt ? `Seu Soulmon segurou ${taken}` : `Your Soulmon took ${taken}`,
     });
     setPhase('result');
@@ -418,6 +448,7 @@ export function NightmareBattle({
             <>
               <VisorSprite src={enemy.sprite} alt={enemy.name} flip style={otherBox} data-visor-enemy />
               {hitFx === 'enemy' && <VisorFx icon={specialFx ? '✨' : '💥'} style={otherBox} data-visor-fx={specialFx ? 'special' : 'hit'} />}
+              {guardFx && <VisorFx icon="🛡️" style={{ left: 8, bottom: 8 }} data-visor-fx="guard" />}
             </>
           ))}
           <div style={{ alignSelf: 'stretch' }}>
@@ -439,7 +470,12 @@ export function NightmareBattle({
                 {isPt ? 'Seu Soulmon golpeia — torça por ele!' : 'Your Soulmon strikes — cheer for it!'}
               </p>
             )}
-            {phase === 'defend' && (
+            {phase === 'defend' && !TIMING_DODGE_ENABLED && (
+              <p style={phaseTitle} data-auto-defense>
+                {isPt ? `${enemy.name} vindo — seu Soulmon se defende!` : `${enemy.name} incoming — your Soulmon defends!`}
+              </p>
+            )}
+            {phase === 'defend' && TIMING_DODGE_ENABLED && (
               <>
                 {/* Sem limite de tempo, o relógio não aparece: um contador
                     parado seria pressão sem função. O relógio é leitura, na
@@ -463,7 +499,7 @@ export function NightmareBattle({
             )}
           </div>
           <DefendClock
-            running={phase === 'defend' && defendTime > 0}
+            running={TIMING_DODGE_ENABLED && phase === 'defend' && defendTime > 0}
             left={defendLeft}
             setLeft={setDefendLeft}
             onTimeout={() => defendRef.current(0, true)}

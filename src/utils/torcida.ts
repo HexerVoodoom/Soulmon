@@ -39,11 +39,12 @@ export const TORCIDA_TAPS_CAP = DUEL_TAPS_CAP;
 export const TORCIDA_BASE_FRAC = 0.5;
 
 /**
- * Força do golpe ESPECIAL no PvE, em múltiplos do golpe-base. ⚠️ Número de
- * balanço PROVISÓRIO (o dono só definiu "dano maior"): vai para o registro como
- * pergunta aberta.
+ * Força do golpe ESPECIAL no PvE, em múltiplos do golpe-base. Decisão do dono
+ * (02/10/2026, TORC-1): 3× (era 2×, provisório). O Duelo continua em 1,35×
+ * (servidor, `_duel.js`). Com a defesa automática (`utils/autoDefesa.ts`) a vida
+ * dos inimigos é reajustada em `dungeon.ts` (`ENEMY_HP_MULT`) para manter a curva.
  */
-export const TORCIDA_PVE_SPECIAL_MULT = 2;
+export const TORCIDA_PVE_SPECIAL_MULT = 3;
 
 /** Um toque: o gauge sobe um e para no cheio (toque a mais não rende nada). */
 export function torcidaTap(taps: number): number {

@@ -230,8 +230,9 @@ export function accuracyScale(acc: number): number {
 /**
  * Barra de timing do ATAQUE. DESLIGADA (decisão do dono, 02/10/2026): o pet
  * ataca sozinho. O caminho antigo (`TimingBar` de ataque em `ArenaGame`) fica
- * atrás desta flag, sem apagar — a precisão de DEFESA (esquiva) continua sendo
- * da barra (TORC-3).
+ * atrás desta flag, sem apagar. A DEFESA também deixou de ser da barra (TORC-3,
+ * 02/10/2026): o pet se defende sozinho (`utils/autoDefesa.ts`, mesma lei
+ * 0,70 ± 0,25 da `sampleAcc` abaixo).
  */
 export const ARENA_TIMING_ATTACK_ENABLED = false;
 
@@ -452,7 +453,8 @@ export interface ArenaSimOptions {
   /**
    * O pet golpeia sozinho com `ARENA_AUTO_ACC` (sem sortear a precisão do
    * ataque) — é o Duelo como ele é jogado desde 02/10/2026. A DEFESA continua
-   * sorteada (`sampleAcc`): a esquiva segue sendo da `TimingBar` (TORC-3).
+   * sorteada (`sampleAcc`), e é a mesma lei da defesa automática do jogo
+   * (`autoDefense`: 0,70 ± 0,25 uniforme — TORC-3, `arena.test.ts` trava a paridade).
    */
   autoAttack?: boolean;
   /**

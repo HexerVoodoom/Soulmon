@@ -3,8 +3,8 @@
  * O DUELO DA ARENA com TORCIDA por toques (H14, 02/10/2026, REGISTRO §20).
  *
  * O pet golpeia SOZINHO; o dono torce tocando em qualquer lugar; o gauge cheio
- * (8 toques) vira um golpe de torcida gasto pelo pet. A esquiva continua sendo
- * da `TimingBar` (TORC-3). O caminho antigo (barra de ataque) está atrás de
+ * (8 toques) vira um golpe de torcida gasto pelo pet. A esquiva SAIU
+ * (TORC-3): o pet se defende sozinho (`utils/autoDefesa.ts`). O caminho antigo (barra de ataque) está atrás de
  * `ARENA_TIMING_ATTACK_ENABLED` e é coberto por `ArenaGame.render.test.tsx`.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -64,11 +64,11 @@ describe('Duelo da Arena — o pet golpeia sozinho e a torcida soma', () => {
     expect(screen.getByText(/ataca sozinho/i)).toBeTruthy();
   });
 
-  it('a intro explica a torcida e que a esquiva continua com a pessoa', async () => {
+  it('a intro explica a torcida e que o Soulmon se defende sozinho', async () => {
     renderWithCss(<ArenaGame evolutionStage="rookie" language="pt-BR" onExit={() => {}} />);
     await act(async () => { await Promise.resolve(); await Promise.resolve(); });
     expect(document.querySelector('[data-arena-torcida-legenda]')?.textContent).toMatch(/torce tocando na tela/i);
-    expect(document.querySelector('[data-arena-torcida-legenda]')?.textContent).toMatch(/esquiva/i);
+    expect(document.querySelector('[data-arena-torcida-legenda]')?.textContent).toMatch(/se defende sozinho/i);
   });
 
   it('sem torcer: o pet ataca sozinho com a precisão fixa, golpe-base (multiplicador 1), e a defesa abre', async () => {
@@ -78,7 +78,18 @@ describe('Duelo da Arena — o pet golpeia sozinho e a torcida soma', () => {
     const [, acc, , skillMult] = hit.mock.calls[0];
     expect(acc).toBe(ARENA_AUTO_ACC);
     expect(skillMult ?? 1).toBe(1); // a torcida só soma: sem toque, é o golpe de sempre
-    expect(screen.getByText('Desviar!')).toBeTruthy(); // a esquiva continua sendo da barra
+    // A esquiva por timing saiu (TORC-3): nenhuma barra, o pet se defende sozinho.
+    expect(screen.queryByText('Desviar!')).toBeNull();
+    expect(document.querySelector('[data-auto-defense]')).not.toBeNull();
+  });
+
+  it('a defesa é AUTOMÁTICA: sem nenhum toque, o revide se resolve sozinho e o turno volta para o ataque', async () => {
+    await entrar();
+    avancar(2000);
+    expect(document.querySelector('[data-auto-defense]')).not.toBeNull();
+    avancar(1000);
+    expect(document.querySelector('[data-auto-defense]')).toBeNull();
+    expect(screen.getByText(/ataca sozinho/i)).toBeTruthy();
   });
 
   it('tocar em qualquer lugar enche o gauge; cheio, o pet GASTA num golpe ×torcida e o gauge zera', async () => {
@@ -107,7 +118,7 @@ describe('Duelo da Arena — o pet golpeia sozinho e a torcida soma', () => {
     expect(hit.mock.calls[0][3] ?? 1).toBe(1);
     expect(gauge().getAttribute('data-torcida-full')).toBe('0');
     // 5 toques ficaram guardados: mais 3 enchem o gauge no turno seguinte.
-    fireEvent.click(screen.getByText('Desviar!'));
+    avancar(1000); // o Soulmon se defende sozinho e o turno volta
     for (let i = 0; i < 3; i++) fireEvent.pointerDown(camada());
     expect(gauge().getAttribute('data-torcida-full')).toBe('1');
   });
