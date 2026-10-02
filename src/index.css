@@ -4656,8 +4656,13 @@ select:focus-visible {
    412×700. O `top` negativo cancela o padding e cola a área no topo da tela. */
 :root { --sm-scroll-pt: 12px; }
 .sm-pet-sticky {
-  position: sticky;
-  top: calc(var(--sm-scroll-pt) * -1);
+  /* H7 (02/10/2026): a Home deixou de rolar inteira — o `<main>` é `overflow:
+     hidden` e só `[data-home-scroll]` rola. A área do pet (e o header) ficam
+     FORA do scroller, então não precisam mais de `sticky`: é um bloco comum,
+     `flex: none`, que não encolhe quando o teclado do chat abre. O nome da
+     classe ficou por compatibilidade com os testes e o CSS que a citam. */
+  position: relative;
+  flex: none;
   z-index: 5;
   /* Gutter 16 (canvas Home, P1): o `<main>` da Home é `px-4`; a faixa cancela
      o mesmo valor. Os dois números TÊM de ser o mesmo — senão sobra fresta em
@@ -7514,12 +7519,22 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
   position: absolute;
   left: 0;
   right: 0;
-  height: 36px;
+  height: 44px;
   z-index: 2;
   pointer-events: none;
 }
-.sm3-cena::before { top: 0; background: linear-gradient(var(--sm2-bg), transparent); }
-.sm3-cena::after { bottom: 0; background: linear-gradient(transparent, var(--sm2-bg)); }
+/* H8 (02/10/2026): SEM risco delimitando a área — as duas bordas (cima e baixo)
+   são o MESMO fade discreto, em degraus suaves, e a vinheta/reflexo do vidro
+   some nesta faixa (era ela que desenhava a quina escura em volta). */
+.sm3-cena::before {
+  top: 0;
+  background: linear-gradient(var(--sm2-bg) 0%, color-mix(in srgb, var(--sm2-bg) 60%, transparent) 40%, color-mix(in srgb, var(--sm2-bg) 18%, transparent) 75%, transparent 100%);
+}
+.sm3-cena::after {
+  bottom: 0;
+  background: linear-gradient(transparent 0%, color-mix(in srgb, var(--sm2-bg) 18%, transparent) 25%, color-mix(in srgb, var(--sm2-bg) 60%, transparent) 60%, var(--sm2-bg) 100%);
+}
+.sm3-cena .sm3-cena-viewport .sm2-viewport-glass { background-image: none; }
 
 /* HP / EN — canto inferior esquerdo. Sobre a cena (escura nos dois temas):
    tinta `viewport-ink`, sombra de 1px para descolar do cenário pintado. */
@@ -7659,7 +7674,9 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
    direita na MESMA linha — o dock reserva o canto dele. */
 .sm3-dock.sm-chat-fixed {
   bottom: 0;
-  padding: 10px calc(56px + var(--sm2-space-3) + 6px) calc(16px + env(safe-area-inset-bottom, 0px)) 14px;
+  /* H6 (02/10/2026): o Mapa foi para o TOPO (B2), então o dock não reserva mais o
+     canto — a barra ocupa a largura toda, 14px de gutter dos dois lados. */
+  padding: 10px 14px calc(16px + env(safe-area-inset-bottom, 0px)) 14px;
   background: linear-gradient(transparent, var(--sm2-bg) 30%);
 }
 .sm3-term {
