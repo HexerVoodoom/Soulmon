@@ -211,7 +211,7 @@ export function choiceStyle(selected: boolean): CSSProperties {
     fontFamily: 'var(--sm2-font-text)',
     fontSize: 'var(--sm2-text-sm)',
     lineHeight: 'var(--sm2-leading-body)',
-    fontWeight: selected ? 600 : 400,
+    fontWeight: selected ? 500 : 400,
     cursor: 'pointer',
     border: selected ? '1px solid transparent' : '1px solid var(--sm2-line)',
     backgroundColor: selected ? 'var(--sm2-primary-fill)' : 'var(--sm2-surface)',

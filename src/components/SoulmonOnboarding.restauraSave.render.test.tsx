@@ -10,7 +10,7 @@
  * recarrega (pula termos e onboarding). Sem save remoto → termos.
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { screen, fireEvent, act } from '@testing-library/react';
+import { screen, fireEvent, act, waitFor } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
 import { SoulmonOnboarding } from './SoulmonOnboarding';
 import { STORAGE_KEYS } from '../utils/storageKeys';
@@ -51,7 +51,11 @@ async function entrarComGoogle() {
   renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
   await act(async () => {});
   await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Continue with Google' })); });
-  await act(async () => { await new Promise(r => setTimeout(r, 0)); });
+  // Sob carga a cadeia assíncrona (hash + fetch) demora: espera o desfecho.
+  await waitFor(() => {
+    expect(recarregar.mock.calls.length > 0 || screen.queryByText('Before we start') !== null
+      || localStorage.getItem(STORAGE_KEYS.GAME_STATE) !== null).toBe(true);
+  });
 }
 
 describe('login Google em conta existente', () => {

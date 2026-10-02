@@ -129,9 +129,11 @@ const alertStyle: CSSProperties = {
 const statusStyle: CSSProperties = { ...alertStyle, borderLeftColor: 'var(--sm2-primary-ink)' };
 
 /** A4 (02/10/2026): no onboarding os títulos usam a fonte de TEXTO (Rubik) em
-    vez da display (Cinzel), por legibilidade. Só aqui — o resto do app segue com
+    vez da display (Cinzel), por legibilidade. H2 (rodada 4): peso 500 — o
+    arquivo da Rubik só vai até 500, e o 600 herdado de `sm2TitleStyle` virava
+    NEGRITO SINTÉTICO (borrado e arredondado, lido como a Fredoka antiga). Só aqui — o resto do app segue com
     Cinzel nos títulos. O estilo inline vence a família da classe `.sm2-title`. */
-const tituloOnboarding: CSSProperties = { ...sm2TitleStyle, fontFamily: 'var(--sm2-font-text)' };
+const tituloOnboarding: CSSProperties = { ...sm2TitleStyle, fontFamily: 'var(--sm2-font-text)', fontWeight: 500 };
 
 /** As listas de opção do catálogo, na ordem do intersticial antigo. */
 const STRUGGLE_IDS: StruggleId[] = ['comecar', 'constancia', 'esquecer', 'energia', 'ansiedade', 'distracao', 'tempo', 'perfeccionismo'];
@@ -292,19 +294,17 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     writeLocal(STORAGE_KEYS.LANGUAGE, l, { silent: true });
     onLanguageChange?.(l);
   };
-  const seletorIdioma = (
-    <div role="group" aria-label={isPt ? 'Idioma' : 'Language'} data-language-picker
-      style={{ display: 'flex', justifyContent: 'center', gap: 8, margin: '0 0 16px' }}>
-      {(['en-US', 'pt-BR'] as const).map(l => (
-        <button key={l} type="button" lang={l === 'pt-BR' ? 'pt' : 'en'}
-          aria-pressed={lang === l}
-          style={sm2Button(lang === l ? 'primary' : 'outline', false, 'sm')}
-          onClick={() => escolherIdioma(l)}>
-          {l === 'pt-BR' ? 'Português' : 'English'}
-        </button>
-      ))}
-    </div>
+  // H1 (02/10/2026): o idioma se escolhe num MODAL na abertura (antes do portão),
+  // só quando nada foi gravado ainda. Escolheu → grava, o modal fecha e cai no
+  // login. Os seletores inline do portão e dos termos saíram. O modal é sempre
+  // em inglês (o idioma-padrão antes da escolha).
+  const [idiomaPendente, setIdiomaPendente] = useState(
+    () => !isUpgrade && readLocal(STORAGE_KEYS.LANGUAGE) === null,
   );
+  const escolherInicial = (l: Language) => {
+    escolherIdioma(l);
+    setIdiomaPendente(false);
+  };
   const precoLabel = useUnlockPriceLabel(isPt);
   const L = (t: LText) => (isPt ? t.pt : t.en);
 
@@ -1413,6 +1413,37 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     || (step === REGISTER && !!demoChar)
   );
 
+  if (idiomaPendente) {
+    return (
+      <div style={{
+        position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: 20, boxSizing: 'border-box', backgroundColor: 'var(--sm2-bg)', color: 'var(--sm2-ink)',
+        fontFamily: 'var(--sm2-font-text)',
+      }}>
+        <div role="dialog" aria-modal="true" aria-labelledby="onb-idioma-titulo" data-language-modal
+          style={{
+            width: '100%', maxWidth: 360, boxSizing: 'border-box', padding: 24,
+            backgroundColor: 'var(--sm2-surface)', border: '1px solid var(--sm2-muted)',
+            borderRadius: 16, display: 'flex', flexDirection: 'column', gap: 12,
+          }}>
+          <h2 id="onb-idioma-titulo" className="sm2-title" style={{ ...tituloOnboarding, textAlign: 'center' }}>
+            Choose your language
+          </h2>
+          <p style={{ ...sm2Hint, textAlign: 'center', marginBottom: 6 }}>
+            You can change it later in Settings.
+          </p>
+          {(['en-US', 'pt-BR'] as const).map(l => (
+            <button key={l} type="button" lang={l === 'pt-BR' ? 'pt' : 'en'}
+              style={{ ...sm2Button('primary'), width: '100%' }}
+              onClick={() => escolherInicial(l)}>
+              {l === 'pt-BR' ? 'Português' : 'English'}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{
       position: 'fixed', inset: 0, overflowY: 'auto',
@@ -1533,7 +1564,6 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             hint={isPt
               ? 'Sua conta guarda o progresso e amarra qualquer compra a você. A sessão fica salva — não precisa entrar de novo a cada vez.'
               : 'Your account keeps your progress and ties any purchase to you. The session is saved — no need to sign in every time.'}>
-            {seletorIdioma}
             {authErro && (
               <p role="alert" style={{ ...alertStyle, marginBottom: 12 }}>
                 {textoErroAuth}
@@ -1565,7 +1595,6 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             hint={isPt
               ? 'Sua conta está pronta. Confirme os dois documentos e sua idade para continuar.'
               : 'Your account is ready. Confirm the two documents and your age to continue.'}>
-            {seletorIdioma}
             {blocoLegal}
             <button
               type="button"

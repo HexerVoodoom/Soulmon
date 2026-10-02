@@ -159,7 +159,9 @@ export function installDomGlobals(): void {
  * uma versão que lança, que é como a falha real do navegador chega.
  */
 export function installFakeStorage(): Storage {
-  const store = new Map<string, string>();
+  // H1 (02/10/2026): sem idioma gravado o onboarding abre o MODAL de idioma.
+  // Os testes de fluxo partem de "idioma já escolhido" (en-US = o padrão).
+  const store = new Map<string, string>([['soulmon-language', 'en-US']]);
   const storage: Storage = {
     get length() { return store.size; },
     key: (i: number) => Array.from(store.keys())[i] ?? null,

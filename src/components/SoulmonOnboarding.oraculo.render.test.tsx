@@ -278,7 +278,7 @@ describe('Reveal pago — o casulo no vidro do cartão, depois o cristal apagado
 });
 
 describe('Reveal demo — 13.19 / 13.1 (D-Q8, D-Q13, X4)', () => {
-  beforeEach(() => { vi.useFakeTimers(); installFakeStorage(); clearOracleDraft(); localStorage.clear(); });
+  beforeEach(() => { vi.useFakeTimers(); installFakeStorage(); clearOracleDraft(); localStorage.clear(); localStorage.setItem('soulmon-language', 'en-US'); });
   afterEach(() => { vi.useRealTimers(); });
 
   async function ateOReveal() {

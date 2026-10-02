@@ -78,6 +78,7 @@ async function entrarComGoogleUi() {
 describe('portão de identidade', () => {
   beforeEach(() => {
     localStorage.clear();
+    localStorage.setItem(STORAGE_KEYS.LANGUAGE, 'en-US');
     authLigada = true;
     emailAtual = null;
     resposta = { ok: true, email: 'a@b.com' };
@@ -252,28 +253,51 @@ describe('portão de identidade', () => {
     expect(screen.getByText('What should we call you?')).toBeTruthy();
   });
 
-  it('A1: sem idioma gravado a PRIMEIRA tela abre em INGLÊS, mesmo com o aparelho em PT', async () => {
+  it('H1: sem idioma gravado a PRIMEIRA tela é o MODAL de idioma (em inglês), antes do portão', async () => {
+    localStorage.clear();
     vi.stubGlobal('navigator', { ...navigator, language: 'pt-BR', languages: ['pt-BR'] });
     try {
       await montar();
-      expect(screen.getByRole('button', { name: 'Continue with Google' })).toBeTruthy();
-      expect(screen.queryByText('Entrar com Google')).toBeNull();
-      // Abrir em inglês não grava nada: a escolha ainda é da pessoa.
+      const modal = screen.getByRole('dialog');
+      expect(modal.getAttribute('aria-modal')).toBe('true');
+      expect(screen.getByText('Choose your language')).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'English' })).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'Português' })).toBeTruthy();
+      expect(screen.queryByRole('button', { name: 'Continue with Google' })).toBeNull();
+      // Abrir o modal não grava nada: a escolha é da pessoa.
       expect(localStorage.getItem(STORAGE_KEYS.LANGUAGE)).toBeNull();
     } finally {
       vi.unstubAllGlobals();
     }
   });
 
-  it('A1: escolher Português troca o idioma e a escolha PERSISTE', async () => {
+  it('H1: escolher Português grava, fecha o modal e cai no login em português; persiste', async () => {
+    localStorage.clear();
     await montar();
     fireEvent.click(screen.getByRole('button', { name: 'Português' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
     expect(screen.getByRole('button', { name: 'Entrar com Google' })).toBeTruthy();
     expect(localStorage.getItem(STORAGE_KEYS.LANGUAGE)).toBe('pt-BR');
-    // Remontar (nova abertura): continua em português.
+    // Remontar (nova abertura): sem modal, direto no login em português.
     cleanup();
     await montar();
+    expect(screen.queryByRole('dialog')).toBeNull();
     expect(screen.getByRole('button', { name: 'Entrar com Google' })).toBeTruthy();
+  });
+
+  it('H1: com idioma já gravado o modal NÃO aparece, e o portão não traz seletor inline', async () => {
+    await montar();
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Continue with Google' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Português' })).toBeNull();
+  });
+
+  it('H1: a tela dos termos NÃO mostra seletor de idioma', async () => {
+    emailAtual = 'ja@logado.com';
+    await montar();
+    expect(screen.getByText('Before we start')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Português' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'English' })).toBeNull();
   });
 
   it('a guarda da compra olha o E-MAIL, não a presença do saveId', () => {
@@ -323,6 +347,7 @@ describe('portão de identidade', () => {
 describe('portão — identidade do canvas Onboarding-funil', () => {
   beforeEach(() => {
     localStorage.clear();
+    localStorage.setItem(STORAGE_KEYS.LANGUAGE, 'en-US');
     authLigada = true;
     emailAtual = null;
     resposta = { ok: true, email: 'a@b.com' };
@@ -385,5 +410,7 @@ describe('portão — identidade do canvas Onboarding-funil', () => {
     await montar();
     const titulo = screen.getByText('Before we start');
     expect(titulo.style.fontFamily).toBe('var(--sm2-font-text)');
+    // H2: o arquivo da Rubik só vai até 500 — 600 virava negrito sintético.
+    expect(titulo.style.fontWeight).toBe('500');
   });
 });
