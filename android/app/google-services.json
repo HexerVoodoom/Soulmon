@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "517597188438-82tm8qnftspqc0rlg6v8813ft46hkddl.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.hexervoodoom.soulmon",
+            "certificate_hash": "bcaee2d8c0360bffabf6503bc5bd2d5cf384feb1"
+          }
+        },
+        {
           "client_id": "517597188438-v1338i1q7dc1svdbgiir95k9025ddjk6.apps.googleusercontent.com",
           "client_type": 3
         }
