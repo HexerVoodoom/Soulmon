@@ -58,8 +58,10 @@ export function normalizeCrossings(raw: unknown): CrossingsState {
   }
 
   const a = (r.active ?? null) as Record<string, unknown> | null;
-  const active = a && typeof a === 'object' && isRegionId(a.region) && isChallengeId(a.challenge)
-    && !vistas.has(a.region)
+  // F5 (02/10/2026): a Travessia se repete todo dia, então a ativa pode estar
+  // numa região já aberta ou com "Fiz" guardado. Só a casa não tem desafio.
+  const active = a && typeof a === 'object' && isRegionId(a.region) && a.region !== HOME_REGION
+    && isChallengeId(a.challenge)
     ? { region: a.region, challenge: a.challenge }
     : null;
 
@@ -67,7 +69,7 @@ export function normalizeCrossings(raw: unknown): CrossingsState {
   const destination = isRegionId(r.destination) && r.destination !== HOME_REGION && aberta(r.destination)
     ? r.destination : null;
 
-  return { opened, active, pending, destination, hidden: r.hidden === true };
+  return { opened, active, pending, destination, hidden: r.hidden === true, doneDay: isDayKey(r.doneDay) ? r.doneDay : null };
 }
 
 /**

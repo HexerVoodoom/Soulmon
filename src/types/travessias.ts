@@ -95,8 +95,15 @@ export interface CrossingsState {
   destination: RegionId | null;
   /** Interruptor: esconde a camada inteira de Travessias (MIS-11). O Passeio continua. */
   hidden: boolean;
+  /**
+   * O dia do jogador (`AAAA-MM-DD`) do último "Fiz". É o relógio da regra
+   * "uma vez por dia" (02/10/2026, F5): a Travessia não acaba no "Fiz" —
+   * continua ativa e dá para repetir no dia seguinte. Só um dia, nunca um
+   * histórico (sem contagem, sem sequência).
+   */
+  doneDay: string | null;
 }
 
 export const CROSSINGS_EMPTY: CrossingsState = {
-  opened: [], active: null, pending: [], destination: null, hidden: false,
+  opened: [], active: null, pending: [], destination: null, hidden: false, doneDay: null,
 };

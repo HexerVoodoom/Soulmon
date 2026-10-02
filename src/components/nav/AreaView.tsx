@@ -295,6 +295,7 @@ export function AreaView(props: AreaViewProps) {
                 language={language}
                 crossings={props.passeio?.crossings ?? CROSSINGS_EMPTY}
                 onChange={props.passeio?.onChange ?? (() => {})}
+                todayKey={play.todayKey}
               />
             )}
             {open?.id === 'masmorra' && <MasmorraSheet language={language} bitsToday={play.minigameBitsToday} onStart={() => start('masmorra')} />}

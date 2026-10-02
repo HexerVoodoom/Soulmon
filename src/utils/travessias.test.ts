@@ -5,7 +5,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   normalizeCrossings, REGION_IDS, regionById, openRegions, mistRegions, offerFor, pickCrossing,
-  dropCrossing, markDone, settleNight, setDestination, setHidden, passeioFindOfDay, findAnyById,
+  dropCrossing, markDone, doneToday, crossingYield, settleNight, setDestination, setHidden, passeioFindOfDay, findAnyById,
   activeChallenge, crossingsTouchMap,
 } from './travessias';
 import { REGIONS } from '../data/travessiasCatalog';
@@ -44,8 +44,9 @@ describe('normalizeCrossings', () => {
     });
     expect(n.opened).toEqual([{ region: R1.id, day: '2026-09-01' }]);
     expect(n.pending).toEqual([R2.id]);
-    // Ativa numa região com "Fiz" guardado não sobrevive (não se escolhe o que já foi feito).
-    expect(n.active).toBeNull();
+    // F5 (02/10/2026): a ativa pode estar numa região já guardada/aberta (repete-se todo dia).
+    expect(n.active).toEqual({ region: R2.id, challenge: R2.challenges[0].id });
+    expect(n.doneDay).toBeNull();
     expect(n.destination).toBeNull();
     expect(n.hidden).toBe(false);
   });
@@ -55,6 +56,10 @@ describe('normalizeCrossings', () => {
     expect(normalizeCrossings({ destination: R1.id }).destination).toBeNull();
     const n = normalizeCrossings({ active: { region: R1.id, challenge: 'Fui ao parque com a Ana às 22h!' } });
     expect(n.active).toBeNull();
+    // A casa não tem desafio; `doneDay` só aceita o formato de dia.
+    expect(normalizeCrossings({ active: { region: HOME_REGION, challenge: 'trv-c-x' } }).active).toBeNull();
+    expect(normalizeCrossings({ doneDay: '2026-10-02' }).doneDay).toBe('2026-10-02');
+    expect(normalizeCrossings({ doneDay: 'ontem às 22h' }).doneDay).toBeNull();
   });
 
   it('REGION_IDS (do save, fora do chunk do catálogo) bate um a um com o catálogo', () => {
@@ -79,7 +84,7 @@ describe('regiões abertas, névoa e oferta', () => {
 });
 
 describe('pick / drop / markDone / trocar', () => {
-  it('pick só em região na névoa, só entre os desafios dela', () => {
+  it('pick só entre os desafios da região (qualquer uma fora a casa — a Travessia se repete)', () => {
     const s = pickCrossing(CROSSINGS_EMPTY, R1.id, R1.challenges[0].id);
     expect(s.active).toEqual({ region: R1.id, challenge: R1.challenges[0].id });
     expect(activeChallenge(s)?.challenge.id).toBe(R1.challenges[0].id);
@@ -87,11 +92,11 @@ describe('pick / drop / markDone / trocar', () => {
     expect(pickCrossing(CROSSINGS_EMPTY, R1.id, R2.challenges[0].id)).toBe(CROSSINGS_EMPTY);
     // Casa não tem Travessia.
     expect(pickCrossing(CROSSINGS_EMPTY, HOME_REGION, 'x')).toBe(CROSSINGS_EMPTY);
-    // Região aberta ou pendente: recusado.
+    // F5 (02/10/2026): região aberta ou guardada também pode ser escolhida (repetir o ato todo dia).
     const aberta = comAberta(R1.id);
-    expect(pickCrossing(aberta, R1.id, R1.challenges[0].id)).toBe(aberta);
+    expect(pickCrossing(aberta, R1.id, R1.challenges[0].id).active?.region).toBe(R1.id);
     const pend: CrossingsState = { ...CROSSINGS_EMPTY, pending: [R1.id] };
-    expect(pickCrossing(pend, R1.id, R1.challenges[0].id)).toBe(pend);
+    expect(pickCrossing(pend, R1.id, R1.challenges[0].id).active?.region).toBe(R1.id);
   });
 
   it('trocar escolhe entre os MESMOS 3 e substitui a ativa (nunca re-sorteia)', () => {
@@ -106,28 +111,60 @@ describe('pick / drop / markDone / trocar', () => {
     expect(s.active?.region).toBe(R2.id);
   });
 
-  it('deixar pra lá: sem custo, volta a null', () => {
+  it('recuar: sem custo, volta a null e não mexe em região nem no dia do "Fiz"', () => {
     const s = pickCrossing(CROSSINGS_EMPTY, R1.id, R1.challenges[0].id);
     const d = dropCrossing(s);
     expect(d.active).toBeNull();
     expect(d.pending).toEqual([]);
     expect(d.opened).toEqual([]);
     expect(dropCrossing(d)).toBe(d);
+    // Recuar depois do "Fiz" não apaga o que o "Fiz" deixou (nem libera um segundo "Fiz" no dia).
+    const feito = markDone(s, '2026-10-02');
+    const r = dropCrossing(feito);
+    expect(r.active).toBeNull();
+    expect(r.pending).toEqual([R1.id]);
+    expect(r.doneDay).toBe('2026-10-02');
   });
 
-  it('Fiz: ativa vira pending (sem data) e NÃO abre nada na hora; idempotente', () => {
+  it('Fiz: região vai para pending (sem data) e NÃO abre nada na hora; a ativa fica; idempotente no dia', () => {
     const s = pickCrossing(CROSSINGS_EMPTY, R1.id, R1.challenges[1].id);
-    const f = markDone(s);
-    expect(f.active).toBeNull();
+    const f = markDone(s, '2026-10-02');
+    expect(f.active).toEqual(s.active);
     expect(f.pending).toEqual([R1.id]);
     expect(f.opened).toEqual([]);
-    expect(markDone(f)).toBe(f);
+    expect(f.doneDay).toBe('2026-10-02');
+    expect(doneToday(f, '2026-10-02')).toBe(true);
+    expect(markDone(f, '2026-10-02')).toBe(f);
     expect(crossingsTouchMap(f)).toBe(true);
+    expect(markDone(CROSSINGS_EMPTY, '2026-10-02')).toBe(CROSSINGS_EMPTY);
+  });
+
+  it('F5: uma vez por DIA — vira o dia, vale de novo; a região só entra uma vez', () => {
+    let s = markDone(pickCrossing(CROSSINGS_EMPTY, R1.id, R1.challenges[0].id), '2026-10-02');
+    // Trocar de Travessia no mesmo dia não libera um segundo "Fiz".
+    const trocada = pickCrossing(s, R2.id, R2.challenges[0].id);
+    expect(markDone(trocada, '2026-10-02')).toBe(trocada);
+    // No dia seguinte (virada pelo dayKey do jogador), vale de novo.
+    s = markDone(s, '2026-10-03');
+    expect(s.doneDay).toBe('2026-10-03');
+    expect(s.pending).toEqual([R1.id]); // nada acumula por repetir
+    // Depois que a região abre, repetir não muda o mapa.
+    const noite = settleNight(s, '2026-10-03').state;
+    const outro = markDone(noite, '2026-10-04');
+    expect(outro.doneDay).toBe('2026-10-04');
+    expect(outro.opened).toEqual(noite.opened);
+    expect(outro.pending).toEqual([]);
+  });
+
+  it('crossingYield conta a verdade do mapa: abre / guardada / aberta', () => {
+    expect(crossingYield(CROSSINGS_EMPTY, R1.id)).toBe('abre');
+    expect(crossingYield({ ...CROSSINGS_EMPTY, pending: [R1.id] }, R1.id)).toBe('guardada');
+    expect(crossingYield(comAberta(R1.id), R1.id)).toBe('aberta');
   });
 });
 
 describe('settleNight', () => {
-  const doisFeitos = markDone(pickCrossing(markDone(pickCrossing(CROSSINGS_EMPTY, R1.id, R1.challenges[0].id)), R2.id, R2.challenges[0].id));
+  const doisFeitos = markDone(pickCrossing(markDone(pickCrossing(CROSSINGS_EMPTY, R1.id, R1.challenges[0].id), '2026-09-29'), R2.id, R2.challenges[0].id), '2026-09-30');
 
   it(`abre no máximo ${REGIONS_OPENED_PER_DAY} por noite, o mais antigo primeiro`, () => {
     expect(doisFeitos.pending).toEqual([R1.id, R2.id]);
@@ -151,10 +188,10 @@ describe('settleNight', () => {
 
   it('pending nunca expira: noites e noites depois ele ainda abre', () => {
     // O "Fiz" guardado não carrega data — o tempo que passa não o apaga.
-    const f = markDone(pickCrossing(CROSSINGS_EMPTY, R1.id, R1.challenges[0].id));
+    const f = markDone(pickCrossing(CROSSINGS_EMPTY, R1.id, R1.challenges[0].id), '2026-10-01');
     const n = settleNight(f, '2027-12-31');
     expect(n.arrived).toBe(R1.id);
-    expect(JSON.stringify(f)).not.toMatch(/\d{4}-\d{2}-\d{2}/);
+    expect(JSON.stringify(f.pending)).not.toMatch(/\d{4}-\d{2}-\d{2}/);
   });
 });
 
@@ -217,7 +254,7 @@ describe('passeioFindOfDay — o achado fundido', () => {
   });
 
   it('a noite em que a região ABRE traz a cena de chegada dela', () => {
-    const f = markDone(pickCrossing(CROSSINGS_EMPTY, R1.id, R1.challenges[0].id));
+    const f = markDone(pickCrossing(CROSSINGS_EMPTY, R1.id, R1.challenges[0].id), '2026-10-04');
     const { state } = settleNight(f, '2026-10-05');
     expect(passeioFindOfDay({ ...base, crossings: state, dayKey: '2026-10-05' })).toBe(R1.arrival);
     // Na noite seguinte, não é mais chegada.
