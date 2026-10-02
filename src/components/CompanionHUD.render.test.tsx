@@ -80,17 +80,15 @@ describe('CompanionHUD', () => {
     fireEvent.click(btn);
     expect(onEvolveRequest).toHaveBeenCalledTimes(1);
     // posicionamento crítico é INLINE de propósito (footgun 1: utilitário que
-    // não está no index.css pré-compilado não aplica nada). Canvas Home (X3):
-    // "EVOLVE" no CANTO INFERIOR DIREITO do vidro, na língua do LCD —
-    // Silkscreen 14 caixa alta dentro da moldura pixel do `hudArt`
-    // (`border-image`), alvo 44. Se alguém trocar por classe, o botão cai
-    // fora do canto e este caso avisa.
-    expect(btn.style.right).not.toBe('');
-    expect(btn.style.bottom).not.toBe('');
-    expect(btn.className).toContain('sm2-pxbtn');
-    expect(btn.style.borderImageSource).toMatch(/frame-pipe-vine/);
-    expect(btn.style.borderImageSlice).toBe('24');
-    expect(btn.textContent).toBe('Evoluir');
+    // não está no index.css pré-compilado não aplica nada). B3 (02/10/2026):
+    // CENTRALIZADO no ALTO da área do pet (`left: 50%` + `top`), com o
+    // acabamento `EvolveButton` (`.sm2-evolve-btn`), alvo ≥ 44 e rótulo vivo.
+    expect(btn.style.left).toBe('50%');
+    expect(btn.style.top).not.toBe('');
+    expect(btn.style.bottom).toBe('');
+    expect(btn.className).toContain('sm2-evolve-btn');
+    expect(btn.querySelector('.sm2-evolve-label')?.textContent).toBe('Evoluir');
+    expect(parseFloat(btn.style.minHeight)).toBeGreaterThanOrEqual(44);
   });
 
   it('o botão Evoluir some quando o pet está dormindo', () => {

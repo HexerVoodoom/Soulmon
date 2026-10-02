@@ -87,14 +87,30 @@ interface HomeHudProps {
    */
   focusSealed?: boolean;
   /**
-   * O que vai na PONTA DIREITA da linha da marca — o menu só ícone da Home
-   * (minimal-ui D6). Slot e não botão embutido: o HUD não sabe o que o menu
-   * abre, e não deveria.
+   * O que vai na PONTA ESQUERDA da linha da marca — o menu só ícone da Home
+   * (minimal-ui D6; B2 da rodada 3, 02/10/2026: o sanduíche foi para a
+   * esquerda, onde antes ficava o logo). Slot e não botão embutido: o HUD não
+   * sabe o que o menu abre, e não deveria.
+   */
+  leading?: ReactNode;
+  /**
+   * A ponta DIREITA. Hoje ela só reserva o espaço do link do Mapa — o
+   * `CornerLink` é `fixed` no canto superior direito (fora do HUD, para
+   * continuar à mão com a lista rolada).
    */
   trailing?: ReactNode;
+  /**
+   * B1 (02/10/2026): o NOME do Soulmon, no topo, junto do logo. Só o nome —
+   * a palavra "companheiro"/"Companion" (título do Vínculo) saiu da Home.
+   */
+  petName?: string;
 }
 
-export function HomeHud({ language = 'en-US', focusSealed = false, trailing }: HomeHudProps) {
+/** Largura das duas pontas do header (menu à esquerda, Mapa à direita): iguais,
+ *  para o logo + nome ficarem centrados de verdade. */
+const HUD_SIDE_W = 48;
+
+export function HomeHud({ language = 'en-US', focusSealed = false, leading, trailing, petName }: HomeHudProps) {
   return (
     <div className="sm2-hud">
       {/* A marca é a PALAVRA, sem ícone ao lado.
@@ -123,33 +139,57 @@ export function HomeHud({ language = 'en-US', focusSealed = false, trailing }: H
             wordmark SOUL/MON — PROVISÓRIO, recorte local). Continua sendo o `<h1>` da Home: o
             nome acessível "Soulmon" é texto visualmente oculto ao lado da
             imagem decorativa, então o leitor de tela ouve o mesmo que ouvia. */}
-        <h1 className="sm2-hud-wordmark" style={{ margin: 0, display: 'flex', alignItems: 'center' }}>
-          <img
-            src={logoUrl}
-            alt=""
-            aria-hidden="true"
-            data-home-logo
-            width={LOGO_W}
-            height={LOGO_H}
-            draggable={false}
-            style={{ display: 'block', width: LOGO_W, height: LOGO_H, imageRendering: 'pixelated' }}
-          />
-          <span className="sm2-sr-only">Soulmon</span>
-        </h1>
-        {/* O selo = chip de etiqueta 24 em `primary-soft` (canvas Home,
-            HOME-07): `check_circle` FILL 1 + "focus done" Rubik 12/500. Ícone
-            pelado dentro de um CHIP de texto — a regra do dono é sobre ícone
-            sozinho em box; aqui o chip é a etiqueta inteira. */}
-        {focusSealed && (
-          <span
-            className="sm2-hud-seal"
-            title={language === 'pt-BR' ? 'Foco do dia completo' : "Today's focus complete"}
-          >
-            <Icon name="check_circle" size={20} fill={1} tone="primary" />
-            <span>{language === 'pt-BR' ? 'foco do dia' : 'focus done'}</span>
-          </span>
-        )}
-        {trailing && <div style={{ marginLeft: 'auto', display: 'flex' }}>{trailing}</div>}
+        {/* B2 (02/10/2026): [menu] [logo + nome] [Mapa]. As duas pontas têm a
+            MESMA largura, para o centro ser o centro de verdade. */}
+        <div data-hud-leading style={{ flex: `0 0 ${HUD_SIDE_W}px`, display: 'flex', justifyContent: 'flex-start' }}>
+          {leading}
+        </div>
+        <div
+          data-hud-center
+          style={{ flex: '1 1 auto', minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, maxWidth: '100%' }}>
+            <h1 className="sm2-hud-wordmark" style={{ margin: 0, display: 'flex', alignItems: 'center', flex: '0 0 auto' }}>
+              <img
+                src={logoUrl}
+                alt=""
+                aria-hidden="true"
+                data-home-logo
+                width={LOGO_W}
+                height={LOGO_H}
+                draggable={false}
+                style={{ display: 'block', width: LOGO_W, height: LOGO_H, imageRendering: 'pixelated' }}
+              />
+              <span className="sm2-sr-only">Soulmon</span>
+            </h1>
+            {/* B1 (02/10/2026): SÓ o nome do Soulmon, ao lado do logo. A palavra
+                "companheiro"/"Companion" (título do Vínculo) saiu da Home. */}
+            {petName && (
+              <p
+                className="sm2-home-petname"
+                data-home-petname
+                style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}
+              >
+                {petName}
+              </p>
+            )}
+          </div>
+          {/* O selo = chip de etiqueta 24 em `primary-soft` (canvas Home,
+              HOME-07): `check_circle` FILL 1 + "focus done" Rubik 12/500.
+              Quando existe, desce para uma segunda linha do centro. */}
+          {focusSealed && (
+            <span
+              className="sm2-hud-seal"
+              title={language === 'pt-BR' ? 'Foco do dia completo' : "Today's focus complete"}
+            >
+              <Icon name="check_circle" size={20} fill={1} tone="primary" />
+              <span>{language === 'pt-BR' ? 'foco do dia' : 'focus done'}</span>
+            </span>
+          )}
+        </div>
+        <div data-hud-trailing style={{ flex: `0 0 ${HUD_SIDE_W}px`, display: 'flex', justifyContent: 'flex-end' }}>
+          {trailing}
+        </div>
       </div>
     </div>
   );

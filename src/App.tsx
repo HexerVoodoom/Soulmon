@@ -82,7 +82,7 @@ import { applySpecialItem, specialRefusal } from './utils/specialItemUse';
 import { playerDayKey, playerDayIso } from './utils/playerDay';
 import { shouldInviteRefuge, markRefugeShown, dismissRefugeInvite, acceptRefugeInvite } from './utils/refugio/convite';
 import { RefugeInviteCard } from './components/refugio/RefugeInviteCard';
-import { awardBondXP, bondLevelFor, unclaimedBondRewards, applyBondRewards, bondTitle } from './utils/bond';
+import { awardBondXP, bondLevelFor, unclaimedBondRewards, applyBondRewards } from './utils/bond';
 import { applyPoopDrain, cleanPoop, POOP_DRAIN_PERIOD_MS, remainingDrainToday } from './utils/poopDrain';
 import { isMuted, setMuted, playTaskComplete, playFeed, playEvolve, playDegenerate, playSleep } from './utils/sounds';
 import { pausarTrilha, retomarTrilha } from './utils/trilha';
@@ -5974,7 +5974,8 @@ export default function App() {
                    da barra inferior. Ícone `acoes` (grade 3×3 de gemas, arte
                    do squad de arte) pelado (regra do dono),
                    alvo de 44 no botão, divulgação com `aria-expanded`. */
-                trailing={(
+                petName={soulmonDisplayName(gameState.soulmonMeta) || undefined}
+                leading={(
                   <button
                     type="button"
                     onClick={() => setHomeMenuOpen(true)}
@@ -6068,8 +6069,11 @@ export default function App() {
                 /* WP3.3 — nome e título do Vínculo na home. O título é
                    DERIVADO na leitura (`bondLevelFor(totalXP)`); guardá-lo no
                    save seria duas fontes para o mesmo número (footgun 9). */
+                /* B1 (02/10/2026): o nome NÃO é mais desenhado sob o pet — mora
+                   no header, junto do logo (`HomeHud`) — e o título do Vínculo
+                   ("Companheiro", nível 2) saiu da Home (sem `bondTitleText`).
+                   O nome continua indo para a Mochila (rótulo). */
                 petDisplayName={soulmonDisplayName(gameState.soulmonMeta) || undefined}
-                bondTitleText={bondTitle(bondLevelFor(gameState.totalXP ?? 0), language)}
                 redeemedMark={!!gameState.redeemed && !!gameState.showRedeemed}
                 hauntedWatching={hauntedWatching}
                 /* 🧭 O palco "passeando" (30/09/2026): só o nome da região de

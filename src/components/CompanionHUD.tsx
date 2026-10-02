@@ -12,7 +12,7 @@ import { ITEM_ART } from '../utils/itemArt';
 import { FX_ART } from '../utils/fxArt';
 import { ANIM_ART } from '../utils/animArt';
 import { SpriteAnim } from './pixel/SpriteAnim';
-import { HUD_ART } from '../utils/hudArt';
+import { EvolveButton, EVOLVE_BTN_H } from './pixel/EvolveButton';
 import { type SlotId, BASE_SLOTS, PET_TOP_OFFSET, PET_BOX, PET_RENDER, STAGE_HEIGHT } from '../utils/petStage';
 import { PetStageDecor } from './PetStageDecor';
 import { PET_BACKGROUNDS, isDarkBackground } from '../utils/backgrounds';
@@ -113,7 +113,6 @@ const PET_BOTTOM_IN_STAGE =
    antiga, e continua necessário: a faixa de largura total do balão é
    `pointer-events: none`, e só a CAIXA de fala (não as sobras
    transparentes ao lado, que cobrem o palco inteiro) aceita o clique. */
-const EVOLVE_BTN_BOTTOM = 8;
 const BUBBLE_GAP = 6;
 /* ⚰️ O BALÃO NÃO COBRE A CRIATURA (X2) — revogado em 01/10/2026 (C5 do
    dono): a composição não desce mais sob a fala; o balão é overlay. */
@@ -171,11 +170,9 @@ interface CompanionHUDProps {
    *  um contador que só cresce, e o `kind` diz QUAL frase. As frases vivem em
    *  `utils/petVoice.ts` (o teste de tom varre lá, não aqui). */
   speakSignal?: { n: number; kind: PetVoiceKind };
-  /** WP3.3 — o nome do pet. Não existia neste arquivo até 06/09/2026. */
+  /** WP3.3 — o nome do pet. B1 (02/10/2026): NÃO é mais desenhado sob o pet
+   *  (mora no header da Home, `HomeHud`); só rotula a Mochila. */
   petDisplayName?: string;
-  /** WP3.3 — o título do Vínculo, já resolvido no idioma. DERIVADO de
-   *  `totalXP` por quem chama; nunca leia isto de um campo do save. */
-  bondTitleText?: string | null;
   /** WP4.19 — marca cosmética da recuperação, e só quando o jogador escolheu
    *  exibi-la (`showRedeemed`). Nunca é marca de queda. */
   redeemedMark?: boolean;
@@ -287,7 +284,6 @@ export const CompanionHUD = memo(function CompanionHUD({
   moodToday,
   demoTint,
   petDisplayName,
-  bondTitleText,
   redeemedMark = false,
   equippedBackground = null,
   equippedDecor = {},
@@ -414,6 +410,8 @@ export const CompanionHUD = memo(function CompanionHUD({
      cima; o `ref` continua para quem mede a caixa de fala. */
   const bubbleRef = useRef<HTMLDivElement | null>(null);
   const stageDrop = 0;
+  /* B3: com o "Evoluir" centralizado no alto, o balão desce abaixo dele. */
+  const bubbleTop = canEvolve && !isSleeping ? BUBBLE_GAP + EVOLVE_BTN_H + 16 : BUBBLE_GAP;
   /* C13 — qual dica de leitura está aberta (coração ou energia). Fecha com
      novo toque no mesmo ícone, toque na própria dica, toque fora ou Esc. */
   const [statAberto, setStatAberto] = useState<StatTipKind | null>(null);
@@ -1587,10 +1585,10 @@ export const CompanionHUD = memo(function CompanionHUD({
                       style={{
                         left: `${10 + i * 14}%`,
                         top: '-10px',
-                        animation: `shower-drop 0.9s linear ${i * 0.12}s infinite`,
+                        animation: `shower-drop 1.1s linear ${i * 0.12}s infinite`,
                       }}
                     >
-                      <img src={FX_ART['💧']} alt="" width={14} height={14} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+                      <img src={FX_ART['💧']} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated', opacity: 1 }} />
                     </span>
                   ))}
                   <span
@@ -1744,23 +1742,17 @@ export const CompanionHUD = memo(function CompanionHUD({
             faixas não se cruzam por construção (`CompanionHUD.cta.test`).
             Sem "into X": o botão não diz a forma. */}
         {canEvolve && !isSleeping && (
-          <button
-            type="button"
+          /* B3 (02/10/2026): CENTRALIZADO no ALTO da área do pet, com
+             acabamento próprio (`EvolveButton`: moldura pixel dupla + brilho
+             pulsante; arte do dono opcional em `assets/icons/evoluir-btn.png`).
+             O balão de fala desce abaixo dele quando os dois existem (ver
+             `bubbleTop`) — as faixas continuam sem se cruzar por construção. */
+          <EvolveButton
+            language={language === 'pt-BR' ? 'pt-BR' : 'en-US'}
             onClick={onEvolveRequest}
-            data-evolve-btn
-            className="sm2-pxbtn"
-            aria-label={language === 'pt-BR' ? 'Evoluir' : 'Evolve'}
-            style={{
-              /* Acima dos três cuidados (canto inferior direito da faixa), e
-                 ainda ancorado no RODAPÉ — longe do balão, que é do topo. */
-              position: 'absolute', zIndex: 30, right: EVOLVE_BTN_BOTTOM + RING_PX + 4, bottom: EVOLVE_BTN_BOTTOM + RING_PX + 52,
-              borderImageSource: `url(${HUD_ART.frame})`,
-              borderImageSlice: HUD_ART.frameSlice,
-              animation: reducedMotion ? undefined : 'evo-btn-pulse 1.6s ease-in-out infinite',
-            }}
-          >
-            {language === 'pt-BR' ? 'Evoluir' : 'Evolve'}
-          </button>
+            reducedMotion={reducedMotion}
+            style={{ position: 'absolute', zIndex: 30, left: '50%', top: BUBBLE_GAP, transform: 'translateX(-50%)' }}
+          />
         )}
 
         {/* Balão de fala. Saiu do monospace a 0,68rem (≈11px, abaixo do piso
@@ -1781,7 +1773,7 @@ export const CompanionHUD = memo(function CompanionHUD({
           <div
             className="absolute left-0 right-0"
             style={{
-              top: BUBBLE_GAP,
+              top: bubbleTop,
               zIndex: 45,
               padding: '0 10px',
               /* A faixa é só posicionamento — ela cobre a largura inteira do
@@ -1973,17 +1965,11 @@ export const CompanionHUD = memo(function CompanionHUD({
         </div>
         </div>
 
-        {/* WP3.3 — NOME + TÍTULO DO VÍNCULO, logo abaixo da faixa (uma linha
-            só). O título é DERIVADO (`bondTitle(bondLevelFor(totalXP))`),
-            nunca persistido — guardar `bondLevel` no save é o footgun 9. */}
-        {(petDisplayName || bondTitleText || redeemedMark) && (
+        {/* WP3.3 — era NOME + TÍTULO DO VÍNCULO. B1 (02/10/2026): o nome foi
+            para o header da Home (`HomeHud`, junto do logo) e o título
+            ("Companheiro"…) saiu da Home; aqui sobra só a marca da volta. */}
+        {redeemedMark && (
           <div className="sm2-home-nameline sm3-nameline">
-            {petDisplayName && (
-              <p className="sm2-home-petname">{petDisplayName}</p>
-            )}
-            {bondTitleText && (
-              <p className="sm2-home-petsub">{bondTitleText}</p>
-            )}
             {/* WP4.19 — a marca da VOLTA. Lê como prestígio e nunca como queda.
                 Aparece só se o jogador ligou (padrão desligado). */}
             {redeemedMark && (

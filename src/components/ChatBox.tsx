@@ -4,7 +4,6 @@ import { chatSafetyDecision } from '../utils/chatSafety';
 import { useCallback, useRef, useState } from 'react';
 import { fetchServerConfig } from '../utils/serverConfig';
 import { Icon } from './ui/Icon';
-import { PixelIcon } from './ui/PixelIcon';
 import { toast } from 'sonner';
 import { type AISettings } from './AISettingsModal';
 import { type Language } from '../utils/i18n';
@@ -517,11 +516,11 @@ export function ChatBox({
           {isLoading ? (
             <Icon name="sync" size={32} tone="muted" className="animate-spin" />
           ) : hasText || micDisponivel === false ? (
-            <PixelIcon name="enviar" size={32} />
+            <Icon name="send" size={32} weight={250} tone="primary" />
           ) : isRecording ? (
             <Icon name="stop_circle" size={32} fill={1} tone="danger" />
           ) : (
-            <Icon name="mic" size={32} tone="ink" />
+            <Icon name="mic" size={32} weight={250} tone="primary" />
           )}
         </button>
       </label>

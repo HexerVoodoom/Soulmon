@@ -115,7 +115,7 @@ preso — a distinção importa por causa do footgun 10, ver §3).
 | `--sm-energy` | `#16a34a` | `#4ade80` | verde da barra de energia | **nenhum** — ver §2.7 |
 | `--sm-energy-track` | `#e3ece9` | `#1f332e` | trilho da barra de energia | **nenhum** — ver §2.7 |
 | `--sm-radius` | `16px` | — | raio do sistema antigo | `.sm-card` (`border-radius`) |
-| `--sm-corner-h` | `68px` | — | faixa do link de canto (minimal-ui F1, 23/09/2026): botão de 56px a 12px do rodapé (Mapa na Home, Home no Mapa) | `.sm-chat-fixed` (`bottom`) e o padding do `<main>`. ⚰️ Substitui `--sm-bottomnav-h` (`80px`), que morreu com a barra inferior de 5 abas |
+| `--sm-corner-h` | `68px` | — | faixa do link de canto (minimal-ui F1, 23/09/2026): botão de 56px no TOPO (`top: safe-area + 6px`, B2 02/10/2026; antes a 12px do rodapé) (Mapa na Home, Home no Mapa) | `.sm-chat-fixed` (`bottom`) e o padding do `<main>`. ⚰️ Substitui `--sm-bottomnav-h` (`80px`), que morreu com a barra inferior de 5 abas |
 | `--sm-chatdock-h` | `82px` | — | altura medida do dock de chat | `src/App.tsx`, padding do scroller |
 | `--sm-btn-text` | `#ffffff` | `var(--sm-bg)` | tinta do `.sm-btn` | `.sm-btn` (`color`) |
 
