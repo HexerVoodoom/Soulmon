@@ -1,5 +1,6 @@
 import { NavGlyph } from '../ui/NavGlyphs';
 import { PixelIcon } from '../ui/PixelIcon';
+import { CORNER_RING, CORNER_RING_TOP, CORNER_RING_SIDE, CORNER_GLOW, CORNER_RING_STYLE } from './cornerAnchor';
 
 /** Tinta clara para o que fica sobre a arte escura da área (igual aos rótulos dos lotes). */
 const SCENE_INK = '#E9F5F2';
@@ -79,6 +80,11 @@ export function AreaTopBar({ title, backLabel, onBack, ownsHeading = true, icon 
           }}
         />
       )}
+      {/* H9 (02/10/2026): o voltar mora na ÂNCORA do canto (`cornerAnchor.ts`, a
+          mesma da casinha do Mapa) — `position: fixed`, na MESMA posição e
+          tamanho em toda tela, e não mais onde o fluxo da página o deixasse.
+          O espaço dele na linha é reservado pelo `<span>` vazio logo abaixo. */}
+      <span aria-hidden="true" style={{ width: CORNER_RING, flex: `0 0 ${CORNER_RING}px`, height: CORNER_RING }} />
       <button
         type="button"
         onClick={onBack}
@@ -87,13 +93,18 @@ export function AreaTopBar({ title, backLabel, onBack, ownsHeading = true, icon 
         data-area-back
         className="sm2-area-back"
         style={{
-          width: 44, height: 44, flex: '0 0 44px',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          ...(overScene ? CORNER_RING_STYLE : {
+            width: CORNER_RING, height: CORNER_RING, boxSizing: 'border-box',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'transparent',
+            border: '2px solid var(--sm2-line)',
+            borderRadius: '50%',
+          }),
+          position: 'fixed', zIndex: 45,
+          top: CORNER_RING_TOP, left: CORNER_RING_SIDE,
           padding: 0, cursor: 'pointer',
-          background: 'transparent',
-          border: overScene ? '2px solid rgba(233,245,242,.6)' : '2px solid var(--sm2-line)',
-          borderRadius: '50%',
           color: overScene ? SCENE_INK : 'var(--sm2-ink)',
+          filter: overScene ? CORNER_GLOW : undefined,
         }}
       >
         {icon === 'map'
@@ -106,7 +117,7 @@ export function AreaTopBar({ title, backLabel, onBack, ownsHeading = true, icon 
       {ownsHeading
         ? <h1 style={titleStyle}>{title}</h1>
         : <p aria-hidden="true" style={titleStyle}>{title}</p>}
-      <span aria-hidden="true" style={{ width: 44, flex: '0 0 44px' }} />
+      <span aria-hidden="true" style={{ width: CORNER_RING, flex: `0 0 ${CORNER_RING}px` }} />
     </div>
   );
 }

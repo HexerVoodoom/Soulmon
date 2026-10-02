@@ -7,6 +7,7 @@ import { useBackLayer } from '../../utils/backStack';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
 import { NPC_MAX_WIDTH_PCT } from './npcScale';
 import { Icon } from '../ui/Icon';
+import { CORNER_RING_TOP, CORNER_RING_SIDE } from './cornerAnchor';
 
 /**
  * A FOLHA DE UM LOTE (minimal-ui F4) — bottom-sheet que abre ao tocar um
@@ -87,7 +88,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
           className="sm2-area-back"
           style={{
             position: 'absolute', zIndex: 3,
-            top: 'calc(env(safe-area-inset-top, 0px) + 12px)', left: 16,
+            top: CORNER_RING_TOP, left: CORNER_RING_SIDE,
             width: 44, height: 44, boxSizing: 'border-box',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             padding: 0, cursor: 'pointer', pointerEvents: 'auto',

@@ -13,7 +13,7 @@ import { FX_ART } from '../utils/fxArt';
 import { ANIM_ART } from '../utils/animArt';
 import { SpriteAnim } from './pixel/SpriteAnim';
 import { EvolveButton, EVOLVE_BTN_H } from './pixel/EvolveButton';
-import { type SlotId, BASE_SLOTS, PET_TOP_OFFSET, PET_BOX, PET_RENDER, STAGE_HEIGHT } from '../utils/petStage';
+import { type SlotId, PET_TOP_OFFSET, PET_BOX, PET_RENDER, STAGE_HEIGHT } from '../utils/petStage';
 import { PetStageDecor } from './PetStageDecor';
 import { PET_BACKGROUNDS, isDarkBackground } from '../utils/backgrounds';
 import { statTip, type StatTipKind } from './home/statTips';
@@ -1393,39 +1393,9 @@ export const CompanionHUD = memo(function CompanionHUD({
             )}
 
 
-            {/* Berço — mobília BASE do espaço `nest` (utils/petStage.ts).
-                A caixa vem do palco e a arte vem de `nestArt.ts`: aqui não há
-                import de PNG nem número mágico, é o mesmo contrato do
-                `nodeArt.tsx`. Trocar a peça é mudar o id pedido abaixo. */}
-            <img
-              src={NEST_ART[DEFAULT_NEST]}
-              alt=""
-              aria-hidden="true"
-              data-nest
-              style={{
-                position: 'absolute',
-                /* O berço é MOBÍLIA: ele fica onde está enquanto o pet passeia.
-                   Antes os dois liam a mesma variável, então o "berço" andava
-                   junto — o que só não aparecia porque nada andava. */
-                left: '50%',
-                top: '50%',
-                marginTop: BASE_SLOTS.nest.yPx,
-                width: BASE_SLOTS.nest.w, height: BASE_SLOTS.nest.h,
-                /* `translateX(-50%)` centra a caixa no MESMO eixo do pet —
-                   ver a nota do sprite logo abaixo. */
-                transform: 'translateX(-50%)',
-                objectFit: 'contain',
-                imageRendering: 'pixelated',
-                pointerEvents: 'none',
-                filter: isSleeping ? 'brightness(.55) saturate(.6)' : undefined,
-                /* RODADA 5, tentado e revertido: aro na frente (zIndex 2)
-                   esconde o corpo do pet — o berço de 148px cobre o meio do
-                   sprite de 200px. O "sentado na bacia" da Ref C precisa de
-                   ARTE (berço mais largo/raso), não de z-index — item no
-                   BACKLOG-ARTE-GERAR. */
-                zIndex: 0,
-              }}
-            />
+            {/* H8 (02/10/2026): o BERÇO/ninho saiu de vez (pedido do dono) — o Soulmon
+                pousa direto no cenário. `BASE_SLOTS.nest` e `nestArt.ts` seguem
+                no repo só como contrato de arte; nada aqui os desenha. */}
 
             {/* Soulmon Sprite with flip */}
             {/* Sem `transition` e sem `hover:scale`: movimento DENTRO do visor é

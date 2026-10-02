@@ -19,6 +19,7 @@ import { fireEvent } from '@testing-library/react';
 import { renderWithCss } from '../../test/renderEnv';
 import { MapPage } from './MapPage';
 import { CornerLink } from './CornerLink';
+import { CORNER_RING_TOP, CORNER_RING_SIDE } from './cornerAnchor';
 import { AreaTopBar } from './AreaTopBar';
 import { HomeMenuSheet } from './HomeMenuSheet';
 import { AREAS } from '../../navigation';
@@ -115,8 +116,11 @@ describe('CornerLink', () => {
     expect(btn.querySelector('svg')).toBeNull();
   });
 
-  it('brilho sutil opcional (F3: a casa no Mapa) sem virar caixa', () => {
-    const semGlow = renderWithCss(<CornerLink icon="home" side="left" label="Home" onClick={() => {}} />);
+  it('brilho claro por PADRÃO (H9: a casinha perdeu o brilho), desligável, sem virar caixa', () => {
+    const padrao = renderWithCss(<CornerLink icon="home" side="left" label="Home" onClick={() => {}} />);
+    expect(padrao.container.querySelector('button')!.style.filter).toContain('drop-shadow');
+    padrao.unmount();
+    const semGlow = renderWithCss(<CornerLink icon="home" side="left" label="Home" onClick={() => {}} glow={false} />);
     expect(semGlow.container.querySelector('button')!.style.filter).toBeFalsy();
     semGlow.unmount();
     const comGlow = renderWithCss(<CornerLink icon="home" side="left" label="Home" onClick={() => {}} glow />);
@@ -154,6 +158,29 @@ describe('AreaTopBar', () => {
     expect(back.style.background).toBe('transparent');
     fireEvent.click(back);
     expect(onBack).toHaveBeenCalledOnce();
+  });
+
+  it('H9: o voltar fica FIXO na âncora do canto — a mesma do anel da casinha, em qualquer tela', () => {
+    const casinha = renderWithCss(<CornerLink icon="home" side="left" label="Home" onClick={() => {}} ring />);
+    const caixa = casinha.container.querySelector('button')!;
+    const anel = casinha.container.querySelector('[data-corner-ring]') as HTMLElement;
+    expect(caixa.style.top).toContain('safe-area-inset-top');
+    // o jsdom normaliza `calc()`: compara pelo MESMO caminho de normalização
+    const norm = (prop: 'top' | 'left', v: string) => { const el = document.createElement('div'); el.style[prop] = v; return el.style[prop]; };
+    expect(anel.style.width).toBe('44px');
+    for (const overScene of [true, false]) {
+      const r = renderWithCss(<AreaTopBar title="T" backLabel="Voltar" onBack={() => {}} icon={overScene ? 'map' : 'arrow_back'} overScene={overScene} />);
+      const back = r.container.querySelector('[data-area-back]') as HTMLButtonElement;
+      expect(back.style.position).toBe('fixed');
+      expect(back.style.top).toBe(norm('top', CORNER_RING_TOP));
+      expect(back.style.left).toBe(norm('left', CORNER_RING_SIDE));
+      expect(back.style.width).toBe('44px');
+      expect(back.style.height).toBe('44px');
+      r.unmount();
+    }
+    // o anel da casinha = caixa de 56 + 6px de folga → mesmas coordenadas do voltar
+    expect(CORNER_RING_TOP).toContain('+ 12px');
+    expect(CORNER_RING_SIDE).toContain('+ 6px');
   });
 
   it('glifo do voltar: mapa nas ÁREAS, seta por padrão (Pet/Biblioteca/menu da Home)', () => {

@@ -104,33 +104,21 @@ describe('CompanionHUD', () => {
     expect(screen.getByRole('button', { name: 'Evolve' })).toBeTruthy();
   });
 
-  it('o berço e o sprite do pet são arte NOSSA (src/assets/soulmon)', () => {
+  it('o sprite do pet é arte NOSSA (src/assets/soulmon) — o berço saiu (H8)', () => {
     const { container } = renderWithCss(<CompanionHUD {...base} />);
     const srcs = Array.from(container.querySelectorAll('img')).map(i => i.getAttribute('src') ?? '');
-    expect(srcs.some(s => /nest-(base|cradle-wide)/.test(s))).toBe(true);
+    expect(srcs.some(s => /nest-(base|cradle-wide)/.test(s))).toBe(false);
     // nenhuma arte de terceiro embarcada (docs/Attributions.md)
     expect(srcs.some(s => /_dmc\.png/.test(s))).toBe(false);
   });
 
-  /* O berço só normaliza um sprite imprevisível se o pet estiver DENTRO dele.
-     O defeito era mudo: o berço tinha `translateX(-50%)` e o pet não, então o
-     pet nascia 62px à direita — nada quebrava, só ficava errado. Estes dois
-     casos travam a composição (mesmo eixo, mesma origem vertical declarada). */
-  it('pet e berço compartilham o eixo horizontal (o pet está NO berço)', () => {
+  /* H8 (02/10/2026): o berço/ninho saiu da Home. O pet pousa direto no cenário,
+     e nenhum `<img data-nest>` pode voltar a ser desenhado. */
+  it('a Home não desenha o berço (ninho removido)', () => {
     const { container } = renderWithCss(<CompanionHUD {...base} />);
-    const nest = container.querySelector('[data-nest]') as HTMLElement;
+    expect(container.querySelector('[data-nest]')).toBeNull();
     const pet = container.querySelector('img[alt]:not([alt=""])')?.parentElement as HTMLElement;
-    expect(nest.style.left).toBe(pet.style.left);
-    expect(nest.style.transform).toContain('translateX(-50%)');
     expect(pet.style.transform).toContain('translateX(-50%)');
-  });
-
-  it('a geometria do berço vem do palco, não de número mágico no JSX', () => {
-    const { container } = renderWithCss(<CompanionHUD {...base} />);
-    const nest = container.querySelector('[data-nest]') as HTMLImageElement;
-    expect(nest.style.width).toBe(`${BASE_SLOTS.nest.w}px`);
-    expect(nest.style.height).toBe(`${BASE_SLOTS.nest.h}px`);
-    expect(nest.style.marginTop).toBe(`${BASE_SLOTS.nest.yPx}px`);
   });
 
   /* ── O VISOR e a escala inteira ───────────────────────────────────────── */

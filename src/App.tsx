@@ -5775,7 +5775,7 @@ export default function App() {
           /* Gutter 16 na Home (canvas Home, P1) — TEM de casar com o
              `margin-inline: -16px` do `.sm-pet-sticky` (index.css). As outras
              views seguem em 24. */
-          className={pane === 'main' ? 'flex-1 overflow-y-auto px-4' : 'flex-1 overflow-y-auto px-6'}
+          className={pane === 'main' ? 'flex-1 min-h-0 overflow-hidden flex flex-col px-4' : 'flex-1 overflow-y-auto px-6'}
           style={{
             position: 'relative', zIndex: 1,
             /* RODADA 4: o `pt-3` virou TOKEN porque a área fixa do pet precisa
@@ -5792,8 +5792,11 @@ export default function App() {
                mas a folga igual evita o último item colado no rodapé. */
             /* minimal-ui F2: na Home o terminal e o link do Mapa dividem a
                MESMA faixa do rodapé — a folga é a do dock, só. */
+            /* H7 (02/10/2026): na Home o `<main>` NÃO rola — header e área do pet
+               ficam fixos e só a lista (`data-home-scroll`) tem `overflow-y`.
+               A folga do dock mora no scroller, não aqui. */
             paddingBottom: pane === 'main'
-              ? 'calc(env(safe-area-inset-bottom, 0px) + var(--sm-chatdock-h) + 16px)'
+              ? 0
               : 'calc(var(--sm-corner-h) + env(safe-area-inset-bottom, 0px) + 16px)',
           }}
         >
@@ -5958,7 +5961,7 @@ export default function App() {
           )}
 
           {pane === 'main' && (
-            <div className="space-y-4">
+            <div data-home-col style={{ flex: '1 1 auto', minHeight: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
               {/* HUD do topo: SÓ a marca (o `<h1>` da Home) + o selo do dia.
                   A leitura de HP/energia mora no VIDRO (`VisorBar`, em pixel,
                   no `CompanionHUD`) — e só lá. A barra DOM que este componente
@@ -6097,6 +6100,19 @@ export default function App() {
                 play={playDeck}
               />
 
+              {/* H7 (02/10/2026): ÚNICA região que rola na Home — tudo abaixo da área
+                  do Soulmon (avisos + lista). `min-height: 0` deixa o flex
+                  encolher quando o teclado do chat abre; a folga embaixo é a
+                  do dock fixo. */}
+              <div
+                data-home-scroll
+                className="sm-home-scroll"
+                style={{
+                  flex: '1 1 auto', minHeight: 0, overflowY: 'auto', overscrollBehavior: 'contain',
+                  display: 'grid', alignContent: 'start', gap: 16,
+                  paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + var(--sm-chatdock-h) + 16px)',
+                }}
+              >
               {/* minimal-ui F2 (abordagem B): o SLOT DO DIA mora logo abaixo da
                   faixa do pet — a ordem da tela é marca → cena → avisos → lista.
                   A fila e a prioridade não mudaram (filaDeAvisos.contract). */}
@@ -6539,6 +6555,7 @@ export default function App() {
                   </div>
                 );
               })()}
+              </div>
             </div>
           )}
 

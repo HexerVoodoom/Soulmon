@@ -36,17 +36,6 @@ import type { ReactNode } from 'react';
  * // de mais nada: o teto de 5 é o limite.
  */
 import { Icon } from '../ui/Icon';
-// PROVISÓRIO (01/10/2026): wordmark recortado localmente do original do
-// Gemini, com autorização explícita do dono, até chegar a versão com alfa real
-// (prompts em E:/Soulmon-assets/out/ajustes-20261001/PROMPTS-PARA-O-DONO.md).
-// Quando chegar, troque SÓ o arquivo `logo-wordmark.png` (e a proporção abaixo).
-import logoUrl from '../../assets/brand/final/logo-wordmark.png';
-
-/** O wordmark (SOUL/MON) é 1175×840 (pixel art 235×168 ampliada 5× nearest).
- *  No header da Home ele ocupa 32 px de altura, dentro da linha de 44. */
-const LOGO_H = 32;
-const LOGO_W = Math.round(LOGO_H * 1175 / 840);
-
 /**
  * C1 — o MENU da Home é um hambúrguer simples: três tracinhos, pelado (regra
  * do dono: ícone nunca em caixa). Desenho em SVG com `currentColor`, para o
@@ -100,14 +89,14 @@ interface HomeHudProps {
    */
   trailing?: ReactNode;
   /**
-   * B1 (02/10/2026): o NOME do Soulmon, no topo, junto do logo. Só o nome —
+   * B1/H5 (02/10/2026): o NOME do Soulmon, no centro do topo (sem logo). Só o nome —
    * a palavra "companheiro"/"Companion" (título do Vínculo) saiu da Home.
    */
   petName?: string;
 }
 
 /** Largura das duas pontas do header (menu à esquerda, Mapa à direita): iguais,
- *  para o logo + nome ficarem centrados de verdade. */
+ *  para o nome ficar centrado de verdade. */
 const HUD_SIDE_W = 48;
 
 export function HomeHud({ language = 'en-US', focusSealed = false, leading, trailing, petName }: HomeHudProps) {
@@ -134,13 +123,8 @@ export function HomeHud({ language = 'en-US', focusSealed = false, leading, trai
           tamanho e cor — Cinzel 20, caixa alta; a margem do `h1` é zerada
           aqui). */}
       <div className="sm2-hud-brand" style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 44 }}>
-        {/* C1 (navegação do dono, 01/10/2026): a marca deixa de ser a PALAVRA
-            e vira o LOGO do app (`assets/brand/final/logo-wordmark.png`, o
-            wordmark SOUL/MON — PROVISÓRIO, recorte local). Continua sendo o `<h1>` da Home: o
-            nome acessível "Soulmon" é texto visualmente oculto ao lado da
-            imagem decorativa, então o leitor de tela ouve o mesmo que ouvia. */}
-        {/* B2 (02/10/2026): [menu] [logo + nome] [Mapa]. As duas pontas têm a
-            MESMA largura, para o centro ser o centro de verdade. */}
+        {/* B2/H5 (02/10/2026): [menu] [nome do Soulmon] [Mapa] — sem logo. As duas
+            pontas têm a MESMA largura, para o centro ser o centro de verdade. */}
         <div data-hud-leading style={{ flex: `0 0 ${HUD_SIDE_W}px`, display: 'flex', justifyContent: 'flex-start' }}>
           {leading}
         </div>
@@ -148,32 +132,25 @@ export function HomeHud({ language = 'en-US', focusSealed = false, leading, trai
           data-hud-center
           style={{ flex: '1 1 auto', minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, maxWidth: '100%' }}>
-            <h1 className="sm2-hud-wordmark" style={{ margin: 0, display: 'flex', alignItems: 'center', flex: '0 0 auto' }}>
-              <img
-                src={logoUrl}
-                alt=""
-                aria-hidden="true"
-                data-home-logo
-                width={LOGO_W}
-                height={LOGO_H}
-                draggable={false}
-                style={{ display: 'block', width: LOGO_W, height: LOGO_H, imageRendering: 'pixelated' }}
-              />
-              <span className="sm2-sr-only">Soulmon</span>
-            </h1>
-            {/* B1 (02/10/2026): SÓ o nome do Soulmon, ao lado do logo. A palavra
-                "companheiro"/"Companion" (título do Vínculo) saiu da Home. */}
-            {petName && (
-              <p
-                className="sm2-home-petname"
-                data-home-petname
-                style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}
-              >
-                {petName}
-              </p>
-            )}
-          </div>
+          {/* H5 (02/10/2026): o LOGO saiu do topo da Home. O centro é SÓ o nome do
+              Soulmon (`.sm2-home-petname`); o `<h1>` "Soulmon" segue como o
+              heading da página, oculto para o olho quando o nome está na tela
+              e visível (palavra) quando a criatura ainda não tem nome. */}
+          <h1
+            className={petName ? 'sm2-sr-only' : 'sm2-hud-wordmark'}
+            style={petName ? undefined : { margin: 0, flex: '0 0 auto' }}
+          >
+            Soulmon
+          </h1>
+          {petName && (
+            <p
+              className="sm2-home-petname"
+              data-home-petname
+              style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0, maxWidth: '100%' }}
+            >
+              {petName}
+            </p>
+          )}
           {/* O selo = chip de etiqueta 24 em `primary-soft` (canvas Home,
               HOME-07): `check_circle` FILL 1 + "focus done" Rubik 12/500.
               Quando existe, desce para uma segunda linha do centro. */}

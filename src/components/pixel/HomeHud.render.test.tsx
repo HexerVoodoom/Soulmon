@@ -57,20 +57,24 @@ describe('HomeHud — o orçamento de leituras da Home', () => {
     expect(container.textContent).not.toMatch(/\d/);
   });
 
-  it('o único desenho além do selo é o LOGO (C1, 01/10/2026) — decorativo, o nome está no <h1>', () => {
+  it('H5 (02/10/2026): sem logo no topo — nenhuma imagem; só o selo (quando existe) desenha algo', () => {
     const { container } = renderWithCss(<HomeHud language="pt-BR" focusSealed />);
-    const imgs = container.querySelectorAll('img');
-    expect(imgs.length).toBe(1);
-    expect(imgs[0].getAttribute('data-home-logo')).not.toBeNull();
-    expect(imgs[0].getAttribute('alt')).toBe('');
+    expect(container.querySelectorAll('img').length).toBe(0);
+    expect(container.querySelector('[data-home-logo]')).toBeNull();
     expect(container.querySelectorAll('.sm2-icon').length).toBe(1);
   });
 
-  it('sem o selo, o HUD é só o logo — e o nome acessível continua "Soulmon"', () => {
+  it('sem o selo e sem nome, o HUD é só a palavra "Soulmon" (o <h1>)', () => {
     const { container } = renderWithCss(<HomeHud language="pt-BR" />);
     expect(container.querySelectorAll('.sm2-icon').length).toBe(0);
-    expect(container.querySelectorAll('img').length).toBe(1);
+    expect(container.querySelectorAll('img').length).toBe(0);
     expect(container.textContent?.trim()).toBe('Soulmon');
+  });
+
+  it('com nome, o centro mostra o NOME e o <h1> "Soulmon" fica só para o leitor de tela', () => {
+    const { container } = renderWithCss(<HomeHud language="pt-BR" petName="Pyra" />);
+    expect(container.querySelector('[data-home-petname]')?.textContent).toBe('Pyra');
+    expect(container.querySelector('h1')?.className).toContain('sm2-sr-only');
   });
 
   it('par PT/EN do selo', () => {
