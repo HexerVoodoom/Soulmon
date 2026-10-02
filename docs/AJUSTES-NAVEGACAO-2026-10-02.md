@@ -30,11 +30,11 @@ Continuação de `AJUSTES-NAVEGACAO-2026-10-01.md`. Legenda: `[ ]` aberto · `[x
 - [ ] E2 "Descer mais fundo" só libera andar já alcançado antes; não dá para pular pagando
 
 ## F. Passeio / Travessias
-- [ ] F1 Cada travessia ganha ícone/ilustração além do título
-- [ ] F2 Depois de escolher: separar bem o card que mudou; a tela mostra só a travessia em uso; o modal com todas continua acessível
-- [ ] F3 Tirar o botão "deixa pra depois"; entra "recuar" [?]
-- [ ] F4 Tocar em "Fiz" dá feedback e deixa clara a recompensa
-- [ ] F5 Uma travessia pode ser feita todo dia
+- [x] F1 Cada travessia ganha ícone/ilustração além do título
+- [x] F2 Depois de escolher: separar bem o card que mudou; a tela mostra só a travessia em uso; o modal com todas continua acessível
+- [x] F3 Tirar o botão "deixa pra depois"; entra "recuar" [?]
+- [x] F4 Tocar em "Fiz" dá feedback e deixa clara a recompensa
+- [x] F5 Uma travessia pode ser feita todo dia
 
 ## G. Laboratório, Guilda e Arena
 - [ ] G1 Laboratório / Meu Soulmon / Observatório: tirar o Soulmon do box com gradiente (fica solto)
