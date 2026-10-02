@@ -1205,3 +1205,11 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 **Exports:** `CORNER_BOX`, `CORNER_RING`, `CORNER_BOX_TOP`, `CORNER_SIDE`, `CORNER_RING_TOP`, `CORNER_RING_SIDE`, `CORNER_INK`, `CORNER_GLOW`, `CORNER_RING_STYLE`.
 **Chamado por:** `src/components/nav/CornerLink.tsx` e o `AreaTopBar`.
 **Régua:** `src/components/nav/nav.render.test.tsx`.
+
+### `src/components/ui/InfoTip.tsx`
+**Dono de:** o "?" PADRÃO do app (pedido do dono, 02/10/2026): todo texto explicativo sai da tela e vira um "?" em círculo (glifo `help`, pelado) que abre um tooltip.
+**Props principais:** `children` (texto do tooltip), `label` (nome acessível, por idioma), `language`, `align?`, `style?`.
+**Exports:** `InfoTip`.
+**Estado/efeitos relevantes:** tooltip num portal em `document.body` (nunca cortado por `overflow`), posicionado junto ao botão e preso às bordas; fecha com novo toque, toque fora ou Esc; `aria-expanded` + `aria-describedby`. Alvo de toque 44.
+**Chamado por:** as telas que tinham texto explicativo corrido (Duelo, Feira, Torneio, Masmorra, Seus dados…).
+**Régua:** `src/components/ui/InfoTip.render.test.tsx`.
