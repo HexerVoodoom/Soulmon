@@ -19,8 +19,6 @@ const saveId = 'a'.repeat(32);
 const base = {
   saveId,
   petStage: 'rookie',
-  pvpEnabled: false,
-  onTogglePvp: () => {},
   onMatchPlayed: () => {},
   trophies: [],
   language: 'en-US',

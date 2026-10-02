@@ -77,7 +77,7 @@ import { RitualDialog } from './ritual/RitualKit';
 import { GameVisor, VisorSprite, DIALOG_VISOR_W } from './games/GameKit';
 import { sm2Button, sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 import { sm2Tag } from './TaskMeta';
-import { bondLevelFor, meetsPvpBond, xpToPvpBond, BOND_PVP_MIN_LEVEL } from '../utils/bond';
+import { bondLevelFor, meetsPvpBond, xpToPvpBond, xpForLevel, BOND_PVP_MIN_LEVEL } from '../utils/bond';
 import tournamentFinal from '../assets/soulmon/bg/tournament-final.png';
 
 interface TournamentPageProps {
@@ -85,8 +85,6 @@ interface TournamentPageProps {
   petStage: string;
   /** Linha de arte do pet (`spriteLineOf` — personagem pronto ou o corvinho). */
   petLine?: string;
-  pvpEnabled: boolean;
-  onTogglePvp: (enabled: boolean) => void;
   trophies: Array<{ season: string; place: 1 | 2 | 3 }>;
   language: string;
   /** Emblemas atuais (moeda do torneio) — só para exibir. */
@@ -164,52 +162,7 @@ function TierMark({ id, size, state }: { id: string; size: 24 | 32; state: 'curr
   );
 }
 
-/** Alternador do PvP. `role="switch"` de verdade, alvo de 44px. */
-function Switch({ checked, onToggle, label, disabled = false }: {
-  checked: boolean; onToggle: () => void; label: string; disabled?: boolean;
-}) {
-  /* Travado = inerte por FORMA (D-J14): borda tracejada `muted`, botão
-     `muted`, `aria-disabled`, fora da ordem de foco — nunca `opacity`, que
-     derruba o contraste do que ainda precisa ser lido. Host 52×44. */
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
-      aria-disabled={disabled || undefined}
-      tabIndex={disabled ? -1 : undefined}
-      onClick={disabled ? undefined : onToggle}
-      style={{
-        flexShrink: 0,
-        width: 52, height: 44, padding: 0,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: 'none', border: 'none',
-        cursor: disabled ? 'not-allowed' : 'pointer',
-      }}
-    >
-      <span
-        style={{
-          width: 52, height: 32, borderRadius: 999, boxSizing: 'border-box', position: 'relative',
-          backgroundColor: checked ? 'var(--sm2-primary-fill)' : disabled ? 'transparent' : 'var(--sm2-surface-2)',
-          border: checked ? '2px solid var(--sm2-primary-fill)' : `2px ${disabled ? 'dashed' : 'solid'} var(--sm2-muted)`,
-          transition: 'background-color var(--sm2-dur-tap) var(--sm2-ease)',
-        }}
-      >
-        <span
-          style={{
-            position: 'absolute', top: 4, width: 20, height: 20, borderRadius: '50%',
-            left: checked ? 24 : 4,
-            backgroundColor: checked ? 'var(--sm2-on-primary)' : 'var(--sm2-muted)',
-            transition: 'left var(--sm2-dur-tap) var(--sm2-ease)',
-          }}
-        />
-      </span>
-    </button>
-  );
-}
-
-export function TournamentPage({ saveId, petStage, petLine, pvpEnabled, onTogglePvp, trophies, language, emblems, onEarnEmblems, totalXP, onMatchPlayed, weeklyMissions, onClaimWeekly, shop }: TournamentPageProps) {
+export function TournamentPage({ saveId, petStage, petLine, trophies, language, emblems, onEarnEmblems, totalXP, onMatchPlayed, weeklyMissions, onClaimWeekly, shop }: TournamentPageProps) {
   const isPt = language === 'pt-BR';
   const lang: Language = isPt ? 'pt-BR' : 'en-US';
   const [opponents, setOpponents] = useState<Opponent[] | null>(null);
@@ -255,8 +208,14 @@ export function TournamentPage({ saveId, petStage, petLine, pvpEnabled, onToggle
   const [tab, setTab] = useState<'rank' | 'arena' | 'missions' | 'shop'>('rank');
   const { flash, say } = useShopFlash();
 
+  /* H13 (02/10/2026): o interruptor "Participar do PvP" saiu — o personagem já
+     nasce no PvP. O que sobra é o requisito de Vínculo (`BOND_PVP_MIN_LEVEL`,
+     REGISTRO: o único destrave não-cosmético e social), e a tela o EXPLICA em
+     vez de parecer quebrada. A trava inforjável continua sendo a do servidor. */
+  const pvpAberto = meetsPvpBond(totalXP);
+
   const loadOpponents = () => {
-    if (!pvpEnabled) return;
+    if (!pvpAberto) return;
     setLoadFailed(false);
     getOpponents(saveId)
       .then(r => {
@@ -271,7 +230,7 @@ export function TournamentPage({ saveId, petStage, petLine, pvpEnabled, onToggle
       .catch(() => { setOpponents([]); setLoadFailed(true); });
   };
 
-  useEffect(() => { loadOpponents(); }, [pvpEnabled, saveId]);
+  useEffect(() => { loadOpponents(); }, [pvpAberto, saveId]);
   useEffect(() => {
     if (tab === 'rank' && !rank) {
       /* `?? []` é DEFESA, não redundância: se a resposta vier sem `rank`,
@@ -403,26 +362,6 @@ export function TournamentPage({ saveId, petStage, petLine, pvpEnabled, onToggle
         </ul>
       )}
 
-      {/* Opt-in do PvP — o rótulo inteiro descreve o que muda no mundo.
-          Duas coisas moram aqui, e nenhuma é decoração:
-
-          1. O GATE DE VÍNCULO (nível 5, `utils/bond.ts`). Aqui ele é
-             EXPERIÊNCIA, não trava: a trava inforjável é a do servidor
-             (`functions/api/community.js`), porque `POST profile` aceita
-             `pvpEnabled` do cliente. O que o cliente faz é não oferecer o que
-             não está disponível — e DIZER o que falta, em vez de aceitar o
-             toque e desfazer em silêncio.
-          2. O AVISO DO NICK. Ligar o PvP põe o nome numa lista pública
-             (`action=players` responde `name` para qualquer um). Consentimento
-             sem informação não é consentimento, então o aviso fica ANTES do
-             gesto — não num termo.
-
-          ⚠️ Quem JÁ ligou nunca fica preso: o gate vale para LIGAR. Com o PvP
-          ativo o interruptor continua disponível, em qualquer nível, para a
-          pessoa poder sair.
-
-          📝 Copy FUNCIONAL — diz a coisa certa, mas não passou pelo redator.
-          A voz é pendente do `alpha-redator-ux`. */}
       <PixelTabs
         items={TABS.map(t => ({ key: t.key, label: t.label }))}
         value={tab}
@@ -430,53 +369,49 @@ export function TournamentPage({ saveId, petStage, petLine, pvpEnabled, onToggle
         ariaLabel={isPt ? 'Seções do torneio' : 'Tournament sections'}
       />
 
-      {tab === 'arena' && (() => {
-        const liberado = meetsPvpBond(totalXP);
-        const podeMexer = liberado || pvpEnabled;
-        const faltam = xpToPvpBond(totalXP);
-        return (
-          <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 10, padding: 14 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ ...sm2Text, margin: 0, fontWeight: 500 }}>{isPt ? 'Participar do PvP' : 'Join PvP'}</p>
-                <p style={{ ...sm2Hint, marginTop: 2 }}>
-                  {isPt ? 'Seu pet fica disponível como oponente de outros jogadores.' : 'Your pet becomes available as an opponent for other players.'}
-                </p>
-              </div>
-              <Switch
-                checked={pvpEnabled}
-                onToggle={() => onTogglePvp(!pvpEnabled)}
-                label={isPt ? 'Participar do PvP' : 'Join PvP'}
-                disabled={!podeMexer}
-              />
-            </div>
+      {/* Requisito do Torneio (H13): sem interruptor. Abaixo do Vínculo
+          mínimo a aba diz POR QUE não abre e O QUE falta — progresso, nunca
+          dívida. Aberto, só o aviso do apelido público (informação, não gesto). */}
+      {tab === 'arena' && !pvpAberto && (
+        <div data-torneio-requisito style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 10, padding: 14 }}>
+          <p style={{ ...sm2Text, margin: 0, fontWeight: 500 }}>
+            {isPt ? `O Torneio abre no Vínculo ${BOND_PVP_MIN_LEVEL}` : `The Tournament opens at Bond ${BOND_PVP_MIN_LEVEL}`}
+          </p>
+          <PixelMeter
+            ratio={totalXP / Math.max(1, xpForLevel(BOND_PVP_MIN_LEVEL))}
+            tone="gold"
+            height={10}
+            label={isPt ? `Caminho até o Vínculo ${BOND_PVP_MIN_LEVEL}` : `Progress to Bond ${BOND_PVP_MIN_LEVEL}`}
+          />
+          <p style={{ ...sm2Hint, display: 'flex', alignItems: 'flex-start', gap: 8, margin: 0 }}>
+            <Icon name="link" size={20} tone="muted" />
+            <span>
+              {isPt
+                ? `Você está no Vínculo ${bondLevelFor(totalXP)} — faltam ${xpToPvpBond(totalXP)} XP, que vêm do que você já faz por aqui. Sem pressa: seu Soulmon entra no Torneio sozinho quando chegar.`
+                : `You're at Bond ${bondLevelFor(totalXP)} — ${xpToPvpBond(totalXP)} XP to go, earned by what you already do here. No rush: your Soulmon joins the Tournament on its own when you get there.`}
+            </span>
+          </p>
+          <p style={{ ...sm2Hint, display: 'flex', alignItems: 'flex-start', gap: 8, margin: 0 }}>
+            <Icon name="visibility" size={20} tone="muted" />
+            <span>
+              {isPt
+                ? `O Torneio é social: seu apelido e seu Soulmon aparecem numa lista pública de jogadores. Esperar até o Vínculo ${BOND_PVP_MIN_LEVEL} dá tempo de conhecer o app antes.`
+                : `The Tournament is social: your nickname and your Soulmon show up on a public list of players. Waiting until Bond ${BOND_PVP_MIN_LEVEL} gives you time to get to know the app first.`}
+            </span>
+          </p>
+        </div>
+      )}
 
-            {/* O aviso do nick público. Fica visível SEMPRE que o interruptor
-                pode ser ligado — é a informação que torna o gesto um
-                consentimento. */}
-            <p style={{ ...sm2Hint, display: 'flex', alignItems: 'flex-start', gap: 8, margin: 0 }}>
-              <Icon name="visibility" size={20} tone="muted" />
-              <span>
-                {isPt
-                  ? 'Ao ligar, seu apelido e seu pet passam a aparecer numa lista pública de jogadores. Dá para desligar quando quiser.'
-                  : 'Once on, your nickname and your pet show up on a public list of players. You can turn it off any time.'}
-              </span>
-            </p>
-
-            {/* O que falta, dito como progresso — nunca como dívida. */}
-            {!podeMexer && (
-              <p style={{ ...sm2Hint, display: 'flex', alignItems: 'flex-start', gap: 8, margin: 0 }}>
-                <Icon name="link" size={20} tone="muted" />
-                <span>
-                  {isPt
-                    ? `O PvP abre no Vínculo ${BOND_PVP_MIN_LEVEL}. Você está no ${bondLevelFor(totalXP)} — faltam ${faltam} XP, que vêm do que você já faz aqui.`
-                    : `PvP opens at Bond ${BOND_PVP_MIN_LEVEL}. You're at ${bondLevelFor(totalXP)} — ${faltam} XP to go, earned by what you already do here.`}
-                </span>
-              </p>
-            )}
-          </div>
-        );
-      })()}
+      {tab === 'arena' && pvpAberto && (
+        <p style={{ ...sm2Hint, display: 'flex', alignItems: 'flex-start', gap: 8, margin: 0 }} data-torneio-aviso-publico>
+          <Icon name="visibility" size={20} tone="muted" />
+          <span>
+            {isPt
+              ? 'Seu apelido e seu Soulmon aparecem numa lista pública de jogadores do Torneio.'
+              : 'Your nickname and your Soulmon show up on a public list of Tournament players.'}
+          </span>
+        </p>
+      )}
 
       {/* Torcida (02/10/2026, C2): o dono não via que o duelo do Torneio é de
           torcida — a linha aparece COM o PvP ligado ou não, antes de qualquer
@@ -489,15 +424,7 @@ export function TournamentPage({ saveId, petStage, petLine, pvpEnabled, onToggle
         </p>
       )}
 
-      {tab === 'arena' && !pvpEnabled && (
-        <div style={{ ...cardStyle, textAlign: 'center', padding: 12 }}>
-          <p style={{ ...sm2Text, margin: 0 }}>
-            {isPt ? 'Ative o PvP acima para desafiar oponentes.' : 'Enable PvP above to challenge opponents.'}
-          </p>
-        </div>
-      )}
-
-      {tab === 'arena' && pvpEnabled && (
+      {tab === 'arena' && pvpAberto && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <p className="sm2-num" style={sm2Hint}>
             {matchesLeft === null

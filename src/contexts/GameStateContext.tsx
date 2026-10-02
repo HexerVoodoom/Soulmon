@@ -19,6 +19,7 @@ import { migrateBranchIds } from '../utils/branchMigration';
 import { normalizeSpriteLibrary, type SpriteLibrary } from '../utils/spriteLibrary';
 import { mergeCareCaps, type CareCaps } from '../utils/careCaps';
 import type { BondDailyLedger, BondDailyXP } from '../utils/bond';
+import { meetsPvpBond } from '../utils/bond';
 import { ACHIEVEMENT_IDS, gatilhoAntigoTasks100, type AchievementId } from '../utils/achievements';
 import {
   resolvePlayerDayAnchor, sanitizePlayerDayAnchor, deviceOffsetMs,
@@ -417,7 +418,11 @@ export interface GameState {
   equippedFurniture?: string | null;
   /** Evolution lock (padlock on the Evolution page): while true the pet never evolves at the day turn. */
   evolutionLocked?: boolean;
-  /** Tournament: opt-in para PvP assíncrono (aparece como oponente pra outros e pode desafiar). */
+  /** Tournament: PvP assíncrono (aparece como oponente pra outros e pode desafiar).
+   *  ⚠️ Desde 02/10/2026 (H13) NÃO é mais interruptor: todo personagem nasce com
+   *  `true` e o load força `true` (REGISTRO §20.6). O que decide se a pessoa
+   *  entra de fato no diretório é o gate de Vínculo 5, do SERVIDOR. O campo
+   *  fica no save/no tipo para o servidor e os testes seguirem lendo-o. */
   pvpEnabled?: boolean;
   /** Troféus de season do Tournament (top 3 no fim de cada season). */
   trophies?: Array<{ season: string; place: 1 | 2 | 3 }>;
@@ -1123,7 +1128,11 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
             claimed: Array.isArray(w.claimed) ? (w.claimed.filter(x => typeof x === 'string') as WeeklyMissionProgress['claimed']) : [],
           };
         })(),
-        pvpEnabled: loadedState.pvpEnabled ?? false,
+        // H13 (02/10/2026): o personagem JÁ NASCE no PvP e o interruptor saiu da
+        // tela. Quem tem `false` gravado (save antigo, ou quem desligou antes)
+        // passa a ligado — migração segura: o que de fato publica o perfil é o
+        // gate de Vínculo 5 (`publicarPerfil`, e o servidor confere de novo).
+        pvpEnabled: true,
         // `PetStageDecor` lê `.place`/`.season` de cada troféu para desenhar
         // 🥇🥈🥉 — item que não é objeto vira medalha fantasma.
         trophies: arr<unknown>(loadedState.trophies).filter(
@@ -1385,7 +1394,7 @@ function freshGameState(): GameState {
       playerDayTz: { offsetMs: deviceOffsetMs(new Date()) },
       gamePoints: 0,
       emblems: 0,
-      pvpEnabled: false,
+      pvpEnabled: true,
       trophies: [],
       friends: [],
       ownedBackgrounds: ['bg-room'],
@@ -1596,6 +1605,10 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       // depois da exclusão. Save recusado = perfil não sobe.
       function publicarPerfil() {
       if (!gameState.pvpEnabled) return;
+      // H13: sem interruptor, o que segura a publicação é o Vínculo. Abaixo do
+      // nível 5 o servidor recusaria de qualquer jeito — não vale mandar nome e
+      // pet de quem ainda não está no Torneio nem gastar a leitura do save.
+      if (!meetsPvpBond(gameState.totalXP ?? 0)) return;
       pushProfile({
         id: saveId!,
         // O nome vai para o ranking da COMUNIDADE, onde outros jogadores leem.
@@ -1612,48 +1625,16 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         attrs: { power: gameState.powerPoints, harmony: gameState.harmonyPoints, benevolence: gameState.benevolencePoints },
         tasksDone: gameState.completedTasks?.length ?? 0,
       }).then(resposta => {
-        // ── A RECUSA DE PvP PRECISA CHEGAR AO JOGADOR ────────────────────────
-        //
-        // O servidor barra quem pede para LIGAR o PvP abaixo de
-        // `BOND_PVP_MIN_LEVEL`: grava `pvpEnabled: false` e responde
-        // `pvpBlocked`. Até aqui a resposta inteira caía num `.catch(() => {})`
-        // e o save local seguia com `pvpEnabled: true` — o interruptor ligado, o
-        // jogador fora do diretório, e nada explicando.
-        //
-        // ⚠️ E NÃO É UM CASO DE BORDA. O gate do cliente (`meetsPvpBond`,
-        // `TournamentPage`) lê o XP LOCAL; o servidor lê o XP do save NA NUVEM.
-        // Desde a QA rodada 2 o `pushProfile` só sai DEPOIS do
-        // `cloudSaveComRetry` confirmar — mas com o cloud save falhando o
-        // perfil não sobe, e a divergência entre o interruptor local e o
-        // diretório dura o que a falha durar.
-        //
-        // 🔴 POR QUE ISTO NÃO VIOLA A NOTA R-1 acima, que proíbe `setGameState`
-        // neste callback: a proibição existe porque tocar o estado reagenda o
-        // efeito e reenvia o POST que acabou de falhar — cada gesto acelerando
-        // o ciclo. Aqui o `setGameState` DESLIGA `pvpEnabled`, e é justamente
-        // esse campo que o `if (!gameState.pvpEnabled) return` logo acima usa
-        // como portão do POST. A reconciliação FECHA a porta em vez de bater
-        // nela: o efeito roda mais uma vez e sai antes de publicar. É o oposto
-        // exato do 409 de conflito de save, que continua precisando de via
-        // própria. Há teste travando a não-realimentação
-        // (`GameStateContext.pvpBlocked.test.tsx`).
-        if (resposta?.pvpBlocked !== true) return;
-        // `=== true` e não `truthy`: enquanto a versão publicada do endpoint não
-        // tiver o campo, ausência NÃO pode ser lida como recusa — senão uma
-        // resposta velha desligaria o PvP de quem está regular.
-        setGameState(prev => (prev.pvpEnabled ? { ...prev, pvpEnabled: false } : prev));
-        const pt = resolveLanguage(readLocal(STORAGE_KEYS.LANGUAGE)) === 'pt-BR';
-        // Os números vêm do SERVIDOR (`minBondLevel`/`bondLevel`), nunca de uma
-        // constante do cliente: reimplementar o limite aqui seria o footgun 9, e
-        // divergiria em silêncio no dia em que o servidor mudasse o gate.
-        const min = resposta.minBondLevel;
-        const seu = resposta.bondLevel;
-        toast.warning(
-          pt
-            ? `O PvP não foi ligado: falta Vínculo nível ${min}${typeof seu === 'number' ? ` (você está no ${seu})` : ''}.`
-            : `PvP was not enabled: Bond level ${min} required${typeof seu === 'number' ? ` (you are level ${seu})` : ''}.`,
-          { duration: 10000 },
-        );
+        // ── H13 (02/10/2026): a recusa NÃO desliga mais nada nem avisa ────────
+        // Sem interruptor, `pvpEnabled` é sempre `true` e "ligar" não é um gesto
+        // da pessoa — então não há o que desfazer nem o que avisar aqui (o aviso
+        // dizia "o PvP não foi ligado" a quem nunca pediu nada). A recusa só
+        // acontece quando o XP local já cruzou o nível 5 mas o save na NUVEM
+        // ainda está atrás; o próximo cloud save reenvia o perfil e o servidor
+        // aceita. Quem explica ao jogador o que falta é o Torneio
+        // (`TournamentPage`, aba Desafiar), que lê o mesmo `totalXP`.
+        // Nenhum `setGameState` aqui: nada reagenda o efeito (nota R-1).
+        void resposta;
       }).catch(() => {});
       }
     }, espera);

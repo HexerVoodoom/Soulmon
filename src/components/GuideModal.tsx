@@ -321,8 +321,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              'No duelo do Torneio os pets lutam sozinhos. Você torce três vezes: toque quando o anel encostar no círculo. Torcer só ajuda; não torcer não atrapalha.',
-              'In a Tournament duel the pets fight on their own. You cheer three times: tap when the ring meets the circle. Cheering only helps; skipping never hurts.',
+              'Nos duelos (Torneio e Arena) os pets lutam sozinhos. Você torce tocando em qualquer lugar da tela: o gauge cheio vira um golpe especial. Torcer só ajuda; não torcer não atrapalha.',
+              'In duels (Tournament and Arena) the pets fight on their own. You cheer by tapping anywhere on the screen: a full gauge becomes a special strike. Cheering only helps; skipping never hurts.',
             )}
           </p>
           <p style={para}>

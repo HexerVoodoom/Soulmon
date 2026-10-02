@@ -113,10 +113,10 @@ describe('pushProfile só depois do save confirmado', () => {
     } finally { vi.useRealTimers(); }
   });
 
-  it('sem PvP ligado, save ok não publica perfil (o gate continua)', async () => {
+  it('abaixo do Vínculo 5, save ok não publica perfil (o gate continua)', async () => {
     vi.useFakeTimers();
     try {
-      abrirComSave({ ...COM_PVP_LIGADO, pvpEnabled: false });
+      abrirComSave({ ...COM_PVP_LIGADO, totalXP: 0 });
       await gestoEEspera();
       expect(saves).toHaveLength(1);
       expect(perfis).toHaveLength(0);

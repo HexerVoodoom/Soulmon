@@ -5886,8 +5886,6 @@ export default function App() {
                   saveId,
                   petStage: gameState.evolutionStage,
                   petLine,
-                  pvpEnabled: !!gameState.pvpEnabled,
-                  onTogglePvp: (enabled) => setGameState(prev => ({ ...prev, pvpEnabled: enabled })),
                   trophies: gameState.trophies ?? [],
                   language,
                   emblems: gameState.emblems ?? 0,

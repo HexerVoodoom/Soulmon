@@ -135,7 +135,7 @@ describe('save da nuvem sem os campos novos → os valores que o jogador vê', (
 
     // Conta e "porquê": save antigo é adotado como PAGO — nunca rebaixado.
     expect(s.accountTier).toBe('paid');
-    expect(s.pvpEnabled).toBe(false);
+    expect(s.pvpEnabled).toBe(true); // H13: todo personagem nasce no PvP
     expect(s.soulGoal).toBe('');
     expect(s.soulStruggle).toBe('');
     expect(typeof s.petPassive).toBe('string');
@@ -394,7 +394,7 @@ describe('save ilegível/hostil cai para instalação nova, e nada é adotado de
     expect(s.accountTier).toBe('demo');
     expect(s.degeneratedByHP).toBe(false);
     expect(s.lastDayWasPerfect).toBe(false);
-    expect(s.pvpEnabled).toBe(false);
+    expect(s.pvpEnabled).toBe(true); // H13: todo personagem nasce no PvP
     expect(s.activities).toEqual([]);
     expect(s.tasks).toEqual([]);
     expect(s.eggType).toBe('ignar');
@@ -479,7 +479,7 @@ describe('backup na nuvem: só depois de uma mudança REAL, e com o conteúdo ce
       abrirComSave({
         activities: [], tasks: [], evolutionStage: 'champion-power',
         unlockedEvolutions: ['rookie', 'champion-power'],
-        powerPoints: 9, harmonyPoints: 4, benevolencePoints: 1, pvpEnabled: true,
+        powerPoints: 9, harmonyPoints: 4, benevolencePoints: 1, pvpEnabled: true, totalXP: 4000,
         soulmonMeta: { baseName: 'Fagulha' },
         completedTasks: [{ id: 'a' }, { id: 'b' }, { id: 'c' }],
       });
@@ -503,7 +503,7 @@ describe('backup na nuvem: só depois de uma mudança REAL, e com o conteúdo ce
     vi.useFakeTimers();
     try {
       localStorage.setItem(STORAGE_KEYS.LANGUAGE, 'en-US');
-      abrirComSave({ activities: [], tasks: [], pvpEnabled: true });
+      abrirComSave({ activities: [], tasks: [], pvpEnabled: true, totalXP: 4000 });
       act(() => { screen.getByText('mais').click(); });
       act(() => { vi.advanceTimersByTime(3000); });
       await esperarPerfil();
@@ -515,7 +515,7 @@ describe('backup na nuvem: só depois de uma mudança REAL, e com o conteúdo ce
     vi.useFakeTimers();
     try {
       localStorage.setItem(STORAGE_KEYS.USER_NAME, 'Mateus');
-      abrirComSave({ activities: [], tasks: [], pvpEnabled: true });
+      abrirComSave({ activities: [], tasks: [], pvpEnabled: true, totalXP: 4000 });
       act(() => { screen.getByText('mais').click(); });
       act(() => { vi.advanceTimersByTime(3000); });
       await esperarPerfil();
@@ -525,13 +525,13 @@ describe('backup na nuvem: só depois de uma mudança REAL, e com o conteúdo ce
     } finally { vi.useRealTimers(); }
   });
 
-  // Antes deste gate, o perfil público subia MESMO com os recursos sociais
-  // desligados: `pvpEnabled: false` ia no corpo, mas o corpo já tinha sido
-  // publicado. Quem nunca ligou o social não aparece em diretório nenhum.
-  it('com recursos sociais DESLIGADOS nada é publicado (o save continua indo)', () => {
+  // Antes deste gate, o perfil público subia MESMO sem o social liberado.
+  // H13 (02/10/2026): sem interruptor, o que segura a publicação é o Vínculo 5
+  // — quem ainda não chegou lá não aparece em diretório nenhum.
+  it('abaixo do Vínculo 5 nada é publicado (o save continua indo)', () => {
     vi.useFakeTimers();
     try {
-      abrirComSave({ activities: [], tasks: [], pvpEnabled: false });
+      abrirComSave({ activities: [], tasks: [], pvpEnabled: true, totalXP: 0 });
       act(() => { screen.getByText('mais').click(); });
       act(() => { vi.advanceTimersByTime(3000); });
       expect(perfis).toHaveLength(0);
