@@ -356,6 +356,7 @@ export function StatsPage({
             soulGoal={birth.soulGoal}
             bornAt={birth.bornAt}
             language={language}
+            bare
           />
         )}
 

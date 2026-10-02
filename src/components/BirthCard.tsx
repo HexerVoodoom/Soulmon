@@ -61,6 +61,8 @@ interface BirthCardProps {
   pending?: 'forming' | 'dormant' | null;
   /** Desenha `spriteUrl` como silhueta (máscara do PNG), nunca a arte. */
   silhouette?: boolean;
+  /** G1 (02/10/2026): criatura SOLTA no cartão, sem o visor (anel + vidro). */
+  bare?: boolean;
 }
 
 /** Data por extenso, sem número de ano. "6 de setembro" é lembrança; a data
@@ -79,7 +81,7 @@ function dataPorExtenso(bornAt: string, isPt: boolean): string | null {
 const GLASS = 64;
 const SPRITE = 128;
 
-export function BirthCard({ spriteUrl, name, epithet, soulGoal, bornAt, language, pending = null, silhouette = false }: BirthCardProps) {
+export function BirthCard({ spriteUrl, name, epithet, soulGoal, bornAt, language, pending = null, silhouette = false, bare = false }: BirthCardProps) {
   const isPt = language === 'pt-BR';
   const data = bornAt ? dataPorExtenso(bornAt, isPt) : null;
   const centro = { display: 'flex', alignItems: 'center', justifyContent: 'center' } as const;
@@ -97,6 +99,7 @@ export function BirthCard({ spriteUrl, name, epithet, soulGoal, bornAt, language
       height={GLASS}
       scale={3}
       breathing={false}
+      bare={bare}
       label={!spriteUrl && pending ? undefined : spriteUrl && silhouette ? (isPt ? `${name}, silhueta` : `${name}, silhouette`) : name}
       screenStyle={centro}
     >

@@ -323,6 +323,7 @@ export function PetPage({
             width={64}
             height={64}
             scale={3}
+            bare
             label={isPt ? `${nome}, forma atual` : `${nome}, current form`}
             screenStyle={{ position: 'relative' }}
           >

@@ -80,6 +80,14 @@ export interface ViewportProps {
    * cano), como no artboard.
    */
   frame?: boolean;
+  /**
+   * SOLTO (G1, 02/10/2026, navegação do dono): sem anel de cobre, sem vidro,
+   * sem reflexo — só a MEDIDA (`width*scale`) e o conteúdo, sobre o fundo da
+   * página, como a criatura da Home. A escala inteira continua valendo (a
+   * caixa mede o mesmo e o sprite não muda de tamanho). O padrão segue sendo o
+   * aparelho completo: só o Laboratório (Árvore, Meu Soulmon, Observatório) pede.
+   */
+  bare?: boolean;
 }
 
 /**
@@ -170,6 +178,7 @@ export function Viewport({
   screenStyle,
   screenClassName,
   frame = false,
+  bare = false,
 }: ViewportProps) {
   const reduced = usePrefersReducedMotion();
   // Guard de escala inteira: se alguém passar 2.5 por `as any` num JSX, o
@@ -177,7 +186,7 @@ export function Viewport({
   const s = Math.max(1, Math.round(scale));
   const anima = breathing && !reduced;
 
-  const classes = ['sm2-viewport', anima ? '' : 'sm2-viewport-still', className]
+  const classes = ['sm2-viewport', anima && !bare ? '' : 'sm2-viewport-still', bare ? 'sm2-viewport-bare' : '', className]
     .filter(Boolean)
     .join(' ');
 
@@ -206,7 +215,7 @@ export function Viewport({
             sprite nas bordas (é uma moldura) e o vidro cobre a moldura (é um
             vidro). Mesmo contrato do `.sm2-viewport-glass`: absoluto e sem
             eventos, para não roubar o gesto de esfregar o pet. */}
-        {frame && (
+        {frame && !bare && (
           <div
             className="sm2-viewport-frame"
             aria-hidden="true"
@@ -219,7 +228,7 @@ export function Viewport({
             }}
           />
         )}
-        <div className="sm2-viewport-glass" aria-hidden="true" />
+        {!bare && <div className="sm2-viewport-glass" aria-hidden="true" />}
       </div>
     </div>
   );

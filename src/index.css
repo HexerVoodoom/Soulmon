@@ -5384,6 +5384,18 @@ select:focus-visible {
       transparent 46%),
     radial-gradient(120% 100% at 50% 50%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, .12) 100%);
 }
+/* SOLTO (G1, 02/10/2026): o visor sem aparelho — a criatura sobre o fundo da
+   página, como na Home. Mesma medida (width*scale), sem anel, sem vidro. */
+.sm2-viewport-bare {
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  animation: none;
+}
+.sm2-viewport-bare .sm2-viewport-screen {
+  background-color: transparent;
+  border-radius: 0;
+}
 /* A respiração é do ANEL, não da sombra. A versão anterior interpolava
    `blur 18px → 19px` e `alfa .35 → .365`: nenhum olho humano lê 1px de blur
    num halo escuro, então o aparelho parecia MORTO enquanto pagava recálculo
