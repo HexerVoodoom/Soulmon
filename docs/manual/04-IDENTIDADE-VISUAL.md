@@ -228,6 +228,20 @@ nos dois temas (`#22A900` sobre branco = 3,11:1; `#009ED8` = 3,05:1; `#E69600` =
 2,41:1). Os pares acima são a MESMA matiz com a luminosidade ajustada: não é cor
 nova na paleta.
 
+**Cor e glifo por caminho na Árvore da Evolução (I11, 02/10/2026).** As três
+pílulas do seletor de galho (`EvolutionPath`) e o filete de 4 px dos cards de
+cada ramo usam `ATTR_COLOR` (borda, filete e glifo) e `ATTR_INK` (texto) —
+**nenhum token novo**. O glifo é o desenho único de `AlignmentIcons`
+(Poder = triângulo duplo, Harmonia = círculo com espiral, Benevolência = "Y" com
+ponto), a 20 px da escala. Tronco (rookie) e Ultra são de todos os caminhos e
+ficam neutros. O rótulo continua sendo o portador da informação (WCAG 1.4.1).
+
+**Emblemas de conquista na Ficha (I12, 02/10/2026).** Saíram do visor: grade de
+3 colunas SOLTA sobre a folha, arte 64² a 64 CSS (1× nativo), célula ≥ 48 de
+toque, nome curto embaixo. Fechado = filtro cinza escurecido + legenda `muted`
+(nunca `opacity`); tocar mostra como se ganha. Isto revoga o "nunca soltos no
+aparelho" para a grade de conquistas por pedido do dono.
+
 ### 2.7 Layout, tipografia e os 14 tokens sem consumidor (eram seis)
 
 | token | valor | para quê | um uso |
