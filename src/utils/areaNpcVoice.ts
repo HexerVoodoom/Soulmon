@@ -126,7 +126,7 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     lineEn: 'Each plate on my shell remembers a stretch crossed.',
   },
   'arena:duelo': {
-    namePt: 'Rhinoco, o campeão', nameEn: 'Rhinoco, the champion',
+    namePt: 'Tuska, o campeão', nameEn: 'Tuska, the champion',
     linePt: 'Um duelo, uma rodada de cada vez. Pode vir.',
     lineEn: 'One duel, one round at a time. Come on.',
   },

@@ -33,7 +33,7 @@ Com retentativas, some ~30% (o teto prático passa de 240 imagens). Total recalc
 - ✅ **Prompts de NPC passam pelo oráculo** (decidido 29/09/2026; antes eram escritos à mão). A criatura sai do motor real (`generateOracleWithFamilies` → `composeSpritePrompts`, forma `rookie`, semente fixa), nas duas variantes do app: `imagePrompt` (1ª tentativa) e `imagePromptFallback` (se o provedor recusar). A bíblia dá pose/gesto, a área dá a âncora, o formato (busto 768² sobre `#00FF00`), o negative e o aceite. Arquivos: perfis em [`../npcs-oraculo.md`](../npcs-oraculo.md), saída em [`../npcs-oraculo-saida.md`](../npcs-oraculo-saida.md) + [`../npcs-oraculo-saida.json`](../npcs-oraculo-saida.json), gerador `scripts/npc-oraculo-prompts.mjs` (`node scripts/npc-oraculo-prompts.mjs`). Repinturas fiéis (Vultrak, Vesca) e a conferência de Lumi continuam anexando a arte aprovada — não passam pelo oráculo.
 
 **Continuam abertas:**
-- **PI:** `npc-placeholder-poring` leva o nome de criatura de franquia de terceiros ao bundle; sai (ou vira `slime`) quando o Rhinoco chegar. Tico virou **Bento** (Tico é personagem registrado em PT-BR).
+- **PI:** `npc-placeholder-poring` leva o nome de criatura de franquia de terceiros ao bundle; sai (ou vira `slime`) quando o Tuska chegar. Tico virou **Bento** (Tico é personagem registrado em PT-BR).
 - **Navegação:** mover o Dino de Exploração para Jogos ficou como decisão de navegação (bíblia §7).
 
 ## Depois de gerar

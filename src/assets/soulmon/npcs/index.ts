@@ -71,7 +71,7 @@ export const LOT_NPC_ART: Record<string, string> = {
   'mercado:background': npcLojaBackground,
   'mercado:conquistas': npcMercadoConquistas, // Medra
   'arena:torneio': npcArena,
-  'arena:duelo': npcArenaDuelo, // Rhinoco
+  'arena:duelo': npcArenaDuelo, // Tuska
   'arena:feira': npcArenaFeira, // Fanfare (`utils/fairArt.ts` › FAIR_ART_IDS.npc)
   'exploracao:masmorra': npcExploracao,
   'exploracao:passeio': npcExploracaoPasseio, // Brume

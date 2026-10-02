@@ -1429,3 +1429,24 @@ Decisões do dono na navegação do APK (`docs/AJUSTES-NAVEGACAO-2026-10-02.md` 
 > **Nota 02/10/2026 (tarde, rodada 4):** itens 6 e 7 acima — o Duelo da Arena
 > entra na torcida (TORC-2 respondida) e o PvP perde o interruptor. O item 1 já
 > dizia "Torneio, Pesadelo e Masmorra"; a Arena é o quarto lugar.
+
+## 02/10/2026 — Torneio: menu só de ícones e faixa no título; Rhinoco vira Tuska
+
+Decisões do dono (pedido de 02/10/2026):
+
+1. **O menu do Torneio tem três entradas, só ícone:** Desafiar (`swords`),
+   Missões (`task_alt`) e Loja (`storefront`); o nome fica em `aria-label`/`title`.
+   A aba "Faixa" saiu do menu e a folha **abre em Desafiar** (cai direto no
+   combate). Alternativa que perdeu: manter a Faixa como quarta aba.
+2. **A faixa vira indicador no canto direito da linha do título** (a insígnia
+   atual, `TierMark`); tocar abre a folha com todas as faixas, a atual
+   destacada, o progresso e o "só sobe", com seta de voltar no topo esquerdo.
+   A regra e o texto de progresso não mudaram — só de lugar (a faixa continua
+   vindo antes do ranking).
+3. **Texto da temporada mínimo:** "Dias restantes: N" / "Remaining days: N"
+   (fora da rodada, "Próxima rodada: N dias" / "Next round: N days"). Sem frase.
+4. **Renome do campeão do Duelo da Arena: Rhinoco → Tuska** ("Tuska, o
+   campeão" / "Tuska, the champion"). Motivo: o nome anterior era pouco
+   agradável ao dono. Nenhum outro NPC muda; os arquivos de arte
+   (`npc-arena-duelo`) mantêm o id. As menções históricas (esta seção
+   anterior, `reviews/2026-09-30-ingles-primeiro-nomes.md`) ficam como estavam.

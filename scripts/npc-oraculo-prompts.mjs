@@ -61,7 +61,7 @@ const PERFIS = [
   { id: 'npc-mercado-conquistas', nome: 'Medra', area: 'mercado', forma: 'rookie',
     eixos: { dominantElement: 'terra', dominantRole: 'tanque', dominantAlignment: 'benevolencia', dominantRealm: 'deserto' },
     descricao: 'old wise tortoise with a domed shell of brass plates, each plate engraved with a simple plain medal emblem, moss along the shell rim, kind half-closed eyes' },
-  { id: 'npc-arena-duelo', nome: 'Rhinoco', area: 'arena', forma: 'rookie',
+  { id: 'npc-arena-duelo', nome: 'Tuska', area: 'arena', forma: 'rookie',
     eixos: { dominantElement: 'terra', dominantRole: 'fisico', dominantAlignment: 'poder', dominantRealm: 'picos' },
     descricao: 'stocky bipedal rhinoceros with sandstone hide, a horn of chipped stone with a thin turquoise vein, a bone cloth headband and a good-natured grin' },
   { id: 'npc-arena-feira', nome: 'Fanfare', area: 'arena', forma: 'rookie',

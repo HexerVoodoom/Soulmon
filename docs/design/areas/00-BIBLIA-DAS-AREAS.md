@@ -43,7 +43,7 @@ Fonte: `src/utils/areaSheetCopy.ts` (Mercado, Arena, Laboratório, Hall), `src/u
 | mercado | `background` | Background / Background | loja, Cenários | própria | `npc-loja-background` / Grom |
 | mercado | `conquistas` | Conquistas / Achievements | Missões | própria | **placeholder poring** / Grom |
 | arena | `torneio` | Torneio / Tournament | Torneio | própria | `npc-arena` (Vultrak) |
-| arena | `duelo` | Duelo / Duel | `ArenaGame` (`DueloSheet`) | própria | **placeholder poring** / Rhinoco |
+| arena | `duelo` | Duelo / Duel | `ArenaGame` (`DueloSheet`) | própria | **placeholder poring** / Tuska |
 | arena | `guilda` → **`feira`** | Guilda → **Feira / Fair** | `GuildSheet` (sala Feira) | **placeholder** (= conquistas) | **placeholder coruja-cervo** / Marla |
 | exploracao | `masmorra` | Masmorra / Dungeon | `DungeonGame` | própria | `npc-exploracao` (Zeph) |
 | exploracao | `dino` | Corrida do Dino / Dino Runner | Dino | própria | **placeholder poring** / Zeph |
@@ -207,7 +207,7 @@ Critérios: criatura própria do universo (nunca humano genérico), paleta da á
 | mercado:background | **Panora** | arte existe, **nome criado agora** |
 | mercado:conquistas | **Medra** | **criado agora** (nome + arte) |
 | arena:torneio | Vultrak | existe |
-| arena:duelo | Rhinoco | nome existe, **arte falta** (espécie fixada abaixo) |
+| arena:duelo | Tuska | nome existe, **arte falta** (espécie fixada abaixo) |
 | arena:feira | **Fanfare** | **criado agora** |
 | exploracao:masmorra | Zeph | existe |
 | exploracao:dino | **Trote** | **criado agora** |
@@ -219,7 +219,7 @@ Critérios: criatura própria do universo (nunca humano genérico), paleta da á
 | hall:amigos | Nino | nome existe, arte falta |
 | hall:guilda | Marla | nome existe, arte falta, fala nova |
 
-Contagem: **16 lotes**. NPCs nomeados que já existiam: **11** (Grom, Vultrak, Zeph, Pipo, Vesca, Lumi, Rhinoco, Marla, Nino, Quill, Tico) — com arte própria só **6** (os anfitriões). NPCs **criados agora**: **6** (Tamba, Musga, Panora, Medra, Fanfare, Trote) + **1 renomeado** (Bento). Arte a gerar: **11 bustos** — 8 novos (Medra, Fanfare, Trote, Rhinoco, Bento, Quill, Nino, Marla) + 3 refeitos em alta (Tamba, Musga, Panora; fila de crédito #5–#7) — e **2 repinturas** (Vesca, zona do Laboratório).
+Contagem: **16 lotes**. NPCs nomeados que já existiam: **11** (Grom, Vultrak, Zeph, Pipo, Vesca, Lumi, Tuska, Marla, Nino, Quill, Tico) — com arte própria só **6** (os anfitriões). NPCs **criados agora**: **6** (Tamba, Musga, Panora, Medra, Fanfare, Trote) + **1 renomeado** (Bento). Arte a gerar: **11 bustos** — 8 novos (Medra, Fanfare, Trote, Tuska, Bento, Quill, Nino, Marla) + 3 refeitos em alta (Tamba, Musga, Panora; fila de crédito #5–#7) — e **2 repinturas** (Vesca, zona do Laboratório).
 
 ### 4.2 Fichas dos NPCs sem ficha (os criados e os que só tinham nome)
 
@@ -269,7 +269,7 @@ Contagem: **16 lotes**. NPCs nomeados que já existiam: **11** (Grom, Vultrak, Z
 - Gesto: bate o casco uma vez, as placas tilintam.
 - Combina: latão/âmbar do Mercado; lento como o guindaste que ergue o baú.
 
-**Rhinoco — Duelo (Arena)** (nome existia)
+**Tuska — Duelo (Arena)** (nome existia)
 - Espécie: rinoceronte-bípede atarracado, couro cor de arenito, chifre de pedra lascada com veio turquesa, faixa de pano na testa.
 - Temperamento: bonachão, ri quando apanha. Gosta do encontro, não do resultado.
 - Falas: PT "Um duelo, uma rodada de cada vez. Pode vir." / EN "One duel, one round at a time. Come on." · PT "Essa doeu no chifre. Boa!" / EN "That one rang my horn. Nice!" · PT "Ganhar ou perder, a gente volta pro círculo." / EN "Win or lose, we step back into the circle."
@@ -347,7 +347,7 @@ Estilo: pixel art isométrica, pixel limpo sem anti-aliasing borrado, contorno e
 1. **Mercado** (fundo + lote Conquistas + Medra; refazer Tamba/Musga/Panora) — loja é a área mais visitada do mapa.
 2. **Laboratório** (fundo novo + 3 lotes + Bento/Quill + repintar Vesca e zona) — Evolução e Estatísticas são vistas toda semana; hoje é 100% placeholder.
 3. **Hall** (fundo + 3 lotes + Nino/Marla) — junto da Guilda.
-4. **Arena** (fundo definitivo + Feira + Fanfare + Rhinoco).
+4. **Arena** (fundo definitivo + Feira + Fanfare + Tuska).
 5. **Exploração** (repintar fundo sem caveiras + Trote).
 6. **Jogos** (só repintura A1).
 

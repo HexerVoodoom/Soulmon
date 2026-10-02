@@ -21,7 +21,7 @@ Oito elementos do oráculo (`ElementId`), nenhum usado mais de duas vezes. `fogo
 | `npc-mercado-decoracao` | Mercado | **Musga**: lesma de musgo com quartinho nas costas, lenta, caseira | planta | tanque | harmonia | pântano | musgo; carrega a casa; fala de lugares com equilíbrio |
 | `npc-mercado-background` | Mercado | **Panora**: lula de terra, manto-tela de paisagens, sonhadora | água | mágico | harmonia | oceano | lula; projeta paisagens (ilusão) |
 | `npc-mercado-conquistas` | Mercado | **Medra**: jabuti de casco de placas-medalha, memorioso | terra | tanque | benevolência | deserto | casco pesado; guarda marcos para quem chega |
-| `npc-arena-duelo` | Arena | **Rhinoco**: rinoceronte-bípede de arenito, bonachão | terra | físico | poder | picos | contato direto; único Poder, na área do confronto |
+| `npc-arena-duelo` | Arena | **Tuska**: rinoceronte-bípede de arenito, bonachão | terra | físico | poder | picos | contato direto; único Poder, na área do confronto |
 | `npc-arena-feira` | Arena | **Fanfare**: criatura-sanfona com lanternas, festiva, coletiva | ar | suporte | harmonia | campina | fole = ar; voz coletiva, cooperativa |
 | `npc-exploracao-dino` | Exploração | **Trote**: ave-corredora de turfa com pontas fogo-fátuo | sombra | físico | harmonia | pântano | turfa e fogo-fátuo do Charco; corredor |
 | `npc-laboratorio-pet` | Laboratório | **Bento**: coruja-cervo com chifres de vidro e óculos de cobre | luz | suporte | benevolência | akasha | vidro e lente; cuida da criatura |

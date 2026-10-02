@@ -59,7 +59,7 @@ Generate an original creature for a monster-raising RPG inspired by Digimon, Pok
 Generate an original creature for a monster-raising RPG. Do not copy any existing franchise character. Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: old wise tortoise with a domed shell of brass plates, each plate engraved with a simple plain medal emblem, moss along the shell rim, kind half-closed eyes. a chubby palm-sized body. Flat moss-brown and slate colors with gold accents, no shading, no outlines, no anti-aliasing. Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.
 ```
 
-## Rhinoco — `npc-arena-duelo`
+## Tuska — `npc-arena-duelo`
 
 - área `arena` · forma `rookie` · semente `29092026` (0 rejeitada(s) por paleta)
 - eixos: elemento `terra` · papel `fisico` · alinhamento `poder` · reino `picos`
