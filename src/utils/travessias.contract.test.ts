@@ -162,8 +162,8 @@ describe('(d) o formato: nada distingue a versão pequena, nada paga, o save só
   });
 
   it('CrossingsState guarda só regiões, id do desafio, dias e o interruptor (04 R-4)', () => {
-    expect(campos(corpo('CrossingsState')).sort()).toEqual(['active', 'destination', 'hidden', 'opened', 'pending'].sort());
-    expect(Object.keys(CROSSINGS_EMPTY).sort()).toEqual(['active', 'destination', 'hidden', 'opened', 'pending'].sort());
+    expect(campos(corpo('CrossingsState')).sort()).toEqual(['active', 'destination', 'doneDay', 'hidden', 'opened', 'pending'].sort());
+    expect(Object.keys(CROSSINGS_EMPTY).sort()).toEqual(['active', 'destination', 'doneDay', 'hidden', 'opened', 'pending'].sort());
   });
 });
 
@@ -173,7 +173,9 @@ describe('(e) a folha do Passeio', () => {
   const estados: Array<[string, CrossingsState]> = [
     ['vazio', CROSSINGS_EMPTY],
     ['ativa', pickCrossing(CROSSINGS_EMPTY, R1.id, R1.challenges[0].id)],
-    ['pendentes', markDone(pickCrossing(markDone(pickCrossing(CROSSINGS_EMPTY, R1.id, R1.challenges[0].id)), R2.id, R2.challenges[1].id))],
+    ['pendentes', markDone(pickCrossing(markDone(pickCrossing(CROSSINGS_EMPTY, R1.id, R1.challenges[0].id), '2026-09-30'), R2.id, R2.challenges[1].id), '2026-10-01')],
+    ['ativa feita hoje', markDone(pickCrossing(CROSSINGS_EMPTY, R1.id, R1.challenges[0].id), '2026-10-02')],
+    ['ativa em região aberta', pickCrossing({ ...CROSSINGS_EMPTY, opened: [{ region: R1.id, day: '2026-09-01' }] }, R1.id, R1.challenges[1].id)],
     ['aberta + destino', setDestination({ ...CROSSINGS_EMPTY, opened: [{ region: R1.id, day: '2026-09-01' }] }, R1.id)],
     ['escondida', { ...CROSSINGS_EMPTY, hidden: true }],
   ];
@@ -189,18 +191,16 @@ describe('(e) a folha do Passeio', () => {
   for (const language of ['en-US', 'pt-BR'] as const) {
     for (const [nome, crossings] of estados) {
       it(`${language} · ${nome}: sem contagem, percentual, unlock, prazo, prêmio nem "desafio"`, () => {
-        const { container } = render(createElement(PasseioSheet, { language, crossings, onChange: () => {} }));
-        // Abre a névoa (se houver) e o "Trocar" (se houver) para varrer TODO texto alcançável.
-        const nevoa = container.querySelector<HTMLButtonElement>('[data-nevoa] button');
-        if (nevoa) fireEvent.click(nevoa);
+        const { container } = render(createElement(PasseioSheet, { language, crossings, onChange: () => {}, todayKey: '2026-10-02' }));
         let texto = container.textContent ?? '';
+        // F2 (02/10/2026): "todas" ficam no modal — abre e varre TODO texto alcançável.
+        const trocar = container.querySelector<HTMLButtonElement>('[data-travessia-trocar]');
+        if (trocar) { fireEvent.click(trocar); texto += container.textContent ?? ''; }
         // H12 (01/10/2026): as propostas são cards FECHADOS — abre um por um para varrer o texto de dentro.
         for (const abrir of Array.from(container.querySelectorAll<HTMLButtonElement>('[data-travessia-abrir]'))) {
           fireEvent.click(abrir);
           texto += container.textContent ?? '';
         }
-        const trocar = container.querySelector<HTMLButtonElement>('[data-travessia-trocar]');
-        if (trocar) { fireEvent.click(trocar); texto += container.textContent ?? ''; }
         for (const [regra, re] of PROIBIDO_NA_TELA) expect(texto, regra).not.toMatch(re);
         const seguranca = container.querySelector('[data-travessias-seguranca]');
         if (crossings.hidden) {

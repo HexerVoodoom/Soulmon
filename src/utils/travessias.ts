@@ -9,7 +9,7 @@
  *
  * O que este arquivo garante (e o que os testes travam):
  *  - A Travessia é opt-in, sem prazo e sem data: a ativa não envelhece, e o
- *    "Fiz" guardado (`pending`) nunca expira.
+ *    "Fiz" guardado (`pending`) nunca expira. O "Fiz" é UM POR DIA (`doneDay`).
  *  - "Trocar" escolhe entre os MESMOS três desafios da região (os do
  *    catálogo): nada aqui sorteia desafio.
  *  - No máximo `REGIONS_OPENED_PER_DAY` região se abre por noite, e só na
@@ -59,32 +59,59 @@ export function activeChallenge(s: CrossingsState): { region: Region; challenge:
   return region && challenge ? { region, challenge } : null;
 }
 
+/** Toda região fora a casa, na ordem do catálogo — o que o modal "todas" lista. */
+export const crossingRegions = (): Region[] => REGIONS.filter(r => r.id !== HOME_REGION);
+
 /**
- * Escolhe uma Travessia. Só para região em névoa (não aberta, sem "Fiz"
- * guardado) e só entre os desafios DELA. Substitui a ativa — trocar não custa
- * nada. Qualquer pedido inválido devolve o MESMO estado.
+ * Escolhe uma Travessia, entre os desafios de qualquer região fora a casa
+ * (F5, 02/10/2026: como ela se repete todo dia, escolher uma de região já
+ * aberta é legítimo — o ato vale por si). Substitui a ativa — trocar não custa
+ * nada, e o `doneDay` NÃO zera (o "Fiz" é um por dia, não um por Travessia).
+ * Qualquer pedido inválido devolve o MESMO estado.
  */
 export function pickCrossing(s: CrossingsState, regionId: RegionId, challengeId: string): CrossingsState {
-  if (isRegionOpen(s, regionId) || s.pending.includes(regionId)) return s;
   const region = regionById(regionId);
   if (!region || !region.challenges.some(c => c.id === challengeId)) return s;
   if (s.active?.region === regionId && s.active.challenge === challengeId) return s;
   return { ...s, active: { region: regionId, challenge: challengeId } };
 }
 
-/** "Deixar pra lá": sem custo, sem marca. */
+/**
+ * "Recuar" (antes "Deixar pra lá"): sem custo, sem marca. Só solta a ativa;
+ * região aberta, "Fiz" guardado e `doneDay` ficam como estão.
+ */
 export const dropCrossing = (s: CrossingsState): CrossingsState =>
   s.active === null ? s : { ...s, active: null };
 
+/** O "Fiz" de hoje já foi dado (`dayKey` é o dia do jogador)? */
+export const doneToday = (s: CrossingsState, dayKey: string): boolean => s.doneDay === dayKey;
+
 /**
- * "Fiz": a ativa vira `pending` (sem data — nunca expira) e sai de cena. Não
- * abre nada agora: a região abre na próxima noite (`settleNight`). Idempotente.
+ * O que um "Fiz" muda NO MAPA, para a folha contar a verdade sem inventar
+ * número: 'abre' = a região da ativa ainda está na névoa (o "Fiz" a guarda e
+ * ela abre na próxima noite disponível); 'guardada' = já guardada, espera a
+ * vez; 'aberta' = já está no mapa, repetir não muda mais nada além do ato.
  */
-export function markDone(s: CrossingsState): CrossingsState {
-  if (!s.active) return s;
+export function crossingYield(s: CrossingsState, region: RegionId): 'abre' | 'guardada' | 'aberta' {
+  if (isRegionOpen(s, region)) return 'aberta';
+  return s.pending.includes(region) ? 'guardada' : 'abre';
+}
+
+/**
+ * "Fiz" — UMA VEZ POR DIA do jogador (F5, 02/10/2026; antes era uma vez por
+ * Travessia). A ativa NÃO sai de cena: continua lá para o dia seguinte. Se a
+ * região dela ainda está na névoa, vai para `pending` (sem data, nunca expira);
+ * não abre nada agora — a região abre na próxima noite (`settleNight`, teto
+ * `REGIONS_OPENED_PER_DAY`). Repetir em outro dia não rende nada novo no mapa:
+ * a repetição diária não é farmável (o único ganho é finito e limitado a 1
+ * região por noite). Idempotente no mesmo dia: devolve o MESMO objeto.
+ * `dayKey` vem do relógio do jogador (o mesmo do resto do app).
+ */
+export function markDone(s: CrossingsState, dayKey: string): CrossingsState {
+  if (!s.active || s.doneDay === dayKey) return s;
   const { region } = s.active;
-  if (isRegionOpen(s, region) || s.pending.includes(region)) return { ...s, active: null };
-  return { ...s, active: null, pending: [...s.pending, region] };
+  const guarda = !isRegionOpen(s, region) && !s.pending.includes(region);
+  return { ...s, doneDay: dayKey, ...(guarda ? { pending: [...s.pending, region] } : {}) };
 }
 
 /**
