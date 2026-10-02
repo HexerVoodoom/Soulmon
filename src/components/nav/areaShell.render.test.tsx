@@ -92,7 +92,8 @@ describe('AreaSheet', () => {
     expect(dlg.contains(close)).toBe(true);
     expect(card.contains(close)).toBe(false);
     expect(close.style.position).toBe('absolute');
-    expect(close.style.left).toBe('16px');
+    // H9: o ✕ mora na MESMA âncora lateral do voltar/casinha (`cornerAnchor.ts`)
+    expect(close.style.left).toContain('--sm2-space-3');
     expect(close.compareDocumentPosition(npcZone) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     const npc = container.querySelector('[data-area-sheet-npc]');
     expect(npc).not.toBeNull();

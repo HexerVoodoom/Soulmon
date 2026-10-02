@@ -1,4 +1,5 @@
 import { PixelIcon } from '../ui/PixelIcon';
+import { CORNER_BOX, CORNER_BOX_TOP, CORNER_SIDE, CORNER_GLOW, CORNER_RING_STYLE } from './cornerAnchor';
 
 /**
  * O LINK DE CANTO — a única navegação entre as duas telas de topo.
@@ -15,13 +16,15 @@ import { PixelIcon } from '../ui/PixelIcon';
  * `home.png`, `assets/soulmon/icones-ui`) — até a correção pós-F3 era um glifo
  * vetorial de linha fina no lugar dela, por engano.
  */
-export function CornerLink({ icon, label, side, onClick, glow = false, ring = false }: {
+export function CornerLink({ icon, label, side, onClick, glow = true, ring = false }: {
   icon: 'mapa' | 'home';
   label: string;
   side: 'left' | 'right';
   onClick: () => void;
-  /** Brilho sutil (F3, mock do Mapa): a casa recebe um halo leve para não
-   *  sumir no canto vinhetado sobre a arte isométrica. */
+  /** Brilho claro (F3, mock do Mapa), `true` por padrão desde H9 (02/10/2026):
+   *  a casinha PERDEU o brilho quando o anel entrou — agora a casinha e o ícone
+   *  do Mapa o têm sempre, para ler sobre qualquer fundo. A âncora (posição e
+   *  tamanho) mora em `cornerAnchor.ts`, compartilhada com o voltar das áreas. */
   glow?: boolean;
   /** C14 (navegação do dono, 01/10/2026): o MESMO anel do voltar-ao-mapa das
    *  áreas (`AreaTopBar` sobre a cena: círculo de 44, borda 2px clara). Só o
@@ -40,26 +43,21 @@ export function CornerLink({ icon, label, side, onClick, glow = false, ring = fa
       className="sm2-corner-link"
       style={{
         position: 'fixed',
-        top: 'calc(env(safe-area-inset-top, 0px) + 6px)',
-        [side]: 'var(--sm2-space-3)',
+        top: CORNER_BOX_TOP,
+        [side]: CORNER_SIDE,
         zIndex: 45,
-        width: 56, height: 56,
+        width: CORNER_BOX, height: CORNER_BOX,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         background: 'transparent', border: 'none', padding: 0, cursor: 'pointer',
         color: 'var(--sm2-primary-ink)',
-        filter: glow ? 'drop-shadow(0 0 6px rgba(95, 243, 224, 0.45))' : undefined,
+        filter: glow ? CORNER_GLOW : undefined,
       }}
     >
       {ring ? (
         <span
           aria-hidden="true"
           data-corner-ring
-          style={{
-            width: 44, height: 44, boxSizing: 'border-box',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            border: '2px solid rgba(233,245,242,.6)',
-            borderRadius: '50%',
-          }}
+          style={CORNER_RING_STYLE}
         >
           <PixelIcon name={icon} size={32} />
         </span>
