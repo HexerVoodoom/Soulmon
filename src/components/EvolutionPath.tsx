@@ -37,7 +37,8 @@ import { spriteFailText, spriteText } from '../utils/spriteCopy';
 import { pointsToEvolve } from '../utils/spriteTrigger';
 import { creatureFormId, type CreatureStage, type LText } from '../utils/oracle';
 import { AVAILABLE_BRANCHES, clampBranch, canReachUltra, ULTRA_PATIENCE_DAYS } from '../types/progression';
-import { ALIGN_TO_ATTR, ATTR_LABEL } from '../types/attributes';
+import { ALIGN_TO_ATTR, ATTR_LABEL, ATTR_COLOR, ATTR_INK } from '../types/attributes';
+import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
 /* A varredura de 400 ms mudou de casa: o dono dela é o dono do visor
    (`ui/Viewport.tsx`), porque a spec pede a MESMA sintonia em dois call-sites
    — esta página e o visor da Home (`CompanionHUD`). Hook duplicado com um
@@ -61,6 +62,15 @@ type Attr = 'power' | 'harmony' | 'benevolence';
 // ALIGN_TO_ATTR mudou para types/attributes.ts quando o EvoTrail da Home
 // passou a precisar do mesmo mapa (footgun 9: cópia diverge em silêncio).
 const ATTR_ORDER: Attr[] = ['power', 'harmony', 'benevolence'];
+
+/** I11 (02/10/2026): cada caminho tem COR (`ATTR_COLOR` p/ glifo/linha,
+ *  `ATTR_INK` p/ texto — fonte única, nenhum token novo) e GLIFO (o desenho
+ *  único de `AlignmentIcons`, 20px da escala). Decorativo: o nome vem em texto. */
+function AttrGlyph({ attr, size = 20 }: { attr: Attr; size?: 20 | 24 }) {
+  const c = ATTR_COLOR[attr];
+  const Glyph = attr === 'power' ? PowerIcon : attr === 'harmony' ? HarmonyIcon : BenevolenceIcon;
+  return <span aria-hidden="true" style={{ display: 'inline-flex', flex: 'none' }}><Glyph size={size} color={c} /></span>;
+}
 
 interface EvolutionPathProps {
   /** Id da forma atual ('rookie' | 'champion-power' | ... | 'ultra'). */
@@ -644,6 +654,7 @@ export function EvolutionPath({
     const stageId = creatureFormId(evolution);
     const isCurrent = stageId === currentStageId;
     const isUltra = evolution.stage === 'ultra';
+    const ramoAttr: Attr | null = !isUltra && evolution.stage !== 'rookie' && evolution.branch ? ALIGN_TO_ATTR[evolution.branch] : null;
     const isUltraMode = isUltra && !podeChegarAoUltra;
     const isRevealed = revealed.has(stageId);
     // "Reached" (shown) = the current form, an already-unlocked form, the
@@ -728,7 +739,12 @@ export function EvolutionPath({
     return (
       <article
         key={stageId}
-        style={{ ...card, padding: 12, display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: isLast ? 0 : 8 }}
+        style={{
+          ...card, padding: 12, display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: isLast ? 0 : 8,
+          // I11: o ramo leva a COR do caminho (filete à esquerda). Tronco
+          // (rookie) e Ultra são de todos os caminhos: ficam neutros.
+          ...(ramoAttr ? { borderInlineStart: `4px solid ${ATTR_COLOR[ramoAttr]}` } : null),
+        }}
         data-testid={`sm-no-${stageId}`}
       >
         <SoulNode
@@ -745,7 +761,12 @@ export function EvolutionPath({
           <p style={{ ...sm2Text, fontWeight: 500, margin: 0, color: isReached ? 'var(--sm2-ink)' : 'var(--sm2-muted)' }}>
             {hidden ? '???' : evolution.name}
           </p>
-          {!hidden && <p style={sm2Hint}>{L(evolution.stageName)}</p>}
+          {!hidden && (
+            <p style={{ ...sm2Hint, display: 'flex', alignItems: 'center', gap: 4 }}>
+              {ramoAttr && <AttrGlyph attr={ramoAttr} />}
+              <span style={ramoAttr ? { color: ATTR_INK[ramoAttr] } : undefined}>{L(evolution.stageName)}</span>
+            </p>
+          )}
           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
             {isCurrent && tag(isPt ? 'ATUAL' : 'CURRENT', 'current')}
             {isForecast && tag(isPt ? 'PREVISTA' : 'FORECAST')}
@@ -1253,8 +1274,9 @@ export function EvolutionPath({
             Chips de SELEÇÃO (`role=radio`, canvas `EvoArvore`): 44, pílula,
             `surface-2` + fronteira `muted`; selecionado `primary-soft` +
             `primary-ink` — o mesmo idioma da sub-aba ativa e do cadeado
-            segurado. A cor do atributo saiu do botão: a informação é o
-            RÓTULO, e o galho previsto é dito em palavras logo acima. */}
+            segurado. I11 (02/10): a cor e o glifo do caminho VOLTARAM ao
+            botão (pedido do dono) — o RÓTULO continua sendo o portador da
+            informação (WCAG 1.4.1); cor/glifo são identidade. */}
         <div role="radiogroup" aria-label={isPt ? 'Linha de evolução' : 'Evolution branch'} style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
           {(AVAILABLE_BRANCHES as readonly Attr[]).map(b => {
             const active = selectedBranch === b;
@@ -1267,16 +1289,19 @@ export function EvolutionPath({
                 onClick={() => setSelectedBranch(b)}
                 className="sm2-form-chip"
                 style={{
-                  flex: 1, minWidth: 0, minHeight: 44, padding: '0 6px', borderRadius: 999,
+                  flex: 1, minWidth: 0, minHeight: 44, padding: '0 6px', borderRadius: 999, gap: 4,
                   boxSizing: 'border-box', cursor: 'pointer', whiteSpace: 'nowrap',
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                  fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm)', fontWeight: 500,
+                  fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm)', fontWeight: active ? 600 : 500,
                   lineHeight: 'var(--sm2-leading-body)',
-                  border: `1px solid ${active ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)'}`,
-                  backgroundColor: active ? 'var(--sm2-primary-soft)' : 'var(--sm2-surface-2)',
-                  color: active ? 'var(--sm2-primary-ink)' : 'var(--sm2-ink)',
+                  border: `${active ? 2 : 1}px solid ${ATTR_COLOR[b]}`,
+                  backgroundColor: active
+                    ? `color-mix(in srgb, ${ATTR_COLOR[b]} 16%, var(--sm2-surface-2))`
+                    : 'var(--sm2-surface-2)',
+                  color: ATTR_INK[b],
                 }}
               >
+                <AttrGlyph attr={b} />
                 {L(ATTR_LABEL[b])}
               </button>
             );
