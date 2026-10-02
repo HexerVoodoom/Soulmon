@@ -1,6 +1,7 @@
 import { useState, type CSSProperties, type ReactNode } from 'react';
 import { bitsStyle, emblemStyle, BITS_EXCHANGE, CREDIT_COLOR, CREDIT_TO_BITS, EMBLEMS_PER_LOSS, EMBLEMS_PER_WIN, MINIGAME_BITS_PER_DAY, type CurrencyId } from '../../utils/currencies';
 import { Icon } from '../ui/Icon';
+import { BackArrow } from '../ui/BackArrow';
 import { MiniGlass } from '../ui/MiniGlass';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import type { ShopItem } from '../../utils/shop';
@@ -9,7 +10,8 @@ import { DECOR_ART } from '../../utils/decorArt';
 import { ITEM_ART } from '../../utils/itemArt';
 import { MISSIONS, isShopItemUnlocked } from '../../utils/missions';
 import { itemCurrency } from '../../utils/mercadoCatalog';
-import { decorFitsSetting, type SlotId } from '../../utils/petStage';
+import type { SlotId } from '../../utils/petStage';
+import { decorBlockReason, decorReasonText, decorRuleText } from '../../utils/decorRules';
 import type { WeeklyMission, WeeklyMissionId } from '../../utils/weeklyMissions';
 import type { Language } from '../../utils/i18n';
 
@@ -183,7 +185,7 @@ export interface ShopActions {
  * recusa item de outra moeda (ele seria julgado contra o saldo errado).
  */
 export function ShopShelf({
-  language, items, currency, balance, ownership, actions, say, flash, emptyHint,
+  language, items, currency, balance, ownership, actions, say, flash, emptyHint, hideDecorRule = false,
 }: {
   language: Language;
   items: ShopItem[];
@@ -194,6 +196,8 @@ export function ShopShelf({
   say: (id: string, ok: boolean, msg: ReactNode) => void;
   flash: ShopFlash | null;
   emptyHint?: string;
+  /** A lojinha de Decoração já desenha a regra no topo da folha. */
+  hideDecorRule?: boolean;
 }) {
   const isPt = language === 'pt-BR';
   const { ownedBackgrounds, equippedBackground, ownedFurniture, equippedDecor, missionProgress } = ownership;
@@ -202,6 +206,8 @@ export function ShopShelf({
   const shelf = items.filter(i => itemCurrency(i) === currency);
   /** Item que a pessoa tocou sem saldo — abre o "como conseguir" (H8). */
   const [need, setNeed] = useState<ShopItem | null>(null);
+  /** Item tocado COM saldo — espera o "Confirmar" (D1, 02/10/2026). */
+  const [confirming, setConfirming] = useState<ShopItem | null>(null);
 
   const isOwned = (item: ShopItem) =>
     (item.kind === 'bg' && ownedBackgrounds.includes(item.id))
@@ -217,6 +223,14 @@ export function ShopShelf({
     // H8: sem saldo, a compra nem é tentada — abre o modalzinho que diz de
     // onde vem a moeda (as regras reais, lidas das constantes dos donos).
     if (balance < item.price) { setNeed(item); return; }
+    // D1 (02/10/2026, navegação do dono): o toque NÃO compra mais — abre a
+    // confirmação (custo + saldo depois). A compra de fato é `confirmBuy`.
+    setConfirming(item);
+  };
+
+  const confirmBuy = (item: ShopItem) => {
+    const name = isPt ? item.namePt : item.nameEn;
+    setConfirming(null);
     const ok = actions.onBuy(item.id);
     say(item.id, ok, ok
       ? (isPt ? `${name} comprado.` : `${name} purchased.`)
@@ -271,9 +285,8 @@ export function ShopShelf({
       : null;
     const equipped = owned && equippedId === item.id;
     const stageBg = equippedBackground ? PET_BACKGROUNDS[equippedBackground] : null;
-    const showsHere = item.kind !== 'furniture' || !item.slot || !stageBg
-      ? true
-      : stageBg.slots.includes(item.slot) && decorFitsSetting(item.fits ?? 'any', stageBg.setting);
+    // D2 (02/10/2026): o MOTIVO de a peça não aparecer no cenário atual, na linha do item.
+    const blocked = item.kind === 'furniture' ? decorBlockReason(item, stageBg) : null;
     const isEmblem = currency === 'emblems';
     const affordable = balance >= item.price;
     const name = isPt ? item.namePt : item.nameEn;
@@ -288,7 +301,6 @@ export function ShopShelf({
       : null;
 
     const sub = !unlocked ? lockLine(item)
-      : equipped && !showsHere ? (isPt ? 'Não aparece no cenário atual' : "Doesn't show in the current scene")
       : (isPt ? item.descPt : item.descEn);
 
     return (
@@ -319,6 +331,9 @@ export function ShopShelf({
         <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
           <span style={{ ...sm2Text, fontWeight: 500, color: unlocked ? 'var(--sm2-ink)' : 'var(--sm2-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
           {sub && <span style={sm2Hint}>{sub}</span>}
+          {unlocked && blocked && (
+            <span data-decor-reason={blocked} style={{ ...sm2Hint, color: 'var(--sm2-gold-ink)' }}>{decorReasonText(blocked, isPt)}</span>
+          )}
           {equipped && (
             <span style={{ ...shopTagStyle, alignSelf: 'flex-start', marginTop: 2, color: 'var(--sm2-primary-ink)' }}>
               <Icon name="check_circle" size={ICON_TAG} fill={1} tone="primary" />
@@ -351,6 +366,7 @@ export function ShopShelf({
 
   return (
     <div data-shop-shelf={currency} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sm2-space-2, 8px)' }}>
+      {!hideDecorRule && shelf.some(i => i.kind === 'furniture') && <DecorRuleLine language={language} />}
       {shelf.length === 0
         ? <p style={{ ...sm2Hint, textAlign: 'center', padding: '16px 0', margin: 0 }}>{emptyHint ?? (isPt ? 'Nada por aqui ainda.' : 'Nothing here yet.')}</p>
         : (
@@ -369,8 +385,101 @@ export function ShopShelf({
             </section>
           </>
         )}
+      <PurchaseConfirmSheet
+        open={!!confirming}
+        language={language}
+        question={confirming
+          ? <PurchaseQuestion name={isPt ? confirming.namePt : confirming.nameEn} price={confirming.price} currency={currency} isPt={isPt} />
+          : null}
+        balance={balance}
+        cost={confirming?.price ?? 0}
+        currency={currency}
+        onCancel={() => setConfirming(null)}
+        onConfirm={() => { if (confirming) confirmBuy(confirming); }}
+      />
       <HowToEarnSheet item={need} currency={currency} language={language} onClose={() => setNeed(null)} />
     </div>
+  );
+}
+
+/**
+ * A REGRA DA DECORAÇÃO, no topo da tela (D2, 02/10/2026): quantas peças cabem
+ * e onde elas aparecem. Texto único (`utils/decorRules.ts`) para a loja e para
+ * a loja de Honra do Torneio dizerem a mesma coisa.
+ */
+export function DecorRuleLine({ language }: { language: Language }) {
+  const t = decorRuleText(language === 'pt-BR');
+  return (
+    <div data-decor-rule style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <p style={{ ...sm2Text, margin: 0, fontWeight: 500 }}>{t.limit}</p>
+      <p style={{ ...sm2Hint, margin: 0 }}>{t.scenes}</p>
+    </div>
+  );
+}
+
+/** Nome da moeda, para a linha de saldo da confirmação. */
+function unitName(currency: CurrencyId, isPt: boolean): string {
+  if (currency === 'emblems') return isPt ? 'Honra' : 'Honor';
+  if (currency === 'credits') return isPt ? 'Créditos' : 'Credits';
+  return 'Bits';
+}
+
+/** "Comprar X por N Bits?" — a pergunta da confirmação (D1). */
+export function PurchaseQuestion({ name, price, currency, isPt }: {
+  name: string; price: number; currency: CurrencyId; isPt: boolean;
+}) {
+  return (
+    <>
+      {isPt ? 'Comprar ' : 'Buy '}<strong>{name}</strong>{isPt ? ' por ' : ' for '}
+      <span className="sm2-num">{price}</span> {unitName(currency, isPt)}?
+    </>
+  );
+}
+
+/**
+ * D1 (02/10/2026, navegação do dono) — CONFIRMAR A COMPRA. Comprar no Mercado
+ * deixou de ser um toque só: o card abre esta folha com a pergunta, o custo e
+ * o saldo antes e depois, e só o "Confirmar" gasta. É o mesmo vocabulário do
+ * "como conseguir" (L10): informação sóbria, sem urgência. Cancelar e a seta
+ * de voltar (padrão do app) fecham sem gastar nada. Vale para item, decoração,
+ * cenário e para a troca de Créditos — qualquer saída de moeda do Mercado.
+ *
+ * Só abre com saldo: o caso sem saldo continua sendo o "como conseguir".
+ */
+export function PurchaseConfirmSheet({ open, language, question, balance, cost, currency, onCancel, onConfirm }: {
+  open: boolean;
+  language: Language;
+  question: ReactNode;
+  /** Saldo da moeda que paga, antes da compra. */
+  balance: number;
+  cost: number;
+  currency: CurrencyId;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  const isPt = language === 'pt-BR';
+  const unit = unitName(currency, isPt);
+  const row: CSSProperties = { ...sm2Text, margin: 0, display: 'flex', justifyContent: 'space-between', gap: 12 };
+  return (
+    <ModalSheet open={open} title={isPt ? 'Confirmar compra' : 'Confirm purchase'} onClose={onCancel} language={language} maxWidth={420}>
+      <div data-purchase-confirm style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <BackArrow onClick={onCancel} language={language} style={{ margin: '-8px 0 -4px -10px' }} />
+        <p data-purchase-question style={{ ...sm2Text, margin: 0, fontWeight: 500 }}>{question}</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <p style={row}><span style={sm2Hint}>{isPt ? 'Custo' : 'Cost'}</span><span className="sm2-num" data-purchase-cost>{cost} {unit}</span></p>
+          <p style={row}><span style={sm2Hint}>{isPt ? 'Saldo agora' : 'Balance now'}</span><span className="sm2-num">{balance} {unit}</span></p>
+          <p style={row}><span style={sm2Hint}>{isPt ? 'Saldo depois' : 'Balance after'}</span><span className="sm2-num" data-purchase-after>{Math.max(0, balance - cost)} {unit}</span></p>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button type="button" data-purchase-cancel onClick={onCancel} style={{ ...sm2Button('outline'), flex: 1 }}>
+            {isPt ? 'Cancelar' : 'Cancel'}
+          </button>
+          <button type="button" data-purchase-ok onClick={onConfirm} style={{ ...sm2Button('primary'), flex: 1 }}>
+            {isPt ? 'Confirmar' : 'Confirm'}
+          </button>
+        </div>
+      </div>
+    </ModalSheet>
   );
 }
 
@@ -459,6 +568,17 @@ export function CreditExchange({ language, credits, onExchangeCredits, say }: {
 }) {
   const isPt = language === 'pt-BR';
   const [exchanging, setExchanging] = useState<number | null>(null);
+  /** Pacote tocado — a troca gasta Créditos, então também espera o "Confirmar" (D1). */
+  const [pending, setPending] = useState<(typeof BITS_EXCHANGE)[number] | null>(null);
+  const doExchange = async (pack: (typeof BITS_EXCHANGE)[number]) => {
+    setPending(null);
+    setExchanging(pack.credits);
+    let ok = false;
+    try { ok = await onExchangeCredits(pack.credits); } finally { setExchanging(null); }
+    say(`exch-${pack.credits}`, ok, ok
+      ? <><Bits value={pack.bits} sign="+" />.</>
+      : (isPt ? 'A troca não foi concluída. Tente de novo.' : 'The swap did not go through. Try again.'));
+  };
   return (
     <div data-credit-exchange style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 4 }}>
       <p style={{ ...sm2Text, margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -478,14 +598,7 @@ export function CreditExchange({ language, credits, onExchangeCredits, say }: {
             disabled={!can}
             aria-busy={busy || undefined}
             aria-label={isPt ? `Trocar ${pack.credits} Créditos por ${pack.bits} Bits` : `Swap ${pack.credits} Credits for ${pack.bits} Bits`}
-            onClick={async () => {
-              setExchanging(pack.credits);
-              let ok = false;
-              try { ok = await onExchangeCredits(pack.credits); } finally { setExchanging(null); }
-              say(`exch-${pack.credits}`, ok, ok
-                ? <><Bits value={pack.bits} sign="+" />.</>
-                : (isPt ? 'A troca não foi concluída. Tente de novo.' : 'The swap did not go through. Try again.'));
-            }}
+            onClick={() => setPending(pack)}
             style={{ ...sm2Button('outline', !can), width: '100%', gap: 8 }}
           >
             {busy && <Icon name="sync" size={ICON_INLINE} tone="muted" />}
@@ -496,6 +609,21 @@ export function CreditExchange({ language, credits, onExchangeCredits, say }: {
           </button>
         );
       })}
+      <PurchaseConfirmSheet
+        open={!!pending}
+        language={language}
+        question={pending
+          ? <>
+              {isPt ? 'Trocar ' : 'Swap '}<span className="sm2-num">{pending.credits}</span>
+              {isPt ? ' Créditos por ' : ' Credits for '}<span className="sm2-num">{pending.bits}</span> Bits?
+            </>
+          : null}
+        balance={credits}
+        cost={pending?.credits ?? 0}
+        currency="credits"
+        onCancel={() => setPending(null)}
+        onConfirm={() => { if (pending) void doExchange(pending); }}
+      />
     </div>
   );
 }

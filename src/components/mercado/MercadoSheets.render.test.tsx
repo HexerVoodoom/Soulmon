@@ -47,6 +47,9 @@ describe('compra', () => {
     const onBuy = vi.fn(() => true);
     const { container } = abrir({ stall: 'itens', onBuy });
     fireEvent.click(screen.getByRole('button', { name: `${chip.nameEn} — ${chip.price} Bits` }));
+    // D1 (02/10/2026): o toque abre a confirmação; só o Confirmar compra.
+    expect(onBuy).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
     expect(onBuy).toHaveBeenCalledWith(chip.id);
     expect(container.querySelector('[role="status"]')!.textContent).toBe(`${chip.nameEn} purchased.`);
   });
@@ -164,6 +167,7 @@ describe('moeda certa por aba', () => {
     abrir({ stall: 'decoracao', onBuy });
     fireEvent.click(screen.getByRole('tab', { name: 'Honor' }));
     fireEvent.click(screen.getByRole('button', { name: `${emblemFurn.nameEn} — ${emblemFurn.price} Honor` }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
     expect(onBuy).toHaveBeenCalledWith(emblemFurn.id);
   });
 
@@ -283,7 +287,9 @@ describe('L4 M4: "Do bosque" no TOPO do segmento, antes dos ~20 cenários da loj
   it('Decoração: a Concha da Maré também vem antes da lista; sem nada na posse, silêncio (nem o título)', () => {
     const { container, unmount } = abrir({ stall: 'decoracao', ownedFurniture: ['trophy-concha-mare'] });
     const stall = container.querySelector('[data-mercado-stall]') as HTMLElement;
-    expect(stall.children[1]).toBe(container.querySelector('[data-guild-owned="furniture"]'));
+    // children[1] é a regra da decoração (D2, 02/10/2026); a roda vem logo depois, antes da lista.
+    expect(stall.children[1]).toBe(container.querySelector('[data-decor-rule]'));
+    expect(stall.children[2]).toBe(container.querySelector('[data-guild-owned="furniture"]'));
     unmount();
     const vazio = abrir({ stall: 'decoracao' });
     expect(vazio.container.querySelector('[data-guild-owned]')).toBeNull();
