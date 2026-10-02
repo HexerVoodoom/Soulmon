@@ -90,6 +90,14 @@ describe('a partir do Vínculo 5 o Desafiar abre, sem passo nenhum antes', () =>
     await waitFor(() => expect(buscouOponentes()).toBe(true));
   });
 
+  it('TORC-5: quem saiu da lista pública lê "Você está oculto da lista pública" (e continua com o Desafiar)', async () => {
+    render(<TournamentPage {...props} ocultoDaLista totalXP={xpForLevel(BOND_PVP_MIN_LEVEL)} />);
+    const aviso = document.querySelector('[data-torneio-aviso-publico]')?.textContent ?? '';
+    expect(aviso).toMatch(/oculto da lista pública/);
+    expect(aviso).not.toMatch(/aparecem numa lista/);
+    await waitFor(() => expect(buscouOponentes()).toBe(true));
+  });
+
   it('o aviso está em inglês quando o idioma é inglês', () => {
     render(<TournamentPage {...props} language="en-US" totalXP={xpForLevel(BOND_PVP_MIN_LEVEL)} />);
     expect(screen.getByText(/public list/i)).toBeTruthy();

@@ -276,6 +276,11 @@ export interface GameState {
   /** WP4.19 — exibir a marca da volta é escolha do jogador (padrão: não).
    *  O app não decide contar isso por ninguém. */
   showRedeemed?: boolean;
+  /** TORC-5 (02/10/2026) — opt-out da lista PÚBLICA do Torneio (apelido +
+   *  Soulmon). `true` = a pessoa saiu. O padrão é APARECER (ausente = false):
+   *  o sistema inteiro assume PvP automático, e quem quiser sai em
+   *  Configurações → Seus dados. O servidor é quem faz valer (`publicHidden`). */
+  hideFromPublicList?: boolean;
   currentBranch: 'power' | 'harmony' | 'benevolence';
   lastDayWasPerfect: boolean;
   maxActivityCap: number;
@@ -1027,6 +1032,9 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
           : [],
         redeemed: loadedState.redeemed === true,
         showRedeemed: loadedState.showRedeemed === true,
+        // Só `true` literal esconde: string "false", 1 ou lixo não podem tirar
+        // alguém da lista nem, pior, deixar a pessoa achando que saiu.
+        hideFromPublicList: loadedState.hideFromPublicList === true,
         // Enum de 3 valores: qualquer outra coisa cairia em `getStageLevel`/
         // sprites como galho inexistente.
         currentBranch: (loadedState.currentBranch === 'power' || loadedState.currentBranch === 'harmony'
@@ -1622,6 +1630,9 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         stage: gameState.evolutionStage,
         unlockedStages: gameState.unlockedEvolutions,
         pvpEnabled: !!gameState.pvpEnabled,
+        // Sempre enviado (inclusive `false`): é assim que o servidor RETIRA ou
+        // devolve o registro público na hora da troca (TORC-5).
+        publicHidden: gameState.hideFromPublicList === true,
         attrs: { power: gameState.powerPoints, harmony: gameState.harmonyPoints, benevolence: gameState.benevolencePoints },
         tasksDone: gameState.completedTasks?.length ?? 0,
       }).then(resposta => {
