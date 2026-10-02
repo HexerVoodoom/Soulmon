@@ -47,7 +47,7 @@ import npcJogosMente from './npc-jogos-mente.png';
 import npcJogosRefugio from './npc-jogos-refugio.png';
 import npcMercadoConquistas from './npc-mercado-conquistas.png';
 import npcHallAmigos from './npc-hall-amigos.png';
-import npcHallGuilda from './npc-hall-guilda.png';
+import npcFGuarda from './npc-f-guarda.png';
 import npcLaboratorioPet from './npc-laboratorio-pet.png';
 import npcLaboratorioStats from './npc-laboratorio-stats.png';
 import npcExploracaoPasseio from './npc-exploracao-passeio.png';
@@ -84,7 +84,7 @@ const LOT_NPC_ART: Record<string, string> = {
   'laboratorio:stats': npcLaboratorioStats, // Quill
   'hall:biblioteca': npcHall,
   'hall:amigos': npcHallAmigos, // Nino
-  'hall:guilda': npcHallGuilda, // Marla
+  'hall:guilda': npcFGuarda, // Bastia (G3, 02/10/2026: trocou a Marla-árvore; mesmo busto de EXTRA_NPC_ART.guarda)
 };
 
 import npcOnboarding from './npc-onboarding.png';
@@ -114,7 +114,6 @@ export const FUNCTION_NPC_ART: Record<FunctionNpcId, string> = {
 import npcFForja from './npc-f-forja.png';
 import npcFTreino from './npc-f-treino.png';
 import npcFCacadora from './npc-f-cacadora.png';
-import npcFGuarda from './npc-f-guarda.png';
 import npcFFeras from './npc-f-feras.png';
 import npcFCura from './npc-f-cura.png';
 import npcFMercenaria from './npc-f-mercenaria.png';
