@@ -7974,3 +7974,14 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
    barra inteira (`.sm3-term:focus-within`), que já existe. */
 .sm3-term .sm3-term-input:focus,
 .sm3-term .sm3-term-input:focus-visible { outline: 0; box-shadow: none; }
+
+/* ── Travessia marcada (02/10/2026, F4): o card "assenta" ao receber o "Fiz" —
+   um respiro curto de escala, sem som, sem brilho, sem repetir. Em
+   `prefers-reduced-motion` o card só muda de cor: o bloco canônico de
+   movimento reduzido (`*` com duração 0.01ms) já zera esta animação. */
+@keyframes sm2-travessia-assenta {
+  0%   { transform: scale(0.985); }
+  60%  { transform: scale(1.012); }
+  100% { transform: scale(1); }
+}
+.sm2-travessia-assenta { animation: sm2-travessia-assenta 360ms ease-out 1; }
