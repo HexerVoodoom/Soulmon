@@ -404,3 +404,14 @@ entram é decisão de design.
 | BOSS-1 | Onde os 24 chefes entram? (leva `poderosos`, 01/10/2026; `src/data/bossRoster.ts` + `BOSS_ART`, **sem chamada** — masmorra/arena intocadas) | Sugestão do ROSTER por função: **Torneio** Cinderhorn (preliminar) → Arauto do Fim (final; é BUSTO, não corpo inteiro) · **Corrida** Thrummer → Squallstride · **Masmorra** Orbitant (andar 3), Mycelar (4), Obsidarch (5) · **Duelo** Bladeveil → Sabrefin · **Feira** Glimmerswarm, Corallume (Bestiário) · **Ateliê** Halorune → Chorale · **Refúgio** Drifela → Hollowmere · **Passeio** Astrawing → Nebulara · **Laboratório** Voltbloom → Graftfang · **Sonhos** Duskveil, Dawnloom → Aeonyx · **Mercado** Tallyjack → Cuprex. Chefe com combate muda regra de jogo (masmorra = 6 inimigos/andar hoje) — por isso não foi ligado | Quando o dono decidir o papel de chefe em cada modo |
 | DUELO-1 | Os 6 retratos de oponente do Duelo (`utils/dueloArt.ts`, 01/10/2026) entram onde? | O oponente do Torneio é um amigo real, no estágio REAL dele — o retrato genérico apagaria essa informação, então **não foi ligado**. Sugestão: usar só num duelo contra "criatura da Arena" (sem jogador por trás), escolhendo o retrato por `dueloOponenteArt(id)` | Quando o dono decidir se existe duelo contra criatura da Arena |
 
+
+## Torcida por toques — o que o plano deixou em aberto (02/10/2026)
+
+Decisao do dono aplicada: torcida = tocar na tela + gauge + golpe especial (`REGISTRO-DE-DECISOES.md` §18). Ficou para o dono:
+
+| # | Pergunta aberta | Recomendacao (nada aplicado alem do provisorio) | Gatilho de revisao |
+|---|---|---|---|
+| TORC-1 | Quanto vale o golpe ESPECIAL no Pesadelo e na Masmorra? Hoje `TORCIDA_PVE_SPECIAL_MULT` = 2x o golpe-base (provisorio; o duelo usa 1,35x, calibrado) | Manter 2x e medir a duracao da run | A run de 5 camadas ficar longa demais ou curta demais |
+| TORC-2 | O Duelo da Arena (`ArenaGame`, contra NPCs) tambem vira torcida? Ele tem carga de especial e elementos proprios, e a conta e espelhada em `simulateArenaRun` | Nao mexer ate decidir: trocar muda a calibracao do `arena.test.ts` | O dono querer a mesma sensacao nos dois duelos |
+| TORC-3 | A esquiva (dodge) continua com a `TimingBar` no Pesadelo e na Masmorra? A decisao desativou a torcida por timing, nao a esquiva | Manter a esquiva por timing (e a unica acao ativa do dono) | A esquiva parecer cansativa ao lado da torcida |
+| TORC-4 | O Desafio do Torneio exige PvP ligado + vinculo nivel 5 + rede; o dono precisa disso para ver a torcida no Torneio | Manter o gate (privacidade/consentimento); a legenda da torcida agora aparece na aba mesmo com PvP desligado | Dono nao conseguir testar o Torneio |

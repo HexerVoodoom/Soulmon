@@ -18,16 +18,16 @@ Continuação de `AJUSTES-NAVEGACAO-2026-10-01.md`. Legenda: `[ ]` aberto · `[x
 - [ ] B6 Água do chuveiro: menos transparente e cai mais para baixo
 
 ## C. Pesadelo e combate
-- [ ] C1 Card do pesadelo: brilhos com branco em volta do recorte e uma bolinha roxa → usar uma das criaturas que já temos
-- [ ] C2 O sistema de TORCIDA revisto para o combate não aparece na Arena nem no Pesadelo → ligar
+- [x] C1 Card do pesadelo: brilhos com branco em volta do recorte e uma bolinha roxa → usar uma das criaturas que já temos
+- [x] C2 O sistema de TORCIDA revisto para o combate não aparece na Arena nem no Pesadelo → ligar — torcida por toques + gauge no Torneio, Pesadelo e Masmorra (REGISTRO §18); Duelo da Arena e dosagem do especial em PERGUNTAS-DO-DONO TORC-1..4
 
 ## D. Mercado e decoração
 - [ ] D1 Comprar item pede um modal de confirmação (hoje compra no toque)
 - [ ] D2 Decoração: deixar claro limite de itens, restrições e se algum fundo é exigido; idealmente qualquer decoração em qualquer fundo
 
 ## E. Masmorra
-- [ ] E1 Texto longo vai para um "?" (toque lê)
-- [ ] E2 "Descer mais fundo" só libera andar já alcançado antes; não dá para pular pagando
+- [x] E1 Texto longo vai para um "?" (toque lê)
+- [x] E2 "Descer mais fundo" só libera andar já alcançado antes; não dá para pular pagando
 
 ## F. Passeio / Travessias
 - [ ] F1 Cada travessia ganha ícone/ilustração além do título
@@ -40,7 +40,7 @@ Continuação de `AJUSTES-NAVEGACAO-2026-10-01.md`. Legenda: `[ ]` aberto · `[x
 - [ ] G1 Laboratório / Meu Soulmon / Observatório: tirar o Soulmon do box com gradiente (fica solto)
 - [ ] G2 Estatísticas saem de Configurações e vão para o Laboratório
 - [ ] G3 Missão da Guilda: trocar o NPC [?]
-- [ ] G4 Arena: explicar/clarear a "feira"; aumentar os prédios do duelo e do torneio
+- [x] G4 Arena: explicar/clarear a "feira"; aumentar os prédios do duelo e do torneio
 
 ## Respostas do dono
 _(preencher)_

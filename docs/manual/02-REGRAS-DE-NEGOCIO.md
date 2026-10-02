@@ -4627,23 +4627,30 @@ sendo oponente).
 `functions/api/community.js`, ações `duelStart` e `match`; a regra da luta mora em
 `functions/api/_duel.js` (`simulateDuel`, `duelStats`). Desde 30/09/2026 o
 "Desafiar" abre o **duelo fantasma** (`src/components/DuelScreen.tsx`): os dois
-pets lutam sozinhos e o dono **torce** em 3 golpes (`DUEL_CHEER_STRIKES`:
-`[1, 3, 5]`); a torcida só SOMA. ⚰️ Até então a partida era um placar sorteado:
+pets lutam sozinhos e o dono **torce** tocando em QUALQUER lugar da tela
+(`DUEL_CHEER_STRIKES`: `[1, 3, 5]` são os três golpes em que o gauge pode virar
+especial); a torcida só SOMA. ⚰️ **Desde 02/10/2026 a torcida é por TOQUES + GAUGE**
+(`REGISTRO-DE-DECISOES` §18) — a torcida por *timing* (anel que fecha sobre o alvo,
+×1 a ×1,35 pela precisão) foi trocada e ficou desativada
+(`TIMING_CHEER_ENABLED = false`, código guardado). ⚰️ Até então a partida era um placar sorteado:
 `power(p) = stagePower × 10 + min(20, atributos / 5) + random() × 18`, sem o
 jogador fazer nada.
 
 ```
 duelStats(p) = { hp: 70 + sp × 6,  atk: 10 + sp × 1,2 + min(2, (power + harmony + benevolence) / 50) }
-cheerMultiplier(q) = DUEL_PERFECT_MULT (1,35) se q >= DUEL_PERFECT_CHEER (0,92)
-                     senão 1 + DUEL_CHEER_GAIN (0,25) × q
-luta = até DUEL_MAX_TURNS (12) golpes; dano = max(1, round(atk × (0,5 + rng) × torcida))
+gauge: cada toque enche 1 de DUEL_TAPS_FULL (8); teto de DUEL_TAPS_CAP (10) toques contados por janela
+specialSlots(taps): em cada golpe de torcida, g = min(8, g + toques da janela); g cheio => ESPECIAL e g = 0
+especial = × DUEL_SPECIAL_MULT (1,35, o mesmo da torcida perfeita antiga); sem especial = × 1
+(legado, sem UI) cheerMultiplier(q) = 1,35 se q >= 0,92, senão 1 + 0,25 × q
+luta = até DUEL_MAX_TURNS (12) golpes; dano = max(1, round(atk × (0,5 + rng) × (especial ? 1,35 : 1)))
 won  = nocaute, ou a maior FRAÇÃO de vida restante
 ```
 
 O fluxo tem duas chamadas: **`duelStart`** consome a partida do dia, guarda o
 oponente em `myRank.pending` e sorteia a SEMENTE no servidor, *depois* do
 compromisso; **`match`** roda a luta com a semente GUARDADA (nunca uma enviada) e
-as torcidas higienizadas (`sanitizeCheers`: três números em [0,1]). O cliente
+os toques por janela higienizados (`sanitizeTaps`: três inteiros em [0, 10]; o servidor
+recalcula o especial por `specialSlots`). O cliente
 anima a mesma luta com `simulateDuel` — uma regra, um arquivo. A semente nunca
 vai na lista de oponentes (`opponents` leva só a `duelStats`), senão um cliente
 editado simularia os três e escolheria o que vence.
@@ -4705,7 +4712,7 @@ do Torneio em DIAS, nunca horas", pelo Community Day do Pokémon GO).
   ação, inclusive as GET destrutivas (`trophies?claim=1`, `gifts?claim=1`).
 - **`id === oppSave`** devolve `400 cannot fight yourself`.
 - **Cliente antigo** (sem `duelStart`): `match` abre e fecha numa chamada só, com semente sorteada no servidor; `forfeit` sem duelo aberto devolve `409 no open duel`.
-- **Torcida forjada** rende o mesmo que timing perfeito (teto `DUEL_PERFECT_MULT` por golpe) — aceitável enquanto a Honra for só cosmética (STATUS 30/09/2026).
+- **Torcida forjada** rende o mesmo que o gauge cheio (teto: `DUEL_TAPS_CAP` toques por janela, 3 janelas, no máximo 3 especiais de ×`DUEL_SPECIAL_MULT`) — toque ilimitado não rende mais; aceitável enquanto a Honra for só cosmética (STATUS 30/09 e 02/10/2026).
 - **Oponente com PvP desligado** devolve `404 opponent unavailable` — o saveId
   dele nunca sai do servidor (o cliente conhece só o pid público).
 - **200 com corpo que não é JSON** é FALHA, não sucesso vazio. Era

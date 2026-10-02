@@ -9,6 +9,23 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 02/10/2026 — Combate: torcida por TOQUES + gauge, Masmorra, Feira (rodada 3 do dono, frente C/E/G4)
+>
+> Registro: `REGISTRO-DE-DECISOES.md` §18. **Torcida** = tocar em qualquer lugar da luta;
+> cada toque enche um gauge (8 toques) e o pet gasta o gauge cheio num golpe ESPECIAL.
+> Vale no **duelo fantasma do Torneio** (servidor-autoritativo: `_duel.js` › `sanitizeTaps`/
+> `specialSlots`, teto de 10 toques por janela, especial ×1,35), no **Pesadelo** e na
+> **Masmorra** (`utils/torcida.ts`; o golpe do pet sai sozinho). A torcida por TIMING (anel/
+> `TimingBar`) ficou **desativada** (`TIMING_CHEER_ENABLED = false`), código guardado sem UI.
+> Calibração do duelo: mesmo estágio 51% → 82% (antes 50% → ~80%). **Por que o dono não via
+> a torcida:** ela existia só no Torneio (atrás do PvP opt-in + vínculo 5 + API) — o Duelo da
+> Arena, o Pesadelo e a Masmorra nunca tiveram. **Masmorra:** "Descer mais fundo" só devolve a
+> base até o nível já cumprido (`dungeon.ts` › `buyDeepStart`, regra pura testada); texto longo
+> do lobby atrás de um "?". **Pesadelo:** o convite usa uma criatura existente (sem a bolha roxa).
+> **Arena:** Torneio/Duelo maiores no cenário; legenda de uma linha na Feira.
+> **Fica para o dono:** TORC-1..4 (balanço do especial no PvE,
+> Duelo da Arena, esquiva, gate do Torneio) em `docs/PERGUNTAS-DO-DONO.md`.
+
 > ## 01/10/2026 — Login Google NATIVO no APK (tela branca após escolher a conta, `fix/login-google-nativo`)
 >
 > - Causa: no APK (WebView com `server.url` remoto) `signInWithPopup`/`signInWithRedirect` saem para `accounts.google.com` fora do app e o retorno cai em `soulmon-app.firebaseapp.com/__/auth/handler`, que não volta à WebView → tela branca.
