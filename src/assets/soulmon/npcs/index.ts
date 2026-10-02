@@ -65,7 +65,7 @@ import npcExploracaoPasseio from './npc-exploracao-passeio.png';
  * slime com nome de franquia de terceiro, achado A3 da bíblia das áreas §1.3)
  * saiu do bundle. Nome e fala de cada um: `utils/areaNpcVoice.ts`.
  */
-const LOT_NPC_ART: Record<string, string> = {
+export const LOT_NPC_ART: Record<string, string> = {
   'mercado:itens': npcLojaItens,
   'mercado:decoracao': npcLojaDecoracao,
   'mercado:background': npcLojaBackground,

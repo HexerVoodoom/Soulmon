@@ -37,19 +37,25 @@ interface PlayLotSpec<K extends string> {
   labelPt: string; labelEn: string;
   ariaPt: string; ariaEn: string;
   left: string; top: string;
+  /** Largura em % da cena; sem ela, a do molde (`LOT_WIDTH_DEFAULT`, 38%). */
+  width?: string;
 }
 
+// 🔭 02/10/2026 (H10 de Jogos + auditoria de proporção do H12): os sprites de torre/casa são ALTOS e
+// ESTREITOS (opaco ~52% da largura), então no lote padrão de 38% o prédio ocupava ~20% da tela, pequeno
+// perto do tablado/clareira. Lotes maiores (46–56%) mantendo o centro do tablado/clareira (o `top` foi
+// recalculado para a base do prédio ficar onde já estava).
 // 🗺️ 01/10/2026 (H10, navegação do dono): os dois prédios da Exploração estavam
 // soltos sobre o caminho. O fundo tem DOIS tablados de pedra escura (o de cima à
 // esquerda e o do meio à direita) — cada prédio agora assenta no centro do seu.
 const EXPLORACAO_LOTS: PlayLotSpec<ExploracaoLotId>[] = [
-  { id: 'masmorra', labelPt: 'Masmorra', labelEn: 'Dungeon', ariaPt: 'Entrar na Masmorra', ariaEn: 'Enter the Dungeon', left: '24%', top: '27%' }, // tablado de cima, à esquerda
+  { id: 'masmorra', labelPt: 'Masmorra', labelEn: 'Dungeon', ariaPt: 'Entrar na Masmorra', ariaEn: 'Enter the Dungeon', left: '24%', top: '22%', width: '52%' }, // tablado de cima, à esquerda
   // 🧭 O Passeio (30/09/2026, decisão do dono — `REGISTRO-DE-DECISOES.md` §5.6):
   // a clareira da DIREITA, do outro lado do caminho. Os lotes têm 38% de largura
   // centrados no `left`, então 27% ocupa 8–46% e 70% ocupa 51–89%: não se tocam.
   // EN "Stroll" e não "Trail": trilha é justamente o lugar que o parecer de
   // menores veta para as Travessias (04 R-3).
-  { id: 'passeio', labelPt: 'Passeio', labelEn: 'Stroll', ariaPt: 'Abrir o Passeio', ariaEn: 'Open the Stroll', left: '76%', top: '41%' }, // tablado do meio, à direita
+  { id: 'passeio', labelPt: 'Passeio', labelEn: 'Stroll', ariaPt: 'Abrir o Passeio', ariaEn: 'Open the Stroll', left: '76%', top: '37%', width: '56%' }, // tablado do meio, à direita
 ];
 
 // 🍄 01/10/2026 (H13, navegação do dono): redistribuídos pelas duas clareiras de
@@ -57,9 +63,9 @@ const EXPLORACAO_LOTS: PlayLotSpec<ExploracaoLotId>[] = [
 // longe da borda; o Refúgio desce para o meio da clareira de baixo, longe da
 // escadinha (antes encostava nela).
 const JOGOS_LOTS: PlayLotSpec<JogosLotId>[] = [
-  { id: 'salao', labelPt: 'Salão de Jogos', labelEn: 'Game Hall', ariaPt: 'Entrar no Salão de Jogos', ariaEn: 'Enter the Game Hall', left: '31%', top: '37%' },
-  { id: 'mente', labelPt: 'Ateliê da Mente', labelEn: 'Mind Workshop', ariaPt: 'Entrar no Ateliê da Mente', ariaEn: 'Enter the Mind Workshop', left: '69%', top: '40%' },
-  { id: 'refugio', labelPt: 'Refúgio', labelEn: 'Refuge', ariaPt: 'Entrar no Refúgio', ariaEn: 'Enter the Refuge', left: '50%', top: '79%' },
+  { id: 'salao', labelPt: 'Salão de Jogos', labelEn: 'Game Hall', ariaPt: 'Entrar no Salão de Jogos', ariaEn: 'Enter the Game Hall', left: '31%', top: '36%', width: '46%' },
+  { id: 'mente', labelPt: 'Ateliê da Mente', labelEn: 'Mind Workshop', ariaPt: 'Entrar no Ateliê da Mente', ariaEn: 'Enter the Mind Workshop', left: '69%', top: '39%', width: '52%' },
+  { id: 'refugio', labelPt: 'Refúgio', labelEn: 'Refuge', ariaPt: 'Entrar no Refúgio', ariaEn: 'Enter the Refuge', left: '50%', top: '76%', width: '52%' },
 ];
 
 function resolveLots<K extends string>(specs: PlayLotSpec<K>[], language: Language) {
@@ -69,6 +75,7 @@ function resolveLots<K extends string>(specs: PlayLotSpec<K>[], language: Langua
     label: isPt ? s.labelPt : s.labelEn,
     ariaLabel: isPt ? s.ariaPt : s.ariaEn,
     left: s.left, top: s.top,
+    ...(s.width ? { width: s.width } : {}),
   }));
 }
 
