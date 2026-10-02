@@ -34,6 +34,7 @@ describe('fiação da telemetria — onboarding', () => {
     // teste a DESMARCA — em produção é o comportamento certo, entre casos é
     // vazamento de estado.
     localStorage.clear();
+    localStorage.setItem('soulmon-language', 'en-US');
   });
 
   it('antes da escolha o funil é UNKNOWN; depois dela, DEMO', async () => {
