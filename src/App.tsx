@@ -5887,6 +5887,7 @@ export default function App() {
                 onUnlock={() => setUnlockReason('shop')}
                 tournament={{
                   saveId,
+                  ocultoDaLista: gameState.hideFromPublicList === true,
                   petStage: gameState.evolutionStage,
                   petLine,
                   trophies: gameState.trophies ?? [],
@@ -6566,6 +6567,8 @@ export default function App() {
               redeemed={gameState.redeemed}
               showRedeemed={gameState.showRedeemed}
               onToggleShowRedeemed={() => setGameState(prev => ({ ...prev, showRedeemed: !prev.showRedeemed }))}
+              showInPublicList={gameState.hideFromPublicList !== true}
+              onToggleShowInPublicList={() => setGameState(prev => ({ ...prev, hideFromPublicList: prev.hideFromPublicList !== true }))}
               gm={isAdmin ? gmActions : undefined}
               useAI={useAI}
               onToggleAI={() => setUseAI(!useAI)}

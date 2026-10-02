@@ -64,6 +64,10 @@ export interface PublicProfileInput {
   petName?: string;
   unlockedStages?: string[];
   pvpEnabled: boolean;
+  /** TORC-5: `true` = a pessoa saiu da lista pública do Torneio (Configurações).
+   *  Sempre enviado, para o servidor poder RETIRAR o registro público já
+   *  existente na hora em que a escolha muda. */
+  publicHidden?: boolean;
   attrs?: { power: number; harmony: number; benevolence: number };
   tasksDone?: number;
 }
@@ -86,6 +90,8 @@ export interface ProfilePushResult {
   ok: true;
   /** O estado REAL no servidor depois da gravação. */
   pvpEnabled?: boolean;
+  /** O estado REAL do opt-out da lista pública no servidor. */
+  publicHidden?: boolean;
   /** Só aparece quando um pedido de LIGAR o PvP foi recusado pelo gate. */
   pvpBlocked?: boolean;
   /** O nível de Vínculo que o servidor apurou. `null` quando não chegou a apurar. */
@@ -148,8 +154,10 @@ export interface RankRow {
    *  mês). Save antigo do servidor pode não trazer: `?? 0`, nunca `points`. */
   lifetime?: number;
 }
-export const getRank = (season?: string) =>
-  call<{ season: string; rank: RankRow[] }>('rank', { params: season ? { season } : {} });
+/** `id` (saveId, autorizado) pede também o PRÓPRIO lugar em `me` — é o que
+ *  sobra a quem saiu da lista pública (`publicHidden`), que não aparece em `rank`. */
+export const getRank = (season?: string, id?: string) =>
+  call<{ season: string; rank: RankRow[]; me?: Partial<RankRow> & { hidden?: boolean } }>('rank', { params: { ...(season ? { season } : {}), ...(id ? { id } : {}) } });
 export const getSeasonResult = (season: string) =>
   call<{ season: string; top3: RankRow[] }>('seasonResult', { params: { season } });
 

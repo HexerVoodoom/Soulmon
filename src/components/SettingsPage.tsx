@@ -55,6 +55,10 @@ interface SettingsPageProps {
   redeemed?: boolean;
   showRedeemed?: boolean;
   onToggleShowRedeemed?: () => void;
+  /** TORC-5 — aparecer na lista pública do Torneio (padrão: sim). Sem o
+   *  callback a linha não existe. */
+  showInPublicList?: boolean;
+  onToggleShowInPublicList?: () => void;
   /** Ações do painel de GM. O painel só aparece quando `useAdmin()` é true
    *  (flag vinda do servidor, `utils/adminFlag.ts`) — passar isto não basta. */
   gm?: GmActions;
@@ -155,6 +159,8 @@ export function SettingsPage({
   redeemed = false,
   showRedeemed = false,
   onToggleShowRedeemed,
+  showInPublicList = true,
+  onToggleShowInPublicList,
   onRestoreFromCloud,
   onLoginWithEmail,
   gm,
@@ -284,6 +290,18 @@ export function SettingsPage({
       >
         <AccountDataSection language={language} showHelp={dataHelp} />
         <TelemetrySection language={language} />
+        {onToggleShowInPublicList && (
+          <SwitchRow
+            checked={showInPublicList}
+            onToggle={onToggleShowInPublicList}
+            label={isPt ? 'Aparecer na lista pública do Torneio' : 'Show me on the public Tournament list'}
+            hint={dataHelp
+              ? (isPt
+                ? 'Seu apelido e seu Soulmon aparecem para outros jogadores do Torneio. Desligado, você some da lista na hora e continua podendo jogar.'
+                : 'Your nickname and Soulmon show to other Tournament players. Off, you leave the list right away and can still play.')
+              : undefined}
+          />
+        )}
       </Group>
 
       {/* ── PAINEL DE GM — só existe para `useAdmin()` (o próprio GmPanel

@@ -4743,6 +4743,17 @@ do Torneio em DIAS, nunca horas", pelo Community Day do Pokémon GO).
 - **Torcida forjada** rende o mesmo que o gauge cheio (teto: `DUEL_TAPS_CAP` toques por janela, 3 janelas, no máximo 3 especiais de ×`DUEL_SPECIAL_MULT`) — toque ilimitado não rende mais; aceitável enquanto a Honra for só cosmética (STATUS 30/09 e 02/10/2026).
 - **Oponente com PvP desligado** devolve `404 opponent unavailable` — o saveId
   dele nunca sai do servidor (o cliente conhece só o pid público).
+- **Opt-out da lista pública (TORC-5, 02/10/2026).** `publicHidden` no perfil
+  (cliente: `hideFromPublicList`, Configurações → Seus dados, ligado por padrão).
+  A régua é `isHidden` em `community.js`: escondido sai de `players` (antes do
+  `search`), `player` (`found:false`), `opponents`, `rank`/`seasonResult`,
+  `friends` (adicionar → `404 friend not found`), do `friends[]` que terceiros
+  leem e do `from` do presente; duelar contra ele → `404 opponent unavailable`.
+  Ele segue jogando e vê o próprio lugar (`rank&id=` autorizado → `me`; essa
+  resposta nunca vai para o cache de borda). O perfil sempre sobe com
+  `publicHidden` (também `false`) e cliente antigo sem o campo herda o gravado.
+  A Guilda (coop) é círculo por convite e não é afetada. Travado por
+  `community.publicOptOut.test.js` e `privacidade.listaPublica.contract.test.ts`.
 - **200 com corpo que não é JSON** é FALHA, não sucesso vazio. Era
   `res.json().catch(() => ({}))`, e `getRank()` resolvia com `{}`: a área do
   ranking ficava em branco para sempre e o efeito disparava duas vezes. Portal
@@ -5032,9 +5043,11 @@ não trafega, e o corte é **no servidor** justamente para que uma UI futura nã
 consiga reintroduzi-lo por descuido. O que resta é presença: quem é, que
 criatura tem, há quanto tempo joga.
 
-**Entrar no diretório é um ato explícito**: o toggle de PvP, com o aviso de que o
-apelido e o pet passam a aparecer numa lista pública, e com o botão de desligar
-sempre disponível. O consentimento de Termos/Privacidade é outro assunto e mora
+**Entrar na lista pública é automático e sair é um interruptor** (⚰️ até
+02/10/2026 era o toggle de PvP, um ato explícito — H13 o tirou, TORC-5 trouxe a
+saída de volta): ao cruzar o Vínculo 5 o apelido e o pet aparecem na lista
+pública do Torneio, e Configurações → Seus dados tem "Aparecer na lista pública
+do Torneio", ligado por padrão (`hideFromPublicList`). O consentimento de Termos/Privacidade é outro assunto e mora
 em `src/utils/consent.ts` (`MIN_AGE_YEARS` = 18; `TERMS_VERSION` = **`'2026-09-30'`**
 desde `bcfe7ca6` — os Termos §8 ganharam o parágrafo "Crossings are optional / As
 Travessias são opcionais" (MIS-15, parecer de menores R-9) — e

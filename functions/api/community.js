@@ -121,8 +121,9 @@ async function saveIdForPublicId(env, pid) {
  * linha do ranking). Só o perfil sabe o pid — não há mais como calcular.
  * `null` quando aquele saveId não tem perfil.
  */
-async function pidDeSaveId(env, saveId) {
+async function pidDeSaveId(env, saveId, { semEscondidos = false } = {}) {
   const p = await getProfile(env, saveId);
+  if (semEscondidos && isHidden(p)) return null;
   return p ? await ensurePid(env, p) : null;
 }
 
@@ -154,6 +155,16 @@ async function publicProfile(env, p, extra = {}) {
 }
 // (`async function getProfile` e `putProfile` moram em `_profile.js` desde o WPG-1;
 // esta linha também delimita o fim de `publicProfile` para `PlayerDetailModal.semMetrica`.)
+
+/**
+ * Opt-out da lista PÚBLICA do Torneio (TORC-5, 02/10/2026). `publicHidden` mora
+ * no perfil, por conta (saveId), e é decidido pela pessoa em Configurações.
+ * Escondido = o apelido, o Soulmon e o resto da vista pública NÃO saem em
+ * NENHUMA rota para terceiros: diretório, perfil, oponentes, ranking, presente
+ * e amizade. Esta é a ÚNICA régua — rota nova que sirva dado de outra pessoa
+ * passa por aqui, ou o teste `community.publicOptOut` reprova.
+ */
+const isHidden = p => !!p && p.publicHidden === true;
 
 async function getRank(env, season, id) {
   const raw = await kvOrThrow(env).get(`rank:${season}:${id}`);
@@ -208,6 +219,10 @@ export async function onRequest(context) {
   const cacheable =
     request.method === 'GET' &&
     CACHEABLE_ACTIONS.has(action) &&
+    // `rank&id=` devolve o `me` DA PESSOA (ator autorizado, TORC-5): resposta
+    // por pessoa não vai para cache de URL, que serviria o `me` dela a quem
+    // repetisse o endereço e pularia a autorização.
+    !(action === 'rank' && url.searchParams.has('id')) &&
     typeof caches !== 'undefined' &&
     caches.default;
 
@@ -380,6 +395,9 @@ async function handleCommunity({ request, env }) {
     // apelido com contato é DESCARTADO (fica o anterior) e a resposta avisa.
     const apelidoPedido = body.name ? sanitizarNomeDeGuilda(body.name) : null;
     const nameRejected = !!body.name && !apelidoPedido;
+    // Opt-out da lista pública. Cliente antigo (sem o campo) NÃO desfaz a
+    // escolha feita em outro aparelho: ausência herda o valor gravado.
+    const publicHidden = typeof body.publicHidden === 'boolean' ? body.publicHidden : prev.publicHidden === true;
     const profile = {
       id,
       name: apelidoPedido || sanitizarNomeDeGuilda(prev.name) || 'Anônimo',
@@ -387,6 +405,7 @@ async function handleCommunity({ request, env }) {
       petName: String(body.petName || prev.petName || '').slice(0, 32),
       unlockedStages: Array.isArray(body.unlockedStages) ? body.unlockedStages.slice(0, 16) : (prev.unlockedStages || []),
       pvpEnabled,
+      publicHidden,
       attrs: body.attrs && typeof body.attrs === 'object'
         ? { power: +body.attrs.power || 0, harmony: +body.attrs.harmony || 0, benevolence: +body.attrs.benevolence || 0 }
         : (prev.attrs || { power: 0, harmony: 0, benevolence: 0 }),
@@ -400,9 +419,20 @@ async function handleCommunity({ request, env }) {
     };
     await putProfile(env, id, profile);
     await indexPublicId(env, id, profile.pid);
+    // A escolha mudou: tira da borda, deste ponto de presença, as listas públicas
+    // de 60 s que ainda mostrariam a pessoa. Melhor esforço — o cache da borda é
+    // por URL e por ponto de presença, então outro ponto pode servir a lista
+    // velha até `EDGE_TTL_SECONDS`. O servidor em si já responde certo.
+    if (publicHidden !== (prev.publicHidden === true) && typeof caches !== 'undefined' && caches.default) {
+      const base = `${url.origin}${url.pathname}?action=`;
+      const season = currentSeason();
+      await Promise.all([
+        `${base}players`, `${base}rank`, `${base}rank&season=${season}`, `${base}seasonResult&season=${season}`,
+      ].map(u => caches.default.delete(new Request(u)).catch(() => {})));
+    }
     if (pidLegado) await kvOrThrow(env).delete(`${PID_PREFIX}${pidAntigo}`);
     return json({
-      ok: true, id: profile.pid, pvpEnabled: profile.pvpEnabled,
+      ok: true, id: profile.pid, pvpEnabled: profile.pvpEnabled, publicHidden,
       ...(nameRejected ? { nameRejected: true } : {}),
       ...(pvpBlocked ? { pvpBlocked: true, bondLevel, minBondLevel: BOND_PVP_MIN_LEVEL } : {}),
     });
@@ -431,7 +461,7 @@ async function handleCommunity({ request, env }) {
       // transformaria a busca por nome em confirmação de existência; e
       // `publicProfile` chama `ensurePid`, que EMITE e indexa identidade
       // social como efeito colateral — não se emite para quem não pediu.
-      if (!p.pvpEnabled) continue;
+      if (!p.pvpEnabled || isHidden(p)) continue;
       if (search && !String(p.name).toLowerCase().includes(search)) continue;
       players.push(await publicProfile(env, p));
       if (players.length >= 50) break;
@@ -467,13 +497,14 @@ async function handleCommunity({ request, env }) {
     // oráculo é para ser fechado AGORA, sem depender da fatia 1.
     const targetSave = await saveIdForPublicId(env, id);
     const p = targetSave ? await getProfile(env, targetSave) : null;
-    if (!p) return json({ found: false });
+    // Escondido responde exatamente como inexistente: não confirma a conta.
+    if (!p || isHidden(p)) return json({ found: false });
     const rank = await getRank(env, currentSeason(), targetSave);
     // `friends` sai como pid: internamente são saveIds, e devolvê-los cru
     // vazaria a chave do save de até 5 pessoas por consulta.
     // Amigo sem perfil não tem pid e some da lista — antes saía um pid
     // derivado que não resolvia em lugar nenhum.
-    const friendPids = (await Promise.all((p.friends || []).map(f => pidDeSaveId(env, f)))).filter(Boolean);
+    const friendPids = (await Promise.all((p.friends || []).map(f => pidDeSaveId(env, f, { semEscondidos: true })))).filter(Boolean);
     return json({
       found: true,
       player: await publicProfile(env, p, {
@@ -492,7 +523,7 @@ async function handleCommunity({ request, env }) {
       const raw = await kvOrThrow(env).get(k);
       if (!raw) continue;
       const p = JSON.parse(raw);
-      if (!p.pvpEnabled || p.id === me) continue;
+      if (!p.pvpEnabled || p.id === me || isHidden(p)) continue;
       pool.push({ profile: p, pub: await publicProfile(env, p) });
     }
     // embaralha e devolve até 3
@@ -532,7 +563,7 @@ async function handleCommunity({ request, env }) {
     const me = await getProfile(env, id);
     const opp = await getProfile(env, oppSave);
     if (!me?.pvpEnabled) return { res: json({ error: 'pvp disabled' }, 403) };
-    if (!opp?.pvpEnabled) return { res: json({ error: 'opponent unavailable' }, 404) };
+    if (!opp?.pvpEnabled || isHidden(opp)) return { res: json({ error: 'opponent unavailable' }, 404) };
     const myRank = await getRank(env, currentSeason(), id);
     if (myRank.day !== today()) { myRank.day = today(); myRank.matchesToday = 0; }
     return { opponentId, oppSave, me, opp, myRank };
@@ -627,6 +658,14 @@ async function handleCommunity({ request, env }) {
     if (!/^\d{4}-\d{2}$/.test(season)) return json({ error: 'invalid season' }, 400);
     const keys = await listPrefix(env, `rank:${season}:`, 300);
     const rows = [];
+    // `me`: quem optou por sair da lista continua vendo o PRÓPRIO lugar — só
+    // ela (ator autorizado), nunca por consulta anônima.
+    const meId = url.searchParams.get('id');
+    if (action === 'rank' && meId) {
+      const denied = await denyUnlessOwner(meId);
+      if (denied) return denied;
+    }
+    let meRow = null;
     for (const k of keys) {
       const raw = await kvOrThrow(env).get(k);
       if (!raw) continue;
@@ -635,6 +674,13 @@ async function handleCommunity({ request, env }) {
       // o que ajudava a esconder que o ranking publicava a chave do save.
       const ownerSave = k.slice(`rank:${season}:`.length);
       const p = await getProfile(env, ownerSave);
+      if (isHidden(p)) {
+        // Fora da lista de TODOS os outros — nem a linha, nem o apelido.
+        if (meId && ownerSave === meId) {
+          meRow = { id: await ensurePid(env, p), points: rec.points, wins: rec.wins, losses: rec.losses, lifetime: p.lifetimePoints ?? 0, hidden: true };
+        }
+        continue;
+      }
       rows.push({
         // Sem perfil não há identidade pública: a linha do rank existe (o
         // `rank:` dura mais que o `profile:`), mas não é endereçável.
@@ -647,7 +693,7 @@ async function handleCommunity({ request, env }) {
     }
     rows.sort((a, b) => b.points - a.points);
     if (action === 'seasonResult') return json({ season, top3: rows.slice(0, 3) });
-    return json({ season, rank: rows.slice(0, 50) });
+    return json({ season, rank: rows.slice(0, 50), ...(meRow ? { me: meRow } : {}) });
   }
 
   // Fecha uma season: dá troféu (place 1/2/3) aos 3 primeiros do rank. Chamado
@@ -716,6 +762,9 @@ async function handleCommunity({ request, env }) {
     const friendSave = await saveIdForPublicId(env, friendId);
     if (!friendSave) return json({ error: 'friend not found' }, 404);
     if (id === friendSave) return json({ error: 'cannot befriend yourself' }, 400);
+    // Quem saiu da lista pública também não é adicionável: não confirma que a
+    // conta existe. (Remover um amigo que se escondeu continua possível.)
+    if (!remove && isHidden(await getProfile(env, friendSave))) return json({ error: 'friend not found' }, 404);
     const me = await getProfile(env, id);
     if (!me) return json({ error: 'profile not found' }, 404);
     me.friends = me.friends || [];
@@ -750,7 +799,7 @@ async function handleCommunity({ request, env }) {
 
     const raw = await kvOrThrow(env).get(`gifts:${friendSave}`);
     const gifts = raw ? JSON.parse(raw) : [];
-    gifts.push({ from: me.name, bits: 20, at: Date.now() });
+    gifts.push({ from: isHidden(me) ? '' : me.name, bits: 20, at: Date.now() });
     await kvOrThrow(env).put(`gifts:${friendSave}`, JSON.stringify(gifts.slice(-50)), { expirationTtl: 86400 * 60 });
     return json({ ok: true });
   }

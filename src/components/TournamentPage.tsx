@@ -83,6 +83,9 @@ import tournamentFinal from '../assets/soulmon/bg/tournament-final.png';
 
 interface TournamentPageProps {
   saveId: string;
+  /** TORC-5: a pessoa saiu da lista pública em Configurações. A tela só avisa
+   *  (uma linha) — jogar e ver o próprio lugar seguem iguais. */
+  ocultoDaLista?: boolean;
   petStage: string;
   /** Linha de arte do pet (`spriteLineOf` — personagem pronto ou o corvinho). */
   petLine?: string;
@@ -167,7 +170,7 @@ function TierMark({ id, size, state }: { id: string; size: 24 | 32; state: 'curr
   );
 }
 
-export function TournamentPage({ saveId, petStage, petLine, trophies, language, emblems, onEarnEmblems, totalXP, onMatchPlayed, weeklyMissions, onClaimWeekly, shop, headSlot }: TournamentPageProps) {
+export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLine, trophies, language, emblems, onEarnEmblems, totalXP, onMatchPlayed, weeklyMissions, onClaimWeekly, shop, headSlot }: TournamentPageProps) {
   const isPt = language === 'pt-BR';
   const lang: Language = isPt ? 'pt-BR' : 'en-US';
   const [opponents, setOpponents] = useState<Opponent[] | null>(null);
@@ -175,6 +178,8 @@ export function TournamentPage({ saveId, petStage, petLine, trophies, language, 
   const [matchesLeft, setMatchesLeft] = useState<number | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
   const [rank, setRank] = useState<RankRow[] | null>(null);
+  /** Só vem quando a pessoa está fora da lista pública: o próprio lugar dela. */
+  const [meRank, setMeRank] = useState<{ lifetime?: number } | null>(null);
   const [rankFailed, setRankFailed] = useState(false);
   const [fighting, setFighting] = useState<string | null>(null);
   const [result, setResult] = useState<MatchResult | null>(null);
@@ -190,7 +195,7 @@ export function TournamentPage({ saveId, petStage, petLine, trophies, language, 
      regra escrita da faixa é que acumular NUNCA rebaixa. Ela media o jogador
      contra ele mesmo e caía por motivo que não era dele. `lifetime` só soma;
      `points` continua sendo o do ranking e do troféu da season. */
-  const myLifetime = rank?.find(r => r.id === saveId)?.lifetime ?? 0;
+  const myLifetime = rank?.find(r => r.id === saveId)?.lifetime ?? meRank?.lifetime ?? 0;
   const standing = rank === null ? null : getTierStanding(myLifetime);
   const round = getTournamentWindow();
   /** Quantas posições aparecem ACIMA e ABAIXO do jogador na lista da season.
@@ -245,8 +250,8 @@ export function TournamentPage({ saveId, petStage, petLine, trophies, language, 
          vazio/falha exigem `rank` verdadeiro — a área ficaria em branco e o
          `!rank` deste efeito o disparava de novo. A causa raiz foi fechada no
          `call()` de `utils/community.ts`; isto é o cinto. */
-      getRank()
-        .then(r => setRank(r.rank ?? []))
+      getRank(undefined, saveId)
+        .then(r => { setRank(r.rank ?? []); setMeRank(r.me ?? null); })
         .catch(() => { setRank([]); setRankFailed(true); });
     }
   }, [rank]);
@@ -457,9 +462,11 @@ export function TournamentPage({ saveId, petStage, petLine, trophies, language, 
         <p style={{ ...sm2Hint, display: 'flex', alignItems: 'flex-start', gap: 8, margin: 0 }} data-torneio-aviso-publico>
           <Icon name="visibility" size={20} tone="muted" />
           <span>
-            {isPt
-              ? 'Seu apelido e seu Soulmon aparecem numa lista pública de jogadores do Torneio.'
-              : 'Your nickname and your Soulmon show up on a public list of Tournament players.'}
+            {ocultoDaLista
+              ? (isPt ? 'Você está oculto da lista pública.' : "You're hidden from the public list.")
+              : (isPt
+                ? 'Seu apelido e seu Soulmon aparecem numa lista pública de jogadores do Torneio.'
+                : 'Your nickname and your Soulmon show up on a public list of Tournament players.')}
           </span>
         </p>
       )}
