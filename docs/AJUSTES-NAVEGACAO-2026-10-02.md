@@ -62,3 +62,22 @@ Fonte: navegação do dono no APK logado, após a rodada 3 publicada.
 
 ## Respostas do dono
 _(preencher)_
+
+## Rodada 5 — APK testado (02/10/2026, noite)
+Fonte: navegação do dono depois da rodada 4/Torneio. Padrão novo de interface: texto EXPLICATIVO vira "?" em círculo (`InfoTip`, `src/components/ui/InfoTip.tsx`).
+- [ ] I1 Mercado › lojinha: o 1º modal com o NPC falando não aparece; o texto da fala deve surgir aos poucos (máquina de escrever), não de uma vez
+- [ ] I2 Modais alinhados à base (bottom sheets) SOBEM animados em vez de aparecer instantâneos (respeitar prefers-reduced-motion)
+- [ ] I3 Padrão de voltar/fechar: VOLTAR sempre acima do título, à esquerda; FECHAR de um modal (que não encerra conteúdo significativo) também à esquerda acima do título; FECHAR à direita só para ENCERRAR uma atividade em andamento (ex. sair de uma luta/jogo) — auditar todos os modais
+- [ ] I4 Ilustração própria para os BITS (moeda) — arte no documento de prompts; placeholder até lá
+- [ ] I5 Mercado: tocar num item sobe o modalzinho com as opções de comprar e um preview GRANDE; na área escurecida acima do modal, o ícone do item (ex. Power Chip) sem o quadradinho de gradiente, solto no centro; o mesmo para backgrounds (toque no thumbnail abre a visualização ampliada com o fundo escurecido; "Equipar" continua no botão)
+- [ ] I6 Decoração: pílula (tag) "interno/externo" (indoor/outdoor) em cada peça
+- [ ] I7 Torneio: o "treinamento" não consegue ser testado — investigar e corrigir
+- [ ] I8 Torneio: ícone da faixa (tier) MAIOR; ícone de Missões é uma EXCLAMAÇÃO (!), não um check
+- [ ] I9 Duelo: a folha "Your sheets / Neutral · Element · Basic · Strikes · Skill" não é compreensível → simplificar e explicar atrás de "?"; explicar a Feira atrás de "?" ("não sei como a feira funciona")
+- [ ] I10 COMBATE da Arena: cena em TELA CHEIA com o background (não a faixinha no topo); jogador embaixo à esquerda, inimigo em cima à direita (profundidade tipo Game Boy/Pokémon); barra de HP junto aos pés de cada um; golpes com os assets de skill do ELEMENTO de cada Soulmon (escudo, ataque à distância, ataque físico); luta bem mais LENTA (~10 s tocando para encher o gauge); tocar na tela torce e, ao encher, solta o especial; o gauge enche mais devagar
+- [ ] I11 Laboratório › Árvore da Evolução: as pílulas Poder/Harmonia/Benevolência com a COR e o ÍCONE de cada uma; "Evolution Branches" com cor (e ícone de cada ramo, se possível)
+- [ ] I12 Conquistas (emblemas): tirar do box e ampliar
+- [ ] I13 VARREDURA: todo texto explicativo da interface vira "?" em círculo (`InfoTip`) que abre o tooltip; interface mais limpa
+- [ ] I14 AUDITORIA: conferir tudo que foi pedido nas rodadas 3/4 e o que ficou de fora; corrigir
+
+## Respostas do dono
