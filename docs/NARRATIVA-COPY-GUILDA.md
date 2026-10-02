@@ -129,7 +129,7 @@
 | `guild.feira.titulo` | Feira | Fair | GuildSheet, sala da Feira (abre direto no fenômeno) | §12 |
 | `guild.feira.semroda` | A Feira é da roda: toda semana algo chega da névoa, e a roda o recebe. | The Fair belongs to the circle: every week something comes in from the mist, and the circle receives it. | GuildSheet, Feira sem roda, acima do formulário (FINAL L5) | QA L3 B9 |
 | `guild.feira.aberta.mundo` | A maré abriu a Feira. Algo chegou da névoa. | The tide opened the Fair. Something came in from the mist. | cabeçalho da Feira e cerimônia de abertura | D-G4; L12 |
-| `guild.feira.legenda` | A Feira é o desafio da semana da sua roda: um fenômeno que a roda dissipa junta. | The Fair is your circle's weekly challenge: a phenomenon the circle clears together. | GuildSheet, sala Feira, uma linha no topo (G4, 02/10/2026) | pedido do dono (rodada 3) |
+| `guild.feira.legenda` | A Feira é a sala da roda: um fenômeno por semana que a roda dissipa junta, com uma rodada por dia de cada pessoa. Rende Honra e a Concha da Maré. | The Fair is the circle's room: one phenomenon a week that the circle clears together, one round a day from each person. It earns Honor and the Tide Shell. | GuildSheet, sala Feira, atrás do "?" (`InfoTip`) ao lado do nome do fenômeno (G4 → I9, 02/10/2026) | pedido do dono (rodadas 3 e 5) |
 | `guild.feira.aberta.pet` | Tá tudo embaçado ali. Vamos? | It's all fuzzy over there. Shall we go? | fala do pet ao abrir a Feira | L11 |
 | `guild.feira.fenomeno.nevoa.nome` | Névoa | Mist | rotação semanal, `fx-fair-nevoa` | 08-critica B2 (tempo da Malha) |
 | `guild.feira.fenomeno.nevoa.linha` | Uma camada que não assentou. | A layer that hasn't settled. | idem | B2 |

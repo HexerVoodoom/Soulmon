@@ -101,12 +101,39 @@ describe('Torneio', () => {
   });
 });
 
+describe('Torneio — menu e treino', () => {
+  it('Missões usa a EXCLAMAÇÃO (não o check) e o indicador da faixa é a insígnia de 48', async () => {
+    const { container } = renderWithCss(<TournamentPage {...base} shop={shop} />);
+    const missoes = screen.getByRole('tab', { name: 'Missions' });
+    expect(missoes.textContent).toContain('exclamation');
+    expect(missoes.textContent).not.toContain('task_alt');
+    const ind = await waitFor(() => {
+      const el = container.querySelector('[data-tier-indicator]');
+      expect(el).not.toBeNull();
+      return el as HTMLElement;
+    });
+    expect(ind.querySelector('img')?.getAttribute('width')).toBe('48');
+  });
+
+  it('o TREINO existe sem Vínculo, sem rede e sem oponentes — e abre a luta local', () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('sem rede'))));
+    renderWithCss(<TournamentPage {...base} totalXP={0} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Train' }));
+    expect(screen.queryByRole('button', { name: 'Train' })).toBeNull(); // saiu da folha, entrou a luta
+  });
+});
+
 describe('Duelo', () => {
   it('mostra a ficha padrão sem skills e o botão abre a luta', () => {
     const onStart = vi.fn();
     const { container } = renderWithCss(<DueloSheet language="pt-BR" evolutionStage="rookie" onStart={onStart} />);
-    expect(container.textContent).toContain('Sua ficha');
-    expect(container.textContent).toContain('perder não custa nada');
+    // I9: só o essencial na folha; a explicação mora atrás do "?".
+    expect(container.querySelector('[data-duelo-elemento]')).not.toBeNull();
+    expect(container.querySelector('[data-duelo-poder]')).not.toBeNull();
+    expect(container.textContent).not.toContain('Sua ficha');
+    expect(container.textContent).not.toContain('perder não custa nada');
+    fireEvent.click(screen.getByRole('button', { name: /O que são elemento, poder e golpes/ }));
+    expect(document.querySelector('[data-duelo-ajuda]')!.textContent).toContain('perder não custa nada');
     fireEvent.click(screen.getByRole('button', { name: 'Começar duelo' }));
     expect(onStart).toHaveBeenCalledOnce();
   });

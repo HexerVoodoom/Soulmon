@@ -318,6 +318,11 @@ const CHECK_OUT = 'M8 12.4 11 15.4 19.4 6';
 const RING_OPEN = 'M19.97 8.78A8.6 8.6 0 1 1 17.05 5.04';
 const RING_DISC_OPEN = `${RING_OPEN}Z`;
 const CHECK_BARE = 'M5.2 12.6 9.8 17.2 18.8 6.8';
+/* A EXCLAMAÇÃO (I8, 02/10/2026): o ícone das Missões do Torneio — "tem coisa a fazer".
+   Haste em TRAÇO (ponta redonda, como o cheque) e o ponto é um NÓ. Nome próprio, não
+   Material: `exclamation` não existe na fonte, então não depende do subset. */
+const EXCLAMATION_STEM = 'M12 4.8v9.2';
+const EXCLAMATION_DOT: [number, number, number] = [12, 18.6, 1.55];
 const CLOSE = 'M6.4 6.4 17.6 17.6M17.6 6.4 6.4 17.6';
 /* O mais. É a cruz direcional sem os cantos: por isso o D-pad da nav precisou
    do pino no meio — sem ele os dois desenhos disputavam o mesmo significado. */
@@ -578,6 +583,9 @@ const GLYPHS: Record<string, GlyphDef> = {
     holes: strokeHole(CHECK_IN_RING),
   },
   check: { outline: <path d={CHECK_BARE} /> },
+  exclamation: {
+    outline: <><path d={EXCLAMATION_STEM} /><g fill="currentColor" stroke="none">{node(EXCLAMATION_DOT)}</g></>,
+  },
   close: { outline: <path d={CLOSE} /> },
   add: { outline: <path d={PLUS} /> },
   chevron_right: { outline: <path d={CHEVRON} /> },

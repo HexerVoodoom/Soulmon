@@ -98,6 +98,8 @@ describe('o fenômeno: 3 estados × 4 tipos, sem número nenhum', () => {
     expect(screen.getByText(PT('guild.feira.aberta.mundo'))).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Névoa' })).toBeTruthy();
     expect(screen.getByText(PT('guild.feira.fenomeno.nevoa.linha'))).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Como funciona a Feira' }));
+    expect(screen.getByText(PT('guild.feira.legenda'))).toBeTruthy();
     expect(screen.getByText(fill(PT('guild.feira.sobria'), { cheio: RAID_EMBLEMS, piso: RAID_EMBLEMS_FLOOR }))).toBeTruthy();
     expect(botao()!.textContent).toContain(PT('guild.feira.rodada.botao'));
     expect(botao()!.disabled).toBe(false);
