@@ -36,7 +36,7 @@ import { SoulTestItem, itemHint, itemPrompt } from './SoulTestItem';
 import { PREMADE_CHARACTERS, getDemoSprite, FULL_UNLOCK_SKU } from '../utils/monetization';
 import { useUnlockPriceLabel } from '../utils/priceLabel';
 import { purchase, isBillingAvailable } from '../utils/playBilling';
-import { checarContaExcluidaNoLogin } from '../utils/cloudSave';
+import { checarContaExcluidaNoLogin, restaurarContaNoLogin } from '../utils/cloudSave';
 import {
   isAuthConfigured, getCurrentEmail, entrarComGoogle, type AuthErro,
 } from '../utils/auth';
@@ -1121,6 +1121,16 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     }
     setAvisoContaExcluida(null);
     setAuthEmail(mail ?? '');
+    // H3 (02/10/2026, BUG): conta que JÁ tem save na nuvem restaura o save e
+    // PULA os termos e o onboarding. Antes só o fim do onboarding (26 perguntas
+    // depois) adotava o save — e o login por popup/nativo não passa pelo efeito
+    // do `App.tsx`, que só roda na montagem. Web e APK entram por aqui.
+    if (mail) {
+      setAuthOcupado(true);
+      const rest = await restaurarContaNoLogin(mail);
+      if (rest === 'restaurada') { window.location.reload(); return; }
+      setAuthOcupado(false);
+    }
     // A3: com a conta pronta, falta o aceite dos termos — a menos que esta
     // instalação já tenha provado o aceite da versão ATUAL. Autenticado e
     // aceito: o NOME vem primeiro (B1) — ou o passo em que a pessoa parou.

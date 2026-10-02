@@ -14,7 +14,7 @@
 import { authHeaders } from './auth';
 import { migrateBranchIds } from './branchMigration';
 import { STORAGE_KEYS, RECONCILE_KEYS } from './storageKeys';
-import { writeLocal, readLocal, removeLocal } from './safeStorage';
+import { writeLocal, readLocal, removeLocal, writeFlag } from './safeStorage';
 import { resolveLanguage } from './i18n';
 
 export async function emailToSaveId(email: string): Promise<string> {
@@ -454,7 +454,50 @@ export function adoptCloudSave(
   if (!writeLocal(STORAGE_KEYS.GAME_STATE, serialized)) return 'storage';
   writeLocal(STORAGE_KEYS.SAVE_ID, saveId);
   if (email) writeLocal(STORAGE_KEYS.USER_EMAIL, email.trim().toLowerCase());
+  // H3 (02/10/2026): "onboarding concluído" e "tutorial visto" moram em flags
+  // LOCAIS, fora do save. Adotar o save num aparelho novo sem religá-las fazia
+  // o reload cair no onboarding como conta nova — com o save certo gravado e
+  // ignorado. Só marca quando o save mostra uma criatura/uso de verdade: um
+  // estado vazio que subiu antes do fim do onboarding não pode pular o ritual.
+  if (saveTemOnboardingConcluido(state)) {
+    writeFlag(STORAGE_KEYS.ONBOARDING_COMPLETE, true, { silent: true });
+    writeFlag(STORAGE_KEYS.TUTORIAL_COMPLETE, true, { silent: true });
+  }
   return 'ok';
+}
+
+/** O save já passou pelo onboarding? (criatura nascida ou uso registrado) */
+export function saveTemOnboardingConcluido(state: unknown): boolean {
+  if (!isPlainState(state)) return false;
+  const s = state as Record<string, unknown>;
+  const len = (v: unknown) => (Array.isArray(v) ? v.length : 0);
+  return !!s.soulmonMeta || !!s.demoCharacterId
+    || len(s.activities) > 0 || len(s.completedTasks) > 0
+    || (typeof s.totalXP === 'number' && s.totalXP > 0);
+}
+
+export type RestauracaoNoLogin = 'restaurada' | 'sem-save' | 'indeterminado' | 'storage';
+
+/**
+ * H3 (02/10/2026) — chamada logo DEPOIS de autenticar, ANTES dos termos e do
+ * onboarding. Conta que já tem save na nuvem carrega o save e pula o ritual;
+ * só conta sem save segue para os termos. `'indeterminado'` (rede/5xx) NÃO
+ * decide nada: o fluxo segue como conta nova e a adoção do fim do onboarding
+ * (App.tsx › handleCompleteOnboarding) continua sendo a rede de segurança.
+ * Quem recebe `'restaurada'` deve recarregar a página. Nunca lança.
+ */
+export async function restaurarContaNoLogin(email: string): Promise<RestauracaoNoLogin> {
+  const norm = email.trim().toLowerCase();
+  if (!norm) return 'sem-save';
+  try {
+    const id = await emailToSaveId(norm);
+    const r = await lerNuvem(id);
+    if (r.estado === 'indeterminado' || r.estado === 'excluida') return 'indeterminado';
+    if (r.estado === 'vazio') return 'sem-save';
+    return adoptCloudSave(id, r.state, norm) === 'ok' ? 'restaurada' : 'storage';
+  } catch {
+    return 'indeterminado';
+  }
 }
 
 // ---------------------------------------------------------------------------
