@@ -1252,3 +1252,45 @@ Decisões do dono passadas ao `arte-instalador` junto com a aprovação das leva
    `bg-mission-dinoland`. Ficaram **fora** (decisão separada do dono): o nome da
    missão "Maratonista Jurássico" e o fundo "Vale dos Dinos".
 
+
+## 18. Mercado, decoração e Laboratório — rodada 3 de navegação (02/10/2026)
+
+Fonte: `AJUSTES-NAVEGACAO-2026-10-02.md` (D1, D2, G1–G3). Itens abaixo são decisões de
+implementação tomadas SEM o dono; o que está marcado **[dono]** espera resposta.
+
+1. **Comprar no Mercado pede confirmação (D1).** Tocar no card abre "Comprar X por N
+   Bits/Honra?" com custo, saldo agora e saldo depois, e só o "Confirmar" gasta. Vale para
+   itens, decoração, cenário e também para a **troca de Créditos → Bits** (gasta moeda de
+   dinheiro real). Sem saldo continua abrindo o "como conseguir" (H8), não a confirmação.
+   Alternativa que perdeu: confirmar só acima de um preço — um limiar é regra a mais para
+   lembrar, e o dono pediu o modal para "qualquer compra".
+2. **Decoração: a regra REAL é mantida e passa a ser dita na tela (D2).** Limite = 1 peça por
+   espaço do palco (`SLOT_ORDER`: chão, canto esquerdo, vitrine, canto direito, parede) → no
+   máximo 5 ao mesmo tempo; equipar numa casa ocupada troca. Posse sem limite. Equipar é
+   livre em qualquer cenário; a restrição é de EXIBIÇÃO (`decorBlockReason`): cenário `void`
+   não recebe nada, cenário de céu aberto não tem parede, e peça `indoor`/`outdoor` só
+   aparece em cenário do mesmo tipo (`any` aparece em todos). Dona do texto e da regra:
+   `src/utils/decorRules.ts`. **Não removida** a dependência de cenário: ela é de
+   COMPOSIÇÃO DE ARTE (a peça é desenhada para perspectiva de piso/parede; sofá no mar
+   é erro de composição — `petStage.ts`), não de economia. Alternativa que perdeu: "toda
+   peça em todo fundo" (remover `fits` e `slots`) — pede arte nova ou aceitar sofá na
+   lava. **[dono]** se quiser mesmo isso, decidir se aceita a incoerência visual ou se
+   manda desenhar variantes. Gatilho para rever: o dono ver peça "perdida" (equipada e
+   invisível) com frequência.
+3. **Laboratório sem o aparelho em volta do Soulmon (G1).** `Viewport` ganhou `bare`:
+   mesma medida (escala inteira), sem anel de cobre, vidro nem reflexo. Usado na Árvore da
+   Evolução, em Meu Soulmon e no cartão do Observatório. O padrão do `Viewport` não mudou
+   (continua aparelho completo no resto do app).
+4. **Estatísticas só no Laboratório (G2).** O Observatório (`labTab` `stats`) já era a casa
+   das Estatísticas; saiu a linha "Estatísticas" do menu da Home e a página `page:stats`.
+   O interruptor de **telemetria de uso** (opt-out, "Estatísticas de uso") fica em
+   Configurações › Seus dados: é controle de consentimento/privacidade (LGPD), e mover o
+   opt-out para dentro de um jogo esconderia o direito de sair. **[dono]** confirmar que era
+   a linha do menu (e não esse interruptor) que ele queria fora de Configurações.
+5. **NPC do Salão da Guilda: Bastia (G3).** Saiu a Marla-árvore; entrou a Bastia, guardiã
+   do Salão (busto `npc-f-guarda`, alfa binário 768², já aprovado na leva `npcs-femininas`).
+   Motivo: serena, protetora e sem arma em punho, lê "lugar seguro e sem pressa" — a fala
+   do Salão (`guild.npc.hall`, "Algumas criaturas cuidam de um bosque juntas. Ele só
+   cresce.") segue a mesma, sem cobrança. Alternativas descartadas: Sable (caçadora de
+   recompensas: caça e pergaminho de missão soam a perseguição/FOMO) e Gila (mercenária:
+   conota pagamento). O busto antigo `npc-hall-guilda.png` fica no repositório, sem uso.
