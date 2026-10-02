@@ -76,13 +76,17 @@ describe('CompanionHUD — o balão de fala e o CTA de evolução', () => {
     const btn = screen.getByRole('button', { name: 'Evoluir' });
     const faixa = faixaDoBalao(screen.getByText(FALA_ENERGIZED));
 
-    // "Evoluir" é ancorado no RODAPÉ (`bottom`); o balão, no TOPO (`top`) —
-    // não há mais eixo comum para as duas faixas se cruzarem.
-    expect(btn.style.bottom).not.toBe('');
-    expect(faixa.style.top).not.toBe('');
+    // B3 (02/10/2026): "Evoluir" é CENTRALIZADO no ALTO da área do pet
+    // (`top`, `left: 50%`) e o balão DESCE para baixo dele — as duas faixas
+    // continuam sem cruzar: o topo do balão é maior que o fim do botão (56).
+    expect(btn.style.left).toBe('50%');
+    expect(btn.style.bottom).toBe('');
     expect(faixa.style.bottom).toBe('');
-    expect(parseFloat(btn.style.bottom)).toBeGreaterThanOrEqual(0);
-    expect(parseFloat(faixa.style.top)).toBeGreaterThanOrEqual(0);
+    expect(parseFloat(btn.style.top)).toBeGreaterThanOrEqual(0);
+    expect(parseFloat(faixa.style.top)).toBeGreaterThanOrEqual(parseFloat(btn.style.top) + 56);
+    // alvo ≥ 44 e rótulo acessível
+    expect(parseFloat(btn.style.minHeight)).toBeGreaterThanOrEqual(44);
+    expect(btn.getAttribute('aria-label')).toBe('Evoluir');
   });
 
   it('sem CTA na tela o balão continua no MESMO topo (a posição não depende do botão)', () => {

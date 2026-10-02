@@ -3861,10 +3861,14 @@ html {
   100% { transform: scaleY(1) scaleX(1); }
 }
 
+/* B6 (02/10/2026): a água do chuveiro ficava transparente (sumia aos 20%) e
+   caía só 30px. Agora a gota fica OPACA quase o trajeto todo (some só no fim)
+   e cai 84px, até os pés do pet. */
 @keyframes shower-drop {
   0%   { opacity: 0; transform: translateY(-26px) scale(0.8); }
-  20%  { opacity: 1; }
-  100% { opacity: 0; transform: translateY(30px) scale(1); }
+  10%  { opacity: 1; }
+  82%  { opacity: 1; }
+  100% { opacity: 0; transform: translateY(84px) scale(1); }
 }
 
 @keyframes pet-shower-shake {
@@ -5723,6 +5727,8 @@ select:focus-visible {
      dele. Um bloco novo no fim tira a trava da fundação do alcance do teste
      sem ninguém notar. */
   .sm-visor-swap { animation: none !important; }
+  /* B3: o brilho pulsante do "Evoluir" fica fixo. */
+  .sm2-evolve-btn { animation: none !important; }
   /* minimal-ui F2 (Home B): o cursor do terminal fica ACESO e parado; o "+1"
      aparece sem subir; a mochila abre e desce por corte, sem deslizar. */
   .sm3-term-cur, .sm3-mais { animation: none !important; }
@@ -7974,3 +7980,71 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
    barra inteira (`.sm3-term:focus-within`), que já existe. */
 .sm3-term .sm3-term-input:focus,
 .sm3-term .sm3-term-input:focus-visible { outline: 0; box-shadow: none; }
+
+/* ── BOTÃO "EVOLUIR" (B3, 02/10/2026) ──────────────────────────────────────
+   Componente: `components/pixel/EvolveButton.tsx`. Moldura pixel DUPLA feita só
+   de `box-shadow` (cantos em degrau, sem `clip-path`, que cortaria o brilho):
+   quatro sombras de 4px = borda ciano com cantos chanfrados; `inset` = filete
+   ouro por dentro. O brilho pulsa interpolando as MESMAS 6 camadas (a lista
+   precisa ter o mesmo tamanho nos dois keyframes). Sem animação de
+   layout/transform. Arte do dono opcional: `background-image` vem inline. */
+.sm2-evolve-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-sizing: border-box;
+  min-width: 156px;
+  min-height: 56px;
+  padding: 0 20px;
+  margin: 4px;
+  border: 0;
+  border-radius: 0;
+  font-family: var(--sm2-font-pixel);
+  font-size: 16px;
+  line-height: 1;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  -webkit-font-smoothing: none;
+  color: var(--sm2-viewport-ink);
+  background-color: var(--sm2-viewport-bg);
+  background-image: linear-gradient(180deg, color-mix(in srgb, var(--sm2-primary-ink) 22%, transparent), transparent 70%);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  cursor: pointer;
+  text-shadow: 0 0 6px color-mix(in srgb, var(--sm2-primary-ink) 80%, transparent);
+  box-shadow:
+    0 -4px 0 0 var(--sm2-primary-ink),
+    0 4px 0 0 var(--sm2-primary-ink),
+    -4px 0 0 0 var(--sm2-primary-ink),
+    4px 0 0 0 var(--sm2-primary-ink),
+    inset 0 0 0 2px var(--sm2-gold-ink),
+    0 0 14px 2px color-mix(in srgb, var(--sm2-primary-ink) 45%, transparent);
+  animation: sm2-evolve-glow 1.8s steps(6, end) infinite;
+}
+.sm2-evolve-btn:active { filter: brightness(1.15); }
+.sm2-evolve-btn:focus-visible { outline: 3px solid var(--sm2-gold-ink); outline-offset: 8px; }
+.sm2-evolve-spark { color: var(--sm2-gold-ink); font-size: 14px; }
+.sm2-evolve-label { display: inline-block; }
+@keyframes sm2-evolve-glow {
+  0%, 100% {
+    box-shadow:
+      0 -4px 0 0 var(--sm2-primary-ink),
+      0 4px 0 0 var(--sm2-primary-ink),
+      -4px 0 0 0 var(--sm2-primary-ink),
+      4px 0 0 0 var(--sm2-primary-ink),
+      inset 0 0 0 2px var(--sm2-gold-ink),
+      0 0 10px 1px color-mix(in srgb, var(--sm2-primary-ink) 35%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 -4px 0 0 var(--sm2-primary-ink),
+      0 4px 0 0 var(--sm2-primary-ink),
+      -4px 0 0 0 var(--sm2-primary-ink),
+      4px 0 0 0 var(--sm2-primary-ink),
+      inset 0 0 0 2px var(--sm2-gold-ink),
+      0 0 26px 6px color-mix(in srgb, var(--sm2-primary-ink) 70%, transparent);
+  }
+}
+/* (movimento reduzido do .sm2-evolve-btn: no bloco canônico, mais acima) */

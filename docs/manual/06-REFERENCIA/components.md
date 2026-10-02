@@ -981,12 +981,21 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 
 ### `src/components/pixel/HomeHud.tsx`
 **Dono de:** o HUD do topo da Home — marca à esquerda, medidores segmentados de HP/Energia/Bits abaixo, sob o orçamento de 5 leituras numéricas (`PLANO-DESIGN` §5.1).
-**Props principais:** `HomeHudProps` — HP, energia, Bits, `language`, `focusSealed?`, `trailing?: ReactNode` (minimal-ui D6 — slot na ponta direita da linha da marca, onde o `App` põe o botão do menu só ícone; slot e não botão embutido: o HUD não sabe o que o menu abre).
+**Props principais:** `HomeHudProps` — HP, energia, Bits, `language`, `focusSealed?`, `leading?: ReactNode` (B2, 02/10/2026 — slot na ponta ESQUERDA, onde o `App` põe o botão do menu só ícone), `trailing?: ReactNode` (ponta direita, reserva o espaço do link do Mapa, que é `fixed` no topo) e `petName?` (B1 — só o nome do Soulmon, ao lado do logo).
 **Exports:** `HomeHud(props)`.
 **Estado/efeitos relevantes:** nenhum — apresentação pura sobre valores já calculados.
 **Chamado por:** `src/App.tsx` (`grep -rl "from '.*/HomeHud'" src`, 24/09/2026; ⚰️ o `CompanionHUD` não o importa mais).
 **Régua:** `src/components/pixel/HomeHud.render.test.tsx`, `.selo.render.test.tsx`.
 **Avisos do arquivo:** Créditos e os 3 atributos SAÍRAM deste HUD (troca declarada: Vínculo só entraria se duas leituras saíssem no mesmo PR) — Créditos continuam acionáveis no menu/`CreditsModal`, atributos moram em "CURRENT ALIGNMENT" na `EvolutionPath`; `TODO(Vínculo)` aberto para uma terceira `.sm2-meter` lendo `src/utils/bond.ts`, sem tirar outra leitura antes; Bits sem ícone, fonte de calculadora, para não repetir o bug do ícone 💎 compartilhado com Créditos.
+
+### `src/components/pixel/EvolveButton.tsx`
+**Dono de:** o botão "Evoluir" da Home (B3, 02/10/2026) — centralizado no alto da área do pet, moldura pixel dupla + brilho pulsante em CSS (`.sm2-evolve-btn`, `index.css`).
+**Props principais:** `language`, `onClick?`, `reducedMotion`, `style?` (posição).
+**Exports:** `EvolveButton(props)` · `EVOLVE_BTN_H` (56, o balão desce essa altura) · `EVOLVE_BTN_ART` (URL de `src/assets/icons/evoluir-btn.png` se o arquivo existir; senão `undefined` e vale o CSS — ponto de troca para a arte do dono, que deve vir SEM texto).
+**Estado/efeitos relevantes:** nenhum; o pulso é só `box-shadow` e some com movimento reduzido.
+**Chamado por:** `src/components/CompanionHUD.tsx`.
+**Régua:** `src/components/CompanionHUD.cta.test.tsx`, `CompanionHUD.render.test.tsx`.
+**Avisos do arquivo:** rótulo é texto vivo PT/EN (alvo ≥ 44, `aria-label`); a regra de movimento reduzido mora no bloco canônico do `index.css`.
 
 ### `src/components/pixel/PixelKit.tsx`
 **Dono de:** os primitivos de UI da direção visual pixel (`docs/ui-refs/SPEC-UI-PIXEL.md`) — botão, painel, barra segmentada, checkbox, abas, chip, tag, switch, medidor, slot.

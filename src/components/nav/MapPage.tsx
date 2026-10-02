@@ -36,7 +36,7 @@ const CHIP: import('react').CSSProperties = {
  * `<button>` (não link) que chama `onOpenArea`; o roteamento em si é de
  * `navigation.ts`, um dono só.
  *
- * O canto inferior esquerdo é vinhetado (mesmo truque do mock: um gradiente
+ * O canto SUPERIOR esquerdo é vinhetado (B2, 02/10/2026) (mesmo truque do mock: um gradiente
  * radial escurecendo, para o link da Home — `CornerLink glow` — se destacar
  * sem caixa em volta).
  *
@@ -102,12 +102,12 @@ export function MapPage({ language, onOpenArea, bits, emblems, credits }: {
         }}
       />
 
-      {/* Vinheta leve no canto inferior esquerdo — onde mora o link da Home. */}
+      {/* Vinheta leve no canto superior esquerdo — onde mora o link da Home (B2). */}
       <div
         aria-hidden="true"
         style={{
-          position: 'absolute', left: 0, bottom: 0, width: '48%', height: '28%',
-          background: 'radial-gradient(circle at 0% 100%, rgba(4,10,10,.55), transparent 70%)',
+          position: 'absolute', left: 0, top: 0, width: '48%', height: '28%',
+          background: 'radial-gradient(circle at 0% 0%, rgba(4,10,10,.55), transparent 70%)',
           pointerEvents: 'none',
         }}
       />

@@ -37,35 +37,18 @@ beforeEach(() => {
 });
 afterEach(() => { vi.unstubAllGlobals(); });
 
-describe('CompanionHUD — nome e título do Vínculo (WP3.3)', () => {
-  it('mostra o nome do pet', () => {
-    renderWithCss(<CompanionHUD {...base} petDisplayName="Bito" />);
-    expect(screen.getByText('Bito')).toBeTruthy();
+describe('CompanionHUD — nome e título do Vínculo saíram da faixa do pet (B1, 02/10/2026)', () => {
+  it('o nome NÃO é desenhado sob o pet: mora no header da Home (HomeHud)', () => {
+    const { container } = renderWithCss(<CompanionHUD {...base} petDisplayName="Bito" />);
+    expect(container.querySelector('.sm2-home-petname')).toBeNull();
   });
 
-  it('mostra o título do Vínculo sob o nome', () => {
+  it('o título do Vínculo continua existindo em utils/bond (Estatísticas), mas a Home não o desenha', () => {
     const titulo = bondTitle(2, 'pt-BR');
-    expect(titulo, 'o nível 2 precisa dar título — é a recompensa do dia 1').toBeTruthy();
-    renderWithCss(<CompanionHUD {...base} petDisplayName="Bito" bondTitleText={titulo} />);
-    expect(screen.getByText(titulo!)).toBeTruthy();
-  });
-
-  it('sem título (nível 1) o nome aparece sozinho, sem espaço vazio', () => {
-    // Nível 1 é todo mundo no minuto zero. Uma linha reservada e vazia lê como
-    // "falta algo aqui" — espaço vazio é VAZIO, a mesma regra do palco.
-    renderWithCss(<CompanionHUD {...base} petDisplayName="Bito" bondTitleText={null} />);
-    expect(screen.getByText('Bito')).toBeTruthy();
-  });
-
-  it('sem nome e sem título, nada é desenhado', () => {
-    const { container } = renderWithCss(<CompanionHUD {...base} />);
-    expect(container.textContent).not.toContain('Bito');
-  });
-
-  it('o título vem do idioma escolhido', () => {
-    const en = bondTitle(5, 'en-US');
-    renderWithCss(<CompanionHUD {...base} language="en-US" bondTitleText={en} />);
-    expect(screen.getByText(en!)).toBeTruthy();
+    expect(titulo, 'o nível 2 dá título — só não aparece mais na Home').toBeTruthy();
+    const { container } = renderWithCss(<CompanionHUD {...base} petDisplayName="Bito" />);
+    expect(container.textContent).not.toContain(titulo!);
+    expect(container.textContent).not.toMatch(/companheiro|companion/i);
   });
 });
 

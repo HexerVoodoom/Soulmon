@@ -117,8 +117,8 @@ upgradeRitual           → <SoulmonOnboarding mode="upgrade">  (retorna)
 ### 1.2 Home, Mapa e o menu ícone
 
 - **Home** (`'home'`): um único link para o Mapa, `CornerLink icon="mapa"` no
-  canto inferior direito ("Mapa"/"Map"). O menu ícone do topo (`HomeHud`)
-  abre o `HomeMenuSheet` (decisão D6), com seis linhas (`MenuRow`):
+  canto **SUPERIOR direito** ("Mapa"/"Map"; B2, 02/10/2026 — era o inferior). O header (`HomeHud`) é `[menu ☰] [logo + nome do Soulmon] [Mapa]`: o menu ícone, agora à ESQUERDA onde ficava o logo,
+  abre o `HomeMenuSheet` (decisão D6), com seis linhas (`MenuRow`); a Home mostra só o NOME do Soulmon (B1) — o título do Vínculo ("Companheiro") não é desenhado nela:
   Configurações (`page:settings`), Oráculo (`page:oracle`), Estatísticas
   (`page:stats`), Guia (`GuideModal`), Créditos (`CreditsModal`, só se a prop
   existir) e "Refazer o ritual" (só se a prop existir).
@@ -127,7 +127,7 @@ upgradeRitual           → <SoulmonOnboarding mode="upgrade">  (retorna)
   saldo das 3 moedas no canto inferior **direito** (⚠️ ficava no topo até
   24/09/2026, e a arte do "Jogos" pintava por cima dele; hoje `zIndex` 2, e é
   o espelho do link da Home, no esquerdo) e um único link para a Home,
-  `CornerLink icon="home"` no canto inferior esquerdo ("Início"/"Home",
+  `CornerLink icon="home"` no canto **SUPERIOR esquerdo** (B2, 02/10/2026; "Início"/"Home",
   `goBack`). Cada moeda é uma **pílula** com a moldura `chip-moeda` do squad
   de arte em 9-slice (`border-image`, miolo opaco) — é moldura de TEXTO, não
   de ícone, então a regra "ícone nunca dentro de box" não se aplica.

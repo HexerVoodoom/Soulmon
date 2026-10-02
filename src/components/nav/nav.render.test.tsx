@@ -126,6 +126,13 @@ describe('CornerLink', () => {
     expect(btn.style.border === 'none' || btn.style.border === '' || btn.style.borderStyle === 'none').toBe(true);
   });
 
+  it('B2: os dois links moram no TOPO (nunca embaixo), respeitando a área segura', () => {
+    const r = renderWithCss(<CornerLink icon="mapa" side="right" label="Map" onClick={() => {}} />);
+    const btn = r.container.querySelector('button')!;
+    expect(btn.style.top).toContain('safe-area-inset-top');
+    expect(btn.style.bottom).toBe('');
+  });
+
   it('Home no canto ESQUERDO, Mapa no DIREITO', () => {
     const l = renderWithCss(<CornerLink icon="home" side="left" label="Home" onClick={() => {}} />);
     expect(l.container.querySelector('button')!.style.left).not.toBe('');

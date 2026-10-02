@@ -3,9 +3,9 @@ import { PixelIcon } from '../ui/PixelIcon';
 /**
  * O LINK DE CANTO — a única navegação entre as duas telas de topo.
  *
- * Home: o Mapa, no canto inferior DIREITO. Mapa: a Home, no canto inferior
- * ESQUERDO (minimal-ui, decisão 1 do dono). Não é barra: é um botão só, fixo no
- * canto, acima da área segura do aparelho.
+ * Home: o Mapa, no canto SUPERIOR direito. Mapa: a Home, no canto SUPERIOR
+ * esquerdo (B2, 02/10/2026: antes ficavam embaixo). Não é barra: é um botão só, fixo no
+ * canto, abaixo da área segura do aparelho (o anel de 44 cai em y=12, a linha do header da Home).
  *
  * **Ícone pelado, 32px (papel `nav` da escala, tokens.md §6.1)** — a regra
  * "ícone nunca dentro de box" vale aqui sem exceção (a exceção D1 é só do
@@ -40,7 +40,7 @@ export function CornerLink({ icon, label, side, onClick, glow = false, ring = fa
       className="sm2-corner-link"
       style={{
         position: 'fixed',
-        bottom: 'calc(var(--sm2-space-3) + env(safe-area-inset-bottom, 0px))',
+        top: 'calc(env(safe-area-inset-top, 0px) + 6px)',
         [side]: 'var(--sm2-space-3)',
         zIndex: 45,
         width: 56, height: 56,
