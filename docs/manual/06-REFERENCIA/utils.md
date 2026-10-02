@@ -2679,3 +2679,10 @@ dominância populacional — por isso ±15%. Régua nova:
 **Chamado por:** `src/App.tsx`, `src/contexts/GameStateContext.tsx`
 **Régua:** `src/utils/soulTestAnswers.test.ts`, `src/components/SoulmonOnboarding.testoSalvo.render.test.tsx`.
 **Regra de negócio:** sanitização estrutural (likert 1–5, escolha a/b, cenário por id) sem importar o banco de itens; nada válido → campo ausente. Declarado em `public/privacidade.html` §2.
+
+### `src/utils/areaLotGeometry.ts`
+**Dono de:** a caixa OPACA de cada sprite de lote e o alvo de toque derivado dela (H11/H12, 02/10/2026) — resolve o NPC que alternava: as caixas quadradas dos lotes se sobrepunham e o toque no pé de um prédio caía no vizinho.
+**Exports:** `LotBounds`, `LOT_ART_BOUNDS`, `lotArtBounds(areaId, lotId)`, `LOT_LABEL_H`, `LOT_MIN_WIDTH_PX`, `Rect`, `lotHitRects(...)`.
+**Chamado por:** `src/components/nav/AreaScene.tsx`.
+**Régua:** `src/utils/areaLotGeometry.contract.test.ts` (mede o alfa dos PNG e reprova par de lotes cujos alvos se encostem), `src/components/nav/areaLotNpc.contract.test.tsx` (20 aberturas por lote, sempre o mesmo busto).
+**Regra de negócio:** nenhuma — é geometria de toque. Se a arte de um lote trocar, o teste informa os números novos de `LOT_ART_BOUNDS`.

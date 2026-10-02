@@ -6104,7 +6104,6 @@ export default function App() {
                   do dock fixo. */}
               <div
                 data-home-scroll
-                className="sm-home-scroll"
                 style={{
                   flex: '1 1 auto', minHeight: 0, overflowY: 'auto', overscrollBehavior: 'contain',
                   display: 'grid', alignContent: 'start', gap: 16,

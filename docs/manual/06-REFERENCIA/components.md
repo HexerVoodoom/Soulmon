@@ -1199,3 +1199,9 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 **Exports:** `RestSetupModal`, `RestSetupModalProps`.
 **Chamado por:** `src/App.tsx`
 **Régua:** `src/components/RestSetupModal.render.test.tsx`.
+
+### `src/components/nav/cornerAnchor.ts`
+**Dono de:** a âncora ÚNICA dos botões do canto superior esquerdo/direito (H9, 02/10/2026): caixa de 56, anel de 44, topo e lado, cor e brilho — para o Mapa, a casinha e o voltar-ao-mapa das folhas ficarem sempre no mesmo lugar.
+**Exports:** `CORNER_BOX`, `CORNER_RING`, `CORNER_BOX_TOP`, `CORNER_SIDE`, `CORNER_RING_TOP`, `CORNER_RING_SIDE`, `CORNER_INK`, `CORNER_GLOW`, `CORNER_RING_STYLE`.
+**Chamado por:** `src/components/nav/CornerLink.tsx` e o `AreaTopBar`.
+**Régua:** `src/components/nav/nav.render.test.tsx`.
