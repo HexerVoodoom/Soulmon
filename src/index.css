@@ -5710,6 +5710,8 @@ select:focus-visible {
   .sm2-fair-fx { animation: none !important; }
   /* Duelo fantasma: o número do golpe aparece sem voar. */
   .sm-duel-dmg { animation: none !important; }
+  /* Torcida (02/10/2026): sem movimento, o efeito do toque nem aparece; o gauge é o retorno. */
+  .sm-torcida-burst { display: none !important; }
   .sm2-viewport { animation: none !important; }
   .sm2-icon { transition: none !important; }
   /* minimal-ui F1: o link de canto e o voltar não encolhem no toque. */
@@ -7974,3 +7976,9 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
    barra inteira (`.sm3-term:focus-within`), que já existe. */
 .sm3-term .sm3-term-input:focus,
 .sm3-term .sm3-term-input:focus-visible { outline: 0; box-shadow: none; }
+
+
+/* TORCIDA (02/10/2026): o "grito" que sobe do ponto tocado na luta. Com movimento
+   reduzido o efeito nem renderiza (regra no bloco canonico de prefers-reduced-motion). */
+@keyframes sm-torcida-burst { from { opacity: 0; transform: translate(-50%, -20%) scale(.7); } 20% { opacity: 1; } to { opacity: 0; transform: translate(-50%, -200%) scale(1.15); } }
+.sm-torcida-burst { position: absolute; pointer-events: none; z-index: 5; font-family: Silkscreen, monospace; font-size: 16px; color: var(--sm2-gold-ink); text-shadow: 0 1px 0 var(--sm2-bg); white-space: nowrap; animation: sm-torcida-burst 700ms ease-out forwards; }

@@ -113,7 +113,7 @@ describe('duelo — desistir é perder', () => {
     const rec = JSON.parse(env.DIGIAPP_SAVES.store.get(k));
     rec.pending.at = Date.now() - DUEL_PENDING_MS - 1000;
     env.DIGIAPP_SAVES.store.set(k, JSON.stringify(rec));
-    const r = await call(env, 'match', { opponentId: PID[OPP], cheers: [1, 1, 1] });
+    const r = await call(env, 'match', { opponentId: PID[OPP], cheers: [8, 8, 8] });
     expect(r.json.forfeit).toBe(true);
     expect(r.json.won).toBe(false);
   });
@@ -130,7 +130,7 @@ describe('duelo — resolver usa a semente do servidor e gasta uma partida só',
   it('duelStart + match = UMA partida gasta, e o pending some', async () => {
     const env = mkEnv();
     await call(env, 'duelStart', { opponentId: PID[OPP] });
-    const r = await call(env, 'match', { opponentId: PID[OPP], cheers: [1, 1, 1] });
+    const r = await call(env, 'match', { opponentId: PID[OPP], cheers: [8, 8, 8] });
     expect(r.status).toBe(200);
     expect(r.json.forfeit).toBeUndefined();
     expect(rank(env).matchesToday).toBe(1);
@@ -149,8 +149,8 @@ describe('duelo — resolver usa a semente do servidor e gasta uma partida só',
       env.DIGIAPP_SAVES.store.set(k, JSON.stringify(rec));
     };
     setSeed(a); setSeed(b);
-    const ra = await call(a, 'match', { opponentId: PID[OPP], cheers: [0.5, 0.5, 0.5], seed: 1 });
-    const rb = await call(b, 'match', { opponentId: PID[OPP], cheers: [0.5, 0.5, 0.5], seed: 999 });
+    const ra = await call(a, 'match', { opponentId: PID[OPP], cheers: [4, 4, 4], seed: 1 });
+    const rb = await call(b, 'match', { opponentId: PID[OPP], cheers: [4, 4, 4], seed: 999 });
     expect(ra.json.duel.events).toEqual(rb.json.duel.events);
   });
 
