@@ -37,6 +37,9 @@ const props = {
 beforeEach(() => {
   vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('rede proibida no teste'))));
 });
+/** A aba Faixa busca o ranking ao abrir; o que importa aqui é a busca de OPONENTES. */
+const buscouOponentes = () => vi.mocked(fetch).mock.calls.some(c => /opponents/.test(String(c[0])));
+
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 describe('não existe mais interruptor de PvP', () => {
@@ -74,7 +77,7 @@ describe('abaixo do Vínculo 5 a aba EXPLICA, não parece quebrada', () => {
   it('não procura oponentes enquanto o requisito não é cumprido', async () => {
     render(<TournamentPage {...props} totalXP={0} />);
     await new Promise(r => setTimeout(r, 50));
-    expect(fetch).not.toHaveBeenCalled();
+    expect(buscouOponentes()).toBe(false); // (a aba Faixa já busca o ranking, e isso é outra coisa)
   });
 });
 
@@ -84,7 +87,7 @@ describe('a partir do Vínculo 5 o Desafiar abre, sem passo nenhum antes', () =>
     expect(document.querySelector('[data-torneio-requisito]')).toBeNull();
     expect(screen.queryByText(/Ative o PvP|Enable PvP/)).toBeNull();
     expect(document.querySelector('[data-torneio-aviso-publico]')?.textContent).toMatch(/lista pública/i);
-    await waitFor(() => expect(fetch).toHaveBeenCalled());
+    await waitFor(() => expect(buscouOponentes()).toBe(true));
   });
 
   it('o aviso está em inglês quando o idioma é inglês', () => {
