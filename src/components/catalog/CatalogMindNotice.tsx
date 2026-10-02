@@ -19,9 +19,12 @@ interface CatalogMindNoticeProps {
   language?: 'pt-BR' | 'en-US';
   onCancel: () => void;
   onConfirm: () => void;
+  /** I3: dentro da folha do catálogo a seta de voltar é a do cabeçalho da
+   *  própria folha (`ModalSheet onBack`) — aqui ela some para não duplicar. */
+  showBack?: boolean;
 }
 
-export function CatalogMindNotice({ item, language = 'en-US', onCancel, onConfirm }: CatalogMindNoticeProps) {
+export function CatalogMindNotice({ item, language = 'en-US', onCancel, onConfirm, showBack = true }: CatalogMindNoticeProps) {
   const isPt = language === 'pt-BR';
   const [understood, setUnderstood] = useState(false);
 
@@ -37,6 +40,7 @@ export function CatalogMindNotice({ item, language = 'en-US', onCancel, onConfir
       {/* Back padronizado (navegação do dono, 01/10/2026): a volta ao
           catálogo é a seta no canto superior ESQUERDO, acima do título — o
           "Cancelar" embaixo saiu. */}
+      {showBack && (
       <button
         type="button"
         onClick={onCancel}
@@ -51,6 +55,7 @@ export function CatalogMindNotice({ item, language = 'en-US', onCancel, onConfir
       >
         <Icon name="arrow_back" size={24} />
       </button>
+      )}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <Icon name="health_and_safety" size={24} fill={1} tone="primary" />
         <h3 style={{ ...sm2Text, fontWeight: 600, margin: 0 }}>

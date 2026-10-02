@@ -23,7 +23,7 @@ import type { Language } from '../../utils/i18n';
 import { SPECIAL_ITEMS } from '../../utils/shop';
 import { ITEM_ART } from '../../utils/itemArt';
 import { getFoodDesc, getFoodName } from '../ItemsWindow';
-import { Icon } from '../ui/Icon';
+import { BackArrow } from '../ui/BackArrow';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
 
 /** Distância (px) que separa um TOQUE de um ARRASTO. Abaixo disto é toque, e
@@ -176,18 +176,21 @@ export function Mochila({
 
   return (
     <div
-      className={`sm3-mochila-bg${arrastando ? ' sm3-arrastando' : ''}`}
+      className={`sm3-mochila-bg sm2-sheet-fade${arrastando ? ' sm3-arrastando' : ''}`}
       data-mochila
       onClick={(e) => { if (e.target === e.currentTarget && !arrastando) onClose(); }}
     >
       <div
         ref={dialogRef}
-        className="sm3-mochila"
+        className="sm3-mochila sm2-sheet-rise"
         role="dialog"
         aria-modal="true"
         aria-label={isPt ? 'Mochila' : 'Backpack'}
       >
         <div className="sm3-mochila-alca" aria-hidden="true" />
+        {/* I3: o fechar é a seta do app (`BackArrow` com `close`), no canto superior
+            ESQUERDO, ACIMA do título — o mesmo lugar do voltar. */}
+        <BackArrow icon="close" onClick={onClose} language={isPt ? 'pt-BR' : 'en-US'} style={{ margin: '-6px 0 0 -10px' }} />
         <div className="sm3-mochila-head">
           <div style={{ flex: 1, minWidth: 0 }}>
             <h2 className="sm3-mochila-titulo">{isPt ? 'Mochila' : 'Backpack'}</h2>
@@ -195,14 +198,6 @@ export function Mochila({
               {isPt ? `Arraste até o ${nomePet} pra usar` : `Drag onto ${nomePet} to use`}
             </p>
           </div>
-          <button
-            type="button"
-            className="sm3-mochila-x"
-            onClick={onClose}
-            aria-label={isPt ? 'Fechar' : 'Close'}
-          >
-            <Icon name="close" size={24} tone="muted" />
-          </button>
         </div>
 
         <div className="sm3-mochila-abas" role="tablist" aria-label={isPt ? 'Tipos de item' : 'Item types'}>

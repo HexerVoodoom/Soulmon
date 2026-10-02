@@ -59,6 +59,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
   return (
     <div
       data-area-sheet-backdrop
+      className="sm2-sheet-fade"
       onClick={onClose}
       style={{
         position: 'absolute', inset: 0, zIndex: 20,
@@ -164,6 +165,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
 
         <div
           data-area-sheet
+          className="sm2-sheet-rise"
           // Toque dentro da folha não deve fechar (só o backdrop fecha).
           onClick={e => e.stopPropagation()}
           style={{

@@ -1,5 +1,6 @@
 import { useId, useState, type CSSProperties, type ReactNode } from 'react';
 import { Icon } from '../ui/Icon';
+import { BackArrow } from '../ui/BackArrow';
 import { resolveLanguage, type Language } from '../../utils/i18n';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
 import { readLocal } from '../../utils/safeStorage';
@@ -373,7 +374,7 @@ export function CheckRow({
  * Foco preso, Escape fecha e o foco volta para quem abriu (`useDialogA11y`).
  */
 export function ModalSheet({
-  open, title, onClose, language, children, footer, maxWidth = 480,
+  open, title, onClose, language, children, footer, maxWidth = 480, closeSide = 'start', onBack,
 }: {
   open: boolean;
   title: string;
@@ -382,12 +383,22 @@ export function ModalSheet({
   children: ReactNode;
   footer?: ReactNode;
   maxWidth?: number;
+  /** I3 (02/10/2026): onde mora o fechar. `'start'` (padrão) = canto superior
+   *  ESQUERDO, acima do título (o mesmo lugar do voltar). `'end'` = canto
+   *  superior DIREITO, só para a folha cujo fechar ENCERRA uma atividade em
+   *  andamento. */
+  closeSide?: 'start' | 'end';
+  /** Folha com sub-tela interna (ex.: o aviso do catálogo): a peça do canto
+   *  superior ESQUERDO vira a SETA de voltar à tela anterior da folha, e não o
+   *  fechar. Sem ele, é o fechar (`close`). */
+  onBack?: () => void;
 }) {
   const isPt = language === 'pt-BR';
   const dialogRef = useDialogA11y<HTMLDivElement>(open, onClose);
   if (!open) return null;
   return (
     <div
+      className="sm2-sheet-fade"
       style={{
         position: 'fixed', inset: 0, zIndex: 120,
         background: 'rgba(4, 18, 20, .55)',
@@ -399,6 +410,7 @@ export function ModalSheet({
         role="dialog"
         aria-modal="true"
         aria-label={title}
+        className="sm2-sheet-rise"
         style={{
           width: '100%', maxWidth, maxHeight: '92vh',
           display: 'flex', flexDirection: 'column', overflow: 'hidden',
@@ -423,19 +435,28 @@ export function ModalSheet({
           }}
         />
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 8px 12px 18px' }}>
+        {closeSide === 'start' ? (
+          /* I3: o fechar é a mesma peça do voltar (`BackArrow`, ícone `close`),
+             no canto superior ESQUERDO, numa linha PRÓPRIA acima do título. */
+          <div style={{ padding: '2px 18px 0 18px', flexShrink: 0 }}>
+            <BackArrow icon={onBack ? 'arrow_back' : 'close'} onClick={onBack ?? onClose} language={language} style={{ margin: '0 0 0 -10px' }} />
+          </div>
+        ) : null}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: closeSide === 'start' ? '0 18px 12px 18px' : '10px 8px 12px 18px' }}>
           <span className="sm2-title" style={{ ...sm2TitleStyle, flex: 1 }}>{title}</span>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={isPt ? 'Fechar' : 'Close'}
-            style={{
-              width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: 'none', border: 'none', cursor: 'pointer',
-            }}
-          >
-            <Icon name="close" size={24} tone="muted" />
-          </button>
+          {closeSide === 'end' && (
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label={isPt ? 'Fechar' : 'Close'}
+              style={{
+                width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'none', border: 'none', cursor: 'pointer',
+              }}
+            >
+              <Icon name="close" size={24} tone="muted" />
+            </button>
+          )}
         </div>
 
         {/* SAFE AREA. O sheet encosta no fundo da tela por definição, e o fundo

@@ -398,6 +398,7 @@ export function NightmareBattle({
       zIndex={210}
       maxWidth={340}
       closeLabel={isPt ? 'Fechar' : 'Close'}
+      closeSide="end"
       style={{ alignItems: 'center', textAlign: 'center', gap: 10, paddingTop: 44 }}
     >
       {/* ── Convite ─────────────────────────────────────────────────── */}

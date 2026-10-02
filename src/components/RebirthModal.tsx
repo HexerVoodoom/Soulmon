@@ -127,6 +127,7 @@ export function RebirthModal({ language, onConfirm, onClose }: RebirthModalProps
       onClose={onClose}
       language={language}
       title={isPt ? 'Renascimento' : 'Rebirth'}
+      onBack={confirmando ? () => setConfirmando(false) : undefined}
       maxWidth={520}
       footer={
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
