@@ -9,9 +9,12 @@ import { TimingBar } from './pixel/TimingBar';
 import {
   buildDungeonWave, getDungeonDifficulty, getDungeonBest,
   setDungeonDifficultyAtLeast, recordDungeonScore, LADDER_TIERS,
-  deepStartCost, canBuyDeepStart, DEEP_START_MAX_LEVEL,
+  deepStartCost, canBuyDeepStart, buyDeepStart, DEEP_START_MAX_LEVEL,
+  getDungeonReached, recordDungeonReached,
   type DungeonEnemy,
 } from '../utils/dungeon';
+import { torcidaStrike, torcidaTap } from '../utils/torcida';
+import { TorcidaLayer, TorcidaGauge } from './games/TorcidaKit';
 import { buildRunScenes, DUNGEON_SCENES, type DungeonScene } from '../utils/dungeonScenes';
 import { jeitoDaProfissao, fraseDaProfissao } from '../utils/profissaoMasmorra';
 import type { LText } from '../utils/oracle';
@@ -53,6 +56,8 @@ export const MAX_FLOORS = 5;
    profissão, a masmorra é exatamente a de antes. */
 const DEFEND_TIME = 3.0;   // seconds to react on defense (base; the craft may add)
 const POPUP_MS = 1400;     // how long result popups stay before the next phase
+/** Do começo da vez do Soulmon até o golpe sair sozinho (tempo de o dono torcer). */
+const ATTACK_AUTO_MS = 1300;
 // Bits for clearing a floor — scales with how deep you are. Era 10/15/20/25/30;
 // desde 30/09/2026 passa pelo `DUNGEON_BITS_FACTOR` (0,4 → 4/6/8/10/12), a
 // decisão do dono que trouxe a run completa para perto do teto diário.
@@ -124,6 +129,10 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
   const [gotHeart, setGotHeart] = useState(false);
   const [defendTimeLeft, setDefendTimeLeft] = useState(defendTime);
   const [baseLevel, setBaseLevel] = useState(() => getDungeonDifficulty());
+  /** E2: o nível mais fundo já cumprido — o teto do "Descer mais fundo". */
+  const [reachedLevel, setReachedLevel] = useState(() => getDungeonReached());
+  /** E1: o texto longo do lobby mora atrás do "?". */
+  const [helpOpen, setHelpOpen] = useState(false);
   const [floor, setFloor] = useState(1);
   const [best, setBest] = useState(() => getDungeonBest());
   const [runScore, setRunScore] = useState(0);
@@ -143,6 +152,17 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
     timerRef.current = setTimeout(fn, ms);
   }, []);
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
+
+  // Torcida: o gauge enche com os toques e é gasto no golpe especial. O golpe
+  // do Soulmon sai sozinho (`attackRef` guarda o handler da render atual).
+  const [taps, setTaps] = useState(0);
+  const [specialFx, setSpecialFx] = useState(false);
+  const attackRef = useRef<() => void>(() => {});
+  useEffect(() => {
+    if (phase !== 'attack') return;
+    const id = setTimeout(() => attackRef.current(), ATTACK_AUTO_MS);
+    return () => clearTimeout(id);
+  }, [phase, enemyIdx, floor]);
 
   const flash = (who: 'enemy' | 'player') => {
     setHitFx(who);
@@ -173,6 +193,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
     setEnemyHp(list[0].hp);
     setPlayerHp(playerStats.hp);
     runScoreRef.current = 0;
+    setTaps(0);
     setRunScore(0);
     setRewardMsg('');
     setGotHeart(false);
@@ -195,20 +216,22 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
     after(POPUP_MS, () => { setPopup(null); setPhase('enemy-down'); });
   };
 
-  // Player attack: accuracy² scaling, then the enemy shrugs off dmgReduction.
-  const handleAttack = (acc: number) => {
-    const crit = acc >= PERFECT;
-    const raw = playerStats.dmg * (0.25 + 0.75 * acc * acc) * (crit ? 1.5 : 1);
+  // Torcida (02/10/2026, `utils/torcida.ts`): o Soulmon golpeia sozinho; o dono
+  // TORCE tocando na tela e o gauge cheio vira o golpe ESPECIAL. A torcida só
+  // soma — sem torcer o golpe é o base. A esquiva segue sendo a ação do dono.
+  const handleAttack = () => {
     const guarda = enemy.dmgReduction * (1 - jeito.atravessaGuarda);
-    const dmg = Math.max(1, Math.round(raw * (1 - guarda)));
+    const strike = torcidaStrike(playerStats.dmg, taps, guarda);
+    const dmg = strike.dmg;
+    setTaps(strike.tapsLeft);
+    setSpecialFx(strike.special);
     const newHp = Math.max(0, enemyHp - dmg);
     setEnemyHp(newHp);
     flash('enemy');
-    try { navigator.vibrate?.(crit ? 40 : 15); } catch { /* noop */ }
+    try { navigator.vibrate?.(strike.special ? 40 : 15); } catch { /* noop */ }
 
-    const title = crit ? (isPt ? 'PERFEITO!' : 'PERFECT!')
-      : acc >= 0.6 ? (isPt ? 'Bom golpe!' : 'Good hit!')
-      : (isPt ? 'Raspão...' : 'Graze...');
+    const title = strike.special ? (isPt ? 'Golpe especial da torcida!' : 'Special cheer strike!')
+      : (isPt ? 'O Soulmon golpeia!' : 'Your Soulmon strikes!');
     const atkPopup: Popup = { icon: '⚔️', title, detail: isPt ? `${dmg} de dano no ${enemy.name}` : `${dmg} damage to ${enemy.name}` };
 
     if (newHp <= 0) { defeatEnemy(atkPopup); return; }
@@ -277,6 +300,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
   };
   const handleDefendRef = useRef(handleDefend);
   handleDefendRef.current = handleDefend;
+  attackRef.current = handleAttack;
+  const cheer = () => { if (phase === 'attack' || phase === 'defend' || phase === 'result') setTaps(t => torcidaTap(t)); };
 
   // Defense countdown — shown to the player; expiring = full hit.
   useEffect(() => {
@@ -305,6 +330,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
       setRunScore(runScoreRef.current);
       if (floor >= MAX_FLOORS) {
         setDungeonDifficultyAtLeast(baseLevel + 1); // run complete → next run harder
+        setReachedLevel(recordDungeonReached(baseLevel + 1)); // E2: nível CUMPRIDO (é o teto do "Descer mais fundo")
         onGlitchtama();                             // full clear → 🌀 Glitchtama
         setPhase('run-complete');
         return;
@@ -358,6 +384,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
 
   return (
     <GameRoot>
+      <TorcidaLayer onTap={cheer} active={enemies.length > 0 && (phase === 'attack' || phase === 'defend' || phase === 'result')} isPt={isPt} style={{ flex: '1 0 auto' }}>
       <GameHeader
         run={inBattle}
         title={isPt ? 'Masmorra' : 'Dungeon'}
@@ -386,7 +413,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
         />
         {/* O golpe é o FX `fx-hit` 128² a 1× sobre quem apanhou (D-J4) —
             nunca `filter: brightness(3)`. */}
-        {hitFx === 'enemy' && <VisorFx icon="💥" style={enemyBox} data-visor-fx="hit" />}
+        {hitFx === 'enemy' && <VisorFx icon={specialFx ? '✨' : '💥'} style={enemyBox} data-visor-fx={specialFx ? 'special' : 'hit'} />}
         {hitFx === 'player' && <VisorFx icon="💥" style={{ left: 16, bottom: 8 }} data-visor-fx="hit" />}
       </GameVisor>
 
@@ -399,6 +426,10 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
           ]}
         />
       )}
+      {/* A torcida: o gauge enche com o toque em qualquer lugar da luta. */}
+      {inBattle && enemy && ['attack', 'defend', 'result'].includes(phase) && (
+        <TorcidaGauge taps={taps} onCheer={cheer} isPt={isPt} />
+      )}
 
       {/* Lobby */}
       {phase === 'intro' && (
@@ -406,19 +437,39 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
           <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
             <StatTag label={isPt ? 'Recorde' : 'Best'} value={best} />
             <StatTag label={isPt ? 'Dificuldade base' : 'Base level'} value={baseLevel} />
+            {/* E1 (02/10/2026): o texto longo do lobby mora atrás do "?" — toque lê. */}
+            <button
+              type="button"
+              data-dungeon-help
+              aria-expanded={helpOpen}
+              aria-label={isPt ? 'Como funciona a descida' : 'How the descent works'}
+              onClick={() => setHelpOpen(o => !o)}
+              style={{ background: 'none', border: 'none', padding: 0, minWidth: 44, minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--sm2-primary-ink)' }}
+            >
+              <Icon name="help" size={24} tone="inherit" />
+            </button>
           </div>
-          <p style={phaseLine}>
-            {isPt
-              ? `${MAX_FLOORS} camadas, cada uma com ${ladderLen} inimigos e mais forte que a anterior. A camada 1 serve pra um rookie; algumas camadas abaixo ficam brutais. Concluir a descida inteira sobe a dificuldade (reset semanal). Perder custa a descida — nunca os seus corações.`
-              : `${MAX_FLOORS} layers, each with ${ladderLen} enemies and tougher than the last. Layer 1 suits a rookie; a few layers down gets brutal. Completing the whole descent raises the difficulty (weekly reset). Losing costs you the descent — never your hearts.`}
-          </p>
-          {/* Copy §4, linha de contexto (§7, L3): fecha a leitura de que os
-              inimigos são vítimas ou de que a fenda é castigo de alguém. */}
-          <p style={phaseLine}>
-            {isPt
-              ? 'Aqui o assentamento falhou e as camadas se empilharam. Ninguém mora numa fenda.'
-              : 'Here the settling failed and the layers piled up. Nobody lives in a rift.'}
-          </p>
+          {helpOpen && (
+            <div role="note" data-dungeon-help-panel style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 12, border: '1px solid var(--sm2-line)', borderRadius: 'var(--sm2-radius-md)', backgroundColor: 'var(--sm2-surface-2)' }}>
+              <p style={phaseLine}>
+                {isPt
+                  ? `${MAX_FLOORS} camadas, cada uma com ${ladderLen} inimigos e mais forte que a anterior. A camada 1 serve pra um rookie; algumas camadas abaixo ficam brutais. Concluir a descida inteira sobe a dificuldade (reset semanal). Perder custa a descida — nunca os seus corações.`
+                  : `${MAX_FLOORS} layers, each with ${ladderLen} enemies and tougher than the last. Layer 1 suits a rookie; a few layers down gets brutal. Completing the whole descent raises the difficulty (weekly reset). Losing costs you the descent — never your hearts.`}
+              </p>
+              {/* Copy §4, linha de contexto (§7, L3): fecha a leitura de que os
+                  inimigos são vítimas ou de que a fenda é castigo de alguém. */}
+              <p style={phaseLine}>
+                {isPt
+                  ? 'Aqui o assentamento falhou e as camadas se empilharam. Ninguém mora numa fenda.'
+                  : 'Here the settling failed and the layers piled up. Nobody lives in a rift.'}
+              </p>
+              <p style={phaseLine}>
+                {isPt
+                  ? 'Seu Soulmon golpeia sozinho; você torce no centro da barra para dar força ao golpe. Errar o tempo não tira nada.'
+                  : 'Your Soulmon strikes on its own; you cheer at the center of the bar to power up the strike. Missing the timing takes nothing away.'}
+              </p>
+            </div>
+          )}
           {/* Fase 3 do Oráculo: o OFÍCIO da ficha e o jeito dele na fenda —
               uma palavra nomeada e uma frase de mundo sobre a criatura; o
               número fica dentro da run. Sem profissão, nada aqui. */}
@@ -441,27 +492,28 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
                 Recorrente sem mecânica nova, porque a base reseta toda semana.
                 Some ao chegar no teto: oferta que não pode ser aceita é ruído.
                 Aposta opcional = `outline`, sem placa cheia (canvas Lobby). */}
-            {onSpendBits && baseLevel < DEEP_START_MAX_LEVEL && (
+            {onSpendBits && baseLevel < Math.min(DEEP_START_MAX_LEVEL, reachedLevel) && (
               <>
                 <button
                   type="button"
-                  disabled={!canBuyDeepStart(baseLevel, bits)}
+                  disabled={!canBuyDeepStart(baseLevel, bits, reachedLevel)}
                   onClick={() => {
-                    if (!canBuyDeepStart(baseLevel, bits)) return;
+                    const next = buyDeepStart(baseLevel, bits, reachedLevel);
+                    if (next === null) return;
                     if (!onSpendBits(deepStartCost(baseLevel))) return;
-                    setBaseLevel(setDungeonDifficultyAtLeast(baseLevel + 1));
+                    setBaseLevel(setDungeonDifficultyAtLeast(next));
                   }}
-                  style={{ ...sm2Button('outline', !canBuyDeepStart(baseLevel, bits)), width: '100%', maxWidth: 320 }}
+                  style={{ ...sm2Button('outline', !canBuyDeepStart(baseLevel, bits, reachedLevel)), width: '100%', maxWidth: 320 }}
                 >
                   {isPt
                     ? `Descer mais fundo — ${deepStartCost(baseLevel)} Bits`
                     : `Go deeper — ${deepStartCost(baseLevel)} Bits`}
                 </button>
                 <p style={phaseLine}>
-                  {canBuyDeepStart(baseLevel, bits)
+                  {canBuyDeepStart(baseLevel, bits, reachedLevel)
                     ? (isPt
-                      ? 'Começa a run um nível abaixo. Vale até o reset da semana.'
-                      : 'Starts the run one level deeper. Lasts until the weekly reset.')
+                      ? `Volta a um nível que você já alcançou (até o ${reachedLevel}). Vale até o reset da semana.`
+                      : `Returns you to a level you already reached (up to ${reachedLevel}). Lasts until the weekly reset.`)
                     : (isPt ? 'Bits insuficientes.' : 'Not enough Bits.')}
                 </p>
               </>
@@ -474,12 +526,9 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
       {inBattle && enemy && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minHeight: 120 }}>
           {phase === 'attack' && (
-            <>
-              <p style={phaseTitle}>
-                {isPt ? 'Seu turno — mire no centro!' : 'Your turn — aim for the center!'}
-              </p>
-              <TimingBar key={`atk-${floor}-${enemyIdx}-${enemyHp}-${playerHp}`} speed={enemy.speed * jeito.velocidadeAtaque} label={isPt ? 'Atacar!' : 'Attack!'} onStop={handleAttack} />
-            </>
+            <p style={phaseTitle}>
+              {isPt ? 'Seu Soulmon golpeia — torça por ele!' : 'Your Soulmon strikes — cheer for it!'}
+            </p>
           )}
           {phase === 'defend' && (
             <>
@@ -603,6 +652,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
           )}
         </div>
       )}
+      </TorcidaLayer>
     </GameRoot>
   );
 }

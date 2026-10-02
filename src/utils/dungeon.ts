@@ -195,9 +195,29 @@ export function deepStartCost(currentLevel: number): number {
  */
 export const DEEP_START_MAX_LEVEL = 5;
 
-export function canBuyDeepStart(currentLevel: number, bits: number): boolean {
+/**
+ * 02/10/2026 (E2, dono): "Descer mais fundo" SÓ libera um nível que a pessoa JÁ
+ * ALCANÇOU antes. Não dá para pular pagando — o Bit compra a volta ao ponto
+ * conquistado (depois do reset semanal), nunca o ponto que ainda não se jogou.
+ * `reachedLevel` é o nível mais fundo que a pessoa já cumpriu (ver
+ * `getDungeonReached`/`recordDungeonReached`, gravado ao CONCLUIR uma descida).
+ *
+ * É regra PURA e mora aqui, não na tela: o botão desabilitado é só leitura
+ * desta função, e `buyDeepStart` recusa o mesmo que `canBuyDeepStart`.
+ */
+export function canBuyDeepStart(currentLevel: number, bits: number, reachedLevel: number): boolean {
   if (currentLevel >= DEEP_START_MAX_LEVEL) return false;
+  if (currentLevel >= reachedLevel) return false; // só até onde já chegou
   return bits >= deepStartCost(currentLevel);
+}
+
+/**
+ * O nível que a compra entrega, ou `null` se a regra recusa. Sempre UM nível
+ * por vez e nunca acima do alcançado: o resultado é `currentLevel + 1`, que por
+ * `canBuyDeepStart` é no máximo `reachedLevel`.
+ */
+export function buyDeepStart(currentLevel: number, bits: number, reachedLevel: number): number | null {
+  return canBuyDeepStart(currentLevel, bits, reachedLevel) ? currentLevel + 1 : null;
 }
 
 /** Raise the persisted base level to at least `level` (called on run completion). */
@@ -206,6 +226,24 @@ export function setDungeonDifficultyAtLeast(level: number): number {
   // Progresso de verdade (a base semanal da masmorra): perder isso rebaixa a
   // dificuldade conquistada, então a falha AVISA.
   writeJson(STORAGE_KEYS.DUNGEON_DIFFICULTY, { week: weekKey(), level: next });
+  return next;
+}
+
+/**
+ * O nível mais fundo que a pessoa já cumpriu (persiste; NÃO reseta na semana —
+ * é o que o reset semanal da base deixa para trás e que "Descer mais fundo"
+ * devolve). Nunca menor que a base atual: quem já estava numa base conquistada
+ * antes desta chave existir não perde o que tinha.
+ */
+export function getDungeonReached(): number {
+  const stored = readNumber(STORAGE_KEYS.DUNGEON_REACHED, 1);
+  return Math.max(1, Math.floor(stored), getDungeonDifficulty());
+}
+
+/** Registra um nível CUMPRIDO (nunca chamado numa compra). Só sobe. */
+export function recordDungeonReached(level: number): number {
+  const next = Math.max(getDungeonReached(), Math.floor(level));
+  writeLocal(STORAGE_KEYS.DUNGEON_REACHED, String(next));
   return next;
 }
 
