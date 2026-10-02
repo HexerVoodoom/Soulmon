@@ -12,7 +12,7 @@ import type { CurrencyId } from '../../utils/currencies';
 import type { Language } from '../../utils/i18n';
 import { GuildOwnedShelf } from './GuildOwnedShelf';
 import {
-  CreditExchange, CurrencyBalance, ShopShelf, ShopStatus, bgThumb, useShopFlash,
+  CreditExchange, CurrencyBalance, DecorRuleLine, ShopShelf, ShopStatus, bgThumb, useShopFlash,
   type ShopActions, type ShopOwnership,
 } from './ShopShelf';
 
@@ -88,6 +88,9 @@ export function MercadoStallSheet(props: MercadoStallProps) {
       </div>
 
 
+      {/* D2 (02/10/2026): a regra da decoração no TOPO — quantas peças cabem e onde aparecem. */}
+      {stall === 'decoracao' && cur !== 'credits' && <DecorRuleLine language={language} />}
+
       {/* O que a roda deu (cenários do Bosque, Concha da Maré): só EQUIPA, sem preço.
           NO TOPO, antes de ~20 cenários da loja (QA L3 M4): o que se ganhou não se procura no fim.
           Vazio é silêncio — a seção nem desenha o título. */}
@@ -130,6 +133,7 @@ export function MercadoStallSheet(props: MercadoStallProps) {
           actions={props}
           say={say}
           flash={flash}
+          hideDecorRule
         />
       )}
     </div>

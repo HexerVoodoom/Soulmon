@@ -882,6 +882,7 @@ export function EvolutionPath({
             width={64}
             height={64}
             scale={3}
+            bare
             screenStyle={{ position: 'relative' }}
           >
             {/* A aura elemental (`fx-ataque/`, 128² a 2× = 256) atrás da

@@ -22,8 +22,8 @@ Continuação de `AJUSTES-NAVEGACAO-2026-10-01.md`. Legenda: `[ ]` aberto · `[x
 - [ ] C2 O sistema de TORCIDA revisto para o combate não aparece na Arena nem no Pesadelo → ligar
 
 ## D. Mercado e decoração
-- [ ] D1 Comprar item pede um modal de confirmação (hoje compra no toque)
-- [ ] D2 Decoração: deixar claro limite de itens, restrições e se algum fundo é exigido; idealmente qualquer decoração em qualquer fundo
+- [x] D1 Comprar item pede um modal de confirmação (vale também para a troca de Créditos)
+- [x] D2 Decoração: deixar claro limite de itens, restrições e se algum fundo é exigido; idealmente qualquer decoração em qualquer fundo — regra REAL no REGISTRO §19 (dependência de fundo é de arte, mantida; [?] dono)
 
 ## E. Masmorra
 - [ ] E1 Texto longo vai para um "?" (toque lê)
@@ -37,9 +37,9 @@ Continuação de `AJUSTES-NAVEGACAO-2026-10-01.md`. Legenda: `[ ]` aberto · `[x
 - [ ] F5 Uma travessia pode ser feita todo dia
 
 ## G. Laboratório, Guilda e Arena
-- [ ] G1 Laboratório / Meu Soulmon / Observatório: tirar o Soulmon do box com gradiente (fica solto)
-- [ ] G2 Estatísticas saem de Configurações e vão para o Laboratório
-- [ ] G3 Missão da Guilda: trocar o NPC [?]
+- [x] G1 Laboratório / Meu Soulmon / Observatório: tirar o Soulmon do box com gradiente (fica solto)
+- [x] G2 Estatísticas saem de Configurações e vão para o Laboratório — saiu a linha do menu; o opt-out de telemetria fica em Configurações [?]
+- [x] G3 Missão da Guilda: NPC trocado para a Bastia (REGISTRO §18) [?]
 - [ ] G4 Arena: explicar/clarear a "feira"; aumentar os prédios do duelo e do torneio
 
 ## Respostas do dono

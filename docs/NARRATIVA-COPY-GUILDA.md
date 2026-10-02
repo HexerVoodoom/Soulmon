@@ -15,7 +15,7 @@
 | `guild.lote.hall.aria` | Entrar no Salão da Guilda | Enter the Guild Hall | areaSheetCopy `HALL_LOTS` (já existe) | §12 |
 | `guild.lote.feira.label` | Feira | Fair | areaSheetCopy `ARENA_LOTS`, id novo `feira` (substitui o rótulo "Guilda" da Arena) | §12; D-G4 |
 | `guild.lote.feira.aria` | Entrar na Feira | Enter the Fair | idem | §12 |
-| `guild.npc.hall` | Algumas criaturas cuidam de um bosque juntas. Ele só cresce. | Some creatures keep a grove together. It only grows. | areaNpcVoice `hall:guilda` (Marla, a intendente / Marla, the steward). Substitui "grupo pequeno" | L3, L4; LV-G3 |
+| `guild.npc.hall` | Algumas criaturas cuidam de um bosque juntas. Ele só cresce. | Some creatures keep a grove together. It only grows. | areaNpcVoice `hall:guilda` (Bastia, a guardiã do Salão / Bastia, keeper of the Hall — G3, 02/10/2026; era Marla, a intendente). Substitui "grupo pequeno" | L3, L4; LV-G3 |
 | `guild.npc.feira` | Toda semana algo chega da névoa. A roda chega até ele. | Every week something comes in from the mist. The circle reaches it. | areaNpcVoice `arena:guilda` (chave vira `arena:feira` com o lote). Substitui "grupo pequeno" | L3; D-G4 (sem adversário com gente) |
 
 ## 2. Salão sem guilda, criar, código, entrar

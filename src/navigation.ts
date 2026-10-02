@@ -6,7 +6,8 @@
  * inferior direito); o Mapa tem um único link para a Home (canto inferior
  * esquerdo); cada área do Mapa abre a sua tela, com o voltar para o Mapa.
  *
- * As páginas do menu da Home (D6: Configurações, Oráculo, Estatísticas) são
+ * As páginas do menu da Home (D6: Configurações, Oráculo; as Estatísticas saíram
+ * em 02/10/2026 — G2 — e vivem só no Laboratório, no Observatório) são
  * `page:*` — voltam para a Home, não para o Mapa, porque é de lá que saem.
  *
  * O grafo de "voltar" mora AQUI, numa função pura (`viewBack`), e não espalhado
@@ -20,7 +21,7 @@ export const AREAS = ['mercado', 'jogos', 'arena', 'exploracao', 'laboratorio', 
 export type AreaId = typeof AREAS[number];
 
 /** Páginas que saem do menu da Home (D6). */
-export const MENU_PAGES = ['settings', 'oracle', 'stats'] as const;
+export const MENU_PAGES = ['settings', 'oracle'] as const;
 export type MenuPageId = typeof MENU_PAGES[number];
 
 export type ViewType = 'home' | 'map' | `area:${AreaId}` | `page:${MenuPageId}`;
@@ -81,6 +82,5 @@ export function menuPageLabel(id: MenuPageId, isPt: boolean): string {
   switch (id) {
     case 'settings': return isPt ? 'Configurações' : 'Settings';
     case 'oracle': return isPt ? 'Oráculo' : 'Oracle';
-    case 'stats': return isPt ? 'Estatísticas' : 'Stats';
   }
 }

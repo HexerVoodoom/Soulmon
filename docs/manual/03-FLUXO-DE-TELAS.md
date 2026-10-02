@@ -118,10 +118,11 @@ upgradeRitual           → <SoulmonOnboarding mode="upgrade">  (retorna)
 
 - **Home** (`'home'`): um único link para o Mapa, `CornerLink icon="mapa"` no
   canto **SUPERIOR direito** ("Mapa"/"Map"; B2, 02/10/2026 — era o inferior). O header (`HomeHud`) é `[menu ☰] [logo + nome do Soulmon] [Mapa]`: o menu ícone, agora à ESQUERDA onde ficava o logo,
-  abre o `HomeMenuSheet` (decisão D6), com seis linhas (`MenuRow`); a Home mostra só o NOME do Soulmon (B1) — o título do Vínculo ("Companheiro") não é desenhado nela:
-  Configurações (`page:settings`), Oráculo (`page:oracle`), Estatísticas
-  (`page:stats`), Guia (`GuideModal`), Créditos (`CreditsModal`, só se a prop
-  existir) e "Refazer o ritual" (só se a prop existir).
+  abre o `HomeMenuSheet` (decisão D6), com as linhas (`MenuRow`); a Home mostra só o NOME do Soulmon (B1) — o título do Vínculo ("Companheiro") não é desenhado nela:
+  Configurações (`page:settings`), Oráculo (`page:oracle`, oculto), Guia
+  (`GuideModal`), Créditos (`CreditsModal`, só se a prop existir) e "Refazer o
+  ritual" (só se a prop existir). ⚠️ **Estatísticas saiu do menu em 02/10/2026
+  (G2)**: moram só no Laboratório, no lote Observatório (`labTab` `stats`).
 - **Mapa** (`'map'`, `src/components/nav/MapPage.tsx`): cena isométrica com as
   6 construções (cada uma um `<button>` que chama `goTo(areaView(id))`), o
   saldo das 3 moedas no canto inferior **direito** (⚠️ ficava no topo até
@@ -132,7 +133,7 @@ upgradeRitual           → <SoulmonOnboarding mode="upgrade">  (retorna)
   de arte em 9-slice (`border-image`, miolo opaco) — é moldura de TEXTO, não
   de ícone, então a regra "ícone nunca dentro de box" não se aplica.
 - **Páginas do menu** (`page:*`): `AreaTopBar` com "Voltar ao início"/"Back to
-  home"; Configurações, Oráculo e Estatísticas renderizam as páginas de sempre.
+  home"; Configurações e Oráculo renderizam as páginas de sempre.
 
 ### 1.3 As 6 áreas
 
@@ -148,7 +149,7 @@ e reserva a metade de cima dela (= 1/3 da tela) para o NPC + balão, numa
 `data-area-sheet-npc-zone` com `flex: '0 0 50%'`. A **arte** do NPC agora é
 resolvida por SUB-LOJA (lote), não mais por área inteira: `lotNpcArt(areaId,
 lotId)` (`src/assets/soulmon/npcs/index.ts`, tabela `LOT_NPC_ART` cobrindo os
-17 lotes (medido em 30/09/2026: `jogos:salao`, `jogos:mente`, `jogos:refugio` entram no lugar de `jogos:ppt`/`exploracao:dino`); todos com busto próprio desde 30/09/2026 (leva `npcs-flare`); ⚰️ `PLACEHOLDER_NPC_ART` (a coruja-cervo e o poring) saiu do bundle). Há ainda dois mapas de bustos **sem chamada hoje** — nenhuma tela os desenha, decisão de design pendente do dono (`PERGUNTAS-DO-DONO.md`, NPC-1): `FUNCTION_NPC_ART` (seis NPCs de função: Ambra/onboarding, Iris/oráculo, Faro/conta, Sona/sono, Nuri/cuidados, Tobi/config; fala em `functionNpcVoice`) e `EXTRA_NPC_ART` (15 bustos de ofício, Scoria, Kama, Sable… Selene, Mallo, Kova; fala em `EXTRA_NPC_VOICE`). Nomes dos 17: Medra (`mercado:conquistas`), Rhinoco (`arena:duelo`), Fanfare (`arena:feira`), Brume (`exploracao:passeio`, ⚰️ Zeph), Tessela (`jogos:mente`), Bobbi (`jogos:refugio`), Bento (`laboratorio:pet`, ⚰️ Tico — nome de terceiro), Quill (`laboratorio:stats`), Nino (`hall:amigos`), Marla (`hall:guilda`).
+17 lotes (medido em 30/09/2026: `jogos:salao`, `jogos:mente`, `jogos:refugio` entram no lugar de `jogos:ppt`/`exploracao:dino`); todos com busto próprio desde 30/09/2026 (leva `npcs-flare`); ⚰️ `PLACEHOLDER_NPC_ART` (a coruja-cervo e o poring) saiu do bundle). Há ainda dois mapas de bustos **sem chamada hoje** — nenhuma tela os desenha, decisão de design pendente do dono (`PERGUNTAS-DO-DONO.md`, NPC-1): `FUNCTION_NPC_ART` (seis NPCs de função: Ambra/onboarding, Iris/oráculo, Faro/conta, Sona/sono, Nuri/cuidados, Tobi/config; fala em `functionNpcVoice`) e `EXTRA_NPC_ART` (15 bustos de ofício, Scoria, Kama, Sable… Selene, Mallo, Kova; fala em `EXTRA_NPC_VOICE`). Nomes dos 17: Medra (`mercado:conquistas`), Rhinoco (`arena:duelo`), Fanfare (`arena:feira`), Brume (`exploracao:passeio`, ⚰️ Zeph), Tessela (`jogos:mente`), Bobbi (`jogos:refugio`), Bento (`laboratorio:pet`, ⚰️ Tico — nome de terceiro), Quill (`laboratorio:stats`), Nino (`hall:amigos`), Bastia (`hall:guilda`; era a Marla-árvore até 02/10/2026).
 A **fala** (nome + linha) continua vindo de `areaNpcVoice(areaId, language)` —
 ainda por ÁREA, não por sub-loja. `AreaSheet` ganhou as props `lotId?: string |
 null` e `language: Language` (agora obrigatória):
@@ -164,7 +165,7 @@ null` e `language: Language` (agora obrigatória):
 | `arena` | Arena | Torneio (`TournamentPage`, com a loja de Honra — a moeda `emblems`, rótulo "Honra"/"Honor" desde 30/09/2026, `REGISTRO-DE-DECISOES.md` §17; ⚠️ reverte a D3 de 23/09/2026, que mantinha "Emblemas"; só o rótulo mudou, o campo `emblems` e `EMBLEMS_PER_WIN` ficam, e os emblemas de CONQUISTA da Ficha não mudaram de nome) · Duelo (`DueloSheet` → `ArenaGame`) · **Feira** (`GuildSheet room="feira"`, NPC Fanfare — [§4.26](#guilda-tela); ⚰️ o lote `guilda` da Arena virou a Feira) |
 | `exploracao` | Exploração / Exploration | Masmorra (`MasmorraSheet` → `DungeonGame`; ⚰️ a Corrida com obstáculos (antes "do Dino") saiu para o Salão de Jogos) · **Passeio / Stroll** (`passeio`, desde `3532ccf5`, clareira da direita; NPC Brume, `exploracao:passeio`; prédio próprio — a ilha flutuante com arco de raízes, `lote-exploracao-passeio`, desde a leva `lotes-v2` de 30/09/2026; ⚰️ o placeholder da galeria de cenários e o nome Zeph): folha `PasseioSheet` (lazy) — postais das regiões abertas para escolher o destino (casa inclusa) e, se não escondidas, as Travessias (a ativa com "Fiz" / "Trocar" / "Deixar pra lá", os "Fiz" guardados, as regiões em névoa sem número) e o link "Esconder/Mostrar Travessias"; sem jogo em tela cheia. Com destino ≠ casa, a Home mostra 🎒 nas costas do pet (`CompanionHUD` › `walkingTo`, sem bloquear gesto). Regra: [02 §43](02-REGRAS-DE-NEGOCIO.md#aventura) |
 | `laboratorio` | Laboratório / Laboratory | Evolução — abas sublinhadas Evolução / Soulmon / Estatísticas (`labTab`) |
-| `hall` | Hall | Biblioteca (`LibraryPage`, decisão D4) · **Salão da Guilda** (`GuildSheet room="salao"`, NPC Marla — [§4.26](#guilda-tela)) |
+| `hall` | Hall | Biblioteca (`LibraryPage`, decisão D4) · **Salão da Guilda** (`GuildSheet room="salao"`, NPC Bastia — [§4.26](#guilda-tela)) |
 
 Rótulos: `areaLabel` (`navigation.ts`); lotes: `utils/areaSheetCopy.ts`
 (Mercado, Arena, lote único de Laboratório/Hall) e `utils/playAreaLots.ts`
@@ -1192,9 +1193,9 @@ Três blocos, cada um com condição própria e cada um em `Suspense` com
   propósito (o contrário do Dex).
 - **Régua**: `AdventureDiary.render.test.tsx`.
 
-### 4.8 Estatísticas — `currentView === 'stats'`
+### 4.8 Estatísticas — Laboratório › Observatório (`labTab === 'stats'`)
 
-**Chega por**: chip "Estatísticas" · **Sai para**: os outros dois chips.
+**Chega por**: área Laboratório → lote Observatório (G2, 02/10/2026: não é mais página do menu da Home) · **Sai para**: os outros dois chips.
 
 Quatro cartões, cada um com condição literal dentro da `StatsPage`:
 
@@ -1990,7 +1991,7 @@ mudo por `src/utils/audioBus.contract.test.ts`.
 
 ### 4.26 A Guilda — o Salão (Hall) e a Feira (Arena) <a id="guilda-tela"></a>
 
-**Chega por**: área **Hall** → lote **Salão da Guilda** (NPC Marla, `hall:guilda`) abre
+**Chega por**: área **Hall** → lote **Salão da Guilda** (NPC Bastia, `hall:guilda`) abre
 `GuildSheet room="salao"`; área **Arena** → lote **Feira** (NPC **Fanfare**, `arena:feira`)
 abre `GuildSheet room="feira"` — a mesma folha, duas salas (`AreaView`). ⚰️ Até a fatia B2
 a Arena tinha um lote `guilda` que abria a folha inteira. · **Sai para**: fechar a folha

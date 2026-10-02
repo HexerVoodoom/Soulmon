@@ -570,6 +570,13 @@ Cobertura: **178/178** módulos de `src/utils` em 01/10/2026 (`node scripts/docs
 **Régua:** `dailyReset.escudos.test.ts`, `dailyReset.test.ts`
 **Regra de negócio:** A virada do dia: perda de HP, meta do dia, degeneração e a rota de redenção. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
+### `src/utils/decorRules.ts`
+**Dono de:** a regra REAL da decoração dita ao jogador (D2, 02/10/2026): limite de peças e por que uma peça não aparece no cenário atual.
+**Exports:** `DECOR_MAX_TOTAL`, `decorBlockReason(item, bg)`, `decorReasonText(reason, isPt)`, `decorRuleText(isPt)`, `DecorBlockReason`.
+**Chamado por:** `src/components/mercado/ShopShelf.tsx`
+**Régua:** `src/utils/decorRules.test.ts`, `src/components/mercado/MercadoConfirmar.render.test.tsx`.
+**Regra de negócio:** 1 peça por espaço do palco (`SLOT_ORDER`), até 5 ao mesmo tempo; equipar é livre, a restrição é de exibição (sem cenário, cenário `void`, espaço que o cenário não oferece, `fits` indoor/outdoor). Regras de composição de arte, não de economia; a alternativa que perdeu ("qualquer peça em qualquer fundo") está em `REGISTRO-DE-DECISOES.md` §18.
+
 ### `src/utils/decorArt.ts`
 **Dono de:** Mapa id de mobília (loja) → URL da arte.
 **Exports:**

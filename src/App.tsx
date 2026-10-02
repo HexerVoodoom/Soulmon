@@ -6542,8 +6542,6 @@ export default function App() {
             </div>
           )}
 
-          {pane === 'stats' && !area && statsPage}
-
           {pane === 'settings' && (
             <Suspense fallback={<ScreenSkeleton language={language} />}><SettingsPage
               soundMuted={soundMuted}

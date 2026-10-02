@@ -116,7 +116,7 @@ const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
   },
   // Fala da Feira (`guild.npc.feira`) — a copy mora em `guildCopy.ts`; "grupo
   // pequeno" ficou falso com a roda de até 12. NPC da Feira: Fanfare (criatura-sanfona,
-  // `00-BIBLIA-DAS-AREAS.md`); Marla fica só no Salão.
+  // `00-BIBLIA-DAS-AREAS.md`); Bastia fica só no Salão.
   'arena:feira': {
     namePt: 'Fanfare', nameEn: 'Fanfare',
     linePt: GUILD_COPY['guild.npc.feira'][0],
@@ -152,7 +152,10 @@ const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     lineEn: 'When a wave arrives, I keep it in my bag for you.',
   },
   'hall:guilda': {
-    namePt: 'Marla, a intendente', nameEn: 'Marla, the steward',
+    // G3 (02/10/2026): a Marla-árvore não agradou ao dono; o Salão passa a ser
+    // da Bastia (busto `npc-f-guarda`, mesma de `EXTRA_NPC_VOICE.guarda`) — a
+    // guardiã serena do portão, que dá a ideia de lugar seguro e sem pressa.
+    namePt: 'Bastia, a guardiã do Salão', nameEn: 'Bastia, keeper of the Hall',
     linePt: GUILD_COPY['guild.npc.hall'][0],
     lineEn: GUILD_COPY['guild.npc.hall'][1],
   },
