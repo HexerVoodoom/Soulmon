@@ -1344,10 +1344,10 @@ Decisões do dono na navegação do APK (`docs/AJUSTES-NAVEGACAO-2026-10-02.md` 
      **51%**, gauge cheio nas 3 janelas **82%** (antes: 50% → ~80%); um estágio
      abaixo **14,5% → 38%** (antes ~39%). Gauge parcial ([5,5,5] ou [4,4,4]): 64%.
    - **PvE (Pesadelo e Masmorra):** `utils/torcida.ts`. Golpe-base = 0,5 × `dmg` do
-     estágio (mantém o dano médio de antes); especial = 2× o base
-     (`TORCIDA_PVE_SPECIAL_MULT`, **número provisório** — ver pendências). O gauge é
-     o mesmo (8 toques, importado de `_duel.js`). A **esquiva** (dodge) segue sendo a
-     ação do dono, ainda com a `TimingBar`.
+     estágio (mantém o dano médio de antes); especial = 3× o base
+     (`TORCIDA_PVE_SPECIAL_MULT`, decidido pelo dono em 02/10/2026 — item 8). O gauge é
+     o mesmo (8 toques, importado de `_duel.js`). ⚰️ A **esquiva** (dodge) com a
+     `TimingBar` SAIU no item 8: o Soulmon se defende sozinho.
    - Gatilho para rever: o dono achar a torcida cansativa de tocar, ou o especial do
      PvE desequilibrar a Masmorra.
 2. **"Descer mais fundo" só libera um nível que a pessoa JÁ cumpriu; não dá para
@@ -1390,7 +1390,7 @@ Decisões do dono na navegação do APK (`docs/AJUSTES-NAVEGACAO-2026-10-02.md` 
      turnos) **75,4%** (+16pp); a 4 toques/turno (a cada 2) **81,9%** (+23pp); gauge
      cheio a cada golpe **92,3%** (+33pp, contra +31pp do duelo fantasma: 51% → 82%).
      Sem torcer fica dentro das faixas do balanceamento (40–80%, dispersão ≤ 20pp).
-   - A **esquiva continua da `TimingBar`** (TORC-3, igual ao Pesadelo/Masmorra); a
+   - ⚰️ A esquiva da `TimingBar` saiu depois (item 8: defesa automática); a
      barra de timing do ATAQUE fica atrás de `ARENA_TIMING_ATTACK_ENABLED = false`
      (código e testes do caminho antigo guardados, sem apagar).
    - **Alternativa que perdeu:** manter a barra de ataque no Duelo da Arena e
@@ -1426,6 +1426,56 @@ Decisões do dono na navegação do APK (`docs/AJUSTES-NAVEGACAO-2026-10-02.md` 
      opt-out de privacidade em Configurações.
    - Gatilho para rever: reclamação de privacidade, ou a decisão do dono sobre TORC-5.
 
+8. **A ESQUIVA SAIU: o Soulmon se defende sozinho, e o especial do PvE vale 3×**
+   (02/10/2026, noite — responde TORC-3 e TORC-1; TORC-4 respondida: manter o gate
+   do Vínculo 5). O dono só torce (toques → gauge → especial); não há mais ação
+   de timing em nenhum combate.
+   - **Defesa automática** (`src/utils/autoDefesa.ts`, pura e determinística pela
+     semente da run + nº do golpe sofrido; nenhum atributo novo): cada golpe
+     sofrido sorteia uma precisão `0,70 ± 0,25` (a convenção do jogador MÉDIO da
+     barra, a mesma `sampleAcc` da Arena) e a conta de dano de cada modo segue
+     intacta (`ceil(atk × (1 − precisão)) − reducaoDano` na Masmorra; `enemyHitDamage`
+     com os elementos na Arena). Precisão ≥ `perfeito` = defesa perfeita (sem dano; na
+     Masmorra e no Pesadelo, com o contra-ataque). A UI mostra "Defendeu!" /
+     "Defendeu em parte!" / "Levou o golpe!" e um escudo curto no pet — sem botão. Os
+     ofícios que mexiam na barra de desvio (tecelão, luthier, cartógrafo) viram um
+     bônus de precisão (`jeitoDefesaBonus`); o `perfeito` do joalheiro e o
+     contra-ataque do alquimista seguem valendo. A `TimingBar` e o ramo da esquiva
+     ficam atrás de `TIMING_DODGE_ENABLED = false` ("reaproveitar em outro lugar").
+     O duelo fantasma do Torneio já tinha o oponente se defendendo na simulação
+     servidor-autoritativa (`_duel.js`): **não foi tocado**.
+   - **Calibração** (20.000 runs por caso, `autoDefesa.test.ts`; mesma semente):
+     Masmorra sem torcer, esquiva média 0,70 → defesa automática: **idênticos** em
+     duração (golpes por run 10,9 / 11,3 / 11,6 / 12,2 em rookie@1, champion@2,
+     ultimate@3, mega@4), inimigos derrotados (2,20 / 2,06 / 2,00 / 1,91) e derrota
+     por camada (100% na camada 1, nos dois). Pesadelo (2 inimigos, rookie): vitória
+     46,4% → 46,1% (nível 2) e 0,1% → 0,1% (nível 3), golpes 8,6 → 8,6 e 7,0 → 7,0.
+   - **Especial 3×** (`TORCIDA_PVE_SPECIAL_MULT`: 2 → 3, Pesadelo e Masmorra; o
+     Duelo segue em 1,35×). Inimigos derrotados por run, com defesa automática, a
+     4 / 8 toques por golpe (gauge cheio a cada 2 / 1 golpes), 2× → 3×: rookie@1
+     2,98 → 3,35 / 3,46 → 4,25; champion@2 2,72 → 3,30 / 3,16 → 4,31; ultimate@3
+     2,79 → 3,19 / 3,45 → 4,13; mega@4 2,73 → 3,03 / 3,20 → 3,87. **Não deixa a run
+     trivial** (nem o toque máximo limpa uma camada) e a defesa não a deixa PIOR do
+     que a esquiva média era. Por isso **a vida e o dano dos inimigos NÃO foram
+     tocados** (o ajuste pedido só valia se uma das duas coisas acontecesse).
+   - ⚠️ **Achado que fica para o dono (TORC-6):** a curva que existia já era
+     "bruta" para o jogador médio — com a esquiva em 0,70 a camada 1 não era limpa
+     nem pelo estágio certo, e só quem desviava a ~0,90 passava (champion@1 limpava
+     a camada 1 em 42%, ultimate@1 em 72%, com 4 toques/golpe). Como a defesa
+     automática foi calibrada para o jogador médio, a Masmorra continua assim.
+   - **Alternativas que perderam:** (a) manter a esquiva por timing — o dono
+     decidiu que o jogador só torce; (b) defesa por escolha do jogador (botão
+     "defender") — é a mesma ação ativa que ele quis tirar; (c) defesa com a taxa de
+     um jogador BOM (~0,85–0,90) — deixaria a Masmorra jogável, mas rende uma luta
+     bem mais fácil que a que o dono tinha sob os olhos e é decisão de dificuldade
+     dele (TORC-6); (d) afinar vida/dano dos inimigos já agora — idem, sem alvo de
+     dificuldade definido; (e) degrau por estágio na defesa — testado e descartado:
+     movia a duração em até 7% e o estágio já entra pelo HP/dano e pela escada de
+     inimigos.
+   - Gatilho para rever: o dono achar a Masmorra impossível/trivial depois de
+     jogá-la, ou decidir o alvo de dificuldade (TORC-6).
+
+> **Nota 02/10/2026 (noite):** item 8 — esquiva removida, defesa automática, especial 3×.
 > **Nota 02/10/2026 (tarde, rodada 4):** itens 6 e 7 acima — o Duelo da Arena
 > entra na torcida (TORC-2 respondida) e o PvP perde o interruptor. O item 1 já
 > dizia "Torneio, Pesadelo e Masmorra"; a Arena é o quarto lugar.

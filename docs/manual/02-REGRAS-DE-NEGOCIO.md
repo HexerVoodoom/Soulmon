@@ -4482,9 +4482,24 @@ Contagens medidas em 09/09/2026 com
 `sed -n '/^const SPIRIT_BG_SCENES/,/^];/p' src/utils/dungeonScenes.ts | grep -c 'namePt:'`
 e equivalentes.
 
+⚰️ **Combate desde 02/10/2026 (REGISTRO §20.7).** Nem o golpe nem a esquiva são mais
+ação do dono: o Soulmon golpeia SOZINHO (golpe-base = `TORCIDA_BASE_FRAC` 0,5 × `dmg`
+do estágio), o dono **só torce** (toque em qualquer lugar → gauge de 8 → golpe
+ESPECIAL de `TORCIDA_PVE_SPECIAL_MULT` = **3×** o golpe-base, `utils/torcida.ts`) e o
+Soulmon **se defende sozinho** (`utils/autoDefesa.ts`: cada golpe sofrido sorteia uma
+precisão 0,70 ± 0,25 pela semente da run; ≥ `perfeito` do jeito = defesa perfeita, sem
+dano e com contra-ataque; abaixo disso o dano segue a fórmula de sempre
+`max(1, ceil(atk × (1 − precisão)) − reducaoDano)`). Mostra "Defendeu!" / "Defendeu em
+parte!" / "Levou o golpe!" e um escudo curto no pet — sem botão. A `TimingBar` e a
+esquiva por timing ficam atrás de `TIMING_DODGE_ENABLED = false`. O Pesadelo é igual.
+Os ofícios que mexiam na barra de desvio viraram bônus na defesa (`jeitoDefesaBonus`).
+Medido em `autoDefesa.test.ts` (20.000 runs): sem torcer, a defesa automática dá a
+MESMA duração e derrota por camada que a esquiva média (0,70); o 3× rende +0,3 a +1,2
+inimigos derrotados por run a quem torce e não torna a run trivial. ⚠️ A curva base já é
+dura: com defesa 0,70 a camada 1 não é limpa nem pelo estágio "certo" (pendência TORC-6).
+
 **Dono.** `src/utils/dungeon.ts` (ondas, stats, base semanal, placar, drops,
-deep start) · `src/components/DungeonGame.tsx` (`MAX_FLOORS`, `clearBonus`, a
-barra de timing, o laço da run) · `src/utils/dungeonScenes.ts` (as cenas) ·
+deep start) · `src/utils/autoDefesa.ts` (a defesa automática) · `src/components/DungeonGame.tsx` (`MAX_FLOORS`, `clearBonus`, o laço da run) · `src/utils/dungeonScenes.ts` (as cenas) ·
 `src/utils/sprites.ts` → `getDungeonEnemySprite` (arte e nome do inimigo).
 
 **Régua.** `src/utils/dungeon.derrotaNaoCobra.test.ts` (o guard que lê o FONTE e
@@ -4686,7 +4701,9 @@ o pet golpeia SOZINHO (`ARENA_AUTO_ACC` = 0,73, ~1,5 s após abrir o turno), toc
 qualquer lugar enche o gauge de `TORCIDA_TAPS_FULL` (8) e o gauge cheio vira um golpe
 de torcida ×`ARENA_TORCIDA_MULT` (1,35) por cima do golpe do turno (`arenaTorcidaTurn`);
 sem toque o golpe é o base, o gauge zera ao gastar, excedente não rende. A esquiva
-segue na `TimingBar`; a barra de ataque ficou atrás de `ARENA_TIMING_ATTACK_ENABLED = false`.
+também saiu (TORC-3): o pet se defende sozinho (`autoDefense`, mesma lei 0,70 ± 0,25 da
+`sampleAcc` da simulação); a barra de ataque ficou atrás de `ARENA_TIMING_ATTACK_ENABLED = false`
+e a de defesa atrás de `TIMING_DODGE_ENABLED = false`.
 Medido em `arena.test.ts` (`simulateArenaRun({ autoAttack, tapsPerTurn })`): base 57,2% de
 vitória média, pet sozinho 59,0%, 2 toques/turno 75,4%, 4 toques/turno 81,9%, gauge cheio
 a cada golpe 92,3%.

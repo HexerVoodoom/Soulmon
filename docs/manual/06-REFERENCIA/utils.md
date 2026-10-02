@@ -658,9 +658,15 @@ Cobertura: **178/178** módulos de `src/utils` em 01/10/2026 (`node scripts/docs
 
 ### `src/utils/torcida.ts`
 **Dono de:** a CONTA da torcida no PvE (Pesadelo e Masmorra, 02/10/2026): o pet golpeia sozinho, cada toque enche o gauge e o gauge cheio é gasto no golpe ESPECIAL. As constantes do gauge são importadas de `functions/api/_duel.js` (uma regra, um arquivo).
-**Exports:** `TORCIDA_TAPS_FULL` (8, o mesmo do duelo) · `TORCIDA_BASE_FRAC` (0,5 do `dmg` do estágio = golpe-base) · `TORCIDA_PVE_SPECIAL_MULT` (2, provisório) · `torcidaTap(taps)` · `torcidaFill(taps)` · `torcidaCheio(taps)` · `torcidaStrike(petDmg, taps, dmgReduction)` → `{ dmg, special, tapsLeft }` · `TIMING_CHEER_ENABLED` (reexport, `false`).
+**Exports:** `TORCIDA_TAPS_FULL` (8, o mesmo do duelo) · `TORCIDA_BASE_FRAC` (0,5 do `dmg` do estágio = golpe-base) · `TORCIDA_PVE_SPECIAL_MULT` (3, decisão do dono 02/10/2026 — TORC-1) · `torcidaTap(taps)` · `torcidaFill(taps)` · `torcidaCheio(taps)` · `torcidaStrike(petDmg, taps, dmgReduction)` → `{ dmg, special, tapsLeft }` · `TIMING_CHEER_ENABLED` (reexport, `false`).
 **Quem chama:** `NightmareBattle`, `DungeonGame`, `DuelScreen` (`torcidaTap`), `TorcidaKit`.
 **Régua:** `src/utils/torcida.test.ts` — a torcida só soma (gauge vazio ou parcial dá o golpe-base, nunca menos).
+
+### `src/utils/autoDefesa.ts`
+**Dono de:** a DEFESA AUTOMÁTICA do pet (TORC-3, 02/10/2026): o dono tirou a esquiva por `TimingBar`; o Soulmon se defende sozinho na Masmorra, no Pesadelo e no Duelo da Arena. Devolve a precisão equivalente da barra (0..1), então a conta de dano de cada modo não muda.
+**Exports:** `TIMING_DODGE_ENABLED` (`false` — a barra e o ramo antigo ficam guardados atrás dela) · `AUTO_DEF_MEAN` (0,70) · `AUTO_DEF_SPREAD` (0,25) · `AUTO_DEF_PERFECT` (0,92) · `AUTO_DEF_PARTIAL` (0,6) · `defenseRoll(seed, n)` (sorteio determinístico) · `autoDefense(roll, { bonus, perfect })` → `{ acc, outcome }` · `jeitoDefesaBonus(jeito)` · `newDefenseSeed()`.
+**Quem chama:** `DungeonGame`, `NightmareBattle`, `ArenaGame`.
+**Régua:** `src/utils/autoDefesa.test.ts` (regra pura, determinismo, paridade com `sampleAcc` da Arena e simulação de 20.000 runs antes/depois), `DungeonGame.defesaAuto.render.test.tsx`, `NightmareBattle.render.test.tsx`, `ArenaGame.torcida.render.test.tsx`.
 
 ### `src/utils/dungeon.ts`
 **02/10/2026 (E2):** `canBuyDeepStart(nível, bits, alcançado)` e `buyDeepStart(...)` só liberam até o nível já CUMPRIDO (`getDungeonReached`/`recordDungeonReached`, chave `DUNGEON_REACHED`, não reseta na semana; só concluir a descida grava) — não dá para pular pagando (`REGISTRO-DE-DECISOES` §20).
