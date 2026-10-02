@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import type { Language } from '../../utils/i18n';
 import type { AreaId } from '../../navigation';
+import { lotArtBounds } from '../../utils/areaLotGeometry';
 
 /**
  * O MOLDE DE UMA ÁREA (minimal-ui F4) — reusado pelas 6 áreas do Mapa.
@@ -91,20 +92,40 @@ export function AreaScene({ areaId, language, lots, background, children }: {
             minWidth: 120,
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
             background: 'transparent', border: 'none', padding: 0, cursor: 'pointer',
+            // H11 (02/10/2026): a caixa do botão (quadrado inteiro, com alfa) NÃO recebe toque —
+            // só o que é opaco no sprite (`data-area-lot-hit`) e o rótulo. Sem isso, o alfa de um
+            // prédio grande roubava o toque do vizinho (Observatório × Árvore da Evolução).
+            pointerEvents: 'none',
           }}
         >
           {lot.art ? (
-            <img
-              src={lot.art}
-              alt=""
-              aria-hidden="true"
-              data-area-lot-art
-              style={{ width: '100%', display: 'block', filter: 'drop-shadow(0 6px 6px rgba(0,0,0,.55))' }}
-            />
+            <span style={{ position: 'relative', width: '100%', display: 'block' }}>
+              <img
+                src={lot.art}
+                alt=""
+                aria-hidden="true"
+                data-area-lot-art
+                style={{ width: '100%', display: 'block', filter: 'drop-shadow(0 6px 6px rgba(0,0,0,.55))' }}
+              />
+              {(() => {
+                const b = lotArtBounds(areaId, lot.id) ?? [0, 0, 1, 1];
+                return (
+                  <span
+                    aria-hidden="true"
+                    data-area-lot-hit
+                    style={{
+                      position: 'absolute', pointerEvents: 'auto', cursor: 'pointer',
+                      left: `${b[0] * 100}%`, top: `${b[1] * 100}%`,
+                      width: `${(b[2] - b[0]) * 100}%`, height: `${(b[3] - b[1]) * 100}%`,
+                    }}
+                  />
+                );
+              })()}
+            </span>
           ) : <span
             aria-hidden="true"
             style={{
-              width: '100%', aspectRatio: '1 / 1',
+              width: '100%', aspectRatio: '1 / 1', pointerEvents: 'auto',
               borderRadius: 'var(--sm2-radius-md)',
               border: '2px solid var(--sm2-line)',
               background: 'var(--sm2-surface)',
@@ -114,7 +135,7 @@ export function AreaScene({ areaId, language, lots, background, children }: {
           <span
             data-area-lot-label
             style={{
-              marginTop: -4,
+              marginTop: -4, pointerEvents: 'auto',
               padding: '2px 9px',
               borderRadius: 999,
               background: 'rgba(8,25,26,.85)',

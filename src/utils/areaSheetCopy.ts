@@ -46,11 +46,16 @@ interface AreaLotSpec<K extends string> {
   width?: string;
 }
 
+// 🏛️ 02/10/2026 (H12, navegação do dono): a torre de Conquistas (sprite alto e estreito, só 50% da
+// largura opaca) ficava minúscula no lote de baixo. Opção (b) do dono: Conquistas SOBE para o espaço
+// de cima da direita, ATRÁS, com a base do tamanho do espaço (lote de 64% da largura, centrado no
+// pé do tablado) e a ponta quase saindo do quadro por cima; a Decoração DESCE para o losango de baixo
+// (um pouco maior, 42%, para cobrir o losango do fundo). Itens e Background não mudam.
 const MERCADO_LOTS: AreaLotSpec<MercadoLotId>[] = [
   { id: 'itens', labelPt: 'Itens', labelEn: 'Items', ariaPt: 'Entrar na lojinha de Itens', ariaEn: 'Enter the Items stall', left: '26%', top: '33%' },
-  { id: 'decoracao', labelPt: 'Decoração', labelEn: 'Decor', ariaPt: 'Entrar na lojinha de Decoração', ariaEn: 'Enter the Decor stall', left: '72%', top: '33%' },
+  { id: 'conquistas', labelPt: 'Conquistas', labelEn: 'Achievements', ariaPt: 'Entrar em Conquistas', ariaEn: 'Enter Achievements', left: '72%', top: '29%', width: '64%' },
   { id: 'background', labelPt: 'Background', labelEn: 'Background', ariaPt: 'Entrar na lojinha de Background', ariaEn: 'Enter the Background stall', left: '26%', top: '55%' },
-  { id: 'conquistas', labelPt: 'Conquistas', labelEn: 'Achievements', ariaPt: 'Entrar em Conquistas', ariaEn: 'Enter Achievements', left: '72%', top: '55%' },
+  { id: 'decoracao', labelPt: 'Decoração', labelEn: 'Decor', ariaPt: 'Entrar na lojinha de Decoração', ariaEn: 'Enter the Decor stall', left: '72%', top: '55%', width: '42%' },
 ];
 
 // ⚔️ 01/10/2026 (H15, navegação do dono): o fundo da Arena tem DOIS tablados.
@@ -58,8 +63,8 @@ const MERCADO_LOTS: AreaLotSpec<MercadoLotId>[] = [
 // por espaço, um em cada metade da diagonal), e a Feira fica sozinha no da
 // direita. Antes a Feira caía fora dos tablados, na escadaria de baixo.
 const ARENA_LOTS: AreaLotSpec<ArenaLotId>[] = [
-  { id: 'torneio', labelPt: 'Torneio', labelEn: 'Tournament', ariaPt: 'Entrar no Torneio', ariaEn: 'Enter the Tournament', left: '23%', top: '49%', width: '42%' },
-  { id: 'duelo', labelPt: 'Duelo', labelEn: 'Duel', ariaPt: 'Entrar no Duelo', ariaEn: 'Enter the Duel', left: '47%', top: '56%', width: '42%' },
+  { id: 'torneio', labelPt: 'Torneio', labelEn: 'Tournament', ariaPt: 'Entrar no Torneio', ariaEn: 'Enter the Tournament', left: '19%', top: '49%', width: '40%' },
+  { id: 'duelo', labelPt: 'Duelo', labelEn: 'Duel', ariaPt: 'Entrar no Duelo', ariaEn: 'Enter the Duel', left: '50%', top: '56%', width: '40%' },
   // O lote da Arena é a FEIRA (`guild.lote.feira.*`, D-G4, WPG-10): abre a sala Feira do
   // `GuildSheet`. O Salão (Bosque/Roda/Mural) continua sendo o lote `guilda` do Hall.
   { id: 'feira', labelPt: GUILD_COPY['guild.lote.feira.label'][0], labelEn: GUILD_COPY['guild.lote.feira.label'][1], ariaPt: GUILD_COPY['guild.lote.feira.aria'][0], ariaEn: GUILD_COPY['guild.lote.feira.aria'][1], left: '78%', top: '40%', width: '36%' },
@@ -81,8 +86,8 @@ const ARENA_LOTS: AreaLotSpec<ArenaLotId>[] = [
 // arte): se a clareira mudar, só `left`/`top`/`width` destas linhas mudam.
 const LABORATORIO_LOTS: AreaLotSpec<LaboratorioLotId>[] = [
   { id: 'evolucao', labelPt: 'Árvore da Evolução', labelEn: 'Evolution Tree', ariaPt: 'Entrar na Árvore da Evolução', ariaEn: 'Enter the Evolution Tree', left: '27%', top: '57%', width: '44%' },
-  { id: 'pet', labelPt: 'Meu Soulmon', labelEn: 'My Soulmon', ariaPt: 'Entrar em Meu Soulmon', ariaEn: 'Enter My Soulmon', left: '72%', top: '57%', width: '44%' },
-  { id: 'stats', labelPt: 'Observatório', labelEn: 'Observatory', ariaPt: 'Entrar no Observatório (estatísticas)', ariaEn: 'Enter the Observatory (stats)', left: '50%', top: '82%', width: '68%' },
+  { id: 'pet', labelPt: 'Meu Soulmon', labelEn: 'My Soulmon', ariaPt: 'Entrar em Meu Soulmon', ariaEn: 'Enter My Soulmon', left: '72%', top: '56%', width: '52%' },
+  { id: 'stats', labelPt: 'Observatório', labelEn: 'Observatory', ariaPt: 'Entrar no Observatório (estatísticas)', ariaEn: 'Enter the Observatory (stats)', left: '50%', top: '88%', width: '62%' },
 ];
 
 const HALL_LOTS: AreaLotSpec<HallLotId>[] = [

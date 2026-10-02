@@ -88,7 +88,23 @@ export function areaNpcVoice(id: AreaId, language: Language): { name: string; li
  * seguem lendo `guildCopy.ts` (a copy revisada da Guilda — a do Salão é a
  * mesma do ROSTER).
  */
-const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
+export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
+  // H11 (02/10/2026): Todo lote tem entrada PRÓPRIA aqui — exatamente um NPC por lote, sem
+  // depender de queda para a voz da área. Os seis lotes abaixo são os que antes caíam no
+  // anfitrião da área (mesmo NPC de antes, só que agora explícito e travado por contrato em
+  // `areaLotNpc.contract.test.ts`). Nada aqui sorteia, rodízio ou depende de estado/hora.
+  'mercado:background': {
+    namePt: 'Panora, a sonhadora', nameEn: 'Panora, the dreamer',
+    // Bíblia das áreas §4.2 (Panora, lula de terra de manto-tela): antes o busto dela
+    // aparecia com o nome e a fala do Grom (voz da área).
+    linePt: 'Esse horizonte tem cheiro de chuva. Quer ver de perto?',
+    lineEn: 'This horizon smells like rain. Want a closer look?',
+  },
+  'arena:torneio': AREA_NPC_VOICE.arena,
+  'exploracao:masmorra': AREA_NPC_VOICE.exploracao,
+  'jogos:salao': AREA_NPC_VOICE.jogos,
+  'laboratorio:evolucao': AREA_NPC_VOICE.laboratorio,
+  'hall:biblioteca': AREA_NPC_VOICE.hall,
   // 01/10/2026 (pedido do dono): as bancas de Itens e de Decoração mostravam
   // "Grom", mas os bustos são outras criaturas. Nomes próprios (loremaster):
   // a criatura-cogumelo das miudezas é Lamela (as lâminas sob o chapéu do

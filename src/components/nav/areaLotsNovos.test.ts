@@ -18,7 +18,7 @@ describe('lotes novos (29/09/2026)', () => {
     const pct = (s?: string) => Number(String(s ?? '38%').replace('%', ''));
     const arena = Object.fromEntries(arenaLots('pt-BR').map(l => [l.id, l]));
     expect(pct(arena.torneio.left)).toBeLessThan(50);
-    expect(pct(arena.duelo.left)).toBeLessThan(50);
+    expect(pct(arena.duelo.left)).toBeLessThanOrEqual(50);
     expect(pct(arena.feira.left)).toBeGreaterThan(60);
     // G4 (02/10/2026): Torneio e Duelo maiores que o molde (38%) — no mesmo tablado, mas bem visiveis.
     expect(pct((arena.torneio as { width?: string }).width)).toBeGreaterThanOrEqual(40);
