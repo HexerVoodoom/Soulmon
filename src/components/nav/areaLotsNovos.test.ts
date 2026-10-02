@@ -20,6 +20,9 @@ describe('lotes novos (29/09/2026)', () => {
     expect(pct(arena.torneio.left)).toBeLessThan(50);
     expect(pct(arena.duelo.left)).toBeLessThan(50);
     expect(pct(arena.feira.left)).toBeGreaterThan(60);
+    // G4 (02/10/2026): Torneio e Duelo maiores que o molde (38%) — no mesmo tablado, mas bem visiveis.
+    expect(pct((arena.torneio as { width?: string }).width)).toBeGreaterThanOrEqual(40);
+    expect(pct((arena.duelo as { width?: string }).width)).toBeGreaterThanOrEqual(40);
     const lab = Object.fromEntries(laboratorioLots('pt-BR').map(l => [l.id, l as { width?: string; top: string }]));
     expect(pct(lab.stats.width)).toBeGreaterThanOrEqual(pct(lab.evolucao.width) * 1.4);
     for (const id of ['evolucao', 'pet']) {
