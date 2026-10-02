@@ -3395,8 +3395,9 @@ async function saveIdForPublicId(env, pid) {
   return saveId;
 }
 __name(saveIdForPublicId, "saveIdForPublicId");
-async function pidDeSaveId(env, saveId) {
+async function pidDeSaveId(env, saveId, { semEscondidos = false } = {}) {
   const p = await getProfile(env, saveId);
+  if (semEscondidos && isHidden(p)) return null;
   return p ? await ensurePid(env, p) : null;
 }
 __name(pidDeSaveId, "pidDeSaveId");
@@ -3420,6 +3421,7 @@ async function publicProfile(env, p, extra = {}) {
   };
 }
 __name(publicProfile, "publicProfile");
+var isHidden = /* @__PURE__ */ __name((p) => !!p && p.publicHidden === true, "isHidden");
 async function getRank(env, season, id) {
   const raw = await kvOrThrow(env).get(`rank:${season}:${id}`);
   return raw ? JSON.parse(raw) : { points: 0, wins: 0, losses: 0, day: today2(), matchesToday: 0 };
@@ -3452,7 +3454,10 @@ async function onRequest3(context) {
   const url = new URL(request.url);
   const action = url.searchParams.get("action") ?? "";
   const ip = clientKey(request);
-  const cacheable = request.method === "GET" && CACHEABLE_ACTIONS.has(action) && typeof caches !== "undefined" && caches.default;
+  const cacheable = request.method === "GET" && CACHEABLE_ACTIONS.has(action) && // `rank&id=` devolve o `me` DA PESSOA (ator autorizado, TORC-5): resposta
+  // por pessoa não vai para cache de URL, que serviria o `me` dela a quem
+  // repetisse o endereço e pularia a autorização.
+  !(action === "rank" && url.searchParams.has("id")) && typeof caches !== "undefined" && caches.default;
   let hit = null;
   if (cacheable) hit = await caches.default.match(request).catch(() => null);
   const gate = takeToken(
@@ -3542,6 +3547,7 @@ async function handleCommunity({ request, env }) {
     }
     const apelidoPedido = body.name ? sanitizarNomeDeGuilda(body.name) : null;
     const nameRejected = !!body.name && !apelidoPedido;
+    const publicHidden = typeof body.publicHidden === "boolean" ? body.publicHidden : prev.publicHidden === true;
     const profile = {
       id,
       name: apelidoPedido || sanitizarNomeDeGuilda(prev.name) || "An\xF4nimo",
@@ -3549,6 +3555,7 @@ async function handleCommunity({ request, env }) {
       petName: String(body.petName || prev.petName || "").slice(0, 32),
       unlockedStages: Array.isArray(body.unlockedStages) ? body.unlockedStages.slice(0, 16) : prev.unlockedStages || [],
       pvpEnabled,
+      publicHidden,
       attrs: body.attrs && typeof body.attrs === "object" ? { power: +body.attrs.power || 0, harmony: +body.attrs.harmony || 0, benevolence: +body.attrs.benevolence || 0 } : prev.attrs || { power: 0, harmony: 0, benevolence: 0 },
       tasksDone: Number.isFinite(+body.tasksDone) ? Math.max(0, +body.tasksDone) : prev.tasksDone || 0,
       friends: prev.friends || [],
@@ -3560,11 +3567,23 @@ async function handleCommunity({ request, env }) {
     };
     await putProfile(env, id, profile);
     await indexPublicId(env, id, profile.pid);
+    if (publicHidden !== (prev.publicHidden === true) && typeof caches !== "undefined" && caches.default) {
+      const base = `${url.origin}${url.pathname}?action=`;
+      const season = currentSeason();
+      await Promise.all([
+        `${base}players`,
+        `${base}rank`,
+        `${base}rank&season=${season}`,
+        `${base}seasonResult&season=${season}`
+      ].map((u) => caches.default.delete(new Request(u)).catch(() => {
+      })));
+    }
     if (pidLegado) await kvOrThrow(env).delete(`${PID_PREFIX}${pidAntigo}`);
     return json3({
       ok: true,
       id: profile.pid,
       pvpEnabled: profile.pvpEnabled,
+      publicHidden,
       ...nameRejected ? { nameRejected: true } : {},
       ...pvpBlocked ? { pvpBlocked: true, bondLevel, minBondLevel: BOND_PVP_MIN_LEVEL } : {}
     });
@@ -3578,7 +3597,7 @@ async function handleCommunity({ request, env }) {
       const raw = await kvOrThrow(env).get(k);
       if (!raw) continue;
       const p = JSON.parse(raw);
-      if (!p.pvpEnabled) continue;
+      if (!p.pvpEnabled || isHidden(p)) continue;
       if (search && !String(p.name).toLowerCase().includes(search)) continue;
       players.push(await publicProfile(env, p));
       if (players.length >= 50) break;
@@ -3589,9 +3608,9 @@ async function handleCommunity({ request, env }) {
   if (action === "player" && method === "GET") {
     const targetSave = await saveIdForPublicId(env, id);
     const p = targetSave ? await getProfile(env, targetSave) : null;
-    if (!p) return json3({ found: false });
+    if (!p || isHidden(p)) return json3({ found: false });
     const rank = await getRank(env, currentSeason(), targetSave);
-    const friendPids = (await Promise.all((p.friends || []).map((f) => pidDeSaveId(env, f)))).filter(Boolean);
+    const friendPids = (await Promise.all((p.friends || []).map((f) => pidDeSaveId(env, f, { semEscondidos: true })))).filter(Boolean);
     return json3({
       found: true,
       player: await publicProfile(env, p, {
@@ -3610,7 +3629,7 @@ async function handleCommunity({ request, env }) {
       const raw = await kvOrThrow(env).get(k);
       if (!raw) continue;
       const p = JSON.parse(raw);
-      if (!p.pvpEnabled || p.id === me) continue;
+      if (!p.pvpEnabled || p.id === me || isHidden(p)) continue;
       pool.push({ profile: p, pub: await publicProfile(env, p) });
     }
     for (let i = pool.length - 1; i > 0; i--) {
@@ -3635,7 +3654,7 @@ async function handleCommunity({ request, env }) {
     const me = await getProfile(env, id);
     const opp = await getProfile(env, oppSave);
     if (!me?.pvpEnabled) return { res: json3({ error: "pvp disabled" }, 403) };
-    if (!opp?.pvpEnabled) return { res: json3({ error: "opponent unavailable" }, 404) };
+    if (!opp?.pvpEnabled || isHidden(opp)) return { res: json3({ error: "opponent unavailable" }, 404) };
     const myRank = await getRank(env, currentSeason(), id);
     if (myRank.day !== today2()) {
       myRank.day = today2();
@@ -3716,12 +3735,24 @@ async function handleCommunity({ request, env }) {
     if (!/^\d{4}-\d{2}$/.test(season)) return json3({ error: "invalid season" }, 400);
     const keys = await listPrefix2(env, `rank:${season}:`, 300);
     const rows = [];
+    const meId = url.searchParams.get("id");
+    if (action === "rank" && meId) {
+      const denied = await denyUnlessOwner(meId);
+      if (denied) return denied;
+    }
+    let meRow = null;
     for (const k of keys) {
       const raw = await kvOrThrow(env).get(k);
       if (!raw) continue;
       const rec = JSON.parse(raw);
       const ownerSave = k.slice(`rank:${season}:`.length);
       const p = await getProfile(env, ownerSave);
+      if (isHidden(p)) {
+        if (meId && ownerSave === meId) {
+          meRow = { id: await ensurePid(env, p), points: rec.points, wins: rec.wins, losses: rec.losses, lifetime: p.lifetimePoints ?? 0, hidden: true };
+        }
+        continue;
+      }
       rows.push({
         // Sem perfil não há identidade pública: a linha do rank existe (o
         // `rank:` dura mais que o `profile:`), mas não é endereçável.
@@ -3738,7 +3769,7 @@ async function handleCommunity({ request, env }) {
     }
     rows.sort((a, b) => b.points - a.points);
     if (action === "seasonResult") return json3({ season, top3: rows.slice(0, 3) });
-    return json3({ season, rank: rows.slice(0, 50) });
+    return json3({ season, rank: rows.slice(0, 50), ...meRow ? { me: meRow } : {} });
   }
   if (action === "closeSeason" && method === "POST") {
     const { season, adminKey } = body;
@@ -3786,6 +3817,7 @@ async function handleCommunity({ request, env }) {
     const friendSave = await saveIdForPublicId(env, friendId);
     if (!friendSave) return json3({ error: "friend not found" }, 404);
     if (id === friendSave) return json3({ error: "cannot befriend yourself" }, 400);
+    if (!remove && isHidden(await getProfile(env, friendSave))) return json3({ error: "friend not found" }, 404);
     const me = await getProfile(env, id);
     if (!me) return json3({ error: "profile not found" }, 404);
     me.friends = me.friends || [];
@@ -3814,7 +3846,7 @@ async function handleCommunity({ request, env }) {
     await putProfile(env, id, me);
     const raw = await kvOrThrow(env).get(`gifts:${friendSave}`);
     const gifts = raw ? JSON.parse(raw) : [];
-    gifts.push({ from: me.name, bits: 20, at: Date.now() });
+    gifts.push({ from: isHidden(me) ? "" : me.name, bits: 20, at: Date.now() });
     await kvOrThrow(env).put(`gifts:${friendSave}`, JSON.stringify(gifts.slice(-50)), { expirationTtl: 86400 * 60 });
     return json3({ ok: true });
   }
@@ -5298,7 +5330,7 @@ async function onRequest6({ env }) {
 }
 __name(onRequest6, "onRequest");
 
-// ../.wrangler/tmp/pages-vwcefW/functionsRoutes-0.505812388358434.mjs
+// ../.wrangler/tmp/pages-geMGT3/functionsRoutes-0.7222252545969434.mjs
 var routes = [
   {
     routePath: "/api/account",
