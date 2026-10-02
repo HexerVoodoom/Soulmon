@@ -17,11 +17,11 @@ import { PLACEHOLDER_ART } from '../utils/placeholderArt';
 import { ScreenSkeleton } from './ui/ScreenSkeleton';
 import { sm2Button, sm2Hint, sm2Label, sm2Text, sm2TitleStyle, Field, CheckRow, Chip } from './form/FormKit';
 import { STORAGE_KEYS } from '../utils/storageKeys';
-import { readLocal, writeJson, removeLocal } from '../utils/safeStorage';
+import { readLocal, writeLocal, writeJson, removeLocal } from '../utils/safeStorage';
 import { readOracleDraft, writeOracleDraft, clearOracleDraft } from '../utils/oracleDraft';
 import { readGateDraft, writeGateDraft, clearGateDraft } from '../utils/gateDraft';
 import {
-  buildConsentRecord, isAgeBlocked, MIN_AGE_YEARS,
+  buildConsentRecord, isAgeBlocked, isConsentCurrent, MIN_AGE_YEARS,
   type ConsentRecord,
 } from '../utils/consent';
 import {
@@ -38,10 +38,9 @@ import { useUnlockPriceLabel } from '../utils/priceLabel';
 import { purchase, isBillingAvailable } from '../utils/playBilling';
 import { checarContaExcluidaNoLogin } from '../utils/cloudSave';
 import {
-  isAuthConfigured, getCurrentEmail, entrarComSenha, criarContaComSenha,
-  entrarComGoogle, mandarResetDeSenha, type AuthErro,
+  isAuthConfigured, getCurrentEmail, entrarComGoogle, type AuthErro,
 } from '../utils/auth';
-import { resolveLanguage } from '../utils/i18n';
+import { resolveLanguage, type Language } from '../utils/i18n';
 import { track, flush as flushTelemetry, onboardingStepCode, TELEMETRY_FUNNEL, TELEMETRY_PURCHASE_REASON, revealDurationBucket, unlockReasonCode } from '../utils/telemetry';
 import { UnlockNudge } from './UnlockAccountModal';
 import type { ActivityCategory } from '../types/attributes';
@@ -128,6 +127,11 @@ const alertStyle: CSSProperties = {
   borderLeft: '3px solid var(--sm2-gold-ink)',
 };
 const statusStyle: CSSProperties = { ...alertStyle, borderLeftColor: 'var(--sm2-primary-ink)' };
+
+/** A4 (02/10/2026): no onboarding os títulos usam a fonte de TEXTO (Rubik) em
+    vez da display (Cinzel), por legibilidade. Só aqui — o resto do app segue com
+    Cinzel nos títulos. O estilo inline vence a família da classe `.sm2-title`. */
+const tituloOnboarding: CSSProperties = { ...sm2TitleStyle, fontFamily: 'var(--sm2-font-text)' };
 
 /** As listas de opção do catálogo, na ordem do intersticial antigo. */
 const STRUGGLE_IDS: StruggleId[] = ['comecar', 'constancia', 'esquecer', 'energia', 'ansiedade', 'distracao', 'tempo', 'perfeccionismo'];
@@ -219,6 +223,9 @@ interface SoulmonOnboardingProps {
    * pergunta do ritual vai direto à geração.
    */
   savedTestAnswers?: SoulAnswers;
+  /** A1 (02/10/2026): avisa o App quando a pessoa escolhe o idioma na entrada,
+   *  para o resto do app abrir no mesmo idioma sem recarregar. */
+  onLanguageChange?: (lang: Language) => void;
 }
 
 /**
@@ -271,11 +278,33 @@ export const GOOGLE_SEM_RESPOSTA_MS = 120_000;
 
 interface SavedProfile extends OracleInput { seed: number }
 
-export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed, onCancel, savedTestAnswers }: SoulmonOnboardingProps) {
+export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed, onCancel, savedTestAnswers, onLanguageChange }: SoulmonOnboardingProps) {
   // WP5.8 — o preço que o Play vai cobrar NESTE aparelho; fora do Android
   // nativo cai na constante publicada (`utils/priceLabel.ts`).
   const isUpgrade = mode === 'upgrade';
-  const isPt = resolveLanguage(readLocal(STORAGE_KEYS.LANGUAGE)) === 'pt-BR';
+  // A1 (02/10/2026): sem escolha gravada o app abre em INGLÊS (`resolveLanguage`);
+  // o idioma só muda quando a pessoa escolhe no seletor da entrada, e a
+  // escolha persiste.
+  const [lang, setLang] = useState<Language>(() => resolveLanguage(readLocal(STORAGE_KEYS.LANGUAGE)));
+  const isPt = lang === 'pt-BR';
+  const escolherIdioma = (l: Language) => {
+    setLang(l);
+    writeLocal(STORAGE_KEYS.LANGUAGE, l, { silent: true });
+    onLanguageChange?.(l);
+  };
+  const seletorIdioma = (
+    <div role="group" aria-label={isPt ? 'Idioma' : 'Language'} data-language-picker
+      style={{ display: 'flex', justifyContent: 'center', gap: 8, margin: '0 0 16px' }}>
+      {(['en-US', 'pt-BR'] as const).map(l => (
+        <button key={l} type="button" lang={l === 'pt-BR' ? 'pt' : 'en'}
+          aria-pressed={lang === l}
+          style={sm2Button(lang === l ? 'primary' : 'outline', false, 'sm')}
+          onClick={() => escolherIdioma(l)}>
+          {l === 'pt-BR' ? 'Português' : 'English'}
+        </button>
+      ))}
+    </div>
+  );
   const precoLabel = useUnlockPriceLabel(isPt);
   const L = (t: LText) => (isPt ? t.pt : t.en);
 
@@ -366,16 +395,12 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   // `obfuscatedExternalAccountId`, e com `PLAY_REQUIRE_ACCOUNT_BINDING` ligado
   // ela seria RECUSADA: a pessoa pagaria e não receberia.
   const CHOICE_STEP = -7;
-  // A segunda tela da conta: e-mail e senha. Separada da primeira a pedido do
-  // dono — a primeira oferece só Google ou "New User", e o formulário vive
-  // aqui em vez de empilhar tudo numa tela só.
-  const EMAIL_STEP = -8;
-  // A tela do Google. Existe porque o aceite dos Termos e o 18+ SAÍRAM da
-  // primeira tela (pedido do dono: ela mostra só as duas portas) — e entrar
-  // com Google TAMBÉM cria conta. Sem esta tela, esse caminho abriria conta
-  // sem aceite e sem checagem de idade, que é exatamente o que as duas travas
-  // existem para impedir.
-  const GOOGLE_STEP = -9;
+  // A tela dos TERMOS (A3, 02/10/2026). Vem DEPOIS do login: o portão tem um
+  // botão só ("Continue with Google") e, com a conta já autenticada, esta tela
+  // pede o aceite dos Termos/Privacidade e a declaração de 18+. Sem aceitar
+  // não se avança ao onboarding. Reaproveita o id -9 (era a tela do Google,
+  // que saiu): o código de telemetria desse degrau continua o mesmo.
+  const TERMS_STEP = -9;
   // B1 (checklist do dono, 01/10/2026): o NOME DO JOGADOR é a PRIMEIRA
   // pergunta depois da conta — antes de metas, escolha e ritual. Era o
   // "apelido" do cadastro final; o valor é o mesmo (`userName`).
@@ -444,8 +469,6 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
    *  comprovado; `''` = deslogado. O portão só decide depois de saber. */
   const [authEmail, setAuthEmail] = useState<string | null>(null);
   const [authUsavel, setAuthUsavel] = useState(false);
-  const [senha, setSenha] = useState('');
-  const [criandoConta, setCriandoConta] = useState(false);
   const [authErro, setAuthErro] = useState<AuthErro | null>(null);
   const [authOcupado, setAuthOcupado] = useState(false);
   /** Temporizador da rede de segurança do Google (`GOOGLE_SEM_RESPOSTA_MS`).
@@ -456,7 +479,6 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   useEffect(() => () => {
     if (redeGoogleRef.current !== null) clearTimeout(redeGoogleRef.current);
   }, []);
-  const [resetEnviado, setResetEnviado] = useState(false);
   const [demoCharacterId, setDemoCharacterId] = useState<'kaelen' | 'orrin' | 'thalindra' | 'igni' | 'nautilu' | 'astrase' | null>(null);
   const [unlockLoading, setUnlockLoading] = useState(false);
   const [unlockMessage, setUnlockMessage] = useState<string | null>(null);
@@ -464,8 +486,14 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
    *  próprio, com rótulo e foco, e o botão de avançar só liga com ela marcada.
    *  Caixa embutida dentro do parágrafo dos Termos não é consentimento
    *  específico (achado do run 01, PLANO-TAREFAS.md:187). */
-  const [consentChecked, setConsentChecked] = useState(!!(draft?.consent ?? gate?.consent));
-  const [consent, setConsent] = useState<ConsentRecord | null>(draft?.consent ?? gate?.consent ?? null);
+  // A3: só vale como "já aceitou" o registro da versão ATUAL dos documentos —
+  // quem aceitou uma versão antiga vê a tela de novo.
+  const consentInicial = (() => {
+    const c = draft?.consent ?? gate?.consent ?? null;
+    return c && isConsentCurrent(c) ? c : null;
+  })();
+  const [consentChecked, setConsentChecked] = useState(!!consentInicial);
+  const [consent, setConsent] = useState<ConsentRecord | null>(consentInicial);
   /** Mês/ano de nascimento pedido SÓ no caminho demo, e SÓ para conferir 18+
    *  (utils/consent.ts). O demo pula o Oráculo inteiro e nunca chega ao passo
    *  da data — sem isto, o 18+ do dono valeria só para quem paga. Fica em
@@ -572,12 +600,9 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
    *  zero toque — e continua funcionando se a criatura mudar antes do
    *  cadastro (reroll do demo, por exemplo). */
   const [petNameEdit, setPetNameEdit] = useState<string | null>(null);
-  const [email, setEmail] = useState('');
-  const [emailError, setEmailError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   /** Link de acesso enviado — a tela passa a pedir que o usuário abra o e-mail. */
 
-  const isValidEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
   // No caminho grátis o e-mail é OPCIONAL: pedir dado de contato antes de a
   // pessoa ter visto o pet andar é o maior ponto de abandono de um onboarding.
   // Ele é pedido depois, quando já existe progresso a proteger (ver
@@ -716,8 +741,13 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       // de 26 perguntas não pode cobrá-las de novo. Sem auth configurada, o
       // aceite guardado é a prova de que o portão já foi atravessado, mas só
       // conta quando há passo gravado (rascunho antigo pergunta de novo).
-      const podeRetomar = !!gate?.consent && (!!atual || (!usavel && gate.step !== undefined));
-      if (podeRetomar && step === IDENTITY_STEP) setStep(passoDeRetomada());
+      const podeRetomar = !!consent && (!!atual || (!usavel && gate?.step !== undefined));
+      if (podeRetomar && step === IDENTITY_STEP) { setStep(passoDeRetomada()); return; }
+      // A3: o login vem PRIMEIRO e os termos DEPOIS. Já autenticado (voltou do
+      // redirect, ou já tinha sessão) sem aceite da versão atual → tela dos
+      // termos. Sem auth configurada o portão não existe: vai direto aos
+      // termos, que não dependem do Firebase.
+      if (step === IDENTITY_STEP && !consent && (!!atual || !usavel)) setStep(TERMS_STEP);
     })();
     return () => { cancelado = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -902,7 +932,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const next = () => {
     // O portão não avança por `next()`: quem o atravessa é uma autenticação
     // bem-sucedida (ver `aposAutenticar`).
-    if (step === IDENTITY_STEP || step === EMAIL_STEP || step === GOOGLE_STEP) return;
+    if (step === IDENTITY_STEP || step === TERMS_STEP) return;
     if (!canAdvance()) return;
     // B1 + 01/10/2026: do nome vai-se direto às perguntas do ritual.
     if (step === NAME_STEP) { setStep(QUIZ_START); return; }
@@ -935,8 +965,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   // desistir do ritual e voltar ao jogo.
   const back = () => {
     if (isUpgrade && step === 1) { onCancel?.(); return; }
-    // Das duas telas de conta volta-se para a primeira do portão.
-    if (step === EMAIL_STEP || step === GOOGLE_STEP) { setStep(IDENTITY_STEP); return; }
+    // Dos termos não se volta ao portão: a conta já existe (A3).
+    if (step === TERMS_STEP) return;
     // Do nome não se volta para o portão: a conta já existe, e desfazê-la
     // não é o que um botão de voltar deve sugerir.
     if (step === NAME_STEP) return;
@@ -1029,8 +1059,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       'email-invalido': 'Digite um e-mail válido.',
       'senha-fraca': 'A senha precisa de pelo menos 6 caracteres.',
       'credencial-invalida': 'E-mail ou senha não conferem.',
-      'email-em-uso': 'Já existe conta com esse e-mail. Toque em "Já tenho conta — entrar".',
-      'nao-encontrado': 'Não achamos conta com esse e-mail. Toque em "Criar conta".',
+      'email-em-uso': 'Já existe conta com esse e-mail. Entre com a conta Google dele.',
+      'nao-encontrado': 'Não achamos conta com esse e-mail.',
       'muitas-tentativas': 'Muitas tentativas seguidas. Espere um pouco e tente de novo.',
       'rede': 'Sem conexão agora. Confira a internet e tente de novo.',
       'popup-fechado': 'A janela do Google fechou antes de terminar. Pode tentar de novo.',
@@ -1044,8 +1074,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
          quem talvez não chegue a lugar nenhum deixa a pessoa esperando por uma
          tela que não vem. A saída que SEMPRE funciona é a que aparece primeiro:
          liberar o pop-up, ou entrar com e-mail e senha. */
-      'popup-bloqueado': 'Seu navegador bloqueou a janela do Google. Libere pop-ups para este site e toque de novo — ou entre com e-mail e senha, que não abre janela nenhuma.',
-      'dominio-nao-autorizado': 'Este endereço ainda não está liberado para entrar com Google. Use e-mail e senha por enquanto.',
+      'popup-bloqueado': 'Seu navegador bloqueou a janela do Google. Libere pop-ups para este site e toque de novo.',
+      'dominio-nao-autorizado': 'Este endereço ainda não está liberado para entrar com Google.',
       'provedor-desligado': 'Esse jeito de entrar está indisponível agora.',
       // Serve para os dois casos, porque daqui não se sabe qual é.
       'sem-resposta': 'A janela do Google não respondeu. Se ela ainda estiver aberta, termine por lá; se não, pode tentar de novo.',
@@ -1055,13 +1085,13 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       'email-invalido': 'Enter a valid email.',
       'senha-fraca': 'The password needs at least 6 characters.',
       'credencial-invalida': "Email or password don't match.",
-      'email-em-uso': 'An account with that email already exists. Tap "I already have an account".',
-      'nao-encontrado': 'No account found with that email. Tap "Create account".',
+      'email-em-uso': 'An account with that email already exists. Sign in with its Google account.',
+      'nao-encontrado': 'No account found with that email.',
       'muitas-tentativas': 'Too many attempts in a row. Wait a moment and try again.',
       'rede': 'No connection right now. Check the internet and try again.',
       'popup-fechado': 'The Google window closed before finishing. You can try again.',
-      'popup-bloqueado': 'Your browser blocked the Google window. Allow pop-ups for this site and tap again — or sign in with email and password, which opens no window at all.',
-      'dominio-nao-autorizado': 'This address is not approved for Google sign-in yet. Use email and password for now.',
+      'popup-bloqueado': 'Your browser blocked the Google window. Allow pop-ups for this site and tap again.',
+      'dominio-nao-autorizado': 'This address is not approved for Google sign-in yet.',
       'provedor-desligado': 'That way of signing in is unavailable right now.',
       'sem-resposta': 'The Google window didn’t respond. If it’s still open, finish there; if not, you can try again.',
       'desconhecido': "Couldn't sign in right now. Please try again shortly.",
@@ -1091,24 +1121,18 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     }
     setAvisoContaExcluida(null);
     setAuthEmail(mail ?? '');
-    setResetEnviado(false);
-    // O carimbo do aceite é feito NO MOMENTO em que a conta nasce, não no fim
-    // do onboarding: é esse instante que a prova precisa registrar.
-    if (!consent) setConsent(buildConsentRecord());
-    // Autenticado: o NOME vem primeiro (B1) — ou, se esta instalação já tem
-    // rascunho do onboarding, o passo em que a pessoa parou.
-    setStep(passoDeRetomada());
+    // A3: com a conta pronta, falta o aceite dos termos — a menos que esta
+    // instalação já tenha provado o aceite da versão ATUAL. Autenticado e
+    // aceito: o NOME vem primeiro (B1) — ou o passo em que a pessoa parou.
+    setStep(consent ? passoDeRetomada() : TERMS_STEP);
   };
 
-  /** SEM AUTH CONFIGURADA o portão não pode trancar o app.
-   *
-   *  Um build sem as `VITE_FIREBASE_*` (contribuidor sem `.env`, ou o app
-   *  antes da configuração) não tem como autenticar ninguém. Com o portão
-   *  sendo o PRIMEIRO passo, exigir conta ali deixaria o app sem abrir. Falta
-   *  de configuração vira ausência de conta, nunca porta trancada — mas o
-   *  aceite dos Termos e o 18+ continuam obrigatórios, porque eles não
-   *  dependem do Firebase. */
-  const aoContinuarSemConta = () => {
+  /** A3 — o aceite dos Termos + 18+, DEPOIS do login. O carimbo é feito
+   *  NESTE instante (é ele que a prova de consentimento precisa registrar) e
+   *  só com as duas caixas marcadas. Sem auth configurada o portão não existe
+   *  e a pessoa chega aqui direto: falta de configuração nunca vira porta
+   *  trancada, mas o aceite e o 18+ continuam obrigatórios. */
+  const aoAceitarTermos = () => {
     if (!podeAutenticar) return;
     if (!consent) setConsent(buildConsentRecord());
     setStep(passoDeRetomada());
@@ -1119,22 +1143,6 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
      (ver `podeAutenticar`). Não há declaração de menoridade a interceptar. O
      `AGE_BLOCK` continua existindo para o caminho PAGO, onde a data cheia do
      mapa astral pode revelar um menor que já preencheu meia dúzia de telas. */
-
-  /** "New User" → formulário de e-mail e senha, já em modo de criação. */
-  const aoAbrirEmail = () => {
-    setCriandoConta(true);
-    setAuthErro(null);
-    setResetEnviado(false);
-    setStep(EMAIL_STEP);
-  };
-
-  /** "Continue with Google" → tela com o aceite e a idade, e só então o
-   *  popup. A ordem importa: uma vez aberta a conta no Google, desfazê-la é
-   *  bem mais difícil do que perguntar antes. */
-  const aoAbrirGoogle = () => {
-    setAuthErro(null);
-    setStep(GOOGLE_STEP);
-  };
 
   /** O que ainda falta para deixar uma conta nascer. Sem isto o botão só fica
    *  apagado e o toque não faz nada — a pessoa não tem como saber o motivo. */
@@ -1203,7 +1211,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   );
 
   const aoEntrarComGoogle = async () => {
-    if (authOcupado || !podeAutenticar) return;
+    if (authOcupado) return;
     setAuthOcupado(true);
     setAuthErro(null);
     // Rede de segurança: ver `GOOGLE_SEM_RESPOSTA_MS`. Ela LIBERA a tela sem
@@ -1224,39 +1232,6 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     }
     setAuthOcupado(false);
     if (r.ok) { await aposAutenticar(r.email); return; }
-    setAuthErro(r.erro ?? 'desconhecido');
-  };
-
-  const aoEnviarSenha = async () => {
-    if (authOcupado || !podeAutenticar) return;
-    const mail = email.trim().toLowerCase();
-    if (!isValidEmail(mail)) { setEmailError(true); setAuthErro('email-invalido'); return; }
-    // O piso de 6 é do próprio Firebase; conferir aqui evita uma ida à rede
-    // só para receber `auth/weak-password`.
-    if (criandoConta && senha.length < 6) { setAuthErro('senha-fraca'); return; }
-    if (!senha) { setAuthErro('credencial-invalida'); return; }
-    setAuthOcupado(true);
-    setAuthErro(null);
-    const r = criandoConta
-      ? await criarContaComSenha(mail, senha)
-      : await entrarComSenha(mail, senha);
-    setAuthOcupado(false);
-    if (r.ok) { await aposAutenticar(r.email ?? mail); return; }
-    setAuthErro(r.erro ?? 'desconhecido');
-  };
-
-  const aoEsquecerSenha = async () => {
-    if (authOcupado) return;
-    const mail = email.trim().toLowerCase();
-    if (!isValidEmail(mail)) { setEmailError(true); setAuthErro('email-invalido'); return; }
-    setAuthOcupado(true);
-    setAuthErro(null);
-    const r = await mandarResetDeSenha(mail);
-    setAuthOcupado(false);
-    // Sucesso e "não existe conta" dão a MESMA resposta de propósito: dizer
-    // "não achamos esse e-mail" aqui entregaria a quem perguntar quais
-    // endereços têm conta no app.
-    if (r.ok || r.erro === 'nao-encontrado') { setResetEnviado(true); return; }
     setAuthErro(r.erro ?? 'desconhecido');
   };
 
@@ -1421,7 +1396,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
 
   /** Onde a seta de voltar existe (B6). Espelha os ramos de `back()`. */
   const temVolta = !oracleDebugOpen && (
-    [GOOGLE_STEP, EMAIL_STEP, GOAL_STEP, STRUGGLE_STEP, STRENGTH_STEP, STARTER_STEP, CHOICE_STEP, DEMO_PICK].includes(step)
+    [GOAL_STEP, STRUGGLE_STEP, STRENGTH_STEP, STARTER_STEP, CHOICE_STEP, DEMO_PICK].includes(step)
     || (step >= 1 && step < FAVORITE_STEP)
     || (step >= QUIZ_START && step < QUIZ_END)
     || (step >= DEEP_START && step < DEEP_END)
@@ -1537,196 +1512,60 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               </section>
             )}
           </div>
+          {/* A2 (02/10/2026): UM botão só. Conta existente entra direto; conta
+              nova é criada pelo próprio Firebase no primeiro login Google. E-mail,
+              senha e "New User" saíram da tela. Os termos vêm DEPOIS (A3). Enquanto
+              a auth resolve (`authEmail === null`) ou se ela não existe, o portão
+              não mostra botão: sem auth o fluxo segue direto para os termos. */}
+          {mostrarAuth && (
           <StepShell
-            title={!mostrarAuth
-              ? (isPt ? 'Antes de começar' : 'Before we start')
-              : (isPt ? 'Entrar no Soulmon' : 'Sign in to Soulmon')}
-            hint={!mostrarAuth
-              ? (isPt
-                ? 'Você pode ler os dois documentos agora — eles abrem numa aba nova e seu progresso aqui não se perde.'
-                : 'You can read both documents now — they open in a new tab and nothing here is lost.')
-              : (isPt
-                ? 'Sua conta guarda o progresso e amarra qualquer compra a você. A sessão fica salva — não precisa entrar de novo a cada vez.'
-                : 'Your account keeps your progress and ties any purchase to you. The session is saved — no need to sign in every time.')}>
-            {mostrarAuth ? (
-              <>
-                <button
-                  type="button"
-                  style={{ ...sm2Button('primary'), width: '100%' }}
-                  onClick={aoAbrirGoogle}
-                >
-                  {isPt ? 'Entrar com Google' : 'Continue with Google'}
-                </button>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '18px 0' }}>
-                  <span style={{ flex: 1, height: 1, backgroundColor: 'var(--sm2-line)' }} />
-                  <span style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'ou' : 'or'}</span>
-                  <span style={{ flex: 1, height: 1, backgroundColor: 'var(--sm2-line)' }} />
-                </div>
-
-                {/* Segunda PORTA = `outline` (D-O5): ghost ciano ao lado de um
-                    primário ciano lê como a mesma ação; outline diz "outra
-                    porta". */}
-                <button
-                  type="button"
-                  style={{ ...sm2Button('outline'), width: '100%' }}
-                  onClick={aoAbrirEmail}
-                >
-                  {isPt ? 'Novo usuário' : 'New User'}
-                </button>
-              </>
-            ) : (
-              /* Sem auth configurada não há conta a oferecer, e quem já está
-                 autenticado não tem o que fazer com um formulário. Nos dois
-                 casos o portão vira só o aceite e a idade: falta de
-                 configuração nunca pode virar porta trancada. */
-              <>
-                {blocoLegal}
-                <button
-                  type="button"
-                  style={{ ...sm2Button('primary', !podeAutenticar), width: '100%', marginTop: 20 }}
-                  onClick={aoContinuarSemConta}
-                  disabled={!podeAutenticar}
-                >
-                  {isPt ? 'Continuar' : 'Continue'}
-                </button>
-                {!podeAutenticar && <p style={{ ...sm2Hint, marginTop: 12, textAlign: 'center' }}>{faltaParaAutenticar}</p>}
-              </>
-            )}
-          </StepShell>
-          </>
-        )}
-
-        {/* PORTÃO — TELA DO GOOGLE: aceite e idade ANTES do popup.
-            Perguntar antes é o que evita ter de desfazer uma conta já criada
-            no Google, que é bem mais difícil do que uma pergunta a mais. */}
-        {step === GOOGLE_STEP && (
-          <StepShell
-            title={isPt ? 'Entrar com Google' : 'Continue with Google'}
+            title={isPt ? 'Entrar no Soulmon' : 'Sign in to Soulmon'}
             hint={isPt
-              ? 'Antes de criar sua conta, confirme os dois documentos e sua idade.'
-              : 'Before your account is created, confirm the two documents and your age.'}>
-            {blocoLegal}
+              ? 'Sua conta guarda o progresso e amarra qualquer compra a você. A sessão fica salva — não precisa entrar de novo a cada vez.'
+              : 'Your account keeps your progress and ties any purchase to you. The session is saved — no need to sign in every time.'}>
+            {seletorIdioma}
             {authErro && (
-              <p role="alert" style={{ ...alertStyle, marginTop: 12 }}>
+              <p role="alert" style={{ ...alertStyle, marginBottom: 12 }}>
                 {textoErroAuth}
               </p>
             )}
             <button
               type="button"
-              style={{ ...sm2Button('primary', authOcupado || !podeAutenticar), width: '100%', marginTop: 20 }}
+              style={{ ...sm2Button('primary', authOcupado), width: '100%' }}
               onClick={aoEntrarComGoogle}
               /* O rótulo NÃO pode sumir enquanto o botão gira: com só um
-                 `<Spinner />` dentro, o nome acessível vira vazio e o leitor
-                 de tela anuncia "botão, desabilitado" sem dizer de quê. O
-                 `aria-label` fixo mantém o nome, e o `aria-busy` é o que
-                 conta a espera. (QA de 09/09/2026, quatro botões do
-                 onboarding.) */
+                 `<Spinner />` dentro, o nome acessível vira vazio. O
+                 `aria-label` fixo mantém o nome, e o `aria-busy` conta a
+                 espera. */
               aria-label={isPt ? 'Entrar com Google' : 'Continue with Google'}
               aria-busy={authOcupado}
-              disabled={authOcupado || !podeAutenticar}
+              disabled={authOcupado}
             >
               {authOcupado ? <Spinner size={24} /> : (isPt ? 'Entrar com Google' : 'Continue with Google')}
             </button>
-            {!podeAutenticar && <p style={{ ...sm2Hint, marginTop: 12, textAlign: 'center' }}>{faltaParaAutenticar}</p>}
           </StepShell>
+          )}
+          </>
         )}
 
-        {/* PORTÃO — TELA DO E-MAIL: formulário, aceite e idade.
-            O modo abre em "criar conta", que é o que o botão prometeu, e
-            alterna para entrar: quem já tem conta de e-mail precisa de um
-            caminho, e ele não pode ser um beco sem saída. */}
-        {step === EMAIL_STEP && (
+        {/* A3 — TERMOS DEPOIS DO LOGIN: aceite + 18+, e só então o onboarding. */}
+        {step === TERMS_STEP && (
           <StepShell
-            title={criandoConta
-              ? (isPt ? 'Criar sua conta' : 'Create your account')
-              : (isPt ? 'Entrar' : 'Sign in')}
+            title={isPt ? 'Antes de começar' : 'Before we start'}
             hint={isPt
-              ? 'A sessão fica salva neste aparelho — não precisa entrar de novo a cada vez.'
-              : 'The session is saved on this device — no need to sign in every time.'}>
-
-            <label style={sm2Label} htmlFor="onb-gate-email">
-              {isPt ? 'E-mail' : 'Email'}
-            </label>
-            {/* E-mail malformado = anel ÂMBAR do `Field` (`warn`) + `aria-invalid`
-                + a frase "Enter a valid email." em `role=alert` logo abaixo
-                do bloco (X2: erro em texto, nunca só por cor). */}
-            <Field id="onb-gate-email" type="email" value={email} autoComplete="email"
-              warn={emailError}
-              aria-invalid={emailError || undefined}
-              onChange={e => { setEmail(e.target.value); setEmailError(false); setAuthErro(null); }}
-              placeholder={isPt ? 'voce@exemplo.com' : 'you@example.com'} />
-
-            <label style={{ ...sm2Label, marginTop: 14 }} htmlFor="onb-gate-senha">
-              {isPt ? 'Senha' : 'Password'}
-            </label>
-            <Field id="onb-gate-senha" type="password" value={senha}
-              autoComplete={criandoConta ? 'new-password' : 'current-password'}
-              onChange={e => { setSenha(e.target.value); setAuthErro(null); }}
-              placeholder={isPt ? 'Mínimo de 6 caracteres' : 'At least 6 characters'}
-              onKeyDown={e => e.key === 'Enter' && aoEnviarSenha()} />
-            {/* A regra "6 caracteres" sumia junto com o placeholder ao digitar
-                (achado 5 do canvas): fica como dica enquanto faltar. */}
-            {criandoConta && senha.length > 0 && senha.length < 6 && (
-              <p style={{ ...sm2Hint, marginTop: 4 }}>
-                {isPt ? 'Mínimo de 6 caracteres.' : 'At least 6 characters.'}
-              </p>
-            )}
-
-            <div style={{ height: 1, backgroundColor: 'var(--sm2-line)', margin: '22px 0 14px' }} />
+              ? 'Sua conta está pronta. Confirme os dois documentos e sua idade para continuar.'
+              : 'Your account is ready. Confirm the two documents and your age to continue.'}>
+            {seletorIdioma}
             {blocoLegal}
-
-            {authErro && (
-              <p role="alert" style={{ ...alertStyle, marginTop: 12 }}>
-                {textoErroAuth}
-              </p>
-            )}
-            {resetEnviado && (
-              <p role="status" style={{ ...statusStyle, marginTop: 12 }}>
-                {isPt
-                  ? 'Mandamos um e-mail para trocar a senha. Se não aparecer, olhe no spam.'
-                  : 'We sent an email to reset your password. If it does not show up, check your spam.'}
-              </p>
-            )}
-
             <button
               type="button"
-              style={{ ...sm2Button('primary', authOcupado || !podeAutenticar), width: '100%', marginTop: 20 }}
-              onClick={aoEnviarSenha}
-              aria-label={criandoConta ? (isPt ? 'Criar conta' : 'Create account') : (isPt ? 'Entrar' : 'Sign in')}
-              aria-busy={authOcupado}
-              disabled={authOcupado || !podeAutenticar}
+              style={{ ...sm2Button('primary', !podeAutenticar), width: '100%', marginTop: 20 }}
+              onClick={aoAceitarTermos}
+              disabled={!podeAutenticar}
             >
-              {authOcupado
-                ? <Spinner size={24} />
-                : criandoConta
-                  ? (isPt ? 'Criar conta' : 'Create account')
-                  : (isPt ? 'Entrar' : 'Sign in')}
+              {isPt ? 'Continuar' : 'Continue'}
             </button>
             {!podeAutenticar && <p style={{ ...sm2Hint, marginTop: 12, textAlign: 'center' }}>{faltaParaAutenticar}</p>}
-
-            {/* A inversão criar/entrar é um LINK (ghost), não uma porta. */}
-            <button
-              type="button"
-              style={{ ...sm2Button('ghost'), width: '100%', marginTop: 8 }}
-              onClick={() => { setCriandoConta(v => !v); setAuthErro(null); setResetEnviado(false); }}
-            >
-              {criandoConta
-                ? (isPt ? 'Já tenho conta — entrar' : 'I already have an account — sign in')
-                : (isPt ? 'Criar conta' : 'Create account')}
-            </button>
-
-            {!criandoConta && (
-              <button
-                type="button"
-                style={{ ...sm2Button('quiet', authOcupado), width: '100%', marginTop: 4 }}
-                onClick={aoEsquecerSenha}
-                disabled={authOcupado}
-              >
-                {isPt ? 'Esqueci minha senha' : 'I forgot my password'}
-              </button>
-            )}
-
           </StepShell>
         )}
 
@@ -1890,7 +1729,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             peso. Os 6 cabem em 844 sem rolar. */}
         {step === DEMO_PICK && (
           <div style={{ paddingTop: 20 }}>
-            <h2 className="sm2-title" style={{ ...sm2TitleStyle, marginBottom: 12 }}>
+            <h2 className="sm2-title" style={{ ...tituloOnboarding, marginBottom: 12 }}>
               {isPt ? 'Escolha seu Soulmon' : 'Choose your Soulmon'}
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
@@ -2192,7 +2031,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 nome sugerido — manter é seguir em frente. */}
             {!isUpgrade && (
               <div style={{ textAlign: 'left', marginBottom: 20 }}>
-                <label className="sm2-title" style={{ ...sm2TitleStyle, display: 'block', marginBottom: 10 }} htmlFor="onb-petname">
+                <label className="sm2-title" style={{ ...tituloOnboarding, display: 'block', marginBottom: 10 }} htmlFor="onb-petname">
                   {isPt ? 'Dê nome ao seu Soulmon' : 'Name your Soulmon'}
                 </label>
                 <Field
@@ -2356,7 +2195,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 />
               </Viewport>
             </div>
-            <label className="sm2-title" style={{ ...sm2TitleStyle, display: 'block', marginBottom: 10 }} htmlFor="onb-petname">
+            <label className="sm2-title" style={{ ...tituloOnboarding, display: 'block', marginBottom: 10 }} htmlFor="onb-petname">
               {isPt ? 'Dê nome ao seu Soulmon' : 'Name your Soulmon'}
             </label>
             <Field id="onb-petname" type="text" value={petNameValue} maxLength={24} autoFocus
@@ -2405,7 +2244,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
 function StepShell({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
     <div style={{ paddingTop: 20 }}>
-      <h2 className="sm2-title" style={{ ...sm2TitleStyle, marginBottom: 6 }}>{title}</h2>
+      <h2 className="sm2-title" style={{ ...tituloOnboarding, marginBottom: 6 }}>{title}</h2>
       {hint && <p style={{ ...sm2Hint, marginBottom: 18 }}>{hint}</p>}
       {children}
     </div>

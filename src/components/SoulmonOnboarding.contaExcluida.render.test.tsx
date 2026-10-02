@@ -24,10 +24,7 @@ vi.mock('../utils/auth', async () => {
     ...real,
     isAuthConfigured: () => true,
     getCurrentEmail: async () => null,
-    entrarComSenha: async (e: string) => { estado.chamadas.push(`entrar:${e}`); return { ok: true, email: e }; },
-    criarContaComSenha: async (e: string) => ({ ok: true, email: e }),
-    entrarComGoogle: async () => ({ ok: true, email: 'g@exemplo.com' }),
-    mandarResetDeSenha: async () => ({ ok: true }),
+    entrarComGoogle: async () => { estado.chamadas.push('entrar:google'); return { ok: true, email: 'g@exemplo.com' }; },
   };
 });
 vi.mock('../utils/cloudSave', async () => {
@@ -46,14 +43,9 @@ async function montar() {
   await act(async () => {});
 }
 
-async function entrar(email: string) {
-  botao('New User');
-  ir('I am 18 or older');
-  ir('I have read and agree to the Terms of Use and the Privacy Policy');
-  botao('I already have an account — sign in');
-  fireEvent.change(screen.getByLabelText('Email'), { target: { value: email } });
-  fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'segredo123' } });
-  await act(async () => { botao('Sign in'); });
+/** A2/A3 (02/10/2026): o portão tem UM botão (Google); os termos vêm depois. */
+async function entrar() {
+  await act(async () => { botao('Continue with Google'); });
   await act(async () => { await new Promise(r => setTimeout(r, 0)); });
 }
 
@@ -73,21 +65,26 @@ describe('lápide no login', () => {
     expect(live.getAttribute('aria-live')).toBe('polite');
     expect(live.textContent).toBe('');
 
-    await entrar('alguem@exemplo.com');
-    expect(estado.chamadas).toEqual(['entrar:alguem@exemplo.com', 'checar:alguem@exemplo.com']);
+    await entrar();
+    expect(estado.chamadas).toEqual(['entrar:google', 'checar:g@exemplo.com']);
     expect(screen.queryByText('What should we call you?')).toBeNull();
     expect(screen.getByRole('heading', { name: 'Account deleted' })).toBeTruthy();
-    // A região é remontada com a troca de passo (ida ao formulário e volta).
     expect(document.querySelector('[data-account-deleted-live]')!.textContent).toContain('deleted on 03/09');
-    // De volta à primeira tela — as duas portas.
-    expect(screen.getByRole('button', { name: 'New User' })).toBeTruthy();
+    // De volta à primeira tela — a única porta.
+    expect(screen.getByRole('button', { name: 'Continue with Google' })).toBeTruthy();
     // Nada ficou pendurado no aparelho para a próxima abertura repetir.
     expect(localStorage.getItem(STORAGE_KEYS.ACCOUNT_DELETED_NOTICE)).toBeNull();
   });
 
   it('conta normal → segue para o "porquê" e o aviso não aparece', async () => {
     await montar();
-    await entrar('ok@exemplo.com');
+    await entrar();
+    // A3: depois do login vêm os termos; só então o "porquê".
+    expect(screen.getByText('Before we start')).toBeTruthy();
+    expect(screen.queryByText('What should we call you?')).toBeNull();
+    ir('I am 18 or older');
+    ir('I have read and agree to the Terms of Use and the Privacy Policy');
+    botao('Continue');
     expect(screen.getByText('What should we call you?')).toBeTruthy();
     expect(screen.queryByRole('heading', { name: 'Account deleted' })).toBeNull();
   });

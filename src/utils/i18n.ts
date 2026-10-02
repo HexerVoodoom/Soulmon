@@ -3,19 +3,19 @@
 export type Language = 'en-US' | 'pt-BR';
 
 /**
- * Idioma inicial: o que o usuário escolheu, senão o do aparelho.
+ * Idioma inicial: o que o usuário escolheu, senão INGLÊS.
  *
- * Ponto ÚNICO dessa decisão. Antes o App e o onboarding decidiam cada um por
- * si, e o onboarding caía sempre em inglês — a primeira tela que o usuário vê,
- * a que precisa convencê-lo a ficar, abria no idioma errado para o público
- * brasileiro.
+ * Ponto ÚNICO dessa decisão (App e onboarding leem daqui). Decisão do dono em
+ * 02/10/2026 (A1): o app abre SEMPRE em inglês, inclusive antes da escolha de
+ * idioma — o idioma do aparelho (`navigator.language`) deixou de contar. A
+ * alternativa que perdeu (detectar o idioma do aparelho) está em
+ * `docs/REGISTRO-DE-DECISOES.md`.
  *
  * @param stored valor salvo em localStorage (STORAGE_KEYS.LANGUAGE)
  */
 export function resolveLanguage(stored: string | null): Language {
   if (stored === 'pt-BR' || stored === 'en-US') return stored;
-  const nav = typeof navigator !== 'undefined' ? (navigator.language || '') : '';
-  return nav.toLowerCase().startsWith('pt') ? 'pt-BR' : 'en-US';
+  return 'en-US';
 }
 
 export interface Translations {

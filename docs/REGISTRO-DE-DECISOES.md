@@ -1252,3 +1252,20 @@ Decisões do dono passadas ao `arte-instalador` junto com a aprovação das leva
    `bg-mission-dinoland`. Ficaram **fora** (decisão separada do dono): o nome da
    missão "Maratonista Jurássico" e o fundo "Vale dos Dinos".
 
+## 18. Entrada: inglês primeiro, Google único, termos depois do login (02/10/2026)
+
+Decisões do dono na rodada 3 (`AJUSTES-NAVEGACAO-2026-10-02.md`, A1–A4):
+
+1. **O app abre SEMPRE em inglês** (`resolveLanguage` devolve `en-US` sem escolha
+   gravada). O idioma só muda quando a pessoa escolhe — seletor English/Português na
+   entrada e na tela dos termos — e a escolha persiste (`STORAGE_KEYS.LANGUAGE`).
+   Alternativa que perdeu: **detectar o idioma do aparelho** (`navigator.language`),
+   que era o comportamento de 01/10. Gatilho para rever: a maioria dos instalados
+   abrir, estrangeira ao inglês e sem entender o seletor.
+2. **O portão tem UM botão: "Continue with Google".** Conta existente entra direto;
+   conta nova nasce no primeiro login (Firebase). E-mail/senha/"New User"/link por
+   e-mail saíram da tela; o código de `utils/auth.ts` fica, sem ponto de entrada.
+3. **Termos e 18+ vêm DEPOIS do login** (`TERMS_STEP`, id -9). Quem já aceitou a versão
+   ATUAL dos dois documentos (`isConsentCurrent`) não vê de novo; versão antiga pede
+   o aceite outra vez. O registro (`consent`, `TERMS_VERSION`/`PRIVACY_VERSION`) não mudou.
+4. **Títulos do onboarding em Rubik**, não Cinzel (só no onboarding).

@@ -4,10 +4,10 @@ Fonte: navegação do dono pelo APK já logado (Pesadelo, Home, Mercado, Masmorr
 Continuação de `AJUSTES-NAVEGACAO-2026-10-01.md`. Legenda: `[ ]` aberto · `[x]` feito e verificado · `[?]` depende de resposta.
 
 ## A. Entrada e onboarding
-- [ ] A1 O app abre SEMPRE em inglês, inclusive antes da pergunta de idioma (hoje já abre em PT-BR)
-- [ ] A2 Portão com UM botão só: "Continuar com Google" — conta existente entra direto, conta nova é criada
-- [ ] A3 Os termos vêm DEPOIS do login: criou/entrou → precisa aceitar os termos para avançar para o app
-- [ ] A4 Títulos do onboarding usam a fonte de texto corrido (Rubik), não a display Cinzel — legibilidade
+- [x] A1 O app abre SEMPRE em inglês, inclusive antes da pergunta de idioma (hoje já abre em PT-BR)
+- [x] A2 Portão com UM botão só: "Continuar com Google" — conta existente entra direto, conta nova é criada
+- [x] A3 Os termos vêm DEPOIS do login: criou/entrou → precisa aceitar os termos para avançar para o app
+- [x] A4 Títulos do onboarding usam a fonte de texto corrido (Rubik), não a display Cinzel — legibilidade
 
 ## B. Home
 - [ ] B1 Mostrar só o nome do Soulmon (sai a palavra "companheiro"); o nome fica no topo, junto do logo

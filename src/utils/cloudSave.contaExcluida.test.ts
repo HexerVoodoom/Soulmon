@@ -96,10 +96,10 @@ describe('410 account-deleted — classe `deleted`', () => {
     expect(mensagemContaExcluida(true)).not.toBe(mensagemContaExcluida(false));
   });
 
-  it('A2: sem LANGUAGE gravada o idioma vem do aparelho (`resolveLanguage`), não cai em EN', async () => {
+  it('A1 (02/10/2026): sem LANGUAGE gravada o idioma é EN mesmo com o aparelho em PT', async () => {
     vi.stubGlobal('navigator', { language: 'pt-BR' });
     await reagirContaExcluida({ recarregar: () => {} });
-    expect(memoria.get(STORAGE_KEYS.ACCOUNT_DELETED_NOTICE)).toBe(MSG_PT);
+    expect(memoria.get(STORAGE_KEYS.ACCOUNT_DELETED_NOTICE)).toBe(MSG_EN);
   });
 
   it('a data da exclusão (`deletedAt` do 410) entra como DD/MM, nos dois idiomas', () => {

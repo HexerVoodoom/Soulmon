@@ -5223,7 +5223,7 @@ export default function App() {
     return (
       <>
         {selo}
-        <Suspense fallback={<ScreenSkeleton language={language} />}><SoulmonOnboarding onComplete={handleCompleteOnboarding} /></Suspense>
+        <Suspense fallback={<ScreenSkeleton language={language} />}><SoulmonOnboarding onComplete={handleCompleteOnboarding} onLanguageChange={setLanguage} /></Suspense>
       </>
     );
   }

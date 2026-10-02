@@ -1,34 +1,21 @@
 // @vitest-environment jsdom
 /**
- * O PORTÃO DE IDENTIDADE — A PRIMEIRA TELA DO APP (07/09/2026)
- * ===========================================================
+ * O PORTÃO DE IDENTIDADE — A PRIMEIRA TELA DO APP (rodada 3, 02/10/2026)
+ * =====================================================================
  *
- * Pedido do dono: logo depois do carregamento, o app pergunta e-mail e senha
- * ou login com Google, com a opção de criar conta, ANTES de entrar no jogo.
+ * A2: o portão tem UM botão só, "Continue with Google". Conta existente entra
+ * direto; conta nova é criada pelo próprio Firebase no primeiro login Google.
+ * E-mail, senha, "New User" e link por e-mail não têm ponto de entrada na tela.
  *
- * Por que isso também é dinheiro, e não só UX:
+ * A3: os Termos/Privacidade e o 18+ vêm DEPOIS do login. Sem aceitar não se
+ * avança ao onboarding; quem já aceitou a versão atual não vê de novo.
  *
- * `handleUnlockFull` compra chamando `purchase()`, que manda o `saveId` como
- * `obfuscatedAccountId`. Antes do login esse saveId é um UUID ALEATÓRIO gerado
- * por `App.tsx` na primeira abertura; ao entrar, ele é SUBSTITUÍDO pelo
- * SHA-256 do e-mail. `isPlayPurchaseBoundTo` compara os dois por igualdade:
- *
- *     if (bound) return !!saveId && String(bound) === String(saveId);
- *
- * Como o campo vem PREENCHIDO, cai no ramo da igualdade e falha — a compra é
- * recusada INCLUSIVE com `PLAY_REQUIRE_ACCOUNT_BINDING` desligado. A pessoa
- * paga e não recebe. Com a conta antes da escolha, isso deixa de existir.
- *
- * OS TERMOS E O 18+ VIVEM DENTRO DESTA TELA, e não numa anterior: criar conta
- * é coletar dado pessoal, então o aceite precisa vir antes dela (D-07), e
- * abrir conta para menor é o que o 18+ existe para impedir. Foi assim que deu
- * para atender "a conta é a primeira coisa" sem perder nenhuma das duas
- * proteções.
+ * Por que o login vem antes de tudo (dinheiro): `handleUnlockFull` compra com
+ * o `saveId` derivado do e-mail; antes do login ele é um UUID aleatório e a
+ * compra seria recusada. Com a conta antes da escolha, isso deixa de existir.
  *
  * E o portão NÃO pode virar porta trancada: sem `VITE_FIREBASE_*` a auth não
- * existe, e um passo obrigatório que dependesse dela deixaria um build sem
- * `.env` sem abrir. Falta de configuração vira ausência de conta — o aceite e
- * a idade continuam obrigatórios, porque não dependem do Firebase.
+ * existe e o fluxo segue direto para os termos (que não dependem do Firebase).
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
@@ -36,6 +23,9 @@ import { resolve } from 'node:path';
 import { screen, fireEvent, act, cleanup } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
 import { SoulmonOnboarding, GOOGLE_SEM_RESPOSTA_MS } from './SoulmonOnboarding';
+import { buildConsentRecord, TERMS_VERSION } from '../utils/consent';
+import { writeGateDraft } from '../utils/gateDraft';
+import { STORAGE_KEYS } from '../utils/storageKeys';
 
 vi.mock('../utils/auth', async () => {
   const real = await vi.importActual<typeof import('../utils/auth')>('../utils/auth');
@@ -43,8 +33,6 @@ vi.mock('../utils/auth', async () => {
     ...real,
     isAuthConfigured: () => authLigada,
     getCurrentEmail: async () => emailAtual,
-    entrarComSenha: async (e: string, s: string) => { chamadas.push(`entrar:${e}:${s}`); return resposta; },
-    criarContaComSenha: async (e: string, s: string) => { chamadas.push(`criar:${e}:${s}`); return resposta; },
     entrarComGoogle: async () => {
       chamadas.push('google');
       // `googlePendura` reproduz o caso que o COOP cria: a promessa NUNCA
@@ -53,7 +41,6 @@ vi.mock('../utils/auth', async () => {
       if (googlePendura) return new Promise<never>(() => {});
       return resposta;
     },
-    mandarResetDeSenha: async (e: string) => { chamadas.push(`reset:${e}`); return resposta; },
   };
 });
 
@@ -77,27 +64,16 @@ async function montar() {
   await act(async () => {});
 }
 
-/** Aceite dos Termos + idade. Vive nas telas que CRIAM conta (Google e
- *  e-mail), não na primeira — a primeira mostra só as duas portas. */
+/** Aceite dos Termos + idade — a tela que vem DEPOIS do login (A3). */
 function aceitarERevelarIdade() {
   ir('I am 18 or older');
   ir('I have read and agree to the Terms of Use and the Privacy Policy');
 }
 
-/** TELA 1 → formulário de e-mail e senha, por "New User". */
-function abrirFormulario() {
-  botao('New User');
-  aceitarERevelarIdade();
+/** Toca o botão único do portão e espera a promessa. */
+async function entrarComGoogleUi() {
+  await act(async () => { botao('Continue with Google'); });
 }
-
-/** TELA 1 → tela do Google. */
-function abrirGoogle() {
-  botao('Continue with Google');
-  aceitarERevelarIdade();
-}
-
-const campoEmail = () => screen.getByLabelText('Email');
-const campoSenha = () => screen.getByLabelText('Password');
 
 describe('portão de identidade', () => {
   beforeEach(() => {
@@ -109,52 +85,101 @@ describe('portão de identidade', () => {
     googlePendura = false;
   });
 
-  it('a PRIMEIRA tela tem só as duas portas — nada de formulário', async () => {
+  it('A2: a PRIMEIRA tela tem UM botão só — nada de e-mail, senha ou "New User"', async () => {
     await montar();
-    expect(screen.getByText('Continue with Google')).toBeTruthy();
-    expect(screen.getByText('or')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'New User' })).toBeTruthy();
-    // O formulário mudou de tela: empilhar tudo numa só era o que o dono
-    // pediu para desfazer.
+    expect(screen.getAllByRole('button', { name: 'Continue with Google' })).toHaveLength(1);
+    expect(screen.queryByRole('button', { name: 'New User' })).toBeNull();
+    expect(screen.queryByText('or')).toBeNull();
     expect(screen.queryByLabelText('Email')).toBeNull();
     expect(screen.queryByLabelText('Password')).toBeNull();
-    // E a compra não é alcançável daqui.
+    expect(screen.queryByText(/password/i)).toBeNull();
+    // Os termos NÃO estão no portão (A3), e a compra não é alcançável daqui.
+    expect(screen.queryByText('I am 18 or older')).toBeNull();
+    expect(screen.queryByText('Read the Terms of Use')).toBeNull();
     expect(screen.queryByText(/Get your own Soulmon/)).toBeNull();
-    expect(screen.queryByText('Start now — it’s free')).toBeNull();
+    expect(btn('Continue with Google').disabled).toBe(false);
   });
 
-  it('"New User" leva ao formulário, já em modo de CRIAR conta', async () => {
+  it('A2: o botão entra direto — sem aceite prévio — e chama o Google uma vez', async () => {
     await montar();
-    botao('New User');
-    expect(campoEmail()).toBeTruthy();
-    expect(campoSenha()).toBeTruthy();
-    expect(btn('Create account')).toBeTruthy();
-    // O aceite e a idade acompanham a tela que cria a conta.
-    expect(screen.getByText('Read the Terms of Use')).toBeTruthy();
-    expect(screen.getByText('I am 18 or older')).toBeTruthy();
+    await entrarComGoogleUi();
+    expect(chamadas).toEqual(['google']);
   });
 
-  it('o caminho do GOOGLE também passa pelo aceite e pelo 18+', async () => {
-    // Entrar com Google CRIA conta. Se o aceite morasse só no caminho do
-    // e-mail, este lado da bifurcação abriria conta sem aceite e sem idade.
+  it('A3: depois do login vêm os TERMOS; sem aceitar não se chega ao onboarding', async () => {
     await montar();
-    botao('Continue with Google');
+    await entrarComGoogleUi();
+    expect(screen.getByText('Before we start')).toBeTruthy();
     expect(screen.getByText('Read the Terms of Use')).toBeTruthy();
-    expect(screen.getByText('I am 18 or older')).toBeTruthy();
-    expect(btn('Continue with Google').disabled).toBe(true);
-    expect(chamadas).toEqual([]);
+    expect(screen.getByText('Read the Privacy Policy')).toBeTruthy();
+    expect(screen.queryByText('What should we call you?')).toBeNull();
+    // Sem nada marcado o botão fica apagado.
+    expect(btn('Continue').disabled).toBe(true);
+    // Só o aceite não basta — falta a idade.
+    ir('I have read and agree to the Terms of Use and the Privacy Policy');
+    expect(btn('Continue').disabled).toBe(true);
+    ir('I am 18 or older');
+    expect(btn('Continue').disabled).toBe(false);
+    botao('Continue');
+    expect(screen.getByText('What should we call you?')).toBeTruthy();
+  });
+
+  it('A3: dos termos NÃO se volta ao portão (a conta já existe)', async () => {
+    await montar();
+    await entrarComGoogleUi();
+    expect(screen.queryByRole('button', { name: 'Back' })).toBeNull();
+  });
+
+  it('A3: o carimbo do aceite sai NA TELA DOS TERMOS, com as versões atuais', async () => {
+    await montar();
+    await entrarComGoogleUi();
+    aceitarERevelarIdade();
+    botao('Continue');
+    const gravado = JSON.parse(localStorage.getItem(STORAGE_KEYS.GATE_DRAFT) ?? 'null');
+    expect(gravado?.consent?.termsVersion).toBe(TERMS_VERSION);
+  });
+
+  it('A3: já autenticado SEM aceite da versão atual → cai nos termos', async () => {
+    emailAtual = 'ja@logado.com';
+    await montar();
+    expect(screen.queryByRole('button', { name: 'Continue with Google' })).toBeNull();
+    expect(screen.getByText('Before we start')).toBeTruthy();
+    expect(btn('Continue').disabled).toBe(true);
+    aceitarERevelarIdade();
+    botao('Continue');
+    expect(screen.getByText('What should we call you?')).toBeTruthy();
+  });
+
+  it('A3: quem JÁ aceitou a versão atual não vê os termos de novo', async () => {
+    emailAtual = 'ja@logado.com';
+    writeGateDraft({
+      soulGoal: '', soulStruggle: '', consent: buildConsentRecord(),
+      step: -10,
+    } as Parameters<typeof writeGateDraft>[0]);
+    await montar();
+    expect(screen.queryByText('Before we start')).toBeNull();
+    expect(screen.getByText('What should we call you?')).toBeTruthy();
+  });
+
+  it('A3: aceite de uma versão ANTIGA dos documentos pede o aceite de novo', async () => {
+    emailAtual = 'ja@logado.com';
+    writeGateDraft({
+      soulGoal: '', soulStruggle: '',
+      consent: { ...buildConsentRecord(), termsVersion: '2020-01-01' },
+      step: -10,
+    } as Parameters<typeof writeGateDraft>[0]);
+    await montar();
+    expect(screen.getByText('Before we start')).toBeTruthy();
+    expect(screen.queryByText('What should we call you?')).toBeNull();
   });
 
   it('🔴 o botão do Google NÃO trava para sempre se a promessa não terminar', async () => {
     // O caso real: `accounts.google.com` manda COOP, o `popup.closed` fica
-    // ilegível, e o `pollUserCancellation` do Firebase — a única coisa que
-    // rejeita quando a pessoa fecha a janela — nunca conclui. Sem rede de
-    // segurança o `authOcupado` fica preso em `true` e o botão morre
-    // desabilitado, sem mensagem, na PRIMEIRA tela do app: recarregar a
-    // página passa a ser a única saída. Ver `GOOGLE_SEM_RESPOSTA_MS`.
+    // ilegível, e o `pollUserCancellation` do Firebase nunca conclui. Sem rede
+    // de segurança o `authOcupado` fica preso em `true` e o botão morre
+    // desabilitado na PRIMEIRA tela do app. Ver `GOOGLE_SEM_RESPOSTA_MS`.
     googlePendura = true;
     await montar();
-    abrirGoogle();
     expect(btn('Continue with Google').disabled).toBe(false);
     // O relógio falso entra DEPOIS de montar: a resolução da auth na montagem
     // é assíncrona, e com o relógio já congelado a tela nem chega ao portão.
@@ -162,7 +187,6 @@ describe('portão de identidade', () => {
     try {
       botao('Continue with Google');
       expect(chamadas).toEqual(['google']);
-      // Enquanto espera, o botão fica desabilitado — isso é correto.
       expect(btn('Continue with Google').disabled).toBe(true);
 
       // Um pouco ANTES do prazo, continua esperando: a rede não pode encurtar
@@ -181,14 +205,10 @@ describe('portão de identidade', () => {
 
   it('a rede NÃO dispara quando o login responde a tempo', async () => {
     await montar();
-    abrirGoogle();
     vi.useFakeTimers();
     try {
       botao('Continue with Google');
       await act(async () => {});
-      // Respondeu: nada de mensagem, e o temporizador foi cancelado — avançar
-      // o relógio depois do prazo não pode inventar um erro em cima de um
-      // login que já deu certo.
       await act(async () => { vi.advanceTimersByTime(GOOGLE_SEM_RESPOSTA_MS + 5000); });
       expect(screen.queryByText(/didn’t respond/i)).toBeNull();
     } finally {
@@ -196,120 +216,27 @@ describe('portão de identidade', () => {
     }
   });
 
-  it('das duas telas de conta dá para VOLTAR à primeira', async () => {
+  it('falha do Google mostra recado acionável e NÃO avança', async () => {
+    resposta = { ok: false, erro: 'popup-fechado' };
     await montar();
-    botao('New User');
-    botao('Back');
-    expect(btn('New User')).toBeTruthy();
-    botao('Continue with Google');
-    botao('Back');
-    expect(btn('New User')).toBeTruthy();
+    await entrarComGoogleUi();
+    expect(screen.getByRole('alert').textContent).toContain('closed before finishing');
+    expect(screen.queryByText('Before we start')).toBeNull();
+    // O botão continua disponível: nunca um beco sem saída.
+    expect(btn('Continue with Google').disabled).toBe(false);
   });
 
-  it('sem aceite dos Termos e sem idade, NENHUMA conta nasce', async () => {
-    await montar();
-    botao('New User');
-    expect(btn('Create account').disabled).toBe(true);
-
-    // Só o aceite não basta — falta a idade.
-    ir('I have read and agree to the Terms of Use and the Privacy Policy');
-    expect(btn('Create account').disabled).toBe(true);
-
-    fireEvent.click(screen.getByText('I am 18 or older'));
-    expect(btn('Create account').disabled).toBe(false);
-    // E nada foi tocado na rede enquanto os requisitos não estavam completos.
-    expect(chamadas).toEqual([]);
+  it('as mensagens de erro não mandam para e-mail/senha (não existem mais)', async () => {
+    for (const erro of ['popup-bloqueado', 'dominio-nao-autorizado']) {
+      cleanup();
+      resposta = { ok: false, erro };
+      await montar();
+      await entrarComGoogleUi();
+      expect(screen.getByRole('alert').textContent).not.toMatch(/password|email and/i);
+    }
   });
 
-  it('sem declarar maioridade NENHUMA conta nasce — nem pelo Google', async () => {
-    // Com uma CAIXA no lugar do campo de data não existe "declarar
-    // menoridade" a interceptar: quem não tem a idade simplesmente não marca,
-    // e sem a marca nada avança. A trava mudou de forma, não de efeito — e o
-    // Google é o caminho que cria conta sem passar por formulário nenhum.
-    await montar();
-    botao('Continue with Google');
-    ir('I have read and agree to the Terms of Use and the Privacy Policy');
-    expect(btn('Continue with Google').disabled).toBe(true);
-    await act(async () => { botao('Continue with Google'); });
-    expect(chamadas).toEqual([]);
-  });
-
-  it('entrar com senha: normaliza o e-mail e leva ao "porquê"', async () => {
-    await montar();
-    abrirFormulario();
-    botao('I already have an account — sign in');
-    fireEvent.change(campoEmail(), { target: { value: '  Alguem@Exemplo.COM ' } });
-    fireEvent.change(campoSenha(), { target: { value: 'segredo123' } });
-    await act(async () => { botao('Sign in'); });
-    // Normalizado: o saveId é derivado do e-mail, então caixa e espaço não
-    // podem gerar duas contas para a mesma pessoa.
-    expect(chamadas).toEqual(['entrar:alguem@exemplo.com:segredo123']);
-    expect(screen.getByText('What should we call you?')).toBeTruthy();
-  });
-
-  it('"Criar conta" é uma ação DIFERENTE de entrar', async () => {
-    await montar();
-    abrirFormulario();
-    fireEvent.change(campoEmail(), { target: { value: 'novo@exemplo.com' } });
-    fireEvent.change(campoSenha(), { target: { value: 'segredo123' } });
-    await act(async () => { botao('Create account'); });
-    expect(chamadas).toEqual(['criar:novo@exemplo.com:segredo123']);
-  });
-
-  it('senha curta nem chega à rede', async () => {
-    await montar();
-    abrirFormulario();
-    fireEvent.change(campoEmail(), { target: { value: 'novo@exemplo.com' } });
-    fireEvent.change(campoSenha(), { target: { value: '123' } });
-    await act(async () => { botao('Create account'); });
-    expect(chamadas).toEqual([]);
-    expect(screen.getByRole('alert')).toBeTruthy();
-  });
-
-  it('entrar com Google não pede e-mail nenhum', async () => {
-    await montar();
-    abrirGoogle();
-    await act(async () => { botao('Continue with Google'); });
-    expect(chamadas).toEqual(['google']);
-    expect(screen.getByText('What should we call you?')).toBeTruthy();
-  });
-
-  it('falha de credencial mostra recado acionável e NÃO avança', async () => {
-    resposta = { ok: false, erro: 'credencial-invalida' };
-    await montar();
-    abrirFormulario();
-    botao('I already have an account — sign in');
-    fireEvent.change(campoEmail(), { target: { value: 'a@b.com' } });
-    fireEvent.change(campoSenha(), { target: { value: 'errada' } });
-    await act(async () => { botao('Sign in'); });
-    expect(screen.getByRole('alert').textContent).toContain("Email or password don't match");
-    expect(screen.queryByText('What should we call you?')).toBeNull();
-    // O campo continua editável: nunca um beco sem saída.
-    expect(campoSenha()).toBeTruthy();
-  });
-
-  it('recuperar senha responde IGUAL para conta existente e inexistente', async () => {
-    // Dizer "não achamos esse e-mail" entregaria a quem perguntar quais
-    // endereços têm conta no app.
-    await montar();
-    abrirFormulario();
-    botao('I already have an account — sign in');
-    fireEvent.change(campoEmail(), { target: { value: 'a@b.com' } });
-    await act(async () => { botao('I forgot my password'); });
-    const comConta = screen.getByRole('status').textContent;
-
-    resposta = { ok: false, erro: 'nao-encontrado' };
-    cleanup();
-    localStorage.clear();
-    await montar();
-    abrirFormulario();
-    botao('I already have an account — sign in');
-    fireEvent.change(campoEmail(), { target: { value: 'nao-existe@b.com' } });
-    await act(async () => { botao('I forgot my password'); });
-    expect(screen.getByRole('status').textContent).toBe(comConta);
-  });
-
-  it('sem auth configurada o portão NÃO TRANCA — mas o aceite e o 18+ ficam', async () => {
+  it('sem auth configurada o portão NÃO TRANCA — vai direto aos termos, que ficam obrigatórios', async () => {
     authLigada = false;
     await montar();
     // Nenhuma forma de conta é oferecida...
@@ -325,18 +252,28 @@ describe('portão de identidade', () => {
     expect(screen.getByText('What should we call you?')).toBeTruthy();
   });
 
-  it('quem já está autenticado não vê formulário de conta nenhum', async () => {
-    emailAtual = 'ja@logado.com';
+  it('A1: sem idioma gravado a PRIMEIRA tela abre em INGLÊS, mesmo com o aparelho em PT', async () => {
+    vi.stubGlobal('navigator', { ...navigator, language: 'pt-BR', languages: ['pt-BR'] });
+    try {
+      await montar();
+      expect(screen.getByRole('button', { name: 'Continue with Google' })).toBeTruthy();
+      expect(screen.queryByText('Entrar com Google')).toBeNull();
+      // Abrir em inglês não grava nada: a escolha ainda é da pessoa.
+      expect(localStorage.getItem(STORAGE_KEYS.LANGUAGE)).toBeNull();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('A1: escolher Português troca o idioma e a escolha PERSISTE', async () => {
     await montar();
-    expect(screen.queryByText('Continue with Google')).toBeNull();
-    expect(screen.queryByRole('button', { name: 'New User' })).toBeNull();
-    expect(screen.queryByLabelText('Password')).toBeNull();
-    // Mas o aceite continua sendo pedido: sem prova local dele, presumir
-    // consentimento seria inventar a prova que o CONSENT existe para produzir.
-    expect(btn('Continue').disabled).toBe(true);
-    aceitarERevelarIdade();
-    await act(async () => { botao('Continue'); });
-    expect(screen.getByText('What should we call you?')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Português' }));
+    expect(screen.getByRole('button', { name: 'Entrar com Google' })).toBeTruthy();
+    expect(localStorage.getItem(STORAGE_KEYS.LANGUAGE)).toBe('pt-BR');
+    // Remontar (nova abertura): continua em português.
+    cleanup();
+    await montar();
+    expect(screen.getByRole('button', { name: 'Entrar com Google' })).toBeTruthy();
   });
 
   it('a guarda da compra olha o E-MAIL, não a presença do saveId', () => {
@@ -363,10 +300,7 @@ describe('portão de identidade', () => {
     const fonte = readFileSync(resolve(process.cwd(), 'src/components/SoulmonOnboarding.tsx'), 'utf-8');
     for (const par of [
       ['Entrar com Google', 'Continue with Google'],
-      ['Criar conta', 'Create account'],
-      ['Esqueci minha senha', 'I forgot my password'],
-      ['Novo usuário', 'New User'],
-      ['Senha', 'Password'],
+      ['Antes de começar', 'Before we start'],
       ['Li e concordo com os Termos de Uso e a Política de Privacidade',
         'I have read and agree to the Terms of Use and the Privacy Policy'],
     ]) {
@@ -407,16 +341,14 @@ describe('portão — identidade do canvas Onboarding-funil', () => {
     expect(screen.queryByText('Soulmon', { selector: 'span' })).toBeNull();
   });
 
-  it('"New User" é a segunda PORTA: `outline`, não ghost/quiet', async () => {
+  it('o botão único é o primário do sistema', async () => {
     await montar();
-    const b = btn('New User');
-    expect(b.style.getPropertyValue('--sm2-btn')).toBe('outline');
     expect(btn('Continue with Google').style.getPropertyValue('--sm2-btn')).toBe('primary');
   });
 
-  it('os links legais são ghost 44 em `primary-ink`, empilhados, sem "·"', async () => {
+  it('os links legais (tela dos termos) são ghost 44 em `primary-ink`, empilhados, sem "·"', async () => {
     await montar();
-    botao('New User');
+    await entrarComGoogleUi();
     const termos = screen.getByRole('link', { name: 'Read the Terms of Use' }) as HTMLAnchorElement;
     const priv = screen.getByRole('link', { name: 'Read the Privacy Policy' }) as HTMLAnchorElement;
     for (const a of [termos, priv]) {
@@ -429,28 +361,10 @@ describe('portão — identidade do canvas Onboarding-funil', () => {
     expect(termos.parentElement!.textContent).not.toContain('·');
   });
 
-  it('e-mail malformado: anel âmbar no campo + "Enter a valid email." em `role=alert` âmbar', async () => {
-    await montar();
-    abrirFormulario();
-    fireEvent.change(campoEmail(), { target: { value: 'maria@exemplo' } });
-    fireEvent.change(campoSenha(), { target: { value: 'segredo1' } });
-    botao('Create account');
-    const alerta = screen.getByRole('alert');
-    expect(alerta.textContent).toBe('Enter a valid email.');
-    expect(alerta.style.borderLeft).toContain('var(--sm2-gold-ink)');
-    expect(alerta.style.color).toBe('var(--sm2-ink)');
-    const campo = campoEmail() as HTMLInputElement;
-    expect(campo.getAttribute('aria-invalid')).toBe('true');
-    expect(campo.style.boxShadow).toContain('var(--sm2-gold-ink)');
-    expect(chamadas).toEqual([]);
-  });
-
   it('nenhum alerta do portão usa vermelho', async () => {
     resposta = { ok: false, erro: 'popup-bloqueado' };
     await montar();
-    abrirGoogle();
-    botao('Continue with Google');
-    await act(async () => {});
+    await entrarComGoogleUi();
     const alerta = screen.getByRole('alert');
     expect(alerta.style.borderLeft).toContain('var(--sm2-gold-ink)');
     expect(alerta.style.color).not.toContain('danger');
@@ -459,11 +373,17 @@ describe('portão — identidade do canvas Onboarding-funil', () => {
   it('o envio declara `aria-busy` e mantém o nome acessível', async () => {
     googlePendura = true;
     await montar();
-    abrirGoogle();
     botao('Continue with Google');
     await act(async () => {});
     const b = btn('Continue with Google');
     expect(b.getAttribute('aria-busy')).toBe('true');
     expect(b.disabled).toBe(true);
+  });
+
+  it('A4: o título do onboarding usa a fonte de TEXTO (Rubik), não a display (Cinzel)', async () => {
+    emailAtual = 'ja@logado.com';
+    await montar();
+    const titulo = screen.getByText('Before we start');
+    expect(titulo.style.fontFamily).toBe('var(--sm2-font-text)');
   });
 });

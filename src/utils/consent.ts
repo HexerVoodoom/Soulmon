@@ -51,6 +51,15 @@ export function buildConsentRecord(now: Date = new Date()): ConsentRecord {
 }
 
 /**
+ * O registro guardado ainda vale para os documentos PUBLICADOS agora? Só o
+ * aceite das duas versões atuais dispensa a tela de termos (A3, 02/10/2026):
+ * quem aceitou uma versão antiga volta a ver o aceite.
+ */
+export function isConsentCurrent(c: ConsentRecord | null | undefined): boolean {
+  return !!c && c.termsVersion === TERMS_VERSION && c.privacyVersion === PRIVACY_VERSION;
+}
+
+/**
  * Idade em anos completos na data `now`. `birthDate` no formato AAAA-MM-DD
  * (o mesmo que o onboarding já monta). Data inválida devolve `null` — quem
  * chama decide, e "não sei a idade" nunca vira "é menor".

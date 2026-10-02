@@ -44,9 +44,12 @@ describe('fiação da telemetria — onboarding', () => {
     vi.stubGlobal('fetch', undefined);
     renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
     // A PRIMEIRA tela é o portão de identidade (07/09/2026), e ela é anterior
-    // à bifurcação: não dá para rotular o caminho ainda.
+    // à bifurcação: não dá para rotular o caminho ainda. Sem auth configurada
+    // (este teste) o portão não tem botão e a efeito de montagem leva direto
+    // aos termos (A3, 02/10/2026): portão (-6) e depois termos (-9).
     expect(only('onboarding_step')).toEqual([
       expect.objectContaining({ p: { step: onboardingStepCode(-6), funnel: TELEMETRY_FUNNEL.unknown } }),
+      expect.objectContaining({ p: { step: onboardingStepCode(-9), funnel: TELEMETRY_FUNNEL.unknown } }),
     ]);
 
     fireEvent.click(screen.getByText(
@@ -70,7 +73,7 @@ describe('fiação da telemetria — onboarding', () => {
     const ritual = Array.from({ length: 6 }, (_, i) => onboardingStepCode(6 + i));
     const teste = Array.from({ length: 20 }, (_, i) => onboardingStepCode(13 + i));
     expect(antesDaEscolha.map(r => r.p?.step)).toEqual([
-      onboardingStepCode(-6), onboardingStepCode(-10), ...ritual, ...teste,
+      onboardingStepCode(-6), onboardingStepCode(-9), onboardingStepCode(-10), ...ritual, ...teste,
       onboardingStepCode(-2), onboardingStepCode(-3),
       onboardingStepCode(-11), onboardingStepCode(-12), onboardingStepCode(-7),
     ]);
