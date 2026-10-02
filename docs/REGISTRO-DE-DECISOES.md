@@ -1423,8 +1423,38 @@ Decisões do dono na navegação do APK (`docs/AJUSTES-NAVEGACAO-2026-10-02.md` 
    - **Risco aceito e listado:** sem o gesto, o apelido entra na lista pública ao
      cruzar o Vínculo 5 sem consentimento ativo. Mitigação: o aviso fica na aba;
      o servidor ainda não grava nada abaixo do 5. Pendência do dono (TORC-5): um
-     opt-out de privacidade em Configurações.
+     opt-out de privacidade em Configurações. ✅ **Respondida no mesmo dia — ver o
+     item 8 abaixo.**
    - Gatilho para rever: reclamação de privacidade, ou a decisão do dono sobre TORC-5.
+8. **Opt-out da lista pública do Torneio** (02/10/2026, TORC-5 respondida pelo
+   dono). Um interruptor discreto em Configurações → Seus dados, **ligado por
+   padrão**, que NÃO mora no Torneio: "Aparecer na lista pública do Torneio" /
+   "Show me on the public Tournament list" (explicação atrás do "?" do grupo, sem
+   copy longa na linha). Campo `hideFromPublicList` no save (só o `true` literal
+   esconde; ausente = aparece) e `publicHidden` no perfil do servidor, por conta.
+   O cliente SEMPRE envia `publicHidden` (inclusive `false`) para o servidor poder
+   retirar e devolver o registro na hora; cliente antigo sem o campo herda o valor
+   gravado (não desfaz a escolha feita em outro aparelho). **Servidor** (a régua é
+   `isHidden` em `functions/api/community.js`): escondido some de `players`
+   (antes do `search`, para a busca não confirmar existência), `player` (responde
+   `found:false`, igual a inexistente), `opponents`, `rank`/`seasonResult` (nem a
+   linha nem o apelido), `friends` (não adicionável: `404 friend not found`), da
+   lista de amigos que terceiros leem e do `from` do presente (`''`); ninguém duela
+   contra ele (`404 opponent unavailable`). Ele **continua jogando** e vê o
+   próprio lugar: `rank&id=` (ator autorizado) devolve `me`, e o Torneio mostra
+   uma linha "Você está oculto da lista pública". Política: `PRIVACY_VERSION` =
+   `2026-10-02` (§5, PT e EN).
+   - **Alternativa que perdeu:** opt-in (interruptor desligado) — o dono pediu
+     ligado por padrão, coerente com o PvP automático (item 7).
+   - **Limites declarados:** (a) o cache de borda de 60 s de `players`/`rank` pode
+     servir a lista velha em outro ponto de presença por até 60 s — a rota com
+     `id` nunca é cacheada e a troca limpa o cache do ponto que a recebeu; (b) a
+     **Guilda** (coop) é um círculo só por convite e segue mostrando o apelido aos
+     membros (`_coop.js` `montarCartao`) — o interruptor vale para a lista
+     PÚBLICA; (c) troféus de season continuam sendo concedidos a quem está oculto
+     (são privados do dono) — mas não aparece no `seasonResult` público.
+   - Gatilho para rever: o dono querer que o opt-out valha também na Guilda, ou
+     reclamação de que 60 s de cache é tempo demais.
 
 > **Nota 02/10/2026 (tarde, rodada 4):** itens 6 e 7 acima — o Duelo da Arena
 > entra na torcida (TORC-2 respondida) e o PvP perde o interruptor. O item 1 já

@@ -70,6 +70,7 @@ diz "—", o campo é opcional e o padrão É a ausência.
 | `degeneratedByHP` | `boolean` | O pet caiu por HP 0. | `src/utils/dailyReset.ts` | `false` | sim |
 | `redeemed?` | `boolean` | Já caiu por HP 0 **e subiu de novo**. Cosmético e só no sentido positivo. | `src/App.tsx` | `false` | sim |
 | `showRedeemed?` | `boolean` | Exibir a marca da volta — escolha do jogador, padrão não. | `src/App.tsx` | `false` | sim |
+| `hideFromPublicList?` | `boolean` | Opt-out da lista pública do Torneio (TORC-5, 02/10/2026): `true` = a pessoa saiu. Só o `true` literal vale no load; o padrão é aparecer. Sobe como `publicHidden` no perfil. | `src/components/SettingsPage.tsx` (via `src/App.tsx`) | `false` | sim |
 | `maxActivityCap` | `number` | Teto de atividades da forma. | `src/types/progression.ts` (`FORM_REQUIREMENTS[…].cap`) | derivado do estágio | sim |
 | `lastResetDate` | `string` | `toDateString()` da última virada. É a chave do MOTOR de virada (`dayKeyOf`), **não** o dia do jogador. | `src/utils/dailyReset.ts`, `habitRhythm.ts` | `new Date().toDateString()` | sim |
 | `rebirth?` | `RebirthRecord \| null` | O registro do Renascimento. **Nunca é apagado** — é ele que impede a segunda vez. | `src/utils/rebirth.ts` | — (ausência = jamais renasceu, nunca inferido) | sim |
