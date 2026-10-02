@@ -53,7 +53,7 @@ export function RegionPostal({ region, width = 56, height = 44 }: { region: Regi
 }
 
 /** O glifo da área da vida de uma Travessia (decorativo; a área também vai escrita). */
-export function AreaGlyph({ area, size = 28 }: { area: CrossingArea; size?: number }) {
+export function AreaGlyph({ area, size = 24 }: { area: CrossingArea; size?: number }) {
   return (
     <span aria-hidden="true" data-travessia-area={area} style={{ display: 'inline-flex', flexShrink: 0 }}>
       <Icon name={AREA_ICON[area]} size={size} tone="primary" />

@@ -277,7 +277,7 @@ function CardAtivo({ crossings, isPt, todayKey, justDone, onFiz, onTrocar, onRec
       <p role="status" aria-live="polite" data-travessia-hoje style={{ ...sm2Text, margin: 0, display: 'flex', gap: 8, alignItems: 'center' }}>
         {feito ? (
           <>
-            <Icon name="check_circle" size={22} fill={1} tone="primary" />
+            <Icon name="check_circle" size={20} fill={1} tone="primary" />
             <span>
               {isPt
                 ? 'Registrado por hoje. Amanhã dá para fazer de novo, se quiser.'
