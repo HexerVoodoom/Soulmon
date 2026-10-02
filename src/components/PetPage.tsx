@@ -38,11 +38,12 @@ import type { ClassTitle } from '../utils/soulProfile/ficha/classTitle';
 import type { CompanheiroVisivel } from '../utils/soulProfile/ficha/companheiro';
 import { auraForElement } from '../utils/attackFxArt';
 import { sigilArt } from '../utils/sigilArt';
-import { ACHIEVEMENT_IDS, ACHIEVEMENT_LABELS, type AchievementId } from '../utils/achievements';
+import { ACHIEVEMENT_IDS, ACHIEVEMENT_LABELS, ACHIEVEMENT_HOW, achievementShortName, type AchievementId } from '../utils/achievements';
 import { emblemArt } from '../utils/emblemArt';
 import { Viewport } from './ui/Viewport';
 import { MiniGlass } from './ui/MiniGlass';
 import { Icon } from './ui/Icon';
+import { InfoTip } from './ui/InfoTip';
 import { sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 
 interface PetPageProps {
@@ -145,26 +146,17 @@ const SIGIL: CSSProperties = {
 };
 
 /**
- * O VISOR DE EMBLEMAS (D-P5): `Viewport 158×41×2` = 316×82 CSS, com **duas
- * linhas de 158×20 (×2 = 316×40)** e 2 px entre elas — emblemas 64² a 32
- * (0,5×), `gap` 2 + `padding` 4. A conta: com 9 conquistas (`ACHIEVEMENT_IDS`)
- * o visor 142×20 do código de 15/09 não comportava as nove abertas
- * (9 × 32 + 8 × 2 + 8 = 312 > 284); em duas linhas cada conquista tem casa
- * FIXA (as `ceil(9/2)` primeiras em cima, o resto embaixo — pela ordem
- * canônica), então abrir uma nova nunca embaralha as outras. Só os abertos
- * são desenhados; os fechados não viram cadeado nem silhueta (o app não
- * cobra). Um `role="img"` só, com o MESMO texto da linha quieta sob o visor
- * (X2: o vidente vê o que o leitor ouve).
+ * EMBLEMAS DE CONQUISTA — I12 (02/10/2026, pedido do dono): saem do visor
+ * (D-P5, "dentro de um box") e viram uma GRADE de emblemas SOLTOS sobre o
+ * fundo da folha, maiores: arte 64² a 64 CSS (1× nativo — escala inteira),
+ * célula com alvo de toque ≥ 48 e o nome CURTO embaixo. Os nove aparecem
+ * sempre; o FECHADO fica em tom apagado por filtro (cinza + escurecido) e por
+ * legenda `muted` — NUNCA por opacidade, que reprova o contraste do nome. Sem
+ * cadeado e sem "faltam N": posse, nunca dívida (E5/13.7). Tocar abre COMO se
+ * ganha (H9), por `aria-pressed`/linha de detalhe — não por hover.
  */
-const EMBLEM_ROW_W = 158;
-const EMBLEM_ROW_H = 20;
-const EMBLEM_ROWS = 2;
-const EMBLEM_ROW_GAP = 1; // lógico; ×2 = 2 CSS px entre as linhas
-const EMBLEM_PER_ROW = Math.ceil(ACHIEVEMENT_IDS.length / EMBLEM_ROWS);
-const emblemRow: CSSProperties = {
-  display: 'flex', alignItems: 'center', gap: 2, padding: '0 4px', boxSizing: 'border-box',
-  width: EMBLEM_ROW_W * 2, height: EMBLEM_ROW_H * 2,
-};
+const EMBLEM_SIZE = 64;
+const EMBLEM_COLS = 3;
 
 /**
  * Uma habilidade. `basica`/`especial` viram PALAVRA ("Básica · custo baixo") e
@@ -211,6 +203,11 @@ export function PetPage({
   const H = headingLevel === 2 ? 'h2' : 'h1';
   const L = (t: { pt: string; en: string }) => (isPt ? t.pt : t.en);
 
+  const [emblemaSel, setEmblemaSel] = useState<AchievementId | null>(null);
+  const abertos = ACHIEVEMENT_IDS.filter(id => achievements.includes(id));
+  const rotuloConquistas = isPt
+    ? `Conquistas · ${abertos.length} de ${ACHIEVEMENT_IDS.length}`
+    : `Achievements · ${abertos.length} of ${ACHIEVEMENT_IDS.length}`;
   const [skills, setSkills] = useState<Record<FichaStage, StageSkills> | null>(savedSkills ?? null);
   const [classTitles, setClassTitles] = useState<Record<FichaStage, ClassTitle> | null>(savedClassTitles ?? null);
   const [companheiro, setCompanheiro] = useState<CompanheiroVisivel | null>(savedCompanheiro ?? null);
@@ -334,49 +331,86 @@ export function PetPage({
             )}
           </Viewport>
 
-          {/* Emblemas de CONQUISTA (15/09/2026): pixel, logo DENTRO de um segundo visor
-              estreito — nunca soltos no aparelho (`04` §1). Só os abertos são
-              desenhados; os fechados não viram cadeado nem silhueta (o app não cobra). */}
-          {achievements.length > 0 && (() => {
-            const abertos = ACHIEVEMENT_IDS.filter(id => achievements.includes(id));
-            const rotulo = isPt
-              ? `Conquistas · ${abertos.length} de ${ACHIEVEMENT_IDS.length}`
-              : `Achievements · ${abertos.length} of ${ACHIEVEMENT_IDS.length}`;
-            const linhas = Array.from({ length: EMBLEM_ROWS }, (_, i) =>
-              ACHIEVEMENT_IDS.slice(i * EMBLEM_PER_ROW, (i + 1) * EMBLEM_PER_ROW).filter(id => abertos.includes(id)));
-            return (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-                <Viewport
-                  width={EMBLEM_ROW_W}
-                  height={EMBLEM_ROW_H * EMBLEM_ROWS + EMBLEM_ROW_GAP * (EMBLEM_ROWS - 1)}
-                  scale={2}
-                  breathing={false}
-                  label={rotulo}
-                  style={{ borderRadius: 12 }}
-                  screenStyle={{ display: 'flex', flexDirection: 'column', gap: EMBLEM_ROW_GAP * 2 }}
-                >
-                  {linhas.map((ids, i) => (
-                    <div key={i} data-emblem-row={i} style={emblemRow}>
-                      {ids.map(id => (
+          {/* Emblemas de CONQUISTA (I12): grade solta, sem box. Ver o bloco
+              `EMBLEM_SIZE`. A contagem de POSSE é a linha quieta (E5/13.7). */}
+          <section
+            aria-label={rotuloConquistas}
+            data-emblem-grid
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, width: '100%', maxWidth: 420 }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <p className="sm2-num" data-achievements-count style={{ ...sm2Hint, textAlign: 'center' }}>{rotuloConquistas}</p>
+              <InfoTip language={language} label={isPt ? 'Como funcionam as conquistas' : 'How achievements work'}>
+                {isPt
+                  ? 'Toque num emblema para ver como ganhá-lo. Os apagados ainda não foram abertos — não há pressa e nada se perde.'
+                  : 'Tap an emblem to see how to earn it. The dimmed ones are not open yet — no hurry, and nothing is ever lost.'}
+              </InfoTip>
+            </div>
+            <ul
+              style={{
+                listStyle: 'none', margin: 0, padding: 0, width: '100%',
+                display: 'grid', gridTemplateColumns: `repeat(${EMBLEM_COLS}, minmax(0, 1fr))`, gap: 8,
+              }}
+            >
+              {ACHIEVEMENT_IDS.map(id => {
+                const aberto = achievements.includes(id);
+                const nomeCompleto = isPt ? ACHIEVEMENT_LABELS[id].pt : ACHIEVEMENT_LABELS[id].en;
+                const curto = achievementShortName(id, isPt);
+                const arte = emblemArt(id);
+                const sel = emblemaSel === id;
+                return (
+                  <li key={id} style={{ display: 'flex' }}>
+                    <button
+                      type="button"
+                      data-emblem-cell={id}
+                      data-locked={aberto ? undefined : 'true'}
+                      aria-pressed={sel}
+                      aria-label={`${nomeCompleto} — ${aberto ? (isPt ? 'aberta' : 'open') : (isPt ? 'ainda fechada' : 'not open yet')}`}
+                      onClick={() => setEmblemaSel(sel ? null : id)}
+                      style={{
+                        flex: 1, minWidth: 0, minHeight: 48, padding: '8px 4px', boxSizing: 'border-box',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                        background: 'transparent', cursor: 'pointer', borderRadius: 'var(--sm2-radius-md)',
+                        border: `1px solid ${sel ? 'var(--sm2-primary-ink)' : 'transparent'}`,
+                      }}
+                    >
+                      {arte ? (
                         <img
-                          key={id}
-                          src={emblemArt(id)}
-                          alt={isPt ? ACHIEVEMENT_LABELS[id].pt : ACHIEVEMENT_LABELS[id].en}
-                          title={isPt ? ACHIEVEMENT_LABELS[id].pt : ACHIEVEMENT_LABELS[id].en}
-                          width={32}
-                          height={32}
-                          data-emblem={id}
-                          style={{ imageRendering: 'pixelated', display: 'block' }}
+                          src={arte}
+                          alt=""
+                          aria-hidden="true"
+                          width={EMBLEM_SIZE}
+                          height={EMBLEM_SIZE}
+                          data-emblem={aberto ? id : undefined}
+                          style={{
+                            imageRendering: 'pixelated', display: 'block',
+                            filter: aberto ? undefined : 'grayscale(1) brightness(0.55)',
+                          }}
                         />
-                      ))}
-                    </div>
-                  ))}
-                </Viewport>
-                {/* A contagem de POSSE como linha quieta (E5/13.7) — nunca "faltam N". */}
-                <p className="sm2-num" data-achievements-count style={{ ...sm2Hint, textAlign: 'center' }}>{rotulo}</p>
-              </div>
-            );
-          })()}
+                      ) : (
+                        <span aria-hidden="true" style={{ width: EMBLEM_SIZE, height: EMBLEM_SIZE }} />
+                      )}
+                      <span
+                        style={{
+                          ...sm2Hint, textAlign: 'center', lineHeight: 'var(--sm2-leading-body)',
+                          color: aberto ? 'var(--sm2-ink)' : 'var(--sm2-muted)', fontWeight: aberto ? 600 : 400,
+                          overflowWrap: 'anywhere',
+                        }}
+                      >
+                        {curto}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            {/* COMO se ganha — a linha de detalhe do emblema tocado (H9). */}
+            <p data-emblem-how aria-live="polite" style={{ ...sm2Text, textAlign: 'center', minHeight: 0, margin: 0 }}>
+              {emblemaSel
+                ? `${isPt ? ACHIEVEMENT_LABELS[emblemaSel].pt : ACHIEVEMENT_LABELS[emblemaSel].en}. ${isPt ? ACHIEVEMENT_HOW[emblemaSel].pt : ACHIEVEMENT_HOW[emblemaSel].en}`
+                : ''}
+            </p>
+          </section>
 
           <div style={{ textAlign: 'center', maxWidth: 420 }}>
             <H style={h1Style}>{atual.name}</H>
