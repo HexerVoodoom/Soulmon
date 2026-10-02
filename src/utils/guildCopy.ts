@@ -123,6 +123,9 @@ export const GUILD_COPY = {
   'guild.feira.titulo': ['Feira', 'Fair'],
   // FINAL (L5, 29/09): a Feira sem roda explica o que é antes do formulário (QA L3 B9).
   'guild.feira.semroda': ['A Feira é da roda: toda semana algo chega da névoa, e a roda o recebe.', 'The Fair belongs to the circle: every week something comes in from the mist, and the circle receives it.'],
+  // G4 (02/10/2026): a legenda de UMA linha no topo da sala — o dono não entendia o que a Feira é.
+  // Sem número e sem "golpe/dano/quem": a régua da sala (GuildSheet.feira.render.test) varre isso.
+  'guild.feira.legenda': ['A Feira é o desafio da semana da sua roda: um fenômeno que a roda dissipa junta.', "The Fair is your circle's weekly challenge: a phenomenon the circle clears together."],
   'guild.feira.aberta.mundo': ['A maré abriu a Feira. Algo chegou da névoa.', 'The tide opened the Fair. Something came in from the mist.'],
   'guild.feira.fenomeno.nevoa.nome': ['Névoa', 'Mist'],
   'guild.feira.fenomeno.nevoa.linha': ['Uma camada que não assentou.', "A layer that hasn't settled."],

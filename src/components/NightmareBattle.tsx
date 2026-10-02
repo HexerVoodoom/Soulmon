@@ -59,7 +59,9 @@ import { RitualDialog } from './ritual/RitualKit';
 import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import { GameVisor, VisorSprite, VisorFx, HpBars, FxPopup, DIALOG_VISOR_W, phaseTitle } from './games/GameKit';
 import { NIGHTMARE_SCENE } from '../utils/dungeonScenes';
-import { getSpriteForStage, DUNGEON_SPIRIT_SPRITE } from '../utils/sprites';
+import { getSpriteForStage, DUNGEON_LINE_SPRITES } from '../utils/sprites';
+import { torcidaStrike, torcidaTap } from '../utils/torcida';
+import { TorcidaLayer, TorcidaGauge } from './games/TorcidaKit';
 import { playerStatsFor } from '../utils/dungeon';
 import { TimingBar } from './pixel/TimingBar';
 import { playFeed } from '../utils/sounds';
@@ -93,6 +95,12 @@ export interface NightmareBattleProps {
 
 
 const PERFECT = 0.92;
+/** Do começo da vez do Soulmon até o golpe sair sozinho. */
+const ATTACK_AUTO_MS = 1300;
+/* C1 (02/10/2026): o convite do pesadelo mostrava `dungeon-spirit.png` (bolha
+   roxa com brilhos, uma bolinha roxa solta e franja clara). Agora é uma
+   criatura que já existe no repo, com alfa limpo (binário, sem borda clara). */
+const INTRO_CREATURE = DUNGEON_LINE_SPRITES.ignar.champion;
 const DEFEND_TIME = 3.0;
 const POPUP_MS = 1200;
 
@@ -163,6 +171,12 @@ export function NightmareBattle({
   /* Declarado AQUI, antes do `return null` de `!open`: um `useRef` depois de um
      retorno condicional quebra a ordem dos hooks. Recebe o handler mais abaixo. */
   const defendRef = useRef<(acc: number, timedOut?: boolean) => void>(() => {});
+  /* Torcida (02/10/2026): o golpe do pet sai sozinho; o gauge enche com os
+     toques do dono e é gasto no golpe especial. `attackRef` guarda o handler
+     da render atual, para o timer do golpe automático nunca ler gauge velho. */
+  const [taps, setTaps] = useState(0);
+  const [specialFx, setSpecialFx] = useState(false);
+  const attackRef = useRef<() => void>(() => {});
 
   const after = useCallback((ms: number, fn: () => void) => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -191,6 +205,17 @@ export function NightmareBattle({
     if (fxRef.current) clearTimeout(fxRef.current);
     fxRef.current = setTimeout(() => setHitFx(null), 420);
   };
+
+  // O golpe do Soulmon sai sozinho, um instante depois de a vez dele começar —
+  // tempo de o dono torcer. Nada aqui é um limite: é o ritmo da luta.
+  useEffect(() => {
+    if (!open || phase !== 'attack') return;
+    const id = setTimeout(() => attackRef.current(), ATTACK_AUTO_MS);
+    return () => clearTimeout(id);
+  }, [open, phase, idx]);
+
+  // Nova noite / reabertura: o gauge começa vazio.
+  useEffect(() => { if (open) setTaps(0); }, [open, wave]);
 
   if (!open) return null;
 
@@ -231,23 +256,27 @@ export function NightmareBattle({
     setPhase('attack');
   };
 
-  const handleAttack = (acc: number) => {
+  /* Torcida (02/10/2026, `utils/torcida.ts`): o Soulmon golpeia sozinho; o dono
+     TORCE tocando na tela e o gauge cheio vira o golpe ESPECIAL. A torcida só
+     soma — sem torcer o golpe é o base, nunca menos. A esquiva segue sendo a
+     ação do dono (TimingBar). A torcida por timing está desligada. */
+  const handleAttack = () => {
     if (!enemy) return;
-    const crit = acc >= PERFECT;
-    const raw = stats.dmg * (0.25 + 0.75 * acc * acc) * (crit ? 1.5 : 1);
-    const dmg = Math.max(1, Math.round(raw * (1 - enemy.dmgReduction)));
+    const strike = torcidaStrike(stats.dmg, taps, enemy.dmgReduction);
+    const dmg = strike.dmg;
+    setTaps(strike.tapsLeft);
+    setSpecialFx(strike.special);
     const next = Math.max(0, enemyHp - dmg);
     setEnemyHp(next);
     flash('enemy');
     // A vibração NÃO passa por CSS nenhum, então `prefers-reduced-motion` só a
     // alcança por guard em JS. E ela não é essencial: é tempero do acerto.
     if (!relaxedTiming) {
-      try { navigator.vibrate?.(crit ? 40 : 15); } catch { /* noop */ }
+      try { navigator.vibrate?.(strike.special ? 40 : 15); } catch { /* noop */ }
     }
 
-    const head = crit ? (isPt ? 'PERFEITO!' : 'PERFECT!')
-      : acc >= 0.6 ? (isPt ? 'Bom golpe!' : 'Good hit!')
-      : (isPt ? 'Raspão...' : 'Graze...');
+    const head = strike.special ? (isPt ? 'Golpe especial da torcida!' : 'Special cheer strike!')
+      : (isPt ? 'O Soulmon golpeia!' : 'Your Soulmon strikes!');
     setPopup({
       icon: '✨', title: head,
       detail: isPt ? `${dmg} de dano em ${enemy.name}` : `${dmg} damage to ${enemy.name}`,
@@ -313,6 +342,8 @@ export function NightmareBattle({
     after(POPUP_MS, () => { setPopup(null); setPhase('attack'); });
   };
   defendRef.current = handleDefend;
+  attackRef.current = handleAttack;
+  const cheer = () => { if (phase === 'attack' || phase === 'defend' || phase === 'result') setTaps(t => torcidaTap(t)); };
 
   const inBattle = !!enemy && ['attack', 'defend', 'result'].includes(phase);
   const goodMorning = isPt ? 'Bom dia!' : 'Good morning!';
@@ -342,7 +373,7 @@ export function NightmareBattle({
       {/* ── Convite ─────────────────────────────────────────────────── */}
       {phase === 'intro' && (
         <>
-          {visor(80, <VisorSprite src={DUNGEON_SPIRIT_SPRITE} alt="" idle={false} style={otherBox} data-visor-enemy />)}
+          {visor(80, <VisorSprite src={INTRO_CREATURE} alt="" flip idle={false} style={otherBox} data-visor-enemy />)}
           <p style={sm2Hint}>{isPt ? 'De manhã, seu Soulmon conta:' : 'In the morning, your Soulmon says:'}</p>
           <h2 style={{ margin: 0, fontFamily: 'var(--sm2-font-display)', fontWeight: 600, fontSize: 'var(--sm2-text-lg)', lineHeight: 'var(--sm2-leading-title)', color: 'var(--sm2-ink)' }}>{title}</h2>
           <p style={{ ...sm2Text, margin: 0 }}>{flavor}</p>
@@ -377,11 +408,16 @@ export function NightmareBattle({
 
       {/* ── A luta: o visor persiste (R6), as barras fora dele ───────── */}
       {inBattle && enemy && (
-        <>
+        <TorcidaLayer
+          onTap={cheer}
+          active={inBattle}
+          isPt={isPt}
+          style={{ alignSelf: 'stretch', alignItems: 'center', gap: 10 }}
+        >
           {visor(80, (
             <>
               <VisorSprite src={enemy.sprite} alt={enemy.name} flip style={otherBox} data-visor-enemy />
-              {hitFx === 'enemy' && <VisorFx icon="💥" style={otherBox} data-visor-fx="hit" />}
+              {hitFx === 'enemy' && <VisorFx icon={specialFx ? '✨' : '💥'} style={otherBox} data-visor-fx={specialFx ? 'special' : 'hit'} />}
             </>
           ))}
           <div style={{ alignSelf: 'stretch' }}>
@@ -392,20 +428,16 @@ export function NightmareBattle({
               ]}
             />
           </div>
-          {/* A instrução da barra (J3) — não existia no código. */}
-          <p style={sm2Hint}>{isPt ? 'Toque quando o marcador cruzar o meio.' : 'Tap when the marker crosses the middle.'}</p>
+          {/* A torcida: o gauge enche com o toque em qualquer lugar da luta. */}
+          <div style={{ alignSelf: 'stretch' }}>
+            <TorcidaGauge taps={taps} onCheer={cheer} isPt={isPt} />
+          </div>
 
           <div aria-live="polite" style={{ alignSelf: 'stretch', display: 'flex', flexDirection: 'column', gap: 8, minHeight: 92 }}>
             {phase === 'attack' && (
-              <>
-                <p style={phaseTitle}>{isPt ? 'Sua vez — pare no centro!' : 'Your turn — stop in the center!'}</p>
-                <TimingBar
-                  key={`atk-${idx}-${enemyHp}-${playerHp}`}
-                  speed={enemy.speed}
-                  label={isPt ? 'Avançar!' : 'Push!'}
-                  onStop={handleAttack}
-                />
-              </>
+              <p style={phaseTitle}>
+                {isPt ? 'Seu Soulmon golpeia — torça por ele!' : 'Your Soulmon strikes — cheer for it!'}
+              </p>
             )}
             {phase === 'defend' && (
               <>
@@ -436,7 +468,7 @@ export function NightmareBattle({
             setLeft={setDefendLeft}
             onTimeout={() => defendRef.current(0, true)}
           />
-        </>
+        </TorcidaLayer>
       )}
 
       {/* ── Vitória: a faísca no lugar do pesadelo, nunca sobre o pet ── */}

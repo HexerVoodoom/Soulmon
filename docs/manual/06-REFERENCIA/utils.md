@@ -575,7 +575,7 @@ Cobertura: **178/178** módulos de `src/utils` em 01/10/2026 (`node scripts/docs
 **Exports:** `DECOR_MAX_TOTAL`, `decorBlockReason(item, bg)`, `decorReasonText(reason, isPt)`, `decorRuleText(isPt)`, `DecorBlockReason`.
 **Chamado por:** `src/components/mercado/ShopShelf.tsx`
 **Régua:** `src/utils/decorRules.test.ts`, `src/components/mercado/MercadoConfirmar.render.test.tsx`.
-**Regra de negócio:** 1 peça por espaço do palco (`SLOT_ORDER`), até 5 ao mesmo tempo; equipar é livre, a restrição é de exibição (sem cenário, cenário `void`, espaço que o cenário não oferece, `fits` indoor/outdoor). Regras de composição de arte, não de economia; a alternativa que perdeu ("qualquer peça em qualquer fundo") está em `REGISTRO-DE-DECISOES.md` §18.
+**Regra de negócio:** 1 peça por espaço do palco (`SLOT_ORDER`), até 5 ao mesmo tempo; equipar é livre, a restrição é de exibição (sem cenário, cenário `void`, espaço que o cenário não oferece, `fits` indoor/outdoor). Regras de composição de arte, não de economia; a alternativa que perdeu ("qualquer peça em qualquer fundo") está em `REGISTRO-DE-DECISOES.md` §19.
 
 ### `src/utils/decorArt.ts`
 **Dono de:** Mapa id de mobília (loja) → URL da arte.
@@ -656,7 +656,14 @@ Cobertura: **178/178** módulos de `src/utils` em 01/10/2026 (`node scripts/docs
 **Chamado por:** `src/components/DreamDex.tsx`, `src/components/MorningDream.tsx`
 **Régua:** nenhuma (`ls src/utils/dreamArt*.test.ts` vazio).
 
+### `src/utils/torcida.ts`
+**Dono de:** a CONTA da torcida no PvE (Pesadelo e Masmorra, 02/10/2026): o pet golpeia sozinho, cada toque enche o gauge e o gauge cheio é gasto no golpe ESPECIAL. As constantes do gauge são importadas de `functions/api/_duel.js` (uma regra, um arquivo).
+**Exports:** `TORCIDA_TAPS_FULL` (8, o mesmo do duelo) · `TORCIDA_BASE_FRAC` (0,5 do `dmg` do estágio = golpe-base) · `TORCIDA_PVE_SPECIAL_MULT` (2, provisório) · `torcidaTap(taps)` · `torcidaFill(taps)` · `torcidaCheio(taps)` · `torcidaStrike(petDmg, taps, dmgReduction)` → `{ dmg, special, tapsLeft }` · `TIMING_CHEER_ENABLED` (reexport, `false`).
+**Quem chama:** `NightmareBattle`, `DungeonGame`, `DuelScreen` (`torcidaTap`), `TorcidaKit`.
+**Régua:** `src/utils/torcida.test.ts` — a torcida só soma (gauge vazio ou parcial dá o golpe-base, nunca menos).
+
 ### `src/utils/dungeon.ts`
+**02/10/2026 (E2):** `canBuyDeepStart(nível, bits, alcançado)` e `buyDeepStart(...)` só liberam até o nível já CUMPRIDO (`getDungeonReached`/`recordDungeonReached`, chave `DUNGEON_REACHED`, não reseta na semana; só concluir a descida grava) — não dá para pular pagando (`REGISTRO-DE-DECISOES` §20).
 > ⚠️ 30/09/2026: `DUNGEON_BITS_FACTOR` (0,4) — Bits por inimigo e o custo de começar mais fundo (`DEEP_START_BASE_COST` = 16) passam por ele (decisão do dono, `BALANCO-MINIJOGOS.md` §4).
 **Dono de:** Stats do jogador, montagem de onda e progressão de dificuldade da Masmorra — sem gate de HP nem limite diário.
 **Exports:**

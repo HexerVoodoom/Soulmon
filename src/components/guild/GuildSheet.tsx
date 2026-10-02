@@ -877,6 +877,8 @@ function SalaFeira({ guild, t, language, ocupado, reducedMotion, resgate, resgat
   return (
     <section className="sm2-guild-sec" aria-label={t('guild.feira.titulo')} data-guild-room="feira">
       {resgate}
+      {/* G4 (02/10/2026): legenda de uma linha — o que é a Feira. */}
+      <p className="sm2-lib-s" style={{ margin: 0 }} data-feira-legenda>{t('guild.feira.legenda')}</p>
       {/* O cartão do resgate já diz "se desfez diante da roda": dizer de novo, uma linha acima, é eco (QA L3 B2). */}
       {!(dissipada && resgateAberto) && (
         <p className="sm2-stats-t" style={{ margin: 0 }} data-feira-cabecalho>

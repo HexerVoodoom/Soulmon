@@ -18,16 +18,16 @@ Continuação de `AJUSTES-NAVEGACAO-2026-10-01.md`. Legenda: `[ ]` aberto · `[x
 - [ ] B6 Água do chuveiro: menos transparente e cai mais para baixo
 
 ## C. Pesadelo e combate
-- [ ] C1 Card do pesadelo: brilhos com branco em volta do recorte e uma bolinha roxa → usar uma das criaturas que já temos
-- [ ] C2 O sistema de TORCIDA revisto para o combate não aparece na Arena nem no Pesadelo → ligar
+- [x] C1 Card do pesadelo: brilhos com branco em volta do recorte e uma bolinha roxa → usar uma das criaturas que já temos
+- [x] C2 O sistema de TORCIDA revisto para o combate não aparece na Arena nem no Pesadelo → ligar — torcida por toques + gauge no Torneio, Pesadelo e Masmorra (REGISTRO §20); Duelo da Arena e dosagem do especial em PERGUNTAS-DO-DONO TORC-1..4
 
 ## D. Mercado e decoração
 - [x] D1 Comprar item pede um modal de confirmação (vale também para a troca de Créditos)
 - [x] D2 Decoração: deixar claro limite de itens, restrições e se algum fundo é exigido; idealmente qualquer decoração em qualquer fundo — regra REAL no REGISTRO §19 (dependência de fundo é de arte, mantida; [?] dono)
 
 ## E. Masmorra
-- [ ] E1 Texto longo vai para um "?" (toque lê)
-- [ ] E2 "Descer mais fundo" só libera andar já alcançado antes; não dá para pular pagando
+- [x] E1 Texto longo vai para um "?" (toque lê)
+- [x] E2 "Descer mais fundo" só libera andar já alcançado antes; não dá para pular pagando
 
 ## F. Passeio / Travessias
 - [x] F1 Cada travessia ganha ícone/ilustração além do título
@@ -39,8 +39,9 @@ Continuação de `AJUSTES-NAVEGACAO-2026-10-01.md`. Legenda: `[ ]` aberto · `[x
 ## G. Laboratório, Guilda e Arena
 - [x] G1 Laboratório / Meu Soulmon / Observatório: tirar o Soulmon do box com gradiente (fica solto)
 - [x] G2 Estatísticas saem de Configurações e vão para o Laboratório — saiu a linha do menu; o opt-out de telemetria fica em Configurações [?]
-- [x] G3 Missão da Guilda: NPC trocado para a Bastia (REGISTRO §18) [?]
-- [ ] G4 Arena: explicar/clarear a "feira"; aumentar os prédios do duelo e do torneio
+- [x] G3 Missão da Guilda: NPC trocado para a Bastia (REGISTRO §19) [?]
+
+- [x] G4 Arena: explicar/clarear a "feira"; aumentar os prédios do duelo e do torneio
 
 ## Respostas do dono
 _(preencher)_

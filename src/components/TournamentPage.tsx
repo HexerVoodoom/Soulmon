@@ -478,6 +478,17 @@ export function TournamentPage({ saveId, petStage, petLine, pvpEnabled, onToggle
         );
       })()}
 
+      {/* Torcida (02/10/2026, C2): o dono não via que o duelo do Torneio é de
+          torcida — a linha aparece COM o PvP ligado ou não, antes de qualquer
+          botão, e diz como a luta funciona. */}
+      {tab === 'arena' && (
+        <p style={sm2Hint} data-torcida-legenda>
+          {isPt
+            ? 'Os dois Soulmons lutam sozinhos. Você torce tocando na tela: o gauge cheio vira um golpe especial.'
+            : 'The two Soulmons fight on their own. You cheer by tapping the screen: a full gauge becomes a special strike.'}
+        </p>
+      )}
+
       {tab === 'arena' && !pvpEnabled && (
         <div style={{ ...cardStyle, textAlign: 'center', padding: 12 }}>
           <p style={{ ...sm2Text, margin: 0 }}>

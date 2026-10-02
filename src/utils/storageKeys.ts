@@ -62,6 +62,7 @@ export const STORAGE_KEYS = {
   AUTO_SLEEP_END: 'soulmon-auto-sleep-end',
   DUNGEON_DIFFICULTY: 'soulmon-dungeon-difficulty',
   DUNGEON_BEST: 'soulmon-dungeon-best',
+  DUNGEON_REACHED: 'soulmon-dungeon-reached',
   DUNGEON_HEART_DROPS: 'soulmon-dungeon-heart-drops',
   DINO_BEST: 'soulmon-dino-best',
   /** H17 (01/10/2026) — ids de jogador/criatura que a pessoa já abriu na

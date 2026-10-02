@@ -15,9 +15,21 @@
  *  - DESISTÊNCIA = DERROTA: a cota é gasta na abertura; sair antes do fim,
  *    fechar o app ou passar de `DUEL_PENDING_MS` fecha o duelo como derrota
  *    (`forfeitPending`, `community.js`). Não existe como perder de graça;
- *  - a torcida só SOMA: sem torcer, o pet ataca normal (q = 0 → ×1). Mandar
- *    torcidas perfeitas forjadas rende exatamente o que um jogador com timing
- *    perfeito já rende — esse é o teto do que um cliente editado ganha.
+ *  - a torcida só SOMA: sem torcer, o pet ataca normal (×1). Mandar torcida
+ *    forjada rende no máximo o que a torcida cheia já rende — esse é o teto do
+ *    que um cliente editado ganha (`DUEL_TAPS_CAP` por janela, 3 janelas).
+ *
+ * ── TORCIDA POR TOQUES (decisão do dono, 02/10/2026) ──────────────────────
+ * Torcer é TOCAR EM QUALQUER LUGAR da tela durante a luta. Cada toque enche um
+ * GAUGE de `DUEL_TAPS_FULL` toques; quando o pet chega num golpe de torcida
+ * (`DUEL_CHEER_STRIKES`) com o gauge cheio, ele GASTA o gauge num golpe
+ * ESPECIAL (×`DUEL_SPECIAL_MULT`). Sem gauge cheio o golpe é o normal. O que o
+ * cliente manda é quantos toques deu em cada JANELA (o tempo até cada golpe de
+ * torcida); o servidor higieniza (`sanitizeTaps`: inteiros em [0, CAP]) e
+ * recalcula tudo (`specialSlots`) — toque ilimitado não rende mais que o teto.
+ * A mecânica ANTIGA (timing do anel, `cheerMultiplier`) segue no arquivo atrás
+ * de `TIMING_CHEER_ENABLED = false`, sem nenhum caminho de UI: reaproveitar em
+ * outro lugar depois.
  *
  * Perder não custa coração nem nada do pet (mesma regra da Masmorra/Arena).
  */
@@ -30,6 +42,50 @@ export const DUEL_CHEER_STRIKES = [1, 3, 5];
 export const DUEL_PERFECT_CHEER = 0.92;
 export const DUEL_CHEER_GAIN = 0.25;  // q = 1 → ×1,25
 export const DUEL_PERFECT_MULT = 1.35; // q ≥ 0,92
+
+/**
+ * Torcida por TIMING (anel que fecha sobre o alvo): DESATIVADA em 02/10/2026 —
+ * o dono trocou por toques livres + gauge. O código antigo (`cheerMultiplier`,
+ * `sanitizeCheers`, a janela de ±400 ms em `DuelScreen`) fica aqui para
+ * reaproveitar em outro lugar depois; nenhum caminho de UI o usa.
+ */
+export const TIMING_CHEER_ENABLED = false;
+
+/** Toques que enchem o gauge de torcida. */
+export const DUEL_TAPS_FULL = 8;
+/** Teto de toques contados por janela (≥ FULL: o excedente não vale nada). */
+export const DUEL_TAPS_CAP = 10;
+/**
+ * Força do golpe ESPECIAL. É o mesmo ×1,35 da torcida perfeita antiga: com o
+ * gauge cheio nas 3 janelas o duelo rende exatamente o que o timing perfeito
+ * rendia (mesmo estágio ~50% → ~80%), e sem torcer é o golpe base de sempre.
+ */
+export const DUEL_SPECIAL_MULT = DUEL_PERFECT_MULT;
+
+/** Higieniza os toques vindos da rede: 3 inteiros em [0, CAP], o resto vira 0. */
+export function sanitizeTaps(raw) {
+  const arr = Array.isArray(raw) ? raw : [];
+  return DUEL_CHEER_STRIKES.map((_, i) => {
+    const n = Math.floor(Number(arr[i]));
+    return Number.isFinite(n) ? Math.min(DUEL_TAPS_CAP, Math.max(0, n)) : 0;
+  });
+}
+
+/**
+ * Em quais golpes de torcida o pet solta o ESPECIAL. O gauge acumula entre as
+ * janelas (limitado a FULL) e zera ao ser gasto — a MESMA conta que a tela faz
+ * toque a toque.
+ */
+export function specialSlots(taps) {
+  const t = sanitizeTaps(taps);
+  let g = 0;
+  return t.map((n) => {
+    g = Math.min(DUEL_TAPS_FULL, g + n);
+    if (g < DUEL_TAPS_FULL) return false;
+    g = 0;
+    return true;
+  });
+}
 
 const STAGE_POWER = { rookie: 1, champion: 2, ultimate: 3, mega: 4, ultra: 5 };
 function stagePowerOf(stage) {
@@ -68,7 +124,7 @@ function mulberry32(seed) {
   };
 }
 
-/** Higieniza a torcida vinda da rede: 3 números em [0,1], o resto vira 0. */
+/** (Torcida por TIMING, desativada — ver `TIMING_CHEER_ENABLED`.) 3 números em [0,1]. */
 export function sanitizeCheers(raw) {
   const arr = Array.isArray(raw) ? raw : [];
   return DUEL_CHEER_STRIKES.map((_, i) => {
@@ -90,7 +146,9 @@ export function cheerMultiplier(q) {
  */
 export function simulateDuel({ me, opp, seed, cheers }) {
   const rng = mulberry32(seed);
-  const q = sanitizeCheers(cheers);
+  // `cheers` = toques por janela (padrão) ou q de timing (só com a flag ligada).
+  const q = TIMING_CHEER_ENABLED ? sanitizeCheers(cheers) : null;
+  const special = TIMING_CHEER_ENABLED ? null : specialSlots(cheers);
   let hpMe = me.hp, hpOpp = opp.hp;
   let turn = me.atk > opp.atk ? 'me' : me.atk < opp.atk ? 'opp' : (rng() < 0.5 ? 'me' : 'opp');
   let myStrike = 0;
@@ -101,7 +159,10 @@ export function simulateDuel({ me, opp, seed, cheers }) {
     let cheer = null;
     if (turn === 'me') {
       const slot = DUEL_CHEER_STRIKES.indexOf(myStrike);
-      if (slot >= 0) { cheer = q[slot]; mult *= cheerMultiplier(cheer); }
+      if (slot >= 0) {
+        if (q) { cheer = q[slot]; mult *= cheerMultiplier(cheer); }
+        else { const sp = !!special?.[slot]; cheer = sp ? 1 : 0; if (sp) mult *= DUEL_SPECIAL_MULT; }
+      }
       myStrike++;
     }
     const dmg = Math.max(1, Math.round(atk * mult));

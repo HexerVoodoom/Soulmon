@@ -436,9 +436,15 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 
 ### `src/components/DuelScreen.tsx`
 **Dono de:** a TELA do duelo fantasma do Torneio (30/09/2026) — os pets lutam sozinhos e o dono torce em 3 golpes. Só anima: a regra é de `functions/api/_duel.js`, e quem decide é o servidor (`match`).
-**Exports:** `DuelScreen` (props `me`/`opp`/`seed`/sprites/nomes, `onDone(cheers)`); `cheerQuality(deltaMs)` (1 no alvo, 0 a 400 ms); `CHEER_MS`/`CHEER_TARGET` (o anel).
+**Exports:** `DuelScreen` (props `me`/`opp`/`seed`/sprites/nomes, `onDone(taps)` — os TOQUES de cada uma das 3 janelas de torcida, desde 02/10/2026); `cheerQuality(deltaMs)`, `CHEER_MS`/`CHEER_TARGET` (o anel por TIMING — guardados, sem UI, `TIMING_CHEER_ENABLED = false`).
 **Quem chama:** `TournamentPage` (`fight` chama `startDuel` quando o servidor manda `duel`; o × antes do fim chama `leaveDuel` = derrota). Desde o delta `ae366480..5edfcfba` o `TournamentPage` importa também o tipo `DuelStats` de `functions/api/_duel.js` (declarado em `_duel.d.ts`); a tela exporta ainda `DuelScreenProps` (`me`, `opp`, `seed`, `petSprite`, `oppSprite`, `petName`, `oppName`, `isPt`, `onDone`, `onClose`); o × só age enquanto `phase !== 'done'`.
 **Régua:** `src/components/DuelScreen.render.test.tsx`. Nasce muda (R-NOVA).
+
+### `src/components/games/TorcidaKit.tsx`
+**Dono de:** as peças de TELA da torcida (02/10/2026, decisão do dono): tocar em qualquer lugar da luta enche um gauge e o pet gasta o gauge cheio num golpe especial. Só desenha e repassa o toque; a regra mora em `src/utils/torcida.ts` (PvE) e em `functions/api/_duel.js` (duelo).
+**Exports:** `TorcidaLayer({ onTap, active, isPt, children, style })` (envolve a luta, pega o `pointerdown`, solta o "grito" no ponto tocado — sem animação com movimento reduzido — e NÃO engole botão, link nem campo) · `TorcidaGauge({ taps, onCheer, isPt, disabled })` (a barra do gauge, a legenda "Toque em qualquer lugar para torcer" e o botão "Torcer!" para teclado e leitor de tela).
+**Quem chama:** `DuelScreen`, `NightmareBattle`, `DungeonGame`.
+**Régua:** `DuelScreen.render.test.tsx`, `NightmareBattle.render.test.tsx`. Nasce muda (R-NOVA); keyframes `sm-torcida-burst` em `src/index.css`.
 
 ### `src/components/DreamDex.tsx`
 **Dono de:** a Dex de Sonhos — coleção de cenas noturnas colecionáveis, apresentação pura de `DREAM_CATALOG`.

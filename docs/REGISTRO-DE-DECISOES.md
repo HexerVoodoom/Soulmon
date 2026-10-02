@@ -1313,3 +1313,61 @@ implementação tomadas SEM o dono; o que está marcado **[dono]** espera respos
    cresce.") segue a mesma, sem cobrança. Alternativas descartadas: Sable (caçadora de
    recompensas: caça e pergaminho de missão soam a perseguição/FOMO) e Gila (mercenária:
    conota pagamento). O busto antigo `npc-hall-guilda.png` fica no repositório, sem uso.
+
+## 20. Combate: torcida por toques e "Descer mais fundo" só até onde já se chegou (02/10/2026)
+
+Decisões do dono na navegação do APK (`docs/AJUSTES-NAVEGACAO-2026-10-02.md` C1/C2, E2, G4).
+
+1. **A TORCIDA é tocar em QUALQUER LUGAR da tela de combate; cada toque enche um
+   GAUGE e o pet GASTA o gauge cheio num golpe ESPECIAL.** Vale para o **duelo
+   fantasma do Torneio**, o **Pesadelo** e a **Masmorra**. Os golpes normais
+   continuam sendo do pet, sozinho; a torcida **só soma** (sem torcer, o golpe é o
+   base, nunca menos); cada toque solta um "grito" ("VAI!", "GO!", ✦…) no ponto
+   tocado — sem animação com movimento reduzido — e os botões da tela (sair) não
+   são engolidos. Há um botão "Torcer!" para quem não toca na tela.
+   - **Alternativa que perdeu: torcida por TIMING** (a barra/anel que fecha sobre o
+     alvo, ×1 a ×1,35 pela precisão, janela de ±400 ms — `STATUS` de 30/09/2026).
+     Perdeu porque exigia olho no alvo e precisão num app de uso calmo, e o dono
+     queria um gesto sem acerto/erro. O código **fica guardado, sem UI**
+     (`TIMING_CHEER_ENABLED = false` em `functions/api/_duel.js`; `cheerMultiplier`,
+     `sanitizeCheers` e `cheerQuality`/`CHEER_*` em `DuelScreen.tsx`) para
+     reaproveitar em outro lugar.
+   - **Duelo (servidor-autoritativo):** o cliente manda quantos toques deu em cada
+     JANELA (o tempo até cada golpe de torcida, `DUEL_CHEER_STRIKES = [1,3,5]`); o
+     servidor higieniza (`sanitizeTaps`: inteiros em [0, `DUEL_TAPS_CAP` = 10]),
+     recalcula (`specialSlots`: o gauge acumula entre janelas, limitado a
+     `DUEL_TAPS_FULL` = 8, e zera ao ser gasto) e decide. **Toque ilimitado não
+     rende mais que o teto:** 3 janelas, no máximo 3 especiais. O especial vale
+     `DUEL_SPECIAL_MULT` = ×1,35, o mesmo da torcida perfeita antiga.
+   - **Calibração** (20.000 duelos, `_duel.test.js`): mesmo estágio sem torcer
+     **51%**, gauge cheio nas 3 janelas **82%** (antes: 50% → ~80%); um estágio
+     abaixo **14,5% → 38%** (antes ~39%). Gauge parcial ([5,5,5] ou [4,4,4]): 64%.
+   - **PvE (Pesadelo e Masmorra):** `utils/torcida.ts`. Golpe-base = 0,5 × `dmg` do
+     estágio (mantém o dano médio de antes); especial = 2× o base
+     (`TORCIDA_PVE_SPECIAL_MULT`, **número provisório** — ver pendências). O gauge é
+     o mesmo (8 toques, importado de `_duel.js`). A **esquiva** (dodge) segue sendo a
+     ação do dono, ainda com a `TimingBar`.
+   - Gatilho para rever: o dono achar a torcida cansativa de tocar, ou o especial do
+     PvE desequilibrar a Masmorra.
+2. **"Descer mais fundo" só libera um nível que a pessoa JÁ cumpriu; não dá para
+   pular pagando.** O nível mais fundo cumprido (`DUNGEON_REACHED`, não reseta na
+   semana) só sobe ao CONCLUIR uma descida; a compra devolve a base, de um em um
+   nível, até esse teto (`canBuyDeepStart(nível, bits, alcançado)` e
+   `buyDeepStart`, puras e testadas, em `src/utils/dungeon.ts`; a oferta some quando
+   não há nível conquistado acima da base atual). O preço (16 Bits × nível) e o teto
+   absoluto (`DEEP_START_MAX_LEVEL` = 5) não mudaram.
+   - **Alternativa que perdeu: pular pagando** (WP4.5 — comprar `base + 1` direto,
+     mesmo sem ter jogado até ali). Perdeu porque deixava o Bit comprar progresso que
+     a pessoa não fez, esvaziando o "concluir a descida" como conquista; agora o Bit
+     só compra a VOLTA ao ponto conquistado depois do reset semanal.
+3. **A Feira da Arena é a sala cooperativa da Guilda** (o fenômeno da semana que a
+   roda dissipa junta: uma rodada por dia, rende Honra e, a cada N Feiras
+   dissipadas, a Concha da Maré) — não é loja nem feira de compra. A folha ganhou
+   uma legenda de uma linha (`guild.feira.legenda`), e os prédios do Torneio e do
+   Duelo ficaram maiores no cenário (42% da largura, antes 30%), juntos no mesmo
+   tablado.
+4. **Masmorra: o texto longo do lobby fica atrás de um "?"** (toque lê); o lobby
+   mostra só Recorde, Dificuldade base, "Descer" e, quando cabe, "Descer mais fundo".
+5. **O convite do Pesadelo mostra uma criatura que já existe** (`ignar`, linha
+   própria, alfa limpo) no lugar do `dungeon-spirit.png` (bolha roxa com franja
+   clara). O arquivo antigo continua no repo, sem uso na tela.

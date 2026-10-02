@@ -58,11 +58,11 @@ const MERCADO_LOTS: AreaLotSpec<MercadoLotId>[] = [
 // por espaço, um em cada metade da diagonal), e a Feira fica sozinha no da
 // direita. Antes a Feira caía fora dos tablados, na escadaria de baixo.
 const ARENA_LOTS: AreaLotSpec<ArenaLotId>[] = [
-  { id: 'torneio', labelPt: 'Torneio', labelEn: 'Tournament', ariaPt: 'Entrar no Torneio', ariaEn: 'Enter the Tournament', left: '21%', top: '48%', width: '30%' },
-  { id: 'duelo', labelPt: 'Duelo', labelEn: 'Duel', ariaPt: 'Entrar no Duelo', ariaEn: 'Enter the Duel', left: '46%', top: '54%', width: '30%' },
+  { id: 'torneio', labelPt: 'Torneio', labelEn: 'Tournament', ariaPt: 'Entrar no Torneio', ariaEn: 'Enter the Tournament', left: '23%', top: '49%', width: '42%' },
+  { id: 'duelo', labelPt: 'Duelo', labelEn: 'Duel', ariaPt: 'Entrar no Duelo', ariaEn: 'Enter the Duel', left: '47%', top: '56%', width: '42%' },
   // O lote da Arena é a FEIRA (`guild.lote.feira.*`, D-G4, WPG-10): abre a sala Feira do
   // `GuildSheet`. O Salão (Bosque/Roda/Mural) continua sendo o lote `guilda` do Hall.
-  { id: 'feira', labelPt: GUILD_COPY['guild.lote.feira.label'][0], labelEn: GUILD_COPY['guild.lote.feira.label'][1], ariaPt: GUILD_COPY['guild.lote.feira.aria'][0], ariaEn: GUILD_COPY['guild.lote.feira.aria'][1], left: '72%', top: '40%', width: '36%' },
+  { id: 'feira', labelPt: GUILD_COPY['guild.lote.feira.label'][0], labelEn: GUILD_COPY['guild.lote.feira.label'][1], ariaPt: GUILD_COPY['guild.lote.feira.aria'][0], ariaEn: GUILD_COPY['guild.lote.feira.aria'][1], left: '78%', top: '40%', width: '36%' },
 ];
 
 // Laboratório e Hall (29/09/2026): as antigas abas/filtros viraram construções
