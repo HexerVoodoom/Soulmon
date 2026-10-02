@@ -1,0 +1,2 @@
+const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/web-7-KsRS7Q.js","assets/index-D9XkQiXz.js","assets/vendor-DDxydHEc.js","assets/index-C6gthPpJ.css"])))=>i.map(i=>d[i]);
+import{aE as r,av as t}from"./index-D9XkQiXz.js";import"./vendor-DDxydHEc.js";const i=r("CapacitorPedometer",{web:()=>t(()=>import("./web-7-KsRS7Q.js"),__vite__mapDeps([0,1,2,3])).then(e=>new e.CapacitorPedometerWeb)});export{i as CapacitorPedometer};
