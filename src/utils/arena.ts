@@ -29,6 +29,7 @@ import { CUSTO_PONTO_PAR } from './soulProfile/ficha/cascata';
 import type { Ficha, FichaStage } from './soulProfile/ficha/types';
 import type { EscolaId, RecursoId } from './soulProfile/ficha/types';
 import type { StageSkills } from './soulProfile/ficha/skills';
+import { TORCIDA_TAPS_FULL, TORCIDA_TAPS_CAP } from './torcida';
 
 // ── Elements ────────────────────────────────────────────────────────────────
 
@@ -213,6 +214,54 @@ export const CRIT_MULT = 1.5;
 
 export function accuracyScale(acc: number): number {
   return 0.25 + 0.75 * acc * acc;
+}
+
+// ── Torcida por toques no Duelo da Arena (02/10/2026, H14 / REGISTRO §20) ───
+//
+// O pet golpeia SOZINHO; o dono TORCE tocando em qualquer lugar. Cada toque
+// enche o gauge (`TORCIDA_TAPS_FULL` = 8, o mesmo do duelo e do PvE) e, com o
+// gauge cheio no momento do golpe, o pet GASTA tudo num golpe de TORCIDA.
+//
+// ⚠️ A torcida só SOMA: sem torcer o golpe é o golpe-base da simulação (nunca
+// menos), e o golpe de torcida é UM multiplicador por golpe (`ARENA_TORCIDA_MULT`),
+// sem empilhar — toque ilimitado rende no máximo UM golpe de torcida por turno
+// (`TORCIDA_TAPS_CAP` toques contam por turno e o gauge zera ao ser gasto).
+
+/**
+ * Barra de timing do ATAQUE. DESLIGADA (decisão do dono, 02/10/2026): o pet
+ * ataca sozinho. O caminho antigo (`TimingBar` de ataque em `ArenaGame`) fica
+ * atrás desta flag, sem apagar — a precisão de DEFESA (esquiva) continua sendo
+ * da barra (TORC-3).
+ */
+export const ARENA_TIMING_ATTACK_ENABLED = false;
+
+/**
+ * Precisão do golpe automático do pet. Calibrada para que "sem torcida" renda
+ * o mesmo que a simulação base (`accMean` 0,7 ± 0,25): ver `arena.test.ts`.
+ * Abaixo de `PERFECT_ACC`: o golpe automático nunca é crítico.
+ */
+export const ARENA_AUTO_ACC = 0.73;
+
+/** Força do golpe de TORCIDA, sobre o golpe do turno (básico ou especial da escola). */
+export const ARENA_TORCIDA_MULT = 1.35;
+
+export interface ArenaTorcidaTurn {
+  /** Multiplicador do golpe deste turno: 1 sem torcida, `ARENA_TORCIDA_MULT` com. */
+  mult: number;
+  /** O gauge estava cheio e foi gasto neste golpe. */
+  special: boolean;
+  /** Gauge que sobra depois do golpe (0 se gastou). */
+  gaugeLeft: number;
+}
+
+/**
+ * O golpe de torcida de UM turno. `gauge` = toques acumulados até o golpe
+ * (o excedente de `TORCIDA_TAPS_FULL` não rende nada). Pura.
+ */
+export function arenaTorcidaTurn(gauge: number): ArenaTorcidaTurn {
+  const g = Math.min(TORCIDA_TAPS_FULL, Math.max(0, Math.floor(Number.isFinite(gauge) ? gauge : 0)));
+  const special = g >= TORCIDA_TAPS_FULL;
+  return { mult: special ? ARENA_TORCIDA_MULT : 1, special, gaugeLeft: special ? 0 : g };
 }
 
 /** One basic (or per-target special) hit. `mult` = elemental multiplier. */
@@ -400,6 +449,18 @@ export interface ArenaArchetypeConfig {
 export interface ArenaSimOptions {
   difficulty?: number;
   accMean?: number;
+  /**
+   * O pet golpeia sozinho com `ARENA_AUTO_ACC` (sem sortear a precisão do
+   * ataque) — é o Duelo como ele é jogado desde 02/10/2026. A DEFESA continua
+   * sorteada (`sampleAcc`): a esquiva segue sendo da `TimingBar` (TORC-3).
+   */
+  autoAttack?: boolean;
+  /**
+   * Toques por turno que a torcida dá antes do golpe do pet (0 = ninguém
+   * torce). Entra no gauge de `TORCIDA_TAPS_FULL` com teto por turno de
+   * `TORCIDA_TAPS_CAP`; cheio, o golpe do turno vale `ARENA_TORCIDA_MULT`.
+   */
+  tapsPerTurn?: number;
   rng: () => number;
   pool: BestiaryCreature[];
 }
@@ -424,7 +485,9 @@ export function simulateArenaRun(config: ArenaArchetypeConfig, opts: ArenaSimOpt
   let charge = 0;
   let echoLeft = 0;
   let weakenLeft = 0;
+  let gauge = 0;
   const sampleAcc = () => clamp01(accMean + (rng() * 2 - 1) * 0.25);
+  const tapsPerTurn = Math.min(TORCIDA_TAPS_CAP, Math.max(0, Math.floor(opts.tapsPerTurn ?? 0)));
 
   for (let round = 1; round <= ARENA_ROUNDS; round++) {
     const enemies = buildArenaRound(round, difficulty, rng, pool);
@@ -442,15 +505,19 @@ export function simulateArenaRun(config: ArenaArchetypeConfig, opts: ArenaSimOpt
         echoLeft--;
       }
 
-      // Player action: special when charged, basic otherwise.
-      const acc = sampleAcc();
+      // Player action: special when charged, basic otherwise. A torcida só
+      // SOMA: sem toques o multiplicador é 1 e o golpe é o de sempre.
+      const acc = opts.autoAttack ? ARENA_AUTO_ACC : sampleAcc();
+      gauge = Math.min(TORCIDA_TAPS_FULL, gauge + tapsPerTurn);
+      const torcida = arenaTorcidaTurn(gauge);
+      gauge = torcida.gaugeLeft;
       if (charge >= SPECIAL_CHARGE_TURNS) {
         const targets = special.targets === 'all'
           ? alive()
           : alive().slice(0, special.targets);
         for (const t of targets) {
           t.hp -= playerHitDamage(stats.dmg, acc,
-            elementMultiplier(config.elementoEspecial, t.elements), special.mult);
+            elementMultiplier(config.elementoEspecial, t.elements), special.mult * torcida.mult);
         }
         if (special.healFrac) hp = Math.min(stats.hp, hp + Math.round(stats.hp * special.healFrac));
         if (special.weakenTurns) weakenLeft = special.weakenTurns;
@@ -460,7 +527,7 @@ export function simulateArenaRun(config: ArenaArchetypeConfig, opts: ArenaSimOpt
         const t = alive()[0];
         if (t) {
           t.hp -= playerHitDamage(stats.dmg, acc,
-            elementMultiplier(config.elementoBasica, t.elements));
+            elementMultiplier(config.elementoBasica, t.elements), torcida.mult);
         }
         charge++;
       }

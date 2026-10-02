@@ -20,8 +20,13 @@
  * 40–80%, dispersão ≤ 20pp) rodando aquele laço. Trocar a ordem aqui — atacar
  * antes do eco, deixar só o inimigo da vez revidar, cobrar a carga do especial
  * de outro jeito — invalida o balanceamento inteiro sem nada ficar vermelho.
- * A ÚNICA diferença permitida é a origem da precisão: lá vem de `sampleAcc()`,
- * aqui vem da `TimingBar`.
+ * A ÚNICA diferença permitida é a origem da precisão. DEFESA: lá vem de
+ * `sampleAcc()`, aqui da `TimingBar` (a esquiva segue sendo ação do dono).
+ * ATAQUE (desde 02/10/2026, H14): o pet golpeia SOZINHO com `ARENA_AUTO_ACC`
+ * (`simulateArenaRun({ autoAttack: true })`) e o dono TORCE tocando na tela —
+ * gauge de 8 toques, golpe de torcida ×`ARENA_TORCIDA_MULT` gasto pelo pet
+ * (`arenaTorcidaTurn`, REGISTRO §20). A `TimingBar` de ataque fica atrás de
+ * `ARENA_TIMING_ATTACK_ENABLED` (= false), sem apagar.
  *
  * O laço, na ordem exata:
  *   1. eco da evocação (se houver carga de um especial anterior);
@@ -48,6 +53,8 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { TimingBar } from './pixel/TimingBar';
+import { TorcidaLayer, TorcidaGauge } from './games/TorcidaKit';
+import { torcidaTap } from '../utils/torcida';
 import { Icon } from './ui/Icon';
 import { sm2Button, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, VisorFx, HpBars, FxPopup, StatTag, phaseTitle, phaseLine } from './games/GameKit';
@@ -55,6 +62,9 @@ import { ARENA_SCENE } from '../utils/dungeonScenes';
 import { getDungeonEnemySprite, getSpriteForStage } from '../utils/sprites';
 import {
   ARENA_ROUNDS,
+  ARENA_AUTO_ACC,
+  ARENA_TIMING_ATTACK_ENABLED,
+  arenaTorcidaTurn,
   DEFAULT_ARENA_ATTRIBUTES,
   PERFECT_ACC,
   ROUND_CLEAR_HEAL,
@@ -91,6 +101,9 @@ type Fase =
 
 interface Popup { icon: string; title: string; detail: string }
 
+/** Quanto o pet espera antes de golpear sozinho — o tempo de a torcida encher o gauge. */
+const ARENA_STRIKE_MS = 1500;
+
 export interface ArenaGameProps {
   evolutionStage: string;
   demoCharacterId?: string;
@@ -125,6 +138,14 @@ export function ArenaGame({
   const [pontos, setPontos] = useState(0);
   const [popup, setPopup] = useState<Popup | null>(null);
   const popupTimer = useRef(0);
+  /** O gauge da torcida (0..8). O ref é o que o golpe lê; o state só desenha. */
+  const [taps, setTaps] = useState(0);
+  const tapsRef = useRef(0);
+  /** Toque de torcida: sobe o gauge e para no cheio (toque a mais não rende). */
+  const torcer = useCallback(() => {
+    tapsRef.current = torcidaTap(tapsRef.current);
+    setTaps(tapsRef.current);
+  }, []);
 
   const par = skills?.[stage];
   const basica = par?.basica;
@@ -174,6 +195,8 @@ export function ArenaGame({
     setEco(0);
     setEnfraquecidos(0);
     setPontos(0);
+    tapsRef.current = 0;
+    setTaps(0);
     setRodada(1);
     montarRodada(1, pool);
   }, [pool, stats.hp, montarRodada]);
@@ -240,7 +263,14 @@ export function ArenaGame({
       setEco(e => e - 1);
     }
 
-    // 2) Especial quando carregado, básica quando não.
+    // 2) Especial quando carregado, básica quando não. A torcida só SOMA: com o
+    //    gauge cheio o golpe do turno vale ×ARENA_TORCIDA_MULT e o gauge é gasto;
+    //    sem ele (ou com a barra de ataque do caminho antigo) o multiplicador é 1.
+    const torcida = arenaTorcidaTurn(ARENA_TIMING_ATTACK_ENABLED ? 0 : tapsRef.current);
+    if (!ARENA_TIMING_ATTACK_ENABLED) {
+      tapsRef.current = torcida.gaugeLeft;
+      setTaps(torcida.gaugeLeft);
+    }
     const usouEspecial = carga >= SPECIAL_CHARGE_TURNS;
     if (usouEspecial) {
       const alvosDoEspecial = efeito.targets === 'all'
@@ -250,7 +280,7 @@ export function ArenaGame({
         t.hp -= playerHitDamage(
           stats.dmg, acc,
           elementMultiplier(especial?.elementoId ?? 'vigor', t.elements),
-          efeito.mult,
+          efeito.mult * torcida.mult,
         );
       }
       if (efeito.healFrac) {
@@ -280,7 +310,9 @@ export function ArenaGame({
       mostrarPopup({
         icon: '✨',
         title: (isPt ? especial?.nome.pt : especial?.nome.en) ?? (isPt ? 'Especial!' : 'Special!'),
-        detail: isPt ? 'A habilidade especial disparou' : 'Special skill unleashed',
+        detail: torcida.special
+          ? (isPt ? 'Com a força da torcida!' : 'With the crowd behind it!')
+          : (isPt ? 'A habilidade especial disparou' : 'Special skill unleashed'),
       });
     } else {
       const t = vivosDe()[0];
@@ -288,9 +320,16 @@ export function ArenaGame({
         t.hp -= playerHitDamage(
           stats.dmg, acc,
           elementMultiplier(basica?.elementoId ?? 'vigor', t.elements),
+          torcida.mult,
         );
       }
       setCarga(c => c + 1);
+      if (torcida.special) {
+        mostrarPopup({
+          icon: '📣', title: isPt ? 'Golpe da torcida!' : 'Cheer strike!',
+          detail: isPt ? 'Seu Soulmon ouviu vocês' : 'Your Soulmon heard you',
+        });
+      }
       if (acc >= PERFECT_ACC) {
         mostrarPopup({
           icon: '💥', title: isPt ? 'Crítico!' : 'Critical!',
@@ -334,6 +373,15 @@ export function ArenaGame({
     setFase('atacar');
   }, [inimigos, defensor, hp, atributos, enfraquecidos, isPt, mostrarPopup]);
 
+  /** O pet golpeia SOZINHO: um instante depois de abrir o turno, ele ataca. */
+  const atacarRef = useRef(atacar);
+  atacarRef.current = atacar;
+  useEffect(() => {
+    if (ARENA_TIMING_ATTACK_ENABLED || fase !== 'atacar' || vivos.length === 0) return;
+    const t = setTimeout(() => atacarRef.current(ARENA_AUTO_ACC), ARENA_STRIKE_MS);
+    return () => clearTimeout(t);
+  }, [fase, rodada, vivos.length, hp, carga]);
+
   const proximaRodada = useCallback(() => {
     if (!pool) return;
     if (rodada >= ARENA_ROUNDS) {
@@ -364,6 +412,7 @@ export function ArenaGame({
 
   return (
     <GameRoot>
+      <TorcidaLayer onTap={torcer} active={emLuta && !ARENA_TIMING_ATTACK_ENABLED} isPt={isPt} style={{ flex: '1 0 auto' }}>
       <GameHeader
         run={emLuta}
         title={isPt ? 'Arena' : 'Arena'}
@@ -447,6 +496,13 @@ export function ArenaGame({
             </p>
           )}
 
+          {!ARENA_TIMING_ATTACK_ENABLED && (
+            <p style={phaseLine} data-arena-torcida-legenda>
+              {isPt
+                ? 'Seu Soulmon luta sozinho. Você torce tocando na tela: o gauge cheio vira um golpe da torcida. A esquiva continua com você.'
+                : 'Your Soulmon fights on its own. You cheer by tapping the screen: a full gauge becomes a cheer strike. Dodging is still up to you.'}
+            </p>
+          )}
           <p style={phaseLine}>
             {isPt
               ? `${ARENA_ROUNDS} rodadas seguidas, cada uma mais dura. Seu elemento decide quem você machuca mais e quem te machuca. Entre as rodadas você recupera um pouco. Perder custa a run — nunca os seus corações.`
@@ -518,7 +574,14 @@ export function ArenaGame({
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minHeight: 120 }}>
             {popup && <FxPopup icon={popup.icon} title={popup.title} detail={popup.detail} />}
-            {fase === 'atacar' && alvo && (
+            {fase === 'atacar' && alvo && !ARENA_TIMING_ATTACK_ENABLED && (
+              <p style={phaseTitle} data-arena-auto-attack>
+                {especialPronto
+                  ? (isPt ? 'Especial carregado — torça por ele!' : 'Special charged — cheer for it!')
+                  : (isPt ? 'Seu Soulmon ataca sozinho — torça!' : 'Your Soulmon strikes on its own — cheer!')}
+              </p>
+            )}
+            {fase === 'atacar' && alvo && ARENA_TIMING_ATTACK_ENABLED && (
               <>
                 <p style={phaseTitle}>
                   {especialPronto
@@ -555,6 +618,12 @@ export function ArenaGame({
               </>
             )}
           </div>
+
+          {/* A torcida: toque em qualquer lugar enche o gauge; o botão é o caminho
+              para quem não toca na tela (teclado, leitor de tela). */}
+          {!ARENA_TIMING_ATTACK_ENABLED && (
+            <TorcidaGauge taps={taps} onCheer={torcer} isPt={isPt} />
+          )}
         </>
       )}
 
@@ -608,6 +677,7 @@ export function ArenaGame({
           </div>
         </>
       )}
+      </TorcidaLayer>
     </GameRoot>
   );
 }
