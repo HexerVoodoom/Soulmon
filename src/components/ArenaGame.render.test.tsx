@@ -43,6 +43,10 @@ vi.mock('../utils/arena', async importOriginal => {
   const real = await importOriginal<typeof import('../utils/arena')>();
   return {
     ...real,
+    // Este arquivo trava o caminho ANTIGO (barra de timing no ataque): a flag
+    // volta a ligar só aqui. O caminho novo (pet sozinho + torcida) é de
+    // `ArenaGame.torcida.render.test.tsx` (H14, 02/10/2026).
+    ARENA_TIMING_ATTACK_ENABLED: true,
     loadBestiaryPool: vi.fn(async () => POOL),
     buildArenaRound: vi.fn(real.buildArenaRound),
   };

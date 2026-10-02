@@ -98,58 +98,55 @@ beforeEach(() => {
 });
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
-describe('recusa de PvP do servidor: o cliente reconcilia em vez de mentir', () => {
-  it('servidor responde pvpBlocked → o save local DESLIGA o pvpEnabled', async () => {
+describe('recusa de PvP do servidor (H13: sem interruptor, nada a desfazer)', () => {
+  const BLOQUEADO = { ok: true, pvpEnabled: false, pvpBlocked: true, bondLevel: 3, minBondLevel: 5 };
+
+  async function gesto() {
+    act(() => { screen.getByText('mais').click(); });
+    await act(async () => { vi.advanceTimersByTime(3000); await Promise.resolve(); });
+    // A promessa do `pushProfile` resolve num microtask depois do timer.
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+  }
+
+  it('servidor responde pvpBlocked → o save local NÃO é mexido e ninguém é "avisado" de algo que não pediu', async () => {
     vi.useFakeTimers();
     try {
-      resposta.atual = { ok: true, pvpEnabled: false, pvpBlocked: true, bondLevel: 3, minBondLevel: 5 };
+      resposta.atual = BLOQUEADO;
       abrirComSave(COM_PVP_LIGADO);
-      expect(estado().pvpEnabled).toBe(true);
-
-      act(() => { screen.getByText('mais').click(); });
-      await act(async () => { vi.advanceTimersByTime(3000); await Promise.resolve(); });
-      // A promessa do `pushProfile` resolve num microtask depois do timer.
-      await act(async () => { await Promise.resolve(); await Promise.resolve(); });
-
+      await gesto();
       expect(perfis).toHaveLength(1);
-      expect(perfis[0].pvpEnabled).toBe(true);   // foi PEDIDO ligado…
-      expect(estado().pvpEnabled).toBe(false);   // …e o servidor mandou desligar
+      expect(estado().pvpEnabled).toBe(true);
+      expect(avisos).toHaveLength(0);
     } finally { vi.useRealTimers(); }
   });
 
-  it('a recusa NAO se realimenta: com o PvP desligado, nao sai outro perfil', async () => {
+  it('a recusa NAO se realimenta: sem setGameState na resposta, nao sai outro perfil', async () => {
     vi.useFakeTimers();
     try {
-      resposta.atual = { ok: true, pvpEnabled: false, pvpBlocked: true, bondLevel: 3, minBondLevel: 5 };
+      resposta.atual = BLOQUEADO;
       abrirComSave(COM_PVP_LIGADO);
-      act(() => { screen.getByText('mais').click(); });
-      await act(async () => { vi.advanceTimersByTime(3000); await Promise.resolve(); });
-      await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+      await gesto();
       expect(perfis).toHaveLength(1);
-
-      // O ciclo que a nota R-1 teme: o setGameState da reconciliacao reagenda o
-      // efeito. Aqui ele PARA, porque o portao `if (!gameState.pvpEnabled)`
-      // fecha antes do POST. Se algum dia isto virar 2, virou loop.
+      // Se a resposta tocasse o estado, o efeito reagendaria e reenviaria o POST
+      // (nota R-1). Se algum dia isto virar 2, virou loop.
       await act(async () => { vi.advanceTimersByTime(30000); await Promise.resolve(); });
       expect(perfis).toHaveLength(1);
     } finally { vi.useRealTimers(); }
   });
 
-  it('o jogador é AVISADO, com o nivel que falta — recusa silenciosa é o defeito', async () => {
+  it('abaixo do Vínculo 5 (XP local) o perfil nem sobe: nada a recusar', async () => {
     vi.useFakeTimers();
     try {
-      localStorage.setItem(STORAGE_KEYS.LANGUAGE, 'pt-BR');
-      resposta.atual = { ok: true, pvpEnabled: false, pvpBlocked: true, bondLevel: 3, minBondLevel: 5 };
-      abrirComSave(COM_PVP_LIGADO);
-      act(() => { screen.getByText('mais').click(); });
-      await act(async () => { vi.advanceTimersByTime(3000); await Promise.resolve(); });
-      await act(async () => { await Promise.resolve(); await Promise.resolve(); });
-
-      expect(avisos).toHaveLength(1);
-      // Numero CRU na expectativa: derivar de BOND_PVP_MIN_LEVEL seria auditar
-      // a constante com ela mesma. O jogador precisa ler o QUE FALTA.
-      expect(avisos[0]).toContain('5');
+      abrirComSave({ ...COM_PVP_LIGADO, totalXP: 100 });
+      await gesto();
+      expect(perfis).toHaveLength(0);
+      expect(estado().pvpEnabled).toBe(true);
     } finally { vi.useRealTimers(); }
+  });
+
+  it('save antigo com pvpEnabled:false (ou sem o campo) carrega LIGADO (migração do H13)', () => {
+    abrirComSave({ activities: [], tasks: [], pvpEnabled: false, totalXP: 0 });
+    expect(estado().pvpEnabled).toBe(true);
   });
 
   it('resposta NORMAL (sem pvpBlocked) nao mexe em nada', async () => {

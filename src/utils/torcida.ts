@@ -16,16 +16,20 @@
  * (`TIMING_CHEER_ENABLED = false` em `_duel.js`) e nenhum caminho de UI a usa:
  * o código fica para reaproveitar em outro lugar depois.
  *
- * Não é usada no Duelo da Arena (ele tem a curva e a carga de especial próprias
- * de `utils/arena.ts`, espelhadas em `simulateArenaRun`; mexer lá é decisão do
- * dono).
+ * O Duelo da Arena (`ArenaGame`, contra NPCs) TAMBÉM usa o gauge e o grito
+ * (`TorcidaLayer`/`TorcidaGauge`), mas a conta do golpe de torcida mora em
+ * `utils/arena.ts` (`arenaTorcidaTurn`): ele tem a curva e a carga de especial
+ * próprias, espelhadas em `simulateArenaRun` (H14, 02/10/2026).
  */
-import { DUEL_TAPS_FULL, TIMING_CHEER_ENABLED } from '../../functions/api/_duel.js';
+import { DUEL_TAPS_FULL, DUEL_TAPS_CAP, TIMING_CHEER_ENABLED } from '../../functions/api/_duel.js';
 
 export { TIMING_CHEER_ENABLED };
 
 /** Toques que enchem o gauge (o mesmo número do duelo). */
 export const TORCIDA_TAPS_FULL = DUEL_TAPS_FULL;
+
+/** Toques que contam por janela/turno (o resto é descartado: toque ilimitado não rende mais). */
+export const TORCIDA_TAPS_CAP = DUEL_TAPS_CAP;
 
 /**
  * Fração do `dmg` do estágio que é o golpe-BASE do pet (sem torcida). 0,5 mantém

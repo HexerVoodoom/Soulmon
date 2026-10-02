@@ -1320,7 +1320,8 @@ Decisões do dono na navegação do APK (`docs/AJUSTES-NAVEGACAO-2026-10-02.md` 
 
 1. **A TORCIDA é tocar em QUALQUER LUGAR da tela de combate; cada toque enche um
    GAUGE e o pet GASTA o gauge cheio num golpe ESPECIAL.** Vale para o **duelo
-   fantasma do Torneio**, o **Pesadelo** e a **Masmorra**. Os golpes normais
+   fantasma do Torneio**, o **Pesadelo**, a **Masmorra** e (desde a nota do item 6)
+   o **Duelo da Arena**. Os golpes normais
    continuam sendo do pet, sozinho; a torcida **só soma** (sem torcer, o golpe é o
    base, nunca menos); cada toque solta um "grito" ("VAI!", "GO!", ✦…) no ponto
    tocado — sem animação com movimento reduzido — e os botões da tela (sair) não
@@ -1371,3 +1372,60 @@ Decisões do dono na navegação do APK (`docs/AJUSTES-NAVEGACAO-2026-10-02.md` 
 5. **O convite do Pesadelo mostra uma criatura que já existe** (`ignar`, linha
    própria, alfa limpo) no lugar do `dungeon-spirit.png` (bolha roxa com franja
    clara). O arquivo antigo continua no repo, sem uso na tela.
+6. **O Duelo da Arena (`ArenaGame`, contra NPCs) ganha a MESMA torcida** (02/10/2026,
+   rodada 4, H14 — responde TORC-2). O dono não via mudança nenhuma no combate da
+   Arena porque a torcida só existia no Torneio/Pesadelo/Masmorra. Agora: o pet
+   golpeia SOZINHO (`ARENA_AUTO_ACC` = 0,73, `utils/arena.ts`; ~1,5 s depois de abrir o
+   turno), tocar em QUALQUER lugar enche o gauge de 8 toques (`TorcidaLayer` +
+   `TorcidaGauge`, botão "Torcer!") e o gauge cheio vira um **golpe de torcida
+   ×`ARENA_TORCIDA_MULT` (1,35 — o mesmo do duelo fantasma)** gasto pelo pet,
+   por cima do golpe do turno (básico ou o especial da escola, que segue com a
+   carga de 3 turnos e o laço de `simulateArenaRun`). A torcida só SOMA (sem
+   toque o golpe é o base); **teto por golpe** (um multiplicador, sem empilhar; o
+   gauge zera ao gastar; excedente de toque não rende); o Duelo é PvE e roda no
+   cliente, então não há o que "forjar" além do que o teto já limita.
+   - **Calibração** (`arena.test.ts`, 3.000 runs × 6 escolas, mesma semente):
+     base antiga (barra de timing, precisão 0,7 ± 0,25) **57,2%** de vitória média;
+     pet sozinho sem torcer **59,0%**; torcida a 2 toques/turno (especial a cada 4
+     turnos) **75,4%** (+16pp); a 4 toques/turno (a cada 2) **81,9%** (+23pp); gauge
+     cheio a cada golpe **92,3%** (+33pp, contra +31pp do duelo fantasma: 51% → 82%).
+     Sem torcer fica dentro das faixas do balanceamento (40–80%, dispersão ≤ 20pp).
+   - A **esquiva continua da `TimingBar`** (TORC-3, igual ao Pesadelo/Masmorra); a
+     barra de timing do ATAQUE fica atrás de `ARENA_TIMING_ATTACK_ENABLED = false`
+     (código e testes do caminho antigo guardados, sem apagar).
+   - **Alternativa que perdeu:** manter a barra de ataque no Duelo da Arena e
+     torcer só nos outros modos — perdeu porque o dono pediu "a mesma sensação nos
+     dois duelos" e a barra exigia olho e precisão que a decisão do item 1 tirou.
+   - Gatilho para rever: o ritmo de 1,5 s por golpe parecer curto/longo para
+     encher o gauge, ou o ×1,35 deixar o Duelo fácil demais para quem toca sem
+     parar (a conta acima é o piso/teto: +33pp).
+7. **PvP sem interruptor: o personagem já nasce no PvP** (02/10/2026, rodada 4,
+   H13). **Causa do "Join PvP não funciona":** o interruptor era `disabled`
+   (inerte por forma: tracejado, `aria-disabled`, sem `onClick`) para quem tinha
+   Vínculo < 5 — quase todo mundo que testa o APK — e ficava dentro da aba
+   Desafiar; quem passava do 5 ainda dependia da API de perfil
+   (`pushProfile`) e, se o save na nuvem estivesse atrás, o servidor devolvia
+   `pvpBlocked` e o cliente DESLIGAVA o toggle de volta com um toast. Ou seja:
+   ou não respondia ao toque, ou desfazia sozinho. **Agora:** `pvpEnabled` nasce
+   `true` e o load FORÇA `true` (migração: quem tinha `false` salvo — antigo ou
+   desligado antes — passa a ligado); o interruptor e o card "Ative o PvP acima"
+   saíram. O **gate de Vínculo 5 foi MANTIDO** (é regra de produto declarada:
+   `bond.ts` §6 / `level-de-conta.md` §6 — único destrave não-cosmético, social;
+   o servidor continua decidindo): ele só **segura a publicação do perfil**
+   (`publicarPerfil` não sobe abaixo do 5, e a recusa do servidor não desliga mais
+   nada nem avisa) e a aba Desafiar **explica**: "O Torneio abre no Vínculo 5",
+   barra de progresso, "você está no N, faltam X XP", o porquê (é social: apelido
+   e Soulmon numa lista pública) e "sem pressa". Aberto, sobra só o aviso do
+   apelido público (informação, não mais gesto).
+   - **Alternativa que perdeu: opt-in explícito** (o interruptor, ligado pela
+     pessoa, com o aviso do nick antes do gesto). Perdeu por decisão do dono —
+     "o personagem já nasce no PvP" — e porque na prática era uma porta fechada.
+   - **Risco aceito e listado:** sem o gesto, o apelido entra na lista pública ao
+     cruzar o Vínculo 5 sem consentimento ativo. Mitigação: o aviso fica na aba;
+     o servidor ainda não grava nada abaixo do 5. Pendência do dono (TORC-5): um
+     opt-out de privacidade em Configurações.
+   - Gatilho para rever: reclamação de privacidade, ou a decisão do dono sobre TORC-5.
+
+> **Nota 02/10/2026 (tarde, rodada 4):** itens 6 e 7 acima — o Duelo da Arena
+> entra na torcida (TORC-2 respondida) e o PvP perde o interruptor. O item 1 já
+> dizia "Torneio, Pesadelo e Masmorra"; a Arena é o quarto lugar.

@@ -1,28 +1,23 @@
 // @vitest-environment jsdom
 /**
- * O gate de PvP no CLIENTE — que é experiência, não trava.
+ * O requisito de Vínculo do Torneio, no CLIENTE — que é experiência, não trava.
  *
- * A trava é do servidor (`functions/api/community.js` + `_bond.js`): só ela é
- * inforjável. O que o cliente deve fazer é NÃO OFERECER o que ainda não está
- * disponível, e dizer por quê — botão que aceita o toque e some em silêncio é
- * pior que botão desligado.
+ * H13 (02/10/2026): o interruptor "Participar do PvP" SAIU — o personagem já
+ * nasce no PvP. Sobrou o requisito (Vínculo 5, `BOND_PVP_MIN_LEVEL`): abaixo
+ * dele a aba Desafiar EXPLICA por que não abre e o que falta (em vez de parecer
+ * quebrada); a trava inforjável continua sendo a do servidor
+ * (`functions/api/community.js` + `_bond.js`).
  *
- * E o outro lado, que não é sobre nível nenhum: ligar o PvP põe o NICK DA
+ * E o outro lado, que não é sobre nível nenhum: estar no PvP põe o NICK DA
  * PESSOA numa lista pública (`action=players` devolve `name` para qualquer um).
- * Consentimento sem informação não é consentimento — o aviso precisa estar na
- * tela ANTES do gesto, não num termo que ninguém abre.
+ * O aviso fica na tela — informação, já que não há mais gesto de consentimento.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render as rtlRender, screen, cleanup, fireEvent } from '@testing-library/react';
+import { render as rtlRender, screen, cleanup, fireEvent, waitFor } from '@testing-library/react';
 import { TournamentPage } from './TournamentPage';
 import { xpForLevel, BOND_PVP_MIN_LEVEL } from '../utils/bond';
 
-/**
- * minimal-ui F5 — a folha do Torneio abre na Faixa; o interruptor do PvP e o
- * aviso do nick moram na aba de desafiar, que é onde o gesto acontece. O
- * `render` daqui abre a folha e vai direto para essa aba — a intenção dos
- * testes (o gate e o aviso ANTES do gesto) não mudou.
- */
+/** A folha abre na Faixa; o requisito e o aviso moram na aba Desafiar. */
 function render(ui: Parameters<typeof rtlRender>[0]) {
   const r = rtlRender(ui);
   fireEvent.click(screen.getByRole('tab', { name: /Desafiar|Challenge/ }));
@@ -32,8 +27,6 @@ function render(ui: Parameters<typeof rtlRender>[0]) {
 const props = {
   saveId: 'a'.repeat(32),
   petStage: 'rookie',
-  pvpEnabled: false,
-  onTogglePvp: () => {},
   onMatchPlayed: () => {},
   trophies: [],
   language: 'pt-BR',
@@ -44,44 +37,68 @@ const props = {
 beforeEach(() => {
   vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('rede proibida no teste'))));
 });
-// Sem `globals: true` no vitest.config não há limpeza automática — e sem ela
-// o DOM do teste anterior sobra e o `getByRole` acha dois interruptores.
+/** A aba Faixa busca o ranking ao abrir; o que importa aqui é a busca de OPONENTES. */
+const buscouOponentes = () => vi.mocked(fetch).mock.calls.some(c => /opponents/.test(String(c[0])));
+
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
-describe('o PvP só é OFERECIDO a partir do Vínculo 5', () => {
-  it('abaixo do nível, o interruptor está inerte (aria-disabled, fora do Tab) e a tela diz o que falta', () => {
-    // Inerte por FORMA, não por `disabled` nativo nem opacidade (canvas Jogos
-    // D-J14): `aria-disabled` + `tabIndex=-1`, borda tracejada.
-    render(<TournamentPage {...props} totalXP={0} />);
-    const sw = screen.getByRole('switch', { name: /PvP/i });
-    expect(sw.getAttribute('aria-disabled')).toBe('true');
-    expect(sw.getAttribute('tabindex')).toBe('-1');
-    expect(sw.style.opacity).toBe('');
-    expect(screen.getByText(new RegExp(`Vínculo ${BOND_PVP_MIN_LEVEL}`))).toBeTruthy();
-  });
-
-  it('no nível 5, o interruptor está disponível', () => {
-    render(<TournamentPage {...props} totalXP={xpForLevel(BOND_PVP_MIN_LEVEL)} />);
-    expect(screen.getByRole('switch', { name: /PvP/i }).hasAttribute('aria-disabled')).toBe(false);
-  });
-
-  it('quem JÁ ligou continua com o interruptor disponível para desligar', () => {
-    // A decisão do dono: o gate vale para LIGAR. Travar aqui prenderia a pessoa
-    // dentro de uma lista pública da qual ela quer sair — o pior resultado
-    // possível de um gate de consentimento.
-    render(<TournamentPage {...props} pvpEnabled totalXP={0} />);
-    expect(screen.getByRole('switch', { name: /PvP/i }).hasAttribute('aria-disabled')).toBe(false);
+describe('não existe mais interruptor de PvP', () => {
+  it.each([0, xpForLevel(BOND_PVP_MIN_LEVEL)])('com totalXP=%i, nenhum switch na tela', totalXP => {
+    render(<TournamentPage {...props} totalXP={totalXP} />);
+    expect(screen.queryByRole('switch')).toBeNull();
+    expect(screen.queryByText(/Participar do PvP|Join PvP/)).toBeNull();
   });
 });
 
-describe('o nick vai para uma lista pública, e isso é dito', () => {
-  it('o aviso do nick público aparece junto do interruptor', () => {
-    render(<TournamentPage {...props} totalXP={xpForLevel(BOND_PVP_MIN_LEVEL)} />);
+describe('abaixo do Vínculo 5 a aba EXPLICA, não parece quebrada', () => {
+  it('diz que o Torneio abre no Vínculo 5, onde a pessoa está e quanto falta', () => {
+    render(<TournamentPage {...props} totalXP={0} />);
+    const card = document.querySelector('[data-torneio-requisito]') as HTMLElement;
+    expect(card).not.toBeNull();
+    expect(card.textContent).toMatch(new RegExp(`Vínculo ${BOND_PVP_MIN_LEVEL}`));
+    expect(card.textContent).toMatch(/faltam \d+ XP/);
+    expect(card.textContent).toMatch(/Sem pressa/); // progresso, nunca dívida
+    expect(card.querySelector('[role="progressbar"]')).not.toBeNull();
+  });
+
+  it('o porquê (é social) está dito, e o aviso do apelido público também', () => {
+    render(<TournamentPage {...props} totalXP={0} />);
     expect(screen.getByText(/lista pública/i)).toBeTruthy();
+  });
+
+  it('em inglês, tudo em inglês', () => {
+    render(<TournamentPage {...props} language="en-US" totalXP={0} />);
+    const card = document.querySelector('[data-torneio-requisito]') as HTMLElement;
+    expect(card.textContent).toMatch(new RegExp(`opens at Bond ${BOND_PVP_MIN_LEVEL}`));
+    expect(card.textContent).toMatch(/XP to go/);
+    expect(card.textContent).not.toMatch(/Vínculo|faltam/);
+  });
+
+  it('não procura oponentes enquanto o requisito não é cumprido', async () => {
+    render(<TournamentPage {...props} totalXP={0} />);
+    await new Promise(r => setTimeout(r, 50));
+    expect(buscouOponentes()).toBe(false); // (a aba Faixa já busca o ranking, e isso é outra coisa)
+  });
+});
+
+describe('a partir do Vínculo 5 o Desafiar abre, sem passo nenhum antes', () => {
+  it('sem card de requisito; procura oponentes; mostra o aviso do apelido público', async () => {
+    render(<TournamentPage {...props} totalXP={xpForLevel(BOND_PVP_MIN_LEVEL)} />);
+    expect(document.querySelector('[data-torneio-requisito]')).toBeNull();
+    expect(screen.queryByText(/Ative o PvP|Enable PvP/)).toBeNull();
+    expect(document.querySelector('[data-torneio-aviso-publico]')?.textContent).toMatch(/lista pública/i);
+    await waitFor(() => expect(buscouOponentes()).toBe(true));
   });
 
   it('o aviso está em inglês quando o idioma é inglês', () => {
     render(<TournamentPage {...props} language="en-US" totalXP={xpForLevel(BOND_PVP_MIN_LEVEL)} />);
     expect(screen.getByText(/public list/i)).toBeTruthy();
+  });
+});
+
+describe('a legenda da torcida aparece nos dois casos', () => {
+  it.each([0, xpForLevel(BOND_PVP_MIN_LEVEL)])('totalXP=%i', totalXP => {
+    render(<TournamentPage {...props} totalXP={totalXP} />);
+    expect(document.querySelector('[data-torcida-legenda]')).not.toBeNull();
   });
 });

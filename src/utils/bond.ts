@@ -550,9 +550,11 @@ export const BOND_PVP_MIN_LEVEL = 5;
  * estágio, dias perfeitos e HP), quem cruzou uma vez cruzou para sempre. Não há
  * janela, decaimento nem "proteção de nível" a manter.
  *
- * O nível NÃO substitui o consentimento: ele só torna o PvP DISPONÍVEL. Ligar
- * continua sendo um ato explícito, com o aviso de que o nick vai para uma lista
- * pública.
+ * ⚠️ Desde 02/10/2026 (H13) não existe mais o interruptor "Participar do PvP":
+ * o personagem já nasce no PvP, e este nível é o ÚNICO requisito — a aba Desafiar
+ * explica o que falta em vez de parecer quebrada. O aviso de que o nick vai para
+ * uma lista pública segue na tela (informação, não mais um gesto de consentimento;
+ * opt-out de privacidade = pendência TORC-5 do dono).
  */
 export function meetsPvpBond(totalXP: number): boolean {
   return bondLevelFor(Math.max(0, safe(totalXP))) >= BOND_PVP_MIN_LEVEL;

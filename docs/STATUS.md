@@ -9,6 +9,19 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 02/10/2026 (tarde) — Rodada 4: torcida no Duelo da Arena (H14) e PvP sem interruptor (H13)
+>
+> - **H14:** `ArenaGame` (PvE contra NPCs) ganhou a torcida por toques: o pet golpeia SOZINHO
+>   (`ARENA_AUTO_ACC`), `TorcidaLayer` + `TorcidaGauge` (8 toques), golpe de torcida ×1,35
+>   (`arenaTorcidaTurn`) por cima do golpe do turno; esquiva segue na `TimingBar`; barra de ataque
+>   atrás de `ARENA_TIMING_ATTACK_ENABLED = false`. Calibração medida em `arena.test.ts`: base 57,2%,
+>   sem torcer 59,0%, 4 toques/turno 81,9%, gauge cheio 92,3% (duelo fantasma: +31pp; aqui +33pp).
+> - **H13:** causa do "Join PvP não funciona": o switch era inerte (`aria-disabled`) abaixo do Vínculo 5
+>   e, acima, o `pvpBlocked` do servidor o desligava de volta. Removido; `pvpEnabled` nasce e carrega
+>   `true`. Gate de Vínculo 5 MANTIDO (regra de produto, `bond.ts` §6): segura a publicação do perfil
+>   e a aba Desafiar explica o requisito. REGISTRO §20 itens 6–7.
+> - **Fica para o dono:** TORC-5 (opt-out de privacidade da lista pública), TORC-1/3/4 — `PERGUNTAS-DO-DONO.md`.
+
 > ## 02/10/2026 — Combate: torcida por TOQUES + gauge, Masmorra, Feira (rodada 3 do dono, frente C/E/G4)
 >
 > Registro: `REGISTRO-DE-DECISOES.md` §20. **Torcida** = tocar em qualquer lugar da luta;

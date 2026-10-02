@@ -5,7 +5,9 @@ import { describe, it, expect } from 'vitest';
 import {
   getArenaAttributes, COUNTERS, buildArenaRound, simulateArenaRun,
   SPECIAL_EFFECTS, type ArenaArchetypeConfig, type BestiaryCreature,
+  arenaTorcidaTurn, ARENA_TORCIDA_MULT, ARENA_AUTO_ACC, PERFECT_ACC,
 } from './arena';
+import { TORCIDA_TAPS_FULL, TORCIDA_TAPS_CAP } from './torcida';
 import { CLASS_ELEMENT_ORDER } from './soulProfile/types';
 import type { Ficha } from './soulProfile/ficha/types';
 import type { EscolaId } from './soulProfile/ficha/types';
@@ -143,5 +145,78 @@ describe('simulação de balance — os coeficientes obedecem a este teste', () 
     expect(min, `taxas: ${detail}`).toBeGreaterThanOrEqual(0.4);
     expect(max, `taxas: ${detail}`).toBeLessThanOrEqual(0.8);
     expect(max - min, `spread: ${detail}`).toBeLessThanOrEqual(0.2);
+  });
+});
+
+// ── Torcida por toques no Duelo da Arena (H14, 02/10/2026) ──────────────────
+//
+// O pet golpeia sozinho (`autoAttack`) e a torcida só SOMA. A calibração é
+// medida aqui, não prometida: sem torcer ≈ a simulação base (timing 0,7); com
+// a torcida cheia, o ganho médio é do tamanho do duelo fantasma (+31pp:
+// 51% → 82%, `functions/api/_duel.test.js`).
+describe('torcida por toques — a conta e a calibração', () => {
+  const ESCOLAS: EscolaId[] = [
+    'combate_fisico', 'longo_alcance', 'conjuracao', 'evocacao', 'benca', 'maldicao',
+  ];
+  const RUNS = 3000;
+  const taxas = (opts: Record<string, unknown>) => ESCOLAS.map(escola => {
+    const config: ArenaArchetypeConfig = {
+      stage: 'rookie', escolaBasica: escola, escolaEspecial: escola,
+      elementoBasica: 'vigor', elementoEspecial: 'vigor',
+      attrs: { principal: 'vigor', secundario: 'vigor' },
+    };
+    const rng = mulberry32(20260818);
+    let wins = 0;
+    for (let i = 0; i < RUNS; i++) {
+      if (simulateArenaRun(config, { rng, pool: POOL, accMean: 0.7, ...opts }).won) wins++;
+    }
+    return wins / RUNS;
+  });
+  const media = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
+
+  it('arenaTorcidaTurn: só gasta com o gauge cheio; excedente não rende; nunca abaixo de 1', () => {
+    expect(arenaTorcidaTurn(0)).toEqual({ mult: 1, special: false, gaugeLeft: 0 });
+    expect(arenaTorcidaTurn(TORCIDA_TAPS_FULL - 1)).toEqual({ mult: 1, special: false, gaugeLeft: TORCIDA_TAPS_FULL - 1 });
+    expect(arenaTorcidaTurn(TORCIDA_TAPS_FULL)).toEqual({ mult: ARENA_TORCIDA_MULT, special: true, gaugeLeft: 0 });
+    // Teto por golpe: 1000 toques valem o mesmo que 8.
+    expect(arenaTorcidaTurn(1000).mult).toBe(ARENA_TORCIDA_MULT);
+    // Entrada podre não forja nada.
+    for (const lixo of [NaN, -5, Infinity * 0]) expect(arenaTorcidaTurn(lixo).mult).toBe(1);
+    expect(ARENA_TORCIDA_MULT).toBeGreaterThan(1);
+    expect(ARENA_AUTO_ACC).toBeLessThan(PERFECT_ACC); // o golpe automático nunca é crítico
+  });
+
+  it('sem torcer, o golpe automático rende ≈ a simulação base (±4pp na média) e respeita as faixas', () => {
+    const base = taxas({});
+    const auto = taxas({ autoAttack: true });
+    expect(Math.abs(media(auto) - media(base))).toBeLessThanOrEqual(0.04);
+    expect(Math.min(...auto), JSON.stringify(auto)).toBeGreaterThanOrEqual(0.4);
+    expect(Math.max(...auto), JSON.stringify(auto)).toBeLessThanOrEqual(0.8);
+    expect(Math.max(...auto) - Math.min(...auto), JSON.stringify(auto)).toBeLessThanOrEqual(0.2);
+  });
+
+  it('a torcida só SOMA: cada nível de toque rende mais que o anterior, em toda escola', () => {
+    const n0 = taxas({ autoAttack: true });
+    const n2 = taxas({ autoAttack: true, tapsPerTurn: 2 });
+    const n4 = taxas({ autoAttack: true, tapsPerTurn: 4 });
+    const n8 = taxas({ autoAttack: true, tapsPerTurn: 8 });
+    ESCOLAS.forEach((_, i) => {
+      expect(n2[i]).toBeGreaterThan(n0[i]);
+      expect(n4[i]).toBeGreaterThan(n2[i]);
+      expect(n8[i]).toBeGreaterThanOrEqual(n4[i]);
+    });
+  });
+
+  it('torcida cheia (gauge pronto a cada golpe) ≈ o ganho do duelo fantasma (+31pp, faixa +25..+40)', () => {
+    const ganho = media(taxas({ autoAttack: true, tapsPerTurn: TORCIDA_TAPS_FULL }))
+      - media(taxas({ autoAttack: true }));
+    expect(ganho).toBeGreaterThanOrEqual(0.25);
+    expect(ganho).toBeLessThanOrEqual(0.4);
+  });
+
+  it('toque ilimitado não rende mais que o teto: 1000 toques por turno = TORCIDA_TAPS_CAP', () => {
+    const teto = taxas({ autoAttack: true, tapsPerTurn: TORCIDA_TAPS_CAP });
+    const abuso = taxas({ autoAttack: true, tapsPerTurn: 1000 });
+    expect(abuso).toEqual(teto);
   });
 });

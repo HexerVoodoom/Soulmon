@@ -4681,6 +4681,16 @@ RING em que cada elemento bate os DOIS seguintes e apanha dos DOIS anteriores �
 `SPECIAL_CHARGE_TURNS` (3), crítico em `PERFECT_ACC` (0,92) com `CRIT_MULT` (1,5)
 e cura de `ROUND_CLEAR_HEAL` (30%) ao limpar a rodada. Paga **Bits**.
 
+⚰️ **Desde 02/10/2026 (H14) o Duelo da Arena tem TORCIDA por toques** (REGISTRO §20.6):
+o pet golpeia SOZINHO (`ARENA_AUTO_ACC` = 0,73, ~1,5 s após abrir o turno), tocar em
+qualquer lugar enche o gauge de `TORCIDA_TAPS_FULL` (8) e o gauge cheio vira um golpe
+de torcida ×`ARENA_TORCIDA_MULT` (1,35) por cima do golpe do turno (`arenaTorcidaTurn`);
+sem toque o golpe é o base, o gauge zera ao gastar, excedente não rende. A esquiva
+segue na `TimingBar`; a barra de ataque ficou atrás de `ARENA_TIMING_ATTACK_ENABLED = false`.
+Medido em `arena.test.ts` (`simulateArenaRun({ autoAttack, tapsPerTurn })`): base 57,2% de
+vitória média, pet sozinho 59,0%, 2 toques/turno 75,4%, 4 toques/turno 81,9%, gauge cheio
+a cada golpe 92,3%.
+
 ⚠️ **A ordem de turno do componente é a MESMA de `simulateArenaRun`, passo a
 passo**, e isso não é preferência: os números dos especiais foram calibrados por
 simulação de 300+ runs por arquétipo (taxa de vitória 40–80%, dispersão ≤ 20 pp).
@@ -4694,7 +4704,8 @@ partida, o rank, a season, os troféus) · `functions/api/_duel.js` (a luta) · 
 **Régua.** `src/utils/tournamentSeason.test.ts`,
 `src/utils/tournamentTiers.test.ts` ("a faixa nunca desce por causa do que os
 outros fizeram"), `src/utils/arena.test.ts` (a simulação de balanceamento — a
-autoridade sobre os coeficientes), `src/components/ArenaGame.render.test.tsx`,
+autoridade sobre os coeficientes), `src/components/ArenaGame.render.test.tsx` (caminho antigo, barra de ataque),
+`src/components/ArenaGame.torcida.render.test.tsx` (pet sozinho + torcida),
 `functions/api/community.test.js`, `functions/api/community.pvpGate.test.js`,
 `functions/api/community.duelo.test.js` (desistência = derrota, semente só no servidor),
 `src/components/TournamentPage.bondGate.test.tsx`.
@@ -4733,7 +4744,7 @@ de vermelho (tinta neutra; só a vitória ganha cor). Não deixa perder sem ganh
 nada — e não deixa desistir sem perder. A Arena **não cobra coração nem tem porta de entrada paga**.
 
 **Onde a UI mostra.** `src/components/TournamentPage.tsx` (faixa → ranking →
-oponentes → troféus → o toggle de PvP), `src/components/DuelScreen.tsx` (o duelo fantasma), `src/components/ArenaGame.tsx` (aberta
+oponentes → troféus; sem toggle de PvP desde 02/10/2026 — abaixo do Vínculo 5 a aba explica o requisito), `src/components/DuelScreen.tsx` (o duelo fantasma), `src/components/ArenaGame.tsx` (aberta
 pelo lote Duelo da área Arena — `DueloSheet`; ⚰️ antes, da `ActivitiesPage`).
 
 ---
