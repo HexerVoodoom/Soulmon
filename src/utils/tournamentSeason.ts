@@ -58,15 +58,22 @@ export function getTournamentWindow(now: Date = new Date()): TournamentWindow {
   return { isOpen: false, daysUntilNext: (ROUND_START_DAY - day + 7) % 7, daysLeft: 0 };
 }
 
-/** Frase curta para a UI, nos dois idiomas. Nunca cobra presença. */
+/**
+ * Texto MÍNIMO para a UI, nos dois idiomas (02/10/2026, pedido do dono: sem
+ * frases). Rodada aberta: "Dias restantes: N". Fora da janela: "Próxima
+ * rodada: N dias". Singular/plural coerente (1 dia / 1 day). Nunca cobra
+ * presença.
+ */
 export function tournamentWindowLabel(win: TournamentWindow, language: 'pt-BR' | 'en-US'): string {
   const isPt = language === 'pt-BR';
   if (win.isOpen) {
+    const n = win.daysLeft;
     return isPt
-      ? `Rodada rolando — mais ${win.daysLeft} ${win.daysLeft === 1 ? 'dia' : 'dias'}. É quando tem mais gente por aqui.`
-      : `Round is on — ${win.daysLeft} more ${win.daysLeft === 1 ? 'day' : 'days'}. This is when the most people are around.`;
+      ? `${n === 1 ? 'Dia restante' : 'Dias restantes'}: ${n}`
+      : `${n === 1 ? 'Remaining day' : 'Remaining days'}: ${n}`;
   }
+  const n = win.daysUntilNext;
   return isPt
-    ? `Próxima rodada em ${win.daysUntilNext} ${win.daysUntilNext === 1 ? 'dia' : 'dias'}. Dá pra lutar hoje do mesmo jeito.`
-    : `Next round in ${win.daysUntilNext} ${win.daysUntilNext === 1 ? 'day' : 'days'}. You can still battle today.`;
+    ? `Próxima rodada: ${n} ${n === 1 ? 'dia' : 'dias'}`
+    : `Next round: ${n} ${n === 1 ? 'day' : 'days'}`;
 }

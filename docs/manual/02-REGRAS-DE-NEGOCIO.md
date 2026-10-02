@@ -4604,8 +4604,8 @@ minijogo à parte, que só empresta o nome). Cada uma abaixo.
 
 Duas decisões deliberadas: a janela é de **DIAS, nunca de horas** (evento de 3 h
 num horário fixo exclui quem trabalha), e **fora da janela nada fecha** — o
-Torneio continua inteiro disponível. `tournamentWindowLabel` diz isso na letra:
-"Dá pra lutar hoje do mesmo jeito."
+Torneio continua inteiro disponível. `tournamentWindowLabel` fala o mínimo (02/10/2026): "Dias restantes: N" na rodada,
+"Próxima rodada: N dias" fora — e nada fecha, o menu do Torneio segue inteiro.
 
 ### As faixas
 

@@ -39,11 +39,15 @@ describe('rodada do torneio', () => {
     }
   });
 
-  it('fora da janela o texto deixa claro que nada está trancado', () => {
-    const fechado = tournamentWindowLabel(getTournamentWindow(at(11)), 'pt-BR');
-    expect(fechado).toMatch(/dá pra lutar hoje/i);
-    const en = tournamentWindowLabel(getTournamentWindow(at(11)), 'en-US');
-    expect(en).toMatch(/still battle/i);
+  it('o texto é MÍNIMO: "Dias restantes: N" na rodada, "Próxima rodada: N dias" fora', () => {
+    expect(tournamentWindowLabel(getTournamentWindow(at(7)), 'pt-BR')).toBe('Dias restantes: 3');
+    expect(tournamentWindowLabel(getTournamentWindow(at(7)), 'en-US')).toBe('Remaining days: 3');
+    expect(tournamentWindowLabel(getTournamentWindow(at(9)), 'pt-BR')).toBe('Dia restante: 1');
+    expect(tournamentWindowLabel(getTournamentWindow(at(9)), 'en-US')).toBe('Remaining day: 1');
+    expect(tournamentWindowLabel(getTournamentWindow(at(10)), 'pt-BR')).toBe('Próxima rodada: 4 dias');
+    expect(tournamentWindowLabel(getTournamentWindow(at(13)), 'pt-BR')).toBe('Próxima rodada: 1 dia');
+    expect(tournamentWindowLabel(getTournamentWindow(at(13)), 'en-US')).toBe('Next round: 1 day');
+    expect(tournamentWindowLabel(getTournamentWindow(at(10)), 'en-US')).toBe('Next round: 4 days');
   });
 
   it('o convite nunca cobra presença', () => {

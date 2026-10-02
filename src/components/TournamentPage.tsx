@@ -52,6 +52,7 @@
  * visor 288×112 da arena e as duas criaturas a 64 na vitória.
  */
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { Language } from '../utils/i18n';
 import { TOURNAMENT_TIERS } from '../utils/tournamentTiers';
 import { tournamentShopItems } from '../utils/mercadoCatalog';
@@ -72,7 +73,7 @@ import { TIER_INSIGNIA_ART } from '../assets/soulmon/icones-ui';
 import { getTournamentWindow, tournamentWindowLabel } from '../utils/tournamentSeason';
 import { Icon } from './ui/Icon';
 import { MiniGlass } from './ui/MiniGlass';
-import { PixelMeter, PixelTabs } from './pixel/PixelKit';
+import { PixelMeter } from './pixel/PixelKit';
 import { RitualDialog } from './ritual/RitualKit';
 import { GameVisor, VisorSprite, DIALOG_VISOR_W } from './games/GameKit';
 import { sm2Button, sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
@@ -106,6 +107,10 @@ interface TournamentPageProps {
   /** A loja de Emblemas (minimal-ui F5: mora no Torneio, na Arena). A
    *  compra continua sendo do `handleShopBuy`; aqui só a prateleira. */
   shop?: { ownership: ShopOwnership; actions: ShopActions };
+  /** Onde pôr o indicador da faixa: o canto direito da linha do título (que é
+   *  da folha, `AreaSheet`). `undefined` = sem folha em volta, o indicador vai
+   *  inline no topo; `null` = a folha ainda não entregou o encaixe (espera). */
+  headSlot?: HTMLElement | null;
 }
 
 /** Emblemas: serifa de medalha (regra das três moedas) em ouro-TINTA. */
@@ -162,7 +167,7 @@ function TierMark({ id, size, state }: { id: string; size: 24 | 32; state: 'curr
   );
 }
 
-export function TournamentPage({ saveId, petStage, petLine, trophies, language, emblems, onEarnEmblems, totalXP, onMatchPlayed, weeklyMissions, onClaimWeekly, shop }: TournamentPageProps) {
+export function TournamentPage({ saveId, petStage, petLine, trophies, language, emblems, onEarnEmblems, totalXP, onMatchPlayed, weeklyMissions, onClaimWeekly, shop, headSlot }: TournamentPageProps) {
   const isPt = language === 'pt-BR';
   const lang: Language = isPt ? 'pt-BR' : 'en-US';
   const [opponents, setOpponents] = useState<Opponent[] | null>(null);
@@ -202,10 +207,12 @@ export function TournamentPage({ saveId, petStage, petLine, trophies, language, 
   const visibleRank = rankExpanded || myIndex < 0
     ? rankRows
     : rankRows.slice(Math.max(0, myIndex - RANK_WINDOW), myIndex + RANK_WINDOW + 1);
-  /* minimal-ui F5 — a folha do Torneio abre na FAIXA (mock aprovado,
-     `propostas/arena/mock.html`): é a leitura que mede o jogador contra ele
-     mesmo, e por isso vem antes de desafiar e antes do ranking. */
-  const [tab, setTab] = useState<'rank' | 'arena' | 'missions' | 'shop'>('rank');
+  /* 02/10/2026 — o Torneio abre em DESAFIAR (pedido do dono): a pessoa cai
+     direto na opção de entrar em combate. A faixa saiu do menu e virou o
+     indicador do canto do título (abre `tiersOpen`). */
+  const [tab, setTab] = useState<'arena' | 'missions' | 'shop'>('arena');
+  /** A folha das faixas (antiga aba "Faixa") — abre pelo indicador do título. */
+  const [tiersOpen, setTiersOpen] = useState(false);
   const { flash, say } = useShopFlash();
 
   /* H13 (02/10/2026): o interruptor "Participar do PvP" saiu — o personagem já
@@ -232,7 +239,7 @@ export function TournamentPage({ saveId, petStage, petLine, trophies, language, 
 
   useEffect(() => { loadOpponents(); }, [pvpAberto, saveId]);
   useEffect(() => {
-    if (tab === 'rank' && !rank) {
+    if (!rank) {
       /* `?? []` é DEFESA, não redundância: se a resposta vier sem `rank`,
          gravar `undefined` deixaria `rank` falso, e os dois ramos de estado
          vazio/falha exigem `rank` verdadeiro — a área ficaria em branco e o
@@ -242,7 +249,7 @@ export function TournamentPage({ saveId, petStage, petLine, trophies, language, 
         .then(r => setRank(r.rank ?? []))
         .catch(() => { setRank([]); setRankFailed(true); });
     }
-  }, [tab, rank]);
+  }, [rank]);
 
   /* Com servidor que manda a ficha de luta, o "Desafiar" abre o DUELO: o
      servidor gasta a partida e sorteia a semente (`startDuel`); os pets lutam
@@ -299,12 +306,39 @@ export function TournamentPage({ saveId, petStage, petLine, trophies, language, 
     }
   };
 
+  /** Menu SÓ DE ÍCONE (02/10/2026): o nome vai no `aria-label`/`title`. Glifos:
+   *  `swords` (combate, Material), `task_alt` (missões) e `storefront` (loja) —
+   *  estes dois com desenho próprio em `NavGlyphs`. */
   const TABS = [
-    { key: 'rank' as const, label: isPt ? 'Faixa' : 'Tier' },
-    { key: 'arena' as const, label: isPt ? 'Desafiar' : 'Challenge' },
-    { key: 'missions' as const, label: isPt ? 'Missões' : 'Missions' },
-    ...(shop ? [{ key: 'shop' as const, label: isPt ? 'Loja' : 'Shop' }] : []),
+    { key: 'arena' as const, label: isPt ? 'Desafiar' : 'Challenge', icon: 'swords' },
+    { key: 'missions' as const, label: isPt ? 'Missões' : 'Missions', icon: 'task_alt' },
+    ...(shop ? [{ key: 'shop' as const, label: isPt ? 'Loja' : 'Shop', icon: 'storefront' }] : []),
   ];
+
+  /** O indicador da faixa (canto do título): a insígnia atual; toque abre a folha.
+   *  Se o ranking falhou, vira a nuvem cortada — tocar tenta de novo. */
+  const tierIndicator = rank === null ? null : (
+    <button
+      type="button"
+      data-tier-indicator
+      onClick={() => {
+        if (rankFailed) { setRank(null); setRankFailed(false); } else setTiersOpen(true);
+      }}
+      aria-label={rankFailed
+        ? (isPt ? 'Faixa: não deu para carregar — tentar de novo' : "Tier: couldn't load — try again")
+        : `${isPt ? 'Faixa' : 'Tier'}: ${isPt ? standing!.tier.namePt : standing!.tier.nameEn}`}
+      title={isPt ? 'Faixa' : 'Tier'}
+      style={{
+        width: 44, height: 44, flexShrink: 0, padding: 0, cursor: 'pointer',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'none', border: 'none', color: 'var(--sm2-ink)',
+      }}
+    >
+      {rankFailed
+        ? <Icon name="cloud_off" size={24} tone="muted" />
+        : <TierMark id={standing!.tier.id} size={32} state="current" />}
+    </button>
+  );
 
 
   if (duel) {
@@ -330,6 +364,10 @@ export function TournamentPage({ saveId, petStage, petLine, trophies, language, 
           rodada da semana (RITUAL, não tranca — `utils/tournamentSeason.ts`)
           e os Emblemas, ícone em ouro + número com serifa: as três moedas
           continuam impossíveis de confundir. */}
+      {headSlot === undefined && tierIndicator && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: -8 }}>{tierIndicator}</div>
+      )}
+      {headSlot && tierIndicator && createPortal(tierIndicator, headSlot)}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <p style={{ ...sm2Hint, flex: 1, minWidth: 0, margin: 0 }}>{tournamentWindowLabel(round, isPt ? 'pt-BR' : 'en-US')}</p>
         <span
@@ -362,12 +400,25 @@ export function TournamentPage({ saveId, petStage, petLine, trophies, language, 
         </ul>
       )}
 
-      <PixelTabs
-        items={TABS.map(t => ({ key: t.key, label: t.label }))}
-        value={tab}
-        onChange={setTab}
-        ariaLabel={isPt ? 'Seções do torneio' : 'Tournament sections'}
-      />
+      <div className="sm2-kit-tabs" role="tablist" aria-label={isPt ? 'Seções do torneio' : 'Tournament sections'}>
+        {TABS.map(t => {
+          const on = t.key === tab;
+          return (
+            <button
+              key={t.key}
+              type="button"
+              role="tab"
+              aria-selected={on}
+              aria-label={t.label}
+              title={t.label}
+              onClick={() => setTab(t.key)}
+              className={on ? 'sm2-kit-tab sm2-kit-tab-on' : 'sm2-kit-tab'}
+            >
+              <Icon name={t.icon} size={24} fill={on ? 1 : 0} />
+            </button>
+          );
+        })}
+      </div>
 
       {/* Requisito do Torneio (H13): sem interruptor. Abaixo do Vínculo
           mínimo a aba diz POR QUE não abre e O QUE falta — progresso, nunca
@@ -515,8 +566,30 @@ export function TournamentPage({ saveId, petStage, petLine, trophies, language, 
         </div>
       )}
 
-      {tab === 'rank' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {/* Folha das FAIXAS (02/10/2026): a antiga aba "Faixa" virou isto — abre
+          pelo indicador do canto do título. Mesma regra e mesmo texto de
+          progresso de antes (a faixa vem ANTES do ranking, só sobe); só mudou
+          de lugar. Voltar = seta no topo ESQUERDO (padrão B6/I3). */}
+      {tiersOpen && (
+        <RitualDialog label={isPt ? 'Faixas do Torneio' : 'Tournament tiers'} onClose={() => setTiersOpen(false)} zIndex={400} maxWidth={380} style={{ gap: 8 }}>
+          <button
+            type="button"
+            onClick={() => setTiersOpen(false)}
+            aria-label={isPt ? 'Voltar' : 'Back'}
+            title={isPt ? 'Voltar' : 'Back'}
+            data-tiers-back
+            style={{
+              alignSelf: 'flex-start', width: 44, height: 44, margin: '-8px 0 -8px -10px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--sm2-ink)',
+            }}
+          >
+            <Icon name="arrow_back" size={24} />
+          </button>
+          <h2 style={{ margin: 0, fontFamily: 'var(--sm2-font-display)', fontWeight: 600, fontSize: 'var(--sm2-text-lg)', lineHeight: 'var(--sm2-leading-title)', color: 'var(--sm2-ink)' }}>
+            {isPt ? 'Faixas' : 'Tiers'}
+          </h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {rank === null && (
             <p role="status" style={{ ...sm2Hint, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '24px 0' }}>
               <Icon name="sync" size={24} tone="primary" className="animate-spin" />
@@ -654,6 +727,7 @@ export function TournamentPage({ saveId, petStage, petLine, trophies, language, 
             </button>
           )}
         </div>
+        </RitualDialog>
       )}
 
       {/* ─── AS MISSÕES DA SEMANA ──────────────────────────────────────────

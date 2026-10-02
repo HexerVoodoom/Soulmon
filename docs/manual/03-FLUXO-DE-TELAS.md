@@ -149,7 +149,7 @@ e reserva a metade de cima dela (= 1/3 da tela) para o NPC + balão, numa
 `data-area-sheet-npc-zone` com `flex: '0 0 50%'`. A **arte** do NPC agora é
 resolvida por SUB-LOJA (lote), não mais por área inteira: `lotNpcArt(areaId,
 lotId)` (`src/assets/soulmon/npcs/index.ts`, tabela `LOT_NPC_ART` cobrindo os
-17 lotes (medido em 30/09/2026: `jogos:salao`, `jogos:mente`, `jogos:refugio` entram no lugar de `jogos:ppt`/`exploracao:dino`); todos com busto próprio desde 30/09/2026 (leva `npcs-flare`); ⚰️ `PLACEHOLDER_NPC_ART` (a coruja-cervo e o poring) saiu do bundle). Há ainda dois mapas de bustos **sem chamada hoje** — nenhuma tela os desenha, decisão de design pendente do dono (`PERGUNTAS-DO-DONO.md`, NPC-1): `FUNCTION_NPC_ART` (seis NPCs de função: Ambra/onboarding, Iris/oráculo, Faro/conta, Sona/sono, Nuri/cuidados, Tobi/config; fala em `functionNpcVoice`) e `EXTRA_NPC_ART` (15 bustos de ofício, Scoria, Kama, Sable… Selene, Mallo, Kova; fala em `EXTRA_NPC_VOICE`). Nomes dos 17: Medra (`mercado:conquistas`), Rhinoco (`arena:duelo`), Fanfare (`arena:feira`), Brume (`exploracao:passeio`, ⚰️ Zeph), Tessela (`jogos:mente`), Bobbi (`jogos:refugio`), Bento (`laboratorio:pet`, ⚰️ Tico — nome de terceiro), Quill (`laboratorio:stats`), Nino (`hall:amigos`), Bastia (`hall:guilda`; era a Marla-árvore até 02/10/2026).
+17 lotes (medido em 30/09/2026: `jogos:salao`, `jogos:mente`, `jogos:refugio` entram no lugar de `jogos:ppt`/`exploracao:dino`); todos com busto próprio desde 30/09/2026 (leva `npcs-flare`); ⚰️ `PLACEHOLDER_NPC_ART` (a coruja-cervo e o poring) saiu do bundle). Há ainda dois mapas de bustos **sem chamada hoje** — nenhuma tela os desenha, decisão de design pendente do dono (`PERGUNTAS-DO-DONO.md`, NPC-1): `FUNCTION_NPC_ART` (seis NPCs de função: Ambra/onboarding, Iris/oráculo, Faro/conta, Sona/sono, Nuri/cuidados, Tobi/config; fala em `functionNpcVoice`) e `EXTRA_NPC_ART` (15 bustos de ofício, Scoria, Kama, Sable… Selene, Mallo, Kova; fala em `EXTRA_NPC_VOICE`). Nomes dos 17: Medra (`mercado:conquistas`), Tuska (`arena:duelo`), Fanfare (`arena:feira`), Brume (`exploracao:passeio`, ⚰️ Zeph), Tessela (`jogos:mente`), Bobbi (`jogos:refugio`), Bento (`laboratorio:pet`, ⚰️ Tico — nome de terceiro), Quill (`laboratorio:stats`), Nino (`hall:amigos`), Bastia (`hall:guilda`; era a Marla-árvore até 02/10/2026).
 A **fala** (nome + linha) continua vindo de `areaNpcVoice(areaId, language)` —
 ainda por ÁREA, não por sub-loja. `AreaSheet` ganhou as props `lotId?: string |
 null` e `language: Language` (agora obrigatória):
@@ -1530,8 +1530,15 @@ o `CLAUDE.md` já registra que ele **não** está em `utils/dungeon.ts`).
 **Chega por**: área Arena → lote Torneio (`AreaSheet`, minimal-ui F5); ⚰️ antes,
 `onOpenTournament` da `ActivitiesPage` · **Sai para**: fechar a folha ou voltar ao Mapa.
 
-- **O que se vê/faz**: a **faixa** (`getTierStanding`) vem **antes** do ranking;
-  o ranking é uma **janela de ±`RANK_WINDOW` (3) posições**, com a season inteira a um toque; o
+- **O que se vê/faz** (desde 02/10/2026): o menu tem **três entradas só de ícone** —
+  Desafiar (`swords`), Missões (`task_alt`) e Loja (`storefront`, só com `shop`); o nome
+  fica em `aria-label`/`title`. A folha **abre em Desafiar** (cai direto no combate). A
+  linha do topo é só `tournamentWindowLabel` ("Dias restantes: N" / "Remaining days: N")
+  + a Honra. ⚰️ A aba "Faixa" saiu do menu: a **faixa** atual virou um **indicador no canto
+  direito da linha do título** (`data-tier-indicator`, `TierMark` 32 px, portal para o
+  `headSlotRef` do `AreaSheet`); tocar abre a **folha das faixas** (`RitualDialog`, seta de
+  voltar no topo esquerdo `data-tiers-back`) com a faixa atual, as cinco insígnias, o
+  progresso e "só sobe". A faixa (`getTierStanding`) continua **antes** do ranking; o ranking é uma **janela de ±`RANK_WINDOW` (3) posições**, com a season inteira a um toque; o
   placar de derrota é tinta neutra; perder também rende Honra e a tela diz. A marca da faixa (`TierMark`) é a INSÍGNIA em pixel da rodada 3 (`TIER_INSIGNIA_ART`, 32 px na faixa atual e 24 px na escada), apagada por FILTRO (dessaturada e escura) na faixa não alcançada, nunca por `opacity`; sem arte para o id, cai no glifo Material de antes (`TIER_ICON`). O oponente continua com o sprite do ESTÁGIO REAL dele; `dueloArt.ts` (`dueloOponenteArt`, seis retratos de criatura por elemento) está **sem chamada** (DUELO-1 em `PERGUNTAS-DO-DONO.md`).
 - **Estados**: **requisito** — desde 02/10/2026 (H13) NÃO há interruptor de PvP (o
   personagem já nasce nele). Abaixo do Vínculo `BOND_PVP_MIN_LEVEL` (5) a aba Desafiar

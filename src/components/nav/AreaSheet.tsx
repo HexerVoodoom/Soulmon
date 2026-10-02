@@ -23,7 +23,7 @@ import { CORNER_RING_TOP, CORNER_RING_SIDE } from './cornerAnchor';
  * vem de quem chama (F5: Mercado e Arena em `App.tsx`); o molde só garante
  * abrir/fechar, o NPC certo, a fala e a proporção.
  */
-export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, onClose, npcArt, children }: {
+export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, onClose, npcArt, headSlotRef, children }: {
   areaId: AreaId;
   /** Id do lote aberto (ex.: `'itens'`, `'torneio'`) — resolve o NPC certo
    *  via `lotNpcArt`. Áreas com folha única (Laboratório/Hall) passam o
@@ -39,6 +39,9 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
   closeLabel: string;
   open: boolean;
   onClose: () => void;
+  /** Encaixe no canto DIREITO da linha do título (ex.: o indicador da faixa do
+   *  Torneio, que entra por portal). Ref-callback: o conteúdo recebe o elemento. */
+  headSlotRef?: (el: HTMLElement | null) => void;
   children?: ReactNode;
 }) {
   // O voltar do sistema (botão do Android/navegador) fecha a folha antes de mudar de tela.
@@ -184,6 +187,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
             <h2 style={{ flex: 1, margin: 0, fontFamily: 'var(--sm2-font-display)', fontSize: 'var(--sm2-text-lg)', fontWeight: 700, color: 'var(--sm2-ink)' }}>
               {title}
             </h2>
+            {headSlotRef && <span ref={headSlotRef} data-area-sheet-head-slot style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }} />}
           </div>
           {/* H6 (01/10/2026): o rolável começa COLADO no título (sem `padding-top`),
               para o cabeçalho fixo de dentro (abas/filtro, `position: sticky;

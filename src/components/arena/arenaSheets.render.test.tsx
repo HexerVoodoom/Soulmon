@@ -2,7 +2,7 @@
 /**
  * A Arena (minimal-ui F5) — as folhas Torneio e Duelo.
  *
- * Torneio: abre na FAIXA (antes do ranking e antes de desafiar), tem as
+ * Torneio: abre em DESAFIAR (02/10/2026; a faixa é o indicador do título), tem as
  * missões da semana pagas em Emblemas e a loja de Emblemas, que só vende
  * cosmético e só mostra Emblemas. Duelo: mostra a ficha e abre a luta.
  */
@@ -40,13 +40,30 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 describe('Torneio', () => {
-  it('abre na Faixa, com as cinco faixas em fila e a atual marcada', async () => {
+  it('o menu é só de ícone (Desafiar · Missões · Loja), abre em Desafiar e a Faixa não é aba', () => {
+    renderWithCss(<TournamentPage {...base} shop={shop} />);
+    const tabs = screen.getAllByRole('tab');
+    expect(tabs.map(t => t.getAttribute('aria-label'))).toEqual(['Challenge', 'Missions', 'Shop']);
+    for (const t of tabs) expect((t.textContent ?? '').replace(/s/g, '')).not.toContain(t.getAttribute('aria-label')!);
+    expect(screen.getByRole('tab', { name: 'Challenge' }).getAttribute('aria-selected')).toBe('true');
+    expect(screen.queryByRole('tab', { name: 'Tier' })).toBeNull();
+  });
+
+  it('a faixa vira indicador do título; tocar abre a folha com as cinco faixas e a atual marcada', async () => {
     const { container } = renderWithCss(<TournamentPage {...base} shop={shop} />);
-    expect(screen.getByRole('tab', { name: 'Tier' }).getAttribute('aria-selected')).toBe('true');
-    await waitFor(() => expect(container.querySelector('[data-tier-state="current"]')).not.toBeNull());
-    expect(container.querySelectorAll('[data-tier]').length).toBe(TOURNAMENT_TIERS.length);
-    expect(container.querySelector('[data-tier-state="current"]')!.getAttribute('data-tier')).toBe('broto');
-    expect(container.querySelector('[data-tier="semente"]')!.getAttribute('data-tier-state')).toBe('passed');
+    const ind = await waitFor(() => {
+      const el = container.querySelector('[data-tier-indicator]');
+      expect(el).not.toBeNull();
+      return el as HTMLElement;
+    });
+    expect(container.querySelector('[data-tier]')).toBeNull();
+    fireEvent.click(ind);
+    expect(screen.getByRole('dialog', { name: 'Tournament tiers' })).toBeTruthy();
+    expect(document.querySelectorAll('[data-tier]').length).toBe(TOURNAMENT_TIERS.length);
+    expect(document.querySelector('[data-tier-state="current"]')!.getAttribute('data-tier')).toBe('broto');
+    expect(document.querySelector('[data-tier="semente"]')!.getAttribute('data-tier-state')).toBe('passed');
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+    expect(screen.queryByRole('dialog', { name: 'Tournament tiers' })).toBeNull();
   });
 
   it('as missões da semana aparecem e o resgate paga pelo id', () => {

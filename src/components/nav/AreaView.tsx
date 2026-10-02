@@ -164,6 +164,8 @@ export function AreaView(props: AreaViewProps) {
   const { area, language, ownership, actions } = props;
   const [sheet, setSheet] = useState<string | null>(null);
   const [duelOpen, setDuelOpen] = useState(false);
+  /** O encaixe do canto do título da folha do Torneio (o indicador da faixa entra por portal). */
+  const [tournamentHead, setTournamentHead] = useState<HTMLElement | null>(null);
   const [game, setGame] = useState<PlayGame | null>(props.initialGame ?? null);
   const { onInitialGameConsumed } = props;
   useEffect(() => { if (props.initialGame) onInitialGameConsumed?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -236,10 +238,10 @@ export function AreaView(props: AreaViewProps) {
         background={AREA_BG.arena}
         lots={lots.map(l => ({ ...l, art: ARENA_LOT_ART[l.id], onOpen: () => setSheet(l.id) } satisfies AreaLot))}
       >
-        <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close}>
+        <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close} headSlotRef={open?.id === 'torneio' ? setTournamentHead : undefined}>
           <Suspense fallback={<SheetLoading language={language} />}>
             {open?.id === 'torneio' && (
-              <TournamentPage {...props.tournament} shop={{ ownership, actions }} />
+              <TournamentPage {...props.tournament} shop={{ ownership, actions }} headSlot={tournamentHead} />
             )}
             {open?.id === 'feira' && (
               <GuildSheet room="feira" language={language} {...props.guild} />
