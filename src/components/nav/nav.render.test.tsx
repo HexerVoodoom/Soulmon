@@ -216,8 +216,9 @@ describe('HomeMenuSheet (D6)', () => {
   };
 
   it('tudo que morava no sanduíche, nos dois idiomas — sem Oráculo e ritual (G1)', () => {
-    expect(rows('en-US')).toEqual(['Settings', 'Stats', 'Guide', 'Credits']);
-    expect(rows('pt-BR')).toEqual(['Configurações', 'Estatísticas', 'Guia', 'Créditos']);
+    // G2 (02/10/2026): Estatísticas saíram do menu — moram no Laboratório.
+    expect(rows('en-US')).toEqual(['Settings', 'Guide', 'Credits']);
+    expect(rows('pt-BR')).toEqual(['Configurações', 'Guia', 'Créditos']);
   });
 
   it('cada linha fecha a folha e leva ao destino certo', () => {
@@ -230,8 +231,9 @@ describe('HomeMenuSheet (D6)', () => {
     const btn = (t: string) => Array.from(document.querySelectorAll('[data-menu-row]')).find(b => b.textContent?.includes(t))!;
     // G1: Oráculo oculto do menu (a página continua existindo).
     expect(btn('Oracle')).toBeUndefined();
-    fireEvent.click(btn('Stats'));
-    expect(onOpenPage).toHaveBeenLastCalledWith('stats');
+    expect(btn('Stats')).toBeUndefined();
+    fireEvent.click(btn('Settings'));
+    expect(onOpenPage).toHaveBeenLastCalledWith('settings');
     fireEvent.click(btn('Guide'));
     expect(onOpenGuide).toHaveBeenCalledOnce();
     expect(onClose).toHaveBeenCalledTimes(2);

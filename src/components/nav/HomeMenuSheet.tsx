@@ -82,11 +82,6 @@ export function HomeMenuSheet({
           />
         )}
         <MenuRow
-          icon="leaderboard"
-          label={isPt ? 'Estatísticas' : 'Stats'}
-          onClick={go(() => onOpenPage('stats'))}
-        />
-        <MenuRow
           icon="help"
           label={isPt ? 'Guia' : 'Guide'}
           onClick={go(onOpenGuide)}

@@ -45,13 +45,15 @@ describe('lotes novos (29/09/2026)', () => {
     const lotes: Array<[Parameters<typeof lotNpcArt>[0], string, string]> = [
       ['arena', 'duelo', 'Rhinoco'], ['arena', 'feira', 'Fanfare'], ['jogos', 'mente', 'Tessela'],
       ['jogos', 'refugio', 'Bobbi'], ['mercado', 'conquistas', 'Medra'], ['hall', 'amigos', 'Nino'],
-      ['hall', 'guilda', 'Marla'], ['laboratorio', 'pet', 'Bento'], ['laboratorio', 'stats', 'Quill'],
+      ['hall', 'guilda', 'Bastia'], ['laboratorio', 'pet', 'Bento'], ['laboratorio', 'stats', 'Quill'],
       ['exploracao', 'passeio', 'Brume'],
     ];
     const artes = lotes.map(([a, l]) => lotNpcArt(a, l));
     expect(new Set(artes).size).toBe(lotes.length);
     for (const [a, l, nome] of lotes) {
-      expect(lotNpcArt(a, l)).toMatch(new RegExp(`npc-${a}-${l}`));
+      // G3 (02/10/2026): o Salão da Guilda usa o busto da Bastia (`npc-f-guarda`), já aprovado.
+      const arquivo = a === 'hall' && l === 'guilda' ? 'npc-f-guarda' : `npc-${a}-${l}`;
+      expect(lotNpcArt(a, l)).toMatch(new RegExp(arquivo));
       expect(Object.values(AREA_NPC_ART)).not.toContain(lotNpcArt(a, l));
       for (const lang of ['pt-BR', 'en-US'] as const) expect(lotNpcVoice(a, l, lang).name).toContain(nome);
     }
