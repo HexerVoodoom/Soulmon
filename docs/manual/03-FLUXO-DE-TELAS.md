@@ -1533,8 +1533,12 @@ o `CLAUDE.md` já registra que ele **não** está em `utils/dungeon.ts`).
 - **O que se vê/faz**: a **faixa** (`getTierStanding`) vem **antes** do ranking;
   o ranking é uma **janela de ±`RANK_WINDOW` (3) posições**, com a season inteira a um toque; o
   placar de derrota é tinta neutra; perder também rende Honra e a tela diz. A marca da faixa (`TierMark`) é a INSÍGNIA em pixel da rodada 3 (`TIER_INSIGNIA_ART`, 32 px na faixa atual e 24 px na escada), apagada por FILTRO (dessaturada e escura) na faixa não alcançada, nunca por `opacity`; sem arte para o id, cai no glifo Material de antes (`TIER_ICON`). O oponente continua com o sprite do ESTÁGIO REAL dele; `dueloArt.ts` (`dueloOponenteArt`, seis retratos de criatura por elemento) está **sem chamada** (DUELO-1 em `PERGUNTAS-DO-DONO.md`).
-- **Estados**: **vazio** — "Enable PvP above…" quando `pvpEnabled` é falso; o
-  gate de Vínculo (`BOND_PVP_MIN_LEVEL`) é decidido pelo servidor.
+- **Estados**: **requisito** — desde 02/10/2026 (H13) NÃO há interruptor de PvP (o
+  personagem já nasce nele). Abaixo do Vínculo `BOND_PVP_MIN_LEVEL` (5) a aba Desafiar
+  mostra o card `data-torneio-requisito`: "O Torneio abre no Vínculo 5", barra de
+  progresso, onde a pessoa está e quanto falta, o porquê (é social) e "sem pressa"; o
+  gate real continua sendo decidido pelo servidor. Aberto, sobra o aviso do apelido
+  público (`data-torneio-aviso-publico`).
 - **Efeitos ao jogar**: `onEarnEmblems` soma Honra **e** chama
   `contarMissao('tournament-match')` (conta a PARTIDA, não a vitória);
   `onMatchPlayed` credita XP de Vínculo.
@@ -1554,8 +1558,7 @@ o `CLAUDE.md` já registra que ele **não** está em `utils/dungeon.ts`).
   (regra em `functions/api/_duel.js`); `não percorrida`.
 - **Resultado da partida**: um `RitualDialog` (`zIndex={400}`, `3f359acc`) com as
   duas criaturas em mini-visor; "Fight" tem nome acessível "Fight — challenge
-  ‹nome›" (WCAG 2.5.3); o switch de PvP travado é inerte por forma
-  (`aria-disabled`, fora do Tab), nunca `disabled`.
+  ‹nome›" (WCAG 2.5.3). (⚰️ o switch de PvP travado, inerte por forma, saiu em 02/10/2026.)
 - **O que os mini-visores mostram** (`66e32d43`, rodada 2, 21/09/2026 — D-J13
   cumprida): o oponente a 64 é `lineIconForStage(o.stage, 64) ?? getSpriteForStage(o.stage)`;
   a linha do ranking a 32 é `lineIconForStage(r.stage, 32)` com `imageRendering:
