@@ -5898,6 +5898,7 @@ export default function App() {
                   ocultoDaLista: gameState.hideFromPublicList === true,
                   petStage: gameState.evolutionStage,
                   petLine,
+                  petElement: gameState.soulmonMeta?.dominantElement,
                   trophies: gameState.trophies ?? [],
                   language,
                   emblems: gameState.emblems ?? 0,

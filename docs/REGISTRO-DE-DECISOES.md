@@ -1505,6 +1505,78 @@ Decisões do dono na navegação do APK (`docs/AJUSTES-NAVEGACAO-2026-10-02.md` 
    - Gatilho para rever: o dono achar a Masmorra impossível/trivial depois de
      jogá-la, ou decidir o alvo de dificuldade (TORC-6).
 
+9. **A CENA de combate em TELA CHEIA e a luta mais LENTA** (02/10/2026, rodada 5,
+   I10 — o dono testou o APK e achou a Arena "fraca e rápida demais"). Vale para o
+   **Duelo da Arena** (`ArenaGame`) e o **duelo fantasma do Torneio** (`DuelScreen`);
+   Pesadelo e Masmorra NÃO entram agora (a peça fica pronta para eles).
+   - **A cena** (`src/components/games/BattleStage.tsx`, reutilizável): o background
+     do combate (`ARENA_SCENE`, 1080×1920) ocupa a tela inteira; o seu Soulmon fica
+     embaixo à ESQUERDA (grande, mais perto) e o inimigo em cima à DIREITA (0,56× — 0,5×
+     com vários —, mais longe), cada um com plataforma/sombra; a **barra de HP fica
+     nos PÉS** de cada um (nome curto + HP numérico, o do alvo mirado e o seu) — não
+     numa barra lá em cima. O gauge de torcida vai no topo (sob o título) e o X no
+     canto superior DIREITO; a faixa da nav inferior fica livre. **Nenhum texto
+     explicativo na cena:** a frase da torcida virou o `InfoTip` ("?") do gauge; o
+     "especial pronto" é o ícone (e texto só para leitor de tela).
+   - **Três ações visuais por lutador, com a arte de SKILL do ELEMENTO**
+     (`fx-<elemento>-<estado>.png`, `utils/attackFxArt.ts` — 154 elementos × 6 estados
+     já estavam no repo, ninguém os chamava no combate): **físico** = investida do
+     lutador até o alvo + `slash` + `impact`; **à distância** = `cast` no conjurador,
+     `orb` atravessa a cena, `impact` no alvo; **escudo** = a defesa automática
+     perfeita mostra o `defended` do elemento do DEFENSOR no lugar do impacto
+     (substitui o "escudo curto"). O ESPECIAL/golpe da torcida é o ranged em dobro
+     (`cast` + `aura` + `orb` grande). O JOGO decide; a cena só desenha, e o dano e a
+     barra de HP chegam no IMPACTO (`STAGE_TIMING`, `utils/combatFx.ts`). Quem investe
+     e quem atira: na Arena, a escola da ficha (só `combate_fisico` investe) e o revide
+     alterna por inimigo; no duelo, alterna por golpe. Elemento: o do golpe básico/
+     especial da ficha (Arena), o dominante do oráculo (duelo), e o do inimigo da Arena
+     vem do bestiário. **Elemento do oponente do duelo:** o servidor não publica
+     elemento, então a cena dá um elemento VISUAL determinístico pelo id dele
+     (`visualElementFor`) — só desenho, nenhuma regra. Sem arte cai no `neutro`.
+   - **Movimento reduzido** (`prefers-reduced-motion`): sem investida, sem projétil e
+     sem pulso — só o flash do impacto/escudo no alvo (regra no bloco canônico do
+     `index.css`; o JS também não monta o trajeto).
+   - **Sair:** o X (canto superior direito, ícone pelado) pede CONFIRMAÇÃO quando sair
+     perde progresso (Arena: a corrida; duelo: conta como derrota) e a luta PAUSA
+     enquanto a pergunta está aberta.
+   - **Ritmo — as contas.** Duelo fantasma (`DuelScreen`): passo de 900 ms →
+     `DUEL_STEP_MS` 1500 (a ação começa antes e o golpe chega no impacto: ~1,2 s
+     investida, ~1,5 s projétil, ~1,7 s especial); a luta tem 11,8 golpes em média
+     (quase sempre os 12 do teto), então a duração média foi de **~10,6 s para
+     ~16–17 s**. Gauge **8 → 16 toques** (`DUEL_TAPS_FULL`) e teto por janela
+     **10 → 20** (`DUEL_TAPS_CAP`): a 3 toques/s o gauge enche em ~5,3 s e o **primeiro
+     especial sai no 10º segundo** (mediana, modelo de tempo de `combatFx.test.ts`; antes
+     já na 1ª janela, ~2,7 s). Taxa de vitória (mesmo estágio; 1.500 duelos por célula no
+     modelo de tempo, 20.000 no teto; o "dedo" é um modelo de toques/s): **sem torcer 51,1%** (igual a antes);
+     **3 toques/s 73,2%** (antes 77,4%, com 8 toques e 900 ms); 6 toques/s 81,8%; **gauge
+     cheio nas 3 janelas 81,9%** (o teto, igual a antes). Um estágio abaixo: sem torcer
+     14,5%, 3 toques/s 30,8%, teto 38,3% (antes: sem torcer 14,5% e teto 38%). **O teto de ganho NÃO
+     mudou** (CAP ≥ FULL ⇒ uma janela forjada já enche o gauge, mas 3 janelas = no máximo
+     3 especiais): o servidor segue sanitizando (`sanitizeTaps`) e recalculando
+     (`specialSlots`) tudo; `community.duelo.test.js` trava que 999 por janela resolve
+     IGUAL a 20 por janela e que 15 toques não viram especial.
+     Duelo da Arena: o golpe do pet chega ~2,4 s após abrir o turno (era 1,5 s) e o
+     revide ~1,4 s (era 0,8 s) — um turno contra um inimigo passa de 2,3 s para ~3,8 s.
+     `TORCIDA_TAPS_FULL` = 16: a 3 toques/s são ~11 toques por turno (antes ~7 para 8).
+     Calibração (`arena.test.ts`, 3.000 runs × 6 escolas, mesma semente): sem torcer
+     **59,0%** (igual); **11 toques/turno (especial a cada 2 turnos) 81,9%**, o mesmo
+     que 4 toques/turno rendiam com o gauge de 8; gauge cheio a cada golpe **92,3%**
+     (igual). O PvE (Pesadelo/Masmorra) fica em **8 toques** (`TORCIDA_PVE_TAPS_FULL`):
+     nada mudou neles.
+   - **Alternativas que perderam:** (a) só desacelerar com o gauge em 8 — encheria em
+     ~2,7 s e o especial sairia na 1ª janela de quem toca; o dono pediu ~10 s;
+     (b) só subir o gauge mantendo 900 ms — a luta de ~10,6 s acabaria no limiar do
+     especial; (c) subir o teto de especiais (mais janelas de torcida) para compensar
+     o ganho de quem toca normal — mexeria no teto que o servidor aceita; fica para o
+     dono se achar a torcida pouco recompensadora (a 3 toques/s ela rende +22pp, antes +26pp).
+   - Limites declarados: a cena do Pesadelo e da Masmorra (e o intro/resultado da
+     Arena, que seguem no layout antigo) ficam para depois; a pessoa que usa a Arena
+     perde, na tela, a linha "inimigos enfraquecidos/eco ativo" (o efeito vale igual).
+   - Gatilho para rever: a luta de ~17 s cansar (baixar `DUEL_STEP_MS`), o primeiro
+     especial demorar demais para quem toca devagar, ou o dono querer a cena também no PvE.
+
+> **Nota 02/10/2026 (rodada 5, I10):** item 9 — cena de combate em tela cheia, golpes
+> com a arte do elemento, luta mais lenta (gauge 8 → 16 no duelo e na Arena).
 > **Nota 02/10/2026 (noite):** item 8 — esquiva removida, defesa automática, especial 3×.
 > **Nota 02/10/2026 (tarde, rodada 4):** itens 6 e 7 acima — o Duelo da Arena
 > entra na torcida (TORC-2 respondida) e o PvP perde o interruptor. O item 1 já

@@ -8,7 +8,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, act, fireEvent, cleanup } from '@testing-library/react';
 import { NightmareBattle } from './NightmareBattle';
 import { DUNGEON_LINE_SPRITES } from '../utils/sprites';
-import { TORCIDA_TAPS_FULL } from '../utils/torcida';
+import { TORCIDA_PVE_TAPS_FULL } from '../utils/torcida';
 import type { DungeonEnemy } from '../utils/dungeon';
 
 afterEach(() => { cleanup(); vi.useRealTimers(); });
@@ -52,7 +52,7 @@ describe('Pesadelo — torcida', () => {
     const { container } = montar([inimigo(60)]);
     fireEvent.click(screen.getByRole('button', { name: 'Ficar na frente dele' }));
     const camada = container.querySelector('[data-torcida-layer]') as HTMLElement;
-    for (let i = 0; i < TORCIDA_TAPS_FULL; i++) fireEvent.pointerDown(camada);
+    for (let i = 0; i < TORCIDA_PVE_TAPS_FULL; i++) fireEvent.pointerDown(camada);
     expect(container.querySelector('[data-torcida-gauge]')!.getAttribute('data-torcida-full')).toBe('1');
     act(() => { vi.advanceTimersByTime(1400); });
     expect(screen.getByText('Golpe especial da torcida!')).toBeTruthy();

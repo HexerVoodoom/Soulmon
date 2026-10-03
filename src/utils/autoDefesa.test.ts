@@ -5,7 +5,7 @@ import {
 } from './autoDefesa';
 import { buildDungeonWave, playerStatsFor } from './dungeon';
 import { JEITO_PADRAO, jeitoDaProfissao, type JeitoNaMasmorra } from './profissaoMasmorra';
-import { TORCIDA_BASE_FRAC, TORCIDA_PVE_SPECIAL_MULT, TORCIDA_TAPS_FULL, torcidaStrike } from './torcida';
+import { TORCIDA_BASE_FRAC, TORCIDA_PVE_SPECIAL_MULT, TORCIDA_PVE_TAPS_FULL, torcidaStrike } from './torcida';
 
 function mulberry(seed: number) {
   let a = seed | 0;
@@ -108,8 +108,8 @@ function simRun(o: SimOpts): SimOut {
       let eh = e.hp;
       let guard = 0;
       while (eh > 0 && guard++ < 500) {
-        gauge = Math.min(TORCIDA_TAPS_FULL, gauge + o.tapsPerStrike);
-        const special = gauge >= TORCIDA_TAPS_FULL;
+        gauge = Math.min(TORCIDA_PVE_TAPS_FULL, gauge + o.tapsPerStrike);
+        const special = gauge >= TORCIDA_PVE_TAPS_FULL;
         if (special) gauge = 0;
         const guarda = e.dmgReduction * (1 - jeito.atravessaGuarda);
         const raw = dmg * TORCIDA_BASE_FRAC * (special ? o.specialMult : 1);
@@ -204,7 +204,7 @@ describe('simulação 20.000 lutas — a defesa automática mantém a curva da e
 
   it('a regra do especial usada aqui é a da produção (3×)', () => {
     expect(TORCIDA_PVE_SPECIAL_MULT).toBe(3);
-    const s = torcidaStrike(8, TORCIDA_TAPS_FULL);
+    const s = torcidaStrike(8, TORCIDA_PVE_TAPS_FULL);
     expect(s.dmg).toBe(Math.round(8 * TORCIDA_BASE_FRAC * 3));
   });
 });

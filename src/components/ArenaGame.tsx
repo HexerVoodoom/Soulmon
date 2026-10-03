@@ -56,7 +56,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { TimingBar } from './pixel/TimingBar';
 import { TorcidaLayer, TorcidaGauge } from './games/TorcidaKit';
-import { torcidaTap } from '../utils/torcida';
+import { torcidaTap, TORCIDA_TAPS_FULL } from '../utils/torcida';
+import { BattleStage, BATTLE_LAYER_STYLE, type StageAction, type StageHit } from './games/BattleStage';
+import {
+  ARENA_STRIKE_MS, ARENA_DEFEND_MS, STAGE_TIMING, fxElementId, impactMs, prefersReducedMotion,
+  strikeKindForSchool, type StageActionKind,
+} from '../utils/combatFx';
 import { autoDefense, defenseRoll, newDefenseSeed, TIMING_DODGE_ENABLED } from '../utils/autoDefesa';
 import { Icon } from './ui/Icon';
 import { sm2Button, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
@@ -104,10 +109,8 @@ type Fase =
 
 interface Popup { icon: string; title: string; detail: string }
 
-/** Quanto o pet espera antes de golpear sozinho — o tempo de a torcida encher o gauge. */
-const ARENA_STRIKE_MS = 1500;
-/** Do começo do revide até o Soulmon se defender sozinho (TORC-3, 02/10/2026). */
-const ARENA_DEFEND_MS = 800;
+// O ritmo da luta (`ARENA_STRIKE_MS` = 2400 — era 1500 —, `ARENA_DEFEND_MS` = 1400 — era 800)
+// mora em `utils/combatFx.ts`, ao lado do passo do duelo fantasma (rodada 5, I10).
 
 export interface ArenaGameProps {
   evolutionStage: string;
@@ -150,9 +153,16 @@ export function ArenaGame({
   const defSeedRef = useRef(newDefenseSeed());
   const defCountRef = useRef(0);
   const [guardFx, setGuardFx] = useState(false);
+  /** A cena nova (I10): a ação em curso (investida/projétil/escudo) e o número do dano. */
+  const [acao, setAcao] = useState<StageAction | null>(null);
+  const [golpe, setGolpe] = useState<StageHit | null>(null);
+  const cenaSeq = useRef(0);
+  /** A confirmação de sair está aberta: a luta espera. */
+  const [pausado, setPausado] = useState(false);
+  const reduzido = useRef(prefersReducedMotion());
   /** Toque de torcida: sobe o gauge e para no cheio (toque a mais não rende). */
   const torcer = useCallback(() => {
-    tapsRef.current = torcidaTap(tapsRef.current);
+    tapsRef.current = torcidaTap(tapsRef.current, TORCIDA_TAPS_FULL);
     setTaps(tapsRef.current);
   }, []);
 
@@ -349,6 +359,11 @@ export function ArenaGame({
       }
     }
 
+    // O número que sobe do alvo mirado (a cena nova; o caminho antigo não o desenha).
+    const idxAlvo = inimigos.indexOf(alvo);
+    const dealt = idxAlvo >= 0 ? Math.round(inimigos[idxAlvo].hp - copia[idxAlvo].hp) : 0;
+    if (dealt > 0) setGolpe({ id: ++cenaSeq.current, side: 'foe', foe: idxAlvo, value: dealt, big: usouEspecial || torcida.special });
+
     setInimigos(copia);
     if (!copia.some(e => e.hp > 0)) { limparRodada(); return; }
     abrirDefesa(copia);
@@ -394,22 +409,52 @@ export function ArenaGame({
   const atacarRef = useRef(atacar);
   atacarRef.current = atacar;
   useEffect(() => {
-    if (ARENA_TIMING_ATTACK_ENABLED || fase !== 'atacar' || vivos.length === 0) return;
-    const t = setTimeout(() => atacarRef.current(ARENA_AUTO_ACC), ARENA_STRIKE_MS);
-    return () => clearTimeout(t);
-  }, [fase, rodada, vivos.length, hp, carga]);
+    if (ARENA_TIMING_ATTACK_ENABLED || fase !== 'atacar' || vivos.length === 0 || pausado) return;
+    // A cena (I10): a ação COMEÇA `impactMs` antes de o golpe chegar; o jogo resolve no
+    // impacto, e a barra de HP só cai quando o golpe chega no alvo.
+    let t2: ReturnType<typeof setTimeout> | undefined;
+    const t1 = setTimeout(() => {
+      const pronto = carga >= SPECIAL_CHARGE_TURNS;
+      const cheio = tapsRef.current >= TORCIDA_TAPS_FULL;
+      const kind: StageActionKind = pronto || cheio ? 'special' : strikeKindForSchool(basica?.escolaId);
+      const elemento = pronto ? especial?.elementoId : basica?.elementoId;
+      setAcao({
+        id: ++cenaSeq.current, actor: 'me', foe: Math.max(0, inimigos.indexOf(alvo as ArenaEnemy)),
+        kind, element: fxElementId(elemento ?? 'vigor'),
+      });
+      t2 = setTimeout(() => atacarRef.current(ARENA_AUTO_ACC), impactMs(kind, reduzido.current));
+    }, Math.max(0, ARENA_STRIKE_MS - STAGE_TIMING.special.impact));
+    return () => { clearTimeout(t1); if (t2) clearTimeout(t2); };
+  }, [fase, rodada, vivos.length, hp, carga, pausado]);
 
   /** O Soulmon se defende SOZINHO: a regra pura decide (determinística pela semente). */
   const defenderRef = useRef(defender);
   defenderRef.current = defender;
   useEffect(() => {
-    if (TIMING_DODGE_ENABLED || fase !== 'defender' || defensor < 0) return;
-    const t = setTimeout(() => {
+    if (TIMING_DODGE_ENABLED || fase !== 'defender' || defensor < 0 || pausado) return;
+    const e = inimigos[defensor];
+    if (!e) return;
+    let t2: ReturnType<typeof setTimeout> | undefined;
+    const t1 = setTimeout(() => {
       const roll = defenseRoll(defSeedRef.current, defCountRef.current++);
-      defenderRef.current(autoDefense(roll, { perfect: PERFECT_ACC }).acc);
-    }, ARENA_DEFEND_MS);
-    return () => clearTimeout(t);
-  }, [fase, defensor, rodada, hp]);
+      const acc = autoDefense(roll, { perfect: PERFECT_ACC }).acc;
+      // Quem revida investe (pares) ou atira (ímpares); o escudo é o do ELEMENTO de quem defende.
+      const kind: StageActionKind = defensor % 2 === 0 ? 'melee' : 'ranged';
+      const perfeita = acc >= PERFECT_ACC;
+      setAcao({
+        id: ++cenaSeq.current, actor: 'foe', foe: defensor, kind, element: fxElementId(e.elements[0]),
+        shield: perfeita ? fxElementId(basica?.elementoId ?? atributos.principal) : null,
+      });
+      t2 = setTimeout(() => {
+        if (!perfeita) {
+          const dano = enemyHitDamage(e.atk, acc, e.elements[0], atributos, enfraquecidos > 0);
+          if (dano > 0) setGolpe({ id: ++cenaSeq.current, side: 'me', foe: defensor, value: Math.round(dano) });
+        }
+        defenderRef.current(acc);
+      }, impactMs(kind, reduzido.current));
+    }, Math.max(0, ARENA_DEFEND_MS - STAGE_TIMING.ranged.impact));
+    return () => { clearTimeout(t1); if (t2) clearTimeout(t2); };
+  }, [fase, defensor, rodada, hp, pausado]);
 
   const proximaRodada = useCallback(() => {
     if (!pool) return;
@@ -438,6 +483,60 @@ export function ArenaGame({
     const topo = n <= 1 ? 48 : n === 2 ? 12 : 8;
     return { right: 16, top: topo + i * passo };
   };
+
+  /* A LUTA na cena nova (I10, 02/10/2026): tela cheia, profundidade de Game Boy,
+     barra de HP nos pés, golpes com a arte do elemento. Os caminhos antigos
+     (barra de timing de ataque/esquiva, atrás das flags) seguem no layout de
+     baixo, intocados. */
+  if (emLuta && !ARENA_TIMING_ATTACK_ENABLED && !TIMING_DODGE_ENABLED) {
+    const alvoIdx = fase === 'defender' && defensor >= 0 ? defensor : Math.max(0, inimigos.indexOf(alvo as ArenaEnemy));
+    const carregado = carga >= SPECIAL_CHARGE_TURNS;
+    return (
+      <TorcidaLayer onTap={torcer} active={!pausado} isPt={isPt} style={BATTLE_LAYER_STYLE}>
+        <BattleStage
+          scene={ARENA_SCENE.bg}
+          me={{
+            key: 'me', sprite: petSprite, name: isPt ? 'Você' : 'You', hp: Math.max(0, hp), maxHp: stats.hp,
+            element: fxElementId(basica?.elementoId ?? atributos.principal),
+          }}
+          foes={inimigos.map((e, i) => ({
+            key: i, sprite: sprites[i], name: nomeDe(e), hp: Math.max(0, e.hp), maxHp: e.maxHp,
+            element: fxElementId(e.elements[0]), down: e.hp <= 0,
+          }))}
+          target={alvoIdx}
+          action={acao}
+          hit={golpe}
+          title={`${isPt ? 'Arena' : 'Arena'} · ${rodada}/${ARENA_ROUNDS}`}
+          closeLabel={sair}
+          onClose={onExit}
+          exitConfirm={{
+            title: isPt ? 'Sair da Arena? Esta corrida se perde.' : 'Leave the Arena? This run will be lost.',
+            stay: isPt ? 'Continuar' : 'Keep going',
+            leave: sair,
+          }}
+          onPauseChange={setPausado}
+          badge={(
+            <span
+              role="img"
+              aria-label={`${isPt ? 'Carga' : 'Charge'} ${Math.min(carga, SPECIAL_CHARGE_TURNS)}/${SPECIAL_CHARGE_TURNS}`}
+              data-arena-charge={carregado ? 'full' : String(carga)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 4, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.8))' }}
+            >
+              {carregado
+                ? <Icon name="auto_awesome" size={20} fill={1} tone="primary" />
+                : Array.from({ length: SPECIAL_CHARGE_TURNS }, (_, i) => (
+                  <span key={i} style={{ width: 8, height: 8, borderRadius: '50%', boxSizing: 'border-box', border: '1.5px solid var(--sm2-ink)', backgroundColor: i < carga ? 'var(--sm2-ink)' : 'transparent' }} />
+                ))}
+            </span>
+          )}
+          hud={<TorcidaGauge taps={taps} onCheer={torcer} isPt={isPt} full={TORCIDA_TAPS_FULL} bare />}
+        >
+          {/* Gancho de estado (sem texto): em que passo do turno a luta está. */}
+          <span hidden data-arena-fase={fase} />
+        </BattleStage>
+      </TorcidaLayer>
+    );
+  }
 
   return (
     <GameRoot>
@@ -659,7 +758,7 @@ export function ArenaGame({
           {/* A torcida: toque em qualquer lugar enche o gauge; o botão é o caminho
               para quem não toca na tela (teclado, leitor de tela). */}
           {!ARENA_TIMING_ATTACK_ENABLED && (
-            <TorcidaGauge taps={taps} onCheer={torcer} isPt={isPt} />
+            <TorcidaGauge taps={taps} onCheer={torcer} isPt={isPt} full={TORCIDA_TAPS_FULL} />
           )}
         </>
       )}

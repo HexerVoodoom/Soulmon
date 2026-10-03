@@ -5745,6 +5745,10 @@ select:focus-visible {
   .sm-duel-dmg { animation: none !important; }
   /* Torcida (02/10/2026): sem movimento, o efeito do toque nem aparece; o gauge é o retorno. */
   .sm-torcida-burst { display: none !important; }
+  /* Cena de combate (rodada 5, I10): sem investida, projétil nem pulso — só o flash no alvo. */
+  .sm-bs-lunge, .sm-bs-fly, .sm-bs-cast, .sm-bs-hit { animation: none !important; }
+  .sm-bs-fly, .sm-bs-cast { display: none !important; }
+  .sm-bs-pop { animation-name: sm-bs-flash !important; }
   .sm2-viewport { animation: none !important; }
   .sm2-icon { transition: none !important; }
   /* minimal-ui F1: o link de canto e o voltar não encolhem no toque. */
@@ -8106,3 +8110,45 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
    reduzido o efeito nem renderiza (regra no bloco canonico de prefers-reduced-motion). */
 @keyframes sm-torcida-burst { from { opacity: 0; transform: translate(-50%, -20%) scale(.7); } 20% { opacity: 1; } to { opacity: 0; transform: translate(-50%, -200%) scale(1.15); } }
 .sm-torcida-burst { position: absolute; pointer-events: none; z-index: 5; font-family: Silkscreen, monospace; font-size: 16px; color: var(--sm2-gold-ink); text-shadow: 0 1px 0 var(--sm2-bg); white-space: nowrap; animation: sm-torcida-burst 700ms ease-out forwards; }
+
+/* CENA DE COMBATE (02/10/2026, rodada 5 / I10 — `components/games/BattleStage.tsx`).
+   Tudo por variável: `--dx`/`--dy` = o trajeto em px, `--bs-dur` = duração e
+   `--bs-delay` = atraso (o tempo até o golpe CHEGAR, `utils/combatFx.ts`). A
+   cena pinta a arte de skill do ELEMENTO (`fx-<id>-<estado>.png`). Com
+   `prefers-reduced-motion` não há investida nem projétil: só o flash no alvo
+   (regra no bloco canônico lá em cima). */
+@keyframes sm-bs-lunge {
+  0% { transform: translate(0, 0); }
+  42% { transform: translate(var(--dx), var(--dy)); }
+  56% { transform: translate(var(--dx), var(--dy)); }
+  100% { transform: translate(0, 0); }
+}
+.sm-bs-lunge { animation: sm-bs-lunge var(--bs-dur, 1000ms) ease-in-out 1 both; }
+@keyframes sm-bs-fly {
+  0% { opacity: 0; transform: translate(0, 0) scale(.5); }
+  12% { opacity: 1; transform: translate(calc(var(--dx) * .08), calc(var(--dy) * .08)) scale(1); }
+  96% { opacity: 1; transform: translate(var(--dx), var(--dy)) scale(1); }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(1.1); }
+}
+.sm-bs-fly { animation: sm-bs-fly var(--bs-dur, 760ms) cubic-bezier(.35, 0, .65, 1) var(--bs-delay, 0ms) 1 both; }
+@keyframes sm-bs-pop {
+  0% { opacity: 0; transform: scale(.4); }
+  25% { opacity: 1; transform: scale(1.06); }
+  75% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.12); }
+}
+.sm-bs-pop { animation: sm-bs-pop var(--bs-dur, 520ms) ease-out var(--bs-delay, 0ms) 1 both; }
+@keyframes sm-bs-flash { 0% { opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes sm-bs-cast {
+  0% { opacity: 0; transform: scale(.5) rotate(0deg); }
+  30% { opacity: 1; transform: scale(1) rotate(30deg); }
+  100% { opacity: 0; transform: scale(1.15) rotate(80deg); }
+}
+.sm-bs-cast { animation: sm-bs-cast var(--bs-dur, 700ms) ease-out var(--bs-delay, 0ms) 1 both; }
+@keyframes sm-bs-hit {
+  0%, 100% { transform: translateX(0); filter: none; }
+  20% { transform: translateX(-5px); filter: brightness(1.7); }
+  45% { transform: translateX(5px); filter: brightness(1.3); }
+  70% { transform: translateX(-2px); filter: none; }
+}
+.sm-bs-hit { animation: sm-bs-hit 420ms ease-out var(--bs-delay, 0ms) 1 both; }

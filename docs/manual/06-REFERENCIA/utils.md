@@ -588,7 +588,7 @@ Cobertura: **178/178** módulos de `src/utils` em 01/10/2026 (`node scripts/docs
 **Dono de:** URL do sprite de FX de ataque por elemento (18 base + 136 derivados) + estado — 924 peças em `assets/soulmon/fx-ataque/`. Era `derivedAttackFxArt.ts` até 15/09/2026 (só derivados).
 **Exports:**
 - `AttackFxState` (type) — `| 'cast' | 'aura' | 'slash' | 'impact' | 'defended' | 'orb'`
-- `attackFx` — URL para elemento + estado, ou `undefined` (consumidor cai no emoji de `fxArt.ts`).
+- `attackFx` — URL para elemento + estado, ou `undefined` (consumidor cai no emoji de `fxArt.ts`). Desde 02/10/2026 (rodada 5/I10) o COMBATE também a chama, via `utils/combatFx.ts` (`fxFrame`, com fallback no `neutro`): `slash`/`impact` (físico), `cast`/`orb`/`aura` (à distância e especial), `defended` (escudo).
 - `derivedAttackFx` — alias antigo de `attackFx`.
 - `auraForElement(elementoOraculo, size = 128)` — a aura para o elemento DOMINANTE do oráculo (`planta`→`vida`, `industrial`→`aco`). D9: a única chamada por agora. Desde `66e32d43` (21/09/2026, R2-3) aceita `size: 96 | 128`: com `96` devolve a variante 96² (`fx-<el>-aura-96.png`, o vidro 192 da Ficha a 2×) quando ela existe; sem ela — ou com `128` — a 128² de sempre.
 - `ATTACK_FX_COUNT`, `AURA_96_COUNT` (quantas auras 96² o glob achou — uma por elemento com `-aura.png`, desde `66e32d43`), `ATTACK_FX_STATES`.
@@ -658,9 +658,15 @@ Cobertura: **178/178** módulos de `src/utils` em 01/10/2026 (`node scripts/docs
 
 ### `src/utils/torcida.ts`
 **Dono de:** a CONTA da torcida no PvE (Pesadelo e Masmorra, 02/10/2026): o pet golpeia sozinho, cada toque enche o gauge e o gauge cheio é gasto no golpe ESPECIAL. As constantes do gauge são importadas de `functions/api/_duel.js` (uma regra, um arquivo).
-**Exports:** `TORCIDA_TAPS_FULL` (8, o mesmo do duelo) · `TORCIDA_BASE_FRAC` (0,5 do `dmg` do estágio = golpe-base) · `TORCIDA_PVE_SPECIAL_MULT` (3, decisão do dono 02/10/2026 — TORC-1) · `torcidaTap(taps)` · `torcidaFill(taps)` · `torcidaCheio(taps)` · `torcidaStrike(petDmg, taps, dmgReduction)` → `{ dmg, special, tapsLeft }` · `TIMING_CHEER_ENABLED` (reexport, `false`).
+**Exports:** `TORCIDA_TAPS_FULL` (16, o do duelo e da Arena — de `_duel.js`; era 8 até a rodada 5/I10) · `TORCIDA_PVE_TAPS_FULL` (8, o gauge do Pesadelo e da Masmorra, que não mudou) · `TORCIDA_BASE_FRAC` (0,5 do `dmg` do estágio = golpe-base) · `TORCIDA_PVE_SPECIAL_MULT` (3, decisão do dono 02/10/2026 — TORC-1) · `torcidaTap(taps, full?)` · `torcidaFill(taps, full?)` · `torcidaCheio(taps, full?)` (`full` padrão = PvE) · `torcidaStrike(petDmg, taps, dmgReduction)` → `{ dmg, special, tapsLeft }` · `TIMING_CHEER_ENABLED` (reexport, `false`).
 **Quem chama:** `NightmareBattle`, `DungeonGame`, `DuelScreen` (`torcidaTap`), `TorcidaKit`.
 **Régua:** `src/utils/torcida.test.ts` — a torcida só soma (gauge vazio ou parcial dá o golpe-base, nunca menos).
+
+### `src/utils/combatFx.ts`
+**Dono de:** a ARTE e o RITMO das ações visuais da cena de combate (`games/BattleStage.tsx`, 02/10/2026, rodada 5/I10): qual figura de skill do elemento (`fx-<id>-<estado>`) entra em cada ação e quanto tempo dura. Não decide regra de jogo.
+**Exports:** `fxElementId(id)` (qualquer id → um que tem arte; `planta`→`vida`, `industrial`→`aco`, sem arte → `neutro`) · `fxFrame(elemento, estado)` · `visualElementFor(texto)` (elemento VISUAL determinístico do oponente do duelo — o servidor não publica elemento) · `strikeKindForSchool(escola)` (só `combate_fisico` investe) · `VISUAL_ELEMENTS` (os 17 base), `FX_FALLBACK_ELEMENT` · `STAGE_TIMING`, `impactMs`, `totalMs` (o dano chega no impacto; movimento reduzido = flash) · `DUEL_STEP_MS` (1500, o passo do duelo fantasma; era 900), `ARENA_STRIKE_MS` (2400; era 1500), `ARENA_DEFEND_MS` (1400; era 800) · `prefersReducedMotion()` · tipo `StageActionKind`.
+**Quem chama:** `games/BattleStage.tsx`, `ArenaGame`, `DuelScreen`, `TournamentPage` (`visualElementFor`).
+**Régua:** `src/utils/combatFx.test.ts` — inventário (17 base × 6 estados, 154 × 6 no glob), fallback no neutro, e o RITMO/calibração do duelo (modelo de tempo: ~17 s, primeiro especial a ~10 s a 3 toques/s, 51% → 73% → teto 82%).
 
 ### `src/utils/autoDefesa.ts`
 **Dono de:** a DEFESA AUTOMÁTICA do pet (TORC-3, 02/10/2026): o dono tirou a esquiva por `TimingBar`; o Soulmon se defende sozinho na Masmorra, no Pesadelo e no Duelo da Arena. Devolve a precisão equivalente da barra (0..1), então a conta de dano de cada modo não muda.

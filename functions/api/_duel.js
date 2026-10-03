@@ -17,7 +17,7 @@
  *    (`forfeitPending`, `community.js`). Não existe como perder de graça;
  *  - a torcida só SOMA: sem torcer, o pet ataca normal (×1). Mandar torcida
  *    forjada rende no máximo o que a torcida cheia já rende — esse é o teto do
- *    que um cliente editado ganha (`DUEL_TAPS_CAP` por janela, 3 janelas).
+ *    que um cliente editado ganha (`DUEL_TAPS_CAP` por janela, 3 janelas, no máximo 3 especiais).
  *
  * ── TORCIDA POR TOQUES (decisão do dono, 02/10/2026) ──────────────────────
  * Torcer é TOCAR EM QUALQUER LUGAR da tela durante a luta. Cada toque enche um
@@ -51,10 +51,22 @@ export const DUEL_PERFECT_MULT = 1.35; // q ≥ 0,92
  */
 export const TIMING_CHEER_ENABLED = false;
 
-/** Toques que enchem o gauge de torcida. */
-export const DUEL_TAPS_FULL = 8;
-/** Teto de toques contados por janela (≥ FULL: o excedente não vale nada). */
-export const DUEL_TAPS_CAP = 10;
+/**
+ * Toques que enchem o gauge de torcida. 16 desde 02/10/2026 (rodada 5, I10): eram
+ * 8 e a luta passava rápido demais. A 3 toques/s (ritmo normal) são ~6 s de toque
+ * para encher, e a luta animada dura ~17 s (`STAGE_STEP_MS` em `utils/combatFx`):
+ * o primeiro especial sai por volta dos 10 s. Vale também para o Duelo da Arena
+ * (`utils/torcida.ts` importa daqui); o PvE (Pesadelo/Masmorra) ficou em 8
+ * (`TORCIDA_PVE_TAPS_FULL`) até a cena nova chegar neles.
+ */
+export const DUEL_TAPS_FULL = 16;
+/**
+ * Teto de toques contados por janela (≥ FULL: o excedente não vale nada). 20 =
+ * ~6,7 toques/s numa janela de 3 s: acima do que um dedo faz e abaixo do
+ * auto-clique. O TETO DE GANHO não mudou: 3 janelas, no máximo 3 especiais
+ * (CAP ≥ FULL ⇒ uma janela sozinha já enche o gauge; forjar não passa disso).
+ */
+export const DUEL_TAPS_CAP = 20;
 /**
  * Força do golpe ESPECIAL. É o mesmo ×1,35 da torcida perfeita antiga: com o
  * gauge cheio nas 3 janelas o duelo rende exatamente o que o timing perfeito
