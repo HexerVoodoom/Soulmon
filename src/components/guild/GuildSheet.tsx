@@ -62,6 +62,7 @@ import { getSpriteForStage } from '../../utils/sprites';
 // `src/styles/tokens.md`: a fonte é SUBSETADA, e um nome fora dele renderiza um
 // <span> VAZIO — sem erro e sem aparecer em teste nenhum.
 import { Icon } from '../ui/Icon';
+import { InfoTip } from '../ui/InfoTip';
 import { Field } from '../form/FormKit';
 import { usePrefersReducedMotion } from '../ui/Viewport';
 import { GroveVisor } from './GroveVisor';
@@ -877,8 +878,6 @@ function SalaFeira({ guild, t, language, ocupado, reducedMotion, resgate, resgat
   return (
     <section className="sm2-guild-sec" aria-label={t('guild.feira.titulo')} data-guild-room="feira">
       {resgate}
-      {/* G4 (02/10/2026): legenda de uma linha — o que é a Feira. */}
-      <p className="sm2-lib-s" style={{ margin: 0 }} data-feira-legenda>{t('guild.feira.legenda')}</p>
       {/* O cartão do resgate já diz "se desfez diante da roda": dizer de novo, uma linha acima, é eco (QA L3 B2). */}
       {!(dissipada && resgateAberto) && (
         <p className="sm2-stats-t" style={{ margin: 0 }} data-feira-cabecalho>
@@ -886,7 +885,15 @@ function SalaFeira({ guild, t, language, ocupado, reducedMotion, resgate, resgat
         </p>
       )}
       <FeiraVisor raid={raid} reducedMotion={reducedMotion} label={t(dissipada ? 'guild.aria.feira.dissipado' : raid.ferido ? 'guild.aria.feira.ferido' : 'guild.aria.feira', { nome })} />
-      <h3 className="sm2-grove-stage" data-feira-fenomeno>{nome}</h3>
+      {/* I9 (02/10/2026): "não sei como a Feira funciona" — a explicação (e a linha sóbria da
+          Honra) saiu da sala e mora atrás do "?" ao lado do nome do fenômeno. */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+        <h3 className="sm2-grove-stage" data-feira-fenomeno style={{ margin: 0 }}>{nome}</h3>
+        <InfoTip language={language} label={language === 'pt-BR' ? 'Como funciona a Feira' : 'How the Fair works'} align="right" style={{ marginRight: -8 }}>
+          <span data-feira-legenda style={{ display: 'block' }}>{t('guild.feira.legenda')}</span>
+          <span style={{ display: 'block', marginTop: 6 }}>{t('guild.feira.sobria', { cheio: RAID_EMBLEMS, piso: RAID_EMBLEMS_FLOOR })}</span>
+        </InfoTip>
+      </div>
       <p className="sm2-grove-line">{t(`guild.feira.fenomeno.${raid.phenomenon}.linha`)}</p>
       {!dissipada && raid.lastWeek && !resgateAberto && (
         <p className="sm2-lib-s" style={{ margin: 0 }} data-feira-semana-passada={raid.lastWeek}>
@@ -908,7 +915,6 @@ function SalaFeira({ guild, t, language, ocupado, reducedMotion, resgate, resgat
           {raid.hitToday ? t('guild.feira.rodada.feita') : t('guild.feira.rodada.botao')}
         </button>
       )}
-      <p className="sm2-lib-s" style={{ margin: 0 }}>{t('guild.feira.sobria', { cheio: RAID_EMBLEMS, piso: RAID_EMBLEMS_FLOOR })}</p>
     </section>
   );
 }

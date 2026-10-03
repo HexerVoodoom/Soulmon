@@ -1,6 +1,9 @@
 import type { CSSProperties } from 'react';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
-import { ARENA_ROUNDS } from '../../utils/arena';
+import { ARENA_ROUNDS, getArenaPlayerStats } from '../../utils/arena';
+import { elementIcon } from '../../utils/elementIconArt';
+import { Icon } from '../ui/Icon';
+import { InfoTip } from '../ui/InfoTip';
 import { getStageLevel } from '../../types/progression';
 import type { StageSkills } from '../../utils/soulProfile/ficha/skills';
 import type { FichaStage } from '../../utils/soulProfile/ficha/types';
@@ -12,6 +15,11 @@ import type { Language } from '../../utils/i18n';
  * ficha. Mock aprovado: `propostas/arena/mock.html` (`#modalArena`: "sua
  * ficha" + CTA).
  *
+ * I9 (02/10/2026): o dono não entendia "Sua ficha / Neutro · elemento · golpe
+ * básico · habilidade". Agora só o essencial — o elemento do Soulmon (com ícone),
+ * o poder e os dois golpes, numa linha — e o que cada coisa significa mora atrás
+ * de um "?" (`InfoTip`).
+ *
  * A folha só MOSTRA a ficha e abre o jogo; a luta, o balanceamento e o que ela
  * rende continuam inteiros na `ArenaGame` (que não cobra coração nem tem porta
  * paga — CLAUDE.md, "encoraja, nunca um cobrador"). O mock prometia Emblemas
@@ -19,17 +27,14 @@ import type { Language } from '../../utils/i18n';
  * mudar a moeda de um jogo é regra de economia, não fatia de UI.
  */
 const box: CSSProperties = {
-  flex: 1, minWidth: 0, padding: '10px 12px', boxSizing: 'border-box',
+  flex: 1, minWidth: 0, padding: '10px 12px', boxSizing: 'border-box', minHeight: 56,
   border: '1px solid var(--sm2-line)', borderRadius: 'var(--sm2-radius-md)',
   backgroundColor: 'var(--sm2-bg)',
-  display: 'flex', flexDirection: 'column', gap: 2,
+  display: 'flex', alignItems: 'center', gap: 8,
 };
 const boxValue: CSSProperties = {
   ...sm2Text, fontFamily: 'var(--sm2-font-display)', fontWeight: 600,
   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-};
-const boxLabel: CSSProperties = {
-  ...sm2Hint, fontSize: 'var(--sm2-text-xs)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0,
 };
 
 function fichaStageOf(evolutionStage: string): FichaStage {
@@ -44,38 +49,63 @@ export function DueloSheet({ language, evolutionStage, skills, onStart }: {
   onStart: () => void;
 }) {
   const isPt = language === 'pt-BR';
-  const par = skills?.[fichaStageOf(evolutionStage)];
+  const stage = fichaStageOf(evolutionStage);
+  const par = skills?.[stage];
   const t = (x: { pt: string; en: string } | undefined) => (x ? (isPt ? x.pt : x.en) : null);
-  const elemento = t(par?.especial?.elementoNome) ?? t(par?.basica?.elementoNome);
-  const especial = t(par?.especial?.nome);
+  const elementoId = par?.especial?.elementoId ?? par?.basica?.elementoId ?? 'neutro';
+  const elemento = t(par?.especial?.elementoNome) ?? t(par?.basica?.elementoNome) ?? (isPt ? 'Neutro' : 'Neutral');
+  const arte = elementIcon(elementoId) ?? elementIcon('neutro');
+  // O mesmo poder que a luta usa (`ArenaGame`: a básica define a escola; sem ficha, combate físico).
+  const poder = getArenaPlayerStats(stage, par?.basica?.escolaId ?? 'combate_fisico').dmg;
+  const golpes = [t(par?.basica?.nome), t(par?.especial?.nome)].filter(Boolean) as string[];
+  const golpesTxt = golpes.length ? golpes.join(' · ') : (isPt ? 'Golpe básico' : 'Basic strike');
 
   return (
     <div data-duelo style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <p style={{ ...sm2Hint, margin: 0, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--sm2-gold-ink)', fontWeight: 600 }}>
-        {isPt ? 'Sua ficha' : 'Your sheet'}
-      </p>
       <div style={{ display: 'flex', gap: 8 }}>
-        <div style={box}>
-          <span style={boxValue}>{elemento ?? (isPt ? 'Neutro' : 'Neutral')}</span>
-          <p style={boxLabel}>{isPt ? 'elemento' : 'element'}</p>
+        <div style={box} data-duelo-elemento>
+          {arte && <img src={arte} alt="" width={32} height={32} style={{ width: 32, height: 32, imageRendering: 'pixelated', flexShrink: 0 }} />}
+          <span style={boxValue}>{elemento}</span>
         </div>
-        <div style={box}>
-          <span style={boxValue}>{especial ?? (isPt ? 'Golpe básico' : 'Basic strike')}</span>
-          <p style={boxLabel}>{isPt ? 'habilidade' : 'skill'}</p>
+        <div style={{ ...box, flex: '0 0 auto' }} data-duelo-poder title={isPt ? 'Poder' : 'Power'} aria-label={`${isPt ? 'Poder' : 'Power'}: ${poder}`}>
+          <Icon name="bolt" size={24} tone="gold" fill={1} />
+          <span className="sm2-num" style={boxValue}>{poder}</span>
         </div>
       </div>
-      {!par && (
-        <p style={{ ...sm2Hint, margin: 0 }}>
-          {isPt
-            ? 'Sem ficha neste aparelho: você luta com o par de golpes padrão.'
-            : 'No sheet on this device: you fight with the default pair of moves.'}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+        <p data-duelo-golpes style={{ ...sm2Text, margin: 0, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {golpesTxt}
         </p>
-      )}
-      <p style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>
-        {isPt
-          ? `${ARENA_ROUNDS} rodadas contra criaturas do bestiário · vencer rende Bits · perder não custa nada`
-          : `${ARENA_ROUNDS} rounds against bestiary creatures · winning earns Bits · losing costs nothing`}
-      </p>
+        <InfoTip language={language} label={isPt ? 'O que são elemento, poder e golpes' : 'What element, power and strikes are'} align="right">
+          <span data-duelo-ajuda>
+            <span style={{ display: 'block' }}>
+              {isPt
+                ? 'Elemento: a natureza do seu Soulmon. Alguns elementos ganham de outros na luta.'
+                : "Element: your Soulmon's nature. Some elements beat others in a fight."}
+            </span>
+            <span style={{ display: 'block', marginTop: 6 }}>
+              {isPt
+                ? 'Poder: a força dos seus golpes. Cresce quando o Soulmon evolui.'
+                : 'Power: how hard your strikes hit. It grows as your Soulmon evolves.'}
+            </span>
+            <span style={{ display: 'block', marginTop: 6 }}>
+              {isPt
+                ? 'Golpes: o primeiro é o básico; o segundo é o especial, que sai quando a torcida enche o gauge.'
+                : 'Strikes: the first is the basic one; the second is the special, which fires when your cheering fills the gauge.'}
+            </span>
+            {!par && (
+              <span style={{ display: 'block', marginTop: 6 }}>
+                {isPt ? 'Sem ficha neste aparelho: você luta com o par de golpes padrão.' : 'No sheet on this device: you fight with the default pair of moves.'}
+              </span>
+            )}
+            <span style={{ display: 'block', marginTop: 6 }}>
+              {isPt
+                ? `${ARENA_ROUNDS} rodadas contra criaturas do bestiário · vencer rende Bits · perder não custa nada`
+                : `${ARENA_ROUNDS} rounds against bestiary creatures · winning earns Bits · losing costs nothing`}
+            </span>
+          </span>
+        </InfoTip>
+      </div>
       <button type="button" data-duelo-start onClick={onStart} style={{ ...sm2Button('primary'), width: '100%' }}>
         {isPt ? 'Começar duelo' : 'Start duel'}
       </button>

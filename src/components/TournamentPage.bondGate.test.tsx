@@ -61,8 +61,9 @@ describe('abaixo do Vínculo 5 a aba EXPLICA, não parece quebrada', () => {
     expect(card.querySelector('[role="progressbar"]')).not.toBeNull();
   });
 
-  it('o porquê (é social) está dito, e o aviso do apelido público também', () => {
+  it('o porquê (é social) está dito atrás do "?"', () => {
     render(<TournamentPage {...props} totalXP={0} />);
+    fireEvent.click(screen.getByRole('button', { name: /Por que o Torneio é social/ }));
     expect(screen.getByText(/lista pública/i)).toBeTruthy();
   });
 
@@ -86,12 +87,14 @@ describe('a partir do Vínculo 5 o Desafiar abre, sem passo nenhum antes', () =>
     render(<TournamentPage {...props} totalXP={xpForLevel(BOND_PVP_MIN_LEVEL)} />);
     expect(document.querySelector('[data-torneio-requisito]')).toBeNull();
     expect(screen.queryByText(/Ative o PvP|Enable PvP/)).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /Sobre a lista pública/ }));
     expect(document.querySelector('[data-torneio-aviso-publico]')?.textContent).toMatch(/lista pública/i);
     await waitFor(() => expect(buscouOponentes()).toBe(true));
   });
 
   it('TORC-5: quem saiu da lista pública lê "Você está oculto da lista pública" (e continua com o Desafiar)', async () => {
     render(<TournamentPage {...props} ocultoDaLista totalXP={xpForLevel(BOND_PVP_MIN_LEVEL)} />);
+    fireEvent.click(screen.getByRole('button', { name: /Sobre a lista pública/ }));
     const aviso = document.querySelector('[data-torneio-aviso-publico]')?.textContent ?? '';
     expect(aviso).toMatch(/oculto da lista pública/);
     expect(aviso).not.toMatch(/aparecem numa lista/);
@@ -100,13 +103,15 @@ describe('a partir do Vínculo 5 o Desafiar abre, sem passo nenhum antes', () =>
 
   it('o aviso está em inglês quando o idioma é inglês', () => {
     render(<TournamentPage {...props} language="en-US" totalXP={xpForLevel(BOND_PVP_MIN_LEVEL)} />);
+    fireEvent.click(screen.getByRole('button', { name: /About the public list/ }));
     expect(screen.getByText(/public list/i)).toBeTruthy();
   });
 });
 
-describe('a legenda da torcida aparece nos dois casos', () => {
+describe('o treino e a legenda da torcida aparecem nos dois casos', () => {
   it.each([0, xpForLevel(BOND_PVP_MIN_LEVEL)])('totalXP=%i', totalXP => {
     render(<TournamentPage {...props} totalXP={totalXP} />);
     expect(document.querySelector('[data-torcida-legenda]')).not.toBeNull();
+    expect(document.querySelector('[data-torneio-treino]')).not.toBeNull();
   });
 });

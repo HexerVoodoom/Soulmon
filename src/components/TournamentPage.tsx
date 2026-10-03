@@ -65,13 +65,14 @@ import { getSpriteForStage } from '../utils/sprites';
 import { lineIconForStage } from '../utils/lineIcons';
 import { getStageLevel } from '../types/progression';
 import { DuelScreen } from './DuelScreen';
-import type { DuelStats } from '../../functions/api/_duel.js';
+import { duelStats, simulateDuel, type DuelStats } from '../../functions/api/_duel.js';
 import { getOpponents, playMatch, startDuel, getRank, type Opponent, type MatchResult, type RankRow } from '../utils/community';
 import { EMBLEMS_PER_WIN, EMBLEMS_PER_LOSS, emblemStyle } from '../utils/currencies';
 import { getTierStanding } from '../utils/tournamentTiers';
 import { TIER_INSIGNIA_ART } from '../assets/soulmon/icones-ui';
 import { getTournamentWindow, tournamentWindowLabel } from '../utils/tournamentSeason';
 import { Icon } from './ui/Icon';
+import { InfoTip } from './ui/InfoTip';
 import { MiniGlass } from './ui/MiniGlass';
 import { PixelMeter } from './pixel/PixelKit';
 import { RitualDialog } from './ritual/RitualKit';
@@ -146,15 +147,15 @@ const TIER_ICON: Record<string, string> = {
  * no molde dos emblemas de conquista; sem arte, o glifo Material de antes. A faixa ainda
  * não alcançada sai apagada por FILTRO (dessaturada e escura), nunca por `opacity`.
  */
-function TierMark({ id, size, state }: { id: string; size: 24 | 32; state: 'current' | 'passed' | 'next' }) {
+function TierMark({ id, size, state }: { id: string; size: 24 | 32 | 48; state: 'current' | 'passed' | 'next' }) {
   const art = TIER_INSIGNIA_ART[id];
   if (!art) {
     const name = TIER_ICON[id] ?? 'military_tech';
     const fill = state === 'next' ? 0 : 1;
     const tone = state === 'current' ? 'primary' : state === 'passed' ? 'gold' : 'muted';
-    return size === 32
-      ? <Icon name={name} size={32} fill={fill} tone={tone} />
-      : <Icon name={name} size={24} fill={fill} tone={tone} />;
+    return size === 24
+      ? <Icon name={name} size={24} fill={fill} tone={tone} />
+      : <Icon name={name} size={32} fill={fill} tone={tone} />;
   }
   return (
     <img
@@ -219,6 +220,24 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
   /** A folha das faixas (antiga aba "Faixa") — abre pelo indicador do título. */
   const [tiersOpen, setTiersOpen] = useState(false);
   const { flash, say } = useShopFlash();
+
+  /* I7 (02/10/2026) — TREINO: o Torneio não tinha NENHUM jeito de lutar sem o PvP
+     (Vínculo mínimo + servidor + partida do dia), e por isso "o treinamento não
+     podia ser testado". Agora há uma sombra de treino, 100% LOCAL: sem rede, sem
+     Vínculo, sem partida gasta, sem Honra, sem pontos e sem XP — não rende nem
+     custa nada. A luta é a mesma `DuelScreen`, com a mesma simulação. */
+  const [training, setTraining] = useState<{ seed: number; me: DuelStats; opp: DuelStats } | null>(null);
+  const [trainingWon, setTrainingWon] = useState<boolean | null>(null);
+  const startTraining = () => {
+    const me = duelStats({ stage: petStage });
+    // A sombra bate um pouco mais fraco: o treino é para aprender a torcer, não para perder.
+    const sombra = duelStats({ stage: petStage });
+    setTraining({
+      seed: Math.floor(Math.random() * 0xffffffff),
+      me,
+      opp: { ...sombra, atk: Math.round(sombra.atk * 0.85 * 10) / 10 },
+    });
+  };
 
   /* H13 (02/10/2026): o interruptor "Participar do PvP" saiu — o personagem já
      nasce no PvP. O que sobra é o requisito de Vínculo (`BOND_PVP_MIN_LEVEL`,
@@ -312,11 +331,11 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
   };
 
   /** Menu SÓ DE ÍCONE (02/10/2026): o nome vai no `aria-label`/`title`. Glifos:
-   *  `swords` (combate, Material), `task_alt` (missões) e `storefront` (loja) —
+   *  `swords` (combate, Material), `exclamation` (missões, I8) e `storefront` (loja) —
    *  estes dois com desenho próprio em `NavGlyphs`. */
   const TABS = [
     { key: 'arena' as const, label: isPt ? 'Desafiar' : 'Challenge', icon: 'swords' },
-    { key: 'missions' as const, label: isPt ? 'Missões' : 'Missions', icon: 'task_alt' },
+    { key: 'missions' as const, label: isPt ? 'Missões' : 'Missions', icon: 'exclamation' },
     ...(shop ? [{ key: 'shop' as const, label: isPt ? 'Loja' : 'Shop', icon: 'storefront' }] : []),
   ];
 
@@ -334,17 +353,38 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         : `${isPt ? 'Faixa' : 'Tier'}: ${isPt ? standing!.tier.namePt : standing!.tier.nameEn}`}
       title={isPt ? 'Faixa' : 'Tier'}
       style={{
-        width: 44, height: 44, flexShrink: 0, padding: 0, cursor: 'pointer',
+        width: 48, height: 48, flexShrink: 0, padding: 0, cursor: 'pointer',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         background: 'none', border: 'none', color: 'var(--sm2-ink)',
       }}
     >
+      {/* I8 (02/10/2026): a insígnia cresceu de 32 para 48 (o alvo cabe em 48×48). */}
       {rankFailed
-        ? <Icon name="cloud_off" size={24} tone="muted" />
-        : <TierMark id={standing!.tier.id} size={32} state="current" />}
+        ? <Icon name="cloud_off" size={32} tone="muted" />
+        : <TierMark id={standing!.tier.id} size={48} state="current" />}
     </button>
   );
 
+
+  if (training) {
+    return (
+      <DuelScreen
+        me={training.me}
+        opp={training.opp}
+        seed={training.seed}
+        petSprite={getSpriteForStage(petStage, petLine, 256)}
+        oppSprite={getSpriteForStage(petStage)}
+        petName={isPt ? 'Você' : 'You'}
+        oppName={isPt ? 'Sombra de treino' : 'Training shadow'}
+        isPt={isPt}
+        onDone={cheers => {
+          setTrainingWon(simulateDuel({ me: training.me, opp: training.opp, seed: training.seed, cheers }).won);
+          setTraining(null);
+        }}
+        onClose={() => setTraining(null)}
+      />
+    );
+  }
 
   if (duel) {
     return (
@@ -430,9 +470,18 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
           dívida. Aberto, só o aviso do apelido público (informação, não gesto). */}
       {tab === 'arena' && !pvpAberto && (
         <div data-torneio-requisito style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 10, padding: 14 }}>
-          <p style={{ ...sm2Text, margin: 0, fontWeight: 500 }}>
-            {isPt ? `O Torneio abre no Vínculo ${BOND_PVP_MIN_LEVEL}` : `The Tournament opens at Bond ${BOND_PVP_MIN_LEVEL}`}
-          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, margin: '-8px 0 -8px 0' }}>
+            <p style={{ ...sm2Text, margin: 0, fontWeight: 500, flex: 1, minWidth: 0 }}>
+              {isPt ? `O Torneio abre no Vínculo ${BOND_PVP_MIN_LEVEL}` : `The Tournament opens at Bond ${BOND_PVP_MIN_LEVEL}`}
+            </p>
+            <InfoTip language={lang} label={isPt ? 'Por que o Torneio é social' : 'Why the Tournament is social'} align="right">
+              <span data-torneio-social>
+                {isPt
+                  ? `O Torneio é social: seu apelido e seu Soulmon aparecem numa lista pública de jogadores. Esperar até o Vínculo ${BOND_PVP_MIN_LEVEL} dá tempo de conhecer o app antes.`
+                  : `The Tournament is social: your nickname and your Soulmon show up on a public list of players. Waiting until Bond ${BOND_PVP_MIN_LEVEL} gives you time to get to know the app first.`}
+              </span>
+            </InfoTip>
+          </div>
           <PixelMeter
             ratio={totalXP / Math.max(1, xpForLevel(BOND_PVP_MIN_LEVEL))}
             tone="gold"
@@ -447,50 +496,60 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
                 : `You're at Bond ${bondLevelFor(totalXP)} — ${xpToPvpBond(totalXP)} XP to go, earned by what you already do here. No rush: your Soulmon joins the Tournament on its own when you get there.`}
             </span>
           </p>
-          <p style={{ ...sm2Hint, display: 'flex', alignItems: 'flex-start', gap: 8, margin: 0 }}>
-            <Icon name="visibility" size={20} tone="muted" />
-            <span>
-              {isPt
-                ? `O Torneio é social: seu apelido e seu Soulmon aparecem numa lista pública de jogadores. Esperar até o Vínculo ${BOND_PVP_MIN_LEVEL} dá tempo de conhecer o app antes.`
-                : `The Tournament is social: your nickname and your Soulmon show up on a public list of players. Waiting until Bond ${BOND_PVP_MIN_LEVEL} gives you time to get to know the app first.`}
-            </span>
-          </p>
+        </div>
+      )}
+
+      {/* TREINO (I7): a luta que NÃO depende de nada — nem rede, nem Vínculo, nem
+          partida do dia. Fica antes de qualquer trava, sempre à mão. Atrás do "?":
+          como a luta funciona (a torcida) e o que o treino não rende. */}
+      {tab === 'arena' && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <button
+            type="button"
+            data-torneio-treino
+            onClick={startTraining}
+            style={{ ...sm2Button('outline'), flex: 1, minWidth: 0 }}
+          >
+            <Icon name="swords" size={20} />
+            {isPt ? 'Treinar' : 'Train'}
+          </button>
+          <span data-torcida-legenda style={{ display: 'inline-flex' }}>
+            <InfoTip language={lang} label={isPt ? 'Como funcionam a luta e o treino' : 'How fighting and training work'} align="right">
+              <span style={{ display: 'block' }}>
+                {isPt
+                  ? 'Os dois Soulmons lutam sozinhos. Você torce tocando na tela: o gauge cheio vira um golpe especial.'
+                  : 'The two Soulmons fight on their own. You cheer by tapping the screen: a full gauge becomes a special strike.'}
+              </span>
+              <span style={{ display: 'block', marginTop: 6 }}>
+                {isPt
+                  ? 'O treino é contra uma sombra, sem internet e sem Vínculo mínimo. Não gasta partida e não rende nada.'
+                  : 'Training is against a shadow, with no internet and no minimum Bond. It uses no match and earns nothing.'}
+              </span>
+            </InfoTip>
+          </span>
         </div>
       )}
 
       {tab === 'arena' && pvpAberto && (
-        <p style={{ ...sm2Hint, display: 'flex', alignItems: 'flex-start', gap: 8, margin: 0 }} data-torneio-aviso-publico>
-          <Icon name="visibility" size={20} tone="muted" />
-          <span>
-            {ocultoDaLista
-              ? (isPt ? 'Você está oculto da lista pública.' : "You're hidden from the public list.")
-              : (isPt
-                ? 'Seu apelido e seu Soulmon aparecem numa lista pública de jogadores do Torneio.'
-                : 'Your nickname and your Soulmon show up on a public list of Tournament players.')}
-          </span>
-        </p>
-      )}
-
-      {/* Torcida (02/10/2026, C2): o dono não via que o duelo do Torneio é de
-          torcida — a linha aparece COM o PvP ligado ou não, antes de qualquer
-          botão, e diz como a luta funciona. */}
-      {tab === 'arena' && (
-        <p style={sm2Hint} data-torcida-legenda>
-          {isPt
-            ? 'Os dois Soulmons lutam sozinhos. Você torce tocando na tela: o gauge cheio vira um golpe especial.'
-            : 'The two Soulmons fight on their own. You cheer by tapping the screen: a full gauge becomes a special strike.'}
-        </p>
-      )}
-
-      {tab === 'arena' && pvpAberto && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <p className="sm2-num" style={sm2Hint}>
-            {matchesLeft === null
-              ? (isPt ? 'Partidas de hoje: não deu para consultar' : "Today's matches: couldn't check")
-              : (isPt
-                ? `${matchesLeft} ${matchesLeft === 1 ? 'partida restante' : 'partidas restantes'} hoje`
-                : `${matchesLeft} ${matchesLeft === 1 ? 'match' : 'matches'} left today`)}
-          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, margin: '-8px 0' }}>
+            <p className="sm2-num" style={{ ...sm2Hint, flex: 1, minWidth: 0 }}>
+              {matchesLeft === null
+                ? (isPt ? 'Partidas de hoje: não deu para consultar' : "Today's matches: couldn't check")
+                : (isPt
+                  ? `${matchesLeft} ${matchesLeft === 1 ? 'partida restante' : 'partidas restantes'} hoje`
+                  : `${matchesLeft} ${matchesLeft === 1 ? 'match' : 'matches'} left today`)}
+            </p>
+            <InfoTip language={lang} label={isPt ? 'Sobre a lista pública' : 'About the public list'} align="right">
+              <span data-torneio-aviso-publico>
+                {ocultoDaLista
+                  ? (isPt ? 'Você está oculto da lista pública.' : "You're hidden from the public list.")
+                  : (isPt
+                    ? 'Seu apelido e seu Soulmon aparecem numa lista pública de jogadores do Torneio.'
+                    : 'Your nickname and your Soulmon show up on a public list of Tournament players.')}
+              </span>
+            </InfoTip>
+          </div>
 
           {/* O erro de AÇÃO: filete `gold-ink` 3px + tinta `ink` — informação,
               nunca vermelho (a partida não aconteceu; ninguém errou). */}
@@ -766,6 +825,24 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
             flash={flash}
           />
         </div>
+      )}
+
+      {trainingWon !== null && (
+        <RitualDialog
+          label={isPt ? 'Treino' : 'Training'}
+          onClose={() => setTrainingWon(null)}
+          zIndex={400}
+          maxWidth={320}
+          style={{ alignItems: 'center', textAlign: 'center', gap: 10 }}
+        >
+          <h2 data-treino-resultado style={{ margin: 0, fontFamily: 'var(--sm2-font-display)', fontWeight: 600, fontSize: 'var(--sm2-text-lg)', lineHeight: 'var(--sm2-leading-title)', color: 'var(--sm2-ink)' }}>
+            {trainingWon ? (isPt ? 'Treino vencido' : 'Training won') : (isPt ? 'Treino perdido' : 'Training lost')}
+          </h2>
+          <p style={sm2Hint}>{isPt ? 'Sem prêmio e sem custo.' : 'No reward, no cost.'}</p>
+          <button type="button" onClick={() => setTrainingWon(null)} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 260 }}>
+            {isPt ? 'Continuar' : 'Continue'}
+          </button>
+        </RitualDialog>
       )}
 
       {result && (
