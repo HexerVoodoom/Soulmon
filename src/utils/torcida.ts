@@ -25,8 +25,19 @@ import { DUEL_TAPS_FULL, DUEL_TAPS_CAP, TIMING_CHEER_ENABLED } from '../../funct
 
 export { TIMING_CHEER_ENABLED };
 
-/** Toques que enchem o gauge (o mesmo número do duelo). */
+/**
+ * Toques que enchem o gauge no DUELO (Torneio fantasma e Duelo da Arena): o
+ * número de `_duel.js` (16 desde 02/10/2026, rodada 5 I10 — eram 8).
+ */
 export const TORCIDA_TAPS_FULL = DUEL_TAPS_FULL;
+
+/**
+ * Toques que enchem o gauge no PvE (Pesadelo e Masmorra): continuam 8. A cena
+ * nova de combate (`BattleStage`, I10) ainda não chegou neles e o ritmo deles
+ * não mudou, então o gauge também não. Quando entrarem, é só passar
+ * `TORCIDA_TAPS_FULL` no `full` das funções abaixo.
+ */
+export const TORCIDA_PVE_TAPS_FULL = 8;
 
 /** Toques que contam por janela/turno (o resto é descartado: toque ilimitado não rende mais). */
 export const TORCIDA_TAPS_CAP = DUEL_TAPS_CAP;
@@ -46,18 +57,18 @@ export const TORCIDA_BASE_FRAC = 0.5;
  */
 export const TORCIDA_PVE_SPECIAL_MULT = 3;
 
-/** Um toque: o gauge sobe um e para no cheio (toque a mais não rende nada). */
-export function torcidaTap(taps: number): number {
-  return Math.min(TORCIDA_TAPS_FULL, Math.max(0, Math.floor(taps)) + 1);
+/** Um toque: o gauge sobe um e para no cheio (toque a mais não rende nada). `full` padrão = PvE. */
+export function torcidaTap(taps: number, full = TORCIDA_PVE_TAPS_FULL): number {
+  return Math.min(full, Math.max(0, Math.floor(taps)) + 1);
 }
 
 /** 0..1 para a barra. */
-export function torcidaFill(taps: number): number {
-  return Math.min(1, Math.max(0, taps) / TORCIDA_TAPS_FULL);
+export function torcidaFill(taps: number, full = TORCIDA_PVE_TAPS_FULL): number {
+  return Math.min(1, Math.max(0, taps) / full);
 }
 
-export function torcidaCheio(taps: number): boolean {
-  return taps >= TORCIDA_TAPS_FULL;
+export function torcidaCheio(taps: number, full = TORCIDA_PVE_TAPS_FULL): boolean {
+  return taps >= full;
 }
 
 export interface TorcidaStrike {

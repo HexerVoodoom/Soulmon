@@ -8,7 +8,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { onRequest } from './community.js';
-import { DUEL_PENDING_MS } from './_duel.js';
+import { DUEL_PENDING_MS, DUEL_TAPS_FULL, DUEL_TAPS_CAP } from './_duel.js';
 
 const ME = 'a'.repeat(32);
 const OPP = 'b'.repeat(32);
@@ -113,7 +113,7 @@ describe('duelo — desistir é perder', () => {
     const rec = JSON.parse(env.DIGIAPP_SAVES.store.get(k));
     rec.pending.at = Date.now() - DUEL_PENDING_MS - 1000;
     env.DIGIAPP_SAVES.store.set(k, JSON.stringify(rec));
-    const r = await call(env, 'match', { opponentId: PID[OPP], cheers: [8, 8, 8] });
+    const r = await call(env, 'match', { opponentId: PID[OPP], cheers: [DUEL_TAPS_FULL, DUEL_TAPS_FULL, DUEL_TAPS_FULL] });
     expect(r.json.forfeit).toBe(true);
     expect(r.json.won).toBe(false);
   });
@@ -130,7 +130,7 @@ describe('duelo — resolver usa a semente do servidor e gasta uma partida só',
   it('duelStart + match = UMA partida gasta, e o pending some', async () => {
     const env = mkEnv();
     await call(env, 'duelStart', { opponentId: PID[OPP] });
-    const r = await call(env, 'match', { opponentId: PID[OPP], cheers: [8, 8, 8] });
+    const r = await call(env, 'match', { opponentId: PID[OPP], cheers: [DUEL_TAPS_FULL, DUEL_TAPS_FULL, DUEL_TAPS_FULL] });
     expect(r.status).toBe(200);
     expect(r.json.forfeit).toBeUndefined();
     expect(rank(env).matchesToday).toBe(1);
@@ -152,6 +152,27 @@ describe('duelo — resolver usa a semente do servidor e gasta uma partida só',
     const ra = await call(a, 'match', { opponentId: PID[OPP], cheers: [4, 4, 4], seed: 1 });
     const rb = await call(b, 'match', { opponentId: PID[OPP], cheers: [4, 4, 4], seed: 999 });
     expect(ra.json.duel.events).toEqual(rb.json.duel.events);
+  });
+
+  it('toque forjado não rende mais que o teto: 999 por janela resolve IGUAL ao teto por janela (gauge de 16)', async () => {
+    const a = mkEnv(); const b = mkEnv();
+    await call(a, 'duelStart', { opponentId: PID[OPP] });
+    await call(b, 'duelStart', { opponentId: PID[OPP] });
+    const setSeed = env => {
+      const k = [...env.DIGIAPP_SAVES.store.keys()].find(x => x.startsWith('rank:') && x.endsWith(ME));
+      const rec = JSON.parse(env.DIGIAPP_SAVES.store.get(k)); rec.pending.seed = 777;
+      env.DIGIAPP_SAVES.store.set(k, JSON.stringify(rec));
+    };
+    setSeed(a); setSeed(b);
+    const ra = await call(a, 'match', { opponentId: PID[OPP], cheers: [999, 999, 999] });
+    const rb = await call(b, 'match', { opponentId: PID[OPP], cheers: [DUEL_TAPS_CAP, DUEL_TAPS_CAP, DUEL_TAPS_CAP] });
+    expect(ra.json.duel.events).toEqual(rb.json.duel.events);
+    // E um gauge que não encheu (15 toques numa janela só) não vira especial nenhum.
+    const c = mkEnv();
+    await call(c, 'duelStart', { opponentId: PID[OPP] });
+    setSeed(c);
+    const rc = await call(c, 'match', { opponentId: PID[OPP], cheers: [DUEL_TAPS_FULL - 1, 0, 0] });
+    expect(rc.json.duel.events.some(e => e.cheer === 1)).toBe(false);
   });
 
   it('a cota diária vale para o duelo: a 6ª abertura é recusada', async () => {
