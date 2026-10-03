@@ -57,6 +57,17 @@ export function decorReasonText(reason: DecorBlockReason, isPt: boolean): string
   }
 }
 
+/**
+ * A PÍLULA "interno / externo" da peça (I6, 02/10/2026): o `fits` dela em
+ * palavra curta, nos dois idiomas. `any` (ou ausente) = serve a qualquer cenário.
+ */
+export function decorFitLabel(fits: DecorFit | undefined, isPt: boolean): { fit: DecorFit; text: string } {
+  const fit: DecorFit = fits ?? 'any';
+  if (fit === 'indoor') return { fit, text: isPt ? 'Interno' : 'Indoor' };
+  if (fit === 'outdoor') return { fit, text: isPt ? 'Externo' : 'Outdoor' };
+  return { fit, text: isPt ? 'Qualquer' : 'Any' };
+}
+
 /** A linha de regra do topo da decoração (limite + restrições), nos dois idiomas. */
 export function decorRuleText(isPt: boolean): { limit: string; scenes: string } {
   const names = SLOT_ORDER.map(id => (isPt ? DECOR_SLOTS[id].namePt : DECOR_SLOTS[id].nameEn).toLowerCase()).join(', ');

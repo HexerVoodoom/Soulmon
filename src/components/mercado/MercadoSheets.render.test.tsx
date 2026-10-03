@@ -47,6 +47,8 @@ describe('compra', () => {
     const onBuy = vi.fn(() => true);
     const { container } = abrir({ stall: 'itens', onBuy });
     fireEvent.click(screen.getByRole('button', { name: `${chip.nameEn} — ${chip.price} Bits` }));
+    // I5 (02/10/2026): o toque abre a folha do item; o Comprar dela abre a confirmação.
+    fireEvent.click(screen.getByRole('button', { name: 'Buy' }));
     // D1 (02/10/2026): o toque abre a confirmação; só o Confirmar compra.
     expect(onBuy).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
@@ -62,6 +64,7 @@ describe('compra', () => {
     expect(price.style.color).toBe('var(--sm2-muted)');
     expect(price.style.opacity).toBe('');
     act(() => { fireEvent.click(card); });
+    act(() => { fireEvent.click(screen.getByRole('button', { name: 'Buy' })); });
     expect(onBuy).not.toHaveBeenCalled();
     const modal = screen.getByRole('dialog', { name: 'How to get Bits' });
     // As regras REAIS, lidas das constantes: os minijogos (com o teto diário) e a troca de Créditos.
@@ -77,6 +80,7 @@ describe('compra', () => {
     abrir({ stall: 'decoracao', emblems: 0 });
     fireEvent.click(screen.getByRole('tab', { name: 'Honor' }));
     act(() => { fireEvent.click(screen.getByRole('button', { name: `${emblemFurn.nameEn} — ${emblemFurn.price} Honor` })); });
+    act(() => { fireEvent.click(screen.getByRole('button', { name: 'Buy' })); });
     const modal = screen.getByRole('dialog', { name: 'How to get Honor' });
     expect(modal.querySelector('[data-how-to-earn-way="torneio"]')!.textContent).toMatch(/3 Honor per win and 1 per match/);
   });
@@ -86,6 +90,7 @@ describe('compra', () => {
     const onEquip = vi.fn();
     abrir({ stall: 'background', ownedBackgrounds: ['bg-room', bitsBg.id], onBuy, onEquip });
     fireEvent.click(screen.getByRole('button', { name: `${bitsBg.nameEn} — Equip` }));
+    fireEvent.click(screen.getByRole('button', { name: 'Equip' }));
     expect(onBuy).not.toHaveBeenCalled();
     expect(onEquip).toHaveBeenCalledWith(bitsBg.id);
   });
@@ -136,7 +141,7 @@ describe('compra', () => {
 });
 
 describe('moeda certa por aba', () => {
-  it('Decoração abre em Bits: saldo "260 Bits" num <p>, mono primary-ink sem ícone, só preços em Bits', () => {
+  it('Decoração abre em Bits: saldo "260 Bits" num <p>, mono primary-ink, moeda própria (BitsIcon) decorativa, só preços em Bits', () => {
     const { container } = abrir({ stall: 'decoracao' });
     const p = container.querySelector('[data-balance="bits"]') as HTMLElement;
     expect(p.tagName).toBe('P');
@@ -144,7 +149,11 @@ describe('moeda certa por aba', () => {
     const n = p.querySelector('.sm2-num') as HTMLElement;
     expect(n.style.fontFamily).toBe('var(--sm2-font-mono)');
     expect(n.style.color).toBe('var(--sm2-primary-ink)');
-    expect(p.querySelector('svg, .sm2-icon')).toBeNull();
+    // I4: a moeda tem ilustração própria (BitsIcon), decorativa; nunca um glifo do `Icon` genérico.
+    expect(p.querySelector('.sm2-icon')).toBeNull();
+    const coin = p.querySelector('[data-bits-icon]') as Element;
+    expect(coin).not.toBeNull();
+    expect(coin.getAttribute('aria-hidden')).toBe('true');
     expect(container.querySelector(`[data-shop-item="${emblemFurn.id}"]`)).toBeNull();
     expect(container.querySelector('[data-shop-shelf]')!.textContent).not.toContain('Honor');
   });
@@ -167,6 +176,7 @@ describe('moeda certa por aba', () => {
     abrir({ stall: 'decoracao', onBuy });
     fireEvent.click(screen.getByRole('tab', { name: 'Honor' }));
     fireEvent.click(screen.getByRole('button', { name: `${emblemFurn.nameEn} — ${emblemFurn.price} Honor` }));
+    fireEvent.click(screen.getByRole('button', { name: 'Buy' }));
     fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
     expect(onBuy).toHaveBeenCalledWith(emblemFurn.id);
   });

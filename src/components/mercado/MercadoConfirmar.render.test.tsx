@@ -36,6 +36,7 @@ describe('D1 — confirmar a compra', () => {
     const onBuy = vi.fn(() => true);
     abrir({ stall: 'itens', onBuy, points: 260 });
     fireEvent.click(screen.getByRole('button', { name: `${chip.nameEn} — ${chip.price} Bits` }));
+    fireEvent.click(screen.getByRole('button', { name: 'Buy' }));
     const dlg = screen.getByRole('dialog', { name: 'Confirm purchase' });
     expect(onBuy).not.toHaveBeenCalled();
     expect(dlg.querySelector('[data-purchase-question]')!.textContent).toBe(`Buy ${chip.nameEn} for ${chip.price} Bits?`);
@@ -52,13 +53,16 @@ describe('D1 — confirmar a compra', () => {
     abrir({ stall: 'itens', onBuy });
     const card = () => screen.getByRole('button', { name: `${chip.nameEn} — ${chip.price} Bits` });
     fireEvent.click(card());
+    fireEvent.click(screen.getByRole('button', { name: 'Buy' }));
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(screen.queryByRole('dialog', { name: 'Confirm purchase' })).toBeNull();
     fireEvent.click(card());
+    fireEvent.click(screen.getByRole('button', { name: 'Buy' }));
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));
     expect(screen.queryByRole('dialog', { name: 'Confirm purchase' })).toBeNull();
     expect(onBuy).not.toHaveBeenCalled();
     fireEvent.click(card());
+    fireEvent.click(screen.getByRole('button', { name: 'Buy' }));
     fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
     expect(onBuy).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole('dialog', { name: 'Confirm purchase' })).toBeNull();
@@ -67,6 +71,7 @@ describe('D1 — confirmar a compra', () => {
   it('em PT-BR a pergunta e os botões saem em português', () => {
     abrir({ stall: 'itens', language: 'pt-BR' });
     fireEvent.click(screen.getByRole('button', { name: `${chip.namePt} — ${chip.price} Bits` }));
+    fireEvent.click(screen.getByRole('button', { name: 'Comprar' }));
     const dlg = screen.getByRole('dialog', { name: 'Confirmar compra' });
     expect(dlg.querySelector('[data-purchase-question]')!.textContent).toBe(`Comprar ${chip.namePt} por ${chip.price} Bits?`);
     expect(within(dlg).getByRole('button', { name: 'Cancelar' })).toBeTruthy();
@@ -75,6 +80,7 @@ describe('D1 — confirmar a compra', () => {
   it('sem saldo continua abrindo o "como conseguir", não a confirmação', () => {
     abrir({ stall: 'itens', points: 1 });
     fireEvent.click(screen.getByRole('button', { name: `${chip.nameEn} — ${chip.price} Bits` }));
+    fireEvent.click(screen.getByRole('button', { name: 'Buy' }));
     expect(screen.queryByRole('dialog', { name: 'Confirm purchase' })).toBeNull();
     expect(screen.getByRole('dialog', { name: 'How to get Bits' })).toBeTruthy();
   });

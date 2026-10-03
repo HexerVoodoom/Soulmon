@@ -1,6 +1,7 @@
 import type { Language } from '../../utils/i18n';
 import { AREAS, areaLabel, type AreaId } from '../../navigation';
 import { bitsStyle, emblemStyle, CREDIT_COLOR } from '../../utils/currencies';
+import { BitsIcon } from '../ui/BitsIcon';
 
 import bgMapa from '../../assets/soulmon/mapa/bg-mapa.png';
 import zonaMercado from '../../assets/soulmon/mapa/zona-mercado.png';
@@ -133,7 +134,7 @@ export function MapPage({ language, onOpenArea, bits, emblems, credits }: {
         }}
       >
         <span data-map-chip aria-label={isPt ? `${bits} Bits` : `${bits} Bits`} style={{ ...CHIP, ...bitsStyle, fontSize: 'var(--sm2-text-sm)' }}>
-          {bits} Bits
+          <BitsIcon size={20} style={{ marginRight: 4 }} />{bits} Bits
         </span>
         <span data-map-chip aria-label={isPt ? `${emblems} de Honra` : `${emblems} Honor`} style={{ ...CHIP, ...emblemStyle, fontSize: 'var(--sm2-text-sm)' }}>
           {emblems} {isPt ? 'Honra' : 'Honor'}

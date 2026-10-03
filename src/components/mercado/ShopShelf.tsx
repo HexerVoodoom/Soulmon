@@ -3,6 +3,8 @@ import { bitsStyle, emblemStyle, BITS_EXCHANGE, CREDIT_COLOR, CREDIT_TO_BITS, EM
 import { Icon } from '../ui/Icon';
 import { BackArrow } from '../ui/BackArrow';
 import { MiniGlass } from '../ui/MiniGlass';
+import { BitsIcon } from '../ui/BitsIcon';
+import { DecorFitTag, ShopItemSheet } from './ShopItemSheet';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import type { ShopItem } from '../../utils/shop';
 import { PET_BACKGROUNDS } from '../../utils/backgrounds';
@@ -39,7 +41,8 @@ import type { Language } from '../../utils/i18n';
  *                  (`HowToEarnSheet`, H8 de 01/10/2026). Nunca `danger`.
  *
  * ─── AS TRÊS MOEDAS (regra de produto, D-L4, D-L10, D-L11) ─────────────────
- *   Bits      → "N Bits" em mono `primary-ink` (`bitsStyle`), SEM ícone.
+ *   Bits      → "N Bits" em mono `primary-ink` (`bitsStyle`) com a moeda própria
+ *               (`BitsIcon`, I4 de 02/10/2026) antes do número.
  *   Emblemas  → `military_tech` FILL + número em serifa `gold-ink`.
  *   Créditos  → `diamond` FILL em `--sm2-credit-ink`, só na troca.
  */
@@ -82,7 +85,7 @@ const unitStyle: CSSProperties = {
 export function Bits({ value, dim = false, sign = '' }: { value: number; dim?: boolean; sign?: string }) {
   return (
     <span className="sm2-num" style={{ ...bitsNum, display: 'inline-flex', alignItems: 'baseline', gap: 4, whiteSpace: 'nowrap', color: dim ? 'var(--sm2-muted)' : bitsNum.color }}>
-      {sign}{value}<span style={unitStyle}>Bits</span>
+      <BitsIcon size={20} />{sign}{value}<span style={unitStyle}>Bits</span>
     </span>
   );
 }
@@ -208,6 +211,8 @@ export function ShopShelf({
   const [need, setNeed] = useState<ShopItem | null>(null);
   /** Item tocado COM saldo — espera o "Confirmar" (D1, 02/10/2026). */
   const [confirming, setConfirming] = useState<ShopItem | null>(null);
+  /** Item tocado — abre a folha do item (preview grande + comprar/equipar, I5). */
+  const [picked, setPicked] = useState<ShopItem | null>(null);
 
   const isOwned = (item: ShopItem) =>
     (item.kind === 'bg' && ownedBackgrounds.includes(item.id))
@@ -292,9 +297,8 @@ export function ShopShelf({
     const name = isPt ? item.namePt : item.nameEn;
     const failing = flash?.id === item.id && !flash.ok;
 
-    const action = owned
-      ? () => { if (item.kind === 'bg') actions.onEquip(equipped ? null : item.id); else if (item.slot) actions.onEquipFurniture(equipped ? null : item.id, item.slot); }
-      : unlocked ? () => buy(item) : undefined;
+    // I5 (02/10/2026): o toque abre a FOLHA DO ITEM; comprar/equipar vivem nela.
+    const action = unlocked ? () => setPicked(item) : undefined;
 
     const status = owned
       ? (equipped ? (isPt ? 'Equipado' : 'Equipped') : (isPt ? 'Equipar' : 'Equip'))
@@ -330,6 +334,7 @@ export function ShopShelf({
 
         <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
           <span style={{ ...sm2Text, fontWeight: 500, color: unlocked ? 'var(--sm2-ink)' : 'var(--sm2-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
+          {item.kind === 'furniture' && <DecorFitTag fits={item.fits} isPt={isPt} />}
           {sub && <span style={sm2Hint}>{sub}</span>}
           {unlocked && blocked && (
             <span data-decor-reason={blocked} style={{ ...sm2Hint, color: 'var(--sm2-gold-ink)' }}>{decorReasonText(blocked, isPt)}</span>
@@ -385,6 +390,27 @@ export function ShopShelf({
             </section>
           </>
         )}
+      <ShopItemSheet
+        item={picked}
+        language={language}
+        currency={currency}
+        balance={balance}
+        owned={!!picked && isOwned(picked)}
+        equipped={!!picked && isOwned(picked) && (picked.kind === 'bg' ? equippedBackground === picked.id : picked.slot ? equippedDecor[picked.slot] === picked.id : false)}
+        onClose={() => setPicked(null)}
+        onBuy={it => { setPicked(null); buy(it); }}
+        onEquip={it => {
+          const eq = it.kind === 'bg' ? equippedBackground === it.id : it.slot ? equippedDecor[it.slot] === it.id : false;
+          setPicked(null);
+          if (it.kind === 'bg') actions.onEquip(eq ? null : it.id); else if (it.slot) actions.onEquipFurniture(eq ? null : it.id, it.slot);
+        }}
+        bitsPrice={(v, dim) => <Bits value={v} dim={dim} />}
+        emblemPrice={(v, dim) => (
+          <span className="sm2-num" style={{ ...emblemNum, display: 'inline-flex', alignItems: 'baseline', gap: 4, whiteSpace: 'nowrap', color: dim ? 'var(--sm2-muted)' : emblemNum.color }}>
+            {v}<span style={unitStyle}>{isPt ? 'Honra' : 'Honor'}</span>
+          </span>
+        )}
+      />
       <PurchaseConfirmSheet
         open={!!confirming}
         language={language}
