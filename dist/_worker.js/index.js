@@ -3270,8 +3270,8 @@ var DUEL_PERFECT_CHEER = 0.92;
 var DUEL_CHEER_GAIN = 0.25;
 var DUEL_PERFECT_MULT = 1.35;
 var TIMING_CHEER_ENABLED = false;
-var DUEL_TAPS_FULL = 8;
-var DUEL_TAPS_CAP = 10;
+var DUEL_TAPS_FULL = 16;
+var DUEL_TAPS_CAP = 20;
 var DUEL_SPECIAL_MULT = DUEL_PERFECT_MULT;
 function sanitizeTaps(raw) {
   const arr = Array.isArray(raw) ? raw : [];
@@ -5330,7 +5330,7 @@ async function onRequest6({ env }) {
 }
 __name(onRequest6, "onRequest");
 
-// ../.wrangler/tmp/pages-geMGT3/functionsRoutes-0.7222252545969434.mjs
+// ../.wrangler/tmp/pages-PmNY1z/functionsRoutes-0.754670952864316.mjs
 var routes = [
   {
     routePath: "/api/account",
