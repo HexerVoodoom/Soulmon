@@ -218,6 +218,14 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Chamado por:** `src/components/mercado/MercadoSheets.tsx`, `src/components/TournamentPage.tsx`; `src/components/nav/AreaView.tsx` importa só os tipos `ShopOwnership`/`ShopActions` (24/09/2026).
 **Régua:** `src/components/mercado/MercadoSheets.render.test.tsx`, `src/components/arena/arenaSheets.render.test.tsx`, `src/utils/weeklyMissions.fiacao.test.ts`.
 
+### `src/components/mercado/ShopItemSheet.tsx`
+**Dono de:** a FOLHA DO ITEM da lojinha (I5/I6, 02/10/2026): tocar num item abre um bottom sheet com as opções (Comprar / Equipar / Tirar) e um PREVIEW GRANDE — o ícone do item solto, SEM o quadradinho de vidro, centrado na área escurecida acima da folha (portal em `document.body`, decorativo); para cenário a miniatura abre o LIGHTBOX (fundo escurecido, arte grande, ✕ no topo esquerdo, fecha ao tocar fora). A compra real continua na `PurchaseConfirmSheet`. Também dono da pílula Interno/Externo/Qualquer da decoração.
+**Props principais:** `item`, `language`, `currency`, `balance`, `owned`, `equipped`, `onClose`, `onBuy`, `onEquip`, `bitsPrice`, `emblemPrice` (render props do preço).
+**Exports:** `ShopItemSheet`, `BackgroundLightbox`, `DecorFitTag`.
+**Depende de:** `ModalSheet` (`form/FormKit`), `useDialogA11y`, `utils/decorRules.ts` › `decorFitLabel`.
+**Chamado por:** `src/components/mercado/ShopShelf.tsx` (`DecorFitTag` também no card da peça).
+**Régua:** `src/components/mercado/ShopItemSheet.render.test.tsx`.
+
 ### `src/components/nav/AreaView.tsx`
 **Dono de:** UMA área do Mapa inteira (minimal-ui F5, 24/09/2026) — a `AreaScene`, o lote aberto (`AreaSheet`, estado LOCAL; o `App` monta com `key` da view, então trocar de área fecha a folha) e o conteúdo: no Mercado as 4 lojinhas (fundo, arte dos lotes e os vendedores de `STALL_NPC_ART`), na Arena o Torneio (`TournamentPage` com a loja de Emblemas) e o Duelo (`DueloSheet` → `ArenaGame` em tela cheia); na Exploração a Masmorra e a Corrida com obstáculos (⚰️ "Corrida do Dino"; o id de jogo `dino` não mudou), em Jogos o Pedra, papel e tesoura (folhas-porta de `play/PlaySheets.tsx` → `DungeonGame`/`DinoGame`/`RPSGame` em tela cheia, com os handlers de `play`); no Laboratório a folha com as abas Evolução/Soulmon/Stats (`labContent`, montado no `App`) e no Hall a Biblioteca (`hallContent`, `LibraryPage` `embedded`). Consolidado das PRs #117 e #118. Entra por `lazy()` no `App` para ficar fora do chunk de entrada (orçamento de bytes, decisão #31). Não decide regra: compra, troca, partida e luta chegam prontas por props.
 **Props principais:** `AreaViewProps` — `area`, `language`, `ownership`/`actions` (os mesmos para Mercado e Torneio), `points`/`emblems`/`credits`, `onExchangeCredits`, `accountTier?`/`onUnlock?`, `tournament` (as props do `TournamentPage` menos `shop`), `evolutionStage`, `demoCharacterId?`, `skills?`, `onEarnPoints`, `play: PlayHandlers` (masmorra/dino/sumidouro de Bits), `labTab`, `labContent`, `hallContent`, `onLayerChange?` (29/09/2026: avisa o `App` quando há camada de tela cheia — folha, jogo ou duelo; o `App` guarda em `areaLayerOpen` e passa `covered` ao `AreaTopBar`; o cleanup do efeito avisa `false`), `passeio?` (desde `3532ccf5`: `{ crossings, onChange(f) }` — o estado `GameState.crossings` e o ÚNICO caminho de escrita, uma função pura de `utils/travessias` aplicada sobre `prev` no `App`; o lote `passeio` da Exploração abre `PasseioSheet` lazy, com `CROSSINGS_EMPTY` na falta da prop).
@@ -1213,3 +1221,25 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 **Estado/efeitos relevantes:** tooltip num portal em `document.body` (nunca cortado por `overflow`), posicionado junto ao botão e preso às bordas; fecha com novo toque, toque fora ou Esc; `aria-expanded` + `aria-describedby`. Alvo de toque 44.
 **Chamado por:** as telas que tinham texto explicativo corrido (Duelo, Feira, Torneio, Masmorra, Seus dados…).
 **Régua:** `src/components/ui/InfoTip.render.test.tsx`.
+
+### `src/components/ui/TypewriterText.tsx`
+**Dono de:** o texto que surge letra a letra, como máquina de escrever (I1, 02/10/2026): ~30 ms por caractere, sem som, altura final reservada (a parte não dita fica no fluxo com `visibility: hidden` — sem reflow), toque completa na hora, `prefers-reduced-motion` (ou sem `matchMedia`) mostra tudo de uma vez. Leitor de tela lê o texto inteiro de um nó oculto; o desenho animado é `aria-hidden` e não há `aria-live`.
+**Props principais:** `text`, `speedMs?` (30), `onDone?` (uma vez por texto), `style?`, `className?`.
+**Exports:** `TypewriterText`, `prefersNoTypewriter`.
+**Estado/efeitos relevantes:** contador amarrado ao texto (trocar `text` recomeça); um `setInterval` enquanto fala.
+**Chamado por:** `src/components/nav/NpcSpeech.tsx`.
+**Régua:** `src/components/ui/TypewriterText.render.test.tsx`.
+
+### `src/components/ui/BitsIcon.tsx`
+**Dono de:** a moeda dos Bits (I4, 02/10/2026) — o PONTO ÚNICO de troca de arte. Detecta `src/assets/icons/bits.png` por `import.meta.glob`; sem o arquivo, desenha uma moeda pixel 8×8 provisória (aro `primary-ink`, miolo `gold-ink`, barra gravada) com tokens de cor. Decorativa (`aria-hidden`) salvo quando recebe `label`.
+**Props principais:** `size?` (20), `label?`, `style?`.
+**Exports:** `BitsIcon`.
+**Chamado por:** `src/components/mercado/ShopShelf.tsx` (`Bits`), `src/components/nav/MapPage.tsx` (chip de saldo).
+**Régua:** `src/components/ui/BitsIcon.render.test.tsx`, `src/components/mercado/MercadoSheets.render.test.tsx`.
+
+### `src/components/nav/NpcSpeech.tsx`
+**Dono de:** o balão de fala do NPC na folha do lote (I1, 02/10/2026): nome + fala digitada (`TypewriterText`). Monta de novo a cada abertura da folha, então a fala é dita uma vez por abertura e não bloqueia o resto; enquanto fala aceita toque (completa sem fechar a folha), depois volta a ser transparente ao toque. Mantém `data-area-sheet-npc-line` (o CSS de viewport baixa depende dele).
+**Props principais:** `name`, `line`.
+**Exports:** `NpcSpeech`.
+**Chamado por:** `src/components/nav/AreaSheet.tsx`.
+**Régua:** `src/components/nav/NpcSpeech.render.test.tsx`.

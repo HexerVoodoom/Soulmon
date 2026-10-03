@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { DECOR_MAX_TOTAL, decorBlockReason, decorReasonText, decorRuleText } from './decorRules';
+import { DECOR_MAX_TOTAL, decorBlockReason, decorReasonText, decorRuleText, decorFitLabel } from './decorRules';
 import { SLOT_ORDER } from './petStage';
 import { PET_BACKGROUNDS } from './backgrounds';
 import { ALL_SHOP_ITEMS } from './shop';
@@ -52,5 +52,16 @@ describe('decorRules — a regra real da decoração (D2, 02/10/2026)', () => {
     }
     expect(decorRuleText(true).limit).toContain(String(DECOR_MAX_TOTAL));
     expect(decorRuleText(false).limit).toContain(String(DECOR_MAX_TOTAL));
+  });
+});
+
+describe('decorFitLabel — a pílula interno/externo/qualquer (I6, 02/10/2026)', () => {
+  it('traduz o `fits` da peça, nos dois idiomas; ausente = qualquer', () => {
+    expect(decorFitLabel('indoor', true)).toEqual({ fit: 'indoor', text: 'Interno' });
+    expect(decorFitLabel('outdoor', true)).toEqual({ fit: 'outdoor', text: 'Externo' });
+    expect(decorFitLabel('any', true)).toEqual({ fit: 'any', text: 'Qualquer' });
+    expect(decorFitLabel(undefined, false)).toEqual({ fit: 'any', text: 'Any' });
+    expect(decorFitLabel('indoor', false).text).toBe('Indoor');
+    expect(decorFitLabel('outdoor', false).text).toBe('Outdoor');
   });
 });
