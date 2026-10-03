@@ -26,15 +26,20 @@ export const REST_SETUP_MORNING_END_HOUR = 12;
 export interface RestSetupInput {
   /** O convite já apareceu neste aparelho. */
   shown: boolean;
-  /** `gameState.bornAt` (YYYY-MM-DD). Ausente = não sabemos o dia → não mostra. */
+  /** `gameState.bornAt` (YYYY-MM-DD). Ausente → cai em `firstOpenKey`. */
   bornAt: string | undefined;
+  /** Dia (YYYY-MM-DD) da PRIMEIRA abertura neste aparelho. Rede de segurança
+   *  para saves sem `bornAt` (o upgrade e a conta restaurada não o preenchem —
+   *  decisão D17, `App.tsx`), que antes nunca viam o convite (auditoria
+   *  02/10/2026). Sem os dois, não mostra. */
+  firstOpenKey?: string | undefined;
   /** Dia do JOGADOR de hoje (`playerDayKey`). */
   todayKey: string;
 }
 
-export function shouldShowRestSetup({ shown, bornAt, todayKey }: RestSetupInput): boolean {
+export function shouldShowRestSetup({ shown, bornAt, firstOpenKey, todayKey }: RestSetupInput): boolean {
   if (shown) return false;
-  const day = daysTogether(bornAt, todayKey);
+  const day = daysTogether(bornAt ?? firstOpenKey, todayKey);
   if (day === null) return false;
   return day >= REST_SETUP_DAY;
 }

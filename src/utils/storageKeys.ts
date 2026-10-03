@@ -120,6 +120,8 @@ export const STORAGE_KEYS = {
   /** G8 (01/10/2026): o modal de sono automático + janela de descanso já
    *  apareceu (uma vez só, na 1ª abertura do 2º dia — `utils/restSetup.ts`). */
   REST_SETUP_SHOWN: 'soulmon-rest-setup-shown',
+  /** Dia da primeira abertura neste aparelho — fallback do convite do sono em save sem `bornAt`. */
+  REST_SETUP_FIRST_OPEN: 'soulmon-rest-setup-first-open',
   /** `marcaAvisoTermos(...)` da última atualização de Termos/Privacidade que a
    *  pessoa dispensou com "Ok" (utils/termsNotice.ts, decisão #24). Fica no
    *  aparelho, não no save: é um aviso lido, não um consentimento. */
