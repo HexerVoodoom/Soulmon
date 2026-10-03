@@ -66,6 +66,7 @@ import { lineIconForStage } from '../utils/lineIcons';
 import { getStageLevel } from '../types/progression';
 import { DuelScreen } from './DuelScreen';
 import type { DuelStats } from '../../functions/api/_duel.js';
+import { visualElementFor } from '../utils/combatFx';
 import { getOpponents, playMatch, startDuel, getRank, type Opponent, type MatchResult, type RankRow } from '../utils/community';
 import { EMBLEMS_PER_WIN, EMBLEMS_PER_LOSS, emblemStyle } from '../utils/currencies';
 import { getTierStanding } from '../utils/tournamentTiers';
@@ -89,6 +90,8 @@ interface TournamentPageProps {
   petStage: string;
   /** Linha de arte do pet (`spriteLineOf` — personagem pronto ou o corvinho). */
   petLine?: string;
+  /** Elemento dominante do SEU Soulmon (`soulmonMeta.dominantElement`): a arte dos golpes do duelo. */
+  petElement?: string;
   trophies: Array<{ season: string; place: 1 | 2 | 3 }>;
   language: string;
   /** Emblemas atuais (moeda do torneio) — só para exibir. */
@@ -170,7 +173,7 @@ function TierMark({ id, size, state }: { id: string; size: 24 | 32; state: 'curr
   );
 }
 
-export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLine, trophies, language, emblems, onEarnEmblems, totalXP, onMatchPlayed, weeklyMissions, onClaimWeekly, shop, headSlot }: TournamentPageProps) {
+export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLine, petElement, trophies, language, emblems, onEarnEmblems, totalXP, onMatchPlayed, weeklyMissions, onClaimWeekly, shop, headSlot }: TournamentPageProps) {
   const isPt = language === 'pt-BR';
   const lang: Language = isPt ? 'pt-BR' : 'en-US';
   const [opponents, setOpponents] = useState<Opponent[] | null>(null);
@@ -354,6 +357,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         seed={duel.seed}
         petSprite={getSpriteForStage(petStage, petLine, 256)}
         oppSprite={getSpriteForStage(duel.opp.stage)}
+        petElement={petElement}
+        oppElement={visualElementFor(duel.opp.id)}
         petName={isPt ? 'Você' : 'You'}
         oppName={duel.opp.petName || duel.opp.name}
         isPt={isPt}
