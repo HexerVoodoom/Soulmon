@@ -1552,9 +1552,14 @@ o `CLAUDE.md` já registra que ele **não** está em `utils/dungeon.ts`).
 - **Duelo fantasma (30/09/2026)**: se o oponente traz `opp.duel` e o servidor mandou
   `myDuel` (`r.me?.duel`), o "Desafiar" chama `startDuel` (o servidor gasta a partida e
   sorteia `seed`) e `setDuel(...)`; o componente devolve `<DuelScreen>` **no lugar** da
-  página. Os pets lutam sozinhos; em cada golpe de `DUEL_CHEER_STRIKES` o botão
-  "Torcer"/"Cheer" (`phase === 'cheer'`) arma um anel — toque no encontro
-  (`cheerQuality`) só soma; não torcer não tira nada. Fim da luta (`phase === 'done'`,
+  página, em **TELA CHEIA** (`games/BattleStage.tsx`, rodada 5/I10, 02/10/2026): o background da
+  Arena cobre a viewport, o seu Soulmon fica embaixo à esquerda (grande) e o oponente em
+  cima à direita (menor), cada um com a barra de HP nos pés; o gauge de torcida (16 toques,
+  "?" com a explicação — nenhuma frase na cena) fica no topo e o **X no canto superior
+  direito** pede confirmação ("Sair do duelo? Conta como derrota."). Os pets lutam sozinhos
+  num passo de ~1,5 s (investida ou projétil com a arte de skill do ELEMENTO; o especial
+  é o projétil grande); toque em QUALQUER lugar enche o gauge e, cheio, no golpe de torcida
+  vira o especial. A torcida só soma; não torcer não tira nada. Fim da luta (`phase === 'done'`,
   "Conferindo o resultado…") → `onDone(cheers)` → `resolveMatch(opp, cheers)` →
   `playMatch(saveId, opp.id, cheers, forfeit)`. **Sair** ("Sair do duelo"/"Leave the
   duel", `onClose`, inerte em `done`) → `leaveDuel` → `resolveMatch(opp, [], true)` =
