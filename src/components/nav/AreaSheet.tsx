@@ -3,6 +3,7 @@ import type { AreaId } from '../../navigation';
 import type { Language } from '../../utils/i18n';
 import { lotNpcArt } from '../../assets/soulmon/npcs';
 import { lotNpcVoice } from '../../utils/areaNpcVoice';
+import { NpcSpeech } from './NpcSpeech';
 import { useBackLayer } from '../../utils/backStack';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
 import { NPC_MAX_WIDTH_PCT } from './npcScale';
@@ -140,26 +141,9 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
               filter: 'drop-shadow(0 6px 8px rgba(0,0,0,.6))',
             }}
           />
-          {/* Balão de fala — espaço reservado mesmo quando a linha for curta. */}
-          <p
-            data-area-sheet-npc-line
-            style={{
-              flex: 1, minWidth: 0,
-              margin: '0 0 8px',
-              padding: '10px 12px',
-              background: 'rgba(15,42,41,.96)',
-              border: '2px solid var(--sm2-gold-fill)',
-              borderRadius: '14px 14px 14px 2px',
-              font: '500 13px/1.35 var(--sm2-font-text)',
-              color: '#E9F5F2',
-              boxShadow: '0 6px 14px rgba(0,0,0,.45)',
-            }}
-          >
-            <b style={{ display: 'block', marginBottom: 4, fontSize: 12, letterSpacing: '0.06em', color: 'var(--sm2-gold-ink)' }}>
-              {npc.name}
-            </b>
-            {npc.line}
-          </p>
+          {/* Balão de fala — a fala surge letra a letra (I1, `NpcSpeech`); a altura final
+              já fica reservada, então o balão não cresce enquanto ela é dita. */}
+          <NpcSpeech name={npc.name} line={npc.line} />
         </div>
 
         <div
