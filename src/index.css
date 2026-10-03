@@ -5704,6 +5704,18 @@ select:focus-visible {
 .sm2-corner-link:active { transform: scale(.94); }
 .sm2-area-back:active { transform: scale(.94); }
 
+/* ── FOLHAS DE BASE SOBEM (I2, 02/10/2026) ──────────────────────────────
+   Todo modal alinhado à BASE (`ModalSheet`, `AreaSheet`) entra SUBINDO: a
+   folha vai de `translateY(100%)` a 0 e o véu escurece por fade. Só
+   `transform`/`opacity` (nada de layout). Só a ENTRADA — a saída continua
+   instantânea (desmonta junto com o estado, e o foco devolvido do
+   `useDialogA11y` não pode esperar uma animação). Movimento reduzido: o
+   bloco canônico, mais abaixo, zera as duas classes e a folha aparece direto. */
+@keyframes sm2-sheet-rise { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes sm2-sheet-fade { from { opacity: 0; } to { opacity: 1; } }
+.sm2-sheet-rise { animation: sm2-sheet-rise 260ms cubic-bezier(.2, .8, .2, 1) 1 backwards; }
+.sm2-sheet-fade { animation: sm2-sheet-fade 220ms ease-out 1 backwards; }
+
 /* ── MOVIMENTO REDUZIDO ──────────────────────────────────────────────────
    O bloco global logo acima já zera `animation`/`transition` de tudo; este é
    explícito sobre as duas peças desta onda porque `font-variation-settings` e
@@ -5737,6 +5749,8 @@ select:focus-visible {
   .sm2-icon { transition: none !important; }
   /* minimal-ui F1: o link de canto e o voltar não encolhem no toque. */
   .sm2-corner-link:active, .sm2-area-back:active { transform: none; }
+  /* I2: as folhas de base aparecem direto, sem subir nem esmaecer. */
+  .sm2-sheet-rise, .sm2-sheet-fade { animation: none !important; }
   /* A sintonia do Visor (troca da arte de reserva pelo sprite próprio) vira
      CORTE SECO: a troca continua acontecendo, só sem a transição
      (`spec-geracao-incremental.md` §6). Mora AQUI, e não num segundo bloco no
@@ -7753,10 +7767,6 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
   color: var(--sm2-gold-ink);
 }
 .sm3-mochila-dica { margin: 2px 0 0; font-size: var(--sm2-text-xs); font-weight: 600; color: var(--sm2-muted); }
-.sm3-mochila-x {
-  width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
-  background: none; border: none; cursor: pointer; padding: 0;
-}
 .sm3-mochila-abas { display: flex; border-bottom: 1px solid var(--sm2-line); margin-bottom: 12px; }
 .sm3-mochila-abas button {
   flex: 1;

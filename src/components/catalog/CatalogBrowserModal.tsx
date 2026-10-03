@@ -63,11 +63,12 @@ export function CatalogBrowserModal({ isOpen, onClose, language = 'en-US', onAdd
   };
 
   return (
-    <ModalSheet open={isOpen} onClose={onClose} language={language} title={isPt ? 'Catálogo de atividades' : 'Activity catalog'}>
+    <ModalSheet open={isOpen} onClose={onClose} onBack={pendingMindItem ? () => setPendingMindItem(null) : undefined} language={language} title={isPt ? 'Catálogo de atividades' : 'Activity catalog'}>
       {pendingMindItem ? (
         <CatalogMindNotice
           item={pendingMindItem}
           language={language}
+          showBack={false}
           onCancel={() => setPendingMindItem(null)}
           onConfirm={() => { onAdd(pendingMindItem); setPendingMindItem(null); }}
         />

@@ -15,14 +15,22 @@ import { Icon } from './Icon';
  *
  * Uso: `<BackArrow onClick={voltar} language={language} />` como PRIMEIRO
  * elemento da tela, antes do título.
+ *
+ * I3 (02/10/2026): o FECHAR de um modal/folha SIMPLES mora no MESMO lugar
+ * (canto superior ESQUERDO, acima do título) — `icon="close"`, o rótulo
+ * padrão vira Fechar/Close. O X à DIREITA existe só onde fechar ENCERRA uma
+ * atividade em andamento (luta, minijogo, run).
  */
 export function BackArrow({
-  onClick, language, label, style,
+  onClick, language, label, style, icon = 'arrow_back',
 }: {
   onClick: () => void;
   language: 'pt-BR' | 'en-US';
-  /** Nome acessível próprio (ex.: "Fechar a loja"); padrão = Voltar/Back. */
+  /** Nome acessível próprio (ex.: "Fechar a loja"); padrão = Voltar/Back
+   *  (ou Fechar/Close com `icon="close"`). */
   label?: string;
+  /** `arrow_back` = voltar (padrão); `close` = fechar um modal/folha simples. */
+  icon?: 'arrow_back' | 'close';
   style?: CSSProperties;
 }) {
   const isPt = language === 'pt-BR';
@@ -32,9 +40,9 @@ export function BackArrow({
         type="button"
         className="sm2-ora-back"
         onClick={onClick}
-        aria-label={label ?? (isPt ? 'Voltar' : 'Back')}
+        aria-label={label ?? (icon === 'close' ? (isPt ? 'Fechar' : 'Close') : (isPt ? 'Voltar' : 'Back'))}
       >
-        <Icon name="arrow_back" size={24} tone="inherit" />
+        <Icon name={icon} size={24} tone="inherit" />
       </button>
     </div>
   );

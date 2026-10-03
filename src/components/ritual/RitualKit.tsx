@@ -1,5 +1,6 @@
 import { useLayoutEffect, type CSSProperties, type ReactNode } from 'react';
 import { Icon } from '../ui/Icon';
+import { BackArrow } from '../ui/BackArrow';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
 import { SM2_SHADOW_CARD, sm2Hint } from '../form/FormKit';
 
@@ -46,6 +47,11 @@ export interface RitualDialogProps {
   maxWidth?: number;
   /** Rótulo do × 44 no canto. Ausente = sem ×. */
   closeLabel?: string;
+  /** I3 (02/10/2026): onde mora o ×. `'start'` (padrão) = canto superior
+   *  ESQUERDO, ACIMA do título, o mesmo lugar do voltar. `'end'` = canto
+   *  superior DIREITO, só quando fechar ENCERRA uma atividade em andamento
+   *  (a luta do pesadelo). */
+  closeSide?: 'start' | 'end';
   /** × por ÚLTIMO na ordem de foco (E9, folhas de gate); padrão = primeiro
    *  (o relatório: "× 44, primeiro focável"). */
   closeLast?: boolean;
@@ -68,11 +74,11 @@ export interface RitualDialogProps {
 }
 
 export function RitualDialog({
-  label, labelledBy, onClose, zIndex = 200, maxWidth = 340, closeLabel, closeLast = false,
+  label, labelledBy, onClose, zIndex = 200, maxWidth = 340, closeLabel, closeLast = false, closeSide = 'start',
   focusContainer = false, veilRole, children, style, className, theme,
 }: RitualDialogProps) {
   const dialogRef = useDialogA11y<HTMLDivElement>(true, onClose);
-  const closeButton = closeLabel ? <CloseX onClose={onClose} label={closeLabel} /> : null;
+  const closeButton = closeLabel ? <CloseX onClose={onClose} label={closeLabel} side={closeSide} inOrder={closeLast} /> : null;
 
   useLayoutEffect(() => {
     if (!focusContainer) return;
@@ -125,7 +131,17 @@ export function RitualDialog({
   );
 }
 
-function CloseX({ onClose, label }: { onClose: () => void; label: string }) {
+function CloseX({ onClose, label, side, inOrder }: { onClose: () => void; label: string; side: 'start' | 'end'; inOrder: boolean }) {
+  if (side === 'start') {
+    /* I3: a MESMA peça do voltar (`BackArrow`, `icon="close"`), no fluxo, como
+       PRIMEIRO item visual do cartão. `order: -1` mantém a ordem de FOCO do
+       DOM (`closeLast`: por último) sem mudar o desenho. */
+    return (
+      <div style={{ alignSelf: 'flex-start', order: -1, margin: '-8px 0 -8px -8px' }} data-ritual-close-start data-close-last={inOrder ? 'true' : undefined}>
+        <BackArrow icon="close" onClick={onClose} language="pt-BR" label={label} style={{ margin: 0 }} />
+      </div>
+    );
+  }
   /* 44×44 (WCAG 2.2 2.5.8), ícone pelado — ícone nunca dentro de box. */
   return (
     <button

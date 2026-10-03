@@ -209,6 +209,18 @@ de que ele era inalcançável vale só até a F1.
 
 ---
 
+### 1.5 Convenção de voltar e fechar (I3, 02/10/2026)
+
+Três gestos, três lugares — valem para toda tela, folha e diálogo do app:
+
+| Gesto | Quando | Onde | Peça |
+|---|---|---|---|
+| **Voltar** | sair de uma sub-tela para a anterior | seta no canto superior ESQUERDO, ACIMA do título | `BackArrow` (`arrow_back`); em folha com sub-tela, `ModalSheet onBack` |
+| **Fechar** (modal/folha simples) | descartar uma folha que não encerra conteúdo significativo | MESMO lugar do voltar, ícone `close` | `BackArrow icon="close"`; já embutido em `ModalSheet` e `RitualDialog` (`closeSide="start"`, padrão), `AreaSheet` e `Mochila` |
+| **Encerrar atividade** | fechar ENCERRA algo em andamento (luta, minijogo, run) | X no canto superior DIREITO | `GameHeader` (jogos) e `RitualDialog closeSide="end"` (pesadelo) |
+
+Folhas de BASE (`ModalSheet`, `AreaSheet`, Mochila) entram SUBINDO (`translateY(100%)→0`, 260 ms, com o véu em fade de 220 ms; classes `sm2-sheet-rise`/`sm2-sheet-fade` do `index.css`). Só a entrada anima — a saída continua instantânea, para o foco devolvido do `useDialogA11y` não esperar. Movimento reduzido: aparece direto (regra no bloco canônico do `index.css`).
+
 ## 2. Primeira abertura, passo a passo
 
 ### 2.1 Splash estática do `index.html`
