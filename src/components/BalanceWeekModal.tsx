@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import type { Language } from '../utils/i18n';
 import { ModalSheet, sm2Button, sm2Hint, sm2Label, sm2Text } from './form/FormKit';
-import { InfoTip } from './ui/InfoTip';
 import { weekdayShort, weekdayFull, WEEKDAY_INDEXES } from '../utils/weekdays';
 import {
   equilibrarSemana, type AtividadeSemanal, type PropostaDeEquilibrio,
@@ -173,7 +172,7 @@ export function BalanceWeekModal({
             </ul>
           </div>
 
-          <InfoTip language={language} label={isPt ? 'Sobre a frequência dos hábitos' : 'About habit frequency'} align="left" style={{ minHeight: 24, justifyContent: 'flex-start' }}>{t.mesmaFrequencia}</InfoTip>
+          <p style={{ ...sm2Hint, margin: 0 }}>{t.mesmaFrequencia}</p>
 
           {/* Honestidade quando não cabe — em `muted`, não em vermelho: é
               informação, e a proposta continua sendo a melhor possível. */}
