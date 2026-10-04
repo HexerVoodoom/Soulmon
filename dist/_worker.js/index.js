@@ -4900,6 +4900,23 @@ var CORS11 = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization"
 };
 var SERVER_OWNED_FIELDS = ["accountTier", "credits"];
+var CADERNO_MAX_ENTRIES = 120;
+var CADERNO_MAX_CHARS = 2e3;
+function clampCaderno(raw) {
+  if (!Array.isArray(raw)) return [];
+  const out = [];
+  for (const e of raw) {
+    if (!e || typeof e !== "object") continue;
+    if (typeof e.id !== "string" || !/^[a-z0-9-]{1,40}$/.test(e.id)) continue;
+    if (typeof e.day !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(e.day)) continue;
+    if (!["tres-coisas", "gratidao", "aprendi", "livre"].includes(e.formato)) continue;
+    if (typeof e.text !== "string" || !e.text.trim() || !Number.isFinite(Number(e.at))) continue;
+    out.push({ id: e.id, day: e.day, formato: e.formato, text: e.text.slice(0, CADERNO_MAX_CHARS), at: Number(e.at) });
+    if (out.length >= CADERNO_MAX_ENTRIES) break;
+  }
+  return out;
+}
+__name(clampCaderno, "clampCaderno");
 var MAX_STATE_BYTES = 5 * 1024 * 1024;
 var SAVE_TTL_SECONDS = 86400 * 365;
 var RENEW_AFTER_SECONDS = 86400 * 30;
@@ -4968,6 +4985,7 @@ async function onRequest5({ request, env }) {
     }
     const state = { ...incoming };
     for (const field of SERVER_OWNED_FIELDS) delete state[field];
+    if ("caderno" in state) state.caderno = clampCaderno(state.caderno);
     const serialized = JSON.stringify(state);
     if (serialized.length > MAX_STATE_BYTES) {
       console.warn("save: POST recusado, state acima do teto", { saveId, bytes: serialized.length });
@@ -5384,7 +5402,7 @@ async function onRequest6({ env }) {
 }
 __name(onRequest6, "onRequest");
 
-// ../.wrangler/tmp/pages-wFxTRL/functionsRoutes-0.4201425782289374.mjs
+// ../.wrangler/tmp/pages-6T99hk/functionsRoutes-0.7809049202935829.mjs
 var routes = [
   {
     routePath: "/api/account",
