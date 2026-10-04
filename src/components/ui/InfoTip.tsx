@@ -72,12 +72,14 @@ export function InfoTip({
     const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); setOpen(false); } };
     const reflow = () => place();
     document.addEventListener('pointerdown', fora);
-    document.addEventListener('keydown', esc, true);
+    // `window` (e não `document`): na captura o `window` vem ANTES, então a dica trata o Esc primeiro
+    // e o modal em volta (que ouve o `document`) nem chega a vê-lo.
+    window.addEventListener('keydown', esc, true);
     window.addEventListener('resize', reflow);
     window.addEventListener('scroll', reflow, true);
     return () => {
       document.removeEventListener('pointerdown', fora);
-      document.removeEventListener('keydown', esc, true);
+      window.removeEventListener('keydown', esc, true);
       window.removeEventListener('resize', reflow);
       window.removeEventListener('scroll', reflow, true);
     };
