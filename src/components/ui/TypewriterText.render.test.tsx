@@ -51,10 +51,16 @@ describe('TypewriterText', () => {
     expect(container.querySelector('[aria-live]')).toBeNull();
   });
 
-  it('prefers-reduced-motion mostra tudo de uma vez', () => {
+  it('prefers-reduced-motion (Android "remover animações") AINDA digita, só mais rápido', () => {
     mockMotion(true);
     const onDone = vi.fn();
-    const { container } = render(<TypewriterText text="Tudo junto" onDone={onDone} />);
+    const { container } = render(<TypewriterText text="Tudo junto" onDone={onDone} speedMs={30} />);
+    // começa vazio: a fala do NPC nunca pode sumir só por causa do flag
+    expect(shown(container)).toBe('');
+    act(() => { vi.advanceTimersByTime(15 * 3); });
+    expect(shown(container).length).toBeGreaterThan(0);
+    expect(shown(container).length).toBeLessThan('Tudo junto'.length);
+    act(() => { vi.advanceTimersByTime(15 * 20); });
     expect(shown(container)).toBe('Tudo junto');
     expect(onDone).toHaveBeenCalledTimes(1);
   });
