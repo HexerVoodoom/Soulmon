@@ -5958,7 +5958,7 @@ export default function App() {
                    `hallContent`, montados antes do `return`). */
                 /* 🧭 Passeio + Travessias (30/09/2026): o estado do save e o
                    ÚNICO caminho de escrita (função pura sobre `prev`). */
-                passeio={{ crossings, onChange: handleCrossings }}
+                passeio={{ crossings, onChange: handleCrossings, seed: saveId }}
                 labTab={labTab}
                 onLabTab={setLabTab}
                 labContent={labContent}

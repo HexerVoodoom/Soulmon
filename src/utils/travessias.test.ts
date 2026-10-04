@@ -6,11 +6,12 @@ import { describe, it, expect } from 'vitest';
 import {
   normalizeCrossings, REGION_IDS, regionById, openRegions, mistRegions, offerFor, pickCrossing,
   dropCrossing, markDone, doneToday, crossingYield, settleNight, setDestination, setHidden, passeioFindOfDay, findAnyById,
-  activeChallenge, crossingsTouchMap,
+  activeChallenge, crossingsTouchMap, dailyOffer, pickMission, missionMark, marcosAbertos,
 } from './travessias';
+import { MARCO_POSTAIS, VIAGENS } from '../data/travessiasViagens';
 import { REGIONS } from '../data/travessiasCatalog';
 import { ADVENTURE_CATALOG, adventureOfDay, adventureOfNight, collectAdventure } from './adventure';
-import { CROSSINGS_EMPTY, HOME_REGION, REGIONS_OPENED_PER_DAY, type CrossingsState, type RegionId } from '../types/travessias';
+import { CROSSINGS_EMPTY, HOME_REGION, MARCO_THRESHOLDS, MISSIONS_OFFERED_PER_DAY, REGIONS_OPENED_PER_DAY, type CrossingsState, type RegionId } from '../types/travessias';
 
 const FORA = REGIONS.filter(r => r.id !== HOME_REGION);
 const R1 = FORA[0];
@@ -139,18 +140,21 @@ describe('pick / drop / markDone / trocar', () => {
     expect(markDone(CROSSINGS_EMPTY, '2026-10-02')).toBe(CROSSINGS_EMPTY);
   });
 
-  it('F5: uma vez por DIA — vira o dia, vale de novo; a região só entra uma vez', () => {
-    let s = markDone(pickCrossing(CROSSINGS_EMPTY, R1.id, R1.challenges[0].id), '2026-10-02');
+  it('F5: uma vez por DIA — vira o dia, escolhe-se de novo e vale de novo; a região só entra uma vez', () => {
+    let s = markDone(pickCrossing(CROSSINGS_EMPTY, R1.id, R1.challenges[0].id, '2026-10-02'), '2026-10-02');
     // Trocar de Travessia no mesmo dia não libera um segundo "Fiz".
-    const trocada = pickCrossing(s, R2.id, R2.challenges[0].id);
+    const trocada = pickCrossing(s, R2.id, R2.challenges[0].id, '2026-10-02');
     expect(markDone(trocada, '2026-10-02')).toBe(trocada);
-    // No dia seguinte (virada pelo dayKey do jogador), vale de novo.
-    s = markDone(s, '2026-10-03');
+    // 04/10/2026 (missões diárias): a escolhida de ontem NÃO vale hoje — escolhe-se de novo.
+    expect(markDone(s, '2026-10-03')).toBe(s);
+    expect(activeChallenge(s, '2026-10-03')).toBeNull();
+    // No dia seguinte (virada pelo dayKey do jogador), escolhida de novo, vale de novo.
+    s = markDone(pickCrossing(s, R1.id, R1.challenges[0].id, '2026-10-03'), '2026-10-03');
     expect(s.doneDay).toBe('2026-10-03');
     expect(s.pending).toEqual([R1.id]); // nada acumula por repetir
     // Depois que a região abre, repetir não muda o mapa.
     const noite = settleNight(s, '2026-10-03').state;
-    const outro = markDone(noite, '2026-10-04');
+    const outro = markDone(pickCrossing(noite, R1.id, R1.challenges[0].id, '2026-10-04'), '2026-10-04');
     expect(outro.doneDay).toBe('2026-10-04');
     expect(outro.opened).toEqual(noite.opened);
     expect(outro.pending).toEqual([]);
@@ -164,7 +168,7 @@ describe('pick / drop / markDone / trocar', () => {
 });
 
 describe('settleNight', () => {
-  const doisFeitos = markDone(pickCrossing(markDone(pickCrossing(CROSSINGS_EMPTY, R1.id, R1.challenges[0].id), '2026-09-29'), R2.id, R2.challenges[0].id), '2026-09-30');
+  const doisFeitos = markDone(pickCrossing(markDone(pickCrossing(CROSSINGS_EMPTY, R1.id, R1.challenges[0].id, '2026-09-29'), '2026-09-29'), R2.id, R2.challenges[0].id, '2026-09-30'), '2026-09-30');
 
   it(`abre no máximo ${REGIONS_OPENED_PER_DAY} por noite, o mais antigo primeiro`, () => {
     expect(doisFeitos.pending).toEqual([R1.id, R2.id]);
@@ -296,5 +300,200 @@ describe('passeioFindOfDay — o achado fundido', () => {
     expect(findAnyById(R1.arrival.id)).toBe(R1.arrival);
     expect(findAnyById(R1.finds[0].id)).toBe(R1.finds[0]);
     expect(findAnyById('trv-nao-existe')).toBeUndefined();
+  });
+});
+
+
+describe('missões diárias: 3 propostas, escolhe 1 (04/10/2026)', () => {
+  const D = dias(60);
+
+  it('dailyOffer: 3 propostas, de regiões DIFERENTES, todas do catálogo, sem repetir', () => {
+    for (const dia of D) {
+      const o = dailyOffer(dia, 'save-a');
+      expect(o).toHaveLength(MISSIONS_OFFERED_PER_DAY);
+      expect(new Set(o.map(m => m.region.id)).size).toBe(3);
+      expect(new Set(o.map(m => m.challenge.id)).size).toBe(3);
+      for (const m of o) {
+        expect(m.region.id).not.toBe(HOME_REGION);
+        expect(m.region.challenges.map(c => c.id)).toContain(m.challenge.id);
+      }
+    }
+  });
+
+  it('é determinística pelo dia + save (reabrir nunca re-sorteia) e muda com o dia e com o save', () => {
+    const ids = (dia: string, seed: string) => dailyOffer(dia, seed).map(m => m.challenge.id).join('|');
+    for (const dia of D) expect(ids(dia, 'x')).toBe(ids(dia, 'x'));
+    expect(new Set(D.map(d => ids(d, 'x'))).size).toBeGreaterThan(30);
+    expect(D.filter(d => ids(d, 'x') !== ids(d, 'y')).length).toBeGreaterThan(30);
+  });
+
+  it('com o tempo, as 21 propostas aparecem (nenhuma fica inalcançável) e as 7 regiões são cenário', () => {
+    const vistas = new Set<string>();
+    for (const dia of dias(400)) dailyOffer(dia, 's').forEach(m => vistas.add(m.challenge.id));
+    expect(vistas.size).toBe(21);
+  });
+
+  it('pickMission só aceita uma das três do dia; trocar antes do "Fiz" é livre; depois do "Fiz", não', () => {
+    const dia = '2026-10-04';
+    const [a, b] = dailyOffer(dia, 's');
+    const fora = FORA.flatMap(r => r.challenges.map(c => ({ r, c })))
+      .find(x => !dailyOffer(dia, 's').some(m => m.challenge.id === x.c.id))!;
+    expect(pickMission(CROSSINGS_EMPTY, dia, 's', fora.r.id, fora.c.id)).toBe(CROSSINGS_EMPTY);
+    let s = pickMission(CROSSINGS_EMPTY, dia, 's', a.region.id, a.challenge.id);
+    expect(activeChallenge(s, dia)?.challenge.id).toBe(a.challenge.id);
+    expect(s.pickDay).toBe(dia);
+    s = pickMission(s, dia, 's', b.region.id, b.challenge.id);
+    expect(activeChallenge(s, dia)?.challenge.id).toBe(b.challenge.id);
+    const feito = markDone(s, dia);
+    expect(pickMission(feito, dia, 's', a.region.id, a.challenge.id)).toBe(feito);
+    // Outro dia: a de ontem some, a oferta é nova.
+    expect(activeChallenge(feito, '2026-10-05')).toBeNull();
+  });
+
+  it('recuar solta a escolha e o dia dela; as três voltam', () => {
+    const dia = '2026-10-04';
+    const m = dailyOffer(dia, 's')[0];
+    const s = dropCrossing(pickMission(CROSSINGS_EMPTY, dia, 's', m.region.id, m.challenge.id));
+    expect(s.active).toBeNull();
+    expect(s.pickDay).toBeNull();
+    expect(missionMark(s, dia)).toBe('available');
+  });
+});
+
+describe('o marcador "!" / "?" (04/10/2026)', () => {
+  const dia = '2026-10-04';
+  const m = dailyOffer(dia, 's')[0];
+  it('"!" com missões para escolher, "?" com uma escolhida, nada depois do "Fiz" ou com a camada escondida', () => {
+    expect(missionMark(CROSSINGS_EMPTY, dia)).toBe('available');
+    const escolhida = pickMission(CROSSINGS_EMPTY, dia, 's', m.region.id, m.challenge.id);
+    expect(missionMark(escolhida, dia)).toBe('progress');
+    expect(missionMark(markDone(escolhida, dia), dia)).toBeNull();
+    expect(missionMark({ ...CROSSINGS_EMPTY, hidden: true }, dia)).toBeNull();
+    // No dia seguinte a de ontem não conta: "!" de novo (sem culpa, sem marca de atraso).
+    expect(missionMark(markDone(escolhida, dia), '2026-10-05')).toBe('available');
+    expect(missionMark(escolhida, '2026-10-05')).toBe('available');
+  });
+});
+
+describe('Marcos de Aventura: 1 por missão, 1 por dia, cosmético (04/10/2026)', () => {
+  it('"Fiz" soma 1 e o mesmo dia não soma de novo; recuar e trocar não mexem no total', () => {
+    const dia = '2026-10-04';
+    const m = dailyOffer(dia, 's')[0];
+    const f = markDone(pickMission(CROSSINGS_EMPTY, dia, 's', m.region.id, m.challenge.id), dia);
+    expect(f.score).toBe(1);
+    expect(markDone(f, dia)).toBe(f);
+    expect(dropCrossing(f).score).toBe(1);
+    expect(pickMission(f, dia, 's', m.region.id, m.challenge.id)).toBe(f);
+  });
+
+  it('o total NUNCA cai (dias sem fazer não custam nada) e anda no máximo 1 por dia', () => {
+    let s = CROSSINGS_EMPTY;
+    let anterior = 0;
+    dias(30).forEach((dia, i) => {
+      if (i % 3 === 0) return; // dias sem fazer
+      const m = dailyOffer(dia, 's')[0];
+      s = markDone(pickMission(s, dia, 's', m.region.id, m.challenge.id), dia);
+      expect(s.score - anterior).toBeLessThanOrEqual(1);
+      expect(s.score).toBeGreaterThanOrEqual(anterior);
+      anterior = s.score;
+    });
+    expect(s.score).toBe(20);
+    expect(marcosAbertos(s)).toBe(MARCO_THRESHOLDS.length);
+  });
+
+  it('o "Fiz" guarda a viagem da noite (dia + região da missão)', () => {
+    const dia = '2026-10-04';
+    const m = dailyOffer(dia, 's')[0];
+    const f = markDone(pickMission(CROSSINGS_EMPTY, dia, 's', m.region.id, m.challenge.id), dia);
+    expect(f.trip).toEqual({ day: dia, region: m.region.id });
+  });
+
+  it('normalizeCrossings: pickDay/score/trip tolerantes; lixo vira o vazio; save antigo segue válido', () => {
+    const n = normalizeCrossings({
+      active: { region: R1.id, challenge: R1.challenges[0].id }, pickDay: '2026-10-04',
+      score: 7.9, trip: { day: '2026-10-04', region: R2.id },
+    });
+    expect(n.pickDay).toBe('2026-10-04');
+    expect(n.score).toBe(7);
+    expect(n.trip).toEqual({ day: '2026-10-04', region: R2.id });
+    const lixo = normalizeCrossings({ pickDay: 'hoje', score: -3, trip: { day: 'x', region: 'akasha' } });
+    expect(lixo.pickDay).toBeNull();
+    expect(lixo.score).toBe(0);
+    expect(lixo.trip).toBeNull();
+    expect(normalizeCrossings({ score: 'muito' }).score).toBe(0);
+    expect(normalizeCrossings({ score: 1e12 }).score).toBe(9999);
+    // pickDay sem ativa não fica pendurado; trip da casa é recusada.
+    expect(normalizeCrossings({ pickDay: '2026-10-04' }).pickDay).toBeNull();
+    expect(normalizeCrossings({ trip: { day: '2026-10-04', region: HOME_REGION } }).trip).toBeNull();
+    // Save de antes das missões diárias (sem os três campos): ativa vale, mas sem dia (a folha mostra as três).
+    const antigo = normalizeCrossings({ active: { region: R1.id, challenge: R1.challenges[0].id }, doneDay: '2026-10-02' });
+    expect(antigo.active).not.toBeNull();
+    expect(antigo.pickDay).toBeNull();
+    expect(antigo.score).toBe(0);
+    expect(activeChallenge(antigo, '2026-10-04')).toBeNull();
+  });
+});
+
+describe('a viagem da noite e os postais dos Marcos (04/10/2026)', () => {
+  const base = { entries: [] as { id: string; day: string }[], feito: 2, meta: 4 };
+  const jaAberta = (r: RegionId): CrossingsState => comAberta(r);
+
+  it('as sete regiões com desafio têm 3 historinhas; a casa não; ids únicos e todos resolvem', () => {
+    expect(Object.keys(VIAGENS).sort()).toEqual(FORA.map(r => r.id).sort());
+    const ids = [...Object.values(VIAGENS).flatMap(v => v!.map(x => x.id)), ...MARCO_POSTAIS.map(m => m.id)];
+    expect(ids).toHaveLength(21 + 3);
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const id of ids) expect(findAnyById(id), id).toBeTruthy();
+    expect(MARCO_POSTAIS).toHaveLength(MARCO_THRESHOLDS.length);
+  });
+
+  it('a noite da missão (região já aberta) traz UMA historinha da região dela, determinística', () => {
+    for (const r of FORA) {
+      const c: CrossingsState = { ...jaAberta(r.id), trip: { day: '2026-10-04', region: r.id }, score: 1 };
+      const f = passeioFindOfDay({ ...base, crossings: c, dayKey: '2026-10-04' });
+      expect(VIAGENS[r.id]!.map(v => v.id), r.id).toContain(f.id);
+      expect(passeioFindOfDay({ ...base, crossings: c, dayKey: '2026-10-04' })).toBe(f);
+    }
+  });
+
+  it('a primeira noite da região traz a chegada; a viagem só depois; noite sem missão não viaja', () => {
+    const c: CrossingsState = { ...CROSSINGS_EMPTY, opened: [{ region: R1.id, day: '2026-10-04' }], trip: { day: '2026-10-04', region: R1.id }, score: 1 };
+    expect(passeioFindOfDay({ ...base, crossings: c, dayKey: '2026-10-04' })).toBe(R1.arrival);
+    const semMissao: CrossingsState = { ...jaAberta(R1.id), trip: { day: '2026-10-03', region: R1.id } };
+    const f = passeioFindOfDay({ ...base, crossings: semMissao, dayKey: '2026-10-04' });
+    expect(VIAGENS[R1.id]!.some(v => v.id === f.id)).toBe(false);
+  });
+
+  it('prefere a historinha ainda não coletada; esgotadas, repete sem ficar vazio', () => {
+    const c: CrossingsState = { ...jaAberta(R1.id), trip: { day: '2026-10-04', region: R1.id }, score: 1 };
+    const vistas = VIAGENS[R1.id]!.slice(0, 2).map(v => ({ id: v.id, day: '2026-09-01' }));
+    expect(passeioFindOfDay({ ...base, entries: vistas, crossings: c, dayKey: '2026-10-04' }).id).toBe(VIAGENS[R1.id]![2].id);
+    const todas = VIAGENS[R1.id]!.map(v => ({ id: v.id, day: '2026-09-01' }));
+    expect(findAnyById(passeioFindOfDay({ ...base, entries: todas, crossings: c, dayKey: '2026-10-04' }).id)).toBeTruthy();
+  });
+
+  it('o postal do Marco vem na primeira noite livre depois do total, uma única vez, e some do sorteio depois de coletado', () => {
+    const c: CrossingsState = { ...jaAberta(R1.id), score: 5 };
+    const f = passeioFindOfDay({ ...base, crossings: c, dayKey: '2026-10-04' });
+    expect(f).toBe(MARCO_POSTAIS[0]);
+    const diario = collectAdventure([], f.id, '2026-10-04');
+    // Reabrir a mesma noite devolve o mesmo; na seguinte, já não é o postal.
+    expect(passeioFindOfDay({ ...base, entries: diario, crossings: c, dayKey: '2026-10-04' }).id).toBe(f.id);
+    expect(passeioFindOfDay({ ...base, entries: diario, crossings: c, dayKey: '2026-10-05' }).id).not.toBe(f.id);
+    // Abaixo do limiar, nunca.
+    const poucos: CrossingsState = { ...jaAberta(R1.id), score: 4 };
+    for (const dia of dias(20)) expect(MARCO_POSTAIS.map(m => m.id)).not.toContain(passeioFindOfDay({ ...base, crossings: poucos, dayKey: dia }).id);
+  });
+
+  it('um total grande abre os três postais, um por noite', () => {
+    const c: CrossingsState = { ...jaAberta(R1.id), score: 25 };
+    let diario: { id: string; day: string }[] = [];
+    const achados: string[] = [];
+    dias(3).forEach(dia => {
+      const f = passeioFindOfDay({ ...base, entries: diario, crossings: c, dayKey: dia });
+      achados.push(f.id);
+      diario = collectAdventure(diario, f.id, dia);
+    });
+    expect(achados).toEqual(MARCO_POSTAIS.map(m => m.id));
   });
 });

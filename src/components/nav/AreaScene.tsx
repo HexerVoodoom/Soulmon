@@ -2,6 +2,8 @@ import type { ReactNode } from 'react';
 import type { Language } from '../../utils/i18n';
 import type { AreaId } from '../../navigation';
 import { lotArtBounds } from '../../utils/areaLotGeometry';
+import { MissionMark } from '../play/MissionMark';
+import type { MissionMark as MissionMarkKind } from '../../utils/travessiasSave';
 
 /**
  * O MOLDE DE UMA ÁREA (minimal-ui F4) — reusado pelas 6 áreas do Mapa.
@@ -35,6 +37,8 @@ export interface AreaLot {
   /** Largura do lote em % da cena (01/10/2026, H16 — o Observatório é maior que
    *  os vizinhos). Sem ela, o padrão do molde, `LOT_WIDTH_DEFAULT`. */
   width?: string;
+  /** Marcador de missão sobre o lote (04/10/2026): "!" disponível, "?" em andamento. */
+  mark?: MissionMarkKind;
 }
 
 /** Largura padrão de um lote, em % da cena (o molde F4). */
@@ -132,6 +136,11 @@ export function AreaScene({ areaId, language, lots, background, children }: {
               boxShadow: '0 6px 6px rgba(0,0,0,.35)',
             }}
           />}
+          {lot.mark && (
+            <span style={{ position: 'absolute', top: '-2%', left: '50%', transform: 'translate(-50%, -50%)', pointerEvents: 'none' }}>
+              <MissionMark kind={lot.mark} isPt={isPt} size={32} />
+            </span>
+          )}
           <span
             data-area-lot-label
             style={{

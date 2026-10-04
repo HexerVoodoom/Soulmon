@@ -102,8 +102,34 @@ export interface CrossingsState {
    * histórico (sem contagem, sem sequência).
    */
   doneDay: string | null;
+  /**
+   * O dia (`AAAA-MM-DD`) em que `active` foi escolhida (04/10/2026, missões
+   * diárias): a ativa vale PARA AQUELE DIA — no dia seguinte saem três
+   * propostas novas. null = save antigo, sem dia (a folha trata como "sem
+   * missão hoje").
+   */
+  pickDay: string | null;
+  /**
+   * MARCOS DE AVENTURA (04/10/2026): quantas missões foram feitas, no total.
+   * 1 por "Fiz" e só um "Fiz" por dia, então o contador anda no máximo 1/dia.
+   * Só abre postais cosméticos (`MARCO_THRESHOLDS`); nunca paga nada e nunca
+   * cai (sem perda por não fazer).
+   */
+  score: number;
+  /**
+   * A viagem da noite: a missão feita em `day` leva o Soulmon à região dela, e
+   * ele volta no relatório daquele dia com uma historinha. Só dia + região.
+   */
+  trip: { day: string; region: RegionId } | null;
 }
+
+/** Marcos de Aventura: quantas missões feitas abrem um postal cosmético (04/10/2026). */
+export const MARCO_THRESHOLDS: readonly number[] = [5, 10, 20];
+
+/** Quantas propostas o jogador vê por dia, entre as quais escolhe UMA. */
+export const MISSIONS_OFFERED_PER_DAY = 3;
 
 export const CROSSINGS_EMPTY: CrossingsState = {
   opened: [], active: null, pending: [], destination: null, hidden: false, doneDay: null,
+  pickDay: null, score: 0, trip: null,
 };

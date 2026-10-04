@@ -1582,6 +1582,68 @@ Decisões do dono na navegação do APK (`docs/AJUSTES-NAVEGACAO-2026-10-02.md` 
 > entra na torcida (TORC-2 respondida) e o PvP perde o interruptor. O item 1 já
 > dizia "Torneio, Pesadelo e Masmorra"; a Arena é o quarto lugar.
 
+## 21. Travessias viram MISSÕES DO DIA: 3 por dia, escolhe 1, Marcos de Aventura e viagem da noite (04/10/2026)
+
+Pedido do dono sobre o "scroll"/Passeio da Exploração. Implementado na branch
+`feat/r6-explor6`; **tudo é cosmético e opt-in** — nenhum valor de economia mudou
+(Travessia continua sem Bits, XP, Emblema, Vínculo, `perfectDays` ou evolução;
+contrato `travessias.contract.test.ts`).
+
+1. **Cara de missão: "!" e "?".** Dois glifos autorais (`exclamation` — que já
+   existia para as Missões do Torneio — e o novo `question`, em `ui/NavGlyphs.tsx`)
+   viram o marcador `MissionMark` (`components/play/MissionMark.tsx`): **"!" = há
+   missões do dia para escolher; "?" = uma escolhida, esperando o "Fiz"; nada = feita
+   hoje ou camada escondida**. Aparece no card do Passeio e **sobre o lote do Passeio**
+   na Exploração (`missionMark(c, dayKey)`, em `travessiasSave.ts`, para não
+   puxar o catálogo ao chunk de entrada). Parado: sem animação, sem som, sem número.
+   Os dois são nomes próprios, fora do subset da fonte (`iconInventory.contract`).
+2. **3 missões por dia, escolhe 1.** `dailyOffer(dayKey, seed)` (pura) sorteia 3
+   das 21 propostas (7 regiões × 3), **de 3 regiões diferentes** (cada missão é um
+   cenário distinto, sem repetir no dia), com semente = dia do jogador + id do save:
+   reabrir a folha nunca re-sorteia. `pickMission` só aceita uma das três; antes do
+   "Fiz" dá para trocar (Recuar); depois, não. A escolhida **vale só para aquele
+   dia** (`CrossingsState.pickDay`): no dia seguinte saem três novas, sem "atraso"
+   nem culpa. Segue **um "Fiz" por dia no total** (F5 de 02/10 mantido).
+   **O modal "Todas as Travessias" (as 21) saiu da UI** — a oferta do dia o substitui;
+   o catálogo continua o mesmo.
+3. **Pontuação: "Marcos de Aventura".** `score` = nº de missões feitas (1 por "Fiz",
+   no máximo 1/dia, **nunca cai**, teto de sanidade 9999). Aos **5, 10 e 20** o
+   Soulmon volta com um **postal cosmético** (`MARCO_POSTAIS`, ids `trv-marco-N`) na
+   primeira noite livre (a noite que abre região tem prioridade) — derivado do total +
+   diário, sem estado extra. O total aparece discreto ("Marcos de Aventura · 7", só
+   com 1 ou mais, nunca "faltam N"), com a regra atrás de um `InfoTip`.
+4. **Viagem da noite.** O "Fiz" guarda `trip = { day, region }`. No relatório daquele
+   dia, `passeioFindOfDay` troca o sorteio pelo **cenário da missão**: na noite em que
+   a região abre vale a cena de chegada de sempre; depois, **uma de 3 historinhas por
+   região** (`data/travessiasViagens.ts`, 21 no total, 1ª pessoa do pet, 2–3 frases,
+   preferindo a ainda não coletada). Mesmo mecanismo do achado da noite e do diário —
+   nenhum sistema paralelo. Ordem do achado: já guardado > chegada de região > postal
+   de Marco > viagem da missão > destino do Passeio > Aventura comum.
+5. **Texto explicativo atrás de `InfoTip`** (passeio, missões, versão que vale,
+   Marcos); a linha de segurança e a linha "No mapa" seguem visíveis.
+
+**Alternativas que perderam (pontuação):**
+
+| Alternativa | Por que perdeu |
+|---|---|
+| Pontos que viram Bits/XP | Farmável; veta a economia (Travessia não paga nada) |
+| Sequência de dias / "streak" | Culpa e FOMO; contradiz R-1 e a linha vermelha (`PROPOSTA-MISSOES-EXPLORACAO.md`) |
+| Pontos por dificuldade ou por região | A barra é amplitude, nunca dificuldade crescente (§5.6) |
+| Placar semanal / reinício | Perde ao não fazer: o oposto do pedido |
+| Marcos que abrem REGIÃO | Já há o teto 1 região/noite (R-32); misturaria duas regras. Ficou cosmético |
+| Marcos que dão item de decoração | Pede arte e catálogo novos; fica como sugestão (pergunta 2 abaixo) |
+
+**Falsifica:** se a pessoa passar a marcar sem fazer, ou se o "!" diário virar
+obrigação (queixa de culpa), tirar o marcador do lote e voltar à oferta sem "!".
+
+**Perguntas conservadoras ao dono (não decididas aqui):**
+1. O "!" sobre o lote aparece **todo dia** enquanto a missão do dia não for feita —
+   é o pedido, mas é a coisa mais "badge" do app; aceita assim, ou só aparece 1× por
+   dia / some depois de aberta a folha?
+2. Marcos 5/10/20: ficam só como postais, ou algum vira troféu/decoração (precisa arte)?
+3. A regra antiga "a folha nunca mostra total" (R-5) abriu uma exceção: o total de Marcos.
+   Confirma que é só esse número (e que continua sem "faltam N")?
+
 ## 02/10/2026 — Torneio: menu só de ícones e faixa no título; Rhinoco vira Tuska
 
 Decisões do dono (pedido de 02/10/2026):

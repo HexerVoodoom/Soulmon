@@ -22,14 +22,15 @@
  *    Aventura comum (o catálogo comum continua 100% alcançável — R-33).
  */
 import {
-  HOME_REGION, PASSEIO_REGION_FIND_CHANCE, REGIONS_OPENED_PER_DAY,
+  HOME_REGION, MARCO_THRESHOLDS, MISSIONS_OFFERED_PER_DAY, PASSEIO_REGION_FIND_CHANCE, REGIONS_OPENED_PER_DAY,
   type CrossingChallenge, type CrossingsState, type Region, type RegionFind, type RegionId,
 } from '../types/travessias';
 import { REGIONS } from '../data/travessiasCatalog';
+import { MARCO_POSTAIS, VIAGENS } from '../data/travessiasViagens';
 import { adventureOfDay, findById, type AdventureEntry, type AdventureFind } from './adventure';
 import { hashString, mulberry32 } from './oracle';
 
-export { normalizeCrossings, REGION_IDS, isRegionId, crossingsTouchMap } from './travessiasSave';
+export { normalizeCrossings, REGION_IDS, isRegionId, crossingsTouchMap, missionMark, type MissionMark } from './travessiasSave';
 
 export const regionById = (id: RegionId): Region | undefined => REGIONS.find(r => r.id === id);
 
@@ -50,9 +51,14 @@ export function mistRegions(s: CrossingsState): Region[] {
 /** Os 3 desafios da região — os do catálogo, sempre os mesmos (não há sorteio). */
 export const offerFor = (region: Region): readonly CrossingChallenge[] => region.challenges;
 
-/** O desafio ativo resolvido no catálogo (ou null, se o id sumiu numa versão futura). */
-export function activeChallenge(s: CrossingsState): { region: Region; challenge: CrossingChallenge } | null {
+/**
+ * O desafio ativo resolvido no catálogo (ou null, se o id sumiu numa versão
+ * futura). Com `dayKey`, só vale a escolhida NAQUELE dia (missões diárias,
+ * 04/10/2026): a de ontem não segue para hoje — saem três propostas novas.
+ */
+export function activeChallenge(s: CrossingsState, dayKey?: string): { region: Region; challenge: CrossingChallenge } | null {
   if (!s.active) return null;
+  if (dayKey !== undefined && s.pickDay !== dayKey) return null;
   const region = regionById(s.active.region);
   const id = s.active.challenge;
   const challenge = region?.challenges.find(c => c.id === id) ?? null;
@@ -69,19 +75,60 @@ export const crossingRegions = (): Region[] => REGIONS.filter(r => r.id !== HOME
  * nada, e o `doneDay` NÃO zera (o "Fiz" é um por dia, não um por Travessia).
  * Qualquer pedido inválido devolve o MESMO estado.
  */
-export function pickCrossing(s: CrossingsState, regionId: RegionId, challengeId: string): CrossingsState {
+export function pickCrossing(s: CrossingsState, regionId: RegionId, challengeId: string, dayKey?: string): CrossingsState {
   const region = regionById(regionId);
   if (!region || !region.challenges.some(c => c.id === challengeId)) return s;
-  if (s.active?.region === regionId && s.active.challenge === challengeId) return s;
-  return { ...s, active: { region: regionId, challenge: challengeId } };
+  const pickDay = dayKey ?? s.pickDay;
+  if (s.active?.region === regionId && s.active.challenge === challengeId && s.pickDay === pickDay) return s;
+  return { ...s, active: { region: regionId, challenge: challengeId }, pickDay };
 }
+
+/** Uma missão do dia: o cenário (região) e o ato (a Travessia). */
+export interface DailyMission { region: Region; challenge: CrossingChallenge }
+
+/**
+ * AS TRÊS MISSÕES DO DIA (04/10/2026, pedido do dono): três propostas
+ * sorteadas entre as 21 do catálogo (7 regiões × 3), das quais se escolhe UMA.
+ * PURA e determinística: a mesma `dayKey` (o dia do jogador) + a mesma `seed`
+ * (o id do save) dão sempre as mesmas três — reabrir a folha nunca re-sorteia
+ * (a regra 3 da Aventura). Sem repetição no dia: as três vêm de regiões
+ * DIFERENTES (cada missão é um cenário distinto), e dentro da região a
+ * proposta é uma das três dela. Nada aqui depende do que a pessoa fez ontem.
+ */
+export function dailyOffer(dayKey: string, seed = ''): DailyMission[] {
+  const rng = mulberry32(hashString(`missoes:${dayKey}:${seed}`) >>> 0);
+  const regioes = crossingRegions();
+  // Fisher–Yates com a semente do dia.
+  for (let i = regioes.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [regioes[i], regioes[j]] = [regioes[j], regioes[i]];
+  }
+  return regioes.slice(0, MISSIONS_OFFERED_PER_DAY).map(region => ({
+    region,
+    challenge: region.challenges[Math.floor(rng() * region.challenges.length) % region.challenges.length],
+  }));
+}
+
+/**
+ * Escolhe a missão de HOJE entre as três do dia. Fora da oferta, ou depois do
+ * "Fiz" de hoje (a missão do dia já foi), devolve o MESMO estado. Antes do
+ * "Fiz" dá para trocar por outra das três sem custo.
+ */
+export function pickMission(s: CrossingsState, dayKey: string, seed: string, regionId: RegionId, challengeId: string): CrossingsState {
+  if (s.doneDay === dayKey) return s;
+  if (!dailyOffer(dayKey, seed).some(m => m.region.id === regionId && m.challenge.id === challengeId)) return s;
+  return pickCrossing(s, regionId, challengeId, dayKey);
+}
+
+/** Marcos já abertos pelo total de missões (cosmético; ver `MARCO_THRESHOLDS`). */
+export const marcosAbertos = (s: CrossingsState): number => MARCO_THRESHOLDS.filter(t => s.score >= t).length;
 
 /**
  * "Recuar" (antes "Deixar pra lá"): sem custo, sem marca. Só solta a ativa;
  * região aberta, "Fiz" guardado e `doneDay` ficam como estão.
  */
 export const dropCrossing = (s: CrossingsState): CrossingsState =>
-  s.active === null ? s : { ...s, active: null };
+  s.active === null ? s : { ...s, active: null, pickDay: null };
 
 /** O "Fiz" de hoje já foi dado (`dayKey` é o dia do jogador)? */
 export const doneToday = (s: CrossingsState, dayKey: string): boolean => s.doneDay === dayKey;
@@ -109,9 +156,18 @@ export function crossingYield(s: CrossingsState, region: RegionId): 'abre' | 'gu
  */
 export function markDone(s: CrossingsState, dayKey: string): CrossingsState {
   if (!s.active || s.doneDay === dayKey) return s;
+  // A escolhida de OUTRO dia não conta para hoje (save antigo, sem dia, passa).
+  if (s.pickDay !== null && s.pickDay !== dayKey) return s;
   const { region } = s.active;
   const guarda = !isRegionOpen(s, region) && !s.pending.includes(region);
-  return { ...s, doneDay: dayKey, ...(guarda ? { pending: [...s.pending, region] } : {}) };
+  return {
+    ...s, doneDay: dayKey, pickDay: dayKey,
+    // Marcos de Aventura: 1 por missão, e só uma missão por dia (04/10/2026).
+    score: s.score + 1,
+    // A viagem da noite: o Soulmon vai ao cenário da missão e volta no relatório.
+    trip: { day: dayKey, region },
+    ...(guarda ? { pending: [...s.pending, region] } : {}),
+  };
 }
 
 /**
@@ -159,7 +215,11 @@ export function findAnyById(id: string): PasseioFind | undefined {
     const f = r.finds.find(x => x.id === id);
     if (f) return f;
   }
-  return undefined;
+  for (const lista of Object.values(VIAGENS)) {
+    const v = lista?.find(x => x.id === id);
+    if (v) return v;
+  }
+  return MARCO_POSTAIS.find(m => m.id === id);
 }
 
 /**
@@ -190,6 +250,23 @@ export function passeioFindOfDay(args: {
   const chegou = c.opened.find(o => o.day === dayKey);
   const regiaoNova = chegou ? regionById(chegou.region) : undefined;
   if (regiaoNova) return regiaoNova.arrival;
+
+  // Marco de Aventura: o postal cosmético de 5/10/20 missões, na primeira noite
+  // livre depois de chegar lá (deriva do total + diário: sem estado novo).
+  const tem0 = new Set(antes);
+  const marco = MARCO_POSTAIS.find((m, i) => c.score >= MARCO_THRESHOLDS[i] && !tem0.has(m.id));
+  if (marco) return marco;
+
+  // A viagem da noite: a missão cumprida neste dia leva o Soulmon à região dela
+  // (cenário da missão) e ele volta com uma historinha. Prefere a não coletada.
+  const viagem = c.trip && c.trip.day === dayKey ? VIAGENS[c.trip.region] : undefined;
+  if (viagem) {
+    const tem = new Set(antes);
+    const livres = viagem.filter(v => !tem.has(v.id));
+    const base = livres.length > 0 ? livres : viagem;
+    const seed = hashString(`viagem:${dayKey}:${c.trip!.region}`) >>> 0;
+    return base[Math.floor(mulberry32(seed)() * base.length) % base.length];
+  }
 
   const dest = c.destination;
   if (dest && dest !== HOME_REGION && isRegionOpen(c, dest)) {
