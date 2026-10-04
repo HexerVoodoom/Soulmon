@@ -227,6 +227,27 @@ Três gestos, três lugares — valem para toda tela, folha e diálogo do app:
 | **Fechar** (modal/folha simples) | descartar uma folha que não encerra conteúdo significativo | MESMO lugar do voltar, ícone `close` | `BackArrow icon="close"`; já embutido em `ModalSheet` e `RitualDialog` (`closeSide="start"`, padrão), `AreaSheet` e `Mochila` |
 | **Encerrar atividade** | fechar ENCERRA algo em andamento (luta, minijogo, run) | X no canto superior DIREITO | `GameHeader` (jogos) e `RitualDialog closeSide="end"` (pesadelo) |
 
+**Minijogos e lutas (`GameHeader`, `BattleStage`).** O ✕ só vai para a DIREITA enquanto há partida em andamento (`activity`/`exitConfirm`); ocioso (lobby, carregando, erro, resultado, formulário) ele vira o ✕ do canto superior ESQUERDO (`data-game-close-start`) e, havendo `onBack`, só a seta de voltar. Quando sair PERDE progresso, `exitConfirm` abre o diálogo "Continuar / Sair" e `onPauseChange` pausa a partida (Dino, Troca, Bolhas, Masmorra e Arena pausam; o Eco e o Picross não têm relógio). Sem confirmação, por não perderem nada: Pedra-Papel-Tesoura em 0×0, Respiração (sessão de bem-estar) e Bolhas no modo calmo; a Revisão grava a cada resposta.
+
+**Classificação das superfícies (auditoria de 04/10/2026):**
+
+| Superfície | Classe | Como fica |
+|---|---|---|
+| `ModalSheet` (Guia, Glossário, Renascimento, Triagem, Edição, Criação, Ajustes de IA, créditos…) | fechar-modal | ✕ à esquerda; sem botão "Fechar/Voltar" de texto no pé (Guia, Glossário e a Pilha perderam o deles) |
+| `ModalSheet onBack` (Renascimento em confirmação, aviso do catálogo) | voltar | seta à esquerda; o "Voltar/Agora não" do pé do Renascimento saiu |
+| `RitualDialog` (relatório do dia, sonho, descanso, 1ª tarefa, jogador) | fechar-modal | ✕ à esquerda (`closeSide="start"`); o "Fechar" de texto do jogador saiu |
+| `RitualDialog closeSide="end"` (Pesadelo) | encerrar-atividade | ✕ à direita |
+| `AreaSheet`, Mochila, lightbox de fundo | fechar-modal | ✕ à esquerda |
+| Minijogos e Masmorra/Arena/Duelo | encerrar-atividade | ✕ à direita + confirmação quando perde progresso |
+| Lobby/erro/resultado dos jogos | fechar-modal | ✕ à esquerda (o "Voltar" de texto da Arena saiu) |
+| Tutorial do primeiro jogo, ferramenta do Oráculo (dev) | voltar / fechar | seta/✕ no topo esquerdo (o "Voltar" de texto saiu) |
+| Cerimônias (evolução, marco, bosque) e "Entendi" | reconhecimento | CTA primário no pé (ação, não saída) |
+| Ofertas ("Agora não": check-in, Desbloquear conta, Instalar, Proteger progresso, Boas-vindas, Leitura nova) | recusa | CTA no pé — é recusa de oferta |
+| "Cancelar/Salvar" (Edição, Criação, Confirmar) e "Voltar" do apagar conta | decisão | par de ações com consequência; o ✕ do topo também existe |
+| Banners e cards (aviso de HP, convite do relatório, relatório da semana, busca do catálogo, remover passo) | dispensar-inline | ✕/"Fechar" no próprio card; não é modal |
+
+O contrato `src/components/ui/voltarFechar.contract.test.ts` reprova um ✕ novo fora desta tabela e um ✕ de base à direita fora do ramo `end`.
+
 Folhas de BASE (`ModalSheet`, `AreaSheet`, Mochila) entram SUBINDO (`translateY(100%)→0`, 260 ms, com o véu em fade de 220 ms; classes `sm2-sheet-rise`/`sm2-sheet-fade` do `index.css`). Só a entrada anima — a saída continua instantânea, para o foco devolvido do `useDialogA11y` não esperar. Movimento reduzido: aparece direto (regra no bloco canônico do `index.css`).
 
 ## 2. Primeira abertura, passo a passo
