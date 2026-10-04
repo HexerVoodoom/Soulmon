@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { MiniGameBaseProps } from './types';
 import { sm2Button } from '../form/FormKit';
-import { GameRoot, GameHeader, GameVisor, VisorSprite, phaseTitle, phaseLine } from '../games/GameKit';
+import { GameRoot, GameHeader, GameVisor, VisorSprite, phaseTitle, phaseLine, gameExitConfirm } from '../games/GameKit';
 import { usePrefersReducedMotion } from '../ui/Viewport';
 import { MINI_FX, REFUGIO_SCENE } from '../../utils/visorScenes';
 import { getSpriteForStage } from '../../utils/sprites';
@@ -61,6 +61,9 @@ export function BolhasGame({ language, evolutionStage, demoCharacterId, onExit, 
   const fx = useRef<Fx[]>([]);
   const stair = useRef<Staircase>(initialStaircase());
   const startedAt = useRef(0);
+  /** I3: a confirmação de sair pausa o relógio; ao retomar, todo carimbo de tempo anda junto. */
+  const pausedRef = useRef(false);
+  const pauseAtRef = useRef(0);
   const lastSpawn = useRef(0);
   const nextId = useRef(1);
   const scoreRef = useRef(0);
@@ -87,6 +90,7 @@ export function BolhasGame({ language, evolutionStage, demoCharacterId, onExit, 
   useEffect(() => {
     if (phase !== 'play') return;
     const id = setInterval(() => {
+      if (pausedRef.current) return;
       const now = Date.now();
       if (!calma && timeLeftMs(startedAt.current, now) <= 0) { finish(); return; }
       // Quem escapou por cima: sonho perdido / fiapo deixado passar (só a escada lê).
@@ -108,6 +112,16 @@ export function BolhasGame({ language, evolutionStage, demoCharacterId, onExit, 
     }, TICK_MS);
     return () => clearInterval(id);
   }, [phase, calma, mode, slow, finish]);
+
+  const onPauseChange = (p: boolean) => {
+    if (p) { pauseAtRef.current = Date.now(); pausedRef.current = true; return; }
+    const d = Date.now() - pauseAtRef.current;
+    startedAt.current += d;
+    if (lastSpawn.current) lastSpawn.current += d;
+    bubbles.current = bubbles.current.map(b => ({ ...b, born: b.born + d }));
+    fx.current = fx.current.map(x => ({ ...x, until: x.until + d }));
+    pausedRef.current = false;
+  };
 
   const begin = () => {
     const now = Date.now();
@@ -177,6 +191,9 @@ export function BolhasGame({ language, evolutionStage, demoCharacterId, onExit, 
         info={<><span style={{ display: 'block' }}>{sub}</span>{rule && <span style={{ display: 'block', marginTop: 6 }}>{rule}</span>}</>}
         closeLabel={isPt ? 'Sair' : 'Exit'}
         onClose={onExit}
+        activity={phase === 'play'}
+        exitConfirm={phase === 'play' && !calma ? gameExitConfirm(isPt, 'da rodada') : undefined}
+        onPauseChange={onPauseChange}
       />
 
       {!calma && phase === 'play' && (

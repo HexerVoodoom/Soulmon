@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import type { EarningGameProps } from './types';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
-import { GameRoot, GameHeader, GameVisor, phaseTitle, phaseLine } from '../games/GameKit';
+import { GameRoot, GameHeader, GameVisor, phaseTitle, phaseLine, gameExitConfirm } from '../games/GameKit';
 import { Icon } from '../ui/Icon';
 import { readLocal, writeLocal } from '../../utils/safeStorage';
 import { STORAGE_KEYS } from '../../utils/storageKeys';
@@ -259,6 +259,8 @@ export function PicrossGame({ language, onEarnPoints, onExit, todayKey }: Earnin
           : (isPt ? `Outro desenho · ${n}×${n}` : `Another picture · ${n}×${n}`)}
         closeLabel={isPt ? 'Sair' : 'Exit'}
         onClose={onExit}
+        activity={!solved && !picking}
+        exitConfirm={!solved && !picking && history.length > 0 ? gameExitConfirm(isPt, 'do desenho') : undefined}
         onBack={picking ? () => setPicking(false) : undefined}
         backLabel={isPt ? 'Voltar ao desenho' : 'Back to the picture'}
         language={language}

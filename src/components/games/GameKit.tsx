@@ -22,13 +22,13 @@
  *    outro é `gold-fill`; "Too slow!" tem a MESMA tinta que "PERFECT!";
  *  · **ícone nunca em box**; **texto nunca abaixo de 12**; **alvo ≥ 44**.
  */
-import type { CSSProperties, ReactNode } from 'react';
+import { useState, type CSSProperties, type ReactNode } from 'react';
 import { Icon } from '../ui/Icon';
 import { NavGlyph } from '../ui/NavGlyphs';
 import { Viewport } from '../ui/Viewport';
 import { MiniGlass } from '../ui/MiniGlass';
 import { PixelMeter } from '../pixel/PixelKit';
-import { sm2Hint, sm2Text, SM2_SHADOW_CARD } from '../form/FormKit';
+import { sm2Button, sm2Hint, sm2Text, SM2_SHADOW_CARD } from '../form/FormKit';
 import { InfoTip } from '../ui/InfoTip';
 import { FX_ART } from '../../utils/fxArt';
 
@@ -69,7 +69,7 @@ export function GameRoot({ children, style }: { children: ReactNode; style?: CSS
  * (Rubik 14/500 sobre `line`, o canvas `.ghdr.run`); sem `run` o título é
  * Cinzel 20 (lobby, Dino, PPT).
  */
-export function GameHeader({ title, sub, closeLabel, onClose, run = false, onBack, backLabel, info, infoLabel, language }: {
+export function GameHeader({ title, sub, closeLabel, onClose, run = false, onBack, backLabel, info, infoLabel, language, activity = false, exitConfirm, onPauseChange }: {
   title: string;
   sub?: ReactNode;
   /** I13 (02/10/2026): as instruções/regras do jogo moram atrás de um "?"
@@ -86,7 +86,31 @@ export function GameHeader({ title, sub, closeLabel, onClose, run = false, onBac
    *  O mesmo anel do `AreaTopBar` (exceção D1). */
   onBack?: () => void;
   backLabel?: string;
+  /** I3 (02/10/2026): o × só mora à DIREITA quando fechar ENCERRA uma atividade
+   *  em andamento (`activity` ou `exitConfirm`). Sem nenhum dos dois (lobby,
+   *  carregando, erro, resultado, formulário) a tela não encerra nada: o fechar
+   *  é o ✕ do canto superior ESQUERDO, acima do título, como o voltar — e,
+   *  havendo `onBack`, só a seta de voltar aparece. */
+  activity?: boolean;
+  /** Sair PERDE progresso: o × pede confirmação antes (mesmo padrão do
+   *  `BattleStage`). Implica `activity`. */
+  exitConfirm?: { title: string; stay: string; leave: string };
+  /** A partida pausa enquanto a confirmação está aberta. */
+  onPauseChange?: (paused: boolean) => void;
 }) {
+  const [confirming, setConfirming] = useState(false);
+  const onRight = activity || !!exitConfirm;
+  const tryClose = () => {
+    if (exitConfirm) { setConfirming(true); onPauseChange?.(true); } else onClose();
+  };
+  const stay = () => { setConfirming(false); onPauseChange?.(false); };
+  const ring: CSSProperties = {
+    width: 44, height: 44, flex: 'none', marginBottom: 6, boxSizing: 'border-box',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    padding: 0, cursor: 'pointer', background: 'transparent',
+    border: '2px solid var(--sm2-line)', borderRadius: '50%',
+    color: 'var(--sm2-ink)',
+  };
   return (
     <div
       style={{
@@ -105,15 +129,22 @@ export function GameHeader({ title, sub, closeLabel, onClose, run = false, onBac
             title={backLabel}
             data-game-back
             className="sm2-area-back"
-            style={{
-              width: 44, height: 44, flex: 'none', marginBottom: 6, boxSizing: 'border-box',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              padding: 0, cursor: 'pointer', background: 'transparent',
-              border: '2px solid var(--sm2-line)', borderRadius: '50%',
-              color: 'var(--sm2-ink)',
-            }}
+            style={ring}
           >
             <NavGlyph name="arrow_back" size={24} tone="ink" />
+          </button>
+        )}
+        {!onBack && !onRight && (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={closeLabel}
+            title={closeLabel}
+            data-game-close-start
+            className="sm2-area-back"
+            style={ring}
+          >
+            <Icon name="close" size={24} tone="inherit" />
           </button>
         )}
         {run ? (
@@ -135,20 +166,57 @@ export function GameHeader({ title, sub, closeLabel, onClose, run = false, onBac
       {info !== undefined && infoLabel && language && (
         <InfoTip language={language} label={infoLabel} align="right" style={{ marginRight: -8 }}>{info}</InfoTip>
       )}
-      {/* O × é o PRIMEIRO interativo da tela (J5) — 44×44, ícone pelado. */}
-      <button
-        type="button"
-        onClick={onClose}
-        aria-label={closeLabel}
-        style={{
-          width: 44, height: 44, flex: 'none', margin: '-2px -8px 0 0',
-          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-          background: 'none', border: 'none', cursor: 'pointer',
-          borderRadius: 'var(--sm2-radius-md)', color: 'var(--sm2-ink)',
-        }}
-      >
-        <Icon name="close" size={24} tone="inherit" />
-      </button>
+      {/* O × da ATIVIDADE em andamento (I3): à direita e, quando sair perde
+          progresso, pede confirmação. */}
+      {onRight && (
+        <button
+          type="button"
+          onClick={tryClose}
+          aria-label={closeLabel}
+          data-game-close-end
+          style={{
+            width: 44, height: 44, flex: 'none', margin: '-2px -8px 0 0',
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            background: 'none', border: 'none', cursor: 'pointer',
+            borderRadius: 'var(--sm2-radius-md)', color: 'var(--sm2-ink)',
+          }}
+        >
+          <Icon name="close" size={24} tone="inherit" />
+        </button>
+      )}
+      {confirming && exitConfirm && (
+        <ExitConfirm {...exitConfirm} onStay={stay} onLeave={onClose} />
+      )}
+    </div>
+  );
+}
+
+/** Texto padrão da confirmação de sair de uma partida em andamento (`GameHeader exitConfirm`). */
+export function gameExitConfirm(isPt: boolean, what?: string): { title: string; stay: string; leave: string } {
+  return {
+    title: isPt ? `Sair${what ? ` ${what}` : ''}? O progresso desta partida se perde.` : `Leave${what ? ` ${what}` : ''}? This game's progress will be lost.`,
+    stay: isPt ? 'Continuar' : 'Keep going',
+    leave: isPt ? 'Sair' : 'Leave',
+  };
+}
+
+/** A confirmação de sair de uma partida (perde progresso). Mesma peça do `BattleStage`. */
+function ExitConfirm({ title, stay, leave, onStay, onLeave }: { title: string; stay: string; leave: string; onStay: () => void; onLeave: () => void }) {
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
+      data-game-confirm
+      style={{ position: 'fixed', inset: 0, zIndex: 130, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: 'rgba(0,0,0,.6)' }}
+    >
+      <div style={{ width: '100%', maxWidth: 320, display: 'flex', flexDirection: 'column', gap: 12, padding: 16, boxSizing: 'border-box', backgroundColor: 'var(--sm2-surface)', border: '1px solid var(--sm2-line)', borderRadius: 'var(--sm2-radius-md)' }}>
+        <p style={{ ...sm2Text, margin: 0, fontWeight: 500, textAlign: 'center' }}>{title}</p>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button type="button" autoFocus onClick={onStay} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }}>{stay}</button>
+          <button type="button" onClick={onLeave} data-game-confirm-leave style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, padding: '0 8px' }}>{leave}</button>
+        </div>
+      </div>
     </div>
   );
 }

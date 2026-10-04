@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Icon } from './ui/Icon';
 import { InfoTip } from './ui/InfoTip';
 import { sm2Button } from './form/FormKit';
-import { GameRoot, GameHeader, GameVisor, VisorSprite, VisorFx, HpBars, FxPopup, StatTag, phaseTitle, phaseLine } from './games/GameKit';
+import { GameRoot, GameHeader, GameVisor, VisorSprite, VisorFx, HpBars, FxPopup, StatTag, phaseTitle, phaseLine, gameExitConfirm } from './games/GameKit';
 import { getSpriteForStage } from '../utils/sprites';
 import { playFeed } from '../utils/sounds';
 import { playerStatsFor, DUNGEON_BITS_FACTOR } from '../utils/dungeon';
@@ -166,11 +166,13 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
   const [taps, setTaps] = useState(0);
   const [specialFx, setSpecialFx] = useState(false);
   const attackRef = useRef<() => void>(() => {});
+  /** I3: a confirmação de sair pausa os golpes automáticos. */
+  const [paused, setPaused] = useState(false);
   useEffect(() => {
-    if (phase !== 'attack') return;
+    if (phase !== 'attack' || paused) return;
     const id = setTimeout(() => attackRef.current(), ATTACK_AUTO_MS);
     return () => clearTimeout(id);
-  }, [phase, enemyIdx, floor]);
+  }, [phase, enemyIdx, floor, paused]);
 
   const flash = (who: 'enemy' | 'player') => {
     setHitFx(who);
@@ -324,14 +326,14 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
   // O Soulmon se defende sozinho: um instante depois de o golpe vir, a regra
   // pura decide (determinística pela semente da run) e a conta de dano segue.
   useEffect(() => {
-    if (TIMING_DODGE_ENABLED || phase !== 'defend' || !enemy) return;
+    if (TIMING_DODGE_ENABLED || phase !== 'defend' || !enemy || paused) return;
     const id = setTimeout(() => {
       const roll = defenseRoll(defSeedRef.current, defCountRef.current++);
       handleDefendRef.current(
         autoDefense(roll, { bonus: jeitoDefesaBonus(jeito), perfect: PERFECT }).acc);
     }, DEFEND_AUTO_MS);
     return () => clearTimeout(id);
-  }, [phase, enemyIdx, floor]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [phase, enemyIdx, floor, paused]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Defense countdown — shown to the player; expiring = full hit. (Só com a barra.)
   useEffect(() => {
@@ -391,6 +393,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
     setPhase('attack');
   };
 
+  const emCombate = enemies.length > 0 && ['attack', 'defend', 'result', 'enemy-down'].includes(phase);
   const inBattle = enemies.length > 0 && ['attack', 'defend', 'result', 'enemy-down', 'floor-clear', 'run-complete', 'lost'].includes(phase);
   const sceneName = isPt ? scene.namePt : scene.nameEn;
   const exitLabel = isPt ? 'Sair' : 'Exit';
@@ -428,6 +431,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
         }
         closeLabel={exitLabel}
         onClose={exitRun}
+        exitConfirm={emCombate ? gameExitConfirm(isPt, 'da masmorra') : undefined}
+        onPauseChange={setPaused}
       />
 
       {/* O VISOR (D-J3): a cena do andar em `cover`, o pet a 128 embaixo à

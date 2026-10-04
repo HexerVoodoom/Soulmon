@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { EarningGameProps } from './types';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
-import { GameRoot, GameHeader, GameVisor, VisorSprite, phaseTitle, phaseLine } from '../games/GameKit';
+import { GameRoot, GameHeader, GameVisor, VisorSprite, phaseTitle, phaseLine, gameExitConfirm } from '../games/GameKit';
 import { usePrefersReducedMotion } from '../ui/Viewport';
 import { getSpriteForStage } from '../../utils/sprites';
 import { ATELIE_SCENE, MINI_FX } from '../../utils/visorScenes';
@@ -170,6 +170,7 @@ export function EcoGame({ language, evolutionStage, demoCharacterId, onEarnPoint
         )}
         closeLabel={isPt ? 'Sair' : 'Exit'}
         onClose={onExit}
+        exitConfirm={phase === 'show' || phase === 'input' ? gameExitConfirm(isPt, 'do jogo') : undefined}
       />
 
       {/* O VISOR: o pet no meio e a pedra que ele está cantando ao lado. */}

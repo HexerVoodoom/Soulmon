@@ -5,7 +5,7 @@ import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readNumber, writeLocal } from '../utils/safeStorage';
 import type { Language } from '../utils/i18n';
 import { sm2Button } from './form/FormKit';
-import { GameRoot, GameHeader, GameVisor, GAME_VISOR_W, phaseTitle, phaseLine } from './games/GameKit';
+import { GameRoot, GameHeader, GameVisor, GAME_VISOR_W, phaseTitle, phaseLine, gameExitConfirm } from './games/GameKit';
 import { DINO_SCENE } from '../utils/dungeonScenes';
 import obstacle1 from '../assets/soulmon/dino/dino-obstacle-1.png';
 import obstacle2 from '../assets/soulmon/dino/dino-obstacle-2.png';
@@ -110,6 +110,8 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
   const groundImgRef = useRef<HTMLImageElement | null>(null);
   const parallaxImgRef = useRef<HTMLImageElement | null>(null);
   const [phase, setPhase] = useState<'ready' | 'playing' | 'over'>('ready');
+  /** I3: a confirmação de sair pausa a corrida (o laço é por `dt`, retoma sem salto). */
+  const [paused, setPaused] = useState(false);
   const phaseRef = useRef(phase);
   phaseRef.current = phase;
   const [finalScore, setFinalScore] = useState(0);
@@ -171,7 +173,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
   };
 
   useEffect(() => {
-    if (phase !== 'playing') return;
+    if (phase !== 'playing' || paused) return;
     const canvas = canvasRef.current!;
     const ctx = canvas.getContext('2d')!;
     ctx.imageSmoothingEnabled = false;
@@ -286,7 +288,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
     };
     window.addEventListener('keydown', onKey);
     return () => { cancelAnimationFrame(raf); window.removeEventListener('keydown', onKey); };
-  }, [phase, jump, onEarnPoints, onScore, petNeedsFlip]);
+  }, [phase, paused, jump, onEarnPoints, onScore, petNeedsFlip]);
 
   return (
     <GameRoot>
@@ -300,6 +302,8 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
           : 'Jump the enemies! They get scarier over time. 100 score = 1 Bit'}
         closeLabel={isPt ? 'Sair' : 'Exit'}
         onClose={onExit}
+        exitConfirm={phase === 'playing' ? gameExitConfirm(isPt, 'da corrida') : undefined}
+        onPauseChange={setPaused}
       />
 
       {/* O VISOR 348×192 (D-J3): a cena `minigame-dino` em `cover` atrás, o

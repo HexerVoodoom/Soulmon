@@ -265,6 +265,7 @@ export function RevisaoGame({
       <GameRoot>
         <GameHeader
           run
+          activity
           title={title}
           sub={isPt ? `Cartão ${index + 1} de ${queue.length}` : `Card ${index + 1} of ${queue.length}`}
           closeLabel={closeLabel}
