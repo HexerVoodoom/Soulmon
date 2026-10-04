@@ -62,10 +62,12 @@ export interface NodeArtProps {
   visual: SoulNodeVisual;
   /** O Oráculo está desenhando esta forma: anel tracejado, mesmo tom. */
   busy?: boolean;
+  /** Rodada 7 (I3): a COR do ramo no anel (Poder verde, Harmonia azul, Ultra amarelo). */
+  ringColor?: string;
 }
 
 /** O disco e o anel do nó — vetor, por token. */
-export function NodeArt({ visual, busy = false }: NodeArtProps) {
+export function NodeArt({ visual, busy = false, ringColor }: NodeArtProps) {
   const dashed = visual === 'forecast' || busy;
   return (
     <svg
@@ -86,7 +88,7 @@ export function NodeArt({ visual, busy = false }: NodeArtProps) {
         cy={C}
         r={R}
         fill="none"
-        stroke={RING_TONE[visual]}
+        stroke={ringColor ?? RING_TONE[visual]}
         strokeWidth={3}
         strokeDasharray={dashed ? '6 5' : undefined}
       />

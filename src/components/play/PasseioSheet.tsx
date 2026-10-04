@@ -11,7 +11,7 @@ import { travessiaTitle } from '../../utils/travessiaTitles';
 import { sheetCard, sheetCardList, sheetCardTitle } from '../nav/sheetKit';
 import { Celebration } from '../ui/Celebration';
 import { Icon } from '../ui/Icon';
-import { InfoTip } from '../ui/InfoTip';
+import { InfoTip, InfoTipSection } from '../ui/InfoTip';
 import { MissionMark } from './MissionMark';
 import { AREA_LABEL, AreaGlyph, RegionPostal } from './TravessiaIcon';
 
@@ -125,11 +125,6 @@ function MissoesDoDia({ ofertas, isPt, language, aberto, setAberto, onPick }: {
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <MissionMark kind="available" isPt={isPt} />
         <p style={{ ...sectionHead, flex: 1 }}>{isPt ? 'Missões de hoje' : 'Missions of the day'}</p>
-        <InfoTip language={language} align="right" label={isPt ? 'Como funcionam as missões do dia' : 'How the daily missions work'}>
-          {isPt
-            ? 'Todo dia saem três missões, de lugares diferentes. Escolha uma, ou nenhuma. Cada missão é um cenário: à noite o Soulmon viaja para lá e volta no relatório com uma historinha. Uma Travessia é algo que você faz na sua vida, fora do app. Escolhida, a missão fica com você por 24 horas; se não der, ela se vai sem custo e saem outras.'
-            : 'Every day three missions come up, from different places. Pick one, or none. Each mission is a scene: at night the Soulmon travels there and comes back in the report with a little story. A Crossing is something you do in your own life, outside the app. Once picked, the mission stays with you for 24 hours; if it does not work out, it goes away at no cost and new ones come up.'}
-        </InfoTip>
       </div>
       <ul style={sheetCardList} data-travessia-oferta>
         {ofertas.map(({ region, challenge: c }) => {
@@ -225,13 +220,8 @@ function CardAtivo({ crossings, isPt, language, todayKey, now, justDone, onFiz }
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 4 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
-          <Proposta c={challenge} isPt={isPt} />
-        </div>
-        <InfoTip language={language} align="right" label={isPt ? 'Qual versão vale' : 'Which version counts'}>
-          {isPt ? 'Qualquer uma das duas vale, a plena ou a pequena.' : 'Either one is enough, the full or the small one.'}
-        </InfoTip>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <Proposta c={challenge} isPt={isPt} />
       </div>
 
       {/* O estado de HOJE. Sem sequência, sem "ontem", sem cobrança: ou está
@@ -364,15 +354,30 @@ export function PasseioSheet({ language, crossings, onChange, todayKey, seed = '
 
   return (
     <div data-passeio style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {/* UM só "i" por folha (I2), no canto superior direito, explicando tudo daqui. */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: -8 }}>
+        <InfoTip language={language} align="right" label={isPt ? 'Sobre o Passeio' : 'About the Stroll'}>
+          <InfoTipSection title={isPt ? 'O passeio' : 'The stroll'}>
+            {isPt
+              ? 'Ele sai para passear todo dia e volta com o que viu no relatório do fim do dia. Uma missão escolhida decide o destino da noite.'
+              : 'It heads out every day and tells you what it saw in the end-of-day report. A chosen mission sets the night’s destination.'}
+          </InfoTipSection>
+          <InfoTipSection title={isPt ? 'Missões do dia' : 'Daily missions'}>
+            {isPt
+              ? 'Todo dia saem três missões, de lugares diferentes. Escolha uma, ou nenhuma. Cada missão é um cenário: à noite o Soulmon viaja para lá e volta com uma historinha. Uma Travessia é algo que você faz na sua vida, fora do app; vale a versão plena ou a pequena. Escolhida, a missão fica com você por 24 horas; se não der, ela se vai sem custo e saem outras.'
+              : 'Every day three missions come up, from different places. Pick one, or none. Each mission is a scene: at night the Soulmon travels there and comes back with a little story. A Crossing is something you do in your own life, outside the app; the full or the small version counts. Once picked, the mission stays with you for 24 hours; if it does not work out, it goes away at no cost and new ones come up.'}
+          </InfoTipSection>
+          <InfoTipSection title={isPt ? 'Marcos de Aventura' : 'Adventure Milestones'} last>
+            {isPt
+              ? 'Cada missão feita soma um Marco, no máximo um por dia. Em 5, 10 e 20 Marcos o Soulmon volta com um postal especial. Não muda nada no jogo, nunca diminui e não tem prazo.'
+              : 'Each mission done adds one Milestone, at most one a day. At 5, 10 and 20 Milestones the Soulmon comes back with a special postcard. It changes nothing in the game, never goes down and has no deadline.'}
+          </InfoTipSection>
+        </InfoTip>
+      </div>
       {mostraDestino && (
         <>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <p style={{ ...sectionHead, flex: 1 }}>{isPt ? 'Passeio livre · escolha o destino' : 'Free stroll · pick the destination'}</p>
-            <InfoTip language={language} align="right" label={isPt ? 'Como funciona o passeio' : 'How the stroll works'}>
-              {isPt
-                ? 'Ele sai para passear todo dia e volta com o que viu no relatório do fim do dia. Escolha para onde, entre os lugares que já abriram. Uma missão escolhida decide o destino da noite.'
-                : 'It heads out every day and tells you what it saw in the end-of-day report. Pick where, among the places already open. A chosen mission sets the night’s destination.'}
-            </InfoTip>
           </div>
           <ul style={list} role="group" aria-label={isPt ? 'Destino do passeio' : 'Stroll destination'}>
             {abertas.map(r => (
@@ -424,11 +429,6 @@ export function PasseioSheet({ language, crossings, onChange, todayKey, seed = '
         {crossings.score > 0 && (
           <p data-marcos style={{ ...note, display: 'flex', alignItems: 'center', gap: 4 }}>
             <span>{isPt ? `Marcos de Aventura · ${crossings.score}` : `Adventure Milestones · ${crossings.score}`}</span>
-            <InfoTip language={language} align="left" label={isPt ? 'O que são os Marcos de Aventura' : 'What Adventure Milestones are'}>
-              {isPt
-                ? 'Cada missão feita soma um Marco, no máximo um por dia. Em 5, 10 e 20 Marcos o Soulmon volta com um postal especial. Não muda nada no jogo, nunca diminui e não tem prazo.'
-                : 'Each mission done adds one Milestone, at most one a day. At 5, 10 and 20 Milestones the Soulmon comes back with a special postcard. It changes nothing in the game, never goes down and has no deadline.'}
-            </InfoTip>
           </p>
         )}
 

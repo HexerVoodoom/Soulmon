@@ -37,7 +37,7 @@ import { spriteFailText, spriteText } from '../utils/spriteCopy';
 import { pointsToEvolve } from '../utils/spriteTrigger';
 import { creatureFormId, type CreatureStage, type LText } from '../utils/oracle';
 import { AVAILABLE_BRANCHES, clampBranch, canReachUltra, ULTRA_PATIENCE_DAYS } from '../types/progression';
-import { ALIGN_TO_ATTR, ATTR_LABEL, ATTR_COLOR, ATTR_INK } from '../types/attributes';
+import { ALIGN_TO_ATTR, ATTR_LABEL, ATTR_COLOR, ATTR_INK, ULTRA_COLOR } from '../types/attributes';
 import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
 /* A varredura de 400 ms mudou de casa: o dono dela é o dono do visor
    (`ui/Viewport.tsx`), porque a spec pede a MESMA sintonia em dois call-sites
@@ -48,7 +48,6 @@ import { auraForElement } from '../utils/attackFxArt';
 import { PLACEHOLDER_ART } from '../utils/placeholderArt';
 import { ANIM_ART } from '../utils/animArt';
 import { HUD_ART } from '../utils/hudArt';
-import { PixelSegmentedBar } from './pixel/PixelKit';
 import { RitualDialog } from './ritual/RitualKit';
 /* `useIsOnline` já é o dono da leitura de rede neste app (o selo "SEM SINAL").
    O card `OFFLINE` da spec (§2.2) precisa da MESMA resposta — um segundo
@@ -479,8 +478,11 @@ export function EvolutionPath({
   const tituloDoVisor = evoluiNoToque
     ? (isPt ? 'Encostar' : 'Touch it')
     : evolutionLocked ? (isPt ? 'Soltar' : 'Release') : (isPt ? 'Segurar' : 'Hold');
-  /* A régua dos três atributos: o líder, com piso em 10 segmentos. */
-  const reguaDosAtributos = Math.max(10, powerPoints, harmonyPoints, benevolencePoints);
+  /* Rodada 7 (I4/I5): os pontos viram NÚMERO dentro das pílulas dos ramos; o
+     que lidera (sozinho, com pontos) ganha brilho na cor dele. Empate = ninguém
+     brilha — destacar um seria mentir sobre uma disputa aberta. */
+  const pontosDe = (a: Attr) => (a === 'power' ? powerPoints : a === 'harmony' ? harmonyPoints : benevolencePoints);
+  const lider: Attr | null = !isTie && topAttr > 0 ? (ATTR_ORDER.find(a => pontosDe(a) === topAttr) ?? null) : null;
 
   /* ── O ESTADO DA ARTE, forma por forma (§2.2) ──────────────────────────────
      Até aqui a página dizia o estado do sprite só da forma ATUAL. A spec põe o
@@ -742,9 +744,8 @@ export function EvolutionPath({
         key={stageId}
         style={{
           ...card, padding: 12, display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: isLast ? 0 : 8,
-          // I11: o ramo leva a COR do caminho (filete à esquerda). Tronco
-          // (rookie) e Ultra são de todos os caminhos: ficam neutros.
-          ...(ramoAttr ? { borderInlineStart: `4px solid ${ATTR_COLOR[ramoAttr]}` } : null),
+          // Rodada 7 (I3): sem moldura/barra colorida — a COR do ramo mora no
+          // círculo em volta da arte (`ringColor` do `SoulNode`).
         }}
         data-testid={`sm-no-${stageId}`}
       >
@@ -753,6 +754,7 @@ export function EvolutionPath({
           sprite={arteDoNo}
           silhouette={hidden && Boolean(arteVerdadeira)}
           busy={estado === 'GERANDO'}
+          ringColor={isUltra ? ULTRA_COLOR : ramoAttr ? ATTR_COLOR[ramoAttr] : undefined}
           label={nodeLabel}
           title={hidden ? (isPt ? 'Revelar (spoiler)' : 'Reveal (spoiler)') : nome}
           onClick={hidden ? () => setConfirmReveal(evolution) : undefined}
@@ -1225,28 +1227,6 @@ export function EvolutionPath({
               : 'Too early to tell. Finish tasks and the branch shows up here.'}
           </p>
         )}
-
-        {/* Os três atributos em `.segb` de 10 segmentos (vetor, `role=progressbar`
-            por atributo, rótulo 12 `muted` de 90px) — nenhum percentual, nenhum
-            "N%" (02 §16). Os pontos não têm teto no jogo: a régua é o LÍDER
-            (piso 10), então a leitura é "quem está na frente, e por quanto". */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 4 }}>
-          {ATTR_ORDER.map(a => {
-            const valor = a === 'power' ? powerPoints : a === 'harmony' ? harmonyPoints : benevolencePoints;
-            return (
-              <div key={a} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ ...sm2Hint, width: 90, flex: 'none' }}>{L(ATTR_LABEL[a])}</span>
-                <PixelSegmentedBar
-                  value={valor}
-                  max={reguaDosAtributos}
-                  segments={10}
-                  label={L(ATTR_LABEL[a])}
-                  style={{ flex: 1 }}
-                />
-              </div>
-            );
-          })}
-        </div>
       </section>
 
       {/* ─────────── A árvore ─────────── */}
@@ -1300,10 +1280,15 @@ export function EvolutionPath({
                     ? `color-mix(in srgb, ${ATTR_COLOR[b]} 16%, var(--sm2-surface-2))`
                     : 'var(--sm2-surface-2)',
                   color: ATTR_INK[b],
+                  // I5: o ramo que lidera brilha na cor dele (Poder verde, Harmonia azul, Benevolência dourado).
+                  boxShadow: lider === b ? `0 0 12px 2px ${ATTR_COLOR[b]}` : undefined,
                 }}
+                data-attr-leader={lider === b ? 'sim' : undefined}
               >
                 <AttrGlyph attr={b} />
                 {L(ATTR_LABEL[b])}
+                {/* I4: a progressão em NÚMERO, dentro da pílula. */}
+                <span className="sm2-num" data-attr-points={b} style={{ fontWeight: 600 }}>{pontosDe(b)}</span>
               </button>
             );
           })}

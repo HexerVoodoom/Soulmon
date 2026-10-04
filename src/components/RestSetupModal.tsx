@@ -24,7 +24,7 @@ import { STORAGE_KEYS } from '../utils/storageKeys';
 import { isMorning } from '../utils/restSetup';
 import { SwitchRow, TimeField, sm2Button, sm2Text } from './form/FormKit';
 import { RitualDialog, ritualTitle } from './ritual/RitualKit';
-import { InfoTip } from './ui/InfoTip';
+import { InfoTip, InfoTipSection } from './ui/InfoTip';
 
 export interface RestSetupModalProps {
   language: Language;
@@ -61,20 +61,22 @@ export function RestSetupModal({ language, now, window: restWindow, onChangeWind
         <p style={{ ...ritualTitle, margin: 0, flex: 1, minWidth: 0 }}>{title}</p>
         {/* I13 (02/10/2026): a legenda mora atrás do "?". */}
         <InfoTip language={language} label={isPt ? 'Sobre este ajuste' : 'About this setup'} align="right">
-          {isPt
-            ? 'Duas coisas que você pode ajustar agora — ou depois, em Configurações.'
-            : 'Two things you can set now — or later, in Settings.'}
+          <InfoTipSection title={isPt ? 'Este ajuste' : 'This setup'}>
+            {isPt
+              ? 'Duas coisas que você pode ajustar agora — ou depois, em Configurações.'
+              : 'Two things you can set now — or later, in Settings.'}
+          </InfoTipSection>
+          <InfoTipSection title={isPt ? 'Janela de descanso' : 'Rest window'} last>
+            {isPt
+              ? 'As horas em que você gosta de desacelerar. Pondo seu Soulmon para dormir dentro delas, ele volta de manhã com um sonho.'
+              : 'The hours you like to wind down. Put your Soulmon to bed inside them and it comes back with a dream in the morning.'}
+          </InfoTipSection>
         </InfoTip>
       </div>
 
       <section data-rest-setup="window" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
           <p style={{ ...sm2Text, fontWeight: 500, margin: 0 }}>{isPt ? 'Janela de descanso' : 'Rest window'}</p>
-          <InfoTip language={language} label={isPt ? 'O que é a janela de descanso' : 'What the rest window is'} align="right" style={{ minHeight: 28 }}>
-            {isPt
-              ? 'As horas em que você gosta de desacelerar. Pondo seu Soulmon para dormir dentro delas, ele volta de manhã com um sonho.'
-              : 'The hours you like to wind down. Put your Soulmon to bed inside them and it comes back with a dream in the morning.'}
-          </InfoTip>
         </div>
         <div className="sm2-conta-times">
           <TimeField

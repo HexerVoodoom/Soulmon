@@ -3,11 +3,13 @@ import { createPortal } from 'react-dom';
 import { Icon } from './Icon';
 
 /**
- * `InfoTip` — o "?" PADRÃO do app (pedido do dono, 02/10/2026): todo texto
- * EXPLICATIVO sai da tela e vira um "?" em círculo; quem quiser, toca e lê.
- * A interface fica limpa e a explicação continua a UM toque.
+ * `InfoTip` — o "i" PADRÃO do app (pedido do dono, 02/10/2026; o "?" virou "i"
+ * cinza claro na rodada 7, 04/10/2026 — o "?" amarelo é das quests): todo texto
+ * EXPLICATIVO sai da tela e vira um "i" em círculo; quem quiser, toca e lê.
+ * A interface fica limpa e a explicação continua a UM toque. UM por modal/folha,
+ * no canto superior direito, explicando TUDO daquele modal.
  *
- * Desenho: o glifo `help` (que já é um "?" dentro de um círculo — o ícone
+ * Desenho: o glifo `info` (que já é um "i" dentro de um círculo — o ícone
  * continua PELADO, sem box nem fundo, regra visual do dono) a 20px, num alvo
  * de toque de 44px. O tooltip abre num PORTAL em `document.body` (nunca é
  * cortado por `overflow` de folha/modal), posicionado junto ao botão e preso
@@ -99,11 +101,11 @@ export function InfoTip({
         style={{
           background: 'none', border: 'none', padding: 0, margin: 0,
           minWidth: 44, minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer', color: 'var(--sm2-ink-muted, var(--sm2-primary-ink))', flexShrink: 0,
+          cursor: 'pointer', color: 'var(--sm2-muted)', flexShrink: 0,
           ...style,
         }}
       >
-        <Icon name="help" size={20} tone="inherit" />
+        <Icon name="info" size={20} tone="inherit" />
       </button>
       {open && pos && typeof document !== 'undefined' && createPortal(
         <div
@@ -129,5 +131,18 @@ export function InfoTip({
         document.body,
       )}
     </>
+  );
+}
+
+/**
+ * Uma seção curta DENTRO do tooltip único de um modal/folha (rodada 7, I2):
+ * título em negrito + texto. Várias seções = tudo do modal num "i" só.
+ */
+export function InfoTipSection({ title, children, last = false }: { title: string; children: ReactNode; last?: boolean }) {
+  return (
+    <span style={{ display: 'block', marginBottom: last ? 0 : 10 }}>
+      <b style={{ display: 'block', fontWeight: 600, marginBottom: 2 }}>{title}</b>
+      {children}
+    </span>
   );
 }

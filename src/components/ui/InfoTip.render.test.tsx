@@ -5,7 +5,7 @@ import { InfoTip } from './InfoTip';
 
 afterEach(cleanup);
 
-describe('InfoTip — o "?" padrão', () => {
+describe('InfoTip — o "i" padrão', () => {
   it('abre e fecha pelo toque, com aria-expanded e o texto num note', () => {
     render(<InfoTip language="pt-BR" label="Como funciona">Texto explicativo</InfoTip>);
     const b = screen.getByRole('button', { name: 'Como funciona' });
@@ -42,11 +42,11 @@ describe('InfoTip — o "?" padrão', () => {
     document.removeEventListener('keydown', outer);
   });
 
-  it('o alvo de toque tem 44px e o ícone é o "help" pelado (sem box)', () => {
+  it('o alvo de toque tem 44px e o ícone é o "info" pelado (sem box)', () => {
     render(<InfoTip language="pt-BR" label="Ajuda">x</InfoTip>);
     const b = screen.getByRole('button', { name: 'Ajuda' });
     expect(b.style.minWidth).toBe('44px');
     expect(b.style.minHeight).toBe('44px');
-    expect(b.textContent).toContain('help');
+    expect(b.textContent).toContain('info');
   });
 });

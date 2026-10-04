@@ -20,6 +20,10 @@ interface SoulNodeProps {
   silhouette?: boolean;
   /** O Oráculo está desenhando esta forma (anel tracejado, D-E9). */
   busy?: boolean;
+  /** Rodada 7 (I3): a cor do ramo no anel do nó. */
+  ringColor?: string;
+  /** Rodada 7 (I5): brilho (glow) na cor dada — o ramo que lidera. */
+  glowColor?: string;
   /** Rótulo acessível COMPLETO: nome + situação + o que o toque faz (V2). */
   label: string;
   title?: string;
@@ -47,7 +51,7 @@ interface SoulNodeProps {
  * (88 ≥ 44).
  */
 export function SoulNode({
-  visual, sprite, silhouette = false, busy = false, label, title, onClick,
+  visual, sprite, silhouette = false, busy = false, ringColor, glowColor, label, title, onClick,
 }: SoulNodeProps) {
   const box: CSSProperties = {
     position: 'relative',
@@ -60,12 +64,13 @@ export function SoulNode({
     background: 'transparent',
     cursor: onClick ? 'pointer' : undefined,
     borderRadius: '50%',
+    ...(glowColor ? { boxShadow: `0 0 12px 2px ${glowColor}` } : null),
   };
   const inset = (NODE_SIZE - NODE_GLASS) / 2;
 
   const body = (
     <>
-      <NodeArt visual={visual} busy={busy} />
+      <NodeArt visual={visual} busy={busy} ringColor={ringColor} />
       <span
         className="sm2-viewport-screen sm2-visor"
         data-node-glass
