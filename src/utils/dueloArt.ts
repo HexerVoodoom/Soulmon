@@ -2,11 +2,10 @@
 // folha "faltantes-1", 6 × 128², pixel de 2, alfa binário): criaturas originais por elemento, para
 // o oponente de duelo que não tem sprite próprio.
 //
-// ⚠️ SEM CHAMADA (registrado em `docs/PERGUNTAS-DO-DONO.md`, DUELO-1): hoje o oponente do Torneio é
-// um amigo de verdade e aparece com o sprite do ESTÁGIO REAL dele (`TournamentPage` ›
-// `getSpriteForStage(opp.stage)`) — trocar isso por um retrato genérico apagaria a informação de
-// estágio, e não existe oponente sem sprite. O mapa fica pronto para um duelo contra "criatura
-// da Arena" (sem jogador por trás). Enquanto ninguém o importa, não entra no bundle.
+// R8 (04/10/2026): agora tem chamada — os três desafiantes NPC do Torneio vazio (`utils/tournamentNpcs.ts`,
+// treino com outra roupa, sem partida do dia e sem ganho). O oponente de jogador de verdade continua com o
+// sprite do ESTÁGIO REAL dele (`TournamentPage` › `getSpriteForStage(opp.stage)`): trocar isso por um retrato
+// genérico apagaria a informação de estágio (DUELO-1, `docs/PERGUNTAS-DO-DONO.md`).
 import op1 from '../assets/soulmon/duelo/duelo-oponente-1.png';
 import op2 from '../assets/soulmon/duelo/duelo-oponente-2.png';
 import op3 from '../assets/soulmon/duelo/duelo-oponente-3.png';

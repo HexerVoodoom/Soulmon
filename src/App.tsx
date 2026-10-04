@@ -43,6 +43,7 @@ import { NotificationManager } from './components/NotificationManager';
 import { adventureOfNight, collectAdventure } from './utils/adventure';
 import { crossingsTouchMap, missionMark } from './utils/travessiasSave';
 import { clearLegacy, loadLegacyEntries, mergeEntries, type CadernoEntry } from './utils/cadernoSave';
+import { sanitizeEquippedFrame } from './utils/frames';
 import { CROSSINGS_EMPTY, HOME_REGION, type CrossingsState } from './types/travessias';
 import { IntroScreen } from './components/IntroScreen';
 import { CATEGORY_ATTRIBUTES, type ActivityCategory, XP_THRESHOLDS } from './types/attributes';
@@ -3613,6 +3614,11 @@ export default function App() {
     setGameState(prev => ({ ...prev, equippedBackground: id }));
   }, []);
 
+  /** Moldura de avatar (R8): cosmética pura — só grava o id escolhido (`null` = sem moldura). Valer ou não é do `resolveEquippedFrame`. */
+  const handleEquipFrame = useCallback((id: string | null) => {
+    setGameState(prev => (prev.equippedFrame ?? null) === id ? prev : { ...prev, equippedFrame: sanitizeEquippedFrame(id) });
+  }, []);
+
   /**
    * Equipa/desequipa decoração. `id` null limpa o espaço; caso contrário o item
    * ocupa o SEU espaço, substituindo quem estava lá. Não existe "equipar em
@@ -6000,6 +6006,9 @@ export default function App() {
                   petStage: gameState.evolutionStage,
                   petLine,
                   trophies: gameState.trophies ?? [],
+                  equippedFrame: gameState.equippedFrame ?? null,
+                  ownedFrames: gameState.ownedFrames ?? [],
+                  onEquipFrame: handleEquipFrame,
                   petElement: gameState.soulmonMeta?.dominantElement,
                   language,
                   emblems: gameState.emblems ?? 0,

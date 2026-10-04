@@ -131,6 +131,14 @@ describe('opt-out da lista pública — o servidor respeita a flag por conta', (
     expect(players.map(p => p.name)).not.toContain(SEGREDO);
   });
 
+  it('R8: `myPlace` é a posição REAL (ocultos também ocupam lugar) e só vem para o próprio dono', async () => {
+    const env = mundo({ publicHidden: true });
+    // pontos: Bruno 99 (oculto) > Carol 20 > Alice 10 → Alice é a 3ª, mesmo com Bruno fora da lista
+    expect((await (await get(env, 'rank', { season: SEASON, id: ALICE })).json()).myPlace).toBe(3);
+    expect((await (await get(env, 'rank', { season: SEASON, id: BRUNO })).json()).myPlace).toBe(1);
+    expect((await (await get(env, 'rank', { season: SEASON })).json()).myPlace).toBeUndefined();
+  });
+
   it('quem saiu continua vendo o PRÓPRIO lugar (me), e só ele', async () => {
     const env = mundo({ publicHidden: true });
     const meu = await (await get(env, 'rank', { season: SEASON, id: BRUNO })).json();

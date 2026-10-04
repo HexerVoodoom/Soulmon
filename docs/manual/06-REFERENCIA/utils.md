@@ -2603,15 +2603,29 @@ dominância populacional — por isso ±15%. Régua nova:
 **Regra de negócio:** A rodada do Torneio é ritual de sexta a domingo — fora da janela o Torneio segue disponível. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
 ### `src/utils/tournamentTiers.ts`
-**Dono de:** As faixas do Torneio (Madeira→Mestre, as clássicas; rodada 7 / A1) por pontos — nunca rebaixa.
+**Dono de:** As faixas do Torneio. Seis de PONTOS lifetime (Madeira 0 · Bronze 100 · Prata 300 · Ouro 700 · Platina 1100 · Diamante 1500 — só sobem) e, desde a R8 (04/10/2026), dois LUGARES de topo da season: **Mestre = top 100** e **Grão-Mestre (Grandmaster) = top 20**, só com lifetime ≥ `SEAT_MIN_LIFETIME` (1500). O lugar é VIVO: saiu do top, volta à faixa de pontos (nunca abaixo dela). REGISTRO §23.
 **Exports:**
-- `TournamentTier` (interface) — campos: `id`, `namePt`, `nameEn`, `min` (o `emoji` saiu na rodada 7).
-- `TOURNAMENT_TIERS` — tabela/dado de configuração (ver código; 7+ linhas).
-- `TierStanding` (interface) — campos: `tier`, `next`, `pointsToNext`, `progress`.
-- `function getTierStanding(points: number): TierStanding` — Faixa de um jogador a partir dos pontos. Pontos negativos ou inválidos caem na primeira faixa — nunca lança, porque isto alimenta UI.
+- `TournamentTier` (interface) — campos: `id`, `namePt`, `nameEn`, `min`, `maxPlace?` (só nos lugares).
+- `TOURNAMENT_TIERS` — as seis faixas de pontos. `TOURNAMENT_SEATS` — Mestre (100) e Grão-Mestre (20). `TOURNAMENT_LADDER` — as oito, na ordem (o que a folha desenha). `SEAT_MIN_LIFETIME` — 1500.
+- `TierStanding` (interface) — campos: `tier`, `next`, `pointsToNext`, `progress`, `seat`, `place` (o "#N" do ícone; só com `seat`).
+- `function getTierStanding(points: number, place?: number | null): TierStanding` — Faixa a partir dos pontos lifetime e, opcionalmente, da posição na season. Nunca lança.
+- `function resolveSeasonPlace(serverPlace: unknown, rankIndex: number): number | null` — a posição do servidor (`myPlace` de `action=rank&id=`) ou, em servidor antigo, o índice na lista pública (top 50) + 1.
 **Chamado por:** `src/components/TournamentPage.tsx`
 **Régua:** `tournamentTiers.test.ts`
-**Regra de negócio:** As faixas do Torneio nunca rebaixam o jogador ao acumular pontos. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+**Regra de negócio:** As faixas de pontos nunca rebaixam o jogador ao acumular pontos; Mestre/Grão-Mestre são lugares da season. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+
+### `src/utils/tournamentNpcs.ts`
+**Dono de:** os três DESAFIANTES NPC do Torneio vazio (R8, 04/10/2026): Espina/Thorn, Quartzo/Quartz e Maré/Tide, com os retratos `duelo-oponente-1/4/5` (`dueloArt.ts`). É o TREINO com outra roupa — não conta partida do dia, não chama o servidor, não rende Honra/pontos/XP/missão; estágio do jogador, ataque a 0,85×.
+**Exports:** `TournamentNpc` (interface: `id`, `namePt`, `nameEn`, `art`) · `TOURNAMENT_NPCS` · `function npcAtk(atk: number): number`.
+**Chamado por:** `src/components/TournamentPage.tsx` (lista vazia de oponentes → os três cartões; `startTraining(npc)`).
+**Régua:** `src/components/TournamentPage.r8.render.test.tsx`.
+
+### `src/utils/frames.ts`
+**Dono de:** o catálogo de MOLDURAS de avatar (R8, 04/10/2026) — COSMÉTICA pura, nunca vantagem. Origens: `rank` (uma por degrau da escada; Madeira…Diamante pela faixa lifetime, Mestre/Grão-Mestre só com o lugar ocupado), `shop` (Bits, `price`), `achievement`, `event`. Arte ainda não existe: cada uma traz um `look` placeholder (anel CSS).
+**Exports:** `FrameOrigin`, `FrameLook`, `AvatarFrame`, `FrameContext` (tipos) · `FRAMES` · `FRAME_IDS` · `FRAME_ID_RE` · `FRAMES_MAX_OWNED` · `frameById` · `sanitizeOwnedFrames` · `sanitizeEquippedFrame` · `frameAvailable` · `resolveEquippedFrame` (equipada que deixou de valer → `null`, sem moldura) · `availableFrames`.
+**Chamado por:** `src/contexts/GameStateContext.tsx` (sanitiza `ownedFrames`/`equippedFrame` no load), `src/App.tsx` (`handleEquipFrame`), `src/components/TournamentPage.tsx`, `src/components/ui/AvatarFrame.tsx`.
+**Régua:** `src/utils/frames.test.ts` (catálogo, cosmética, sanitização, paridade de formato/teto com `functions/api/save.js`), `functions/api/save.frames.test.js`.
+**Save:** `GameState.ownedFrames?: string[]` (`?? []`) e `GameState.equippedFrame?: string | null` (`?? null`) — ver 07-DADOS-E-SAVE.
 
 ### `src/utils/tzOffset.ts`
 **Dono de:** Offset em ms de um fuso IANA à frente do UTC, num instante dado (histórico de horário de verão incluído).

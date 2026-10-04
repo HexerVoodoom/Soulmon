@@ -17,6 +17,9 @@ import { render as rtlRender, screen, cleanup, fireEvent, waitFor } from '@testi
 import { TournamentPage } from './TournamentPage';
 import { xpForLevel, BOND_PVP_MIN_LEVEL } from '../utils/bond';
 
+/** R8: o "i" ÚNICO da página (canto superior direito) explica tudo; abre por este botão. */
+const abrirInfo = () => fireEvent.click(screen.getByRole('button', { name: /Sobre o Torneio|About the Tournament/ }));
+
 /** A folha abre na Faixa; o requisito e o aviso moram na aba Desafiar. */
 function render(ui: Parameters<typeof rtlRender>[0]) {
   const r = rtlRender(ui);
@@ -57,16 +60,16 @@ describe('abaixo do Vínculo 5 a aba EXPLICA, não parece quebrada', () => {
     expect(card).not.toBeNull();
     expect(card.textContent).toMatch(new RegExp(`Vínculo ${BOND_PVP_MIN_LEVEL}`));
     expect(card.textContent).toMatch(/faltam \d+ XP/);
-    // K6: o "sem pressa" (progresso, nunca dívida) mora atrás do "?" do cartão.
-    fireEvent.click(screen.getByRole('button', { name: /Como entrar no Torneio|How to join the Tournament/ }));
-    expect(document.body.textContent).toMatch(/Sem pressa/);
+    // R8: o "sem pressa" (progresso, nunca dívida) mora no "i" único da página.
+    abrirInfo();
+    expect(document.body.textContent).toMatch(/sem pressa/i);
     expect(card.querySelector('[role="progressbar"]')).not.toBeNull();
   });
 
   it('o porquê (é social) está dito atrás do "?"', () => {
     render(<TournamentPage {...props} totalXP={0} />);
-    fireEvent.click(screen.getByRole('button', { name: /Por que o Torneio é social/ }));
-    expect(screen.getByText(/lista pública/i)).toBeTruthy();
+    abrirInfo();
+    expect(document.querySelector('[data-torneio-social]')?.textContent).toMatch(/lista pública/i);
   });
 
   it('em inglês, tudo em inglês', () => {
@@ -89,14 +92,14 @@ describe('a partir do Vínculo 5 o Desafiar abre, sem passo nenhum antes', () =>
     render(<TournamentPage {...props} totalXP={xpForLevel(BOND_PVP_MIN_LEVEL)} />);
     expect(document.querySelector('[data-torneio-requisito]')).toBeNull();
     expect(screen.queryByText(/Ative o PvP|Enable PvP/)).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: /Sobre a lista pública/ }));
+    abrirInfo();
     expect(document.querySelector('[data-torneio-aviso-publico]')?.textContent).toMatch(/lista pública/i);
     await waitFor(() => expect(buscouOponentes()).toBe(true));
   });
 
   it('TORC-5: quem saiu da lista pública lê "Você está oculto da lista pública" (e continua com o Desafiar)', async () => {
     render(<TournamentPage {...props} ocultoDaLista totalXP={xpForLevel(BOND_PVP_MIN_LEVEL)} />);
-    fireEvent.click(screen.getByRole('button', { name: /Sobre a lista pública/ }));
+    abrirInfo();
     const aviso = document.querySelector('[data-torneio-aviso-publico]')?.textContent ?? '';
     expect(aviso).toMatch(/oculto da lista pública/);
     expect(aviso).not.toMatch(/aparecem numa lista/);
@@ -105,15 +108,16 @@ describe('a partir do Vínculo 5 o Desafiar abre, sem passo nenhum antes', () =>
 
   it('o aviso está em inglês quando o idioma é inglês', () => {
     render(<TournamentPage {...props} language="en-US" totalXP={xpForLevel(BOND_PVP_MIN_LEVEL)} />);
-    fireEvent.click(screen.getByRole('button', { name: /About the public list/ }));
-    expect(screen.getByText(/public list/i)).toBeTruthy();
+    abrirInfo();
+    expect(document.querySelector('[data-torneio-aviso-publico]')?.textContent).toMatch(/public list/i);
   });
 });
 
-describe('o treino e a legenda da torcida aparecem nos dois casos', () => {
+describe('o treino aparece nos dois casos e a legenda da torcida mora no "i" único', () => {
   it.each([0, xpForLevel(BOND_PVP_MIN_LEVEL)])('totalXP=%i', totalXP => {
     render(<TournamentPage {...props} totalXP={totalXP} />);
-    expect(document.querySelector('[data-torcida-legenda]')).not.toBeNull();
     expect(document.querySelector('[data-torneio-treino]')).not.toBeNull();
+    abrirInfo();
+    expect(document.querySelector('[data-torcida-legenda]')).not.toBeNull();
   });
 });
