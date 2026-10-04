@@ -34,10 +34,13 @@ import { BASE_ELEMENT_LABELS, DERIVED_ELEMENT_PAIRS } from './soulProfile/derive
 import { CLASS_ELEMENT_ORDER } from './soulProfile/types';
 import { CLASS_DATA } from './soulProfile/ficha/buildSheet';
 import { emptyIncubation } from './spriteTrigger';
-import type { EscolaId } from './soulProfile/ficha/types';
+import { REBIRTH_REQUIRED_STAGE, rebirthRefusal, canRebirth, type RebirthEligibilityInput, type RebirthRefusal } from './rebirthGate';
 
-/** Estágio que habilita o Rebirth. O ápice da escada, não um número solto. */
-export const REBIRTH_REQUIRED_STAGE = 'ultra';
+// A porta de elegibilidade mora em `rebirthGate.ts` (leve, usada pelo App no chunk
+// de entrada); reexportada aqui para quem usa o módulo inteiro.
+export { REBIRTH_REQUIRED_STAGE, rebirthRefusal, canRebirth };
+export type { RebirthEligibilityInput, RebirthRefusal };
+import type { EscolaId } from './soulProfile/ficha/types';
 
 /**
  * O ganho: multiplicador sobre o ORÇAMENTO de pontos da ficha, em TODOS os
@@ -158,30 +161,6 @@ export function sanitizeCriatura(raw: unknown): string {
     .replace(/\s+/g, ' ')
     .trim()
     .slice(0, REBIRTH_CRIATURA_MAX);
-}
-
-export interface RebirthEligibilityInput {
-  evolutionStage?: string;
-  accountTier?: 'demo' | 'paid';
-  rebirth?: RebirthRecord | null;
-}
-
-/**
- * Por que uma RECUSA com motivo em vez de um booleano: cada motivo tem uma
- * saída diferente na tela (comprar, subir a escada, ou nada — já usou). Um
- * `false` mudo mandaria o jogador adivinhar qual dos três é.
- */
-export type RebirthRefusal = 'not-ultra' | 'not-paid' | 'already-used' | null;
-
-export function rebirthRefusal(input: RebirthEligibilityInput): RebirthRefusal {
-  if (input.rebirth) return 'already-used';
-  if (input.accountTier !== 'paid') return 'not-paid';
-  if (input.evolutionStage !== REBIRTH_REQUIRED_STAGE) return 'not-ultra';
-  return null;
-}
-
-export function canRebirth(input: RebirthEligibilityInput): boolean {
-  return rebirthRefusal(input) === null;
 }
 
 /** O alvo mínimo que `applyRebirth` sabe reescrever. Genérico em `T` para o

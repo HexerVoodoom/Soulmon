@@ -30,8 +30,6 @@ import { CATEGORY_ICONS } from './types/category-icons';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { Toaster } from './components/ui/sonner';
 import { GamePopups } from './components/GamePopups';
-import { EvolveTaskModal } from './components/EvolveTaskModal';
-import { EvolutionCeremony } from './components/EvolutionCeremony';
 import { useSpriteGeneration, libraryOf } from './hooks/useSpriteGeneration';
 import { emptyIncubation, incubationFor, incubationReady, isIncubating } from './utils/spriteTrigger';
 import { spriteText } from './utils/spriteCopy';
@@ -39,13 +37,10 @@ import { emptySpriteLibrary, revertVisor, displaySprite, isNewbornLibrary, markT
 import { getSpriteForStage } from './utils/sprites';
 import { ContentModals } from './components/ContentModals';
 import { NotificationManager } from './components/NotificationManager';
-import { DailyReportModal } from './components/DailyReportModal';
 import { adventureOfNight, collectAdventure } from './utils/adventure';
 import { crossingsTouchMap } from './utils/travessiasSave';
 import { CROSSINGS_EMPTY, HOME_REGION, type CrossingsState } from './types/travessias';
-import { WelcomePromptModal } from './components/WelcomePromptModal';
 import { IntroScreen } from './components/IntroScreen';
-import { ProtectProgressModal } from './components/ProtectProgressModal';
 import { CATEGORY_ATTRIBUTES, type ActivityCategory, XP_THRESHOLDS } from './types/attributes';
 import { type CareEvent } from './components/CareSystem';
 import { FORM_REQUIREMENTS, getStageLevel, canSelectWeekdays, getMaxEnergyForStage } from './types/progression';
@@ -114,8 +109,6 @@ import { FirstDayCard } from './components/FirstDayCard';
 import { TermsUpdateBanner } from './components/TermsUpdateBanner';
 import { marcaAvisoTermos, precisaAvisarTermos, qualDocMudou } from './utils/termsNotice';
 import { PRIVACY_VERSION, TERMS_VERSION } from './utils/consent';
-import { MilestoneCeremony } from './components/MilestoneCeremony';
-import { GroveMilestoneCeremony } from './components/guild/GroveMilestoneCeremony';
 import { useGroveWatch } from './hooks/useGroveWatch';
 import {
   acknowledgeGroveMilestone, grantGroveScenes, grantGuildScenes, groveAvisoFor, groveStageAt, formatDayLabel,
@@ -123,9 +116,7 @@ import {
 } from './utils/groveLocal';
 import { grantGuildTrophy } from './utils/guildClaimLocal';
 import { guildCoreText, groveStageName, type GroveMarcoStage } from './utils/guildCopyCore';
-import {
-  applyRebirth, canRebirth, rebirthRefusal, rebirthEscolaOptions, rebirthElementOptions, herancaDoCiclo,
-} from './utils/rebirth';
+import { canRebirth, rebirthRefusal } from './utils/rebirthGate';
 import type { RebirthChoices } from './utils/rebirth';
 import { anniversaryOn, daysTogether } from './utils/anniversary';
 import { memoryToShow, markMemoryShown } from './utils/memories';
@@ -140,6 +131,7 @@ import { sleepReminderCopy } from '../functions/api/_pushCopy.js';
 import { BITS_EXCHANGE, creditMinigameBits, minigameBitsToday } from './utils/currencies';
 import { snapshotCompletion, undoCompletion, UNDO_WINDOW_MS } from './utils/completionUndo';
 import { UndoToast } from './components/UndoToast';
+import { WeeklyReportCard } from './components/WeeklyReportCard';
 import { adminFromEntitlement, setAdminFlag, useAdmin } from './utils/adminFlag';
 import { isCorvo, spriteLineOf } from './utils/corvoPet';
 // G1: `corvoAdocao` (nomes, CORVO_STAGES, adoptCorvo) e `gmTools` só são lidos por admin, no clique —
@@ -183,15 +175,11 @@ import { UnlockAccountModal, UnlockNudge, type UnlockReason } from './components
 // tradução de um gesto do usuário em chamada de regra. Nenhuma fórmula é
 // reescrita neste arquivo: regra copiada é regra que diverge em silêncio
 // (footgun 9 do CLAUDE.md).
-import { MorningCheckIn } from './components/MorningCheckIn';
-import { TriagePile, type TriageAction } from './components/TriagePile';
-import { MorningDream } from './components/MorningDream';
+import { type TriageAction } from './components/TriagePile';
 import { dreamTwin, grantDreamTwin } from './utils/dreamDecorTwin';
 import { sanitizeSoulTestAnswers } from './utils/soulTestAnswers';
-import { RestSetupModal } from './components/RestSetupModal';
 import { shouldShowRestSetup } from './utils/restSetup';
 import { chatSettingsFor, personalityProfileFromSave } from './utils/personality';
-import { WeeklyReportCard } from './components/WeeklyReportCard';
 import {
   needsCheckIn, checkInPlan, completeCheckIn,
   needsWeeklyReport, weeklyReport, stackingSuggestion,
@@ -210,10 +198,8 @@ import {
 import { normalizeSchedule, weekDaysForSchedule, HABIT_WEIGHT, MAX_DAILY_FOCUS, cheerReached } from './types/taskModel';
 import { equilibrarSemana, valeEquilibrar } from './utils/weekBalance';
 import { needsCatalogOnboarding, markCatalogOnboardingSeen, onboardingProfileFrom } from './utils/catalogOnboarding';
-import { CatalogOnboardingFlow, activitiesFromCatalogChoice } from './components/catalog/CatalogOnboardingFlow';
-import { ACTIVITY_CATALOG } from './data/activityCatalog';
-import { CatalogBrowserModal } from './components/catalog/CatalogBrowserModal';
-import { CatalogLevelInviteModal } from './components/catalog/CatalogLevelInviteModal';
+import { activitiesFromCatalogChoice } from './utils/catalogChoice';
+import { loadCatalog } from './data/catalogoCarga';
 import { pickCatalogLevelInviteCandidate, applyLevelChange } from './utils/catalogLevelSignal';
 
 import type { Schedule, HabitAnchor, Effort } from './types/taskModel';
@@ -225,7 +211,6 @@ import type { Dream, RestWindow } from './utils/restWindow';
 // ── SONO JOGÁVEL, BRINCAR E PASSOS ──────────────────────────────────────────
 // Mesma disciplina do bloco acima: as regras moram nos módulos puros
 // (`nightmares`, `petNeeds`, `steps`) e aqui só existe fiação.
-import { NightmareBattle } from './components/NightmareBattle';
 import { StepsCard } from './components/StepsCard';
 import {
   buildNightmareWave, hasPendingNightmare, markFought, nightmareDayKey, nightmaresFor,
@@ -656,6 +641,23 @@ const MILESTONE_TEXT: Record<string, { pt: string; en: string }> = {
 };
 
 const RebirthModal = lazy(() => import('./components/RebirthModal').then(m => ({ default: m.RebirthModal })));
+// Pesadelo da manhã: leva junto BattleStage/PveMechanics/usePveBattle/combatFx/attackFxArt (~100 KB) — só na luta.
+const NightmareBattle = lazy(() => import('./components/NightmareBattle').then(m => ({ default: m.NightmareBattle })));
+// Modais/interstícios que só montam sob condição (rodada 6, perf): saem do chunk de entrada.
+const EvolveTaskModal = lazy(() => import('./components/EvolveTaskModal').then(m => ({ default: m.EvolveTaskModal })));
+const EvolutionCeremony = lazy(() => import('./components/EvolutionCeremony').then(m => ({ default: m.EvolutionCeremony })));
+const DailyReportModal = lazy(() => import('./components/DailyReportModal').then(m => ({ default: m.DailyReportModal })));
+const WelcomePromptModal = lazy(() => import('./components/WelcomePromptModal').then(m => ({ default: m.WelcomePromptModal })));
+const ProtectProgressModal = lazy(() => import('./components/ProtectProgressModal').then(m => ({ default: m.ProtectProgressModal })));
+const MilestoneCeremony = lazy(() => import('./components/MilestoneCeremony').then(m => ({ default: m.MilestoneCeremony })));
+const GroveMilestoneCeremony = lazy(() => import('./components/guild/GroveMilestoneCeremony').then(m => ({ default: m.GroveMilestoneCeremony })));
+const MorningCheckIn = lazy(() => import('./components/MorningCheckIn').then(m => ({ default: m.MorningCheckIn })));
+const TriagePile = lazy(() => import('./components/TriagePile').then(m => ({ default: m.TriagePile })));
+const MorningDream = lazy(() => import('./components/MorningDream').then(m => ({ default: m.MorningDream })));
+const RestSetupModal = lazy(() => import('./components/RestSetupModal').then(m => ({ default: m.RestSetupModal })));
+const CatalogOnboardingFlow = lazy(() => import('./components/catalog/CatalogOnboardingFlow').then(m => ({ default: m.CatalogOnboardingFlow })));
+const CatalogBrowserModal = lazy(() => import('./components/catalog/CatalogBrowserModal').then(m => ({ default: m.CatalogBrowserModal })));
+const CatalogLevelInviteModal = lazy(() => import('./components/catalog/CatalogLevelInviteModal').then(m => ({ default: m.CatalogLevelInviteModal })));
 const EvolutionPath = lazy(() => import('./components/EvolutionPath').then(m => ({ default: m.EvolutionPath })));
 const CreditsModal = lazy(() => import('./components/CreditsModal').then(m => ({ default: m.CreditsModal })));
 const NewReadingModal = lazy(() => import('./components/NewReadingModal').then(m => ({ default: m.NewReadingModal })));
@@ -1685,6 +1687,13 @@ export default function App() {
   // sugerir algo. `lastCatalogLevelInviteDayKey` é o teto de **1 convite por
   // dia** (app inteiro, não por hábito) — checado ANTES de varrer, para não
   // fazer o trabalho à toa nem oferecer duas vezes no mesmo dia.
+  // O índice do catálogo carrega por `import()` quando há hábito vindo dele
+  // (`catalogId`); sem o índice o convite de nível não tem como existir.
+  const [catalogLoaded, setCatalogLoaded] = useState(false);
+  const temHabitoDoCatalogo = (gameState.activities ?? []).some((a: any) => !!a.catalogId);
+  useEffect(() => {
+    if (temHabitoDoCatalogo && !catalogLoaded) loadCatalog().then(() => setCatalogLoaded(true)).catch(() => {});
+  }, [temHabitoDoCatalogo, catalogLoaded]);
   const catalogLevelInviteCandidate = useMemo(
     () => pickCatalogLevelInviteCandidate(
       (gameState.activities ?? []) as any,
@@ -1692,7 +1701,7 @@ export default function App() {
       new Date(),
       (gameState as any).lastCatalogLevelInviteDayKey,
     ),
-    [gameState.activities, gameState.habitRhythms, (gameState as any).lastCatalogLevelInviteDayKey],
+    [gameState.activities, gameState.habitRhythms, (gameState as any).lastCatalogLevelInviteDayKey, catalogLoaded],
   );
 
   // F3 do catálogo de atividades (docs/PLANO-CATALOGO-ATIVIDADES.md): o
@@ -3719,6 +3728,9 @@ export default function App() {
    */
   const handleRebirth = useCallback(async (choices: RebirthChoices): Promise<boolean> => {
     if (!canRebirth(gameState)) return false;
+    // Opções de escola/elemento, `applyRebirth` e a herança vivem em `rebirth.ts`
+    // (puxa o class-system) — só carregam aqui, no momento de renascer.
+    const { applyRebirth, rebirthEscolaOptions, rebirthElementOptions, herancaDoCiclo } = await import('./utils/rebirth');
     const saved = readJson<(OracleInput & { seed: number }) | null>(
       STORAGE_KEYS.SOULMON_PROFILE, null);
     if (!saved) return false;
@@ -4865,8 +4877,11 @@ export default function App() {
        renderizava "onboarding completo + tutorial pendente" e o tutorial
        antigo ("crie sua 1ª tarefa") piscava — e ficava, se a pessoa fechasse
        o app ali ou se a adoção de um save da nuvem recarregasse a página. */
+    // O catálogo carrega por `import()`; o onboarding já o puxou (mesmo chunk),
+    // então o `await` resolve no mesmo tick. Só espera quando há itens escolhidos.
+    const catalogById = (data.catalogChoice?.itemIds?.length ?? 0) > 0 ? await loadCatalog() : {};
     const catalogItems = (data.catalogChoice?.itemIds ?? [])
-      .map(id => ACTIVITY_CATALOG.find(c => c.id === id))
+      .map(id => catalogById[id])
       .filter((c): c is NonNullable<typeof c> => !!c);
     if (catalogItems.length > 0) {
       writeFlag(STORAGE_KEYS.TUTORIAL_COMPLETE, true, { silent: true });
@@ -5645,12 +5660,14 @@ export default function App() {
             abertura. Quem decide agora é a fila, e o gate é REATIVO — quando
             o último intersticial fecha, o pedido aparece sozinho. */}
         {protectPrompt && interstitial === 'welcome' && (
-          <ProtectProgressModal
+          <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+            <ProtectProgressModal
             language={language}
             reason={protectPrompt}
             onDismiss={dismissProtectPrompt}
             onConfirm={handleProtectProgress}
           />
+          </Suspense>
         )}
 
         {/* Help Modal */}
@@ -5707,7 +5724,8 @@ export default function App() {
             propósito (z-300): ela não pede nada além do gesto e não pode
             esperar a vez — comemorar depois não é comemorar. */}
         {milestoneCeremony && (
-          <MilestoneCeremony
+          <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+            <MilestoneCeremony
             tier={milestoneCeremony.tier}
             habitName={milestoneCeremony.habitName}
             text={milestoneCeremony.text}
@@ -5717,6 +5735,7 @@ export default function App() {
             language={language}
             onDone={() => setMilestoneCeremony(null)}
           />
+          </Suspense>
         )}
 
         {rebirthOpen && (
@@ -6790,7 +6809,8 @@ export default function App() {
         </Suspense>
       )}
 
-      <CatalogBrowserModal
+      <Suspense fallback={null}>
+        <CatalogBrowserModal
         isOpen={catalogBrowserOpen}
         onClose={() => setCatalogBrowserOpen(false)}
         language={language}
@@ -6800,6 +6820,7 @@ export default function App() {
         }}
         onCreateFromScratch={() => { setCatalogBrowserOpen(false); setCreateModalOpen(true); }}
       />
+      </Suspense>
 
       {createModalOpen && (
         <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}><CreateModal
@@ -6885,7 +6906,8 @@ export default function App() {
       />
 
       {evolutionCeremony && (
-        <EvolutionCeremony
+        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+          <EvolutionCeremony
           fromStage={evolutionCeremony.from}
           toStage={evolutionCeremony.to}
           toName={getStageNameById(evolutionCeremony.to)}
@@ -6897,6 +6919,7 @@ export default function App() {
           onEvolved={handleEvolve}
           onClose={() => setEvolutionCeremony(null)}
         />
+        </Suspense>
       )}
 
       {/* O sheet das três saídas da tarefa adiada. Vive aqui em cima e não
@@ -6919,7 +6942,8 @@ export default function App() {
           seguinte cobra requisito, na ordem emocionalmente invertida. O gate
           é reativo: quando a cerimônia fecha, o modal aparece se ainda fizer
           sentido. */}
-      <EvolveTaskModal
+      <Suspense fallback={null}>
+        <EvolveTaskModal
         isOpen={evolveModalStage !== null && evolutionCeremony === null}
         onClose={() => setEvolveModalStage(null)}
         onCreateTask={() => { setEvolveModalStage(null); setCreateModalOpen(true); }}
@@ -6932,6 +6956,7 @@ export default function App() {
         stageName={evolveModalStage ? getStageNameById(evolveModalStage) : ''}
         language={language}
       />
+      </Suspense>
 
       {/* Notification Manager */}
       <NotificationManager
@@ -6971,7 +6996,8 @@ export default function App() {
       />
       {/* Ordem da fila em `interstitial` (perto do topo do componente). */}
       {interstitial === 'dailyReport' && gameState.lastDayReport && (
-        <DailyReportModal
+        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+          <DailyReportModal
           report={gameState.lastDayReport}
           adventure={aventuraDaNoite}
           adventureIsNew={aventuraInedita}
@@ -7033,11 +7059,13 @@ export default function App() {
           spriteUrl={displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? getSpriteForStage(gameState.evolutionStage, petLine)}
           onDismissOffer={() => setGameState(prev => ({ ...prev, offerDismissed: true }))}
         />
+        </Suspense>
       )}
       {/* CHECK-IN MATINAL — o ritual de ≤20s. Só um por dia e pulável sem
           culpa. Posição na fila: depois do relatório diário. */}
       {interstitial === 'checkIn' && checkInPlanData && (
-        <MorningCheckIn
+        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+          <MorningCheckIn
           open
           plan={checkInPlanData}
           /* WP2.5 — `soulStruggle` era escrito no onboarding e NUNCA lido em
@@ -7059,13 +7087,15 @@ export default function App() {
           onConfirm={handleCheckInConfirm}
           onSkip={handleCheckInSkip}
         />
+        </Suspense>
       )}
 
       {/* MARCO DO BOSQUE — a irmã da cerimônia de hábito: espera o gesto, z 300,
           movimento reduzido reduz o movimento e NUNCA a pausa. Posição na fila:
           depois de relatório e check-in, antes do sonho. Uma vez por estágio novo. */}
       {interstitial === 'groveMilestone' && grovePendente && grove?.pending && (
-        <GroveMilestoneCeremony
+        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+          <GroveMilestoneCeremony
           stage={grovePendente}
           spriteUrl={minhaCriaturaUrl}
           dateLabel={formatDayLabel(grove.pending.day, language)}
@@ -7073,12 +7103,14 @@ export default function App() {
           language={language}
           onDone={acknowledgeGroveMilestone}
         />
+        </Suspense>
       )}
 
       {/* ARRUMAR A PILHA — fila de cartas com quatro saídas grandes. Topo da
           fila de intersticiais: é a única aberta por toque do usuário. */}
       {interstitial === 'triage' && triageTasks && (
-        <TriagePile
+        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+          <TriagePile
           open
           tasks={triageTasks}
           language={language}
@@ -7087,22 +7119,26 @@ export default function App() {
           onResolve={handleTriageResolve}
           onClose={() => setTriageTasks(null)}
         />
+        </Suspense>
       )}
 
       {/* G8 — o convite do sono (sono automático + janela), uma vez só. */}
       {interstitial === 'restSetup' && (
-        <RestSetupModal
+        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+          <RestSetupModal
           language={language}
           now={new Date()}
           window={(gameState.rest ?? createRestState()).window}
           onChangeWindow={handleChangeRestWindow}
           onClose={closeRestSetup}
         />
+        </Suspense>
       )}
 
       {/* O SONHO DA MANHÃ — recompensa, nunca veredito. Só de manhã. */}
       {interstitial === 'dream' && morningDream && (
-        <MorningDream
+        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+          <MorningDream
           open
           dream={morningDream.dream}
           isNew={morningDream.isNew}
@@ -7121,12 +7157,14 @@ export default function App() {
               : {};
           })()}
         />
+        </Suspense>
       )}
 
       {/* O PESADELO DA MANHÃ — a face jogável da mesma noite do sonho. Entra
           DEPOIS dele (posição na fila), e nunca à noite. Perder não custa nada,
           e a tela diz isso. */}
       {interstitial === 'nightmare' && (
+        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
         <NightmareBattle
           open
           wave={nightmareWave}
@@ -7139,6 +7177,7 @@ export default function App() {
           onLose={closeNightmare}
           onClose={closeNightmare}
         />
+        </Suspense>
       )}
 
       {/* ÚLTIMO da fila: ele mesmo decide se tem algo a pedir (instalar a PWA /
@@ -7150,7 +7189,8 @@ export default function App() {
           adiável é mais barato que dois diálogos empilhados com dois
           focus-traps. */}
       {interstitial === 'catalogOnboarding' && (
-        <CatalogOnboardingFlow
+        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+          <CatalogOnboardingFlow
           language={language}
           onComplete={(chosen) => setGameState(prev => {
             const withFlag = markCatalogOnboardingSeen(prev as any, new Date()) as any;
@@ -7162,9 +7202,11 @@ export default function App() {
             };
           })}
         />
+        </Suspense>
       )}
       {interstitial === 'catalogLevelInvite' && catalogLevelInviteCandidate && (
-        <CatalogLevelInviteModal
+        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+          <CatalogLevelInviteModal
           isOpen
           direction={catalogLevelInviteCandidate.suggestion === 'up' ? 'up' : 'down'}
           itemName={language === 'pt-BR' ? catalogLevelInviteCandidate.item.name.pt : catalogLevelInviteCandidate.item.name.en}
@@ -7200,9 +7242,11 @@ export default function App() {
             } as any;
           })}
         />
+        </Suspense>
       )}
       {interstitial === 'welcome' && (
-        <WelcomePromptModal
+        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+          <WelcomePromptModal
           language={language}
           notificationsEnabled={notificationsEnabled}
           /* CONDIÇÃO DE ENTRADA do pedido de notificação — ver a fila de
@@ -7211,6 +7255,7 @@ export default function App() {
           notificationsUnlocked={jaConcluiuAlgo}
           onEnableNotifications={handleToggleNotifications}
         />
+        </Suspense>
       )}
       <Toaster richColors position="top-right" />
     </div>

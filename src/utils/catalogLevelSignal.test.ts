@@ -1,8 +1,9 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import { lowConstancyStreak, catalogLevelSignal, pickCatalogLevelInviteCandidate } from './catalogLevelSignal';
 import { emptyRhythm, completeHabit, applyMissedDay, dayKeyOf } from './habitRhythm';
 import type { HabitRhythm } from './habitRhythm';
 import { ACTIVITY_CATALOG } from '../data/activityCatalog';
+import { loadCatalog } from '../data/catalogoCarga';
 
 const HOJE = new Date('2026-09-28T12:00:00');
 
@@ -120,6 +121,8 @@ describe('catalogLevelSignal', () => {
 });
 
 describe('pickCatalogLevelInviteCandidate', () => {
+  // O catálogo carrega sob demanda no app; aqui ele é carregado antes.
+  beforeAll(async () => { await loadCatalog(); });
   const item = ACTIVITY_CATALOG.find((i) => !i.optInOnly)!;
   const optInItem = ACTIVITY_CATALOG.find((i) => i.optInOnly)!;
 

@@ -9,7 +9,13 @@ import { eachMapping, TraceMap } from '@jridgewell/trace-mapping';
 
 const out = resolve(process.argv[2] ?? join(tmpdir(), 'soulmon-analise'));
 const topN = Number(process.argv[3] ?? 25);
-await build({ logLevel: 'error', build: { outDir: out, emptyOutDir: true, sourcemap: true, copyPublicDir: false } });
+// Plugin só desta análise: guarda quem importa quem (estático) para dizer, de
+// cada módulo grande, QUAL import estático o prende no chunk de entrada.
+const importadores = new Map();
+const grafo = { name: 'grafo-entrada', generateBundle() {
+  for (const id of this.getModuleIds()) importadores.set(id, this.getModuleInfo(id).importers);
+} };
+await build({ logLevel: 'error', plugins: [grafo], build: { outDir: out, emptyOutDir: true, sourcemap: true, copyPublicDir: false } });
 const assets = join(out, 'assets');
 const html = readFileSync(join(out, 'index.html'), 'utf8');
 const nome = /src="\/assets\/(index-[A-Za-z0-9_-]+\.js)"/.exec(html)[1];
@@ -28,4 +34,10 @@ for (let i = 0; i < segs.length; i++) {
   soma.set(s, (soma.get(s) ?? 0) + (fim - segs[i][0]));
 }
 console.log(`${nome}: ${total} B`);
-[...soma].sort((a, b) => b[1] - a[1]).slice(0, topN).forEach(([s, b]) => console.log(String(b).padStart(8), s.replace(/^.*?(node_modules\/|src\/)/, '$1')));
+const curto = p => p.replaceAll('\\', '/').replace(/^.*?(node_modules\/|src\/)/, '$1');
+const porCurto = new Map([...importadores].map(([id, imp]) => [curto(id), imp.map(curto)]));
+const naEntrada = new Set([...soma.keys()].map(curto));
+[...soma].sort((a, b) => b[1] - a[1]).slice(0, topN).forEach(([s, b]) => {
+  const c = curto(s);
+  console.log(String(b).padStart(8), c, '<-', (porCurto.get(c) ?? []).filter(i => naEntrada.has(i)).slice(0, 5).join(', '));
+});
