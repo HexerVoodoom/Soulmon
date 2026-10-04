@@ -17,6 +17,7 @@ import type { FichaStage } from '../../utils/soulProfile/ficha/types';
 import type { SalaoGame, MenteGame, RefugioGame } from '../play/PlaySheets';
 import { REVIEW_EMPTY, dueCards, type ReviewState } from '../../utils/mente/revisao';
 import { CROSSINGS_EMPTY, type CrossingsState } from '../../types/travessias';
+import { missionMark } from '../../utils/travessiasSave';
 
 /**
  * UMA ÁREA DO MAPA, INTEIRA (minimal-ui F4 molde + F5 conteúdo) — a cena
@@ -123,6 +124,8 @@ export interface AreaViewProps {
   passeio?: {
     crossings: CrossingsState;
     onChange: (f: (c: CrossingsState) => CrossingsState) => void;
+    /** A semente do sorteio das missões do dia (o id do save). */
+    seed?: string;
   };
   /** Laboratório (F5, ex-PR #117): a aba ativa (estado do `App`, porque ela
    *  também decide o `pane`) e o conteúdo já montado — Evolução/Soulmon/Stats
@@ -276,7 +279,11 @@ export function AreaView(props: AreaViewProps) {
     const start = (g: PlayGame) => { setSheet(null); setGame(g); };
     const exitGame = () => setGame(null);
     const lots: AreaLot[] = area === 'exploracao'
-      ? exploracaoLots(language).map(l => ({ ...l, art: EXPLORACAO_LOT_ART[l.id], onOpen: () => setSheet(l.id) }))
+      ? exploracaoLots(language).map(l => ({
+        ...l, art: EXPLORACAO_LOT_ART[l.id], onOpen: () => setSheet(l.id),
+        // "!" / "?" sobre o Passeio (04/10/2026): missão do dia disponível / em andamento.
+        ...(l.id === 'passeio' ? { mark: missionMark(props.passeio?.crossings ?? CROSSINGS_EMPTY, props.play.todayKey ?? new Date().toISOString().slice(0, 10)) } : {}),
+      }))
       : jogosLots(language).map(l => ({ ...l, art: JOGOS_LOT_ART[l.id], onOpen: () => setSheet(l.id) }));
     const open = lots.find(l => l.id === sheet) ?? null;
     const { play } = props;
@@ -298,6 +305,7 @@ export function AreaView(props: AreaViewProps) {
                 crossings={props.passeio?.crossings ?? CROSSINGS_EMPTY}
                 onChange={props.passeio?.onChange ?? (() => {})}
                 todayKey={play.todayKey}
+                seed={props.passeio?.seed}
               />
             )}
             {open?.id === 'masmorra' && <MasmorraSheet language={language} bitsToday={play.minigameBitsToday} onStart={() => start('masmorra')} />}

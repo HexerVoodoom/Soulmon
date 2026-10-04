@@ -1,14 +1,17 @@
-import { useState, type CSSProperties } from 'react';
-import { ModalSheet, choiceStyle, sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
+import { useMemo, useState, type CSSProperties } from 'react';
+import { choiceStyle, sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import type { Language } from '../../utils/i18n';
 import { HOME_REGION, type CrossingChallenge, type CrossingsState, type Region, type RegionId } from '../../types/travessias';
 import {
-  activeChallenge, crossingRegions, crossingYield, doneToday, dropCrossing, isRegionOpen, markDone,
-  offerFor, openRegions, pickCrossing, regionById, setDestination, setHidden,
+  activeChallenge, crossingYield, dailyOffer, doneToday, dropCrossing, markDone,
+  openRegions, pickMission, regionById, setDestination, setHidden,
+  type DailyMission,
 } from '../../utils/travessias';
 import { travessiaTitle } from '../../utils/travessiaTitles';
 import { sheetCard, sheetCardList, sheetCardTitle } from '../nav/sheetKit';
 import { Icon } from '../ui/Icon';
+import { InfoTip } from '../ui/InfoTip';
+import { MissionMark } from './MissionMark';
 import { AREA_LABEL, AreaGlyph, RegionPostal } from './TravessiaIcon';
 
 /**
@@ -121,117 +124,85 @@ function mapaLinha(
 }
 
 /**
- * As propostas de uma região: cada uma é um CARD FECHADO, separado do vizinho,
- * com o sinal visual (glifo da área) e o título próprio
+ * AS MISSÕES DO DIA (04/10/2026): três propostas sorteadas (`dailyOffer`, as
+ * mesmas o dia inteiro), cada uma um CARD FECHADO, separado do vizinho, com o
+ * postal do cenário dela, o sinal da área e o título próprio
  * (`utils/travessiaTitles.ts`). Tocar abre o card — o ato, a versão pequena e o
- * "Escolher esta" (primário, H14). Um aberto por vez, em todo o modal.
+ * "Escolher esta" (primário, H14). Um aberto por vez. Escolhe-se UMA; nada obriga.
  */
-function Oferta({ region, isPt, currentId, aberto, setAberto, onPick }: {
-  region: Region; isPt: boolean; currentId?: string;
+function MissoesDoDia({ ofertas, isPt, language, aberto, setAberto, onPick }: {
+  ofertas: DailyMission[]; isPt: boolean; language: Language;
   aberto: string | null; setAberto: (id: string | null) => void;
-  onPick: (challengeId: string) => void;
+  onPick: (regionId: RegionId, challengeId: string) => void;
 }) {
   return (
-    <ul style={sheetCardList} data-travessia-oferta={region.id}>
-      {offerFor(region).map(c => {
-        const open = aberto === c.id;
-        const title = travessiaTitle(c.id, isPt) ?? (isPt ? c.textPt : c.textEn);
-        const bodyId = `sm2-travessia-${c.id}`;
-        const area = AREA_LABEL[c.area];
-        return (
-          <li key={c.id} data-travessia-card={c.id} style={{ ...sheetCard, padding: 0, gap: 0 }}>
-            <button
-              type="button"
-              aria-expanded={open}
-              aria-controls={bodyId}
-              data-travessia-abrir={c.id}
-              onClick={() => setAberto(open ? null : c.id)}
-              style={{
-                width: '100%', minHeight: 56, display: 'flex', alignItems: 'center', gap: 12,
-                padding: '12px', boxSizing: 'border-box', textAlign: 'left',
-                background: 'transparent', border: 'none', cursor: 'pointer',
-              }}
-            >
-              <AreaGlyph area={c.area} />
-              <span style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
-                <span style={sheetCardTitle}>{title}</span>
-                <span style={note}>{isPt ? area.pt : area.en}</span>
-              </span>
-              <Icon name={open ? 'expand_less' : 'expand_more'} size={24} tone="muted" />
-            </button>
-            {open && (
-              <div id={bodyId} style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '0 12px 12px' }}>
-                <Proposta c={c} isPt={isPt} />
-                <button
-                  type="button"
-                  data-travessia-escolher={c.id}
-                  disabled={c.id === currentId}
-                  onClick={() => onPick(c.id)}
-                  style={{ ...sm2Button('primary', c.id === currentId), width: '100%' }}
-                >
-                  {c.id === currentId ? (isPt ? 'É a sua agora' : 'Your current one') : (isPt ? 'Escolher esta' : 'Choose this one')}
-                </button>
-              </div>
-            )}
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
-
-/** O modal com TODAS as Travessias, por região. Ver e trocar; nada obriga. */
-function TodasModal({ open, onClose, language, crossings, currentId, onPick }: {
-  open: boolean; onClose: () => void; language: Language; crossings: CrossingsState;
-  currentId?: string; onPick: (regionId: RegionId, challengeId: string) => void;
-}) {
-  const isPt = language === 'pt-BR';
-  const [aberto, setAberto] = useState<string | null>(null);
-  return (
-    <ModalSheet
-      open={open}
-      onClose={onClose}
-      language={language}
-      title={isPt ? 'Todas as Travessias' : 'All Crossings'}
-    >
-      <div data-travessias-todas style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <p style={note}>
+    <div data-travessias-missoes style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <MissionMark kind="available" isPt={isPt} />
+        <p style={{ ...sectionHead, flex: 1 }}>{isPt ? 'Missões de hoje' : 'Missions of the day'}</p>
+        <InfoTip language={language} align="right" label={isPt ? 'Como funcionam as missões do dia' : 'How the daily missions work'}>
           {isPt
-            ? 'Veja à vontade. Trocar não custa nada, e dá para voltar a qualquer uma depois.'
-            : 'Look around. Switching costs nothing, and you can come back to any of them later.'}
-        </p>
-        {crossingRegions().map(r => (
-          <section key={r.id} data-travessias-regiao={r.id} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <header style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <RegionPostal region={r} />
-              <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-                <span style={sectionHead}>{isPt ? r.namePt : r.nameEn}</span>
-                {isRegionOpen(crossings, r.id) && (
-                  <span style={note}>{isPt ? 'Já está no seu mapa' : 'Already on your map'}</span>
-                )}
-              </span>
-            </header>
-            <Oferta
-              region={r}
-              isPt={isPt}
-              currentId={currentId}
-              aberto={aberto}
-              setAberto={setAberto}
-              onPick={id => onPick(r.id, id)}
-            />
-          </section>
-        ))}
+            ? 'Todo dia saem três missões, de lugares diferentes. Escolha uma — ou nenhuma, sem pressa. Cada missão é um cenário: à noite o Soulmon viaja para lá e volta no relatório com uma historinha. Uma Travessia é algo que você faz na sua vida, fora do app. Fica esperando o tempo que for.'
+            : 'Every day three missions come up, from different places. Pick one, or none, no rush. Each mission is a scene: at night the Soulmon travels there and comes back in the report with a little story. A Crossing is something you do in your own life, outside the app. It waits for as long as you like.'}
+        </InfoTip>
       </div>
-    </ModalSheet>
+      <ul style={sheetCardList} data-travessia-oferta>
+        {ofertas.map(({ region, challenge: c }) => {
+          const open = aberto === c.id;
+          const title = travessiaTitle(c.id, isPt) ?? (isPt ? c.textPt : c.textEn);
+          const bodyId = `sm2-travessia-${c.id}`;
+          const area = AREA_LABEL[c.area];
+          return (
+            <li key={c.id} data-travessia-card={c.id} style={{ ...sheetCard, padding: 0, gap: 0 }}>
+              <button
+                type="button"
+                aria-expanded={open}
+                aria-controls={bodyId}
+                data-travessia-abrir={c.id}
+                onClick={() => setAberto(open ? null : c.id)}
+                style={{
+                  width: '100%', minHeight: 56, display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '12px', boxSizing: 'border-box', textAlign: 'left',
+                  background: 'transparent', border: 'none', cursor: 'pointer',
+                }}
+              >
+                <RegionPostal region={region} />
+                <span style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
+                  <span style={sheetCardTitle}>{title}</span>
+                  <span style={{ ...note, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <AreaGlyph area={c.area} size={20} />
+                    {isPt ? `${region.namePt} · ${area.pt}` : `${region.nameEn} · ${area.en}`}
+                  </span>
+                </span>
+                <Icon name={open ? 'expand_less' : 'expand_more'} size={24} tone="muted" />
+              </button>
+              {open && (
+                <div id={bodyId} style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '0 12px 12px' }}>
+                  <Proposta c={c} isPt={isPt} />
+                  <button
+                    type="button"
+                    data-travessia-escolher={c.id}
+                    onClick={() => onPick(region.id, c.id)}
+                    style={{ ...sm2Button('primary'), width: '100%' }}
+                  >
+                    {isPt ? 'Escolher esta' : 'Choose this one'}
+                  </button>
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }
 
 /** O card da Travessia em uso: a única coisa de Travessia que a tela principal mostra. */
-function CardAtivo({ crossings, isPt, todayKey, justDone, onFiz, onTrocar, onRecuar }: {
-  crossings: CrossingsState; isPt: boolean; todayKey: string; justDone: boolean;
-  onFiz: () => void; onTrocar: () => void; onRecuar: () => void;
+function CardAtivo({ crossings, isPt, language, todayKey, justDone, onFiz, onRecuar }: {
+  crossings: CrossingsState; isPt: boolean; language: Language; todayKey: string; justDone: boolean;
+  onFiz: () => void; onRecuar: () => void;
 }) {
-  const ativa = activeChallenge(crossings);
+  const ativa = activeChallenge(crossings, todayKey);
   if (!ativa) return null;
   const { region, challenge } = ativa;
   const nome = isPt ? region.namePt : region.nameEn;
@@ -254,8 +225,9 @@ function CardAtivo({ crossings, isPt, todayKey, justDone, onFiz, onTrocar, onRec
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <RegionPostal region={region} width={64} height={52} />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0, flex: 1 }}>
-          <p style={{ ...sm2Hint, margin: 0 }}>
-            {isPt ? `Sua Travessia · ${nome}` : `Your Crossing · ${nome}`}
+          <p style={{ ...sm2Hint, margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+            {!feito && <MissionMark kind="progress" isPt={isPt} size={20} />}
+            {isPt ? `Sua missão de hoje · ${nome}` : `Your mission today · ${nome}`}
           </p>
           <p data-travessia-titulo style={{ ...sheetCardTitle, display: 'flex', alignItems: 'center', gap: 8 }}>
             <AreaGlyph area={challenge.area} />
@@ -265,8 +237,14 @@ function CardAtivo({ crossings, isPt, todayKey, justDone, onFiz, onTrocar, onRec
         </div>
       </div>
 
-      <Proposta c={challenge} isPt={isPt} />
-      <p style={note}>{isPt ? 'Qualquer uma das duas vale.' : 'Either one is enough.'}</p>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 4 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
+          <Proposta c={challenge} isPt={isPt} />
+        </div>
+        <InfoTip language={language} align="right" label={isPt ? 'Qual versão vale' : 'Which version counts'}>
+          {isPt ? 'Qualquer uma das duas vale, a plena ou a pequena.' : 'Either one is enough, the full or the small one.'}
+        </InfoTip>
+      </div>
 
       <p data-travessia-mapa style={{ ...sm2Text, margin: 0, fontWeight: 600 }}>
         {mapaLinha(y, nome, primeira, isPt)}
@@ -280,8 +258,8 @@ function CardAtivo({ crossings, isPt, todayKey, justDone, onFiz, onTrocar, onRec
             <Icon name="check_circle" size={20} fill={1} tone="primary" />
             <span>
               {isPt
-                ? 'Registrado por hoje. Amanhã dá para fazer de novo, se quiser.'
-                : 'Noted for today. Tomorrow you can do it again, if you like.'}
+                ? `Registrado por hoje. Esta noite o Soulmon viaja para ${nome}; amanhã saem três missões novas.`
+                : `Noted for today. Tonight the Soulmon travels to ${nome}; tomorrow three new missions come up.`}
             </span>
           </>
         ) : (
@@ -300,51 +278,54 @@ function CardAtivo({ crossings, isPt, todayKey, justDone, onFiz, onTrocar, onRec
       >
         {feito ? (isPt ? 'Feito hoje' : 'Done today') : (isPt ? 'Fiz' : 'I did it')}
       </button>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <button type="button" data-travessia-trocar onClick={onTrocar} style={{ ...sm2Button('outline'), flex: 1 }}>
-          {isPt ? 'Ver todas e trocar' : 'See all and swap'}
-        </button>
-        <button type="button" data-travessia-recuar onClick={onRecuar} style={{ ...sm2Button('ghost'), flex: 1 }}>
+      {!feito && (
+        <button type="button" data-travessia-recuar onClick={onRecuar} style={{ ...sm2Button('ghost'), width: '100%' }}>
           {isPt ? 'Recuar' : 'Step back'}
         </button>
-      </div>
+      )}
     </div>
   );
 }
 
-export function PasseioSheet({ language, crossings, onChange, todayKey }: {
+export function PasseioSheet({ language, crossings, onChange, todayKey, seed = '' }: {
   language: Language;
   crossings: CrossingsState;
   onChange: Update;
   /** O dia do jogador (o mesmo relógio do resto do app). Sem ele, o dia local. */
   todayKey?: string;
+  /** A semente do sorteio das missões do dia (o id do save). */
+  seed?: string;
 }) {
   const isPt = language === 'pt-BR';
-  const [todas, setTodas] = useState(false);
+  const [aberto, setAberto] = useState<string | null>(null);
   const [justDone, setJustDone] = useState(false);
 
   const dia = todayKey ?? fallbackDayKey();
   const destino = crossings.destination ?? HOME_REGION;
   const abertas = openRegions(crossings);
-  const ativa = activeChallenge(crossings);
+  const ativa = activeChallenge(crossings, dia);
+  const feitoHoje = doneToday(crossings, dia);
+  const ofertas = useMemo(() => dailyOffer(dia, seed), [dia, seed]);
   const pendentes = crossings.pending.map(regionById).filter((r): r is Region => !!r);
   const nomeDe = (r: Region) => (isPt ? r.namePt : r.nameEn);
 
   const escolher = (region: RegionId, challengeId: string) => {
-    onChange(c => pickCrossing(c, region, challengeId));
-    setTodas(false);
+    onChange(c => pickMission(c, dia, seed, region, challengeId));
+    setAberto(null);
     setJustDone(false);
   };
 
   return (
     <div data-passeio style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       {/* ── 1. O Passeio: para onde ele vai hoje ─────────────────────────── */}
-      <p style={sectionHead}>{isPt ? 'Para onde ele vai hoje' : 'Where it goes today'}</p>
-      <p style={note}>
-        {isPt
-          ? 'Ele sai para passear todo dia e volta com o que viu no relatório do fim do dia.'
-          : 'It heads out every day and tells you what it saw in the end-of-day report.'}
-      </p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+        <p style={{ ...sectionHead, flex: 1 }}>{isPt ? 'Para onde ele vai hoje' : 'Where it goes today'}</p>
+        <InfoTip language={language} align="right" label={isPt ? 'Como funciona o passeio' : 'How the stroll works'}>
+          {isPt
+            ? 'Ele sai para passear todo dia e volta com o que viu no relatório do fim do dia.'
+            : 'It heads out every day and tells you what it saw in the end-of-day report.'}
+        </InfoTip>
+      </div>
       <ul style={list} role="group" aria-label={isPt ? 'Destino do passeio' : 'Stroll destination'}>
         {abertas.map(r => (
           <Postal
@@ -370,36 +351,43 @@ export function PasseioSheet({ language, crossings, onChange, todayKey }: {
         <section data-travessias aria-labelledby="sm2-travessias-title" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <hr style={divider} />
           <p id="sm2-travessias-title" style={sectionHead}>{isPt ? 'Travessias' : 'Crossings'}</p>
-          <p style={note}>
-            {isPt
-              ? 'Uma Travessia é algo que você faz na sua vida, fora do app. É opcional, e fica esperando o tempo que for.'
-              : 'A Crossing is something you do in your own life, outside the app. It is optional, and it waits for as long as you like.'}
-          </p>
 
           {ativa ? (
             <CardAtivo
               crossings={crossings}
               isPt={isPt}
+              language={language}
               todayKey={dia}
               justDone={justDone}
               onFiz={() => { onChange(c => markDone(c, dia)); setJustDone(true); }}
-              onTrocar={() => setTodas(true)}
               onRecuar={() => { onChange(dropCrossing); setJustDone(false); }}
             />
-          ) : (
+          ) : feitoHoje ? (
             <div data-travessia-vazia style={{ ...sheetCard, alignItems: 'stretch' }}>
               <p style={{ ...sm2Text, margin: 0 }}>
-                {isPt ? 'Nenhuma Travessia em uso agora. Tudo bem assim.' : 'No Crossing in use right now. That is fine.'}
+                {isPt ? 'A missão de hoje já foi registrada. Amanhã saem três novas.' : 'Today’s mission is already noted. Three new ones come up tomorrow.'}
               </p>
-              <button
-                type="button"
-                data-travessia-trocar
-                onClick={() => setTodas(true)}
-                style={{ ...sm2Button('primary'), width: '100%' }}
-              >
-                {isPt ? 'Ver as Travessias' : 'See the Crossings'}
-              </button>
             </div>
+          ) : (
+            <MissoesDoDia
+              ofertas={ofertas}
+              isPt={isPt}
+              language={language}
+              aberto={aberto}
+              setAberto={setAberto}
+              onPick={escolher}
+            />
+          )}
+
+          {crossings.score > 0 && (
+            <p data-marcos style={{ ...note, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span>{isPt ? `Marcos de Aventura · ${crossings.score}` : `Adventure Milestones · ${crossings.score}`}</span>
+              <InfoTip language={language} align="left" label={isPt ? 'O que são os Marcos de Aventura' : 'What Adventure Milestones are'}>
+                {isPt
+                  ? 'Cada missão feita soma um Marco, no máximo um por dia. Em 5, 10 e 20 Marcos o Soulmon volta com um postal especial. Não muda nada no jogo, nunca diminui e não tem prazo.'
+                  : 'Each mission done adds one Milestone, at most one a day. At 5, 10 and 20 Milestones the Soulmon comes back with a special postcard. It changes nothing in the game, never goes down and has no deadline.'}
+              </InfoTip>
+            </p>
           )}
 
           {pendentes.length > 0 && (
@@ -431,15 +419,6 @@ export function PasseioSheet({ language, crossings, onChange, todayKey }: {
           >
             {isPt ? 'Esconder Travessias' : 'Hide Crossings'}
           </button>
-
-          <TodasModal
-            open={todas}
-            onClose={() => setTodas(false)}
-            language={language}
-            crossings={crossings}
-            currentId={ativa?.challenge.id}
-            onPick={escolher}
-          />
         </section>
       )}
     </div>
