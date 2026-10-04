@@ -25,7 +25,7 @@ import {
   suggestLevelChange, applyLevelChange, LEVEL_UP_WINDOW_DAYS, LEVEL_DOWN_COOLDOWN_DAYS,
   type LevelSuggestion,
 } from './catalogLevel';
-import { ACTIVITY_CATALOG_BY_ID } from '../data/activityCatalog';
+import { catalogIfLoaded } from '../data/catalogoCarga';
 import type { CatalogLevel, CatalogItem } from '../types/activityCatalog';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -148,9 +148,12 @@ export function pickCatalogLevelInviteCandidate(
   lastInviteDayKey: string | undefined,
 ): CatalogLevelInviteCandidate | null {
   if (lastInviteDayKey === dayKeyOf(now)) return null; // teto de 1/dia, app inteiro
+  // O catálogo carrega sob demanda (`loadCatalog`); antes disso não há convite.
+  const porId = catalogIfLoaded();
+  if (!porId) return null;
   for (const activity of activities) {
     if (!activity.catalogId) continue;
-    const item = ACTIVITY_CATALOG_BY_ID[activity.catalogId];
+    const item = porId[activity.catalogId];
     if (!item) continue;
     const rhythm = habitRhythms?.[activity.id] ?? emptyRhythm();
     const suggestion = catalogLevelSignal({

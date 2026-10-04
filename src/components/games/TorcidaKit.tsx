@@ -129,6 +129,7 @@ export function TorcidaLayer({ onTap, active = true, isPt, children, style, masc
 
   const onPointerDown = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
     const el = e.target as HTMLElement | null;
+    swipeFrom.current = null; // um toque novo nunca herda o ponto de um gesto que não terminou
     // O botão de sair (e qualquer outro) fica com o próprio toque.
     if (el?.closest?.('button, a, input, textarea, select, [role="button"]')) return;
     if (swipeActive) swipeFrom.current = { x: e.clientX, y: e.clientY };
@@ -150,6 +151,8 @@ export function TorcidaLayer({ onTap, active = true, isPt, children, style, masc
     timers.current.push(setTimeout(() => setBursts(list => list.filter(x => x.id !== n)), BURST_MS));
   }, [active, isPt, onTap, mascot, shoutNow, swipeActive]);
 
+  const onPointerCancel = useCallback(() => { swipeFrom.current = null; }, []);
+
   const onPointerUp = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
     const from = swipeFrom.current;
     swipeFrom.current = null;
@@ -165,6 +168,7 @@ export function TorcidaLayer({ onTap, active = true, isPt, children, style, masc
       data-torcida-layer
       onPointerDown={onPointerDown}
       onPointerUp={onPointerUp}
+      onPointerCancel={onPointerCancel}
       style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 'inherit', touchAction: swipeActive ? 'none' : 'manipulation', ...style }}
     >
       {children}

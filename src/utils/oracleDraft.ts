@@ -34,6 +34,7 @@ import { STORAGE_KEYS } from './storageKeys';
 import type { City } from './soulProfile/cities';
 import type { Answers as SoulAnswers } from './soulProfile/personality/types';
 import { normalizeConsent, type ConsentRecord } from './consent';
+import { sanitizeSoulTestAnswers } from './soulTestAnswers';
 
 export const ORACLE_DRAFT_VERSION = 1;
 
@@ -65,6 +66,27 @@ export interface OracleDraft {
   savedAt: string;
 }
 
+/** Só pares texto → texto (QA1: o storage não é confiável; array e valor solto saem). */
+function respostasTexto(v: unknown): Record<string, string> {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return {};
+  const out: Record<string, string> = {};
+  for (const [k, x] of Object.entries(v as Record<string, unknown>)) {
+    if (typeof x === 'string') out[k] = x;
+  }
+  return out;
+}
+
+/** A cidade chega ao mapa astral: sem nome, fuso e coordenadas finitas, é descartada. */
+function cidadeValida(v: unknown): City | null {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
+  const c = v as Record<string, unknown>;
+  const ok = typeof c.name === 'string' && c.name.length > 0
+    && typeof c.timeZone === 'string' && c.timeZone.length > 0
+    && typeof c.latitude === 'number' && Number.isFinite(c.latitude)
+    && typeof c.longitude === 'number' && Number.isFinite(c.longitude);
+  return ok ? (v as City) : null;
+}
+
 /**
  * Lê o rascunho SE ele for retomável neste modo: mesmo `mode`, versão certa e
  * passo dentro de `[1, maxResumableStep]`. Fora disso devolve `null` — um
@@ -89,10 +111,12 @@ export function readOracleDraft(
     birthDate: typeof d.birthDate === 'string' ? d.birthDate : '',
     birthDateText: typeof d.birthDateText === 'string' ? d.birthDateText : '',
     birthTime: typeof d.birthTime === 'string' ? d.birthTime : '12:00',
-    birthCity: d.birthCity && typeof d.birthCity === 'object' ? (d.birthCity as City) : null,
+    birthCity: cidadeValida(d.birthCity),
     timeUnknown: d.timeUnknown === true,
-    answers: d.answers && typeof d.answers === 'object' ? (d.answers as Record<string, string>) : {},
-    testAnswers: d.testAnswers && typeof d.testAnswers === 'object' ? (d.testAnswers as SoulAnswers) : {},
+    answers: respostasTexto(d.answers),
+    // Mesmo validador do save (`soulTestAnswers`): só a FORMA de likert /
+    // forced-choice / scenario passa; o resto o ritual pergunta de novo.
+    testAnswers: sanitizeSoulTestAnswers(d.testAnswers) ?? {},
     refine: d.refine === true ? true : d.refine === false ? false : null,
     // Mesmo dono do `gateDraft` e do `GameStateContext`: `normalizeConsent`.
     // A cópia que morava aqui era equivalente, e "equivalente" é o estado em

@@ -20,7 +20,7 @@ import {
 import { ensureSeasonProgress, applySeasonMedal } from './seasons';
 import { awardBondXP } from './bond';
 import { playerDayKey } from './playerDay';
-import { ACTIVITY_CATALOG_BY_ID } from '../data/activityCatalog';
+import { CATALOG_OPT_IN_ONLY_IDS } from '../data/catalogoCarga';
 
 /**
  * V2 da revisão de psicologia (`docs/reviews/2026-09-28-catalogo-psicologia.md`):
@@ -35,12 +35,12 @@ import { ACTIVITY_CATALOG_BY_ID } from '../data/activityCatalog';
  */
 function isOptInOnlyActivity(activity: { catalogId?: string }): boolean {
   const catalogId = activity?.catalogId;
-  return !!catalogId && ACTIVITY_CATALOG_BY_ID[catalogId]?.optInOnly === true;
+  return !!catalogId && CATALOG_OPT_IN_ONLY_IDS.has(catalogId);
 }
 
 /** Peso de UM hábito na meta ponderada — 0 para item `optInOnly` do catálogo,
  *  `HABIT_WEIGHT` (1) para todos os outros (o padrão de sempre). */
-function habitWeightOf(activity: { catalogId?: string }): number {
+export function habitWeightOf(activity: { catalogId?: string }): number {
   return isOptInOnlyActivity(activity) ? 0 : HABIT_WEIGHT;
 }
 

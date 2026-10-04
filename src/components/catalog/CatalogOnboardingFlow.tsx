@@ -3,6 +3,7 @@ import { Icon } from '../ui/Icon';
 import { RitualDialog, ritualTitle } from '../ritual/RitualKit';
 import { sm2Button, sm2Hint, sm2Text, Chip } from '../form/FormKit';
 import { recommendStarterSet } from '../../utils/recommend';
+import { activitiesFromCatalogChoice } from '../../utils/catalogChoice';
 import { ACTIVITY_CATALOG } from '../../data/activityCatalog';
 import {
   LIFE_AREA_LABEL, LIFE_AREAS,
@@ -35,10 +36,6 @@ interface CatalogOnboardingFlowProps {
 }
 
 type Step = 'areas' | 'struggles' | 'strengths' | 'starter';
-
-function genId(): string {
-  return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
-}
 
 function toggle<T>(list: T[], value: T, max: number): T[] {
   if (list.includes(value)) return list.filter((v) => v !== value);
@@ -252,30 +249,5 @@ export function CatalogOnboardingFlow({ language = 'en-US', onComplete }: Catalo
   );
 }
 
-/** Constrói as `Activity` a partir dos itens escolhidos — id novo, nível 1,
- *  agenda padrão do nível 1 do item. Não decide nada sobre o resto do save. */
-export function activitiesFromCatalogChoice(
-  items: CatalogItem[],
-  isPt: boolean,
-  nowIso: string = new Date().toISOString(),
-): Array<{
-  id: string; name: string; category: CatalogItem['category']; emoji: string;
-  steps: never[]; weekDays: number[]; catalogId: string; level: 1;
-  catalogLevelSetAt: string;
-  schedule: CatalogItem['levels'][number]['defaultSchedule'];
-}> {
-  // `catalogLevelSetAt` desde a criação: sem ele `catalogLevelSignal` trata o
-  // tempo no nível como 0 e o convite de subir nunca aparece.
-  return items.map((item) => ({
-    id: genId(),
-    name: isPt ? item.name.pt : item.name.en,
-    catalogLevelSetAt: nowIso,
-    category: item.category,
-    emoji: item.emoji,
-    steps: [],
-    weekDays: [0, 1, 2, 3, 4, 5, 6],
-    catalogId: item.id,
-    level: 1,
-    schedule: item.levels[0].defaultSchedule,
-  }));
-}
+// Mora em `utils/catalogChoice.ts` (o `App.tsx` o usa sem carregar este fluxo); reexportado por compat.
+export { activitiesFromCatalogChoice };

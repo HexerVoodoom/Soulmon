@@ -713,6 +713,12 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   }, [step]);
 
   const [generateError, setGenerateError] = useState(false);
+  /** "Começar agora — é grátis": o 1º toque carrega o motor do Oráculo sob demanda
+   *  (chunks `motor` + `familias`). Sem retorno, em rede móvel isso parecia
+   *  "travado" (relato do dono, 04/10/2026) e, se o chunk falhasse, o toque não
+   *  fazia NADA. Agora o botão mostra que está trabalhando e a falha é avisada. */
+  const [iniciandoGratis, setIniciandoGratis] = useState(false);
+  const [erroGratis, setErroGratis] = useState(false);
 
   // PORTÃO — resolve o estado de autenticação UMA vez, na montagem.
   //
@@ -954,12 +960,33 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   /** A escolha GRÁTIS. A leitura demo nasce aqui, das 6 respostas que já
    *  foram dadas antes da escolha (13.19), e abre o reveal demo. */
   const escolherGratis = async () => {
-    setFlow('demo');
-    setDemoReading(await generateOracleAsync({
-      fullName: '', birthDate: '', birthTime: '', birthPlace: '', answers,
-    }));
-    setStep(REVEAL_DEMO);
+    if (iniciandoGratis) return;
+    setIniciandoGratis(true);
+    setErroGratis(false);
+    try {
+      const leitura = await generateOracleAsync({
+        fullName: '', birthDate: '', birthTime: '', birthPlace: '', answers,
+      });
+      setFlow('demo');
+      setDemoReading(leitura);
+      setStep(REVEAL_DEMO);
+    } catch (err) {
+      // O código cru vai ao console (padrão do projeto): chunk que não baixou,
+      // offline no 1º toque, motor lançando.
+      console.warn('[onboarding] escolherGratis falhou', err);
+      setErroGratis(true);
+    } finally {
+      setIniciandoGratis(false);
+    }
   };
+
+  // Aquece o motor do Oráculo enquanto a pessoa lê a escolha: quando ela toca
+  // em "Começar agora", os chunks já estão no cache e o clique é instantâneo.
+  useEffect(() => {
+    if (step !== CHOICE_STEP) return;
+    void import('../utils/oracle/motor').catch(() => {});
+    void import('../utils/oracle/familias').catch(() => {});
+  }, [step]);
 
   // No upgrade não existe passo 0 (intro): voltar da primeira pergunta é
   // desistir do ritual e voltar ao jogo.
@@ -1614,11 +1641,24 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 perder o usuario. */}
             <button
               type="button"
-              style={{ ...sm2Button('primary'), width: '100%' }}
+              style={{ ...sm2Button('primary', iniciandoGratis), width: '100%' }}
               onClick={() => { void escolherGratis(); }}
+              aria-busy={iniciandoGratis}
+              disabled={iniciandoGratis}
             >
-              {isPt ? 'Começar agora — é grátis' : 'Start now — it’s free'}
+              {iniciandoGratis
+                ? (isPt ? 'Preparando…' : 'Getting ready…')
+                : (isPt ? 'Começar agora — é grátis' : 'Start now — it’s free')}
             </button>
+            {/* Falha ao preparar a leitura (rede, chunk): âmbar, a falha não é da
+                pessoa — o botão volta a ficar ativo para tentar outra vez. */}
+            {erroGratis && (
+              <p role="alert" style={{ ...alertStyle, marginTop: 12 }}>
+                {isPt
+                  ? 'Não deu para começar agora. Confira a conexão e toque de novo.'
+                  : "We couldn't start just now. Check your connection and tap again."}
+              </p>
+            )}
             {/* A segunda escolha = `outline` (D-O5): peso igual ao de uma
                 porta, sem dourado, sem badge — a bifurcação sem empurrão. O
                 preço em `tabular-nums`. */}

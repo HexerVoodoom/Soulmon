@@ -55,3 +55,15 @@ describe('AreaSheet › NPC do Mercado', () => {
     expect(container.querySelector('[data-typewriter-shown]')!.textContent).toBe('');
   });
 });
+
+describe('NpcSpeech › QA3 — trocar a fala recomeça limpo', () => {
+  it('depois de completar a fala A, a fala B volta a digitar e a aceitar toque (done/skip não vazam)', () => {
+    const { container, rerender } = render(<NpcSpeech name="Lamela" line="Fala A." />);
+    const balloon = () => container.querySelector('[data-area-sheet-npc-line]') as HTMLElement;
+    fireEvent.click(balloon()); // completa A
+    expect(balloon().style.pointerEvents).toBe('none');
+    rerender(<NpcSpeech name="Lamela" line="Outra fala, bem maior." />);
+    expect(container.querySelector('[data-typewriter-shown]')!.textContent).toBe('');
+    expect(balloon().style.pointerEvents).toBe('auto');
+  });
+});

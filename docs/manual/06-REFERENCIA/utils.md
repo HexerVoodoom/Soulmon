@@ -1243,6 +1243,49 @@ Cobertura: **179/179** (+1 em 04/10/2026: `petBounce.ts`); antes **178/178** mó
 **Régua:** `oracle.soulProfile.test.ts`, `oracle.test.ts`, `oracleDraft.test.ts`
 **Regra de negócio:** O motor de geração da criatura — arquétipo, família e as 11 formas. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md). Desde 28/09/2026 (§13 de `docs/BESTIARIO-PROCEDENCIA.md`), a função interna (não exportada) `bestiaryFamilyIds(familia, biologia)` traduz a taxonomia grossa do bestiário (tabelas internas `BIOLOGIA_TO_FAMILY_IDS`/`FAMILIA_TO_FAMILY_IDS`, também não exportadas) para ids das 43 `CREATURE_FAMILIES` finas do Oráculo; `pickFamilies` ganhou o parâmetro `bestiaryFamilyHint?: string[] | null` para reforçar o slot 1 de família com essa ponte quando a descrição do usuário não citou bicho nenhum.
 
+### `src/utils/oracle/base.ts`
+**Dono de:** o núcleo LEVE do Oráculo que o chunk de entrada importa — hash/RNG semeado, id da forma no motor do jogo, nomes de estágio e ficha dos elementos. Extraído de `oracle.ts` em 04/10/2026 (rodada 6, perf): sem isso o Rollup mantinha no `index-*.js` ~25 KB de tabelas que só chunks preguiçosos usam.
+**Exports:**
+- `creatureFormId(form)` — traduz stage/branch do oráculo para o id de forma do jogo (`champion-power`, `ultimate-harmony`…).
+- `hashString(s)` / `mulberry32(seed)` — FNV-1a de 32 bits e RNG determinístico (o MESMO usado pela ficha/bestiário).
+- `ELEMENT_INFO` — nome, emoji e personalidade dos 8 elementos. `STAGE_NAMES` — nome de cada estágio.
+**Chamado por:** `src/App.tsx`, `src/hooks/useSpriteGeneration.ts`, `src/utils/adventure.ts`, `src/utils/weeklyMissions.ts`, `src/utils/travessias.ts`, `src/utils/monetization.ts`, `src/utils/corvoAdocao.ts`, `src/utils/oracle.ts` (reexporta).
+**Régua:** `oracle.test.ts`, `entradaEnxuta.contract.test.ts`
+**Regra de negócio:** código do caminho crítico importa DAQUI, nunca de `oracle.ts` — [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+
+### `src/utils/oracle/gerar.ts`
+**Dono de:** a entrada de PRODUÇÃO da geração do Oráculo.
+**Exports:**
+- `generateOracleAsync(input, seed?, overrides?)` — carrega `familias` e `motor` por `import()` e gera a leitura. Fora de `oracle.ts` porque um `import()` de um módulo que o chunk de entrada também importa estático o mantém inteiro lá.
+**Chamado por:** `src/App.tsx` (por `import()`), `src/utils/soulProfile/pipeline.ts`, `src/utils/oracle.ts` (reexporta).
+**Régua:** `oracle.test.ts`, `oracleBundleSplit.contract.test.ts`
+**Regra de negócio:** nunca importar estaticamente de código do chunk de entrada. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+
+### `src/utils/oracle/motor.ts`
+**Dono de:** o MOTOR de geração da criatura (pontuação de elementos/papéis/alinhamentos/reinos, nome, formas de evolução, prompts de sprite) — ~70 KB. Extraído de `oracle.ts` em 04/10/2026.
+**Exports:**
+- `generateOracleWithFamilies(input, familias, seed?, overrides?): OracleResult` — o corpo puro da geração; as famílias entram por parâmetro.
+**Chamado por:** `src/utils/oracle/gerar.ts` (por `import()`), `src/test/oracleSync.ts`, `scripts/npc-oraculo-prompts.mjs`.
+**Régua:** `oracle.test.ts`, `oracle.soulProfile.test.ts`, `spritePrompt.dono.contract.test.ts`, `entradaEnxuta.contract.test.ts`
+**Regra de negócio:** é o dono único do prompt de sprite e da cláusula anti-franquia; nunca importar estaticamente do chunk de entrada. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+
+### `src/utils/rebirthGate.ts`
+**Dono de:** SÓ a regra de elegibilidade do Renascimento, sem a ficha do class-system (que `rebirth.ts` puxa, ~28 KB).
+**Exports:**
+- `REBIRTH_REQUIRED_STAGE` — `'ultra'`.
+- `RebirthEligibilityInput` / `RebirthRefusal` (types) e `rebirthRefusal(input)` / `canRebirth(input)` — recusa motivada (`not-ultra` / `not-paid` / `already-used`).
+**Chamado por:** `src/App.tsx` (render da Evolução), `src/utils/rebirth.ts` (reexporta).
+**Régua:** `rebirth.test.ts`, `entradaEnxuta.contract.test.ts`
+**Regra de negócio:** o resto do Renascimento (`applyRebirth`, opções) carrega por `import()` ao renascer. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+
+### `src/utils/catalogChoice.ts`
+**Dono de:** a construção das `Activity` a partir dos itens do catálogo escolhidos.
+**Exports:**
+- `activitiesFromCatalogChoice(items, isPt, nowIso?)` — id novo, nível 1, agenda padrão do nível 1, `catalogLevelSetAt` desde a criação. Antes morava em `CatalogOnboardingFlow.tsx` (reexportada de lá).
+**Chamado por:** `src/App.tsx`, `src/components/catalog/CatalogOnboardingFlow.tsx`.
+**Régua:** `CatalogOnboardingFlow.render.test.tsx`
+**Regra de negócio:** o `App.tsx` o usa sem carregar o fluxo (que é `React.lazy`). [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+
 ### `src/utils/oracle/familias.ts`
 **Dono de:** os DADOS das famílias visuais do Oráculo — só dado, zero função. Extraído de `oracle.ts` na Fase 2 do Oráculo para sair do chunk de entrada.
 **Exports:**
@@ -1405,6 +1448,8 @@ Cobertura: **179/179** (+1 em 04/10/2026: `petBounce.ts`); antes **178/178** mó
 - `function sanitizePlayerDayAnchor(raw: unknown): PlayerDayAnchor | undefined` — Higieniza o que veio do save. Save é dado NÃO CONFIÁVEL: veio da nuvem, pode ter sido editado à mão, pode ser de uma versão futura.
 - `function resolvePlayerDayAnchor( existing: PlayerDayAnchor | undefined, profileZone: string | undefined, now: Date): PlayerDayAnchor` — A âncora a gravar no save, no load. Ordem, e o porquê de cada degrau: 1. **O que já está no save vence.** A âncora existe para ser ESTÁVEL.
 **Chamado por:** `desktop/renderer/src/care.ts`, `src/App.tsx`, `src/components/LibraryPage.tsx`, `src/components/guild/GuildSheet.tsx`, `src/components/nav/AreaView.tsx`, `src/contexts/GameStateContext.tsx`, `src/hooks/useGroveWatch.ts`, `src/utils/community.ts`, `src/utils/dailyReset.ts`, `src/utils/nightmares.ts`, `src/utils/petNeeds.ts`, `src/utils/poopDrain.ts`, `src/utils/restWindow.ts`, `src/utils/rituals.ts`, `src/utils/specialItemUse.ts` (`grep -rlE "(from|import\()\s*['\"][^'\"]*/playerDay['\"]" src desktop`, 30/09/2026)
+- `function dayKeyParts(key: unknown): { y: number; m: number; d: number } | null` e `function dayKeyToIso(key: unknown): string | null` (desde 04/10/2026, QA2) — leem uma chave de dia em QUALQUER dos dois formatos que circulam (`YYYY-MM-DD` e o `"Sun Oct 04 2026"` que `playerDayKey` devolve), só pelo texto (sem fuso). Consumidores: `anniversary.ts` › `parse` (`daysTogether`/`anniversaryOn`/`shouldShowRestSetup`), `travessiasSave.ts` › `normalizeCrossings`, `notifications.ts` › `subscribeToPush`, `BirthCard`, e `App.tsx` (dia da noite do Passeio). Régua: `qa2.dayKeyFormats.test.ts`.
+
 **Régua:** `playerDay.contract.test.ts`, `playerDay.test.ts`, `playerDayIso.test.ts`
 **Avisos do arquivo:**
 - ⚠️ Resíduo do achado X-4 (commit 9e9f679f): o conserto anterior tornou `rubHealRecordFor` ordem-consciente, mas não resolve sozinho o caso de aparelhos em fusos diferentes — daí este módulo.
@@ -1524,6 +1569,7 @@ Cobertura: **179/179** (+1 em 04/10/2026: `petBounce.ts`); antes **178/178** mó
 - `function crossesMidnight(window: RestWindow): boolean` — A janela atravessa a meia-noite (23:00–07:00 é o caso normal, não a exceção).
 - `function isWithinWindow( window: RestWindow, at: Date, graceMin: number = REST_WINDOW_GRACE_MIN): boolean` — O instante `at` está dentro da janela? A tolerância se aplica ao **INÍCIO**: deitar um pouco ANTES do horário combinado conta (o começo recua `graceMin`), e deitar um pouco DEPOIS já está dentro da janela por construção.
 - `function morningKey( sleptAt: Date, wokeAt?: Date, anchor?: PlayerDayAnchor): string` — O dayKey da MANHÃ de uma noite. Deitou de noite (meio-dia em diante) → a manhã é a do dia seguinte. Deitou de madrugada (antes do meio-dia) → a manhã já é a do mesmo dia civil. Se houver `wokeAt`, ele manda: é literalmente a manhã.
+- `function nightAlreadyRecorded(state: RestState, sleptAt: Date): boolean` (desde 04/10/2026, QA2) — a noite que o `sleptAt` abre já tem registro? Pergunta pela MANHÃ da noite (`morningKey`), não pelo dia de hoje: a manhã de ontem à noite tem a data de hoje, e comparar com hoje travava o XP `restNight` e a missão `rest-nights` em toda noite depois da primeira. Usado por `App.tsx` (efeito de deitar/levantar). Régua: `qa2.restNightGuard.test.ts`.
 - `function recordNight(state: RestState, sleptAt: Date, wokeAt?: Date): RestState` — Registra uma noite. **Idempotente por dayKey da manhã** — chamar duas vezes para a mesma manhã atualiza o registro, nunca cria um segundo. Poda em `MAX_NIGHTS` mantendo as mais recentes.
 - `RestConstancy` (interface) — campos: `onTime`, `window`, `ratio`.
 - `function restConstancy( state: RestState, now: Date, windowDays: number = REST_WINDOW_DAYS): RestConstancy` — A média móvel de regularidade nas últimas `windowDays` manhãs.

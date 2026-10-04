@@ -43,7 +43,7 @@ describe('um dono só para o prompt de sprite', () => {
   it('AUTOVERIFICAÇÃO: o dono vivo é reconhecido pela própria assinatura', () => {
     // Se a heurística parar de casar com o `oracle.ts`, ela parou de casar
     // com qualquer coisa — e o guard passaria por não encontrar ninguém.
-    const oracle = readFileSync(join(UTILS, 'oracle.ts'), 'utf8');
+    const oracle = readFileSync(join(UTILS, 'oracle', 'motor.ts'), 'utf8'); // o dono mora em oracle/motor.ts desde 04/10/2026
     expect(COMPOE_PROMPT.test(oracle)).toBe(true);
     expect(oracle).toContain(CLAUSULA);
   });

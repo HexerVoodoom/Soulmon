@@ -94,7 +94,7 @@ async function carregarOraculo() {
   const out = join(dir, 'oraculo.mjs');
   await build({
     stdin: {
-      contents: "export { generateOracleWithFamilies } from './src/utils/oracle';\nexport * as familias from './src/utils/oracle/familias';\n",
+      contents: "export { generateOracleWithFamilies } from './src/utils/oracle/motor';\nexport * as familias from './src/utils/oracle/familias';\n",
       resolveDir: ROOT, loader: 'ts',
     },
     bundle: true, format: 'esm', platform: 'node', outfile: out, logLevel: 'error',

@@ -84,18 +84,26 @@ export async function spendCredits(
 ): Promise<Entitlement | null> {
   const id = currentSaveId();
   if (!id) return null;
-  try {
-    const res = await fetch('/api/entitlements?action=spend', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
-      body: JSON.stringify({ id, amount, reason, opId }),
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.ok ? { tier: data.tier, credits: data.credits, adsLeft: data.adsLeft, admin: data.admin === true } : null;
-  } catch {
-    return null;
+  // QA1: UMA reenvio, com o MESMO `opId`, quando a requisição LANÇOU (a rede
+  // caiu e não sabemos se o servidor já debitou). O servidor devolve o
+  // resultado guardado em vez de cobrar de novo; sem o reenvio, a resposta
+  // perdida virava "Créditos insuficientes" com o dinheiro já debitado e o
+  // efeito não aplicado. Recusa do servidor (402/4xx) NÃO é reenviada.
+  for (let tentativa = 0; tentativa < 2; tentativa++) {
+    try {
+      const res = await fetch('/api/entitlements?action=spend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+        body: JSON.stringify({ id, amount, reason, opId }),
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data.ok ? { tier: data.tier, credits: data.credits, adsLeft: data.adsLeft, admin: data.admin === true } : null;
+    } catch {
+      /* rede: tenta de novo uma vez com o mesmo opId */
+    }
   }
+  return null;
 }
 
 /** Credita a recompensa do anúncio (o teto diário é aplicado no servidor). */

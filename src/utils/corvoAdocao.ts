@@ -5,7 +5,8 @@
  * pelo painel de GM e pelo clique de adotar (import dinâmico no `App.tsx`).
  * A doc completa do que `adoptCorvo` preserva e substitui está no cabeçalho de `corvoPet.ts`.
  */
-import { STAGE_NAMES, type AlignmentId, type CreatureStage, type LText, type StageId } from './oracle';
+import { STAGE_NAMES } from './oracle/base';
+import type { AlignmentId, CreatureStage, LText, StageId } from './oracle';
 import { CORVO_FORM_IDS, CORVO_LINE, isCorvo, type CorvoCarrier, type CorvoFormId } from './corvoPet';
 
 // ── Nomes e descrições (bíblia: L1..L12; vocabulário §12) ────────────────────

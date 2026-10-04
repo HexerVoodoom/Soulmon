@@ -364,7 +364,7 @@ describe('a noite não se contradiz', () => {
     // Três pushes em 2h30 produzem habituação, e desligar push é irreversível
     // na prática. O das 20h é o que cede porque é o único que pede EXECUÇÃO.
     const manager = readFileSync('src/components/NotificationManager.tsx', 'utf8');
-    expect(manager).toContain('if (restWindow) return;');
+    expect(manager).toContain('if (restWindowRef.current) return;');
   });
 });
 

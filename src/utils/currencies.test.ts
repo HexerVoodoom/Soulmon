@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { CURRENCIES, CREDIT_TO_BITS, BITS_EXCHANGE, EMBLEMS_PER_WIN, EMBLEMS_PER_LOSS } from './currencies';
+import { CURRENCIES, CREDIT_TO_BITS, BITS_EXCHANGE, EMBLEMS_PER_WIN, EMBLEMS_PER_LOSS, creditMinigameBits, minigameBitsToday, MINIGAME_BITS_PER_DAY } from './currencies';
 import { SHOP_ITEMS, TOURNAMENT_ITEMS, ALL_SHOP_ITEMS } from './shop';
 import { PET_BACKGROUNDS } from './backgrounds';
 
@@ -123,5 +123,26 @@ describe('todo item comprável é renderizável', () => {
   it('não há id repetido no catálogo inteiro', () => {
     const ids = ALL_SHOP_ITEMS.map(i => i.id);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+// QA1 (rodada 6) — Bits de minijogo com quantia ou registro corrompidos.
+describe('creditMinigameBits — entrada não finita não envenena o saldo', () => {
+  it('amount NaN não vira gamePoints NaN', () => {
+    const prev = { gamePoints: 50 };
+    const r = creditMinigameBits(prev, NaN, 'Mon Sep 28 2026');
+    expect(r).toBe(prev);
+  });
+  it('amount Infinity credita só o que o teto do dia permite', () => {
+    const r = creditMinigameBits({ gamePoints: 0 }, Infinity, 'Mon Sep 28 2026');
+    expect(r.gamePoints).toBe(MINIGAME_BITS_PER_DAY);
+  });
+  it('registro do dia com `earned` ilegível conta como zero (não NaN)', () => {
+    const dia = 'Mon Sep 28 2026';
+    const prev = { gamePoints: 10, minigameBits: { day: dia, earned: undefined as unknown as number } };
+    expect(minigameBitsToday(prev, dia)).toBe(0);
+    const r = creditMinigameBits(prev, 30, dia);
+    expect(r.gamePoints).toBe(40);
+    expect(r.minigameBits?.earned).toBe(30);
   });
 });

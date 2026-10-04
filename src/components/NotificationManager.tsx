@@ -72,6 +72,15 @@ export function NotificationManager({
   const lastGoodnightDate = useRef<string>('');
   /** WP3.11 — o lembrete de deitar é 1×/dia, como os outros. */
   const lastSleepReminderDate = useRef<string>('');
+  /* A janela e o sono por REF: os dois efeitos de intervalo abaixo não os têm
+     nas deps (reiniciar o intervalo a cada mudança adiaria o disparo), então
+     liam o valor de quando o efeito rodou pela última vez — o lembrete de
+     deitar saía com o pet já dormindo, e o aviso das 20h saía por cima da
+     janela recém-configurada (o triplo push que a janela existe para evitar). */
+  const restWindowRef = useRef(restWindow);
+  restWindowRef.current = restWindow;
+  const isSleepingRef = useRef(isSleeping);
+  isSleepingRef.current = isSleeping;
 
   // Push subscription — register/unregister when notifications toggle. Native
   // Android uses FCM (the WebView has no Web Push support); browsers/PWA use
@@ -159,7 +168,7 @@ export function NotificationManager({
          Este é o que cede porque é o único dos três que pede EXECUÇÃO, e a
          faixa noturna é onde o produto já removeu o nudge das 21h pelo mesmo
          motivo. Quem não configurou janela continua recebendo. */
-      if (restWindow) return;
+      if (restWindowRef.current) return;
 
       lastEveningWarnDate.current = today;
       // A copy mora no DONO ÚNICO (`_pushCopy.js`). Ela era inline aqui, e foi
@@ -226,6 +235,27 @@ export function NotificationManager({
       const today = now.toDateString();
       const ispt = language === 'pt-BR';
 
+      /* WP3.11 — O LEMBRETE DE DEITAR.
+         `sleepReminderAt` existia, com teste, e NUNCA foi chamado por
+         ninguém: a Janela de Descanso declarava que o único push possível é o
+         de deitar, e esse push não existia. A hora sai da janela que a PESSOA
+         escolheu (30 min antes do início), então ele não cabe no relógio fixo
+         das outras três.
+         ⚠️ Vem ANTES da guarda de minuto abaixo: a hora deste lembrete sai da janela
+         (22:30, 23:15…) e a guarda deixa passar só os minutos 0 e 1 — atrás dela o
+         lembrete só saía se a hora caísse em :00/:01, ou seja, quase nunca.
+         Não dispara dormindo (já deitou, não há o que lembrar) e é 1×/dia. */
+      const janela = restWindowRef.current;
+      if (janela && !isSleepingRef.current && lastSleepReminderDate.current !== today) {
+        // -60 s: um tick atrasado (aba em segundo plano) ainda enxerga a ocorrência de HOJE
+        // em vez da de amanhã, que `sleepReminderAt` devolve assim que o alvo passa.
+        const alvo = sleepReminderAt(janela, new Date(now.getTime() - 60_000));
+        if (alvo && Math.abs(alvo.getTime() - now.getTime()) <= 60_000) {
+          const c = sleepReminderCopy(petName, ispt ? 'pt-BR' : 'en-US');
+          lastSleepReminderDate.current = today;
+          showNotification(c.title, { body: c.body, tag: c.tag });
+        }
+      }
       // Allow a 1-minute grace window so we don't miss if the interval fires at :01
       if (mm > 1) return;
 
@@ -254,22 +284,6 @@ export function NotificationManager({
         const c = copia(16);
         if (c) {
           lastNudge16Date.current = today;
-          showNotification(c.title, { body: c.body, tag: c.tag });
-        }
-      }
-
-      /* WP3.11 — O LEMBRETE DE DEITAR.
-         `sleepReminderAt` existia, com teste, e NUNCA foi chamado por
-         ninguém: a Janela de Descanso declarava que o único push possível é o
-         de deitar, e esse push não existia. A hora sai da janela que a PESSOA
-         escolheu (30 min antes do início), então ele não cabe no relógio fixo
-         das outras três.
-         Não dispara dormindo (já deitou, não há o que lembrar) e é 1×/dia. */
-      if (restWindow && !isSleeping && lastSleepReminderDate.current !== today) {
-        const alvo = sleepReminderAt(restWindow, now);
-        if (alvo && Math.abs(alvo.getTime() - now.getTime()) <= 60_000) {
-          const c = sleepReminderCopy(petName, ispt ? 'pt-BR' : 'en-US');
-          lastSleepReminderDate.current = today;
           showNotification(c.title, { body: c.body, tag: c.tag });
         }
       }

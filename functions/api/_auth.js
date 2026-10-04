@@ -17,19 +17,45 @@ const JWK_URL = 'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@
 
 let jwksCache = null;
 let jwksExpiry = 0;
+let jwksFetchedAt = 0;
 
-async function getJwks() {
+/** Folga mínima entre releituras FORÇADAS (kid desconhecido) — um `kid` inventado
+ *  por quem sonda não pode virar uma busca ao Google por requisição. */
+const JWKS_FORCE_MIN_GAP_MS = 60_000;
+
+/**
+ * Chaves públicas do Firebase, com cache pelo `max-age` do Google.
+ *
+ * QA1 (rodada 6): duas falhas do desenho anterior.
+ *  · `force` (kid fora do cache = chave rotacionada): relê uma vez, respeitando
+ *    a folga mínima. Antes o login novo era recusado até o cache vencer.
+ *  · Se a releitura FALHA (fetch caiu, 5xx) e há cópia na memória — mesmo
+ *    vencida —, usa a cópia. Antes lançava, `verifyIdToken` devolvia null e todo
+ *    usuário tomava 401 por um soluço do endpoint do Google.
+ */
+async function getJwks(force = false) {
   const now = Date.now();
-  if (jwksCache && now < jwksExpiry) return jwksCache;
-  const res = await fetch(JWK_URL);
-  if (!res.ok) throw new Error(`jwks fetch failed: ${res.status}`);
-  const data = await res.json();
-  // As chaves rotacionam — respeita o max-age informado pelo Google.
-  const cc = res.headers.get('cache-control') || '';
-  const maxAge = Number(/max-age=(\d+)/.exec(cc)?.[1] ?? 3600);
-  jwksCache = data.keys || [];
-  jwksExpiry = now + maxAge * 1000;
-  return jwksCache;
+  if (jwksCache && now < jwksExpiry && !force) return jwksCache;
+  if (jwksCache && force && now - jwksFetchedAt < JWKS_FORCE_MIN_GAP_MS) return jwksCache;
+  try {
+    const res = await fetch(JWK_URL);
+    if (!res.ok) throw new Error(`jwks fetch failed: ${res.status}`);
+    const data = await res.json();
+    const cc = res.headers.get('cache-control') || '';
+    const maxAge = Number(/max-age=(\d+)/.exec(cc)?.[1] ?? 3600);
+    jwksCache = data.keys || [];
+    jwksExpiry = now + maxAge * 1000;
+    jwksFetchedAt = now;
+    return jwksCache;
+  } catch (err) {
+    if (jwksCache) {
+      // Tenta de novo só depois da folga, em vez de martelar um endpoint doente.
+      jwksFetchedAt = now;
+      jwksExpiry = now + JWKS_FORCE_MIN_GAP_MS;
+      return jwksCache;
+    }
+    throw err;
+  }
 }
 
 function b64urlToBytes(s) {
@@ -73,8 +99,9 @@ export async function verifyIdToken(idToken, projectId) {
     // Sem e-mail confirmado não há prova de posse — que é justamente o ponto.
     if (!payload.email || payload.email_verified !== true) return null;
 
-    const jwks = await getJwks();
-    const jwk = jwks.find(k => k.kid === header.kid);
+    let jwk = (await getJwks()).find(k => k.kid === header.kid);
+    // `kid` fora do cache: pode ser chave rotacionada. Uma releitura (com folga).
+    if (!jwk) jwk = (await getJwks(true)).find(k => k.kid === header.kid);
     if (!jwk) return null;
 
     const key = await crypto.subtle.importKey(

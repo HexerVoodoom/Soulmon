@@ -292,7 +292,14 @@ async function handleCommunity({ request, env }) {
     return handleGuild({ request, env });
   }
   const method = request.method;
-  const body = method === 'POST' ? await request.json().catch(() => ({})) : {};
+  // Corpo: teto de 64 KB (um perfil/duelo/presente tem poucas centenas de bytes) e SEMPRE um objeto —
+  // `null`, número ou lista no JSON davam TypeError em `body.id` (500).
+  let body = {};
+  if (method === 'POST') {
+    const text = await request.text().catch(() => '');
+    if (text.length > 65536) return json({ error: 'payload too large' }, 413);
+    try { const parsed = JSON.parse(text); body = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {}; } catch { body = {}; }
+  }
   const id = body.id || url.searchParams.get('id');
 
   /**
@@ -397,13 +404,20 @@ async function handleCommunity({ request, env }) {
     const nameRejected = !!body.name && !apelidoPedido;
     // Opt-out da lista pública. Cliente antigo (sem o campo) NÃO desfaz a
     // escolha feita em outro aparelho: ausência herda o valor gravado.
+    // `petName`, `stage` e `unlockedStages` também saem na lista PÚBLICA e eram texto livre: a mesma régua
+    // do apelido (D-1) vale aqui — contato é descartado e fica o valor anterior. `stage` é um id de estágio.
+    const ID_ESTAGIO = /^[A-Za-z0-9_.-]{1,40}$/;
+    const petNameOk = (v) => typeof v === 'string' && v.length > 0 && sanitizarNomeDeGuilda(v) !== null;
+    const prevPet = petNameOk(prev.petName) ? String(prev.petName).slice(0, 32) : '';
     const publicHidden = typeof body.publicHidden === 'boolean' ? body.publicHidden : prev.publicHidden === true;
     const profile = {
       id,
       name: apelidoPedido || sanitizarNomeDeGuilda(prev.name) || 'Anônimo',
-      stage: String(body.stage || prev.stage || 'rookie').slice(0, 40),
-      petName: String(body.petName || prev.petName || '').slice(0, 32),
-      unlockedStages: Array.isArray(body.unlockedStages) ? body.unlockedStages.slice(0, 16) : (prev.unlockedStages || []),
+      stage: (typeof body.stage === 'string' && ID_ESTAGIO.test(body.stage) ? body.stage : (ID_ESTAGIO.test(String(prev.stage ?? '')) ? prev.stage : 'rookie')),
+      petName: petNameOk(body.petName) ? body.petName.slice(0, 32) : prevPet,
+      unlockedStages: Array.isArray(body.unlockedStages)
+        ? body.unlockedStages.filter(s => typeof s === 'string' && ID_ESTAGIO.test(s)).slice(0, 16)
+        : (prev.unlockedStages || []),
       pvpEnabled,
       publicHidden,
       attrs: body.attrs && typeof body.attrs === 'object'
@@ -516,6 +530,8 @@ async function handleCommunity({ request, env }) {
 
   // ── Tournament ────────────────────────────────────────────────────────────
   if (action === 'opponents' && method === 'GET') {
+    // Com `id` a resposta traz a ficha e a cota DESSA conta: so o dono le (senao e oraculo e-mail->conta, como o `player` era).
+    if (id) { const denied = await denyUnlessOwner(id); if (denied) return denied; }
     const keys = await listPrefix(env, 'profile:', 300);
     const me = id;
     const pool = [];

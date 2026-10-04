@@ -108,11 +108,35 @@ export async function purchase(productId: string): Promise<PurchaseResult> {
     return { ok: false, reason: 'cancelled' };
   }
 
-  const verified = await verifyPurchase(productId, purchaseToken);
+  const verified = await verificarComReenvio(productId, purchaseToken);
   if (!verified.ok) return { ok: false, reason: verified.reason };
 
   await fecharNaPlay(plugin, purchaseToken, verified.consumeToken);
   return { ok: true, ent: verified.ent };
+}
+
+/** Motivos que dizem "não deu para falar com o servidor/loja agora" — não "esta compra é inválida". */
+function falhaTransitoria(reason: string): boolean {
+  return reason === 'network' || reason === 'verification-failed' || /^http-5\d\d$/.test(reason);
+}
+
+/** Esperas antes de cada reenvio. Teto de 2 reenvios: não prende a tela por minutos. */
+export const VERIFY_RETRY_DELAYS_MS = [1500, 4000];
+
+/**
+ * QA1 (rodada 6): a compra JÁ foi cobrada na Play. Se a verificação cai por rede
+ * ou 5xx, reenvia o MESMO comprovante (o servidor é idempotente por `orderId` e
+ * `claimOrder` aceita a mesma conta) em vez de devolver "não deu" a quem pagou.
+ * Recusa definitiva (`order-in-use`, `account-mismatch`…) devolve na hora.
+ */
+async function verificarComReenvio(productId: string, purchaseToken: string) {
+  let r = await verifyPurchase(productId, purchaseToken);
+  for (const espera of VERIFY_RETRY_DELAYS_MS) {
+    if (r.ok || !falhaTransitoria(r.reason)) return r;
+    await new Promise<void>(resolve => { setTimeout(resolve, espera); });
+    r = await verifyPurchase(productId, purchaseToken);
+  }
+  return r;
 }
 
 /**

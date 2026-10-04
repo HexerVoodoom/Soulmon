@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { activitiesForWeekDay, dailyGoalFor, tasksCompletedOn } from '../utils/dailyReset';
-import { HABIT_WEIGHT, normalizeEffort } from '../types/taskModel';
+import { activitiesForWeekDay, dailyGoalFor, habitWeightOf, tasksCompletedOn } from '../utils/dailyReset';
+import { normalizeEffort } from '../types/taskModel';
 import { CATEGORY_ATTRIBUTES, ActivityCategory } from '../types/attributes';
 
 interface Step {
@@ -118,7 +118,10 @@ export function doneWeightFor(
       // escrito para ele, então quem só usa hábitos em etapas via sempre 0.
       ? activity.steps.every((s: Step) => s.completed)
       : !!activity.completedToday && activity.lastCompletedDate === dayKey;
-    if (isComplete) peso += HABIT_WEIGHT;
+    // Mesmo peso da META e da VIRADA (`habitWeightOf`: 0 para item `optInOnly` do
+    // catálogo). Com `HABIT_WEIGHT` fixo a barra mostrava um dia completo que a
+    // virada não contava.
+    if (isComplete) peso += habitWeightOf(activity);
   });
 
   // Tarefas marcadas que ainda estão na lista (janela de 3s até saírem) MAIS as

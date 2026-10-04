@@ -14,11 +14,14 @@
  *    contador, não uma data.
  */
 
-/** `'2026-09-06'` → `{y, m, d}`; `null` para qualquer coisa que não seja isso. */
+import { dayKeyParts } from './playerDay';
+
+/** `'2026-09-06'` → `{y, m, d}`; `null` para qualquer coisa que não seja isso.
+ *  Aceita também `"Sun Oct 04 2026"`: é o que `playerDayKey` devolve e, por
+ *  isso, o que `bornAt` e o `todayKey` do App sempre foram — só o ISO fazia
+ *  `daysTogether`/`anniversaryOn` devolverem `null` para todo save real. */
 function parse(dayKey: string | undefined): { y: number; m: number; d: number } | null {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dayKey ?? '').trim());
-  if (!m) return null;
-  return { y: Number(m[1]), m: Number(m[2]), d: Number(m[3]) };
+  return dayKeyParts(dayKey);
 }
 
 export type AnniversaryKind = 'month' | 'year';

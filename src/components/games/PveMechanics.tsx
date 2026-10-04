@@ -18,18 +18,30 @@ const now = (): number => (typeof performance !== 'undefined' ? performance.now(
 /** Depois de o anel passar do alvo, ainda dá `RING_GRACE_MS` para tocar antes de valer `ruim`. */
 const RING_GRACE_MS = 250;
 
-export function SpecialRing({ spec, x, y, size, onGrade, label, now: nowFn = now }: {
+export function SpecialRing({ spec, x, y, size, onGrade, label, paused = false, now: nowFn = now }: {
   spec: RingSpec;
   /** Centro do alvo em px do campo, e o tamanho do corpo dele. */
   x: number; y: number; size: number;
   onGrade: (grade: RingGrade, tapMs: number | null) => void;
   /** Nome acessível do botão do alvo (ex.: "Golpear"). */
   label: string;
+  /** A luta está pausada (confirmação de sair): o anel congela, senão vencia sozinho com o "Sair?" aberto. */
+  paused?: boolean;
   now?: () => number;
 }) {
   const ringEl = useRef<HTMLDivElement>(null);
   const done = useRef(false);
-  const t0 = useRef(nowFn());
+  /** Tempo de LUTA do anel (ms), sem o tempo pausado. */
+  const elapsed = useRef(0);
+  const last = useRef(nowFn());
+  const pausedRef = useRef(paused);
+  pausedRef.current = paused;
+  const tick = useCallback(() => {
+    const n = nowFn();
+    if (!pausedRef.current) elapsed.current += n - last.current;
+    last.current = n;
+    return elapsed.current;
+  }, [nowFn]);
   const gradeRef = useRef(onGrade);
   gradeRef.current = onGrade;
   const target = Math.round(Math.max(56, size * 0.8));
@@ -42,15 +54,16 @@ export function SpecialRing({ spec, x, y, size, onGrade, label, now: nowFn = now
 
   useEffect(() => {
     done.current = false;
-    t0.current = nowFn();
+    elapsed.current = 0;
+    last.current = nowFn();
     const el = ringEl.current;
     const paint = () => {
-      const t = nowFn() - t0.current;
+      const t = tick();
       if (el) {
         el.style.transform = `translate(-50%, -50%) scale(${ringScale(t, spec).toFixed(3)})`;
         el.setAttribute('data-ring-hot', Math.abs(t - spec.targetMs) <= RING_OTIMO_MS ? '1' : '0');
       }
-      if (t >= spec.ms + RING_GRACE_MS) finish(null);
+      if (!pausedRef.current && t >= spec.ms + RING_GRACE_MS) finish(null);
     };
     paint();
     const id = setInterval(paint, 16);
@@ -58,11 +71,11 @@ export function SpecialRing({ spec, x, y, size, onGrade, label, now: nowFn = now
       const el2 = e.target as HTMLElement | null;
       // O X e a confirmação de sair ficam com o próprio toque; o mascote e o alvo contam.
       if (el2?.closest?.('[data-stage-close], [data-stage-confirm]')) return;
-      finish(nowFn() - t0.current);
+      finish(tick());
     };
     window.addEventListener('pointerdown', onDown, true);
     return () => { clearInterval(id); window.removeEventListener('pointerdown', onDown, true); };
-  }, [spec, finish, nowFn]);
+  }, [spec, finish, nowFn, tick]);
 
   return (
     <div
@@ -94,7 +107,7 @@ export function SpecialRing({ spec, x, y, size, onGrade, label, now: nowFn = now
         type="button"
         data-ring-button
         aria-label={label}
-        onClick={() => finish(nowFn() - t0.current)}
+        onClick={() => finish(tick())}
         style={{
           position: 'absolute', left: 0, top: 0, width: Math.max(44, target), height: Math.max(44, target),
           transform: 'translate(-50%, -50%)', borderRadius: '50%', background: 'none', border: 'none',

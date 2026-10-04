@@ -8,7 +8,8 @@
  * saída para a mesma seed.
  */
 import * as familias from '../utils/oracle/familias';
-import { generateOracleWithFamilies, type OracleInput, type OracleOverrides, type OracleResult } from '../utils/oracle';
+import { generateOracleWithFamilies } from '../utils/oracle/motor';
+import type { OracleInput, OracleOverrides, OracleResult } from '../utils/oracle';
 
 export function generateOracle(input: OracleInput, seed?: number, overrides?: OracleOverrides): OracleResult {
   return generateOracleWithFamilies(input, familias, seed, overrides);

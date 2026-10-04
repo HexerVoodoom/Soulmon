@@ -368,17 +368,30 @@ __name(gateTombstone, "gateTombstone");
 var JWK_URL = "https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com";
 var jwksCache = null;
 var jwksExpiry = 0;
-async function getJwks() {
+var jwksFetchedAt = 0;
+var JWKS_FORCE_MIN_GAP_MS = 6e4;
+async function getJwks(force = false) {
   const now = Date.now();
-  if (jwksCache && now < jwksExpiry) return jwksCache;
-  const res = await fetch(JWK_URL);
-  if (!res.ok) throw new Error(`jwks fetch failed: ${res.status}`);
-  const data = await res.json();
-  const cc = res.headers.get("cache-control") || "";
-  const maxAge = Number(/max-age=(\d+)/.exec(cc)?.[1] ?? 3600);
-  jwksCache = data.keys || [];
-  jwksExpiry = now + maxAge * 1e3;
-  return jwksCache;
+  if (jwksCache && now < jwksExpiry && !force) return jwksCache;
+  if (jwksCache && force && now - jwksFetchedAt < JWKS_FORCE_MIN_GAP_MS) return jwksCache;
+  try {
+    const res = await fetch(JWK_URL);
+    if (!res.ok) throw new Error(`jwks fetch failed: ${res.status}`);
+    const data = await res.json();
+    const cc = res.headers.get("cache-control") || "";
+    const maxAge = Number(/max-age=(\d+)/.exec(cc)?.[1] ?? 3600);
+    jwksCache = data.keys || [];
+    jwksExpiry = now + maxAge * 1e3;
+    jwksFetchedAt = now;
+    return jwksCache;
+  } catch (err) {
+    if (jwksCache) {
+      jwksFetchedAt = now;
+      jwksExpiry = now + JWKS_FORCE_MIN_GAP_MS;
+      return jwksCache;
+    }
+    throw err;
+  }
 }
 __name(getJwks, "getJwks");
 function b64urlToBytes(s) {
@@ -405,8 +418,8 @@ async function verifyIdToken(idToken, projectId) {
     if (typeof payload.exp !== "number" || payload.exp <= now) return null;
     if (typeof payload.iat !== "number" || payload.iat > now + 300) return null;
     if (!payload.email || payload.email_verified !== true) return null;
-    const jwks = await getJwks();
-    const jwk = jwks.find((k) => k.kid === header.kid);
+    let jwk = (await getJwks()).find((k) => k.kid === header.kid);
+    if (!jwk) jwk = (await getJwks(true)).find((k) => k.kid === header.kid);
     if (!jwk) return null;
     const key = await crypto.subtle.importKey(
       "jwk",
@@ -3291,13 +3304,15 @@ var DUEL_HP_BASE = 140;
 var DUEL_HP_PER_STAGE = 12;
 var STAGE_POWER = { rookie: 1, champion: 2, ultimate: 3, mega: 4, ultra: 5 };
 function stagePowerOf(stage) {
-  return STAGE_POWER[String(stage || "").split("-")[0]] ?? 1;
+  const key = String(stage || "").split("-")[0];
+  return Object.prototype.hasOwnProperty.call(STAGE_POWER, key) ? STAGE_POWER[key] : 1;
 }
 __name(stagePowerOf, "stagePowerOf");
 function duelStats(profile) {
   const sp = stagePowerOf(profile?.stage);
   const a = profile?.attrs || {};
-  const attrSum = (+a.power || 0) + (+a.harmony || 0) + (+a.benevolence || 0);
+  const pos = /* @__PURE__ */ __name((v) => Number.isFinite(+v) ? Math.max(0, +v) : 0, "pos");
+  const attrSum = pos(a.power) + pos(a.harmony) + pos(a.benevolence);
   return {
     hp: DUEL_HP_BASE + sp * DUEL_HP_PER_STAGE,
     atk: Math.round((10 + sp * 1.2 + Math.min(2, attrSum / 50)) * 10) / 10
@@ -3513,7 +3528,17 @@ async function handleCommunity({ request, env }) {
     return handleGuild({ request, env });
   }
   const method = request.method;
-  const body = method === "POST" ? await request.json().catch(() => ({})) : {};
+  let body = {};
+  if (method === "POST") {
+    const text = await request.text().catch(() => "");
+    if (text.length > 65536) return json3({ error: "payload too large" }, 413);
+    try {
+      const parsed = JSON.parse(text);
+      body = parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+    } catch {
+      body = {};
+    }
+  }
   const id = body.id || url.searchParams.get("id");
   const denyUnlessOwner = /* @__PURE__ */ __name(async (actorId) => {
     if (!VALID_ID3.test(actorId || "")) return json3({ error: "invalid id" }, 400);
@@ -3569,13 +3594,16 @@ async function handleCommunity({ request, env }) {
     }
     const apelidoPedido = body.name ? sanitizarNomeDeGuilda(body.name) : null;
     const nameRejected = !!body.name && !apelidoPedido;
+    const ID_ESTAGIO = /^[A-Za-z0-9_.-]{1,40}$/;
+    const petNameOk = /* @__PURE__ */ __name((v) => typeof v === "string" && v.length > 0 && sanitizarNomeDeGuilda(v) !== null, "petNameOk");
+    const prevPet = petNameOk(prev.petName) ? String(prev.petName).slice(0, 32) : "";
     const publicHidden = typeof body.publicHidden === "boolean" ? body.publicHidden : prev.publicHidden === true;
     const profile = {
       id,
       name: apelidoPedido || sanitizarNomeDeGuilda(prev.name) || "An\xF4nimo",
-      stage: String(body.stage || prev.stage || "rookie").slice(0, 40),
-      petName: String(body.petName || prev.petName || "").slice(0, 32),
-      unlockedStages: Array.isArray(body.unlockedStages) ? body.unlockedStages.slice(0, 16) : prev.unlockedStages || [],
+      stage: typeof body.stage === "string" && ID_ESTAGIO.test(body.stage) ? body.stage : ID_ESTAGIO.test(String(prev.stage ?? "")) ? prev.stage : "rookie",
+      petName: petNameOk(body.petName) ? body.petName.slice(0, 32) : prevPet,
+      unlockedStages: Array.isArray(body.unlockedStages) ? body.unlockedStages.filter((s) => typeof s === "string" && ID_ESTAGIO.test(s)).slice(0, 16) : prev.unlockedStages || [],
       pvpEnabled,
       publicHidden,
       attrs: body.attrs && typeof body.attrs === "object" ? { power: +body.attrs.power || 0, harmony: +body.attrs.harmony || 0, benevolence: +body.attrs.benevolence || 0 } : prev.attrs || { power: 0, harmony: 0, benevolence: 0 },
@@ -3644,6 +3672,10 @@ async function handleCommunity({ request, env }) {
     });
   }
   if (action === "opponents" && method === "GET") {
+    if (id) {
+      const denied = await denyUnlessOwner(id);
+      if (denied) return denied;
+    }
     const keys = await listPrefix2(env, "profile:", 300);
     const me = id;
     const pool = [];
@@ -5352,7 +5384,7 @@ async function onRequest6({ env }) {
 }
 __name(onRequest6, "onRequest");
 
-// ../.wrangler/tmp/pages-n8PM3o/functionsRoutes-0.480665890507438.mjs
+// ../.wrangler/tmp/pages-wFxTRL/functionsRoutes-0.4201425782289374.mjs
 var routes = [
   {
     routePath: "/api/account",

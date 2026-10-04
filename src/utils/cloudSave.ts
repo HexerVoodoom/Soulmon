@@ -254,10 +254,13 @@ export const CLOUD_SAVE_RETRY_JANELA_MS = 10 * 60_000;
 export const CLOUD_SAVE_RETRY_BACKOFF_MS = [2000, 8000, 30000];
 
 const orcamentos = new Map<string, { gasto: number; janelaEm: number }>();
+/** Última chamada de `cloudSaveComRetry` por `saveId` (ver o comentário lá). */
+const ordemDeChamada = new Map<string, number>();
 
 /** Só para teste: zera o estado de módulo entre casos. */
 export function __resetRetryBudgets(): void {
   orcamentos.clear();
+  ordemDeChamada.clear();
 }
 
 /**
@@ -306,11 +309,19 @@ export async function cloudSaveComRetry(
   const esperar = opts.esperar ?? esperaReal;
   const agora = opts.agora ?? Date.now;
 
+  // QA1: número de ordem desta chamada para o `saveId`. Um retry que acorda
+  // DEPOIS de uma chamada mais nova ter começado carrega estado VELHO, e o
+  // `put` cego do servidor o poria por cima do novo — a nuvem voltaria no
+  // tempo. Superado = para de insistir (a chamada nova é quem manda).
+  const minha = (ordemDeChamada.get(saveId) ?? 0) + 1;
+  ordemDeChamada.set(saveId, minha);
+
   let resultado = await cloudSave(saveId, state);
   while (!resultado.ok && resultado.retentavel) {
     const atraso = consumirRetry(saveId, agora());
     if (atraso === null) break;
     await esperar(atraso);
+    if (ordemDeChamada.get(saveId) !== minha) break;
     resultado = await cloudSave(saveId, state);
   }
   // Devolve o orçamento: só a falha PERSISTENTE precisa ser racionada.
@@ -383,6 +394,34 @@ export async function checarContaExcluidaNoLogin(email: string): Promise<{ mensa
   return { mensagem, saveId };
 }
 
+/**
+ * Resultado de "esta conta já tem save na nuvem?" para quem vai TROCAR de
+ * identidade (login, proteger progresso, fim do onboarding).
+ *
+ * QA1 (rodada 6): `cloudLoad` devolve `null` tanto para "não tem save" quanto
+ * para "não consegui ler" (offline, 5xx, 401). Os call sites tratavam os dois
+ * como conta nova, apontavam o aparelho para o `saveId` derivado e o POST
+ * seguinte (`put` cego em `save.js`) SOBRESCREVIA o save do outro aparelho com
+ * o estado local. Aqui a dúvida tem nome próprio — e quem chama NÃO move
+ * identidade nem sobe nada quando ela vem. (`reconcileSaveId` já seguia esta
+ * regra; este é o mesmo contrato para os outros caminhos.)
+ *
+ *  · `existente` — há save: adotar com `adoptCloudSave`.
+ *  · `nova`      — o servidor RESPONDEU que não há: aí sim o local sobe.
+ *  · `incerta`   — rede/5xx/401 ou lápide (410): não decide nada.
+ */
+export type ConsultaConta =
+  | { estado: 'existente'; state: unknown }
+  | { estado: 'nova' }
+  | { estado: 'incerta' };
+
+export async function consultarContaNaNuvem(saveId: string): Promise<ConsultaConta> {
+  const r = await lerNuvem(saveId);
+  if (r.estado === 'encontrado') return { estado: 'existente', state: r.state };
+  if (r.estado === 'vazio') return { estado: 'nova' };
+  return { estado: 'incerta' };
+}
+
 export async function cloudLoad(saveId: string): Promise<unknown | null> {
   const r = await lerNuvem(saveId);
   // GET também recebe o 410: só reage se ESTE aparelho ainda carrega o save
@@ -425,6 +464,21 @@ function isPlainState(state: unknown): state is Record<string, unknown> {
   return typeof state === 'object' && state !== null && !Array.isArray(state);
 }
 
+/** Guarda o save local em `CONFLICT_BACKUP` se ele tiver progresso de verdade. */
+function copiarLocalAntesDeSubstituir(): void {
+  const cru = readLocal(STORAGE_KEYS.GAME_STATE);
+  if (!cru) return;
+  let local: unknown;
+  try { local = JSON.parse(cru); } catch { return; }
+  if (!saveTemOnboardingConcluido(local)) return;
+  writeLocal(RECONCILE_KEYS.CONFLICT_BACKUP, JSON.stringify({
+    saveId: readLocal(STORAGE_KEYS.SAVE_ID) ?? '',
+    salvoEm: new Date().toISOString(),
+    motivo: 'adocao-da-nuvem',
+    state: local,
+  }), { silent: true });
+}
+
 export type AdoptResult = 'ok' | 'invalid' | 'storage';
 
 /**
@@ -435,6 +489,7 @@ export function adoptCloudSave(
   saveId: string,
   rawState: unknown,
   email?: string,
+  opts: { semCopia?: boolean } = {},
 ): AdoptResult {
   const state = migrateBranchIds(rawState);
   if (!isPlainState(state)) {
@@ -448,6 +503,16 @@ export function adoptCloudSave(
     serialized = JSON.stringify(state);
   } catch {
     return 'invalid';
+  }
+  // CÓPIA DO QUE VAI SER SUBSTITUÍDO (QA1, rodada 6). Só `reconcileSaveId`
+  // guardava o progresso local antes de a nuvem vencer; login, "proteger
+  // progresso" e fim do onboarding trocavam o save sem rastro. Só copia quando
+  // há progresso REAL (um estado novo não pode gastar a cópia anterior) e só
+  // quando a identidade muda (reidratar o próprio save não perde nada). Falha
+  // na cópia não impede a adoção: com o storage cheio a gravação abaixo também
+  // falha e nada é trocado.
+  if (!opts.semCopia && readLocal(STORAGE_KEYS.SAVE_ID) !== saveId) {
+    copiarLocalAntesDeSubstituir();
   }
   // DADO PRIMEIRO. Se isto falhar, a identidade NÃO troca e o jogador continua
   // no save que ele já tinha, em vez de ficar apontado para um save vazio.
@@ -609,7 +674,7 @@ export async function reconcileSaveId(
       return { estado: 'storage', saveId: derivado };
     }
     // `adoptCloudSave` grava o DADO e só então troca a identidade, e não lança.
-    if (adoptCloudSave(derivado, naNuvem.state, norm) !== 'ok') {
+    if (adoptCloudSave(derivado, naNuvem.state, norm, { semCopia: true }) !== 'ok') {
       return { estado: 'storage', saveId: derivado };
     }
     writeLocal(RECONCILE_KEYS.PREVIOUS_SAVE_ID, anterior, { silent: true });

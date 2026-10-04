@@ -47,7 +47,7 @@
  * coletado, e coleção com data. Inventar uma segunda forma para o mesmo
  * problema seria o footgun 9 em escala de módulo.
  */
-import { hashString, mulberry32 } from './oracle';
+import { hashString, mulberry32 } from './oracle/base';
 
 export type AdventureRarity = 'common' | 'rare' | 'legendary';
 

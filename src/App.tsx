@@ -30,8 +30,6 @@ import { CATEGORY_ICONS } from './types/category-icons';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { Toaster } from './components/ui/sonner';
 import { GamePopups } from './components/GamePopups';
-import { EvolveTaskModal } from './components/EvolveTaskModal';
-import { EvolutionCeremony } from './components/EvolutionCeremony';
 import { useSpriteGeneration, libraryOf } from './hooks/useSpriteGeneration';
 import { emptyIncubation, incubationFor, incubationReady, isIncubating } from './utils/spriteTrigger';
 import { spriteText } from './utils/spriteCopy';
@@ -39,14 +37,11 @@ import { emptySpriteLibrary, revertVisor, displaySprite, isNewbornLibrary, markT
 import { getSpriteForStage } from './utils/sprites';
 import { ContentModals } from './components/ContentModals';
 import { NotificationManager } from './components/NotificationManager';
-import { DailyReportModal } from './components/DailyReportModal';
 import { adventureOfNight, collectAdventure } from './utils/adventure';
 import { crossingsTouchMap } from './utils/travessiasSave';
 import { clearLegacy, loadLegacyEntries, mergeEntries, type CadernoEntry } from './utils/cadernoSave';
 import { CROSSINGS_EMPTY, HOME_REGION, type CrossingsState } from './types/travessias';
-import { WelcomePromptModal } from './components/WelcomePromptModal';
 import { IntroScreen } from './components/IntroScreen';
-import { ProtectProgressModal } from './components/ProtectProgressModal';
 import { CATEGORY_ATTRIBUTES, type ActivityCategory, XP_THRESHOLDS } from './types/attributes';
 import { type CareEvent } from './components/CareSystem';
 import { FORM_REQUIREMENTS, getStageLevel, canSelectWeekdays, getMaxEnergyForStage } from './types/progression';
@@ -59,7 +54,7 @@ import {
   readFlag, readFlagState, readJson, readLocal, readNumber, removeLocal, writeFlag, writeJson, writeLocal,
 } from './utils/safeStorage';
 import { initialNotificationsEnabled, readSystemNotificationPermission } from './utils/notificationDefault';
-import { hashString, creatureFormId, ELEMENT_INFO } from './utils/oracle';
+import { hashString, creatureFormId, ELEMENT_INFO } from './utils/oracle/base';
 import type { OracleInput, OracleResult, ElementId } from './utils/oracle';
 import type { Manifestacao } from './utils/soulProfile/ficha/manifestacaoSave';
 import { applyDecorEquip, type SlotId } from './utils/petStage';
@@ -80,7 +75,7 @@ import {
 import { feedTimesFor, rubHealFor } from './utils/careCaps';
 import { applyRub, applyFeed, rubDecision } from './utils/careUpdaters';
 import { applySpecialItem, specialRefusal } from './utils/specialItemUse';
-import { playerDayKey, playerDayIso } from './utils/playerDay';
+import { playerDayKey, playerDayIso, dayKeyToIso } from './utils/playerDay';
 import { shouldInviteRefuge, markRefugeShown, dismissRefugeInvite, acceptRefugeInvite } from './utils/refugio/convite';
 import { RefugeInviteCard } from './components/refugio/RefugeInviteCard';
 import { awardBondXP, bondLevelFor, unclaimedBondRewards, applyBondRewards } from './utils/bond';
@@ -106,7 +101,6 @@ import {
 import { fitHabitCreates } from './utils/habitCreate';
 import { applyShopBuy, shopBuyRefusal } from './utils/shopBuy';
 import { soulmonDisplayName } from './utils/petName';
-import { readingSeed } from './utils/newReading';
 import { rolledRareCheer, type PetVoiceKind } from './utils/petVoice';
 import {
   emptyFirstDay, markGesture, shouldShowFirstDay, type FirstDayGesture,
@@ -115,8 +109,6 @@ import { FirstDayCard } from './components/FirstDayCard';
 import { TermsUpdateBanner } from './components/TermsUpdateBanner';
 import { marcaAvisoTermos, precisaAvisarTermos, qualDocMudou } from './utils/termsNotice';
 import { PRIVACY_VERSION, TERMS_VERSION } from './utils/consent';
-import { MilestoneCeremony } from './components/MilestoneCeremony';
-import { GroveMilestoneCeremony } from './components/guild/GroveMilestoneCeremony';
 import { useGroveWatch } from './hooks/useGroveWatch';
 import {
   acknowledgeGroveMilestone, grantGroveScenes, grantGuildScenes, groveAvisoFor, groveStageAt, formatDayLabel,
@@ -124,9 +116,7 @@ import {
 } from './utils/groveLocal';
 import { grantGuildTrophy } from './utils/guildClaimLocal';
 import { guildCoreText, groveStageName, type GroveMarcoStage } from './utils/guildCopyCore';
-import {
-  applyRebirth, canRebirth, rebirthRefusal, rebirthEscolaOptions, rebirthElementOptions, herancaDoCiclo,
-} from './utils/rebirth';
+import { canRebirth, rebirthRefusal } from './utils/rebirthGate';
 import type { RebirthChoices } from './utils/rebirth';
 import { anniversaryOn, daysTogether } from './utils/anniversary';
 import { memoryToShow, markMemoryShown } from './utils/memories';
@@ -140,7 +130,9 @@ import {
 import { sleepReminderCopy } from '../functions/api/_pushCopy.js';
 import { BITS_EXCHANGE, creditMinigameBits, minigameBitsToday } from './utils/currencies';
 import { snapshotCompletion, undoCompletion, UNDO_WINDOW_MS } from './utils/completionUndo';
+import { useDeferredFlush } from './hooks/useDeferredFlush';
 import { UndoToast } from './components/UndoToast';
+import { WeeklyReportCard } from './components/WeeklyReportCard';
 import { adminFromEntitlement, setAdminFlag, useAdmin } from './utils/adminFlag';
 import { isCorvo, spriteLineOf } from './utils/corvoPet';
 // G1: `corvoAdocao` (nomes, CORVO_STAGES, adoptCorvo) e `gmTools` só são lidos por admin, no clique —
@@ -184,15 +176,11 @@ import { UnlockAccountModal, UnlockNudge, type UnlockReason } from './components
 // tradução de um gesto do usuário em chamada de regra. Nenhuma fórmula é
 // reescrita neste arquivo: regra copiada é regra que diverge em silêncio
 // (footgun 9 do CLAUDE.md).
-import { MorningCheckIn } from './components/MorningCheckIn';
-import { TriagePile, type TriageAction } from './components/TriagePile';
-import { MorningDream } from './components/MorningDream';
+import { type TriageAction } from './components/TriagePile';
 import { dreamTwin, grantDreamTwin } from './utils/dreamDecorTwin';
 import { sanitizeSoulTestAnswers } from './utils/soulTestAnswers';
-import { RestSetupModal } from './components/RestSetupModal';
 import { shouldShowRestSetup } from './utils/restSetup';
 import { chatSettingsFor, personalityProfileFromSave } from './utils/personality';
-import { WeeklyReportCard } from './components/WeeklyReportCard';
 import {
   needsCheckIn, checkInPlan, completeCheckIn,
   needsWeeklyReport, weeklyReport, stackingSuggestion,
@@ -211,22 +199,19 @@ import {
 import { normalizeSchedule, weekDaysForSchedule, HABIT_WEIGHT, MAX_DAILY_FOCUS, cheerReached } from './types/taskModel';
 import { equilibrarSemana, valeEquilibrar } from './utils/weekBalance';
 import { needsCatalogOnboarding, markCatalogOnboardingSeen, onboardingProfileFrom } from './utils/catalogOnboarding';
-import { CatalogOnboardingFlow, activitiesFromCatalogChoice } from './components/catalog/CatalogOnboardingFlow';
-import { ACTIVITY_CATALOG } from './data/activityCatalog';
-import { CatalogBrowserModal } from './components/catalog/CatalogBrowserModal';
-import { CatalogLevelInviteModal } from './components/catalog/CatalogLevelInviteModal';
+import { activitiesFromCatalogChoice } from './utils/catalogChoice';
+import { loadCatalog } from './data/catalogoCarga';
 import { pickCatalogLevelInviteCandidate, applyLevelChange } from './utils/catalogLevelSignal';
 
 import type { Schedule, HabitAnchor, Effort } from './types/taskModel';
 import {
-  createRestState, recordNight, dreamRarity, rollDream, collectDream, DREAM_CATALOG, isWithinWindow,
+  createRestState, recordNight, nightAlreadyRecorded, dreamRarity, rollDream, collectDream, DREAM_CATALOG, isWithinWindow,
 } from './utils/restWindow';
 import type { Dream, RestWindow } from './utils/restWindow';
 
 // ── SONO JOGÁVEL, BRINCAR E PASSOS ──────────────────────────────────────────
 // Mesma disciplina do bloco acima: as regras moram nos módulos puros
 // (`nightmares`, `petNeeds`, `steps`) e aqui só existe fiação.
-import { NightmareBattle } from './components/NightmareBattle';
 import { StepsCard } from './components/StepsCard';
 import {
   buildNightmareWave, hasPendingNightmare, markFought, nightmareDayKey, nightmaresFor,
@@ -657,6 +642,23 @@ const MILESTONE_TEXT: Record<string, { pt: string; en: string }> = {
 };
 
 const RebirthModal = lazy(() => import('./components/RebirthModal').then(m => ({ default: m.RebirthModal })));
+// Pesadelo da manhã: leva junto BattleStage/PveMechanics/usePveBattle/combatFx/attackFxArt (~100 KB) — só na luta.
+const NightmareBattle = lazy(() => import('./components/NightmareBattle').then(m => ({ default: m.NightmareBattle })));
+// Modais/interstícios que só montam sob condição (rodada 6, perf): saem do chunk de entrada.
+const EvolveTaskModal = lazy(() => import('./components/EvolveTaskModal').then(m => ({ default: m.EvolveTaskModal })));
+const EvolutionCeremony = lazy(() => import('./components/EvolutionCeremony').then(m => ({ default: m.EvolutionCeremony })));
+const DailyReportModal = lazy(() => import('./components/DailyReportModal').then(m => ({ default: m.DailyReportModal })));
+const WelcomePromptModal = lazy(() => import('./components/WelcomePromptModal').then(m => ({ default: m.WelcomePromptModal })));
+const ProtectProgressModal = lazy(() => import('./components/ProtectProgressModal').then(m => ({ default: m.ProtectProgressModal })));
+const MilestoneCeremony = lazy(() => import('./components/MilestoneCeremony').then(m => ({ default: m.MilestoneCeremony })));
+const GroveMilestoneCeremony = lazy(() => import('./components/guild/GroveMilestoneCeremony').then(m => ({ default: m.GroveMilestoneCeremony })));
+const MorningCheckIn = lazy(() => import('./components/MorningCheckIn').then(m => ({ default: m.MorningCheckIn })));
+const TriagePile = lazy(() => import('./components/TriagePile').then(m => ({ default: m.TriagePile })));
+const MorningDream = lazy(() => import('./components/MorningDream').then(m => ({ default: m.MorningDream })));
+const RestSetupModal = lazy(() => import('./components/RestSetupModal').then(m => ({ default: m.RestSetupModal })));
+const CatalogOnboardingFlow = lazy(() => import('./components/catalog/CatalogOnboardingFlow').then(m => ({ default: m.CatalogOnboardingFlow })));
+const CatalogBrowserModal = lazy(() => import('./components/catalog/CatalogBrowserModal').then(m => ({ default: m.CatalogBrowserModal })));
+const CatalogLevelInviteModal = lazy(() => import('./components/catalog/CatalogLevelInviteModal').then(m => ({ default: m.CatalogLevelInviteModal })));
 const EvolutionPath = lazy(() => import('./components/EvolutionPath').then(m => ({ default: m.EvolutionPath })));
 const CreditsModal = lazy(() => import('./components/CreditsModal').then(m => ({ default: m.CreditsModal })));
 const NewReadingModal = lazy(() => import('./components/NewReadingModal').then(m => ({ default: m.NewReadingModal })));
@@ -1235,7 +1237,7 @@ export default function App() {
       if (cancelled || !res.ok || !res.email) return;
       // O saveId é derivado do e-mail agora COMPROVADO — realinha e recarrega
       // para o estado inteiro vir da conta certa.
-      const { emailToSaveId, cloudLoad, adoptCloudSave, checarContaExcluidaNoLogin } = await import('./utils/cloudSave');
+      const { emailToSaveId, consultarContaNaNuvem, adoptCloudSave, checarContaExcluidaNoLogin } = await import('./utils/cloudSave');
       // F1 (QA rodada 2): conta com lápide não entra — o helper já deslogou e
       // gravou o aviso; o reload devolve ao portão, que o mostra.
       if (await checarContaExcluidaNoLogin(res.email)) {
@@ -1248,10 +1250,14 @@ export default function App() {
       // deixava o app apontado para um save que nunca chegou, e o próximo
       // cloud save subia o estado local antigo por cima do save do outro
       // aparelho (rodada 4, §3). Este call site tinha escapado daquele fix.
-      const existente = await cloudLoad(id);
+      const consulta = await consultarContaNaNuvem(id);
       if (cancelled) return;
-      if (existente) {
-        if (adoptCloudSave(id, existente, res.email) !== 'ok') return;
+      // QA1: "não consegui ler" NÃO é "conta nova". Trocar o `saveId` agora faria
+      // o próximo POST sobrescrever o save do outro aparelho; sem trocar, a
+      // reconciliação da próxima abertura (`reconcileSaveId`) decide com a rede.
+      if (consulta.estado === 'incerta') return;
+      if (consulta.estado === 'existente') {
+        if (adoptCloudSave(id, consulta.state, res.email) !== 'ok') return;
       } else {
         // Conta nova: o save local é que vai subir. Só troca a identidade se
         // ela realmente persistiu; senão o reload voltaria ao id antigo.
@@ -1308,18 +1314,26 @@ export default function App() {
 
   /** Passa o save local para a identidade do e-mail e sobe pra nuvem. */
   const handleProtectProgress = useCallback(async (email: string) => {
-    const { emailToSaveId, cloudLoad, cloudSave, adoptCloudSave } = await import('./utils/cloudSave');
+    const { emailToSaveId, consultarContaNaNuvem, cloudSave, adoptCloudSave } = await import('./utils/cloudSave');
     const newSaveId = await emailToSaveId(email);
 
     // Já existe um Soulmon nesse e-mail (outro aparelho): adota em vez de
     // sobrescrever — apagar o save antigo de alguém seria bem pior do que
     // perder o progresso local recente.
-    const existing = await cloudLoad(newSaveId);
-    if (existing) {
+    const consulta = await consultarContaNaNuvem(newSaveId);
+    // QA1: dúvida (rede/5xx/401) não é "conta nova" — o `cloudSave` abaixo é um
+    // `put` cego e apagaria o save do outro aparelho. Nada é alterado.
+    if (consulta.estado === 'incerta') {
+      toast.error(language === 'pt-BR'
+        ? 'Não consegui falar com a nuvem agora, então não mexi em nada. Tente de novo em instantes.'
+        : "Couldn't reach the cloud right now, so nothing was changed. Try again in a moment.");
+      return;
+    }
+    if (consulta.estado === 'existente') {
       // `adoptCloudSave` grava o SAVE antes da identidade e nunca lança: com o
       // storage cheio, trocar o id sem o dado faria o próximo cloud save subir
       // o estado local antigo por cima do save do outro aparelho.
-      if (adoptCloudSave(newSaveId, existing, email) !== 'ok') {
+      if (adoptCloudSave(newSaveId, consulta.state, email) !== 'ok') {
         toast.error(language === 'pt-BR'
           ? 'Não consegui carregar o progresso deste e-mail neste aparelho. Nada foi alterado.'
           : "Couldn't load this email's progress on this device. Nothing was changed.");
@@ -1686,6 +1700,13 @@ export default function App() {
   // sugerir algo. `lastCatalogLevelInviteDayKey` é o teto de **1 convite por
   // dia** (app inteiro, não por hábito) — checado ANTES de varrer, para não
   // fazer o trabalho à toa nem oferecer duas vezes no mesmo dia.
+  // O índice do catálogo carrega por `import()` quando há hábito vindo dele
+  // (`catalogId`); sem o índice o convite de nível não tem como existir.
+  const [catalogLoaded, setCatalogLoaded] = useState(false);
+  const temHabitoDoCatalogo = (gameState.activities ?? []).some((a: any) => !!a.catalogId);
+  useEffect(() => {
+    if (temHabitoDoCatalogo && !catalogLoaded) loadCatalog().then(() => setCatalogLoaded(true)).catch(() => {});
+  }, [temHabitoDoCatalogo, catalogLoaded]);
   const catalogLevelInviteCandidate = useMemo(
     () => pickCatalogLevelInviteCandidate(
       (gameState.activities ?? []) as any,
@@ -1693,7 +1714,7 @@ export default function App() {
       new Date(),
       (gameState as any).lastCatalogLevelInviteDayKey,
     ),
-    [gameState.activities, gameState.habitRhythms, (gameState as any).lastCatalogLevelInviteDayKey],
+    [gameState.activities, gameState.habitRhythms, (gameState as any).lastCatalogLevelInviteDayKey, catalogLoaded],
   );
 
   // F3 do catálogo de atividades (docs/PLANO-CATALOGO-ATIVIDADES.md): o
@@ -2461,6 +2482,7 @@ export default function App() {
     setEditingTask(null);
   };
 
+  const adiarConclusaoDeTarefa = useDeferredFlush(3000);
   // Handle toggling task completion
   const handleToggleTask = (taskId: string) => {
     const task = gameState.tasks.find(t => t.id === taskId);
@@ -2534,7 +2556,11 @@ export default function App() {
       // (O ramo antigo de "estágio inicial dá energia em vez de comida" saiu:
       // a árvore do Soulmon não tem mais ovo/baby, então getStageLevel nunca
       // devolvia esses níveis e o ramo era inalcançável.)
-      setTimeout(() => {
+      // `adiarConclusaoDeTarefa` = `setTimeout` de 3 s que TAMBÉM roda na hora se
+      // a aba for escondida / a página descarregada: com o timer solto, fechar o
+      // app nesses 3 s deixava a tarefa marcada sem nunca pagar comida nem Vínculo
+      // (e a virada do dia a reabria).
+      adiarConclusaoDeTarefa(() => {
         let concluiu = false;
         setGameState(prev => {
           const feito = completeTask(prev, taskId) ?? prev;
@@ -2573,7 +2599,7 @@ export default function App() {
           falar(assombrada ? 'haunted' : rolledRareCheer(Math.random()) ? 'rare' : 'task');
           marcarGestoDoDia('task');
         });
-      }, 3000);
+      });
     }
   };
 
@@ -3645,6 +3671,8 @@ export default function App() {
     // Confere o perfil ANTES de cobrar — cobrar e depois falhar seria roubo.
     if (!saved) return false;
     const leituras = Number(saved.readings ?? 0) + 1;
+    // `newReading.ts` puxa as perguntas do Oráculo (copy longa): só carrega aqui.
+    const { readingSeed } = await import('./utils/newReading');
     const newSeed = readingSeed(novasRespostas, leituras);
     saved.answers = novasRespostas;
     // GERA ANTES DE COBRAR. Conferir só a existência do perfil não bastava: um
@@ -3661,7 +3689,7 @@ export default function App() {
         const { generateOracleComplete } = await import('./utils/soulProfile');
         result = (await generateOracleComplete(saved, newSeed)).result;
       } else {
-        const { generateOracleAsync } = await import('./utils/oracle');
+        const { generateOracleAsync } = await import('./utils/oracle/gerar');
         result = await generateOracleAsync(saved, newSeed);
       }
     } catch {
@@ -3720,6 +3748,9 @@ export default function App() {
    */
   const handleRebirth = useCallback(async (choices: RebirthChoices): Promise<boolean> => {
     if (!canRebirth(gameState)) return false;
+    // Opções de escola/elemento, `applyRebirth` e a herança vivem em `rebirth.ts`
+    // (puxa o class-system) — só carregam aqui, no momento de renascer.
+    const { applyRebirth, rebirthEscolaOptions, rebirthElementOptions, herancaDoCiclo } = await import('./utils/rebirth');
     const saved = readJson<(OracleInput & { seed: number }) | null>(
       STORAGE_KEYS.SOULMON_PROFILE, null);
     if (!saved) return false;
@@ -3751,7 +3782,7 @@ export default function App() {
         const { generateOracleComplete } = await import('./utils/soulProfile');
         result = (await generateOracleComplete(comEscolhas, novaSeed)).result;
       } else {
-        const { generateOracleAsync } = await import('./utils/oracle');
+        const { generateOracleAsync } = await import('./utils/oracle/gerar');
         result = await generateOracleAsync(comEscolhas, novaSeed);
       }
     } catch {
@@ -4108,9 +4139,13 @@ export default function App() {
     // Dia do JOGADOR: `moodLog` mora no save, e com o dia do aparelho o mesmo
     // dia rendia DUAS entradas em fusos diferentes (ver `utils/mood.ts`).
     const today = playerDayKey(new Date(), gameState.playerDayTz);
+    // A missão é "em 3 DIAS": só a PRIMEIRA resposta do dia conta. Responder de
+    // novo SUBSTITUI o humor (`recordMood`) e antes somava de novo — três toques
+    // no mesmo dia fechavam a missão semanal.
+    const primeiraDoDia = moodFor(gameState.moodLog, today) === null;
     setGameState(prev => ({ ...prev, moodLog: recordMood(prev.moodLog, today, mood) }));
-    contarMissao('mood-checkins');
-  }, [gameState.playerDayTz]);
+    if (primeiraDoDia) contarMissao('mood-checkins');
+  }, [gameState.moodLog, gameState.playerDayTz]);
 
   /**
    * A AVENTURA DA NOITE (`utils/adventure.ts`, `docs/PLANO-TAREFAS.md` §2.4).
@@ -4149,8 +4184,13 @@ export default function App() {
     if (trv) {
       // A noite se assenta ao ABRIR o relatório (efeito abaixo); a tela já
       // mostra o estado assentado para não piscar o achado comum antes.
-      const settled = showDailyReport ? trv.settleNight(c, r.date).state : c;
-      return trv.passeioFindOfDay({ crossings: settled, entries, feito: r.done, meta: r.required, dayKey: r.date });
+      // O MAPA conta os dias em `AAAA-MM-DD` (o `markDone` da folha grava
+      // `playerDayIso`); a `date` do relatório é `toDateString`. Sem converter,
+      // a região aberta pela noite era descartada no load seguinte e a viagem
+      // da noite nunca casava.
+      const diaMapa = dayKeyToIso(r.date) ?? r.date;
+      const settled = showDailyReport ? trv.settleNight(c, diaMapa).state : c;
+      return trv.passeioFindOfDay({ crossings: settled, entries, feito: r.done, meta: r.required, dayKey: r.date, crossDay: diaMapa });
     }
     // Mapa tocado e catálogo ainda chegando: espera um instante em vez de
     // mostrar um achado que vai trocar.
@@ -4182,13 +4222,14 @@ export default function App() {
     const r = gameState.lastDayReport;
     if (!showDailyReport || !r || !aventuraDaNoite) return;
     const dia = r.date;
+    const diaMapa = dayKeyToIso(dia) ?? dia; // o mapa usa AAAA-MM-DD (ver `aventuraDaNoite`)
     setGameState(prev => {
       const c0 = prev.crossings ?? CROSSINGS_EMPTY;
       if (!trv && crossingsTouchMap(c0)) return prev;
-      const c1 = trv ? trv.settleNight(c0, dia).state : c0;
+      const c1 = trv ? trv.settleNight(c0, diaMapa).state : c0;
       const diario = prev.adventures ?? [];
       const achado = trv
-        ? trv.passeioFindOfDay({ crossings: c1, entries: diario, feito: r.done, meta: r.required, dayKey: dia })
+        ? trv.passeioFindOfDay({ crossings: c1, entries: diario, feito: r.done, meta: r.required, dayKey: dia, crossDay: diaMapa })
         : adventureOfNight(diario, r.done, r.required, dia);
       const novoDiario = collectAdventure(diario, achado.id, dia);
       const diarioMudou = novoDiario.length !== diario.length;
@@ -4410,17 +4451,23 @@ export default function App() {
          `awardBondXP` não é. */
       setGameState(prev => {
         const rest = prev.rest ?? createRestState();
-        const chaveDaNoite = playerDayKey(now, prev.playerDayTz);
-        const jaRegistrada = rest.nights.some(n => n.date === chaveDaNoite);
+        // O ledger do Vínculo é do DIA de hoje; a pergunta "esta noite já foi
+        // registrada?" é pela MANHÃ da noite (`nightAlreadyRecorded`). Comparar
+        // `nights` com o dia de hoje fazia a manhã de ontem (que tem a data de
+        // hoje) travar o XP de toda noite depois da primeira.
+        const chaveDoDia = playerDayKey(now, prev.playerDayTz);
+        const jaRegistrada = nightAlreadyRecorded(rest, now);
         const comNoite = { ...prev, rest: recordNight(rest, now) };
         return !jaRegistrada && isWithinWindow(rest.window, now)
-          ? awardBondXP(comNoite, { kind: 'restNight' }, chaveDaNoite)
+          ? awardBondXP(comNoite, { kind: 'restNight' }, chaveDoDia)
           : comNoite;
       });
       // Conta a noite só quando o deitar caiu DENTRO da janela escolhida: a
       // missão premia o comportamento, exatamente como a Janela de Descanso —
       // contar toda noite pagaria por ir dormir, não por ir no horário.
-      if (isWithinWindow((gameState.rest ?? createRestState()).window, now)) contarMissao('rest-nights');
+      // Uma vez por NOITE: deitar de novo na mesma noite não soma outra.
+      const restAntes = gameState.rest ?? createRestState();
+      if (isWithinWindow(restAntes.window, now) && !nightAlreadyRecorded(restAntes, now)) contarMissao('rest-nights');
       return;
     }
     const startedIso = readLocal(STORAGE_KEYS.SLEEP_STARTED_AT);
@@ -4553,7 +4600,7 @@ export default function App() {
    * uma recompensa que insiste vira cobrança. `markFought` é idempotente por
    * dayKey, então o StrictMode (que roda o updater 2×) não duplica nada.
    */
-  const closeNightmare = useCallback(() => {
+  const markNightmareFought = useCallback(() => {
     // A âncora sai de DENTRO do updater: `prev.rest` é o estado corrente, e
     // carimbar com uma âncora capturada por fechamento seria gravar um nome de
     // dia que o portão (`hasPendingNightmare`, que lê `rest.playerDayTz`)
@@ -4565,8 +4612,11 @@ export default function App() {
         nightmareDayKey(new Date(), prev.rest?.playerDayTz),
       ),
     }));
-    setNightmareOpen(false);
   }, [setGameState]);
+  const closeNightmare = useCallback(() => {
+    markNightmareFought();
+    setNightmareOpen(false);
+  }, [markNightmareFought]);
 
   /**
    * Vitória: energia (teto do estágio), meio coração no máximo (teto de
@@ -4797,7 +4847,9 @@ export default function App() {
     // sem som ate a decisao de vinculo sobre C-4 fechar (as saidas em aberto sao
     // "variacao do motivo de presenca" ou "nenhum som"); a recusa por teto
     // continua distinguivel pela fala do pet, que e o canal real (R-34).
-    contarMissao('rub-days');
+    // "em 4 DIAS": só a primeira cura do dia conta (o teto diário concede 2–3
+    // pedaços de carinho, e cada um somava um "dia").
+    if (rubHealFor(gameState.careCaps, today).healed <= 0) contarMissao('rub-days');
     if (!rubFalouRef.current) {
       rubFalouRef.current = true;
       falar('rub');
@@ -4883,10 +4935,9 @@ export default function App() {
        renderizava "onboarding completo + tutorial pendente" e o tutorial
        antigo ("crie sua 1ª tarefa") piscava — e ficava, se a pessoa fechasse
        o app ali ou se a adoção de um save da nuvem recarregasse a página. */
-    const catalogItems = (data.catalogChoice?.itemIds ?? [])
-      .map(id => ACTIVITY_CATALOG.find(c => c.id === id))
-      .filter((c): c is NonNullable<typeof c> => !!c);
-    if (catalogItems.length > 0) {
+    // Os ids vêm da própria UI do catálogo; a marca NÃO espera o carregamento
+    // (o catálogo é `import()`) — resolver os itens fica para mais abaixo.
+    if ((data.catalogChoice?.itemIds?.length ?? 0) > 0) {
       writeFlag(STORAGE_KEYS.TUTORIAL_COMPLETE, true, { silent: true });
       setHasCompletedTutorial(true);
     }
@@ -4905,7 +4956,7 @@ export default function App() {
     } else {
       // O e-mail vira a identidade de sync — mesmo mecanismo do login manual em
       // Configurações (saveId = hash do e-mail).
-      const { emailToSaveId, cloudLoad, adoptCloudSave } = await import('./utils/cloudSave');
+      const { emailToSaveId, consultarContaNaNuvem, adoptCloudSave } = await import('./utils/cloudSave');
       const newSaveId = await emailToSaveId(normalizedEmail);
       writeLocal(STORAGE_KEYS.USER_EMAIL, normalizedEmail);
 
@@ -4913,17 +4964,23 @@ export default function App() {
       // aparelho) — adota o save existente em vez de sobrescrever com uma
       // criatura nova. Precisa de reload: o gameState inteiro muda de baixo do
       // GameStateProvider, o que setGameState não faz de forma segura.
-      const existing = await cloudLoad(newSaveId);
+      const consulta = await consultarContaNaNuvem(newSaveId);
       // Só recarrega se o save da nuvem REALMENTE ficou gravado. Falhou =
       // segue o ritual normal com o progresso local, em vez de recarregar num
       // id que não tem dado nenhum por trás.
-      if (existing && adoptCloudSave(newSaveId, existing, normalizedEmail) === 'ok') {
+      if (consulta.estado === 'existente' && adoptCloudSave(newSaveId, consulta.state, normalizedEmail) === 'ok') {
         window.location.reload();
         return;
       }
 
-      writeLocal(STORAGE_KEYS.SAVE_ID, newSaveId);
-      setSaveId(newSaveId);
+      // QA1: com a nuvem INCERTA (rede/5xx/401) o `saveId` NÃO troca. Apontar
+      // para o id derivado agora faria o próximo POST (put cego) sobrescrever o
+      // save que talvez exista lá; com o e-mail gravado, `reconcileSaveId` na
+      // próxima abertura resolve com a rede de volta (adota ou migra).
+      if (consulta.estado !== 'incerta') {
+        writeLocal(STORAGE_KEYS.SAVE_ID, newSaveId);
+        setSaveId(newSaveId);
+      }
     }
 
     const newActivitiesBase: Activity[] = data.initialActivities.map((item, i) => ({
@@ -4942,6 +4999,11 @@ export default function App() {
        mesma pergunta duas vezes. Com ≥1 atividade a home já não nasce vazia,
        então o tutorial de "crie sua 1ª tarefa" também não abre (a pergunta
        aberta de objetivo dele seria a terceira cópia da mesma pergunta). */
+    // O onboarding já puxou o catálogo (mesmo chunk): a promessa resolve no mesmo tick.
+    const catalogById = (data.catalogChoice?.itemIds?.length ?? 0) > 0 ? await loadCatalog() : {};
+    const catalogItems = (data.catalogChoice?.itemIds ?? [])
+      .map(id => catalogById[id])
+      .filter((c): c is NonNullable<typeof c> => !!c);
     const catalogActivities = activitiesFromCatalogChoice(catalogItems, language === 'pt-BR') as unknown as Activity[];
     const newActivities: Activity[] = [...newActivitiesBase, ...catalogActivities];
     // 01/10/2026 — o perfil do onboarding (forças + o que atrapalha) entra no
@@ -5663,12 +5725,14 @@ export default function App() {
             abertura. Quem decide agora é a fila, e o gate é REATIVO — quando
             o último intersticial fecha, o pedido aparece sozinho. */}
         {protectPrompt && interstitial === 'welcome' && (
-          <ProtectProgressModal
+          <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+            <ProtectProgressModal
             language={language}
             reason={protectPrompt}
             onDismiss={dismissProtectPrompt}
             onConfirm={handleProtectProgress}
           />
+          </Suspense>
         )}
 
         {/* Help Modal */}
@@ -5725,7 +5789,8 @@ export default function App() {
             propósito (z-300): ela não pede nada além do gesto e não pode
             esperar a vez — comemorar depois não é comemorar. */}
         {milestoneCeremony && (
-          <MilestoneCeremony
+          <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+            <MilestoneCeremony
             tier={milestoneCeremony.tier}
             habitName={milestoneCeremony.habitName}
             text={milestoneCeremony.text}
@@ -5735,6 +5800,7 @@ export default function App() {
             language={language}
             onDone={() => setMilestoneCeremony(null)}
           />
+          </Suspense>
         )}
 
         {rebirthOpen && (
@@ -6621,13 +6687,18 @@ export default function App() {
                 return true;
               }}
               onLoginWithEmail={async (email) => {
-                const { emailToSaveId, cloudLoad, cloudSave, adoptCloudSave, checarContaExcluidaNoLogin } = await import('./utils/cloudSave');
+                const { emailToSaveId, consultarContaNaNuvem, cloudSave, adoptCloudSave, checarContaExcluidaNoLogin } = await import('./utils/cloudSave');
                 // F1 (QA rodada 2): e-mail com lápide não vira identidade —
                 // lançar cai no estado de erro do SettingsPage.
                 if (await checarContaExcluidaNoLogin(email)) throw new Error('account-deleted');
                 const id = await emailToSaveId(email);
-                const state = await cloudLoad(id);
-                if (state) {
+                const consulta = await consultarContaNaNuvem(id);
+                // QA1: dúvida não é "primeiro login" — o `cloudSave` do ramo
+                // `else` é um put cego e apagaria o save do outro aparelho.
+                // Lançar cai no estado de erro do SettingsPage; nada foi tocado.
+                if (consulta.estado === 'incerta') throw new Error('cloud-unreachable');
+                const state = consulta.estado === 'existente' ? consulta.state : null;
+                if (consulta.estado === 'existente') {
                   // Existing account on this email — adopt its cloud progress.
                   // Dado primeiro, identidade depois: trocar o `saveId` sem o
                   // save gravado faz o próximo cloud save subir o estado LOCAL
@@ -6645,7 +6716,7 @@ export default function App() {
                   await cloudSave(id, gameState);
                 }
                 window.location.reload();
-                return state ? 'loaded' : 'created';
+                return consulta.estado === 'existente' ? 'loaded' : 'created';
               }}
             /></Suspense>
           )}
@@ -6809,7 +6880,8 @@ export default function App() {
         </Suspense>
       )}
 
-      <CatalogBrowserModal
+      <Suspense fallback={null}>
+        <CatalogBrowserModal
         isOpen={catalogBrowserOpen}
         onClose={() => setCatalogBrowserOpen(false)}
         language={language}
@@ -6819,6 +6891,7 @@ export default function App() {
         }}
         onCreateFromScratch={() => { setCatalogBrowserOpen(false); setCreateModalOpen(true); }}
       />
+      </Suspense>
 
       {createModalOpen && (
         <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}><CreateModal
@@ -6904,7 +6977,8 @@ export default function App() {
       />
 
       {evolutionCeremony && (
-        <EvolutionCeremony
+        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+          <EvolutionCeremony
           fromStage={evolutionCeremony.from}
           toStage={evolutionCeremony.to}
           toName={getStageNameById(evolutionCeremony.to)}
@@ -6916,6 +6990,7 @@ export default function App() {
           onEvolved={handleEvolve}
           onClose={() => setEvolutionCeremony(null)}
         />
+        </Suspense>
       )}
 
       {/* O sheet das três saídas da tarefa adiada. Vive aqui em cima e não
@@ -6938,7 +7013,8 @@ export default function App() {
           seguinte cobra requisito, na ordem emocionalmente invertida. O gate
           é reativo: quando a cerimônia fecha, o modal aparece se ainda fizer
           sentido. */}
-      <EvolveTaskModal
+      <Suspense fallback={null}>
+        <EvolveTaskModal
         isOpen={evolveModalStage !== null && evolutionCeremony === null}
         onClose={() => setEvolveModalStage(null)}
         onCreateTask={() => { setEvolveModalStage(null); setCreateModalOpen(true); }}
@@ -6951,6 +7027,7 @@ export default function App() {
         stageName={evolveModalStage ? getStageNameById(evolveModalStage) : ''}
         language={language}
       />
+      </Suspense>
 
       {/* Notification Manager */}
       <NotificationManager
@@ -6990,7 +7067,8 @@ export default function App() {
       />
       {/* Ordem da fila em `interstitial` (perto do topo do componente). */}
       {interstitial === 'dailyReport' && gameState.lastDayReport && (
-        <DailyReportModal
+        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+          <DailyReportModal
           report={gameState.lastDayReport}
           adventure={aventuraDaNoite}
           adventureIsNew={aventuraInedita}
@@ -7052,11 +7130,13 @@ export default function App() {
           spriteUrl={displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? getSpriteForStage(gameState.evolutionStage, petLine)}
           onDismissOffer={() => setGameState(prev => ({ ...prev, offerDismissed: true }))}
         />
+        </Suspense>
       )}
       {/* CHECK-IN MATINAL — o ritual de ≤20s. Só um por dia e pulável sem
           culpa. Posição na fila: depois do relatório diário. */}
       {interstitial === 'checkIn' && checkInPlanData && (
-        <MorningCheckIn
+        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+          <MorningCheckIn
           open
           plan={checkInPlanData}
           /* WP2.5 — `soulStruggle` era escrito no onboarding e NUNCA lido em
@@ -7078,13 +7158,15 @@ export default function App() {
           onConfirm={handleCheckInConfirm}
           onSkip={handleCheckInSkip}
         />
+        </Suspense>
       )}
 
       {/* MARCO DO BOSQUE — a irmã da cerimônia de hábito: espera o gesto, z 300,
           movimento reduzido reduz o movimento e NUNCA a pausa. Posição na fila:
           depois de relatório e check-in, antes do sonho. Uma vez por estágio novo. */}
       {interstitial === 'groveMilestone' && grovePendente && grove?.pending && (
-        <GroveMilestoneCeremony
+        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+          <GroveMilestoneCeremony
           stage={grovePendente}
           spriteUrl={minhaCriaturaUrl}
           dateLabel={formatDayLabel(grove.pending.day, language)}
@@ -7092,12 +7174,14 @@ export default function App() {
           language={language}
           onDone={acknowledgeGroveMilestone}
         />
+        </Suspense>
       )}
 
       {/* ARRUMAR A PILHA — fila de cartas com quatro saídas grandes. Topo da
           fila de intersticiais: é a única aberta por toque do usuário. */}
       {interstitial === 'triage' && triageTasks && (
-        <TriagePile
+        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+          <TriagePile
           open
           tasks={triageTasks}
           language={language}
@@ -7106,22 +7190,26 @@ export default function App() {
           onResolve={handleTriageResolve}
           onClose={() => setTriageTasks(null)}
         />
+        </Suspense>
       )}
 
       {/* G8 — o convite do sono (sono automático + janela), uma vez só. */}
       {interstitial === 'restSetup' && (
-        <RestSetupModal
+        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+          <RestSetupModal
           language={language}
           now={new Date()}
           window={(gameState.rest ?? createRestState()).window}
           onChangeWindow={handleChangeRestWindow}
           onClose={closeRestSetup}
         />
+        </Suspense>
       )}
 
       {/* O SONHO DA MANHÃ — recompensa, nunca veredito. Só de manhã. */}
       {interstitial === 'dream' && morningDream && (
-        <MorningDream
+        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+          <MorningDream
           open
           dream={morningDream.dream}
           isNew={morningDream.isNew}
@@ -7140,12 +7228,14 @@ export default function App() {
               : {};
           })()}
         />
+        </Suspense>
       )}
 
       {/* O PESADELO DA MANHÃ — a face jogável da mesma noite do sonho. Entra
           DEPOIS dele (posição na fila), e nunca à noite. Perder não custa nada,
           e a tela diz isso. */}
       {interstitial === 'nightmare' && (
+        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
         <NightmareBattle
           open
           wave={nightmareWave}
@@ -7155,9 +7245,14 @@ export default function App() {
           petElement={gameState.soulmonMeta?.dominantElement}
           language={language}
           onWin={handleNightmareWin}
-          onLose={closeNightmare}
+          /* Derrota SÓ grava a noite como lutada: fechar aqui desmontava o modal
+             no mesmo instante e a tela "O sonho passou — e você acorda bem" (a
+             que diz que perder não custou nada) nunca aparecia. Quem fecha é o
+             "Bom dia" (`onClose`). */
+          onLose={markNightmareFought}
           onClose={closeNightmare}
         />
+        </Suspense>
       )}
 
       {/* ÚLTIMO da fila: ele mesmo decide se tem algo a pedir (instalar a PWA /
@@ -7169,21 +7264,27 @@ export default function App() {
           adiável é mais barato que dois diálogos empilhados com dois
           focus-traps. */}
       {interstitial === 'catalogOnboarding' && (
-        <CatalogOnboardingFlow
+        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+          <CatalogOnboardingFlow
           language={language}
-          onComplete={(chosen) => setGameState(prev => {
-            const withFlag = markCatalogOnboardingSeen(prev as any, new Date()) as any;
-            return {
-              ...withFlag,
-              // ACRESCENTA, nunca substitui — nenhuma atividade existente é
-              // tocada (decisão do dono, 28/09/2026).
-              activities: [...(prev.activities ?? []), ...activitiesFromCatalogChoice(chosen, language === 'pt-BR')],
-            };
-          })}
+          onComplete={(chosen) => {
+            // ACRESCENTA, nunca substitui — nenhuma atividade existente é
+            // tocada (decisão do dono, 28/09/2026). Mas pelo PORTÃO de criação
+            // (D-12): escrever em `activities` por fora furava o teto do demo e
+            // o do estágio (o tutorial já pode ter enchido a lista), sem contar
+            // `activity_create`. Mesmo caminho do catálogo avulso (`create_modal`).
+            commitHabitCreate(
+              activitiesFromCatalogChoice(chosen, language === 'pt-BR'),
+              TELEMETRY_CREATE_PATH.create_modal,
+            );
+            setGameState(prev => markCatalogOnboardingSeen(prev as any, new Date()) as any);
+          }}
         />
+        </Suspense>
       )}
       {interstitial === 'catalogLevelInvite' && catalogLevelInviteCandidate && (
-        <CatalogLevelInviteModal
+        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+          <CatalogLevelInviteModal
           isOpen
           direction={catalogLevelInviteCandidate.suggestion === 'up' ? 'up' : 'down'}
           itemName={language === 'pt-BR' ? catalogLevelInviteCandidate.item.name.pt : catalogLevelInviteCandidate.item.name.en}
@@ -7219,9 +7320,11 @@ export default function App() {
             } as any;
           })}
         />
+        </Suspense>
       )}
       {interstitial === 'welcome' && (
-        <WelcomePromptModal
+        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+          <WelcomePromptModal
           language={language}
           notificationsEnabled={notificationsEnabled}
           /* CONDIÇÃO DE ENTRADA do pedido de notificação — ver a fila de
@@ -7230,6 +7333,7 @@ export default function App() {
           notificationsUnlocked={jaConcluiuAlgo}
           onEnableNotifications={handleToggleNotifications}
         />
+        </Suspense>
       )}
       <Toaster richColors position="top-right" />
     </div>
