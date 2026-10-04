@@ -111,7 +111,7 @@ describe('QuickAddBar — ajuda e idioma', () => {
     // Uma legenda de tokens sempre visível faz uma caixa de texto simples
     // parecer uma interface que exige estudo.
     abrir();
-    expect((screen.getByText('Atalhos').closest('button'))!.getAttribute('aria-expanded')).toBe('false');
+    expect(screen.getByRole('button', { name: 'Atalhos' }).getAttribute('aria-expanded')).toBe('false');
   });
 
   it('fala os dois idiomas', () => {
@@ -120,6 +120,6 @@ describe('QuickAddBar — ajuda e idioma', () => {
     cleanup();
     abrir(true, 'en-US');
     expect(screen.getByPlaceholderText('Capture in one line…')).toBeTruthy();
-    expect(screen.getByText('Shortcuts')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Shortcuts' })).toBeTruthy();
   });
 });

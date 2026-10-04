@@ -25,7 +25,8 @@
 import { useMemo, useState } from 'react';
 import { parseQuickAdd, quickAddHint, type QuickAddResult } from '../utils/quickAdd';
 import { Icon } from './ui/Icon';
-import { Field, sm2Hint, sm2Text } from './form/FormKit';
+import { InfoTip } from './ui/InfoTip';
+import { Field, sm2Text } from './form/FormKit';
 import { sm2Tag } from './TaskMeta';
 import type { Language } from '../utils/i18n';
 
@@ -40,7 +41,6 @@ export function QuickAddBar({ language, onCommit }: QuickAddBarProps) {
   const isPt = language === 'pt-BR';
   const [texto, setTexto] = useState('');
   const [recusado, setRecusado] = useState(false);
-  const [ajudaAberta, setAjudaAberta] = useState(false);
 
   // `now` entra por parâmetro porque o parser é puro de propósito: data
   // relativa com relógio próprio é intestável e vira bug de fuso na virada.
@@ -144,29 +144,13 @@ export function QuickAddBar({ language, onCommit }: QuickAddBarProps) {
           permanente de tokens transforma uma caixa de texto simples numa
           interface que parece exigir estudo. O texto vem de `quickAddHint`,
           que já é o dono dessa frase no `CreateModal` — duas listas de atalhos
-          divergiriam em silêncio na primeira mudança do parser. */}
-      <button
-        type="button"
-        onClick={() => setAjudaAberta(a => !a)}
-        aria-expanded={ajudaAberta}
-        style={{
-          ...sm2Hint, marginTop: 2, background: 'none', border: 'none',
-          // 44 px de altura de TOQUE (WCAG 2.2 AA 2.5.8 e a régua do resto do
-          // app). Com `padding: 0` este era o único alvo abaixo da linha na
-          // tela inicial: 20 px de altura, medido no aparelho de 375 px. O
-          // `marginTop` desceu de 6 para 2 e o `padding` vertical compensa, de
-          // modo que a POSIÇÃO do texto na tela não muda — só a área que
-          // recebe o dedo.
-          padding: '10px 8px 10px 0', minHeight: 44,
-          cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
-        }}
-      >
-        <Icon name={ajudaAberta ? 'expand_less' : 'expand_more'} size={20} tone="muted" />
-        {isPt ? 'Atalhos' : 'Shortcuts'}
-      </button>
-      {ajudaAberta && (
-        <p style={{ ...sm2Hint, marginTop: 6 }}>{quickAddHint(isPt ? 'pt-BR' : 'en')}</p>
-      )}
+          divergiriam em silêncio na primeira mudança do parser.
+          I13 (02/10/2026): o disclosure "Atalhos ▾" virou o `InfoTip` padrão. */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <InfoTip language={language} label={isPt ? 'Atalhos' : 'Shortcuts'} align="right">
+          {quickAddHint(isPt ? 'pt-BR' : 'en')}
+        </InfoTip>
+      </div>
     </div>
   );
 }

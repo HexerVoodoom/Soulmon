@@ -4,6 +4,7 @@ import { useItemForm, todayIso } from '../hooks/useItemForm';
 import type { Language } from '../utils/i18n';
 import type { Effort } from '../types/taskModel';
 import { CategoryChips, EffortFields, StepsFields } from './CreateModal';
+import { InfoTip } from './ui/InfoTip';
 import { CheckRow, Field, ModalSheet, Segment, sm2Button, sm2Hint, sm2Label } from './form/FormKit';
 
 interface TaskEditModalProps {
@@ -158,7 +159,9 @@ export function TaskEditModal({
           <Field type="date" value={startDate} aria-label={txt.when}
             onChange={(e) => setStartDate(e.target.value)} />
         )}
-        <p style={sm2Hint}>{txt.whenHint}</p>
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <InfoTip language={language} label={isPt ? 'Sobre o "quando"' : 'About the "when"'} align="right" style={{ minHeight: 28 }}>{txt.whenHint}</InfoTip>
+        </div>
       </div>
 
       <div>
