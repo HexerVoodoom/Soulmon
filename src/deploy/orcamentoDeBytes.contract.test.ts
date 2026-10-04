@@ -89,8 +89,16 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // `TypewriterText`/`NpcSpeech`, `BitsIcon`, convite do descanso com fallback.
   // Crescimento JUSTIFICADO, não perdoado — candidatos a pagar: `BattleStage` e
   // `ShopItemSheet` como `import()` (só carregam ao lutar/abrir a loja).
-  'index.js': 759_120,
-  'index.css': 153_795,          // 150 KB — 1,5× o teto
+  // Re-medido em 04/10/2026: 759_120 → 893_158 (+134 KB). Rodada 6 dos ajustes do
+  // dono: combate v2 (`BattleStage`, `PveMechanics`, `usePveBattle`, `energia`,
+  // `combatFx`, mascote), missões diárias + 21 historinhas (`travessiasViagens`),
+  // varredura do "?" (~55 textos viraram `InfoTip` — o texto continua no bundle),
+  // `NpcSpeech`/`ShopItemSheet`. Crescimento JUSTIFICADO, não perdoado — e GRANDE:
+  // próxima tarefa é pagar com `import()` (`BattleStage`+`PveMechanics`+`usePveBattle`
+  // só ao lutar, `travessiasViagens` só ao abrir o relatório, `ShopItemSheet`).
+  'index.js': 893_158,
+  // 04/10/2026: 153_795 → 164_043 (+10 KB) — keyframes da cena de combate, sheets animados, mascote.
+  'index.css': 164_043,          // 150 KB — 1,5× o teto
   'evolution-bg.mp4': 3_917_240, // 3,7 MB — fundo de UMA cerimônia; correção #3 (WebM/CSS)
   'intro.mp4': 2_524_939,        // 2,4 MB — vídeo da intro
 };
