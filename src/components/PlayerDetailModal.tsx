@@ -25,7 +25,6 @@ import { ATTR_LABEL } from '../types/attributes';
 import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
 import { Viewport } from './ui/Viewport';
 import { RitualDialog } from './ritual/RitualKit';
-import { sm2Button } from './form/FormKit';
 import type { DirectoryPlayer } from '../utils/community';
 import type { Language } from '../utils/i18n';
 
@@ -54,7 +53,6 @@ export function PlayerDetailModal({ player, language, onClose }: PlayerDetailMod
       onClose={onClose}
       labelledBy="sm2-player-title"
       closeLabel={isPt ? 'Fechar' : 'Close'}
-      closeLast
       maxWidth={340}
     >
       <h2
@@ -139,10 +137,6 @@ export function PlayerDetailModal({ player, language, onClose }: PlayerDetailMod
           </p>
         )}
       </div>
-
-      <button type="button" onClick={onClose} style={{ ...sm2Button('outline'), width: '100%' }}>
-        {isPt ? 'Fechar' : 'Close'}
-      </button>
     </RitualDialog>
   );
 }

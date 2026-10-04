@@ -171,7 +171,7 @@ export function TriagePile({ open, tasks, language, onResolve, onClose, petSprit
         {current ? (
           <TriageCard task={current} now={now} isPt={isPt} onAction={handle} />
         ) : (
-          <TriageDone isPt={isPt} decided={doneCount} onClose={onClose} petSprite={petSprite} />
+          <TriageDone isPt={isPt} decided={doneCount} petSprite={petSprite} />
         )}
       </div>
     </ModalSheet>
@@ -255,7 +255,7 @@ function TriageCard({
   );
 }
 
-function TriageDone({ isPt, decided, onClose, petSprite }: { isPt: boolean; decided: number; onClose: () => void; petSprite?: string }) {
+function TriageDone({ isPt, decided, petSprite }: { isPt: boolean; decided: number; petSprite?: string }) {
   const nothingToDo = decided === 0;
   return (
     <div style={{ ...card, alignItems: 'center', textAlign: 'center', padding: '24px 12px' }}>
@@ -286,14 +286,7 @@ function TriageDone({ isPt, decided, onClose, petSprite }: { isPt: boolean; deci
             ? `Você decidiu ${decided} ${decided === 1 ? 'coisa' : 'coisas'}. Decidir o que NÃO fazer é planejamento de verdade — e é isso que tira o peso da cabeça, não a lista vazia.`
             : `You decided on ${decided} ${decided === 1 ? 'item' : 'items'}. Deciding what NOT to do is real planning — and that's what lifts the weight, not an empty list.`}
       </p>
-      {/* O único `primary` da folha: há UMA ação. */}
-      <button
-        type="button"
-        onClick={onClose}
-        style={{ ...sm2Button('primary'), width: '100%', marginTop: 8 }}
-      >
-        {isPt ? 'Voltar' : 'Back'}
-      </button>
+      {/* I3: sem botão "Voltar" no pé — o ✕ do topo da folha (`ModalSheet`) fecha. */}
     </div>
   );
 }

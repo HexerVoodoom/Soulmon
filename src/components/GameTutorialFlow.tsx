@@ -1,5 +1,6 @@
 import { useMemo, useState, type CSSProperties } from 'react';
 import { Icon } from './ui/Icon';
+import { BackArrow } from './ui/BackArrow';
 import { Viewport } from './ui/Viewport';
 import { Chip, sm2Button, sm2Hint, sm2Label, sm2Text, sm2TitleStyle } from './form/FormKit';
 import type { Language } from '../utils/i18n';
@@ -357,14 +358,8 @@ export function GameTutorialFlow({
           <>
             {dots}
             {/* Passo obrigatório: criar a 1ª tarefa */}
-            <button
-              type="button"
-              onClick={() => setStep(TASK_STEP - 1)}
-              style={{ ...sm2Button('quiet', false, 'sm'), alignSelf: 'flex-start', padding: '0 8px' }}
-            >
-              <Icon name="arrow_back" size={20} />
-              {isPt ? 'Voltar' : 'Back'}
-            </button>
+            {/* I3: voltar = seta no canto superior ESQUERDO, acima do título. */}
+            <BackArrow onClick={() => setStep(TASK_STEP - 1)} language={isPt ? 'pt-BR' : 'en-US'} />
             <h2 className="sm2-title" style={sm2TitleStyle}>
               {isPt ? 'Qual é o seu objetivo?' : "What's your goal?"}
             </h2>

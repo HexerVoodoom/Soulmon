@@ -1463,14 +1463,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
            `null` — meio segundo de tela branca; agora é o esqueleto do visor. */
         <Suspense fallback={<ScreenSkeleton language={isPt ? 'pt-BR' : 'en-US'} />}>
           <div style={{ width: '100%', maxWidth: 440, padding: '20px 20px 40px' }}>
-            <button
-              type="button"
-              style={{ ...sm2Button('outline'), marginBottom: 12 }}
-              onClick={() => setOracleDebugOpen(false)}
-            >
-              <Icon name="arrow_back" size={20} />
-              {isPt ? 'Fechar' : 'Close'}
-            </button>
+            {/* I3: ferramenta de dev — fechar = ✕ no topo ESQUERDO, acima do título. */}
+            <BackArrow icon="close" onClick={() => setOracleDebugOpen(false)} language={isPt ? 'pt-BR' : 'en-US'} />
             <OraclePage language={isPt ? 'pt-BR' : 'en-US'} initialDebugMode />
           </div>
         </Suspense>

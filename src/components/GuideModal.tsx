@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { Icon } from './ui/Icon';
-import { ModalSheet, sm2Button, sm2Hint } from './form/FormKit';
+import { ModalSheet, sm2Hint } from './form/FormKit';
 import { FOOD_LIMIT_PER_HOUR } from '../utils/careRules';
 import type { Language } from '../utils/i18n';
 import { FORM_REQUIREMENTS, ULTRA_PATIENCE_DAYS } from '../types/progression';
@@ -349,11 +349,6 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
       language={language}
       title={L('Guia', 'Guide')}
       maxWidth={520}
-      footer={
-        <button type="button" onClick={onClose} style={{ ...sm2Button('outline'), width: '100%' }}>
-          {L('Fechar', 'Close')}
-        </button>
-      }
     >
       <p style={sm2Hint}>
         {L('Toque num assunto. Nada aqui é obrigatório saber para jogar.',

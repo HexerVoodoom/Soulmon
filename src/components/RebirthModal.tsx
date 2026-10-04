@@ -144,13 +144,6 @@ export function RebirthModal({ language, onConfirm, onClose }: RebirthModalProps
                 ? (isPt ? 'Tenho certeza — renascer' : "I'm sure — be reborn")
                 : (isPt ? 'Renascer' : 'Be reborn')}
           </button>
-          <button
-            type="button"
-            onClick={confirmando ? () => setConfirmando(false) : onClose}
-            style={{ ...sm2Button('outline'), width: '100%' }}
-          >
-            {confirmando ? (isPt ? 'Voltar' : 'Back') : (isPt ? 'Agora não' : 'Not now')}
-          </button>
         </div>
       }
     >
