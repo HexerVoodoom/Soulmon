@@ -323,6 +323,13 @@ const CHECK_BARE = 'M5.2 12.6 9.8 17.2 18.8 6.8';
    Material: `exclamation` não existe na fonte, então não depende do subset. */
 const EXCLAMATION_STEM = 'M12 4.8v9.2';
 const EXCLAMATION_DOT: [number, number, number] = [12, 18.6, 1.55];
+/* A INTERROGAÇÃO (04/10/2026): o par da exclamação — "missão em andamento / à espera do
+   'Fiz'", como o "?" amarelo do World of Warcraft. O gancho é TRAÇO (ponta redonda, mesmo
+   peso da haste da exclamação) e o ponto é o MESMO nó, na mesma posição: lado a lado os dois
+   glifos são irmãos. Nome próprio (`question`, não `help` — esse é o "?" em círculo do
+   InfoTip), então também não depende do subset da fonte. */
+const QUESTION_HOOK = 'M8.7 8.6a3.3 3.3 0 1 1 5.2 2.7c-1.2.8-1.9 1.5-1.9 3.1';
+const QUESTION_DOT: [number, number, number] = [12, 18.6, 1.55];
 const CLOSE = 'M6.4 6.4 17.6 17.6M17.6 6.4 6.4 17.6';
 /* O mais. É a cruz direcional sem os cantos: por isso o D-pad da nav precisou
    do pino no meio — sem ele os dois desenhos disputavam o mesmo significado. */
@@ -585,6 +592,9 @@ const GLYPHS: Record<string, GlyphDef> = {
   check: { outline: <path d={CHECK_BARE} /> },
   exclamation: {
     outline: <><path d={EXCLAMATION_STEM} /><g fill="currentColor" stroke="none">{node(EXCLAMATION_DOT)}</g></>,
+  },
+  question: {
+    outline: <><path d={QUESTION_HOOK} /><g fill="currentColor" stroke="none">{node(QUESTION_DOT)}</g></>,
   },
   close: { outline: <path d={CLOSE} /> },
   add: { outline: <path d={PLUS} /> },

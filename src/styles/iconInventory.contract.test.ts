@@ -55,7 +55,7 @@ function arquivosTsx(dir: string, saida: string[] = []): string[] {
  * `map` antes. Ficam de fora explicitamente, e não por um
  * filtro esperto — assim acrescentar outro caso obriga a decidir de novo.
  */
-const NAO_SAO_ICONES = new Set(['activities', 'evolution', 'shop', 'mapa', 'exclamation']);
+const NAO_SAO_ICONES = new Set(['activities', 'evolution', 'shop', 'mapa', 'exclamation', 'question']);
 
 describe('inventário de ícones', () => {
   it('todo `<Icon name="…">` literal existe no subset da fonte', () => {
