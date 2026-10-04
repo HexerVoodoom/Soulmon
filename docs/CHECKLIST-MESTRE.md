@@ -4,17 +4,15 @@ Lista ÚNICA de tudo que o dono pediu para mudar no app, por rodada. Fonte dos p
 `AJUSTES-NAVEGACAO-2026-10-01.md` (rodadas 1–2) e `AJUSTES-NAVEGACAO-2026-10-02.md`
 (rodadas 3, 4 e 5); a rodada 6 vem do pedido de 04/10/2026.
 
-**Verificado em 04/10/2026, no código de `feat/r5-int` (HEAD `c426ecee`), pelo `ajustes-verificador`.**
+**Reverificado em 04/10/2026 (2ª passada, rodadas 1–6 completas), no código de `feat/r6-verif2` (= `main` com as
+rodadas 1 a 6 integradas, HEAD `487e75ec`), pelo `ajustes-verificador`.**
 Método: ✅ = existe E está montado numa tela alcançável (arquivo:linha); ⚠️ = existe mas
-parcial/condicional/depende de arte; ❌ = não existe ou regrediu; ⏳ = não iniciado.
+parcial/condicional/depende de arte; ❌ = não existe ou regrediu; ⏳ = não iniciado / aguarda o dono.
 Sem prova de código = ⚠️. Não confia em commit message nem em relatório de agente.
+Testes rodados nesta passada: `voltarFechar.contract`, `energia`, `travessias`, `entradaEnxuta.contract` (todos verdes).
 
-> **ACHADO Nº 1 (explica o "ainda não vi" do dono):** a rodada 5 (I1–I12, 21 commits) está só em
-> `feat/r5-int` / `origin/feat/r5-int`. **`main` termina em `b402bd4b` (rodada 4 + Torneio)** —
-> `git merge-base --is-ancestor feat/r5-int main` = falso. O APK que o dono testa vem da `main`,
-> logo lojinha com NPC digitando, preview grande, treino no Torneio, combate em tela cheia,
-> modais subindo, pílulas coloridas, emblemas soltos e voltar/fechar à esquerda NÃO estão no
-> aparelho dele. O código existe e está montado (abaixo); falta merge + build do APK.
+> **ACHADO Nº 1 (da 1ª passada) — RESOLVIDO:** a rodada 5 já está na `main` (as rodadas 1–6 estão todas
+> integradas em `feat/r6-verif2`). Resta só confirmar que o APK do dono foi rebuildado depois do merge.
 
 Legenda de Tipo: **cód** = código · **arte** = depende de imagem do dono
 (prompts em `E:\Soulmon-assets\out\ajustes-20261001\PROMPTS-PARA-O-DONO.md`) · **dec** = decisão do dono.
@@ -143,7 +141,7 @@ Legenda de Tipo: **cód** = código · **arte** = depende de imagem do dono
 | H1 | Idioma num MODAL na abertura | cód | ✅ | `SoulmonOnboarding.tsx:301,1415-1440` | Só quando `LANGUAGE` nunca foi gravado; some em conta já usada |
 | H2 | Onboarding todo em fonte de texto | cód | ✅ | `SoulmonOnboarding.tsx:136` | |
 | H3 | BUG: Google em conta existente não restaurava save | cód | ✅ | `SoulmonOnboarding.tsx:1124-1131` → `utils/cloudSave.ts:489` (`restaurarContaNoLogin`) | Fix `c33e0695` JÁ está na `main`. Só restaura se houver save na nuvem para o e-mail; se o dono ainda vê o onboarding, checar se o save foi gravado na conta (`cloudSave`) antes ou se o APK é anterior ao fix |
-| H4 | Sprites cortados (Pyraka e outra) | **arte** | ⚠️ | `assets/soulmon/lines/kaelen-rookie.png` (86 KB, antigo) | **O dono JÁ ENTREGOU** `E:\Soulmon-assets\entrada-dono\pyraka-rookie\kaelen-rookie.png` (523 KB, 02/10 23:11) — **NÃO instalado no repo**. "Acache" ainda não identificado |
+| H4 | Sprites cortados (Pyraka e outra) | **arte** | ⚠️ | `src/assets/soulmon/lines/kaelen-rookie.png` (256×256, bbox 32,26–224,230 = corpo inteiro; commit `18c18303`, derivado da entrega 1024² do dono) | **Pyraka INSTALADO**. A "outra" ("Acache") nunca foi identificada → resta ⚠️ até o dono dizer qual |
 | H5 | Home sem logo no topo | cód | ✅ | `HomeHud.tsx:92-151` | |
 | H6 | Chat em largura total | cód | ✅ | `CompanionHUD.tsx` (dock); `index.css:3947` | |
 | H7 | Scroll só da lista | cód | ✅ | `App.tsx:6107-6118` (`data-home-scroll`) | |
@@ -155,83 +153,85 @@ Legenda de Tipo: **cód** = código · **arte** = depende de imagem do dono
 | H13 | PvP sem toggle | cód | ✅ | `TournamentPage.tsx:245-250` (`pvpAberto = meetsPvpBond`) | Sem toggle; resta o requisito de Vínculo (explicado na tela) |
 | H14 | Torcida também no Duelo da Arena | cód | ✅ | `DuelScreen.tsx:176-200`; `AreaView.tsx:250,261` | |
 
-**Rodada 4: 14 itens — ✅ 13 · ⚠️ 1 (H4: arte entregue, falta instalar).**
+**Rodada 4: 14 itens — ✅ 13 · ⚠️ 1 (H4: Pyraka instalado; falta identificar a "outra").**
 
 ---
 
-## Rodada 5 (02/10/2026, noite) — I1–I14  (**só em `feat/r5-int`, NÃO na `main`**)
+## Rodada 5 (02/10/2026, noite) — I1–I14  (agora na `main`)
 
 | ID | Pedido | Tipo | Verif. | Evidência | Obs. |
 |---|---|---|---|---|---|
-| I1 | Lojinha: NPC fala e texto digita aos poucos | cód | ✅ | `nav/AreaSheet.tsx:147` → `nav/NpcSpeech.tsx:15,38` → `ui/TypewriterText.tsx:38` | **Risco**: `prefersNoTypewriter()` (`TypewriterText.tsx:35`) mostra tudo de uma vez se o aparelho tem "remover animações" (Android) — o dono pode não ver a digitação mesmo com o build novo |
+| I1 | Lojinha: NPC fala e texto digita aos poucos | cód | ✅ | `nav/AreaSheet.tsx:147` → `nav/NpcSpeech.tsx:15,38` → `ui/TypewriterText.tsx:28-48` | Risco da r5 RESOLVIDO (`18c18303`): com "remover animações" a digitação continua, 2× mais rápida (`reducedSpeed`); `prefersNoTypewriter` só vale sem `matchMedia` |
 | I2 | Modais de base SOBEM animados | cód | ✅ | `index.css:5714-5717,5757`; `FormKit.tsx:413`; `AreaSheet.tsx:152`; `Mochila.tsx:185` | Todos os `ModalSheet` (59 usos) herdam. Respeita reduced-motion |
-| I3 | Voltar/fechar à esquerda; ✕ direito só p/ encerrar atividade | cód | ⚠️ | `FormKit.tsx:376-460` (`closeSide`); `AreaSheet.tsx:93`; `Mochila.tsx:193`; `NightmareBattle.tsx:401` (`end`) | Auditoria PARCIAL: ainda com ✕ à direita fora do padrão — `ritual/RitualKit.tsx:152-158` (fecha folha, não atividade?), `DailyReportModal.tsx:397` (dispensar, aceitável), `games/GameKit.tsx:130-141` (sair do jogo = atividade, aceitável), `GamePopups`/`ConfirmDialog` não auditados |
+| I3 | Voltar/fechar à esquerda; ✕ direito só p/ encerrar atividade | cód | ✅ | `ui/voltarFechar.contract.test.ts:25-40` (TABELA: todo arquivo com ✕ classificado; falha se surgir ✕ fora da tabela; passou); `FormKit.tsx:376-460`, `AreaSheet.tsx:93`, `Mochila.tsx:193`; ✕ à direita só em `GameKit.tsx`/`BattleStage.tsx` (atividade) e dispensar-inline (`DailyReportModal`, `CreateModal`, banners do `App`) | Auditoria fechada pelo contrato; `RitualKit`/`ConfirmDialog`/`EditModal` ficam cobertos pela regra "todo ✕ entra na tabela" |
 | I4 | Ilustração própria dos BITS | **arte** | ⚠️ | `ui/BitsIcon.tsx:15,28` (glob de `assets/icons/bits.png`) | Moeda SVG interina montada (`ShopShelf`, `MapPage`). Arte final = **ARTE do dono** (prompt 3; `entrada-dono/bits-icon` vazia) |
 | I5 | Mercado: modalzinho + preview GRANDE solto; lightbox do fundo | cód | ✅ | `mercado/ShopItemSheet.tsx:49-86,143-215`; montado em `ShopShelf.tsx:393` | |
 | I6 | Pílula interno/externo na decoração | cód | ✅ | `ShopItemSheet.tsx:124`; `ShopShelf.tsx:337` | |
 | I7 | Torneio: treinamento testável | cód | ✅ | `TournamentPage.tsx:232-241,372-388,507-520` | Botão "Treinar" na aba Desafiar, local, sem Vínculo |
 | I8 | Ícone da faixa maior; Missões = "!" | cód | ✅ | `TournamentPage.tsx:341,366`; `ui/NavGlyphs.tsx:586` | Indicador só aparece com `rank` carregado (precisa rede) |
 | I9 | Duelo simplificado + "?"; Feira com "?" | cód | ✅ | `arena/DueloSheet.tsx:46-135`; `GuildSheet.tsx:892` | |
-| I10 | Combate da Arena em TELA CHEIA, profundidade, HP nos pés, golpes do elemento, mais lento | cód | ✅ | `games/BattleStage.tsx:37,147,422`; `DuelScreen.tsx:182`; `ArenaGame.tsx:496`; `utils/combatFx.ts:90` (1,5 s/golpe); `_duel.js:62` (16 toques) | **Só Arena/Duelo.** Pesadelo (`NightmareBattle.tsx:442`) e Masmorra (`DungeonGame.tsx:417`) NÃO usam `BattleStage` → K1 |
+| I10 | Combate da Arena em TELA CHEIA, profundidade, HP nos pés, golpes do elemento, mais lento | cód | ✅ | `games/BattleStage.tsx`; montado em `DuelScreen.tsx:179`, `ArenaGame.tsx:607-670`, `NightmareBattle.tsx:246-290`, `DungeonGame.tsx:347-499`; `utils/combatFx.ts:72,90,104` | Agora vale para as 4 lutas (ver K1) |
 | I11 | Lab › Árvore: pílulas com cor e ícone | cód | ✅ | `EvolutionPath.tsx:66-74,1285-1310` | Título "Evolution branches" (`:1255`) continua texto simples, sem cor/ícone |
 | I12 | Emblemas fora do box e maiores | cód | ✅ | `PetPage.tsx:149-160,334-391` (grade solta, 64 px, 3 col.); montado `App.tsx:5509` | |
-| I13 | VARREDURA: texto explicativo → "?" | cód | ⚠️ | `ui/InfoTip.tsx`; só 5 usos reais (`TournamentPage` ×3, `GuildSheet`, `DueloSheet`, `PetPage`, `TorcidaKit`) | Resto ainda em `sm2Hint` (ex.: `ConquistasSheet`, `ShopShelf` ×14, `SoulmonOnboarding` ×14, `AccountDataSection` ×16) → K6 |
-| I14 | AUDITORIA do que ficou de fora | — | ⚠️ | este documento | Auditoria feita; pendências na seção final |
+| I13 | VARREDURA: texto explicativo → "?" | cód | ⚠️ | `ui/InfoTip.tsx`; 44 usos de `<InfoTip` em 37 telas (antes 5), ver K6 | Ainda há `sm2Hint`/parágrafos corridos fora das exceções → K6 |
+| I14 | AUDITORIA do que ficou de fora | — | ⚠️ | este documento (2ª passada) | Pendências na seção final |
 
-**Rodada 5: 14 itens — ✅ 10 · ⚠️ 4 (I3 parcial, I4 arte, I13 parcial, I14 em curso).** Nenhum ❌ de código.
+**Rodada 5: 14 itens — ✅ 11 (I1, I3 e I10 subiram) · ⚠️ 3 (I4 arte, I13 parcial, I14).** Nenhum ❌ de código.
 
 ---
 
-## Rodada 6 (04/10/2026) — pedidos novos, NÃO implementados
+## Rodada 6 (04/10/2026) — implementada e integrada
 
-| ID | Pedido | Tipo | Verif. | Estado atual no código | Obs. |
+| ID | Pedido | Tipo | Verif. | Evidência (código MONTADO numa tela) | Obs. |
 |---|---|---|---|---|---|
-| K1 | Combate v2 (Arena/Torneio PvP, Pesadelo e Masmorra PvE): cena maior; ícone de TORCIDA lateral estilo Digimon 1 ("CHEER!"); barra de cheer demora a encher; Masmorra persiste a barra entre combates; PvE: mecânica ativa estilo Pokémon GO p/ especial e outra p/ reduzir dano; PvP: especial sai direto; batalhas bem mais longas; HP em cima do personagem + barra de ENERGIA (3 fatores: atacar, apanhar, cheer) que solta o ESPECIAL do elemento | cód | ⏳ | Base reaproveitável: `games/BattleStage.tsx` (só Arena/Duelo), `games/TorcidaKit.tsx`, `utils/torcida.ts` (`TORCIDA_PVE_TAPS_FULL`), `utils/combatFx.ts`, `functions/api/_duel.js` (regra PvP — servidor decide). Pesadelo e Masmorra têm layout próprio | Maior item. Mexe em regra do servidor (PvP) — fatiar |
-| K2 | Refazer fundos do Laboratório e do Hall: revisar prompts aprovados e produzir novos | **arte**/dec | ⏳ | Prompts 6 e 7 existem em `PROMPTS-PARA-O-DONO.md`; `entrada-dono/05-bg-*` vazias; geometria já pronta (`areaLotGeometry.ts:36`) | Entrega = prompts; o dono gera a imagem |
-| K3 | Rodadas de QA só de bug e correção | cód | ⏳ | — | Sem features novas |
-| K4 | Exploração › Missões: "!" / "?" estilo WoW; 3 missões aleatórias/dia, escolhe 1; cada uma é um cenário; pontuação; influencia o Pesadelo (volta no dia seguinte com historinha) | cód+dec | ⏳ | Exploração só tem `masmorra` e `passeio` (`areaLotGeometry.ts:31-32`); "Missões" atual do Torneio = conquistas (`utils/missions`), outra coisa. Pesadelo: `NightmareBattle.tsx`; viagem noturna: `App.tsx:4128-4154` (`adventureOfNight`) | Definir/sugerir pontuação; decisão do dono |
-| K5 | Prédios novos na Exploração: Pomodoro e outras técnicas; missão de journaling | cód+**arte**+dec | ⏳ | Nada no código (`grep pomodoro/journal` só acha `data/activityCatalog.ts`) | Cada prédio precisa de lote em `areaLotGeometry.ts` + arte do fundo/prédio |
-| K6 | Varredura de texto explicativo → `InfoTip` | cód | ⏳ | Só 5 usos hoje (ver I13) | Exceto onboarding/termos/segurança |
-| K7 | Corrida com o BOUNCING da Home (não de costas, estático); feedback de animação; modais de base sobem | cód | ⏳/✅ parcial | Corrida: `DinoGame.tsx:130` usa sprite estático; bounce da Home = squash em `CompanionHUD.tsx:1522` (`getSquashScale`). Modais sobem = **✅** (I2) | Só a parte da corrida/animação falta |
-| K8 | Este checklist + verificador a cada rodada | proc | ✅ | `docs/CHECKLIST-MESTRE.md`; `.claude/agents/ajustes-verificador.md` | |
+| K1 | Combate v2: cena grande; torcida/mascote; barra de cheer lenta; Masmorra persiste a barra; PvE com anel (especial) e esquiva por deslize; PvP especial direto; lutas mais longas; HP + ENERGIA em cima do lutador | cód | ✅ | **Cena cheia nas 4 lutas** (`BattleStage` + `TorcidaLayer mascot`): Pesadelo `NightmareBattle.tsx:246-290` (montado `App.tsx:7239`), Masmorra `DungeonGame.tsx:347-499` (`AreaView.tsx:332`), Arena PvE `ArenaGame.tsx:607-670` (`AreaView.tsx:274`; `ARENA_ENERGY_ENABLED = true`, `utils/arena.ts:604`), Duelo/PvP `DuelScreen.tsx:179-196` (`TournamentPage.tsx:374,394`). **Mascote**: `TorcidaKit.tsx:54,89-138`. **HP + energia em cima**: `BattleStage.tsx:164-198` (`data-stage-energy`). **Barra de cheer lenta**: `energia.ts:43` (`CHEER_TAPS_FULL = DUEL_TAPS_FULL = 24`, `_duel.js:78`). **Anel PvE**: `energia.ts:98-125` + `PveMechanics.tsx` (`SpecialRing`) via `BattleStage.tsx:34`. **Esquiva por deslize**: `TorcidaKit.tsx:103,135,159-162`; ligado em `NightmareBattle:252`, `DungeonGame:353`, `ArenaGame:613` (`swipeActive={phase==='dodge'}`). **PvP direto no servidor**: `_duel.js:35-41,216-223` (especial sai quando `enMe>=MAX`, sem anel/esquiva). **Persistência na Masmorra**: `usePveBattle.ts:135,194` (`keepPet`; só zera na run nova, `DungeonGame.tsx:202`). **Duração**: `energia.ts:79` (`PVE_HP_SCALE=1.8`, inimigo ×1,1), `combatFx.ts:90` (`DUEL_STEP_MS=1700`), `:104` (`ARENA_STRIKE_MS=2400`). Teste `energia.test.ts` verde | Alcançável por jogador comum (PvP exige Vínculo, `TournamentPage:245`; treino local sem Vínculo, `:232`). **Não provado em tela** (só código + teste unitário): a sensação de duração real. Dificuldade da Masmorra → TORC-6 pendente (K11) |
+| K2 | Refazer fundos do Laboratório e do Hall | **arte**/dec | ⏳ | Prompts 6 e 7 prontos; `entrada-dono/05-bg-hall` e `05-bg-laboratorio` **vazias** (04/10); aviso interino `areaSheetCopy.ts:85` | **ARTE do dono** |
+| K3 | Rodadas de QA só de bug e correção | cód | ✅ | 31 commits `fix(qa1/qa2/qa3)` no log (8+11+12), ex. `c164f0fb`, `b2f65ba6`, `463fac60`; merges `e6955df4`, `a487bbb1`, `753540ff` | A contagem do dono (37) inclui itens sem a tag; ver K11 |
+| K4 | Exploração › Missões: marcador "!"/"?", 3 missões/dia (escolhe 1), cenário, pontuação (Marcos), influencia o Pesadelo | cód+dec | ✅ | **Marcador no lote**: `AreaView.tsx:295` (`missionMark`) → `AreaScene.tsx:141` (`MissionMark`); **no card**: `PasseioSheet.tsx:141,229`; **3/dia**: `types/travessias.ts:130` (`MISSIONS_OFFERED_PER_DAY=3`), `travessias.ts:98-106`, `PasseioSheet.tsx:311-316` (`dailyOffer`/`pickMission`); **Marcos**: `travessiasSave.ts` (`score`, `marcosAbertos`), `travessias.test.ts:378-401` (1/missão/dia, cosmético; verde); **Pesadelo**: `travessias.ts:167-272` (`trip` + `VIAGENS`, viagem da noite) | Perguntas §21 (marcador todo dia, Marcos→decoração, total de Marcos) abertas → K11 |
+| K5 | Prédios novos na Exploração: Pomodoro/técnicas; journaling | cód+**arte**+dec | ⚠️ | `playAreaLots.ts:32,62-63` (lotes `oficina`, `caderno`); `AreaView.tsx:321-322` monta `OficinaSheet`/`CadernoSheet`; `areaLotGeometry.ts:30-31` | Código ✅. **Arte provisória**: lotes reusam sprites do Observatório/Biblioteca (comentário em `areaLotGeometry.ts:29`) → **ARTE do dono** |
+| K6 | Varredura de texto explicativo → `InfoTip` | cód | ⚠️ | 44 usos de `<InfoTip` em 37 telas (antes 5): `PlaySheets` ×6, `PasseioSheet` ×5, `TournamentPage` ×3, `OficinaSheet` ×2, `StatsPage`, `RestSetupModal`… | **Sobram** `sm2Hint` em 25+ telas (`TournamentPage` 19, `AccountDataSection` 14, `ShopShelf` 13, `EvolutionPath` 12, `PetPage` 11, `App.tsx` 9) e literais ≥120 caracteres fora de InfoTip em `SettingsPage` ×6, `AccountDataSection` ×4, `RebirthModal` ×4, `OraclePage` ×4, `GameTutorialFlow` ×3, `PixelizerCard`, `mente/TrocaGame`, `BalanceWeekModal`, `NewReadingModal` (grep heurístico; `GuideModal`/`HelpModal` = ajuda, exceção natural). Lista de exceções declaradas não encontrada em doc |
+| K7 | Corrida com o BOUNCING da Home; feedback de animação; modais sobem | cód | ✅ | `DinoGame.tsx:10,126-135` (`idlePose`/`runPose` de `utils/petBounce.ts`, squash/stretch/poeira; commits `f37f4a56`, `ca5f6ef4`); montado `AreaView.tsx:353`; modais sobem = I2 (`index.css:5714-5757`) | Orientação do sprite (de costas) não provada em tela |
+| K8 | Checklist + verificador a cada rodada | proc | ✅ | `docs/CHECKLIST-MESTRE.md`; `.claude/agents/ajustes-verificador.md` | |
+| K9 | Botão "Começar agora — é grátis" do onboarding não avançava | cód | ✅ | `SoulmonOnboarding.tsx:720,962-976` (`escolherGratis`/`iniciandoGratis`, falha com `console.warn` e aviso), `:1644-1649` (botão `aria-busy`/`disabled`, texto de "preparando"); commit `17548bd1` (aquece o Oráculo) | Portão alcançável por todo usuário novo |
+| K10 | Oficina do Foco + Caderno na Exploração (técnicas, timer, journaling na nuvem, vibração com interruptor) | cód | ✅ | `play/OficinaSheet.tsx:95`; `utils/focoTimer.ts:141-148` (vibra 180 ms, padrão ligada); interruptor `SettingsPage.tsx:9,113`; Caderno `CadernoSheet.tsx` + `utils/cadernoSave.ts` (4 formatos), no save `App.tsx:4259,6047` (`GameState.caderno`), contrato de dado sensível `cadernoSensivel.contract.test.ts`; testes `OficinaCaderno.render.test.tsx` | Arte dos lotes provisória (K5) |
+| K11 | QA de bug 1/2/3: bugs corrigidos + o que ficou como DECISÃO do dono | cód+dec | ⚠️ | Corrigidos: ver K3 (31 commits `qa*`). Decisões abertas: **TORC-6** (dificuldade da Masmorra, `PERGUNTAS-DO-DONO.md:415`, "Nada aplicado"); perguntas de missões §21 (`REGISTRO-DE-DECISOES.md:1711-1718`, 3 perguntas) | **Não achei em nenhum doc do repo** as decisões "relógio que volta", "duas abas", "corrida do KV no `match`", "pós-exclusão de conta", `consumedOrders` (só como resíduo da exclusão em `STATUS.md:1126`) e "banho farmável" → registrar em `PERGUNTAS-DO-DONO.md`, senão ficam invisíveis ao dono |
+| K12 | JS de entrada reduzido (893→544 KB) com contrato | cód | ✅ | `dist/assets/index-CnR684pc.js` = 545.892 B; `src/deploy/entradaEnxuta.contract.test.ts` (2 testes, verdes); Pesadelo lazy `App.tsx:645` | |
 
-**Rodada 6: 8 itens — ⏳ 7 · ✅ 1 (K8). Dentro do K7, "modais sobem" já está ✅.**
+**Rodada 6: 12 itens — ✅ 8 (K1, K3, K4, K7, K8, K9, K10, K12) · ⚠️ 3 (K5 arte provisória, K6 varredura parcial, K11 decisões abertas) · ⏳ 1 (K2 arte do dono).**
 
 ---
 
-## Fechamento da verificação (04/10/2026)
+## Fechamento da verificação (2ª passada, 04/10/2026)
 
 ### Contagem por rodada
 | Rodada | Itens | ✅ | ⚠️ | ❌ | ⏳/➖ |
 |---|---|---|---|---|---|
-| 1 | 72 | 69 | 2 | 1 | 0 |
-| 3 | 25 | 23 | 1 | 0 | 1 (dispensado) |
-| 4 | 14 | 13 | 1 | 0 | 0 |
-| 5 | 14 | 10 | 4 | 0 | 0 |
-| 6 | 8 | 1 | 0 | 0 | 7 |
+| 1 | 72 | 69 | 2 (A1, C6: arte) | 1 (H18: arte) | 0 |
+| 3 | 25 | 23 | 1 (B3: arte) | 0 | 1 (B4 dispensado) |
+| 4 | 14 | 13 | 1 (H4) | 0 | 0 |
+| 5 | 14 | 11 | 3 (I4 arte, I13, I14) | 0 | 0 |
+| 6 | 12 | 8 | 3 (K5, K6, K11) | 0 | 1 (K2 arte) |
 
 ### Regressões (item ✅ → ⚠️/❌)
-Nenhuma encontrada nas rodadas 1–5. Atenção: H7 (r1) mudou de "item já ganho NÃO aparece na loja" para "aparece numa seção **Já são seus**" (`ShopShelf.tsx:380`) — decisão posterior, não é bug, mas contraria a letra do pedido H7; confirmar com o dono.
+Nenhuma. Todos os caminhos de arquivo citados nas rodadas 1–5 ainda existem (só faltam, como esperado, os PNGs de arte `bits.png` e `evoluir-btn.png`). H7 (r1) segue contrariando a letra do pedido (seção "Já são seus", `ShopShelf.tsx:380`) — confirmar com o dono.
 
-### Lista priorizada de ❌/⚠️
-1. **Deploy (bloqueia tudo da r5)** — merge de `feat/r5-int` na `main` + build do APK. Sem isso o dono continua "não vendo" I1–I12.
-2. **H4 — instalar o Pyraka entregue** (`entrada-dono/pyraka-rookie/kaelen-rookie.png` → `src/assets/soulmon/lines/kaelen-rookie.png` + derivados `icons/kaelen-rookie-32/64.png`). Arte já está com o dono feita; falta só o pipeline.
-3. **I13 / K6 — varredura de "?"** — arquivos prováveis: `mercado/ShopShelf.tsx`, `mercado/MercadoSheets.tsx` (`idleLine`, "Como ganhar"), `SoulmonOnboarding.tsx:1574`, `AccountDataSection.tsx`, `PetPage.tsx`, `EvolutionPath.tsx`, `play/PasseioSheet.tsx`. Usar `ui/InfoTip.tsx`.
-4. **I3 — auditoria de ✕ à direita** — `ritual/RitualKit.tsx:152-158`, `GamePopups.tsx`, `ConfirmDialog.tsx`, `EditModal.tsx`, `CreateModal.tsx`, `ContentModals.tsx`.
-5. **I1 — risco reduced-motion** — `ui/TypewriterText.tsx:35`: avaliar se Android "remover animações" deve desligar a digitação (hoje desliga; pode explicar "não vi o texto digitando").
-6. **I11 — título "Linhas de evolução"** sem cor/ícone — `EvolutionPath.tsx:1255`.
-7. **I10 — estender a cena cheia a Pesadelo/Masmorra** (vira K1) — `NightmareBattle.tsx`, `DungeonGame.tsx`.
-8. **H7 (r1)** — confirmar que "Já são seus" é aceito.
+### Lista priorizada de ⚠️/❌ restantes
+1. **K6/I13 — varredura do "?"** (código) — `TournamentPage.tsx`, `AccountDataSection.tsx`, `mercado/ShopShelf.tsx`, `EvolutionPath.tsx`, `PetPage.tsx`, `SettingsPage.tsx`, `RebirthModal.tsx`, `OraclePage.tsx`, `GameTutorialFlow.tsx`, `App.tsx`. Usar `ui/InfoTip.tsx`; declarar as exceções num doc.
+2. **K11 — registrar as decisões dos QAs** (dec) — entradas em `docs/PERGUNTAS-DO-DONO.md` para relógio que volta, duas abas, corrida do KV, pós-exclusão, `consumedOrders`, banho farmável; **TORC-6** (`buildDungeonWave`) e as 3 perguntas de missões (§21).
+3. **H7 (r1)** — confirmar "Já são seus" (dec).
+4. **H4 — identificar a segunda sprite cortada ("Acache")** (dec do dono).
+5. **Confirmar o APK**: rebuild a partir da `main` atual; o dono tem de ver K1, K4, K9, K10 no aparelho.
+6. **Provar em tela** a duração dos combates e a orientação do sprite da Corrida (só há código/teste).
 
 ### O que é ARTE do dono (não é bug de código)
-| Item | Prompt | Pasta de entrega (hoje vazia) |
-|---|---|---|
-| A1/logo | 4 | `entrada-dono/01-logo` |
-| A1/mascote | 5 | `entrada-dono/02-mascote` |
-| B3 r3 — moldura do "Evoluir" | 2 | `entrada-dono/evoluir-btn` |
-| I4 — moeda Bits | 3 | `entrada-dono/bits-icon` |
-| C6 — 5 humores | 8 | `entrada-dono/06-mood-folha` |
-| H18/K2 — fundo do Hall | 6 | `entrada-dono/05-bg-hall` |
-| H18/K2 — fundo do Laboratório | 7 | `entrada-dono/05-bg-laboratorio` |
-| H4 — Pyraka rookie | 1 | **entregue**, só instalar |
-| K5 — prédios novos da Exploração | a escrever | — |
+| Item | Prompt | Pasta de entrega | Estado (04/10) |
+|---|---|---|---|
+| A1/logo | 4 | `entrada-dono/01-logo` | vazia |
+| A1/mascote | 5 | `entrada-dono/02-mascote` | vazia |
+| B3 r3 — moldura do "Evoluir" | 2 | `entrada-dono/evoluir-btn` | vazia |
+| I4 — moeda Bits | 3 | `entrada-dono/bits-icon` | vazia |
+| C6 — 5 humores | 8 | `entrada-dono/06-mood-folha` | vazia |
+| H18/K2 — fundo do Hall | 6 | `entrada-dono/05-bg-hall` | vazia |
+| H18/K2 — fundo do Laboratório | 7 | `entrada-dono/05-bg-laboratorio` | vazia |
+| H4 — Pyraka rookie | 1 | `entrada-dono/pyraka-rookie` | entregue e INSTALADO |
+| K5 — arte dos lotes Oficina/Caderno | a escrever | — | provisória (sprites reusados) |
