@@ -59,6 +59,8 @@ export function EcoGame({ language, evolutionStage, demoCharacterId, onEarnPoint
   const [seq, setSeq] = useState<Stone[]>([]);
   const [input, setInput] = useState<Stone[]>([]);
   const [lit, setLit] = useState<Stone | null>(null);
+  // Acertos desta rodada: cada um dá um pulinho no pet (`VisorSprite hop`).
+  const [hits, setHits] = useState(0);
   const [longest, setLongest] = useState(0);
   const [earned, setEarned] = useState(0);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -117,6 +119,7 @@ export function EcoGame({ language, evolutionStage, demoCharacterId, onEarnPoint
     later(() => setLit(null), 180);
     const r = checkTap(seq, input, stone, reverse);
     if (r === 'miss') { finish(longest); return; }
+    setHits(h => h + 1);
     if (r === 'continue') { setInput([...input, stone]); return; }
     // Completou: guarda o maior eco e cresce 1.
     const best = Math.max(longest, seq.length);
@@ -178,6 +181,7 @@ export function EcoGame({ language, evolutionStage, demoCharacterId, onEarnPoint
           src={pet}
           data-visor-pet
           idle={!reduced}
+          hop={hits}
           style={{
             left: 110, top: 24,
             transform: !reduced && lit !== null && phase === 'show' ? 'translateY(-6px)' : undefined,

@@ -4952,6 +4952,14 @@ select:focus-visible {
 .sm-haunt-particle {
   animation: sm-ambient-float 3.6s ease-in-out infinite;
 }
+/* Pulinho de acerto do pet nos minijogos (`VisorSprite hop`): sobe, estica um pouco, volta. Sem texto, sem som. */
+@keyframes visor-hop {
+  0%   { transform: translateY(0) scale(1, 1); }
+  35%  { transform: translateY(-7px) scale(0.97, 1.06); }
+  70%  { transform: translateY(0) scale(1.04, 0.94); }
+  100% { transform: translateY(0) scale(1, 1); }
+}
+.sm-visor-hop { animation: visor-hop 300ms ease-out 1; transform-origin: 50% 100%; }
 .sm-battle-idle {
   animation: dungeon-idle var(--sm-idle-dur, 1.5s) ease-in-out infinite;
 }
@@ -4979,6 +4987,7 @@ select:focus-visible {
   /* `!important` obrigatório: estas duas nasceram como `style={{animation}}`
      e ainda podem receber a propriedade por inline em algum ponto. */
   .sm-haunt-particle,
+  .sm-visor-hop,
   .sm-battle-idle { animation: none !important; }
 }
 
