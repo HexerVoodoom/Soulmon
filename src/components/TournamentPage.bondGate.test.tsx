@@ -57,7 +57,9 @@ describe('abaixo do Vínculo 5 a aba EXPLICA, não parece quebrada', () => {
     expect(card).not.toBeNull();
     expect(card.textContent).toMatch(new RegExp(`Vínculo ${BOND_PVP_MIN_LEVEL}`));
     expect(card.textContent).toMatch(/faltam \d+ XP/);
-    expect(card.textContent).toMatch(/Sem pressa/); // progresso, nunca dívida
+    // K6: o "sem pressa" (progresso, nunca dívida) mora atrás do "?" do cartão.
+    fireEvent.click(screen.getByRole('button', { name: /Como entrar no Torneio|How to join the Tournament/ }));
+    expect(document.body.textContent).toMatch(/Sem pressa/);
     expect(card.querySelector('[role="progressbar"]')).not.toBeNull();
   });
 

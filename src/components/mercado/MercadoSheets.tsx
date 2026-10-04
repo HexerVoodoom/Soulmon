@@ -1,6 +1,7 @@
 import { useState, type CSSProperties } from 'react';
 import { PixelTabs } from '../pixel/PixelKit';
 import { Icon } from '../ui/Icon';
+import { InfoTip } from '../ui/InfoTip';
 import { sm2Hint, sm2Text } from '../form/FormKit';
 import { UnlockNudge } from '../UnlockAccountModal';
 import { STALL_CURRENCIES, stallItems, type MercadoStall } from '../../utils/mercadoCatalog';
@@ -81,7 +82,7 @@ export function MercadoStallSheet(props: MercadoStallProps) {
         )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <ShopStatus flash={flash} idle={idleLine(cur, isPt)} />
+            <ShopStatus flash={flash} idle={idleLine(cur, isPt)} language={language} />
           </div>
           <CurrencyBalance currency={cur} value={balance} language={language} />
         </div>
@@ -205,18 +206,21 @@ export function ConquistasSheet({ language, missionProgress }: {
                 {/* Ícone PELADO (regra do dono), 24 da escala viva. */}
                 <Icon name={m.iconName} size={24} fill={done ? 1 : 0} tone={done ? 'primary' : 'muted'} />
                 <span style={{ ...sm2Text, flex: 1, minWidth: 0, fontWeight: 600, fontFamily: 'var(--sm2-font-display)', color: 'var(--sm2-ink)' }}>{isPt ? m.namePt : m.nameEn}</span>
+                {/* K6 (04/10/2026): o "como ganhar" mora atrás do "?" ao lado do nome. */}
+                <InfoTip language={language} label={isPt ? `Como ganhar: ${m.namePt}` : `How to earn: ${m.nameEn}`} align="right" style={{ minHeight: 24 }}>
+                  <span data-mission-how style={{ display: 'block' }}>{isPt ? m.descPt : m.descEn}</span>
+                  {rewardName && !done && (
+                    <span style={{ display: 'block', marginTop: 6 }}>
+                      {isPt ? 'Cenário exclusivo: a lojinha de Background libera quando esta conquista fecha.' : 'Exclusive scene: the Background stall unlocks it when this achievement is done.'}
+                    </span>
+                  )}
+                </InfoTip>
                 {done ? (
                   <Icon name="check_circle" size={24} fill={1} tone="primary" label={isPt ? 'concluída' : 'done'} />
                 ) : m.target > 1 && cur > 0 ? (
                   <span className="sm2-num" style={{ ...sm2Hint, flex: 'none', whiteSpace: 'nowrap' }}>{cur}/{m.target}</span>
                 ) : null}
               </div>
-              <p data-mission-how style={{ ...sm2Text, margin: 0 }}>
-                <span style={{ ...sm2Hint, display: 'block', letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 600 }}>
-                  {isPt ? 'Como ganhar' : 'How to earn'}
-                </span>
-                {isPt ? m.descPt : m.descEn}
-              </p>
               {rewardName && (
                 <div data-mission-reward style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <MiniGlass size={52} style={{ width: 96, height: 52, flex: 'none' }}>
@@ -229,11 +233,9 @@ export function ConquistasSheet({ language, missionProgress }: {
                       {isPt ? 'O que ganha' : 'What you get'}
                     </span>
                     <span style={{ ...sm2Text, fontWeight: 500 }}>{rewardName}</span>
-                    <span style={sm2Hint}>
-                      {done
-                        ? (isPt ? 'Liberado — está na lojinha de Background.' : 'Unlocked — it is in the Background stall.')
-                        : (isPt ? 'Cenário exclusivo: a lojinha de Background libera quando esta conquista fecha.' : 'Exclusive scene: the Background stall unlocks it when this achievement is done.')}
-                    </span>
+                    {done && (
+                      <span style={sm2Hint}>{isPt ? 'Liberado — está na lojinha de Background.' : 'Unlocked — it is in the Background stall.'}</span>
+                    )}
                   </span>
                 </div>
               )}

@@ -255,7 +255,9 @@ describe('Conquistas — filtro por categoria, sem coluna de zeros (WP4.12)', ()
       fireEvent.click(tab);
       if (container.querySelector(`[data-mission="${m.id}"]`)) break;
     }
-    expect(container.querySelector(`[data-mission="${m.id}"]`)!.textContent).toContain(m.descPt);
+    // K6: a condição mora atrás do "?" do card.
+    fireEvent.click(container.querySelector(`[data-mission="${m.id}"] [data-info-tip]`)!);
+    expect(document.body.querySelector('[data-mission-how]')!.textContent).toContain(m.descPt);
   });
 
   it('com progresso real, o número VOLTA', () => {
@@ -268,7 +270,8 @@ describe('Conquistas — filtro por categoria, sem coluna de zeros (WP4.12)', ()
     }
     const li = container.querySelector(`[data-mission="${m.id}"]`)!;
     expect(li.textContent).toContain(`1/${m.target}`);
-    expect(li.textContent).toContain(m.descPt);
+    fireEvent.click(li.querySelector('[data-info-tip]')!);
+    expect(document.body.querySelector('[data-mission-how]')!.textContent).toContain(m.descPt);
   });
 
   it('concluída = anel primary-ink + check, e diz o que liberou', () => {

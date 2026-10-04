@@ -149,19 +149,31 @@ export function useShopFlash() {
 
 /** A região viva da prateleira. Existe sempre no DOM (região que aparece vazia
  *  não é anunciada em alguns leitores). Recusa é ÂMBAR, nunca `danger`. */
-export function ShopStatus({ flash, idle }: { flash: ShopFlash | null; idle: ReactNode }) {
-  return (
+export function ShopStatus({ flash, idle, language }: { flash: ShopFlash | null; idle: ReactNode; language?: 'pt-BR' | 'en-US' }) {
+  // K6 (04/10/2026): com `language`, a linha de apoio (`idle`) mora atrás de um "?" ao lado da região viva;
+  // sem `language` (legado) ela continua escrita.
+  const tip = language !== undefined;
+  const status = (
     <p
       role="status"
       aria-live="polite"
       style={{
-        ...sm2Hint, minHeight: 18, margin: 0,
+        ...sm2Hint, minHeight: 18, margin: 0, flex: 1, minWidth: 0,
         fontWeight: flash ? 500 : 400,
         color: flash ? (flash.ok ? 'var(--sm2-ink)' : 'var(--sm2-gold-ink)') : 'var(--sm2-muted)',
       }}
     >
-      {flash ? flash.msg : idle}
+      {flash ? flash.msg : (tip ? '' : idle)}
     </p>
+  );
+  if (!tip) return status;
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+      {status}
+      <InfoTip language={language} label={language === 'pt-BR' ? 'Sobre esta moeda' : 'About this currency'} align="left" style={{ minHeight: 24 }}>
+        {idle}
+      </InfoTip>
+    </div>
   );
 }
 

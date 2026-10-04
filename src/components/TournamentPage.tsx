@@ -493,14 +493,19 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
             height={10}
             label={isPt ? `Caminho até o Vínculo ${BOND_PVP_MIN_LEVEL}` : `Progress to Bond ${BOND_PVP_MIN_LEVEL}`}
           />
-          <p style={{ ...sm2Hint, display: 'flex', alignItems: 'flex-start', gap: 8, margin: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Icon name="link" size={20} tone="muted" />
-            <span>
+            <p className="sm2-num" style={{ ...sm2Hint, flex: 1, minWidth: 0, margin: 0 }}>
               {isPt
-                ? `Você está no Vínculo ${bondLevelFor(totalXP)} — faltam ${xpToPvpBond(totalXP)} XP, que vêm do que você já faz por aqui. Sem pressa: seu Soulmon entra no Torneio sozinho quando chegar.`
-                : `You're at Bond ${bondLevelFor(totalXP)} — ${xpToPvpBond(totalXP)} XP to go, earned by what you already do here. No rush: your Soulmon joins the Tournament on its own when you get there.`}
-            </span>
-          </p>
+                ? `Vínculo ${bondLevelFor(totalXP)} · faltam ${xpToPvpBond(totalXP)} XP`
+                : `Bond ${bondLevelFor(totalXP)} · ${xpToPvpBond(totalXP)} XP to go`}
+            </p>
+            <InfoTip language={lang} label={isPt ? 'Como entrar no Torneio' : 'How to join the Tournament'} align="right" style={{ minHeight: 24 }}>
+              {isPt
+                ? 'Os XP vêm do que você já faz por aqui. Sem pressa: seu Soulmon entra no Torneio sozinho quando chegar ao Vínculo.'
+                : 'The XP comes from what you already do here. No rush: your Soulmon joins the Tournament on its own once you reach the Bond.'}
+            </InfoTip>
+          </div>
         </div>
       )}
 
@@ -729,13 +734,20 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
               {/* Progresso DENTRO da faixa, em `gold-fill` — só sobe. */}
               <PixelMeter ratio={standing.progress} tone="gold" height={12} label={isPt ? 'Progresso na faixa' : 'Tier progress'} />
 
-              <p style={sm2Hint}>
-                {standing.next
-                  ? (isPt
-                      ? `${standing.pointsToNext} pts até ${standing.next.namePt}. Sua faixa só sobe — ninguém te tira dela.`
-                      : `${standing.pointsToNext} pts to ${standing.next.nameEn}. Your tier only climbs — nobody can knock you down.`)
-                  : (isPt ? 'Faixa máxima. Daqui é só jogar por gosto.' : 'Top tier. From here it’s just for the love of it.')}
-              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <p className="sm2-num" style={{ ...sm2Hint, flex: 1, minWidth: 0, margin: 0 }}>
+                  {standing.next
+                    ? (isPt
+                        ? `${standing.pointsToNext} pts até ${standing.next.namePt}`
+                        : `${standing.pointsToNext} pts to ${standing.next.nameEn}`)
+                    : (isPt ? 'Faixa máxima.' : 'Top tier.')}
+                </p>
+                <InfoTip language={lang} label={isPt ? 'Sobre a faixa' : 'About the tier'} align="right" style={{ minHeight: 24 }}>
+                  {standing.next
+                    ? (isPt ? 'Sua faixa só sobe — ninguém te tira dela.' : 'Your tier only climbs — nobody can knock you down.')
+                    : (isPt ? 'Daqui é só jogar por gosto.' : 'From here it’s just for the love of it.')}
+                </InfoTip>
+              </div>
             </div>
           )}
 
@@ -817,7 +829,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         <div data-tournament-shop style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <ShopStatus flash={flash} idle={isPt ? 'Honra só vem do Torneio — e só compra cosmético.' : 'Honor only comes from the Tournament — and only buys cosmetics.'} />
+              <ShopStatus flash={flash} idle={isPt ? 'Honra só vem do Torneio — e só compra cosmético.' : 'Honor only comes from the Tournament — and only buys cosmetics.'} language={lang} />
             </div>
             <CurrencyBalance currency="emblems" value={emblems} language={lang} />
           </div>
