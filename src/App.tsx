@@ -219,7 +219,7 @@ import { pickCatalogLevelInviteCandidate, applyLevelChange } from './utils/catal
 
 import type { Schedule, HabitAnchor, Effort } from './types/taskModel';
 import {
-  createRestState, recordNight, dreamRarity, rollDream, collectDream, DREAM_CATALOG, isWithinWindow,
+  createRestState, recordNight, nightAlreadyRecorded, dreamRarity, rollDream, collectDream, DREAM_CATALOG, isWithinWindow,
 } from './utils/restWindow';
 import type { Dream, RestWindow } from './utils/restWindow';
 
@@ -4113,9 +4113,13 @@ export default function App() {
     // Dia do JOGADOR: `moodLog` mora no save, e com o dia do aparelho o mesmo
     // dia rendia DUAS entradas em fusos diferentes (ver `utils/mood.ts`).
     const today = playerDayKey(new Date(), gameState.playerDayTz);
+    // A missão é "em 3 DIAS": só a PRIMEIRA resposta do dia conta. Responder de
+    // novo SUBSTITUI o humor (`recordMood`) e antes somava de novo — três toques
+    // no mesmo dia fechavam a missão semanal.
+    const primeiraDoDia = moodFor(gameState.moodLog, today) === null;
     setGameState(prev => ({ ...prev, moodLog: recordMood(prev.moodLog, today, mood) }));
-    contarMissao('mood-checkins');
-  }, [gameState.playerDayTz]);
+    if (primeiraDoDia) contarMissao('mood-checkins');
+  }, [gameState.moodLog, gameState.playerDayTz]);
 
   /**
    * A AVENTURA DA NOITE (`utils/adventure.ts`, `docs/PLANO-TAREFAS.md` §2.4).
@@ -4404,17 +4408,23 @@ export default function App() {
          `awardBondXP` não é. */
       setGameState(prev => {
         const rest = prev.rest ?? createRestState();
-        const chaveDaNoite = playerDayKey(now, prev.playerDayTz);
-        const jaRegistrada = rest.nights.some(n => n.date === chaveDaNoite);
+        // O ledger do Vínculo é do DIA de hoje; a pergunta "esta noite já foi
+        // registrada?" é pela MANHÃ da noite (`nightAlreadyRecorded`). Comparar
+        // `nights` com o dia de hoje fazia a manhã de ontem (que tem a data de
+        // hoje) travar o XP de toda noite depois da primeira.
+        const chaveDoDia = playerDayKey(now, prev.playerDayTz);
+        const jaRegistrada = nightAlreadyRecorded(rest, now);
         const comNoite = { ...prev, rest: recordNight(rest, now) };
         return !jaRegistrada && isWithinWindow(rest.window, now)
-          ? awardBondXP(comNoite, { kind: 'restNight' }, chaveDaNoite)
+          ? awardBondXP(comNoite, { kind: 'restNight' }, chaveDoDia)
           : comNoite;
       });
       // Conta a noite só quando o deitar caiu DENTRO da janela escolhida: a
       // missão premia o comportamento, exatamente como a Janela de Descanso —
       // contar toda noite pagaria por ir dormir, não por ir no horário.
-      if (isWithinWindow((gameState.rest ?? createRestState()).window, now)) contarMissao('rest-nights');
+      // Uma vez por NOITE: deitar de novo na mesma noite não soma outra.
+      const restAntes = gameState.rest ?? createRestState();
+      if (isWithinWindow(restAntes.window, now) && !nightAlreadyRecorded(restAntes, now)) contarMissao('rest-nights');
       return;
     }
     const startedIso = readLocal(STORAGE_KEYS.SLEEP_STARTED_AT);
@@ -4794,7 +4804,9 @@ export default function App() {
     // sem som ate a decisao de vinculo sobre C-4 fechar (as saidas em aberto sao
     // "variacao do motivo de presenca" ou "nenhum som"); a recusa por teto
     // continua distinguivel pela fala do pet, que e o canal real (R-34).
-    contarMissao('rub-days');
+    // "em 4 DIAS": só a primeira cura do dia conta (o teto diário concede 2–3
+    // pedaços de carinho, e cada um somava um "dia").
+    if (rubHealFor(gameState.careCaps, today).healed <= 0) contarMissao('rub-days');
     if (!rubFalouRef.current) {
       rubFalouRef.current = true;
       falar('rub');

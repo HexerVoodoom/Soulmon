@@ -247,6 +247,18 @@ export function morningKey(
 }
 
 /**
+ * Esta noite (a que o `sleptAt` abre) JÁ tem registro? A pergunta certa é pela
+ * MANHÃ da noite (`morningKey`) — o nome que `recordNight` grava —, e não pelo
+ * dia de hoje: a manhã de ontem à noite tem a data de HOJE, e comparar com hoje
+ * fazia toda noite depois da primeira parecer "já registrada" (sem XP de
+ * descanso e sem a missão `rest-nights`).
+ */
+export function nightAlreadyRecorded(state: RestState, sleptAt: Date): boolean {
+  const key = morningKey(sleptAt, undefined, state.playerDayTz);
+  return state.nights.some((n) => n.date === key);
+}
+
+/**
  * Registra uma noite. **Idempotente por dayKey da manhã** — chamar duas vezes
  * para a mesma manhã atualiza o registro, nunca cria um segundo. Poda em
  * `MAX_NIGHTS` mantendo as mais recentes.
