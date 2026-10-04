@@ -24,6 +24,7 @@ import { SPECIAL_ITEMS } from '../../utils/shop';
 import { ITEM_ART } from '../../utils/itemArt';
 import { getFoodDesc, getFoodName } from '../ItemsWindow';
 import { BackArrow } from '../ui/BackArrow';
+import { InfoTip } from '../ui/InfoTip';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
 
 /** Distância (px) que separa um TOQUE de um ARRASTO. Abaixo disto é toque, e
@@ -194,10 +195,11 @@ export function Mochila({
         <div className="sm3-mochila-head">
           <div style={{ flex: 1, minWidth: 0 }}>
             <h2 className="sm3-mochila-titulo">{isPt ? 'Mochila' : 'Backpack'}</h2>
-            <p className="sm3-mochila-dica">
-              {isPt ? `Arraste até o ${nomePet} pra usar` : `Drag onto ${nomePet} to use`}
-            </p>
           </div>
+          {/* I13 (02/10/2026): a dica de arrastar mora atrás do "?". */}
+          <InfoTip language={language} label={isPt ? 'Como usar um item' : 'How to use an item'} align="right">
+            {isPt ? `Arraste até o ${nomePet} pra usar` : `Drag onto ${nomePet} to use`}
+          </InfoTip>
         </div>
 
         <div className="sm3-mochila-abas" role="tablist" aria-label={isPt ? 'Tipos de item' : 'Item types'}>

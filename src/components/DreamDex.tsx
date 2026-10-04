@@ -49,6 +49,7 @@ import {
 import type { Language } from '../utils/i18n';
 import type { CSSProperties } from 'react';
 import { Icon } from './ui/Icon';
+import { InfoTip } from './ui/InfoTip';
 import { MiniGlass } from './ui/MiniGlass';
 import { SM2_SHADOW_CARD, sm2Hint, sm2Text } from './form/FormKit';
 import { DREAM_ART } from '../utils/dreamArt';
@@ -241,19 +242,17 @@ export function DreamDex({ rest, language }: DreamDexProps) {
             </div>
           </>
         )}
-        <p style={{ ...sm2Hint, margin: '8px 0 0' }}>
-          {vazio
-            ? (isPt
-              ? 'Toda manhã depois de uma noite na sua janela, seu Soulmon volta com uma cena. A primeira está a caminho.'
-              : 'Every morning after a night inside your window, your Soulmon comes back with a scene. The first one is on its way.')
-            : collected === total
+        {(vazio || collected === total) && (
+          <p style={{ ...sm2Hint, margin: '8px 0 0' }}>
+            {vazio
               ? (isPt
-                ? 'Coleção completa. Seu Soulmon já sonhou com tudo que existe — e continua sonhando.'
-                : 'Collection complete. Your Soulmon has dreamed everything there is — and keeps dreaming.')
+                ? 'Toda manhã depois de uma noite na sua janela, seu Soulmon volta com uma cena. A primeira está a caminho.'
+                : 'Every morning after a night inside your window, your Soulmon comes back with a scene. The first one is on its way.')
               : (isPt
-                ? 'As silhuetas são cenas que seu Soulmon ainda não sonhou. Elas esperam o tempo que precisarem.'
-                : 'The silhouettes are scenes your Soulmon hasn’t dreamed yet. They wait as long as they need to.')}
-        </p>
+                ? 'Coleção completa. Seu Soulmon já sonhou com tudo que existe — e continua sonhando.'
+                : 'Collection complete. Your Soulmon has dreamed everything there is — and keeps dreaming.')}
+          </p>
+        )}
       </div>
 
       {/* Agrupado por raridade. Ordem fixa: comum → raro → lendário. */}
@@ -311,14 +310,20 @@ export function DreamDex({ rest, language }: DreamDexProps) {
         );
       })}
 
-      <p style={{ ...sm2Hint, display: 'flex', alignItems: 'flex-start', gap: 8, margin: 0 }}>
-        <Icon name="info" size={20} tone="muted" />
-        <span>
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <InfoTip language={language} label={isPt ? 'Sobre a coleção' : 'About the collection'} align="right" style={{ minHeight: 24 }}>
+          {!vazio && collected !== total && (
+            <span style={{ display: 'block', marginBottom: 6 }}>
+              {isPt
+                ? 'As silhuetas são cenas que seu Soulmon ainda não sonhou. Elas esperam o tempo que precisarem.'
+                : 'The silhouettes are scenes your Soulmon hasn’t dreamed yet. They wait as long as they need to.'}
+            </span>
+          )}
           {isPt
             ? `${DREAM_CATALOG.length} cenas no total. A coleção só cresce — nada aqui volta atrás.`
             : `${DREAM_CATALOG.length} scenes in total. The collection only grows — nothing here ever goes back.`}
-        </span>
-      </p>
+        </InfoTip>
+      </div>
     </section>
   );
 }

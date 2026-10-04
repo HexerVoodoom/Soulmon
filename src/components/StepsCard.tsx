@@ -31,6 +31,7 @@
 import { DEFAULT_STEP_GOAL, stepsConsentCopy, stepsGoalProgress } from '../utils/steps';
 import type { Language } from '../utils/i18n';
 import { GroupCard, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
+import { InfoTip } from './ui/InfoTip';
 
 /*
  * CANVAS "CONTA" (20/09/2026, `Passos.dc.html`, CONTA-11/12): o consentimento
@@ -119,12 +120,15 @@ export function StepsCard({
         <div className="sm2-kit-meter-fill" style={{ width: `${Math.round(Math.max(0, Math.min(1, ratio)) * 100)}%` }} />
       </div>
 
-      {/* A REGRA DE PRODUTO, na tela, sempre visível. */}
-      <p style={sm2Hint}>
-        {isPt
-          ? 'Passos não valem ponto sozinhos: eles só confirmam um hábito de saúde que você já marcou como feito.'
-          : 'Steps never score on their own: they only confirm a health habit you already marked as done.'}
-      </p>
+      {/* A REGRA DE PRODUTO (I13: atrás do "?"; o consentimento dos passos
+          continua inteiro em `stepsConsentCopy`). */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <InfoTip language={language} label={isPt ? 'Como os passos contam' : 'How steps count'} align="right" style={{ minHeight: 24 }}>
+          {isPt
+            ? 'Passos não valem ponto sozinhos: eles só confirmam um hábito de saúde que você já marcou como feito.'
+            : 'Steps never score on their own: they only confirm a health habit you already marked as done.'}
+        </InfoTip>
+      </div>
     </GroupCard>
   );
 }

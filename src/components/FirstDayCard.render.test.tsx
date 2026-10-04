@@ -7,7 +7,7 @@
  * este produto se define por não cobrar.
  */
 import { describe, it, expect } from 'vitest';
-import { screen } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
 import { FirstDayCard } from './FirstDayCard';
 import { emptyFirstDay, markGesture } from '../utils/firstDay';
@@ -48,7 +48,9 @@ describe('FirstDayCard — não cobra, e diz que vai embora', () => {
     const { container } = renderWithCss(
       <FirstDayCard progress={emptyFirstDay(HOJE)} language="pt-BR" />,
     );
-    expect(container.textContent).toContain('Some sozinho');
+    // I13: a legenda mora atrás do "?".
+    fireEvent.click(container.querySelector('button[aria-label="Sobre este cartão"]')!);
+    expect(document.querySelector('[data-info-tip-panel]')!.textContent).toContain('Some sozinho');
   });
 
   it('nenhuma palavra de cobrança, e nenhuma promessa de prêmio', () => {
