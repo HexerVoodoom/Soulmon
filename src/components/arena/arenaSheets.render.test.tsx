@@ -32,7 +32,7 @@ const shop = {
 };
 
 beforeEach(() => {
-  // O ranking responde com o jogador na faixa Broto (lifetime 150).
+  // O ranking responde com o jogador na faixa Bronze (lifetime 150).
   vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({
     rank: [{ id: saveId, name: 'Eu', stage: 'rookie', points: 40, lifetime: 150 }],
   }), { status: 200, headers: { 'Content-Type': 'application/json' } })));
@@ -60,8 +60,8 @@ describe('Torneio', () => {
     fireEvent.click(ind);
     expect(screen.getByRole('dialog', { name: 'Tournament tiers' })).toBeTruthy();
     expect(document.querySelectorAll('[data-tier]').length).toBe(TOURNAMENT_TIERS.length);
-    expect(document.querySelector('[data-tier-state="current"]')!.getAttribute('data-tier')).toBe('broto');
-    expect(document.querySelector('[data-tier="semente"]')!.getAttribute('data-tier-state')).toBe('passed');
+    expect(document.querySelector('[data-tier-state="current"]')!.getAttribute('data-tier')).toBe('bronze');
+    expect(document.querySelector('[data-tier="madeira"]')!.getAttribute('data-tier-state')).toBe('passed');
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));
     expect(screen.queryByRole('dialog', { name: 'Tournament tiers' })).toBeNull();
   });
@@ -103,17 +103,21 @@ describe('Torneio', () => {
 });
 
 describe('Torneio — menu e treino', () => {
-  it('Missões usa a EXCLAMAÇÃO (não o check) e o indicador da faixa é a insígnia de 48', async () => {
+  it('Missões usa o "?" amarelo (A2; não a exclamação nem o check) e o indicador da faixa é o glifo da faixa (Bronze) em 48, sem box', async () => {
     const { container } = renderWithCss(<TournamentPage {...base} shop={shop} />);
     const missoes = screen.getByRole('tab', { name: 'Missions' });
-    expect(missoes.textContent).toContain('exclamation');
+    expect(missoes.textContent).toContain('question');
+    expect(missoes.textContent).not.toContain('exclamation');
+    expect(missoes.querySelector('.sm2-icon')!.className).toMatch(/gold/);
     expect(missoes.textContent).not.toContain('task_alt');
     const ind = await waitFor(() => {
       const el = container.querySelector('[data-tier-indicator]');
       expect(el).not.toBeNull();
       return el as HTMLElement;
     });
-    expect(ind.querySelector('img')?.getAttribute('width')).toBe('48');
+    const glifo = ind.querySelector('.sm2-icon') as HTMLElement;
+    expect(glifo.textContent).toContain('military_tech');
+    expect(glifo.style.fontSize).toBe('48px');
   });
 
   it('o TREINO existe sem Vínculo, sem rede e sem oponentes — e abre a luta local', () => {
@@ -135,6 +139,11 @@ describe('Duelo', () => {
     expect(container.textContent).not.toContain('perder não custa nada');
     fireEvent.click(screen.getByRole('button', { name: /O que são elemento, poder e golpes/ }));
     expect(document.querySelector('[data-duelo-ajuda]')!.textContent).toContain('perder não custa nada');
+    // A7: o "?" saiu da luta, então a explicação de COMO lutar (torcer, anel, esquiva) mora aqui, no InfoTip único.
+    const como = document.querySelector('[data-duelo-como-lutar]')!.textContent!;
+    expect(como).toMatch(/torcer/);
+    expect(como).toMatch(/anel/);
+    expect(como).toMatch(/esquivar/);
     fireEvent.click(screen.getByRole('button', { name: 'Começar duelo' }));
     expect(onStart).toHaveBeenCalledOnce();
   });

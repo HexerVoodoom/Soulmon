@@ -59,7 +59,7 @@ describe('Masmorra — a cena em tela cheia', () => {
     expect(document.querySelector('[data-visor-pet]')).toBeNull(); // o visor pequeno saiu da luta
     expect(screen.queryByText(/torça por ele/i)).toBeNull();
     expect(screen.queryByText(/se defende/i)).toBeNull();
-    expect(document.querySelector('[data-info-tip]')).not.toBeNull();
+    expect(document.querySelector('[data-info-tip]')).toBeNull(); // A7: nenhum "?" dentro da luta
     expect(document.body.textContent).toMatch(/Camada 1\/5/);
   });
 

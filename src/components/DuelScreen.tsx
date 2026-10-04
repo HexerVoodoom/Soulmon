@@ -147,7 +147,11 @@ export function DuelScreen({
       const ev = evs[idx];
       if (!ev) { setShown(s => s + 1); return; }
       const meu = ev.actor === 'me';
-      const kind: StageActionKind = ev.special ? 'special' : idx % 2 === 0 ? 'melee' : 'ranged';
+      // A6 (rodada 7): o golpe normal alterna físico/à distância POR LUTADOR (o n-ésimo golpe normal DELE). Antes era
+      // pela paridade do índice do evento — como os lados se alternam 1 a 1, o dono era sempre físico e o oponente
+      // SEMPRE à distância (nunca atacava com o corte).
+      const nDele = evs.slice(0, idx).filter(e => e.actor === ev.actor && !e.special).length;
+      const kind: StageActionKind = ev.special ? 'special' : nDele % 2 === 0 ? 'melee' : 'ranged';
       setMedidor(ev.meter);
       setEnergia({ me: ev.preMe, opp: ev.preOpp });
       setAcao({ id: ++cenaSeq.current, actor: meu ? 'me' : 'foe', foe: 0, kind, element: meu ? meEl : oppEl });

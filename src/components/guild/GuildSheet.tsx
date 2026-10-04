@@ -894,6 +894,8 @@ function SalaFeira({ guild, t, language, ocupado, reducedMotion, resgate, resgat
         <h3 className="sm2-grove-stage" data-feira-fenomeno style={{ margin: 0 }}>{nome}</h3>
         <InfoTip language={language} label={language === 'pt-BR' ? 'Como funciona a Feira' : 'How the Fair works'} align="right" style={{ marginRight: -8 }}>
           <span data-feira-legenda style={{ display: 'block' }}>{t('guild.feira.legenda')}</span>
+          <span data-feira-como style={{ display: 'block', marginTop: 6 }}>{t('guild.feira.como')}</span>
+          <span data-feira-ganho style={{ display: 'block', marginTop: 6 }}>{t('guild.feira.ganho')}</span>
           <span style={{ display: 'block', marginTop: 6 }}>{t('guild.feira.sobria', { cheio: RAID_EMBLEMS, piso: RAID_EMBLEMS_FLOOR })}</span>
         </InfoTip>
       </div>

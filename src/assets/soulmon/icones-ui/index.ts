@@ -29,11 +29,6 @@ import chipMoeda from './chip-moeda.png';
 import iconMochila from './mochila.png';
 import iconAcordar from './sol-acordar.png';
 // Rodada 3, leva `extras` (22 ícones). Ver os mapas no fim do arquivo.
-import insigniaSemente from './insignia-faixa-semente.png';
-import insigniaBroto from './insignia-faixa-broto.png';
-import insigniaGuardiao from './insignia-faixa-guardiao.png';
-import insigniaAnciao from './insignia-faixa-anciao.png';
-import insigniaLendario from './insignia-faixa-lendario.png';
 import ceuSol from './ceu-sol.png';
 import ceuLuaNova from './ceu-lua-nova.png';
 import ceuLuaCrescente from './ceu-lua-crescente.png';
@@ -75,17 +70,14 @@ export const CHIP_MOEDA_ART = chipMoeda;
 export const CHIP_MOEDA_SLICE = { top: 18, right: 48, bottom: 18, left: 48 } as const;
 
 /**
- * Insígnias das faixas do Torneio (64², aro de cobre como os emblemas), por `id` de
- * `utils/tournamentTiers.ts`. Consumidor: o card "Sua faixa" do `TournamentPage`, que
- * cai no glifo Material quando a faixa não tem arte.
+ * Insígnias das faixas do Torneio, por `id` de `utils/tournamentTiers.ts`. Consumidor: o card "Sua faixa" do
+ * `TournamentPage`, que cai no glifo Material (`Icon`, sem box) quando a faixa não tem arte.
+ *
+ * VAZIO desde a rodada 7 / A1 (04/10/2026): as faixas viraram Madeira→Mestre e as 5 insígnias antigas (aro de
+ * cobre, tema Semente→Lendário, `insignia-faixa-*.png`, ainda em disco) não casam mais; as 7 faixas usam o
+ * glifo. Arte nova de metal por faixa = prompt P3 do dono (`docs/AJUSTES-RODADA-7-2026-10-04.md`).
  */
-export const TIER_INSIGNIA_ART: Partial<Record<string, string>> = {
-  semente: insigniaSemente,
-  broto: insigniaBroto,
-  guardiao: insigniaGuardiao,
-  anciao: insigniaAnciao,
-  lendario: insigniaLendario,
-};
+export const TIER_INSIGNIA_ART: Partial<Record<string, string>> = {};
 
 /** Céu do visor (64²): sol + 5 fases da lua. ⚠️ SEM CHAMADA (30/09/2026): nenhum visor
  *  desenha céu/fase da lua hoje — a arte espera o consumidor. */

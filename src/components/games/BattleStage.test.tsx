@@ -133,14 +133,22 @@ describe('BattleStage — o que a cena desenha', () => {
   const camadasDe = () => [...document.querySelectorAll('[data-stage-fx]')].map(e => e.getAttribute('data-stage-fx'));
   const srcsDe = () => [...document.querySelectorAll('[data-stage-fx] img')].map(e => e.getAttribute('src') ?? '');
 
-  it('ataque FÍSICO: a investida do atacante + o corte e o impacto do ELEMENTO dele no alvo', () => {
+  it('ataque FÍSICO (A5): a investida do atacante + SÓ o corte do ELEMENTO dele no alvo — sem splash/impacto', () => {
     const action: StageAction = { id: 1, actor: 'me', foe: 0, kind: 'melee', element: 'fogo' };
     render(<BattleStage {...baseProps} action={action} />);
     expect(document.querySelector('.sm-bs-lunge')).not.toBeNull();
     expect(camadasDe()).not.toContain('sm-bs-fly');
     const srcs = srcsDe();
     expect(srcs.some(s => /fx-fogo-slash/.test(s))).toBe(true);
-    expect(srcs.some(s => /fx-fogo-impact/.test(s))).toBe(true);
+    expect(srcs.some(s => /fx-fogo-impact/.test(s))).toBe(false);
+  });
+
+  it('o splash (impacto) é do dano à distância/mágico: o projétil e o especial ainda o mostram', () => {
+    for (const kind of ['ranged', 'special'] as const) {
+      cleanup();
+      render(<BattleStage {...baseProps} action={{ id: 20, actor: 'me', foe: 0, kind, element: 'fogo' }} />);
+      expect(srcsDe().some(s => /fx-fogo-impact/.test(s)), kind).toBe(true);
+    }
   });
 
   it('ataque À DISTÂNCIA: o projétil (orb) do elemento atravessa a cena; sem investida', () => {

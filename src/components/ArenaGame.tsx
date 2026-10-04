@@ -562,7 +562,10 @@ export function ArenaGame({
     onDefeat: () => setFase('perdeu'),
   };
   const battle = usePveBattle({
-    running: ARENA_ENERGY_ENABLED && fase === 'atacar' && vivos.length > 0,
+    // SEM `vivos.length > 0` (A3, rodada 7): o golpe que derruba o último inimigo zera `vivos`; se isto
+    // desligasse a luta ali, o relógio morria dentro do END_BEAT_MS e `onVictory` nunca rodava (inimigo
+    // apagado, luta travada). A luta só para quando o `onVictory` leva a fase para `rodada-limpa`.
+    running: ARENA_ENERGY_ENABLED && fase === 'atacar',
     paused: pausado, seed: seedLuta, reduced: reduzido.current, rules: regras,
   });
   battleRef.current = battle;

@@ -78,10 +78,10 @@ describe('Duelo da Arena — a cena em tela cheia com energia', () => {
     // A faixinha antiga (o visor 348×160) e a carga em bolinhas não existem mais na luta.
     expect(document.querySelector('[data-visor-pet]')).toBeNull();
     expect(document.querySelector('[data-arena-charge]')).toBeNull();
-    // Nada de frase explicativa: o "?" é o InfoTip.
+    // Nada de frase explicativa e nenhum "?" dentro da luta (A7): a explicação mora no modal anterior.
     expect(screen.queryByText(/ataca sozinho/i)).toBeNull();
     expect(screen.queryByText(/Toque em qualquer lugar/i)).toBeNull();
-    expect(document.querySelector('[data-info-tip]')).not.toBeNull();
+    expect(document.querySelector('[data-info-tip]')).toBeNull(); // A7: nenhum "?" dentro da luta
   });
 
   it('as flags: a energia está LIGADA, a barra de ataque DESLIGADA e não há "Atacar!" na tela', async () => {
@@ -203,6 +203,26 @@ describe('Duelo da Arena — a barra de cheer e a energia', () => {
     const antes = ratio();
     fireEvent.pointerDown(camada());
     expect(ratio()).toBe(antes);
+  });
+});
+
+
+describe('Duelo da Arena — derrotar o inimigo (A3, rodada 7)', () => {
+  it('🔴 o golpe que derruba o ÚLTIMO inimigo fecha a rodada — ele não fica apagado e a luta travada', async () => {
+    // Bug: `running` dependia de `vivos.length > 0`; o golpe fatal zerava `vivos`, o relógio morria
+    // dentro da pausa de fim (`END_BEAT_MS`) e `onVictory` nunca rodava.
+    hit.mockReturnValueOnce(99999);
+    await entrar();
+    await avancar(GOLPE_MS);
+    expect(hit).toHaveBeenCalledTimes(1);
+    expect(document.querySelector('[data-battle-stage]')).not.toBeNull(); // ainda na cena (o inimigo caiu)
+    await avancar(1200); // a pausa de fim (900 ms) e a virada de fase
+    expect(screen.getByText(/Rodada 1 vencida/)).toBeTruthy();
+    expect(document.querySelector('[data-battle-stage]')).toBeNull();
+    // e dá para seguir para a rodada 2
+    fireEvent.click(screen.getByRole('button', { name: 'Próxima rodada' }));
+    expect(document.querySelector('[data-battle-stage]')).not.toBeNull();
+    expect(document.querySelector('[data-stage-plate="foe"]')).not.toBeNull();
   });
 });
 

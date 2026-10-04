@@ -90,8 +90,13 @@ export function DueloSheet({ language, evolutionStage, skills, onStart }: {
             </span>
             <span style={{ display: 'block', marginTop: 6 }}>
               {isPt
-                ? 'Golpes: o primeiro é o básico; o segundo é o especial, que sai quando a torcida enche o gauge.'
-                : 'Strikes: the first is the basic one; the second is the special, which fires when your cheering fills the gauge.'}
+                ? 'Golpes: o primeiro é o básico; o segundo é o especial, que sai quando a barra de energia enche.'
+                : 'Strikes: the first is the basic one; the second is the special, which fires when the energy bar is full.'}
+            </span>
+            <span data-duelo-como-lutar style={{ display: 'block', marginTop: 6 }}>
+              {isPt
+                ? 'Na luta, seu Soulmon ataca e se defende sozinho. Toque na tela (ou no mascote) para torcer: a barra de cheer enche devagar e despeja energia nele. Com a energia cheia, ele solta o especial — toque no anel na hora certa para render mais. Quando o inimigo soltar o dele, deslize o dedo para o lado para esquivar.'
+                : 'In the fight, your Soulmon attacks and defends on its own. Tap the screen (or the mascot) to cheer: the cheer bar fills slowly and pours energy into it. With full energy it unleashes its special — tap the ring at the right moment to hit harder. When the enemy unleashes its own, swipe sideways to dodge.'}
             </span>
             {!par && (
               <span style={{ display: 'block', marginTop: 6 }}>
