@@ -57,6 +57,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { TimingBar } from './pixel/TimingBar';
 import { TorcidaLayer, TorcidaGauge } from './games/TorcidaKit';
 import { torcidaTap, TORCIDA_TAPS_FULL } from '../utils/torcida';
+import { usePveBattle, type PveRules } from './games/usePveBattle';
+import {
+  CHEER_TAPS_FULL, DODGE_REDUCE, ENERGY_MAX, PVE_FOE_SPECIAL_MULT, RING_MULT, type RingGrade, type DodgeGrade,
+} from '../utils/energia';
 import { BattleStage, BATTLE_LAYER_STYLE, type StageAction, type StageHit } from './games/BattleStage';
 import {
   ARENA_STRIKE_MS, ARENA_DEFEND_MS, STAGE_TIMING, fxElementId, impactMs, prefersReducedMotion,
@@ -64,6 +68,7 @@ import {
 } from '../utils/combatFx';
 import { autoDefense, defenseRoll, newDefenseSeed, TIMING_DODGE_ENABLED } from '../utils/autoDefesa';
 import { Icon } from './ui/Icon';
+import { InfoTip } from './ui/InfoTip';
 import { sm2Button, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, VisorFx, HpBars, FxPopup, StatTag, phaseTitle, phaseLine } from './games/GameKit';
 import { ARENA_SCENE } from '../utils/dungeonScenes';
@@ -71,6 +76,9 @@ import { getDungeonEnemySprite, getSpriteForStage } from '../utils/sprites';
 import {
   ARENA_ROUNDS,
   ARENA_AUTO_ACC,
+  ARENA_ENERGY_ENABLED,
+  ARENA_FOE_HP_EXTRA,
+  ARENA_HP_SCALE,
   ARENA_TIMING_ATTACK_ENABLED,
   arenaTorcidaTurn,
   DEFAULT_ARENA_ATTRIBUTES,
@@ -160,6 +168,14 @@ export function ArenaGame({
   /** A confirmação de sair está aberta: a luta espera. */
   const [pausado, setPausado] = useState(false);
   const reduzido = useRef(prefersReducedMotion());
+  /** A luta COM ENERGIA (04/10/2026): o relógio é o `usePveBattle`; as regras leem estas refs (sempre o estado mais novo). */
+  const battleRef = useRef<{ reset: (o: { foes: number; keepPet?: boolean }) => void } | null>(null);
+  const inimigosRef = useRef<ArenaEnemy[]>([]);
+  const hpRef = useRef(0);
+  const ecoRef = useRef(0);
+  const fracoRef = useRef(0);
+  const ultimoRef = useRef(-1);
+  const [seedLuta, setSeedLuta] = useState(() => defSeedRef.current);
   /** Toque de torcida: sobe o gauge e para no cheio (toque a mais não rende). */
   const torcer = useCallback(() => {
     tapsRef.current = torcidaTap(tapsRef.current, TORCIDA_TAPS_FULL);
@@ -172,7 +188,7 @@ export function ArenaGame({
   const atributos = attrs ?? DEFAULT_ARENA_ATTRIBUTES;
   const efeito = SPECIAL_EFFECTS[especial?.escolaId ?? 'combate_fisico'];
   const stats = useMemo(
-    () => getArenaPlayerStats(stage, basica?.escolaId ?? 'combate_fisico'),
+    () => getArenaPlayerStats(stage, basica?.escolaId ?? 'combate_fisico', ARENA_ENERGY_ENABLED ? ARENA_HP_SCALE : 1),
     [stage, basica?.escolaId],
   );
 
@@ -200,8 +216,10 @@ export function ArenaGame({
   }, []);
 
   const montarRodada = useCallback((n: number, poolAtual: BestiaryCreature[]) => {
-    const novos = buildArenaRound(n, 1, Math.random, poolAtual);
+    const novos = buildArenaRound(n, 1, Math.random, poolAtual, ARENA_ENERGY_ENABLED ? ARENA_HP_SCALE * ARENA_FOE_HP_EXTRA : 1);
+    inimigosRef.current = novos;
     setInimigos(novos);
+    battleRef.current?.reset({ foes: novos.length, keepPet: true });
     setSprites(novos.map(e => getDungeonEnemySprite(e.tier).sprite));
     setDefensor(-1);
     setFase('atacar');
@@ -217,6 +235,11 @@ export function ArenaGame({
     tapsRef.current = 0;
     defSeedRef.current = newDefenseSeed();
     defCountRef.current = 0;
+    setSeedLuta(defSeedRef.current);
+    hpRef.current = stats.hp;
+    ecoRef.current = 0;
+    fracoRef.current = 0;
+    battleRef.current?.reset({ foes: 1, keepPet: false });
     setTaps(0);
     setRodada(1);
     montarRodada(1, pool);
@@ -409,7 +432,7 @@ export function ArenaGame({
   const atacarRef = useRef(atacar);
   atacarRef.current = atacar;
   useEffect(() => {
-    if (ARENA_TIMING_ATTACK_ENABLED || fase !== 'atacar' || vivos.length === 0 || pausado) return;
+    if (ARENA_ENERGY_ENABLED || ARENA_TIMING_ATTACK_ENABLED || fase !== 'atacar' || vivos.length === 0 || pausado) return;
     // A cena (I10): a ação COMEÇA `impactMs` antes de o golpe chegar; o jogo resolve no
     // impacto, e a barra de HP só cai quando o golpe chega no alvo.
     let t2: ReturnType<typeof setTimeout> | undefined;
@@ -431,7 +454,7 @@ export function ArenaGame({
   const defenderRef = useRef(defender);
   defenderRef.current = defender;
   useEffect(() => {
-    if (TIMING_DODGE_ENABLED || fase !== 'defender' || defensor < 0 || pausado) return;
+    if (ARENA_ENERGY_ENABLED || TIMING_DODGE_ENABLED || fase !== 'defender' || defensor < 0 || pausado) return;
     const e = inimigos[defensor];
     if (!e) return;
     let t2: ReturnType<typeof setTimeout> | undefined;
@@ -455,6 +478,94 @@ export function ArenaGame({
     }, Math.max(0, ARENA_DEFEND_MS - STAGE_TIMING.ranged.impact));
     return () => { clearTimeout(t1); if (t2) clearTimeout(t2); };
   }, [fase, defensor, rodada, hp, pausado]);
+
+  /* ── A LUTA COM ENERGIA (04/10/2026, REGISTRO §20.10) ─────────────────────────
+     O pet golpeia sozinho; a barra de ENERGIA de cada lutador (dado + sofrido + cheer) dispara o
+     ESPECIAL: no pet, o especial da ficha com o ANEL (nota ruim/bom/ótimo no multiplicador); no
+     inimigo, um golpe ×${PVE_FOE_SPECIAL_MULT} que o jogador pode ESQUIVAR deslizando o dedo. A ordem do laço é a de
+     `simulateArenaRunEnergy` (eco → ação do pet → revide de cada inimigo vivo → enfraquecimento perde um turno). */
+  const limparRef = useRef(limparRodada);
+  limparRef.current = limparRodada;
+  inimigosRef.current = inimigos;
+  hpRef.current = hp;
+  ecoRef.current = eco;
+  fracoRef.current = enfraquecidos;
+  const ringTag = (r: RingGrade) => (isPt ? { otimo: 'ÓTIMO!', bom: 'BOM', ruim: 'FRACO' } : { otimo: 'GREAT!', bom: 'GOOD', ruim: 'WEAK' })[r];
+  const regras: PveRules = {
+    perfect: PERFECT_ACC,
+    target: () => Math.max(0, inimigosRef.current.findIndex(e => e.hp > 0)),
+    foes: () => {
+      const l = inimigosRef.current.map((e, i) => (e.hp > 0 ? i : -1)).filter(i => i >= 0);
+      ultimoRef.current = l.length ? l[l.length - 1] : -1;
+      return l;
+    },
+    playerElement: (sp: boolean) => fxElementId((sp ? especial?.elementoId : basica?.elementoId) ?? atributos.principal ?? 'vigor'),
+    foeElement: (i: number) => fxElementId(inimigosRef.current[i]?.elements[0]),
+    playerKind: () => strikeKindForSchool(basica?.escolaId),
+    foeKind: (foe: number) => (foe % 2 === 0 ? 'melee' : 'ranged'),
+    playerStrike: ({ special, ring }) => {
+      const antes = inimigosRef.current;
+      const copia = antes.map(e => ({ ...e }));
+      const vivosC = () => copia.filter(e => e.hp > 0);
+      if (ecoRef.current > 0) {
+        const t = vivosC()[0];
+        if (t) {
+          t.hp -= Math.max(1, Math.round(stats.dmg * (efeito.echoMult ?? 0) * elementMultiplier(especial?.elementoId ?? 'vigor', t.elements)));
+        }
+        ecoRef.current -= 1;
+        setEco(ecoRef.current);
+      }
+      if (special) {
+        const alvos = efeito.targets === 'all' ? vivosC() : vivosC().slice(0, efeito.targets);
+        for (const t of alvos) {
+          t.hp -= playerHitDamage(stats.dmg, ARENA_AUTO_ACC, elementMultiplier(especial?.elementoId ?? 'vigor', t.elements), efeito.mult * RING_MULT[ring]);
+        }
+        if (efeito.healFrac) {
+          hpRef.current = Math.min(stats.hp, hpRef.current + Math.round(stats.hp * efeito.healFrac));
+          setHp(hpRef.current);
+        }
+        if (efeito.weakenTurns) { fracoRef.current = efeito.weakenTurns; setEnfraquecidos(fracoRef.current); }
+        if (efeito.echoTurns) { ecoRef.current = efeito.echoTurns; setEco(ecoRef.current); }
+      } else {
+        const t = vivosC()[0];
+        if (t) t.hp -= playerHitDamage(stats.dmg, ARENA_AUTO_ACC, elementMultiplier(basica?.elementoId ?? 'vigor', t.elements));
+      }
+      inimigosRef.current = copia;
+      setInimigos(copia);
+      const hits = copia
+        .map((e, i) => ({ foe: i, value: Math.round(antes[i].hp - e.hp) }))
+        .filter(h => h.value > 0);
+      return { hits, tag: special ? ringTag(ring) : undefined, victory: !copia.some(e => e.hp > 0) };
+    },
+    foeStrike: ({ foe, special, dodge, acc }: { foe: number; special: boolean; dodge: DodgeGrade; acc: number }) => {
+      const e = inimigosRef.current[foe];
+      const ultimo = foe === ultimoRef.current;
+      let value = 0;
+      let blocked = false;
+      let tag: string | undefined;
+      if (e) {
+        if (!special && acc >= PERFECT_ACC) {
+          blocked = true;
+          tag = isPt ? 'Defendeu!' : 'Blocked!';
+        } else {
+          const base = enemyHitDamage(e.atk, special ? Math.min(acc, PERFECT_ACC - 0.01) : acc, e.elements[0], atributos, fracoRef.current > 0);
+          value = special ? Math.max(1, Math.round(base * PVE_FOE_SPECIAL_MULT * (1 - DODGE_REDUCE[dodge]))) : base;
+          if (special) tag = dodge === 'otimo' ? (isPt ? 'Esquivou!' : 'Dodged!') : dodge === 'bom' ? (isPt ? 'Quase!' : 'Close!') : undefined;
+        }
+      }
+      hpRef.current -= value;
+      setHp(hpRef.current);
+      if (ultimo && fracoRef.current > 0) { fracoRef.current -= 1; setEnfraquecidos(fracoRef.current); }
+      return { value: Math.round(value), blocked, tag, defeat: hpRef.current <= 0 };
+    },
+    onVictory: () => limparRef.current(),
+    onDefeat: () => setFase('perdeu'),
+  };
+  const battle = usePveBattle({
+    running: ARENA_ENERGY_ENABLED && fase === 'atacar' && vivos.length > 0,
+    paused: pausado, seed: seedLuta, reduced: reduzido.current, rules: regras,
+  });
+  battleRef.current = battle;
 
   const proximaRodada = useCallback(() => {
     if (!pool) return;
@@ -491,21 +602,43 @@ export function ArenaGame({
   if (emLuta && !ARENA_TIMING_ATTACK_ENABLED && !TIMING_DODGE_ENABLED) {
     const alvoIdx = fase === 'defender' && defensor >= 0 ? defensor : Math.max(0, inimigos.indexOf(alvo as ArenaEnemy));
     const carregado = carga >= SPECIAL_CHARGE_TURNS;
+    const en = ARENA_ENERGY_ENABLED;
     return (
-      <TorcidaLayer onTap={torcer} active={!pausado} isPt={isPt} style={BATTLE_LAYER_STYLE}>
+      <TorcidaLayer
+        onTap={en ? battle.cheer : torcer}
+        active={!pausado && (!en || battle.phase === 'idle')}
+        isPt={isPt}
+        style={BATTLE_LAYER_STYLE}
+        mascot
+        swipeActive={en && battle.phase === 'dodge'}
+        onSwipe={battle.swipe}
+      >
         <BattleStage
           scene={ARENA_SCENE.bg}
           me={{
             key: 'me', sprite: petSprite, name: isPt ? 'Você' : 'You', hp: Math.max(0, hp), maxHp: stats.hp,
             element: fxElementId(basica?.elementoId ?? atributos.principal),
+            energy: en ? battle.petEnergy / ENERGY_MAX : undefined,
           }}
           foes={inimigos.map((e, i) => ({
             key: i, sprite: sprites[i], name: nomeDe(e), hp: Math.max(0, e.hp), maxHp: e.maxHp,
             element: fxElementId(e.elements[0]), down: e.hp <= 0,
+            energy: en ? (battle.foeEnergy[i] ?? 0) / ENERGY_MAX : undefined,
           }))}
-          target={alvoIdx}
-          action={acao}
-          hit={golpe}
+          target={en ? Math.max(0, inimigos.findIndex(e => e.hp > 0)) : alvoIdx}
+          action={en ? battle.action : acao}
+          hit={en ? battle.hits : golpe}
+          charging={en && battle.charging}
+          ring={en ? battle.ring : null}
+          onRingGrade={battle.resolveRing}
+          dodge={en ? battle.dodge : null}
+          onDodge={battle.swipe}
+          petDodge={en ? battle.petDodge : null}
+          mechLabels={{
+            strike: isPt ? 'Golpear' : 'Strike',
+            dodgeLeft: isPt ? 'Esquivar para a esquerda' : 'Dodge left',
+            dodgeRight: isPt ? 'Esquivar para a direita' : 'Dodge right',
+          }}
           title={`${isPt ? 'Arena' : 'Arena'} · ${rodada}/${ARENA_ROUNDS}`}
           closeLabel={sair}
           onClose={onExit}
@@ -515,7 +648,7 @@ export function ArenaGame({
             leave: sair,
           }}
           onPauseChange={setPausado}
-          badge={(
+          badge={en ? undefined : (
             <span
               role="img"
               aria-label={`${isPt ? 'Carga' : 'Charge'} ${Math.min(carga, SPECIAL_CHARGE_TURNS)}/${SPECIAL_CHARGE_TURNS}`}
@@ -529,7 +662,7 @@ export function ArenaGame({
                 ))}
             </span>
           )}
-          hud={<TorcidaGauge taps={taps} onCheer={torcer} isPt={isPt} full={TORCIDA_TAPS_FULL} bare />}
+          hud={<TorcidaGauge taps={en ? battle.meter : taps} onCheer={en ? battle.cheer : torcer} isPt={isPt} full={en ? CHEER_TAPS_FULL : TORCIDA_TAPS_FULL} bare />}
         >
           {/* Gancho de estado (sem texto): em que passo do turno a luta está. */}
           <span hidden data-arena-fase={fase} />
@@ -611,9 +744,11 @@ export function ArenaGame({
               </p>
               <p style={phaseLine}>
                 <b style={{ color: 'var(--sm2-ink)', fontWeight: 500 }}>{isPt ? especial.nome.pt : especial.nome.en}</b>
-                {' · '}{isPt
-                  ? `carrega em ${SPECIAL_CHARGE_TURNS} turnos`
-                  : `charges in ${SPECIAL_CHARGE_TURNS} turns`}
+                {' · '}{ARENA_ENERGY_ENABLED
+                  ? (isPt ? 'com a energia cheia' : 'with full energy')
+                  : isPt
+                    ? `carrega em ${SPECIAL_CHARGE_TURNS} turnos`
+                    : `charges in ${SPECIAL_CHARGE_TURNS} turns`}
               </p>
             </>
           ) : (
@@ -624,7 +759,17 @@ export function ArenaGame({
             </p>
           )}
 
-          {!ARENA_TIMING_ATTACK_ENABLED && (
+          {!ARENA_TIMING_ATTACK_ENABLED && ARENA_ENERGY_ENABLED && (
+            /* A explicação mora atrás do "?" (InfoTip) — nenhum texto explicativo solto (04/10/2026). */
+            <div style={{ display: 'flex', justifyContent: 'center' }} data-arena-torcida-legenda>
+              <InfoTip language={isPt ? 'pt-BR' : 'en-US'} label={isPt ? 'Como funciona o Duelo' : 'How the Duel works'}>
+                {isPt
+                  ? 'Seu Soulmon luta e se defende sozinho. Toque na tela (ou no mascote) para torcer: a barra de cheer enche devagar e despeja energia nele. Com a energia cheia, ele solta o especial — toque no anel na hora certa para render mais. Quando o inimigo soltar o dele, deslize o dedo para o lado para esquivar.'
+                  : 'Your Soulmon fights and defends on its own. Tap the screen (or the mascot) to cheer: the cheer bar fills slowly and pours energy into it. With full energy it unleashes its special — tap the ring at the right moment to hit harder. When the enemy unleashes its own, swipe sideways to dodge.'}
+              </InfoTip>
+            </div>
+          )}
+          {!ARENA_TIMING_ATTACK_ENABLED && !ARENA_ENERGY_ENABLED && (
             <p style={phaseLine} data-arena-torcida-legenda>
               {isPt
                 ? 'Seu Soulmon luta sozinho. Você torce tocando na tela: o gauge cheio vira um golpe da torcida. Ele também se defende sozinho.'

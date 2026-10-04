@@ -166,7 +166,8 @@ describe('a Arena abre para TODO save, inclusive o sem ficha', () => {
       <ArenaGame evolutionStage="rookie" language="pt-BR" skills={skillsCom('benca')} onExit={() => {}} />,
     );
     await screen.findByRole('button', { name: /Entrar na Arena/i });
-    expect(screen.getByText(new RegExp(`carrega em ${SPECIAL_CHARGE_TURNS} turnos`))).toBeTruthy();
+    // 04/10/2026: a carga em turnos saiu — o especial dispara com a barra de ENERGIA cheia (REGISTRO §20.10)
+    expect(screen.getByText(/com a energia cheia/)).toBeTruthy();
   });
 
   it('o texto promete o que a regra cumpre: perder NÃO custa corações', async () => {

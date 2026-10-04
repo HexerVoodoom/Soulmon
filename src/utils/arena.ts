@@ -30,6 +30,10 @@ import type { Ficha, FichaStage } from './soulProfile/ficha/types';
 import type { EscolaId, RecursoId } from './soulProfile/ficha/types';
 import type { StageSkills } from './soulProfile/ficha/skills';
 import { TORCIDA_TAPS_FULL, TORCIDA_TAPS_CAP } from './torcida';
+import {
+  CHEER_TAPS_CAP, CHEER_TAPS_FULL, DODGE_REDUCE, PVE_FOE_SPECIAL_MULT, RING_MULT, addEnergy, energyFull, spendEnergy,
+  type DodgeGrade, type RingGrade,
+} from './energia';
 
 // ── Elements ────────────────────────────────────────────────────────────────
 
@@ -170,10 +174,10 @@ const ROLE_SHAPE: Record<EscolaId, { hp: number; dmg: number }> = {
 
 export interface ArenaPlayerStats { hp: number; dmg: number }
 
-export function getArenaPlayerStats(stage: FichaStage, escolaBasica: EscolaId): ArenaPlayerStats {
+export function getArenaPlayerStats(stage: FichaStage, escolaBasica: EscolaId, hpScale = 1): ArenaPlayerStats {
   const base = STAGE_BUDGET[stage] ?? STAGE_BUDGET.rookie;
   const shape = ROLE_SHAPE[escolaBasica] ?? ROLE_SHAPE.evocacao;
-  return { hp: Math.round(base.hp * shape.hp), dmg: Math.round(base.dmg * shape.dmg) };
+  return { hp: Math.round(base.hp * shape.hp * hpScale), dmg: Math.round(base.dmg * shape.dmg) };
 }
 
 /** Turns of charge the special needs before it can fire. */
@@ -388,6 +392,8 @@ export function buildArenaRound(
   difficulty: number,
   rng: () => number,
   pool: BestiaryCreature[],
+  /** Escala de vida dos inimigos (duelo mais longo, 04/10/2026); 1 = a curva de antes. */
+  hpScale = 1,
 ): ArenaEnemy[] {
   const comp = ROUND_COMP[Math.min(Math.max(roundIdx, 1), ARENA_ROUNDS) - 1];
   const curve = (1 + ROUND_GROWTH * (roundIdx - 1)) * (1 + DIFFICULTY_GROWTH * (Math.max(1, difficulty) - 1));
@@ -418,7 +424,7 @@ export function buildArenaRound(
     const noun = nouns[Math.floor(rng() * nouns.length)];
     const el = elements[0];
 
-    const hp = Math.max(4, Math.round(mediumHp * shape.hp * hpShape));
+    const hp = Math.max(4, Math.round(mediumHp * shape.hp * hpShape * hpScale));
     return {
       namePt: `${noun.pt} de ${elementLabel(el, true)}`,
       nameEn: `${elementLabel(el, false)} ${noun.en}`,
@@ -584,4 +590,139 @@ export function buildDefaultArenaSkills(): StageSkills {
       custo: 'alto',
     },
   };
+}
+
+// ── ENERGIA no Duelo da Arena (04/10/2026, REGISTRO §20.10) ─────────────────────
+//
+// O modelo de `utils/energia.ts` entra no Duelo contra NPCs: cada lutador tem UMA
+// barra de energia que enche por ataque DADO, ataque SOFRIDO e (só o pet) pelo CHEER.
+// Energia cheia = o ESPECIAL: no pet, o especial da ficha (a "carga de turnos" saiu
+// da tela — a barra de energia a substitui); no inimigo, um golpe ×`PVE_FOE_SPECIAL_MULT`.
+// PvE: o especial do pet pede o ANEL e o do inimigo pode ser ESQUIVADO (mecânicas ativas).
+// O caminho antigo (carga em turnos + golpe de torcida ×1,35) fica em `simulateArenaRun`
+// com `energy` desligado — atrás de `ARENA_ENERGY_ENABLED = false`, sem apagar.
+export const ARENA_ENERGY_ENABLED = true as boolean;
+
+/** Duelos mais longos: vida do pet e dos inimigos × isto (o dano não muda). Calibrado em `arena.test.ts`. */
+export const ARENA_HP_SCALE = 1.9;
+/** Vida extra dos inimigos, para o pet não ganhar força de graça com a energia (calibrado). */
+export const ARENA_FOE_HP_EXTRA = 0.9;
+
+export type ArenaSkill = 'nenhuma' | 'media' | 'boa';
+
+export interface ArenaEnergyResult {
+  won: boolean;
+  roundsCleared: number;
+  /** Turnos do pet jogados. */
+  turns: number;
+  /** Inimigos derrotados. */
+  kills: number;
+  /** Duração estimada na cena, em segundos (golpe do pet + um revide por inimigo vivo). */
+  seconds: number;
+}
+
+/**
+ * A run inteira com ENERGIA. Pura dado o `rng`. `skill` modela quem joga as mecânicas do PvE
+ * (nota do anel e da esquiva sorteadas): `nenhuma` = nunca age (anel `ruim`, sem esquiva),
+ * `media` e `boa` sorteiam as notas. `tapsPerTurn` = toques de cheer entre os golpes do pet.
+ */
+export function simulateArenaRunEnergy(config: ArenaArchetypeConfig, opts: {
+  rng: () => number; pool: BestiaryCreature[]; difficulty?: number; accMean?: number;
+  tapsPerTurn?: number; skill?: ArenaSkill; strikeMs?: number; defendMs?: number;
+}): ArenaEnergyResult {
+  const { rng, pool } = opts;
+  const difficulty = opts.difficulty ?? 1;
+  const accMean = opts.accMean ?? 0.7;
+  const skill = opts.skill ?? 'media';
+  const stats = getArenaPlayerStats(config.stage, config.escolaBasica, ARENA_HP_SCALE);
+  const special = SPECIAL_EFFECTS[config.escolaEspecial];
+  const tapsPerTurn = Math.min(CHEER_TAPS_CAP, Math.max(0, Math.floor(opts.tapsPerTurn ?? 0)));
+  const strikeMs = opts.strikeMs ?? 2400;
+  const defendMs = opts.defendMs ?? 1400;
+  const sampleAcc = () => clamp01(accMean + (rng() * 2 - 1) * 0.25);
+  const ringOf = (): RingGrade => {
+    const r = rng();
+    return skill === 'nenhuma' ? 'ruim'
+      : skill === 'media' ? (r < 0.25 ? 'ruim' : r < 0.75 ? 'bom' : 'otimo')
+      : (r < 0.1 ? 'ruim' : r < 0.4 ? 'bom' : 'otimo');
+  };
+  const dodgeOf = (): DodgeGrade => {
+    const r = rng();
+    return skill === 'nenhuma' ? 'nada'
+      : skill === 'media' ? (r < 0.3 ? 'nada' : r < 0.7 ? 'bom' : 'otimo')
+      : (r < 0.1 ? 'nada' : r < 0.4 ? 'bom' : 'otimo');
+  };
+
+  let hp = stats.hp;
+  let pE = 0;
+  let meter = 0;
+  let echoLeft = 0;
+  let weakenLeft = 0;
+  let turns = 0;
+  let kills = 0;
+  let ms = 0;
+
+  for (let round = 1; round <= ARENA_ROUNDS; round++) {
+    const enemies = buildArenaRound(round, difficulty, rng, pool, ARENA_HP_SCALE * ARENA_FOE_HP_EXTRA);
+    const eEn = enemies.map(() => 0);
+    let guard = 0;
+    while (enemies.some(e => e.hp > 0) && hp > 0 && guard++ < 400) {
+      const alive = () => enemies.filter(e => e.hp > 0);
+      turns++;
+      if (echoLeft > 0) {
+        const t = alive()[0];
+        if (t) {
+          t.hp -= Math.max(1, Math.round(stats.dmg * (special.echoMult ?? 0) * elementMultiplier(config.elementoEspecial, t.elements)));
+        }
+        echoLeft--;
+      }
+      // o cheer: os toques entre os golpes enchem a barra de cheer, que despeja energia no pet.
+      meter += tapsPerTurn;
+      while (meter >= CHEER_TAPS_FULL) { meter -= CHEER_TAPS_FULL; pE = addEnergy(pE, 'cheer'); }
+
+      const before = alive();
+      if (energyFull(pE)) {
+        pE = spendEnergy(pE);
+        const ring = RING_MULT[ringOf()];
+        const targets = special.targets === 'all' ? alive() : alive().slice(0, special.targets);
+        for (const t of targets) {
+          t.hp -= playerHitDamage(stats.dmg, ARENA_AUTO_ACC, elementMultiplier(config.elementoEspecial, t.elements), special.mult * ring);
+          eEn[enemies.indexOf(t)] = addEnergy(eEn[enemies.indexOf(t)], 'taken');
+        }
+        if (special.healFrac) hp = Math.min(stats.hp, hp + Math.round(stats.hp * special.healFrac));
+        if (special.weakenTurns) weakenLeft = special.weakenTurns;
+        if (special.echoTurns) echoLeft = special.echoTurns;
+      } else {
+        const t = alive()[0];
+        if (t) {
+          t.hp -= playerHitDamage(stats.dmg, ARENA_AUTO_ACC, elementMultiplier(config.elementoBasica, t.elements));
+          eEn[enemies.indexOf(t)] = addEnergy(eEn[enemies.indexOf(t)], 'taken');
+        }
+      }
+      pE = addEnergy(pE, 'dealt');
+      ms += strikeMs;
+      for (const e of before) if (e.hp <= 0) kills++;
+
+      for (const e of alive()) {
+        const i = enemies.indexOf(e);
+        const fs = energyFull(eEn[i]);
+        if (fs) eEn[i] = spendEnergy(eEn[i]);
+        const defAcc = sampleAcc();
+        if (fs || defAcc < PERFECT_ACC) {
+          // O especial do inimigo não é bloqueado de graça: vale o golpe normal × mult, menos a esquiva.
+          const base = enemyHitDamage(e.atk, fs ? Math.min(defAcc, PERFECT_ACC - 0.01) : defAcc, e.elements[0], config.attrs, weakenLeft > 0);
+          hp -= fs
+            ? Math.max(1, Math.round(base * PVE_FOE_SPECIAL_MULT * (1 - DODGE_REDUCE[dodgeOf()])))
+            : base;
+        }
+        eEn[i] = addEnergy(eEn[i], 'dealt');
+        pE = addEnergy(pE, 'taken');
+        ms += defendMs;
+      }
+      if (weakenLeft > 0) weakenLeft--;
+    }
+    if (hp <= 0) return { won: false, roundsCleared: round - 1, turns, kills, seconds: ms / 1000 };
+    hp = Math.min(stats.hp, hp + Math.round(stats.hp * ROUND_CLEAR_HEAL));
+  }
+  return { won: true, roundsCleared: ARENA_ROUNDS, turns, kills, seconds: ms / 1000 };
 }
