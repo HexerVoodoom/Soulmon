@@ -11,7 +11,7 @@ import {
 import { MARCO_POSTAIS, VIAGENS } from '../data/travessiasViagens';
 import { REGIONS } from '../data/travessiasCatalog';
 import { ADVENTURE_CATALOG, adventureOfDay, adventureOfNight, collectAdventure } from './adventure';
-import { CROSSINGS_EMPTY, HOME_REGION, MARCO_THRESHOLDS, MISSIONS_OFFERED_PER_DAY, REGIONS_OPENED_PER_DAY, type CrossingsState, type RegionId } from '../types/travessias';
+import { CROSSINGS_EMPTY, HOME_REGION, LOG_MAX, MARCO_THRESHOLDS, MISSIONS_OFFERED_PER_DAY, REGIONS_OPENED_PER_DAY, type CrossingsState, type RegionId } from '../types/travessias';
 
 const FORA = REGIONS.filter(r => r.id !== HOME_REGION);
 const R1 = FORA[0];
@@ -333,7 +333,7 @@ describe('missões diárias: 3 propostas, escolhe 1 (04/10/2026)', () => {
     expect(vistas.size).toBe(21);
   });
 
-  it('pickMission só aceita uma das três do dia; trocar antes do "Fiz" é livre; depois do "Fiz", não', () => {
+  it('pickMission só aceita uma das três do dia; escolhida NÃO se troca (M4); depois do "Fiz", não', () => {
     const dia = '2026-10-04';
     const [a, b] = dailyOffer(dia, 's');
     const fora = FORA.flatMap(r => r.challenges.map(c => ({ r, c })))
@@ -342,8 +342,9 @@ describe('missões diárias: 3 propostas, escolhe 1 (04/10/2026)', () => {
     let s = pickMission(CROSSINGS_EMPTY, dia, 's', a.region.id, a.challenge.id);
     expect(activeChallenge(s, dia)?.challenge.id).toBe(a.challenge.id);
     expect(s.pickDay).toBe(dia);
-    s = pickMission(s, dia, 's', b.region.id, b.challenge.id);
-    expect(activeChallenge(s, dia)?.challenge.id).toBe(b.challenge.id);
+    // Rodada 7 (M4): escolheu, não troca.
+    expect(pickMission(s, dia, 's', b.region.id, b.challenge.id)).toBe(s);
+    expect(activeChallenge(s, dia)?.challenge.id).toBe(a.challenge.id);
     const feito = markDone(s, dia);
     expect(pickMission(feito, dia, 's', a.region.id, a.challenge.id)).toBe(feito);
     // Outro dia: a de ontem some, a oferta é nova.
@@ -360,6 +361,71 @@ describe('missões diárias: 3 propostas, escolhe 1 (04/10/2026)', () => {
   });
 });
 
+describe('a janela de 24 h da missão (rodada 7, M4)', () => {
+  const dia = '2026-10-04';
+  const T0 = Date.UTC(2026, 9, 4, 20, 0, 0);
+  const H = 3_600_000;
+  const [a, b] = dailyOffer(dia, 's');
+  const escolhida = pickMission(CROSSINGS_EMPTY, dia, 's', a.region.id, a.challenge.id, T0);
+
+  it('guarda o instante da escolha; dentro das 24 h vale, mesmo virando o dia, e não se troca', () => {
+    expect(escolhida.pickAt).toBe(T0);
+    const amanha = '2026-10-05';
+    expect(activeChallenge(escolhida, amanha, T0 + 10 * H)?.challenge.id).toBe(a.challenge.id);
+    expect(missionMark(escolhida, amanha, T0 + 10 * H)).toBe('progress');
+    const ofertaDeAmanha = dailyOffer(amanha, 's')[0];
+    expect(pickMission(escolhida, amanha, 's', ofertaDeAmanha.region.id, ofertaDeAmanha.challenge.id, T0 + 10 * H)).toBe(escolhida);
+    expect(pickMission(escolhida, dia, 's', b.region.id, b.challenge.id, T0 + 1 * H)).toBe(escolhida);
+  });
+
+  it('passadas as 24 h ela se solta sozinha, sem custo: saem outras e se escolhe de novo', () => {
+    const amanha = '2026-10-05';
+    const depois = T0 + 24 * H;
+    expect(activeChallenge(escolhida, amanha, depois)).toBeNull();
+    expect(missionMark(escolhida, amanha, depois)).toBe('available');
+    const nova = dailyOffer(amanha, 's')[1];
+    const s = pickMission(escolhida, amanha, 's', nova.region.id, nova.challenge.id, depois);
+    expect(s.active?.challenge).toBe(nova.challenge.id);
+    expect(s.pickAt).toBe(depois);
+    expect(s.score).toBe(0); // perder não custa nada e não soma nada
+    // O "Fiz" depois das 24 h não vale para a que já se foi.
+    expect(markDone(escolhida, amanha, depois)).toBe(escolhida);
+  });
+
+  it('"Fiz" dentro das 24 h, já no dia seguinte, vale: conclui, registra e para o relógio', () => {
+    const amanha = '2026-10-05';
+    const feito = markDone(escolhida, amanha, T0 + 10 * H);
+    expect(feito.doneDay).toBe(amanha);
+    expect(feito.pickAt).toBeNull();
+    expect(feito.log).toEqual([{ day: amanha, region: a.region.id, challenge: a.challenge.id }]);
+    expect(missionMark(feito, amanha, T0 + 11 * H)).toBeNull();
+  });
+});
+
+describe('o registro das missões feitas (rodada 7, M6)', () => {
+  it('cada "Fiz" entra uma vez, só dia + região + id; fica só o fim do registro', () => {
+    let s: CrossingsState = CROSSINGS_EMPTY;
+    for (let d = 1; d <= 70; d++) {
+      const m = dailyOffer(`x${d}`, 's')[0];
+      s = markDone(pickCrossing(s, m.region.id, m.challenge.id, `x${d}`), `x${d}`);
+    }
+    expect(s.log.length).toBe(LOG_MAX);
+    expect(Object.keys(s.log[0]).sort()).toEqual(['challenge', 'day', 'region']);
+    expect(s.log[LOG_MAX - 1].day).toBe('x70');
+  });
+
+  it('normalizeCrossings: pickAt e log tolerantes; lixo some', () => {
+    const n = normalizeCrossings({
+      active: { region: 'floresta', challenge: 'trv-c-floresta-1' }, pickDay: '2026-10-04', pickAt: 1_700_000_000_000,
+      log: [{ day: '2026-10-01', region: 'floresta', challenge: 'trv-c-floresta-1' }, { day: 'lixo', region: 'floresta', challenge: 'x' }, { day: '2026-10-02', region: 'campina', challenge: 'a' }, null, 7],
+    });
+    expect(n.pickAt).toBe(1_700_000_000_000);
+    expect(n.log).toEqual([{ day: '2026-10-01', region: 'floresta', challenge: 'trv-c-floresta-1' }]);
+    expect(normalizeCrossings({ pickAt: 5, log: 'x' }).pickAt).toBeNull(); // sem ativa, sem relógio
+    expect(normalizeCrossings({ pickAt: 5, log: 'x' }).log).toEqual([]);
+  });
+});
+
 describe('o marcador "!" / "?" (04/10/2026)', () => {
   const dia = '2026-10-04';
   const m = dailyOffer(dia, 's')[0];
@@ -368,7 +434,8 @@ describe('o marcador "!" / "?" (04/10/2026)', () => {
     const escolhida = pickMission(CROSSINGS_EMPTY, dia, 's', m.region.id, m.challenge.id);
     expect(missionMark(escolhida, dia)).toBe('progress');
     expect(missionMark(markDone(escolhida, dia), dia)).toBeNull();
-    expect(missionMark({ ...CROSSINGS_EMPTY, hidden: true }, dia)).toBeNull();
+    // Rodada 7 (M7): a camada não se esconde mais; `hidden` de save antigo é ignorado.
+    expect(missionMark({ ...CROSSINGS_EMPTY, hidden: true }, dia)).toBe('available');
     // No dia seguinte a de ontem não conta: "!" de novo (sem culpa, sem marca de atraso).
     expect(missionMark(markDone(escolhida, dia), '2026-10-05')).toBe('available');
     expect(missionMark(escolhida, '2026-10-05')).toBe('available');

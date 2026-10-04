@@ -81,30 +81,70 @@ describe('missões do dia (04/10/2026) — a tela mostra as TRÊS e se escolhe U
   });
 });
 
-describe('F3 — Recuar no lugar de "Deixar pra lá"', () => {
-  it('não existe mais o botão antigo; Recuar solta a escolha e as três voltam', () => {
-    const { container } = render(createElement(Viva, { inicial: ativa, dia: DIA }));
-    expect(container.querySelector('[data-travessia-deixar]')).toBeNull();
+describe('rodada 7 (M1–M4, M7) — escolhida, só a missão; sem Recuar, sem Esconder; relógio de 24 h', () => {
+  it('escolhida: some o "para onde ele vai hoje"; não há Recuar, Trocar nem Esconder Travessias', () => {
+    const aberta: CrossingsState = { ...CROSSINGS_EMPTY, opened: [{ region: R1.id, day: '2026-09-01' }] };
+    const { container } = render(createElement(Viva, { inicial: aberta, dia: DIA }));
+    // Com uma região aberta há o que escolher: o destino aparece, rotulado — até escolher a missão.
+    expect(container.querySelector('[data-passeio-destino]')).toBeTruthy();
+    expect(container.textContent).toMatch(/Passeio livre/);
+    fireEvent.click(container.querySelector(`[data-travessia-abrir="${C1.id}"]`)!);
+    fireEvent.click(container.querySelector(`[data-travessia-escolher="${C1.id}"]`)!);
+    expect(container.querySelector('[data-passeio-destino]')).toBeNull();
+    expect(container.textContent).not.toMatch(/Para onde ele vai hoje|Passeio livre/);
+    expect(container.querySelector('[data-travessia-recuar]')).toBeNull();
     expect(container.querySelector('[data-travessia-trocar]')).toBeNull();
-    expect(container.textContent).not.toMatch(/deixar pra l[aá]|deixa pra depois/i);
-    fireEvent.click(container.querySelector('[data-travessia-recuar]')!);
+    expect(container.querySelector('[data-travessias-esconder]')).toBeNull();
+    expect(container.querySelectorAll('[data-travessia-card]').length).toBe(0);
+    expect(container.textContent).not.toMatch(/Recuar|Step back|Esconder|Hide/);
+  });
+
+  it('só a casa aberta: não há "destino" para escolher (o chip sem sentido saiu)', () => {
+    const { container } = render(createElement(Viva, { inicial: CROSSINGS_EMPTY, dia: DIA }));
+    expect(container.querySelector('[data-passeio-destino]')).toBeNull();
+  });
+
+  it('o card diz quantas horas restam, sem "prazo"; o texto longo do mapa saiu', () => {
+    const T0 = Date.UTC(2026, 9, 2, 12, 0, 0);
+    const c = pickMission(CROSSINGS_EMPTY, DIA, SEED, M1.region.id, M1.challenge.id, T0);
+    const { container } = render(createElement(PasseioSheet, {
+      language: 'pt-BR', crossings: c, onChange: () => {}, todayKey: DIA, seed: SEED, now: T0 + 5 * 3_600_000,
+    }));
+    expect(container.querySelector('[data-travessia-tempo]')!.textContent).toBe('Vale por mais 19 h.');
+    expect(container.querySelector('[data-travessia-mapa]')).toBeNull();
+    expect(container.textContent).not.toMatch(/No mapa|pressa/i);
+  });
+
+  it('passadas as 24 h a missão some e voltam as três do dia', () => {
+    const T0 = Date.UTC(2026, 9, 2, 12, 0, 0);
+    const c = pickMission(CROSSINGS_EMPTY, DIA, SEED, M1.region.id, M1.challenge.id, T0);
+    const { container } = render(createElement(PasseioSheet, {
+      language: 'pt-BR', crossings: c, onChange: () => {}, todayKey: '2026-10-03', seed: SEED, now: T0 + 24 * 3_600_000,
+    }));
     expect(container.querySelector('[data-travessia-ativa]')).toBeNull();
     expect(container.querySelectorAll('[data-travessia-card]').length).toBe(3);
   });
+});
 
-  it('depois do "Fiz" não há Recuar (a missão de hoje já foi)', () => {
+describe('rodada 7 (M5, M6) — celebração e registro', () => {
+  it('o "Fiz" solta a celebração (decorativa, aria-hidden); o registro lista a missão feita', () => {
     const { container } = render(createElement(Viva, { inicial: ativa, dia: DIA }));
+    expect(container.querySelector('[data-celebration]')).toBeNull();
+    expect(container.querySelector('[data-travessias-registro]')).toBeNull();
     fireEvent.click(container.querySelector('[data-travessia-fiz]')!);
-    expect(container.querySelector('[data-travessia-recuar]')).toBeNull();
+    const fx = container.querySelector('[data-celebration]')!;
+    expect(fx.getAttribute('aria-hidden')).toBe('true');
+    const abrir = container.querySelector('[data-registro-abrir]') as HTMLElement;
+    expect(abrir.getAttribute('aria-expanded')).toBe('false');
+    fireEvent.click(abrir);
+    const item = container.querySelector(`[data-registro-item="${C1.id}"]`)!;
+    expect(item.textContent).toContain(travessiaTitle(C1.id, true)!);
   });
 });
 
 describe('F4/F5 — "Fiz" dá retorno claro, uma vez por dia', () => {
   it('marca, confirma, diz para onde o Soulmon viaja e o que muda no mapa; o total aparece discreto', () => {
     const { container } = render(createElement(Viva, { inicial: ativa, dia: DIA }));
-    const mapa = () => container.querySelector('[data-travessia-mapa]')!.textContent!;
-    expect(mapa()).toContain(R1.namePt);
-    expect(mapa()).toMatch(/abre/);
     expect(container.querySelector('[data-marcos]')).toBeNull(); // 0 não aparece: sem número cobrando
 
     const fiz = container.querySelector<HTMLButtonElement>('[data-travessia-fiz]')!;
@@ -113,12 +153,11 @@ describe('F4/F5 — "Fiz" dá retorno claro, uma vez por dia', () => {
 
     const hoje = container.querySelector('[data-travessia-hoje]')!;
     expect(hoje.getAttribute('role')).toBe('status');
-    expect(hoje.textContent).toMatch(/Registrado por hoje/);
+    expect(hoje.textContent).toMatch(/Feita\./);
     expect(hoje.textContent).toContain(`viaja para ${R1.namePt}`);
     expect(container.querySelector('[data-travessia-ativa]')!.getAttribute('data-travessia-feito')).toBe('sim');
     expect(container.querySelector<HTMLButtonElement>('[data-travessia-fiz]')!.disabled).toBe(true);
     expect(container.querySelector('[data-mission-mark]')).toBeNull();
-    expect(mapa()).toMatch(/próxima noite/);
     expect(container.querySelector('[data-marcos]')!.textContent).toMatch(/Marcos de Aventura · 1/);
   });
 
@@ -136,16 +175,10 @@ describe('F4/F5 — "Fiz" dá retorno claro, uma vez por dia', () => {
     expect(container.querySelector('[data-marcos]')!.textContent).toMatch(/· 1/); // o total fica
   });
 
-  it('região já aberta: a linha do mapa diz que repetir não muda o mapa (nada farmável)', () => {
-    const aberta: CrossingsState = { ...ativa, opened: [{ region: R1.id, day: '2026-09-01' }] };
-    const { container } = render(createElement(Viva, { inicial: aberta, dia: DIA }));
-    expect(container.querySelector('[data-travessia-mapa]')!.textContent).toMatch(/já está no seu mapa/);
-  });
-
   it('EN: o mesmo caminho em inglês, sem "challenge"', () => {
     const { container } = render(createElement(Viva, { inicial: ativa, dia: DIA, language: 'en-US' }));
     fireEvent.click(container.querySelector('[data-travessia-fiz]')!);
-    expect(container.querySelector('[data-travessia-hoje]')!.textContent).toMatch(/Noted for today/);
+    expect(container.querySelector('[data-travessia-hoje]')!.textContent).toMatch(/Done\. Tonight/);
     expect(container.querySelector('[data-marcos]')!.textContent).toMatch(/Adventure Milestones/);
     expect(container.textContent).not.toMatch(/challenge/i);
   });

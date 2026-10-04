@@ -4,15 +4,15 @@ Fonte: navegação do dono pelo APK depois da rodada 6. Legenda: `[ ]` aberto ·
 Faixas: M = Missões/Travessias · I = InfoTip e Laboratório · J = Jogos e carregamento · A = Arena/Torneio.
 
 ## M — Passeio / Travessias / Missões
-- [ ] M1 Chip "Where it goes today › Mirror Home, low grass…" parece botão e ninguém entende → remover/explicar
-- [ ] M2 Depois de ESCOLHER a travessia ("Choose this one") o modal muda: some "Where it goes today", fica só a travessia e a tarefa
-- [ ] M3 Tirar texto longo ("On the map, once you mark I did it, forest opens on the next night strolls…")
-- [ ] M4 Tirar "Step back"; entra TIMER de 24 h: escolheu, não troca; não fez em 24 h → perde a missão e escolhe outra no dia seguinte; fez → "OK" e conclui
-- [ ] M5 Efeito de celebração ao concluir travessia, missão e a meta/tarefa do dia
-- [ ] M6 REGISTRO das travessias já feitas (em algum lugar do Passeio)
-- [ ] M7 Tirar o botão "Hide crossings"
-- [ ] M8 Ícone de Missões na Home, perto do minimapa (canto superior direito) → lista de missões do usuário
-- [ ] M9 Ícone de quest: "?" AMARELO (o "?" azul de ajuda sai — ver I1)
+- [x] M1 Chip "Where it goes today › Mirror Home, low grass…" parece botão e ninguém entende → remover/explicar
+- [x] M2 Depois de ESCOLHER a travessia ("Choose this one") o modal muda: some "Where it goes today", fica só a travessia e a tarefa
+- [x] M3 Tirar texto longo ("On the map, once you mark I did it, forest opens on the next night strolls…")
+- [x] M4 Tirar "Step back"; entra TIMER de 24 h: escolheu, não troca; não fez em 24 h → perde a missão e escolhe outra no dia seguinte; fez → "OK" e conclui
+- [x] M5 Efeito de celebração ao concluir travessia, missão e a meta/tarefa do dia — feito: Celebration no "Fiz" (testado) e na meta do dia (só tsc, sem teste de comportamento)
+- [x] M6 REGISTRO das travessias já feitas (em algum lugar do Passeio)
+- [x] M7 Tirar o botão "Hide crossings"
+- [x] M8 Ícone de Missões na Home, perto do minimapa (canto superior direito) → lista de missões do usuário — feito: ícone sob o Mapa abre a folha de missões (sem conferência visual)
+- [x] M9 Ícone de quest: "?" AMARELO (o "?" azul de ajuda sai — ver I1)
 
 ## I — InfoTip e Laboratório
 - [ ] I1 Ícone de informação passa a ser "i" (não "?"), cinza claro (não azul)

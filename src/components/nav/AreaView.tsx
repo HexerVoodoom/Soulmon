@@ -292,7 +292,7 @@ export function AreaView(props: AreaViewProps) {
       ? exploracaoLots(language).map(l => ({
         ...l, art: EXPLORACAO_LOT_ART[l.id], onOpen: () => setSheet(l.id),
         // "!" / "?" sobre o Passeio (04/10/2026): missão do dia disponível / em andamento.
-        ...(l.id === 'passeio' ? { mark: missionMark(props.passeio?.crossings ?? CROSSINGS_EMPTY, props.play.todayKey ?? new Date().toISOString().slice(0, 10)) } : {}),
+        ...(l.id === 'passeio' ? { mark: missionMark(props.passeio?.crossings ?? CROSSINGS_EMPTY, props.play.todayKey ?? new Date().toISOString().slice(0, 10), Date.now()) } : {}),
       }))
       : jogosLots(language).map(l => ({ ...l, art: JOGOS_LOT_ART[l.id], onOpen: () => setSheet(l.id) }));
     const open = lots.find(l => l.id === sheet) ?? null;

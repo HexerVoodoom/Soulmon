@@ -316,6 +316,26 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Chamado por:** `src/App.tsx`.
 **Régua:** `src/components/nav/nav.render.test.tsx`.
 
+### `src/components/nav/MissionsLink.tsx`
+**Dono de:** o ícone de Missões da Home (rodada 7, M8, 04/10/2026) — botão fixo no canto superior direito, logo abaixo do `CornerLink` do Mapa, no mesmo anel. Glifo de quest amarelo (`gold`): "!" com missões para escolher, "?" com uma escolhida ou já feita. Parado, sem número e sem som.
+**Props principais:** `mark: MissionMark` (de `missionMark`), `label`, `onClick`.
+**Exports:** `MissionsLink(props)`.
+**Chamado por:** `src/App.tsx` (só com `currentView === 'home'`).
+**Régua:** `src/styles/iconScale.contract.test.ts` (glifo 24).
+
+### `src/components/nav/MissionsSheet.tsx`
+**Dono de:** a lista de missões aberta pelo ícone da Home — a MESMA folha do Passeio (`PasseioSheet`, lazy) dentro de um `ModalSheet`. Regra única, dois lugares: nada daqui escreve estado que o Passeio não escreva.
+**Props principais:** `open`, `onClose`, `language`, `crossings`, `onChange` (função pura sobre `prev`), `todayKey`, `seed`.
+**Exports:** `MissionsSheet(props)`.
+**Chamado por:** `src/App.tsx`.
+
+### `src/components/ui/Celebration.tsx`
+**Dono de:** a celebração curta (rodada 7, M5) — 12 faíscas CSS, ~1,3 s, uma vez, decorativa (`aria-hidden`). Em `prefers-reduced-motion` o CSS (`.sm2-celebrate`, bloco canônico) a esconde.
+**Props principais:** `fixed?` (sobre a tela, para a meta do dia), `onDone?`.
+**Exports:** `Celebration(props)`.
+**Chamado por:** `src/components/play/PasseioSheet.tsx` (o "Fiz"), `src/App.tsx` (meta do dia cumprida).
+**Régua:** `src/components/play/PasseioSheet.render.test.tsx`.
+
 ### `src/components/nav/AreaScene.tsx`
 **Dono de:** o MOLDE de uma área do Mapa (minimal-ui F4) — fundo de cena e "lotes" (construções clicáveis, posicionadas em % sobre a cena). ⚠️ **Decisão do dono, 28/09/2026: não existe mais NPC anfitrião fixo no rodapé da cena.** Cada lote tem o NPC dele próprio, mostrado só dentro da folha que abre ao tocá-lo (`AreaSheet`, via `lotNpcArt`) — a `AreaScene` não desenha NPC nem balão de fala nenhum. Não decide o conteúdo de cada folha — isso é do `AreaView`.
 **Props principais:** `areaId: AreaId`, `language`, `lots: AreaLot[]` (`id`, `label`, `left`/`top`, `ariaLabel`, `onOpen`, `art?` — a arte isométrica do lote, desde F5), `background?` (fundo pintado 9:16 em `cover`, desde F5; sem ele, o degradê de tokens), `children?` (onde entra o `AreaSheet` aberto, no mesmo empilhamento da cena).

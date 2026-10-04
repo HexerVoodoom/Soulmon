@@ -236,7 +236,8 @@ describe('Exploração — o Passeio (30/09/2026)', () => {
     fireEvent.click(container.querySelector('[data-area-lot="passeio"]')!);
     await achar(container, '[data-passeio]');
     const folha = getByRole('dialog', { name: 'Stroll' });
-    expect(folha.querySelector('[data-passeio-destino="campina"]')!.getAttribute('aria-pressed')).toBe('true');
+    // Rodada 7 (M1): só a casa aberta = nada para escolher, então o "destino" nem aparece.
+    expect(folha.querySelector('[data-passeio-destino]')).toBeNull();
     // O Passeio tem NPC próprio desde 30/09/2026 (Brume, leva npcs-flare); a Masmorra segue com o Zeph.
     expect(container.querySelector('[data-area-sheet-npc-line]')!.textContent).toContain('Brume');
     // 04/10/2026: o lote leva o "!" (missões do dia para escolher) e a folha mostra as TRÊS do dia.

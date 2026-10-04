@@ -15,6 +15,9 @@ import {
   openSourceFromUrl, afterBadDayGapBucket, trackRetentionOnOpen,
 } from './utils/telemetry';
 import { CornerLink } from './components/nav/CornerLink';
+import { MissionsLink } from './components/nav/MissionsLink';
+import { MissionsSheet } from './components/nav/MissionsSheet';
+import { Celebration } from './components/ui/Celebration';
 import { AreaTopBar } from './components/nav/AreaTopBar';
 import { MapPage } from './components/nav/MapPage';
 import { HomeMenuSheet } from './components/nav/HomeMenuSheet';
@@ -38,7 +41,7 @@ import { getSpriteForStage } from './utils/sprites';
 import { ContentModals } from './components/ContentModals';
 import { NotificationManager } from './components/NotificationManager';
 import { adventureOfNight, collectAdventure } from './utils/adventure';
-import { crossingsTouchMap } from './utils/travessiasSave';
+import { crossingsTouchMap, missionMark } from './utils/travessiasSave';
 import { clearLegacy, loadLegacyEntries, mergeEntries, type CadernoEntry } from './utils/cadernoSave';
 import { CROSSINGS_EMPTY, HOME_REGION, type CrossingsState } from './types/travessias';
 import { IntroScreen } from './components/IntroScreen';
@@ -714,6 +717,10 @@ export default function App() {
   const area = areaOf(currentView);
   /** O menu ícone da Home (D6). */
   const [homeMenuOpen, setHomeMenuOpen] = useState(false);
+  /* Rodada 7 (M8): a lista de missões aberta pelo ícone da Home. */
+  const [missionsOpen, setMissionsOpen] = useState(false);
+  /* Rodada 7 (M5): a celebração da meta do dia — liga na virada de "não" para "sim". */
+  const [celebrarMeta, setCelebrarMeta] = useState(false);
   const currentViewRef = useRef(currentView);
   currentViewRef.current = currentView;
   // Id estável de comunidade (Tournament/Biblioteca) — mesmo id do cloud save.
@@ -1781,6 +1788,13 @@ export default function App() {
   const heartGoalHoje = heartGoalFor(gameState, new Date().getDay(), new Date().toDateString());
   const fioGoal = { done: dailyDone, heart: heartGoalHoje, full: dailyTotal };
   const fioMetaCumprida = dailyTotal > 0 && dailyDone >= heartGoalHoje;
+  /* M5: celebra UMA vez quando a meta do dia vira "cumprida" nesta sessão. Começa
+     no valor de agora (abrir o app com a meta já cumprida não celebra de novo). */
+  const metaAntes = useRef(fioMetaCumprida);
+  useEffect(() => {
+    if (fioMetaCumprida && !metaAntes.current) setCelebrarMeta(true);
+    metaAntes.current = fioMetaCumprida;
+  }, [fioMetaCumprida]);
   const minhaCriaturaUrl = displaySprite(spriteAcervo, gameState.evolutionStage)?.url
     ?? getSpriteForStage(gameState.evolutionStage, petLine);
   /* O selo "Dia completo" da lista (minimal-ui F2). A condição é a da VIRADA —
@@ -6797,6 +6811,25 @@ export default function App() {
           ring
         />
       )}
+      {currentView === 'home' && (
+        <MissionsLink
+          mark={missionMark(crossings, playerDayIso(new Date(), gameState.playerDayTz), Date.now())}
+          label={language === 'pt-BR' ? 'Missões' : 'Missions'}
+          onClick={() => setMissionsOpen(true)}
+        />
+      )}
+      {currentView === 'home' && celebrarMeta && (
+        <Celebration fixed onDone={() => setCelebrarMeta(false)} />
+      )}
+      <MissionsSheet
+        open={missionsOpen}
+        onClose={() => setMissionsOpen(false)}
+        language={language}
+        crossings={crossings}
+        onChange={handleCrossings}
+        todayKey={playerDayIso(new Date(), gameState.playerDayTz)}
+        seed={saveId}
+      />
       {currentView === 'map' && (
         <CornerLink
           icon="home"

@@ -110,6 +110,20 @@ export interface CrossingsState {
    */
   pickDay: string | null;
   /**
+   * O instante (epoch ms) em que `active` foi escolhida (rodada 7, M4,
+   * 04/10/2026): a missão escolhida vale por `MISSION_WINDOW_MS` (24 h) e não se
+   * troca nesse tempo. Passado isso ela se solta sozinha, sem custo e sem marca,
+   * e saem propostas novas. null = save antigo, ou missão já feita (aí vale só
+   * o dia, `pickDay`).
+   */
+  pickAt: number | null;
+  /**
+   * O REGISTRO das missões feitas (rodada 7, M6): mais recentes por último,
+   * guarda só dia + região + id do desafio (nunca texto), no máximo `LOG_MAX`.
+   * Sem contagem, sem sequência: é um diário, não um placar.
+   */
+  log: Array<{ day: string; region: RegionId; challenge: string }>;
+  /**
    * MARCOS DE AVENTURA (04/10/2026): quantas missões foram feitas, no total.
    * 1 por "Fiz" e só um "Fiz" por dia, então o contador anda no máximo 1/dia.
    * Só abre postais cosméticos (`MARCO_THRESHOLDS`); nunca paga nada e nunca
@@ -129,7 +143,13 @@ export const MARCO_THRESHOLDS: readonly number[] = [5, 10, 20];
 /** Quantas propostas o jogador vê por dia, entre as quais escolhe UMA. */
 export const MISSIONS_OFFERED_PER_DAY = 3;
 
+/** Quanto tempo vale a missão escolhida: 24 h, sem troca (rodada 7, M4). */
+export const MISSION_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+/** Quantas entradas o registro guarda (as mais recentes). */
+export const LOG_MAX = 60;
+
 export const CROSSINGS_EMPTY: CrossingsState = {
   opened: [], active: null, pending: [], destination: null, hidden: false, doneDay: null,
-  pickDay: null, score: 0, trip: null,
+  pickDay: null, pickAt: null, log: [], score: 0, trip: null,
 };

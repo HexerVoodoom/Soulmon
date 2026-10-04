@@ -5,7 +5,8 @@ import type { MissionMark as Kind } from '../../utils/travessiasSave';
 /**
  * O MARCADOR DE MISSÃO (04/10/2026, pedido do dono — como o World of Warcraft):
  * "!" = há missões do dia para escolher; "?" = uma escolhida, esperando o
- * "Fiz". Os dois são glifos AUTORAIS (`ui/NavGlyphs.tsx`: `exclamation` e
+ * "Fiz". Rodada 7 (M9): os dois agora são AMARELOS (tom `gold`) — o "?" azul
+ * saiu da quest. Os dois são glifos AUTORAIS (`ui/NavGlyphs.tsx`: `exclamation` e
  * `question`), pelados — ícone nunca dentro de box. Parado: sem animação, sem
  * som, sem número (as regras do Passeio: nada que cobre). Some quando a missão
  * de hoje foi feita ou quando a camada de Travessias está escondida.
@@ -25,7 +26,7 @@ export function MissionMark({ kind, size = 24, isPt, style }: {
         name={kind === 'available' ? 'exclamation' : 'question'}
         size={size}
         weight={600}
-        tone={kind === 'available' ? 'gold' : 'primary'}
+        tone="gold"
         label={label}
       />
     </span>

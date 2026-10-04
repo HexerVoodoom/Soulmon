@@ -5744,6 +5744,8 @@ select:focus-visible {
   .sm-pet-haunted { animation: none !important; transform: rotate(-4deg); }
   /* WP1.1: o casulo do reveal para de pulsar e continua sendo um casulo. */
   .sm-reveal-cocoon, .sm-reveal-cocoon-img { animation: none !important; }
+  /* Celebração (rodada 7, M5): sem movimento ela nem renderiza; o texto de estado basta. */
+  .sm2-celebrate { display: none !important; }
   /* WP2.4: a cerimônia do marco aparece parada — a informação é a mesma. */
   .sm-milestone-pop { animation: none !important; }
   /* Bosque da Guilda: as criaturas ficam paradas. */
@@ -8200,3 +8202,13 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
 .sm-cheer-jump { animation: sm-cheer-jump 360ms ease-out 1; }
 @keyframes sm-cheer-bubble { 0% { opacity: 0; transform: translateY(6px) scale(.7); } 20% { opacity: 1; transform: translateY(0) scale(1.05); } 80% { opacity: 1; transform: translateY(-2px) scale(1); } 100% { opacity: 0; transform: translateY(-6px) scale(1); } }
 .sm-cheer-bubble { position: absolute; right: 2px; bottom: 62px; z-index: 7; padding: 3px 8px; border-radius: 10px 10px 2px 10px; background-color: var(--sm2-surface); border: 1px solid var(--sm2-line); color: var(--sm2-gold-ink); font-family: Silkscreen, monospace; font-size: 14px; line-height: 1.2; white-space: nowrap; pointer-events: none; animation: sm-cheer-bubble 760ms ease-out 1 both; }
+
+/* ── CELEBRAÇÃO (rodada 7, M5, 04/10/2026 — `components/ui/Celebration.tsx`):
+   o estouro curto de faíscas ao cumprir uma missão ou a meta do dia. Uma vez só.
+   Em `prefers-reduced-motion` ela nem renderiza (regra no bloco canônico). */
+@keyframes sm2-celebrate-spark {
+  0%   { opacity: 0; transform: rotate(var(--sm2-spark-a)) translateX(0) scale(.6); }
+  15%  { opacity: 1; }
+  100% { opacity: 0; transform: rotate(var(--sm2-spark-a)) translateX(var(--sm2-spark-d)) scale(1); }
+}
+.sm2-celebrate-spark { position: absolute; left: -3px; top: -3px; width: 6px; height: 6px; border-radius: 50%; opacity: 0; animation: sm2-celebrate-spark 1100ms ease-out 1 both; }

@@ -164,7 +164,8 @@ describe('(d) o formato: nada distingue a versão pequena, nada paga, o save só
   it('CrossingsState guarda só regiões, id do desafio, dias, o total de Marcos e o interruptor (04 R-4)', () => {
     // 04/10/2026 (missões diárias): + pickDay (dia da escolha), score (Marcos de Aventura, pedido do dono)
     // e trip (dia + região da viagem da noite). Nenhum texto livre.
-    const CAMPOS = ['active', 'destination', 'doneDay', 'hidden', 'opened', 'pending', 'pickDay', 'score', 'trip'].sort();
+    // Rodada 7 (M4, M6): + pickAt (instante da escolha, a janela de 24 h) e log (o registro: dia + região + id).
+    const CAMPOS = ['active', 'destination', 'doneDay', 'hidden', 'log', 'opened', 'pending', 'pickAt', 'pickDay', 'score', 'trip'].sort();
     expect(campos(corpo('CrossingsState')).sort()).toEqual(CAMPOS);
     expect(Object.keys(CROSSINGS_EMPTY).sort()).toEqual(CAMPOS);
   });
@@ -190,6 +191,8 @@ describe('(e) a folha do Passeio', () => {
     ['percentual', /%/],
     ['unlock', /unlock|desbloque/i],
     ['a palavra da camada', /challenge|desafio/i],
+    // Rodada 7 (M4): a missão escolhida vale 24 h e a folha diz quantas horas restam ("Vale por mais 18 h"),
+    // mas nunca a palavra de cobrança nem uma data-limite.
     ['prazo', /deadline|prazo|expira|expires|until|at[ée] (dia|domingo|amanh)/i],
     ['prêmio', /reward|recompensa|pr[êe]mio|\bbits\b|\bxp\b|emblem/i],
   ];
@@ -205,13 +208,11 @@ describe('(e) a folha do Passeio', () => {
           texto += container.textContent ?? '';
         }
         for (const [regra, re] of PROIBIDO_NA_TELA) expect(texto, regra).not.toMatch(re);
+        // Rodada 7 (M7): a camada não se esconde mais — nem o `hidden` de um save antigo a apaga.
+        expect(container.querySelector('[data-travessias-mostrar]')).toBeNull();
+        expect(container.querySelector('[data-travessias-esconder]')).toBeNull();
         const seguranca = container.querySelector('[data-travessias-seguranca]');
-        if (crossings.hidden) {
-          expect(seguranca).toBeNull();
-          expect(container.querySelector('[data-travessias-mostrar]')).toBeTruthy();
-        } else {
-          expect(seguranca?.textContent ?? '').toMatch(language === 'pt-BR' ? /seguro/ : /safe/);
-        }
+        expect(seguranca?.textContent ?? '').toMatch(language === 'pt-BR' ? /seguro/ : /safe/);
         cleanup();
       });
     }

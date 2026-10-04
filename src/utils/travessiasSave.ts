@@ -12,7 +12,7 @@
  * nada de texto livre, lugar, foto ou pessoa. A higienização descarta o que
  * não for isso.
  */
-import { CROSSINGS_EMPTY, HOME_REGION, type CrossingsState, type RegionId } from '../types/travessias';
+import { CROSSINGS_EMPTY, HOME_REGION, LOG_MAX, MISSION_WINDOW_MS, type CrossingsState, type RegionId } from '../types/travessias';
 import { dayKeyToIso } from './playerDay';
 
 /**
@@ -88,9 +88,21 @@ export function normalizeCrossings(raw: unknown): CrossingsState {
     ? { day: tripDay, region: t.region }
     : null;
 
+  const pickAt = active && typeof r.pickAt === 'number' && Number.isFinite(r.pickAt) && r.pickAt > 0
+    ? Math.floor(r.pickAt) : null;
+
+  // O registro (rodada 7, M6): só dia + região + id; lixo é descartado; fica o fim.
+  const log: CrossingsState['log'] = [];
+  for (const e of Array.isArray(r.log) ? r.log : []) {
+    const o = (e ?? {}) as Record<string, unknown>;
+    const dia = asDayKey(o.day);
+    if (!dia || !isRegionId(o.region) || o.region === HOME_REGION || !isChallengeId(o.challenge)) continue;
+    log.push({ day: dia, region: o.region, challenge: o.challenge });
+  }
+
   return {
     opened, active, pending, destination, hidden: r.hidden === true,
-    doneDay: asDayKey(r.doneDay), pickDay, score, trip,
+    doneDay: asDayKey(r.doneDay), pickDay, pickAt, log: log.slice(-LOG_MAX), score, trip,
   };
 }
 
@@ -106,9 +118,21 @@ const SCORE_MAX = 9999;
  */
 export type MissionMark = 'available' | 'progress' | null;
 
-export function missionMark(c: CrossingsState, dayKey: string): MissionMark {
-  if (c.hidden || c.doneDay === dayKey) return null;
-  return c.active && c.pickDay === dayKey ? 'progress' : 'available';
+export function missionMark(c: CrossingsState, dayKey: string, now?: number): MissionMark {
+  // Rodada 7 (M7): a camada não se esconde mais — `hidden` de save antigo é ignorado.
+  if (c.doneDay === dayKey) return null;
+  return missionLive(c, dayKey, now) ? 'progress' : 'available';
+}
+
+/**
+ * A missão escolhida ainda vale? (rodada 7, M4.) Com `pickAt` e `now`: vale por
+ * 24 h a partir da escolha, mesmo virando o dia. Sem `pickAt` (save antigo, ou
+ * missão já feita) ou sem `now`: vale só no dia da escolha.
+ */
+export function missionLive(c: CrossingsState, dayKey: string, now?: number): boolean {
+  if (!c.active) return false;
+  if (c.pickAt !== null && now !== undefined) return now < c.pickAt + MISSION_WINDOW_MS;
+  return c.pickDay === dayKey;
 }
 
 /**
