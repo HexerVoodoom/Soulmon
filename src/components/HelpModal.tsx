@@ -1,4 +1,4 @@
-import { ModalSheet, sm2Button, sm2Hint } from './form/FormKit';
+import { ModalSheet, sm2Hint } from './form/FormKit';
 import { FOOD_LIMIT_PER_HOUR } from '../utils/careRules';
 import { Language } from '../utils/i18n';
 import {
@@ -198,11 +198,6 @@ export function HelpModal({ isOpen, onClose, language }: HelpModalProps) {
       language={language}
       title={isPt ? 'Glossário' : 'Glossary'}
       maxWidth={520}
-      footer={
-        <button type="button" onClick={onClose} style={{ ...sm2Button('outline'), width: '100%' }}>
-          {isPt ? 'Fechar' : 'Close'}
-        </button>
-      }
     >
       {/* Copy §6 (L10, §16): é aqui que "o universo é descrito como universo".
           A 2ª oração bloqueia a inferência de tipologia ("então eu sou

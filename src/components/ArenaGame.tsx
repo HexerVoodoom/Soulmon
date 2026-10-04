@@ -680,6 +680,12 @@ export function ArenaGame({
         sub={emLuta ? `${isPt ? 'Rodada' : 'Round'} ${rodada}/${ARENA_ROUNDS}` : undefined}
         closeLabel={sair}
         onClose={onExit}
+        exitConfirm={emLuta ? {
+          title: isPt ? 'Sair da Arena? Esta corrida se perde.' : 'Leave the Arena? This run will be lost.',
+          stay: isPt ? 'Continuar' : 'Keep going',
+          leave: sair,
+        } : undefined}
+        onPauseChange={setPausado}
       />
 
       {fase === 'carregando' && (
@@ -691,9 +697,6 @@ export function ArenaGame({
             <Icon name="sync" size={24} tone="primary" className="animate-spin" />
             {isPt ? 'Chamando os desafiantes…' : 'Calling the challengers…'}
           </p>
-          <button type="button" onClick={onExit} style={{ ...sm2Button('outline'), width: '100%', maxWidth: 200, alignSelf: 'center' }}>
-            {isPt ? 'Voltar' : 'Go back'}
-          </button>
         </>
       )}
 
@@ -716,9 +719,6 @@ export function ArenaGame({
               ? 'Não consegui carregar os desafiantes agora. Isso costuma ser conexão — tente de novo daqui a pouco.'
               : "I could not load the challengers right now. This is usually the connection — try again in a bit."}
           </p>
-          <button type="button" onClick={onExit} style={{ ...sm2Button('outline'), width: '100%', maxWidth: 200 }}>
-            {isPt ? 'Voltar' : 'Go back'}
-          </button>
         </div>
       )}
 

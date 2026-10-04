@@ -313,7 +313,8 @@ describe('estados que não são a luta', () => {
     vi.mocked(arena.loadBestiaryPool).mockRejectedValueOnce(new Error('rede'));
     renderWithCss(<ArenaGame evolutionStage="rookie" language="pt-BR" onExit={() => {}} />);
     expect(await screen.findByText(/Não consegui carregar os desafiantes/i)).toBeTruthy();
-    expect(screen.getByRole('button', { name: /Voltar/i })).toBeTruthy();
+    // I3: sem botão "Voltar" de texto — a saída é o ✕ do topo, à ESQUERDA (ocioso).
+    expect(screen.getByRole('button', { name: /Sair/i })).toBeTruthy();
   });
 
   it('o estado de erro OFERECE saída — beco sem saída é pior que erro', async () => {
@@ -321,11 +322,11 @@ describe('estados que não são a luta', () => {
     vi.mocked(arena.loadBestiaryPool).mockRejectedValueOnce(new Error('rede'));
     const onExit = vi.fn();
     renderWithCss(<ArenaGame evolutionStage="rookie" language="pt-BR" onExit={onExit} />);
-    // Espera o ESTADO DE ERRO: a tela de carregamento também oferece "Voltar"
+    // Espera o ESTADO DE ERRO: a tela de carregamento também oferece a saída (✕ ocioso, à esquerda)
     // (canvas Jogos: "Go back" no loading), e clicar nele no instante em que o
     // pool rejeita acerta um nó já desmontado.
     await screen.findByText(/Não consegui carregar os desafiantes/i);
-    fireEvent.click(screen.getByRole('button', { name: /Voltar/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Sair/i }));
     expect(onExit).toHaveBeenCalled();
   });
 

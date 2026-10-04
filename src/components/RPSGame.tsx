@@ -3,7 +3,7 @@ import type { CSSProperties } from 'react';
 import rpsScene from '../assets/soulmon/bg/minigame-rps.png';
 import type { Language } from '../utils/i18n';
 import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
-import { GameRoot, GameHeader, GameVisor, phaseTitle } from './games/GameKit';
+import { GameRoot, GameHeader, GameVisor, phaseTitle, gameExitConfirm } from './games/GameKit';
 
 /**
  * Rock-Paper-Scissors vs the pet. First to 3 round-wins takes the match.
@@ -126,6 +126,8 @@ export function RPSGame({ language, onEarnPoints, onExit }: {
         title={isPt ? 'Pedra · Papel · Tesoura' : 'Rock · Paper · Scissors'}
         closeLabel={isPt ? 'Sair' : 'Exit'}
         onClose={onExit}
+        activity={!matchOver}
+        exitConfirm={!matchOver && playerWins + petWins > 0 ? gameExitConfirm(isPt, 'da partida') : undefined}
       />
 
       {/* Placar em Rubik `tabular-nums` (era Silkscreen — V3). */}

@@ -178,7 +178,7 @@ export function RespiracaoGame({ language, evolutionStage, demoCharacterId, onEx
   const ease = `${TICK_MS}ms linear`;
   return (
     <GameRoot>
-      <GameHeader run title={title} closeLabel={closeLabel} onClose={onExit} />
+      <GameHeader run activity title={title} closeLabel={closeLabel} onClose={onExit} />
       <GameVisor height={80} scene={REFUGIO_SCENE}>
         <div
           aria-hidden="true"

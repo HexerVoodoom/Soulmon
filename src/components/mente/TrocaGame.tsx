@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react';
 import type { EarningGameProps } from './types';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
-import { GameRoot, GameHeader, GameVisor, VisorSprite, StatTag, phaseTitle, phaseLine } from '../games/GameKit';
+import { GameRoot, GameHeader, GameVisor, VisorSprite, StatTag, phaseTitle, phaseLine, gameExitConfirm } from '../games/GameKit';
 import { Icon } from '../ui/Icon';
 import { usePrefersReducedMotion } from '../ui/Viewport';
 import { DUNGEON_LINE_SPRITES } from '../../utils/sprites';
@@ -51,6 +51,13 @@ export function TrocaGame({ language, onEarnPoints, onExit }: EarningGameProps) 
   gameRef.current = game;
   const overRef = useRef(false);
   const startRef = useRef(Date.now());
+  /** I3: a confirmação de sair pausa o relógio (e o teclado) da rodada. */
+  const pausedRef = useRef(false);
+  const pauseAtRef = useRef(0);
+  const onPauseChange = useCallback((p: boolean) => {
+    if (p) { pauseAtRef.current = Date.now(); pausedRef.current = true; }
+    else { startRef.current += Date.now() - pauseAtRef.current; pausedRef.current = false; }
+  }, []);
   const nudgeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pulseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const swipeX = useRef<number | null>(null);
@@ -69,6 +76,7 @@ export function TrocaGame({ language, onEarnPoints, onExit }: EarningGameProps) 
   useEffect(() => {
     if (over) return;
     const id = setInterval(() => {
+      if (pausedRef.current) return;
       const left = Math.max(0, TROCA_SESSION_MS - (Date.now() - startRef.current));
       setLeftMs(left);
       if (left <= 0) finish(gameRef.current);
@@ -117,6 +125,7 @@ export function TrocaGame({ language, onEarnPoints, onExit }: EarningGameProps) 
   useEffect(() => {
     if (over) return;
     const onKey = (e: KeyboardEvent) => {
+      if (pausedRef.current) return;
       if (e.key === 'ArrowLeft') { e.preventDefault(); sort('left'); }
       else if (e.key === 'ArrowRight') { e.preventDefault(); sort('right'); }
     };
@@ -201,6 +210,8 @@ export function TrocaGame({ language, onEarnPoints, onExit }: EarningGameProps) 
         info={isPt ? 'Separe cada criatura pela regra de cima.' : 'Sort each creature by the rule on top.'}
         closeLabel={isPt ? 'Sair' : 'Exit'}
         onClose={onExit}
+        exitConfirm={over ? undefined : gameExitConfirm(isPt, 'da rodada')}
+        onPauseChange={onPauseChange}
       />
 
       {over ? (
