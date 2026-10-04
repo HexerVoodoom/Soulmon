@@ -20,7 +20,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { screen, fireEvent, act, cleanup } from '@testing-library/react';
+import { screen, fireEvent, act, cleanup, waitFor } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
 import { SoulmonOnboarding, GOOGLE_SEM_RESPOSTA_MS } from './SoulmonOnboarding';
 import { buildConsentRecord, TERMS_VERSION } from '../utils/consent';
@@ -73,6 +73,14 @@ function aceitarERevelarIdade() {
 /** Toca o botão único do portão e espera a promessa. */
 async function entrarComGoogleUi() {
   await act(async () => { botao('Continue with Google'); });
+  // O login agora verifica o save na nuvem ANTES de seguir (`restaurarContaNoLogin`,
+  // assíncrono): espera o DESFECHO (termos, nome ou alerta de erro), senão toda
+  // busca síncrona logo depois é uma corrida contra o relógio do CI.
+  if (googlePendura) return;
+  await waitFor(() => {
+    const achou = screen.queryByText('Before we start') || screen.queryByText('What should we call you?') || screen.queryByRole('alert');
+    expect(achou).toBeTruthy();
+  }, { timeout: 5000 });
 }
 
 describe('portão de identidade', () => {
