@@ -7171,15 +7171,18 @@ export default function App() {
       {interstitial === 'catalogOnboarding' && (
         <CatalogOnboardingFlow
           language={language}
-          onComplete={(chosen) => setGameState(prev => {
-            const withFlag = markCatalogOnboardingSeen(prev as any, new Date()) as any;
-            return {
-              ...withFlag,
-              // ACRESCENTA, nunca substitui — nenhuma atividade existente é
-              // tocada (decisão do dono, 28/09/2026).
-              activities: [...(prev.activities ?? []), ...activitiesFromCatalogChoice(chosen, language === 'pt-BR')],
-            };
-          })}
+          onComplete={(chosen) => {
+            // ACRESCENTA, nunca substitui — nenhuma atividade existente é
+            // tocada (decisão do dono, 28/09/2026). Mas pelo PORTÃO de criação
+            // (D-12): escrever em `activities` por fora furava o teto do demo e
+            // o do estágio (o tutorial já pode ter enchido a lista), sem contar
+            // `activity_create`. Mesmo caminho do catálogo avulso (`create_modal`).
+            commitHabitCreate(
+              activitiesFromCatalogChoice(chosen, language === 'pt-BR'),
+              TELEMETRY_CREATE_PATH.create_modal,
+            );
+            setGameState(prev => markCatalogOnboardingSeen(prev as any, new Date()) as any);
+          }}
         />
       )}
       {interstitial === 'catalogLevelInvite' && catalogLevelInviteCandidate && (
