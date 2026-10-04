@@ -293,12 +293,9 @@ function Registro({ log, isPt }: { log: CrossingsState['log']; isPt: boolean }) 
       {aberto && (
         <ul id="sm2-registro-lista" style={{ ...list, display: 'flex', flexDirection: 'column', gap: 6 }}>
           {itens.map((e, i) => {
-            const region = regionById(e.region);
-            const desafio = region?.challenges.find(c => c.id === e.challenge);
-            const titulo = travessiaTitle(e.challenge, isPt) ?? (desafio ? (isPt ? desafio.textPt : desafio.textEn) : e.challenge);
+            const titulo = travessiaTitle(e.challenge, isPt) ?? e.challenge;
             return (
               <li key={`${e.day}-${e.challenge}-${i}`} data-registro-item={e.challenge} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                {desafio && <AreaGlyph area={desafio.area} size={20} />}
                 <span style={{ ...sm2Text, flex: 1, minWidth: 0 }}>{titulo}</span>
                 <span style={{ ...note, flexShrink: 0 }}>{diaCurto(e.day, isPt)}</span>
               </li>

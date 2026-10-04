@@ -103,7 +103,7 @@ describe('Torneio', () => {
 });
 
 describe('Torneio — menu e treino', () => {
-  it('Missões usa o "?" amarelo (A2; não a exclamação nem o check) e o indicador da faixa é o glifo da faixa (Bronze) em 48, sem box', async () => {
+  it('Missões usa o "?" amarelo (A2; não a exclamação nem o check) e o indicador da faixa é o glifo da faixa (Bronze) em 32, sem box', async () => {
     const { container } = renderWithCss(<TournamentPage {...base} shop={shop} />);
     const missoes = screen.getByRole('tab', { name: 'Missions' });
     expect(missoes.textContent).toContain('question');
@@ -117,7 +117,7 @@ describe('Torneio — menu e treino', () => {
     });
     const glifo = ind.querySelector('.sm2-icon') as HTMLElement;
     expect(glifo.textContent).toContain('military_tech');
-    expect(glifo.style.fontSize).toBe('48px');
+    expect(glifo.style.fontSize).toBe('32px');
   });
 
   it('o TREINO existe sem Vínculo, sem rede e sem oponentes — e abre a luta local', () => {
