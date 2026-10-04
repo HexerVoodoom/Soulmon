@@ -53,7 +53,7 @@ import {
   readFlag, readFlagState, readJson, readLocal, readNumber, removeLocal, writeFlag, writeJson, writeLocal,
 } from './utils/safeStorage';
 import { initialNotificationsEnabled, readSystemNotificationPermission } from './utils/notificationDefault';
-import { hashString, creatureFormId, ELEMENT_INFO } from './utils/oracle';
+import { hashString, creatureFormId, ELEMENT_INFO } from './utils/oracle/base';
 import type { OracleInput, OracleResult, ElementId } from './utils/oracle';
 import type { Manifestacao } from './utils/soulProfile/ficha/manifestacaoSave';
 import { applyDecorEquip, type SlotId } from './utils/petStage';
@@ -100,7 +100,6 @@ import {
 import { fitHabitCreates } from './utils/habitCreate';
 import { applyShopBuy, shopBuyRefusal } from './utils/shopBuy';
 import { soulmonDisplayName } from './utils/petName';
-import { readingSeed } from './utils/newReading';
 import { rolledRareCheer, type PetVoiceKind } from './utils/petVoice';
 import {
   emptyFirstDay, markGesture, shouldShowFirstDay, type FirstDayGesture,
@@ -3653,6 +3652,8 @@ export default function App() {
     // Confere o perfil ANTES de cobrar — cobrar e depois falhar seria roubo.
     if (!saved) return false;
     const leituras = Number(saved.readings ?? 0) + 1;
+    // `newReading.ts` puxa as perguntas do Oráculo (copy longa): só carrega aqui.
+    const { readingSeed } = await import('./utils/newReading');
     const newSeed = readingSeed(novasRespostas, leituras);
     saved.answers = novasRespostas;
     // GERA ANTES DE COBRAR. Conferir só a existência do perfil não bastava: um
@@ -3669,7 +3670,7 @@ export default function App() {
         const { generateOracleComplete } = await import('./utils/soulProfile');
         result = (await generateOracleComplete(saved, newSeed)).result;
       } else {
-        const { generateOracleAsync } = await import('./utils/oracle');
+        const { generateOracleAsync } = await import('./utils/oracle/gerar');
         result = await generateOracleAsync(saved, newSeed);
       }
     } catch {
@@ -3762,7 +3763,7 @@ export default function App() {
         const { generateOracleComplete } = await import('./utils/soulProfile');
         result = (await generateOracleComplete(comEscolhas, novaSeed)).result;
       } else {
-        const { generateOracleAsync } = await import('./utils/oracle');
+        const { generateOracleAsync } = await import('./utils/oracle/gerar');
         result = await generateOracleAsync(comEscolhas, novaSeed);
       }
     } catch {

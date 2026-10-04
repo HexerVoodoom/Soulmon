@@ -252,22 +252,9 @@ export interface CreatureStage {
   imagePromptFallback: string;
 }
 
-/**
- * Id da forma no MOTOR DO JOGO ('rookie' | '{champion|ultimate|mega}-{power|
- * harmony|benevolence}' | 'ultra' — ver types/progression.ts). Único ponto que
- * traduz o vocabulário do oráculo (stage 'perfeito' + branch poder/harmonia/
- * benevolencia) pro vocabulário do jogo (nível 'ultimate' + atributo
- * power/harmony/benevolence, já usado em todo o resto do app).
- */
-export function creatureFormId(form: Pick<CreatureStage, 'stage' | 'branch'>): string {
-  if (form.stage === 'rookie' || form.stage === 'ultra') return form.stage;
-  const level = form.stage === 'perfeito' ? 'ultimate' : form.stage; // champion/mega: 1:1
-  const attrByAlignment: Record<AlignmentId, 'power' | 'harmony' | 'benevolence'> = {
-    poder: 'power', harmonia: 'harmony', benevolencia: 'benevolence',
-  };
-  const attr = form.branch ? attrByAlignment[form.branch] : 'harmony';
-  return `${level}-${attr}`;
-}
+// O núcleo leve mora em `oracle/base.ts` (o chunk de entrada importa de lá); reexportado aqui.
+import { creatureFormId, hashString, mulberry32, ELEMENT_INFO, STAGE_NAMES } from './oracle/base';
+export { creatureFormId, hashString, mulberry32, ELEMENT_INFO, STAGE_NAMES };
 
 export interface OracleResult {
   input: OracleInputSync | OracleInputWithClass; // o do pipeline guarda promptClassFlavor
@@ -322,29 +309,6 @@ export interface FamilyResult {
 // ---------------------------------------------------------------------------
 // Utilidades: hash + RNG semeado
 // ---------------------------------------------------------------------------
-
-/** FNV-1a 32 bits — hash estável do input p/ semear o RNG. */
-export function hashString(s: string): number {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < s.length; i++) {
-    h ^= s.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  return h >>> 0;
-}
-
-/** mulberry32 — RNG determinístico pequeno. */
-/** Exportado para os módulos do soulProfile (ficha/bestiário) usarem o MESMO
- *  RNG semeado — segunda cópia divergiria em silêncio (footgun 9). */
-export function mulberry32(seed: number): () => number {
-  let a = seed >>> 0;
-  return () => {
-    a |= 0; a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
 
 export function pick<T>(rng: () => number, arr: T[]): T {
   return arr[Math.floor(rng() * arr.length) % arr.length];
@@ -663,17 +627,6 @@ export function computeVedic(month: number, day: number): VedicResult {
 // 5. Pontuação de elementos e funções
 // ---------------------------------------------------------------------------
 
-export const ELEMENT_INFO: Record<ElementId, { name: LText; emoji: string; personality: LText }> = {
-  agua: { name: { pt: 'Água', en: 'Water' }, emoji: '💧', personality: { pt: 'Fluido, empático e profundo — sente antes de entender e cura pela presença.', en: 'Fluid, empathetic and deep — feels before understanding and heals through presence.' } },
-  fogo: { name: { pt: 'Fogo', en: 'Fire' }, emoji: '🔥', personality: { pt: 'Ardente, apaixonado e inquieto — inspira e incendeia quem está por perto.', en: 'Burning, passionate and restless — inspires and ignites those around.' } },
-  terra: { name: { pt: 'Terra', en: 'Earth' }, emoji: '⛰️', personality: { pt: 'Sólido, leal e prático — a rocha em que os outros se apoiam.', en: 'Solid, loyal and practical — the rock others lean on.' } },
-  ar: { name: { pt: 'Ar', en: 'Air' }, emoji: '🌪️', personality: { pt: 'Livre, curioso e veloz — vive de ideias e nunca fica parado.', en: 'Free, curious and swift — lives on ideas and never stands still.' } },
-  sombra: { name: { pt: 'Sombra', en: 'Shadow' }, emoji: '🌑', personality: { pt: 'Misterioso, estrategista e introspectivo — enxerga o que ninguém vê.', en: 'Mysterious, strategic and introspective — sees what no one else sees.' } },
-  luz: { name: { pt: 'Luz', en: 'Light' }, emoji: '✨', personality: { pt: 'Radiante, otimista e inspirador — guia os outros pelo exemplo.', en: 'Radiant, optimistic and inspiring — guides others by example.' } },
-  planta: { name: { pt: 'Planta', en: 'Plant' }, emoji: '🌿', personality: { pt: 'Paciente, nutridor e resiliente — cresce devagar e floresce sempre.', en: 'Patient, nurturing and resilient — grows slowly and always blooms.' } },
-  industrial: { name: { pt: 'Industrial', en: 'Industrial' }, emoji: '⚙️', personality: { pt: 'Engenhoso, preciso e incansável — constrói o futuro peça por peça.', en: 'Ingenious, precise and tireless — builds the future piece by piece.' } },
-};
-
 export const ROLE_INFO: Record<RoleId, { name: LText; emoji: string; profile: LText }> = {
   suporte: { name: { pt: 'Suporte', en: 'Support' }, emoji: '💖', profile: { pt: 'Perfil cuidador: fortalece, cura e mantém o grupo de pé.', en: 'Caretaker profile: strengthens, heals and keeps the group standing.' } },
   tanque: { name: { pt: 'Tanque', en: 'Tank' }, emoji: '🛡️', profile: { pt: 'Perfil protetor: se coloca na frente e absorve o perigo pelos outros.', en: 'Protector profile: stands in front and absorbs danger for others.' } },
@@ -926,15 +879,18 @@ function escalaDoRitual<K extends string>(chaves: readonly K[], efeito: (fx: Que
   return Object.fromEntries(chaves.map(k => [k, esperado[k] > 0 ? media / esperado[k] : 1])) as Record<K, number>;
 }
 
-export const RITUAL_ELEMENT_SCALE = escalaDoRitual(ELEMENT_ORDER, fx => fx.elements);
+// `/* @__PURE__ */`: sem ele o Rollup não descarta ORACLE_QUESTIONS (copy longa) do chunk de entrada.
+export const RITUAL_ELEMENT_SCALE = /* @__PURE__ */ escalaDoRitual(ELEMENT_ORDER, fx => fx.elements);
 /** Ver o uso em `generateOracle` (caminho do perfil novo). Pontos de share
  *  (a média de um elemento é 12,5). */
 export const ELEMENT_DOMINANCE_COMPENSATION: Record<ElementId, number> = {
   agua: 0.2, fogo: -0.8, terra: -0.5, ar: -0.9, sombra: 1.2, luz: 0.1, planta: 0.5, industrial: 0.6,
 };
-export const RITUAL_ALIGNMENT_SCALE = escalaDoRitual(ALIGNMENT_ORDER, fx => fx.alignments);
+// `/* @__PURE__ */`: sem ele o Rollup não descarta ORACLE_QUESTIONS (copy longa) do chunk de entrada.
+export const RITUAL_ALIGNMENT_SCALE = /* @__PURE__ */ escalaDoRitual(ALIGNMENT_ORDER, fx => fx.alignments);
 /** Mesma lógica para os REINOS (floresta esperava 1,17 por pessoa, akasha 0,17). */
-export const RITUAL_REALM_SCALE = escalaDoRitual(REALM_ORDER, fx => fx.realms);
+// `/* @__PURE__ */`: sem ele o Rollup não descarta ORACLE_QUESTIONS (copy longa) do chunk de entrada.
+export const RITUAL_REALM_SCALE = /* @__PURE__ */ escalaDoRitual(REALM_ORDER, fx => fx.realms);
 
 /** Caminho do ritual: `curto` = só as 6 perguntas; `longo` = + os 20 itens. */
 export type CaminhoRitual = 'curto' | 'longo';
@@ -1011,14 +967,6 @@ export const REALM_WEIGHTS: Record<RealmId, Partial<Record<ElementId, number>>> 
   akasha: { luz: 3, sombra: 3 },
 };
 
-export const STAGE_NAMES: Record<StageId, LText> = {
-  rookie: { pt: 'Desperto', en: 'Awakened' },
-  champion: { pt: 'Ascendente', en: 'Ascendant' },
-  perfeito: { pt: 'Transcendente', en: 'Transcendent' },
-  mega: { pt: 'Apoteose', en: 'Apotheosis' },
-  ultra: { pt: 'Zênite', en: 'Zenith' },
-};
-
 
 
 /**
@@ -1035,8 +983,8 @@ export type OracleInputWithClass = Omit<OracleInput, 'promptClassFlavor'> & {
   promptClassFlavor: string | undefined; // EN, curto (ex.: "Volcanologist")
 };
 
-export async function generateOracleAsync(input: OracleInputSync | OracleInputWithClass, seed?: number, overrides?: OracleOverrides): Promise<OracleResult> {
-  const [familias, motor] = await Promise.all([import('./oracle/familias'), import('./oracle/motor')]);
-  return motor.generateOracleWithFamilies(input, familias, seed, overrides);
-}
+// `generateOracleAsync` mora em `oracle/gerar.ts` (04/10/2026): o `App.tsx` o chama por
+// `import()`, e um `import()` de ESTE módulo — que o App também importa estático —
+// faz o Rollup manter o módulo inteiro (namespace completo) no chunk de entrada.
+export { generateOracleAsync } from './oracle/gerar';
 

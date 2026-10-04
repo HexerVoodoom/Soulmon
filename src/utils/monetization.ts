@@ -7,7 +7,8 @@
 // equivalente) quando a conta de anúncios existir; a assinatura já serve.
 import { FORM_REQUIREMENTS } from '../types/progression';
 import { getSpriteForStage, DUNGEON_LINE_NAMES } from './sprites';
-import { STAGE_NAMES, type CreatureStage, type StageId, type AlignmentId } from './oracle';
+import { STAGE_NAMES } from './oracle/base';
+import type { CreatureStage, StageId, AlignmentId } from './oracle';
 
 export type AccountTier = 'demo' | 'paid';
 

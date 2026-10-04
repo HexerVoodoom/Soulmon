@@ -21,7 +21,8 @@
  * de dia) usa **a mesma janela** — é a exigência literal do gate.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { creatureFormId, type CreatureStage } from '../utils/oracle';
+import { creatureFormId } from '../utils/oracle/base';
+import type { CreatureStage } from '../utils/oracle';
 import { requestSprite } from '../utils/spriteGen';
 import { runSpriteBatch } from '../utils/spriteRunner';
 import {

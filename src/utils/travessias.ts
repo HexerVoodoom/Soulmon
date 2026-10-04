@@ -28,7 +28,7 @@ import {
 import { REGIONS } from '../data/travessiasCatalog';
 import { MARCO_POSTAIS, VIAGENS } from '../data/travessiasViagens';
 import { adventureOfDay, findById, type AdventureEntry, type AdventureFind } from './adventure';
-import { hashString, mulberry32 } from './oracle';
+import { hashString, mulberry32 } from './oracle/base';
 
 export { normalizeCrossings, REGION_IDS, isRegionId, crossingsTouchMap, missionMark, type MissionMark } from './travessiasSave';
 

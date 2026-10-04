@@ -18,7 +18,7 @@
 // Créditos (dinheiro real não se ganha jogando).
 // ---------------------------------------------------------------------------
 
-import { hashString, mulberry32 } from './oracle';
+import { hashString, mulberry32 } from './oracle/base';
 
 export type WeeklyMissionId =
   | 'rest-nights' | 'checkins' | 'haunted-done' | 'dungeon-runs'
