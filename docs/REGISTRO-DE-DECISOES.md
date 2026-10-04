@@ -1779,6 +1779,63 @@ economia** (sem Bits, XP, Emblema, Vínculo, `perfectDays`); nada vai ao save.
 
 **Respondidas pelo dono em 04/10/2026:** nome "Caderno / Journal" aprovado; o Caderno não rende nada; vai ao save na nuvem; vibração ligada por padrão com interruptor; bustos provisórios Tique/Sépia ficam.
 
+## 23. Torneio R8: Mestre/Grão-Mestre por posição, molduras, desafiantes NPC e "i" único (04/10/2026)
+
+Respostas do dono de 04/10/2026 (faixas Madeira 0 · Bronze 100 · Prata 300 · Ouro 700 · Platina 1100 · Diamante 1500;
+Mestre = top 100; Grão-Mestre/Grandmaster = top 20, ícone com "#N"). Implementado na branch `feat/r8-torneio`.
+(O pedido citava "§20"; o §20 já era o do Combate, por isso esta seção é a 23.)
+
+1. **Mestre e Grão-Mestre são LUGARES da season, não faixas de pontos** (`tournamentTiers.ts` › `TOURNAMENT_SEATS`).
+   O Mestre deixou de ser o 7º degrau de pontos (2200). Regra decidida aqui (recomendação do lead, [pendente do dono]):
+   - a posição é a do **ranking da season** (pontos da season, o mesmo que dá os troféus), não a do lifetime;
+   - só disputa o lugar quem já tem **lifetime ≥ 1500** (`SEAT_MIN_LIFETIME`, a faixa Diamante) — sem isso, numa season
+     com três jogadores o 1º colocado com 20 pontos viraria Grão-Mestre;
+   - o lugar é **VIVO**: quem sai do top 100/20 volta, na hora, à faixa que os pontos lifetime dão (Diamante para quem
+     é elegível) — **nunca abaixo dela**. As seis faixas de pontos continuam só subindo; o que se perde é o lugar, que
+     se ganha de volta subindo de novo. A virada de mês (season nova) reabre todos os lugares;
+   - o ícone mostra "#N" = a posição; no Grão-Mestre o #N é lido como o nível (#1 é o topo).
+2. **Servidor:** `functions/api/community.js` › `action=rank&id=` passa a devolver `myPlace` (a posição REAL do
+   jogador, contando também quem está oculto da lista pública), só para o dono autorizado (`denyUnlessOwner`). Sem
+   rota nova. Cliente com servidor antigo cai na lista pública (top 50: serve ao Grão-Mestre, não ao Mestre inteiro).
+   **Limite conhecido:** o `rank` lê até 300 chaves do KV, em ordem de chave (não de pontos) — acima de 300 jogadores
+   na season a posição deixa de ser confiável. **Plano do que falta:** um índice ordenado da season (KV `rankIndex:<season>`
+   regravado no `match`, ou D1 com `ORDER BY points`), e então `myPlace` sai dele; e, para mostrar a moldura/faixa dos
+   OUTROS no ranking, publicar `frameId` no perfil público (decisão de privacidade do dono — hoje só o próprio jogador
+   vê a própria moldura).
+3. **Molduras de avatar** (`utils/frames.ts`, `components/ui/AvatarFrame.tsx`): catálogo com origem `rank | shop |
+   achievement | event`; `GameState.ownedFrames` + `GameState.equippedFrame` (`?? []`/`?? null`, saneados no load e com
+   forma conferida em `save.js`). As de rank seguem a faixa (Madeira…Diamante por lifetime; Mestre/Grão-Mestre só com o
+   lugar ocupado — se perder o lugar, a tela desenha SEM moldura e o id fica guardado). **Cosmética, nunca vantagem**
+   (teste trava os campos). Arte ainda não existe: anel CSS placeholder; quando chegar, troca por imagem no próprio
+   componente. **Moldura de avatar é peça própria, não "ícone dentro de box"** — a regra do dono vale para glifos de UI,
+   que seguem pelados; a moldura envolve a criatura. Compra na loja com Bits e concessão por conquista/evento ficam
+   para a próxima fatia (o catálogo já traz preço/como; falta o item na loja e quem grava em `ownedFrames`).
+4. **Torneio vazio → três desafiantes NPC** (`utils/tournamentNpcs.ts`: Espina/Thorn, Quartzo/Quartz, Maré/Tide, com os
+   retratos `duelo-oponente-1/4/5`). É o TREINO com outra roupa: não chama o servidor, não conta partida do dia, não rende
+   Honra/pontos/XP/missão; estágio do jogador. O cartão diz "Treino" e o resultado diz "Sem prêmio e sem custo" —
+   disfarçado no formato, nunca mentindo.
+5. **"i" único no Torneio**: um `InfoTip` no canto superior direito (ao lado da insígnia), com seções para faixas,
+   desafiar/lista pública, luta e treino, missões, loja e molduras. Os cinco "i" de antes saíram.
+
+**Alternativas que perderam:**
+
+| Alternativa | Por que perdeu |
+|---|---|
+| Mestre por limiar de pontos (2200), como até a R7 | O dono definiu Mestre/Grão-Mestre por posição (top 100/20) |
+| Lugar de topo "só sobe" (uma vez Mestre, sempre Mestre) | Viraria um título permanente de quem jogou cedo; o top 100 de agosto não é o de outubro. A proteção "só sobe" fica nas faixas de pontos |
+| Rebaixar a faixa de pontos ao sair do top | Quebra a tese das faixas (medir o jogador contra ele mesmo) |
+| Posição pelo lifetime | Lifetime só soma: o topo congelaria nos veteranos e ninguém novo chegaria |
+| Lugar sem piso de lifetime | Season vazia faria Grão-Mestre de quem jogou uma partida |
+| Rota nova de servidor para a posição | `myPlace` cabe na rota `rank` que já existe, com a mesma autorização |
+| NPC contando partida/rendendo Honra | Seria farm sem adversário real; o pedido era treino disfarçado |
+
+**Falsifica:** se o ranking mostrar gente "caindo" de Mestre e saindo do Torneio (queixa de perda), rever para um lugar
+que vale até o fim da season (congelado na virada) em vez de vivo.
+
+**Perguntas ao dono (em `docs/PERGUNTAS-DO-DONO.md` quando houver o lote):** (a) lugar vivo ou congelado até o fim da
+season? (b) o piso de lifetime 1500 para disputar o lugar está bom? (c) mostrar a moldura dos outros no ranking
+(publicar no perfil público)? (d) preços das molduras de loja (600/900 Bits) e quais conquistas/eventos dão moldura?
+
 ## 02/10/2026 — Torneio: menu só de ícones e faixa no título; Rhinoco vira Tuska
 
 Decisões do dono (pedido de 02/10/2026):

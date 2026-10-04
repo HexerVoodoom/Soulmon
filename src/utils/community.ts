@@ -154,10 +154,10 @@ export interface RankRow {
    *  mês). Save antigo do servidor pode não trazer: `?? 0`, nunca `points`. */
   lifetime?: number;
 }
-/** `id` (saveId, autorizado) pede também o PRÓPRIO lugar em `me` — é o que
+/** `id` (saveId, autorizado) pede também o PRÓPRIO lugar em `me` e a posição REAL na season em `myPlace` (R8: decide Mestre/Grão-Mestre) — é o que
  *  sobra a quem saiu da lista pública (`publicHidden`), que não aparece em `rank`. */
 export const getRank = (season?: string, id?: string) =>
-  call<{ season: string; rank: RankRow[]; me?: Partial<RankRow> & { hidden?: boolean } }>('rank', { params: { ...(season ? { season } : {}), ...(id ? { id } : {}) } });
+  call<{ season: string; rank: RankRow[]; me?: Partial<RankRow> & { hidden?: boolean }; myPlace?: number }>('rank', { params: { ...(season ? { season } : {}), ...(id ? { id } : {}) } });
 export const getSeasonResult = (season: string) =>
   call<{ season: string; top3: RankRow[] }>('seasonResult', { params: { season } });
 

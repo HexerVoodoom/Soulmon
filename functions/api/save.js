@@ -49,6 +49,27 @@ function clampCaderno(raw) {
   return out;
 }
 
+/**
+ * Molduras de avatar (R8, 04/10/2026) — COSMÉTICA. O servidor só garante a FORMA: `equippedFrame` é um id
+ * no formato ou `null`; `ownedFrames` é uma lista de ids no formato, sem repetição, com teto. Nunca valida
+ * se o jogador "merece" a moldura (rank/loja/conquista são do cliente e não dão poder algum) e nada daqui
+ * entra em economia. Mesmos formato e teto de `src/utils/frames.ts` (há teste de paridade).
+ */
+const FRAME_ID_RE = /^[a-z0-9-]{1,40}$/;
+const FRAMES_MAX_OWNED = 200;
+function clampFrameId(raw) {
+  return typeof raw === 'string' && FRAME_ID_RE.test(raw) ? raw : null;
+}
+function clampOwnedFrames(raw) {
+  if (!Array.isArray(raw)) return [];
+  const out = [];
+  for (const v of raw) {
+    if (typeof v === 'string' && FRAME_ID_RE.test(v) && !out.includes(v)) out.push(v);
+    if (out.length >= FRAMES_MAX_OWNED) break;
+  }
+  return out;
+}
+
 const MAX_STATE_BYTES = 5 * 1024 * 1024;
 
 /**
@@ -192,6 +213,8 @@ export async function onRequest({ request, env }) {
     // formato do cliente (`utils/cadernoSave.ts`: 120 x 2000 caracteres) e descarta o resto — nunca o
     // lê, interpreta ou envia a IA/métricas. 120 x 2000 (menos de ~1 MB em UTF-8) cabe nos 5 MB.
     if ('caderno' in state) state.caderno = clampCaderno(state.caderno);
+    if ('equippedFrame' in state) state.equippedFrame = clampFrameId(state.equippedFrame);
+    if ('ownedFrames' in state) state.ownedFrames = clampOwnedFrames(state.ownedFrames);
     const serialized = JSON.stringify(state);
     if (serialized.length > MAX_STATE_BYTES) {
       console.warn('save: POST recusado, state acima do teto', { saveId, bytes: serialized.length });

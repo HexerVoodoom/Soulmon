@@ -12,7 +12,7 @@ import { renderWithCss } from '../../test/renderEnv';
 import { TournamentPage } from '../TournamentPage';
 import { DueloSheet } from './DueloSheet';
 import { TOURNAMENT_ITEMS } from '../../utils/shop';
-import { TOURNAMENT_TIERS } from '../../utils/tournamentTiers';
+import { TOURNAMENT_LADDER } from '../../utils/tournamentTiers';
 import { weeklyMissionsFor } from '../../utils/weeklyMissions';
 
 const saveId = 'a'.repeat(32);
@@ -59,7 +59,7 @@ describe('Torneio', () => {
     expect(container.querySelector('[data-tier]')).toBeNull();
     fireEvent.click(ind);
     expect(screen.getByRole('dialog', { name: 'Tournament tiers' })).toBeTruthy();
-    expect(document.querySelectorAll('[data-tier]').length).toBe(TOURNAMENT_TIERS.length);
+    expect(document.querySelectorAll('[data-tier]').length).toBe(TOURNAMENT_LADDER.length);
     expect(document.querySelector('[data-tier-state="current"]')!.getAttribute('data-tier')).toBe('bronze');
     expect(document.querySelector('[data-tier="madeira"]')!.getAttribute('data-tier-state')).toBe('passed');
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));

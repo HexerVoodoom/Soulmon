@@ -4663,13 +4663,22 @@ Torneio continua inteiro disponível. `tournamentWindowLabel` fala o mínimo (02
 
 ### As faixas
 
-`src/utils/tournamentTiers.ts` → `TOURNAMENT_TIERS`, sete degraus por pontos
-mínimos — as faixas CLÁSSICAS (04/10/2026, rodada 7 / A1; antes Semente→Lendário):
+`src/utils/tournamentTiers.ts` → `TOURNAMENT_TIERS`, seis degraus por pontos
+LIFETIME mínimos — as faixas CLÁSSICAS (04/10/2026, rodada 7 / A1; antes Semente→Lendário):
 Madeira/Wood (0) · Bronze (100) · Prata/Silver (300) · Ouro/Gold (700) ·
-Platina/Platinum (1100) · Diamante/Diamond (1500) · Mestre/Master (2200). Sem emoji:
+Platina/Platinum (1100) · Diamante/Diamond (1500). Sem emoji:
 o símbolo de cada faixa é um glifo do inventário (`TIER_ICON` no `TournamentPage`).
-`getTierStanding(points)` devolve a faixa, a próxima,
-`pointsToNext` e `progress` (0–1, e 1 na última).
+`getTierStanding(points, place?)` devolve a faixa, a próxima,
+`pointsToNext`, `progress` (0–1, e 1 na última), `seat` e `place`.
+
+**Mestre e Grão-Mestre são LUGARES, não faixas de pontos** (R8, decisão do dono 04/10/2026;
+REGISTRO §23): `TOURNAMENT_SEATS` — **Mestre/Master = top 100** e **Grão-Mestre/Grandmaster =
+top 20** do ranking da SEASON, só para quem já tem lifetime ≥ 1500 (`SEAT_MIN_LIFETIME`, a
+faixa Diamante). O ícone dos dois mostra "#N" (a posição; no Grão-Mestre o #N é o nível). A
+posição vem do servidor (`action=rank&id=` → `myPlace`, só para o dono autorizado); servidor
+antigo cai na lista pública (top 50). O lugar é VIVO: quem sai do top volta à faixa que os pontos
+lifetime dão (nunca abaixo dela) — as seis faixas de pontos continuam só subindo. ⚰️ Até a R8,
+Mestre era um 7º degrau de pontos (2200).
 
 **A faixa lê `lifetime`, não `points`.** Os `points` da season descem por três
 caminhos — derrota própria (−8), ser sorteado como oponente e perder (−4, **sem

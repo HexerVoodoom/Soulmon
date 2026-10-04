@@ -19,7 +19,7 @@
 //   POST duelStart {id, opponentId}     → abre o duelo: gasta a partida e sorteia a semente
 //   POST match     {id, opponentId, cheers?, forfeit?} → resolve a partida no servidor
 //                                          (forfeit = desistir do duelo aberto = derrota)
-//   GET  rank      ?season=             → top 50 da season
+//   GET  rank      ?season=             → top 50 da season (+ `myPlace`, a posição REAL, só com `&id=` autorizado)
 //   GET  seasonResult ?season=          → top 3 (para troféus)
 //   POST closeSeason {season, adminKey} → fecha a season: dá troféu (top 3)
 //   GET  trophies  ?id=&claim=1         → troféus pendentes do jogador (e zera)
@@ -682,10 +682,17 @@ async function handleCommunity({ request, env }) {
       if (denied) return denied;
     }
     let meRow = null;
+    // R8 (04/10/2026): Mestre = top 100 e Grão-Mestre = top 20 da season. A posição do PRÓPRIO jogador
+    // (`myPlace`) sai de TODAS as linhas lidas — inclusive as ocultas da lista pública, que também
+    // ocupam lugar — e só volta a quem passou por `denyUnlessOwner` (nunca em consulta anônima).
+    // Limite herdado: `listPrefix` lê até 300 chaves; com mais de 300 jogadores na season a posição
+    // deixa de ser confiável (plano em docs/REGISTRO-DE-DECISOES.md §23: índice ordenado no servidor).
+    const allPoints = [];
     for (const k of keys) {
       const raw = await kvOrThrow(env).get(k);
       if (!raw) continue;
       const rec = JSON.parse(raw);
+      allPoints.push({ owner: k.slice(`rank:${season}:`.length), points: Number(rec.points) || 0 });
       // Atenção: a chave do rank é o saveId. Esta variável já se chamou `pid`,
       // o que ajudava a esconder que o ranking publicava a chave do save.
       const ownerSave = k.slice(`rank:${season}:`.length);
@@ -709,7 +716,13 @@ async function handleCommunity({ request, env }) {
     }
     rows.sort((a, b) => b.points - a.points);
     if (action === 'seasonResult') return json({ season, top3: rows.slice(0, 3) });
-    return json({ season, rank: rows.slice(0, 50), ...(meRow ? { me: meRow } : {}) });
+    let myPlace = null;
+    if (meId) {
+      allPoints.sort((a, b) => (b.points - a.points) || (a.owner < b.owner ? -1 : a.owner > b.owner ? 1 : 0));
+      const at = allPoints.findIndex(r => r.owner === meId);
+      if (at >= 0) myPlace = at + 1;
+    }
+    return json({ season, rank: rows.slice(0, 50), ...(meRow ? { me: meRow } : {}), ...(myPlace ? { myPlace } : {}) });
   }
 
   // Fecha uma season: dá troféu (place 1/2/3) aos 3 primeiros do rank. Chamado

@@ -438,3 +438,20 @@ Tres rodadas de QA (conta/save/economia, loop do jogo, combate/servidor/lojas) c
 | QA-11 | **Habito "a cada N dias" (`from: 'start'`)**: a ancora e `done[0]` e `done` e truncado em 120; a fase pode mudar apos ~120 conclusoes. | Gravar a ancora no save (mudanca de modelo) | Habito "a cada N dias" fora de fase |
 | QA-12 | **`EditModal` em estagio sem grade de dias** (rookie, inclusive apos queda) regrava `schedule` como "todo dia": editar so o nome de um habito `timesPerWeek` apaga a agenda. | Preservar a agenda quando a grade nao existe | Habito semanal virando diario |
 | QA-13 | **Reaceite apos subir `TERMS_VERSION`/`PRIVACY_VERSION`** (#24 ja listada): conta com onboarding feito e consentimento antigo nunca volta a tela de termos (o aviso aparece, o reaceite nao e exigido). | Exigir reaceite quando a politica muda de forma material | Auditoria LGPD |
+
+## Torneio R8 — Mestre/Grão-Mestre, molduras e NPCs (04/10/2026)
+
+Implementado na branch `feat/r8-torneio` com a recomendação do lead; detalhe e alternativas em
+`REGISTRO-DE-DECISOES.md` §23. Nenhuma bloqueia.
+
+1. **Lugar de Mestre/Grão-Mestre: vivo ou congelado?** Hoje é VIVO (saiu do top 100/20, volta na hora à faixa de
+   pontos — nunca abaixo dela). Alternativa: congelar o lugar até o fim da season.
+2. **Piso para disputar o lugar:** hoje lifetime ≥ 1500 (faixa Diamante). Mantém?
+3. **Moldura dos OUTROS no ranking:** hoje só você vê a sua. Mostrar a dos outros exige publicar o id da moldura no
+   perfil público (servidor + política de privacidade).
+4. **Molduras de loja/conquista/evento:** preços sugeridos 600/900 Bits; quais conquistas e eventos dão moldura? A
+   compra na loja ainda não está ligada (o catálogo já existe).
+5. **NPCs do Torneio vazio:** o cartão diz "Treino" (honesto); se preferir o disfarce total, some o selo — o resultado
+   continua dizendo "Sem prêmio e sem custo".
+6. **"i" único:** o pedido citava a Feira; a Feira é outra folha (Guilda) e não aparece no Torneio, por isso não está
+   no texto. Incluir uma linha apontando para ela?

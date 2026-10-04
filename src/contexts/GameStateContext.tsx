@@ -52,6 +52,7 @@ import {
 import { toast } from 'sonner';
 import { onboardingProfileFrom } from '../utils/catalogOnboarding';
 import { normalizeEntries, type CadernoEntry } from '../utils/cadernoSave';
+import { sanitizeEquippedFrame, sanitizeOwnedFrames } from '../utils/frames';
 import { sanitizeSoulTestAnswers } from '../utils/soulTestAnswers';
 import type { Answers } from '../utils/soulProfile/personality/types';
 
@@ -460,6 +461,12 @@ export interface GameState {
    *  `cadernoSensivel.contract.test.ts`); entra na exportação e some com a exclusão da conta. Nada
    *  rende (sem Bits/XP/selo). Dono: `utils/cadernoSave.ts`. Leitura: `?? []`. */
   caderno?: CadernoEntry[];
+  /** 🖼️ MOLDURAS de avatar (R8, 04/10/2026) — COSMÉTICA (`utils/frames.ts`; nunca vantagem). Posse das de loja/conquista/evento
+   *  (as de rank vêm da faixa e não ficam aqui). Leitura: `?? []`. O servidor só confere a FORMA (`functions/api/save.js`). */
+  ownedFrames?: string[];
+  /** Id da moldura EQUIPADA (qualquer origem) ou `null` = sem moldura. Leitura: `?? null`; se deixou de valer (lugar de Mestre
+   *  perdido), a tela desenha sem moldura (`resolveEquippedFrame`) e o id fica guardado. */
+  equippedFrame?: string | null;
   /** Dias completos REAIS (virada). ⚠️ Desde a decisão #41/#60 (22/09/2026) o
    *  🌀 Glitchtama NÃO entra aqui — é ele que `utils/achievements.ts` lê. */
   totalPerfectDays?: number;
@@ -1276,6 +1283,9 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         crossings: normalizeCrossings(loadedState.crossings),
         // Caderno: lixo é descartado, teto de 120 × 2000 (`normalizeEntries`); nunca derruba o load.
         caderno: normalizeEntries(loadedState.caderno),
+        // Molduras: lixo é descartado (`utils/frames.ts`), nunca derruba o load; save antigo entra vazio / sem moldura.
+        ownedFrames: sanitizeOwnedFrames(loadedState.ownedFrames),
+        equippedFrame: sanitizeEquippedFrame(loadedState.equippedFrame),
         totalPerfectDays: num(loadedState.totalPerfectDays, 0),
         // #41/#60: save anterior à decisão não tem o campo, e o vitalício antigo
         // JÁ somava os 🌀 — herdar `totalPerfectDays` é o que impede a missão de
