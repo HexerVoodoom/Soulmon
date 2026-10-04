@@ -4493,6 +4493,25 @@ dano e com contra-ataque; abaixo disso o dano segue a fórmula de sempre
 parte!" / "Levou o golpe!" e um escudo curto no pet — sem botão. A `TimingBar` e a
 esquiva por timing ficam atrás de `TIMING_DODGE_ENABLED = false`. O Pesadelo é igual.
 Os ofícios que mexiam na barra de desvio viraram bônus na defesa (`jeitoDefesaBonus`).
+
+**Energia, anel e esquiva desde 04/10/2026 (REGISTRO §20.10).** Cada lutador tem UMA
+barra de **energia** (0–100, `utils/energia.ts`; as constantes são de `_duel.js`): +9
+por ataque DADO, +7 por ataque SOFRIDO e +36 por despejo da **barra de cheer** — o
+medidor de toques do dono, que enche DEVAGAR (`CHEER_TAPS_FULL` = 24; o excedente fica)
+e, na Masmorra, **persiste entre os inimigos e as camadas da run**. Energia cheia = o
+ESPECIAL no golpe seguinte (o gauge de 8 toques que virava o especial saiu). O PvE tem
+**mecânicas ativas**: (a) o especial do pet pede o **anel** que encolhe sobre o alvo
+(1,5–2,1 s pela semente): toque na hora certa = ótimo ×1,35 (±120 ms), bom ×1
+(±320 ms), ruim ×0,75 (cedo ou sem toque); (b) quando a energia do INIMIGO enche, ele solta
+o especial dele (2× o golpe normal, sem bloqueio de graça) e o jogador pode **esquivar
+deslizando o dedo** (ou pelas setas) com o projétil no ar — ótimo (últimos 500 ms) tira
+85%, bom 50%, sem agir leva o dano cheio. A defesa automática segue como base dos golpes
+normais. **A luta ficou mais longa:** vida do pet × `PVE_HP_SCALE` (1,8) e do inimigo ×
+1,8 × `PVE_FOE_HP_EXTRA` (1,1), dano igual, `PVE_STEP_MS` = 1,7 s por lado — ~20–30 s
+por inimigo. Calibração (20.000 lutas, `energia.test.ts`): inimigos derrotados por run
+de quem joga as mecânicas ≈ os de antes (Masmorra rookie@1 2,19 → 2,24; champion@2 2,06 →
+2,05; ultimate@3 2,00 → 2,01; mega@4 1,92 → 1,91), Pesadelo (top 2) 46,4% → 50,1%; quem
+nunca age fica abaixo (Pesadelo 25,1%) e quem torce rende mais.
 Medido em `autoDefesa.test.ts` (20.000 runs): sem torcer, a defesa automática dá a
 MESMA duração e derrota por camada que a esquiva média (0,70); o 3× rende +0,3 a +1,2
 inimigos derrotados por run a quem torce e não torna a run trivial. ⚠️ A curva base já é
@@ -4652,20 +4671,22 @@ especial); a torcida só SOMA. **Desde 02/10/2026 (rodada 5/I10) a luta é uma C
 jogador fazer nada.
 
 ```
-duelStats(p) = { hp: 70 + sp × 6,  atk: 10 + sp × 1,2 + min(2, (power + harmony + benevolence) / 50) }
-gauge: cada toque enche 1 de DUEL_TAPS_FULL (16, era 8); teto de DUEL_TAPS_CAP (20, era 10) toques contados por janela
-specialSlots(taps): em cada golpe de torcida, g = min(16, g + toques da janela); g cheio => ESPECIAL e g = 0
-especial = × DUEL_SPECIAL_MULT (1,35, o mesmo da torcida perfeita antiga); sem especial = × 1
+duelStats(p) = { hp: 140 + sp × 12,  atk: 10 + sp × 1,2 + min(2, (power + harmony + benevolence) / 50) }   (04/10/2026: a vida dobrou)
+energia (cada lutador, 0..100): +9 por golpe dado, +7 por golpe sofrido; ao fechar cada janela do dono, a BARRA DE CHEER (DUEL_TAPS_FULL = 24)
+   soma os toques da janela (teto de DUEL_TAPS_CAP = 16 por janela, uma janela por golpe do dono, DUEL_CHEER_WINDOWS = 13); cheia, despeja +36 no pet e fica o excedente
+especial: energia >= 100 no golpe seguinte (do dono OU do fantasma) => dano × DUEL_SPECIAL_MULT (2) e a barra é gasta — DIRETO, sem mecânica de uso nem de defesa
 (legado, sem UI) cheerMultiplier(q) = 1,35 se q >= 0,92, senão 1 + 0,25 × q
-luta = até DUEL_MAX_TURNS (12) golpes; dano = max(1, round(atk × (0,5 + rng) × (especial ? 1,35 : 1)))
+luta = até DUEL_MAX_TURNS (26) golpes (~35–42 s a DUEL_STEP_MS = 1,7 s); dano = max(1, round(atk × (1 ± 0,74 sorteado) × (especial ? 2 : 1)))
 won  = nocaute, ou a maior FRAÇÃO de vida restante
+calibração (20.000 duelos): mesmo estágio sem torcer 50,2% · 3 toques/s 72,3% · teto (16 por janela) 81,9% · um estágio abaixo 13,0% / 29,2% / 41,3%
 ```
+(Até 04/10/2026: 12 golpes, `DUEL_TAPS_FULL` 16, especial ×1,35 só do dono em 3 janelas — `specialSlots`; REGISTRO §20.10.)
 
 O fluxo tem duas chamadas: **`duelStart`** consome a partida do dia, guarda o
 oponente em `myRank.pending` e sorteia a SEMENTE no servidor, *depois* do
 compromisso; **`match`** roda a luta com a semente GUARDADA (nunca uma enviada) e
-os toques por janela higienizados (`sanitizeTaps`: três inteiros em [0, 10]; o servidor
-recalcula o especial por `specialSlots`). O cliente
+os toques por janela higienizados (`sanitizeTaps`: 13 inteiros em [0, 16]; o servidor
+recalcula a energia e o especial por `cheerDischarges` + `simulateDuel`). O cliente
 anima a mesma luta com `simulateDuel` — uma regra, um arquivo. A semente nunca
 vai na lista de oponentes (`opponents` leva só a `duelStats`), senão um cliente
 editado simularia os três e escolheria o que vence.
@@ -4695,6 +4716,14 @@ RING em que cada elemento bate os DOIS seguintes e apanha dos DOIS anteriores �
 `DISADVANTAGE_MULT` = 0,8 com cancelamento mútuo, especial por escola a cada
 `SPECIAL_CHARGE_TURNS` (3), crítico em `PERFECT_ACC` (0,92) com `CRIT_MULT` (1,5)
 e cura de `ROUND_CLEAR_HEAL` (30%) ao limpar a rodada. Paga **Bits**.
+
+**Desde 04/10/2026 o Duelo da Arena usa a ENERGIA** (REGISTRO §20.10): o especial da ficha dispara com a
+barra de energia do pet cheia (ataque dado + sofrido de cada inimigo vivo + cheer), no lugar da carga de
+`SPECIAL_CHARGE_TURNS` turnos e do golpe de torcida ×1,35 (`ARENA_ENERGY_ENABLED`); cada inimigo tem a barra dele
+e solta um golpe de 2×; o anel e a esquiva valem como no resto do PvE; vida × `ARENA_HP_SCALE` (1,9) e inimigo
+× 0,9 extra — ~24 s por inimigo. Medido em `energia.test.ts` (6 escolas × 3.000 runs): antes (pet sozinho, sem
+torcer) 59,2% de vitória média; depois, jogando as mecânicas sem torcer 59,4% (faixa 49,5–73,9%); nunca agindo 34,6%;
+11 toques/turno 81,6%; bom jogador + 11 toques 90,3%. O texto abaixo descreve o caminho antigo, que fica atrás da flag.
 
 ⚰️ **Desde 02/10/2026 (H14) o Duelo da Arena tem TORCIDA por toques** (REGISTRO §20.6):
 o pet golpeia SOZINHO (`ARENA_AUTO_ACC` = 0,73, o golpe chega ~2,4 s após abrir o turno — era 1,5 s), tocar em
@@ -4740,7 +4769,7 @@ do Torneio em DIAS, nunca horas", pelo Community Day do Pokémon GO).
   ação, inclusive as GET destrutivas (`trophies?claim=1`, `gifts?claim=1`).
 - **`id === oppSave`** devolve `400 cannot fight yourself`.
 - **Cliente antigo** (sem `duelStart`): `match` abre e fecha numa chamada só, com semente sorteada no servidor; `forfeit` sem duelo aberto devolve `409 no open duel`.
-- **Torcida forjada** rende o mesmo que o gauge cheio (teto: `DUEL_TAPS_CAP` = 20 toques por janela, 3 janelas, no máximo 3 especiais de ×`DUEL_SPECIAL_MULT`) — toque ilimitado não rende mais; aceitável enquanto a Honra for só cosmética (STATUS 30/09 e 02/10/2026).
+- **Torcida forjada** rende o mesmo que o teto (`DUEL_TAPS_CAP` = 16 toques por janela × 13 janelas; a barra de cheer de 24 despeja no máximo 8 vezes no jogo todo) — toque ilimitado, ou janelas a mais, não rendem mais (`_duel.test.js`, `community.duelo.test.js`); aceitável enquanto a Honra for só cosmética (STATUS 30/09 e 02/10/2026).
 - **Oponente com PvP desligado** devolve `404 opponent unavailable` — o saveId
   dele nunca sai do servidor (o cliente conhece só o pid público).
 - **Opt-out da lista pública (TORC-5, 02/10/2026).** `publicHidden` no perfil

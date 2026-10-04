@@ -1316,6 +1316,11 @@ implementação tomadas SEM o dono; o que está marcado **[dono]** espera respos
 
 ## 20. Combate: torcida por toques e "Descer mais fundo" só até onde já se chegou (02/10/2026)
 
+> ⚰️ **Reescrito em parte em 04/10/2026 (item 10 abaixo):** o "gauge que vira UM golpe especial"
+> (itens 1, 6 e 9) foi substituído pela **ENERGIA** — uma barra por lutador, abastecida por ataque dado,
+> ataque sofrido e pela barra de cheer. Os números do gauge (8/16 toques, ×1,35, ×3 por gauge) ficam
+> como histórico e como o caminho antigo atrás de `ARENA_ENERGY_ENABLED = false`.
+
 Decisões do dono na navegação do APK (`docs/AJUSTES-NAVEGACAO-2026-10-02.md` C1/C2, E2, G4).
 
 1. **A TORCIDA é tocar em QUALQUER LUGAR da tela de combate; cada toque enche um
@@ -1575,6 +1580,73 @@ Decisões do dono na navegação do APK (`docs/AJUSTES-NAVEGACAO-2026-10-02.md` 
    - Gatilho para rever: a luta de ~17 s cansar (baixar `DUEL_STEP_MS`), o primeiro
      especial demorar demais para quem toca devagar, ou o dono querer a cena também no PvE.
 
+10. **ENERGIA, mecânicas ativas no PvE, PvP direto, cena maior e luta mais longa** (04/10/2026, rodada 6
+   — o dono pediu isto duas vezes e não tinha saído). Vale para as quatro lutas: **Duelo da Arena**, **duelo
+   fantasma do Torneio**, **Pesadelo** e **Masmorra** — todas na `BattleStage` em tela cheia (Pesadelo e Masmorra
+   entraram agora; a faixa do visor 348×160 saiu da luta).
+   - **A cena, maior.** O seu Soulmon ocupa até ~64% da largura (≥ 215 px num celular; eram ≤ 190), o inimigo 0,66×.
+     Um **mascote da torcida** (bichinho de pixel em SVG com tokens, estilo Digimon 1) fica fixo no canto inferior
+     direito: a cada toque ele pula, levanta os pompons e solta o balão "VAI!"/"CHEER!" — além do grito no ponto
+     tocado, que continua; ele também é o botão de torcer (teclado e leitor de tela). Com
+     `prefers-reduced-motion`: sem pulo e sem o grito no ponto, só o balão **pisca**. Os lutadores fazem o
+     "bouncing" idle (e brilham com a energia cheia). Nenhum texto explicativo na cena: o "?" (`InfoTip`).
+   - **O modelo da energia (simples e legível).** Cada lutador tem UMA barra de **energia** (0–100), EM CIMA do
+     personagem, logo abaixo da barra de HP (as duas coladas nele). Ela enche por três fatores: cada ataque DADO
+     (+9), cada ataque SOFRIDO (+7) e o CHEER (+36 por despejo, um tanto maior que um golpe). A **"barra de cheer"** é o
+     medidor de TOQUES do jogador (`CHEER_TAPS_FULL` = **24**, lenta de propósito: ~8 s a 3 toques/s; era 16 e 8): ao
+     encher ela **despeja** a energia no pet e zera (o excedente fica). **Na Masmorra a barra de cheer e a energia do pet
+     PERSISTEM entre os combates e as camadas da run** (os cartões de resultado moram SOBRE a mesma cena); uma run nova
+     zera. Energia cheia = o lutador solta o **ESPECIAL** no golpe seguinte (com a arte do ELEMENTO: cast + aura + orb +
+     impact) e gasta a barra. As constantes são UMAS, do servidor (`_duel.js` → `utils/energia.ts`).
+   - **PvE (Pesadelo, Masmorra, Duelo da Arena): mecânicas ativas — a escolha do dono pendente é a (a).**
+     (a) **O ANEL** (estilo Pokémon GO): com a energia cheia o pet carrega e um anel encolhe sobre o alvo (1,5–2,1 s,
+     velocidade sorteada pela SEMENTE da luta); um toque QUALQUER na tela na hora certa define o multiplicador do
+     especial — ótimo ×1,35 (±120 ms do instante em que o anel encosta no círculo), bom ×1 (±320 ms), ruim ×0,75
+     (cedo, tarde ou sem toque; o especial sai mesmo assim). (b) **A ESQUIVA**: quando a energia do INIMIGO enche, ele
+     carrega (cast + aura, 1–1,5 s) e solta o especial dele (2× o golpe normal, sem bloqueio de graça); o jogador pode
+     **deslizar o dedo** para o lado (ou usar as setas de cada lado do pet) com o projétil no ar: nos últimos 500 ms
+     antes do impacto tira 85% do dano, antes disso 50%, sem agir leva o dano cheio. **A defesa automática segue como base**
+     dos golpes normais (sem agir, dano normal; agir bem reduz). A `TimingBar` segue desligada atrás das flags.
+     O anel é desenhado por JS e NÃO congela com movimento reduzido (é a mecânica essencial — WCAG 2.3.3).
+   - **PvP (duelo fantasma): SEM mecânica.** O especial sai DIRETO, dos dois lutadores, sem anel e sem esquiva. Continua
+     **servidor-autoritativo e determinístico** (`_duel.js` + `DuelScreen`): o cliente manda os toques de cada JANELA
+     (uma por golpe do dono, 13 janelas), o servidor higieniza (`sanitizeTaps`: inteiros em [0, 16]) e recalcula a
+     energia, os despejos (`cheerDischarges`) e a luta; **toque forjado ou ilimitado não rende mais que o teto** (13 × 16
+     toques no jogo todo = no máximo 8 despejos). O fantasma também ganha energia (dado + sofrido) e solta o especial
+     dele — sem isso o duelo deixaria de ser simétrico (50% no mesmo estágio sem torcer).
+   - **Batalhas mais longas — as contas (20.000 lutas por caso, `energia.test.ts`, `_duel.test.js`).** *Duelo
+     fantasma:* até 26 golpes (eram 12) a ~1,7 s cada (`DUEL_STEP_MS`; era 1,5 s) = **~35–42 s** (era ~17 s depois da rodada 5
+     e ~10,6 s antes); vida × 2 (`DUEL_HP_BASE` 140, 12/estágio) e o dano sorteado com mais variância (±0,74 em vez de
+     ±0,5, para a mesma incerteza com mais golpes). Taxa de vitória (antes → depois): mesmo estágio sem torcer 51,3% → 50,2%;
+     a 3 toques/s 73,2% → 72,3%; teto 81,9% → 81,9%; um estágio abaixo 14,5% → 13,0% (sem torcer), 30,8% → 29,2% (3 toques/s),
+     38,3% → 41,3% (teto). *PvE:* vida do pet e do inimigo × `PVE_HP_SCALE` = 1,8 (e o inimigo × `PVE_FOE_HP_EXTRA` =
+     1,1, porque ele agora também enche a energia e solta o especial), dano igual, `PVE_STEP_MS` = 1,7 s por lado →
+     **~20–29 s por inimigo** (cada ida-e-volta ≈ 3,4 s; eram 3,6–5,0 idas por inimigo = ~12–17 s de ação, ~18–25 s com os
+     popups parados da tela antiga). Inimigos derrotados por run de quem joga as mecânicas, antes → depois: Masmorra
+     rookie@1 2,19 → 2,24; champion@2 2,06 → 2,05; ultimate@3 2,00 → 2,01; mega@4 1,92 → 1,91; Pesadelo (top 2) 46,4% → 50,1% de
+     vitória. Quem NUNCA age (anel sempre ruim, nunca esquiva) fica abaixo (Pesadelo 25,1%); quem torce 6 toques por
+     ida-e-volta ganha +0,1 a +0,2 inimigo por run. *Duelo da Arena (6 escolas × 3.000 runs):* `ARENA_HP_SCALE` 1,9 e
+     `ARENA_FOE_HP_EXTRA` 0,9 → **~24 s por inimigo**; média 59,2% (antes, pet sozinho) → 59,4% jogando as mecânicas sem torcer;
+     nunca agindo 34,6%; 11 toques/turno 81,6%. **Teto de duração do servidor (forfeit de 5 min, `DUEL_PENDING_MS`):**
+     a luta animada do PvP leva ≤ 26 × 1,7 s = 44 s, uma fração do prazo — não foi tocado.
+   - **Alternativas que perderam:** (a) o cheer como fator DIRETO por toque na energia (cada toque +x) — perdeu: o dono pediu
+     uma barra de cheer que demore a carregar e despeje; (b) **arrastar/lançar o orb** no lugar do anel — perdeu: é mais
+     ação e disputa o gesto livre da torcida; o anel é um toque só, com feedback claro, e já é um idioma que o dono citou
+     (Pokémon GO); (c) **tocar no impacto para "aparar"** no lugar do deslize — perdeu: o toque já é torcida (e anel); o
+     deslize é um gesto DISTINTO e não pode ser confundido com cheer; (d) mecânica também no PvP — perdeu por decisão do
+     dono (servidor-autoritativo, sem ação do cliente que o servidor não consiga recalcular); (e) alongar a luta só pelo
+     ritmo, sem mexer em vida — perdeu: o PvP já terminava quase sempre no teto de 12 golpes; sem mais vida a luta de 26 golpes
+     acabaria em nocaute cedo; (f) energia só do pet — perdeu: o fantasma/inimigo sem especial deixaria o duelo assimétrico.
+   - **Escolhas que ficam com o DONO (conservadoras, listadas):** a escolha do **ANEL** como mecânica do especial (e o
+     ruim ×0,75 / ótimo ×1,35, a janela de ±120/320 ms e o 1,5–2,1 s do anel); o **deslize** como esquiva e os 50%/85% de
+     redução; o inimigo e o fantasma soltarem o especial 2×; o ritmo de 1,7 s por golpe e a duração de ~40 s do duelo;
+     e o 24 do medidor de cheer.
+   - Gatilho para rever: a luta de ~40 s cansar (baixar `DUEL_STEP_MS`/`PVE_STEP_MS` ou `PVE_HP_SCALE`), o anel ficar
+     difícil de acertar no celular (alargar `RING_OTIMO_MS`) ou o dono querer o especial no PvP também com mecânica.
+
+> **Nota 04/10/2026 (rodada 6):** item 10 — cena maior com mascote da torcida, barras de HP e ENERGIA em cima do
+> personagem, barra de cheer lenta (24) que despeja energia, especial por energia cheia, anel e esquiva no PvE, PvP
+> direto, lutas de ~40 s (PvP) e ~20–30 s por inimigo (PvE); Pesadelo e Masmorra entram na `BattleStage`.
 > **Nota 02/10/2026 (rodada 5, I10):** item 9 — cena de combate em tela cheia, golpes
 > com a arte do elemento, luta mais lenta (gauge 8 → 16 no duelo e na Arena).
 > **Nota 02/10/2026 (noite):** item 8 — esquiva removida, defesa automática, especial 3×.

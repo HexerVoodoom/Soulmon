@@ -1500,7 +1500,7 @@ minijogo não é concluir tarefa, R-CAT).
 faixa da nav inferior** — a nav continua visível, e sair pelo Início é caminho
 legítimo) › `GameHeader` (título + × 44 que chama `onClose` = o `onExit` do jogo, e
 é **o primeiro interativo** da tela) › `GameVisor` (o minijogo é o conteúdo do
-vidro) › `HpBars`/`TimingBar`/`FxPopup` (`role="status"`) embaixo (`TimingBar` mora em
+vidro) › `HpBars`/`TimingBar`/`FxPopup` (`role="status"`) embaixo — ⚠️ a LUTA da Masmorra, do Pesadelo e da Arena saiu do visor e é a `BattleStage` em tela cheia (04/10/2026, REGISTRO §20.10; o visor segue nos lobbies, na Home e no Dino) (`TimingBar` mora em
 `src/components/pixel/TimingBar.tsx`; os outros dois no `GameKit`). Sem `Suspense`
 novo: ⚰️ o ponto de montagem era `{openGame === '<id>' && (…)}` na
 `ActivitiesPage`; desde a minimal-ui F5 é `{game === '<id>' && (…)}` no
@@ -1566,12 +1566,16 @@ o `CLAUDE.md` já registra que ele **não** está em `utils/dungeon.ts`).
   sorteia `seed`) e `setDuel(...)`; o componente devolve `<DuelScreen>` **no lugar** da
   página, em **TELA CHEIA** (`games/BattleStage.tsx`, rodada 5/I10, 02/10/2026): o background da
   Arena cobre a viewport, o seu Soulmon fica embaixo à esquerda (grande) e o oponente em
-  cima à direita (menor), cada um com a barra de HP nos pés; o gauge de torcida (16 toques,
-  "?" com a explicação — nenhuma frase na cena) fica no topo e o **X no canto superior
+  cima à direita (menor), cada um com as barras de HP e de ENERGIA EM CIMA do personagem
+  (desde 04/10/2026, REGISTRO §20.10, e os lutadores ficaram BEM maiores); a barra de
+  cheer (24 toques, lenta; "?" com a explicação — nenhuma frase na cena) fica no pé, ao
+  lado do **mascote da torcida** (um bichinho de pixel no canto inferior direito que pula e
+  grita "VAI!"/"CHEER!" a cada toque), e o **X no canto superior
   direito** pede confirmação ("Sair do duelo? Conta como derrota."). Os pets lutam sozinhos
-  num passo de ~1,5 s (investida ou projétil com a arte de skill do ELEMENTO; o especial
-  é o projétil grande); toque em QUALQUER lugar enche o gauge e, cheio, no golpe de torcida
-  vira o especial. A torcida só soma; não torcer não tira nada. Fim da luta (`phase === 'done'`,
+  num passo de ~1,7 s (~35–42 s no total; investida ou projétil com a arte de skill do
+  ELEMENTO; o especial é o projétil grande); toque em QUALQUER lugar enche a barra de cheer e,
+  cheia, ela despeja energia no pet; **energia cheia de qualquer um dos dois = o ESPECIAL,
+  DIRETO, sem mecânica de uso nem de defesa**. A torcida só soma; não torcer não tira nada. Fim da luta (`phase === 'done'`,
   "Conferindo o resultado…") → `onDone(cheers)` → `resolveMatch(opp, cheers)` →
   `playMatch(saveId, opp.id, cheers, forfeit)`. **Sair** ("Sair do duelo"/"Leave the
   duel", `onClose`, inerte em `done`) → `leaveDuel` → `resolveMatch(opp, [], true)` =
