@@ -33,7 +33,7 @@ import { TorcidaLayer, TorcidaGauge } from './games/TorcidaKit';
 import { BattleStage, BATTLE_LAYER_STYLE, type StageAction, type StageHit } from './games/BattleStage';
 import { ARENA_SCENE } from '../utils/dungeonScenes';
 import {
-  DUEL_STEP_MS, STAGE_TIMING, fxElementId, impactMs, prefersReducedMotion, visualElementFor,
+  DUEL_STEP_MS, STAGE_TIMING, fxElementId, impactMs, prefersReducedMotion, visualElementFor, elementStrikeForm, specialLabel,
   type StageActionKind,
 } from '../utils/combatFx';
 import {
@@ -147,14 +147,14 @@ export function DuelScreen({
       const ev = evs[idx];
       if (!ev) { setShown(s => s + 1); return; }
       const meu = ev.actor === 'me';
-      // A6 (rodada 7): o golpe normal alterna físico/à distância POR LUTADOR (o n-ésimo golpe normal DELE). Antes era
-      // pela paridade do índice do evento — como os lados se alternam 1 a 1, o dono era sempre físico e o oponente
-      // SEMPRE à distância (nunca atacava com o corte).
-      const nDele = evs.slice(0, idx).filter(e => e.actor === ev.actor && !e.special).length;
-      const kind: StageActionKind = ev.special ? 'special' : nDele % 2 === 0 ? 'melee' : 'ranged';
+      // R8: a forma do golpe (físico/à distância) vem da SKILL do lutador — o arquétipo do ELEMENTO dele (o servidor não
+      // publica skill), básica ou especial —, não de índice nem de sorteio (`elementStrikeForm`, `utils/combatFx.ts`).
+      const elDele = meu ? meEl : oppEl;
+      const forma = elementStrikeForm(elDele, ev.special ? 'especial' : 'basica');
+      const kind: StageActionKind = ev.special ? 'special' : forma;
       setMedidor(ev.meter);
       setEnergia({ me: ev.preMe, opp: ev.preOpp });
-      setAcao({ id: ++cenaSeq.current, actor: meu ? 'me' : 'foe', foe: 0, kind, element: meu ? meEl : oppEl });
+      setAcao({ id: ++cenaSeq.current, actor: meu ? 'me' : 'foe', foe: 0, kind, strike: ev.special ? forma : undefined, element: elDele });
       t2 = setTimeout(() => {
         setGolpe({ id: ++cenaSeq.current, side: meu ? 'foe' : 'me', foe: 0, value: ev.dmg, big: ev.special });
         setEnergia({ me: ev.energyMe, opp: ev.energyOpp });
@@ -183,6 +183,7 @@ export function DuelScreen({
     <TorcidaLayer onTap={cheer} active={cheering && !pausado} isPt={isPt} style={BATTLE_LAYER_STYLE} mascot>
       <BattleStage
         scene={ARENA_SCENE.bg}
+        specialLabel={specialLabel(isPt)}
         me={{ key: 'me', sprite: petSprite, name: petName || (isPt ? 'Você' : 'You'), hp: hpMe, maxHp: me.hp, element: meEl, down: fim && hpMe <= 0, energy: energia.me / DUEL_ENERGY_MAX }}
         foes={[{ key: 'opp', sprite: oppSprite, name: oppName, hp: hpOpp, maxHp: opp.hp, element: oppEl, down: fim && hpOpp <= 0, energy: energia.opp / DUEL_ENERGY_MAX }]}
         action={acao}

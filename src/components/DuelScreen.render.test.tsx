@@ -7,9 +7,9 @@ import { DUEL_STEP_MS } from '../utils/combatFx';
 
 afterEach(() => { cleanup(); vi.useRealTimers(); });
 
-function montar(onDone = vi.fn(), onClose = vi.fn()) {
+function montar(onDone = vi.fn(), onClose = vi.fn(), oppElement = 'agua') {
   const s = duelStats({ stage: 'rookie' });
-  const r = render(<DuelScreen me={s} opp={s} seed={123} petSprite="" oppSprite="" petName="Pet" oppName="Rival" isPt petElement="fogo" oppElement="agua" onDone={onDone} onClose={onClose} />);
+  const r = render(<DuelScreen me={s} opp={s} seed={123} petSprite="" oppSprite="" petName="Pet" oppName="Rival" isPt petElement="fogo" oppElement={oppElement} onDone={onDone} onClose={onClose} />);
   const camada = () => r.container.querySelector('[data-torcida-layer]') as HTMLElement;
   return { onDone, onClose, camada };
 }
@@ -57,19 +57,30 @@ describe('DuelScreen — a cena em tela cheia', () => {
     for (const src of fx) expect(src).toMatch(/fx-(fogo|agua)-(cast|aura|slash|impact|defended|orb)/);
   });
 
-  it('A6: o oponente TAMBÉM ataca com o golpe físico (investida) — não só à distância', () => {
+  /** Corre a luta toda e anota quem investiu (lunge) e quem atirou (projétil), por lado. */
+  function observar(oppElement: string) {
     vi.useFakeTimers();
-    const { onDone } = montar();
-    let oponenteInvestiu = false; let oponenteAtirou = false; let donoInvestiu = false;
-    for (let i = 0; i < 400 && !onDone.mock.calls.length; i++) {
+    const { onDone } = montar(vi.fn(), vi.fn(), oppElement);
+    const v = { oponenteInvestiu: false, donoInvestiu: false, atirou: false };
+    for (let i = 0; i < 600 && !onDone.mock.calls.length; i++) {
       act(() => { vi.advanceTimersByTime(100); });
-      if (document.querySelector('[data-stage-sprite="foe"]')?.closest('.sm-bs-lunge')) oponenteInvestiu = true;
-      if (document.querySelector('[data-stage-sprite="me"]')?.closest('.sm-bs-lunge')) donoInvestiu = true;
-      if (document.querySelector('.sm-bs-fly')) oponenteAtirou = true;
+      if (document.querySelector('[data-stage-sprite="foe"]')?.closest('.sm-bs-lunge')) v.oponenteInvestiu = true;
+      if (document.querySelector('[data-stage-sprite="me"]')?.closest('.sm-bs-lunge')) v.donoInvestiu = true;
+      if (document.querySelector('.sm-bs-fly')) v.atirou = true;
     }
-    expect(oponenteInvestiu).toBe(true);
-    expect(donoInvestiu).toBe(true);
-    expect(oponenteAtirou).toBe(true);
+    return v;
+  }
+
+  it('R8: a forma do golpe vem da SKILL (arquétipo do elemento): oponente físico investe, à distância atira; o círculo de cast só no especial', () => {
+    // fogo (dono): básica à distância, especial físico. marcial (oponente): físico nas duas — nunca atira.
+    const fisico = observar('marcial');
+    expect(fisico.oponenteInvestiu).toBe(true);
+    expect(fisico.donoInvestiu).toBe(true); // o especial físico do fogo
+    cleanup(); vi.useRealTimers();
+    // agua (oponente): à distância nas duas — nunca investe.
+    const distancia = observar('agua');
+    expect(distancia.oponenteInvestiu).toBe(false);
+    expect(distancia.atirou).toBe(true);
   });
 
   it('a energia sobe na barra de cada um (dado + sofrido): depois dos dois primeiros golpes as barras não estão vazias', () => {

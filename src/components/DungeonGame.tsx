@@ -18,7 +18,7 @@ import {
 import {
   CHEER_TAPS_FULL, ENERGY_MAX, PVE_HP_SCALE, pveFoeHp, pveFoeHitDamage, pveStrikeDamage, type RingGrade,
 } from '../utils/energia';
-import { fxElementId, visualElementFor, prefersReducedMotion } from '../utils/combatFx';
+import { fxElementId, visualElementFor, prefersReducedMotion, elementStrikeForm, specialLabel } from '../utils/combatFx';
 import { TorcidaLayer, TorcidaGauge } from './games/TorcidaKit';
 import { BattleStage, BATTLE_LAYER_STYLE } from './games/BattleStage';
 import { usePveBattle, type PveRules } from './games/usePveBattle';
@@ -234,8 +234,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, profi
     foes: () => (enemyHpRef.current > 0 ? [0] : []),
     playerElement: () => petEl,
     foeElement: () => enemyEl,
-    playerKind: n => (n % 2 === 0 ? 'melee' : 'ranged'),
-    foeKind: (_f, n) => (n % 2 === 0 ? 'melee' : 'ranged'),
+    playerKind: sp => elementStrikeForm(petEl, sp ? 'especial' : 'basica'),
+    foeKind: (_f, sp) => elementStrikeForm(enemyEl, sp ? 'especial' : 'basica'),
     playerStrike: ({ special, ring }) => {
       const e = enemiesRef.current[enemyIdxRef.current];
       const guarda = (e?.dmgReduction ?? 0) * (1 - jeito.atravessaGuarda);
@@ -354,6 +354,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, profi
         onSwipe={battle.swipe}
       >
         <BattleStage
+          specialLabel={specialLabel(isPt)}
           scene={scene.bg}
           me={{
             key: 'me', sprite: petSprite, name: isPt ? 'Você' : 'You', hp: Math.max(0, playerHp), maxHp: playerStats.hp,

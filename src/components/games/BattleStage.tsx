@@ -29,7 +29,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import { Icon } from '../ui/Icon';
 import { PixelMeter } from '../pixel/PixelKit';
 import { sm2Button, sm2Text } from '../form/FormKit';
-import { fxFrame, impactMs, totalMs, prefersReducedMotion, type StageActionKind } from '../../utils/combatFx';
+import { fxFrame, impactMs, totalMs, prefersReducedMotion, SPECIAL_LABEL, type StageActionKind, type StrikeForm } from '../../utils/combatFx';
 import { type RingGrade, type RingSpec } from '../../utils/energia';
 import { SpecialRing, DodgeButtons } from './PveMechanics';
 
@@ -59,6 +59,8 @@ export interface StageAction {
   /** Índice do inimigo (atacante, se `actor` = foe; alvo, se `actor` = me). */
   foe: number;
   kind: StageActionKind;
+  /** Só no `special`: a FORMA da skill especial (investida ou projétil). Ausente = à distância. */
+  strike?: StrikeForm;
   /** Elemento de quem ataca. */
   element: string;
   /** Elemento do DEFENSOR quando a defesa automática bloqueou: mostra a barreira dele no lugar do impacto. */
@@ -123,6 +125,14 @@ export function stageLayout(w: number, h: number, nFoes: number): StageLayout {
   }));
   return { me, foes, plateH: PLATE_H, platHalf, barsH: BARS_H };
 }
+
+/** A forma do golpe: a do `kind`, ou — no especial — a da skill (`strike`, padrão à distância). */
+export const strikeFormOf = (a: Pick<StageAction, 'kind' | 'strike'>): StrikeForm =>
+  a.kind === 'special' ? (a.strike ?? 'ranged') : a.kind;
+
+/** A investida do ESPECIAL físico só começa depois da carga (o círculo de cast): chega no instante do impacto. */
+const lungeDelay = (a: StageAction): number =>
+  a.kind === 'special' ? Math.max(0, (a.impactMs ?? impactMs('special', false)) - impactMs('melee', false)) : 0;
 
 /** O centro do corpo (onde o golpe sai e chega). */
 const bodyCenter = (s: Spot) => ({ x: s.x, y: s.y - s.size * 0.47 });
@@ -219,7 +229,7 @@ function Platform({ spot, half }: { spot: Spot; half: number }) {
 
 function Fighter({ f, spot, flip, zIndex, lunge, hitKey, hitDelay, charged }: {
   f: StageFighter; spot: Spot; flip: boolean; zIndex: number;
-  lunge: { key: number; dx: number; dy: number; dur: number } | null;
+  lunge: { key: number; dx: number; dy: number; dur: number; delay: number } | null;
   hitKey: number; hitDelay: number; charged: boolean;
 }) {
   return (
@@ -229,7 +239,7 @@ function Fighter({ f, spot, flip, zIndex, lunge, hitKey, hitDelay, charged }: {
       <div
         key={lunge ? `l${lunge.key}` : 'l-'}
         className={lunge ? 'sm-bs-lunge' : undefined}
-        style={lunge ? ({ ['--dx' as string]: `${lunge.dx}px`, ['--dy' as string]: `${lunge.dy}px`, ['--bs-dur' as string]: `${lunge.dur}ms` } as CSSProperties) : undefined}
+        style={lunge ? ({ ['--dx' as string]: `${lunge.dx}px`, ['--dy' as string]: `${lunge.dy}px`, ['--bs-dur' as string]: `${lunge.dur}ms`, ['--bs-delay' as string]: `${lunge.delay}ms` } as CSSProperties) : undefined}
       >
         <div
           key={hitKey ? `h${hitKey}` : 'h-'}
@@ -287,6 +297,30 @@ function Fx({ src, x, y, size, anim, delay, dur, rot = 0, flipX = false, extra }
   );
 }
 
+/**
+ * O selo `SPECIAL!` na hora do especial (PvP e PvE): a fonte display do projeto, sobre o lutador que conjura.
+ * Animação curta (`sm-bs-special`); com movimento reduzido só aparece e some (sem subir nem crescer).
+ */
+function SpecialBanner({ action, layout, label }: { action: StageAction; layout: StageLayout; label: string }) {
+  const spot = action.actor === 'me' ? layout.me : (layout.foes[Math.min(action.foe, layout.foes.length - 1)] ?? layout.foes[0]);
+  const c = bodyCenter(spot);
+  const fs = Math.round(Math.max(20, Math.min(34, spot.size * 0.16)));
+  return (
+    <div
+      aria-hidden="true"
+      data-stage-special
+      className="sm-bs-special"
+      style={{
+        position: 'absolute', left: c.x, top: c.y - spot.size * 0.12, transform: 'translate(-50%, -50%)', zIndex: 6, pointerEvents: 'none',
+        fontFamily: 'var(--sm2-font-display)', fontWeight: 700, fontSize: fs, letterSpacing: '.08em', whiteSpace: 'nowrap',
+        color: 'var(--sm2-gold-ink)', textShadow: '0 2px 0 var(--sm2-bg), 0 0 14px var(--sm2-gold-fill)',
+      }}
+    >
+      <span style={{ display: 'block' }}>{label}</span>
+    </div>
+  );
+}
+
 function ActionFx({ action, layout, reduced }: { action: StageAction; layout: StageLayout; reduced: boolean }) {
   const meSpot = layout.me;
   const foeSpot = layout.foes[Math.min(action.foe, layout.foes.length - 1)] ?? layout.foes[0];
@@ -304,22 +338,22 @@ function ActionFx({ action, layout, reduced }: { action: StageAction; layout: St
     ? fxFrame(action.shield, 'defended')
     : fxFrame(el, 'impact');
   const big = action.kind === 'special';
+  const form = strikeFormOf(action);
   const landSize = Math.round(toSpot.size * (blocked ? 0.9 : big ? 1.1 : 0.8));
   const flipX = action.actor === 'foe'; // o corte e o orb são desenhados "para a direita"
   const fxScale = Math.max(1, meSpot.size / 190);
 
   const layers: ReactNode[] = [];
   if (!reduced) {
-    if (action.kind === 'ranged' || big) {
-      const cast = action.castMs ?? (big ? 900 : 650);
+    // O círculo de cast (e a aura) é SÓ do especial carregado — o golpe básico não carrega nada.
+    if (big) {
+      const cast = action.castMs ?? 900;
       layers.push(
-        <Fx key="cast" src={fxFrame(el, 'cast')} x={from.x} y={from.y + (action.actor === 'me' ? 18 : 10)} size={Math.round((big ? 124 : 92) * fxScale)} anim="sm-bs-cast" delay={0} dur={cast} />,
+        <Fx key="cast" src={fxFrame(el, 'cast')} x={from.x} y={from.y + (action.actor === 'me' ? 18 : 10)} size={Math.round(124 * fxScale)} anim="sm-bs-cast" delay={0} dur={cast} />,
+        <Fx key="aura" src={fxFrame(el, 'aura')} x={from.x} y={from.y} size={Math.round((action.actor === 'me' ? meSpot : foeSpot).size * 1.3)} anim="sm-bs-pop" delay={0} dur={Math.max(1000, action.castMs ?? 0)} />,
       );
-      if (big) {
-        layers.push(
-          <Fx key="aura" src={fxFrame(el, 'aura')} x={from.x} y={from.y} size={Math.round((action.actor === 'me' ? meSpot : foeSpot).size * 1.3)} anim="sm-bs-pop" delay={0} dur={Math.max(1000, action.castMs ?? 0)} />,
-        );
-      }
+    }
+    if (form === 'ranged') {
       const flyDelay = action.castMs ?? (big ? 320 : 180);
       layers.push(
         <Fx
@@ -330,13 +364,13 @@ function ActionFx({ action, layout, reduced }: { action: StageAction; layout: St
       );
     } else {
       layers.push(
-        <Fx key="slash" src={fxFrame(el, 'slash')} x={to.x} y={to.y} size={Math.round(toSpot.size * 0.95)} anim="sm-bs-pop" delay={Math.max(0, impact - 240)} dur={400} flipX={flipX} />,
+        <Fx key="slash" src={fxFrame(el, 'slash')} x={to.x} y={to.y} size={Math.round(toSpot.size * (big ? 1.2 : 0.95))} anim="sm-bs-pop" delay={Math.max(0, impact - 240)} dur={400} flipX={flipX} />,
       );
     }
   }
   // A5 (rodada 7): o golpe FÍSICO (investida) é só o CORTE — sem o splash/"crash" do impacto. O splash é do dano à
-  // distância/mágico (ranged/special). O escudo (bloqueio) e o movimento reduzido (sem corte, só o flash) mantêm o frame.
-  if (reduced || blocked || action.kind !== 'melee') layers.push(
+  // distância/mágico (projétil, especial à distância). O escudo (bloqueio) e o movimento reduzido (sem corte, só o flash) mantêm o frame.
+  if (reduced || blocked || form !== 'melee') layers.push(
     <Fx key="land" src={landing} x={to.x} y={to.y} size={landSize} anim="sm-bs-pop" delay={Math.max(0, impact - 60)} dur={reduced ? total - impact : Math.min(700, total - impact + 60)} flipX={flipX && !blocked} />,
   );
   return <>{layers}</>;
@@ -379,13 +413,15 @@ export interface BattleStageProps {
   petDodge?: { id: number; dir: -1 | 1 } | null;
   /** Nomes acessíveis das mecânicas (sem texto na tela). */
   mechLabels?: { strike: string; dodgeLeft: string; dodgeRight: string };
+  /** O texto do selo do especial (`specialLabel(isPt)` de `utils/combatFx.ts`); sem ele, o EN. */
+  specialLabel?: string;
   children?: ReactNode;
 }
 
 /** A cena inteira. Envolva-a numa `TorcidaLayer style={BATTLE_LAYER_STYLE} mascot`. */
 export function BattleStage({
   scene, me, foes, target = 0, action, hit, badge, title, closeLabel, onClose, exitConfirm, onPauseChange, hud, status,
-  charging = false, ring, onRingGrade, dodge, onDodge, petDodge, mechLabels, children,
+  charging = false, ring, onRingGrade, dodge, onDodge, petDodge, mechLabels, specialLabel, children,
 }: BattleStageProps) {
   const fieldRef = useRef<HTMLDivElement>(null);
   const { w, h } = useBox(fieldRef);
@@ -407,18 +443,18 @@ export function BattleStage({
   const actor = action?.actor;
   const foeSpotOf = (i: number) => layout.foes[Math.min(i, layout.foes.length - 1)] ?? layout.foes[0];
   const meLunge = petDodge && !reduced
-    ? { key: 100000 + petDodge.id, dx: petDodge.dir * Math.round(layout.me.size * 0.45), dy: 0, dur: 800 }
-    : action && actor === 'me' && action.kind === 'melee' && !reduced
+    ? { key: 100000 + petDodge.id, dx: petDodge.dir * Math.round(layout.me.size * 0.45), dy: 0, dur: 800, delay: 0 }
+    : action && actor === 'me' && strikeFormOf(action) === 'melee' && !reduced
       ? (() => {
           const t = foeSpotOf(action.foe);
           const a = bodyCenter(layout.me); const b = bodyCenter(t);
-          return { key: action.id, dx: Math.round((b.x - a.x) * 0.78), dy: Math.round((b.y - a.y) * 0.78), dur: totalMs('melee', false) };
+          return { key: action.id, dx: Math.round((b.x - a.x) * 0.78), dy: Math.round((b.y - a.y) * 0.78), dur: totalMs('melee', false), delay: lungeDelay(action) };
         })()
       : null;
-  const foeLunge = (i: number) => action && actor === 'foe' && action.foe === i && action.kind === 'melee' && !reduced
+  const foeLunge = (i: number) => action && actor === 'foe' && action.foe === i && strikeFormOf(action) === 'melee' && !reduced
     ? (() => {
         const a = bodyCenter(layout.foes[i] ?? layout.foes[0]); const b = bodyCenter(layout.me);
-        return { key: action.id, dx: Math.round((b.x - a.x) * 0.78), dy: Math.round((b.y - a.y) * 0.78), dur: totalMs('melee', false) };
+        return { key: action.id, dx: Math.round((b.x - a.x) * 0.78), dy: Math.round((b.y - a.y) * 0.78), dur: totalMs('melee', false), delay: lungeDelay(action) };
       })()
     : null;
   const hitOn = (side: 'me' | number) => {
@@ -508,6 +544,7 @@ export function BattleStage({
         <FighterBars fighter={me} spot={layout.me} tone="cyan" numeric barsH={layout.barsH} />
 
         {action && <ActionFx key={action.id} action={action} layout={layout} reduced={reduced} />}
+        {action?.kind === 'special' && <SpecialBanner key={`sp${action.id}`} action={action} layout={layout} label={specialLabel ?? SPECIAL_LABEL.en} />}
         {charging && !action?.shield && (
           <div key="charge" aria-hidden="true" data-stage-charging className="sm-bs-charge" style={{ position: 'absolute', left: layout.me.x - layout.me.size * 0.7, top: meBody.y - layout.me.size * 0.7, width: layout.me.size * 1.4, height: layout.me.size * 1.4, zIndex: 2, pointerEvents: 'none', borderRadius: '50%' }} />
         )}

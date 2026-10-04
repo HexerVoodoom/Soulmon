@@ -5759,6 +5759,8 @@ select:focus-visible {
   /* Cena de combate (rodada 5, I10): sem investida, projétil nem pulso — só o flash no alvo. */
   .sm-bs-lunge, .sm-bs-fly, .sm-bs-cast, .sm-bs-hit { animation: none !important; }
   .sm-bs-fly, .sm-bs-cast { display: none !important; }
+  /* Selo SPECIAL! do especial (04/10/2026): sem subir nem crescer — só aparece e some (flash). */
+  .sm-bs-special { animation-name: sm-bs-flash !important; }
   .sm-bs-pop { animation-name: sm-bs-flash !important; }
   /* Combate maior, energia e torcida (04/10/2026): sem bouncing, sem brilho em movimento, sem pulo do mascote; o balao so pisca. */
   .sm-bs-bounce, .sm-cheer-jump, .sm-bs-dodge-hint, .sm-bs-charge, .sm-bs-energy-full > i { animation: none !important; }
@@ -8141,7 +8143,7 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
   56% { transform: translate(var(--dx), var(--dy)); }
   100% { transform: translate(0, 0); }
 }
-.sm-bs-lunge { animation: sm-bs-lunge var(--bs-dur, 1000ms) ease-in-out 1 both; }
+.sm-bs-lunge { animation: sm-bs-lunge var(--bs-dur, 1000ms) ease-in-out var(--bs-delay, 0ms) 1 both; }
 @keyframes sm-bs-fly {
   0% { opacity: 0; transform: translate(0, 0) scale(.5); }
   12% { opacity: 1; transform: translate(calc(var(--dx) * .08), calc(var(--dy) * .08)) scale(1); }
@@ -8212,3 +8214,15 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
   100% { opacity: 0; transform: rotate(var(--sm2-spark-a)) translateX(var(--sm2-spark-d)) scale(1); }
 }
 .sm2-celebrate-spark { position: absolute; left: -3px; top: -3px; width: 6px; height: 6px; border-radius: 50%; opacity: 0; animation: sm2-celebrate-spark 1100ms ease-out 1 both; }
+
+/* SELO DO ESPECIAL (04/10/2026, rodada 8 — `SpecialBanner` em `components/games/BattleStage.tsx`): o "SPECIAL!" em fonte
+   display que sobe um pouco e estoura na hora do especial, PvP e PvE. Curto (~1,1 s). Com `prefers-reduced-motion` o bloco
+   canônico troca a animação pelo flash (sem movimento). */
+@keyframes sm-bs-special {
+  0% { opacity: 0; transform: translate(-50%, -30%) scale(.55); }
+  22% { opacity: 1; transform: translate(-50%, -50%) scale(1.18); }
+  40% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  80% { opacity: 1; transform: translate(-50%, -62%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -78%) scale(1.04); }
+}
+.sm-bs-special { animation: sm-bs-special 1100ms ease-out 0ms 1 both; }

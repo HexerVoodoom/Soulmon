@@ -64,7 +64,7 @@ import {
 import { BattleStage, BATTLE_LAYER_STYLE, type StageAction, type StageHit } from './games/BattleStage';
 import {
   ARENA_STRIKE_MS, ARENA_DEFEND_MS, STAGE_TIMING, fxElementId, impactMs, prefersReducedMotion,
-  strikeKindForSchool, type StageActionKind,
+  skillStrikeForm, elementStrikeForm, specialLabel, type StageActionKind,
 } from '../utils/combatFx';
 import { autoDefense, defenseRoll, newDefenseSeed, TIMING_DODGE_ENABLED } from '../utils/autoDefesa';
 import { Icon } from './ui/Icon';
@@ -439,11 +439,11 @@ export function ArenaGame({
     const t1 = setTimeout(() => {
       const pronto = carga >= SPECIAL_CHARGE_TURNS;
       const cheio = tapsRef.current >= TORCIDA_TAPS_FULL;
-      const kind: StageActionKind = pronto || cheio ? 'special' : strikeKindForSchool(basica?.escolaId);
+      const kind: StageActionKind = pronto || cheio ? 'special' : skillStrikeForm(basica, 'basica');
       const elemento = pronto ? especial?.elementoId : basica?.elementoId;
       setAcao({
         id: ++cenaSeq.current, actor: 'me', foe: Math.max(0, inimigos.indexOf(alvo as ArenaEnemy)),
-        kind, element: fxElementId(elemento ?? 'vigor'),
+        kind, strike: kind === 'special' ? skillStrikeForm(especial, 'especial') : undefined, element: fxElementId(elemento ?? 'vigor'),
       });
       t2 = setTimeout(() => atacarRef.current(ARENA_AUTO_ACC), impactMs(kind, reduzido.current));
     }, Math.max(0, ARENA_STRIKE_MS - STAGE_TIMING.special.impact));
@@ -461,8 +461,8 @@ export function ArenaGame({
     const t1 = setTimeout(() => {
       const roll = defenseRoll(defSeedRef.current, defCountRef.current++);
       const acc = autoDefense(roll, { perfect: PERFECT_ACC }).acc;
-      // Quem revida investe (pares) ou atira (ímpares); o escudo é o do ELEMENTO de quem defende.
-      const kind: StageActionKind = defensor % 2 === 0 ? 'melee' : 'ranged';
+      // Quem revida golpeia como a skill BÁSICA do elemento dele (físico ou à distância); o escudo é o do ELEMENTO de quem defende.
+      const kind: StageActionKind = elementStrikeForm(e.elements[0], 'basica');
       const perfeita = acc >= PERFECT_ACC;
       setAcao({
         id: ++cenaSeq.current, actor: 'foe', foe: defensor, kind, element: fxElementId(e.elements[0]),
@@ -501,8 +501,8 @@ export function ArenaGame({
     },
     playerElement: (sp: boolean) => fxElementId((sp ? especial?.elementoId : basica?.elementoId) ?? atributos.principal ?? 'vigor'),
     foeElement: (i: number) => fxElementId(inimigosRef.current[i]?.elements[0]),
-    playerKind: () => strikeKindForSchool(basica?.escolaId),
-    foeKind: (foe: number) => (foe % 2 === 0 ? 'melee' : 'ranged'),
+    playerKind: (sp: boolean) => (sp ? skillStrikeForm(especial, 'especial') : skillStrikeForm(basica, 'basica')),
+    foeKind: (foe: number, sp: boolean) => elementStrikeForm(inimigosRef.current[foe]?.elements[0], sp ? 'especial' : 'basica'),
     playerStrike: ({ special, ring }) => {
       const antes = inimigosRef.current;
       const copia = antes.map(e => ({ ...e }));
@@ -618,6 +618,7 @@ export function ArenaGame({
       >
         <BattleStage
           scene={ARENA_SCENE.bg}
+          specialLabel={specialLabel(isPt)}
           me={{
             key: 'me', sprite: petSprite, name: isPt ? 'Você' : 'You', hp: Math.max(0, hp), maxHp: stats.hp,
             element: fxElementId(basica?.elementoId ?? atributos.principal),

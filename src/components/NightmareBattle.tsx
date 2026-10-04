@@ -52,7 +52,7 @@ import { newDefenseSeed } from '../utils/autoDefesa';
 import {
   CHEER_TAPS_FULL, ENERGY_MAX, PVE_HP_SCALE, pveFoeHp, pveFoeHitDamage, pveStrikeDamage, type RingGrade,
 } from '../utils/energia';
-import { fxElementId, visualElementFor, prefersReducedMotion } from '../utils/combatFx';
+import { fxElementId, visualElementFor, prefersReducedMotion, elementStrikeForm, specialLabel } from '../utils/combatFx';
 import { playFeed } from '../utils/sounds';
 import {
   nightmareFlavor,
@@ -164,8 +164,8 @@ export function NightmareBattle({
     foes: () => (enemyHpRef.current > 0 ? [0] : []),
     playerElement: () => petEl,
     foeElement: () => enemyEl,
-    playerKind: n => (n % 2 === 0 ? 'melee' : 'ranged'),
-    foeKind: (_f, n) => (n % 2 === 0 ? 'melee' : 'ranged'),
+    playerKind: sp => elementStrikeForm(petEl, sp ? 'especial' : 'basica'),
+    foeKind: (_f, sp) => elementStrikeForm(enemyEl, sp ? 'especial' : 'basica'),
     playerStrike: ({ special, ring }) => {
       const e = waveRef.current[idxRef.current];
       const dmg = pveStrikeDamage({ dmg: stats.dmg, guard: e?.dmgReduction ?? 0, special, ring });
@@ -253,6 +253,7 @@ export function NightmareBattle({
         onSwipe={battle.swipe}
       >
         <BattleStage
+          specialLabel={specialLabel(isPt)}
           scene={NIGHTMARE_SCENE.bg}
           me={{
             key: 'me', sprite: petSprite, name: isPt ? 'Seu Soulmon' : 'Your Soulmon', hp: Math.max(0, playerHp), maxHp: stats.hp,

@@ -1,9 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import {
   fxElementId, fxFrame, visualElementFor, strikeKindForSchool, VISUAL_ELEMENTS, FX_FALLBACK_ELEMENT,
+  SCHOOL_STRIKE_FORM, ELEMENT_STRIKE_FORM, skillStrikeForm, elementStrikeForm, specialLabel, SPECIAL_LABEL,
   STAGE_TIMING, DUEL_STEP_MS, PVE_STEP_MS, ARENA_STRIKE_MS, ARENA_DEFEND_MS, impactMs, totalMs,
 } from './combatFx';
 import { ATTACK_FX_COUNT } from './attackFxArt';
+import classSystem from './soulProfile/ficha/classSystem.data.json';
+import pool from './soulProfile/bestiary/pool.json';
+import { CLASS_ELEMENT_ORDER } from './soulProfile/types';
 import {
   simulateDuel, duelStats, duelSeed, DUEL_CHEER_WINDOWS, DUEL_MAX_TURNS, DUEL_PENDING_MS, DUEL_TAPS_FULL, DUEL_TAPS_CAP,
 } from '../../functions/api/_duel.js';
@@ -53,12 +57,51 @@ describe('o elemento visual do oponente e a ação de cada escola', () => {
     expect(new Set(ids).size).toBeGreaterThanOrEqual(12); // espalha, não colapsa num elemento
   });
 
-  it('só o combate físico investe; as outras escolas atiram', () => {
-    expect(strikeKindForSchool('combate_fisico')).toBe('melee');
-    for (const e of ['longo_alcance', 'evocacao', 'conjuracao', 'benca', 'maldicao'] as const) {
-      expect(strikeKindForSchool(e)).toBe('ranged');
-    }
+  it('o golpe BÁSICO segue a tabela da escola (R8: combate físico e a mordida da maldição investem; o resto atira)', () => {
+    for (const e of ['combate_fisico', 'maldicao'] as const) expect(strikeKindForSchool(e)).toBe('melee');
+    for (const e of ['longo_alcance', 'evocacao', 'conjuracao', 'benca'] as const) expect(strikeKindForSchool(e)).toBe('ranged');
     expect(strikeKindForSchool(undefined)).toBe('ranged');
+  });
+
+  it('R8: nenhuma skill sem kind — toda escola × papel (básica/especial) e todo elemento de inimigo tem forma', () => {
+    const escolas = Object.keys((classSystem as { escolas: Record<string, unknown> }).escolas);
+    expect(escolas.length).toBeGreaterThanOrEqual(6);
+    for (const e of escolas) {
+      for (const role of ['basica', 'especial'] as const) {
+        const f = SCHOOL_STRIKE_FORM[e as keyof typeof SCHOOL_STRIKE_FORM]?.[role];
+        expect(['melee', 'ranged'], `${e}/${role}`).toContain(f);
+      }
+    }
+    const elementos = new Set<string>([...CLASS_ELEMENT_ORDER, ...VISUAL_ELEMENTS]);
+    for (const c of (pool as { criaturas: Array<{ elementos: string[] }> }).criaturas) c.elementos.forEach(x => elementos.add(x));
+    for (const el of elementos) {
+      for (const role of ['basica', 'especial'] as const) {
+        expect(['melee', 'ranged'], `${el}/${role}`).toContain(ELEMENT_STRIKE_FORM[el]?.[role]);
+      }
+    }
+  });
+
+  it('R8: a forma vem da SKILL (escola/papel ou elemento), sem índice; desconhecido cai à distância', () => {
+    expect(skillStrikeForm({ escolaId: 'combate_fisico' }, 'basica')).toBe('melee');
+    expect(skillStrikeForm({ escolaId: 'combate_fisico' }, 'especial')).toBe('melee');
+    expect(skillStrikeForm({ escolaId: 'conjuracao' }, 'especial')).toBe('ranged');
+    expect(skillStrikeForm({ escolaId: 'maldicao' }, 'basica')).toBe('melee');
+    expect(skillStrikeForm({ escolaId: 'maldicao' }, 'especial')).toBe('ranged');
+    // sem escola (ficha ausente): cai no elemento da skill; sem nada, à distância
+    expect(skillStrikeForm({ elementoId: 'marcial' }, 'basica')).toBe('melee');
+    expect(skillStrikeForm(undefined, 'basica')).toBe('ranged');
+    // determinístico: a mesma skill dá sempre a mesma forma
+    const seq = Array.from({ length: 6 }, () => elementStrikeForm('fogo', 'basica'));
+    expect(new Set(seq).size).toBe(1);
+    expect(elementStrikeForm('fogo', 'basica')).toBe('ranged');
+    expect(elementStrikeForm('fogo', 'especial')).toBe('melee');
+    expect(elementStrikeForm('planta', 'basica')).toBe(elementStrikeForm('vida', 'basica')); // alias do oráculo
+    expect(elementStrikeForm('elemento-que-nao-existe', 'especial')).toBe('ranged');
+  });
+
+  it('R8: o rótulo do especial está centralizado (EN e PT)', () => {
+    expect(specialLabel(false)).toBe(SPECIAL_LABEL.en);
+    expect(specialLabel(true)).toBe(SPECIAL_LABEL.pt);
   });
 
   it('movimento reduzido: o impacto chega logo (só o flash), sem trajeto', () => {

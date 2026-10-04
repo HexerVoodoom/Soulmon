@@ -23,7 +23,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { StageAction, StageHit } from './BattleStage';
-import { STAGE_TIMING, PVE_STEP_MS, impactMs, type StageActionKind } from '../../utils/combatFx';
+import { STAGE_TIMING, PVE_STEP_MS, impactMs, type StageActionKind, type StrikeForm } from '../../utils/combatFx';
 import { autoDefense, defenseRoll } from '../../utils/autoDefesa';
 import {
   addEnergy, cheerTap, dodgeGrade, dodgeSpec, energyFull, ringSpec, spendEnergy,
@@ -70,9 +70,10 @@ export interface PveRules {
   /** Elemento da arte do golpe do pet (o especial pode ter outro). */
   playerElement(special: boolean): string;
   foeElement(foe: number): string;
-  /** O golpe normal do pet: investida ou projétil. */
-  playerKind(n: number): 'melee' | 'ranged';
-  foeKind(foe: number, n: number): 'melee' | 'ranged';
+  /** A FORMA do golpe do pet — da SKILL dele (básica ou especial): investida ou projétil. Nunca de índice/sorteio. */
+  playerKind(special: boolean): StrikeForm;
+  /** A FORMA do golpe do inimigo `foe` — da skill dele (básica ou especial). */
+  foeKind(foe: number, special: boolean): StrikeForm;
   /** Bônus na defesa automática (o ofício) e o limiar da defesa perfeita. */
   defenseBonus?: number;
   perfect: number;
@@ -234,6 +235,7 @@ export function usePveBattle(opts: PveBattleOptions): PveBattle {
         const special = energyFull(pE.current);
         let ringG: RingGrade = 'bom';
         let kind: StageActionKind;
+        const pForm = rules.playerKind(special);
         if (special) {
           const spec = ringSpec(seed, nRing.current++);
           setCharging(true);
@@ -249,9 +251,9 @@ export function usePveBattle(opts: PveBattleOptions): PveBattle {
           if (!alive()) return;
           kind = 'special';
         } else {
-          kind = rules.playerKind(n);
+          kind = pForm;
         }
-        setAction({ id: ++seq.current, actor: 'me', foe: target, kind, element: rules.playerElement(special) });
+        setAction({ id: ++seq.current, actor: 'me', foe: target, kind, strike: special ? pForm : undefined, element: rules.playerElement(special) });
         if (!(await wait(impactMs(kind, reduced)))) return;
         const res = rules.playerStrike({ special, ring: ringG, target, n });
         if (special) setPetEnergy(spendEnergy(pE.current));
@@ -284,7 +286,7 @@ export function usePveBattle(opts: PveBattleOptions): PveBattle {
             setDodge({ spec, key: ++seq.current });
             setPhaseBoth('dodge');
             setAction({
-              id: ++seq.current, actor: 'foe', foe, kind: 'special', element: r2.foeElement(foe),
+              id: ++seq.current, actor: 'foe', foe, kind: 'special', strike: r2.foeKind(foe, true), element: r2.foeElement(foe),
               castMs: spec.castMs, impactMs: spec.impactMs, totalMs: spec.impactMs + 500,
             });
             if (!(await wait(spec.impactMs))) return;
@@ -297,7 +299,7 @@ export function usePveBattle(opts: PveBattleOptions): PveBattle {
           } else {
             acc = autoDefense(defenseRoll(seed, nDef.current++), { bonus: r2.defenseBonus, perfect: r2.perfect }).acc;
             blocked = acc >= r2.perfect;
-            fKind = r2.foeKind(foe, fn);
+            fKind = r2.foeKind(foe, false);
             setAction({
               id: ++seq.current, actor: 'foe', foe, kind: fKind, element: r2.foeElement(foe),
               shield: blocked ? r2.playerElement(false) : null,

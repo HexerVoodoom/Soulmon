@@ -151,6 +151,34 @@ describe('BattleStage — o que a cena desenha', () => {
     }
   });
 
+  it('R8: o círculo de cast e a aura são SÓ do especial — golpe básico (físico ou à distância) não carrega nada', () => {
+    for (const kind of ['melee', 'ranged'] as const) {
+      cleanup();
+      render(<BattleStage {...baseProps} action={{ id: 30, actor: 'me', foe: 0, kind, element: 'fogo' }} />);
+      expect(document.querySelector('.sm-bs-cast'), kind).toBeNull();
+      expect(srcsDe().some(s => /fx-fogo-cast|fx-fogo-aura/.test(s)), kind).toBe(false);
+      expect(document.querySelector('[data-stage-special]'), kind).toBeNull();
+    }
+  });
+
+  it('R8: o ESPECIAL físico (skill física) = círculo + aura + investida + corte, sem projétil e sem splash; o selo SPECIAL! aparece', () => {
+    render(<BattleStage {...baseProps} action={{ id: 31, actor: 'me', foe: 0, kind: 'special', strike: 'melee', element: 'fogo' }} />);
+    const srcs = srcsDe();
+    expect(srcs.some(s => /fx-fogo-cast/.test(s))).toBe(true);
+    expect(srcs.some(s => /fx-fogo-aura/.test(s))).toBe(true);
+    expect(srcs.some(s => /fx-fogo-slash/.test(s))).toBe(true);
+    expect(srcs.some(s => /fx-fogo-orb|fx-fogo-impact/.test(s))).toBe(false);
+    const lunge = document.querySelector('.sm-bs-lunge') as HTMLElement;
+    expect(lunge).not.toBeNull();
+    expect(parseInt(lunge.style.getPropertyValue('--bs-delay'), 10)).toBeGreaterThan(0); // a investida espera a carga
+    expect(document.querySelector('[data-stage-special]')?.textContent).toBe('SPECIAL!');
+  });
+
+  it('R8: o selo do especial usa o rótulo recebido (copy centralizada) e aparece no inimigo também', () => {
+    render(<BattleStage {...baseProps} specialLabel="ESPECIAL!" action={{ id: 32, actor: 'foe', foe: 0, kind: 'special', element: 'agua' }} />);
+    expect(document.querySelector('[data-stage-special]')?.textContent).toBe('ESPECIAL!');
+  });
+
   it('ataque À DISTÂNCIA: o projétil (orb) do elemento atravessa a cena; sem investida', () => {
     const action: StageAction = { id: 2, actor: 'me', foe: 0, kind: 'ranged', element: 'fogo' };
     render(<BattleStage {...baseProps} action={action} />);
@@ -259,6 +287,8 @@ describe('BattleStage — o que a cena desenha', () => {
       expect(document.querySelector('.sm-bs-cast'), kind).toBeNull();
       expect(document.querySelector('.sm-bs-hit'), kind).toBeNull();
       expect(camadasDe(), kind).toEqual(['sm-bs-pop']); // só o flash do impacto
+      // O selo do especial aparece (a classe troca a animação por flash no CSS reduzido), sem círculo de cast.
+      expect(!!document.querySelector('[data-stage-special]'), kind).toBe(kind === 'special');
     }
   });
 });
