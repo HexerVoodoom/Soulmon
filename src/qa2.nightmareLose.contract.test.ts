@@ -15,7 +15,9 @@ import { resolve } from 'node:path';
 describe('pesadelo: derrota mantém a tela de derrota', () => {
   const app = readFileSync(resolve(process.cwd(), 'src/App.tsx'), 'utf-8');
   const bloco = app.slice(app.indexOf("interstitial === 'nightmare' && ("));
-  const jsx = bloco.slice(0, bloco.indexOf('/>'));
+  // o bloco agora está num `<Suspense fallback={<ScreenSkeleton … />}>` (carga sob demanda): o 1º '/>' é do
+  // esqueleto — corta no fechamento do `NightmareBattle` (primeiro '/>' depois do componente).
+  const jsx = bloco.slice(bloco.indexOf('<NightmareBattle'), bloco.indexOf('/>', bloco.indexOf('<NightmareBattle')));
 
   it('onLose NÃO é o callback que fecha', () => {
     expect(jsx).toMatch(/onLose=\{markNightmareFought\}/);
