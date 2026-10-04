@@ -403,7 +403,9 @@ async function handleCommunity({ request, env }) {
       name: apelidoPedido || sanitizarNomeDeGuilda(prev.name) || 'Anônimo',
       stage: String(body.stage || prev.stage || 'rookie').slice(0, 40),
       petName: String(body.petName || prev.petName || '').slice(0, 32),
-      unlockedStages: Array.isArray(body.unlockedStages) ? body.unlockedStages.slice(0, 16) : (prev.unlockedStages || []),
+      unlockedStages: Array.isArray(body.unlockedStages)
+        ? body.unlockedStages.filter(s => typeof s === 'string' && s.length <= 40).slice(0, 16)
+        : (prev.unlockedStages || []),
       pvpEnabled,
       publicHidden,
       attrs: body.attrs && typeof body.attrs === 'object'
@@ -516,6 +518,8 @@ async function handleCommunity({ request, env }) {
 
   // ── Tournament ────────────────────────────────────────────────────────────
   if (action === 'opponents' && method === 'GET') {
+    // Com `id` a resposta traz a ficha e a cota DESSA conta: so o dono le (senao e oraculo e-mail->conta, como o `player` era).
+    if (id) { const denied = await denyUnlessOwner(id); if (denied) return denied; }
     const keys = await listPrefix(env, 'profile:', 300);
     const me = id;
     const pool = [];
