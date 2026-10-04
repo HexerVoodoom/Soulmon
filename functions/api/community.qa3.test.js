@@ -87,3 +87,21 @@ describe('profile — texto livre PÚBLICO passa pela régua de contato (D-1)', 
     expect(p.unlockedStages).toEqual(['rookie', 'mega-harmony']);
   });
 });
+
+describe('corpo do POST', () => {
+  const env = () => ({ DIGIAPP_SAVES: fakeKV({ [`profile:${ME}`]: perfil(ME) }) });
+  const raw = (body) => onRequest({
+    request: new Request(`https://x.dev/api/community?action=profile&id=${ME}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body }),
+    env: env(),
+  });
+  it('JSON `null`/número/lista não derruba com 500 (vira corpo vazio)', async () => {
+    for (const b of ['null', '7', '[1,2]', '"x"']) {
+      const res = await raw(b);
+      expect(res.status, b).toBeLessThan(500);
+    }
+  });
+  it('corpo gigante é recusado com 413 antes de virar objeto', async () => {
+    const res = await raw(JSON.stringify({ id: ME, lixo: 'x'.repeat(200_000) }));
+    expect(res.status).toBe(413);
+  });
+});

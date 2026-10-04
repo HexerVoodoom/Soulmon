@@ -292,7 +292,14 @@ async function handleCommunity({ request, env }) {
     return handleGuild({ request, env });
   }
   const method = request.method;
-  const body = method === 'POST' ? await request.json().catch(() => ({})) : {};
+  // Corpo: teto de 64 KB (um perfil/duelo/presente tem poucas centenas de bytes) e SEMPRE um objeto —
+  // `null`, número ou lista no JSON davam TypeError em `body.id` (500).
+  let body = {};
+  if (method === 'POST') {
+    const text = await request.text().catch(() => '');
+    if (text.length > 65536) return json({ error: 'payload too large' }, 413);
+    try { const parsed = JSON.parse(text); body = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {}; } catch { body = {}; }
+  }
   const id = body.id || url.searchParams.get('id');
 
   /**
