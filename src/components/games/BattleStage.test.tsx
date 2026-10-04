@@ -14,7 +14,7 @@ const foe = (i: number, extra: Partial<StageFighter> = {}): StageFighter => ({
   key: i, sprite: 'foe.png', name: `Inimigo ${i}`, hp: 30, maxHp: 60, element: 'agua', ...extra,
 });
 
-describe('stageLayout — profundidade de Game Boy', () => {
+describe('stageLayout — profundidade de Game Boy, lutadores BEM maiores (04/10/2026)', () => {
   for (const [w, h] of [[375, 636], [412, 760], [360, 560], [800, 700]] as const) {
     it(`${w}×${h}: o seu Soulmon embaixo à ESQUERDA e maior; o inimigo em cima à DIREITA e menor`, () => {
       const l = stageLayout(w, h, 1);
@@ -23,24 +23,30 @@ describe('stageLayout — profundidade de Game Boy', () => {
       expect(f.x).toBeGreaterThan(w / 2);
       expect(l.me.y).toBeGreaterThan(f.y); // o seu mais perto (embaixo)
       expect(l.me.size).toBeGreaterThan(f.size); // e maior
-      expect(f.size / l.me.size).toBeGreaterThan(0.45);
-      expect(f.size / l.me.size).toBeLessThan(0.65);
+      expect(f.size / l.me.size).toBeGreaterThan(0.5);
+      expect(f.size / l.me.size).toBeLessThan(0.7);
     });
 
-    it(`${w}×${h}: tudo cabe na caixa, com a barra de HP dos pés DENTRO dela`, () => {
+    it(`${w}×${h}: tudo cabe na caixa, com as barras de HP e energia EM CIMA de cada lutador, dentro dela`, () => {
       for (const n of [1, 2, 3]) {
         const l = stageLayout(w, h, n);
         expect(l.foes).toHaveLength(n);
         for (const s of [l.me, ...l.foes]) {
           expect(s.x - s.size / 2).toBeGreaterThanOrEqual(-1);
           expect(s.x + s.size / 2).toBeLessThanOrEqual(w + 1);
-          expect(s.y - s.size * 0.94).toBeGreaterThanOrEqual(0); // o sprite não sai pelo topo
-          const plateBottom = s.y + l.platHalf(s) + 3 + l.plateH;
-          expect(plateBottom).toBeLessThanOrEqual(h + 1); // a barra do pé cabe
+          expect(s.y - s.size * 0.94 - l.barsH).toBeGreaterThanOrEqual(-12); // o bloco de barras (acima da cabeça) cabe no topo
+          expect(s.y + l.platHalf(s)).toBeLessThanOrEqual(h + 1); // e a plataforma, embaixo
         }
       }
     });
   }
+
+  it('o seu Soulmon usa a viewport: ≥ 55% da largura num celular (era ≤ 190 px)', () => {
+    const l = stageLayout(375, 640, 1);
+    expect(l.me.size).toBeGreaterThanOrEqual(215);
+    expect(l.me.size / 375).toBeGreaterThan(0.55);
+    expect(stageLayout(375, 640, 1).me.size).toBeGreaterThan(190);
+  });
 });
 
 describe('BattleStage — o que a cena desenha', () => {
@@ -49,14 +55,60 @@ describe('BattleStage — o que a cena desenha', () => {
     me, foes: [foe(0)], title: 'Duelo', closeLabel: 'Sair', onClose: () => {},
   };
 
-  it('tela cheia: o layer fixo, o X no canto superior DIREITO e uma barra de HP em cada pé', () => {
+  it('tela cheia: o layer fixo, o X no canto superior DIREITO e as barras de HP EM CIMA de cada lutador', () => {
     expect(BATTLE_LAYER_STYLE.position).toBe('fixed');
     render(<BattleStage {...baseProps} />);
     const x = screen.getByRole('button', { name: 'Sair' });
     expect(x.hasAttribute('data-stage-close')).toBe(true);
     expect(document.querySelector('[data-stage-plate="me"]')?.textContent).toContain('40/80');
     expect(document.querySelector('[data-stage-plate="foe"]')?.textContent).toContain('Inimigo 0');
-    expect(document.querySelectorAll('[role="progressbar"]').length).toBe(2);
+    expect(document.querySelectorAll('[role="progressbar"]').length).toBe(2); // sem energia informada: só HP
+  });
+
+  it('as barras ficam EM CIMA do personagem (coladas nele): HP e, logo abaixo, ENERGIA', () => {
+    render(<BattleStage {...baseProps} me={{ ...me, energy: 0.4 }} foes={[foe(0, { energy: 1 })]} />);
+    expect(document.querySelectorAll('[role="progressbar"]').length).toBe(4); // HP + energia de cada um
+    const plate = document.querySelector('[data-stage-plate="me"]') as HTMLElement;
+    const sprite = document.querySelector('[data-stage-sprite="me"]') as HTMLElement;
+    const spriteBox = sprite.closest('div[style*="position: absolute"]') as HTMLElement;
+    // a placa fica ACIMA do topo do sprite (top menor)
+    expect(parseFloat(plate.style.top)).toBeLessThan(parseFloat(spriteBox.style.top) + parseFloat(spriteBox.style.height) * 0.3);
+    // dentro da placa: o HP vem antes da energia
+    const barras = plate.querySelectorAll('[role="progressbar"]');
+    expect(barras[0].className).toContain('sm2-kit-meter');
+    expect(barras[1].hasAttribute('data-stage-energy')).toBe(true);
+    expect(barras[1].getAttribute('aria-valuenow')).toBe('40');
+    // energia cheia do inimigo: a barra pulsa e a placa avisa
+    const foePlate = document.querySelector('[data-stage-plate="foe"]') as HTMLElement;
+    expect(foePlate.getAttribute('data-stage-energy-full')).toBe('1');
+    expect(foePlate.querySelector('.sm-bs-energy-full')).not.toBeNull();
+    expect(plate.getAttribute('data-stage-energy-full')).toBe('0');
+  });
+
+  it('o personagem faz o BOUNCING idle durante a luta (e brilha com a energia cheia)', () => {
+    render(<BattleStage {...baseProps} me={{ ...me, energy: 1 }} />);
+    const meImg = document.querySelector('[data-stage-sprite="me"]') as HTMLElement;
+    const foeImg = document.querySelector('[data-stage-sprite="foe"]') as HTMLElement;
+    expect(meImg.className).toContain('sm-bs-bounce');
+    expect(foeImg.className).toContain('sm-bs-bounce');
+    expect(meImg.className).toContain('sm-bs-charged');
+    expect(foeImg.className).not.toContain('sm-bs-charged');
+    expect(meImg.style.getPropertyValue('--bs-bounce')).toMatch(/px$/);
+  });
+
+  it('nenhum texto explicativo na cena: só o título, os nomes e os números', () => {
+    render(<BattleStage {...baseProps} me={{ ...me, energy: 0.5 }} />);
+    const texto = (document.querySelector('[data-battle-stage]')?.textContent ?? '').replace(/\s+/g, ' ').trim();
+    expect(texto.length).toBeLessThan(80);
+    expect(texto).not.toMatch(/toque|tap|torça|cheer|energia|energy/i);
+  });
+
+  it('a barra de cheer (hud) vai no PÉ da cena, não no topo', () => {
+    render(<BattleStage {...baseProps} hud={<span data-teste-hud>x</span>} />);
+    const footer = document.querySelector('[data-stage-footer]') as HTMLElement;
+    expect(footer.contains(document.querySelector('[data-teste-hud]'))).toBe(true);
+    expect(footer.style.bottom).toContain('--sm-corner-h');
+    expect((document.querySelector('[data-stage-hud]') as HTMLElement).contains(footer)).toBe(false);
   });
 
   it('o inimigo caído some a barra e fica apagado', () => {
@@ -122,6 +174,18 @@ describe('BattleStage — o que a cena desenha', () => {
     expect(document.querySelector('.sm-bs-hit')).toBeNull();
   });
 
+  it('o feedback do golpe é CURTO: o número e um selo (ÓTIMO!, Defendeu!) sobem do alvo; vários alvos = vários números', () => {
+    render(<BattleStage {...baseProps} foes={[foe(0), foe(1)]} hit={[{ id: 1, side: 'foe', foe: 0, value: 12, big: true, tag: 'ÓTIMO!' }, { id: 2, side: 'foe', foe: 1, value: 7 }]} />);
+    const nums = [...document.querySelectorAll('[data-stage-dmg]')];
+    expect(nums.length).toBe(2);
+    expect(nums[0].textContent).toContain('ÓTIMO!');
+    expect(nums[0].textContent).toContain('12');
+    expect(nums[1].textContent).toContain('7');
+    cleanup();
+    render(<BattleStage {...baseProps} hit={{ id: 3, side: 'me', foe: 0, value: 0, tag: 'Defendeu!' }} />);
+    expect(document.querySelector('[data-stage-tag]')?.textContent).toBe('Defendeu!');
+  });
+
   it('o golpe que ACERTA faz o alvo tremer (e o número do dano sobe dele)', () => {
     const action: StageAction = { id: 5, actor: 'me', foe: 0, kind: 'ranged', element: 'fogo' };
     render(<BattleStage {...baseProps} action={action} hit={{ id: 1, side: 'foe', foe: 0, value: 12 }} />);
@@ -142,6 +206,39 @@ describe('BattleStage — o que a cena desenha', () => {
     const action: StageAction = { id: 7, actor: 'me', foe: 0, kind: 'ranged', element: 'inexistente' };
     render(<BattleStage {...baseProps} action={action} />);
     expect(srcsDe().some(s => /fx-neutro-orb/.test(s))).toBe(true);
+  });
+
+  it('o especial do INIMIGO no PvE carrega (cast + aura) e o projétil só sai depois — o tempo da esquiva', () => {
+    const action: StageAction = { id: 8, actor: 'foe', foe: 0, kind: 'special', element: 'agua', castMs: 1200, impactMs: 2200, totalMs: 2700 };
+    render(<BattleStage {...baseProps} action={action} />);
+    const orb = document.querySelector('.sm-bs-fly') as HTMLElement;
+    expect(orb.style.getPropertyValue('--bs-delay')).toBe('1200ms'); // o projétil sai depois da carga
+    expect(orb.style.getPropertyValue('--bs-dur')).toBe('1000ms'); // e voa 1 s até chegar
+    expect(srcsDe().some(s => /fx-agua-aura/.test(s))).toBe(true);
+  });
+
+  it('o ANEL do especial (PvE) aparece sobre o ALVO e o toque entrega a nota; as setas de esquiva ficam do lado do pet', async () => {
+    const onGrade = vi.fn();
+    const onDodge = vi.fn();
+    const spec = { ms: 1800, targetMs: 1270 };
+    const { rerender } = render(<BattleStage {...baseProps} ring={{ key: 1, spec, foe: 0 }} onRingGrade={onGrade} onDodge={onDodge} />);
+    expect(document.querySelector('[data-stage-ring]')).not.toBeNull();
+    expect(screen.getByRole('button', { name: 'Strike' })).toBeTruthy();
+    expect(document.querySelector('[data-stage-charging]')).toBeNull();
+    rerender(<BattleStage {...baseProps} charging dodge={{ key: 2 }} onDodge={onDodge} onRingGrade={onGrade} />);
+    expect(document.querySelector('[data-stage-charging]')).not.toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Dodge left' }));
+    expect(onDodge).toHaveBeenLastCalledWith(-1);
+    fireEvent.click(screen.getByRole('button', { name: 'Dodge right' }));
+    expect(onDodge).toHaveBeenLastCalledWith(1);
+  });
+
+  it('a esquiva faz o pet DESLIZAR (sem movimento reduzido)', () => {
+    render(<BattleStage {...baseProps} petDodge={{ id: 1, dir: 1 }} />);
+    const lunge = document.querySelector('.sm-bs-lunge') as HTMLElement;
+    expect(lunge).not.toBeNull();
+    expect(parseInt(lunge.style.getPropertyValue('--dx'), 10)).toBeGreaterThan(0);
+    expect(parseInt(lunge.style.getPropertyValue('--dy'), 10)).toBe(0);
   });
 
   it('prefers-reduced-motion: sem investida e sem projétil — só o flash no alvo', () => {
