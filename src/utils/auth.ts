@@ -162,7 +162,17 @@ export async function entrarComGoogle(): Promise<ResultadoAuth> {
   if (Capacitor.isNativePlatform()) return entrarComGoogleNativo();
   // Fora do `try` de proposito: o `catch` precisa deles para poder cair no
   // redirecionamento quando o popup e bloqueado.
-  const { auth, authMod } = await getAuth();
+  // QA1: o carregamento do SDK também pode falhar (chunk que não baixou,
+  // offline no primeiro toque). Rejeitar aqui deixava o botão preso até a rede
+  // de 2 minutos do portão; o contrato desta função é nunca lançar.
+  let carregado: Awaited<ReturnType<typeof getAuth>>;
+  try {
+    carregado = await getAuth();
+  } catch (err) {
+    console.warn('[auth] entrarComGoogle: SDK não carregou', { error: (err as { name?: string })?.name });
+    return { ok: false, erro: 'rede' };
+  }
+  const { auth, authMod } = carregado;
   const provider = new authMod.GoogleAuthProvider();
   try {
     await garantirPersistencia(auth, authMod);
