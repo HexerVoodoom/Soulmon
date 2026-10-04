@@ -129,14 +129,19 @@ export const DUEL_HP_BASE = 140;
 export const DUEL_HP_PER_STAGE = 12;
 const STAGE_POWER = { rookie: 1, champion: 2, ultimate: 3, mega: 4, ultra: 5 };
 function stagePowerOf(stage) {
-  return STAGE_POWER[String(stage || '').split('-')[0]] ?? 1;
+  // Propriedade PRÓPRIA: `stage` é texto livre do perfil, e 'constructor'/'__proto__'
+  // achavam um valor herdado do Object (não-nulo) → NaN na ficha → duelo sem golpes.
+  const key = String(stage || '').split('-')[0];
+  return Object.prototype.hasOwnProperty.call(STAGE_POWER, key) ? STAGE_POWER[key] : 1;
 }
 
 /** Ficha de luta pública: SÓ números derivados, nunca os atributos crus. */
 export function duelStats(profile) {
   const sp = stagePowerOf(profile?.stage);
   const a = profile?.attrs || {};
-  const attrSum = (+a.power || 0) + (+a.harmony || 0) + (+a.benevolence || 0);
+  // Piso 0 e só finitos: atributo negativo/infinito do perfil não derruba o ataque nem gera NaN.
+  const pos = (v) => (Number.isFinite(+v) ? Math.max(0, +v) : 0);
+  const attrSum = pos(a.power) + pos(a.harmony) + pos(a.benevolence);
   return {
     hp: DUEL_HP_BASE + sp * DUEL_HP_PER_STAGE,
     atk: Math.round((10 + sp * 1.2 + Math.min(2, attrSum / 50)) * 10) / 10,
