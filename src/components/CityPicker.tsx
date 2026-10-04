@@ -21,6 +21,7 @@
 import { useMemo, useState } from 'react';
 import { cityLabel, searchCities, type City } from '../utils/soulProfile/cities';
 import { Field, choiceStyle, sm2Hint } from './form/FormKit';
+import { InfoTip } from './ui/InfoTip';
 
 interface CityPickerProps {
   value: City | null;
@@ -91,13 +92,17 @@ export function CityPicker({ value, onChange, isPt, inputStyle, optionStyle = ch
       )}
 
       {value && (
-        <p style={{ ...sm2Hint, margin: '10px 2px 0' }}>
-          {isPt ? 'Fuso horário: ' : 'Timezone: '}
-          <strong className="sm2-num" style={{ color: 'var(--sm2-ink)', fontWeight: 500 }}>{value.timeZone}</strong>
-          {isPt
-            ? ' — é ele que faz o horário de verão da sua data de nascimento ser respeitado.'
-            : ' — this is what makes the daylight saving rules of your birth date apply.'}
-        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, margin: '6px 2px 0' }}>
+          <p style={{ ...sm2Hint, margin: 0 }}>
+            {isPt ? 'Fuso horário: ' : 'Timezone: '}
+            <strong className="sm2-num" style={{ color: 'var(--sm2-ink)', fontWeight: 500 }}>{value.timeZone}</strong>
+          </p>
+          <InfoTip language={isPt ? 'pt-BR' : 'en-US'} label={isPt ? 'Sobre o fuso horário' : 'About the timezone'} align="left" style={{ minHeight: 24 }}>
+            {isPt
+              ? 'É o fuso que faz o horário de verão da sua data de nascimento ser respeitado.'
+              : 'This is what makes the daylight saving rules of your birth date apply.'}
+          </InfoTip>
+        </div>
       )}
     </div>
   );

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Icon } from './ui/Icon';
-import { sm2Button, sm2Hint } from './form/FormKit';
+import { InfoTip } from './ui/InfoTip';
+import { sm2Button } from './form/FormKit';
 import { type Language } from '../utils/i18n';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readFlag, writeFlag } from '../utils/safeStorage';
@@ -73,15 +74,18 @@ export function InstallPrompt({ language = 'en-US' }: InstallPromptProps) {
        pelado em `primary-ink` + título 14/500; "Install" `primary` 48 e
        "Not now" `outline` — a recusa é saída, nunca `quiet`. */
     <section className="sm2-conta-card">
-      <h3 className="sm2-conta-t" style={{ display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}>
-        <Icon name="download" size={24} tone="primary" />
-        {isPt ? 'Instalar o Soulmon' : 'Install Soulmon'}
-      </h3>
-      <p style={sm2Hint}>
-        {isPt
-          ? 'Acesso rápido pela tela inicial e funcionamento offline.'
-          : 'Quick access from your home screen, and it works offline.'}
-      </p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+        <h3 className="sm2-conta-t" style={{ display: 'flex', alignItems: 'center', gap: 8, margin: 0, flex: 1, minWidth: 0 }}>
+          <Icon name="download" size={24} tone="primary" />
+          {isPt ? 'Instalar o Soulmon' : 'Install Soulmon'}
+        </h3>
+        {/* K6 (04/10/2026): o benefício mora atrás do "?". */}
+        <InfoTip language={language} label={isPt ? 'Por que instalar' : 'Why install'} align="right" style={{ minHeight: 28 }}>
+          {isPt
+            ? 'Acesso rápido pela tela inicial e funcionamento offline.'
+            : 'Quick access from your home screen, and it works offline.'}
+        </InfoTip>
+      </div>
       <button type="button" onClick={handleInstall} style={{ ...sm2Button('primary'), width: '100%' }}>
         {isPt ? 'Instalar' : 'Install'}
       </button>

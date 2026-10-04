@@ -148,7 +148,9 @@ function TelemetrySection({ language }: { language: Language }) {
           setEnabled(next);
         }}
         label={copy.toggleLabel}
-        hint={isPt
+        language={language}
+        infoLabel={isPt ? 'Sobre as métricas de uso' : 'About usage metrics'}
+        info={isPt
           ? 'Contadores de uso do app. Nunca o que você escreveu.'
           : 'Counters about app usage. Never what you wrote.'}
       />

@@ -236,7 +236,9 @@ export function RestWindowCard({
         checked={hidden}
         onToggle={() => onToggleMetrics(!hidden)}
         label={switchLabel}
-        hint={isPt
+        language={language}
+        infoLabel={isPt ? 'Sobre esconder os números' : 'About hiding the numbers'}
+        info={isPt
           ? 'Some com os números. Os sonhos continuam chegando igual.'
           : 'Hides the numbers. Dreams keep arriving all the same.'}
       />

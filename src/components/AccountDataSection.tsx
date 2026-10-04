@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import { Icon } from './ui/Icon';
+import { InfoTip } from './ui/InfoTip';
 import type { Language } from '../utils/i18n';
 import { isAuthConfigured } from '../utils/auth';
 import { readLocal } from '../utils/safeStorage';
@@ -72,9 +73,12 @@ function NotIncluded({ items, isPt }: { items: NotIncludedItem[]; isPt: boolean 
       </p>
       <ul style={{ ...stackStyle, listStyle: 'none', margin: 0, padding: 0 }}>
         {items.map(item => (
-          <li key={item.what}>
-            <p className="sm2-num" style={{ ...sm2Hint, fontWeight: 500 }}>{item.what}</p>
-            <p style={sm2Hint}>{pick(item, isPt)}</p>
+          <li key={item.what} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <p className="sm2-num" style={{ ...sm2Hint, fontWeight: 500, flex: 1, minWidth: 0 }}>{item.what}</p>
+            {/* K6 (04/10/2026): o porquê de cada item mora atrás do "?". */}
+            <InfoTip language={isPt ? 'pt-BR' : 'en-US'} label={isPt ? `Por que não está aqui: ${item.what}` : `Why it is not here: ${item.what}`} align="right" style={{ minHeight: 24 }}>
+              {pick(item, isPt)}
+            </InfoTip>
           </li>
         ))}
       </ul>
@@ -107,8 +111,12 @@ function Inventory({ plan, isPt }: { plan: DeletePlan; isPt: boolean }) {
     <div style={stackStyle}>
       {blocks.map(b => (
         <div key={b.key}>
-          <p style={{ ...sm2Text, fontWeight: 500 }}>{b.title}</p>
-          <p style={sm2Hint}>{b.hint}</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <p style={{ ...sm2Text, fontWeight: 500, flex: 1, minWidth: 0 }}>{b.title}</p>
+            <InfoTip language={isPt ? 'pt-BR' : 'en-US'} label={isPt ? `Sobre: ${b.title}` : `About: ${b.title}`} align="right" style={{ minHeight: 24 }}>
+              {b.hint}
+            </InfoTip>
+          </div>
           {plan[b.key].length > 0 ? (
             <ul className="sm2-num" style={{ ...sm2Hint, margin: '4px 0 0', paddingLeft: 18 }}>
               {plan[b.key].map(line => <li key={line}>{line}</li>)}
