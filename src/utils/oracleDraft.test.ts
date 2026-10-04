@@ -85,3 +85,46 @@ describe('oracleDraft (WP1.7)', () => {
     expect(readOracleDraft('onboarding', 40)).toBeNull();
   });
 });
+
+// QA1 (rodada 6) — o rascunho do ritual não validava a FORMA do que lê
+// (o do portão, `gateDraft`, valida). Storage é dado não confiável.
+describe('oracleDraft — forma do que vem do storage (QA1)', () => {
+  beforeEach(() => { installFakeStorage(); clearOracleDraft(); });
+  const gravaCru = (extra: Record<string, unknown>) => localStorage.setItem(
+    STORAGE_KEYS.ORACLE_DRAFT,
+    JSON.stringify({ v: ORACLE_DRAFT_VERSION, mode: 'onboarding', step: 3, savedAt: 'x', ...extra }),
+  );
+
+  it('`answers` só mantém pares texto→texto (array e valores soltos saem)', () => {
+    gravaCru({ answers: { q1: 'a', q2: 5, q3: { x: 1 } } });
+    expect(readOracleDraft('onboarding', 40)!.answers).toEqual({ q1: 'a' });
+    gravaCru({ answers: ['a', 'b'] });
+    expect(readOracleDraft('onboarding', 40)!.answers).toEqual({});
+  });
+
+  it('`testAnswers` só mantém respostas com a forma de likert/forced-choice/scenario', () => {
+    gravaCru({ testAnswers: {
+      i1: { kind: 'likert', value: 4 },
+      i2: { kind: 'likert', value: 99 },
+      i3: 5,
+      i4: { kind: 'forced-choice', choice: 'b' },
+      i5: null,
+    } });
+    expect(readOracleDraft('onboarding', 40)!.testAnswers).toEqual({
+      i1: { kind: 'likert', value: 4 },
+      i4: { kind: 'forced-choice', choice: 'b' },
+    });
+    gravaCru({ testAnswers: [1, 2, 3] });
+    expect(readOracleDraft('onboarding', 40)!.testAnswers).toEqual({});
+  });
+
+  it('`birthCity` sem nome/fuso/coordenadas finitas vira null (não chega ao mapa astral)', () => {
+    gravaCru({ birthCity: {} });
+    expect(readOracleDraft('onboarding', 40)!.birthCity).toBeNull();
+    gravaCru({ birthCity: { name: 'X', region: '', country: 'BR', latitude: 'a', longitude: 1, timeZone: 'America/Sao_Paulo' } });
+    expect(readOracleDraft('onboarding', 40)!.birthCity).toBeNull();
+    const ok = { name: 'Aracaju', region: 'SE', country: 'BR', latitude: -10.9, longitude: -37, timeZone: 'America/Maceio' };
+    gravaCru({ birthCity: ok });
+    expect(readOracleDraft('onboarding', 40)!.birthCity).toEqual(ok);
+  });
+});
