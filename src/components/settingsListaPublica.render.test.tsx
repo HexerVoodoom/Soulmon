@@ -73,7 +73,7 @@ describe('Configurações → Seus dados → lista pública do Torneio', () => {
   it('o "?" de Seus dados revela a explicação da linha', () => {
     renderSettings({ onToggleShowInPublicList: () => {} });
     expect(screen.queryByText(/você some da lista na hora/)).toBeNull();
-    fireEvent.click(document.querySelector('[data-data-help]')!);
+    fireEvent.click(screen.getByRole('button', { name: 'O que estes botões fazem' }));
     expect(screen.getByText(/você some da lista na hora/)).toBeTruthy();
   });
 

@@ -3,6 +3,7 @@ import {
   ActionRow, Disclosure, Field, GroupCard, Segment, SwitchRow, TimeField, sm2Button, sm2Hint, sm2Text,
 } from './form/FormKit';
 import { Icon } from './ui/Icon';
+import { InfoTip } from './ui/InfoTip';
 import { Language, useTranslation, getLanguageName } from '../utils/i18n';
 import { readFlag, readLocal, writeFlag, writeLocal } from '../utils/safeStorage';
 import { AccountSection } from './AccountSection';
@@ -172,10 +173,7 @@ export function SettingsPage({
   const [copied, setCopied] = useState(false);
   const [restoreInput, setRestoreInput] = useState('');
   const [restoreStatus, setRestoreStatus] = useState<'idle' | 'loading' | 'ok' | 'err'>('idle');
-  /* G5: o "?" de Seus dados revela as explicações dos dois botões — e abre o
-     grupo junto, senão o toque no "?" de um card fechado não mostraria nada. */
   const [dataOpen, setDataOpen] = useState(false);
-  const [dataHelp, setDataHelp] = useState(false);
 
   // Janela de sono automático: lida e gravada direto no localStorage; o efeito
   // do App pega a mudança no tique de minuto seguinte.
@@ -276,30 +274,38 @@ export function SettingsPage({
         open={dataOpen}
         onOpenChange={setDataOpen}
         titleAside={(
-          <button
-            type="button"
-            className="sm2-conta-help"
-            data-data-help
-            aria-expanded={dataHelp}
-            aria-label={isPt ? 'O que estes botões fazem' : 'What these buttons do'}
-            onClick={() => { const next = !dataHelp; setDataHelp(next); if (next) setDataOpen(true); }}
-          >
-            <Icon name="help" size={24} tone="inherit" />
-          </button>
+          /* G5 → I13 (02/10/2026): o "?" próprio virou o `InfoTip` padrão; as
+             explicações dos botões e da lista pública moram TODAS atrás dele. */
+          <InfoTip language={language} label={isPt ? 'O que estes botões fazem' : 'What these buttons do'} align="right" style={{ alignSelf: 'center' }}>
+            <span data-data-help-panel style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <span data-data-help-text="export">
+                {isPt
+                  ? 'Baixar meus dados: um arquivo com tudo o que o Soulmon guarda sobre você nos servidores dele.'
+                  : 'Download my data: a file with everything Soulmon keeps about you on its servers.'}
+              </span>
+              <span data-data-help-text="delete">
+                {isPt
+                  ? 'Apagar minha conta: primeiro a gente mostra exatamente o que some; você confirma depois.'
+                  : 'Delete my account: first we show exactly what goes; you confirm after that.'}
+              </span>
+              {onToggleShowInPublicList && (
+                <span data-data-help-text="public-list">
+                  {isPt
+                    ? 'Seu apelido e seu Soulmon aparecem para outros jogadores do Torneio. Desligado, você some da lista na hora e continua podendo jogar.'
+                    : 'Your nickname and Soulmon show to other Tournament players. Off, you leave the list right away and can still play.'}
+                </span>
+              )}
+            </span>
+          </InfoTip>
         )}
       >
-        <AccountDataSection language={language} showHelp={dataHelp} />
+        <AccountDataSection language={language} />
         <TelemetrySection language={language} />
         {onToggleShowInPublicList && (
           <SwitchRow
             checked={showInPublicList}
             onToggle={onToggleShowInPublicList}
             label={isPt ? 'Aparecer na lista pública do Torneio' : 'Show me on the public Tournament list'}
-            hint={dataHelp
-              ? (isPt
-                ? 'Seu apelido e seu Soulmon aparecem para outros jogadores do Torneio. Desligado, você some da lista na hora e continua podendo jogar.'
-                : 'Your nickname and Soulmon show to other Tournament players. Off, you leave the list right away and can still play.')
-              : undefined}
           />
         )}
       </Group>
@@ -319,7 +325,9 @@ export function SettingsPage({
             checked={showRedeemed}
             onToggle={onToggleShowRedeemed}
             label={isPt ? 'Mostrar a marca da volta' : 'Show the comeback mark'}
-            hint={isPt
+            language={language}
+            infoLabel={isPt ? 'Sobre a marca da volta' : 'About the comeback mark'}
+            info={isPt
               ? 'Seu Soulmon já se recuperou por inteiro. Mostrar isso é escolha sua.'
               : 'Your Soulmon has fully recovered before. Showing it is up to you.'}
           />
@@ -335,7 +343,9 @@ export function SettingsPage({
             checked={!soundMuted}
             onToggle={onToggleSound}
             label={isPt ? 'Sons' : 'Sound effects'}
-            hint={isPt
+            language={language}
+            infoLabel={isPt ? 'Sobre os sons' : 'About sound effects'}
+            info={isPt
               ? 'Confirmam o que você fez. Nunca tocam sozinhos.'
               : 'They confirm what you did. Never play on their own.'}
           />
@@ -346,7 +356,9 @@ export function SettingsPage({
               setTrilha(!trilha);
             }}
             label={isPt ? 'Trilha' : 'Music'}
-            hint={soundMuted
+            language={language}
+            infoLabel={isPt ? 'Sobre a trilha' : 'About the music'}
+            info={soundMuted
               ? (isPt ? 'Com os sons desligados, a trilha fica em silêncio.' : 'With sound off, music stays silent.')
               : (isPt ? 'Duas camadas calmas, em loop. Para sozinha quando o app sai de vista.' : 'Two calm looping layers. Stops by itself when the app is out of view.')}
           />
@@ -359,13 +371,17 @@ export function SettingsPage({
           checked={notificationsEnabled}
           onToggle={onToggleNotifications}
           label={t.settings.notifications}
-          hint={t.settings.notificationsDescription}
+          language={language}
+          infoLabel={isPt ? 'Sobre as notificações' : 'About notifications'}
+          info={t.settings.notificationsDescription}
         />
         <SwitchRow
           checked={useAI}
           onToggle={onToggleAI}
           label={isPt ? 'Conversa com IA' : 'AI chat'}
-          hint={isPt
+          language={language}
+          infoLabel={isPt ? 'Sobre a conversa com IA' : 'About the AI chat'}
+          info={isPt
             ? 'Desligado, seu Soulmon responde por palavras-chave.'
             : 'Off, it answers from keywords.'}
         />
@@ -481,7 +497,9 @@ export function SettingsPage({
             setAutoSleepEnabled(next);
           }}
           label={isPt ? 'Sono automático' : 'Auto sleep'}
-          hint={isPt
+          language={language}
+          infoLabel={isPt ? 'Sobre o sono automático' : 'About auto sleep'}
+          info={isPt
             ? 'Seu Soulmon dorme e acorda sozinho. Dormindo, não faz cocô.'
             : 'It sleeps and wakes on its own. Asleep, it never poops.'}
         />

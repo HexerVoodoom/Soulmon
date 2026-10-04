@@ -22,8 +22,9 @@ import type { RestWindow } from '../utils/restWindow';
 import { readFlag, readLocal, writeFlag, writeLocal } from '../utils/safeStorage';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { isMorning } from '../utils/restSetup';
-import { SwitchRow, TimeField, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
+import { SwitchRow, TimeField, sm2Button, sm2Text } from './form/FormKit';
 import { RitualDialog, ritualTitle } from './ritual/RitualKit';
+import { InfoTip } from './ui/InfoTip';
 
 export interface RestSetupModalProps {
   language: Language;
@@ -56,20 +57,25 @@ export function RestSetupModal({ language, now, window: restWindow, onChangeWind
 
   return (
     <RitualDialog label={title} onClose={onClose} maxWidth={360} closeLabel={isPt ? 'Fechar' : 'Close'}>
-      <p style={{ ...ritualTitle, margin: '0 36px 0 0' }}>{title}</p>
-      <p style={sm2Hint}>
-        {isPt
-          ? 'Duas coisas que você pode ajustar agora — ou depois, em Configurações.'
-          : 'Two things you can set now — or later, in Settings.'}
-      </p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4, margin: '0 36px 0 0' }}>
+        <p style={{ ...ritualTitle, margin: 0, flex: 1, minWidth: 0 }}>{title}</p>
+        {/* I13 (02/10/2026): a legenda mora atrás do "?". */}
+        <InfoTip language={language} label={isPt ? 'Sobre este ajuste' : 'About this setup'} align="right">
+          {isPt
+            ? 'Duas coisas que você pode ajustar agora — ou depois, em Configurações.'
+            : 'Two things you can set now — or later, in Settings.'}
+        </InfoTip>
+      </div>
 
       <section data-rest-setup="window" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <p style={{ ...sm2Text, fontWeight: 500, margin: 0 }}>{isPt ? 'Janela de descanso' : 'Rest window'}</p>
-        <p style={{ ...sm2Hint, margin: 0 }}>
-          {isPt
-            ? 'As horas em que você gosta de desacelerar. Pondo seu Soulmon para dormir dentro delas, ele volta de manhã com um sonho.'
-            : 'The hours you like to wind down. Put your Soulmon to bed inside them and it comes back with a dream in the morning.'}
-        </p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+          <p style={{ ...sm2Text, fontWeight: 500, margin: 0 }}>{isPt ? 'Janela de descanso' : 'Rest window'}</p>
+          <InfoTip language={language} label={isPt ? 'O que é a janela de descanso' : 'What the rest window is'} align="right" style={{ minHeight: 28 }}>
+            {isPt
+              ? 'As horas em que você gosta de desacelerar. Pondo seu Soulmon para dormir dentro delas, ele volta de manhã com um sonho.'
+              : 'The hours you like to wind down. Put your Soulmon to bed inside them and it comes back with a dream in the morning.'}
+          </InfoTip>
+        </div>
         <div className="sm2-conta-times">
           <TimeField
             ariaLabel={isPt ? 'Começa' : 'Starts'}
@@ -89,7 +95,9 @@ export function RestSetupModal({ language, now, window: restWindow, onChangeWind
           checked={autoOn}
           onToggle={() => setAuto(!autoOn)}
           label={isPt ? 'Sono automático' : 'Auto sleep'}
-          hint={isPt
+          language={language}
+          infoLabel={isPt ? 'Sobre o sono automático' : 'About auto sleep'}
+          info={isPt
             ? 'Seu Soulmon dorme e acorda sozinho nestas horas. Dormindo, não faz cocô.'
             : 'Your Soulmon sleeps and wakes on its own at these hours. Asleep, it never poops.'}
         />

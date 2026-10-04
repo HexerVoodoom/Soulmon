@@ -94,7 +94,6 @@ describe('G5 — Seus dados: o "?" revela as explicações', () => {
     expect(help.getAttribute('aria-expanded')).toBe('false');
     fireEvent.click(help);
     expect(help.getAttribute('aria-expanded')).toBe('true');
-    expect(screen.getByRole('button', { name: /^Your data/ }).getAttribute('aria-expanded')).toBe('true');
     expect(document.querySelector('[data-data-help-text="export"]')?.textContent).toMatch(/Download my data/);
     expect(document.querySelector('[data-data-help-text="delete"]')?.textContent).toMatch(/Delete my account/);
   });
@@ -113,6 +112,7 @@ describe('G3/G9 — selo de conta Full e "Restaurar compras" claro', () => {
     await waitFor(() => expect(document.querySelector('[data-full-badge]')?.textContent).toMatch('Full account'));
     expect(screen.queryByText(/Your plan/)).toBeNull();
     expect(screen.getByRole('button', { name: 'Restore purchases' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /What "Restore purchases" does/ }));
     expect(screen.getByText(/Nothing is charged/)).toBeTruthy();
   });
 
