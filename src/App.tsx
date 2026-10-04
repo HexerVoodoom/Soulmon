@@ -4541,7 +4541,7 @@ export default function App() {
    * uma recompensa que insiste vira cobrança. `markFought` é idempotente por
    * dayKey, então o StrictMode (que roda o updater 2×) não duplica nada.
    */
-  const closeNightmare = useCallback(() => {
+  const markNightmareFought = useCallback(() => {
     // A âncora sai de DENTRO do updater: `prev.rest` é o estado corrente, e
     // carimbar com uma âncora capturada por fechamento seria gravar um nome de
     // dia que o portão (`hasPendingNightmare`, que lê `rest.playerDayTz`)
@@ -4553,8 +4553,11 @@ export default function App() {
         nightmareDayKey(new Date(), prev.rest?.playerDayTz),
       ),
     }));
-    setNightmareOpen(false);
   }, [setGameState]);
+  const closeNightmare = useCallback(() => {
+    markNightmareFought();
+    setNightmareOpen(false);
+  }, [markNightmareFought]);
 
   /**
    * Vitória: energia (teto do estágio), meio coração no máximo (teto de
@@ -7142,7 +7145,11 @@ export default function App() {
           petElement={gameState.soulmonMeta?.dominantElement}
           language={language}
           onWin={handleNightmareWin}
-          onLose={closeNightmare}
+          /* Derrota SÓ grava a noite como lutada: fechar aqui desmontava o modal
+             no mesmo instante e a tela "O sonho passou — e você acorda bem" (a
+             que diz que perder não custou nada) nunca aparecia. Quem fecha é o
+             "Bom dia" (`onClose`). */
+          onLose={markNightmareFought}
           onClose={closeNightmare}
         />
       )}
