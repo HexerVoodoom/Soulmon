@@ -7,10 +7,10 @@ import { DUEL_TAPS_FULL } from '../../functions/api/_duel.js';
 import { PLAYER_STATS } from './dungeon';
 
 describe('torcida (PvE) — toques enchem o gauge, o pet gasta no especial', () => {
-  it('o gauge do PvE segue em 8; o do duelo/Arena é o de `_duel.js` (16) — e a torcida por timing está desligada', () => {
+  it('LEGADO: o gauge do PvE antigo segue em 8 e o do duelo/Arena antigo em 16 — a barra de cheer nova (24) é de `energia.ts`; a torcida por timing está desligada', () => {
     expect(TORCIDA_PVE_TAPS_FULL).toBe(8);
-    expect(TORCIDA_TAPS_FULL).toBe(DUEL_TAPS_FULL);
-    expect(DUEL_TAPS_FULL).toBe(16);
+    expect(TORCIDA_TAPS_FULL).toBe(16);
+    expect(DUEL_TAPS_FULL).toBe(24); // a barra de cheer de agora (energia) é mais lenta que o gauge antigo
     expect(TORCIDA_TAPS_FULL).toBeGreaterThan(TORCIDA_PVE_TAPS_FULL);
     expect(TIMING_CHEER_ENABLED).toBe(false);
   });

@@ -1,4 +1,11 @@
 /**
+ * ⚠️ LEGADO (04/10/2026, REGISTRO §20.10): o gauge de torcida que virava UM golpe especial foi
+ * SUBSTITUÍDO pela ENERGIA (`utils/energia.ts`): a "barra de cheer" enche devagar (`CHEER_TAPS_FULL` = 24)
+ * e despeja energia no pet; energia cheia = especial. Este arquivo fica para o caminho antigo
+ * (`ARENA_ENERGY_ENABLED = false` em `utils/arena.ts`) e para as constantes que os testes de
+ * calibração antigos usam. Os números abaixo (`TORCIDA_TAPS_FULL` = 16, `TORCIDA_TAPS_CAP` = 20) são os
+ * do gauge antigo, que deixaram de acompanhar o servidor.
+ *
  * TORCIDA — o pet golpeia sozinho, o dono TORCE tocando na tela.
  *
  * Decisão do dono (02/10/2026): torcer é TOCAR EM QUALQUER LUGAR da tela de
@@ -21,7 +28,7 @@
  * `utils/arena.ts` (`arenaTorcidaTurn`): ele tem a curva e a carga de especial
  * próprias, espelhadas em `simulateArenaRun` (H14, 02/10/2026).
  */
-import { DUEL_TAPS_FULL, DUEL_TAPS_CAP, TIMING_CHEER_ENABLED } from '../../functions/api/_duel.js';
+import { TIMING_CHEER_ENABLED } from '../../functions/api/_duel.js';
 
 export { TIMING_CHEER_ENABLED };
 
@@ -29,7 +36,7 @@ export { TIMING_CHEER_ENABLED };
  * Toques que enchem o gauge no DUELO (Torneio fantasma e Duelo da Arena): o
  * número de `_duel.js` (16 desde 02/10/2026, rodada 5 I10 — eram 8).
  */
-export const TORCIDA_TAPS_FULL = DUEL_TAPS_FULL;
+export const TORCIDA_TAPS_FULL = 16;
 
 /**
  * Toques que enchem o gauge no PvE (Pesadelo e Masmorra): continuam 8. A cena
@@ -40,7 +47,7 @@ export const TORCIDA_TAPS_FULL = DUEL_TAPS_FULL;
 export const TORCIDA_PVE_TAPS_FULL = 8;
 
 /** Toques que contam por janela/turno (o resto é descartado: toque ilimitado não rende mais). */
-export const TORCIDA_TAPS_CAP = DUEL_TAPS_CAP;
+export const TORCIDA_TAPS_CAP = 20;
 
 /**
  * Fração do `dmg` do estágio que é o golpe-BASE do pet (sem torcida). 0,5 mantém

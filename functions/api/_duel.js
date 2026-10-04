@@ -17,28 +17,47 @@
  *    (`forfeitPending`, `community.js`). Não existe como perder de graça;
  *  - a torcida só SOMA: sem torcer, o pet ataca normal (×1). Mandar torcida
  *    forjada rende no máximo o que a torcida cheia já rende — esse é o teto do
- *    que um cliente editado ganha (`DUEL_TAPS_CAP` por janela, 3 janelas, no máximo 3 especiais).
+ *    que um cliente editado ganha (`DUEL_TAPS_CAP` por janela; ver a ENERGIA abaixo, 04/10/2026).
  *
- * ── TORCIDA POR TOQUES (decisão do dono, 02/10/2026) ──────────────────────
+ * ── TORCIDA POR TOQUES (decisão do dono, 02/10/2026; refeita pela ENERGIA em 04/10) ──────────────────────
  * Torcer é TOCAR EM QUALQUER LUGAR da tela durante a luta. Cada toque enche um
  * GAUGE de `DUEL_TAPS_FULL` toques; quando o pet chega num golpe de torcida
  * (`DUEL_CHEER_STRIKES`) com o gauge cheio, ele GASTA o gauge num golpe
  * ESPECIAL (×`DUEL_SPECIAL_MULT`). Sem gauge cheio o golpe é o normal. O que o
  * cliente manda é quantos toques deu em cada JANELA (o tempo até cada golpe de
  * torcida); o servidor higieniza (`sanitizeTaps`: inteiros em [0, CAP]) e
- * recalcula tudo (`specialSlots`) — toque ilimitado não rende mais que o teto.
+ * recalcula tudo (`cheerDischarges`) — toque ilimitado não rende mais que o teto.
  * A mecânica ANTIGA (timing do anel, `cheerMultiplier`) segue no arquivo atrás
  * de `TIMING_CHEER_ENABLED = false`, sem nenhum caminho de UI: reaproveitar em
  * outro lugar depois.
  *
+ * ── ENERGIA (decisão do dono, 04/10/2026 — REGISTRO §20.10) ────────────────
+ * Cada lutador tem UMA barra de ENERGIA (0..`DUEL_ENERGY_MAX`) que enche por
+ * três fatores: cada ataque DADO (`DUEL_ENERGY_DEALT`), cada ataque SOFRIDO
+ * (`DUEL_ENERGY_TAKEN`) e, só para o dono da tela, o CHEER: a "barra de cheer" é
+ * o medidor de TOQUES (`DUEL_TAPS_FULL`) que, ao encher, DESPEJA
+ * `DUEL_ENERGY_CHEER` de energia no pet e zera (o excedente fica). Energia cheia =
+ * o lutador solta o ESPECIAL no golpe seguinte (×`DUEL_SPECIAL_MULT`) e gasta a
+ * barra. No PvP NÃO há mecânica de uso nem de defesa: o especial sai DIRETO.
+ * O cliente manda quantos toques deu em cada JANELA (uma por golpe do dono, até
+ * `DUEL_CHEER_WINDOWS`); o servidor higieniza (`sanitizeTaps`: inteiros em
+ * [0, `DUEL_TAPS_CAP`]) e recalcula TUDO — toque forjado ou ilimitado rende no
+ * máximo `DUEL_CHEER_WINDOWS × DUEL_TAPS_CAP` toques no jogo todo.
+ *
+ * ── DURAÇÃO (04/10/2026) ───────────────────────────────────────────────────
+ * Até 26 golpes (`DUEL_MAX_TURNS`), a ~1,6 s cada na tela (`DUEL_STEP_MS`):
+ * ~35–42 s. O servidor segue com o teto de `DUEL_PENDING_MS` (5 min, forfeit).
+ *
  * Perder não custa coração nem nada do pet (mesma regra da Masmorra/Arena).
  */
 
-export const DUEL_MAX_TURNS = 12;
+export const DUEL_MAX_TURNS = 26;
 /** Quanto tempo um duelo aberto vale: passou disso, o `match` conta como desistência. */
 export const DUEL_PENDING_MS = 5 * 60 * 1000;
-/** Os turnos do DONO DA TELA em que ele pode torcer (índice do golpe dele: 0, 1, 2…). */
+/** (Legado do timing, desligado) Os golpes do dono em que a torcida por TIMING valia. */
 export const DUEL_CHEER_STRIKES = [1, 3, 5];
+/** Janelas de toque: UMA por golpe do dono da tela (os dois alternam, então metade dos turnos). */
+export const DUEL_CHEER_WINDOWS = DUEL_MAX_TURNS / 2;
 export const DUEL_PERFECT_CHEER = 0.92;
 export const DUEL_CHEER_GAIN = 0.25;  // q = 1 → ×1,25
 export const DUEL_PERFECT_MULT = 1.35; // q ≥ 0,92
@@ -52,53 +71,62 @@ export const DUEL_PERFECT_MULT = 1.35; // q ≥ 0,92
 export const TIMING_CHEER_ENABLED = false;
 
 /**
- * Toques que enchem o gauge de torcida. 16 desde 02/10/2026 (rodada 5, I10): eram
- * 8 e a luta passava rápido demais. A 3 toques/s (ritmo normal) são ~6 s de toque
- * para encher, e a luta animada dura ~17 s (`STAGE_STEP_MS` em `utils/combatFx`):
- * o primeiro especial sai por volta dos 10 s. Vale também para o Duelo da Arena
- * (`utils/torcida.ts` importa daqui); o PvE (Pesadelo/Masmorra) ficou em 8
- * (`TORCIDA_PVE_TAPS_FULL`) até a cena nova chegar neles.
+ * Toques que enchem a barra de CHEER. 24 desde 04/10/2026 (eram 16, e 8 antes): a
+ * barra deve DEMORAR a carregar. A 3 toques/s são ~8 s de toque para despejar a
+ * energia no pet; a luta dura ~40 s.
  */
-export const DUEL_TAPS_FULL = 16;
+export const DUEL_TAPS_FULL = 24;
 /**
- * Teto de toques contados por janela (≥ FULL: o excedente não vale nada). 20 =
- * ~6,7 toques/s numa janela de 3 s: acima do que um dedo faz e abaixo do
- * auto-clique. O TETO DE GANHO não mudou: 3 janelas, no máximo 3 especiais
- * (CAP ≥ FULL ⇒ uma janela sozinha já enche o gauge; forjar não passa disso).
+ * Teto de toques contados por janela (uma janela = um golpe do dono ≈ 3,2 s na tela).
+ * 16 = ~5 toques/s: acima do que um dedo faz de forma sustentada e abaixo do auto-clique.
+ * O TETO DE GANHO do jogo todo é `DUEL_CHEER_WINDOWS × DUEL_TAPS_CAP` toques (208):
+ * forjar não passa disso.
  */
-export const DUEL_TAPS_CAP = 20;
+export const DUEL_TAPS_CAP = 16;
+/** A barra de energia de cada lutador. */
+export const DUEL_ENERGY_MAX = 100;
+/** Energia por ataque DADO. */
+export const DUEL_ENERGY_DEALT = 9;
+/** Energia por ataque SOFRIDO. */
+export const DUEL_ENERGY_TAKEN = 7;
+/** Energia que uma barra de cheer cheia despeja no pet (maior que um ataque dado/sofrido). */
+export const DUEL_ENERGY_CHEER = 36;
 /**
- * Força do golpe ESPECIAL. É o mesmo ×1,35 da torcida perfeita antiga: com o
- * gauge cheio nas 3 janelas o duelo rende exatamente o que o timing perfeito
- * rendia (mesmo estágio ~50% → ~80%), e sem torcer é o golpe base de sempre.
+ * Força do golpe ESPECIAL (energia cheia). No PvP vale para os DOIS lutadores: sem
+ * torcer a luta segue ~50% no mesmo estágio; o cheer só adianta o especial do dono.
  */
-export const DUEL_SPECIAL_MULT = DUEL_PERFECT_MULT;
+export const DUEL_SPECIAL_MULT = 2;
+/** Meia-largura do sorteio do dano por golpe: `1 ± DUEL_DMG_SPREAD` (era ±0,5 com 12 golpes; mais golpes pedem mais variância para a mesma incerteza). */
+export const DUEL_DMG_SPREAD = 0.74;
 
-/** Higieniza os toques vindos da rede: 3 inteiros em [0, CAP], o resto vira 0. */
+/** Higieniza os toques vindos da rede: `DUEL_CHEER_WINDOWS` inteiros em [0, CAP], o resto vira 0. */
 export function sanitizeTaps(raw) {
   const arr = Array.isArray(raw) ? raw : [];
-  return DUEL_CHEER_STRIKES.map((_, i) => {
+  return Array.from({ length: DUEL_CHEER_WINDOWS }, (_, i) => {
     const n = Math.floor(Number(arr[i]));
     return Number.isFinite(n) ? Math.min(DUEL_TAPS_CAP, Math.max(0, n)) : 0;
   });
 }
 
 /**
- * Em quais golpes de torcida o pet solta o ESPECIAL. O gauge acumula entre as
- * janelas (limitado a FULL) e zera ao ser gasto — a MESMA conta que a tela faz
- * toque a toque.
+ * Em quais janelas a barra de CHEER despeja energia no pet (CAP < FULL: no máximo uma
+ * por janela). O medidor acumula entre as janelas e o excedente fica — a MESMA conta
+ * que a tela faz toque a toque.
  */
-export function specialSlots(taps) {
+export function cheerDischarges(taps) {
   const t = sanitizeTaps(taps);
-  let g = 0;
+  let m = 0;
   return t.map((n) => {
-    g = Math.min(DUEL_TAPS_FULL, g + n);
-    if (g < DUEL_TAPS_FULL) return false;
-    g = 0;
+    m += n;
+    if (m < DUEL_TAPS_FULL) return false;
+    m -= DUEL_TAPS_FULL;
     return true;
   });
 }
 
+/** Vida do duelo: o dobro da de antes (70 + 6/estágio) — a luta passou de 12 para 26 golpes (04/10/2026). */
+export const DUEL_HP_BASE = 140;
+export const DUEL_HP_PER_STAGE = 12;
 const STAGE_POWER = { rookie: 1, champion: 2, ultimate: 3, mega: 4, ultra: 5 };
 function stagePowerOf(stage) {
   return STAGE_POWER[String(stage || '').split('-')[0]] ?? 1;
@@ -110,7 +138,7 @@ export function duelStats(profile) {
   const a = profile?.attrs || {};
   const attrSum = (+a.power || 0) + (+a.harmony || 0) + (+a.benevolence || 0);
   return {
-    hp: 70 + sp * 6,
+    hp: DUEL_HP_BASE + sp * DUEL_HP_PER_STAGE,
     atk: Math.round((10 + sp * 1.2 + Math.min(2, attrSum / 50)) * 10) / 10,
   };
 }
@@ -151,35 +179,55 @@ export function cheerMultiplier(q) {
 }
 
 /**
- * A luta inteira, PURA e determinística. `cheers[i]` vale para o golpe
- * `DUEL_CHEER_STRIKES[i]` do jogador "me".
- * Devolve os eventos (para animar) e o vencedor. Sem nocaute em
- * `DUEL_MAX_TURNS`, vence quem tiver a MAIOR fração de vida.
+ * A luta inteira, PURA e determinística. `cheers[i]` = toques da janela `i` (o
+ * i-ésimo golpe do jogador "me"). Devolve os eventos (para animar) e o vencedor. Sem
+ * nocaute em `DUEL_MAX_TURNS`, vence quem tiver a MAIOR fração de vida.
+ *
+ * Cada evento leva a ENERGIA dos dois ANTES (`preMe`, `preOpp`) e DEPOIS do golpe (`energyMe`,
+ * `energyOpp`), o medidor de cheer (`meter`, já depois do despejo) e se o golpe foi o ESPECIAL (`special`).
  */
 export function simulateDuel({ me, opp, seed, cheers }) {
   const rng = mulberry32(seed);
   // `cheers` = toques por janela (padrão) ou q de timing (só com a flag ligada).
   const q = TIMING_CHEER_ENABLED ? sanitizeCheers(cheers) : null;
-  const special = TIMING_CHEER_ENABLED ? null : specialSlots(cheers);
+  const taps = TIMING_CHEER_ENABLED ? null : sanitizeTaps(cheers);
   let hpMe = me.hp, hpOpp = opp.hp;
   let turn = me.atk > opp.atk ? 'me' : me.atk < opp.atk ? 'opp' : (rng() < 0.5 ? 'me' : 'opp');
   let myStrike = 0;
+  let enMe = 0, enOpp = 0, meter = 0;
   const events = [];
   for (let t = 0; t < DUEL_MAX_TURNS && hpMe > 0 && hpOpp > 0; t++) {
     const atk = turn === 'me' ? me.atk : opp.atk;
-    let mult = 0.5 + rng();
+    let mult = 1 - DUEL_DMG_SPREAD + 2 * DUEL_DMG_SPREAD * rng();
     let cheer = null;
+    let special = false;
     if (turn === 'me') {
-      const slot = DUEL_CHEER_STRIKES.indexOf(myStrike);
-      if (slot >= 0) {
-        if (q) { cheer = q[slot]; mult *= cheerMultiplier(cheer); }
-        else { const sp = !!special?.[slot]; cheer = sp ? 1 : 0; if (sp) mult *= DUEL_SPECIAL_MULT; }
+      if (q) {
+        const slot = DUEL_CHEER_STRIKES.indexOf(myStrike);
+        if (slot >= 0) { cheer = q[slot]; mult *= cheerMultiplier(cheer); }
+      } else {
+        // 1) o cheer: os toques da janela enchem o medidor; cheio, despeja energia no pet.
+        meter += (taps ? taps[myStrike] : 0) ?? 0;
+        if (meter >= DUEL_TAPS_FULL) { meter -= DUEL_TAPS_FULL; enMe = Math.min(DUEL_ENERGY_MAX, enMe + DUEL_ENERGY_CHEER); }
+        // 2) energia cheia: o golpe é o ESPECIAL e gasta a barra.
+        if (enMe >= DUEL_ENERGY_MAX) { special = true; enMe -= DUEL_ENERGY_MAX; mult *= DUEL_SPECIAL_MULT; }
+        cheer = special ? 1 : 0;
       }
       myStrike++;
+    } else if (!q && enOpp >= DUEL_ENERGY_MAX) {
+      special = true; enOpp -= DUEL_ENERGY_MAX; mult *= DUEL_SPECIAL_MULT;
     }
+    // A energia ANTES do golpe (já com o cheer despejado e ainda com a barra cheia que dispara o especial): é o que a tela mostra no começo da ação.
+    const preMe = special && turn === 'me' ? enMe + DUEL_ENERGY_MAX : enMe;
+    const preOpp = special && turn === 'opp' ? enOpp + DUEL_ENERGY_MAX : enOpp;
     const dmg = Math.max(1, Math.round(atk * mult));
     if (turn === 'me') hpOpp = Math.max(0, hpOpp - dmg); else hpMe = Math.max(0, hpMe - dmg);
-    events.push({ actor: turn, dmg, cheer, hpMe, hpOpp });
+    if (!q) {
+      // 3) dado e sofrido enchem as duas barras.
+      if (turn === 'me') { enMe = Math.min(DUEL_ENERGY_MAX, enMe + DUEL_ENERGY_DEALT); enOpp = Math.min(DUEL_ENERGY_MAX, enOpp + DUEL_ENERGY_TAKEN); }
+      else { enOpp = Math.min(DUEL_ENERGY_MAX, enOpp + DUEL_ENERGY_DEALT); enMe = Math.min(DUEL_ENERGY_MAX, enMe + DUEL_ENERGY_TAKEN); }
+    }
+    events.push({ actor: turn, dmg, cheer, special, hpMe, hpOpp, preMe, preOpp, energyMe: enMe, energyOpp: enOpp, meter });
     turn = turn === 'me' ? 'opp' : 'me';
   }
   const won = hpOpp <= 0 ? true : hpMe <= 0 ? false : hpMe / me.hp >= hpOpp / opp.hp;

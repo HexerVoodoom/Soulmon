@@ -8,7 +8,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { onRequest } from './community.js';
-import { DUEL_PENDING_MS, DUEL_TAPS_FULL, DUEL_TAPS_CAP } from './_duel.js';
+import { DUEL_PENDING_MS, DUEL_TAPS_FULL, DUEL_TAPS_CAP, DUEL_CHEER_WINDOWS } from './_duel.js';
 
 const ME = 'a'.repeat(32);
 const OPP = 'b'.repeat(32);
@@ -113,7 +113,7 @@ describe('duelo — desistir é perder', () => {
     const rec = JSON.parse(env.DIGIAPP_SAVES.store.get(k));
     rec.pending.at = Date.now() - DUEL_PENDING_MS - 1000;
     env.DIGIAPP_SAVES.store.set(k, JSON.stringify(rec));
-    const r = await call(env, 'match', { opponentId: PID[OPP], cheers: [DUEL_TAPS_FULL, DUEL_TAPS_FULL, DUEL_TAPS_FULL] });
+    const r = await call(env, 'match', { opponentId: PID[OPP], cheers: Array(DUEL_CHEER_WINDOWS).fill(DUEL_TAPS_CAP) });
     expect(r.json.forfeit).toBe(true);
     expect(r.json.won).toBe(false);
   });
@@ -130,7 +130,7 @@ describe('duelo — resolver usa a semente do servidor e gasta uma partida só',
   it('duelStart + match = UMA partida gasta, e o pending some', async () => {
     const env = mkEnv();
     await call(env, 'duelStart', { opponentId: PID[OPP] });
-    const r = await call(env, 'match', { opponentId: PID[OPP], cheers: [DUEL_TAPS_FULL, DUEL_TAPS_FULL, DUEL_TAPS_FULL] });
+    const r = await call(env, 'match', { opponentId: PID[OPP], cheers: Array(DUEL_CHEER_WINDOWS).fill(DUEL_TAPS_CAP) });
     expect(r.status).toBe(200);
     expect(r.json.forfeit).toBeUndefined();
     expect(rank(env).matchesToday).toBe(1);
@@ -154,7 +154,7 @@ describe('duelo — resolver usa a semente do servidor e gasta uma partida só',
     expect(ra.json.duel.events).toEqual(rb.json.duel.events);
   });
 
-  it('toque forjado não rende mais que o teto: 999 por janela resolve IGUAL ao teto por janela (gauge de 16)', async () => {
+  it('toque forjado não rende mais que o teto: 999 por janela resolve IGUAL ao teto por janela (16 por janela, 24 enchem o medidor)', async () => {
     const a = mkEnv(); const b = mkEnv();
     await call(a, 'duelStart', { opponentId: PID[OPP] });
     await call(b, 'duelStart', { opponentId: PID[OPP] });
@@ -164,15 +164,18 @@ describe('duelo — resolver usa a semente do servidor e gasta uma partida só',
       env.DIGIAPP_SAVES.store.set(k, JSON.stringify(rec));
     };
     setSeed(a); setSeed(b);
-    const ra = await call(a, 'match', { opponentId: PID[OPP], cheers: [999, 999, 999] });
-    const rb = await call(b, 'match', { opponentId: PID[OPP], cheers: [DUEL_TAPS_CAP, DUEL_TAPS_CAP, DUEL_TAPS_CAP] });
+    const ra = await call(a, 'match', { opponentId: PID[OPP], cheers: Array(60).fill(999) }); // janelas a mais também não valem
+    const rb = await call(b, 'match', { opponentId: PID[OPP], cheers: Array(DUEL_CHEER_WINDOWS).fill(DUEL_TAPS_CAP) });
     expect(ra.json.duel.events).toEqual(rb.json.duel.events);
-    // E um gauge que não encheu (15 toques numa janela só) não vira especial nenhum.
-    const c = mkEnv();
+    // E uma barra de cheer que não encheu (menos de ${DUEL_TAPS_FULL} toques no total) NÃO despeja energia: igual a não torcer.
+    const c = mkEnv(); const d = mkEnv();
     await call(c, 'duelStart', { opponentId: PID[OPP] });
-    setSeed(c);
+    await call(d, 'duelStart', { opponentId: PID[OPP] });
+    setSeed(c); setSeed(d);
     const rc = await call(c, 'match', { opponentId: PID[OPP], cheers: [DUEL_TAPS_FULL - 1, 0, 0] });
-    expect(rc.json.duel.events.some(e => e.cheer === 1)).toBe(false);
+    const rd = await call(d, 'match', { opponentId: PID[OPP], cheers: [] });
+    const semMedidor = evs => evs.map(({ meter, ...e }) => e); // o medidor parcial aparece no evento; a luta (golpes, vida, energia) é a mesma
+    expect(semMedidor(rc.json.duel.events)).toEqual(semMedidor(rd.json.duel.events));
   });
 
   it('a cota diária vale para o duelo: a 6ª abertura é recusada', async () => {

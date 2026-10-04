@@ -87,7 +87,14 @@ export function totalMs(kind: StageActionKind, reduced: boolean): number {
  * e o especial (gauge de 16 toques a ~3 toques/s) sai por volta dos 10 s tocando.
  * Calibração e taxa de vitória: `REGISTRO-DE-DECISOES.md` §20.9.
  */
-export const DUEL_STEP_MS = 1500;
+export const DUEL_STEP_MS = 1700;
+
+/**
+ * Passo da luta de PvE (Pesadelo, Masmorra, Duelo da Arena): tempo entre o começo de um golpe e o do
+ * seguinte, de cada lado. A ida-e-volta dura ~3,4 s; com a vida de PvE × `PVE_HP_SCALE` (utils/energia.ts)
+ * cada inimigo leva ~20–30 s.
+ */
+export const PVE_STEP_MS = 1700;
 
 /**
  * Duelo da Arena: do começo do turno até o golpe do pet CHEGAR no alvo (era 1500 ms) e
