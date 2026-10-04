@@ -178,16 +178,19 @@ function SkillRow({ skill, isPt }: { skill: StageSkill; isPt: boolean }) {
         tone={especial ? 'gold' : 'primary'}
       />
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ ...sm2Text, fontWeight: 500, margin: 0 }}>
-          {nome}
-          {typeof skill.poder === 'number' && (
-            <span className="sm2-num" style={{ ...sm2Hint, marginLeft: 8 }}>
-              {isPt ? `poder ${skill.poder}` : `power ${skill.poder}`}
-            </span>
-          )}
-        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <p style={{ ...sm2Text, fontWeight: 500, margin: 0, flex: 1, minWidth: 0 }}>
+            {nome}
+            {typeof skill.poder === 'number' && (
+              <span className="sm2-num" style={{ ...sm2Hint, marginLeft: 8 }}>
+                {isPt ? `poder ${skill.poder}` : `power ${skill.poder}`}
+              </span>
+            )}
+          </p>
+          {/* K6 (04/10/2026): a descrição da habilidade mora atrás do "?". */}
+          <InfoTip language={isPt ? 'pt-BR' : 'en-US'} label={isPt ? `Sobre a habilidade: ${nome}` : `About the skill: ${nome}`} align="right" style={{ minHeight: 24 }}>{desc}</InfoTip>
+        </div>
         <p style={{ ...sm2Hint, marginTop: 2 }}>{`${tipo} · ${custo}`}</p>
-        <p style={{ ...sm2Hint, marginTop: 4 }}>{desc}</p>
       </div>
     </div>
   );

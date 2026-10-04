@@ -55,6 +55,7 @@ import { RitualDialog } from './ritual/RitualKit';
    `navigator.onLine` aqui seria a cópia do footgun 9 na sua forma mais boba. */
 import { useIsOnline } from './ui/OfflineSeal';
 import { Icon } from './ui/Icon';
+import { InfoTip } from './ui/InfoTip';
 import { playVisorTune } from '../utils/sounds';
 import { sm2Button, sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 
@@ -790,11 +791,11 @@ export function EvolutionPath({
               A ordem é deliberada — a PERMANÊNCIA vem primeiro, porque é o
               caminho que não pede nenhum ato de descuido. */}
           {isUltraMode && (
-            <p style={{ ...sm2Hint, marginTop: 2 }}>
+            <InfoTip language={language} label={isPt ? 'Como chegar à forma Ultra' : 'How to reach the Ultra form'} align="left" style={{ minHeight: 24, justifyContent: 'flex-start' }}>
               {isPt
                 ? `Dois caminhos chegam aqui: ${ULTRA_PATIENCE_DAYS} dias completos como mega, ou conhecer os três galhos. Nenhum é melhor — e nenhum pede que você desça.`
                 : `Two paths reach this form: ${ULTRA_PATIENCE_DAYS} complete days as a mega, or knowing all three branches. Neither is better — and neither asks you to go back down.`}
-            </p>
+            </InfoTip>
           )}
 
           {isPreviousStage && (

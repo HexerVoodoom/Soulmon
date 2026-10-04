@@ -36,6 +36,7 @@ import { findAnyById } from '../utils/travessias';
 import { ADVENTURE_ART } from '../utils/adventureArt';
 import { sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 import { MiniGlass } from './ui/MiniGlass';
+import { InfoTip } from './ui/InfoTip';
 import { dayKeyLabel } from '../utils/dayKeyLabel';
 import type { Language } from '../utils/i18n';
 
@@ -64,21 +65,24 @@ export function AdventureDiary({ entries, language }: AdventureDiaryProps) {
 
   return (
     <section style={card} aria-labelledby="sm2-diario-title">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 10 }}>
       <h2
         id="sm2-diario-title"
         style={{
           fontFamily: 'var(--sm2-font-display)', fontSize: 'var(--sm2-text-md)',
           fontWeight: 600, lineHeight: 'var(--sm2-leading-title)',
-          color: 'var(--sm2-ink)', margin: '0 0 4px',
+          color: 'var(--sm2-ink)', margin: 0, flex: 1, minWidth: 0,
         }}
       >
         {isPt ? 'Diário de aventuras' : 'Adventure diary'}
       </h2>
-      <p style={{ ...sm2Hint, marginBottom: 14 }}>
+      {/* K6 (04/10/2026): a legenda do diário mora atrás do "?". */}
+      <InfoTip language={language} label={isPt ? 'Sobre o diário de aventuras' : 'About the adventure diary'} align="right" style={{ minHeight: 24 }}>
         {isPt
           ? 'O que ele trouxe de cada dia lá fora.'
           : 'What it brought back from each day out there.'}
-      </p>
+      </InfoTip>
+      </div>
 
       {linhas.length === 0 ? (
         // O vazio é uma promessa, não uma falta: nada de "0 de 24".

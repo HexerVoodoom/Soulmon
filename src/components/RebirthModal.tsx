@@ -26,6 +26,7 @@
 import { useMemo, useState } from 'react';
 import { ModalSheet, sm2Button, sm2Hint, sm2Label, sm2Text, Field } from './form/FormKit';
 import { Icon } from './ui/Icon';
+import { InfoTip } from './ui/InfoTip';
 import { OVO_RENASCIMENTO } from '../utils/visorScenes';
 import {
   rebirthEscolaOptions, rebirthElementOptions, sanitizeCriatura,
@@ -164,17 +165,19 @@ export function RebirthModal({ language, onConfirm, onClose }: RebirthModalProps
           : 'Your creature reached the top. Rebirth returns them to an egg: back to Rookie, attribute points reset to zero — in exchange they are born deeper, with more points at every stage, and this time the two of you choose who they are.'}
       </p>
 
-      <p style={sm2Hint}>
-        {isPt
-          ? 'Nada mais é perdido: Bits, Honra, Créditos, decoração, cenários, sonhos, hábitos, tarefas, dias completos e as formas que você já viu continuam exatamente como estão.'
-          : 'Nothing else is lost: Bits, Honor, Credits, decorations, scenes, dreams, habits, tasks, complete days and the forms you already unlocked all stay exactly as they are.'}
-      </p>
-
-      <p style={{ ...sm2Hint, fontWeight: 500 }}>
-        {isPt
-          ? 'Acontece UMA vez por criatura, e não tem como desfazer.'
-          : 'It happens ONCE per creature, and there is no undo.'}
-      </p>
+      {/* K6 (04/10/2026): o aviso de irreversibilidade FICA (honestidade); o "o que se mantém" mora no "?". */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+        <p style={{ ...sm2Hint, fontWeight: 500, flex: 1, minWidth: 0 }}>
+          {isPt
+            ? 'Acontece UMA vez por criatura, e não tem como desfazer.'
+            : 'It happens ONCE per creature, and there is no undo.'}
+        </p>
+        <InfoTip language={language} label={isPt ? 'O que se mantém no Renascimento' : 'What Rebirth keeps'} align="right" style={{ minHeight: 24 }}>
+          {isPt
+            ? 'Nada mais é perdido: Bits, Honra, Créditos, decoração, cenários, sonhos, hábitos, tarefas, dias completos e as formas que você já viu continuam exatamente como estão.'
+            : 'Nothing else is lost: Bits, Honor, Credits, decorations, scenes, dreams, habits, tasks, complete days and the forms you already unlocked all stay exactly as they are.'}
+        </InfoTip>
+      </div>
 
       <div>
         <label style={sm2Label} htmlFor="rebirth-criatura">
@@ -187,11 +190,11 @@ export function RebirthModal({ language, onConfirm, onClose }: RebirthModalProps
           placeholder={isPt ? 'ex.: uma raposa de vidro' : 'e.g. a glass fox'}
           onChange={e => setCriatura(e.target.value)}
         />
-        <p style={sm2Hint}>
+        <InfoTip language={language} label={isPt ? 'Sobre o campo da criatura' : 'About the creature field'} align="left" style={{ minHeight: 24, justifyContent: 'flex-start' }}>
           {isPt
             ? 'Campo livre — é isto que o desenho da criatura vai seguir.'
             : 'Free text — this is what the creature’s art will follow.'}
-        </p>
+        </InfoTip>
       </div>
 
       <div style={{ display: 'flex', gap: 8 }}>
@@ -210,11 +213,11 @@ export function RebirthModal({ language, onConfirm, onClose }: RebirthModalProps
           </optgroup>
         </Combo>
       </div>
-      <p style={sm2Hint}>
+      <InfoTip language={language} label={isPt ? 'Sobre a escola e o elemento' : 'About school and element'} align="left" style={{ minHeight: 24, justifyContent: 'flex-start' }}>
         {isPt
           ? 'A escola e o elemento escolhidos ganham o maior peso na ficha da nova criatura.'
           : 'The chosen school and element get the heaviest weight in the new creature’s sheet.'}
-      </p>
+      </InfoTip>
 
       {/* O alerta de confirmação: filete `gold-ink` 3px — âmbar, nunca vermelho. */}
       {confirmando && (
