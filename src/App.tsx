@@ -1234,7 +1234,7 @@ export default function App() {
       if (cancelled || !res.ok || !res.email) return;
       // O saveId é derivado do e-mail agora COMPROVADO — realinha e recarrega
       // para o estado inteiro vir da conta certa.
-      const { emailToSaveId, cloudLoad, adoptCloudSave, checarContaExcluidaNoLogin } = await import('./utils/cloudSave');
+      const { emailToSaveId, consultarContaNaNuvem, adoptCloudSave, checarContaExcluidaNoLogin } = await import('./utils/cloudSave');
       // F1 (QA rodada 2): conta com lápide não entra — o helper já deslogou e
       // gravou o aviso; o reload devolve ao portão, que o mostra.
       if (await checarContaExcluidaNoLogin(res.email)) {
@@ -1247,10 +1247,14 @@ export default function App() {
       // deixava o app apontado para um save que nunca chegou, e o próximo
       // cloud save subia o estado local antigo por cima do save do outro
       // aparelho (rodada 4, §3). Este call site tinha escapado daquele fix.
-      const existente = await cloudLoad(id);
+      const consulta = await consultarContaNaNuvem(id);
       if (cancelled) return;
-      if (existente) {
-        if (adoptCloudSave(id, existente, res.email) !== 'ok') return;
+      // QA1: "não consegui ler" NÃO é "conta nova". Trocar o `saveId` agora faria
+      // o próximo POST sobrescrever o save do outro aparelho; sem trocar, a
+      // reconciliação da próxima abertura (`reconcileSaveId`) decide com a rede.
+      if (consulta.estado === 'incerta') return;
+      if (consulta.estado === 'existente') {
+        if (adoptCloudSave(id, consulta.state, res.email) !== 'ok') return;
       } else {
         // Conta nova: o save local é que vai subir. Só troca a identidade se
         // ela realmente persistiu; senão o reload voltaria ao id antigo.
@@ -1307,18 +1311,26 @@ export default function App() {
 
   /** Passa o save local para a identidade do e-mail e sobe pra nuvem. */
   const handleProtectProgress = useCallback(async (email: string) => {
-    const { emailToSaveId, cloudLoad, cloudSave, adoptCloudSave } = await import('./utils/cloudSave');
+    const { emailToSaveId, consultarContaNaNuvem, cloudSave, adoptCloudSave } = await import('./utils/cloudSave');
     const newSaveId = await emailToSaveId(email);
 
     // Já existe um Soulmon nesse e-mail (outro aparelho): adota em vez de
     // sobrescrever — apagar o save antigo de alguém seria bem pior do que
     // perder o progresso local recente.
-    const existing = await cloudLoad(newSaveId);
-    if (existing) {
+    const consulta = await consultarContaNaNuvem(newSaveId);
+    // QA1: dúvida (rede/5xx/401) não é "conta nova" — o `cloudSave` abaixo é um
+    // `put` cego e apagaria o save do outro aparelho. Nada é alterado.
+    if (consulta.estado === 'incerta') {
+      toast.error(language === 'pt-BR'
+        ? 'Não consegui falar com a nuvem agora, então não mexi em nada. Tente de novo em instantes.'
+        : "Couldn't reach the cloud right now, so nothing was changed. Try again in a moment.");
+      return;
+    }
+    if (consulta.estado === 'existente') {
       // `adoptCloudSave` grava o SAVE antes da identidade e nunca lança: com o
       // storage cheio, trocar o id sem o dado faria o próximo cloud save subir
       // o estado local antigo por cima do save do outro aparelho.
-      if (adoptCloudSave(newSaveId, existing, email) !== 'ok') {
+      if (adoptCloudSave(newSaveId, consulta.state, email) !== 'ok') {
         toast.error(language === 'pt-BR'
           ? 'Não consegui carregar o progresso deste e-mail neste aparelho. Nada foi alterado.'
           : "Couldn't load this email's progress on this device. Nothing was changed.");
@@ -4887,7 +4899,7 @@ export default function App() {
     } else {
       // O e-mail vira a identidade de sync — mesmo mecanismo do login manual em
       // Configurações (saveId = hash do e-mail).
-      const { emailToSaveId, cloudLoad, adoptCloudSave } = await import('./utils/cloudSave');
+      const { emailToSaveId, consultarContaNaNuvem, adoptCloudSave } = await import('./utils/cloudSave');
       const newSaveId = await emailToSaveId(normalizedEmail);
       writeLocal(STORAGE_KEYS.USER_EMAIL, normalizedEmail);
 
@@ -4895,17 +4907,23 @@ export default function App() {
       // aparelho) — adota o save existente em vez de sobrescrever com uma
       // criatura nova. Precisa de reload: o gameState inteiro muda de baixo do
       // GameStateProvider, o que setGameState não faz de forma segura.
-      const existing = await cloudLoad(newSaveId);
+      const consulta = await consultarContaNaNuvem(newSaveId);
       // Só recarrega se o save da nuvem REALMENTE ficou gravado. Falhou =
       // segue o ritual normal com o progresso local, em vez de recarregar num
       // id que não tem dado nenhum por trás.
-      if (existing && adoptCloudSave(newSaveId, existing, normalizedEmail) === 'ok') {
+      if (consulta.estado === 'existente' && adoptCloudSave(newSaveId, consulta.state, normalizedEmail) === 'ok') {
         window.location.reload();
         return;
       }
 
-      writeLocal(STORAGE_KEYS.SAVE_ID, newSaveId);
-      setSaveId(newSaveId);
+      // QA1: com a nuvem INCERTA (rede/5xx/401) o `saveId` NÃO troca. Apontar
+      // para o id derivado agora faria o próximo POST (put cego) sobrescrever o
+      // save que talvez exista lá; com o e-mail gravado, `reconcileSaveId` na
+      // próxima abertura resolve com a rede de volta (adota ou migra).
+      if (consulta.estado !== 'incerta') {
+        writeLocal(STORAGE_KEYS.SAVE_ID, newSaveId);
+        setSaveId(newSaveId);
+      }
     }
 
     const newActivitiesBase: Activity[] = data.initialActivities.map((item, i) => ({
@@ -6602,13 +6620,18 @@ export default function App() {
                 return true;
               }}
               onLoginWithEmail={async (email) => {
-                const { emailToSaveId, cloudLoad, cloudSave, adoptCloudSave, checarContaExcluidaNoLogin } = await import('./utils/cloudSave');
+                const { emailToSaveId, consultarContaNaNuvem, cloudSave, adoptCloudSave, checarContaExcluidaNoLogin } = await import('./utils/cloudSave');
                 // F1 (QA rodada 2): e-mail com lápide não vira identidade —
                 // lançar cai no estado de erro do SettingsPage.
                 if (await checarContaExcluidaNoLogin(email)) throw new Error('account-deleted');
                 const id = await emailToSaveId(email);
-                const state = await cloudLoad(id);
-                if (state) {
+                const consulta = await consultarContaNaNuvem(id);
+                // QA1: dúvida não é "primeiro login" — o `cloudSave` do ramo
+                // `else` é um put cego e apagaria o save do outro aparelho.
+                // Lançar cai no estado de erro do SettingsPage; nada foi tocado.
+                if (consulta.estado === 'incerta') throw new Error('cloud-unreachable');
+                const state = consulta.estado === 'existente' ? consulta.state : null;
+                if (consulta.estado === 'existente') {
                   // Existing account on this email — adopt its cloud progress.
                   // Dado primeiro, identidade depois: trocar o `saveId` sem o
                   // save gravado faz o próximo cloud save subir o estado LOCAL
@@ -6626,7 +6649,7 @@ export default function App() {
                   await cloudSave(id, gameState);
                 }
                 window.location.reload();
-                return state ? 'loaded' : 'created';
+                return consulta.estado === 'existente' ? 'loaded' : 'created';
               }}
             /></Suspense>
           )}
