@@ -220,6 +220,9 @@ export function ChatBox({
         onCreateActivity(data.action.activity);
       }
 
+      // Resposta sem texto (corpo {}, vazio, não-string): vira a resposta local
+      // em vez de undefined — que ia para o balão e envenenava o history.
+      if (typeof data?.response !== 'string' || !data.response.trim()) return getPetResponse(userMessage);
       return data.response;
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
