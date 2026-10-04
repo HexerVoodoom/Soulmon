@@ -7,6 +7,7 @@ import type { Language } from '../utils/i18n';
 import { sm2Button } from './form/FormKit';
 import { GameRoot, GameHeader, GameVisor, GAME_VISOR_W, phaseTitle, phaseLine } from './games/GameKit';
 import { DINO_SCENE } from '../utils/dungeonScenes';
+import { idlePose, runPose, type PetPose } from '../utils/petBounce';
 import obstacle1 from '../assets/soulmon/dino/dino-obstacle-1.png';
 import obstacle2 from '../assets/soulmon/dino/dino-obstacle-2.png';
 import obstacle3 from '../assets/soulmon/dino/dino-obstacle-3.png';
@@ -92,6 +93,46 @@ const VISOR_H = 96;
 const GROUND_Y = VISOR_H * 2 - 40;
 const DINO_X = 24, DINO_S = 64;
 
+/** Poeira dos pés: quadradinhos de 2–3 px (grade nítida), poucos, 3 cores do visor. */
+type Dust = { x: number; y: number; vx: number; vy: number; life: number; max: number; size: number; c: number };
+const MAX_DUST = 14;
+const reducedMotionNow = () => {
+  try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { return false; }
+};
+const readDustColors = (el: Element): string[] => {
+  const cs = getComputedStyle(el);
+  const v = (n: string, d: string) => cs.getPropertyValue(n).trim() || d;
+  return [v('--sm2-viewport-ink', '#E9F5F2'), v('--sm2-viewport-ring', '#B0722F'), v('--sm2-viewport-ring-deep', '#5E3612')];
+};
+function spawnDust(list: Dust[], x: number, y: number, speed: number, n: number) {
+  for (let i = 0; i < n && list.length < MAX_DUST; i++) {
+    const max = 0.28 + Math.random() * 0.2;
+    list.push({ x: x + Math.random() * 6, y: y - Math.random() * 3, vx: -speed * (0.25 + Math.random() * 0.3), vy: -(8 + Math.random() * 26), life: max, max, size: Math.random() < 0.6 ? 2 : 3, c: Math.floor(Math.random() * 3) });
+  }
+}
+function stepDust(list: Dust[], dt: number) {
+  for (const d of list) { d.life -= dt; d.x += d.vx * dt; d.y += d.vy * dt; d.vy += 60 * dt; }
+  for (let i = list.length - 1; i >= 0; i--) if (list[i].life <= 0) list.splice(i, 1);
+}
+function drawDust(ctx: CanvasRenderingContext2D, list: Dust[], colors: string[]) {
+  for (const d of list) {
+    ctx.globalAlpha = Math.max(0, d.life / d.max) * 0.85;
+    ctx.fillStyle = colors[d.c];
+    ctx.fillRect(Math.round(d.x), Math.round(d.y), d.size, d.size);
+  }
+  ctx.globalAlpha = 1;
+}
+/** Desenha o pet com a pose (origem nos pés, centro da base); sprite sempre nítido. */
+function drawPet(ctx: CanvasRenderingContext2D, img: HTMLImageElement, groundY: number, h: number, pose: PetPose) {
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.translate(DINO_X + DINO_S / 2, groundY - h + pose.dy);
+  if (pose.rot) ctx.rotate(pose.rot);
+  ctx.scale(pose.sx, pose.sy);
+  ctx.drawImage(img, -DINO_S / 2, -DINO_S, DINO_S, DINO_S);
+  ctx.restore();
+}
+
 export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoints, onScore, onExit }: {
   evolutionStage: string;
   /** Modo demo (utils/monetization.ts): personagem pré-pronto — sobrepõe o sprite do pet (nunca dos obstáculos). */
@@ -121,7 +162,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
   const petNeedsFlip = false;
 
   // Physics/game state lives in a ref — the loop never re-renders React.
-  const g = useRef({ h: 0, vy: 0, obstacles: [] as { x: number; size: number; tier: number; v: number }[], speed: 0, t: 0, spawnIn: 0, score: 0, gx: 0, px: 0 });
+  const g = useRef({ h: 0, vy: 0, obstacles: [] as { x: number; size: number; tier: number; v: number }[], speed: 0, t: 0, spawnIn: 0, score: 0, gx: 0, px: 0, dust: [] as Dust[], sinceLand: 9, dustIn: 0, wasAir: false });
 
   useEffect(() => {
     const pet = new Image();
@@ -138,21 +179,39 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
     const far = new Image(); far.src = parallaxFar; parallaxImgRef.current = far;
     // O quadro parado do vidro antes de começar: chão, parallax e o pet na
     // linha dos pés — a criatura pequena esperando, não um vidro vazio.
+    // Parado (antes de começar / depois de perder) o pet respira — a curva da Home
+    // (`utils/petBounce.idlePose`). Depois de perder, os obstáculos da última cena e o
+    // chão ficam onde estavam; só a respiração continua (30 fps, pausa com a aba oculta).
+    const t0 = performance.now();
     const drawStatic = () => {
       if (phaseRef.current === 'playing') return;
       const canvas = canvasRef.current;
       const ctx = canvas?.getContext('2d');
       if (!canvas || !ctx) return;
+      const s = g.current;
       ctx.imageSmoothingEnabled = false;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const strip = (img: HTMLImageElement, y: number, w: number, h: number) => { for (let x = 0; x < canvas.width; x += w) ctx.drawImage(img, x, y, w, h); };
-      if (far.complete && far.naturalWidth) strip(far, GROUND_Y - PARALLAX_H, PARALLAX_W, PARALLAX_H);
-      if (ground.complete && ground.naturalWidth) strip(ground, canvas.height - GROUND_H, GROUND_W, GROUND_H);
-      if (pet.complete && pet.naturalWidth) ctx.drawImage(pet, DINO_X, GROUND_Y - DINO_S, DINO_S, DINO_S);
+      const strip = (img: HTMLImageElement, off: number, y: number, w: number, h: number) => { const st = -((off % w) + w) % w; for (let x = st; x < canvas.width; x += w) ctx.drawImage(img, x, y, w, h); };
+      if (far.complete && far.naturalWidth) strip(far, s.px, GROUND_Y - PARALLAX_H, PARALLAX_W, PARALLAX_H);
+      for (const o of s.obstacles) {
+        const img = tierImgsRef.current[o.tier]?.[o.v];
+        if (img?.complete && img.naturalWidth) ctx.drawImage(img, o.x, GROUND_Y - o.size, o.size, o.size);
+      }
+      if (ground.complete && ground.naturalWidth) strip(ground, s.gx, canvas.height - GROUND_H, GROUND_W, GROUND_H);
+      if (pet.complete && pet.naturalWidth) drawPet(ctx, pet, GROUND_Y, 0, idlePose((performance.now() - t0) / 1000, reducedMotionNow()));
     };
     for (const img of [pet, ground, far]) img.addEventListener('load', drawStatic);
     drawStatic();
-    return () => { for (const img of [pet, ground, far]) img.removeEventListener('load', drawStatic); };
+    let raf = 0;
+    let lastDraw = 0;
+    const idleLoop = (now: number) => {
+      raf = requestAnimationFrame(idleLoop);
+      if (phaseRef.current === 'playing' || document.hidden || now - lastDraw < 33) return;
+      lastDraw = now;
+      drawStatic();
+    };
+    raf = requestAnimationFrame(idleLoop);
+    return () => { cancelAnimationFrame(raf); for (const img of [pet, ground, far]) img.removeEventListener('load', drawStatic); };
   }, [evolutionStage, demoCharacterId]);
 
   const jump = useCallback(() => {
@@ -165,7 +224,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
   }, []);
 
   const start = () => {
-    g.current = { h: 0, vy: 0, obstacles: [], speed: 260, t: 0, spawnIn: 1.1, score: 0, gx: 0, px: 0 };
+    g.current = { h: 0, vy: 0, obstacles: [], speed: 260, t: 0, spawnIn: 1.1, score: 0, gx: 0, px: 0, dust: [], sinceLand: 9, dustIn: 0, wasAir: false };
     setEarned(0);
     setPhase('playing');
   };
@@ -180,6 +239,8 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
     let raf = 0;
     let last = performance.now();
     let dead = false;
+    const reduced = reducedMotionNow();
+    const dustColors = readDustColors(canvas);
 
     // Faixa repetível em X: desenha cópias lado a lado a partir do offset.
     const drawStrip = (img: HTMLImageElement, offset: number, y: number, w: number, h: number) => {
@@ -206,6 +267,21 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
         s.h = Math.max(0, s.h + s.vy * dt);
         if (s.h === 0) s.vy = 0;
       }
+
+      // Poeira: uma lufada a cada passada no chão; maior no pouso. Só desenho — não
+      // mexe em física, colisão, pontuação nem tempo.
+      const air = s.h > 0 || s.vy > 0;
+      s.sinceLand += dt;
+      if (s.wasAir && !air) {
+        s.sinceLand = 0;
+        if (!reduced) spawnDust(s.dust, DINO_X + 10, GROUND - 1, s.speed, 4);
+      }
+      s.wasAir = air;
+      if (!air && !reduced) {
+        s.dustIn -= dt;
+        if (s.dustIn <= 0) { spawnDust(s.dust, DINO_X + 6, GROUND - 1, s.speed, 1 + (Math.random() < 0.4 ? 1 : 0)); s.dustIn = 0.11 + Math.random() * 0.05; }
+      }
+      stepDust(s.dust, dt);
 
       // Obstacles — tier can also roll one level below for variety
       s.spawnIn -= dt;
@@ -242,7 +318,11 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       const ground = groundImgRef.current;
       if (ground?.complete) drawStrip(ground, s.gx, canvas.height - GROUND_H, GROUND_W, GROUND_H);
       const pet = petImgRef.current;
+      // Poeira atrás dos pés (some em movimento reduzido), depois o pet com a pose
+      // da corrida: quique da passada, estica no impulso, achata no pouso.
+      drawDust(ctx, s.dust, dustColors);
       if (pet?.complete) {
+        const pose = runPose({ t: s.t, speed: s.speed, h: s.h, vy: s.vy, sinceLand: s.sinceLand, reduced });
         if (petNeedsFlip) {
           ctx.save();
           ctx.translate(DINO_X + DINO_S, GROUND - DINO_S - s.h);
@@ -250,7 +330,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
           ctx.drawImage(pet, 0, 0, DINO_S, DINO_S);
           ctx.restore();
         }
-        else ctx.drawImage(pet, DINO_X, GROUND - DINO_S - s.h, DINO_S, DINO_S);
+        else drawPet(ctx, pet, GROUND, s.h, pose);
       }
       if (scoreElRef.current) scoreElRef.current.textContent = String(Math.floor(s.score));
 
