@@ -151,7 +151,7 @@ describe('moeda certa por aba', () => {
     expect(n.style.color).toBe('var(--sm2-primary-ink)');
     // I4: a moeda tem ilustração própria (BitsIcon), decorativa; nunca um glifo do `Icon` genérico.
     expect(p.querySelector('.sm2-icon')).toBeNull();
-    const coin = p.querySelector('[data-bits-icon]') as Element;
+    const coin = p.querySelector('[data-bits-kind]') as Element;
     expect(coin).not.toBeNull();
     expect(coin.getAttribute('aria-hidden')).toBe('true');
     expect(container.querySelector(`[data-shop-item="${emblemFurn.id}"]`)).toBeNull();

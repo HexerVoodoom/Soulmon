@@ -343,7 +343,7 @@ export function PetPage({
               <InfoTip language={language} label={isPt ? 'Como funcionam as conquistas' : 'How achievements work'}>
                 {isPt
                   ? 'Toque num emblema para ver como ganhá-lo. Os apagados ainda não foram abertos — não há pressa e nada se perde.'
-                  : 'Tap an emblem to see how to earn it. The dimmed ones are not open yet — no hurry, and nothing is ever lost.'}
+                  : 'Tap an emblem to see how to earn it. The dimmed ones are not open yet — take your time, and nothing is ever lost.'}
               </InfoTip>
             </div>
             <ul

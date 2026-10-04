@@ -84,7 +84,12 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // coração/energia, sonho que dá a decoração, `soulTestAnswers` no save.
   // Crescimento JUSTIFICADO, não perdoado — candidatos a pagar: `RestSetupModal`
   // e o passo do teste longo do onboarding como `import()`.
-  'index.js': 748_092,
+  // Re-medido em 03/10/2026: 748_092 → 759_120 (+10,8 KB). Rodada 5 dos ajustes
+  // do dono: `BattleStage`/`combatFx` (cena de combate em tela cheia), `autoDefesa`,
+  // `TypewriterText`/`NpcSpeech`, `BitsIcon`, convite do descanso com fallback.
+  // Crescimento JUSTIFICADO, não perdoado — candidatos a pagar: `BattleStage` e
+  // `ShopItemSheet` como `import()` (só carregam ao lutar/abrir a loja).
+  'index.js': 759_120,
   'index.css': 153_795,          // 150 KB — 1,5× o teto
   'evolution-bg.mp4': 3_917_240, // 3,7 MB — fundo de UMA cerimônia; correção #3 (WebM/CSS)
   'intro.mp4': 2_524_939,        // 2,4 MB — vídeo da intro
