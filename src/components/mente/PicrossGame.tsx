@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import type { EarningGameProps } from './types';
-import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
+import { sm2Button, sm2Text } from '../form/FormKit';
 import { GameRoot, GameHeader, GameVisor, phaseTitle, phaseLine, gameExitConfirm } from '../games/GameKit';
 import { Icon } from '../ui/Icon';
 import { readLocal, writeLocal } from '../../utils/safeStorage';
@@ -265,9 +265,18 @@ export function PicrossGame({ language, onEarnPoints, onExit, todayKey }: Earnin
         backLabel={isPt ? 'Voltar ao desenho' : 'Back to the picture'}
         language={language}
         infoLabel={isPt ? 'Como se joga' : 'How to play'}
-        info={isPt
-          ? 'Os números dizem os blocos pintados de cada linha e coluna, em ordem.'
-          : 'The numbers give the filled runs of each row and column, in order.'}
+        info={(
+          <>
+            <span style={{ display: 'block' }}>
+              {isPt
+                ? 'Os números dizem os blocos pintados de cada linha e coluna, em ordem.'
+                : 'The numbers give the filled runs of each row and column, in order.'}
+            </span>
+            <span style={{ display: 'block', marginTop: 6 }}>
+              {isPt ? 'Toque longo numa casa também marca X.' : 'A long press on a square also marks X.'}
+            </span>
+          </>
+        )}
       />
 
       {picking ? picker : solved ? (
@@ -377,9 +386,6 @@ export function PicrossGame({ language, onEarnPoints, onExit, todayKey }: Earnin
               {isPt ? 'Outros' : 'More'}
             </button>
           </div>
-          <p style={{ ...sm2Hint, textAlign: 'center' }}>
-            {isPt ? 'Toque longo numa casa também marca X.' : 'A long press on a square also marks X.'}
-          </p>
         </>
       )}
     </GameRoot>

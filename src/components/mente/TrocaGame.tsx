@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react';
 import type { EarningGameProps } from './types';
-import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
+import { sm2Button, sm2Text } from '../form/FormKit';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, StatTag, phaseTitle, phaseLine, gameExitConfirm } from '../games/GameKit';
 import { Icon } from '../ui/Icon';
 import { usePrefersReducedMotion } from '../ui/Viewport';
@@ -207,7 +207,12 @@ export function TrocaGame({ language, onEarnPoints, onExit }: EarningGameProps) 
         title={isPt ? 'Troca de Regra' : 'Rule Switch'}
         language={language}
         infoLabel={isPt ? 'Como se joga' : 'How to play'}
-        info={isPt ? 'Separe cada criatura pela regra de cima.' : 'Sort each creature by the rule on top.'}
+        info={(
+          <>
+            <span style={{ display: 'block' }}>{isPt ? 'Separe cada criatura pela regra de cima.' : 'Sort each creature by the rule on top.'}</span>
+            <span style={{ display: 'block', marginTop: 6 }}>{isPt ? 'Toque num lado ou arraste a carta.' : 'Tap a side or swipe the card.'}</span>
+          </>
+        )}
         closeLabel={isPt ? 'Sair' : 'Exit'}
         onClose={onExit}
         exitConfirm={over ? undefined : gameExitConfirm(isPt, 'da rodada')}
@@ -282,10 +287,6 @@ export function TrocaGame({ language, onEarnPoints, onExit }: EarningGameProps) 
               </GameVisor>
             </div>
           </div>
-
-          <p style={{ ...sm2Hint, textAlign: 'center' }}>
-            {isPt ? 'Toque num lado ou arraste a carta.' : 'Tap a side or swipe the card.'}
-          </p>
 
           <div style={{ display: 'flex', gap: 8 }}>
             {destino('left')}

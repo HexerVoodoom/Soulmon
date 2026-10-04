@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
 import type { Language } from '../utils/i18n';
 import { pixelizeBuffer } from '../utils/pixelizer';
+import { InfoTip } from './ui/InfoTip';
 
 interface PixelizerCardProps {
   language?: Language;
@@ -111,12 +112,15 @@ export function PixelizerCard({ language = 'en-US' }: PixelizerCardProps) {
 
   return (
     <div className={cardCls} style={mono}>
-      <h3 className={`mb-1 ${titleCls}`} style={titleStyle}>🕹️ {isPt ? 'Pixelador v-pet' : 'V-pet Pixelizer'}</h3>
-      <p className={`text-xs mb-2 ${mutedCls}`} style={mutedStyle}>
-        {isPt
-          ? 'Cole (Ctrl+V) ou envie a imagem gerada pela IA — o app converte em sprite 16x16 de verdade, com paleta limitada e fundo transparente.'
-          : 'Paste (Ctrl+V) or upload the AI-generated image — the app converts it into a REAL 16x16 sprite with a limited palette and transparent background.'}
-      </p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }} className="mb-1">
+        <h3 className={titleCls} style={titleStyle}>🕹️ {isPt ? 'Pixelador v-pet' : 'V-pet Pixelizer'}</h3>
+        {/* K6 (04/10/2026): o como-usar mora atrás do "?". */}
+        <InfoTip language={language} label={isPt ? 'Como usar o Pixelador' : 'How to use the Pixelizer'} align="left" style={{ minHeight: 24 }}>
+          {isPt
+            ? 'Cole (Ctrl+V) ou envie a imagem gerada pela IA — o app converte em sprite 16x16 de verdade, com paleta limitada e fundo transparente.'
+            : 'Paste (Ctrl+V) or upload the AI-generated image — the app converts it into a REAL 16x16 sprite with a limited palette and transparent background.'}
+        </InfoTip>
+      </div>
 
       <div className="flex flex-wrap items-center gap-2 mb-2 text-xs">
         <button onClick={() => fileInputRef.current?.click()} className={btnCls} style={{ ...mono, ...btnStyle }}>
