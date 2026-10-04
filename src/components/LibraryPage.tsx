@@ -29,6 +29,7 @@ import { LIBRARY_NPCS } from '../utils/libraryNpcs';
 import { PlayerDetailModal } from './PlayerDetailModal';
 import { CoopPanel } from './CoopPanel';
 import { Icon } from './ui/Icon';
+import { InfoTip } from './ui/InfoTip';
 import { MiniGlass } from './ui/MiniGlass';
 import { Field, sm2Button } from './form/FormKit';
 import type { Language } from '../utils/i18n';
@@ -273,11 +274,12 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
             {isPt ? 'Biblioteca' : 'Library'}
           </h1>
         )}
-        <p className="sm2-lib-s" style={{ margin: 0 }}>
+        {/* K6 (04/10/2026): a legenda da Biblioteca mora atrás do "?". */}
+        <InfoTip language={language} label={isPt ? 'Sobre a Biblioteca' : 'About the Library'} align="left" style={{ minHeight: 24, justifyContent: 'flex-start' }}>
           {seenOnly
             ? (isPt ? 'Os Soulmons que já cruzaram o seu caminho.' : 'The Soulmons that have crossed your path.')
             : (isPt ? 'Veja outros jogadores e seus Soulmon.' : 'See other players and their Soulmon.')}
-        </p>
+        </InfoTip>
       </div>
 
       {tab !== 'coop' && (

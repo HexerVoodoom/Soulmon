@@ -712,7 +712,10 @@ function SalaBosque({ guild, t, language, metaDoDiaCumprida, ocupado, mySprite, 
         </>
       )}
       {proximo && <p className="sm2-grove-line" data-guild-perto>{t('guild.bosque.perto', { estagio: proximo })}</p>}
-      <p className="sm2-lib-s" style={{ margin: 0 }}>{t('guild.bosque.regra')}</p>
+      {/* K6 (04/10/2026): a regra do bosque mora atrás do "?". */}
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <InfoTip language={language} label={language === 'pt-BR' ? 'Como o bosque cresce' : 'How the grove grows'} style={{ minHeight: 28 }}>{t('guild.bosque.regra')}</InfoTip>
+      </div>
       {fioHoje && <p className="sm2-stats-t" style={{ margin: 0 }}>{t('guild.bosque.fio.hoje')}</p>}
       {podeFirmar && (
         <button

@@ -760,9 +760,12 @@ describe('o Bosque por estágio', () => {
   it('a regra sóbria é linha FIXA do Bosque, nos dois idiomas', async () => {
     vi.mocked(getGuild).mockResolvedValue(noEstagio(2, 1));
     await montar();
+    // K6: a regra mora atrás do "?" (InfoTip) — um toque a lê.
+    fireEvent.click(screen.getByRole('button', { name: 'Como o bosque cresce' }));
     expect(screen.getByText(PT('guild.bosque.regra'))).toBeTruthy();
     cleanup();
     await montar({ language: 'en-US' });
+    fireEvent.click(screen.getByRole('button', { name: 'How the grove grows' }));
     expect(screen.getByText(EN('guild.bosque.regra'))).toBeTruthy();
   });
 
