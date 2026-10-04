@@ -40,7 +40,7 @@ function isOptInOnlyActivity(activity: { catalogId?: string }): boolean {
 
 /** Peso de UM hábito na meta ponderada — 0 para item `optInOnly` do catálogo,
  *  `HABIT_WEIGHT` (1) para todos os outros (o padrão de sempre). */
-function habitWeightOf(activity: { catalogId?: string }): number {
+export function habitWeightOf(activity: { catalogId?: string }): number {
   return isOptInOnlyActivity(activity) ? 0 : HABIT_WEIGHT;
 }
 
