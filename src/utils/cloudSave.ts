@@ -254,10 +254,13 @@ export const CLOUD_SAVE_RETRY_JANELA_MS = 10 * 60_000;
 export const CLOUD_SAVE_RETRY_BACKOFF_MS = [2000, 8000, 30000];
 
 const orcamentos = new Map<string, { gasto: number; janelaEm: number }>();
+/** Última chamada de `cloudSaveComRetry` por `saveId` (ver o comentário lá). */
+const ordemDeChamada = new Map<string, number>();
 
 /** Só para teste: zera o estado de módulo entre casos. */
 export function __resetRetryBudgets(): void {
   orcamentos.clear();
+  ordemDeChamada.clear();
 }
 
 /**
@@ -306,11 +309,19 @@ export async function cloudSaveComRetry(
   const esperar = opts.esperar ?? esperaReal;
   const agora = opts.agora ?? Date.now;
 
+  // QA1: número de ordem desta chamada para o `saveId`. Um retry que acorda
+  // DEPOIS de uma chamada mais nova ter começado carrega estado VELHO, e o
+  // `put` cego do servidor o poria por cima do novo — a nuvem voltaria no
+  // tempo. Superado = para de insistir (a chamada nova é quem manda).
+  const minha = (ordemDeChamada.get(saveId) ?? 0) + 1;
+  ordemDeChamada.set(saveId, minha);
+
   let resultado = await cloudSave(saveId, state);
   while (!resultado.ok && resultado.retentavel) {
     const atraso = consumirRetry(saveId, agora());
     if (atraso === null) break;
     await esperar(atraso);
+    if (ordemDeChamada.get(saveId) !== minha) break;
     resultado = await cloudSave(saveId, state);
   }
   // Devolve o orçamento: só a falha PERSISTENTE precisa ser racionada.
