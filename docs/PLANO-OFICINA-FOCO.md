@@ -50,11 +50,11 @@ Os números e o ano (1, 3, 4) foram conferidos por busca em 04/10/2026; Ericsson
   **3 coisas boas** (3 linhas), **gratidão** (1), **o que aprendi hoje** (1), **escrita expressiva** (livre, ~3 min;
   Pennebaker & Beall, 1986, *J. Abnorm. Psychol.* 95(3) — evidência moderada, efeito pequeno). "3 coisas boas":
   Seligman et al. (2005), *Am. Psychol.* 60(5) — moderada.
-- **Privacidade (regra dura):** o texto fica **só neste aparelho**, em `localStorage` (`soulmon-caderno`), **fora do
-  save em nuvem**, nunca enviado ao servidor, à IA nem ao chat; apagável por entrada e "apagar tudo". Como não entra
-  no save, **`public/privacidade.html` não foi alterado** (alterar exige subir `PRIVACY_VERSION` e re-pedir
-  consentimento — decisão do dono, pergunta 3). A folha diz isso, atrás de um `InfoTip`. Efeito colateral honesto:
-  trocar de aparelho ou limpar o navegador perde o Caderno (dito no `InfoTip`).
+- **Privacidade (revisto em 04/10/2026, decisão do dono):** o Caderno vai para o **save na nuvem do próprio
+  titular** (`GameState.caderno`; era só `localStorage` na 1ª versão). É **dado sensível**: nunca entra em payload de
+  IA/chat, telemetria, métricas, perfil público ou guilda (contrato `cadernoSensivel.contract.test.ts`); sai na
+  exportação e some na exclusão da conta; apagável por entrada e por inteiro. `public/privacidade.html` §2 declara
+  (PT/EN) e `PRIVACY_VERSION` sobe para `2026-10-04`. Tetos 120 × 2000, sanitizados no load e no `save.js`.
 - **Psicologia (veto aplicado):** sem sequência, sem total, sem "faltam", sem lembrete, sem cobrança, sem diagnóstico,
   sem "análise" do texto. Salvar não rende nada além de a entrada ficar guardada. Se o texto casa com o léxico de
   sofrimento (`needsBridge`, o mesmo do chat, **calculado no aparelho**), aparece, sem bloquear nada, a linha de
@@ -74,10 +74,7 @@ cumulativo): o relógio da tela só relê `Date.now()`, então sobrevive a aba e
 Ao fim: aviso na tela + notificação local **só se a permissão já está concedida** (o app nunca a pede aqui) +
 vibração curta. A pessoa marca "Foquei" (registro local do dia) ou dispensa; sem ela, nada conta.
 
-## 6. Decisões só do dono (conservadoras já aplicadas)
+## 6. Decisões do dono (respondidas em 04/10/2026)
 
-1. "Caderno/Journal" em vez de "Diário" (colisão com o Diário de Aventuras)?
-2. Um selo/postal por entrada do Caderno, ou um "ato" de hábito? **Hoje: nada.**
-3. Declarar o Caderno em `privacidade.html` mesmo sem sair do aparelho (sobe `PRIVACY_VERSION`)? **Hoje: não.**
-4. Aceita que o Caderno se perca ao trocar de aparelho (vs. entrar no save, o que o tornaria dado sensível no servidor)?
-5. A vibração ao fim do foco: ligada por padrão, como está?
+Nome "Caderno / Journal": ok. Sem recompensa nenhuma. **Caderno no save na nuvem** (acima). Vibração ao fim do foco
+**ligada por padrão**, com interruptor em Configurações › Seus dados. Bustos provisórios Tique/Sépia ficam.

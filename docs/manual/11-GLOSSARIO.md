@@ -341,7 +341,7 @@ Quem encontrar o nome da esquerda num commit, num comentário ou num doc de regi
 | Pyrakamon · Akashaoimon · Nimbratamon | **Pyraka · Akashai · Nimbrata** (nenhum nome de criatura leva sufixo fixo tipo "-mon"; os ids `kaelen`/`orrin`/`thalindra` NÃO mudaram) | 08/09/2026 | `DUNGEON_LINE_NAMES` em `src/utils/sprites.ts` |
 | ⚰️ binding KV `DIGIAPP_SAVES` como única opção | o acessor aceita `SOULMON_SAVES` **e** `DIGIAPP_SAVES` — separar os DADOS continua sendo decisão do dono | 07/09/2026 | `kv` em `functions/api/_kv.js` |
 | **Oficina do Foco** | Lote da Exploração (04/10/2026): timer de foco 25/5 e 50/10 + cards das técnicas de produtividade. Tique é o NPC. Regra: [02 §61](02-REGRAS-DE-NEGOCIO.md#oficina-foco) |
-| **Caderno** (EN *Journal*) | Lote da Exploração (04/10/2026): journaling privado, só no aparelho, sem Bits nem sequência. Não é o Diário de Aventuras (o álbum do pet). Sépia é a NPC. Regra: [02 §61](02-REGRAS-DE-NEGOCIO.md#oficina-foco) |
+| **Caderno** (EN *Journal*) | Lote da Exploração (04/10/2026): journaling sensível no save na nuvem do titular (nunca em IA/telemetria), sem Bits nem sequência. Não é o Diário de Aventuras (o álbum do pet). Sépia é a NPC. Regra: [02 §61](02-REGRAS-DE-NEGOCIO.md#oficina-foco) |
 
 ---
 

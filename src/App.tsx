@@ -42,6 +42,7 @@ import { NotificationManager } from './components/NotificationManager';
 import { DailyReportModal } from './components/DailyReportModal';
 import { adventureOfNight, collectAdventure } from './utils/adventure';
 import { crossingsTouchMap } from './utils/travessiasSave';
+import { clearLegacy, loadLegacyEntries, mergeEntries, type CadernoEntry } from './utils/cadernoSave';
 import { CROSSINGS_EMPTY, HOME_REGION, type CrossingsState } from './types/travessias';
 import { WelcomePromptModal } from './components/WelcomePromptModal';
 import { IntroScreen } from './components/IntroScreen';
@@ -4209,6 +4210,23 @@ export default function App() {
     });
   }, [setGameState]);
 
+  /** O Caderno muda a lista por uma função PURA sobre `prev` (footgun 6). */
+  const handleCaderno = useCallback((f: (c: CadernoEntry[]) => CadernoEntry[]) => {
+    setGameState(prev => {
+      const c0 = prev.caderno ?? [];
+      const c1 = f(c0);
+      return c1 === c0 ? prev : { ...prev, caderno: c1 };
+    });
+  }, [setGameState]);
+
+  /** Migração ÚNICA: as anotações da 1ª versão (só no aparelho) entram no save e a chave local some. */
+  useEffect(() => {
+    const legado = loadLegacyEntries();
+    if (legado.length === 0) { clearLegacy(); return; }
+    setGameState(prev => ({ ...prev, caderno: mergeEntries(prev.caderno, legado) }));
+    clearLegacy();
+  }, [setGameState]);
+
   /** O palco "passeando": o nome da região de destino (≠ casa), ou null. */
   const passeandoEm = useMemo(() => {
     const dest = crossings.destination;
@@ -5960,6 +5978,7 @@ export default function App() {
                 /* 🧭 Passeio + Travessias (30/09/2026): o estado do save e o
                    ÚNICO caminho de escrita (função pura sobre `prev`). */
                 passeio={{ crossings, onChange: handleCrossings, seed: saveId }}
+                caderno={{ entries: gameState.caderno ?? [], onChange: handleCaderno }}
                 labTab={labTab}
                 onLabTab={setLabTab}
                 labContent={labContent}

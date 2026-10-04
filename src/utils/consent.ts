@@ -32,7 +32,7 @@ export const MIN_AGE_YEARS = 18;
  * publicado.
  */
 export const TERMS_VERSION = '2026-09-30'; // §8: as Travessias são opcionais (parecer de menores R-9, MIS-15)
-export const PRIVACY_VERSION = '2026-10-02'; // §5: lista pública do Torneio (automática no Vínculo 5) e o opt-out em Configurações
+export const PRIVACY_VERSION = '2026-10-04'; // §2: o Caderno (anotações no save na nuvem, dado sensível); antes, 10-02: lista pública do Torneio
 
 export interface ConsentRecord {
   /** ISO de quando o usuário marcou a caixa. */

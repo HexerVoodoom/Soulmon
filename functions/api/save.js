@@ -31,6 +31,24 @@ const SERVER_OWNED_FIELDS = ['accountTier', 'credits'];
  * cliente com bug (ou alguém mal-intencionado) enche o namespace de graça.
  * 5 MB é ~50× o maior save real observado e ainda cabe sprite embutido.
  */
+/** Mesmos tetos de `src/utils/cadernoSave.ts` (há teste de paridade). */
+const CADERNO_MAX_ENTRIES = 120;
+const CADERNO_MAX_CHARS = 2000;
+function clampCaderno(raw) {
+  if (!Array.isArray(raw)) return [];
+  const out = [];
+  for (const e of raw) {
+    if (!e || typeof e !== 'object') continue;
+    if (typeof e.id !== 'string' || !/^[a-z0-9-]{1,40}$/.test(e.id)) continue;
+    if (typeof e.day !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(e.day)) continue;
+    if (!['tres-coisas', 'gratidao', 'aprendi', 'livre'].includes(e.formato)) continue;
+    if (typeof e.text !== 'string' || !e.text.trim() || !Number.isFinite(Number(e.at))) continue;
+    out.push({ id: e.id, day: e.day, formato: e.formato, text: e.text.slice(0, CADERNO_MAX_CHARS), at: Number(e.at) });
+    if (out.length >= CADERNO_MAX_ENTRIES) break;
+  }
+  return out;
+}
+
 const MAX_STATE_BYTES = 5 * 1024 * 1024;
 
 /**
@@ -170,6 +188,10 @@ export async function onRequest({ request, env }) {
     }
     const state = { ...incoming };
     for (const field of SERVER_OWNED_FIELDS) delete state[field];
+    // Caderno (04/10/2026): dado sensível do titular. O servidor só o ACEITA como lista de entradas no
+    // formato do cliente (`utils/cadernoSave.ts`: 120 x 2000 caracteres) e descarta o resto — nunca o
+    // lê, interpreta ou envia a IA/métricas. 120 x 2000 (menos de ~1 MB em UTF-8) cabe nos 5 MB.
+    if ('caderno' in state) state.caderno = clampCaderno(state.caderno);
     const serialized = JSON.stringify(state);
     if (serialized.length > MAX_STATE_BYTES) {
       console.warn('save: POST recusado, state acima do teto', { saveId, bytes: serialized.length });

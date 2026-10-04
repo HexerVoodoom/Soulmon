@@ -10,7 +10,7 @@
  *  · O aviso de fim usa a notificação local SÓ se a permissão já estava concedida (esta tela
  *    NUNCA a pede) e uma vibração curta. Sem permissão: o aviso é o da tela.
  */
-import { readJson, writeJson, removeLocal } from './safeStorage';
+import { readJson, writeJson, removeLocal, readLocal, writeLocal } from './safeStorage';
 import { STORAGE_KEYS } from './storageKeys';
 import { showNotification } from './notifications';
 
@@ -138,10 +138,14 @@ export const isLongBreak = (mode: FocoModeId, countToday: number): boolean =>
 let armed: ReturnType<typeof setTimeout> | null = null;
 export interface EndNoticeCopy { title: string; body: string }
 
-/** O que acontece quando chega a zero: notificação local SÓ com permissão já concedida + vibração curta. */
+/** A vibração ao fim está ligada? Padrão LIGADA (só `'false'` desliga) — interruptor em Configurações. */
+export const isVibrateOn = (): boolean => readLocal(STORAGE_KEYS.FOCO_VIBRATE) !== 'false';
+export const setVibrateOn = (on: boolean): void => { writeLocal(STORAGE_KEYS.FOCO_VIBRATE, on ? 'true' : 'false', { silent: true }); };
+
+/** O que acontece quando chega a zero: notificação local SÓ com permissão já concedida + vibração curta (se ligada). */
 export function fireEndNotice(copy: EndNoticeCopy): void {
   try { if (typeof Notification !== 'undefined' && Notification.permission === 'granted') showNotification(copy.title, { body: copy.body, tag: 'foco-fim' }); } catch { /* sem notificação: o aviso é o da tela */ }
-  try { navigator.vibrate?.(180); } catch { /* sem vibração */ }
+  try { if (isVibrateOn()) navigator.vibrate?.(180); } catch { /* sem vibração */ }
 }
 
 /** Agenda o aviso para `endAt`. Reagendar cancela o anterior. Timeout só DISPARA; a conta é do relógio. */

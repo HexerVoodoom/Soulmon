@@ -2213,10 +2213,13 @@ dominância populacional — por isso ±15%. Régua nova:
 
 ### `src/utils/focoTimer.ts`
 **Dono de:** o timer da Oficina do Foco e o registro dos "foquei" (04/10/2026). O tempo é um timestamp (`endAt`): `startPhase`, `pause`, `resume`, `remainingMs`, `settle`, `formatClock`; modos `FOCO_MODES` (25/5, 50/10), pausa longa a cada 4 focos no 25/5 (`isLongBreak`); `normalizeTimer`/`normalizeSessions` higienizam o storage; `recordSession` soma por dia (guarda `KEEP_DAYS`); `armEndNotice`/`fireEndNotice` avisam ao fim (notificação local só com permissão JÁ concedida, nunca a pede, + vibração curta).
-**Chaves:** `STORAGE_KEYS.FOCO_TIMER`, `FOCO_SESSIONS` — só do aparelho, fora do save.
+**Chaves:** `STORAGE_KEYS.FOCO_TIMER`, `FOCO_SESSIONS`, `FOCO_VIBRATE` — só do aparelho, fora do save. `isVibrateOn`/`setVibrateOn`: a vibração ao fim é LIGADA por padrão (interruptor em Configurações).
+
+### `src/utils/cadernoSave.ts`
+**Dono de:** o dado do Caderno (04/10/2026), a parte PURA (sem rede): `CadernoEntry`, tetos `MAX_CHARS` (2000) e `MAX_ENTRIES` (120), `normalizeEntries` (load do `GameState.caderno`), `addEntry`, `removeEntry`, `mergeEntries`, `formatoDoDia` e a migração da chave legada (`loadLegacyEntries`/`clearLegacy`, `soulmon-caderno`). Dado SENSÍVEL: nunca em IA/telemetria (`cadernoSensivel.contract.test.ts`). Paridade de tetos com `functions/api/save.js` (`clampCaderno`).
 
 ### `src/utils/cadernoLocal.ts`
-**Dono de:** o journaling local do Caderno (04/10/2026). PRIVADO: `STORAGE_KEYS.CADERNO`, fora do save em nuvem, sem rede. `normalizeEntries` (teto de `MAX_CHARS`/`MAX_ENTRIES`, descarta lixo), `addEntry`, `removeEntry`, `clearAll`, `formatoDoDia` (sugestão determinística), `sinaisDeSofrimento` (reexporta `needsBridge`).
+**Dono de:** a ponte da folha com o aparelho: reexporta `cadernoSave` e `sinaisDeSofrimento` (= `needsBridge` do chat, local, só para a linha de apoio). Separado para o `App` não puxar o léxico de crise ao chunk de entrada.
 
 ### `src/data/focoTecnicas.ts`
 **Dono de:** o catálogo das 7 técnicas da Oficina do Foco (Pomodoro, blocos 50/10, se-então, esvaziar a cabeça, regra dos 2 minutos, Eisenhower, o sapo primeiro), cada uma com ícone, linha, explicação PT/EN, fonte e nível de evidência (`forte`/`moderada`/`fraca`).

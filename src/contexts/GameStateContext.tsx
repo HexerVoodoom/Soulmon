@@ -51,6 +51,7 @@ import {
 } from '../utils/safeStorage';
 import { toast } from 'sonner';
 import { onboardingProfileFrom } from '../utils/catalogOnboarding';
+import { normalizeEntries, type CadernoEntry } from '../utils/cadernoSave';
 import { sanitizeSoulTestAnswers } from '../utils/soulTestAnswers';
 import type { Answers } from '../utils/soulProfile/personality/types';
 
@@ -453,6 +454,12 @@ export interface GameState {
    *  sistema do núcleo lê este campo** (meta, HP, `perfectDays`, evolução,
    *  Vínculo, missões, Bits, Emblemas) — há contrato. Leitura: `?? CROSSINGS_EMPTY`. */
   crossings?: CrossingsState;
+  /** 📓 O CADERNO (04/10/2026, decisão do dono: vai para o save na nuvem do titular). As anotações de
+   *  journaling — texto livre, até 120 entradas de 2000 caracteres. ⚠️ **DADO SENSÍVEL**: nunca entra
+   *  em payload de IA/chat, telemetria, métricas, perfil público ou guilda (contrato
+   *  `cadernoSensivel.contract.test.ts`); entra na exportação e some com a exclusão da conta. Nada
+   *  rende (sem Bits/XP/selo). Dono: `utils/cadernoSave.ts`. Leitura: `?? []`. */
+  caderno?: CadernoEntry[];
   /** Dias completos REAIS (virada). ⚠️ Desde a decisão #41/#60 (22/09/2026) o
    *  🌀 Glitchtama NÃO entra aqui — é ele que `utils/achievements.ts` lê. */
   totalPerfectDays?: number;
@@ -1267,6 +1274,8 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         refugeInvite: sanitizeRefugeInvite(loadedState.refugeInvite),
         // Travessias: lixo é descartado pelo dono (`normalizeCrossings`), nunca derruba o load.
         crossings: normalizeCrossings(loadedState.crossings),
+        // Caderno: lixo é descartado, teto de 120 × 2000 (`normalizeEntries`); nunca derruba o load.
+        caderno: normalizeEntries(loadedState.caderno),
         totalPerfectDays: num(loadedState.totalPerfectDays, 0),
         // #41/#60: save anterior à decisão não tem o campo, e o vitalício antigo
         // JÁ somava os 🌀 — herdar `totalPerfectDays` é o que impede a missão de

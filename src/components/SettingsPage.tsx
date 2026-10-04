@@ -6,6 +6,7 @@ import { Icon } from './ui/Icon';
 import { InfoTip } from './ui/InfoTip';
 import { Language, useTranslation, getLanguageName } from '../utils/i18n';
 import { readFlag, readLocal, writeFlag, writeLocal } from '../utils/safeStorage';
+import { isVibrateOn, setVibrateOn } from '../utils/focoTimer';
 import { AccountSection } from './AccountSection';
 import { AccountDataSection } from './AccountDataSection';
 import { InstallPrompt } from './InstallPrompt';
@@ -106,6 +107,24 @@ function Group({ title, children, titleAside, open, onOpenChange }: {
  * O padrão (ligado) NÃO é decidido aqui — `isTelemetryEnabled()` é a única
  * fonte, e trocar o padrão é uma linha lá.
  */
+/** A vibração curta ao fim do foco (Oficina do Foco, 04/10/2026): ligada por padrão, só do aparelho. */
+function FocoVibrateRow({ language }: { language: Language }) {
+  const isPt = language === 'pt-BR';
+  const [on, setOn] = useState(() => isVibrateOn());
+  return (
+    <SwitchRow
+      checked={on}
+      onToggle={() => { const n = !on; setOn(n); setVibrateOn(n); }}
+      label={isPt ? 'Vibrar ao fim do foco' : 'Vibrate when focus ends'}
+      language={language}
+      infoLabel={isPt ? 'Sobre a vibração do foco' : 'About the focus vibration'}
+      info={isPt
+        ? 'Uma vibração curta quando o tempo do timer da Oficina do Foco acaba, se o seu aparelho vibra. Vale só neste aparelho.'
+        : 'A short buzz when the Focus Workshop timer ends, if your device can vibrate. Applies to this device only.'}
+    />
+  );
+}
+
 function TelemetrySection({ language }: { language: Language }) {
   const isPt = language === 'pt-BR';
   const copy = telemetryConsentCopy(isPt ? 'pt-BR' : 'en-US');
@@ -301,6 +320,7 @@ export function SettingsPage({
       >
         <AccountDataSection language={language} />
         <TelemetrySection language={language} />
+        <FocoVibrateRow language={language} />
         {onToggleShowInPublicList && (
           <SwitchRow
             checked={showInPublicList}

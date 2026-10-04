@@ -6,15 +6,16 @@ import { SupportNote } from '../refugio/SupportNote';
 import { sheetCard, sheetCardList } from '../nav/sheetKit';
 import type { Language } from '../../utils/i18n';
 import {
-  CADERNO_FORMATOS, MAX_CHARS, addEntry, clearAll, formatoDoDia, loadEntries, removeEntry, saveEntries,
-  sinaisDeSofrimento, type CadernoFormato,
+  CADERNO_FORMATOS, MAX_CHARS, addEntry, formatoDoDia, removeEntry, sinaisDeSofrimento,
+  type CadernoEntry, type CadernoFormato,
 } from '../../utils/cadernoLocal';
 
 /**
  * A FOLHA DO CADERNO (04/10/2026, `docs/PLANO-OFICINA-FOCO.md` §3) — a missão de journaling.
  *
- * PRIVADA: o texto fica só neste aparelho (`utils/cadernoLocal.ts`), nunca vai a servidor, IA
- * ou chat, e se apaga por entrada ou por inteiro. Nada aqui conta, pontua ou lembra: sem
+ * SENSÍVEL: o texto mora em `GameState.caderno` (save na nuvem do próprio titular, decisão do dono
+ * de 04/10/2026), nunca vai a IA, chat, telemetria ou outras pessoas, e se apaga por entrada ou
+ * por inteiro. A folha escreve por funções PURAS de `utils/cadernoSave` entregues ao `App`. Nada aqui conta, pontua ou lembra: sem
  * sequência, sem total, sem "hoje você ainda não escreveu". O formato do dia é só uma
  * sugestão; a pessoa troca. Se o rascunho sugerir sofrimento (o léxico do chat, calculado
  * aqui no aparelho), aparece a linha de apoio — sem bloquear nada.
@@ -44,14 +45,17 @@ const areaStyle: CSSProperties = {
   fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-md)', lineHeight: 'var(--sm2-leading-body)',
 };
 
-export function CadernoSheet({ language, todayKey }: { language: Language; todayKey?: string }) {
+export function CadernoSheet({ language, todayKey, entries, onChange }: {
+  language: Language; todayKey?: string;
+  entries: CadernoEntry[];
+  onChange: (f: (c: CadernoEntry[]) => CadernoEntry[]) => void;
+}) {
   const isPt = language === 'pt-BR';
   const day = todayKey ?? fallbackDay();
   const [formato, setFormato] = useState<CadernoFormato>(() => formatoDoDia(day));
   const [linhas, setLinhas] = useState(['', '', '']);
   const [texto, setTexto] = useState('');
-  const [entries, setEntries] = useState(() => loadEntries());
-  const [aviso, setAviso] = useState<'ok' | 'erro' | null>(null);
+  const [aviso, setAviso] = useState<'ok' | null>(null);
   const [confirmaApagar, setConfirmaApagar] = useState(false);
   const [sinalSalvo, setSinalSalvo] = useState(false);
 
@@ -62,13 +66,13 @@ export function CadernoSheet({ language, todayKey }: { language: Language; today
   const mudou = () => { setAviso(null); setSinalSalvo(false); };
   const guardar = () => {
     if (!rascunho.trim()) return;
-    const next = addEntry(entries, day, formato, rascunho, Date.now());
-    if (next === entries || !saveEntries(next)) { setAviso('erro'); return; }
-    setEntries(next); setSinalSalvo(sofrimento);
+    const at = Date.now(), texto0 = rascunho;
+    onChange(c => addEntry(c, day, formato, texto0, at));
+    setSinalSalvo(sofrimento);
     setLinhas(['', '', '']); setTexto(''); setAviso('ok');
   };
-  const apagar = (id: string) => { const next = removeEntry(entries, id); setEntries(next); saveEntries(next); };
-  const apagarTudo = () => { clearAll(); setEntries([]); setConfirmaApagar(false); setAviso(null); };
+  const apagar = (id: string) => onChange(c => removeEntry(c, id));
+  const apagarTudo = () => { onChange(() => []); setConfirmaApagar(false); setAviso(null); };
 
   return (
     <div data-caderno style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -76,8 +80,8 @@ export function CadernoSheet({ language, todayKey }: { language: Language; today
         <p style={{ ...sectionHead, flex: 1 }}>{isPt ? 'Escrever hoje' : 'Write today'}</p>
         <InfoTip language={language} align="right" label={isPt ? 'Onde fica o que você escreve' : 'Where your writing lives'}>
           {isPt
-            ? 'O que você escreve aqui fica só neste aparelho. Não vai para o servidor, nem para a IA, nem para o chat, e não entra no seu save: quem usar outro aparelho ou limpar o navegador não o leva junto. Você apaga uma entrada ou tudo, quando quiser. Nada aqui conta, pontua ou lembra. Escrever sobre algo difícil pode remexer coisas: pare quando quiser. Isto não substitui ajuda profissional.'
-            : 'What you write here stays on this device only. It does not go to the server, the AI or the chat, and it is not part of your save: switching devices or clearing the browser leaves it behind. You can delete one entry or everything, any time. Nothing here counts, scores or reminds. Writing about something hard can stir things up: stop whenever you like. This does not replace professional help.'}
+            ? 'O que você escreve aqui fica no seu save, na nuvem, só seu. Nenhuma IA lê, o chat não vê e outras pessoas não têm acesso. Você apaga uma entrada ou tudo, quando quiser, e apagar a conta apaga o Caderno. Nada aqui conta, pontua ou lembra. Escrever sobre algo difícil pode remexer coisas: pare quando quiser. Isto não substitui ajuda profissional.'
+            : 'What you write here lives in your save, in the cloud, yours alone. No AI reads it, the chat cannot see it and other people have no access. You can delete one entry or everything any time, and deleting your account deletes the Journal. Nothing here counts, scores or reminds. Writing about something hard can stir things up: stop whenever you like. This does not replace professional help.'}
         </InfoTip>
       </div>
 
@@ -110,12 +114,7 @@ export function CadernoSheet({ language, todayKey }: { language: Language; today
         <button type="button" data-caderno-guardar disabled={!rascunho.trim()} onClick={guardar} style={sm2Button('primary', !rascunho.trim())}>
           {isPt ? 'Guardar' : 'Save'}
         </button>
-        {aviso === 'ok' && <p role="status" data-caderno-ok style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Guardado neste aparelho.' : 'Saved on this device.'}</p>}
-        {aviso === 'erro' && (
-          <p role="alert" data-caderno-erro style={{ ...sm2Hint, margin: 0, color: 'var(--sm2-gold-ink)' }}>
-            {isPt ? 'Não deu para guardar: o aparelho está sem espaço ou bloqueou o armazenamento. O texto continua aqui.' : 'Could not save: the device is out of space or blocked storage. Your text is still here.'}
-          </p>
-        )}
+        {aviso === 'ok' && <p role="status" data-caderno-ok style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Guardado no seu save.' : 'Saved to your save.'}</p>}
       </div>
 
       {mostraApoio && (

@@ -147,8 +147,12 @@ export const STORAGE_KEYS = {
   /** OFICINA DO FOCO — os "foquei" dos últimos dias, por dia (contagem + minutos). Sem total
    *  público, sem sequência. Aparelho, não save. Dono: `utils/focoTimer.ts`. */
   FOCO_SESSIONS: 'soulmon-foco-sessions',
-  /** CADERNO (04/10/2026) — o journaling. **PRIVADO: texto livre da pessoa, só neste aparelho,
-   *  fora do save em nuvem, nunca enviado a servidor/IA/chat.** Dono: `utils/cadernoLocal.ts`. */
+  /** Preferência da OFICINA DO FOCO: vibração curta ao fim. LIGADA por padrão (decisão do dono,
+   *  04/10/2026): só `'false'` desliga. Interruptor em Configurações › Seus dados. */
+  FOCO_VIBRATE: 'soulmon-foco-vibrate',
+  /** CADERNO — chave LEGADA (04/10/2026, 1ª versão: só no aparelho). O Caderno agora mora em
+   *  `GameState.caderno` (save na nuvem do titular); esta chave só é LIDA para migrar as
+   *  anotações antigas para o save uma vez e é apagada em seguida. Dono: `utils/cadernoLocal.ts`. */
   CADERNO: 'soulmon-caderno',
 } as const;
 

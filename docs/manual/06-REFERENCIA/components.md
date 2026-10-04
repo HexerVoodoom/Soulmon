@@ -292,8 +292,8 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Exports:** `OficinaSheet({ language, todayKey? })`. O relógio relê `Date.now()` (`useNow`: 1 s + `visibilitychange`); a regra mora em `utils/focoTimer`. Sem Bits/XP, sem placar: só "Hoje: N focos" local.
 
 ### `src/components/play/CadernoSheet.tsx`
-**Dono de:** a folha do Caderno (04/10/2026): a missão de journaling com quatro formatos (3 coisas boas, gratidão, o que aprendi, escrita livre), lista das anotações com apagar uma / apagar tudo (confirmado) e a linha de apoio (`SupportNote`) quando o rascunho casa com o léxico de sofrimento (`needsBridge`). Privado: só `localStorage` (`utils/cadernoLocal`).
-**Exports:** `CadernoSheet({ language, todayKey? })`.
+**Dono de:** a folha do Caderno (04/10/2026): a missão de journaling com quatro formatos (3 coisas boas, gratidão, o que aprendi, escrita livre), lista das anotações com apagar uma / apagar tudo (confirmado) e a linha de apoio (`SupportNote`) quando o rascunho casa com o léxico de sofrimento (`needsBridge`). Sensível: as entradas vêm do save (`GameState.caderno`) e a folha escreve por funções puras de `utils/cadernoSave` entregues ao `App` (`handleCaderno`).
+**Exports:** `CadernoSheet({ language, todayKey?, entries, onChange(f) })`.
 
 ### `src/components/play/MissionMark.tsx`
 **Dono de:** o marcador de missão à la World of Warcraft (04/10/2026): "!" (`exclamation`, tom gold) = missões do dia disponíveis, "?" (`question`, tom primary) = missão escolhida em andamento. Glifos autorais pelados (sem box), parados, com `label` PT/EN.

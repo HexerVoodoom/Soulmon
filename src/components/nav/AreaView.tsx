@@ -18,6 +18,7 @@ import type { SalaoGame, MenteGame, RefugioGame } from '../play/PlaySheets';
 import { REVIEW_EMPTY, dueCards, type ReviewState } from '../../utils/mente/revisao';
 import { CROSSINGS_EMPTY, type CrossingsState } from '../../types/travessias';
 import { missionMark } from '../../utils/travessiasSave';
+import type { CadernoEntry } from '../../utils/cadernoSave';
 
 /**
  * UMA ÁREA DO MAPA, INTEIRA (minimal-ui F4 molde + F5 conteúdo) — a cena
@@ -125,6 +126,11 @@ export interface AreaViewProps {
   play: PlayHandlers;
   /** 🧭 Passeio + Travessias (30/09/2026): o estado do save e o único caminho de
    *  escrita — uma função PURA de `utils/travessias` aplicada sobre `prev` no `App`. */
+  /** 📓 Caderno (04/10/2026): as anotações (do save) e o único caminho de escrita. */
+  caderno?: {
+    entries: CadernoEntry[];
+    onChange: (f: (c: CadernoEntry[]) => CadernoEntry[]) => void;
+  };
   passeio?: {
     crossings: CrossingsState;
     onChange: (f: (c: CrossingsState) => CrossingsState) => void;
@@ -313,7 +319,7 @@ export function AreaView(props: AreaViewProps) {
               />
             )}
             {open?.id === 'oficina' && <OficinaSheet language={language} todayKey={play.todayKey} />}
-            {open?.id === 'caderno' && <CadernoSheet language={language} todayKey={play.todayKey} />}
+            {open?.id === 'caderno' && <CadernoSheet language={language} todayKey={play.todayKey} entries={props.caderno?.entries ?? []} onChange={props.caderno?.onChange ?? (() => {})} />}
             {open?.id === 'masmorra' && <MasmorraSheet language={language} bitsToday={play.minigameBitsToday} onStart={() => start('masmorra')} />}
             {open?.id === 'salao' && <SalaoSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} />}
             {open?.id === 'mente' && <MenteSheet language={language} bitsToday={play.minigameBitsToday} reviewDue={dueCards(review, todayKey).length} onStart={start} />}

@@ -1731,10 +1731,16 @@ economia** (sem Bits, XP, Emblema, Vínculo, `perfectDays`); nada vai ao save.
    LOCAL do dia (sem total público, sem sequência, sem placar, 14 dias).
 3. **Catálogo de 7 técnicas** com fonte e nível de evidência dito no `InfoTip` (forte: se-então; moderada: Pomodoro,
    esvaziar a cabeça; fraca: blocos 50/10 e 90/20, 2 minutos, Eisenhower, o sapo). A copy descreve, nunca promete.
-4. **Caderno privado:** texto só em `localStorage` (`soulmon-caderno`), fora do save, sem rede, apagável por entrada e
-   por inteiro; sem sequência/total/lembrete; linha de apoio (CVV 188 / findahelpline) se o rascunho casa com o léxico de
-   sofrimento do chat, calculado no aparelho. `public/privacidade.html` NÃO foi alterado (não sai do aparelho; mexer
-   exigiria subir `PRIVACY_VERSION` e re-pedir consentimento).
+4. **Caderno sensível, NO SAVE NA NUVEM do titular** (decisão do dono, 04/10/2026 — reverte a 1ª versão,
+   que o deixava só no aparelho): `GameState.caderno` (até 120 entradas × 2000 caracteres, sanitizado no load
+   e clampado em `functions/api/save.js`; 120 × 2000 cabe folgado nos 5 MB). Migração única do
+   `localStorage` (`soulmon-caderno`) para o save, que apaga a chave. **Nunca** entra em payload de IA/chat,
+   telemetria, métricas, perfil público ou guilda (contrato `cadernoSensivel.contract.test.ts`); entra na
+   exportação e some com a exclusão da conta (o save inteiro é exportado e apagado). Declarado em
+   `public/privacidade.html` §2 (PT e EN), `PRIVACY_VERSION` = `2026-10-04` (re-pede ciência dos termos).
+   Sem Bits/XP/selo/hábito. Linha de apoio se o texto casa com o léxico de sofrimento, no aparelho.
+5. **Vibração ao fim do foco: ligada por padrão**, com interruptor em Configurações › Seus dados
+   (`soulmon-foco-vibrate`, só do aparelho).
 
 **Alternativas que perderam:**
 
@@ -1742,7 +1748,7 @@ economia** (sem Bits, XP, Emblema, Vínculo, `perfectDays`); nada vai ao save.
 |---|---|
 | Bits/XP por sessão de foco ou por entrada do Caderno | Farmável (foco vazio, texto vazio); veta a economia — e premia o app, não a vida |
 | Sequência de dias de foco ou de escrita | Culpa e FOMO (linha vermelha; mesma razão do §21) |
-| Caderno no save em nuvem | Texto íntimo no servidor: dado sensível, exigiria política e consentimento novos |
+| Caderno SÓ no aparelho (a 1ª versão) | Perdia as anotações ao trocar de aparelho ou limpar o navegador; o dono preferiu o save na nuvem do titular, com a sensibilidade protegida (04/10/2026) |
 | Texto do Caderno enviado à IA para "devolutiva" | Quebra a promessa de privacidade e arrisca "diagnóstico" |
 | Chamar o prédio de "Diário" | Colide com o Diário de Aventuras (o álbum do pet) |
 | Um lote só para tudo (técnicas + journaling) | Duas funções sem relação; o pedido falava em prédios (plural) |
@@ -1752,9 +1758,7 @@ economia** (sem Bits, XP, Emblema, Vínculo, `perfectDays`); nada vai ao save.
 **Falsifica:** se as pessoas marcarem "Foquei" sem focar, ou o Caderno virar obrigação (queixa de culpa), tirar o
 "Hoje: N" e o formato do dia.
 
-**Perguntas conservadoras ao dono (não decididas aqui):** (1) "Caderno/Journal" serve ou prefere outro nome?
-(2) Um selo/postal por entrada, ou um "ato" de hábito? Hoje: nada. (3) Declarar o Caderno em `privacidade.html` mesmo
-sem sair do aparelho? Hoje: não. (4) Aceita perder o Caderno ao trocar de aparelho? (5) A vibração ao fim fica ligada?
+**Respondidas pelo dono em 04/10/2026:** nome "Caderno / Journal" aprovado; o Caderno não rende nada; vai ao save na nuvem; vibração ligada por padrão com interruptor; bustos provisórios Tique/Sépia ficam.
 
 ## 02/10/2026 — Torneio: menu só de ícones e faixa no título; Rhinoco vira Tuska
 
