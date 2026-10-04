@@ -35,7 +35,7 @@ export function InfoTip({
   style?: React.CSSProperties;
 }) {
   const [open, setOpen] = useState(false);
-  const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null);
+  const [pos, setPos] = useState<{ top?: number; bottom?: number; maxHeight: number; left: number; width: number } | null>(null);
   const btn = useRef<HTMLButtonElement | null>(null);
   const tip = useRef<HTMLDivElement | null>(null);
   const id = useId();
@@ -50,7 +50,12 @@ export function InfoTip({
     const width = Math.min(300, vw - margin * 2);
     const anchor = align === 'left' ? r.left : align === 'right' ? r.right - width : r.left + r.width / 2 - width / 2;
     const left = Math.max(margin, Math.min(anchor, vw - margin - width));
-    setPos({ top: r.bottom + 6, left, width });
+    // Abre embaixo; sem ~140px livres (o "?" do pé da cena de combate) e com mais espaço em cima, vira para CIMA.
+    const vh = window.innerHeight;
+    const below = vh - r.bottom - 6 - margin;
+    const above = r.top - 6 - margin;
+    if (below < 140 && above > below) setPos({ bottom: vh - r.top + 6, maxHeight: above, left, width });
+    else setPos({ top: r.bottom + 6, maxHeight: Math.max(96, below), left, width });
   }, [align]);
 
   useLayoutEffect(() => { if (open) place(); }, [open, place]);
@@ -67,12 +72,14 @@ export function InfoTip({
     const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); setOpen(false); } };
     const reflow = () => place();
     document.addEventListener('pointerdown', fora);
-    document.addEventListener('keydown', esc, true);
+    // `window` (e não `document`): na captura o `window` vem ANTES, então a dica trata o Esc primeiro
+    // e o modal em volta (que ouve o `document`) nem chega a vê-lo.
+    window.addEventListener('keydown', esc, true);
     window.addEventListener('resize', reflow);
     window.addEventListener('scroll', reflow, true);
     return () => {
       document.removeEventListener('pointerdown', fora);
-      document.removeEventListener('keydown', esc, true);
+      window.removeEventListener('keydown', esc, true);
       window.removeEventListener('resize', reflow);
       window.removeEventListener('scroll', reflow, true);
     };
@@ -105,8 +112,11 @@ export function InfoTip({
           role="note"
           data-info-tip-panel
           lang={isPt ? 'pt-BR' : 'en-US'}
+          // O painel é filho React do "?" (portal): sem isto o toque nele sobe pela ÁRVORE React
+          // até o ancestral (ex.: a `TorcidaLayer`, que o contaria como torcida).
+          onPointerDown={e => e.stopPropagation()}
           style={{
-            position: 'fixed', top: pos.top, left: pos.left, width: pos.width, zIndex: 9000,
+            position: 'fixed', top: pos.top, bottom: pos.bottom, left: pos.left, width: pos.width, maxHeight: pos.maxHeight, overflowY: 'auto', zIndex: 9000,
             boxSizing: 'border-box', padding: '10px 12px',
             border: '1px solid var(--sm2-line)', borderRadius: 'var(--sm2-radius-md)',
             backgroundColor: 'var(--sm2-surface-2)', color: 'var(--sm2-ink)',

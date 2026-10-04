@@ -153,6 +153,16 @@ export function usePveBattle(opts: PveBattleOptions): PveBattle {
   const dodgeStart = useRef(0);
   const dodgeAt = useRef<number | null>(null);
   const runId = useRef(0);
+  /** Muda a cada `reset`: temporizadores soltos (o contra-ataque) de uma luta antiga não escrevem na nova. */
+  const resetGen = useRef(0);
+  /** Relógio de LUTA da esquiva: a hora de parede menos o tempo pausado (a janela não corre com o "Sair?" aberto). */
+  const pausedAcc = useRef(0);
+  const pausedSince = useRef<number | null>(null);
+  useEffect(() => {
+    if (paused) { if (pausedSince.current === null) pausedSince.current = now(); }
+    else if (pausedSince.current !== null) { pausedAcc.current += now() - pausedSince.current; pausedSince.current = null; }
+  }, [paused]);
+  const fightClock = useCallback(() => now() - pausedAcc.current - (pausedSince.current !== null ? now() - pausedSince.current : 0), []);
 
   const setPetEnergy = (v: number) => { pE.current = v; setPetEnergyS(v); };
   const setFoeEnergy = (a: number[]) => { fE.current = a; setFoeEnergyS(a); };
@@ -168,9 +178,9 @@ export function usePveBattle(opts: PveBattleOptions): PveBattle {
 
   const swipe = useCallback((dir: -1 | 1) => {
     if (phaseRef.current !== 'dodge' || dodgeAt.current !== null) return;
-    dodgeAt.current = now() - dodgeStart.current;
+    dodgeAt.current = fightClock() - dodgeStart.current;
     setPetDodge({ id: ++seq.current, dir });
-  }, []);
+  }, [fightClock]);
 
   const resolveRing = useCallback((grade: RingGrade) => {
     const r = ringResolver.current;
@@ -179,6 +189,7 @@ export function usePveBattle(opts: PveBattleOptions): PveBattle {
   }, []);
 
   const reset = useCallback((o: { foes: number; keepPet?: boolean }) => {
+    resetGen.current++;
     setFoeEnergy(Array.from({ length: Math.max(1, o.foes) }, () => 0));
     if (!o.keepPet) { setPetEnergy(0); setMeter(0); }
     setAction(null); setHits([]); setRing(null); setDodge(null); setPetDodge(null); setCharging(false);
@@ -269,7 +280,7 @@ export function usePveBattle(opts: PveBattleOptions): PveBattle {
             const fe2 = fE.current.slice(); fe2[foe] = spendEnergy(fe2[foe] ?? 0); setFoeEnergy(fe2);
             const spec = dodgeSpec(seed, nDodge.current++);
             dodgeAt.current = null;
-            dodgeStart.current = now();
+            dodgeStart.current = fightClock();
             setDodge({ spec, key: ++seq.current });
             setPhaseBoth('dodge');
             setAction({
@@ -303,7 +314,12 @@ export function usePveBattle(opts: PveBattleOptions): PveBattle {
           }
           if (fr.counter) {
             const c = fr.counter;
-            setTimeout(() => setHits(h => [...h, { id: ++seq.current, side: 'foe', foe: c.foe, value: c.value }]), 450);
+            const gen = resetGen.current;
+            const ct = setTimeout(() => {
+              timers.delete(ct);
+              if (alive() && gen === resetGen.current) setHits(h => [...h, { id: ++seq.current, side: 'foe', foe: c.foe, value: c.value }]);
+            }, 450);
+            timers.add(ct);
           }
           if (fr.defeat) {
             if (!(await wait(END_BEAT_MS))) return;

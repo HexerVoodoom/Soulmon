@@ -12,7 +12,12 @@ import { TypewriterText } from '../ui/TypewriterText';
  * folha); terminada a fala ele volta a ser transparente ao toque, como antes
  * (a zona do NPC é `pointer-events: none` — toque ali fecha pelo backdrop).
  */
-export function NpcSpeech({ name, line }: { name: string; line: string }) {
+/** A fala é dita UMA vez por texto: trocar `line` (idioma, outro lote) recomeça limpo — `done`/`skip` do texto antigo não valem para o novo. */
+export function NpcSpeech(p: { name: string; line: string }) {
+  return <NpcSpeechInner key={`${p.name}|${p.line}`} {...p} />;
+}
+
+function NpcSpeechInner({ name, line }: { name: string; line: string }) {
   const [done, setDone] = useState(false);
   const [skip, setSkip] = useState(false);
   return (

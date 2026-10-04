@@ -119,6 +119,13 @@ function focusables(root: HTMLElement): HTMLElement[] {
 /** Diálogos abertos AGORA. A guarda de scroll deixa passar o que nasce neles. */
 const openDialogs = new Set<HTMLElement>();
 
+/**
+ * Pilha dos diálogos abertos, do mais antigo ao do TOPO. Só o do topo trata o teclado:
+ * todos ouvem o `document` (captura) e `stopPropagation` não impede os outros ouvintes do
+ * MESMO nó — sem isto o Esc fechava a pilha inteira e o Tab do de baixo roubava o foco do de cima.
+ */
+const dialogStack: HTMLElement[] = [];
+
 /** Quantos diálogos seguram a trava de scroll. Nunca fica negativo. */
 let lockCount = 0;
 
@@ -255,6 +262,7 @@ export function useDialogA11y<T extends HTMLElement = HTMLElement>(
     // (5) O fundo para de existir: sem rolagem, sem leitor de tela. Antes do
     // foco inicial — inertizar depois roubaria o foco que acabamos de dar.
     openDialogs.add(node);
+    dialogStack.push(node);
     const releaseScroll = lockBackground();
     const releaseInert = hideOthers(node);
 
@@ -270,6 +278,7 @@ export function useDialogA11y<T extends HTMLElement = HTMLElement>(
     }
 
     const onKeyDown = (e: KeyboardEvent) => {
+      if (dialogStack[dialogStack.length - 1] !== node) return; // não é o do topo
       if (e.key === 'Escape') {
         e.stopPropagation();
         closeRef.current();
@@ -314,6 +323,8 @@ export function useDialogA11y<T extends HTMLElement = HTMLElement>(
       // (5') Solta o fundo. Primeiro o inerte, depois o scroll: devolver o foco
       // a um elemento ainda inerte é o jeito de perder o foco para o `<body>`.
       openDialogs.delete(node);
+      const at = dialogStack.lastIndexOf(node);
+      if (at >= 0) dialogStack.splice(at, 1);
       releaseInert();
       releaseScroll();
       // (4) Devolução do foco. `isConnected` porque o elemento que abriu pode

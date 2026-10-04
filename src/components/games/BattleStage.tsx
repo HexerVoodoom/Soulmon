@@ -390,8 +390,11 @@ export function BattleStage({
   const layout = stageLayout(w, h, foes.length);
   const reducedRef = useRef(prefersReducedMotion());
   const reduced = reducedRef.current;
-  const [confirming, setConfirming] = useState(false);
+  const [confirmingRaw, setConfirming] = useState(false);
+  // Sem `exitConfirm` (a luta acabou com a confirmação aberta) o diálogo some: a pausa tem que sumir junto.
+  const confirming = confirmingRaw && !!exitConfirm;
 
+  useEffect(() => { if (!exitConfirm) setConfirming(false); }, [exitConfirm]);
   useEffect(() => { onPauseChange?.(confirming); }, [confirming, onPauseChange]);
 
   const tryClose = () => {
@@ -516,6 +519,7 @@ export function BattleStage({
               spec={ring.spec}
               x={c.x} y={c.y} size={s.size}
               onGrade={onRingGrade}
+              paused={confirming}
               label={mechLabels?.strike ?? 'Strike'}
             />
           );
