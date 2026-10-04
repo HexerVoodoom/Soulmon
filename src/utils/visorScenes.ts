@@ -30,6 +30,8 @@ import fumaca from '../assets/soulmon/fx/fx-fumaca.png';
 
 /** Altura nativa (CSS px) da faixa de mini-visor. */
 export const VISOR_STRIP_H = 160;
+/** Largura nativa (CSS px) da faixa de mini-visor (o vidro tem a metade: 348). */
+export const VISOR_STRIP_W = 696;
 
 /** Faixa em tamanho nativo, ancorada embaixo; `fallback` pinta o que a faixa não cobre. */
 export function visorStrip(src: string, fallback = 'var(--sm2-viewport-bg)'): string {
@@ -47,8 +49,22 @@ export const VISOR_ART = {
   visorFeira,
 } as const;
 
-/** Ateliê da Mente (Eco, Revisão): centro livre, pedras nas prateleiras. */
-export const ATELIE_SCENE = visorStrip(visorAtelie);
+/** Cor média da primeira linha de `visor-atelie` (o teto de raízes): o degradê de cima parte dela. */
+const ATELIE_TOPO = '#214041';
+
+/**
+ * Ateliê da Mente (Eco, Revisão): centro livre, pedras nas prateleiras.
+ *
+ * J4 (rodada 7, 04/10/2026): o fundo do Eco "estava ruim" porque a faixa 696×160 entrava em
+ * tamanho NATIVO num vidro de 348 — só o MIOLO vazio da faixa aparecia (um retângulo chapado
+ * escuro), e as prateleiras com pedras, as raízes e os cristais, que enquadram o pet, ficavam
+ * cortados fora. Agora a faixa INTEIRA entra a 0,5× (696→348 × 160→80): como a arte é de pixel
+ * 4×, isso dá exatamente 2×2 px por pixel de arte — nítido, sem fração. O que sobra de altura
+ * vira o degradê da cor do teto da arte (mesma receita do Refúgio).
+ */
+export const ATELIE_SCENE =
+  `url(${visorAtelie}) center bottom/${VISOR_STRIP_W / 2}px ${VISOR_STRIP_H / 2}px no-repeat, `
+  + `linear-gradient(180deg, var(--sm2-viewport-bg) 0, ${ATELIE_TOPO} calc(100% - ${VISOR_STRIP_H / 2}px), ${ATELIE_TOPO} 100%)`;
 
 /** Refúgio (Bolhas, Respiração): lago calmo, centro livre. Acima da faixa, o degradê da cor do topo dela. */
 export const REFUGIO_SCENE = visorStrip(

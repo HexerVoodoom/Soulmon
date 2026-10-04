@@ -14,6 +14,7 @@ beforeEach(() => {
   vi.useFakeTimers();
   window.matchMedia = ((q: string) => ({ matches: false, media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {}, dispatchEvent: () => false })) as unknown as typeof window.matchMedia;
 });
+beforeEach(() => { try { localStorage.clear(); } catch { /* jsdom */ } });
 afterEach(() => { cleanup(); vi.useRealTimers(); });
 
 describe('NpcSpeech', () => {
@@ -49,9 +50,33 @@ describe('AreaSheet › NPC do Mercado', () => {
     expect(container.querySelector('[data-typewriter-sr]')!.textContent).toBe(voice.line);
     act(() => { vi.advanceTimersByTime(30 * voice.line.length + 100); });
     expect(container.querySelector('[data-typewriter-done]')!.getAttribute('data-typewriter-done')).toBe('true');
-    // fechar e reabrir: nova abertura, a fala recomeça
+    // fechar e reabrir: o NPC JÁ falou (J2, rodada 7) — a fala aparece inteira, sem digitar
     rerender(<AreaSheet {...props} open={false} />);
     rerender(<AreaSheet {...props} open />);
+    expect(container.querySelector('[data-typewriter-shown]')!.textContent).toBe(voice.line);
+    expect(container.querySelector('[data-typewriter-done]')!.getAttribute('data-typewriter-done')).toBe('true');
+  });
+});
+
+describe('NpcSpeech › J2 — só a primeira vez que o NPC fala', () => {
+  it('com `speakerKey`: 1ª vez digita, 2ª (outra montagem) mostra tudo; outro NPC digita; sem chave sempre digita', () => {
+    const a = render(<NpcSpeech name="Lamela" line="Fala do dia." speakerKey="mercado:itens" />);
+    expect(a.container.querySelector('[data-typewriter-shown]')!.textContent).toBe('');
+    a.unmount();
+    const b = render(<NpcSpeech name="Lamela" line="Fala do dia." speakerKey="mercado:itens" />);
+    expect(b.container.querySelector('[data-typewriter-shown]')!.textContent).toBe('Fala do dia.');
+    b.unmount();
+    const c = render(<NpcSpeech name="Outro" line="Fala do dia." speakerKey="arena:feira" />);
+    expect(c.container.querySelector('[data-typewriter-shown]')!.textContent).toBe('');
+    c.unmount();
+    const d = render(<NpcSpeech name="Lamela" line="Fala do dia." />);
+    expect(d.container.querySelector('[data-typewriter-shown]')!.textContent).toBe('');
+    expect(JSON.parse(localStorage.getItem('soulmon-npc-fala-vista')!)).toEqual(['mercado:itens', 'arena:feira']);
+  });
+
+  it('storage corrompido não quebra: trata como "ainda não falou"', () => {
+    localStorage.setItem('soulmon-npc-fala-vista', '{lixo');
+    const { container } = render(<NpcSpeech name="L" line="Oi." speakerKey="mercado:itens" />);
     expect(container.querySelector('[data-typewriter-shown]')!.textContent).toBe('');
   });
 });

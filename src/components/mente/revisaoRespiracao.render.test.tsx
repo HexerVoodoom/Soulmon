@@ -154,6 +154,36 @@ describe('RespiracaoGame', () => {
     expect(container.textContent).not.toMatch(/Bits|pontos|score/i);
   });
 
+  it('J6: segurar o botão ENCHE da esquerda para a direita na inspiração e ESVAZIA na expiração; soltar zera', () => {
+    vi.useFakeTimers();
+    const { container } = renderWithCss(<RespiracaoGame language="en-US" evolutionStage="rookie" onExit={() => {}} />);
+    fireEvent.click(q(container, '[data-respiracao-start]'));
+    const hold = q(container, '[data-respiracao-hold]');
+    const fill = () => q<HTMLElement>(container, '[data-respiracao-hold-fill]').style.width;
+    expect(hold.textContent).toBe('Hold while you breathe (optional)');
+    expect(fill()).toBe('0%'); // sem toque, vazio
+    fireEvent.pointerDown(hold);
+    act(() => { vi.advanceTimersByTime(2000); }); // calma: inspira 4 s → ~50%
+    const meio = parseInt(fill(), 10);
+    expect(meio).toBeGreaterThan(35); expect(meio).toBeLessThan(65);
+    act(() => { vi.advanceTimersByTime(2000); }); // fim da inspiração → ~100%
+    expect(parseInt(fill(), 10)).toBeGreaterThanOrEqual(95);
+    act(() => { vi.advanceTimersByTime(3000); }); // meio da expiração (6 s) → ~50%
+    const sai = parseInt(fill(), 10);
+    expect(sai).toBeGreaterThan(35); expect(sai).toBeLessThan(65);
+    fireEvent.pointerUp(hold);
+    expect(fill()).toBe('0%'); // soltou: para
+    act(() => { vi.advanceTimersByTime(1000); });
+    expect(fill()).toBe('0%');
+  });
+
+  it('J6: o rótulo do botão em PT-BR', () => {
+    vi.useFakeTimers();
+    const { container } = renderWithCss(<RespiracaoGame language="pt-BR" evolutionStage="rookie" onExit={() => {}} />);
+    fireEvent.click(q(container, '[data-respiracao-start]'));
+    expect(q(container, '[data-respiracao-hold]').textContent).toBe('Segure enquanto respira (opcional)');
+  });
+
   it('não expõe onEarnPoints nem importa som (guard de fonte)', () => {
     const src = readFileSync(resolve(__dirname, '../refugio/RespiracaoGame.tsx'), 'utf8');
     expect(src).not.toMatch(/onEarnPoints|EarningGameProps/);

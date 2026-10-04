@@ -368,6 +368,7 @@ de forma é `GAME_STATE`, que usa `_` e versão: `soulmon_state_v1` (era
 | `FOCO_TIMER` | `soulmon-foco-timer` | O timer da Oficina do Foco em curso (modo, fase, `endAt`). Só do aparelho, fora do save. |
 | `FOCO_SESSIONS` | `soulmon-foco-sessions` | Os "foquei" dos últimos 14 dias (contagem + minutos por dia). Aparelho, fora do save. |
 | `CADERNO` | `soulmon-caderno` | **Legada** (1ª versão do Caderno, só aparelho): lida UMA vez para migrar as anotações para `GameState.caderno` e apagada em seguida. |
+| `NPC_FALA_VISTA` | `soulmon-npc-fala-vista` | Lista (JSON, até 64) de `area:lote` cujo NPC já digitou a fala uma vez neste aparelho (rodada 7 · J2): depois a fala aparece inteira. Conveniência de aparelho, fora do save. | `NpcSpeech.tsx` |
 | `FOCO_VIBRATE` | `soulmon-foco-vibrate` | A vibração ao fim do foco; ligada por padrão (só `'false'` desliga). Aparelho. |
 | `FCM_TOKEN` | `soulmon-fcm-token` | O token FCM deste aparelho. | `notifications.ts` |
 | `LAST_CLOUD_SYNC` | `soulmon-last-cloud-sync` | ISO do último save confirmado PELO SERVIDOR. | `cloudSave.ts`, `SettingsPage.tsx` |

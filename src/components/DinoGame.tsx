@@ -5,7 +5,7 @@ import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readNumber, writeLocal } from '../utils/safeStorage';
 import type { Language } from '../utils/i18n';
 import { sm2Button } from './form/FormKit';
-import { GameRoot, GameHeader, GameVisor, GAME_VISOR_W, phaseTitle, phaseLine, gameExitConfirm } from './games/GameKit';
+import { GameRoot, GameHeader, GAME_VISOR_W, phaseTitle, phaseLine, gameExitConfirm } from './games/GameKit';
 import { DINO_SCENE } from '../utils/dungeonScenes';
 import { idlePose, runPose, type PetPose } from '../utils/petBounce';
 import obstacle1 from '../assets/soulmon/dino/dino-obstacle-1.png';
@@ -86,11 +86,15 @@ const GROUND_W = 384;
 const PARALLAX_H = 128;
 const PARALLAX_W = 512;
 const PARALLAX_SPEED = 0.25;    // fração da velocidade do chão
-// O vidro: 174×96 lógicos a 2× = 348×192 (canvas `Dino`).
+// TELA CHEIA (rodada 7 · J3, 04/10/2026): o campo ocupa tudo entre o cabeçalho e o "Pular" —
+// sangra até as bordas, sem o anel do visor. O tamanho mínimo é o vidro de antes (348×192);
+// acima disso o canvas acompanha o campo (ResizeObserver) e o chão desce com ele. A física e o
+// balanceamento NÃO mudam: velocidades, pulo e caixas de colisão são em px, e a linha dos pés
+// continua 40 px acima do fundo.
 const VISOR_W = GAME_VISOR_W * 2;
-const VISOR_H = 96;
-/** Linha dos pés (pet e obstáculos): 40 acima do fundo do vidro (canvas). */
-const GROUND_Y = VISOR_H * 2 - 40;
+const STAGE_MIN_H = 192;
+/** Distância da linha dos pés ao fundo do campo (canvas `Dino`). */
+const GROUND_FROM_BOTTOM = 40;
 const DINO_X = 24, DINO_S = 64;
 
 /** Poeira dos pés: quadradinhos de 2–3 px (grade nítida), poucos, 3 cores do visor. */
@@ -150,6 +154,11 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
   const tierImgsRef = useRef<HTMLImageElement[][]>([]);
   const groundImgRef = useRef<HTMLImageElement | null>(null);
   const parallaxImgRef = useRef<HTMLImageElement | null>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  /** Tamanho do campo em px de CSS (= px do canvas, escala 1× nítida). */
+  const [stage, setStage] = useState({ w: VISOR_W, h: STAGE_MIN_H });
+  const groundYRef = useRef(STAGE_MIN_H - GROUND_FROM_BOTTOM);
+  groundYRef.current = stage.h - GROUND_FROM_BOTTOM;
   const [phase, setPhase] = useState<'ready' | 'playing' | 'over'>('ready');
   /** I3: a confirmação de sair pausa a corrida (o laço é por `dt`, retoma sem salto). */
   const [paused, setPaused] = useState(false);
@@ -158,6 +167,22 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
   const [finalScore, setFinalScore] = useState(0);
   const [earned, setEarned] = useState(0);
   const [best, setBest] = useState(() => readNumber(STORAGE_KEYS.DINO_BEST, 0));
+
+  // O campo acompanha a tela (rotação, barra do sistema); piso = o vidro de antes.
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+    const measure = () => {
+      const w = Math.max(VISOR_W, Math.round(el.clientWidth));
+      const h = Math.max(STAGE_MIN_H, Math.round(el.clientHeight));
+      setStage(p => (p.w === w && p.h === h ? p : { w, h }));
+    };
+    measure();
+    if (typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   // Nossa arte é sempre desenhada olhando pra DIREITA, que é o sentido da
   // corrida — não existe mais lista de exceções (era só de sprite emprestado).
@@ -194,13 +219,13 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       ctx.imageSmoothingEnabled = false;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const strip = (img: HTMLImageElement, off: number, y: number, w: number, h: number) => { const st = -((off % w) + w) % w; for (let x = st; x < canvas.width; x += w) ctx.drawImage(img, x, y, w, h); };
-      if (far.complete && far.naturalWidth) strip(far, s.px, GROUND_Y - PARALLAX_H, PARALLAX_W, PARALLAX_H);
+      if (far.complete && far.naturalWidth) strip(far, s.px, groundYRef.current - PARALLAX_H, PARALLAX_W, PARALLAX_H);
       for (const o of s.obstacles) {
         const img = tierImgsRef.current[o.tier]?.[o.v];
-        if (img?.complete && img.naturalWidth) ctx.drawImage(img, o.x, GROUND_Y - o.size, o.size, o.size);
+        if (img?.complete && img.naturalWidth) ctx.drawImage(img, o.x, groundYRef.current - o.size, o.size, o.size);
       }
       if (ground.complete && ground.naturalWidth) strip(ground, s.gx, canvas.height - GROUND_H, GROUND_W, GROUND_H);
-      if (pet.complete && pet.naturalWidth) drawPet(ctx, pet, GROUND_Y, 0, idlePose((performance.now() - t0) / 1000, reducedMotionNow()));
+      if (pet.complete && pet.naturalWidth) drawPet(ctx, pet, groundYRef.current, 0, idlePose((performance.now() - t0) / 1000, reducedMotionNow()));
     };
     for (const img of [pet, ground, far]) img.addEventListener('load', drawStatic);
     drawStatic();
@@ -236,7 +261,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
     const canvas = canvasRef.current!;
     const ctx = canvas.getContext('2d')!;
     ctx.imageSmoothingEnabled = false;
-    const GROUND = GROUND_Y;
+    let GROUND = groundYRef.current;
     const s = g.current;
     let raf = 0;
     let last = performance.now();
@@ -257,6 +282,8 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
     };
 
     const tick = (now: number) => {
+      GROUND = groundYRef.current; // o campo pode ter mudado de tamanho (rotação)
+      ctx.imageSmoothingEnabled = false; // redimensionar o canvas zera o contexto
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
       s.t += dt;
@@ -371,7 +398,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
   }, [phase, paused, jump, onEarnPoints, onScore, petNeedsFlip]);
 
   return (
-    <GameRoot>
+    <GameRoot style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 10px)' }}>
       <GameHeader
         title={isPt ? 'Corrida com obstáculos' : 'Obstacle Run'}
         sub={<span className="sm2-num">{isPt ? 'Recorde' : 'Best'} {best}</span>}
@@ -389,13 +416,23 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       {/* O VISOR 348×192 (D-J3): a cena `minigame-dino` em `cover` atrás, o
           `<canvas>` transparente na frente desenhando o parallax e o chão a
           1×, o pet a 64 e os obstáculos. Tocar no vidro também pula. */}
-      <GameVisor height={VISOR_H} scene={`${DINO_SCENE.bg.replace('center/cover', 'center 40%/cover')}`}>
+      <div
+        ref={stageRef}
+        data-dino-stage
+        style={{
+          position: 'relative', flex: '1 1 0', minHeight: STAGE_MIN_H, overflow: 'hidden',
+          // sangra até as bordas (o `GameRoot` tem 16 px de gutter lateral)
+          margin: '0 -16px',
+          background: `${DINO_SCENE.bg.replace('center/cover', 'center 40%/cover')}`,
+          imageRendering: 'auto',
+        }}
+      >
         <canvas
           ref={canvasRef}
-          width={VISOR_W}
-          height={VISOR_H * 2}
+          width={stage.w}
+          height={stage.h}
           onPointerDown={jump}
-          style={{ display: 'block', width: VISOR_W, height: VISOR_H * 2, touchAction: 'manipulation', imageRendering: 'pixelated' }}
+          style={{ display: 'block', width: stage.w, height: stage.h, touchAction: 'manipulation', imageRendering: 'pixelated' }}
         />
         {/* O placar é DOM, em Silkscreen 14 DENTRO do vidro, sobre a placa
             `color-mix(viewport-bg 78%)` — a voz do aparelho (D-J10 idem). */}
@@ -412,7 +449,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
         >
           <span ref={scoreElRef}>0</span>
         </span>
-      </GameVisor>
+      </div>
 
       {phase === 'ready' && (
         <>

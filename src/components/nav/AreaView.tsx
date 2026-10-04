@@ -19,6 +19,11 @@ import { REVIEW_EMPTY, dueCards, type ReviewState } from '../../utils/mente/revi
 import { CROSSINGS_EMPTY, type CrossingsState } from '../../types/travessias';
 import { missionMark } from '../../utils/travessiasSave';
 import type { CadernoEntry } from '../../utils/cadernoSave';
+import { ScreenSkeleton } from '../ui/ScreenSkeleton';
+import {
+  usePlayPrefetch, loadPlaySheets, loadDungeonGame, loadDinoGame, loadRPSGame, loadEcoGame, loadBolhasGame,
+  loadTrocaGame, loadPicrossGame, loadRevisaoGame, loadRespiracaoGame,
+} from './playPrefetch';
 
 /**
  * UMA ÁREA DO MAPA, INTEIRA (minimal-ui F4 molde + F5 conteúdo) — a cena
@@ -43,24 +48,24 @@ const DueloSheet = lazy(() => import('../arena/DueloSheet').then(m => ({ default
 const ArenaGame = lazy(() => import('../ArenaGame').then(m => ({ default: m.ArenaGame })));
 // Exploração + Jogos (F5, ex-PR #118): as folhas-porta e os minijogos de
 // sempre (os mesmos que a antiga `ActivitiesPage` abria).
-const MasmorraSheet = lazy(() => import('../play/PlaySheets').then(m => ({ default: m.MasmorraSheet })));
+const MasmorraSheet = lazy(() => loadPlaySheets().then(m => ({ default: m.MasmorraSheet })));
 // Os três prédios de Jogos (30/09/2026): Salão (livres), Ateliê da Mente e Refúgio.
-const SalaoSheet = lazy(() => import('../play/PlaySheets').then(m => ({ default: m.SalaoSheet })));
-const MenteSheet = lazy(() => import('../play/PlaySheets').then(m => ({ default: m.MenteSheet })));
-const RefugioSheet = lazy(() => import('../play/PlaySheets').then(m => ({ default: m.RefugioSheet })));
+const SalaoSheet = lazy(() => loadPlaySheets().then(m => ({ default: m.SalaoSheet })));
+const MenteSheet = lazy(() => loadPlaySheets().then(m => ({ default: m.MenteSheet })));
+const RefugioSheet = lazy(() => loadPlaySheets().then(m => ({ default: m.RefugioSheet })));
 // 🧭 O Passeio (30/09/2026): a folha carrega o catálogo das regiões — por isso lazy.
 const OficinaSheet = lazy(() => import('../play/OficinaSheet').then(m => ({ default: m.OficinaSheet })));
 const CadernoSheet = lazy(() => import('../play/CadernoSheet').then(m => ({ default: m.CadernoSheet })));
 const PasseioSheet = lazy(() => import('../play/PasseioSheet').then(m => ({ default: m.PasseioSheet })));
-const DungeonGame = lazy(() => import('../DungeonGame').then(m => ({ default: m.DungeonGame })));
-const DinoGame = lazy(() => import('../DinoGame').then(m => ({ default: m.DinoGame })));
-const RPSGame = lazy(() => import('../RPSGame').then(m => ({ default: m.RPSGame })));
-const EcoGame = lazy(() => import('../mente/EcoGame').then(m => ({ default: m.EcoGame })));
-const BolhasGame = lazy(() => import('../mente/BolhasGame').then(m => ({ default: m.BolhasGame })));
-const TrocaGame = lazy(() => import('../mente/TrocaGame').then(m => ({ default: m.TrocaGame })));
-const PicrossGame = lazy(() => import('../mente/PicrossGame').then(m => ({ default: m.PicrossGame })));
-const RevisaoGame = lazy(() => import('../mente/RevisaoGame').then(m => ({ default: m.RevisaoGame })));
-const RespiracaoGame = lazy(() => import('../refugio/RespiracaoGame').then(m => ({ default: m.RespiracaoGame })));
+const DungeonGame = lazy(() => loadDungeonGame().then(m => ({ default: m.DungeonGame })));
+const DinoGame = lazy(() => loadDinoGame().then(m => ({ default: m.DinoGame })));
+const RPSGame = lazy(() => loadRPSGame().then(m => ({ default: m.RPSGame })));
+const EcoGame = lazy(() => loadEcoGame().then(m => ({ default: m.EcoGame })));
+const BolhasGame = lazy(() => loadBolhasGame().then(m => ({ default: m.BolhasGame })));
+const TrocaGame = lazy(() => loadTrocaGame().then(m => ({ default: m.TrocaGame })));
+const PicrossGame = lazy(() => loadPicrossGame().then(m => ({ default: m.PicrossGame })));
+const RevisaoGame = lazy(() => loadRevisaoGame().then(m => ({ default: m.RevisaoGame })));
+const RespiracaoGame = lazy(() => loadRespiracaoGame().then(m => ({ default: m.RespiracaoGame })));
 
 /** Os handlers dos minijogos da Exploração e de Jogos — prontos no `App`, os
  *  MESMOS que a antiga `ActivitiesPage` repassava. Nenhuma regra nasce aqui:
@@ -187,6 +192,8 @@ export function AreaView(props: AreaViewProps) {
   // R1: qualquer camada de tela cheia (folha, jogo, duelo) avisa o `App`, que
   // esconde o topo sobre a cena — ele não pode competir com o ✕/voltar da camada.
   const layerOpen = sheet !== null || duelOpen || game !== null;
+  // J1 (rodada 7): baixa os chunks de jogar ANTES do toque (ver `playPrefetch.ts`).
+  usePlayPrefetch(area === 'exploracao' || area === 'jogos', sheet !== null);
   const { onLayerChange } = props;
   useEffect(() => {
     onLayerChange?.(layerOpen);
@@ -327,7 +334,7 @@ export function AreaView(props: AreaViewProps) {
           </Suspense>
         </AreaSheet>
         {game && (
-          <Suspense fallback={<SheetLoading language={language} />}>
+          <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" label={language === 'pt-BR' ? 'Abrindo' : 'Opening'} />}>
             {game === 'masmorra' && (
               <DungeonGame
                 evolutionStage={props.evolutionStage}

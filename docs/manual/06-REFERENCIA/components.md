@@ -1294,9 +1294,17 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 **Chamado por:** `src/components/mercado/ShopShelf.tsx` (`Bits`), `src/components/nav/MapPage.tsx` (chip de saldo).
 **Régua:** `src/components/ui/BitsIcon.render.test.tsx`, `src/components/mercado/MercadoSheets.render.test.tsx`.
 
+### `src/components/nav/playPrefetch.ts`
+**Dono de:** o prefetch dos chunks de jogar (rodada 7 · J1, 04/10/2026). Causa do "Opening…" demorado: o APK carrega o app de URL remota e cada `lazy()` só baixava no toque (cascata `PlaySheets` → jogo → `GameKit`/`BattleStage` → arte; chunks de 6–30 KB, o custo é a latência de cada ida). Os `load*` são os MESMOS `import()` que o `lazy()` do `AreaView`/`App` usa (o Vite deduplica), chamados em tempo ocioso, um por tick, com falha silenciosa.
+**Props principais:** —
+**Exports:** `loadAreaView`, `loadPlaySheets`, `loadDungeonGame`, `loadDinoGame`, `loadRPSGame`, `loadEcoGame`, `loadBolhasGame`, `loadTrocaGame`, `loadPicrossGame`, `loadRevisaoGame`, `loadRespiracaoGame`, `prefetchSequence`, `useAreaViewPrefetch`, `usePlayPrefetch`.
+**Estado/efeitos relevantes:** `requestIdleCallback` (cai para `setTimeout`); `useAreaViewPrefetch` (Home) sobe `AreaView` e `PlaySheets`; `usePlayPrefetch` (áreas Exploração/Jogos) sobe a folha e, com uma folha aberta, os nove jogos.
+**Chamado por:** `src/App.tsx`, `src/components/nav/AreaView.tsx`.
+**Régua:** `src/components/nav/playPrefetch.test.tsx`.
+
 ### `src/components/nav/NpcSpeech.tsx`
-**Dono de:** o balão de fala do NPC na folha do lote (I1, 02/10/2026): nome + fala digitada (`TypewriterText`). Monta de novo a cada abertura da folha, então a fala é dita uma vez por abertura e não bloqueia o resto; enquanto fala aceita toque (completa sem fechar a folha), depois volta a ser transparente ao toque. Mantém `data-area-sheet-npc-line` (o CSS de viewport baixa depende dele).
-**Props principais:** `name`, `line`.
-**Exports:** `NpcSpeech`.
+**Dono de:** o balão de fala do NPC na folha do lote (I1, 02/10/2026): nome + fala digitada (`TypewriterText`). Desde a rodada 7 (J2) a digitação é só da PRIMEIRA vez que aquele NPC (`speakerKey` = `area:lote`) fala neste aparelho — a lista fica em `STORAGE_KEYS.NPC_FALA_VISTA`; depois a fala aparece inteira. Sem `speakerKey` sempre digita. Monta de novo a cada abertura da folha e não bloqueia o resto; enquanto fala aceita toque (completa sem fechar a folha), depois volta a ser transparente ao toque. Mantém `data-area-sheet-npc-line` (o CSS de viewport baixa depende dele).
+**Props principais:** `name`, `line`, `speakerKey?`.
+**Exports:** `NpcSpeech`, `npcJaFalou`.
 **Chamado por:** `src/components/nav/AreaSheet.tsx`.
 **Régua:** `src/components/nav/NpcSpeech.render.test.tsx`.

@@ -144,7 +144,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
           />
           {/* Balão de fala — a fala surge letra a letra (I1, `NpcSpeech`); a altura final
               já fica reservada, então o balão não cresce enquanto ela é dita. */}
-          <NpcSpeech name={npc.name} line={npc.line} />
+          <NpcSpeech name={npc.name} line={npc.line} speakerKey={lotId ? `${areaId}:${lotId}` : undefined} />
         </div>
 
         <div

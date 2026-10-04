@@ -214,7 +214,9 @@ export function RespiracaoGame({ language, evolutionStage, demoCharacterId, onEx
           <div style={{ width: `${Math.round(level * 100)}%`, height: '100%', backgroundColor: 'var(--sm2-primary-fill)' }} />
         </div>
       )}
-      {/* Apoio opcional: segurar enquanto inspira. Não mede nada — só acende a bolha. */}
+      {/* Apoio opcional: segurar enquanto respira. Não mede nada — o preenchimento do botão
+          (esquerda → direita) é a MESMA curva da bolha: enche na inspiração, esvazia na
+          expiração, enquanto o toque durar; soltou, o preenchimento some (J6, rodada 7). */}
       <button
         type="button"
         data-respiracao-hold
@@ -225,9 +227,22 @@ export function RespiracaoGame({ language, evolutionStage, demoCharacterId, onEx
         onPointerCancel={() => setHolding(false)}
         onKeyDown={(e) => { if (e.key === ' ' || e.key === 'Enter') setHolding(true); }}
         onKeyUp={() => setHolding(false)}
-        style={{ ...sm2Button('outline'), minHeight: 56, touchAction: 'none', userSelect: 'none' }}
+        style={{ ...sm2Button('outline'), position: 'relative', overflow: 'hidden', minHeight: 56, touchAction: 'none', userSelect: 'none' }}
       >
-        {isPt ? 'Segure enquanto inspira (opcional)' : 'Hold while breathing in (optional)'}
+        <span
+          aria-hidden="true"
+          data-respiracao-hold-fill
+          style={{
+            position: 'absolute', left: 0, top: 0, bottom: 0, zIndex: 0, pointerEvents: 'none',
+            width: holding ? `${Math.round(level * 100)}%` : '0%',
+            backgroundColor: 'color-mix(in srgb, var(--sm2-primary-fill) 45%, transparent)',
+            // Movimento reduzido: o preenchimento acompanha a bolha em degraus (cada tick), sem suavização.
+            transition: reduced ? 'none' : `width ${ease}`,
+          }}
+        />
+        <span style={{ position: 'relative', zIndex: 1 }}>
+          {isPt ? 'Segure enquanto respira (opcional)' : 'Hold while you breathe (optional)'}
+        </span>
       </button>
       <p style={phaseLine}>{isPt ? 'Se preferir, só olhe a bolha.' : 'Or just watch the bubble.'}</p>
       <button type="button" data-respiracao-stop onClick={finish} style={sm2Button('quiet')}>
