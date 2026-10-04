@@ -167,6 +167,35 @@ export function playerDayIso(now: Date, anchor: PlayerDayAnchor | undefined): st
 }
 
 /**
+ * As partes (`y`, `m` 1–12, `d`) de uma chave de dia em QUALQUER dos dois
+ * formatos que circulam no app: `YYYY-MM-DD` (o que `bornAt` documenta e o que
+ * o servidor aceita) e `Www Mmm DD YYYY` (o que `playerDayKey` REALMENTE
+ * devolve). Os dois se encontraram sem se reconhecer: `bornAt` é gravado por
+ * `playerDayKey` mas era lido por módulos que só entendiam o ISO, e o resultado
+ * era silêncio total (`daysTogether` sempre `null`). É o mesmo defeito que
+ * `offerMoment` já corrigira para `isoWeekKey` — esta é a versão compartilhada.
+ * Lê o TEXTO, não o relógio: nenhum fuso entra.
+ */
+export function dayKeyParts(key: unknown): { y: number; m: number; d: number } | null {
+  if (typeof key !== 'string') return null;
+  const s = key.trim();
+  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (iso) return { y: Number(iso[1]), m: Number(iso[2]), d: Number(iso[3]) };
+  const nativo = /^[A-Z][a-z]{2} ([A-Z][a-z]{2}) (\d{2}) (\d{4})$/.exec(s);
+  if (!nativo) return null;
+  const m = MESES.indexOf(nativo[1]) + 1;
+  const d = Number(nativo[2]);
+  return m >= 1 && d >= 1 && d <= 31 ? { y: Number(nativo[3]), m, d } : null;
+}
+
+/** A mesma chave em `YYYY-MM-DD` (ou `null` se não for uma chave de dia). */
+export function dayKeyToIso(key: unknown): string | null {
+  const p = dayKeyParts(key);
+  if (!p) return null;
+  return `${String(p.y).padStart(4, '0')}-${String(p.m).padStart(2, '0')}-${String(p.d).padStart(2, '0')}`;
+}
+
+/**
  * Higieniza o que veio do save. Save é dado NÃO CONFIÁVEL: veio da nuvem, pode
  * ter sido editado à mão, pode ser de uma versão futura.
  *

@@ -79,7 +79,7 @@ import {
 import { feedTimesFor, rubHealFor } from './utils/careCaps';
 import { applyRub, applyFeed, rubDecision } from './utils/careUpdaters';
 import { applySpecialItem, specialRefusal } from './utils/specialItemUse';
-import { playerDayKey, playerDayIso } from './utils/playerDay';
+import { playerDayKey, playerDayIso, dayKeyToIso } from './utils/playerDay';
 import { shouldInviteRefuge, markRefugeShown, dismissRefugeInvite, acceptRefugeInvite } from './utils/refugio/convite';
 import { RefugeInviteCard } from './components/refugio/RefugeInviteCard';
 import { awardBondXP, bondLevelFor, unclaimedBondRewards, applyBondRewards } from './utils/bond';
@@ -4148,8 +4148,13 @@ export default function App() {
     if (trv) {
       // A noite se assenta ao ABRIR o relatório (efeito abaixo); a tela já
       // mostra o estado assentado para não piscar o achado comum antes.
-      const settled = showDailyReport ? trv.settleNight(c, r.date).state : c;
-      return trv.passeioFindOfDay({ crossings: settled, entries, feito: r.done, meta: r.required, dayKey: r.date });
+      // O MAPA conta os dias em `AAAA-MM-DD` (o `markDone` da folha grava
+      // `playerDayIso`); a `date` do relatório é `toDateString`. Sem converter,
+      // a região aberta pela noite era descartada no load seguinte e a viagem
+      // da noite nunca casava.
+      const diaMapa = dayKeyToIso(r.date) ?? r.date;
+      const settled = showDailyReport ? trv.settleNight(c, diaMapa).state : c;
+      return trv.passeioFindOfDay({ crossings: settled, entries, feito: r.done, meta: r.required, dayKey: r.date, crossDay: diaMapa });
     }
     // Mapa tocado e catálogo ainda chegando: espera um instante em vez de
     // mostrar um achado que vai trocar.
@@ -4181,13 +4186,14 @@ export default function App() {
     const r = gameState.lastDayReport;
     if (!showDailyReport || !r || !aventuraDaNoite) return;
     const dia = r.date;
+    const diaMapa = dayKeyToIso(dia) ?? dia; // o mapa usa AAAA-MM-DD (ver `aventuraDaNoite`)
     setGameState(prev => {
       const c0 = prev.crossings ?? CROSSINGS_EMPTY;
       if (!trv && crossingsTouchMap(c0)) return prev;
-      const c1 = trv ? trv.settleNight(c0, dia).state : c0;
+      const c1 = trv ? trv.settleNight(c0, diaMapa).state : c0;
       const diario = prev.adventures ?? [];
       const achado = trv
-        ? trv.passeioFindOfDay({ crossings: c1, entries: diario, feito: r.done, meta: r.required, dayKey: dia })
+        ? trv.passeioFindOfDay({ crossings: c1, entries: diario, feito: r.done, meta: r.required, dayKey: dia, crossDay: diaMapa })
         : adventureOfNight(diario, r.done, r.required, dia);
       const novoDiario = collectAdventure(diario, achado.id, dia);
       const diarioMudou = novoDiario.length !== diario.length;

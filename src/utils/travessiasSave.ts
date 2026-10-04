@@ -13,6 +13,7 @@
  * não for isso.
  */
 import { CROSSINGS_EMPTY, HOME_REGION, type CrossingsState, type RegionId } from '../types/travessias';
+import { dayKeyToIso } from './playerDay';
 
 /**
  * Os oito reinos, na ordem da bíblia (§7.2). É a lista de valores do tipo
@@ -25,8 +26,14 @@ export const REGION_IDS: readonly RegionId[] = [
 export const isRegionId = (v: unknown): v is RegionId =>
   typeof v === 'string' && (REGION_IDS as readonly string[]).includes(v);
 
-/** `AAAA-MM-DD` — o formato do dia do jogador. Qualquer outra coisa é lixo. */
-const isDayKey = (v: unknown): v is string => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
+/**
+ * `AAAA-MM-DD` — o formato do dia no mapa. Qualquer outra coisa é lixo, EXCETO a
+ * forma `toDateString` ("Sat Oct 03 2026"), que o App chegou a gravar aqui (a
+ * `date` do relatório diário entrava em `settleNight`/`markDone` sem conversão):
+ * descartá-la fazia a região aberta pela noite SUMIR no próximo load (ela já
+ * saíra de `pending`). Em vez de perder, converte para ISO.
+ */
+const asDayKey = (v: unknown): string | null => dayKeyToIso(v);
 
 /** Id de desafio: só o formato de id do catálogo (nunca texto livre no save). */
 const isChallengeId = (v: unknown): v is string => typeof v === 'string' && /^[a-z0-9-]{1,64}$/.test(v);
@@ -45,9 +52,10 @@ export function normalizeCrossings(raw: unknown): CrossingsState {
   const vistas = new Set<RegionId>([HOME_REGION]);
   for (const e of Array.isArray(r.opened) ? r.opened : []) {
     const o = (e ?? {}) as Record<string, unknown>;
-    if (!isRegionId(o.region) || !isDayKey(o.day) || vistas.has(o.region)) continue;
+    const dia = asDayKey(o.day);
+    if (!isRegionId(o.region) || !dia || vistas.has(o.region)) continue;
     vistas.add(o.region);
-    opened.push({ region: o.region, day: o.day });
+    opened.push({ region: o.region, day: dia });
   }
 
   const pending: RegionId[] = [];
@@ -71,17 +79,18 @@ export function normalizeCrossings(raw: unknown): CrossingsState {
 
   // Missões diárias (04/10/2026): o dia da escolha, o total de Marcos e a viagem
   // da noite. Tudo opcional num save antigo; lixo vira o valor vazio.
-  const pickDay = active && isDayKey(r.pickDay) ? r.pickDay : null;
+  const pickDay = active ? asDayKey(r.pickDay) : null;
   const score = typeof r.score === 'number' && Number.isFinite(r.score)
     ? Math.min(SCORE_MAX, Math.max(0, Math.floor(r.score))) : 0;
   const t = (r.trip ?? null) as Record<string, unknown> | null;
-  const trip = t && typeof t === 'object' && isDayKey(t.day) && isRegionId(t.region) && t.region !== HOME_REGION
-    ? { day: t.day, region: t.region }
+  const tripDay = t && typeof t === 'object' ? asDayKey(t.day) : null;
+  const trip = t && tripDay && isRegionId(t.region) && t.region !== HOME_REGION
+    ? { day: tripDay, region: t.region }
     : null;
 
   return {
     opened, active, pending, destination, hidden: r.hidden === true,
-    doneDay: isDayKey(r.doneDay) ? r.doneDay : null, pickDay, score, trip,
+    doneDay: asDayKey(r.doneDay), pickDay, score, trip,
   };
 }
 

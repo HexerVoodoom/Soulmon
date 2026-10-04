@@ -6,6 +6,7 @@ import { VAPID_PUBLIC_KEY } from './vapid';
 import { STORAGE_KEYS } from './storageKeys';
 import { readJson, readLocal, removeLocal, writeJson, writeLocal } from './safeStorage';
 import { authHeaders } from './auth';
+import { dayKeyToIso } from './playerDay';
 
 export interface NotificationPermissionState {
   granted: boolean;
@@ -161,7 +162,10 @@ export const subscribeToPush = async (
       ...sub.toJSON(),
       petName,
       language,
-      bornAt,
+      // O servidor só aceita `AAAA-MM-DD` (e DESCARTA o resto em silêncio), mas
+      // o `bornAt` do save vem de `playerDayKey` ("Sun Oct 04 2026"): sem
+      // converter, a copy dos dias 1/2 nunca chegava a ninguém.
+      bornAt: dayKeyToIso(bornAt) ?? undefined,
       ...(saveId ? { saveId } : {}),
     };
 

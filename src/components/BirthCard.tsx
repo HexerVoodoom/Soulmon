@@ -43,6 +43,7 @@
 import { Viewport } from './ui/Viewport';
 import { PLACEHOLDER_ART } from '../utils/placeholderArt';
 import type { Language } from '../utils/i18n';
+import { dayKeyParts } from '../utils/playerDay';
 
 interface BirthCardProps {
   /** Sprite próprio da forma inicial, quando existe. Sem ele, o cartão mostra
@@ -68,9 +69,10 @@ interface BirthCardProps {
 /** Data por extenso, sem número de ano. "6 de setembro" é lembrança; a data
  *  ISO é registro, e registro é o que este cartão não quer ser. */
 function dataPorExtenso(bornAt: string, isPt: boolean): string | null {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(bornAt);
+  // `bornAt` vem de `playerDayKey` ("Sun Oct 04 2026"), não só de `YYYY-MM-DD`.
+  const m = dayKeyParts(bornAt);
   if (!m) return null;
-  const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+  const d = new Date(Date.UTC(m.y, m.m - 1, m.d));
   if (Number.isNaN(d.getTime())) return null;
   return new Intl.DateTimeFormat(isPt ? 'pt-BR' : 'en-US', {
     day: 'numeric', month: 'long', timeZone: 'UTC',
