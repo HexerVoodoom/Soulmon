@@ -154,6 +154,10 @@ export const STORAGE_KEYS = {
    *  `GameState.caderno` (save na nuvem do titular); esta chave só é LIDA para migrar as
    *  anotações antigas para o save uma vez e é apagada em seguida. Dono: `utils/cadernoLocal.ts`. */
   CADERNO: 'soulmon-caderno',
+  /** NPC que JÁ FALOU neste aparelho (rodada 7 · J2, 04/10/2026): a lista de `area:lote` cujo balão
+   *  já digitou a fala uma vez — dali em diante a fala aparece inteira. Conveniência por aparelho,
+   *  fora do save. Dono: `components/nav/NpcSpeech.tsx`. */
+  NPC_FALA_VISTA: 'soulmon-npc-fala-vista',
 } as const;
 
 /**

@@ -213,6 +213,7 @@ import type { Dream, RestWindow } from './utils/restWindow';
 // Mesma disciplina do bloco acima: as regras moram nos módulos puros
 // (`nightmares`, `petNeeds`, `steps`) e aqui só existe fiação.
 import { StepsCard } from './components/StepsCard';
+import { loadAreaView, useAreaViewPrefetch } from './components/nav/playPrefetch';
 import {
   buildNightmareWave, hasPendingNightmare, markFought, nightmareDayKey, nightmaresFor,
   createNightmareState, type NightmareRewards,
@@ -683,7 +684,7 @@ const LibraryPage = lazy(() => import('./components/LibraryPage').then(m => ({ d
 // A área inteira (cena + lotes + folhas + Torneio/Duelo) entra por `lazy`:
 // nada dela é necessário para a Home abrir, e o chunk de entrada está acima do
 // orçamento de bytes (decisão #31).
-const AreaView = lazy(() => import('./components/nav/AreaView').then(m => ({ default: m.AreaView })));
+const AreaView = lazy(() => loadAreaView().then(m => ({ default: m.AreaView })));
 const PetPage = lazy(() => import('./components/PetPage').then(m => ({ default: m.PetPage })));
 
 /** O que o `<main>` desenha fora das áreas, DERIVADO da navegação
@@ -1281,6 +1282,8 @@ export default function App() {
   const [unlockReason, setUnlockReason] = useState<UnlockReason | null>(null);
   // R1: camada de tela cheia aberta numa área (folha/jogo/duelo) — esconde o topo sobre a cena.
   const [areaLayerOpen, setAreaLayerOpen] = useState(false);
+  // J1 (rodada 7): o chunk das áreas (e a folha de jogar) sobe em tempo ocioso — o toque não espera a rede.
+  useAreaViewPrefetch();
   const [upgradeRitual, setUpgradeRitual] = useState(false);
   // Booleanos, e não os arrays: dependendo de `unlockedEvolutions`/
   // `completedTasks` o efeito re-rodava a cada setGameState (a identidade do

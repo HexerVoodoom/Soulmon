@@ -1,5 +1,21 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { TypewriterText } from '../ui/TypewriterText';
+import { readJson, writeJson } from '../../utils/safeStorage';
+import { STORAGE_KEYS } from '../../utils/storageKeys';
+
+/** J2 (rodada 7): a digitação é só da PRIMEIRA vez que aquele NPC fala neste aparelho. */
+export function npcJaFalou(speakerKey: string | undefined): boolean {
+  if (!speakerKey) return false;
+  const lista = readJson<unknown>(STORAGE_KEYS.NPC_FALA_VISTA, []);
+  return Array.isArray(lista) && lista.includes(speakerKey);
+}
+
+function marcaNpcFalou(speakerKey: string): void {
+  const lista = readJson<unknown>(STORAGE_KEYS.NPC_FALA_VISTA, []);
+  const atual = Array.isArray(lista) ? lista.filter((x): x is string => typeof x === 'string') : [];
+  if (atual.includes(speakerKey)) return;
+  writeJson(STORAGE_KEYS.NPC_FALA_VISTA, [...atual, speakerKey].slice(-64), { silent: true });
+}
 
 /**
  * O BALÃO DE FALA DO NPC da folha do lote (I1, 02/10/2026): nome + fala que
@@ -13,13 +29,15 @@ import { TypewriterText } from '../ui/TypewriterText';
  * (a zona do NPC é `pointer-events: none` — toque ali fecha pelo backdrop).
  */
 /** A fala é dita UMA vez por texto: trocar `line` (idioma, outro lote) recomeça limpo — `done`/`skip` do texto antigo não valem para o novo. */
-export function NpcSpeech(p: { name: string; line: string }) {
+export function NpcSpeech(p: { name: string; line: string; /** `area:lote` — sem ele a fala sempre digita (uso fora das folhas). */ speakerKey?: string }) {
   return <NpcSpeechInner key={`${p.name}|${p.line}`} {...p} />;
 }
 
-function NpcSpeechInner({ name, line }: { name: string; line: string }) {
+function NpcSpeechInner({ name, line, speakerKey }: { name: string; line: string; speakerKey?: string }) {
   const [done, setDone] = useState(false);
-  const [skip, setSkip] = useState(false);
+  // Lido UMA vez, na montagem: marcar "visto" não pode encurtar a fala que está sendo dita agora.
+  const [skip, setSkip] = useState(() => npcJaFalou(speakerKey));
+  useEffect(() => { if (speakerKey) marcaNpcFalou(speakerKey); }, [speakerKey]);
   return (
     <p
       data-area-sheet-npc-line
