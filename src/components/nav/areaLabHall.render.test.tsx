@@ -15,6 +15,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { fireEvent } from '@testing-library/react';
 import { renderWithCss } from '../../test/renderEnv';
 import { AreaScene } from './AreaScene';
 import { AreaSheet } from './AreaSheet';
@@ -121,7 +122,9 @@ describe('Hall — a Biblioteca (D4) com a saudação da Lumi', () => {
     solta.unmount();
     const dentro = renderWithCss(<LibraryPage {...base} embedded />);
     expect(dentro.container.querySelector('h1')).toBeNull();
-    expect(dentro.container.textContent).toContain('Veja outros jogadores');
+    // a legenda foi para o "?" (varredura K6): abre o tooltip antes de ler
+    fireEvent.click(dentro.getByRole('button', { name: 'Sobre a Biblioteca' }));
+    expect(document.body.textContent).toContain('Veja outros jogadores');
     dentro.unmount();
   });
 });
