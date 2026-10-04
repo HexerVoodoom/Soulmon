@@ -4878,13 +4878,9 @@ export default function App() {
        renderizava "onboarding completo + tutorial pendente" e o tutorial
        antigo ("crie sua 1ª tarefa") piscava — e ficava, se a pessoa fechasse
        o app ali ou se a adoção de um save da nuvem recarregasse a página. */
-    // O catálogo carrega por `import()`; o onboarding já o puxou (mesmo chunk),
-    // então o `await` resolve no mesmo tick. Só espera quando há itens escolhidos.
-    const catalogById = (data.catalogChoice?.itemIds?.length ?? 0) > 0 ? await loadCatalog() : {};
-    const catalogItems = (data.catalogChoice?.itemIds ?? [])
-      .map(id => catalogById[id])
-      .filter((c): c is NonNullable<typeof c> => !!c);
-    if (catalogItems.length > 0) {
+    // Os ids vêm da própria UI do catálogo; a marca NÃO espera o carregamento
+    // (o catálogo é `import()`) — resolver os itens fica para mais abaixo.
+    if ((data.catalogChoice?.itemIds?.length ?? 0) > 0) {
       writeFlag(STORAGE_KEYS.TUTORIAL_COMPLETE, true, { silent: true });
       setHasCompletedTutorial(true);
     }
@@ -4940,6 +4936,11 @@ export default function App() {
        mesma pergunta duas vezes. Com ≥1 atividade a home já não nasce vazia,
        então o tutorial de "crie sua 1ª tarefa" também não abre (a pergunta
        aberta de objetivo dele seria a terceira cópia da mesma pergunta). */
+    // O onboarding já puxou o catálogo (mesmo chunk): a promessa resolve no mesmo tick.
+    const catalogById = (data.catalogChoice?.itemIds?.length ?? 0) > 0 ? await loadCatalog() : {};
+    const catalogItems = (data.catalogChoice?.itemIds ?? [])
+      .map(id => catalogById[id])
+      .filter((c): c is NonNullable<typeof c> => !!c);
     const catalogActivities = activitiesFromCatalogChoice(catalogItems, language === 'pt-BR') as unknown as Activity[];
     const newActivities: Activity[] = [...newActivitiesBase, ...catalogActivities];
     // 01/10/2026 — o perfil do onboarding (forças + o que atrapalha) entra no
