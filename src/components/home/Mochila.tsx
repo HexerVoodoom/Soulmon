@@ -111,8 +111,14 @@ export function Mochila({
     if (open) return;
     setSelecionado(null);
     setFantasma(null);
+    // Fechou NO MEIO de um arrasto sobre o pet (Esc/voltar): sem avisar, o pet
+    // ficava aceso para sempre — ninguém mais chamava `onTargetChange(false)`.
+    if (arrastoRef.current) {
+      arrastoRef.current = null;
+      onTargetChange?.(false);
+    }
     limparRef.current?.();
-  }, [open]);
+  }, [open, onTargetChange]);
   useEffect(() => () => limparRef.current?.(), []);
 
   // O selecionado saiu do estoque (usou o último): some a barra de "Usar".

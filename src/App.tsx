@@ -79,7 +79,7 @@ import {
 import { feedTimesFor, rubHealFor } from './utils/careCaps';
 import { applyRub, applyFeed, rubDecision } from './utils/careUpdaters';
 import { applySpecialItem, specialRefusal } from './utils/specialItemUse';
-import { playerDayKey, playerDayIso } from './utils/playerDay';
+import { playerDayKey, playerDayIso, dayKeyToIso } from './utils/playerDay';
 import { shouldInviteRefuge, markRefugeShown, dismissRefugeInvite, acceptRefugeInvite } from './utils/refugio/convite';
 import { RefugeInviteCard } from './components/refugio/RefugeInviteCard';
 import { awardBondXP, bondLevelFor, unclaimedBondRewards, applyBondRewards } from './utils/bond';
@@ -139,6 +139,7 @@ import {
 import { sleepReminderCopy } from '../functions/api/_pushCopy.js';
 import { BITS_EXCHANGE, creditMinigameBits, minigameBitsToday } from './utils/currencies';
 import { snapshotCompletion, undoCompletion, UNDO_WINDOW_MS } from './utils/completionUndo';
+import { useDeferredFlush } from './hooks/useDeferredFlush';
 import { UndoToast } from './components/UndoToast';
 import { adminFromEntitlement, setAdminFlag, useAdmin } from './utils/adminFlag';
 import { isCorvo, spriteLineOf } from './utils/corvoPet';
@@ -218,7 +219,7 @@ import { pickCatalogLevelInviteCandidate, applyLevelChange } from './utils/catal
 
 import type { Schedule, HabitAnchor, Effort } from './types/taskModel';
 import {
-  createRestState, recordNight, dreamRarity, rollDream, collectDream, DREAM_CATALOG, isWithinWindow,
+  createRestState, recordNight, nightAlreadyRecorded, dreamRarity, rollDream, collectDream, DREAM_CATALOG, isWithinWindow,
 } from './utils/restWindow';
 import type { Dream, RestWindow } from './utils/restWindow';
 
@@ -2472,6 +2473,7 @@ export default function App() {
     setEditingTask(null);
   };
 
+  const adiarConclusaoDeTarefa = useDeferredFlush(3000);
   // Handle toggling task completion
   const handleToggleTask = (taskId: string) => {
     const task = gameState.tasks.find(t => t.id === taskId);
@@ -2545,7 +2547,11 @@ export default function App() {
       // (O ramo antigo de "estágio inicial dá energia em vez de comida" saiu:
       // a árvore do Soulmon não tem mais ovo/baby, então getStageLevel nunca
       // devolvia esses níveis e o ramo era inalcançável.)
-      setTimeout(() => {
+      // `adiarConclusaoDeTarefa` = `setTimeout` de 3 s que TAMBÉM roda na hora se
+      // a aba for escondida / a página descarregada: com o timer solto, fechar o
+      // app nesses 3 s deixava a tarefa marcada sem nunca pagar comida nem Vínculo
+      // (e a virada do dia a reabria).
+      adiarConclusaoDeTarefa(() => {
         let concluiu = false;
         setGameState(prev => {
           const feito = completeTask(prev, taskId) ?? prev;
@@ -2584,7 +2590,7 @@ export default function App() {
           falar(assombrada ? 'haunted' : rolledRareCheer(Math.random()) ? 'rare' : 'task');
           marcarGestoDoDia('task');
         });
-      }, 3000);
+      });
     }
   };
 
@@ -4119,9 +4125,13 @@ export default function App() {
     // Dia do JOGADOR: `moodLog` mora no save, e com o dia do aparelho o mesmo
     // dia rendia DUAS entradas em fusos diferentes (ver `utils/mood.ts`).
     const today = playerDayKey(new Date(), gameState.playerDayTz);
+    // A missão é "em 3 DIAS": só a PRIMEIRA resposta do dia conta. Responder de
+    // novo SUBSTITUI o humor (`recordMood`) e antes somava de novo — três toques
+    // no mesmo dia fechavam a missão semanal.
+    const primeiraDoDia = moodFor(gameState.moodLog, today) === null;
     setGameState(prev => ({ ...prev, moodLog: recordMood(prev.moodLog, today, mood) }));
-    contarMissao('mood-checkins');
-  }, [gameState.playerDayTz]);
+    if (primeiraDoDia) contarMissao('mood-checkins');
+  }, [gameState.moodLog, gameState.playerDayTz]);
 
   /**
    * A AVENTURA DA NOITE (`utils/adventure.ts`, `docs/PLANO-TAREFAS.md` §2.4).
@@ -4160,8 +4170,13 @@ export default function App() {
     if (trv) {
       // A noite se assenta ao ABRIR o relatório (efeito abaixo); a tela já
       // mostra o estado assentado para não piscar o achado comum antes.
-      const settled = showDailyReport ? trv.settleNight(c, r.date).state : c;
-      return trv.passeioFindOfDay({ crossings: settled, entries, feito: r.done, meta: r.required, dayKey: r.date });
+      // O MAPA conta os dias em `AAAA-MM-DD` (o `markDone` da folha grava
+      // `playerDayIso`); a `date` do relatório é `toDateString`. Sem converter,
+      // a região aberta pela noite era descartada no load seguinte e a viagem
+      // da noite nunca casava.
+      const diaMapa = dayKeyToIso(r.date) ?? r.date;
+      const settled = showDailyReport ? trv.settleNight(c, diaMapa).state : c;
+      return trv.passeioFindOfDay({ crossings: settled, entries, feito: r.done, meta: r.required, dayKey: r.date, crossDay: diaMapa });
     }
     // Mapa tocado e catálogo ainda chegando: espera um instante em vez de
     // mostrar um achado que vai trocar.
@@ -4193,13 +4208,14 @@ export default function App() {
     const r = gameState.lastDayReport;
     if (!showDailyReport || !r || !aventuraDaNoite) return;
     const dia = r.date;
+    const diaMapa = dayKeyToIso(dia) ?? dia; // o mapa usa AAAA-MM-DD (ver `aventuraDaNoite`)
     setGameState(prev => {
       const c0 = prev.crossings ?? CROSSINGS_EMPTY;
       if (!trv && crossingsTouchMap(c0)) return prev;
-      const c1 = trv ? trv.settleNight(c0, dia).state : c0;
+      const c1 = trv ? trv.settleNight(c0, diaMapa).state : c0;
       const diario = prev.adventures ?? [];
       const achado = trv
-        ? trv.passeioFindOfDay({ crossings: c1, entries: diario, feito: r.done, meta: r.required, dayKey: dia })
+        ? trv.passeioFindOfDay({ crossings: c1, entries: diario, feito: r.done, meta: r.required, dayKey: dia, crossDay: diaMapa })
         : adventureOfNight(diario, r.done, r.required, dia);
       const novoDiario = collectAdventure(diario, achado.id, dia);
       const diarioMudou = novoDiario.length !== diario.length;
@@ -4404,17 +4420,23 @@ export default function App() {
          `awardBondXP` não é. */
       setGameState(prev => {
         const rest = prev.rest ?? createRestState();
-        const chaveDaNoite = playerDayKey(now, prev.playerDayTz);
-        const jaRegistrada = rest.nights.some(n => n.date === chaveDaNoite);
+        // O ledger do Vínculo é do DIA de hoje; a pergunta "esta noite já foi
+        // registrada?" é pela MANHÃ da noite (`nightAlreadyRecorded`). Comparar
+        // `nights` com o dia de hoje fazia a manhã de ontem (que tem a data de
+        // hoje) travar o XP de toda noite depois da primeira.
+        const chaveDoDia = playerDayKey(now, prev.playerDayTz);
+        const jaRegistrada = nightAlreadyRecorded(rest, now);
         const comNoite = { ...prev, rest: recordNight(rest, now) };
         return !jaRegistrada && isWithinWindow(rest.window, now)
-          ? awardBondXP(comNoite, { kind: 'restNight' }, chaveDaNoite)
+          ? awardBondXP(comNoite, { kind: 'restNight' }, chaveDoDia)
           : comNoite;
       });
       // Conta a noite só quando o deitar caiu DENTRO da janela escolhida: a
       // missão premia o comportamento, exatamente como a Janela de Descanso —
       // contar toda noite pagaria por ir dormir, não por ir no horário.
-      if (isWithinWindow((gameState.rest ?? createRestState()).window, now)) contarMissao('rest-nights');
+      // Uma vez por NOITE: deitar de novo na mesma noite não soma outra.
+      const restAntes = gameState.rest ?? createRestState();
+      if (isWithinWindow(restAntes.window, now) && !nightAlreadyRecorded(restAntes, now)) contarMissao('rest-nights');
       return;
     }
     const startedIso = readLocal(STORAGE_KEYS.SLEEP_STARTED_AT);
@@ -4794,7 +4816,9 @@ export default function App() {
     // sem som ate a decisao de vinculo sobre C-4 fechar (as saidas em aberto sao
     // "variacao do motivo de presenca" ou "nenhum som"); a recusa por teto
     // continua distinguivel pela fala do pet, que e o canal real (R-34).
-    contarMissao('rub-days');
+    // "em 4 DIAS": só a primeira cura do dia conta (o teto diário concede 2–3
+    // pedaços de carinho, e cada um somava um "dia").
+    if (rubHealFor(gameState.careCaps, today).healed <= 0) contarMissao('rub-days');
     if (!rubFalouRef.current) {
       rubFalouRef.current = true;
       falar('rub');
@@ -7162,6 +7186,10 @@ export default function App() {
           petElement={gameState.soulmonMeta?.dominantElement}
           language={language}
           onWin={handleNightmareWin}
+          /* Derrota SÓ grava a noite como lutada: fechar aqui desmontava o modal
+             no mesmo instante e a tela "O sonho passou — e você acorda bem" (a
+             que diz que perder não custou nada) nunca aparecia. Quem fecha é o
+             "Bom dia" (`onClose`). */
           onLose={markNightmareFought}
           onClose={closeNightmare}
         />
@@ -7178,15 +7206,18 @@ export default function App() {
       {interstitial === 'catalogOnboarding' && (
         <CatalogOnboardingFlow
           language={language}
-          onComplete={(chosen) => setGameState(prev => {
-            const withFlag = markCatalogOnboardingSeen(prev as any, new Date()) as any;
-            return {
-              ...withFlag,
-              // ACRESCENTA, nunca substitui — nenhuma atividade existente é
-              // tocada (decisão do dono, 28/09/2026).
-              activities: [...(prev.activities ?? []), ...activitiesFromCatalogChoice(chosen, language === 'pt-BR')],
-            };
-          })}
+          onComplete={(chosen) => {
+            // ACRESCENTA, nunca substitui — nenhuma atividade existente é
+            // tocada (decisão do dono, 28/09/2026). Mas pelo PORTÃO de criação
+            // (D-12): escrever em `activities` por fora furava o teto do demo e
+            // o do estágio (o tutorial já pode ter enchido a lista), sem contar
+            // `activity_create`. Mesmo caminho do catálogo avulso (`create_modal`).
+            commitHabitCreate(
+              activitiesFromCatalogChoice(chosen, language === 'pt-BR'),
+              TELEMETRY_CREATE_PATH.create_modal,
+            );
+            setGameState(prev => markCatalogOnboardingSeen(prev as any, new Date()) as any);
+          }}
         />
       )}
       {interstitial === 'catalogLevelInvite' && catalogLevelInviteCandidate && (

@@ -6,6 +6,7 @@ import { VAPID_PUBLIC_KEY } from './vapid';
 import { STORAGE_KEYS } from './storageKeys';
 import { readJson, readLocal, removeLocal, writeJson, writeLocal } from './safeStorage';
 import { authHeaders } from './auth';
+import { dayKeyToIso } from './playerDay';
 
 export interface NotificationPermissionState {
   granted: boolean;
@@ -161,7 +162,10 @@ export const subscribeToPush = async (
       ...sub.toJSON(),
       petName,
       language,
-      bornAt,
+      // O servidor só aceita `AAAA-MM-DD` (e DESCARTA o resto em silêncio), mas
+      // o `bornAt` do save vem de `playerDayKey` ("Sun Oct 04 2026"): sem
+      // converter, a copy dos dias 1/2 nunca chegava a ninguém.
+      bornAt: dayKeyToIso(bornAt) ?? undefined,
       ...(saveId ? { saveId } : {}),
     };
 
@@ -377,7 +381,12 @@ export const syncTaskAlarms = (
   }>,
   language: 'pt-BR' | 'en-US' = 'en-US'
 ) => {
-  const todayISO = new Date().toISOString().split('T')[0];
+  // Dia LOCAL (`deadline.date` vem de um <input type="date">): `toISOString` é
+  // UTC e, em UTC−3, vira "amanhã" às 21h — a tarefa de hoje perdia o alarme e
+  // a de amanhã ganhava um hoje.
+  const hoje = new Date();
+  const p2 = (n: number) => String(n).padStart(2, '0');
+  const todayISO = `${hoje.getFullYear()}-${p2(hoje.getMonth() + 1)}-${p2(hoje.getDate())}`;
   const isNative = Capacitor.isNativePlatform();
 
   // Replace old task alarms with fresh set

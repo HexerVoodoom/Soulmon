@@ -1,7 +1,7 @@
 import { aiFetch } from '../utils/aiClient';
 import { HELPLINE_DIRECTORY_URL, helplineDirectoryLabel, helplineNumbers } from '../utils/supportLine';
 import { chatSafetyDecision } from '../utils/chatSafety';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchServerConfig } from '../utils/serverConfig';
 import { Icon } from './ui/Icon';
 import { toast } from 'sonner';
@@ -92,6 +92,25 @@ export function ChatBox({
     return transcribeAvailable;
   }, []);
   const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
+  /* O microfone aberto agora. O `CompanionHUD` (dono deste componente) desmonta
+     quando a pessoa sai da Home: sem isto a gravação seguia viva — microfone do
+     aparelho ligado e `chunks` crescendo sem teto — até fechar o app. Ao
+     desmontar: para o gravador, solta as trilhas e marca o `onstop` como
+     abandonado (um áudio que ninguém vai ver não é transcrito nem enviado). */
+  const micRef = useRef<{ recorder: MediaRecorder; stream: MediaStream; abandoned: boolean } | null>(null);
+  const vivoRef = useRef(true);
+  useEffect(() => {
+    vivoRef.current = true; // StrictMode monta, desmonta e monta de novo
+    return () => {
+      vivoRef.current = false;
+      const m = micRef.current;
+      if (!m) return;
+      m.abandoned = true;
+      try { if (m.recorder.state !== 'inactive') m.recorder.stop(); } catch { /* já parado */ }
+      m.stream.getTracks().forEach(track => track.stop());
+      micRef.current = null;
+    };
+  }, []);
   
   // Anti-autofill trick
   const [isInputReadOnly, setIsInputReadOnly] = useState(true);
@@ -201,6 +220,9 @@ export function ChatBox({
         onCreateActivity(data.action.activity);
       }
 
+      // Resposta sem texto (corpo {}, vazio, não-string): vira a resposta local
+      // em vez de undefined — que ia para o balão e envenenava o history.
+      if (typeof data?.response !== 'string' || !data.response.trim()) return getPetResponse(userMessage);
       return data.response;
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
@@ -291,6 +313,8 @@ export function ChatBox({
       // Start recording
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // Desmontou enquanto a permissão estava aberta: ninguém vai parar isto.
+        if (!vivoRef.current) { stream.getTracks().forEach(track => track.stop()); return; }
         
         // Use audio/webm with opus codec for better compatibility
         const options = { mimeType: 'audio/webm;codecs=opus' };
@@ -301,7 +325,13 @@ export function ChatBox({
         } catch (e) {
           // Fallback to default if opus not supported
           if (import.meta.env.DEV) console.log('Opus codec not supported, using default');
-          recorder = new MediaRecorder(stream);
+          try {
+            recorder = new MediaRecorder(stream);
+          } catch (e2) {
+            // Sem gravador nenhum: o microfone recém-aberto não pode ficar ligado.
+            stream.getTracks().forEach(track => track.stop());
+            throw e2;
+          }
         }
         
         const chunks: Blob[] = [];
@@ -312,20 +342,26 @@ export function ChatBox({
           }
         };
 
+        const mic = { recorder, stream, abandoned: false };
         recorder.onstop = async () => {
+          // Solta o microfone ANTES de transcrever: a transcrição pode levar
+          // até 30 s e o aparelho não deve mostrar "microfone em uso" nesse
+          // tempo todo (antes as trilhas só paravam depois do `await`).
+          stream.getTracks().forEach(track => track.stop());
+          if (micRef.current === mic) micRef.current = null;
+          if (mic.abandoned) return; // o chat foi desmontado: nada a transcrever
+
           setIsLoading(true);
-          
+
           const audioBlob = new Blob(chunks, { type: recorder.mimeType });
           if (import.meta.env.DEV) console.log('Audio recorded:', { size: audioBlob.size, type: audioBlob.type, chunks: chunks.length });
-          
+
           await transcribeAudio(audioBlob);
-          
-          // Stop all tracks to release the microphone
-          stream.getTracks().forEach(track => track.stop());
         };
 
         // Start recording
         recorder.start();
+        micRef.current = mic;
         setMediaRecorder(recorder);
         setIsRecording(true);
       } catch (error) {

@@ -237,9 +237,14 @@ export function passeioFindOfDay(args: {
   entries: readonly AdventureEntry[];
   feito: number;
   meta: number;
+  /** A chave do DIÁRIO e das sementes (a `date` do relatório, `toDateString`). */
   dayKey: string;
+  /** A mesma noite na chave do MAPA (`AAAA-MM-DD`, a de `settleNight`/`markDone`).
+   *  Sem ela vale `dayKey` — o caso dos testes, em que as duas são ISO. */
+  crossDay?: string;
 }): PasseioFind {
   const { crossings: c, entries, feito, meta, dayKey } = args;
+  const crossDay = args.crossDay ?? dayKey;
 
   const daNoite = entries.find(e => e.day === dayKey);
   const ja = daNoite ? findAnyById(daNoite.id) : undefined;
@@ -247,7 +252,7 @@ export function passeioFindOfDay(args: {
 
   const antes = entries.filter(e => e.day !== dayKey).map(e => e.id);
 
-  const chegou = c.opened.find(o => o.day === dayKey);
+  const chegou = c.opened.find(o => o.day === crossDay);
   const regiaoNova = chegou ? regionById(chegou.region) : undefined;
   if (regiaoNova) return regiaoNova.arrival;
 
@@ -259,7 +264,7 @@ export function passeioFindOfDay(args: {
 
   // A viagem da noite: a missão cumprida neste dia leva o Soulmon à região dela
   // (cenário da missão) e ele volta com uma historinha. Prefere a não coletada.
-  const viagem = c.trip && c.trip.day === dayKey ? VIAGENS[c.trip.region] : undefined;
+  const viagem = c.trip && c.trip.day === crossDay ? VIAGENS[c.trip.region] : undefined;
   if (viagem) {
     const tem = new Set(antes);
     const livres = viagem.filter(v => !tem.has(v.id));

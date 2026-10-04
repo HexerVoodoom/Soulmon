@@ -7,7 +7,7 @@
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
 
 ## Índice
-- [src/hooks](#src-hooks) — `useCareSystem.ts` · `useDailyReset.ts` · `useDialogA11y.ts` · `useGroveWatch.ts` · `useItemForm.ts` · `useProgressTracking.ts` · `useSpriteGeneration.ts`
+- [src/hooks](#src-hooks) — `useCareSystem.ts` · `useDailyReset.ts` · `useDeferredFlush.ts` · `useDialogA11y.ts` · `useGroveWatch.ts` · `useItemForm.ts` · `useProgressTracking.ts` · `useSpriteGeneration.ts`
 - [src/contexts](#src-contexts) — `GameStateContext.tsx` · `LanguageContext.tsx` · `ThemeContext.tsx`
 - [src/types](#src-types) — `attributes.ts` · `category-icons.ts` · `progression.ts` · `taskModel.ts`
 
@@ -31,6 +31,10 @@
 **Chamado por:** `src/App.tsx`. Testado via import direto em `src/contexts/GameStateContext.hydrate.fuzz.test.tsx`.
 **Régua:** `src/hooks/useDailyReset.test.ts`, `useDailyReset.clock.test.ts`, `useDailyReset.rollover.test.ts`.
 **Avisos do arquivo:** "não reimplemente a lógica aqui — foi assim que o teste antigo passou a testar uma cópia" (comentário logo acima de `performDailyReset`); `rolloverPending` deve ser devolvido daqui, nunca recalculado no `App.tsx`, "uma dona só".
+
+### `src/hooks/useDeferredFlush.ts`
+
+- `function useDeferredFlush(delayMs: number): (fn: () => void) => void` (desde 04/10/2026, QA2) — `setTimeout` que também roda o pendente na hora se a aba for escondida (`visibilitychange`), a página descarregada (`pagehide`) ou o dono desmontar; cada `fn` roda uma vez. Usado por `App.tsx` › `handleToggleTask` (a conclusão da tarefa avulsa, 3 s depois do toque). Régua: `useDeferredFlush.test.tsx`, `qa2.taskFinalize.contract.test.ts`.
 
 ### `src/hooks/useDialogA11y.ts`
 **Dono de:** o contrato de acessibilidade de TODO diálogo modal do app — foco inicial, focus trap, Escape, devolução de foco e travamento do fundo (scroll + árvore de acessibilidade). Um hook só para os quatro diálogos do motor de rituais, porque os quatro tinham o mesmo contrato quebrado de formas diferentes (ver o cabeçalho do arquivo: `MorningCheckIn`/`TriagePile` sem trap nem Escape, `MorningDream` com Escape por acidente, `NightmareBattle` sem foco inicial).
