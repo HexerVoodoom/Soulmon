@@ -96,7 +96,17 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // `NpcSpeech`/`ShopItemSheet`. Crescimento JUSTIFICADO, não perdoado — e GRANDE:
   // próxima tarefa é pagar com `import()` (`BattleStage`+`PveMechanics`+`usePveBattle`
   // só ao lutar, `travessiasViagens` só ao abrir o relatório, `ShopItemSheet`).
-  'index.js': 893_158,
+  // PAGO EM PARTE em 04/10/2026 (rodada 6, perf — branch feat/r6-lazy): 893_158 → 540_385
+  // (−352,8 KB, −39%). Saíram do chunk de entrada por import()/React.lazy: a luta do
+  // pesadelo inteira (NightmareBattle → BattleStage, usePveBattle, PveMechanics,
+  // combatFx, attackFxArt ≈ 100 KB), o catálogo de atividades (31 KB, agora
+  // `data/catalogoCarga.ts`), o motor do Oráculo (`oracle/motor.ts`, ~70 KB) e as
+  // perguntas do ritual (`oracle.ts` ficou fora do caminho crítico: `oracle/base.ts`),
+  // a ficha do class-system do Renascimento (`rebirthGate.ts`, ~28 KB) e 14 modais
+  // condicionais do App. Quem impede a volta: `entradaEnxuta.contract.test.ts`.
+  // Ainda 2,2× o teto: o resto é o próprio `App.tsx` (92 KB), sonner (34 KB), CompanionHUD,
+  // i18n, shop, GameStateContext.
+  'index.js': 540_385,
   // 04/10/2026: 153_795 → 164_043 (+10 KB) — keyframes da cena de combate, sheets animados, mascote.
   'index.css': 164_043,          // 150 KB — 1,5× o teto
   'evolution-bg.mp4': 3_917_240, // 3,7 MB — fundo de UMA cerimônia; correção #3 (WebM/CSS)
