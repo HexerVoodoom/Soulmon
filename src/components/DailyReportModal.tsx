@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import { Icon } from './ui/Icon';
+import { InfoTip } from './ui/InfoTip';
 import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import { UnlockNudge } from './UnlockAccountModal';
 import { MemoriesCard } from './MemoriesCard';
@@ -416,14 +417,16 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, on
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {canRecover && (
           <>
-            <button type="button" onClick={onRecoverHearts} style={{ ...sm2Button('outline'), width: '100%' }}>
-              {isPt ? 'Eu fiz, esqueci de marcar' : 'I did it, forgot to log'}
-            </button>
-            <p style={{ ...hint, textAlign: 'center' }}>
-              {isPt
-                ? 'Devolve os corações. O dia completo não volta — esse já passou.'
-                : 'Gives the hearts back. The complete day doesn’t return — that one’s gone.'}
-            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <button type="button" onClick={onRecoverHearts} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0 }}>
+                {isPt ? 'Eu fiz, esqueci de marcar' : 'I did it, forgot to log'}
+              </button>
+              <InfoTip language={language} label={isPt ? 'O que este botão faz' : 'What this button does'} align="right">
+                {isPt
+                  ? 'Devolve os corações. O dia completo não volta — esse já passou.'
+                  : 'Gives the hearts back. The complete day doesn’t return — that one’s gone.'}
+              </InfoTip>
+            </div>
           </>
         )}
         <button type="button" onClick={onClose} style={{ ...sm2Button('primary'), width: '100%' }}>

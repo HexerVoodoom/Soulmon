@@ -293,6 +293,11 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       <GameHeader
         title={isPt ? 'Corrida com obstáculos' : 'Obstacle Run'}
         sub={<span className="sm2-num">{isPt ? 'Recorde' : 'Best'} {best}</span>}
+        language={language}
+        infoLabel={isPt ? 'Como se joga' : 'How to play'}
+        info={isPt
+          ? 'Pule os inimigos! Eles ficam mais fortes com o tempo. 100 de score = 1 Bit'
+          : 'Jump the enemies! They get scarier over time. 100 score = 1 Bit'}
         closeLabel={isPt ? 'Sair' : 'Exit'}
         onClose={onExit}
       />
@@ -327,11 +332,6 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
 
       {phase === 'ready' && (
         <>
-          <p style={phaseLine}>
-            {isPt
-              ? 'Pule os inimigos! Eles ficam mais fortes com o tempo. 100 de score = 1 Bit'
-              : 'Jump the enemies! They get scarier over time. 100 score = 1 Bit'}
-          </p>
           <button type="button" onClick={start} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 240, alignSelf: 'center' }}>
             {isPt ? 'Começar' : 'Start'}
           </button>

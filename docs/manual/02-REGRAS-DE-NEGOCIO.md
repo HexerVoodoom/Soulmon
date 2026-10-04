@@ -3685,6 +3685,26 @@ settleNight(s, dayKey): se nenhuma região abriu nesta noite e há "Fiz" guardad
 - **Régua**: `src/utils/travessias.test.ts`, `src/utils/travessias.contract.test.ts`
   (a)–(e), `src/components/play/playArea.render.test.tsx`.
 
+**Missões do dia, Marcos de Aventura e a viagem da noite (04/10/2026 — `REGISTRO-DE-DECISOES.md` §21).**
+Mudam a camada das Travessias; o resto do Passeio acima segue.
+- **3 missões por dia, escolhe 1**: `dailyOffer(dayKey, seed)` sorteia 3 das 21 propostas
+  (`seed` = id do save; **3 regiões diferentes**, determinístico: reabrir não re-sorteia).
+  `pickMission(s, dayKey, seed, region, challenge)` só aceita uma das três e não aceita nada
+  depois do "Fiz" de hoje; a escolhida vale só para o dia (`CrossingsState.pickDay`) — no dia
+  seguinte saem três novas. `activeChallenge(s, dayKey)` devolve null se a escolhida é de outro
+  dia. "Recuar" (`dropCrossing`) solta a escolha e devolve as três. Um "Fiz" por dia no total.
+- **Marcos de Aventura**: `CrossingsState.score` soma 1 por "Fiz" (no máximo 1/dia, nunca cai,
+  teto 9999 na higienização). `MARCO_THRESHOLDS` = 5/10/20 abrem um postal cosmético
+  (`MARCO_POSTAIS`, `trv-marco-N`) na primeira noite livre. Nunca Bits/XP/Emblema.
+- **Viagem da noite**: `markDone` guarda `trip = { day, region }`; no relatório desse dia
+  `passeioFindOfDay` traz a cena de chegada (se a região abriu nesta noite) ou uma de **3
+  historinhas por região** (`VIAGENS`, 21; prefere a não coletada). Ordem: já guardado >
+  chegada > postal de Marco > viagem > destino > Aventura comum.
+- **Marcador**: `missionMark(c, dayKey)` → `'available'` ("!", `exclamation`), `'progress'`
+  ("?", `question`) ou null; mostrado sobre o lote do Passeio e no card. Sem som, animação ou número.
+- **Régua**: `src/utils/travessias.test.ts` (blocos "missões diárias", "marcador", "Marcos",
+  "viagem"), `src/components/play/PasseioSheet.render.test.tsx`, `src/utils/travessias.contract.test.ts`.
+
 **Onde a UI mostra.** O cartão do achado dentro do
 `src/components/DailyReportModal.tsx` ([§11](#relatorio-diario)) e
 `src/components/AdventureDiary.tsx`, na página do **Pet**, ao lado do Dex de

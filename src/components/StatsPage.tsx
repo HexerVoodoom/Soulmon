@@ -60,6 +60,7 @@ import {
 import type { RestState } from '../utils/restWindow';
 import { bondProgress, bondTitle } from '../utils/bond';
 import { Icon } from './ui/Icon';
+import { InfoTip } from './ui/InfoTip';
 
 interface CompletedTask {
   id: string;
@@ -272,7 +273,15 @@ export function StatsPage({
 
       {/* ─────────────── A leitura dominante: o Vínculo ─────────────── */}
       <section className="sm2-stats-card" style={{ gap: 4 }} aria-labelledby="sm2-bond-title">
-        <p className="sm2-stats-lab">{isPt ? 'Nível de vínculo' : 'Bond level'}</p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+          <p className="sm2-stats-lab">{isPt ? 'Nível de vínculo' : 'Bond level'}</p>
+          {/* I13 (02/10/2026): a frase de regra do vínculo mora atrás do "?". */}
+          <InfoTip language={language} label={isPt ? 'Como funciona o vínculo' : 'How the bond works'} align="right" style={{ minHeight: 24 }}>
+            {isPt
+              ? 'Ele só sobe. Cuidar de você é o que aproxima vocês dois — nada aqui desce, nunca.'
+              : 'It only goes up. Caring for yourself is what brings you two closer — nothing here ever drops.'}
+          </InfoTip>
+        </div>
         {/* A PALAVRA vem primeiro (Cinzel 24); o número é a legenda dela. */}
         <h2 id="sm2-bond-title" className="sm2-stats-word">
           {title ?? (isPt ? 'Recém-chegados' : 'Just met')}
@@ -299,11 +308,6 @@ export function StatsPage({
             <div className="sm2-kit-meter-fill" style={{ width: `${pct}%` }} />
           </div>
         )}
-        <p className="sm2-stats-s" style={{ marginTop: 4 }}>
-          {isPt
-            ? 'Ele só sobe. Cuidar de você é o que aproxima vocês dois — nada aqui desce, nunca.'
-            : 'It only goes up. Caring for yourself is what brings you two closer — nothing here ever drops.'}
-        </p>
       </section>
 
       {/* ─────────────── Quem ele é ─────────────── */}
@@ -416,7 +420,14 @@ export function StatsPage({
         return (
           <section className="sm2-stats-card">
             <CardHead icon="calendar_month">{isPt ? 'A estação' : 'The season'}</CardHead>
-            <p className="sm2-stats-t">{seasonLabel(win, isPt ? 'pt-BR' : 'en-US')}</p>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+              <p className="sm2-stats-t">{seasonLabel(win, isPt ? 'pt-BR' : 'en-US')}</p>
+              <InfoTip language={language} label={isPt ? 'Como funciona a estação' : 'How the season works'} align="right" style={{ minHeight: 24 }}>
+                {isPt
+                  ? 'Um caminho basta — nunca os três.'
+                  : 'One path is enough — never all three.'}
+              </InfoTip>
+            </div>
 
             {!hideMetrics && andados.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -426,11 +437,6 @@ export function StatsPage({
                     <b>{Math.min(p.current, p.target)}/{p.target}</b>
                   </p>
                 ))}
-                <p className="sm2-stats-s">
-                  {isPt
-                    ? 'Um caminho basta — nunca os três.'
-                    : 'One path is enough — never all three.'}
-                </p>
               </div>
             )}
 

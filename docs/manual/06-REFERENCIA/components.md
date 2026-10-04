@@ -282,9 +282,16 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** `src/components/play/playArea.render.test.tsx`.
 
 ### `src/components/play/PasseioSheet.tsx`
-**Dono de:** a folha do Passeio na Exploração (30/09/2026): para onde o Soulmon vai hoje (postais das regiões abertas, casa inclusa) e, se não escondida, as Travessias — a ativa (texto pleno + versão pequena, "Fiz" / "Trocar" entre os mesmos 3 / "Deixar pra lá"), os "Fiz" guardados ("abre no passeio da próxima noite", sem contagem) e, sem ativa, as regiões em névoa (tocar mostra as 3 propostas). Linha de segurança discreta (parecer 04 R-9) e o link "Esconder/Mostrar Travessias". Nunca mostra número de regiões, total, percentual, prazo, prêmio nem a palavra "desafio"/"challenge". Muda, sem push nem badge (R-NOVA). Nenhuma regra nasce aqui: cada toque entrega ao `App` uma função pura de `utils/travessias`.
+**Dono de:** a folha do Passeio na Exploração (30/09/2026): para onde o Soulmon vai hoje (postais das regiões abertas, casa inclusa) e, se não escondida, as Travessias — a ativa (texto pleno + versão pequena, "Fiz" / "Recuar"; ⚰️ "Trocar" entre os mesmos 3 e o modal das 21 saíram em 04/10/2026), os "Fiz" guardados ("abre no passeio da próxima noite", sem contagem) e, sem ativa, as regiões em névoa (tocar mostra as 3 propostas). Linha de segurança discreta (parecer 04 R-9) e o link "Esconder/Mostrar Travessias". Nunca mostra número de regiões, total, percentual, prazo, prêmio nem a palavra "desafio"/"challenge". Muda, sem push nem badge (R-NOVA). Nenhuma regra nasce aqui: cada toque entrega ao `App` uma função pura de `utils/travessias`.
 **Exports:** `PasseioSheet({ language, crossings, onChange(f), todayKey? })`. Redesenhada em 02/10/2026 (F1–F5): a tela mostra só a Travessia em uso (card com postal da região, glifo da área, título, ato, linha "No mapa" vinda de `crossingYield`, estado de hoje), com "Fiz" (uma vez por dia, `markDone(c, dia)`), "Ver todas e trocar" (abre `ModalSheet` com as 21) e "Recuar" (`dropCrossing`); ⚰️ "Deixar pra lá" e a lista de regiões em névoa na tela principal.
-**Imports novos:** `ModalSheet` de `form/FormKit`, `crossingYield`/`doneToday`/`crossingRegions` de `utils/travessias`.
+**Missões do dia (04/10/2026):** props novas `seed?` (id do save); sem escolha mostra as 3 de `dailyOffer(dia, seed)` (cards fechados, "Escolher esta" → `pickMission`) com o "!" (`MissionMark`); escolhida vira o card com "?"; depois do "Fiz" diz para onde o Soulmon viaja; `data-marcos` ("Marcos de Aventura · N", só com N ≥ 1) com `InfoTip`. Explicações atrás de `InfoTip`.
+**Imports novos:** `dailyOffer`/`pickMission`/`doneToday`/`crossingYield` de `utils/travessias`, `InfoTip`, `MissionMark`.
+
+### `src/components/play/MissionMark.tsx`
+**Dono de:** o marcador de missão à la World of Warcraft (04/10/2026): "!" (`exclamation`, tom gold) = missões do dia disponíveis, "?" (`question`, tom primary) = missão escolhida em andamento. Glifos autorais pelados (sem box), parados, com `label` PT/EN.
+**Exports:** `MissionMark({ kind, size?, isPt, style? })`.
+**Chamado por:** `src/components/play/PasseioSheet.tsx`, `src/components/nav/AreaScene.tsx` (campo `mark` do lote).
+**Régua:** `src/components/play/PasseioSheet.render.test.tsx`, `src/components/play/playArea.render.test.tsx`.
 
 ### `src/components/play/TravessiaIcon.tsx`
 **Dono de:** o sinal visual de cada Travessia (02/10/2026, F1): o postal da região (`PET_BACKGROUNDS`) e o glifo da área da vida (`AREA_ICON`, nomes do subset Material — provisórios).

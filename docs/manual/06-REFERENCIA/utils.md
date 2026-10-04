@@ -2202,9 +2202,15 @@ dominância populacional — por isso ±15%. Régua nova:
 
 ### `src/utils/travessias.ts`
 **Dono de:** o Passeio e as Travessias (30/09/2026, `REGISTRO-DE-DECISOES.md` §5.6) — funções PURAS (sem React, sem `localStorage`, `dayKey` por parâmetro): regiões abertas e em névoa, a oferta (os 3 desafios do catálogo, sem sorteio), escolher/trocar entre os mesmos 3, "deixar pra lá", "Fiz" (vira `pending`, sem data, nunca expira), a noite que abre no máximo `REGIONS_OPENED_PER_DAY` região (`settleNight`, idempotente — mesma referência na 2ª chamada), o destino e o interruptor, e o achado da noite FUNDIDO (`passeioFindOfDay`: já guardado → ele; região que abriu → chegada; destino aberto ≠ casa → com `PASSEIO_REGION_FIND_CHANCE` um achado exclusivo não coletado; senão, e sempre em casa, exatamente `adventureOfDay`). Nenhum sistema do núcleo importa este módulo (contrato).
-**Exports:** `regionById`, `isRegionOpen`, `openRegions`, `mistRegions`, `offerFor`, `activeChallenge`, `pickCrossing`, `dropCrossing`, `markDone`, `settleNight`, `setDestination`, `setHidden`, `findAnyById`, `passeioFindOfDay`, tipo `PasseioFind`; reexporta `normalizeCrossings`, `REGION_IDS`, `isRegionId`, `crossingsTouchMap` de `travessiasSave.ts`.
+**Exports:** `regionById`, `isRegionOpen`, `openRegions`, `mistRegions`, `offerFor`, `activeChallenge`, `pickCrossing`, `dropCrossing`, `markDone`, `settleNight`, `setDestination`, `setHidden`, `findAnyById`, `passeioFindOfDay`, tipo `PasseioFind`; desde 04/10/2026 também `dailyOffer`, `pickMission`, `marcosAbertos`, tipo `DailyMission` (as 3 missões do dia, Marcos de Aventura, viagem da noite — `REGISTRO` §21); reexporta `normalizeCrossings`, `REGION_IDS`, `isRegionId`, `crossingsTouchMap`, `missionMark` e o tipo `MissionMark` de `travessiasSave.ts`.
 **Chamado por:** `src/App.tsx` (import dinâmico, só quando o save já mexeu no mapa), `src/components/play/PasseioSheet.tsx`, `src/components/AdventureDiary.tsx` (`findAnyById`).
 **Régua:** `src/utils/travessias.test.ts`, `src/utils/travessias.contract.test.ts`.
+
+### `src/data/travessiasViagens.ts`
+**Dono de:** a copy da VIAGEM DA NOITE e dos Marcos (04/10/2026, `REGISTRO` §21): `VIAGENS` (3 historinhas por região com desafio, 21 no total, ids `trv-<região>-volta-N`, 1ª pessoa do pet, 2–3 frases, PT/EN) e `MARCO_POSTAIS` (3 postais cosméticos aos 5/10/20 Marcos, `trv-marco-N`). Mesmo tipo `RegionFind` do catálogo; sem arte própria ainda (cai no emoji).
+**Exports:** `VIAGENS`, `MARCO_POSTAIS`.
+**Chamado por:** `src/utils/travessias.ts` (`passeioFindOfDay`, `findAnyById`).
+**Régua:** `src/utils/travessias.test.ts` (bloco "a viagem da noite e os postais dos Marcos").
 
 ### `src/utils/travessiaTitles.ts`
 **Dono de:** os TÍTULOS das propostas de Travessia (01/10/2026, H12 da navegação do dono) — ao abrir uma região na névoa, as três propostas viram cards fechados com título; o título nomeia o ATO (nunca prêmio, prazo, número ou "desafio"). EN primeiro, par PT-BR junto. Proposta sem título cai no texto do ato.
@@ -2214,7 +2220,7 @@ dominância populacional — por isso ±15%. Régua nova:
 
 ### `src/utils/travessiasSave.ts`
 **Dono de:** a parte das Travessias que o chunk de entrada precisa SEM o catálogo das regiões (orçamento de bytes): a higienização do save (`normalizeCrossings` — tolera ausência/lixo, filtra `RegionId` inválido, casa, dia malformado, texto livre no id do desafio, repetição) e a pergunta "o save já mexeu no mapa?" (`crossingsTouchMap`).
-**Exports:** `REGION_IDS`, `isRegionId`, `normalizeCrossings`, `crossingsTouchMap`.
+**Exports:** `REGION_IDS`, `isRegionId`, `normalizeCrossings`, `crossingsTouchMap`, `missionMark` (o "!"/"?" do lote, sem o catálogo — 04/10/2026), tipo `MissionMark`. `normalizeCrossings` também higieniza `pickDay` (só com ativa), `score` (inteiro 0–9999) e `trip` (dia + região ≠ casa).
 **Chamado por:** `src/contexts/GameStateContext.tsx` (load), `src/App.tsx`, `src/utils/travessias.ts` (reexporta).
 **Régua:** `src/utils/travessias.test.ts` (inclui `REGION_IDS` = ids do catálogo).
 

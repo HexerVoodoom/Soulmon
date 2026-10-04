@@ -28,7 +28,7 @@ import { REGIONS } from '../data/travessiasCatalog';
 import { ADVENTURE_CATALOG } from './adventure';
 import { CROSSINGS_EMPTY, HOME_REGION, type CrossingsState } from '../types/travessias';
 import { PasseioSheet } from '../components/play/PasseioSheet';
-import { markDone, pickCrossing, setDestination } from './travessias';
+import { dailyOffer, markDone, pickCrossing, pickMission, setDestination } from './travessias';
 
 const RAIZ = resolve(__dirname, '../..');
 const ler = (rel: string) => readFileSync(join(RAIZ, rel), 'utf8');
@@ -161,21 +161,27 @@ describe('(d) o formato: nada distingue a versão pequena, nada paga, o save só
     expect(semComentarios).not.toMatch(/\b(reward|recompensa|prize|bonus|b[ôo]nus|weight|peso|multiplier|xp|bits|emblems?)\s*\??:/i);
   });
 
-  it('CrossingsState guarda só regiões, id do desafio, dias e o interruptor (04 R-4)', () => {
-    expect(campos(corpo('CrossingsState')).sort()).toEqual(['active', 'destination', 'doneDay', 'hidden', 'opened', 'pending'].sort());
-    expect(Object.keys(CROSSINGS_EMPTY).sort()).toEqual(['active', 'destination', 'doneDay', 'hidden', 'opened', 'pending'].sort());
+  it('CrossingsState guarda só regiões, id do desafio, dias, o total de Marcos e o interruptor (04 R-4)', () => {
+    // 04/10/2026 (missões diárias): + pickDay (dia da escolha), score (Marcos de Aventura, pedido do dono)
+    // e trip (dia + região da viagem da noite). Nenhum texto livre.
+    const CAMPOS = ['active', 'destination', 'doneDay', 'hidden', 'opened', 'pending', 'pickDay', 'score', 'trip'].sort();
+    expect(campos(corpo('CrossingsState')).sort()).toEqual(CAMPOS);
+    expect(Object.keys(CROSSINGS_EMPTY).sort()).toEqual(CAMPOS);
   });
 });
 
 describe('(e) a folha do Passeio', () => {
   const R1 = FORA[0];
   const R2 = FORA[1];
+  const HOJE = '2026-10-02';
+  const M = dailyOffer(HOJE, '')[0];
+  const escolhida = pickMission(CROSSINGS_EMPTY, HOJE, '', M.region.id, M.challenge.id);
   const estados: Array<[string, CrossingsState]> = [
-    ['vazio', CROSSINGS_EMPTY],
-    ['ativa', pickCrossing(CROSSINGS_EMPTY, R1.id, R1.challenges[0].id)],
-    ['pendentes', markDone(pickCrossing(markDone(pickCrossing(CROSSINGS_EMPTY, R1.id, R1.challenges[0].id), '2026-09-30'), R2.id, R2.challenges[1].id), '2026-10-01')],
-    ['ativa feita hoje', markDone(pickCrossing(CROSSINGS_EMPTY, R1.id, R1.challenges[0].id), '2026-10-02')],
-    ['ativa em região aberta', pickCrossing({ ...CROSSINGS_EMPTY, opened: [{ region: R1.id, day: '2026-09-01' }] }, R1.id, R1.challenges[1].id)],
+    ['vazio (as três do dia)', CROSSINGS_EMPTY],
+    ['ativa', escolhida],
+    ['pendentes', markDone(pickCrossing(markDone(pickCrossing(CROSSINGS_EMPTY, R1.id, R1.challenges[0].id, '2026-09-30'), '2026-09-30'), R2.id, R2.challenges[1].id, '2026-10-01'), '2026-10-01')],
+    ['ativa feita hoje', markDone(escolhida, HOJE)],
+    ['ativa em região aberta', { ...escolhida, opened: [{ region: M.region.id, day: '2026-09-01' }] }],
     ['aberta + destino', setDestination({ ...CROSSINGS_EMPTY, opened: [{ region: R1.id, day: '2026-09-01' }] }, R1.id)],
     ['escondida', { ...CROSSINGS_EMPTY, hidden: true }],
   ];
@@ -191,11 +197,8 @@ describe('(e) a folha do Passeio', () => {
   for (const language of ['en-US', 'pt-BR'] as const) {
     for (const [nome, crossings] of estados) {
       it(`${language} · ${nome}: sem contagem, percentual, unlock, prazo, prêmio nem "desafio"`, () => {
-        const { container } = render(createElement(PasseioSheet, { language, crossings, onChange: () => {}, todayKey: '2026-10-02' }));
+        const { container } = render(createElement(PasseioSheet, { language, crossings, onChange: () => {}, todayKey: HOJE }));
         let texto = container.textContent ?? '';
-        // F2 (02/10/2026): "todas" ficam no modal — abre e varre TODO texto alcançável.
-        const trocar = container.querySelector<HTMLButtonElement>('[data-travessia-trocar]');
-        if (trocar) { fireEvent.click(trocar); texto += container.textContent ?? ''; }
         // H12 (01/10/2026): as propostas são cards FECHADOS — abre um por um para varrer o texto de dentro.
         for (const abrir of Array.from(container.querySelectorAll<HTMLButtonElement>('[data-travessia-abrir]'))) {
           fireEvent.click(abrir);

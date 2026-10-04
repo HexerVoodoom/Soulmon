@@ -103,9 +103,13 @@ describe('D2 — a regra da decoração, na tela', () => {
   it('a lojinha de Decoração abre com o limite (1 por espaço, até 5) e onde a peça aparece', () => {
     const { container } = abrir({ stall: 'decoracao' });
     const rule = container.querySelector('[data-decor-rule]')!;
-    expect(rule.textContent).toContain('1 piece per spot');
-    expect(rule.textContent).toContain('up to 5 at once');
-    expect(rule.textContent).toContain('indoor');
+    // I13: a regra mora atrás do "?" — fora da tela até tocar.
+    expect(rule.textContent).not.toContain('1 piece per spot');
+    fireEvent.click(within(rule as HTMLElement).getByRole('button', { name: 'How decoration works' }));
+    const tip = document.querySelector('[data-info-tip-panel]')!;
+    expect(tip.textContent).toContain('1 piece per spot');
+    expect(tip.textContent).toContain('up to 5 at once');
+    expect(tip.textContent).toContain('indoor');
     // só UMA vez (a prateleira não repete)
     expect(container.querySelectorAll('[data-decor-rule]').length).toBe(1);
     // e vem ANTES da prateleira

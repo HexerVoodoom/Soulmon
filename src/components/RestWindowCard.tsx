@@ -46,6 +46,7 @@ import {
 import { REST_WINDOW_DAYS } from '../types/taskModel';
 import type { Language } from '../utils/i18n';
 import { GroupCard, SwitchRow, TimeField, sm2Button, sm2Hint } from './form/FormKit';
+import { InfoTip } from './ui/InfoTip';
 
 /*
  * CANVAS "CONTA" (20/09/2026, `Descanso.dc.html`, D-K1/D-K3): o cartão é o
@@ -107,11 +108,13 @@ export function RestWindowCard({
 
   return (
     <GroupCard title={isPt ? 'Janela de descanso' : 'Rest window'}>
-      <p style={sm2Hint}>
-        {isPt
-          ? 'Escolha os horários que combinam com a sua vida. A janela é sua — o app não sugere nenhuma.'
-          : 'Pick the hours that fit your life. The window is yours — the app suggests none.'}
-      </p>
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <InfoTip language={language} label={isPt ? 'Sobre a janela de descanso' : 'About the rest window'} align="right" style={{ minHeight: 24 }}>
+          {isPt
+            ? 'Escolha os horários que combinam com a sua vida. A janela é sua — o app não sugere nenhuma.'
+            : 'Pick the hours that fit your life. The window is yours — the app suggests none.'}
+        </InfoTip>
+      </div>
 
       {/* Os dois campos. Sem "duração", sem "ideal", sem cálculo de horas. O
           nome de cada um vai no `aria-label` (Starts / Ends), como no canvas. */}

@@ -19,6 +19,7 @@
  */
 import { sm2Hint, sm2Text } from './form/FormKit';
 import { Icon } from './ui/Icon';
+import { InfoTip } from './ui/InfoTip';
 import { FIRST_DAY_GESTURES, type FirstDayGesture, type FirstDayProgress } from '../utils/firstDay';
 import type { Language } from '../utils/i18n';
 
@@ -56,14 +57,17 @@ export function FirstDayCard({ progress, language }: FirstDayCardProps) {
         marginBottom: 12,
       }}
     >
-      <p style={{ ...sm2Text, margin: '0 0 2px', fontWeight: 600 }}>
-        {isPt ? 'Vocês acabaram de se conhecer' : 'You two just met'}
-      </p>
-      <p style={{ ...sm2Hint, margin: '0 0 10px' }}>
-        {isPt
-          ? 'Três coisas que ele adora. Some sozinho no fim do dia.'
-          : 'Three things they love. It goes away on its own by the end of the day.'}
-      </p>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, margin: '0 0 6px' }}>
+        <p style={{ ...sm2Text, margin: 0, fontWeight: 600 }}>
+          {isPt ? 'Vocês acabaram de se conhecer' : 'You two just met'}
+        </p>
+        {/* I13 (02/10/2026): a legenda mora atrás do "?". */}
+        <InfoTip language={language} label={isPt ? 'Sobre este cartão' : 'About this card'} align="right" style={{ minHeight: 24 }}>
+          {isPt
+            ? 'Três coisas que ele adora. Some sozinho no fim do dia.'
+            : 'Three things they love. It goes away on its own by the end of the day.'}
+        </InfoTip>
+      </div>
 
       <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
         {FIRST_DAY_GESTURES.map(g => {

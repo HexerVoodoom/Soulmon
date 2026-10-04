@@ -29,10 +29,22 @@ const SR_ONLY: CSSProperties = {
   overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap', border: 0,
 };
 
-/** A pessoa pediu menos movimento — ou não há como animar (sem `matchMedia`). */
+/** Sem como animar (sem `matchMedia`, ex. jsdom/SSR): mostra tudo.
+ *  ATENÇÃO (04/10/2026): "remover animações" do Android liga `prefers-reduced-motion`
+ *  em TODO WebView — e a digitação NÃO é movimento vestibular (o texto não se
+ *  desloca). Desligá-la com esse flag escondia a fala do NPC do dono. Agora a
+ *  digitação continua, só mais rápida (`reducedSpeed`). */
 export function prefersNoTypewriter(): boolean {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return true;
-  try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { return true; }
+  return typeof window === 'undefined' || typeof window.matchMedia !== 'function';
+}
+
+/** Metade do tempo por caractere quando a pessoa pediu menos movimento. */
+function reducedSpeed(speedMs: number): number {
+  try {
+    if (typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return Math.max(10, Math.round(speedMs / 2));
+  } catch { /* segue com a velocidade normal */ }
+  return speedMs;
 }
 
 export function TypewriterText({ text, speedMs = 30, onDone, instant = false, style, className }: {
@@ -64,7 +76,7 @@ export function TypewriterText({ text, speedMs = 30, onDone, instant = false, st
         const base = p.text === text ? p.n : 0;
         return { text, n: Math.min(total, base + 1) };
       });
-    }, Math.max(10, speedMs));
+    }, Math.max(10, reducedSpeed(speedMs)));
     return () => window.clearInterval(id);
   }, [done, total, speedMs, text]);
 

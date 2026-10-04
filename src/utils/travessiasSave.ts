@@ -69,7 +69,37 @@ export function normalizeCrossings(raw: unknown): CrossingsState {
   const destination = isRegionId(r.destination) && r.destination !== HOME_REGION && aberta(r.destination)
     ? r.destination : null;
 
-  return { opened, active, pending, destination, hidden: r.hidden === true, doneDay: isDayKey(r.doneDay) ? r.doneDay : null };
+  // Missões diárias (04/10/2026): o dia da escolha, o total de Marcos e a viagem
+  // da noite. Tudo opcional num save antigo; lixo vira o valor vazio.
+  const pickDay = active && isDayKey(r.pickDay) ? r.pickDay : null;
+  const score = typeof r.score === 'number' && Number.isFinite(r.score)
+    ? Math.min(SCORE_MAX, Math.max(0, Math.floor(r.score))) : 0;
+  const t = (r.trip ?? null) as Record<string, unknown> | null;
+  const trip = t && typeof t === 'object' && isDayKey(t.day) && isRegionId(t.region) && t.region !== HOME_REGION
+    ? { day: t.day, region: t.region }
+    : null;
+
+  return {
+    opened, active, pending, destination, hidden: r.hidden === true,
+    doneDay: isDayKey(r.doneDay) ? r.doneDay : null, pickDay, score, trip,
+  };
+}
+
+/** Teto de sanidade do total de Marcos (um por dia, então ~27 anos). */
+const SCORE_MAX = 9999;
+
+/**
+ * O marcador de MISSÃO sobre o lote do Passeio (04/10/2026), à la World of
+ * Warcraft: `'available'` = "!" (há missões do dia para escolher), `'progress'`
+ * = "?" (uma escolhida, ainda sem o "Fiz"), `null` = nada (feita hoje, ou a
+ * camada escondida). Mora aqui, fora do catálogo, porque a Exploração precisa
+ * dele sem carregar as regiões. Sem número, sem som, sem animação.
+ */
+export type MissionMark = 'available' | 'progress' | null;
+
+export function missionMark(c: CrossingsState, dayKey: string): MissionMark {
+  if (c.hidden || c.doneDay === dayKey) return null;
+  return c.active && c.pickDay === dayKey ? 'progress' : 'available';
 }
 
 /**

@@ -31,6 +31,7 @@ import type { Language } from '../utils/i18n';
 import { categoryLabel } from '../types/category-icons';
 import type { ActivityCategory } from '../types/attributes';
 import { Icon } from './ui/Icon';
+import { InfoTip } from './ui/InfoTip';
 import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import { ConstancyWindow } from './HabitConstancy';
 import { ritualLabel } from './ritual/RitualKit';
@@ -72,12 +73,15 @@ export function WeeklyReportCard({ report, suggestion, language, onDismiss, rhyt
         display: 'flex', flexDirection: 'column', gap: 8,
       }}
     >
-      <p style={{ ...ritualLabel, color: 'var(--sm2-ink)' }}>{isPt ? 'SUA SEMANA' : 'YOUR WEEK'}</p>
-      <p style={muted}>
-        {isPt
-          ? 'Uma leitura dos últimos sete dias. Nada aqui é nota — é só o que aconteceu.'
-          : 'A read on the last seven days. None of this is a grade — it is just what happened.'}
-      </p>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        <p style={{ ...ritualLabel, color: 'var(--sm2-ink)' }}>{isPt ? 'SUA SEMANA' : 'YOUR WEEK'}</p>
+        {/* I13 (02/10/2026): a legenda mora atrás do "?". */}
+        <InfoTip language={language} label={isPt ? 'Sobre a leitura da semana' : 'About the week read'} align="right" style={{ minHeight: 24 }}>
+          {isPt
+            ? 'Uma leitura dos últimos sete dias. Nada aqui é nota — é só o que aconteceu.'
+            : 'A read on the last seven days. None of this is a grade — it is just what happened.'}
+        </InfoTip>
+      </div>
 
       {lines.length > 0 && (
         <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>

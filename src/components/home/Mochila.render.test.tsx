@@ -146,6 +146,8 @@ describe('Mochila — a alternativa acessível', () => {
 
   it('par EN: "Use <item>" e a dica de arrastar com o nome do pet', () => {
     const { onUse } = montar({ language: 'en-US' });
+    expect(screen.queryByText('Drag onto Bito to use')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'How to use an item' }));
     expect(screen.getByText('Drag onto Bito to use')).toBeTruthy();
     act(() => { screen.getByRole('button', { name: 'Apple × 3' }).focus(); });
     fireEvent.click(screen.getByRole('button', { name: 'Use Apple' }));

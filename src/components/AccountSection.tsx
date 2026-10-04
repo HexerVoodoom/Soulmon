@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { sm2Button, sm2Hint } from './form/FormKit';
+import { InfoTip } from './ui/InfoTip';
 import { Icon } from './ui/Icon';
 import { CREDIT_COLOR } from '../utils/currencies';
 import type { Language } from '../utils/i18n';
@@ -155,18 +156,20 @@ export function AccountSection({ language, onEntitlementChange, onSignedIn }: Ac
 
       {/* "Restore purchases" `outline` 48 de largura inteira; "Sign out" é
           `quiet` — sair é quieto, nunca vermelho. */}
-      <button type="button" onClick={handleRestore} disabled={restoring} style={{ ...sm2Button('outline', restoring), width: '100%' }}>
-        {restoring
-          ? (isPt ? 'Restaurando…' : 'Restoring…')
-          : (isPt ? 'Restaurar compras' : 'Restore purchases')}
-      </button>
-      {/* G9: o que o botão faz, numa linha — devolve o que já foi pago na
-          conta da loja (aparelho novo, reinstalação). Não cobra nada. */}
-      <p style={{ ...sm2Hint, marginTop: -4 }}>
-        {isPt
-          ? 'Traz de volta o que você já comprou nesta conta Google. Não cobra nada.'
-          : 'Brings back what you already bought on this Google account. Nothing is charged.'}
-      </p>
+      {/* G9 → I13: o que o botão faz (devolve o que já foi pago na conta da
+          loja; não cobra nada) mora atrás do "?" ao lado dele. */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+        <button type="button" onClick={handleRestore} disabled={restoring} style={{ ...sm2Button('outline', restoring), flex: 1, minWidth: 0 }}>
+          {restoring
+            ? (isPt ? 'Restaurando…' : 'Restoring…')
+            : (isPt ? 'Restaurar compras' : 'Restore purchases')}
+        </button>
+        <InfoTip language={language} label={isPt ? 'O que "Restaurar compras" faz' : 'What "Restore purchases" does'} align="right">
+          {isPt
+            ? 'Traz de volta o que você já comprou nesta conta Google. Não cobra nada.'
+            : 'Brings back what you already bought on this Google account. Nothing is charged.'}
+        </InfoTip>
+      </div>
       {isAuthConfigured() && authEmail && (
         <button type="button" onClick={handleSignOut} style={{ ...sm2Button('quiet'), width: '100%' }}>
           {isPt ? 'Sair da conta' : 'Sign out'}

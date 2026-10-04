@@ -1,6 +1,7 @@
 import { useState, type CSSProperties, type ReactNode } from 'react';
 import { bitsStyle, emblemStyle, BITS_EXCHANGE, CREDIT_COLOR, CREDIT_TO_BITS, EMBLEMS_PER_LOSS, EMBLEMS_PER_WIN, MINIGAME_BITS_PER_DAY, type CurrencyId } from '../../utils/currencies';
 import { Icon } from '../ui/Icon';
+import { InfoTip } from '../ui/InfoTip';
 import { BackArrow } from '../ui/BackArrow';
 import { MiniGlass } from '../ui/MiniGlass';
 import { BitsIcon } from '../ui/BitsIcon';
@@ -436,9 +437,13 @@ export function ShopShelf({
 export function DecorRuleLine({ language }: { language: Language }) {
   const t = decorRuleText(language === 'pt-BR');
   return (
-    <div data-decor-rule style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-      <p style={{ ...sm2Text, margin: 0, fontWeight: 500 }}>{t.limit}</p>
-      <p style={{ ...sm2Hint, margin: 0 }}>{t.scenes}</p>
+    <div data-decor-rule style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+      <p style={{ ...sm2Text, margin: 0, fontWeight: 500 }}>{language === 'pt-BR' ? 'Regra da decoração' : 'Decoration rule'}</p>
+      {/* I13 (02/10/2026): a regra inteira mora atrás do "?" (texto único em `decorRules`). */}
+      <InfoTip language={language} label={language === 'pt-BR' ? 'Como funciona a decoração' : 'How decoration works'} align="right">
+        <span style={{ display: 'block', fontWeight: 500 }}>{t.limit}</span>
+        <span style={{ display: 'block', marginTop: 6 }}>{t.scenes}</span>
+      </InfoTip>
     </div>
   );
 }

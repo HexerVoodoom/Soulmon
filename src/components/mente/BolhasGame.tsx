@@ -156,6 +156,10 @@ export function BolhasGame({ language, evolutionStage, demoCharacterId, onExit, 
   const sub = calma
     ? (isPt ? 'Sem pressa. Estoure quando quiser.' : 'No rush. Pop whenever you like.')
     : (isPt ? 'Estoure os sonhos claros, deixe passar os fiapos escuros.' : 'Pop the bright dreams, let the dark wisps drift by.');
+  /* I13: a regra do pagamento (só no jogo que paga) entra no mesmo "?". */
+  const rule = calma ? null : (isPt
+    ? `60 segundos. 1 Bit a cada ${BOLHAS_POINTS_PER_BIT} sonhos, até ${BOLHAS_MAX_BITS}.`
+    : `60 seconds. 1 Bit per ${BOLHAS_POINTS_PER_BIT} dreams, up to ${BOLHAS_MAX_BITS}.`);
 
   const petStyle: CSSProperties = {
     left: VISOR_W / 2 - 32, top: VISOR_H - 68,
@@ -166,7 +170,14 @@ export function BolhasGame({ language, evolutionStage, demoCharacterId, onExit, 
 
   return (
     <GameRoot>
-      <GameHeader title={title} sub={sub} closeLabel={isPt ? 'Sair' : 'Exit'} onClose={onExit} />
+      <GameHeader
+        title={title}
+        language={language}
+        infoLabel={isPt ? 'Como se joga' : 'How to play'}
+        info={<><span style={{ display: 'block' }}>{sub}</span>{rule && <span style={{ display: 'block', marginTop: 6 }}>{rule}</span>}</>}
+        closeLabel={isPt ? 'Sair' : 'Exit'}
+        onClose={onExit}
+      />
 
       {!calma && phase === 'play' && (
         <div style={{ display: 'flex', justifyContent: 'center', gap: 16 }}>
@@ -218,11 +229,6 @@ export function BolhasGame({ language, evolutionStage, demoCharacterId, onExit, 
 
       {phase === 'intro' && (
         <>
-          <p style={phaseLine}>
-            {isPt
-              ? `60 segundos. 1 Bit a cada ${BOLHAS_POINTS_PER_BIT} sonhos, até ${BOLHAS_MAX_BITS}.`
-              : `60 seconds. 1 Bit per ${BOLHAS_POINTS_PER_BIT} dreams, up to ${BOLHAS_MAX_BITS}.`}
-          </p>
           <button type="button" onClick={begin} style={sm2Button('primary')} data-bolhas-start>
             {isPt ? 'Começar' : 'Start'}
           </button>

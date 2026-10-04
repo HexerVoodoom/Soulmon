@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import type { CSSProperties } from 'react';
 import { Icon } from './ui/Icon';
+import { InfoTip } from './ui/InfoTip';
 import { sm2Button } from './form/FormKit';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, StatTag, phaseTitle, phaseLine } from './games/GameKit';
 import { getSpriteForStage } from '../utils/sprites';
@@ -137,7 +138,6 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, profi
   /** E2: o nível mais fundo já cumprido — o teto do "Descer mais fundo". */
   const [reachedLevel, setReachedLevel] = useState(() => getDungeonReached());
   /** E1: o texto longo do lobby mora atrás do "?". */
-  const [helpOpen, setHelpOpen] = useState(false);
   const [floor, setFloor] = useState(1);
   const [best, setBest] = useState(() => getDungeonBest());
   const [runScore, setRunScore] = useState(0);
@@ -524,39 +524,28 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, profi
       <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
         <StatTag label={isPt ? 'Recorde' : 'Best'} value={best} />
         <StatTag label={isPt ? 'Dificuldade base' : 'Base level'} value={baseLevel} />
-        {/* E1 (02/10/2026): o texto longo do lobby mora atrás do "?" — toque lê. */}
-        <button
-          type="button"
-          data-dungeon-help
-          aria-expanded={helpOpen}
-          aria-label={isPt ? 'Como funciona a descida' : 'How the descent works'}
-          onClick={() => setHelpOpen(o => !o)}
-          style={{ background: 'none', border: 'none', padding: 0, minWidth: 44, minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--sm2-primary-ink)' }}
-        >
-          <Icon name="help" size={24} tone="inherit" />
-        </button>
+        {/* E1 (02/10/2026): o texto longo do lobby mora atrás do "?" — toque lê.
+            I13: agora é o `InfoTip` padrão (antes era um "?" próprio). */}
+        <InfoTip language={language} label={isPt ? 'Como funciona a descida' : 'How the descent works'} align="right">
+          <span data-dungeon-help-panel style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <span>
+                  {isPt
+                    ? `${MAX_FLOORS} camadas, cada uma com ${ladderLen} inimigos e mais forte que a anterior. A camada 1 serve pra um rookie; algumas camadas abaixo ficam brutais. Concluir a descida inteira sobe a dificuldade (reset semanal). Perder custa a descida — nunca os seus corações.`
+                    : `${MAX_FLOORS} layers, each with ${ladderLen} enemies and tougher than the last. Layer 1 suits a rookie; a few layers down gets brutal. Completing the whole descent raises the difficulty (weekly reset). Losing costs you the descent — never your hearts.`}
+                </span>
+                <span>
+                  {isPt
+                    ? 'Aqui o assentamento falhou e as camadas se empilharam. Ninguém mora numa fenda.'
+                    : 'Here the settling failed and the layers piled up. Nobody lives in a rift.'}
+                </span>
+                <span>
+                  {isPt
+                    ? 'Seu Soulmon golpeia e se defende sozinho. Toque na tela (ou no mascote) para torcer: a barra de cheer enche devagar e despeja energia nele — e ela fica de um inimigo para o outro. Com a energia cheia, ele solta o especial: toque no anel na hora certa. Quando o inimigo soltar o dele, deslize o dedo para o lado para esquivar.'
+                    : 'Your Soulmon strikes and defends on its own. Tap the screen (or the mascot) to cheer: the cheer bar fills slowly and pours energy into it — and it carries over from one enemy to the next. With full energy it unleashes its special: tap the ring at the right moment. When the enemy unleashes its own, swipe sideways to dodge.'}
+                </span>
+          </span>
+        </InfoTip>
       </div>
-      {helpOpen && (
-        <div role="note" data-dungeon-help-panel style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 12, border: '1px solid var(--sm2-line)', borderRadius: 'var(--sm2-radius-md)', backgroundColor: 'var(--sm2-surface-2)' }}>
-          <p style={phaseLine}>
-            {isPt
-              ? `${MAX_FLOORS} camadas, cada uma com ${ladderLen} inimigos e mais forte que a anterior. A camada 1 serve pra um rookie; algumas camadas abaixo ficam brutais. Concluir a descida inteira sobe a dificuldade (reset semanal). Perder custa a descida — nunca os seus corações.`
-              : `${MAX_FLOORS} layers, each with ${ladderLen} enemies and tougher than the last. Layer 1 suits a rookie; a few layers down gets brutal. Completing the whole descent raises the difficulty (weekly reset). Losing costs you the descent — never your hearts.`}
-          </p>
-          {/* Copy §4, linha de contexto (§7, L3): fecha a leitura de que os
-              inimigos são vítimas ou de que a fenda é castigo de alguém. */}
-          <p style={phaseLine}>
-            {isPt
-              ? 'Aqui o assentamento falhou e as camadas se empilharam. Ninguém mora numa fenda.'
-              : 'Here the settling failed and the layers piled up. Nobody lives in a rift.'}
-          </p>
-          <p style={phaseLine}>
-            {isPt
-              ? 'Seu Soulmon golpeia e se defende sozinho. Toque na tela (ou no mascote) para torcer: a barra de cheer enche devagar e despeja energia nele — e ela fica de um inimigo para o outro. Com a energia cheia, ele solta o especial: toque no anel na hora certa. Quando o inimigo soltar o dele, deslize o dedo para o lado para esquivar.'
-              : 'Your Soulmon strikes and defends on its own. Tap the screen (or the mascot) to cheer: the cheer bar fills slowly and pours energy into it — and it carries over from one enemy to the next. With full energy it unleashes its special: tap the ring at the right moment. When the enemy unleashes its own, swipe sideways to dodge.'}
-          </p>
-        </div>
-      )}
       {/* Fase 3 do Oráculo: o OFÍCIO da ficha e o jeito dele na fenda —
           uma palavra nomeada e uma frase de mundo sobre a criatura; o
           número fica dentro da run. Sem profissão, nada aqui. */}

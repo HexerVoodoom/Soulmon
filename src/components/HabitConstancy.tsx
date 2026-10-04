@@ -10,6 +10,7 @@ import {
   type HabitRhythm,
 } from '../utils/habitRhythm';
 import { Icon } from './ui/Icon';
+import { InfoTip } from './ui/InfoTip';
 
 /**
  * O INDICADOR DE CONSTÂNCIA DE UM HÁBITO
@@ -295,20 +296,22 @@ export function HabitConstancy({ rhythm, schedule: _schedule, now, language, com
             <span key={i} aria-hidden="true" style={dotStyle(i < shields ? 'shielded' : 'empty')} />
           ))}
         </span>
+        {/* I13 (02/10/2026): as duas frases de regra moram atrás do "?". A tese
+            do produto ("nada zera") continua escrita aqui — só na ficha; na
+            lista ela apareceria embaixo de CADA hábito. */}
+        <InfoTip language={language} label={isPt ? 'Como funcionam os escudos' : 'How shields work'} align="right" style={{ minHeight: 24 }}>
+          <span style={{ display: 'block' }}>
+            {isPt
+              ? 'Chegam com semanas firmes e entram sozinhos quando um dia escapa.'
+              : 'They arrive with steady weeks and step in on their own when a day slips.'}
+          </span>
+          <span style={{ display: 'block', marginTop: 6 }}>
+            {isPt
+              ? 'Nada zera aqui: um dia perdido custa um pontinho, não a sua história.'
+              : 'Nothing resets here: one missed day costs a dot, not your history.'}
+          </span>
+        </InfoTip>
       </div>
-      <span>
-        {isPt
-          ? 'Chegam com semanas firmes e entram sozinhos quando um dia escapa.'
-          : 'They arrive with steady weeks and step in on their own when a day slips.'}
-      </span>
-
-      {/* A tese do produto, escrita. Só na ficha — na lista ela apareceria
-          embaixo de CADA hábito. */}
-      <span>
-        {isPt
-          ? 'Nada zera aqui: um dia perdido custa um pontinho, não a sua história.'
-          : 'Nothing resets here: one missed day costs a dot, not your history.'}
-      </span>
     </div>
   );
 }

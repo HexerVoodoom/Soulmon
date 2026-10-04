@@ -167,6 +167,14 @@ null` e `language: Language` (agora obrigatória):
 | `laboratorio` | Laboratório / Laboratory | Evolução — abas sublinhadas Evolução / Soulmon / Estatísticas (`labTab`) |
 | `hall` | Hall | Biblioteca (`LibraryPage`, decisão D4) · **Salão da Guilda** (`GuildSheet room="salao"`, NPC Bastia — [§4.26](#guilda-tela)) |
 
+**Passeio — missões do dia (04/10/2026).** O lote do Passeio leva um marcador de missão
+("!" = há três missões do dia para escolher; "?" = uma escolhida, esperando o "Fiz"; nada
+depois do "Fiz"). Dentro da folha: os destinos, e em Travessias os 3 cards do dia (postal da
+região, título, área) — tocar abre o ato, a versão pequena e "Escolher esta"; escolhida, vira o
+card da missão com "Fiz" e "Recuar". Depois do "Fiz": "esta noite o Soulmon viaja para
+<região>" e, no relatório do dia seguinte, a historinha da viagem. O total ("Marcos de
+Aventura · N") aparece discreto a partir de 1. Textos explicativos ficam atrás do `InfoTip`.
+
 Rótulos: `areaLabel` (`navigation.ts`); lotes: `utils/areaSheetCopy.ts`
 (Mercado, Arena, lote único de Laboratório/Hall) e `utils/playAreaLots.ts`
 (Exploração, Jogos). Os jogos montam **por cima** da área e voltam a ela no

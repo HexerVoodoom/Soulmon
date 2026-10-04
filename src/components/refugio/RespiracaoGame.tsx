@@ -104,7 +104,9 @@ export function RespiracaoGame({ language, evolutionStage, demoCharacterId, onEx
       <GameRoot>
         <GameHeader
           title={title}
-          sub={isPt ? 'Siga a bolha. Não precisa tocar em nada.' : 'Follow the bubble. No need to touch anything.'}
+          language={language}
+          infoLabel={isPt ? 'Como respirar com o Soulmon' : 'How to breathe with your Soulmon'}
+          info={isPt ? 'Siga a bolha. Não precisa tocar em nada.' : 'Follow the bubble. No need to touch anything.'}
           closeLabel={closeLabel}
           onClose={onExit}
         />

@@ -1,0 +1,33 @@
+import type { CSSProperties } from 'react';
+import { Icon } from '../ui/Icon';
+import type { MissionMark as Kind } from '../../utils/travessiasSave';
+
+/**
+ * O MARCADOR DE MISSÃO (04/10/2026, pedido do dono — como o World of Warcraft):
+ * "!" = há missões do dia para escolher; "?" = uma escolhida, esperando o
+ * "Fiz". Os dois são glifos AUTORAIS (`ui/NavGlyphs.tsx`: `exclamation` e
+ * `question`), pelados — ícone nunca dentro de box. Parado: sem animação, sem
+ * som, sem número (as regras do Passeio: nada que cobre). Some quando a missão
+ * de hoje foi feita ou quando a camada de Travessias está escondida.
+ */
+export function MissionMark({ kind, size = 24, isPt, style }: {
+  kind: Exclude<Kind, null>; size?: number; isPt: boolean; style?: CSSProperties;
+}) {
+  const label = kind === 'available'
+    ? (isPt ? 'Missões do dia' : 'Missions of the day')
+    : (isPt ? 'Missão em andamento' : 'Mission in progress');
+  return (
+    <span
+      data-mission-mark={kind}
+      style={{ display: 'inline-flex', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.7))', ...style }}
+    >
+      <Icon
+        name={kind === 'available' ? 'exclamation' : 'question'}
+        size={size}
+        weight={600}
+        tone={kind === 'available' ? 'gold' : 'primary'}
+        label={label}
+      />
+    </span>
+  );
+}

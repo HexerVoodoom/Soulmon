@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Icon } from './ui/Icon';
+import { InfoTip } from './ui/InfoTip';
 import {
   CATEGORY_ATTRIBUTES, ATTR_INK, ATTR_LABEL,
   ActivityCategory, type BranchType,
@@ -85,6 +86,16 @@ type HabitScheduleState = ReturnType<typeof useHabitSchedule>;
  * divergiria sem dar erro nenhum: o hábito passaria a cobrar num ritmo que o
  * usuário não escolheu, e ninguém veria isso num code review.
  */
+/** I13 (02/10/2026): a dica de campo (antes um parágrafo `muted` sob o controle)
+ *  vira um "?" alinhado à direita da linha. O texto continua inteiro no tooltip. */
+function HintTip({ language, label, children }: { language: Language; label: string; children: React.ReactNode }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+      <InfoTip language={language} label={label} align="right" style={{ minHeight: 28 }}>{children}</InfoTip>
+    </div>
+  );
+}
+
 export function HabitScheduleFields({ sched, language }: { sched: HabitScheduleState; language: Language }) {
   const isPt = language === 'pt-BR';
   /** Qual preset descreve a seleção atual — `null` quando é personalizada. */
@@ -206,7 +217,7 @@ export function HabitScheduleFields({ sched, language }: { sched: HabitScheduleS
               />
             ))}
           </div>
-          <p style={sm2Hint}>{t.timesHelp}</p>
+          <HintTip language={language} label={isPt ? 'Sobre os dias da semana' : 'About the weekly days'}>{t.timesHelp}</HintTip>
         </div>
       )}
 
@@ -230,7 +241,9 @@ export function HabitScheduleFields({ sched, language }: { sched: HabitScheduleS
               {t.fromCompletion}
             </CheckRow>
           </div>
-          <p style={sm2Hint}>{sched.fromCompletion ? t.fromCompletionOn : t.fromCompletionOff}</p>
+          <HintTip language={language} label={isPt ? 'Sobre contar da conclusão' : 'About counting from completion'}>
+            {sched.fromCompletion ? t.fromCompletionOn : t.fromCompletionOff}
+          </HintTip>
         </div>
       )}
     </div>
@@ -578,7 +591,7 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, langu
           onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); applyQuickAdd(); } }}
           placeholder={quickAddHint(isPt ? 'pt-BR' : 'en')}
         />
-        <p style={sm2Hint}>{txt.quickHelp}</p>
+        <HintTip language={language} label={isPt ? 'Sobre a captura rápida' : 'About quick add'}>{txt.quickHelp}</HintTip>
       </div>
 
       {/* O que foi entendido. Só aparece com o formulário fechado — com ele
@@ -656,7 +669,7 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, langu
                     <Field type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
                       aria-label={txt.when} />
                   )}
-                  <p style={sm2Hint}>{txt.whenHint}</p>
+                  <HintTip language={language} label={isPt ? 'Sobre o "quando"' : 'About the "when"'}>{txt.whenHint}</HintTip>
                 </div>
 
                 <div>

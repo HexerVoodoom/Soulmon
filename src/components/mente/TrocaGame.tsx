@@ -196,7 +196,9 @@ export function TrocaGame({ language, onEarnPoints, onExit }: EarningGameProps) 
     <GameRoot>
       <GameHeader
         title={isPt ? 'Troca de Regra' : 'Rule Switch'}
-        sub={isPt ? 'Separe cada criatura pela regra de cima.' : 'Sort each creature by the rule on top.'}
+        language={language}
+        infoLabel={isPt ? 'Como se joga' : 'How to play'}
+        info={isPt ? 'Separe cada criatura pela regra de cima.' : 'Sort each creature by the rule on top.'}
         closeLabel={isPt ? 'Sair' : 'Exit'}
         onClose={onExit}
       />

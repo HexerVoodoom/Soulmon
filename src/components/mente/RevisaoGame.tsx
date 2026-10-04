@@ -130,7 +130,14 @@ export function RevisaoGame({
   if (screen === 'home') {
     return (
       <GameRoot>
-        <GameHeader title={title} sub={explain} closeLabel={closeLabel} onClose={onExit} />
+        <GameHeader
+          title={title}
+          language={language}
+          infoLabel={isPt ? 'Como funciona a Revisão' : 'How Review works'}
+          info={explain}
+          closeLabel={closeLabel}
+          onClose={onExit}
+        />
         {petVisor}
         <p role="status" data-revisao-due style={phaseTitle}>
           {due.length === 0
@@ -304,13 +311,13 @@ export function RevisaoGame({
         onClose={onExit}
         onBack={() => setScreen('home')}
         backLabel={isPt ? 'Voltar à Revisão' : 'Back to Review'}
+        language={language}
+        infoLabel={isPt ? 'Como funciona a Revisão' : 'How Review works'}
+        info={isPt ? 'O que você lembrou volta mais tarde; o resto volta amanhã.' : 'What you remembered comes back later; the rest comes back tomorrow.'}
       />
       {petVisor}
       <div role="status" data-revisao-done style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
         <p style={phaseTitle}>{isPt ? 'Revisão feita.' : 'Review done.'}</p>
-        <p style={phaseLine}>
-          {isPt ? 'O que você lembrou volta mais tarde; o resto volta amanhã.' : 'What you remembered comes back later; the rest comes back tomorrow.'}
-        </p>
         {earned > 0 && <p className="sm2-num" style={phaseLine}>+{earned} Bits</p>}
       </div>
       {/* I3 (01/10/2026): o "Voltar" de baixo virou a seta acima do título. */}

@@ -11,6 +11,7 @@
  * dublês que só registram as props — o que se testa aqui é a fiação, não a
  * jogabilidade (que tem teste próprio).
  */
+import { CROSSINGS_EMPTY } from '../../types/travessias';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { act, fireEvent, waitFor } from '@testing-library/react';
 import { readFileSync } from 'node:fs';
@@ -139,14 +140,14 @@ describe('Exploração — Zeph e a Masmorra', () => {
     const folha = getByRole('dialog', { name: 'Masmorra' });
     expect(folha.textContent).toContain('321');
     expect(folha.textContent).toContain('Nível 1');
-    expect(folha.textContent).toMatch(/nunca os seus corações/);
+    // I13 (02/10/2026): a nota "perder custa só a run" saiu da folha e mora
+    // atrás do "?" — fica fora da tela até o jogador tocar.
+    expect(folha.textContent).not.toMatch(/nunca os seus corações/);
+    fireEvent.click(getByRole('button', { name: 'Como funciona a masmorra' }));
+    expect(document.querySelector('[data-info-tip-panel]')!.textContent).toMatch(/nunca os seus corações/);
     expect(folha.textContent).toContain('4→12');
-    // H11 (01/10/2026): a fileira 1-2-3-4-5 saiu, e as duas notas ("perder
-    // custa só a run" e os Bits de hoje) vêm DEPOIS do botão de entrar.
+    // H11 (01/10/2026): a fileira 1-2-3-4-5 saiu.
     expect(folha.querySelectorAll('ol li')).toHaveLength(0);
-    const cta = folha.querySelector('[data-masmorra-start]')!;
-    const nota = Array.from(folha.querySelectorAll('p')).find(p => /nunca os seus corações/.test(p.textContent ?? ''))!;
-    expect(cta.compareDocumentPosition(nota) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('Masmorra: SEM gate de entrada — o CTA nunca fica desabilitado, nem com 0 Bits', async () => {
@@ -207,7 +208,8 @@ describe('Exploração — Zeph e a Masmorra', () => {
     expect(container.querySelector('[data-area-lot="masmorra"]')!.textContent).toContain('Dungeon');
     fireEvent.click(container.querySelector('[data-area-lot="masmorra"]')!);
     await achar(container, '[data-masmorra]');
-    expect(getByRole('dialog', { name: 'Dungeon' }).textContent).toMatch(/never your hearts/);
+    fireEvent.click(getByRole('button', { name: 'How the dungeon works' }));
+    expect(document.querySelector('[data-info-tip-panel]')!.textContent).toMatch(/never your hearts/);
   });
 });
 
@@ -218,7 +220,7 @@ describe('Exploração — o Passeio (30/09/2026)', () => {
       const { area, language, evolutionStage, demoCharacterId, totalPoints, onEarnPoints, ...play } = props({ language: 'en-US' });
       const areaProps = {
         area, language, evolutionStage, demoCharacterId, onEarnPoints, play,
-        passeio: { crossings: { opened: [], active: null, pending: [], destination: null, hidden: false, doneDay: null }, onChange },
+        passeio: { crossings: CROSSINGS_EMPTY, onChange },
         points: totalPoints, emblems: 0, credits: 0,
         ownership: {} as AreaViewProps['ownership'], actions: {} as AreaViewProps['actions'],
         onExchangeCredits: async () => false, tournament: {} as AreaViewProps['tournament'],
@@ -235,12 +237,11 @@ describe('Exploração — o Passeio (30/09/2026)', () => {
     expect(folha.querySelector('[data-passeio-destino="campina"]')!.getAttribute('aria-pressed')).toBe('true');
     // O Passeio tem NPC próprio desde 30/09/2026 (Brume, leva npcs-flare); a Masmorra segue com o Zeph.
     expect(container.querySelector('[data-area-sheet-npc-line]')!.textContent).toContain('Brume');
-    // F2 (02/10/2026): sem Travessia em uso, a tela principal NÃO lista as 21; um botão abre o modal com todas.
-    expect(folha.querySelector('[data-travessia-card]')).toBeNull();
-    fireEvent.click(folha.querySelector('[data-travessia-trocar]')!);
-    // H12 (01/10/2026): as propostas são cards FECHADOS, com título — abrir um mostra o "Escolher esta".
+    // 04/10/2026: o lote leva o "!" (missões do dia para escolher) e a folha mostra as TRÊS do dia.
+    expect(container.querySelector('[data-area-lot="passeio"] [data-mission-mark="available"]')).toBeTruthy();
     const cards = folha.querySelectorAll('[data-travessia-card]');
-    expect(cards.length).toBe(21);
+    expect(cards.length).toBe(3);
+    // H12 (01/10/2026): as propostas são cards FECHADOS, com título — abrir um mostra o "Escolher esta".
     expect(folha.querySelector('[data-travessia-escolher]')).toBeNull();
     const abrir = cards[0].querySelector('[data-travessia-abrir]') as HTMLElement;
     expect(abrir.getAttribute('aria-expanded')).toBe('false');
@@ -249,7 +250,7 @@ describe('Exploração — o Passeio (30/09/2026)', () => {
     fireEvent.click(folha.querySelector('[data-travessia-escolher]')!);
     expect(onChange).toHaveBeenCalledTimes(1);
     const f = onChange.mock.calls[0][0] as (c: unknown) => { active: unknown };
-    expect(f({ opened: [], active: null, pending: [], destination: null, hidden: false, doneDay: null }).active).not.toBeNull();
+    expect(f(CROSSINGS_EMPTY).active).not.toBeNull();
   });
 });
 

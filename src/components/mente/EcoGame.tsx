@@ -134,7 +134,7 @@ export function EcoGame({ language, evolutionStage, demoCharacterId, onEarnPoint
     : (isPt ? 'Repita as pedras na ordem em que o pet cantar.' : 'Repeat the stones in the order your pet sings them.');
 
   const status = phase === 'intro'
-    ? (isPt ? `Começa com ${ECO_START_LENGTH} pedras e cresce uma a cada eco.` : `Starts with ${ECO_START_LENGTH} stones and grows by one each echo.`)
+    ? (isPt ? 'Quando quiser' : 'Whenever you like')
     : phase === 'show'
       ? (isPt ? 'Observe o eco…' : 'Watch the echo…')
       : phase === 'input'
@@ -153,7 +153,24 @@ export function EcoGame({ language, evolutionStage, demoCharacterId, onEarnPoint
 
   return (
     <GameRoot>
-      <GameHeader title={title} sub={sub} closeLabel={isPt ? 'Sair' : 'Exit'} onClose={onExit} />
+      <GameHeader
+        title={title}
+        language={language}
+        infoLabel={isPt ? 'Como se joga' : 'How to play'}
+        info={(
+          <>
+            <span style={{ display: 'block' }}>{sub}</span>
+            <span style={{ display: 'block', marginTop: 6 }}>
+              {isPt ? `Começa com ${ECO_START_LENGTH} pedras e cresce uma a cada eco.` : `Starts with ${ECO_START_LENGTH} stones and grows by one each echo.`}
+            </span>
+            <span style={{ display: 'block', marginTop: 6 }}>
+              {isPt ? `1 Bit por pedra além de ${ECO_START_LENGTH}, até ${ECO_MAX_BITS}.` : `1 Bit per stone past ${ECO_START_LENGTH}, up to ${ECO_MAX_BITS}.`}
+            </span>
+          </>
+        )}
+        closeLabel={isPt ? 'Sair' : 'Exit'}
+        onClose={onExit}
+      />
 
       {/* O VISOR: o pet no meio e a pedra que ele está cantando ao lado. */}
       <GameVisor height={80} scene={ATELIE_SCENE} label={isPt ? 'O pet canta as pedras' : 'Your pet sings the stones'}>
@@ -235,9 +252,6 @@ export function EcoGame({ language, evolutionStage, demoCharacterId, onEarnPoint
           <button type="button" aria-pressed={reverse} onClick={() => setReverse(r => !r)} style={toggle} data-eco-reverse>
             {isPt ? 'Eco reverso' : 'Reverse echo'}{reverse ? (isPt ? ' · ligado' : ' · on') : ''}
           </button>
-          <p style={phaseLine}>
-            {isPt ? `1 Bit por pedra além de ${ECO_START_LENGTH}, até ${ECO_MAX_BITS}.` : `1 Bit per stone past ${ECO_START_LENGTH}, up to ${ECO_MAX_BITS}.`}
-          </p>
           <button type="button" onClick={start} style={sm2Button('primary')} data-eco-start>
             {isPt ? 'Começar' : 'Start'}
           </button>
