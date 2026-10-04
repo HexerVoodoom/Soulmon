@@ -62,15 +62,17 @@ export function InfoTip({
       if (t && (btn.current?.contains(t) || tip.current?.contains(t))) return;
       setOpen(false);
     };
-    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    // CAPTURA + stopPropagation: com o tooltip aberto, o Esc fecha SÓ ele — sem
+    // levar junto o modal/folha em volta (`useDialogA11y` também escuta o Esc).
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); setOpen(false); } };
     const reflow = () => place();
     document.addEventListener('pointerdown', fora);
-    document.addEventListener('keydown', esc);
+    document.addEventListener('keydown', esc, true);
     window.addEventListener('resize', reflow);
     window.addEventListener('scroll', reflow, true);
     return () => {
       document.removeEventListener('pointerdown', fora);
-      document.removeEventListener('keydown', esc);
+      document.removeEventListener('keydown', esc, true);
       window.removeEventListener('resize', reflow);
       window.removeEventListener('scroll', reflow, true);
     };

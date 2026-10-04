@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { InfoTip } from './InfoTip';
 
@@ -29,6 +29,17 @@ describe('InfoTip — o "?" padrão', () => {
     fireEvent.click(b);
     fireEvent.pointerDown(screen.getByText('fora'));
     expect(screen.queryByRole('note')).toBeNull();
+  });
+
+  it('Esc fecha só o tooltip, sem chegar ao modal em volta', () => {
+    const outer = vi.fn();
+    document.addEventListener('keydown', outer);
+    render(<InfoTip language="pt-BR" label="Ajuda">x</InfoTip>);
+    fireEvent.click(screen.getByRole('button', { name: 'Ajuda' }));
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByRole('note')).toBeNull();
+    expect(outer).not.toHaveBeenCalled();
+    document.removeEventListener('keydown', outer);
   });
 
   it('o alvo de toque tem 44px e o ícone é o "help" pelado (sem box)', () => {
