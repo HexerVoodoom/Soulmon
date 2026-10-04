@@ -1,6 +1,7 @@
 import { useId, useState, type CSSProperties, type ReactNode } from 'react';
 import { Icon } from '../ui/Icon';
 import { BackArrow } from '../ui/BackArrow';
+import { InfoTip } from '../ui/InfoTip';
 import { resolveLanguage, type Language } from '../../utils/i18n';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
 import { readLocal } from '../../utils/safeStorage';
@@ -580,15 +581,20 @@ export function GroupCard({
  * O trilho reusa `.sm2-kit-switch-track/-knob` — o mesmo desenho do kit.
  */
 export function SwitchRow({
-  checked, onToggle, label, hint, ariaLabel,
+  checked, onToggle, label, hint, ariaLabel, info, infoLabel, language,
 }: {
   checked: boolean;
   onToggle: () => void;
   label: string;
   hint?: string;
   ariaLabel?: string;
+  /** I13 (02/10/2026): a explicação da linha mora atrás de um "?" (`InfoTip`) FORA
+   *  do `role="switch"` (botão dentro de botão é HTML inválido). Exige `infoLabel` e `language`. */
+  info?: ReactNode;
+  infoLabel?: string;
+  language?: Language;
 }) {
-  return (
+  const row = (
     <button
       type="button"
       role="switch"
@@ -605,6 +611,13 @@ export function SwitchRow({
         <span className="sm2-kit-switch-track"><span className="sm2-kit-switch-knob" /></span>
       </span>
     </button>
+  );
+  if (info === undefined || !infoLabel || !language) return row;
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+      <div style={{ flex: 1, minWidth: 0 }}>{row}</div>
+      <InfoTip language={language} label={infoLabel} align="right">{info}</InfoTip>
+    </div>
   );
 }
 

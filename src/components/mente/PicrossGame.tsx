@@ -261,6 +261,11 @@ export function PicrossGame({ language, onEarnPoints, onExit, todayKey }: Earnin
         onClose={onExit}
         onBack={picking ? () => setPicking(false) : undefined}
         backLabel={isPt ? 'Voltar ao desenho' : 'Back to the picture'}
+        language={language}
+        infoLabel={isPt ? 'Como se joga' : 'How to play'}
+        info={isPt
+          ? 'Os números dizem os blocos pintados de cada linha e coluna, em ordem.'
+          : 'The numbers give the filled runs of each row and column, in order.'}
       />
 
       {picking ? picker : solved ? (
@@ -286,11 +291,6 @@ export function PicrossGame({ language, onEarnPoints, onExit, todayKey }: Earnin
         </>
       ) : (
         <>
-          <p style={{ ...sm2Hint, textAlign: 'center' }}>
-            {isPt
-              ? 'Os números dizem os blocos pintados de cada linha e coluna, em ordem.'
-              : 'The numbers give the filled runs of each row and column, in order.'}
-          </p>
 
           <div style={{ display: 'flex', gap: 8 }}>
             {modeBtn('fill', isPt ? 'Pintar' : 'Fill')}

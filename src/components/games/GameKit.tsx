@@ -29,6 +29,7 @@ import { Viewport } from '../ui/Viewport';
 import { MiniGlass } from '../ui/MiniGlass';
 import { PixelMeter } from '../pixel/PixelKit';
 import { sm2Hint, sm2Text, SM2_SHADOW_CARD } from '../form/FormKit';
+import { InfoTip } from '../ui/InfoTip';
 import { FX_ART } from '../../utils/fxArt';
 
 /** Largura LÓGICA do visor de jogo (×2 = 348, o vidro do canvas). */
@@ -68,9 +69,14 @@ export function GameRoot({ children, style }: { children: ReactNode; style?: CSS
  * (Rubik 14/500 sobre `line`, o canvas `.ghdr.run`); sem `run` o título é
  * Cinzel 20 (lobby, Dino, PPT).
  */
-export function GameHeader({ title, sub, closeLabel, onClose, run = false, onBack, backLabel }: {
+export function GameHeader({ title, sub, closeLabel, onClose, run = false, onBack, backLabel, info, infoLabel, language }: {
   title: string;
   sub?: ReactNode;
+  /** I13 (02/10/2026): as instruções/regras do jogo moram atrás de um "?"
+   *  (`InfoTip`) ao lado do ×, em vez de uma linha de texto. Exige `infoLabel` e `language`. */
+  info?: ReactNode;
+  infoLabel?: string;
+  language?: 'pt-BR' | 'en-US';
   closeLabel: string;
   onClose: () => void;
   run?: boolean;
@@ -126,6 +132,9 @@ export function GameHeader({ title, sub, closeLabel, onClose, run = false, onBac
         )}
         {sub !== undefined && <p style={sm2Hint}>{sub}</p>}
       </div>
+      {info !== undefined && infoLabel && language && (
+        <InfoTip language={language} label={infoLabel} align="right" style={{ marginRight: -8 }}>{info}</InfoTip>
+      )}
       {/* O × é o PRIMEIRO interativo da tela (J5) — 44×44, ícone pelado. */}
       <button
         type="button"

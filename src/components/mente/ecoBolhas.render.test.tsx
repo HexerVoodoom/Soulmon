@@ -102,7 +102,10 @@ describe('BolhasGame', () => {
     const onEarn = vi.fn();
     const { container } = renderWithCss(<BolhasGame {...base} language="pt-BR" mode="calma" onEarnPoints={onEarn} />);
     expect(container.textContent).toContain('Bolhas calmas');
-    expect(container.textContent).toContain('Sem pressa. Estoure quando quiser.');
+    // I13 (02/10/2026): a instrução mora atrás do "?" do cabeçalho.
+    expect(container.textContent).not.toContain('Sem pressa. Estoure quando quiser.');
+    fireEvent.click(container.querySelector<HTMLButtonElement>('button[aria-label="Como se joga"]')!);
+    expect(document.querySelector('[data-info-tip-panel]')!.textContent).toContain('Sem pressa. Estoure quando quiser.');
     expect(container.querySelector('[data-bolhas-score]')).toBeNull();
     expect(container.querySelector('[data-bolhas-time]')).toBeNull();
     for (let t = 0; t < 40; t++) {
@@ -121,7 +124,8 @@ describe('BolhasGame', () => {
     const onEarn = vi.fn();
     const { container } = renderWithCss(<BolhasGame {...base} language="en-US" mode="foco" onEarnPoints={onEarn} />);
     expect(container.textContent).toContain('Dream Bubbles');
-    expect(container.textContent).toContain('Pop the bright dreams, let the dark wisps drift by');
+    fireEvent.click(container.querySelector<HTMLButtonElement>('button[aria-label="How to play"]')!);
+    expect(document.querySelector('[data-info-tip-panel]')!.textContent).toContain('Pop the bright dreams, let the dark wisps drift by');
     fireEvent.click(container.querySelector('[data-bolhas-start]')!);
     let popped = 0;
     while (popped < 12) {
