@@ -3263,35 +3263,32 @@ async function handleGuild({ request, env }) {
 __name(handleGuild, "handleGuild");
 
 // api/_duel.js
-var DUEL_MAX_TURNS = 12;
+var DUEL_MAX_TURNS = 26;
 var DUEL_PENDING_MS = 5 * 60 * 1e3;
 var DUEL_CHEER_STRIKES = [1, 3, 5];
+var DUEL_CHEER_WINDOWS = DUEL_MAX_TURNS / 2;
 var DUEL_PERFECT_CHEER = 0.92;
 var DUEL_CHEER_GAIN = 0.25;
 var DUEL_PERFECT_MULT = 1.35;
 var TIMING_CHEER_ENABLED = false;
-var DUEL_TAPS_FULL = 16;
-var DUEL_TAPS_CAP = 20;
-var DUEL_SPECIAL_MULT = DUEL_PERFECT_MULT;
+var DUEL_TAPS_FULL = 24;
+var DUEL_TAPS_CAP = 16;
+var DUEL_ENERGY_MAX = 100;
+var DUEL_ENERGY_DEALT = 9;
+var DUEL_ENERGY_TAKEN = 7;
+var DUEL_ENERGY_CHEER = 36;
+var DUEL_SPECIAL_MULT = 2;
+var DUEL_DMG_SPREAD = 0.74;
 function sanitizeTaps(raw) {
   const arr = Array.isArray(raw) ? raw : [];
-  return DUEL_CHEER_STRIKES.map((_, i) => {
+  return Array.from({ length: DUEL_CHEER_WINDOWS }, (_, i) => {
     const n = Math.floor(Number(arr[i]));
     return Number.isFinite(n) ? Math.min(DUEL_TAPS_CAP, Math.max(0, n)) : 0;
   });
 }
 __name(sanitizeTaps, "sanitizeTaps");
-function specialSlots(taps) {
-  const t = sanitizeTaps(taps);
-  let g = 0;
-  return t.map((n) => {
-    g = Math.min(DUEL_TAPS_FULL, g + n);
-    if (g < DUEL_TAPS_FULL) return false;
-    g = 0;
-    return true;
-  });
-}
-__name(specialSlots, "specialSlots");
+var DUEL_HP_BASE = 140;
+var DUEL_HP_PER_STAGE = 12;
 var STAGE_POWER = { rookie: 1, champion: 2, ultimate: 3, mega: 4, ultra: 5 };
 function stagePowerOf(stage) {
   return STAGE_POWER[String(stage || "").split("-")[0]] ?? 1;
@@ -3302,7 +3299,7 @@ function duelStats(profile) {
   const a = profile?.attrs || {};
   const attrSum = (+a.power || 0) + (+a.harmony || 0) + (+a.benevolence || 0);
   return {
-    hp: 70 + sp * 6,
+    hp: DUEL_HP_BASE + sp * DUEL_HP_PER_STAGE,
     atk: Math.round((10 + sp * 1.2 + Math.min(2, attrSum / 50)) * 10) / 10
   };
 }
@@ -3333,33 +3330,58 @@ __name(cheerMultiplier, "cheerMultiplier");
 function simulateDuel({ me, opp, seed, cheers }) {
   const rng = mulberry32(seed);
   const q = TIMING_CHEER_ENABLED ? sanitizeCheers(cheers) : null;
-  const special = TIMING_CHEER_ENABLED ? null : specialSlots(cheers);
+  const taps = TIMING_CHEER_ENABLED ? null : sanitizeTaps(cheers);
   let hpMe = me.hp, hpOpp = opp.hp;
   let turn = me.atk > opp.atk ? "me" : me.atk < opp.atk ? "opp" : rng() < 0.5 ? "me" : "opp";
   let myStrike = 0;
+  let enMe = 0, enOpp = 0, meter = 0;
   const events = [];
   for (let t = 0; t < DUEL_MAX_TURNS && hpMe > 0 && hpOpp > 0; t++) {
     const atk = turn === "me" ? me.atk : opp.atk;
-    let mult = 0.5 + rng();
+    let mult = 1 - DUEL_DMG_SPREAD + 2 * DUEL_DMG_SPREAD * rng();
     let cheer = null;
+    let special = false;
     if (turn === "me") {
-      const slot = DUEL_CHEER_STRIKES.indexOf(myStrike);
-      if (slot >= 0) {
-        if (q) {
+      if (q) {
+        const slot = DUEL_CHEER_STRIKES.indexOf(myStrike);
+        if (slot >= 0) {
           cheer = q[slot];
           mult *= cheerMultiplier(cheer);
-        } else {
-          const sp = !!special?.[slot];
-          cheer = sp ? 1 : 0;
-          if (sp) mult *= DUEL_SPECIAL_MULT;
         }
+      } else {
+        meter += (taps ? taps[myStrike] : 0) ?? 0;
+        if (meter >= DUEL_TAPS_FULL) {
+          meter -= DUEL_TAPS_FULL;
+          enMe = Math.min(DUEL_ENERGY_MAX, enMe + DUEL_ENERGY_CHEER);
+        }
+        if (enMe >= DUEL_ENERGY_MAX) {
+          special = true;
+          enMe -= DUEL_ENERGY_MAX;
+          mult *= DUEL_SPECIAL_MULT;
+        }
+        cheer = special ? 1 : 0;
       }
       myStrike++;
+    } else if (!q && enOpp >= DUEL_ENERGY_MAX) {
+      special = true;
+      enOpp -= DUEL_ENERGY_MAX;
+      mult *= DUEL_SPECIAL_MULT;
     }
+    const preMe = special && turn === "me" ? enMe + DUEL_ENERGY_MAX : enMe;
+    const preOpp = special && turn === "opp" ? enOpp + DUEL_ENERGY_MAX : enOpp;
     const dmg = Math.max(1, Math.round(atk * mult));
     if (turn === "me") hpOpp = Math.max(0, hpOpp - dmg);
     else hpMe = Math.max(0, hpMe - dmg);
-    events.push({ actor: turn, dmg, cheer, hpMe, hpOpp });
+    if (!q) {
+      if (turn === "me") {
+        enMe = Math.min(DUEL_ENERGY_MAX, enMe + DUEL_ENERGY_DEALT);
+        enOpp = Math.min(DUEL_ENERGY_MAX, enOpp + DUEL_ENERGY_TAKEN);
+      } else {
+        enOpp = Math.min(DUEL_ENERGY_MAX, enOpp + DUEL_ENERGY_DEALT);
+        enMe = Math.min(DUEL_ENERGY_MAX, enMe + DUEL_ENERGY_TAKEN);
+      }
+    }
+    events.push({ actor: turn, dmg, cheer, special, hpMe, hpOpp, preMe, preOpp, energyMe: enMe, energyOpp: enOpp, meter });
     turn = turn === "me" ? "opp" : "me";
   }
   const won = hpOpp <= 0 ? true : hpMe <= 0 ? false : hpMe / me.hp >= hpOpp / opp.hp;
@@ -5330,7 +5352,7 @@ async function onRequest6({ env }) {
 }
 __name(onRequest6, "onRequest");
 
-// ../.wrangler/tmp/pages-bpIOTC/functionsRoutes-0.7876506288380234.mjs
+// ../.wrangler/tmp/pages-ZUWXG9/functionsRoutes-0.021444563829351337.mjs
 var routes = [
   {
     routePath: "/api/account",
