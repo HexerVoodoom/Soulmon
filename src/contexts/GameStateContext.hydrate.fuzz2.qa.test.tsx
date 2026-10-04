@@ -75,9 +75,11 @@ beforeEach(() => {
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 describe('AUTOVERIFICAÇÃO', () => {
-  it('a lista de campos veio do tipo e tem os 100 (+ `crossings`, 30/09/2026; + `onboardingProfile` e `soulTestAnswers`, 01/10/2026; + `hideFromPublicList`, 02/10/2026; + `caderno`, 04/10/2026)', () => {
+  it('a lista de campos veio do tipo e tem os 100 (+ `crossings`, 30/09/2026; + `onboardingProfile` e `soulTestAnswers`, 01/10/2026; + `hideFromPublicList`, 02/10/2026; + `caderno`, 04/10/2026; + `ownedFrames` e `equippedFrame`, 04/10/2026)', () => {
     const campos = camposDeGameState();
-    expect(campos.length).toBe(101);
+    expect(campos.length).toBe(103);
+    expect(campos).toContain('ownedFrames');
+    expect(campos).toContain('equippedFrame');
     expect(campos).toContain('caderno');
     expect(campos).toContain("hideFromPublicList");
     expect(campos).toContain('onboardingProfile');
