@@ -36,6 +36,7 @@ import {
 } from '../utils/petNeeds';
 import type { Language } from '../utils/i18n';
 import { PixelButton, PixelPanel, PixelTag } from './pixel/PixelKit';
+import { InfoTip } from './ui/InfoTip';
 
 export interface PlayCardProps {
   /** `canPlay(state, todayKey)`. `false` NÃO é erro e não vira aviso. */
@@ -135,20 +136,23 @@ export function PlayCard({
     <PixelPanel title={isPt ? 'BRINCAR' : 'PLAY'}>
       {buffBlock}
 
-      <p style={{ ...bodyLine, marginBottom: 6 }}>
-        {isPt ? 'Vamos brincar um pouquinho?' : 'Want to play for a bit?'}
-      </p>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
+        <p style={{ ...bodyLine, margin: 0 }}>
+          {isPt ? 'Vamos brincar um pouquinho?' : 'Want to play for a bit?'}
+        </p>
+        {/* I13 (02/10/2026): custo e prêmio continuam a UM toque, antes do clique. */}
+        {canPlay && (
+          <InfoTip language={language} label={isPt ? 'Custo e prêmio de brincar' : 'Cost and reward of playing'} align="right" style={{ minHeight: 28 }}>
+            {isPt
+              ? `Custa ${PLAY_ENERGY_COST} de energia e dá +${bonusPct}% de Bits no próximo minijogo, mais um ponto de atributo.`
+              : `Costs ${PLAY_ENERGY_COST} energy and grants +${bonusPct}% Bits on your next minigame, plus one attribute point.`}
+          </InfoTip>
+        )}
+      </div>
 
       {/* Custo e prêmio, honestos, ANTES do clique — mas só enquanto a oferta
           existe: sem energia, a linha logo abaixo já diz o preço, e as duas
           juntas repetiam "custa 1 de energia" duas vezes seguidas. */}
-      {canPlay && (
-        <p style={{ ...mutedLine, marginBottom: 10 }}>
-          {isPt
-            ? `Custa ${PLAY_ENERGY_COST} de energia e dá +${bonusPct}% de Bits no próximo minijogo, mais um ponto de atributo.`
-            : `Costs ${PLAY_ENERGY_COST} energy and grants +${bonusPct}% Bits on your next minigame, plus one attribute point.`}
-        </p>
-      )}
 
       {/* Este bloco troca SOZINHO: o botão vira frase (e volta) assim que a
           energia muda por uma comida dada em outro canto da tela. `aria-live`
