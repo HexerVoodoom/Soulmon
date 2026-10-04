@@ -597,6 +597,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
 
           {opponents?.map(o => {
             const busy = fighting === o.id;
+            // Um duelo sendo aberto trava TODOS os "Desafiar": outro duelStart em voo fecharia este como derrota.
+            const lockedByOther = fighting !== null;
             const blocked = matchesLeft === 0;
             return (
               <div key={o.id} style={{ ...cardStyle, display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', minHeight: 56 }}>
@@ -621,12 +623,12 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
                     "Fight" e acerta. */}
                 <button
                   type="button"
-                  disabled={blocked || busy}
+                  disabled={blocked || busy || lockedByOther}
                   onClick={() => fight(o)}
                   aria-label={blocked
                     ? (isPt ? 'Desafiar — sem partidas restantes hoje' : 'Fight — no matches left today')
                     : (isPt ? `Desafiar ${o.name}` : `Fight — challenge ${o.name}`)}
-                  style={{ ...sm2Button('primary', blocked || busy, 'sm'), flexShrink: 0, minWidth: 88 }}
+                  style={{ ...sm2Button('primary', blocked || busy || lockedByOther, 'sm'), flexShrink: 0, minWidth: 88 }}
                 >
                   {busy && <Icon name="sync" size={20} className="animate-spin" />}
                   {isPt ? 'Desafiar' : 'Fight'}
