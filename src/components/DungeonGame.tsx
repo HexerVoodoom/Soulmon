@@ -1,12 +1,12 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useRef } from 'react';
+import type { CSSProperties } from 'react';
 import { Icon } from './ui/Icon';
 import { sm2Button } from './form/FormKit';
-import { GameRoot, GameHeader, GameVisor, VisorSprite, VisorFx, HpBars, FxPopup, StatTag, phaseTitle, phaseLine } from './games/GameKit';
+import { GameRoot, GameHeader, GameVisor, VisorSprite, StatTag, phaseTitle, phaseLine } from './games/GameKit';
 import { getSpriteForStage } from '../utils/sprites';
 import { playFeed } from '../utils/sounds';
 import { playerStatsFor, DUNGEON_BITS_FACTOR } from '../utils/dungeon';
-import { TimingBar } from './pixel/TimingBar';
-import { autoDefense, defenseRoll, jeitoDefesaBonus, newDefenseSeed, TIMING_DODGE_ENABLED } from '../utils/autoDefesa';
+import { newDefenseSeed, jeitoDefesaBonus } from '../utils/autoDefesa';
 import {
   buildDungeonWave, getDungeonDifficulty, getDungeonBest,
   setDungeonDifficultyAtLeast, recordDungeonScore, LADDER_TIERS,
@@ -14,15 +14,20 @@ import {
   getDungeonReached, recordDungeonReached,
   type DungeonEnemy,
 } from '../utils/dungeon';
-import { torcidaStrike, torcidaTap } from '../utils/torcida';
+import {
+  CHEER_TAPS_FULL, ENERGY_MAX, PVE_HP_SCALE, pveFoeHp, pveFoeHitDamage, pveStrikeDamage, type RingGrade,
+} from '../utils/energia';
+import { fxElementId, visualElementFor, prefersReducedMotion } from '../utils/combatFx';
 import { TorcidaLayer, TorcidaGauge } from './games/TorcidaKit';
+import { BattleStage, BATTLE_LAYER_STYLE } from './games/BattleStage';
+import { usePveBattle, type PveRules } from './games/usePveBattle';
 import { buildRunScenes, DUNGEON_SCENES, type DungeonScene } from '../utils/dungeonScenes';
 import { jeitoDaProfissao, fraseDaProfissao } from '../utils/profissaoMasmorra';
 import type { LText } from '../utils/oracle';
 import type { Language } from '../utils/i18n';
 
 /**
- * Dungeon minigame — timing-bar battle across up to 5 FLOORS.
+ * Dungeon minigame — a battle across up to 5 FLOORS, in the full-screen `BattleStage`.
  *
  * A run is up to 5 floors; each floor is a fixed ladder of 6 RANDOM wild creatures
  * climbing the tiers (baby-i → baby-ii → rookie → champion → ultimate → mega).
@@ -33,48 +38,47 @@ import type { Language } from '../utils/i18n';
  * harder); the base level resets WEEKLY. Player HP carries between floors with a
  * small heal on each clear.
  *
- * Canvas Jogos (DECISÕES §25, D-J3…D-J9): o minijogo é o conteúdo de um VISOR
- * 348×176 (cena do andar em `cover`, pet e inimigo 256² a 128, FX 128² a 1× na
- * caixa do inimigo — o golpe, a derrota dele e a faísca da run completa; nunca
- * sobre o pet); o chrome é aparelho em vetor (`games/GameKit.tsx`): × 44 pelado
- * primeiro, barras de HP `.meter` fora do vidro ("You" ciano, o outro
- * `gold-fill` — nunca ❤️, nunca vermelho), `TimingBar` por token, popups
- * `role=status` com o FX num mini-visor 64. O overlay VHS saiu (movimento
- * contínuo sem propósito; `prefers-reduced-motion` já não o lia).
+ * ── A LUTA (04/10/2026, REGISTRO §20.10) ──────────────────────────────────────
+ * A cena é a MESMA tela cheia do Duelo (`games/BattleStage.tsx`): o Soulmon grande embaixo à
+ * esquerda, o inimigo em cima à direita, HP e ENERGIA em cima de cada um, o mascote da torcida no
+ * canto. O relógio, a energia e as mecânicas são do `games/usePveBattle.ts`; as regras de dano são
+ * de `utils/energia.ts` (e o jeito do OFÍCIO da ficha as ajusta). O Soulmon golpeia e se defende
+ * sozinho; a barra de CHEER (toques) enche devagar e despeja energia nele — e **a barra e a energia
+ * PERSISTEM entre os inimigos e as camadas da run** (a masmorra é contínua). Energia cheia = o ESPECIAL,
+ * com o ANEL (toque na hora certa); quando o inimigo solta o dele, dá para ESQUIVAR deslizando o dedo.
+ * Vida do pet e dos inimigos × `PVE_HP_SCALE`: ~20–30 s por inimigo.
  *
- * Attack: stop the sweeping marker near CENTER for more damage (≥92% = crit).
- * Defense (02/10/2026, TORC-3): the pet defends ON ITS OWN (`utils/autoDefesa.ts`).
- * The timed dodge bar is kept behind `TIMING_DODGE_ENABLED` (= false) to reuse elsewhere.
+ * A `TimingBar` de ataque/esquiva saiu desta tela (`TIMING_DODGE_ENABLED = false`, `utils/autoDefesa.ts`;
+ * o componente `pixel/TimingBar.tsx` fica no repo para reaproveitar).
  * Sem limite diário e SEM gate de entrada: a masmorra não cobra da barra de
  * cuidado do pet (perder custa a run — bônus de andar, Glitchtama e placar —
  * nunca corações). Coraçõezinhos (raramente) dropam; o placar alimenta o ranking.
  */
 
 export const MAX_FLOORS = 5;
-/* Fase 3 do Oráculo: o limiar do PERFEITO, o tempo de defesa, a cura por
-   camada e as velocidades das barras são os valores de `JEITO_PADRAO`
-   (`utils/profissaoMasmorra.ts`), e a PROFISSÃO da ficha move UM deles de
-   leve — é o "jeito de agir na masmorra" (PLANO-ORACULO.md §3). Sem
-   profissão, a masmorra é exatamente a de antes. */
-const DEFEND_TIME = 3.0;   // seconds to react on defense (base; the craft may add)
-const POPUP_MS = 1400;     // how long result popups stay before the next phase
-/** Do começo da vez do Soulmon até o golpe sair sozinho (tempo de o dono torcer). */
-const ATTACK_AUTO_MS = 1300;
-/** Do começo da defesa até o Soulmon se defender sozinho (dá tempo de ler o golpe vindo). */
-const DEFEND_AUTO_MS = 900;
 // Bits for clearing a floor — scales with how deep you are. Era 10/15/20/25/30;
 // desde 30/09/2026 passa pelo `DUNGEON_BITS_FACTOR` (0,4 → 4/6/8/10/12), a
 // decisão do dono que trouxe a run completa para perto do teto diário.
 export const clearBonus = (floor: number) => Math.round((10 + 5 * (floor - 1)) * DUNGEON_BITS_FACTOR);
 
-type Phase = 'intro' | 'attack' | 'defend' | 'result' | 'enemy-down' | 'floor-clear' | 'run-complete' | 'lost';
-interface Popup { icon: string; title: string; detail: string }
+type Phase = 'intro' | 'fight' | 'enemy-down' | 'floor-clear' | 'run-complete' | 'lost';
+
+/** O cartão de resultado sobre a cena (entre inimigos, camadas e no fim). */
+const PANEL: CSSProperties = {
+  position: 'absolute', left: 12, right: 12, zIndex: 7, boxSizing: 'border-box',
+  bottom: 'calc(var(--sm-corner-h, 68px) + env(safe-area-inset-bottom, 0px) + 62px)',
+  maxHeight: '52vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, padding: 12,
+  backgroundColor: 'color-mix(in srgb, var(--sm2-surface) 92%, transparent)',
+  border: '1px solid var(--sm2-line)', borderRadius: 'var(--sm2-radius-md)',
+};
 
 // ── Game ───────────────────────────────────────────────────────────────────
-export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profissaoNome, language, onEnter, onLose, onHeartDrop, onGlitchtama, onFloorCleared, onEnemyDefeated, onEarnPoints, onExit, bits = 0, onSpendBits }: {
+export function DungeonGame({ evolutionStage, demoCharacterId, petElement, profissao, profissaoNome, language, onEnter, onLose, onHeartDrop, onGlitchtama, onFloorCleared, onEnemyDefeated, onEarnPoints, onExit, bits = 0, onSpendBits }: {
   evolutionStage: string;
   /** Modo demo (utils/monetization.ts): personagem pré-pronto — sobrepõe o sprite do pet (nunca dos inimigos). */
   demoCharacterId?: string;
+  /** Elemento dominante do Soulmon (`soulmonMeta.dominantElement`): a arte dos golpes dele. Sem ele, o neutro. */
+  petElement?: string;
   /** Fase 3 do Oráculo — id da profissão da ficha (`ficha/manifestacao.ts`).
    *  Ausente = `JEITO_PADRAO`. Nunca toca Bits, drops nem dificuldade. */
   profissao?: string | null;
@@ -115,9 +119,9 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
   const isPt = language === 'pt-BR';
   const jeito = jeitoDaProfissao(profissao);
   const base = playerStatsFor(evolutionStage);
-  const playerStats = { hp: Math.round(base.hp * jeito.hp), dmg: base.dmg * jeito.dmg };
+  // Vida do pet × PVE_HP_SCALE: a luta ficou mais longa (04/10/2026); o dano por golpe não muda.
+  const playerStats = { hp: Math.round(base.hp * jeito.hp * PVE_HP_SCALE), dmg: base.dmg * jeito.dmg };
   const PERFECT = jeito.perfeito;
-  const defendTime = DEFEND_TIME + jeito.tempoDefesaExtra;
   const profissaoRotulo = profissao && profissaoNome ? (isPt ? profissaoNome.pt : profissaoNome.en) : undefined;
   const profissaoFrase = fraseDaProfissao(profissao, isPt);
 
@@ -126,12 +130,9 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
   const [enemyHp, setEnemyHp] = useState(0);
   const [playerHp, setPlayerHp] = useState(playerStats.hp);
   const [phase, setPhase] = useState<Phase>('intro');
-  const [popup, setPopup] = useState<Popup | null>(null);
-  const [hitFx, setHitFx] = useState<'enemy' | 'player' | null>(null);
   const [rewardMsg, setRewardMsg] = useState('');
   /** O coraçãozinho caiu neste inimigo (JOGO-10) — vira glifo, não emoji na string. */
   const [gotHeart, setGotHeart] = useState(false);
-  const [defendTimeLeft, setDefendTimeLeft] = useState(defendTime);
   const [baseLevel, setBaseLevel] = useState(() => getDungeonDifficulty());
   /** E2: o nível mais fundo já cumprido — o teto do "Descer mais fundo". */
   const [reachedLevel, setReachedLevel] = useState(() => getDungeonReached());
@@ -142,45 +143,26 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
   const [runScore, setRunScore] = useState(0);
   // 5 scenes drawn per run from the classic pool + the shop backdrops.
   const [runScenes, setRunScenes] = useState<DungeonScene[]>(() => buildRunScenes());
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const defendResolvedRef = useRef(false);
   const runScoreRef = useRef(0);
-  /** Defesa automática: sorteio determinístico por (semente da run, nº do golpe sofrido). */
-  const defSeedRef = useRef(newDefenseSeed());
-  const defCountRef = useRef(0);
-  const [guardFx, setGuardFx] = useState(false);
+  /** A semente da luta: o sorteio da defesa automática, do anel e da esquiva (determinístico dentro da run). */
+  const [seedLuta, setSeedLuta] = useState(() => newDefenseSeed());
+  /** A confirmação de sair está aberta: a luta espera. */
+  const [pausado, setPausado] = useState(false);
+  const reduzido = useRef(prefersReducedMotion());
+  // As refs que as regras leem (sempre o estado mais novo, de dentro do relógio da luta).
+  const enemyHpRef = useRef(0);
+  const playerHpRef = useRef(playerStats.hp);
+  const enemiesRef = useRef<DungeonEnemy[]>([]);
+  const enemyIdxRef = useRef(0);
+  const battleRef = useRef<{ reset: (o: { foes: number; keepPet?: boolean }) => void } | null>(null);
 
   const enemy = enemies[enemyIdx];
   const petSprite = getSpriteForStage(evolutionStage, demoCharacterId, 256);
   const ladderLen = LADDER_TIERS.length;
   const scene = runScenes[floor - 1] ?? DUNGEON_SCENES[0];
-
-  const after = useCallback((ms: number, fn: () => void) => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(fn, ms);
-  }, []);
-  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
-
-  // Torcida: o gauge enche com os toques e é gasto no golpe especial. O golpe
-  // do Soulmon sai sozinho (`attackRef` guarda o handler da render atual).
-  const [taps, setTaps] = useState(0);
-  const [specialFx, setSpecialFx] = useState(false);
-  const attackRef = useRef<() => void>(() => {});
-  useEffect(() => {
-    if (phase !== 'attack') return;
-    const id = setTimeout(() => attackRef.current(), ATTACK_AUTO_MS);
-    return () => clearTimeout(id);
-  }, [phase, enemyIdx, floor]);
-
-  const flash = (who: 'enemy' | 'player') => {
-    setHitFx(who);
-    setTimeout(() => setHitFx(null), 450);
-  };
-
-  const guard = () => {
-    setGuardFx(true);
-    setTimeout(() => setGuardFx(false), 450);
-  };
+  const petEl = fxElementId(petElement);
+  const enemyEl = fxElementId(visualElementFor(enemy?.stage ?? 'x'));
+  const foeMax = enemy ? pveFoeHp(enemy.hp) : 1;
 
   const addPoints = (pts: number) => {
     onEarnPoints(pts);
@@ -193,6 +175,16 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
     onExit();
   };
 
+  /** Põe um inimigo da escada na luta (vida × escala, ref e estado). */
+  const enterEnemy = (list: DungeonEnemy[], idx: number) => {
+    enemiesRef.current = list;
+    enemyIdxRef.current = idx;
+    setEnemyIdx(idx);
+    const hp = pveFoeHp(list[idx].hp);
+    enemyHpRef.current = hp;
+    setEnemyHp(hp);
+  };
+
   // Começa a run no andar 1 (level = base persistida). Sem gate de entrada.
   const startRun = () => {
     const res = onEnter();
@@ -202,18 +194,16 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
     setBest(res.best);
     setFloor(1);
     setEnemies(list);
-    setEnemyIdx(0);
-    setEnemyHp(list[0].hp);
+    enterEnemy(list, 0);
+    playerHpRef.current = playerStats.hp;
     setPlayerHp(playerStats.hp);
     runScoreRef.current = 0;
-    defSeedRef.current = newDefenseSeed();
-    defCountRef.current = 0;
-    setTaps(0);
+    setSeedLuta(newDefenseSeed());
+    battleRef.current?.reset({ foes: 1, keepPet: false }); // run nova: a barra de cheer e a energia começam do zero
     setRunScore(0);
     setRewardMsg('');
     setGotHeart(false);
-    setPopup(null);
-    setPhase('attack');
+    setPhase('fight');
   };
 
   // Enemy defeated: grant points + roll a heart drop, then confirm.
@@ -221,85 +211,65 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
   // sao 5 andares x 6 inimigos = 30 disparos do som que o produto reserva para
   // "voce concluiu uma coisa real" — gastar celebracao no evento frequente e
   // gasta-la. O canal visual (inimigo saindo da escada) e sincrono e continua.
-  const defeatEnemy = (finalMsg: Popup) => {
-    onEnemyDefeated(enemy.stage);
-    addPoints(enemy.points);
+  const defeatEnemy = () => {
+    const e = enemiesRef.current[enemyIdxRef.current];
+    if (!e) return;
+    onEnemyDefeated(e.stage);
+    addPoints(e.points);
     setGotHeart(onHeartDrop());
-    setRewardMsg(`+${enemy.points} Bits`);
-    setPopup(finalMsg);
-    setPhase('result');
-    after(POPUP_MS, () => { setPopup(null); setPhase('enemy-down'); });
+    setRewardMsg(`+${e.points} Bits`);
+    setPhase('enemy-down');
   };
 
-  // Torcida (02/10/2026, `utils/torcida.ts`): o Soulmon golpeia sozinho; o dono
-  // TORCE tocando na tela e o gauge cheio vira o golpe ESPECIAL. A torcida só
-  // soma — sem torcer o golpe é o base. O Soulmon se defende sozinho (TORC-3).
-  const handleAttack = () => {
-    const guarda = enemy.dmgReduction * (1 - jeito.atravessaGuarda);
-    const strike = torcidaStrike(playerStats.dmg, taps, guarda);
-    const dmg = strike.dmg;
-    setTaps(strike.tapsLeft);
-    setSpecialFx(strike.special);
-    const newHp = Math.max(0, enemyHp - dmg);
-    setEnemyHp(newHp);
-    flash('enemy');
-    try { navigator.vibrate?.(strike.special ? 40 : 15); } catch { /* noop */ }
+  const ringTag = (r: RingGrade) => (isPt ? { otimo: 'ÓTIMO!', bom: 'BOM', ruim: 'FRACO' } : { otimo: 'GREAT!', bom: 'GOOD', ruim: 'WEAK' })[r];
 
-    const title = strike.special ? (isPt ? 'Golpe especial da torcida!' : 'Special cheer strike!')
-      : (isPt ? 'O Soulmon golpeia!' : 'Your Soulmon strikes!');
-    const atkPopup: Popup = { icon: '⚔️', title, detail: isPt ? `${dmg} de dano no ${enemy.name}` : `${dmg} damage to ${enemy.name}` };
-
-    if (newHp <= 0) { defeatEnemy(atkPopup); return; }
-
-    setPopup(atkPopup);
-    setPhase('result');
-    after(POPUP_MS, () => {
-      setPopup(null);
-      defendResolvedRef.current = false;
-      setDefendTimeLeft(defendTime);
-      setPhase('defend');
-    });
-  };
-
-  // Defense: graded — a perfect one blocks everything + counters. `acc` vem da
-  // defesa automática (`autoDefense`); com `TIMING_DODGE_ENABLED` vem da barra.
-  const handleDefend = (acc: number, timedOut = false) => {
-    if (defendResolvedRef.current) return;
-    defendResolvedRef.current = true;
-
-    if (!timedOut && acc >= PERFECT) {
-      const counter = Math.max(1, Math.round(2 * jeito.contraAtaque * (1 - enemy.dmgReduction)));
-      const newEnemyHp = Math.max(0, enemyHp - counter);
-      setEnemyHp(newEnemyHp);
-      flash('enemy');
-      try { navigator.vibrate?.(40); } catch { /* noop */ }
-      guard();
-      const dodgePopup: Popup = {
-        icon: '🛡️', title: isPt ? 'Defendeu!' : 'Defended!',
-        detail: isPt ? `Contra-ataque: ${counter} de dano!` : `Counter-attack: ${counter} damage!`,
-      };
-      if (newEnemyHp <= 0) { defeatEnemy(dodgePopup); return; }
-      setPopup(dodgePopup);
-      setPhase('result');
-      after(POPUP_MS, () => { setPopup(null); setPhase('attack'); });
-      return;
-    }
-
-    const effAcc = timedOut ? 0 : acc;
-    const taken = Math.max(1, Math.ceil(enemy.atk * (1 - effAcc)) - jeito.reducaoDano);
-    const newHp = Math.max(0, playerHp - taken);
-    setPlayerHp(newHp);
-    flash('player');
-    try { navigator.vibrate?.(30); } catch { /* noop */ }
-
-    if (effAcc >= 0.6) guard();
-    const title = timedOut ? (isPt ? 'Muito lento!' : 'Too slow!')
-      : effAcc >= 0.6 ? (isPt ? 'Defendeu em parte!' : 'Partly defended!')
-      : (isPt ? 'Levou o golpe!' : 'Took the hit!');
-    setPopup({ icon: '💥', title, detail: isPt ? `Você sofreu ${taken} de dano` : `You took ${taken} damage` });
-    setPhase('result');
-
-    if (newHp <= 0) {
+  /* As regras da luta. O relógio (`usePveBattle`) chama estas funções no instante do IMPACTO de cada
+     golpe; elas leem/gravam as refs e o estado da tela. Mesma conta de antes (`torcida.ts`/`autoDefesa.ts`),
+     agora em `utils/energia.ts`: golpe-base = 0,5 × dmg; especial = 3× × a nota do anel; defesa perfeita
+     = sem dano + contra-ataque (ofício); o especial do inimigo vale 2× e a esquiva tira a parte dela. */
+  const regras: PveRules = {
+    perfect: PERFECT,
+    defenseBonus: jeitoDefesaBonus(jeito),
+    target: () => 0,
+    foes: () => (enemyHpRef.current > 0 ? [0] : []),
+    playerElement: () => petEl,
+    foeElement: () => enemyEl,
+    playerKind: n => (n % 2 === 0 ? 'melee' : 'ranged'),
+    foeKind: (_f, n) => (n % 2 === 0 ? 'melee' : 'ranged'),
+    playerStrike: ({ special, ring }) => {
+      const e = enemiesRef.current[enemyIdxRef.current];
+      const guarda = (e?.dmgReduction ?? 0) * (1 - jeito.atravessaGuarda);
+      const dmg = pveStrikeDamage({ dmg: playerStats.dmg, guard: guarda, special, ring });
+      enemyHpRef.current = Math.max(0, enemyHpRef.current - dmg);
+      setEnemyHp(enemyHpRef.current);
+      try { navigator.vibrate?.(special ? 40 : 15); } catch { /* noop */ }
+      return { hits: [{ foe: 0, value: dmg }], tag: special ? ringTag(ring) : undefined, victory: enemyHpRef.current <= 0 };
+    },
+    foeStrike: ({ special, dodge, acc }) => {
+      const e = enemiesRef.current[enemyIdxRef.current];
+      if (!e) return { value: 0, blocked: false, defeat: false };
+      const r = pveFoeHitDamage({ atk: e.atk, acc, perfect: PERFECT, reducaoDano: jeito.reducaoDano, special, dodge });
+      if (r.blocked) {
+        // Defesa perfeita: sem dano + contra-ataque do ofício (a regra de sempre).
+        const counter = Math.max(1, Math.round(2 * jeito.contraAtaque * (1 - e.dmgReduction)));
+        enemyHpRef.current = Math.max(0, enemyHpRef.current - counter);
+        setEnemyHp(enemyHpRef.current);
+        try { navigator.vibrate?.(40); } catch { /* noop */ }
+        return {
+          value: 0, blocked: true, counter: { foe: 0, value: counter }, tag: isPt ? 'Defendeu!' : 'Defended!',
+          defeat: false, victory: enemyHpRef.current <= 0,
+        };
+      }
+      playerHpRef.current -= r.dmg;
+      setPlayerHp(playerHpRef.current);
+      try { navigator.vibrate?.(30); } catch { /* noop */ }
+      const tag = special
+        ? (dodge === 'otimo' ? (isPt ? 'Esquivou!' : 'Dodged!') : dodge === 'bom' ? (isPt ? 'Quase!' : 'Close!') : undefined)
+        : undefined;
+      return { value: r.dmg, blocked: false, tag, defeat: playerHpRef.current <= 0 };
+    },
+    onVictory: () => defeatEnemy(),
+    onDefeat: () => {
       // C-6 (run `som-01`): sem som de degeneracao. Perder a run nao custa
       // coracao nenhum, de proposito — sonorizar como perda estrutural inverte
       // a regra escrita. O fim de partida ja e mostrado em tela.
@@ -311,40 +281,14 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
       const newBest = recordDungeonScore(runScoreRef.current);
       setBest(newBest);
       setRunScore(runScoreRef.current);
-      after(POPUP_MS, () => { setPopup(null); setPhase('lost'); });
-      return;
-    }
-    after(POPUP_MS, () => { setPopup(null); setPhase('attack'); });
+      setPhase('lost');
+    },
   };
-  const handleDefendRef = useRef(handleDefend);
-  handleDefendRef.current = handleDefend;
-  attackRef.current = handleAttack;
-  const cheer = () => { if (phase === 'attack' || phase === 'defend' || phase === 'result') setTaps(t => torcidaTap(t)); };
-
-  // O Soulmon se defende sozinho: um instante depois de o golpe vir, a regra
-  // pura decide (determinística pela semente da run) e a conta de dano segue.
-  useEffect(() => {
-    if (TIMING_DODGE_ENABLED || phase !== 'defend' || !enemy) return;
-    const id = setTimeout(() => {
-      const roll = defenseRoll(defSeedRef.current, defCountRef.current++);
-      handleDefendRef.current(
-        autoDefense(roll, { bonus: jeitoDefesaBonus(jeito), perfect: PERFECT }).acc);
-    }, DEFEND_AUTO_MS);
-    return () => clearTimeout(id);
-  }, [phase, enemyIdx, floor]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Defense countdown — shown to the player; expiring = full hit. (Só com a barra.)
-  useEffect(() => {
-    if (!TIMING_DODGE_ENABLED || phase !== 'defend') return;
-    const id = setInterval(() => {
-      setDefendTimeLeft(t => {
-        const nt = Math.max(0, +(t - 0.1).toFixed(1));
-        if (nt <= 0) handleDefendRef.current(0, true);
-        return nt;
-      });
-    }, 100);
-    return () => clearInterval(id);
-  }, [phase]);
+  const battle = usePveBattle({
+    running: phase === 'fight' && !!enemy,
+    paused: pausado, seed: seedLuta, reduced: reduzido.current, rules: regras,
+  });
+  battleRef.current = battle;
 
   // Advance to the next enemy; or clear the floor (heal), or complete the run.
   const nextEnemy = () => {
@@ -366,16 +310,16 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
         return;
       }
       const heal = Math.ceil(playerStats.hp * jeito.curaAndar);
-      setPlayerHp(hp => Math.min(playerStats.hp, hp + heal));
+      playerHpRef.current = Math.min(playerStats.hp, playerHpRef.current + heal);
+      setPlayerHp(playerHpRef.current);
       setRewardMsg(isPt ? `Recuperou ${heal} de HP` : `Recovered ${heal} HP`);
       setPhase('floor-clear');
       return;
     }
-    const idx = enemyIdx + 1;
-    setEnemyIdx(idx);
-    setEnemyHp(enemies[idx].hp);
+    enterEnemy(enemies, enemyIdx + 1);
+    battleRef.current?.reset({ foes: 1, keepPet: true }); // a barra de cheer e a energia do pet PERSISTEM
     setRewardMsg('');
-    setPhase('attack');
+    setPhase('fight');
   };
 
   // Descend to the next (harder) floor, carrying HP over.
@@ -384,205 +328,69 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
     const list = buildDungeonWave(baseLevel + (f - 1), evolutionStage);
     setFloor(f);
     setEnemies(list);
-    setEnemyIdx(0);
-    setEnemyHp(list[0].hp);
+    enterEnemy(list, 0);
+    battleRef.current?.reset({ foes: 1, keepPet: true });
     setRewardMsg('');
-    setPopup(null);
-    setPhase('attack');
+    setPhase('fight');
   };
 
-  const inBattle = enemies.length > 0 && ['attack', 'defend', 'result', 'enemy-down', 'floor-clear', 'run-complete', 'lost'].includes(phase);
+  const inStage = enemies.length > 0 && phase !== 'intro';
   const sceneName = isPt ? scene.namePt : scene.nameEn;
   const exitLabel = isPt ? 'Sair' : 'Exit';
   const scoreLine = isPt ? `Placar: ${runScore} · Recorde: ${best}` : `Score: ${runScore} · Best: ${best}`;
 
-  /* O que o VIDRO mostra na caixa do inimigo (canto superior direito, 128²,
-     a MESMA caixa em todas as fases — X1/X4): o inimigo espelhado na luta; o
-     `fx-defeat` quando ele cai; o `fx-sparkle` quando a run acaba (a run
-     acabou onde o último inimigo estava — nunca sobre o pet); nada na derrota
-     (o pet fica inteiro — nada caiu do lado dele). */
-  const enemyBox: React.CSSProperties = { right: 16, top: 8 };
-  const enemySlot = phase === 'run-complete'
-    ? <VisorFx icon="✨" style={enemyBox} data-visor-fx="sparkle" />
-    : phase === 'enemy-down' || phase === 'floor-clear'
-      ? <VisorFx icon="🏳️" style={enemyBox} data-visor-fx="defeat" />
-      : phase === 'lost'
-        ? null
-        : enemy
-          ? <VisorSprite src={enemy.sprite} alt={enemy.name} flip style={enemyBox} data-visor-enemy />
-          : null;
-
-  return (
-    <GameRoot>
-      <TorcidaLayer onTap={cheer} active={enemies.length > 0 && (phase === 'attack' || phase === 'defend' || phase === 'result')} isPt={isPt} style={{ flex: '1 0 auto' }}>
-      <GameHeader
-        run={inBattle}
-        title={isPt ? 'Masmorra' : 'Dungeon'}
-        sub={
-          <>
-            {/* Copy §4: "camada/layer" é o termo canônico (§12); os números
-                vêm de `MAX_FLOORS`, nunca à mão. */}
-            {isPt ? `Camada ${floor} de ${MAX_FLOORS}` : `Layer ${floor} of ${MAX_FLOORS}`} · {sceneName}
-            {inBattle ? ` · ${isPt ? 'inimigo' : 'enemy'} ${enemyIdx + 1}/${ladderLen}` : null}
-          </>
-        }
-        closeLabel={exitLabel}
-        onClose={exitRun}
-      />
-
-      {/* O VISOR (D-J3): a cena do andar em `cover`, o pet a 128 embaixo à
-          esquerda, o inimigo a 128 espelhado no alto à direita; 176 de altura
-          em TODAS as fases (X4). No lobby, só o pet, centrado. */}
-      <GameVisor height={88} scene={scene.bg}>
-        {enemySlot}
-        <VisorSprite
-          src={petSprite}
-          alt=""
-          style={inBattle ? { left: 16, bottom: 8 } : { left: '50%', marginLeft: -64, bottom: 8 }}
-          data-visor-pet
-        />
-        {/* O golpe é o FX `fx-hit` 128² a 1× sobre quem apanhou (D-J4) —
-            nunca `filter: brightness(3)`. */}
-        {hitFx === 'enemy' && <VisorFx icon={specialFx ? '✨' : '💥'} style={enemyBox} data-visor-fx={specialFx ? 'special' : 'hit'} />}
-        {hitFx === 'player' && <VisorFx icon="💥" style={{ left: 16, bottom: 8 }} data-visor-fx="hit" />}
-        {guardFx && <VisorFx icon="🛡️" style={{ left: 16, bottom: 8 }} data-visor-fx="guard" />}
-      </GameVisor>
-
-      {/* As barras FORA do vidro, em vetor (D-J5): "You" ciano, o outro dourado. */}
-      {inBattle && enemy && (
-        <HpBars
-          bars={[
-            { label: isPt ? 'Você' : 'You', cur: playerHp, max: playerStats.hp, tone: 'cyan' },
-            { label: enemy.name, cur: enemyHp, max: enemy.hp, tone: 'gold' },
-          ]}
-        />
-      )}
-      {/* A torcida: o gauge enche com o toque em qualquer lugar da luta. */}
-      {inBattle && enemy && ['attack', 'defend', 'result'].includes(phase) && (
-        <TorcidaGauge taps={taps} onCheer={cheer} isPt={isPt} />
-      )}
-
-      {/* Lobby */}
-      {phase === 'intro' && (
-        <>
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <StatTag label={isPt ? 'Recorde' : 'Best'} value={best} />
-            <StatTag label={isPt ? 'Dificuldade base' : 'Base level'} value={baseLevel} />
-            {/* E1 (02/10/2026): o texto longo do lobby mora atrás do "?" — toque lê. */}
-            <button
-              type="button"
-              data-dungeon-help
-              aria-expanded={helpOpen}
-              aria-label={isPt ? 'Como funciona a descida' : 'How the descent works'}
-              onClick={() => setHelpOpen(o => !o)}
-              style={{ background: 'none', border: 'none', padding: 0, minWidth: 44, minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--sm2-primary-ink)' }}
-            >
-              <Icon name="help" size={24} tone="inherit" />
-            </button>
-          </div>
-          {helpOpen && (
-            <div role="note" data-dungeon-help-panel style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 12, border: '1px solid var(--sm2-line)', borderRadius: 'var(--sm2-radius-md)', backgroundColor: 'var(--sm2-surface-2)' }}>
-              <p style={phaseLine}>
-                {isPt
-                  ? `${MAX_FLOORS} camadas, cada uma com ${ladderLen} inimigos e mais forte que a anterior. A camada 1 serve pra um rookie; algumas camadas abaixo ficam brutais. Concluir a descida inteira sobe a dificuldade (reset semanal). Perder custa a descida — nunca os seus corações.`
-                  : `${MAX_FLOORS} layers, each with ${ladderLen} enemies and tougher than the last. Layer 1 suits a rookie; a few layers down gets brutal. Completing the whole descent raises the difficulty (weekly reset). Losing costs you the descent — never your hearts.`}
-              </p>
-              {/* Copy §4, linha de contexto (§7, L3): fecha a leitura de que os
-                  inimigos são vítimas ou de que a fenda é castigo de alguém. */}
-              <p style={phaseLine}>
-                {isPt
-                  ? 'Aqui o assentamento falhou e as camadas se empilharam. Ninguém mora numa fenda.'
-                  : 'Here the settling failed and the layers piled up. Nobody lives in a rift.'}
-              </p>
-              <p style={phaseLine}>
-                {isPt
-                  ? 'Seu Soulmon golpeia sozinho; você torce no centro da barra para dar força ao golpe. Errar o tempo não tira nada.'
-                  : 'Your Soulmon strikes on its own; you cheer at the center of the bar to power up the strike. Missing the timing takes nothing away.'}
-              </p>
-            </div>
-          )}
-          {/* Fase 3 do Oráculo: o OFÍCIO da ficha e o jeito dele na fenda —
-              uma palavra nomeada e uma frase de mundo sobre a criatura; o
-              número fica dentro da run. Sem profissão, nada aqui. */}
-          {profissaoRotulo && profissaoFrase && (
-            <p style={phaseLine} data-profissao={profissao}>
-              {isPt ? `Ofício ${profissaoRotulo} — ${profissaoFrase}` : `${profissaoRotulo} craft — ${profissaoFrase}`}
-            </p>
-          )}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
-            <button type="button" onClick={startRun} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 320 }}>
-              {/* Copy §4: fenda se DESCE; não se "entra" nem se "inicia run". */}
-              {isPt ? 'Descer' : 'Go down'}
-            </button>
-
-            {/* WP4.5 — DESCER MAIS FUNDO: o sumidouro recorrente de Bits.
-                Os Bits só tinham compras ÚNICAS, então quem joga muito acumulava
-                moeda que não compra nada — e moeda que não compra nada deixa de
-                ser recompensa. Este é o único sumidouro que o CLAUDE.md declara
-                legítimo: custo de ENTRADA, nunca cobrar da barra de cuidado.
-                Recorrente sem mecânica nova, porque a base reseta toda semana.
-                Some ao chegar no teto: oferta que não pode ser aceita é ruído.
-                Aposta opcional = `outline`, sem placa cheia (canvas Lobby). */}
-            {onSpendBits && baseLevel < Math.min(DEEP_START_MAX_LEVEL, reachedLevel) && (
-              <>
-                <button
-                  type="button"
-                  disabled={!canBuyDeepStart(baseLevel, bits, reachedLevel)}
-                  onClick={() => {
-                    const next = buyDeepStart(baseLevel, bits, reachedLevel);
-                    if (next === null) return;
-                    if (!onSpendBits(deepStartCost(baseLevel))) return;
-                    setBaseLevel(setDungeonDifficultyAtLeast(next));
-                  }}
-                  style={{ ...sm2Button('outline', !canBuyDeepStart(baseLevel, bits, reachedLevel)), width: '100%', maxWidth: 320 }}
-                >
-                  {isPt
-                    ? `Descer mais fundo — ${deepStartCost(baseLevel)} Bits`
-                    : `Go deeper — ${deepStartCost(baseLevel)} Bits`}
-                </button>
-                <p style={phaseLine}>
-                  {canBuyDeepStart(baseLevel, bits, reachedLevel)
-                    ? (isPt
-                      ? `Volta a um nível que você já alcançou (até o ${reachedLevel}). Vale até o reset da semana.`
-                      : `Returns you to a level you already reached (up to ${reachedLevel}). Lasts until the weekly reset.`)
-                    : (isPt ? 'Bits insuficientes.' : 'Not enough Bits.')}
-                </p>
-              </>
-            )}
-          </div>
-        </>
-      )}
-
-      {/* Área de ação (durante a run) */}
-      {inBattle && enemy && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minHeight: 120 }}>
-          {phase === 'attack' && (
-            <p style={phaseTitle}>
-              {isPt ? 'Seu Soulmon golpeia — torça por ele!' : 'Your Soulmon strikes — cheer for it!'}
-            </p>
-          )}
-          {phase === 'defend' && (
-            TIMING_DODGE_ENABLED ? (
-              <>
-                {/* O relógio é leitura, não alarme: `ink` sempre, `tabular-nums`
-                    (D-J8 — era `#facc15` → `#f87171` no último segundo). */}
-                <p style={phaseTitle}>
-                  {isPt ? `${enemy.name} atacando — desvie!` : `${enemy.name} attacking — dodge!`}{' '}
-                  <span className="sm2-num">{defendTimeLeft.toFixed(1)}s</span>
-                </p>
-                <TimingBar key={`def-${floor}-${enemyIdx}-${enemyHp}-${playerHp}`} speed={enemy.speed * 1.2 * jeito.velocidadeDefesa} label={isPt ? 'Desviar!' : 'Dodge!'} onStop={a => handleDefend(a)} />
-              </>
-            ) : (
-              <p style={phaseTitle} data-auto-defense>
-                {isPt ? `${enemy.name} ataca — seu Soulmon se defende!` : `${enemy.name} attacks — your Soulmon defends!`}
-              </p>
-            )
-          )}
-          {phase === 'result' && popup && (
-            <FxPopup icon={popup.icon} title={popup.title} detail={popup.detail} />
-          )}
+  /* A LUTA e os cartões de resultado moram na MESMA cena de tela cheia: a barra de cheer e a energia
+     seguem visíveis entre os inimigos (a masmorra é contínua). */
+  if (inStage && enemy) {
+    const fighting = phase === 'fight';
+    return (
+      <TorcidaLayer
+        onTap={battle.cheer}
+        active={fighting && !pausado && battle.phase === 'idle'}
+        isPt={isPt}
+        style={BATTLE_LAYER_STYLE}
+        mascot
+        swipeActive={fighting && battle.phase === 'dodge'}
+        onSwipe={battle.swipe}
+      >
+        <BattleStage
+          scene={scene.bg}
+          me={{
+            key: 'me', sprite: petSprite, name: isPt ? 'Você' : 'You', hp: Math.max(0, playerHp), maxHp: playerStats.hp,
+            element: petEl, energy: battle.petEnergy / ENERGY_MAX,
+          }}
+          foes={[{
+            key: `${floor}-${enemyIdx}`, sprite: enemy.sprite, name: enemy.name, hp: Math.max(0, enemyHp), maxHp: foeMax,
+            element: enemyEl, down: enemyHp <= 0, energy: (battle.foeEnergy[0] ?? 0) / ENERGY_MAX,
+          }]}
+          action={battle.action}
+          hit={battle.hits}
+          charging={battle.charging}
+          ring={battle.ring}
+          onRingGrade={battle.resolveRing}
+          dodge={battle.dodge}
+          onDodge={battle.swipe}
+          petDodge={battle.petDodge}
+          mechLabels={{
+            strike: isPt ? 'Golpear' : 'Strike',
+            dodgeLeft: isPt ? 'Esquivar para a esquerda' : 'Dodge left',
+            dodgeRight: isPt ? 'Esquivar para a direita' : 'Dodge right',
+          }}
+          /* Copy §4: "camada/layer" é o termo canônico (§12); os números vêm de `MAX_FLOORS`, nunca à mão. */
+          title={`${isPt ? 'Camada' : 'Layer'} ${floor}/${MAX_FLOORS}`}
+          badge={<span className="sm2-num" style={{ fontSize: 'var(--sm2-text-sm)', color: 'var(--sm2-viewport-ink)', textShadow: '0 1px 2px rgba(0,0,0,.8)' }} aria-label={`${sceneName} · ${isPt ? 'inimigo' : 'enemy'} ${enemyIdx + 1}/${ladderLen}`}>{enemyIdx + 1}/{ladderLen}</span>}
+          closeLabel={exitLabel}
+          onClose={exitRun}
+          exitConfirm={fighting ? {
+            title: isPt ? 'Sair da descida? O placar até aqui fica.' : 'Leave the descent? Your score so far stays.',
+            stay: isPt ? 'Continuar' : 'Keep going',
+            leave: exitLabel,
+          } : undefined}
+          onPauseChange={setPausado}
+          hud={<TorcidaGauge taps={battle.meter} onCheer={battle.cheer} isPt={isPt} disabled={!fighting} full={CHEER_TAPS_FULL} bare />}
+        >
           {phase === 'enemy-down' && (
-            <>
+            <div role="status" style={PANEL}>
               {/* Copy §4 (§5.12, L3): vencer é PASSAR, não matar — nenhuma
                   criatura da Malha morre. ⚠️ EN nunca "{name} passed": é o
                   eufemismo de velório. O verbo canônico é "parar de insistir". */}
@@ -612,10 +420,10 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
                       : (isPt ? `Limpar camada (+${clearBonus(floor)} Bits)` : `Clear layer (+${clearBonus(floor)} Bits)`))
                   : (isPt ? `Desafiar ${enemies[enemyIdx + 1].name}` : `Challenge ${enemies[enemyIdx + 1].name}`)}
               </button>
-            </>
+            </div>
           )}
           {phase === 'floor-clear' && (
-            <>
+            <div role="status" style={PANEL}>
               <p style={phaseTitle}>{isPt ? `Camada ${floor} limpa.` : `Layer ${floor} cleared.`}</p>
               {/* Copy §4: dá sentido ao escalonamento de tier (`LADDER_TIERS`)
                   sem falar em dificuldade como mérito. */}
@@ -631,10 +439,10 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
                   {isPt ? 'Sair c/ placar' : 'Bank & exit'}
                 </button>
               </div>
-            </>
+            </div>
           )}
           {phase === 'run-complete' && (
-            <>
+            <div role="status" style={PANEL}>
               {/* Nenhuma cor de prêmio: o que é ganho fala pela frase (D-J8). */}
               {/* Copy §4: fato, nunca "você dominou a masmorra" (L12). O
                   número vem de `MAX_FLOORS`. */}
@@ -659,10 +467,10 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
                   {exitLabel}
                 </button>
               </div>
-            </>
+            </div>
           )}
           {phase === 'lost' && (
-            <>
+            <div role="status" style={PANEL}>
               {/* A derrota sem visor de derrota e sem cor de perda: o que estava
                   em jogo era a run; os corações ficam, e a tela diz (JOGO-09). */}
               {/* Copy §4 (L5, §7): "Voltar sem terminar não custa nada do que
@@ -685,11 +493,119 @@ export function DungeonGame({ evolutionStage, demoCharacterId, profissao, profis
                   {exitLabel}
                 </button>
               </div>
-            </>
+            </div>
           )}
+        </BattleStage>
+      </TorcidaLayer>
+    );
+  }
+
+  return (
+    <GameRoot>
+      <GameHeader
+        run={false}
+        title={isPt ? 'Masmorra' : 'Dungeon'}
+        sub={isPt ? `Camada ${floor} de ${MAX_FLOORS}` : `Layer ${floor} of ${MAX_FLOORS}`}
+        closeLabel={exitLabel}
+        onClose={exitRun}
+      />
+
+      {/* O VISOR do lobby: a cena do andar em `cover` e só o pet, centrado. */}
+      <GameVisor height={88} scene={scene.bg}>
+        <VisorSprite
+          src={petSprite}
+          alt=""
+          style={{ left: '50%', marginLeft: -64, bottom: 8 }}
+          data-visor-pet
+        />
+      </GameVisor>
+
+      {/* Lobby */}
+      <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
+        <StatTag label={isPt ? 'Recorde' : 'Best'} value={best} />
+        <StatTag label={isPt ? 'Dificuldade base' : 'Base level'} value={baseLevel} />
+        {/* E1 (02/10/2026): o texto longo do lobby mora atrás do "?" — toque lê. */}
+        <button
+          type="button"
+          data-dungeon-help
+          aria-expanded={helpOpen}
+          aria-label={isPt ? 'Como funciona a descida' : 'How the descent works'}
+          onClick={() => setHelpOpen(o => !o)}
+          style={{ background: 'none', border: 'none', padding: 0, minWidth: 44, minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--sm2-primary-ink)' }}
+        >
+          <Icon name="help" size={24} tone="inherit" />
+        </button>
+      </div>
+      {helpOpen && (
+        <div role="note" data-dungeon-help-panel style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 12, border: '1px solid var(--sm2-line)', borderRadius: 'var(--sm2-radius-md)', backgroundColor: 'var(--sm2-surface-2)' }}>
+          <p style={phaseLine}>
+            {isPt
+              ? `${MAX_FLOORS} camadas, cada uma com ${ladderLen} inimigos e mais forte que a anterior. A camada 1 serve pra um rookie; algumas camadas abaixo ficam brutais. Concluir a descida inteira sobe a dificuldade (reset semanal). Perder custa a descida — nunca os seus corações.`
+              : `${MAX_FLOORS} layers, each with ${ladderLen} enemies and tougher than the last. Layer 1 suits a rookie; a few layers down gets brutal. Completing the whole descent raises the difficulty (weekly reset). Losing costs you the descent — never your hearts.`}
+          </p>
+          {/* Copy §4, linha de contexto (§7, L3): fecha a leitura de que os
+              inimigos são vítimas ou de que a fenda é castigo de alguém. */}
+          <p style={phaseLine}>
+            {isPt
+              ? 'Aqui o assentamento falhou e as camadas se empilharam. Ninguém mora numa fenda.'
+              : 'Here the settling failed and the layers piled up. Nobody lives in a rift.'}
+          </p>
+          <p style={phaseLine}>
+            {isPt
+              ? 'Seu Soulmon golpeia e se defende sozinho. Toque na tela (ou no mascote) para torcer: a barra de cheer enche devagar e despeja energia nele — e ela fica de um inimigo para o outro. Com a energia cheia, ele solta o especial: toque no anel na hora certa. Quando o inimigo soltar o dele, deslize o dedo para o lado para esquivar.'
+              : 'Your Soulmon strikes and defends on its own. Tap the screen (or the mascot) to cheer: the cheer bar fills slowly and pours energy into it — and it carries over from one enemy to the next. With full energy it unleashes its special: tap the ring at the right moment. When the enemy unleashes its own, swipe sideways to dodge.'}
+          </p>
         </div>
       )}
-      </TorcidaLayer>
+      {/* Fase 3 do Oráculo: o OFÍCIO da ficha e o jeito dele na fenda —
+          uma palavra nomeada e uma frase de mundo sobre a criatura; o
+          número fica dentro da run. Sem profissão, nada aqui. */}
+      {profissaoRotulo && profissaoFrase && (
+        <p style={phaseLine} data-profissao={profissao}>
+          {isPt ? `Ofício ${profissaoRotulo} — ${profissaoFrase}` : `${profissaoRotulo} craft — ${profissaoFrase}`}
+        </p>
+      )}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
+        <button type="button" onClick={startRun} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 320 }}>
+          {/* Copy §4: fenda se DESCE; não se "entra" nem se "inicia run". */}
+          {isPt ? 'Descer' : 'Go down'}
+        </button>
+
+        {/* WP4.5 — DESCER MAIS FUNDO: o sumidouro recorrente de Bits.
+            Os Bits só tinham compras ÚNICAS, então quem joga muito acumulava
+            moeda que não compra nada — e moeda que não compra nada deixa de
+            ser recompensa. Este é o único sumidouro que o CLAUDE.md declara
+            legítimo: custo de ENTRADA, nunca cobrar da barra de cuidado.
+            Recorrente sem mecânica nova, porque a base reseta toda semana.
+            Some ao chegar no teto: oferta que não pode ser aceita é ruído.
+            Aposta opcional = `outline`, sem placa cheia (canvas Lobby). */}
+        {onSpendBits && baseLevel < Math.min(DEEP_START_MAX_LEVEL, reachedLevel) && (
+          <>
+            <button
+              type="button"
+              disabled={!canBuyDeepStart(baseLevel, bits, reachedLevel)}
+              onClick={() => {
+                const next = buyDeepStart(baseLevel, bits, reachedLevel);
+                if (next === null) return;
+                if (!onSpendBits(deepStartCost(baseLevel))) return;
+                setBaseLevel(setDungeonDifficultyAtLeast(next));
+              }}
+              style={{ ...sm2Button('outline', !canBuyDeepStart(baseLevel, bits, reachedLevel)), width: '100%', maxWidth: 320 }}
+            >
+              {isPt
+                ? `Descer mais fundo — ${deepStartCost(baseLevel)} Bits`
+                : `Go deeper — ${deepStartCost(baseLevel)} Bits`}
+            </button>
+            <p style={phaseLine}>
+              {canBuyDeepStart(baseLevel, bits, reachedLevel)
+                ? (isPt
+                  ? `Volta a um nível que você já alcançou (até o ${reachedLevel}). Vale até o reset da semana.`
+                  : `Returns you to a level you already reached (up to ${reachedLevel}). Lasts until the weekly reset.`)
+                : (isPt ? 'Bits insuficientes.' : 'Not enough Bits.')}
+            </p>
+          </>
+        )}
+      </div>
     </GameRoot>
   );
 }

@@ -5921,6 +5921,7 @@ export default function App() {
                 skills={gameState.soulmonSkills}
                 profissao={manifestacaoAtual?.profissao}
                 profissaoNome={manifestacaoAtual?.profissaoNome}
+                petElement={gameState.soulmonMeta?.dominantElement}
                 onEarnPoints={handleEarnGamePoints}
                 /* Exploração + Jogos: os MESMOS handlers que a antiga
                    `ActivitiesPage` recebia. */
@@ -7132,6 +7133,7 @@ export default function App() {
           rarity={nightmareRarity}
           petStage={gameState.evolutionStage}
           demoCharacterId={petLine}
+          petElement={gameState.soulmonMeta?.dominantElement}
           language={language}
           onWin={handleNightmareWin}
           onLose={closeNightmare}

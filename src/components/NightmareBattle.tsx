@@ -20,51 +20,39 @@
  * "o sonho passou, você acorda bem". Nenhum número diminui aqui.
  *
  * ───────────────────────────────────────────────────────────────────────────
+ * A LUTA (04/10/2026, REGISTRO §20.10)
+ * ───────────────────────────────────────────────────────────────────────────
+ * O convite, a vitória e a derrota são o diálogo de sempre; a LUTA é a tela cheia da
+ * `BattleStage` (a mesma do Duelo e da Masmorra): o Soulmon grande, HP e ENERGIA em cima de cada
+ * um, o mascote da torcida no canto, a barra de cheer no pé. O relógio, a energia e as mecânicas
+ * ativas (o ANEL do especial e a ESQUIVA do especial do pesadelo) são do `games/usePveBattle.ts`;
+ * as regras de dano, de `utils/energia.ts`. Vida do pet e dos inimigos × `PVE_HP_SCALE` (~20–30 s
+ * por inimigo). A `TimingBar` de esquiva saiu daqui (`TIMING_DODGE_ENABLED = false`).
+ *
+ * ───────────────────────────────────────────────────────────────────────────
  * POR QUE O `DungeonGame` NÃO FOI REUTILIZADO (para quem for refatorar)
  * ───────────────────────────────────────────────────────────────────────────
- * A intenção era compor `DungeonGame` em vez de reimplementar combate. Não deu,
- * e os impedimentos são todos ARQUITETURAIS — nenhum se resolve por props, e
- * eu não podia editar `DungeonGame.tsx`:
- *
- *  1. **Ele não aceita uma onda pronta.** A única entrada de inimigos é interna
- *     (`buildDungeonWave(res.level, evolutionStage)` dentro de `startRun`); a
- *     prop `onEnter` devolve um `level`, não uma `DungeonEnemy[]`. O pesadelo
- *     precisa exatamente do contrário: a onda vem de `buildNightmareWave`, que
- *     é quem aplica `NIGHTMARE_WAVE_SIZE` e o teto de tier por estágio.
- *  2. **Ele é uma RUN de 5 andares, não uma luta.** Andar, cenário por andar,
- *     `MAX_FLOORS`, bônus de andar, Glitchtama e "próximo andar" são estado
- *     interno. O pesadelo é UMA luta curta, de manhã, antes do café.
- *  3. **Ele escreve no localStorage direto** (`getDungeonDifficulty`,
- *     `recordDungeonScore`, `setDungeonDifficultyAtLeast`). Uma luta de
- *     pesadelo alimentando o recorde e a dificuldade semanal da Masmorra
- *     misturaria duas economias que a regra mantém separadas.
- *  4. ~~**`TimingBar` e `PLAYER_STATS` não são exportados**~~ — ✅ PAGO em
- *     09/09/2026, quando a Arena precisou da mesma barra e faria a TERCEIRA
- *     cópia. `TimingBar` virou `components/pixel/TimingBar.tsx` e
- *     `PLAYER_STATS` virou `utils/dungeon.ts` (que já era dono das stats de
- *     inimigo). As duas cópias marcadas `⚠️ DUPLICADO` foram apagadas; este
- *     arquivo e o `DungeonGame` importam o mesmo dono.
- *
- * O que CONTINUA valendo dos itens 1–3: o miolo de combate ainda não é um
- * componente que receba `enemies: DungeonEnemy[]` e devolva `onWin/onLose`.
- * Enquanto não for, cada jogo desenha o próprio laço — o que é aceitável
- * porque as REGRAS de cada um são de fato diferentes (a Arena tem elementos,
- * carga de especial e 5 rodadas; a Masmorra tem andares; o Pesadelo é uma luta
- * só). O que não podia continuar duplicado era a MECÂNICA, e essa agora tem
- * dono.
+ * Ele não aceita uma onda pronta (a entrada de inimigos é interna), é uma RUN de 5 andares (andar,
+ * bônus, Glitchtama) e escreve no localStorage direto (recorde e dificuldade semanal da Masmorra) —
+ * misturaria duas economias que a regra mantém separadas. O que não podia continuar duplicado era a
+ * MECÂNICA, e essa agora tem dono: `usePveBattle` + `utils/energia.ts` + `BattleStage`.
  */
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { RitualDialog } from './ritual/RitualKit';
 import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
-import { GameVisor, VisorSprite, VisorFx, HpBars, FxPopup, DIALOG_VISOR_W, phaseTitle } from './games/GameKit';
+import { GameVisor, VisorSprite, VisorFx, DIALOG_VISOR_W, phaseTitle } from './games/GameKit';
 import { NIGHTMARE_SCENE } from '../utils/dungeonScenes';
 import { getSpriteForStage, DUNGEON_LINE_SPRITES } from '../utils/sprites';
-import { torcidaStrike, torcidaTap } from '../utils/torcida';
 import { TorcidaLayer, TorcidaGauge } from './games/TorcidaKit';
+import { BattleStage, BATTLE_LAYER_STYLE } from './games/BattleStage';
+import { usePveBattle, type PveRules } from './games/usePveBattle';
 import { playerStatsFor } from '../utils/dungeon';
-import { TimingBar } from './pixel/TimingBar';
-import { autoDefense, defenseRoll, newDefenseSeed, TIMING_DODGE_ENABLED } from '../utils/autoDefesa';
+import { newDefenseSeed } from '../utils/autoDefesa';
+import {
+  CHEER_TAPS_FULL, ENERGY_MAX, PVE_HP_SCALE, pveFoeHp, pveFoeHitDamage, pveStrikeDamage, type RingGrade,
+} from '../utils/energia';
+import { fxElementId, visualElementFor, prefersReducedMotion } from '../utils/combatFx';
 import { playFeed } from '../utils/sounds';
 import {
   nightmareFlavor,
@@ -86,6 +74,8 @@ export interface NightmareBattleProps {
   petStage: string;
   /** Personagem de demo, quando houver (mesma prop do DungeonGame). */
   demoCharacterId?: string;
+  /** Elemento dominante do Soulmon: a arte dos golpes dele. Sem ele, o neutro. */
+  petElement?: string;
   language: Language;
   /** Venceu: as recompensas de `nightmareRewards(rarity, true)`. */
   onWin: (rewards: NightmareRewards) => void;
@@ -94,67 +84,22 @@ export interface NightmareBattleProps {
   onClose: () => void;
 }
 
-
+/** A defesa perfeita do pesadelo (limiar da defesa automática). */
 const PERFECT = 0.92;
-/** Do começo da vez do Soulmon até o golpe sair sozinho. */
-const ATTACK_AUTO_MS = 1300;
-/** Do começo da defesa até o Soulmon se defender sozinho (TORC-3, 02/10/2026). */
-const DEFEND_AUTO_MS = 900;
 /* C1 (02/10/2026): o convite do pesadelo mostrava `dungeon-spirit.png` (bolha
    roxa com brilhos, uma bolinha roxa solta e franja clara). Agora é uma
    criatura que já existe no repo, com alfa limpo (binário, sem borda clara). */
 const INTRO_CREATURE = DUNGEON_LINE_SPRITES.ignar.champion;
-const DEFEND_TIME = 3.0;
-const POPUP_MS = 1200;
 
-/**
- * `prefers-reduced-motion` lido do sistema, com guard.
- *
- * Guard e não `window.matchMedia(...)` direto por dois motivos, os dois já
- * pagos: o jsdom dos testes NÃO implementa `matchMedia` (a chamada crua joga
- * `TypeError` e derruba o render inteiro), e o renderer do desktop pode montar
- * este arquivo fora de um documento. Falso é o padrão seguro: mantém o jogo
- * como sempre foi.
- */
-function prefersReducedMotion(): boolean {
-  try {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
-    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  } catch {
-    return false;
-  }
-}
-
-type Phase = 'intro' | 'attack' | 'defend' | 'result' | 'won' | 'lost';
-interface Popup { icon: string; title: string; detail: string }
-
+type Phase = 'intro' | 'fight' | 'won' | 'lost';
 
 export function NightmareBattle({
-  open, wave, rarity, petStage, demoCharacterId, language, onWin, onLose, onClose,
+  open, wave, rarity, petStage, demoCharacterId, petElement, language, onWin, onLose, onClose,
 }: NightmareBattleProps) {
   const isPt = language === 'pt-BR';
-  const stats = playerStatsFor(petStage);
-
-  /**
-   * G5 — WCAG 2.2.1 (Timing Adjustable, nível A).
-   *
-   * A defesa tinha 3,0 s FIXOS, sem jeito de desligar, estender ou ajustar:
-   * é exatamente o que o 2.2.1 proíbe. A saída mais simples que passa é a
-   * primeira opção do próprio critério — **desligar o limite** — e ela vem
-   * atrelada ao sinal que o sistema operacional já dá: quem pediu movimento
-   * reduzido pediu, na prática, uma tela que não corre atrás dele. Sem
-   * preferência declarada, o combate continua idêntico ao que sempre foi.
-   *
-   * Lido UMA vez por montagem (`useState` com inicializador): o limite não pode
-   * mudar no meio de uma esquiva.
-   *
-   * O que NÃO muda: a `TimingBar` continua andando. Ela é a mecânica essencial
-   * do minijogo (2.3.3 isenta movimento essencial), e sem ela não existe
-   * acerto nem contra-ataque — o que sai é a AMEAÇA de perder o turno por
-   * demora, não a habilidade.
-   */
-  const [relaxedTiming] = useState(prefersReducedMotion);
-  const defendTime = relaxedTiming ? 0 : DEFEND_TIME;
+  const base = playerStatsFor(petStage);
+  // Vida do pet × PVE_HP_SCALE: a luta ficou mais longa (04/10/2026); o dano por golpe não muda.
+  const stats = { hp: Math.round(base.hp * PVE_HP_SCALE), dmg: base.dmg };
 
   /* Trap + Escape + devolução de foco vêm do `RitualDialog` (SIS-06, canvas
      Rituais): o × 44 pelado é o primeiro focável, Escape fecha. */
@@ -163,99 +108,37 @@ export function NightmareBattle({
   const [enemyHp, setEnemyHp] = useState(0);
   const [playerHp, setPlayerHp] = useState(stats.hp);
   const [phase, setPhase] = useState<Phase>('intro');
-  const [popup, setPopup] = useState<Popup | null>(null);
-  const [hitFx, setHitFx] = useState<'enemy' | 'player' | null>(null);
-  const [defendLeft, setDefendLeft] = useState(defendTime);
   const [rewards, setRewards] = useState<NightmareRewards | null>(null);
+  /** A semente da luta: o sorteio da defesa automática, do anel e da esquiva. */
+  const [seedLuta, setSeedLuta] = useState(() => newDefenseSeed());
+  /** A confirmação de sair está aberta: a luta espera. */
+  const [pausado, setPausado] = useState(false);
+  const reduced = useRef(prefersReducedMotion());
+  const enemyHpRef = useRef(0);
+  const playerHpRef = useRef(stats.hp);
+  const idxRef = useRef(0);
+  const waveRef = useRef(wave);
+  waveRef.current = wave;
+  const battleRef = useRef<{ reset: (o: { foes: number; keepPet?: boolean }) => void } | null>(null);
 
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const fxRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const defendResolved = useRef(false);
-  /* Declarado AQUI, antes do `return null` de `!open`: um `useRef` depois de um
-     retorno condicional quebra a ordem dos hooks. Recebe o handler mais abaixo. */
-  const defendRef = useRef<(acc: number, timedOut?: boolean) => void>(() => {});
-  /* Torcida (02/10/2026): o golpe do pet sai sozinho; o gauge enche com os
-     toques do dono e é gasto no golpe especial. `attackRef` guarda o handler
-     da render atual, para o timer do golpe automático nunca ler gauge velho. */
-  const [taps, setTaps] = useState(0);
-  const [specialFx, setSpecialFx] = useState(false);
-  const attackRef = useRef<() => void>(() => {});
-  /* Defesa automática (`utils/autoDefesa.ts`): sorteio determinístico por
-     (semente da luta, nº do golpe sofrido). */
-  const defSeedRef = useRef(newDefenseSeed());
-  const defCountRef = useRef(0);
-  const [guardFx, setGuardFx] = useState(false);
-
-  const after = useCallback((ms: number, fn: () => void) => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(fn, ms);
-  }, []);
-  useEffect(() => () => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    if (fxRef.current) clearTimeout(fxRef.current);
-  }, []);
+  const enemy = wave[idx];
+  const petEl = fxElementId(petElement);
+  const enemyEl = fxElementId(visualElementFor(enemy?.stage ?? 'x'));
 
   // Reabrir com outra noite recomeça limpo (o modal fica montado no App).
   useEffect(() => {
     if (!open) return;
     setIdx(0);
+    idxRef.current = 0;
     setEnemyHp(0);
+    enemyHpRef.current = 0;
     setPlayerHp(stats.hp);
+    playerHpRef.current = stats.hp;
     setPhase('intro');
-    setPopup(null);
-    setDefendLeft(defendTime);
     setRewards(null);
-    defendResolved.current = false;
+    setSeedLuta(newDefenseSeed());
+    battleRef.current?.reset({ foes: 1, keepPet: false });
   }, [open, wave, stats.hp]);
-
-  const flash = (who: 'enemy' | 'player') => {
-    setHitFx(who);
-    if (fxRef.current) clearTimeout(fxRef.current);
-    fxRef.current = setTimeout(() => setHitFx(null), 420);
-  };
-
-  // O golpe do Soulmon sai sozinho, um instante depois de a vez dele começar —
-  // tempo de o dono torcer. Nada aqui é um limite: é o ritmo da luta.
-  useEffect(() => {
-    if (!open || phase !== 'attack') return;
-    const id = setTimeout(() => attackRef.current(), ATTACK_AUTO_MS);
-    return () => clearTimeout(id);
-  }, [open, phase, idx]);
-
-  // O Soulmon se defende sozinho: a regra pura decide (determinística pela semente).
-  useEffect(() => {
-    if (TIMING_DODGE_ENABLED || !open || phase !== 'defend') return;
-    const id = setTimeout(() => {
-      const roll = defenseRoll(defSeedRef.current, defCountRef.current++);
-      defendRef.current(autoDefense(roll, { perfect: PERFECT }).acc);
-    }, DEFEND_AUTO_MS);
-    return () => clearTimeout(id);
-  }, [open, phase, idx]);
-
-  // Nova noite / reabertura: o gauge começa vazio e a defesa ganha semente nova.
-  useEffect(() => {
-    if (!open) return;
-    setTaps(0);
-    defSeedRef.current = newDefenseSeed();
-    defCountRef.current = 0;
-  }, [open, wave]);
-
-  if (!open) return null;
-
-  const enemy = wave[idx];
-  const petSprite = getSpriteForStage(petStage, demoCharacterId, 256);
-  const title = nightmareName(rarity, language);
-  const flavor = nightmareFlavor(rarity, language);
-  const preview = nightmareRewards(rarity, true);
-
-  const start = () => {
-    if (wave.length === 0) return;
-    setIdx(0);
-    setEnemyHp(wave[0].hp);
-    setPlayerHp(stats.hp);
-    setPopup(null);
-    setPhase('attack');
-  };
 
   const win = () => {
     playFeed();
@@ -271,122 +154,152 @@ export function NightmareBattle({
     onLose();
   };
 
-  const nextEnemy = () => {
-    if (idx + 1 >= wave.length) { win(); return; }
-    const n = idx + 1;
-    setIdx(n);
-    setEnemyHp(wave[n].hp);
-    setPhase('attack');
-  };
+  const ringTag = (r: RingGrade) => (isPt ? { otimo: 'ÓTIMO!', bom: 'BOM', ruim: 'FRACO' } : { otimo: 'GREAT!', bom: 'GOOD', ruim: 'WEAK' })[r];
 
-  /* Torcida (02/10/2026, `utils/torcida.ts`): o Soulmon golpeia sozinho; o dono
-     TORCE tocando na tela e o gauge cheio vira o golpe ESPECIAL. A torcida só
-     soma — sem torcer o golpe é o base, nunca menos. O Soulmon se defende
-     sozinho (TORC-3). A torcida e a esquiva por timing estão desligadas. */
-  const handleAttack = () => {
-    if (!enemy) return;
-    const strike = torcidaStrike(stats.dmg, taps, enemy.dmgReduction);
-    const dmg = strike.dmg;
-    setTaps(strike.tapsLeft);
-    setSpecialFx(strike.special);
-    const next = Math.max(0, enemyHp - dmg);
-    setEnemyHp(next);
-    flash('enemy');
-    // A vibração NÃO passa por CSS nenhum, então `prefers-reduced-motion` só a
-    // alcança por guard em JS. E ela não é essencial: é tempero do acerto.
-    if (!relaxedTiming) {
-      try { navigator.vibrate?.(strike.special ? 40 : 15); } catch { /* noop */ }
-    }
-
-    const head = strike.special ? (isPt ? 'Golpe especial da torcida!' : 'Special cheer strike!')
-      : (isPt ? 'O Soulmon golpeia!' : 'Your Soulmon strikes!');
-    setPopup({
-      icon: '✨', title: head,
-      detail: isPt ? `${dmg} de dano em ${enemy.name}` : `${dmg} damage to ${enemy.name}`,
-    });
-    setPhase('result');
-
-    if (next <= 0) {
-      // C-1 (run `som-01`): morte de inimigo nao usa o som de conclusao — o
-      // popup de dano + `setPhase('result')` ja carregam o resultado (R-36).
-      after(POPUP_MS, () => { setPopup(null); nextEnemy(); });
-      return;
-    }
-    after(POPUP_MS, () => {
-      setPopup(null);
-      defendResolved.current = false;
-      setDefendLeft(defendTime);
-      setPhase('defend');
-    });
-  };
-
-  const guard = () => {
-    setGuardFx(true);
-    setTimeout(() => setGuardFx(false), 450);
-  };
-
-  const handleDefend = (acc: number, timedOut = false) => {
-    if (defendResolved.current || !enemy) return;
-    defendResolved.current = true;
-
-    if (!timedOut && acc >= PERFECT) {
-      const counter = Math.max(1, Math.round(2 * (1 - enemy.dmgReduction)));
-      const next = Math.max(0, enemyHp - counter);
-      setEnemyHp(next);
-      flash('enemy');
-      guard();
-      setPopup({
-        icon: '🛡️', title: isPt ? 'Defendeu!' : 'Defended!',
-        detail: isPt ? `Contra-ataque: ${counter} de dano!` : `Counter-attack: ${counter} damage!`,
-      });
-      setPhase('result');
-      if (next <= 0) {
-        // C-1: idem no contra-ataque do desvio perfeito.
-        after(POPUP_MS, () => { setPopup(null); nextEnemy(); });
-        return;
+  /* As regras da luta (o relógio é o `usePveBattle`): golpe-base = 0,5 × dmg, especial = 3× × a nota do anel,
+     defesa perfeita = sem dano + contra-ataque, e o especial do pesadelo (2×) pode ser esquivado. */
+  const regras: PveRules = {
+    perfect: PERFECT,
+    target: () => 0,
+    foes: () => (enemyHpRef.current > 0 ? [0] : []),
+    playerElement: () => petEl,
+    foeElement: () => enemyEl,
+    playerKind: n => (n % 2 === 0 ? 'melee' : 'ranged'),
+    foeKind: (_f, n) => (n % 2 === 0 ? 'melee' : 'ranged'),
+    playerStrike: ({ special, ring }) => {
+      const e = waveRef.current[idxRef.current];
+      const dmg = pveStrikeDamage({ dmg: stats.dmg, guard: e?.dmgReduction ?? 0, special, ring });
+      enemyHpRef.current = Math.max(0, enemyHpRef.current - dmg);
+      setEnemyHp(enemyHpRef.current);
+      // A vibração NÃO passa por CSS nenhum, então `prefers-reduced-motion` só a
+      // alcança por guard em JS. E ela não é essencial: é tempero do acerto.
+      if (!reduced.current) {
+        try { navigator.vibrate?.(special ? 40 : 15); } catch { /* noop */ }
       }
-      after(POPUP_MS, () => { setPopup(null); setPhase('attack'); });
-      return;
-    }
-
-    const eff = timedOut ? 0 : acc;
-    const taken = Math.max(1, Math.ceil(enemy.atk * (1 - eff)));
-    const next = Math.max(0, playerHp - taken);
-    setPlayerHp(next);
-    flash('player');
-    if (eff >= 0.6) guard();
-
-    setPopup({
-      icon: '💫',
-      title: timedOut ? (isPt ? 'Muito lento!' : 'Too slow!')
-        : eff >= 0.6 ? (isPt ? 'Defendeu em parte!' : 'Partly defended!')
-        : (isPt ? 'Levou o golpe!' : 'Took the hit!'),
-      detail: isPt ? `Seu Soulmon segurou ${taken}` : `Your Soulmon took ${taken}`,
-    });
-    setPhase('result');
-
-    if (next <= 0) {
-      after(POPUP_MS, () => { setPopup(null); lose(); });
-      return;
-    }
-    after(POPUP_MS, () => { setPopup(null); setPhase('attack'); });
+      return { hits: [{ foe: 0, value: dmg }], tag: special ? ringTag(ring) : undefined, victory: enemyHpRef.current <= 0 };
+    },
+    foeStrike: ({ special, dodge, acc }) => {
+      const e = waveRef.current[idxRef.current];
+      if (!e) return { value: 0, blocked: false, defeat: false };
+      const r = pveFoeHitDamage({ atk: e.atk, acc, perfect: PERFECT, special, dodge });
+      if (r.blocked) {
+        const counter = Math.max(1, Math.round(2 * (1 - e.dmgReduction)));
+        enemyHpRef.current = Math.max(0, enemyHpRef.current - counter);
+        setEnemyHp(enemyHpRef.current);
+        return {
+          value: 0, blocked: true, counter: { foe: 0, value: counter }, tag: isPt ? 'Defendeu!' : 'Defended!',
+          defeat: false, victory: enemyHpRef.current <= 0,
+        };
+      }
+      playerHpRef.current -= r.dmg;
+      setPlayerHp(playerHpRef.current);
+      const tag = special
+        ? (dodge === 'otimo' ? (isPt ? 'Esquivou!' : 'Dodged!') : dodge === 'bom' ? (isPt ? 'Quase!' : 'Close!') : undefined)
+        : undefined;
+      return { value: r.dmg, blocked: false, tag, defeat: playerHpRef.current <= 0 };
+    },
+    onVictory: () => {
+      // C-1 (run `som-01`): morte de inimigo nao usa o som de conclusao.
+      const n = idxRef.current + 1;
+      if (n >= waveRef.current.length) { win(); return; }
+      idxRef.current = n;
+      setIdx(n);
+      const hp = pveFoeHp(waveRef.current[n].hp);
+      enemyHpRef.current = hp;
+      setEnemyHp(hp);
+      battleRef.current?.reset({ foes: 1, keepPet: true }); // a energia e a barra de cheer seguem para o próximo
+    },
+    onDefeat: () => lose(),
   };
-  defendRef.current = handleDefend;
-  attackRef.current = handleAttack;
-  const cheer = () => { if (phase === 'attack' || phase === 'defend' || phase === 'result') setTaps(t => torcidaTap(t)); };
+  const battle = usePveBattle({
+    running: open && phase === 'fight' && !!enemy,
+    paused: pausado, seed: seedLuta, reduced: reduced.current, rules: regras, runKey: idx,
+  });
+  battleRef.current = battle;
 
-  const inBattle = !!enemy && ['attack', 'defend', 'result'].includes(phase);
+  if (!open) return null;
+
+  const petSprite = getSpriteForStage(petStage, demoCharacterId, 256);
+  const title = nightmareName(rarity, language);
+  const flavor = nightmareFlavor(rarity, language);
+  const preview = nightmareRewards(rarity, true);
+
+  const start = () => {
+    if (wave.length === 0) return;
+    setIdx(0);
+    idxRef.current = 0;
+    const hp = pveFoeHp(wave[0].hp);
+    enemyHpRef.current = hp;
+    setEnemyHp(hp);
+    setPlayerHp(stats.hp);
+    playerHpRef.current = stats.hp;
+    setSeedLuta(newDefenseSeed());
+    battleRef.current?.reset({ foes: 1, keepPet: false });
+    setPhase('fight');
+  };
+
   const goodMorning = isPt ? 'Bom dia!' : 'Good morning!';
+
+  /* A LUTA: a tela cheia (a mesma cena do Duelo e da Masmorra). */
+  if (phase === 'fight' && enemy) {
+    return (
+      <TorcidaLayer
+        onTap={battle.cheer}
+        active={!pausado && battle.phase === 'idle'}
+        isPt={isPt}
+        style={{ ...BATTLE_LAYER_STYLE, zIndex: 220 }}
+        mascot
+        swipeActive={battle.phase === 'dodge'}
+        onSwipe={battle.swipe}
+      >
+        <BattleStage
+          scene={NIGHTMARE_SCENE.bg}
+          me={{
+            key: 'me', sprite: petSprite, name: isPt ? 'Seu Soulmon' : 'Your Soulmon', hp: Math.max(0, playerHp), maxHp: stats.hp,
+            element: petEl, energy: battle.petEnergy / ENERGY_MAX,
+          }}
+          foes={[{
+            key: idx, sprite: enemy.sprite, name: isPt ? 'Pesadelo' : 'Nightmare', hp: Math.max(0, enemyHp), maxHp: pveFoeHp(enemy.hp),
+            element: enemyEl, down: enemyHp <= 0, energy: (battle.foeEnergy[0] ?? 0) / ENERGY_MAX,
+          }]}
+          action={battle.action}
+          hit={battle.hits}
+          charging={battle.charging}
+          ring={battle.ring}
+          onRingGrade={battle.resolveRing}
+          dodge={battle.dodge}
+          onDodge={battle.swipe}
+          petDodge={battle.petDodge}
+          mechLabels={{
+            strike: isPt ? 'Golpear' : 'Strike',
+            dodgeLeft: isPt ? 'Esquivar para a esquerda' : 'Dodge left',
+            dodgeRight: isPt ? 'Esquivar para a direita' : 'Dodge right',
+          }}
+          title={title}
+          badge={wave.length > 1 ? <span className="sm2-num" style={{ fontSize: 'var(--sm2-text-sm)', color: 'var(--sm2-viewport-ink)', textShadow: '0 1px 2px rgba(0,0,0,.8)' }}>{idx + 1}/{wave.length}</span> : undefined}
+          closeLabel={isPt ? 'Sair do pesadelo' : 'Leave the nightmare'}
+          onClose={onClose}
+          exitConfirm={{
+            title: isPt ? 'Deixar o pesadelo? Nada se perde — ele só passa.' : 'Leave the nightmare? Nothing is lost — it just passes.',
+            stay: isPt ? 'Continuar' : 'Keep going',
+            leave: isPt ? 'Sair' : 'Leave',
+          }}
+          onPauseChange={setPausado}
+          hud={<TorcidaGauge taps={battle.meter} onCheer={battle.cheer} isPt={isPt} full={CHEER_TAPS_FULL} bare />}
+        />
+      </TorcidaLayer>
+    );
+  }
+
   /* O VISOR do diálogo (288 = 144×2): o pet a 128 embaixo à esquerda; na caixa
-     do outro (alto à direita) o espírito 128² a 1× na proposta, o pesadelo da
-     vez na luta, a faísca na vitória — nunca sobre o pet (X1); na derrota
-     nada: o pet inteiro, porque nada caiu (JOGO-25). */
+     do outro (alto à direita) o espírito 128² a 1× na proposta, a faísca na
+     vitória — nunca sobre o pet (X1); na derrota nada: o pet inteiro, porque
+     nada caiu (JOGO-25). */
   const otherBox: CSSProperties = { right: 8, top: 12 };
   const visor = (height: 80 | 72, other: React.ReactNode) => (
     <GameVisor width={DIALOG_VISOR_W} height={height} scene={NIGHTMARE_SCENE.bg}>
       {other}
       <VisorSprite src={petSprite} alt="" style={{ left: 8, bottom: 8 }} data-visor-pet />
-      {hitFx === 'player' && <VisorFx icon="💥" style={{ left: 8, bottom: 8 }} data-visor-fx="hit" />}
     </GameVisor>
   );
   const btn = (variant: 'primary' | 'outline'): CSSProperties => ({ ...sm2Button(variant), width: '100%', maxWidth: 260, alignSelf: 'center' });
@@ -437,77 +350,6 @@ export function NightmareBattle({
         </>
       )}
 
-      {/* ── A luta: o visor persiste (R6), as barras fora dele ───────── */}
-      {inBattle && enemy && (
-        <TorcidaLayer
-          onTap={cheer}
-          active={inBattle}
-          isPt={isPt}
-          style={{ alignSelf: 'stretch', alignItems: 'center', gap: 10 }}
-        >
-          {visor(80, (
-            <>
-              <VisorSprite src={enemy.sprite} alt={enemy.name} flip style={otherBox} data-visor-enemy />
-              {hitFx === 'enemy' && <VisorFx icon={specialFx ? '✨' : '💥'} style={otherBox} data-visor-fx={specialFx ? 'special' : 'hit'} />}
-              {guardFx && <VisorFx icon="🛡️" style={{ left: 8, bottom: 8 }} data-visor-fx="guard" />}
-            </>
-          ))}
-          <div style={{ alignSelf: 'stretch' }}>
-            <HpBars
-              bars={[
-                { label: isPt ? 'Vida do pesadelo' : 'Nightmare health', cur: enemyHp, max: enemy.hp, tone: 'gold' },
-                { label: isPt ? 'Fôlego do seu Soulmon' : "Your Soulmon's stamina", cur: playerHp, max: stats.hp, tone: 'cyan' },
-              ]}
-            />
-          </div>
-          {/* A torcida: o gauge enche com o toque em qualquer lugar da luta. */}
-          <div style={{ alignSelf: 'stretch' }}>
-            <TorcidaGauge taps={taps} onCheer={cheer} isPt={isPt} />
-          </div>
-
-          <div aria-live="polite" style={{ alignSelf: 'stretch', display: 'flex', flexDirection: 'column', gap: 8, minHeight: 92 }}>
-            {phase === 'attack' && (
-              <p style={phaseTitle}>
-                {isPt ? 'Seu Soulmon golpeia — torça por ele!' : 'Your Soulmon strikes — cheer for it!'}
-              </p>
-            )}
-            {phase === 'defend' && !TIMING_DODGE_ENABLED && (
-              <p style={phaseTitle} data-auto-defense>
-                {isPt ? `${enemy.name} vindo — seu Soulmon se defende!` : `${enemy.name} incoming — your Soulmon defends!`}
-              </p>
-            )}
-            {phase === 'defend' && TIMING_DODGE_ENABLED && (
-              <>
-                {/* Sem limite de tempo, o relógio não aparece: um contador
-                    parado seria pressão sem função. O relógio é leitura, na
-                    tinta do texto (D-J8). */}
-                <p style={phaseTitle}>
-                  {isPt ? `${enemy.name} vindo — desvie!` : `${enemy.name} incoming — dodge!`}
-                  {defendTime > 0
-                    ? <> <span className="sm2-num">{defendLeft.toFixed(1)}s</span></>
-                    : (isPt ? ' (sem pressa)' : ' (no time limit)')}
-                </p>
-                <TimingBar
-                  key={`def-${idx}-${enemyHp}-${playerHp}`}
-                  speed={enemy.speed * 1.2}
-                  label={isPt ? 'Desviar!' : 'Dodge!'}
-                  onStop={(a) => handleDefend(a)}
-                />
-              </>
-            )}
-            {phase === 'result' && popup && (
-              <FxPopup icon={popup.icon} title={popup.title} detail={popup.detail} />
-            )}
-          </div>
-          <DefendClock
-            running={TIMING_DODGE_ENABLED && phase === 'defend' && defendTime > 0}
-            left={defendLeft}
-            setLeft={setDefendLeft}
-            onTimeout={() => defendRef.current(0, true)}
-          />
-        </TorcidaLayer>
-      )}
-
       {/* ── Vitória: a faísca no lugar do pesadelo, nunca sobre o pet ── */}
       {phase === 'won' && rewards && (
         <div aria-live="polite" style={{ display: 'contents' }}>
@@ -539,41 +381,6 @@ export function NightmareBattle({
       )}
     </RitualDialog>
   );
-}
-
-/**
- * Relógio da defesa. Componente separado só para o `setInterval` ter um ciclo
- * de vida próprio — dentro do corpo do modal ele conviveria com o `return null`
- * do `!open`, e hook depois de retorno condicional é erro de regra dos hooks.
- */
-function DefendClock({ running, left, setLeft, onTimeout }: {
-  running: boolean;
-  left: number;
-  setLeft: (fn: (t: number) => number) => void;
-  onTimeout: () => void;
-}) {
-  const firedRef = useRef(false);
-  const timeoutRef = useRef(onTimeout);
-  timeoutRef.current = onTimeout;
-
-  useEffect(() => {
-    if (!running) { firedRef.current = false; return; }
-    const id = setInterval(() => {
-      setLeft((t) => {
-        const nt = Math.max(0, +(t - 0.1).toFixed(1));
-        if (nt <= 0 && !firedRef.current) {
-          firedRef.current = true;
-          timeoutRef.current();
-        }
-        return nt;
-      });
-    }, 100);
-    return () => clearInterval(id);
-  }, [running, setLeft]);
-
-  // Só o tempo restante já é anunciado no texto da fase — nada a renderizar.
-  void left;
-  return null;
 }
 
 export default NightmareBattle;

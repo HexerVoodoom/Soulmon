@@ -115,6 +115,8 @@ export interface AreaViewProps {
    *  jeito de agir na fenda (`utils/profissaoMasmorra.ts`). Só a masmorra lê. */
   profissao?: string | null;
   profissaoNome?: { pt: string; en: string } | null;
+  /** Elemento dominante do Soulmon (`soulmonMeta.dominantElement`): a arte dos golpes da Masmorra. */
+  petElement?: string;
   onEarnPoints: (points: number) => void;
   /** Exploração + Jogos (F5). */
   play: PlayHandlers;
@@ -314,6 +316,7 @@ export function AreaView(props: AreaViewProps) {
                 demoCharacterId={props.demoCharacterId}
                 profissao={props.profissao}
                 profissaoNome={props.profissaoNome}
+                petElement={props.petElement}
                 language={language}
                 onEnter={play.onDungeonEnter}
                 onLose={play.onDungeonLose}
