@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import { Icon } from './ui/Icon';
-import { InfoTip } from './ui/InfoTip';
+import { InfoTip, InfoTipSection } from './ui/InfoTip';
 import type { Language } from '../utils/i18n';
 import { isAuthConfigured } from '../utils/auth';
 import { readLocal } from '../utils/safeStorage';
@@ -75,10 +75,6 @@ function NotIncluded({ items, isPt }: { items: NotIncludedItem[]; isPt: boolean 
         {items.map(item => (
           <li key={item.what} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <p className="sm2-num" style={{ ...sm2Hint, fontWeight: 500, flex: 1, minWidth: 0 }}>{item.what}</p>
-            {/* K6 (04/10/2026): o porquê de cada item mora atrás do "?". */}
-            <InfoTip language={isPt ? 'pt-BR' : 'en-US'} label={isPt ? `Por que não está aqui: ${item.what}` : `Why it is not here: ${item.what}`} align="right" style={{ minHeight: 24 }}>
-              {pick(item, isPt)}
-            </InfoTip>
           </li>
         ))}
       </ul>
@@ -86,9 +82,9 @@ function NotIncluded({ items, isPt }: { items: NotIncludedItem[]; isPt: boolean 
   );
 }
 
-/** As três colunas do inventário, sempre as três — inclusive a que sobrevive. */
-function Inventory({ plan, isPt }: { plan: DeletePlan; isPt: boolean }) {
-  const blocks: Array<{ key: keyof DeletePlan; title: string; hint: string }> = [
+/** Os rótulos das três colunas do inventário e a explicação de cada uma (a explicação mora no "i" único da seção). */
+function inventoryBlocks(isPt: boolean): Array<{ key: keyof DeletePlan; title: string; hint: string }> {
+  return [
     {
       key: 'apaga',
       title: isPt ? 'Some para sempre' : 'Gone for good',
@@ -107,15 +103,17 @@ function Inventory({ plan, isPt }: { plan: DeletePlan; isPt: boolean }) {
         : 'The link to your purchase receipt. It is what stops one receipt from becoming several paid accounts — and what lets you restore your purchase if you come back with the same email.',
     },
   ];
+}
+
+/** As três colunas do inventário, sempre as três — inclusive a que sobrevive. */
+function Inventory({ plan, isPt }: { plan: DeletePlan; isPt: boolean }) {
+  const blocks = inventoryBlocks(isPt);
   return (
     <div style={stackStyle}>
       {blocks.map(b => (
         <div key={b.key}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <p style={{ ...sm2Text, fontWeight: 500, flex: 1, minWidth: 0 }}>{b.title}</p>
-            <InfoTip language={isPt ? 'pt-BR' : 'en-US'} label={isPt ? `Sobre: ${b.title}` : `About: ${b.title}`} align="right" style={{ minHeight: 24 }}>
-              {b.hint}
-            </InfoTip>
           </div>
           {plan[b.key].length > 0 ? (
             <ul className="sm2-num" style={{ ...sm2Hint, margin: '4px 0 0', paddingLeft: 18 }}>
@@ -252,8 +250,26 @@ export function AccountDataSection({ language, saveId: saveIdProp, authAvailable
   const busy = exportPhase === 'loading' || deletePhase === 'loading' || deletePhase === 'deleting';
   const blocked = !!localUnavailable || !saveId;
 
+  // R8-i (04/10/2026): UM "i" por tela — os porquês do inventário e do "o que não está aqui"
+  // moram aqui; os rótulos e itens continuam visíveis (EXCECOES-TEXTO-VISIVEL, ROT).
+  const planoAberto = (deletePhase === 'plan' || deletePhase === 'deleting') && !!pending;
+  const itensFora = planoAberto ? pending!.naoIncluido : (exportPhase === 'done' || deletePhase === 'done') ? notIncluded : null;
+  const temDica = planoAberto || !!itensFora?.length;
+
   return (
     <div style={stackStyle}>
+      {temDica && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: -8 }}>
+          <InfoTip language={language} label={isPt ? 'Sobre seus dados' : 'About your data'} align="right" style={{ minHeight: 24 }}>
+            {planoAberto && inventoryBlocks(isPt).map((b, i, arr) => (
+              <InfoTipSection key={b.key} title={b.title} last={!itensFora?.length && i === arr.length - 1}>{b.hint}</InfoTipSection>
+            ))}
+            {itensFora?.map((item, i, arr) => (
+              <InfoTipSection key={item.what} title={item.what} last={i === arr.length - 1}>{pick(item, isPt)}</InfoTipSection>
+            ))}
+          </InfoTip>
+        </div>
+      )}
       {/* INDISPONÍVEL — primeiro, e antes de qualquer botão. */}
       {localUnavailable && (
         <Panel>

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type CSSProperties } from 'react';
 import { Segment, sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
-import { InfoTip } from '../ui/InfoTip';
+import { InfoTip, InfoTipSection } from '../ui/InfoTip';
 import { Icon } from '../ui/Icon';
 import { sheetCard, sheetCardList, sheetCardTitle } from '../nav/sheetKit';
 import type { Language } from '../../utils/i18n';
@@ -90,10 +90,19 @@ export function OficinaSheet({ language, todayKey }: { language: Language; today
     <div data-oficina style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <p style={{ ...sectionHead, flex: 1 }}>{isPt ? 'Timer de foco' : 'Focus timer'}</p>
-        <InfoTip language={language} align="right" label={isPt ? 'Como funciona o timer' : 'How the timer works'}>
-          {isPt
-            ? 'O relógio segue o horário de verdade: pode trocar de aba ou fechar esta folha que ele continua. Ao fim, o app avisa na tela, vibra de leve e, só se você já permitiu notificações, avisa também fora do app. Marcar “Foquei” guarda um registro do dia só neste aparelho: sem placar, sem sequência, sem Bits.'
-            : 'The clock follows real time: you can switch tabs or close this sheet and it keeps going. At the end the app tells you on screen, buzzes lightly and, only if you already allowed notifications, also outside the app. Marking “I focused” keeps a note of the day on this device only: no scoreboard, no streak, no Bits.'}
+        <InfoTip language={language} align="right" label={isPt ? 'Como funciona a Oficina' : 'How the Workshop works'}>
+          <InfoTipSection title={isPt ? 'Timer de foco' : 'Focus timer'}>
+            {isPt
+              ? 'O relógio segue o horário de verdade: pode trocar de aba ou fechar esta folha que ele continua. Ao fim, o app avisa na tela, vibra de leve e, só se você já permitiu notificações, avisa também fora do app. Marcar “Foquei” guarda um registro do dia só neste aparelho: sem placar, sem sequência, sem Bits.'
+              : 'The clock follows real time: you can switch tabs or close this sheet and it keeps going. At the end the app tells you on screen, buzzes lightly and, only if you already allowed notifications, also outside the app. Marking “I focused” keeps a note of the day on this device only: no scoreboard, no streak, no Bits.'}
+          </InfoTipSection>
+          {FOCO_TECNICAS.map((t, i) => (
+            <InfoTipSection key={t.id} title={isPt ? t.namePt : t.nameEn} last={i === FOCO_TECNICAS.length - 1}>
+              <strong>{isPt ? EVIDENCIA_LABEL[t.evidencia].pt : EVIDENCIA_LABEL[t.evidencia].en}.</strong>{' '}
+              {isPt ? t.howPt : t.howEn}{' '}
+              <em>{isPt ? 'Fonte: ' : 'Source: '}{t.fonte}</em>
+            </InfoTipSection>
+          ))}
         </InfoTip>
       </div>
 
@@ -168,11 +177,6 @@ export function OficinaSheet({ language, todayKey }: { language: Language; today
               <span style={sheetCardTitle}>{isPt ? t.namePt : t.nameEn}</span>
               <span style={{ ...sm2Hint, margin: 0 }}>{isPt ? t.linePt : t.lineEn}</span>
             </span>
-            <InfoTip language={language} align="right" label={isPt ? `Sobre: ${t.namePt}` : `About: ${t.nameEn}`}>
-              <strong>{isPt ? EVIDENCIA_LABEL[t.evidencia].pt : EVIDENCIA_LABEL[t.evidencia].en}.</strong>{' '}
-              {isPt ? t.howPt : t.howEn}{' '}
-              <em>{isPt ? 'Fonte: ' : 'Source: '}{t.fonte}</em>
-            </InfoTip>
           </li>
         ))}
       </ul>

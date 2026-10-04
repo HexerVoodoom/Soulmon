@@ -216,7 +216,7 @@ export function RespiracaoGame({ language, evolutionStage, demoCharacterId, onEx
       )}
       {/* Apoio opcional: segurar enquanto respira. Não mede nada — o preenchimento do botão
           (esquerda → direita) é a MESMA curva da bolha: enche na inspiração, esvazia na
-          expiração, enquanto o toque durar; soltou, o preenchimento some (J6, rodada 7). */}
+          expiração, enquanto o toque durar; soltou, o preenchimento decai em ~200 ms (J6, rodada 7; R8-i). */}
       <button
         type="button"
         data-respiracao-hold
@@ -237,7 +237,8 @@ export function RespiracaoGame({ language, evolutionStage, demoCharacterId, onEx
             width: holding ? `${Math.round(level * 100)}%` : '0%',
             backgroundColor: 'color-mix(in srgb, var(--sm2-primary-fill) 45%, transparent)',
             // Movimento reduzido: o preenchimento acompanha a bolha em degraus (cada tick), sem suavização.
-            transition: reduced ? 'none' : `width ${ease}`,
+            // Ao SOLTAR (R8-i, 04/10/2026): decay MUITO rápido (~200 ms), não de uma vez. Reduzido: sem transição.
+            transition: reduced ? 'none' : (holding ? `width ${ease}` : 'width 200ms ease-out'),
           }}
         />
         <span style={{ position: 'relative', zIndex: 1 }}>

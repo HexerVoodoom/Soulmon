@@ -43,7 +43,7 @@ import { emblemArt } from '../utils/emblemArt';
 import { Viewport } from './ui/Viewport';
 import { MiniGlass } from './ui/MiniGlass';
 import { Icon } from './ui/Icon';
-import { InfoTip } from './ui/InfoTip';
+import { InfoTip, InfoTipSection } from './ui/InfoTip';
 import { sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 
 interface PetPageProps {
@@ -165,7 +165,6 @@ const EMBLEM_COLS = 3;
  */
 function SkillRow({ skill, isPt }: { skill: StageSkill; isPt: boolean }) {
   const nome = isPt ? skill.nome.pt : skill.nome.en;
-  const desc = isPt ? skill.descricao.pt : skill.descricao.en;
   const especial = skill.tipo !== 'basica';
   const tipo = especial ? (isPt ? 'Especial' : 'Special') : (isPt ? 'Básica' : 'Basic');
   const custo = skill.custo === 'baixo' ? (isPt ? 'custo baixo' : 'low cost') : (isPt ? 'custo alto' : 'high cost');
@@ -187,8 +186,6 @@ function SkillRow({ skill, isPt }: { skill: StageSkill; isPt: boolean }) {
               </span>
             )}
           </p>
-          {/* K6 (04/10/2026): a descrição da habilidade mora atrás do "?". */}
-          <InfoTip language={isPt ? 'pt-BR' : 'en-US'} label={isPt ? `Sobre a habilidade: ${nome}` : `About the skill: ${nome}`} align="right" style={{ minHeight: 24 }}>{desc}</InfoTip>
         </div>
         <p style={{ ...sm2Hint, marginTop: 2 }}>{`${tipo} · ${custo}`}</p>
       </div>
@@ -316,6 +313,26 @@ export function PetPage({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingBottom: 24 }}>
 
+      {/* R8-i (04/10/2026): UM "i" por tela, no canto superior direito — habilidades e conquistas. */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: -24 }}>
+        <InfoTip language={language} label={isPt ? 'Como funciona esta tela' : 'How this screen works'} align="right" style={{ minHeight: 24 }}>
+          {skillsAtuais && (
+            <InfoTipSection title={isPt ? 'Habilidades' : 'Skills'}>
+              {[skillsAtuais.basica, skillsAtuais.especial].map((sk, i) => (
+                <span key={i} style={{ display: 'block', marginBottom: i === 0 ? 4 : 0 }}>
+                  <em>{isPt ? sk.nome.pt : sk.nome.en}:</em> {isPt ? sk.descricao.pt : sk.descricao.en}
+                </span>
+              ))}
+            </InfoTipSection>
+          )}
+          <InfoTipSection title={isPt ? 'Conquistas' : 'Achievements'} last>
+            {isPt
+              ? 'Toque num emblema para ver como ganhá-lo. Os apagados ainda não foram abertos — não há pressa e nada se perde.'
+              : 'Tap an emblem to see how to earn it. The dimmed ones are not open yet — take your time, and nothing is ever lost.'}
+          </InfoTipSection>
+        </InfoTip>
+      </div>
+
       {/* ─────────── A HEROÍNA ─────────── */}
       {atual ? (
         <section style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
@@ -343,11 +360,6 @@ export function PetPage({
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               <p className="sm2-num" data-achievements-count style={{ ...sm2Hint, textAlign: 'center' }}>{rotuloConquistas}</p>
-              <InfoTip language={language} label={isPt ? 'Como funcionam as conquistas' : 'How achievements work'}>
-                {isPt
-                  ? 'Toque num emblema para ver como ganhá-lo. Os apagados ainda não foram abertos — não há pressa e nada se perde.'
-                  : 'Tap an emblem to see how to earn it. The dimmed ones are not open yet — take your time, and nothing is ever lost.'}
-              </InfoTip>
             </div>
             <ul
               style={{

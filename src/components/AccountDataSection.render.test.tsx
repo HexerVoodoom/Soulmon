@@ -93,12 +93,12 @@ describe('AccountDataSection — exclusão em dois passos', () => {
     expect(screen.getByText('abc123 (save)')).toBeTruthy();
     expect(screen.getByText(/Continua existindo/)).toBeTruthy();
     expect(screen.getByText('ord:GPA.1234')).toBeTruthy();
-    // K6: as explicações moram atrás do "?" — abre o do bloco que sobrevive.
-    fireEvent.click(screen.getByRole('button', { name: /Sobre: Continua existindo/ }));
+    // R8-i: as explicações moram atrás do "i" ÚNICO da seção (inventário + "não está aqui").
+    expect(screen.getAllByRole('button', { name: /Sobre seus dados/ })).toHaveLength(1);
+    fireEvent.click(screen.getByRole('button', { name: /Sobre seus dados/ }));
     expect(screen.getByText(/restaurar a compra/)).toBeTruthy();
     expect(screen.getByText(/vale por 15 minutos/)).toBeTruthy();
     // O `naoIncluido` também aqui: quem apaga precisa saber o que não é alcançado.
-    fireEvent.click(screen.getAllByRole('button', { name: /Por que não está aqui/ })[0]);
     expect(screen.getByText(/NUNCA são enviados ao servidor/)).toBeTruthy();
     // Só o segundo passo apaga: nenhuma chamada de confirmação saiu sozinha.
     const calls = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls;
@@ -185,9 +185,9 @@ describe('AccountDataSection — exportação', () => {
     renderWithCss(<AccountDataSection language="pt-BR" saveId="abc123" authAvailable />);
     fireEvent.click(screen.getByRole('button', { name: /Baixar meus dados/ }));
     expect(await screen.findByText(/O que NÃO está aqui/)).toBeTruthy();
-    fireEvent.click(screen.getAllByRole('button', { name: /Por que não está aqui/ })[0]);
-    expect(screen.getByText(/NUNCA são enviados ao servidor/)).toBeTruthy();
     expect(screen.getByText('soulmon-profile (localStorage)')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /Sobre seus dados/ }));
+    expect(screen.getByText(/NUNCA são enviados ao servidor/)).toBeTruthy();
   });
 });
 

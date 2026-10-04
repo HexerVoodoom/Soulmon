@@ -1,6 +1,6 @@
 import { useState, type CSSProperties, type ReactNode } from 'react';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
-import { InfoTip } from '../ui/InfoTip';
+import { InfoTip, InfoTipSection } from '../ui/InfoTip';
 import { MAX_FLOORS, clearBonus } from '../DungeonGame';
 import { MATCH_POINTS, WINS_NEEDED } from '../RPSGame';
 import { getDungeonBest, getDungeonDifficulty, HEART_DROP_CHANCE } from '../../utils/dungeon';
@@ -167,11 +167,6 @@ export function DinoSheet({ language, onStart }: { language: Language; onStart: 
           label={isPt ? 'no recorde' : 'at your best'}
           valueStyle={bitsStyle}
         />
-        <InfoTip language={language} label={isPt ? 'Como funciona a Corrida' : 'How the Run works'} align="right">
-          {isPt
-            ? `Pule os obstáculos · cada ${DINO_POINTS_PER_BIT} pontos vira 1 Bit`
-            : `Jump the obstacles · every ${DINO_POINTS_PER_BIT} points becomes 1 Bit`}
-        </InfoTip>
       </div>
       {/* H13 (01/10/2026): "Jogar"/"Play" nos dois jogos do Salão — "Correr"
           lia como descrição do jogo, não como a ação de abri-lo. */}
@@ -190,11 +185,6 @@ export function PptSheet({ language, onStart }: { language: Language; onStart: (
       <div style={{ display: 'flex', gap: 8 }}>
         <StatBox value={`${MATCH_POINTS} Bits`} label={isPt ? 'por vitória' : 'per win'} valueStyle={bitsStyle} />
         <StatBox value={WINS_NEEDED} label={isPt ? 'rodadas para vencer' : 'rounds to win'} />
-        <InfoTip language={language} label={isPt ? 'Como funciona o jogo' : 'How the game works'} align="right">
-          {isPt
-            ? `Contra o seu Soulmon — quem vencer ${WINS_NEEDED} rodadas leva a partida`
-            : `Against your Soulmon — first to ${WINS_NEEDED} rounds takes the match`}
-        </InfoTip>
       </div>
       <button type="button" data-ppt-start onClick={onStart} style={cta}>
         {isPt ? 'Jogar' : 'Play'}
@@ -224,7 +214,21 @@ export function SalaoSheet({ language, onStart, bitsToday }: { language: Languag
   const isPt = language === 'pt-BR';
   return (
     <div data-salao style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <BitsHoje language={language} earned={bitsToday} />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        <BitsHoje language={language} earned={bitsToday} />
+        <InfoTip language={language} label={isPt ? 'Como funciona o Salão' : 'How the Hall works'} align="right">
+          <InfoTipSection title={isPt ? 'Corrida com obstáculos' : 'Obstacle Run'}>
+            {isPt
+              ? `Pule os obstáculos · cada ${DINO_POINTS_PER_BIT} pontos vira 1 Bit`
+              : `Jump the obstacles · every ${DINO_POINTS_PER_BIT} points becomes 1 Bit`}
+          </InfoTipSection>
+          <InfoTipSection title={isPt ? 'Pedra, papel e tesoura' : 'Rock, paper, scissors'} last>
+            {isPt
+              ? `Contra o seu Soulmon — quem vencer ${WINS_NEEDED} rodadas leva a partida`
+              : `Against your Soulmon — first to ${WINS_NEEDED} rounds takes the match`}
+          </InfoTipSection>
+        </InfoTip>
+      </div>
       <ul style={sheetCardList}>
         <li style={sheetCard}>
           <p style={sheetCardTitle}>{isPt ? 'Corrida com obstáculos' : 'Obstacle Run'}</p>
@@ -241,20 +245,15 @@ export function SalaoSheet({ language, onStart, bitsToday }: { language: Languag
 
 /** Um jogo do Ateliê/Refúgio: CARD próprio (I2) com o CTA PRIMÁRIO (H14 — a
  *  ação principal de toda folha é o mesmo botão, padronizado). */
-function GameRow({ id, title, asks, detail, meta, cta, onStart, dataKey, language }: {
-  id: string; title: string; asks: string; detail: string; meta?: ReactNode; cta: string;
-  onStart: () => void; dataKey: 'mente' | 'refugio'; language: Language;
+function GameRow({ id, title, asks, meta, cta, onStart, dataKey }: {
+  id: string; title: string; asks: string; meta?: ReactNode; cta: string;
+  onStart: () => void; dataKey: 'mente' | 'refugio';
 }) {
-  const isPt = language === 'pt-BR';
   return (
     <li style={sheetCard}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
         <span style={{ ...sheetCardTitle, flex: 1, minWidth: 0 }}>{title}</span>
         {meta !== undefined && <span className="sm2-num" style={{ ...sm2Hint, flexShrink: 0 }}>{meta}</span>}
-        {/* I13: "como se joga" mora atrás do "?" — o card fica título + o que pede + botão. */}
-        <InfoTip language={language} label={isPt ? `Como se joga: ${title}` : `How to play: ${title}`} align="right" style={{ minHeight: 24, alignSelf: 'center' }}>
-          {detail}
-        </InfoTip>
       </div>
       <p style={{ ...sm2Hint, margin: 0, color: 'var(--sm2-gold-ink)' }}>{asks}</p>
       <button
@@ -328,14 +327,19 @@ export function MenteSheet({ language, reviewDue, onStart, bitsToday }: {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
         <BitsHoje language={language} earned={bitsToday} />
         <InfoTip language={language} label={isPt ? 'Como funciona o Ateliê' : 'How the Atelier works'} align="right">
-          {isPt
-            ? 'Cada jogo pede uma coisa diferente. Perder só encerra a rodada.'
-            : 'Each game asks for something different. Losing only ends the round.'}
+          <InfoTipSection title={isPt ? 'O Ateliê' : 'The Atelier'}>
+            {isPt
+              ? 'Cada jogo pede uma coisa diferente. Perder só encerra a rodada.'
+              : 'Each game asks for something different. Losing only ends the round.'}
+          </InfoTipSection>
+          {rows.map((r, i) => (
+            <InfoTipSection key={r.id} title={r.title} last={i === rows.length - 1}>{r.detail}</InfoTipSection>
+          ))}
         </InfoTip>
       </div>
       <ul style={sheetCardList}>
         {rows.map(r => (
-          <GameRow key={r.id} language={language} dataKey="mente" id={r.id} title={r.title} asks={r.asks} detail={r.detail} meta={r.meta} cta={r.cta ?? cta} onStart={() => onStart(r.id)} />
+          <GameRow key={r.id} dataKey="mente" id={r.id} title={r.title} asks={r.asks} meta={r.meta} cta={r.cta ?? cta} onStart={() => onStart(r.id)} />
         ))}
       </ul>
     </div>
@@ -349,25 +353,31 @@ export function RefugioSheet({ language, onStart }: { language: Language; onStar
     <div data-refugio style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <InfoTip language={language} label={isPt ? 'Sobre o Refúgio' : 'About the Refuge'} align="right">
-          {isPt
-            ? 'Um canto para quando o dia pesar. Aqui nada pontua, nada paga e nada é medido.'
-            : 'A corner for when the day feels heavy. Nothing here scores, pays or measures anything.'}
+          <InfoTipSection title={isPt ? 'O Refúgio' : 'The Refuge'}>
+            {isPt
+              ? 'Um canto para quando o dia pesar. Aqui nada pontua, nada paga e nada é medido.'
+              : 'A corner for when the day feels heavy. Nothing here scores, pays or measures anything.'}
+          </InfoTipSection>
+          <InfoTipSection title={isPt ? 'Respirar com o Soulmon' : 'Breathe with your Soulmon'}>
+            {isPt ? 'Siga uma bolha que enche e esvazia devagar. Seu Soulmon respira junto.' : 'Follow a bubble that slowly fills and empties. Your Soulmon breathes along.'}
+          </InfoTipSection>
+          <InfoTipSection title={isPt ? 'Bolhas calmas' : 'Calm bubbles'} last>
+            {isPt ? 'Só estourar bolhas, no seu ritmo.' : 'Just pop bubbles, at your own pace.'}
+          </InfoTipSection>
         </InfoTip>
       </div>
       <ul style={sheetCardList}>
         <GameRow
-          language={language} dataKey="refugio" id="respiracao"
+          dataKey="refugio" id="respiracao"
           title={isPt ? 'Respirar com o Soulmon' : 'Breathe with your Soulmon'}
           asks={isPt ? '1 a 3 minutos' : '1 to 3 minutes'}
-          detail={isPt ? 'Siga uma bolha que enche e esvazia devagar. Seu Soulmon respira junto.' : 'Follow a bubble that slowly fills and empties. Your Soulmon breathes along.'}
           cta={isPt ? 'Começar' : 'Start'}
           onStart={() => onStart('respiracao')}
         />
         <GameRow
-          language={language} dataKey="refugio" id="bolhas-calmas"
+          dataKey="refugio" id="bolhas-calmas"
           title={isPt ? 'Bolhas calmas' : 'Calm bubbles'}
           asks={isPt ? 'Sem tempo, sem placar' : 'No timer, no score'}
-          detail={isPt ? 'Só estourar bolhas, no seu ritmo.' : 'Just pop bubbles, at your own pace.'}
           cta={isPt ? 'Começar' : 'Start'}
           onStart={() => onStart('bolhas-calmas')}
         />
