@@ -141,6 +141,15 @@ export const STORAGE_KEYS = {
    *  respostas 200 são possíveis, e é esta lista que impede o segundo crédito de Emblemas.
    *  Só recibos (nada de nome, guilda ou quantia). Dono: `utils/guildClaimLocal.ts`. */
   GUILD_CLAIMED: 'soulmon-guild-claimed',
+  /** OFICINA DO FOCO (04/10/2026) — o timer em curso (modo, fase, `endAt` em timestamp). Só do
+   *  aparelho, nunca no save. Dono: `utils/focoTimer.ts`. */
+  FOCO_TIMER: 'soulmon-foco-timer',
+  /** OFICINA DO FOCO — os "foquei" dos últimos dias, por dia (contagem + minutos). Sem total
+   *  público, sem sequência. Aparelho, não save. Dono: `utils/focoTimer.ts`. */
+  FOCO_SESSIONS: 'soulmon-foco-sessions',
+  /** CADERNO (04/10/2026) — o journaling. **PRIVADO: texto livre da pessoa, só neste aparelho,
+   *  fora do save em nuvem, nunca enviado a servidor/IA/chat.** Dono: `utils/cadernoLocal.ts`. */
+  CADERNO: 'soulmon-caderno',
 } as const;
 
 /**
