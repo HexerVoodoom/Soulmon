@@ -381,7 +381,12 @@ export const syncTaskAlarms = (
   }>,
   language: 'pt-BR' | 'en-US' = 'en-US'
 ) => {
-  const todayISO = new Date().toISOString().split('T')[0];
+  // Dia LOCAL (`deadline.date` vem de um <input type="date">): `toISOString` é
+  // UTC e, em UTC−3, vira "amanhã" às 21h — a tarefa de hoje perdia o alarme e
+  // a de amanhã ganhava um hoje.
+  const hoje = new Date();
+  const p2 = (n: number) => String(n).padStart(2, '0');
+  const todayISO = `${hoje.getFullYear()}-${p2(hoje.getMonth() + 1)}-${p2(hoje.getDate())}`;
   const isNative = Capacitor.isNativePlatform();
 
   // Replace old task alarms with fresh set
