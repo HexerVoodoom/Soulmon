@@ -33,6 +33,7 @@ const TABELA: Record<string, Classe> = {
   'components/ritual/RitualKit.tsx': 'base-esquerda', // o ramo `end` é só do pesadelo (atividade)
   'components/form/FormKit.tsx': 'base-esquerda', // idem: `closeSide="end"` só para atividade
   'components/nav/AreaSheet.tsx': 'base-esquerda',
+  'components/AdventureDiary.tsx': 'base-esquerda', // modal de tela cheia (rodada 7, I7): ✕ no topo ESQUERDO
   'components/home/Mochila.tsx': 'base-esquerda',
   'components/mercado/ShopItemSheet.tsx': 'base-esquerda', // lightbox: ✕ no topo ESQUERDO
   'components/SoulmonOnboarding.tsx': 'dispensar-inline', // card da oferta 13.1 + ferramenta de dev (BackArrow close)

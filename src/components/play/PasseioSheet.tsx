@@ -10,7 +10,7 @@ import {
 import { travessiaTitle } from '../../utils/travessiaTitles';
 import { sheetCard, sheetCardList, sheetCardTitle } from '../nav/sheetKit';
 import { Icon } from '../ui/Icon';
-import { InfoTip } from '../ui/InfoTip';
+import { InfoTip, InfoTipSection } from '../ui/InfoTip';
 import { MissionMark } from './MissionMark';
 import { AREA_LABEL, AreaGlyph, RegionPostal } from './TravessiaIcon';
 
@@ -140,11 +140,6 @@ function MissoesDoDia({ ofertas, isPt, language, aberto, setAberto, onPick }: {
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <MissionMark kind="available" isPt={isPt} />
         <p style={{ ...sectionHead, flex: 1 }}>{isPt ? 'Missões de hoje' : 'Missions of the day'}</p>
-        <InfoTip language={language} align="right" label={isPt ? 'Como funcionam as missões do dia' : 'How the daily missions work'}>
-          {isPt
-            ? 'Todo dia saem três missões, de lugares diferentes. Escolha uma — ou nenhuma, sem pressa. Cada missão é um cenário: à noite o Soulmon viaja para lá e volta no relatório com uma historinha. Uma Travessia é algo que você faz na sua vida, fora do app. Fica esperando o tempo que for.'
-            : 'Every day three missions come up, from different places. Pick one, or none, no rush. Each mission is a scene: at night the Soulmon travels there and comes back in the report with a little story. A Crossing is something you do in your own life, outside the app. It waits for as long as you like.'}
-        </InfoTip>
       </div>
       <ul style={sheetCardList} data-travessia-oferta>
         {ofertas.map(({ region, challenge: c }) => {
@@ -235,18 +230,12 @@ function CardAtivo({ crossings, isPt, language, todayKey, justDone, onFiz, onRec
           </p>
           <p style={note}>{isPt ? area.pt : area.en}</p>
         </div>
-        <InfoTip language={isPt ? 'pt-BR' : 'en-US'} label={isPt ? 'Sobre as duas versões' : 'About the two versions'} align="right">
-          {isPt ? 'Qualquer uma das duas vale.' : 'Either one is enough.'}
-        </InfoTip>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 4 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
           <Proposta c={challenge} isPt={isPt} />
         </div>
-        <InfoTip language={language} align="right" label={isPt ? 'Qual versão vale' : 'Which version counts'}>
-          {isPt ? 'Qualquer uma das duas vale, a plena ou a pequena.' : 'Either one is enough, the full or the small one.'}
-        </InfoTip>
       </div>
 
       <p data-travessia-mapa style={{ ...sm2Text, margin: 0, fontWeight: 600 }}>
@@ -323,10 +312,22 @@ export function PasseioSheet({ language, crossings, onChange, todayKey, seed = '
       {/* ── 1. O Passeio: para onde ele vai hoje ─────────────────────────── */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
         <p style={{ ...sectionHead, flex: 1 }}>{isPt ? 'Para onde ele vai hoje' : 'Where it goes today'}</p>
-        <InfoTip language={language} align="right" label={isPt ? 'Como funciona o passeio' : 'How the stroll works'}>
-          {isPt
-            ? 'Ele sai para passear todo dia e volta com o que viu no relatório do fim do dia.'
-            : 'It heads out every day and tells you what it saw in the end-of-day report.'}
+        <InfoTip language={language} align="right" label={isPt ? 'Sobre o Passeio' : 'About the Stroll'}>
+          <InfoTipSection title={isPt ? 'O passeio' : 'The stroll'}>
+            {isPt
+              ? 'Ele sai para passear todo dia e volta com o que viu no relatório do fim do dia.'
+              : 'It heads out every day and tells you what it saw in the end-of-day report.'}
+          </InfoTipSection>
+          <InfoTipSection title={isPt ? 'Missões do dia' : 'Daily missions'}>
+            {isPt
+              ? 'Todo dia saem três missões, de lugares diferentes. Escolha uma — ou nenhuma, sem pressa. Cada missão é um cenário: à noite o Soulmon viaja para lá e volta no relatório com uma historinha. Uma Travessia é algo que você faz na sua vida, fora do app. Qualquer uma das duas versões vale, a plena ou a pequena.'
+              : 'Every day three missions come up, from different places. Pick one, or none, no rush. Each mission is a scene: at night the Soulmon travels there and comes back in the report with a little story. A Crossing is something you do in your own life, outside the app. Either version counts, the full or the small one.'}
+          </InfoTipSection>
+          <InfoTipSection title={isPt ? 'Marcos de Aventura' : 'Adventure Milestones'} last>
+            {isPt
+              ? 'Cada missão feita soma um Marco, no máximo um por dia. Em 5, 10 e 20 Marcos o Soulmon volta com um postal especial. Não muda nada no jogo, nunca diminui e não tem prazo.'
+              : 'Each mission done adds one Milestone, at most one a day. At 5, 10 and 20 Milestones the Soulmon comes back with a special postcard. It changes nothing in the game, never goes down and has no deadline.'}
+          </InfoTipSection>
         </InfoTip>
       </div>
       <ul style={list} role="group" aria-label={isPt ? 'Destino do passeio' : 'Stroll destination'}>
@@ -385,11 +386,6 @@ export function PasseioSheet({ language, crossings, onChange, todayKey, seed = '
           {crossings.score > 0 && (
             <p data-marcos style={{ ...note, display: 'flex', alignItems: 'center', gap: 4 }}>
               <span>{isPt ? `Marcos de Aventura · ${crossings.score}` : `Adventure Milestones · ${crossings.score}`}</span>
-              <InfoTip language={language} align="left" label={isPt ? 'O que são os Marcos de Aventura' : 'What Adventure Milestones are'}>
-                {isPt
-                  ? 'Cada missão feita soma um Marco, no máximo um por dia. Em 5, 10 e 20 Marcos o Soulmon volta com um postal especial. Não muda nada no jogo, nunca diminui e não tem prazo.'
-                  : 'Each mission done adds one Milestone, at most one a day. At 5, 10 and 20 Milestones the Soulmon comes back with a special postcard. It changes nothing in the game, never goes down and has no deadline.'}
-              </InfoTip>
             </p>
           )}
 

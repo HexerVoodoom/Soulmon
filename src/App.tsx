@@ -5624,7 +5624,7 @@ export default function App() {
           {labTab === 'pet' && (
             <div style={{ marginTop: 16 }}>
               <Suspense fallback={<ScreenSkeleton language={language} />}>
-                <AdventureDiary entries={gameState.adventures ?? []} language={language} />
+                <AdventureDiary entries={gameState.adventures ?? []} language={language} spriteUrl={minhaCriaturaUrl} sceneId={gameState.equippedBackground ?? null} />
               </Suspense>
             </div>
           )}

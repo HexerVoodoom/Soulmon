@@ -148,6 +148,10 @@ export function useSpriteGeneration(args: UseSpriteGenerationArgs): SpriteGenera
           return { url: image, formId, provider, at: Date.now() };
         },
         onResult: (formId, entry) => {
+          // Rodada 7 (I6): o indicador "desenhando" sai FORMA A FORMA, assim que a
+          // arte chega — antes só zerava no fim do lote inteiro e o nó ficava
+          // "carregando" com o sprite já pronto.
+          setGenerating(prev => prev.filter(id => id !== formId));
           // A troca do rosto da forma ATUAL é sempre do jogador (§2.3.1) —
           // exceto no nascimento, onde ainda não há história a proteger.
           const éAtual = formId === argsRef.current.trigger.evolutionStage;
@@ -155,6 +159,7 @@ export function useSpriteGeneration(args: UseSpriteGenerationArgs): SpriteGenera
           argsRef.current.updateLibrary(prev => recordSprite(prev, entry, { adopt, dayKey: argsRef.current.dayKey }));
         },
         onFailure: (formId, kind) => {
+          setGenerating(prev => prev.filter(id => id !== formId));
           argsRef.current.updateLibrary(prev => recordFailure(prev, formId, kind, { manual: opts.manual }));
         },
         isCancelled: () => argsRef.current.busy,

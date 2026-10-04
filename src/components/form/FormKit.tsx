@@ -375,7 +375,7 @@ export function CheckRow({
  * Foco preso, Escape fecha e o foco volta para quem abriu (`useDialogA11y`).
  */
 export function ModalSheet({
-  open, title, onClose, language, children, footer, maxWidth = 480, closeSide = 'start', onBack,
+  open, title, onClose, language, children, footer, maxWidth = 480, closeSide = 'start', onBack, info,
 }: {
   open: boolean;
   title: string;
@@ -393,6 +393,9 @@ export function ModalSheet({
    *  superior ESQUERDO vira a SETA de voltar à tela anterior da folha, e não o
    *  fechar. Sem ele, é o fechar (`close`). */
   onBack?: () => void;
+  /** Rodada 7 (I2): O "i" ÚNICO da folha — canto superior DIREITO do cabeçalho,
+   *  explicando TUDO que há nela (várias seções curtas dentro do mesmo tooltip). */
+  info?: { label: string; content: ReactNode };
 }) {
   const isPt = language === 'pt-BR';
   const dialogRef = useDialogA11y<HTMLDivElement>(open, onClose);
@@ -445,6 +448,7 @@ export function ModalSheet({
         ) : null}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: closeSide === 'start' ? '0 18px 12px 18px' : '10px 8px 12px 18px' }}>
           <span className="sm2-title" style={{ ...sm2TitleStyle, flex: 1 }}>{title}</span>
+          {info && <InfoTip language={language} label={info.label} align="right">{info.content}</InfoTip>}
           {closeSide === 'end' && (
             <button
               type="button"

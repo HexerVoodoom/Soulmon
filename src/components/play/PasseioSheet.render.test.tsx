@@ -55,7 +55,7 @@ describe('missões do dia (04/10/2026) — a tela mostra as TRÊS e se escolhe U
   it('o texto explicativo mora atrás de um "?" (InfoTip), não solto na tela', () => {
     const { container } = render(createElement(Viva, { inicial: CROSSINGS_EMPTY, dia: DIA }));
     expect(container.textContent).not.toMatch(/Todo dia saem três missões/);
-    expect(container.querySelector('button[aria-label="Como funcionam as missões do dia"]')).toBeTruthy();
+    expect(container.querySelector('button[aria-label="Sobre o Passeio"]')).toBeTruthy();
   });
 
   it('escolher troca as três pelo card da missão, com o "?" (em andamento)', () => {

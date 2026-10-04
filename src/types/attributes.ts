@@ -90,6 +90,9 @@ export const ATTR_LABEL: Record<BranchType, { pt: string; en: string }> = {
  * Precisa do ícone de um atributo? Importe de `components/AlignmentIcons`.
  */
 
+/** Rodada 7 (I3): o amarelo do Ascendente (forma Ultra) — o círculo do nó dela. */
+export const ULTRA_COLOR = '#F2C200';
+
 /**
  * A mesma cor de `ATTR_COLOR`, mas na luminosidade que passa 4,5:1 como
  * TEXTO — por tema, via variável CSS (o tema é resolvido no CSS, e prender
