@@ -287,6 +287,14 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Missões do dia (04/10/2026):** props novas `seed?` (id do save); sem escolha mostra as 3 de `dailyOffer(dia, seed)` (cards fechados, "Escolher esta" → `pickMission`) com o "!" (`MissionMark`); escolhida vira o card com "?"; depois do "Fiz" diz para onde o Soulmon viaja; `data-marcos` ("Marcos de Aventura · N", só com N ≥ 1) com `InfoTip`. Explicações atrás de `InfoTip`.
 **Imports novos:** `dailyOffer`/`pickMission`/`doneToday`/`crossingYield` de `utils/travessias`, `InfoTip`, `MissionMark`.
 
+### `src/components/play/OficinaSheet.tsx`
+**Dono de:** a folha da Oficina do Foco na Exploração (04/10/2026, [PLANO-OFICINA-FOCO](../../PLANO-OFICINA-FOCO.md)): o timer de foco real (25/5 e 50/10; iniciar, pausar, continuar, cancelar; ao fim, "Foquei" ou "Agora não") e os cards das técnicas de `FOCO_TECNICAS`, com a explicação, a evidência e a fonte atrás de `InfoTip`.
+**Exports:** `OficinaSheet({ language, todayKey? })`. O relógio relê `Date.now()` (`useNow`: 1 s + `visibilitychange`); a regra mora em `utils/focoTimer`. Sem Bits/XP, sem placar: só "Hoje: N focos" local.
+
+### `src/components/play/CadernoSheet.tsx`
+**Dono de:** a folha do Caderno (04/10/2026): a missão de journaling com quatro formatos (3 coisas boas, gratidão, o que aprendi, escrita livre), lista das anotações com apagar uma / apagar tudo (confirmado) e a linha de apoio (`SupportNote`) quando o rascunho casa com o léxico de sofrimento (`needsBridge`). Privado: só `localStorage` (`utils/cadernoLocal`).
+**Exports:** `CadernoSheet({ language, todayKey? })`.
+
 ### `src/components/play/MissionMark.tsx`
 **Dono de:** o marcador de missão à la World of Warcraft (04/10/2026): "!" (`exclamation`, tom gold) = missões do dia disponíveis, "?" (`question`, tom primary) = missão escolhida em andamento. Glifos autorais pelados (sem box), parados, com `label` PT/EN.
 **Exports:** `MissionMark({ kind, size?, isPt, style? })`.

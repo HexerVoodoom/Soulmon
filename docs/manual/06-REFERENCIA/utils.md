@@ -2211,6 +2211,16 @@ dominância populacional — por isso ±15%. Régua nova:
 **Chamado por:** `src/App.tsx`, `src/components/CompanionHUD.tsx`, `src/components/DinoGame.tsx`, `src/components/DungeonGame.tsx`, `src/components/EvolutionPath.tsx`, `src/components/NightmareBattle.tsx`, `src/components/RPSGame.tsx`, `src/utils/trilha.ts` (`isMuted`)
 **Régua:** `sounds.contract.test.ts`, `sounds.visorTune.test.ts`
 
+### `src/utils/focoTimer.ts`
+**Dono de:** o timer da Oficina do Foco e o registro dos "foquei" (04/10/2026). O tempo é um timestamp (`endAt`): `startPhase`, `pause`, `resume`, `remainingMs`, `settle`, `formatClock`; modos `FOCO_MODES` (25/5, 50/10), pausa longa a cada 4 focos no 25/5 (`isLongBreak`); `normalizeTimer`/`normalizeSessions` higienizam o storage; `recordSession` soma por dia (guarda `KEEP_DAYS`); `armEndNotice`/`fireEndNotice` avisam ao fim (notificação local só com permissão JÁ concedida, nunca a pede, + vibração curta).
+**Chaves:** `STORAGE_KEYS.FOCO_TIMER`, `FOCO_SESSIONS` — só do aparelho, fora do save.
+
+### `src/utils/cadernoLocal.ts`
+**Dono de:** o journaling local do Caderno (04/10/2026). PRIVADO: `STORAGE_KEYS.CADERNO`, fora do save em nuvem, sem rede. `normalizeEntries` (teto de `MAX_CHARS`/`MAX_ENTRIES`, descarta lixo), `addEntry`, `removeEntry`, `clearAll`, `formatoDoDia` (sugestão determinística), `sinaisDeSofrimento` (reexporta `needsBridge`).
+
+### `src/data/focoTecnicas.ts`
+**Dono de:** o catálogo das 7 técnicas da Oficina do Foco (Pomodoro, blocos 50/10, se-então, esvaziar a cabeça, regra dos 2 minutos, Eisenhower, o sapo primeiro), cada uma com ícone, linha, explicação PT/EN, fonte e nível de evidência (`forte`/`moderada`/`fraca`).
+
 ### `src/utils/travessias.ts`
 **Dono de:** o Passeio e as Travessias (30/09/2026, `REGISTRO-DE-DECISOES.md` §5.6) — funções PURAS (sem React, sem `localStorage`, `dayKey` por parâmetro): regiões abertas e em névoa, a oferta (os 3 desafios do catálogo, sem sorteio), escolher/trocar entre os mesmos 3, "deixar pra lá", "Fiz" (vira `pending`, sem data, nunca expira), a noite que abre no máximo `REGIONS_OPENED_PER_DAY` região (`settleNight`, idempotente — mesma referência na 2ª chamada), o destino e o interruptor, e o achado da noite FUNDIDO (`passeioFindOfDay`: já guardado → ele; região que abriu → chegada; destino aberto ≠ casa → com `PASSEIO_REGION_FIND_CHANCE` um achado exclusivo não coletado; senão, e sempre em casa, exatamente `adventureOfDay`). Nenhum sistema do núcleo importa este módulo (contrato).
 **Exports:** `regionById`, `isRegionOpen`, `openRegions`, `mistRegions`, `offerFor`, `activeChallenge`, `pickCrossing`, `dropCrossing`, `markDone`, `settleNight`, `setDestination`, `setHidden`, `findAnyById`, `passeioFindOfDay`, tipo `PasseioFind`; desde 04/10/2026 também `dailyOffer`, `pickMission`, `marcosAbertos`, tipo `DailyMission` (as 3 missões do dia, Marcos de Aventura, viagem da noite — `REGISTRO` §21); reexporta `normalizeCrossings`, `REGION_IDS`, `isRegionId`, `crossingsTouchMap`, `missionMark` e o tipo `MissionMark` de `travessiasSave.ts`.

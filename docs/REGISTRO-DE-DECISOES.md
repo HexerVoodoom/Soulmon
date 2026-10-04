@@ -1716,6 +1716,46 @@ obrigação (queixa de culpa), tirar o marcador do lote e voltar à oferta sem "
 3. A regra antiga "a folha nunca mostra total" (R-5) abriu uma exceção: o total de Marcos.
    Confirma que é só esse número (e que continua sem "faltam N")?
 
+## 22. Oficina do Foco e Caderno: dois prédios novos na Exploração (04/10/2026)
+
+Pedido do dono: um prédio de TÉCNICAS de gestão de tempo e produtividade (Pomodoro e outras) e uma missão de
+journaling, "talvez tudo na Exploração". Plano completo, catálogo e fontes em
+[`PLANO-OFICINA-FOCO.md`](PLANO-OFICINA-FOCO.md); implementado na branch `feat/r6-oficina`. **Nada muda na
+economia** (sem Bits, XP, Emblema, Vínculo, `perfectDays`); nada vai ao save.
+
+1. **Dois lotes na clareira de baixo** do `bg-exploracao` (que estava vazia): `oficina` (Oficina do Foco, NPC Tique)
+   e `caderno` (Caderno / Journal, NPC Sépia). Arte e bustos PROVISÓRIOS (sprites do Observatório e da Biblioteca;
+   bustos `ferreira` e `lua` de `EXTRA_NPC_ART`). Contrato de geometria e de NPC (agora 20 lotes) seguem verdes.
+2. **Timer de foco real** (25/5 e 50/10) por timestamp (`endAt`), persistido só no aparelho; aviso ao fim na tela +
+   vibração curta + notificação local SÓ se a permissão já estava concedida (nunca é pedida aqui). "Foquei" é uma marca
+   LOCAL do dia (sem total público, sem sequência, sem placar, 14 dias).
+3. **Catálogo de 7 técnicas** com fonte e nível de evidência dito no `InfoTip` (forte: se-então; moderada: Pomodoro,
+   esvaziar a cabeça; fraca: blocos 50/10 e 90/20, 2 minutos, Eisenhower, o sapo). A copy descreve, nunca promete.
+4. **Caderno privado:** texto só em `localStorage` (`soulmon-caderno`), fora do save, sem rede, apagável por entrada e
+   por inteiro; sem sequência/total/lembrete; linha de apoio (CVV 188 / findahelpline) se o rascunho casa com o léxico de
+   sofrimento do chat, calculado no aparelho. `public/privacidade.html` NÃO foi alterado (não sai do aparelho; mexer
+   exigiria subir `PRIVACY_VERSION` e re-pedir consentimento).
+
+**Alternativas que perderam:**
+
+| Alternativa | Por que perdeu |
+|---|---|
+| Bits/XP por sessão de foco ou por entrada do Caderno | Farmável (foco vazio, texto vazio); veta a economia — e premia o app, não a vida |
+| Sequência de dias de foco ou de escrita | Culpa e FOMO (linha vermelha; mesma razão do §21) |
+| Caderno no save em nuvem | Texto íntimo no servidor: dado sensível, exigiria política e consentimento novos |
+| Texto do Caderno enviado à IA para "devolutiva" | Quebra a promessa de privacidade e arrisca "diagnóstico" |
+| Chamar o prédio de "Diário" | Colide com o Diário de Aventuras (o álbum do pet) |
+| Um lote só para tudo (técnicas + journaling) | Duas funções sem relação; o pedido falava em prédios (plural) |
+| `setInterval` cumulativo para contar o tempo | Atrasa em aba em segundo plano; o timestamp é exato |
+| Pedir permissão de notificação ao iniciar o timer | Pedir permissão é decisão do app, não de uma folha |
+
+**Falsifica:** se as pessoas marcarem "Foquei" sem focar, ou o Caderno virar obrigação (queixa de culpa), tirar o
+"Hoje: N" e o formato do dia.
+
+**Perguntas conservadoras ao dono (não decididas aqui):** (1) "Caderno/Journal" serve ou prefere outro nome?
+(2) Um selo/postal por entrada, ou um "ato" de hábito? Hoje: nada. (3) Declarar o Caderno em `privacidade.html` mesmo
+sem sair do aparelho? Hoje: não. (4) Aceita perder o Caderno ao trocar de aparelho? (5) A vibração ao fim fica ligada?
+
 ## 02/10/2026 — Torneio: menu só de ícones e faixa no título; Rhinoco vira Tuska
 
 Decisões do dono (pedido de 02/10/2026):

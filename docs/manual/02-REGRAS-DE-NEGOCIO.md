@@ -5817,3 +5817,14 @@ de conserto silencioso.
 **Não faz.** Não é backdoor: nada disso vale para quem não está em `ADMIN_EMAILS`; não muda regra de jogo para os demais; não concede `accountTier:'paid'` gravado.
 
 **Régua.** `functions/api/admin*.test.js` (tokens RSA assinados de verdade, abuso, tetos), `src/utils/adminCorvo.contract.test.ts`, `src/utils/gmTools.test.ts`, `src/components/GmPanel.render.test.tsx`, `src/utils/entitlementSync.test.ts` (a consulta). Dívidas M-3/B-3/B-4 em [`reviews/admin-corvo/`](../reviews/admin-corvo/L3-verificacao-final.md).
+
+<a id="oficina-foco"></a>
+## 61. 🛠️ Oficina do Foco e Caderno (Exploração, 04/10/2026)
+
+**O que é.** Dois lotes da Exploração, sem relação com a economia: a **Oficina do Foco** (timer de foco + técnicas de gestão de tempo e produtividade) e o **Caderno** (journaling). Decisão e alternativas em [REGISTRO §22](../REGISTRO-DE-DECISOES.md); plano e fontes em [PLANO-OFICINA-FOCO](../PLANO-OFICINA-FOCO.md).
+
+**Regras.** (1) Nada paga Bits, XP, Emblema, Vínculo nem toca `perfectDays`; nada entra no save. (2) Timer por timestamp (`endAt`) em `utils/focoTimer.ts`: 25/5 e 50/10; pausa longa de 15 depois de cada 4 focos do dia no 25/5; ao fim, aviso na tela, vibração curta e notificação local só com permissão JÁ concedida. (3) "Foquei" soma 1 ao dia local (`FOCO_SESSIONS`, 14 dias, teto 99/dia); sem total público, sequência ou placar. (4) As 7 técnicas (`data/focoTecnicas.ts`) dizem fonte e evidência no `InfoTip`; a copy descreve e não promete. (5) Caderno: texto só em `localStorage` (`soulmon-caderno`), até 2000 caracteres e 120 entradas, apagável por entrada e por inteiro; `needsBridge` (o léxico do chat) mostra a linha de apoio no aparelho, sem bloquear; nunca vai a servidor, IA ou chat.
+
+**Não faz.** Não conta sequência, não lembra, não cobra, não analisa nem diagnostica o texto, não pede permissão de notificação.
+
+**Régua.** `utils/focoTimer.test.ts`, `utils/cadernoLocal.test.ts`, `components/play/OficinaCaderno.render.test.tsx`, `utils/areaLotGeometry.contract.test.ts`, `components/nav/areaLotNpc.contract.test.tsx`.

@@ -364,6 +364,9 @@ de forma é `GAME_STATE`, que usa `_` e versão: `soulmon_state_v1` (era
 | `TERMS_NOTICE_SHOWN` | `soulmon-terms-notice-shown` | A `marcaAvisoTermos(...)` da versão cuja PRIMEIRA exibição do banner já aconteceu — distinta de `TERMS_NOTICE_SEEN` (dispensado): é o que põe o banner em posição 1 da fila de avisos da Home só na primeira vez (`App.tsx` › `termsNoticePrimeiraVez`). Desde `592e2c14` (QA Rodada 2 A3). | `App.tsx` |
 | `GUILD_LAST_STAGE` | `soulmon-guild-last-stage` | O que ESTE aparelho já viu do Bosque (`GroveLocal`: `gid`, último estágio reconhecido, datas dos marcos, marco pendente, cenários já entregues). Estado de UI, **nunca de jogo**; o ponteiro da guilda é do servidor (`guildNoSave.contract.test.ts`). | `groveLocal.ts`, `useGroveWatch.ts`, `GuildSheet.tsx` |
 | `GUILD_CLAIMED` | `soulmon-guild-claimed` | Os RECIBOS opacos dos resgates da Feira que este aparelho já creditou (impedem o segundo crédito de Emblemas se o KV devolver 200 duas vezes). Só recibos: sem nome, guilda ou quantia. | `guildClaimLocal.ts`, `GuildSheet.tsx` |
+| `FOCO_TIMER` | `soulmon-foco-timer` | O timer da Oficina do Foco em curso (modo, fase, `endAt`). Só do aparelho, fora do save. |
+| `FOCO_SESSIONS` | `soulmon-foco-sessions` | Os "foquei" dos últimos 14 dias (contagem + minutos por dia). Aparelho, fora do save. |
+| `CADERNO` | `soulmon-caderno` | **Privado.** As anotações do Caderno (texto livre). Só neste aparelho, fora do save em nuvem, nunca enviado. |
 | `FCM_TOKEN` | `soulmon-fcm-token` | O token FCM deste aparelho. | `notifications.ts` |
 | `LAST_CLOUD_SYNC` | `soulmon-last-cloud-sync` | ISO do último save confirmado PELO SERVIDOR. | `cloudSave.ts`, `SettingsPage.tsx` |
 | `ORACLE_FORM` | `soulmon-oracle-form` | Estado do formulário da página do Oráculo (ferramenta de criação). | `OraclePage.tsx` |
