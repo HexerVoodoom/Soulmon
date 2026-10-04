@@ -3795,10 +3795,12 @@ async function handleCommunity({ request, env }) {
       if (denied) return denied;
     }
     let meRow = null;
+    const allPoints = [];
     for (const k of keys) {
       const raw = await kvOrThrow(env).get(k);
       if (!raw) continue;
       const rec = JSON.parse(raw);
+      allPoints.push({ owner: k.slice(`rank:${season}:`.length), points: Number(rec.points) || 0 });
       const ownerSave = k.slice(`rank:${season}:`.length);
       const p = await getProfile(env, ownerSave);
       if (isHidden(p)) {
@@ -3823,7 +3825,13 @@ async function handleCommunity({ request, env }) {
     }
     rows.sort((a, b) => b.points - a.points);
     if (action === "seasonResult") return json3({ season, top3: rows.slice(0, 3) });
-    return json3({ season, rank: rows.slice(0, 50), ...meRow ? { me: meRow } : {} });
+    let myPlace = null;
+    if (meId) {
+      allPoints.sort((a, b) => b.points - a.points || (a.owner < b.owner ? -1 : a.owner > b.owner ? 1 : 0));
+      const at = allPoints.findIndex((r) => r.owner === meId);
+      if (at >= 0) myPlace = at + 1;
+    }
+    return json3({ season, rank: rows.slice(0, 50), ...meRow ? { me: meRow } : {}, ...myPlace ? { myPlace } : {} });
   }
   if (action === "closeSeason" && method === "POST") {
     const { season, adminKey } = body;
@@ -4917,6 +4925,22 @@ function clampCaderno(raw) {
   return out;
 }
 __name(clampCaderno, "clampCaderno");
+var FRAME_ID_RE = /^[a-z0-9-]{1,40}$/;
+var FRAMES_MAX_OWNED = 200;
+function clampFrameId(raw) {
+  return typeof raw === "string" && FRAME_ID_RE.test(raw) ? raw : null;
+}
+__name(clampFrameId, "clampFrameId");
+function clampOwnedFrames(raw) {
+  if (!Array.isArray(raw)) return [];
+  const out = [];
+  for (const v of raw) {
+    if (typeof v === "string" && FRAME_ID_RE.test(v) && !out.includes(v)) out.push(v);
+    if (out.length >= FRAMES_MAX_OWNED) break;
+  }
+  return out;
+}
+__name(clampOwnedFrames, "clampOwnedFrames");
 var MAX_STATE_BYTES = 5 * 1024 * 1024;
 var SAVE_TTL_SECONDS = 86400 * 365;
 var RENEW_AFTER_SECONDS = 86400 * 30;
@@ -4986,6 +5010,8 @@ async function onRequest5({ request, env }) {
     const state = { ...incoming };
     for (const field of SERVER_OWNED_FIELDS) delete state[field];
     if ("caderno" in state) state.caderno = clampCaderno(state.caderno);
+    if ("equippedFrame" in state) state.equippedFrame = clampFrameId(state.equippedFrame);
+    if ("ownedFrames" in state) state.ownedFrames = clampOwnedFrames(state.ownedFrames);
     const serialized = JSON.stringify(state);
     if (serialized.length > MAX_STATE_BYTES) {
       console.warn("save: POST recusado, state acima do teto", { saveId, bytes: serialized.length });
@@ -5402,7 +5428,7 @@ async function onRequest6({ env }) {
 }
 __name(onRequest6, "onRequest");
 
-// ../.wrangler/tmp/pages-rxDYxN/functionsRoutes-0.43750538007056705.mjs
+// ../.wrangler/tmp/pages-CwWkdE/functionsRoutes-0.7449945802924841.mjs
 var routes = [
   {
     routePath: "/api/account",
