@@ -134,6 +134,7 @@ describe('portão de identidade', () => {
   it('A3: o carimbo do aceite sai NA TELA DOS TERMOS, com as versões atuais', async () => {
     await montar();
     await entrarComGoogleUi();
+    await screen.findByText('Before we start');
     aceitarERevelarIdade();
     botao('Continue');
     const gravado = JSON.parse(localStorage.getItem(STORAGE_KEYS.GATE_DRAFT) ?? 'null');
@@ -146,6 +147,7 @@ describe('portão de identidade', () => {
     expect(screen.queryByRole('button', { name: 'Continue with Google' })).toBeNull();
     expect(await screen.findByText('Before we start')).toBeTruthy();
     expect(btn('Continue').disabled).toBe(true);
+    await screen.findByText('Before we start');
     aceitarERevelarIdade();
     botao('Continue');
     expect(screen.getByText('What should we call you?')).toBeTruthy();
@@ -247,6 +249,7 @@ describe('portão de identidade', () => {
     // ...e mesmo assim os Termos e a idade continuam obrigatórios, porque não
     // dependem do Firebase.
     expect(btn('Continue').disabled).toBe(true);
+    await screen.findByText('Before we start');
     aceitarERevelarIdade();
     expect(btn('Continue').disabled).toBe(false);
     await act(async () => { botao('Continue'); });
