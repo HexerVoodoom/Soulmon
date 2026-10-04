@@ -110,7 +110,7 @@ describe('portão de identidade', () => {
   it('A3: depois do login vêm os TERMOS; sem aceitar não se chega ao onboarding', async () => {
     await montar();
     await entrarComGoogleUi();
-    expect(screen.getByText('Before we start')).toBeTruthy();
+    expect(await screen.findByText('Before we start')).toBeTruthy();
     expect(screen.getByText('Read the Terms of Use')).toBeTruthy();
     expect(screen.getByText('Read the Privacy Policy')).toBeTruthy();
     expect(screen.queryByText('What should we call you?')).toBeNull();
@@ -144,7 +144,7 @@ describe('portão de identidade', () => {
     emailAtual = 'ja@logado.com';
     await montar();
     expect(screen.queryByRole('button', { name: 'Continue with Google' })).toBeNull();
-    expect(screen.getByText('Before we start')).toBeTruthy();
+    expect(await screen.findByText('Before we start')).toBeTruthy();
     expect(btn('Continue').disabled).toBe(true);
     aceitarERevelarIdade();
     botao('Continue');
@@ -170,7 +170,7 @@ describe('portão de identidade', () => {
       step: -10,
     } as Parameters<typeof writeGateDraft>[0]);
     await montar();
-    expect(screen.getByText('Before we start')).toBeTruthy();
+    expect(await screen.findByText('Before we start')).toBeTruthy();
     expect(screen.queryByText('What should we call you?')).toBeNull();
   });
 
@@ -295,7 +295,7 @@ describe('portão de identidade', () => {
   it('H1: a tela dos termos NÃO mostra seletor de idioma', async () => {
     emailAtual = 'ja@logado.com';
     await montar();
-    expect(screen.getByText('Before we start')).toBeTruthy();
+    expect(await screen.findByText('Before we start')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Português' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'English' })).toBeNull();
   });
@@ -408,7 +408,7 @@ describe('portão — identidade do canvas Onboarding-funil', () => {
   it('A4: o título do onboarding usa a fonte de TEXTO (Rubik), não a display (Cinzel)', async () => {
     emailAtual = 'ja@logado.com';
     await montar();
-    const titulo = screen.getByText('Before we start');
+    const titulo = await screen.findByText('Before we start');
     expect(titulo.style.fontFamily).toBe('var(--sm2-font-text)');
     // H2: o arquivo da Rubik só vai até 500 — 600 virava negrito sintético.
     expect(titulo.style.fontWeight).toBe('500');
