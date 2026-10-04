@@ -189,7 +189,7 @@ export function BolhasGame({ language, evolutionStage, demoCharacterId, onExit, 
       )}
 
       <GameVisor height={120} scene={REFUGIO_SCENE} label={isPt ? 'Bolhas subindo' : 'Rising bubbles'}>
-        <VisorSprite src={pet} size={64} data-visor-pet idle={!blowing && !reduced} style={petStyle} />
+        <VisorSprite src={pet} size={64} data-visor-pet idle={!blowing && !reduced} hop={calma ? 0 : score} style={petStyle} />
         {phase === 'play' && bubbles.current.map(b => {
           const p = posOf(b, now);
           const sway = reduced || calma ? 0 : Math.sin((now - b.born) / 400 + b.id) * 6;

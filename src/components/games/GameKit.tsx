@@ -22,7 +22,7 @@
  *    outro é `gold-fill`; "Too slow!" tem a MESMA tinta que "PERFECT!";
  *  · **ícone nunca em box**; **texto nunca abaixo de 12**; **alvo ≥ 44**.
  */
-import type { CSSProperties, ReactNode } from 'react';
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { Icon } from '../ui/Icon';
 import { NavGlyph } from '../ui/NavGlyphs';
 import { Viewport } from '../ui/Viewport';
@@ -194,24 +194,33 @@ export function GameVisor({ width = GAME_VISOR_W, height, scene, children, label
 }
 
 /** Sprite 256² a 128 (0,5×) dentro do vidro. `flip` = de frente para o pet. */
-export function VisorSprite({ src, size = 128, flip = false, idle = true, style, alt = '', ...data }: {
+export function VisorSprite({ src, size = 128, flip = false, idle = true, hop = 0, style, alt = '', ...data }: {
   src: string;
   size?: 32 | 64 | 128;
   flip?: boolean;
   /** Respiração `.sm-battle-idle` (morre em `prefers-reduced-motion`). */
   idle?: boolean;
+  /** Contador de acertos: a cada mudança o pet dá um pulinho (300 ms, sem texto nem som; morre em `prefers-reduced-motion`). */
+  hop?: number;
   style?: CSSProperties;
   alt?: string;
   'data-visor-pet'?: boolean;
   'data-visor-enemy'?: boolean;
 }) {
+  const [hopping, setHopping] = useState(false);
+  useEffect(() => {
+    if (!hop) return;
+    setHopping(true);
+    const id = setTimeout(() => setHopping(false), 300);
+    return () => clearTimeout(id);
+  }, [hop]);
   return (
     <img
       src={src}
       alt={alt}
       width={size}
       height={size}
-      className={idle ? 'sm-battle-idle' : undefined}
+      className={hopping ? 'sm-visor-hop' : idle ? 'sm-battle-idle' : undefined}
       {...data}
       style={{
         position: 'absolute', width: size, height: size, maxWidth: 'none',
