@@ -9,6 +9,7 @@ import {
 import { travessiaTitle } from '../../utils/travessiaTitles';
 import { sheetCard, sheetCardList, sheetCardTitle } from '../nav/sheetKit';
 import { Icon } from '../ui/Icon';
+import { InfoTip } from '../ui/InfoTip';
 import { AREA_LABEL, AreaGlyph, RegionPostal } from './TravessiaIcon';
 
 /**
@@ -195,11 +196,13 @@ function TodasModal({ open, onClose, language, crossings, currentId, onPick }: {
       title={isPt ? 'Todas as Travessias' : 'All Crossings'}
     >
       <div data-travessias-todas style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <p style={note}>
-          {isPt
-            ? 'Veja à vontade. Trocar não custa nada, e dá para voltar a qualquer uma depois.'
-            : 'Look around. Switching costs nothing, and you can come back to any of them later.'}
-        </p>
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <InfoTip language={language} label={isPt ? 'Sobre trocar de Travessia' : 'About switching Crossings'} align="right">
+            {isPt
+              ? 'Veja à vontade. Trocar não custa nada, e dá para voltar a qualquer uma depois.'
+              : 'Look around. Switching costs nothing, and you can come back to any of them later.'}
+          </InfoTip>
+        </div>
         {crossingRegions().map(r => (
           <section key={r.id} data-travessias-regiao={r.id} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <header style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -263,10 +266,12 @@ function CardAtivo({ crossings, isPt, todayKey, justDone, onFiz, onTrocar, onRec
           </p>
           <p style={note}>{isPt ? area.pt : area.en}</p>
         </div>
+        <InfoTip language={isPt ? 'pt-BR' : 'en-US'} label={isPt ? 'Sobre as duas versões' : 'About the two versions'} align="right">
+          {isPt ? 'Qualquer uma das duas vale.' : 'Either one is enough.'}
+        </InfoTip>
       </div>
 
       <Proposta c={challenge} isPt={isPt} />
-      <p style={note}>{isPt ? 'Qualquer uma das duas vale.' : 'Either one is enough.'}</p>
 
       <p data-travessia-mapa style={{ ...sm2Text, margin: 0, fontWeight: 600 }}>
         {mapaLinha(y, nome, primeira, isPt)}
@@ -339,12 +344,14 @@ export function PasseioSheet({ language, crossings, onChange, todayKey }: {
   return (
     <div data-passeio style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       {/* ── 1. O Passeio: para onde ele vai hoje ─────────────────────────── */}
-      <p style={sectionHead}>{isPt ? 'Para onde ele vai hoje' : 'Where it goes today'}</p>
-      <p style={note}>
-        {isPt
-          ? 'Ele sai para passear todo dia e volta com o que viu no relatório do fim do dia.'
-          : 'It heads out every day and tells you what it saw in the end-of-day report.'}
-      </p>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        <p style={sectionHead}>{isPt ? 'Para onde ele vai hoje' : 'Where it goes today'}</p>
+        <InfoTip language={language} label={isPt ? 'Como funciona o passeio' : 'How the stroll works'} align="right">
+          {isPt
+            ? 'Ele sai para passear todo dia e volta com o que viu no relatório do fim do dia.'
+            : 'It heads out every day and tells you what it saw in the end-of-day report.'}
+        </InfoTip>
+      </div>
       <ul style={list} role="group" aria-label={isPt ? 'Destino do passeio' : 'Stroll destination'}>
         {abertas.map(r => (
           <Postal
@@ -369,12 +376,14 @@ export function PasseioSheet({ language, crossings, onChange, todayKey }: {
       ) : (
         <section data-travessias aria-labelledby="sm2-travessias-title" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <hr style={divider} />
-          <p id="sm2-travessias-title" style={sectionHead}>{isPt ? 'Travessias' : 'Crossings'}</p>
-          <p style={note}>
-            {isPt
-              ? 'Uma Travessia é algo que você faz na sua vida, fora do app. É opcional, e fica esperando o tempo que for.'
-              : 'A Crossing is something you do in your own life, outside the app. It is optional, and it waits for as long as you like.'}
-          </p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+            <p id="sm2-travessias-title" style={sectionHead}>{isPt ? 'Travessias' : 'Crossings'}</p>
+            <InfoTip language={language} label={isPt ? 'O que é uma Travessia' : 'What a Crossing is'} align="right">
+              {isPt
+                ? 'Uma Travessia é algo que você faz na sua vida, fora do app. É opcional, e fica esperando o tempo que for.'
+                : 'A Crossing is something you do in your own life, outside the app. It is optional, and it waits for as long as you like.'}
+            </InfoTip>
+          </div>
 
           {ativa ? (
             <CardAtivo
