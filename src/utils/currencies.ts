@@ -228,7 +228,9 @@ export interface MinigameBitsState {
  *  sob a virada. */
 export function minigameBitsToday(state: MinigameBitsState, dayKey: string): number {
   const reg = state.minigameBits;
-  return reg && reg.day === dayKey ? Math.max(0, reg.earned) : 0;
+  // `earned` vem do save (dado não confiável): não finito conta como zero.
+  // `Math.max(0, undefined)` é NaN, e NaN no ledger envenena o saldo inteiro.
+  return reg && reg.day === dayKey && Number.isFinite(reg.earned) ? Math.max(0, reg.earned) : 0;
 }
 
 /** Quanto o minijogo ainda PODE render hoje (0 = teto do dia gasto). */
@@ -255,6 +257,10 @@ export function creditMinigameBits<T extends MinigameBitsState>(
   amount: number,
   dayKey: string,
 ): T {
+  // `Math.floor(NaN)` é NaN e NaN <= 0 é falso: a quantia passava pelo teto e
+  // gravava `gamePoints: NaN` (perde o saldo todo no próximo save). Só número
+  // finito credita; Infinity já é limitado pelo teto do dia logo abaixo.
+  if (typeof amount !== 'number' || Number.isNaN(amount)) return prev;
   const pedido = Math.max(0, Math.floor(amount));
   if (pedido <= 0) return prev;
   const ganho = Math.min(pedido, remainingMinigameBits(prev, dayKey));
