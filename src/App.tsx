@@ -139,6 +139,7 @@ import {
 import { sleepReminderCopy } from '../functions/api/_pushCopy.js';
 import { BITS_EXCHANGE, creditMinigameBits, minigameBitsToday } from './utils/currencies';
 import { snapshotCompletion, undoCompletion, UNDO_WINDOW_MS } from './utils/completionUndo';
+import { useDeferredFlush } from './hooks/useDeferredFlush';
 import { UndoToast } from './components/UndoToast';
 import { adminFromEntitlement, setAdminFlag, useAdmin } from './utils/adminFlag';
 import { isCorvo, spriteLineOf } from './utils/corvoPet';
@@ -2460,6 +2461,7 @@ export default function App() {
     setEditingTask(null);
   };
 
+  const adiarConclusaoDeTarefa = useDeferredFlush(3000);
   // Handle toggling task completion
   const handleToggleTask = (taskId: string) => {
     const task = gameState.tasks.find(t => t.id === taskId);
@@ -2533,7 +2535,11 @@ export default function App() {
       // (O ramo antigo de "estágio inicial dá energia em vez de comida" saiu:
       // a árvore do Soulmon não tem mais ovo/baby, então getStageLevel nunca
       // devolvia esses níveis e o ramo era inalcançável.)
-      setTimeout(() => {
+      // `adiarConclusaoDeTarefa` = `setTimeout` de 3 s que TAMBÉM roda na hora se
+      // a aba for escondida / a página descarregada: com o timer solto, fechar o
+      // app nesses 3 s deixava a tarefa marcada sem nunca pagar comida nem Vínculo
+      // (e a virada do dia a reabria).
+      adiarConclusaoDeTarefa(() => {
         let concluiu = false;
         setGameState(prev => {
           const feito = completeTask(prev, taskId) ?? prev;
@@ -2572,7 +2578,7 @@ export default function App() {
           falar(assombrada ? 'haunted' : rolledRareCheer(Math.random()) ? 'rare' : 'task');
           marcarGestoDoDia('task');
         });
-      }, 3000);
+      });
     }
   };
 
