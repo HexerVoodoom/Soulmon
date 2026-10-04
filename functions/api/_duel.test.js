@@ -31,10 +31,12 @@ describe('duelo fantasma — torcida por toques', () => {
   it('o gauge: cheio gasta e solta o especial; parcial acumula para a próxima janela', () => {
     expect(specialSlots([])).toEqual([false, false, false]);
     expect(specialSlots(CHEIA)).toEqual([true, true, true]);
-    // 5 + 5 = 10 ≥ 8 → especial na 2ª janela; o gauge zera; 3ª janela sozinha não enche.
-    expect(specialSlots([5, 5, 5])).toEqual([false, true, false]);
-    // 4 toques por janela: 4, 8 → especial na 2ª, depois 4 de novo (não enche).
-    expect(specialSlots([4, 4, 4])).toEqual([false, true, false]);
+    // 10 + 10 = 20 ≥ 16 → especial na 2ª janela; o gauge zera; 3ª janela sozinha não enche.
+    expect(specialSlots([10, 10, 10])).toEqual([false, true, false]);
+    // 8 toques por janela: 8, 16 → especial na 2ª, depois 8 de novo (não enche).
+    expect(specialSlots([8, 8, 8])).toEqual([false, true, false]);
+    // O gauge de 16 não enche com 15 numa janela só.
+    expect(specialSlots([DUEL_TAPS_FULL - 1, 0, 0])).toEqual([false, false, false]);
   });
 
   it('a torcida só SOMA: nunca reduz dano e nunca troca vitória por derrota', () => {
@@ -68,6 +70,15 @@ describe('duelo fantasma — torcida por toques', () => {
       if (base[i].actor === 'me') myStrikes++;
     }
     expect(com.slice(0, i)).toEqual(base.slice(0, i));
+  });
+
+  it('o gauge pede 16 toques e o teto por janela (20) é ≥ ao gauge: o teto de GANHO não mudou (3 especiais)', () => {
+    expect(DUEL_TAPS_FULL).toBe(16);
+    expect(DUEL_TAPS_CAP).toBe(20);
+    expect(DUEL_TAPS_CAP).toBeGreaterThanOrEqual(DUEL_TAPS_FULL);
+    // Uma janela forjada no teto já enche o gauge, mas não passa de UM especial por janela.
+    expect(specialSlots([DUEL_TAPS_CAP, DUEL_TAPS_CAP, DUEL_TAPS_CAP])).toEqual([true, true, true]);
+    expect(specialSlots([1e9, 1e9, 1e9])).toEqual([true, true, true]);
   });
 
   it('higieniza os toques vindos da rede e põe TETO por janela', () => {

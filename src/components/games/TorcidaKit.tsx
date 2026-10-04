@@ -18,7 +18,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CSSProperties, PointerEvent as ReactPointerEvent, ReactNode } from 'react';
 import { PixelMeter } from '../pixel/PixelKit';
 import { sm2Button, sm2Hint } from '../form/FormKit';
-import { torcidaFill, torcidaCheio } from '../../utils/torcida';
+import { torcidaFill, torcidaCheio, TORCIDA_PVE_TAPS_FULL } from '../../utils/torcida';
+import { Icon } from '../ui/Icon';
+import { InfoTip } from '../ui/InfoTip';
 
 const WORDS_PT = ['VAI!', 'ISSO!', 'FORÇA!', '✦', 'BORA!'];
 const WORDS_EN = ['GO!', 'YEAH!', 'COME ON!', '✦', 'NICE!'];
@@ -98,26 +100,46 @@ export function TorcidaLayer({ onTap, active = true, isPt, children, style }: {
   );
 }
 
-export function TorcidaGauge({ taps, onCheer, isPt, disabled = false }: {
-  /** Toques no gauge (0..TAPS_FULL). */
+export function TorcidaGauge({ taps, onCheer, isPt, disabled = false, full = TORCIDA_PVE_TAPS_FULL, bare = false }: {
+  /** Toques no gauge (0..full). */
   taps: number;
   /** Caminho sem toque na tela: o botão "Torcer!". */
   onCheer: () => void;
   isPt: boolean;
   disabled?: boolean;
+  /** Toques que enchem o gauge. Padrão = PvE (8); duelo e Arena passam `TORCIDA_TAPS_FULL`. */
+  full?: number;
+  /**
+   * Versão da cena de combate (`BattleStage`, I10): SEM texto na tela. A frase
+   * explicativa vira um InfoTip e o "especial pronto" vira o ícone + texto só
+   * para leitor de tela.
+   */
+  bare?: boolean;
 }) {
-  const cheio = torcidaCheio(taps);
+  const cheio = torcidaCheio(taps, full);
   const label = isPt ? 'Torcida' : 'Cheer';
+  const pronto = isPt ? 'Golpe especial pronto!' : 'Special strike ready!';
+  const explica = isPt
+    ? 'Toque em qualquer lugar da tela para torcer: cada toque enche o gauge e, cheio, seu Soulmon solta um golpe especial.'
+    : 'Tap anywhere on the screen to cheer: each tap fills the gauge, and when it is full your Soulmon unleashes a special strike.';
   return (
-    <div data-torcida-gauge data-torcida-full={cheio ? '1' : '0'} style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 'none' }}>
+    <div data-torcida-gauge data-torcida-full={cheio ? '1' : '0'} style={{ display: 'flex', alignItems: 'center', gap: bare ? 4 : 10, flex: 'none' }}>
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
-        <p style={{ ...sm2Hint, margin: 0 }} aria-live="polite">
-          {cheio
-            ? (isPt ? 'Golpe especial pronto!' : 'Special strike ready!')
-            : (isPt ? 'Toque em qualquer lugar para torcer' : 'Tap anywhere to cheer')}
-        </p>
-        <PixelMeter ratio={torcidaFill(taps)} tone="gold" height={10} label={label} />
+        {bare ? (
+          <span className="sm2-sr-only" aria-live="polite">{cheio ? pronto : ''}</span>
+        ) : (
+          <p style={{ ...sm2Hint, margin: 0 }} aria-live="polite">
+            {cheio ? pronto : (isPt ? 'Toque em qualquer lugar para torcer' : 'Tap anywhere to cheer')}
+          </p>
+        )}
+        <PixelMeter ratio={torcidaFill(taps, full)} tone="gold" height={bare ? 12 : 10} label={label} />
       </div>
+      {bare && cheio && <Icon name="auto_awesome" size={24} fill={1} tone="primary" />}
+      {bare && (
+        <InfoTip language={isPt ? 'pt-BR' : 'en-US'} label={isPt ? 'Como torcer' : 'How to cheer'} align="right">
+          {explica}
+        </InfoTip>
+      )}
       <button
         type="button"
         disabled={disabled}

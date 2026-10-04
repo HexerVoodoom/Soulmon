@@ -214,6 +214,18 @@ describe('torcida por toques — a conta e a calibração', () => {
     expect(ganho).toBeLessThanOrEqual(0.4);
   });
 
+  it('ritmo NORMAL (≈3 toques/s × ~3,8 s por turno ≈ 11 toques) enche o gauge a cada 2 turnos: +20..+28pp (rodada 5/I10)', () => {
+    // O gauge passou de 8 para 16 toques e o turno de 2,3 s para ~3,8 s (`utils/combatFx.ts`):
+    // quem toca normal continua soltando um golpe de torcida a cada 2 turnos — o mesmo
+    // ganho que 4 toques/turno rendiam com o gauge de 8 (81,9% ≈ 82%).
+    const ganho = media(taxas({ autoAttack: true, tapsPerTurn: 11 }))
+      - media(taxas({ autoAttack: true }));
+    expect(ganho).toBeGreaterThanOrEqual(0.2);
+    expect(ganho).toBeLessThanOrEqual(0.28);
+    // E o gauge cheio ainda é o teto (16 toques por turno = especial todo turno).
+    expect(TORCIDA_TAPS_FULL).toBe(16);
+  });
+
   it('toque ilimitado não rende mais que o teto: 1000 toques por turno = TORCIDA_TAPS_CAP', () => {
     const teto = taxas({ autoAttack: true, tapsPerTurn: TORCIDA_TAPS_CAP });
     const abuso = taxas({ autoAttack: true, tapsPerTurn: 1000 });

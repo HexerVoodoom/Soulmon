@@ -1719,9 +1719,17 @@ export default function App() {
      Posição: o ÚLTIMO antes de 'welcome' — é uma vez só como o catálogo, e
      cede a vez a tudo que é ritual diário. Não pede permissão de sistema. */
   const [restSetupShown, setRestSetupShown] = useState(() => readFlag(STORAGE_KEYS.REST_SETUP_SHOWN));
+  const [restFirstOpen] = useState<string>(() => {
+    const salvo = readLocal(STORAGE_KEYS.REST_SETUP_FIRST_OPEN);
+    if (salvo) return salvo;
+    const hoje = playerDayKey(new Date(), gameState.playerDayTz);
+    writeLocal(STORAGE_KEYS.REST_SETUP_FIRST_OPEN, hoje, { silent: true });
+    return hoje;
+  });
   const needsRestSetup = shouldShowRestSetup({
     shown: restSetupShown,
     bornAt: gameState.bornAt,
+    firstOpenKey: restFirstOpen,
     todayKey: playerDayKey(new Date(), gameState.playerDayTz),
   });
   const closeRestSetup = useCallback(() => {
@@ -5891,6 +5899,7 @@ export default function App() {
                   petStage: gameState.evolutionStage,
                   petLine,
                   trophies: gameState.trophies ?? [],
+                  petElement: gameState.soulmonMeta?.dominantElement,
                   language,
                   emblems: gameState.emblems ?? 0,
                   onEarnEmblems: amount => {

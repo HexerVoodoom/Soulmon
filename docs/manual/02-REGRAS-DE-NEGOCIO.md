@@ -4644,7 +4644,7 @@ sendo oponente).
 "Desafiar" abre o **duelo fantasma** (`src/components/DuelScreen.tsx`): os dois
 pets lutam sozinhos e o dono **torce** tocando em QUALQUER lugar da tela
 (`DUEL_CHEER_STRIKES`: `[1, 3, 5]` são os três golpes em que o gauge pode virar
-especial); a torcida só SOMA. ⚰️ **Desde 02/10/2026 a torcida é por TOQUES + GAUGE**
+especial); a torcida só SOMA. **Desde 02/10/2026 (rodada 5/I10) a luta é uma CENA em tela cheia, mais lenta** (`BattleStage`, passo de ~1,5 s por golpe — ~17 s no total —, gauge de 16 toques: a 3 toques/s o primeiro especial sai no ~10º segundo; REGISTRO §20.9). ⚰️ **Desde 02/10/2026 a torcida é por TOQUES + GAUGE**
 (`REGISTRO-DE-DECISOES` §20) — a torcida por *timing* (anel que fecha sobre o alvo,
 ×1 a ×1,35 pela precisão) foi trocada e ficou desativada
 (`TIMING_CHEER_ENABLED = false`, código guardado). ⚰️ Até então a partida era um placar sorteado:
@@ -4653,8 +4653,8 @@ jogador fazer nada.
 
 ```
 duelStats(p) = { hp: 70 + sp × 6,  atk: 10 + sp × 1,2 + min(2, (power + harmony + benevolence) / 50) }
-gauge: cada toque enche 1 de DUEL_TAPS_FULL (8); teto de DUEL_TAPS_CAP (10) toques contados por janela
-specialSlots(taps): em cada golpe de torcida, g = min(8, g + toques da janela); g cheio => ESPECIAL e g = 0
+gauge: cada toque enche 1 de DUEL_TAPS_FULL (16, era 8); teto de DUEL_TAPS_CAP (20, era 10) toques contados por janela
+specialSlots(taps): em cada golpe de torcida, g = min(16, g + toques da janela); g cheio => ESPECIAL e g = 0
 especial = × DUEL_SPECIAL_MULT (1,35, o mesmo da torcida perfeita antiga); sem especial = × 1
 (legado, sem UI) cheerMultiplier(q) = 1,35 se q >= 0,92, senão 1 + 0,25 × q
 luta = até DUEL_MAX_TURNS (12) golpes; dano = max(1, round(atk × (0,5 + rng) × (especial ? 1,35 : 1)))
@@ -4697,8 +4697,8 @@ RING em que cada elemento bate os DOIS seguintes e apanha dos DOIS anteriores �
 e cura de `ROUND_CLEAR_HEAL` (30%) ao limpar a rodada. Paga **Bits**.
 
 ⚰️ **Desde 02/10/2026 (H14) o Duelo da Arena tem TORCIDA por toques** (REGISTRO §20.6):
-o pet golpeia SOZINHO (`ARENA_AUTO_ACC` = 0,73, ~1,5 s após abrir o turno), tocar em
-qualquer lugar enche o gauge de `TORCIDA_TAPS_FULL` (8) e o gauge cheio vira um golpe
+o pet golpeia SOZINHO (`ARENA_AUTO_ACC` = 0,73, o golpe chega ~2,4 s após abrir o turno — era 1,5 s), tocar em
+qualquer lugar enche o gauge de `TORCIDA_TAPS_FULL` (16, era 8 — REGISTRO §20.9) e o gauge cheio vira um golpe
 de torcida ×`ARENA_TORCIDA_MULT` (1,35) por cima do golpe do turno (`arenaTorcidaTurn`);
 sem toque o golpe é o base, o gauge zera ao gastar, excedente não rende. A esquiva
 também saiu (TORC-3): o pet se defende sozinho (`autoDefense`, mesma lei 0,70 ± 0,25 da
@@ -4740,7 +4740,7 @@ do Torneio em DIAS, nunca horas", pelo Community Day do Pokémon GO).
   ação, inclusive as GET destrutivas (`trophies?claim=1`, `gifts?claim=1`).
 - **`id === oppSave`** devolve `400 cannot fight yourself`.
 - **Cliente antigo** (sem `duelStart`): `match` abre e fecha numa chamada só, com semente sorteada no servidor; `forfeit` sem duelo aberto devolve `409 no open duel`.
-- **Torcida forjada** rende o mesmo que o gauge cheio (teto: `DUEL_TAPS_CAP` toques por janela, 3 janelas, no máximo 3 especiais de ×`DUEL_SPECIAL_MULT`) — toque ilimitado não rende mais; aceitável enquanto a Honra for só cosmética (STATUS 30/09 e 02/10/2026).
+- **Torcida forjada** rende o mesmo que o gauge cheio (teto: `DUEL_TAPS_CAP` = 20 toques por janela, 3 janelas, no máximo 3 especiais de ×`DUEL_SPECIAL_MULT`) — toque ilimitado não rende mais; aceitável enquanto a Honra for só cosmética (STATUS 30/09 e 02/10/2026).
 - **Oponente com PvP desligado** devolve `404 opponent unavailable` — o saveId
   dele nunca sai do servidor (o cliente conhece só o pid público).
 - **Opt-out da lista pública (TORC-5, 02/10/2026).** `publicHidden` no perfil

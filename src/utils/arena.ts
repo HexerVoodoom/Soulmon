@@ -219,7 +219,8 @@ export function accuracyScale(acc: number): number {
 // ── Torcida por toques no Duelo da Arena (02/10/2026, H14 / REGISTRO §20) ───
 //
 // O pet golpeia SOZINHO; o dono TORCE tocando em qualquer lugar. Cada toque
-// enche o gauge (`TORCIDA_TAPS_FULL` = 8, o mesmo do duelo e do PvE) e, com o
+// enche o gauge (`TORCIDA_TAPS_FULL` = 16 desde a rodada 5/I10 — eram 8 —, o mesmo do
+// duelo fantasma; o PvE segue em 8) e, com o
 // gauge cheio no momento do golpe, o pet GASTA tudo num golpe de TORCIDA.
 //
 // ⚠️ A torcida só SOMA: sem torcer o golpe é o golpe-base da simulação (nunca

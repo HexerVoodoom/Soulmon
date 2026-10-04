@@ -8,7 +8,7 @@ afterEach(cleanup);
 describe('BitsIcon — a moeda dos Bits (I4)', () => {
   it('sem arte própria desenha o SVG pixel provisório, decorativo, em tokens de cor', () => {
     const { container } = render(<BitsIcon />);
-    const el = container.querySelector('[data-bits-icon]') as Element;
+    const el = container.querySelector('[data-bits-kind]') as Element;
     expect(el).not.toBeNull();
     expect(el.getAttribute('aria-hidden')).toBe('true');
     expect(el.getAttribute('width')).toBe('20');
@@ -19,7 +19,7 @@ describe('BitsIcon — a moeda dos Bits (I4)', () => {
 
   it('com `label` vira imagem nomeada (ícone sozinho, sem o texto Bits ao lado)', () => {
     const { container } = render(<BitsIcon label="Bits" size={32} />);
-    const el = container.querySelector('[data-bits-icon]') as Element;
+    const el = container.querySelector('[data-bits-kind]') as Element;
     expect(el.getAttribute('role')).toBe('img');
     expect(el.getAttribute('aria-label')).toBe('Bits');
     expect(el.getAttribute('width')).toBe('32');

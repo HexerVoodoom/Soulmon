@@ -25,6 +25,13 @@ describe('shouldShowRestSetup (G8)', () => {
     expect(shouldShowRestSetup({ shown: false, bornAt: '2026-10-05', todayKey: '2026-10-02' })).toBe(false);
   });
 
+  it('save sem `bornAt` usa a 1ª abertura do aparelho como nascimento (auditoria 02/10/2026)', () => {
+    expect(shouldShowRestSetup({ shown: false, bornAt: undefined, firstOpenKey: '2026-10-01', todayKey: '2026-10-01' })).toBe(false);
+    expect(shouldShowRestSetup({ shown: false, bornAt: undefined, firstOpenKey: '2026-10-01', todayKey: '2026-10-02' })).toBe(true);
+    // o `bornAt` real manda quando existe
+    expect(shouldShowRestSetup({ shown: false, bornAt: '2026-10-02', firstOpenKey: '2026-09-01', todayKey: '2026-10-02' })).toBe(false);
+  });
+
   it('a hora não decide se aparece — só o texto (manhã antes das 12h)', () => {
     expect(isMorning(new Date(2026, 9, 2, 8, 0))).toBe(true);
     expect(isMorning(new Date(2026, 9, 2, 11, 59))).toBe(true);

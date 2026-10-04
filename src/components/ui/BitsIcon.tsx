@@ -46,10 +46,10 @@ export function BitsIcon({ size = 20, label, style }: {
   const a11y = label ? { role: 'img' as const, 'aria-label': label } : { 'aria-hidden': true as const };
   const box: CSSProperties = { width: size, height: size, flex: 'none', display: 'inline-block', verticalAlign: 'middle', imageRendering: 'pixelated', ...style };
   if (ART) {
-    return <img data-bits-icon="art" src={ART} alt={label ?? ''} width={size} height={size} {...(label ? {} : { 'aria-hidden': true as const })} style={box} />;
+    return <img data-bits-kind="art" src={ART} alt={label ?? ''} width={size} height={size} {...(label ? {} : { 'aria-hidden': true as const })} style={box} />;
   }
   return (
-    <svg data-bits-icon="svg" viewBox="0 0 8 8" width={size} height={size} shapeRendering="crispEdges" {...a11y} style={box}>
+    <svg data-bits-kind="svg" viewBox="0 0 8 8" width={size} height={size} shapeRendering="crispEdges" {...a11y} style={box}>
       {COIN.flatMap((row, y) => Array.from(row).map((c, x) => (
         c === '.' ? null : <rect key={`${x}-${y}`} x={x} y={y} width={1} height={1} fill={FILL[c]} />
       )))}
