@@ -616,6 +616,16 @@ export function completeDayReached(p: { registered: number; goal: number; done: 
 }
 
 /**
+ * Gatilho da celebração do dia (R8-i, 04/10/2026): dispara UMA vez por dia do
+ * jogador, na transição "dia completo" falso → verdadeiro dentro da sessão
+ * (abrir o app com o dia já completo não celebra). `ultimoDia` é a chave do dia
+ * em que já celebrou. A condição de "completo" é `completeDayReached` — a mesma do ⭐.
+ */
+export function deveCelebrarDiaCompleto(p: { antes: boolean; agora: boolean; ultimoDia: string | null; hoje: string }): boolean {
+  return p.agora && !p.antes && p.ultimoDia !== p.hoje;
+}
+
+/**
  * O PESO cadastrado PARA ESTE dia: atividades do dia + tarefas ativas ainda na
  * lista + tarefas do dia que já saíram da lista por terem sido feitas.
  *

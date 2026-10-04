@@ -177,6 +177,32 @@ describe('RespiracaoGame', () => {
     expect(fill()).toBe('0%');
   });
 
+  it('R8-i: ao soltar o preenchimento decai em ~200 ms (não some de uma vez); reduzido: sem transição', () => {
+    vi.useFakeTimers();
+    const { container } = renderWithCss(<RespiracaoGame language="en-US" evolutionStage="rookie" onExit={() => {}} />);
+    fireEvent.click(q(container, '[data-respiracao-start]'));
+    const hold = q(container, '[data-respiracao-hold]');
+    const fillEl = () => q<HTMLElement>(container, '[data-respiracao-hold-fill]');
+    fireEvent.pointerDown(hold);
+    act(() => { vi.advanceTimersByTime(2000); });
+    fireEvent.pointerUp(hold);
+    expect(fillEl().style.transition).toMatch(/width 200ms/);
+  });
+
+  it('R8-i: com prefers-reduced-motion o preenchimento não tem transição', () => {
+    vi.useFakeTimers();
+    const prev = window.matchMedia;
+    window.matchMedia = ((q: string) => ({ matches: true, media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} })) as unknown as typeof window.matchMedia;
+    try {
+      const { container } = renderWithCss(<RespiracaoGame language="en-US" evolutionStage="rookie" onExit={() => {}} />);
+      fireEvent.click(q(container, '[data-respiracao-start]'));
+      const hold = q(container, '[data-respiracao-hold]');
+      fireEvent.pointerDown(hold);
+      fireEvent.pointerUp(hold);
+      expect(q<HTMLElement>(container, '[data-respiracao-hold-fill]').style.transition).toMatch(/none/);
+    } finally { window.matchMedia = prev; }
+  });
+
   it('J6: o rótulo do botão em PT-BR', () => {
     vi.useFakeTimers();
     const { container } = renderWithCss(<RespiracaoGame language="pt-BR" evolutionStage="rookie" onExit={() => {}} />);

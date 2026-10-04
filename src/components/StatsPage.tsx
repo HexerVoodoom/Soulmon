@@ -60,7 +60,7 @@ import {
 import type { RestState } from '../utils/restWindow';
 import { bondProgress, bondTitle } from '../utils/bond';
 import { Icon } from './ui/Icon';
-import { InfoTip } from './ui/InfoTip';
+import { InfoTip, InfoTipSection } from './ui/InfoTip';
 
 interface CompletedTask {
   id: string;
@@ -276,10 +276,17 @@ export function StatsPage({
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
           <p className="sm2-stats-lab">{isPt ? 'Nível de vínculo' : 'Bond level'}</p>
           {/* I13 (02/10/2026): a frase de regra do vínculo mora atrás do "?". */}
-          <InfoTip language={language} label={isPt ? 'Como funciona o vínculo' : 'How the bond works'} align="right" style={{ minHeight: 24 }}>
-            {isPt
-              ? 'Ele só sobe. Cuidar de você é o que aproxima vocês dois — nada aqui desce, nunca.'
-              : 'It only goes up. Caring for yourself is what brings you two closer — nothing here ever drops.'}
+          <InfoTip language={language} label={isPt ? 'Como funcionam as estatísticas' : 'How the stats work'} align="right" style={{ minHeight: 24 }}>
+            <InfoTipSection title={isPt ? 'Vínculo' : 'Bond'}>
+              {isPt
+                ? 'Ele só sobe. Cuidar de você é o que aproxima vocês dois — nada aqui desce, nunca.'
+                : 'It only goes up. Caring for yourself is what brings you two closer — nothing here ever drops.'}
+            </InfoTipSection>
+            <InfoTipSection title={isPt ? 'Estação' : 'Season'} last>
+              {isPt
+                ? 'Um caminho basta — nunca os três.'
+                : 'One path is enough — never all three.'}
+            </InfoTipSection>
           </InfoTip>
         </div>
         {/* A PALAVRA vem primeiro (Cinzel 24); o número é a legenda dela. */}
@@ -422,11 +429,6 @@ export function StatsPage({
             <CardHead icon="calendar_month">{isPt ? 'A estação' : 'The season'}</CardHead>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
               <p className="sm2-stats-t">{seasonLabel(win, isPt ? 'pt-BR' : 'en-US')}</p>
-              <InfoTip language={language} label={isPt ? 'Como funciona a estação' : 'How the season works'} align="right" style={{ minHeight: 24 }}>
-                {isPt
-                  ? 'Um caminho basta — nunca os três.'
-                  : 'One path is enough — never all three.'}
-              </InfoTip>
             </div>
 
             {!hideMetrics && andados.length > 0 && (

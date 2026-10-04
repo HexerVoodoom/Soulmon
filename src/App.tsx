@@ -70,7 +70,7 @@ import { applyDecorEquip, type SlotId } from './utils/petStage';
 const ACTIVITY_LOG_CAP = 90;
 const EMPTY_DECOR: Partial<Record<SlotId, string>> = {};
 const EMPTY_TROPHIES: Array<{ season: string; place: 1 | 2 | 3 }> = [];
-import { getNextEvolution, dailyGoalFor, heartGoalFor, degeneratedPerfectDays, registeredForDay, tasksToAvoidHeartLoss, applyRedemption, podeEvoluirDepoisDaQueda, completeDayReached } from './utils/dailyReset';
+import { getNextEvolution, dailyGoalFor, heartGoalFor, degeneratedPerfectDays, registeredForDay, tasksToAvoidHeartLoss, applyRedemption, podeEvoluirDepoisDaQueda, completeDayReached, deveCelebrarDiaCompleto } from './utils/dailyReset';
 import {
   feedFood, rubHeal, rubRefusal, completeTask,
   FOOD_LIMIT_PER_HOUR,
@@ -1791,13 +1791,6 @@ export default function App() {
   const heartGoalHoje = heartGoalFor(gameState, new Date().getDay(), new Date().toDateString());
   const fioGoal = { done: dailyDone, heart: heartGoalHoje, full: dailyTotal };
   const fioMetaCumprida = dailyTotal > 0 && dailyDone >= heartGoalHoje;
-  /* M5: celebra UMA vez quando a meta do dia vira "cumprida" nesta sessão. Começa
-     no valor de agora (abrir o app com a meta já cumprida não celebra de novo). */
-  const metaAntes = useRef(fioMetaCumprida);
-  useEffect(() => {
-    if (fioMetaCumprida && !metaAntes.current) setCelebrarMeta(true);
-    metaAntes.current = fioMetaCumprida;
-  }, [fioMetaCumprida]);
   const minhaCriaturaUrl = displaySprite(spriteAcervo, gameState.evolutionStage)?.url
     ?? getSpriteForStage(gameState.evolutionStage, petLine);
   /* O selo "Dia completo" da lista (minimal-ui F2). A condição é a da VIRADA —
@@ -1811,6 +1804,20 @@ export default function App() {
     done: dailyDone,
     energy: gameState.energyPoints ?? 0,
   });
+  /* M5 (R8-i, 04/10/2026): a celebração é do DIA COMPLETO (⭐: peso feito ≥ meta inteira,
+     ≥1 cadastrada, energia ≥ meta) — não mais da meta de coração. UMA vez por dia do
+     jogador, na transição dentro da sessão: começa no valor de agora (abrir o app com
+     o dia já completo não celebra). */
+  const diaCompletoAntes = useRef(diaCompletoHoje);
+  const diaCelebrado = useRef<string | null>(null);
+  useEffect(() => {
+    const hoje = new Date().toDateString();
+    if (deveCelebrarDiaCompleto({ antes: diaCompletoAntes.current, agora: diaCompletoHoje, ultimoDia: diaCelebrado.current, hoje })) {
+      diaCelebrado.current = hoje;
+      setCelebrarMeta(true);
+    }
+    diaCompletoAntes.current = diaCompletoHoje;
+  }, [diaCompletoHoje]);
 
   /**
    * "O jogador já concluiu ALGUMA coisa, algum dia?"

@@ -1,4 +1,4 @@
-import { InfoTip } from './ui/InfoTip';
+import { InfoTip, InfoTipSection } from './ui/InfoTip';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import type { Language } from '../utils/i18n';
@@ -334,9 +334,21 @@ export function OraclePage({ language = 'en-US', initialDebugMode = false }: Ora
         <h2 className="text-lg" style={{ color: 'var(--sm-ink)' }}>🔮 {isPt ? 'Oráculo de Criaturas' : 'Creature Oracle'}</h2>
         {/* K6 (04/10/2026): o passo a passo mora atrás do "?". */}
         <InfoTip language={language} label={isPt ? 'Como usar o Oráculo' : 'How to use the Oracle'} align="left" style={{ minHeight: 24, color: 'var(--sm-muted)' }}>
-          {isPt
-            ? '1) Revele a leitura → 2) ajuste o que quiser → 3) gere a criatura e os prompts.'
-            : '1) Reveal the reading → 2) adjust anything → 3) generate the creature and prompts.'}
+          <InfoTipSection title={isPt ? 'Passo a passo' : 'Step by step'}>
+            {isPt
+              ? '1) Revele a leitura → 2) ajuste o que quiser → 3) gere a criatura e os prompts.'
+              : '1) Reveal the reading → 2) adjust anything → 3) generate the creature and prompts.'}
+          </InfoTipSection>
+          <InfoTipSection title={isPt ? 'Campo em branco' : 'Leaving it empty'}>
+            {isPt
+              ? 'Deixe em branco para 100% leitura (nome, nascimento e respostas).'
+              : 'Leave empty for 100% reading (name, birth and answers).'}
+          </InfoTipSection>
+          <InfoTipSection title={isPt ? 'Prompts de imagem' : 'Image prompts'} last>
+            {isPt
+              ? 'Os prompts de imagem só aparecem depois de gerar. Ajustou algum valor? Ele será respeitado.'
+              : 'Image prompts only appear after generating. Adjusted a value? It will be respected.'}
+          </InfoTipSection>
         </InfoTip>
       </div>
 
@@ -515,11 +527,6 @@ export function OraclePage({ language = 'en-US', initialDebugMode = false }: Ora
               className={inputCls}
               style={{ ...mono, resize: 'vertical' }}
             />
-            <InfoTip language={language} label={isPt ? 'Sobre o campo em branco' : 'About leaving it empty'} align="left" style={{ minHeight: 24, justifyContent: 'flex-start' }}>
-              {isPt
-                ? 'Deixe em branco para 100% leitura (nome, nascimento e respostas).'
-                : 'Leave empty for 100% reading (name, birth and answers).'}
-            </InfoTip>
           </div>}
 
           <div className="flex gap-2 pt-1">
@@ -901,13 +908,6 @@ export function OraclePage({ language = 'en-US', initialDebugMode = false }: Ora
               ? (isPt ? '🎲 Gerar outra variação' : '🎲 Generate another variation')
               : (isPt ? '👾 Gerar criatura e prompts' : '👾 Generate creature and prompts')}
           </button>
-          {!creature && (
-            <InfoTip language={language} label={isPt ? 'Sobre os prompts de imagem' : 'About the image prompts'} align="left" style={{ minHeight: 24, justifyContent: 'flex-start', marginTop: -8 }}>
-              {isPt
-                ? 'Os prompts de imagem só aparecem depois de gerar. Ajustou algum valor? Ele será respeitado.'
-                : 'Image prompts only appear after generating. Adjusted a value? It will be respected.'}
-            </InfoTip>
-          )}
         </>
       )}
 
