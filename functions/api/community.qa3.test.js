@@ -54,3 +54,36 @@ describe('profile sanitiza unlockedStages', () => {
     expect(p.unlockedStages).toEqual(['rookie', 'champion-power']);
   });
 });
+
+describe('profile — texto livre PÚBLICO passa pela régua de contato (D-1)', () => {
+  const post = async (env, body) => {
+    const res = await onRequest({
+      request: new Request(`https://x.dev/api/community?action=profile&id=${ME}`, {
+        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: ME, pvpEnabled: true, ...body }),
+      }),
+      env,
+    });
+    expect(res.status).toBe(200);
+    return JSON.parse(env.DIGIAPP_SAVES.store.get(`profile:${ME}`));
+  };
+  const mk = () => ({ DIGIAPP_SAVES: fakeKV({ [`profile:${ME}`]: perfil(ME, { petName: 'Kuro', stage: 'champion' }) }) });
+
+  it('petName com contato é descartado (fica o anterior); nome comum passa', async () => {
+    let p = await post(mk(), { petName: 'zap: 11 98888-7777' });
+    expect(p.petName).toBe('Kuro');
+    p = await post(mk(), { petName: 'me chama no whatsapp: 11988887777' });
+    expect(p.petName).toBe('Kuro');
+    p = await post(mk(), { petName: 'joao@mail.com' });
+    expect(p.petName).toBe('Kuro');
+    p = await post(mk(), { petName: 'Bolinha' });
+    expect(p.petName).toBe('Bolinha');
+  });
+
+  it('stage e unlockedStages só aceitam id de estágio (nunca frase livre)', async () => {
+    let p = await post(mk(), { stage: 'chame no zap 5511988887777' });
+    expect(p.stage).toBe('champion'); // recusa: fica o anterior
+    p = await post(mk(), { stage: 'champion-power', unlockedStages: ['rookie', 'me liga 5511 9888', 'mega-harmony'] });
+    expect(p.stage).toBe('champion-power');
+    expect(p.unlockedStages).toEqual(['rookie', 'mega-harmony']);
+  });
+});

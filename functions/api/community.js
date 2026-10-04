@@ -397,14 +397,19 @@ async function handleCommunity({ request, env }) {
     const nameRejected = !!body.name && !apelidoPedido;
     // Opt-out da lista pública. Cliente antigo (sem o campo) NÃO desfaz a
     // escolha feita em outro aparelho: ausência herda o valor gravado.
+    // `petName`, `stage` e `unlockedStages` também saem na lista PÚBLICA e eram texto livre: a mesma régua
+    // do apelido (D-1) vale aqui — contato é descartado e fica o valor anterior. `stage` é um id de estágio.
+    const ID_ESTAGIO = /^[A-Za-z0-9_.-]{1,40}$/;
+    const petNameOk = (v) => typeof v === 'string' && v.length > 0 && sanitizarNomeDeGuilda(v) !== null;
+    const prevPet = petNameOk(prev.petName) ? String(prev.petName).slice(0, 32) : '';
     const publicHidden = typeof body.publicHidden === 'boolean' ? body.publicHidden : prev.publicHidden === true;
     const profile = {
       id,
       name: apelidoPedido || sanitizarNomeDeGuilda(prev.name) || 'Anônimo',
-      stage: String(body.stage || prev.stage || 'rookie').slice(0, 40),
-      petName: String(body.petName || prev.petName || '').slice(0, 32),
+      stage: (typeof body.stage === 'string' && ID_ESTAGIO.test(body.stage) ? body.stage : (ID_ESTAGIO.test(String(prev.stage ?? '')) ? prev.stage : 'rookie')),
+      petName: petNameOk(body.petName) ? body.petName.slice(0, 32) : prevPet,
       unlockedStages: Array.isArray(body.unlockedStages)
-        ? body.unlockedStages.filter(s => typeof s === 'string' && s.length <= 40).slice(0, 16)
+        ? body.unlockedStages.filter(s => typeof s === 'string' && ID_ESTAGIO.test(s)).slice(0, 16)
         : (prev.unlockedStages || []),
       pvpEnabled,
       publicHidden,
