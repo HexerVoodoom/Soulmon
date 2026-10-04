@@ -124,11 +124,12 @@ describe('o gesto de deslizar (a esquiva do PvE)', () => {
   });
 });
 
-describe('a barra de CHEER (bare): só a barra e o "?" — a explicação vai atrás do InfoTip', () => {
+describe('a barra de CHEER (bare): só a barra — sem texto e sem "?" (A7, a explicação mora no modal anterior)', () => {
   it('sem texto explicativo na tela; o botão "Torcer!" só no layout antigo; o gauge lê a proporção', () => {
     const { container } = render(<TorcidaGauge taps={CHEER_TAPS_FULL / 2} onCheer={() => {}} isPt bare />);
     expect(container.textContent).not.toMatch(/Toque|Torcer|tap/i);
-    expect(screen.getByRole('button', { name: 'Como torcer' })).toBeTruthy(); // o InfoTip
+    expect(screen.queryByRole('button', { name: 'Como torcer' })).toBeNull(); // A7: o "?" saiu da luta
+    expect(container.querySelector('[data-info-tip]')).toBeNull();
     expect(container.querySelector('[data-torcida-gauge]')?.getAttribute('data-torcida-ratio')).toBe('0.50');
     expect(container.querySelector('[role="progressbar"]')?.getAttribute('aria-valuenow')).toBe('50');
     cleanup();

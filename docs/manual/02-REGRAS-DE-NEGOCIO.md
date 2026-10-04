@@ -4663,9 +4663,12 @@ Torneio continua inteiro disponível. `tournamentWindowLabel` fala o mínimo (02
 
 ### As faixas
 
-`src/utils/tournamentTiers.ts` → `TOURNAMENT_TIERS`, cinco degraus por pontos
-mínimos: Semente 🌱 (0) · Broto 🍀 (100) · Guardião 🛡️ (300) · Ancião 🌟 (700) ·
-Lendário 👑 (1500). `getTierStanding(points)` devolve a faixa, a próxima,
+`src/utils/tournamentTiers.ts` → `TOURNAMENT_TIERS`, sete degraus por pontos
+mínimos — as faixas CLÁSSICAS (04/10/2026, rodada 7 / A1; antes Semente→Lendário):
+Madeira/Wood (0) · Bronze (100) · Prata/Silver (300) · Ouro/Gold (700) ·
+Platina/Platinum (1100) · Diamante/Diamond (1500) · Mestre/Master (2200). Sem emoji:
+o símbolo de cada faixa é um glifo do inventário (`TIER_ICON` no `TournamentPage`).
+`getTierStanding(points)` devolve a faixa, a próxima,
 `pointsToNext` e `progress` (0–1, e 1 na última).
 
 **A faixa lê `lifetime`, não `points`.** Os `points` da season descem por três

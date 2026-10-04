@@ -33,7 +33,7 @@ describe('DuelScreen — a cena em tela cheia', () => {
     expect(document.querySelector('[data-stage-close]')).not.toBeNull();
     expect(document.querySelector('[data-cheer-mascot]')).not.toBeNull();
     expect(screen.queryByText(/lutam sozinhos/i)).toBeNull();
-    expect(document.querySelector('[data-info-tip]')).not.toBeNull();
+    expect(document.querySelector('[data-info-tip]')).toBeNull(); // A7: nenhum "?" dentro da luta
   });
 
   it('a luta é LONGA: ~35–45 s (era ~17 s, e ~10,6 s antes) e o relógio respeita o passo', () => {
@@ -55,6 +55,21 @@ describe('DuelScreen — a cena em tela cheia', () => {
     const fx = [...document.querySelectorAll('[data-stage-fx] img')].map(i => i.getAttribute('src') ?? '');
     expect(fx.length).toBeGreaterThan(0);
     for (const src of fx) expect(src).toMatch(/fx-(fogo|agua)-(cast|aura|slash|impact|defended|orb)/);
+  });
+
+  it('A6: o oponente TAMBÉM ataca com o golpe físico (investida) — não só à distância', () => {
+    vi.useFakeTimers();
+    const { onDone } = montar();
+    let oponenteInvestiu = false; let oponenteAtirou = false; let donoInvestiu = false;
+    for (let i = 0; i < 400 && !onDone.mock.calls.length; i++) {
+      act(() => { vi.advanceTimersByTime(100); });
+      if (document.querySelector('[data-stage-sprite="foe"]')?.closest('.sm-bs-lunge')) oponenteInvestiu = true;
+      if (document.querySelector('[data-stage-sprite="me"]')?.closest('.sm-bs-lunge')) donoInvestiu = true;
+      if (document.querySelector('.sm-bs-fly')) oponenteAtirou = true;
+    }
+    expect(oponenteInvestiu).toBe(true);
+    expect(donoInvestiu).toBe(true);
+    expect(oponenteAtirou).toBe(true);
   });
 
   it('a energia sobe na barra de cada um (dado + sofrido): depois dos dois primeiros golpes as barras não estão vazias', () => {

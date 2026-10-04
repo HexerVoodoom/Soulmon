@@ -56,7 +56,7 @@ describe('Pesadelo — a luta em tela cheia', () => {
     expect(document.querySelector('[data-cheer-mascot]')).not.toBeNull();
     expect(document.querySelector('[data-torcida-gauge]')).not.toBeNull();
     expect(document.querySelector('[data-timing-bar]')).toBeNull(); // a TimingBar segue desligada
-    expect(document.querySelector('[data-info-tip]')).not.toBeNull();
+    expect(document.querySelector('[data-info-tip]')).toBeNull(); // A7: nenhum "?" dentro da luta
     expect(screen.queryByText(/torça por ele/i)).toBeNull();
     // o diálogo do convite sai de cena: a luta usa a viewport inteira
     expect(document.querySelector('[role="dialog"]:not([data-stage-confirm])')).toBeNull();

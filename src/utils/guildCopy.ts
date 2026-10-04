@@ -125,7 +125,11 @@ export const GUILD_COPY = {
   'guild.feira.semroda': ['A Feira é da roda: toda semana algo chega da névoa, e a roda o recebe.', 'The Fair belongs to the circle: every week something comes in from the mist, and the circle receives it.'],
   // G4 (02/10/2026): a legenda de UMA linha no topo da sala — o dono não entendia o que a Feira é.
   // Sem número e sem "golpe/dano/quem": a régua da sala (GuildSheet.feira.render.test) varre isso.
-  'guild.feira.legenda': ['A Feira é a sala da roda: um fenômeno por semana que a roda dissipa junta, com uma rodada por dia de cada pessoa. Rende Honra e a Concha da Maré.', "The Fair is the circle's room: one phenomenon a week that the circle clears together, one round a day from each person. It earns Honor and the Tide Shell."],
+  // A8 (rodada 7, 04/10/2026): o dono seguia sem entender a Feira. Três frases curtas para um leigo, dentro do
+  // InfoTip ÚNICO da sala: o que é, o que o jogador faz, o que ganha. Mesma régua: sem número, "golpe", "vida", "quem".
+  'guild.feira.legenda': ['A Feira é uma tarefa da semana feita em roda. Toda semana chega da névoa um fenômeno, e a sua roda (o grupo do app) precisa desfazê-lo junta.', 'The Fair is a weekly task done as a circle. Every week a phenomenon comes in from the mist, and your circle (your group in the app) has to undo it together.'],
+  'guild.feira.como': ['Uma vez por dia, cada pessoa faz a própria rodada no botão abaixo. Cada rodada enfraquece um pouco o fenômeno; quando as rodadas da roda se somam o bastante, ele se desfaz.', "Once a day, each person takes their own round with the button below. Each round weakens the phenomenon a little; when the circle's rounds add up enough, it comes apart."],
+  'guild.feira.ganho': ['O que se ganha: Honra (a moeda dos enfeites) e, de vez em quando, a Concha da Maré, uma decoração do bosque. Se o fenômeno voltar à névoa, nada se perde.', 'What you get: Honor (the currency for decor) and, now and then, the Tide Shell, a decoration for the grove. If the phenomenon goes back into the mist, nothing is lost.'],
   'guild.feira.aberta.mundo': ['A maré abriu a Feira. Algo chegou da névoa.', 'The tide opened the Fair. Something came in from the mist.'],
   'guild.feira.fenomeno.nevoa.nome': ['Névoa', 'Mist'],
   'guild.feira.fenomeno.nevoa.linha': ['Uma camada que não assentou.', "A layer that hasn't settled."],

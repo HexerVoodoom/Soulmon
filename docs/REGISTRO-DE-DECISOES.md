@@ -1644,6 +1644,25 @@ Decisões do dono na navegação do APK (`docs/AJUSTES-NAVEGACAO-2026-10-02.md` 
    - Gatilho para rever: a luta de ~40 s cansar (baixar `DUEL_STEP_MS`/`PVE_STEP_MS` ou `PVE_HP_SCALE`), o anel ficar
      difícil de acertar no celular (alargar `RING_OTIMO_MS`) ou o dono querer o especial no PvP também com mecânica.
 
+11. **Rodada 7 / faixa A (04/10/2026): faixas clássicas, vitória da Arena destravada, golpe físico só com corte, "?" fora da luta.**
+   - **Faixas do Torneio = as clássicas** (pedido do dono): Madeira/Wood 0 · Bronze 100 · Prata/Silver 300 · Ouro/Gold 700 ·
+     Platina/Platinum 1100 · Diamante/Diamond 1500 · Mestre/Master 2200 (`utils/tournamentTiers.ts`). Os mínimos 100/300/700/1500
+     das faixas antigas (Broto/Guardião/Ancião/Lendário) ficaram em Bronze/Prata/Ouro/Diamante; Platina e Mestre são degraus
+     novos. **A regra não mudou:** a faixa é função só do `lifetime` do próprio jogador, então só sobe (testado). O campo
+     `emoji` saiu do modelo; o símbolo é um glifo do inventário, sem box (park · military_tech · star · emoji_events ·
+     auto_awesome · diamond · swords), e as 5 insígnias antigas (rodada 3) ficaram sem consumidor — arte de metal por faixa é
+     o prompt P3 do dono. A aba de Missões do Torneio passou a usar o "?" amarelo (`question`, A2). *Alternativa que perdeu:*
+     manter os 5 degraus só renomeando (Madeira…Ouro, Mestre) — perderia o par Platina/Diamante que o jogador espera nas clássicas.
+     *Falsifica:* se jogadores reais ficarem presos em Diamante sem horizonte, abaixar o `min` de Mestre.
+   - **A3 (bug):** o golpe que derrubava o ÚLTIMO inimigo da Arena desligava a luta (`running` dependia de haver inimigo vivo)
+     dentro da pausa de fim — `onVictory` nunca rodava: inimigo apagado e tela travada. Agora a luta só para quando a fase vira
+     `rodada-limpa` (teste de regressão em `ArenaGame.torcida.render.test.tsx`).
+   - **A5:** o golpe FÍSICO (investida) mostra só o CORTE; o splash de impacto é do dano à distância/mágico (e do escudo/movimento
+     reduzido, que não têm corte). **A6:** o Duelo fantasma sorteava físico/à distância pela paridade do índice do evento —
+     como os lados se alternam, o oponente era SEMPRE à distância; agora alterna por lutador.
+   - **A7/A8:** nenhum "?" dentro da luta (a explicação de torcer/anel/esquiva mora no InfoTip único da folha do Duelo); a
+     explicação da Feira foi reescrita para leigo (o que é · o que se faz · o que se ganha), no InfoTip único da sala.
+
 > **Nota 04/10/2026 (rodada 6):** item 10 — cena maior com mascote da torcida, barras de HP e ENERGIA em cima do
 > personagem, barra de cheer lenta (24) que despeja energia, especial por energia cheia, anel e esquiva no PvE, PvP
 > direto, lutas de ~40 s (PvP) e ~20–30 s por inimigo (PvE); Pesadelo e Masmorra entram na `BattleStage`.

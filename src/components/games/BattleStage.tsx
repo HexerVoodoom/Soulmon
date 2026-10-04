@@ -17,7 +17,7 @@
  * (`NightmareBattle`) e Masmorra (`DungeonGame`) usam a mesma `BattleStage` (props `me`/`foes`/`action`).
  *
  * Contrato de tela (regras do dono):
- *  · NENHUM texto explicativo — o "?" é o `InfoTip` (no `TorcidaGauge bare`);
+ *  · NENHUM texto explicativo e NENHUM "?" dentro da luta (A7, rodada 7): a explicação mora no modal anterior;
  *  · o botão de sair é o X no canto superior DIREITO (ícone pelado), com
  *    confirmação quando sair perde progresso (`exitConfirm`);
  *  · o toque em qualquer lugar é da `TorcidaLayer` que envolve esta peça (o mascote da torcida mora lá);
@@ -334,7 +334,9 @@ function ActionFx({ action, layout, reduced }: { action: StageAction; layout: St
       );
     }
   }
-  layers.push(
+  // A5 (rodada 7): o golpe FÍSICO (investida) é só o CORTE — sem o splash/"crash" do impacto. O splash é do dano à
+  // distância/mágico (ranged/special). O escudo (bloqueio) e o movimento reduzido (sem corte, só o flash) mantêm o frame.
+  if (reduced || blocked || action.kind !== 'melee') layers.push(
     <Fx key="land" src={landing} x={to.x} y={to.y} size={landSize} anim="sm-bs-pop" delay={Math.max(0, impact - 60)} dur={reduced ? total - impact : Math.min(700, total - impact + 60)} flipX={flipX && !blocked} />,
   );
   return <>{layers}</>;

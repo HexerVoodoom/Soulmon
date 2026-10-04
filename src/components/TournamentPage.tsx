@@ -132,17 +132,17 @@ const cardStyle: React.CSSProperties = {
 };
 
 /**
- * Símbolo da faixa. O modelo (`utils/tournamentTiers.ts`) guarda um EMOJI, que
- * é arte do sistema operacional no meio de uma peça nossa — e `tournamentTiers`
- * não é meu arquivo nesta onda. O mapa mora aqui e cai em `military_tech` para
- * faixa nova: um `id` desconhecido não pode apagar a marca da faixa.
+ * Símbolo da faixa (A1, rodada 7): um GLIFO do inventário (`Icon`, sem box — o emoji saiu do modelo). O mapa
+ * mora aqui e cai em `military_tech` para faixa nova: um `id` desconhecido não pode apagar a marca da faixa.
  */
 const TIER_ICON: Record<string, string> = {
-  semente: 'eco',
-  broto: 'park',
-  guardiao: 'military_tech',
-  anciao: 'auto_awesome',
-  lendario: 'emoji_events',
+  madeira: 'park',
+  bronze: 'military_tech',
+  prata: 'star',
+  ouro: 'emoji_events',
+  platina: 'auto_awesome',
+  diamante: 'diamond',
+  mestre: 'swords',
 };
 
 /**
@@ -156,9 +156,7 @@ function TierMark({ id, size, state }: { id: string; size: 24 | 32 | 48; state: 
     const name = TIER_ICON[id] ?? 'military_tech';
     const fill = state === 'next' ? 0 : 1;
     const tone = state === 'current' ? 'primary' : state === 'passed' ? 'gold' : 'muted';
-    return size === 24
-      ? <Icon name={name} size={24} fill={fill} tone={tone} />
-      : <Icon name={name} size={32} fill={fill} tone={tone} />;
+    return <Icon name={name} size={size} fill={fill} tone={tone} />;
   }
   return (
     <img
@@ -334,12 +332,12 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
   };
 
   /** Menu SÓ DE ÍCONE (02/10/2026): o nome vai no `aria-label`/`title`. Glifos:
-   *  `swords` (combate, Material), `exclamation` (missões, I8) e `storefront` (loja) —
-   *  estes dois com desenho próprio em `NavGlyphs`. */
+   *  `swords` (combate, Material), `question` (missões — o "?" AMARELO, A2/rodada 7; era `exclamation`, I8)
+   *  e `storefront` (loja) — estes dois com desenho próprio em `NavGlyphs`. */
   const TABS = [
-    { key: 'arena' as const, label: isPt ? 'Desafiar' : 'Challenge', icon: 'swords' },
-    { key: 'missions' as const, label: isPt ? 'Missões' : 'Missions', icon: 'exclamation' },
-    ...(shop ? [{ key: 'shop' as const, label: isPt ? 'Loja' : 'Shop', icon: 'storefront' }] : []),
+    { key: 'arena' as const, label: isPt ? 'Desafiar' : 'Challenge', icon: 'swords', tone: 'inherit' as const },
+    { key: 'missions' as const, label: isPt ? 'Missões' : 'Missions', icon: 'question', tone: 'gold' as const },
+    ...(shop ? [{ key: 'shop' as const, label: isPt ? 'Loja' : 'Shop', icon: 'storefront', tone: 'inherit' as const }] : []),
   ];
 
   /** O indicador da faixa (canto do título): a insígnia atual; toque abre a folha.
@@ -464,7 +462,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
               onClick={() => setTab(t.key)}
               className={on ? 'sm2-kit-tab sm2-kit-tab-on' : 'sm2-kit-tab'}
             >
-              <Icon name={t.icon} size={24} fill={on ? 1 : 0} />
+              <Icon name={t.icon} size={24} fill={on ? 1 : 0} tone={t.tone} />
             </button>
           );
         })}
@@ -527,8 +525,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
             <InfoTip language={lang} label={isPt ? 'Como funcionam a luta e o treino' : 'How fighting and training work'} align="right">
               <span style={{ display: 'block' }}>
                 {isPt
-                  ? 'Os dois Soulmons lutam sozinhos. Você torce tocando na tela: o gauge cheio vira um golpe especial.'
-                  : 'The two Soulmons fight on their own. You cheer by tapping the screen: a full gauge becomes a special strike.'}
+                  ? 'Os dois Soulmons lutam sozinhos. Você torce tocando na tela (ou no mascote): a barra de cheer enche devagar e despeja energia no seu Soulmon; com a energia cheia, ele solta o golpe especial.'
+                  : 'The two Soulmons fight on their own. You cheer by tapping the screen (or the mascot): the cheer bar fills slowly and pours energy into your Soulmon; with full energy, it unleashes its special strike.'}
               </span>
               <span style={{ display: 'block', marginTop: 6 }}>
                 {isPt

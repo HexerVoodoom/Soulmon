@@ -1104,7 +1104,7 @@ Cobertura: **179/179** (+1 em 04/10/2026: `petBounce.ts`); antes **178/178** mó
 - `MoodValue` (type) — `1 | 2 | 3 | 4 | 5`
 - `MoodEntry` (interface) — campos: `date`, `mood`.
 - `MoodOption` (interface) — campos: `value`, `emoji`, `labelPt`, `labelEn`.
-- `MOOD_OPTIONS` — tabela/dado de configuração (ver código; 7+ linhas).
+- `MOOD_OPTIONS` — tabela/dado de configuração: 7 faixas (Madeira 0 · Bronze 100 · Prata 300 · Ouro 700 · Platina 1100 · Diamante 1500 · Mestre 2200).
 - `MOOD_LOG_CAP` — Quantos dias o histórico guarda. Registro de acompanhamento, não arquivo.
 - `function getMoodOption(value: MoodValue): MoodOption` — A opção de humor (emoji + rótulo) para um valor; sem match cai no neutro (índice 2).
 - `function recordMood(log: MoodEntry[] | undefined, date: string, mood: MoodValue): MoodEntry[]` — Registra o humor do dia. Responder de novo no mesmo dia SUBSTITUI — humor muda, e a pessoa tem direito de corrigir sem que o app guarde as duas coisas.
@@ -2603,9 +2603,9 @@ dominância populacional — por isso ±15%. Régua nova:
 **Regra de negócio:** A rodada do Torneio é ritual de sexta a domingo — fora da janela o Torneio segue disponível. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
 ### `src/utils/tournamentTiers.ts`
-**Dono de:** As faixas do Torneio (Semente→Lendário) por pontos — nunca rebaixa.
+**Dono de:** As faixas do Torneio (Madeira→Mestre, as clássicas; rodada 7 / A1) por pontos — nunca rebaixa.
 **Exports:**
-- `TournamentTier` (interface) — campos: `id`, `emoji`, `namePt`, `nameEn`, `min`.
+- `TournamentTier` (interface) — campos: `id`, `namePt`, `nameEn`, `min` (o `emoji` saiu na rodada 7).
 - `TOURNAMENT_TIERS` — tabela/dado de configuração (ver código; 7+ linhas).
 - `TierStanding` (interface) — campos: `tier`, `next`, `pointsToNext`, `progress`.
 - `function getTierStanding(points: number): TierStanding` — Faixa de um jogador a partir dos pontos. Pontos negativos ou inválidos caem na primeira faixa — nunca lança, porque isto alimenta UI.

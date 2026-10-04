@@ -17,19 +17,26 @@
 
 export interface TournamentTier {
   id: string;
-  emoji: string;
   namePt: string;
   nameEn: string;
   /** Pontos mínimos para entrar nesta faixa. */
   min: number;
 }
 
+/**
+ * As faixas CLÁSSICAS de jogo (A1, rodada 7, 04/10/2026 — antes Semente/Broto/Guardião/Ancião/Lendário):
+ * Madeira → Bronze → Prata → Ouro → Platina → Diamante → Mestre. Os mínimos de Broto/Guardião/Ancião/Lendário
+ * (100/300/700/1500) ficaram nos degraus de Bronze/Prata/Ouro/Diamante; Platina e Mestre são degraus NOVOS
+ * (1100 e 2200). A regra não mudou: é função só dos pontos do próprio jogador, então só sobe.
+ */
 export const TOURNAMENT_TIERS: readonly TournamentTier[] = [
-  { id: 'semente', emoji: '🌱', namePt: 'Semente', nameEn: 'Seedling', min: 0 },
-  { id: 'broto', emoji: '🍀', namePt: 'Broto', nameEn: 'Sprout', min: 100 },
-  { id: 'guardiao', emoji: '🛡️', namePt: 'Guardião', nameEn: 'Guardian', min: 300 },
-  { id: 'anciao', emoji: '🌟', namePt: 'Ancião', nameEn: 'Elder', min: 700 },
-  { id: 'lendario', emoji: '👑', namePt: 'Lendário', nameEn: 'Legend', min: 1500 },
+  { id: 'madeira', namePt: 'Madeira', nameEn: 'Wood', min: 0 },
+  { id: 'bronze', namePt: 'Bronze', nameEn: 'Bronze', min: 100 },
+  { id: 'prata', namePt: 'Prata', nameEn: 'Silver', min: 300 },
+  { id: 'ouro', namePt: 'Ouro', nameEn: 'Gold', min: 700 },
+  { id: 'platina', namePt: 'Platina', nameEn: 'Platinum', min: 1100 },
+  { id: 'diamante', namePt: 'Diamante', nameEn: 'Diamond', min: 1500 },
+  { id: 'mestre', namePt: 'Mestre', nameEn: 'Master', min: 2200 },
 ] as const;
 
 export interface TierStanding {

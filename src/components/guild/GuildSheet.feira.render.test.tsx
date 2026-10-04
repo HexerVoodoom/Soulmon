@@ -100,6 +100,9 @@ describe('o fenômeno: 3 estados × 4 tipos, sem número nenhum', () => {
     expect(screen.getByText(PT('guild.feira.fenomeno.nevoa.linha'))).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Como funciona a Feira' }));
     expect(screen.getByText(PT('guild.feira.legenda'))).toBeTruthy();
+    // A8: para um leigo — o que é (legenda), o que se faz (como) e o que se ganha (ganho), tudo no InfoTip único.
+    expect(screen.getByText(PT('guild.feira.como'))).toBeTruthy();
+    expect(screen.getByText(PT('guild.feira.ganho'))).toBeTruthy();
     expect(screen.getByText(fill(PT('guild.feira.sobria'), { cheio: RAID_EMBLEMS, piso: RAID_EMBLEMS_FLOOR }))).toBeTruthy();
     expect(botao()!.textContent).toContain(PT('guild.feira.rodada.botao'));
     expect(botao()!.disabled).toBe(false);

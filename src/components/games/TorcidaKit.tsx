@@ -27,7 +27,6 @@ import { PixelMeter } from '../pixel/PixelKit';
 import { sm2Button, sm2Hint } from '../form/FormKit';
 import { CHEER_TAPS_FULL, cheerRatio } from '../../utils/energia';
 import { Icon } from '../ui/Icon';
-import { InfoTip } from '../ui/InfoTip';
 
 const WORDS_PT = ['VAI!', 'ISSO!', 'FORÇA!', '✦', 'BORA!'];
 const WORDS_EN = ['GO!', 'YEAH!', 'COME ON!', '✦', 'NICE!'];
@@ -225,16 +224,13 @@ export function TorcidaGauge({ taps, onCheer, isPt, disabled = false, full = CHE
   /** Toques que enchem a barra. Padrão = `CHEER_TAPS_FULL` (24, lenta de propósito). */
   full?: number;
   /**
-   * Versão da cena de combate (`BattleStage`): SEM texto na tela. A frase explicativa
-   * vira um InfoTip.
+   * Versão da cena de combate (`BattleStage`): SEM texto e SEM "?" na tela (A7, rodada 7) — a explicação
+   * de como torcer mora no modal ANTERIOR à luta (o InfoTip único dele).
    */
   bare?: boolean;
 }) {
   const ratio = full > 0 ? Math.min(1, Math.max(0, taps) / full) : cheerRatio(taps);
   const label = isPt ? 'Torcida' : 'Cheer';
-  const explica = isPt
-    ? 'Toque em qualquer lugar da tela (ou no mascote) para torcer: a barra de cheer enche devagar e, cheia, despeja energia no seu Soulmon. Com a energia cheia, ele solta o golpe ESPECIAL.'
-    : 'Tap anywhere on the screen (or the mascot) to cheer: the cheer bar fills slowly and, when full, pours energy into your Soulmon. With full energy, it unleashes its SPECIAL strike.';
   return (
     <div data-torcida-gauge data-torcida-ratio={ratio.toFixed(2)} style={{ display: 'flex', alignItems: 'center', gap: bare ? 2 : 10, flex: 'none' }}>
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -246,12 +242,7 @@ export function TorcidaGauge({ taps, onCheer, isPt, disabled = false, full = CHE
         <PixelMeter ratio={ratio} tone="gold" height={bare ? 12 : 10} label={label} />
       </div>
       {bare && (
-        <>
-          <Icon name="bolt" size={20} tone="muted" />
-          <InfoTip language={isPt ? 'pt-BR' : 'en-US'} label={isPt ? 'Como torcer' : 'How to cheer'} align="right">
-            {explica}
-          </InfoTip>
-        </>
+        <Icon name="bolt" size={20} tone="muted" />
       )}
       {!bare && (
         <button
