@@ -15,33 +15,33 @@ Faixas: M = Missões/Travessias · I = InfoTip e Laboratório · J = Jogos e car
 - [x] M9 Ícone de quest: "?" AMARELO (o "?" azul de ajuda sai — ver I1)
 
 ## I — InfoTip e Laboratório
-- [ ] I1 Ícone de informação passa a ser "i" (não "?"), cinza claro (não azul)
-- [ ] I2 UM só InfoTip por modal, no canto superior direito, que explica TUDO daquele modal (Conquistas, Diário, Coleção de sonhos, Passeio…)
-- [ ] I3 Evolution Tree: "Where they are heading" — círculo em volta do pet com a COR do ramo (Ascendente amarelo, Harmonia azul, Poder verde); card sem moldura/barra lateral colorida
-- [ ] I4 Trocar a progressão em barrinhas por NÚMERO; juntar com "Evolution Branches": Poder/Harmonia/Benevolência com o número dentro, lado a lado
-- [ ] I5 Glow no ramo que lidera: Poder verde, Harmonia azul, Benevolência dourado
-- [ ] I6 "O loading tem que atualizar" (indicador de carregando do Laboratório)
-- [ ] I7 Adventure Diary: modal de TELA CHEIA com o fundo, o Soulmon na cena e a historinha; o ícone no Laboratório fica como está
+- [x] I1 Ícone de informação passa a ser "i" (não "?"), cinza claro (não azul)
+- [?] I2 (parcial: Passeio, Renascimento, Descanso, Diário; faltam páginas e listas) UM só InfoTip por modal, no canto superior direito, que explica TUDO daquele modal (Conquistas, Diário, Coleção de sonhos, Passeio…)
+- [x] I3 Evolution Tree: "Where they are heading" — círculo em volta do pet com a COR do ramo (Ascendente amarelo, Harmonia azul, Poder verde); card sem moldura/barra lateral colorida
+- [x] I4 Trocar a progressão em barrinhas por NÚMERO; juntar com "Evolution Branches": Poder/Harmonia/Benevolência com o número dentro, lado a lado
+- [x] I5 Glow no ramo que lidera: Poder verde, Harmonia azul, Benevolência dourado
+- [?] I6 "O loading tem que atualizar" (indicador de carregando do Laboratório)
+- [x] I7 Adventure Diary: modal de TELA CHEIA com o fundo, o Soulmon na cena e a historinha; o ícone no Laboratório fica como está
 
 ## J — Jogos, carregamento e NPC
-- [ ] J1 Lista de masmorras e TODOS os jogos demoram ("Opening…") → medir e acelerar (prefetch/skeleton)
-- [ ] J2 Texto "máquina de escrever" do NPC só na PRIMEIRA vez que aquele NPC fala; depois carrega tudo de uma vez
-- [ ] J3 Obstacle Run em TELA CHEIA
-- [ ] J4 Fundo do Eco está ruim
-- [ ] J5 Refúgio: o personagem é bom, mas a casinha não combina → prédio com água (prompt de arte para o dono)
-- [ ] J6 Botões "Hold while breathing…" (Briefing com o pet): ao segurar o botão ENCHE da esquerda p/ direita e ESVAZIA no ritmo da bolha, enquanto o toque durar
+- [?] J1 (feito, sem conferência no aparelho) Lista de masmorras e TODOS os jogos demoram ("Opening…") → medir e acelerar (prefetch/skeleton)
+- [x] J2 Texto "máquina de escrever" do NPC só na PRIMEIRA vez que aquele NPC fala; depois carrega tudo de uma vez
+- [?] J3 (feito, sem conferência no aparelho) Obstacle Run em TELA CHEIA
+- [?] J4 (feito, sem conferência no aparelho) Fundo do Eco está ruim
+- [x] J5 Refúgio: o personagem é bom, mas a casinha não combina → prédio com água (prompt de arte para o dono)
+- [x] J6 Botões "Hold while breathing…" (Briefing com o pet): ao segurar o botão ENCHE da esquerda p/ direita e ESVAZIA no ritmo da bolha, enquanto o toque durar
 
 ## A — Arena / Torneio
-- [ ] A1 Faixas passam a ser as clássicas: Madeira, Bronze, Prata, Ouro, Platina, Diamante, Mestre
-- [ ] A2 Ícone da aba de Quest do Torneio ("!") a repensar (usar o "?" amarelo, M9)
-- [ ] A3 BUG: ao derrotar o inimigo na Arena ele fica transparente e TRAVA — não avança
-- [ ] A4 "Tier" esvazia em algum momento do combate — investigar se faz sentido; explicar ou corrigir
-- [ ] A5 Ataque FÍSICO: só o corte (sem splash/"crash"); o splash é só do dano à distância
-- [ ] A6 Verificar se o inimigo nunca usa ataque físico (só mágico) — bug ou só aquele inimigo
-- [ ] A7 Tirar o "?" de dentro do combate; explicação fica no modal anterior
-- [ ] A8 A Feira: explicar melhor (dono continua sem entender)
-- [ ] A9 Pergunta do dono: diferença entre Duelo e Torneio → responder por texto
+- [x] A1 Faixas passam a ser as clássicas: Madeira, Bronze, Prata, Ouro, Platina, Diamante, Mestre
+- [x] A2 Ícone da aba de Quest do Torneio ("!") a repensar (usar o "?" amarelo, M9)
+- [x] A3 BUG: ao derrotar o inimigo na Arena ele fica transparente e TRAVA — não avança
+- [x] A4 "Tier" esvazia em algum momento do combate — investigar se faz sentido; explicar ou corrigir
+- [x] A5 Ataque FÍSICO: só o corte (sem splash/"crash"); o splash é só do dano à distância
+- [x] A6 Verificar se o inimigo nunca usa ataque físico (só mágico) — bug ou só aquele inimigo
+- [x] A7 Tirar o "?" de dentro do combate; explicação fica no modal anterior
+- [x] A8 A Feira: explicar melhor (dono continua sem entender)
+- [x] A9 Pergunta do dono: diferença entre Duelo e Torneio → responder por texto
 - [ ] A10 "No opponents available" → NPCs com os assets existentes (depois; só prompt se faltar arte)
 
 ## Arte (prompts para o dono)
-- [ ] P1 Prédio do Refúgio com água · [ ] P2 fundo do Eco · [ ] P3 NPCs/prédios novos que as faixas acima exigirem
+- [x] P1 Prédio do Refúgio com água · [ ] P2 fundo do Eco · [ ] P3 NPCs/prédios novos que as faixas acima exigirem

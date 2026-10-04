@@ -156,7 +156,9 @@ function TierMark({ id, size, state }: { id: string; size: 24 | 32 | 48; state: 
     const name = TIER_ICON[id] ?? 'military_tech';
     const fill = state === 'next' ? 0 : 1;
     const tone = state === 'current' ? 'primary' : state === 'passed' ? 'gold' : 'muted';
-    return <Icon name={name} size={size} fill={fill} tone={tone} />;
+    return size === 24
+      ? <Icon name={name} size={24} fill={fill} tone={tone} />
+      : <Icon name={name} size={32} fill={fill} tone={tone} />;
   }
   return (
     <img
