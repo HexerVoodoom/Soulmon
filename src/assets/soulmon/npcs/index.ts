@@ -75,6 +75,9 @@ export const LOT_NPC_ART: Record<string, string> = {
   'arena:feira': npcArenaFeira, // Fanfare (`utils/fairArt.ts` › FAIR_ART_IDS.npc)
   'exploracao:masmorra': npcExploracao,
   'exploracao:passeio': npcExploracaoPasseio, // Brume
+  // 04/10/2026: bustos PROVISÓRIOS (os de `EXTRA_NPC_ART` sem lote) até a arte própria.
+  'exploracao:oficina': npcFFerreira, // Tique (placeholder: busto da Kova)
+  'exploracao:caderno': npcFLua, // Sépia (placeholder: busto da Selene)
   // Os três prédios de Jogos (30/09/2026): o Pipo segue no Salão (jogos livres).
   'jogos:salao': npcJogos,
   'jogos:mente': npcJogosMente, // Tessela

@@ -161,6 +161,18 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     linePt: 'A névoa abre um pouco mais a cada passo. Ande devagar o quanto quiser.',
     lineEn: 'The mist opens a little further each step. Walk as slow as you like.',
   },
+  // 🛠️ 04/10/2026 (pedido do dono): os dois prédios da clareira de baixo. Falas sem cobrança, sem
+  // número e sem prometer efeito (a Oficina descreve; o Caderno guarda e cala).
+  'exploracao:oficina': {
+    namePt: 'Tique, a relojoeira', nameEn: 'Tique, the clockmaker',
+    linePt: 'O tempo anda no seu passo. Aqui só ajudo a medir.',
+    lineEn: 'Time keeps your pace. All I do here is help you measure it.',
+  },
+  'exploracao:caderno': {
+    namePt: 'Sépia, a copista', nameEn: 'Sépia, the scribe',
+    linePt: 'O que se escreve aqui fica na gaveta. Só você abre.',
+    lineEn: 'What is written here stays in the drawer. Only you open it.',
+  },
   'hall:amigos': {
     namePt: 'Nino, o carteiro', nameEn: 'Nino, the courier',
     // H5 (01/10/2026): afirmava que um aceno TINHA chegado, com ou sem aceno (L10).

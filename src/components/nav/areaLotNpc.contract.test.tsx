@@ -37,7 +37,7 @@ afterEach(() => vi.restoreAllMocks());
 
 describe('H11 — a tabela lote → NPC é única e completa', () => {
   it('as duas tabelas (arte e voz) cobrem EXATAMENTE os lotes que existem — sem lote órfão, sem lote caindo no anfitrião da área', () => {
-    expect(ALL_KEYS.length).toBe(18);
+    expect(ALL_KEYS.length).toBe(20);
     expect(Object.keys(LOT_NPC_ART).sort()).toEqual([...ALL_KEYS].sort());
     expect(Object.keys(LOT_NPC_VOICE).sort()).toEqual([...ALL_KEYS].sort());
   });

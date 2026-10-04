@@ -29,7 +29,7 @@
  */
 import type { Language } from './i18n';
 
-export type ExploracaoLotId = 'masmorra' | 'passeio';
+export type ExploracaoLotId = 'masmorra' | 'passeio' | 'oficina' | 'caderno';
 export type JogosLotId = 'salao' | 'mente' | 'refugio';
 
 interface PlayLotSpec<K extends string> {
@@ -56,6 +56,11 @@ const EXPLORACAO_LOTS: PlayLotSpec<ExploracaoLotId>[] = [
   // EN "Stroll" e não "Trail": trilha é justamente o lugar que o parecer de
   // menores veta para as Travessias (04 R-3).
   { id: 'passeio', labelPt: 'Passeio', labelEn: 'Stroll', ariaPt: 'Abrir o Passeio', ariaEn: 'Open the Stroll', left: '76%', top: '37%', width: '56%' }, // tablado do meio, à direita
+  // 🛠️ 04/10/2026 (pedido do dono, `docs/PLANO-OFICINA-FOCO.md`): a GRANDE clareira de baixo, que estava
+  // vazia, ganha dois prédios lado a lado — técnicas de foco/produtividade e o Caderno (journaling).
+  // PT "Caderno" e não "Diário": já existe o Diário de Aventuras (o álbum do pet).
+  { id: 'oficina', labelPt: 'Oficina do Foco', labelEn: 'Focus Workshop', ariaPt: 'Entrar na Oficina do Foco', ariaEn: 'Enter the Focus Workshop', left: '28%', top: '86%', width: '50%' },
+  { id: 'caderno', labelPt: 'Caderno', labelEn: 'Journal', ariaPt: 'Abrir o Caderno', ariaEn: 'Open the Journal', left: '71%', top: '90%', width: '40%' },
 ];
 
 // 🍄 01/10/2026 (H13, navegação do dono): redistribuídos pelas duas clareiras de

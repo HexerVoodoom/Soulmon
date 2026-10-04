@@ -48,6 +48,8 @@ const SalaoSheet = lazy(() => import('../play/PlaySheets').then(m => ({ default:
 const MenteSheet = lazy(() => import('../play/PlaySheets').then(m => ({ default: m.MenteSheet })));
 const RefugioSheet = lazy(() => import('../play/PlaySheets').then(m => ({ default: m.RefugioSheet })));
 // 🧭 O Passeio (30/09/2026): a folha carrega o catálogo das regiões — por isso lazy.
+const OficinaSheet = lazy(() => import('../play/OficinaSheet').then(m => ({ default: m.OficinaSheet })));
+const CadernoSheet = lazy(() => import('../play/CadernoSheet').then(m => ({ default: m.CadernoSheet })));
 const PasseioSheet = lazy(() => import('../play/PasseioSheet').then(m => ({ default: m.PasseioSheet })));
 const DungeonGame = lazy(() => import('../DungeonGame').then(m => ({ default: m.DungeonGame })));
 const DinoGame = lazy(() => import('../DinoGame').then(m => ({ default: m.DinoGame })));
@@ -310,6 +312,8 @@ export function AreaView(props: AreaViewProps) {
                 seed={props.passeio?.seed}
               />
             )}
+            {open?.id === 'oficina' && <OficinaSheet language={language} todayKey={play.todayKey} />}
+            {open?.id === 'caderno' && <CadernoSheet language={language} todayKey={play.todayKey} />}
             {open?.id === 'masmorra' && <MasmorraSheet language={language} bitsToday={play.minigameBitsToday} onStart={() => start('masmorra')} />}
             {open?.id === 'salao' && <SalaoSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} />}
             {open?.id === 'mente' && <MenteSheet language={language} bitsToday={play.minigameBitsToday} reviewDue={dueCards(review, todayKey).length} onStart={start} />}

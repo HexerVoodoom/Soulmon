@@ -120,13 +120,15 @@ async function achar(container: HTMLElement, sel: string): Promise<HTMLElement> 
 }
 
 describe('Exploração — Zeph e a Masmorra', () => {
-  it('a cena tem a Masmorra e o Passeio (30/09/2026; a Corrida mudou para o Salão de Jogos); Zeph fala dentro da folha', () => {
+  it('a cena tem a Masmorra, o Passeio, a Oficina e o Caderno (30/09 e 04/10/2026; a Corrida mudou para o Salão de Jogos); Zeph fala dentro da folha', () => {
     const { container } = renderWithCss(<PlayAreaView {...props()} />);
     expect(container.querySelector('[data-area-npc]')).toBeNull();
     expect([...container.querySelectorAll('[data-area-lot]')].map(e => e.getAttribute('data-area-lot')))
-      .toEqual(['masmorra', 'passeio']);
+      .toEqual(['masmorra', 'passeio', 'oficina', 'caderno']);
     expect(container.querySelector('[data-area-lot="masmorra"] [data-area-lot-art]')).toBeTruthy();
     expect(container.querySelector('[data-area-lot="passeio"] [data-area-lot-art]')).toBeTruthy();
+    expect(container.querySelector('[data-area-lot="oficina"] [data-area-lot-art]')).toBeTruthy();
+    expect(container.querySelector('[data-area-lot="caderno"] [data-area-lot-art]')).toBeTruthy();
     expect(container.querySelector('[data-area-lot="dino"]')).toBeNull();
     fireEvent.click(container.querySelector('[data-area-lot="masmorra"]')!);
     expect(container.querySelector('[data-area-sheet-npc-line]')!.textContent).toContain('Zeph');
