@@ -82,18 +82,23 @@ const ARENA_LOTS: AreaLotSpec<ArenaLotId>[] = [
 // 🔭 01/10/2026 (H16/H17, navegação do dono): prédios MAIORES. No Laboratório o
 // Observatório fica significativamente maior que os vizinhos, e os dois de cima
 // crescem um pouco e descem para assentar no hexágono. No Hall os três crescem.
-// ⚠️ Os fundos do Hall e do Laboratório estão sendo refeitos (H18, frente de
-// arte): se a clareira mudar, só `left`/`top`/`width` destas linhas mudam.
+// 🗺️ 04/10/2026 (H18, fundos refeitos — `entrada-dono/05-bg-*`, GPT Image 2): plataformas NOVAS.
+// Medidas no fundo final renderizado em `cover` a 390×844 (o `left` é % da TELA, não da imagem:
+// o `cover` corta ~11% de cada lado, então a plataforma em 26% da imagem cai em ~22% da tela).
+// Hall: dois losangos em cima (centro ~22/37 e ~78/37 na tela) e um grande embaixo (~50/66).
+// Laboratório: o hexágono GRANDE subiu (centro ~50/41, o Observatório) e os dois menores desceram
+// (~22/66 e ~78/66). O `top` é o pé do prédio, um pouco à frente do centro da plataforma. Prévia:
+// `E:/Soulmon-assets/out/instalacao-20261004/areas/prancha-01-hall-lab-lotes.png`.
 const LABORATORIO_LOTS: AreaLotSpec<LaboratorioLotId>[] = [
-  { id: 'evolucao', labelPt: 'Árvore da Evolução', labelEn: 'Evolution Tree', ariaPt: 'Entrar na Árvore da Evolução', ariaEn: 'Enter the Evolution Tree', left: '27%', top: '57%', width: '44%' },
-  { id: 'pet', labelPt: 'Meu Soulmon', labelEn: 'My Soulmon', ariaPt: 'Entrar em Meu Soulmon', ariaEn: 'Enter My Soulmon', left: '72%', top: '56%', width: '52%' },
-  { id: 'stats', labelPt: 'Observatório', labelEn: 'Observatory', ariaPt: 'Entrar no Observatório (estatísticas)', ariaEn: 'Enter the Observatory (stats)', left: '50%', top: '88%', width: '62%' },
+  { id: 'evolucao', labelPt: 'Árvore da Evolução', labelEn: 'Evolution Tree', ariaPt: 'Entrar na Árvore da Evolução', ariaEn: 'Enter the Evolution Tree', left: '22%', top: '70%', width: '44%' },
+  { id: 'pet', labelPt: 'Meu Soulmon', labelEn: 'My Soulmon', ariaPt: 'Entrar em Meu Soulmon', ariaEn: 'Enter My Soulmon', left: '78%', top: '70%', width: '50%' },
+  { id: 'stats', labelPt: 'Observatório', labelEn: 'Observatory', ariaPt: 'Entrar no Observatório (estatísticas)', ariaEn: 'Enter the Observatory (stats)', left: '50%', top: '43%', width: '62%' },
 ];
 
 const HALL_LOTS: AreaLotSpec<HallLotId>[] = [
-  { id: 'biblioteca', labelPt: 'Biblioteca', labelEn: 'Library', ariaPt: 'Entrar na Biblioteca', ariaEn: 'Enter the Library', left: '27%', top: '44%', width: '46%' },
-  { id: 'amigos', labelPt: 'Círculo de Amigos', labelEn: 'Friends Circle', ariaPt: 'Entrar no Círculo de Amigos', ariaEn: 'Enter the Friends Circle', left: '72%', top: '44%', width: '46%' },
-  { id: 'guilda', labelPt: GUILD_COPY['guild.lote.hall.label'][0], labelEn: GUILD_COPY['guild.lote.hall.label'][1], ariaPt: GUILD_COPY['guild.lote.hall.aria'][0], ariaEn: GUILD_COPY['guild.lote.hall.aria'][1], left: '50%', top: '80%', width: '48%' },
+  { id: 'biblioteca', labelPt: 'Biblioteca', labelEn: 'Library', ariaPt: 'Entrar na Biblioteca', ariaEn: 'Enter the Library', left: '22%', top: '40%', width: '44%' },
+  { id: 'amigos', labelPt: 'Círculo de Amigos', labelEn: 'Friends Circle', ariaPt: 'Entrar no Círculo de Amigos', ariaEn: 'Enter the Friends Circle', left: '78%', top: '40%', width: '44%' },
+  { id: 'guilda', labelPt: GUILD_COPY['guild.lote.hall.label'][0], labelEn: GUILD_COPY['guild.lote.hall.label'][1], ariaPt: GUILD_COPY['guild.lote.hall.aria'][0], ariaEn: GUILD_COPY['guild.lote.hall.aria'][1], left: '50%', top: '70%', width: '58%' },
 ];
 
 function resolveLots<K extends string>(specs: AreaLotSpec<K>[], language: Language) {

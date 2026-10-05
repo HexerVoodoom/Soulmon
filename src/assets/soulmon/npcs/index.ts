@@ -51,6 +51,8 @@ import npcFGuarda from './npc-f-guarda.png';
 import npcLaboratorioPet from './npc-laboratorio-pet.png';
 import npcLaboratorioStats from './npc-laboratorio-stats.png';
 import npcExploracaoPasseio from './npc-exploracao-passeio.png';
+import npcExploracaoOficina from './npc-exploracao-oficina.png';
+import npcExploracaoCaderno from './npc-exploracao-caderno.png';
 
 /**
  * NPC por SUB-LOJA (minimal-ui F4/F5, decisão do dono 28/09/2026): cada lote
@@ -75,9 +77,10 @@ export const LOT_NPC_ART: Record<string, string> = {
   'arena:feira': npcArenaFeira, // Fanfare (`utils/fairArt.ts` › FAIR_ART_IDS.npc)
   'exploracao:masmorra': npcExploracao,
   'exploracao:passeio': npcExploracaoPasseio, // Brume
-  // 04/10/2026: bustos PROVISÓRIOS (os de `EXTRA_NPC_ART` sem lote) até a arte própria.
-  'exploracao:oficina': npcFFerreira, // Tique (placeholder: busto da Kova)
-  'exploracao:caderno': npcFLua, // Sépia (placeholder: busto da Selene)
+  // 04/10/2026: bustos PRÓPRIOS (`entrada-dono/npc-exploracao-*`, 768², alfa binário); até aqui eram
+  // os da Kova e da Selene. As versões `-b` ficaram fora do bundle (`E:/Soulmon-assets/instalados/alternativas/`).
+  'exploracao:oficina': npcExploracaoOficina, // Tique (grilo-besouro artesão)
+  'exploracao:caderno': npcExploracaoCaderno, // Sépia (lula-coruja escriba)
   // Os três prédios de Jogos (30/09/2026): o Pipo segue no Salão (jogos livres).
   'jogos:salao': npcJogos,
   'jogos:mente': npcJogosMente, // Tessela

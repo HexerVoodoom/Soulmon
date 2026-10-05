@@ -45,10 +45,12 @@ import lotePpt from './lote-jogos-ppt.png';
 // arte ao Ateliê da Mente, que ganhou prédio próprio. O arquivo fica em disco
 // (fora do bundle, sem import) para quando a Corrida ganhar lote de novo.
 import lotePasseio from './lote-exploracao-passeio.png';
-// 🛠️ 04/10/2026: arte PROVISÓRIA da Oficina do Foco (o Observatório) e do Caderno (a Biblioteca) —
-// os mesmos arquivos que os lotes de origem; trocar quando a arte própria chegar (PLANO-OFICINA-FOCO §1).
-import loteOficina from './lote-laboratorio-stats.png';
-import loteCaderno from './lote-hall-biblioteca.png';
+// 🛠️ 04/10/2026: prédios PRÓPRIOS da Oficina do Foco (oficina de artesão com timers de cristal, NPC Tique)
+// e do Caderno (casinha-tinteiro com pena, NPC Sépia) — `entrada-dono/lote-exploracao-*` (GPT Image 2.5
+// Flare, alfa real), mesmo pós dos lotes-v2 (300², alfa binário). Até aqui emprestavam o Observatório e a
+// Biblioteca. As versões `-b` ficaram fora do bundle (`E:/Soulmon-assets/instalados/alternativas/`).
+import loteOficina from './lote-exploracao-oficina.png';
+import loteCaderno from './lote-exploracao-caderno.png';
 import loteMente from './lote-jogos-mente.png';
 import loteRefugio from './lote-jogos-refugio.png';
 
@@ -59,14 +61,16 @@ export const EXPLORACAO_LOT_ART = { masmorra: loteMasmorra, passeio: lotePasseio
 
 // 🏛️ Os três prédios de Jogos (30/09/2026). O Salão herda as duas artes que já
 // eram dele por conteúdo (o PPT; o Dino mudou da Exploração para cá).
-// `mente` e `refugio`: prédios próprios desde 30/09/2026 (leva lotes-v2).
+// `mente` e `refugio`: prédios próprios desde 30/09/2026 (leva lotes-v2). 04/10/2026 (J5): o Refúgio
+// trocou a casinha de cogumelo PROVISÓRIA pela casa-gruta com cachoeira e lago (`entrada-dono/36-*`).
 export const JOGOS_LOT_ART = { salao: lotePpt, mente: loteMente, refugio: loteRefugio } as const;
 
 // ── Guilda, Laboratório e Hall (29/09/2026) ────────────────────────────────
-// 🌙 Fundos 760×1344 do Hall e do Laboratório (30/09/2026, rodada 3 fundos-v2,
-// aprovados pelo dono): até aqui as duas áreas caíam no degradê de tokens do
-// `AreaScene`. As clareiras vazias foram medidas pelo gerador — as posições dos
-// lotes em `utils/areaSheetCopy.ts` (`LABORATORIO_LOTS`/`HALL_LOTS`) seguem elas.
+// 🌙 Fundos 760×1344 do Hall e do Laboratório. 04/10/2026 (H18): REFEITOS na receita dos
+// aprovados (GPT Image 2, 9:16, terreno denso com plataformas esculpidas — `entrada-dono/05-bg-*`)
+// e com o mesmo pós de Arena/Exploração/Mercado/Jogos: cover 760×1344 lanczos, grade-to-home,
+// 0 px de matiz 262–345 (WebP q85 ≈ 306/327 KB, teto 400). As posições dos lotes em
+// `utils/areaSheetCopy.ts` (`LABORATORIO_LOTS`/`HALL_LOTS`) seguem as plataformas novas.
 import bgHall from './bg-hall.png';
 import bgLaboratorio from './bg-laboratorio.png';
 
