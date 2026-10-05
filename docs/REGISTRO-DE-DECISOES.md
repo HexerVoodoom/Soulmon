@@ -1895,3 +1895,16 @@ Decisões do dono no run SQUAD-Alpha `combate-v3-01` (Discovery reaberta). Plano
    - Perderam: (a) só PvE com PvP normalizado (recomendado pelo benchmark: GW2 sPvP, VGC); (b) talento só muda escolha, sem número.
 4. **Chips de atributo** deixam de dar +3 pontos e passam a influenciar só a distribuição dos pontos na evolução. Isso fecha o caminho Créditos→Bits→atributo.
    - Perderam: (a) remover os chips; (b) remover o câmbio Créditos→Bits.
+
+### 24.1 Adendo — decisões do dono de 05/10/2026 (contexto do run §2.10 e §2.11)
+
+5. **Sorte no dano: AR(1) por golpe, ρ = 0,9, σ = 15%** (piso do multiplicador 0,05). O mais fraco por 5% vence ~31%; o mais fraco por 1 level, ~19%. RNG `mulberry32` com seed por luta e stream por lado; no PvP a seed é do servidor. As metas de win rate do mais fraco são decisão do dono. Implementado no núcleo puro `src/utils/combate/` (PR1).
+   - Perderam: (a) cauda de crítico (3–5% ×2,5–3); (b) uniforme ±v por golpe; (c) sorteio anticorrelacionado por luta.
+6. **Equipamento: loja direta e fragmentos, SEM RNG, só com moeda ganha jogando.** Nenhuma lootbox.
+   - Perderam: (a) lootbox com teto, pity e odds exibidas; (b) Créditos→Bits para equipamento com teto diário de +25%.
+7. **Créditos aceleram só o que não é combate** (cosmético e conveniência), com teto de +25% sobre o ritmo grátis. Slots pagos de Comércio entram no mesmo teto. Equipamento nunca é comprado com Créditos.
+8. **Renascimento = pago + gate de Vínculo.** O Vínculo nunca é pago.
+9. **Chips dão SÓ pontos de tipo** (Poder/Harmonia/Benevolência) e afetam APENAS a evolução, sem efeito direto em combate. Chips já comprados ficam como estão (sem reembolso e sem conversão); o +3 legado no PvP é tratado no clamp/normalização, e se não couber vira risco de checkpoint.
+10. **Respec de talentos é sempre pago, com moeda ganha.**
+11. **ROLE_SHAPE fica**, limitado a ±25%.
+12. **Classificação Livre, com acesso provável por menores: o ECA Digital (Lei 15.211/2025) é tratado como aplicável.** A análise jurídica foi feita pelos próprios agentes (alpha-compliance, com fontes primárias). **É análise interna por IA, NÃO é parecer de advogado.** Não bloqueia o PR8, porque o desenho não tem RNG pago nem Créditos→combate.
