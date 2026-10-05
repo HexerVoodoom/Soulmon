@@ -93,6 +93,28 @@ export const MAX_HP_BY_FORM = {
 export type EvolutionStage = keyof typeof FORM_REQUIREMENTS;
 
 /**
+ * Teto de level do Soulmon por estágio (combate v3, PR2), ACUMULADO de
+ * `FORM_REQUIREMENTS.cap` (6/7/8/9/10 -> 6/13/21/30/40). Derivado, nunca
+ * copiado: se a escada mudar, o teto segue. Não escreva estes números em
+ * lugar nenhum.
+ */
+export const STAGE_LEVEL_CAPS: readonly number[] = Object.values(FORM_REQUIREMENTS).reduce<number[]>(
+  (acc, f) => [...acc, (acc[acc.length - 1] ?? 0) + f.cap],
+  [],
+);
+
+/** Índice do estágio (0 = rookie ... 4 = ultra) na ordem de `FORM_REQUIREMENTS`. */
+export function stageIndexOf(stage: string): number {
+  const idx = (Object.keys(FORM_REQUIREMENTS) as string[]).indexOf(getStageLevel(stage));
+  return idx < 0 ? 0 : idx;
+}
+
+/** Teto de level do estágio (id completo, ex.: 'champion-power'). */
+export function levelCapFor(stage: string): number {
+  return STAGE_LEVEL_CAPS[stageIndexOf(stage)];
+}
+
+/**
  * O MAIOR requisito diário da escada (hoje 6, de mega/ultra).
  *
  * Existe para que nenhum outro teto do jogo possa ficar ABAIXO do que o jogo
