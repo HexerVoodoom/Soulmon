@@ -201,3 +201,11 @@ Decisões do dono que **substituem** o texto acima onde conflitarem:
 - **Segurança (S1):** `save.js` e `_duel.js` clampam `combatStats` (finito, piso, teto = base + ganho máx × dias de conta carimbados pelo servidor).
 
 **Ordem nova das fases** (substitui §6): 0) simulação fora do repo com as regras acima → 1) núcleo puro + especiais por família + simulador no repo como teste → 2) motores um por vez: Arena (já tem simulador) → Masmorra/Pesadelo → PvP `_duel.js` por último, com teste de paridade → 3) save + crescimento + clamp no servidor → 4) nome do especial → 5) docs.
+
+## 10. Revisão pós-Prototyper (04/10/2026) — substitui a §9 onde conflitar
+- Régua de paridade: **tempo para vencer no espelho ±5%** (win rate sai).
+- Curva: `golpes = ceil(HP × (1 + DEF/k) ÷ (1 + ATK/k))`; o HP cresce junto (a cada 4º dia que conta + evolução).
+- Energia também por tempo e por dano recebido: **1 especial garantido por luta**.
+- Buff SPD mantido (calibrar na Fase 2).
+- Q6: **cada estágio gera um especial novo** (nome e efeito). Q7: o selo mostra só o nome próprio.
+- **Glitchtama dá ponto.** Invariante: mesmo estágio = mesmo total de pontos ao evoluir. **Empate é resultado válido.**
