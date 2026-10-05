@@ -1,0 +1,155 @@
+{
+ "runId": "combate-v3-01",
+ "alvo": "Combate v3 do Soulmon",
+ "modo": "validar-o-que-existe",
+ "perfil": "produto/game design",
+ "status": "bloqueado",
+ "faseAtual": "builder",
+ "proximaFase": "builder",
+ "worktree": "E:/soulmon-cv3",
+ "branch": "combate-v3/plano",
+ "commits": [
+  "3390eb6b docs(combate): plano copiado + 00-MAPA (sem PR)",
+  "7dae804b docs(combate): plano v3 revisado (sem PR)",
+  "69c4a1e0 docs(combate): plano v3 pós-spike (sem PR)",
+  "630848b3 docs: plano §11 + REGISTRO §24 (sem PR)"
+ ],
+ "fases": {
+  "discovery": {
+   "veredito": "CONCERNS",
+   "agentes": [
+    "curador-de-contexto",
+    "benchmark",
+    "qa",
+    "skeptic",
+    "compliance",
+    "security"
+   ],
+   "porqueEscala": "feature média; o problema e o negócio já vêm dados pelo dono; sem usuários, sem sizing",
+   "artefatos": [
+    "contexto.md",
+    "discovery/dossie-codigo.md",
+    "discovery/benchmark.md",
+    "discovery/sim-modelo.md",
+    "discovery/gate.md"
+   ],
+   "fatais": [
+    "F1 métrica de paridade",
+    "F2 ATK puro domina / piso"
+   ],
+   "checkpoint": "CONTINUAR: paridade win-rate espelho; piso 3 + HP rodizio 4o dia; camadas fora ±25%; nome sem IA; retroativo totalPerfectDays"
+  },
+  "prototyper": {
+   "veredito": "CONCERNS",
+   "premissa": "NAO",
+   "agentes": [
+    "backend(spike)",
+    "skeptic"
+   ],
+   "porqueEscala": "spike unico responde a premissa",
+   "artefatos": [
+    "prototyper/spike-sim.md",
+    "prototyper/spike-sim2.md",
+    "prototyper/gate.md"
+   ],
+   "fatais": [
+    "dominancia por curva de stats"
+   ],
+   "passes": 2,
+   "checkpoint1": "AJUSTAR",
+   "respike": "NAO por pouco; k=8*nivel round SPD prop; 5 familias PASS; buffs -13..-15%; marginal ~0",
+   "confirmacao": "NAO FECHA: marginal 0,3% d60 (FATAL); cura/escudo -6,9% 1 celula",
+   "builderAberto": false,
+   "reescala": "NAO FECHA: gap +54% d45, DEF 125s; causa raiz curva x estagio longo; 4 respikes sem convergir"
+  },
+  "discovery-v2": {
+   "veredito": "CONCERNS",
+   "agentes": [
+    "curador",
+    "benchmark",
+    "backend",
+    "compliance",
+    "architect",
+    "skeptic"
+   ],
+   "artefatos": [
+    "discovery/dossie-progressao.md",
+    "discovery/benchmark-progressao.md",
+    "discovery/spike-level.md",
+    "discovery/arquitetura-camadas.md",
+    "discovery/gate.md"
+   ],
+   "passes": 1,
+   "fatais": [
+    "+1 level 1,7% (HP estagio 4)",
+    "escopo/decisao"
+   ]
+  },
+  "prototyper-v2": {
+   "veredito": "PASS com 1 decisao bloqueante",
+   "premissa": "SIM",
+   "agentes": [
+    "backend",
+    "skeptic"
+   ],
+   "passes": 1,
+   "artefatos": [
+    "prototyper/spike-sistema.md",
+    "prototyper/gate.md"
+   ],
+   "bloqueante": "5% => 90% vitoria PvP",
+   "variancia": "PASS default AR(1) rho0.9 s15; 31,5% / ~19%"
+  },
+  "builder": {
+   "stories": [
+    "PR1-nucleo",
+    "PR2-xp-level-save",
+    "PR3-arena",
+    "PR4-masmorra-pesadelo",
+    "PR5-pvp-duel",
+    "PR6-chips-distribuicao",
+    "PR7-vinculo-talentos-gates",
+    "PR8-equipamento (BLOQUEADO lootbox)",
+    "PR9-nome-especial",
+    "PR10-docs"
+   ],
+   "abertoPor": "pre-autorizacao do dono (variancia sem FATAL)",
+   "PR1": "BLOQUEADO: disco E: 100% cheio (0 livre). rng/curve/bonus/specials.ts escritos sem commit; falta level/fight/ruler/test",
+   "prs": {
+    "PR1": "merged #221 3f73ef78",
+    "PR1b": "BLOQUEADO calibracao PvP (WIP b830e846 local)"
+   }
+  }
+ },
+ "decisoesDono": {
+  "Q1": "galho dominante: Poder→ATK, Harmonia→SPD, Benevolência→DEF; HP só na evolução",
+  "Q2": "cada dia que conta para evolução (proposta: dayWasPerfect/completeDayReached na virada)",
+  "Q4": "×1,5 ceil nos 4",
+  "Q5": "±1 golpe"
+ },
+ "abertas": [
+  "disco E: (dono)",
+  "lootbox A/C + classificacao indicativa",
+  "chip x economia de galhos (§10)",
+  "reembolso chips",
+  "respec talentos",
+  "ROLE_SHAPE",
+  "Créditos->Bits conflita com #4 (compliance)",
+  "PR1b calibracao torcida",
+  "ClassInd 14 anos x Livre (loja Creditos)",
+  "Q-FX1 maldicao/HoT"
+ ],
+ "invalidados": [
+  "prototyper/_superseded/spike-sim.md",
+  "prototyper/_superseded/spike-sim2.md",
+  "prototyper/_superseded/gate.md (invalidado-por-voltar; evidencia)"
+ ],
+ "defaultsDeclarados": {
+  "Q6": "especial NOVO por estagio (dono)",
+  "Q7": "so nome proprio (dono)",
+  "Glitchtama": "da ponto; pontos=min(perfectDays,required) (proposta)",
+  "empate": "valido (dono)",
+  "hpRodizio": "4o dia (default)",
+  "progressao": "piso 15%; HP=10*1.5^s*(1+L/10); regua pareada; teto global 5% nao empilhavel; equipamento Bits sem cambio p/ itens %; Renascimento pago+Vinculo; Comercio sem %"
+ }
+}

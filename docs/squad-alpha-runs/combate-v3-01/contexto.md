@@ -1,0 +1,164 @@
+# Bloco de contexto — Combate v3 do Soulmon (run `combate-v3-01`)
+
+| Meta | Valor |
+|---|---|
+| Resolvido em | 04/10/2026 |
+| Fontes usadas | Despacho do dono via laço principal (Q1/Q2/Q4/Q5 respondidas) · `D:\Soulmon\HANDOFF-COMBATE-V3.md` (copiado para `docs/PLANO-COMBATE-V3.md`) · repo `D:\Soulmon\repo` (`CLAUDE.md`, `docs/manual/00-MAPA.md`, `docs/REGISTRO-DE-DECISOES.md` §20/§23) |
+| Lacunas abertas | Q3, Q6, Q7, Q8, Q9 (ver §2.2) · regra exata de "dia que conta para evolução" (a descobrir no código — curador) |
+
+## §1 Organização
+Soulmon — app de produtividade gamificado do gênero v-pet (hábitos/tarefas reais fazem a criatura crescer). Estágio: pré-lançamento; **ninguém usa em produção** (00-MAPA, 07/09/2026) — sem telemetria. Dono único (solo dev + IA).
+
+## §2 Alvo do run
+Combate v3: atributos lineares ATK/DEF/SPD/HP (unidade = golpe) + golpe especial com nome gerado e efeito por família (dano, DoT, cura, buff, debuff, escudo) com paridade de tempo provada por simulação.
+
+### §2.1 Decisões do dono já respondidas (04/10/2026)
+- **Q1** Ponto do dia vai para o atributo do galho dominante do dia: Poder→ATK, Harmonia→SPD, Benevolência→DEF. **HP sobe só na evolução.**
+- **Q2** O ponto é dado em **cada dia que conta para evolução** (mesma regra que o jogo já usa — descobrir no código).
+- **Q4** Boost de evolução ×1,5 **arredondado para cima**, nos 4 atributos.
+- **Q5** Vantagem elemental vira **±1 golpe** (linear).
+
+### §2.2 Abertas (pendências ao dono — não inventar)
+Q3 piso de `golpesParaDerrubar` / teto da escada · Q6 especial muda ao evoluir / `E` cresce · Q7 selo na tela · Q8 nome por regra ou IA · Q9 saves existentes.
+
+## §3 Usuário(s)
+Jogador casual de v-pet/produtividade, mobile-first (Android/Capacitor + web + desktop Electron). Combate é idle/"torcer em vez de comandar" (taps de torcida, energia dispara especial). Detalhe de ICP em `docs/manual/01-VISAO.md` §3. ⚠️ Dois perfis: jogador de PvE solo e o PvP do Torneio (servidor autoritativo) — paridade cliente/servidor obrigatória.
+
+## §4 Métrica-norte + entrada
+Sem telemetria (sem usuários). Métrica do run = **régua de balanço por simulação**: tempo para vencer de cada família de especial dentro de ±5% da referência dano direto; spread de win rate ≤ 20pp (precedente `arena.test.ts`); duração de luta PvE ~20–29 s, PvP ~35–42 s (REGISTRO §20). Métrica de produto: `[a definir]` (retenção é hipótese).
+
+## §5 Restrições duras
+Funções PURAS (sem React) com um dono por regra · paridade cliente/servidor travada por teste (`functions/api/_duel.js`) · save saneado no load e em `functions/api/save.js` + teste de contagem de campos · tsc (app + `tsconfig.server.json`), vitest, `npm run build` (dist commitado) antes do PR · PR + CI verde + merge ff por fase (autorizado) · worktree `E:/soulmon-cv3` · EN primeiro + PT-BR · commits PT-BR com `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>` · arquivos grandes em `E:\`.
+
+## §6 Restrição regulatória / política
+Documentado: linhas vermelhas do produto (`01-VISAO.md` §7; handoff §8) — perder luta nunca custa coração; atributo/especial nunca é vantagem paga (Créditos não compram atributo); sem punição (dia ruim não tira ponto); copy sem cobrança/FOMO (`copy.semFomo`); sem nomes/números de franquia nem sufixo "-mon" (`narrativa.contract.test.ts`, `NARRATIVA-E-UNIVERSO.md`). IA opcional (`/api/chat`, Groq) exige higienização e fallback offline. Nenhuma norma legal externa documentada → lacuna, se surgir, vai ao dono.
+
+## §7 Marca e voz
+Design system **canônico** (`04-IDENTIDADE-VISUAL.md`, `src/index.css`). Voz: EN primeiro, PT natural (não calco), sem cobrança. Lane de marca não se aplica.
+
+## §8 Stack e ambiente
+React + TypeScript + Vite, Capacitor/Electron, Cloudflare Pages Functions (`functions/api/*.js`), vitest. Rastreador: GitHub (PRs/CI). Analytics: nenhum ativo.
+
+## §9 Donos por disciplina
+| Disciplina | Dono |
+|---|---|
+| Produto / game design | Dono do Soulmon (perfil do run: produto/game design) |
+| Design | Dono do Soulmon |
+| Tech | Dono do Soulmon (execução delegada a Claude) |
+| Negócio | Dono do Soulmon |
+| Jurídico | Dono do Soulmon `[sem jurídico separado declarado]` |
+
+## §10 Fora de escopo
+Monetização de atributos; mudar a economia de galhos de evolução (`powerPoints/harmonyPoints/benevolencePoints`); arte nova; som novo (superfície nova nasce muda); minijogos fora das 4 lutas (Arena, Masmorra, Pesadelo, Duelo do Torneio).
+
+## §2.3 Decisões do checkpoint da Fase 0 (04/10/2026, dono: CONTINUAR)
+- **F1** Paridade de especiais = **win rate no espelho ±5pp** contra a referência dano direto. Tempo/HP só informativos.
+- **F2/Q3** Piso de **3 golpes** em `golpesParaDerrubar`. **HP também ganha ponto diário**, por **rodízio** (default declarado pela squad): a cada 4º dia que conta, o ponto vai para HP; nos outros, para o atributo do galho dominante do dia.
+- **X4** Anel, esquiva e torcida ficam **fora da régua**, limitados a ±25% de efeito.
+- **Q8** Nome por **regra determinística, sem IA**. **Q9** Saves antigos ganham pontos retroativos por `totalPerfectDays`.
+- **Defaults declarados (confirmar no próximo checkpoint):** Q6 nome fixo por estágio + orçamento `E` constante em golpes (escala sozinho). Q7 nome próprio do especial no lugar de "ESPECIAL!". Glitchtama NÃO dá ponto de combate. Desempate do espelho: vence quem tem mais % de HP restante, depois seed determinística do servidor.
+- **S1** `save.js` e `_duel.js` clampam `combatStats` (teto = base + ganho máx × dias de conta do servidor).
+
+## §2.4 Decisões do checkpoint da Fase 1 (04/10/2026, dono: AJUSTAR) — SUBSTITUEM §2.3 onde conflitarem
+- Régua = **tempo para vencer no espelho ±5%** (determinística). Win rate sai.
+- Curva = **golpes = ceil(HP×(1+DEF/k)÷(1+ATK/k))**, e o HP cresce junto.
+- Energia também **por tempo e por dano recebido**, garantindo 1 especial por luta.
+- Buff SPD: **mantido**, calibrado na Fase 2 com a régua nova.
+- **CORREÇÕES dos defaults da squad:**
+  - Q6: **cada estágio gera um especial NOVO (nome e efeito)**.
+  - Q7: o selo mostra só o nome próprio.
+  - **Glitchtama DÁ ponto.** Invariante: todo Soulmon do mesmo estágio evolui com o **mesmo total de pontos** (derivar a regra; tem de valer com degeneração e com o zerar na evolução).
+  - **Empate no espelho é resultado válido** (ninguém ganha). Sai o desempate por %HP/seed.
+  - HP a cada 4º dia que conta: mantido como default.
+
+## §2.5 Decisões do re-spike da Fase 1 (04/10/2026)
+- **Dano fracionário**: a barra anda em frações; só a exibição arredonda.
+- Buffs: aceita −15% no rookie, sem conversão em dano.
+- DEF puro: aceito como tanque, teto de 40 s.
+- Degeneração: os pontos **espelham perfectDays** (tira e recupera; invariante exato). A copy segue `copy.semFomo`, sem tom punitivo.
+- O dono pré-autorizou: se a confirmação fechar sem FATAL, gate F1 aprovado e a Fase 2 abre (1º PR: núcleo puro + especiais + simulador como teste vitest, sem UI).
+
+## §2.6 Decisões da confirmação F1 (04/10/2026)
+- Curva **re-escala por estágio**: dentro do estágio, +1 ponto ≈ 1 golpe (~10%); entre estágios o equilíbrio vem do ×1,5.
+- Cura e escudo calibrados por estágio.
+- Critério mínimo de valor do ponto (declarado pela squad, fixo): **+1 ponto ≥2% do TTK em todo dia medido**.
+- Pré-autorizado: se fechar sem FATAL, gate F1 aprovado e o Builder abre (1º PR: núcleo + especiais + simulador vitest).
+
+## §2.7 VOLTAR para a Discovery com escopo ampliado (05/10/2026, dono)
+Os spikes da F1 estão em `prototyper/_superseded/` como evidência. Lições: com a curva aditiva o build puro domina, com a multiplicativa domina o distribuído, e o estágio longo quebra o equilíbrio.
+- Registrado: teto de pontos por estágio; DEF resolvido pelo teto; buffs calibrados por estágio.
+- **Proposta do dono: LEVEL + XP no lugar de "1 ponto/dia".**
+  - Soulmon:
+    - Toda atividade dá XP, ~66% vem do bônus de dia completo e o resto das tarefas.
+    - Teto de level por estágio. A evolução continua presa às atividades reais (regra de dias perfeitos intacta).
+    - O level define o TOTAL de pontos; o galho dominante decide a distribuição, com limite.
+  - Usuário:
+    - Level separado. O Soulmon pode regredir por degeneração; o usuário não.
+    - Os gates ficam no level do usuário: Arena/PvP, Torneio, andares altos de Masmorra/Pesadelo, Renascimento.
+    - 1 ponto de talento por level.
+  - Árvore de talentos do usuário:
+    - Caminhos PvP / PvE / Comércio, com pontos nunca suficientes para tudo.
+    - Vantagem numérica ~5% e/ou só fora do PvP: a squad propõe e pergunta.
+  - **Equipamentos** para o Soulmon: theory crafting e uso da moeda.
+- **Conflitos com linhas vermelhas → perguntar ao dono, não resolver:**
+  1. "Créditos não compram atributo" × equipamento comprado com moeda (moeda ganha jogando × paga).
+  2. "Estratégia só muda o playstyle" × vantagem de ~5% no PvP.
+  3. `copy.semFomo` / nunca punir × gates e regressão.
+
+## §2.8 Decisões da Discovery reaberta (05/10/2026, dono: CONTINUAR)
+- **Escopo: TUDO neste run** (level do Soulmon, PvP, especiais, talentos+gates, equipamento+moeda, Comércio), em PRs pequenos na ordem de risco.
+- Concentração máx. 45%.
+- **HP sobe automaticamente com o level** (não gasta ponto). Os pontos de distribuição vão só para ATK/DEF/SPD; durabilidade extra só via DEF.
+- Degeneração: **o level desce e é exibido**, com texto neutro (`copy.semFomo`).
+- **Chips** deixam de dar +3. Passam a influenciar só a DISTRIBUIÇÃO (caminho Poder/Harmonia/Benevolência) na evolução.
+- **Level do usuário = Vínculo.** Revogam-se "recompensa do Vínculo só cosmética" e "escada de gates é grind" (registrar no REGISTRO com as alternativas que perderam).
+- **~5% de talento/equipamento também no PvP.** O dono aceita conscientemente a contradição com "só playstyle". Nada comprável com dinheiro real dá %; o equipamento usa moeda ganha jogando (ambiguidade → pergunta).
+- XP: dia completo + esforço/meta (nunca contagem), alvo 66/34.
+- Pendentes: Renascimento (pago + level?), escopo do caminho Comércio, moeda do equipamento.
+
+## §2.9 Checkpoint da F1 do sistema (05/10/2026)
+- **5% de bônus mantido também no PvP**, decisão consciente com ~90% de vitória entre iguais na mesa.
+- Diretriz de monetização: **não pode ser P2W**, mas é OK dinheiro real **acelerar um pouco** a aquisição de recursos, de forma comedida. Os 4 defaults de economia serão revistos com benchmark.
+- **NOVO: range de dano (sorte)**, para que o mais fraco vença de vez em quando. Calibrar por simulação. A régua pareada passa a ser sobre a média de muitas seeds.
+- Pré-autorizado: se a variância fechar sem FATAL, abrir o Builder com o PR1 (núcleo puro: curva + level + HP automático + especiais + range de dano + régua pareada em vitest, sem UI).
+
+## §2.10 Decisões (05/10/2026)
+- Disco E: será liberado pelo dono. **Não escrever em E: até o aviso** (o PR1 está pausado; o REGISTRO §24 fica pendente porque vive no worktree em E:).
+- Sorte: **AR(1) ρ=0,9 σ=15%**, ~31% / ~19%. As metas de win rate do mais fraco são **decisão do dono**.
+- Créditos→Bits para equipamento: tende a permitido com teto diário de +25% sobre o grátis. **Avaliar lootbox com teto** (pity, odds exibidas, compliance/legal, faixa etária).
+- Renascimento = pago + Vínculo (o Vínculo nunca é pago). Comércio: slots pagos dentro do mesmo teto de +25%. Piso de 15% mantido.
+
+## §2.11 Decisões do dono (05/10/2026, modais lootbox + stories)
+- Equipamento: loja direta/fragmentos, SEM RNG, só moeda ganha.
+- Créditos aceleram só não-combate (cosmético/conveniência), teto +25%. Equipamento só com moeda ganha.
+- Classificação: Livre / acesso provável por menores. ECA Digital (L15.211/2025) tratado como aplicável.
+- Jurídico: análise feita pelos próprios agentes (alpha-compliance, com fontes primárias). **É ANÁLISE INTERNA POR IA, NÃO É PARECER DE ADVOGADO.** Não bloqueia o PR8 (o desenho não tem RNG pago nem Créditos→combate).
+- Chips: dão SÓ pontos de tipo (Poder/Harmonia/Benevolência) e afetam APENAS a evolução. Sem efeito direto em combate.
+- Chips já comprados: ficam como estão (sem reembolso e sem conversão). O +3 legado no PvP é tratado no clamp/normalização; se não couber, é risco de checkpoint.
+- Respec de talentos: sempre pago (moeda ganha).
+- ROLE_SHAPE: FICA, limitado a ±25%.
+- Disco: autorizado usar outros discos (não C:). Worktree vai para D:\soulmon-cv3.
+
+## §2.12 Protocolo e novos pedidos (05/10/2026)
+- **Antes de CADA merge:** fetch de origin/main → rebase → tsc, vitest e build de novo se algo mudou.
+- **Novos pedidos de combate:**
+  - (B1) a barra de energia do especial dispara ao encher e ZERA;
+  - (B2) o golpe básico é fixo por personagem (melee OU ranged) em todas as telas; o especial é independente;
+  - (N1) o cast mostra o nome próprio da habilidade (StageSkill);
+  - (FX) o cast do especial é aprimorado em todas as telas, com FX distintos para buff/debuff/maldição/DoT/cura/HoT, movimento reduzido e R-NOVA.
+- Sessão irmã em D:\soulmon-ajustes (modais/home): avisar se tocar nesses componentes.
+- PR1 mergeado: #221, main 3f73ef78.
+
+## §2.13 Decisões do dono (05/10/2026, depois do PR1b)
+- PvP depois do B1: ACEITAR ~65% na torcida normal. A faixa do teste baixa. "Uma barra, um uso" fica, com paridade entre cliente e servidor.
+- Compra de Créditos: atrás de verificação de idade ou supervisão parental, mantendo a classificação Livre. Vira story/pendência e não bloqueia o combate.
+- FX de maldição e HoT: ficam prontos, mas inalcançáveis até a mecânica existir.
+- Merge: se o classificador bloquear ("Merge Without Review"), não contornar. Parar e reportar com o PR pronto.
+- Sessão irmã: mexe em App.tsx/AreaView.tsx (initialSheet). No rebase, preservar as duas mudanças.
+- Merge liberado (settings): gh pr merge / push main / ff-only, após fetch+rebase+recheck+CI verde. Repassar a todo executor.
+
+## §2.14 Decisões do dono sobre os assets (05/10/2026, `builder/INVENTARIO-ASSETS.md`)
+- **M1** Arte nova **LIBERADA** para P0+P1 (cerca de 60 peças). Para esses assets, isso supera o "arte nova" da §10 e o "só reuso" do PR11. O som continua fora (R-NOVA).
+- **M2** O level do Soulmon aparece como **`Lv N`** abreviado, nunca "nível" por extenso (NARRATIVA §12).
+- **M3** Equipamento com **3 slots, um por atributo**: Núcleo→ATK, Carapaça→DEF, Rastro→SPD. Tiers comprados direto, sem RNG.
+- **M4** A maré de sorte fica **OCULTA**: a mecânica AR(1) continua, mas nenhum indicador aparece na UI.
