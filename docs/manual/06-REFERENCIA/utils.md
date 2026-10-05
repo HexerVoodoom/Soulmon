@@ -6,7 +6,7 @@
 > **Não cobre:** o CONTEÚDO das regras de jogo em profundidade (→ [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md)); componentes, hooks, contexts, types, plugins, constants, `functions/api`, `workers/` e `desktop/` (→ os outros docs de `06-REFERENCIA/`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
 
-Cobertura: **179/179** (+1 em 04/10/2026: `petBounce.ts`); antes **178/178** módulos de `src/utils` em 01/10/2026 (`node scripts/docs-inventario.mjs | grep -c '^### `src/utils/'` = `grep -c '^### `src/utils/'` deste doc = 178; +3 em 01/10/2026: `visorScenes.ts`, `dueloArt.ts`, `lineFullArt.ts`; o número entre os dois estava defasado — dizia 166 com 178 entradas); antes, **166/166** (+9 em 30/09/2026: `mente/*`, `refugio/respiracao.ts`, `refugio/convite.ts` e `supportLine.ts`); antes, **157/157** (inclui `src/utils/soulProfile/`), medidos por `node scripts/docs-inventario.mjs` em 29/09/2026 (eram 139 em 24/09/2026; a Guilda e a `backStack` entraram no meio) — os últimos a entrar foram `fairArt.ts`, `groveLocal.ts`, `groveStage.ts`, `guildClaimLocal.ts` e `guildCopyCore.ts`. (Dizia "120/120, medidos em 09/09/2026", que era a medição certa de uma árvore que cresceu 19 módulos desde então; o número **só** vale com a data ao lado, e quem quiser o de hoje roda o script.) `src/navigation.ts` é documentado aqui também, por vizinhança de assunto, e não entra nessa contagem. Ordem do corpo: alfabética por caminho. Índice abaixo: agrupado por família.
+Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `rng`, `ruler`, `specials` — núcleo do combate v3, PR1); antes **179/179** (+1 em 04/10/2026: `petBounce.ts`); antes **178/178** módulos de `src/utils` em 01/10/2026 (`node scripts/docs-inventario.mjs | grep -c '^### `src/utils/'` = `grep -c '^### `src/utils/'` deste doc = 178; +3 em 01/10/2026: `visorScenes.ts`, `dueloArt.ts`, `lineFullArt.ts`; o número entre os dois estava defasado — dizia 166 com 178 entradas); antes, **166/166** (+9 em 30/09/2026: `mente/*`, `refugio/respiracao.ts`, `refugio/convite.ts` e `supportLine.ts`); antes, **157/157** (inclui `src/utils/soulProfile/`), medidos por `node scripts/docs-inventario.mjs` em 29/09/2026 (eram 139 em 24/09/2026; a Guilda e a `backStack` entraram no meio) — os últimos a entrar foram `fairArt.ts`, `groveLocal.ts`, `groveStage.ts`, `guildClaimLocal.ts` e `guildCopyCore.ts`. (Dizia "120/120, medidos em 09/09/2026", que era a medição certa de uma árvore que cresceu 19 módulos desde então; o número **só** vale com a data ao lado, e quem quiser o de hoje roda o script.) `src/navigation.ts` é documentado aqui também, por vizinhança de assunto, e não entra nessa contagem. Ordem do corpo: alfabética por caminho. Índice abaixo: agrupado por família.
 
 ## Índice por família
 
@@ -661,6 +661,70 @@ Cobertura: **179/179** (+1 em 04/10/2026: `petBounce.ts`); antes **178/178** mó
 **Exports:** `TORCIDA_TAPS_FULL` (16, o do duelo e da Arena — de `_duel.js`; era 8 até a rodada 5/I10) · `TORCIDA_PVE_TAPS_FULL` (8, o gauge do Pesadelo e da Masmorra, que não mudou) · `TORCIDA_BASE_FRAC` (0,5 do `dmg` do estágio = golpe-base) · `TORCIDA_PVE_SPECIAL_MULT` (3, decisão do dono 02/10/2026 — TORC-1) · `torcidaTap(taps, full?)` · `torcidaFill(taps, full?)` · `torcidaCheio(taps, full?)` (`full` padrão = PvE) · `torcidaStrike(petDmg, taps, dmgReduction)` → `{ dmg, special, tapsLeft }` · `TIMING_CHEER_ENABLED` (reexport, `false`).
 **Quem chama:** `NightmareBattle`, `DungeonGame`, `DuelScreen` (`torcidaTap`), `TorcidaKit`.
 **Régua:** `src/utils/torcida.test.ts` — a torcida só soma (gauge vazio ou parcial dá o golpe-base, nunca menos).
+
+### `src/utils/combate/bonus.ts`
+**Dono de:** O teto único de bônus de dano do combate v3: `min(talento + equipamento + Comércio + Renascimento, 5%)`, não empilhável, vale no PvP (REGISTRO §24).
+**Exports:**
+- `COMBAT_BONUS_CAP` (const) — `0.05`.
+- `BonusSources` (interface) — campos opcionais: `talent`, `equipment`, `commerce`, `rebirth`.
+- `combinedBonus(sources)` — soma as fontes válidas (negativo/NaN/infinito contam 0) e aplica o teto.
+**Chamado por:** ninguém ainda (núcleo do PR1 do combate v3; os motores entram nos PRs seguintes).
+**Régua:** `src/utils/combate/combate.test.ts` (gate 6 + prova de vermelho sem teto).
+
+### `src/utils/combate/curve.ts`
+**Dono de:** A curva de golpes e o ritmo do combate v3: `golpes = HP·(1+DEF/8)/(1+ATK/8)/(1+bônus)`, fracionário; exibição por `round`; ritmo `9·(1+SPD/8)/(1+1/8)` por janela.
+**Exports:**
+- `CURVE_K` (const) — `8`. `BASE_ATTACKS_PER_WINDOW` (const) — `9`.
+- `Combatant` (interface) — campos: `level`, `atk`, `def`, `spd`, `hp`, `bonus`.
+- `hitsToKnockOut(attacker, defender)`, `displayHits(hits)`, `attacksPerWindow(spd)`.
+**Chamado por:** `combate/level.ts`, `combate/fight.ts`, `combate/ruler.ts`.
+**Régua:** `src/utils/combate/combate.test.ts` (gate 1: exemplos 10/9/11 do dono).
+
+### `src/utils/combate/fight.ts`
+**Dono de:** O simulador puro e determinístico de uma luta v3 (seed → resultado): janela normalizada por level (espelho equilibrado = 25 s), energia e especiais, sorte AR(1) por golpe, tempo "fantasma" dos dois lados e empate como resultado válido.
+**Exports:**
+- `MIRROR_SECONDS` (const) — `25`.
+- `windowSeconds(level)`.
+- `FightSide`, `FightOptions` (`seed`, `hpScale`, `variance`, `windowLevel`, `phases`), `FightResult`, `FightWinner` (`'A' | 'B' | 'draw'`).
+- `fight(a, b, opts)`.
+**Chamado por:** `combate/ruler.ts`.
+**Régua:** `src/utils/combate/combate.test.ts` (gates 2, 3, 4, 7 e 8).
+
+### `src/utils/combate/level.ts`
+**Dono de:** Level, pontos e HP do Soulmon no combate v3: tetos por estágio derivados de `FORM_REQUIREMENTS.cap` (6/13/21/30/40), 1 ponto por level em ATK/DEF/SPD com teto 45% e piso 15% por atributo, base `ceil(1,5^s)`, HP automático `10·1,5^s·(1+L/10)`.
+**Exports:**
+- `STAGE_LEVEL_CAPS`, `MAX_LEVEL`, `MAX_SHARE`, `MIN_SHARE`, `SHARE_BOUNDS`, `HP_BASE`, `HP_LEVEL_DIVISOR`, `STAGE_FACTOR` (const).
+- `StatWeights`, `Points`, `ShareBounds` (interface); `ReferenceBuild` (type).
+- `REFERENCE_BUILDS`, `REFERENCE_BUILD_NAMES`, `RULER_LEVELS` (const) — a amostra declarada dos gates.
+- `clampLevel`, `stageOfLevel`, `firstLevelOfStage`, `stageBase`, `autoHp`, `distributePoints`, `combatantAt`.
+**Chamado por:** `combate/fight.ts`, `combate/ruler.ts`.
+**Régua:** `src/utils/combate/combate.test.ts` (bloco `level` e gate 2).
+
+### `src/utils/combate/rng.ts`
+**Dono de:** Toda a aleatoriedade de uma luta v3: `mulberry32` com seed por luta, stream por lado, Box–Muller e o multiplicador AR(1) (ρ 0,9, σ 15%, piso 0,05).
+**Exports:**
+- `Rng` (type), `VarianceConfig` (interface).
+- `mulberry32(seed)`, `sideSeed(seed, side)`, `gaussian(r)`, `ar1Multiplier(r, cfg)`.
+- `PHASE_SALT`, `VARIANCE` (const).
+**Chamado por:** `combate/fight.ts`.
+**Régua:** `src/utils/combate/combate.test.ts` (vetor de conformidade `mulberry32(42)`, gates 7 e 8).
+
+### `src/utils/combate/ruler.ts`
+**Dono de:** A régua pareada do combate v3: Δ = média por seed de `tA/tB` (família × direto) − `tA/tB` (direto × direto), HP×3, tolerância ±5% e −15% para buffs no rookie.
+**Exports:**
+- `RULER_HP_SCALE`, `RULER_TOLERANCE`, `RULER_ROOKIE_BUFF_TOLERANCE` (const).
+- `rulerBounds(family, level)`, `rulerSeed(i, cell)`, `rulerBaseline(c, seeds, cell)`, `pairedDelta(c, special, seeds, cell, baseline?)`.
+**Chamado por:** ninguém ainda (só a régua).
+**Régua:** `src/utils/combate/combate.test.ts` (gate 5 + prova de vermelho com dot ×1,5).
+
+### `src/utils/combate/specials.ts`
+**Dono de:** As 7 famílias de especial do combate v3 (orçamento E = 3 golpes, potência `p` calibrada no spike) e a energia (60 por fração causada, 60 por fração recebida, +2/s, dispara a 100).
+**Exports:**
+- `SPECIAL_BUDGET_HITS` (const) — `3`. `SPECIAL_FAMILIES`, `REFERENCE_FAMILY`, `BUFF_FAMILIES`, `SPECIAL_POWER`, `ENERGY`, `ENERGY_TRIGGER` (const).
+- `SpecialFamily` (type), `Special`, `EnergyRates` (interface).
+- `specialOf(family)`.
+**Chamado por:** `combate/fight.ts`, `combate/ruler.ts`.
+**Régua:** `src/utils/combate/combate.test.ts` (gate 5).
 
 ### `src/utils/combatFx.ts`
 **Dono de:** a ARTE e o RITMO das ações visuais da cena de combate (`games/BattleStage.tsx`, 02/10/2026, rodada 5/I10): qual figura de skill do elemento (`fx-<id>-<estado>`) entra em cada ação e quanto tempo dura. Não decide regra de jogo.
