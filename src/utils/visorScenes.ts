@@ -49,22 +49,25 @@ export const VISOR_ART = {
   visorFeira,
 } as const;
 
-/** Cor média da primeira linha de `visor-atelie` (o teto de raízes): o degradê de cima parte dela. */
-const ATELIE_TOPO = '#214041';
+/** Cor média da primeira linha de `visor-atelie` (o teto de raízes): o degradê de reserva parte dela. */
+const ATELIE_TOPO = '#133738';
+/** Medida nativa da cena ALTA do Ateliê (04/10/2026): 696×320 = 174×80 pixels de arte a 4×. */
+const ATELIE_ART_H = 320;
 
 /**
  * Ateliê da Mente (Eco, Revisão): centro livre, pedras nas prateleiras.
  *
  * J4 (rodada 7, 04/10/2026): o fundo do Eco "estava ruim" porque a faixa 696×160 entrava em
- * tamanho NATIVO num vidro de 348 — só o MIOLO vazio da faixa aparecia (um retângulo chapado
- * escuro), e as prateleiras com pedras, as raízes e os cristais, que enquadram o pet, ficavam
- * cortados fora. Agora a faixa INTEIRA entra a 0,5× (696→348 × 160→80): como a arte é de pixel
- * 4×, isso dá exatamente 2×2 px por pixel de arte — nítido, sem fração. O que sobra de altura
- * vira o degradê da cor do teto da arte (mesma receita do Refúgio).
+ * tamanho NATIVO num vidro de 348 — só o MIOLO vazio aparecia. Primeiro conserto: a faixa inteira
+ * a 0,5× com um degradê por cima. Segundo (mesmo dia, bloco 37 do dono): a cena ficou ALTA —
+ * caverna-estúdio com teto de raízes, pilares de runa e prateleiras, 696×320 (174×80 de arte a 4×,
+ * `entrada-dono/37-visor-atelie`, pixelizada fator 4, 16 cores). A 0,5× ela vira 348×160 = o vidro
+ * do Eco inteiro (`GameVisor height={80}` ×2), com 2×2 px por pixel de arte — nítido, sem fração.
+ * A Revisão (vidro 144) corta só o alto do teto (âncora embaixo). O degradê fica de reserva.
  */
 export const ATELIE_SCENE =
-  `url(${visorAtelie}) center bottom/${VISOR_STRIP_W / 2}px ${VISOR_STRIP_H / 2}px no-repeat, `
-  + `linear-gradient(180deg, var(--sm2-viewport-bg) 0, ${ATELIE_TOPO} calc(100% - ${VISOR_STRIP_H / 2}px), ${ATELIE_TOPO} 100%)`;
+  `url(${visorAtelie}) center bottom/${VISOR_STRIP_W / 2}px ${ATELIE_ART_H / 2}px no-repeat, `
+  + `linear-gradient(180deg, var(--sm2-viewport-bg) 0, ${ATELIE_TOPO} 100%)`;
 
 /** Refúgio (Bolhas, Respiração): lago calmo, centro livre. Acima da faixa, o degradê da cor do topo dela. */
 export const REFUGIO_SCENE = visorStrip(
