@@ -11,7 +11,8 @@
  *    propósito). Ao encher, ela DESPEJA `ENERGY_CHEER` de energia no pet (um tanto
  *    maior que um ataque dado/sofrido) e zera; o excedente de toques fica. Na
  *    Masmorra o medidor PERSISTE entre os combates da run.
- *  · Energia cheia = o lutador solta o ESPECIAL no golpe seguinte e gasta a barra.
+ *  · Energia cheia = a PRÓXIMA ação do dono é o ESPECIAL; ela zera a barra e o golpe de
+ *    cast não rende `'dealt'` (0 logo depois do cast; sem excedente).
  *
  * ## Duas famílias de luta
  *
@@ -54,8 +55,17 @@ export function addEnergy(energy: number, kind: EnergyKind): number {
 export const energyFull = (energy: number): boolean => energy >= ENERGY_MAX;
 /** 0..1 para a barra. */
 export const energyRatio = (energy: number): number => Math.min(1, Math.max(0, energy) / ENERGY_MAX);
-/** Gasta a barra no especial (o excedente, se houver, fica). */
-export const spendEnergy = (energy: number): number => Math.max(0, energy - ENERGY_MAX);
+/**
+ * Gasta a barra no especial: SEMPRE volta a 0. Excedente não existe — `addEnergy` trava em
+ * `ENERGY_MAX` (PR1b/B1: uma barra cheia = um especial).
+ */
+export const spendEnergy = (_energy: number): number => 0;
+/**
+ * A energia do ATOR depois do golpe dele. O golpe de cast (`special`) NÃO rende `'dealt'`:
+ * a barra fica em 0 até a próxima ação de alguém (PR1b/B1; mesma regra em `_duel.js`).
+ */
+export const strikeEnergy = (energy: number, special: boolean): number =>
+  special ? spendEnergy(energy) : addEnergy(energy, 'dealt');
 
 export interface CheerTap { meter: number; discharged: boolean }
 /**

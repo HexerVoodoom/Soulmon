@@ -215,12 +215,12 @@ export function simulateDuel({ me, opp, seed, cheers }) {
         meter += (taps ? taps[myStrike] : 0) ?? 0;
         if (meter >= DUEL_TAPS_FULL) { meter -= DUEL_TAPS_FULL; enMe = Math.min(DUEL_ENERGY_MAX, enMe + DUEL_ENERGY_CHEER); }
         // 2) energia cheia: o golpe é o ESPECIAL e gasta a barra.
-        if (enMe >= DUEL_ENERGY_MAX) { special = true; enMe -= DUEL_ENERGY_MAX; mult *= DUEL_SPECIAL_MULT; }
+        if (enMe >= DUEL_ENERGY_MAX) { special = true; enMe = 0; mult *= DUEL_SPECIAL_MULT; }
         cheer = special ? 1 : 0;
       }
       myStrike++;
     } else if (!q && enOpp >= DUEL_ENERGY_MAX) {
-      special = true; enOpp -= DUEL_ENERGY_MAX; mult *= DUEL_SPECIAL_MULT;
+      special = true; enOpp = 0; mult *= DUEL_SPECIAL_MULT;
     }
     // A energia ANTES do golpe (já com o cheer despejado e ainda com a barra cheia que dispara o especial): é o que a tela mostra no começo da ação.
     const preMe = special && turn === 'me' ? enMe + DUEL_ENERGY_MAX : enMe;
@@ -228,9 +228,10 @@ export function simulateDuel({ me, opp, seed, cheers }) {
     const dmg = Math.max(1, Math.round(atk * mult));
     if (turn === 'me') hpOpp = Math.max(0, hpOpp - dmg); else hpMe = Math.max(0, hpMe - dmg);
     if (!q) {
-      // 3) dado e sofrido enchem as duas barras.
-      if (turn === 'me') { enMe = Math.min(DUEL_ENERGY_MAX, enMe + DUEL_ENERGY_DEALT); enOpp = Math.min(DUEL_ENERGY_MAX, enOpp + DUEL_ENERGY_TAKEN); }
-      else { enOpp = Math.min(DUEL_ENERGY_MAX, enOpp + DUEL_ENERGY_DEALT); enMe = Math.min(DUEL_ENERGY_MAX, enMe + DUEL_ENERGY_TAKEN); }
+      // 3) dado e sofrido enchem as duas barras. O golpe de CAST não rende "dado": a barra
+      //    do ator fica em 0 (PR1b/B1 — uma barra cheia = um especial; sem excedente).
+      if (turn === 'me') { if (!special) enMe = Math.min(DUEL_ENERGY_MAX, enMe + DUEL_ENERGY_DEALT); enOpp = Math.min(DUEL_ENERGY_MAX, enOpp + DUEL_ENERGY_TAKEN); }
+      else { if (!special) enOpp = Math.min(DUEL_ENERGY_MAX, enOpp + DUEL_ENERGY_DEALT); enMe = Math.min(DUEL_ENERGY_MAX, enMe + DUEL_ENERGY_TAKEN); }
     }
     events.push({ actor: turn, dmg, cheer, special, hpMe, hpOpp, preMe, preOpp, energyMe: enMe, energyOpp: enOpp, meter });
     turn = turn === 'me' ? 'opp' : 'me';
