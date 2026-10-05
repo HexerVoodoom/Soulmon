@@ -2043,6 +2043,15 @@ dominância populacional — por isso ±15%. Régua nova:
 **Chamado por:** `src/components/nav/AreaView.tsx`, `src/components/arena/DueloSheet.tsx` (⚰️ antes `ActivitiesPage.tsx`, minimal-ui F5), `src/components/ArenaGame.render.test.tsx`, `src/components/ArenaGame.tsx`, `src/components/PetPage.tsx`, `src/contexts/GameStateContext.tsx`, `src/utils/arena.ts`, `src/utils/soulProfile/ficha/fromInput.ts`, `src/utils/soulProfile/ficha/realSkillPower.ts`, `src/utils/soulProfile/index.ts`, `src/utils/soulProfile/pipeline.ts`
 **Régua:** nenhuma (`ls src/utils/soulProfile/ficha/skills*.test.ts` vazio).
 
+### `src/utils/soulProfile/ficha/stageSkillsFor.ts`
+**Dono de:** O par de skills da ficha do estágio ATUAL do pet, num lugar só para as telas de luta (PR1b/B2).
+**Exports:**
+- `fichaStageOf(evolutionStage: string): FichaStage` — estágio da ficha; os dois de bebê caem em `rookie`.
+- `FichaSkills` (type) — `Partial<Record<FichaStage, StageSkills>>`.
+- `stageSkillsFor(skills, evolutionStage): StageSkills | undefined` — o `skills?.[stage]` da Arena, igual em Masmorra, Pesadelo e Duelo.
+**Chamado por:** `src/components/ArenaGame.tsx`, `src/components/DuelScreen.tsx`, `src/components/DungeonGame.tsx`, `src/components/NightmareBattle.tsx`, `src/components/TournamentPage.tsx`.
+**Régua:** `src/components/strikeForm.pr1b.screens.test.tsx`
+
 ### `src/utils/soulProfile/ficha/types.ts`
 **Dono de:** Tipos da ficha de personagem: elementos, escolas, recursos, profissões, criaturas, gerações.
 **Exports:**
