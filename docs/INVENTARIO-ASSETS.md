@@ -1,4 +1,4 @@
-﻿# Inventário de assets — o que existe, onde vai, o que falta
+# Inventário de assets — o que existe, onde vai, o que falta
 
 > **Data:** 22/09/2026 (§0 recontado por comando e §2b — os 102 órfãos — pela QA Rodada 2, [`reviews/2026-09-22-qa-rodada-2/06-som-arte-design-marca-r2.md`](reviews/2026-09-22-qa-rodada-2/06-som-arte-design-marca-r2.md) §2; anterior: 15/09/2026) · **Escopo:** TODO asset visual disponível para o Soulmon — no repo,
 > nas levas do Gemini (`D:\Soulmon\_gemini_out\`), no kit de UI gerado no Gemini
