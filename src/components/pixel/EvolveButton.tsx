@@ -18,7 +18,10 @@
  * A arte final será uma imagem gerada pelo dono. Basta soltar o arquivo em
  * `src/assets/icons/evoluir-btn.png`: se ele existir, é usado como MOLDURA/
  * fundo do botão (9-slice não é necessário: `background-size: 100% 100%`); se
- * não existir, vale o CSS. Nada mais muda. O RÓTULO continua sendo texto vivo
+ * não existir, vale o CSS. Nada mais muda. ARTE INSTALADA em 04/10/2026
+ * (entrega do dono, alfa real, 468×137 = 3× de 156×46): com ela, o CSS de
+ * `[data-evolve-art="image"]` (fim do `index.css`) tira a placa, o contorno de
+ * `box-shadow` e o pulso — a moldura é a imagem. O RÓTULO continua sendo texto vivo
  * ("Evoluir"/"Evolve", PT+EN, acessível) por cima da arte — por isso a imagem
  * deve vir SEM texto. `import.meta.glob` com arquivo ausente devolve `{}`, não
  * quebra o build.
@@ -64,9 +67,10 @@ export function EvolveButton({
         animation: reducedMotion ? 'none' : undefined,
       }}
     >
-      <span aria-hidden="true" className="sm2-evolve-spark">✦</span>
+      {/* Com a arte do dono, os cristais das pontas já são dela: as faíscas ✦ saem. */}
+      {!EVOLVE_BTN_ART && <span aria-hidden="true" className="sm2-evolve-spark">✦</span>}
       <span className="sm2-evolve-label">{label}</span>
-      <span aria-hidden="true" className="sm2-evolve-spark">✦</span>
+      {!EVOLVE_BTN_ART && <span aria-hidden="true" className="sm2-evolve-spark">✦</span>}
     </button>
   );
 }

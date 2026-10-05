@@ -8226,3 +8226,16 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
   100% { opacity: 0; transform: translate(-50%, -78%) scale(1.04); }
 }
 .sm-bs-special { animation: sm-bs-special 1100ms ease-out 0ms 1 both; }
+
+/* Botão Evoluir com a ARTE do dono (04/10/2026, `assets/icons/evoluir-btn.png`,
+   468×137 = 3× de 156×46): a moldura é a imagem — sai a placa, o contorno de
+   box-shadow e o pulso do CSS. 192×56 mantém a proporção da arte (3,4:1). */
+.sm2-evolve-btn[data-evolve-art="image"] {
+  width: 192px;
+  min-width: 192px;
+  height: 56px;
+  background-color: transparent;
+  box-shadow: none;
+  animation: none;
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--sm2-primary-ink) 45%, transparent));
+}

@@ -4,11 +4,10 @@
  * (1..5), o MESMO número que vai para o save em `moodLog` — nunca o emoji.
  *
  * Arte: o fogo-fátuo da alma, uma cor por humor (frio → quente), expressão
- * sempre calma. 128² com alfa nativo (desenhado em grade 16×16 e ampliado 8×
- * nearest — nada recortado de fundo). ⚠️ INTERINO: a conta do Higgsfield
- * estava sem crédito em 01/10/2026; a folha definitiva em `gpt_image_2
- * --background transparent` substitui estes arquivos com o MESMO nome (prompt
- * em `E:/Soulmon-assets/out/ajustes-20261001/c6/PROMPT-FOLHA.md`).
+ * sempre calma. DEFINITIVA desde 04/10/2026: a folha do dono (alfa real,
+ * `E:/Soulmon-assets/entrada-dono/06-mood-folha/mood-folha.png`) fatiada por
+ * projeção, alfa binarizado e reduzida nearest a 128² — os MESMOS nomes do
+ * interino desenhado à mão (01/10/2026), que ela substitui.
  *
  * Integração (fora desta entrega): quem desenha o humor troca
  * `<span>{m.emoji}</span>` por `<img src={MOOD_ICON[m.value]} …
