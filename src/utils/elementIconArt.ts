@@ -20,7 +20,7 @@
 /**
  * `import.meta.glob` com `eager: true` faz o Vite ver e empacotar cada PNG
  * estaticamente (mesma garantia de bundle que imports nomeados dariam), sem
- * exigir uma linha de import por arquivo — inviável à mão para 137 ícones.
+ * exigir uma linha de import por arquivo — inviável à mão para 154 ícones.
  */
 const modules = import.meta.glob('../assets/soulmon/elementos/*.png', {
   eager: true,
@@ -40,10 +40,11 @@ for (const [path, url] of Object.entries(modules)) {
  * `undefined` se não houver arte para esse id.
  *
  * Devolve `undefined` de propósito em vez de cair num placeholder: o
- * consumidor decide se mostra o rótulo de texto, um traço, ou nada. Hoje os
- * 136 derivados e o `neutro` estão todos cobertos; os 17 elementos BASE
- * (fogo, agua, terra…) ainda NÃO têm ícone, então `elementIcon('fogo')` é
- * `undefined` e isso é esperado.
+ * consumidor decide se mostra o rótulo de texto, um traço, ou nada. Desde
+ * 04/10/2026 (rodada 2 do Higgsfield, `elementos-el` + `elementos-el-base`)
+ * os 17 BASE, os 136 derivados e o `neutro` estão todos cobertos — 154 ícones,
+ * 96² (32 px × 3 de DPR; o `neutro` segue 128² da leva antiga). `planta` não
+ * tem ícone próprio: o base de planta é `vida`.
  */
 export const elementIcon = (elementoId: string): string | undefined =>
   ELEMENT_ICONS[elementoId];

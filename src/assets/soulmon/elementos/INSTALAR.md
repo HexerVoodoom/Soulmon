@@ -85,3 +85,21 @@ Isso é o guard funcionando, não um bug. Como as folhas são grade regular, o
 
 Vale saber que **isso não aparecia na inspeção visual** das folhas a 520px; só
 apareceu no fatiamento. Conferir a folha por print não substitui fatiar.
+
+## Rodada 2 do Higgsfield (04/10/2026) — troca completa + os 17 base
+
+Fonte: `E:\Soulmon-assets\entrada-dono\elementos-el\` (17 folhas 4×2, ordem em
+`elementos-el-MANIFEST.json`) e `elementos-el-base\` (3 folhas 3×2,
+`elementos-el-base-MANIFEST.json`). GPT Image 2.5 Flare, alfa REAL.
+
+- Fatiado por componente conexo (alfa binarizado em 128, ruído < 24 px fora,
+  cada componente vai para a célula do seu centróide), encaixado em quadrado e
+  reduzido por **nearest** a **96×96** (o único consumidor, `DueloSheet`, mostra
+  a 32 px; 96 = 32 × DPR 3). Alfa binário.
+- **153 trocados/novos**: os 136 derivados (substituem os 128² de ago/2026) e os
+  **17 base pela primeira vez** (`el-fogo`, `el-agua`… `el-vida` é o base de
+  planta). `el-neutro` não tinha folha nova: segue o 128² antigo.
+- Atenção (relatório da instalação): vários derivados de sombra/arcano saem
+  em violeta (cronomancia, fogo_feiticeiro, singularidade, pacto, portal…), como
+  já saíam na leva antiga; os de Tempo trazem ampulheta (não é relógio).
+- Prancha: `E:\Soulmon-assets\out\instalacao-20261004\combate\prancha-elementos*.png`.
