@@ -11,7 +11,7 @@ import { travessiaTitle } from '../../utils/travessiaTitles';
 import { sheetCard, sheetCardList, sheetCardTitle } from '../nav/sheetKit';
 import { Celebration } from '../ui/Celebration';
 import { Icon } from '../ui/Icon';
-import { InfoTip, InfoTipSection } from '../ui/InfoTip';
+import { ModalInfo, InfoTipSection } from '../ui/InfoTip';
 import { MissionMark } from './MissionMark';
 import { AREA_LABEL, AreaGlyph, RegionPostal } from './TravessiaIcon';
 
@@ -351,9 +351,8 @@ export function PasseioSheet({ language, crossings, onChange, todayKey, seed = '
 
   return (
     <div data-passeio style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {/* UM só "i" por folha (I2), no canto superior direito, explicando tudo daqui. */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: -8 }}>
-        <InfoTip language={language} align="right" label={isPt ? 'Sobre o Passeio' : 'About the Stroll'}>
+      {/* UM só "i" por folha (I2): `ModalInfo` o leva à linha do título da moldura. */}
+      <ModalInfo language={language} align="right" label={isPt ? 'Sobre o Passeio' : 'About the Stroll'}>
           <InfoTipSection title={isPt ? 'O passeio' : 'The stroll'}>
             {isPt
               ? 'Ele sai para passear todo dia e volta com o que viu no relatório do fim do dia. Uma missão escolhida decide o destino da noite.'
@@ -369,8 +368,7 @@ export function PasseioSheet({ language, crossings, onChange, todayKey, seed = '
               ? 'Cada missão feita soma um Marco, no máximo um por dia. Em 5, 10 e 20 Marcos o Soulmon volta com um postal especial. Não muda nada no jogo, nunca diminui e não tem prazo.'
               : 'Each mission done adds one Milestone, at most one a day. At 5, 10 and 20 Milestones the Soulmon comes back with a special postcard. It changes nothing in the game, never goes down and has no deadline.'}
           </InfoTipSection>
-        </InfoTip>
-      </div>
+      </ModalInfo>
       {mostraDestino && (
         <>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>

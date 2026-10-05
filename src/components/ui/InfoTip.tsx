@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from './Icon';
 
@@ -145,4 +145,32 @@ export function InfoTipSection({ title, children, last = false }: { title: strin
       {children}
     </span>
   );
+}
+
+/**
+ * O ENCAIXE DO "i" NA LINHA DO TÍTULO (ajuste do dono, 05/10/2026): o "i" de um
+ * modal/folha mora no canto superior DIREITO, NA MESMA LINHA do título. Quem
+ * desenha o título (as molduras `ModalSheet` e `AreaSheet`) é o ÚNICO dono da
+ * posição: ele abre um encaixe (`ModalInfoSlot`) e publica o elemento por
+ * contexto. O conteúdo da folha usa `ModalInfo`, que entra no encaixe por portal
+ * — nenhuma folha posiciona o próprio "i". Fora de uma moldura (sem encaixe),
+ * `ModalInfo` cai no `InfoTip` comum, onde foi escrito.
+ */
+const ModalInfoSlotContext = createContext<HTMLElement | null>(null);
+
+/** Moldura: chame no título e passe `slot` para o `<span ref>` do canto direito. */
+export function useModalInfoSlot() {
+  const [slot, setSlot] = useState<HTMLElement | null>(null);
+  return { slot, slotRef: setSlot };
+}
+
+export function ModalInfoSlotProvider({ slot, children }: { slot: HTMLElement | null; children: ReactNode }) {
+  return <ModalInfoSlotContext.Provider value={slot}>{children}</ModalInfoSlotContext.Provider>;
+}
+
+/** O "i" ÚNICO de um modal/folha — sempre na linha do título da moldura em volta. */
+export function ModalInfo(props: Parameters<typeof InfoTip>[0]) {
+  const slot = useContext(ModalInfoSlotContext);
+  const tip = <InfoTip {...props} align={props.align ?? 'right'} />;
+  return slot ? createPortal(tip, slot) : tip;
 }

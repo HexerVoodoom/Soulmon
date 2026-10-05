@@ -8,6 +8,7 @@ import { useBackLayer } from '../../utils/backStack';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
 import { NPC_MAX_WIDTH_PCT } from './npcScale';
 import { Icon } from '../ui/Icon';
+import { ModalInfoSlotProvider, useModalInfoSlot } from '../ui/InfoTip';
 import { CORNER_RING_TOP, CORNER_RING_SIDE } from './cornerAnchor';
 
 /**
@@ -51,6 +52,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
   // L1 #24): foco inicial no primeiro focável (o fechar), Tab preso, fundo
   // `inert`, Escape e o foco DEVOLVIDO ao lote que abriu, nunca ao `<body>`.
   const dialogRef = useDialogA11y<HTMLDivElement>(open, onClose);
+  const { slot, slotRef } = useModalInfoSlot();
 
   if (!open) return null;
 
@@ -174,6 +176,8 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
               {title}
             </h2>
             {headSlotRef && <span ref={headSlotRef} data-area-sheet-head-slot style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }} />}
+            {/* O "i" ÚNICO da folha (`ModalInfo`) entra aqui: canto direito, na linha do título. */}
+            <span ref={slotRef} data-modal-info-slot style={{ display: 'flex', alignItems: 'center', flexShrink: 0, marginRight: -10 }} />
           </div>
           {/* H6 (01/10/2026): o rolável começa COLADO no título (sem `padding-top`),
               para o cabeçalho fixo de dentro (abas/filtro, `position: sticky;
@@ -182,7 +186,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
               espaçador que rola junto. */}
           <div data-area-sheet-body style={{ flex: 1, overflowY: 'auto', padding: '0 16px calc(16px + env(safe-area-inset-bottom, 0px))' }}>
             <div aria-hidden="true" style={{ height: 8 }} />
-            {children}
+            <ModalInfoSlotProvider slot={slot}>{children}</ModalInfoSlotProvider>
           </div>
         </div>
       </div>

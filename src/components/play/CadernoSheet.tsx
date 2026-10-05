@@ -1,6 +1,6 @@
 import { useMemo, useState, type CSSProperties } from 'react';
 import { Field, Segment, sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
-import { InfoTip } from '../ui/InfoTip';
+import { ModalInfo } from '../ui/InfoTip';
 import { Icon } from '../ui/Icon';
 import { SupportNote } from '../refugio/SupportNote';
 import { sheetCard, sheetCardList } from '../nav/sheetKit';
@@ -78,11 +78,11 @@ export function CadernoSheet({ language, todayKey, entries, onChange }: {
     <div data-caderno style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <p style={{ ...sectionHead, flex: 1 }}>{isPt ? 'Escrever hoje' : 'Write today'}</p>
-        <InfoTip language={language} align="right" label={isPt ? 'Onde fica o que você escreve' : 'Where your writing lives'}>
+        <ModalInfo language={language} align="right" label={isPt ? 'Onde fica o que você escreve' : 'Where your writing lives'}>
           {isPt
             ? 'O que você escreve aqui fica no seu save, na nuvem, só seu. Nenhuma IA lê, o chat não vê e outras pessoas não têm acesso. Você apaga uma entrada ou tudo, quando quiser, e apagar a conta apaga o Caderno. Nada aqui conta, pontua ou lembra. Escrever sobre algo difícil pode remexer coisas: pare quando quiser. Isto não substitui ajuda profissional.'
             : 'What you write here lives in your save, in the cloud, yours alone. No AI reads it, the chat cannot see it and other people have no access. You can delete one entry or everything any time, and deleting your account deletes the Journal. Nothing here counts, scores or reminds. Writing about something hard can stir things up: stop whenever you like. This does not replace professional help.'}
-        </InfoTip>
+        </ModalInfo>
       </div>
 
       <div role="radiogroup" aria-label={isPt ? 'Formato' : 'Format'} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
