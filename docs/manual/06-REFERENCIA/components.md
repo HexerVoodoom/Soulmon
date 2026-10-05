@@ -323,6 +323,11 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Chamado por:** `src/App.tsx` (só com `currentView === 'home'`).
 **Régua:** `src/styles/iconScale.contract.test.ts` (glifo 24).
 
+### `src/components/home/HomeMissionsCard.tsx`
+**Dono de:** o card de missões na Home (carregado por `React.lazy`); só exibe o que `homeMissions` calcula e abre a folha de Missões.
+**Exports:** `default HomeMissions({ language, input, onOpen })`, `HomeMissionsCard({ language, daily, weekly, onOpen })`.
+**Chamado por:** `src/App.tsx`.
+
 ### `src/components/nav/MissionsSheet.tsx`
 **Dono de:** a lista de missões aberta pelo ícone da Home — a MESMA folha do Passeio (`PasseioSheet`, lazy) dentro de um `ModalSheet`. Regra única, dois lugares: nada daqui escreve estado que o Passeio não escreva.
 **Props principais:** `open`, `onClose`, `language`, `crossings`, `onChange` (função pura sobre `prev`), `todayKey`, `seed`.

@@ -102,6 +102,10 @@ export interface AreaViewProps {
    *  One-shot: o `App` limpa pelo `onInitialGameConsumed`. */
   initialGame?: PlayGame;
   onInitialGameConsumed?: () => void;
+  /** Abre a folha de um lote ao montar (missão da Home → o lugar dela, ex.:
+   *  `'passeio'`, `'torneio'`). One-shot: o `App` limpa pelo `onInitialSheetConsumed`. */
+  initialSheet?: string;
+  onInitialSheetConsumed?: () => void;
   language: Language;
   /** Avisa se há camada de tela cheia aberta (folha/jogo/duelo). Estável (setState). */
   onLayerChange?: (open: boolean) => void;
@@ -180,13 +184,15 @@ function SheetLoading({ language }: { language: Language }) {
 
 export function AreaView(props: AreaViewProps) {
   const { area, language, ownership, actions } = props;
-  const [sheet, setSheet] = useState<string | null>(null);
+  const [sheet, setSheet] = useState<string | null>(props.initialSheet ?? null);
   const [duelOpen, setDuelOpen] = useState(false);
   /** O encaixe do canto do título da folha do Torneio (o indicador da faixa entra por portal). */
   const [tournamentHead, setTournamentHead] = useState<HTMLElement | null>(null);
   const [game, setGame] = useState<PlayGame | null>(props.initialGame ?? null);
   const { onInitialGameConsumed } = props;
   useEffect(() => { if (props.initialGame) onInitialGameConsumed?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const { onInitialSheetConsumed } = props;
+  useEffect(() => { if (props.initialSheet) onInitialSheetConsumed?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const closeLabel = language === 'pt-BR' ? 'Fechar' : 'Close';
   const close = () => setSheet(null);
   // R1: qualquer camada de tela cheia (folha, jogo, duelo) avisa o `App`, que
