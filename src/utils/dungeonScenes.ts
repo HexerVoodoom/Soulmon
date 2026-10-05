@@ -52,6 +52,24 @@ import dungeonBg10 from '../assets/soulmon/bg/dungeon-10.png';
 import ruinedHall from '../assets/soulmon/bg/minigame-dino.png';
 import arenaNight from '../assets/soulmon/bg/tournament-night.png';
 import arenaFinal from '../assets/soulmon/bg/tournament-final.png';
+// 04/10/2026 — 10 áreas + 6 interiores (`entrada-dono/cenario-*`, GPT Image 2.5 Flare 9:16 opaco), reduzidos para
+// 608×1080 (WebP ≈ 150–245 KB) — mesma caixa ALTA dos de cima, sem tela nova: entram só no sorteio dos andares.
+import dgCavernaCristalina from '../assets/soulmon/bg/dungeon-caverna-cristalina.png';
+import dgCidadeEmRuinas from '../assets/soulmon/bg/dungeon-cidade-em-ruinas.png';
+import dgCostaVulcanica from '../assets/soulmon/bg/dungeon-costa-vulcanica.png';
+import dgFlorestaDeOutono from '../assets/soulmon/bg/dungeon-floresta-de-outono.png';
+import dgIlhasDoCeu from '../assets/soulmon/bg/dungeon-ilhas-do-ceu.png';
+import dgJardimLunar from '../assets/soulmon/bg/dungeon-jardim-lunar.png';
+import dgOasisDeserto from '../assets/soulmon/bg/dungeon-oasis-deserto.png';
+import dgPenhascoDeBambu from '../assets/soulmon/bg/dungeon-penhasco-de-bambu.png';
+import dgPicoNevado from '../assets/soulmon/bg/dungeon-pico-nevado.png';
+import dgRecifeProfundo from '../assets/soulmon/bg/dungeon-recife-profundo.png';
+import dgInteriorBiblioteca from '../assets/soulmon/bg/dungeon-interior-biblioteca.png';
+import dgInteriorForja from '../assets/soulmon/bg/dungeon-interior-forja.png';
+import dgInteriorTaverna from '../assets/soulmon/bg/dungeon-interior-taverna.png';
+import dgInteriorLaboratorioEstufa from '../assets/soulmon/bg/dungeon-interior-laboratorio-estufa.png';
+import dgInteriorTemplo from '../assets/soulmon/bg/dungeon-interior-templo.png';
+import dgInteriorBazar from '../assets/soulmon/bg/dungeon-interior-bazar.png';
 
 // Cenários espirituais (Soulmon) — cavernas geradas, uma paleta por "andar".
 const SPIRIT_BG_SCENES: DungeonScene[] = [
@@ -80,6 +98,23 @@ const SPIRIT_BG_SCENES: DungeonScene[] = [
   // exatamente a fronteira que aquele arquivo traçou.
   { namePt: 'Arena Noturna', nameEn: 'Night Arena', accent: '#6fd3e8', bg: `url(${arenaNight}) center/cover` },
   { namePt: 'Coliseu Ancião', nameEn: 'Elder Colosseum', accent: '#d7a55c', bg: `url(${arenaFinal}) center/cover` },
+  // Terceira leva (04/10/2026): o fundo do `url` é a cor média medida no PNG (reserva enquanto carrega).
+  { namePt: 'Caverna Cristalina', nameEn: 'Crystal Cavern', accent: '#5ad6ff', bg: `url(${dgCavernaCristalina}) center/cover #286362` },
+  { namePt: 'Cidade em Ruínas', nameEn: 'Ruined City', accent: '#57d9c4', bg: `url(${dgCidadeEmRuinas}) center/cover #22524e` },
+  { namePt: 'Costa Vulcânica', nameEn: 'Volcanic Coast', accent: '#e08a3c', bg: `url(${dgCostaVulcanica}) center/cover #364949` },
+  { namePt: 'Floresta de Outono', nameEn: 'Autumn Forest', accent: '#d9a45c', bg: `url(${dgFlorestaDeOutono}) center/cover #61543a` },
+  { namePt: 'Ilhas do Céu', nameEn: 'Sky Isles', accent: '#7fd6e0', bg: `url(${dgIlhasDoCeu}) center/cover #739b74` },
+  { namePt: 'Jardim Lunar', nameEn: 'Moon Garden', accent: '#9fe0e8', bg: `url(${dgJardimLunar}) center/cover #39747c` },
+  { namePt: 'Oásis do Deserto', nameEn: 'Desert Oasis', accent: '#d9b45c', bg: `url(${dgOasisDeserto}) center/cover #827b5a` },
+  { namePt: 'Penhasco de Bambu', nameEn: 'Bamboo Cliff', accent: '#6fd39a', bg: `url(${dgPenhascoDeBambu}) center/cover #59776b` },
+  { namePt: 'Pico Nevado', nameEn: 'Snowy Peak', accent: '#9fd8f0', bg: `url(${dgPicoNevado}) center/cover #6c99be` },
+  { namePt: 'Recife Profundo', nameEn: 'Deep Reef', accent: '#3fd2d9', bg: `url(${dgRecifeProfundo}) center/cover #25717d` },
+  { namePt: 'Biblioteca Perdida', nameEn: 'Lost Library', accent: '#8fd6c2', bg: `url(${dgInteriorBiblioteca}) center/cover #274d48` },
+  { namePt: 'Forja de Cristal', nameEn: 'Crystal Forge', accent: '#e0a050', bg: `url(${dgInteriorForja}) center/cover #244345` },
+  { namePt: 'Taverna da Lareira', nameEn: 'Hearth Tavern', accent: '#d9a45c', bg: `url(${dgInteriorTaverna}) center/cover #34413d` },
+  { namePt: 'Estufa-Laboratório', nameEn: 'Greenhouse Lab', accent: '#4fd6a8', bg: `url(${dgInteriorLaboratorioEstufa}) center/cover #1d534e` },
+  { namePt: 'Templo das Águas', nameEn: 'Water Temple', accent: '#6fd3e8', bg: `url(${dgInteriorTemplo}) center/cover #2b5a53` },
+  { namePt: 'Bazar Escondido', nameEn: 'Hidden Bazaar', accent: '#c98a4b', bg: `url(${dgInteriorBazar}) center/cover #2f3f3c` },
 ];
 
 /** A cena do PESADELO (`NightmareBattle`) — a Forja das Almas, como o canvas
