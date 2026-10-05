@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type CSSProperties } from 'react';
 import { Segment, sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
-import { InfoTip, InfoTipSection } from '../ui/InfoTip';
+import { ModalInfo, InfoTipSection } from '../ui/InfoTip';
 import { Icon } from '../ui/Icon';
 import { sheetCard, sheetCardList, sheetCardTitle } from '../nav/sheetKit';
 import type { Language } from '../../utils/i18n';
@@ -90,7 +90,7 @@ export function OficinaSheet({ language, todayKey }: { language: Language; today
     <div data-oficina style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <p style={{ ...sectionHead, flex: 1 }}>{isPt ? 'Timer de foco' : 'Focus timer'}</p>
-        <InfoTip language={language} align="right" label={isPt ? 'Como funciona a Oficina' : 'How the Workshop works'}>
+        <ModalInfo language={language} align="right" label={isPt ? 'Como funciona a Oficina' : 'How the Workshop works'}>
           <InfoTipSection title={isPt ? 'Timer de foco' : 'Focus timer'}>
             {isPt
               ? 'O relógio segue o horário de verdade: pode trocar de aba ou fechar esta folha que ele continua. Ao fim, o app avisa na tela, vibra de leve e, só se você já permitiu notificações, avisa também fora do app. Marcar “Foquei” guarda um registro do dia só neste aparelho: sem placar, sem sequência, sem Bits.'
@@ -103,7 +103,7 @@ export function OficinaSheet({ language, todayKey }: { language: Language; today
               <em>{isPt ? 'Fonte: ' : 'Source: '}{t.fonte}</em>
             </InfoTipSection>
           ))}
-        </InfoTip>
+        </ModalInfo>
       </div>
 
       <div data-oficina-timer style={{ ...sheetCard, alignItems: 'center', gap: 12 }}>

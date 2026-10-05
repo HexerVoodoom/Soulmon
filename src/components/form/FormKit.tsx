@@ -1,7 +1,7 @@
 import { useId, useState, type CSSProperties, type ReactNode } from 'react';
 import { Icon } from '../ui/Icon';
 import { BackArrow } from '../ui/BackArrow';
-import { InfoTip } from '../ui/InfoTip';
+import { InfoTip, ModalInfo, ModalInfoSlotProvider, useModalInfoSlot } from '../ui/InfoTip';
 import { resolveLanguage, type Language } from '../../utils/i18n';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
 import { readLocal } from '../../utils/safeStorage';
@@ -399,8 +399,10 @@ export function ModalSheet({
 }) {
   const isPt = language === 'pt-BR';
   const dialogRef = useDialogA11y<HTMLDivElement>(open, onClose);
+  const { slot, slotRef } = useModalInfoSlot();
   if (!open) return null;
   return (
+    <ModalInfoSlotProvider slot={slot}>
     <div
       className="sm2-sheet-fade"
       style={{
@@ -448,7 +450,9 @@ export function ModalSheet({
         ) : null}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: closeSide === 'start' ? '0 18px 12px 18px' : '10px 8px 12px 18px' }}>
           <span className="sm2-title" style={{ ...sm2TitleStyle, flex: 1 }}>{title}</span>
-          {info && <InfoTip language={language} label={info.label} align="right">{info.content}</InfoTip>}
+          {/* O encaixe do "i" ÚNICO da folha (`ModalInfo`): canto direito, na linha do título. */}
+          <span ref={slotRef} data-modal-info-slot style={{ display: 'contents' }} />
+          {info && <ModalInfo language={language} label={info.label}>{info.content}</ModalInfo>}
           {closeSide === 'end' && (
             <button
               type="button"
@@ -495,6 +499,7 @@ export function ModalSheet({
         )}
       </div>
     </div>
+    </ModalInfoSlotProvider>
   );
 }
 

@@ -3,7 +3,7 @@ import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { ARENA_ROUNDS, getArenaPlayerStats } from '../../utils/arena';
 import { elementIcon } from '../../utils/elementIconArt';
 import { Icon } from '../ui/Icon';
-import { InfoTip } from '../ui/InfoTip';
+import { ModalInfo } from '../ui/InfoTip';
 import { getStageLevel } from '../../types/progression';
 import type { StageSkills } from '../../utils/soulProfile/ficha/skills';
 import type { FichaStage } from '../../utils/soulProfile/ficha/types';
@@ -76,7 +76,7 @@ export function DueloSheet({ language, evolutionStage, skills, onStart }: {
         <p data-duelo-golpes style={{ ...sm2Text, margin: 0, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {golpesTxt}
         </p>
-        <InfoTip language={language} label={isPt ? 'O que são elemento, poder e golpes' : 'What element, power and strikes are'} align="right">
+        <ModalInfo language={language} label={isPt ? 'O que são elemento, poder e golpes' : 'What element, power and strikes are'} align="right">
           <span data-duelo-ajuda>
             <span style={{ display: 'block' }}>
               {isPt
@@ -109,7 +109,7 @@ export function DueloSheet({ language, evolutionStage, skills, onStart }: {
                 : `${ARENA_ROUNDS} rounds against bestiary creatures · winning earns Bits · losing costs nothing`}
             </span>
           </span>
-        </InfoTip>
+        </ModalInfo>
       </div>
       <button type="button" data-duelo-start onClick={onStart} style={{ ...sm2Button('primary'), width: '100%' }}>
         {isPt ? 'Começar duelo' : 'Start duel'}

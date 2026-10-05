@@ -1,6 +1,6 @@
 import { useState, type CSSProperties, type ReactNode } from 'react';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
-import { InfoTip, InfoTipSection } from '../ui/InfoTip';
+import { ModalInfo, InfoTipSection } from '../ui/InfoTip';
 import { MAX_FLOORS, clearBonus } from '../DungeonGame';
 import { MATCH_POINTS, WINS_NEEDED } from '../RPSGame';
 import { getDungeonBest, getDungeonDifficulty, HEART_DROP_CHANCE } from '../../utils/dungeon';
@@ -119,9 +119,9 @@ export function MasmorraSheet({ language, onStart, bitsToday }: { language: Lang
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
         <p style={sectionHead}>{isPt ? `${MAX_FLOORS} andares por run` : `${MAX_FLOORS} floors per run`}</p>
         {/* I13: a nota de "perder" saiu da folha e mora atrás do "?". */}
-        <InfoTip language={language} label={isPt ? 'Como funciona a masmorra' : 'How the dungeon works'} align="right">
+        <ModalInfo language={language} label={isPt ? 'Como funciona a masmorra' : 'How the dungeon works'} align="right">
           {isPt ? 'Perder custa só a run — nunca os seus corações.' : 'Losing only costs the run — never your hearts.'}
-        </InfoTip>
+        </ModalInfo>
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
         <StatBox value={isPt ? `Nível ${level}` : `Level ${level}`} label={isPt ? 'dificuldade da semana' : "this week's difficulty"} />
@@ -216,7 +216,7 @@ export function SalaoSheet({ language, onStart, bitsToday }: { language: Languag
     <div data-salao style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
         <BitsHoje language={language} earned={bitsToday} />
-        <InfoTip language={language} label={isPt ? 'Como funciona o Salão' : 'How the Hall works'} align="right">
+        <ModalInfo language={language} label={isPt ? 'Como funciona o Salão' : 'How the Hall works'} align="right">
           <InfoTipSection title={isPt ? 'Corrida com obstáculos' : 'Obstacle Run'}>
             {isPt
               ? `Pule os obstáculos · cada ${DINO_POINTS_PER_BIT} pontos vira 1 Bit`
@@ -227,7 +227,7 @@ export function SalaoSheet({ language, onStart, bitsToday }: { language: Languag
               ? `Contra o seu Soulmon — quem vencer ${WINS_NEEDED} rodadas leva a partida`
               : `Against your Soulmon — first to ${WINS_NEEDED} rounds takes the match`}
           </InfoTipSection>
-        </InfoTip>
+        </ModalInfo>
       </div>
       <ul style={sheetCardList}>
         <li style={sheetCard}>
@@ -326,7 +326,7 @@ export function MenteSheet({ language, reviewDue, onStart, bitsToday }: {
     <div data-mente style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
         <BitsHoje language={language} earned={bitsToday} />
-        <InfoTip language={language} label={isPt ? 'Como funciona o Ateliê' : 'How the Atelier works'} align="right">
+        <ModalInfo language={language} label={isPt ? 'Como funciona o Ateliê' : 'How the Atelier works'} align="right">
           <InfoTipSection title={isPt ? 'O Ateliê' : 'The Atelier'}>
             {isPt
               ? 'Cada jogo pede uma coisa diferente. Perder só encerra a rodada.'
@@ -335,7 +335,7 @@ export function MenteSheet({ language, reviewDue, onStart, bitsToday }: {
           {rows.map((r, i) => (
             <InfoTipSection key={r.id} title={r.title} last={i === rows.length - 1}>{r.detail}</InfoTipSection>
           ))}
-        </InfoTip>
+        </ModalInfo>
       </div>
       <ul style={sheetCardList}>
         {rows.map(r => (
@@ -351,8 +351,7 @@ export function RefugioSheet({ language, onStart }: { language: Language; onStar
   const isPt = language === 'pt-BR';
   return (
     <div data-refugio style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-        <InfoTip language={language} label={isPt ? 'Sobre o Refúgio' : 'About the Refuge'} align="right">
+        <ModalInfo language={language} label={isPt ? 'Sobre o Refúgio' : 'About the Refuge'} align="right">
           <InfoTipSection title={isPt ? 'O Refúgio' : 'The Refuge'}>
             {isPt
               ? 'Um canto para quando o dia pesar. Aqui nada pontua, nada paga e nada é medido.'
@@ -364,8 +363,7 @@ export function RefugioSheet({ language, onStart }: { language: Language; onStar
           <InfoTipSection title={isPt ? 'Bolhas calmas' : 'Calm bubbles'} last>
             {isPt ? 'Só estourar bolhas, no seu ritmo.' : 'Just pop bubbles, at your own pace.'}
           </InfoTipSection>
-        </InfoTip>
-      </div>
+        </ModalInfo>
       <ul style={sheetCardList}>
         <GameRow
           dataKey="refugio" id="respiracao"
