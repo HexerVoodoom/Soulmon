@@ -261,7 +261,7 @@ export function AreaView(props: AreaViewProps) {
         <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close} headSlotRef={open?.id === 'torneio' ? setTournamentHead : undefined}>
           <Suspense fallback={<SheetLoading language={language} />}>
             {open?.id === 'torneio' && (
-              <TournamentPage {...props.tournament} shop={{ ownership, actions }} headSlot={tournamentHead} />
+              <TournamentPage {...props.tournament} skills={props.skills} shop={{ ownership, actions }} headSlot={tournamentHead} />
             )}
             {open?.id === 'feira' && (
               <GuildSheet room="feira" language={language} {...props.guild} />
@@ -342,6 +342,7 @@ export function AreaView(props: AreaViewProps) {
                 profissao={props.profissao}
                 profissaoNome={props.profissaoNome}
                 petElement={props.petElement}
+                skills={props.skills}
                 language={language}
                 onEnter={play.onDungeonEnter}
                 onLose={play.onDungeonLose}

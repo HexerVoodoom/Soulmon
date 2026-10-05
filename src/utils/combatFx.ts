@@ -121,6 +121,20 @@ export function skillStrikeForm(skill: { escolaId?: EscolaId; elementoId?: strin
   return elementStrikeForm(skill?.elementoId, role);
 }
 
+/** Um lutador para `fighterStrikeForm`: a skill da ficha do papel (se houver) e o elemento dele. */
+export interface StrikeFighter {
+  skill?: { escolaId?: EscolaId } | null;
+  element?: string | null;
+}
+/**
+ * DONO ÚNICO da forma do golpe de um lutador (PR1b/B2). Precedência num lugar só: com ficha, a ESCOLA
+ * da `StageSkill` decide (igual na Arena, Masmorra, Pesadelo e Duelo); sem ficha, o ELEMENTO.
+ */
+export function fighterStrikeForm(fighter: StrikeFighter, role: SkillRole): StrikeForm {
+  if (fighter.skill?.escolaId) return SCHOOL_STRIKE_FORM[fighter.skill.escolaId][role];
+  return elementStrikeForm(fighter.element, role);
+}
+
 /** Compat: a skill BÁSICA da escola. */
 export function strikeKindForSchool(escola: EscolaId | undefined): StrikeForm {
   return escola ? SCHOOL_STRIKE_FORM[escola].basica : ELEMENT_STRIKE_FALLBACK.basica;
@@ -131,8 +145,10 @@ export function strikeKindForSchool(escola: EscolaId | undefined): StrikeForm {
  * sem franquia): "Arcano!"/"Arcane!", "Despertar!"/"Awaken!", "Ápice!"/"Zenith!".
  */
 export const SPECIAL_LABEL = { en: 'SPECIAL!', pt: 'ESPECIAL!' } as const;
-export function specialLabel(isPt: boolean): string {
-  return isPt ? SPECIAL_LABEL.pt : SPECIAL_LABEL.en;
+/** N1 (PR1b): o selo do cast mostra o nome próprio da `StageSkill` especial; sem ficha, `SPECIAL_LABEL`. */
+export function specialLabel(isPt: boolean, skill?: { nome: { pt: string; en: string } } | null): string {
+  const nome = skill?.nome?.[isPt ? 'pt' : 'en']?.trim();
+  return nome || (isPt ? SPECIAL_LABEL.pt : SPECIAL_LABEL.en);
 }
 
 /**

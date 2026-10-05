@@ -28,12 +28,13 @@
  *
  * Superfície nova nasce MUDA (R-NOVA, `docs/SOM.md`): nenhum som aqui.
  */
+import { stageSkillsFor, type FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { TorcidaLayer, TorcidaGauge } from './games/TorcidaKit';
 import { BattleStage, BATTLE_LAYER_STYLE, type StageAction, type StageHit } from './games/BattleStage';
 import { ARENA_SCENE } from '../utils/dungeonScenes';
 import {
-  DUEL_STEP_MS, STAGE_TIMING, fxElementId, impactMs, prefersReducedMotion, visualElementFor, elementStrikeForm, specialLabel,
+  DUEL_STEP_MS, STAGE_TIMING, fxElementId, impactMs, prefersReducedMotion, visualElementFor, fighterStrikeForm, specialLabel,
   type StageActionKind,
 } from '../utils/combatFx';
 import {
@@ -69,6 +70,10 @@ export interface DuelScreenProps {
   isPt: boolean;
   /** Elemento do SEU Soulmon (a arte dos golpes); sem ele, o neutro. */
   petElement?: string;
+  /** Estágio do SEU pet (para achar o par da ficha em `skills`). */
+  petStage?: string;
+  /** As skills da ficha (o mesmo `skills` da Arena). Com elas, a escola decide o golpe e o selo leva o nome do especial (PR1b B2/N1); sem elas, o elemento. */
+  skills?: FichaSkills;
   /** Elemento do oponente (o servidor não o publica: o chamador dá um visual determinístico). */
   oppElement?: string;
   /** Fim da luta animada: os toques de cada janela vão para o servidor decidir. */
@@ -77,7 +82,7 @@ export interface DuelScreenProps {
 }
 
 export function DuelScreen({
-  me, opp, seed, petSprite, oppSprite, petName, oppName, isPt, petElement, oppElement, onDone, onClose,
+  me, opp, seed, petSprite, oppSprite, petName, oppName, isPt, petElement, petStage = 'rookie', skills, oppElement, onDone, onClose,
 }: DuelScreenProps) {
   /** Toques de cada janela JÁ fechada (um por golpe do dono). */
   const [cheers, setCheers] = useState<number[]>([]);
@@ -100,6 +105,7 @@ export function DuelScreen({
   const reduzido = useRef(prefersReducedMotion());
 
   const meEl = fxElementId(petElement);
+  const par = stageSkillsFor(skills, petStage);
   const oppEl = fxElementId(oppElement ?? visualElementFor(oppName));
 
   const sim = useMemo(() => simulateDuel({ me, opp, seed, cheers }), [me, opp, seed, cheers]);
@@ -147,10 +153,11 @@ export function DuelScreen({
       const ev = evs[idx];
       if (!ev) { setShown(s => s + 1); return; }
       const meu = ev.actor === 'me';
-      // R8: a forma do golpe (físico/à distância) vem da SKILL do lutador — o arquétipo do ELEMENTO dele (o servidor não
-      // publica skill), básica ou especial —, não de índice nem de sorteio (`elementStrikeForm`, `utils/combatFx.ts`).
+      // R8 + PR1b/B2: a forma do golpe vem do dono único `fighterStrikeForm` — o SEU pet pela escola da ficha (igual
+      // às outras telas); o oponente pelo ELEMENTO (o servidor não publica a skill dele; PR5/PR9).
       const elDele = meu ? meEl : oppEl;
-      const forma = elementStrikeForm(elDele, ev.special ? 'especial' : 'basica');
+      const role = ev.special ? 'especial' : 'basica';
+      const forma = fighterStrikeForm({ skill: meu ? (ev.special ? par?.especial : par?.basica) : null, element: elDele }, role);
       const kind: StageActionKind = ev.special ? 'special' : forma;
       setMedidor(ev.meter);
       setEnergia({ me: ev.preMe, opp: ev.preOpp });
@@ -163,7 +170,7 @@ export function DuelScreen({
     }, Math.max(0, DUEL_STEP_MS - STAGE_TIMING.ranged.impact));
     return () => { clearTimeout(t1); if (t2) clearTimeout(t2); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, shown, pausado, meEl, oppEl]);
+  }, [phase, shown, pausado, meEl, oppEl, par]);
 
   useEffect(() => {
     if (phase === 'done' && !sent.current) {
@@ -184,7 +191,7 @@ export function DuelScreen({
       <BattleStage
         scene={ARENA_SCENE.bg}
         sceneElement={oppEl}
-        specialLabel={specialLabel(isPt)}
+        specialLabel={specialLabel(isPt, par?.especial)}
         me={{ key: 'me', sprite: petSprite, name: petName || (isPt ? 'Você' : 'You'), hp: hpMe, maxHp: me.hp, element: meEl, down: fim && hpMe <= 0, energy: energia.me / DUEL_ENERGY_MAX }}
         foes={[{ key: 'opp', sprite: oppSprite, name: oppName, hp: hpOpp, maxHp: opp.hp, element: oppEl, down: fim && hpOpp <= 0, energy: energia.opp / DUEL_ENERGY_MAX }]}
         action={acao}

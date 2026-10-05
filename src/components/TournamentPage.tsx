@@ -51,6 +51,7 @@
  * 16 (Silkscreen só dentro do vidro); o resultado num `RitualDialog` com o
  * visor 288×112 da arena e as duas criaturas a 64 na vitória.
  */
+import type { FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Language } from '../utils/i18n';
@@ -96,6 +97,8 @@ interface TournamentPageProps {
   petLine?: string;
   /** Elemento dominante do SEU Soulmon (`soulmonMeta.dominantElement`): a arte dos golpes do duelo. */
   petElement?: string;
+  /** As skills da ficha (PR1b B2/N1): o SEU golpe no duelo segue a escola, igual às outras telas. */
+  skills?: FichaSkills;
   trophies: Array<{ season: string; place: 1 | 2 | 3 }>;
   /** R8: moldura de avatar (cosmética, `utils/frames.ts`). `equippedFrame` = id escolhido; `ownedFrames` = posse de loja/conquista/evento. */
   equippedFrame?: string | null;
@@ -191,7 +194,7 @@ function TierMark({ id, size, state, place }: { id: string; size: 24 | 32 | 48; 
   );
 }
 
-export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLine, petElement, trophies, equippedFrame = null, ownedFrames = [], onEquipFrame, language, emblems, onEarnEmblems, totalXP, onMatchPlayed, weeklyMissions, onClaimWeekly, shop, headSlot }: TournamentPageProps) {
+export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLine, petElement, skills, trophies, equippedFrame = null, ownedFrames = [], onEquipFrame, language, emblems, onEarnEmblems, totalXP, onMatchPlayed, weeklyMissions, onClaimWeekly, shop, headSlot }: TournamentPageProps) {
   const isPt = language === 'pt-BR';
   const lang: Language = isPt ? 'pt-BR' : 'en-US';
   const [opponents, setOpponents] = useState<Opponent[] | null>(null);
@@ -468,6 +471,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         petSprite={getSpriteForStage(petStage, petLine, 256)}
         oppSprite={training.npc ? training.npc.art : getSpriteForStage(petStage)}
         oppElement={training.npc ? visualElementFor(training.npc.id) : undefined}
+        petStage={petStage}
+        skills={skills}
         petName={isPt ? 'Você' : 'You'}
         oppName={training.npc ? (isPt ? training.npc.namePt : training.npc.nameEn) : (isPt ? 'Sombra de treino' : 'Training shadow')}
         isPt={isPt}
@@ -489,6 +494,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         petSprite={getSpriteForStage(petStage, petLine, 256)}
         oppSprite={getSpriteForStage(duel.opp.stage)}
         petElement={petElement}
+        petStage={petStage}
+        skills={skills}
         oppElement={visualElementFor(duel.opp.id)}
         petName={isPt ? 'Você' : 'You'}
         oppName={duel.opp.petName || duel.opp.name}

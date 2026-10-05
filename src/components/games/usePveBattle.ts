@@ -26,7 +26,7 @@ import type { StageAction, StageHit } from './BattleStage';
 import { STAGE_TIMING, PVE_STEP_MS, impactMs, type StageActionKind, type StrikeForm } from '../../utils/combatFx';
 import { autoDefense, defenseRoll } from '../../utils/autoDefesa';
 import {
-  addEnergy, cheerTap, dodgeGrade, dodgeSpec, energyFull, ringSpec, spendEnergy,
+  addEnergy, cheerTap, dodgeGrade, dodgeSpec, energyFull, ringSpec, spendEnergy, strikeEnergy,
   type DodgeGrade, type DodgeSpec, type RingGrade, type RingSpec,
 } from '../../utils/energia';
 
@@ -256,8 +256,8 @@ export function usePveBattle(opts: PveBattleOptions): PveBattle {
         setAction({ id: ++seq.current, actor: 'me', foe: target, kind, strike: special ? pForm : undefined, element: rules.playerElement(special) });
         if (!(await wait(impactMs(kind, reduced)))) return;
         const res = rules.playerStrike({ special, ring: ringG, target, n });
-        if (special) setPetEnergy(spendEnergy(pE.current));
-        setPetEnergy(addEnergy(pE.current, 'dealt'));
+        // B1 (PR1b): o cast zera a barra e não rende "dado" — uma barra cheia = um especial.
+        setPetEnergy(strikeEnergy(pE.current, special));
         const fe = fE.current.slice();
         for (const h of res.hits) fe[h.foe] = addEnergy(fe[h.foe] ?? 0, 'taken');
         setFoeEnergy(fe);
@@ -307,7 +307,7 @@ export function usePveBattle(opts: PveBattleOptions): PveBattle {
             if (!(await wait(impactMs(fKind, reduced)))) return;
           }
           const fr = r2.foeStrike({ foe, special: fSpecial, dodge: dodgeG, acc, n: fn });
-          const fe3 = fE.current.slice(); fe3[foe] = addEnergy(fe3[foe] ?? 0, 'dealt'); setFoeEnergy(fe3);
+          const fe3 = fE.current.slice(); fe3[foe] = strikeEnergy(fe3[foe] ?? 0, fSpecial); setFoeEnergy(fe3);
           setPetEnergy(addEnergy(pE.current, 'taken'));
           if (fr.value > 0) {
             setHits([{ id: ++seq.current, side: 'me', foe, value: fr.value, big: fSpecial, tag: fr.tag }]);

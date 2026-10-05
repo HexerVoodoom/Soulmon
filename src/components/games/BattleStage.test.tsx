@@ -174,6 +174,17 @@ describe('BattleStage — o que a cena desenha', () => {
     expect(document.querySelector('[data-stage-special]')?.textContent).toBe('SPECIAL!');
   });
 
+  it('N1 (PR1b): nome longo da skill no selo trunca com reticências, sem quebrar o layout', () => {
+    const longo = 'Lâmina Ancestral do Crepúsculo Eterno das Sombras';
+    render(<BattleStage {...baseProps} specialLabel={longo} action={{ id: 33, actor: 'me', foe: 0, kind: 'special', strike: 'ranged', element: 'fogo' }} />);
+    const span = document.querySelector('[data-stage-special] span') as HTMLElement;
+    expect(span.textContent).toBe(longo);
+    expect(span.style.textOverflow).toBe('ellipsis');
+    expect(span.style.overflow).toBe('hidden');
+    expect(span.style.whiteSpace).toBe('nowrap');
+    expect(span.style.maxWidth).not.toBe('');
+  });
+
   it('R8: o selo do especial usa o rótulo recebido (copy centralizada) e aparece no inimigo também', () => {
     render(<BattleStage {...baseProps} specialLabel="ESPECIAL!" action={{ id: 32, actor: 'foe', foe: 0, kind: 'special', element: 'agua' }} />);
     expect(document.querySelector('[data-stage-special]')?.textContent).toBe('ESPECIAL!');
