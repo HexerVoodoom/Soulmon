@@ -103,6 +103,20 @@ O teste de deriva (`petStage.test.ts`) só sabe conferir gradiente, então ele
 **pula** quem começa com `url(`. O que garante esses oito é a arte ter sido
 encomendada para a caixa — a mesma regra da decoração.
 
+**Terceira leva pintada (04/10/2026, à venda, 160–240 Bits):** Beira do Lago
+(`bg-lakeside`, outdoor, só chão), Bosque de Cristal (`bg-crystal-grove`),
+Caverna das Brasas (`bg-ember-cavern`), Terraço das Nuvens (`bg-cloud-terrace`)
+— outdoor, com `wall` (arcos/colunas/paredes de gruta) —, Estufa Noturna
+(`bg-night-greenhouse`) e Sótão Aconchegante (`bg-cozy-loft`), indoor com `wall`.
+A arte veio 16:9 (1344×752) com o chão em 70–79 % da altura; o pós
+(`E:/Soulmon-assets/out/instalacao-20261004/areas/fin-petbox.mjs`) escala o
+mínimo para cobrir 1200×648 e reenquadra para o **topo do chão cair em 74 %**
+(o Sótão já nasce em ~72 %, `horizonY: 72`). O `hf-finalize-bg.mjs` errou o
+chão em dois deles (pegou a borda da FRENTE do piso, 84 %, e completou o rodapé
+com cor chapada) — por isso a linha foi lida na prancha e passada à mão.
+Miniatura 96×52 derivada (lanczos3 + sharpen leve). Os seis também entram no
+sorteio de andares da masmorra (`SHOP_BG_ACCENTS`), como todo cenário da loja.
+
 ---
 
 ## Itens de decoração

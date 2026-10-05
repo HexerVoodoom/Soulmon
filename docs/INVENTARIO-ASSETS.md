@@ -19,6 +19,22 @@
 > `D:\Soulmonrand-archiverand-anterior\`. Estado por peça em `ASSETS-A-GERAR.md` §11. Os §1–§4 abaixo
 > descrevem o estado ANTES da rodada; re-varrer com `/squad-arte inventario`.
 
+> **Atualização 04/10/2026 (instalação das levas Higgsfield de 04/10 — `E:/Soulmon-assets/entrada-dono/`;
+> pranchas em `E:/Soulmon-assets/out/instalacao-20261004/areas/`):**
+> - **Instalados no bundle:** fundos novos do Hall e do Laboratório (760×1344, pós dos aprovados, lotes
+>   reposicionados); prédio do Refúgio com água; prédios e bustos próprios da Oficina do Foco (Tique) e do
+>   Caderno (Sépia); cena alta do Ateliê (`bg/visor-atelie.png`, 696×320); retratos dos 3 desafiantes do
+>   Torneio (`soulmon/desafiantes/`, 192²); 6 cenários do palco à venda (`backgrounds/bg-{lakeside,
+>   crystal-grove,ember-cavern,night-greenhouse,cozy-loft,cloud-terrace}` + thumbs); 16 andares de masmorra
+>   (`bg/dungeon-<cenario>.png`, 608×1080, 10 áreas + 6 interiores).
+> - **Fora do bundle (prontos, decisão do dono):** `E:/Soulmon-assets/instalados/predios-novos/` (20 prédios
+>   300², `MANIFEST.md`), `npcs-novos/` (20 `npcb-*` + 29 `npcnew-*`, 768²), `npcs-alternativos/` (20
+>   `npcalt-*` — 0 trocas, recomendações por lote no `MANIFEST.md`), `alternativas/` (as `-b` da Oficina e do
+>   Caderno).
+> - **Sem consumidor desde hoje:** `npc-f-ferreira`/`npc-f-lua` continuam em `EXTRA_NPC_ART` (só deixaram de
+>   ser o placeholder da Oficina/Caderno); `lote-laboratorio-stats`/`lote-hall-biblioteca` seguem usados pelos
+>   lotes de origem.
+
 ## 0. Números
 
 | Origem | Arquivos de imagem | Estado |
@@ -61,9 +77,11 @@ Fase 1 (`design/INVENTARIO-WIREFRAMES.md`).
 | `backgrounds/bg-attic … bg-swamp` | 8 · **1200×648** (pet-box da loja, formato certo) | `PET_BACKGROUNDS` (`utils/backgrounds.ts`) | Loja (`CenariosMobilias`), Home (palco do pet) |
 | `backgrounds/bg-guild-{clareira,ramagem,copa,mata,bosque-antigo}` | 5 · **1200×648** RGB noturnos, chão 66% (rodada 3 fundos-v2, instalados 30/09/2026; antes gradiente CSS) | `PET_BACKGROUNDS` | Guilda (`GroveVisor`, cerimônia de marco, prateleira da Guilda) e palco da Home quando equipado — ganhos por conquista, nunca vendidos; fonte `E:/Soulmon-assets/out/rodada3/fundos-v2/final/` (`MANIFEST.md` com sha256) |
 | `backgrounds/bg-campina`, `bg-cavernas` | 2 · **1200×648** RGB noturnos, chão 74% (fundos-v2, 30/09/2026) | `PET_BACKGROUNDS` + `REGIONS[].bgId` (`data/travessiasCatalog.ts`) | Exploração › Passeio (postal da região) — **não vendidos** (fora de `shop.ts`/`SHOP_BG_ACCENTS`) |
-| `soulmon/areas/bg-hall`, `bg-laboratorio` | 2 · **760×1344** RGB (fundos-v2, 30/09/2026) | `HALL_BG`/`LABORATORIO_BG` (`areas/index.ts` → `AreaView.tsx`) | Mapa › Hall e › Laboratório — antes caíam no degradê do `AreaScene` |
+| `soulmon/areas/bg-hall`, `bg-laboratorio` | 2 · **760×1344** RGB — refeitos em 04/10/2026 (GPT Image 2, cover lanczos + grade-to-home, sem pixelizar, como Arena/Exploração/Mercado/Jogos; WebP ≈ 306/327 KB); os de 30/09 (fundos-v2, pixelizados 16 cores) saíram | `HALL_BG`/`LABORATORIO_BG` (`areas/index.ts` → `AreaView.tsx`) | Mapa › Hall e › Laboratório |
+| `soulmon/bg/dungeon-<cenario>` (caverna-cristalina, cidade-em-ruinas, costa-vulcanica, floresta-de-outono, ilhas-do-ceu, jardim-lunar, oasis-deserto, penhasco-de-bambu, pico-nevado, recife-profundo, interior-{biblioteca,forja,taverna,laboratorio-estufa,templo,bazar}) | 16 · **608×1080** RGB (04/10/2026, reduzidos de 1520×2688) | `SPIRIT_BG_SCENES` (`dungeonScenes.ts`) | Jogos (Masmorra, sorteio dos andares) |
+| `backgrounds/bg-{lakeside,crystal-grove,ember-cavern,night-greenhouse,cozy-loft,cloud-terrace}` | 6 · **1200×648** RGB, chão 74 % (Sótão 72 %), 04/10/2026 | `PET_BACKGROUNDS` + `shop.ts` (160–240 Bits) | Loja, palco da Home, sorteio da masmorra |
 | `backgrounds/bg-gameboy`, `bg-matrix`, `bg-ocean` | 3 · **800×800** (formato antigo, `setting:'void'`) | idem | Loja — ⚠️ cortam nas laterais |
-| `backgrounds/thumbs/` | 35 · **96×52** — miniatura de cada cenário 1200×648, DERIVADA (lanczos3 + sharpen leve; rodada 2 R2-1, 21/09/2026); as 7 de fundos-v2 vieram prontas da leva. as 27 dos cenários retonados em 30/09 (tom da Home v2) foram rederivadas pelo mesmo método | `BG_THUMBS` (glob em `ShopModal.tsx`) | Loja (`CenariosMobilias`, mini-visor do card) |
+| `backgrounds/thumbs/` | 41 · **96×52** (+6 em 04/10/2026) — miniatura de cada cenário 1200×648, DERIVADA (lanczos3 + sharpen leve; rodada 2 R2-1, 21/09/2026); as 7 de fundos-v2 vieram prontas da leva. as 27 dos cenários retonados em 30/09 (tom da Home v2) foram rederivadas pelo mesmo método | `BG_THUMBS` (glob em `ShopModal.tsx`) | Loja (`CenariosMobilias`, mini-visor do card) |
 | `backgrounds/home-scene-1547.png` | 1 · 1376×3058 | `CompanionHUD.tsx` | Home (fundo do palco) — é a "image 1547" da pasta do Desktop |
 | `video/evolution-bg.mp4` + thumb | 1 | `EvolutionCeremony.tsx` | Evolução (`Cerimonia`) |
 | `brand/intro.mp4` | 1 · 720×1280 | `IntroScreen.tsx` | Onboarding-funil (`IntroEstados`) |
