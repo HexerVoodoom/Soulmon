@@ -188,3 +188,16 @@ varre todas as escolas × elementos (como o teste de tipo da R8).
 - Atributo derivado ≠ atributo persistido em dois lugares. Servidor decide PvP.
 - Movimento reduzido reduz o movimento, não a informação. Toda superfície nova nasce muda (R-NOVA, `docs/SOM.md`).
 - Sem números de franquia/nomes registrados; EN primeiro.
+
+---
+
+## 9. Revisão pós-Discovery (SQUAD-Alpha, run combate-v3-01, 04/10/2026)
+
+Decisões do dono que **substituem** o texto acima onde conflitarem:
+- Q1 galho dominante do dia (Poder→ATK, Harmonia→SPD, Benevolência→DEF); **HP por rodízio: a cada 4º dia que conta**. Q2 gatilho = `dayWasPerfect` na virada (`completeDayReached`), não o delta de `perfectDays`. Glitchtama não dá ponto.
+- Q3 **piso de 3 golpes**. Q4 ×1,5 arredondado para cima nos 4 atributos. Q5 vantagem elemental = ±1 golpe.
+- §3 régua: **win rate no espelho ±5pp** de cada família contra o dano direto; tempo e HP só informativos. Anel, esquiva e torcida ficam fora da régua (±25%).
+- Q8 nome por regra determinística, sem IA. Q9 retroativo por `totalPerfectDays`. Defaults: Q6 `E` constante, nome fixo por estágio; Q7 nome próprio no selo; desempate = mais % de HP, depois seed do servidor.
+- **Segurança (S1):** `save.js` e `_duel.js` clampam `combatStats` (finito, piso, teto = base + ganho máx × dias de conta carimbados pelo servidor).
+
+**Ordem nova das fases** (substitui §6): 0) simulação fora do repo com as regras acima → 1) núcleo puro + especiais por família + simulador no repo como teste → 2) motores um por vez: Arena (já tem simulador) → Masmorra/Pesadelo → PvP `_duel.js` por último, com teste de paridade → 3) save + crescimento + clamp no servidor → 4) nome do especial → 5) docs.
