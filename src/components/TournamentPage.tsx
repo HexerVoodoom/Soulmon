@@ -128,6 +128,8 @@ interface TournamentPageProps {
    *  da folha, `AreaSheet`). `undefined` = sem folha em volta, o indicador vai
    *  inline no topo; `null` = a folha ainda não entregou o encaixe (espera). */
   headSlot?: HTMLElement | null;
+  /** Aba inicial (a missão semanal da Home abre direto em `'missions'`). */
+  initialTab?: 'arena' | 'missions' | 'shop';
 }
 
 /** Emblemas: serifa de medalha (regra das três moedas) em ouro-TINTA. */
@@ -194,7 +196,7 @@ function TierMark({ id, size, state, place }: { id: string; size: 24 | 32 | 48; 
   );
 }
 
-export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLine, petElement, skills, trophies, equippedFrame = null, ownedFrames = [], onEquipFrame, language, emblems, onEarnEmblems, totalXP, onMatchPlayed, weeklyMissions, onClaimWeekly, shop, headSlot }: TournamentPageProps) {
+export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLine, petElement, skills, trophies, equippedFrame = null, ownedFrames = [], onEquipFrame, language, emblems, onEarnEmblems, totalXP, onMatchPlayed, weeklyMissions, onClaimWeekly, shop, headSlot, initialTab }: TournamentPageProps) {
   const isPt = language === 'pt-BR';
   const lang: Language = isPt ? 'pt-BR' : 'en-US';
   const [opponents, setOpponents] = useState<Opponent[] | null>(null);
@@ -251,7 +253,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
   /* 02/10/2026 — o Torneio abre em DESAFIAR (pedido do dono): a pessoa cai
      direto na opção de entrar em combate. A faixa saiu do menu e virou o
      indicador do canto do título (abre `tiersOpen`). */
-  const [tab, setTab] = useState<'arena' | 'missions' | 'shop'>('arena');
+  const [tab, setTab] = useState<'arena' | 'missions' | 'shop'>(initialTab ?? 'arena');
   /** A folha das faixas (antiga aba "Faixa") — abre pelo indicador do título. */
   const [tiersOpen, setTiersOpen] = useState(false);
   const { flash, say } = useShopFlash();

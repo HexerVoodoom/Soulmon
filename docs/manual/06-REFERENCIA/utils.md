@@ -1121,6 +1121,11 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/components/mercado/MercadoSheets.tsx`, `src/components/mercado/ShopShelf.tsx`, `src/components/TournamentPage.tsx`.
 **Régua:** `src/utils/mercadoCatalog.test.ts` (moeda por aba, Emblemas só cosmético, sem 🌀/💗, nada vendável sumiu na repartição, toda missão com categoria).
 
+### `src/utils/homeMissions.ts`
+**Dono de:** a regra PURA do card de missões da Home — monta as missões do dia (passeio, meta, tarefa parada) e as semanais a partir do estado; sem efeito colateral.
+**Exports:** `HomeMissionKind` (type), `HomeMission`, `WeeklyRow` (interfaces), `staleTaskOfDay(tasks, now)`, `homeMissions(input)`.
+**Chamado por:** `src/components/home/HomeMissionsCard.tsx`.
+
 ### `src/utils/missions.ts`
 **Dono de:** As missões PERMANENTES (lifetime) que liberam a compra dos cenários exclusivos da loja. Desde minimal-ui F5 (24/09/2026) cada missão tem `category` (`MissionCategory`: `evolution`/`dungeon`/`games`/`constancy`, lista em `MISSION_CATEGORIES`) — o filtro da folha de Conquistas do Mercado.
 **Exports:**

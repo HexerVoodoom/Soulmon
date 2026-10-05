@@ -108,7 +108,9 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // i18n, shop, GameStateContext.
   // 04/10/2026 (rodada 7): 540_385 → 550_797 (+10 KB) — missões com relógio de 24 h, celebração, ícone/folha de Missões na Home e prefetch dos jogos.
   // 05/10/2026 (combate v3 PR1b): 550_797 → 559_001 (+23 B sobre a main) — `fighterStrikeForm`, nome da skill no selo e `stageSkillsFor`; a main já estava a 11 B da folga.
-  'index.js': 559_001,
+  // 05/10/2026 (ajustes): 559_001 → 559_558 (+557 B, soma ao PR1b) — card de missões na Home
+  // (o card e a regra são `lazy`; fica no entrada só a fiação de navegação) e `MissionsSheet` passou a `lazy`.
+  'index.js': 559_558,
   // 04/10/2026: 153_795 → 164_043 (+10 KB) — keyframes da cena de combate, sheets animados, mascote.
   'index.css': 164_043,          // 150 KB — 1,5× o teto
   'evolution-bg.mp4': 3_917_240, // 3,7 MB — fundo de UMA cerimônia; correção #3 (WebM/CSS)

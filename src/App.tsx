@@ -16,7 +16,7 @@ import {
 } from './utils/telemetry';
 import { CornerLink } from './components/nav/CornerLink';
 import { MissionsLink } from './components/nav/MissionsLink';
-import { MissionsSheet } from './components/nav/MissionsSheet';
+import type { HomeMission } from './utils/homeMissions';
 import { Celebration } from './components/ui/Celebration';
 import { AreaTopBar } from './components/nav/AreaTopBar';
 import { MapPage } from './components/nav/MapPage';
@@ -520,6 +520,8 @@ function PostponeNudgeSheet({
 }
 
 // O glossário só existe quando alguém o abre — e ganhou os verbetes da Guilda (B2): fora do JS de entrada.
+const MissionsSheet = lazy(() => import('./components/nav/MissionsSheet').then(m => ({ default: m.MissionsSheet })));
+const HomeMissions = lazy(() => import('./components/home/HomeMissionsCard'));
 const HelpModal = lazy(() => import('./components/HelpModal').then(m => ({ default: m.HelpModal })));
 const RestWindowCard = lazy(() => import('./components/RestWindowCard').then(m => ({ default: m.RestWindowCard })));
 const DreamDex = lazy(() => import('./components/DreamDex').then(m => ({ default: m.DreamDex })));
@@ -848,6 +850,9 @@ export default function App() {
   const [hpBannerDismissed, setHpBannerDismissed] = useState(false);
   /** O convite ao Refúgio foi aceito: a área Jogos monta já com a respiração aberta (one-shot). */
   const [refugeLaunch, setRefugeLaunch] = useState(false);
+  /** Missão da Home → o lugar dela: a folha do lote a abrir (one-shot) e a aba do Torneio. */
+  const [missionSheet, setMissionSheet] = useState<string | null>(null);
+  const [tournamentTab, setTournamentTab] = useState(false);
   /* SLOT DO DIA — a linha "+N avisos" nasce RECOLHIDA. Estado de VISTA, fora
      do GameState de propósito (não vira cloud save a cada toque). */
   const [avisosAbertos, setAvisosAbertos] = useState(false);
@@ -3440,6 +3445,9 @@ export default function App() {
     setRefugeLaunch(true);
   }, [setGameState]);
   const handleRefugeLaunchConsumed = useCallback(() => setRefugeLaunch(false), []);
+  // A aba Missões do Torneio vale só para esta visita (o Torneio monta depois da folha, lazy).
+  const handleMissionSheetConsumed = useCallback(() => setMissionSheet(null), []);
+  useEffect(() => { if (areaOf(currentView) !== 'arena') setTournamentTab(false); }, [currentView]);
 
   const handleDinoScore = useCallback((score: number) => {
     setGameState(prev => (score > (prev.dinoBest ?? 0) ? { ...prev, dinoBest: score } : prev));
@@ -5233,6 +5241,15 @@ export default function App() {
     });
   }, [gameState.weeklyMissions, gameState.playerDayTz]);
 
+  /** Missão da Home → DIRETO ao lugar dela (ajuste do dono, 05/10/2026). */
+  const abrirMissaoDaHome = useCallback((m: HomeMission) => {
+    const lote = m.kind === 'passeio' ? 'passeio' : m.kind === 'semanal' ? 'torneio' : null;
+    if (!lote) return document.getElementById('lista-do-dia')?.scrollIntoView({ behavior: 'smooth' });
+    setMissionSheet(lote);
+    setTournamentTab(lote === 'torneio');
+    goTo(areaView(lote === 'passeio' ? 'exploracao' : 'arena'));
+  }, [goTo]);
+
   /** Paga os Emblemas de uma missão pronta. `claimWeekly` é idempotente e
    *  devolve 0 se já estava paga — pagar duas vezes é bug de economia. */
   const resgatarMissao = useCallback((id: WeeklyMissionId) => {
@@ -5991,6 +6008,8 @@ export default function App() {
                 area={area}
                 initialGame={area === 'jogos' && refugeLaunch ? 'respiracao' : undefined}
                 onInitialGameConsumed={handleRefugeLaunchConsumed}
+                initialSheet={missionSheet ?? undefined}
+                onInitialSheetConsumed={handleMissionSheetConsumed}
                 onLayerChange={setAreaLayerOpen}
                 language={language}
                 ownership={{
@@ -6008,6 +6027,7 @@ export default function App() {
                 accountTier={gameState.accountTier}
                 onUnlock={() => setUnlockReason('shop')}
                 tournament={{
+                  initialTab: tournamentTab ? 'missions' : undefined,
                   saveId,
                   ocultoDaLista: gameState.hideFromPublicList === true,
                   petStage: gameState.evolutionStage,
@@ -6596,6 +6616,24 @@ export default function App() {
                   conclusão (`jaConcluiuAlgo`) — célula inerte, não card
                   ausente. */}
 
+              {/* ── MISSÕES (ajuste do dono, 05/10/2026): card fixo no topo da
+                  lista, diárias primeiro e semanais do Torneio depois. Tocar leva
+                  ao lugar da missão. Nada novo é pago (`utils/homeMissions.ts`). */}
+              <Suspense fallback={null}>
+              <HomeMissions
+                language={language}
+                input={{
+                  passeio: missionMark(crossings, playerDayIso(new Date(), gameState.playerDayTz), Date.now()),
+                  meta: { done: dailyDone, goal: dailyTotal },
+                  tasks: gameState.tasks ?? [],
+                  weekly: missoesDaSemana,
+                  now: new Date(),
+                }}
+                onOpen={abrirMissaoDaHome}
+              />
+              </Suspense>
+              <div id="lista-do-dia" aria-hidden="true" />
+
               {/* ── A LISTA DO DIA (canvas Atividades, §20) ─────────────────
                   UM painel de rituais, linhas de 56px, e a gaveta do que saiu
                   de vista — tudo em `components/DailyRituals.tsx` (a
@@ -6840,7 +6878,7 @@ export default function App() {
       {currentView === 'home' && celebrarMeta && (
         <Celebration fixed onDone={() => setCelebrarMeta(false)} />
       )}
-      <MissionsSheet
+      {missionsOpen && <Suspense fallback={null}><MissionsSheet
         open={missionsOpen}
         onClose={() => setMissionsOpen(false)}
         language={language}
@@ -6848,7 +6886,7 @@ export default function App() {
         onChange={handleCrossings}
         todayKey={playerDayIso(new Date(), gameState.playerDayTz)}
         seed={saveId}
-      />
+      /></Suspense>}
       {currentView === 'map' && (
         <CornerLink
           icon="home"
