@@ -183,6 +183,7 @@ export function DuelScreen({
     <TorcidaLayer onTap={cheer} active={cheering && !pausado} isPt={isPt} style={BATTLE_LAYER_STYLE} mascot>
       <BattleStage
         scene={ARENA_SCENE.bg}
+        sceneElement={oppEl}
         specialLabel={specialLabel(isPt)}
         me={{ key: 'me', sprite: petSprite, name: petName || (isPt ? 'Você' : 'You'), hp: hpMe, maxHp: me.hp, element: meEl, down: fim && hpMe <= 0, energy: energia.me / DUEL_ENERGY_MAX }}
         foes={[{ key: 'opp', sprite: oppSprite, name: oppName, hp: hpOpp, maxHp: opp.hp, element: oppEl, down: fim && hpOpp <= 0, energy: energia.opp / DUEL_ENERGY_MAX }]}

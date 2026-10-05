@@ -618,6 +618,7 @@ export function ArenaGame({
       >
         <BattleStage
           scene={ARENA_SCENE.bg}
+          sceneElement={inimigos[0] ? fxElementId(inimigos[0].elements[0]) : null}
           specialLabel={specialLabel(isPt)}
           me={{
             key: 'me', sprite: petSprite, name: isPt ? 'Você' : 'You', hp: Math.max(0, hp), maxHp: stats.hp,

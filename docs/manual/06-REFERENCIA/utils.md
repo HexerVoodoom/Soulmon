@@ -668,6 +668,12 @@ Cobertura: **179/179** (+1 em 04/10/2026: `petBounce.ts`); antes **178/178** mó
 **Quem chama:** `games/BattleStage.tsx`, `ArenaGame`, `DuelScreen`, `TournamentPage` (`visualElementFor`).
 **Régua:** `src/utils/combatFx.test.ts` — inventário (17 base × 6 estados, 154 × 6 no glob), fallback no neutro, e o RITMO/calibração do duelo (modelo de tempo, 04/10/2026: ~35–45 s, o especial com 3 toques/s sai antes do que sairia sozinho, 50% → 72% → teto 82%).
 
+### `src/utils/combatArt.ts`
+**Dono de:** a arte da CENA de combate por elemento (rodada 2 do Higgsfield, 04/10/2026, `assets/soulmon/combate/`): 17 cenários 9:16 (`bg-<base>.png`, 360×640 ampliados com `pixelated` — a 1080×1920 o WebP passava do teto de 400 KB), 17 escudos levantados (`escudo-<base>.png`, 128²) e a plataforma sob os pés (`sombra-clara`/`sombra-escura`, 256×96). Só os 17 base têm arte: derivado → 1º componente (`DERIVED_ELEMENT_PAIRS`), `planta` → `vida`, `industrial` → `marcial`; `neutro` → `undefined`.
+**Exports:** `combatBaseElement(id)` · `combatSceneBg(id)` (`url(…) center/cover <cor média>` ou `undefined`) · `combatShield(id)` · `combatShadow(sceneElement)` (escura só sobre o cenário de `luz`) · `COMBAT_BG_COUNT`, `COMBAT_SHIELD_COUNT`.
+**Quem chama:** só `games/BattleStage.tsx` (chunk preguiçoso da luta — não importar do chunk de entrada). Regra do cenário: `BattleStage` recebe `sceneElement`; Arena e Duelo passam o elemento do INIMIGO (luta-se no terreno dele); Pesadelo e Masmorra não passam (cena fixa / cenário por andar). O escudo do DEFENSOR substitui o flash `defended` do FX no bloqueio (sem arte → `defended`).
+**Régua:** `src/utils/combatArt.test.ts` (17 + 17, mapeamento, plataforma, e os 154 ícones de elemento) + `games/BattleStage.test.tsx` (escudo, fallback neutro, camada do cenário).
+
 ### `src/utils/energia.ts`
 **Dono de:** a ENERGIA e as mecânicas ativas do PvE (04/10/2026, REGISTRO §20.10). **O modelo:** cada lutador tem UMA barra de energia (0–`ENERGY_MAX` = 100) que enche por ataque DADO (+9), ataque SOFRIDO (+7) e, só o pet do jogador, pelo CHEER (+36): a "barra de cheer" é o medidor de TOQUES (`CHEER_TAPS_FULL` = 24, lento) que, ao encher, despeja energia no pet e zera (o excedente fica). Energia cheia = o ESPECIAL no golpe seguinte. As constantes de energia são IMPORTADAS de `functions/api/_duel.js` (uma regra, um arquivo): o PvP e o PvE enchem do mesmo jeito.
 **Exports:** `ENERGY_MAX`/`ENERGY_DEALT`/`ENERGY_TAKEN`/`ENERGY_CHEER`/`CHEER_TAPS_FULL`/`CHEER_TAPS_CAP` · `addEnergy(e, 'dealt' | 'taken' | 'cheer')`, `spendEnergy`, `energyFull`, `energyRatio` · `cheerTap(meter)` → `{ meter, discharged }`, `cheerRatio` · **PvE:** `PVE_HP_SCALE` (1,8), `PVE_FOE_HP_EXTRA` (1,1), `pveHp`, `pveFoeHp`, `PVE_SPECIAL_MULT` (3, o do dono), `PVE_FOE_SPECIAL_MULT` (2), `PVE_BASE_FRAC` (0,5), `pveStrikeDamage({ dmg, guard, special, ring })`, `pveFoeHitDamage({ atk, acc, perfect, reducaoDano, special, dodge })` (golpe normal bloqueado por defesa perfeita; o especial não é bloqueado de graça) · **O ANEL** (o especial do pet): `RingGrade` (`ruim` ×0,75 / `bom` ×1 / `otimo` ×1,35, `RING_MULT`), `ringSpec(seed, n)` (velocidade 1,5–2,1 s pela semente), `ringScale(t, spec)`, `ringGrade(tapMs, spec)` (ótimo ±120 ms, bom ±320 ms do instante em que o anel encosta no alvo; sem toque = ruim) · **A ESQUIVA** (o especial do inimigo): `DodgeGrade` (`nada` 0% / `bom` 50% / `otimo` 85% de redução, `DODGE_REDUCE`), `dodgeSpec(seed, n)` (carga de 1–1,5 s e voo de 1 s), `dodgeGrade(swipeMs, spec)` (só vale com o projétil no ar; os últimos 500 ms antes do impacto são ótimos).
@@ -728,8 +734,8 @@ Cobertura: **179/179** (+1 em 04/10/2026: `petBounce.ts`); antes **178/178** mó
 **Exports:**
 - `elementIcon` — Devolve a URL do ícone de um elemento — base, derivado ou `neutro` — ou `undefined` se não houver arte para esse id. Devolve `undefined` de propósito em vez de cair num placeholder: o consumidor decide se mostra o rótulo de texto, um traço, ou nada.
 - `elementIconIds` — Todos os ids que têm ícone. Útil para testes de cobertura.
-**Chamado por:** nenhum consumidor encontrado (`grep -rl` em `src/`, `functions/`, `workers/`, `desktop/`).
-**Régua:** nenhuma (`ls src/utils/elementIconArt*.test.ts` vazio).
+**Chamado por:** `arena/DueloSheet.tsx` (32 px). Desde 04/10/2026 (rodada 2 do Higgsfield) cobre os 17 base + 136 derivados (96²) + `neutro` (128², leva antiga) = 154.
+**Régua:** `src/utils/combatArt.test.ts` (contagem 154 e os 17 base presentes).
 
 ### `src/utils/entitlements.ts`
 **Dono de:** Cliente do saldo real de Créditos/tier no servidor — gasto, recompensa de anúncio e verificação de compra.

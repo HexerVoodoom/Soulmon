@@ -32,6 +32,7 @@ import { sm2Button, sm2Text } from '../form/FormKit';
 import { fxFrame, impactMs, totalMs, prefersReducedMotion, SPECIAL_LABEL, type StageActionKind, type StrikeForm } from '../../utils/combatFx';
 import { type RingGrade, type RingSpec } from '../../utils/energia';
 import { SpecialRing, DodgeButtons } from './PveMechanics';
+import { combatSceneBg, combatShield, combatShadow } from '../../utils/combatArt';
 
 /** O estilo da `TorcidaLayer` que envolve a cena: a tela inteira, acima das páginas. */
 export const BATTLE_LAYER_STYLE: CSSProperties = {
@@ -212,16 +213,20 @@ function FighterBars({ fighter, spot, tone, numeric, barsH }: {
   );
 }
 
-/** A sombra/plataforma sob os pés. */
-function Platform({ spot, half }: { spot: Spot; half: number }) {
+/** A sombra/plataforma sob os pés — a arte `combate/sombra-*.png` (256×96), esticada na elipse. */
+function Platform({ spot, half, art }: { spot: Spot; half: number; art: string }) {
   const w = Math.round(spot.size * 1.05);
   return (
-    <div
+    <img
+      src={art}
+      alt=""
       aria-hidden="true"
+      data-stage-platform
+      width={w}
+      height={half * 2}
       style={{
-        position: 'absolute', left: spot.x - w / 2, top: spot.y - half, width: w, height: half * 2,
-        borderRadius: '50%', zIndex: 1, pointerEvents: 'none',
-        background: 'radial-gradient(ellipse at 50% 50%, rgba(255,255,255,.16) 0 34%, rgba(0,0,0,.5) 36% 64%, transparent 72%)',
+        position: 'absolute', left: spot.x - w / 2, top: spot.y - half, width: w, height: half * 2, maxWidth: 'none',
+        zIndex: 1, pointerEvents: 'none', imageRendering: 'pixelated',
       }}
     />
   );
@@ -334,8 +339,9 @@ function ActionFx({ action, layout, reduced }: { action: StageAction; layout: St
   const total = action.totalMs ?? totalMs(action.kind, reduced);
   const el = action.element;
   const blocked = !!action.shield;
+  // O escudo LEVANTADO do elemento do defensor (`combate/escudo-*`); sem arte (neutro), o flash `defended` do FX.
   const landing = blocked
-    ? fxFrame(action.shield, 'defended')
+    ? combatShield(action.shield) ?? fxFrame(action.shield, 'defended')
     : fxFrame(el, 'impact');
   const big = action.kind === 'special';
   const form = strikeFormOf(action);
@@ -379,6 +385,12 @@ function ActionFx({ action, layout, reduced }: { action: StageAction; layout: St
 export interface BattleStageProps {
   /** `background` shorthand do cenário (ex.: `ARENA_SCENE.bg`). */
   scene?: string;
+  /**
+   * Elemento que escolhe o CENÁRIO (`combate/bg-*`, um por elemento base). Quando tem arte, vence `scene`.
+   * Regra (04/10/2026): Arena e Duelo passam o elemento do INIMIGO (luta-se no terreno dele); o Pesadelo e a
+   * Masmorra não passam (cena fixa / cenário por andar).
+   */
+  sceneElement?: string | null;
   me: StageFighter;
   foes: StageFighter[];
   /** Índice do inimigo mirado (mostra o HP numérico dele). */
@@ -420,7 +432,7 @@ export interface BattleStageProps {
 
 /** A cena inteira. Envolva-a numa `TorcidaLayer style={BATTLE_LAYER_STYLE} mascot`. */
 export function BattleStage({
-  scene, me, foes, target = 0, action, hit, badge, title, closeLabel, onClose, exitConfirm, onPauseChange, hud, status,
+  scene, sceneElement, me, foes, target = 0, action, hit, badge, title, closeLabel, onClose, exitConfirm, onPauseChange, hud, status,
   charging = false, ring, onRingGrade, dodge, onDodge, petDodge, mechLabels, specialLabel, children,
 }: BattleStageProps) {
   const fieldRef = useRef<HTMLDivElement>(null);
@@ -465,16 +477,22 @@ export function BattleStage({
 
   const hits = hit ? (Array.isArray(hit) ? hit : [hit]) : [];
   const meBody = bodyCenter(layout.me);
+  const elementScene = combatSceneBg(sceneElement);
+  const platformArt = combatShadow(elementScene ? sceneElement : null);
 
   return (
     <div
       data-battle-stage
       style={{
         position: 'absolute', inset: 0, overflow: 'hidden',
-        background: scene ?? 'var(--sm2-viewport-bg)',
+        background: elementScene ? 'var(--sm2-viewport-bg)' : scene ?? 'var(--sm2-viewport-bg)',
         color: 'var(--sm2-ink)', fontFamily: 'var(--sm2-font-text)',
       }}
     >
+      {/* O cenário do elemento: arte 360×640 ampliada SEM suavizar (numa camada própria, para o `pixelated` não herdar). */}
+      {elementScene && (
+        <div aria-hidden="true" data-stage-scene={sceneElement ?? ''} style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: elementScene, imageRendering: 'pixelated' }} />
+      )}
       {/* O véu: escurece o topo e o pé para o HUD e as barras lerem sobre a arte. */}
       <div aria-hidden="true" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'linear-gradient(to bottom, rgba(0,0,0,.5), rgba(0,0,0,0) 20%, rgba(0,0,0,0) 76%, rgba(0,0,0,.45))' }} />
 
@@ -521,9 +539,9 @@ export function BattleStage({
         {foes.map((f, i) => {
           const s = layout.foes[i];
           if (!s) return null;
-          return <Platform key={`pl${f.key}`} spot={s} half={layout.platHalf(s)} />;
+          return <Platform key={`pl${f.key}`} spot={s} half={layout.platHalf(s)} art={platformArt} />;
         })}
-        <Platform spot={layout.me} half={layout.platHalf(layout.me)} />
+        <Platform spot={layout.me} half={layout.platHalf(layout.me)} art={platformArt} />
 
         {foes.map((f, i) => {
           const s = layout.foes[i];

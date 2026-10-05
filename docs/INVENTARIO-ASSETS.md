@@ -85,11 +85,12 @@ Fase 1 (`design/INVENTARIO-WIREFRAMES.md`).
 | `soulmon/fx/{fx-corrida-estilhaco-*,fx-corrida-faisca-*,cristal-moeda}` | 9 + 2 sheets (rodada 3) | — | ⚠️ **sem chamada** (a Corrida não tem FX de impacto nem moeda coletável hoje) |
 | `soulmon/fx/` | 12 · 64²/128² — 6 partículas de cuidado + 6 FX de batalha | `fxArt.ts` (**emoji** do `Popup.icon`) | Home (`PetCarinho`, banho), Jogos (`MasmorraTurno`, `PesadeloFim`) |
 | `soulmon/fx/anim-sleep-z-light.png` | 1 · 192×64 (3 quadros) — a folha `anim-sleep-z` recolorida em claro (`#E9F5F2`/`#5FF3E0`, alfa intacto; rodada 2 R2-4) | `ANIM_ART.sleepZLight` (`animArt.ts`) | Home (`CompanionHUD` dormindo sobre cenário escuro — `isDarkBackground`) |
-| `soulmon/fx-ataque/fx-<el>-aura-96.png` | 154 · **96²** — aura por elemento derivada da 128² (lanczos3, alfa < 64 → 0; rodada 2 R2-3) | `auraForElement(el, 96)` (`attackFxArt.ts`) | Pet (`FichaEstados` — aura a 2× = o vidro 192 inteiro) |
+| `soulmon/fx-ataque/fx-<el>-aura-96.png` | 154 · **96²** — aura por elemento (desde 04/10/2026, 153 refeitas da folha nova por nearest; `neutro` segue a de R2-3) | `auraForElement(el, 96)` (`attackFxArt.ts`) | Pet (`FichaEstados` — aura a 2× = o vidro 192 inteiro) |
 | `soulmon/icons/games/hand-*` | 3 · 128² | `RPSGame.tsx` | Jogos (`PPT`) |
 | `soulmon/icons/categories/icon-cat-*` | 8 · 128² | `types/category-icons.ts` | Atividades (`LinhaHabitoEstados`, `CriarAtividade`) — ⚠️ **pixel FORA do visor** (lista de tarefas é aparelho). Divergência a registrar no canvas de Atividades, não a reproduzir |
-| `soulmon/elementos/` | 137 · 128² | `elementIconArt.ts` (glob) | Pet (`FichaEstados` — habilidades), Jogos (ficha de ataque) |
-| `soulmon/fx-ataque/` | 816 · 128² — 136 elementos DERIVADOS × 6 estados | `derivedAttackFxArt.ts` (glob) | Jogos — ⚠️ **sem ponto de chamada**: o combate não conhece elemento (decisão de produto pendente) |
+| `soulmon/elementos/` | 154 · **96²** (17 base + 136 derivados, rodada 2 do Higgsfield, 04/10/2026; `el-neutro` 128² antigo) | `elementIconArt.ts` (glob) | Arena (`DueloSheet`, 32 px) |
+| `soulmon/fx-ataque/` | 924 · 128² — 154 elementos (17 base + 136 derivados + neutro) × 6 estados; os 153 com folha nova trocados em 04/10/2026 (rodada 2 do Higgsfield, sem a franja branca) | `attackFxArt.ts` (glob, chunk preguiçoso da luta) via `combatFx.ts` | `BattleStage` (Arena, Duelo, Pesadelo, Masmorra) + aura da Ficha/Evolução |
+| `soulmon/combate/` | 17 `bg-<base>` (360×640, ampliados `pixelated`) · 17 `escudo-<base>` (128²) · `sombra-clara`/`sombra-escura` (256×96) — 04/10/2026 | `combatArt.ts` | `BattleStage`: cenário por elemento do INIMIGO (Arena, Duelo), escudo do defensor no bloqueio, plataforma sob os pés |
 
 ### 1.4 Marca e PWA (fora do visor — vetor/imagem de marca, não pixel)
 
@@ -160,6 +161,7 @@ consumidor** — `src/assets/artMaps.contract.test.ts` (novo, 14/14) cobre `embl
 
 | Leva | Qtd · formato | O que é | Visor? | Ponto de chamada hoje | Veredito |
 |---|---|---|---|---|---|
+| `E:\Soulmon-assets\instalados\criaturas\` (rodada 4 do Higgsfield, 04/10/2026) | 40 · 256² + 64² (alfa binário, nearest) | criaturas pequenas fofas, "NPC ajudante" no log | dentro | **nenhum** | **Decisão do dono (04/10): não entram agora** — processadas e guardadas com prancha + `MANIFEST.md`; `dragaozinho-casca` lembra franquia, revisar |
 | `entrega2/` | 6 movimento 64² + 6 ganho 96² + `fx-heal` + `move-poof` + `nest-cradle-wide` 660×312 | poeira de passo, Z de sono, espreguiçar, selo de dia perfeito, level-up, baú, confete, burst de evolução, selo de foco; berço largo (`A12`) | dentro | **nenhum** para os 6 de movimento; ganho tem momento (`DailyReportModal`, masmorra, evolução); berço substitui `nest-base` | **instalar berço** (`nestArt`, `h:104`); ganho/movimento entram quando a animação for escrita (Home/Rituais/Evolução) |
 | `entrega3/` | 8 · 1200×648 | os 8 cenários da loja em versão DIA (solar punk) | dentro | `PET_BACKGROUNDS` aceita | **Decisão do dono**: par dia/noite (pelo relógio do app?) ou descarte. O `HANDOFF-GERACAO` diz que o teste solar punk "não continua" |
 | `entrega4/` | 7 spritesheets anim (células 64²) + **6 do Dino** (4 obstáculos 128², chão 384×48, parallax 512×128) | comer, coração, banho, sono, cocô, faísca, poeira — quadro a quadro; conjunto do Dino Runner | dentro | anim: nenhum (novo); **Dino: substitui silhuetas + linha de 1px em `DinoGame.tsx`** | **Dino = instalar já** (é o buraco mais visível; atenção à colisão do obstáculo 3). Anims: Home (`PetCarinho`, `PetDormindo`, banho) quando houver infra de spritesheet |

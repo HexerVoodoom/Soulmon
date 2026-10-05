@@ -200,14 +200,34 @@ describe('BattleStage — o que a cena desenha', () => {
     expect(srcsDe().some(s => /fx-agua-orb/.test(s))).toBe(true);
   });
 
-  it('ESCUDO: a defesa mostra a barreira do elemento do DEFENSOR no lugar do impacto', () => {
+  it('ESCUDO: a defesa mostra o escudo LEVANTADO do elemento do DEFENSOR no lugar do impacto', () => {
     const action: StageAction = { id: 4, actor: 'foe', foe: 0, kind: 'melee', element: 'agua', shield: 'fogo' };
     render(<BattleStage {...baseProps} action={action} />);
     const srcs = srcsDe();
-    expect(srcs.some(s => /fx-fogo-defended/.test(s))).toBe(true);
+    // Arte da rodada 2 (04/10/2026): `combate/escudo-<base>.png`; sem escudo (neutro) cai no `fx-*-defended`.
+    expect(srcs.some(s => /escudo-fogo/.test(s))).toBe(true);
     expect(srcs.some(s => /fx-agua-impact/.test(s))).toBe(false);
     // E o escudo defende: o seu Soulmon não treme.
     expect(document.querySelector('.sm-bs-hit')).toBeNull();
+  });
+
+  it('ESCUDO sem arte própria (neutro) cai no flash `defended` do FX', () => {
+    const action: StageAction = { id: 5, actor: 'foe', foe: 0, kind: 'melee', element: 'agua', shield: 'neutro' };
+    render(<BattleStage {...baseProps} action={action} />);
+    expect(srcsDe().some(s => /fx-neutro-defended/.test(s))).toBe(true);
+  });
+
+  it('CENÁRIO por elemento: `sceneElement` com arte vence `scene` (camada pixelada); sem arte, fica o `scene`', () => {
+    const { unmount } = render(<BattleStage {...baseProps} scene="url(x.png) center/cover" sceneElement="vapor" />);
+    const camada = document.querySelector('[data-stage-scene]') as HTMLElement;
+    expect(camada).not.toBeNull();
+    expect(camada.style.background).toMatch(/bg-fogo\.png/);
+    expect(camada.style.imageRendering).toBe('pixelated');
+    expect(document.querySelectorAll('[data-stage-platform]').length).toBeGreaterThan(0);
+    unmount();
+    render(<BattleStage {...baseProps} scene="url(x.png) center/cover" sceneElement="neutro" />);
+    expect(document.querySelector('[data-stage-scene]')).toBeNull();
+    expect((document.querySelector('[data-battle-stage]') as HTMLElement).style.background).toMatch(/x\.png/);
   });
 
   it('o feedback do golpe é CURTO: o número e um selo (ÓTIMO!, Defendeu!) sobem do alvo; vários alvos = vários números', () => {
