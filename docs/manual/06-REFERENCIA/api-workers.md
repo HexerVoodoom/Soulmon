@@ -247,6 +247,12 @@
 **Régua:** `functions/api/bond.parity.test.js` — varre milhares de valores de `totalXP` e exige que este arquivo e `src/utils/bond.ts` respondam o MESMO nível (footgun 9: cópia deliberada, travada por paridade comportamental porque Pages Functions não importam de `src/`).
 **Avisos do arquivo:** o que NÃO foi copiado, de propósito: tabela de XP por evento, tetos diários, escada de recompensas e títulos. Limite honesto: `bondLevelOf` barra quem forja só o `pvpEnabled`, não quem forja o `totalXP` do save inteiro.
 
+### `functions/api/_soulXP.js`
+**Dono de:** XP e level do Soulmon do lado do SERVIDOR (combate v3, PR2): recalcula de `evolutionStage` + `perfectDays`; o servidor nunca aceita level nem stats do cliente (S1).
+**Exports:** `STAGE_LEVEL_CAPS`, `MAX_LEVEL`, `XP_PER_LEVEL`, `XP_FULL_DAY` (const); `stageIndexOf`, `levelCapFor`, `soulXP`, `levelFor`, `soulLevel`.
+**Chamado por:** ninguém ainda (o clamp S1 do PvP e os gates entram nos PRs seguintes).
+**Régua:** `functions/api/soulXP.parity.test.js` — deriva os tetos de `FORM_REQUIREMENTS` do app e exige o mesmo XP/level em 915 estados (cópia deliberada, footgun 9, travada por paridade).
+
 ### `functions/api/guild.js` (572 linhas — `wc -l`, 29/09/2026; novo em WPG-1/WPG-2, `PLANO-GUILDA.md`)
 **Rota:** `/api/guild?action=…` · **Métodos:** `OPTIONS`, `GET`/`POST` por ação (`GUILD_ACTIONS` dá o método de cada uma).
 **Dono de:** a RESPOSTA da Guilda (coop com teto 12). `vistaDaGuilda` é a ÚNICA montagem do que sai: nunca saveId, `hostSave` (só `isHost` de quem pergunta), estágio/HP de criatura alheia (LV-G10), contagem por pessoa (dias, fios, dano), quem faltou. **Ausência nunca é estado** (M-1): com ≤ `PRESENCA_NOMINAL_MAX` (4) `apareceuHoje`/`cameToday` só existem quando `true`; com 5+ só `threadedToday: true | null`. `progress`/`target` saíram (M-3). Cada membro sai com um id OPACO (`memberId`, 16 hex, `idOpacoDoMembro`), nunca o pid. Estado em `_coop.js` (chaves `coop*`, sem migrar para `guild:*`).
