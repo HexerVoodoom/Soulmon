@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import { Icon } from './ui/Icon';
+import { REPORT_HEAD_ART } from '../assets/soulmon/icones-ui/interacao';
 import { InfoTip } from './ui/InfoTip';
 import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import { UnlockNudge } from './UnlockAccountModal';
@@ -273,7 +274,11 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, on
         {report.wasPerfect && <Confetti />}
         {welcome && spriteUrl
           ? <SpriteGlass spriteUrl={spriteUrl} />
-          : <Icon name={headIcon} size={48} fill={report.wasPerfect ? 1 : 0} tone={headTone} style={{ position: 'relative', zIndex: 1 }} />}
+          /* 04/10/2026 (decisão do dono): a manchete usa a arte de ciclo do dia / recompensa
+             (`REPORT_HEAD_ART`, pixel 96² a 48); o glifo é o fallback. */
+          : REPORT_HEAD_ART[headIcon]
+            ? <img src={REPORT_HEAD_ART[headIcon]} alt="" aria-hidden="true" data-report-head-art={headIcon} width={48} height={48} style={{ width: 48, height: 48, display: 'block', imageRendering: 'pixelated', position: 'relative', zIndex: 1 }} />
+            : <Icon name={headIcon} size={48} fill={report.wasPerfect ? 1 : 0} tone={headTone} style={{ position: 'relative', zIndex: 1 }} />}
         <h2 data-headline style={{ ...ritualTitle, position: 'relative', zIndex: 1 }}>{headline}</h2>
       </div>
 

@@ -49,6 +49,8 @@ import { useMemo, type ReactNode } from 'react';
 import { ActivityCategory } from '../types/attributes';
 import { useTranslation, Language } from '../utils/i18n';
 import { getPassive } from '../utils/passives';
+import { PixelIcon } from './ui/PixelIcon';
+import { PASSIVE_ICON_ART } from '../assets/soulmon/icones-ui/interacao';
 import { BirthCard } from './BirthCard';
 import { FormAlbum } from './FormAlbum';
 import { BestiaryCard } from './BestiaryCard';
@@ -257,9 +259,11 @@ export function StatsPage({
   });
 
   /** Traço/ritmo (D-S2): ícone Material 24 pelado em `primary-ink` + nome 14/500 + frase 14. */
-  const traitRow = (iconName: string, name: string, desc: string) => (
+  /* 04/10/2026 (decisão do dono): a passiva com arte própria (`PASSIVE_ICON_ART`, pixel) usa a arte;
+     o glifo Material fica para o ritmo e para passiva sem arte. */
+  const traitRow = (iconName: string, name: string, desc: string, art?: string) => (
     <p key={name} className="sm2-stats-trait">
-      <Icon name={iconName} size={24} tone="primary" />
+      {art ? <PixelIcon src={art} size={24} /> : <Icon name={iconName} size={24} tone="primary" />}
       <span className="sm2-stats-t" style={{ minWidth: 0 }}>
         <b style={{ fontWeight: 500 }}>{name}</b>
         {' — '}
@@ -325,6 +329,7 @@ export function StatsPage({
             PASSIVE_ICON[passive.id] ?? 'auto_awesome',
             isPt ? passive.namePt : passive.nameEn,
             isPt ? passive.descPt : passive.descEn,
+            PASSIVE_ICON_ART[passive.id],
           )}
           {carePattern && traitRow(
             PATTERN_ICON[carePattern.id] ?? 'auto_awesome',

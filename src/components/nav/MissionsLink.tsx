@@ -1,4 +1,6 @@
 import { Icon } from '../ui/Icon';
+import { PixelIcon } from '../ui/PixelIcon';
+import { QUEST_ART } from '../../assets/soulmon/icones-ui';
 import type { MissionMark } from '../../utils/travessiasSave';
 import { CORNER_BOX, CORNER_BOX_TOP, CORNER_GLOW, CORNER_RING_STYLE, CORNER_SIDE } from './cornerAnchor';
 
@@ -38,7 +40,10 @@ export function MissionsLink({ mark, label, onClick }: {
       }}
     >
       <span aria-hidden="true" style={CORNER_RING_STYLE}>
-        <Icon name={mark === 'available' ? 'exclamation' : 'question'} size={24} weight={600} tone="gold" />
+        {/* 04/10/2026: o "?" é a arte de quest do dono; o "!" segue o glifo autoral. */}
+        {mark === 'available'
+          ? <Icon name="exclamation" size={24} weight={600} tone="gold" />
+          : <PixelIcon src={QUEST_ART} size={24} />}
       </span>
     </button>
   );

@@ -1546,19 +1546,20 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
           <>
           {/* A1 (checklist do dono, 01/10/2026): A MARCA é o LOGO do app
               (`src/assets/brand/final/logo-wordmark.png`, o wordmark SOUL/MON
-              — PROVISÓRIO, recorte local autorizado pelo dono em 01/10/2026),
+              — DEFINITIVO desde 04/10/2026: gerado pelo dono com alfa real,
+              recortado na bbox e reduzido nearest a 480×357, 3× do exibido),
               solto — sem o slot-visor de gradiente e sem o wordmark em texto
-              que vinham antes. Pixel art com contorno escuro próprio
-              (1175×840), `pixelated`; 160 de largura = 160×114.
+              que vinham antes. Pixel art com contorno escuro próprio,
+              `pixelated`; 160 de largura = 160×119.
               `role=img` + nome acessível: o logo é a única marca da tela. */}
           <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 24 }}>
             <img
               src={logoUrl}
               alt="Soulmon"
               width={160}
-              height={114}
+              height={119}
               data-brand-logo
-              style={{ width: 160, height: 114, display: 'block', imageRendering: 'pixelated' }}
+              style={{ width: 160, height: 119, display: 'block', imageRendering: 'pixelated' }}
             />
           </div>
           {/* A1: a região viva está SEMPRE no DOM (vazia) e o texto entra

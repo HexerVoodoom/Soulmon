@@ -9,18 +9,21 @@ import { UI_ICON_ART, type UiIconArt } from '../../assets/soulmon/icones-ui';
  * Sem fundo, sem moldura: a regra "ícone nunca dentro de box" é de quem
  * chama (só os cuidados têm a exceção D1).
  */
-export function PixelIcon({ name, size, style }: {
-  name: UiIconArt;
+export function PixelIcon({ name, src, size, style }: {
+  /** Ícone do set `UI_ICON_ART`… */
+  name?: UiIconArt;
+  /** …ou a URL de uma arte de outro mapa (quest, interação — 04/10/2026). A escala continua a mesma. */
+  src?: string;
   size: number;
   style?: CSSProperties;
 }) {
   return (
     <img
-      src={UI_ICON_ART[name]}
+      src={src ?? (name ? UI_ICON_ART[name] : undefined)}
       alt=""
       aria-hidden="true"
       draggable={false}
-      data-pixel-icon={name}
+      data-pixel-icon={name ?? 'art'}
       width={size}
       height={size}
       style={{ width: size, height: size, objectFit: 'contain', display: 'block', pointerEvents: 'none', ...style }}

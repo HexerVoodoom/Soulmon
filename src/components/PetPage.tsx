@@ -43,6 +43,8 @@ import { emblemArt } from '../utils/emblemArt';
 import { Viewport } from './ui/Viewport';
 import { MiniGlass } from './ui/MiniGlass';
 import { Icon } from './ui/Icon';
+import { PixelIcon } from './ui/PixelIcon';
+import { STATUS_ICON_ART } from '../assets/soulmon/icones-ui/interacao';
 import { InfoTip, InfoTipSection } from './ui/InfoTip';
 import { sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 
@@ -170,12 +172,10 @@ function SkillRow({ skill, isPt }: { skill: StageSkill; isPt: boolean }) {
   const custo = skill.custo === 'baixo' ? (isPt ? 'custo baixo' : 'low cost') : (isPt ? 'custo alto' : 'high cost');
   return (
     <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-      <Icon
-        name={especial ? 'auto_awesome' : 'bolt'}
-        size={24}
-        fill={especial ? 1 : 0}
-        tone={especial ? 'gold' : 'primary'}
-      />
+      {/* 04/10/2026 (decisão do dono): a skill básica usa o raio de status em pixel (`ui-status`). */}
+      {especial
+        ? <Icon name="auto_awesome" size={24} fill={1} tone="gold" />
+        : <PixelIcon src={STATUS_ICON_ART.raio} size={24} />}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           <p style={{ ...sm2Text, fontWeight: 500, margin: 0, flex: 1, minWidth: 0 }}>

@@ -24,8 +24,8 @@ export const MOOD_ART_ID: Record<MoodValue, MoodArtId> = {
   5: 'great',
 };
 
-/** id → URL da arte (interina, desenhada à mão em 01/10/2026; a folha
- *  gpt_image_2 troca os PNGs com o mesmo nome). */
+/** id → URL da arte (definitiva desde 04/10/2026: a folha do dono, com os
+ *  mesmos nomes do interino de 01/10/2026). */
 export const MOOD_ART: Partial<Record<MoodArtId, string>> = { ...MOOD_ICON_BY_NAME };
 
 export function moodArtFor(value: MoodValue): string | undefined {

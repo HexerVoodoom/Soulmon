@@ -19,6 +19,19 @@
 > `D:\Soulmonrand-archiverand-anterior\`. Estado por peça em `ASSETS-A-GERAR.md` §11. Os §1–§4 abaixo
 > descrevem o estado ANTES da rodada; re-varrer com `/squad-arte inventario`.
 
+> **Atualização 04/10/2026 (instalação da arte do dono — `feat/arte-marca`):** fonte `E:\Soulmon-assets\entrada-dono\<pasta>\`
+> (arquivo canônico = sem `-vN`), alfa real binarizado, reduzido *nearest* ao tamanho de uso; pranchas de conferência em
+> `E:\Soulmon-assets\out\instalacao-20261004\marca\`. Instalado: **wordmark** definitivo
+> (`brand/final/logo-wordmark.png`, 480×357), **mascote** (`soulmon/mascot-raven.png`, 384²), **Bits**
+> (`icons/bits.png`, 96², o `BitsIcon` detecta), **botão Evoluir** (`icons/evoluir-btn.png`, 468×137), **humor** definitivo
+> (`icons/mood/mood-1…5`, 128², mesmos nomes do interino), **quest** "?" (`soulmon/icones-ui/quest.png` → `QUEST_ART`),
+> **carga do especial** (`icons/especial-carga-0/1/2-*.png` → `TorcidaGauge`), **pedra/papel/tesoura**
+> (`soulmon/icons/games/hand-*.png`, troca no lugar), **14 molduras** (`soulmon/molduras/<id>.png` → `FRAME_ART`,
+> canvas 192² com a abertura de 96 centrada), **ícones de interação** (`soulmon/icones-ui/interacao/`, 39 peças;
+> exceção à tese "O Visor" — `REGISTRO-DE-DECISOES.md` §24) e **20 ícones das Travessias** (`soulmon/travessias/trv-c-*.png`,
+> SEM importador — slot é decisão do dono; `trv-c-gelo-2` reprovado: a folha repetiu o ícone de `cavernas-3`).
+> Os derivados de marca (`marca-derivados.mjs`: favicon, launcher, splash) saem da tocha, não do wordmark — não mudaram.
+
 ## 0. Números
 
 | Origem | Arquivos de imagem | Estado |

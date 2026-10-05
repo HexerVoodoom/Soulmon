@@ -111,10 +111,10 @@ describe('a heroína no vidro 192²', () => {
     expect(vidro.closest('.sm2-viewport')).toBeNull();
   });
 
-  it('habilidades com ícone Material (bolt / auto_awesome), sem el-*.png', () => {
+  it('habilidades: básica com o raio de status em pixel (04/10/2026), especial com `auto_awesome`, sem el-*.png', () => {
     const { container } = montar({ savedSkills: skills() });
     const texto = container.textContent ?? '';
-    expect(texto).toContain('bolt');
+    expect(container.querySelector('img[src*="status-raio"]')).not.toBeNull();
     expect(texto).toContain('auto_awesome');
     const srcs = Array.from(container.querySelectorAll('img')).map(i => i.getAttribute('src') ?? '');
     expect(srcs.some(s => /el-[a-z]+\.png/.test(s))).toBe(false);

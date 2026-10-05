@@ -1,23 +1,72 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { Icon } from './Icon';
 import { MiniGlass } from './MiniGlass';
-import { FRAMES, frameAvailable, type AvatarFrame as FrameDef, type FrameContext } from '../../utils/frames';
+import { FRAMES, FRAME_ART_CANVAS, FRAME_ART_OPENING, frameArt, frameAvailable, type AvatarFrame as FrameDef, type FrameContext } from '../../utils/frames';
+import { PixelIcon } from './PixelIcon';
+import { STATUS_ICON_ART } from '../../assets/soulmon/icones-ui/interacao';
 import { sm2Hint, sm2Text } from '../form/FormKit';
 
 /**
  * MOLDURAS DE AVATAR (R8, 04/10/2026) — o desenho e o seletor. O catálogo e as regras moram em
  * `utils/frames.ts`; aqui só se pinta.
  *
- * ⚠️ PLACEHOLDER: ainda não há arte. A moldura é um anel de CSS (`outline` + `box-shadow`, que seguem o
- * `border-radius` do vidro) com a cor e o traço do `look` de cada uma. Quando a arte chegar (blocos de
- * moldura em `PROMPTS-PARA-O-DONO.md`, entrega em `E:/Soulmon-assets/entrada-dono/molduras/`), entra um
- * mapa `id → PNG` e este componente passa a desenhar a imagem por cima do avatar; nenhum chamador muda.
+ * ARTE (04/10/2026): as 14 molduras do dono (`FRAME_ART`, `utils/frames.ts`). Todas vêm normalizadas
+ * (canvas 192², abertura de 96 centrada), então a conta é uma só: a imagem é desenhada POR CIMA do avatar
+ * com a abertura em 94% do lado dele (a moldura morde 3% de cada borda — sem fresta entre arte e vidro) e a
+ * ornamentação transborda; a `margin` reserva esse transbordo para não invadir o vizinho. Id sem arte cai no
+ * anel de CSS do `look` (o placeholder de antes). Mestre e Grão-Mestre trazem a plaquinha lisa embaixo: o
+ * "#N" (`plaque`, o mesmo número do `TierMark`) é TEXTO vivo por cima dela, nunca desenhado na arte.
  *
  * Moldura de avatar é PEÇA PRÓPRIA, não "ícone dentro de box": ela envolve a CRIATURA. Os glifos de UI
  * continuam pelados (regra do dono). É cosmética — não toca em luta, ganho nem economia.
  */
-export function AvatarFrame({ frame, children, style }: { frame: FrameDef | null; children: ReactNode; style?: CSSProperties }) {
+export function AvatarFrame({ frame, children, style, size = 32, plaque }: {
+  frame: FrameDef | null;
+  children: ReactNode;
+  style?: CSSProperties;
+  /** Lado do avatar em CSS px (os dois chamadores usam 32). */
+  size?: number;
+  /** Mestre/Grão-Mestre: o "#N" escrito na plaquinha da arte. Ignorado nas outras molduras. */
+  plaque?: number | null;
+}) {
   if (!frame) return <>{children}</>;
+  const art = frameArt(frame.id);
+  if (art) {
+    const F = Math.round(size * (FRAME_ART_CANVAS / FRAME_ART_OPENING) * 0.94);
+    const off = Math.round((size - F) / 2);
+    const comPlaca = plaque && (frame.tierId === 'mestre' || frame.tierId === 'grao-mestre');
+    return (
+      <span
+        data-avatar-frame={frame.id}
+        data-avatar-frame-art
+        style={{ position: 'relative', display: 'inline-flex', flex: 'none', margin: -off, ...style }}
+      >
+        {children}
+        <img
+          src={art}
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+          width={F}
+          height={F}
+          style={{ position: 'absolute', left: off, top: off, width: F, height: F, imageRendering: 'pixelated', pointerEvents: 'none' }}
+        />
+        {comPlaca && (
+          <span
+            className="sm2-num"
+            data-avatar-frame-plaque={plaque}
+            style={{
+              position: 'absolute', left: '50%', top: Math.round(F * 0.82) + off, transform: 'translate(-50%, -50%)',
+              fontSize: 'var(--sm2-text-xs)', fontWeight: 600, lineHeight: 1, whiteSpace: 'nowrap',
+              color: 'var(--sm2-viewport-ink)', textShadow: '0 0 2px #000, 0 1px 1px #000', pointerEvents: 'none',
+            }}
+          >
+            #{plaque}
+          </span>
+        )}
+      </span>
+    );
+  }
   const { ring, accent, line, width } = frame.look;
   return (
     <span
@@ -92,7 +141,8 @@ export function FrameSelector({ ctx, equipped, onEquip, previewSrc, isPt }: {
               {!ok && <span style={{ ...sm2Hint, margin: 0 }}>{howText(f, isPt)}</span>}
             </span>
             {on && <Icon name="check" size={20} tone="primary" />}
-            {!ok && <Icon name="lock" size={20} tone="muted" />}
+            {/* 04/10/2026: o cadeado é a arte de status do dono (`ui-status`). */}
+            {!ok && <PixelIcon src={STATUS_ICON_ART.cadeado} size={20} />}
           </>
         );
         return (

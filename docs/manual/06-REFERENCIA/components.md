@@ -490,6 +490,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Dono de:** as peças de TELA da torcida (02/10/2026, decisão do dono; mascote em 04/10/2026): tocar em qualquer lugar da luta (ou no mascote) enche a BARRA DE CHEER, que despeja energia no pet. Só desenha e repassa o toque; a regra mora em `src/utils/energia.ts` (PvE) e em `functions/api/_duel.js` (duelo).
 **Exports:** `TorcidaLayer({ onTap, active, isPt, children, style, mascot, onSwipe, swipeActive })` (envolve a luta, pega o `pointerdown`, solta o "grito" no ponto tocado — sem animação com movimento reduzido — e NÃO engole botão, link nem campo; com `mascot` desenha o **mascote da torcida** fixo no canto inferior direito, que a cada toque pula, levanta os pompons e mostra o balão "VAI!"/"CHEER!"; ele é um BOTÃO para teclado e leitor de tela; com `swipeActive`, o deslize horizontal de ≥ `SWIPE_MIN_PX` (44) chama `onSwipe(-1 | 1)` — a ESQUIVA do PvE) · `CheerMascot({ cheer, size })` (o pixel SVG de 16×16, só com tokens; `cheer` = braços e pompons para cima) · `SWIPE_MIN_PX` · `TorcidaGauge({ taps, onCheer, isPt, disabled, full, bare })` (a barra de cheer; `full` padrão = `CHEER_TAPS_FULL` (24); `bare` = a versão da cena de combate, SEM texto e SEM "?" na tela (A7, rodada 7): só a barra e o ícone — a explicação de torcer/anel/esquiva mora no InfoTip único da folha anterior (`DueloSheet`, `data-duelo-como-lutar`); sem `bare` mantém a frase e o botão "Torcer!").
 **Quem chama:** `DuelScreen`, `ArenaGame`, `NightmareBattle`, `DungeonGame`.
+**Carga do especial (04/10/2026):** no `bare`, o raio cinza ao lado da barra virou o cristal de carga do dono — `especialCargaArt(ratio)` (export) escolhe vazio (0) / meio (0<r<1) / cheio (1, especial pronto).
 **Régua:** `src/components/games/TorcidaKit.test.tsx` (mascote no canto, pulo + balão por toque, reduced-motion, deslize), `DuelScreen.render.test.tsx`, `NightmareBattle.render.test.tsx`. Nasce muda (R-NOVA); keyframes `sm-torcida-burst`, `sm-cheer-jump`, `sm-cheer-bubble` em `src/index.css`.
 
 ### `src/components/games/BattleStage.tsx`
@@ -1161,7 +1162,7 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 
 ### `src/components/ui/PixelIcon.tsx`
 **Dono de:** o ícone de UI em pixel art do squad de arte (`src/assets/soulmon/icones-ui/`, alfa real, 128px no lado maior) — `<img>` decorativo (`alt=""`, `aria-hidden`), caixa quadrada `size` com `object-fit: contain`, sem fundo nem moldura.
-**Props principais:** `name: UiIconArt` (`mapa`/`home`/`itens`/`dormir`/`banho`/`acoes`/`enviar`/`hp`/`energia`), `size`, `style?`.
+**Props principais:** `name?: UiIconArt` (`mapa`/`home`/`itens`/`dormir`/`banho`/`acoes`/`enviar`/`hp`/`energia`) **ou** `src?: string` (04/10/2026: arte de outro mapa — `QUEST_ART`, os ícones de interação de `icones-ui/interacao.ts`, a carga do especial), `size`, `style?`. Com `src`, a escala de ícone (20/24/32) continua vigiada pelo `iconScale.contract.test.ts`.
 **Exports:** `PixelIcon`.
 **Chamado por:** `src/App.tsx` (menu da Home → `acoes`), `src/components/nav/CornerLink.tsx` (`mapa`/`home`), `src/components/CompanionHUD.tsx` (cuidados `itens`/`dormir`/`banho`, stats `hp`/`energia`), `src/components/ChatBox.tsx` (`enviar`) — 24/09/2026. A moldura `chip-moeda` do mesmo pacote é usada direto pelo `MapPage` (9-slice).
 **Régua:** `size` entra na varredura de `src/styles/iconScale.contract.test.ts` (mesma escala de §6.1); o `CornerLink` é exercitado em `src/components/nav/nav.render.test.tsx`.
@@ -1201,11 +1202,11 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 **Régua:** exercitado por `src/components/SoulmonOnboarding.funil.render.test.tsx` (`[data-back-arrow]` antes do título).
 
 ### `src/components/ui/AvatarFrame.tsx`
-**Dono de:** o DESENHO das molduras de avatar (R8, 04/10/2026) e o seletor. `AvatarFrame` envolve o avatar (normalmente um `MiniGlass`) com um anel CSS placeholder (`outline` + `box-shadow`) a partir do `look` de `utils/frames.ts`; `null` = sem moldura. `FrameSelector` lista "Sem moldura" + o catálogo: as disponíveis são botões (`aria-pressed`), as trancadas mostram como se consegue (tracejado, `aria-disabled`, fora do Tab — nunca opacidade).
-**Exports:** `AvatarFrame({ frame, children, style? })` · `FrameSelector({ ctx, equipped, onEquip, previewSrc, isPt })`.
+**Dono de:** o DESENHO das molduras de avatar (R8, 04/10/2026) e o seletor. `AvatarFrame` envolve o avatar (normalmente um `MiniGlass`) com a ARTE da moldura (`FRAME_ART`, `utils/frames.ts`: canvas 192² com abertura de 96 centrada) desenhada por cima, a abertura em 94% do lado do avatar e o transbordo reservado na `margin`; id sem arte cai no anel CSS do `look`; `null` = sem moldura. Mestre/Grão-Mestre escrevem o `#N` (`plaque`) como texto vivo na plaquinha. `FrameSelector` lista "Sem moldura" + o catálogo: as disponíveis são botões (`aria-pressed`), as trancadas mostram como se consegue (tracejado, `aria-disabled`, fora do Tab — nunca opacidade).
+**Exports:** `AvatarFrame({ frame, children, style?, size = 32, plaque? })` · `FrameSelector({ ctx, equipped, onEquip, previewSrc, isPt })`.
 **Chamado por:** `src/components/TournamentPage.tsx` (linha do próprio jogador no ranking; diálogo "Moldura" aberto pela folha das faixas).
 **Régua:** `src/components/TournamentPage.r8.render.test.tsx`.
-**Avisos do arquivo:** moldura de avatar é peça própria, não "ícone dentro de box" (a regra vale para glifos de UI). Quando a arte chegar (`E:/Soulmon-assets/entrada-dono/molduras/`), entra um mapa id → PNG aqui e nenhum chamador muda.
+**Avisos do arquivo:** moldura de avatar é peça própria, não "ícone dentro de box" (a regra vale para glifos de UI). A arte chegou em 04/10/2026 (14 molduras, `src/assets/soulmon/molduras/`); o cadeado das trancadas é a arte de status do dono. Régua da arte: `src/assets/arteDono20261004.contract.test.ts`.
 
 ### `src/components/ui/MiniGlass.tsx`
 **Dono de:** o vidro SEM anel — o slot SIS-07 na versão "palco" do canvas Pet (D-P7/D-P8/D-P9): retângulo `--sm2-viewport-bg` (escuro nos dois temas) + reflexo `.sm2-viewport-glass`, sem anel de cobre e sem respiração, para a arte pixel que vive dentro de uma CÉLULA vetor.

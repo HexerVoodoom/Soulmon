@@ -47,10 +47,11 @@ describe('StatsPage — canvas §27', () => {
     expect(meter.getAttribute('aria-valuenow')).not.toBeNull();
   });
 
-  it('traço com ícone Material pelado — Sortudo é `star`, nunca `casino` (X2)', () => {
+  it('traço da passiva com a arte própria pelada (04/10/2026, decisão do dono) — nunca `casino` (X2)', () => {
     const { container } = renderWithCss(<StatsPage {...base} />);
     const trait = container.querySelector('.sm2-stats-trait') as HTMLElement;
-    expect(trait.textContent).toContain('star');
+    const art = trait.querySelector('img[data-pixel-icon]') as HTMLImageElement;
+    expect(art.getAttribute('src')).toMatch(/passiva-sortudo/);
     expect(trait.textContent).toContain('Lucky');
     expect(container.textContent).not.toContain('casino');
   });
@@ -94,8 +95,8 @@ describe('StatsPage — canvas §27', () => {
     expect(container.textContent).toContain('Just met');
     expect(container.textContent).toMatch(/Level \d/);
     expect(container.textContent).not.toMatch(/0 of 36|0\/11|0\/0/);
-    // Silhueta e vidro vazio: nenhum PNG no cartão sem sprite próprio.
-    expect(container.querySelectorAll('img')).toHaveLength(0);
+    // Silhueta e vidro vazio: nenhum PNG no cartão sem sprite próprio (a única imagem é o ícone da passiva).
+    expect(Array.from(container.querySelectorAll('img')).filter(i => !i.hasAttribute('data-pixel-icon'))).toHaveLength(0);
   });
 
   it('`hideMetrics`: somem os números, ficam a palavra, o cartão, as artes e as listas', () => {

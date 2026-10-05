@@ -1836,6 +1836,32 @@ que vale até o fim da season (congelado na virada) em vez de vivo.
 season? (b) o piso de lifetime 1500 para disputar o lugar está bom? (c) mostrar a moldura dos outros no ranking
 (publicar no perfil público)? (d) preços das molduras de loja (600/900 Bits) e quais conquistas/eventos dão moldura?
 
+## 24. Ícones de interação em pixel na UI do aparelho — exceção à tese "O Visor" (04/10/2026)
+
+**Decisão do dono (04/10/2026, repassada pelo coordenador da instalação de arte):** *"os ícones ui-\* (ciclo do
+dia, atividades, passivas, recompensas, status) DEVEM ser usados na UI, mesmo fora do visor — a regra 'pixel só
+dentro do visor' cede para eles."*
+
+O que muda: o set de 39 ícones das folhas `ui-*` (gerado pelo dono, alfa real; ordem em
+`E:/Soulmon-assets/entrada-dono/ui-icones-MANIFEST.json`) entra em superfícies do APARELHO — catálogo de
+atividades, Estatísticas, relatório da noite, cadeados da loja e das molduras, skill básica do Pet. A tese
+`docs/manual/04-IDENTIDADE-VISUAL.md` §1 continua valendo para todo o resto: a exceção é **este set**, não uma
+licença geral para pixel art fora do vidro. Os ícones continuam pelados (regra "ícone nunca dentro de box").
+
+Onde ligou (só onde havia slot): atividades → cartão do `CatalogBrowserModal` e do `CatalogOnboardingFlow` (23 de
+28 têm arte); passivas → linha de traço das Estatísticas (as 5 do jogo; coruja/brincalhão/paciente ficam sem
+passiva); ciclo do dia + estrela de recompensa → manchete do relatório da noite (`REPORT_HEAD_ART`); cadeado →
+`ShopShelf` e `FrameSelector`; raio → skill básica no Pet. Sem slot (em disco, fora do bundle): as 3 chamas de
+streak (o app recusa streak por tese — `HomeHud`), sino, escudo, cadeado aberto, 4 peças do ciclo do dia e 7 de
+recompensa.
+
+**Alternativa que perdeu:** redesenhar o set em SVG/Material para respeitar a tese (era a recomendação do
+`LOG-GERACAO.md` da leva).
+
+**Falsifica:** se a crítica de design medir a tela com as duas linguagens brigando (glifo Material + pixel lado a
+lado na mesma lista) e o dono preferir a coerência, o set volta para dentro do visor e os slots caem no glifo
+(todo chamador já tem o fallback).
+
 ## 02/10/2026 — Torneio: menu só de ícones e faixa no título; Rhinoco vira Tuska
 
 Decisões do dono (pedido de 02/10/2026):
