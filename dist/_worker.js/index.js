@@ -3371,7 +3371,7 @@ function simulateDuel({ me, opp, seed, cheers }) {
         }
         if (enMe >= DUEL_ENERGY_MAX) {
           special = true;
-          enMe -= DUEL_ENERGY_MAX;
+          enMe = 0;
           mult *= DUEL_SPECIAL_MULT;
         }
         cheer = special ? 1 : 0;
@@ -3379,7 +3379,7 @@ function simulateDuel({ me, opp, seed, cheers }) {
       myStrike++;
     } else if (!q && enOpp >= DUEL_ENERGY_MAX) {
       special = true;
-      enOpp -= DUEL_ENERGY_MAX;
+      enOpp = 0;
       mult *= DUEL_SPECIAL_MULT;
     }
     const preMe = special && turn === "me" ? enMe + DUEL_ENERGY_MAX : enMe;
@@ -3389,10 +3389,10 @@ function simulateDuel({ me, opp, seed, cheers }) {
     else hpMe = Math.max(0, hpMe - dmg);
     if (!q) {
       if (turn === "me") {
-        enMe = Math.min(DUEL_ENERGY_MAX, enMe + DUEL_ENERGY_DEALT);
+        if (!special) enMe = Math.min(DUEL_ENERGY_MAX, enMe + DUEL_ENERGY_DEALT);
         enOpp = Math.min(DUEL_ENERGY_MAX, enOpp + DUEL_ENERGY_TAKEN);
       } else {
-        enOpp = Math.min(DUEL_ENERGY_MAX, enOpp + DUEL_ENERGY_DEALT);
+        if (!special) enOpp = Math.min(DUEL_ENERGY_MAX, enOpp + DUEL_ENERGY_DEALT);
         enMe = Math.min(DUEL_ENERGY_MAX, enMe + DUEL_ENERGY_TAKEN);
       }
     }
@@ -5428,7 +5428,7 @@ async function onRequest6({ env }) {
 }
 __name(onRequest6, "onRequest");
 
-// ../.wrangler/tmp/pages-TaJF35/functionsRoutes-0.04462443930466731.mjs
+// ../.wrangler/tmp/pages-aDqf8D/functionsRoutes-0.57123103282683.mjs
 var routes = [
   {
     routePath: "/api/account",
@@ -5670,7 +5670,7 @@ var routes = [
   }
 ];
 
-// ../../Soulmon/repo/node_modules/path-to-regexp/dist.es2015/index.js
+// ../node_modules/path-to-regexp/dist.es2015/index.js
 function lexer(str) {
   var tokens = [];
   var i = 0;
@@ -5996,7 +5996,7 @@ function pathToRegexp(path, keys, options) {
 }
 __name(pathToRegexp, "pathToRegexp");
 
-// ../../Soulmon/repo/node_modules/wrangler/templates/pages-template-worker.ts
+// ../node_modules/wrangler/templates/pages-template-worker.ts
 var escapeRegex = /[.+?^${}()|[\]\\]/g;
 function* executeRequest(request) {
   const requestPath = new URL(request.url).pathname;
