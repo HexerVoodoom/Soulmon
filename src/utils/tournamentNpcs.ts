@@ -15,9 +15,9 @@ import { DUELO_OPONENTE_ART } from './dueloArt';
 // 04/10/2026: retratos PRÓPRIOS dos três desafiantes (`entrada-dono/npc-desafiante-*`, GPT Image 2.5 Flare,
 // alfa real → 192², alfa binário). Entram só no CARTÃO (64 CSS px = 3× de densidade); na luta o oponente
 // continua sendo a CRIATURA do desafiante (`art`, os `duelo-oponente-*`): o retrato é a pessoa, não o bicho.
-import portraitEspina from '../assets/soulmon/duelo/npc-desafiante-espina.png';
-import portraitQuartzo from '../assets/soulmon/duelo/npc-desafiante-quartzo.png';
-import portraitMare from '../assets/soulmon/duelo/npc-desafiante-mare.png';
+import portraitEspina from '../assets/soulmon/desafiantes/npc-desafiante-espina.png';
+import portraitQuartzo from '../assets/soulmon/desafiantes/npc-desafiante-quartzo.png';
+import portraitMare from '../assets/soulmon/desafiantes/npc-desafiante-mare.png';
 
 export interface TournamentNpc {
   id: string;
