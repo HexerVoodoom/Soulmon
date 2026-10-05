@@ -13,9 +13,11 @@
 //   • achievement — dada por uma conquista (outro sistema grava o id em `ownedFrames`);
 //   • event       — dada por um evento sazonal (idem).
 //
-// ARTE: ainda não existe. Cada moldura traz um `look` PLACEHOLDER (CSS puro, em `AvatarFrame.tsx`);
-// quando a arte chegar (PROMPTS-PARA-O-DONO.md, blocos de moldura) ela entra em `FRAME_ART[id]` e o
-// componente passa a desenhar a imagem por cima, sem mudar mais nada daqui.
+// ARTE (04/10/2026): as 14 molduras do dono (blocos 38 e 39 de PROMPTS-PARA-O-DONO.md) moram em
+// `assets/soulmon/molduras/<id>.png` e entram por `FRAME_ART[id]` (glob: o nome do arquivo É o id).
+// Todas normalizadas no mesmo canvas — 192², a ABERTURA (lado menor) com 96 px e centrada —, então o
+// componente escala qualquer uma pela mesma conta (`FRAME_ART_CANVAS`/`FRAME_ART_OPENING`). O `look`
+// CSS continua como fallback de id sem arte.
 //
 // Moldura de avatar é PEÇA PRÓPRIA — não é "ícone dentro de box" (a regra de UI do dono vale para
 // glifos de interface, que ficam pelados). Ela envolve a criatura, não um ícone.
@@ -133,4 +135,22 @@ export function resolveEquippedFrame(equipped: unknown, ctx: FrameContext): Avat
 /** Quais molduras o jogador pode usar agora, na ordem do catálogo. */
 export function availableFrames(ctx: FrameContext): AvatarFrame[] {
   return FRAMES.filter(f => frameAvailable(f, ctx));
+}
+
+// ── ARTE ───────────────────────────────────────────────────────────────────────────────────────────
+/** Lado do canvas de cada PNG de moldura e lado (menor) da abertura nele — medidos no pipeline. */
+export const FRAME_ART_CANVAS = 192;
+export const FRAME_ART_OPENING = 96;
+
+const FRAME_PNG = import.meta.glob<string>('../assets/soulmon/molduras/*.png', { eager: true, import: 'default' });
+/** Id da moldura → URL da arte. Id sem arte não tem chave (o `AvatarFrame` cai no anel CSS). */
+export const FRAME_ART: Readonly<Record<string, string>> = Object.fromEntries(
+  Object.entries(FRAME_PNG).flatMap(([path, url]) => {
+    const m = /\/([a-z0-9-]+)\.png$/.exec(path);
+    return m ? [[m[1], url]] : [];
+  }),
+);
+
+export function frameArt(id: string): string | undefined {
+  return FRAME_ART[id];
 }

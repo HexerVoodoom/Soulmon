@@ -26,7 +26,16 @@ import type { CSSProperties, PointerEvent as ReactPointerEvent, ReactNode } from
 import { PixelMeter } from '../pixel/PixelKit';
 import { sm2Button, sm2Hint } from '../form/FormKit';
 import { CHEER_TAPS_FULL, cheerRatio } from '../../utils/energia';
-import { Icon } from '../ui/Icon';
+import { PixelIcon } from '../ui/PixelIcon';
+// Carga do especial (04/10/2026, arte do dono — bloco 18): o mesmo cristal em 3 estados, 96² pixel.
+import cargaVazio from '../../assets/icons/especial-carga-0-vazio.png';
+import cargaMeio from '../../assets/icons/especial-carga-1-meio.png';
+import cargaCheio from '../../assets/icons/especial-carga-2-cheio.png';
+
+/** Estado do cristal de carga pela fração da barra: vazio (0), meio (0 < r < 1), cheio (1 = especial pronto). */
+export function especialCargaArt(ratio: number): string {
+  return ratio >= 1 ? cargaCheio : ratio > 0 ? cargaMeio : cargaVazio;
+}
 
 const WORDS_PT = ['VAI!', 'ISSO!', 'FORÇA!', '✦', 'BORA!'];
 const WORDS_EN = ['GO!', 'YEAH!', 'COME ON!', '✦', 'NICE!'];
@@ -242,7 +251,10 @@ export function TorcidaGauge({ taps, onCheer, isPt, disabled = false, full = CHE
         <PixelMeter ratio={ratio} tone="gold" height={bare ? 12 : 10} label={label} />
       </div>
       {bare && (
-        <Icon name="bolt" size={20} tone="muted" />
+        /* O raio cinza virou o cristal de carga do especial (arte do dono): vazio → meio → cheio. */
+        <span data-especial-carga={ratio >= 1 ? 'cheio' : ratio > 0 ? 'meio' : 'vazio'} style={{ display: 'inline-flex' }}>
+          <PixelIcon src={especialCargaArt(ratio)} size={24} />
+        </span>
       )}
       {!bare && (
         <button

@@ -71,9 +71,10 @@ import { duelStats, simulateDuel, type DuelStats } from '../../functions/api/_du
 import { visualElementFor } from '../utils/combatFx';
 import { getOpponents, playMatch, startDuel, getRank, type Opponent, type MatchResult, type RankRow } from '../utils/community';
 import { EMBLEMS_PER_WIN, EMBLEMS_PER_LOSS, emblemStyle } from '../utils/currencies';
-import { TIER_INSIGNIA_ART } from '../assets/soulmon/icones-ui';
+import { QUEST_ART, TIER_INSIGNIA_ART } from '../assets/soulmon/icones-ui';
 import { getTournamentWindow, tournamentWindowLabel } from '../utils/tournamentSeason';
 import { Icon } from './ui/Icon';
+import { PixelIcon } from './ui/PixelIcon';
 import { InfoTip, InfoTipSection } from './ui/InfoTip';
 import { AvatarFrame, FrameSelector } from './ui/AvatarFrame';
 import { MiniGlass } from './ui/MiniGlass';
@@ -554,7 +555,10 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
               onClick={() => setTab(t.key)}
               className={on ? 'sm2-kit-tab sm2-kit-tab-on' : 'sm2-kit-tab'}
             >
-              <Icon name={t.icon} size={24} fill={on ? 1 : 0} tone={t.tone} />
+              {/* 04/10/2026: a aba Missões usa a arte de quest do dono (`QUEST_ART`). */}
+              {t.key === 'missions'
+                ? <PixelIcon src={QUEST_ART} size={24} />
+                : <Icon name={t.icon} size={24} fill={on ? 1 : 0} tone={t.tone} />}
             </button>
           );
         })}
@@ -866,7 +870,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
                     <span className="sm2-num" style={{ ...sm2Hint, width: 28, flexShrink: 0, color: isMe ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)' }}>
                       {place}
                     </span>
-                    <AvatarFrame frame={isMe ? myFrame : null}>
+                    <AvatarFrame frame={isMe ? myFrame : null} plaque={isMe ? standing?.place : null}>
                       <MiniGlass size={32}>
                         {(() => {
                           const icon = lineIconForStage(r.stage, 32);
