@@ -45,10 +45,12 @@ import lotePpt from './lote-jogos-ppt.png';
 // arte ao Ateliê da Mente, que ganhou prédio próprio. O arquivo fica em disco
 // (fora do bundle, sem import) para quando a Corrida ganhar lote de novo.
 import lotePasseio from './lote-exploracao-passeio.png';
-// 🛠️ 04/10/2026: arte PROVISÓRIA da Oficina do Foco (o Observatório) e do Caderno (a Biblioteca) —
-// os mesmos arquivos que os lotes de origem; trocar quando a arte própria chegar (PLANO-OFICINA-FOCO §1).
-import loteOficina from './lote-laboratorio-stats.png';
-import loteCaderno from './lote-hall-biblioteca.png';
+// 🛠️ 04/10/2026: prédios PRÓPRIOS da Oficina do Foco (oficina de artesão com timers de cristal, NPC Tique)
+// e do Caderno (casinha-tinteiro com pena, NPC Sépia) — `entrada-dono/lote-exploracao-*` (GPT Image 2.5
+// Flare, alfa real), mesmo pós dos lotes-v2 (300², alfa binário). Até aqui emprestavam o Observatório e a
+// Biblioteca. As versões `-b` ficaram fora do bundle (`E:/Soulmon-assets/instalados/alternativas/`).
+import loteOficina from './lote-exploracao-oficina.png';
+import loteCaderno from './lote-exploracao-caderno.png';
 import loteMente from './lote-jogos-mente.png';
 import loteRefugio from './lote-jogos-refugio.png';
 
@@ -59,7 +61,8 @@ export const EXPLORACAO_LOT_ART = { masmorra: loteMasmorra, passeio: lotePasseio
 
 // 🏛️ Os três prédios de Jogos (30/09/2026). O Salão herda as duas artes que já
 // eram dele por conteúdo (o PPT; o Dino mudou da Exploração para cá).
-// `mente` e `refugio`: prédios próprios desde 30/09/2026 (leva lotes-v2).
+// `mente` e `refugio`: prédios próprios desde 30/09/2026 (leva lotes-v2). 04/10/2026 (J5): o Refúgio
+// trocou a casinha de cogumelo PROVISÓRIA pela casa-gruta com cachoeira e lago (`entrada-dono/36-*`).
 export const JOGOS_LOT_ART = { salao: lotePpt, mente: loteMente, refugio: loteRefugio } as const;
 
 // ── Guilda, Laboratório e Hall (29/09/2026) ────────────────────────────────
