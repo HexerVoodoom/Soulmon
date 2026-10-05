@@ -18,7 +18,8 @@ import {
 import {
   CHEER_TAPS_FULL, ENERGY_MAX, PVE_HP_SCALE, pveFoeHp, pveFoeHitDamage, pveStrikeDamage, type RingGrade,
 } from '../utils/energia';
-import { fxElementId, visualElementFor, prefersReducedMotion, elementStrikeForm, specialLabel } from '../utils/combatFx';
+import { stageSkillsFor, type FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
+import { fxElementId, visualElementFor, prefersReducedMotion, elementStrikeForm, fighterStrikeForm, specialLabel } from '../utils/combatFx';
 import { TorcidaLayer, TorcidaGauge } from './games/TorcidaKit';
 import { BattleStage, BATTLE_LAYER_STYLE } from './games/BattleStage';
 import { usePveBattle, type PveRules } from './games/usePveBattle';
@@ -74,12 +75,14 @@ const PANEL: CSSProperties = {
 };
 
 // ── Game ───────────────────────────────────────────────────────────────────
-export function DungeonGame({ evolutionStage, demoCharacterId, petElement, profissao, profissaoNome, language, onEnter, onLose, onHeartDrop, onGlitchtama, onFloorCleared, onEnemyDefeated, onEarnPoints, onExit, bits = 0, onSpendBits }: {
+export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skills, profissao, profissaoNome, language, onEnter, onLose, onHeartDrop, onGlitchtama, onFloorCleared, onEnemyDefeated, onEarnPoints, onExit, bits = 0, onSpendBits }: {
   evolutionStage: string;
   /** Modo demo (utils/monetization.ts): personagem pré-pronto — sobrepõe o sprite do pet (nunca dos inimigos). */
   demoCharacterId?: string;
   /** Elemento dominante do Soulmon (`soulmonMeta.dominantElement`): a arte dos golpes dele. Sem ele, o neutro. */
   petElement?: string;
+  /** As skills da ficha (o mesmo `skills` da Arena). Com elas, a escola decide o golpe e o selo leva o nome do especial (PR1b B2/N1); sem elas, o elemento. */
+  skills?: FichaSkills;
   /** Fase 3 do Oráculo — id da profissão da ficha (`ficha/manifestacao.ts`).
    *  Ausente = `JEITO_PADRAO`. Nunca toca Bits, drops nem dificuldade. */
   profissao?: string | null;
@@ -161,6 +164,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, profi
   const ladderLen = LADDER_TIERS.length;
   const scene = runScenes[floor - 1] ?? DUNGEON_SCENES[0];
   const petEl = fxElementId(petElement);
+  const par = stageSkillsFor(skills, evolutionStage);
   const enemyEl = fxElementId(visualElementFor(enemy?.stage ?? 'x'));
   const foeMax = enemy ? pveFoeHp(enemy.hp) : 1;
 
@@ -234,7 +238,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, profi
     foes: () => (enemyHpRef.current > 0 ? [0] : []),
     playerElement: () => petEl,
     foeElement: () => enemyEl,
-    playerKind: sp => elementStrikeForm(petEl, sp ? 'especial' : 'basica'),
+    playerKind: sp => fighterStrikeForm({ skill: sp ? par?.especial : par?.basica, element: petEl }, sp ? 'especial' : 'basica'),
     foeKind: (_f, sp) => elementStrikeForm(enemyEl, sp ? 'especial' : 'basica'),
     playerStrike: ({ special, ring }) => {
       const e = enemiesRef.current[enemyIdxRef.current];
@@ -354,7 +358,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, profi
         onSwipe={battle.swipe}
       >
         <BattleStage
-          specialLabel={specialLabel(isPt)}
+          specialLabel={specialLabel(isPt, par?.especial)}
           scene={scene.bg}
           me={{
             key: 'me', sprite: petSprite, name: isPt ? 'Você' : 'You', hp: Math.max(0, playerHp), maxHp: playerStats.hp,

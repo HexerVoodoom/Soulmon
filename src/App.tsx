@@ -7295,6 +7295,7 @@ export default function App() {
           petStage={gameState.evolutionStage}
           demoCharacterId={petLine}
           petElement={gameState.soulmonMeta?.dominantElement}
+          skills={gameState.soulmonSkills}
           language={language}
           onWin={handleNightmareWin}
           /* Derrota SÓ grava a noite como lutada: fechar aqui desmontava o modal

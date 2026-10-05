@@ -6,7 +6,7 @@ import { TORCIDA_BASE_FRAC, TORCIDA_PVE_SPECIAL_MULT } from './torcida';
 import {
   ENERGY_MAX, ENERGY_DEALT, ENERGY_TAKEN, ENERGY_CHEER, CHEER_TAPS_FULL, CHEER_TAPS_CAP, PVE_HP_SCALE, PVE_FOE_HP_EXTRA,
   PVE_SPECIAL_MULT, PVE_FOE_SPECIAL_MULT, RING_MULT, RING_OTIMO_MS, RING_BOM_MS, RING_FROM, RING_TO, DODGE_REDUCE, DODGE_OTIMO_MS,
-  addEnergy, spendEnergy, energyFull, energyRatio, cheerTap, cheerRatio, pveStrikeDamage, pveFoeHitDamage, pveHp, pveFoeHp,
+  addEnergy, spendEnergy, strikeEnergy, energyFull, energyRatio, cheerTap, cheerRatio, pveStrikeDamage, pveFoeHitDamage, pveHp, pveFoeHp,
   ringSpec, ringScale, ringGrade, dodgeSpec, dodgeGrade,
   type RingGrade, type DodgeGrade,
 } from './energia';
@@ -230,16 +230,14 @@ function simRun(o: P): Out {
         meter += o.tapsPerTrip;
         while (meter >= CHEER_TAPS_FULL) { meter -= CHEER_TAPS_FULL; pE = addEnergy(pE, 'cheer'); }
         const special = !o.legacy && energyFull(pE);
-        if (special) pE = spendEnergy(pE);
         const guarda = e.dmgReduction * (1 - jeito.atravessaGuarda);
         eh -= pveStrikeDamage({ dmg, guard: guarda, special, ring: pickRing(o.pol, o.rng()) });
-        pE = addEnergy(pE, 'dealt'); eE = addEnergy(eE, 'taken');
+        pE = strikeEnergy(pE, special); eE = addEnergy(eE, 'taken');
         if (eh <= 0) break;
         const fs = !o.legacy && energyFull(eE);
-        if (fs) eE = spendEnergy(eE);
         const acc = autoDefense(defenseRoll(seed, nDef++), { bonus, perfect: jeito.perfeito }).acc;
         const hit = pveFoeHitDamage({ atk: e.atk, acc, perfect: jeito.perfeito, reducaoDano: jeito.reducaoDano, special: fs, dodge: fs ? pickDodge(o.pol, o.rng()) : 'nada' });
-        eE = addEnergy(eE, 'dealt'); pE = addEnergy(pE, 'taken');
+        eE = strikeEnergy(eE, fs); pE = addEnergy(pE, 'taken');
         if (hit.blocked) { eh -= Math.max(1, Math.round(2 * jeito.contraAtaque * (1 - e.dmgReduction))); continue; }
         hp -= hit.dmg;
         if (hp <= 0) return { won: false, kills, tripsPerEnemy };

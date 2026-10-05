@@ -31,7 +31,7 @@ import type { EscolaId, RecursoId } from './soulProfile/ficha/types';
 import type { StageSkills } from './soulProfile/ficha/skills';
 import { TORCIDA_TAPS_FULL, TORCIDA_TAPS_CAP } from './torcida';
 import {
-  CHEER_TAPS_CAP, CHEER_TAPS_FULL, DODGE_REDUCE, PVE_FOE_SPECIAL_MULT, RING_MULT, addEnergy, energyFull, spendEnergy,
+  CHEER_TAPS_CAP, CHEER_TAPS_FULL, DODGE_REDUCE, PVE_FOE_SPECIAL_MULT, RING_MULT, addEnergy, energyFull, strikeEnergy,
   type DodgeGrade, type RingGrade,
 } from './energia';
 
@@ -268,6 +268,15 @@ export function arenaTorcidaTurn(gauge: number): ArenaTorcidaTurn {
   const g = Math.min(TORCIDA_TAPS_FULL, Math.max(0, Math.floor(Number.isFinite(gauge) ? gauge : 0)));
   const special = g >= TORCIDA_TAPS_FULL;
   return { mult: special ? ARENA_TORCIDA_MULT : 1, special, gaugeLeft: special ? 0 : g };
+}
+
+/**
+ * O golpe do turno é o ESPECIAL? Só a `carga` (`SPECIAL_CHARGE_TURNS`) dispara; o gauge da
+ * torcida cheio só MULTIPLICA o golpe (`arenaTorcidaTurn`), nunca troca para especial
+ * (PR1b/B1: uma barra = um uso). `_gauge` fica na assinatura para o teste travar isso.
+ */
+export function arenaTurnIsSpecial(carga: number, _gauge: number): boolean {
+  return carga >= SPECIAL_CHARGE_TURNS;
 }
 
 /** One basic (or per-target special) hit. `mult` = elemental multiplier. */
@@ -681,8 +690,8 @@ export function simulateArenaRunEnergy(config: ArenaArchetypeConfig, opts: {
       while (meter >= CHEER_TAPS_FULL) { meter -= CHEER_TAPS_FULL; pE = addEnergy(pE, 'cheer'); }
 
       const before = alive();
-      if (energyFull(pE)) {
-        pE = spendEnergy(pE);
+      const pCast = energyFull(pE);
+      if (pCast) {
         const ring = RING_MULT[ringOf()];
         const targets = special.targets === 'all' ? alive() : alive().slice(0, special.targets);
         for (const t of targets) {
@@ -699,14 +708,13 @@ export function simulateArenaRunEnergy(config: ArenaArchetypeConfig, opts: {
           eEn[enemies.indexOf(t)] = addEnergy(eEn[enemies.indexOf(t)], 'taken');
         }
       }
-      pE = addEnergy(pE, 'dealt');
+      pE = strikeEnergy(pE, pCast); // B1 (PR1b): o cast zera e não rende "dado"
       ms += strikeMs;
       for (const e of before) if (e.hp <= 0) kills++;
 
       for (const e of alive()) {
         const i = enemies.indexOf(e);
         const fs = energyFull(eEn[i]);
-        if (fs) eEn[i] = spendEnergy(eEn[i]);
         const defAcc = sampleAcc();
         if (fs || defAcc < PERFECT_ACC) {
           // O especial do inimigo não é bloqueado de graça: vale o golpe normal × mult, menos a esquiva.
@@ -715,7 +723,7 @@ export function simulateArenaRunEnergy(config: ArenaArchetypeConfig, opts: {
             ? Math.max(1, Math.round(base * PVE_FOE_SPECIAL_MULT * (1 - DODGE_REDUCE[dodgeOf()])))
             : base;
         }
-        eEn[i] = addEnergy(eEn[i], 'dealt');
+        eEn[i] = strikeEnergy(eEn[i], fs);
         pE = addEnergy(pE, 'taken');
         ms += defendMs;
       }

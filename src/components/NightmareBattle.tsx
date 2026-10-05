@@ -52,7 +52,8 @@ import { newDefenseSeed } from '../utils/autoDefesa';
 import {
   CHEER_TAPS_FULL, ENERGY_MAX, PVE_HP_SCALE, pveFoeHp, pveFoeHitDamage, pveStrikeDamage, type RingGrade,
 } from '../utils/energia';
-import { fxElementId, visualElementFor, prefersReducedMotion, elementStrikeForm, specialLabel } from '../utils/combatFx';
+import { stageSkillsFor, type FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
+import { fxElementId, visualElementFor, prefersReducedMotion, elementStrikeForm, fighterStrikeForm, specialLabel } from '../utils/combatFx';
 import { playFeed } from '../utils/sounds';
 import {
   nightmareFlavor,
@@ -76,6 +77,8 @@ export interface NightmareBattleProps {
   demoCharacterId?: string;
   /** Elemento dominante do Soulmon: a arte dos golpes dele. Sem ele, o neutro. */
   petElement?: string;
+  /** As skills da ficha (o mesmo `skills` da Arena). Com elas, a escola decide o golpe e o selo leva o nome do especial (PR1b B2/N1); sem elas, o elemento. */
+  skills?: FichaSkills;
   language: Language;
   /** Venceu: as recompensas de `nightmareRewards(rarity, true)`. */
   onWin: (rewards: NightmareRewards) => void;
@@ -94,7 +97,7 @@ const INTRO_CREATURE = DUNGEON_LINE_SPRITES.ignar.champion;
 type Phase = 'intro' | 'fight' | 'won' | 'lost';
 
 export function NightmareBattle({
-  open, wave, rarity, petStage, demoCharacterId, petElement, language, onWin, onLose, onClose,
+  open, wave, rarity, petStage, demoCharacterId, petElement, skills, language, onWin, onLose, onClose,
 }: NightmareBattleProps) {
   const isPt = language === 'pt-BR';
   const base = playerStatsFor(petStage);
@@ -123,6 +126,7 @@ export function NightmareBattle({
 
   const enemy = wave[idx];
   const petEl = fxElementId(petElement);
+  const par = stageSkillsFor(skills, petStage);
   const enemyEl = fxElementId(visualElementFor(enemy?.stage ?? 'x'));
 
   // Reabrir com outra noite recomeça limpo (o modal fica montado no App).
@@ -164,7 +168,7 @@ export function NightmareBattle({
     foes: () => (enemyHpRef.current > 0 ? [0] : []),
     playerElement: () => petEl,
     foeElement: () => enemyEl,
-    playerKind: sp => elementStrikeForm(petEl, sp ? 'especial' : 'basica'),
+    playerKind: sp => fighterStrikeForm({ skill: sp ? par?.especial : par?.basica, element: petEl }, sp ? 'especial' : 'basica'),
     foeKind: (_f, sp) => elementStrikeForm(enemyEl, sp ? 'especial' : 'basica'),
     playerStrike: ({ special, ring }) => {
       const e = waveRef.current[idxRef.current];
@@ -253,7 +257,7 @@ export function NightmareBattle({
         onSwipe={battle.swipe}
       >
         <BattleStage
-          specialLabel={specialLabel(isPt)}
+          specialLabel={specialLabel(isPt, par?.especial)}
           scene={NIGHTMARE_SCENE.bg}
           me={{
             key: 'me', sprite: petSprite, name: isPt ? 'Seu Soulmon' : 'Your Soulmon', hp: Math.max(0, playerHp), maxHp: stats.hp,

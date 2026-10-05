@@ -37,12 +37,12 @@ describe('duelo fantasma — a ENERGIA (04/10/2026, REGISTRO §20.10)', () => {
     expect(DUEL_ENERGY_CHEER).toBeGreaterThan(DUEL_ENERGY_DEALT);
     expect(DUEL_ENERGY_CHEER).toBeGreaterThan(DUEL_ENERGY_TAKEN);
     const { events } = simulateDuel({ me: R, opp: R, seed: 11, cheers: [] });
-    // sem torcer: a energia do dono sobe 9 por golpe dado e 7 por golpe sofrido, e o especial gasta 100
+    // sem torcer: a energia do dono sobe 9 por golpe dado e 7 por golpe sofrido, e o especial ZERA a barra sem render "dado" (PR1b/B1)
     let en = 0;
     for (const e of events) {
       if (e.actor === 'me') {
-        if (en >= DUEL_ENERGY_MAX) { expect(e.special).toBe(true); en -= DUEL_ENERGY_MAX; } else expect(e.special).toBe(false);
-        en = Math.min(DUEL_ENERGY_MAX, en + DUEL_ENERGY_DEALT);
+        if (en >= DUEL_ENERGY_MAX) { expect(e.special).toBe(true); en = 0; }
+        else { expect(e.special).toBe(false); en = Math.min(DUEL_ENERGY_MAX, en + DUEL_ENERGY_DEALT); }
       } else en = Math.min(DUEL_ENERGY_MAX, en + DUEL_ENERGY_TAKEN);
       expect(e.energyMe).toBe(en);
     }
@@ -135,7 +135,9 @@ describe('duelo fantasma — a ENERGIA (04/10/2026, REGISTRO §20.10)', () => {
   it('calibração: sem torcer ~50%; quem toca normal ~72%; o teto ~82%; um estágio abaixo ~13% / ~29% / ~41%', () => {
     expect(rate(R, R, [])).toBeGreaterThan(0.44);
     expect(rate(R, R, [])).toBeLessThan(0.56);
-    expect(rate(R, R, dedo(3))).toBeGreaterThan(0.65);
+    // Decisão do dono (05/10/2026, contexto §2.13, PR1b): "uma barra, um uso" — o cast não rende
+    // "dado"; a torcida normal caiu de ~0,72 para ~0,645 e isso foi ACEITO (faixa baixada).
+    expect(rate(R, R, dedo(3))).toBeGreaterThan(0.6);
     expect(rate(R, R, dedo(3))).toBeLessThan(0.8);
     expect(rate(R, R, CHEIA)).toBeGreaterThan(0.75);
     expect(rate(R, C, [])).toBeLessThan(0.22);

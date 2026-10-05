@@ -321,7 +321,8 @@ function SpecialBanner({ action, layout, label }: { action: StageAction; layout:
         color: 'var(--sm2-gold-ink)', textShadow: '0 2px 0 var(--sm2-bg), 0 0 14px var(--sm2-gold-fill)',
       }}
     >
-      <span style={{ display: 'block' }}>{label}</span>
+      {/* N1 (PR1b): o nome próprio da skill pode ser longo — trunca, nunca quebra a cena. */}
+      <span style={{ display: 'block', maxWidth: 'min(86vw, 340px)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span>
     </div>
   );
 }

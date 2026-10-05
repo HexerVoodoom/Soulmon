@@ -129,7 +129,21 @@ describe('usePveBattle — o ANEL do especial (mecânica ativa do pet)', () => {
     expect(log).toEqual(['P:S:otimo']);
     expect(result.current.phase).toBe('idle');
     expect(result.current.charging).toBe(false);
-    expect(result.current.petEnergy).toBe(ENERGY_DEALT); // gastou a barra e ganhou o "dado"
+    expect(result.current.petEnergy).toBe(0); // B1 (PR1b): o cast zera a barra e NÃO rende o "dado"
+  });
+
+  it('B1: barra enchida pelo golpe SOFRIDO no turno do inimigo → a próxima ação do pet é o especial', async () => {
+    const log: string[] = [];
+    const { result } = montar(mkRules(log), { seed: 9 });
+    act(() => result.current._setPetEnergy(ENERGY_MAX - ENERGY_DEALT - ENERGY_TAKEN));
+    await advance(2 * (LEAD + STAGE_TIMING.ranged.impact) + LEAD + 50);
+    expect(log).toEqual(['P:n:bom', expect.stringMatching(/^F:n:/)]);
+    expect(result.current.petEnergy).toBe(ENERGY_MAX); // cheia, aguardando a vez do dono
+    expect(result.current.phase).toBe('ring'); // sem básica no meio
+    act(() => result.current.resolveRing('bom'));
+    await advance(STAGE_TIMING.special.impact + 20);
+    expect(log[2]).toBe('P:S:bom');
+    expect(result.current.petEnergy).toBe(0);
   });
 });
 

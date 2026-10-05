@@ -64,7 +64,7 @@ import {
 import { BattleStage, BATTLE_LAYER_STYLE, type StageAction, type StageHit } from './games/BattleStage';
 import {
   ARENA_STRIKE_MS, ARENA_DEFEND_MS, STAGE_TIMING, fxElementId, impactMs, prefersReducedMotion,
-  skillStrikeForm, elementStrikeForm, specialLabel, type StageActionKind,
+  fighterStrikeForm, elementStrikeForm, specialLabel, type StageActionKind,
 } from '../utils/combatFx';
 import { autoDefense, defenseRoll, newDefenseSeed, TIMING_DODGE_ENABLED } from '../utils/autoDefesa';
 import { Icon } from './ui/Icon';
@@ -76,7 +76,7 @@ import { getDungeonEnemySprite, getSpriteForStage } from '../utils/sprites';
 import {
   ARENA_ROUNDS,
   ARENA_AUTO_ACC,
-  ARENA_ENERGY_ENABLED,
+  ARENA_ENERGY_ENABLED, arenaTurnIsSpecial,
   ARENA_FOE_HP_EXTRA,
   ARENA_HP_SCALE,
   ARENA_TIMING_ATTACK_ENABLED,
@@ -97,19 +97,10 @@ import {
   type BestiaryCreature,
 } from '../utils/arena';
 import type { StageSkills } from '../utils/soulProfile/ficha/skills';
+import { fichaStageOf } from '../utils/soulProfile/ficha/stageSkillsFor';
 import type { FichaStage } from '../utils/soulProfile/ficha/types';
-import { getStageLevel } from '../types/progression';
 import type { Language } from '../utils/i18n';
 
-/** Estágios que a ficha conhece. `getStageLevel` devolve os do PET, que têm
- *  dois níveis de bebê a mais — os dois caem em `rookie`, que é o piso da
- *  tabela de orçamento do motor. */
-function fichaStageOf(evolutionStage: string): FichaStage {
-  const nivel = getStageLevel(evolutionStage);
-  return (['rookie', 'champion', 'ultimate', 'mega', 'ultra'].includes(nivel)
-    ? nivel
-    : 'rookie') as FichaStage;
-}
 
 type Fase =
   | 'carregando' | 'sem-motor' | 'intro'
@@ -437,13 +428,13 @@ export function ArenaGame({
     // impacto, e a barra de HP só cai quando o golpe chega no alvo.
     let t2: ReturnType<typeof setTimeout> | undefined;
     const t1 = setTimeout(() => {
-      const pronto = carga >= SPECIAL_CHARGE_TURNS;
-      const cheio = tapsRef.current >= TORCIDA_TAPS_FULL;
-      const kind: StageActionKind = pronto || cheio ? 'special' : skillStrikeForm(basica, 'basica');
+      // B1 (PR1b): só a carga dispara o especial; a torcida cheia só multiplica (`arenaTorcidaTurn`).
+      const pronto = arenaTurnIsSpecial(carga, tapsRef.current);
+      const kind: StageActionKind = pronto ? 'special' : fighterStrikeForm({ skill: basica, element: basica?.elementoId }, 'basica');
       const elemento = pronto ? especial?.elementoId : basica?.elementoId;
       setAcao({
         id: ++cenaSeq.current, actor: 'me', foe: Math.max(0, inimigos.indexOf(alvo as ArenaEnemy)),
-        kind, strike: kind === 'special' ? skillStrikeForm(especial, 'especial') : undefined, element: fxElementId(elemento ?? 'vigor'),
+        kind, strike: kind === 'special' ? fighterStrikeForm({ skill: especial, element: especial?.elementoId }, 'especial') : undefined, element: fxElementId(elemento ?? 'vigor'),
       });
       t2 = setTimeout(() => atacarRef.current(ARENA_AUTO_ACC), impactMs(kind, reduzido.current));
     }, Math.max(0, ARENA_STRIKE_MS - STAGE_TIMING.special.impact));
@@ -501,7 +492,7 @@ export function ArenaGame({
     },
     playerElement: (sp: boolean) => fxElementId((sp ? especial?.elementoId : basica?.elementoId) ?? atributos.principal ?? 'vigor'),
     foeElement: (i: number) => fxElementId(inimigosRef.current[i]?.elements[0]),
-    playerKind: (sp: boolean) => (sp ? skillStrikeForm(especial, 'especial') : skillStrikeForm(basica, 'basica')),
+    playerKind: (sp: boolean) => (sp ? fighterStrikeForm({ skill: especial, element: especial?.elementoId }, 'especial') : fighterStrikeForm({ skill: basica, element: basica?.elementoId }, 'basica')),
     foeKind: (foe: number, sp: boolean) => elementStrikeForm(inimigosRef.current[foe]?.elements[0], sp ? 'especial' : 'basica'),
     playerStrike: ({ special, ring }) => {
       const antes = inimigosRef.current;
@@ -619,7 +610,7 @@ export function ArenaGame({
         <BattleStage
           scene={ARENA_SCENE.bg}
           sceneElement={inimigos[0] ? fxElementId(inimigos[0].elements[0]) : null}
-          specialLabel={specialLabel(isPt)}
+          specialLabel={specialLabel(isPt, especial)}
           me={{
             key: 'me', sprite: petSprite, name: isPt ? 'Você' : 'You', hp: Math.max(0, hp), maxHp: stats.hp,
             element: fxElementId(basica?.elementoId ?? atributos.principal),
