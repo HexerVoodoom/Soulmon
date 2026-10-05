@@ -1882,3 +1882,16 @@ Decisões do dono (pedido de 02/10/2026):
    agradável ao dono. Nenhum outro NPC muda; os arquivos de arte
    (`npc-arena-duelo`) mantêm o id. As menções históricas (esta seção
    anterior, `reviews/2026-09-30-ingles-primeiro-nomes.md`) ficam como estavam.
+
+## 24. Combate v3: progressão por level, Vínculo com efeito de jogo e 5% no PvP (05/10/2026)
+
+Decisões do dono no run SQUAD-Alpha `combate-v3-01` (Discovery reaberta). Plano: [`PLANO-COMBATE-V3.md`](PLANO-COMBATE-V3.md) §11. **Ainda não implementado.**
+
+1. **Revogada** a regra "a recompensa do Vínculo é só cosmética" (`bond.ts`, invariante 3). O Vínculo passa a ser o level do usuário e dá 1 ponto de talento por level.
+   - Perderam: (a) um segundo level de usuário, que duplicaria a fonte da verdade (footgun 9); (b) não ter level de usuário.
+2. **Revogada** a regra "escada de gates é grind com outro nome" (`bond.ts` §6). Arena/PvP, Torneio, andares altos e Renascimento passam a ter gate pelo level do Vínculo. A copy dos gates segue `copy.semFomo`.
+   - Perdeu: manter um gate único (Vínculo ≥5).
+3. **~5% de vantagem de talento/equipamento vale também no PvP.** O dono aceita conscientemente a contradição com "a estratégia só muda o playstyle". A linha vermelha fica de pé: nada comprável com dinheiro real dá vantagem percentual.
+   - Perderam: (a) só PvE com PvP normalizado (recomendado pelo benchmark: GW2 sPvP, VGC); (b) talento só muda escolha, sem número.
+4. **Chips de atributo** deixam de dar +3 pontos e passam a influenciar só a distribuição dos pontos na evolução. Isso fecha o caminho Créditos→Bits→atributo.
+   - Perderam: (a) remover os chips; (b) remover o câmbio Créditos→Bits.

@@ -209,3 +209,16 @@ Decisões do dono que **substituem** o texto acima onde conflitarem:
 - Buff SPD mantido (calibrar na Fase 2).
 - Q6: **cada estágio gera um especial novo** (nome e efeito). Q7: o selo mostra só o nome próprio.
 - **Glitchtama dá ponto.** Invariante: mesmo estágio = mesmo total de pontos ao evoluir. **Empate é resultado válido.**
+
+## 11. Progressão por level (Discovery reaberta, 05/10/2026) — substitui o "1 ponto/dia" das §2.3/§9/§10
+- **Soulmon:**
+  - XP do dia completo + esforço/meta (nunca contagem), alvo 66/34.
+  - Level com teto por estágio derivado de `FORM_REQUIREMENTS.cap` (6/13/21/30/40 acumulado).
+  - 1 ponto por level, distribuído em ATK/DEF/SPD pelo galho, com teto de 45% num atributo.
+  - **HP sobe automaticamente com o level.**
+  - O level desce na degeneração e é exibido com texto neutro.
+  - Curva `golpes = HP·(1+DEF/8)/(1+ATK/8)`, fracionária.
+- **Usuário:** level = Vínculo. 1 ponto de talento por level. Árvore PvP/PvE/Comércio. Gates por Vínculo. Ver REGISTRO §24.
+- **Equipamento:** percentual, moeda ganha jogando. Talento + equipamento ≈5%, também no PvP.
+- **Chips:** só distribuição.
+- **Ordem dos PRs:** núcleo (curva + level + especiais + simulador vitest) → PvP → save/XP → Vínculo/talentos/gates → equipamento/moeda/Comércio → nome do especial → docs.
