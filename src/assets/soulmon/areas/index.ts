@@ -63,10 +63,11 @@ export const EXPLORACAO_LOT_ART = { masmorra: loteMasmorra, passeio: lotePasseio
 export const JOGOS_LOT_ART = { salao: lotePpt, mente: loteMente, refugio: loteRefugio } as const;
 
 // ── Guilda, Laboratório e Hall (29/09/2026) ────────────────────────────────
-// 🌙 Fundos 760×1344 do Hall e do Laboratório (30/09/2026, rodada 3 fundos-v2,
-// aprovados pelo dono): até aqui as duas áreas caíam no degradê de tokens do
-// `AreaScene`. As clareiras vazias foram medidas pelo gerador — as posições dos
-// lotes em `utils/areaSheetCopy.ts` (`LABORATORIO_LOTS`/`HALL_LOTS`) seguem elas.
+// 🌙 Fundos 760×1344 do Hall e do Laboratório. 04/10/2026 (H18): REFEITOS na receita dos
+// aprovados (GPT Image 2, 9:16, terreno denso com plataformas esculpidas — `entrada-dono/05-bg-*`)
+// e com o mesmo pós de Arena/Exploração/Mercado/Jogos: cover 760×1344 lanczos, grade-to-home,
+// 0 px de matiz 262–345 (WebP q85 ≈ 306/327 KB, teto 400). As posições dos lotes em
+// `utils/areaSheetCopy.ts` (`LABORATORIO_LOTS`/`HALL_LOTS`) seguem as plataformas novas.
 import bgHall from './bg-hall.png';
 import bgLaboratorio from './bg-laboratorio.png';
 
