@@ -48,6 +48,15 @@ import bgGuildMataImg from '../assets/backgrounds/bg-guild-mata.png';
 import bgGuildBosqueAntigoImg from '../assets/backgrounds/bg-guild-bosque-antigo.png';
 import bgCampinaImg from '../assets/backgrounds/bg-campina.png';
 import bgCavernasImg from '../assets/backgrounds/bg-cavernas.png';
+// 04/10/2026 — terceira leva de cenários PINTADOS à venda (`entrada-dono/petbox-*`, GPT Image 2.5 Flare 16:9
+// opaco): 1200×648 lanczos, reenquadrados para o topo do chão cair em 74% (`instalacao-20261004/areas/fin-petbox.mjs`;
+// o Sótão já nasceu com o chão em ~72%). `baseColor` = média dos 32 px de baixo, como nos outros pintados.
+import bgLakesideImg from '../assets/backgrounds/bg-lakeside.png';
+import bgCrystalGroveImg from '../assets/backgrounds/bg-crystal-grove.png';
+import bgEmberCavernImg from '../assets/backgrounds/bg-ember-cavern.png';
+import bgNightGreenhouseImg from '../assets/backgrounds/bg-night-greenhouse.png';
+import bgCozyLoftImg from '../assets/backgrounds/bg-cozy-loft.png';
+import bgCloudTerraceImg from '../assets/backgrounds/bg-cloud-terrace.png';
 
 /**
  * Só chão — para cenas de céu aberto sem nenhuma superfície vertical (planície
@@ -236,6 +245,38 @@ export const PET_BACKGROUNDS: Record<string, PetBackground> = {
     namePt: 'Pântano Fosforescente', nameEn: 'Glowing Swamp',
     css: `url(${bgSwampImg})`, baseColor: '#021513',
     setting: 'outdoor', slots: GROUND_SLOTS, horizonY: 74,
+  },
+  // ── Terceira leva pintada (04/10/2026) — à venda na loja (`shop.ts`) ───────
+  'bg-lakeside': {
+    // Margem de lago: céu e água abertos, nada onde pendurar.
+    namePt: 'Beira do Lago', nameEn: 'Lakeside',
+    css: `url(${bgLakesideImg})`, baseColor: '#183430',
+    setting: 'outdoor', slots: GROUND_SLOTS, horizonY: 74,
+  },
+  'bg-crystal-grove': {
+    namePt: 'Bosque de Cristal', nameEn: 'Crystal Grove',
+    css: `url(${bgCrystalGroveImg})`, baseColor: '#163032',
+    setting: 'outdoor', slots: FULL_SLOTS, horizonY: 74,
+  },
+  'bg-ember-cavern': {
+    namePt: 'Caverna das Brasas', nameEn: 'Ember Cavern',
+    css: `url(${bgEmberCavernImg})`, baseColor: '#11252d',
+    setting: 'outdoor', slots: FULL_SLOTS, horizonY: 74,
+  },
+  'bg-night-greenhouse': {
+    namePt: 'Estufa Noturna', nameEn: 'Night Greenhouse',
+    css: `url(${bgNightGreenhouseImg})`, baseColor: '#12292f',
+    setting: 'indoor', slots: FULL_SLOTS, horizonY: 74,
+  },
+  'bg-cozy-loft': {
+    namePt: 'Sótão Aconchegante', nameEn: 'Cozy Loft',
+    css: `url(${bgCozyLoftImg})`, baseColor: '#0f3843',
+    setting: 'indoor', slots: FULL_SLOTS, horizonY: 72,
+  },
+  'bg-cloud-terrace': {
+    namePt: 'Terraço das Nuvens', nameEn: 'Cloud Terrace',
+    css: `url(${bgCloudTerraceImg})`, baseColor: '#1a2e32',
+    setting: 'outdoor', slots: FULL_SLOTS, horizonY: 74,
   },
   // ── Mission-exclusive backgrounds (utils/missions.ts) — never sold ─────────
   'bg-mission-filecity': {

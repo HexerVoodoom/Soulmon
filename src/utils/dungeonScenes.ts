@@ -109,6 +109,13 @@ const SHOP_BG_ACCENTS: Record<string, string> = {
   'bg-cloudsea': '#4fe3c1',
   'bg-observatory': '#d7a55c',
   'bg-swamp': '#4fd6a8',
+  // 04/10/2026, terceira leva pintada.
+  'bg-lakeside': '#d9a45c',
+  'bg-crystal-grove': '#5ad6ff',
+  'bg-ember-cavern': '#e08a3c',
+  'bg-night-greenhouse': '#4fd6a8',
+  'bg-cozy-loft': '#c98a4b',
+  'bg-cloud-terrace': '#4fe3c1',
 };
 
 const SHOP_BG_SCENES: DungeonScene[] = Object.entries(SHOP_BG_ACCENTS)
