@@ -102,3 +102,24 @@ a saída do fatiador com `| head`.
 As folhas 3×2 originais (`raw/`) **não foram copiadas para o repo** — ficam só
 em `D:\Soulmon\_gemini_out\entrega6\derivados\raw\`, caso alguém precise
 recortar diferente.
+
+## Rodada 2 do Higgsfield (04/10/2026) — arte NOVA para os 153 elementos
+
+Substitui a arte antiga (que tinha franja branca) dos 17 base + 136 derivados.
+Fonte: `E:\Soulmon-assets\entrada-dono\fx-<id>\fx-<id>-folha.png` (1344×752,
+1 fileira com os 6 estados na ordem cast · aura · slash · impact · defended ·
+orb; GPT Image 2.5 Flare, alfa REAL). `fx-espectro`: canônica é a sem `-v`
+(= v2, mesmo MD5).
+
+- Fatiado por componente conexo (alfa binarizado em 128, ruído < 24 px fora,
+  componente → célula do centróide), encaixado em quadrado centrado (margem 4%)
+  e reduzido por **nearest** a **128×128** (+ `-aura-96`), mesmos nomes e ids
+  de antes — `attackFxArt.ts` não mudou, o mapa de URLs continua no chunk
+  preguiçoso da luta (`entradaEnxuta.contract.test.ts`).
+- `neutro` não tinha folha nova: segue a arte antiga.
+- Bytes (PNG fonte): 18,1 MB → 15,7 MB. Ver o relatório para o WebP do dist.
+- Atenção: **Arcano** sai azul-índigo puxando para violeta (regra antiga:
+  roxo só na linha Kaelen) — instalado e sinalizado ao dono; métrica de
+  magenta (r>g+40 e b>g+40) caiu de 75% (antigo) para < 5%. `fogo_feiticeiro`
+  é o único acima de 5% (15%).
+- Pranchas: `E:\Soulmon-assets\out\instalacao-20261004\combate\prancha-fx-*.png`.
