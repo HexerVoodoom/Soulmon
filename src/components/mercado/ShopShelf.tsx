@@ -1,6 +1,8 @@
 import { useState, type CSSProperties, type ReactNode } from 'react';
 import { bitsStyle, emblemStyle, BITS_EXCHANGE, CREDIT_COLOR, CREDIT_TO_BITS, EMBLEMS_PER_LOSS, EMBLEMS_PER_WIN, MINIGAME_BITS_PER_DAY, type CurrencyId } from '../../utils/currencies';
 import { Icon } from '../ui/Icon';
+import { PixelIcon } from '../ui/PixelIcon';
+import { STATUS_ICON_ART } from '../../assets/soulmon/icones-ui/interacao';
 import { InfoTip } from '../ui/InfoTip';
 import { BackArrow } from '../ui/BackArrow';
 import { MiniGlass } from '../ui/MiniGlass';
@@ -362,7 +364,8 @@ export function ShopShelf({
 
         {!unlocked ? (
           <span aria-hidden="true" style={{ ...shopTagStyle, color: 'var(--sm2-muted)' }}>
-            <Icon name="lock" size={ICON_TAG} tone="muted" />
+            {/* 04/10/2026 (decisão do dono): o cadeado é a arte de status (`ui-status`). */}
+            <PixelIcon src={STATUS_ICON_ART.cadeado} size={ICON_TAG} />
             {isPt ? 'bloqueado' : 'locked'}
           </span>
         ) : owned ? (

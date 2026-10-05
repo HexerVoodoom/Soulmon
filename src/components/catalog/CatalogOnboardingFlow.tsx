@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Icon } from '../ui/Icon';
+import { PixelIcon } from '../ui/PixelIcon';
+import { ACTIVITY_ICON_ART } from '../../assets/soulmon/icones-ui/interacao';
 import { RitualDialog, ritualTitle } from '../ritual/RitualKit';
 import { sm2Button, sm2Hint, sm2Text, Chip } from '../form/FormKit';
 import { recommendStarterSet } from '../../utils/recommend';
@@ -178,7 +180,11 @@ export function CatalogOnboardingFlow({ language = 'en-US', onComplete }: Catalo
             return (
               <div key={item.id} className="sm2-conta-card" data-starter-item={item.id} style={{ padding: '6px 6px 6px 12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, minHeight: 44 }}>
-                  <span style={{ ...sm2Text, fontWeight: 600 }}>{name}</span>
+                  {/* 04/10/2026 (decisão do dono): ícone de atividade em pixel, quando existe. */}
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                    {ACTIVITY_ICON_ART[item.id] && <PixelIcon src={ACTIVITY_ICON_ART[item.id]} size={32} style={{ flex: 'none' }} />}
+                    <span style={{ ...sm2Text, fontWeight: 600 }}>{name}</span>
+                  </span>
                   {isOn ? (
                     <button
                       type="button"

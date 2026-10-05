@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Icon } from '../ui/Icon';
+import { PixelIcon } from '../ui/PixelIcon';
+import { ACTIVITY_ICON_ART } from '../../assets/soulmon/icones-ui/interacao';
 import { ModalSheet, Segment, sm2Button, sm2Hint, sm2Text, Field } from '../form/FormKit';
 import { CatalogMindNotice } from './CatalogMindNotice';
 import { ACTIVITY_CATALOG } from '../../data/activityCatalog';
@@ -132,9 +134,13 @@ export function CatalogBrowserModal({ isOpen, onClose, language = 'en-US', onAdd
             {items.map((item) => (
               <div key={item.id} className="sm2-conta-card" style={{ padding: 10 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                  {/* D5: sem emoji como ícone — o nome fala sozinho. */}
-                  <span style={{ ...sm2Text, fontWeight: 600 }}>
-                    {isPt ? item.name.pt : item.name.en}
+                  {/* D5: sem emoji como ícone. 04/10/2026 (decisão do dono): o ícone de
+                      atividade em pixel (`ACTIVITY_ICON_ART`), quando a atividade tem um. */}
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                    {ACTIVITY_ICON_ART[item.id] && <PixelIcon src={ACTIVITY_ICON_ART[item.id]} size={32} style={{ flex: 'none' }} />}
+                    <span style={{ ...sm2Text, fontWeight: 600 }}>
+                      {isPt ? item.name.pt : item.name.en}
+                    </span>
                   </span>
                   {/* D6: "Adicionar" mais baixo (32) — o cartão inteiro não
                       precisa de um botão de 44 de altura para uma ação curta. */}

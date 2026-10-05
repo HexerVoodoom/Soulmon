@@ -134,7 +134,8 @@ describe('compra', () => {
 
   it('a arte vive dentro de um mini-visor (nenhum <img> fora do vidro)', () => {
     const { container } = abrir({ stall: 'decoracao' });
-    const imgs = Array.from(container.querySelectorAll('img'));
+    // Fora do vidro só os ÍCONES de UI pelados (04/10/2026): a moeda dos Bits e o cadeado em pixel do dono.
+    const imgs = Array.from(container.querySelectorAll('img')).filter(i => !i.hasAttribute('data-pixel-icon') && !i.hasAttribute('data-bits-kind'));
     expect(imgs.length).toBeGreaterThan(0);
     for (const img of imgs) expect(img.closest('[data-mini-glass]')).not.toBeNull();
   });

@@ -2621,10 +2621,10 @@ dominância populacional — por isso ±15%. Régua nova:
 **Régua:** `src/components/TournamentPage.r8.render.test.tsx`.
 
 ### `src/utils/frames.ts`
-**Dono de:** o catálogo de MOLDURAS de avatar (R8, 04/10/2026) — COSMÉTICA pura, nunca vantagem. Origens: `rank` (uma por degrau da escada; Madeira…Diamante pela faixa lifetime, Mestre/Grão-Mestre só com o lugar ocupado), `shop` (Bits, `price`), `achievement`, `event`. Arte ainda não existe: cada uma traz um `look` placeholder (anel CSS).
-**Exports:** `FrameOrigin`, `FrameLook`, `AvatarFrame`, `FrameContext` (tipos) · `FRAMES` · `FRAME_IDS` · `FRAME_ID_RE` · `FRAMES_MAX_OWNED` · `frameById` · `sanitizeOwnedFrames` · `sanitizeEquippedFrame` · `frameAvailable` · `resolveEquippedFrame` (equipada que deixou de valer → `null`, sem moldura) · `availableFrames`.
+**Dono de:** o catálogo de MOLDURAS de avatar (R8, 04/10/2026) — COSMÉTICA pura, nunca vantagem. Origens: `rank` (uma por degrau da escada; Madeira…Diamante pela faixa lifetime, Mestre/Grão-Mestre só com o lugar ocupado), `shop` (Bits, `price`), `achievement`, `event`. Arte (04/10/2026): `FRAME_ART` (glob de `assets/soulmon/molduras/*.png`, o nome do arquivo é o id; as 14 têm arte), normalizada em `FRAME_ART_CANVAS` = 192 com abertura `FRAME_ART_OPENING` = 96; o `look` (anel CSS) fica de fallback.
+**Exports:** `FrameOrigin`, `FrameLook`, `AvatarFrame`, `FrameContext` (tipos) · `FRAMES` · `FRAME_IDS` · `FRAME_ID_RE` · `FRAMES_MAX_OWNED` · `frameById` · `sanitizeOwnedFrames` · `sanitizeEquippedFrame` · `frameAvailable` · `resolveEquippedFrame` (equipada que deixou de valer → `null`, sem moldura) · `availableFrames` · `FRAME_ART` · `FRAME_ART_CANVAS` · `FRAME_ART_OPENING` · `frameArt`.
 **Chamado por:** `src/contexts/GameStateContext.tsx` (sanitiza `ownedFrames`/`equippedFrame` no load), `src/App.tsx` (`handleEquipFrame`), `src/components/TournamentPage.tsx`, `src/components/ui/AvatarFrame.tsx`.
-**Régua:** `src/utils/frames.test.ts` (catálogo, cosmética, sanitização, paridade de formato/teto com `functions/api/save.js`), `functions/api/save.frames.test.js`.
+**Régua:** `src/assets/arteDono20261004.contract.test.ts` (arte 1:1, canvas, abertura vazia), `src/utils/frames.test.ts` (catálogo, cosmética, sanitização, paridade de formato/teto com `functions/api/save.js`), `functions/api/save.frames.test.js`.
 **Save:** `GameState.ownedFrames?: string[]` (`?? []`) e `GameState.equippedFrame?: string | null` (`?? null`) — ver 07-DADOS-E-SAVE.
 
 ### `src/utils/tzOffset.ts`
