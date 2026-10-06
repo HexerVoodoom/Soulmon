@@ -23,6 +23,7 @@ import { jeitoParaPve, JEITO_PADRAO, type JeitoNaMasmorra, type JeitoPve } from 
 import type { Combatant } from './combate/curve';
 import type { FightSide } from './combate/fight';
 import { groupFightSteps, type GroupEvent, type GroupResult } from './combate/group';
+import type { AttrBonus } from './combate/bonus';
 import { combatantAt, type StatWeights } from './combate/level';
 import { mulberry32 } from './combate/rng';
 import { PVE_FAMILY_POWER, specialOf, type SpecialFamily } from './combate/specials';
@@ -126,6 +127,8 @@ export interface SequenceConfig {
   build: StatWeights;
   family: SpecialFamily;
   jeito?: JeitoNaMasmorra;
+  /** PR12a: o bônus do jogador (já pelo teto de 5%): número = ATK; três canais = ATK/DEF/SPD. */
+  bonus?: number | Partial<AttrBonus>;
   /** Knobs of the gates only. */
   knobs?: { foe?: DungeonFoeKnobs; contraTeto?: number; ring?: Readonly<Record<RingGrade, number>>; dodge?: Readonly<Record<DodgeGrade, number>> };
 }
@@ -149,7 +152,7 @@ export function playSequence(
   healAfter: (i: number) => number = () => 0,
 ): SequenceResult {
   const p: DungeonPlayerCfg = {
-    combatant: combatantAt(cfg.level, cfg.build), family: cfg.family, jeito: cfg.jeito,
+    combatant: combatantAt(cfg.level, cfg.build, cfg.bonus), family: cfg.family, jeito: cfg.jeito,
     contraTeto: cfg.knobs?.contraTeto, ring: cfg.knobs?.ring, dodge: cfg.knobs?.dodge,
   };
   const odds = ARENA_SKILL_ODDS[skill];

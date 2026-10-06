@@ -2934,7 +2934,7 @@ dominância populacional — por isso ±15%. Régua nova:
 
 ### `src/utils/equipment.ts`
 **Dono de:** o EQUIPAMENTO do Soulmon (Combate v3 / PR8, decisões do dono §2.14 M3 e §2.26): 3 slots (Núcleo=ATK, Carapaça=DEF, Rastro=SPD), 3 tiers (9 itens), bônus PERCENTUAL, aquisição por Bits GANHOS ou fragmentos, SEM sorteio. O bônus entra pelo canal único de 5% (`combate/bonus.ts`: PvP por atributo em `combinedAttrBonus`, fenda como soma em `combinedBonus`). O Comércio só mexe em preço (`tal-com-01`) e em ganho de fragmentos (`tal-com-02`, até +25%). Persistido só `equipment: { owned, equipped, fragments }`; slot forjado é descartado peça a peça. Preços e percentuais são defaults da squad. Espelho no servidor: `functions/api/_equipment.js`.
-**Exports:** `EQUIP_CATALOG`, `EQUIP_BY_ID`, `EQUIP_SLOTS`, `SLOT_ATTR`, `TIER_PCT`, `TIER_BITS`, `TIER_FRAGMENTS`, `FRAGMENTS_MAX`, `EMPTY_EQUIPMENT`, `sanitizeEquipment`, `equipAttrBonus`, `equipScalar`, `equipPriceDiscount`, `fragmentGain`, `discounted`, `equipPrice`, `equipBuyRefusal`, `applyEquipBuy`, `applyEquip`, `applyUnequip`, `addFragments`, `spendBits`.
+**Exports:** `EQUIP_CATALOG`, `EQUIP_BY_ID`, `EQUIP_SLOTS`, `SLOT_ATTR`, `TIER_PCT`, `TIER_BITS`, `TIER_FRAGMENTS`, `FRAGMENTS_MAX`, `EMPTY_EQUIPMENT`, `sanitizeEquipment`, `equipAttrBonus`, `equipScalar`, `dungeonAttrBonus`, `equipPriceDiscount`, `fragmentGain`, `discounted`, `equipPrice`, `equipBuyRefusal`, `applyEquipBuy`, `applyEquip`, `applyUnequip`, `addFragments`, `spendBits`.
 **Régua:** `src/utils/equipment.test.ts`, `functions/api/equipment.parity.test.js`.
 
 ### `src/utils/bitsOrigin.ts`

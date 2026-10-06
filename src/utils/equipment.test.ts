@@ -278,6 +278,21 @@ describe('6. o câmbio de Créditos: teto diário de +25% sobre o ganho grátis'
     expect(applyCreditExchange(s, 600, DAY).ok).toBe(false);
   });
 
+  it('PR12a (§2.28 A): os 3 pacotes pequenos cabem no dia TÍPICO, e o maior é o que o dia típico comporta (não sobra pacote impossível)', () => {
+    const DIA_COMPLETO = 100, MINIJOGO_TETO = 150; // BITS_PER_COMPLETE_DAY, MINIGAME_BITS_PER_DAY (lidos do código)
+    const tipico = DIA_COMPLETO + MINIJOGO_TETO / 2; // 175 grátis
+    const cheio = DIA_COMPLETO + MINIJOGO_TETO; // 250 grátis
+    const sala = (livre: number) => creditExchangeRoom(noteFreeBits({ gamePoints: 0 } as EState, livre, DAY), DAY);
+    expect(sala(tipico)).toBe(43);
+    expect(sala(cheio)).toBe(62);
+    expect(BITS_EXCHANGE.map((p) => p.bits)).toEqual([10, 20, 40]);
+    for (const p of BITS_EXCHANGE) { expect(p.bits).toBeLessThanOrEqual(sala(tipico)); expect(p.bits).toBe(p.credits * 10); }
+    // o de 20 cabe já no piso (dia só de cuidado), o de 40 só a partir de 160 grátis
+    expect(creditExchangeRoom({}, DAY)).toBeGreaterThanOrEqual(20);
+    expect(sala(159)).toBeLessThan(40);
+    expect(sala(160)).toBeGreaterThanOrEqual(40);
+  });
+
   it('dia sem ganho grátis ainda tem o piso (25 Bits); virar o dia reabre a conta e mantém o Bit pago no saldo', () => {
     expect(creditExchangeRoom({}, DAY)).toBe(25);
     const hoje = applyCreditExchange({ gamePoints: 0 } as EState, 25, DAY);
@@ -297,9 +312,9 @@ describe('6. o câmbio de Créditos: teto diário de +25% sobre o ganho grátis'
   });
 
   it('os pacotes da loja existem e a conta de hoje diz qual cabe (cabem só os que o ganho grátis permite)', () => {
-    const s: EState = noteFreeBits({ gamePoints: 0 } as EState, 1000, DAY); // 250 de espaço
+    const s: EState = noteFreeBits({ gamePoints: 0 } as EState, 100, DAY); // 25 de espaço (dia só de cuidado)
     const cabem = BITS_EXCHANGE.filter((p) => p.bits <= creditExchangeRoom(s, DAY)).map((p) => p.credits);
-    expect(cabem).toEqual([10, 25]);
+    expect(cabem).toEqual([1, 2]); // PR12a: 10 e 20 Bits cabem em 25; o de 40 pede um dia de 160 grátis
   });
 
   it('o ganho grátis soma: Bit de minijogo conta, câmbio não', async () => {

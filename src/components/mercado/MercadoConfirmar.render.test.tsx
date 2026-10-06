@@ -89,13 +89,13 @@ describe('D1 — confirmar a compra', () => {
     const onExchangeCredits = vi.fn(async () => true);
     abrir({ stall: 'itens', onExchangeCredits, credits: 32 });
     fireEvent.click(screen.getByRole('tab', { name: 'Credits' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Swap 10 Credits for 100 Bits' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Swap 1 Credit for 10 Bits' }));
     const dlg = screen.getByRole('dialog', { name: 'Confirm purchase' });
     expect(onExchangeCredits).not.toHaveBeenCalled();
-    expect(dlg.querySelector('[data-purchase-question]')!.textContent).toBe('Swap 10 Credits for 100 Bits?');
-    expect(dlg.querySelector('[data-purchase-after]')!.textContent).toBe('22 Credits');
+    expect(dlg.querySelector('[data-purchase-question]')!.textContent).toBe('Swap 1 Credit for 10 Bits?');
+    expect(dlg.querySelector('[data-purchase-after]')!.textContent).toBe('31 Credits');
     fireEvent.click(within(dlg).getByRole('button', { name: 'Confirm' }));
-    expect(onExchangeCredits).toHaveBeenCalledWith(10);
+    expect(onExchangeCredits).toHaveBeenCalledWith(1);
   });
 });
 

@@ -650,13 +650,13 @@ export function CreditExchange({ language, credits, onExchangeCredits, say }: {
             type="button"
             disabled={!can}
             aria-busy={busy || undefined}
-            aria-label={isPt ? `Trocar ${pack.credits} Créditos por ${pack.bits} Bits` : `Swap ${pack.credits} Credits for ${pack.bits} Bits`}
+            aria-label={isPt ? `Trocar ${pack.credits} ${pack.credits === 1 ? 'Crédito' : 'Créditos'} por ${pack.bits} Bits` : `Swap ${pack.credits} ${pack.credits === 1 ? 'Credit' : 'Credits'} for ${pack.bits} Bits`}
             onClick={() => setPending(pack)}
             style={{ ...sm2Button('outline', !can), width: '100%', gap: 8 }}
           >
             {busy && <Icon name="sync" size={ICON_INLINE} tone="muted" />}
             <span>
-              {isPt ? 'Trocar ' : 'Swap '}<span className="sm2-num">{pack.credits}</span>{isPt ? ' Créditos por ' : ' Credits for '}
+              {isPt ? 'Trocar ' : 'Swap '}<span className="sm2-num">{pack.credits}</span>{isPt ? (pack.credits === 1 ? ' Crédito por ' : ' Créditos por ') : (pack.credits === 1 ? ' Credit for ' : ' Credits for ')}
             </span>
             <span className="sm2-num" style={{ ...bitsNum, color: can ? bitsNum.color : 'var(--sm2-muted)' }}>{pack.bits} Bits</span>
           </button>
@@ -675,7 +675,7 @@ export function CreditExchange({ language, credits, onExchangeCredits, say }: {
         question={pending
           ? <>
               {isPt ? 'Trocar ' : 'Swap '}<span className="sm2-num">{pending.credits}</span>
-              {isPt ? ' Créditos por ' : ' Credits for '}<span className="sm2-num">{pending.bits}</span> Bits?
+              {isPt ? (pending.credits === 1 ? ' Crédito por ' : ' Créditos por ') : (pending.credits === 1 ? ' Credit for ' : ' Credits for ')}<span className="sm2-num">{pending.bits}</span> Bits?
             </>
           : null}
         balance={credits}

@@ -145,11 +145,19 @@ export const CREDIT_COLOR = 'var(--sm2-credit-ink)';
  */
 export const CREDIT_TO_BITS = 10;
 
-/** Pacotes de troca oferecidos na loja. */
+/**
+ * Pacotes de troca oferecidos na loja (PR12a, decisão do dono §2.28 A).
+ *
+ * Os pacotes cabem no teto de 25% do ganho GRÁTIS do dia (`bitsOrigin.ts`). Medido no código: o dia completo rende
+ * `BITS_PER_COMPLETE_DAY` (100) e o minijogo até `MINIGAME_BITS_PER_DAY` (150). Dia típico (dia completo + metade do minijogo)
+ * = 175 grátis → espaço de 43 Bits; dia só de cuidado (100) → 25 (o piso de referência); dia cheio (250) → 62.
+ * Pacotes 10/20/40: o de 10 cabe em qualquer dia, o de 20 cabe já no piso, o de 40 cabe no dia típico (≥ 160 grátis).
+ * Os antigos 100/250/600 só cabiam em dias de 400/1.000/2.400 Bits grátis, que não existem.
+ */
 export const BITS_EXCHANGE = [
-  { credits: 10, bits: 10 * CREDIT_TO_BITS },
-  { credits: 25, bits: 25 * CREDIT_TO_BITS },
-  { credits: 60, bits: 60 * CREDIT_TO_BITS },
+  { credits: 1, bits: 1 * CREDIT_TO_BITS },
+  { credits: 2, bits: 2 * CREDIT_TO_BITS },
+  { credits: 4, bits: 4 * CREDIT_TO_BITS },
 ] as const;
 
 /** Recompensa em Emblemas por partida de torneio. */
