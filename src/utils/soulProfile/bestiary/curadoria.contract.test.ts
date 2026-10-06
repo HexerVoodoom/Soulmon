@@ -53,12 +53,9 @@ describe('o pool é o corpus do Besti-rio-', () => {
   });
 
   it('os 17 elementos têm pelo menos 8 criaturas cada, exceto as lacunas CONHECIDAS do corpus', () => {
-    // ⚠️ Lacuna medida em 06/10/2026: o corpus do Besti-rio- não tem NENHUMA
-    // criatura com `marcial` (nem direto nem por derivado). Quem tem Marcial
-    // dominante pontua o resto (reino, hostilidade, tamanho), mas o termo de
-    // elemento não encontra par. Conserto é corpus (repo irmão), não regra.
-    // Se o corpus passar a cobrir, tire daqui — este caso falha de propósito.
-    const LACUNAS_CONHECIDAS = ['marcial'];
+    // A lacuna de `marcial` (nenhuma criatura no corpus bruto) foi fechada pelo
+    // enriquecimento de 06/10/2026. Se uma lacuna nova aparecer, declare aqui.
+    const LACUNAS_CONHECIDAS: string[] = [];
     const cont: Record<string, number> = {};
     // Derivado conta pelos componentes — é assim que `select.ts` pontua.
     const baseDe = (id: string): string[] =>
@@ -70,10 +67,16 @@ describe('o pool é o corpus do Besti-rio-', () => {
     expect(pobres).toEqual(LACUNAS_CONHECIDAS);
   });
 
-  it('o sorteio por grupo aguenta família nula (a maioria do corpus não a tem)', () => {
-    // `select.ts` agrupa por `familia ?? especieDe(nome)`; este caso só trava
-    // que o corpus continua assim (e que o fallback é o que está em uso).
-    const semFamilia = BESTIARY_POOL.filter(c => c.familia === null).length;
-    expect(semFamilia).toBeGreaterThan(0);
+  it('toda criatura tem grupo (família) do vocabulário de 23 grupos, sem nenhum nulo', () => {
+    const GRUPOS = new Set(['reptil', 'aracnideo', 'inseto', 'geologico', 'elemental', 'ave', 'humanoide',
+      'angelical', 'monstro', 'peixe', 'cnidario', 'molusco', 'crustaceo', 'anfibio', 'verme', 'fungo',
+      'morto_vivo', 'mamifero', 'planta', 'etereo', 'demonio', 'construto', 'extraplanetario']);
+    const fora = BESTIARY_POOL.filter(c => !c.familia || !GRUPOS.has(c.familia)).map(c => c.nome);
+    expect(fora.slice(0, 10)).toEqual([]);
+  });
+
+  it('a descrição é a FÍSICA do enriquecimento (curta, em inglês), nunca o texto oficial do corpus', () => {
+    const longas = BESTIARY_POOL.filter(c => c.descricao.length > 240).map(c => c.nome);
+    expect(longas.slice(0, 10)).toEqual([]);
   });
 });

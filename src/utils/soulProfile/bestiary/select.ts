@@ -217,7 +217,12 @@ export function speciesProximity(prev: BestiaryCreature, c: BestiaryCreature): n
  * Régua: `criacaoDistribuicao.test.ts` (continuidade é o normal, travessia
  * não é rara).
  */
-const LINEAGE_PROXIMITY_WEIGHT = 3;
+// ⚠️ 06/10/2026: era 3, calibrado para o pool curado de 194. Com o corpus de
+// 7.386 (≈330 por grupo) a faixa de 6 só tinha criaturas da MESMA família e
+// 0,8% das evoluções atravessavam. Varredura (N=240, mesma régua de
+// `criacaoDistribuicao.test.ts`): 0,25→96%, 0,5→93%, 0,8→77%, **1,0–1,2 passa
+// (30–65%)**, 1,5→22%, 2→5%. A janela é estreita — o valor fica no meio dela.
+const LINEAGE_PROXIMITY_WEIGHT = 1.1;
 
 const PREFIXO_PROCEDURAL = /^(?:Titânico|Espiritual|Cristalino|Corrompido|Ancião)\s+/;
 /** A ESPÉCIE de uma entrada do pool: sem prefixo procedural, sem o sufixo

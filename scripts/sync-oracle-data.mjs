@@ -149,7 +149,6 @@ console.log(`  diais gen-2: divisor ${geracoes.divisorCascata['2']} · limiar ${
 // Uso:  BESTIARIO_DIR=/caminho/Besti-rio- node scripts/sync-oracle-data.mjs
 // ---------------------------------------------------------------------------
 const BEST_DIR = process.env.BESTIARIO_DIR ?? path.resolve(ROOT, '../Besti-rio-');
-const DESCRICAO_MAX = 200;
 const FONTES = ['variantes', 'enriched', 'faunaflora', 'pokemon', 'digimon', 'dnd'];
 if (!existsSync(BEST_DIR)) throw new Error(`Besti-rio- não encontrado em ${BEST_DIR} — use BESTIARIO_DIR.`);
 const bestDir = path.join(ROOT, 'src/utils/soulProfile/bestiary');
@@ -159,21 +158,33 @@ for (const f of FONTES) {
   const parsed = JSON.parse(readFileSync(path.join(BEST_DIR, 'src/registry/data', `${f}.json`), 'utf8'));
   corpus.push(...(Array.isArray(parsed) ? parsed : Object.values(parsed)[0]));
 }
-const elegivel = c =>
-  process.env.BESTIARIO_TUDO === '1' ||
-  (c.classificacaoConfianca === 'alta' && c.descricao && !/sem registro f/i.test(c.descricao) &&
-    Array.isArray(c.elementos) && c.elementos.length > 0);
+// ⚠️ 06/10/2026 (2ª decisão do dono, no mesmo dia): "a lista completa menos as
+// procedurais". O corte de qualidade (confiança/elementos) caiu: 80% do corpus
+// não procedural vinha SEM elementos, então ele é enriquecido, não filtrado.
+// Procedural = origem "Geração Procedural" OU nome no padrão
+// "<Prefixo> <Espécie> de <Elemento>" (variantes mecânicas espécie × elemento).
+const PROCEDURAL_NOME = /^(?:Titânico|Espiritual|Cristalino|Corrompido|Ancião)\s+(.+?)\s+de\s+\S+$/;
+const ehProcedural = c => /Procedural/i.test(c.origem ?? '') || PROCEDURAL_NOME.test(c.nome ?? '');
+// Elementos, grupo e DESCRIÇÃO FÍSICA vêm de `scripts/data/bestiario-enriquecimento.json`
+// (feito ficha a ficha por agentes, validado por lote). A descrição oficial do
+// corpus NÃO entra no pool: era texto de terceiros, muitas vezes errado
+// (o "Cattiva" do Palworld vinha descrito como um filme italiano de 1991) e só
+// servia de palpite de família. A física nova a substitui.
+const enriq = JSON.parse(readFileSync(path.join(ROOT, 'scripts/data/bestiario-enriquecimento.json'), 'utf8')).fichas;
 const vistos = new Set();
 const criaturas = [];
+const semFicha = [];
 for (const c of corpus) {
-  if (!elegivel(c) || vistos.has(c.nome)) continue;
+  if (ehProcedural(c) || vistos.has(c.nome)) continue;
   vistos.add(c.nome);
+  const e = enriq[c.nome];
+  if (!e) { semFicha.push(c.nome); continue; }
   criaturas.push({
     nome: c.nome,
     origem: c.origem,
-    descricao: String(c.descricao ?? '').slice(0, DESCRICAO_MAX),
-    elementos: c.elementos ?? [],
-    familia: c.familia ?? null,
+    descricao: e.aparencia,
+    elementos: e.elementos,
+    familia: e.grupo,
     biologia: c.biologia ?? [],
     bioma: c.bioma ?? [],
     tamanho: c.tamanho,
@@ -181,7 +192,8 @@ for (const c of corpus) {
     atributos: c.atributos ?? null,
   });
 }
+if (semFicha.length) throw new Error(`${semFicha.length} criaturas sem ficha de enriquecimento (ex.: ${semFicha.slice(0, 3).join(', ')}) — rode o enriquecimento antes.`);
 const poolOut = { _provenance: provenance(BEST_DIR), criaturas };
 writeFileSync(path.join(bestDir, 'pool.json'), JSON.stringify(poolOut) + '\n');
 const fams = new Set(criaturas.map(c => c.familia));
-console.log(`pool: ${criaturas.length}/${corpus.length} criaturas do corpus · ${fams.size} valores de família @ ${poolOut._provenance.sha.slice(0, 8)}`);
+console.log(`pool: ${criaturas.length}/${corpus.length} criaturas (sem as procedurais) · ${fams.size} grupos @ ${poolOut._provenance.sha.slice(0, 8)}`);

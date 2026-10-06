@@ -9,6 +9,15 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 06/10/2026 (noite) — Bestiário = 7.386 criaturas (corpus − procedurais), enriquecidas ficha a ficha — SEM MERGE
+>
+> - Pool novo: 7.386 criaturas, 23 grupos, todas com 1–3 elementos (os 17, `marcial` incluso) e **descrição física**
+>   (a oficial não entra mais). `scripts/data/bestiario-enriquecimento.json` + `sync-oracle-data.mjs` seção 2.
+> - ⚠️ **Decisões que ficam com o dono:** (1) a **Arena ficou mais fácil** (taxa base 59,0%→68,6%); (2) `GRUPO_PESO`
+>   foi calibrado para o pool curado e não foi refeito; (3) `LINEAGE_PROXIMITY_WEIGHT` caiu de 3 para 1,1 (janela estreita);
+>   (4) o chunk do pool tem **3 MB** e nomes de franquia — merge na `main` publica isso em produção.
+> - Falha pré-existente: `tests/convertToWebp.test.ts` (PNG somente-leitura, efeito de rodar como root).
+
 > ## 06/10/2026 — Bestiário = corpus do Besti-rio- direto, sem allowlist (decisão do dono) — SEM MERGE
 >
 > - `scripts/sync-oracle-data.mjs` seção 2 lê o repo irmão (6.507 fichas elegíveis por qualidade);
