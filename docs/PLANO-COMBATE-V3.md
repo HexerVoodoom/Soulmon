@@ -1,5 +1,7 @@
 # HANDOFF — Combate v3: atributos lineares + especial com nome e efeito
 
+> **CONCLUÍDO em 06/10/2026.** O run `combate-v3-01` implementou este plano em PR1 a PR11 (com divergências decididas pelo dono ao longo do caminho: curva por level em vez de "1 ponto por dia", golpe normalizado, talentos, equipamento, teto único de 5%). **O que vale hoje está em [`REGISTRO-DE-DECISOES.md`](REGISTRO-DE-DECISOES.md) §24 e em [`manual/02-REGRAS-DE-NEGOCIO.md`](manual/02-REGRAS-DE-NEGOCIO.md) §55-B.** O texto abaixo é o histórico do pedido e fica como estava.
+
 Criado em 04/10/2026, a pedido do dono. Para abrir uma **sessão dedicada** do Claude Code em `D:\Soulmon\repo`.
 O prompt de abertura está na seção 0. Ao começar, copie este arquivo para `docs/PLANO-COMBATE-V3.md` (com entrada no
 `docs/manual/00-MAPA.md`, senão o `docsManual.contract` reprova) e trabalhe a partir dele.

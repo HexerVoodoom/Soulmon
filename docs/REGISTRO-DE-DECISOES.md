@@ -1318,6 +1318,8 @@ implementação tomadas SEM o dono; o que está marcado **[dono]** espera respos
 
 ## 20. Combate: torcida por toques e "Descer mais fundo" só até onde já se chegou (02/10/2026)
 
+> ⚰️ **Itens 1, 6, 9 e 10 SUBSTITUÍDOS pela §24 (06/10/2026, combate v3):** a torcida passa a existir só na Arena e no Duelo (`CHEER.energyPerDischarge` = 9 na Arena, `pvpEnergyPerDischarge` = 2,5 no Duelo), a energia é "uma barra, um uso", o golpe é normalizado e a luta roda no núcleo `src/utils/combate/`. Vale o que está na §24.6.
+>
 > ⚰️ **Reescrito em parte em 04/10/2026 (item 10 abaixo):** o "gauge que vira UM golpe especial"
 > (itens 1, 6 e 9) foi substituído pela **ENERGIA** — uma barra por lutador, abastecida por ataque dado,
 > ataque sofrido e pela barra de cheer. Os números do gauge (8/16 toques, ×1,35, ×3 por gauge) ficam
@@ -1944,3 +1946,31 @@ O que o PR7 implementou das decisões acima, e o que perdeu a disputa.
 - **Renascimento = conta paga + Vínculo** (`rebirthGate.ts`, recusa `low-bond`): o dinheiro não compra Vínculo.
 - **Talentos** (`src/utils/talents.ts`, espelho `_talents.js`): persistido só `talentPicks: string[]` (um id por grau); pontos = Vínculo até 20; 3 caminhos; a árvore nunca fecha; vetor inválido é descartado inteiro no `save.js` e vale 0 no duelo; entra pelo canal `combinedBonus` (teto único de 5%). Respec sempre pago em Bits. Os dois talentos que tocavam linha vermelha (`tal-pvp-05`, `tal-com-05`) foram redesenhados no PR7b (§24.3).
   - Perderam: talento só PvE com PvP normalizado; talento sem número.
+
+### 24.6 Fechamento do run `combate-v3-01` (06/10/2026, PR10): decisões do dono, alternativas que perderam e medições
+
+Consolida as decisões do dono do run (contexto §2.3–§2.26). Plano: [`PLANO-COMBATE-V3.md`](PLANO-COMBATE-V3.md) (concluído). Regras vigentes: [`manual/02-REGRAS-DE-NEGOCIO.md`](manual/02-REGRAS-DE-NEGOCIO.md) §55-B.
+
+1. **Curva de atributos: por level, com golpes = ceil(HP × (1 + DEF/k) ÷ (1 + ATK/k)) e HP que cresce sozinho.** Substitui o "1 ponto por dia" e o boost de evolução do handoff.
+   - Perderam: (a) curva ADITIVA (o build puro domina); (b) curva MULTIPLICATIVA (domina o distribuído, e o estágio longo quebra o equilíbrio); (c) PROPORCIONAL pura ao ponto diário (a spike da Fase 1 foi arquivada em `_superseded`). A curva re-escala por estágio: dentro do estágio +1 ponto ≈ 1 golpe (~10%), entre estágios o equilíbrio vem do ×1,5.
+2. **Régua de balanço = TEMPO para vencer no espelho (±5%), não win rate.** A régua de win rate (F1, ±5pp, §2.3) foi trocada na Fase 1 e a régua pareada passa a medir a média de muitas seeds (a sorte do golpe entra no motor). Empate é resultado válido (sem pontos), sem desempate por %HP.
+   - Perdeu: win rate ±5pp contra o dano direto.
+3. **Golpe normalizado e sorte AR(1)** (ρ = 0,9, σ = 8%, `HIT_UNIT_H0` = 10): cada ataque vale ~1/10 do espelho em qualquer level, o que substitui o σ 15% do §24.1 item 5. Metas do mais fraco mantidas (por 5% ~31%; por 1 Lv ~19%). A maré de sorte fica OCULTA na UI.
+   - Perdeu: σ 15% com golpe cru (sem normalizar o valor do golpe por level).
+4. **5% de vantagem também no PvP, com TETO ÚNICO.** Foi aceito no checkpoint com a promessa "~90% de vitória entre iguais na mesa" (§2.9). Medido depois do golpe normalizado e do teto único (soma dos canais ATK/DEF/SPD, de todas as fontes, nunca acima de 5%): o mais forte por 5% vence 64–67%, BEM abaixo dos ~90% declarados. O dono manteve a decisão com o número real. A linha vermelha fica: nada comprável com dinheiro real dá vantagem percentual.
+   - Perderam: (a) normalizar o PvP (GW2 sPvP, VGC), recomendado pelo benchmark; (b) um teto de 5% POR canal (daria 15% no total); (c) item de ponto plano (+1 ponto no L1 passa de 5%).
+5. **Torcida só na Arena e no Duelo; Masmorra e Pesadelo vão sozinhos.** `CHEER.energyPerDischarge` = 9 (o maior valor em que a torcida SOZINHA move a vitória da run ≤ 25pp) e `pvpEnergyPerDischarge` = 2,5 (~65% na torcida normal no PvP). Medido: nenhuma habilidade +24,8pp, boa +17,9pp, TTK −8,7%.
+   - Perderam: `energyPerDischarge` = 90 (tirava a parede da Arena, mas torcer sozinho vencia 95%: +46,9pp, RED do gate) e 3 (a torcida não pesava). Com 90 a diferença torcida × sem torcida era de 49pp.
+6. **Evocação sai das escolas de SKILL** (PR9b) e fica na ficha como pontos, pelo companheiro capturável.
+   - Perdeu: remover a escola de vez (a ficha a produz e o companheiro/capture e os requisitos de talento a leem) ou torná-la uma escola de combate.
+7. **Equipamento: 3 slots por atributo, percentual, loja direta ou fragmentos, SEM RNG, só com moeda GANHA.** Lootbox descartada (decisão do dono; a análise de ECA Digital foi interna por IA, não é parecer de advogado).
+   - Perderam: lootbox com pity e odds exibidas; Créditos→Bits para equipamento com teto de +25%.
+8. **Créditos aceleram só o que não é combate, com teto de +25% sobre o ritmo grátis** (`CREDIT_BITS_CAP_RATIO`; piso de referência de um dia completo). O pacote que passa do teto não é cobrado nem partido.
+   - Perdeu: câmbio livre.
+9. **Nome do especial por REGRA, sem IA**, novo a cada estágio, em 7 famílias; o PvP publica só o ID do léxico, nunca texto do save.
+   - Perderam: nome por IA; nome fixo por estágio; o rótulo "ESPECIAL!".
+10. **Level desce na degeneração, com texto neutro** (`copy.semFomo`); invariante: todo Soulmon do mesmo estágio evolui com o mesmo total de pontos. Glitchtama dá ponto.
+    - Perderam: level que só sobe; texto punitivo.
+11. **Teto S1 do duelo:** 1 level por dia de servidor desde a 1ª gravação (`metadata.f` do KV), só no duelo, sem reescrever o save.
+
+**Medições na `main` com o #232 (06/10/2026, `7c76eaf9`).** Régua do repositório (N = 3200, `arena.v3.test.ts`, `dungeon.v3.test.ts`, `combate/`): duração mediana da Arena R1–R5 21,8/19,7/20,9/27,6/24,3 s; vitória por build 64,0–68,6% (4,6pp), por estágio 58,0–70,9%; células família × área 60,3–72,3% (12,1pp, meta ≤ 20pp); habilidade 23,6pp (meta ≤ 25pp); torcida sozinha +24,8pp; escolas 63,4–71,3% (7,9pp). Essa régua monta o inimigo pelo espelho `arenaFoe`, então NÃO enxerga o sorteio do bestiário; por isso foi feita uma varredura extra com o pool real e elementos (N = 1600 por ponto, `buildArenaRound` + `simulateArenaRunV3`): por elemento do jogador 60,1–67,5% (7,4pp), por família 56,9–63,3% (6,4pp), por escola 61,9–71,1% (9,2pp), torcida sozinha +25,0pp (`nenhuma`) e +18,2pp (`boa`). A torcida da Arena em E = 9 está na margem da meta (≤ 25pp): o ruído de N = 1600 é de ±2pp.

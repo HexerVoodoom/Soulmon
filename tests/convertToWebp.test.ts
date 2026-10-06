@@ -7,7 +7,7 @@
 // ===========================================================================
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdtemp, mkdir, writeFile, readFile, readdir, rm } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { existsSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import sharp from 'sharp';
 import { converter } from '../scripts/convert-to-webp.mjs';
@@ -131,7 +131,7 @@ describe('convert-to-webp — caminhos de falha', () => {
       ...silencio,
       converterUm: async (i, o) => { await sharp(i).webp().toFile(o); },
       // gancho de teste: o `log` roda por PNG convertido; no 2º, plantamos.
-      log: (() => { let n = 0; return () => { if (++n === 2) void writeFile(join(dir, 'tarde.map'), 'ref a-H.png'); }; })(),
+      log: (() => { let n = 0; return () => { if (++n === 2) writeFileSync(join(dir, 'tarde.map'), 'ref a-H.png'); }; })(),
     });
     // O `.map` foi gravado durante o passo 1 (antes do passo 2), então É
     // reescrito — e não há sobra. Este caso documenta que a sobra só nasce de

@@ -13,6 +13,9 @@ import {
   REST_WINDOW_DAYS,
 } from '../types/taskModel';
 import { GOOD_CONSTANCY_RATIO } from '../utils/habitRhythm';
+import { GATES } from '../utils/gates';
+import { TALENT_POINTS_MAX } from '../utils/talents';
+import { COMBAT_BONUS_CAP } from '../utils/combate/bonus';
 import { DREAM_CATALOG } from '../utils/restWindow';
 import { guildText } from '../utils/guildCopy';
 import { GUILD_MAX_MEMBERS, GUILD_TIDE_WEEKS, RAID_EMBLEMS, RAID_EMBLEMS_FLOOR, RAID_TROPHY_EVERY } from '../utils/guildRules';
@@ -65,6 +68,17 @@ const TERMS: Term[] = [
     icon: '⚡', en: 'Energy', pt: 'Energia',
     descEn: `The side bar. Fills only by feeding (up to ${FOOD_LIMIT_PER_HOUR}/hour) and resets each day.`,
     descPt: `A barra lateral. Sobe apenas alimentando (até ${FOOD_LIMIT_PER_HOUR}/hora) e zera todo dia.`,
+  },
+  {
+    // Combate v3: Vínculo N (você) e Lv N (o Soulmon). Números das CONSTANTES; sem prazo, sem cobrança.
+    icon: '🔗', en: 'Bond N / Lv N', pt: 'Vínculo N / Lv N',
+    descEn: `Bond N is your level as a carer (up to ${TALENT_POINTS_MAX}); each one gives a talent point. Lv N is your Soulmon's. The Arena opens at Bond ${GATES.pvp.minBond}.`,
+    descPt: `Vínculo N é o seu nível como pessoa que cuida (até ${TALENT_POINTS_MAX}); cada um rende um ponto de talento. Lv N é o do seu Soulmon. A Arena abre no Vínculo ${GATES.pvp.minBond}.`,
+  },
+  {
+    icon: '🎖️', en: 'Talents & equipment', pt: 'Talentos e equipamento',
+    descEn: `Three paths and three slots in Stats. Together they add at most ${Math.round(COMBAT_BONUS_CAP * 100)}% strength, and equipment is bought with Bits you earned, never drawn.`,
+    descPt: `Três caminhos e três espaços em Estatísticas. Juntos somam no máximo ${Math.round(COMBAT_BONUS_CAP * 100)}% de força, e o equipamento se compra com Bits ganhos, nunca sorteado.`,
   },
   {
     icon: '🥚', en: 'Rebirth', pt: 'Renascimento',
