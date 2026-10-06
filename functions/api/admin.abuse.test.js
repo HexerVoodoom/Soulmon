@@ -61,7 +61,7 @@ describe('spend', () => {
 describe('ent: nunca recebe admin', () => {
   it('rebirth-reset e GET do admin não gravam admin/tier paid', async () => {
     const env = envWith();
-    env.DIGIAPP_SAVES.store.set(ADMIN_ID, JSON.stringify({ rebirth: { at: '2026-09-01', fromStage: 'ultra' } }));
+    env.DIGIAPP_SAVES.store.set(ADMIN_ID, JSON.stringify({ rebirth: { at: '2026-09-01', fromStage: 'ultra' }, totalXP: 60000 }));
     await post(ADMIN, 'rebirth-reset', { id: ADMIN_ID }, env);
     await onRequestGet({ request: reqWith(await token(ADMIN), `https://x/api/entitlements?id=${ADMIN_ID}`), env });
     const e = ent(env, ADMIN_ID);

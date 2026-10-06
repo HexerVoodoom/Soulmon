@@ -4707,7 +4707,7 @@ torcida só SOMA. ⚰️ A torcida por *timing* (anel que fecha sobre o alvo) es
 
 ```
 ficha de cada lado = o SAVE (KV saveId), derivada no servidor: level = soulLevel(evolutionStage, perfectDays)
-   LIMITADO pelo teto S1 (maxLevelFor: 1 + dias de servidor desde a 1ª gravação, metadata.f do KV; sem f vale o teto do estágio);
+   LIMITADO pelo teto S1 (maxLevelFor: 1 + dias de servidor desde a 1ª gravação, metadata.f do KV; sem f vale o level 1 até a 1ª gravação escrever o f);
    stats = combatantAt(level, galho); família do especial = escola da skill especial da ficha (desconhecida = direct);
    bônus = os talentos e o equipamento DO SAVE, recalculados no servidor, no canal único de 5% (`combinedAttrBonus`; ⚰️ valia 0 até o PR7/PR8)
 luta = fight(me, opp, { seed do servidor, hpScale: PVP_HP_SCALE (1,7), cheer: descargas da torcida }) — empate quando os dois caem no mesmo instante
@@ -4735,7 +4735,14 @@ abertura, então não existe perder de graça. A contabilidade é única em
 `settleMatch` (vitória, derrota e desistência passam por ela).
 `MATCHES_PER_DAY` = 5 (do servidor; estourar devolve `429 daily limit`).
 Pontuação de season: `+20` / `−8` para quem jogou, `+10` / `−4` para o oponente,
-sempre com piso em 0. O ranking é o top **50** da season; `season` é
+sempre com piso em 0. **Rendimento decrescente (PR13, decisão do dono):** o GANHO
+(nunca a perda) cai com a diferença de level (`functions/api/_honra.js`:
+carência `HONRA_LEVEL_CARENCIA` = 3, zero ao fim de `HONRA_LEVEL_QUEDA` = 6 levels a mais) e com a
+N-ésima vitória do dia sobre o MESMO oponente (`HONRA_FATOR_POR_REPETICAO` = 1, 0,5, 0,25, 0); vale também para quem defende
+e vence. Duas contas próprias rendem no máximo 35 pontos/dia por par (eram 100). O `match` devolve `gain` e `honorFactor`, e o app aplica o fator à Honra de vitória.
+**`duelStart` é atômico por conta (PR13):** duelo aberto e válido = outro `duelStart` devolve `409 duel open` (outro oponente) ou o
+MESMO duelo (mesmo oponente); fila por isolate (`withDuelLock`) — sem CAS no KV, a janela entre isolates só fecha com Durable Object. Save de oponente acima de
+`DUEL_SAVE_MAX_CHARS` (1 milhão) não luta e nem é parseado. O ranking é o top **50** da season; `season` é
 `YYYY-MM` (`currentSeason()`), e `closeSeason` dá troféu de 1º/2º/3º ao top 3 —
 protegido por `SEASON_ADMIN_KEY` e **idempotente** por `closed:<season>`, porque
 quem chama é um cron e cron repete.

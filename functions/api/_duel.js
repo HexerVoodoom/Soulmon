@@ -35,7 +35,7 @@
  * não dá pontos nem Honra para ninguém.
  */
 import {
-  CHEER, MAX_LEVEL, PVP_HP_SCALE, cheerEvents, combinedAttrBonus, fightSteps, soulCombatant, specialOf,
+  CHEER, PVP_HP_SCALE, cheerEvents, combinedAttrBonus, fightSteps, soulCombatant, specialOf,
 } from './_combate.js';
 import { bondLevelFor } from './_bond.js';
 import { talentAttrBonus, talentCheerScale } from './_talents.js';
@@ -51,6 +51,12 @@ export const DUEL_TAPS_FULL = CHEER.tapsFull;
 export const DUEL_TAPS_CAP = CHEER.tapsCapPerBucket;
 /** Baldes de torcida de uma luta: 60 s / 3 s = 20. Toque depois disso não conta. */
 export const DUEL_CHEER_BUCKETS = Math.ceil(60 / CHEER.bucketSeconds);
+/**
+ * Teto do save LIDO como oponente (PR13, ALTO-3): acima disso o lado "nao luta" e o save NEM e parseado. A gravacao aceita 5 MB
+ * (`save.js`), mas o maior save real observado e ~50x menor; parsear 5 MB por listagem de oponentes e vetor de DoS. 1 milhao de
+ * caracteres = ~10x o maior save real. Quem passa disso continua jogando; so nao entra como oponente do Torneio.
+ */
+export const DUEL_SAVE_MAX_CHARS = 1_000_000;
 /** Um dia de servidor, em ms (o passo do teto S1). */
 export const DUEL_DAY_MS = 86_400_000;
 
@@ -80,12 +86,12 @@ export function duelCheerEvents(rawTaps, side = 0, scale = 1) {
 
 /**
  * Teto S1: o level máximo que o duelo aceita, pela data da 1ª gravação do save (`firstSeen`, ms).
- * `1 + dias de servidor desde então`. Sem `firstSeen` (save gravado antes da regra) vale o teto do
- * estágio (o que o save já diz). Relógio no futuro conta 0 dias.
+ * `1 + dias de servidor desde então`. Sem `firstSeen` vale o level 1 (PR13: o piso, nao o teto do estagio) ate o
+ * `save.js` gravar o `f` — o que acontece na PRIMEIRA gravacao seguinte do save (`f = agora` se nao ha). Relógio no futuro conta 0 dias.
  * @param {unknown} firstSeen @param {number} now
  */
 export function maxLevelFor(firstSeen, now) {
-  if (typeof firstSeen !== 'number' || !Number.isFinite(firstSeen) || firstSeen <= 0) return MAX_LEVEL;
+  if (typeof firstSeen !== 'number' || !Number.isFinite(firstSeen) || firstSeen <= 0) return 1;
   return 1 + Math.max(0, Math.floor((now - firstSeen) / DUEL_DAY_MS));
 }
 

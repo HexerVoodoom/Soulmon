@@ -345,7 +345,9 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
       setMatchesLeft(typeof r.matchesLeft === 'number' ? r.matchesLeft : matchesLeft);
       setDuel({ opp, seed: r.seed, me: r.me, oppSide: r.opp });
     } catch (err) {
-      setFightError(err instanceof Error && err.message
+      setFightError(err instanceof Error && err.message === 'duel open'
+        ? (isPt ? 'Há um duelo aberto. Termine esse ou espere ele fechar sozinho, em alguns minutos.' : 'A duel is still open. Finish it or wait a few minutes for it to close by itself.')
+        : err instanceof Error && err.message
         ? err.message
         : (isPt ? 'A partida não aconteceu. Tente de novo.' : "The match didn't happen. Try again."));
     } finally {
@@ -370,7 +372,12 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
       // Emblemas: moeda EXCLUSIVA do torneio (utils/currencies.ts). Perder
       // também rende algo — a partida diária não pode virar tempo perdido.
       // EMPATE (PR5, §2.4): partida jogada, sem Honra e sem pontos para ninguém.
-      if (!r.draw) onEarnEmblems(r.won ? EMBLEMS_PER_WIN : EMBLEMS_PER_LOSS);
+      // PR13: a Honra de VITÓRIA acompanha o ganho de pontos que o servidor decidiu (`honorFactor`: oponente bem abaixo do seu level
+      // ou o mesmo oponente de novo no dia rende menos). Derrota rende como sempre.
+      if (!r.draw) {
+        const fator = typeof r.honorFactor === 'number' && Number.isFinite(r.honorFactor) ? Math.min(1, Math.max(0, r.honorFactor)) : 1;
+        onEarnEmblems(r.won ? Math.round(EMBLEMS_PER_WIN * fator) : EMBLEMS_PER_LOSS);
+      }
       // 🔗 Vínculo: a partida rende XP dos dois lados do placar (`bondXP`), sob
       // o teto diário suave do torneio. Perder rende menos, nunca zero — falha
       // não pune, é a invariante 1 do módulo.
@@ -451,8 +458,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
                     : 'Your nickname and your Soulmon show up on a public list of Tournament players.')}
                 {' '}
                 {isPt
-                  ? 'Há um número de partidas por dia; perder também rende Honra. Sem oponentes, três desafiantes NPC treinam com você — não gastam partida e não rendem nada.'
-                  : 'There is a daily number of matches; losing earns Honor too. With no opponents, three NPC challengers train with you — they use no match and earn nothing.'}
+                  ? 'Há um número de partidas por dia; perder também rende Honra. Vencer alguém de level bem abaixo do seu, ou o mesmo oponente várias vezes no dia, rende cada vez menos. Sem oponentes, três desafiantes NPC treinam com você — não gastam partida e não rendem nada.'
+                  : 'There is a daily number of matches; losing earns Honor too. Beating someone far below your level, or the same opponent several times a day, earns less each time. With no opponents, three NPC challengers train with you — they use no match and earn nothing.'}
               </span>
             )}
         </InfoTipSection>

@@ -9,6 +9,15 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 06/10/2026 (noite) — Combate v3: correções da auditoria de segurança (PR13)
+>
+> - **Corrigidos:** corrida da cota/semente do duelo (fila por conta + duelo aberto = 409/mesmo duelo); fazenda de pontos/Honra
+>   (rendimento decrescente por level e por par/dia, `_honra.js`); save gigante como oponente (teto antes do parse); `rebirth-reset`
+>   confere conta paga + Vínculo 12; `maxLevelFor` sem `f` = level 1; corpo do `save` com teto antes do parse, em bytes, e rate limit; `attrs` finitos.
+> - **Abertos (decisão do dono):** família do especial derivada no servidor (inexequível: a seed da ficha mora só no aparelho); `bitsOrigin`/câmbio só-cliente (limitação declarada);
+>   desistência na virada de mês; torcida ótima offline; janela entre isolates do KV (sem CAS) — fecha com Durable Object.
+> - Registro: `squad-alpha-runs/combate-v3-01/SEGURANCA-AUDITORIA.md` (run-state, fora do git).
+
 > ## 06/10/2026 (noite) — Bestiário = 7.386 criaturas (corpus − procedurais), enriquecidas ficha a ficha — SEM MERGE
 >
 > - Pool novo: 7.386 criaturas, 23 grupos, todas com 1–3 elementos (os 17, `marcial` incluso) e **descrição física**

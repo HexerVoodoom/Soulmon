@@ -426,6 +426,12 @@ Cloudflare Workers (`workers/`), deploy **manual** (`wrangler deploy` dentro de 
 **Exports:** `EQUIP_SLOTS`, `SLOT_ATTR`, `TIER_PCT`, `FRAGMENTS_MAX`, `EQUIP`, `sanitizeEquipment`, `equipAttrBonus`, `sanitizeBitsOrigin`.
 **Régua:** `functions/api/equipment.parity.test.js`.
 
+### `functions/api/_honra.js`
+**Dono de:** o RENDIMENTO DECRESCENTE dos pontos do Torneio (PR13, decisão do dono 06/10/2026): o ganho de uma vitória cai com a diferença de level (oponente muito abaixo rende ~0) e com a N-ésima vitória do dia sobre o MESMO oponente. Nunca mexe no que se perde. Os levels vêm da ficha congelada em `duelStart`.
+**Exports:** `HONRA_PONTOS_VITORIA`, `HONRA_PONTOS_DEFESA`, `HONRA_LEVEL_CARENCIA`, `HONRA_LEVEL_QUEDA`, `HONRA_FATOR_POR_REPETICAO`, `fatorPorLevel`, `fatorPorRepeticao`, `ganhoDePontos`, `HONRA_TETO_DIA_POR_PAR`.
+**Chamado por:** `community.js › settleMatch` (devolve `gain`/`honorFactor` no `match`).
+**Régua:** `functions/api/community.farm.test.js`.
+
 ### `functions/api/_gates.js`
 **Dono de:** o ESPELHO de `src/utils/gates.ts` (a tabela de portões do Vínculo); `community.js` e `_bond.js` leem daqui.
 **Exports:** `GATES`, `MASMORRA_ALTO_A_PARTIR_DO_ANDAR`, `gateFor`.

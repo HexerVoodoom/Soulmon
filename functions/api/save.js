@@ -15,6 +15,7 @@ import { gateTombstone } from './_accountTombstone.js';
 import { bondLevelFor } from './_bond.js';
 import { sanitizeTalentPicks } from './_talents.js';
 import { sanitizeEquipment, sanitizeBitsOrigin } from './_equipment.js';
+import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -74,6 +75,17 @@ function clampOwnedFrames(raw) {
 }
 
 const MAX_STATE_BYTES = 5 * 1024 * 1024;
+/**
+ * PR13 (MEDIO-6): teto do CORPO, conferido ANTES de ler/parsear. O envelope e o state mais um pouco (id, campos soltos).
+ * `Content-Length` acima disso = 413 sem ler nada; sem o header, o texto lido e medido antes do `JSON.parse`.
+ */
+const MAX_BODY_BYTES = MAX_STATE_BYTES + 64 * 1024;
+/**
+ * Tetos de gravacao (amortecedor de CUSTO, como `_rateLimit.js`: por isolate, nao e controle exato). Por IP (cobrado
+ * antes de ler o corpo) e por CONTA (depois da autorizacao). O app grava por debounce, bem abaixo disto.
+ */
+const SAVE_WRITE_RATE_IP = { limit: 120, windowMs: 60_000 };
+const SAVE_WRITE_RATE_ACCOUNT = { limit: 30, windowMs: 60_000 };
 
 /**
  * Prazo do save na nuvem, RENOVADO A CADA ACESSO (decisão do dono, 07/09/2026).
@@ -115,7 +127,22 @@ export async function onRequest({ request, env }) {
   const url = new URL(request.url);
   // Só o POST tem corpo. Lemos antes de resolver o id porque o id pode vir
   // dele (ver abaixo).
-  const body = request.method === 'POST' ? await request.json().catch(() => null) : null;
+  let body = null;
+  if (request.method === 'POST') {
+    const ipGate = takeToken('save-write-ip', clientKey(request), SAVE_WRITE_RATE_IP);
+    if (!ipGate.ok) return tooManyRequests(ipGate.retryAfter, CORS);
+    const declared = Number(request.headers.get('content-length'));
+    if (Number.isFinite(declared) && declared > MAX_BODY_BYTES) {
+      console.warn('save: POST recusado antes de ler, corpo acima do teto', { bytes: declared });
+      return Response.json({ error: 'State too large' }, { status: 413, headers: CORS });
+    }
+    const text = await request.text().catch(() => '');
+    if (text.length > MAX_BODY_BYTES) {
+      console.warn('save: POST recusado antes do parse, corpo acima do teto', { chars: text.length });
+      return Response.json({ error: 'State too large' }, { status: 413, headers: CORS });
+    }
+    try { body = JSON.parse(text); } catch { body = null; }
+  }
 
   // O contrato canônico é `?id=` no query string. Aceitamos também `body.id` no
   // POST por RETROCOMPATIBILIDADE: existem builds já instaladas (o overlay de
@@ -212,6 +239,8 @@ export async function onRequest({ request, env }) {
   }
 
   if (request.method === 'POST') {
+    const acctGate = takeToken('save-write', saveId, SAVE_WRITE_RATE_ACCOUNT);
+    if (!acctGate.ok) return tooManyRequests(acctGate.retryAfter, CORS);
     // `!body?.state` só barrava falsy. `state: 1` passava e `{ ...1 }` é `{}`:
     // o save inteiro do jogador (dias perfeitos, árvore, inventário) virava um
     // objeto vazio, sem erro nenhum. `state: "oi"` gravava {"0":"o","1":"i"}.
@@ -242,8 +271,10 @@ export async function onRequest({ request, env }) {
       if (o) state.bitsOrigin = o; else delete state.bitsOrigin;
     }
     const serialized = JSON.stringify(state);
-    if (serialized.length > MAX_STATE_BYTES) {
-      console.warn('save: POST recusado, state acima do teto', { saveId, bytes: serialized.length });
+    // BYTES, nao caracteres (PR13): UTF-8 chega a 3 bytes por caractere. So mede de verdade quando o pior caso poderia estourar.
+    const bytes = serialized.length * 3 > MAX_STATE_BYTES ? new TextEncoder().encode(serialized).length : serialized.length;
+    if (bytes > MAX_STATE_BYTES) {
+      console.warn('save: POST recusado, state acima do teto', { saveId, bytes });
       return Response.json({ error: 'State too large' }, { status: 413, headers: CORS });
     }
     // `f` = a data da 1ª gravação deste save, em ms (teto S1 do duelo, `_duel.js` › `maxLevelFor`). É o ÚNICO

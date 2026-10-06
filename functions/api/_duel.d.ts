@@ -23,6 +23,7 @@ export declare const DUEL_TAPS_FULL: number;
 export declare const DUEL_TAPS_CAP: number;
 export declare const DUEL_CHEER_BUCKETS: number;
 export declare const DUEL_DAY_MS: number;
+export declare const DUEL_SAVE_MAX_CHARS: number;
 export declare const SPECIAL_FAMILY_IDS: string[];
 export declare const ESCOLA_FAMILY: Record<string, string>;
 export declare function sanitizeTaps(raw: unknown): number[];
