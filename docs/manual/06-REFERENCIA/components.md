@@ -1336,3 +1336,7 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 
 ### `src/components/TalentTreeCard.tsx`
 **Dono de:** a tela da árvore de talentos do Vínculo (PR7), carregada `lazy` pela `StatsPage` com a arte sob demanda. Pontos, graus e respec vêm de `utils/talents.ts`; local-first (o servidor valida na sincronia). Estados: árvore vazia, pontos para gastar, todos gastos, respec sem Bits. PR7b: com `tal-com-05` (Balança) cada nó comprado ganha "−1" (refazer UM ponto, preço de um ponto em Bits ganhos).
+
+### `src/components/EquipmentCard.tsx`
+**Dono de:** a tela do equipamento e da vitrine (PR8b), carregada `lazy` pela `StatsPage` junto com a arte sob demanda. Regras de `utils/equipment.ts` e `utils/bitsOrigin.ts`; local-first. Compra com Bits GANHOS ou fragmentos (sem sorteio), equipar/tirar, recusas neutras (Bits insuficientes, Bits vindos de Crédito, fragmentos insuficientes). Fragmentos vêm da run completa da Masmorra (`App.tsx › handleGlitchtama`).
+**Régua:** `src/components/EquipmentCard.render.test.tsx`.

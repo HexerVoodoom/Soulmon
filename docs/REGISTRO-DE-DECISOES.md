@@ -1920,6 +1920,11 @@ Decisões do dono no run SQUAD-Alpha `combate-v3-01` (Discovery reaberta). Plano
   - Perdeu: "conveniência de câmbio" (encostava no teto de +25% dos Créditos).
 - **StatsPage:** "Nível de vínculo / Level N" virou "Vínculo N / Bond N" (NARRATIVA §12).
 
+### 24.5 PR8b — telas do equipamento, fragmentos e o câmbio visível (06/10/2026)
+- **`EquipmentCard`** (StatsPage, `lazy`, só com métricas visíveis): 3 slots, 9 itens com preço em Bits ganhos e em fragmentos, equipar/tirar; ícones = os 13 já instalados (sem arte nova). Recusas neutras; o texto diz que não há sorteio nem compra com dinheiro.
+- **Fragmentos:** a run COMPLETA da Masmorra (os 5 andares, `handleGlitchtama`) rende `FRAGMENTS_PER_RUN` = 5 (default da squad), +5% por grau de `tal-com-02` até +25%. Sem teto diário próprio (a run é o portão); o equipamento inteiro vale no máximo 4,5% e o teto de 5% é um só.
+- **Câmbio de Créditos:** a aba mostra quanto cabe hoje (25% do ganho grátis do dia) e desabilita o pacote que não cabe; amanhã a conta abre de novo. A compra de Créditos atrás de verificação de idade segue story pendente.
+
 ### 24.4 PR8a — equipamento e procedência dos Bits (06/10/2026, decisões do dono, contexto §2.26)
 - **Equipamento:** 3 slots, um por atributo (Núcleo=ATK, Carapaça=DEF, Rastro=SPD), 3 tiers (+0,5% / +1% / +1,5% no atributo do slot; os três no tier 3 somam 4,5%). Aquisição por **loja direta (Bits GANHOS) ou fragmentos**, sem sorteio, sem caixa, sem chance (teste lê a fonte e reprova `Math.random`/`odds`/`pity`). Percentual, nunca ponto plano (o item plano de +1 ponto no L1 passa de 5%: prova de vermelho). Entra pelo canal único de 5% (PvP por atributo, fenda como soma); o servidor recalcula do save e descarta slot forjado.
   - Perdeu: caixa/lootbox com pity (o dono decidiu: sem RNG); equipamento de ponto plano (estoura o teto com +1); equipamento comprável com Crédito (linha vermelha).

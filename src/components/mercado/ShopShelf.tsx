@@ -1,5 +1,8 @@
 import { useState, type CSSProperties, type ReactNode } from 'react';
 import { bitsStyle, emblemStyle, BITS_EXCHANGE, CREDIT_COLOR, CREDIT_TO_BITS, EMBLEMS_PER_LOSS, EMBLEMS_PER_WIN, MINIGAME_BITS_PER_DAY, type CurrencyId } from '../../utils/currencies';
+import { useGameStateOptional } from '../../contexts/GameStateContext';
+import { creditExchangeRoom } from '../../utils/bitsOrigin';
+import { playerDayKey } from '../../utils/playerDay';
 import { Icon } from '../ui/Icon';
 import { PixelIcon } from '../ui/PixelIcon';
 import { STATUS_ICON_ART } from '../../assets/soulmon/icones-ui/interacao';
@@ -614,6 +617,9 @@ export function CreditExchange({ language, credits, onExchangeCredits, say }: {
 }) {
   const isPt = language === 'pt-BR';
   const [exchanging, setExchanging] = useState<number | null>(null);
+  // PR8 (§2.26): o câmbio do dia cabe em 25% do ganho GRÁTIS do dia. A conta é do save (`bitsOrigin`); sem Provider (demo, testes) não há teto.
+  const ctx = useGameStateOptional();
+  const room = ctx ? creditExchangeRoom(ctx.gameState, playerDayKey(new Date(), ctx.gameState.playerDayTz)) : Infinity;
   /** Pacote tocado — a troca gasta Créditos, então também espera o "Confirmar" (D1). */
   const [pending, setPending] = useState<(typeof BITS_EXCHANGE)[number] | null>(null);
   const doExchange = async (pack: (typeof BITS_EXCHANGE)[number]) => {
@@ -636,7 +642,8 @@ export function CreditExchange({ language, credits, onExchangeCredits, say }: {
       </p>
       {BITS_EXCHANGE.map(pack => {
         const busy = exchanging === pack.credits;
-        const can = credits >= pack.credits && exchanging === null;
+        const fits = pack.bits <= room;
+        const can = credits >= pack.credits && exchanging === null && fits;
         return (
           <button
             key={pack.credits}
@@ -655,6 +662,13 @@ export function CreditExchange({ language, credits, onExchangeCredits, say }: {
           </button>
         );
       })}
+      {Number.isFinite(room) && (
+        <p data-exchange-room style={{ ...sm2Hint, margin: 0 }}>
+          {isPt
+            ? `Hoje o câmbio cabe até ${room} Bits (um quarto do que você ganhou jogando). Amanhã a conta abre de novo. Bits de Crédito não compram equipamento.`
+            : `Today the exchange fits up to ${room} Bits (a quarter of what you earned by playing). The count opens again tomorrow. Bits from Credits do not buy equipment.`}
+        </p>
+      )}
       <PurchaseConfirmSheet
         open={!!pending}
         language={language}

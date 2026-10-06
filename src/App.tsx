@@ -84,6 +84,7 @@ import { playerDayKey, playerDayIso, dayKeyToIso } from './utils/playerDay';
 import { shouldInviteRefuge, markRefugeShown, dismissRefugeInvite, acceptRefugeInvite } from './utils/refugio/convite';
 import { RefugeInviteCard } from './components/refugio/RefugeInviteCard';
 import { awardBondXP, bondLevelFor, unclaimedBondRewards, applyBondRewards } from './utils/bond';
+import { sanitizeTalentPicks } from './utils/talents';
 import { soulLevel, soulLevelLine } from './utils/soulXP';
 import { applyPoopDrain, cleanPoop, POOP_DRAIN_PERIOD_MS, remainingDrainToday } from './utils/poopDrain';
 import { isMuted, setMuted, playTaskComplete, playFeed, playEvolve, playDegenerate, playSleep } from './utils/sounds';
@@ -137,7 +138,7 @@ import {
 import { sleepReminderCopy } from '../functions/api/_pushCopy.js';
 import { BITS_EXCHANGE, creditMinigameBits, minigameBitsToday } from './utils/currencies';
 import { noteFreeBits, creditExchangeRoom, applyCreditExchange } from './utils/bitsOrigin';
-import { spendBits } from './utils/equipment';
+import { spendBits, addFragments, fragmentGain, FRAGMENTS_PER_RUN } from './utils/equipment';
 import { snapshotCompletion, undoCompletion, UNDO_WINDOW_MS } from './utils/completionUndo';
 import { useDeferredFlush } from './hooks/useDeferredFlush';
 import { UndoToast } from './components/UndoToast';
@@ -3398,7 +3399,7 @@ export default function App() {
   // 🌀 Glitchtama — guaranteed reward for clearing all 5 dungeon floors.
   // Also counts a completed run for the missions.
   const handleGlitchtama = useCallback(() => {
-    setGameState(prev => ({
+    setGameState(prev => addFragments({
       // 🔗 Vínculo: a run completa (os 5 andares) é o evento de masmorra que o
       // app tem em mãos, e ele passa pelo TETO DIÁRIO SUAVE de `bond.ts` —
       // ao bater, simplesmente para de somar. Nada é subtraído e a masmorra
@@ -3407,7 +3408,8 @@ export default function App() {
       ...awardBondXP(prev, { kind: 'dungeonRun' }, playerDayKey(new Date(), prev.playerDayTz)),
       foodInventory: { ...prev.foodInventory, [GLITCHTAMA_EMOJI]: (prev.foodInventory[GLITCHTAMA_EMOJI] ?? 0) + 1 },
       dungeonRunsCompleted: (prev.dungeonRunsCompleted ?? 0) + 1,
-    }));
+    // PR8b: a run COMPLETA rende fragmentos de equipamento (moeda ganha jogando; o Comércio soma até +25%).
+    }, fragmentGain(FRAGMENTS_PER_RUN, sanitizeTalentPicks(prev.talentPicks, bondLevelFor(prev.totalXP ?? 0)))));
     contarMissao('dungeon-runs');
   }, [contarMissao]);
 
