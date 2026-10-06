@@ -46,7 +46,7 @@ export function buildFichaESkills(
   ) as Record<FichaStage, Ficha>;
   return {
     fichaByStage,
-    stageSkills: buildAllStageSkills(fichaByStage, seedKey),
+    stageSkills: buildAllStageSkills(fichaByStage, seedKey, oracleAxes.dominantElement),
     dominantElement: oracleAxes.dominantElement,
   };
 }

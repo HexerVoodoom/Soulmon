@@ -3,9 +3,10 @@
 // section and the torcida calibration of the old turn engine were deleted with it (PR3b lists them).
 import { describe, it, expect } from 'vitest';
 import {
-  getArenaAttributes, COUNTERS, buildArenaRound, ESCOLA_FAMILY_PROVISORIO, elementAdvantage, type BestiaryCreature,
+  getArenaAttributes, COUNTERS, buildArenaRound, ESCOLA_FAMILY_PADRAO, familyOfSkill, elementAdvantage, type BestiaryCreature,
 } from './arena';
 import { buildStageSkills } from './soulProfile/ficha/skills';
+import { SPECIAL_FAMILIES } from './combate/specials';
 import { CLASS_ELEMENT_ORDER } from './soulProfile/types';
 import type { Ficha } from './soulProfile/ficha/types';
 import { mulberry32 } from './oracle';
@@ -96,13 +97,15 @@ describe('inimigos do bestiário', () => {
   });
 });
 
-describe('PR3b — a família do especial ainda é PROVISÓRIA (até o PR9)', () => {
-  it('REPROVA no dia em que StageSkill.familia passar a existir: troque ESCOLA_FAMILY_PROVISORIO pela família real', () => {
+describe('PR9 — a família do especial é da SKILL (StageSkill.familia)', () => {
+  it('o especial leva `familia` real; a tabela por escola é só o padrão de quem não tem', () => {
     const ficha = fichaWith({ fogo: 3, agua: 2 });
     const par = buildStageSkills(ficha, 'rookie', 'seed');
-    expect('familia' in par.basica).toBe(false);
-    expect('familia' in par.especial).toBe(false);
-    expect(Object.keys(ESCOLA_FAMILY_PROVISORIO).sort()).toEqual(
+    expect(SPECIAL_FAMILIES).toContain(par.especial.familia);
+    expect(familyOfSkill(par.especial)).toBe(par.especial.familia);
+    expect(familyOfSkill({ escolaId: 'benca' })).toBe(ESCOLA_FAMILY_PADRAO.benca);
+    expect(familyOfSkill(undefined)).toBe('direct');
+    expect(Object.keys(ESCOLA_FAMILY_PADRAO).sort()).toEqual(
       ['benca', 'combate_fisico', 'conjuracao', 'evocacao', 'longo_alcance', 'maldicao']);
   });
 });

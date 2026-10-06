@@ -35,7 +35,7 @@ import { useGroupBattle, type GroupRound, type GroupScene } from './games/useGro
 import { RING_TAG, DODGE_TAG, PERSONAL_TAG } from './games/pveTags';
 import { CHEER_TAPS_FULL } from '../utils/energia';
 import { BattleStage, BATTLE_LAYER_STYLE } from './games/BattleStage';
-import { fxElementId, prefersReducedMotion, fighterStrikeForm, elementStrikeForm, specialLabel } from '../utils/combatFx';
+import { fxElementId, prefersReducedMotion, fighterStrikeForm, elementStrikeForm, specialLabel, foeSpecialLabel } from '../utils/combatFx';
 import { autoDefense, defenseRoll, newDefenseSeed } from '../utils/autoDefesa';
 import { Icon } from './ui/Icon';
 import { InfoTip } from './ui/InfoTip';
@@ -58,7 +58,7 @@ import {
   autoDefenseHitScale,
   buildArenaRound,
   elementLabel,
-  familyOfEscola,
+  familyOfSkill,
   loadBestiaryPool,
   type ArenaEnemy,
   type ArenaPlayerCfg,
@@ -136,11 +136,11 @@ export function ArenaGame({
   );
   const jogador = useMemo<ArenaPlayerCfg>(() => ({
     combatant: soulCombatant(estado),
-    family: familyOfEscola(especial?.escolaId),
+    family: familyOfSkill(especial),
     area: especial?.area?.tipo === 'circulo' ? 'area' : 'single',
     escolaBasica: basica?.escolaId ?? 'combate_fisico',
     elements: { basica: basica?.elementoId ?? 'vigor', especial: especial?.elementoId ?? basica?.elementoId ?? 'vigor', attrs: atributos },
-  }), [estado, especial?.escolaId, especial?.area?.tipo, basica?.escolaId, basica?.elementoId, especial?.elementoId, atributos]);
+  }), [estado, especial?.familia, especial?.escolaId, especial?.area?.tipo, basica?.escolaId, basica?.elementoId, especial?.elementoId, atributos]);
   const jogadorRef = useRef(jogador);
   jogadorRef.current = jogador;
   const lado = useMemo(() => arenaPlayerSide(jogador), [jogador]);
@@ -285,6 +285,7 @@ export function ArenaGame({
           scene={ARENA_SCENE.bg}
           sceneElement={inimigos[0] ? fxElementId(inimigos[0].elements[0]) : null}
           specialLabel={specialLabel(isPt, especial)}
+          foeSpecialLabel={(f) => foeSpecialLabel(isPt, f.element, f.name)}
           me={{
             key: 'me', sprite: petSprite, name: isPt ? 'Você' : 'You', hp: Math.round(Math.max(0, hpFrac) * hpMax), maxHp: hpMax,
             element: fxElementId(basica?.elementoId ?? atributos.principal),

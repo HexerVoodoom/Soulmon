@@ -15,7 +15,7 @@
 //
 // Pure and deterministic given a seed: the draws come from `defenseRoll` and `mulberry32`, never `Math.random`.
 import { autoDefense, defenseRoll } from './autoDefesa';
-import { ARENA_SKILL_ODDS, autoDefenseHitScale, familyOfEscola, type ArenaSkill } from './arena';
+import { ARENA_SKILL_ODDS, autoDefenseHitScale, familyOfSkill, type ArenaSkill } from './arena';
 import { dungeonFoe, type DungeonFoeKnobs } from './dungeon';
 import { DODGE_REDUCE, RING_MULT, type DodgeGrade, type RingGrade } from './energia';
 import { nightmareSlots } from './nightmares';
@@ -42,8 +42,8 @@ export interface DungeonPlayerCfg {
   dodge?: Readonly<Record<DodgeGrade, number>>;
 }
 
-/** The family of the special by the school of the SPECIAL skill (provisional until PR9, like the Arena). */
-export const dungeonFamily = (escola: EscolaId | undefined): SpecialFamily => familyOfEscola(escola);
+/** The family of the special: the SPECIAL skill's own `familia` (PR9); without it, the default of its school. */
+export const dungeonFamily = (skill: { familia?: SpecialFamily; escolaId?: EscolaId } | undefined | null): SpecialFamily => familyOfSkill(skill);
 
 const jeitoOf = (p: DungeonPlayerCfg): JeitoPve => jeitoParaPve(p.jeito ?? JEITO_PADRAO, { contraTeto: p.contraTeto });
 

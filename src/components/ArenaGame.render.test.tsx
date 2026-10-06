@@ -16,7 +16,7 @@ import { renderWithCss } from '../test/renderEnv';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { ArenaGame } from './ArenaGame';
-import { ARENA_ROUNDS, ESCOLA_FAMILY_PROVISORIO } from '../utils/arena';
+import { ARENA_ROUNDS, ESCOLA_FAMILY_PADRAO } from '../utils/arena';
 import type { StageSkills } from '../utils/soulProfile/ficha/skills';
 
 /** Uma criatura só, determinística: o que varia nos testes é a ESCOLA e a
@@ -121,8 +121,8 @@ describe('a tela não inventa número de balanceamento', () => {
     expect(fisico).not.toBe(conjurador);
   });
 
-  it('cada escola de especial mapeia para uma família (provisório até o PR9) — a tela lê, não decide', () => {
-    const familias = Object.values(ESCOLA_FAMILY_PROVISORIO);
+  it('cada escola de especial mapeia para uma família (o padrão; a família real vem da skill, PR9) — a tela lê, não decide', () => {
+    const familias = Object.values(ESCOLA_FAMILY_PADRAO);
     expect(new Set(familias).size).toBeGreaterThan(1);
   });
 });

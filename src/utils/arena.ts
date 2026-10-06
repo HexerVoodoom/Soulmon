@@ -160,10 +160,11 @@ export const ROLE_SHAPE: Record<EscolaId, { hp: number; dmg: number }> = {
 };
 
 /**
- * PROVISIONAL family of the special by school, until PR9 gives `StageSkill` a real `familia`
- * (a test fails the day `StageSkill.familia` exists, to force the swap).
+ * DEFAULT family of the special by school: only the fallback for a skill without `familia` (old data,
+ * no ficha) and the reference build of the school in the balance simulations. Since PR9 the real
+ * family comes from `StageSkill.familia` (`familyOfSkill`), new at every stage.
  */
-export const ESCOLA_FAMILY_PROVISORIO: Record<EscolaId, SpecialFamily> = {
+export const ESCOLA_FAMILY_PADRAO: Record<EscolaId, SpecialFamily> = {
   combate_fisico: 'direct',
   longo_alcance: 'dot',
   conjuracao: 'direct',
@@ -173,7 +174,12 @@ export const ESCOLA_FAMILY_PROVISORIO: Record<EscolaId, SpecialFamily> = {
 };
 
 export function familyOfEscola(escola: EscolaId | undefined): SpecialFamily {
-  return ESCOLA_FAMILY_PROVISORIO[escola ?? 'combate_fisico'] ?? 'direct';
+  return ESCOLA_FAMILY_PADRAO[escola ?? 'combate_fisico'] ?? 'direct';
+}
+
+/** The family of a special skill: its own `familia` (PR9); without it, the default of its school. */
+export function familyOfSkill(skill: { familia?: SpecialFamily; escolaId?: EscolaId } | undefined | null): SpecialFamily {
+  return skill?.familia ?? familyOfEscola(skill?.escolaId);
 }
 
 /** From this accuracy up the automatic defence blocks the hit clean (the `perfeito` of `utils/autoDefesa.ts`). */

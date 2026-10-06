@@ -9,7 +9,7 @@
  */
 import { describe, expect, it, vi } from 'vitest';
 import {
-  ARENA_FOES, ARENA_ROUNDS, ARENA_ROUND_COMP, ARENA_ROUND_GROWTH, ARENA_SKILL_ODDS, ESCOLA_FAMILY_PROVISORIO, ROLE_SHAPE,
+  ARENA_FOES, ARENA_ROUNDS, ARENA_ROUND_COMP, ARENA_ROUND_GROWTH, ARENA_SKILL_ODDS, ESCOLA_FAMILY_PADRAO, ROLE_SHAPE,
   ROUND_CLEAR_HEAL, arenaFoe, arenaFoeWithElement, arenaPlayerSide, elementAdvantage, simulateArenaRunV3,
   type ArenaPlayerCfg, type ArenaRunConfig, type ArenaSkill,
 } from './arena';
@@ -154,7 +154,7 @@ describe('AC3b. the 6 archetypes (school → family, area, role shape): 40-80%, 
       let w = 0;
       for (let i = 0; i < N; i++) {
         w += +simulateArenaRunV3({
-          level: 6, build: REFERENCE_BUILDS.balanced, family: ESCOLA_FAMILY_PROVISORIO[escola],
+          level: 6, build: REFERENCE_BUILDS.balanced, family: ESCOLA_FAMILY_PADRAO[escola],
           area: areaDaEscola(escola).tipo === 'circulo' ? 'area' : 'single', escolaBasica: escola,
         }, 20260818 + i, 'media').won;
       }
@@ -326,8 +326,8 @@ describe('AC8. determinism and the provisional family map', () => {
     const cfg = cell(11, 'area');
     expect(simulateArenaRunV3(cfg, 1).rounds).not.toEqual(simulateArenaRunV3(cfg, 2).rounds);
   });
-  it('the provisional school → family map (until PR9)', () => {
-    expect(ESCOLA_FAMILY_PROVISORIO).toEqual({
+  it('the default school → family map (fallback of a skill without `familia`, since PR9)', () => {
+    expect(ESCOLA_FAMILY_PADRAO).toEqual({
       combate_fisico: 'direct', longo_alcance: 'dot', conjuracao: 'direct', benca: 'heal', maldicao: 'defDebuff', evocacao: 'atkBuff',
     });
   });
