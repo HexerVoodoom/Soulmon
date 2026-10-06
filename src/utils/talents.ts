@@ -41,6 +41,12 @@ export type TalentEffect =
   | { readonly kind: 'equipPrice' }
   /** Comércio (PR8): mais fragmentos por prêmio (`equipment.ts › fragmentGain`, dentro do +25%). */
   | { readonly kind: 'fragmentGain' }
+  /** Comércio (PR12b): +1 espaço por grau na MOCHILA do equipamento (`equipment.ts › backpackCapacity`). Capacidade, não combate. */
+  | { readonly kind: 'backpack' }
+  /** Comércio (PR12b): +% por grau nos Bits do dia completo (`equipment.ts › missionBitsGain`). Sem fonte nova; dentro do +25%. */
+  | { readonly kind: 'missionBits' }
+  /** Comércio (PR12b): desconto semanal determinístico em UM item do equipamento (`equipment.ts › weeklyDiscountItem`). */
+  | { readonly kind: 'weeklyDiscount' }
   /** Reduz o custo do respec em `perRank × grau` (Comércio: só moeda). */
   | { readonly kind: 'respecDiscount'; readonly perRank: number }
   /** O efeito depende de um gancho que ainda não existe (motor/PR8). O nó aparece, mas não se compra. */
@@ -87,10 +93,10 @@ export const TALENT_TREE: readonly TalentNode[] = [
   { id: 'tal-com-01', path: 'comercio', tier: 1, maxRank: 3, effect: { kind: 'equipPrice' } },
   { id: 'tal-com-02', path: 'comercio', tier: 1, maxRank: 3, effect: { kind: 'fragmentGain' } },
   { id: 'tal-com-03', path: 'comercio', tier: 1, maxRank: 4, effect: { kind: 'respecDiscount', perRank: RESPEC_STEP } },
-  { id: 'tal-com-04', path: 'comercio', tier: 2, maxRank: 3, effect: { kind: 'pendente' } },
+  { id: 'tal-com-04', path: 'comercio', tier: 2, maxRank: 3, effect: { kind: 'backpack' } },
   { id: 'tal-com-05', path: 'comercio', tier: 2, maxRank: 1, effect: { kind: 'respecOne' } },
-  { id: 'tal-com-06', path: 'comercio', tier: 2, maxRank: 3, effect: { kind: 'pendente' } },
-  { id: 'tal-com-07', path: 'comercio', tier: 3, maxRank: 1, effect: { kind: 'pendente' } },
+  { id: 'tal-com-06', path: 'comercio', tier: 2, maxRank: 3, effect: { kind: 'missionBits' } },
+  { id: 'tal-com-07', path: 'comercio', tier: 3, maxRank: 1, effect: { kind: 'weeklyDiscount' } },
 ];
 
 export const TALENT_BY_ID: ReadonlyMap<string, TalentNode> = new Map(TALENT_TREE.map((n) => [n.id, n]));

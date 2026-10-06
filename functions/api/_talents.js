@@ -11,7 +11,7 @@ export const TALENT_POINTS_MAX = 20;
 
 /**
  * id -> grau maximo e efeito, so dos nos PEGAVEIS (os `pendente` nao se compram).
- * @type {Readonly<Record<string, { maxRank: number, kind: 'combatBonus' | 'respecDiscount' | 'cheerBoost' | 'respecOne' | 'equipPrice' | 'fragmentGain', scope?: 'pvp' | 'pve', attr?: 'atk' | 'def' | 'spd', perRank?: number }>>}
+ * @type {Readonly<Record<string, { maxRank: number, kind: 'combatBonus' | 'respecDiscount' | 'cheerBoost' | 'respecOne' | 'equipPrice' | 'fragmentGain' | 'backpack' | 'missionBits' | 'weeklyDiscount', scope?: 'pvp' | 'pve', attr?: 'atk' | 'def' | 'spd', perRank?: number }>>}
  */
 export const PICKABLE = {
   'tal-pvp-01': { maxRank: 4, kind: 'combatBonus', scope: 'pvp', attr: 'atk', perRank: 0.004 },
@@ -23,7 +23,10 @@ export const PICKABLE = {
   'tal-com-01': { maxRank: 3, kind: 'equipPrice' },
   'tal-com-02': { maxRank: 3, kind: 'fragmentGain' },
   'tal-com-03': { maxRank: 4, kind: 'respecDiscount', perRank: 0.1 },
+  'tal-com-04': { maxRank: 3, kind: 'backpack' },
   'tal-com-05': { maxRank: 1, kind: 'respecOne' },
+  'tal-com-06': { maxRank: 3, kind: 'missionBits' },
+  'tal-com-07': { maxRank: 1, kind: 'weeklyDiscount' },
 };
 
 const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);

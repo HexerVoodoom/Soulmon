@@ -139,3 +139,27 @@ describe('PR8b: a arte e a fonte das fragmentos', () => {
     expect(corpo).toMatch(/fragmentGain\(FRAGMENTS_PER_RUN/);
   });
 });
+
+describe('PR12b: mochila e peça da semana na tela', () => {
+  const vinculo = xpForLevel(8);
+  it('mostra a mochila "N de 3"; cheia, a compra que iria para ela é recusada com aviso neutro, sem debitar', () => {
+    abrir({ gamePoints: 99999, totalXP: vinculo, equipment: { owned: ['eq-nucleo-t1', 'eq-nucleo-t2', 'eq-nucleo-t3', 'eq-carapaca-t1', 'eq-carapaca-t2'], equipped: { nucleo: 'eq-nucleo-t1', carapaca: 'eq-carapaca-t1' }, fragments: 0 } });
+    expect(document.querySelector('[data-equip-backpack]')!.textContent).toMatch(/3 de 3/);
+    act(() => { fireEvent.click(botao('eq-carapaca-t3', /Comprar/)); });
+    expect(estado().eq.owned).toHaveLength(5);
+    expect(estado().bits).toBe(99999);
+    expect(aviso()).toMatch(/mochila está cheia/);
+    expect(aviso()).not.toMatch(/corra|acaba|última/i);
+  });
+  it('com Bolsa com alça o espaço abre; com Moeda coroada a peça da semana mostra o preço com desconto e o rótulo calmo', () => {
+    abrir({ gamePoints: 99999, totalXP: vinculo, talentPicks: ['tal-com-07'] });
+    const marcada = document.querySelectorAll('[data-equip-weekly]');
+    expect(marcada).toHaveLength(1);
+    expect(marcada[0].textContent).toMatch(/desconto desta semana/);
+    expect(marcada[0].textContent).not.toMatch(/\d+\s*(dias|horas)|acaba|termina|restam/i);
+  });
+  it('sem o nó não há rótulo de desconto', () => {
+    abrir({ gamePoints: 0, totalXP: vinculo });
+    expect(document.querySelectorAll('[data-equip-weekly]')).toHaveLength(0);
+  });
+});

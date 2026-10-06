@@ -13,9 +13,11 @@ import { bondLevelFor } from '../utils/bond';
 import { sanitizeTalentPicks } from '../utils/talents';
 import {
   EQUIP_CATALOG, EQUIP_SLOTS, SLOT_ATTR, sanitizeEquipment, equipAttrBonus, equipBuyRefusal, equipPrice, applyEquipBuy, applyEquip,
-  applyUnequip, type EquipItem, type EquipSlot, type EquipPay,
+  applyUnequip, backpackCapacity, backpackUsed, backpackHasRoom, weeklyDiscountItem, type EquipItem, type EquipSlot, type EquipPay,
 } from '../utils/equipment';
 import { earnedBits } from '../utils/bitsOrigin';
+import { isoWeekKey } from '../utils/offerMoment';
+import { playerDayKey } from '../utils/playerDay';
 import { loadEquipArt } from '../utils/equipArt';
 import { ATTR_COPY, SLOT_COPY, itemName, refusalText } from '../utils/equipmentCopy';
 
@@ -46,7 +48,11 @@ export default function EquipmentCard({ language = 'pt-BR' }: { language?: strin
   const bond = bondLevelFor(gameState.totalXP ?? 0);
   const picks = sanitizeTalentPicks(gameState.talentPicks, bond);
   const eq = sanitizeEquipment(gameState.equipment);
-  const view = { gamePoints: gameState.gamePoints, bitsOrigin: gameState.bitsOrigin, equipment: eq, talentPicks: picks };
+  const weekKey = isoWeekKey(playerDayKey(new Date(), gameState.playerDayTz));
+  const view = { gamePoints: gameState.gamePoints, bitsOrigin: gameState.bitsOrigin, equipment: eq, talentPicks: picks, weekKey };
+  const daSemana = picks.includes('tal-com-07') ? weeklyDiscountItem(weekKey) : null;
+  const mochilaUsada = backpackUsed(eq);
+  const mochilaCap = backpackCapacity(picks);
   const bonus = equipAttrBonus(eq);
   const ganhos = earnedBits(view);
 
@@ -56,12 +62,21 @@ export default function EquipmentCard({ language = 'pt-BR' }: { language?: strin
     if (motivo) { setAviso(refusalText(motivo, isPt)); return; }
     setGameState((prev) => {
       const b = bondLevelFor(prev.totalXP ?? 0);
-      const r = applyEquipBuy({ ...prev, talentPicks: sanitizeTalentPicks(prev.talentPicks, b) }, id, pay);
-      return r.ok ? { ...r.state, talentPicks: prev.talentPicks } : prev;
+      const r = applyEquipBuy({ ...prev, talentPicks: sanitizeTalentPicks(prev.talentPicks, b), weekKey: isoWeekKey(playerDayKey(new Date(), prev.playerDayTz)) }, id, pay);
+      if (!r.ok) return prev;
+      const { weekKey: _w, ...resto } = r.state as typeof r.state & { weekKey?: unknown };
+      return { ...resto, talentPicks: prev.talentPicks };
     });
   };
   const equipar = (id: string) => { setAviso(null); setGameState((prev) => applyEquip(prev, id)); };
-  const tirar = (slot: EquipSlot) => { setAviso(null); setGameState((prev) => applyUnequip(prev, slot)); };
+  const tirar = (slot: EquipSlot) => {
+    setAviso(null);
+    setGameState((prev) => {
+      const r = applyUnequip({ equipment: prev.equipment, talentPicks: sanitizeTalentPicks(prev.talentPicks, bondLevelFor(prev.totalXP ?? 0)) }, slot);
+      return r.equipment === prev.equipment ? prev : { ...prev, equipment: r.equipment };
+    });
+    if (!backpackHasRoom(eq, picks)) setAviso(refusalText('backpack-full', isPt));
+  };
 
   const linhaBonus = (['atk', 'def', 'spd'] as const).map((a) => `${isPt ? ATTR_COPY[a].pt : ATTR_COPY[a].en} +${pct(bonus[a], isPt)}`).join(' · ');
   const vazio = eq.owned.length === 0;
@@ -71,7 +86,8 @@ export default function EquipmentCard({ language = 'pt-BR' }: { language?: strin
     const equipado = eq.equipped[item.slot] === item.id;
     const nome = itemName(item.slot, item.tier, isPt);
     const attr = isPt ? ATTR_COPY[SLOT_ATTR[item.slot]].pt : ATTR_COPY[SLOT_ATTR[item.slot]].en;
-    const precoBits = equipPrice(item, 'bits', picks);
+    const precoBits = equipPrice(item, 'bits', picks, weekKey);
+    const dessaSemana = daSemana === item.id;
     const precoFrag = equipPrice(item, 'fragments', picks);
     return (
       <li key={item.id} data-equip-item={item.id} data-owned={possui || undefined} data-equipped={equipado || undefined}
@@ -81,6 +97,7 @@ export default function EquipmentCard({ language = 'pt-BR' }: { language?: strin
           <b style={{ fontWeight: 500 }}>{nome}</b>{' '}
           <span className="sm2-num">+{pct(item.pct, isPt)} {attr}</span>
           {equipado && <span className="sm2-stats-s"> · {isPt ? 'equipado' : 'equipped'}</span>}
+          {dessaSemana && !possui && <span className="sm2-stats-s" data-equip-weekly> · {isPt ? 'desconto desta semana' : "this week's discount"}</span>}
         </span>
         {possui ? (
           !equipado && (
@@ -117,6 +134,9 @@ export default function EquipmentCard({ language = 'pt-BR' }: { language?: strin
           : (isPt ? `Bônus de equipamento: ${linhaBonus}.` : `Equipment bonus: ${linhaBonus}.`)}
         {' '}
         {isPt ? `Fragmentos: ${eq.fragments}. Bits ganhos: ${ganhos}.` : `Fragments: ${eq.fragments}. Earned Bits: ${ganhos}.`}
+      </p>
+      <p className="sm2-stats-s" data-equip-backpack>
+        {isPt ? `Mochila (peças guardadas fora dos slots): ${mochilaUsada} de ${mochilaCap}.` : `Pack (pieces kept outside the slots): ${mochilaUsada} of ${mochilaCap}.`}
       </p>
       <p className="sm2-stats-s">
         {isPt

@@ -18,7 +18,9 @@ import {
   type HabitRhythm,
 } from './habitRhythm';
 import { ensureSeasonProgress, applySeasonMedal } from './seasons';
-import { awardBondXP } from './bond';
+import { awardBondXP, bondLevelFor } from './bond';
+import { sanitizeTalentPicks } from './talents';
+import { missionBitsGain } from './equipment';
 import { playerDayKey } from './playerDay';
 import { noteFreeBits } from './bitsOrigin';
 import { CATALOG_OPT_IN_ONLY_IDS } from '../data/catalogoCarga';
@@ -895,6 +897,8 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
   // `tasksCompletedOn` repetida no outro eixo.
   const energyWasFull = (prev.energyPoints ?? 0) >= dailyGoal;
   const dayWasPerfect = completeDayReached({ registered: totalTasks, goal: dailyGoal, done: dailyDone, energy: prev.energyPoints ?? 0 });
+  // PR12b (`tal-com-06`): os Bits do dia completo com o Comércio. Picks inválidos para o Vínculo valem zero.
+  const dayBits = missionBitsGain(BITS_PER_COMPLETE_DAY, sanitizeTalentPicks(prev.talentPicks, bondLevelFor(prev.totalXP ?? 0)));
 
   // Ausência: se o app ficou dias sem abrir, não há o que cobrar — as tarefas
   // daqueles dias nem chegaram a ser registradas. Cobrar aqui puniria o retorno,
@@ -1215,9 +1219,10 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
        produto diz querer. Paga a unidade já sancionada (o dia completo), nunca
        a contagem de tarefas (linha vermelha #16), e não tem teto próprio: o
        teto do dia completo é o próprio calendário. */
-    gamePoints: (prev.gamePoints ?? 0) + (dayWasPerfect ? BITS_PER_COMPLETE_DAY : 0),
+    gamePoints: (prev.gamePoints ?? 0) + (dayWasPerfect ? dayBits : 0),
     // PR8: o Bit do dia completo é Bit GANHO e soma ao ganho grátis do dia (base do teto de +25% do câmbio).
-    ...(dayWasPerfect ? { bitsOrigin: noteFreeBits(prev, BITS_PER_COMPLETE_DAY, playerDayKey(now, prev.playerDayTz)).bitsOrigin } : {}),
+    // PR12b: `dayBits` = os 100 de sempre + o Comércio (`tal-com-06`, até +15%): a mesma fonte, sem fonte nova.
+    ...(dayWasPerfect ? { bitsOrigin: noteFreeBits(prev, dayBits, playerDayKey(now, prev.playerDayTz)).bitsOrigin } : {}),
     /* WP4.16 — a estação passa a existir para o jogador.
        `seasons.ts` estava escrito, testado e SEM CONSUMIDOR: ninguém chamava
        `ensureSeasonProgress`, ninguém chamava `applySeasonMedal`, e por isso a

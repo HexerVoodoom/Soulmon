@@ -4,7 +4,7 @@
  * (`copy.semFomo`): sem contagem que apressa. "Vínculo", nunca "nível".
  */
 import { PVP_STEP, PVE_STEP, RESPEC_STEP, CHEER_STEP } from './talents';
-import { PRICE_STEP, FRAGMENT_GAIN_STEP } from './equipment';
+import { PRICE_STEP, FRAGMENT_GAIN_STEP, BACKPACK_BASE, BACKPACK_STEP, MISSION_BITS_STEP, WEEKLY_DISCOUNT } from './equipment';
 
 export interface TalentCopy {
   readonly namePt: string;
@@ -47,10 +47,10 @@ export const TALENT_COPY: Readonly<Record<string, TalentCopy>> = {
   'tal-com-03': { namePt: 'Ampulheta de moeda', nameEn: 'Coin hourglass',
     descPt: `Refazer a árvore custa ${Math.round(RESPEC_STEP * 100)}% menos por grau. É preço, não combate.`,
     descEn: `Rebuilding the tree costs ${Math.round(RESPEC_STEP * 100)}% less per rank. It is price, not combat.` },
-  'tal-com-04': { namePt: 'Bolsa com alça', nameEn: 'Strapped pouch', descPt: '+1 espaço na mochila. Chega com o equipamento.', descEn: '+1 pack slot. Arrives with equipment.' },
+  'tal-com-04': { namePt: 'Bolsa com alça', nameEn: 'Strapped pouch', descPt: `+${BACKPACK_STEP} espaço por grau na mochila (peças guardadas fora dos slots; a mochila começa com ${BACKPACK_BASE}). É capacidade, não combate.`, descEn: `+${BACKPACK_STEP} pack slot per rank (pieces kept outside the slots; the pack starts with ${BACKPACK_BASE}). Capacity, not combat.` },
   'tal-com-05': { namePt: 'Balança', nameEn: 'Scales',
     descPt: 'Refazer UM ponto à sua escolha, em vez da árvore toda, pelo preço de um ponto (Bits que você ganhou jogando). É conveniência, não combate.',
     descEn: 'Take back ONE point of your choice instead of the whole tree, at the price of one point (Bits you earned by playing). Convenience, not combat.' },
-  'tal-com-06': { namePt: 'Pergaminho enrolado', nameEn: 'Rolled scroll', descPt: 'Mais Bits nas missões. Chega com o gancho da economia.', descEn: 'More Bits from missions. Arrives with the economy hook.' },
-  'tal-com-07': { namePt: 'Moeda coroada', nameEn: 'Crowned coin', descPt: 'Desconto rotativo fixo. Chega com o equipamento.', descEn: 'A fixed rotating discount. Arrives with equipment.' },
+  'tal-com-06': { namePt: 'Pergaminho enrolado', nameEn: 'Rolled scroll', descPt: `${pct(MISSION_BITS_STEP, true)} mais Bits por grau no dia completo, até +25%. Não cria Bits novos: só rende mais do que o dia já dava. É moeda, não combate.`, descEn: `${pct(MISSION_BITS_STEP, false)} more Bits per rank on a complete day, up to +25%. No new source of Bits: it only adds to what the day already gave. Currency, not combat.` },
+  'tal-com-07': { namePt: 'Moeda coroada', nameEn: 'Crowned coin', descPt: `Toda semana UMA peça do equipamento fica ${Math.round(WEEKLY_DISCOUNT * 100)}% mais barata em Bits. A peça vem de uma ordem fixa (a mesma para todos, sem acaso), a semana seguinte é só a próxima da ordem e nada some se você não comprar. É preço, não combate.`, descEn: `Every week ONE piece of equipment is ${Math.round(WEEKLY_DISCOUNT * 100)}% cheaper in Bits. The piece follows a fixed order (the same for everyone, nothing random); next week is just the next in line and nothing goes away if you do not buy. Price, not combat.` },
 };

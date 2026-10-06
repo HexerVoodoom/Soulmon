@@ -774,7 +774,7 @@ das 22h, que chegava em PT para quem tinha escolhido inglês. `resolveLanguage`
      `combinedAttrBonus`, nunca por multiplicador próprio, e nada comprado com
      dinheiro real entra nele; (c) o motor tem espelho no servidor —
      `functions/api/_combate.js`, `_gates.js`, `_talents.js` e `_equipment.js`,
-     cada um com `*.parity.test.js`: mudou constante ou fórmula de um lado, mude
+     cada um com `*.parity.test.js` (o Comércio — `tal-com-01/02/04/06/07` — só mexe em preço, ganho de moeda e mochila, nunca em % de combate; o desconto da semana é determinístico por `weeklyDiscountItem`, sem sorteio): mudou constante ou fórmula de um lado, mude
      os dois; (d) equipamento só se compra com Bits GANHOS (`bitsOrigin.paidLeft`
      é a parte vinda de Crédito) e SEM sorteio — nada de `Math.random`/odds/pity
      (um teste lê a fonte); (e) torcida só na Arena
