@@ -198,12 +198,12 @@ describe('combate v3 — o texto do level que desceu é neutro (semFomo)', () =>
 // para a criatura, `NARRATIVA-E-UNIVERSO` §12 e a tabela do vocabulário).
 // ---------------------------------------------------------------------------
 import { gateLine, GATES, type GateFeature } from './utils/gates';
-import { TALENT_TREE } from './utils/talents';
+import { TALENT_COPY } from './utils/talentCopy';
 
 describe('combate v3 / PR7 — a copy de gate e de talento é semFomo', () => {
   const portas = Object.keys(GATES) as GateFeature[];
   const textosDeGate = ['en-US', 'pt-BR'].flatMap((lang) => portas.flatMap((f) => [1, 2, 4].map((lv) => gateLine(f, lv, lang))).filter(Boolean));
-  const textosDeTalento = TALENT_TREE.flatMap((n) => [n.namePt, n.nameEn, n.descPt, n.descEn]);
+  const textosDeTalento = Object.values(TALENT_COPY).flatMap((n) => [n.namePt, n.nameEn, n.descPt, n.descEn]);
 
   it('os textos existem (a varredura tem chão)', () => {
     expect(textosDeGate.length).toBeGreaterThan(10);

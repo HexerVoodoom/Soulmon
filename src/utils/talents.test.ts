@@ -194,3 +194,11 @@ describe('os talentos sobrevivem à degeneração', () => {
     expect(talentBonus.length).toBe(3);
   });
 });
+
+describe('todo nó da árvore tem texto nas duas línguas (talentCopy.ts)', () => {
+  it('sem nó órfão e sem texto vazio', async () => {
+    const { TALENT_COPY } = await import('./talentCopy');
+    expect(Object.keys(TALENT_COPY).sort()).toEqual(TALENT_TREE.map((n) => n.id).sort());
+    for (const [id, c] of Object.entries(TALENT_COPY)) for (const t of [c.namePt, c.nameEn, c.descPt, c.descEn]) expect(t.length, id).toBeGreaterThan(3);
+  });
+});

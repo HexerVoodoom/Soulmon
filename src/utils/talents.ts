@@ -18,7 +18,8 @@
  * FORA, à espera do dono (linha vermelha, NÃO implementados): `tal-pvp-05` (torcida +% / câmbio) e
  * `tal-com-05` (conveniência de câmbio). Ver `TALENTOS_PENDENTES_DO_DONO`.
  *
- * Módulo PURO: sem React, sem relógio, sem localStorage.
+ * Módulo PURO: sem React, sem relógio, sem localStorage. Os TEXTOS dos nós moram em `talentCopy.ts` (só a tela
+ * os lê, atrás do `lazy`): este arquivo entra no chunk de entrada pelo `useTalentBonus`, e o orçamento de bytes pesa.
  */
 
 export type TalentPath = 'pvp' | 'pve' | 'comercio';
@@ -38,74 +39,40 @@ export interface TalentNode {
   readonly tier: 1 | 2 | 3;
   readonly maxRank: number;
   readonly effect: TalentEffect;
-  readonly namePt: string;
-  readonly nameEn: string;
-  readonly descPt: string;
-  readonly descEn: string;
 }
 
 /** Teto de pontos de talento: o Vínculo acima disto não rende ponto novo (a árvore tem de ficar maior que isto). */
 export const TALENT_POINTS_MAX = 20;
 
 /** Passo de cada grau dos nós de combate (fração; 0,004 = 0,4%). Os graus de um caminho cabem nos 5%. */
-const PVP_STEP = 0.004;
-const PVE_STEP = 0.006;
-const RESPEC_STEP = 0.1;
+export const PVP_STEP = 0.004;
+export const PVE_STEP = 0.006;
+export const RESPEC_STEP = 0.1;
 
-const pct = (f: number, pt: boolean) => `${(f * 100).toFixed(1).replace(/\.0$/, '').replace('.', pt ? ',' : '.')}%`;
-const dpt = (f: number, onde: string) => `${onde}: ${pct(f, true)} por grau, dentro do teto único de 5%.`;
-const den = (f: number, where: string) => `${where}: ${pct(f, false)} per rank, inside the single 5% cap.`;
-const SOON_ENGINE_PT = 'Chega com o gancho do motor.';
-const SOON_ENGINE_EN = 'Arrives with the engine hook.';
 
 export const TALENT_TREE: readonly TalentNode[] = [
   // ── PvP ──────────────────────────────────────────────────────────────────
-  { id: 'tal-pvp-01', path: 'pvp', tier: 1, maxRank: 4, effect: { kind: 'combatBonus', scope: 'pvp', perRank: PVP_STEP },
-    namePt: 'Ponta de lança', nameEn: 'Spearpoint', descPt: dpt(PVP_STEP, 'Mais dano no Duelo'), descEn: den(PVP_STEP, 'More damage in the Duel') },
-  { id: 'tal-pvp-02', path: 'pvp', tier: 1, maxRank: 4, effect: { kind: 'combatBonus', scope: 'pvp', perRank: PVP_STEP },
-    namePt: 'Braçadeira', nameEn: 'Bracer', descPt: dpt(PVP_STEP, 'Mais firmeza no Duelo'), descEn: den(PVP_STEP, 'More steadiness in the Duel') },
-  { id: 'tal-pvp-03', path: 'pvp', tier: 1, maxRank: 4, effect: { kind: 'combatBonus', scope: 'pvp', perRank: PVP_STEP },
-    namePt: 'Investida', nameEn: 'Charge', descPt: dpt(PVP_STEP, 'Mais ímpeto no Duelo'), descEn: den(PVP_STEP, 'More drive in the Duel') },
-  { id: 'tal-pvp-04', path: 'pvp', tier: 2, maxRank: 3, effect: { kind: 'pendente' },
-    namePt: 'Faísca inicial', nameEn: 'Starting spark',
-    descPt: `A luta começa com parte da energia do especial. ${SOON_ENGINE_PT}`, descEn: `The fight starts with part of the special energy. ${SOON_ENGINE_EN}` },
-  { id: 'tal-pvp-06', path: 'pvp', tier: 2, maxRank: 3, effect: { kind: 'pendente' },
-    namePt: 'Brasa abafada', nameEn: 'Smothered ember',
-    descPt: `Menos dano de efeito contínuo. ${SOON_ENGINE_PT}`, descEn: `Less damage from over-time effects. ${SOON_ENGINE_EN}` },
-  { id: 'tal-pvp-07', path: 'pvp', tier: 3, maxRank: 1, effect: { kind: 'pendente' },
-    namePt: 'Coroa do duelista', nameEn: "Duelist's crown", descPt: `+1 turno de reforço. ${SOON_ENGINE_PT}`, descEn: `+1 buff turn. ${SOON_ENGINE_EN}` },
+  { id: 'tal-pvp-01', path: 'pvp', tier: 1, maxRank: 4, effect: { kind: 'combatBonus', scope: 'pvp', perRank: PVP_STEP } },
+  { id: 'tal-pvp-02', path: 'pvp', tier: 1, maxRank: 4, effect: { kind: 'combatBonus', scope: 'pvp', perRank: PVP_STEP } },
+  { id: 'tal-pvp-03', path: 'pvp', tier: 1, maxRank: 4, effect: { kind: 'combatBonus', scope: 'pvp', perRank: PVP_STEP } },
+  { id: 'tal-pvp-04', path: 'pvp', tier: 2, maxRank: 3, effect: { kind: 'pendente' } },
+  { id: 'tal-pvp-06', path: 'pvp', tier: 2, maxRank: 3, effect: { kind: 'pendente' } },
+  { id: 'tal-pvp-07', path: 'pvp', tier: 3, maxRank: 1, effect: { kind: 'pendente' } },
   // ── PvE ──────────────────────────────────────────────────────────────────
-  { id: 'tal-pve-01', path: 'pve', tier: 1, maxRank: 4, effect: { kind: 'combatBonus', scope: 'pve', perRank: PVE_STEP },
-    namePt: 'Garra da fenda', nameEn: 'Rift claw',
-    descPt: dpt(PVE_STEP, 'Mais dano na Arena, na Masmorra e no Pesadelo'), descEn: den(PVE_STEP, 'More damage in the Arena, Dungeon and Nightmare') },
-  { id: 'tal-pve-02', path: 'pve', tier: 1, maxRank: 4, effect: { kind: 'combatBonus', scope: 'pve', perRank: PVE_STEP },
-    namePt: 'Muro da fenda', nameEn: 'Rift wall',
-    descPt: dpt(PVE_STEP, 'Mais firmeza na Arena, na Masmorra e no Pesadelo'), descEn: den(PVE_STEP, 'More steadiness in the Arena, Dungeon and Nightmare') },
-  { id: 'tal-pve-03', path: 'pve', tier: 2, maxRank: 3, effect: { kind: 'pendente' },
-    namePt: 'Gota subindo', nameEn: 'Rising droplet', descPt: `Mais cura recebida. ${SOON_ENGINE_PT}`, descEn: `More healing received. ${SOON_ENGINE_EN}` },
-  { id: 'tal-pve-04', path: 'pve', tier: 2, maxRank: 3, effect: { kind: 'pendente' },
-    namePt: 'Agulha de bússola', nameEn: 'Compass needle', descPt: 'Mais Bits da fenda. Chega com o gancho da economia.', descEn: 'More rift Bits. Arrives with the economy hook.' },
-  { id: 'tal-pve-05', path: 'pve', tier: 2, maxRank: 3, effect: { kind: 'pendente' },
-    namePt: 'Lua com olho', nameEn: 'Eyed moon', descPt: `Mais força contra o Pesadelo. ${SOON_ENGINE_PT}`, descEn: `More strength against the Nightmare. ${SOON_ENGINE_EN}` },
-  { id: 'tal-pve-06', path: 'pve', tier: 2, maxRank: 3, effect: { kind: 'pendente' },
-    namePt: 'Arco de luz', nameEn: 'Arc of light', descPt: `Escudo do especial mais forte. ${SOON_ENGINE_PT}`, descEn: `Stronger special shield. ${SOON_ENGINE_EN}` },
-  { id: 'tal-pve-07', path: 'pve', tier: 3, maxRank: 1, effect: { kind: 'pendente' },
-    namePt: 'Arco coroado', nameEn: 'Crowned arc', descPt: `Começa a luta com um escudo leve. ${SOON_ENGINE_PT}`, descEn: `Starts the fight with a light shield. ${SOON_ENGINE_EN}` },
+  { id: 'tal-pve-01', path: 'pve', tier: 1, maxRank: 4, effect: { kind: 'combatBonus', scope: 'pve', perRank: PVE_STEP } },
+  { id: 'tal-pve-02', path: 'pve', tier: 1, maxRank: 4, effect: { kind: 'combatBonus', scope: 'pve', perRank: PVE_STEP } },
+  { id: 'tal-pve-03', path: 'pve', tier: 2, maxRank: 3, effect: { kind: 'pendente' } },
+  { id: 'tal-pve-04', path: 'pve', tier: 2, maxRank: 3, effect: { kind: 'pendente' } },
+  { id: 'tal-pve-05', path: 'pve', tier: 2, maxRank: 3, effect: { kind: 'pendente' } },
+  { id: 'tal-pve-06', path: 'pve', tier: 2, maxRank: 3, effect: { kind: 'pendente' } },
+  { id: 'tal-pve-07', path: 'pve', tier: 3, maxRank: 1, effect: { kind: 'pendente' } },
   // ── Comércio (só preço e ganho de moeda GANHA; nunca % de combate) ──────
-  { id: 'tal-com-01', path: 'comercio', tier: 1, maxRank: 3, effect: { kind: 'pendente' },
-    namePt: 'Etiqueta', nameEn: 'Price tag', descPt: 'Equipamento mais barato. Chega com o equipamento.', descEn: 'Cheaper equipment. Arrives with equipment.' },
-  { id: 'tal-com-02', path: 'comercio', tier: 1, maxRank: 3, effect: { kind: 'pendente' },
-    namePt: 'Fragmentos', nameEn: 'Fragments', descPt: 'Mais fragmentos. Chega com o equipamento.', descEn: 'More fragments. Arrives with equipment.' },
-  { id: 'tal-com-03', path: 'comercio', tier: 1, maxRank: 4, effect: { kind: 'respecDiscount', perRank: RESPEC_STEP },
-    namePt: 'Ampulheta de moeda', nameEn: 'Coin hourglass',
-    descPt: `Refazer a árvore custa ${Math.round(RESPEC_STEP * 100)}% menos por grau. É preço, não combate.`,
-    descEn: `Rebuilding the tree costs ${Math.round(RESPEC_STEP * 100)}% less per rank. It is price, not combat.` },
-  { id: 'tal-com-04', path: 'comercio', tier: 2, maxRank: 3, effect: { kind: 'pendente' },
-    namePt: 'Bolsa com alça', nameEn: 'Strapped pouch', descPt: '+1 espaço na mochila. Chega com o equipamento.', descEn: '+1 pack slot. Arrives with equipment.' },
-  { id: 'tal-com-06', path: 'comercio', tier: 2, maxRank: 3, effect: { kind: 'pendente' },
-    namePt: 'Pergaminho enrolado', nameEn: 'Rolled scroll', descPt: 'Mais Bits nas missões. Chega com o gancho da economia.', descEn: 'More Bits from missions. Arrives with the economy hook.' },
-  { id: 'tal-com-07', path: 'comercio', tier: 3, maxRank: 1, effect: { kind: 'pendente' },
-    namePt: 'Moeda coroada', nameEn: 'Crowned coin', descPt: 'Desconto rotativo fixo. Chega com o equipamento.', descEn: 'A fixed rotating discount. Arrives with equipment.' },
+  { id: 'tal-com-01', path: 'comercio', tier: 1, maxRank: 3, effect: { kind: 'pendente' } },
+  { id: 'tal-com-02', path: 'comercio', tier: 1, maxRank: 3, effect: { kind: 'pendente' } },
+  { id: 'tal-com-03', path: 'comercio', tier: 1, maxRank: 4, effect: { kind: 'respecDiscount', perRank: RESPEC_STEP } },
+  { id: 'tal-com-04', path: 'comercio', tier: 2, maxRank: 3, effect: { kind: 'pendente' } },
+  { id: 'tal-com-06', path: 'comercio', tier: 2, maxRank: 3, effect: { kind: 'pendente' } },
+  { id: 'tal-com-07', path: 'comercio', tier: 3, maxRank: 1, effect: { kind: 'pendente' } },
 ];
 
 /** Os dois talentos que tocam linha vermelha. NÃO existem na árvore até o dono decidir. */
